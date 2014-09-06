@@ -1,0 +1,142 @@
+.\" -*- nroff -*-
+.\" Portions of this file are subject to the following copyright.  See
+.\" the Net-SNMP COPYING file for more details and other copyrights
+.\" that may apply:
+.\" /***********************************************************
+.\" 	Copyright 1988, 1989 by Carnegie Mellon University
+.\" 
+.\"                       All Rights Reserved
+.\" 
+.\" Permission to use, copy, modify, and distribute this software and its 
+.\" documentation for any purpose and without fee is hereby granted, 
+.\" provided that the above copyright notice appear in all copies and that
+.\" both that copyright notice and this permission notice appear in 
+.\" supporting documentation, and that the name of CMU not be
+.\" used in advertising or publicity pertaining to distribution of the
+.\" software without specific, written prior permission.  
+.\" 
+.\" CMU DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
+.\" ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL
+.\" CMU BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR
+.\" ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
+.\" WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
+.\" ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
+.\" SOFTWARE.
+.\" ******************************************************************/
+.TH SNMPWALK 1 "28 May 2007" VVERSIONINFO "Net-SNMP"
+.SH NAME
+snmpwalk - retrieve a subtree of management values using SNMP GETNEXT requests
+.SH SYNOPSIS
+.B snmpwalk
+[APPLICATION OPTIONS] [COMMON OPTIONS] AGENT [OID]
+.SH DESCRIPTION
+.B snmpwalk
+is an SNMP application that uses SNMP GETNEXT requests to query a
+network entity for a tree of information.
+.PP
+An object identifier (OID) may be given on the command line.  This OID
+specifies which portion of the object identifier space will be
+searched using GETNEXT requests.  All variables in the subtree
+below the given OID are queried and their values presented to the user.
+Each variable name is given in the format specified in
+.IR variables(5) .
+.PP
+If no OID argument is present,
+.B snmpwalk
+will search the subtree rooted at SNMPv2\-SMI::mib\-2
+(including any MIB object values from other MIB modules,
+that are defined as lying within this subtree).
+If the network entity has an error processing the request packet, an
+error packet will be returned and a message will be shown, helping to
+pinpoint why the request was malformed.
+.PP
+If the tree search causes attempts to search beyond the end of the
+MIB, the message "End of MIB" will be displayed.
+.SH OPTIONS
+.TP 8
+.B \-Cc
+Do not check whether the returned OIDs are increasing.  Some agents
+(LaserJets are an example) return OIDs out of order, but can
+complete the walk anyway.  Other agents return OIDs that are out of
+order and can cause
+.B snmpwalk
+to loop indefinitely.  By default,
+.B snmpwalk
+tries to detect this behavior and warns you when it hits an agent
+acting illegally.  Use
+.B \-Cc
+to turn off this check.
+.TP
+.B \-CE {OID}
+End the walk at the specified OID, rather than a simple subtree.
+This can be used to walk a partial subtree, selected columns of
+a table, or even two or more tables within a single command.
+.TP
+.B \-Ci
+Include the given OID in the search range.  Normally
+.B snmpwalk
+uses GETNEXT requests starting with the OID you specified and returns
+all results in the MIB subtree rooted at that OID.  Sometimes, you may
+wish to include the OID specified on the command line in the printed
+results if it is a valid OID in the tree itself.  This option lets you
+do this explicitly.
+.TP
+.B \-CI
+In fact, the given OID will be retrieved automatically if the main
+subtree walk returns no useable values.  This allows a walk of a
+single instance to behave as generally expected, and return the
+specified instance value.
+This option turns off this final GET request, so a walk of a
+single instance will return nothing.
+.TP
+.B \-Cp
+Upon completion of the walk, print the number of variables found.
+.TP
+.B \-Ct
+Upon completion of the walk, print the total wall-clock time it took
+to collect the data (in seconds).  Note that the timer is started just
+before the beginning of the data request series and stopped just after
+it finishes.  Most importantly, this means that it does not include
+snmp library initialization, shutdown, argument processing, and any
+other overhead.
+.PP
+In addition to these options,
+.B snmpwalk
+takes the common options described in the 
+.I snmpcmd(1)
+manual page.
+.SH EXAMPLES
+.br
+Note that
+.B snmpbulkget
+REQUIRES  an argument specifying the agent to query
+and at most one OID argument, as described there.
+The command:
+.PP
+snmpwalk \-Os \-c public \-v 1 zeus system
+.PP
+will retrieve all of the variables under system:
+.PP
+sysDescr.0 = STRING: "SunOS zeus.net.cmu.edu 4.1.3_U1 1 sun4m"
+.br
+sysObjectID.0 = OID: enterprises.hp.nm.hpsystem.10.1.1
+.br
+sysUpTime.0 = Timeticks: (155274552) 17 days, 23:19:05
+.br
+sysContact.0 = STRING: ""
+.br
+sysName.0 = STRING: "zeus.net.cmu.edu"
+.br
+sysLocation.0 = STRING: ""
+.br
+sysServices.0 = INTEGER: 72
+.br
+(plus the contents of the sysORTable).
+
+The command:
+.PP
+snmpwalk \-Os \-c public \-v 1 \-CE sysORTable zeus system
+.PP
+will retrieve the scalar values, but omit the sysORTable.
+.SH "SEE ALSO"
+snmpcmd(1), snmpbulkwalk(1), variables(5).

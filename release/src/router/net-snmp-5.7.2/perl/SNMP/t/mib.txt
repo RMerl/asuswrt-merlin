@@ -1,0 +1,4208 @@
+RFC1155-SMI DEFINITIONS ::= BEGIN
+    nullOID       OBJECT IDENTIFIER ::= { ccitt 0 }
+    internet      OBJECT IDENTIFIER ::= { iso org(3) dod(6) 1 }
+    directory     OBJECT IDENTIFIER ::= { internet 1 }
+    mgmt          OBJECT IDENTIFIER ::= { internet 2 }
+    experimental  OBJECT IDENTIFIER ::= { internet 3 }
+    private       OBJECT IDENTIFIER ::= { internet 4 }
+    enterprises   OBJECT IDENTIFIER ::= { private 1 }
+END
+
+-- @(#)WSCCS o/mibs-rfc1213.mib 1.1 8/30/95
+-- Changes to rfc1213 (MIB-II):
+--      No changes needed.
+
+
+          RFC1213-MIB DEFINITIONS ::= BEGIN
+
+          IMPORTS
+                  mgmt, NetworkAddress, IpAddress, Counter, Gauge,
+                          TimeTicks
+                      FROM RFC1155-SMI
+                  OBJECT-TYPE
+                          FROM RFC-1212;
+
+          --  This MIB module uses the extended OBJECT-TYPE macro as
+          --  defined in [14];
+
+
+          --  MIB-II (same prefix as MIB-I)
+
+          mib-2      OBJECT IDENTIFIER ::= { mgmt 1 }
+
+          -- textual conventions
+
+          DisplayString ::=
+              OCTET STRING
+          -- This data type is used to model textual information taken
+          -- from the NVT ASCII character set.  By convention, objects
+          -- with this syntax are declared as having
+          --
+          --      SIZE (0..255)
+
+          PhysAddress ::=
+              OCTET STRING
+          -- This data type is used to model media addresses.  For many
+          -- types of media, this will be in a binary representation.
+          -- For example, an ethernet address would be represented as
+          -- a string of 6 octets.
+
+
+          -- groups in MIB-II
+
+          system       OBJECT IDENTIFIER ::= { mib-2 1 }
+
+          interfaces   OBJECT IDENTIFIER ::= { mib-2 2 }
+
+          at           OBJECT IDENTIFIER ::= { mib-2 3 }
+
+          ip           OBJECT IDENTIFIER ::= { mib-2 4 }
+
+          icmp         OBJECT IDENTIFIER ::= { mib-2 5 }
+
+          tcp          OBJECT IDENTIFIER ::= { mib-2 6 }
+
+          udp          OBJECT IDENTIFIER ::= { mib-2 7 }
+
+          egp          OBJECT IDENTIFIER ::= { mib-2 8 }
+
+          -- historical (some say hysterical)
+          -- cmot      OBJECT IDENTIFIER ::= { mib-2 9 }
+
+          transmission OBJECT IDENTIFIER ::= { mib-2 10 }
+
+          snmp         OBJECT IDENTIFIER ::= { mib-2 11 }
+
+
+          -- the System group
+
+          -- Implementation of the System group is mandatory for all
+          -- systems.  If an agent is not configured to have a value
+          -- for any of these variables, a string of length 0 is
+          -- returned.
+
+          sysDescr OBJECT-TYPE
+              SYNTAX  DisplayString (SIZE (0..255))
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "A textual description of the entity.  This value
+                      should include the full name and version
+                      identification of the system's hardware type,
+                      software operating-system, and networking
+                      software.  It is mandatory that this only contain
+                      printable ASCII characters."
+              ::= { system 1 }
+
+          sysObjectID OBJECT-TYPE
+              SYNTAX  OBJECT IDENTIFIER
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The vendor's authoritative identification of the
+                      network management subsystem contained in the
+                      entity.  This value is allocated within the SMI
+                      enterprises subtree (1.3.6.1.4.1) and provides an
+                      easy and unambiguous means for determining `what
+                      kind of box' is being managed.  For example, if
+                      vendor `Flintstones, Inc.' was assigned the
+                      subtree 1.3.6.1.4.1.4242, it could assign the
+                      identifier 1.3.6.1.4.1.4242.1.1 to its `Fred
+                      Router'."
+              ::= { system 2 }
+
+          sysUpTime OBJECT-TYPE
+              SYNTAX  TimeTicks
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The time (in hundredths of a second) since the
+                      network management portion of the system was last
+                      re-initialized."
+              ::= { system 3 }
+
+          sysContact OBJECT-TYPE
+              SYNTAX  DisplayString (SIZE (0..255))
+              ACCESS  read-write
+              STATUS  mandatory
+              DESCRIPTION
+                      "The textual identification of the contact person
+                      for this managed node, together with information
+                      on how to contact this person."
+              ::= { system 4 }
+
+          sysName OBJECT-TYPE
+              SYNTAX  DisplayString (SIZE (0..255))
+              ACCESS  read-write
+              STATUS  mandatory
+              DESCRIPTION
+                      "An administratively-assigned name for this
+                      managed node.  By convention, this is the node's
+                      fully-qualified domain name."
+              ::= { system 5 }
+
+          sysLocation OBJECT-TYPE
+              SYNTAX  DisplayString (SIZE (0..255))
+              ACCESS  read-write
+              STATUS  mandatory
+              DESCRIPTION
+                      "The physical location of this node (e.g.,
+                      `telephone closet, 3rd floor')."
+              ::= { system 6 }
+
+          sysServices OBJECT-TYPE
+              SYNTAX  INTEGER (0..127)
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "A value which indicates the set of services that
+                      this entity primarily offers.
+
+                      The value is a sum.  This sum initially takes the
+                      value zero, Then, for each layer, L, in the range
+                      1 through 7, that this node performs transactions
+                      for, 2 raised to (L - 1) is added to the sum.  For
+                      example, a node which performs primarily routing
+                      functions would have a value of 4 (2^(3-1)).  In
+                      contrast, a node which is a host offering
+                      application services would have a value of 72
+                      (2^(4-1) + 2^(7-1)).  Note that in the context of
+                      the Internet suite of protocols, values should be
+                      calculated accordingly:
+
+                           layer  functionality
+                               1  physical (e.g., repeaters)
+                               2  datalink/subnetwork (e.g., bridges)
+                               3  internet (e.g., IP gateways)
+                               4  end-to-end  (e.g., IP hosts)
+                               7  applications (e.g., mail relays)
+
+                      For systems including OSI protocols, layers 5 and
+                      6 may also be counted."
+              ::= { system 7 }
+
+
+          -- the Interfaces group
+
+          -- Implementation of the Interfaces group is mandatory for
+          -- all systems.
+
+          ifNumber OBJECT-TYPE
+              SYNTAX  INTEGER
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The number of network interfaces (regardless of
+                      their current state) present on this system."
+              ::= { interfaces 1 }
+
+
+          -- the Interfaces table
+
+          -- The Interfaces table contains information on the entity's
+          -- interfaces.  Each interface is thought of as being
+          -- attached to a `subnetwork'.  Note that this term should
+          -- not be confused with `subnet' which refers to an
+          -- addressing partitioning scheme used in the Internet suite
+          -- of protocols.
+
+          ifTable OBJECT-TYPE
+              SYNTAX  SEQUENCE OF IfEntry
+              ACCESS  not-accessible
+              STATUS  mandatory
+              DESCRIPTION
+                      "A list of interface entries.  The number of
+                      entries is given by the value of ifNumber."
+              ::= { interfaces 2 }
+
+          ifEntry OBJECT-TYPE
+              SYNTAX  IfEntry
+              ACCESS  not-accessible
+              STATUS  mandatory
+              DESCRIPTION
+                      "An interface entry containing objects at the
+                      subnetwork layer and below for a particular
+                      interface."
+              INDEX   { ifIndex }
+              ::= { ifTable 1 }
+
+          IfEntry ::=
+              SEQUENCE {
+                  ifIndex
+                      INTEGER,
+                  ifDescr
+                      DisplayString,
+                  ifType
+                      INTEGER,
+                  ifMtu
+                      INTEGER,
+                  ifSpeed
+                      Gauge,
+                  ifPhysAddress
+                      PhysAddress,
+                  ifAdminStatus
+                      INTEGER,
+                  ifOperStatus
+                      INTEGER,
+                  ifLastChange
+                      TimeTicks,
+                  ifInOctets
+                      Counter,
+                  ifInUcastPkts
+                      Counter,
+                  ifInNUcastPkts
+                      Counter,
+                  ifInDiscards
+                      Counter,
+                  ifInErrors
+                      Counter,
+                  ifInUnknownProtos
+                      Counter,
+                  ifOutOctets
+                      Counter,
+                  ifOutUcastPkts
+                      Counter,
+                  ifOutNUcastPkts
+                      Counter,
+                  ifOutDiscards
+                      Counter,
+                  ifOutErrors
+                      Counter,
+                  ifOutQLen
+                      Gauge,
+                  ifSpecific
+                      OBJECT IDENTIFIER
+              }
+
+          ifIndex OBJECT-TYPE
+              SYNTAX  INTEGER
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "A unique value for each interface.  Its value
+                      ranges between 1 and the value of ifNumber.  The
+                      value for each interface must remain constant at
+                      least from one re-initialization of the entity's
+                      network management system to the next re-
+                      initialization."
+              ::= { ifEntry 1 }
+
+          ifDescr OBJECT-TYPE
+              SYNTAX  DisplayString (SIZE (0..255))
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "A textual string containing information about the
+                      interface.  This string should include the name of
+                      the manufacturer, the product name and the version
+                      of the hardware interface."
+              ::= { ifEntry 2 }
+
+          ifType OBJECT-TYPE
+              SYNTAX  INTEGER {
+                          other(1),          -- none of the following
+                          regular1822(2),
+                          hdh1822(3),
+                          ddn-x25(4),
+                          rfc877-x25(5),
+                          ethernet-csmacd(6),
+                          iso88023-csmacd(7),
+                          iso88024-tokenBus(8),
+                          iso88025-tokenRing(9),
+                          iso88026-man(10),
+                          starLan(11),
+                          proteon-10Mbit(12),
+                          proteon-80Mbit(13),
+                          hyperchannel(14),
+                          fddi(15),
+                          lapb(16),
+                          sdlc(17),
+                          ds1(18),           -- T-1
+                          e1(19),            -- european equiv. of T-1
+                          basicISDN(20),
+                          primaryISDN(21),   -- proprietary serial
+                          propPointToPointSerial(22),
+                          ppp(23),
+                          softwareLoopback(24),
+                          eon(25),            -- CLNP over IP [11]
+                          ethernet-3Mbit(26),
+                          nsip(27),           -- XNS over IP
+                          slip(28),           -- generic SLIP
+                          ultra(29),          -- ULTRA technologies
+                          ds3(30),            -- T-3
+                          sip(31),            -- SMDS
+                          frame-relay(32)
+                      }
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The type of interface, distinguished according to
+                      the physical/link protocol(s) immediately `below'
+                      the network layer in the protocol stack."
+              ::= { ifEntry 3 }
+
+          ifMtu OBJECT-TYPE
+              SYNTAX  INTEGER
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The size of the largest datagram which can be
+                      sent/received on the interface, specified in
+                      octets.  For interfaces that are used for
+                      transmitting network datagrams, this is the size
+                      of the largest network datagram that can be sent
+                      on the interface."
+              ::= { ifEntry 4 }
+
+          ifSpeed OBJECT-TYPE
+              SYNTAX  Gauge
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "An estimate of the interface's current bandwidth
+                      in bits per second.  For interfaces which do not
+                      vary in bandwidth or for those where no accurate
+                      estimation can be made, this object should contain
+                      the nominal bandwidth."
+              ::= { ifEntry 5 }
+
+          ifPhysAddress OBJECT-TYPE
+              SYNTAX  PhysAddress
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The interface's address at the protocol layer
+                      immediately `below' the network layer in the
+                      protocol stack.  For interfaces which do not have
+                      such an address (e.g., a serial line), this object
+                      should contain an octet string of zero length."
+              ::= { ifEntry 6 }
+
+          ifAdminStatus OBJECT-TYPE
+              SYNTAX  INTEGER {
+                          up(1),       -- ready to pass packets
+                          down(2),
+                          testing(3)   -- in some test mode
+                      }
+              ACCESS  read-write
+              STATUS  mandatory
+              DESCRIPTION
+                      "The desired state of the interface.  The
+                      testing(3) state indicates that no operational
+                      packets can be passed."
+              ::= { ifEntry 7 }
+
+          ifOperStatus OBJECT-TYPE
+              SYNTAX  INTEGER {
+                          up(1),       -- ready to pass packets
+                          down(2),
+                          testing(3)   -- in some test mode
+                      }
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The current operational state of the interface.
+                      The testing(3) state indicates that no operational
+                      packets can be passed."
+              ::= { ifEntry 8 }
+
+          ifLastChange OBJECT-TYPE
+              SYNTAX  TimeTicks
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The value of sysUpTime at the time the interface
+                      entered its current operational state.  If the
+                      current state was entered prior to the last re-
+                      initialization of the local network management
+                      subsystem, then this object contains a zero
+                      value."
+              ::= { ifEntry 9 }
+
+          ifInOctets OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The total number of octets received on the
+                      interface, including framing characters."
+              ::= { ifEntry 10 }
+
+          ifInUcastPkts OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The number of subnetwork-unicast packets
+                      delivered to a higher-layer protocol."
+              ::= { ifEntry 11 }
+
+          ifInNUcastPkts OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The number of non-unicast (i.e., subnetwork-
+                      broadcast or subnetwork-multicast) packets
+                      delivered to a higher-layer protocol."
+              ::= { ifEntry 12 }
+
+          ifInDiscards OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The number of inbound packets which were chosen
+                      to be discarded even though no errors had been
+                      detected to prevent their being deliverable to a
+                      higher-layer protocol.  One possible reason for
+                      discarding such a packet could be to free up
+                      buffer space."
+              ::= { ifEntry 13 }
+
+          ifInErrors OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The number of inbound packets that contained
+                      errors preventing them from being deliverable to a
+                      higher-layer protocol."
+              ::= { ifEntry 14 }
+          ifInUnknownProtos OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The number of packets received via the interface
+                      which were discarded because of an unknown or
+                      unsupported protocol."
+              ::= { ifEntry 15 }
+
+          ifOutOctets OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The total number of octets transmitted out of the
+                      interface, including framing characters."
+              ::= { ifEntry 16 }
+
+          ifOutUcastPkts OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The total number of packets that higher-level
+                      protocols requested be transmitted to a
+                      subnetwork-unicast address, including those that
+                      were discarded or not sent."
+              ::= { ifEntry 17 }
+
+          ifOutNUcastPkts OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The total number of packets that higher-level
+                      protocols requested be transmitted to a non-
+                      unicast (i.e., a subnetwork-broadcast or
+                      subnetwork-multicast) address, including those
+                      that were discarded or not sent."
+              ::= { ifEntry 18 }
+
+          ifOutDiscards OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The number of outbound packets which were chosen
+                      to be discarded even though no errors had been
+                      detected to prevent their being transmitted.  One
+                      possible reason for discarding such a packet could
+                      be to free up buffer space."
+              ::= { ifEntry 19 }
+
+          ifOutErrors OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The number of outbound packets that could not be
+                      transmitted because of errors."
+              ::= { ifEntry 20 }
+
+          ifOutQLen OBJECT-TYPE
+              SYNTAX  Gauge
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The length of the output packet queue (in
+                      packets)."
+              ::= { ifEntry 21 }
+
+          ifSpecific OBJECT-TYPE
+              SYNTAX  OBJECT IDENTIFIER
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "A reference to MIB definitions specific to the
+                      particular media being used to realize the
+                      interface.  For example, if the interface is
+                      realized by an ethernet, then the value of this
+                      object refers to a document defining objects
+                      specific to ethernet.  If this information is not
+                      present, its value should be set to the OBJECT
+                      IDENTIFIER { 0 0 }, which is a syntatically valid
+                      object identifier, and any conformant
+                      implementation of ASN.1 and BER must be able to
+                      generate and recognize this value."
+              ::= { ifEntry 22 }
+
+
+          -- the Address Translation group
+
+          -- Implementation of the Address Translation group is
+          -- mandatory for all systems.  Note however that this group
+          -- is deprecated by MIB-II. That is, it is being included
+          -- solely for compatibility with MIB-I nodes, and will most
+          -- likely be excluded from MIB-III nodes.  From MIB-II and
+          -- onwards, each network protocol group contains its own
+          -- address translation tables.
+
+          -- The Address Translation group contains one table which is
+          -- the union across all interfaces of the translation tables
+          -- for converting a NetworkAddress (e.g., an IP address) into
+          -- a subnetwork-specific address.  For lack of a better term,
+          -- this document refers to such a subnetwork-specific address
+          -- as a `physical' address.
+
+          -- Examples of such translation tables are: for broadcast
+          -- media where ARP is in use, the translation table is
+          -- equivalent to the ARP cache; or, on an X.25 network where
+          -- non-algorithmic translation to X.121 addresses is
+          -- required, the translation table contains the
+          -- NetworkAddress to X.121 address equivalences.
+
+          atTable OBJECT-TYPE
+              SYNTAX  SEQUENCE OF AtEntry
+              ACCESS  not-accessible
+              STATUS  deprecated
+              DESCRIPTION
+                      "The Address Translation tables contain the
+                      NetworkAddress to `physical' address equivalences.
+                      Some interfaces do not use translation tables for
+                      determining address equivalences (e.g., DDN-X.25
+                      has an algorithmic method); if all interfaces are
+                      of this type, then the Address Translation table
+                      is empty, i.e., has zero entries."
+              ::= { at 1 }
+
+          atEntry OBJECT-TYPE
+              SYNTAX  AtEntry
+              ACCESS  not-accessible
+              STATUS  deprecated
+              DESCRIPTION
+                      "Each entry contains one NetworkAddress to
+                      `physical' address equivalence."
+              INDEX   { atIfIndex,
+                        atNetAddress }
+              ::= { atTable 1 }
+
+          AtEntry ::=
+              SEQUENCE {
+                  atIfIndex
+                      INTEGER,
+                  atPhysAddress
+                      PhysAddress,
+                  atNetAddress
+                      NetworkAddress
+              }
+
+          atIfIndex OBJECT-TYPE
+              SYNTAX  INTEGER
+              ACCESS  read-write
+              STATUS  deprecated
+              DESCRIPTION
+                      "The interface on which this entry's equivalence
+                      is effective.  The interface identified by a
+                      particular value of this index is the same
+                      interface as identified by the same value of
+                      ifIndex."
+              ::= { atEntry 1 }
+
+          atPhysAddress OBJECT-TYPE
+              SYNTAX  PhysAddress
+              ACCESS  read-write
+              STATUS  deprecated
+              DESCRIPTION
+                      "The media-dependent `physical' address.
+
+                      Setting this object to a null string (one of zero
+                      length) has the effect of invaliding the
+                      corresponding entry in the atTable object.  That
+                      is, it effectively dissasociates the interface
+                      identified with said entry from the mapping
+                      identified with said entry.  It is an
+                      implementation-specific matter as to whether the
+                      agent removes an invalidated entry from the table.
+                      Accordingly, management stations must be prepared
+                      to receive tabular information from agents that
+                      corresponds to entries not currently in use.
+                      Proper interpretation of such entries requires
+                      examination of the relevant atPhysAddress object."
+              ::= { atEntry 2 }
+
+          atNetAddress OBJECT-TYPE
+              SYNTAX  NetworkAddress
+              ACCESS  read-write
+              STATUS  deprecated
+              DESCRIPTION
+                      "The NetworkAddress (e.g., the IP address)
+                      corresponding to the media-dependent `physical'
+                      address."
+              ::= { atEntry 3 }
+
+
+          -- the IP group
+
+          -- Implementation of the IP group is mandatory for all
+          -- systems.
+
+          ipForwarding OBJECT-TYPE
+              SYNTAX  INTEGER {
+                          forwarding(1),    -- acting as a gateway
+                          not-forwarding(2) -- NOT acting as a gateway
+                      }
+              ACCESS  read-write
+              STATUS  mandatory
+              DESCRIPTION
+                      "The indication of whether this entity is acting
+                      as an IP gateway in respect to the forwarding of
+                      datagrams received by, but not addressed to, this
+                      entity.  IP gateways forward datagrams.  IP hosts
+                      do not (except those source-routed via the host).
+
+                      Note that for some managed nodes, this object may
+                      take on only a subset of the values possible.
+                      Accordingly, it is appropriate for an agent to
+                      return a `badValue' response if a management
+                      station attempts to change this object to an
+                      inappropriate value."
+              ::= { ip 1 }
+
+          ipDefaultTTL OBJECT-TYPE
+              SYNTAX  INTEGER
+              ACCESS  read-write
+              STATUS  mandatory
+              DESCRIPTION
+                      "The default value inserted into the Time-To-Live
+                      field of the IP header of datagrams originated at
+                      this entity, whenever a TTL value is not supplied
+                      by the transport layer protocol."
+              ::= { ip 2 }
+
+          ipInReceives OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The total number of input datagrams received from
+                      interfaces, including those received in error."
+              ::= { ip 3 }
+
+          ipInHdrErrors OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The number of input datagrams discarded due to
+                      errors in their IP headers, including bad
+                      checksums, version number mismatch, other format
+                      errors, time-to-live exceeded, errors discovered
+                      in processing their IP options, etc."
+              ::= { ip 4 }
+
+          ipInAddrErrors OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The number of input datagrams discarded because
+                      the IP address in their IP header's destination
+                      field was not a valid address to be received at
+                      this entity.  This count includes invalid
+                      addresses (e.g., 0.0.0.0) and addresses of
+                      unsupported Classes (e.g., Class E).  For entities
+                      which are not IP Gateways and therefore do not
+                      forward datagrams, this counter includes datagrams
+                      discarded because the destination address was not
+                      a local address."
+              ::= { ip 5 }
+
+          ipForwDatagrams OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The number of input datagrams for which this
+                      entity was not their final IP destination, as a
+                      result of which an attempt was made to find a
+                      route to forward them to that final destination.
+                      In entities which do not act as IP Gateways, this
+                      counter will include only those packets which were
+                      Source-Routed via this entity, and the Source-
+                      Route option processing was successful."
+              ::= { ip 6 }
+
+          ipInUnknownProtos OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The number of locally-addressed datagrams
+                      received successfully but discarded because of an
+                      unknown or unsupported protocol."
+              ::= { ip 7 }
+
+          ipInDiscards OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The number of input IP datagrams for which no
+                      problems were encountered to prevent their
+                      continued processing, but which were discarded
+                      (e.g., for lack of buffer space).  Note that this
+                      counter does not include any datagrams discarded
+                      while awaiting re-assembly."
+              ::= { ip 8 }
+
+          ipInDelivers OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The total number of input datagrams successfully
+                      delivered to IP user-protocols (including ICMP)."
+              ::= { ip 9 }
+
+          ipOutRequests OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The total number of IP datagrams which local IP
+                      user-protocols (including ICMP) supplied to IP in
+                      requests for transmission.  Note that this counter
+                      does not include any datagrams counted in
+                      ipForwDatagrams."
+              ::= { ip 10 }
+
+          ipOutDiscards OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The number of output IP datagrams for which no
+                      problem was encountered to prevent their
+                      transmission to their destination, but which were
+                      discarded (e.g., for lack of buffer space).  Note
+                      that this counter would include datagrams counted
+                      in ipForwDatagrams if any such packets met this
+                      (discretionary) discard criterion."
+              ::= { ip 11 }
+
+          ipOutNoRoutes OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The number of IP datagrams discarded because no
+                      route could be found to transmit them to their
+                      destination.  Note that this counter includes any
+                      packets counted in ipForwDatagrams which meet this
+                      `no-route' criterion.  Note that this includes any
+                      datagarms which a host cannot route because all of
+                      its default gateways are down."
+              ::= { ip 12 }
+
+          ipReasmTimeout OBJECT-TYPE
+              SYNTAX  INTEGER
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The maximum number of seconds which received
+                      fragments are held while they are awaiting
+                      reassembly at this entity."
+              ::= { ip 13 }
+
+          ipReasmReqds OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The number of IP fragments received which needed
+                      to be reassembled at this entity."
+              ::= { ip 14 }
+
+          ipReasmOKs OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The number of IP datagrams successfully re-
+                      assembled."
+              ::= { ip 15 }
+
+          ipReasmFails OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The number of failures detected by the IP re-
+                      assembly algorithm (for whatever reason: timed
+                      out, errors, etc).  Note that this is not
+                      necessarily a count of discarded IP fragments
+                      since some algorithms (notably the algorithm in
+                      RFC 815) can lose track of the number of fragments
+                      by combining them as they are received."
+              ::= { ip 16 }
+
+          ipFragOKs OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The number of IP datagrams that have been
+                      successfully fragmented at this entity."
+              ::= { ip 17 }
+
+          ipFragFails OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The number of IP datagrams that have been
+                      discarded because they needed to be fragmented at
+                      this entity but could not be, e.g., because their
+                      Don't Fragment flag was set."
+              ::= { ip 18 }
+
+          ipFragCreates OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The number of IP datagram fragments that have
+                      been generated as a result of fragmentation at
+                      this entity."
+              ::= { ip 19 }
+
+          -- the IP address table
+
+          -- The IP address table contains this entity's IP addressing
+          -- information.
+
+          ipAddrTable OBJECT-TYPE
+              SYNTAX  SEQUENCE OF IpAddrEntry
+              ACCESS  not-accessible
+              STATUS  mandatory
+              DESCRIPTION
+                      "The table of addressing information relevant to
+                      this entity's IP addresses."
+              ::= { ip 20 }
+
+          ipAddrEntry OBJECT-TYPE
+              SYNTAX  IpAddrEntry
+              ACCESS  not-accessible
+              STATUS  mandatory
+              DESCRIPTION
+                      "The addressing information for one of this
+                      entity's IP addresses."
+              INDEX   { ipAdEntAddr }
+              ::= { ipAddrTable 1 }
+
+          IpAddrEntry ::=
+              SEQUENCE {
+                  ipAdEntAddr
+                      IpAddress,
+                  ipAdEntIfIndex
+                      INTEGER,
+                  ipAdEntNetMask
+                      IpAddress,
+                  ipAdEntBcastAddr
+                      INTEGER,
+                  ipAdEntReasmMaxSize
+                      INTEGER (0..65535)
+              }
+
+          ipAdEntAddr OBJECT-TYPE
+              SYNTAX  IpAddress
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The IP address to which this entry's addressing
+                      information pertains."
+              ::= { ipAddrEntry 1 }
+
+          ipAdEntIfIndex OBJECT-TYPE
+              SYNTAX  INTEGER
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The index value which uniquely identifies the
+                      interface to which this entry is applicable.  The
+                      interface identified by a particular value of this
+                      index is the same interface as identified by the
+                      same value of ifIndex."
+              ::= { ipAddrEntry 2 }
+
+          ipAdEntNetMask OBJECT-TYPE
+              SYNTAX  IpAddress
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The subnet mask associated with the IP address of
+                      this entry.  The value of the mask is an IP
+                      address with all the network bits set to 1 and all
+                      the hosts bits set to 0."
+              ::= { ipAddrEntry 3 }
+
+          ipAdEntBcastAddr OBJECT-TYPE
+              SYNTAX  INTEGER
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The value of the least-significant bit in the IP
+                      broadcast address used for sending datagrams on
+                      the (logical) interface associated with the IP
+                      address of this entry.  For example, when the
+                      Internet standard all-ones broadcast address is
+                      used, the value will be 1.  This value applies to
+                      both the subnet and network broadcasts addresses
+                      used by the entity on this (logical) interface."
+              ::= { ipAddrEntry 4 }
+
+          ipAdEntReasmMaxSize OBJECT-TYPE
+              SYNTAX  INTEGER (0..65535)
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The size of the largest IP datagram which this
+                      entity can re-assemble from incoming IP fragmented
+                      datagrams received on this interface."
+              ::= { ipAddrEntry 5 }
+
+          -- the IP routing table
+
+          -- The IP routing table contains an entry for each route
+          -- presently known to this entity.
+
+          ipRouteTable OBJECT-TYPE
+              SYNTAX  SEQUENCE OF IpRouteEntry
+              ACCESS  not-accessible
+              STATUS  mandatory
+              DESCRIPTION
+                      "This entity's IP Routing table."
+              ::= { ip 21 }
+
+          ipRouteEntry OBJECT-TYPE
+              SYNTAX  IpRouteEntry
+              ACCESS  not-accessible
+              STATUS  mandatory
+              DESCRIPTION
+                      "A route to a particular destination."
+              INDEX   { ipRouteDest }
+              ::= { ipRouteTable 1 }
+
+          IpRouteEntry ::=
+              SEQUENCE {
+                  ipRouteDest
+                      IpAddress,
+                  ipRouteIfIndex
+                      INTEGER,
+                  ipRouteMetric1
+                      INTEGER,
+                  ipRouteMetric2
+                      INTEGER,
+                  ipRouteMetric3
+                      INTEGER,
+                  ipRouteMetric4
+                      INTEGER,
+                  ipRouteNextHop
+                      IpAddress,
+                  ipRouteType
+                      INTEGER,
+                  ipRouteProto
+                      INTEGER,
+                  ipRouteAge
+                      INTEGER,
+                  ipRouteMask
+                      IpAddress,
+                  ipRouteMetric5
+                      INTEGER,
+                  ipRouteInfo
+                      OBJECT IDENTIFIER
+              }
+
+          ipRouteDest OBJECT-TYPE
+              SYNTAX  IpAddress
+              ACCESS  read-write
+              STATUS  mandatory
+              DESCRIPTION
+                      "The destination IP address of this route.  An
+                      entry with a value of 0.0.0.0 is considered a
+                      default route.  Multiple routes to a single
+                      destination can appear in the table, but access to
+                      such multiple entries is dependent on the table-
+                      access mechanisms defined by the network
+                      management protocol in use."
+              ::= { ipRouteEntry 1 }
+
+          ipRouteIfIndex OBJECT-TYPE
+              SYNTAX  INTEGER
+              ACCESS  read-write
+              STATUS  mandatory
+              DESCRIPTION
+                      "The index value which uniquely identifies the
+                      local interface through which the next hop of this
+                      route should be reached.  The interface identified
+                      by a particular value of this index is the same
+                      interface as identified by the same value of
+                      ifIndex."
+              ::= { ipRouteEntry 2 }
+
+          ipRouteMetric1 OBJECT-TYPE
+              SYNTAX  INTEGER
+              ACCESS  read-write
+              STATUS  mandatory
+              DESCRIPTION
+                      "The primary routing metric for this route.  The
+                      semantics of this metric are determined by the
+                      routing-protocol specified in the route's
+                      ipRouteProto value.  If this metric is not used,
+                      its value should be set to -1."
+              ::= { ipRouteEntry 3 }
+
+          ipRouteMetric2 OBJECT-TYPE
+              SYNTAX  INTEGER
+              ACCESS  read-write
+              STATUS  mandatory
+              DESCRIPTION
+                      "An alternate routing metric for this route.  The
+                      semantics of this metric are determined by the
+                      routing-protocol specified in the route's
+                      ipRouteProto value.  If this metric is not used,
+                      its value should be set to -1."
+              ::= { ipRouteEntry 4 }
+
+          ipRouteMetric3 OBJECT-TYPE
+              SYNTAX  INTEGER
+              ACCESS  read-write
+              STATUS  mandatory
+              DESCRIPTION
+                      "An alternate routing metric for this route.  The
+                      semantics of this metric are determined by the
+                      routing-protocol specified in the route's
+                      ipRouteProto value.  If this metric is not used,
+                      its value should be set to -1."
+              ::= { ipRouteEntry 5 }
+
+          ipRouteMetric4 OBJECT-TYPE
+              SYNTAX  INTEGER
+              ACCESS  read-write
+              STATUS  mandatory
+              DESCRIPTION
+                      "An alternate routing metric for this route.  The
+                      semantics of this metric are determined by the
+                      routing-protocol specified in the route's
+                      ipRouteProto value.  If this metric is not used,
+                      its value should be set to -1."
+              ::= { ipRouteEntry 6 }
+
+          ipRouteNextHop OBJECT-TYPE
+              SYNTAX  IpAddress
+              ACCESS  read-write
+              STATUS  mandatory
+              DESCRIPTION
+                      "The IP address of the next hop of this route.
+                      (In the case of a route bound to an interface
+                      which is realized via a broadcast media, the value
+                      of this field is the agent's IP address on that
+                      interface.)"
+              ::= { ipRouteEntry 7 }
+
+          ipRouteType OBJECT-TYPE
+              SYNTAX  INTEGER {
+                          other(1),        -- none of the following
+
+                          invalid(2),      -- an invalidated route
+                                           -- route to directly
+
+                          direct(3),       -- connected (sub-)network
+
+                                           -- route to a non-local
+                          indirect(4)      -- host/network/sub-network
+                      }
+              ACCESS  read-write
+              STATUS  mandatory
+              DESCRIPTION
+                      "The type of route.  Note that the values
+                      direct(3) and indirect(4) refer to the notion of
+                      direct and indirect routing in the IP
+                      architecture.
+
+                      Setting this object to the value invalid(2) has
+                      the effect of invalidating the corresponding entry
+                      in the ipRouteTable object.  That is, it
+                      effectively dissasociates the destination
+                      identified with said entry from the route
+                      identified with said entry.  It is an
+                      implementation-specific matter as to whether the
+                      agent removes an invalidated entry from the table.
+                      Accordingly, management stations must be prepared
+                      to receive tabular information from agents that
+                      corresponds to entries not currently in use.
+                      Proper interpretation of such entries requires
+                      examination of the relevant ipRouteType object."
+              ::= { ipRouteEntry 8 }
+
+          ipRouteProto OBJECT-TYPE
+              SYNTAX  INTEGER {
+                          other(1),       -- none of the following
+
+                                          -- non-protocol information,
+                                          -- e.g., manually configured
+                          local(2),       -- entries
+
+                                          -- set via a network
+                          netmgmt(3),     -- management protocol
+
+                                          -- obtained via ICMP,
+                          icmp(4),        -- e.g., Redirect
+
+                                          -- the remaining values are
+                                          -- all gateway routing
+                                          -- protocols
+                          egp(5),
+                          ggp(6),
+                          hello(7),
+                          rip(8),
+                          is-is(9),
+                          es-is(10),
+                          ciscoIgrp(11),
+                          bbnSpfIgp(12),
+                          ospf(13),
+                          bgp(14)
+                      }
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The routing mechanism via which this route was
+                      learned.  Inclusion of values for gateway routing
+                      protocols is not intended to imply that hosts
+                      should support those protocols."
+              ::= { ipRouteEntry 9 }
+
+          ipRouteAge OBJECT-TYPE
+              SYNTAX  INTEGER
+              ACCESS  read-write
+              STATUS  mandatory
+              DESCRIPTION
+                      "The number of seconds since this route was last
+                      updated or otherwise determined to be correct.
+                      Note that no semantics of `too old' can be implied
+                      except through knowledge of the routing protocol
+                      by which the route was learned."
+              ::= { ipRouteEntry 10 }
+
+          ipRouteMask OBJECT-TYPE
+              SYNTAX  IpAddress
+              ACCESS  read-write
+              STATUS  mandatory
+              DESCRIPTION
+                      "Indicate the mask to be logical-ANDed with the
+                      destination address before being compared to the
+                      value in the ipRouteDest field.  For those systems
+                      that do not support arbitrary subnet masks, an
+                      agent constructs the value of the ipRouteMask by
+                      determining whether the value of the correspondent
+                      ipRouteDest field belong to a class-A, B, or C
+                      network, and then using one of:
+
+                           mask           network
+                           255.0.0.0      class-A
+                           255.255.0.0    class-B
+                           255.255.255.0  class-C
+
+                      If the value of the ipRouteDest is 0.0.0.0 (a
+                      default route), then the mask value is also
+                      0.0.0.0.  It should be noted that all IP routing
+                      subsystems implicitly use this mechanism."
+              ::= { ipRouteEntry 11 }
+
+          ipRouteMetric5 OBJECT-TYPE
+              SYNTAX  INTEGER
+              ACCESS  read-write
+              STATUS  mandatory
+              DESCRIPTION
+                      "An alternate routing metric for this route.  The
+                      semantics of this metric are determined by the
+                      routing-protocol specified in the route's
+                      ipRouteProto value.  If this metric is not used,
+                      its value should be set to -1."
+              ::= { ipRouteEntry 12 }
+
+          ipRouteInfo OBJECT-TYPE
+              SYNTAX  OBJECT IDENTIFIER
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "A reference to MIB definitions specific to the
+                      particular routing protocol which is responsible
+                      for this route, as determined by the value
+                      specified in the route's ipRouteProto value.  If
+                      this information is not present, its value should
+                      be set to the OBJECT IDENTIFIER { 0 0 }, which is
+                      a syntatically valid object identifier, and any
+                      conformant implementation of ASN.1 and BER must be
+                      able to generate and recognize this value."
+              ::= { ipRouteEntry 13 }
+
+
+          -- the IP Address Translation table
+
+          -- The IP address translation table contain the IpAddress to
+          -- `physical' address equivalences.  Some interfaces do not
+          -- use translation tables for determining address
+          -- equivalences (e.g., DDN-X.25 has an algorithmic method);
+          -- if all interfaces are of this type, then the Address
+          -- Translation table is empty, i.e., has zero entries.
+
+          ipNetToMediaTable OBJECT-TYPE
+              SYNTAX  SEQUENCE OF IpNetToMediaEntry
+              ACCESS  not-accessible
+              STATUS  mandatory
+              DESCRIPTION
+                      "The IP Address Translation table used for mapping
+                      from IP addresses to physical addresses."
+              ::= { ip 22 }
+
+          ipNetToMediaEntry OBJECT-TYPE
+              SYNTAX  IpNetToMediaEntry
+              ACCESS  not-accessible
+              STATUS  mandatory
+              DESCRIPTION
+                      "Each entry contains one IpAddress to `physical'
+                      address equivalence."
+              INDEX   { ipNetToMediaIfIndex,
+                        ipNetToMediaNetAddress }
+              ::= { ipNetToMediaTable 1 }
+
+          IpNetToMediaEntry ::=
+              SEQUENCE {
+                  ipNetToMediaIfIndex
+                      INTEGER,
+                  ipNetToMediaPhysAddress
+                      PhysAddress,
+                  ipNetToMediaNetAddress
+                      IpAddress,
+                  ipNetToMediaType
+                      INTEGER
+              }
+
+          ipNetToMediaIfIndex OBJECT-TYPE
+              SYNTAX  INTEGER
+              ACCESS  read-write
+              STATUS  mandatory
+              DESCRIPTION
+                      "The interface on which this entry's equivalence
+                      is effective.  The interface identified by a
+                      particular value of this index is the same
+                      interface as identified by the same value of
+                      ifIndex."
+              ::= { ipNetToMediaEntry 1 }
+
+          ipNetToMediaPhysAddress OBJECT-TYPE
+              SYNTAX  PhysAddress
+              ACCESS  read-write
+              STATUS  mandatory
+              DESCRIPTION
+                      "The media-dependent `physical' address."
+              ::= { ipNetToMediaEntry 2 }
+
+          ipNetToMediaNetAddress OBJECT-TYPE
+              SYNTAX  IpAddress
+              ACCESS  read-write
+              STATUS  mandatory
+              DESCRIPTION
+                      "The IpAddress corresponding to the media-
+                      dependent `physical' address."
+              ::= { ipNetToMediaEntry 3 }
+
+          ipNetToMediaType OBJECT-TYPE
+              SYNTAX  INTEGER {
+                          other(1),        -- none of the following
+                          invalid(2),      -- an invalidated mapping
+                          dynamic(3),
+                          static(4)
+                      }
+              ACCESS  read-write
+              STATUS  mandatory
+              DESCRIPTION
+                      "The type of mapping.
+
+                      Setting this object to the value invalid(2) has
+                      the effect of invalidating the corresponding entry
+                      in the ipNetToMediaTable.  That is, it effectively
+                      dissasociates the interface identified with said
+                      entry from the mapping identified with said entry.
+                      It is an implementation-specific matter as to
+                      whether the agent removes an invalidated entry
+                      from the table.  Accordingly, management stations
+                      must be prepared to receive tabular information
+                      from agents that corresponds to entries not
+                      currently in use.  Proper interpretation of such
+                      entries requires examination of the relevant
+                      ipNetToMediaType object."
+              ::= { ipNetToMediaEntry 4 }
+
+
+          -- additional IP objects
+
+          ipRoutingDiscards OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The number of routing entries which were chosen
+                      to be discarded even though they are valid.  One
+                      possible reason for discarding such an entry could
+                      be to free-up buffer space for other routing
+                      entries."
+              ::= { ip 23 }
+
+
+          -- the ICMP group
+
+          -- Implementation of the ICMP group is mandatory for all
+          -- systems.
+
+          icmpInMsgs OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The total number of ICMP messages which the
+                      entity received.  Note that this counter includes
+                      all those counted by icmpInErrors."
+              ::= { icmp 1 }
+
+          icmpInErrors OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The number of ICMP messages which the entity
+                      received but determined as having ICMP-specific
+                      errors (bad ICMP checksums, bad length, etc.)."
+              ::= { icmp 2 }
+
+          icmpInDestUnreachs OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The number of ICMP Destination Unreachable
+                      messages received."
+              ::= { icmp 3 }
+
+          icmpInTimeExcds OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The number of ICMP Time Exceeded messages
+                      received."
+              ::= { icmp 4 }
+
+          icmpInParmProbs OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The number of ICMP Parameter Problem messages
+                      received."
+              ::= { icmp 5 }
+
+          icmpInSrcQuenchs OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The number of ICMP Source Quench messages
+                      received."
+              ::= { icmp 6 }
+
+          icmpInRedirects OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The number of ICMP Redirect messages received."
+              ::= { icmp 7 }
+
+          icmpInEchos OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The number of ICMP Echo (request) messages
+                      received."
+              ::= { icmp 8 }
+
+          icmpInEchoReps OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The number of ICMP Echo Reply messages received."
+              ::= { icmp 9 }
+
+          icmpInTimestamps OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The number of ICMP Timestamp (request) messages
+                      received."
+              ::= { icmp 10 }
+
+          icmpInTimestampReps OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The number of ICMP Timestamp Reply messages
+                      received."
+              ::= { icmp 11 }
+
+          icmpInAddrMasks OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The number of ICMP Address Mask Request messages
+                      received."
+              ::= { icmp 12 }
+
+          icmpInAddrMaskReps OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The number of ICMP Address Mask Reply messages
+                      received."
+              ::= { icmp 13 }
+
+          icmpOutMsgs OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The total number of ICMP messages which this
+                      entity attempted to send.  Note that this counter
+                      includes all those counted by icmpOutErrors."
+              ::= { icmp 14 }
+
+          icmpOutErrors OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The number of ICMP messages which this entity did
+                      not send due to problems discovered within ICMP
+                      such as a lack of buffers.  This value should not
+                      include errors discovered outside the ICMP layer
+                      such as the inability of IP to route the resultant
+                      datagram.  In some implementations there may be no
+                      types of error which contribute to this counter's
+                      value."
+              ::= { icmp 15 }
+
+          icmpOutDestUnreachs OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The number of ICMP Destination Unreachable
+                      messages sent."
+              ::= { icmp 16 }
+
+          icmpOutTimeExcds OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The number of ICMP Time Exceeded messages sent."
+              ::= { icmp 17 }
+
+          icmpOutParmProbs OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The number of ICMP Parameter Problem messages
+                      sent."
+              ::= { icmp 18 }
+
+          icmpOutSrcQuenchs OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The number of ICMP Source Quench messages sent."
+              ::= { icmp 19 }
+
+          icmpOutRedirects OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The number of ICMP Redirect messages sent.  For a
+                      host, this object will always be zero, since hosts
+                      do not send redirects."
+              ::= { icmp 20 }
+
+          icmpOutEchos OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The number of ICMP Echo (request) messages sent."
+              ::= { icmp 21 }
+
+          icmpOutEchoReps OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The number of ICMP Echo Reply messages sent."
+              ::= { icmp 22 }
+
+          icmpOutTimestamps OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The number of ICMP Timestamp (request) messages
+                      sent."
+              ::= { icmp 23 }
+
+          icmpOutTimestampReps OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The number of ICMP Timestamp Reply messages
+                      sent."
+              ::= { icmp 24 }
+
+          icmpOutAddrMasks OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The number of ICMP Address Mask Request messages
+                      sent."
+              ::= { icmp 25 }
+
+          icmpOutAddrMaskReps OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The number of ICMP Address Mask Reply messages
+                      sent."
+              ::= { icmp 26 }
+
+
+          -- the TCP group
+
+          -- Implementation of the TCP group is mandatory for all
+          -- systems that implement the TCP.
+
+          -- Note that instances of object types that represent
+          -- information about a particular TCP connection are
+          -- transient; they persist only as long as the connection
+          -- in question.
+
+          tcpRtoAlgorithm OBJECT-TYPE
+              SYNTAX  INTEGER {
+                          other(1),    -- none of the following
+
+                          constant(2), -- a constant rto
+                          rsre(3),     -- MIL-STD-1778, Appendix B
+                          vanj(4)      -- Van Jacobson's algorithm [10]
+                      }
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The algorithm used to determine the timeout value
+                      used for retransmitting unacknowledged octets."
+              ::= { tcp 1 }
+
+          tcpRtoMin OBJECT-TYPE
+              SYNTAX  INTEGER
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The minimum value permitted by a TCP
+                      implementation for the retransmission timeout,
+                      measured in milliseconds.  More refined semantics
+                      for objects of this type depend upon the algorithm
+                      used to determine the retransmission timeout.  In
+                      particular, when the timeout algorithm is rsre(3),
+                      an object of this type has the semantics of the
+                      LBOUND quantity described in RFC 793."
+              ::= { tcp 2 }
+
+
+          tcpRtoMax OBJECT-TYPE
+              SYNTAX  INTEGER
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The maximum value permitted by a TCP
+                      implementation for the retransmission timeout,
+                      measured in milliseconds.  More refined semantics
+                      for objects of this type depend upon the algorithm
+                      used to determine the retransmission timeout.  In
+                      particular, when the timeout algorithm is rsre(3),
+                      an object of this type has the semantics of the
+                      UBOUND quantity described in RFC 793."
+              ::= { tcp 3 }
+
+          tcpMaxConn OBJECT-TYPE
+              SYNTAX  INTEGER
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The limit on the total number of TCP connections
+                      the entity can support.  In entities where the
+                      maximum number of connections is dynamic, this
+                      object should contain the value -1."
+              ::= { tcp 4 }
+
+          tcpActiveOpens OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The number of times TCP connections have made a
+                      direct transition to the SYN-SENT state from the
+                      CLOSED state."
+              ::= { tcp 5 }
+
+          tcpPassiveOpens OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The number of times TCP connections have made a
+                      direct transition to the SYN-RCVD state from the
+                      LISTEN state."
+              ::= { tcp 6 }
+
+          tcpAttemptFails OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The number of times TCP connections have made a
+                      direct transition to the CLOSED state from either
+                      the SYN-SENT state or the SYN-RCVD state, plus the
+                      number of times TCP connections have made a direct
+                      transition to the LISTEN state from the SYN-RCVD
+                      state."
+              ::= { tcp 7 }
+
+          tcpEstabResets OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The number of times TCP connections have made a
+                      direct transition to the CLOSED state from either
+                      the ESTABLISHED state or the CLOSE-WAIT state."
+              ::= { tcp 8 }
+
+          tcpCurrEstab OBJECT-TYPE
+              SYNTAX  Gauge
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The number of TCP connections for which the
+                      current state is either ESTABLISHED or CLOSE-
+                      WAIT."
+              ::= { tcp 9 }
+
+          tcpInSegs OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The total number of segments received, including
+                      those received in error.  This count includes
+                      segments received on currently established
+                      connections."
+              ::= { tcp 10 }
+
+          tcpOutSegs OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The total number of segments sent, including
+                      those on current connections but excluding those
+                      containing only retransmitted octets."
+              ::= { tcp 11 }
+
+          tcpRetransSegs OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The total number of segments retransmitted - that
+                      is, the number of TCP segments transmitted
+                      containing one or more previously transmitted
+                      octets."
+              ::= { tcp 12 }
+
+
+          -- the TCP Connection table
+
+          -- The TCP connection table contains information about this
+          -- entity's existing TCP connections.
+
+          tcpConnTable OBJECT-TYPE
+              SYNTAX  SEQUENCE OF TcpConnEntry
+              ACCESS  not-accessible
+              STATUS  mandatory
+              DESCRIPTION
+                      "A table containing TCP connection-specific
+                      information."
+              ::= { tcp 13 }
+
+          tcpConnEntry OBJECT-TYPE
+              SYNTAX  TcpConnEntry
+              ACCESS  not-accessible
+              STATUS  mandatory
+              DESCRIPTION
+                      "Information about a particular current TCP
+                      connection.  An object of this type is transient,
+                      in that it ceases to exist when (or soon after)
+                      the connection makes the transition to the CLOSED
+                      state."
+              INDEX   { tcpConnLocalAddress,
+                        tcpConnLocalPort,
+                        tcpConnRemAddress,
+                        tcpConnRemPort }
+              ::= { tcpConnTable 1 }
+
+          TcpConnEntry ::=
+              SEQUENCE {
+                  tcpConnState
+                      INTEGER,
+                  tcpConnLocalAddress
+                      IpAddress,
+                  tcpConnLocalPort
+                      INTEGER (0..65535),
+                  tcpConnRemAddress
+                      IpAddress,
+                  tcpConnRemPort
+                      INTEGER (0..65535)
+              }
+
+          tcpConnState OBJECT-TYPE
+              SYNTAX  INTEGER {
+                          closed(1),
+                          listen(2),
+                          synSent(3),
+                          synReceived(4),
+                          established(5),
+                          finWait1(6),
+                          finWait2(7),
+                          closeWait(8),
+                          lastAck(9),
+                          closing(10),
+                          timeWait(11),
+                          deleteTCB(12)
+                      }
+              ACCESS  read-write
+              STATUS  mandatory
+              DESCRIPTION
+                      "The state of this TCP connection.
+
+                      The only value which may be set by a management
+                      station is deleteTCB(12).  Accordingly, it is
+                      appropriate for an agent to return a `badValue'
+                      response if a management station attempts to set
+                      this object to any other value.
+
+                      If a management station sets this object to the
+                      value deleteTCB(12), then this has the effect of
+                      deleting the TCB (as defined in RFC 793) of the
+                      corresponding connection on the managed node,
+                      resulting in immediate termination of the
+                      connection.
+
+                      As an implementation-specific option, a RST
+                      segment may be sent from the managed node to the
+                      other TCP endpoint (note however that RST segments
+                      are not sent reliably)."
+              ::= { tcpConnEntry 1 }
+
+          tcpConnLocalAddress OBJECT-TYPE
+              SYNTAX  IpAddress
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The local IP address for this TCP connection.  In
+                      the case of a connection in the listen state which
+                      is willing to accept connections for any IP
+                      interface associated with the node, the value
+                      0.0.0.0 is used."
+              ::= { tcpConnEntry 2 }
+
+          tcpConnLocalPort OBJECT-TYPE
+              SYNTAX  INTEGER (0..65535)
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The local port number for this TCP connection."
+              ::= { tcpConnEntry 3 }
+
+          tcpConnRemAddress OBJECT-TYPE
+              SYNTAX  IpAddress
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The remote IP address for this TCP connection."
+              ::= { tcpConnEntry 4 }
+
+          tcpConnRemPort OBJECT-TYPE
+              SYNTAX  INTEGER (0..65535)
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The remote port number for this TCP connection."
+              ::= { tcpConnEntry 5 }
+
+
+          -- additional TCP objects
+
+          tcpInErrs OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The total number of segments received in error
+                      (e.g., bad TCP checksums)."
+              ::= { tcp 14 }
+
+          tcpOutRsts OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The number of TCP segments sent containing the
+                      RST flag."
+              ::= { tcp 15 }
+
+
+          -- the UDP group
+
+          -- Implementation of the UDP group is mandatory for all
+          -- systems which implement the UDP.
+
+          udpInDatagrams OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The total number of UDP datagrams delivered to
+                      UDP users."
+              ::= { udp 1 }
+
+          udpNoPorts OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The total number of received UDP datagrams for
+                      which there was no application at the destination
+                      port."
+              ::= { udp 2 }
+
+          udpInErrors OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The number of received UDP datagrams that could
+                      not be delivered for reasons other than the lack
+                      of an application at the destination port."
+              ::= { udp 3 }
+
+          udpOutDatagrams OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The total number of UDP datagrams sent from this
+                      entity."
+              ::= { udp 4 }
+
+
+          -- the UDP Listener table
+
+          -- The UDP listener table contains information about this
+          -- entity's UDP end-points on which a local application is
+          -- currently accepting datagrams.
+
+          udpTable OBJECT-TYPE
+              SYNTAX  SEQUENCE OF UdpEntry
+              ACCESS  not-accessible
+              STATUS  mandatory
+              DESCRIPTION
+                      "A table containing UDP listener information."
+              ::= { udp 5 }
+
+          udpEntry OBJECT-TYPE
+              SYNTAX  UdpEntry
+              ACCESS  not-accessible
+              STATUS  mandatory
+              DESCRIPTION
+                      "Information about a particular current UDP
+                      listener."
+              INDEX   { udpLocalAddress, udpLocalPort }
+              ::= { udpTable 1 }
+
+          UdpEntry ::=
+              SEQUENCE {
+                  udpLocalAddress
+                      IpAddress,
+                  udpLocalPort
+                      INTEGER (0..65535)
+              }
+
+          udpLocalAddress OBJECT-TYPE
+              SYNTAX  IpAddress
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The local IP address for this UDP listener.  In
+                      the case of a UDP listener which is willing to
+                      accept datagrams for any IP interface associated
+                      with the node, the value 0.0.0.0 is used."
+              ::= { udpEntry 1 }
+
+          udpLocalPort OBJECT-TYPE
+              SYNTAX  INTEGER (0..65535)
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The local port number for this UDP listener."
+              ::= { udpEntry 2 }
+
+
+          -- the EGP group
+
+          -- Implementation of the EGP group is mandatory for all
+          -- systems which implement the EGP.
+
+          egpInMsgs OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The number of EGP messages received without
+                      error."
+              ::= { egp 1 }
+
+          egpInErrors OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The number of EGP messages received that proved
+                      to be in error."
+              ::= { egp 2 }
+
+          egpOutMsgs OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The total number of locally generated EGP
+                      messages."
+              ::= { egp 3 }
+
+          egpOutErrors OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The number of locally generated EGP messages not
+                      sent due to resource limitations within an EGP
+                      entity."
+              ::= { egp 4 }
+
+
+          -- the EGP Neighbor table
+
+          -- The EGP neighbor table contains information about this
+          -- entity's EGP neighbors.
+
+          egpNeighTable OBJECT-TYPE
+              SYNTAX  SEQUENCE OF EgpNeighEntry
+              ACCESS  not-accessible
+              STATUS  mandatory
+              DESCRIPTION
+                      "The EGP neighbor table."
+              ::= { egp 5 }
+
+          egpNeighEntry OBJECT-TYPE
+              SYNTAX  EgpNeighEntry
+              ACCESS  not-accessible
+              STATUS  mandatory
+              DESCRIPTION
+                      "Information about this entity's relationship with
+                      a particular EGP neighbor."
+              INDEX   { egpNeighAddr }
+              ::= { egpNeighTable 1 }
+
+          EgpNeighEntry ::=
+              SEQUENCE {
+                  egpNeighState
+                      INTEGER,
+                  egpNeighAddr
+                      IpAddress,
+                  egpNeighAs
+                      INTEGER,
+                  egpNeighInMsgs
+                      Counter,
+                  egpNeighInErrs
+                      Counter,
+                  egpNeighOutMsgs
+                      Counter,
+                  egpNeighOutErrs
+                      Counter,
+                  egpNeighInErrMsgs
+                      Counter,
+                  egpNeighOutErrMsgs
+                      Counter,
+                  egpNeighStateUps
+                      Counter,
+                  egpNeighStateDowns
+                      Counter,
+                  egpNeighIntervalHello
+                      INTEGER,
+                  egpNeighIntervalPoll
+                      INTEGER,
+                  egpNeighMode
+                      INTEGER,
+                  egpNeighEventTrigger
+                      INTEGER
+              }
+
+          egpNeighState OBJECT-TYPE
+              SYNTAX  INTEGER {
+                          idle(1),
+                          acquisition(2),
+                          down(3),
+                          up(4),
+                          cease(5)
+                      }
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The EGP state of the local system with respect to
+                      this entry's EGP neighbor.  Each EGP state is
+                      represented by a value that is one greater than
+                      the numerical value associated with said state in
+                      RFC 904."
+              ::= { egpNeighEntry 1 }
+
+          egpNeighAddr OBJECT-TYPE
+              SYNTAX  IpAddress
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The IP address of this entry's EGP neighbor."
+              ::= { egpNeighEntry 2 }
+
+          egpNeighAs OBJECT-TYPE
+              SYNTAX  INTEGER
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The autonomous system of this EGP peer.  Zero
+                      should be specified if the autonomous system
+                      number of the neighbor is not yet known."
+              ::= { egpNeighEntry 3 }
+
+          egpNeighInMsgs OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The number of EGP messages received without error
+                      from this EGP peer."
+              ::= { egpNeighEntry 4 }
+
+          egpNeighInErrs OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The number of EGP messages received from this EGP
+                      peer that proved to be in error (e.g., bad EGP
+                      checksum)."
+              ::= { egpNeighEntry 5 }
+
+          egpNeighOutMsgs OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The number of locally generated EGP messages to
+                      this EGP peer."
+              ::= { egpNeighEntry 6 }
+
+          egpNeighOutErrs OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The number of locally generated EGP messages not
+                      sent to this EGP peer due to resource limitations
+                      within an EGP entity."
+              ::= { egpNeighEntry 7 }
+
+          egpNeighInErrMsgs OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The number of EGP-defined error messages received
+                      from this EGP peer."
+              ::= { egpNeighEntry 8 }
+
+          egpNeighOutErrMsgs OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The number of EGP-defined error messages sent to
+                      this EGP peer."
+              ::= { egpNeighEntry 9 }
+
+          egpNeighStateUps OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The number of EGP state transitions to the UP
+                      state with this EGP peer."
+              ::= { egpNeighEntry 10 }
+
+          egpNeighStateDowns OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The number of EGP state transitions from the UP
+                      state to any other state with this EGP peer."
+              ::= { egpNeighEntry 11 }
+
+          egpNeighIntervalHello OBJECT-TYPE
+              SYNTAX  INTEGER
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The interval between EGP Hello command
+                      retransmissions (in hundredths of a second).  This
+                      represents the t1 timer as defined in RFC 904."
+              ::= { egpNeighEntry 12 }
+
+          egpNeighIntervalPoll OBJECT-TYPE
+              SYNTAX  INTEGER
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The interval between EGP poll command
+                      retransmissions (in hundredths of a second).  This
+                      represents the t3 timer as defined in RFC 904."
+              ::= { egpNeighEntry 13 }
+
+          egpNeighMode OBJECT-TYPE
+              SYNTAX  INTEGER { active(1), passive(2) }
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The polling mode of this EGP entity, either
+                      passive or active."
+              ::= { egpNeighEntry 14 }
+
+          egpNeighEventTrigger OBJECT-TYPE
+              SYNTAX  INTEGER { start(1), stop(2) }
+              ACCESS  read-write
+              STATUS  mandatory
+              DESCRIPTION
+                      "A control variable used to trigger operator-
+                      initiated Start and Stop events.  When read, this
+                      variable always returns the most recent value that
+                      egpNeighEventTrigger was set to.  If it has not
+                      been set since the last initialization of the
+                      network management subsystem on the node, it
+                      returns a value of `stop'.
+
+                      When set, this variable causes a Start or Stop
+                      event on the specified neighbor, as specified on
+                      pages 8-10 of RFC 904.  Briefly, a Start event
+                      causes an Idle peer to begin neighbor acquisition
+                      and a non-Idle peer to reinitiate neighbor
+                      acquisition.  A stop event causes a non-Idle peer
+                      to return to the Idle state until a Start event
+                      occurs, either via egpNeighEventTrigger or
+                      otherwise."
+              ::= { egpNeighEntry 15 }
+
+
+          -- additional EGP objects
+
+          egpAs OBJECT-TYPE
+              SYNTAX  INTEGER
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The autonomous system number of this EGP entity."
+              ::= { egp 6 }
+
+
+          -- the Transmission group
+
+          -- Based on the transmission media underlying each interface
+          -- on a system, the corresponding portion of the Transmission
+          -- group is mandatory for that system.
+
+          -- When Internet-standard definitions for managing
+          -- transmission media are defined, the transmission group is
+          -- used to provide a prefix for the names of those objects.
+
+          -- Typically, such definitions reside in the experimental
+          -- portion of the MIB until they are "proven", then as a
+          -- part of the Internet standardization process, the
+          -- definitions are accordingly elevated and a new object
+          -- identifier, under the transmission group is defined. By
+          -- convention, the name assigned is:
+          --
+          --     type OBJECT IDENTIFIER    ::= { transmission number }
+          --
+          -- where "type" is the symbolic value used for the media in
+          -- the ifType column of the ifTable object, and "number" is
+          -- the actual integer value corresponding to the symbol.
+
+
+          -- the SNMP group
+
+          -- Implementation of the SNMP group is mandatory for all
+          -- systems which support an SNMP protocol entity.  Some of
+          -- the objects defined below will be zero-valued in those
+          -- SNMP implementations that are optimized to support only
+          -- those functions specific to either a management agent or
+          -- a management station.  In particular, it should be
+          -- observed that the objects below refer to an SNMP entity,
+          -- and there may be several SNMP entities residing on a
+          -- managed node (e.g., if the node is hosting acting as
+          -- a management station).
+
+          snmpInPkts OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The total number of Messages delivered to the
+                      SNMP entity from the transport service."
+              ::= { snmp 1 }
+
+          snmpOutPkts OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The total number of SNMP Messages which were
+                      passed from the SNMP protocol entity to the
+                      transport service."
+              ::= { snmp 2 }
+
+          snmpInBadVersions OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The total number of SNMP Messages which were
+                      delivered to the SNMP protocol entity and were for
+                      an unsupported SNMP version."
+              ::= { snmp 3 }
+
+          snmpInBadCommunityNames OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The total number of SNMP Messages delivered to
+                      the SNMP protocol entity which used a SNMP
+                      community name not known to said entity."
+              ::= { snmp 4 }
+
+          snmpInBadCommunityUses OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The total number of SNMP Messages delivered to
+                      the SNMP protocol entity which represented an SNMP
+                      operation which was not allowed by the SNMP
+                      community named in the Message."
+              ::= { snmp 5 }
+
+          snmpInASNParseErrs OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The total number of ASN.1 or BER errors
+                      encountered by the SNMP protocol entity when
+                      decoding received SNMP Messages."
+              ::= { snmp 6 }
+
+          -- { snmp 7 } is not used in rfc1213, but MIBII.mdl had one :(
+          snmpInBadTypes OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "Total number of PDUs having an unknown PDU type"
+              ::= { snmp 7 }
+
+          snmpInTooBigs OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The total number of SNMP PDUs which were
+                      delivered to the SNMP protocol entity and for
+                      which the value of the error-status field is
+                      `tooBig'."
+              ::= { snmp 8 }
+
+          snmpInNoSuchNames OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The total number of SNMP PDUs which were
+                      delivered to the SNMP protocol entity and for
+                      which the value of the error-status field is
+                      `noSuchName'."
+              ::= { snmp 9 }
+
+          snmpInBadValues OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The total number of SNMP PDUs which were
+                      delivered to the SNMP protocol entity and for
+                      which the value of the error-status field is
+                      `badValue'."
+              ::= { snmp 10 }
+
+          snmpInReadOnlys OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The total number valid SNMP PDUs which were
+                      delivered to the SNMP protocol entity and for
+                      which the value of the error-status field is
+                      `readOnly'.  It should be noted that it is a
+                      protocol error to generate an SNMP PDU which
+                      contains the value `readOnly' in the error-status
+                      field, as such this object is provided as a means
+                      of detecting incorrect implementations of the
+                      SNMP."
+              ::= { snmp 11 }
+
+          snmpInGenErrs OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The total number of SNMP PDUs which were
+                      delivered to the SNMP protocol entity and for
+                      which the value of the error-status field is
+                      `genErr'."
+              ::= { snmp 12 }
+
+          snmpInTotalReqVars OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The total number of MIB objects which have been
+                      retrieved successfully by the SNMP protocol entity
+                      as the result of receiving valid SNMP Get-Request
+                      and Get-Next PDUs."
+              ::= { snmp 13 }
+
+          snmpInTotalSetVars OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The total number of MIB objects which have been
+                      altered successfully by the SNMP protocol entity
+                      as the result of receiving valid SNMP Set-Request
+                      PDUs."
+              ::= { snmp 14 }
+
+          snmpInGetRequests OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The total number of SNMP Get-Request PDUs which
+                      have been accepted and processed by the SNMP
+                      protocol entity."
+              ::= { snmp 15 }
+
+          snmpInGetNexts OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The total number of SNMP Get-Next PDUs which have
+                      been accepted and processed by the SNMP protocol
+                      entity."
+              ::= { snmp 16 }
+
+          snmpInSetRequests OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The total number of SNMP Set-Request PDUs which
+                      have been accepted and processed by the SNMP
+                      protocol entity."
+              ::= { snmp 17 }
+
+          snmpInGetResponses OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The total number of SNMP Get-Response PDUs which
+                      have been accepted and processed by the SNMP
+                      protocol entity."
+              ::= { snmp 18 }
+
+          snmpInTraps OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The total number of SNMP Trap PDUs which have
+                      been accepted and processed by the SNMP protocol
+                      entity."
+              ::= { snmp 19 }
+
+          snmpOutTooBigs OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The total number of SNMP PDUs which were
+                      generated by the SNMP protocol entity and for
+                      which the value of the error-status field is
+                      `tooBig.'"
+              ::= { snmp 20 }
+
+          snmpOutNoSuchNames OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The total number of SNMP PDUs which were
+                      generated by the SNMP protocol entity and for
+                      which the value of the error-status is
+                      `noSuchName'."
+              ::= { snmp 21 }
+
+          snmpOutBadValues OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The total number of SNMP PDUs which were
+                      generated by the SNMP protocol entity and for
+                      which the value of the error-status field is
+                      `badValue'."
+              ::= { snmp 22 }
+
+          -- { snmp 23 } is not used in rfc1213, but MIBII.mdl had one :(
+          snmpOutReadOnlys OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The total number of SNMP PDUs which were
+                      generated by the SNMP protocol entity and for
+                      which the value of the error-status field is
+                      `readOnly'."
+              ::= { snmp 23 }
+
+          snmpOutGenErrs OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The total number of SNMP PDUs which were
+                      generated by the SNMP protocol entity and for
+                      which the value of the error-status field is
+                      `genErr'."
+              ::= { snmp 24 }
+
+          snmpOutGetRequests OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The total number of SNMP Get-Request PDUs which
+                      have been generated by the SNMP protocol entity."
+              ::= { snmp 25 }
+
+          snmpOutGetNexts OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The total number of SNMP Get-Next PDUs which have
+                      been generated by the SNMP protocol entity."
+              ::= { snmp 26 }
+
+          snmpOutSetRequests OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The total number of SNMP Set-Request PDUs which
+                      have been generated by the SNMP protocol entity."
+              ::= { snmp 27 }
+
+          snmpOutGetResponses OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The total number of SNMP Get-Response PDUs which
+                      have been generated by the SNMP protocol entity."
+              ::= { snmp 28 }
+
+          snmpOutTraps OBJECT-TYPE
+              SYNTAX  Counter
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The total number of SNMP Trap PDUs which have
+                      been generated by the SNMP protocol entity."
+              ::= { snmp 29 }
+
+          snmpEnableAuthenTraps OBJECT-TYPE
+              SYNTAX  INTEGER { enabled(1), disabled(2) }
+              ACCESS  read-write
+              STATUS  mandatory
+              DESCRIPTION
+                      "Indicates whether the SNMP agent process is
+                      permitted to generate authentication-failure
+                      traps.  The value of this object overrides any
+                      configuration information; as such, it provides a
+                      means whereby all authentication-failure traps may
+                      be disabled.
+
+                      Note that it is strongly recommended that this
+                      object be stored in non-volatile memory so that it
+                      remains constant between re-initializations of the
+                      network management system."
+              ::= { snmp 30 }
+
+          END
+-- @(#)WSCCS g/mibs-wfcommon.mib 1.4 10/26/95
+Wellfleet-COMMON-MIB
+
+DEFINITIONS ::= BEGIN
+
+IMPORTS
+
+  enterprises
+    FROM RFC1155-SMI;
+
+wellfleet		OBJECT IDENTIFIER ::= { enterprises 18 }
+
+wfSwSeries7		OBJECT IDENTIFIER ::= { wellfleet 3 }
+
+wfHardwareConfig	OBJECT IDENTIFIER ::= { wfSwSeries7 1 }
+
+wfHwModuleGroup		OBJECT IDENTIFIER ::= { wfHardwareConfig 4 }
+
+wfSystem		OBJECT IDENTIFIER ::= { wfSwSeries7 3 }
+
+END  -- Wellfleet-COMMON-MIB
+-- @(#)WSCCS i/mibs-hardware.mib 1.2 10/9/95
+Wellfleet-HARDWARE-MIB DEFINITIONS ::= BEGIN
+
+-- Created by mdl2asn version 3.1
+-- Creation date: Wed Aug 30 16:42:01 EDT 1995
+
+
+    IMPORTS
+
+      IpAddress, Counter, Gauge, TimeTicks, Opaque, enterprises, mgmt
+        FROM RFC1155-SMI
+      OBJECT-TYPE
+        FROM RFC-1212
+      TRAP-TYPE
+        FROM RFC-1215
+      DisplayString, mib-2
+        FROM RFC1213-MIB
+      wfHardwareConfig
+        FROM Wellfleet-COMMON-MIB;
+
+
+    wfHwBase	OBJECT IDENTIFIER ::= { wfHardwareConfig 1 }
+
+    wfHwBpIdOpt OBJECT-TYPE
+        SYNTAX	INTEGER {
+    		    acefn(1),
+    		    aceln(2),
+    		    acecn(3),
+    		    afn(4),
+    		    in(5),
+    		    an(16),
+    		    sys5000(5000),
+    		    freln(16640),
+    		    frecn(16896),
+    		    frerbln(17152),
+    		    asn(20480),
+    		    asnzcable(20736),
+    		    asnbcable(20992)
+    		}
+        ACCESS	read-only
+        STATUS	mandatory
+        DESCRIPTION
+                "The BackPlane identification number."
+        ::= { wfHwBase 1 }
+
+    wfHwBpRev OBJECT-TYPE
+        SYNTAX	OCTET STRING
+        ACCESS	read-only
+        STATUS	mandatory
+        DESCRIPTION
+                "The revision level of the BackPlane. High byte is in upper 2 bytes."
+        ::= { wfHwBase 2 }
+
+    wfHwBpSerialNumber OBJECT-TYPE
+        SYNTAX	OCTET STRING
+        ACCESS	read-only
+        STATUS	mandatory
+        DESCRIPTION
+                "The serial number of the BackPlane."
+        ::= { wfHwBase 3 }
+
+    wfBCNPwrSupply1 OBJECT-TYPE
+        SYNTAX	INTEGER {
+    		    ok(1),
+    		    fail(2),
+    		    notpresent(3)
+    		}
+        ACCESS	read-only
+        STATUS	mandatory
+        DESCRIPTION
+                "Status of BCN Hot-Swappable Power Supply 1"
+        DEFVAL	{ notpresent }
+        ::= { wfHwBase 4 }
+
+    wfBCNPwrSupply2 OBJECT-TYPE
+        SYNTAX	INTEGER {
+    		    ok(1),
+    		    fail(2),
+    		    notpresent(3)
+    		}
+        ACCESS	read-only
+        STATUS	mandatory
+        DESCRIPTION
+                "Status of BCN Hot-Swappable Power Supply 2"
+        DEFVAL	{ notpresent }
+        ::= { wfHwBase 5 }
+
+    wfBCNPwrSupply3 OBJECT-TYPE
+        SYNTAX	INTEGER {
+    		    ok(1),
+    		    fail(2),
+    		    notpresent(3)
+    		}
+        ACCESS	read-only
+        STATUS	mandatory
+        DESCRIPTION
+                "Status of BCN Hot-Swappable Power Supply 3"
+        DEFVAL	{ notpresent }
+        ::= { wfHwBase 6 }
+
+    wfBCNPwrSupply4 OBJECT-TYPE
+        SYNTAX	INTEGER {
+    		    ok(1),
+    		    fail(2),
+    		    notpresent(3)
+    		}
+        ACCESS	read-only
+        STATUS	mandatory
+        DESCRIPTION
+                "Status of BCN Hot-Swappable Power Supply 4"
+        DEFVAL	{ notpresent }
+        ::= { wfHwBase 7 }
+
+    wfBCNFanStatus OBJECT-TYPE
+        SYNTAX	INTEGER {
+    		    ok(1),
+    		    fail(2),
+    		    notpresent(3)
+    		}
+        ACCESS	read-only
+        STATUS	mandatory
+        DESCRIPTION
+                "Status of BCN Fan Tray"
+        DEFVAL	{ notpresent }
+        ::= { wfHwBase 8 }
+
+    wfBCNTemperature OBJECT-TYPE
+        SYNTAX	INTEGER {
+    		    ok(1),
+    		    caution(2),
+    		    notpresent(3)
+    		}
+        ACCESS	read-only
+        STATUS	mandatory
+        DESCRIPTION
+                "Status of BCN Temperature sensor"
+        DEFVAL	{ notpresent }
+        ::= { wfHwBase 9 }
+
+    wfHwTable OBJECT-TYPE
+        SYNTAX	SEQUENCE OF WfHwEntry
+        ACCESS	not-accessible
+        STATUS	mandatory
+        DESCRIPTION
+                "Hardware Table  - indexed by slot number"
+        ::= { wfHardwareConfig 2 }
+
+    wfHwEntry OBJECT-TYPE
+        SYNTAX	WfHwEntry
+        ACCESS	not-accessible
+        STATUS	mandatory
+        DESCRIPTION
+                "Hardware specific information about a slot."
+        INDEX	{ wfHwSlot }
+        ::= { wfHwTable 1 }
+
+    WfHwEntry ::= SEQUENCE {
+    	    wfHwSlot
+    		INTEGER,
+    	    wfHwModIdOpt
+    		INTEGER,
+    	    wfHwModRev
+    		OCTET STRING,
+    	    wfHwModSerialNumber
+    		OCTET STRING,
+    	    wfHwMotherBdIdOpt
+    		INTEGER,
+    	    wfHwMotherBdRev
+    		OCTET STRING,
+    	    wfHwMotherBdSerialNumber
+    		OCTET STRING,
+    	    wfHwDaughterBdIdOpt
+    		INTEGER,
+    	    wfHwDaughterBdRev
+    		OCTET STRING,
+    	    wfHwDaughterBdSerialNumber
+    		OCTET STRING,
+    	    wfHwBabyBdIdOpt
+    		INTEGER,
+    	    wfHwBabyBdRev
+    		OCTET STRING,
+    	    wfHwBabyBdSerialNumber
+    		OCTET STRING,
+    	    wfHwDiagPromRev
+    		OCTET STRING,
+    	    wfHwDiagPromDate
+    		DisplayString,
+    	    wfHwDiagPromSource
+    		DisplayString,
+    	    wfHwBootPromRev
+    		OCTET STRING,
+    	    wfHwBootPromDate
+    		DisplayString,
+    	    wfHwBootPromSource
+    		DisplayString,
+    	    wfHwSparePromRev
+    		OCTET STRING,
+    	    wfHwSparePromDate
+    		DisplayString,
+    	    wfHwSparePromSource
+    		DisplayString,
+    	    wfHwFileSysPresent
+    		INTEGER,
+    	    wfHwFileSysPresent2
+    		INTEGER,
+    	    wfHwConfigServer
+    		INTEGER,
+    	    wfHwConfigFile
+    		DisplayString,
+    	    wfHwConfigDateAndTime
+    		OCTET STRING,
+    	    wfHwActiveImageName
+    		DisplayString,
+    	    wfHwActiveImageSource
+    		DisplayString,
+    	    wfHwActiveImageDate
+    		DisplayString,
+    	    wfHwMotherBdMemorySize
+    		INTEGER,
+    	    wfHwFastPacketCacheSize
+    		INTEGER,
+    	    wfHwModDaughterBd1IdOpt
+    		INTEGER,
+    	    wfHwModDaughterBd1AwRev
+    		OCTET STRING,
+    	    wfHwModDaughterBd1Rev
+    		OCTET STRING,
+    	    wfHwModDaughterBd1SerialNumber
+    		OCTET STRING,
+    	    wfHwModDaughterBd2IdOpt
+    		INTEGER,
+    	    wfHwModDaughterBd2AwRev
+    		OCTET STRING,
+    	    wfHwModDaughterBd2Rev
+    		OCTET STRING,
+    	    wfHwModDaughterBd2SerialNumber
+    		OCTET STRING
+        }
+
+    wfHwSlot OBJECT-TYPE
+        SYNTAX	INTEGER
+        ACCESS	read-only
+        STATUS	mandatory
+        DESCRIPTION
+                "A unique value for each slot.
+                Its value ranges between 1 and 14.
+                There are products in this family that contain 1, 5, and 14 slots."
+        ::= { wfHwEntry 1 }
+
+    wfHwModIdOpt OBJECT-TYPE
+        SYNTAX	INTEGER {
+    		    enet1(1),
+    		    enet2(8),
+    		    sync1(16),
+    		    sync1a(17),
+    		    t11(24),
+    		    dse1(32),
+    		    dse1a(33),
+    		    dst416(40),
+    		    sst416a(41),
+    		    dst4(42),
+    		    sst4a(43),
+    		    sst416(44),
+    		    stok416(45),
+    		    sst4(46),
+    		    stok4(47),
+    		    floppy(48),
+    		    necfloppy(49),
+    		    t12(56),
+    		    t12a(57),
+    		    st1(58),
+    		    t156k(60),
+    		    e1(61),
+    		    st156k(62),
+    		    se1(63),
+    		    t12n(64),
+    		    st1n(65),
+    		    t156kn(66),
+    		    st156kn(67),
+    		    e1n(68),
+    		    se1n(69),
+    		    sync(80),
+    		    sync2a(81),
+    		    cmcfddi(88),
+    		    iphfddi(89),
+    		    dt(104),
+    		    dsde1(112),
+    		    dsde1a(113),
+    		    enet(114),
+    		    dse2(116),
+    		    dse2a(117),
+    		    sse(118),
+    		    ssea(119),
+    		    dsde10bt(120),
+    		    enet3(132),
+    		    dsde2(156),
+    		    oldqenf(160),
+    		    denf(161),
+    		    qenf(162),
+    		    qef(164),
+    		    def(165),
+    		    mct1(168),
+    		    smct1(169),
+    		    dtok(176),
+    		    mce1(184),
+    		    smce1(185),
+    		    mce1ii75(188),
+    		    smce1ii75(189),
+    		    mce1ii120(190),
+    		    smce1ii120(191),
+    		    wffddi2m(192),
+    		    wffddi1m(193),
+    		    wffddi2s(194),
+    		    wffddi1s(195),
+    		    wffddi2mf(196),
+    		    wffddi1mf(197),
+    		    wffddi2sf(198),
+    		    wffddi1sf(199),
+    		    fmdset(200),
+    		    fmdst(201),
+    		    fmdse(202),
+    		    fmsst(203),
+    		    fmsse(204),
+    		    fnsdse(208),
+    		    fnsdsdt(216),
+    		    fnsdst(217),
+    		    dhssi(224),
+    		    shssi(225),
+    		    esafnf(232),
+    		    esafdsenf(233),
+    		    esafssenf(234),
+    		    esafdenf(235),
+    		    esaf(236),
+    		    esafdse(237),
+    		    esafsse(238),
+    		    esafde(239),
+    		    qtok(256),
+    		    asn(511),
+    		    anseds(1024),
+    		    ansedst(1025),
+    		    ansedsh(1026),
+    		    ansedsi(1027),
+    		    ansedsti(1028),
+    		    ansedshi(1029),
+    		    ansets(1030),
+    		    ansetst(1031),
+    		    ansetsh(1032),
+    		    andeds(1033),
+    		    andedst(1034),
+    		    andedsh(1035),
+    		    andstx(1036),
+    		    andst(1037),
+    		    andsti(1038),
+    		    antst(1039),
+    		    antstx(1040),
+    		    ansdsedst(1041),
+    		    ansdsedstx(1042),
+    		    ansedsi2(1043),
+    		    ansedsti2(1044),
+    		    ansedshi2(1045),
+    		    andsti2(1046),
+    		    ansedsg(1047),
+    		    ansedsgx(1048),
+    		    ansetsg(1049),
+    		    andedsg(1050),
+    		    ansedsgi(1051),
+    		    ansetsgx(1052),
+    		    andedsgx(1053),
+    		    ansedsgix(1054),
+    		    ansedsx(1055),
+    		    ansetsx(1056),
+    		    andedsx(1057),
+    		    ansedstx(1058),
+    		    ansetstx(1059),
+    		    andedstx(1060),
+    		    andsti2x(1061),
+    		    ansedsi2x(1062),
+    		    ansedsti2x(1063),
+    		    atmalc(4096),
+    		    atmalctaxi100(4097),
+    		    atmalcsonetmm(4098),
+    		    atmalcsonetsm(4099),
+    		    osync(4352),
+    		    comp(4353),
+    		    comp128(4354),
+    		    atmcoc3mm(4608),
+    		    atmcoc3sm(4609),
+    		    atmcoc3utp5(4610),
+    		    de100(4864),
+    		    atmcds3(5120),
+    		    atmce3(5121),
+		    qmct1rj45(5376),
+		    qmct1db15(5377),
+    		    srml(8448),
+		    atm5000ah(524288),
+    		    qe(1048799),
+    		    qehwf(1048798),
+    		    qefddi2m(1048831),
+    		    qefddi2mhwf(1048830),
+    		    qefddi2s(1048823),
+    		    qefddi2shwf(1048822),
+    		    qefddi1m(1048815),
+    		    qefddi1mhwf(1048814),
+    		    qefddi1s(1048807),
+    		    qefddi1shwf(1048806),
+    		    qecddi2stp(1048827),
+    		    qecddi2stphwf(1048826),
+    		    qecddi1stp(1048811),
+    		    qecddi1stphwf(1048810),
+    		    qecddi2utp(1048763),
+    		    qecddi2utphwf(1048762),
+    		    qecddi1utp(1048747),
+    		    qecddi1utphwf(1048746),
+    		    enet3atm(1048832),
+    		    enet3enet(1048833),
+    		    enet3fddi(1048834),
+    		    enet3tok(1048835),
+    		    enet3tokf(1048836),
+    		    enet3sync(1048837),
+    		    enet3only(1048863),
+    		    fddiatm(1048864),
+    		    fddienet(1048865),
+    		    fddifddi(1048866),
+    		    fdditok(1048867),
+    		    fdditokf(1048868),
+    		    fddisync(1048869),
+    		    fddionly(1048895),
+    		    tok3atm(1048896),
+    		    tok3enet(1048897),
+    		    tok3fddi(1048898),
+    		    tok3tok(1048899),
+    		    tok3tokf(1048900),
+    		    tok3sync(1048901),
+    		    tok3only(1048927),
+    		    tokf3atm(1048928),
+    		    tokf3enet(1048929),
+    		    tokf3fddi(1048930),
+    		    tokf3tok(1048931),
+    		    tokf3tokf(1048932),
+    		    tokf3sync(1048933),
+    		    tokf3only(1048959),
+    		    enet3datm(1048960),
+    		    enet3denet(1048961),
+    		    enet3dfddi(1048962),
+    		    enet3dtok(1048963),
+    		    enet3dtokf(1048964),
+    		    enet3dsync(1048965),
+    		    enet3donly(1048991),
+    		    chipcomfenet(1049089),
+    		    chipcomffddi(1049090),
+    		    chipcomftok(1049091),
+    		    chipcomftokf(1049092),
+    		    chipcomfdsync(1049093),
+    		    chipcomfisdn(1049094),
+    		    chipcomffddis(1049095),
+    		    chipcomfonly(1049119),
+    		    chipcomenet(1049217),
+    		    chipcomfddi(1049218),
+    		    chipcomtok(1049219),
+    		    chipcomtokf(1049220),
+    		    chipcomdsync(1049221),
+    		    chipcomisdn(1049222),
+    		    chipcomfddis(1049223),
+    		    chipcomonly(1049247)
+    		}
+        ACCESS	read-only
+        STATUS	mandatory
+        DESCRIPTION
+                "The module identification number.
+
+                     Port Configurations
+                 HWStat Name  Enet Sync Async Token Framer Fiber
+                 ------ ------------ ------ ---- ----- ----- ------ -----
+                    1 ENET-1  2 0 0 0 0 0
+                    8 ENET-2  2 0 0 0 0 0
+
+                   16 SYNC-1  0 4 1 0 0 0
+                   17 SYNC-1 [1] 0 4 1 0 0 0
+
+                   24 T1-1  0 2 1 0 2 0
+
+                   32 DSE-1  1 2 1 0 0 0
+                   33 DSE-1  [1] 1 2 1 0 0 0
+
+                   40 DST-4/16 0 2 1 1 0 0
+                   41 SST-4/16  [1] 0 1 1 1 0 0
+                   42 DST-4  0 2 1 1 0 0
+                   43 SST-4   [1] 0 1 1 1 0 0
+                   44 SST-4/16 0 1 1 1 0 0
+                   45 STOK-4/16 [3] 0 0 0 1 0 0
+                   46 SST-4  0 1 1 1 0 0
+                   47 STOK-4   [3] 0 0 0 1 0 0
+
+                   48 FLOPPY    0 0 0 0 0 0
+
+                   56 T1-2  0 2 1 0 2 0
+                   57 T1-2  0 2 1 0 2 0
+                   58 ST1  0 1 1 0 1 0
+                   60 T1-56K  0 1 1 0 1 0
+                   61 E1 [3] 0 2 0 0 2 0
+                   62 ST1-56K  0 1 1 0 1 0
+                   63 SE1 [3] 0 1 0 0 1 0
+
+                   64 T1-2n  0 2 1 0 2 0
+                   65 ST1n  0 1 1 0 1 0
+                   66 T1-56Kn  0 1 1 0 1 0
+                   67 ST1-56Kn 0 1 1 0 1 0
+                   68 E1n [3] 0 2 0 0 2 0
+                   69 SE1n [3] 0 1 0 0 1 0
+
+                   80 SYNC-2  0 4 1 0 0 0
+                   81 SYNC-2  [1] 0 4 1 0 0 0
+
+                   88 CMC-FDDI    [6] 0 0 0 0 0 1
+                   89 IPHASE-FDDI [6] 0 0 0 0 0 1
+
+                  112 DSDE-1  2 2 1 0 0 0
+                  113 DSDE-1  [1] 2 2 1 0 0 0
+                  114 ENET  2 0 0 0 0 0
+                  116 DSE-2  1 2 1 0 0 0
+                  117 DSE-2   [1] 1 2 1 0 0 0
+                  118 SSE  1 1 1 0 0 0
+                  119 SSE     [1] 1 1 1 0 0 0
+
+                  132 ENET-3 [2] 2 0 0 0 0 0
+
+                  156 DSDE-2 [2] 2 2 1 0 0 0
+
+                  160 QE/NF  4 0 0 0 0 0
+                  161 DE/NF [5] 2 0 0 0 0 0
+                  162 QE/NF  4 0 0 0 0 0
+                  164 QE/F [4] 4 0 0 0 0 0
+                  165 DE/F [4,5] 2 0 0 0 0 0
+
+                      168    MCT1            0    2 Munich   0       0       2       0
+                      169    SMCT1           0    1 Munich   0       0       1       0
+
+                  176 DTOK  0 0 0 2 0 0
+
+                      184    MCE1            0    2 Munich   0       0       2       0
+                      185    SMCE1           0    1 Munich   0       0       1       0
+                      188    MCE1II75        0    2 Munich   0       0       2       0
+                      189    SMCE1II75       0    1 Munich   0       0       1       0
+                      190    MCE1II120       0    2 Munich   0       0       2       0
+                      191    SMCE1II120      0    1 Munich   0       0       1       0
+
+                  192 WF_FDDI_2M 0 0 0 0 0 1
+                  193 WF_FDDI_1M 0 0 0 0 0 1
+                  194 WF_FDDI_2S 0 0 0 0 0 1
+                  195 WF_FDDI_1S 0 0 0 0 0 1
+                  196 WF_FDDI_2MF 0 0 0 0 0 1
+                  197 WF_FDDI_1MF 0 0 0 0 0 1
+                  198 WF_FDDI_2SF 0 0 0 0 0 1
+                  199 WF_FDDI_1SF 0 0 0 0 0 1
+
+                  200 HW_MODULE_FMDSET  [7] 1 2 0 1 0 0
+                  201 HW_MODULE_FMDST   [7] 0 2 0 1 0 0
+                  202 HW_MODULE_FMDSE   [7] 1 2 0 0 0 0
+                  203 HW_MODULE_FMSST   [7] 0 1 0 1 0 0
+                  204 HW_MODULE_FMSSE   [7] 1 1 0 0 0 0
+
+                  208 FNSDSE   [7] 1 2 0 0 0 0
+                  216 FNSDSDT  [7] 0 2 0 2 0 0
+                  217 FNSDST   [7] 0 2 0 1 0 0
+
+                      224    DHSSI           0    2 hssi     0       0       0       0
+                      225    SHSSI           0    1 hssi     0       0       0       0
+
+                      232    ESAF_NF         2       2       0       0       0       0
+                      233    ESAF_DSE_NF     1       2       0       0       0       0
+                      234    ESAF_SSE_NF     1       1       0       0       0       0
+                      235    ESAF_DE_NF      2       0       0       0       0       0
+                      236    ESAF [2]        2       2       0       0       0       0
+                      237    ESAF_DSE [2]    1       2       0       0       0       0
+                      238    ESAF_SSE [2]    1       1       0       0       0       0
+                      239    ESAF_DE [2]     2       0       0       0       0       0
+
+                      256    QTOK  0 0 0 4 0 0
+
+                 ASN (Barracuda)
+
+                  511    ASN[8]
+
+
+                 AN Module IDs (Piranha, Guppy...)
+
+                 ID      Mnemonic        ENET    SYNC    ISDN    TR      HUB     DCM
+                 --      --------        ----    ----    ----    --      ---     ---
+                 1024    ANSEDS          1       2       0       0       0       N
+
+                 1025    ANSEDST         1       2       0       1       0       N
+
+                 1026    ANSEDSH         1       2       0       0       12      N
+
+                 1027    ANSEDSI         1       2       1       0       0       N
+
+                 1028    ANSEDSTI        1       2       1       1       0       N
+
+                 1029    ANSEDSHI        1       2       1       0       12      N
+
+                 1030    ANSETS          1       3       0       0       0       N
+
+                 1031    ANSETST         1       3       0       1       0       N
+
+                 1032    ANSETSH         1       3       0       0       12      N
+
+                 1033    ANDEDS          2       2       0       0       0       N
+
+                 1034    ANDEDST         2       2       0       1       0       N
+
+                 1035    ANDEDSH         2       2       0       0       12      N
+
+                 1036    ANDSTX          0       2       0       1       0       Y
+                 (formerly ANDS)
+
+                 1037    ANDST           0       2       0       1       0       N
+
+                 1038    ANDSTI          0       2       1       1       0       N
+
+                 1039    ANTST           0       3       0       1       0       N
+
+                 1040    ANTSTX          0       3       0       1       0       Y
+                 (formerly ANSDSEDS)
+
+                 1041    ANSDSEDST       1       2       0       1       0       N
+
+                 1042    ANSDSEDSTX      1       2       0       1       0       Y
+                 (formerly ANSDSEDSH)
+
+                 1043    ANSEDSI2        1       2       1       0       0       N
+
+                 1044    ANSEDSTI2       1       2       1       1       0       N
+
+                 1045    ANSEDSHI2       1       2       1       0       12      N
+
+                 1046    ANDSTI2         0       2       1       1       0       N
+
+                 1047    ANSEDSG         1       2       0       0       8       N
+
+                 1048    ANSEDSGX        1       2       0       0       8       Y
+
+                 1049    ANSETSG         1       3       0       0       8       N
+
+                 1050    ANDEDSG         2       2       0       0       8       N
+
+                 1051    ANSEDSGI        1       2       1       0       8       N
+
+                 1052    ANSETSGX        1       3       0       0       8       Y
+
+                 1053    ANDEDSGX        2       2       0       0       8       Y
+
+                 1054    ANSEDSGIX       1       2       1       0       8       Y
+
+                 1055    ANSEDSX         1       2       0       0       0       Y
+
+                 1056    ANSETSX         1       3       0       0       0       Y
+
+                 1057    ANDEDSX         2       2       0       0       0       Y
+
+                 1058    ANSEDSTX        1       2       0       1       0       Y
+
+                 1059    ANSETSTX        1       3       0       1       0       Y
+
+                 1060    ANDEDSTX        2       2       0       1       0       Y
+
+                 1061    ANDSTI2X        0       2       1       0       0       Y
+
+                 1062    ANSEDSI2X       1       2       1       0       0       Y
+
+                 1063    ANSEDSTI2X      1       2       1       1       0       Y
+
+
+                     4096    ATMALC          0       0       0       0       0       0
+                     4097    ATMALCTAXI100   0       0       0       0       0       1
+                     4098    ATMALCSONETMM   0       0       0       0       1       1 [9]
+                     4099    ATMALCSONETSM   0       0       0       0       1       1 [9]
+                     4352    OSYNC           0       8       0       0       0       0
+                     4353    OSYNC_COMP (32) 0       8       0       0       0       0
+                     4354    OSYNC_COMP128   0       8       0       0       0       0
+
+                     4608    ATMCOC3MM       0       0       0       0       1       1 [10]
+                     4609    ATMCOC3SM       0       0       0       0       1       1 [10]
+                     4610    ATMCOC3UTP5     0       0       0       0       1       0 [10]
+
+                     4864    DE100           2       0       0       0       0       0
+
+                     5120    ATMCDS3         0       0       0       0       1       0 [10]
+                     5121    ATMCE3          0       0       0       0       1       0 [10]
+
+                 8448 SRML  0 0 0 0 0 0
+
+
+                 NOTES:
+                  [1] Indicates Module has COM Port 1 configured for ASYNC.
+                   The AM8530's port B is configured for COM1.
+
+                  [2] This Module contains the DEFA - Hardware Filtering.  CAMS
+                   must be programmed (can contain 2 - 6 CAMS onboard).
+
+                  [3] The AM8530 has been removed (depopulated) from this module.
+                   Programming this device should not be performed.
+
+                  [4] Contains Dual Defa hardware. (Can be depopulated)
+
+                  [5] Depop'd two ports of hardware to make Dual Ethernet module.
+
+                  [6] These are FDDI modules.  The ID cannot be read from the Link
+                   module I/O space.
+
+                     [7] These are AFN Platform Integrated 'Modules' - Cannot be detached
+                             or be used by any other platform.
+
+                 [8] Module IDs from 1280(0x500) to 2559(0x9ff) are used
+                  for the ASN Net Modules. Module ID 512(0x200) is
+                  used for the ASN SPEX. These IDs are documented in
+                  MODULE.mdl. A module ID of 511(0x1ff) in
+                  'wfHwEntry.wfHwModIdOpt' indicates that it is an
+                  ASN platform and the user should refer to
+                  'wfHwModuleEntry.wfHwModuleModIdOpt' for Module ID details
+
+                     [9]     ATMALC link modules. The physical option for SONET includes a
+                             framer and the medium is fiber optics. Only one port per physical
+                             daughtercard per link module.
+
+                     [10]    ARE UTOPIA link modules. "
+        ::= { wfHwEntry 2 }
+
+    wfHwModRev OBJECT-TYPE
+        SYNTAX	OCTET STRING
+        ACCESS	read-only
+        STATUS	mandatory
+        DESCRIPTION
+                "The revision level of the module. High byte is in upper 2 bytes."
+        ::= { wfHwEntry 3 }
+
+    wfHwModSerialNumber OBJECT-TYPE
+        SYNTAX	OCTET STRING
+        ACCESS	read-only
+        STATUS	mandatory
+        DESCRIPTION
+                "The serial number of the module."
+        ::= { wfHwEntry 4 }
+
+    wfHwMotherBdIdOpt OBJECT-TYPE
+        SYNTAX	INTEGER {
+    		    sysctrl(1),
+    		    ace12(2),
+    		    ace25(3),
+    		    ace32(4),
+    		    afn(5),
+    		    in(6),
+    		    sysctrl2(7),
+    		    an(16),
+    		    fre(256),
+    		    fre2(768),
+    		    o60(769),
+    		    asn(1024),
+    		    are(1280),
+    		    srmf(8704)
+    		}
+        ACCESS	read-only
+        STATUS	mandatory
+        DESCRIPTION
+                "The mother board identification number."
+        ::= { wfHwEntry 5 }
+
+    wfHwMotherBdRev OBJECT-TYPE
+        SYNTAX	OCTET STRING
+        ACCESS	read-only
+        STATUS	mandatory
+        DESCRIPTION
+                "The revision level of the mother board. High byte is in upper 2 bytes."
+        ::= { wfHwEntry 6 }
+
+    wfHwMotherBdSerialNumber OBJECT-TYPE
+        SYNTAX	OCTET STRING
+        ACCESS	read-only
+        STATUS	mandatory
+        DESCRIPTION
+                "The serial number of the mother board."
+        ::= { wfHwEntry 7 }
+
+    wfHwDaughterBdIdOpt OBJECT-TYPE
+        SYNTAX	INTEGER {
+    		    sysctrl(1),
+    		    ace68020mhz12(2),
+    		    ace68020mhz25(3),
+    		    ace68030mhz32(4),
+    		    fre68040mhz25(4352),
+    		    fre68040mhz33(4608)
+    		}
+        ACCESS	read-only
+        STATUS	mandatory
+        DESCRIPTION
+                "The daughter board identification number."
+        ::= { wfHwEntry 8 }
+
+    wfHwDaughterBdRev OBJECT-TYPE
+        SYNTAX	OCTET STRING
+        ACCESS	read-only
+        STATUS	mandatory
+        DESCRIPTION
+                "The revision level of the daughter board. High byte is in upper 2 bytes."
+        ::= { wfHwEntry 9 }
+
+    wfHwDaughterBdSerialNumber OBJECT-TYPE
+        SYNTAX	OCTET STRING
+        ACCESS	read-only
+        STATUS	mandatory
+        DESCRIPTION
+                "The serial number of the daughter board."
+        ::= { wfHwEntry 10 }
+
+    wfHwBabyBdIdOpt OBJECT-TYPE
+        SYNTAX	INTEGER
+        ACCESS	read-only
+        STATUS	mandatory
+        DESCRIPTION
+                "The baby board identification number."
+        ::= { wfHwEntry 11 }
+
+    wfHwBabyBdRev OBJECT-TYPE
+        SYNTAX	OCTET STRING
+        ACCESS	read-only
+        STATUS	mandatory
+        DESCRIPTION
+                "The revision level of the baby board. High byte is in upper 2 bytes."
+        ::= { wfHwEntry 12 }
+
+    wfHwBabyBdSerialNumber OBJECT-TYPE
+        SYNTAX	OCTET STRING
+        ACCESS	read-only
+        STATUS	mandatory
+        DESCRIPTION
+                "The serial number of the baby board."
+        ::= { wfHwEntry 13 }
+
+    wfHwDiagPromRev OBJECT-TYPE
+        SYNTAX	OCTET STRING
+        ACCESS	read-only
+        STATUS	mandatory
+        DESCRIPTION
+                "The revision level of the Diagnostic PROM. Major revision level
+                is in the upper 2 bytes, minor revision level in the lower 2 bytes."
+        ::= { wfHwEntry 14 }
+
+    wfHwDiagPromDate OBJECT-TYPE
+        SYNTAX	DisplayString
+        ACCESS	read-only
+        STATUS	mandatory
+        DESCRIPTION
+                "The creation date of the Diagnostic PROM"
+        ::= { wfHwEntry 15 }
+
+    wfHwDiagPromSource OBJECT-TYPE
+        SYNTAX	DisplayString
+        ACCESS	read-only
+        STATUS	mandatory
+        DESCRIPTION
+                "The origin of the Diagnostic PROM contents"
+        ::= { wfHwEntry 16 }
+
+    wfHwBootPromRev OBJECT-TYPE
+        SYNTAX	OCTET STRING
+        ACCESS	read-only
+        STATUS	mandatory
+        DESCRIPTION
+                "The revision level of the BOOT PROM. Major revision level
+                is in the upper 2 bytes, minor revision level in the lower 2 bytes."
+        ::= { wfHwEntry 17 }
+
+    wfHwBootPromDate OBJECT-TYPE
+        SYNTAX	DisplayString
+        ACCESS	read-only
+        STATUS	mandatory
+        DESCRIPTION
+                "The creation date of the Boot PROM"
+        ::= { wfHwEntry 18 }
+
+    wfHwBootPromSource OBJECT-TYPE
+        SYNTAX	DisplayString
+        ACCESS	read-only
+        STATUS	mandatory
+        DESCRIPTION
+                "The origin of the Boot PROM contents"
+        ::= { wfHwEntry 19 }
+
+    wfHwSparePromRev OBJECT-TYPE
+        SYNTAX	OCTET STRING
+        ACCESS	read-only
+        STATUS	mandatory
+        DESCRIPTION
+                "The revision level of the BOOT PROM. Major revision level
+                is in the upper 2 bytes, minor revision level in the lower 2 bytes."
+        ::= { wfHwEntry 20 }
+
+    wfHwSparePromDate OBJECT-TYPE
+        SYNTAX	DisplayString
+        ACCESS	read-only
+        STATUS	mandatory
+        DESCRIPTION
+                "The creation date of the Spare PROM"
+        ::= { wfHwEntry 21 }
+
+    wfHwSparePromSource OBJECT-TYPE
+        SYNTAX	DisplayString
+        ACCESS	read-only
+        STATUS	mandatory
+        DESCRIPTION
+                "The origin of the Spare PROM contents"
+        ::= { wfHwEntry 22 }
+
+    wfHwFileSysPresent OBJECT-TYPE
+        SYNTAX	INTEGER {
+    		    filesys(1),
+    		    nofilesys(2)
+    		}
+        ACCESS	read-only
+        STATUS	mandatory
+        DESCRIPTION
+                "Flag indicating presence of File System on this slot."
+        DEFVAL	{ nofilesys }
+        ::= { wfHwEntry 23 }
+
+    wfHwFileSysPresent2 OBJECT-TYPE
+        SYNTAX	INTEGER {
+    		    filesys(1),
+    		    nofilesys(2)
+    		}
+        ACCESS	read-only
+        STATUS	mandatory
+        DESCRIPTION
+                "Flag indicating presence of File System (Syscon2 volume#2) on this slot."
+        DEFVAL	{ nofilesys }
+        ::= { wfHwEntry 24 }
+
+    wfHwConfigServer OBJECT-TYPE
+        SYNTAX	INTEGER
+        ACCESS	read-only
+        STATUS	mandatory
+        DESCRIPTION
+                "The slot number from which this slot was served its
+                configuration.  If the value for this attribute is 0, this
+                slot obtained its configuration from a file system resource
+                (not necessarily local); If the value for this attribute is
+                -1, this slot does not participate in the boot process (e.g.
+                SRM). A positive value indicates that the configuration was
+                obtained from memory from the slot indicated by the value of
+                this attribute."
+        ::= { wfHwEntry 25 }
+
+    wfHwConfigFile OBJECT-TYPE
+        SYNTAX	DisplayString
+        ACCESS	read-only
+        STATUS	mandatory
+        DESCRIPTION
+                "The name of the config file the active configuration was
+                derived from.  This does NOT necessarily reflect the
+                current configuration!"
+        ::= { wfHwEntry 26 }
+
+    wfHwConfigDateAndTime OBJECT-TYPE
+        SYNTAX	OCTET STRING
+        ACCESS	read-only
+        STATUS	mandatory
+        DESCRIPTION
+                "The 11 octet date and time that a configuration was
+                loaded on/served to this slot. Octet map: 1-2 Year,
+                3 Month, 4 Day, 5 Hour, 6 Minutes, 7 Seconds,
+                8 Deci-seconds, 9 Direction from GMT ('+'|`-'), 10 GMT Hour
+                Offset, 11 GMT Minute Offset."
+        ::= { wfHwEntry 27 }
+
+    wfHwActiveImageName OBJECT-TYPE
+        SYNTAX	DisplayString
+        ACCESS	read-only
+        STATUS	mandatory
+        DESCRIPTION
+                "If slot was booted from a local source: this is the name of the active
+                image, which is in the form of <volume>:<image name>.
+                If slot was booted from a network source: this is the full pathname
+                where the active image was found on the remote server."
+        ::= { wfHwEntry 28 }
+
+    wfHwActiveImageSource OBJECT-TYPE
+        SYNTAX	DisplayString
+        ACCESS	read-only
+        STATUS	mandatory
+        DESCRIPTION
+                "The origin of the active image"
+        ::= { wfHwEntry 29 }
+
+    wfHwActiveImageDate OBJECT-TYPE
+        SYNTAX	DisplayString
+        ACCESS	read-only
+        STATUS	mandatory
+        DESCRIPTION
+                "The date which the active image was created"
+        ::= { wfHwEntry 30 }
+
+    wfHwMotherBdMemorySize OBJECT-TYPE
+        SYNTAX	INTEGER
+        ACCESS	read-only
+        STATUS	mandatory
+        DESCRIPTION
+                "The total installed dram size in kilobytes."
+        ::= { wfHwEntry 31 }
+
+    wfHwFastPacketCacheSize OBJECT-TYPE
+        SYNTAX	INTEGER
+        ACCESS	read-only
+        STATUS	mandatory
+        DESCRIPTION
+                "The size of the installed fast packet cache in kilobytes."
+        ::= { wfHwEntry 32 }
+
+    wfHwModDaughterBd1IdOpt OBJECT-TYPE
+        SYNTAX	INTEGER
+        ACCESS	read-only
+        STATUS	mandatory
+        DESCRIPTION
+                "Link module daughter board #1 identification number"
+        ::= { wfHwEntry 33 }
+
+    wfHwModDaughterBd1AwRev OBJECT-TYPE
+        SYNTAX	OCTET STRING
+        ACCESS	read-only
+        STATUS	mandatory
+        DESCRIPTION
+                "Link module daughter board #1 artwork revision level"
+        ::= { wfHwEntry 34 }
+
+    wfHwModDaughterBd1Rev OBJECT-TYPE
+        SYNTAX	OCTET STRING
+        ACCESS	read-only
+        STATUS	mandatory
+        DESCRIPTION
+                "Link module daughter board #1 board revision level"
+        ::= { wfHwEntry 35 }
+
+    wfHwModDaughterBd1SerialNumber OBJECT-TYPE
+        SYNTAX	OCTET STRING
+        ACCESS	read-only
+        STATUS	mandatory
+        DESCRIPTION
+                "Link module daughter board #1 serial number"
+        ::= { wfHwEntry 36 }
+
+    wfHwModDaughterBd2IdOpt OBJECT-TYPE
+        SYNTAX	INTEGER
+        ACCESS	read-only
+        STATUS	mandatory
+        DESCRIPTION
+                "Link module daughter board #2 identification number"
+        ::= { wfHwEntry 37 }
+
+    wfHwModDaughterBd2AwRev OBJECT-TYPE
+        SYNTAX	OCTET STRING
+        ACCESS	read-only
+        STATUS	mandatory
+        DESCRIPTION
+                "Link module daughter board #2 artwork revision level"
+        ::= { wfHwEntry 38 }
+
+    wfHwModDaughterBd2Rev OBJECT-TYPE
+        SYNTAX	OCTET STRING
+        ACCESS	read-only
+        STATUS	mandatory
+        DESCRIPTION
+                "Link module daughter board #2 board revision level"
+        ::= { wfHwEntry 39 }
+
+    wfHwModDaughterBd2SerialNumber OBJECT-TYPE
+        SYNTAX	OCTET STRING
+        ACCESS	read-only
+        STATUS	mandatory
+        DESCRIPTION
+                "Link module daughter board #2 serial number"
+        ::= { wfHwEntry 40 }
+
+    END  -- Wellfleet-HARDWARE-MIB
+-- @(#)WSCCS q/mibs-module.mib 1.1 8/30/95
+Wellfleet-MODULE-MIB DEFINITIONS ::= BEGIN
+
+-- Created by mdl2asn version 3.1
+-- Creation date: Wed Aug 30 16:45:27 EDT 1995
+
+
+    IMPORTS
+
+      IpAddress, Counter, Gauge, TimeTicks, Opaque, enterprises, mgmt
+        FROM RFC1155-SMI
+      OBJECT-TYPE
+        FROM RFC-1212
+      TRAP-TYPE
+        FROM RFC-1215
+      DisplayString, mib-2
+        FROM RFC1213-MIB
+      wfHwModuleGroup
+        FROM Wellfleet-COMMON-MIB;
+
+
+    wfHwModuleTable OBJECT-TYPE
+        SYNTAX	SEQUENCE OF WfHwModuleEntry
+        ACCESS	not-accessible
+        STATUS	mandatory
+        DESCRIPTION
+                "Hardware Module Table
+                Filled in by the Module Driver. Read by SNMP to
+                build the driver load records "
+        ::= { wfHwModuleGroup 1 }
+
+    wfHwModuleEntry OBJECT-TYPE
+        SYNTAX	WfHwModuleEntry
+        ACCESS	not-accessible
+        STATUS	mandatory
+        DESCRIPTION
+                "Hardware specific information about a slot."
+        INDEX	{ wfHwModuleSlot,
+    		  wfHwModuleModule }
+        ::= { wfHwModuleTable 1 }
+
+    WfHwModuleEntry ::= SEQUENCE {
+    	    wfHwModuleSlot
+    		INTEGER,
+    	    wfHwModuleModule
+    		INTEGER,
+    	    wfHwModuleModIdOpt
+    		INTEGER,
+    	    wfHwModuleModRev
+    		OCTET STRING,
+    	    wfHwModuleModSerialNumber
+    		OCTET STRING,
+    	    wfHwModuleArtworkRev
+    		DisplayString
+        }
+
+    wfHwModuleSlot OBJECT-TYPE
+        SYNTAX	INTEGER
+        ACCESS	read-only
+        STATUS	mandatory
+        DESCRIPTION
+                "A unique value for each slot.
+                Its value ranges between 1 and 4."
+        ::= { wfHwModuleEntry 1 }
+
+    wfHwModuleModule OBJECT-TYPE
+        SYNTAX	INTEGER
+        ACCESS	read-only
+        STATUS	mandatory
+        DESCRIPTION
+                "This value ranges between 1 and 4"
+        ::= { wfHwModuleEntry 2 }
+
+    wfHwModuleModIdOpt OBJECT-TYPE
+        SYNTAX	INTEGER {
+    		    spex(512),
+    		    hss(768),
+    		    hsd(769),
+    		    denm(1280),
+    		    denmhwf(1281),
+    		    dsnmnn(1536),
+    		    dsnmn1(1537),
+    		    dsnmn2(1538),
+    		    dsnm1n(1540),
+    		    dsnm11(1541),
+    		    dsnm12(1542),
+    		    dsnm2n(1544),
+    		    dsnm21(1545),
+    		    dsnm22(1546),
+    		    dsnmnnisdn(1584),
+    		    dsnmn1isdn(1585),
+    		    dsnmn2isdn(1586),
+    		    dsnm1nisdn(1588),
+    		    dsnm11isdn(1589),
+    		    dsnm12isdn(1590),
+    		    dsnm2nisdn(1592),
+    		    dsnm21isdn(1593),
+    		    dsnm22isdn(1594),
+    		    mmfsdsas(1792),
+    		    mmfsddas(1793),
+    		    smfsdsas(1800),
+    		    smfsddas(1801),
+    		    mmscsas(1808),
+    		    mmscdas(1809),
+    		    smammbdas(1825),
+    		    mmasmbdas(1833),
+    		    mmfsdsashwf(1856),
+    		    mmfsddashwf(1857),
+    		    smfsdsashwf(1864),
+    		    smfsddashwf(1865),
+    		    mmscsashwf(1872),
+    		    mmscdashwf(1873),
+    		    smammbdashwf(1889),
+    		    mmasmbdashwf(1897),
+    		    dtnm(2048),
+    		    cam(2049),
+    		    se100nm(2304),
+    		    asnqbri(2560)
+    		}
+        ACCESS	read-only
+        STATUS	mandatory
+        DESCRIPTION
+                "Module IDs for the net modules modules"
+        ::= { wfHwModuleEntry 3 }
+
+    wfHwModuleModRev OBJECT-TYPE
+        SYNTAX	OCTET STRING
+        ACCESS	read-only
+        STATUS	mandatory
+        DESCRIPTION
+                "The revision level of the module. High byte is in upper 2 bytes."
+        ::= { wfHwModuleEntry 4 }
+
+    wfHwModuleModSerialNumber OBJECT-TYPE
+        SYNTAX	OCTET STRING
+        ACCESS	read-only
+        STATUS	mandatory
+        DESCRIPTION
+                "The serial number of the module."
+        ::= { wfHwModuleEntry 5 }
+
+    wfHwModuleArtworkRev OBJECT-TYPE
+        SYNTAX	DisplayString
+        ACCESS	read-only
+        STATUS	mandatory
+        DESCRIPTION
+                "The Artwork Revision number of the module"
+        ::= { wfHwModuleEntry 6 }
+
+    wfModuleTable OBJECT-TYPE
+        SYNTAX	SEQUENCE OF WfModuleEntry
+        ACCESS	not-accessible
+        STATUS	mandatory
+        DESCRIPTION
+                "This table is used by the module driver for Barracuda"
+        ::= { wfHwModuleGroup 2 }
+
+    wfModuleEntry OBJECT-TYPE
+        SYNTAX	WfModuleEntry
+        ACCESS	not-accessible
+        STATUS	mandatory
+        DESCRIPTION
+                "Hardware specific information about a slot."
+        INDEX	{ wfModuleSlot }
+        ::= { wfModuleTable 1 }
+
+    WfModuleEntry ::= SEQUENCE {
+    	    wfModuleDelete
+    		INTEGER,
+    	    wfModuleSlot
+    		INTEGER,
+    	    wfModuleTimerFrequency
+    		INTEGER,
+    	    wfModuleBufferBalance
+    		INTEGER,
+    	    wfModuleFddiWeight
+    		INTEGER,
+    	    wfModuleTokenRingWeight
+    		INTEGER,
+    	    wfModuleCsmacdWeight
+    		INTEGER,
+    	    wfModuleSyncWeight
+    		INTEGER,
+    	    wfModuleFreeBufferCredits
+    		INTEGER,
+    	    wfModuleTotalBufferCredits
+    		INTEGER,
+    	    wfModuleRestart
+    		INTEGER,
+    	    wfModuleCsmacd100Weight
+    		INTEGER
+        }
+
+    wfModuleDelete OBJECT-TYPE
+        SYNTAX	INTEGER {
+    		    created(1),
+    		    deleted(2)
+    		}
+        ACCESS	read-write
+        STATUS	mandatory
+        DESCRIPTION
+                "create/delete parameter"
+        DEFVAL	{ created }
+        ::= { wfModuleEntry 1 }
+
+    wfModuleSlot OBJECT-TYPE
+        SYNTAX	INTEGER
+        ACCESS	read-only
+        STATUS	mandatory
+        DESCRIPTION
+                "A unique value for each slot.
+                Its value ranges between 1 and 14.
+                There are products in this family that contain 1, 5, and 14 slots."
+        ::= { wfModuleEntry 2 }
+
+    wfModuleTimerFrequency OBJECT-TYPE
+        SYNTAX	INTEGER {
+    		    timerdefault(1)
+    		}
+        ACCESS	read-write
+        STATUS	mandatory
+        DESCRIPTION
+                "This value determines the frequency for the buffer balance
+                algorithm to run"
+        DEFVAL	{ timerdefault }
+        ::= { wfModuleEntry 3 }
+
+    wfModuleBufferBalance OBJECT-TYPE
+        SYNTAX	INTEGER {
+    		    txrx(1),
+    		    none(2),
+    		    rx(3),
+    		    tx(4)
+    		}
+        ACCESS	read-write
+        STATUS	mandatory
+        DESCRIPTION
+                "Enable/Disable buffer balancing algorithm selectively"
+        DEFVAL	{ txrx }
+        ::= { wfModuleEntry 4 }
+
+    wfModuleFddiWeight OBJECT-TYPE
+        SYNTAX	INTEGER(1..10)
+        ACCESS	read-write
+        STATUS	mandatory
+        DESCRIPTION
+                "This value determines the weight of the fddi line
+                for the buffer balancing algorithm"
+        DEFVAL	{ 6 }
+        ::= { wfModuleEntry 5 }
+
+    wfModuleTokenRingWeight OBJECT-TYPE
+        SYNTAX	INTEGER(1..10)
+        ACCESS	read-write
+        STATUS	mandatory
+        DESCRIPTION
+                "This value determines the weight of the token-ring
+                for the buffer balancing algorithm"
+        DEFVAL	{ 4 }
+        ::= { wfModuleEntry 6 }
+
+    wfModuleCsmacdWeight OBJECT-TYPE
+        SYNTAX	INTEGER(1..10)
+        ACCESS	read-write
+        STATUS	mandatory
+        DESCRIPTION
+                "This value determines the weight of the csmacd line
+                for the buffer balancing algorithm"
+        DEFVAL	{ 3 }
+        ::= { wfModuleEntry 7 }
+
+    wfModuleSyncWeight OBJECT-TYPE
+        SYNTAX	INTEGER(1..10)
+        ACCESS	read-write
+        STATUS	mandatory
+        DESCRIPTION
+                "This value determines the weight of the sync line
+                for the buffer balancing algorithm"
+        DEFVAL	{ 2 }
+        ::= { wfModuleEntry 8 }
+
+    wfModuleFreeBufferCredits OBJECT-TYPE
+        SYNTAX	INTEGER
+        ACCESS	read-only
+        STATUS	mandatory
+        DESCRIPTION
+                "This attribute indicates the number of buffers
+                available to line drivers but not used by them"
+        ::= { wfModuleEntry 9 }
+
+    wfModuleTotalBufferCredits OBJECT-TYPE
+        SYNTAX	INTEGER
+        ACCESS	read-only
+        STATUS	mandatory
+        DESCRIPTION
+                "This attribute indicates the total number of buffers
+                available to line drivers"
+        ::= { wfModuleEntry 10 }
+
+    wfModuleRestart OBJECT-TYPE
+        SYNTAX	INTEGER
+        ACCESS	read-write
+        STATUS	mandatory
+        DESCRIPTION
+                "This attribute should be touched after the queue
+                lengths are configured in the line-records"
+        ::= { wfModuleEntry 11 }
+
+    wfModuleCsmacd100Weight OBJECT-TYPE
+        SYNTAX	INTEGER(1..10)
+        ACCESS	read-write
+        STATUS	mandatory
+        DESCRIPTION
+                "This value determines the weight of the csmacd 100MB line
+                for the buffer balancing algorithm"
+        DEFVAL	{ 6 }
+        ::= { wfModuleEntry 12 }
+
+    END  -- Wellfleet-MODULE-MIB
+-- @(#)WSCCS h/mibs-sys.mib 1.1 8/30/95
+Wellfleet-SYS-MIB DEFINITIONS ::= BEGIN
+
+-- Created by mdl2asn version 3.1
+-- Creation date: Wed Aug 30 16:48:50 EDT 1995
+
+
+    IMPORTS
+
+      IpAddress, Counter, Gauge, TimeTicks, Opaque, enterprises, mgmt
+        FROM RFC1155-SMI
+      OBJECT-TYPE
+        FROM RFC-1212
+      TRAP-TYPE
+        FROM RFC-1215
+      DisplayString, mib-2
+        FROM RFC1213-MIB
+      wfSystem
+        FROM Wellfleet-COMMON-MIB;
+
+
+    wfSys		OBJECT IDENTIFIER ::= { wfSystem 1 }
+
+    wfSysDescr OBJECT-TYPE
+        SYNTAX	DisplayString
+        ACCESS	read-only
+        STATUS	mandatory
+        DESCRIPTION
+                "A textual description of the entity including full name and version of
+                the system's hardware type, OS, and networking SW "
+        ::= { wfSys 1 }
+
+    wfSysObjectID OBJECT-TYPE
+        SYNTAX	OBJECT IDENTIFIER
+        ACCESS	read-only
+        STATUS	mandatory
+        DESCRIPTION
+                "Provides an unambiguous means for determining the MIB type (old product vs.
+                harpoon MIB)."
+        ::= { wfSys 2 }
+
+    wfSysUpTime OBJECT-TYPE
+        SYNTAX	TimeTicks
+        ACCESS	read-only
+        STATUS	mandatory
+        DESCRIPTION
+                "Time in seconds/100 since the last cold start"
+        ::= { wfSys 3 }
+
+    wfSysContact OBJECT-TYPE
+        SYNTAX	DisplayString
+        ACCESS	read-write
+        STATUS	mandatory
+        DESCRIPTION
+                "Contact person for this node and where/how to contact them"
+        ::= { wfSys 4 }
+
+    wfSysName OBJECT-TYPE
+        SYNTAX	DisplayString
+        ACCESS	read-write
+        STATUS	mandatory
+        DESCRIPTION
+                "Node's fully qualified domain name or administratively assigned name"
+        ::= { wfSys 5 }
+
+    wfSysLocation OBJECT-TYPE
+        SYNTAX	DisplayString
+        ACCESS	read-write
+        STATUS	mandatory
+        DESCRIPTION
+                "Physical Location of this Node"
+        ::= { wfSys 6 }
+
+    wfSysServices OBJECT-TYPE
+        SYNTAX	INTEGER
+        ACCESS	read-only
+        STATUS	mandatory
+        DESCRIPTION
+                "A sum of numbers indicating the set of services the entity offers. For each
+                layer L, add 2**(L - 1). Example: 78 = Layers 2,3,4, and 7."
+        DEFVAL	{ 78 }
+        ::= { wfSys 7 }
+
+    wfSysGmtOffset OBJECT-TYPE
+        SYNTAX	INTEGER
+        ACCESS	read-only
+        STATUS	mandatory
+        DESCRIPTION
+                "The positive or negative offset from Greenwich Mean Time (GMT). This
+                effectively describes the time zone."
+        ::= { wfSys 8 }
+
+    wfSysMibVersion OBJECT-TYPE
+        SYNTAX	DisplayString
+        ACCESS	read-only
+        STATUS	mandatory
+        DESCRIPTION
+                "The version of the private management information base currently being
+                used by the system software. Format is: xV.RR"
+        ::= { wfSys 9 }
+
+    wfSysMibRevision OBJECT-TYPE
+        SYNTAX	INTEGER
+        ACCESS	read-write
+        STATUS	mandatory
+        DESCRIPTION
+                "The revision level of the private management information base currently
+                being used by the system software."
+        ::= { wfSys 10 }
+
+    wfSysAgentType OBJECT-TYPE
+        SYNTAX	INTEGER {
+    		    anrptragenttype(29),
+    		    anhubagenttype(30)
+    		}
+        ACCESS	read-only
+        STATUS	mandatory
+        DESCRIPTION
+                "The network management agent's module type"
+        ::= { wfSys 11 }
+
+    wfSysMibCounterEnable OBJECT-TYPE
+        SYNTAX	INTEGER {
+    		    enabled(1),
+    		    disabled(2)
+    		}
+        ACCESS	read-write
+        STATUS	mandatory
+        DESCRIPTION
+                "Mib II counter Switch"
+        DEFVAL	{ enabled }
+        ::= { wfSys 12 }
+
+    END  -- Wellfleet-SYS-MIB

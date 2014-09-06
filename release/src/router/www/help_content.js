@@ -30,7 +30,9 @@ helpcontent[1] = new Array("",
 						   "<#WLANConfig11b_Channel_itemdesc#>",
 						   "<#WLANConfig11b_x_BRApply_itemdesc#>",
 						   "<#WLANConfig11b_x_Mode_itemdesc5#>",
-							 "<#WLANConfig11b_x_Mode_itemdescAC#>");
+							"<#WLANConfig11b_x_Mode_itemdescAC#>",
+							"<#WLANConfig11b_x_Mode_itemdescAC2#>",
+							"<#WLANConfig11b_x_Mode_itemdescAC3#>");
 helpcontent[2] = new Array("",
 						   "<#WLANAuthentication11a_ExAuthDBIPAddr_itemdesc#>",
 						   "<#WLANAuthentication11a_ExAuthDBPortNumber_itemdesc#>",
@@ -210,8 +212,8 @@ helpcontent[20] = new Array("",
 							"<#min_bound_desc#>",
 							"<#max_bound_desc#>",
 							"<#bound_zero_desc#>",
-							Untranslated.intelligence_type_desc,
-							Untranslated.traditional_type_desc);
+							"<#EzQoS_type_adaptive_desc#>",
+							"<#EzQoS_type_traditional_desc#>");
 // HSDPA
 helpcontent[21] = new Array("",
 							"<#HSDPAConfig_hsdpa_mode_itemdesc#>",

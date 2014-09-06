@@ -28,7 +28,10 @@ a:active {
 }
 </style>
 <script type="text/javascript" src="/state.js"></script>
+<script type="text/javascript" src="/jquery.js"></script>
+<script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <script>
+var $j = jQuery.noConflict();
 var diskOrder = parent.getSelectedDiskOrder();
 var _DMDiskNum = (pool_devices().getIndexByValue('<% nvram_get("apps_dev"); %>') < foreign_disk_total_mounted_number()[0])? 0 : 1;
 
@@ -66,6 +69,10 @@ function initial(){
 
 	if(sw_mode == "2" || sw_mode == "3" || sw_mode == "4")
 		$("aidisk_hyperlink").style.display = "none";
+	
+	if(based_modelid == "RT-AC87U"){
+		document.getElementById('reduce_usb3_table').style.display = "";
+	}		
 }
 
 var thisForeignDisksIndex;
@@ -116,9 +123,15 @@ function showdisklink(){
 			$("ddnslink2").style.display = "";
 			$("desc_2").style.display = "";			
 			$("ddnslink2_LAN").style.display = "";
-			$("selected_account_link").href = 'ftp://<% nvram_get("ddns_hostname_x"); %>';
+			if(getBrowser_info().ie != undefined || getBrowser_info().ie != null)
+				$("selected_account_link").href = 'ftp://<% nvram_get("productid"); %>@<% nvram_get("ddns_hostname_x"); %>';
+			else
+				$("selected_account_link").href = 'ftp://<% nvram_get("ddns_hostname_x"); %>';
 			showtext($("selected_account_str"), 'ftp://<% nvram_get("ddns_hostname_x"); %>');
-			$("selected_account_link_LAN").href = 'ftp://<% nvram_get("lan_ipaddr"); %>';
+			if(getBrowser_info().ie != undefined || getBrowser_info().ie != null)
+				$("selected_account_link_LAN").href = 'ftp://<% nvram_get("productid"); %>@<% nvram_get("lan_ipaddr"); %>';
+			else
+				$("selected_account_link_LAN").href = 'ftp://<% nvram_get("lan_ipaddr"); %>';
 			showtext($("selected_account_str_LAN"), 'ftp://<% nvram_get("lan_ipaddr"); %>');
 		}
 		
@@ -143,8 +156,14 @@ function showdisklink(){
 		$("noWAN_link").style.display = "";
 		$("ddnslink3").style.display = "";
 		if(FTP_mode == 1){
+			if(getBrowser_info().ie != undefined || getBrowser_info().ie != null)
+				$("ftp_account_link").href = 'ftp://<% nvram_get("productid"); %>@<% nvram_get("lan_ipaddr"); %>';
+			else
 				$("ftp_account_link").href = 'ftp://<% nvram_get("lan_ipaddr"); %>';
 		}else{
+			if(getBrowser_info().ie != undefined || getBrowser_info().ie != null)
+				$("ftp_account_link").href = 'ftp://<% nvram_get("productid"); %>@<% nvram_get("lan_ipaddr"); %>';
+			else
 				$("ftp_account_link").href = 'ftp://<% nvram_get("lan_ipaddr"); %>';
 				$("ftp_account_link").innerHTML = 'ftp://<% nvram_get("lan_ipaddr"); %>';
 		}		
@@ -191,10 +210,13 @@ function gotoDM(){
 	if(dm_http_port == "")
 		dm_http_port = "8081";
 
+	var dm_url = "";
 	if(parent.location.host.split(":").length > 1)
-		parent.location.href = "http://" + parent.location.host.split(":")[0] + ":" + dm_http_port;
+		dm_url = "http://" + parent.location.host.split(":")[0] + ":" + dm_http_port;
 	else
-		parent.location.href = "http://" + parent.location.host + ":" + dm_http_port;
+		dm_url = "http://" + parent.location.host + ":" + dm_http_port;
+
+	window.open(dm_url);
 }
 
 function remove_disk(){
@@ -287,8 +309,44 @@ function remove_disk(){
     	<p class="formfonttitle_nwm" style="float:left;width:138px; "><#Safelyremovedisk_title#>:</p>
     	<input id="show_remove_button" class="button_gen" type="button" class="button" onclick="remove_disk();" value="<#btn_remove#>">
     	<div id="show_removed_string" style="display:none;"><#Safelyremovedisk#></div>
+		 <img style="margin-top:5px;" src="/images/New_ui/networkmap/linetwo2.png">
     </td>
   </tr>
+</table>
+
+<table width="95%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="table1px" id="reduce_usb3_table" style="display:none">
+	<tr>
+		<td height="50" style="padding:10px 15px 0px 15px;">
+			<p class="formfonttitle_nwm" style="float:left;width:138px; " onmouseover="parent.overHint(24);" onmouseout="parent.nd();"><#WLANConfig11b_x_ReduceUSB3#></p>
+			<form method="post" name="form" action="/start_apply.htm" target="hidden_frame">
+				<input type="hidden" name="current_page" value="/index.asp">
+				<input type="hidden" name="next_page" value="/index.asp">
+				<input type="hidden" name="productid" value="<% nvram_get("productid"); %>">
+				<input type="hidden" name="action_mode" value="apply">
+				<input type="hidden" name="action_script" value="reboot">
+				<input type="hidden" name="action_wait" value="160">
+				<input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
+				<input type="hidden" name="usb_usb3" value="<% nvram_get("usb_usb3"); %>">
+			
+			<div align="center" class="left" style="width:120px; float:left; cursor:pointer;margin-top:-7px;" id="reduce_usb3_enable"></div>
+			<script type="text/javascript">
+				var flag = document.form.usb_usb3.value == 1 ?  0: 1;
+				$j('#reduce_usb3_enable').iphoneSwitch( flag,
+					function(){		//ON:0
+						document.form.usb_usb3.value = 0;
+						document.form.submit();
+					},
+					function(){		//OFF:1
+						document.form.usb_usb3.value = 1;
+						document.form.submit();
+					},
+					{
+						switch_on_container_path: '/switcherplugin/iphone_switch_container_off.png'
+					})
+			</script>
+			</form>
+		</td>
+	</tr>
 </table>
 
 <div id="unmounted_refresh" style="padding:5px 0px 5px 25px; display:none">

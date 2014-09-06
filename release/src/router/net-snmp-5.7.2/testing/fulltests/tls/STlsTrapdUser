@@ -1,0 +1,87 @@
+#!/bin/sh
+
+. STlsVars
+
+#########################################
+# CERTIFICATE SETUP
+#
+
+# produce the certificates to use
+
+# snmptrapd
+HOSTNAME=`hostname`
+CAPTURE $NSCERT gencert -t snmptrapdd   --cn $HOSTNAME $NSCERTARGS
+SERVERFP=`$NSCERT showcerts --fingerprint --brief snmptrapdd  $NSCERTARGS`
+CHECKVALUEISNT "$SERVERFP" "" "generated fingerprint for snmptrapdd certificate"
+
+# user
+CAPTURE $NSCERT gencert -t snmpapp --cn 'testuser'  $NSCERTARGS
+TESTUSERFP=`$NSCERT showcerts --fingerprint --brief snmpapp $NSCERTARGS`
+CHECKVALUEISNT "$TESTUSERFP" "" "generated fingerprint for testuser certificate"
+
+# CA certificate
+
+CAPTURE $NSCERT genca --cn ca-net-snmp.org  $NSCERTARGS
+CAFP=`$NSCERT showcas --fingerprint --brief ca-net-snmp.org $NSCERTARGS`
+CHECKVALUEISNT "$CAFP" "" "generated fingerprint for ca-net-snmp.org certificate"
+
+# user 9: CA signed user cert
+CAPTURE $NSCERT gencert -t causer --with-ca ca-net-snmp.org --san email:user9@test.net-snmp.org --email user9@test.net-snmp.org  $NSCERTARGS
+CAUSERFP=`$NSCERT showcerts --fingerprint --brief causer $NSCERTARGS`
+CHECKVALUEISNT "$CAUSERFP" "" "generated fingerprint for causer certificate"
+
+#########################################
+# AGENT CONFIGURATION
+#
+
+CONFIGTRAPD '[snmp]' debugTokens tsm
+# ,tls,ssl,cert,tsm
+CONFIGTRAPD '[snmp]' doDebugging 1
+CONFIGTRAPD '[snmp]' serverCert $SERVERFP
+
+CONFIGTRAPD '[snmp]' trustCert $CAFP
+
+# common name mappings
+CONFIGTRAPD certSecName 9  $TESTUSERFP     --cn
+
+CONFIGTRAPD certSecName 100 $CAFP        --rfc822
+
+CONFIGAPP   serverCert  	  $SERVERFP
+CONFIGAPP   defSecurityModel      tsm
+
+CONFIGTRAPD  authuser log -s tsm testuser authpriv
+
+# this file contains tests common to both tls and dtls usages
+
+# start the agent up
+FLAGS="-Dtls -On $SNMP_FLAGS $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPTRAPD_PORT"
+
+STARTTRAPD
+
+########################################
+# POST-TRAPD-STARTUP Certificates
+# user
+CAPTURE $NSCERT gencert -t snmptrap --cn 'testuser'  $NSCERTARGS
+TESTUSERFP=`$NSCERT showcerts --fingerprint --brief snmptrap $NSCERTARGS`
+CHECKVALUEISNT "$TESTUSERFP" "" "generated fingerprint for testuser certificate"
+
+######################################################################
+# ACTUAL TESTS
+#
+# Run the actual list of tests
+#
+
+# using user 1 - a common name mapped certificate
+# (using the default "snmpapp" certificate because we don't specify another)
+DOTRAPTEST user1TrapTest "$FLAGS"
+
+# failing using the CA signed cert without
+DOFAILTRAPTEST user2UnknownUser "-T our_identity=snmptrap $FLAGS"
+
+# using user 1 - sending an INFORM
+# (using the default "snmpapp" certificate because we don't specify another)
+DOTRAPTEST user1InformTest "-Ci $FLAGS"
+
+STOPTRAPD
+
+FINISHED

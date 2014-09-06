@@ -246,7 +246,7 @@ int main(int argc, char *argv[])
 	}
 	// share mode
 	else if (nvram_match("st_samba_mode", "1") || nvram_match("st_samba_mode", "3")) {
-#if defined(RTCONFIG_TFAT) || defined(RTCONFIG_TUXERA_NTFS) || defined(RTCONFIG_TUXERA_HFS) || defined(RTCONFIG_EXFAT)
+#if defined(RTCONFIG_TFAT) || defined(RTCONFIG_TUXERA_NTFS) || defined(RTCONFIG_TUXERA_HFS)
 		if(nvram_get_int("enable_samba_tuxera") == 1){
 			fprintf(fp, "auth methods = guest\n");
 			fprintf(fp, "guest account = admin\n");

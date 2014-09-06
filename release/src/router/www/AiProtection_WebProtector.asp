@@ -74,7 +74,7 @@ var wrs_id_array = [["1,2,3,4,5,6,8", "9,10,14,15,16,25,26", "11"],
 					 ["3", "1"],
 					 ["8", "4", ""]];*/					
 var apps_id_array = [["", "", ""],
-					 ["", "0,15", "", "", "21"],
+					 ["", "0,6,15", "", "", "21"],
 					 ["3", "1"],
 					 ["8", "4", ""]];					 
 
@@ -300,27 +300,26 @@ function addRow_main(obj, length){
 }
 					 
 function genMain_table(){
-	//var category_name = ["Web Surfing", "Adult", "Instant Message and Communication", "P2P and File Transfer", "Streaming and Entertainment"];
-	var category_name = ["Adult", "Instant Message and Communication", "P2P and File Transfer", "Streaming and Entertainment"];
+	var category_name = ["<#AiProtection_filter_Adult#>", "<#AiProtection_filter_message#>", "<#AiProtection_filter_p2p#>", "<#AiProtection_filter_stream#>"];
 	/*var sub_category_name = [["General Web service"],
-							 ["Pornography", "Illegal and Violence", "Gambling"],
-							 ["Internet Telephony", "Instant Mssaging", "Virtual Community", "Blog", "Mobile"],
-							 ["File transfer", "Peer to Peer"],
-							 ["Games", "Streaming media", "Internet Radio and TV"]];*/
-	var sub_category_name = [["Pornography", "Illegal and Violence", "Gambling"],
-							 ["Internet Telephony", "Instant Mssaging", "Virtual Community", "Blog", "Mobile"],
-							 ["File transfer", "Peer to Peer"],
-							 ["Games", "Streaming media", "Internet Radio and TV"]];
+							 ["<#AiProtection_filter_Adult1#>", "<#AiProtection_filter_Adult2#>", "<#AiProtection_filter_Adult3#>"],
+							 ["<#AiProtection_filter_Adult3#>", "<#AiProtection_filter_Adult5#>", "<#AiProtection_filter_Adult6#>", "<#AiProtection_filter_Adult7#>", "<#AiProtection_filter_Adult8#>"],
+							 ["<#AiProtection_filter_p2p1#>", "<#AiProtection_filter_p2p2#>"],
+							 ["<#AiProtection_filter_stream1#>", "<#AiProtection_filter_stream2#>", "<#AiProtection_filter_stream3#>"]];*/
+	var sub_category_name = [["<#AiProtection_filter_Adult1#>", "<#AiProtection_filter_Adult2#>", "<#AiProtection_filter_Adult3#>"],
+							 ["<#AiProtection_filter_Adult3#>", "<#AiProtection_filter_Adult5#>", "<#AiProtection_filter_Adult6#>", "<#AiProtection_filter_Adult7#>", "<#AiProtection_filter_Adult8#>"],
+							 ["<#AiProtection_filter_p2p1#>", "<#AiProtection_filter_p2p2#>"],
+							 ["<#AiProtection_filter_stream1#>", "<#AiProtection_filter_stream2#>", "<#AiProtection_filter_stream3#>"]];
 	
 	/*var category_desc = ["Block web Surfing will prohibit client from any web service.",
 						 "Block adult content can prevent child from visiting sexy, violence and illegal related content.", 
 						 "Block IM and communication content can prevent child from addicted to social networking usage.", 
-						 "Block P2P and File Transfer content can keep your network in a better transmission quality.", 
-						 "Block Streaming and Entertainment content can prevent child from spending long time on Internet entertainment."];	*/	
+						 "<#AiProtection_filter_p2p_desc#>", 
+						 "<#AiProtection_filter_stream_desc#>"];	*/
 	var category_desc = ["Block adult content can prevent child from visiting sexy, violence and illegal related content.", 
 						 "Block IM and communication content can prevent child from addicted to social networking usage.", 
-						 "Block P2P and File Transfer content can keep your network in a better transmission quality.", 
-						 "Block Streaming and Entertainment content can prevent child from spending long time on Internet entertainment."];					 
+						 "<#AiProtection_filter_p2p_desc#>", 
+						 "<#AiProtection_filter_stream_desc#>"];
 		
 	var match_flag = 0;
 	var apps_filter_row = apps_filter.split("<");
@@ -335,7 +334,7 @@ function genMain_table(){
 	code += '<input id="selAll" type="checkbox" onclick="selectAll(this, 0);" value="">';
 	code += '</th>';
 	code += '<th width="40%">Client name</th>';
-	code += '<th width="40%">Content Category</th>';
+	code += '<th width="40%"><#AiProtection_filter_category#></th>';
 	code += '<th width="10%"><#list_add_delete#></th>';
 	code += '</tr>';
 	code += '<tr id="main_element">';	
@@ -343,7 +342,7 @@ function genMain_table(){
 	code += '<input type="checkbox" checked="">';
 	code += '</td>';
 	code += '<td style="border-bottom:2px solid #000;">';
-	code += '<input type="text" maxlength="32" style="margin-left:10px;float:left;width:255px;" class="input_20_table" name="PC_devicename" onkeypress="" onclick="hideClients_Block();" onblur="if(!over_var){hideClients_Block();}" placeholder="Please select the client name">';
+	code += '<input type="text" maxlength="32" style="margin-left:10px;float:left;width:255px;" class="input_20_table" name="PC_devicename" onkeypress="" onclick="hideClients_Block();" onblur="if(!over_var){hideClients_Block();}" placeholder="<#AiProtection_client_select#>">';
 	code += '<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" onclick="pullLANIPList(this);" title="<#select_client#>" onmouseover="over_var=1;" onmouseout="over_var=0;">';
 	code += '<div id="ClientList_Block_PC" class="ClientList_Block_PC"></div>';	
 	code += '</td>';
@@ -504,7 +503,7 @@ function showLANIPList(){
 		code += ' </div></a>';
 	}
 	
-	code +='<!--[if lte IE 6.5]><script>alert("<#ALERT_TO_CHANGE_BROWSER#>");</script><![endif]-->';	
+	code +="<!--[if lte IE 6.5]><script>alert(\"<#ALERT_TO_CHANGE_BROWSER#>\");</script><![endif]-->";	
 	$("ClientList_Block_PC").innerHTML = code;
 }
 
@@ -741,14 +740,14 @@ function show_inner_tab(){
 	if(document.form.current_page.value == "ParentalControl.asp"){		
 		code += '<span class="clicked">Time Limits</span>';
 		code += '<a href="AiProtection_WebProtector.asp">';
-		code += '<span style="margin-left:10px" class="click">Web & Apps Filters</span>';
+		code += "<span style=\"margin-left:10px\" class=\"click\"><#AiProtection_filter#></span>";
 		code += '</a>';
 	}
 	else{
 		code += '<a href="ParentalControl.asp">';
 		code += '<span class="click">Time Limits</span>';
 		code += '</a>';
-		code += '<span style="margin-left:10px" class="clicked">Web & Apps Filters</span>';	
+		code += "<span style=\"margin-left:10px\" class=\"clicked\"><#AiProtection_filter#></span>";	
 	}
 
 	$('switch_menu').innerHTML = code;
@@ -853,16 +852,16 @@ function eula_confirm(){
 									<table width="730px">
 										<tr>
 											<td align="left">
-												<div class="formfonttitle" style="width:400px">AiProtection - Web & Apps Filters</div>
+												<div class="formfonttitle" style="width:400px">AiProtection - <#AiProtection_filter#></div>
 											</td>
 											<td>
 												<div id="switch_menu" style="margin:-20px 0px 0px -20px;">													
 													<div style="background-image:url('images/New_ui/left-dark.png');width:173px;height:40px;">
-														<div style="text-align:center;padding-top:9px;color:#93A9B1;font-size:14px">Web & Apps Filters</div>
+														<div style="text-align:center;padding-top:9px;color:#93A9B1;font-size:14px"><#AiProtection_filter#></div>
 													</div>
 													<a href="ParentalControl.asp">
 														<div style="background-image:url('images/New_ui/right-light.png');width:172px;height:40px;margin:-41px 0px 0px 173px;">
-															<div style="text-align:center;padding-top:9px;color:#FFFFFF;font-size:14px">Time Scheduling</div>
+															<div style="text-align:center;padding-top:9px;color:#FFFFFF;font-size:14px"><#Time_Scheduling#></div>
 														</div>
 													</a>
 												</div>
@@ -879,13 +878,13 @@ function eula_confirm(){
 											</td>
 											<td>&nbsp;&nbsp;</td>
 											<td style="font-style: italic;font-size: 14px;">
-												<span>Web & Apps Filters allows you to block access to unwanted websites and apps. To use web & apps Filters:</span>
+												<span><#AiProtection_filter_desc1#></span>
 												<ol>
-													<li>In the [Clients Name] column, select the client whose network usage you want to control. The client name can be modified in network map client list.</li>
-													<li>Check the unwanted content categories</li>
-													<li>Click the plus (+) icon to add rule then click apply.</li>												
+													<li><#AiProtection_filter_desc2#></li>
+													<li><#AiProtection_filter_desc3#></li>
+													<li><#AiProtection_filter_desc4#></li>
 												</ol>
-												<span>If you want to disable the rule temporarily, uncheck the check box in front of rule.</span>
+												<span><#AiProtection_filter_note#></span>
 											</td>
 										</tr>
 									</table>
@@ -894,7 +893,7 @@ function eula_confirm(){
 			<!--=====Beginning of Main Content=====-->
 								<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
 									<tr>
-										<th>Enable Web & Apps Filters</th>
+										<th><#AiProtection_filter#></th>
 										<td>
 											<div align="center" class="left" style="width:94px; float:left; cursor:pointer;" id="radio_web_restrict_enable"></div>
 											<div class="iphone_switch_container" style="height:32px; width:74px; position: relative; overflow: hidden">
@@ -977,3 +976,4 @@ function eula_confirm(){
 </form>
 </body>
 </html>
+

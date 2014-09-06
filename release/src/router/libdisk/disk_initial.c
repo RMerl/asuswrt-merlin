@@ -615,10 +615,6 @@ int find_partition_label(const char *dev_name, char *label){
 		goto ret;
 	if(volume_id_probe_hfs_hfsplus(&id) == 0 || id.error)
 		goto ret;
-#if defined(RTCONFIG_EXFAT)
-	if(volume_id_probe_exfat(&id) == 0 || id.error)
-		goto ret;
-#endif
 
 ret:
 	volume_id_free_buffer(&id);

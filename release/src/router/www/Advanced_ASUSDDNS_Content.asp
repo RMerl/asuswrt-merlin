@@ -129,53 +129,14 @@ function ddns_load_body(){
    
     hideLoading();
 
-    if(ddns_return_code == 'register,-1')
-        alert("<#LANHostConfig_x_DDNS_alarm_2#>");
-    else if(ddns_return_code.indexOf('200')!=-1){
-        alert("<#LANHostConfig_x_DDNS_alarm_3#>");
+    var ddnsHint = getDDNSState(ddns_return_code, hostname_x, ddns_old_name);
+    if(ddnsHint != "")
+        alert(ddnsHint);
+    if(ddns_return_code.indexOf('200')!=-1 || ddns_return_code.indexOf('220')!=-1 || ddns_return_code == 'register,230'){
         showhide("wan_ip_hide2", 0);
         if(ddns_server_x == "WWW.ASUS.COM")
             showhide("wan_ip_hide3", 1);       
-    }else if(ddns_return_code.indexOf('203')!=-1)
-        alert("<#LANHostConfig_x_DDNS_alarm_hostname#> '"+hostname_x+"' <#LANHostConfig_x_DDNS_alarm_registered#>");
-    else if(ddns_return_code.indexOf('220')!=-1){
-        alert("<#LANHostConfig_x_DDNS_alarm_4#>");
-        showhide("wan_ip_hide2", 0);
-        if(ddns_server_x == "WWW.ASUS.COM")
-            showhide("wan_ip_hide3", 1);       
-    }else if(ddns_return_code == 'register,230'){
-        alert("<#LANHostConfig_x_DDNS_alarm_5#>");
-        showhide("wan_ip_hide2", 0);
-        if(ddns_server_x == "WWW.ASUS.COM")
-            showhide("wan_ip_hide3", 1);       
-    }else if(ddns_return_code.indexOf('233')!=-1)
-        alert("<#LANHostConfig_x_DDNS_alarm_hostname#> '"+hostname_x+"' <#LANHostConfig_x_DDNS_alarm_registered_2#> '"+ddns_old_name+"'");
-    else if(ddns_return_code.indexOf('296')!=-1)
-        alert("<#LANHostConfig_x_DDNS_alarm_6#>");
-    else if(ddns_return_code.indexOf('297')!=-1)
-        alert("<#LANHostConfig_x_DDNS_alarm_7#>");
-    else if(ddns_return_code.indexOf('298')!=-1)
-        alert("<#LANHostConfig_x_DDNS_alarm_8#>");
-    else if(ddns_return_code.indexOf('299')!=-1)
-        alert("<#LANHostConfig_x_DDNS_alarm_9#>");
-    else if(ddns_return_code.indexOf('401')!=-1)
-        alert("<#LANHostConfig_x_DDNS_alarm_10#>");
-    else if(ddns_return_code.indexOf('407')!=-1)
-        alert("<#LANHostConfig_x_DDNS_alarm_11#>");
-    else if(ddns_return_code == 'Time-out')
-        alert("<#LANHostConfig_x_DDNS_alarm_1#>");
-    else if(ddns_return_code =='unknown_error')
-        alert("<#LANHostConfig_x_DDNS_alarm_2#>");
-      else if(ddns_return_code =='connect_fail')
-        alert("<#qis_fail_desc7#>");
-      else if(ddns_return_code =='no_change')
-            alert("<#LANHostConfig_x_DDNS_alarm_nochange#>");
-      /*else if(ddns_return_code =='ddns_query')
-            alert("<#LANHostConfig_x_DDNSHostnameCheck_buttonname#>");*/
-        else if(ddns_return_code =='auth_fail')
-                alert("<#qis_fail_desc1#>");
-      else if(ddns_return_code !='')
-            alert("<#LANHostConfig_x_DDNS_alarm_2#>");
+    } 
 }
 
 function applyRule(){

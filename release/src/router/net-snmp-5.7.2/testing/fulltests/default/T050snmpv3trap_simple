@@ -1,0 +1,36 @@
+#!/bin/sh
+
+. ../support/simple_eval_tools.sh
+
+HEADER SNMPv3 traps received and sent by tools
+
+#SKIPIFNOT NETSNMP_USE_OPENSSL
+SKIPIFNOT NETSNMP_ENABLE_SCAPI_AUTHPRIV
+
+#
+# Begin test
+#
+
+CREATEUSERENGINEID=0x80001f88802b3d0e06bbdf4321
+. ./Sv3usmconfigtrapd
+CONFIGTRAPD authuser log $TESTNOAUTHUSER noAuthNoPriv
+CONFIGTRAPD authuser log $TESTAUTHUSER authNoPriv
+CONFIGTRAPD authuser log $TESTPRIVUSER authPriv
+CONFIGTRAPD agentxsocket /dev/null
+
+STARTTRAPD
+
+CAPTURE "snmptrap -d -e $CREATEUSERENGINEID $TESTNOAUTHARGS $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPTRAPD_PORT 0 .1.3.6.1.6.3.1.1.5.1 .1.3.6.1.2.1.1.4.0 s received_trap_nanp"
+DELAY
+CAPTURE "snmptrap -d -e $CREATEUSERENGINEID $TESTAUTHARGS $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPTRAPD_PORT 0 .1.3.6.1.6.3.1.1.5.1 .1.3.6.1.2.1.1.4.0 s received_trap_anp"
+DELAY
+CAPTURE "snmptrap -d -e $CREATEUSERENGINEID $TESTPRIVARGS $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPTRAPD_PORT 0 .1.3.6.1.6.3.1.1.5.1 .1.3.6.1.2.1.1.4.0 s received_trap_ap"
+DELAY
+
+STOPTRAPD
+
+CHECKTRAPD "received_trap_nanp"
+CHECKTRAPD "received_trap_anp"
+CHECKTRAPD "received_trap_ap"
+
+FINISHED

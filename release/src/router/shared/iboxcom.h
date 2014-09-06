@@ -220,7 +220,11 @@ typedef struct ws_info_t	{
 #define EXTEND_WEBDAV_TYPE_HTTPS	0x01
 #define EXTEND_WEBDAV_TYPE_BOTH		0x02
 
-#define EXTEND_API_LEVEL		1
+#ifdef RTCONFIG_ROG
+#define EXTEND_API_LEVEL		2
+#else
+#define EXTEND_API_LEVEL                1
+#endif
 
 typedef struct webdav_info_t {
 	BYTE EnableWebDav;

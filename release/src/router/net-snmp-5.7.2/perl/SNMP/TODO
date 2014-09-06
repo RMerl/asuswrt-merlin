@@ -1,0 +1,40 @@
+enhance make test
+
+implement v2 traps and v3 inform requests.
+
+solidify/enhance the V3 api
+
+handle TCP sessions
+
+See that informative strings are returned and the the error number is
+useful in all cases. (need to set $! for errors where a session is not
+returned (failed engineId discovery, memory alloc error, failed key
+computation?))
+
+PC and other unix builds - any platform issues
+
+building with shared libs
+
+ensure module does not complain with -w.
+
+enhance async api so that a boolean false return from a callback exits
+the MainLoop
+
+enhance async api to store a reference to the perl SNMP::Sesion object
+for 2 reasons: 1) if the initial calling session goes out of scope we
+won't destroy the C-struct session until the callback is called. 2) it
+allows us to set error codes in the perl SNMP::Session object
+
+see if new async hooks play with Event.pm
+
+handle dynamic changes to Session parameters, perhaps tie Error* to
+snmp_session struct rather than current duplicate representation.
+
+make the parsed mib interface $SNMP::MIB writable
+
+allow unloading and reinitialization of parsed MIB
+
+attach to libucdagent - provide agent functionality
+
+look for *Not Implemeted* and implement :)
+

@@ -14,7 +14,7 @@ LDLIBS = -lpthread
 ifeq ($(STATIC),1)
 LDLIBS += $(TOP)/libgdbm/.libs/libgdbm.a $(TOP)/libid3tag/.libs/libid3tag.a $(TOP)/zlib/libz.a
 else
-LDLIBS += -L$(TOP)/zlib -L$(TOP)/libgdbm/.libs/ -lgdbm -L$(TOP)/libid3tag/.libs/  
+LDLIBS += -L$(TOP)/zlib -lz -L$(TOP)/libgdbm/.libs/ -lgdbm -L$(TOP)/libid3tag/.libs/ -lid3tag
 endif
 
 all: $(OBJS)

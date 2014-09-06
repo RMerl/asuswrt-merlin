@@ -33,6 +33,15 @@ endif
 export CFLAGS += $(EXTRACFLAGS)
 endif
 
+
+ifneq ($(findstring DSL,$(BUILD_NAME)),)
+MODEL = $(subst -,_,$(BUILD_NAME))
+else
+MODEL = $(subst -,,$(subst +,P,$(BUILD_NAME)))
+endif
+export CFLAGS += -D$(MODEL)
+
+
 export OLD_SRC=$(SRCBASE)/../src
 ifeq ($(RTCONFIG_BCMARM),y)
 #export CFLAGS += -I$(SRCBASE)/common/include
@@ -106,7 +115,11 @@ PCIEFD_TARGET_NAME	:= pcie-ag-splitrx-fdap-mbss-mfp-wl11k-wl11u-txbf-pktctx-amsd
 endif
 
 PCIEFD_EMBED_HEADER_TEMPLATE := $(SRCBASE_DHD)/shared/rtecdc_router.h.in
+PCIEFD_EMBED_HEADERA0_TEMPLATE := $(SRCBASE_DHD)/shared/rtecdc_43602a0.h.in
+PCIEFD_EMBED_HEADERA1_TEMPLATE := $(SRCBASE_DHD)/shared/rtecdc_43602a1.h.in
 PCIEFD_EMBED_HEADER	:= $(SRCBASE_DHD)/shared/rtecdc_router.h
+PCIEFD_EMBED_HEADERA0	:= $(SRCBASE_DHD)/shared/rtecdc_43602a0.h
+PCIEFD_EMBED_HEADERA1	:= $(SRCBASE_DHD)/shared/rtecdc_43602a1.h
 obj-pciefd		:= $(patsubst %,%-obj,$(PCIEFD_TARGETS_LIST))
 install-pciefd		:= $(patsubst %,%-install,$(PCIEFD_TARGETS_LIST))
 endif
@@ -375,7 +388,7 @@ obj-$(RTCONFIG_MEDIA_SERVER) += libgdbm
 obj-$(RTCONFIG_MEDIA_SERVER) += mt-daapd
 #obj-$(RTCONFIG_MEDIA_SERVER) += mt-daapd-svn-1696
 
-MEDIA_SERVER_STATIC=y
+#MEDIA_SERVER_STATIC=y
 
 #add by gauss for cloudsync
 obj-$(RTCONFIG_CLOUDSYNC) += openssl
@@ -406,6 +419,15 @@ obj-$(RTCONFIG_TIMEMACHINE) += expat-2.0.1
 else
 obj-$(RTCONFIG_MEDIA_SERVER) += mDNSResponder
 endif
+
+#add for snmpd
+SNMPD_CFLAGS += -D$(BUILD_NAME)
+ifeq ($(BUILD_NAME), $(filter $(BUILD_NAME), RT-N66U RT-AC66U))
+SNMPD_CFLAGS += -DDUAL_BAND
+endif
+obj-$(RTCONFIG_SNMPD) += openssl
+obj-$(RTCONFIG_SNMPD) += libnmp
+obj-$(RTCONFIG_SNMPD) += net-snmp-5.7.2
 
 #
 # configurable packages
@@ -527,7 +549,7 @@ obj-y += libxml2
 obj-y += curl-7.21.7
 obj-y += wb
 obj-y += email-3.1.3
-#obj-y += radpd
+obj-y += radpd
 endif
 
 obj-$(RTCONFIG_GEOIP) += GeoIP-1.6.2
@@ -1147,7 +1169,7 @@ endif
 
 infosvr: shared nvram${BCMEX}
 
-httpd: shared nvram$(BCMEX) libdisk $(if $(RTCONFIG_HTTPS),mssl) $(if $(RTCONFIG_PUSH_EMAIL),push_log)
+httpd: shared nvram$(BCMEX) libdisk $(if $(RTCONFIG_HTTPS),mssl) $(if $(RTCONFIG_PUSH_EMAIL),push_log) $(if $(RTCONFIG_BWDPI),bwdpi) $(if $(RTCONFIG_BWDPI),bwdpi_sqlite)
 	@$(SEP)
 	@$(MAKE) -C httpd
 
@@ -1345,11 +1367,11 @@ ifneq ($(wildcard $(SRCBASE_FW)/wl/sys),)
 	+$(MAKE) CROSS_COMPILE=arm-none-eabi -C $(SRCBASE_FW)/dongle/rte/wl $(patsubst %-obj,%,$@)/$(PCIEFD_TARGET_NAME) -j 8
 	if [ -a $(SRCBASE_FW)/dongle/rte/wl/builds/$(patsubst %-obj,%,$@)/$(PCIEFD_TARGET_NAME)/rtecdc_$(patsubst %-roml-obj,%,$@).h ]; then \
 		cp $(SRCBASE_FW)/dongle/rte/wl/builds/$(patsubst %-obj,%,$@)/$(PCIEFD_TARGET_NAME)/rtecdc_$(patsubst %-roml-obj,%,$@).h $(SRCBASE_DHD)/shared/rtecdc_$(patsubst %-roml-obj,%,$@).h; \
-		echo "#include <rtecdc_$(patsubst %-roml-obj,%,$@).h>" >> $(PCIEFD_EMBED_HEADER); \
+		#echo "#include <rtecdc_$(patsubst %-roml-obj,%,$@).h>" >> $(PCIEFD_EMBED_HEADER); \
 	fi;
 	if [ -a $(SRCBASE_FW)/dongle/rte/wl/builds/$(patsubst %-obj,%,$@)/$(PCIEFD_TARGET_NAME)/rtecdc_$(patsubst %-ram-obj,%,$@).h ]; then \
 		cp $(SRCBASE_FW)/dongle/rte/wl/builds/$(patsubst %-obj,%,$@)/$(PCIEFD_TARGET_NAME)/rtecdc_$(patsubst %-ram-obj,%,$@).h $(SRCBASE_DHD)/shared/rtecdc_$(patsubst %-ram-obj,%,$@).h; \
-		echo "#include <rtecdc_$(patsubst %-ram-obj,%,$@).h>" >> $(PCIEFD_EMBED_HEADER); \
+		#echo "#include <rtecdc_$(patsubst %-ram-obj,%,$@).h>" >> $(PCIEFD_EMBED_HEADER); \
 	fi;
 	cp $(SRCBASE_FW)/dongle/rte/chipimages/43602a0/roml.bin $(SRCBASE)/router/dhd_43602/43602a0
 	-cp $(SRCBASE_FW)/dongle/rte/chipimages/43602a1/roml.bin $(SRCBASE)/router/dhd_43602/43602a1
@@ -1360,12 +1382,14 @@ ifneq ($(wildcard $(SRCBASE_FW)/wl/sys),)
 endif
 endif
 
-pciefd-cleangen:
+pciefd-cleangen: pciefd-clean
 # Clean PCIEFD firmware only if it is not prebuilt
 ifeq ($(RTCONFIG_DHDAP),y)
 ifneq ($(wildcard $(SRCBASE_FW)/wl/sys),)
-	rm -f  $(PCIEFD_EMBED_HEADER);
-	cp $(PCIEFD_EMBED_HEADER_TEMPLATE) $(PCIEFD_EMBED_HEADER);
+	#rm -f  $(PCIEFD_EMBED_HEADER);
+	cp -f $(PCIEFD_EMBED_HEADER_TEMPLATE) $(PCIEFD_EMBED_HEADER);
+	cp -f $(PCIEFD_EMBED_HEADERA0_TEMPLATE) $(PCIEFD_EMBED_HEADERA0);
+	cp -f $(PCIEFD_EMBED_HEADERA1_TEMPLATE) $(PCIEFD_EMBED_HEADERA1);
 endif
 endif
 
@@ -2239,9 +2263,6 @@ radpd:
 radpd-install: radpd
 	@mkdir -p $(TARGETDIR)/rom/etc/certs
 	install -D radpd/radpd $(INSTALLDIR)/radpd/usr/sbin/radpd
-	install -D radpd/ca.cer $(TARGETDIR)/rom/etc/certs/ca.cer
-	install -D radpd/device.cer $(TARGETDIR)/rom/etc/certs/device.cer
-	install -D radpd/device.key $(TARGETDIR)/rom/etc/certs/device.key
 
 radpd-clean:
 	@$(MAKE) -C radpd clean
@@ -2282,7 +2303,7 @@ sqlite/stamp-h1:
 	CC=$(CC) CFLAGS="-Os $(EXTRACFLAGS) -ffunction-sections -fdata-sections -fPIC" \
 		LDFLAGS="-ffunction-sections -fdata-sections -Wl,--gc-sections" \
 		$(CONFIGURE) --prefix=/usr --enable-shared --enable-static \
-		--disable-readline --disable-dynamic-extensions --enable-threadsafe \
+		--disable-readline --disable-dynamic-extensions --disable-threadsafe \
 		--disable-dependency-tracking
 	touch $@
 
@@ -2515,7 +2536,7 @@ endif
 minidlna: zlib sqlite ffmpeg libogg flac jpeg libexif libid3tag libvorbis
 	@$(SEP)
 	@cd minidlna && ./genosver.sh
-	@$(MAKE) -C minidlna CC=$(CC) $(if $(MEDIA_SERVER_STATIC),STATIC=1,) minidlna $(PARALLEL_BUILD)
+	@$(MAKE) -C minidlna CC=$(CC) $(if $(MEDIA_SERVER_STATIC),STATIC=1) minidlna $(PARALLEL_BUILD)
 
 libgdbm/stamp-h1:
 	cd libgdbm && \
@@ -2544,7 +2565,7 @@ endif
 
 mt-daapd: zlib libid3tag libgdbm
 	@$(SEP)
-	@$(MAKE) -C mt-daapd CC=$(CC) $(if $(MEDIA_SERVER_STATIC),STATIC=1,) all $(PARALLEL_BUILD)
+	@$(MAKE) -C mt-daapd CC=$(CC) $(if $(MEDIA_SERVER_STATIC),STATIC=1) all $(PARALLEL_BUILD)
 
 mt-daapd-svn-1696/stamp-h1: zlib libid3tag sqlite
 	cd mt-daapd-svn-1696 && $(CONFIGURE) --prefix=/usr \
@@ -3081,6 +3102,20 @@ curl-7.21.7-clean:
 	-@$(MAKE) -C curl-7.21.7 clean
 	@rm -f curl-7.21.7/stamp-h1
 
+#snmp with asus mib and openssl 1.0.0
+net-snmp-5.7.2/stamp-h1:
+	cd $(TOP)/net-snmp-5.7.2 && $(CONFIGURE) --prefix=$(INSTALLDIR)/net-snmp-5.7.2/usr --disable-embedded-perl --with-perl-modules=no --disable-debugging --enable-mini-agent --with-transports=UDP --without-kmem-usage --disable-applications --disable-mib-loading --disable-scripts --disable-mibs --disable-manuals --with-openssl=$(TOP)/openssl --with-ldflags="-L$(TOP)/openssl -L$(TOP)/nvram$(BCMEX) -L$(TOP)/shared -L$(TOP)/libnmp" --with-libs="-lnvram -lshared -lnmp $(EXTRA_FLAG)" --with-cflags="$(SNMPD_CFLAGS) -I$(TOP)/libnmp" --with-default-snmp-version="3" --with-sys-location=Unknown --with-logfile=/var/log/snmpd.log --with-persistent-directory=/var/net-snmp --with-sys-contact=root@localhost --enable-static=no --with-mib-modules="asus-mib/wireless,asus-mib/passpoint,asus-mib/lan,asus-mib/wan,asus-mib/ipv6,asus-mib/vpn,asus-mib/firewall,asus-mib/administration,asus-mib/systemLog,asus-mib/guestNetwork,asus-mib/trafficManager,asus-mib/parentalControl,asus-mib/quickInternetSetup"
+	@touch net-snmp-5.7.2/stamp-h1
+
+net-snmp-5.7.2: net-snmp-5.7.2/stamp-h1
+
+net-snmp-5.7.2-install:
+	@$(MAKE) -C net-snmp-5.7.2 install
+
+net-snmp-5.7.2-clean:
+	@[ ! -f net-snmp-5.7.2/Makefile ] || $(MAKE) -C net-snmp-5.7.2 clean
+	@rm -f net-snmp-5.7.2/stamp-h1
+
 #asuswebstorage
 asuswebstorage$(BCMEX)/stamp-h1:
 	touch $@
@@ -3457,7 +3492,7 @@ tftp-install:
 bwdpi: nvram$(BCMEX)
 	cd bwdpi && CC=$(CC) && $(MAKE)
 
-bwdpi_sqlite: sqlite
+bwdpi_sqlite: bwdpi sqlite
 	cd bwdpi_sqlite && CC=$(CC) && $(MAKE)
 
 bwdpi_sqlite-clean:

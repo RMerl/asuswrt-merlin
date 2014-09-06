@@ -1,0 +1,54 @@
+#!/bin/sh
+
+. ../support/simple_eval_tools.sh
+
+HEADER "extending agent functionality with extend"
+
+[ "x$OSTYPE" = xmsys -a "x$MSYS_SH" = x ] && SKIP "\$MSYS_SH has not been set"
+SKIPIF NETSNMP_DISABLE_SNMPV2C
+SKIPIFNOT USING_AGENT_EXTEND_MODULE
+SKIPIFNOT USING_UTILITIES_EXECUTE_MODULE
+
+# make sure snmpget can be executed
+SNMPGET="${SNMP_UPDIR}/apps/snmpget"
+[ -x "$SNMPGET" ] || SKIP
+
+snmp_version=v2c
+TESTCOMMUNITY=testcommunity
+. ./Sv2cconfig
+
+#
+# Begin test
+#
+
+index='"hello"'
+if [ "x$OSTYPE" = "xmsys" ]; then
+    CONFIGAGENT extend hello $MSYS_SH -c "'" echo hello_world "'"
+else
+    CONFIGAGENT extend hello /usr/bin/env echo hello_world
+fi
+
+STARTAGENT
+
+# NET-SNMP-EXTEND-MIB::nsExtendOutput1Line."hello" = STRING: "hello_world"
+CAPTURE "$SNMPGET $SNMP_FLAGS -$snmp_version -c $TESTCOMMUNITY $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT .1.3.6.1.4.1.8072.1.3.2.3.1.1.$index"
+CHECKORDIE "STRING: hello_world"
+
+#NET-SNMP-EXTEND-MIB::nsExtendOutputFull."hello" = STRING: "hello_world"
+CAPTURE "$SNMPGET $SNMP_FLAGS -$snmp_version -c $TESTCOMMUNITY $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT .1.3.6.1.4.1.8072.1.3.2.3.1.2.$index"
+CHECKORDIE "STRING: hello_world"
+
+#NET-SNMP-EXTEND-MIB::nsExtendOutLine."hello".1 = STRING: "hello_world"
+CAPTURE "$SNMPGET $SNMP_FLAGS -$snmp_version -c $TESTCOMMUNITY $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT .1.3.6.1.4.1.8072.1.3.2.4.1.2.$index.1"
+CHECKORDIE "STRING: hello_world"
+
+#NET-SNMP-EXTEND-MIB::nsExtendOutNumLines."hello" = INTEGER: 1
+CAPTURE "$SNMPGET $SNMP_FLAGS -$snmp_version -c $TESTCOMMUNITY $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT .1.3.6.1.4.1.8072.1.3.2.3.1.3.$index"
+CHECKORDIE "INTEGER: 1"
+
+#NET-SNMP-EXTEND-MIB::nsExtendResult."hello" = INTEGER: 0
+CAPTURE "$SNMPGET $SNMP_FLAGS -$snmp_version -c $TESTCOMMUNITY $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT .1.3.6.1.4.1.8072.1.3.2.3.1.4.$index"
+CHECKORDIE "INTEGER: 0"
+
+STOPAGENT
+FINISHED

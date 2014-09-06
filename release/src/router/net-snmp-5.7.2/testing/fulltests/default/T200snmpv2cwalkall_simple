@@ -1,0 +1,38 @@
+#!/bin/sh
+
+. ../support/simple_eval_tools.sh
+
+HEADER "full snmpwalk (SNMPv2c) against agent (may take time)"
+
+if test `uname -s` = "HP-UX" ; then
+    if test `id -u` != "0" ; then
+        # The agent needs to be run as root - else force skip
+        SKIP
+    fi
+fi
+
+SKIPIF NETSNMP_DISABLE_SNMPV2C
+
+# make sure snmpwalk can be executed
+SNMPWALK="${SNMP_UPDIR}/apps/snmpwalk"
+[ -x "$SNMPWALK" ] || SKIP
+
+snmp_version=v2c
+. ./Sv2cconfig
+
+#
+# Begin test
+#
+
+# higher timeout/retry values for safety
+TIMEOUT=10
+RETRY=5
+
+STARTAGENT
+
+CAPTURE "$SNMPWALK $SNMP_FLAGS -$snmp_version -c testcommunity -t $TIMEOUT -r $RETRY $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT .1"
+ISDEFINED USING_WINEXTDLL_MODULE || ISDEFINED USING_ETHERLIKE_MIB_DOT3STATSTABLE_MODULE || CHECKANDDIE "= Wrong Type (should be "
+CHECKORDIE "No more variables left in this MIB View"
+
+STOPAGENT
+FINISHED

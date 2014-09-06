@@ -1,0 +1,38 @@
+#
+# Makefile for libnetsnmphelpers
+#
+
+top_builddir=../..
+
+# use GNU vpath, if available, to only set a path for source and headers
+# VPATH will pick up objects too, which is bad if you are sharing a
+# source dir...
+@GNU_vpath@ %.h $(srcdir)
+@GNU_vpath@ %.c $(srcdir)
+# fallback to regular VPATH for non-gnu...
+@NON_GNU_VPATH@ $(srcdir)
+
+#
+# What to install
+#
+
+INSTALLLIBS=libnetsnmphelpers.$(LIB_EXTENSION)$(LIB_VERSION)
+INCLUDESUBDIR=agent
+
+#
+# Build info
+#
+HELPERLIB       = libnetsnmphelpers.$(LIB_EXTENSION)$(LIB_VERSION)
+# -I. -I.. -I../..
+CPPFLAGS= $(TOP_INCLUDES) -I. $(AGENT_INCLUDES) $(MIBGROUP_INCLUDES) \
+	$(SNMPLIB_INCLUDES) @CPPFLAGS@
+
+OBJS = dummy.o
+
+LOBJS = dummy.lo
+
+all: standardall
+
+libnetsnmphelpers.$(LIB_EXTENSION)$(LIB_VERSION):    $(LOBJS)
+	$(LIB_LD_CMD) $@ $(LOBJS) @LD_NO_UNDEFINED@ $(LDFLAGS) $(LIB_LD_LIBS)
+	$(RANLIB) $@

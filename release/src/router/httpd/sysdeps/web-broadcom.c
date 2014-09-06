@@ -818,7 +818,7 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 
 	snprintf(prefix, sizeof(prefix), "wl%d_", unit);
 #ifdef RTCONFIG_PROXYSTA
-	if (is_psta(1 - unit))
+	if (psta_exist_except(unit))
 	{
 		ret += websWrite(wp, "%s radio is disabled\n",
 			(wl_control_channel(unit) > 0) ?

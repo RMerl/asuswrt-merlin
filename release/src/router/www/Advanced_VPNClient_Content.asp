@@ -186,7 +186,6 @@ function cancel_add_rule(){
 	restart_vpncall_flag = 0;
 	idx_tmp = "";
 	$j("#vpnc_settings").fadeOut(300);
-	setTimeout("location.reload();",500);
 }
 
 function get_vpnc_appendix_auto_conn(idx){
@@ -301,7 +300,7 @@ function addRow_Group(upper, flag, idx){
 						document.form.submit();		
 			}
 			cancel_add_rule();
-			idx_tmp= "";
+			setTimeout("location.reload();",500);		
 		}		
 	}
 	else{	//Add Rule
@@ -351,7 +350,8 @@ function addRow_Group(upper, flag, idx){
 
 			show_vpnc_rulelist();
 			cancel_add_rule();
-			idx_tmp= "";
+			setTimeout("location.reload();",500);
+
 			document.form.vpnc_clientlist.value = vpnc_clientlist_array;
 			document.form.submit();
 		}				

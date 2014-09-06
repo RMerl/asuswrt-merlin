@@ -1,0 +1,29 @@
+#!/bin/sh
+
+# generically set up the community "testcommunity" for various snmp
+# version access to the agent.
+
+if [ "x$snmp_version" = "x" ]; then
+  snmp_version="any"
+fi
+if [ "x$snmp_write_access" = "x" ]; then
+  snmp_write_access="none"
+fi
+
+[ "x$SNMP_SMUX_SOCKET" = "x" ] && SNMP_SMUX_SOCKET=1.0.0.0
+
+CONFIGAGENT [snmp] persistentdir $SNMP_TMP_PERSISTENTDIR
+CONFIGAGENT smuxsocket $SNMP_SMUX_SOCKET
+
+CONFIGAGENT com2sec testcommunitysec  default testcommunity
+if [ "$SNMP_TRANSPORT_SPEC" = "udp6" -o "$SNMP_TRANSPORT_SPEC" = "tcp6" ];then 
+	CONFIGAGENT com2sec6 testcommunitysec  default testcommunity
+fi
+
+if [ "$SNMP_TRANSPORT_SPEC" = "unix" ];then 
+	CONFIGAGENT com2secunix testcommunitysec  testcommunity
+fi
+
+CONFIGAGENT group   testcommunitygroup  $snmp_version     testcommunitysec
+CONFIGAGENT view    all     included .1 80
+CONFIGAGENT "access  testcommunitygroup  '' any noauth exact all $snmp_write_access none"

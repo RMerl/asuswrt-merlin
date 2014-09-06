@@ -1,0 +1,288 @@
+.\" Portions of this file are subject to the following copyright.  See
+.\" the Net-SNMP's COPYING file for more details and other copyrights
+.\" that may apply:
+.\" /***********************************************************
+.\" 	Copyright 1988, 1989 by Carnegie Mellon University
+.\" 
+.\"                       All Rights Reserved
+.\" 
+.\" Permission to use, copy, modify, and distribute this software and its 
+.\" documentation for any purpose and without fee is hereby granted, 
+.\" provided that the above copyright notice appear in all copies and that
+.\" both that copyright notice and this permission notice appear in 
+.\" supporting documentation, and that the name of CMU not be
+.\" used in advertising or publicity pertaining to distribution of the
+.\" software without specific, written prior permission.  
+.\" 
+.\" CMU DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
+.\" ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL
+.\" CMU BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR
+.\" ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
+.\" WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
+.\" ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
+.\" SOFTWARE.
+.\" ******************************************************************/
+.\" Portions of this file are copyrighted by:
+.\" Copyright Copyright 2003 Sun Microsystems, Inc. All rights reserved.
+.\" Use is subject to license terms specified in the COPYING file
+.\" distributed with the Net-SNMP package.
+.\" ******************************************************************/
+.TH SNMPTRANSLATE 1 "20 Jul 2010" VVERSIONINFO "Net-SNMP"
+.SH NAME
+snmptranslate - translate MIB OID names between numeric and textual forms
+.SH SYNOPSIS
+.B snmptranslate
+[OPTIONS] OID [OID]...
+.SH DESCRIPTION
+.B snmptranslate
+is an application that translates one or more SNMP object identifier
+values from their symbolic (textual) forms into their numerical forms
+(or vice versa).  
+.PP
+OID is either a numeric or textual object identifier.
+.SH OPTIONS
+.TP 8
+.B \-D\fI[TOKEN[,...]]
+Turn on debugging output for the given
+.IR "TOKEN" "(s)."
+Try
+.IR ALL
+for extremely verbose output.
+.TP
+.B \-h
+Display a brief usage message and then exit.
+.TP
+.BI \-m " MIBLIST"
+Specifies a colon separated list of MIB modules to load for this
+application.  This overrides the environment variable MIBS.
+.IP
+The special keyword
+.I ALL
+is used to specify all modules in all directories when searching for MIB
+files.  Every file whose name does not begin with "." will be parsed as
+if it were a MIB file.
+.TP
+.BI \-M " DIRLIST"
+Specifies a colon separated list of directories to search for MIBs.
+This overrides the environment variable MIBDIRS.
+.TP
+.BI \-T " TRANSOPTS"
+Provides control over the translation of the OID values.  The
+following
+.I TRANSOPTS
+are available:
+.RS
+.TP 6
+.B \-Td
+Print full details of the specified OID.
+.TP
+.B \-Tp
+Print a graphical tree, rooted at the specified OID.
+.TP
+.B \-Ta
+Dump the loaded MIB in a trivial form.
+.TP
+.B \-Tl
+Dump a labeled form of all objects.
+.TP
+.B \-To
+Dump a numeric form of all objects.
+.TP
+.B \-Ts
+Dump a symbolic form of all objects.
+.TP
+.B \-Tt
+Dump a tree form of the loaded MIBs (mostly useful for debugging).
+.TP
+.B \-Tz
+Dump a numeric and labeled form of all objects (compatible with MIB2SCHEMA format).
+.RE
+.TP
+.B \-V
+Display version information for the application and then exit.
+.TP
+.BI \-w " WIDTH"
+Specifies the width of
+.B \-Tp
+and
+.B \-Td
+output. The default is very large.
+.PP
+In addition to the above options, 
+.B snmptranslate
+takes the OID input 
+.RB ( \-I ),
+MIB parsing
+.RB ( \-M )
+and OID output
+.RB ( \-O )
+options described in the 
+.BR "INPUT OPTIONS" ", " "MIB PARSING OPTIONS" " and " "OUTPUT OPTIONS"
+sections of the
+.I snmpcmd(1) 
+manual page.
+.SH EXAMPLES
+.IP \(bu 4
+snmptranslate \-On \-IR sysDescr
+.br
+will translate "sysDescr" to a more qualified form:
+.IP
+system.sysDescr
+.IP \(bu 4
+snmptranslate \-Onf \-IR sysDescr
+.br
+will translate "sysDecr" to:
+.IP
+.RI .iso.org.dod.internet.mgmt.mib\-2.system.sysDescr
+.IP \(bu 4 
+snmptranslate \-Td \-OS system.sysDescr
+.br
+will translate "sysDecr" into:
+.IP
+.nf
+SNMPv2\-MIB::sysDescr
+sysDescr OBJECT\-TYPE
+  \-\- FROM SNMPv2\-MIB
+  \-\- TEXTUAL CONVENTION DisplayString
+  SYNTAX OCTET STRING (0..255)
+  DISPLAY\-HINT "255a"
+  MAX\-ACCESS read\-only
+  STATUS current
+  DESCRIPTION "A textual description of the entity. This
+               value should include the full name and
+               version identification of the system's
+               hardware type, software operating\-system,
+               and networking software."
+::= { iso(1) org(3) dod(6) internet(1) mgmt(2) mib\-2(1) system(1) 1 }
+.fi
+.IP \(bu 4 
+snmptranslate \-Tp \-OS system
+.br
+will print the following tree:
+.IP
+.nf
++--system(1)
+   |
+   +-- -R-- String    sysDescr(1)
+   |        Textual Convention: DisplayString
+   |        Size: 0..255
+   +-- -R-- ObjID     sysObjectID(2)
+   +-- -R-- TimeTicks sysUpTime(3)
+   +-- -RW- String    sysContact(4)
+   |        Textual Convention: DisplayString
+   |        Size: 0..255
+   +-- -RW- String    sysName(5)
+   |        Textual Convention: DisplayString
+   |        Size: 0..255
+   +-- -RW- String    sysLocation(6)
+   |        Textual Convention: DisplayString
+   |        Size: 0..255
+   +-- -R-- Integer   sysServices(7)
+   +-- -R-- TimeTicks sysORLastChange(8)
+   |        Textual Convention: TimeStamp
+   |
+   +--sysORTable(9)
+      |
+      +--sysOREntry(1)
+         |
+         +-- ---- Integer   sysORIndex(1)
+         +-- -R-- ObjID     sysORID(2)
+         +-- -R-- String    sysORDescr(3)
+         |        Textual Convention: DisplayString
+         |        Size: 0..255
+         +-- -R-- TimeTicks sysORUpTime(4)
+                  Textual Convention: TimeStamp
+
+.fi
+.PP
+.IP \(bu 4
+snmptranslate \-Ta | head
+.br
+will produce the following dump:
+.IP
+.nf
+dump DEFINITIONS ::= BEGIN
+org ::= { iso 3 }
+dod ::= { org 6 }
+internet ::= { dod 1 }
+directory ::= { internet 1 }
+mgmt ::= { internet 2 }
+experimental ::= { internet 3 }
+private ::= { internet 4 }
+security ::= { internet 5 }
+snmpV2 ::= { internet 6 }
+.fi
+.PP
+.IP \(bu 4
+snmptranslate \-Tl | head
+.br
+will produce the following dump:
+.IP
+.nf
+.RI .iso(1).org(3)
+.RI .iso(1).org(3).dod(6)
+.RI .iso(1).org(3).dod(6).internet(1)
+.RI .iso(1).org(3).dod(6).internet(1).directory(1)
+.RI .iso(1).org(3).dod(6).internet(1).mgmt(2)
+.RI .iso(1).org(3).dod(6).internet(1).mgmt(2).mib\-2(1)
+.RI .iso(1).org(3).dod(6).internet(1).mgmt(2).mib\-2(1).system(1)
+.RI .iso(1).org(3).dod(6).internet(1).mgmt(2).mib\-2(1).system(1).sysDescr(1)
+.RI .iso(1).org(3).dod(6).internet(1).mgmt(2).mib\-2(1).system(1).sysObjectID(2)
+.RI .iso(1).org(3).dod(6).internet(1).mgmt(2).mib\-2(1).system(1).sysUpTime(3)
+.fi
+.PP
+.IP \(bu 4
+snmptranslate \-To | head
+.br
+will produce the following dump
+.IP
+.nf
+.RI .1.3
+.RI .1.3.6
+.RI .1.3.6.1
+.RI .1.3.6.1.1
+.RI .1.3.6.1.2
+.RI .1.3.6.1.2.1
+.RI .1.3.6.1.2.1.1
+.RI .1.3.6.1.2.1.1.1
+.RI .1.3.6.1.2.1.1.2
+.RI .1.3.6.1.2.1.1.3
+.fi
+.PP
+.IP \(bu 4
+snmptranslate \-Ts | head
+.br
+will produce the following dump
+.IP
+.nf
+.RI .iso.org
+.RI .iso.org.dod
+.RI .iso.org.dod.internet
+.RI .iso.org.dod.internet.directory
+.RI .iso.org.dod.internet.mgmt
+.RI .iso.org.dod.internet.mgmt.mib\-2
+.RI .iso.org.dod.internet.mgmt.mib\-2.system
+.RI .iso.org.dod.internet.mgmt.mib\-2.system.sysDescr
+.RI .iso.org.dod.internet.mgmt.mib\-2.system.sysObjectID
+.RI .iso.org.dod.internet.mgmt.mib\-2.system.sysUpTime
+.fi
+.PP
+.IP \(bu 4
+snmptranslate \-Tt | head
+.br
+will produce the following dump
+.IP
+.nf
+  org(3) type=0
+    dod(6) type=0
+      internet(1) type=0
+        directory(1) type=0
+        mgmt(2) type=0
+          mib\-2(1) type=0
+            system(1) type=0
+              sysDescr(1) type=2 tc=4 hint=255a
+              sysObjectID(2) type=1
+              sysUpTime(3) type=8
+.fi
+.SH "SEE ALSO"
+snmpcmd(1), variables(5), RFC 2578-2580.

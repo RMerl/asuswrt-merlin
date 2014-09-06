@@ -1,0 +1,92 @@
+.TH SNMPD.INTERNAL 5 "06 Dec 2005" VVERSIONINFO "Net-SNMP"
+.SH NAME
+snmpd.internal - internal configuration of the Net-SNMP agent
+.SH DESCRIPTION
+The
+.I snmpd.conf(5)
+man page defines the syntax and behaviour of the main
+configuration directives that can be used to control the
+operation of the Net-SNMP agent, and the management information
+it provides.
+.PP
+However there are several other configuration directives
+(many of which, though not all, start with a leading underscore)
+that are recognised by the agent.  These are typically used
+to retain configuration across agent restarts, and are not
+intended for direct user access.
+This man page list these directives, giving a brief indication
+of where they are used.  For full details - see the relevant source
+files.  If you can't follow that source, you probably shouldn't
+be fiddling with these directives!
+.SH AGENT BEHAVIOUR
+.IP "quit"
+.\" .SS "Listening addresses"
+.\" .SS "Run-time privileges"
+.\" .SS SNMPv3 Configuration
+.SH ACCESS CONTROL
+.\" .SS SNMPv3 Users
+.\" .SS Traditional Access Control
+.SS VACM Configuration
+.IP "vacmView / vacmGroup / vacmAccess  "
+These directives are used to retain dynamically configured
+access control settings.
+.\" .SS Typed-View Configuration
+.SH SYSTEM INFORMATION
+.SS System Group
+.IP "setSerialNo "
+This directive is used to implement the advisory lock object
+\fCsnmpSetSerialNo\fR.
+.IP "psyslocation / psyscontact / psysname "
+These directives are used to retain dynamically configured
+system settings.
+They will be overridden by the corresponding
+\fIsysLocation\fR, \fIsysContact\fR and \fIsysName\fR directives.
+.\" .SS Host Resources Group
+.\" .SS Process Monitoring 
+.\" .SS Disk Usage Monitoring
+.\" .SS System Load Monitoring
+.\" .SS Log File Monitoring
+.SH "ACTIVE MONITORING"
+.SS "Notification Handling"
+.IP "pauthtrapenable"
+This directive is used to retain the dynamically configured
+setting of whether the agent should generate authenticationFailure
+traps.
+It will be overridden by the corresponding
+\fIauthtrapenable\fR directive.
+.IP "snmpNotify*Table "
+.IP "targetAddr / targetParams "
+These directives are used to retain dynamically configured
+notification destination settings.
+.SS "DisMan Event MIB"
+.IP "_mteE*Table, _mteOTable, _mteT*Table "
+These directives are used to retain dynamically configured
+event, object and monitor trigger settings.
+.IP "mteObjectsTable / mteTriggerTable "
+These directives are for compatibility with the previous
+\fIdisman/event-mib\fR implementation.
+.SS "DisMan Schedule MIB"
+.IP "_schedTable "
+This directive is used to retain dynamically configured
+scheduled events.
+.SH "EXTENDING AGENT FUNCTIONALITY"
+.SS "Arbitrary Extension Commands"
+.IP "extend-sh "
+.IP "exec2 / sh2 / execFix2 "
+These directives were defined by analogy with equivalent directives
+in the previous \fIucd-snmp/extensible\fR implementation.
+They are deprecated, and should not be used.
+.\" .SS "MIB-Specific Extension Commands"
+.\" .SS "Embedded Perl Support"
+.\" .SS Dynamically Loadable Modules
+.\" .SS "Proxy Support"
+.\" .SS SMUX Sub-Agents
+.\" .SS AgentX Sub-Agents
+.\" .SH "OTHER CONFIGURATION"
+.SH "FILES"
+SYSCONFDIR/snmp/snmpd.conf
+.SH "SEE ALSO"
+snmpconf(1), snmpd.conf(5), snmp.conf(5), snmp_config(5), snmpd(8), EXAMPLE.conf, netsnmp_config_api(3).
+.\" Local Variables:
+.\"  mode: nroff
+.\" End:

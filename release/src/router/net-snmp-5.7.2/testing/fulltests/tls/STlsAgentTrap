@@ -1,0 +1,66 @@
+#!/bin/sh
+
+. STlsVars
+
+SKIPIFNOT USING_EXAMPLES_EXAMPLE_MODULE
+
+#########################################
+# CERTIFICATE SETUP
+#
+
+# produce the certificates to use
+
+# snmptrapd
+HOSTNAME=`hostname`
+CAPTURE $NSCERT gencert -t snmptrapd   --cn $HOSTNAME $NSCERTARGS
+TRAPDFP=`$NSCERT showcerts --fingerprint --brief snmptrapd  $NSCERTARGS`
+CHECKVALUEISNT "$TRAPDFP" "" "generated fingerprint for snmptrapd certificate"
+
+# snmpd
+HOSTNAME=`hostname`
+CAPTURE $NSCERT gencert -t snmpd   --cn $HOSTNAME $NSCERTARGS
+SERVERFP=`$NSCERT showcerts --fingerprint --brief snmpd  $NSCERTARGS`
+CHECKVALUEISNT "$SERVERFP" "" "generated fingerprint for snmpd certificate"
+
+# user
+CAPTURE $NSCERT gencert -t snmpapp --cn 'testuser'  $NSCERTARGS
+TESTUSERFP=`$NSCERT showcerts --fingerprint --brief snmpapp $NSCERTARGS`
+CHECKVALUEISNT "$TESTUSERFP" "" "generated fingerprint for testuser certificate"
+
+#########################################
+# Configuration
+
+# snmpd
+CONFIGAGENT trapsess -Ci -T our_identity=$TESTUSERFP -T their_identity=$TRAPDFP  ${SNMP_TRANSPORT_SPEC}:${SNMP_TEST_DEST}${SNMP_SNMPTRAPD_PORT}
+CONFIGAGENT '[snmp]' serverCert $SERVERFP
+CONFIGAGENT 	     certSecName      9  $TESTUSERFP     --cn
+CONFIGAGENT          rwuser           -s tsm testuser
+
+# snmptrapd
+CONFIGTRAPD '[snmp]' serverCert $TRAPDFP
+CONFIGTRAPD 	     certSecName      9  $TESTUSERFP     --cn
+CONFIGTRAPD 	     authuser         log -s tsm testuser authpriv
+CONFIGTRAPD          agentxsocket     /dev/null
+
+# general
+
+#
+# Begin test
+#
+
+STARTTRAPD
+
+# initialize only the example mib, and not the notification mib stuff
+AGENT_FLAGS="$AGENT_FLAGS -Dexample,header_generic"
+STARTAGENT
+
+#DELAY
+CAPTURE "snmpset -T their_identity=snmpd -T our_identity=snmpapp -On -t 3 -r 0 $SNMP_FLAGS $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT .1.3.6.1.4.1.2021.254.8.0 i 1"
+
+STOPAGENT
+
+STOPTRAPD
+
+CHECKTRAPD "life the universe and everything"
+
+FINISHED

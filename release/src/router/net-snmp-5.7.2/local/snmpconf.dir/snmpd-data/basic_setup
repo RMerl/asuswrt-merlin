@@ -1,0 +1,17 @@
+group basic_setup
+message ************************************************
+message *** Beginning basic system information setup ***
+message ************************************************
+subgroup system_setup Do you want to configure the information returned in the system MIB group (contact info, etc)?
+message **************************************
+message *** BEGINNING ACCESS CONTROL SETUP ***
+message **************************************
+subgroup access_control Do you want to configure the agent's access control?
+message ****************************************
+message *** Beginning trap destination setup ***
+message ****************************************
+subgroup trapsinks Do you want to configure where and if the agent will send traps?
+message ****************************************
+message *** Beginning monitoring setup ***
+message ****************************************
+subgroup monitoring_services Do you want to configure the agent's ability to monitor various aspects of your system?

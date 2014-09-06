@@ -50,6 +50,7 @@ enum {
 	SWCFG_STB12,		/* 5 STB on LAN1&2 */
 	SWCFG_STB34,		/* 6 STB on LAN3&4 */
 	SWCFG_BRIDGE,		/* 7 Bridge */
+	SWCFG_PSTA,		/* 8 PSta */
 	WAN1PORT1,
 	WAN1PORT2,
 	WAN1PORT3,

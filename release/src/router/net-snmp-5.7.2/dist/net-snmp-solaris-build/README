@@ -1,0 +1,19 @@
+The "buildpackage-solaris" script does a "one-shot" build 
+and packaging of an untarred net-snmp distribution 
+on Solaris without requiring root access. 
+ 
+The resulting native Solaris package can then be 
+(automatically) installed/removed using the Solaris 
+pkgadd(1)/pkgrm(1) commands. 
+ 
+The script requires customization of your 
+development environment - see attached file 
+DEVENV - before it can be used. 
+ 
+ Basic usage: ./buildpackage-solaris distclean 
+ 
+The script "elfdepend.sh" is required to 
+determine the dependencies of all built ELF binaries 
+and libraries to create a "package dependency file" - 
+see depend(4). 
+ 

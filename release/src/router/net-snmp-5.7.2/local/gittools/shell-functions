@@ -1,0 +1,443 @@
+# -*- shell-script -*-
+# These functions are useful functions when working with a bash shell
+# within a Net-SNMP git checkout.
+
+nsbuildroot=${nsbuildroot:=$HOME/ns-build-root}
+nsecho=${nsecho:=}
+nsbranches=${nsbranches:="V5-4-patches V5-5-patches V5-6-patches V5-7-patches master"}
+
+# set nsverbose to ':' if you don't want verbose output of what's going on
+nsverbose=${nsverbose:="echo ::: Net-SNMP: "}
+
+_ns_maybemkdir () {
+    dir=$1
+    if [ ! -d $dir ] ; then
+	$nsverbose making directory $dir
+	mkdir -p $dir
+    fi
+}
+
+_ns_switchtobuilddir () {
+    dir=$1
+    _ns_maybemkdir $dir
+    $nsverbose cd $dir
+    cd $dir
+}
+
+_ns_getbuilddir() {
+    nssuffix=${1:-$nssuffix}
+    nsbranch=`git branch | egrep '^\*' | sed 's/^..//'`
+    NSBUILDDIR="$nsbuildroot/$nsbranch"
+    NSSRCDIR="$PWD"
+
+    # add on the suffix if created
+    if [ "$nssuffix" != "" ]; then
+	NSBUILDDIR="$nsbuildroot/$nsbranch-$nssuffix"
+    fi
+}
+
+_ns_setbuilddir() {
+    _ns_getbuilddir "$1"
+    _ns_switchtobuilddir $NSBUILDDIR
+}
+
+_ns_cleanup() {
+    $nsverbose cd $NSSRCDIR
+    cd $NSSRCDIR
+}
+
+_ns_checkclean() {
+    if [ `git status --porcelain --untracked-files=no | wc -l` -gt 0 ] ; then
+	echo "Your directory has outstanding changes!"
+	echo "  Please either commit the changes, discard them or stash them"
+	NSCLEAN=0
+    else
+	NSCLEAN=1
+    fi
+}
+
+#
+# nsmake [-s suffix]
+#   runs 'make' in $nsbuildroot/branch[-suffix]
+nsmake () {
+    if [ "$1" = "-s" ]; then
+	shift
+        _ns_setbuilddir "$1"
+	shift
+    else
+        _ns_setbuilddir
+    fi
+
+    $nsverbose make "$@"
+    $nsecho make "$@"
+
+    _ns_cleanup
+}
+
+nsmakeall () {
+    _ns_checkclean
+    if [ $NSCLEAN != 1 ]; then
+	return
+    fi
+
+    for branch in $nsbranches ; do
+	git checkout $branch
+	nsmake "$@"
+    done
+}
+
+#
+# nsconfigure [-s suffix] [configure arguments]
+#   runs 'configure' in $nsbuildroot/branch[-suffix] with passed arguments
+nsconfigure () {
+    if [ "$1" = "-s" ]; then
+	shift
+        _ns_setbuilddir "$1"
+	shift
+    else
+        _ns_setbuilddir
+    fi
+    
+    $nsverbose running $NSSRCDIR/configure "$@"
+    $nsecho $NSSRCDIR/configure "$@"
+    
+    _ns_cleanup
+}
+
+nspatchtry() {
+    _ns_checkclean
+    if [ $NSCLEAN != 1 ]; then
+	return
+    fi
+
+    # remember these branches
+    nsgoodbranches=""
+    nsbadbranches=""
+
+    # remember the patch args for later use
+    nspatchargs="$@"
+
+    # attempt to add any missing patch arguments
+
+    echo "x $nspatchargs x" | grep -- -p > /dev/null
+    if [ $? != "0" ] ; then
+	# they didn't specify a -p option.  Try to guess at one...
+	nspatchfile=`echo $nspatchargs | sed 's/.* \([^ ]+\)$/\1/'`
+	# attempt to count the slashes before any agent/snmplib/apps/etc
+	patchcount=$((`grep diff $nspatchfile | head -1 | awk '{print $NF}' | sed 's/\(agent\|snmplib\|apps\|local\|perl\|python\).*//;s#[^/]##g' | wc -c` - 1))
+	nspatchargs="-p $patchcount $nspatchargs"
+    fi
+
+    echo "x $nspatchargs x" | grep -- "-i " > /dev/null
+    if [ $? != "0" ] ; then
+	# they didn't specify a -i option.  Try to add one...
+	nspatchargs=`echo $nspatchargs | sed 's/\(.*\) \(..*\)$/\1 -i \2/'`
+    fi
+
+    echo "Using patch args: $nspatchargs"
+
+    for branch in $nsbranches ; do
+	$nsverbose checking out and applying patch in $branch
+	$nsecho git checkout $branch
+
+	$nsverbose Appling patch
+	$nsecho patch -N --batch $nspatchargs
+	if [ $? = 0 ] ; then
+	    $nsverbose Patch succeeded on $branch
+	    nsgoodbranches="$nsgoodbranches $branch"
+	else
+	    $nsverbose Patch failed on $branch
+	    nsbadbranches="$nsbadbranches $branch"
+	fi
+
+	$nsverbose cleaning source tree
+	git checkout .
+    done
+
+    echo ""
+    echo "Patch application results:"
+    echo "  Success: $nsgoodbranches"
+    echo "     Fail: $nsbadbranches"
+}
+
+_nspatchapplybase() {
+    _ns_checkclean
+    if [ $NSCLEAN != 1 ]; then
+	return
+    fi
+
+    patchbranch=`echo $nsgoodbranches | sed 's/ .*//'`
+
+    $nsverbose Checking out $patchbranch
+    $nsecho git checkout $patchbranch
+
+    $nsverbose applying the patch "$nspatchargs"
+    $nsecho patch $nspatchargs
+    $nsecho git diff | cat
+}
+
+nspatchapply() {
+    _nspatchapplybase
+    
+    echo ""
+    echo -n "commit the results to $patchbranch? [y/n]"
+    read ans
+
+    if [ $ans = 'y' -o $ans = 'Y' ] ; then
+	$nsecho git commit -a "$@"
+    fi
+}
+
+nssfpatchapply() {
+    _nspatchapplybase
+    nssfpatchcommit "$@"
+}
+
+nssfpatchcommit() {
+    patch="$1"
+    area="$2"
+
+    if [ "$patch" = "" ] ; then
+	echo "Enter patch number: "
+	echo -n "> "
+	read patch
+    fi
+    if [ "$patch" = "" ] ; then
+	echo "Error: A patch number is required"
+	return
+    fi
+
+    if [ "$area" = "" ] ; then
+	echo "Which area does this patch affect?  (agent, libnetsnmp, apps, ...)?"
+	echo -n "> "
+	read area
+    fi
+    if [ "$area" = "" ] ; then
+	area="unknown"
+    fi
+
+    #
+    # get the patch's html
+    #
+    tmpfile="/tmp/nspatch.$patch"
+    if [ ! -f "$tmpfile" ]; then
+	wget -O $tmpfile "https://sourceforge.net/tracker/?func=detail&aid="${patch}"&group_id=12694&atid=312694"
+    fi
+
+    echo "---------------------------------"
+
+    username=`grep /users/ $tmpfile | head -1 | sed 's/.*.users.//;s/.".*//;'`
+    echo "username:   $username"
+
+    fullname=`grep /users/ $tmpfile | head -1 | sed 's/.*title=.//;s/".*//;'`
+    echo "fullname:   $fullname"
+
+    title=`grep "Detail: $patch" $tmpfile | head -1 | sed "s/.*$patch - //;s/<.*//" | sed 's/"//g;' | sed "s/'//g;"`
+    echo commit msg: $title
+
+    commitmsg="CHANGES: $area: PATCH $patch: from $username: $title"
+
+    patchbranch=`echo $nsgoodbranches | sed 's/ .*//'`
+    echo "Branch:     $patchbranch"
+    echo "Command: "
+    echo "  git commit -a -s \\"
+    echo "  --author='$fullname <$username@users.sourceforge.net>'\\"
+    echo "  -m '$commitmsg'"
+    echo ""
+    echo -n "commit the results to $patchbranch? [y/n]"
+    read ans
+
+    if [ $ans = 'y' -o $ans = 'Y' ] ; then
+	$nsecho git commit -a -s --author="$fullname <$username@users.sourceforge.net>" -m "$commitmsg"
+    else
+	echo "if you don't wish to keep the changes, use 'git reset --hard'"
+    fi
+}
+    
+
+nsrollup() {
+    fetch=1;
+
+    if [ "$1" = "--no-fetch" ] ; then
+	fetch=0
+        shift
+    fi
+
+    if [ "$1" = "--merge" ] ; then
+	mergeop="merge"
+    elif [ "$1" = "--rebase" ] ; then
+	mergeop="rebase"
+    else
+	mergeop="merge"
+    fi
+
+    _ns_checkclean
+    if [ $NSCLEAN != 1 ]; then
+	return
+    fi
+
+    if [ $fetch == 1 ]; then
+      $nsverbose Pulling all upstream branches
+      $nsecho git fetch --all
+    fi
+    
+    nslastbranch=""
+
+    nsbranchesdone=""
+    nsbranchesnotdone=""
+
+    for branch in $nsbranches ; do
+	if [ "$nslastbranch" != "" ] ; then
+	    $nsverbose checking out $branch
+	    $nsecho git checkout $branch
+
+	    if [ -f dist/release ] ; then
+		if [ "`egrep ^$branch dist/release`" = "$branch rc" ] ; then
+		    $nsverbose Skipping: branch is in rc phase of release
+		    nsbranchesnotdone="$nsbranchesnotdone $branch"
+
+		    # comment this out if you want nsrollup to skip the
+		    # branch and roll the changes in the lower branch up
+		    # to the super-parent when the parent is in release status
+		    nslastbranch=$branch
+
+		    continue
+		fi
+	    fi
+
+	    $nsverbose rebasing our local changes on $branch
+	    MERGE_AUTOEDIT=no git $mergeop origin/$branch
+
+	    $nsverbose merging $nslastbranch into $branch
+	    MERGE_AUTOEDIT=no $nsecho git merge --log $nslastbranch
+	    if [ $? != 0 ] ; then
+		echo ""
+		echo "---------------------------------------------"
+		echo "Merge of $nslastbranch into $branch failed!!!"
+		echo ""
+		echo "Hints for fixing this:"
+		echo "  You're on: $branch"
+		echo "  Steps:"
+		echo "    1) fix all files marked as problematic"
+		echo "    2) run 'git add' on each file"
+		if [ $mergeop = "rebase" ] ; then
+		    echo "    3) run 'git rebase --continue' to commit the changes"
+		else
+		    echo "    3) run 'git commit' to commit the changes"
+		fi
+		echo "    4) once done, re-run nsrollup"
+		echo "  Aborting:"
+		echo "    If instead you want to give up, run"
+		echo "    1) git $mergeop --abort"
+		echo ""
+		echo "Updated the following branches:"
+		echo "  $nsbranchesdone"
+		if [ "$nsbranchesnotdone" != "" ] ; then
+		    echo "Did NOT update the following branches:"
+		    echo "  $nsbranchesnotdone"
+		fi
+		echo "Failed to update this branch:"
+		echo "   $branch"
+		return
+	    fi
+
+	    _ns_checkclean
+	    if [ $NSCLEAN != 1 ] ; then
+		# we really shouldn't git here.  merge will either autocommit
+		# or it will fail
+		$nsverbose committing merge results
+		$nsecho git commit -m "nsrollup: merging $nslastbranch into $branch" -a
+	    fi
+
+	    nsbranchesdone="$nsbranchesdone $branch"
+	fi
+
+	nslastbranch=$branch
+    done
+
+    echo ""
+    echo "-------------------------------"
+    echo "Updated the following branches:"
+    echo "  $nsbranchesdone"
+    if [ "$nsbranchesnotdone" != "" ] ; then
+	echo "Did NOT update the following branches:"
+	echo "  $nsbranchesnotdone"
+    fi
+
+    echo ""
+    echo "Now would be a good time to run 'nssync'"
+}
+
+nspull() {
+    nscurrentbranch=`git branch | egrep '^\*' | sed 's/^..//'`
+    _ns_checkclean
+    if [ $NSCLEAN != 1 ]; then
+	return
+    fi
+
+    if [ "$1" = "--merge" ] ; then
+	mergeop="merge"
+    elif [ "$1" = "--rebase" ] ; then
+	mergeop="rebase"
+    else
+	mergeop="merge"
+    fi
+
+    git fetch --all
+    for branch in $nsbranches ; do
+	git checkout $branch
+	MERGE_AUTOEDIT=no git $mergeop origin/$branch
+	if [ $? != 0 ] ; then
+	    echo "git $mergeop failed; please fix first"
+	    return
+	fi
+    done
+    git checkout $nscurrentbranch
+}
+
+nspush() {
+    _ns_checkclean
+    if [ $NSCLEAN != 1 ]; then
+	return
+    fi
+
+    git push origin $nsbranches
+    if [ $? != 0 ] ; then
+	echo "git push failed; help?"
+	return
+    fi
+}
+
+#
+# pull/pushes all the known active branches
+#
+nssync() {
+    nspull "$@"
+    nspush "$@"
+}
+
+#
+# runs the right version of autoconf for a given branch
+#
+#   configure autoconf versions using --prefix=/usr/local/autoconf-VERSION
+#
+nsautoconf() {
+    if [ "$1" == "autoheader" ] ; then
+	tool="autoheader"
+    else
+	tool="autoconf"
+    fi
+
+    COR=`cat dist/autoconf-version`
+    PATH=/usr/local/autoconf-${COR}/bin:$PATH autoconf --version > /tmp/autoconf.version
+    VER=`head -1 /tmp/autoconf.version | awk '{print $NF}'`
+    if [ "$VER" != "$COR" ] ; then
+	echo "failed to find the correct version of autoconf"
+	echo "please install autoconf version $COR in /usr/local/autoconf-$COR"
+	echo "  (configure autoconf-$COR using -prefix=/usr/local/autoconf-$COR"
+	return
+    fi
+
+    echo "RUNNING AUTOCONF $COR"
+    PATH=/usr/local/autoconf-${autover}/bin:$PATH $tool
+}

@@ -1,0 +1,26 @@
+title           Logging options
+description     Logging options
+
+token doNotLogTraps
+info        Prevent traps from being logged
+info        Useful when you only want to use traphandles
+info        arguments: (1|yes|true|0|no|false)
+question 1  Should traps be logged
+validanswer 1 ^(1|yes|true|0|no|false)
+
+token logOption
+info        Set options controlling where to log to
+info        See -L options in the snmptrapd.conf man page
+question 1  Logging options
+
+token outputOption
+info        Toggle options controlling output display
+info        See -O options in the snmptrapd.conf man page
+question 1  Logging options
+
+token printEventNumbers
+info        Print event numbers (rising/falling alarm, etc.)
+info        arguments: (1|yes|true|0|no|false)
+question 1  Print event numbers
+validanswer 1 ^(1|yes|true|0|no|false)
+

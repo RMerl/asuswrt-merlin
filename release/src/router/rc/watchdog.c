@@ -132,6 +132,7 @@ static int BTN_pressed_count = 0;
 #ifdef RTCONFIG_DSL
 static int dsl_sync_check_timer = 0;
 #endif
+static int wlonunit = -1;
 
 extern int g_wsc_configured;
 extern int g_isEnrollee[MAX_NR_WL_IF];
@@ -159,14 +160,20 @@ extern int no_need_to_start_wps();
 
 void led_control_normal(void)
 {
-	led_control(LED_POWER, LED_ON);
-
-	if (nvram_get_int("led_pwr_gpio") != nvram_get_int("led_wps_gpio"))
-		led_control(LED_WPS, LED_OFF);
-
 #if defined(RTCONFIG_LED_BTN) && defined(RTAC87U)
 	LED_switch_count = nvram_get_int("LED_switch_count");
+	if(nvram_get_int("AllLED") == 0) return;
 #endif
+
+	led_control(LED_POWER, LED_ON);
+
+#if defined(RTN11P)
+	led_control(LED_WPS, LED_ON);	//wps led is also 2g led. and NO power led.
+#else
+	if (nvram_get_int("led_pwr_gpio") != nvram_get_int("led_wps_gpio"))
+		led_control(LED_WPS, LED_OFF);
+#endif
+
 }
 
 void erase_nvram(void)
@@ -295,9 +302,6 @@ void btn_check(void)
 				if (++btn_count > RESET_WAIT_COUNT)
 				{
 					fprintf(stderr, "You can release RESET button now!\n");
-#ifdef RTCONFIG_NEW_RST_BTN
-					setAllLedOff();
-#endif
 					btn_pressed = 2;
 				}
 				if (btn_pressed == 2)
@@ -568,14 +572,27 @@ void btn_check(void)
 
 			eval("et", "robowr", "0", "0x18", "0x01ff");
 			eval("et", "robowr", "0", "0x1a", "0x01ff");
-
-			eval("wl", "ledbh", "10", "7");
-			eval("wl", "-i", "eth2", "ledbh", "10", "7");
+			if (wlonunit == -1 || wlonunit == 0) {
+#ifdef RTAC68U
+				eval("wl", "ledbh", "10", "7");
+#elif RTAC3200
+				eval("wl", "-i", "eth2", "ledbh", "10", "7");
+#endif
+			} else if (wlonunit == -1 || wlonunit == 1) {
+#ifdef RTAC68U
+				eval("wl", "-i", "eth2", "ledbh", "10", "7");
+#elif RTAC3200
+				eval("wl", "ledbh", "10", "7");
+#endif
+			}
 #ifdef RTAC3200
-			eval("wl", "-i", "eth3", "ledbh", "10", "7");
+			else if (wlonunit == -1 || wlonunit == 2) {
+				eval("wl", "-i", "eth3", "ledbh", "10", "7");
+			}
 #endif
 #ifdef RTAC68U
-			if (nvram_match("wl1_radio", "1"))
+			if (nvram_match("wl1_radio", "1") &&
+			   (wlonunit == -1 || wlonunit == 1))
 			{
 				nvram_set("led_5g", "1");
 				led_control(LED_5G, LED_ON);
@@ -642,7 +659,7 @@ void btn_check(void)
 
 #ifdef RTCONFIG_BCMWL6
 #ifdef RTCONFIG_PROXYSTA
-	if (is_psta(0) || is_psta(1))
+	if (psta_exist())
 		return;
 #endif
 #endif
@@ -753,7 +770,6 @@ void btn_check(void)
 	}
 #endif
 }
-
 
 #define DAYSTART (0)
 #define DAYEND (60*60*23 + 60*59 + 59) // 86399
@@ -1246,7 +1262,8 @@ void led_check(void)
 
 #if defined(RTCONFIG_BRCM_USBAP) || defined(RTAC66U) || defined(BCM4352)
 #if defined(RTAC66U) || defined(BCM4352)
-	if (nvram_match("led_5g", "1"))
+	if (nvram_match("led_5g", "1") &&
+	   (wlonunit == -1 || wlonunit == 1))
 #endif
 	fake_wl_led_5g();
 #endif
@@ -1884,7 +1901,7 @@ void rssi_check_unit(int unit)
 		return;
 
 #ifdef RTCONFIG_PROXYSTA
-	if (is_psta(1 - unit))
+	if (psta_exist_except(unit))
 	{
 		dbg("%s radio is disabled\n",
 			nvram_match(strcat_r(prefix, "nband", tmp), "1") ? "5 GHz" : "2.4 GHz");
@@ -2049,7 +2066,7 @@ static void send_wrslog_email(char *path)
 		return;
 	}
 
-#ifdef HTTPS
+#ifdef RTCONFIG_HTTPS
 	strncpy(smtp_auth_pass,pwdec(nvram_get("PM_SMTP_AUTH_PASS")),256);
 #else
 	strncpy(smtp_auth_pass,nvram_get("PM_SMTP_AUTH_PASS"),256);
@@ -2121,7 +2138,7 @@ static void check_dc_alive()
 		nvram_get_int("qos_enable") == 1 && nvram_get_int("qos_type") == 0)
 		return;
 
-	start_dc();
+	start_dc(NULL);
 }
 
 static void auto_sig_check()
@@ -2340,9 +2357,14 @@ watchdog_main(int argc, char *argv[])
 	pre_sw_mode=nvram_get_int("sw_mode");
 #endif
 
+	if ((nvram_get_int("sw_mode") == SW_MODE_AP) && (nvram_get_int("wlc_psta") == 1))
+		wlonunit = nvram_get_int("wlc_band");
+
 #ifdef RTCONFIG_RALINK
 	doSystem("iwpriv %s set WatchdogPid=%d", WIF_2G, getpid());
+#if defined(RTCONFIG_HAS_5G)
 	doSystem("iwpriv %s set WatchdogPid=%d", WIF_5G, getpid());
+#endif	/* RTCONFIG_HAS_5G */
 #endif	/* RTCONFIG_RALINK */
 
 	/* set the signal handler */
@@ -2393,3 +2415,4 @@ watchdog_main(int argc, char *argv[])
 
 	return 0;
 }
+

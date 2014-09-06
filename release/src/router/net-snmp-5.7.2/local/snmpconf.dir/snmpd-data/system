@@ -1,0 +1,43 @@
+title System Information Setup
+description  This section defines some of the information reported in
+description  the "system" mib group in the mibII tree.
+
+token syslocation
+info  The [typically physical] location of the system.
+info  Note that setting this value here means that when trying to
+info  perform an snmp SET operation to the sysLocation.0 variable will make
+info  the agent return the "notWritable" error code.  IE, including
+info  this token in the snmpd.conf file will disable write access to
+info  the variable.
+info  arguments:  location_string
+question 1 The location of the system
+
+token syscontact
+info  The contact information for the administrator
+info  Note that setting this value here means that when trying to
+info  perform an snmp SET operation to the sysContact.0 variable will make
+info  the agent return the "notWritable" error code.  IE, including
+info  this token in the snmpd.conf file will disable write access to
+info  the variable.
+info  arguments:  contact_string
+question 1 The contact information
+
+token sysservices
+info  The proper value for the sysServices object.
+info  arguments:  sysservices_number
+question 1 does this host offer physical services (eg, like a repeater) [answer 0 or 1]
+question 2 does this host offer datalink/subnetwork services (eg, like a bridge)
+question 3 does this host offer internet services (eg, supports IP)
+question 4 does this host offer end-to-end services (eg, supports TCP)
+question 7 does this host offer application services (eg, supports SMTP)
+validanswer 1 ^(0|1)$
+validanswer 2 ^(0|1)$
+validanswer 3 ^(0|1)$
+validanswer 4 ^(0|1)$
+validanswer 7 ^(0|1)$
+line eval $1*1 + $2*2 + $3*4 + $4*8 + $7*64
+
+group system_setup
+single syslocation
+single syscontact
+single sysservices Do you want to properly set the value of the sysServices.0 OID (if you don't know, just say no)?

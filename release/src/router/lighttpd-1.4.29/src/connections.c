@@ -391,7 +391,7 @@ static int connection_handle_read(server *srv, connection *con) {
 		if (errno == EINTR) {
 			/* we have been interrupted before we could read */
 			con->is_readable = 1;
-			Cdbg(DBE,"EINTR return 0");
+			//Cdbg(DBE,"EINTR return 0");
 			return 0;
 		}
 
@@ -1075,7 +1075,7 @@ static void check_available_temp_space(server *srv, connection *con){
 		struct dirent *de;
 							
 		while(NULL != (de = readdir(dir))) {
-					
+				
 			if ( de->d_name[0] == '.' && de->d_name[1] == '.' && de->d_name[2] == '\0' ) {
 				continue;
 				//- ignore the parent dir
@@ -1092,48 +1092,49 @@ static void check_available_temp_space(server *srv, connection *con){
 			
 			sprintf(disk_full_path, "%s%s", disk_path, de->d_name);
 			sprintf(querycmd, "df|grep -i '%s'", disk_full_path);
-						
+			
 			char mybuffer[BUFSIZ]="\0";
 			FILE* fp = popen( querycmd, "r");
 			if(fp){
 				int len = fread(mybuffer, sizeof(char), BUFSIZ, fp);
-				mybuffer[len-1]="\0";
-				pclose(fp);
-							
-				char * pch;
-				pch = strtok(mybuffer, " ");
-				int count=1;
-				while(pch!=NULL){				
-					if(count==4){
-						//- Available space
-						int available_space = atoi(pch);
-						//- more than 100MB
-						if( available_space > 102400 ){
+				if(len>0){
+					mybuffer[len-1]="\0";
+				
+					char * pch;
+					pch = strtok(mybuffer, " ");
+					int count=1;
+					while(pch!=NULL){				
+						if(count==4){
+							//- Available space
+							int available_space = atoi(pch);
 
-							//- Add usbdisk temp folder
-							data_string *ds = data_string_init();
-							buffer_copy_string_len(ds->key, CONST_STR_LEN("server.usbdisk.upload-dirs"));
-							buffer_copy_string_len(ds->value, disk_path, strlen(disk_path));
-							buffer_append_string_len(ds->value, de->d_name, strlen(de->d_name));
-							
-							array_replace(srv->srvconf.upload_tempdirs, (data_unset *)ds);
-							
-							bFound = 1;
-							break;
+							//- more than 100MB
+							if( available_space > 102400 ){								
+								//- Add usbdisk temp folder
+								data_string *ds = data_string_init();
+								buffer_copy_string_len(ds->key, CONST_STR_LEN("server.usbdisk.upload-dirs"));
+								buffer_copy_string_len(ds->value, disk_path, strlen(disk_path));
+								buffer_append_string_len(ds->value, de->d_name, strlen(de->d_name));
+								array_replace(srv->srvconf.upload_tempdirs, (data_unset *)ds);
+								bFound = 1;
+								break;
+							}
 						}
+									
+						//- Next
+						pch = strtok(NULL," ");
+						count++;
 					}
-								
-					//- Next
-					pch = strtok(NULL," ");
-					count++;
+
 				}
-								
+
+				pclose(fp);
 			}
-			
+
 			if(bFound==1)
 				break;
 		}
-				
+
 		closedir(dir);
 	}
 #else
@@ -2031,7 +2032,7 @@ connection *connection_accept(server *srv, server_socket *srv_socket) {
 
 
 int connection_state_machine(server *srv, connection *con) {
-//Cdbg(DBE, "enter..state=[%d][%s], status=[%d]", con->state, connection_get_state(con->state), con->http_status);
+Cdbg(DBE, "enter..state=[%d][%s], status=[%d]", con->state, connection_get_state(con->state), con->http_status);
 	int done = 0, r;
 #ifdef USE_OPENSSL
 	server_socket *srv_sock = con->srv_socket;
@@ -2114,6 +2115,7 @@ int connection_state_machine(server *srv, connection *con) {
 			}
 
 #endif
+			
 			////////////////////////////////////////////////////////////////////////////////////////
 			//- If url is encrypted share link, then use basic auth
 			int result = parser_share_link(srv, con);
@@ -2129,7 +2131,7 @@ int connection_state_machine(server *srv, connection *con) {
 				break;
 			}
 			////////////////////////////////////////////////////////////////////////////////////////
-
+			
 			if (res) {
 				check_available_temp_space(srv, con);
 				

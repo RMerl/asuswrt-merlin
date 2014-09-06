@@ -1,0 +1,6 @@
+Revision history for Perl extension OID.
+
+0.01  Mon Apr 29 16:58:40 2002
+	- original version; created by h2xs 1.21 with options
+		OID.h
+

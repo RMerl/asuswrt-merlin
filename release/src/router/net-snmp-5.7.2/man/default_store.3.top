@@ -1,0 +1,83 @@
+.TH DEFAULT_STORE 3 "25 Jun 2002" VVERSIONINFO "Net-SNMP"
+.SH NAME
+default_store \- generic storage of global data.
+.SH SYNOPSIS
+.B #include <net-snmp/net-snmp-config.h>
+.br
+.B #include <net-snmp/config_api.h>
+
+.BI "int netsnmp_ds_set_boolean(int " store ", int " which ", int " val ");"
+.br
+.BI "int netsnmp_ds_get_boolean(int " store ", int " which ");"
+.br
+.BI "int netsnmp_ds_set_int(int " store ", int " which ", int " val ");"
+.br
+.BI "int netsnmp_ds_get_int(int " store ", int " which ");"
+.br
+.BI "int netsnmp_ds_set_string(int " store ", int " which ", "
+.br
+.BI "                          const char *" val ");"
+.br
+.BI "char *netsnmp_ds_get_string(int " store ", int " which ");"
+.br
+.BI "int netsnmp_ds_register_config(u_char " type ", "
+.br
+.BI "                               const char *" ftype ","
+.br
+.BI "                               const char *" token ","
+.br
+.BI "                               int " store ", int " which ");"
+.br
+.BI "int netsnmp_ds_register_premib(u_char " type ", "
+.br
+.BI "                               const char *" ftype ","
+.br
+.BI "                               const char *" token ","
+.br
+.BI "                               int " store ", int " which ");"
+.br
+.BI "void netsnmp_ds_shutdown(void);"
+.fi
+.SH DESCRIPTION
+The purpose of the default storage is three-fold:
+.IP 1)
+To create a global storage space without creating a whole bunch of
+globally accessible variables or a whole bunch of access functions to
+work with more privately restricted variables.
+.IP 2)
+To provide a single location where the thread locking needs to be
+implemented. At the time of this writing, however, thread locking is not
+yet in place.
+.IP 3)
+To reduce the number of cross dependencies between code pieces that
+may or may not be linked together in the long run. This provides for a
+single location in which configuration data, for example, can be
+stored for a separate section of code that may not be linked in to
+the application in question.
+.PP
+The functions defined here implement these goals.
+.PP
+Currently, three data types are supported: booleans, integers, and
+strings. Each of these data types have separate storage
+spaces. In addition, the storage space for each data type is divided
+further by the application level.   Currently, there are two storage
+spaces. The first is reserved for the SNMP library itself. The second 
+is intended for use in applications and is not modified or checked by
+the library, and, therefore, this is the space usable by you.
+.PP
+You can think of these storage spaces as being 3 arrays, something
+like bool_storage[storeid][which], int_storage[storeid][which], and
+string_storage[storeid][which].  The data is then accessed through the 
+functions defined below.  For data you wish to store, you should use a 
+.I store
+parameter of
+.BR NETSNMP_DS_APPLICATION_ID .
+.PP
+The storage space used by the library (for which the 
+.I store
+parameter is
+.BR NETSNMP_DS_LIBRARY_ID )
+is defined in the default_store.h file, which currently contains the 
+following defines: 
+.PP
+.nf

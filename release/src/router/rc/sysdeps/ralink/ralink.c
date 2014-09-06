@@ -455,29 +455,37 @@ int getRegDomain_5G(void)
 int setRegSpec(const char *regSpec)
 {
 	char REGSPEC[MAX_REGSPEC_LEN+1];
+	char file[64];
 	int i;
 
 	if (regSpec == NULL || regSpec[0] == '\0' || strlen(regSpec) > 3)
-		return -1;
-	if (!strcasecmp(regSpec, "CE")) ;
-#if !defined(RTAC51U) ||  !defined(RTN54U)	//AC51 current support CE and NCC only.
-	else if (!strcasecmp(regSpec, "FCC")) ;
-#endif
-#if defined(RTAC52U)
-	else if (!strcasecmp(regSpec, "SG")) ;
-#endif
-#if defined(RTAC52U)
-	else if (!strcasecmp(regSpec, "AU")) ;
-#endif
-#if defined(RTAC51U) ||  defined(RTN54U) 
-	else if (!strcasecmp(regSpec, "NCC")) ;
-#endif
-	else
 		return -1;
 
 	memset(REGSPEC, 0, sizeof(REGSPEC));
 	for (i=0; regSpec[i]!='\0' ;i++)
 		REGSPEC[i]=(char)toupper(regSpec[i]);
+
+	// may be CE, FCC, AU, SG, NCC. It is based on files in /ra_SKU/
+	snprintf(file, sizeof(file), "/ra_SKU/SingleSKU_%s.dat", REGSPEC);
+	if (!f_exists(file))
+		return -1;
+#ifdef RTAC52U
+	snprintf(file, sizeof(file), "/ra_SKU/SingleSKU_%s_0002.dat", REGSPEC);
+	if (!f_exists(file))
+		return -1;
+#endif
+
+#ifdef RTCONFIG_HAS_5G
+	snprintf(file, sizeof(file), "/ra_SKU/SingleSKU_5G_%s.dat", REGSPEC);
+	if (!f_exists(file))
+		return -1;
+#ifdef RTAC52U
+	snprintf(file, sizeof(file), "/ra_SKU/SingleSKU_5G_%s_0002.dat", REGSPEC);
+	if (!f_exists(file))
+		return -1;
+#endif	/* RTAC52U */
+#endif	/* RTCONFIG_HAS_5G */
+
 	FWrite(REGSPEC, REGSPEC_ADDR, MAX_REGSPEC_LEN);
 	return 0;
 }
@@ -1634,15 +1642,17 @@ int gen_ralink_config(int band, int is_iNIC)
 				fprintf(fp, "WirelessMode=%d\n", 8);	// A + AN mixed
 #endif
 			}
-			else if (atoi(str) == 1)  // N Only or N + AC
+			else if (atoi(str) == 1)  // N Only
 			{
+				fprintf(fp, "WirelessMode=%d\n", 11);	// N in 5G
+			}
 #if defined(VHT_SUPPORT)
+			else if (atoi(str) == 8)  // AN/AC Mixed
+			{
 				fprintf(fp, "WirelessMode=%d\n", 15);	// AN + AC mixed
 				VHTBW_MAX = 1;
-#else
-				fprintf(fp, "WirelessMode=%d\n", 11);	// N in 5G
-#endif
 			}
+#endif
 			else if (atoi(str) == 2)  // A
 				fprintf(fp, "WirelessMode=%d\n", 2);
 			else			// A,N
@@ -3172,17 +3182,9 @@ int gen_ralink_config(int band, int is_iNIC)
 				if (!nvram_match(strcat_r(prefix_mssid, "bss_enabled", temp), "1"))
 					continue;
 			}
-			else
-				sprintf(prefix_mssid, "wl%d_", band);
 
-			str = nvram_safe_get(strcat_r(prefix_mssid, "auth_mode_x", temp));
-			if(!strcmp(str,"wpa") || !strcmp(str,"wpa2") || !strcmp(str,"wpawpa2") || !strcmp(str,"radius"))
 			{
 				fprintf(fp, "RADIUS_Key%d=%s\n", j, radius_key);
-			}
-			else
-			{
-				fprintf(fp, "RADIUS_Key%d=\n", j);
 			}
 
 			sprintf(RADIUS_Server, "%s%s;", RADIUS_Server, radius_server);	//cannot be empty ";"
@@ -5824,14 +5826,10 @@ int get_apcli_status(void)
 
 	wlc_band = nvram_get_int("wlc_band");
 
-#if defined(RTCONFIG_RALINK_MT7620)
-	if (wlc_band == 0)
-#else
 	if (wlc_band == 1)
-#endif
-		ifname = "apcli0";
+		ifname = APCLI_5G;
 	else
-		ifname = "apclii0";
+		ifname = APCLI_2G;
 
 	memset(data, 0x00, sizeof(data));
 	wrq.u.data.length = sizeof(data);

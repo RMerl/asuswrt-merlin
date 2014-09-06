@@ -1,0 +1,59 @@
+#!/bin/sh
+
+. ../support/simple_eval_tools.sh
+
+HEADER AgentX GET support
+
+SKIPIFNOT USING_AGENTX_MASTER_MODULE
+SKIPIFNOT USING_AGENTX_SUBAGENT_MODULE
+SKIPIFNOT USING_MIBII_SYSTEM_MIB_MODULE
+
+#
+# Begin test
+#
+
+# standard V3 configuration for initial user
+. ./Sv3config
+
+# Start the agent without initializing the system mib.
+if [ "x$SNMP_TRANSPORT_SPEC" = "xunix" ];then
+ORIG_AGENT_FLAGS="$AGENT_FLAGS -x $SNMP_TMPDIR/agentx_socket"
+else
+ORIG_AGENT_FLAGS="$AGENT_FLAGS -x tcp:${SNMP_TEST_DEST}${SNMP_AGENTX_PORT}"
+fi
+AGENT_FLAGS="$ORIG_AGENT_FLAGS -I -system_mib,winExtDLL"
+STARTAGENT
+
+# test to see that the current agent doesn't support the system mib
+CAPTURE "snmpget -On $SNMP_FLAGS $AUTHTESTARGS $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT .1.3.6.1.2.1.1.3.0"
+
+CHECK ".1.3.6.1.2.1.1.3.0 = No Such Object"
+
+if test "$snmp_last_test_result" = 1; then
+  # test the agentx subagent by first running it...
+
+  SNMP_SNMPD_PID_FILE_ORIG=$SNMP_SNMPD_PID_FILE
+  SNMP_SNMPD_LOG_FILE_ORIG=$SNMP_SNMPD_LOG_FILE
+  SNMP_SNMPD_PID_FILE=$SNMP_SNMPD_PID_FILE.num2
+  SNMP_SNMPD_LOG_FILE=$SNMP_SNMPD_LOG_FILE.num2
+  AGENT_FLAGS="$ORIG_AGENT_FLAGS -X -I system_mib"
+  SNMP_CONFIG_FILE="$SNMP_TMPDIR/bogus.conf"
+  STARTAGENT
+
+  # test to see that the agent now supports setting the system mib
+  CAPTURE "snmpget -On $SNMP_FLAGS -t 3 $AUTHTESTARGS $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT .1.3.6.1.2.1.1.3.0"
+
+  CHECK ".1.3.6.1.2.1.1.3.0 = Timeticks:"
+
+  # stop the subagent
+  STOPAGENT
+
+  SNMP_SNMPD_PID_FILE=$SNMP_SNMPD_PID_FILE_ORIG
+  SNMP_SNMPD_LOG_FILE=$SNMP_SNMPD_LOG_FILE_ORIG
+fi
+
+# stop the master agent
+STOPAGENT
+
+# all done (whew)
+FINISHED

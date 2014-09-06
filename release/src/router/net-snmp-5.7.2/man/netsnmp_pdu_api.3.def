@@ -1,0 +1,30 @@
+.TH NETSNMP_PDU_API 3 "13 Aug 2010" VVERSIONINFO "Net-SNMP"
+.SH NAME
+snmp_pdu_create,
+snmp_clone_pdu,
+snmp_fix_pdu,
+snmp_free_pdu - netsnmp_pdu_api functions
+.SH SYNOPSIS
+.B #include <net-snmp/pdu_api.h>
+.PP
+.BI "netsnmp_pdu *snmp_pdu_create( int" "type" ");"
+.PP
+.BI "netsnmp_pdu *snmp_clone_pdu( netsnmp_pdu*" "pdu" ");"
+.PP
+.BI "netsnmp_pdu *snmp_fix_pdu( netsnmp_pdu*" "pdu" ", int " "idx" ");"
+.PP
+.BI "netsnmp_pdu *snmp_free_pdu( netsnmp_pdu*" "pdu" ");"
+.PP
+.SH DESCRIPTION
+These functions deal with SNMP request structures.
+.PP
+.B snmp_pdu_create
+.PP
+.B snmp_clone_pdu
+.PP
+.B snmp_fix_pdu
+.PP
+.B snmp_free_pdu
+.SH "SEE ALSO"
+.BR varbind_api "(3)"
+.BR session_api "(3)"

@@ -25,14 +25,6 @@ endif
 
 include $(SRCBASE)/.config
 
-ifneq ($(findstring DSL,$(BUILD_NAME)),)
-MODEL = $(subst -,_,$(BUILD_NAME))
-else
-MODEL = $(subst -,,$(BUILD_NAME))
-endif
-
-export CFLAGS += -D$(MODEL)
-
 
 LDFLAGS = -L$(TOP)/nvram${BCMEX} -lnvram -L$(TOP)/shared -lshared -lcrypt -L$(TOP)/libbcmcrypto -lbcmcrypto
 
@@ -177,6 +169,9 @@ ifeq ($(RTCONFIG_ACCEL_PPTPD),y)
 OBJS += vpn.o
 endif
 
+ifeq ($(RTCONFIG_SNMPD),y)
+OBJS += snmpd.o
+endif
 ifeq ($(RTCONFIG_OPENVPN),y)
 CFLAGS += -DRTCONFIG_CROND
 OBJS += openvpn.o
@@ -195,7 +190,10 @@ OBJS += dsl.o
 ifeq ($(RTCONFIG_RALINK),y)
 OBJS += dsl-upg.o
 endif
+ifeq ($(RTCONFIG_DSL_TCLINUX),y)
 OBJS += dsl_fb.o
+OBJS += dsl_diag.o
+endif
 endif
 
 ifeq ($(RTCONFIG_BCMWL6),y)
@@ -434,14 +432,25 @@ size: rc
 # handle prebuilt object here
 ifneq ($(wildcard ./prebuild),)
 ifeq ($(RTCONFIG_DSL),y)
-ifneq ($(RTCONFIG_RALINK),y)
+ifeq ($(RTCONFIG_DSL_TCLINUX),y)
 dsl_fb.o:
 	@-cp -f ./prebuild/dsl_fb.o .
+dsl_diag.o:
+	@-cp -f ./prebuild/dsl_diag.o .
 endif
 endif
 ifeq ($(RTCONFIG_HTTPS),y)
 pwdec.o:
 	@-cp -f ./prebuild/pwdec$(BCMEX).o pwdec.o
+endif
+else
+ifeq ($(RTCONFIG_HTTPS),y)
+dsl_fb.o:dsl_fb.c
+	@echo "encrypt dsl password"
+	./dsl_fb_enc.sh
+	$(CC) $(CFLAGS) -c dsl_fb.c
+	@echo "decrypt dsl password"
+	./dsl_fb_dec.sh
 endif
 endif
 

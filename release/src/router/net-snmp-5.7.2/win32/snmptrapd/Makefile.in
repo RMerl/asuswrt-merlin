@@ -1,0 +1,295 @@
+PROGNAME=
+CFG=
+OUTDIR=
+INTDIR=
+SSL=
+LINKTYPE=
+
+# Set to 1 to allow the building using the DLL version of SNMPLIB.
+ALLOW_DLL=1
+
+!IF "$(OS)" == "Windows_NT"
+NULL=
+!ELSE 
+NULL=nul
+!ENDIF 
+
+!IF  "$(CFG)" == "release"
+
+ALL : "..\bin\$(OUTDIR)\$(PROGNAME).exe" "$(INTDIR)"
+
+
+CLEAN :
+	-@erase "$(INTDIR)\winservice.obj"
+	-@erase "$(INTDIR)\winservice.res"
+	-@erase "$(INTDIR)\$(PROGNAME).obj"
+	-@erase "$(INTDIR)\vc??.idb"
+	-@erase "$(INTDIR)\$(PROGNAME).pch"
+	-@erase "..\bin\$(OUTDIR)\$(PROGNAME).exe"
+	-@erase "..\bin\$(OUTDIR)\$(PROGNAME).exe.manifest"
+
+"..\bin\$(OUTDIR)" :
+    if not exist "..\bin\$(OUTDIR)/$(NULL)" mkdir "..\bin\$(OUTDIR)"
+
+"$(INTDIR)" :
+    if not exist "$(INTDIR)/$(NULL)" mkdir "$(INTDIR)"
+
+CPP=cl.exe
+CPP_PROJ=/nologo /MD /W3 /EHsc /Zi /O2 /I "." /I ".." /I "..\..\snmplib" /I "..\.." /I "..\..\include" /I "..\..\agent\mibgroup" /D "WIN32" /D "_BIND_TO_CURRENT_VCLIBS_VERSION" /D "NDEBUG" /D "_CONSOLE" /D "_CRT_SECURE_NO_WARNINGS" /D "_CRT_NONSTDC_NO_WARNINGS" /D "_MBCS" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\$(PROGNAME).pdb" /FD /c 
+
+!IF "$(LINKTYPE)" == "dynamic"
+CPP_PROJ=$(CPP_PROJ) /D "NMAKE_NETSNMP_USE_DLL"
+!ENDIF
+
+.c{$(INTDIR)}.obj::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+.cpp{$(INTDIR)}.obj::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+.cxx{$(INTDIR)}.obj::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+.c{$(INTDIR)}.sbr::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+.cpp{$(INTDIR)}.sbr::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+.cxx{$(INTDIR)}.sbr::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+RSC=rc.exe
+RSC_PROJ=/l 0x409 /fo"$(INTDIR)\winservice.res" /d "NDEBUG" 
+BSC32=bscmake.exe
+BSC32_FLAGS=/nologo /o"$(INTDIR)\$(PROGNAME).bsc" 
+BSC32_SBRS= \
+
+LINK32=link.exe
+LINK32_FLAGS=netsnmp.lib netsnmpagent.lib netsnmpmibs.lib netsnmptrapd.lib advapi32.lib ws2_32.lib kernel32.lib user32.lib /nologo /subsystem:console /pdb:"../bin/$(OUTDIR)/$(PROGNAME).pdb" /debug /out:"..\bin\$(OUTDIR)/$(PROGNAME).exe" /libpath:"../lib/release" 
+LINK32_OBJS= \
+	"$(INTDIR)\$(PROGNAME).obj" \
+	"$(INTDIR)\winservice.obj" \
+	"$(INTDIR)\winservice.res"
+
+"..\bin\$(OUTDIR)\$(PROGNAME).exe" : "..\bin\$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
+!IF "$(LINKTYPE)" == "static" || "$(ALLOW_DLL)" == "1"
+    $(LINK32) @<<
+  $(LINK32_FLAGS) $(LINK32_OBJS)
+<<
+ if exist "..\bin\$(OUTDIR)\$(PROGNAME).exe.manifest" \
+	    mt.exe -manifest "..\bin\$(OUTDIR)\$(PROGNAME).exe.manifest" -outputresource:"..\bin\$(OUTDIR)\$(PROGNAME).exe";1
+!ELSE	# Linktype check
+	-@echo .
+	-@echo Aborting build.  Applications can not be built using --linktype=dynamic
+	-@echo .
+!ENDIF
+
+!ELSEIF  "$(CFG)" == "debug"
+
+ALL : "..\bin\$(OUTDIR)\$(PROGNAME).exe" "$(INTDIR)\$(PROGNAME).bsc" "$(INTDIR)"
+
+
+CLEAN :
+	-@erase "$(INTDIR)\winservice.obj"
+	-@erase "$(INTDIR)\winservice.res"
+	-@erase "$(INTDIR)\winservice.sbr"
+	-@erase "$(INTDIR)\$(PROGNAME).obj"
+	-@erase "$(INTDIR)\$(PROGNAME).sbr"
+	-@erase "$(INTDIR)\vc??.idb"
+	-@erase "$(INTDIR)\vc??.pdb"
+	-@erase "$(INTDIR)\$(PROGNAME).pch"
+	-@erase "$(INTDIR)\$(PROGNAME).bsc"
+	-@erase "$(INTDIR)\$(PROGNAME).pdb"
+	-@erase "..\bin\$(OUTDIR)\$(PROGNAME).exe"
+	-@erase "..\bin\$(OUTDIR)\$(PROGNAME).exe.manifest"
+
+"..\bin\$(OUTDIR)" :
+    if not exist "..\bin\$(OUTDIR)/$(NULL)" mkdir "..\bin\$(OUTDIR)"
+
+"$(INTDIR)" :
+    if not exist "$(INTDIR)/$(NULL)" mkdir "$(INTDIR)"
+
+CPP=cl.exe
+CPP_PROJ=/nologo /MDd /W3 /Gm /EHsc /Zi /Od /I "." /I ".." /I "..\..\snmplib" /I "..\.." /I "..\..\include" /I "..\..\agent\mibgroup" /D "WIN32" /D "_BIND_TO_CURRENT_VCLIBS_VERSION" /D "_DEBUG" /D "_CONSOLE" /D "_CRT_SECURE_NO_WARNINGS" /D "_CRT_NONSTDC_NO_WARNINGS" /D "_MBCS" /FR"$(INTDIR)\\" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\$(PROGNAME).pdb" /FD /c 
+
+!IF "$(LINKTYPE)" == "dynamic"
+CPP_PROJ=$(CPP_PROJ) /D "NMAKE_NETSNMP_USE_DLL"
+!ENDIF
+
+.c{$(INTDIR)}.obj::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+.cpp{$(INTDIR)}.obj::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+.cxx{$(INTDIR)}.obj::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+.c{$(INTDIR)}.sbr::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+.cpp{$(INTDIR)}.sbr::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+.cxx{$(INTDIR)}.sbr::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+RSC=rc.exe
+RSC_PROJ=/l 0x409 /fo"$(INTDIR)\winservice.res" /d "_DEBUG" 
+BSC32=bscmake.exe
+BSC32_FLAGS=/nologo /o"$(INTDIR)\$(PROGNAME).bsc" 
+BSC32_SBRS= \
+	"$(INTDIR)\$(PROGNAME).sbr" \
+	"$(INTDIR)\winservice.sbr"
+
+"$(INTDIR)\$(PROGNAME).bsc" : "..\bin\$(OUTDIR)" $(BSC32_SBRS)
+    $(BSC32) @<<
+  $(BSC32_FLAGS) $(BSC32_SBRS)
+<<
+
+LINK32=link.exe
+LINK32_FLAGS=netsnmp.lib netsnmpagent.lib netsnmpmibs.lib netsnmptrapd.lib advapi32.lib ws2_32.lib kernel32.lib user32.lib /nologo /subsystem:console /incremental:no /pdb:"../bin/$(OUTDIR)/$(PROGNAME).pdb" /debug /out:"..\bin\$(OUTDIR)/$(PROGNAME).exe" /pdbtype:sept /libpath:"../lib/debug" 
+LINK32_OBJS= \
+	"$(INTDIR)\$(PROGNAME).obj" \
+	"$(INTDIR)\winservice.obj" \
+	"$(INTDIR)\winservice.res"
+
+"..\bin\$(OUTDIR)\$(PROGNAME).exe" : "..\bin\$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
+!IF "$(LINKTYPE)" == "static" || "$(ALLOW_DLL)" == "1"
+    $(LINK32) @<<
+  $(LINK32_FLAGS) $(LINK32_OBJS)
+<<
+ if exist "..\bin\$(OUTDIR)\$(PROGNAME).exe.manifest" \
+	    mt.exe -manifest "..\bin\$(OUTDIR)\$(PROGNAME).exe.manifest" -outputresource:"..\bin\$(OUTDIR)\$(PROGNAME).exe";1
+!ELSE	# Linktype check
+	-@echo .
+	-@echo Aborting build.  Applications can not be built using --linktype=dynamic
+	-@echo .
+!ENDIF
+
+!ENDIF 
+
+
+!IF "$(NO_EXTERNAL_DEPS)" != "1"
+!IF EXISTS("$(PROGNAME).dep")
+!INCLUDE "$(PROGNAME).dep"
+!ELSE 
+!MESSAGE Warning: cannot find "$(PROGNAME).dep"
+!ENDIF 
+!ENDIF 
+
+
+SOURCE=..\..\apps\$(PROGNAME).c
+
+!IF  "$(CFG)" == "release"
+
+
+"$(INTDIR)\$(PROGNAME).obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "debug"
+
+
+"$(INTDIR)\$(PROGNAME).obj"	"$(INTDIR)\$(PROGNAME).sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\..\apps\$(PROGNAME)_handlers.c
+
+!IF  "$(CFG)" == "release"
+
+
+"$(INTDIR)\$(PROGNAME)_handlers.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "debug"
+
+
+"$(INTDIR)\$(PROGNAME)_handlers.obj"	"$(INTDIR)\$(PROGNAME)_handlers.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\..\apps\$(PROGNAME)_log.c
+
+!IF  "$(CFG)" == "release"
+
+
+"$(INTDIR)\$(PROGNAME)_log.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "debug"
+
+
+"$(INTDIR)\$(PROGNAME)_log.obj"	"$(INTDIR)\$(PROGNAME)_log.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\..\snmplib\winservice.c
+
+!IF  "$(CFG)" == "release"
+
+
+"$(INTDIR)\winservice.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "debug"
+
+
+"$(INTDIR)\winservice.obj"	"$(INTDIR)\winservice.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\..\snmplib\winservice.rc
+
+!IF  "$(CFG)" == "release"
+
+
+"$(INTDIR)\winservice.res" : $(SOURCE) "$(INTDIR)"
+	$(RSC) /l 0x409 /fo"$(INTDIR)\winservice.res" /i "..\..\snmplib" /d "NDEBUG" $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "debug"
+
+
+"$(INTDIR)\winservice.res" : $(SOURCE) "$(INTDIR)"
+	$(RSC) /l 0x409 /fo"$(INTDIR)\winservice.res" /i "..\..\snmplib" /d "_DEBUG" $(SOURCE)
+
+
+!ENDIF 

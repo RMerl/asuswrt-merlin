@@ -262,6 +262,22 @@ enum ieee80211_ba_type {
 	IEEE80211_BA_IMMEDIATE = 1,
 };
 
+enum ieee80211_power_index_bf_ss {
+	PWR_IDX_BFOFF = 0,
+	PWR_IDX_BFON_1SS = 0,	/* Use the same power as bfoff case */
+	PWR_IDX_BFON_2SS = 1,
+	PWR_IDX_BFON_3SS = 2,
+	PWR_IDX_BFON_4SS = 3,
+	PWR_IDX_BF_SS_MAX = 4
+};
+
+enum ieee80211_power_index_bw {
+	PWR_IDX_20M = 0,
+	PWR_IDX_40M = 1,
+	PWR_IDX_80M = 2,
+	PWR_IDX_BW_MAX = 3
+};
+
 /*
  * Channels are specified by frequency and attributes.
  */
@@ -270,13 +286,11 @@ struct ieee80211_channel {
 	u_int32_t ic_flags;	/* see below */
 	u_int8_t ic_ieee;	/* IEEE channel number */
 	int8_t ic_maxregpower;	/* maximum regulatory tx power in dBm */
-	int8_t ic_maxpower;	/* maximum tx power in dBm for the current bandwidth*/
+	int8_t ic_maxpower;	/* maximum tx power in dBm for the current bandwidth with beam-forming off */
 	int8_t ic_minpower;	/* minimum tx power in dBm */
 	int8_t ic_maxpower_normal;	/* backup max tx power for short-range workaround */
 	int8_t ic_minpower_normal;	/* backup min tx power for short-range workaround */
-	int8_t ic_maxpower_20M;	/* maximum tx power in dBm for 20MHz bandwidth */
-	int8_t ic_maxpower_40M;	/* maximum tx power in dBm for 40MHz bandwidth */
-	int8_t ic_maxpower_80M;	/* maximum tx power in dBm for 80MHz bandwidth */
+	int8_t ic_maxpower_table[PWR_IDX_BF_SS_MAX][PWR_IDX_BW_MAX];	/* the maximum powers for different cases */
 	u_int32_t ic_radardetected; /* number that radar signal has been detected on this channel */
 	u_int8_t ic_center_f_80MHz;
 	u_int8_t ic_center_f_160MHz;

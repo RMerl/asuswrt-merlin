@@ -141,7 +141,7 @@ int rpc_qcsapi_set_SSID(const char *ifname, const char *ssid)
 		dbG("Qcsapi qcsapi_wifi_set_SSID %s error, return: %d\n", ifname, ret);
 		return ret;
 	}
-	dbG("Set SSID of interface %s as: %s\n", ifname, ssid);
+	dbG("%s as: %s\n", ifname, ssid);
 
 	return 0;
 }
@@ -159,7 +159,7 @@ int rpc_qcsapi_set_SSID_broadcast(const char *ifname, const char *option)
 		dbG("Qcsapi qcsapi_wifi_set_option::SSID_broadcast %s error, return: %d\n", ifname, ret);
 		return ret;
 	}
-	dbG("Set Broadcast SSID of interface %s as: %s\n", ifname, OPTION ? "TRUE" : "FALSE");
+	dbG("%s as: %s\n", ifname, OPTION ? "TRUE" : "FALSE");
 
 	return 0;
 }
@@ -187,7 +187,7 @@ int rpc_qcsapi_set_vht(const char *mode)
 		dbG("Qcsapi qcsapi_wifi_set_vht %s error, return: %d\n", WIFINAME, ret);
 		return ret;
 	}
-	dbG("Set wireless mode of interface %s as: %s\n", WIFINAME, VHT ? "11ac" : "11n");
+	dbG("%s as: %s\n", WIFINAME, VHT ? "11ac" : "11n");
 
 	return 0;
 }
@@ -219,7 +219,7 @@ int rpc_qcsapi_set_bw(const char *bw)
 		dbG("Qcsapi qcsapi_wifi_set_bw %s error, return: %d\n", WIFINAME, ret);
 		return ret;
 	}
-	dbG("Set bw of interface %s as: %d MHz\n", WIFINAME, BW);
+	dbG("%s as: %d MHz\n", WIFINAME, BW);
 
 	return 0;
 }
@@ -240,7 +240,7 @@ int rpc_qcsapi_set_channel(const char *chspec_buf)
 		dbG("Qcsapi qcsapi_wifi_set_channel %s error, return: %d\n", WIFINAME, ret);
 		return ret;
 	}
-	dbG("Set channel of interface %s as: %d\n", WIFINAME, channel);
+	dbG("%s as: %d\n", WIFINAME, channel);
 
 	snprintf(str_ch, sizeof(str_ch), "%d", channel);
 	ret = qcsapi_config_update_parameter(WIFINAME, "channel", str_ch);
@@ -248,7 +248,7 @@ int rpc_qcsapi_set_channel(const char *chspec_buf)
 		dbG("Qcsapi qcsapi_config_update_parameter %s error, return: %d\n", WIFINAME, ret);
 		return ret;
 	}
-	dbG("update channel to wireless_conf.txt %s as: %s\n", WIFINAME, str_ch);
+	dbG("update wireless_conf.txt %s as: %s\n", WIFINAME, str_ch);
 
 	return 0;
 }
@@ -277,7 +277,7 @@ int rpc_qcsapi_set_beacon_type(const char *ifname, const char *auth_mode)
 		dbG("Qcsapi qcsapi_wifi_set_beacon_type %s error, return: %d\n", ifname, ret);
 		return ret;
 	}
-	dbG("Set beacon type of interface %s as: %s\n", ifname, p_new_beacon);
+	dbG("%s as: %s\n", ifname, p_new_beacon);
 
 	if (p_new_beacon) free(p_new_beacon);
 
@@ -306,7 +306,7 @@ int rpc_qcsapi_set_WPA_encryption_modes(const char *ifname, const char *crypto)
 		dbG("Qcsapi qcsapi_wifi_set_WPA_encryption_modes %s error, return: %d\n", ifname, ret);
 		return ret;
 	}
-	dbG("Set WPA encryption mode of interface %s as: %s\n", ifname, encryption_modes);
+	dbG("%s as: %s\n", ifname, encryption_modes);
 
 	return 0;
 }
@@ -320,15 +320,15 @@ int rpc_qcsapi_set_key_passphrase(const char *ifname, const char *wpa_psk)
 
 	ret = qcsapi_wifi_set_key_passphrase(ifname, 0, wpa_psk);
 	if (ret < 0) {
-		dbG("Qcsapi qcsapi_wifi_set_key_passphrase %s error, return: %d\n", ifname, ret);
+		dbG("%s set_key_passphrase error, return: %d\n", ifname, ret);
 
 		ret = qcsapi_wifi_set_pre_shared_key(ifname, 0, wpa_psk);
 		if (ret < 0)
-			dbG("Qcsapi qcsapi_wifi_set_pre_shared_key %s error, return: %d\n", ifname, ret);
+			dbG("%s set_pre_shared_key error, return: %d\n", ifname, ret);
 
 		return ret;
 	}
-	dbG("Set WPA preshared key of interface %s as: %s\n", ifname, wpa_psk);
+	dbG("%s as: %s\n", ifname, wpa_psk);
 
 	return 0;
 }
@@ -346,7 +346,7 @@ int rpc_qcsapi_set_dtim(const char *dtim)
 		dbG("Qcsapi qcsapi_wifi_set_dtim %s error, return: %d\n", WIFINAME, ret);
 		return ret;
 	}
-	dbG("Set dtim of interface %s as: %d\n", WIFINAME, DTIM);
+	dbG("%s as: %d\n", WIFINAME, DTIM);
 
 	return 0;
 }
@@ -364,7 +364,7 @@ int rpc_qcsapi_set_beacon_interval(const char *beacon_interval)
 		dbG("Qcsapi qcsapi_wifi_set_beacon_interval %s error, return: %d\n", WIFINAME, ret);
 		return ret;
 	}
-	dbG("Set beacon_interval of interface %s as: %d\n", WIFINAME, BCN);
+	dbG("%s as: %d\n", WIFINAME, BCN);
 
 	return 0;
 }
@@ -383,7 +383,7 @@ int rpc_qcsapi_set_mac_address_filtering(const char *ifname, const char *mac_add
 		dbG("Qcsapi qcsapi_wifi_get_mac_address_filtering %s error, return: %d\n", ifname, ret);
 		return ret;
 	}
-	dbG("Original mac_address_filtering setting of interface %s: %d\n", ifname, orig_mac_address_filtering);
+	dbG("%s: %d\n", ifname, orig_mac_address_filtering);
 
 	if (!strcmp(mac_address_filtering, "disabled"))
 		MAF = qcsapi_disable_mac_address_filtering;
@@ -399,7 +399,7 @@ int rpc_qcsapi_set_mac_address_filtering(const char *ifname, const char *mac_add
 		dbG("Qcsapi qcsapi_wifi_set_mac_address_filtering %s error, return: %d\n", ifname, ret);
 		return ret;
 	}
-	dbG("Set mac_address_filtering of interface %s as: %d (%s)\n", ifname, MAF, mac_address_filtering);
+	dbG("%s as: %d (%s)\n", ifname, MAF, mac_address_filtering);
 
 	if ((MAF != orig_mac_address_filtering) &&
 		(MAF != qcsapi_disable_mac_address_filtering))
@@ -1582,7 +1582,12 @@ ej_wl_channel_list_5g(int eid, webs_t wp, int argc, char_t **argv)
 		dbG("Qcsapi qcsapi_wifi_get_regulatory_region %s error, return: %d\n", WIFINAME, ret);
 		goto ERROR;
 	}
-	ret = qcsapi_regulatory_get_list_regulatory_channels(cur_ccode, 20 /* bw */, list_of_channels);
+
+	if(strcmp(cur_ccode, "eu")==0){
+		ret = qcsapi_regulatory_get_list_regulatory_channels(cur_ccode, 40 /* bw */, list_of_channels);
+	}else{
+		ret = qcsapi_regulatory_get_list_regulatory_channels(cur_ccode, 20 /* bw */, list_of_channels);
+	}
 	if (ret < 0) {
 		dbG("Qcsapi qcsapi_regulatory_get_list_regulatory_channels %s error, return: %d\n", WIFINAME, ret);
 		goto ERROR;

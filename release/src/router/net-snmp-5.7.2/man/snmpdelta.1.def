@@ -1,0 +1,160 @@
+.\" Portions of this file are subject to the following copyright.  See
+.\" the Net-SNMP's COPYING file for more details and other copyrights
+.\" that may apply:
+.\" /***********************************************************
+.\" Portions of this file are copyrighted by:
+.\" Copyright Copyright 2003 Sun Microsystems, Inc. All rights reserved.
+.\" Use is subject to license terms specified in the COPYING file
+.\" distributed with the Net-SNMP package.
+.\" ******************************************************************/
+.TH SNMPDELTA 1 "25 Jul 2003" VVERSIONINFO "Net-SNMP"
+.SH NAME
+snmpdelta \- Monitor delta differences in SNMP Counter values
+.SH SYNOPSIS
+.B snmpdelta
+[ COMMON OPTIONS ] [\-Cf] [ \-Ct ] [ \-Cs ] [ \-CS ] [ \-Cm ] [ \-CF configfile ] [ \-Cl ] [ \-Cp period ] [ \-CP Peaks ] [ \-Ck ] [ \-CT ] AGENT OID [ OID ... ]
+.SH "DESCRIPTION"
+.B snmpdelta
+will monitor the specified integer valued OIDs, and report changes
+over time.
+.PP
+AGENT identifies a target SNMP agent, which is instrumented
+to monitor the given objects.  At its simplest, the AGENT
+specification will consist of a hostname or an IPv4
+address.  In this situation, the command will attempt
+communication with the agent, using UDP/IPv4 to port 161
+of the given target host. See snmpcmd(1) for a full list of
+the possible formats for AGENT.
+.PP
+OID is an object identifier which uniquely
+identifies the object type within a MIB. Multiple
+OIDs can be specified on a single snmpdelta command.
+.PP
+.SH OPTIONS
+.TP 8
+.B COMMON OPTIONS
+Please see
+.I snmpcmd(1)
+for a list of possible values for COMMON OPTIONS
+as well as their descriptions.
+.TP
+.B \-Cf
+Don't fix errors and retry the request.
+Without this option, if multiple oids have been specified for
+a single request and if the request for one or more of the
+oids fails, snmpdelta will retry the request so that data for
+oids apart from the ones that failed will still be returned. 
+Specifying \-Cf tells
+.I  snmpdelta
+not to retry a request, even
+if there are multiple oids specified.
+.TP
+.B \-Ct
+Flag will determine time interval from the monitored entity.
+.TP
+.B \-Cs
+Flag will display a timestamp.
+.TP
+.B \-CS
+Generates a "sum count" in addition to the individual instance
+counts.  The "sum count" is the total of all the individual
+deltas for each time period.
+.TP
+.B \-Cm
+Prints the max value ever attained.
+.TP
+.B \-CF configfile
+Tells
+.B snmpdelta
+to read it's configuration from the specified file.
+This options allows the input to be set up in advance rather
+than having to be specified on the command line.
+.TP
+.B \-Cl
+Tells
+.B snmpdelta
+to write it's configuration to files whose names correspond to the MIB
+instances monitored.  For example, snmpdelta \-Cl localhost ifInOctets.1
+will create a file "localhost\-ifInOctets.1".
+.TP
+.B \-Cp
+Specifies the number of seconds between polling periods.
+Polling constitutes sending a request to the agent. The
+default polling period is one second.
+.TP
+.B \-CP peaks
+Specifies the reporting period in number of polling periods.
+If this option is specified, snmpdelta polls the agent
+.I peaks
+number of times before reporting the results.
+The result reported includes the average value over
+the reporting period. In addition, the highest polled
+value within the reporting period is shown.
+.TP
+.B \-Ck
+When the polling period (\-Cp) is an increment of 60 seconds
+and the timestamp is displayed in the output (\-Cs), then
+the default display shows the timestamp in the format
+hh:mm mm/dd. This option causes the timestamp format
+to be hh:mm:ss mm/dd.
+.TP
+.B \-CT
+Makes 
+.B snmpdelta
+print its output in tabular form.
+.TP
+.B \-Cv vars/pkt
+Specifies the maximum number of oids allowed to be packaged
+in a single PDU. Multiple PDUs can be created in a single
+request. The default value of variables per packet is 60.
+This option is useful if a request response results in an
+error becaues the packet is too big.
+.PP
+Note that
+.B snmpdelta
+REQUIRES  an argument specifying the agent to query
+and at least one OID argument, as described in the 
+.I snmpcmd(1)
+manual page.
+.SH EXAMPLES
+.nf
+$ snmpdelta \-c public \-v 1 \-Cs localhost IF\-MIB::ifInUcastPkts.3 IF\-MIB::ifOutUcastPkts.3
+[20:15:43 6/14] ifInUcastPkts.3 /1 sec: 158
+[20:15:43 6/14] ifOutUcastPkts.3 /1 sec: 158
+[20:15:44 6/14] ifInUcastPkts.3 /1 sec: 184
+[20:15:44 6/14] ifOutUcastPkts.3 /1 sec: 184
+[20:15:45 6/14] ifInUcastPkts.3 /1 sec: 184
+[20:15:45 6/14] ifOutUcastPkts.3 /1 sec: 184
+[20:15:46 6/14] ifInUcastPkts.3 /1 sec: 158
+[20:15:46 6/14] ifOutUcastPkts.3 /1 sec: 158
+[20:15:47 6/14] ifInUcastPkts.3 /1 sec: 184
+[20:15:47 6/14] ifOutUcastPkts.3 /1 sec: 184
+[20:15:48 6/14] ifInUcastPkts.3 /1 sec: 184
+[20:15:48 6/14] ifOutUcastPkts.3 /1 sec: 184
+[20:15:49 6/14] ifInUcastPkts.3 /1 sec: 158
+[20:15:49 6/14] ifOutUcastPkts.3 /1 sec: 158
+^C
+$ snmpdelta \-c public \-v 1 \-Cs \-CT localhost IF\-MIB:ifInUcastPkts.3 IF\-MIB:ifOutcastPkts.3
+localhost	ifInUcastPkts.3	ifOutUcastPkts.3
+[20:15:59 6/14]	184.00	184.00
+[20:16:00 6/14]	158.00	158.00
+[20:16:01 6/14]	184.00	184.00
+[20:16:02 6/14]	184.00	184.00
+[20:16:03 6/14]	158.00	158.00
+[20:16:04 6/14]	184.00	184.00
+[20:16:05 6/14]	184.00	184.00
+[20:16:06 6/14]	158.00	158.00
+^C
+.fi
+.PP
+The following example uses a number of options. Since the 
+.I Cl 
+option is specified, the output is sent to a file and not to the
+screen.
+.PP
+.nf
+$ snmpdelta \-c public \-v 1 \-Ct \-Cs \-CS \-Cm \-Cl \-Cp 60 \-CP 60
+  interlink.sw.net.cmu.edu .1.3.6.1.2.1.2.2.1.16.3 .1.3.6.1.2.1.2.2.1.16.4
+.fi
+.SH "SEE ALSO"
+snmpcmd(1), variables(5).

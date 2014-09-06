@@ -11,24 +11,21 @@
 <script>
 	var reboot_needed_time = eval("<% get_default_reboot_time(); %>");
 	parent.$("hiddenMask").style.visibility = "hidden";
-	if(parent.based_modelid == "RT-AC56S"
+	if( parent.based_modelid == "DSL-AC68U"
+			|| parent.based_modelid == "RT-AC52U"
+			|| parent.based_modelid == "RT-AC56S"
 			|| parent.based_modelid == "RT-AC56U"
 			|| parent.based_modelid == "RT-AC66U"
 			|| parent.based_modelid == "RT-AC68U"
 			|| parent.based_modelid == "RT-AC68U_V2"
-			|| parent.based_modelid == "DSL-AC68U"
 			|| parent.based_modelid == "RT-AC69U"
+			|| parent.based_modelid == "RT-AC3200"
 			|| parent.based_modelid == "TM-AC1900"
-			|| parent.based_modelid == "RT-AC3200"){	//MODELDEP: RT-AC56S, RT-AC56U, RT-AC66U, RT-AC68U, RT-AC68U_V2, RT-AC69U, TM-AC1900, RT-AC3200 2014.06
-			reboot_needed_time += 30;
-			parent.showLoadingBar(reboot_needed_time);
-			reboot_needed_time += 2;
-			setTimeout("parent.detect_httpd();", reboot_needed_time*1000);
-	}else if(parent.based_modelid == "RT-AC52U"){			//MODELDEP: RT-AC52U
+	){	//MODELDEP: RT-AC52U, RT-AC56S, RT-AC56U, RT-AC66U, RT-AC68U, RT-AC68U_V2, RT-AC69U, TM-AC1900, RT-AC3200 2014.06
 			reboot_needed_time += 40;
 			parent.showLoadingBar(reboot_needed_time);
 			reboot_needed_time += 2;
-            setTimeout("parent.detect_httpd();", reboot_needed_time*1000);
+			setTimeout("parent.detect_httpd();", reboot_needed_time*1000);
 	}else{
 			parent.showLoadingBar(270);
 			setTimeout("parent.detect_httpd();", 272000);		

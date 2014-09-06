@@ -1,0 +1,44 @@
+#!/bin/sh
+
+. ../support/simple_eval_tools.sh
+
+HEADER AgentX trap sending support using agentxtrap
+
+SKIPIFNOT USING_AGENTX_MASTER_MODULE
+SKIPIFNOT NETSNMP_SECMOD_USM
+
+#
+# Begin test
+#
+
+# start the trap demon
+CONFIGTRAPD authcommunity log public
+STARTTRAPD
+
+# standard V3 configuration for initial user
+. ./Sv3config
+# configure the trap receiver.
+CONFIGAGENT trap2sink ${SNMP_TRANSPORT_SPEC}:${SNMP_TEST_DEST}${SNMP_SNMPTRAPD_PORT} public
+
+# Start the agent
+if [ "x$SNMP_TRANSPORT_SPEC" = "xunix" ];then
+AGENTX_SERVER="-x $SNMP_TMPDIR/agentx_socket"
+else
+AGENTX_SERVER="-x tcp:${SNMP_TEST_DEST}${SNMP_AGENTX_PORT}"
+fi
+AGENT_FLAGS="$AGENT_FLAGS $AGENTX_SERVER"
+STARTAGENT
+
+CAPTURE "agentxtrap $AGENTX_SERVER 0.0 0.0 s mostly_harmless"
+
+# stop the master agent
+STOPAGENT
+
+# stop the trap demon
+STOPTRAPD
+
+# Check that the trap was received
+CHECKTRAPD "= STRING: \"*mostly_harmless\"*"
+
+# all done (whew)
+FINISHED

@@ -127,12 +127,6 @@ char *detect_fs_type(char *device)
 		else
 			return "vfat";
 	}
-	/* detect exfat */
-	else if (buf[510] == 0x55 && buf[511] == 0xAA && /* signature */
-		 !memcmp(buf + 3, "EXFAT   ", 8))
-	{
-		return "exfat";
-	}
 
 	return "unknown";
 }
@@ -500,7 +494,6 @@ extern int volume_id_probe_vfat();
 extern int volume_id_probe_ntfs();
 extern int volume_id_probe_linux_swap();
 extern int volume_id_probe_hfs_hfsplus(struct volume_id *id);
-extern int volume_id_probe_exfat(struct volume_id *id);
 
 /* Put the label in *label and uuid in *uuid.
  * Return 0 if no label/uuid found, NZ if there is a label or uuid.
@@ -527,10 +520,6 @@ int find_label_or_uuid(char *dev_name, char *label, char *uuid)
 		goto ret;
 #if defined(RTCONFIG_HFS)
 	if(volume_id_probe_hfs_hfsplus(&id) == 0 || id.error)
-		goto ret;
-#endif
-#if defined(RTCONFIG_EXFAT)
-	if(volume_id_probe_exfat(&id) == 0 || id.error)
 		goto ret;
 #endif
 ret:

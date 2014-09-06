@@ -1,0 +1,262 @@
+#!/bin/sh
+
+. STlsVars
+
+#########################################
+# CERTIFICATE SETUP
+#
+
+# produce the certificates to use
+
+# snmpd
+HOSTNAME=`hostname`
+CAPTURE $NSCERT gencert -t snmpd   --cn $HOSTNAME $NSCERTARGS
+SERVERFP=`$NSCERT showcerts --fingerprint --brief snmpd  $NSCERTARGS`
+CHECKVALUEISNT "$SERVERFP" "" "generated fingerprint for snmpd certificate"
+
+# user
+CAPTURE $NSCERT gencert -t snmpapp --cn 'testuser'  $NSCERTARGS
+TESTUSERFP=`$NSCERT showcerts --fingerprint --brief snmpapp $NSCERTARGS`
+CHECKVALUEISNT "$TESTUSERFP" "" "generated fingerprint for testuser certificate"
+
+# user 1.5
+CAPTURE $NSCERT gencert -t snmpapp2 --cn 'testuser2'  $NSCERTARGS
+TESTUSER2FP=`$NSCERT showcerts --fingerprint --brief snmpapp2 $NSCERTARGS`
+CHECKVALUEISNT "$TESTUSER2FP" "" "generated fingerprint for testuser certificate"
+
+# user 2
+CAPTURE $NSCERT gencert -t otheruser --cn 'otheruser'  $NSCERTARGS
+OTHERUSERFP=`$NSCERT showcerts --fingerprint --brief otheruser $NSCERTARGS`
+CHECKVALUEISNT "$OTHERUSERFP" "" "generated fingerprint for otheruser certificate"
+
+# user 3
+CAPTURE $NSCERT gencert -t invaliduser --cn 'invaliduser'  $NSCERTARGS
+INVALIDUSERFP=`$NSCERT showcerts --fingerprint --brief invaliduser $NSCERTARGS`
+CHECKVALUEISNT "$INVALIDUSERFP" "" "generated fingerprint for otheruser certificate"
+
+# user 4
+CAPTURE $NSCERT gencert -t unmapped --cn 'unmapped'  $NSCERTARGS
+UNMAPPEDFP=`$NSCERT showcerts --fingerprint --brief unmapped $NSCERTARGS`
+CHECKVALUEISNT "$UNMAPPEDFP" "" "generated fingerprint for unmapped certificate"
+
+# user 5
+CAPTURE $NSCERT gencert -t mappeduser --cn 'mappeduser'  $NSCERTARGS
+MAPPEDUSERFP=`$NSCERT showcerts --fingerprint --brief mappeduser $NSCERTARGS`
+CHECKVALUEISNT "$MAPPEDUSERFP" "" "generated fingerprint for mappeduser certificate"
+
+# user 6: SAN email
+CAPTURE $NSCERT gencert -t email --san email:foobaruser@example.com  $NSCERTARGS
+EMAILUSERFP=`$NSCERT showcerts --fingerprint --brief email $NSCERTARGS`
+CHECKVALUEISNT "$EMAILUSERFP" "" "generated fingerprint for email certificate"
+
+# user 7: SAN dns
+CAPTURE $NSCERT gencert -t dns --san DNS:foobar.example.com  $NSCERTARGS
+DNSUSERFP=`$NSCERT showcerts --fingerprint --brief dns $NSCERTARGS`
+CHECKVALUEISNT "$DNSUSERFP" "" "generated fingerprint for dns certificate"
+
+# user 8: SAN IPv4
+CAPTURE $NSCERT gencert -t ipaddr --san IP:127.0.0.1  $NSCERTARGS
+IPUSERFP=`$NSCERT showcerts --fingerprint --brief ipaddr $NSCERTARGS`
+CHECKVALUEISNT "$IPUSERFP" "" "generated fingerprint for ipaddr certificate"
+
+# user 8.1:  afile
+CAPTURE $NSCERT gencert -t afile --cn afileuser $NSCERTARGS
+AFILEUSERFP=`$NSCERT showcerts --fingerprint --brief afile $NSCERTARGS`
+CHECKVALUEISNT "$AFILEUSERFP" "" "generated fingerprint for afile certificate"
+
+
+# CA certificate
+
+CAPTURE $NSCERT genca --cn ca-net-snmp.org  $NSCERTARGS
+CAFP=`$NSCERT showcas --fingerprint --brief ca-net-snmp.org $NSCERTARGS`
+CHECKVALUEISNT "$CAFP" "" "generated fingerprint for ca-net-snmp.org certificate"
+
+# user 9: CA signed user cert
+CAPTURE $NSCERT gencert -t causer --with-ca ca-net-snmp.org --san email:user9@test.net-snmp.org --email user9@test.net-snmp.org  $NSCERTARGS
+CAUSERFP=`$NSCERT showcerts --fingerprint --brief causer $NSCERTARGS`
+CHECKVALUEISNT "$CAUSERFP" "" "generated fingerprint for causer certificate"
+
+CAPTURE $NSCERT gencert -t cadirect9b --with-ca ca-net-snmp.org --san email:user9b@test.net-snmp.org --email user9b@test.net-snmp.org  $NSCERTARGS
+CADIRECTFP=`$NSCERT showcerts --fingerprint --brief cadirect9b $NSCERTARGS`
+CHECKVALUEISNT "$CADIRECTFP" "" "generated fingerprint for cadirect certificate"
+
+CAPTURE $NSCERT genca --cn ca2-net-snmp.org  $NSCERTARGS
+CA2FP=`$NSCERT showcas --fingerprint --brief ca2-net-snmp.org $NSCERTARGS`
+CHECKVALUEISNT "$CA2FP" "" "generated fingerprint for ca2-net-snmp.org certificate"
+
+CAPTURE $NSCERT gencert -t cadirect9c --with-ca ca2-net-snmp.org --san email:user9c@test.net-snmp.org --email user9c@test.net-snmp.org  $NSCERTARGS
+CADIRECT9CFP=`$NSCERT showcerts --fingerprint --brief cadirect9c $NSCERTARGS`
+CHECKVALUEISNT "$CADIRECT9CFP" "" "generated fingerprint for cadirect9c certificate"
+
+CAPTURE $NSCERT gencert -t cadirect9d --with-ca ca2-net-snmp.org --san email:user9d@test.net-snmp.org --email user9d@test.net-snmp.org  $NSCERTARGS
+CADIRECT9DFP=`$NSCERT showcerts --fingerprint --brief cadirect9d $NSCERTARGS`
+CHECKVALUEISNT "$CADIRECT9DFP" "" "generated fingerprint for cadirect9d certificate"
+
+#########################################
+# AGENT CONFIGURATION
+#
+
+CONFIGAGENT '[snmp]' debugTokens tsm
+# ,tls,ssl,cert,tsm
+CONFIGAGENT '[snmp]' doDebugging 1
+CONFIGAGENT '[snmp]' logTimestamp 1
+CONFIGAGENT '[snmp]' serverCert $SERVERFP
+
+CONFIGAGENT '[snmp]' trustCert $CAFP
+CONFIGAGENT '[snmp]' trustCert $CADIRECT9CFP
+
+# common name mappings
+CONFIGAGENT certSecName 9  $TESTUSERFP     --cn
+CONFIGAGENT certSecName 10 $TESTUSER2FP    --cn
+CONFIGAGENT certSecName 11 $OTHERUSERFP    --cn
+CONFIGAGENT certSecName 12 $INVALIDUSERFP  --cn
+
+CONFIGAGENT certSecName 20 $MAPPEDUSERFP --sn aftermapping
+CONFIGAGENT certSecName 21 $EMAILUSERFP  --rfc822
+CONFIGAGENT certSecName 22 $DNSUSERFP    --dns
+CONFIGAGENT certSecName 23 $IPUSERFP     --ip
+CONFIGAGENT certSecName 24 afile         --cn
+
+CONFIGAGENT certSecName 100 $CAFP        --rfc822
+CONFIGAGENT certSecName 101 $CADIRECTFP  --sn causerdirectmap
+CONFIGAGENT certSecName 102 $CADIRECT9CFP  --sn causerdirect9cmap
+# intentionally not mapped:
+#CONFIGAGENT certSecName 1001 $CADIRECT9DFP  --sn causerdirect9dmap
+
+# *** INTENTIONALLY NOT MAPPING AT ALL: ***
+# CONFIGAGENT certSecName 1000 $UNMAPPEDFP ....
+
+CONFIGAPP   serverCert  	  $SERVERFP
+CONFIGAPP   defSecurityModel      tsm
+CONFIGAPP   logTimestamp          1
+
+CONFIGAGENT  rwuser -s tsm testuser authpriv
+CONFIGAGENT  rwuser -s tsm testuser2 authpriv
+CONFIGAGENT  rwuser -s tsm otheruser authpriv
+CONFIGAGENT  rwuser -s tsm aftermapping authpriv
+
+CONFIGAGENT  rwuser -s tsm foobaruser@example.com authpriv
+CONFIGAGENT  rwuser -s tsm foobar.example.com authpriv
+CONFIGAGENT  rwuser -s tsm 127.0.0.1 authpriv
+CONFIGAGENT  rwuser -s tsm user8@test.net-snmp.org authpriv
+CONFIGAGENT  rwuser -s tsm user9@test.net-snmp.org authpriv
+CONFIGAGENT  rwuser -s tsm user10@test.net-snmp.org authpriv
+CONFIGAGENT  rwuser -s tsm afileuser authpriv
+CONFIGAGENT  rwuser -s tsm causerdirectmap authpriv
+CONFIGAGENT  rwuser -s tsm causerdirect9cmap authpriv
+
+
+# this file contains tests common to both tls and dtls usages
+
+# start the agent up
+FLAGS="-Dtls -v3 -On $SNMP_FLAGS $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT"
+
+STARTAGENT
+
+# shouldn't have config errors
+CHECKAGENTCOUNT 0 ": Error:"
+
+######################################################################
+# EXTENDED CERTIFICATE SETUP
+#
+# Perform more steps of configuration that should occur *after* the
+# agent has started in order to prevent it from having seen these
+# files ahead of time.
+
+# this user's fingerprint should not be recognized 
+CAPTURE $NSCERT gencert -t unknownuser --san email:unknownuser@example.com  $NSCERTARGS
+UNKNOWNUSER=`$NSCERT showcerts --fingerprint --brief unknownuser $NSCERTARGS`
+CHECKVALUEISNT "$UNMAPPEDFP" "" "generated fingerprint for unknownuser certificate"
+
+# this user's fingerprint should not be directly recognized, but it's
+# CA should.
+
+# user 10: CA signed cert
+CAPTURE $NSCERT gencert -D -t unknowncauser --cn unknowncauser@net-snmp.org --email unknowncauser@net-snmp.org  --with-ca ca-net-snmp.org --san email:user10@test.net-snmp.org $NSCERTARGS
+UNKNOWNCAUSERFP=`$NSCERT showcerts --fingerprint --brief unknowncauser $NSCERTARGS`
+CHECKVALUEISNT "$UNKNOWNCAUSERFP" "" "generated fingerprint for unknowncauser certificate"
+
+######################################################################
+# ACTUAL TESTS
+#
+# Run the actual list of tests
+#
+
+# using user 1 - a common name mapped certificate
+# (using the default "snmpapp" certificate because we don't specify another)
+DOSETTEST user1SnmpApp "$FLAGS"
+
+# now rerun the test after specifying our default using the (same) fingerprint
+CONFIGAPP   clientCert  	  $TESTUSER2FP
+DOSETTEST user1ClientPub "$FLAGS"
+
+# using user 2 - a common name mapped certificate with a direct -T FP request
+DOSETTEST user2DashTFPFlag "-T our_identity=$OTHERUSERFP $FLAGS"
+
+CHECKAGENTCOUNT 4  "otheruser"
+
+# using user 2, specifying the file name instead of the fingerprint
+DOSETTEST user2DashTFileFlag "-T our_identity=otheruser $FLAGS"
+
+CHECKAGENTCOUNT 8  "otheruser"
+
+# using user 3 - an invalid certificate (mapped but not authorized)
+DOFAILSETTEST "invalidUnauthorizedCert" "-T our_identity=$INVALIDUSERFP $FLAGS"
+
+CHECK "authorizationError"
+
+# using user 4 - an unmapped certificate
+DOFAILSETTEST "unmappedCertificate" "-T our_identity=$UNMAPPEDFP $FLAGS"
+
+CHECK "failed rfc5343"
+
+# Check *their* certificate with a different one than expected; should fail
+DOFAILSETTEST "incorectServerCertificate" "-r 0 -T our_identity=$OTHERUSERFP -T their_identity=$OTHERUSERFP $FLAGS"
+
+CHECK "failed to verify ssl certificate"
+
+# using user 5 - a completely remapped certificate (direct specified secname)
+DOSETTEST user5RemappedSecname "-T our_identity=$MAPPEDUSERFP $FLAGS"
+
+# using user 6 - a subjectAltName=email certificate mapping
+DOSETTEST user6SANEmail "-T our_identity=$EMAILUSERFP $FLAGS"
+
+# using user 7 - a subjectAltName=dns certificate mapping
+DOSETTEST user7SANDNS "-T our_identity=$DNSUSERFP $FLAGS"
+
+# using user 8 - a subjectAltName=ipv4 certificate mapping
+DOSETTEST user8SANIP "-T our_identity=$IPUSERFP $FLAGS"
+
+# using user 8 - test that certmapping works from a local filename
+DOSETTEST afileuser "-T our_identity=afile $FLAGS"
+
+# using user 9 - a CA signed certificate
+DOSETTEST user9CASignedCert "-T our_identity=$CAUSERFP -T trust_cert=$CAFP $FLAGS"
+
+# using user 9b - a CA signed certificate with a user-based fp mapping
+DOSETTEST user9bCASignedDirectMap "-T our_identity=$CADIRECTFP $FLAGS"
+
+# using user 9c - a CA2 signed certificate with a user-based fp mapping
+DOSETTEST user9cCASignedDirectMap "-T our_identity=$CADIRECT9CFP $FLAGS"
+
+# using user 9d - a CA2 signed certificate no user-based fp mapping
+DOFAILSETTEST user9dCASignedDirectMap "-T our_identity=$CADIRECT9DFP $FLAGS"
+
+# using user unknown - the server will not have seen this fingerprint at all
+CAPTURE "snmpget -T our_identity=$UNKNOWNUSER -T trust_cert=$CAFP $FLAGS .1.3.6.1.2.1.1.6.0"
+
+# different types of failure messaages for tls/dtls...
+if [ $SNMP_TRANSPORT_SPEC = dtlsudp ]; then
+    CHECK              "failed rfc5343 contextEngineID probing"
+    CHECKAGENTCOUNT  1 "TLS Error: no certificate returned"
+else
+    CHECK              "failed to ssl_connect"
+    CHECKAGENTCOUNT  1 "Failed SSL_accept"
+fi
+
+# using the user without a known fingerprint but with a known CA
+DOSETTEST userNewFromCA " -T trust_cert=$CAFP -T our_identity=$UNKNOWNCAUSERFP $FLAGS"
+
+STOPAGENT
+
+FINISHED

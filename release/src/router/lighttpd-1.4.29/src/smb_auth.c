@@ -1693,7 +1693,6 @@ int smbc_get_usbdisk_permission(const char* user_name, const char* usbdisk_rel_s
 	int permission = -1;
 	
 	#if EMBEDDED_EANBLE
-
 	int st_samba_mode = nvram_get_st_samba_mode();
 	
 	if( (st_samba_mode==1) ||
@@ -3419,6 +3418,18 @@ void md5sum(char* output, int counter, ...)
 	output[129] = '\0';
 }
 
+int check_skip_folder_name(char* foldername){	
+	if ( strcmp(foldername, "minidlna")==0 ||		 
+		 strcmp(foldername, "asusware")==0 ||		 
+		 strcmp(foldername, "asusware.big")==0 ||		 
+		 strcmp(foldername, "asusware.mipsbig")==0 ||
+		 strcmp(foldername, "asusware.arm")==0 ||		 
+		 strcmp(foldername, "$RECYCLE.BIN")==0 ) {		
+		 return 1;	
+	}	
+
+	return 0;
+}
 #if 0
 int is_utf8_file(const char* file){
 	FILE* fp;

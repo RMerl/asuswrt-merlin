@@ -1,0 +1,79 @@
+title Output style options
+description This section allows you to control how the output of the
+description various commands will be formated
+
+token logTimestamp
+info  Should timestamps be shown on the output
+info  arguments: (1|yes|true|0|no|false)
+question 1  Should timestamps be shown on the output
+validanswer 1 ^(1|yes|true|0|no|false)$
+
+token printNumericEnums
+info  Print enums numericly or textually
+info  command line equivelent: -Oe
+question 1 Print enums numericly
+info  arguments: (1|yes|true|0|no|false)
+validanswer 1 ^(1|yes|true|0|no|false)$
+
+token printNumericOids
+info  Print OIDs numericly or textually
+info  command line equivelent: -On
+question 1 Print enums numericly
+info  arguments: (1|yes|true|0|no|false)
+validanswer 1 ^(1|yes|true|0|no|false)$
+
+token dontBreakdownOids
+info When OIDs contain a index to a table, they are broken
+info into the displayable pieces and shown to you.
+info For example the oid vacmSecurityModel.0.3.119.101.115
+info is nicely broken down by
+info default and the string hidden in the oid is shown
+info to you as vacmSecurityModel.0."wes". This token and the -Ob
+info option diables this feature and displays it as
+info vacmSecurityModel.0.3.119.101.115 again.
+info  command line equivelent: -Ob
+info  arguments: (1|yes|true|0|no|false)
+validanswer 1 ^(1|yes|true|0|no|false)$
+question 1 Disable the breaking-down of OIDs?
+
+token escapeQuotes
+info  Should the quotation marks in broken down oids be escaped
+info  If you want to cut and paste oids that have been broken down
+info  into indexes and strings, this will put a backslash in front of them
+info  so your shell will pass them rather than interpret them.
+info  arguments: (1|yes|true|0|no|false)
+question 1  Should the quotation marks in broken down oids be escaped
+validanswer 1 ^(1|yes|true|0|no|false)$
+
+token quickPrinting
+info  Make the output simple for quick parsing
+info  This option removes the equal sign and value identifies leaving
+info  just the oid and the value on the output for easier parsing in scripts
+info  command line equivelent: -Oq
+info  arguments: (1|yes|true|0|no|false)
+validanswer 1 ^(1|yes|true|0|no|false)$
+question 1  Make the output simple for quick parsing
+
+token numericTimeticks
+info  Print timeticks as a number and not a time-string
+info  command line equivelent:
+info  arguments: (1|yes|true|0|no|false)
+question 1 Print timeticks as a number and not a time-string
+validanswer 1 ^(1|yes|true|0|no|false)$
+
+token suffixPrinting
+info Shorten OIDs printed to the screen
+info possible values:
+info -  0:  UCD-style.  OIDs are displayed like:
+info -        system.sysUpTime.0
+info -  1:  deletes all by the last symbolic part of the OID:
+info -        system.sysUpTime.0 becomes sysUpTime.0
+info -  2:  is  a  variant  of this, adding the name of the MIB
+info -      that defined this object:
+info -        system.sysUpTime.0 becomes SNMPv2-MIB::sysUpTime.0
+info -      (This is the default with net-snmp v5)
+info  command line equivelent: 0 = -Ou,  1 = -Os, 2 = -OS
+info  arguments: (1|2)
+question 1 Shorten OIDs (0|1|2)
+validanswer 1 ^(0|1|2)$
+

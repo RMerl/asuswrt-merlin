@@ -12,14 +12,6 @@ endif
 
 include $(SRCBASE)/.config
 
-ifneq ($(findstring DSL,$(BUILD_NAME)),)
-MODEL = $(subst -,_,$(BUILD_NAME))
-else
-MODEL = $(subst -,,$(BUILD_NAME))
-endif
-
-export CFLAGS += -D$(MODEL)
-
 ifeq ($(RTN11P),y)
 CFLAGS += -DBAND_2G_ONLY
 endif
@@ -41,7 +33,7 @@ CFLAGS += -DDNSMASQ
 endif
 
 ifeq ($(RTCONFIG_BWDPI),y)
-CFLAGS += -I$(TOP)/bwdpi/
+CFLAGS += -I$(TOP)/bwdpi/ -I$(TOP)/sqlite
 endif
 
 OBJS = httpd.o cgi.o ej.o 
@@ -115,6 +107,9 @@ endif
 
 ifeq ($(RTCONFIG_BWDPI),y)
 LIBS += -L$(TOP)/bwdpi -lbwdpi
+LIBS += -L$(TOP)/bwdpi_sqlite -lbwdpi_sql
+LIBS += -L$(TOP)/sqlite/.libs -lsqlite3
+#LIBS += -lpthread
 endif
 
 ifeq ($(RTCONFIG_GEOIP),y)

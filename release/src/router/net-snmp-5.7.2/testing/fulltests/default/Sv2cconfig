@@ -1,0 +1,4 @@
+#!/bin/sh
+
+snmp_version=v2c
+. ./Svanyconfig

@@ -1,0 +1,183 @@
+#!/usr/bin/perl
+
+use strict;
+use Text::Wrap;
+my %output;
+my $text;
+my %stash;
+
+use Getopt::Long;
+
+my %opts = (
+	    c => 'CHANGES.new',
+	    n => 'NEWS.new',
+	   );
+
+LocalGetOptions(\%opts,
+		['s|start-regexp=s','A regexp to look for in files to start converting at'],
+		['e|end-regexp=s','A regexp to look for in files to end converting at'],
+		"",
+		['c|changes-file=s','A file to save CHANGES entries to'],
+		['n|news-file=s','A file to save NEWS entries to'],
+		['d|debug-line=s', 'Debugging output for lines matching STRING'],
+		"",
+		['GUI:otherargs_text','Input files to parse'],
+	       );
+
+my $maybecontinue = 0;
+my $lasttext = "";
+my $lastfile;
+my $lastcomponent;
+
+foreach my $argv (@ARGV) {
+    open(I, $argv);
+    if ($opts{'s'}) {
+	while (<I>) {
+	    last if (/$opts{'s'}/o);
+	}
+    }
+
+    while (<I>) {
+	my ($file, $component, $patbug, $nums, $text);
+
+	last if ($opts{'e'} && /$opts{e}/o);
+
+	print STDERR "here: $_" if ($opts{'d'} && /$opts{'d'}/o);
+
+	# don't use this:
+	#   FILE: BUGS: 123,456: text
+	($file, $patbug, $nums, $text) = 
+	  /(NEWS|CHANGES):\s*-*\s*\[*(BUG|PATCH)(?:ES|S|):*\s*([\d,\s*]*)\]*:*\s*-*\s*(.*)/;
+
+	print STDERR "  1:$file, $component, $patbug, $nums, $text\n" if ($opts{'d'} && /$opts{'d'}/o);
+
+	# or this:
+	#   FILE: component - text
+	($file, $component, $text) = 
+	  /(NEWS|CHANGES):\s*(\w+)\s*-+\s*(.*)/ if (!$file);
+
+	print STDERR "  2:$file, $component, $patbug, $nums, $text\n" if ($opts{'d'} && /$opts{'d'}/o);
+
+	# what you should use:
+	#   FILE: component: BUGS: 123,456: text
+	#
+	#      or
+	#   FILE: component: PATCH: 123,456: from someone text
+	#   FILE: component: PATCH: 123,456: from "someone long" text
+	($file, $component, $patbug, $nums, $text) = 
+	  /(NEWS|CHANGES):\s*([^:]+):\s*-*\s*\[*(BUG|PATCH)(?:ES|S):*\s*([\d,\s*]*)\]*:*\s*-*\s*(?:from ["'][^"]+["']|from \w+|):*\s*(.*)/ if (!$file);
+
+	print STDERR "  3:$file, $component, $patbug, $nums, $text\n" if ($opts{'d'} && /$opts{'d'}/o);
+
+	#      or at least:
+	#   FILE: component: text
+	($file, $component, $text) = 
+	  /(NEWS|CHANGES):\s*([^:]+):\s*-*\s*(.*)/ if (!$file);
+
+	print STDERR "  4:$file, $component, $patbug, $nums, $text\n" if ($opts{'d'} && /$opts{'d'}/o);
+
+	# component left out
+	# FILE: [BUGS: 123,456]: text
+	($file, $patbug, $nums, $text) = 
+	  /(NEWS|CHANGES):\s*\[*(BUG|PATCH)*(?:ES|S|):*\s*([\d,\s*]*)\]*:*\s*-*\s*(.*)/ if (!$file);
+	
+	print STDERR "  5:$file, $component, $patbug, $nums, $text\n" if ($opts{'d'} && /$opts{'d'}/o);
+
+	if ($opts{'d'} && /$opts{'d'}/o) {
+	    my $bogus = 1; # breakable point
+	}
+
+	if (!$file && $maybecontinue) {
+	    if (/^\s*(.+)$/) {
+		$text = $1;
+		$file = $lastfile;
+		$component = $lastcomponent;
+
+		# we're going to re-add these
+		pop @{$output{$opts{'c'}}{$component}};
+		pop @{$output{$opts{'n'}}{$component}} if ($file eq 'NEWS');
+	    } else {
+		$maybecontinue = 0;
+		$lasttext = "";
+		next;
+	    }
+	} elsif (!$file) {
+	    next;
+	}
+		
+	next if (exists($stash{$text}));
+	$stash{$text} = 1;
+	
+	$component = "unspecified" if (!$component);
+	if ($patbug) {
+	    $lasttext .= " [$patbug $nums]: $text";
+	} else {
+	    $lasttext .= " $text";
+	}
+	$lasttext =~ s/^ //;                   # get rid of leading spaces
+	$lasttext =~ s/^([a-z])/uc($1)/e;      # capitalize the first letter 
+	$text = wrap("      - ","        ","$lasttext") . "\n";
+	
+	#
+	#  Assist with displaying categories in a sensible order
+	#     snmplib first
+	#     snmpd/snmp{apps}
+	#     various other
+	#     O/S specific  (relies on upper case)
+	#
+	$component =~ s/^snmplib/00snmplib/;
+	$component =~ s/^snmp/0snmp/;
+	$component =~ s/^agent/0snmpd/;		# Merge "agent" into "snmpd"
+	$component =~ s/^([A-Z])/zz\1/;
+	print STDERR "  t:$file, $component, $patbug, $nums, $text\n" if ($opts{'d'} && /$opts{'d'}/o);
+	push @{$output{$opts{'c'}}{$component}}, $text;
+	push @{$output{$opts{'n'}}{$component}}, $text if ($file eq 'NEWS');
+	$lastfile = $file;
+	$lastcomponent = $component;
+	$maybecontinue = 1;
+    }
+}
+
+
+
+# save the news and changes to appropriate files
+foreach my $f ($opts{'c'}, $opts{'n'}) {
+    my $cat2;
+    open(O,">$f");
+    foreach my $cat (sort (keys(%{$output{$f}}))) {
+	($cat2 = $cat) =~ s/^00?|^zz//;
+	print O "    $cat2:\n";
+	print O sort @{$output{$f}{$cat}};
+	print O "\n";
+    }
+    close(O);
+}
+
+#######################################################################
+# getopt long gui portability code
+#
+sub LocalGetOptions {
+    if (eval {require Getopt::GUI::Long;}) {
+	import Getopt::GUI::Long;
+	Getopt::GUI::Long::Configure(qw(display_help no_ignore_case));
+	return GetOptions(@_);
+    } else {
+	require Getopt::Long;
+	Getopt::Long::Configure(qw(auto_help no_ignore_case));
+	import Getopt::Long;
+    }
+    GetOptions(LocalOptionsMap(@_));
+}
+
+sub LocalOptionsMap {
+    my ($st, $cb, @opts) = ((ref($_[0]) eq 'HASH')
+			    ? (1, 1, $_[0]) : (0, 2));
+    for (my $i = $st; $i <= $#_; $i += $cb) {
+	if ($_[$i]) {
+	    next if (ref($_[$i]) eq 'ARRAY' && $_[$i][0] =~ /^GUI:/);
+	    push @opts, ((ref($_[$i]) eq 'ARRAY') ? $_[$i][0] : $_[$i]);
+	    push @opts, $_[$i+1] if ($cb == 2);
+	}
+    }
+    return @opts;
+}

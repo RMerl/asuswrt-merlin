@@ -1,0 +1,8 @@
+Revision history for Perl extension NetSNMP::TrapReceiver.
+
+(Please see the Net-SNMP ChangeLog file for complete details)
+
+5.2  Fri Feb  6 15:58:25 2004
+	- original version; created by h2xs 1.22 with options
+		-a -b 5.0.6 -O -n NetSNMP::TrapReceiver -x perl_snmptrapd.h
+

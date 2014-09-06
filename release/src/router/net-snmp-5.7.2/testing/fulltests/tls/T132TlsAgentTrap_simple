@@ -1,0 +1,15 @@
+#!/bin/sh
+
+. ../support/simple_eval_tools.sh
+
+HEADER TLS-TCP agent trap tests
+
+SKIPIFNOT NETSNMP_TRANSPORT_TLSTCP_DOMAIN
+
+#
+# Begin test
+#
+
+SNMP_TRANSPORT_SPEC=tlstcp
+
+. ./STlsAgentTrap

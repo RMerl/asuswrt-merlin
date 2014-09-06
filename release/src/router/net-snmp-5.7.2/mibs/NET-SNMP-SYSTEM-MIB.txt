@@ -1,0 +1,63 @@
+NET-SNMP-SYSTEM-MIB DEFINITIONS ::= BEGIN
+
+--
+-- Characteristics of the current running system
+--
+
+IMPORTS
+    netSnmpObjects, netSnmpModuleIDs FROM NET-SNMP-MIB
+
+    Float FROM NET-SNMP-TC
+
+    OBJECT-TYPE, NOTIFICATION-TYPE, MODULE-IDENTITY, Integer32, Counter32
+        FROM SNMPv2-SMI
+
+    DisplayString FROM SNMPv2-TC;
+
+
+netSnmpSystemMIB MODULE-IDENTITY
+    LAST-UPDATED "200202090000Z"
+    ORGANIZATION "www.net-snmp.org"
+    CONTACT-INFO    
+	 "postal:   Wes Hardaker
+                    P.O. Box 382
+                    Davis CA  95617
+
+          email:    net-snmp-coders@lists.sourceforge.net"
+    DESCRIPTION
+	"Characteristics of the current running system"
+    REVISION     "200202090000Z"
+    DESCRIPTION
+	"First draft."
+    ::= { netSnmpModuleIDs 4}
+
+
+nsMemory                    OBJECT IDENTIFIER ::= {netSnmpObjects 31}
+nsSwap                      OBJECT IDENTIFIER ::= {netSnmpObjects 32}
+nsCPU                       OBJECT IDENTIFIER ::= {netSnmpObjects 33}
+nsLoad                      OBJECT IDENTIFIER ::= {netSnmpObjects 34}
+nsDiskIO                    OBJECT IDENTIFIER ::= {netSnmpObjects 35}
+
+
+--
+--  Memory
+--
+
+--
+--  Swap
+--
+
+--
+--  CPU Statistics
+--
+
+--
+--  Load Average
+--
+
+--
+--  Disk IO
+--
+
+
+END

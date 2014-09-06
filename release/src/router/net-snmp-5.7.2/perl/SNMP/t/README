@@ -1,0 +1,81 @@
+
+mibload
+(save_descriptions, use_long_names) 
+  setmib
+  initMib
+  addMibDirs
+  addMibFiles
+  loadModules
+  unloadModules (todo)
+
+mib
+ translateObj
+ getType
+ mapEnum
+ SNMP::MIB::NODE
+
+session
+  connectivity
+  error handling
+  mib loading
+  parameters
+
+get
+(use_enums, sprint_val, long_names)
+  var formats
+  fget
+  multi varbinds
+  error reporting
+
+getnext
+
+set
+
+trap??
+
+async
+
+snmpv3
+
+
+This is the first stab at setting up comprehensive tests for
+SNMP-1.7 which look and act like regular perl5 test results.
+
+Use teststub.t attached below as a template for creating additional
+test modules.
+
+Add more tests and feed them back into the distribution!  The more the
+better!
+
+Written by John Stoffel (jfs@fluent.com =or= john@nesc.org) 10/14/1997
+
+------------<teststub.t>--------------------------------
+#!./perl
+
+BEGIN {
+    unless(grep /blib/, @INC) {
+        chdir 't' if -d 't';
+        @INC = '../lib' if -d '../lib';
+    }
+}
+use Test;
+use SNMP 3.0;
+
+$SNMP::verbose = 0;
+$num = 0;  # Number of tests to run
+
+print "1..$num\n";
+$n = 1;
+
+my $junk_oid = ".1.3.6.1.2.1.1.1.1.1.1";
+my $oid = '.1.3.6.1.2.1.1.1';
+my $name = 'sysDescr';
+my $junk_name = 'fooDescr';
+
+######################################################################
+# Garbage names return Undef.
+# test 1
+$type = SNMP::getType($junk_name);
+printf "%s %d\n", (!defined($type)) ? "ok" :"not ok", $n++;
+
+

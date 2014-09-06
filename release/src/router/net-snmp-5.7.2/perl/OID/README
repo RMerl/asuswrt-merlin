@@ -1,0 +1,31 @@
+OID version 0.01
+================
+
+The NetSNMP::OID class is a simple wrapper around a C-based net-snmp
+oid.  The OID is internally stored as a C array of integers for speed
+purposes when doing comparisons, etc.  The standard logical expression
+operators (<, >, ==, ...) are overloaded such that lexographical
+comparisons may be done with them.
+
+INSTALLATION
+
+To install this module type the following:
+
+   perl Makefile.PL
+   make
+   make test
+   make install
+
+DEPENDENCIES
+
+This module requires these other modules and libraries:
+
+  The net-snmp 5.0 or greater release
+  The SNMP 5.0.1 or greater perl module.
+
+COPYRIGHT AND LICENCE
+
+Copyright (c) 2002 Networks Associates Technology, Inc.  All
+Rights Reserved.  This program is free software; you can
+redistribute it and/or modify it under the same terms as Perl
+itself.

@@ -1,0 +1,813 @@
+#!/usr/bin/env perl
+
+use Getopt::Long;
+#use Data::Dumper;
+use File::Basename;
+use Cwd qw(abs_path);
+use strict;
+
+########################################
+# Globals and Command Line options
+
+my %opts = ('groups' => 'default',
+            'master-directory' => 'fulltests',
+	    'srcdir' => dirname("$0") . "/..",
+            'builddir' => '..',
+	    'failed-file' => 'failed_tests',
+	   );
+
+Getopt::Long::Configure(qw(no_ignore_case));
+GetOptions(\%opts,
+           "verbose",
+           "help|?",
+           "quiet|q",
+           "groups|g=s",
+           "r=s",
+           "debug",
+           "srcdir|D=s",
+           "builddir|d=s",
+	   "f",
+	   "F",
+	   "failed-file=s",
+	   "master-directory=s",
+	  ) || ++$opts{'help'};
+
+# Change srcdir and builddir to absolute paths
+$opts{'srcdir'} = abs_path($opts{'srcdir'});
+$opts{'builddir'} = abs_path($opts{'builddir'});
+# Set exeext.
+$opts{'exeext'} = join(readpipe($opts{'builddir'} . '/net-snmp-config --exeext'));
+
+usage() if ($opts{'help'});
+
+# Build the harness object
+my %args = (
+	    verbosity => ($opts{'verbose'} ? 1 : ($opts{'quiet'} ? -1 : 0)),
+	    exec => \&decide_exec,
+	    # this option is *really* weird in how it works
+	    failures => ($opts{'quiet'} ? 0 : ($opts{'verbose'} ? 0 : 1)),
+	    errors => ($opts{'quiet'} ? 0 : 1),
+	   );
+
+# list of support infrastructure components
+my %support;
+my %sources;
+
+# if the -d option was specified, pass on the source root directory to all apps
+if (exists($opts{'master-directory'})) {
+    $ENV{'NETSNMPSRCDIR'} = $opts{'master-directory'};
+} else {
+    $ENV{'NETSNMPSRCDIR'} = '.';
+}
+
+# pass srcdir and builddir to all apps
+$ENV{'srcdir'} = $opts{'srcdir'};
+$ENV{'builddir'} = $opts{'builddir'};
+
+# set up MIBDIRS to refer to the src directory
+if (!$ENV{'MIBDIRS'}) {
+    $ENV{'MIBDIRS'} = "$opts{srcdir}/mibs";
+}
+
+########################################
+# Protection measures
+$ENV{'SNMPCONFPATH'} = "/dev/null";
+
+# create the testing harness infrastructure
+
+my $harness;
+if (eval { require TAP::Harness; } ) {
+    import TAP::Harness;
+    $harness = TAP::Harness->new(\%args);
+} else {
+    require Test::Harness;
+    import Test::Harness;
+    if ($opts{'groups'} ne 'default') {
+	print STDERR "
+ERROR: I can not find the perl TAP::Harness module.  We support the
+more common Test::Harness module but only for the default test group.
+
+Either:
+  1) run only the default tests (i.e., just \"make test\")
+  2) install the TAP::Harness perl module
+
+";
+	exit 1;
+    }
+}
+
+
+########################################
+# gather the tests
+my @tests;
+
+DEBUG("Gathering and building tests:\n");
+find_support();
+if ($opts{'f'}) {
+    DIE("The -f and -g options can not be both specified\n")
+      if ($opts{'groups'} ne 'default');
+    DIE("The -f and -r options can not be both specified\n") if ($opts{'r'});
+    DIE("No $opts{'failed-file'} file was found to read failed state from\n")
+      if (! -f $opts{'failed-file'});
+    open(F, $opts{'failed-file'});
+    while (<F>) {
+	chomp;
+	push @tests, build_test($_);
+    }
+} else {
+    @tests = gather_tests($opts{'groups'}, $opts{'r'});
+}
+
+########################################
+# rename them to remove parent dirs
+@tests = rename_tests(@tests);
+
+########################################
+# run the tests
+
+DEBUG("Running tests:\n"); 
+DEBUG("-" x 78, "\n");
+
+my $results;
+if ($harness) {
+    $results = $harness->runtests(@tests);
+} else {
+    # minimal backwards compat with Test::Harness
+    run_older_perl_tests(@tests);
+}
+
+my @failed = $results->failed();
+if (!$opts{'q'} && $#failed > -1) {
+    print "\nWe failed these ", (1 + $#failed), " tests:\n";
+    my @lines = @failed;
+    map { if (exists($sources{$_})) { $_ = "$_ ( $sources{$_} )"} } @lines;
+    print "  ", join("\n  ",@lines), "\n";
+}
+
+if (!$opts{'F'}) {
+    open(F,">$opts{'failed-file'}");
+    if ($#failed > -1) {
+	print F join("\n", get_sources(@failed)) . "\n";
+    }
+    close(F);
+}
+
+exit($results->all_passed() ? 0 : 1);
+
+######################################################################
+# Infrastructure
+#
+
+########################################
+# decides how we should execute a test
+#
+sub decide_exec {
+    my ( $harness, $testfile ) = @_;
+
+    # 1) Parse the $testfile argument.
+    my ($dirname, $groupname, $basename, $app_extension, $file_extension) = 
+      ($testfile =~ /([^\/]+)\/([^\/]+)\/([^\/]+)_([^\/_]+)\.*([^\/\.]*)$/);
+    $app_extension =~ s/$opts{'exeext'}\$//;
+
+    # 2) we have a RUN_TYPE file in the same directory
+    if (exists($support{'run'}{$app_extension}{$groupname})) {
+	return [$support{'run'}{$app_extension}{$groupname}, $testfile];
+    }
+
+    # 3) return a generic run script
+    if (exists($support{'run'}{$app_extension}{'generic'})) {
+	return [$support{'run'}{$app_extension}{'generic'}, $testfile];
+    }
+
+    # 4) give up and let the test harness decide itself
+    return undef;
+}
+
+sub gather_tests {
+    my ( $groups, $regexp ) = @_;
+    my @groups;
+
+    # figure out the list of groups we need to search through
+    if ($groups eq 'all') {
+	# find every group we can
+	# we exclude:
+	#  - things not a directory
+	#  - anything with "template" in the name
+	@groups =
+	  grep { !/(template|support)/ &&
+		   -d $_ && s/$opts{'srcdir'}\/testing\/$opts{'master-directory'}.// } glob("$opts{'srcdir'}/testing/$opts{'master-directory'}/*");
+    } else {
+	# they specified a comma separated list
+	@groups = split(/,\s*/, $groups);
+    }
+    DEBUG("Checking groups: ", join(", ", @groups), "\n");
+
+    my @tests;
+    foreach my $group (@groups) {
+	my @files;
+
+	DEBUG("checking group $group\n");
+
+	if (! -d "$opts{'srcdir'}/testing/$opts{'master-directory'}/$group") {
+	    ERROR("group '$group' is not a directory under '$opts{'srcdir'}/testing/$opts{'master-directory'}'; ignoring\n");
+	    next;
+	}
+
+	# push on all files that start with T[NUM]*
+	push_or_skip(\@tests, $regexp, glob("$opts{'srcdir'}/testing/$opts{'master-directory'}/$group/T[0-9]*"));
+    }
+
+    return @tests;
+}
+
+sub push_or_skip {
+    my ($array, $regexp, @files) = @_;
+    foreach my $file (@files) {
+	next if ($file =~ /.(bak|old|orig|rej)$/);
+	next if ($file =~ /~$/);
+	next if (defined($regexp) && $file !~ /$regexp/i);
+	DEBUG("  Adding file $file\n");
+	push @$array, build_test($file);
+    }
+}
+
+# rename all the tests to remove the top subdir to help readability
+sub rename_tests {
+    my (@tests) = @_;
+    my @newtests;
+
+    # yes, I could have used map.  But I didn't.
+    foreach my $file (@tests) {
+	my $title = "$file";
+	my $foundheader = 0;
+	$title = $sources{$file} if (exists($sources{$file}));
+	
+	open(SRC, $title);
+	while (<SRC>) {
+	    if (/(HEADER|TITLE)\s+['"]*(.*)/) {
+		$title = $2;
+		$title =~ s/\s*\*\/.*//;
+		$title =~ s/['"]$//;
+		$foundheader = 1;
+		last;
+	    }
+	}
+	close(SRC);
+
+	if (! $foundheader) {
+	    $title =~ s/^$opts{'srcdir'}\/testing\///;
+	    $title =~ s/$opts{'master-directory'}.//;
+	}
+	$sources{$title} = $sources{$file} || $file;
+	push @newtests, [$file, $title];
+    }
+    return @newtests;
+}
+
+# called to possibly manipluate the list of tests to run by building some
+sub build_tests {
+    my (@tests) = @_;
+    my @newtests;
+
+    foreach my $test (@tests) {
+	my $title;
+	
+	my $built = build_test($test);
+	if (ref($built) eq 'ARRAY') {
+	    push @newtests, @$built;
+	} elsif ($built ne "") {
+	    push @newtests, $built;
+	}
+    }
+    return @newtests;
+}
+
+#
+# Finds scripts that are used to build and run actual commands
+#
+sub find_builders {
+    $support{'build'} = {};
+    find_scripts('build', $support{'build'});
+}
+
+sub find_runners {
+    $support{'run'} = {};
+    find_scripts('run', $support{'run'});
+}
+
+sub find_support {
+    find_builders();
+    find_runners();
+}
+
+sub find_scripts {
+    my ($buildname, $hashref) = @_;
+    my $count;
+    DEBUG("looking for $buildname scripts\n");
+    foreach my $builder (glob("$opts{'srcdir'}/testing/$opts{'master-directory'}/*/*_${buildname}")) {
+	next if ($builder =~ /~$/);
+	next if ($builder =~ /.(bak|orig|rej|old)$/);
+
+	my ($group, $type) = ($builder =~ /([^\/]+)\/([^\/]*)_${buildname}/);
+	# save this as a certain group builder
+	$hashref->{$type}{$group} = $builder;
+
+	# save this as a generic builder if there isn't a better
+	# generic one, such as one that exists in the support
+	# directory.
+	if (!exists($hashref->{$type}{'generic'}) || $group eq 'support') {
+	    $hashref->{$type}{'generic'} = $builder;
+	}
+	$count++;
+    }
+    DEBUG("  found $count\n");
+}
+
+# called to build a test from a registerd builder
+sub build_test {
+    my ($testfile) = @_;
+
+    my ($dirname, $groupname, $basename, $app_extension, $file_extension) = 
+      ($testfile =~ /([^\/]+)\/([^\/]+)\/([^\/]+)_([^\/_]+)\.([^\/\.]+)$/);
+
+    # is this even a buildable type recipe?
+    if (!$dirname || !$basename || !$app_extension || !$file_extension) {
+	return $testfile;
+    }
+
+    DEBUG("found: $testfile => $dirname, $basename, $app_extension, $file_extension\n");
+
+    # choices:
+    # 1) we have a registered subroutine to build an extension from
+    # XXX
+
+    # 2) we have a BUILD_TYPE file in the same directory
+    if (exists($support{'build'}{$app_extension}{$dirname})) {
+	return
+	  call_build_script($support{'build'}{$app_extension}{$dirname}, $testfile);
+    }
+
+    # 3) return a generic build script
+    if (exists($support{'build'}{$app_extension}{'generic'})) {
+	return
+	  call_build_script($support{'build'}{$app_extension}{'generic'}, $testfile);
+    }
+
+    # 4) we assume it's fine as is
+    return $testfile;
+}
+
+sub call_build_script {
+    my ($scriptname, $filename) = @_;
+
+    my $maybenewfile = $filename;
+    $maybenewfile =~ s/.[^\.]+$/$opts{'exeext'}/;
+    $maybenewfile =~ s/T([^\/]+)$/B$1/;  # change prefix to B for 'Built'
+    $maybenewfile =~ s/^$opts{'srcdir'}\///;
+
+    my $newpath = $maybenewfile;
+    $newpath =~ s/\/[^\/]*$//;
+
+    if (! -d $newpath) {
+	DEBUG("making directory $newpath\n");
+	system("$opts{'srcdir'}/mkinstalldirs $newpath");
+    }
+
+    my $lastline;
+    DEBUG("BUILDING: $scriptname $filename $maybenewfile\n");
+    open(B,"$scriptname $filename $maybenewfile|");
+    while (<B>) {
+	$lastline = $_;
+    }
+    chomp($lastline);
+
+    DEBUG("  result: $lastline\n");
+    return undef if ($lastline eq 'fail');
+    return undef if ($lastline eq 'skip');
+    return $filename if ($lastline eq '');
+    $sources{$lastline} = $filename;        # remember where we came from
+    return $lastline;
+}
+
+sub get_sources {
+    my (@names) = @_;
+    map { if (exists($sources{$_})) { $_ = $sources{$_} } } @names;
+    return @names;
+}
+
+sub run_older_perl_tests {
+    #
+    # Older versions of perl used a different test suite called Test::Harness
+    # It is much more limited than TAP::Harness;
+    #
+    # Here we massage our older tests into something that will work under
+    # Test::Harness too.
+    #
+    my @tests = @_;
+
+    # create the temporary files
+    my @tempfiles;
+    if (! -d "$opts{'master-directory'}") {
+	mkdir("$opts{'master-directory'}", 0777);
+    }
+    if (! -d "$opts{'master-directory'}/temptests") {
+	mkdir("$opts{'master-directory'}/temptests", 0777);
+    }
+    foreach my $test (@tests) {
+	my $tempfile = "$test->[0].t";
+	$tempfile =~ s#^$opts{'srcdir'}#$opts{'builddir'}#;
+	$tempfile =~ s#$opts{'master-directory'}/default/#$opts{'master-directory'}/temptests/#;
+	open(T, ">$tempfile") || die("$tempfile: $!");
+	print T "# functionally perl\n\nsystem(\"$opts{'srcdir'}/testing/fulltests/support/simple_run $test->[0]\");\n";
+	close(T);
+	chmod(0755, $tempfile);
+	push @tempfiles, $tempfile;
+    }
+
+    $results = runtests(@tempfiles);
+
+    unlink(@tempfiles) || die("$@ $!");
+    exit;
+}
+
+# usage output
+sub usage {
+    print "$0 [OPTIONS]\n";
+
+    print "\nOPTIONS:\n";
+    print "  -v\t\t\tRuns in verbose mode; dumping all test output\n";
+    print "    --verbose\n";
+    print "  -q\t\t\tRuns in quieter mode; dumps less test output\n";
+    print "    --quiet\n";
+    print "  -g GROUP\t\tRuns the group of specified tests (default = 'default')\n";
+    print "    --group GROUP\n";
+    print "\t\t\t(use 'all' to run all tests)\n";
+    print "  -r REGEXP\t\tOnly run test files matching this regexp\n";
+    print "  -f\t\t\tRun only the failed tests from the last run\n";
+    print "  -F\t\t\tDon't create the failed_tests file\n";
+    print "  --failed-file FILE\tThe location of the failed state file\n";
+    print "  -D PATH\t\tSource directory\n";
+    print "    --srcdir PATH\n";
+    print "    (currently '$opts{'srcdir'}')\n";
+    print "  -d PATH\t\tBuild directory to be tested\n";
+    print "    --builddir PATH\n";
+    print "    (currently '$opts{'builddir'}')\n";
+    print "  --master-directory DIRNAME\n";
+    print "    (default = 'fulltests')\n";
+    print "  -h\t\t\tThis help output\n";
+    print "    --help\n";
+    print "  --debug\t\tDebugging output\n\n";
+    exit;
+}
+
+sub DEBUG {
+    return if (!$opts{'debug'});
+    print @_;
+}
+
+sub ERROR {
+    print STDERR "Error:", @_;
+}
+
+sub DIE {
+    ERROR(@_);
+    exit 1;
+}
+
+=pod
+
+=head1 NAME
+
+runfulltests - the Net-SNMP test suite coordinator
+
+=head1 SYNOPSIS
+
+runfulltests [OPTIONS]
+
+# ./RUNFULLTESTS
+
+# ./RUNFULLTESTS -g all
+
+=head1 DESCRIPTION
+
+B<RUNFULLTESTS> is a TAP (see below) output aggregator and test suite
+management program.  It runs groups of tests that it can find in the
+I<fulltests> sub-directory.  It defaults to running a basic set of
+high-level Net-SNMP tests found in the fulltests/default directory.
+To run a different set of tests see the -g flag.
+
+It is able to keep state and remember which tests failed so that
+during development you can simply re-run only the "last failed tests"
+using the -f switch.
+
+=head2 Perl Requirements
+
+Ideally it should be run under a fairly modern version of perl (eg,
+5.10) but minmial support is provided for older versions of perl as
+well.
+
+If no perl is available on the system, there is also a fall-back
+"RUNTESTS" suite which merely executes the default scripts for testing
+compliance of the high-level applications.
+
+=head2 Important Notes About Writing New Tests
+
+When designing new tests it is strongly encouraged that some
+conventions are followed:
+
+  - Design the test files so they can be build/run without them
+    needing to be build/run within a testing harness like this one
+    (B<RUNFULLTESTS>).  IE, you should be able to run them directly by
+    hand for debugging purposes without requiring them to be invoked
+    within this or any other testing harness.
+  - Name them beginning with TNNN where NNN is a 3 digit number
+
+The rational behind these rules follows in the sections below
+
+=head1 OPTIONS
+
+=over
+
+=item -g GROUP
+
+=item --group GROUP
+
+By default the "default" group of tests is run.  Which is really just
+everything that B<RUNFULLTESTS> can find from the I<fulltests/default>
+sub-directory.  The -g switch can be used to specify other
+sub-directories of tests to run.  The argument is a comma-separated
+list of subdirectories to use.
+
+The special keyword I<all> can be used to run every test in every
+subdirectory of the I<fulltests> directory.
+
+=item -r REGEXP
+
+Only run test files that match the I<REGEXP> regular expression.
+
+To run only tests of a certain file name you might combine this with
+'-g all'.  E.G., -g all -r snmpv3 will run all snmpv3 (named) tests
+that B<RUNFULLTESTS> can find.
+
+=item -f
+
+Only run the tests that failed from the last run.
+
+=item --failed-file FILE
+
+Where to store the state of which tests have failed.
+
+=item -F
+
+Don't save state to the failed-file.
+
+=item -D PATH
+
+=item --srcdir PATH
+
+If RUNFULLTESTS is being executed from a build directory other than
+where the source files are located, this flag can be used to specify
+where the Net-SNMP root source directory is found.
+
+=item -d PATH
+
+=item --builddir PATH
+
+Specifies the root of the build directory.
+
+=item --master-directory DIRNAME
+
+Specifies an alternate master directory.  The default is "fulltests"
+
+=item -v
+
+=item --verbose
+
+Turns on verbose output mode.
+
+=item -q
+
+=item --quiet
+
+Turns on quiet output mode.
+
+=item --debug
+
+Turns on debugging output (which primarily shows how B<RUNFULLTESTS>
+is collecting tests to run, etc).
+
+=item -h
+
+=item --help
+
+Command line usage help output.
+
+=back
+
+=head1 TEST ARCHITECTURE
+
+=head2 TAP output
+
+TAP stands for "Test Anything Protocol".  TAP was originally
+perl-specific but has been turning out to be a generic protocol for
+testing just about anything.  It's heavily documented at:
+
+  http://testanything.org/wiki/index.php/Main_Page
+
+We're using TAP because it's highly flexible and separates the
+invidual tests from the "collect and report" aspect.  RUNFULLTESTS is
+simply a perl-based implementation for collecting and summarizing the
+test results.  Other collection agents could be used instead of this
+one, and any sort of test or language could be used for the individual
+tests as well (in fact the default suite has some that are SH-based,
+C-based, ...).
+
+It may be that eventually the TAP protocol actually makes it into the
+IETF (http://testanything.org/wiki/index.php/TAP_at_IETF:_Draft_Standard).
+
+The syntax of TAP is very simple.  See the above web page for a
+complete description, but this will provide you a minimal "getting
+started" example and shows the output of 5 sub-tests run from a single
+test application.
+
+  1..5
+  ok 1 - Yay
+  ok 2 - Second part succeeded
+  not ok 3 - Oh no...  A problem occurred.
+  not ok 4 - The computer thought 2+2 was 5
+  ok 5 - All is well that ends well
+
+That's it.  Output from a test tool like that is auto-summarized by
+this application in success/fail reports.
+
+=head2 Testing Phases
+
+The testing process goes through the following phases:
+
+ - Test and Infrastructure Collection
+ - Test Execution
+   - Build if needed
+   - Run
+
+=head2 Test Collection
+
+B<RUNFULLTESTS> will search all the requested groups for files that
+begin with the letter 'T'.  They are executed in alphabetical order
+within their group.  Convention is to number test files with a three
+digit (zero-padded) number after the 'T' letter to ensure ordering is
+as expected.
+
+Files to be collected by B<RUNFULLTESTS> are made up of a number of
+components to support a flexible build and execution system (discussed
+in detail in the following sections).  They are structured as follows:
+
+  T<NNN><NAME>_<TYPE>.<SUFFIX>
+
+Where:
+
+  NNN:      Is the 3 digit number mentioned above.
+  NAME:     The filename of the test describing what it's about
+  TYPE:     The internal "type" of the test, which is used later in building
+            and execution (see below).
+  .SUFFIX:  An optional file-type suffix
+
+Examples:
+
+  fulltests/default/T001snmpv1get_simple
+  fulltests/snmpv3/T040keymanagetest_capp.c
+
+Any other files are ignored in terms of tests and may be supplimental
+to the above build systems.  (Supporting files, by convention, begin
+with a capital 'S').
+
+=head3 Full Title
+
+Within the file there may be a line containing "HEADER ..." that will
+be examined for a better title of the test.  Anything before "HEADER"
+will be ignored, and the special "*/" will be replaced as well.  For
+example, these are valid header source lines:
+
+  # HEADER A cool test
+  /* HEADER A cool test from my C-based source file */
+
+=head2 Infrastructure Collection
+
+In addition to test files, I<infrastructure> files are searched for
+and remembered for later use (again, see below).  These files will be
+of the form:
+
+  <TYPE>_<USEAGE>
+
+Where:
+
+  TYPE:      The type name matching the file to support.
+
+  USAGE:     How this file should be used.  Currently should be either
+            I<build> or I<run> as described below.
+
+Example files
+
+  fulltests/support/clib_build
+  fulltests/support/simple_run
+
+Infrastructure files may exist in the source directory of where they're
+expected to be run (ie, parallel to the test files) or they may exist
+in the special "support" directory if they're expected to be
+generically used across multilpe test group types.
+
+=head2 Test Execution
+
+Tests are run in two phases using the following pseudo-algorithm:
+
+  + for each test file
+    + if an appropriate TYPE_build file exists for a test {
+      + run "TYPE_build TESTFILE"
+      + record the last line as the new TESTFILE to run
+    }
+
+    + if an apporpriate TYPE_run file exists for a test {
+      + run "TYPE_run TESTFILE"
+      + collect it's output as the TAP output
+    } else {
+      + run "TESTFILE"
+      + collect it's output as the TAP output
+    }
+
+For example, if the following files existed:
+
+  fulltests/examplres/T001testing_examp
+  fulltests/examplres/examp_build
+  fulltests/examplres/examp_run
+
+Then the following would be the rough execution:
+
+  newfile = `fulltests/examplres/examp_build \
+             fulltests/examplres/T001testing_examp | tail -1`
+  fulltests/examplres/examp_run $newfile
+
+=head1 TEST TYPES
+
+Net-SNMP testing comes with a number of test suite "builders" and
+"runners" that are useful for developing new tests.  These are
+documented here:
+
+=over
+
+=item simple
+
+I<simple> test files are simple sh-shell-script files used to test
+high-level functionality of Net-SNMP tools.  They're easy to write and
+should generally contain the following sort of structure:
+
+  . ../support/simple_eval_tools.sh
+  HEADER my name
+  STARTAGENT
+  CAPTURE "snmpget..."
+  CHECK "for this string"
+  STOPAGENT
+  FINISHED
+
+Example file: fulltests/default/T001snmpv1get_simple
+
+=item capp
+
+I<capp> files are fundamentally full C-source-code applications that
+are built and linked against the libnetsnmp library.  Thus, a file
+named I<T001mytest_capp.c> is compiled using the same compiler used to
+compile Net-SNMP and linked against the required libraries for a basic
+Net-SNMP application.  It should, of course, produce TAP output after
+it's compiled and run.
+
+Example file: fulltests/snmpv3/T010scapitest_capp.c
+
+=item clib
+
+I<clib> files are simple C-source-code files that are wrapped into a
+main() application with appropriate #include files, etc.  I<clib>
+files are designed primarly to write quick unit-tests for the Net-SNMP
+core library.
+
+Example file: fulltests/unit-tests/T001defaultstore_clib.c
+
+=item Write your own!
+
+This test system is designed to be flexible and expandable if the
+basic architecture is followed.  The goal is to make it easy to create
+very simple test suites or complex unit-tests or anything in between.
+
+=back
+
+=head1 DEBUGGING BROKEN TESTS
+
+If the individual tests are designed well, you should be able to
+re-run individual tests outside of the B<RUNFULLTESTS> aggregation
+environment using the appropriate _build and _run scripts as needed.
+Test writers are encouraged to output comments in their TAP output to
+help users debug the results.
+
+=head1 Author
+
+Original architecture: Wes Hardaker <hardaker@users.sourceforge.net>
+
+=cut
+

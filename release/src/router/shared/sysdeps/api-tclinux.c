@@ -134,6 +134,7 @@ int separate_tc_fw_from_trx(char* trxpath)
 	{
 		// only trx, no tc fw
 		printf("no tc fw\n");
+		goto err;
 	}
 
 	RetVal = 1;

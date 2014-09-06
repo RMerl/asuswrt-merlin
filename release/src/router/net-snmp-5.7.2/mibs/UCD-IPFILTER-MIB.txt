@@ -1,0 +1,261 @@
+UCD-IPFILTER-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    OBJECT-TYPE, MODULE-IDENTITY, Counter32, Integer32
+	FROM SNMPv2-SMI
+    ucdExperimental
+	FROM UCD-SNMP-MIB;
+
+ucdIpFilter MODULE-IDENTITY
+    LAST-UPDATED "200001260000Z"
+    ORGANIZATION "University of California, Davis"
+    CONTACT-INFO    
+	"This mib is no longer being maintained by the University of
+	 California and is now in life-support-mode and being
+	 maintained by the net-snmp project.  The best place to write
+	 for public questions about the net-snmp-coders mailing list
+	 at net-snmp-coders@lists.sourceforge.net.
+
+         postal:   Wes Hardaker
+                   P.O. Box 382
+                   Davis CA  95617
+
+         email:    net-snmp-coders@lists.sourceforge.net
+        "
+    DESCRIPTION
+	"This module defines MIB components for reading information 
+	 from the IP Filter. This would let you only read its rules 
+	 and counters.
+
+         IP Filter by Darren Reed <darrenr@pobox.com>
+         IP Filter web page URL http://coombs.anu.edu.au/~avalon/
+         ipf-mod.pl module by Yaroslav Terletsky <ts@polynet.lviv.ua>
+         IP Filter UCD-SNMP module URL
+         ftp://ftp.polynet.lviv.ua/pub/UNIX/security/ipf/ucd-snmp-ipf-mod.tgz
+         Yaroslav Terletsky <ts@polynet.lviv.ua>"
+
+    REVISION	 "200001260000Z"
+    DESCRIPTION
+	"Renamed MIB root object"
+
+    REVISION	 "9912150000Z"
+    DESCRIPTION
+	"SMIv2 version converted from an older MIB definition."
+    ::= { ucdExperimental 2 }
+
+ipfInTable OBJECT-TYPE
+    SYNTAX	SEQUENCE OF IpfInEntry
+    MAX-ACCESS	not-accessible
+    STATUS	current
+    DESCRIPTION
+	"A table with IP Filter incoming rules and statistics."
+    ::= { ucdIpFilter 1 }
+
+ipfInEntry OBJECT-TYPE
+    SYNTAX	IpfInEntry
+    MAX-ACCESS	not-accessible
+    STATUS	current
+    DESCRIPTION
+	"IP Filter incoming rules table entry."
+    INDEX	{ ipfInIndex }
+    ::= { ipfInTable 1 }
+
+IpfInEntry ::= SEQUENCE {
+    ipfInIndex	Integer32,
+    ipfInRule	OCTET STRING,
+    ipfInHits	Counter32
+}
+
+ipfInIndex OBJECT-TYPE
+    SYNTAX	Integer32 (0..2147483647)
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"Reference index for each incoming IP Filter rule."
+    ::= { ipfInEntry 1 }
+
+ipfInRule OBJECT-TYPE
+    SYNTAX	OCTET STRING
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"Textual representation of the incoming IP Filter rule."
+    ::= { ipfInEntry 2 }
+
+ipfInHits OBJECT-TYPE
+    SYNTAX	Counter32
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"Hits of the incoming IP Filter rule."
+    ::= { ipfInEntry 3 }
+
+ipfOutTable OBJECT-TYPE
+    SYNTAX	SEQUENCE OF IpfOutEntry
+    MAX-ACCESS	not-accessible
+    STATUS	current
+    DESCRIPTION
+	"A table with IP Filter outgoing rules and statistic."
+    ::= { ucdIpFilter 2 }
+
+ipfOutEntry OBJECT-TYPE  
+    SYNTAX	IpfOutEntry
+    MAX-ACCESS	not-accessible 
+    STATUS	current
+    DESCRIPTION
+	"IP Filter outgoing rules table entry."
+    INDEX	{ ipfOutIndex }
+    ::= { ipfOutTable 1 }
+
+IpfOutEntry ::= SEQUENCE {
+    ipfOutIndex	Integer32,
+    ipfOutRule	OCTET STRING,
+    ipfOutHits	Counter32
+}
+
+ipfOutIndex OBJECT-TYPE
+    SYNTAX	Integer32 (1..2147483647)
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"Reference index for each outgoing IP Filter rule."
+    ::= { ipfOutEntry 1 }
+
+ipfOutRule OBJECT-TYPE
+    SYNTAX	OCTET STRING
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"Textual representation of the outgoing IP Filter rule."
+    ::= { ipfOutEntry 2 }
+
+ipfOutHits OBJECT-TYPE
+    SYNTAX	Counter32
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"Hits of the outgoing IP Filter rule."
+    ::= { ipfOutEntry 3 }
+
+ipfAccInTable OBJECT-TYPE
+    SYNTAX	SEQUENCE OF IpfAccInEntry
+    MAX-ACCESS	not-accessible
+    STATUS	current
+    DESCRIPTION
+	"A table with IP Filter incoming accounting rules
+	 and statistics."
+    ::= { ucdIpFilter 3 }
+
+ipfAccInEntry OBJECT-TYPE
+    SYNTAX	IpfAccInEntry
+    MAX-ACCESS	not-accessible
+    STATUS	current
+    DESCRIPTION
+	"IP FIlter incoming accounting rules table entry."
+    INDEX	{ ipfAccInIndex }
+    ::= { ipfAccInTable 1 }
+
+IpfAccInEntry ::= SEQUENCE {
+    ipfAccInIndex	Integer32,
+    ipfAccInRule	OCTET STRING,
+    ipfAccInHits	Counter32,
+    ipfAccInBytes	Counter32
+}
+
+ipfAccInIndex OBJECT-TYPE
+    SYNTAX	Integer32 (1..2147483647)
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"Reference index for each incoming accounting
+	 IP Filter rule."
+    ::= { ipfAccInEntry 1 }
+
+ipfAccInRule OBJECT-TYPE
+    SYNTAX	OCTET STRING
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"Textual representation of the incoming accounting
+	 IP Filter rule."
+    ::= { ipfAccInEntry 2 }
+
+ipfAccInHits OBJECT-TYPE
+    SYNTAX	Counter32
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"Hits of the incoming accounting IP Filter rule."
+    ::= { ipfAccInEntry 3 }
+
+ipfAccInBytes OBJECT-TYPE
+    SYNTAX	Counter32
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"Bytes passed thru the incoming accounting
+	 IP Filter rule."
+    ::= { ipfAccInEntry 4 }
+
+ipfAccOutTable OBJECT-TYPE
+    SYNTAX	SEQUENCE OF IpfAccOutEntry
+    MAX-ACCESS	not-accessible
+    STATUS	current
+    DESCRIPTION
+	"A table with IP Filter outgoing accounting rules
+	 and statistic."
+    ::= { ucdIpFilter 4 }
+
+ipfAccOutEntry OBJECT-TYPE
+    SYNTAX	IpfAccOutEntry
+    MAX-ACCESS	not-accessible
+    STATUS	current
+    DESCRIPTION
+	"IP Filter outgoing accounting rules table entry."
+    INDEX	{ ipfAccOutIndex }
+    ::= { ipfAccOutTable 1 }
+
+IpfAccOutEntry ::= SEQUENCE {
+    ipfAccOutIndex	Integer32,
+    ipfAccOutRule	OCTET STRING,
+    ipfAccOutHits	Counter32,
+    ipfAccOutBytes	Counter32
+}
+
+ipfAccOutIndex OBJECT-TYPE
+    SYNTAX	Integer32 (1..2147483647)
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"Reference index for each outgoing accounting
+	 IP Filter rule."
+    ::= { ipfAccOutEntry 1 }
+
+ipfAccOutRule OBJECT-TYPE
+    SYNTAX	OCTET STRING
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"Textual representation of the outgoing accounting
+	 IP Filter rule."
+    ::= { ipfAccOutEntry 2 }
+
+ipfAccOutHits OBJECT-TYPE
+    SYNTAX	Counter32
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"Hits of the outgoing accounting IP Filter rule."
+    ::= { ipfAccOutEntry 3 }
+
+ipfAccOutBytes OBJECT-TYPE
+    SYNTAX	Counter32
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"Bytes passed thru the outgoing accounting
+	 IP Filter rule."
+    ::= { ipfAccOutEntry 4 }
+
+END
+

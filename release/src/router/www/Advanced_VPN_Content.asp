@@ -87,7 +87,7 @@ function pptpd_connected_status(){
 			username_status = "status"+ind;
 			if(pptpd_connected_clients.length >0){
 				for(var y=0; y<pptpd_connected_clients.length; y++){
-					if(document.getElementById('pptpd_clientlist_table').rows[x].cells[1].innerHTML == pptpd_connected_clients[y].username){
+					if(document.getElementById('pptpd_clientlist_table').rows[x].cells[1].title == pptpd_connected_clients[y].username){
 						document.getElementById(username_status).innerHTML = '<a class="hintstyle2" href="javascript:void(0);" onClick="showPPTPClients(\''+pptpd_connected_clients[y].username+'\');"><#Connected#></a>';
 							break;
 					}		
@@ -110,7 +110,7 @@ function openvpnd_connected_status(){
 			username_status = "conn"+ind;
 			if(openvpnd_connected_clients.length >0){
 				for(var y=0; y<openvpnd_connected_clients.length; y++){
-					if($("openvpnd_clientlist_table").rows[x].cells[1].innerHTML == openvpnd_connected_clients[y].username){
+					if($("openvpnd_clientlist_table").rows[x].cells[1].title == openvpnd_connected_clients[y].username){
 							document.getElementById(username_status).innerHTML = '<a class="hintstyle2" href="javascript:void(0);" onClick="showOpenVPNClients(\''+openvpnd_connected_clients[y].username+'\');"><#Connected#></a>';
 							break;
 					}		
@@ -247,7 +247,7 @@ function validForm(mode){
 		alert("<#JS_fieldblank#>");
 		valid_username.focus();
 		return false;
-	}else if(!Block_chars(valid_username, [" ", "@", "*", "+", "|", ":", "?", "<", ">", ",", ".", "/", ";", "[", "]", "\\", "=", "\"" ])){
+	}else if(!Block_chars(valid_username, [" ", "@", "*", "+", "|", ":", "?", "<", ">", ",", ".", "/", ";", "[", "]", "\\", "=", "\"", "&" ])){
 		return false;
 	}
 
@@ -255,7 +255,7 @@ function validForm(mode){
 		alert("<#JS_fieldblank#>");
 		valid_password.focus();
 		return false;
-	}else if(!Block_chars(valid_password, ["<", ">"])){
+	}else if(!Block_chars(valid_password, ["<", ">", "&"])){
 		return false;
 	}
 
@@ -269,7 +269,7 @@ function addRow_Group(upper, flag){
 		password_obj = document.form.pptpd_clientlist_password;
 		var rule_num = $(table_id).rows.length;
 		var item_num = $(table_id).rows[0].cells.length;		
-		if(rule_num > upper){
+		if(rule_num >= upper){
 			alert("<#JS_itemlimit1#> " + upper + " <#JS_itemlimit2#>");
 			return false;	
 		}		
@@ -280,7 +280,7 @@ function addRow_Group(upper, flag){
 		password_obj = document.form.vpn_server_clientlist_password;
 		var rule_num = $(table_id).rows.length;
 		var item_num = $(table_id).rows[0].cells.length;		
-		if(rule_num > upper+1){
+		if(rule_num >= upper+1){
 			alert("<#JS_itemlimit1#> " + upper + " <#JS_itemlimit2#>");
 			return false;	
 		}
@@ -290,7 +290,7 @@ function addRow_Group(upper, flag){
 		//Viz check same rule  //match(username) is not accepted
 		if(item_num >=2){
 			for(i=0; i<rule_num; i++){	
-				if(username_obj.value == $(table_id).rows[i].cells[1].innerHTML){
+				if(username_obj.value == $(table_id).rows[i].cells[1].title){
 					alert("<#JS_duplicate#>");
 					username_obj.focus();
 					username_obj.select();
@@ -382,7 +382,7 @@ function showpptpd_clientlist(){
 						pptpd_clientlist_col[0]=pptpd_clientlist_col[0].substring(0, 30)+"...";
 						code +='<td width="35%" title="'+overlib_str0[i]+'">'+ pptpd_clientlist_col[0] +'</td>';
 					}else
-						code +='<td width="35%">'+ pptpd_clientlist_col[0] +'</td>';
+						code +='<td width="35%" title="'+pptpd_clientlist_col[0]+'">'+ pptpd_clientlist_col[0] +'</td>';
 				}
 				else if(j == 1){
 					if(pptpd_clientlist_col[1].length >32){
@@ -390,7 +390,7 @@ function showpptpd_clientlist(){
 						pptpd_clientlist_col[1]=pptpd_clientlist_col[1].substring(0, 30)+"...";
 						code +='<td width="35%" title="'+overlib_str1[i]+'">'+ pptpd_clientlist_col[1] +'</td>';
 					}else
-						code +='<td width="35%">'+ pptpd_clientlist_col[1] +'</td>';
+						code +='<td width="35%" title="'+vpn_server_clientlist_col[0]+'">'+ vpn_server_clientlist_col[0] +'</td>';
 				} 
 			}
 			code +='<td width="15%">';

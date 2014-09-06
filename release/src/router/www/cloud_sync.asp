@@ -364,7 +364,7 @@ function edit_Row(r){
 	else if(cloud_synclist_all[r][0] == 4){
 		change_service("Samba");
 		document.form.sambaclient_name.value = cloud_synclist_all[r][1];
-		document.form.sambaclient_ip.value = cloud_synclist_all[r][2];
+		document.form.sambaclient_ip.value = cloud_synclist_all[r][2].substring(6);
 		document.form.sambaclient_sharefolder.value = cloud_synclist_all[r][3];
 		document.form.cloud_username.value = cloud_synclist_all[r][4];
 		document.form.cloud_password.value = cloud_synclist_all[r][5];
@@ -395,6 +395,7 @@ function delRow(_rulenum){
 	document.form.submit();
 }
 
+var iCountSamba = 0;
 function showcloud_synclist(){
 	var rsnum = 0;
 	var cloud_synclist_row = cloud_synclist_array.split('&#60');
@@ -483,13 +484,14 @@ function showcloud_synclist(){
 			else if(cloud_synclist_col[0] == 4){ // SambaClient
 				cloudListTableItem.provider = cloud_synclist_col[0];
 				cloudListTableItem.icon = "ftp_server.png";
-				cloudListTableItem.username = cloud_synclist_col[4];
+				cloudListTableItem.username = cloud_synclist_col[1];
 				cloudListTableItem.rule = cloud_synclist_col[6];
 				cloudListTableItem.ruleId = "sambaclient_status_image"
 				cloudListTableItem.path = cloud_synclist_col[7];
 				cloudListTableItem.syncStatusId = "cloudStatus_sambaclient";
 				cloudListTableItem.syncStatusDefaultStr = "Waiting..."
 				curRule.SambaClient = cloudListTableItem.rule;
+				iCountSamba++;
 			}
 			else{
 				continue;
@@ -756,7 +758,7 @@ function updateCloudStatus(){
 							_cloud_sambaclient_msg += ": </b><br />";
 							_cloud_sambaclient_msg += "<span style=\\'word-break:break-all;\\'>" + decodeURIComponentSafe(cloud_sambaclient_obj) + "</span>";
 						}
-						else if(cloud_dropbox_msg){
+						else if(cloud_sambaclient_msg){
 							_cloud_sambaclient_msg += cloud_sambaclient_msg;
 						}
 						else{
@@ -947,7 +949,7 @@ function applyRule(){
 			//[0] = Provider, [1] = Work Group, [2] = Server IP address, [3] = Server share folder, [4] = Username, [5] = Password, [6] = Cloud rule, [7]  = Cloud dir
 			newRule.push(4);
 			newRule.push(document.form.sambaclient_name.value);
-			newRule.push(document.form.sambaclient_ip.value);
+			newRule.push("smb://" + document.form.sambaclient_ip.value);
 			newRule.push(document.form.sambaclient_sharefolder.value);
 			newRule.push(document.form.cloud_username.value);
 			newRule.push(document.form.cloud_password.value);
@@ -1014,6 +1016,12 @@ function showAddTable(srv, row_number){
 		$("cloud_username").value = "";
 		$("cloud_password").value = "";
 		$("PATH").value = "";
+		$("sambaclient_ip").value = "";
+		$("sambaclient_sharefolder").value = "";
+		if(iCountSamba!=0)
+			$("sambaclient_name").value = "WORKGROUP(" + iCountSamba + ")";
+		else
+			$("sambaclient_name").value = "WORKGROUP";
 	}
 	else{
 		$("cloudAddTable").style.display = "none";
@@ -1455,9 +1463,8 @@ function change_service(obj){
 				$j('#Dropbox').parent().css('display','block');
 			if(isSupport(ss_support, "ftp"))
 				$j('#ftp_server').parent().css('display','block');
-			if(isSupport(ss_support, "samba")){
+			if(isSupport(ss_support, "samba"))
 				$j('#Samba').parent().css('display','block');
-			}
 		},
 		function(){		// for mouse leave event
 			$j('#WebStorage').parent().css('display','none');
@@ -1636,10 +1643,12 @@ function onDropBoxLogin(token, uid){
 							</tr>	
 						<tr style="display:none;">
 							<th width="30%" style="font-family: Calibri;font-weight: bolder;">
-								Work Group
+								Server Name
 							</th>			
 							<td>
-							  <input type="text"  class="input_32_table" style="height: 23px;" id="sambaclient_name" name="sambaclient_name" value="WORKGROUP">
+							  <input type="text"  class="input_32_table" style="height: 23px;" id="sambaclient_name" name="sambaclient_name">
+							  &nbsp;
+							  <span>(Optional)</span>
 							</td>
 						</tr>	
 						<tr style="display:none;">
@@ -1647,6 +1656,7 @@ function onDropBoxLogin(token, uid){
 								Server IP address
 							</th>			
 							<td>
+								<span>smb://</span>
 							  <input type="text"  class="input_32_table" style="height: 23px;" id="sambaclient_ip" name="sambaclient_ip" value="">
 							</td>
 						</tr>	
@@ -1730,7 +1740,7 @@ function onDropBoxLogin(token, uid){
 
 						  <tr id="security_code_tr">
 							<th width="30%" style="font-family: Calibri;font-weight: bolder;">
-								<#routerSync_Security_code#> code
+								<#routerSync_Security_code#>
 							</th>
 							<td>
 								<div style="color:#FC0;"><input id="security_code_field" name="security_code_field" type="text" maxlength="6" class="input_32_table" style="height: 23px;width:100px;margin-right:10px;" >OTP Authentication</div>

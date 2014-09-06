@@ -1,0 +1,155 @@
+#!/bin/sh
+
+. ../support/simple_eval_tools.sh
+
+HEADER com2sec6 directive
+
+SKIPIFNOT NETSNMP_TRANSPORT_UDPIPV6_DOMAIN
+SKIPIF NETSNMP_NO_DEBUGGING
+
+#
+# Begin test
+#
+
+# 601a Test missing CONTEXT
+CONFIGAGENT 'com2sec6 -Cn'
+# 601b Test empty CONTEXT
+CONFIGAGENT 'com2sec6 -Cn ""'
+# 601c Test overlong CONTEXT (34 chars)
+CONFIGAGENT 'com2sec6 -Cn 1234567890123456789012345678901234'
+
+# 602a Test missing secName
+CONFIGAGENT 'com2sec6'
+# 602b Test empty secName
+CONFIGAGENT 'com2sec6 ""'
+# 602c Test overlong secName (34 chars)
+CONFIGAGENT 'com2sec6 1234567890123456789012345678901234'
+# 602d Test valid context and missing secName
+CONFIGAGENT 'com2sec6 -Cn 123456789012345678901234567890123'
+# 602e Test valid context and empty secName
+CONFIGAGENT 'com2sec6 -Cn 123456789012345678901234567890123 ""'
+
+# 603a Test missing network address
+CONFIGAGENT 'com2sec6 t603a'
+# 603b Test empty network address
+CONFIGAGENT 'com2sec6 t603b ""'
+# 603c Test forbidden value
+CONFIGAGENT 'com2sec6 t603c NETWORK'
+
+# 604a Test missing COMMUNITY
+CONFIGAGENT 'com2sec6 t604a default'
+# 604b 'Error: empty COMMUNITY parameter'
+CONFIGAGENT 'com2sec6 t604b default ""'
+# 604c Test overlong COMMUNITY
+CONFIGAGENT 'com2sec6 t604c default 123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345'
+# 604d Test barely valid community
+CONFIGAGENT 'com2sec6 t604d default 12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234'
+# 604e Test forbidden value
+CONFIGAGENT 'com2sec6 t604e default COMMUNITY'
+
+# 605a Test 'default' configuration
+CONFIGAGENT 'com2sec6 t605a default c605a'
+# 605b Test ip address configuration
+CONFIGAGENT 'com2sec6 t605b aa00:: c605b'
+# 605c Test valid numeric mask
+CONFIGAGENT 'com2sec6 t605c aa00::/8 c605c'
+# 605d Test invalid numeric mask (too big)
+CONFIGAGENT 'com2sec6 t605d aa00::/129 c605d'
+# 605e Test invalid numeric mask (negative)
+CONFIGAGENT 'com2sec6 t605e aa00::/-1 c605e'
+# 605f Test valid ip address mask
+CONFIGAGENT 'com2sec6 t605f aa00::/ff00:: c605f'
+# 605g Test invalid ip address mask
+CONFIGAGENT 'com2sec6 t605g aa00::/fffff:: c605g'
+# 605h Test invalid ip address mask
+CONFIGAGENT 'com2sec6 t605h aa00::/gg00:: c605h'
+# 605i Test address with 1 bits not covered by the mask
+CONFIGAGENT 'com2sec6 t605i aa00::/0ff0:: c605i'
+
+# 606a Test maximally long address/mask
+CONFIGAGENT 'com2sec6 t606a ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff/ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff c606a'
+
+# 607a Test non existant host name
+CONFIGAGENT 'com2sec6 t607a no.such.address. c607a'
+# 607b Test maximally long host name/mask
+CONFIGAGENT 'com2sec6 t607b a23456789012345678901234567890123456789012345678901234567890123.a23456789012345678901234567890123456789012345678901234567890123.a23456789012345678901234567890123456789012345678901234567890123.a234567890123456789012345678901234567890123456789012345678901./ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff c607b'
+
+# 608 Lookup tests, require network access
+# 608a Test lookup returning a single host
+CONFIGAGENT 'com2sec6 t608a www.ietf.org c608a'
+# 608b Test lookup returning multiple hosts
+CONFIGAGENT 'com2sec6 t608b ipv6.google.com c608b'
+
+# Default agent setup
+CONFIGAGENT "[snmp] persistentdir $SNMP_TMP_PERSISTENTDIR"
+# Dummy config to prevent the basic_setup warning
+CONFIGAGENT 'rocommunity public 127.0.0.0/8'
+
+AGENT_FLAGS='-Dnetsnmp_udp_parse_security,netsnmp_udp6_parse_security,netsnmp_unix_parse_security'
+
+STARTAGENT
+
+SAVECHECKAGENT() {
+    CHECKAGENT "$@"
+    if [ "x$return_value" != "x0" ] ; then
+        FINISHED
+    fi
+}
+
+# 601
+SAVECHECKAGENT 'line 1: Error: missing CONTEXT_NAME parameter'
+SAVECHECKAGENT 'line 2: Error: missing NAME parameter'
+SAVECHECKAGENT 'line 3: Error: context name too long'
+# 602
+CHECKAGENTCOUNT atleastone 'line 4: Error: Blank line following com2sec6 token.'
+SAVECHECKAGENT 'line 5: Error: empty NAME parameter'
+SAVECHECKAGENT 'line 6: Error: security name too long'
+SAVECHECKAGENT 'line 7: Error: missing NAME parameter'
+SAVECHECKAGENT 'line 8: Error: empty NAME parameter'
+# 603
+SAVECHECKAGENT 'line 9: Error: missing SOURCE parameter'
+SAVECHECKAGENT 'line 10: Error: empty SOURCE parameter'
+SAVECHECKAGENT 'line 11: Error: example config NETWORK not properly configured'
+# 604
+SAVECHECKAGENT 'line 12: Error: missing COMMUNITY parameter'
+SAVECHECKAGENT 'line 13: Error: empty COMMUNITY parameter'
+SAVECHECKAGENT 'line 14: Error: community name too long'
+SAVECHECKAGENT '<"12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234", ::/::> => "t604d"'
+SAVECHECKAGENT 'line 16: Error: example config COMMUNITY not properly configured'
+# 605
+SAVECHECKAGENT '<"c605a", ::/::> => "t605a"'
+SAVECHECKAGENT '<"c605b", aa00::/ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff> => "t605b"'
+SAVECHECKAGENT '<"c605c", aa00::/ff00::> => "t605c"'
+SAVECHECKAGENT 'line 20: Error: bad mask length'
+SAVECHECKAGENT 'line 21: Error: bad mask length'
+SAVECHECKAGENT '<"c605f", aa00::/ff00::> => "t605f"'
+SAVECHECKAGENT 'line 23: Error: bad mask'
+SAVECHECKAGENT 'line 24: Error: bad mask'
+SAVECHECKAGENT 'line 25: Error: source/mask mismatch'
+# 606
+SAVECHECKAGENT '<"c606a", ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff/ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff> => "t606a"'
+# 607
+SAVECHECKAGENT 'line 27: Error:'
+SAVECHECKAGENT 'line 28: Error:'
+
+# 608
+CHECKAGENT '<"c608a"'
+if [ "$snmp_last_test_result" -eq 0 ] ; then
+  CHECKAGENT 'line 29: Error:'
+  errnum=`expr $errnum - 1`
+  if [ "$snmp_last_test_result" -ne 1 ] ; then
+    FINISHED
+  fi
+elif [ "$snmp_last_test_result" -ne 1 ] ; then
+  FINISHED
+fi
+
+CHECKAGENTCOUNT atleastone '<"c608b"'
+if [ "$snmp_last_test_result" -eq 0 ] ; then
+  CHECKAGENT 'line 30: Error:'
+  if [ "$snmp_last_test_result" -eq 1 ] ; then
+    errnum=`expr $errnum - 1`
+  fi
+fi
+
+FINISHED

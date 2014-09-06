@@ -209,8 +209,8 @@ function initial(){
 	show_menu();
 	if(bwdpi_support){
 		//show_inner_tab();
-		$('guest_image').src = "/images/New_ui/TimeLimits.png";
-		$('content_title').innerHTML = "AiProtection - Time scheduling";
+		document.getElementById('guest_image').style.background = "url(images/New_ui/TimeLimits.png)";
+		$('content_title').innerHTML = "AiProtection - <#Time_Scheduling#>";
 		$('desc_title').innerHTML = "Time Scheduling allows you to set the time limit for a client's network usage. To use Time Scheduling:";		
 		//$('web_title').innerHTML = "<#Web_Title#> - Time Scheduling";
 		$('PC_enable').innerHTML = "Enable Time Scheduling";
@@ -220,8 +220,9 @@ function initial(){
 	show_footer();
 	init_array(array);
 	init_cookie();	
-	if(downsize_4m_support)
-		$("guest_image").parentNode.style.display = "none";
+	if(downsize_4m_support || downsize_8m_support){
+			document.getElementById("guest_image").parentNode.style.display = "none";
+	}
 
 	if(!yadns_support){
 		$('FormTitle').style.webkitBorderRadius = "3px";
@@ -261,7 +262,7 @@ function showLANIPList(){
 		htmlCode += clientObj.mac;
 		htmlCode += '\');"><strong>';
 		htmlCode += clientObj.name;
-		htmlCode += '</strong></div></a><!--[if lte IE 6.5]><script>alert("<#ALERT_TO_CHANGE_BROWSER#>");</script><![endif]-->';	
+		htmlCode += "</strong></div></a><!--[if lte IE 6.5]><script>alert(\"<#ALERT_TO_CHANGE_BROWSER#>\");</script><![endif]-->";	
 	}
 
 	$("ClientList_Block_PC").innerHTML = htmlCode;
@@ -312,7 +313,7 @@ function gen_mainTable(){
 	code +='<td style="border-bottom:2px solid #000;">--</td>';
 	code +='<td style="border-bottom:2px solid #000;"><input class="url_btn" type="button" onClick="addRow_main(16)" value=""></td></tr>';
 	if(MULTIFILTER_DEVICENAME == "" && MULTIFILTER_MAC == "")
-		code +='<tr><td style="color:#FFCC00;" colspan="10"><#IPConnection_VSList_Norule#></td>';
+		code +='<tr><td style="color:#FFCC00;" colspan="5"><#IPConnection_VSList_Norule#></td>';
 	else{
 		for(var i=0; i<MULTIFILTER_DEVICENAME_row.length; i++){
 			code +='<tr id="row'+i+'">';
@@ -895,16 +896,16 @@ function genEnableArray_main(j, obj){
 function show_inner_tab(){
 	var code = "";
 	if(document.form.current_page.value == "ParentalControl.asp"){		
-		code += '<span class="clicked">Time Scheduling</span>';
+		code += "<span class=\"clicked\"><#Time_Scheduling#></span>";
 		code += '<a href="AiProtection_WebProtector.asp">';
-		code += '<span style="margin-left:10px" class="click">Web & Apps Filters</span>';
+		code += "<span style=\"margin-left:10px\" class=\"click\"><#AiProtection_filter#></span>";
 		code += '</a>';
 	}
 	else{
 		code += '<a href="AiProtection_WebProtector.asp">';
-		code += '<span class="click">Time Scheduling</span>';
+		code += "<span class=\"click\"><#Time_Scheduling#></span>";
 		code += '</a>';		
-		code += '<span style="margin-left:10px" class="clicked">Web & Apps Filters</span>';	
+		code += "<span style=\"margin-left:10px\" class=\"clicked\"><#AiProtection_filter#></span>";	
 	}
 	
 	$('switch_menu').innerHTML = code;
@@ -967,11 +968,11 @@ function show_inner_tab(){
 						<div id="switch_menu" style="margin:-20px 0px 0px -20px;;display:none;">
 							<a href="AiProtection_WebProtector.asp">
 								<div style="background-image:url('images/New_ui/left-light.png');width:173px;height:40px;">
-									<div style="text-align:center;padding-top:9px;color:#FFFFFF;font-size:14px">Web & Apps Filters</div>
+									<div style="text-align:center;padding-top:9px;color:#FFFFFF;font-size:14px"><#AiProtection_filter#></div>
 								</div>
 							</a>
 							<div style="background-image:url('images/New_ui/right-dark.png');width:172px;height:40px;margin:-40px 0px 0px 173px;">
-								<div style="text-align:center;padding-top:9px;color:#93A9B1;font-size:14px">Time Scheduling</div>
+								<div style="text-align:center;padding-top:9px;color:#93A9B1;font-size:14px"><#Time_Scheduling#></div>
 							</div>
 						</div>
 					<td>
@@ -983,7 +984,7 @@ function show_inner_tab(){
 			<table width="700px" style="margin-left:25px;">
 				<tr>
 					<td>
-						<img id="guest_image" src="/images/New_ui/parental-control.png">
+						<div id="guest_image" style="background: url(images/New_ui/parental-control.png);width: 130px;height: 87px;"></div>
 					</td>
 					<td>&nbsp;&nbsp;</td>
 					<td style="font-style: italic;font-size: 14px;">

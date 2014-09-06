@@ -64,6 +64,11 @@ var webs_state_upgrade = '<% nvram_get("webs_state_upgrade"); %>';
 var webs_state_error = '<% nvram_get("webs_state_error"); %>';
 var webs_state_info = '<% nvram_get("webs_state_info"); %>';
 
+var auth_mode_5_2 = '<% nvram_get("wl2_auth_mode_x"); %>';
+var wep_x_5_2 = '<% nvram_get("wl2_wep_x"); %>';
+var key_x_5_2 = '<% nvram_get("wl2_key"); %>';
+var wpa_mode_5_2 = '<% nvram_get("wl2_wpa_mode"); %>';
+
 if(parent.tmo_support)
         var theUrl = "cellspot.router"; 
 else
@@ -279,6 +284,14 @@ function QKfinish_load_body(){
 	$("#security_item2")[0].innerHTML = "<#QIS_finish_wireless_item2#>";
 	$("#security_item5")[0].innerHTML = "<#QIS_finish_wireless_item2#>";
 
+	if(parent.wl_info.band5g_2_support){
+		parent.document.getElementById("contentM").style.height = "630px";
+		$("#band5g_desc")[0].innerHTML = "(5GHz-1)";
+		$("#ssid_5_2_item")[0].innerHTML = "<#QIS_finish_wireless_item1#>";
+		$("#ssid_5_2")[0].innerHTML = handle_show_str(decodeURIComponent('<% nvram_char_to_ascii("", "wl2_ssid"); %>'));
+		$("#security_item5_2")[0].innerHTML = "<#QIS_finish_wireless_item2#>";
+	}
+
 		shown_str = "";
 		if(auth_mode2 == "open" && wep_x2 == "0"){
 			$("#security2")[0].innerHTML = "Open System";
@@ -391,6 +404,67 @@ function QKfinish_load_body(){
 			}
 			$("#key5")[0].innerHTML = handle_show_str(decodeURIComponent(shown_str));
 		}
+
+		if(!parent.wl_info.band5g_2_support){
+			$("#desc2g")[0].style.display = "none";
+			$("#freqtitle5_2")[0].style.display = "none";
+			$("#ssid5_2_block")[0].style.display = "none";
+			$("#key5_2_block")[0].style.display = "none";
+			$("#security5_2_block")[0].style.display = "none";
+		}
+		else{
+			shown_str = "";
+			if(auth_mode_5_2 == "open" && wep_x_5_2 == "0"){
+				$("#security5_2")[0].innerHTML = "Open System";
+				$("#key5_block_2")[0].style.display = "none";
+			}
+			else if(auth_mode_5_2 == "open" && wep_x_5_2 != "0"){
+				$("#security5_2")[0].innerHTML = "Open System";
+				$("#key5_2_item")[0].innerHTML = "<#WLANConfig11b_WEPKey_itemname#>";
+				if(key_x_5_2 ==1)
+					shown_str = '<% nvram_get("wl2_key1"); %>';
+				else if(key_x_5_2 ==2)	
+					shown_str = '<% nvram_get("wl2_key2"); %>';
+				else if(key_x_5_2 ==3)
+					shown_str = '<% nvram_get("wl2_key3"); %>';
+				else if(key_x_5_2 ==4)		
+					shown_str = '<% nvram_get("wl2_key4"); %>';
+			}
+			else if(auth_mode_5_2 == "shared"){
+				$("#security5_2")[0].innerHTML = "Shared Key";
+				$("#key5_2_item")[0].innerHTML = "<#WLANConfig11b_WEPKey_itemname#>";
+				if(key_x_5_2 ==1)
+					shown_str = '<% nvram_get("wl2_key1"); %>';
+				else if(key_x_5_2 ==2)	
+					shown_str = '<% nvram_get("wl2_key2"); %>';
+				else if(key_x_5_2 ==3)
+					shown_str = '<% nvram_get("wl2_key3"); %>';
+				else if(key_x_5_2 ==4)		
+					shown_str = '<% nvram_get("wl2_key4"); %>';
+			}
+			else if(auth_mode_5_2 == "psk"){
+				$("#security5_2")[0].innerHTML = "WPA-Personal - TKIP";
+				$("#key5_2_item")[0].innerHTML = "<#QIS_finish_wireless_item3#>";
+				shown_str = '<% nvram_char_to_ascii("", "wl2_wpa_psk"); %>';
+			}
+			else if(auth_mode_5_2 == "psk2"){
+				$("#security5_2")[0].innerHTML = "WPA2-Personal - AES";
+				$("#key5_2_item")[0].innerHTML = "<#QIS_finish_wireless_item3#>";
+				shown_str = '<% nvram_char_to_ascii("", "wl2_wpa_psk"); %>';
+			}
+			else if(auth_mode_5_2 == "pskpsk2"){
+				$("#security5_2")[0].innerHTML = "WPA-Auto-Personal - TKIP + AES";
+				$("#key5_2_item")[0].innerHTML = "<#QIS_finish_wireless_item3#>";
+				shown_str = '<% nvram_char_to_ascii("", "wl2_wpa_psk"); %>';
+			}
+			else{	
+				$("#freqtitle5_2")[0].style.display = "none";
+				$("#ssid5_2_block")[0].style.display = "none";
+				$("#key5_2_block")[0].style.display = "none";
+				$("#security5_2_block")[0].style.display = "none";
+			}
+			$("#key5_2")[0].innerHTML = handle_show_str(decodeURIComponent(shown_str));
+		}		
 
 	//Repeater mode wireless LAN 2.4G/5G
 	if('<% nvram_get("sw_mode"); %>' == "2"){
@@ -803,6 +877,8 @@ function showclock(){
 <input type="hidden" name="wl1_ssid2" value="<% nvram_char_to_ascii("WLANConfig11b", "wl1_ssid"); %>">
 <input type="hidden" name="wl0_wpa_psk" value="<% nvram_char_to_ascii("WLANConfig11b", "wl0_wpa_psk"); %>">
 <input type="hidden" name="wl1_wpa_psk" value="<% nvram_char_to_ascii("WLANConfig11b", "wl1_wpa_psk"); %>">
+<input type="hidden" name="wl2_ssid2" value="<% nvram_char_to_ascii("WLANConfig11b", "wl2_ssid"); %>">
+<input type="hidden" name="wl2_wpa_psk" value="<% nvram_char_to_ascii("WLANConfig11b", "wl2_wpa_psk"); %>">
 <input type="hidden" name="time_zone_x" value="<% nvram_get("time_zone_x"); %>" disabled>
 <input type="hidden" name="time_zone" value="<% nvram_get("time_zone"); %>" disabled>
 <div class="QISmain" id="QISmain" style="display:none">
@@ -852,7 +928,7 @@ function showclock(){
 
 	<!-- WL 5GHz -->
 	<tr id="freqtitle5">
-		<td align="left" colspan="4" style="color:#5AD;font-size:16px; border-bottom:1px dashed #AAA;"><#menu5_1#> <span style="color:#5AD;">(5GHz)</span></td>	
+		<td align="left" colspan="4" style="color:#5AD;font-size:16px; border-bottom:1px dashed #AAA;"><#menu5_1#> <span id="band5g_desc" style="color:#5AD;">(5GHz)</span></td>	
 	</tr>
 	<tr id="ssid5_block">
 	  <th width="180"><span id="ssid_5_item"></span></th>
@@ -870,6 +946,29 @@ function showclock(){
 	  <th width="180"><span id="security_item5"></span></th>
 	  <td class="QISformtd">
 			<span id="security5"></span>
+	  </td>
+	</tr>
+
+		<!-- WL 5GHz-2 -->
+	<tr id="freqtitle5_2">
+		<td align="left" colspan="4" style="color:#5AD;font-size:16px; border-bottom:1px dashed #AAA;"><#menu5_1#> <span style="color:#5AD;">(5GHz-2)</span></td>	
+	</tr>
+	<tr id="ssid5_2_block">
+	  <th width="180"><span id="ssid_5_2_item"></span></th>
+	  <td class="QISformtd">
+			<span id="ssid_5_2" style="white-space: pre;"></span>
+	  </td>
+	</tr>
+	<tr id="key5_2_block">
+	  <th width="180"><span id="key5_2_item"></span></th>
+	  <td class="QISformtd">
+			<span id="key5_2"></span>
+	  </td>
+	</tr>
+	<tr id="security5_2_block">
+	  <th width="180"><span id="security_item5_2"></span></th>
+	  <td class="QISformtd">
+			<span id="security5_2"></span>
 	  </td>
 	</tr>
 

@@ -1,0 +1,6 @@
+#!/bin/sh
+
+checknametype="--san"
+checknameprefix="DNS:"
+
+. STlsServerSession

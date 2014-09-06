@@ -1,0 +1,59 @@
+#!/usr/bin/perl
+
+use DBI;
+$hostname = 'localhost';          # Host that serves the mSQL Database
+$dbname = 'snmp';                 # mySQL Database name
+$doit = 1;
+
+sub usage {
+    print "$0 [-H host] [-u user] [-p password] [-v] [-h] [-n] [-g groupname] [-m machinename] TOKEN VALUE\n";
+    exit 0;
+}
+
+while ($#ARGV > -1 && $ARGV[0] =~ /^-/) {
+    $_ = shift @ARGV;
+    usage if (/-h/);
+    $hostname = shift if (/-H/);
+    $user = shift if (/-u/);
+    $pass = shift if (/-p/);
+    $group = shift if (/-g/);
+    $machine = shift if (/-m/);
+    $verbose = 1 if (/-v/);
+    $doit = 0 if (/-n/);
+}
+
+( $dbh = DBI->connect("DBI:mysql:database=$dbname;host=$hostname", $user, $pass))
+    or die "\tConnect not ok: $DBI::errstr\n";
+
+if (defined($machine)) {
+    $table = "authhost";
+    $group = $machine;
+} else {
+    $table = "authgroup";
+    $group = "default" if (!defined($group));
+}
+
+$token = shift;
+$value = shift;
+while(defined($value)) {
+    if (DO("select * from $table where lookup = '$group' and varcol = '$token'") eq "0E0") {
+	DO("insert into $table(lookup, varcol, valcol) values('$group', '$token', '$value')");
+    } else {
+	DO("update $table set valcol = '$value' where lookup = '$group' and varcol = '$token'");
+    }
+    $token = shift;
+    $value = shift;
+}
+
+$dbh->disconnect();
+
+sub DO {
+    my $cmd = shift;
+    print $cmd,"\n" if ($verbose);
+    my $ret = $dbh->do($cmd) if ($doit);
+    print "  returned: $ret\n" if ($verbose);
+    if ($DBI::errstr) {
+	print "db error ($ret): $DBI::errstr\n";
+    }
+    return $ret;
+}

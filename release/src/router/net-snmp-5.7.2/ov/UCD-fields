@@ -1,0 +1,32 @@
+Field "SNMPAgent" {
+	Type Enumeration;
+	Flags	capability, general, locate;
+	Enumeration 
+		"Unset",
+		"UCD HP-UX 9",
+		"UCD HP-UX 10",
+		"UCD SunOS4",
+		"UCD Solaris",
+		"UCD OSF",
+		"UCD Ultrix",
+		"UCD NetBSD",
+		"UCD FreeBSD",
+		"UCD IRIX",
+		"UCD Linux",
+		"UCD BSD/OS",
+		"UCD OpenBSD",
+		"UCD Win32",
+		"UCD HP-UX 11",
+		"UCD AIX",
+		"UCD Mac OS X",
+		"UCD Dragonfly",
+		"UCD Unknown",
+		"UCDavis Agent";
+}
+
+Field "vendor" {
+	Type Enumeration;
+	Flags	capability, general, locate;
+	Enumeration "Unset",
+		"UCDavis";
+}

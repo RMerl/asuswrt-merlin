@@ -43,6 +43,7 @@ int wds_enable(void)
 	return foreach_wif(1, NULL, is_wds);
 }
 #endif
+
 #ifdef CONFIG_BCMWL5
 void
 start_nas(void)
@@ -51,7 +52,9 @@ start_nas(void)
 
 	system("nas&");
 #ifdef RTCONFIG_TMOBILE
+#ifndef RTCONFIG_NOPP
 	system("radpd");
+#endif
 #endif
 }
 
@@ -60,7 +63,9 @@ stop_nas(void)
 {
 	killall_tk("nas");
 #ifdef RTCONFIG_TMOBILE
+#ifndef RTCONFIG_NOPP
 	killall_tk("radpd");
+#endif
 #endif
 }
 #ifdef REMOVE

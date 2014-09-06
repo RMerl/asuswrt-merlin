@@ -1,0 +1,56 @@
+Some notes for the IRIX port
+============================
+
+1. Compiling
+------------
+
+net-snmp 5.3.1 and later have been compiled successfully on IRIX 6.5 using the 
+MIPSpro C compiler 7.4.4m in C99 mode:
+
+	CC=c99 ./configure && make && make install
+
+Please note that the "host" module doesn't compile on IRIX, so you *cannot*
+configure with "--with-mib-modules=host".
+
+Compiling with gcc may be possible, but is unsupported at this point in time
+due to difficulties with the IRIX system headers. Brent Bice has reported
+a successful build of net-snmp 5.4 with gcc 3.4.6 on a IP30 machine using:
+
+	CFLAGS="-D_PAGESZ=16384 -D_MIPS3_ADDRSPACE -DIP30 -DR10000 -DMP \
+	        -DCELL_PREPARE -DBHV_PREPARE" ./configure ...
+
+See http://techpubs.sgi.com/library/tpl/cgi-bin/getdoc.cgi/0620/bks/\
+SGI_Developer/books/DevDriver_PG/sgi_html/ch10.html and 
+/var/sysgen/Makefile.kernio .
+
+2. CPU stats
+------------
+
+net-snmp 5.4.1 and later reports CPU statistics on IRIX 6.x by default using 
+the hardware/cpu/cpu_sysinfo module. There's also an alternative implementation:
+hardware/cpu/cpu_pcp. For full discussion and build instructions for cpu_pcp
+see Patch #1675869: 
+
+  http://sf.net/support/tracker.php?aid=1675869
+
+
+3. Known Issues
+---------------
+
+Accessing certain MIB objects on IRIX64 machines (i.e. when running a 64-bit 
+kernel will trigger nlist/klookup errors. The agent will not return proper 
+values for the affected MIB objects (e.g. tcpConnTable, udpTable). 
+Starting from net-snmp 5.4, you can avoid nlist altogether (recommended for 
+IRIX64) by using
+
+   ./configure --without-kmem-usage ...
+
+
+3. Feedback
+-----------
+
+Please also see README and PORTING.
+
+If you have questions, additional insights or (even better) patches regarding
+net-snmp on IRIX, please refer to the net-snmp mailing lists (see 
+http://www.net-snmp.org/lists).

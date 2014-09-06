@@ -657,6 +657,9 @@ extern void init_spinlock(void);
 /* misc.c */
 extern int is_psta(int unit);
 extern int is_psr(int unit);
+extern int psta_exist();
+extern int psta_exist_except(int unit);
+extern int psr_exist_except(int unit);
 extern unsigned int netdev_calc(char *ifname, char *ifname_desc, unsigned long *rx, unsigned long *tx, char *ifname_desc2, unsigned long *rx2, unsigned long *tx2);
 
 #endif

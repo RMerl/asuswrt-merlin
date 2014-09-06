@@ -1,0 +1,22 @@
+#!/bin/sh
+
+. ../support/simple_eval_tools.sh
+
+HEADER for failure of SNMPv3 get using unknown user.
+
+#
+# Begin test
+#
+
+# standard V3 configuration for initial user
+. ./Sv3config
+
+STARTAGENT
+
+CAPTURE "snmpget -On $SNMP_FLAGS -v 3 -l nanp -u unknownuser $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT .1.3.6.1.2.1.1.3.0"
+
+STOPAGENT
+
+CHECK "Unknown user name"
+
+FINISHED

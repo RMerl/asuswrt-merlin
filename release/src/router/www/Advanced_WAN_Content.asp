@@ -199,7 +199,7 @@ var ctf = {
 	changeType: function(){
 		if((document.form.wan_proto.value == 'dhcp' || document.form.wan_proto.value == 'static') && 
 		   (wan_proto_orig == "pppoe" || wan_proto_orig == "pptp" || wan_proto_orig == "l2tp"))
-			return true;
+			return false;
 		else if((document.form.wan_proto.value == "pppoe" || document.form.wan_proto.value == "pptp"	|| document.form.wan_proto.value == "l2tp") && 
 		   (wan_proto_orig == 'dhcp' || wan_proto_orig == 'static'))
 			return true;

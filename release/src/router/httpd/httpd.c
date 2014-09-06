@@ -378,7 +378,6 @@ auth_check( char* dirname, char* authorization ,char* url)
 #endif
 	}
 
-	//printf("[httpd] auth chk:%s, %s\n", dirname, url);	// tmp test
 	/* Is this directory unprotected? */
 	if ( !strlen(auth_passwd) )
 		/* Yes, let the request go through. */
@@ -406,14 +405,6 @@ auth_check( char* dirname, char* authorization ,char* url)
 	/* Is this the right user and password? */
 	if ( strcmp( auth_userid, authinfo ) == 0 && strcmp( auth_passwd, authpass ) == 0)
 	{
-		//fprintf(stderr, "login check : %x %x\n", login_ip, last_login_ip);
-		/* Is this is the first login after logout */
-		//if (login_ip==0 && last_login_ip==login_ip_tmp)
-		//{
-		//	send_authenticate(dirname);
-		//	last_login_ip=0;
-		//	return 0;
-		//}
 		login_try = 0;
 		last_login_timestamp = 0;
 		return 1;
@@ -427,10 +418,13 @@ static void
 __send_authenticate( char* realm )
 {
 	char header[10000];
+	memset(header, 0, sizeof(header));
+
 #ifdef RTCONFIG_TMOBILE
 	if(isAjaxLogin == 0)
 #endif
 	(void) snprintf(header, sizeof(header), "WWW-Authenticate: Basic realm=\"%s\"", realm);
+
 	send_error( 401, "Unauthorized", header, "Authorization required." );
 }
 
@@ -689,6 +683,10 @@ char detect_timestampstr[32];
 #define APPLYAPPSTR 	"applyapp.cgi"
 #define GETAPPSTR 	"getapp"
 
+#ifdef RTCONFIG_ROG
+#define APPLYROGSTR     "api.asp"
+#endif
+
 
 static void
 handle_request(void)
@@ -844,8 +842,19 @@ handle_request(void)
 	}
 
 //2008.08 magic{
+#ifdef RTCONFIG_TMOBILE	
+	if (file[0] == '\0' || file[len-1] == '/'){
+		x_Setting = nvram_get_int("x_Setting");
+		if(x_Setting)
+			file = "index.asp";
+		else
+			file = "MobileQIS_Login.asp";
+	}	
+#else
 	if (file[0] == '\0' || file[len-1] == '/')
 		file = "index.asp";
+#endif
+
 
 // 2007.11 James. {
 	char *query;
@@ -863,7 +872,12 @@ handle_request(void)
 	}
 // 2007.11 James. }
 
-	if(strncmp(url, APPLYAPPSTR, strlen(APPLYAPPSTR))==0)  fromapp=1;
+	if(strncmp(url, APPLYAPPSTR, strlen(APPLYAPPSTR))==0 
+#ifdef RTCONFIG_ROG
+		|| strncmp(url, APPLYROGSTR, strlen(APPLYROGSTR))==0
+#endif
+	)
+		fromapp=1;
 	else if(strncmp(url, GETAPPSTR, strlen(GETAPPSTR))==0)  {
 		fromapp=1;
 		strcpy(url, url+strlen(GETAPPSTR));

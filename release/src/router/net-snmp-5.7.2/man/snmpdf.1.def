@@ -1,0 +1,71 @@
+.\" Portions of this file are subject to the following copyright.  See
+.\" the Net-SNMP's COPYING file for more details and other copyrights
+.\" that may apply:
+.\" /***********************************************************
+.\" Portions of this file are copyrighted by:
+.\" Copyright Copyright 2003 Sun Microsystems, Inc. All rights reserved.
+.\" Use is subject to license terms specified in the COPYING file
+.\" distributed with the Net-SNMP package.
+.\" ******************************************************************/
+.TH SNMPDF 1 "25 Jul 2003" VVERSIONINFO "Net-SNMP"
+.SH NAME
+snmpdf - display disk space usage on a network entity via SNMP
+.SH SYNOPSIS
+.B snmpdf
+[COMMON OPTIONS] [\-Cu] AGENT
+.SH DESCRIPTION
+.B snmpdf
+is simply a networked version of the typical df command.  It
+checks the disk space on the remote machine by examining the
+HOST\-RESOURCES\-MIB's hrStorageTable or the UCD\-SNMP\-MIB's dskTable.
+By default, the hrStorageTable is preferred as it typically contains
+more information.  However, the \-Cu argument can be passed to snmpdf
+to force the usage of the dskTable.
+.PP
+AGENT identifies a target SNMP agent, which is instrumented
+to monitor the gievn objects.  At its simplest, the AGENT
+specification will consist of a hostname or an IPv4
+address.  In this situation, the command will attempt
+communication with the agent, using UDP/IPv4 to port 161
+of the given target host. See the
+.I snmpcmd(1)
+manual page for a full list of the possible formats for AGENT.
+.PP
+See the
+.I snmpd.conf(5)
+manual page on setting up the dskTable using the 
+.I disk
+directive in the snmpd.conf file.
+.SH "OPTIONS"
+.TP 8
+.B COMMON OPTIONS
+Please see
+.I snmpcmd(1)
+for a list of possible values for COMMON OPTIONS
+as well as their descriptions.
+.TP
+.B \-Cu
+Forces the command to use dskTable in mib
+UCD\-SNMP\-MIB instead of the default to determine
+the storage information. Generally, the default
+use of hrStorageTable in mib HOST\-RESOURCES\-MIB
+is preferred because it typically contains
+more information.
+.SH "EXAMPLES"
+.PP
+% snmpdf \-v 2c \-c public localhost
+.PP
+.nf
+Description       size (kB)         Used    Available Used%
+/                   7524587      2186910      5337677   29%
+/proc                     0            0            0    0%
+/etc/mnttab               0            0            0    0%
+/var/run            1223088           32      1223056    0%
+/tmp                1289904        66848      1223056    5%
+/cache               124330         2416       121914    1%
+/vol                      0            0            0    0%
+Real Memory          524288       447456        76832   85%
+Swap Space          1420296       195192      1225104   13%
+.fi
+.SH "SEE ALSO"
+snmpd.conf(5), snmp.conf(5)

@@ -1,0 +1,57 @@
+# -*- autoconf -*-
+#########################################
+##
+# Checks for types
+##
+#########################################
+
+##
+#   Standard checks:
+##
+
+# Checks for typedefs, structures, and compiler characteristics.
+AC_TYPE_OFF_T
+AC_TYPE_PID_T
+AC_HEADER_TIME
+
+
+##
+#   More complex checks:
+##
+
+#   Check for 'socklen_t'                           (HP-UX)
+#
+AC_CHECK_TYPES([socklen_t],,,[
+#include <sys/types.h>
+#if STDC_HEADERS
+#include <stdlib.h>
+#include <stddef.h>
+#endif
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif])
+
+
+#   Check for 'in_addr_t'
+#       May be in <netinet/in.h>                        (AIX)
+#
+AC_CHECK_TYPES([in_addr_t],,,[
+#include <sys/types.h>
+#if STDC_HEADERS
+#include <stdlib.h>
+#include <stddef.h>
+#endif
+#ifdef HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif])
+
+
+#   Check for 'ssize_t'
+#       Not necessarily in <sys/types.h>                (older MinGW)
+#
+AC_CHECK_TYPES([ssize_t],,,[
+#include <sys/types.h>
+#if STDC_HEADERS
+#include <stdlib.h>
+#include <stddef.h>
+#endif])

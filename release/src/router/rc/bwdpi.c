@@ -32,7 +32,8 @@ int bwdpi_main(int argc, char **argv)
 
 	if (argc == 1){
 		printf("Usage :\n");
-		printf("  bwdpi [iqos/qosd/wrs/dc] [start/stop/restart]\n");
+		printf("  bwdpi [iqos/qosd/wrs] [start/stop/restart]\n");
+		printf("  bwdpi dc [start/stop/restart] [ptah]\n");
 		printf("  bwdpi stat -m [mode] -n [name] -u [dura] -d [date]\n");
 		printf("  bwpdi history -m [MAC] -z\n");
 		printf("  bwpdi app [0/1]\n");
@@ -45,6 +46,8 @@ int bwdpi_main(int argc, char **argv)
 		printf("  bwpdi rewrite path1 path2 path3\n");
 		printf("  bwpdi checksize path size\n");
 		printf("  bwpdi extract path\n");
+		printf("  bwpdi get_app_patrol\n");
+		printf("  bwpdi get_anomaly [0/2]\n");
 		return 0;
 	}
 
@@ -172,14 +175,18 @@ int bwdpi_main(int argc, char **argv)
 		}
 	}
 	else if (!strcmp(argv[1], "dc")){
-		if(argc != 3)
+		if(argc == 3)
 		{
-			printf("  bwpdi dc [start/stop/restart]\n");
-			return 0;
+			return data_collect_main(argv[2], NULL);
+		}
+		else if(argc == 4)
+		{
+			return data_collect_main(argv[2], argv[3]);
 		}
 		else
 		{
-			return data_collect_main(argv[2]);
+			printf("  bwpdi dc [start/stop/restart] [path]\n");
+			return 0;
 		}
 	}
 	else if (!strcmp(argv[1], "device")){
@@ -267,9 +274,32 @@ int bwdpi_main(int argc, char **argv)
 			return extract_data_main(argv[2]);
 		}
 	}
+	else if (!strcmp(argv[1], "get_app_patrol")){
+		if(argc != 2)
+		{
+			printf("  bwpdi get_app_patrol\n");
+			return 0;
+		}
+		else
+		{
+			return get_app_patrol_main();
+		}
+	}
+	else if (!strcmp(argv[1], "get_anomaly")){
+		if(argc != 3)
+		{
+			printf("  bwpdi get_anomaly [0/2]\n");
+			return 0;
+		}
+		else
+		{
+			return get_anomaly_main(argv[2]);
+		}
+	}
 	else{
 		printf("Usage :\n");
-		printf("  bwdpi [iqos/qosd/wrs/dc] [start/stop/restart]\n");
+		printf("  bwdpi [iqos/qosd/wrs] [start/stop/restart]\n");
+		printf("  bwdpi dc [start/stop/restart] [ptah]\n");
 		printf("  bwdpi stat -m [mode] -n [name] -u [dura] -d [date]\n");
 		printf("  bwpdi history -m [MAC] -z\n");
 		printf("  bwpdi app [0/1]\n");
@@ -282,6 +312,8 @@ int bwdpi_main(int argc, char **argv)
 		printf("  bwpdi rewrite path1 path2 path3\n");
 		printf("  bwpdi checksize path size\n");
 		printf("  bwpdi extract path\n");
+		printf("  bwpdi get_app_patrol\n");
+		printf("  bwpdi get_anomaly [0/2]\n");
 		return 0;
 	}
 

@@ -1,0 +1,267 @@
+.TH SNMPUSM 1 "11 Dec 2009" VVERSIONINFO "Net-SNMP"
+.SH NAME
+snmpusm - creates and maintains SNMPv3 users on a network entity
+.SH SYNOPSIS
+.B snmpusm
+[COMMON OPTIONS] [\-Cw] AGENT
+.B create
+USER [CLONEFROM-USER]
+.br
+.B snmpusm
+[COMMON OPTIONS] AGENT
+.B delete
+USER
+.br
+.B snmpusm
+[COMMON OPTIONS] AGENT
+.B cloneFrom
+USER CLONEFROM-USER
+.br
+.B snmpusm
+[COMMON OPTIONS] [\-Ca] [\-Cx] AGENT
+.B passwd
+OLD-PASSPHRASE NEW-PASSPHRASE [USER]
+.br
+.B snmpusm
+[COMMON OPTIONS] <\-Ca | \-Cx> \-Ck AGENT
+.B passwd
+OLD-KEY-OR-PASSPHRASE NEW-KEY-OR-PASSPHRASE [USER]
+.br
+.B snmpusm
+[COMMON OPTIONS] [\-Ca] [\-Cx] AGENT
+.B changekey
+[USER]
+
+.SH DESCRIPTION
+.B snmpusm
+is an SNMP application that can be used to do simple maintenance on 
+the users known to an SNMP agent, by manipulating the agent's
+User-based Security Module (USM) table.  The user needs
+write access to the usmUserTable MIB table.  This tool can be
+used to create, delete, clone, and change the passphrase of users
+configured on a running SNMP agent.
+
+.SH OPTIONS
+Common options for all
+.B snmpusm
+commands:
+.TP
+.BI \-CE " ENGINE-ID"
+Set usmUserEngineID to be used as part of the index of the usmUserTable.
+Default is to use the contextEngineID (set via \-E or probed) as the 
+usmUserEngineID.
+.TP
+.BI \-Cp " STRING"
+Set the usmUserPublic value of the (new) user to the specified STRING.
+.PP
+Options for the
+.B passwd 
+and
+.B changekey
+commands:
+.TP
+.BI \-Ca
+Change the authentication key.
+.TP
+.BI \-Cx
+Change the privacy key.
+.TP
+.BI \-Ck
+Allows one to use localized key (must start with 0x) instead of passphrase.
+When this option is used, either the \-Ca or \-Cx option (but not both) must also
+be used.
+
+.SH CREATING USERS
+.PP
+An unauthenticated SNMPv3 user can be created using the command
+.IP
+.B snmpusm
+[COMMON OPTIONS] AGENT create USER
+.PP
+This constructs an (inactive) entry in the usmUserTable,
+with no authentication or privacy settings.
+In principle, this user should be useable for 'noAuthNoPriv' requests,
+but in practise the Net-SNMP agent will not allow such an entry
+to be made active.  The user can be created via the createAndWait
+operation instead by using the \-Ca flag.  This will prevent the user
+from being marked as active in any agent until explicitly activated
+later via the activate command.
+
+.PP
+In order to activate this entry, it is necessary to "clone" an existing
+user, using the command
+.IP
+.B snmpusm
+[COMMON OPTIONS] AGENT cloneFrom USER CLONEFROM-USER
+.PP
+The USER entry then inherits the same authentication and privacy
+settings (including pass phrases) as the CLONEFROM user.
+
+.PP
+These two steps can be combined into one, by using the command
+.IP
+.B snmpusm
+[COMMON OPTIONS] AGENT create USER CLONEFROM-USER
+
+.PP
+The two forms of the
+.B create
+sub-command require that the user being created does not already exist.
+The
+.B cloneFrom
+sub-command requires that the user being cloned to
+.I does
+already exist.
+
+.PP
+Cloning is the only way to specify which authentication and privacy
+protocols to use for a given user, and it is only possible to do this
+once.  Subsequent attempts to reclone onto the same user will appear
+to succeed, but will be silently ignored.
+This (somewhat unexpected) behaviour is mandated by the SNMPv3
+USM specifications (RFC 3414).
+To change the authentication and privacy settings for a given user,
+it is necessary to delete and recreate the user entry.
+This is
+.I not
+necessary for simply changing the pass phrases (see below).
+This means that the agent must be initialized with at least one
+user for each combination of authentication and privacy protocols.
+See the
+.I snmpd.conf(5)
+manual page for details of the
+.B createUser
+configuration directive.
+
+.SH DELETING USERS
+A user can be deleted from the usmUserTable using the command
+.IP
+.B snmpusm
+[COMMON OPTIONS] AGENT delete USER
+
+.SH CHANGING PASS PHRASES
+User profiles contain private keys that are never
+transmitted over the wire in clear text (regardless of whether the
+administration requests are encrypted or not).  
+To change the secret key for a user, it is necessary to specify the
+user's old passphrase as well as the new one.
+This uses the command
+.IP
+.B snmpusm
+[COMMON OPTIONS] [\-Ca] [\-Cx] AGENT passwd OLD-PASSPHRASE NEW-PASSPHRASE [USER]
+
+.PP
+After cloning a new user entry from the appropriate template,
+you should immediately change the new user's passphrase.
+
+.PP
+If USER is not specified, this command will change the passphrase
+of the (SNMPv3) user issuing the command.  If the \-Ca or \-Cx options
+are specified, then only the authentication or privacy keys are changed.  If
+these options are not specified, then both the authentication and privacy keys
+are changed.
+
+.IP
+.B snmpusm
+[COMMON OPTIONS] [\-Ca] [\-Cx] AGENT changekey [USER]
+
+.PP
+This command changes the key in a perfect-forward-secrecy compliant
+way through a diffie-helman exchange.  The remote agent must support
+the SNMP\-USM\-DH\-OBJECTS\-MIB for this command to work.  The resulting
+keys are printed to the console and may be then set in future command
+invocations using the \-\-defAuthLocalizedKey and \-\-defPrivLocalizedKey
+options or in your snmp.conf file using the defAuthLocalizedKey and
+defPrivLocalizedKey keywords.
+
+.PP
+Note that since these keys are randomly generated based on a
+diffie helman exchange, they are no longer derived from a more easily
+typed password.  They are, however, much more secure.
+
+.PP
+To change from a localized key back to a password, the following variant
+of the 
+.B passwd
+sub-command is used:
+
+.IP
+.B snmpusm
+[COMMON OPTIONS] <\-Ca | \-Cx> \-Ck AGENT passwd OLD-KEY-OR-PASSPHRASE NEW-KEY-OR-PASSPHRASE [USER]
+
+.PP
+Either the \-Ca or the \-Cx option must be specified.  The OLD-KEY-OR-PASSPHRASE
+and/or NEW-KEY-OR-PASSPHRASE arguments can either be a passphrase or a
+localized key starting with "0x", e.g. as printed out by the
+.B changekey
+sub-command.
+
+.PP
+Note that
+.B snmpusm
+REQUIRES  an argument specifying the agent to query
+as described in the .I snmpcmd(1) manual page.
+.SH EXAMPLES
+.PP
+Let's assume for our examples that the following VACM and USM
+configurations lines were in the snmpd.conf file for a Net-SNMP agent.
+These lines set up a default user called "initial" with the
+authentication passphrase "setup_passphrase" so that we can perform
+the initial setup of an agent:
+.PP
+.RS
+.nf
+# VACM configuration entries
+rwuser initial
+# lets add the new user we'll create too:
+rwuser wes
+# USM configuration entries
+createUser initial MD5 setup_passphrase DES
+.fi
+.RE
+.PP
+Note: the "initial" user's setup should be removed after creating a
+real user that you grant administrative privileges to (like the user
+"wes" we'll be creating in this example.
+.PP
+Note: passphrases must be 8 characters
+.I minimum
+in length.
+.SS Create a new user
+.PP
+snmpusm \-v3 \-u initial \-n "" \-l authNoPriv \-a MD5 \-A setup_passphrase
+localhost create wes initial
+.IP
+Creates a new user, here named "wes" using the user "initial" to do
+it.  "wes" is cloned from "initial" in the process, so he inherits
+that user's passphrase ("setup_passphrase").
+.SS Change the user's passphrase
+.PP
+snmpusm \-v 3 \-u wes \-n "" \-l authNoPriv \-a MD5 \-A setup_passphrase
+localhost passwd setup_passphrase new_passphrase
+.IP
+After creating the user "wes" with the same passphrase as the
+"initial" user, we need to change his passphrase for him.  The above
+command changes it from "setup_passphrase", which was inherited from
+the initial user, to "new_passphrase".
+.SS Test the new user
+.PP
+snmpget \-v 3 \-u wes \-n "" \-l authNoPriv \-a MD5 \-A new_passphrase
+localhost sysUpTime.0
+.IP
+If the above commands were successful, this command should have
+properly performed an authenticated SNMPv3 GET request to the agent.
+.PP
+Now, go remove the vacm "group" snmpd.conf entry for the "initial"
+user and you have a valid user 'wes' that you can use for future
+transactions instead of initial.
+
+.SH WARNING
+Manipulating the usmUserTable using this command can
+.I only
+be done using SNMPv3.
+This command will not work with the community-based versions,
+even if they have write access to the table.
+
+.SH "SEE ALSO"
+snmpd.conf(5), snmp.conf(5), RFC 3414

@@ -1,0 +1,130 @@
+#!/bin/perl
+
+# steps:
+# 1) run configure
+# 2) perl local/minimalist/remove-unneeded-modules
+# 3) make depend
+# 4) make
+
+use File::Find;
+use Data::Dumper;
+use strict;
+
+my %exceptions = qw(
+   agent/mibgroup/mibdefs.h              	              1
+   agent/mibgroup/struct.h               	              1
+   agent/mibgroup/agentx/protocol.h      	              1
+   agent/mibgroup/agentx/agentx_config.h 	              1
+   agent/mibgroup/agentx/subagent.h      	              1
+   agent/mibgroup/mib_module_includes.h  	              1
+   agent/mibgroup/mib_module_inits.h     	              1
+   agent/mibgroup/mib_module_dot_conf.h  	              1
+   agent/mibgroup/mib_module_shutdown.h  	              1
+   agent/mibgroup/agent_module_includes.h	              1
+   agent/mibgroup/agent_module_inits.h   	              1
+   agent/mibgroup/agent_module_dot_conf.h	              1
+   agent/mibgroup/agent_module_shutdown.h	              1
+   agent/mibgroup/mibII/vacm_conf.c      	              1
+   agent/mibgroup/snmpv3/usmConf.c       	              1
+   agent/mibgroup/utilities/iquery.c     	              1
+   agent/mibgroup/mibII/vacm_conf.h      	              1
+   agent/mibgroup/snmpv3/usmConf.h       	              1
+   agent/mibgroup/utilities/iquery.h     	              1
+   agent/mibgroup/util_funcs/MIB_STATS_CACHE_TIMEOUT.h        1
+   agent/mibgroup/host_res.h                                  1
+   agent/mibgroup/hr_filesys.h                                1
+   agent/mibgroup/if-mib/ifTable/ifTable_defs.h               1
+   agent/mibgroup/ifTable_defs.h                              1
+   agent/mibgroup/mibII/mibII_common.h                        1
+   agent/mibgroup/mnttypes.h                                  1
+   agent/mibgroup/utilities/execute.h                         1
+);
+
+my %opts;
+
+LocalGetOptions(\%opts,
+		['n|dry-run',      "Dry-run, just say what you would do"],
+		['v|verbose',      "Show what files are being left too"],
+    );
+
+my $inputMakefile = $ARGV[0] || "agent/mibgroup/Makefile";
+my $inputDir = $ARGV[1] || "agent/mibgroup";
+
+my $collecting = 0;
+my (%files, @files);
+
+open(I, $inputMakefile);
+while(<I>) {
+    if (/mib_module_list_c=/) {
+	$collecting = 1;
+    } elsif ($collecting) {
+	if (! /\\\s*$/) {
+	    $collecting = 0;
+	}
+	chomp();
+	s/\\//;
+	s/\s*//g;
+	s/\.c//;
+	push @files, "agent/mibgroup/$_";
+	$files{"agent/mibgroup/$_.c"} = 1;
+	$files{"agent/mibgroup/$_.h"} = 1;
+    }
+}
+
+find(\&remove_files, $inputDir);
+
+sub remove_files {
+    return if (!/\.[ch]$/);
+    return if (/\.h$/); # XXX: we need to delete headers eventually too
+    return if (/_constants.h/);
+    return if (exists($exceptions{$File::Find::name}));
+
+    if (!exists($files{$File::Find::name})) {
+	Unlink($_, $File::Find::name);
+    } elsif ($opts{'v'}) {
+	print "Leaving $File::Find::name\n";
+    }
+}
+
+sub Unlink {
+    my ($file, $fullfile) = @_;
+    print "Removing $fullfile\n";
+    if (!$opts{'n'}) {
+	unlink($file);
+	if (-f "$file") {
+	    print "*** FAILED to remove $file\n"; 
+	}
+    }
+}
+
+
+sub LocalGetOptions {
+    if (eval {require Getopt::GUI::Long;}) {
+        import Getopt::GUI::Long;
+        # optional configure call
+	my @gopts = qw(no_ignore_case no_gui allow_zero);
+	if ($Getopt::GUI::Long::VERSION > 0.2) {
+	    push @gopts, qw(display_help capture_output);
+	}
+        Getopt::GUI::Long::Configure(@gopts);
+        return GetOptions(@_);
+    }
+    require Getopt::Long;
+    import Getopt::Long;
+    # optional configure call
+    Getopt::Long::Configure(qw(display_help no_ignore_case capture_output));
+    GetOptions(LocalOptionsMap(@_));
+}
+
+sub LocalOptionsMap {
+    my ($st, $cb, @opts) = ((ref($_[0]) eq 'HASH') 
+                            ? (1, 1, $_[0]) : (0, 2));
+    for (my $i = $st; $i <= $#_; $i += $cb) {
+        if ($_[$i]) {
+            next if (ref($_[$i]) eq 'ARRAY' && $_[$i][0] =~ /^GUI:/);
+            push @opts, ((ref($_[$i]) eq 'ARRAY') ? $_[$i][0] : $_[$i]);
+            push @opts, $_[$i+1] if ($cb == 2);
+        }
+    }
+    return @opts;
+}

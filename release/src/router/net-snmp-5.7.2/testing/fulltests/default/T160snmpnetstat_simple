@@ -1,0 +1,55 @@
+#!/bin/sh
+
+. ../support/simple_eval_tools.sh
+
+# snmpnetstat test only works with UDP or TCP
+if [ "x$SNMP_TRANSPORT_SPEC" = "x" -o "x$SNMP_TRANSPORT_SPEC" = "xudp" ]; then
+  proto=udp
+  HEADER "if snmpnetstat finds the running agent in udpTable"
+  SKIPIFNOT USING_MIBII_UDPTABLE_MODULE
+elif [ "x$SNMP_TRANSPORT_SPEC" = "xtcp" ]; then
+  proto=tcp
+  HEADER "if snmpnetstat finds the running agent in tcpTable"
+  SKIPIFNOT USING_MIBII_TCPTABLE_MODULE
+else
+  HEADER "if snmpnetstat finds the running agent in udpTable/tcpTable"
+  SKIP
+fi
+
+# on some systems the agent needs to be run as root to access udpTable/tcpTable
+# - else force skip
+case "x`uname -s`" in
+  xAIX)     [ "x`id -u`" != "x0" ] && SKIP;;
+  xHP-UX)   [ "x`id -u`" != "x0" ] && SKIP;;
+  xIRIX*)   [ "x`id -u`" != "x0" ] && SKIP;;
+  xNetBSD)  [ "x`id -u`" != "x0" ] && SKIP;;
+  xOpenBSD) [ "x`id -u`" != "x0" ] && SKIP;;
+  xOSF1)    [ "x`id -u`" != "x0" ] && SKIP;;
+esac
+
+SKIPIF NETSNMP_DISABLE_SNMPV2C
+
+# make sure snmpnetstat can be executed
+SNMPNETSTAT="${SNMP_UPDIR}/apps/snmpnetstat/snmpnetstat"
+[ -x "$SNMPNETSTAT" ] || SKIP
+
+snmp_version=v2c
+. ./Sv2cconfig
+
+#
+# Begin test
+#
+
+STARTAGENT
+
+CAPTURE "$SNMPNETSTAT -Cn -Cp $proto -$snmp_version -c testcommunity $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT"
+CHECKEXACT "127.0.0.1.$SNMP_SNMPD_PORT"
+# multiple occurrences (especially in tcpTable) are fine
+if [ "$snmp_last_test_result" != 0 ] ; then
+    return_value=0
+else
+    return_value=1
+fi
+
+STOPAGENT
+FINISHED

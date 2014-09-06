@@ -1,0 +1,141 @@
+########################################################################
+##
+## DEFAULTS (no blank lines allowed)
+##
+########################################################################
+## mark boundarys
+@if "x$m2c_mark_boundary" eq "x"@
+@   eval $m2c_mark_boundary = 0@
+@end@
+##
+@if "x$mfd_readme_verbose" eq "x"@
+@   eval $mfd_readme_verbose = 1@
+@end@
+@if "x$m2c_create_fewer_files" eq "x"@
+@   eval $m2c_create_fewer_files = 0@
+@end@
+@if "x$mfd_processing_types" eq "x"@
+@   eval $mfd_processing_types = "#"@
+@end@
+@if "x$m2c_code_verbose" eq "x"@
+@   eval $m2c_code_verbose = 0@
+@end@
+@if "x$m2c_defaults_dir" eq "x"@
+@   eval $m2c_defaults_dir = "defaults/"@
+@end@
+########################################################################
+## enum constants upper or lower case? (NODE_NAME vs node_name)
+@if "x$m2c_const_lc" eq "x"@
+@   eval $m2c_const_lc = 0@
+@end@
+##
+########################################################################
+## prefix for all enums  (NODE_NAME vs XYZ_NODE_NAME)
+@if "x$m2c_const_pfx" eq "x"@
+@   eval $m2c_const_pfx = ""@        # or "XYZ_"
+@end@
+##
+########################################################################
+## use temporary values in get routines, or direct pointers?
+@if "x$m2c_get_use_temp" eq "x"@
+@   eval $m2c_get_use_temp = 0@
+@end@
+##
+########################################################################
+########################################################################
+##
+## CODING STYLE
+##
+########################################################################
+########################################################################
+## allow for different style enums (#define vs const)
+@if "x$m2c_const_dcl" eq "x"@
+@   eval $m2c_const_dcl = "#define"@ # or "const int"
+@end@
+@if "m2c_const_del" eq "x"@
+@   eval $m2c_const_del = ""@        # or "="
+@end@
+@if "x$m2c_const_sfx" eq "x"@
+@   eval $m2c_const_sfx = ""@        # or ";"
+@end@
+##
+## set defaults for mfd
+##
+@if "x$user_mfd_default_table_access" eq "x" @
+@  eval $mfd_default_table_access = "container-cached"@
+@else@
+@  eval $mfd_default_table_access = "$user_mfd_default_table_access"@
+@end@
+##
+@if "x$user_mfd_default_table_skip_mapping" eq "x" @
+@  eval $mfd_default_table_skip_mapping = 1@
+@else@
+@  eval $mfd_default_table_skip_mapping = $user_mfd_default_table_skip_mapping@
+@end@
+##
+@if "x$user_mfd_default_data_context" eq "x" @
+@  eval $mfd_default_data_context = "generated"@
+@else@
+@  eval $mfd_default_data_context = "$user_mfd_default_data_context"@
+@end@
+##
+@if "x$user_mfd_default_context_reg" eq "x" @
+@  eval $mfd_default_context_reg = "netsnmp_data_list"@
+@else@
+@  eval $mfd_default_context_reg = "$user_mfd_default_context_reg"@
+@end@
+##
+@if "x$user_mfd_default_data_allocate" eq "x" @
+@  eval $mfd_default_data_allocate = 0@
+@else@
+@  eval $mfd_default_data_allocate = $user_mfd_default_data_allocate@
+@end@
+##
+@if "x$user_mfd_default_data_cache" eq "x" @
+@  eval $mfd_default_data_cache = 1@
+@else@
+@  eval $mfd_default_data_cache = $user_mfd_default_data_cache@
+@end@
+##
+@if "x$user_mfd_default_data_sparse" eq "x" @
+@  eval $mfd_default_data_sparse = 0@
+@else@
+@  eval $mfd_default_data_sparse = $user_mfd_default_data_sparse@
+@end@
+@if "x$user_mfd_default_undo_embed" eq "x" @
+@  eval $mfd_default_undo_embed = 0@
+@else@
+@  eval $mfd_default_undo_embed = $user_mfd_default_undo_embed@
+@end@
+##
+@if "x$user_mfd_default_data_init" eq "x" @
+@  eval $mfd_default_data_init = 1@
+@else@
+@  eval $mfd_default_data_init = $user_mfd_default_data_init@
+@end@
+##
+@if "x$user_mfd_default_data_transient" eq "x" @
+@  eval $mfd_default_data_transient = 2@ # TRANSIENT
+@else@
+@  eval $mfd_default_data_transient = $user_mfd_default_data_transient@
+@end@
+##
+@if "x$user_mfd_default_include_examples" eq "x" @
+@  eval $mfd_default_include_examples = 1@
+@else@
+@  eval $mfd_default_include_examples = $user_mfd_default_include_examples@
+@end@
+@if "x$m2c_data_cache" eq "x"@
+@   eval $m2c_data_cache = 0@
+@end@
+##
+@if "x$user_mfd_default_generate_makefile" eq "x" @
+@  eval $mfd_default_generate_makefile = 0@
+@else@
+@  eval $mfd_default_generate_makefile = $user_mfd_default_generate_makefile@
+@end@
+@if "x$user_mfd_default_generate_subagent" eq "x" @
+@  eval $mfd_default_generate_subagent = 0@
+@else@
+@  eval $mfd_default_generate_subagent = $user_mfd_default_generate_subagent@
+@end@

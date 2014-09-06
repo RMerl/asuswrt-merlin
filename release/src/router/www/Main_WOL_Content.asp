@@ -55,11 +55,12 @@
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
 <script language="JavaScript" type="text/javascript" src="/help.js"></script>
 <script language="JavaScript" type="text/javascript" src="/jquery.js"></script>
+<script language="JavaScript" type="text/javascript" src="/client_function.js"></script>
 <script>
 function initial(){
 	show_menu();
 	showwollist();
-	setTimeout("showLANIPList();", 1000);
+	showLANIPList();
 }
 
 function onSubmitCtrl(o, s) {
@@ -250,27 +251,28 @@ function del_Row(r){
 }
 
 function showLANIPList(){
-	var code = "";
-	var show_name = "";
-	var client_list_array = '<% get_client_detail_info(); %>';	
-	var client_list_row = client_list_array.split('<');	
-
-	for(var i = 1; i < client_list_row.length; i++){
-		var client_list_col = client_list_row[i].split('>');
-		if(client_list_col[1] && client_list_col[1].length > 20)
-			show_name = client_list_col[1].substring(0, 16) + "..";
-		else
-			show_name = client_list_col[1];	
-
-		code += '<a><div onmouseover="over_var=1;" onmouseout="over_var=0;" onclick="setClientIP(\''+client_list_col[1]+'\', \''+client_list_col[3]+'\');"><strong>'+client_list_col[3]+'</strong> ';
-		
-		if(show_name && show_name.length > 0)
-				code += '( '+show_name+')';
-		code += ' </div></a>';
+	if(clientList.length == 0){
+		setTimeout("showLANIPList();", 500);
+		return false;
 	}
 
-	code +='<!--[if lte IE 6.5]><iframe class="hackiframe2"></iframe><![endif]-->';	
-	$("ClientList_Block_PC").innerHTML = code;
+	var htmlCode = "";
+	for(var i=0; i<clientList.length;i++){
+		var clientObj = clientList[clientList[i]];
+
+		if(clientObj.ip == "offline") clientObj.ip = "";
+		if(clientObj.name.length > 20) clientObj.name = clientObj.name.substring(0, 16) + "..";
+
+		htmlCode += '<a><div onmouseover="over_var=1;" onmouseout="over_var=0;" onclick="setClientIP(\'';
+		htmlCode += clientObj.name;
+		htmlCode += '\', \'';
+		htmlCode += clientObj.mac;
+		htmlCode += '\');"><strong>';
+		htmlCode += clientObj.name;
+		htmlCode += '</strong></div></a><!--[if lte IE 6.5]><iframe class="hackiframe2"></iframe><![endif]-->';	
+	}
+
+	$("ClientList_Block_PC").innerHTML = htmlCode;
 }
 
 function setClientIP(_name, _macaddr){

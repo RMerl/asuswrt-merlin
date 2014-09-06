@@ -1,0 +1,118 @@
+#!/bin/sh
+#
+# $Id$
+#
+CVS_RSH=ssh; export CVS_RSH
+TAG=
+WO=0
+DEST=
+
+if [ "x$1" = "x-u" ]; then
+    DEST=$2
+    shift 2
+
+    # gnu tar (as of 1.15.1) is unable to create portable tar archives, 
+    # especially if long file names (>100 char) are present.
+    # star is a better replacement.
+    if [ -x /usr/bin/star ]; then
+        TAR='/usr/bin/star -Hustar -not -pat="*/CVS/*" -c -f'
+    elif [ -x /bin/tar ]; then
+        TAR="/bin/tar --exclude=CVS -c -f"
+        echo "warning: star not available, using (less portable) tar..."
+    else
+        echo "neither /usr/bin/star nor /bin/tar found."
+        exit
+    fi
+fi
+
+if [ $# -eq 0 ]; then
+    DIR=$PWD
+else
+    if [ $# -ne 1 ]; then
+        echo "usage: $0 <working directory>"
+        exit
+    fi
+    DIR=$1
+fi
+
+if [ -z ${DIR##*/} ];then
+   DIR=${DIR%/*}
+fi
+SUBD=${DIR##*/}
+PARENT=${DIR%*$SUBD}
+#echo "$DIR = $PARENT + $SUBD"
+
+if [ ! -d $DIR ]; then
+    echo "no such directory '$DIR'"
+    exit
+fi
+
+if [ ! -d $DIR/CVS ]; then
+    echo "'$DIR' has no CVS directory!"
+    exit
+fi
+
+if [ ! -f $DIR/CVS/Repository ]; then
+    echo "'$DIR' has no CVS/Repository!"
+    exit
+fi
+
+if [ ! -f $DIR/CVS/Root ]; then
+    echo "'$DIR' has no CVS/Root!"
+    exit
+fi
+
+if [ -f $DIR/CVS/Tag ]; then
+    TAG=`cat $DIR/CVS/Tag | cut -c 2-`
+    CMDTAG="-r $TAG"
+fi
+
+REP="`cat $DIR/CVS/Repository`"
+ROOT="`cat $DIR/CVS/Root`"
+
+cd $DIR
+#echo $PWD
+#    COMMAND="cvs -q -z3 -d $ROOT co $TAG -d $DIR $REP"
+
+COMMAND="cvs -q -z3 -d $ROOT update -P -d $CMDTAG"
+
+if [ ! -w $DIR/CVS ]; then
+    if [ -O $DIR/CVS ]; then
+        WO=1
+        echo "Making $DIR writable"
+        chmod -R u+w $DIR
+    fi
+fi
+
+echo "Updating directory $DIR with $TAG $REP..."
+echo "$COMMAND"
+
+$COMMAND
+rc=$?
+if [ $rc -ne 0 ]; then
+    echo "cvs command returned $?"
+fi
+
+if [ $WO -eq 1 ]; then
+    echo "Making $DIR read-only"
+    chmod -R a-w $DIR
+fi
+
+if [ ! -z $DEST ]; then
+    if [ -z $TAG ]; then
+        TAG=MAIN
+    fi
+
+  if [ $rc -ne 0 ]; then
+    echo "skipping upload"
+  else
+    cd ..
+#    echo $PWD
+    DATE=`date +%Y%m%d_%H%M`
+    SOURCE=$REP-cvs-$TAG"_$DATE"
+    $TAR /tmp/$SOURCE.tar $SUBD
+    gzip -f --best /tmp/$SOURCE.tar
+    scp /tmp/$SOURCE.tar.gz $DEST
+    rm -f /tmp/$SOURCE.tar.gz
+  fi
+fi

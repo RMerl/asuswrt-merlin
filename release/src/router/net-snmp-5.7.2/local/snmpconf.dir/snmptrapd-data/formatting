@@ -1,0 +1,15 @@
+title		Output formatting for traps received.
+description	Output from snmptrapd is formatted according to the
+description	rules defined by the formatting configuration directives.
+
+token	    format1
+info	    How SNMPv1 traps are formatted.
+info	    See the snmptrapd.conf manual page for format string details.
+info	    arguments: formatstring
+question 1  The format specification string for SNMPv1 traps
+
+token	    format2
+info	    How SNMPv2 and SNMPv3 traps are formatted.
+info	    See the snmptrapd.conf manual page for format string details.
+info	    arguments: formatstring
+question 1  The format specification string for SNMPv2 and SNMPv3 traps.

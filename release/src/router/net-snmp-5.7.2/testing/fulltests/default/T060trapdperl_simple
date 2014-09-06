@@ -1,0 +1,59 @@
+#!/bin/sh
+
+. ../support/simple_eval_tools.sh
+
+HEADER 'snmptrapd embedded perl support (NetSNMP::TrapReceiver)'
+
+SKIPIF NETSNMP_DISABLE_SNMPV2C
+SKIPIFNOT NETSNMP_EMBEDDED_PERL
+SKIPIFNOT HAVE_SIGHUP
+SKIPIFNOT NETSNMP_SECMOD_USM
+
+#
+# Begin test
+#
+
+snmp_version=v2c
+TESTCOMMUNITY=testcommunity
+TESTOID=.1.3.6.1.6.3.1.1.5.1
+TESTOID2=.1.3.6.1.6.3.1.1.5.2
+VAROID=.1.3.6.1.2.1.1.4.0
+EMBPERL_LOGFILE=${SNMP_TMPDIR}/embperl.log
+
+# make sure that we can fulfill all library dependencies
+_ld_lib_path="${SNMP_UPDIR}/snmplib/.libs:${SNMP_UPDIR}/agent/.libs:${SNMP_UPDIR}/agent/helpers/.libs"
+if [ x$OSTYPE = xcygwin ]; then
+  PATH="${_ld_lib_path}:$PATH"
+fi
+
+echo "use blib qw(${SNMP_UPDIR}/perl);" > ${SNMP_TMPDIR}/snmp_perl_trapd.pl
+echo "use NetSNMP::TrapReceiver;" >> ${SNMP_TMPDIR}/snmp_perl_trapd.pl
+
+CONFIGTRAPD authcommunity execute $TESTCOMMUNITY
+CONFIGTRAPD perlInitFile ${SNMP_TMPDIR}/snmp_perl_trapd.pl
+CONFIGTRAPD 'perl sub my_receiver { open LOG,">>'$EMBPERL_LOGFILE'"; print LOG "handled_by_embperl\n"; close LOG };'
+CONFIGTRAPD 'perl sub my_receiver2 { open LOG,">>'$EMBPERL_LOGFILE'"; print LOG "handled_again_by_embperl\n"; close LOG };'
+CONFIGTRAPD 'perl NetSNMP::TrapReceiver::register("'$TESTOID'", \&my_receiver) || warn "register_perl_handler_failed";'
+CONFIGTRAPD 'perl NetSNMP::TrapReceiver::register("'$TESTOID2'", \&my_receiver2) || warn "register_second_perl_handler_failed";'
+CONFIGTRAPD 'perl print STDERR "registered_perl_handler_ok\n";'
+CONFIGTRAPD agentxsocket /dev/null
+
+STARTTRAPD
+
+## 1) trigger embedded perl notification handler
+
+CAPTURE "snmptrap -Ci -t $SNMP_SLEEP -d -$snmp_version -c $TESTCOMMUNITY $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPTRAPD_PORT 0 $TESTOID $VAROID s handled_trap_$snmp_version"
+
+## 2) persistency: reconfigure (SIGHUP), re-trigger
+
+HUPTRAPD
+CAPTURE "snmptrap -Ci -t $SNMP_SLEEP -d -$snmp_version -c $TESTCOMMUNITY $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPTRAPD_PORT 0 $TESTOID2 $VAROID s handled_trap2_$snmp_version"
+
+## stop
+STOPTRAPD
+
+
+CHECKORDIE "handled_by_embperl"       $EMBPERL_LOGFILE
+CHECKORDIE "handled_again_by_embperl" $EMBPERL_LOGFILE
+
+FINISHED

@@ -1908,8 +1908,8 @@ background-position: -160px -55px;
 background-position: -160px -95px;
 }
 
-#content .folder.selectmode {
-background-position: -160px -95px;
+#content .folder.checked {
+background-position: -160px -135px;
 }
 
 #content .folder .routerync {

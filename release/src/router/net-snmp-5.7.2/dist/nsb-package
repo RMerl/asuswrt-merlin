@@ -1,0 +1,137 @@
+#!/bin/sh
+#
+# $Id$
+# Author: Robert Story <rstory@freesnmp.com>
+#
+########################################################################
+########################################################################
+
+usage()
+{
+   echo "Usage: $0  [params] VERSION"
+   echo ""
+   echo "  params: [-c] [-d] [-P] [-s NSB_SRC_DIR] [-b BUILDD] [-i NSB_INSTALL_DIR]"
+   echo "          [-h host] [-p path]"
+   echo ""
+   echo " VERSION    : release number (eg 5.2.2)"
+   echo " -s NSB_SRC_DIR  : source directory [$HOME/src/net-snmp-VERSION]"
+   echo " -b BUILDD  : build directory [$HOME/build/]"
+   echo "              NOTE-platform will be appended to build directory"
+   echo " -i NSB_INSTALL_DIR: install directory [$HOME/build/\$PLATFORM/usr]"
+   echo ""
+   echo " -x : configure extra features for pre-release testing"
+   echo " -c : skip configure"
+   echo " -d : dirty build (don't make distclean)"
+   echo " -m : skip 'make all'"
+   echo " -P : pause at prompts in between stages"
+   echo " -r : remove build dir (rm -fR) before build"
+   echo " -R : remove build dir (rm -fR) after successful build"
+   echo " -t : skip 'make test'"
+   echo " -C : don't source $HOME/.snmp/nsb-package"
+   echo ""
+   echo " -h : host to upload results to"
+   echo " -p : path to upload results to"
+   exit 1
+}
+
+#trap exit SIGINT
+
+#set -x
+
+# make getopts work on Tru64 by respawning in Posix mode
+if [ "`uname`" = "OSF1" -a "$BIN_SH" != "xpg4" ]; then
+    BIN_SH=xpg4
+    export BIN_SH
+    exec $0 $*
+fi
+
+#
+# find nsb-platform based on the path to this script
+#
+EXE_PATH=`dirname $0`
+if [ ! -f $EXE_PATH/nsb-functions ];then
+   if [ -f $HOME/bin/nsb-functions ]; then
+      EXE_PATH=$HOME/bin
+   elif [ -f nsb-functions ];then
+      EXE_PATH=$PWD
+   else
+      echo "Cannot find nsb-functions in $EXE_PATH, $HOME/bin or $PWD"
+      exit 1
+   fi
+fi
+
+if [ "x$1" = "x-C" ]; then
+    shift
+else
+    if [ -f $HOME/.snmp/nsb-package ];then
+        . $HOME/.snmp/nsb-package
+    fi
+fi
+
+########################################################################
+########################################################################
+
+REMOVE_SUCCESS=0
+
+#      x)  x=$OPTARG ;;
+while getopts b:cdh:i:mPp:rRs:tx opt
+do
+    case "$opt" in
+      b)  NSB_BUILD_DIR=$OPTARG ;;
+      c)  NSB_SKIP_CONFIG=1 ;;
+      d)  NSB_CLEAN=0 ;;
+      h)  NSB_SCP_HOST=$OPTARG ;;
+      i)  NSB_INSTALL_DIR=$OPTARG ;;
+      m)  NSB_SKIP_BUILD=1 ;;
+      P)  NSB_PROMPT=1 ;;
+      p)  NSB_SCP_DEST=$OPTARG ;;
+      r)  NSB_CLEAN=2 ;;
+      R)  REMOVE_SUCCESS=1 ;;
+      s)  NSB_SRC_DIR=$OPTARG ;;
+      t)  NSB_SKIP_TEST=1 ;;
+      x)  NSB_CONFIG_ALL=1;;
+      \?)# unknown flag
+        usage;;
+    esac
+done
+shift `expr $OPTIND - 1`
+
+if [ $# -ne 1 ]; then
+   echo "expecting 1 argument, got $# ($@)"
+   usage
+fi
+
+NSB_VERSION=$1
+
+. $EXE_PATH/nsb-functions
+
+nsb_default_paths
+
+if [ $NSB_CLEAN -eq 1 ]; then
+   if [ $NSB_SKIP_CONFIG -eq 1 ]; then
+      echo "A clean build also requires configuration (-d and -c"
+      echo "cannot both be specified)."
+      usage
+   fi
+fi
+
+
+########################################################################
+########################################################################
+nsb_prompt "press enter to build $NSB_SRC_DIR in $NSB_BUILD_DIR, and install in $NSB_INSTALL_DIR"
+nsb_build $NSB_VERSION $NSB_SRC_DIR $NSB_BUILD_DIR $NSB_INSTALL_DIR $NSB_CONFIG_ALL
+rc=$?
+if [ "x$NSB_SCP_HOST" != "x" ]; then
+   nsb_upload $NSB_BUILD_DIR $NSB_SCP_HOST:$NSB_SCP_DEST/$NSB_VERSION/$NSB_HOST/
+fi
+if [ $rc -eq 0 ] && [ $REMOVE_SUCCESS -eq 1 ];then
+    nsb_prompt "press enter to remove $NSB_BUILD_DIR"
+    if [ "x$NSB_BUILD_DIR" = "/" ]; then
+       nsb_abort "Not running rm -fR from /"
+    else
+       /bin/rm -fR $NSB_BUILD_DIR > /dev/null 2>&1
+    fi
+fi
+
+nsb_prompt "press enter to exit with rc $RC"
+exit $rc

@@ -1,0 +1,15 @@
+TARG = oid_to_type oid_to_sym
+
+all: $(TARG)
+
+oid_to_type: oid_to_type.in ../sedscript
+	$(SED) -f ../sedscript $(srcdir)/oid_to_type.in > oid_to_type
+
+oid_to_sym: oid_to_sym.in ../sedscript
+	$(SED) -f ../sedscript $(srcdir)/oid_to_sym.in > oid_to_sym
+
+clean:
+	rm -f $(TARG)
+
+install:
+

@@ -1,0 +1,40 @@
+#!/bin/sh
+
+# standard V1 configuration: testcommunity1 testcommunity2
+# testcommunity1 can access .1.3.6.1.2.1.1.1, others are denied
+# generically set up the community "testcommunity1 and testcommunity2" for various snmp
+# version access to the agent.
+
+if [ "x$snmp_version" = "x" ]; then
+  snmp_version="any"
+fi
+
+CONFIGAGENT [snmp] persistentdir $SNMP_TMP_PERSISTENTDIR
+
+CONFIGAGENT rocommunity testrocommunity 127.0.0.1 .1.3.6.1.2.1.1.5.0
+CONFIGAGENT rwcommunity testrwcommunity 127.0.0.1 .1.3.6.1.2.1.1.5.0
+
+CONFIGAGENT com2sec testcommunitysec1  default testcommunity1
+CONFIGAGENT com2sec testcommunitysec2  default testcommunity2
+
+if [ "$SNMP_TRANSPORT_SPEC" = "udp6" -o "$SNMP_TRANSPORT_SPEC" = "tcp6" ];then 
+CONFIGAGENT rocommunity6 testrocommunity ::1 .1.3.6.1.2.1.1.5.0
+CONFIGAGENT rwcommunity6 testrwcommunity ::1 .1.3.6.1.2.1.1.5.0
+CONFIGAGENT com2sec6 testcommunitysec1  default testcommunity1
+CONFIGAGENT com2sec6 testcommunitysec2  default testcommunity2
+fi
+
+if [ "$SNMP_TRANSPORT_SPEC" = "unix" ];then 
+CONFIGAGENT com2secunix testcommunitysec1  testcommunity1
+CONFIGAGENT com2secunix testcommunitysec2  testcommunity2
+fi
+
+CONFIGAGENT group   testcommunitygroup1  $snmp_version     testcommunitysec1
+CONFIGAGENT group   testcommunitygroup2  $snmp_version     testcommunitysec2
+
+CONFIGAGENT view    system1     included .1.3.6.1.2.1.1.1 
+CONFIGAGENT view    system2     included .1
+CONFIGAGENT view    system2     excluded .1.3.6.1.2.1.1.1 
+CONFIGAGENT 'access  testcommunitygroup1  "" any noauth exact system1 none none'
+CONFIGAGENT 'access  testcommunitygroup2  "" any noauth exact system2 none none'
+

@@ -188,7 +188,7 @@ int copy_routes(int table){
  */
 int add_multi_routes(void)
 {
-	int unit, wan_state;
+	int unit;
 	char tmp[100], prefix[] = "wanXXXXXXXXXX_";
 	char wan_proto[32], wan_if[32], wan_ip[32], wan_gate[32];
 	char cmd[2048];
@@ -215,12 +215,11 @@ int add_multi_routes(void)
 		gate_num = 0;
 		for(unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit){ // Multipath
 			snprintf(prefix, sizeof(prefix), "wan%d_", unit);
-			wan_state = nvram_get_int(strcat_r(prefix, "state_t", tmp));
 			strncpy(wan_ip, nvram_safe_get(strcat_r(prefix, "ipaddr", tmp)), 32);
 			strncpy(wan_gate, nvram_safe_get(strcat_r(prefix, "gateway", tmp)), 32);
 
 			// when wan_down().
-			if(wan_state == WAN_STATE_DISCONNECTED)
+			if(!is_wan_connect(unit))
 				continue;
 
 			if(strlen(wan_gate) <= 0 || !strcmp(wan_gate, "0.0.0.0"))
@@ -246,14 +245,13 @@ int add_multi_routes(void)
 			continue;
 
 		snprintf(prefix, sizeof(prefix), "wan%d_", unit);
-		wan_state = nvram_get_int(strcat_r(prefix, "state_t", tmp));
 		strncpy(wan_proto, nvram_safe_get(strcat_r(prefix, "proto", tmp)), 32);
 		strncpy(wan_if, get_wan_ifname(unit), 32);
 		strncpy(wan_ip, nvram_safe_get(strcat_r(prefix, "ipaddr", tmp)), 32);
 		strncpy(wan_gate, nvram_safe_get(strcat_r(prefix, "gateway", tmp)), 32);
 
 		// when wan_down().
-		if(wan_state == WAN_STATE_DISCONNECTED)
+		if(!is_wan_connect(unit))
 			continue;
 
 		if(strlen(wan_gate) <= 0 || !strcmp(wan_gate, "0.0.0.0"))
@@ -2254,9 +2252,6 @@ wan_up(char *wan_ifname)	// oleg patch, replace
 			route_add(wan_ifname, 0, gateway, NULL, "255.255.255.255");
 	}
 
-	/* default route via default gateway */
-	add_multi_routes();
-
 	/* hack: avoid routing cycles, when both peer and server has the same IP */
 	if (strcmp(wan_proto, "pptp") == 0 || strcmp(wan_proto, "l2tp") == 0) {
 		/* delete gateway route as it's no longer needed */
@@ -2321,6 +2316,9 @@ wan_up(char *wan_ifname)	// oleg patch, replace
 	if (start_auth(wan_unit, 1) == 0) {
 		update_wan_state(prefix, WAN_STATE_CONNECTING, 0);
 	}
+
+	/* default route via default gateway */
+	add_multi_routes();
 
 	if (wan_unit != wan_primary_ifunit())
 		return;

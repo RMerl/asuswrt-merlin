@@ -1,0 +1,113 @@
+#!/usr/bin/perl -w
+
+$TOCHEADER=" TABLE OF CONTENTS";
+
+open(O, ">FAQ.html");
+
+
+# Load FAQ into memory
+while(<>) {
+  push (@faqfile, $_);
+}
+my $current_line = 0;
+my $version;
+
+# Skip header up to table of contents
+while($current_line <= $#faqfile) {
+    $_ = $faqfile[$current_line];
+    $current_line++;
+
+    if (/Net-SNMP Version: (.*)/) {
+      $version = $1;
+    }
+
+    last if (/$TOCHEADER/);
+}
+
+print O '<p class="SectionTitle">
+FAQ
+</p>
+FAQ Maintainer: Dave Shield<br/>
+Email: <a href="mailto:net-snmp-coders@lists.sourceforge.net">net-snmp-coders@list.sourceforge.net</a><br/>
+';
+print O "Version: $version<br/>\n";
+print O '<hr/>
+<h2>Table of Contents</h2>
+';
+
+# Create table of contents
+while($current_line <= $#faqfile) {
+    $_ = $faqfile[$current_line];
+    
+    #Skip blank lines
+    if (/^\s*$/) {
+      $current_line++;
+      last;
+    }
+
+    chomp();
+
+    # Remove white space at start of line
+    $_ =~ s/^ *//;
+    
+    $x = $_;
+
+    # Remove white space at start of line
+    $x =~ s/^ *//g;
+
+    # Replace all non alpha characters with _
+    $x =~ s/[^a-zA-Z]/_/g;
+
+    # Save cleaned up line
+    $xlate{$_} = $x;
+
+    if ( /&/ ) { $_ =~ s/&/&amp;/g; }
+    if ( /</ ) { $_ =~ s/</&lt;/g; }
+    if ( />/ ) { $_ =~ s/>/&gt;/g; }
+    if (/^[ A-Z]+$/) {
+        # Section header (eg: GENERAL)
+	print O "</ul><b>$_</b><ul>\n";
+    } else {
+        # Question / answer - create link to it
+        if ($faqfile[$current_line+1] =~ /^     */) {
+          
+          # Continuation of the question.
+          $current_line++;
+          my $part2 = $faqfile[$current_line];
+          
+          # Remove white space at start of line
+          $part2 =~ s/^ *//;
+
+          print O "<li> <a href=\"#$x\">$_ $part2</a></li>\n";
+        }
+        else {
+          print O "<li> <a href=\"#$x\">$_</a></li>\n";
+        }
+    }
+    $current_line++;
+}
+
+print O "</ul><hr/><pre>\n";
+
+# Print contents with targets defined
+while($current_line <= $#faqfile) {
+    $_ = $faqfile[$current_line];
+    $current_line++;
+
+    chomp();
+
+    $y = $_;
+
+    if (defined($xlate{$y})) {
+	print O "<a name=\"$xlate{$y}\"></a>\n";
+    }
+    if ( /&/ ) { $_ =~ s/&/&amp;/g; }
+    if ( /</ ) { $_ =~ s/</&lt;/g; }
+    if ( />/ ) { $_ =~ s/>/&gt;/g; }
+    print O "$_\n";
+}
+
+print O '
+</pre>
+';
+

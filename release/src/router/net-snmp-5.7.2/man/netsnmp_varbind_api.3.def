@@ -1,0 +1,216 @@
+.TH NETSNMP_VARBIND_API 3 "13 Aug 2010" VVERSIONINFO "Net-SNMP"
+.SH NAME
+snmp_pdu_add_variable,
+snmp_varlist_add_variable,
+snmp_add_null_var,
+snmp_clone_varbind,
+snmp_set_var_objid,
+snmp_set_var_value,
+snmp_set_var_typed_value,
+snmp_set_var_typed_integer,
+print_variable,
+fprint_variable,
+snprint_variable,
+print_value,
+fprint_value,
+snprint_value,
+snmp_free_var,
+snmp_free_varbind - netsnmp_varbind_api functions
+.SH SYNOPSIS
+.B #include <net-snmp/varbind_api.h>
+.SS Creation
+.PP
+.B "netsnmp_variable_list *snmp_pdu_add_variable("
+.br
+.BI "                     netsnmp_pdu *" pdu ","
+.br
+.BI "                     const oid *" objid ", size_t " objidlen ","
+.br
+.BI "                     u_char " type ", const void *" value ", size_t " len ");"
+.br
+.B "netsnmp_variable_list *snmp_varlist_add_variable("
+.br
+.BI "                     netsnmp_variable_list *" varlist ","
+.br
+.BI "                     const oid *" objid ", size_t " objidlen ","
+.br
+.BI "                     u_char " type ", const void *" value ", size_t " len ");"
+.br
+.B "netsnmp_variable_list *snmp_add_null_var("
+.br
+.BI "                     netsnmp_pdu *" pdu ","
+.br
+.BI "                     const oid *" objid ", size_t " objidlen ");"
+.PP
+.B "netsnmp_variable_list *snmp_clone_varbind("
+.br
+.BI "                     netsnmp_variable_list *" varlist ");"
+.SS Setting Values
+.PP
+.BI "int  snmp_set_var_objid( netsnmp_variable_list* " variable ","
+.br
+.BI "                     const oid * " objid ", size_t " objidlen ");"
+.br
+.BI "int  snmp_set_var_value( netsnmp_variable_list* " variable ","
+.br
+.BI "                     const void * " value ", size_t " vallen ");"
+.br
+.BI "int  snmp_set_var_typed_value( netsnmp_variable_list* " variable ","
+.br
+.BI "                     u_char " type ","
+.br
+.BI "                     const void * " value ", size_t " vallen ");"
+.br
+.BI "int  snmp_set_var_typed_integer( netsnmp_variable_list* " variable ","
+.br
+.BI "                     u_char " type ", long " value ");"
+.br
+.SS Output
+.PP
+.BI "void  print_variable(const oid *" "objid" ", size_t " "objidlen" ","
+.br
+.BI "                     const netsnmp_variable_list *" variable ");"
+.br
+.BI "void fprint_variable(FILE *" fp ","
+.br
+.BI "                     const oid *" objid ", size_t " objidlen ","
+.br
+.BI "                     const netsnmp_variable_list *" variable ");"
+.br
+.BI "int snprint_variable(char *" "buf" ", size_t " "len" ","
+.br
+.BI "                     const oid *" objid ", size_t " objidlen ","
+.br
+.BI "                     const netsnmp_variable_list *" variable ");"
+.PP
+.BI "void  print_value(const oid *" objid ", size_t " objidlen ","
+.br
+.BI "                     const netsnmp_variable_list *" variable ");"
+.br
+.BI "void fprint_value(FILE *" fp ","
+.br
+.BI "                     const oid *" objid ", size_t " objidlen ","
+.br
+.BI "                     const netsnmp_variable_list *" variable ");"
+.br
+.BI "int snprint_value(char *" buf ", size_t " "len" ","
+.br
+.BI "                     const oid *" objid ", size_t " objidlen ","
+.br
+.BI "                     const netsnmp_variable_list *" variable ");"
+.br
+.br
+.SS Deletion
+.PP
+.BI "void snmp_free_var(       netsnmp_variable_list *" variable ");"
+.br
+.BI "void snmp_free_varbind( netsnmp_variable_list *" variables ");"
+.br
+.PP
+.SH DESCRIPTION
+The functions dealing with variable bindings fall into four groups - 
+dealing with the creation, setting of values, output and deletion of varbinds.
+.SS Creation
+.B snmp_pdu_add_variable
+will create a new varbind structure, initialised with the name (
+.IR objid ", " objidlen
+), syntax (
+.I type
+) and value (
+.I value ", " len
+) provided.
+This varbind is then added to the end of the varbind list in
+the given PDU.
+.PP
+.B snmp_varlist_add_variable
+is similar, but appends the new varbind to the end of the
+varbind list provided.
+When adding the first varbind to an empty list, simply
+pass the address of the head of the list:
+.IP
+  netsnmp_variable_list *vl = NULL;
+  snmp_varlist_add_variable(
+            &vl, name1, name1_len,
+            ASN_\fITYPE\fP, &val1, val1_len);
+  snmp_varlist_add_variable(
+            &vl, name2, name2_len,
+            ASN_\fITYPE\fP, &val2, val2_len);
+.PP
+In both cases, the routine will return a pointer to the new
+varbind structure (or NULL if the varbind creation fails).
+.PP
+.B snmp_add_null_var
+is a convenience function to add an empty varbind to the PDU.
+without needing to specify the NULL value explicitly.
+This is the normal mechanism for constructing a GET (or similar)
+information retrieval request.
+.br
+Again, this returns a pointer to the new varbind, or NULL.
+.PP
+.B snmp_clone_varbind
+creates a copy of each varbind in the specified list,
+returning a pointer to the head of the new list
+(or NULL if the cloning fails).
+.br
+.SS Setting of values
+.B snmp_set_var_objid
+sets the name of the varbind structure to the specified OID.
+.br
+.B snmp_set_var_typed_value
+sets the syntax type and value of the varbind structure.
+.br
+.B snmp_set_var_value
+sets the value of the varbind structure, leaving the syntax type unchanged.
+.br
+.B snmp_set_var_typed_integer
+is a convenience function to set the syntax type and value for
+a 32-bit integer-based varbind.
+.PP
+All four of these return 0 if the assignment is successful,
+or 1 if it is not.
+.SS Output
+.B print_variable
+will take an object identifier (as returned by
+.BR read_objid ", " snmp_parse_oid " or " get_module_node )
+and an instance of such a variable, and prints to the standard output
+the textual form of the object identifier together with the value
+of the variable.
+.PP
+.B fprint_variable
+does the same, but prints to the FILE pointer specified by the initial
+parameter.
+.PP
+.B snprint_variable
+prints the same information into the buffer pointed to by
+.I buf
+which is of length
+.IR len .
+It returns the number of characters printed, or -1 if the
+buffer was not large enough.  In the latter case,
+.I buf
+will typically contained a truncated version of the information (but
+this behaviour is not guaranteed).  This function replaces the
+obsolete function
+.BR sprint_variable .
+.PP
+.BR print_value ,
+.BR fprint_value ,
+and
+.B snprint_value
+do the same as the equivalent
+.B print_variable
+routines, but only displaying the value of the variable, without the
+corresponding object identifier.
+.PP
+For displaying the OID of a varbind, see \fBmin_api\fP(3).
+.br
+.SS Deletion
+.B snmp_free_var
+releases all memory used by the given varbind structure.
+.br
+.B snmp_free_varbind
+releases all memory used by each varbind structure in the varbind list provided.
+.br
+.SH "SEE ALSO"
+.BR pdu_api "(3)"
+.BR mib_api "(3)"

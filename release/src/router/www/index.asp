@@ -69,6 +69,7 @@
 </style>
 <script type="text/javascript" src="/md5.js"></script>
 <script type="text/javascript" src="/state.js"></script>
+<script type="text/javascript" src="/general.js"></script>
 <script type="text/javascript" src="/popup.js"></script>
 <script type="text/javascript" src="/disk_functions.js"></script>
 <script type="text/javascript" src="/help.js"></script>
@@ -79,8 +80,14 @@
 var $j = jQuery.noConflict();	
 
 if(location.pathname == "/"){
-	if('<% nvram_get("x_Setting"); %>' == '0')
-		location.href = '/QIS_wizard.htm?flag=welcome';
+	if('<% nvram_get("x_Setting"); %>' == '0'){
+		if(tmo_support){
+			location.href = '/QIS_wizard_m.htm';
+		}
+		else{
+			location.href = '/QIS_wizard.htm?flag=welcome';
+		}
+	}	
 	else if('<% nvram_get("w_Setting"); %>' == '0' && sw_mode != 2)
 		location.href = '/QIS_wizard.htm?flag=wireless';
 }
@@ -115,7 +122,6 @@ else
 
 // Client list
 var wireless = [<% wl_auth_list(); %>];	// [[MAC, associated, authorized], ...]
-var client_list_array = '<% get_client_detail_info(); %>';
 
 // USB function
 var currentUsbPort = new Number();
@@ -533,7 +539,7 @@ function clickEvent(obj){
 
 	if(lastClicked){
 		if(lastClicked.id.indexOf("USBdisk") > 0)
-			lastClicked.style.backgroundPosition = '0% -3px';
+			lastClicked.style.backgroundPosition = '0% -4px';
 		else
 			lastClicked.style.backgroundPosition = '0% 0%';
 	}
@@ -634,7 +640,7 @@ function showstausframe(page){
 function check_status(_device){
 	var diskOrder = _device.usbPath;
 	document.getElementById('iconUSBdisk_'+diskOrder).style.backgroundImage = "url(/images/New_ui/networkmap/USB_2.png)";	
-	document.getElementById('iconUSBdisk_'+diskOrder).style.backgroundPosition = '0px -3px';
+	document.getElementById('iconUSBdisk_'+diskOrder).style.backgroundPosition = '0px -4px';
 	document.getElementById('iconUSBdisk_'+diskOrder).style.position = "absolute";
 	document.getElementById('iconUSBdisk_'+diskOrder).style.marginTop = "0px";
 
@@ -667,10 +673,10 @@ function check_status(_device){
 				break;
 		}
 	}
-
+	
 	if(got_code_1){
 		// red
-		document.getElementById('iconUSBdisk_'+diskOrder).style.backgroundPosition = '0px -3px';
+		document.getElementById('iconUSBdisk_'+diskOrder).style.backgroundPosition = '0px -6px';
 		document.getElementById('ring_USBdisk_'+diskOrder).style.backgroundPosition = '0% 101%';
 	}
 	else if(got_code_2 || got_code_3){
@@ -678,7 +684,7 @@ function check_status(_device){
 	}
 	else{
 		// blue
-		document.getElementById('iconUSBdisk_'+diskOrder).style.backgroundPosition = '0px -3px';
+		document.getElementById('iconUSBdisk_'+diskOrder).style.backgroundPosition = '0px -5px';
 		document.getElementById('ring_USBdisk_'+diskOrder).style.backgroundPosition = '0% 50%';
 	}
 }
@@ -702,34 +708,9 @@ function show_ddns_fail_hint() {
 	if( !((link_status == "2" && link_auxstatus == "0") || (link_status == "2" && link_auxstatus == "2")) )
 		str = "<#Disconnected#>";
 	else if(ddns_server = 'WWW.ASUS.COM') {
-		if(ddns_return_code == 'register,203')
-               alert("<#LANHostConfig_x_DDNS_alarm_hostname#> '<%nvram_get("ddns_hostname_x");%>' <#LANHostConfig_x_DDNS_alarm_registered#>");
-        else if(ddns_return_code.indexOf('233')!=-1)
-                str = "<#LANHostConfig_x_DDNS_alarm_hostname#> '<%nvram_get("ddns_hostname_x");%>' <#LANHostConfig_x_DDNS_alarm_registered_2#> '<%nvram_get("ddns_old_name");%>'";
-	  	else if(ddns_return_code.indexOf('297')!=-1)
-        		str = "<#LANHostConfig_x_DDNS_alarm_7#>";
-	  	else if(ddns_return_code.indexOf('298')!=-1)
-    			str = "<#LANHostConfig_x_DDNS_alarm_8#>";
-	  	else if(ddns_return_code.indexOf('299')!=-1)
-    			str = "<#LANHostConfig_x_DDNS_alarm_9#>";
-  		else if(ddns_return_code.indexOf('401')!=-1)
-	    		str = "<#LANHostConfig_x_DDNS_alarm_10#>";
-	  	else if(ddns_return_code.indexOf('407')!=-1)
-    			str = "<#LANHostConfig_x_DDNS_alarm_11#>";
-		else if(ddns_return_code.indexOf('-1')!=-1)
-			str = "<#LANHostConfig_x_DDNS_alarm_2#>";
-	  	else if(ddns_return_code =='no_change')
-    			str = "<#LANHostConfig_x_DDNS_alarm_nochange#>";
-	        else if(ddns_return_code == 'Time-out')
-        	        str = "<#LANHostConfig_x_DDNS_alarm_1#>";
-	        else if(ddns_return_code =='unknown_error')
-        	        str = "<#LANHostConfig_x_DDNS_alarm_2#>";
-	  	else if(ddns_return_code =='')
-    			str = "<#LANHostConfig_x_DDNS_alarm_2#>";
-		else if(ddns_return_code =='connect_fail')
-                	str = "<#qis_fail_desc7#>";
-                else if(ddns_return_code =='auth_fail')
-                        str = "<#qis_fail_desc1#>";
+		var ddnsHint = getDDNSState(ddns_return_code, "<%nvram_get("ddns_hostname_x");%>", "<%nvram_get("ddns_old_name");%>");
+		if(ddnsHint != "")
+			str = ddnsHint;
 	}
 	else 
 		str = "<#LANHostConfig_x_DDNS_alarm_2#>";
@@ -1022,7 +1003,7 @@ function cal_panel_block(){
 }
 
 function check_usb3(){
-	if(based_modelid == "RT-AC87U" || based_modelid == "RT-AC68U" || based_modelid == "RT-AC56U" || based_modelid == "RT-N18U" || based_modelid == "DSL-AC68U"){
+	if(based_modelid == "DSL-AC68U" || based_modelid == "RT-AC3200" || based_modelid == "RT-AC87U" || based_modelid == "RT-AC69U" || based_modelid == "RT-AC68U" || based_modelid == "RT-AC68U_V2" || based_modelid == "RT-AC56S" || based_modelid == "RT-AC56U" || based_modelid == "RT-AC55U" || based_modelid == "RT-N18U" || based_modelid == "TM-AC1900"){
 		document.getElementById('usb1_image').src = "images/New_ui/networkmap/USB3.png";
 	}
 	else if(based_modelid == "RT-N65U"){
@@ -1344,7 +1325,7 @@ function check_usb3(){
 							<img style="margin-top:15px;width:150px;height:2px" src="/images/New_ui/networkmap/linetwo2.png">
 							<div style="margin-top:10px;margin-bottom:10px;" id="deviceIcon_2"></div>
 							<div><img id="usb2_image" src="images/New_ui/networkmap/USB2.png"></div>
-							<div style="margin:10px 0px;>
+							<div style="margin:10px 0px;">
 								<span id="deviceText_2"></span>
 								<select id="deviceOption_2" class="input_option" style="display:none;height:20px;width:130px;font-size:12px;"></select>	
 							</div>						
@@ -1404,7 +1385,7 @@ function check_usb3(){
 </body>
 
 <form method="post" name="networkmapdRefresh" action="/apply.cgi" target="hidden_frame">
-	<input type="hidden" name="action_mode" value="refresh_networkmap">
+	<input type="hidden" name="action_mode" value="update_client_list">
 	<input type="hidden" name="action_script" value="">
 	<input type="hidden" name="action_wait" value="1">
 	<input type="hidden" name="current_page" value="httpd_check.htm">

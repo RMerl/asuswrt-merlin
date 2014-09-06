@@ -1,0 +1,126 @@
+#!/bin/sh
+
+#
+# feature-check: This script looks for feature statements in a file by
+# executing a compiler under CPP and extracting lines of the following
+# form:
+#
+# netsnmp_feature_provides(foo): used to indicate it provides feature "foo"
+# netsnmp_feature_require(bar): used to indicate it requires feature "bar"
+# netsnmp_feature_want(bar): used to indicate it wants feature "bar"
+#                    (but can live without it)
+#
+# Using these lines it then generates a list of feature requirement
+# defines in "include/net-snmp/net-snmp-features.h" which can then be
+# loaded in later passes at compile time.
+#
+# Defines produced when netsnmp_featre_require(bar) is present:
+#   #define NETSNMP_FEATURE_REQUIRE_BAR 1
+#
+# Defines produced when netsnmp_feature_want(bar) is present:
+#   #define NETSNMP_FEATURE_WANT_BAR 1
+#
+# And when all the features have been collected, they are also inverted via
+# the feature-post-check script:
+#
+#   #define NETSNMP_FEATURE_REMOVE_BARX 1  /* never required */
+#   #undef  NETSNMP_FEATURE_REMOVE_BAR      /* required */
+
+# Usage:
+
+# feature-check NORMAL-COMPILE-LINE
+
+SED=sed
+GREP=grep
+CC=gcc
+RM=rm
+
+if test "x$1" = "x--feature-global" ; then
+    # a global file should be included
+    shift
+    global=$1
+    shift
+fi
+
+sourcedir=$1
+shift
+
+source=$1
+shift
+
+destination=$1
+shift
+
+tmpf="$destination.1"
+
+compileline="$@"
+$compileline '-DNETSNMP_FEATURE_CHECKING=1' \
+             '-DNETSNMP_MINIMAL_CODE=1' \
+             '-Dnetsnmp_feature_require(X)=X NSF_RR' \
+             '-Dnetsnmp_feature_provide(X)=X NSF_PP' \
+             '-Dnetsnmp_feature_child_of(X,Y)=X,Y NSF_CO' \
+             '-Dnetsnmp_feature_want(X)=X NSF_WW' $source | \
+    $GREP NSF_ | $GREP -v '^#define' > $tmpf
+
+$RM -f $destination;
+touch $destination;
+
+# process requires
+firstrequire=1
+for i in `grep NSF_RR $tmpf | sed 's/ NSF_RR//'` ; do
+    if test $firstrequire = 1 ; then
+	echo "" >> $destination
+	echo "/* required by $sourcedir/$source */" >> $destination
+	firstrequire=0
+    fi
+    upper=`echo $i | tr a-z A-Z`
+    echo "#define NETSNMP_FEATURE_REQUIRE_$upper 1" >> $destination
+done
+
+# process provides
+firstfeature=1
+for i in `grep NSF_PP $tmpf | sed 's/ NSF_PP//'` ; do
+    if test $firstfeature = 1 ; then
+	echo "" >> $destination
+	echo "/* features provided by $sourcedir/$source */" >> $destination
+	firstfeature=0
+    fi
+    upper=`echo $i | tr a-z A-Z`
+    echo "#define NETSNMP_FEATURE_PROVIDE_$upper 1" >> $destination
+done
+
+# process children
+firstfeature=1
+for i in `grep NSF_CO $tmpf | sed 's/ NSF_CO//'` ; do
+    parent=`echo $i | sed 's/.*,//'`
+    child=`echo $i | sed 's/,.*//'`
+    if test $firstfeature = 1 ; then
+	echo "" >> $destination
+	echo "/* features provided by $sourcedir/$source */" >> $destination
+	firstfeature=0
+    fi
+    upperchild=`echo $child | tr a-z A-Z`
+    upperparent=`echo $parent | tr a-z A-Z`
+    echo "#define NETSNMP_FEATURE_${upperchild}_CHILD_OF_${upperparent} 1" >> $destination
+    echo "#define NETSNMP_FEATURE_PROVIDE_$upperchild 1" >> $destination
+done
+
+# process wants
+firstfeature=1
+for i in `grep NSF_WW $tmpf | sed 's/ NSF_WW//'` ; do
+    if test $firstfeature = 1 ; then
+	echo "" >> $destination
+	echo "/* features wanted by $sourcedir/$source */" >> $destination
+	firstfeature=0
+    fi
+    upper=`echo $i | tr a-z A-Z`
+    echo "#define NETSNMP_FEATURE_WANT_$upper 1" >> $destination
+done
+
+if test "x$global" != "x" ; then
+    cat $destination >> $global
+fi
+
+
+# clean up
+#$RM -f $tmpf

@@ -64,7 +64,7 @@
 <script>
 var $j = jQuery.noConflict();
 var bwdpi_app_rulelist = "<% nvram_get("bwdpi_app_rulelist"); %>".replace(/&#60/g, "<");;
-var category_title = ["", "Gaming", "Video and Audio Streaming","VoIP and Instant Messaging", "Web Surfing","File Transferring", "Others"];					 
+var category_title = ["", "<#Adaptive_Game#>", "<#Adaptive_Stream#>","<#Adaptive_Message#>", "<#Adaptive_WebSurf#>","<#Adaptive_FileTransfer#>", "<#Adaptive_Others#>"];					 
 var cat_id_array = [[9,20], [8], [4], [0,5,6,15,17], [13,24], [1,3,14], [7,10,11,21,23]];
 
 function register_event(){
@@ -187,13 +187,13 @@ function applyRule(){
 									<table width="100%">
 										<tr>
 											<td  class="formfonttitle" align="left">								
-												<div >Adaptive QoS - Adaptive</div>
+												<div><#Adaptive_QoS#> - <#EzQoS_type_adaptive#></div>
 											</td>
 											<td align="right">
 												<div>
 													<select onchange="switchPage(this.options[this.selectedIndex].value)" class="input_option">
-														<option value="1" >Configure</option>
-														<option value="2" selected>Adaptive Type</option>														
+														<option value="1" ><#Adaptive_QoS_Conf#></option>
+														<option value="2" selected><#EzQoS_type_adaptive#></option>														
 													</select>	    
 												</div>
 											</td>	
@@ -206,12 +206,12 @@ function applyRule(){
 							</tr>
 							<tr>
 								<td height="30" align="left" valign="top" bgcolor="#4D595D">																		
-									<div class="formfontdesc" style="line-height:20px;font-size:14px;">In the QoS Adaptive type, the APPs with higher priority will be get better bandwidth over another when the APPs are competing for limited bandwidth, Drag and drop APPs category to upper level for higher priority</div>
+									<div class="formfontdesc" style="line-height:20px;font-size:14px;"><#Adaptive_QoS_desc#></div>
 								</td>
 							</tr>	
 							<tr>
 								<td>
-									<div class="priority priority_highest">Highest</div>
+									<div class="priority priority_highest"><#Highest#></div>
 								</td>
 							</tr>
 							<tr>
@@ -221,7 +221,7 @@ function applyRule(){
 							</tr>
 							<tr>
 								<td>
-									<div class="priority priority_lowest">Lowest</div>	
+									<div class="priority priority_lowest"><#Lowest#></div>	
 								</td>
 							</tr>
 							<tr>

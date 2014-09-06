@@ -188,7 +188,7 @@ function detect_httpd(){
 
 	$j.ajax({
     		url: '../httpd_check.htm',
-    		dataType: 'script',
+    		dataType: 'text',
 				timeout: 1500,
     		error: function(xhr){
     				dead++;

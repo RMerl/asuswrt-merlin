@@ -1,0 +1,16 @@
+Reported By: C. M. Heard; heard@pobox.com
+Date: Wed, 29 Jan 2003 10:07:06 -0800
+
+In Section 10.2:
+
+   [15] Case, J., McCloghrie, K., Rose, M. and S. Waldbusser,
+        "Coexistence between Version 1 and Version 2 of the Internet-
+        Standard Network Management Framework", RFC 2576, January 1996.
+
+Should be:
+
+   [15] Case, J., McCloghrie, K., Rose, M. and S. Waldbusser,
+        "Coexistence between Version 1 and Version 2 of the Internet-
+        Standard Network Management Framework", RFC 1908, January 1996.
+ 
+

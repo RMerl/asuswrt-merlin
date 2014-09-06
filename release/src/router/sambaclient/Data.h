@@ -7,6 +7,7 @@
         |       |             |               |      |_____|   |            |
         |       |             |               |         |      |            |
         ID   workgroup        IP         shareFolder   auth   rule     localFolder
+
 */
 
 #ifndef __DATA_H

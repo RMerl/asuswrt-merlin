@@ -1,0 +1,15 @@
+#!/bin/sh
+
+. ../support/simple_eval_tools.sh
+
+HEADER TLS-TCP server SAN tests using session desthost
+
+SKIPIFNOT NETSNMP_TRANSPORT_TLSTCP_DOMAIN
+
+#
+# Begin test
+#
+
+SNMP_TRANSPORT_SPEC=tlstcp
+
+. ./STlsSanSession

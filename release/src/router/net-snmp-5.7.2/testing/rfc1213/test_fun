@@ -1,0 +1,68 @@
+## no ANSI color for cygwin
+pass_num=0;
+fail_num=0;
+case_num=0;
+tcase_str=""
+dperline=0
+max_dperline=25	# maximum dots per line
+
+pass_info()
+{
+	if [ $SNMP_VERBOSE -ne 0 ] ; then
+#	    if [ "x$OSTYPE" = "xcygwin" ] ; then
+		echo -en $1
+#	    else
+#		echo -en "\033[1;32m$1\033[0;39m"
+#	    fi
+	fi
+}
+
+fail_info()
+{
+	if [ $SNMP_VERBOSE -eq 0 ] ; then
+	    echo
+	    ECHO $tcase_str
+	fi
+#	if [ "x$OSTYPE" = "xcygwin" ] ; then
+	    echo -en $1
+#	else
+#	    echo -en "\033[1;31m$1\033[0;39m"
+#	fi
+}
+
+test_start()
+{
+	case_num=`expr $case_num + 1`;
+	tcase_str="$testnum.$case_num:$1   "
+	if [ $SNMP_VERBOSE -ne 0 ] ; then
+		ECHO $tcase_str
+	else
+	    ECHO "."
+	    dperline=`expr $dperline + 1`
+	    if [ $dperline -ge $max_dperline ] ; then
+		dperline=0
+		echo
+	    fi
+	fi
+}
+
+test_finish()
+{
+	if [ x$1 == x"PASS" ];then
+		pass_num=`expr $pass_num + 1`
+		pass_info "PASS\n"
+	else
+		fail_num=`expr $fail_num + 1`
+		fail_info "FAIL\n"
+	fi
+	tcase_str=""
+}
+
+summary()
+{
+    if [ $case_num -ne $pass_num ] ; then
+	echo
+	ECHO "$testnum: $case_num total, $pass_num passed, $fail_num failed.  "
+    fi
+}
+

@@ -1,0 +1,365 @@
+		  The Python 'netsnmp' Extension Module
+		      for the Net-SNMP Library
+
+Contents:
+   Introduction:
+   Availability:
+   Contact:
+   Supported Platforms:
+   Release Notes:
+   Installation:
+   Operational Description:
+   Trouble Shooting:
+   Acknowledgments:
+   License/Copyright:
+
+Introduction:
+
+   This is the Python 'netsnmp' extension module. The 'netsnmp' module
+   provides a full featured, tri-lingual SNMP (SNMPv3, SNMPv2c,
+   SNMPv1) client API. The 'netsnmp' module internals rely on the
+   Net-SNMP toolkit library. For information on the Net-SNMP library
+   see the documentation provided with the Net-SNMP distribution or
+   the project web page available on 'Source Forge':
+
+   http://www.net-snmp.org/
+
+Availability:
+
+   The most recent release of the Python 'netsnmp' module can be found
+   bundled with the latest Net-SNMP distribution available from:
+
+     http://www.net-snmp.org/download.html
+
+Contact:
+
+   The following mailing list should be consider the primary support
+   mechanism for this module:
+
+   net-snmp-users@lists.sourceforge.net mail list
+
+   (see http://www.net-snmp.org/lists/users/ to subscribe)
+
+Supported Platforms:
+
+   Linux 2.x
+   Other UNIX/POSIX variants (untested)
+   MS Windows (untested)
+
+   Let us know where it *doesn't* work, as it should on most systems
+
+Release Notes:
+
+   This initial alpha release of the Python 'netsnmp' extension module
+   has been developed against net-snmp 5.4.pre1.
+
+   Only syncronous, client-side functionality is implemented.
+
+   Access to the parsed MIB database is not yet implemented.
+
+KNOWN BUGS:
+
+   Too many to mention at this point
+
+Installation:
+
+   Build and install the Net-SNMP package - see Net-SNMP README and
+   INSTALL docs.
+
+   Unix:
+
+   cd net-snmp/python
+   python setup.py build
+   python setup.py test (requires a locally running agent w/ config provided)
+   python setup.py install
+
+
+Operational Description:
+
+   The basic operations of the SNMP protocol are provided by this
+   module through an object oriented interface for modularity and ease
+   of use.  The primary class is netsnmp.Session which encapsulates
+   the persistent aspects of a connection between the management
+   application and the managed agent. This class supplies 'get',
+   'getnext', 'getbulk', 'set' and other method calls. 
+
+   A description of the fields which can be specified when instantiating an
+   netsnmp.Session follows:
+
+   netsnmp.Session(<tag>=<value>, ... )
+
+    DestHost    - default 'localhost', hostname or ip addr of SNMP agent
+    Version     - default '3', [1, 2 (equiv to 2c), 3]
+    RemotePort  - default '161', allow remote UDP port to be overridden
+    Timeout     - default '500000', micro-seconds before retry
+    Retries     - default '3', retries before failure
+    RetryNoSuch - default '0', if enabled NOSUCH errors in 'get' pdus will
+                  be repaired, removing the varbind in error, and resent -
+                  undef will be returned for all NOSUCH varbinds, when set
+                  to '0' this feature is disabled and the entire get request
+                  will fail on any NOSUCH error (applies to v1 only)
+    UseLongNames - set to non-zero to have <tags> for 'getnext' methods 
+                  generated preferring longer Mib name convention (e.g., 
+		  system.sysDescr vs just sysDescr)
+    UseSprintValue - set to non-zero to have return values
+                  for 'get' and 'getnext' methods formatted with the libraries
+                  sprint_value function. This will result in certain data types
+                  being returned in non-canonical format Note: values returned
+                  with this option set may not be appropriate for 'set' 
+                  operations (see discussion of value formats in <vars> 
+                  description section)
+    UseEnums    - set to non-zero to have integer return values
+                  converted to enumeration identifiers if possible, 
+                  these values will also be acceptable when supplied to 
+                  'set' operations
+    UseNumeric  - set to non-zero to have <tags> returned by the 'get'
+                  methods untranslated (i.e. dotted-decimal).  Setting the
+                  UseLongNames value for the session is highly recommended.
+    BestGuess   - this setting controls how <tags> are parsed.  setting 
+                  to 0 causes a regular lookup.  setting to 1 causes a regular 
+                  expression match (defined as -Ib in snmpcmd). setting to 2 
+                  causes a random access lookup (defined as -IR in snmpcmd).
+    ErrorStr    - read-only, holds the error message assoc. w/ last request
+    ErrorNum    - read-only, holds the snmp_err or status of last request
+    ErrorInd    - read-only, holds the snmp_err_index when appropriate
+
+   SNMPv1/SNMPv2c options:
+    Community   - default 'public', SNMP community string (used for both R/W)
+
+   SNMPv3 Options:
+    SecName     - default 'initial', security name (v3)
+    SecLevel    - default 'noAuthNoPriv', security level [noAuthNoPriv,
+                  authNoPriv, authPriv] (v3)
+    ContextEngineId - default <SecEngineId>, context engineID, will be
+                      probed if not supplied (v3)
+    Context     - default '', context name (v3)
+
+   SNMPv3 over TLS or DTLS options:
+    OurIdentity   - The fingerprint or file name for the local X.509
+                    certificate to use for our identity.  Run
+                    net-snmp-cert to create and manage certificates.
+    TheirIdentity - The fingerprint or file name for the local X.509
+                    certificate to use for their identity.  
+    TrustCert     - A trusted certificate to use for validating
+                    certificates.  Typically this would be a CA
+                    certificate.
+    TheirHostname - Their hostname to expect.  Either "TheirIdentity"
+    		    or a trusted certificate plus a hostname is needed
+    		    to validate the server is the proper server.
+    
+   SNMPv3 with USM security Options:
+    SecEngineId - default <none>, security engineID, will be probed if not
+                  supplied (v3)
+    AuthProto   - default 'MD5', authentication protocol [MD5, SHA] (v3)
+    AuthPass    - default <none>, authentication passphrase
+    PrivProto   - default 'DES', privacy protocol [DES] (v3)
+    PrivPass    - default <none>, privacy passphrase (v3)
+
+   private:
+    sess_ptr    - internal field used to cache a created session structure
+
+   methods:
+
+    get(<netsnmp.VarList object>)
+                    - SNMP GET a netsnmp.VarList object must be supplied,
+		      returns a tuple of values for each varbind in list
+
+    getnext(<netsnmp.VarList object>)
+                    - SNMP GETNEXT, a netsnmp.VarList object must be supplied
+                      returns retrieved value(s), VarList passed as arguments
+		      are updated to return a list of next lexicographical 
+		      Varbind objects. returns a tuple of values for each 
+		      varbind in list
+
+    set(<netsnmp.VarList object>)
+                    - SNMP SET, a netsnmp.VarList object must be supplied
+                      the value field in all Varbinds must be in a canonical
+                      format (i.e., well known format) to ensure unambiguous
+                      translation to SNMP MIB data value (see discussion of
+                      canonical value format <vars> description section),
+                      returns true on success or None on error. 
+
+    getbulk(<non-repeaters>, <max-repeaters>, <netsnmp.VarList object>)
+                    - SNMP GETBULK, a netsnmp.VarList object must be supplied
+                      the single next lexico instance is fetched for the first 
+		      n Varbinds in the list as defined by <non-repeaters>. 
+                      For the remaining Varbinds, the next m lexico instances 
+                      are retrieved each of the remaining Varbinds, 
+                      where m is <max-repeaters>. Returns a tuple of values 
+		      retrieved.
+
+    walk(<netsnmp.VarList object>)
+             	    - Performs multiple GETNEXT requests in order to
+             	      return a tuple of values retrieved from the MIB
+             	      below the Varbind passed in.  The VarList passed
+             	      in will be updated to contain a complete set of
+             	      Varbinds created for the results of the walk.
+
+             	      Note that only one varbind should be contained in the
+             	      VarList passed in.  The code is structured to maybe
+             	      handle this is the the future, but right now walking
+             	      multiple trees at once is not yet supported and will
+             	      produce insufficient results.
+
+
+   Acceptable variable formats:
+
+    netsnmp.VarList:  - represents an list of Varbind objects to get or set.
+                        takes are arguments and unspecified number of Varbinds,
+			or tuples which will be converted to Varbinds.
+
+
+    netsnmp.Varbind:  - represents a single MIB object to get or set
+			implemented as Python[<tag>, <iid>, <val>, <type>].
+			<tag>  - one of the following forms:
+                           1) leaf identifier (e.g., 'sysDescr') assumed to be
+                           unique for practical purposes
+                           2) fully qualified identifier (e.g.,
+   			   '.iso.org.dod.internet.mgmt.mib-2.system.sysDescr')
+                           3) fully qualified, dotted-decimal, numeric OID 
+			   (e.g., '.1.3.6.1.2.1.1.1')
+                      <iid>  - the dotted-decimal, instance identifier. for
+                               scalar MIB objects use '0'
+   		      <val>  - the SNMP data value retrieved from or being set
+                               to the agents MIB. for set operations the <val> 
+                               format must be canonical to ensure unambiguous 
+			       translation. The canonical forms are as follows:
+			    OBJECTID => dotted-decimal (e.g., .1.3.6.1.2.1.1.1)
+			    OCTETSTR => perl scalar containing octets,
+			    INTEGER => decimal signed integer (or enum),
+			    NETADDR => dotted-decimal,
+			    IPADDR => dotted-decimal,
+			    COUNTER => decimal unsigned integer,
+			    COUNTER64  => decimal unsigned integer,
+			    GAUGE,  => decimal unsigned integer,
+			    UINTEGER,  => decimal unsigned integer,
+			    TICKS,  => decimal unsigned integer,
+			    OPAQUE => perl scalar containing octets,
+			    NULL,  => perl scalar containing nothing,
+
+                      <type> - SNMP data type (see list above), this field is
+                               populated by 'get' and 'getnext' operations. In
+                               some cases the programmer needs to populate this
+                               field when passing to a 'set' operation. this
+                               field need not be supplied when the attribute
+                               indicated by <tag> is already described in the
+                               parsed MIB. for 'set's, if a numeric OID is used
+                               and the object is not in the parsed MIB,
+                               the <type> field must be supplied
+
+
+   Python 'netsnmp' package variables and functions:
+
+
+    netsnmp.verbose       - default '0', 
+                            controls warning/info output of themodule 
+			    0 => no output, 
+			    1 => enables warning/info
+
+(needs implementation)
+    $SNMP::debugging     - default '0', controls debugging output level
+                           within SNMP module and libsnmp
+                           1 => enables 'SNMP::verbose' (see above)
+                           2 => level 1 plus snmp_set_do_debugging(1),
+                           3 => level 2 plus snmp_set_dump_packet(1)
+
+    $SNMP::dump_packet   - default '0', set [non-]zero to independently set
+                           snmp_set_dump_packet()
+
+   Exported 'netsnmp' package utility functions:
+
+   snmpget(<Varbind/VarList>, <Session args>) 
+             - takes args of netsnmp.Session preceded by those of the 
+               corresponding netsnmp.Session method. Returns a tuple with 
+               Varbind values fetched, and input is updated to contain
+               complete Varbinds fetched. 
+
+   snmpgetnext(<Varbind/VarList>, <Session args>)
+             - takes args of netsnmp.Session preceded by those of the
+               corresponding netsnmp.Session method. Returns a tuple with 
+               Varbind values fetched, and input is updated to contain
+               complete Varbinds fetched. 
+
+   snmpgetbulk(nonrepeaters, maxrepetitions,<VarList>, <Session args>)
+             - takes args of netsnmp.Session preceded by those of the
+               corresponding netsnmp.Session method. Returns a tuple with 
+               Varbind values fetched, and VarList is updated to contain
+               complete Varbinds fetched. 
+
+   snmpset(<Varbind/VarList>, <Session args>)
+             - takes args of netsnmp.Session preceded by those of the
+               corresponding netsnmp.Session method. returns True on success,
+               otherwise False.
+
+   snmpwalk(<Varbind/VarList>, <Session args>)) 
+             - takes args of netsnmp.Session preceded by a Varbind or
+               VarList from which the 'walk' operation will start.
+               Returns a tuple of values retrieved from the MIB below
+               the Varbind passed in.  If a VarList is passed in it
+               will be updated to contain a complete set of VarBinds
+               created for the results of the walk.  It is not
+               recommended to pass in just a Varbind since you loose
+               the ability to examine the returned OIDs.  But, if only
+               a Varbind is passed in it will be returned unaltered.
+
+               Note that only one varbind should be contained in the
+               VarList passed in.  The code is structured to maybe
+               handle this is the the future, but right now walking
+               multiple trees at once is not yet supported and will
+               produce insufficient results.
+
+Trouble Shooting:
+
+   If problems occur there are number areas to look at to narrow down the
+   possibilities.
+
+   The first step should be to test the Net-SNMP installation
+   independently from the Python 'netsnmp' Extension.
+
+   Try running the apps from the Net-SNMP distribution.
+
+   Make sure your agent (snmpd) is running and properly configured with
+   read-write access for the community you are using.
+
+   Ensure that your MIBs are installed and environment variables are set
+   appropriately (see man mib_api)
+
+   Be sure to ensure headers and libraries from old CMU installations are
+   not being used by mistake (see -NET-SNMP-PATH).
+
+   If the problem occurs during compilation/linking check that the snmp
+   library being linked is actually the Net-SNMP library (there have been
+   name conflicts with existing snmp libs).
+
+   Also check that the header files are correct and up to date.
+
+   Sometimes compiling the Net-SNMP library with
+   'position-independent-code' enabled is required (HPUX specifically).
+
+   If you cannot resolve the problem you can email 
+   net-snmp-users@lists.sourceforge.net.
+
+   Please give sufficient information to analyze the problem (OS type,
+   versions for OS/python/net-SNMP/compiler, complete error output, etc.)
+
+Acknowledgments:
+
+   Giovanni Marzot (the original author)
+   ScienceLogic, LLC sponsored the initial development of this module.
+   Wes Hardaker and the net-snmp-coders
+
+   Thanks in advance to any who supply patches, suggestions and feedback.
+
+License:
+
+   Please see the LICENSE file contained with this package
+
+Copyright:
+
+   Copyright (c) 2006 G. S. Marzot. All rights reserved.
+   This program is free software; you can redistribute it and/or
+   modify it under the same terms as Net-SNMP itself.
+
+   Copyright (c) 2006 SPARTA, Inc.  All Rights Reserved.  This
+   program is free software; you can redistribute it and/or modify
+   it under the same terms as Net-SNMP itself.

@@ -1,0 +1,110 @@
+.\" -*- nroff -*-
+.\" Portions of this file are subject to the following copyright.  See
+.\" the Net-SNMP COPYING file for more details and other copyrights
+.\" that may apply:
+.\" /***********************************************************
+.\" 	Copyright 1988, 1989 by Carnegie Mellon University
+.\" 
+.\"                       All Rights Reserved
+.\" 
+.\" Permission to use, copy, modify, and distribute this software and its 
+.\" documentation for any purpose and without fee is hereby granted, 
+.\" provided that the above copyright notice appear in all copies and that
+.\" both that copyright notice and this permission notice appear in 
+.\" supporting documentation, and that the name of CMU not be
+.\" used in advertising or publicity pertaining to distribution of the
+.\" software without specific, written prior permission.  
+.\" 
+.\" CMU DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
+.\" ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL
+.\" CMU BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR
+.\" ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
+.\" WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
+.\" ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
+.\" SOFTWARE.
+.\" ******************************************************************/
+.TH SNMPSET 1 "19 Jun 2003" VVERSIONINFO "Net-SNMP"
+.SH NAME
+snmpset - communicates with a network entity using SNMP SET requests
+.SH SYNOPSIS
+.B snmpset
+[COMMON OPTIONS] AGENT OID TYPE VALUE [OID TYPE VALUE]...
+.SH DESCRIPTION
+.B snmpset
+is an SNMP application that uses the SNMP SET request to set
+information on a network entity.  One or more object identifiers
+(OIDs) must be given as arguments on the command line.  A type and a
+value to be set must accompany each object identifier.  Each variable
+name is given in the format specified in
+.IR variables(5) .
+.PP
+The
+.I TYPE
+is a single character, one of:
+.RS
+.PD 0
+.TP 3
+.B i
+INTEGER
+.TP 3
+.B u
+UNSIGNED
+.TP 3
+.B s
+STRING
+.TP 3
+.B x
+HEX STRING
+.TP 3
+.B d
+DECIMAL STRING
+.TP 3
+.B n
+NULLOBJ
+.TP 3
+.B o
+OBJID
+.TP 3
+.B t
+TIMETICKS
+.TP 3
+.B a
+IPADDRESS
+.TP 3
+.B b
+BITS
+.PD
+.RE
+Most of these will use the obvious corresponding ASN.1 type.
+\&'s', 'x', 'd' and 'b' are all different ways of specifying an OCTET STRING
+value, and the 'u' unsigned type is also used for handling Gauge32 values.
+.PP
+If you have the proper MIB file loaded, you can, in most cases, replace the
+type with an '=' sign. For an object of type OCTET STRING this will assume
+a string like the 's' type notation. For other types it will do "The
+Right Thing".
+.PP
+For example:
+.PP
+snmpset \-c private \-v 1 test\-hub system.sysContact.0 s dpz@noc.rutgers.edu ip.ipforwarding.0 = 2
+.PP
+will set the variables sysContact.0 and ipForwarding.0:
+.PP
+system.sysContact.0 = STRING: "dpz@noc.rutgers.edu"
+.br
+ip.ipForwarding.0 = INTEGER: not\-forwarding(2)
+.PP
+If the network entity has an error processing the request packet, an
+error packet will be returned and a message will be shown, helping to
+pinpoint in what way the request was malformed.
+.SH OPTIONS
+.B snmpset
+takes the common options described in the
+.I snmpcmd(1)
+manual page.
+Note that
+.B snmpset
+REQUIRES  an argument specifying the agent to query
+and at least one set of OID/type/value arguments, as described in there.
+.SH "SEE ALSO"
+snmpcmd(1), variables(5).

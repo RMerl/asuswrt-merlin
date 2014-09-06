@@ -1,0 +1,23 @@
+#!/usr/bin/perl
+
+
+open(I, "Makefile.subs.pl");
+@stuff = <I>;
+
+foreach my $i (@ARGV) {
+    print "updating $i\n";
+    open(I, $i);
+    open(O,">$i.new");
+    while(<I>) {
+	# start replacement here
+	last if /common subroutines -- DO NOT EDIT/;
+	print O;
+    }
+    print O "# common subroutines -- DO NOT EDIT.\n";
+    print O "# They are imported from the Makefile.subs.pl file\n";
+    print O @stuff;
+    close(I);
+    close(O);
+    rename($i,"$i.bak");
+    rename("$i.new", "$i");
+}

@@ -1,0 +1,700 @@
+#!/bin/sh
+#
+# $Id$
+#
+# this shell script is designed to merely dump the configuration
+# information about how the net-snmp package was compiled.  The
+# information is particularly useful for applications that need to
+# link against the net-snmp libraries and hence must know about any
+# other libraries that must be linked in as well.
+
+check_build_dir()
+{
+      build_dir=$1
+
+      if test "x$build_dir" = "x" ; then
+         echo "You must specify a build directory."
+         exit 1
+      fi
+      # is it the src dir?
+      if test -f $build_dir/net-snmp-config.in ; then
+         return
+      fi
+      # make sure we can find build dir
+      if test ! -d $build_dir/snmplib/.libs ; then
+         echo "$build_dir does not appear to be a build directory."
+         exit 1
+      fi
+}
+
+# usage: index n arguments
+# effect: returns the (n+1)th argument
+index()
+{
+    eval echo \$`expr $1 + 1`
+}
+
+# usage: count arguments
+# effect: returns the number of arguments
+count()
+{
+    echo $#
+}
+
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+includedir=@includedir@
+libdir=@libdir@
+datarootdir=@datarootdir@
+NSC_LDFLAGS="@LDFLAGS@"
+
+NSC_LIBS="@LIBS@"
+NSC_LNETSNMPLIBS="@LNETSNMPLIBS@"
+NSC_LAGENTLIBS="@LAGENTLIBS@ @PERLLDOPTS_FOR_APPS@"
+NSC_LMIBLIBS="@LMIBLIBS@"
+
+NSC_INCLUDEDIR=${includedir}
+NSC_LIBDIR=-L${libdir}
+
+NSC_SNMPLIBS="-lnetsnmp ${NSC_LNETSNMPLIBS}"
+NSC_SUBAGENTLIBS="-lnetsnmpagent ${NSC_LAGENTLIBS} ${NSC_SNMPLIBS}"
+NSC_AGENTLIBS="-lnetsnmpmibs ${NSC_LMIBLIBS} ${NSC_SUBAGENTLIBS}"
+
+NSC_PREFIX=$prefix
+NSC_EXEC_PREFIX=$exec_prefix
+NSC_SRCDIR=@srcdir@
+NSC_INCDIR=${NSC_PREFIX}/include
+
+NSC_BASE_SNMP_LIBS="-lnetsnmp"
+NSC_BASE_SUBAGENT_LIBS="-lnetsnmpagent ${NSC_BASE_SNMP_LIBS}"
+NSC_BASE_AGENT_LIBS="-lnetsnmpmibs ${NSC_BASE_SUBAGENT_LIBS}"
+
+NSC_SRC_LIBDIRS="agent/.libs snmplib/.libs"
+NSC_SRC_LIBDEPS="agent/.libs/libnetsnmpmibs.a agent/.libs/libnetsnmpagent.a snmplib/.libs/libnetsnmp.a"
+
+if test "x$NSC_SRCDIR" = "x." ; then
+   NSC_SRCDIR="NET-SNMP-SOURCE-DIR"
+fi
+
+if test "x$1" = "x"; then
+  usage="yes"
+else
+  while test "x$done" = "x" -a "x$1" != "x" -a "x$usage" != "xyes"; do
+  case "$1" in
+    -*=*) optarg=`echo "$1" | sed 's/[-_a-zA-Z0-9]*=//'` ;;
+    *) optarg= ;;
+  esac
+
+  unset shifted
+  case $1 in
+    --prefix=*)
+      prefix=$optarg
+      NSC_PREFIX=${prefix}
+      NSC_INCLUDEDIR=${prefix}/include
+      NSC_LIBDIR=-L${prefix}/lib
+      ;;
+
+    --exec-prefix=*)
+      exec_prefix=$optarg
+      NSC_EXEC_PREFIX=${exec_prefix}
+      NSC_LIBDIR=-L${exec_prefix}/lib
+      ;;
+
+    --debug-tokens|--deb*|--dbg*)
+      echo "find $NSC_SRCDIR -name \"*.c\" -print | xargs grep DEBUGMSGT | grep \\\" | cut -f 2 -d\\\" | sort -u"
+      if test "x$NSC_SRCDIR" != "xNET-SNMP-SOURCE-DIR" ; then
+        /usr/bin/find $NSC_SRCDIR -name "*.c" -print | xargs grep DEBUGMSGT | grep \" | cut -f 2 -d\" | sort -u
+      fi
+      ;;
+    --indent-options|--in*)
+      echo "indent -orig -nbc -bap -nut -nfca `(cd $NSC_INCDIR/net-snmp; perl -n -e 'print "-T $1 " if (/}\s*(netsnmp_\w+)\s*;/);' */*.h)`"
+      ;;
+    --configure-options|--con*)
+      echo @CONFIGURE_OPTIONS@
+      ;;
+    --snmpd-module-list|--mod*)
+      @MODULE_LIST@
+      ;;
+    --default-mibs|--mibs|--MIBS)
+      echo @NETSNMP_DEFAULT_MIBS@
+      ;;
+    --default-mibdirs|--mibdirs|--MIBDIRS)
+      echo @NETSNMP_DEFAULT_MIBDIRS@
+      ;;
+    --env-separator)
+      echo "@ENV_SEPARATOR@"
+      ;;
+    --exeext)
+      echo "@EXEEXT@"
+      ;;
+    --snmpconfpath|--SNMPCONFPATH)
+      echo "@SNMPCONFPATH@@ENV_SEPARATOR@@SNMPSHAREPATH@@ENV_SEPARATOR@@SNMPLIBPATH@@ENV_SEPARATOR@$HOME/.snmp@ENV_SEPARATOR@@PERSISTENT_DIRECTORY@"
+      ;;
+    --persistent-directory|--persistent-dir)
+      echo @PERSISTENT_DIRECTORY@
+      ;;
+    --perlprog|--perl)
+      echo @PERLPROG@
+      ;;
+    #################################################### compile
+    --base-cflags)
+      echo @CFLAGS@ @CPPFLAGS@ -I${NSC_INCLUDEDIR}
+      ;;
+    --cflags|--cf*)
+      echo @CFLAGS@ @DEVFLAGS@ @CPPFLAGS@ -I. -I${NSC_INCLUDEDIR}
+      ;;
+    --srcdir)
+      echo $NSC_SRCDIR
+      ;;
+    #################################################### linking
+    --libdir|--lib-dir)
+      echo $NSC_LIBDIR
+      ;;
+    --ldflags|--ld*)
+      echo $NSC_LDFLAGS
+      ;;
+    --build-lib-dirs)
+      shift
+      build_dir=$1
+      check_build_dir $build_dir
+      for dir in $NSC_SRC_LIBDIRS; do
+          result="$result -L$build_dir/$dir"
+      done
+      echo $result
+      ;;
+    --build-lib-deps)
+      shift
+      build_dir=$1
+      check_build_dir $build_dir
+      for dir in $NSC_SRC_LIBDEPS; do
+          result="$result $build_dir/$dir"
+      done
+      echo $result
+      ;;
+    --build-includes)
+      shift
+      build_dir=$1
+      check_build_dir $build_dir
+      result="-I$build_dir/include"
+      if test "$build_dir" != "$NSC_SRCDIR" -a "$NSC_SRCDIR" != "NET-SNMP-SOURCE-DIR"
+      then
+          result="$result -I$NSC_SRCDIR/include"
+      fi
+      echo $result
+      ;;
+    --build-command)
+      echo "@CC@ @CFLAGS@ @DEVFLAGS@"
+      ;;
+    #################################################### client lib
+    --libs)
+      # use this one == --netsnmp-libs + --external-libs
+      echo $NSC_LDFLAGS $NSC_LIBDIR $NSC_SNMPLIBS $NSC_LIBS
+      ;;
+    --netsnmp-libs)
+      echo $NSC_LIBDIR $NSC_BASE_SNMP_LIBS
+      ;;
+    --external-libs)
+      echo $NSC_LDFLAGS $NSC_LNETSNMPLIBS $NSC_LIBS @PERLLDOPTS_FOR_APPS@
+      ;;
+    #################################################### agent lib
+    --base-agent-libs)
+      echo $NSC_BASE_AGENT_LIBS
+      ;;
+    --base-subagent-libs)
+      echo $NSC_BASE_SUBAGENT_LIBS
+      ;;
+    --agent-libs)
+      # use this one == --netsnmp-agent-libs + --external-libs
+      echo $NSC_LDFLAGS $NSC_LIBDIR $NSC_AGENTLIBS $NSC_LIBS
+      ;;
+    --netsnmp-agent-libs)
+      echo $NSC_LIBDIR $NSC_BASE_AGENT_LIBS
+      ;;
+    --external-agent-libs)
+      echo $NSC_LDFLAGS $NSC_LMIBLIBS $NSC_LAGENTLIBS $NSC_LNETSNMPLIBS $NSC_LIBS
+      ;;
+    ####################################################
+    --version|--ver*)
+      echo @VERSION@
+      ;;
+    --help)
+      usage="yes"
+      ;;
+    --prefix|--pre*)
+      echo $NSC_PREFIX
+      ;;
+    --exec-prefix)
+      echo $NSC_EXEC_PREFIX
+      ;;
+    ####################################################
+    --create-snmpv3-user)
+      done=1
+      shift
+      net-snmp-create-v3-user $*
+      exit $?
+      ;;
+
+    ####################################################
+    --compile-subagent)
+      shift
+      shifted=1
+      while test "x$done" = "x" -a "x$1" != "x" ; do
+	case $1 in
+            --norm)
+	        norm=1
+	        shift
+		;;
+            --cflags)
+	        shift
+	        if test "x$1" = "x" ; then
+	            echo "You must specify the extra cflags"
+	            exit 1
+	        fi
+	        cflags=$1
+	        echo "setting extra cflags: $cflags"
+	        shift
+		;;
+            --ldflags)
+	        shift
+	        if test "x$1" = "x" ; then
+	            echo "You must specify the extra ldflags"
+	            exit 1
+	        fi
+	        ldflags=$1
+	        echo "setting extra ldflags: $ldflags"
+	        shift
+		;;
+ 	    --*)
+		echo "unknown suboption to --compile-subagent: $1"
+		exit 1
+		;;
+	    *)
+                if test "x$outname" = "x"; then
+                  outname=$1
+                  shift
+                else
+	          done=1
+                fi
+		;;
+	esac
+      done
+      tmpfile=netsnmptmp.$$.c
+      if test -f $tmpfile; then
+	echo "Ack.  Can't create $tmpfile: already exists"
+	exit 1
+      fi
+      echo "generating the temporary code file: $tmpfile"
+      rm -f $tmpfile
+      cat > $tmpfile <<EOF
+/* generated from net-snmp-config */
+#include <net-snmp/net-snmp-config.h>
+#ifdef HAVE_SIGNAL
+#include <signal.h>
+#endif /* HAVE_SIGNAL */
+#include <net-snmp/net-snmp-includes.h>
+#include <net-snmp/agent/net-snmp-agent-includes.h>
+EOF
+
+    # If we were only given a single filename
+    # (and no explicit output name)
+    # then use that as the base of the output name
+    #
+    # If we weren't even given that, then bomb out
+    if test "x$1" = "x"; then
+      if test "x$outname" = "x"; then
+        echo "No MIB module codefile specified"
+        rm -f $tmpfile
+        exit 1
+      else
+        cfiles=$outname
+        outname=`basename $cfiles | sed 's/\.[co]$//'`
+        if test -f $outname.h; then
+          if grep "init_$outname" $outname.h; then
+            echo "  #include \"$outname.h\"" >> $tmpfile
+          fi
+        fi
+      fi
+    fi
+
+    # add include files
+    while test "$1" != ""; do
+      cfiles="$cfiles $1"
+      name=`basename $1 | sed 's/\.[co]$//'`
+      if test -f $name.h; then
+        if grep "init_$name" $name.h; then
+          echo "  #include \"$name.h\"" >> $tmpfile
+        fi
+      fi
+      shift
+    done
+
+      cat >> $tmpfile <<EOF
+const char *app_name = "$outname";
+static int reconfig = 0;
+
+extern int netsnmp_running;
+
+#ifdef __GNUC__
+#define UNUSED __attribute__((unused))
+#else
+#define UNUSED
+#endif
+
+RETSIGTYPE
+stop_server(UNUSED int a) {
+    netsnmp_running = 0;
+}
+
+#ifdef SIGHUP
+RETSIGTYPE
+hup_handler(int sig)
+{
+    reconfig = 1;
+    signal(SIGHUP, hup_handler);
+}
+#endif
+
+static void
+usage(const char *prog)
+{
+    fprintf(stderr,
+            "USAGE: %s [OPTIONS]\n"
+            "\n"
+            "OPTIONS:\n", prog);
+
+    fprintf(stderr,
+            "  -d\t\t\tdump all traffic\n"
+            "  -D TOKEN[,...]\tturn on debugging output for the specified "
+            "TOKENs\n"
+            "\t\t\t   (ALL gives extremely verbose debugging output)\n"
+            "  -f\t\t\tDo not fork() from the calling shell.\n"
+            "  -h\t\t\tdisplay this help message\n"
+            "  -H\t\t\tdisplay a list of configuration file directives\n"
+            "  -L LOGOPTS\t\tToggle various defaults controlling logging:\n");
+    snmp_log_options_usage("\t\t\t  ", stderr);
+#ifndef DISABLE_MIB_LOADING
+    fprintf(stderr,
+            "  -m MIB[:...]\t\tload given list of MIBs (ALL loads "
+            "everything)\n"
+            "  -M DIR[:...]\t\tlook in given list of directories for MIBs\n");
+#endif /* DISABLE_MIB_LOADING */
+#ifndef DISABLE_MIB_LOADING
+    fprintf(stderr,
+            "  -P MIBOPTS\t\tToggle various defaults controlling mib "
+            "parsing:\n");
+    snmp_mib_toggle_options_usage("\t\t\t  ", stderr);
+#endif /* DISABLE_MIB_LOADING */
+    fprintf(stderr,
+            "  -v\t\t\tdisplay package version number\n"
+            "  -x TRANSPORT\tconnect to master agent using TRANSPORT\n");
+    exit(1);
+}
+
+static void
+version(void)
+{
+    fprintf(stderr, "NET-SNMP version: %s\n", netsnmp_get_version());
+    exit(0);
+}
+
+int
+main (int argc, char **argv)
+{
+  int arg;
+  char* cp = NULL;
+  int dont_fork = 0, do_help = 0;
+
+  while ((arg = getopt(argc, argv, "dD:fhHL:"
+#ifndef DISABLE_MIB_LOADING
+                       "m:M:"
+#endif /* DISABLE_MIB_LOADING */
+                       "n:"
+#ifndef DISABLE_MIB_LOADING
+                       "P:"
+#endif /* DISABLE_MIB_LOADING */
+                       "vx:")) != EOF) {
+    switch (arg) {
+    case 'd':
+      netsnmp_ds_set_boolean(NETSNMP_DS_LIBRARY_ID,
+                             NETSNMP_DS_LIB_DUMP_PACKET, 1);
+      break;
+
+    case 'D':
+      debug_register_tokens(optarg);
+      snmp_set_do_debugging(1);
+      break;
+
+    case 'f':
+      dont_fork = 1;
+      break;
+
+    case 'h':
+      usage(argv[0]);
+      break;
+
+    case 'H':
+      do_help = 1;
+      break;
+
+    case 'L':
+      if (snmp_log_options(optarg, argc, argv) < 0) {
+        exit(1);
+      }
+      break;
+
+#ifndef DISABLE_MIB_LOADING
+    case 'm':
+      if (optarg != NULL) {
+        setenv("MIBS", optarg, 1);
+      } else {
+        usage(argv[0]);
+      }
+      break;
+
+    case 'M':
+      if (optarg != NULL) {
+        setenv("MIBDIRS", optarg, 1);
+      } else {
+        usage(argv[0]);
+      }
+      break;
+#endif /* DISABLE_MIB_LOADING */
+
+    case 'n':
+      if (optarg != NULL) {
+        app_name = optarg;
+        netsnmp_ds_set_string(NETSNMP_DS_LIBRARY_ID,
+                              NETSNMP_DS_LIB_APPTYPE, app_name);
+      } else {
+        usage(argv[0]);
+      }
+      break;
+
+#ifndef DISABLE_MIB_LOADING
+    case 'P':
+      cp = snmp_mib_toggle_options(optarg);
+      if (cp != NULL) {
+        fprintf(stderr, "Unknown parser option to -P: %c.\n", *cp);
+        usage(argv[0]);
+      }
+      break;
+#endif /* DISABLE_MIB_LOADING */
+
+    case 'v':
+      version();
+      break;
+
+    case 'x':
+      if (optarg != NULL) {
+        netsnmp_ds_set_string(NETSNMP_DS_APPLICATION_ID,
+                              NETSNMP_DS_AGENT_X_SOCKET, optarg);
+      } else {
+        usage(argv[0]);
+      }
+      break;
+
+    default:
+      fprintf(stderr, "invalid option: -%c\n", arg);
+      usage(argv[0]);
+      break;
+    }
+  }
+
+  if (do_help) {
+    netsnmp_ds_set_boolean(NETSNMP_DS_APPLICATION_ID,
+                           NETSNMP_DS_AGENT_NO_ROOT_ACCESS, 1);
+  } else {
+    /* we are a subagent */
+    netsnmp_ds_set_boolean(NETSNMP_DS_APPLICATION_ID,
+                           NETSNMP_DS_AGENT_ROLE, 1);
+
+    if (!dont_fork) {
+      if (netsnmp_daemonize(1, snmp_stderrlog_status()) != 0)
+        exit(1);
+    }
+
+    /* initialize tcpip, if necessary */
+    SOCK_STARTUP;
+  }
+
+  /* initialize the agent library */
+  init_agent(app_name);
+
+  /* initialize your mib code here */
+EOF
+
+    # add init routines
+    for i in $cfiles ; do
+      name=`basename $i | sed 's/\.[co]$//'`
+      echo checking for init_$name in $i
+      if grep "init_$name" $i ; then
+        echo "  init_${name}();" >> $tmpfile
+      fi
+    done
+
+    # handle the main loop
+    cat >> $tmpfile <<EOF
+
+  /* $outname will be used to read $outname.conf files. */
+  init_snmp("$outname");
+
+  if (do_help) {
+    fprintf(stderr, "Configuration directives understood:\n");
+    read_config_print_usage("  ");
+    exit(0);
+  }
+
+  /* In case we received a request to stop (kill -TERM or kill -INT) */
+  netsnmp_running = 1;
+#ifdef SIGTERM
+  signal(SIGTERM, stop_server);
+#endif
+#ifdef SIGINT
+  signal(SIGINT, stop_server);
+#endif
+#ifdef SIGHUP
+  signal(SIGHUP, hup_handler);
+#endif
+
+  /* main loop here... */
+  while(netsnmp_running) {
+    if (reconfig) {
+      free_config();
+      read_configs();
+      reconfig = 0;
+    }
+    agent_check_and_process(1);
+  }
+
+  /* at shutdown time */
+  snmp_shutdown(app_name);
+
+  /* deinitialize your mib code here */
+EOF
+
+    # add shutdown routines
+
+    i=`count $cfiles`
+    while [ $i -gt 0 ] ; do
+      fullname=`index $i $cfiles`
+      name=`basename $fullname | sed 's/\.[co]$//'`
+      echo checking for shutdown_$name in $fullname
+      if grep "shutdown_$name" $fullname ; then
+        echo "  shutdown_${name}();" >> $tmpfile
+      fi
+      i=`expr $i - 1`
+    done
+
+    # finish file
+    cat >> $tmpfile <<EOF
+
+  /* shutdown the agent library */
+  shutdown_agent();
+  SOCK_CLEANUP;
+  exit(0);
+}
+EOF
+      if test "$?" != 0 -o ! -f "$tmpfile" ; then
+        echo "Ack.  Can't create $tmpfile."
+	exit 1
+      fi
+      cmd="@CC@ $cflags @CFLAGS@ @DEVFLAGS@ -I. -I${NSC_INCLUDEDIR} -o $outname $tmpfile $cfiles $NSC_LDFLAGS $NSC_LIBDIR $NSC_BASE_AGENT_LIBS $NSC_AGENTLIBS $ldflags"
+      echo "running: $cmd"
+      `$cmd`
+      if test "x$norm" != "x1" ; then
+        echo "removing the temporary code file: $tmpfile"
+        rm -f $tmpfile
+      else
+        echo "leaving the temporary code file: $tmpfile"
+      fi
+      if test -f $outname ; then
+        echo "subagent program $outname created"
+      fi
+      ;;
+
+    *)
+      echo "unknown option $1"
+      usage="yes"
+      ;;
+  esac
+  if [ "x$shifted" = "x" ] ; then
+      shift
+  fi
+  done
+fi
+
+if test "x$usage" = "xyes"; then
+  echo ""
+  echo "Usage:"
+  echo "  net-snmp-config [--cflags] [--agent-libs] [--libs] [--version]"
+  echo "                  ... [see below for complete flag list]"
+  echo ""
+  echo "    --version         displays the net-snmp version number"
+  echo "    --indent-options  displays the indent options from the Coding Style"
+  echo "    --debug-tokens    displays a example command line to search to source"
+  echo "                      code for a list of available debug tokens"
+  echo ""
+  echo "  SNMP Setup commands:"
+  echo ""
+  echo "    --create-snmpv3-user creates a SNMPv3 user in Net-SNMP config file."
+  echo "                         See net-snmp-create-v3-user --help for list of"
+  echo "                         accepted options."
+  echo ""
+  echo "  These options produce the various compilation flags needed when"
+  echo "  building external SNMP applications:"
+  echo ""
+  echo "    --base-cflags     lists additional compilation flags needed"
+  echo "    --cflags          lists additional compilation flags needed"
+  echo "                      (includes -I. and extra developer warning flags)"
+  echo ""
+  echo "  These options produce the various link flags needed when"
+  echo "  building external SNMP applications:"
+  echo ""
+  echo "    --libs            lists libraries needed for building applications"
+  echo "    --agent-libs      lists libraries needed for building subagents"
+  echo ""
+  echo "  These options produce various link flags broken down into parts."
+  echo "  (Most of the time the simple options above should be used.)"
+  echo ""
+  echo "    --libdir              path to netsnmp libraries"
+  echo ""
+  echo "    --base-agent-libs     netsnmp specific agent libraries"
+  echo ""
+  echo "    --netsnmp-libs        netsnmp specific libraries (with path)"
+  echo "    --netsnmp-agent-libs  netsnmp specific agent libraries (with path)"
+  echo ""
+  echo "    --ldflags             link flags for external libraries"
+  echo "    --external-libs       external libraries needed by netsnmp libs"
+  echo "    --external-agent-libs external libraries needed by netsnmp agent libs"
+  echo ""
+  echo "  These options produce various link flags used when linking an"
+  echo "  external application against an uninstalled build directory."
+  echo ""
+  echo "    --build-includes      include path to build/source includes"
+  echo "    --build-lib-dirs      link path to libraries"
+  echo "    --build-lib-deps      path to libraries for dependency target"
+  echo "    --build-command       command to compile \$3... to \$2"
+  echo ""
+  echo "  Automated subagent building (produces an OUTPUTNAME binary file):"
+  echo "  [this feature has not been tested very well yet.  use at your risk.]"
+  echo ""
+  echo "    --compile-subagent OUTPUTNAME [--norm] [--cflags flags]"
+  echo "                                  [--ldflags flags] mibmodule1.c [...]]"
+  echo ""
+  echo "         --norm           leave the generated .c file around to read."
+  echo "         --cflags flags   extra cflags to use (e.g. -I...)."
+  echo "         --ldflags flags  extra ld flags to use (e.g. -L... -l...)."
+  echo ""
+  echo "  Details on how the net-snmp package was compiled:"
+  echo ""
+  echo "    --configure-options   display original configure arguments"
+  echo "    --prefix              display the installation prefix"
+  echo "    --snmpd-module-list   display the modules compiled into the agent"
+  echo "    --default-mibs        display default list of MIBs"
+  echo "    --default-mibdirs     display default list of MIB directories"
+  echo "    --snmpconfpath        display default SNMPCONFPATH"
+  echo "    --persistent-directory display default persistent directory"
+  echo "    --perlprog            display path to perl for the perl modules"
+  echo ""
+  exit
+fi  

@@ -372,10 +372,10 @@ function doPROPFINDMEDIALIST(open_url, append_result, complete_handler, media_ty
 						var next_end = next_start + 50;
 						if( next_end > this_query_count )
 							next_end = this_query_count;
-						
+							
 						var next_page_html = "<div class='nextDiv' start='" + next_start + "' end='" + next_end + "'><span>";
 						var a = m.getString("title_next_query");
-						a = a.replace("%s", next_end);
+						a = a.replace("%s", next_start + "-" + next_end);
 						a = a.replace("%s", this_query_count);
 						next_page_html += a;
 						next_page_html += "</span></div>";

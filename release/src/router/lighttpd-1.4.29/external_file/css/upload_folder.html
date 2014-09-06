@@ -86,15 +86,14 @@ var array_download_folder = [];
 var array_download_file = [];
 
 function showEnableJAVAUI(){
-	
 	var enable_html = '<input class="enableJAVA" type="button" value="Enable JAVA">';
 	$(enable_html).appendTo($("#save"));
 	
-  $("span#hint").text(m.getString("title_not_support_java"));
+  	$("span#hint").text(m.getString("title_not_support_java"));
   
-  $(".enableJAVA").click(function(){
-  	window.open("http://java.com/en/download/help/enable_browser.xml", "_blank");
-  }); 
+  	$(".enableJAVA").click(function(){
+  		window.open("http://java.com/en/download/help/enable_browser.xml", "_blank");
+  	}); 
 }
 
 function showInstallJAVAUI(){
@@ -103,8 +102,8 @@ function showInstallJAVAUI(){
 	
 	$("span#hint").text(m.getString("title_not_install_java"));
     
-  $(".install").click(function(){
-  	window.open("http://java.com/download", "_blank");
+  	$(".install").click(function(){
+  		window.open("http://java.com/download", "_blank");
  	}); 
 }
 
@@ -117,16 +116,16 @@ $("document").ready(function() {
 	$("#progressbar").hide();
 	$('button#cancel').text(m.getString('btn_cancel'));
 	
-  var msg = "";
+  	var msg = "";
 	if (!navigator.javaEnabled()) {
 		showEnableJAVAUI();
-    return;
+    	return;
 	}
 	
 	var is_java_enabled = false;
 	if (deployJava.versionCheck("1.6.0+") || deployJava.versionCheck("1.4") || deployJava.versionCheck("1.5.0*")) {
-  	is_java_enabled = true;
-  }
+  		is_java_enabled = true;
+  	}
 	
 	if(!is_java_enabled){
 		showInstallJAVAUI();
@@ -160,17 +159,6 @@ function doCancel(e) {
 	parent.closeJqmWindow(1);
 };
 
-function getUrlVars(){
-	var vars = [], hash;
-  var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
-  for(var i = 0; i < hashes.length; i++){
-  	hash = hashes[i].split('=');
-    vars.push(hash[0]);
-    vars[hash[0]] = hash[1];
-  }
-  return vars;
-}
-
 function get_user_agent(){
 	return g_storage.get('user_agent');
 }
@@ -185,7 +173,7 @@ function get_remote_folder(){
 } 	
 
 function get_remote_file(){
-  return array_download_file;
+  	return array_download_file;
 }
 
 function start_upload(){
@@ -209,41 +197,40 @@ function refresh_status(status){
     
 function refresh_progress(progress){
 	$("#lb_Progress").text(progress+"%");
-  $("#progressbar #div_progress").css("width", progress + "%");
-  $("#progressbar").show();
+  	$("#progressbar #div_progress").css("width", progress + "%");
+  	$("#progressbar").show();
 }
 </script>
 </head>
 <body>
-
 <table width="100%" border="0" align="center" cellpadding="0" cellspacing="0" style="overflow:hidden;">	
 	<tr height="50px">
-  	<td>
+  		<td>
 			<table width="100%">
 				<td><tr>			
 					<span id='hint'></span>	  
 					<span id='progress'></span>
 				</td></tr>				
 			</table>  
-    </td>    
-  </tr>
-  <tr>
-  	<td>  		
+    	</td>    
+  	</tr>
+  	<tr>
+  		<td>  		
 			<div id="progressbar" style="text-align:center;position:relative;">
 				<div id="div_progress" style="position: absolute;"></div>
 				<div style="position:relative;width:100%;"><label id="lb_Progress" style="color:#ffffff;"></label></div>
 			</div>
-    </td>    
-  </tr>  
-  <tr>
-  	<td>
-  	<div class="table_block_footer" style="float:right;height:30px;">
-  		<button id="cancel" class="btnStyle" onClick="doCancel();">Close</button>
-  		<div id="save">
-			</div>
-    </div>
-    </td>
-  </tr>
+    	</td>    
+  	</tr>  
+  	<tr>
+  		<td>
+  			<div class="table_block_footer" style="float:right;height:30px;">
+  				<button id="cancel" class="btnStyle" onClick="doCancel();">Close</button>
+  				<div id="save">
+				</div>
+    		</div>
+    	</td>
+  	</tr>
 </table>
 </body>
 </html>

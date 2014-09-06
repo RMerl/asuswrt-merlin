@@ -1,0 +1,35 @@
+#!/bin/sh
+
+. ../support/simple_eval_tools.sh
+
+HEADER SNMPv2c set of system.sysContact.0
+
+SKIPIF NETSNMP_DISABLE_SET_SUPPORT
+SKIPIF NETSNMP_NO_WRITE_SUPPORT
+SKIPIF NETSNMP_DISABLE_SNMPV2C
+SKIPIFNOT USING_MIBII_SYSTEM_MIB_MODULE
+
+#
+# Begin test
+#
+
+# standard V2C configuration: testcomunnity
+snmp_write_access='all'
+. ./Sv2cconfig
+STARTAGENT
+
+CAPTURE "snmpget -On $SNMP_FLAGS -c testcommunity -v 2c $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT .1.3.6.1.2.1.1.4.0"
+
+CHECK ".1.3.6.1.2.1.1.4.0 = STRING:"
+
+CAPTURE "snmpset -On $SNMP_FLAGS -c testcommunity -v 2c $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT .1.3.6.1.2.1.1.4.0 s foobartestingbaz"
+
+CHECK ".1.3.6.1.2.1.1.4.0 = STRING:"
+
+CAPTURE "snmpget -On $SNMP_FLAGS -c testcommunity -v 2c $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT .1.3.6.1.2.1.1.4.0"
+
+CHECK "STRING: foobartestingbaz"
+
+STOPAGENT
+
+FINISHED

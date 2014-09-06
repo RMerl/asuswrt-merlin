@@ -60,7 +60,7 @@
 	border-radius:10px;
 	text-align:center;
 	padding:3px 0px;
-	width:80px;
+	width:100px;
 
 }
 
@@ -119,7 +119,7 @@ function close_weakness_status(){
 }
 
 function enable_whole_security(){
-    if(!confirm("This will enable Vulnerability Protection, Malicious Site Blocking and Infected Device Prevention and Blocking. Security settings will impact your wireless, wired and attached storage network performance.")){
+    if(!confirm("<#AiProtection_Vulnerability_confirm#>")){
 		return false;
 	}
 	
@@ -588,7 +588,7 @@ function apply_alert_preference(){
 	<table style="width:99%;">
 		<tr>
 			<td>
-				<div class="weakness_router_status"><#AiProtection_scan_status#></div>
+				<div class="weakness_router_status"><#AiProtection_scan#></div>
 			</td>
 		</tr>	
 		<tr>
@@ -596,85 +596,85 @@ function apply_alert_preference(){
 				<div>
 					<table class="weakness_status" cellspacing="0" cellpadding="4" align="center">
 						<tr>
-							<th>Default router login username and password changed -</th>
+							<th><#AiProtection_scan_item1#> -</th>
 							<td>
 								<div id="login_password"></div>
 							</td>					
 						</tr>
 						<tr>
-							<th>Wireless password strength check -</th>
+							<th><#AiProtection_scan_item2#> -</th>
 							<td>
 								<div id="score"></div>
 							</td>			
 						</tr>
 						<tr>
-							<th>Wireless encryption enabled -</th>
+							<th><#AiProtection_scan_item3#> -</th>
 							<td>
 								<div id="wireless_encryption"></div>
 							</td>			
 						</tr>
 						<tr>
-							<th>UPnP service disabled -</th>
+							<th><#AiProtection_scan_item4#> -</th>
 							<td>
 								<div id="upnp_service"></div>
 							</td>	
 						</tr>
 						<tr>
-							<th>Web access from WAN disabled -</th>
+							<th><#AiProtection_scan_item5#> -</th>
 							<td>
 								<div id="access_from_wan"></div>
 							</td>	
 						</tr>
 						<tr>
-							<th>PING from WAN disabled -</th>
+							<th><#AiProtection_scan_item6#> -</th>
 							<td>
 								<div id="ping_from_wan"></div>
 							</td>	
 						</tr>
 						<tr>
-							<th>DMZ disabled -</th>
+							<th><#AiProtection_scan_item7#> -</th>
 							<td>
 								<div id="dmz_service"></div>
 							</td>
 						</tr>
 						<tr>
-							<th>Port trigger disabled -</th>
+							<th><#AiProtection_scan_item8#> -</th>
 							<td>
 								<div id="port_tirgger"></div>
 							</td>
 						</tr>
 						<tr>
-							<th>Port forwarding disabled -</th>
+							<th><#AiProtection_scan_item9#> -</th>
 							<td>
 								<div id="port_forwarding"></div>
 							</td>		
 						</tr>
 						<tr>
-							<th>Anonymous login to FTP share disabled -</th>
+							<th><#AiProtection_scan_item10#> -</th>
 							<td>
 								<div id="ftp_account"></div>
 							</td>		
 						</tr>
 						<tr>
-							<th>Disable guest login for Network Place Share -</th>
+							<th><#AiProtection_scan_item11#> -</th>
 							<td>
 								<div id="samba_account"></div>
 							</td>		
 						</tr>
 						<tr>
-							<th>Malicious Website Blocking enabled -</th>
+							<th><#AiProtection_scan_item12#> -</th>
 							<td>
 								<div id="wrs_service"></div>
 							</td>	
 						</tr>
 						<tr>
-							<th>Intruder Prevention enabled -</th>
+							<th><#AiProtection_scan_item13#> -</th>
 							<td>
 								<div id="vp_service"></div>
 							</td>						
 						</tr>
 						<tr>
-							<th>Infected Device Prevention and Blocking -</th>
+							<th><#AiProtection_detection_blocking#> -</th>
 							<td>
 								<div id="cc_service"></div>
 							</td>						
@@ -685,9 +685,9 @@ function apply_alert_preference(){
 		</tr>	
 		<tr>
 			<td>
-				<div style="text-align:center;margin-top:20px;">
-					<input class="button_gen" type="button" onclick="close_weakness_status();" value="Close">
-					<input class="button_gen_long" type="button" onclick="enable_whole_security();" value="Secure Your Router">
+				<div style="text-align:center;margin-top:10px;">
+					<input class="button_gen" type="button" onclick="close_weakness_status();" value="<#CTL_close#>">
+					<input class="button_gen_long" type="button" onclick="enable_whole_security();" value="<#CTL_secure#>">
 				</div>
 			</td>
 		</tr>
@@ -699,7 +699,7 @@ function apply_alert_preference(){
 	<table style="width:99%">
 		<tr>
 			<th>
-				<div style="font-size:16px;">Alert Preference</div>		
+				<div style="font-size:16px;"><#AiProtection_alert_pref#></div>		
 			</th>		
 		</tr>
 			<td>
@@ -748,7 +748,7 @@ function apply_alert_preference(){
 		<tr>
 			<td>
 				<div style="text-align:center;margin-top:20px;">
-					<input class="button_gen" type="button" onclick="close_alert_preference();" value="Close">
+					<input class="button_gen" type="button" onclick="close_alert_preference();" value="<#CTL_close#>">
 					<input class="button_gen_long" type="button" onclick="apply_alert_preference();" value="Apply">
 				</div>
 			</td>		
@@ -878,7 +878,7 @@ function apply_alert_preference(){
 												</td>
 												<td style="width:20%;border-radius:0px 10px 10px 0px;">
 													<div>
-														<input class="button_gen" type="button" onclick="check_weakness();" value="Scan">
+														<input class="button_gen" type="button" onclick="check_weakness();" value="<#CTL_scan#>">
 													</div>
 												</td>										
 											</tr>
@@ -896,8 +896,8 @@ function apply_alert_preference(){
 														<table>
 															<tr>
 																<td style="padding-bottom:10px;">
-																	<div style="font-size:18px;text-shadow:1px 1px 0px black;">Malicious Sites Blocking</div>
-																	<div style="font-style: italic;font-size: 14px;color:#FC0;height:auto;padding-top:5px;">Restricts access to known malicious websites in Trend Micro’s database for always-up-to-date protection.</div>							
+																	<div style="font-size:18px;text-shadow:1px 1px 0px black;"><#AiProtection_sites_blocking#></div>
+																	<div style="font-style: italic;font-size: 14px;color:#FC0;height:auto;padding-top:5px;"><#AiProtection_sites_block_desc#></div>
 																</td>
 															</tr>										
 															<tr>
@@ -990,8 +990,8 @@ function apply_alert_preference(){
 													<div><img src="/images/cloudsync/line.png"></div>
 												</td>
 												<td style="padding:10px;">
-													<div style="font-size:18px;text-shadow:1px 1px 0px black;">Infected Device Prevention and Blocking</div>
-													<div style="font-style: italic;font-size: 14px;color:#FC0;height:auto;;padding-top:5px;">Prevents infected devices from communicating personal information and/or infected status to external parties.</div>
+													<div style="font-size:18px;text-shadow:1px 1px 0px black;"><#AiProtection_detection_blocking#></div>
+													<div style="font-style: italic;font-size: 14px;color:#FC0;height:auto;;padding-top:5px;"><#AiProtection_detection_block_desc#></div>
 												</td>
 												 <td width="6px">
 													<div><img src="/images/cloudsync/line.png"></div>
@@ -1024,7 +1024,7 @@ function apply_alert_preference(){
 														</script>			
 													</div>
 													<div style="margin-top:-15px;">
-														<input class="button_gen_long" type="button" onclick="show_alert_preference();" value="Alert Preference">
+														<input class="button_gen_long" type="button" onclick="show_alert_preference();" value="<#AiProtection_alert_pref#>">
 													</div>
 												</td>										
 											</tr>

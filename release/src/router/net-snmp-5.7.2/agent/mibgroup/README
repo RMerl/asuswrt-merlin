@@ -1,0 +1,113 @@
+This directory holds the implementation of individual MIB groups.
+Currently, this contains the eight MIB-2 groups, plus a basic template
+for new MIB groups (examples/example.c and examples/example.h)
+
+Additionally, you may wish to check out the 'mib2c' perl script in the 
+SRCDIR/local directory that can convert a written mib into C template
+files for use with this package as mib modules.
+
+Each group consists of two files:
+
+  examples/example.h:	interface information
+
+	- declaration of the initialisation function 'init_example'
+		(optional)
+	- declaration of the function(s) for retrieving variable
+		information 'var_example'
+	- declaration of the function(s) for setting variable
+		information (if appropriate)
+
+	- declaration of the function(s) for parsing the snmpd.conf file
+		(optional)
+        - a call to config_parse_dot_conf() to explain to the .conf
+		parser which tokens we want to parse.
+		(optional)
+
+	- definitions of the MIB group 'magic numbers'
+		declarations of the 'public' functions
+
+	- a list of the variables in the group, including
+		type information, mapping between magic numbers
+		and OID sub-identifiers within the group,
+		accessibility information, and the relevant
+		function for retrieving this variable's value.
+                They *must* be listed in the mib-descending order.
+	- a call to 'config_load_mib', identifying the location of
+		this MIB group within the general MIB structure.
+	- a call to 'config_require' to identify any other files
+		that are required by the implementation of this group.
+		(optional)
+
+    (these last three are only visible within the 'glue' file 'snmp_vars.c'
+	(if at all), but are declared here for ease of maintainance)
+
+
+
+  examples/example.c:	implementation code
+		(can be non-existant if only the .h file is needed)
+
+	- a list of kernel information needed to report
+		on this group
+	- an initialisation function (optional)
+        - a routine to parse an snmpd.conf line.
+        - a routine to free resources from above and return to 
+                default settings.
+	- 'header' function(s) to map the OID requested
+		to the next appropriate OID
+		(and similar system-independent setup)
+	- function(s) (possibly system-specific) to
+		determine and return the value of the
+		variable requested.
+	- (optionally) functions used to set values
+	- other functions used internally
+
+
+To implement a new MIB group, copy the two files 'example.c'
+and 'example.h' to appropriate new files ({MODULENAME}.c and {MODULENAME}.h),
+and edit them as follows:
+
+	example.h:
+		globally change "example" to the new module name
+		    and update the initial comment.
+		replace the EXAMPLE* defines with the list of
+		    variables within this new group
+		fill in the 'MODULENAME_variables' structure with these
+		    new variables, updating the type, accessibility
+		    and sub-identifier information as appropriate.
+		replace 'variableN' with the maximum size of the
+		    returned OID (omitting the group prefix).
+		    For non-table values, this will probably be one
+		    greater than the length of the sub-identifier.
+                update or remove the 'config_parse_dot_conf' call if
+                    you need to handle lines in the snmpd.conf files.
+		update the 'config_load_mib' call with the appropriate
+		    location within the global MIB structure, and
+		    its length (note that 'MIB' has length 6)
+		provide a suitable 'config_require' call if this
+		    code uses routines from any other files within
+		    the 'mibgroup' directory (such as 'util_funcs.c')
+
+
+
+	example.c:
+		globally change "example" to the new module name
+		    and update the initial comment.
+		replace the 'MODULENAME_nl' name list with any necessary
+		    kernel variables, and update the associated #define's
+		replace the name length definition within the 'header'
+		    function with the length of the requesting OID
+		    (i.e. the sum of the lengths given in the subtree
+		     definition, and the variable structure above).
+		replace the basic 'switch' structure within the
+		    'var_MODULENAME' function with the necessary code
+		    to calculate the required information.
+		(plus any other internal functions as needed).
+
+  It will then be necessary to (re-)run the configure script with the
+option
+	--with-mib-modules="MODULENAME"
+
+(where MODULENAME matches the name of the .c/.h file pair exactly).
+Note that if anything in the config_* macros changes, or the init function
+is added or removed, then the configure script will need to be re-run.
+

@@ -87,12 +87,13 @@ var g_storage = new myStorage();
 $("document").ready(function() {
 	document.oncontextmenu = function() {return false;};
 	
+	var vars = getUrlVars();
 	var loc_lan = String(window.navigator.userLanguage || window.navigator.language).toLowerCase();		
 	var lan = ( g_storage.get('lan') == undefined ) ? loc_lan : g_storage.get('lan');
 	m.setLanguage(lan);
 	
-	var init_page = ( getUrlVars()["p"] == undefined ) ? 0 : getUrlVars()["p"];
-	var only_show_init_page = ( getUrlVars()["s"] == undefined ) ? 0 : getUrlVars()["s"];
+	var init_page = ( vars["p"] == undefined ) ? 0 : vars["p"];
+	var only_show_init_page = ( vars["s"] == undefined ) ? 0 : vars["s"];
 		
 	// 預設顯示第一個 Tab
 	var _showTabIndex = init_page;
@@ -247,8 +248,14 @@ function getLatestVersion(){
 function refreshShareLinkList(){
 	var webdav_mode = g_storage.get('webdav_mode');
 	var ddns_host_name = g_storage.get('ddns_host_name');    
-					
-	var hostName = (ddns_host_name=="") ? window.location.host : ddns_host_name;
+	var cur_host_name = window.location.host;
+	var hostName = "";
+				
+	if(!isPrivateIP(cur_host_name))
+		hostName = cur_host_name;
+	else			
+		hostName = (ddns_host_name=="") ? cur_host_name : ddns_host_name;
+		
 	if(hostName.indexOf(":")!=-1)
 		hostName = hostName.substring(0, hostName.indexOf(":"));
 			
@@ -465,15 +472,6 @@ function refreshShareLinkList(){
 	});
 }
 
-function parseXml(xml) {
-	if (jQuery.browser.msie) {
-  		var xmlDoc = new ActiveXObject("Microsoft.XMLDOM"); 
-    	xmlDoc.loadXML(xml);
-    	xml = xmlDoc;
-  	}   
-  	return xml;
-}
-
 function doOK(e) {
 	parent.closeJqmWindow();
 };
@@ -481,17 +479,6 @@ function doOK(e) {
 function doCancel(e) {
 	parent.closeJqmWindow();
 };
-
-function getUrlVars(){
-    var vars = [], hash;
-    var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
-    for(var i = 0; i < hashes.length; i++){
-        hash = hashes[i].split('=');
-        vars.push(hash[0]);
-        vars[hash[0]] = hash[1];
-    }
-    return vars;
-}
 
 function onCloseShareLink(){
 	$("#filelink").css("display","none");	

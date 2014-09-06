@@ -50,9 +50,18 @@ function initial(){
 		_change_wl_unit('<% nvram_get("wl_unit"); %>');
 	}
 
-	if(band5g_support && band5g_11ac_support && document.form.wl_unit[1].selected == true){
-		document.getElementById('wl_mode_desc').onclick=function(){return openHint(1, 5)};		
-	}else if(band5g_support && document.form.wl_unit[1].selected == true){
+	//Change wireless mode help desc
+	if(band5g_support && band5g_11ac_support && document.form.wl_unit[1].selected == true){ //AC 5G
+		if(based_modelid == "RT-AC87U") 
+			document.getElementById('wl_mode_desc').onclick=function(){return openHint(1, 6)};//#WLANConfig11b_x_Mode_itemdescAC2#	
+		else if(based_modelid == "DSL-AC68U" || based_modelid == "RT-AC68U" || based_modelid == "RT-AC68U_V2" || based_modelid == "RT-AC69U" || 
+				based_modelid == "RT-AC56U" || based_modelid == "RT-AC56S" || based_modelid == "RT-AC53U"){
+			document.getElementById('wl_mode_desc').onclick=function(){return openHint(1, 7)};//#WLANConfig11b_x_Mode_itemdescAC3#
+		}	
+		else
+			document.getElementById('wl_mode_desc').onclick=function(){return openHint(1, 5)};//#WLANConfig11b_x_Mode_itemdescAC#
+	}
+	else if(band5g_support && document.form.wl_unit[1].selected == true){	//N 5G
 		document.getElementById('wl_mode_desc').onclick=function(){return openHint(1, 4)};
 	}
 
@@ -100,6 +109,8 @@ function initial(){
 
 	if(!band5g_support)	
 		$("wl_unit_field").style.display = "none";
+	if(wl_info.band5g_2_support)
+		regen_band();
 
 	if(sw_mode == 2 || sw_mode == 4)
 		document.form.wl_subunit.value = ('<% nvram_get("wl_unit"); %>' == '<% nvram_get("wlc_band"); %>') ? 1 : -1;
@@ -257,7 +268,7 @@ function applyRule(){
 
 	if(validForm()){
 		if(document.form.wl_closed[0].checked && document.form.wps_enable.value == 1){
-			if(confirm("The WPS will be disabled if hiding SSID")){
+			if(confirm("Selecting Hide SSID will disable WPS. Are you sure?")){
 				document.form.wps_enable.value = "0";	
 			}
 			else{	
@@ -358,7 +369,8 @@ function disableAdvFn(){
 }
 
 function _change_wl_unit(val){
-	document.form.wl_subunit.value = (val == '<% nvram_get("wlc_band"); %>') ? 1 : -1;
+	if(sw_mode == 2 || sw_mode == 4)	
+		document.form.wl_subunit.value = (val == '<% nvram_get("wlc_band"); %>') ? 1 : -1;
 	change_wl_unit();
 }
 
@@ -482,7 +494,7 @@ function tmo_wl_nmode(){
 
 function check_WPS(){
 	if(document.form.wl_closed[0].checked && document.form.wps_enable.value == 1){
-		if(confirm("The WPS will be disabled if hiding SSID")){
+		if(confirm("Selecting Hide SSID will disable WPS. Are you sure?")){
 			document.form.wps_enable.value = "0";	
 		}
 		else{	

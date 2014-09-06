@@ -1,0 +1,165 @@
+This version of net-snmp supports an experimental SNMPv3 security model
+using Kerberos 5 for authentication.  The protocol is described in an
+up-and-coming IETF Internet-Draft.
+
+This document describes a brief overview of the Kerberos Security Model
+and how to use it.
+
+DESCRIPTION:
+
+The Kerberos Security Model does not use USM; it is completely seperate
+and is not tied to USM in any way.  It works by placing the following
+ASN.1 sequence inside of the SNMPv3 msgSecurityParameters:
+
+ksmSecurityParameters ::= SEQUENCE {
+-- The Kerberos 5 checksum type used to checksum this message
+    ksmChecksumType		INTEGER(0..2147483647),
+-- The actual keyed checksum data returned by Kerberos
+    ksmChecksum			OCTET STRING,
+-- The Kerberos 5 message (either an AP_REQ or AP_REP)
+    ksmKerberosMsg		OCTET STRING,
+-- The cached ticket identifier
+    ksmCachedTicket		INTEGER(0..2147483647)
+}
+
+Note that the whole SEQUENCE is BER encoded as an OCTET STRING.
+
+ksmChecksumType is an integer which corresponded to the checksum algorithm
+used to secure this message as defined by Kerberos (see section 8.3 of
+RFC1510).
+
+ksmChecksum is the output of the checksum algoritm defined by ksmChecksumtype
+(with all NULs in the space for the checksum).
+
+ksmKerberosMsg is a Kerberos 5 AP_REQ or AP_REP message, depending on
+whether or not it is a request or a response (AP_REQ for requests, AP_REP
+for responses).
+
+ksmCachedTicket is a integer which uniquely identifies a ticked already
+cached on the agent to save the overhead of transferring a whole AP_REQ/AP_REP.
+If there is no such cached ticket, it is left at zero.
+
+An agent, upon receiving a message using the KSM, will decode the AP_REQ
+contained within the security parameters and thus validate the client's
+identity.  Using the subkey contained within the AP_REQ, the agent will
+validate the checksum (after first clearing the checksum bytes to zero),
+and issue a response, encoding the appropriate AP_REP message in the
+ksmSecurityParameters.
+
+If the securityLevel of the message is set to AuthPriv, the scopedPdu
+payload will be encrypted using the encryption key and algorithm of the
+AP_REQ subkey.  Note that in this case, the msgData will be a BER-encoded
+OCTET STRING corresponding to the "cipher" element of the EncryptedData
+sequence defined in RFC 1510, section 6.1.
+
+Since this security model is experimental, the number assigned to this
+security model is taken from the recommendations of RFC 2271, section 5,
+which specify enterprise-specific Security Models of the form:
+
+	SnmpSecurityModel = enterpriseID * 256 + security model number
+						 in that enterprise ID;
+
+In the case of KSM this gives us:
+
+	SnmpSecurityModel = 8072 * 256 + 0 = 2066432
+
+
+USAGE:
+
+To actually USE the Kerberos Security Model, do the following:
+
+0) Install Kerberos
+
+   Let it be stated up front - Installing Kerberos completely "cold", without
+   any Kerberos experience at all, can be daunting (to say the least).  If you
+   already have a Kerberos infrastructure at your site, then all of the hard
+   work has been done.  If you do NOT, but you still want to tackle it,
+   you might be interested in the Kerberos FAQ, which can be found at:
+
+   http://www.nrl.navy.mil/CCS/people/kenh/kerberos-faq.html
+
+   Currently the code in net-snmp only supports using MIT Kerberos
+   libraries to link against (you should be able to use any kind of Kerberos
+   server, however).
+
+1) Compile net-snmp with Kerberos.
+
+   This assumes that you already have Kerberos libraries in place.
+
+   Configure net-snmp to include the Kerberos Security Model (ksm) and
+   use --with-cflags and --with-ldflags to specify the location and names
+   of Kerberos header files and libraries.  For example, on my system I
+   run:
+
+   ./configure --with-cflags='-I/usr/krb5/include' \
+      --with-ldflags='-L/usr/krb5/lib -lkrb5 -lcrypto -lcom_err -R/usr/krb5/lib'
+
+   Note that this is on Solaris, and that -R is required to set the correct
+   shared library path.  If you have a newer version of Kerberos, you might
+   instead have to use:
+
+   -lkrb5 -lk5crypto -lcom_err
+
+   as the libraries to link against.  If you get errors (for example, you
+   get a message that says the compiler isn't working) you can check
+   config.log for the output of the compiler.
+
+2) Configure Kerberos and SNMP
+
+   Currently, net-snmp uses the "host" principal assigned to a host.  This
+   may change in the future.  You will want to create host principals of
+   the form:
+
+   host/f.q.d.n@YOUR.REALM
+
+   For example:
+
+   host/mydesktop.example.org@EXAMPLE.ORG
+
+   and place the encryption keys for these principals on every machine you
+   wish to run a SNMP agent (you place each key on it's corresponding machine).
+   Your Kerberos documentation should explain how to do this (in the case
+   of MIT Kerberos, you want to look at the "ktadd" command inside of
+   kadmin).
+
+   If you have a Kerberos infrastructure, you likely already have these
+   principals in place on your systems.
+
+   If you're installing Kerberos for the first time as well, you also
+   need to create client principals corresponding to your userid.  See
+   your Kerberos documentation.
+
+   On the SNMP _agent_ side, you'll want to place in your snmpd.conf file
+   (the one that lives in /usr/local/share/snmp/snmpd.conf, or whereever
+   you have configured on your system):
+
+   rwuser -s ksm userid@YOUR.REALM
+
+   to allow the Kerberos principal 'userid@YOUR.REALM' read/write access to
+   the MIB tree.
+
+3) Run the agent and client applications
+
+   Note that before you do any of this, you will have to have valid Kerberos
+   credentials (generally acquired with the "kinit" program).
+
+   The agent should run without any additional flags.
+
+   You should run the client apps with the following flags:
+
+   -Y defSecurityModel=ksm
+   -v 3
+   -u username
+   -l authNoPriv
+
+   for example:
+
+   snmpget -v 3 -Y defSecurityModel=ksm -u myname -l authNoPriv testhost \
+						system.sysDescr.0
+
+   If you wish to encrypt the payload, change the -l argument to "authPriv".
+
+   If you run into problems, you can add the -Dksm flag to both the manager
+   applications and the agent to get more detailed Kerberos error messages.
+   Note that this setup assumes a working Kerberos infrastructure; if you
+   run into problems, check to make sure Kerberos is working for you.

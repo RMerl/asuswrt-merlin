@@ -895,10 +895,12 @@ int OTSStart(int flag)
 			sprintf(ssid, "%s_OTS1", get_productid()); 
 		else sprintf(ssid, "%s_OTS0", get_productid()); 
 
+#if defined(RTCONFIG_HAS_5G)
 		doSystem("iwpriv %s set AuthMode=OPEN", WIF_5G);
 		doSystem("iwpriv %s set EncrypType=NONE", WIF_5G);
 		doSystem("iwpriv %s set IEEE8021X=0", WIF_5G);
 		doSystem("iwpriv %s set SSID=ASUS_OTS", WIF_5G);
+#endif	/* RTCONFIG_HAS_5G */
 
 		doSystem("iwpriv %s set AuthMode=OPEN", WIF2G);
 		doSystem("iwpriv %s set EncrypType=NONE", WIF2G);

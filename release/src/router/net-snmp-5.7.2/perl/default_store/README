@@ -1,0 +1,14 @@
+This module is a wrapper around the net-snmp default store routines.
+See the net-snmp default_store manual page for details.
+
+To install:
+  perl Makefile.PL
+  make
+  make test
+  make install
+
+To compile in the source tree before the net-snmp itself has been installed:
+  perl Makefile.PL -NET-SNMP-CONFIG="sh ../../net-snmp-config" -NET-SNMP-IN-SOURCE=true
+  make
+  make test
+  make install

@@ -26,6 +26,7 @@ AUTOLOGOUT_MAX_MINUTE = 0;
 var $j = jQuery.noConflict();
 var rogClientList = [];
 var Param = {
+	queryId: "",
 	PEAK: 1024*100,
 	selectedClient: ''
 }
@@ -97,7 +98,7 @@ function retAppsDom(macAddr){
 		}
 
 		// init an APP
-		appCode += '<div class="appTraffic" style="height:55px;""><table style="margin-left:50px;"><tr>';
+		appCode += '<div class="appTraffic"><table style="margin-left:50px;"><tr>';
 
 		// Icon
 		appCode += '<td style="width:70px;"><div class="appIcons" style="background-image:url(\'http://';
@@ -213,7 +214,8 @@ function generateRogClientList(){
 	}
 
 	setTimeout("drawTraffic();", 500);
-	var startQuery = setInterval(function(){
+	
+	Param.queryId = setInterval(function(){
 		for(var i=0; i<rogClientList.length; i++){
 			updateClientInfo("http://" + clientList[rogClientList[i]].ip + ":" + clientList[rogClientList[i]].callback + "/callback.asp?output=netdev&jsoncallback=?", rogClientList[i]);
 		}

@@ -1,0 +1,79 @@
+#!/bin/sh
+
+. ../support/simple_eval_tools.sh
+
+HEADER AgentX trap sending support
+
+SKIPIFNOT USING_AGENTX_MASTER_MODULE
+SKIPIFNOT USING_AGENTX_SUBAGENT_MODULE
+SKIPIFNOT USING_EXAMPLES_EXAMPLE_MODULE
+SKIPIFNOT NETSNMP_SECMOD_USM
+
+#
+# Begin test
+#
+
+# start the trap demon
+CONFIGTRAPD authcommunity log public
+STARTTRAPD
+
+# standard V3 configuration for initial user
+. ./Sv3config
+# configure the trap receiver.
+CONFIGAGENT trapsink ${SNMP_TRANSPORT_SPEC}:${SNMP_TEST_DEST}${SNMP_SNMPTRAPD_PORT} public
+
+# Start the agent without initializing the example mib.
+if [ "x$SNMP_TRANSPORT_SPEC" = "xunix" ];then
+ORIG_AGENT_FLAGS="$AGENT_FLAGS -x $SNMP_TMPDIR/agentx_socket"
+else
+ORIG_AGENT_FLAGS="$AGENT_FLAGS -x tcp:${SNMP_TEST_DEST}${SNMP_AGENTX_PORT}"
+fi
+AGENT_FLAGS="$ORIG_AGENT_FLAGS -I -example"
+STARTAGENT
+
+# test to see that the current agent doesn't support the example mib
+CAPTURE "snmpget -On -t 3 $SNMP_FLAGS $AUTHTESTARGS $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT .1.3.6.1.4.1.2021.254.1.0"
+
+CHECK "No Such Object"
+
+if test "$snmp_last_test_result" = 1; then
+  # test the AgentX subagent by first running it...
+
+  SNMP_SNMPD_PID_FILE_ORIG=$SNMP_SNMPD_PID_FILE
+  SNMP_SNMPD_LOG_FILE_ORIG=$SNMP_SNMPD_LOG_FILE
+  SNMP_SNMPD_PID_FILE=$SNMP_SNMPD_PID_FILE.num2
+  SNMP_SNMPD_LOG_FILE=$SNMP_SNMPD_LOG_FILE.num2
+  AGENT_FLAGS="$ORIG_AGENT_FLAGS -X -I example -Dadd"
+  SNMP_CONFIG_FILE="$SNMP_TMPDIR/bogus.conf"
+
+  STARTAGENT
+
+  # test to see that the agent now supports the example mib
+  CAPTURE "snmpget -On $SNMP_FLAGS -t 5 $AUTHTESTARGS $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT .1.3.6.1.4.1.2021.254.1.0"
+
+  CHECK "life the universe and everything"
+
+  if test "$snmp_last_test_result" = 1; then
+
+    # test to see that the agent now sends a trap from the exmaple mib
+    CAPTURE "snmpset -On -r 0 -t 3 $SNMP_FLAGS $AUTHTESTARGS $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT .1.3.6.1.4.1.2021.254.8.0 i 1"
+    DELAY
+    CHECKTRAPD "life the universe and everything"
+
+  fi
+
+  # stop the subagent
+  STOPAGENT
+
+  SNMP_SNMPD_PID_FILE=$SNMP_SNMPD_PID_FILE_ORIG
+  SNMP_SNMPD_LOG_FILE=$SNMP_SNMPD_LOG_FILE_ORIG
+fi
+
+# stop the master agent
+STOPAGENT
+
+# stop the trap demon
+STOPTRAPD
+
+# all done (whew)
+FINISHED

@@ -821,7 +821,8 @@ function adjustLayout(){
 	$('#main_region').css('height', mainRegion_height);	
 	//alert($('#bottom_region').height()+", "+$('#header_region').height()+", "+page_height+", "+mainRegion_height);
 	$('#main_region #main_right_region').css('width', mainRegion_width-parseInt($('#main_region #main_right_region').css("left")));
-	$('#main_region #main_right_region').css('height', mainRegion_height-parseInt($('#main_region #button_panel').height())+7);
+	//$('#main_region #main_right_region').css('height', mainRegion_height-parseInt($('#main_region #button_panel').height())+7);
+	$('#main_region #main_right_region').css('height', mainRegion_height-parseInt($('#main_region #button_panel').height()));
 	
 	//$("#main_region #button_panel").css("left", $("#main_region #main_left_region").width()-9);
 	$("#main_region #button_panel").css("left", $("#main_region #main_right_region").css("left"));

@@ -224,7 +224,7 @@ function applyRule(){
 <tr>
   <th>City:</th>
   <td>
-		<select class="input_option" name="ispcity" onChange="isp_option();service_option();show_input()"></select>
+		<select class="input_option" name="ispcity" tabindex="1" onChange="isp_option();service_option();show_input()"></select>
   </td>
 </tr>
 
@@ -238,70 +238,70 @@ function applyRule(){
 <tr>
   <th>ISP:</th>
   <td>
-		<select class="input_option" name="ispname" onChange="service_option();show_input();"></select>
+		<select class="input_option" name="ispname" tabindex="2" onChange="service_option();show_input();"></select>
   </td>
 </tr>
 
 <tr>
   <th>Service:</th>
   <td>
-		<select class="input_option" name="ispservice" onChange="show_input();"></select>
+		<select class="input_option" name="ispservice" tabindex="3" onChange="show_input();"></select>
   </td>
 </tr>
 
 <tr id="showip" style="display:none">
   <th>WAN IP:</th>
   <td>
-		<input class="input_32_table" style="height: 25px;" name="wan_ipaddr_x" type="text"/>
+		<input name="wan_ipaddr_x" type="text" tabindex="4" class="input_32_table" style="height: 25px;"/>
   </td>
 </tr>
 
 <tr id="showmask" style="display:none">
   <th>Mask:</th>
   <td>
-		<input class="input_32_table" style="height: 25px;" name="wan_netmask_x" type="text"/>
+		<input name="wan_netmask_x" type="text" tabindex="5" class="input_32_table" style="height: 25px;"/>
   </td>
 </tr>
 
 <tr id="showgateway" style="display:none">
   <th>Gateway:</th>
   <td>
-		<input class="input_32_table" style="height: 25px;" name="wan_gateway_x" type="text"/>
+		<input name="wan_gateway_x" type="text" tabindex="6" class="input_32_table" style="height: 25px;"/>
   </td>
 </tr>
 
 <tr id="showdns" style="display:none">
   <th>DNS1:</th>
   <td>
-		<input class="input_32_table" style="height: 25px;" name="wan_dns" type="text"/>
+		<input name="wan_dns" type="text" tabindex="7" class="input_32_table" style="height: 25px;"/>
   </td>
 </tr>
 
 <tr id="showmac" style="display:none">
   <th>MAC:</th>
   <td>
-		<input class="input_32_table" style="height: 25px;" name="wan_hwaddr_x" type="text"/>
+		<input name="wan_hwaddr_x" type="text" tabindex="8" class="input_32_table" style="height: 25px;"/>
   </td>
 </tr>
 
 <tr id="showlogin" style="display:none">
   <th>Login:</th>
   <td>
-		<input class="input_32_table" style="height: 25px;" name="wan_pppoe_username" type="text"/>
+		<input name="wan_pppoe_username" type="text" tabindex="9" class="input_32_table" style="height: 25px;"/>
   </td>
 </tr>
 
 <tr id="showpassword" style="display:none">
   <th>Password:</th>
   <td>
-		<input class="input_32_table" style="height: 25px;" name="wan_pppoe_passwd" type="text"/>
+		<input name="wan_pppoe_passwd" type="text" tabindex="10" class="input_32_table" style="height: 25px;"/>
   </td>
 </tr>
 
 <tr id="showvpnserver" style="display:none">
   <th>VPN Server:</th>
   <td>
-		<input class="input_32_table" style="height: 25px;" name="wan_heartbeat_x" type="text"/>
+		<input name="wan_heartbeat_x" type="text" tabindex="11" class="input_32_table" style="height: 25px;"/>
   </td>
 </tr>
 
@@ -336,8 +336,8 @@ function applyRule(){
 </div>
 
 	<div class="apply_gen" style="margin-top:30px">
-  	<input type="button" id="prevButton" value="<#CTL_prev#>" onclick="location.href='QIS_internet_type.htm';" class="button_gen">
-  	<input type="submit" id="nextButton" value="<#CTL_next#>" class="button_gen">
+  	<input type="button" id="prevButton" value="<#CTL_prev#>" tabindex="13" onclick="location.href='QIS_internet_type.htm';" class="button_gen">
+  	<input type="submit" id="nextButton" value="<#CTL_next#>" tabindex="12" class="button_gen">
 		<span id="loadHint" style="display:none"><#SAVE_note#></span>
 		<img id="loadingIcon" style="display:none;" src="/images/InternetScan.gif"></span>
 	</div>

@@ -84,7 +84,7 @@ function key_event(evt){
 function initial(){
 	show_menu();
 	if(bwdpi_support){
-		$('content_title').innerHTML = "Adaptive QoS - Traditional";
+		$('content_title').innerHTML = "<#Adaptive_QoS#> - <#EzQoS_type_traditional#>";
 	}
 	else{
 		$('content_title').innerHTML = "<#Menu_TrafficManager#> - QoS";

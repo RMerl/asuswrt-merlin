@@ -1,0 +1,30 @@
+NetSNMP/TrapReceiver version 5.2
+=================================
+
+This module will only work if Net-SNMP was compiled with
+--enable-embedded-perl and you follow the instructions in the perldoc
+manual page.
+
+INSTALLATION
+
+To install this module type the following in the Net-SNMP source directory:
+
+   ./configure --enable-embedded-perl
+   make
+   make install
+
+DEPENDENCIES
+
+This module requires these other modules and libraries:
+
+  Net-SNMP, NetSNMP::OID
+
+COPYRIGHT AND LICENCE
+
+Put the correct copyright and licence information here.
+
+Copyright (C) 2004 W. Hardaker
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself. 
+

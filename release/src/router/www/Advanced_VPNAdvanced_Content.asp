@@ -491,6 +491,11 @@ function pptpd_applyRule(){
 	if(check_pptpd_clients_range() == false)
 		return false;
 
+	if(!validate_range(document.form.pptpd_mru, 576, 1492))
+		return false;
+	if(!validate_range(document.form.pptpd_mtu, 576, 1492))
+		return false;
+
 	showLoading();
 	document.form.submit();	
 }
@@ -1131,11 +1136,11 @@ function cal_panel_block(){
 <!-- Yau add mru/mtu-->
                                     <tr>
 										<th><a class="hintstyle" href="javascript:void(0);">MRU</a></th>
-										<td><input type="text" maxlength="15" class="input_15_table" name="pptpd_mru" value="<% nvram_get("pptpd_mru"); %>" ></td>
+										<td><input type="text" maxlength="4" class="input_15_table" name="pptpd_mru" value="<% nvram_get("pptpd_mru"); %>" onKeyPress="return is_number(this,event)" ></td>
                                     </tr>
                                     <tr>
 										<th><a class="hintstyle" href="javascript:void(0);">MTU</a></th>
-										<td><input type="text" maxlength="15" class="input_15_table" name="pptpd_mtu" value="<% nvram_get("pptpd_mtu"); %>" ></td>
+										<td><input type="text" maxlength="4" class="input_15_table" name="pptpd_mtu" value="<% nvram_get("pptpd_mtu"); %>" onKeyPress="return is_number(this,event)" ></td>
                                     </tr>
 <!-- Yau -->
 								<tr>

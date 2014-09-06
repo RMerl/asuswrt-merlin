@@ -1,0 +1,52 @@
+.TH MIB2C.CONF 5 "28 Apr 2004" VVERSIONINFO "Net-SNMP"
+.SH NAME
+mib2c.conf \[em] How to write mib2c.conf files to do ANYTHING based on MIB input.
+.SH SYNOPSIS
+% cat > mib2c.test.conf  << EOF
+@foreach $t table@
+  Starting table $t
+  @foreach $c column@
+    echo $t has column $c which has a syntax of $c.syntax
+  @end@
+
+@end@
+EOF
+
+% mib2c \-c mib2c.test.conf internet
+.SH DESCRIPTION
+The mib2c.conf script language is a MIB-particular language designed
+to easily process MIB nodes in ways that you want.  mib2c is a
+misnomer (for historical purposes), because you can produce anything
+(not just C code).  Look in the Net-SNMP "local" directory for a bunch
+of example mib2c.*.conf files and behold the power before you.
+.SH COMMANDS
+.PP
+All commands within mib2c.conf files are embraced by @ signs.
+Anything with an @ sign at the front and back of the line is generally
+supposed to be a mib2c specific command.  These are detailed here:
+COMMANDSHERE
+.SH VARIABLES
+.PP
+Variables in the mib2c language look very similar to perl variables,
+in that they start with a "$".  They can be used for anything you
+want, but most typically they'll hold mib node names being processed
+by @foreach ...@ clauses.
+.PP
+They also have a special properties when they are a mib node, such that
+adding special suffixes to them will allow them to be interpreted in
+some fashion.  The easiest way to understand this is through an
+example.  If the variable 'x' contained the word 'ifType' then some
+magical things happen.  In mib2c output, anytime $x is seen it is
+replaced with "ifType".  Additional suffixes can be used to get other
+aspects of that mib node though.  If $x.objectID is seen, it'll be
+replaced by the OID for ifType: ".1.3.6.1.2.1.2.2.1.3".  Other
+suffixes that can appear after a dot are listed below.
+.PP
+One last thing: you can use things like $vartext immediately ending in
+some other text, you can use {}s to get proper expansion of only part
+of the mib2c input.  IE, $xtext will produce "$xtext", but ${x}text
+will produce "ifTypetext" instead.
+VAREXPANSIONSHERE
+.SH SEE ALSO
+.PP
+mib2c(1)

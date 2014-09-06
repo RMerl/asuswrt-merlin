@@ -37,6 +37,10 @@ Set Up Environment (Tested in Fedora 8/9 and Ubuntu 10.04/12.04 LTS amd64)
 		make
 		intltool
 		libglib2.0-dev
+		libstdc++5
+		texinfo
+		dos2unix
+		xsltproc
 
 	b. Fedora
 		sudo yum groupinstall "Development Tools"

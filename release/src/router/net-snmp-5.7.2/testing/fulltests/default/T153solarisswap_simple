@@ -1,0 +1,31 @@
+#!/bin/sh
+
+. ../support/simple_eval_tools.sh
+
+HEADER swap on Solaris using HOST-RESOURCES
+
+if test `uname -s` != "SunOS" ; then
+    SKIP "not running solaris"
+fi
+
+ISDEFINED USING_HOST_HR_STORAGE_MODULE || ISDEFINED USING_HOST_HRH_STORAGE_MODULE || SKIP "Not using hrStorage"
+
+SKIPIF NETSNMP_DISABLE_SNMPV1
+
+#
+# Begin test
+#
+
+# standard V1 configuration: testcommunity
+. ./Sv1config
+
+STARTAGENT
+
+# ask for hrStorageSize.10 which reports overall swap size
+CAPTURE "snmpget -On $SNMP_FLAGS -c testcommunity -v 1 $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT .1.3.6.1.2.1.25.2.3.1.5.10"
+
+STOPAGENT
+
+CHECKORDIE "^.1.3.6.1.2.1.25.2.3.1.5.10 = INTEGER:"
+
+FINISHED

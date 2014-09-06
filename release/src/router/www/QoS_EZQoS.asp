@@ -24,8 +24,8 @@ var $j = jQuery.noConflict();
 
 function initial(){
 	show_menu();
-	if(downsize_4m_support)
-		$("guest_image").parentNode.style.display = "none";
+	if(downsize_4m_support || downsize_8m_support)
+			document.getElementById("guest_image").parentNode.style.display = "none";
 	
 	if(document.form.qos_enable.value==1){
 		$('upload_tr').style.display = "";
@@ -40,7 +40,7 @@ function initial(){
 	}
 
 	if(bwdpi_support){
-		$('content_title').innerHTML = "Adaptive QoS - QoS to configuration";
+		$('content_title').innerHTML = "<#Adaptive_QoS#> - <#Adaptive_QoS_Conf#>";
 		if(document.form.qos_enable.value == 1){
 			if(document.form.qos_type.value == 0){		//Traditional Type
 				document.getElementById("settingSelection").length = 1;
@@ -48,8 +48,11 @@ function initial(){
 				add_option($("settingSelection"), '<#qos_user_prio#>', 4, 0);
 			}
 			else{		//Adaptive Type
-				add_option($("settingSelection"), 'Adaptive Type', 2, 0);		
+				add_option($("settingSelection"), "<#EzQoS_type_adaptive#>", 2, 0);		
 			}
+		}
+		else{		// hide select option if qos disable
+			document.getElementById('settingSelection').style.display = "none";	
 		}
 	}
 	else{
@@ -218,14 +221,14 @@ function change_qos_type(value){
 							<tr>
 								<td bgcolor="#4D595D" valign="top">
 									<table width="100%">
-										<tr>
+										<tr style="height:30px;">
 											<td  class="formfonttitle" align="left">								
-												<div id="content_title">Adaptive QoS - QoS</div>
+												<div id="content_title"><#Adaptive_QoS#> - QoS</div>
 											</td>
 											<td align="right" >
 												<div>
 													<select id="settingSelection" onchange="switchPage(this.options[this.selectedIndex].value)" class="input_option">
-														<option value="1">Configuration</option>										
+														<option value="1"><#Adaptive_QoS_Conf#></option>										
 													</select>	    
 												</div>
 											</td>	
@@ -242,19 +245,15 @@ function change_qos_type(value){
 										<table style="width:700px;margin-left:25px;">
 											<tr>
 												<td style="width:130px">
-													<img id="guest_image" src="/images/New_ui/QoS.png">
+													<div id="guest_image" style="background: url(images/New_ui/QoS.png);width: 143px;height: 87px;"></div>
 												</td>
 												<td>&nbsp&nbsp</td>
 												<td style="font-style: italic;font-size: 14px;">
 													<div id="function_desc" class="formfontdesc" style="line-height:20px;">
-														Quality of Service (QoS) ensures bandwidth for prioritized tasks and applications
+														<#EzQoS_desc#>
 														<ul>
-															<li>			
-																<span style="font-weight:bolder;font-size:14px;">Adaptive QoS</span> ensures inbound and outbound bandwidth on both wired and wireless connections for prioritized applications and tasks via pre-defined, drag-and-drop presets: gaming, media streaming, VoIP, web surfing and file transferring.
-															</li>
-															<li>
-																<span style="font-weight:bolder;font-size:14px;">Traditional QoS</span> ensures inbound and outbound bandwidth on both wired and wireless connections for prioritized applications and tasks via manual user-defined parameters. 
-															</li>
+															<li><#EzQoS_desc_Adaptive#></li>
+															<li><#EzQoS_desc_Traditional#></li>
 														</ul>
 														To enable QoS function, click the QoS slide switch , and fill in the upload and download Get the bandwidth information from ISP or go to <a href="http://speedtest.net" target="_blank" style="text-decoration:underline;">http://speedtest.net</a> to check bandwidth.
 													</div>
@@ -271,7 +270,7 @@ function change_qos_type(value){
 								<td valign="top">
 									<table style="margin-left:3px;" width="95%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
 										<tr>
-											<th>Enable Smart QoS</th>
+											<th><#EzQoS_smart_enable#></th>
 											<td>
 												<div class="left" style="width:94px; float:left; cursor:pointer;" id="radio_qos_enable"></div>
 													<script type="text/javascript">
@@ -317,25 +316,21 @@ function change_qos_type(value){
 											<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(20, 2);"><#upload_bandwidth#></a></th>
 											<td>
 												<input type="text" maxlength="10" id="obw" name="obw" onKeyPress="return is_number_float(this,event);" class="input_15_table" value="">
-												<select class="input_option" style="width:87px;">
-													<option>Mb/s</option>
-												</select>
+												<label style="margin-left:5px;">Mb/s</label>
 											</td>
 										</tr>											
 										<tr id="download_tr">
 											<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(20, 2);"><#download_bandwidth#></a></th>
 											<td>
 												<input type="text" maxlength="10" id="ibw" name="ibw" onKeyPress="return is_number_float(this,event);" class="input_15_table" value="">
-												<select class="input_option" style="width:87px;">
-													<option>Mb/s</option>
-												</select>
+												<label style="margin-left:5px;">Mb/s</label>
 											</td>
 										</tr>										
 										<tr id="qos_type_tr" style="display:none">
 											<th>QoS Type</th>
 											<td>
-												<input id="int_type" value="1" onClick="change_qos_type(this.value);" type="radio" <% nvram_match("qos_type", "1","checked"); %>><a class="hintstyle" href="javascript:void(0);" onClick="openHint(20, 6);">Adaptive</a>												
-												<input id="trad_type" value="0" onClick="change_qos_type(this.value);" type="radio" <% nvram_match("qos_type", "0","checked"); %>><a class="hintstyle" href="javascript:void(0);" onClick="openHint(20, 7);">Traditional</a>
+												<input id="int_type" value="1" onClick="change_qos_type(this.value);" type="radio" <% nvram_match("qos_type", "1","checked"); %>><a class="hintstyle" href="javascript:void(0);" onClick="openHint(20, 6);"><#EzQoS_type_adaptive#></a>
+												<input id="trad_type" value="0" onClick="change_qos_type(this.value);" type="radio" <% nvram_match("qos_type", "0","checked"); %>><a class="hintstyle" href="javascript:void(0);" onClick="openHint(20, 7);"><#EzQoS_type_traditional#></a>
 											</td>
 										</tr>								
 									</table>

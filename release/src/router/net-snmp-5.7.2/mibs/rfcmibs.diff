@@ -1,0 +1,499 @@
+Only in /usr/local/share/snmp/rfc: .index
+diff -ru /usr/local/share/snmp/rfc.orig/ADSL-LINE-MIB.txt /usr/local/share/snmp/rfc/ADSL-LINE-MIB.txt
+--- /usr/local/share/snmp/rfc.orig/ADSL-LINE-MIB.txt	Sat Mar  3 17:27:00 2001
++++ /usr/local/share/snmp/rfc/ADSL-LINE-MIB.txt	Tue Jan 23 00:42:41 2001
+@@ -3379,7 +3379,6 @@
+                static profiles are implemented."
+ 
+           OBJECT      adslAtucConfMinSnrMgn
+-          MIN-ACCESS  read-wr
+           MIN-ACCESS  read-write
+           DESCRIPTION
+               "Read-write access is applicable when
+diff -ru /usr/local/share/snmp/rfc.orig/DLSW-MIB.txt /usr/local/share/snmp/rfc/DLSW-MIB.txt
+--- /usr/local/share/snmp/rfc.orig/DLSW-MIB.txt	Sat Mar  3 17:18:28 2001
++++ /usr/local/share/snmp/rfc/DLSW-MIB.txt	Tue Jan 23 00:13:40 2001
+@@ -7,7 +7,7 @@
+ 
+         Counter32, Gauge32, TimeTicks,
+         OBJECT-TYPE, MODULE-IDENTITY,
+-        NOTIFICATION-TYPE                 FROM SNMPv2-SMI
++        NOTIFICATION-TYPE, mib-2          FROM SNMPv2-SMI
+         MODULE-COMPLIANCE, OBJECT-GROUP,
+         NOTIFICATION-GROUP                FROM SNMPv2-CONF
+         ifIndex                           FROM IF-MIB
+@@ -150,12 +150,12 @@
+ 
+ -- The DLSw MIB module contains an object part and a conformance part.
+ -- Object part is organized in the following groups:
+--- (1) dlswNode      -- information about this DLSw
+--- (2) dlswTConn     -- about adjacent DLSw partners
+--- (3) dlswInterface -- about which interfaces DLSw is active on
+--- (4) dlswDirectory -- about any directory of local/remote resources
+--- (5) dlswCircuit   -- about established circuits.
+--- (6) dlswSdlc      -- about SDLC data link switched devices
++-- (1) dlswNode      - information about this DLSw
++-- (2) dlswTConn     - about adjacent DLSw partners
++-- (3) dlswInterface - about which interfaces DLSw is active on
++-- (4) dlswDirectory - about any directory of local/remote resources
++-- (5) dlswCircuit   - about established circuits.
++-- (6) dlswSdlc      - about SDLC data link switched devices
+ 
+ dlswNode        OBJECT IDENTIFIER ::= { dlswMIB 1 }
+ dlswTConn       OBJECT IDENTIFIER ::= { dlswMIB 2 }
+@@ -168,9 +168,9 @@
+ -- THE NODE GROUP
+ -- *******************************************************************
+ 
+--- -------------------------------------------------------------------
++-- ===================================================================
+ -- DLSw Node Identity
+--- -------------------------------------------------------------------
++-- ===================================================================
+ dlswNodeVersion  OBJECT-TYPE
+     SYNTAX     OCTET STRING (SIZE (2))
+     MAX-ACCESS read-only
+@@ -211,9 +211,9 @@
+        "DLSW: Switch-to-Switch Protocol RFC 1795"
+     ::= { dlswNode 3 }
+ 
+--- -------------------------------------------------------------------
++-- ===================================================================
+ -- DLSw Code Capability
+--- -------------------------------------------------------------------
++-- ===================================================================
+ dlswNodeStdPacingSupport  OBJECT-TYPE
+     SYNTAX     INTEGER  {
+        none              (1),  -- does not support DLSw
+@@ -238,9 +238,9 @@
+         scheme but never varies its receive window size."
+     ::= { dlswNode 4 }
+ 
+--- -------------------------------------------------------------------
++-- ===================================================================
+ -- DLSw Node Operational Objects
+--- -------------------------------------------------------------------
++--====================================================================
+ dlswNodeStatus  OBJECT-TYPE
+     SYNTAX     INTEGER  {
+         active        (1),
+@@ -339,10 +339,10 @@
+ -- TRANSPORT CONNECTION (aka: PARTNER DLSW)
+ -- *******************************************************************
+ 
+--- -------------------------------------------------------------------
++-- ===================================================================
+ 
+ -- Transport Connection Statistics Objects
+--- -------------------------------------------------------------------
++-- ===================================================================
+ dlswTConnStat    OBJECT IDENTIFIER ::= { dlswTConn 1 }
+ 
+ dlswTConnStatActiveConnections  OBJECT-TYPE
+@@ -375,9 +375,9 @@
+         this means the transport connection failed unexpectedly."
+     ::= { dlswTConnStat 3 }
+ 
+--- -------------------------------------------------------------------
++-- ===================================================================
+ -- Transport Connection Configuration Table
+--- -------------------------------------------------------------------
++-- ===================================================================
+ dlswTConnConfigTable  OBJECT-TYPE
+     SYNTAX     SEQUENCE OF DlswTConnConfigEntry
+     MAX-ACCESS not-accessible
+@@ -651,15 +651,15 @@
+         row definition out of use."
+     ::= { dlswTConnConfigEntry 13 }
+ 
+--- -------------------------------------------------------------------
++-- ===================================================================
+ -- Transport Connection Operation Table
+--- -------------------------------------------------------------------
++-- ===================================================================
+ -- (1) At most one transport connection can be connected between
+ --     this DLSw and one of its DLSw partners at a given time.
+ -- (2) Multiple transport types are supported.
+ -- (3) Since the entries may be reused, dlswTConnOperEntryTime
+ --     needs to be consulted for the possibility of counter reset.
+--- -------------------------------------------------------------------
++-- ===================================================================
+ 
+ dlswTConnOperTable  OBJECT-TYPE
+     SYNTAX     SEQUENCE OF DlswTConnOperEntry
+@@ -1254,14 +1254,14 @@
+         connection, where `active' means not in `disconnected' state."
+     ::= { dlswTConnOperEntry 36 }
+ 
+--- -------------------------------------------------------------------
++-- ===================================================================
+ -- Transport Connection Specific
+--- -------------------------------------------------------------------
++-- ===================================================================
+ dlswTConnSpecific OBJECT IDENTIFIER ::= { dlswTConn 4 }
+ dlswTConnTcp      OBJECT IDENTIFIER ::= { dlswTConnSpecific 1 }
+ 
+ -- ...................................................................
+--- TCP Transport Connection Specific -- Configuration
++-- TCP Transport Connection Specific - Configuration
+ -- ...................................................................
+ dlswTConnTcpConfigTable  OBJECT-TYPE
+     SYNTAX     SEQUENCE OF DlswTConnTcpConfigEntry
+@@ -1328,7 +1328,7 @@
+     ::= { dlswTConnTcpConfigEntry 3 }
+ 
+ -- ...................................................................
+--- TCP Transport Connection Specific -- Operation
++-- TCP Transport Connection Specific - Operation
+ -- ...................................................................
+ dlswTConnTcpOperTable  OBJECT-TYPE
+     SYNTAX     SEQUENCE OF DlswTConnTcpOperEntry
+@@ -1472,9 +1472,9 @@
+ -- transport address of the DLSw partner is cached.
+ -- *******************************************************************
+ 
+--- -------------------------------------------------------------------
++-- ===================================================================
+ -- Directory Related Statistical Objects
+--- -------------------------------------------------------------------
++-- ===================================================================
+ dlswDirStat     OBJECT IDENTIFIER ::= { dlswDirectory 1 }
+ 
+ dlswDirMacEntries  OBJECT-TYPE
+@@ -1556,9 +1556,9 @@
+         create new rows."
+     ::= { dlswDirStat 8 }
+ 
+--- -------------------------------------------------------------------
++-- ===================================================================
+ -- Directory Cache
+--- -------------------------------------------------------------------
++-- ===================================================================
+ dlswDirCache     OBJECT IDENTIFIER ::= { dlswDirectory 2 }
+ 
+ -- ...................................................................
+@@ -1566,7 +1566,7 @@
+ -- All Possible combinations of values of these objects.
+ --
+ --     EntryType   LocationType       Location        Status
+---  -------------- ------------ ------------------ --------------
++--  ============== ============ ================== ==============
+ --  userConfigured    local     ifEntry or 0.0     reachable, or
+ --                                                 notReachable, or
+ --                                                 unknown
+@@ -1743,7 +1743,7 @@
+ -- All Possible combinations of values of these objects.
+ --
+ --     EntryType   LocationType       Location        Status
+---  -------------- ------------ ------------------ --------------
++--  ============== ============ ================== ==============
+ --  userConfigured    local     ifEntry or 0.0     reachable, or
+ --                                                 notReachable, or
+ --                                                 unknown
+@@ -1918,9 +1918,9 @@
+         following the RowStatus textual convention."
+     ::= { dlswDirNBEntry 9 }
+ 
+--- -------------------------------------------------------------------
++-- ===================================================================
+ -- Resource Locations
+--- -------------------------------------------------------------------
++-- ===================================================================
+ 
+ dlswDirLocate       OBJECT IDENTIFIER ::= { dlswDirectory 3 }
+ 
+@@ -2056,9 +2056,9 @@
+ -- station that receives the initiation.
+ -- *******************************************************************
+ 
+--- -------------------------------------------------------------------
++-- ===================================================================
+ -- Statistics Related to Circuits
+--- -------------------------------------------------------------------
++-- ===================================================================
+ dlswCircuitStat      OBJECT IDENTIFIER ::= { dlswCircuit 1 }
+ 
+ dlswCircuitStatActives  OBJECT-TYPE
+@@ -2079,7 +2079,7 @@
+         or reactivated upon exiting `disconnected' state."
+     ::= { dlswCircuitStat 2 }
+ 
+--- -------------------------------------------------------------------
++-- ===================================================================
+ -- Circuit Table
+ --
+ -- This table is the DLSw entity's view of circuits.  There will be
+@@ -2090,9 +2090,9 @@
+ -- this Circuit Table:
+ --
+ --           number of       |    Origin End Station Location
+---         entries in the    |--------------------------------------
++--         entries in the    |======================================
+ --         Circuit Table     |  internal     local       remote
+---    -----------------------|--------------------------------------
++--    =======================|======================================
+ --     Target    |  internal |     NA          2           1
+ --     End       |  local    |     2           2           1
+ --     Station   |  remote   |     1           1           NA
+@@ -2106,7 +2106,7 @@
+ --
+ -- Most of statistics related to circuits can be collected
+ -- from LLC-2 Link Station Table.
+--- -------------------------------------------------------------------
++-- ===================================================================
+ dlswCircuitTable  OBJECT-TYPE
+     SYNTAX     SEQUENCE OF DlswCircuitEntry
+     MAX-ACCESS not-accessible
+@@ -2814,7 +2814,7 @@
+ -- *******************************************************************
+ dlswTraps              OBJECT IDENTIFIER ::= { dlswMIB 0 }
+ 
+--- -------------------------------------------------------------------
++-- ===================================================================
+ -- This section defines the well-known notifications sent by
+ -- DLSW agents.
+ -- Care must be taken to insure that no particular notification
+@@ -2827,7 +2827,7 @@
+ -- (3) Transport connection up/down
+ 
+ -- (4) Circuit up/down
+--- -------------------------------------------------------------------
++-- ===================================================================
+ --
+ 
+ dlswTrapTConnPartnerReject NOTIFICATION-TYPE
+@@ -2902,9 +2902,9 @@
+ dlswCompliances        OBJECT IDENTIFIER ::= { dlswConformance 1 }
+ dlswGroups             OBJECT IDENTIFIER ::= { dlswConformance 2 }
+ 
+--- -------------------------------------------------------------------
++-- ===================================================================
+ -- COMPLIANCE STATEMENTS
+--- -------------------------------------------------------------------
++-- ===================================================================
+ 
+ -- ...................................................................
+ -- Core compliance for all DLSw entities
+@@ -3245,9 +3245,9 @@
+                "Write access is not required."
+     ::= { dlswCompliances 5 }
+ 
+--- -------------------------------------------------------------------
++-- ===================================================================
+ -- CONFORMANCE GROUPS
+--- -------------------------------------------------------------------
++-- ===================================================================
+ 
+ -- ...................................................................
+ -- Node Conformance Group
+diff -ru /usr/local/share/snmp/rfc.orig/DSA-MIB.txt /usr/local/share/snmp/rfc/DSA-MIB.txt
+--- /usr/local/share/snmp/rfc.orig/DSA-MIB.txt	Sat Mar  3 17:15:36 2001
++++ /usr/local/share/snmp/rfc/DSA-MIB.txt	Thu Feb 22 00:33:45 2001
+@@ -10,7 +10,7 @@
+           mib-2
+                      FROM RFC1213-MIB
+           applIndex, DistinguishedName
+-                     FROM APPLICATION-MIB;
++                     FROM NETWORK-SERVICES-MIB;
+ 
+         dsaMIB MODULE-IDENTITY
+            LAST-UPDATED "9311250000Z"
+diff -ru /usr/local/share/snmp/rfc.orig/FDDI-SMT73-MIB.txt /usr/local/share/snmp/rfc/FDDI-SMT73-MIB.txt
+--- /usr/local/share/snmp/rfc.orig/FDDI-SMT73-MIB.txt	Sat Mar  3 17:15:09 2001
++++ /usr/local/share/snmp/rfc/FDDI-SMT73-MIB.txt	Tue Jan 23 00:11:46 2001
+@@ -3,6 +3,8 @@
+ IMPORTS
+         Counter
+             FROM RFC1155-SMI
++	transmission
++	    FROM RFC1213-MIB
+         OBJECT-TYPE
+             FROM RFC-1212;
+ 
+diff -ru /usr/local/share/snmp/rfc.orig/HPR-MIB.txt /usr/local/share/snmp/rfc/HPR-MIB.txt
+--- /usr/local/share/snmp/rfc.orig/HPR-MIB.txt	Sat Mar  3 17:19:54 2001
++++ /usr/local/share/snmp/rfc/HPR-MIB.txt	Tue Jan 23 00:25:54 2001
+@@ -18,7 +18,7 @@
+                 FROM APPN-MIB;
+ 
+ hprMIB MODULE-IDENTITY
+-        LAST-UPDATED  "970514000000Z"
++        LAST-UPDATED  "9705140000Z"
+         ORGANIZATION  "AIW APPN / HPR MIB SIG"
+         CONTACT-INFO
+                 "
+diff -ru /usr/local/share/snmp/rfc.orig/MIP-MIB.txt /usr/local/share/snmp/rfc/MIP-MIB.txt
+--- /usr/local/share/snmp/rfc.orig/MIP-MIB.txt	Sat Mar  3 17:17:42 2001
++++ /usr/local/share/snmp/rfc/MIP-MIB.txt	Tue Jan 23 00:25:27 2001
+@@ -1,7 +1,7 @@
+     MIP-MIB DEFINITIONS ::= BEGIN
+ 
+     IMPORTS
+-        Counter32, Gauge32, Integer32, IpAddress, experimental,
++        Counter32, Gauge32, Integer32, IpAddress, mib-2,
+         MODULE-IDENTITY, OBJECT-TYPE, NOTIFICATION-TYPE
+                                         FROM SNMPv2-SMI
+         RowStatus, TruthValue, TimeStamp,
+@@ -2117,7 +2117,7 @@
+                 function within a home agent."
+         ::= { mipGroups 12 }
+ 
+-    mipSecNotifcationsGroup NOTIFICATION-GROUP
++    mipSecNotificationsGroup NOTIFICATION-GROUP
+         NOTIFICATIONS { mipAuthFailure }
+         STATUS      current
+         DESCRIPTION
+diff -ru /usr/local/share/snmp/rfc.orig/Modem-MIB.txt /usr/local/share/snmp/rfc/Modem-MIB.txt
+--- /usr/local/share/snmp/rfc.orig/Modem-MIB.txt	Sat Mar  3 17:16:35 2001
++++ /usr/local/share/snmp/rfc/Modem-MIB.txt	Mon Jan 22 23:53:08 2001
+@@ -23,7 +23,7 @@
+              E-mail: waldbusser@cmu.edu"
+     DESCRIPTION
+             "The MIB module for management of dial-up modems."
+-    ::= { mdmMIB 1 }
++    ::= { mdmMib 1 }
+ 
+ mdmMib OBJECT IDENTIFIER ::= { mib-2 38 }
+ 
+diff -ru /usr/local/share/snmp/rfc.orig/PPP-LCP-MIB.txt /usr/local/share/snmp/rfc/PPP-LCP-MIB.txt
+--- /usr/local/share/snmp/rfc.orig/PPP-LCP-MIB.txt	Sat Mar  3 17:14:46 2001
++++ /usr/local/share/snmp/rfc/PPP-LCP-MIB.txt	Sat Mar  3 23:13:27 2001
+@@ -182,7 +182,7 @@
+      ::= { pppLinkStatusEntry 5 }
+ 
+ pppLinkStatusLocalMRU   OBJECT-TYPE
+-     SYNTAX    INTEGER(1..2147483648)
++     SYNTAX    INTEGER(1..2147483647)
+      ACCESS    read-only
+      STATUS    mandatory
+      DESCRIPTION
+@@ -195,7 +195,7 @@
+      ::= { pppLinkStatusEntry 6 }
+ 
+ pppLinkStatusRemoteMRU   OBJECT-TYPE
+-     SYNTAX    INTEGER(1..2147483648)
++     SYNTAX    INTEGER(1..2147483647)
+      ACCESS    read-only
+      STATUS    mandatory
+      DESCRIPTION
+@@ -535,7 +535,7 @@
+      ::= { pppLqrEntry 2 }
+ 
+ pppLqrLocalPeriod   OBJECT-TYPE
+-     SYNTAX    INTEGER(1..2147483648)
++     SYNTAX    INTEGER(1..2147483647)
+      ACCESS    read-only
+      STATUS    mandatory
+      DESCRIPTION
+@@ -548,7 +548,7 @@
+      ::= { pppLqrEntry 3 }
+ 
+ pppLqrRemotePeriod   OBJECT-TYPE
+-     SYNTAX    INTEGER(1..2147483648)
++     SYNTAX    INTEGER(1..2147483647)
+      ACCESS    read-only
+      STATUS    mandatory
+      DESCRIPTION
+diff -ru /usr/local/share/snmp/rfc.orig/RDBMS-MIB.txt /usr/local/share/snmp/rfc/RDBMS-MIB.txt
+--- /usr/local/share/snmp/rfc.orig/RDBMS-MIB.txt	Sat Mar  3 17:16:41 2001
++++ /usr/local/share/snmp/rfc/RDBMS-MIB.txt	Tue Jan 23 00:24:04 2001
+@@ -6,8 +6,8 @@
+         FROM SNMPv2-SMI
+     DisplayString, DateAndTime, AutonomousType
+         FROM SNMPv2-TC
+-    applIndex, applGroup
+-        FROM APPLICATION-MIB
++    applIndex, applGroups
++        FROM NETWORK-SERVICES-MIB
+     mib-2
+         FROM RFC1213-MIB;
+ 
+@@ -1263,8 +1263,8 @@
+          implement the RDBMS MIB"
+     MODULE HOST-RESOURCES-MIB
+         MANDATORY-GROUPS    { hrSystem }
+-    MODULE APPLICATION-MIB
+-        MANDATORY-GROUPS { applGroup }
++    MODULE NETWORK-SERVICES-MIB
++        MANDATORY-GROUPS { applGroups }
+     MODULE RDBMS-MIB
+         MANDATORY-GROUPS { rdbmsGroup }
+ 
+Only in /usr/local/share/snmp/rfc: RFC-1215.txt
+diff -ru /usr/local/share/snmp/rfc.orig/RFC1414-MIB.txt /usr/local/share/snmp/rfc/RFC1414-MIB.txt
+--- /usr/local/share/snmp/rfc.orig/RFC1414-MIB.txt	Sat Mar  3 17:14:37 2001
++++ /usr/local/share/snmp/rfc/RFC1414-MIB.txt	Tue Feb 20 00:25:21 2001
+@@ -3,6 +3,7 @@
+ IMPORTS
+     OBJECT-TYPE
+         FROM RFC-1212
++    mib-2,
+     tcpConnLocalAddress, tcpConnLocalPort,
+     tcpConnRemAddress, tcpConnRemPort
+             FROM RFC1213-MIB;
+diff -ru /usr/local/share/snmp/rfc.orig/SNA-NAU-MIB.txt /usr/local/share/snmp/rfc/SNA-NAU-MIB.txt
+--- /usr/local/share/snmp/rfc.orig/SNA-NAU-MIB.txt	Sat Mar  3 17:16:24 2001
++++ /usr/local/share/snmp/rfc/SNA-NAU-MIB.txt	Mon Jan 22 23:57:44 2001
+@@ -17,7 +17,7 @@
+         DisplayString, RowStatus, TimeStamp, InstancePointer
+                 FROM SNMPv2-TC
+ 
+-        Counter32, Gauge32, Integer32,
++        Counter32, Gauge32, Integer32, mib-2,
+         OBJECT-TYPE, MODULE-IDENTITY, NOTIFICATION-TYPE
+                 FROM SNMPv2-SMI
+ 
+diff -ru /usr/local/share/snmp/rfc.orig/TCPIPX-MIB.txt /usr/local/share/snmp/rfc/TCPIPX-MIB.txt
+--- /usr/local/share/snmp/rfc.orig/TCPIPX-MIB.txt	Sat Mar  3 17:17:17 2001
++++ /usr/local/share/snmp/rfc/TCPIPX-MIB.txt	Sat Mar  3 16:51:11 2001
+@@ -1,6 +1,8 @@
+    TCPIPX-MIB DEFINITIONS ::= BEGIN
+ 
+    IMPORTS
++	   enterprises
++		   FROM RFC1155-SMI
+            OBJECT-TYPE
+                    FROM RFC-1212;
+ 
+@@ -10,7 +12,7 @@
+ 
+ -- as hex digits, as in:  nnnnnnnn:mmmmmmmmmmmm
+ 
+-IpxAddress ::= OCTET STRING (size (10))
++IpxAddress ::= OCTET STRING (SIZE (10))
+ 
+    -- TCP/IPX MIB object idenfifiers
+ 
+diff -ru /usr/local/share/snmp/rfc.orig/UPS-MIB.txt /usr/local/share/snmp/rfc/UPS-MIB.txt
+--- /usr/local/share/snmp/rfc.orig/UPS-MIB.txt	Sat Mar  3 17:16:01 2001
++++ /usr/local/share/snmp/rfc/UPS-MIB.txt	Mon Jan 22 23:55:45 2001
+@@ -2,7 +2,7 @@
+ 
+ IMPORTS
+     MODULE-IDENTITY, OBJECT-TYPE, NOTIFICATION-TYPE,
+-    OBJECT-IDENTITY, Counter32, Gauge32, Integer32
++    OBJECT-IDENTITY, Counter32, Gauge32, Integer32, mib-2
+         FROM SNMPv2-SMI
+     DisplayString, TimeStamp, TimeInterval, TestAndIncr,
+       AutonomousType
+diff -ru /usr/local/share/snmp/rfc.orig/SMUX-MIB.txt /usr/local/share/snmp/rfc/SMUX-MIB.txt
+--- /usr/local/share/snmp/rfc.orig/SMUX-MIB.txt	2002-06-15 15:31:22.000000000 +0200
++++ /usr/local/share/snmp/rfc/SMUX-MIB.txt	2002-06-15 15:31:22.000000000 +0200
+@@ -3,6 +3,8 @@
+ IMPORTS
+         enterprises
+                 FROM RFC1155-SMI
++        DisplayString
++                FROM RFC1213-MIB
+         OBJECT-TYPE
+                 FROM RFC1212;
+ 
+@@ -120,7 +122,7 @@
+         ::= { smuxTreeEntry 1 }
+ 
+ smuxTpriority OBJECT-TYPE
+-        SYNTAX  INTEGER (0..'07fffffff'h)
++        SYNTAX  INTEGER (0..'7fffffff'h)
+         ACCESS  read-only
+         STATUS  mandatory
+         DESCRIPTION

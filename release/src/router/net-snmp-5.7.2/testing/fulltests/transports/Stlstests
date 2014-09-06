@@ -1,0 +1,49 @@
+#!/bin/sh
+
+# this file contains tests common to both tls and dtls usages
+
+export NET_SNMP_CRT_CFGTOOL="${builddir}/net-snmp-config"
+NSCERT="perl $SNMP_BASEDIR/../../../local/net-snmp-cert -I"
+NSCERTARGS="-C $SNMP_TMPDIR"
+
+#########################################
+# Create the certificates
+
+# snmpd
+HOSTNAME=`hostname`
+CAPTURE $NSCERT gencert -t snmpd   --cn $HOSTNAME $NSCERTARGS
+SERVERFP=`$NSCERT showcerts --fingerprint --brief snmpd  $NSCERTARGS`
+CHECKVALUEISNT "$SERVERFP" "" "generated fingerprint for snmpd certificate"
+
+# user
+CAPTURE $NSCERT gencert -t snmpapp --cn 'testuser'  $NSCERTARGS
+TESTUSERFP=`$NSCERT showcerts --fingerprint --brief snmpapp $NSCERTARGS`
+CHECKVALUEISNT "$TESTUSERFP" "" "generated fingerprint for testuser certificate"
+
+########################################
+# Configure the .conf files
+
+CONFIGAPP serverCert $SERVERFP
+
+# common name mappings
+CONFIGAGENT certSecName 9  $TESTUSERFP     --cn
+CONFIGAGENT  rwuser -s tsm testuser authpriv
+
+######################################################################
+# Run the actual list of tests
+#
+
+# start the agent up
+FLAGS="-On $SNMP_FLAGS $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT"
+
+STARTAGENT
+
+# using user 1 - a common name mapped certificate
+# (using the default "snmpapp" certificate because we don't specify another)
+CAPTURE "snmpget $FLAGS .1.3.6.1.2.1.1.3.0"
+
+CHECK       ".1.3.6.1.2.1.1.3.0 = Timeticks:"
+
+STOPAGENT
+
+FINISHED

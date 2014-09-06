@@ -1072,20 +1072,27 @@ setAllLedOn(void)
 #ifdef RTAC68U
 			led_control(LED_USB, LED_ON);
 			led_control(LED_USB3, LED_ON);
+#endif
+#ifdef RTCONFIG_TURBO
 			led_control(LED_TURBO, LED_ON);
 #endif
 			eval("et", "robowr", "0", "0x18", "0x01ff");	// lan/wan ethernet/giga led
 			eval("et", "robowr", "0", "0x1a", "0x01e0");
+#ifndef RTAC3200
 			eval("wl", "ledbh", "10", "1");			// wl 2.4G
 			eval("wl", "-i", "eth2", "ledbh", "10", "1");	// wl 5G
-#ifdef RTAC3200
-			eval("wl", "-i", "eth3", "ledbh", "10", "1");	// wl 5G
+#else
+			eval("wl", "ledbh", "10", "1");			// wl 5G low
+			eval("wl", "-i", "eth2", "ledbh", "10", "1");	// wl 2.4G
+			eval("wl", "-i", "eth3", "ledbh", "10", "1");	// wl 5G high
 			led_control(LED_WPS, LED_ON);
+			led_control(LED_WAN, LED_ON);
 #endif
 			/* 4360's fake 5g led */
+#ifdef RTAC68U
 			gpio_write(LED_5G, 1);				// wl 5G
 			led_control(LED_5G, LED_ON);
-
+#endif
 			break;
 		}
 		case MODEL_RTAC56S:
@@ -1210,6 +1217,57 @@ setAllLedOn(void)
 }
 
 int
+setWlOffLed()
+{
+	int model;
+	int wlon_unit = nvram_get_int("wlc_band");
+
+	model = get_model();
+	switch(model) {
+		case MODEL_RTAC56S:
+		case MODEL_RTAC56U:
+		{
+			if (wlon_unit != 0) {
+				eval("wl", "ledbh", "3", "0");			// wl 2.4G
+			} else {
+				eval("wl", "-i", "eth2", "ledbh", "10", "0");	// wl 5G
+				led_control(LED_5G, LED_OFF);
+			}
+			break;
+		}
+		case MODEL_RTAC68U:
+			if (wlon_unit != 0) {
+				eval("wl", "ledbh", "10", "0");			// wl 2.4G
+			} else {
+				eval("wl", "-i", "eth2", "ledbh", "10", "0");	// wl 5G
+				led_control(LED_5G, LED_OFF);
+			}
+			break;
+		case MODEL_RTAC3200:
+		{
+			if (wlon_unit != 0)
+				eval("wl", "-i", "eth2", "ledbh", "10", "0");	// wl 2.4G
+			else if (wlon_unit != 1)
+				eval("wl", "ledbh", "10", "0");			// wl 5G low
+			else
+				eval("wl", "-i", "eth3", "ledbh", "10", "0");	// wl 5G high
+			break;
+		}
+		case MODEL_RTAC53U:
+		{
+			if (wlon_unit != 0) {
+				eval("wl", "-i", "eth1", "ledbh", "3", "0");	// wl 2.4G
+			} else {
+				eval("wl", "-i", "eth2", "ledbh", "9", "0");	// wl 5G
+			}
+			break;
+		}
+	}
+
+	return 0;
+}
+
+int
 setAllLedOff(void)
 {
 	int model;
@@ -1287,20 +1345,27 @@ setAllLedOff(void)
 #ifdef RTAC68U
 			led_control(LED_USB, LED_OFF);
 			led_control(LED_USB3, LED_OFF);
+#endif
+#ifdef RTCONFIG_TURBO
 			led_control(LED_TURBO, LED_OFF);
 #endif
 			eval("et", "robowr", "0", "0x18", "0x01e0");	// lan/wan ethernet/giga led
 			eval("et", "robowr", "0", "0x1a", "0x01e0");
+#ifndef RTAC3200
 			eval("wl", "ledbh", "10", "0");			// wl 2.4G
-			eval("wl", "-i", "eth2", "ledbh", "10", "0");
-#ifdef RTAC3200
-			eval("wl", "-i", "eth3", "ledbh", "10", "0");
+			eval("wl", "-i", "eth2", "ledbh", "10", "0");	// wl 5G
+#else
+			eval("wl", "ledbh", "10", "0");			// wl 5G low
+			eval("wl", "-i", "eth2", "ledbh", "10", "0");	// wl 2.4G
+			eval("wl", "-i", "eth3", "ledbh", "10", "0");	// wl 5G high
 			led_control(LED_WPS, LED_OFF);
+			led_control(LED_WAN, LED_OFF);
 #endif
 			/* 4360's fake 5g led */
+#ifdef RTAC68U
 			gpio_write(LED_5G, 1);				// wl 5G
 			led_control(LED_5G, LED_OFF);
-
+#endif
 			break;
 		}
 		case MODEL_RTAC66U:
@@ -1452,7 +1517,9 @@ setATEModeLedOn(void){
 		{
 			led_control(LED_USB, LED_ON);
 			led_control(LED_USB3, LED_ON);
+#ifdef RTCONFIG_TURBO
 			led_control(LED_TURBO, LED_ON);
+#endif
 			eval("et", "robowr", "0", "0x18", "0x01ff");	// lan/wan ethernet/giga led
 			eval("et", "robowr", "0", "0x1a", "0x01e0");
 			break;
@@ -1995,7 +2062,7 @@ ERROR:
 
 int Get_ChannelList_2G(void)
 {
-#ifndef RTAC3200
+#ifndef RTAC3200_INTF_ORDER
 	return Get_channel_list(0);
 #else
 	return Get_channel_list(1);
@@ -2004,7 +2071,7 @@ int Get_ChannelList_2G(void)
 
 int Get_ChannelList_5G(void)
 {
-#ifndef RTAC3200
+#ifndef RTAC3200_INTF_ORDER
 	return Get_channel_list(1);
 #else
 	return Get_channel_list(0);
@@ -3108,7 +3175,7 @@ restore_defaults_tmobile(void)
 	nvram_set("wl1_wpa_psk", (const char *) key);
 	nvram_set("wl_wpa_psk_tmo", (const char *) key);
 }
-
+#if 0
 void
 restore_defaults_tmobile_hs2(void)
 {
@@ -3118,10 +3185,12 @@ restore_defaults_tmobile_hs2(void)
 	nvram_set("wl0.3_crypto", "aes");
 	nvram_set("wl0.3_lanaccess", "off");
 	nvram_set("wl0.3_bss_enabled", "1");
-	nvram_set("wl0.3_bss_maxassoc", "8");
+	nvram_set("wl0.3_maxassoc", "8");
 	nvram_set("wl0.3_radius_ipaddr", "127.0.0.1");
 	nvram_set("wl0.3_radius_key", "secret");
 	nvram_set("wl0.3_radius_port", "1814");
+	nvram_set("wl0.3_tmo_radius_ipaddr", "aaa.geo.t-mobile.com");
+	nvram_set("wl0.3_tmo_radius_port", "2083");
 
 	nvram_set("wl1.3_ssid", "CellSpot_AutoConnect");
 	nvram_set("wl1.3_osu_ssid", "CellSpot_AutoConnect");
@@ -3129,11 +3198,14 @@ restore_defaults_tmobile_hs2(void)
 	nvram_set("wl1.3_crypto", "aes");
 	nvram_set("wl1.3_lanaccess", "off");
 	nvram_set("wl1.3_bss_enabled", "1");
-	nvram_set("wl1.3_bss_maxassoc", "8");
+	nvram_set("wl1.3_maxassoc", "8");
 	nvram_set("wl1.3_radius_ipaddr", "127.0.0.1");
 	nvram_set("wl1.3_radius_key", "secret");
 	nvram_set("wl1.3_radius_port", "1815");
+	nvram_set("wl1.3_tmo_radius_ipaddr", "aaa.geo.t-mobile.com");
+	nvram_set("wl1.3_tmo_radius_port", "2083");
 }
+#endif
 #endif
 
 #ifdef RTCONFIG_TMOBILE
@@ -3227,7 +3299,7 @@ reset_countrycode_2g(void)
 			strcpy(country_code_str, "regulation_domain");
 			break;
 	}
-#ifndef RTAC3200
+#ifndef RTAC3200_INTF_ORDER
 	doSystem("nvram set wl0_country_code=`cat /dev/mtd0 | grep %s | cut -d \"=\" -f 2`", country_code_str);
 #else
 	doSystem("nvram set wl1_country_code=`cat /dev/mtd0 | grep %s | cut -d \"=\" -f 2`", country_code_str);
@@ -3257,10 +3329,12 @@ reset_countrycode_5g(void)
 			strcpy(country_code_str, "regulation_domain_5G");
 			break;
 	}
-#ifndef RTAC3200
+#ifndef RTAC3200_INTF_ORDER
 	doSystem("nvram set wl1_country_code=`cat /dev/mtd0 | grep %s | cut -d \"=\" -f 2`", country_code_str);
 #else
 	doSystem("nvram set wl0_country_code=`cat /dev/mtd0 | grep %s | cut -d \"=\" -f 2`", country_code_str);
+#endif
+#ifdef RTAC3200
 	nvram_set("wl2_country_code", nvram_safe_get("wl0_country_code"));
 #endif
 	return 0;
@@ -3310,7 +3384,7 @@ reset_countryrev_2g(void)
 			strcpy(country_rev_str, "1:regrev");
 			break;
 	}
-#ifndef RTAC3200
+#ifndef RTAC3200_INTF_ORDER
 	doSystem("nvram set wl0_country_rev=`cat /dev/mtd0 | grep %s | cut -d \"=\" -f 2`", country_rev_str);
 #else
 	doSystem("nvram set wl1_country_rev=`cat /dev/mtd0 | grep %s | cut -d \"=\" -f 2`", country_rev_str);
@@ -3343,12 +3417,13 @@ reset_countryrev_5g(void)
 			strcpy(country_rev_str, "1:regrev");
 			break;
 	}
-#ifndef RTAC3200
+#ifndef RTAC3200_INTF_ORDER
 	doSystem("nvram set wl1_country_rev=`cat /dev/mtd0 | grep %s | cut -d \"=\" -f 2`", country_rev_str);
 #else
 	doSystem("nvram set wl0_country_rev=`cat /dev/mtd0 | grep %s | cut -d \"=\" -f 2`", country_rev_str);
+#endif
+#ifdef RTAC3200
 	nvram_set("wl2_country_rev", nvram_safe_get("wl0_country_rev"));
 #endif
-
 	return 0;
 }

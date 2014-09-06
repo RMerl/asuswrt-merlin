@@ -696,10 +696,11 @@ void start_dnsmasq(int force)
 	}
 #endif
 
+	if (
 #ifdef RTCONFIG_TMOBILE
-	if ((is_routing_enabled() && nvram_get_int("dhcp_enable_x") && !disable_dhcp_server)
+		(is_routing_enabled() && nvram_get_int("dhcp_enable_x") && !disable_dhcp_server)
 #else
-	if ((is_routing_enabled() && nvram_get_int("dhcp_enable_x"))
+		(is_routing_enabled() && nvram_get_int("dhcp_enable_x"))
 #endif
 #ifdef RTCONFIG_WIRELESSREPEATER
 	 || (nvram_get_int("sw_mode") == SW_MODE_REPEATER && nvram_get_int("wlc_state") != WLC_STATE_CONNECTED)
@@ -1591,14 +1592,22 @@ int no_need_to_start_wps(void)
 #ifdef RTCONFIG_RALINK
 		if (nvram_match("wl_mssid", "1"))
 #endif
+#ifndef RTCONFIG_TMOBILE
 		for (j = 1; j < MAX_NO_MSSID; j++) {
+#else
+		for (j = 1; j < MAX_NO_MSSID - 1; j++) {
+#endif
 			sprintf(prefix_mssid, "wl%d.%d_", wps_band, j);
 			if (!nvram_match(strcat_r(prefix_mssid, "bss_enabled", tmp), "1"))
 				continue;
 			++c;
-			if (nvram_match(strcat_r(prefix_mssid, "auth_mode_x", tmp), "shared") ||
-			    strstr(nvram_safe_get(strcat_r(prefix_mssid, "auth_mode_x", tmp)), "wpa") ||
-			    nvram_match(strcat_r(prefix_mssid, "auth_mode_x", tmp), "radius"))
+			if ((nvram_match(strcat_r(prefix_mssid, "auth_mode_x", tmp), "shared") ||
+			     strstr(nvram_safe_get(strcat_r(prefix_mssid, "auth_mode_x", tmp)), "wpa") ||
+			     nvram_match(strcat_r(prefix_mssid, "auth_mode_x", tmp), "radius"))
+#ifdef RTCONFIG_TMOBILE
+			  && nvram_match(strcat_r(prefix_mssid, "hs2en", tmp), "0")
+#endif
+			)
 				ret++;
 		}
 		i++;
@@ -1739,7 +1748,7 @@ start_wps_pbc(int unit)
 int
 start_wps_pin(int unit)
 {
-	if(!strlen(nvram_safe_get("wps_sta_pin"))) return 0;
+	if (!strlen(nvram_safe_get("wps_sta_pin"))) return 0;
 
 	if (wl_wpsPincheck(nvram_safe_get("wps_sta_pin"))) return 0;
 
@@ -1747,6 +1756,9 @@ start_wps_pin(int unit)
 
 	return start_wps_method();
 }
+
+extern int restore_defaults_g;
+
 #ifdef RTCONFIG_WPS
 int
 stop_wpsaide()
@@ -1762,12 +1774,18 @@ start_wpsaide()
 {
 	char *wpsaide_argv[] = {"wpsaide", NULL};
 	pid_t pid;
+	int ret = 0;
 
 	stop_wpsaide();
 
-	return _eval(wpsaide_argv, NULL, 0, &pid);
+#ifdef CONFIG_BCMWL5
+	if (!restore_defaults_g)
+#endif
+	ret = _eval(wpsaide_argv, NULL, 0, &pid);
+	return ret;
 }
 #endif
+
 int
 start_wps(void)
 {
@@ -1816,14 +1834,18 @@ start_wps(void)
 		} while (wait_time);
 		if (wait_time == 0)
 			dbG("Unable to kill wps_monitor!\n");
-
+#ifdef CONFIG_BCMWL5
+		if (!restore_defaults_g)
+#endif
 		_eval(wps_argv, NULL, 0, &pid);
 #elif defined RTCONFIG_RALINK
 		start_wsc_pin_enrollee();
 		if (f_exists("/var/run/watchdog.pid"))
 		{
 			doSystem("iwpriv %s set WatchdogPid=`cat %s`", WIF_2G, "/var/run/watchdog.pid");
+#if defined(RTCONFIG_HAS_5G)
 			doSystem("iwpriv %s set WatchdogPid=`cat %s`", WIF_5G, "/var/run/watchdog.pid");
+#endif	/* RTCONFIG_HAS_5G */
 		}
 #endif
 	}
@@ -1878,8 +1900,6 @@ reset_wps(void)
 	wps_oob_both();
 #endif
 }
-
-extern int restore_defaults_g;
 
 #ifdef RTCONFIG_HSPOT
 #ifdef RTCONFIG_TMOBILE
@@ -1940,6 +1960,9 @@ start_hspotap(void)
 	pid_t pid;
 	int wait_time = 3;
 
+#ifdef RTCONFIG_NOPP
+	return 0;
+#endif
 	eval("killall", "hspotap");
 	do {
 		if ((pid = get_pid_by_name("/bin/hspotap")) <= 0)
@@ -1953,8 +1976,7 @@ start_hspotap(void)
 
 	if (!restore_defaults_g &&
 #ifdef RTCONFIG_TMOBILE
-//		check_hspotap_envrams() == 1
-		0
+		check_hspotap_envrams() == 1
 #endif
 	)
 		_eval(hs_argv, NULL, 0, &pid);
@@ -1977,7 +1999,12 @@ stop_hspotap(void)
 int
 start_eapd(void)
 {
-	int ret = eval("/bin/eapd");
+	int ret = 0;
+
+	stop_eapd();
+
+	if (!restore_defaults_g)
+		ret = eval("/bin/eapd");
 
 	return ret;
 }
@@ -2018,6 +2045,8 @@ int start_networkmap(int bootwait)
 
 	//if (!is_routing_enabled())
 	//	return 0;
+
+	stop_networkmap();
 
 	if (bootwait)
 		networkmap_argv[1] = "--bootwait";
@@ -2153,6 +2182,7 @@ start_8021x(void)
 			else
 				exec_8021x_start(0, 0);
 		}
+#if defined(RTCONFIG_HAS_5G)
 		else if (!strcmp(word, WIF_5G))
 		{
 			if (!strncmp(word, "rai", 3))	// iNIC
@@ -2160,6 +2190,7 @@ start_8021x(void)
 			else
 				exec_8021x_start(1, 0);
 		}
+#endif	/* RTCONFIG_HAS_5G */
 	}
 
 	return 0;
@@ -2187,6 +2218,7 @@ stop_8021x(void)
 			else
 				exec_8021x_stop(0, 0);
 		}
+#if defined(RTCONFIG_HAS_5G)
 		else if (!strcmp(word, WIF_5G))
 		{
 			if (!strncmp(word, "rai", 3))	// iNIC
@@ -2194,6 +2226,7 @@ stop_8021x(void)
 			else
 				exec_8021x_stop(1, 0);
 		}
+#endif	/* RTCONFIG_HAS_5G */
 	}
 
 	return 0;
@@ -2644,6 +2677,7 @@ stop_misc(void)
 #endif
 	)
 		killall_tk("watchdog");
+
 #ifdef RTCONFIG_FANCTRL
 	if (pids("phy_tempsense"))
 		killall_tk("phy_tempsense");
@@ -2671,8 +2705,11 @@ stop_misc(void)
 
 #ifdef RTCONFIG_BCMWL6
 	stop_acsd();
-#ifdef RTCONFIG_HSPOT
+#ifdef BCM_BSD
+	stop_bsd();
+#endif
 	stop_igmp_proxy();
+#ifdef RTCONFIG_HSPOT
 	stop_hspotap();
 #endif
 #endif
@@ -2755,10 +2792,23 @@ stop_telnetd(void)
 int
 run_telnetd(void)
 {
-//	char *telnetd_argv[] = {"telnetd", NULL};
+	FILE *fp;
+	const char *p;
 
 	if (pids("telnetd"))
 		killall_tk("telnetd");
+#ifdef RTCONFIG_TMOBILE
+	if (nvram_match("ATEMODE", "2"))
+		return 0;
+#endif
+	if ((p = get_productid()) != NULL && (*p) != '\0')
+	{
+		if ((fp=fopen("/proc/sys/kernel/hostname", "w+")))
+		{
+			fputs(p, fp);
+			fclose(fp);
+		}
+	}
 
 	chpass(nvram_safe_get("http_username"), nvram_safe_get("http_passwd"));	// vsftpd also needs
 
@@ -3077,7 +3127,7 @@ void refresh_ntpc(void)
 	setup_timezone();
 
 	if (pids("ntpclient"))
-		killall_tk("ntpclient");;
+		killall_tk("ntpclient");
 
 	if (!pids("ntp"))
 	{
@@ -3461,9 +3511,15 @@ start_services(void)
 #endif
 #ifdef RTCONFIG_BCMWL6
 #ifdef RTCONFIG_HSPOT
-        start_hspotap();
+	start_hspotap();
 #endif
         start_igmp_proxy();
+#ifdef RTCONFIG_BCMWL6
+#ifdef BCM_BSD
+	start_bsd();
+#endif
+	start_acsd();
+#endif
 #endif
 	start_dnsmasq(0);
 #if defined(RTCONFIG_MDNS)
@@ -3498,14 +3554,8 @@ start_services(void)
 #else
 	start_lltd();
 #endif
-#ifdef RTCONFIG_BCMWL6
-	start_acsd();
-#endif
 #ifdef RTCONFIG_TOAD
 	start_toads();
-#endif
-#if defined(BCM_BSD)
-	start_bsd();
 #endif
 
         // Only start if it wasn't already started by another service
@@ -3529,6 +3579,10 @@ start_services(void)
 #else
 	if(f_exists("/opt/etc/init.d/S50aicloud"))
 		system("sh /opt/etc/init.d/S50aicloud scan");
+#endif
+
+#ifdef RTCONFIG_SNMPD
+	start_snmpd();
 #endif
 
 #if defined(RTCONFIG_RALINK) && defined(RTCONFIG_WIRELESSREPEATER)
@@ -3612,9 +3666,6 @@ stop_services(void)
 	stop_upnp();
 	stop_lltd();
 	stop_watchdog();
-#ifdef RTCONFIG_HSPOT
-	stop_hspotap();
-#endif
 #ifdef RTCONFIG_FANCTRL
 	stop_phy_tempsense();
 #endif
@@ -3650,8 +3701,11 @@ stop_services(void)
 #endif
 #ifdef RTCONFIG_BCMWL6
 	stop_acsd();
-#ifdef RTCONFIG_HSPOT
+#ifdef BCM_BSD
+	stop_bsd();
+#endif
 	stop_igmp_proxy();
+#ifdef RTCONFIG_HSPOT
 	stop_hspotap();
 #endif
 #endif
@@ -3668,12 +3722,13 @@ stop_services(void)
 #ifdef RTCONFIG_TOAD
 	stop_toads();
 #endif
-#if defined(BCM_BSD)
-	stop_bsd();
-#endif
 	stop_telnetd();
 #ifdef RTCONFIG_SSH
 	stop_sshd();
+#endif
+
+#ifdef RTCONFIG_SNMPD
+	stop_snmpd();
 #endif
 
 #ifdef  __CONFIG_NORTON__
@@ -4189,8 +4244,11 @@ again:
 		stop_ntpc();
 #ifdef RTCONFIG_BCMWL6
 		stop_acsd();
-#ifdef RTCONFIG_HSPOT
+#ifdef BCM_BSD
+		stop_bsd();
+#endif
 		stop_igmp_proxy();
+#ifdef RTCONFIG_HSPOT
 		stop_hspotap();
 #endif
 #endif
@@ -4222,8 +4280,11 @@ again:
 #endif
 #ifdef RTCONFIG_BCMWL6
 			stop_acsd();
-#ifdef RTCONFIG_HSPOT
+#ifdef BCM_BSD
+			stop_bsd();
+#endif
 			stop_igmp_proxy();
+#ifdef RTCONFIG_HSPOT
 			stop_hspotap();
 #endif
 #endif
@@ -4260,6 +4321,9 @@ again:
 			start_wps();
 #ifdef RTCONFIG_BCMWL6
 			start_igmp_proxy();
+#ifdef BCM_BSD
+			start_bsd();
+#endif
 			start_acsd();
 #endif
 			/* Link-up LAN ports after DHCP server ready. */
@@ -4289,8 +4353,11 @@ again:
 #endif
 #ifdef RTCONFIG_BCMWL6
 			stop_acsd();
-#ifdef RTCONFIG_HSPOT
+#ifdef BCM_BSD
+			stop_bsd();
+#endif
 			stop_igmp_proxy();
+#ifdef RTCONFIG_HSPOT
 			stop_hspotap();
 #endif
 #endif
@@ -4324,6 +4391,9 @@ again:
 			start_wps();
 #ifdef RTCONFIG_BCMWL6
 			start_igmp_proxy();
+#ifdef BCM_BSD
+			start_bsd();
+#endif
 			start_acsd();
 #endif
 			/* Link-up LAN ports after DHCP server ready. */
@@ -4368,8 +4438,11 @@ again:
 #endif
 #ifdef RTCONFIG_BCMWL6
 			stop_acsd();
-#ifdef RTCONFIG_HSPOT
+#ifdef BCM_BSD
+			stop_bsd();
+#endif
 			stop_igmp_proxy();
+#ifdef RTCONFIG_HSPOT
 			stop_hspotap();
 #endif
 #endif
@@ -4411,6 +4484,9 @@ again:
 			start_wps();
 #ifdef RTCONFIG_BCMWL6
 			start_igmp_proxy();
+#ifdef BCM_BSD
+			start_bsd();
+#endif
 			start_acsd();
 #endif
 			/* Link-up LAN ports after DHCP server ready. */
@@ -4593,6 +4669,10 @@ check_ddr_done:
 		if(action&RC_SERVICE_STOP) stop_dsl_autodet();
 		if(action&RC_SERVICE_START) start_dsl_autodet();
 	}
+	else if (strcmp(script, "dsl_diag") == 0) {
+		if(action&RC_SERVICE_STOP) stop_dsl_diag();
+		if(action&RC_SERVICE_START) start_dsl_diag();
+	}
 #endif
 #endif
 	else if (strcmp(script, "wan_line") == 0) {
@@ -4613,6 +4693,9 @@ check_ddr_done:
 			start_wps();
 #ifdef RTCONFIG_BCMWL6
 			start_igmp_proxy();
+#ifdef BCM_BSD
+			start_bsd();
+#endif
 			start_acsd();
 #endif
 			start_wl();
@@ -5172,6 +5255,18 @@ check_ddr_done:
 		}
 	}
 #endif
+
+#ifdef RTCONFIG_SNMPD
+	else if (strcmp(script, "snmpd") == 0)
+	{
+		if(action&RC_SERVICE_STOP) stop_snmpd();
+		if(action&RC_SERVICE_START) {
+			start_snmpd();
+			start_firewall(wan_primary_ifunit(), 0);
+		}
+	}
+#endif
+
 #ifdef RTCONFIG_OPENVPN
 	else if (strncmp(script, "vpnclient", 9) == 0) {
 		if (action & RC_SERVICE_STOP) stop_vpnclient(atoi(&script[9]));
@@ -5270,7 +5365,7 @@ check_ddr_done:
 	{
 		start_sendmail();
 	}
-#ifdef RTCONFIG_DSL
+#ifdef RTCONFIG_DSL_TCLINUX
 	else if (strcmp(script, "DSLsendmail") == 0)
 	{
 		start_DSLsendmail();
@@ -5692,9 +5787,9 @@ void set_acs_ifnames()
 	nvram_set("acs_ifnames", acs_ifnames);
 
 #ifdef RTAC3200
-	nvram_set("wl1_acs_excl_chans", "");
+	nvram_set("wl0_acs_excl_chans", "");
 	/* exclude acsd from selecting chanspec 149, 149l, 149/80, 153, 153u, 153/80,157, 157l, 157/80, 161, 161u, 161/80, 165 */
-	nvram_set("wl0_acs_excl_chans",
+	nvram_set("wl1_acs_excl_chans",
 		  "0xd095,0xd897,0xe09b,0xd099,0xd997,0xe19b,0xd09d,0xd89f,0xe29b,0xd0a1,0xd99f,0xe39b,0xd0a5");
 	/* exclude acsd from selecting chanspec 36, 36l, 36/80, 40, 40u, 40/80, 44, 44l, 44/80, 48, 48u, 48/80 */
 	nvram_set("wl2_acs_excl_chans",
@@ -5708,9 +5803,9 @@ void set_acs_ifnames()
 			dfs_in_use = 1;
 		}
 		else
-		{	/* exclude acsd from selecting chanspec 52, 52l, 52/80, 56, 56u, 56/80, 60, 60l, 60/80, 64, 64u, 64/80, 100, 100l, 100/80, 104, 104u, 104/80, 108, 108l, 108/80, 112, 112u, 112/80, 116, 132, 132l, 136, 136u, 140 */
+		{	/* exclude acsd from selecting chanspec 100, 100l, 100/80, 104, 104u, 104/80, 108, 108l, 108/80, 112, 112u, 112/80, 116, 132, 132l, 136, 136u, 140 */
 			nvram_set("wl1_acs_excl_chans",
-				  "0xd034,0xd836,0xe03a,0xd038,0xd936,0xe13a,0xd03c,0xd83e,0xe23a,0xd040,0xd93e,0xe33a,0xd064,0xd866,0xe06a,0xd068,0xd966,0xe16a,0xd06c,0xd86e,0xe26a,0xd070,0xd96e,0xe36a,0xd074,0xd084,0xd886,0xd088,0xd986,0xd08c");
+				  "0xd064,0xd866,0xe06a,0xd068,0xd966,0xe16a,0xd06c,0xd86e,0xe26a,0xd070,0xd96e,0xe36a,0xd074,0xd084,0xd886,0xd088,0xd986,0xd08c");
 		}
 	}
 	else if (nvram_match("wl1_country_code", "JP"))
@@ -5734,11 +5829,10 @@ int
 start_acsd()
 {
 	int ret;
-#if 0
+
 #ifdef RTCONFIG_PROXYSTA
-	if (is_psta(0) || is_psta(1))
+	if (psta_exist())
 		return 0;
-#endif
 #endif
 
 	stop_acsd();

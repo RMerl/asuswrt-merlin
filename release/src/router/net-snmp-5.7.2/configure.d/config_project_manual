@@ -1,0 +1,170 @@
+# -*- autoconf -*-
+#
+# Prompt for various bits of user information
+#
+
+if test "x$ac_cv_user_prompt_NETSNMP_LOGFILE" = "x" -o "x$ac_cv_user_prompt_NETSNMP_SYS_LOC" = "x" -o "x$ac_cv_user_prompt_NETSNMP_SYS_CONTACT" = "x" -o "x$ac_cv_user_prompt_NETSNMP_DEFAULT_SNMP_VERSION" = "x"; then
+AC_CACHE_CHECK(whether to prompt for values, ac_cv_have_warned,
+[
+if test "x$defaults" = "xno"; then
+AC_MSG_NOTICE([
+
+	 ************** Configuration Section **************
+
+	You are about to be prompted with a series of questions.  Answer
+them carefully, as they determine how the SNMP agent and related
+applications are to function.
+
+	After the configure script finishes, you can browse the newly
+created net-snmp-config.h file for further - less important - parameters to
+modify.  Be careful if you re-run configure though, since net-snmp-config.h 
+will be overwritten.
+
+-Press return to continue-
+])
+
+read tmpinput <&AS_ORIGINAL_STDIN_FD
+ac_cv_have_warned="yes"
+else
+  ac_cv_have_warned="no"
+fi
+])
+else
+  ac_cv_have_warned="yes"
+fi
+
+ME=`$WHOAMI`
+if test -f /etc/resolv.conf; then
+  LOC=`awk '/^domain/{loc=$NF}END{print loc}' /etc/resolv.conf`
+fi
+if test "x$LOC" = x; then
+  LOC="@no.where"
+fi
+
+AC_PROMPT_USER(NETSNMP_DEFAULT_SNMP_VERSION,[
+
+*** Default SNMP Version:
+
+	Starting with Net-SNMP 5.0, you can choose the default version of
+the SNMP protocol to use when no version is given explicitly on the
+command line, or via an 'snmp.conf' file.  In the past this was set to
+SNMPv1, but you can use this to switch to SNMPv3 if desired.  SNMPv3
+will provide a more secure management environment (and thus you're
+encouraged to switch to SNMPv3), but may break existing scripts that
+rely on the old behaviour.  (Though such scripts will probably need to
+be changed to use the '-c' community flag anyway, as the SNMPv1
+command line usage has changed as well.).
+   At this prompt you can select \"1\", \"2\" (for SNMPv2c), or \"3\" as
+the default version for the command tools (snmpget, ...) to use.  This
+can always be overridden at runtime using the -v flag to the tools, or
+by using the \"defVersion\" token in your snmp.conf file.
+   Providing the --with-default-snmp-version=\"x\" parameter to ./configure
+will avoid this prompt.
+
+Default version of SNMP to use],3,unquoted)
+
+# we tested this above before the prompt, but the prompt may give a new value.
+case "${ac_cv_user_prompt_NETSNMP_DEFAULT_SNMP_VERSION}" in
+  [[123]]) ;;
+  2c) ac_cv_user_prompt_NETSNMP_DEFAULT_SNMP_VERSION=2 ;;
+  *)
+    AC_MSG_ERROR([Illegal version number.  Only 1, 2 (for SNMPv2c) and 3 are supported.])
+    ;;
+esac
+
+AC_PROMPT_USER(NETSNMP_SYS_CONTACT,[
+
+*** System Contact Information:
+
+	Describes who should be contacted about the host the agent is
+running on.  This information is available in the MIB-II tree.  This
+can also be over-ridden using the \"syscontact\" syntax in the agent's
+configuration files.
+  Providing the --with-sys-contact=\"contact\" parameter to ./configure
+will avoid this prompt.
+
+System Contact Information],$ME@$LOC,quoted)
+
+AC_PROMPT_USER(NETSNMP_SYS_LOC,[
+
+*** System Location:
+
+	Describes the location of the system.  This information is
+available in the MIB-II tree.  this can also be over-ridden using the
+\"syslocation\" syntax in the agent's configuration files.
+  Providing the --with-sys-location=\"location\" parameter to ./configure
+will avoid this prompt.
+
+System Location],Unknown,quoted)
+
+if test -d /var/log; then
+  defaultlog="/var/log/snmpd.log"
+else
+  defaultlog="/usr/adm/snmpd.log"
+fi
+  
+AC_PROMPT_USER(NETSNMP_LOGFILE,[
+
+*** Logfile location:
+
+	Enter the default location for the snmpd agent to dump
+information & errors to.  If not defined (enter the keyword \"none\"
+at the prompt below) the agent will use stdout and stderr instead.
+(Note: This value can be over-ridden using command line options.)
+  Providing the --with-logfile=\"path\" parameter to ./configure
+will avoid this prompt.
+
+Location to write logfile],$defaultlog,quoted)
+
+if test -d /var; then
+  defaultstore="/var/net-snmp"
+  ucddefaultstore="/var/ucd-snmp"
+else
+  defaultstore="/etc/net-snmp"
+  ucddefaultstore="/etc/ucd-snmp"
+fi
+  
+AC_PROMPT_USER(NETSNMP_PERSISTENT_DIRECTORY,[
+
+*** snmpd persistent storage location:
+
+	Enter a directory for the SNMP library to store persistent
+data in the form of a configuration file.  This default location is
+different than the old default location (which was for ucd-snmp).  If
+you stay with the new path, I'll ask you in a second if you wish to
+copy your files over to the new location (once only).  If you pick
+some other path than the default, you'll have to copy them yourself.
+There is nothing wrong with picking the old path ($ucddefaultstore) if
+you'd rather.
+  Providing the --with-persistent-directory=\"path\" parameter to
+./configure will avoid this prompt.
+
+Location to write persistent information],$defaultstore,quoted)
+
+PERSISTENT_DIRECTORY=$ac_cv_user_prompt_NETSNMP_PERSISTENT_DIRECTORY
+AC_SUBST(PERSISTENT_DIRECTORY)
+UCDPERSISTENT_DIRECTORY=$ucddefaultstore
+AC_SUBST(UCDPERSISTENT_DIRECTORY)
+
+if test $PERSISTENT_DIRECTORY = "$defaultstore" -a -d "$ucddefaultstore" -a ! -d "$defaultstore" ; then
+AC_CACHE_CHECK(If we should copy the old persistent directory, ac_cv_user_prompt_COPY_PERSISTENT_FILES,
+[
+AC_PROMPT_USER_NO_DEFINE(ac_cv_user_prompt_COPY_PERSISTENT_FILES,[
+
+*** Copying old ucd-snmp persistent files to net-snmp persistent directory:
+
+	Would you like to copy the older ucd-snmp persistent files
+into your new net-snmp persistent file path?  This will functionally
+save all your ucd-snmp data and let it be used within the net-snmp
+tools.  This will only be done once when you run make install.  If you
+wish to do this, enter "yes" at the prompt.
+  Providing the --with-copy-persistent-files=\"no\" (or \"yes\")
+parameters to ./configure will avoid this prompt.
+
+Copy ucd-snmp data into the net-snmp data directory],"yes")
+])
+else
+ac_cv_user_prompt_COPY_PERSISTENT_FILES="no"
+fi
+COPY_PERSISTENT_FILES="$ac_cv_user_prompt_COPY_PERSISTENT_FILES"
+AC_SUBST(COPY_PERSISTENT_FILES)

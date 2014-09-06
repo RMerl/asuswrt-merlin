@@ -1,0 +1,25 @@
+#!/bin/sh
+
+. ../support/simple_eval_tools.sh
+
+SKIPIFNOT NETSNMP_SECMOD_USM
+
+HEADER snmptrapd discards of incorrect view types 
+
+#
+# Begin test
+#
+
+CONFIGTRAPD createUser testuser
+CONFIGTRAPD authuser execute testuser noAuthNoPriv
+CONFIGTRAPD agentxsocket /dev/null
+
+STARTTRAPD
+
+CAPTURE "snmptrap -Ci -t $SNMP_SLEEP -d -v 3 -u testuser -l nanp $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPTRAPD_PORT 0 .1.3.6.1.6.3.1.1.5.1 system.sysContact.0 s blah"
+
+STOPTRAPD
+
+CHECKTRAPDCOUNT 0 "coldStart"
+
+FINISHED

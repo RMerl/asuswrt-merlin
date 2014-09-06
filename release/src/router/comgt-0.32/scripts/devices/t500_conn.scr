@@ -2,42 +2,74 @@ opengt
 set com 115200n81
 set senddelay 0.05
 waitquiet 1 0.2
+
+system "nvram set g3state_z=0"
+system "nvram set g3state_apn=0"
+system "nvram set g3state_dial=0"
+system "nvram set g3state_conn=0"
+
+
+:ready
+system "nvram set g3state_z=1"
 send "ATZ^m"
 waitfor 10 "OK","ERR","ERROR"
 if % = -1 goto timeerror
-if % = 0 goto next1
-if % = 1 goto error
-if % = 2 goto error
-:next1
-system "nvram set g3state_z=1"
+if % = 0 goto set_apn
+system "nvram set g3state_z=-1"
+goto error
+
+
+:set_apn
+system "nvram set g3state_apn=1"
 send "AT+CFUN=1;+CGDCONT=1,\"IP\",\"internet\"^m"
 waitfor 10 "OK","ERR","ERROR"
-if % = -1 goto timeerror
-if % = 0 goto next2
-if % = 1 goto error
-if % = 2 goto error
-:next2
+if % = -1 goto apntimeerror
+if % = 0 goto set_dial
+system "nvram set g3state_apn=-1"
+goto apnerror
+
+
+:set_dial
 system "nvram set g3state_dial=1"
 send "ATD*99#^m"
 waitfor 10 "CONNECT","ERR","ERROR"
 if % = -1 goto timeerror
-if % = 0 goto next3
-if % = 1 goto error
-if % = 2 goto error
-:next3
+if % = 0 goto done
+system "nvram set g3state_dial=-1"
+goto error
+
+
+:done
 system "nvram set g3state_conn=1"
 print "CONNECTED\n"
 exit 0
-:error
-system "nvram set connerr=1"
-system "nvram set g3err=1"
-print "CONNECT ERROR\n"
-send "ATH^m"
-exit 1
-:timeerror
-system "nvram set connerr=2"
-system "nvram set g3err=1"
-print "CONNECT TIMEOUT\n"
+
+
+:apnerror
+system "nvram set g3err_apn=1"
+print "ERROR entering APN\n"
+print \"The COMGTAPN env variable is not set.\n"
 send "ATH^m"
 exit 1
 
+
+:apntimeerror
+system "nvram set g3err_apn=2"
+print \"ERROR entering APN\n"
+print "The device timeout\n"
+send "ATH^m"
+exit 1
+
+
+:error
+system "nvram set g3err_conn=1"
+print "CONNECT ERROR\n"
+send "ATH^m"
+exit 1
+
+
+:timeerror
+system "nvram set g3err_conn=2"
+print "CONNECT TIMEOUT\n"
+send "ATH^m"
+exit 1

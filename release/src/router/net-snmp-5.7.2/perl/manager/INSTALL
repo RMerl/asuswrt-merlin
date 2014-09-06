@@ -1,0 +1,198 @@
+REQUIREMENTS
+
+  A knowledgeable user.  This system is *not* entirely user friendly
+  yet.   You have been warned.  Use at your own risk.  yada yada yada.
+
+  Get and install:
+  
+    the mysql (http://www.mysql.com) database
+      it may work with other databases, but I haven't tried.
+
+    Apache (http://www.apache.org)
+
+    The following perl modules (http://www.cpan.org):
+      mod_perl
+      SNMP (from the net-snmp source tree: SRCTREE/perl/SNMP)
+      CGI
+      DBI
+      DBD::mSQL
+      GD::Graph
+
+    You may need more modules depending on your perl version, so sorry
+    in advance if I missed some.
+
+  Building and setting up mysql (a summary of what is needed.  See the
+  mysql documentation for further details):
+     ./configure
+     make
+     make install
+     scripts/mysql_install_db
+  
+     start it by running 'safe_mysqld'.
+     To run the sql commands listed in the following text, run
+     'mysql'.
+
+SQL REQUIREMENTS
+
+  The scripts used by this project automatically create, edit, delete, 
+  insert, update, etc everything necessary.  Because of this, you'll
+  need to set up a SQL user with the ability to modify the heck out of 
+  a database called "snmp" on your mysql server.  We'll call this user 
+  SQLUSER below, and its password SQLPASSWORD.  Replace these with
+  your appropriate information anytime you see them listed below.
+
+INSTALLING THE PERL MODULES
+
+  perl Makefile.PL
+  make
+  make install
+
+  Copy the red.gif, and green.gif graphics files to your apache
+  HTML-ROOT/graphics/.
+
+SETTING UP APACHE
+
+  (assumes you have mod_perl installed properly from above)
+
+  Idealy, it should be put behind a user/password database in your web
+  server (something that sets the REMOTE_USER environmental for CGI
+  scripts).  This will greatly enhance its operation so that different
+  users can be users of different groups of hosts, etc...  If this is
+  not done, everyone will use the user name "guest".
+
+  At the bottom of your httpd.conf file or in an apporpriate
+  VirtualHost directive put the following lines, appropriately
+  configuring the sql username, etc.  I strongly recommend turning on
+  SSL support for this as well.:
+
+    PerlModule netsnmp::manager
+    <Location /manage>
+         # put apache protection stuff here, like a password database etc!!!
+         SetHandler perl-script
+         PerlHandler ucdsnmp::manager
+         PerlSetVar hostname SQLHOST
+         PerlSetVar dbname snmp
+         PerlSetVar user SQLUSER
+         PerlSetVar pass SQLPASSWORD
+
+	 # turn on password protection.  see apache htpasswd documentation.
+	 # comment these out for unauthenticated access (generally a bad idea)
+	 AuthType Basic
+         AuthName "SNMP manager access"
+         AuthUserFile /etc/httpd/conf/manager-passwd
+         require valid-user
+
+    </Location>
+
+   Restart apache after you've done the above.
+
+SETTING UP THE MYSQL UCD-SNMP DATABASES
+
+  Use the following perl script to set up the mysql database tables
+  required:
+
+    ./setupdb -u SQLUSER -p SQLPASSWORD -h SQLHOST
+
+  To display what this will do before you run it:
+
+    ./setupdb -v -n
+
+SETTING UP USERS OF THE SYSTEM
+
+  Now you need to add yourself as a user.  You'll want to use a
+  username that you configured for your apache password file (or
+  whatever), or the user "guest" if you didn't configure apache for
+  authenticated access.  The -a in this case grants "administrative"
+  rights to the group of hosts, and thus allows the user to add new
+  hosts to the group, delete hosts, etc.  Non-administrative users are 
+  mostly "read-only" type users.
+
+  The interface groups hosts together in "groups", and you put users
+  in these groups to assign responsiblity for them.  Groups are
+  created when a user gets assigned to one, so just pick a groupname
+  for now and use it below.  Maybe later you can add yourself to a new 
+  group using a similar command, and the web interface will change to
+  reflect that you are now in more than one group.  Use the same group 
+  name for multiple users that all belong to a single "group".
+
+  If you add an email address to the argument list the system will
+  mail that user every time it finds a problem or finds a problem that 
+  has been fixed.
+
+  *** DO NOT PICK A GROUP WITH THE NAME "default" ***
+
+    ./setupuser -u SQLUSER -p SQLPASSWORD -h SQLHOST -a GROUPNAME USERNAME [EMAILADDRESS]
+
+SETTING UP SNMP AUTHORIZATION INFORMATION
+
+  Now, you need to add in your default authorization information for
+  how to make SNMP requests to your host.  The parameter names you can 
+  pick come straight from the SNMP perl module, so see "perldoc SNMP"
+  for all the parameter names you can pick from.
+
+  Examples:
+
+    ./setupauth -u SQLUSER -p SQLPASSWORD -h SQLHOST Version 1 Community public
+    ./setupauth -u SQLUSER -p SQLPASSWORD -h SQLHOST Version 3 SecName 'v3user' AuthPass 'myv3passphrase' SecLevel authNoPriv
+
+  I also recommend adding a large default timeout (30 secs):
+
+    ./setupauth -u SQLUSER -p SQLPASSWORD -h SQLHOST Timeout 30000000
+  
+  If you want different parameters for a group, it'll inherit
+  everything from the default parameters specified above plus any more 
+  that you set or override:
+
+    ./setupauth -u SQLUSER -p SQLPASSWORD -h SQLHOST -g agroup Community private
+
+  Further, hosts can be given specific parameters as well if they're
+  really special:
+
+    ./setupauth -u SQLUSER -p SQLPASSWORD -h SQLHOST -m host Timeout 60000000
+
+COLLECTING THE DATA
+
+  The command you need to run to collect data is snmptosql, which will 
+  use the information defined above to fill your data base with all
+  sorts of useful information that you've asked it to collect.
+  Something like:
+
+    snmptosql -H SQLHOST -u SQLUSER -p SQLPASSWORD
+
+  should be put in cron to update a regular intervals.  I run mine
+  every 10 minutes.  Note that it will *not* scale to a large number
+  of hosts easily at the moment.  Start with no more than 20 or so to
+  begin with.
+
+USING THE SYSTEM
+
+  Most of the things you'll need to do can be done from the web
+  interface that you've just set up as /manager on some system in the 
+  step above.  Go to this web page to see what you can do.
+
+MONITORING HOSTS WITH IT (finally)
+
+  It's *not* entirely intuitive yet.  So, lets give you an example.  In
+  your snmpd.conf file, put a line that says "proc sendmail".  This will 
+  check to see if sendmail is running on your system.  Also put "disk /
+  10%" which will require the disk has at least 10% of free space.
+  Restart the snmpd (or kill -HUP).  See the snmpd.conf manual page
+  for some details.
+
+  Then, go to the above URL and click on the group name you want to
+  add a host to and enter the host name in the dialog box near the
+  bottom of the page (assuming you're logged in as an administrator
+  user setup using the -a flag to setupuser above).  Click on the
+  "setup group XXX" link at the bottom of the group's page and click
+  on all the check buttons (you can turn them all on even if you're
+  not really using them all) and hit the submit button.
+
+  Come back 10 minutes later, reload the group and click on the host
+  name.  You should see pretty red/green lights if there is or isn't a
+  problem.  It'll show you a few tables with the various bits of data
+  it collected (including how many sendmail processes are running, an
+  how much disk space is actually being used), etc.
+
+GRAPHING
+
+  To be written.

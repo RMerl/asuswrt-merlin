@@ -1,0 +1,67 @@
+One of the goals of the Net-SNMP v5 development line, is to try and
+clarify the distinction between the "public" library API, and routines
+that are regarded as being more "internal" to the library.
+
+  This doesn't mean that application writers are discouraged from
+making use of such internal routines.  There is a strong feeling
+within the development team that as much as possible of the library
+should be made externally visible, to support writing as wide a
+range of applications as possible.  To that end, most routines
+will be declared within an installed header file, rather than
+privately within the library code files themselves.
+
+  The public/internal categorisation is rather concerned with issues
+of documentation, stability, and ease of programming.  The public
+API routines have been selected as those covering the more common
+requirements (e.g. creating SNMP requests, sending them to other SNMP
+agents, and interpreting the results), together with certain supporting
+activities (e.g. run-time configuration).
+
+  The intention is that these routines should be properly documented,
+and remain relatively stable.  We will attempt to avoid changing the
+profile of these interfaces, and would normally provide some mechanism
+to retain backward compatability if need be.
+
+  On the other hand, the internal API routines are regarded as just
+that - "internal" - so may legitimately be changed without providing
+any compatability mechanism.  You are perfectly free to make use of
+these routines, but be aware that you do so "at your own risk".
+
+[This statement is in no way intended to challenge or amend the status
+ of the disclaimers in the top-level 'COPYING' file, which remain
+ unchanged  as the legal basis for using this code]
+
+
+  There are (currently) eight main "public API" header files, relating
+to various areas of SNMP programming, plus a combined "all-in-one"
+header file (net-snmp-includes.h).
+  Currently these simply include the relevant library header files
+following the UCD-SNMP organisation.  However, the intention is for
+future releases to declare the public API calls directly within these
+top-level header files, and use the 'library/*.h' files for the more
+internal calls.  (i.e. those that are more likely to change over time).
+
+  Until this process can be started, the best approximation to the
+"public API" list is probably those routines that are documented
+in manual pages.  Apologies for any confusion, but hopefully this
+process will result in a clearer end result than at present.
+
+Applications writers are encouraged to start #including the new header
+files as soon as possible - either individually, or using the combined
+wrapper file.  Hopefully, with only a handful of top-level files, it
+will be reasonably clear which file(s) might be appropriate for any
+particular programming requirement.
+
+
+
+  One final disclaimer:  The above description represents my own
+personal aims and understanding of the likely development of the
+library API.  While I have every confidence in having the support of
+the other developers (or being able to persuade them of the benefits
+of this approach!), it may turn out that things actually take a different
+route.  Anyone wishing to influence the organisation of the eventual
+library API is encouraged to subscribe to the net-snmp-coders mailing
+list, and contribute to the discussions there.
+
+Dave Shield
+February 2002

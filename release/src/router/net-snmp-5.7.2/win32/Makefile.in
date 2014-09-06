@@ -1,0 +1,503 @@
+SDK=
+LINKTYPE=
+CFG=
+PREFIX=
+PREFIX_DOS=
+PERL=
+NMAKE=nmake /nologo
+
+all : libs apps snmptrapd snmpd local
+
+clean : apps_clean libs_clean snmptrapd_clean snmpd_clean local_clean
+
+snmpd : snmpd_
+snmpd_clean : snmpd_clean_
+netsnmpmibs : netsnmpmibs_	
+netsnmpmibs_clean : netsnmpmibs_clean_
+
+!IF "$(LINKTYPE)" == "static"
+libsnmp : libsnmp_
+libsnmp_clean : libsnmp_clean_
+!ELSE
+libsnmp : libsnmp_dll_
+libsnmp_clean : libsnmp_dll_clean_
+!ENDIF
+
+libs : libagent libsnmp libnetsnmptrapd netsnmpmibs 
+libs_clean : libagent_clean libsnmp_clean libnetsnmptrapd_clean netsnmpmibs_clean
+
+apps : snmpdf snmpset snmpusm snmptest snmptrap snmpvacm snmpwalk snmpdelta snmptable snmpstatus snmpbulkget snmpget snmpgetnext snmpbulkwalk snmptranslate encode_keychange snmpnetstat
+
+apps_clean : snmpdf_clean snmpset_clean snmpusm_clean snmptest_clean snmptrap_clean snmpvacm_clean snmpwalk_clean snmpdelta_clean snmptable_clean snmpstatus_clean snmpbulkget_clean snmpget_clean snmpgetnext_clean snmpbulkwalk_clean snmptranslate_clean encode_keychange_clean snmpnetstat_clean
+
+local : snmpconf mib2c traptoemail
+
+local_clean : snmpconf_clean mib2c_clean traptoemail_clean
+
+perl :
+!IF "$(LINKTYPE)" == "static"
+	-@echo .
+	-@echo WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING
+	-@echo ===============================================================
+	-@echo Building Perl modules using static SNMPLIB library.
+	-@echo .
+	-@echo Some modules will not function correctly with the static version
+	-@echo of the SNMPLIB library.
+	-@echo .
+	-@echo nmake perl_test will not complete due to a crash in the OID
+	-@echo module.
+	-@echo ===============================================================
+	-@echo .
+	-@echo .
+!ELSE	# dynamic/static check
+	-@echo .
+	-@echo ===============================================================
+	-@echo Building Perl modules using dynamic (DLL) SNMPLIB library.
+	-@echo .
+	-@echo ===============================================================
+	-@echo .
+	-@echo .
+!ENDIF	# dynamic/static check
+	cd ..\perl
+!IF "$(CFG)" == "release"
+	perl Makefile.PL CAPI=TRUE -NET-SNMP-IN-SOURCE=TRUE
+!ELSE	# release/debug check
+	perl Makefile.PL CAPI=TRUE -NET-SNMP-IN-SOURCE=TRUE -NET-SNMP-DEBUG=TRUE
+!ENDIF	# release/debug check
+	$(NMAKE)
+	cd ..\win32
+
+perl_test :
+!IF "$(LINKTYPE)" == "static" # Check in case test triggers build
+	-@echo .
+	-@echo Perl test aborted.
+	-@echo Perl modules must be build against dynamic (DLL) libraries
+	-@echo .
+!ELSE	# dynamic/static check
+	cd ..\perl
+	$(NMAKE) test
+	cd ..\win32
+!ENDIF	# dynamic/static check
+
+perl_install :
+!IF "$(LINKTYPE)" == "static" # Check in case install triggers build
+	-@echo .
+	-@echo Perl install aborted.
+	-@echo Perl modules must be build against dynamic (DLL) libraries
+	-@echo .
+!ELSE	# dynamic/static check
+	cd ..\perl
+	$(NMAKE) install
+	cd ..\win32
+!ENDIF	# dynamic/static check
+
+perl_clean :
+	cd ..\perl
+	$(NMAKE) clean
+	cd ..\win32
+
+
+##############
+#
+# Build
+# 
+libagent ::
+	cd libagent
+	$(NMAKE) all
+	cd ..
+
+libsnmp_ ::
+	cd libsnmp
+	$(NMAKE) all
+	cd ..
+
+libsnmp_dll_ ::
+	cd libsnmp_dll
+	$(NMAKE) all
+	cd ..
+
+libnetsnmptrapd ::
+	cd libnetsnmptrapd
+	$(NMAKE) all
+	cd ..
+
+netsnmpmibs_ ::
+	cd netsnmpmibs
+	$(NMAKE) all
+	cd ..
+
+snmpdf ::
+	cd snmpdf
+	$(NMAKE) all
+	cd ..
+
+snmpset ::
+	cd snmpset
+	$(NMAKE) all
+	cd ..
+
+snmpusm ::
+	cd snmpusm
+	$(NMAKE) all
+	cd ..
+
+snmptest ::
+	cd snmptest
+	$(NMAKE) all
+	cd ..
+
+snmptrap ::
+	cd snmptrap
+	$(NMAKE) all
+	cd ..
+
+snmpvacm ::
+	cd snmpvacm
+	$(NMAKE) all
+	cd ..
+
+snmpwalk ::
+	cd snmpwalk
+	$(NMAKE) all
+	cd ..
+
+snmpdelta ::
+	cd snmpdelta
+	$(NMAKE) all
+	cd ..
+
+snmptable ::
+	cd snmptable
+	$(NMAKE) all
+	cd ..
+
+snmpstatus ::
+	cd snmpstatus
+	$(NMAKE) all
+	cd ..
+
+snmpbulkget ::
+	cd snmpbulkget
+	$(NMAKE) all
+	cd ..
+
+snmpget ::
+	cd snmpget
+	$(NMAKE) all
+	cd ..
+
+snmpgetnext ::
+	cd snmpgetnext
+	$(NMAKE) all
+	cd ..
+
+snmpbulkwalk ::
+	cd snmpbulkwalk
+	$(NMAKE) all
+	cd ..
+
+snmptranslate ::
+	cd snmptranslate
+	$(NMAKE) all
+	cd ..
+
+encode_keychange ::
+	cd encode_keychange
+	$(NMAKE) all
+	cd ..
+
+snmpnetstat ::
+	cd snmpnetstat
+	$(NMAKE) all
+	cd ..
+
+snmptrapd ::
+	cd snmptrapd
+	$(NMAKE) all
+	cd ..
+
+snmpd_ ::
+	cd snmpd
+	$(NMAKE) all
+	cd ..
+
+snmpconf ::
+	cd local
+	$(NMAKE) snmpconf
+	cd ..
+
+mib2c ::
+	cd local
+	$(NMAKE) mib2c
+	cd ..
+
+traptoemail ::
+	cd local
+	$(NMAKE) traptoemail
+	cd ..
+
+##############
+#
+# Clean
+# 
+libagent_clean ::
+	cd libagent
+	$(NMAKE) clean
+	cd ..
+
+libsnmp_clean_ ::
+	cd libsnmp
+	$(NMAKE) clean
+	cd ..
+
+libsnmp_dll_clean_ ::
+	cd libsnmp_dll
+	$(NMAKE) clean
+	cd ..
+
+libnetsnmptrapd_clean ::
+	cd libnetsnmptrapd
+	$(NMAKE) clean
+	cd ..
+
+netsnmpmibs_clean_ ::
+	cd netsnmpmibs
+	$(NMAKE) clean
+	cd ..
+
+snmpdf_clean ::
+	cd snmpdf
+	$(NMAKE) clean
+	cd ..
+
+snmpset_clean ::
+	cd snmpset
+	$(NMAKE) clean
+	cd ..
+
+snmpusm_clean ::
+	cd snmpusm
+	$(NMAKE) clean
+	cd ..
+
+snmptest_clean ::
+	cd snmptest
+	$(NMAKE) clean
+	cd ..
+
+snmptrap_clean ::
+	cd snmptrap
+	$(NMAKE) clean
+	cd ..
+
+snmpvacm_clean ::
+	cd snmpvacm
+	$(NMAKE) clean
+	cd ..
+
+snmpwalk_clean ::
+	cd snmpwalk
+	$(NMAKE) clean
+	cd ..
+
+snmpdelta_clean ::
+	cd snmpdelta
+	$(NMAKE) clean
+	cd ..
+
+snmptable_clean ::
+	cd snmptable
+	$(NMAKE) clean
+	cd ..
+
+snmpstatus_clean ::
+	cd snmpstatus
+	$(NMAKE) clean
+	cd ..
+
+snmpbulkget_clean ::
+	cd snmpbulkget
+	$(NMAKE) clean
+	cd ..
+
+snmpget_clean ::
+	cd snmpget
+	$(NMAKE) clean
+	cd ..
+
+snmpgetnext_clean ::
+	cd snmpgetnext
+	$(NMAKE) clean
+	cd ..
+
+snmpbulkwalk_clean ::
+	cd snmpbulkwalk
+	$(NMAKE) clean
+	cd ..
+
+snmptranslate_clean ::
+	cd snmptranslate
+	$(NMAKE) clean
+	cd ..
+
+encode_keychange_clean ::
+	cd encode_keychange
+	$(NMAKE) clean
+	cd ..
+
+snmpnetstat_clean ::
+	cd snmpnetstat
+	$(NMAKE) clean
+	cd ..
+
+snmptrapd_clean ::
+	cd snmptrapd
+	$(NMAKE) clean
+	cd ..
+
+snmpd_clean_ ::
+	cd snmpd
+	$(NMAKE) clean
+	cd ..
+
+snmpconf_clean ::
+	cd local
+	$(NMAKE) snmpconf_clean
+	cd ..
+
+mib2c_clean ::
+	cd local
+	$(NMAKE) mib2c_clean
+	cd ..
+
+traptoemail_clean ::
+	cd local
+	$(NMAKE) traptoemail_clean
+	cd ..
+
+##############
+
+help ::
+        @-echo "NMAKE option    Description"
+        @-echo "============    =============================================="
+        @-echo "                                                              "
+        @-echo "all             libs apps snmptrapd snmpd                     "
+        @-echo "clean           libs_clean apps_clean snmptrapd_clean         "
+        @-echo "                snmpd_clean                                   "
+        @-echo "libs            libagent libsnmp libnetsnmptrapd netsnmpmibs  "
+        @-echo "libs_clean      libagent_clean libnetsnmptrapd_clean          "
+        @-echo "                libsnmp_clean netsnmpmibs_clean               "
+        @-echo "                                                              "
+        @-echo "apps            encode_keychange snmpbulkget snmpbulkwalk     "
+        @-echo "                snmpdelta snmpdf snmpget snmpgetnext          "
+        @-echo "                snmpnetstsat snmpset snmpstatus snmptable     "
+        @-echo "                snmptest snmptranslate snmptrap snmpusm       "
+        @-echo "                snmpvacm snmpwalk                             "
+        @-echo "                                                              "
+        @-echo "apps_clean      (clean all the apps)                          "
+        @-echo "                                                              "
+        @-echo "local           snmpconf, mib2c, traptoemail                  "
+        @-echo "local_clean     snmpconf_clean, mib2c_clean, traptoemail_clean"
+        @-echo "                                                              "
+        @-echo "snmptrapd       Trap daemon                                   "
+        @-echo "snmptrapd_clean Trap daemon clean                             "
+        @-echo "                                                              "
+        @-echo "snmpd           Agent                                         "
+        @-echo "snmpd_clean     Agent clean                                   "
+        @-echo "                                                              "
+        @-echo "install         Install Net-SNMP without Perl                 "
+        @-echo "                                                              "
+        @-echo "install_devel   Install Development files                     "
+        @-echo "                                                              "
+        @-echo "perl            Configure (in source) and then nmake          "
+        @-echo "perl_clean      Perl clean                                    "
+        @-echo "perl_test       Perl tests                                    "
+        @-echo "perl_install    Perl installs                                 "
+
+
+install ::
+	cd ..
+        @-echo Creating $(PREFIX_DOS) sub-directories
+        @-mkdir $(PREFIX_DOS) > NUL:
+        @-mkdir $(PREFIX_DOS)\bin > NUL:
+        @-mkdir $(PREFIX_DOS)\etc > NUL:
+        @-mkdir $(PREFIX_DOS)\etc\snmp > NUL:
+        @-mkdir $(PREFIX_DOS)\share > NUL:
+        @-mkdir $(PREFIX_DOS)\share\snmp > NUL:
+        @-mkdir $(PREFIX_DOS)\share\snmp\mibs > NUL:
+        @-mkdir $(PREFIX_DOS)\share\snmp\snmpconf-data > NUL:
+        @-mkdir $(PREFIX_DOS)\share\snmp\snmpconf-data\snmp-data > NUL:
+        @-mkdir $(PREFIX_DOS)\share\snmp\snmpconf-data\snmpd-data > NUL:
+        @-mkdir $(PREFIX_DOS)\share\snmp\snmpconf-data\snmptrapd-data > NUL:
+        @-mkdir $(PREFIX_DOS)\share\snmp\mib2c-data  > NUL:
+        @-mkdir $(PREFIX_DOS)\snmp > NUL:
+        @-mkdir $(PREFIX_DOS)\snmp\persist > NUL:
+        @-mkdir $(PREFIX_DOS)\temp > NUL:
+        @-mkdir $(PREFIX_DOS)\include > NUL:
+        @-mkdir $(PREFIX_DOS)\include\net-snmp > NUL:
+        @-mkdir $(PREFIX_DOS)\include\net-snmp\agent > NUL:
+
+	@-echo Copying MIB files to $(PREFIX_DOS)\share\snmp\mibs
+        @-Copy mibs\*.txt $(PREFIX_DOS)\share\snmp\mibs > NUL:
+
+	@-echo Copying compiled programs to $(PREFIX_DOS)\bin
+        @-Copy win32\bin\$(CFG)\*.exe $(PREFIX_DOS)\bin > NUL:
+
+	@-echo Copying (local) scripts to $(PREFIX_DOS)\bin
+	@-Copy win32\bin\$(CFG)\snmpconf $(PREFIX_DOS)\bin > NUL:
+	@-Copy win32\local\snmpconf.bat $(PREFIX_DOS)\bin > NUL:
+	@-Copy win32\bin\$(CFG)\mib2c $(PREFIX_DOS)\bin > NUL:
+	@-Copy win32\local\mib2c.bat $(PREFIX_DOS)\bin > NUL:
+	@-Copy win32\bin\$(CFG)\traptoemail $(PREFIX_DOS)\bin > NUL:
+	@-Copy win32\local\traptoemail.bat $(PREFIX_DOS)\bin > NUL:
+
+	@-echo Copying snmpconf files to $(PREFIX_DOS)\share\snmp\snmpconf-data\snmp-data
+        @-Copy local\snmpconf.dir\snmp-data\*.* $(PREFIX_DOS)\share\snmp\snmpconf-data\snmp-data > NUL:
+        @-Copy local\snmpconf.dir\snmpd-data\*.* $(PREFIX_DOS)\share\snmp\snmpconf-data\snmpd-data > NUL:
+        @-Copy local\snmpconf.dir\snmptrapd-data\*.* $(PREFIX_DOS)\share\snmp\snmpconf-data\snmptrapd-data > NUL:
+
+	@-echo Copying mib2c config files to $(PREFIX_DOS)\share\snmp
+        @-Copy local\mib2c*.conf $(PREFIX_DOS)\share\snmp > NUL:
+        @-Copy local\mib2c-conf.d\*.* $(PREFIX_DOS)\share\snmp\mib2c-data > NUL:
+
+	@-echo Copying header files to $(PREFIX_DOS)\include
+        @-copy win32\net-snmp\*.h $(PREFIX_DOS)\include\net-snmp > NUL:
+        @-copy win32\net-snmp\agent\*.h $(PREFIX_DOS)\include\net-snmp\agent > NUL:
+
+	@-echo Copying DLL files to $(PREFIX_DOS)
+        @-Copy win32\bin\$(CFG)\*.dll $(PREFIX_DOS)\bin > NUL:
+
+	@-echo Copying DLL files to %SYSTEMROOT%\System32
+        @-Copy win32\bin\$(CFG)\*.dll %SYSTEMROOT%\System32 > NUL:
+
+        @-echo Done copying files to $(PREFIX_DOS)
+        cd win32
+
+
+install_devel ::
+	cd ..
+        @-echo Creating $(PREFIX_DOS) sub-directories
+        @-mkdir $(PREFIX_DOS) > NUL:
+        @-mkdir $(PREFIX_DOS)\lib > NUL:
+        @-mkdir $(PREFIX_DOS)\include > NUL:
+        @-mkdir $(PREFIX_DOS)\include\net-snmp > NUL:
+
+	@-echo Copying PDB files to $(PREFIX_DOS)\bin
+	@-Copy win32\bin\$(CFG)\*.pdb $(PREFIX_DOS)\bin > NUL:
+
+	@-echo Copying library files to $(PREFIX_DOS)\lib
+        @-copy win32\lib\$(CFG)\*.lib $(PREFIX_DOS)\lib > NUL:
+
+	@-echo Copying header files to $(PREFIX_DOS)\include
+        @-xcopy include\net-snmp\*.h $(PREFIX_DOS)\include\net-snmp /s /y > NUL:
+        @-copy win32\net-snmp\*.h $(PREFIX_DOS)\include\net-snmp > NUL:
+        @-copy win32\net-snmp\agent\*.h $(PREFIX_DOS)\include\net-snmp\agent > NUL:
+        @-copy win32\net-snmp\library\*.h $(PREFIX_DOS)\include\net-snmp\library > NUL:
+
+        @-echo Done copying files to $(PREFIX_DOS)
+
+	@-echo Copying PDB files to %SYSTEMROOT%\System32
+	@-Copy win32\bin\$(CFG)\*.pdb %SYSTEMROOT%\System32 > NUL:
+
+        cd win32
+

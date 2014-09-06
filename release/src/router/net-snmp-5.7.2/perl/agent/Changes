@@ -1,0 +1,6 @@
+Revision history for Perl extension NetSNMP::agent.
+
+0.01  Thu Dec 27 22:24:58 2001
+	- original version; created by h2xs 1.20 with options
+		-x -O -n NetSNMP::agent ./stuff/perl_agent.h
+

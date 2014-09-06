@@ -299,11 +299,6 @@ void start_usb(void)
 #endif
 			}
 #endif
-#ifdef RTCONFIG_EXFAT
-			if(nvram_get_int("usb_fs_exfat")){
-				modprobe("texfat");
-			}
-#endif
 		}
 #endif
 
@@ -358,6 +353,7 @@ void start_usb(void)
 		modprobe("cdc_wdm");
 		modprobe("qmi_wwan");
 		modprobe("cdc_mbim");
+		eval("insmod", "gobi");
 #endif
 	}
 }
@@ -368,6 +364,7 @@ void remove_usb_modem_modules(void)
 #ifdef RTCONFIG_USB_BECEEM
 	modprobe_r("drxvi314");
 #endif
+	eval("rmmod", "gobi");
 	modprobe_r("cdc_mbim");
 	modprobe_r("qmi_wwan");
 	modprobe_r("cdc_wdm");
@@ -430,9 +427,6 @@ void remove_usb_storage_module(void)
 	modprobe_r("jnl");
 #endif
 #endif
-#endif
-#ifdef RTCONFIG_EXFAT
-	modprobe_r("texfat");
 #endif
 	modprobe_r("fuse");
 	sleep(1);
@@ -808,19 +802,6 @@ int mount_r(char *mnt_dev, char *mnt_dir, char *_type)
 #elif defined(RTCONFIG_PARAGON_HFS)
 					ret = eval("mount", "-t", "ufsd", "-o", options, mnt_dev, mnt_dir);
 #endif
-				}
-			}
-#endif
-
-#ifdef RTCONFIG_EXFAT
-			if(ret != 0 && !strncmp(type, "exfat", 5)){
-				sprintf(options + strlen(options), ",iostreaming" + (options[0] ? 0 : 1));
-
-				if(nvram_invmatch("usb_exfat_opt", ""))
-					sprintf(options + strlen(options), "%s%s", options[0] ? "," : "", nvram_safe_get("usb_exfat_opt"));
-
-				if(nvram_get_int("usb_fs_exfat")){
-					ret = eval("mount", "-t", "texfat", "-o", options, mnt_dev, mnt_dir);
 				}
 			}
 #endif
@@ -2032,7 +2013,7 @@ _dprintf("%s: cmd=%s.\n", __FUNCTION__, cmd);
 
 	xstart("nmbd", "-D", "-s", "/etc/smb.conf");
 
-#if defined(RTCONFIG_TFAT) || defined(RTCONFIG_TUXERA_NTFS) || defined(RTCONFIG_TUXERA_HFS) || defined(RTCONFIG_EXFAT)
+#if defined(RTCONFIG_TFAT) || defined(RTCONFIG_TUXERA_NTFS) || defined(RTCONFIG_TUXERA_HFS)
 	if(nvram_get_int("enable_samba_tuxera") == 1)
 		snprintf(smbd_cmd, 32, "%s/smbd", "/usr/bin");
 	else

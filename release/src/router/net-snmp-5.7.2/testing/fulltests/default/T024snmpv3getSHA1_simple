@@ -1,0 +1,25 @@
+#!/bin/sh
+
+. ../support/simple_eval_tools.sh
+
+HEADER SNMPv3 get using SHA/noPriv of .1.3.6.1.2.1.1.3.0
+
+SKIPIFNOT NETSNMP_CAN_DO_CRYPTO
+
+#
+# Begin test
+#
+
+# standard V3 configuration for templateSHA user
+DEFAUTHTYPE="SHA"
+. ./Sv3config
+
+STARTAGENT
+
+CAPTURE "snmpget -On $SNMP_FLAGS $AUTHTESTARGS $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT .1.3.6.1.2.1.1.3.0"
+
+STOPAGENT
+
+CHECK ".1.3.6.1.2.1.1.3.0 = Timeticks:"
+
+FINISHED

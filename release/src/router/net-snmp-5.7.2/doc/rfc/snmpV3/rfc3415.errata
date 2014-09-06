@@ -1,0 +1,14 @@
+Reported By: Guan Hai Bing; guan-hb@cs.sjtu.edu.cn
+Date: Sat, 28 Dec 2002 14:36:59 +0800
+
+In Section A.1:
+
+    (a) "system"       (subtree 1.3.6.1.2.1.1)      [RFC3918]
+    (b) "snmp"         (subtree 1.3.6.1.2.1.11)     [RFC3918]
+
+Should be:
+
+    (a) "system"       (subtree 1.3.6.1.2.1.1)      [RFC3418]
+    (b) "snmp"         (subtree 1.3.6.1.2.1.11)     [RFC3418]
+ 
+

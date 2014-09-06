@@ -1,0 +1,31 @@
+#!/bin/sh
+
+. ../support/simple_eval_tools.sh
+
+HEADER 1st CPU on Solaris using HOST-RESOURCES
+
+if test "x`uname -s`" != "xSunOS" ; then
+    SKIP "not running solaris"
+fi
+
+SKIPIF NETSNMP_DISABLE_SNMPV1
+SKIPIFNOT USING_HOST_HR_DEVICE_MODULE
+
+#
+# Begin test
+#
+
+# standard V1 configuration: testcommunity
+. ./Sv1config
+
+STARTAGENT
+
+# ask for the description of the first CPU in the system
+
+CAPTURE "snmpgetnext -On $SNMP_FLAGS -c testcommunity -v 1 $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT .1.3.6.1.2.1.25.3.2.1.3.767"
+
+CHECKORDIE ' = STRING: "*CPU '
+
+STOPAGENT
+  
+FINISHED

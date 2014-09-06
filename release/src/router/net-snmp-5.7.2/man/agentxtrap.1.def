@@ -1,0 +1,110 @@
+.TH AGENTXTRAP 1 "20 Dec 2009" VVERSIONINFO "Net-SNMP"
+.SH NAME
+agentxtrap - send an AgentX NotifyPDU to an AgentX master agent
+.SH SYNOPSIS
+.B agentxtrap
+.RI [ OPTIONS ] " trap-oid " [ "OID TYPE VALUE" ...]
+.SH DESCRIPTION
+.B agentxtrap
+issues an AgentX NotifyPDU to a master agent. One or more object
+identifiers (OIDs) can be given as arguments on the command line.
+A type and a value must accompany each object identifier.
+Each variable name is given in the format specified in
+.IR variables(5) .
+.PP
+.SH OPTIONS
+.PD 0
+.TP 6
+.BI \-c "\| contextName\^"
+if the
+.B \-c
+option is present then the notification is sent in the nondefault name context.
+.TP
+.BI \-U "\| uptime\^"
+if the
+.B \-U
+option is present then that value, parsed as centiseconds, is taken to be the
+sysUpTime field of the application.
+.TP
+.BI \-x "\| ADDRESS\^"
+if the
+.B \-x
+option is present then contact the AgentX master at ADDRESS and not the default
+one.
+.PD
+.PP
+Additionally all the options described in
+.IR snmpcmd(1)
+under the
+.BR "MIB PARSING OPTIONS" ", " "LOGGING OPTIONS" " and " "INPUT OPTIONS"
+headers as well as the
+.BR -d ", " -D ", " -m " and " -M
+options are supported.
+.PP
+In
+.I OID TYPE VALUE
+the parsing of the
+.I VALUE
+field is controlled by the
+.I TYPE
+field. The possible values for the
+.I TYPE
+field is one of the following characters:
+.RS
+.PD 0
+.TP 3
+.B =
+Let
+.I OID
+decide how
+.I VALUE
+should be interpreted
+.TP
+.B i
+INTEGER
+.TP
+.B u
+Unsigned
+.TP
+.B c
+Counter32
+.TP
+.B s
+OCTET STRING of chaacters
+.TP
+.B x
+OCTET STRING, entered as a sequence of optionally space separated hexadecimal
+digit pairs
+.TP
+.B d
+OCTET STRING, entered as a sequence of space separated decimal digits in the
+range 0 - 255
+.TP
+.B n
+NULL
+.TP
+.B o
+OBJECT IDENTIFIER
+.TP
+.B t
+TimeTicks
+.TP
+.B a
+IpAddress
+.TP
+.B b
+BITS
+.PD
+.RE
+which are handled in the same way as the
+.B snmpset
+command.
+.PP
+.SH EXAMPLES
+To send a generic linkUp trap to the manager for interface 1 the following
+command can be used:
+.PP
+agentxtrap netSnmp.0.3 ifindex.1 i 1
+.PP
+.SH SEE ALSO
+snmpcmd(1), snmpset(1), variables(5), RFC 2741

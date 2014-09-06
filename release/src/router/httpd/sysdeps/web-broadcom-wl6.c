@@ -1319,7 +1319,7 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 
 	snprintf(prefix, sizeof(prefix), "wl%d_", unit);
 #ifdef RTCONFIG_PROXYSTA
-	if (is_psta(1 - unit))
+	if (psta_exist_except(unit))
 	{
 		ret += websWrite(wp, "%s radio is disabled\n",
 			(wl_control_channel(unit) > 0) ?
@@ -2003,7 +2003,7 @@ ERROR:
 int
 ej_wl_channel_list_2g(int eid, webs_t wp, int argc, char_t **argv)
 {
-#ifndef RTAC3200
+#ifndef RTAC3200_INTF_ORDER
 	return ej_wl_channel_list(eid, wp, argc, argv, 0);
 #else
 	return ej_wl_channel_list(eid, wp, argc, argv, 1);
@@ -2014,7 +2014,7 @@ ej_wl_channel_list_2g(int eid, webs_t wp, int argc, char_t **argv)
 int
 ej_wl_channel_list_5g(int eid, webs_t wp, int argc, char_t **argv)
 {
-#ifndef RTAC3200
+#ifndef RTAC3200_INTF_ORDER
 	return ej_wl_channel_list(eid, wp, argc, argv, 1);
 #else
 	return ej_wl_channel_list(eid, wp, argc, argv, 0);
@@ -2094,7 +2094,7 @@ ERROR:
 int
 ej_wl_rate_2g(int eid, webs_t wp, int argc, char_t **argv)
 {
-#ifndef RTAC3200
+#ifndef RTAC3200_INTF_ORDER
 	return ej_wl_rate(eid, wp, argc, argv, 0);
 #else
 	return ej_wl_rate(eid, wp, argc, argv, 1);
@@ -2104,7 +2104,7 @@ ej_wl_rate_2g(int eid, webs_t wp, int argc, char_t **argv)
 int
 ej_wl_rate_5g(int eid, webs_t wp, int argc, char_t **argv)
 {
-#ifndef RTAC3200
+#ifndef RTAC3200_INTF_ORDER
 	return ej_wl_rate(eid, wp, argc, argv, 1);
 #else
 	return ej_wl_rate(eid, wp, argc, argv, 0);
@@ -3555,7 +3555,7 @@ exit:
 int
 ej_wl_sta_list_2g(int eid, webs_t wp, int argc, char_t **argv)
 {
-#ifndef RTAC3200
+#ifndef RTAC3200_INTF_ORDER
 	return wl_sta_list(eid, wp, argc, argv, 0);
 #else
 	return wl_sta_list(eid, wp, argc, argv, 1);
@@ -3566,7 +3566,7 @@ ej_wl_sta_list_2g(int eid, webs_t wp, int argc, char_t **argv)
 int
 ej_wl_sta_list_5g(int eid, webs_t wp, int argc, char_t **argv)
 {
-#ifndef RTAC3200
+#ifndef RTAC3200_INTF_ORDER
 	return wl_sta_list(eid, wp, argc, argv, 1);
 #else
 	return wl_sta_list(eid, wp, argc, argv, 0);

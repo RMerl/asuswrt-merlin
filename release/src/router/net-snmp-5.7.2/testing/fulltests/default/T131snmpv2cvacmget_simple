@@ -1,0 +1,35 @@
+#!/bin/sh
+
+. ../support/simple_eval_tools.sh
+
+HEADER SNMPv2 vacm acceptance support
+
+SKIPIF NETSNMP_DISABLE_SNMPV2C
+
+#
+# Begin test
+#
+
+
+# standard V1 configuration: testcommunity1 testcommunity2
+# testcommunity1 can access .1.3.6.1.2.1.1.1, others are denied
+# testcommunity2 can access all except .1.3.6.1.2.1.1.1
+# This case test for successful access
+
+snmp_version=v2c
+. ./Svacmconfig
+
+STARTAGENT
+
+CAPTURE "snmpget -On $SNMP_FLAGS -c testcommunity1 -v 2c $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT .1.3.6.1.2.1.1.1.0" 
+
+CHECKORDIE ".1.3.6.1.2.1.1.1.0 = STRING:"
+
+CAPTURE "snmpget -On $SNMP_FLAGS -c testcommunity2 -v 2c $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT .1.3.6.1.2.1.1.3.0"
+
+CHECK ".1.3.6.1.2.1.1.3.0 = Timeticks: "
+
+
+STOPAGENT
+
+FINISHED

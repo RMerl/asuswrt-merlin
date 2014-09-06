@@ -31,10 +31,14 @@ typedef uint32_t __u32;
 const char WIF_5G[]	= "rai0";
 const char WIF_2G[]	= "ra0";
 const char WDSIF_5G[]	= "wdsi";
+const char APCLI_5G[]	= "apclii0";
+const char APCLI_2G[]	= "apcli0";
 #else
 const char WIF_5G[]	= "ra0";
 const char WIF_2G[]	= "rai0";
 const char WDSIF_5G[]	= "wds";
+const char APCLI_5G[]	= "apcli0";
+const char APCLI_2G[]	= "apclii0";
 #endif
 
 #if defined(RA_ESW)

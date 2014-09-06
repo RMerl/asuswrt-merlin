@@ -1,0 +1,120 @@
+.fi
+.SH FUNCTIONS
+.TP
+.BI "int netsnmp_ds_set_boolean(int " store ", int " which ", int " val ");"
+Stores
+.I TRUE
+if 
+.I val
+!= 0 or else
+.I FALSE
+into the bool_storage[store][which] slot.  Returns
+.B SNMPERR_GENERR
+if the
+.IR store " and " which
+parameters do not correspond to a valid slot, or
+.B SNMPERR_SUCCESS
+otherwise.
+.TP
+.BI "int netsnmp_ds_get_boolean(int " store ", int " which ");"
+Returns 1 if bool_storage[store][which] is 
+.IR TRUE
+or 0 if not.  May also return
+.B SNMPERR_GENERR
+if the 
+.IR store " and " which
+parameters do not correspond to a valid slot.
+.TP
+.BI "int netsnmp_ds_set_string(int " store ", int " which ", const char *" val ");"
+Stores
+.I val
+into the string_storage[store][which] slot.  Returns
+.B SNMPERR_SUCCESS
+normally, or 
+.B SNMPERR_GENERR
+if the 
+.IR store " and " which
+parameters do not correspond to a valid slot.
+.TP
+.BI "char *netsnmp_ds_get_string(int " store ", int " which ");"
+Returns the string which has been stored in the
+string_storage[store][which] slot, or
+.B NULL
+if the
+.IR store " and " which
+parameters do not correspond to a valid slot.
+.TP 
+.BI "netsnmp_ds_set_int(int " store ", int " which ", int " val ");"
+Stores
+.I val
+into the int_storage[store][which] slot.  Returns
+.B SNMPERR_GENERR
+if the
+.IR store " and " which
+parameters do not correspond to a valid slot, or
+.B SNMPERR_SUCCESS
+otherwise.
+.TP
+.BI "int netsnmp_ds_get_int(int " store ", int " which ");"
+Returns the integer which has been stored in the
+int_storage[store][which] slot, or
+.B SNMPERR_GENERR
+if the
+.IR store " and " which
+parameters do not correspond to a valid slot.
+.TP
+.BI "void netsnmp_ds_shutdown(void);"
+Reclaims memory used to hold information gathered by
+.BR netsnmp_ds_register_config " and " netsnmp_ds_register_premib .
+.TP
+.BI "int netsnmp_ds_register_config(u_char " type ", const char *" ftype ", const char *" token ", int " store ", int " which ");"
+Registers a configuration file directive 
+.I token
+and attaches it to 
+a default storage type and slot.  Specifically,
+.I store
+and
+.I which
+indicate the storage slot in the data type indicated by
+.I type,
+where
+.I type
+is one of the following constants:
+.BR ASN_BOOLEAN ", " ASN_INTEGER ", or " ASN_OCTET_STR .
+The
+.I ftype
+variable indicates the file name base string searched for the
+.I token
+keyword.  For example, the following call:
+.RS
+.IP
+netsnmp_ds_register_config(ASN_INTEGER, "snmp", "testtoken", DS_APPLICATION_ID, 5)
+.RE
+.IP
+would indicate that when the snmp.conf file(s) were found and parsed,
+that any line beginning with the word "testtoken" should be read and
+the value after "testtoken" should be stored into the
+int_storage[DS_APPLICATION_ID][5] slot.  For example the following
+line in the configuration file:
+.RS
+.IP
+testtoken 502
+.RE
+.IP
+would set int_storage[DS_APPLICATION_ID][5] = 502.  This function returns
+.B SNMPERR_SUCCESS
+if the registration was made successfully, or 
+.B SNMPERR_GENERR
+if the registration was not made (perhaps because the
+.IR store " and " which
+parameters do not correspond to a valid slot, or because of a memory
+allocation failure).
+.TP
+.BI "int netsnmp_ds_register_premib(u_char " type ", const char *" ftype ", const char *" token ", int " store ", int " which ");"
+Analogous to the preceding function, but the
+.I token
+is processed before MIBs are read (this is therefore useful for controlling
+MIB processing options).
+.SH "SEE ALSO"
+.BR snmp_config "(5), " netsnmp_config_api "(3)"
+

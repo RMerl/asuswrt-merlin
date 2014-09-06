@@ -776,7 +776,7 @@ int main(int argc, char *argv[])
 	} 
 	// +++ add by chhung, for concurrent AP  
 	if (strcmp(prefix_name, "") == 0) {
-		if (strcmp(argv[0], "rtinicapd") == 0)
+		if (strstr(argv[0], "rtinicapd") != NULL)
 			strcpy(prefix_name, "rai");
 		else
 			strcpy(prefix_name, "ra");

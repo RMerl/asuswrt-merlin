@@ -467,11 +467,10 @@ _fn_(_st_ HTSetting)							\
 	return (MCSMappingRateTable[rate_index] * 5)/10;		\
 }
 
-int FN_GETRATE(getRate,      MACHTTRANSMIT_SETTING)		//getRate(MACHTTRANSMIT_SETTING)
-int FN_GETRATE(getRate_2g,   MACHTTRANSMIT_SETTING_2G)		//getRate_2g(MACHTTRANSMIT_SETTING_2G)
-#if defined(RTAC52U) || defined(RTAC51U) || defined(RTN54U) 
-int FN_GETRATE(getRate_11ac, MACHTTRANSMIT_SETTING_11AC)	//getRate_11ac(MACHTTRANSMIT_SETTING_11AC)
-#endif
+#if defined(RTCONFIG_HAS_5G)
+int FN_GETRATE(getRate,      MACHTTRANSMIT_SETTING_for_5G)		//getRate   (MACHTTRANSMIT_SETTING_for_5G)
+#endif	/* RTCONFIG_HAS_5G */
+int FN_GETRATE(getRate_2g,   MACHTTRANSMIT_SETTING_for_2G)		//getRate_2g(MACHTTRANSMIT_SETTING_for_2G)
 
 
 
@@ -688,7 +687,7 @@ wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 		return ret;
 	}
 
-	RT_802_11_MAC_TABLE* mp=(RT_802_11_MAC_TABLE*)wrq3.u.data.pointer;
+	RT_802_11_MAC_TABLE_5G* mp =(RT_802_11_MAC_TABLE_5G*)wrq3.u.data.pointer;
 	RT_802_11_MAC_TABLE_2G* mp2=(RT_802_11_MAC_TABLE_2G*)wrq3.u.data.pointer;
 	int i;
 
@@ -696,17 +695,6 @@ wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 	ret+=websWrite(wp, "----------------------------------------\n");
 	ret+=websWrite(wp, "%-18s%-4s%-8s%-4s%-4s%-4s%-5s%-5s%-12s\n",
 			   "MAC", "PSM", "PhyMode", "BW", "MCS", "SGI", "STBC", "Rate", "Connect Time");
-#if 0
-	int entrySize;
-	entrySize = sizeof(RT_802_11_MAC_ENTRY);			//52 Bytes default size
-	if (get_model() == MODEL_RTN65U)
-	{
-		if(strcmp(ifname, WIF_2G) == 0)
-			entrySize = sizeof(RT_802_11_MAC_ENTRY_2G);	//24 Bytes used by iNIC fw binary
-		else
-			entrySize = sizeof(RT_802_11_MAC_ENTRY_RT3883);	//40 Bytes used by RT3883
-	}
-#endif
 
 #define SHOW_STA_INFO(_p,_i,_st, _gr) {											\
 		int hr, min, sec;											\
@@ -731,26 +719,16 @@ wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 
 	if (!strcmp(ifname, WIF_2G)) {
 		for (i=0;i<mp->Num;i++) {
-#if defined(RTN65U)
-			SHOW_STA_INFO(mp->Entry, i, RT_802_11_MAC_ENTRY_RT3352_iNIC, getRate_2g);
-#elif defined(RTAC52U) || defined(RTAC51U) || defined(RTN54U) 
-			SHOW_STA_INFO(mp2->Entry, i, RT_802_11_MAC_ENTRY_2G, getRate_2g);
-#else
-			SHOW_STA_INFO(mp2->Entry, i, RT_802_11_MAC_ENTRY_2G, getRate_2g);
-#endif
+			SHOW_STA_INFO(mp2->Entry, i, RT_802_11_MAC_ENTRY_for_2G, getRate_2g);
 		}
 	}
+#if defined(RTCONFIG_HAS_5G)
 	else {
 		for (i=0;i<mp->Num;i++) {
-#if defined(RTN65U)
-			SHOW_STA_INFO(mp->Entry, i, RT_802_11_MAC_ENTRY_RT3883, getRate_2g);
-#elif defined(RTAC52U) || defined(RTAC51U) || defined(RTN54U) 
-			SHOW_STA_INFO(mp2->Entry, i, RT_802_11_MAC_ENTRY_11AC, getRate_11ac);
-#else
-			SHOW_STA_INFO(mp->Entry, i, RT_802_11_MAC_ENTRY_RT3883, getRate_2g);
-#endif
+			SHOW_STA_INFO(mp->Entry, i, RT_802_11_MAC_ENTRY_for_5G, getRate);
 		}
 	}
+#endif	/* RTCONFIG_HAS_5G */
 
 	return ret;
 }
@@ -1114,6 +1092,22 @@ int ej_wl_sta_list_2g(int eid, webs_t wp, int argc, char_t **argv)
 	mp2 = (RT_802_11_MAC_TABLE_2G *)wrq.u.data.pointer;
 	for (i = 0; i<mp2->Num; i++)
 	{
+		rssi = cnt = 0;
+		if (mp2->Entry[i].AvgRssi0) {
+			rssi += mp2->Entry[i].AvgRssi0;
+			cnt++;
+		}
+		if (mp2->Entry[i].AvgRssi1) {
+			rssi += mp2->Entry[i].AvgRssi1;
+			cnt++;
+		}
+		if (mp2->Entry[i].AvgRssi2) {
+			rssi += mp2->Entry[i].AvgRssi2;
+			cnt++;
+		}
+		if (cnt == 0)
+			continue;	//skip this sta info
+
 		if (firstRow == 1)
 			firstRow = 0;
 		else
@@ -1132,19 +1126,6 @@ int ej_wl_sta_list_2g(int eid, webs_t wp, int argc, char_t **argv)
 		value = "";
 		websWrite(wp, ", \"%s\"", value);
 
-		rssi = cnt = 0;
-		if (mp2->Entry[i].AvgRssi0) {
-			rssi += mp2->Entry[i].AvgRssi0;
-			cnt++;
-		}
-		if (mp2->Entry[i].AvgRssi1) {
-			rssi += mp2->Entry[i].AvgRssi1;
-			cnt++;
-		}
-		if (mp2->Entry[i].AvgRssi2) {
-			rssi += mp2->Entry[i].AvgRssi2;
-			cnt++;
-		}
 		rssi = rssi / cnt;
 		websWrite(wp, ", \"%d\"", rssi);
 
@@ -1158,11 +1139,12 @@ exit:
 
 int ej_wl_sta_list_5g(int eid, webs_t wp, int argc, char_t **argv)
 {
+#if defined(RTCONFIG_HAS_5G)
 	struct iwreq wrq;
 	int i, firstRow;
 	char data[16384];
 	char mac[ETHER_ADDR_STR_LEN];
-	RT_802_11_MAC_TABLE *mp;
+	RT_802_11_MAC_TABLE_5G *mp;
 	char *value;
 	int rssi, cnt;
 
@@ -1178,9 +1160,25 @@ int ej_wl_sta_list_5g(int eid, webs_t wp, int argc, char_t **argv)
 
 	/* build wireless sta list */
 	firstRow = 1;
-	mp = (RT_802_11_MAC_TABLE *)wrq.u.data.pointer;
+	mp = (RT_802_11_MAC_TABLE_5G *)wrq.u.data.pointer;
 	for (i = 0; i<mp->Num; i++)
 	{
+		rssi = cnt = 0;
+		if (mp->Entry[i].AvgRssi0) {
+			rssi += mp->Entry[i].AvgRssi0;
+			cnt++;
+		}
+		if (mp->Entry[i].AvgRssi1) {
+			rssi += mp->Entry[i].AvgRssi1;
+			cnt++;
+		}
+		if (mp->Entry[i].AvgRssi2) {
+			rssi += mp->Entry[i].AvgRssi2;
+			cnt++;
+		}
+		if (cnt == 0)
+			continue;	//skip this sta info
+
 		if (firstRow == 1)
 			firstRow = 0;
 		else
@@ -1199,19 +1197,6 @@ int ej_wl_sta_list_5g(int eid, webs_t wp, int argc, char_t **argv)
 		value = "";
 		websWrite(wp, ", \"%s\"", value);
 
-		rssi = cnt = 0;
-		if (mp->Entry[i].AvgRssi0) {
-			rssi += mp->Entry[i].AvgRssi0;
-			cnt++;
-		}
-		if (mp->Entry[i].AvgRssi1) {
-			rssi += mp->Entry[i].AvgRssi1;
-			cnt++;
-		}
-		if (mp->Entry[i].AvgRssi2) {
-			rssi += mp->Entry[i].AvgRssi2;
-			cnt++;
-		}
 		rssi = rssi / cnt;
 		websWrite(wp, ", \"%d\"", rssi);
 
@@ -1219,6 +1204,7 @@ int ej_wl_sta_list_5g(int eid, webs_t wp, int argc, char_t **argv)
 	}
 
 	/* error/exit */
+#endif	/* RTCONFIG_HAS_5G */
 exit:
 	return 0;
 }
@@ -1229,7 +1215,7 @@ int ej_wl_auth_list(int eid, webs_t wp, int argc, char_t **argv)
 	int i, firstRow;
 	char data[16384];
 	char mac[ETHER_ADDR_STR_LEN];
-	RT_802_11_MAC_TABLE *mp;
+	RT_802_11_MAC_TABLE_5G *mp;
 	RT_802_11_MAC_TABLE_2G *mp2;
 	char *value;
 
@@ -1269,6 +1255,7 @@ int ej_wl_auth_list(int eid, webs_t wp, int argc, char_t **argv)
 		websWrite(wp, "]");
 	}
 
+#if defined(RTCONFIG_HAS_5G)
 	/* query wl for authenticated sta list */
 	memset(data, 0, sizeof(data));
 	wrq.u.data.pointer = data;
@@ -1278,7 +1265,7 @@ int ej_wl_auth_list(int eid, webs_t wp, int argc, char_t **argv)
 		goto exit;
 
 	/* build wireless sta list */
-	mp = (RT_802_11_MAC_TABLE *)wrq.u.data.pointer;
+	mp = (RT_802_11_MAC_TABLE_5G *)wrq.u.data.pointer;
 	for (i = 0; i<mp->Num; i++)
 	{
 		if (firstRow == 1)
@@ -1301,6 +1288,7 @@ int ej_wl_auth_list(int eid, webs_t wp, int argc, char_t **argv)
 
 		websWrite(wp, "]");
 	}
+#endif	/* RTCONFIG_HAS_5G */
 
 	/* error/exit */
 exit:

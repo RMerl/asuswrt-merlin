@@ -74,8 +74,7 @@ struct nvram_tuple router_defaults[] = {
 #ifndef RTAC3200
 	{ "wl1_ssid", "ASUS_5G" },
 #else
-	{ "wl0_ssid", "ASUS_5G_low" },
-	{ "wl1_ssid", "ASUS" },
+	{ "wl1_ssid", "ASUS_5G_low" },
 	{ "wl2_ssid", "ASUS_5G_high" },
 #endif
 	{ "wl_bss_enabled", "1", 0 },		/* Service set Enable (1) or disable (0) radio */
@@ -258,7 +257,7 @@ struct nvram_tuple router_defaults[] = {
 
 	{ "wl_nband", "2", 0},			/* N-BAND */
 #ifdef RTAC3200
-	{ "wl0_nband", "1"},
+	{ "wl1_nband", "1"},
 	{ "wl2_nband", "1"},
 #else
 	{ "wl1_nband", "1"},			/* 5 GHz */
@@ -423,11 +422,40 @@ struct nvram_tuple router_defaults[] = {
 	{ "wl_radio_date_x",	"1111111"	},
 	{ "wl_radio_time_x",	"00002359"	},
 	{ "wl_radio_time2_x",	"00002359"	},
-	{ "wl_phrase_x",		""	},	// Passphrase	// Add
-	{ "wl_lanaccess", 		"off"	},
-	{ "wl_expire", 			"0"	},
-	{ "wl_mbss",			""	},
-	{ "wl_txpower",			"100"	},
+	{ "wl_phrase_x",	""		},	// Passphrase	// Add
+	{ "wl_lanaccess", 	"off"		},
+	{ "wl_expire", 		"0"		},
+	{ "wl_mbss",		""		},
+	{ "wl_txpower",		"100"		},
+#ifdef RTCONFIG_TMOBILE
+	{ "wl0.3_ssid",		"CellSpot_AutoConnect"		},
+	{ "wl0.3_osu_ssid",	"CellSpot_AutoConnect"		},
+	{ "wl0.3_auth_mode_x",	"wpa2"				},
+	{ "wl0.3_crypto",	"aes"				},
+	{ "wl0.3_lanaccess",	"off"				},
+	{ "wl0.3_bss_enabled",	"1"				},
+	{ "wl0.3_maxassoc", "8"				},
+	{ "wl0.3_wps_mode",	"disabled"			},
+	{ "wl0.3_radius_ipaddr","127.0.0.1"			},
+	{ "wl0.3_radius_key",	"secret"			},
+	{ "wl0.3_radius_port",	"1814"				},
+	{ "wl0.3_tmo_radius_ipaddr", "aaa.geo.t-mobile.com"	},
+	{ "wl0.3_tmo_radius_port", "2083"			},
+
+	{ "wl1.3_ssid",		"CellSpot_AutoConnect"		},
+	{ "wl1.3_osu_ssid",	"CellSpot_AutoConnect"		},
+	{ "wl1.3_auth_mode_x",	"wpa2"				},
+	{ "wl1.3_crypto",	"aes"				},
+	{ "wl1.3_lanaccess",	"off"				},
+	{ "wl1.3_bss_enabled",	"1"				},
+	{ "wl1.3_maxassoc", "8"				},
+	{ "wl1.3_wps_mode",	"disabled"			},
+	{ "wl1.3_radius_ipaddr","127.0.0.1"			},
+	{ "wl1.3_radius_key",	"secret"			},
+	{ "wl1.3_radius_port",	"1815"				},
+	{ "wl1.3_tmo_radius_ipaddr", "aaa.geo.t-mobile.com"	},
+	{ "wl1.3_tmo_radius_port", "2083"			},
+#endif
 
 #if defined (RTCONFIG_RALINK) || defined (RTCONFIG_BCMWL6)
 #if defined(RTAC53U)
@@ -559,6 +587,9 @@ struct nvram_tuple router_defaults[] = {
 #if defined(RTAC68U)
 	{ "acs_dfs", "0", 0},			/* disable DFS channels for acsd by default */
 #endif
+#ifdef RTCONFIG_QTN
+	{ "acs_dfs", "0", 0},			/* disable DFS channels for acsd by default */
+#endif
 	{ "acs_band1", "0", 0},
 
 	{ "wl_wet_tunnel", "0", 0  },		/* Disable wet tunnel */
@@ -570,7 +601,11 @@ struct nvram_tuple router_defaults[] = {
 	{ "wl_trf_mgmt_rssi_policy", "0", 0 },	/* Disable RSSI (default) */
 #endif /* TRAFFIC_MGMT */
 #ifdef RTCONFIG_BCMARM
+#ifndef RTCONFIG_BCM7
 	{ "wl_atf", "0", 0 }, 			/* Airtime Fairness */
+#else
+	{ "wl_atf", "1", 0 },
+#endif
 #endif
 
 	/* Tx Beamforming */
@@ -658,6 +693,9 @@ struct nvram_tuple router_defaults[] = {
 #else
 	{ "gro_disable",		"0"		},
 #endif
+#endif
+#if defined(RTCONFIG_LED_BTN)
+	{ "AllLED",		"1"		},
 #endif
 //#ifdef RTCONFIG_BCMWL6
 //	{ "pktc_disable", 		"0"		},
@@ -1238,7 +1276,11 @@ struct nvram_tuple router_defaults[] = {
 	// NVRAM for start_usb
 	{ "usb_enable", "1"},
 #ifdef RTCONFIG_USB_XHCI
+#ifdef RTAC87U
+	{ "usb_usb3", "1"},
+#else
 	{ "usb_usb3", "0"},
+#endif
 #ifdef RTCONFIG_XHCIMODE
 	{ "xhcimode_waitsec", "1"},
 #endif
@@ -1280,9 +1322,6 @@ struct nvram_tuple router_defaults[] = {
 #ifdef RTCONFIG_NTFS
 	{ "usb_fs_ntfs", "1"},
 	{ "usb_fs_ntfs_sparse", "0"},
-#endif
-#ifdef RTCONFIG_EXFAT
-	{ "usb_fs_exfat", "1"},
 #endif
 #ifdef RTCONFIG_HFS
 	{ "usb_fs_hfs", "1"},
@@ -1999,6 +2038,20 @@ struct nvram_tuple router_defaults[] = {
 	{ "Ate_continue_fail",		"3"},
 	{ "dev_fail_reboot",		"3"},
 	// Wireless parameters
+
+#ifdef RTCONFIG_SNMPD
+        { "snmpd_enable", "0"},
+	{ "sysName", ""},
+	{ "sysContact", ""},
+	{ "sysLocation", ""},
+	{ "roCommunity", ""},
+	{ "rwCommunity", ""},
+	{ "v3_auth_type", ""},
+	{ "v3_priv_type", ""},
+	{ "v3_auth_passwd", ""},
+	{ "v3_priv_passwd", ""},
+#endif
+
 #ifdef RTCONFIG_TIMEMACHINE
 	{"timemachine_enable", 		"0"},
 	{"tm_device_name", 		""},
@@ -2249,6 +2302,7 @@ struct nvram_tuple router_state_defaults[] = {
 	{ "webs_state_upgrade", "" },
 	{ "webs_state_error", "" },
 	{ "webs_state_info", "" },
+	{ "webs_notif_flag", "" },
 
 	{ "ftp_ports", ""},
 
@@ -2358,6 +2412,7 @@ struct nvram_tuple router_state_defaults[] = {
 	{ "g3state_dial", ""},
 	{ "g3state_conn", ""},
 #endif
+	{ "smart_connect_x", "1"},
 	{ "nmp_client_list",		""},
 	{ NULL, NULL }
 };
@@ -2461,10 +2516,6 @@ struct nvram_tuple bcm4360ac_defaults[] = {
 	{ "pci/2/1/tempsense_slope", "0xff", 0 },
 	{ "pci/2/1/tempthresh", "255", 0 },
 	{ "pci/2/1/txchain", "7", 0 },
-	{ "pci/2/1/ledbh0", "2", 0 },
-	{ "pci/2/1/ledbh1", "5", 0 },
-	{ "pci/2/1/ledbh2", "4", 0 },
-	{ "pci/2/1/ledbh3", "11", 0 },
 	{ "pci/2/1/ledbh10", "7", 0 },
 
 	{ 0, 0, 0 }
@@ -2518,7 +2569,7 @@ struct nvram_tuple bcm4360ac_defaults[] = {
 	{ "1:pdoffset80ma2", "0", 0 },
 	{ "1:cckbw202gpo", "0", 0 },
 	{ "1:cckbw20ul2gpo", "0", 0 },
-	{ "1:dot11agofdmhrbw202gpo", "0xdb97", 0 },
+	{ "1:dot11agofdmhrbw202gpo", "0x2000", 0 },
 	{ "1:ofdmlrbw202gpo", "0", 0 },
 	{ "1:dot11agduphrpo", "0", 0 },
 	{ "1:dot11agduplrpo", "0", 0 },
@@ -2537,17 +2588,14 @@ struct nvram_tuple bcm4360ac_defaults[] = {
 	{ "1:rxgains2gelnagaina2", "4", 0 },
 	{ "1:rxgains2gtrisoa2", "7", 0 },
 	{ "1:rxgains2gtrelnabypa2", "1", 0 },
-	{ "1:ledbh0", "11", 0 },
-	{ "1:ledbh1", "11", 0 },
-	{ "1:ledbh2", "11", 0 },
-	{ "1:ledbh3", "11", 0 },
+	{ "1:ledbh10", "7", 0 },
 	{ "devpath0", "pcie/1/3", 0 },
 	{ "0:devpath0", "sb/1/", 0 },
 	{ "0:boardrev", "0x1421", 0 },
 	{ "0:boardvendor", "0x14e4", 0 },
 	{ "0:devid", "0x43bc", 0 },
 	{ "0:sromrev", "11", 0 },
-	{ "0:boardflags", "0x30048000", 0 },
+	{ "0:boardflags", "0x30040000", 0 },
 	{ "0:boardflags2", "0x00220102", 0 },
 	{ "0:venid", "0x14e4", 0 },
 	{ "0:boardflags3", "0x0", 0 },
@@ -2602,7 +2650,7 @@ struct nvram_tuple bcm4360ac_defaults[] = {
 	{ "0:rxgains5gelnagaina0", "2", 0 },
 	{ "0:rxgains5gtrisoa0", "5", 0 },
 	{ "0:rxgains5gtrelnabypa0", "1", 0 },
-	{ "0:maxp5ga0", "90,90,90,106", 0 },
+	{ "0:maxp5ga0", "106,90,90,106", 0 },
 	{ "0:rxgains5gmelnagaina1", "2", 0 },
 	{ "0:rxgains5gmtrisoa1", "5", 0 },
 	{ "0:rxgains5gmtrelnabypa1", "1", 0 },
@@ -2612,7 +2660,7 @@ struct nvram_tuple bcm4360ac_defaults[] = {
 	{ "0:rxgains5gelnagaina1", "2", 0 },
 	{ "0:rxgains5gtrisoa1", "5", 0 },
 	{ "0:rxgains5gtrelnabypa1", "1", 0 },
-	{ "0:maxp5ga1", "54,90,90,106", 0 },
+	{ "0:maxp5ga1", "106,90,90,106", 0 },
 	{ "0:rxgains5gmelnagaina2", "2", 0 },
 	{ "0:rxgains5gmtrisoa2", "5", 0 },
 	{ "0:rxgains5gmtrelnabypa2", "1", 0 },
@@ -2622,18 +2670,15 @@ struct nvram_tuple bcm4360ac_defaults[] = {
 	{ "0:rxgains5gelnagaina2", "2", 0 },
 	{ "0:rxgains5gtrisoa2", "5", 0 },
 	{ "0:rxgains5gtrelnabypa2", "1", 0 },
-	{ "0:maxp5ga2", "54,90,90,106", 0 },
-	{ "0:ledbh0", "11", 0 },
-	{ "0:ledbh1", "11", 0 },
-	{ "0:ledbh2", "11", 0 },
-	{ "0:ledbh3", "11", 0 },
+	{ "0:maxp5ga2", "106,90,90,106", 0 },
+	{ "0:ledbh10", "7", 0 },
 	{ "devpath2", "pcie/2/1", 0 },
 	{ "2:devpath2", "sb/1/", 0 },
 	{ "2:boardrev", "0x1421", 0 },
 	{ "2:boardvendor", "0x14e4", 0 },
 	{ "2:devid", "0x43bc", 0 },
 	{ "2:sromrev", "11", 0 },
-	{ "2:boardflags", "0x30048000", 0 },
+	{ "2:boardflags", "0x30040000", 0 },
 	{ "2:boardflags2", "0x00220102", 0 },
 	{ "2:venid", "0x14e4", 0 },
 	{ "2:boardflags3", "0x0", 0 },
@@ -2709,10 +2754,7 @@ struct nvram_tuple bcm4360ac_defaults[] = {
 	{ "2:rxgains5gtrisoa2", "5", 0 },
 	{ "2:rxgains5gtrelnabypa2", "1", 0 },
 	{ "2:maxp5ga2", "90,90,90,106", 0 },
-	{ "2:ledbh0", "11", 0 },
-	{ "2:ledbh1", "11", 0 },
-	{ "2:ledbh2", "11", 0 },
-	{ "2:ledbh3", "11", 0 },
+	{ "2:ledbh10", "7", 0 },
 	{ 0, 0, 0 }
 };
 #else

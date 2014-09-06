@@ -1,0 +1,38 @@
+#
+# snmpnetstat Makefile
+#
+
+top_builddir=../..
+mysubdir=apps/snmpnetstat
+
+INSTALLBINPROGS=snmpnetstat$(EXEEXT)
+
+# use GNU vpath, if available, to only set a path for source and headers
+# VPATH will pick up objects too, which is bad if you are sharing a
+# source dir...
+@GNU_vpath@ %.h $(srcdir)
+@GNU_vpath@ %.c $(srcdir)
+# fallback to regular VPATH for non-gnu...
+@NON_GNU_VPATH@ $(srcdir)
+
+#
+# build info
+#
+SRCS=	inet.c inet6.c if.c main.c route.c winstub.c ffs.c
+OBJS=	inet.o inet6.o if.o main.o route.o winstub.o ffs.o
+LOBJS=	inet.lo inet6.lo if.lo main.lo route.lo winstub.lo ffs.lo
+FTOBJS=	inet.ft inet6.ft if.ft main.ft route.ft winstub.ft ffs.ft
+TARG= snmpnetstat$(EXEEXT)
+
+FEATUREFILE=../../include/net-snmp/features-snmpnetstat.h
+
+CPPFLAGS= $(TOP_INCLUDES)  @CPPFLAGS@
+
+VAL_LIBS	= @VAL_LIBS@
+USELIBS= ../../snmplib/libnetsnmp.$(LIB_EXTENSION)$(LIB_VERSION)
+LIBS=	 ../../snmplib/libnetsnmp.$(LIB_EXTENSION)$(LIB_VERSION) $(VAL_LIBS) @LIBS@
+
+all: standardall
+
+snmpnetstat$(EXEEXT): ${LOBJS} ${USELIBS}
+	${LINK} ${CFLAGS} -o $@ ${LOBJS} ${LOCAL_LIBS} ${LDFLAGS} ${LIBS}

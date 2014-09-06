@@ -94,7 +94,6 @@ AUTOLOGOUT_MAX_MINUTE = 0;
 var detect_interval = 2;	// get information per second
 var $j = jQuery.noConflict();
 window.onresize = cal_agreement_block;
-var client_list_array = '<% get_client_detail_info(); %>';
 var custom_name = decodeURIComponent('<% nvram_char_to_ascii("", "custom_clientlist"); %>').replace(/&#62/g, ">").replace(/&#60/g, "<");
 var qos_rulelist = "<% nvram_get("qos_rulelist"); %>".replace(/&#62/g, ">").replace(/&#60/g, "<");
 var curState = '<% nvram_get("apps_analysis"); %>';
@@ -332,7 +331,8 @@ function show_clients(priority_type){
 
 		if(clientObj.name.length > 23){
 			short_name = clientObj.name.substr(0,20) + "...";	
-			code += '<div style="font-family:Courier New,Courier,mono;" title="' + clientObj.mac + '&#10'+ clientObj.name +'">'+ short_name +'</div>';	
+			//code += '<div style="font-family:Courier New,Courier,mono;" title="' + clientObj.mac + '&#10'+ clientObj.name +'">'+ short_name +'</div>';	
+			code += '<div style="font-family:Courier New,Courier,mono;" title="' + clientObj.mac + '">'+ short_name +'</div>';			
 		}
 		else{
 			code += '<div style="font-family:Courier New,Courier,mono;" title="' + clientObj.mac + '">'+ clientObj.name +'</div>';			
@@ -467,12 +467,20 @@ function cancel_previous_device_apps(obj){
 
 function render_apps(apps_array, obj_icon, apps_field){
 	var code = "";
-
+	var img = "";
+	
 	for(i=0;i<apps_array.length;i++){
 		code +='<tr>';
 		code +='<td style="width:70px;">';
-		//code +='<div style="width:40px;height:40px;background-image:url(\'../images/New_ui/networkmap/client-list.png\');background-repeat:no-repeat;background-position:52% -10px;background-color:#1F2D35;border-radius:7px;margin-left:45px;background-size:67px"></div>';
-		code +='<div style="width:40px;height:40px;background-image:url(\'../images/New_ui/sample_35.png\');background-repeat:no-repeat;background-position:50% 45%;background-color:#282E30;border-radius:7px;margin-left:45px;"></div>';
+		img = new Image();
+		img.src = 'images/New_ui/app_icons/'+ apps_array[i][3] +'-'+ apps_array[i][4] +'-0.png';	// to check image file exist	
+		if(img.height == 0){	//default image, if image file doesn't exist
+			code +='<div style="width:40px;height:40px;background-image:url(\'images/New_ui/app_icons/3-144-0.png\');background-repeat:no-repeat;background-position:50% 45%;background-color:#282E30;border-radius:7px;margin-left:45px;"></div>';
+		}
+		else{
+			code +='<div style="width:40px;height:40px;background-image:url(\'images/New_ui/app_icons/'+ apps_array[i][3] +'-'+ apps_array[i][4] +'-0.png\');background-repeat:no-repeat;background-position:50% 45%;background-color:#282E30;border-radius:7px;margin-left:45px;"></div>';
+		}
+				
 		code +='</td>';
 		code +='<td style="width:230px;border-top:1px dotted #333;">';
 		code +='<div id="'+ apps_array[i][0] +'" style="font-family:Courier New,Courier,mono">'+apps_array[i][0]+'</div>';
@@ -526,16 +534,11 @@ function render_apps(apps_array, obj_icon, apps_field){
 client_traffic_old = new Array();
 function calculate_traffic(array_traffic){
 	var client_traffic_new = new Array();
-	var client_list_row = client_list_array.split('<');
-	var client_list_col = new Array();
-	
+
 	for(i=0;i< array_traffic.length;i++){
-		for(j=0;j<client_list_row.length;j++){
-			client_list_col = client_list_row[j].split('>');
-			if(client_list_col[3] == array_traffic[i][0]){
-				client_traffic_new[i] = array_traffic[i][0];	
-				client_traffic_new[array_traffic[i][0]] = {"tx":array_traffic[i][1], "rx":array_traffic[i][2]};								
-			}	
+		if(typeof(clientList[array_traffic[i][0]]) != "undefined"){
+			client_traffic_new[i] = array_traffic[i][0];	
+			client_traffic_new[array_traffic[i][0]] = {"tx":array_traffic[i][1], "rx":array_traffic[i][2]};								
 		}	
 	}
 	
@@ -885,7 +888,7 @@ function update_apps_tarffic(mac, obj, new_element) {
     error: function(xhr) {
 		setTimeout("update_apps_tarffic('"+mac+"');", detect_interval*1000);
     },
-    success: function(response){		
+    success: function(response){	
 		render_apps(array_traffic, obj, new_element);		
 		apps_time_flag = setTimeout((function (mac,obj,new_element){ return function (){ update_apps_tarffic(mac,obj,new_element); } })(mac,obj,new_element), detect_interval*1000);		
     }
@@ -1031,14 +1034,14 @@ function cancel(){
 								<table width="100%">
 									<tr>
 										<td class="formfonttitle" align="left">								
-											<div>Adaptive QoS - WAN/LAN Bandwidth Monitor</div>
+											<div><#Adaptive_QoS#> - <#Bandwidth_monitor_WANLAN#></div>
 										</td>
 										<td>
-											<div style="margin-right:20px;">
+											<div>
 												<table align="right">
 													<tr>
 														<td>
-															<div class="formfonttitle" style="margin-bottom:0px;" title="Enable Apps analysis allows you to click device icon and show all apps traffic by each device for detailed client monitor.">Apps analysis</div>
+															<div class="formfonttitle" style="margin-bottom:0px;margin-left:50px;" title="<#Bandwidth_monit_analy_desc#>"><#Bandwidth_monitor_analysis#></div>
 														</td>
 														<td >
 															<div align="center" class="left" style="width:94px; float:left; cursor:pointer;" id="apps_analysis_enable"></div>
@@ -1117,10 +1120,10 @@ function cancel(){
 									<table>									
 										<tr>
 											<td style="width:50%;font-family: Arial, Helvetica, sans-serif;text-align:left;padding-left:15px;">
-												<div style="cursor:pointer;background-color:#444F53;width:80px;border-radius:10px;text-align:center;box-shadow:0px 2px black;" onclick="show_clients()">
+												<div style="cursor:pointer;background-color:#444F53;width:113px;border-radius:10px;text-align:center;box-shadow:0px 2px black;" onclick="show_clients()">
 													<table>
 														<tr>																			
-															<td><div style="width:73px;">Show All</div></td>
+															<td><div style="width:110px;"><#show_all#></div></td>
 														</tr>
 													</table>											
 												</div>
@@ -1130,51 +1133,51 @@ function cancel(){
 													<table>
 														<tr>
 															<td>															
-																<div id="0" style="cursor:pointer;background-color:#444F53;width:80px;border-radius:10px;text-align:center;box-shadow:0px 2px black;" onclick="show_clients(this.id)">
+																<div id="0" style="cursor:pointer;background-color:#444F53;width:100px;border-radius:10px;text-align:center;box-shadow:0px 2px black;" onclick="show_clients(this.id)">
 																	<table>
 																		<tr>
 																			<td style="width:25px;"><div style="width:12px;height:12px;border-radius:10px;background-color:#F01F09;margin-left:5px;"></div></td>
-																			<td>Highest</td>															
+																			<td><#Highest#></td>															
 																		</tr>
 																	</table>
 																</div>
 															</td>
 															<td>
-																<div id="1" style="cursor:pointer;background-color:#444F53;width:80px;border-radius:10px;text-align:center;box-shadow:0px 2px black;" onclick="show_clients(this.id)">
+																<div id="1" style="cursor:pointer;background-color:#444F53;width:90px;border-radius:10px;text-align:center;box-shadow:0px 2px black;" onclick="show_clients(this.id)">
 																	<table>
 																		<tr>
 																			<td style="width:25px;"><div style="width:12px;height:12px;border-radius:10px;background-color:#F08C09;margin-left:5px;"></div></td>
-																			<td>High</td>
+																			<td><#High#></td>
 																		</tr>
 																	</table>
 																</div>	
 															</td>
 															<td>
-																<div id="2" style="cursor:pointer;background-color:#444F53;width:80px;border-radius:10px;text-align:center;box-shadow:0px 2px black;" onclick="show_clients(this.id)">
+																<div id="2" style="cursor:pointer;background-color:#444F53;width:90px;border-radius:10px;text-align:center;box-shadow:0px 2px black;" onclick="show_clients(this.id)">
 																	<table>
 																		<tr>
 																			<td style="width:25px;"><div style="width:12px;height:12px;border-radius:10px;background-color:#F3DD09;margin-left:5px;"></div></td>
-																			<td>Medium</td>
+																			<td><#Medium#></td>
 																		</tr>
 																	</table>
 																</div>
 															</td>
 															<td>													             												
-																<div id="3" style="cursor:pointer;background-color:#444F53;width:80px;border-radius:10px;text-align:center;box-shadow:0px 2px black;" onclick="show_clients(this.id)">
+																<div id="3" style="cursor:pointer;background-color:#444F53;width:90px;border-radius:10px;text-align:center;box-shadow:0px 2px black;" onclick="show_clients(this.id)">
 																	<table>
 																		<tr>
 																			<td style="width:25px;"><div style="width:12px;height:12px;border-radius:10px;background-color:#59E920;margin-left:5px;"></div></td>
-																			<td>Low</td>
+																			<td><#Low#></td>
 																		</tr>
 																	</table>						
 																</div>												
 															</td>
 															<td>												
-																<div id="4" style="cursor:pointer;background-color:#444F53;width:80px;border-radius:10px;text-align:center;box-shadow:0px 2px black;" onclick="show_clients(this.id)">
+																<div id="4" style="cursor:pointer;background-color:#444F53;width:100px;border-radius:10px;text-align:center;box-shadow:0px 2px black;" onclick="show_clients(this.id)">
 																	<table>
 																		<tr>
 																			<td style="width:25px;"><div style="width:12px;height:12px;border-radius:10px;background-color:#58CCED;margin-left:5px;"></div></td>
-																			<td>Lowest</td>
+																			<td><#Lowest#></td>
 																		</tr>
 																	</table>											
 																</div>												
@@ -1183,7 +1186,7 @@ function cancel(){
 																<div id="5" style="cursor:pointer;background-color:#444F53;width:80px;border-radius:10px;text-align:center;box-shadow:0px 2px black;" onclick="show_clients(this.id)">
 																	<table>
 																		<tr>																			
-																			<td><div style="width:73px;">Empty</div></td>
+																			<td><div style="width:73px;"><#Empty#></div></td>
 																		</tr>
 																	</table>											
 																</div>												

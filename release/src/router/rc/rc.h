@@ -77,6 +77,7 @@ extern char wan6face[];
 
 /* services.c */
 extern int g_reboot;
+extern int wan_phyid;
 
 #ifdef RTCONFIG_BCMARM
 #ifndef LINUX_KERNEL_VERSION
@@ -917,6 +918,7 @@ extern int firmware_check_main(int argc, char *argv[]);
 #ifdef RTCONFIG_HTTPS
 extern int rsasign_check_main(int argc, char *argv[]);
 extern char *pwdec(const char *input);
+extern char *pwdec_dsl(char *input);
 #endif
 extern int service_main(int argc, char *argv[]);
 #ifdef RTCONFIG_DSL
@@ -925,9 +927,17 @@ extern int start_tc_upgrade(void);
 #ifdef RTCONFIG_DSL_TCLINUX
 extern void start_dsl_autodet(void);
 extern void stop_dsl_autodet(void);
+extern void stop_dsl_diag(void);
+extern void start_dsl_diag(void);
 #endif
 #endif
 #ifdef RTCONFIG_PUSH_EMAIL
+#ifdef RTCONFIG_DSL_TCLINUX
 extern void start_DSLsendmail(void);
+#endif
+#endif
+#ifdef RTCONFIG_SNMPD
+extern void start_snmpd(void);
+extern void stop_snmpd(void);
 #endif
 #endif	/* __RC_H__ */

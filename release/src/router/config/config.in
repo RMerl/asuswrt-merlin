@@ -25,6 +25,10 @@ config RTCONFIG_ACCEL_PPTPD
 	bool "ACCEL_PPTPD"
 	default n
 
+config RTCONFIG_SNMPD
+	bool "SNMPD"
+	default n
+
 config RTCONFIG_HTTPS
 	bool "HTTPS"
 	default y
@@ -43,6 +47,10 @@ config RTCONFIG_NV128
 
 config RTCONFIG_DHDAP
 	bool "Bcm7 dhdap"
+	default n
+
+config RTCONFIG_DPSTA
+	bool "Bcm7 dpsta"
 	default n
 
 config RTCONFIG_GMAC3
@@ -272,22 +280,22 @@ config RTCONFIG_SWEBDAVCLIENT
 	default n
 
 config RTCONFIG_DROPBOXCLIENT
-    bool "Dropboxsync (dropbox Client)"
+	bool "Dropboxsync (dropbox Client)"
 	depends on RTCONFIG_CLOUDSYNC
 	default n
 
 config RTCONFIG_FTPCLIENT
-    bool "FTPSync (ftp Client)"
+	bool "FTPSync (ftp Client)"
 	depends on RTCONFIG_CLOUDSYNC
 	default n
 
 config RTCONFIG_SAMBACLIENT
-    bool "SambaSync (samba Client)"
+	bool "SambaSync (samba Client)"
 	depends on RTCONFIG_CLOUDSYNC
 	default n
 
 config RTCONFIG_FLICKRCLIENT
-    bool "FlickrSync (flickr Client)"
+	bool "FlickrSync (flickr Client)"
 	depends on RTCONFIG_CLOUDSYNC
 	default n
 
@@ -369,11 +377,6 @@ config RTCONFIG_TUXERA_HFS
 config RTCONFIG_KERNEL_HFSPLUS
 	bool "Kernel HFSPLUS support"
 	depends on RTCONFIG_HFS
-	default n
-
-config RTCONFIG_EXFAT
-	bool "exFAT Support"
-	depends on RTCONFIG_USB
 	default n
 
 config RTCONFIG_UFSD_DEBUG
@@ -561,10 +564,6 @@ config RTCONFIG_WPS_RST_BTN
 	bool "HW Button for WPS and Restore dual function"
 	default n
 
-config RTCONFIG_NEW_RST_BTN
-	bool "Set All LED off when restore to default"
-	default n
-
 config RTCONFIG_TURBO
 	bool "HW Turbo Btn"
 	default n
@@ -662,6 +661,10 @@ config RTCONFIG_DMALLOC
 	bool "dmalloc"
 	default n
 
+config RTCONFIG_JFFS2ND_BACKUP
+	bool "backup some data to Read-only 2ND JFFS Partition"
+	default n
+
 config RTCONFIG_TEMPROOTFS
 	bool "temp rootfilesystem"
 	default n
@@ -734,6 +737,11 @@ config RTCONFIG_BONDING
 
 config RTCONFIG_TMOBILE
 	bool "T-Mobile Support"
+	default n
+
+config RTCONFIG_NOPP
+	bool "Disable Passpoint"
+	depends on RTCONFIG_TMOBILE
 	default n
 
 config RTCONFIG_UIDEBUG

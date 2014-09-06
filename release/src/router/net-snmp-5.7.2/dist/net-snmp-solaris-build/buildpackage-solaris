@@ -1,0 +1,182 @@
+#!/bin/ksh
+#
+# automatic build (configure/make/package) script 
+# for NET-SNMP on Solaris
+#
+# 2004/11 Rewrite to strictly build the package jfrank@fastrieve.com
+# 2002/11 Stefan.Radman@CTBTO.ORG
+
+
+# If you define DEBUG, the script will be verbose, and we won't remove temporary files
+
+#DEBUG=Y
+if [ ! -z $DEBUG ]; then
+   set -x # be verbose
+fi
+
+# TMP is where we are temporarily installing the package to
+TMP=`pwd`/pkgroot
+
+# PKG is the internal and external name for the package
+PKG=OSSnet-snmp
+
+#PREFIX is the top level architecture dependent directory.
+# This should be normally determined by configure
+#prefix=/opt/${PKG}
+prefix=/usr/local
+
+# VARDIR is the persistent dir from configure
+VARDIR=/var/net-snmp
+
+expandedprefix=${TMP}/${prefix}
+
+PERL=${PERL:=`which perl`}
+MAKE=${MAKE:=`which make`}
+
+if [ -d ${TMP} ]; then
+   rm -rf ${TMP};
+fi
+
+# install to temporary package build root
+cd ../..
+
+$MAKE install prefix=${expandedprefix} exec_prefix=${expandedprefix} || exit 1
+
+# We now have the main software installed, copy over the auxillary files
+cd -
+
+awk /^___snmpd-init.d/,/___EOF/ $0 | grep -v ^___ | sed "s,@prefix@,$prefix,g" >|snmpd-init.d
+
+# create persistent directory if it does not exist
+[ -d $TMP/$VARDIR ] || install -d -m 0755 $TMP/$VARDIR 
+
+# postinstall
+LD_LIBRARY_PATH=$TMP$prefix/lib:$LD_LIBRARY_PATH $TMP/$prefix/bin/snmptranslate\
+  -M$TMP/$prefix/share/snmp/mibs -m SNMPv2-SMI .1 >&- || exit $? # create MIB index
+
+# package
+version=`../../net-snmp-config --version`
+os=`uname -s`
+rel=`uname -r`
+class=snmp
+owner=$LOGNAME
+groups | awk '{print $1}' | read group
+cat <<== >|pkginfo
+PKG="${PKG}"
+NAME="net-snmp-$version"
+ARCH="`uname -p`"
+VERSION="$version, $os $rel, `date +%Y.%m.%d.%H.%M.%S`"
+CATEGORY="OpenSource"
+DESC="The NET-SNMP Tools and Library"
+VENDOR="http://net-snmp.sourceforge.net"
+CLASSES="$class"
+BASEDIR="$prefix"
+==
+. ./pkginfo
+
+echo 'checking dependencies'
+unset LD_LIBRARY_PATH # binaries and libraries should have RPATH now
+./elfdepend.sh $TMP | grep -v "P  *$PKG " >|depend # ignore own package
+
+echo 'creating prototype file'
+cat <<== >|prototype
+i pkginfo
+i copyright=../../COPYING
+#i preinstall=./preinstall-postremove
+#i postinstall=./preinstall-postremove
+i depend
+# set default mode, owner and group
+! default 0775 root sys
+d snmp /etc 0755 root sys
+d snmp /etc/init.d 0755 root sys
+f snmp /etc/init.d/snmpd=./snmpd-init.d 0755 root sys
+#l snmp /etc/rc2.d/S76snmpd=/etc/init.d/snmpd # not yet
+==
+
+pkgproto -c snmp $TMP=/ |\
+egrep -v '^d .* / |^d .* /var |^d .* /opt |^ .*perllocal.pod=' |\
+sed -e "s/ $owner $group\$//" >> prototype || exit $?
+# and ignore top level directories (must pre-exist)
+
+echo 'creating package'
+pkgmk -od . || exit $?
+pkgtrans . $PKG-$version-$ARCH-$os$rel.pkg $PKG || exit $?
+
+# We should really do some cleanup here
+if [ -z $DEBUG ]; then
+   rm -rf snmpd-init.d $PKG $TMP pkginfo prototype depend 
+fi
+
+echo "build was successfull"
+exit 0
+
+# /etc/init/snmpd
+# This is packaged inside of buildpackage-solaris because we need to substitute
+# in the actual server name.
+
+___snmpd-init.d___
+#! /bin/sh
+#
+# start/stop the NET-SNMP master agent (snmpd)
+#
+# Location:      /etc/init.d/snmpd
+#                /etc/rc3.d/S??snmpd
+#
+name="NET-SNMP agent"
+daemon=@prefix@/sbin/snmpd
+
+case "$1" in
+start)
+        [ ! -x $daemon ] && echo "ERROR: cannot start $name ($daemon)" && exit 1
+        echo "Starting $name ... \c"
+        PGREP=`which pgrep`
+        if [ -z $PGREP ]; then
+           pid=`pgrep -fx $daemon`
+        else
+           pid=`ps -ef | grep $daemon | grep -v grep | awk '{print $2}'`
+        fi
+
+        [ ! -z "$pid" ] && echo "already running with pid $pid." && exit 0
+        $daemon && echo "done."
+        ;;
+stop)
+        echo "Stopping $name ... \c"
+        PGREP=`which pgrep`
+        if [ -z $PGREP ]; then
+           pid=`pgrep -fx $daemon`
+        else
+           pid=`ps -ef | grep $daemon | grep -v grep | awk '{print $2}'`
+        fi
+        [ ! -z "$pid" ] && (kill $pid && echo "done" ) || echo "not running"
+
+        ;;
+status)
+        echo "$name is \c"
+        PGREP=`which pgrep`
+        if [ -z $PGREP ]; then
+           pid=`pgrep -fx $daemon`
+        else
+           pid=`ps -ef | grep $daemon | grep -v grep | awk '{print $2}'`
+        fi
+        [ -z "$pid" ] && echo "not running" || echo "running with pid $pid"
+        ;;
+restart)
+        $0 stop && $0 start
+        ;;
+reload)
+        echo "Re-initializing $name ...\c"
+        PGREP=`which pgrep`
+        if [ -z $PGREP ]; then
+           pid=`pgrep -fx $daemon`
+        else
+           pid=`ps -ef | grep $daemon | grep -v grep | awk '{print $2}'`
+        fi
+        [ ! -z "$pid" ] && (kill -HUP $pid && echo "done" ) || echo "not running"
+        ;;
+*)
+        echo "Usage: $0 { start | stop | status | restart | reload }"
+        ;;
+esac
+
+exit 0
+___EOF___

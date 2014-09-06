@@ -1,0 +1,45 @@
+#!/usr/bin/perl
+
+use DBI;
+$hostname = 'localhost';          # Host that serves the mSQL Database
+$dbname = 'snmp';                 # mySQL Database name
+$doit = 1;
+
+sub usage {
+    print "$0 [-H host] [-u user] [-p password] [-v] [-h] [-n] [-d] [-a] GROUP USER EMAILADDRESS\n";
+    exit 0;
+}
+
+while ($#ARGV > -1 && $ARGV[0] =~ /^-/) {
+    $_ = shift @ARGV;
+    usage if (/-h/);
+    $hostname = shift if (/-H/);
+    $sqluser = shift if (/-u/);
+    $pass = shift if (/-p/);
+    $admin = 1 if (/-a/);
+    $verbose = 1 if (/-v/);
+    $delete = 1 if (/-d/);
+    $doit = 0 if (/-n/);
+}
+
+($group, $user, $email) = @ARGV;
+
+die "group $group is a reserved group name, you can't use it.  Sorry." if ($group eq "default");
+
+die "no group specified" if (!defined($group));
+
+( $dbh = DBI->connect("DBI:mysql:database=$dbname;host=$hostname", $sqluser, $pass))
+    or die "\tConnect not ok: $DBI::errstr\n";
+
+DO("insert into usergroups(user, groupname, isadmin) values('$user', '$group', " . (($admin) ? "'Y'" : "'N'") . ")");
+if (defined($email)) {
+    DO("insert into oncall(user, groupname, email, days, hours) values('$user', '$group', '$email', '*', '*')");
+}
+
+$dbh->disconnect();
+
+sub DO {
+    my $cmd = shift;
+    print $cmd,"\n" if ($verbose);
+    $dbh->do($cmd) if ($doit);
+}

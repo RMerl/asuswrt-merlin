@@ -1,0 +1,2 @@
+; This .def file is obsolete. Do not add any names of exported functions here
+; but add NETSNMP_IMPORT to function declarations instead.

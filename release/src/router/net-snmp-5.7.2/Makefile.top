@@ -1,0 +1,120 @@
+#
+# Minimum environment and virtual path setup
+#
+SHELL		= @SHELL@
+srcdir		= @srcdir@
+top_srcdir	= @top_srcdir@
+VERSION		= @VERSION@
+@SET_MAKE@
+
+#
+# Paths
+#
+prefix		= @prefix@
+exec_prefix	= @exec_prefix@
+bindir		= @bindir@
+sbindir		= @sbindir@
+libdir		= @libdir@
+datarootdir	= @datarootdir@
+datadir		= @datadir@
+includedir	= @includedir@/net-snmp
+ucdincludedir	= @includedir@/ucd-snmp
+mandir		= @mandir@
+man1dir		= $(mandir)/man1
+man3dir		= $(mandir)/man3
+man5dir		= $(mandir)/man5
+man8dir		= $(mandir)/man8
+snmplibdir	= $(datadir)/snmp
+mibdir		= $(snmplibdir)/mibs
+persistentdir	= @PERSISTENT_DIRECTORY@
+DESTDIR         = @INSTALL_PREFIX@
+INSTALL_PREFIX  = $(DESTDIR)
+
+#
+# Programs
+#
+INSTALL		= $(LIBTOOL) --mode=install @INSTALL@
+UNINSTALL	= $(LIBTOOL) --mode=uninstall rm -f
+LIBTOOLCLEAN	= $(LIBTOOL) --mode=clean rm -f
+FEATURECHECK	= $(top_srcdir)/local/minimalist/feature-check
+FEATUREPROCESS	= $(top_srcdir)/local/minimalist/feature-remove
+INSTALL_DATA    = @INSTALL_DATA@
+SED		= @SED@
+LN_S		= @LN_S@
+AUTOCONF	= @AUTOCONF@
+AUTOHEADER	= @AUTOHEADER@
+PERL            = @PERLPROG@
+PYTHON          = @PYTHONPROG@
+FIND            = @FIND@
+
+#
+# Compiler arguments
+#
+CFLAGS		= @CFLAGS@ @DEVFLAGS@
+EXTRACPPFLAGS	= @EXTRACPPFLAGS@
+LDFLAGS		= @LDFLAGS@ 
+LIBTOOL		= @LIBTOOL@ @LIBTOOLFLAGS@
+EXEEXT		= @EXEEXT@
+
+# Misc Compiling Stuff
+CC	        = @CC@
+LINKCC	        = @LINKCC@
+
+# use libtool versioning the way they recommend.
+# The (slightly clarified) rules:
+#
+# - If any interfaces/structures have been removed or changed since the
+#   last update, increment current (+5), and set age and revision to 0. Stop.
+#
+# - If any interfaces have been added since the last public release, then
+#   increment current and age, and set revision to 0. Stop.
+# 
+# - If the source code has changed at all since the last update,
+#   then increment revision (c:r:a becomes c:r+1:a). 
+#
+# Note: maintenance releases (eg 5.2.x) should never have changes
+#       that would require a current to be incremented.
+#
+# policy: we increment major releases of LIBCURRENT by 5 starting at
+# 5.3 was at 10, 5.4 is at 15, ...  This leaves some room for needed
+# changes for past releases if absolutely necessary.
+#
+LIBCURRENT  = 30
+LIBAGE      = 0
+LIBREVISION = 2
+
+LIB_LD_CMD      = $(LIBTOOL) --mode=link $(LINKCC) $(CFLAGS) -rpath $(libdir) -version-info $(LIBCURRENT):$(LIBREVISION):$(LIBAGE) -o
+LIB_EXTENSION   = la
+LIB_VERSION     =
+LIB_LDCONFIG_CMD = $(LIBTOOL) --mode=finish $(INSTALL_PREFIX)$(libdir)
+LINK		= $(LIBTOOL) --mode=link $(LINKCC)
+# RANLIB 	= @RANLIB@
+RANLIB		= :
+
+# libtool definitions
+.SUFFIXES: .c .o .lo .rc
+.c.lo:
+	$(LIBTOOL) --mode=compile $(CC) $(CPPFLAGS) $(CFLAGS) -c -o $@ $<
+.rc.lo:
+	$(LIBTOOL) --mode=compile --tag=CC windres -o $@ -i $<
+
+# include paths
+#
+SRC_TOP_INCLUDES            = -I$(top_srcdir)/include
+SRC_SNMPLIB_INCLUDES        = -I$(top_srcdir)/snmplib
+SRC_AGENT_INCLUDES          = -I$(top_srcdir)/agent
+SRC_HELPER_INCLUDES         = -I$(top_srcdir)/agent/helpers
+SRC_MIBGROUP_INCLUDES       = -I$(top_srcdir)/agent/mibgroup
+
+BLD_TOP_INCLUDES            = -I$(top_builddir)/include $(SRC_TOP_INCLUDES)
+BLD_SNMPLIB_INCLUDES        = -I$(top_builddir)/snmplib $(SRC_SNMPLIB_INCLUDES)
+BLD_AGENT_INCLUDES          = -I$(top_builddir)/agent $(SRC_AGENT_INCLUDES)
+BLD_HELPER_INCLUDES         = -I$(top_builddir)/agent/helpers $(SRC_HELPER_INCLUDES)
+BLD_MIBGROUP_INCLUDES       = -I$(top_builddir)/agent/mibgroup $(SRC_MIBGROUP_INCLUDES)
+
+TOP_INCLUDES            = $(@TOP_INCLUDES@)
+SNMPLIB_INCLUDES        = $(@SNMPLIB_INCLUDES@)
+AGENT_INCLUDES          = $(@AGENT_INCLUDES@)
+HELPER_INCLUDES         = $(@HELPER_INCLUDES@)
+MIBGROUP_INCLUDES       = $(@MIBGROUP_INCLUDES@)
+

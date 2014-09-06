@@ -1,0 +1,15 @@
+.TH tkmib "1" "16 Nov 2006" VVERSIONINFO "Net-SNMP"
+.SH NAME
+tkmib - an interactive graphical MIB browser for SNMP
+.SH SYNOPSIS
+.PP
+.B tkmib
+.SH DESCRIPTION
+.PP
+Simple Network Management Protocol (SNMP) provides a framework for
+exchange of the management information between the agents (servers)
+and clients. The Management Information Bases (MIBs) contain a formal
+description of a set of network objects that can be managed using the
+SNMP for a particular agent. \fBtkmib\fR is a graphical user interface
+for browsing the MIBs. It is also capable of sending or retrieving the
+SNMP management information to/from the remote agents interactively.

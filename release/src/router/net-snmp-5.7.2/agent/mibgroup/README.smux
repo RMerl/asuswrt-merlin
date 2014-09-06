@@ -1,0 +1,52 @@
+[1] What is SMUX?
+
+SMUX is the snmp multiplexing protocol (RFC 1227). It can be used by an
+snmp agent to query variables maintained by another user-level process.
+
+[2] Why is it relevant to net-snmp?
+
+The original ucd-snmp agent needed a mechanism to query statistics from
+GateD.  GateD has traditionally supported this functionality via SMUX.
+Hence SMUX was implemented within the ucd-snmp framework to extract
+routing protocol statistics from GateD.
+
+net-snmp continues to support smux, and many applications still use it.
+
+[3] What is GateD?
+
+GateD is the 'Gateway Daemon' which implements a variety of routing
+protocols on a variety of platforms (OSes). This was formerly available
+as open source, but has since been made closed and entirely un-free.
+Other routing protocol daemons such a quagga (http://www.quagga.net)
+support SMUX.
+
+[4] Can SMUX extract statistics from other user-level processes?
+
+Yes, the current implementation allows for the registration of any MIB
+that might be registered by a SMUX peer.
+
+[5] How does it work?
+
+Assuming 'snmpd' is already up and running, when the SMUX peer comes up,
+it identifies itself with an oid identifier and string password, and
+registers any MIBs it would like to implement.  When 'snmpd' receives
+queries for these MIBs, it passes these queries to the peer.
+
+[6] Who implemented SMUX for ucd-snmp?
+
+SMUX was implemented by Rohit Dube. He had oodles of help from
+ucd-snmp-coders (Dave, Niels, Wes, Simon, Felix, Leonti) and gated-people
+(Acee, Feiyi, Larry, Sue). [If I missed somebody, sorry in advance and
+do let me know].  Later, Nick Amato re-write the entire SMUX package so
+the code today is mostly his.
+
+[7] How do I find out more about SMUX?
+
+Read the RFC and the code, mainly, but only for legacy code.
+
+*New* sub-agent development should use the AgentX protocol instead,
+which is not only standardized (RFC 2741 + 2742), but is outright superior
+to smux in a number of important ways (handles SET requests reliably,
+able to handle overlapping registrations, aware of SNMPv3 contexts, etc.)
+
+Only build new smux support if you have to.

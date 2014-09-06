@@ -1,0 +1,94 @@
+#!/usr/bin/perl
+#
+# Tidies up the output of svn2cl to clean it up a touch.
+# It is fancier than before, but probably no better written.
+#     (though there are noticably more comments!)
+
+
+my $inFileList = 0;
+my $stuff      = "";
+my $prefix     = "trunk/net-snmp/";
+
+if ( $ARGV[0] =~ /^V/ ) {
+    $b = shift @ARGV;
+    $prefix    = "branches/$b/net-snmp/";
+}
+
+$line1 = <>;
+if ( $line1 !~ /^svn/ ) { print $line1; }
+while (<>) {
+    s/^\t/ /;
+    #
+    # Note when we're just starting to look at
+    #   the list of files....
+    #
+    if (/^ *\*/) {
+        $_ =~ s/^ *\* //;
+        $inFileList = 1;
+        $stuff = "";
+    }
+    if ( $inFileList ) { 
+        #
+        #  ... and filter out just those from the branch
+        #      that we're working with.
+        #
+        if (/$prefix/) { 
+            #
+            #  XXX: This code implicitly assumes that each entry
+            #       appears on a separate line.  Which is *probably*
+            #       true given the folding done by svn2cl.
+            #         But short paths (e.g. top-level files) may
+            #       break this assumption, as would extending the
+            #       folding point for svn2cl
+            # ToDo:   Strip the prefix (or skip the entry) for
+            #       each token individually, rather than per-line.
+            #
+            $z = $_;
+            $z =~ s/[ \t]*$prefix/ /;
+            $stuff .= $z;
+        } else {
+            $stuff .= " ".$_;
+        }
+        if ( /:/ ) {
+            #
+            # At the end of this list, we need to reformat it
+            #   so that the lines aren't too long or too short
+            #
+            # Flatten things into a single line,
+            #   and make sure it ends in a colon
+            $stuff =~ s/\n//g;
+            if ( $stuff =~ /,$/) { $stuff =~ s/,$/:/; }
+
+            #
+            #  If the line is too long, then start re-folding it
+            #
+            if ( $stuff =~ /.{70}/ ) {
+                @z = split /\s/, $stuff;
+                $line = "*";
+                while ($#z >= 0) {
+                    $z = shift @z;
+                    if ( "$line $z" =~ /.{70}/ ) {
+                        print "   $line\n";
+                        $line = "   $z";
+                    } else {
+                        $line .= " $z";
+                    }
+                }
+                print "   $line\n\n";
+            } else {
+                #
+                #  Otherwise, print the list as it stands
+                #
+                print "   *$stuff\n\n";
+            }
+            $stuff = "";
+            $inFileList = 0;
+        }
+    } else {
+
+        #
+        # If we're not processing the list of files,
+        #   then just pass things through.
+        print $_;
+    }
+}

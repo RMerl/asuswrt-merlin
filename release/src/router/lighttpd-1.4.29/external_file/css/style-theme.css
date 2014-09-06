@@ -213,7 +213,7 @@ cursor: pointer;
 }
 
 #hostview .host_item.offline{
-color:#5A5A5A;
+color:#919191;
 }
 
 #hostview .host_item.select{
@@ -348,7 +348,7 @@ top:0px;
 
 /*--Main Right Region------------------------------------*/
 #main_right_region {
-background-image:url("images/main_right_region_bg.png");
+background-image:url("images/main_right_region_bg.jpg");
 margin:0;
 padding:0;
 overflow: hidden;
@@ -357,6 +357,8 @@ height:100%;
 /*min-width:810px;*/
 position: absolute;
 left:297px;
+background-repeat:no-repeat;
+background-color:#121212;
 }
 /*--------------------------------------*/
 
@@ -686,12 +688,14 @@ cursor:pointer;
 }
 
 #fileview .nextDiv {
-float: left;
+/*float: left;*/
 width: 100%;
 height: 25px;
 text-align: center;
 background-color: #fff;
 cursor:pointer;
+position: absolute;
+bottom: 0px;
 }
 
 #fileview .nextDiv:hover {
@@ -1379,7 +1383,9 @@ width:100%;
 font-family: "Segoe UI",Arial;
 font-weight: lighter;
 font-size: 11pt;
-background-image: url("images/main_right_region_bg.png");
+/*background-image: url("images/main_right_region_bg.jpg");
+background-repeat:no-repeat;
+background-color:#121212;*/
 }
 .table-file-list tr th {
 background-color: #AFAFAF;

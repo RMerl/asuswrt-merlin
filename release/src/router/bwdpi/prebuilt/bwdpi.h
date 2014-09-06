@@ -148,6 +148,8 @@ extern void bwdpi_client_info(char *MAC, bwdpi_device *device);
 extern int device_info_main(char *MAC);
 extern int wrs_url_main();
 extern void redirect_page_status(int cat_id, int *retval, webs_t wp);
+extern int get_anomaly_main(char *cmd);
+extern int get_app_patrol_main();
 
 //dpi.c
 extern void stop_dpi_engine_service();
@@ -167,8 +169,8 @@ extern int wrs_app_service(int cmd);
 
 //data_collect.c
 extern void stop_dc();
-extern void start_dc();
-extern int data_collect_main(char *cmd);
+extern void start_dc(char *path);
+extern int data_collect_main(char *cmd, char *path);
 
 //tools.c
 extern int debug; // bwdpi_debug or wrs_debug

@@ -3,6 +3,8 @@ include ../common.mak
 ASUSWRTTOOLSDIR = $(SRCBASE)/router/tools/Lnx_AsusWrtDictPrep
 ASUSWRTTOOLSDIR2 = $(SRCBASE)/router/tools/Lnx_ToolHelp
 
+MODELS_HAVE_USB3 = "DSL-AC68U RT-AC3200 RT-AC87U RT-AC69U RT-AC68U RT-AC56S RT-AC56U RT-AC55U RT-N18U TM-AC1900"
+
 all:
 
 clean:
@@ -61,15 +63,18 @@ ifeq ($(RTCONFIG_SFP),y)
 	rm -rf $(INSTALLDIR)/www/images/appinstall
 endif
 ifeq ($(RTCONFIG_8M_SFP),y)
+	rm -rf $(INSTALLDIR)/www/images/cloudsync/invite_model.jpg
 	rm -rf $(INSTALLDIR)/www/images/New_ui/network_config.png
 	rm -rf $(INSTALLDIR)/www/images/New_ui/TimeLimits.png
 	rm -rf $(INSTALLDIR)/www/images/New_ui/QoS.png
+	rm -rf $(INSTALLDIR)/www/images/New_ui/parental-control.png
 	rm -rf $(INSTALLDIR)/www/images/New_ui/rt.jpg
 	rm -rf $(INSTALLDIR)/www/images/New_ui/re.jpg
 	rm -rf $(INSTALLDIR)/www/images/New_ui/ap.jpg
 	rm -rf $(INSTALLDIR)/www/images/New_ui/mb.jpg
 endif
 ifeq ($(RTCONFIG_4M_SFP),y)
+	rm -rf $(INSTALLDIR)/www/images/cloudsync/invite_model.jpg
 	rm -rf $(INSTALLDIR)/www/images/New_ui/networkmap/bg.png
 	rm -rf $(INSTALLDIR)/www/images/New_ui/networkmap/client-list.png
 	rm -rf $(INSTALLDIR)/www/images/New_ui/networkmap/client.png
@@ -114,6 +119,7 @@ ifeq ($(RTCONFIG_4M_SFP),y)
 	rm -rf $(INSTALLDIR)/www/images/New_ui/network_config.png
 	rm -rf $(INSTALLDIR)/www/images/New_ui/TimeLimits.png
 	rm -rf $(INSTALLDIR)/www/images/New_ui/QoS.png
+	rm -rf $(INSTALLDIR)/www/images/New_ui/parental-control.png
 	rm -rf $(INSTALLDIR)/www/images/New_ui/rt.jpg
 	rm -rf $(INSTALLDIR)/www/images/New_ui/re.jpg
 	rm -rf $(INSTALLDIR)/www/images/New_ui/ap.jpg
@@ -131,10 +137,17 @@ else
 	rm -rf $(INSTALLDIR)/www/AjaxLogin.asp
 	rm -rf $(INSTALLDIR)/www/Passpoint_hidden.asp
 	rm -rf $(INSTALLDIR)/www/Advanced_WAdvPassPoint_Content.asp
-	rm -rf $(INSTALLDIR)/www/Advanced_WPassPoint_Content.asp
+	rm -rf $(INSTALLDIR)/www/Advanced_WPasspoint_Content.asp
 	rm -rf $(INSTALLDIR)/www/SMTP_Client.asp
 	rm -rf $(INSTALLDIR)/www/images/tmo_modem_plug.png
 	rm -rf $(INSTALLDIR)/www/images/tmo_modem_unplug.png
+	rm -rf $(INSTALLDIR)/www/iui/cellspot_logo.png
+	rm -rf $(INSTALLDIR)/www/iui/default.css
+	rm -rf $(INSTALLDIR)/www/iui/registerEvent.js
+	rm -rf $(INSTALLDIR)/www/iui/tmo-logo.png
+endif
+ifneq ($(RTCONFIG_SNMPD),y)
+	rm -rf $(INSTALLDIR)/www/Advanced_SNMP_Content.asp
 endif
 ifeq ($(RTCONFIG_DSL),y)
 	rm -rf $(INSTALLDIR)/www/images/Model_producticon.png
@@ -142,6 +155,7 @@ ifeq ($(RTCONFIG_DSL),y)
 	rm -rf $(INSTALLDIR)/www/images/New_ui/rt.jpg
 	rm -rf $(INSTALLDIR)/www/images/New_ui/ap.jpg
 else
+	rm -rf $(INSTALLDIR)/www/images/New_ui/export/line_export_notif.png
 	rm -rf $(INSTALLDIR)/www/Main_Spectrum_Content.asp
 	rm -rf $(INSTALLDIR)/www/SNR.svg
 	rm -rf $(INSTALLDIR)/www/BPC.svg
@@ -305,6 +319,8 @@ ifneq ($(RTCONFIG_BWDPI),y)
 	rm -rf $(INSTALLDIR)/www/blocking.asp
 	rm -rf $(INSTALLDIR)/www/getTraffic.asp
 	rm -rf $(INSTALLDIR)/www/getWebHistory.asp
+	rm -rf $(INSTALLDIR)/www/getAppTraffic.asp
+	rm -rf $(INSTALLDIR)/www/getWanTraffic.asp
 	rm -rf $(INSTALLDIR)/www/tm_eula.html
 	rm -rf $(INSTALLDIR)/www/images/New_ui/HomeProtection.png
 	rm -rf $(INSTALLDIR)/www/images/New_ui/TimeLimits.png
@@ -325,16 +341,25 @@ ifneq ($(RTCONFIG_ROG),y)
 endif
 endif
 
-ifneq ($(BUILD_NAME),RT-AC87U)
-ifneq ($(BUILD_NAME),RT-AC68U)
-ifneq ($(BUILD_NAME),RT-AC56U)
-ifneq ($(BUILD_NAME),RT-N65U)
-ifneq ($(BUILD_NAME),RT-N18U)
-ifneq ($(BUILD_NAME),DSL-AC68U)
+ifeq ($(findstring $(BUILD_NAME),$(MODELS_HAVE_USB3)),)
 	rm -rf $(INSTALLDIR)/www/images/New_ui/networkmap/USB3.png
 endif
+
+ifneq ($(RTCONFIG_DROPBOXCLIENT),y)
+	rm -rf $(INSTALLDIR)/www/images/cloudsync/dropbox.png
+	rm -rf $(INSTALLDIR)/www/dropbox_callback.htm
+endif
+
+ifneq ($(RTCONFIG_FTPCLIENT),y)
+ifneq ($(RTCONFIG_SAMBACLIENT),y)
+	rm -rf $(INSTALLDIR)/www/images/cloudsync/ftp_server.png
 endif
 endif
+
+ifneq ($(RTCONFIG_SNMPD), y)	
+	rm -rf $(INSTALLDIR)/www/Advanced_SNMP_Content.asp
 endif
-endif
+
+ifneq ($(RTCONFIG_OLD_PARENTALCTRL), y)	
+	rm -rf $(INSTALLDIR)/www/Advanced_MACFilter_Content.asp
 endif

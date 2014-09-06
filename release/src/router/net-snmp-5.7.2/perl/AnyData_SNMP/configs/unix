@@ -1,0 +1,34 @@
+# example ifconfig command
+alias ifconfig {
+      printf "%-10sinet addr: %-15s  Mask: %-10s\n          %s %s RUNNING:%s  MTU:%d\n          RX packets: %d errors: %d dropped: %d\n          TX packets: %d errors: %d dropped: %d\n          RX bytes:%d  TX bytes: %d\n\n" select ifDescr, ipAdEntAddr, ipAdEntNetMask, ifAdminStatus, ifType, ifOperStatus, ifMtu, ifInUcastPkts, ifInErrors, ifInDiscards, ifOutUcastPkts, ifOutErrors, ifOutDiscards, ifInOctets, ifOutOctets, ifIndex, ipAdEntIfIndex from ifTable, ipAddrTable where ifIndex = ipAdEntIfIndex
+#       select ipAdEntAddr, ifDescr, ifIndex, ipAdEntIfIndex from ifTable, ipAddrTable where ifIndex = ipAdEntIfIndex
+}
+
+# equivelant to netstat -an
+alias netstatan {
+      printf "Active Intenet connections (servers and established)\n"
+      printf "Proto     LocalAddress          Foreign Address      State\n"
+      printf "tcp       %-15s:%-5s %-15s:%-5s%-10s\n" select tcpConnLocalAddress, tcpConnLocalPort, tcpConnRemAddress, tcpConnRemPort, tcpConnState from tcpConnTable;
+      printf "udp       %-15s:%-5s 0.0.0.0:0               %-10s\n" select udpLocalAddress, udpLocalPort from udpTable;
+}
+
+# equivelent to netstat -rn
+alias netstatrn {
+      printf "Kernel IP Routing Table\n"
+      printf "Destination     Gateway         Genmask          Type      Iface\n"
+      printf "%-15s %-15s %-15s  %-8s  %s\n" select ipRouteDest, ipRouteNextHop, ipRouteMask, ipRouteType, ifDescr, ifIndex, ipRouteIfIndex from ifTable, ipRouteTable where ifIndex = ipRouteIfIndex
+}
+
+alias ps {
+      printf "%6d %1d %s %40.40s\n" select hrSWRunIndex, hrSWRunType, hrSWRunName, hrSWRunParameters from hrSWRunTable
+#      printf "%6d %1d %6d %s %40.40s\n" select hrSWRunIndex, hrSWRunType, hrSWRunPerfMem, hrSWRunName, hrSWRunParameters from hrSWRunTable
+}
+
+alias ps_grep {
+      printf "%6d %1d %s %40.40s\n" select hrSWRunIndex, hrSWRunType, hrSWRunName, hrSWRunParameters from hrSWRunTable where hrSWRunName like '%\1%'
+}
+
+alias df {
+      printf "Filesystem               Size     Used\n"
+      printf "%-20s %8d %8d\n" select hrStorageDescr, hrStorageSize, hrStorageUsed from hrStorageTable
+}

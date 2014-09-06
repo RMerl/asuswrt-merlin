@@ -1,0 +1,28 @@
+
+Reported By: Piotr Bandur; piotr.bandur@homus.com
+Date: Tue, 28 Oct 2003
+
+In Section 6.3.1:
+
+    4) Prepend K2 to the result of the step 4 and calculate MD5 digest
+       over it according to [RFC1321].  Take the first 12 octets of the
+       final digest - this is Message Authentication Code (MAC).
+
+Should be:
+
+    4) Prepend K2 to the result of the step 3 and calculate MD5 digest
+       over it according to [RFC1321].  Take the first 12 octets of the
+       final digest - this is Message Authentication Code (MAC).
+
+In Section 7.3.1:
+
+    4) Prepend K2 to the result of the step 4 and calculate SHA digest
+       over it according to [SHA-NIST].  Take the first 12 octets of
+       the final digest - this is Message Authentication Code (MAC).
+
+Should be:
+
+    4) Prepend K2 to the result of the step 3 and calculate SHA digest
+       over it according to [SHA-NIST].  Take the first 12 octets of
+       the final digest - this is Message Authentication Code (MAC).
+ 

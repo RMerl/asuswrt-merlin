@@ -1,0 +1,32 @@
+title Agent Operating Mode
+description  This section defines how the agent will operate when it
+description  is running.
+
+token master
+info  Should the agent operate as a master agent or not.
+info  Currently, the only supported master agent type for this token
+info  is "agentx".
+info  #
+info  arguments: (on|yes|agentx|all|off|no)
+question 1 Should the agent run as a AgentX master agent?
+validanswer 1 ^(on|yes|agentx|all|off|no)$
+
+token agentuser
+info  The system user that the agent runs as.
+info  arguments: name|#uid
+question 1 Enter the name of the user that you want the agent to run as
+
+token agentgroup
+info  The system group that the agent runs as.
+info  arguments: group|#GID
+question 1 Enter the name of the group that you want the agent to run as
+
+token agentaddress
+info  The IP address and port number that the agent will listen on.
+info  By default the agent listens to any and all traffic from any
+info  interface on the default SNMP port (161).  This allows you to
+info  specify which address, interface, transport type and port(s) that you
+info  want the agent to listen on.  Multiple definitions of this token
+info  are concatenated together (using ':'s).
+info  arguments: [transport:]port[@interface/address],...
+question 1 Enter the port numbers, etc that you want the agent to listen to

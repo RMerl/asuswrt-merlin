@@ -32,7 +32,7 @@ _get_fsck_logfile(){
 if [ -z "$1" ] || [ -z "$2" ]; then
 	echo "Usage: app_fsck.sh [filesystem type] [device's path]"
 	exit 0
-elif [ "$1" == "vfat" ] || [ "$1" == "msdos" ]; then
+elif [ "$1" == "vfat" ] || [ "$1" == "msdos" ] || [ "$1" == "fuseblk" ]; then
 	_set_fsck_code $2 3
 	exit 0
 fi
@@ -112,59 +112,79 @@ free_caches -w 0
 set -o pipefail
 _set_fsck_code $2 2
 if [ "$1" == "tfat" ]; then
-	c=0
-	RET=1
-	while [ ${c} -lt 4 -a ${RET} -ne 0 ] ; do
-		c=$((${c} + 1))
-		eval fsck_msdos $autocheck_option $autofix_option $2 $log_option
-		RET=$?
-		if [ ${RET} -ge 251 -a ${RET} -le 254 ] ; then
-			break;
-		fi
-	done
+	# return value = 0: FS be ok.
+	eval fsck_msdos $autocheck_option $autofix_option $2 $log_option
+
+	if [ "$?" == "0" ]; then
+		_set_fsck_code $2 0
+	else
+		_set_fsck_code $2 1
+	fi
 elif [ "$1" == "ntfs" ] || [ "$1" == "tntfs" ]; then
-	c=0
-	RET=1
-	while [ ${c} -lt 4 -a ${RET} -ne 0 ] ; do
-		c=$((${c} + 1))
-		if [ "$ntfs_mod" == "open" ]; then
-			eval fsck.hfsplus $autocheck_option $autofix_option $2 $log_option
-		elif [ "$ntfs_mod" == "paragon" ]; then
+	if [ "$ntfs_mod" == "paragon" ]; then
+		# return value = 1: FS be ok.
+		c=0
+		RET=0
+		while [ ${c} -lt 4 -a ${RET} -ne 1 ] ; do
+			c=$((${c} + 1))
 			eval chkntfs $autocheck_option $autofix_option --verbose $2 $log_option
-		elif [ "$ntfs_mod" == "tuxera" ]; then
-			eval ntfsck $autocheck_option $autofix_option $2 $log_option
+			RET=$?
+			if [ ${RET} -ge 251 -a ${RET} -le 254 ] ; then
+				break;
+			fi
+		done
+
+		if [ "${RET}" == "1" ]; then
+			_set_fsck_code $2 0
+		else
+			_set_fsck_code $2 1
 		fi
-		RET=$?
-		if [ ${RET} -ge 251 -a ${RET} -le 254 ] ; then
-			break;
+	elif [ "$ntfs_mod" == "tuxera" ]; then
+		# return value = 0: FS be ok.
+		eval ntfsck $autocheck_option $autofix_option $2 $log_option
+
+		if [ "$?" == "0" ]; then
+			_set_fsck_code $2 0
+		else
+			_set_fsck_code $2 1
 		fi
-	done
+	fi
 elif [ "$1" == "hfs" ] || [ "$1" == "hfsplus" ] || [ "$1" == "thfsplus" ] || [ "$1" == "hfs+j" ] || [ "$1" == "hfs+jx" ]; then
-	c=0
-	RET=1
-	while [ ${c} -lt 4 -a ${RET} -ne 0 ] ; do
-		c=$((${c} + 1))
-		if [ "$hfs_mod" == "open" ]; then
-			eval fsck.hfsplus $autocheck_option $autofix_option $2 $log_option
-		elif [ "$hfs_mod" == "paragon" ]; then
-			eval chkhfs $autocheck_option $autofix_option --verbose $2 $log_option
-		elif [ "$hfs_mod" == "tuxera" ]; then
-			eval fsck_hfs $autocheck_option $autofix_option $2 $log_option
+	if [ "$hfs_mod" == "open" ]; then
+		eval fsck.hfsplus $autocheck_option $autofix_option $2 $log_option
+
+		if [ "$?" == "0" ]; then
+			_set_fsck_code $2 0
+		else
+			_set_fsck_code $2 1
 		fi
-		RET=$?
-		if [ ${RET} -ge 251 -a ${RET} -le 254 ] ; then
-			break;
+	elif [ "$hfs_mod" == "paragon" ]; then
+		# return value = 1: FS be ok.
+		eval chkhfs $autocheck_option $autofix_option --verbose $2 $log_option
+
+		if [ "$?" == "1" ]; then
+			_set_fsck_code $2 0
+		else
+			_set_fsck_code $2 1
 		fi
-	done
+	elif [ "$hfs_mod" == "tuxera" ]; then
+		# return value = 0: FS be ok.
+		eval fsck_hfs $autocheck_option $autofix_option $2 $log_option
+
+		if [ "$?" == "0" ]; then
+			_set_fsck_code $2 0
+		else
+			_set_fsck_code $2 1
+		fi
+	fi
 else
 	eval fsck.$1 -$autocheck_option$autofix_option -v $2 $log_option
-	RET=$?
+
+	if [ "$?" == "0" ]; then
+		_set_fsck_code $2 0
+	else
+		_set_fsck_code $2 1
+	fi
 fi
 free_caches -w 0 -c 0
-
-if [ "${RET}" != "0" ]; then
-	_set_fsck_code $2 1
-else
-	_set_fsck_code $2 0
-fi
 

@@ -1,0 +1,77 @@
+#!/bin/sh
+
+. ../support/simple_eval_tools.sh
+
+HEADER 'snmpd embedded perl support (using NetSNMP::agent)'
+
+SKIPIF NETSNMP_DISABLE_SNMPV2C
+SKIPIFNOT NETSNMP_EMBEDDED_PERL
+SKIPIFNOT HAVE_SIGHUP
+SKIPIFNOT NETSNMP_SECMOD_USM
+
+#
+# Begin test
+#
+
+snmp_version=v2c
+TESTCOMMUNITY=testcommunity
+. ./Sv2cconfig
+
+TESTOID=.1.3.6.1.4.1.8872.9999.9999.1.0
+TESTOID2=.1.3.6.1.4.1.8872.9999.9999.2.0
+EMBPERL_AGENT=${SNMP_TMPDIR}/hello.pl
+cat >$EMBPERL_AGENT <<END
+#!/usr/bin/env perl
+# minimal embedded perl agent
+
+my \$regat = '.1.3.6.1.4.1.8872.9999.9999'; # netSnmpPlayPen
+my \$myoid = \$regat . ".1.0"; # the "hello world" OID
+my \$myoid2 = \$regat . ".2.0"; # the "hello again world" OID
+
+use NetSNMP::OID qw(:all);
+use NetSNMP::agent qw(:all);
+use NetSNMP::ASN qw(:all);
+use SNMP;
+
+my \$regoid = new NetSNMP::OID(\$regat);
+\$agent->register("hello", \$regoid, \&my_snmp_handler);
+
+sub my_snmp_handler {
+  my (\$handler, \$registration_info, \$request_info, \$requests) = @_;
+  for(my \$request = \$requests; \$request; \$request = \$request->next()) {
+    if (\$request_info->getMode() == MODE_GET) {
+      if (\$request->getOID() == new NetSNMP::OID(\$myoid)) {
+        \$request->setValue(ASN_OCTET_STR, "hello world");
+        last;
+      } elsif (\$request->getOID() == new NetSNMP::OID(\$myoid2)) {
+        \$request->setValue(ASN_OCTET_STR, "hello again world");
+        last;
+      }
+    }
+  }
+}
+END
+
+echo "use blib qw(${SNMP_UPDIR}/perl);" > ${SNMP_TMPDIR}/snmp_perl.pl
+echo 'use NetSNMP::agent;' >> ${SNMP_TMPDIR}/snmp_perl.pl
+echo '$agent = new NetSNMP::agent('"'dont_init_agent' => 1, 'dont_init_lib' => 1);" >> ${SNMP_TMPDIR}/snmp_perl.pl
+
+CONFIGAGENT perlInitFile ${SNMP_TMPDIR}/snmp_perl.pl
+CONFIGAGENT "perl do '$EMBPERL_AGENT';"
+CONFIGAGENT 'perl print STDERR "registered_perl_agent_ok";'
+
+STARTAGENT
+
+## 1) SNMP GET against embedded perl mib module
+CAPTURE "snmpget -$snmp_version -c $TESTCOMMUNITY $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT $TESTOID"
+CHECK "hello world"
+
+## 2) persistency: reconfigure (HUP), re-test
+HUPAGENT
+CAPTURE "snmpget -$snmp_version -c $TESTCOMMUNITY $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT $TESTOID2"
+CHECK "hello again world"
+
+## stop
+STOPAGENT
+
+FINISHED

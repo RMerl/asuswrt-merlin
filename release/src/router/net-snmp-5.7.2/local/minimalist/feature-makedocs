@@ -1,0 +1,221 @@
+#!/usr/bin/perl
+
+use strict;
+use IO::File;
+use Getopt::Std;
+our %opts = (W => 2);
+
+getopts('ohwW:', \%opts) || usage();
+
+usage() if ($opts{'h'});
+
+usage() if ($#ARGV != 1);
+
+# should be the feature-details.h file
+my $inputfile = shift @ARGV;
+my $outputfile = shift @ARGV;
+
+my %features;
+my %top;
+my %files;
+my $reqfile;
+
+gather_data($inputfile);
+if ($opts{'w'}) {
+    print_wiki_mode($outputfile);
+} else {
+    print_org_mode($outputfile);
+}
+
+sub gather_data {
+    my ($inputfile) = @_;
+
+    open(I, $inputfile);
+    while(<I>) {
+	if (/(required|provided|wanted) by (.*) \*/) {
+	    $reqfile = $2;
+	} elsif (/define NETSNMP_FEATURE_PROVIDE_(.*) 1/) {
+	    my $lc = lc($1);
+	    die "no reqfile currently set; bug!" if (!defined($reqfile));
+
+	    add($lc);
+
+	    push @{$files{$reqfile}{'provides'}}, $lc;
+	    push @{$features{$lc}{'providedby'}}, $reqfile;
+
+	} elsif (/define NETSNMP_FEATURE_REQUIRE_(.*) 1/) {
+	    my $lc = lc($1);
+	    die "no reqfile currently set; bug!" if (!defined($reqfile));
+
+	    add($lc);
+
+	    push @{$files{$reqfile}{'requires'}}, $lc;
+	    push @{$features{$lc}{'requiredby'}}, $reqfile;
+
+	} elsif (/define NETSNMP_FEATURE_WANT_(.*) 1/) {
+	    my $lc = lc($1);
+	    die "no reqfile currently set; bug!" if (!defined($reqfile));
+
+	    add($lc);
+
+	    push @{$files{$reqfile}{'wants'}}, $lc;
+	    push @{$features{$lc}{'wantedby'}}, $reqfile;
+	} elsif (/define NETSNMP_FEATURE_(.*)_CHILD_OF_(.*) 1/) {
+	    my $child = lc($1);
+	    my $parent = lc($2);
+
+	    add_child($child, $parent);
+	}
+    }
+}
+
+sub add {
+    my ($name) = @_;
+    if (!exists($features{$name})) {
+	# new feature entirely, mark it as a top node
+	$top{$name} = 1;
+    }
+}
+
+sub add_child {
+    my ($child, $parent) = @_;
+
+    add($parent);
+
+    if (exists($top{$child})) {
+	# it's no longer a top node if it's a child of something else
+	delete $top{$child};
+    }
+    $features{$parent}{'children'}{$child}++;
+
+    $features{$child}{'providedby'}, $reqfile;
+}
+
+######################################################################
+# org-mode output
+#
+sub print_org_mode {
+    my ($outputfile) = @_;
+
+    my $fh = new IO::File;
+
+    if (!$fh->open("> $outputfile")) {
+	die "error!\n";
+    }
+
+    foreach my $node (sort keys(%top)) {
+	print_org_node($fh, $node, "*");
+    }
+}
+
+sub print_org_node {
+    my ($fh, $node, $prefix) = @_;
+
+    my $spaces = $prefix;
+    $spaces =~ s/./ /g;
+
+    print $fh "$prefix $node\n";
+    if (exists($features{$node}{'providedby'})) {
+	print $fh "$spaces + provided in file: " .
+	    join(", ", org_link_files(@{$features{$node}{'providedby'}})) . "\n";
+    }
+    if (exists($features{$node}{'requiredby'})) {
+	print $fh "$spaces + required in file: " .
+	    join(", ", org_link_files(@{$features{$node}{'requiredby'}})) . "\n";
+    }
+    if (exists($features{$node}{'wantedby'})) {
+	print $fh "$spaces + wanted in file: " .
+	    join(", ", org_link_files(@{$features{$node}{'wantedby'}})) . "\n";
+    }
+    if (exists($features{$node}{'children'})) {
+	foreach my $child (sort keys(%{$features{$node}{'children'}})) {
+	    print_org_node($fh, $child, $prefix . "*");
+	}
+    }
+}
+
+sub org_link_files {
+    my @files = @_;
+    map { $_ = "[[file:$_][$_]]"; } @files;
+    return @files;
+}
+
+######################################################################
+# wiki output
+#
+sub print_wiki_mode {
+    my ($outputfile) = @_;
+
+    my $fh = new IO::File;
+    my $depth = 0;
+
+    if (!$fh->open("> $outputfile")) {
+	die "error!\n";
+    }
+
+    print $fh "'''The contents of this page is auto-generated from local/minimalist/feature-makedocs; do not edit by hand (changes will be lost)'''\n\n";
+    print $fh "Details of the feature marking system and how it is used can be found at [[Feature Marking and Selection]]\n\n";
+
+    foreach my $node (sort keys(%top)) {
+	print_wiki_node($fh, $node, $depth+1);
+    }
+}
+
+sub print_wiki_node {
+    my ($fh, $node, $depth) = @_;
+
+    my $dataheader;
+    my $depthincrease = 1;
+
+    if ($depth > $opts{'W'}) {
+	print $fh "*" x ($depth - $opts{'W'} + 1) . " $node\n";
+	$dataheader = "*" x ($depth - $opts{'W'} + 2);
+	$depthincrease++;
+    } else {
+	print $fh "=" x $depth . " $node " . "=" x $depth . "\n";
+	$dataheader = "*";
+    }
+
+    if (exists($features{$node}{'providedby'})) {
+	print $fh "$dataheader provided in file: " .
+	    join(", ", wiki_link_files(@{$features{$node}{'providedby'}})) ."\n";
+    }
+    if (exists($features{$node}{'requiredby'})) {
+	print $fh "$dataheader required in file: " .
+	    join(", ", wiki_link_files(@{$features{$node}{'requiredby'}})) ."\n";
+    }
+    if (exists($features{$node}{'wantedby'})) {
+	print $fh "$dataheader wanted in file: " .
+	    join(", ", wiki_link_files(@{$features{$node}{'wantedby'}})) . "\n";
+    }
+    if (exists($features{$node}{'children'})) {
+	if ($depth >= $opts{'W'}) {
+	    print $fh "$dataheader Children:\n";
+	}
+	foreach my $child (sort keys(%{$features{$node}{'children'}})) {
+	    print_wiki_node($fh, $child, $depth + $depthincrease);
+	}
+    }
+}
+
+sub wiki_link_files {
+    my @files = @_;
+    map { $_ = "[http://net-snmp.svn.sourceforge.net/viewvc/net-snmp/trunk/net-snmp/$_?view=markup $_]"; } @files;
+    return @files;
+}
+
+######################################################################
+# help output
+#
+sub usage {
+    print "Usage: $0 [FLAGS] INPUTFILE OUTPUTFILE\n\n";
+    print "FLAGS:\n";
+    print "\t-h\thelp\n";
+    print "\t-o\tOutput style: Org-Mode [default]\n";
+    print "\t-w\tOutput style: wiki\n";
+    print "\t-W DEPTH\tWiki header to bullet list depth (default 2)\n";
+    print "\nINPUT/OUTPUT\n";
+    print "\tINPUTFILE:\tlocation of the include/net-snmp/feature-details.h file\n";
+    print "\tOUTPUTFILE:\tthe file to write the results to\n";
+    exit;
+}

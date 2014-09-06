@@ -1,0 +1,178 @@
+.\" -*- nroff -*-
+.\" Portions of this file are subject to the following copyright.  See
+.\" the Net-SNMP COPYING file for more details and other copyrights
+.\" that may apply:
+.\" /***********************************************************
+.\" 	Copyright 1988, 1989 by Carnegie Mellon University
+.\" 
+.\"                       All Rights Reserved
+.\" 
+.\" Permission to use, copy, modify, and distribute this software and its 
+.\" documentation for any purpose and without fee is hereby granted, 
+.\" provided that the above copyright notice appear in all copies and that
+.\" both that copyright notice and this permission notice appear in 
+.\" supporting documentation, and that the name of CMU not be
+.\" used in advertising or publicity pertaining to distribution of the
+.\" software without specific, written prior permission.  
+.\" 
+.\" CMU DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
+.\" ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL
+.\" CMU BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR
+.\" ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
+.\" WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
+.\" ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
+.\" SOFTWARE.
+.\" ******************************************************************/
+.TH VARIABLES 5 "01 Oct 2010" VVERSIONINFO "Net-SNMP"
+.SH NAME
+    variables - Format of specifying variable names to SNMP tools.
+.SH DESCRIPTION
+The syntax and semantics of management information in SNMP is
+given by the definitions of MIB objects, loaded from one or more
+MIB files (or "MIB modules").  These definitions are not strictly
+required for the SNMP protocol to operate correctly, but are typically
+needed by SNMP client applications to display information in a
+meaningful manner.
+
+The MIB file also serves as a design document when developing an SNMP
+agent (or sub-agent) that provides this information, and ensures that
+client and server share a common understanding about what management
+information represents.
+
+.SH OIDs
+MIB objects are specified using Object Identifiers (OIDs), which can
+take a number of forms.   Note that all of the examples in this section
+refer to the same MIB object.
+.SS Numeric OIDs
+The fundamental format of an OID is a sequence of integer values
+(or "subidentifiers"), typically written using dots to separate
+the individual subidentifiers.
+.RS
+ .1.3.6.1.2.1.1.1
+.RE
+This is the format that is used within the SNMP protocol itself,
+in the packets that are sent over the network.
+.PP
+This form of representing an OID does not require MIB files or MIB
+object definitions to be available.  However it does rely on the
+client application and/or network administrator knowing what a
+given numeric OID refers to.  As such, it is not a particularly
+helpful representation to anyone just starting out with SNMP.
+.PP
+This format can be obtained by giving the command-line option
+-On
+to most Net-SNMP commands.
+
+.SS Full OID path
+A similar (but somewhat more informative) format uses the same
+dotted list representation, but with the numeric subidentifiers
+replaced by names, taken from the relevant MIB file(s).
+.RS
+ .iso.org.dod.internet.mgmt.mib-2.system.sysDescr
+.RE
+This uniquely identifies a particular MIB object (as with the numeric
+OID), but the list of names should hopefully give some indication as
+to what information this object represents.  However it does rely on
+the relevant MIB files being available (as do all formats other than
+the purely numeric OID).  Such OIDs also tend to be fairly long!
+.PP
+This format can be obtained by giving the command-line option
+-Of
+to most Net-SNMP commands.
+.PP
+A variant of this (typically used when writing OIDs in descriptive
+text, rather than running programs), is to combine the name and
+numeric subidentifier:
+.RS
+ .iso(1).org(3).dod(6).internet(1).mgmt(2).mib-2(1).system(1).sysDescr(1)
+.RE
+
+.SS Module-qualified OIDs
+An alternative way to (more-or-less) uniquely specify an OID,
+is to give the name of the MIB object, together with the MIB
+module where it is defined.
+.RS
+SNMPv2-MIB::sysDescr
+.RE
+MIB object names are unique within a given module, so as long
+as there are not two MIB modules with the same name (which is
+unusual, though not unheard of), this format specifies the
+desired object in a reasonably compact form.  It also makes
+it relatively easy to find the definition of the MIB object.
+.PP
+This is the default format for displaying OIDs in Net-SNMP applications.
+It can also be specified explicitly by giving the command-line option
+-OS
+to most Net-SNMP commands.
+
+.SS Object name
+Possibly the most common form for specifying MIB objects is
+using the name of the object alone - without the full path or
+the name of the module that defines it.
+.RS
+sysDescr
+.RE
+This is by far the shortest and most convenient way to refer to
+a MIB object.  However the danger is that if two MIB modules each
+define a MIB object with the same name (which is perfectly legal
+in some circumstances), then it's not necessarily clear which MIB
+object is actually meant.
+For day-to-day use, particularly when using standard MIB objects,
+this is \fIprobaby\fP safe.
+But it's important to be aware of the potential ambiguities.
+.PP
+This format can be obtained by giving the command-line option
+-Os
+to most Net-SNMP commands.
+
+.SS UCD-format
+Previous versions of the code (UCD v4.x and earlier) used a
+simple approach to shortening the way OIDs were specified.
+If the full path of the OID began with
+\fC.iso.org.dod.internet.mgmt.mib-2\fP
+then this prefix was removed from the OID before displaying it.
+All other OIDs were displayed in full.
+.PP
+Similarly, if an OID was passed to the UCD library that did
+not begin with a dot (and wasn't in the module::name format),
+then the same prefix was prepended.   The example OID from the
+formats listed above would therefore be given or displayed as
+.RS
+system.sysDescr
+.RE
+The inconsistent handling of OIDs, depending on their location
+within the OID tree, proved to be more trouble than it was worth,
+and this format is no longer recommended.
+.PP
+The previous behaviour can be obtained by giving the command-line
+option
+-Ou
+(for displaying output), or
+-Iu
+(for interpreting input OIDs without a leading dot)
+to most Net-SNMP commands.
+.\"
+.\" ====================================
+.\"
+.\" ToDo:
+.\"   Instances:
+.\"      Scalars
+.\"      Tables & indexing
+.\"         string indexes - 'abc' vs "abc"
+'\"      Internal objects
+.\"
+.\"  ? Syntax types
+.\"
+.\" ====================================
+.\".PP
+.\"The description of the variables in the MIB is given in the set of MIB
+.\"files defined by the MIBS environment variable (or the default list
+.\"defined at compilation time) and the MIB files in the
+.\"DATADIR/snmp/mibs directory (or the MIBDIRS environment variable).
+.SH "SEE ALSO"
+snmpcmd(1)
+.SH BUGS
+The parser of the MIB files file is not expected to handle bizarre
+(although correct) interpretations of the ASN.1 notation.
+
+

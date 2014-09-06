@@ -103,6 +103,7 @@ function getAudioPlayerLayout(){
 	layout_html += "<span id='status'></span>";
 	layout_html += "</div>";
 	layout_html += "</div>";
+	
 	return layout_html;
 }
 
@@ -480,7 +481,7 @@ function initAudioPlayer(){
 	
 	if( browserVer.indexOf("Chrome") != -1 ||
 	    ( browserVer.indexOf("Safari") != -1 && ( isMacOS() || isWinOS() ) ) ){
-		jplayer_solution = "html";
+		jplayer_solution = "html,flash";
 		jplayer_supplied = "mp3";
 	}
 	else if( isIE() ||

@@ -1,0 +1,30 @@
+#!/bin/sh
+
+. ../support/simple_eval_tools.sh
+
+HEADER SNMPv3 bulkget of system
+
+SKIPIFNOT USING_MIBII_SYSTEM_MIB_MODULE
+
+#
+# Begin test
+#
+
+# standard V3 configuration: 
+. ./Sv3config
+
+STARTAGENT
+
+CAPTURE "snmpbulkget $SNMP_FLAGS -On -Cn1 -Cr2 $NOAUTHTESTARGS $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT .1.3.6.1.2.1.1.4 .1.3.6.1.2.1.1"
+
+STOPAGENT
+
+CHECKORDIE ".1.3.6.1.2.1.1.4.0 = STRING:"
+CHECKORDIE ".1.3.6.1.2.1.1.1.0 = STRING:"
+CHECKORDIE ".1.3.6.1.2.1.1.2.0 = OID:"
+
+CHECKCOUNT 0 ".1.3.6.1.2.1.1.3.0"
+
+CHECKCOUNT 0 ".1.3.6.1.2.1.1.5.0"
+
+FINISHED

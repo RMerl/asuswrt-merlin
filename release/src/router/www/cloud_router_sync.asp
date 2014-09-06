@@ -1001,8 +1001,8 @@ function check_aicloud(){
 	}
 }
 var hint_string = "";
-hint_string += "<#routerSync_rule_both#><br>";
-hint_string += "<#routerSync_rule_StoC#><br>";
+hint_string += "<#routerSync_rule_both#><br><br>";
+hint_string += "<#routerSync_rule_StoC#><br><br>";
 hint_string += "<#routerSync_rule_CtoS#>";
 
 function checkDDNSReturnCode(){
@@ -1022,41 +1022,16 @@ function checkDDNSReturnCode(){
                 || ddns_return_code == 'register,230'
                 || ddns_return_code =='no_change'){                                             
                     url_combined += "https://" + ddns_host_name;
-			        apply_sharelink();			    
-	        }
-	        else{
-                    if(ddns_return_code == 'register,-1')
-                        alert("<#LANHostConfig_x_DDNS_alarm_2#>");
-	            else if(ddns_return_code.indexOf('203')!=-1)
-		        alert("<#LANHostConfig_x_DDNS_alarm_hostname#> '"+hostname_x+"' <#LANHostConfig_x_DDNS_alarm_registered#>");
-                    else if(ddns_return_code.indexOf('233')!=-1)
-		        alert("<#LANHostConfig_x_DDNS_alarm_hostname#> '"+hostname_x+"' <#LANHostConfig_x_DDNS_alarm_registered_2#> '"+ddns_old_name+"'");
-	            else if(ddns_return_code.indexOf('296')!=-1)
-		        alert("<#LANHostConfig_x_DDNS_alarm_6#>");
-	            else if(ddns_return_code.indexOf('297')!=-1)
-	                alert("<#LANHostConfig_x_DDNS_alarm_7#>");
-	            else if(ddns_return_code.indexOf('298')!=-1)
-         	        alert("<#LANHostConfig_x_DDNS_alarm_8#>");
-	            else if(ddns_return_code.indexOf('299')!=-1)
-		        alert("<#LANHostConfig_x_DDNS_alarm_9#>");
-	            else if(ddns_return_code.indexOf('401')!=-1)
-                        alert("<#LANHostConfig_x_DDNS_alarm_10#>");
-	            else if(ddns_return_code.indexOf('407')!=-1)
-		        alert("<#LANHostConfig_x_DDNS_alarm_11#>");
-	            else if(ddns_return_code == 'Time-out')
-	                alert("<#LANHostConfig_x_DDNS_alarm_1#>");
-	            else if(ddns_return_code =='unknown_error')
-                        alert("<#LANHostConfig_x_DDNS_alarm_2#>");
-  	            else if(ddns_return_code =='connect_fail')
-		        alert("<#qis_fail_desc7#>");
-                    else if(ddns_return_code =='auth_fail')
-                        alert("<#qis_fail_desc1#>");
-                    else if(ddns_return_code !='')
-    		        alert("<#LANHostConfig_x_DDNS_alarm_2#>");	
-    		          
-    		     refreshpage();   	    
-		 }			    
-            }    
+			        apply_sharelink();
+		}
+		else{
+			var ddnsHint = getDDNSState(ddns_return_code, ddns_host_name, ddns_old_name);
+			if(ddnsHint != "")
+				alert(ddnsHint);
+
+			refreshpage();
+		}
+	    }    
        }
    });
 }
@@ -1312,7 +1287,7 @@ function checkDDNSReturnCode(){
 									<td>
 										<div style="width:90%;margin:0px auto;">
 											<a href="cloud_main.asp"><span style="font-family:Lucida Console;text-decoration:underline;color:#FC0">Sync Server cannot be enabled.</span></a>
-											Please enable AiCloud 2.0 first. Click here to enable AiCloud 2.0.
+											Please enable AiCloud 2.0 (Cloud Disk & Smart Access) first. Click here to enable AiCloud 2.0.
 										</div>
 									</td>
 								</tr>

@@ -1,0 +1,232 @@
+# -*- autoconf -*-
+#
+# Maybe add library extensions for thread mutex locking.
+#
+
+if test "x$with_res_locks" = "xyes"; then
+  AC_DEFINE(NETSNMP_REENTRANT, 1,
+    [Define to 1 if you want to build with reentrant/threaded
+     code (incomplete).])
+
+    case $target_os in
+
+    aix*)
+	CC_RUNTIME_ARG="$CC_RUNTIME_ARG -lpthreads"
+	;;
+
+    *)
+	;;
+
+    esac
+fi
+
+#
+# Add platform-specific source files.
+#
+AC_MSG_CHECKING([for platform-specific source])
+other_src_list=""
+other_ftobjs_list=""
+other_lobjs_list=""
+other_objs_list=""
+other_agentobjs=""
+other_lagentobjs=""
+other_ftagentobjs=""
+other_trapd_objects=""
+
+# Win32 service code
+if test "x$PARTIALTARGETOS" = "xmingw32" -o "x$PARTIALTARGETOS" = "xmingw32msvc"; then
+  other_src_list="$other_src_list winservice.c winservicerc.rc"
+  other_objs_list="$other_objs_list winservice.o winservicerc.o"
+  other_lobjs_list="$other_lobjs_list winservice.lo winservicerc.lo"
+  other_ftobjs_list="$other_ftobjs_list winservice.ft winservicerc.ft"
+  other_agentobjs="../snmplib/winservicerc.o"
+  other_lagentobjs="../snmplib/winservicerc.lo"
+  other_ftagentobjs="../snmplib/winservicerc.lo"
+  other_trapd_objects="../snmplib/winservicerc.o" 
+fi
+  
+# Win32 pipes
+if test "x$PARTIALTARGETOS" = "xmingw32" -o "x$PARTIALTARGETOS" = "xmingw32msvc"; then
+  other_src_list="$other_src_list winpipe.c"
+  other_objs_list="$other_objs_list winpipe.o"
+  other_lobjs_list="$other_lobjs_list winpipe.lo"
+  other_ftobjs_list="$other_ftobjs_list winpipe.ft"
+fi
+
+AC_SUBST(other_src_list)
+AC_SUBST(other_objs_list)
+AC_SUBST(other_lobjs_list)
+AC_SUBST(other_ftobjs_list)
+AC_SUBST(other_agentobjs)
+AC_SUBST(other_lagentobjs)
+AC_SUBST(other_ftagentobjs)
+AC_SUBST(other_trapd_objects)
+
+AC_MSG_RESULT([$other_src_list $other_objs_list $other_lobjs_list])
+AC_MSG_RESULT([$other_agentobjs $other_lagentobjs $other_trapd_objects])
+  
+#
+# Create directory structure for build
+#
+if test ! -d include; then
+  mkdir include
+fi
+if test ! -d include/net-snmp; then
+  mkdir include/net-snmp
+fi
+if test ! -d include/net-snmp/agent; then
+  mkdir include/net-snmp/agent
+fi
+if test ! -d include/net-snmp/library; then
+  mkdir include/net-snmp/library
+fi
+if test ! -d include/ucd-snmp; then
+  mkdir include/ucd-snmp
+fi
+
+if test ! -d snmplib; then
+  mkdir snmplib
+fi
+if test ! -d snmplib/transports ; then
+  mkdir snmplib/transports
+fi
+
+#
+# Do transport module processing.
+#
+AC_MSG_CHECKING([for and configuring transport modules to use])
+
+# include the actual code checking
+m4_include(configure.d/config_modules_transports)
+
+AC_SUBST(transport_hdr_list)
+AC_SUBST(transport_src_list)
+AC_SUBST(transport_obj_list)
+AC_SUBST(transport_lobj_list)
+AC_SUBST(transport_ftobj_list)
+for i in $transport_def_list; do
+  AC_DEFINE_UNQUOTED($i)
+done
+AC_MSG_RESULT($transport_result_list.)
+AC_MSG_CACHE_ADD(Network transport support: $transport_result_list)
+
+# cleanup
+rm -f module_tmp_header.h
+
+#
+# Security modules to use
+# 
+
+AC_MSG_CHECKING([for security modules to use])
+m4_include(configure.d/config_modules_security_modules)
+AC_SUBST(security_src_list)
+AC_SUBST(security_hdr_list)
+AC_SUBST(security_obj_list) 	 
+AC_SUBST(security_lobj_list)
+AC_SUBST(security_ftobj_list)
+AC_MSG_RESULT($new_with_security)
+AC_MSG_CACHE_ADD(SNMPv3 Security Modules:    $new_with_security)
+
+#
+# Handle the special case of KSM to see which crypto API we support
+#
+
+ac_cv_NETSNMP_USE_KERBEROS_MIT=no
+rebuilt_new_with_security=
+already_checked_krb5=no
+
+for sec in $new_with_security
+do
+  if test "x$sec" = "xksm" -a "xyes" = "x$already_checked_krb5"; then
+    continue
+  fi
+  already_checked_krb5=yes
+
+  if test x$sec != xksm; then
+    rebuilt_new_with_security="$rebuilt_new_with_security $sec"
+  else
+    if test no = $trykrb5; then
+      AC_MSG_NOTICE([configured not to use krb5. disabling ksm])
+      continue
+    fi
+
+    AC_PATH_PROG([krb5_config],krb5-config,[no],$krb5path/bin:$PATH)
+
+    if test no != $krb5_config; then
+      CPPFLAGS="$CPPFLAGS `$krb5_config --cflags`"
+      LIBS="$LIBS `$krb5_config --libs`"
+    elif test $krb5path != no; then
+      AC_ADD_SEARCH_PATH($krb5path)
+    else
+      AC_ADD_SEARCH_PATH(/usr/kerberos)
+    fi
+
+    AC_MSG_CHECKING([for krb5])
+    AC_CACHE_VAL(ac_cv_have_krb5,
+      AC_CHECK_LIB(krb5, krb5_init_context,
+	ac_cv_have_krb5=yes, ac_cv_have_krb5=no
+      )
+    )
+
+    if test $ac_cv_have_krb5 = no; then
+      if test "x$askedkrb5" = "xyes"; then
+	AC_MSG_ERROR(Asked to use krb5 but I couldn't find it.)
+      fi
+      AC_MSG_RESULT(no. disabling ksm)
+      continue
+    fi
+      
+    AC_MSG_RESULT(yes)
+    rebuilt_new_with_security="$rebuilt_new_with_security ksm"
+
+    AC_MSG_CHECKING([[for heimdal]])
+    AC_CACHE_VAL(ac_cv_heimdal,
+    [AC_TRY_COMPILE(
+      [#include <krb5.h>],
+      [const char *v = heimdal_version;],
+      ac_cv_heimdal=yes,
+      ac_cv_heimdal=no
+    )])
+    AC_MSG_RESULT($ac_cv_heimdal)
+    if test $ac_cv_heimdal = yes; then
+      AC_DEFINE(NETSNMP_USE_KERBEROS_HEIMDAL, 1,
+        [Define this if you're using Heimdal Kerberos])
+      if test no = $krb5_config; then
+	LIBS="$LIBS -lkrb5 -lasn1 -lcom_err -lroken"
+      fi
+    elif test no = $krb5_config; then
+	LIBS="$LIBS -lkrb5 -lcom_err"
+    fi
+
+    AC_MSG_CHECKING([to see which crypto API we need to use])
+    AC_CHECK_FUNC(krb5_c_encrypt,[
+    AC_CACHE_VAL(ac_cv_NETSNMP_USE_KERBEROS_MIT,
+      AC_CHECK_LIB(k5crypto, krb5_init_context,
+	ac_cv_NETSNMP_USE_KERBEROS_MIT=yes, ac_cv_MIT_NEW_CRYPTo=no
+      )
+    )
+
+    if test yes = $ac_cv_NETSNMP_USE_KERBEROS_MIT; then
+      AC_MSG_RESULT(new MIT crypto API)
+      AC_DEFINE(NETSNMP_USE_KERBEROS_MIT, 1,
+        [Define this if we're using the new MIT crypto API])
+      if test no = $krb5_config; then
+	LIBS="$LIBS -lk5crypto"
+      fi
+    else
+      AC_MSG_RESULT(old MIT crypto API)])
+    fi
+  fi
+done
+
+new_with_security=$rebuilt_new_with_security
+
+#
+# Detect lm_sensors version
+#
+if test "x$ac_cv_header_sensors_sensors_h" = "xyes"; then
+    AC_CHECK_DECLS([sensors_get_all_subfeatures],
+        [AC_DEFINE(NETSNMP_USE_SENSORS_V3, 1,
+            [Define this if you have lm_sensors v3 or later])],,
+        [[#include <sensors/sensors.h>]])
+fi

@@ -1,0 +1,117 @@
+#######################################################################
+## generic include for XXX. Do not use directly.
+##
+## $Id$
+########################################################################
+##
+##
+## Note: if you add a var here, add it in mfd-interactive-setup.m2c too
+##
+##
+@open ${m2c_defaults_dir}table-${context}.m2d@
+@eval $m2c_tmp_cc = "##"@
+@eval $tmp_cc = ""@ # hack to prevet mib2c eval
+$m2c_tmp_cc ########################################################################
+$m2c_tmp_cc
+$m2c_tmp_cc mib2c Table setting for $context
+$m2c_tmp_cc
+$m2c_tmp_cc ########################################################################
+$m2c_tmp_cc
+$m2c_tmp_cc User context structure type
+$m2c_tmp_cc
+$tmp_cc@eval $@m2c_context_reg = "$m2c_context_reg"@
+$m2c_tmp_cc
+$m2c_tmp_cc ########################################################################
+$m2c_tmp_cc
+$m2c_tmp_cc Allocate data structure in row structure? (vs embedd)
+$m2c_tmp_cc
+$tmp_cc@eval $@m2c_data_allocate = $m2c_data_allocate@
+$m2c_tmp_cc
+$m2c_tmp_cc ########################################################################
+$m2c_tmp_cc
+$m2c_tmp_cc Generate code to cache data?
+$m2c_tmp_cc
+$tmp_cc@eval $@m2c_data_cache = $m2c_data_cache@
+$m2c_tmp_cc
+$m2c_tmp_cc ########################################################################
+$m2c_tmp_cc
+$m2c_tmp_cc Data context structure type
+$m2c_tmp_cc
+$tmp_cc@eval $@m2c_data_context = "$m2c_data_context"@ [generated|NAME]
+$m2c_tmp_cc
+$m2c_tmp_cc ########################################################################
+$m2c_tmp_cc
+$m2c_tmp_cc Generate function to initialize row context when created?
+$m2c_tmp_cc
+$tmp_cc@eval $@m2c_data_init = $m2c_data_init@
+$m2c_tmp_cc
+$m2c_tmp_cc ########################################################################
+$m2c_tmp_cc
+$m2c_tmp_cc Persistence of data context
+$m2c_tmp_cc // 0:persistent, 1:semi-transient, 2:transient
+$m2c_tmp_cc
+$tmp_cc@eval $@m2c_data_transient = $m2c_data_transient@
+$m2c_tmp_cc
+$m2c_tmp_cc ########################################################################
+$m2c_tmp_cc
+$m2c_tmp_cc Include some example code?
+$m2c_tmp_cc
+$tmp_cc@eval $@m2c_include_examples = $m2c_include_examples@
+$m2c_tmp_cc
+$m2c_tmp_cc ########################################################################
+$m2c_tmp_cc
+$m2c_tmp_cc Generate code for irreversible_commit mode?
+$m2c_tmp_cc
+$tmp_cc@eval $@m2c_irreversible_commit = $m2c_irreversible_commit@
+$m2c_tmp_cc
+$m2c_tmp_cc ########################################################################
+$m2c_tmp_cc
+$m2c_tmp_cc Data access method
+$m2c_tmp_cc
+$tmp_cc@eval $@m2c_table_access = "$m2c_table_access"@
+$m2c_tmp_cc
+$m2c_tmp_cc ########################################################################
+$m2c_tmp_cc
+$m2c_tmp_cc Generate row dependency function?
+$m2c_tmp_cc
+$tmp_cc@eval $@m2c_table_dependencies = $m2c_table_dependencies@
+$m2c_tmp_cc
+$m2c_tmp_cc ########################################################################
+$m2c_tmp_cc
+$m2c_tmp_cc Generate data store/restore functions for persistent storage?
+$m2c_tmp_cc
+$tmp_cc@eval $@m2c_table_persistent = $m2c_table_persistent@
+$m2c_tmp_cc
+$m2c_tmp_cc ########################################################################
+$m2c_tmp_cc
+$m2c_tmp_cc Generate code for dynamic row creation?
+$m2c_tmp_cc
+$tmp_cc@eval $@m2c_table_row_creation = $m2c_table_row_creation@
+$m2c_tmp_cc
+$m2c_tmp_cc ########################################################################
+$m2c_tmp_cc
+$m2c_tmp_cc Generate code for settable objects?
+$m2c_tmp_cc
+$tmp_cc@eval $@m2c_table_settable = $m2c_table_settable@
+$m2c_tmp_cc
+$m2c_tmp_cc ########################################################################
+$m2c_tmp_cc
+$m2c_tmp_cc Skip mapping between data context and MIB formats?
+$m2c_tmp_cc // 0:generate maps, 1:skip maps, -1:skip unless enum/oid
+$m2c_tmp_cc
+$tmp_cc@eval $@m2c_table_skip_mapping = $m2c_table_skip_mapping@
+$m2c_tmp_cc
+$m2c_tmp_cc ########################################################################
+$m2c_tmp_cc
+$m2c_tmp_cc Generate code for sparse tables?
+$m2c_tmp_cc
+$tmp_cc@eval $@m2c_table_sparse = $m2c_table_sparse@
+$m2c_tmp_cc
+$m2c_tmp_cc ########################################################################
+$m2c_tmp_cc
+$m2c_tmp_cc Generate Makefile/AgentX code?
+$m2c_tmp_cc
+$tmp_cc@eval $@mfd_generate_makefile = $mfd_generate_makefile@
+$tmp_cc@eval $@mfd_generate_subagent = $mfd_generate_subagent@
+$m2c_tmp_cc
+@close ${m2c_defaults_dir}table-${context}.m2d@

@@ -1,0 +1,437 @@
+# -*- autoconf -*-
+#########################################
+##
+# Checks for programs
+##
+#########################################
+
+##
+#   Shell checks:
+##
+
+#       Check for 'sh' overflow                         (HP-UX)
+#         (taken from Perl's configure script)
+#
+AC_MSG_CHECKING([if I need to feed myself to ksh])
+if test -f /hp-ux -a -f /bin/ksh; then
+  if (PATH=.; alias -x) >/dev/null 2>&1; then
+    AC_MSG_RESULT(no)
+  else
+    AC_MSG_RESULT(yes)
+    if test "x$1" = "x"; then
+      exec /bin/ksh $0
+    else
+      exec /bin/ksh $0 "$@"
+    fi
+  fi
+else
+  AC_MSG_RESULT(no)
+fi
+
+
+##
+#   Standard and path program checks:
+##
+
+AC_PROG_EGREP
+AC_PROG_GREP
+AC_PROG_INSTALL
+AC_PROG_LN_S
+AC_PROG_MAKE_SET
+AC_PROG_SED
+
+AC_CHECK_PROGS([FILE], [file])
+if test x$ac_cv_prog_FILE = x; then
+  # The file program is not included in the default Cygwin setup, although
+  # this program is essential for libtool to work properly. It is nontrivial
+  # to deduce from the message printed by libtool that the 'file' tool is
+  # missing and libtool does not abort when the file program is not found. So
+  # stop now if the file program has not been found.
+  AC_MSG_ERROR([file program not found although it is needed by libtool.], [1])
+fi
+
+AC_CHECK_PROGS(FIND,   find)
+AC_CHECK_PROGS(WHOAMI, whoami logname, whoami)
+
+AC_PATH_PROG(AUTOCONF,    autoconf)
+AC_PATH_PROG(AUTOHEADER,  autoheader)
+AC_PATH_PROG([PERLPROG],  perl)
+AC_PATH_PROG([PSPROG],    ps)
+AC_PATH_PROG([PYTHONPROG],python)
+
+AC_PATH_PROG([UNAMEPROG], uname)
+AC_DEFINE_UNQUOTED(UNAMEPROG,"$UNAMEPROG", [Where is the uname command])
+
+if test "x$ac_cv_prog_AUTOCONF" = "x"; then
+	AUTOCONF=":"
+	AC_SUBST(AUTOCONF)
+fi
+if test "x$ac_cv_prog_AUTOHEADER" = "x"; then
+	AUTOHEADER=":"
+	AC_SUBST(AUTOHEADER)
+fi
+
+MAKE=${MAKE-"make"}
+$MAKE -v -f /dev/null 2>/dev/null | $GREP GNU >/dev/null
+have_gnu_make=$?
+
+
+##
+#   The Perl function system() is used for running the Net-SNMP regression
+#   tests. Find out whether that function invokes a POSIX shell, which is
+#   necessary in order to run the regression tests. When using Windows + MSYS
+#   + ActiveState Perl, Perl's system() function does invoke Windows' cmd.exe
+#   which is not a POSIX shell.
+##
+
+AC_MSG_CHECKING([whether the Perl function system() invokes a POSIX shell])
+if test "x$PERLPROG" != 'x' && test -x "$PERLPROG" && test "x`$PERLPROG -e 'system('"'"'echo $OSTYPE'"'"');'`" != 'x$OSTYPE'; then
+    PERL_SYSTEM_INVOKES_POSIX_SHELL=yes
+else
+    PERL_SYSTEM_INVOKES_POSIX_SHELL=no
+fi
+AC_SUBST([PERL_SYSTEM_INVOKES_POSIX_SHELL])
+AC_MSG_RESULT([yes])
+
+
+##
+#   Compilation-related program checks:
+##
+
+AC_LANG([C])
+AC_PROG_CC
+AC_PROG_CPP
+LINKCC=${LINKCC-"$CC"}
+AC_SUBST(LINKCC)
+
+AC_AIX
+AC_C_CONST
+AC_C_INLINE
+
+#       libtool stuff for shared/static libraries.
+#
+LT_PREREQ([2.2.6])
+LT_INIT([win32-dll])
+AC_SUBST(LIBTOOL_DEPS)
+
+
+##
+#   Build environment:
+##
+
+#   developer build 
+#       (enabled by default when building from SVN checkout)
+#
+if test "x$developer" != "xno" -a -f $srcdir/remove-files; then
+    developer="yes"
+fi
+AC_MSG_CHECKING([for developer gcc flags])
+if test "x$developer" = "xyes" -a "x$GCC" = "xyes"; then
+
+    #       WWWXXX - strict type checking
+    #
+    DEVFLAGS="-Wall -Wstrict-prototypes -Wwrite-strings -Wcast-qual"
+else
+    DEVFLAGS=""
+fi
+AC_MSG_RESULT($DEVFLAGS)
+AC_SUBST(DEVFLAGS)
+
+
+#   building outside source directory
+#
+#       a) ensure build include paths are before source
+#       b) ensure GNU make uses 'vpath' instead of 'VPATH'
+#
+NON_GNU_VPATH="VPATH ="
+GNU_vpath="#vpath"
+
+#       define include paths relative to top_srcdir
+#       tweak includes if we're building outside of the source dir
+#
+if test "x$srcdir" = "x."; then
+    TOP_INCLUDES=SRC_TOP_INCLUDES
+    SNMPLIB_INCLUDES=SRC_SNMPLIB_INCLUDES
+    AGENT_INCLUDES=SRC_AGENT_INCLUDES
+    HELPER_INCLUDES=SRC_HELPER_INCLUDES
+    MIBGROUP_INCLUDES=SRC_MIBGROUP_INCLUDES
+else
+    TOP_INCLUDES=BLD_TOP_INCLUDES
+    SNMPLIB_INCLUDES=BLD_SNMPLIB_INCLUDES
+    AGENT_INCLUDES=BLD_AGENT_INCLUDES
+    HELPER_INCLUDES=BLD_HELPER_INCLUDES
+    MIBGROUP_INCLUDES=BLD_MIBGROUP_INCLUDES
+    if test $have_gnu_make -eq 0 ; then
+        NON_GNU_VPATH="#VPATH ="
+        GNU_vpath="vpath"
+    fi
+fi
+AC_SUBST(TOP_INCLUDES)
+AC_SUBST(SNMPLIB_INCLUDES)
+AC_SUBST(AGENT_INCLUDES)
+AC_SUBST(HELPER_INCLUDES)
+AC_SUBST(MIBGROUP_INCLUDES)
+AC_SUBST(GNU_vpath)
+AC_SUBST(NON_GNU_VPATH)
+
+
+##
+#   System-related compilation checks:
+##
+
+#       What system are we building for
+#
+AC_CANONICAL_TARGET
+changequote(, )
+PARTIALTARGETOS=`echo $target_os | sed 's/[-._].*//'`
+changequote([, ])
+AC_MSG_CACHE_ADD(Building for:               $PARTIALTARGETOS)
+
+
+#
+#    Whether or not Cygwin's ld recognizes the flag -no-undefined. 
+#
+
+case x$target_os in
+xcygwin*)
+  saved_LDFLAGS=$LDFLAGS
+
+  AC_MSG_CHECKING([whether the linker supports -no-undefined])
+  LDFLAGS="$saved_LDFLAGS -Wl,-no-undefined"
+  AC_LINK_IFELSE([AC_LANG_PROGRAM([],[])],
+                 [AC_MSG_RESULT([yes]); dnl
+                  LD_NO_UNDEFINED=-no-undefined],
+                 [AC_MSG_RESULT([no])])
+  
+  LDFLAGS="$saved_LDFLAGS"
+  ;;
+esac
+
+AC_SUBST(LD_NO_UNDEFINED)
+
+
+#
+#   Socket library: either 'default' (non-MinGW) or 'winsock2' (MinGW).
+#
+case x$target_os in
+  xmingw*)
+    with_socklib=winsock2
+    if test "x$enable_ipv6" = "xyes"; then
+      CFLAGS="-D_WIN32_WINNT=0x0501 $CFLAGS"
+    fi
+    ;;
+  *)
+    with_socklib=default;;
+esac
+
+
+#   Check system define behaviour
+#       Does "-Ux -Dx=x" work as expected?
+#
+AC_MSG_CHECKING([whether to un-define target system token (before redefining)])
+OLD_CPPFLAGS="$CPPFLAGS"
+CPPFLAGS="-U$PARTIALTARGETOS -D$PARTIALTARGETOS=$PARTIALTARGETOS"
+
+AC_EGREP_CPP(yes,
+    [[
+#ifdef $PARTIALTARGETOS
+yes
+#endif
+    ]],
+    [  PARTIALTARGETFLAGS="-U$PARTIALTARGETOS -D$PARTIALTARGETOS=$PARTIALTARGETOS"
+       AC_MSG_RESULT([yes])],
+    [  PARTIALTARGETFLAGS="-D$PARTIALTARGETOS=$PARTIALTARGETOS"
+       AC_MSG_RESULT([no])])
+CFLAGS="$CFLAGS $PARTIALTARGETFLAGS"
+CPPFLAGS="$OLD_CPPFLAGS"
+
+
+#       Determine appropriate <net-snmp/system/{os}.h> include
+#
+AC_MSG_CHECKING([for system include file])
+changequote(, )
+filebase=$target_os
+# ignore binary format indication
+filebase=`echo $filebase | $SED 's/elf//'`
+filebase=`echo $filebase | $SED 's/aout//'`
+filebase=`echo $filebase | $SED 's/ecoff//'`
+filebase=`echo $filebase | $SED 's/coff//'`
+while test "x$filebase" != "x$last" -a ! -f $srcdir/include/net-snmp/system/$filebase.h
+do
+    last=$filebase
+    filebase=`echo $filebase | $SED 's/[-._][^-._]*$//'`
+    if test "x$filebase" = "x$last"; then
+	filebase=`echo $filebase | $SED 's/[0-9]*$//'`
+    fi
+done
+
+if test "x$filebase" = "x$last"; then
+    filebase="generic"
+fi
+ac_cv_NETSNMP_SYSTEM_INCLUDE_FILE="net-snmp/system/$filebase.h"
+changequote([, ])
+AC_MSG_RESULT($ac_cv_NETSNMP_SYSTEM_INCLUDE_FILE)
+AC_DEFINE_UNQUOTED(NETSNMP_SYSTEM_INCLUDE_FILE, "$ac_cv_NETSNMP_SYSTEM_INCLUDE_FILE")
+
+
+#       Determine appropriate <net-snmp/machine/{cpu}.h> include
+#
+AC_MSG_CHECKING([for machine-type include file])
+changequote(, )
+filebase=$target_cpu
+while test "x$filebase" != "x$last" -a ! -f $srcdir/include/net-snmp/machine/$filebase.h
+do
+    last=$filebase
+    filebase=`echo $filebase | $SED 's/[-._][^-._]*$//'`
+done
+
+if test "x$filebase" = "x$last"; then
+    filebase="generic"
+fi
+ac_cv_NETSNMP_MACHINE_INCLUDE_FILE="net-snmp/machine/$filebase.h"
+changequote([, ])
+AC_MSG_RESULT([$ac_cv_NETSNMP_MACHINE_INCLUDE_FILE])
+AC_DEFINE_UNQUOTED(NETSNMP_MACHINE_INCLUDE_FILE, "$ac_cv_NETSNMP_MACHINE_INCLUDE_FILE")
+
+
+##
+#   Platform-specific compilation checks:
+##
+
+#   Preprocessor checks:
+#
+
+#       More sensible system identifier                 (MinGW)
+#
+if test "x$PARTIALTARGETOS" = "xmingw32msvc"; then
+	CFLAGS="$CFLAGS -Dmingw32"
+fi
+
+#       Handle .in file extension                       (GCC)
+#
+AC_MSG_CHECKING([for additional cpp flags])
+if test "x$GCC" = "xyes" -a "x$CPP" = "x$CC -E"; then
+    EXTRACPPFLAGS="-x c"
+else
+    EXTRACPPFLAGS=""
+fi
+
+#       Solaris extra CPP flags                         (Solaris)
+#
+if test "x$GCC" != "xyes"; then
+    case $target_os in
+        solaris*) EXTRACPPFLAGS="$EXTRACPPFLAGS -Xs" ;;
+    esac
+fi
+
+AC_SUBST(EXTRACPPFLAGS)
+AC_MSG_RESULT($EXTRACPPFLAGS)
+
+
+#   Compiler checks:
+#
+
+AC_PATH_PROG([CCPATH],$CC)
+case $target_os in
+    bsdi*)
+        #   Check for bundled compiler                  (BSDi)
+        #
+	if test "x$CCPATH" = "x/usr/ucb/cc" -o "x$CCPATH" = "x/usr/bin/cc"; then
+	    AC_MSG_ERROR([
+
+*** The BSDI /usr/ucb/cc compiler does not work with this package.  
+*** Please run configure with --with-cc=gcc
+])
+	fi
+    ;;
+    solaris*)
+        #   Check for bundled compiler                  (Solaris)
+        #
+	if test "x$CCPATH" = "x/usr/ucb/cc"; then
+	    AC_MSG_ERROR([
+
+*** The solaris /usr/ucb/cc compiler does not work with this package.  
+*** Please put a different compiler in your path first or run
+*** configure with --with-cc=XX, where XX is the compiler you want to use.
+])
+	fi
+    ;;
+esac
+
+
+#   Compiler flags:
+#
+
+# The Net-SNMP source code is not strict-aliasing safe, so add
+# -fno-strict-aliasing to $CFLAGS if the compiler supports it.
+AC_MSG_CHECKING([whether the compiler supports -fno-strict-aliasing])
+netsnmp_save_CFLAGS="$CFLAGS"
+CFLAGS="-fno-strict-aliasing $CFLAGS"
+AC_LINK_IFELSE([AC_LANG_PROGRAM([], [])], [AC_MSG_RESULT([yes])], [
+  AC_MSG_RESULT([no])
+  CFLAGS="$netsnmp_save_CFLAGS"
+])
+
+
+#   Linker checks:
+#
+    
+case $target_os in
+    aix4.2*|aix4.3*|aix5*|aix6*|aix7*)
+        #   Runtime linking flags                       (AIX)
+        #
+        AC_MSG_CHECKING([what linker flags to add to enable runtime linking on AIX])
+        for ld_flag in $LDFLAGS; do
+            if (test $ld_flag = "-brtl" || test $ld_flag = "-Wl,-brtl"); then
+                netsnmp_aix_runtimelinking_flags_ok=yes
+                break
+            fi
+        done
+        if test "X$netsnmp_aix_runtimelinking_flags_ok" != "Xyes"; then
+	    if test "x$GCC" = "xyes"; then
+	        netsnmp_aix_ldflags="-Wl,-brtl"
+	    else
+                netsnmp_aix_ldflags="-brtl"
+	    fi
+            LDFLAGS="$netsnmp_aix_ldflags $LDFLAGS"
+	    AC_MSG_RESULT($netsnmp_aix_ldflags)
+	else
+	    AC_MSG_RESULT([none])
+	fi
+	;;
+
+    darwin8*|darwin9*|darwin10*)
+        #   Flat Namespace linking                      (Mac OS/X)
+        #
+        AC_MSG_CHECKING([whether darwin ld might need -flat_namespace])
+	if test -z "$MACOSX_DEPLOYMENT_TARGET"; then
+		LDFLAGS="-flat_namespace $LDFLAGS"
+		AC_MSG_RESULT([yes])
+	else
+		AC_MSG_RESULT([no])
+	fi
+	;;
+
+    *)
+        ;;
+esac
+
+
+#       dpkg package (swintst_apt)
+#	    used in agent only
+#
+AC_PATH_PROG([DPKG_QUERY_PATH], dpkg-query)
+if test x$DPKG_QUERY_PATH != x; then
+    AC_DEFINE(HAVE_DPKG_QUERY, 1, [Set if the dpkg-query command is available])
+fi
+
+
+##
+#   Non-program/compilation checks:
+##
+
+#       Substitute version number.
+#
+AC_SUBST(VERSION, $PACKAGE_VERSION)
+AC_MSG_CACHE_ADD(Net-SNMP Version:           $PACKAGE_VERSION)
+

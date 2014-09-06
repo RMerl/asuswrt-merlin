@@ -1,0 +1,19 @@
+#!/bin/sh
+
+. ../support/simple_eval_tools.sh
+
+HEADER Unix Transport
+
+SKIPIFNOT NETSNMP_TRANSPORT_UNIX_DOMAIN
+
+#
+# Begin test
+#
+
+SNMP_TRANSPORT_SPEC=unix
+SNMP_TEST_DEST=${SNMP_TMPDIR}/testunixsocket
+
+. ./Stransport
+
+# cleanup
+rm -f $SNMP_TEST_DEST

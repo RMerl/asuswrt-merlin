@@ -627,11 +627,16 @@ void set_radio(int on, int unit, int subunit)
 #if defined(RTAC66U) || defined(BCM4352)
 	if ((unit == 1) & (subunit < 1)) {
 		if (on) {
+#ifndef RTCONFIG_LED_BTN
+			if (!(nvram_get_int("sw_mode")==SW_MODE_AP && nvram_get_int("wlc_psta")==1 && nvram_get_int("wlc_band")==0)) {
+				nvram_set("led_5g", "1");
+				led_control(LED_5G, LED_ON);
+			}
+#else
 			nvram_set("led_5g", "1");
-#ifdef RTCONFIG_LED_BTN
 			if (nvram_get_int("AllLED"))
+				led_control(LED_5G, LED_ON);
 #endif
-			led_control(LED_5G, LED_ON);
 		}
 		else {
 			nvram_set("led_5g", "0");

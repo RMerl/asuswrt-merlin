@@ -1,0 +1,8 @@
+title           Authentication options
+description     Authentication options
+
+token ignoreAuthFailure
+info        Ignore authentication failure traps
+info        arguments: (1|yes|true|0|no|false)
+question 1  Ignore authentication failure traps
+validanswer 1 ^(1|yes|true|0|no|false)

@@ -17,6 +17,7 @@
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
 <script language="JavaScript" type="text/javascript" src="/detect.js"></script>
+<script language="JavaScript" type="text/javascript" src="/client_function.js"></script>
 <script type="text/javascript" src="/jquery.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <style>
@@ -77,32 +78,29 @@ wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
 <% login_state_hook(); %>
 <% wl_get_parameter(); %>
 
-var wireless = [<% wl_auth_list(); %>];	// [[MAC, associated, authorized], ...]
-var client_mac = login_mac_str();
-var wl_macnum_x = '<% nvram_get("wl_macnum_x"); %>';
-var smac = client_mac.split(":");
-var simply_client_mac = smac[0] + smac[1] + smac[2] + smac[3] + smac[4] + smac[5];
 var wl_maclist_x_array = '<% nvram_get("wl_maclist_x"); %>';
 
 function initial(){
 	show_menu();
-	if((sw_mode == 2 || sw_mode == 4) && '<% nvram_get("wl_unit"); %>' == '<% nvram_get("wlc_band"); %>'){
+	if((sw_mode == 2 || sw_mode == 4) && document.form.wl_unit.value == '<% nvram_get("wlc_band"); %>'){
 		for(var i=3; i>=3; i--)
-			$("MainTable1").deleteRow(i);
+			document.getElementById("MainTable1").deleteRow(i);
 		for(var i=2; i>=0; i--)
-			$("MainTable2").deleteRow(i);
-		$("repeaterModeHint").style.display = "";
-		$("wl_maclist_x_Block").style.display = "none";
-		$("submitBtn").style.display = "none";
+			document.getElementById("MainTable2").deleteRow(i);
+		document.getElementById("repeaterModeHint").style.display = "";
+		document.getElementById("wl_maclist_x_Block").style.display = "none";
+		document.getElementById("submitBtn").style.display = "none";
 	}
 	else
 		show_wl_maclist_x();
 
 	setTimeout("showWLMACList();", 1000);	
+	if(!band5g_support)
+		document.getElementById("wl_unit_field").style.display = "none";
+	
+	if(wl_info.band5g_2_support)
+		regen_band();
 
-	if(!band5g_support)	
-		$("wl_unit_field").style.display = "none";
-		
 	check_macMode();
 }
 
@@ -125,20 +123,19 @@ function show_wl_maclist_x(){
 		}
 	}	
   	code +='</tr></table>';
-	
-	$("wl_maclist_x_Block").innerHTML = code;
+	document.getElementById("wl_maclist_x_Block").innerHTML = code;
 }
 
 function deleteRow(r){
   var i=r.parentNode.parentNode.rowIndex;
-  $('wl_maclist_x_table').deleteRow(i);
+  document.getElementById('wl_maclist_x_table').deleteRow(i);
   
   var wl_maclist_x_value = "";
-	for(i=0; i<$('wl_maclist_x_table').rows.length; i++){
+	for(i=0; i<document.getElementById('wl_maclist_x_table').rows.length; i++){
 		wl_maclist_x_value += "&#60";
 		wl_maclist_x_value += $('wl_maclist_x_table').rows[i].cells[0].innerHTML;
 		wl_maclist_x_value += "&#62";
-                wl_maclist_x_value += $('wl_maclist_x_table').rows[i].cells[1].innerHTML;
+		wl_maclist_x_value += document.getElementById('wl_maclist_x_table').rows[i].cells[0].innerHTML;
 	}
 	
 	wl_maclist_x_array = wl_maclist_x_value;
@@ -147,8 +144,8 @@ function deleteRow(r){
 }
 
 function addRow(obj, obj2, upper){
-	var rule_num = $('wl_maclist_x_table').rows.length;
-	var item_num = $('wl_maclist_x_table').rows[0].cells.length;
+	var rule_num = document.getElementById('wl_maclist_x_table').rows.length;
+	var item_num = document.getElementById('wl_maclist_x_table').rows[0].cells.length;
 
 	if(rule_num >= upper){
 		alert("<#JS_itemlimit1#> " + upper + " <#JS_itemlimit2#>");
@@ -169,7 +166,7 @@ function addRow(obj, obj2, upper){
 		//Viz check same rule
 	for(i=0; i<rule_num; i++){
 		for(j=0; j<item_num-1; j++){	
-			if(obj.value.toLowerCase() == $('wl_maclist_x_table').rows[i].cells[j].innerHTML.toLowerCase()){
+			if(obj.value.toLowerCase() == document.getElementById('wl_maclist_x_table').rows[i].cells[j].innerHTML.toLowerCase()){
 				alert("<#JS_duplicate#>");
 				return false;
 			}	
@@ -186,14 +183,14 @@ function addRow(obj, obj2, upper){
 }
 
 function applyRule(){
-	var rule_num = $('wl_maclist_x_table').rows.length;
-	var item_num = $('wl_maclist_x_table').rows[0].cells.length;
+	var rule_num = document.getElementById('wl_maclist_x_table').rows.length;
+	var item_num = document.getElementById('wl_maclist_x_table').rows[0].cells.length;
 	var tmp_value = "";
 
 	for(i=0; i<rule_num; i++){
 		tmp_value += "<"		
 		for(j=0; j<item_num-1; j++){	
-			tmp_value += $('wl_maclist_x_table').rows[i].cells[j].innerHTML;
+			tmp_value += document.getElementById('wl_maclist_x_table').rows[i].cells[j].innerHTML;
 			if(j != item_num-2)	
 				tmp_value += ">";
 		}
@@ -238,19 +235,19 @@ function check_macaddr(obj,flag){ //control hint of input mac address
 		childsel.setAttribute("id","check_mac");
 		childsel.style.color="#FFCC00";
 		obj.parentNode.appendChild(childsel);
-		$("check_mac").innerHTML="<#LANHostConfig_ManualDHCPMacaddr_itemdesc#>";		
-		$("check_mac").style.display = "";
+		document.getElementById("check_mac").innerHTML="<#LANHostConfig_ManualDHCPMacaddr_itemdesc#>";		
+		document.getElementById("check_mac").style.display = "";
 		return false;
 	}else if(flag ==2){
 		var childsel=document.createElement("div");
 		childsel.setAttribute("id","check_mac");
 		childsel.style.color="#FFCC00";
 		obj.parentNode.appendChild(childsel);
-		$("check_mac").innerHTML="<#IPConnection_x_illegal_mac#>";
-		$("check_mac").style.display = "";
+		document.getElementById("check_mac").innerHTML="<#IPConnection_x_illegal_mac#>";
+		document.getElementById("check_mac").style.display = "";
 		return false;		
 	}else{	
-		$("check_mac") ? $("check_mac").style.display="none" : true;
+		document.getElementById("check_mac") ? document.getElementById("check_mac").style.display="none" : true;
 		return true;
 	}	
 }
@@ -279,25 +276,22 @@ function hideClients_Block(){
 function showWLMACList(){
 	var code = "";
 	var show_macaddr = "";
-	var wireless_list_array = [<% wl_auth_list(); %>];	// [[MAC, associated, authorized], ...]
-
-	if(wireless_list_array == "[]" || wireless_list_array == null || wireless_list_array == ""){
-			document.getElementById("pull_arrow").style.display = "none";
-	}else{
-		document.getElementById("pull_arrow").style.display = "";
-		for(var i = 0; i < wireless_list_array.length; i++){
-			var client_list_row = wireless_list_array[i];
-			if(client_list_row[0]){
-				show_macaddr = client_list_row[0];
-				code += '<a><div onmouseover="over_var=1;" onmouseout="over_var=0;" onclick="setClientmac(\''+client_list_row[0]+'\');"><strong>'+client_list_row[0]+'</strong> ';
-				code += ' </div></a>';
-			}else{
-				code += '<div onmouseover="over_var=1;" onmouseout="over_var=0;"><strong>No Wireless Client.</strong>';
-			}
+	var wireless_flag = 0;
+	for(i=0;i<clientList.length;i++){
+		if(clientList[clientList[i]].isWL != 0 && (clientList[clientList[i]].isWL == (parseInt(document.form.wl_unit.value)+1))){		//0: wired, 1: 2.4GHz, 2: 5GHz, filter clients under current band
+			wireless_flag = 1;			
+			code += '<a><div onmouseover="over_var=1;" onmouseout="over_var=0;" onclick="setClientmac(\''+clientList[i]+'\');"><strong>'+clientList[clientList[i]].name+'</strong> ';
+			code += ' </div></a>';
 		}
-		code +='<!--[if lte IE 6.5]><iframe class="hackiframe2"></iframe><![endif]-->';	
-		$("WL_MAC_List_Block").innerHTML = code;
-	}		
+	}
+			
+	code +='<!--[if lte IE 6.5]><iframe class="hackiframe2"></iframe><![endif]-->';	
+	document.getElementById("WL_MAC_List_Block").innerHTML = code;
+	
+	if(wireless_flag == 0)
+		document.getElementById("pull_arrow").style.display = "none";
+	else
+		document.getElementById("pull_arrow").style.display = "";
 }
 
 function setClientmac(macaddr){
@@ -309,20 +303,28 @@ function setClientmac(macaddr){
 
 function check_macMode(){
 	if(document.form.wl_macmode.value == "disabled"){
-		$('mac_filter_mode').style.display = "none";
 		document.form.enable_mac[1].checked = true;
 	}
 	else{
-		$('mac_filter_mode').style.display = "";
 		document.form.enable_mac[0].checked = true;
 	}	
+	
+	enable_macMode();
 }
 
 function enable_macMode(){
-	if(document.form.enable_mac[0].checked)
-		$('mac_filter_mode').style.display = "";	
-	else
-		$('mac_filter_mode').style.display = "none";
+	if(document.form.enable_mac[0].checked){
+		document.getElementById('mac_filter_mode').style.display = "";
+		document.getElementById('MainTable2').style.display = "";
+		document.getElementById('wl_maclist_x_Block').style.display = "";
+		document.form.wl_maclist_x.disabled = false;
+	}
+	else{
+		document.getElementById('mac_filter_mode').style.display = "none";
+		document.getElementById('MainTable2').style.display = "none";
+		document.getElementById('wl_maclist_x_Block').style.display = "none";
+		document.form.wl_maclist_x.disabled = true;
+	}	
 }
 </script>
 </head>
@@ -348,10 +350,8 @@ function enable_macMode(){
 <input type="hidden" name="action_mode" value="apply_new">
 <input type="hidden" name="action_wait" value="3">
 <input type="hidden" name="action_script" value="restart_wireless">
-<input type="hidden" name="first_time" value="">
 <input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
-<input type="hidden" name="wl_ssid" value="<% nvram_get("wl_ssid"); %>">
 <input type="hidden" name="wl_maclist_x" value="">		
 <input type="hidden" name="wl_subunit" value="-1">
 <input type="hidden" name="wl_macmode" value="<% nvram_get("wl_macmode"); %>">
@@ -387,7 +387,7 @@ function enable_macMode(){
 
 						<tr id="repeaterModeHint" style="display:none;">
 							<td colspan="2" style="color:#FFCC00;height:30px;" align="center"><#page_not_support_mode_hint#></td>
-					  </tr>
+						</tr>
 						<tr>
 							<th width="30%"><#enable_macmode#></th>
 							<td>

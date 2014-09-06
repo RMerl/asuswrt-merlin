@@ -1,0 +1,48 @@
+--- ../AnyData-0.05/DBD/AnyData.pm	Tue Jul 17 12:31:44 2001
++++ DBD/AnyData.pm	Wed Oct 31 13:08:37 2001
+@@ -63,7 +63,7 @@
+     # PARSE EXTRA STRINGS IN DSN HERE
+     # Process attributes from the DSN; we assume ODBC syntax
+     # here, that is, the DSN looks like var1=val1;...;varN=valN
+-    my $var;
++    my ($var, $defaultselector, %defaultflags);
+     $dbh->STORE('f_dir','./');
+     foreach $var (split(/;/, $dbname)) {
+         #######################################################
+@@ -80,9 +80,13 @@
+         #######################################################
+         # Patch from Wes Hardaker
+         #######################################################
+-	} elsif( $var =~ m/^\s*?default=(\S+)/i ){
+-            # Default catalog selector to use
+-            $dbh->func('__default',$1, 'ad_catalog');
++	} elsif( $var =~ m/^\s*?ad_default=(\S+)/i ){
++           # Default catalog selector to use
++	    $defaultselector = $1;
++	} elsif( $defaultselector && 
++		 $var =~ m/^\s*?ad_${defaultselector}_(\S+)=(\S+)/i ) {
++           # Add to selector flags.
++   	    $defaultflags{$1} = $2;
+         #######################################################
+         } elsif ($var =~ /(.*?)=(.*)/) {
+             my $key = $1;
+@@ -90,6 +94,10 @@
+             $dbh->STORE($key, $val);
+         }
+     }
++    if ($defaultselector) {
++        $dbh->func('__default', $defaultselector, '', \%defaultflags, 
++		   'ad_catalog');
++    }
+     ### $dbh->func('read_catalog_from_disk');
+     $dbh;
+ }
+@@ -520,7 +528,7 @@
+     my($self, $data, $fields) = @_;
+     my $requested_cols=[];
+     my @rc = $data->{f_stmt}->columns();
+-    push @$requested_cols, $_->{column} for @rc;
++    push @$requested_cols, $_->{name} for @rc;
+     unshift @$fields, $requested_cols;
+     $self->{ad}->push_row(@$fields);
+     1;

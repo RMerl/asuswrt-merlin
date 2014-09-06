@@ -1,0 +1,27 @@
+#!/bin/sh
+#
+# $Id$
+# Author: Robert Story <rstory@freesnmp.com>
+#
+########################################################################
+########################################################################
+
+#
+# find nsb-platform based on the path to this script
+#
+EXE_PATH=`dirname $0`
+if [ -f $EXE_PATH/nsb-functions ];then
+   . $EXE_PATH/nsb-functions
+elif [ -f $HOME/bin/nsb-functions ]; then
+   . $HOME/bin/nsb-functions
+elif [ -f nsb-functions ];then
+   . nsb-functions
+else
+   echo "Cannot find nsb-functions in $EXE_PATH, $HOME/bin or $PWD"
+   exit 1
+fi
+
+########################################################################
+########################################################################
+
+nsb_sysname

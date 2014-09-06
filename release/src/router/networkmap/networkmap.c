@@ -133,7 +133,7 @@ int  sent_arppacket(int raw_sockfd, unsigned char * dst_ipaddr)
                  perror("sendto");
                  return 1;
         }
-	NMP_DEBUG_M("Send ARP Request success to: .%d.%d\n", (int *)dst_ipaddr[2],(int *)dst_ipaddr[3]);
+	//NMP_DEBUG_M("Send ARP Request success to: .%d.%d\n", (int *)dst_ipaddr[2],(int *)dst_ipaddr[3]);
         return 0;
 }
 /******* End of Build ARP Socket Function ********/
@@ -148,6 +148,7 @@ static void refresh_sig(void)
 	nvram_set("networkmap_status", "1");
 	nvram_set("networkmap_fullscan", "1");
 	eval("rm", "-rf", "/var/client*");
+
 #if 0
 	//reset exixt ip table
         memset(&client_detail_info_tab, 0x00, sizeof(client_detail_info_tabLE));
@@ -190,7 +191,7 @@ NMP_DEBUG("search_list= %s\n", search_list);
                 if (vstrsep(b, ">", &db_mac, &db_user_def, &db_device_name, &db_type, &db_http, &db_printer, &db_itune) != 7)
                                 continue;
 
-		NMP_DEBUG("DB: %s,%s,%s,%s,%s,%s,%s\n", db_mac, db_user_def, db_device_name, db_type, db_http, db_printer, db_itune);
+		NMP_DEBUG_M("DB: %s,%s,%s,%s,%s,%s,%s\n", db_mac, db_user_def, db_device_name, db_type, db_http, db_printer, db_itune);
         	if (!strcmp(db_mac, new_mac)) {
 			NMP_DEBUG("*** %s at DB!!! Update to memory\n",new_mac);
 			strcpy(p_client_tab->user_define[client_no], db_user_def);
@@ -414,22 +415,7 @@ int main(int argc, char *argv[])
 	if (strlen(router_mac)!=0) ether_atoe(router_mac, my_hwaddr);
 
 	signal(SIGUSR1, refresh_sig); //catch UI refresh signal
-
-#if 0//Call Bonjour
-static uint32_t opinterface = kDNSServiceInterfaceIndexAny;
-static DNSServiceRef client    = NULL;
-DNSServiceErrorType err;
-char mdns_buf[TypeBufferSize], *typ, *dom;
-
-dom = "";
-typ = "_services._dns-sd._udp";
-NMP_DEBUG("opinterface=%d,typ=%s,dom=%s,\n",opinterface, typ, dom);
-err = DNSServiceBrowse(&client, 0, opinterface, typ, dom, browse_reply, NULL);
-NMP_DEBUG("err= %ld\n", (long int)err);
-if (!client || err != kDNSServiceErr_NoError) { NMP_DEBUG("DNSService call failed %ld\n", (long int)err); return (-1); }
-return 0;
-#endif
-
+	
         // create UDP socket and bind to "br0" to get ARP packet//
 	arp_sockfd = create_socket(INTERFACE);
 
@@ -458,11 +444,19 @@ return 0;
                 	setsockopt(arp_sockfd, SOL_SOCKET, SO_RCVTIMEO, &arp_timeout, sizeof(arp_timeout));//set receive timeout
 			NMP_DEBUG("Starting full scan!\n");
 
-                        //reset client tables
-			lock = file_lock("networkmap");
-        		memset(p_client_detail_info_tab, 0x00, sizeof(CLIENT_DETAIL_INFO_TABLE));
-        		p_client_detail_info_tab->detail_info_num = 0;
-			file_unlock(lock);
+                        if(nvram_match("refresh_networkmap", "1")) {//reset client tables
+				lock = file_lock("networkmap");
+        			memset(p_client_detail_info_tab, 0x00, sizeof(CLIENT_DETAIL_INFO_TABLE));
+        			//p_client_detail_info_tab->detail_info_num = 0;
+				//p_client_detail_info_tab->ip_mac_num = 0;
+				file_unlock(lock);
+				nvram_unset("refresh_networkmap");
+			}
+			else {
+				int x = 0;
+				for(; x<255; x++)
+					p_client_detail_info_tab->exist[x]=0;
+			}
 		    }
 		    scan_count++;
 		    scan_ipaddr[3]++;
@@ -492,9 +486,13 @@ return 0;
 		}
 		else {
 		    arp_ptr = (ARP_HEADER*)(buffer);
-                    NMP_DEBUG("*Receive an ARP Packet from: %d.%d.%d.%d, len:%d\n",
+                    NMP_DEBUG("*Receive an ARP Packet from: %d.%d.%d.%d to %d.%d.%d.%d:%02X:%02X:%02X:%02X - len:%d\n",
 				(int *)arp_ptr->source_ipaddr[0],(int *)arp_ptr->source_ipaddr[1],
 				(int *)arp_ptr->source_ipaddr[2],(int *)arp_ptr->source_ipaddr[3],
+				(int *)arp_ptr->dest_ipaddr[0],(int *)arp_ptr->dest_ipaddr[1],
+				(int *)arp_ptr->dest_ipaddr[2],(int *)arp_ptr->dest_ipaddr[3],
+                                arp_ptr->dest_hwaddr[0],arp_ptr->dest_hwaddr[1],
+                                arp_ptr->dest_hwaddr[2],arp_ptr->dest_hwaddr[3],
 				arp_getlen);
 
 		    //Check ARP packet if source ip and router ip at the same network
@@ -502,11 +500,14 @@ return 0;
 
 			swapbytes16(arp_ptr->message_type);
 
-			//ARP Response packet to router
-			if( arp_ptr->message_type == 0x02 &&   		       	// ARP response
+			if( //ARP packet to router
+			   (arp_ptr->message_type == 0x02 &&   		       	// ARP response
                        	    memcmp(arp_ptr->dest_ipaddr, my_ipaddr, 4) == 0 && 	// dest IP
                        	    memcmp(arp_ptr->dest_hwaddr, my_hwaddr, 6) == 0) 	// dest MAC
-			{
+			    ||
+			   (arp_ptr->message_type == 0x01 &&                    // ARP request
+                            memcmp(arp_ptr->dest_ipaddr, my_ipaddr, 4) == 0)    // dest IP
+			){
 			    //NMP_DEBUG("   It's an ARP Response to Router!\n");
                             NMP_DEBUG("*RCV %d.%d.%d.%d-%02X:%02X:%02X:%02X:%02X:%02X\n",
                             (int *)arp_ptr->source_ipaddr[0],(int *)arp_ptr->source_ipaddr[1],
@@ -519,10 +520,15 @@ return 0;
 				ip_dup = memcmp(p_client_detail_info_tab->ip_addr[i], arp_ptr->source_ipaddr, 4);
                                 mac_dup = memcmp(p_client_detail_info_tab->mac_addr[i], arp_ptr->source_hwaddr, 6);
 
-				if((ip_dup == 0) && (mac_dup == 0))
+				if((ip_dup == 0) && (mac_dup == 0)) {
+					lock = file_lock("networkmap");
+					p_client_detail_info_tab->exist[i] = 1;
+					file_unlock(lock);
 					break;
-				else if((ip_dup != 0) && (mac_dup != 0))
+				}
+				else if((ip_dup != 0) && (mac_dup != 0)) {
 					continue;
+				}
 
 				else if( (scan_count>=255) && ((ip_dup != 0) && (mac_dup == 0)) ) { 
 					NMP_DEBUG("IP changed, update immediately\n");
@@ -538,7 +544,9 @@ return 0;
         	                                arp_ptr->source_ipaddr, 4);
                 	                memcpy(p_client_detail_info_tab->mac_addr[i],
                         	                arp_ptr->source_hwaddr, 6);
+					p_client_detail_info_tab->exist[i] = 1;
 					file_unlock(lock);
+					/*
 					real_num = p_client_detail_info_tab->detail_info_num;
 					p_client_detail_info_tab->detail_info_num = i;
                                         #ifdef NMP_DB
@@ -547,6 +555,7 @@ return 0;
 					FindAllApp(my_ipaddr, p_client_detail_info_tab);
 					FindHostname(p_client_detail_info_tab);
 					p_client_detail_info_tab->detail_info_num = real_num;
+					*/
 					break;
 				}
 
@@ -560,6 +569,7 @@ return 0;
 					arp_ptr->source_ipaddr, 4);
                                 memcpy(p_client_detail_info_tab->mac_addr[p_client_detail_info_tab->ip_mac_num], 
 					arp_ptr->source_hwaddr, 6);
+				p_client_detail_info_tab->exist[p_client_detail_info_tab->ip_mac_num] = 1;
                                 #ifdef NMP_DB
                                         check_nmp_db(p_client_detail_info_tab, i);
                                 #endif
@@ -607,6 +617,24 @@ return 0;
 		}//End of arp_getlen != -1
 	    } // End of while for flush buffer
 
+/*
+	int y = 0;
+	while(p_client_detail_info_tab->type[y]!=0){
+            NMP_DEBUG("%d: %d.%d.%d.%d,%02X:%02X:%02X:%02X:%02X:%02X,%s,%d,%d,%d,%d,%d\n", y ,
+                                p_client_detail_info_tab->ip_addr[y][0],p_client_detail_info_tab->ip_addr[y][1],
+                                p_client_detail_info_tab->ip_addr[y][2],p_client_detail_info_tab->ip_addr[y][3],
+                                p_client_detail_info_tab->mac_addr[y][0],p_client_detail_info_tab->mac_addr[y][1],
+                                p_client_detail_info_tab->mac_addr[y][2],p_client_detail_info_tab->mac_addr[y][3],
+                                p_client_detail_info_tab->mac_addr[y][4],p_client_detail_info_tab->mac_addr[y][5],
+                                p_client_detail_info_tab->device_name[y],
+                                p_client_detail_info_tab->type[y],
+                                p_client_detail_info_tab->http[y],
+                                p_client_detail_info_tab->printer[y],
+                                p_client_detail_info_tab->itune[y],
+				p_client_detail_info_tab->exist[y]);
+		y++;
+        }
+*/
 	    //Find All Application of clients
 	    //NMP_DEBUG("\ndetail ? ip : %d ? %d\n\n", p_client_detail_info_tab->detail_info_num, p_client_detail_info_tab->ip_mac_num);
 	    if(p_client_detail_info_tab->detail_info_num < p_client_detail_info_tab->ip_mac_num) {

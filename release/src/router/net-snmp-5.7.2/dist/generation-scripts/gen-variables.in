@@ -1,0 +1,10 @@
+#
+# common variables used by configure scripts
+#
+SED="@SED@"
+CPP="@CPP@"
+GREP="@GREP@"
+PARTIALTARGETFLAGS="@PARTIALTARGETFLAGS@"
+NETSNMP_SYSTEM_INCLUDE_FILE="@ac_cv_NETSNMP_SYSTEM_INCLUDE_FILE@"
+
+srcdir=@srcdir@

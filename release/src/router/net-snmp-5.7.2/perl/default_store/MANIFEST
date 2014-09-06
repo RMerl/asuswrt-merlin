@@ -1,0 +1,8 @@
+Changes
+MANIFEST
+Makefile.PL
+default_store.pm
+default_store.xs
+test.pl
+typemap
+README

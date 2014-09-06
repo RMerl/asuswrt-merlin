@@ -6,9 +6,7 @@
 	ASUSGATE_note6 : "Your DSL line appears to be unstable. We strongly recommend that you submit a feedback form for our analysis.",
 	ASUSGATE_note7 : "If you are experiencing any DSL related issues or have any comments / suggestions, please feel free to inform our support team.",
 	JS_validclientname : "Client device name only accept alphanumeric characters, under line and dash symbol. The first character cannot be dash \"-\" or under line \"_\".",
-	ASUSGATE_act_feedback : "Feedback now",
-	intelligence_type_desc : "Adaptive QoS type supports you to modify APPs category priority based on router stream. QoS type switching will only keep priority configuration for each client",
-	traditional_type_desc : "Traditional QoS type offers you advanced configure item including port, protocol and transferred. QoS type switching will only keep priority configuration for each client."
+	ASUSGATE_act_feedback : "Feedback now"
 };
 var clicked_help_string = "<#Help_init_word1#> <a class=\"hintstyle\" style=\"background-color:#7aa3bd\"><#Help_init_word2#></a> <#Help_init_word3#>";
 
@@ -136,55 +134,59 @@ function overHint(itemNum){
 	var statusmenu = "";
 	var title2 = 0;
 	var title5 = 0;
+	var title5_2 = 0;
 	
 	if(itemNum == 91){
-		statusmenu ="<span>This category includes Diablo, WOW, Steam game and XBOX, etc. Move this category up for better game experience.</span>";
+		statusmenu ="<span><#Adaptive_Category1#></span>";
 	}
 	else if(itemNum == 92){
-		statusmenu ="<span>This category includes Youtube, Vimeo, iTunes, Hulu, Netflix and Spotify,etc. Move this category up for better networking experience.</span>";
+		statusmenu ="<span><#Adaptive_Category2#></span>";
 	}
 	else if(itemNum == 93){
-		statusmenu ="<span>This category includes VoIP, Instant Messaging, Mail service,etc. You can adjust their priorities according to your preference.</span>";
+		statusmenu ="<span><#Adaptive_Category3#></span>";
 	}
 	else if(itemNum == 94){
-		statusmenu ="<span>This category includes general web service and social network applications like flickr, twitter, facebook, tumblr, google toolbar,etc.</span>";
+		statusmenu ="<span><#Adaptive_Category4#></span>";
 	}
 	else if(itemNum == 95){
-		statusmenu ="<span>This category includes peer to peer and file transfer related software like uTorrent, BitTorrent, Dropbox, 4Shared and FTP applications,etc. It is recommended to leave file transfer category at a lower priority.</span>";
+		statusmenu ="<span><#Adaptive_Category5#></span>";
 	}
 	if(itemNum == 96){
-		statusmenu ="<span>All the activities not included in Game, Streaming Media, Online Chat & Communication, Web Surfing and File Transfer.</span>";
+		statusmenu ="<span><#Adaptive_Category6#></span>";
 	}
+	
+	if(itemNum == 24)		
+		statusmenu += "<span>The USB 3.0 cable without well-shielded would affect the 2.4Ghz wireless range.Enabling this feature to ensure the best wireless performance If your USB 3.0 device is not USB-IF certified.</span>";
 	
 	//for AiProtection-Router Security Scan
 	if(itemNum == 23)		
-		statusmenu += "<span>Enable Infected device detecting and blocked to detects any suspicious connections or activities and blocks them to prevent data stealing.</span>";
+		statusmenu += "<span><#AiProtection_scan_note23#></span>";
 	if(itemNum == 22)		
-		statusmenu += "<span>Enable Intruder Prevention to prevent cracker invasion via vulnerability of router or device software.</span>";
+		statusmenu += "<span><#AiProtection_scan_note22#></span>";
 	if(itemNum == 21)		
-		statusmenu += "<span>Restricts access to known malicious websites in Trend Micro’s database for always-up-to-date protection.</span>";
+		statusmenu += "<span><#AiProtection_scan_note21#></span>";
 	if(itemNum == 20)		
-		statusmenu += "<span>Disable guest login for Network Place Share to avoid unauthorized user have chance to access your data.</span>";
+		statusmenu += "<span><#AiProtection_scan_note20#></span>";
 	if(itemNum == 19)		
-		statusmenu += "<span>Disable Anonymous login to FTP share to avoid unauthorized user have chance to access your data.</span>";
+		statusmenu += "<span><#AiProtection_scan_note19#></span>";
 	if(itemNum == 18)		
-		statusmenu += "<span>Disable Port forwarding to prevent your router from cracker access via specific port.</span>";
+		statusmenu += "<span><#AiProtection_scan_note18#></span>";
 	if(itemNum == 17)		
-		statusmenu += "<span>Disable Port trigger to prevent your router from cracker access via specific port.</span>";
+		statusmenu += "<span><#AiProtection_scan_note17#></span>";
 	if(itemNum == 16)		
-		statusmenu += "<span>Disable DMZ to avoid all the inbounds packets are redirected to the computer exposing on internet.</span>";
+		statusmenu += "<span><#AiProtection_scan_note16#></span>";
 	if(itemNum == 15)		
-		statusmenu += "<span>Disable PING from WAN to avoid cracker can connect to router from external network.</span>";
+		statusmenu += "<span><#AiProtection_scan_note15#></span>";
 	if(itemNum == 14)		
-		statusmenu += "<span>Disable Web access from WAN to prevent your router from external control.</span>";
+		statusmenu += "<span><#AiProtection_scan_note14#></span>";
 	if(itemNum == 13)		
-		statusmenu += "<span>Disable UPnP service to avoid any program have chance to use UPnP port to alter a your router's settings.</span>";
+		statusmenu += "<span><#AiProtection_scan_note13#></span>";
 	if(itemNum == 12)		
-		statusmenu += "<span>Your wireless network is insecure because there is not wireless password. Click the hyper link to set the password.</span>";
+		statusmenu += "<span><#AiProtection_scan_note12#></span>";
 	if(itemNum == 11)		
-		statusmenu += "<span>Please make your network password more complex for better security.</span>";	
+		statusmenu += "<span><#AiProtection_scan_note11#></span>";	
 	if(itemNum == 10)		
-		statusmenu += "<span>Please change your login username and password for better router security.</span>";	
+		statusmenu += "<span><#AiProtection_scan_note10#></span>";	
 	
 	// Viz add 2013.04 for dsl sync status
 	if(itemNum == 9){
@@ -302,7 +304,10 @@ function overHint(itemNum){
 			for(var i=0; i<gn_array_5g.length; i++){
 				if(gn_array_5g[i][0] == 1){
 					if(title5 == 0){
-						statusmenu += "<div class='StatusHint' style='margin-top:15px;'>5GHz Network:</div>";				
+						if(wl_info.band5g_2_support)
+							statusmenu += "<div class='StatusHint' style='margin-top:15px;'>5GHz-1 Network:</div>";			
+						else	
+							statusmenu += "<div class='StatusHint' style='margin-top:15px;'>5GHz Network:</div>";		
 						title5 = 1;
 					}
 	
@@ -330,7 +335,39 @@ function overHint(itemNum){
 				}
 			}
 		}
-		if(title2 == 0 && title5 == 0)
+		if(wl_info.band5g_2_support){
+			for(var i=0; i<gn_array_5g_2.length; i++){
+				if(gn_array_5g_2[i][0] == 1){
+					if(title5_2 == 0){
+						statusmenu += "<div class='StatusHint' style='margin-top:15px;'>5GHz-2 Network:</div>";				
+						title5_2 = 1;
+					}
+	
+					var show_str = gn_array_5g_2[i][1];
+					show_str = decodeURIComponent(show_str);
+					show_str = handle_show_str(show_str);
+					statusmenu += "<span>" + show_str + " (";
+
+					if(gn_array_5g_2[i][11] == 0)
+						statusmenu += '<#Limitless#>';
+					else{
+						var expire_hr = Math.floor(gn_array_5g_2[i][13]/3600);
+						var expire_min = Math.floor((gn_array_5g_2[i][13]%3600)/60);
+						if(expire_hr > 0)
+							statusmenu += '<b id="expire_hr_'+i+'">'+ expire_hr + '</b> Hr <b id="expire_min_'+i+'">' + expire_min +'</b> Min';
+						else{
+							if(expire_min > 0)
+								statusmenu += '<b id="expire_min_'+i+'">' + expire_min +'</b> Min';
+							else	
+								statusmenu += '<b id="expire_min_'+i+'">< 1</b> Min';
+						}
+					}
+
+					statusmenu += " left)</span><br>";
+				}
+			}
+		}
+		if(title2 == 0 && title5 == 0 && title5_2 == 0)
 			statusmenu += "<div class='StatusHint'><#Guest_Network#>:</div><span><#CTL_Disabled#></span>";
 	}
 

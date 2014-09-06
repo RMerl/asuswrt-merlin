@@ -1,0 +1,744 @@
+UCD-SNMP-MIB-OLD DEFINITIONS ::= BEGIN
+
+--
+--  This mib is a badly created mib which has been replaced by a more
+--  properly created UCD-SNMP-MIB.  Use that mib instead.  This file
+--  exists for historical purposes only and for use by people that
+--  need to support both agent versions.
+--
+
+IMPORTS
+	ucdavis
+	    FROM UCD-SNMP-MIB
+        OBJECT-TYPE 				
+	    FROM SNMPv2-SMI
+	DisplayString 				
+	    FROM SNMPv2-TC
+	Integer32
+            FROM SNMPv2-SMI;
+
+-- private	  OBJECT IDENTIFIER ::= { internet 4 }
+-- enterprises    OBJECT IDENTIFIER ::= { private 1 }
+-- ucdavis          OBJECT IDENTIFIER ::= { enterprises 2021 }
+-- processes      OBJECT IDENTIFIER ::= { ucdavis 1 }
+-- exec           OBJECT IDENTIFIER ::= { ucdavis 3 }
+-- memory         OBJECT IDENTIFIER ::= { ucdavis 4 }
+-- lockd          OBJECT IDENTIFIER ::= { ucdavis 5 }
+-- disk           OBJECT IDENTIFIER ::= { ucdavis 6 }
+-- load           OBJECT IDENTIFIER ::= { ucdavis 7 }
+-- version        OBJECT IDENTIFIER ::= { ucdavis 100 }
+-- snmperrs       OBJECT IDENTIFIER ::= { ucdavis 101 }
+-- mibRegistryTable    OBJECT IDENTIFIER ::= { ucdavis 102 }
+
+-- These are the returned values of the agent type.
+-- returned to:  .iso.org.dod.internet.mgmt.mib-2.system.sysObjectID.0 
+
+-- The following section is commented out since it is defined in the
+-- current UCD-SNMP-MIB
+
+-- ucdSnmpAgent      OBJECT IDENTIFIER ::= { ucdavis 250 }
+-- hpux9             OBJECT IDENTIFIER ::= { ucdSnmpAgent 1 }
+-- hpux10            OBJECT IDENTIFIER ::= { ucdSnmpAgent 6 }
+-- sunos4            OBJECT IDENTIFIER ::= { ucdSnmpAgent 2 }
+-- solaris           OBJECT IDENTIFIER ::= { ucdSnmpAgent 3 }
+-- osf               OBJECT IDENTIFIER ::= { ucdSnmpAgent 4 }
+-- ultrix            OBJECT IDENTIFIER ::= { ucdSnmpAgent 5 }
+-- netbsd1           OBJECT IDENTIFIER ::= { ucdSnmpAgent 7 }
+-- freebsd           OBJECT IDENTIFIER ::= { ucdSnmpAgent 8 }
+-- irix              OBJECT IDENTIFIER ::= { ucdSnmpAgent 9 }
+-- linux             OBJECT IDENTIFIER ::= { ucdSnmpAgent 10 }
+-- bsdi              OBJECT IDENTIFIER ::= { ucdSnmpAgent 11 }
+-- unknown           OBJECT IDENTIFIER ::= { ucdSnmpAgent 255 }
+
+
+
+Processes ::= SEQUENCE {
+   processIndex  INTEGER,
+   processNames  DisplayString,
+   processMin    INTEGER,
+   processMax    INTEGER,
+   processCount  INTEGER,
+   processErrorFlag  INTEGER,
+   processErrMessage  DisplayString,
+   processErrFix  INTEGER
+}
+
+processes OBJECT-TYPE
+	SYNTAX SEQUENCE OF Processes
+	ACCESS not-accessible
+	STATUS mandatory
+	DESCRIPTION
+		"A set of information on running programs/daemons."
+	INDEX { processIndex }
+	::= { ucdavis 1 }
+
+processIndex OBJECT-TYPE
+	SYNTAX INTEGER
+	ACCESS read-only
+	STATUS mandatory
+	DESCRIPTION
+		"Reference Index for each observed process."
+	::= { processes 1 }
+
+processNames OBJECT-TYPE
+	SYNTAX DisplayString  (SIZE (0..255))
+	ACCESS read-only
+	STATUS mandatory
+	DESCRIPTION
+		"The table of process names we're Counting."
+	::= { processes 2 }
+
+processMin OBJECT-TYPE
+	SYNTAX INTEGER
+	ACCESS read-only
+	STATUS mandatory
+	DESCRIPTION
+		"The minimum number of processes that should be
+		running.  An error flag is generated if the number of
+		running processes is < the minimum."
+	::= { processes 3 }
+
+processMax OBJECT-TYPE
+	SYNTAX INTEGER
+	ACCESS read-only
+	STATUS mandatory
+	DESCRIPTION
+		"The maximum number of processes that should be
+		running.  An error flag is generated if the number of
+		running processes is > the maximum."
+	::= { processes 4 }
+
+processCount OBJECT-TYPE
+	SYNTAX INTEGER
+	ACCESS read-only
+	STATUS mandatory
+	DESCRIPTION
+		"The number of current processes running with the name
+		in question."
+	::= { processes 5 }
+
+processErrorFlag OBJECT-TYPE
+	SYNTAX INTEGER
+	ACCESS read-only
+	STATUS mandatory
+	DESCRIPTION
+		"A Error flag to indicate trouble with a process.  It
+		goes to 1 if there is an error, 0 if no error."
+	::= { processes 100 }
+
+processErrMessage OBJECT-TYPE
+	SYNTAX DisplayString  (SIZE (0..255))
+	ACCESS read-only
+	STATUS mandatory
+	DESCRIPTION
+		"An error message describing the problem (if one exists)."
+	::= { processes 101 }
+
+processErrFix OBJECT-TYPE
+	SYNTAX INTEGER
+	ACCESS read-write
+	STATUS mandatory
+	DESCRIPTION
+		"Setting this to one will try to fix the problem if possible."
+	::= { processes 102 }
+
+extensible OBJECT-TYPE
+	SYNTAX SEQUENCE OF Extensible
+	ACCESS not-accessible
+	STATUS mandatory
+	DESCRIPTION
+		"Extensible commands returning output and result codes."
+	INDEX { extensibleIndex }
+	::= { ucdavis 3 }
+
+Extensible ::= SEQUENCE {
+   extensibleIndex   INTEGER,
+   extensibleNames   DisplayString,
+   extensibleCommand DisplayString,
+   extensibleResult  INTEGER,
+   extensibleOutput  DisplayString,
+   extensibleErrFix  INTEGER
+}
+
+extensibleIndex OBJECT-TYPE
+	SYNTAX INTEGER
+	ACCESS read-only
+	STATUS mandatory
+	DESCRIPTION
+		"Reference Index for extensible calls."
+	::= { extensible 1 }
+
+extensibleNames OBJECT-TYPE
+	SYNTAX DisplayString  (SIZE (0..255))
+	ACCESS read-only
+	STATUS mandatory
+	DESCRIPTION
+		"Short, one name descriptions of the extensible commands."
+	::= { extensible 2 }
+
+extensibleCommand OBJECT-TYPE
+	SYNTAX DisplayString  (SIZE (0..255))
+	ACCESS read-only
+	STATUS mandatory
+	DESCRIPTION
+		"The command line to be executed."
+	::= { extensible 3 }
+
+extensibleResult OBJECT-TYPE
+	SYNTAX INTEGER
+	ACCESS read-only
+	STATUS mandatory
+	DESCRIPTION
+		"The result code from the executed command."
+	::= { extensible 100 }
+
+extensibleOutput OBJECT-TYPE
+	SYNTAX DisplayString (SIZE (0..255))
+	ACCESS read-only
+	STATUS mandatory
+	DESCRIPTION
+		"The output of the extensible command (top line only)."
+	::= { extensible 101 }
+
+extensibleErrFix OBJECT-TYPE
+	SYNTAX INTEGER
+	ACCESS read-write
+	STATUS mandatory
+	DESCRIPTION
+		"Set to 1 to fix the problem, if possible."
+	::= { extensible 102 }
+	
+-- the following section is commented out because it is already
+-- defined in the current UCD-SNMP-MIB
+   
+-- memory OBJECT-TYPE
+-- 	SYNTAX Memory
+-- 	ACCESS not-accessible
+-- 	STATUS mandatory
+-- 	DESCRIPTION
+-- 		"Miscellanous stuff - memory related."
+-- 	::= { ucdavis 4 }
+-- 
+-- Memory ::= SEQUENCE {
+--    memIndex        INTEGER,
+--    memErrorName    DisplayString,
+--    memTotalSwap     INTEGER,
+--    memAvailSwap     INTEGER,
+--    memTotalReal     INTEGER,
+--    memAvailReal     INTEGER,
+--    memTotalSwapTXT     INTEGER,
+--    memAvailSwapTXT     INTEGER,
+--    memTotalRealTXT     INTEGER,
+--    memAvailRealTXT     INTEGER,
+--    memTotalFree       INTEGER,
+--    memMinimumSwap       INTEGER,
+--    memSwapError       DisplayString,
+--    memShared          INTEGER,
+--    memBuffer          INTEGER,
+--    memCached          INTEGER
+-- }
+-- memIndex OBJECT-TYPE
+--      SYNTAX  INTEGER
+--      ACCESS  read-only
+--      STATUS  mandatory
+--      DESCRIPTION  
+--           "Generic Index."
+--      ::= { memory 1 } 
+-- 
+-- memErrorName OBJECT-TYPE
+--      SYNTAX  DisplayString
+--      ACCESS  read-only
+--      STATUS  mandatory
+--      DESCRIPTION  
+--           "Bogus Name (swap) for consistancy with the rest of the mibs."
+--      ::= { memory 2 } 
+-- 
+-- memTotalSwap OBJECT-TYPE
+-- 	SYNTAX INTEGER
+-- 	ACCESS read-only
+-- 	STATUS mandatory
+-- 	DESCRIPTION
+-- 		"Total Swap Size."
+-- 	::= { memory 3 }
+-- 
+-- memAvailSwap OBJECT-TYPE
+-- 	SYNTAX INTEGER
+-- 	ACCESS read-only
+-- 	STATUS mandatory
+-- 	DESCRIPTION
+-- 		"Available Swap Space."
+-- 	::= { memory 4 }
+-- 
+-- memTotalReal OBJECT-TYPE
+-- 	SYNTAX INTEGER
+-- 	ACCESS read-only
+-- 	STATUS mandatory
+-- 	DESCRIPTION
+-- 		"Total Real/Physical Memory Size."
+-- 	::= { memory 5 }
+-- 
+-- memAvailReal OBJECT-TYPE
+-- 	SYNTAX INTEGER
+-- 	ACCESS read-only
+-- 	STATUS mandatory
+-- 	DESCRIPTION
+-- 		"Available Real/Physical Memory Space."
+-- 	::= { memory 6 }
+-- 
+-- memTotalSwapTXT OBJECT-TYPE
+-- 	SYNTAX INTEGER
+-- 	ACCESS read-only
+-- 	STATUS mandatory
+-- 	DESCRIPTION
+-- 		"Total VM used by text."
+-- 	::= { memory 7 }
+-- 
+-- memAvailSwapTXT OBJECT-TYPE
+-- 	SYNTAX INTEGER
+-- 	ACCESS read-only
+-- 	STATUS mandatory
+-- 	DESCRIPTION
+-- 		"Active VM used by text."
+-- 	::= { memory 8 }
+-- 
+-- memTotalRealTXT OBJECT-TYPE
+-- 	SYNTAX INTEGER
+-- 	ACCESS read-only
+-- 	STATUS mandatory
+-- 	DESCRIPTION
+-- 		"Total Real/Physical Memory Size used by txt."
+-- 	::= { memory 9 }
+-- 
+-- memAvailRealTXT OBJECT-TYPE
+-- 	SYNTAX INTEGER
+-- 	ACCESS read-only
+-- 	STATUS mandatory
+-- 	DESCRIPTION
+-- 		"Active Real/Physical Memory Space used by txt."
+-- 	::= { memory 10 }
+-- 
+-- memTotalFree OBJECT-TYPE
+-- 	SYNTAX INTEGER
+-- 	ACCESS read-only
+-- 	STATUS mandatory
+-- 	DESCRIPTION
+-- 		"Total Available Memory"
+-- 	::= { memory 11 }
+-- 
+-- memMinimumSwap OBJECT-TYPE
+-- 	SYNTAX INTEGER
+-- 	ACCESS read-only
+-- 	STATUS mandatory
+-- 	DESCRIPTION
+-- 		"Minimum amount of free swap.  Otherwise memErrorSwap
+-- 		is set to 1 "
+-- 	::= { memory 12 }
+-- 
+-- memShared OBJECT-TYPE
+-- 	SYNTAX INTEGER
+-- 	ACCESS read-only
+-- 	STATUS mandatory
+-- 	DESCRIPTION
+-- 		"Total Shared Memory"
+-- 	::= { memory 13 }
+-- 
+-- memBuffer OBJECT-TYPE
+-- 	SYNTAX INTEGER
+-- 	ACCESS read-only
+-- 	STATUS mandatory
+-- 	DESCRIPTION
+-- 		"Total Buffered Memory"
+-- 	::= { memory 14 }
+-- 
+-- memCached OBJECT-TYPE
+-- 	SYNTAX INTEGER
+-- 	ACCESS read-only
+-- 	STATUS mandatory
+-- 	DESCRIPTION
+-- 		"Total Cached Memory"
+-- 	::= { memory 15 }
+-- 
+-- memSwapError OBJECT-TYPE
+-- 	SYNTAX INTEGER
+-- 	ACCESS read-only
+-- 	STATUS mandatory
+-- 	DESCRIPTION
+-- 		"Error flag.  1 indicates very little swap space left"
+-- 	::= { memory 100 }
+-- 	
+-- memSwapErrorMsg OBJECT-TYPE
+--      SYNTAX  DisplayString
+--      ACCESS  read-only
+--      STATUS  mandatory
+--      DESCRIPTION  
+--           "Error message describing the errorflag condition"
+--      ::= { memory 101 } 
+-- 
+-- lockd OBJECT-TYPE
+-- 	SYNTAX Lockd
+-- 	ACCESS not-accessible
+-- 	STATUS mandatory
+-- 	DESCRIPTION
+-- 		"Tests the functionality of the rpc.lockd/rpc.statd pair."
+-- 	INDEX { lockdIndex }
+-- 	::= { ucdavis 5 }
+
+-- Lockd ::= SEQUENCE {
+--    lockdIndex   INTEGER,
+--    lockdError  INTEGER,
+--    lockdErrorMsg  DisplayString
+-- }
+-- 
+-- lockdIndex OBJECT-TYPE
+-- 	SYNTAX INTEGER
+-- 	ACCESS read-only
+-- 	STATUS mandatory
+-- 	DESCRIPTION
+-- 		"Reference Index for lockd calls."
+-- 	::= { lockd 1 }
+-- 
+-- lockdError OBJECT-TYPE
+-- 	SYNTAX INTEGER
+-- 	ACCESS read-only
+-- 	STATUS mandatory
+-- 	DESCRIPTION
+-- 		"Error Flag.  > 0 indicates error"
+-- 	::= { lockd 100 }
+-- 
+-- lockdErrorMsg OBJECT-TYPE
+-- 	SYNTAX DisplayString (SIZE (0..255))
+-- 	ACCESS read-only
+-- 	STATUS mandatory
+-- 	DESCRIPTION
+-- 		"Error message if something is wrong"
+-- 	::= { lockd 101 }
+
+disk 	OBJECT-TYPE
+	SYNTAX SEQUENCE OF Disk
+	ACCESS not-accessible
+	STATUS mandatory
+	DESCRIPTION
+		"Disk watching information."
+	INDEX { diskIndex }
+	::= { ucdavis 6 }
+
+Disk ::= SEQUENCE {
+   diskIndex   INTEGER,
+   diskPath  DisplayString,
+   diskDevice  DisplayString,
+   diskMinimum  INTEGER,
+   diskMinPercent  INTEGER,
+   diskTotal  INTEGER,
+   diskAvail  INTEGER,
+   diskUsed  INTEGER,
+   diskPercent  INTEGER,
+   diskErrorFlag  INTEGER,
+   diskErrorMsg  DisplayString
+}
+
+diskIndex OBJECT-TYPE
+	SYNTAX INTEGER
+	ACCESS read-only
+	STATUS mandatory
+	DESCRIPTION
+		"Reference number for the Disk Mib."
+	::= { disk 1 }
+	
+diskPath OBJECT-TYPE
+     SYNTAX  DisplayString
+     ACCESS  read-only
+     STATUS  mandatory
+     DESCRIPTION  
+          "Path where disk is mounted."
+     ::= { disk 2 } 
+
+diskDevice OBJECT-TYPE
+     SYNTAX  DisplayString
+     ACCESS  read-only
+     STATUS  mandatory
+     DESCRIPTION  
+          "Device path"
+     ::= { disk 3 } 
+
+diskMinimum OBJECT-TYPE
+     SYNTAX  INTEGER
+     ACCESS  read-only
+     STATUS  mandatory
+     DESCRIPTION  
+          "Minimum space required on the disk."
+     ::= { disk 4 } 
+
+diskMinPercent OBJECT-TYPE
+     SYNTAX  INTEGER
+     ACCESS  read-only
+     STATUS  mandatory
+     DESCRIPTION  
+          "Minimum percentage of space required on the disk."
+     ::= { disk 5 } 
+
+diskTotal OBJECT-TYPE
+     SYNTAX  INTEGER
+     ACCESS  read-only
+     STATUS  mandatory
+     DESCRIPTION  
+          "Total Disk Size (kbytes)"
+     ::= { disk 6 } 
+
+diskAvail OBJECT-TYPE
+     SYNTAX  INTEGER
+     ACCESS  read-only
+     STATUS  mandatory
+     DESCRIPTION  
+          "Available disk Space"
+     ::= { disk 7 } 
+
+diskUsed OBJECT-TYPE
+     SYNTAX  INTEGER
+     ACCESS  read-only
+     STATUS  mandatory
+     DESCRIPTION  
+          "Used Space on Disk"
+     ::= { disk 8 } 
+
+diskPercent OBJECT-TYPE
+     SYNTAX  INTEGER
+     ACCESS  read-only
+     STATUS  mandatory
+     DESCRIPTION  
+          "Percentage of space used on disk"
+     ::= { disk 9 } 
+
+diskErrorFlag OBJECT-TYPE
+     SYNTAX  INTEGER
+     ACCESS  read-only
+     STATUS  mandatory
+     DESCRIPTION  
+          "Error flag signaling disk is over minimum required space"
+     ::= { disk 100 } 
+     
+diskErrorMsg OBJECT-TYPE
+     SYNTAX  DisplayString
+     ACCESS  read-only
+     STATUS  mandatory
+     DESCRIPTION  
+          "A text description of what caused the error flag to be set."
+     ::= { disk 101 } 
+     
+loadaves OBJECT-TYPE
+	SYNTAX SEQUENCE OF Loadaves
+	ACCESS not-accessible
+	STATUS mandatory
+	DESCRIPTION
+		"Load average information."
+	INDEX { loadaveIndex }
+	::= { ucdavis 7 }
+
+
+Loadaves ::= SEQUENCE {
+   loadaveIndex  INTEGER,
+   loadaveNames  DisplayString,
+   loadaveLoad   DisplayString,
+   loadaveConfig DisplayString,
+   loadaveErrorFlag  INTEGER,
+   loadaveErrMessage  DisplayString
+}
+
+loadaveIndex OBJECT-TYPE
+	SYNTAX INTEGER
+	ACCESS read-only
+	STATUS mandatory
+	DESCRIPTION
+		"Reference Index for each observed loadave."
+	::= { loadaves 1 }
+
+loadaveNames OBJECT-TYPE
+	SYNTAX DisplayString (SIZE (0..255))
+	ACCESS read-only
+	STATUS mandatory
+	DESCRIPTION
+		"The list of loadave names we're Counting."
+	::= { loadaves 2 }
+
+loadaveLoad OBJECT-TYPE
+	SYNTAX DisplayString
+	ACCESS read-only
+	STATUS mandatory
+	DESCRIPTION
+		"The 1,5 and 10 minute load averages."
+	::= { loadaves 3 }
+
+loadaveConfig OBJECT-TYPE
+	SYNTAX DisplayString
+	ACCESS read-only
+	STATUS mandatory
+	DESCRIPTION
+		"The watch point for loadaverages to signal an error."
+	::= { loadaves 4 }
+
+loadaveErrorFlag OBJECT-TYPE
+	SYNTAX INTEGER
+	ACCESS read-only
+	STATUS mandatory
+	DESCRIPTION
+		"A Error flag to indicate trouble with a loadave.  It
+		goes to 1 if there is an error, 0 if no error."
+	::= { loadaves 100 }
+
+loadaveErrMessage OBJECT-TYPE
+	SYNTAX DisplayString (SIZE (0..255))
+	ACCESS read-only
+	STATUS mandatory
+	DESCRIPTION
+		"An error message describing the problem (if one exists)."
+	::= { loadaves 101 }
+
+-- the following section is commented out because it is already
+-- defined in the current UCD-SNMP-MIB
+
+-- version	OBJECT-TYPE
+-- 	SYNTAX Version
+-- 	ACCESS not-accessible
+-- 	STATUS mandatory
+-- 	DESCRIPTION
+-- 		"ece-snmpd version info."
+-- 	INDEX { versionIndex }
+-- 	::= { ucdavis 100 }
+-- 
+-- Version ::= SEQUENCE {
+--    versionIndex   INTEGER,
+--    versionTag  DisplayString,
+--    versionDate  DisplayString,
+--    versionCDate  DisplayString,
+--    versionIdent  DisplayString,
+--    versionClearCache  INTEGER,
+--    versionUpdateConfig  INTEGER,
+--    versionDoDebugging  INTEGER
+-- }
+--    
+-- versionIndex OBJECT-TYPE
+--      SYNTAX  INTEGER
+--      ACCESS  read-only
+--      STATUS  mandatory
+--      DESCRIPTION  
+--           "Index to mib (always 1)"
+--      ::= { version 1 } 
+-- 
+-- versionTag OBJECT-TYPE
+--      SYNTAX  DisplayString
+--      ACCESS  read-only
+--      STATUS  mandatory
+--      DESCRIPTION  
+--           "CVS tag keyword"
+--      ::= { version 2 } 
+--      
+-- versionDate OBJECT-TYPE
+--      SYNTAX  DisplayString
+--      ACCESS  read-only
+--      STATUS  mandatory
+--      DESCRIPTION  
+--           "Date string from RCS keyword"
+--      ::= { version 3 } 
+-- 
+-- versionCDate OBJECT-TYPE
+--      SYNTAX  DisplayString
+--      ACCESS  read-only
+--      STATUS  mandatory
+--      DESCRIPTION  
+--           "Date string from ctime() "
+--      ::= { version 4 } 
+-- 
+-- versionIdent OBJECT-TYPE
+--      SYNTAX  DisplayString
+--      ACCESS  read-only
+--      STATUS  mandatory
+--      DESCRIPTION  
+--           "Id string from RCS keyword"
+--      ::= { version 5 } 
+-- 
+-- versionClearCache OBJECT-TYPE
+--      SYNTAX  INTEGER
+--      ACCESS  read-write
+--      STATUS  mandatory
+--      DESCRIPTION  
+--           "Set to 1 to clear the exec cache, if enabled"
+--      ::= { version 10 } 
+-- 
+-- versionUpdateConfig OBJECT-TYPE
+--      SYNTAX  INTEGER
+--      ACCESS  read-write
+--      STATUS  mandatory
+--      DESCRIPTION  
+--           "Set to 1 to read-read the config file(s)."
+--      ::= { version 11 } 
+-- 
+-- versionRestartAgent OBJECT-TYPE
+--      SYNTAX  INTEGER
+--      ACCESS  read-write
+--      STATUS  mandatory
+--      DESCRIPTION  
+--           "Set to 1 to restart the agent."
+--      ::= { version 12 } 
+-- 
+-- versionDoDebugging OBJECT-TYPE
+--      SYNTAX  INTEGER
+--      ACCESS  read-write
+--      STATUS  mandatory
+--      DESCRIPTION  
+--           "Set to 1 to turn debugging statements on in the agent."
+--      ::= { version 20 } 
+-- 
+
+-- the following section is commented out because it is already
+-- defined in the current UCD-SNMP-MIB
+
+-- snmperrs OBJECT-TYPE
+-- 	SYNTAX Snmperrs
+-- 	ACCESS not-accessible
+-- 	STATUS mandatory
+-- 	DESCRIPTION
+-- 		"A place for the agent to report problems."
+-- 	INDEX { snmperrIndex }
+-- 	::= { ucdavis 101 }
+-- 
+-- 
+-- Snmperrs ::= SEQUENCE {
+--    snmperrIndex  INTEGER,
+--    snmperrNames  DisplayString,
+--    snmperrErrorFlag  INTEGER,
+--    snmperrErrMessage  DisplayString
+-- }
+-- 
+-- snmperrIndex OBJECT-TYPE
+-- 	SYNTAX INTEGER
+-- 	ACCESS read-only
+-- 	STATUS mandatory
+-- 	DESCRIPTION
+-- 		"Reference Index for each observed snmperr."
+-- 	::= { snmperrs 1 }
+-- 
+-- snmperrNames OBJECT-TYPE
+-- 	SYNTAX DisplayString (SIZE (0..255))
+-- 	ACCESS read-only
+-- 	STATUS mandatory
+-- 	DESCRIPTION
+-- 		"snmp"
+-- 	::= { snmperrs 2 }
+-- 
+-- snmperrErrorFlag OBJECT-TYPE
+-- 	SYNTAX INTEGER
+-- 	ACCESS read-only
+-- 	STATUS mandatory
+-- 	DESCRIPTION
+-- 		"A Error flag to indicate trouble with the agent.  It
+-- 		goes to 1 if there is an error, 0 if no error."
+-- 	::= { snmperrs 100 }
+-- 
+-- snmperrErrMessage OBJECT-TYPE
+-- 	SYNTAX DisplayString (SIZE (0..255))
+-- 	ACCESS read-only
+-- 	STATUS mandatory
+-- 	DESCRIPTION
+-- 		"An error message describing the problem (if one exists)."
+-- 	::= { snmperrs 101 }
+-- 
+END

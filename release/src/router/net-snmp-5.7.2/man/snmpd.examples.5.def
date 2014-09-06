@@ -1,0 +1,655 @@
+.TH SNMPD.EXAMPLES 5 "13 Oct 2006" VVERSIONINFO "Net-SNMP"
+.SH NAME
+snmpd.examples - example configuration for the Net-SNMP agent
+.SH DESCRIPTION
+The
+.I snmpd.conf(5)
+man page defines the syntax and behaviour of the various
+configuration directives that can be used to control the
+operation of the Net-SNMP agent, and the management information
+it provides.
+.PP
+This companion man page illustrates these directives, showing
+some practical examples of how they might be used.
+.SH AGENT BEHAVIOUR
+.SS "Listening addresses"
+The default agent behaviour (listing on the standard SNMP UDP port on
+all interfaces) is equivalent to the directive:
+.RS
+agentaddress udp:161
+.RE
+or simply
+.RS
+agentaddress 161
+.RE
+The agent can be configured to \fIonly\fR accept requests sent to the
+local loopback interface (again listening on the SNMP UDP port), using:
+.RS
+agentaddress localhost:161     \fI# (udp implicit)\fR
+.RE
+or
+.RS
+agentaddress 127.0.0.1     \fI# (udp and standard port implicit)\fR
+.RE
+It can be configured to accept both UDP and TCP requests (over both IPv4
+and IPv6), using:
+.RS
+agentaddress udp:161,tcp:161,udp6:161,tcp6:161
+.RE
+.\"
+.\" Can the agent handle the same port for both IPv4 & IPv6
+.\"
+Other combinations are also valid.
+.SS "Run-time privileges"
+The agent can be configured to relinquish any privileged access once it
+has opened the initial listening ports.  Given a suitable "snmp" group
+(defined in \fI/etc/group\fR), this could be done using the directives:
+.RS
+.nf
+agentuser  nobody
+agentgroup snmp
+.fi
+.RE
+A similar effect could be achieved using numeric UID and/or GID values:
+.RS
+.nf
+agentuser  #10
+agentgroup #10
+.fi
+.RE
+.\"
+.\" What effect will/may this have on the information returned.
+.\"   ??? Mention this in the main man page.
+.\"
+.SS SNMPv3 Configuration
+Rather than being generated pseudo-randomly,
+the engine ID for the agent could be calculated based on the MAC address
+of the second network interface (\fIeth1\fR), using the directives:
+.RS
+engineIDType 3
+engineIDNic  eth1
+.RE
+or it could be calculated from the (first) IP address, using:
+.RS
+engineIDType 1
+.RE
+or it could be specified explicitly, using:
+.RS
+engineID "XXX - WHAT FORMAT"
+.RE
+.\"
+.\" Does engineID override the other directives, or what?
+.\"
+.SH ACCESS CONTROL
+.SS SNMPv3 Users
+The following directives will create three users, all using exactly
+the same authentication and encryption settings:
+.RS
+.nf
+createUser me     MD5 "single pass phrase"
+createUser myself MD5 "single pass phrase" DES
+createUser andI   MD5 "single pass phrase" DES "single pass phrase"
+.fi
+.RE
+Note that this defines three \fIdistinct\fR users, who could be granted
+different levels of access.  Changing the passphrase for any one of
+these would not affect the other two.
+.PP
+Separate pass phrases can be specified for authentication and
+encryption:
+.RS
+createUser onering SHA "to rule them all" AES "to bind them"
+.RE
+Remember that these \fIcreateUser\fR directives should be defined in the
+PERSISTENT_DIRECTORY/snmpd.conf file, rather than the usual location.
+.RE
+.\"
+.\"  ??? Illustrate "\-e", "\-l" and "\-m" forms ??
+.\"
+.SS Traditional Access Control
+The SNMPv3 users defined above can be granted access to the full
+MIB tree using the directives:
+.RS
+.nf
+rouser me
+rwuser onering
+.fi
+.RE
+Or selective access to individual subtrees using:
+.RS
+.nf
+rouser myself   .1.3.6.1.2
+rwuser andI     system
+.fi
+.RE
+.PP
+Note that a combination repeating the same user, such as:
+.RS
+.nf
+rouser onering
+rwuser onering
+.fi
+.RE
+should \fBnot\fR be used. This would configure the user \fIonering\fR
+with read-only access (and ignore the \fIrwuser\fR entry altogether).
+The same holds for the community-based directives.
+.PP
+The directives:
+.RS
+.nf
+rocommunity public
+rwcommunity private
+.fi
+.RE
+would define the commonly-expected read and write community strings
+for SNMPv1 and SNMPv2c requests.  This behaviour is \fBnot\fR
+configured by default, and would need to be set up explicitly.
+.RS
+.IP Note:
+It would also be a very good idea to change \fIprivate\fR to something
+a little less predictable!
+.RE
+.PP
+A slightly less vulnerable configuration might restrict what information
+could be retrieved:
+.RS
+rocommunity public   default system
+.RE
+or the management systems that settings could be manipulated from:
+.RS
+rwcommunity private  10.10.10.0/24
+.RE
+or a combination of the two.
+.SS VACM Configuration
+This last pair of settings are equivalent to the full VACM definitions:
+.RS
+.nf
+\fI#         sec.name  source        community\fR
+com2sec   public    default       public
+com2sec   mynet     10.10.10.0/24 private
+com2sec6  mynet     fec0::/64     private
+
+\fI#                  sec.model  sec.name\fR
+group  worldGroup  v1         public
+group  worldGroup  v2c        public
+group  myGroup     v1         mynet
+group  myGroup     v2c        mynet
+
+\fI#              incl/excl   subtree     [mask]\fR
+view   all     included    .1
+view   sysView included    system
+
+\fI#              context model level   prefix  read    write  notify (unused)\fR
+access  worldGroup  ""  any  noauth  exact   system  none   none
+access  myGroup     ""  any  noauth  exact   all     all    none
+.fi
+.RE
+.PP
+There are several points to note in this example:
+.PP
+The \fIgroup\fR directives must be repeated for 
+both SNMPv1 and SNMPv2c requests.
+.PP
+The \fIcom2sec\fR security name is distinct from the community
+string that is mapped to it. They can be the same ("public")
+or different ("mynet"/"private") - but what appears in the
+\fIgroup\fR directive is the security name, regardless of
+the original community string.
+.PP
+Both of the \fIview\fR directives are defining simple OID
+subtrees, so neither of these require an explicit mask.
+The same holds for the "combined subtree2 view defined below.
+In fact, a mask field is only needed when defining row slices
+across a table (or similar views), and can almost always be omitted.
+.PP
+In general, it is advisible not to mix traditional and VACM-based
+access configuration settings, as these can sometimes interfere
+with each other in unexpected ways.  Choose a particular style
+of access configuration, and stick to it.
+.\"
+.\" Mention/use hardwired views	'_all_' and '_none_'
+.\"
+.\" Illustrate other, more flexible configurations
+.\"   including SNMPv3 access.
+.\"
+.SS Typed-View Configuration
+A similar configuration could also be configured as follows:
+.RS
+.nf
+view   sys2View included    system
+view   sys2View included    .1.3.6.1.2.1.25.1
+
+authcommunity read       public  default      \-v sys2View
+authcommunity read,write private 10.10.10.0/8
+.fi
+.RE
+.PP
+This mechanism allows multi-subtree (or other non-simple) views to
+be used with the one-line \fIrocommunity\fR style of configuration.
+.PP
+It would also support configuring "write-only" access, should this
+be required.
+.\"
+.\" Expand this example
+.\"
+.SH SYSTEM INFORMATION
+.SS System Group
+The full contents of the 'system' group (with the exception of \fCsysUpTime\fR)
+can be explicitly configured using:
+.RS
+.nf
+\fI# Override 'uname \-a' and hardcoded system OID - inherently read-only values\fR
+sysDescr     Universal Turing Machine mk I
+sysObjectID  .1.3.6.1.4.1.8072.3.2.1066
+
+\fI# Override default values from 'configure' - makes these objects read-only\fR
+sysContact   Alan.Turing@pre\-cs.man.ac.uk
+sysName      tortoise.turing.com
+sysLocation  An idea in the mind of AT
+
+\fI# Standard end-host behaviour\fR
+sysServices  72
+.fi
+.RE
+.SS Host Resources Group
+The list of devices probed for potential inclusion in the
+\fChrDiskStorageTable\fR (and \fChrDeviceTable\fR) can be amended using
+any of the following directives:
+.RS
+ignoredisk /dev/rdsk/c0t2d0
+.RE
+which prevents the device \fI/dev/rdsk/c0t2d0\fR from being scanned,
+.RS
+.nf
+ignoredisk /dev/rdsk/c0t[!6]d0
+ignoredisk /dev/rdsk/c0t[0\-57\-9a\-f]d0
+.fi
+.RE
+either of which prevents all devices \fI/dev/rdsk/c0t\fRX\fId0\fR
+(except .../\fIc0t6d0\fR) from being scanned,
+.RS
+ignoredisk /dev/rdsk/c1*
+.RE
+which prevents all devices whose device names start with \fI/dev/rdsk/c1\fR
+from being scanned, or
+.RS
+ignoredisk /dev/rdsk/c?t0d0
+.RE
+which prevents all devices \fI/dev/rdsk/c\fRX\fIt0d0\fR
+(where 'X' is any single character) from being scanned.
+.SS Process Monitoring 
+The list of services running on a system can be monitored
+(and provision made for correcting any problems), using:
+.RS
+.nf
+\fI# At least one web server process must be running at all times\fR
+proc    httpd
+procfix httpd  /etc/rc.d/init.d/httpd restart
+
+\fI# There should never be more than 10 mail processes running
+#    (more implies a probable mail storm, so shut down the mail system)\fR
+proc    sendmail   10
+procfix sendmail  /etc/rc.d/init.d/sendmail stop
+
+\fI# There should be a single network management agent running
+#   ("There can be only one")\fR
+proc    snmpd    1  1
+.fi
+.RE
+Also see the "DisMan Event MIB" section later on.
+.SS Disk Usage Monitoring
+The state of disk storage can be monitored using:
+.RS
+.nf
+includeAllDisks 10%
+disk /var 20%
+disk /usr  3%
+\fI#  Keep 100 MB free for crash dumps\fR
+disk /mnt/crash  100000
+.fi
+.RE
+.SS System Load Monitoring
+A simple check for an overloaded system might be:
+.RS
+load 10
+.RE
+A more refined check (to allow brief periods of heavy use,
+but recognise sustained medium-heavy load) might be:
+.RS
+load 30 10 5
+.RE
+.SS Log File Monitoring
+.I TODO
+.RS
+file FILE [MAXSIZE]
+.RE
+.RS
+logmatch NAME PATH CYCLETIME REGEX
+.RE
+.SH "ACTIVE MONITORING"
+.SS "Notification Handling"
+Configuring the agent to report invalid access attempts might be done by:
+.RS
+.nf
+authtrapenable 1
+trapcommunity  public
+trap2sink      localhost
+.fi
+.RE
+Alternatively, the second and third directives could be combined
+(and an acknowledgement requested) using:
+.RS
+informsink     localhost  public
+.RE
+A configuration with repeated sink destinations, such as:
+.RS
+.nf
+trapsink       localhost
+trap2sink      localhost
+informsink     localhost
+.fi
+.RE
+should \fBNOT\fR be used, as this will cause multiple copies
+of each trap to be sent to the same trap receiver.
+.PP
+.I "TODO - discuss SNMPv3 traps"
+.RS
+trapsess  \fIsnmpv3 options\fR  localhost:162
+.RE
+.PP
+.I "TODO - mention trapd access configuration"
+
+.SS "DisMan Event MIB"
+The simplest configuration for active self-monitoring of
+the agent, by the agent, for the agent, is probably:
+.RS
+.nf
+\fI# Set up the credentials to retrieve monitored values\fR
+createUser    _internal MD5 "the first sign of madness"
+iquerySecName _internal
+rouser        _internal
+
+\fI# Active the standard monitoring entries\fR
+defaultMonitors         yes
+linkUpDownNotifications yes
+
+\fI# If there's a problem, then tell someone!\fR
+trap2sink localhost
+.fi
+.RE
+.PP
+The first block sets up a suitable user for retrieving the
+information to by monitored, while the following pair of
+directives activates various built-in monitoring entries.
+.PP
+Note that the DisMan directives are not themselves sufficient to
+actively report problems - there also needs to be a suitable
+destination configured to actually send the resulting notifications to.
+.PP
+A more detailed monitor example is given by:
+.RS
+monitor \-u me \-o hrSWRunName "high process memory" hrSWRunPerfMem > 10000
+.RE
+.PP
+This defines an explicit boolean monitor entry, looking for any process
+using more than 10MB of active memory.  Such processes will be reported
+using the (standard) DisMan trap \fCmteTriggerFired\fR,
+but adding an extra (wildcarded) varbind \fChrSWRunName\fR.
+.PP
+This entry also specifies an explicit user (\fIme\fR, as defined
+earlier) for retrieving the monitored values, and building the trap.
+.PP
+Objects that could potentially fluctuate around the specified level
+are better monitored using a threshold monitor entry: 
+.RS
+monitor \-D \-r 10 "network traffic" ifInOctets 1000000 5000000
+.RE
+.PP
+This will send a \fCmteTriggerRising\fR trap whenever the incoming
+traffic rises above (roughly) 500 kB/s on any network interface,
+and a corresponding \fCmteTriggerFalling\fR trap when it falls below
+100 kB/s again.
+.PP
+Note that this monitors the deltas between successive samples (\fI\-D\fR)
+rather than the actual sample values themselves.  The same effect
+could be obtained using:
+.RS
+monitor \-r 10 "network traffic" ifInOctets \- \- 1000000 5000000
+.RE
+.PP
+The \fIlinkUpDownNotifications\fR directive above is broadly
+equivalent to:
+.RS
+.nf
+notificationEvent  linkUpTrap    linkUp   ifIndex ifAdminStatus ifOperStatus
+notificationEvent  linkDownTrap  linkDown ifIndex ifAdminStatus ifOperStatus
+
+monitor  \-r 60 \-e linkUpTrap   "Generate linkUp"   ifOperStatus != 2
+monitor  \-r 60 \-e linkDownTrap "Generate linkDown" ifOperStatus == 2
+.fi
+.RE
+.PP
+This defines the traps to be sent (using \fInotificationEvent\fR),
+and explicitly references the relevant notification in the corresponding
+monitor entry (rather than using the default DisMan traps).
+.PP
+The \fIdefaultMonitors\fR directive above is equivalent to a series
+of (boolean) monitor entries:
+.RS
+.nf
+monitor	\-o prNames      \-o prErrMessage  "procTable" prErrorFlag   != 0
+monitor	\-o memErrorName \-o memSwapErrorMsg "memory"  memSwapError  != 0
+monitor	\-o extNames     \-o extOutput     "extTable"  extResult     != 0
+monitor	\-o dskPath      \-o dskErrorMsg   "dskTable"  dskErrorFlag  != 0
+monitor	\-o laNames      \-o laErrMessage  "laTable"   laErrorFlag   != 0
+monitor	\-o fileName     \-o fileErrorMsg  "fileTable" fileErrorFlag != 0
+.fi
+.RE
+and will send a trap whenever any of these entries indicate a problem.
+.PP
+An alternative approach would be to automatically invoke the corresponding
+"fix" action:
+.RS
+.nf
+setEvent   prFixIt  prErrFix = 1
+monitor \-e prFixIt "procTable" prErrorFlag   != 0
+.fi
+.RE
+(and similarly for any of the other \fIdefaultMonitor\fR entries).
+.SS "DisMan Schedule MIB"
+The agent could be configured to reload its configuration
+once an hour, using:
+.RS
+repeat 3600 versionUpdateConfig.0 = 1
+.RE
+.PP
+Alternatively this could be configured to be run at specific
+times of day (perhaps following rotation of the logs):
+.RS
+cron 10 0 * * * versionUpdateConfig.0 = 1
+.RE
+.PP
+The one-shot style of scheduling is rather less common, but the
+secret SNMP virus could be activated on the next occurance of Friday 13th using:
+.RS
+at   13 13 13 * 5 snmpVirus.0 = 1
+.RE
+.SH "EXTENDING AGENT FUNCTIONALITY"
+.SS "Arbitrary Extension Commands"
+.I "Old Style"
+.RS 
+.nf
+exec [MIBOID] NAME PROG ARGS"
+sh   [MIBOID] NAME PROG ARGS"
+execfix NAME PROG ARGS"
+.fi
+.RE
+.I "New Style"
+.RS
+.nf
+extend [MIBOID] NAME PROG ARGS"
+extendfix [MIBOID] NAME PROG ARGS"
+.fi
+.RE
+.SS "MIB-Specific Extension Commands"
+.I One-Shot
+.RS
+"pass [\-p priority] MIBOID PROG"
+.RE
+.IP
+.I Persistent
+.RS
+"pass_persist [\-p priority] MIBOID PROG"
+.RE
+.SS "Embedded Perl Support"
+If embedded perl support is enabled in the agent, the default
+initialisation is equivalent to the directives:
+.RS
+.nf
+disablePerl  false
+perlInitFile DATADIR/snmp/snmp_perl.pl
+.fi
+.RE
+The main mechanism for defining embedded perl scripts is the
+\fIperl\fR directive.  A very simple (if somewhat pointless)
+MIB handler could be registered using:
+.RS
+.nf
+perl use Data::Dumper;
+perl sub myroutine  { print "got called: ",Dumper(@_),"\\n"; }
+perl $agent\->register('mylink', '.1.3.6.1.8765', \\&myroutine);
+.fi
+.RE
+.PP
+This relies on the \fI$agent\fR object, defined in the example
+\fCsnmp_perl.pl\fR file.
+.PP
+A more realistic MIB handler might be:
+.RS
+.nf
+\fIXXX - WHAT ???\fR
+.fi
+.RE
+Alternatively, this code could be stored in an external file,
+and loaded using:
+.RS
+perl 'do DATADIR/snmp/perl_example.pl';
+.RE
+.\"
+.\" XXX - does this last entry need the quotes ??
+.\"
+.SS Dynamically Loadable Modules
+.I TODO
+.RS
+dlmod NAME PATH"
+.RE
+.SS "Proxy Support"
+A configuration for acting as a simple proxy for two other
+SNMP agents (running on remote systems) might be:
+.RS
+.nf
+com2sec \-Cn rem1context  rem1user default  remotehost1
+com2sec \-Cn rem2context  rem2user default  remotehost2
+
+proxy \-Cn rem1context  \-v 1 -c public  remotehost1  .1.3
+proxy \-Cn rem2context  \-v 1 -c public  remotehost2  .1.3
+.fi
+.RE
+(plus suitable access control entries).
+.PP
+The same \fIproxy\fR directives would also work with
+(incoming) SNMPv3 requests, which can specify a context directly.
+It would probably be more sensible to use contexts of
+\fIremotehost1\fR and \fIremotehost2\fR - the names above were
+chosen to indicate how these directives work together.
+.PP
+Note that the administrative settings for the proxied request
+are specified explicitly, and are independent of the settings
+from the incoming request.
+.PP
+An alternative use for the \fiproxy\fR directive is to pass
+part of the OID tree to another agent (either on a remote host
+or listening on a different port on the same system),
+while handling the rest internally:
+.RS
+proxy \-v 1 \-c public  localhost:6161  .1.3.6.1.4.1.99
+.RE
+This mechanism can be used to link together two separate SNMP agents.
+.PP
+A less usual approach is to map one subtree into a different area
+of the overall MIB tree (either locally or on a remote system):
+.RS
+.nf
+\fI# uses SNMPv3 to access the MIB tree .1.3.6.1.2.1.1 on 'remotehost'
+# and maps this to the local tree .1.3.6.1.3.10\fR
+proxy \-v 3 \-l noAuthNoPriv \-u user remotehost .1.3.6.1.3.10 .1.3.6.1.2.1.1
+.fi
+.RE
+.SS SMUX Sub-Agents
+.RS
+.nf
+smuxsocket 127.0.0.1
+smuxpeer .1.3.6.1.2.1.14 ospf_pass
+.fi
+.RE
+.SS AgentX Sub-Agents
+The Net-SNMP agent could be configured to operate as an AgentX master
+agent (listening on a non-standard named socket, and running using
+the access privileges defined earlier), using:
+.RS
+.nf
+master agentx
+agentXSocket /tmp/agentx/master
+agentXPerms  0660 0550 nobody snmp
+.fi
+.RE
+.\"
+.\" XXX - do numeric UID/GID take a leading '#' ??
+.\"       why not??
+.\"
+A sub-agent wishing to connect to this master agent would need
+the same \fIagentXSocket\fR directive, or the equivalent code:
+.RS
+.nf
+netsnmp_ds_set_string(NETSNMP_DS_APPLICATION_ID, NETSNMP_DS_AGENT_X_SOCKET, 
+                      "/tmp/agentx/master");
+.fi
+.RE
+.PP
+A loopback networked AgentX configuration could be set up using:
+.RS
+.nf
+agentXSocket   tcp:localhost:705
+agentXTimeout  5
+agentXRetries  2
+.fi
+.RE
+on the master side, and:
+.RS
+.nf
+agentXSocket   tcp:localhost:705
+agentXTimeout  10
+agentXRetries  1
+agentXPingInterval 600
+.fi
+.RE
+on the client.
+.PP
+Note that the timeout and retry settings can be asymmetric
+for the two directions, and the sub-agent can poll the master agent
+at regular intervals (600s = every 10 minutes), to ensure the
+connection is still working.
+.SH "OTHER CONFIGURATION"
+.RS
+override sysDescr.0 octet_str "my own sysDescr"
+.RE
+.RS
+injectHandler stash_cache NAME table_iterator
+.RE
+.SH "FILES"
+SYSCONFDIR/snmp/snmpd.conf
+.SH "SEE ALSO"
+snmpconf(1), snmpd.conf(5), snmp.conf(5), snmp_config(5), snmpd(8), EXAMPLE.conf, netsnmp_config_api(3).
+.\" Local Variables:
+.\"  mode: nroff
+.\" End:

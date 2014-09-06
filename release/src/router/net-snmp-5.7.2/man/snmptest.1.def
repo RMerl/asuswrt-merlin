@@ -1,0 +1,278 @@
+.\" Portions of this file are subject to the following copyright.  See
+.\" the Net-SNMP's COPYING file for more details and other copyrights
+.\" that may apply:
+.\" /***********************************************************
+.\" 	Copyright 1988, 1989 by Carnegie Mellon University
+.\" 
+.\"                       All Rights Reserved
+.\" 
+.\" Permission to use, copy, modify, and distribute this software and its 
+.\" documentation for any purpose and without fee is hereby granted, 
+.\" provided that the above copyright notice appear in all copies and that
+.\" both that copyright notice and this permission notice appear in 
+.\" supporting documentation, and that the name of CMU not be
+.\" used in advertising or publicity pertaining to distribution of the
+.\" software without specific, written prior permission.  
+.\" 
+.\" CMU DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
+.\" ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL
+.\" CMU BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR
+.\" ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
+.\" WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
+.\" ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
+.\" SOFTWARE.
+.\" ******************************************************************/
+.\" Portions of this file are copyrighted by:
+.\" Copyright Copyright 2003 Sun Microsystems, Inc. All rights reserved.
+.\" Use is subject to license terms specified in the COPYING file
+.\" distributed with the Net-SNMP package.
+.\" ******************************************************************/
+.TH SNMPTEST 1 "25 Jul 2003" VVERSIONINFO "Net-SNMP"
+.SH NAME
+snmptest - communicates with a network entity using SNMP requests
+.SH SYNOPSIS
+.B snmptest
+[COMMON OPTIONS] AGENT
+.SH DESCRIPTION
+.B snmptest
+is a flexible SNMP application that can monitor and manage information
+on a network entity.
+.PP
+After invoking the program, a command line interpreter proceeds to
+accept commands.  This intepreter enables the user to send different
+types of SNMP requests to target agents.
+.PP
+AGENT identifies a target SNMP agent, which is instrumented
+to monitor the given objects.  At its simplest, the AGENT
+specification will consist of a hostname or an IPv4
+address.  In this situation, the command will attempt
+communication with the agent, using UDP/IPv4 to port 161
+of the given target host. See snmpcmd(1) for a full list of
+the possible formats for AGENT.
+.PP
+Once snmptest is invoked, the command line intepreter will prompt with:
+.PP
+.B Variable:
+.PP
+At this point you can enter one or more variable names, one per line.
+A blank line ends the parameter input and will send the request
+(variables entered) in a single packet, to the remote entity.
+Each variable name is given
+in the format specified in 
+.IR variables(5) .
+For example:
+.PP
+snmptest \-c public \-v 1 zeus
+.br
+.BR Variable: " system.sysDescr.0"
+.br
+.BR Variable: 
+.PP
+will return some information about the request and reply packets, as
+well as the information:
+.PP
+requestid 0x5992478A errstat 0x0 errindex 0x0
+.br
+system.sysDescr.0 = STRING: "Unix 4.3BSD"
+.PP
+The errstatus value shows the error status code for the call.
+The possible values for errstat are in the header file snmp.h.
+The errindex value identifies the variable that has the given error.
+Index values are assigned to all the variables entered at the "Variable":
+prompt. The first value is assigned an index of 1.
+.PP
+Upon startup, the program defaults to sending a GET request packet.
+The type of request can be changed by typing one of the following
+commands at the "Variable:" prompt:
+.PP
+.nf
+$G - send a GET request
+$N - send a GETNEXT request
+$S - send a SET request
+$B - send a GETBULK request
+     Note: GETBULK is not available in SNMPv1
+$I - send an Inform request
+$T - send an SNMPv2 Trap request
+.fi
+.PP
+Other values that can be entered at the "Variable:" prompt are:
+.PP
+.nf
+$D - toggle the dumping of each sent and received packet
+$QP - toggle a quicker, less verbose output form
+$Q - Quit the program
+.fi
+.PP
+Request Types:
+.PP
+GET Request:
+.PP
+When in "GET request" mode ($G or default), the user can enter
+an OID at the "Variable:" prompt. The user can enter multiple
+OIDs, one per prompt. The user enters a blank line to send
+the GET request.
+.PP
+GETNEXT Request:
+.PP
+The "GETNEXT request" mode ($N) is simlar to the "Get request"
+mode, described above.
+.PP
+SET Request:
+.PP
+When in the "SET request" mode ($S), more information is requested by the
+prompt for each variable.  The prompt:
+.PP
+.nf
+Type [i|s|x|d|n|o|t|a]:
+.fi
+requests the type of the variable be entered.  Depending on the type
+of value you want to set, you can type one of the following:
+.PP
+.nf
+i - integer
+u - unsigned integer
+s - octet string in ASCII
+x - octet string in hex bytes, separated by whitespace
+d - octet string as decimal bytes, separated by whitespace
+a - ip address in dotted IP notation
+o - object identifier
+n - null
+t - timeticks
+.fi
+At this point a value will be prompted for:
+.PP
+Value:
+.PP
+If this is an integer value, just type the integer (in decimal).  If
+it is a decimal string, type in white-space separated decimal numbers,
+one per byte of the string.  Again type a blank line at the prompt for
+the variable name to send the packet.
+.PP
+GETBULK Request:
+.PP
+The "GETBULK request" mode ($B) is similar to the "Set request" mode.
+GETBULK, however, is not available in SNMPv1.
+.PP
+Inform Request:
+.PP
+The "Inform request" mode ($I) is similar to the "Set request" mode.
+This type of request, however, is not available in SNMPv1. Also,
+the _agent_ specified on the snmptest command should correspond
+to the target snmptrapd agent.
+.PP
+SNMPv2 Trap Request:
+.PP
+The "SNMPv2 Trap Request" mode ($T) is similar to the "Set request" mode.
+This type of request, however, is not available in SNMPv1. Also,
+the _agent_ specified on the snmptest command should correspond
+to the target snmptrapd agent.
+.SH OPTIONS
+.B snmptest
+takes the common options described in the 
+.I snmpcmd(1)
+manual page.
+.SH EXAMPLES
+.PP
+The following is an example of sending a GET request for two OIDs:
+.PP
+% snmptest \-v 2c \-c public testhost:9999
+.PP
+.nf
+Variable: system.sysDescr.0
+Variable: system.sysContact.0
+Variable:
+Received Get Response from 128.2.56.220
+requestid 0x7D9FCD63 errstat 0x0 errindex 0x0
+SNMPv2\-MIB::sysDescr.0 = STRING: SunOS testhost 5.9 Generic_112233\-02 sun4u
+SNMPv2\-MIB::sysContact.0 = STRING: x1111
+.fi
+.PP
+The following is an example of sending a GETNEXT request:
+.PP
+.nf
+Variable: SNMPv2\-MIB::sysORUpTime
+Variable:
+Received Get Response from 128.2.56.220
+requestid 0x7D9FCD64 errstat 0x0 errindex 0x0
+SNMPv2\-MIB::sysORUpTime.1 = Timeticks: (6) 0:00:00.06
+Variable:
+.fi
+.PP
+The following is an example of sending a SET request:
+.PP
+.nf
+Variable: $S
+Request type is Set Request
+Variable: system.sysLocation.0
+Type [i|u|s|x|d|n|o|t|a]: s
+Value: building 17
+Variable:
+Received Get Response from 128.2.56.220
+requestid 0x7D9FCD65 errstat 0x0 errindex 0x0
+SNMPv2\-MIB::sysLocation.0 = STRING: building A
+Variable:
+.fi
+.PP
+The following is an example of sending a GETBULK request:
+.PP
+.nf
+Variable: $B
+Request type is Bulk Request
+Enter a blank line to terminate the list of non-repeaters
+and to begin the repeating variables
+Variable:
+Now input the repeating variables
+Variable: system.sysContact.0
+Variable: system.sysLocation.0
+Variable:
+What repeat count? 2
+Received Get Response from 128.2.56.220
+requestid 0x2EA7942A errstat 0x0 errindex 0x0
+SNMPv2\-MIB::sysName.0 = STRING: testhost
+SNMPv2\-MIB::sysORLastChange.0 = Timeticks: (58) 0:00:00.58
+SNMPv2\-MIB::sysLocation.0 = STRING: bldg A
+SNMPv2\-MIB::sysORID.1 = OID: IF\-MIB::ifMIB
+Variable:
+.fi
+.PP
+The following is an example of sending an Inform request:
+.PP
+.nf
+snmptest \-v 2c \-c public snmptrapd_host
+Variable: $I
+Request type is Inform Request
+(Are you sending to the right port?)
+Variable: system.sysContact.0
+Type [i|u|sIx|d|n|o|t|a]: s
+Value: x12345
+Variable:
+Inform Acknowledged
+Variable:
+.fi
+.PP
+The snmptrapd_host will show:
+.PP
+snmptrapd_host [<ip address>]: Trap SNMPv2\-MIB::sysContact.0 = STRING:
+x12345
+.PP
+The following is an example of sending an SNMPv2 Trap request:
+.PP
+.nf
+snmptest \-v 2c \-c public snmptrapd_host
+Variable: $T
+Request type is SNMPv2 Trap Request
+(Are you sending to the right port?)
+Variable: system.sysLocation.0
+Type [i|u|s|x|d|n|o|t|a]: s
+Value: building a
+Variable:
+.fi
+.PP
+The snmptrapd_host will show:
+.PP
+.nf
+snmptrapd_host [<ip address>]: Trap SNMPv2\-MIB::sys.0 = STRING:
+building a
+.fi
+.SH "SEE ALSO"
+snmpcmd(1), snmpget(1), snmpset(1), variables(5)

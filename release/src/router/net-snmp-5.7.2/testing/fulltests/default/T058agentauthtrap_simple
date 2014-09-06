@@ -1,0 +1,36 @@
+#!/bin/sh
+
+. ../support/simple_eval_tools.sh
+
+HEADER authentication failure traps are sent by snmpd
+
+SKIPIF NETSNMP_DISABLE_SNMPV1
+
+#
+# Begin test
+#
+
+# standard V1 configuration: testcommunity
+. ./Sv1config
+# add in a v1 trap sink
+CONFIGAGENT trapsink $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPTRAPD_PORT public
+CONFIGAGENT authtrapenable 1
+CONFIGTRAPD authcommunity log public
+CONFIGTRAPD agentxsocket /dev/null
+
+STARTTRAPD
+
+STARTAGENT
+
+# give the agent more time to start up.  We only want to fire one
+# request (retries = 0) to make sure only one trap is sent.
+#DELAY
+CAPTURE "snmpget -On -r 0 -t 5 $SNMP_FLAGS -v 1 -c wrongcommunity $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT .1.3.6.1.2.1.1.3.0"
+
+STOPAGENT
+
+STOPTRAPD
+
+CHECKTRAPD "Authentication Failure Trap"
+
+FINISHED

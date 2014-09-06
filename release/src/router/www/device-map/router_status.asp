@@ -109,6 +109,14 @@ function initial(){
 	if(band5g_support){
 		$("t0").style.display = "";
 		$("t1").style.display = "";
+		if(wl_info.band5g_2_support){
+			$("t2").style.display = "";
+			$("t1").childNodes[1].innerHTML = "5GHz-1";
+			$("t0").style.width = "66px";
+			$("t1").style.width = "66px";
+			$("t2").style.width = "66px";
+			$("t3").style.width = "66px";
+		}
 		
 		// disallow to use the other band as a wireless AP
 		if(parent.sw_mode == 4 && !localAP_support){
@@ -129,7 +137,7 @@ function initial(){
 }
 
 function tabclickhandler(wl_unit){
-	if(wl_unit == 2){
+	if(wl_unit == 3){
 		location.href = "router_status.asp";
 	}
 	else{
@@ -255,7 +263,12 @@ function detect_CPU_Status(){
 				</div>
 			</td>
 			<td>
-				<div id="t2" class="tabclick_NW" align="center" style="font-weight: bolder; margin-right:2px; width:90px;" onclick="tabclickhandler(2)">
+				<div id="t2" class="tab_NW" align="center" style="font-weight: bolder;display:none; margin-right:2px; width:90px;" onclick="tabclickhandler(2)">
+					<span id="span1" style="cursor:pointer;font-weight: bolder;">5GHz-2</span>
+				</div>
+			</td>
+			<td>
+				<div id="t3" class="tabclick_NW" align="center" style="font-weight: bolder; margin-right:2px; width:90px;" onclick="tabclickhandler(3)">
 					<span id="span1" style="cursor:pointer;font-weight: bolder;">Status</span>
 				</div>
 			</td>

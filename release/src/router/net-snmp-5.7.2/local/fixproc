@@ -1,0 +1,694 @@
+#!/usr/bin/perl
+# 
+# fixproc [-min n] [-max n] [-check | -kill | -restart | -exist | -fix] proc ...
+# 
+# fixproc exit code:
+# 	0	ok
+# 	1	check failed
+# 	2	cannot restart
+# 	3	cannot kill
+# 	4	fix failed	if fix is defined as kill or restart, then
+# 				cannot kill or cannot restart is return instead
+# 	10	fixproc error
+# 
+#
+# Fixes a process named "proc" by performing the specified action.  The
+# actions can be check, kill, restart, exist, or fix.  The action is specified
+# on the command line or is read from a default database, which describes
+# the default action to take for each process.  The database format and
+# the meaning of each action are described below.
+# 
+# database format
+# ---------------
+# 
+# name	foo			required
+# cmd	/a/b/name args		required
+# min	number			optional, defaults to 1
+# max	number			optional, defaults to 1
+# 
+# check	{null, exist, shell}	optional, defaults to exist if not defined
+# [shell command		shell commands needed only if check=shell
+#  ...
+#  shell command
+#  end_shell]			keyword end_shell marks end of shell commands
+# fix	{kill, restart, shell}	required
+# [shell command			shell commands needed only if fix=shell
+#  ...
+#  shell command
+#  end_shell]			keyword end_shell marks end of shell commands
+# 
+# Blank lines and lines beginning with "#" are ignored.
+# 
+#
+# Example:
+# 
+# name	test1
+# cmd	nice /home/kong/z/test1 > /dev/null &
+# max	2
+# fix	shell
+# 	xterm&
+# 	nice /home/kong/z/test1 > /dev/null &
+# 	end_shell
+# 
+# 
+# actions
+# -------
+# There are 5 possible actions:  kill, restart, fix, exist, check.  Fix is
+# defined to be the kill action, the restart action, or a series of shell
+# commands.  Check is optionally defined in the database.  If check is not
+# defined, it defaults to exist.
+# 
+# If the action is specified on the cmd line, it is executed regardless of
+# check.  The commands executed for each action type is as follow:
+# 
+#   switch action:
+# 	kill:
+# 	  kill process, wait 5 seconds, kill -9 if still exist
+# 	  if still exist
+# 	    return "cannot kill"
+# 	  else
+# 	    return "ok"
+# 
+# 	restart:	
+# 	  execute kill
+# 	  if kill returned "cannot kill"
+# 	    return "cannot kill"
+# 	  restart by issuing cmd to shell
+# 	  if check defined
+# 	    execute check
+# 	    if check succeeds
+# 	      return "ok"
+# 	    else
+# 	      return "cannot restart"
+# 
+# 	fix:
+# 	  if fix=kill
+# 	    execute kill
+# 	  else if fix=restart
+# 	    execute restart
+# 	  else
+# 	    execute shell commands
+# 	    execute check
+# 
+# 	check:
+# 	  if check defined as null
+# 	    return "fixproc error"
+# 	  else
+# 	    execute check
+# 	    if check succeeds
+# 	      return (execute exist)
+# 	    return "check failed"
+# 
+# 	exist:
+# 	  if proc exists in ps && (min <= num. of processes <= max)
+# 	    return "ok"
+# 	  else
+# 	    return "check failed"
+# 
+# 
+# If the action is not specified on the cmd line, the default action is the
+# fix action defined in the database.  Fix is only executed if check fails:
+# 
+# 	if fix defined
+# 	  if check is not defined as null
+# 	    execute check
+# 	    if check succeeds
+# 	      return "ok"
+# 	  execute action defined for fix  
+# 	else
+# 	  return "fixproc error"
+# 
+# 
+# If proc is not specified on the command line, return "fixproc error." 
+# Multiple proc's can be defined on the cmd line.   When an error occurs
+# when multiple proc's are specified, the first error encountered halts the
+# script.
+# 
+# For check shell scripts, any non-zero exit code means the check has failed.
+#
+#
+# Timothy Kong		3/1995
+
+use File::Temp qw(tempfile);
+
+$database_file = '/local/etc/fixproc.conf';
+
+$debug = 0;			# specify debug level using -dN
+				# currently defined: -d1
+
+$no_error = 0;
+$check_failed_error = 1;
+$cannot_restart_error = 2;
+$cannot_kill_error = 3;
+$cannot_fix_error = 4;
+$fixproc_error = 10;
+
+$min = 1;
+$max = 1;
+$cmd_line_action = '';
+%min = ();
+%max = ();
+%cmd = ();
+%check = ();
+%fix = ();
+$shell_lines = ();
+@proc_list = ();
+
+$shell_header = "#!/bin/sh\n";
+$shell_end_marker = 'shell_end_marker';
+
+&read_args();
+&read_database();
+# &dump_database();		# debug only
+
+# change the default min. and max. number of processes allowed
+if ($min != 1)
+  {
+    for $name ( keys (%min) )
+      {
+	$min{$name} = $min;
+      }
+  }
+if ($max != 1)
+  {
+    for $name ( keys (%max) )
+      {
+	$max{$name} = $max;
+      }
+  }
+    
+# work on one process at a time
+for $proc ( @proc_list )
+  {
+    $error_code = &work_on_proc ($proc);
+
+############# uncomment next line when fully working ############
+#    exit $error_code if ($error_code);
+
+    die "error_code = $error_code\n" if ($error_code);
+  }
+
+
+# create an executable shell script file
+sub create_sh_script
+{
+  local ($file) = pop (@_);
+  local ($fh) = pop (@_);
+  local ($i) = pop (@_);
+
+  printf (STDERR "create_sh_script\n") if ($debug > 0);
+
+  $! = $fixproc_error;
+  while ( $shell_lines[$i] ne $shell_end_marker )
+    {
+      printf ($fh "%s", $shell_lines[$i]);
+      $i++;
+    }
+  close ($fh);
+  chmod 0755, $file;
+}
+
+
+sub do_fix
+{
+  local ($proc) = pop(@_);
+
+  printf (STDERR "do_fix\n") if ($debug > 0);
+
+  if ($fix{$proc} eq '')
+    {
+      $! = $fixproc_error;
+      die "$0: internal error 4\n";
+    }
+  if ($fix{$proc} eq 'kill')
+    {
+      return &do_kill ($proc);
+    }
+  elsif ($fix{$proc} eq 'restart')
+    {
+      return &do_restart ($proc);
+    }
+  else
+    {
+      # it must be "shell", so execute the shell script defined in database
+      local ($tmpfh, $tmpfile) = tempfile("fix_XXXXXXXX", DIR => "/tmp");
+
+      &create_sh_script ($fix{$proc}, $tmpfh, $tmpfile);
+
+      	# return code is number divided by 256
+      $error_code = (system "$tmpfile") / 256;
+      unlink($tmpfile);
+      return ($fix_failed_error) if ($error_code != 0);
+        # sleep needed here?
+      return &do_exist ($proc);
+    }
+}
+
+
+sub do_check
+{
+  local ($proc) = pop(@_);
+
+  printf (STDERR "do_check\n") if ($debug > 0);
+
+  if ($check{$proc} eq '')
+    {
+      $! = $fixproc_error;
+      die "$0: internal error 2\n";
+    }
+
+  if ($check{$proc} ne 'exist')
+    {
+      # if not "exist", then it must be "shell", so execute the shell script
+      # defined in database
+
+      local ($tmpfh, $tmpfile) = tempfile("check_XXXXXXXX", DIR => "/tmp");
+
+      &create_sh_script ($fix{$proc}, $tmpfh, $tmpfile);
+
+      	# return code is number divided by 256
+      $error_code = (system "$tmpfile") / 256;
+      unlink($tmpfile);
+      return ($check_failed_error) if ($error_code != 0);
+
+      # check passed, continue
+    }
+  return &do_exist ($proc);
+}
+
+
+sub do_exist
+{
+  local ($proc) = pop(@_);
+
+  printf (STDERR "do_exist\n") if ($debug > 0);
+
+  # do ps, check to see if min <= no. of processes <= max
+  $! = $fixproc_error;
+  open (COMMAND, "/bin/ps -e | /bin/grep $proc | /bin/wc -l |")
+    || die "$0: can't run ps-grep-wc command\n";
+  $proc_count = <COMMAND>;
+  if (($proc_count < $min{$proc}) || ($proc_count > $max{$proc}))
+    {
+      return $check_failed_error;
+    }
+  return $no_error;
+}
+
+
+sub do_kill
+{
+  local ($proc) = pop(@_);
+  local ($second_kill_needed);
+
+  printf (STDERR "do_kill\n") if ($debug > 0);
+
+  # first try kill
+  $! = $fixproc_error;
+  open (COMMAND, "/bin/ps -e | /bin/grep $proc |")
+    || die "$0: can't run ps-grep-awk command\n";
+  while (<COMMAND>)
+    {
+      # match the first field of ps -e
+      $! = $fixproc_error;
+      /^\s*(\d+)\s/ || die "$0: can't match ps -e output\n";
+      system "kill $1";
+    }
+
+  # if process still exist, try kill -9
+  sleep 2;
+  $! = $fixproc_error;
+  open (COMMAND, "/bin/ps -e | /bin/grep $proc |")
+    || die "$0: can't run ps-grep-awk command\n";
+  $second_kill_needed = 0;
+  while (<COMMAND>)
+    {
+      # match the first field of ps -e
+      $! = $fixproc_error;
+      /^\s*(\d+)\s/ || die "$0: can't match ps -e output\n";
+      system "kill -9 $1";
+      $second_kill_needed = 1;
+    }
+  return ($no_error) if ($second_kill_needed == 0);
+
+  # see if kill -9 worked
+  sleep 2;
+  $! = $fixproc_error;
+  open (COMMAND, "/bin/ps -e | /bin/grep $proc |")
+    || die "$0: can't run ps-grep-awk command\n";
+  while (<COMMAND>)
+    {				# a process still exist, return error
+      return $cannot_kill_error;
+    }
+  return $no_error;		# good, all dead
+}
+
+
+sub do_restart
+{
+  local ($proc) = pop(@_);
+  local ($error_code);
+
+  printf (STDERR "do_restart\n") if ($debug > 0);
+
+  $error_code = &do_kill ($proc);
+  return $error_code if ($error_code != $no_error);
+  die "$0: internal error 3\n" if ($cmd{$proc} eq '');
+  system "$cmd{$proc}";
+  # sleep needed here?
+  if ($check{$proc} ne 'null')
+    {
+      return $no_error if (&do_check($proc) == $no_error);
+      return $cannot_restart_error;
+    }
+}
+
+
+sub work_on_proc
+{
+  local ($proc) = pop(@_);
+  local ($error_code);
+
+  printf (STDERR "work_on_proc\n") if ($debug > 0);
+
+  if ($cmd_line_action eq '')
+    {
+      # perform action from database
+
+      if ($check{$proc} ne 'null')
+	{
+	  $error_code = &do_check ($proc);
+	  if ($error_code != $check_failed_error)
+	    {
+	      return $error_code;
+	    }
+	}
+      return &do_fix ($proc);
+    }
+  else
+    {
+      # perform action from command line
+
+      $error_code = $no_error;
+      if ($cmd_line_action eq 'kill')
+	{
+	  $error_code = &do_kill ($proc);
+	}
+      elsif ($cmd_line_action eq 'restart')
+	{
+	  $error_code = &do_restart ($proc);
+	}
+      elsif ($cmd_line_action eq 'fix')
+	{
+	  $error_code = &do_fix ($proc);
+	}
+      elsif ($cmd_line_action eq 'check')
+	{
+	  if ( $check{$proc} eq 'null' )
+	    {
+	      exit $fixproc_error;
+	    }
+	  $error_code = &do_check ($proc);
+	}
+      elsif ($cmd_line_action eq 'exist')
+	{
+	  $error_code = &do_exist ($proc);
+	}
+      else
+	{
+	  $! = $fixproc_error;
+	  die "$0: internal error 1\n";
+	}
+    }
+}
+
+
+sub dump_database
+{
+  local ($name);
+
+  for $name (keys(%cmd))
+    {
+      printf ("name\t%s\n", $name);
+      printf ("cmd\t%s\n", $cmd{$name});
+      printf ("min\t%s\n", $min{$name});
+      printf ("max\t%s\n", $max{$name});
+      if ( $check{$name} =~ /[0-9]+/ )
+	{
+	  printf ("check\tshell\n");
+	  $i = $check{$name};
+	  while ( $shell_lines[$i] ne $shell_end_marker )
+	    {
+	      printf ("%s", $shell_lines[$i]);
+	      $i++;
+	    }
+	}
+      else
+	{
+	  printf ("check\t%s\n", $check{$name});
+	}
+      if ( $fix{$name} =~ /[0-9]+/ )
+	{
+	  printf ("fix\tshell\n");
+	  $i = $fix{$name};
+	  while ( $shell_lines[$i] ne $shell_end_marker )
+	    {
+	      printf ("%s", $shell_lines[$i]);
+	      $i++;
+	    }
+	}
+      else
+	{
+	  printf ("fix\t%s\n", $fix{$name});
+	}
+      printf ("\n");
+    }
+}
+
+
+sub read_database
+{
+  local ($in_check_shell_lines) = 0;
+  local ($in_fix_shell_lines) = 0;
+  local ($name) = '';
+  local ($str1);
+  local ($str2);
+
+  $! = $fixproc_error;
+  open (DB, $database_file) || die 'cannot open database file $database_file\n';
+  while (<DB>)
+    {
+      if ((! /\S/) || (/^[ \t]*#.*$/))
+	{
+		# ignore blank lines or lines beginning with "#"
+	}
+      elsif ($in_check_shell_lines)
+	{
+	  if ( /^\s*end_shell\s*$/ )
+	    {
+	      $in_check_shell_lines = 0;
+	      push (@shell_lines, $shell_end_marker);
+	    }
+	  else
+	    {
+	      push (@shell_lines, $_);
+	    }
+	}
+      elsif ($in_fix_shell_lines)
+	{
+	  if ( /^\s*end_shell\s*$/ )
+	    {
+	      $in_fix_shell_lines = 0;
+	      push (@shell_lines, $shell_end_marker);
+	    }
+	  else
+	    {
+	      push (@shell_lines, $_);
+	    }
+	}
+      else
+	{
+	  if ( ! /^\s*(\S+)\s+(\S.*)\s*$/ )
+	    {
+	      $! = $fixproc_error;
+	      die "$0: syntax error in database\n$_";
+	    }
+	  $str1 = $1;
+	  $str2 = $2;
+	  if ($str1 eq 'name')
+	    {
+	      &finish_db_entry($name);
+	      $name = $str2;
+	    }
+	  elsif ($str1 eq 'cmd')
+	    {
+	      $! = $fixproc_error;
+	      die "$0: cmd specified before name in database\n$_\n"
+	        if ($name eq '');
+	      die "$0: cmd specified multiple times for $name in database\n"
+		if ($cmd{$name} ne '');
+	      $cmd{$name} = $str2;
+	    }
+	  elsif ($str1 eq 'min')
+	    {
+	      $! = $fixproc_error;
+	      die "$0: min specified before name in database\n$_\n"
+	        if ($name eq '');
+	      die "$0: min specified multiple times in database\n$_\n"
+		if ($min{$name} ne '');
+	      die "$0: non-numeric min value in database\n$_\n"
+		if ( ! ($str2 =~ /[0-9]+/ ));
+	      $min{$name} = $str2;
+	    }
+	  elsif ($str1 eq 'max')
+	    {
+	      $! = $fixproc_error;
+	      die "$0: max specified before name in database\n$_\n"
+	        if ($name eq '');
+	      die "$0: max specified multiple times in database\n$_\n"
+		if ($max{$name} ne '');
+	      die "$0: non-numeric max value in database\n$_\n"
+		if ( ! ($str2 =~ /[0-9]+/ ));
+	      $max{$name} = $str2;
+	    }
+	  elsif ($str1 eq 'check')
+	    {
+	      $! = $fixproc_error;
+	      die "$0: check specified before name in database\n$_\n"
+	        if ($name eq '');
+	      die "$0: check specified multiple times in database\n$_\n"
+		if ($check{$name} ne '');
+	      if ( $str2 eq 'shell' )
+		{
+		  # if $check{$name} is a number, it is a pointer into
+		  # $shell_lines[] where the shell commands are kept
+		  $shell_lines[$#shell_lines+1] = $shell_header;
+		  $check{$name} = $#shell_lines;
+		  $in_check_shell_lines = 1;
+		}
+	      else
+		{
+		  $check{$name} = $str2;
+		}
+	    }
+	  elsif ($str1 eq 'fix')
+	    {
+	      $! = $fixproc_error;
+	      die "$0: fix specified before name in database\n$_\n"
+	        if ($name eq '');
+	      die "$0: fix specified multiple times in database\n$_\n"
+		if ($fix{$name} ne '');
+	      if ( $str2 eq 'shell' )
+		{
+		  # if $fix{$name} is a number, it is a pointer into
+		  # $shell_lines[] where the shell commands are kept
+		  $shell_lines[$#shell_lines+1] = $shell_header;
+		  $fix{$name} = $#shell_lines;
+		  $in_fix_shell_lines = 1;
+		}
+	      else
+		{
+		  $fix{$name} = $str2;
+		}
+	    }
+	}
+    }
+  &finish_db_entry($name);
+}
+
+
+sub finish_db_entry
+{
+  local ($name) = pop(@_);
+
+  if ($name ne '')
+    {
+      $! = $fixproc_error;
+      die "$0: fix not defined for $name in database\n"
+	if ($fix{$name} eq '');
+      die "$0: cmd not defined for $name in database\n"
+	if ($cmd{$name} eq '');
+      $check{$name} = 'exist' if ($check{$name} eq '');
+      $max{$name} = 1 if ($max{$name} eq '');
+      $min{$name} = 1 if ($min{$name} eq '');
+    }
+}
+
+
+sub read_args
+{
+  local ($i) = 0;
+  local ($arg);
+  local ($action_arg_count) = 0;
+
+  while ( $i <= $#ARGV )
+    {
+      $arg = $ARGV[$i];
+      if (($arg eq '-min') || ($arg eq '-max'))
+	{
+	  if (($i == $#ARGV - 1) || ($ARGV[$i+1] =~ /\D/))  # \D is non-numeric
+	    {
+	      $! = $fixproc_error;
+	      die "$0: numeric arg missing after -min or -max\n";
+	    }
+	  if ($arg eq '-min')
+	    {
+	      $min = $ARGV[$i+1];
+	    }
+	  else
+	    {
+	      $max = $ARGV[$i+1];
+	    }
+	  $i += 2;
+	}
+      elsif ($arg eq '-kill')
+	{
+	  $cmd_line_action = 'kill';
+	  $action_arg_count++;
+	  $i++;
+	}
+      elsif ($arg eq '-check')
+	{
+	  $cmd_line_action = 'check';
+	  $action_arg_count++;
+	  $i++;
+	}
+      elsif ($arg eq '-restart')
+	{
+	  $cmd_line_action = 'restart';
+	  $action_arg_count++;
+	  $i++;
+	}
+      elsif ($arg eq '-exist')
+	{
+	  $cmd_line_action = 'exist';
+	  $action_arg_count++;
+	  $i++;
+	}
+      elsif ($arg eq '-fix')
+	{
+	  $cmd_line_action = 'fix';
+	  $action_arg_count++;
+	  $i++;
+	}
+      elsif ($arg =~ /-d(\d)$/)
+	{
+	  $debug = $1;
+	  $i++;
+	}
+      elsif ($arg =~ /^-/)
+	{
+	  $! = $fixproc_error;
+	  die "$0: unknown switch $arg\n";
+	}
+      else
+	{
+	  push (@proc_list, $arg);
+	  $i++;
+	}
+    }
+    $! = $fixproc_error;
+    die "$0: no process specified\n" if ($#proc_list == -1);
+    die "$0: more than one action specified\n" if ($action_arg_count > 1);
+  }
+

@@ -1,0 +1,149 @@
+#!/usr/bin/perl
+
+use DBI;
+$hostname = 'localhost';          # Host that serves the mSQL Database
+$dbname = 'snmp';                 # mySQL Database name
+$doit = 1;
+
+sub usage {
+    print "$0 [-H sqlhost] [-u user] [-p password] [-d] [-n]\n";
+    exit 0;
+}
+
+while ($#ARGV > -1 && $ARGV[0] =~ /^-/) {
+    $_ = shift @ARGV;
+    usage if (/-h/);
+    $hostname = shift if (/-H/);
+    $user = shift if (/-u/);
+    $pass = shift if (/-p/);
+    $delete = 1 if (/-d/);
+    $verbose = 1 if (/-v/);
+    $doit = 0 if (/-n/);
+}
+
+( $dbh = DBI->connect("DBI:mysql:database=$dbname;host=$hostname", $user, $pass))
+    or die "\tConnect not ok: $DBI::errstr\n";
+
+# run a whole ton of setup stuff
+
+if ($delete) {
+    DO("drop database if exists $dbname");
+}
+
+# here we go
+
+DO("create database $dbname");
+DO("use $dbname");
+
+# tables dumped with
+#
+# mysqldump -d ... snmp TABLE | perl -n -e 'while(<>) { last if (/CREATE/);} print "DO(\"$_"; while (<>) { last if (/\);/); print; } print ")\");\n";'
+
+DO("CREATE TABLE hosterrors (
+  id int(11) DEFAULT '0' NOT NULL auto_increment,
+  host varchar(64),
+  errormsg varchar(128),
+  PRIMARY KEY (id)
+)");
+
+DO("CREATE TABLE hosttables (
+  id int(11) DEFAULT '0' NOT NULL auto_increment,
+  host varchar(64),
+  tablename varchar(64),
+  groupname varchar(32),
+  keephistory int(2),
+  PRIMARY KEY (id)
+)");
+
+DO("CREATE TABLE usergroups (
+  id int(11) DEFAULT '0' NOT NULL auto_increment,
+  user varchar(16),
+  groupname varchar(32),
+  isadmin enum('N','Y') DEFAULT 'N',
+  PRIMARY KEY (id)
+)");
+
+DO("CREATE TABLE userprefs (
+  id int(11) DEFAULT '0' NOT NULL auto_increment,
+  user varchar(16),
+  groupname varchar(32),
+  tablename varchar(64),
+  columnname varchar(64),
+  displayit enum('N','Y') DEFAULT 'Y',
+  PRIMARY KEY (id)
+)");
+
+DO("CREATE TABLE hostgroups (
+  id int(11) DEFAULT '0' NOT NULL auto_increment,
+  host varchar(64),
+  groupname varchar(32),
+  sysObjectId varchar(255),
+  sysDescr varchar(255),
+  versionTag varchar(32),
+  sysUpTime varchar(64),
+  PRIMARY KEY (id)
+)");
+
+DO("CREATE TABLE oncall (
+  id int(11) DEFAULT '0' NOT NULL auto_increment,
+  user varchar(16),
+  groupname varchar(32),
+  email varchar(64),
+  days varchar(64),
+  hours varchar(64),
+  PRIMARY KEY (id)
+)");
+
+DO("CREATE TABLE errorexpressions (
+  id int(11) DEFAULT '0' NOT NULL auto_increment,
+  tablename varchar(64),
+  expression varchar(255),
+  returnfield varchar(64),
+  PRIMARY KEY (id)
+)");
+
+DO("CREATE TABLE setup (
+  lookup varchar(64),
+  varcol varchar(128),
+  valcol varchar(128)
+)");
+
+DO("CREATE TABLE authgroup (
+  id int(11) DEFAULT '0' NOT NULL auto_increment,
+  lookup varchar(64),
+  varcol varchar(128),
+  valcol varchar(128),
+  PRIMARY KEY (id)
+)");
+
+DO("CREATE TABLE authhost (
+  id int(11) DEFAULT '0' NOT NULL auto_increment,
+  lookup varchar(64),
+  varcol varchar(128),
+  valcol varchar(128),
+  PRIMARY KEY (id)
+)");
+
+# insert the standard ucd-snmp expressions 
+DO("insert into errorexpressions(tablename, expression, returnfield)
+                values('prTable', 'prErrorFlag > 0', 'prErrMessage')");
+DO("insert into errorexpressions(tablename, expression, returnfield)
+                values('extTable', 'extResult > 0', 'extOutput')");
+DO("insert into errorexpressions(tablename, expression, returnfield)
+                values('dskTable', 'dskErrorFlag > 0', 'dskErrMessage')");
+DO("insert into errorexpressions(tablename, expression, returnfield)
+                values('laTable', 'laErrorFlag > 0', 'laErrMessage')");
+DO("insert into errorexpressions(tablename, expression, returnfield)
+                values('fileTable', 'fileErrorFlag > 0', 'fileErrMessage')");
+DO("insert into errorexpressions(tablename, expression, returnfield)
+                values('snmperrs', 'snmperrErrorFlag > 0', 'snmperrErrMessage')");
+DO("insert into errorexpressions(tablename, expression, returnfield)
+                values('memory', 'memSwapError > 0', 'memSwapErrMessage')");
+
+$dbh->disconnect();
+
+sub DO {
+    my $cmd = shift;
+    print $cmd,"\n" if ($verbose);
+    $dbh->do($cmd) if ($doit);
+}

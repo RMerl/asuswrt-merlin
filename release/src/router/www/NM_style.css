@@ -24,6 +24,7 @@
 	-webkit-box-shadow: 5px 5px 10px #333;
 	box-shadow: 5px 5px 10px #333;
 	behavior: url(/PIE.htc);
+	position:relative;
 	border-radius: 10px 10px 0 0;
 }
 
@@ -307,6 +308,7 @@
 	/*filter: alpha(opacity=98);
 	opacity: .98;*/
 	behavior: url(/PIE.htc);
+	position:relative;
 	-webkit-border-radius: 10px 0 0 10px;
 	-moz-border-radius: 10px 0 0 10px;	
 	border-radius: 10px 0 0 10px;
@@ -326,6 +328,7 @@
 	/*filter: alpha(opacity=98);
 	opacity: .98;*/
 	behavior: url(/PIE.htc);
+	position:relative;
 	-webkit-border-radius: 0 10px 10px 0;
 	-moz-border-radius: 0 10px 10px 0;	
 	border-radius: 0 10px 10px 0;
@@ -344,6 +347,7 @@
 	/*filter: alpha(opacity=98);
 	opacity: .98;*/
 	behavior: url(/PIE.htc);
+	position:relative;
 	-webkit-border-radius: 10px 10px 0 0;
 	-moz-border-radius: 10px 10px 0 0;
 	border-radius: 10px 10px 0 0;
@@ -363,6 +367,7 @@
 	/*filter: alpha(opacity=98);
 	opacity: .98;*/
 	behavior: url(/PIE.htc);
+	position:relative;
 	-webkit-border-radius: 0 0 10px 10px;
 	-moz-border-radius: 0 0 10px 10px;
 	border-radius: 0 0 10px 10px;
@@ -377,6 +382,7 @@
 	box-shadow: 12px 5px 10px #333;
 	
 	behavior: url(/PIE.htc);
+	position:relative;
 	border-radius: 10px 10px 10px 10px;
 }
 

@@ -1,0 +1,47 @@
+About the MIBS distributed with Net-SNMP.
+
+This directory contains a very basic set of MIB files, ready for use.
+In addition, there are some scripts and table files to help you get a
+fuller collection of MIB files.
+
+smistrip - a script that can extract a MIB file from an RFC (or I-D)
+mibfetch - a script that will fetch an RFC file from a mirror, and extract
+	the hosted MIB from it. It assumes that you have wget installed.
+rfclist - a list of RFC numbers and corresponding MIB name(s)
+ianalist - a list of files at the IANA server that holds IANA maintained
+	MIBs
+Makefile.mib - rules for extracting current MIB files from RFC and IANA
+	files.
+rfcmibs.diff - a set of required patches for MIB files extracted from RFCs
+
+The file Makefile.mib holds rules that fetch and extract MIB files from
+their hosting RFCs. Make will use wget to retrieve the RFC files, and,
+as I am located in Denmark, use the RFC mirror at NORDUnet. You may change
+that at the top of Makefile.mib.
+
+Makefile.mib also holds rules that will collect all the current IETF MIB
+definitions, using the lists in rfclist and ianalist. To get them all,
+use
+	make -f Makefile.mib allmibs
+
+Note, that there are a few fatal syntactic errors in some of the RFC
+definitions. To make them all parse successfully with the Net-SNMP parser,
+you should apply the patches in the file rfcmibs.diff. These patches are
+typical for the problems that are commonly seen with MIB files from various
+sources:
+
+- forgetting to import enterprises/mib-2/transmission from SNMPv2-SMI
+- thinking that a -- comment ends at end-of-line, not at the next --
+- using _ in identifiers. A - may be used in its place
+- various misspellings
+
+There is a short-cut rule
+	make -f Makefile.mib rfc
+that will also apply the patches. Note that Makefile.mib and smistrip has
+configurable versions of awk and patch. If you are running Solaris you
+must set these to nawk and gpatch respectively.
+
+DISCLAIMER: The patches provided here for the IETF standard MIB files
+are not endorsed by anyone, and I don't guarantee that they bring them
+accordance with what the authors intended. All I will promise, is that
+the MIB files can be parsed.

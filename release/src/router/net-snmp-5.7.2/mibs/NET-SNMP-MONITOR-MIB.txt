@@ -1,0 +1,59 @@
+NET-SNMP-MONITOR-MIB DEFINITIONS ::= BEGIN
+
+--
+-- Configured elements of the system to monitor	(XXX - ugh! - need a better description!)
+--
+
+IMPORTS
+    netSnmpObjects, netSnmpModuleIDs FROM NET-SNMP-MIB
+
+    OBJECT-TYPE, NOTIFICATION-TYPE, MODULE-IDENTITY, Integer32
+        FROM SNMPv2-SMI
+
+    DisplayString FROM SNMPv2-TC;
+
+
+netSnmpMonitorMIB MODULE-IDENTITY
+    LAST-UPDATED "200202090000Z"
+    ORGANIZATION "www.net-snmp.org"
+    CONTACT-INFO    
+	 "postal:   Wes Hardaker
+                    P.O. Box 382
+                    Davis CA  95617
+
+          email:    net-snmp-coders@lists.sourceforge.net"
+    DESCRIPTION
+	"Configured elements of the system to monitor
+	 (XXX - ugh! - need a better description!)"
+    REVISION     "200202090000Z"
+    DESCRIPTION
+	"First revision."
+    ::= { netSnmpModuleIDs 3}
+
+
+nsProcess                   OBJECT IDENTIFIER ::= {netSnmpObjects 21}
+nsDisk                      OBJECT IDENTIFIER ::= {netSnmpObjects 22}
+nsFile                      OBJECT IDENTIFIER ::= {netSnmpObjects 23}
+nsLog                       OBJECT IDENTIFIER ::= {netSnmpObjects 24}
+
+--
+--  Process Monitoring
+--
+
+
+--
+--  Disk Monitoring
+--
+
+
+--
+--  File Monitoring
+--
+
+
+--
+--  Log Monitoring
+--
+
+
+END

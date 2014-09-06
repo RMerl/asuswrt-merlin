@@ -1,0 +1,60 @@
+TODO list of possible projects/developments/etc
+===============================================
+
+APIs:
+  Perl		(basically OK - may need a review/update)
+  PHP		(PHP-shipped API is out of date, needs reworking)
+  Java		(see netsnmpj)
+  Tk/Tcl
+  WinSNMP
+  Python	(yapsnmp? / snmpy?)
+  #Net
+
+Agent MIBs:
+  Notification Filtering
+  Community MIB
+  Proxy MIB	(extended to support proxying of subtrees)
+  RMON/RMON2
+  MIB-2 updates	(in hand)
+  IPv6  
+  Firewall	(inc. connection tracking)
+  DisMan:
+    monitor	(done?)
+    RemOps	(preliminary implementation)
+  Tunnel
+  WWW-MIB
+  Hardware Abstraction Layer:
+    HostRes	(convert to use HAL and clean up - in progress)
+    UCDavis	(convert to use HAL and update structures - in progress)
+
+Extensibility:
+  AgentX	(reasonably stable now)
+  SMUX		(?obsolete?)
+  embedded Perl	(done? in hand?)
+     "   Python
+  DisMan script MIB
+  Extend scripts  (new, so will need to bed down)
+  Pass scripts	(support SNMPv2 exceptions/errors)
+  DLMod		(OK, but MIB i/f not robust)
+
+Library:
+  Threading
+  Debugging	(heirarchical)
+  Config	(split syntax & processing, persist/read-only/etc)
+  SecModels:
+    Kerberos	(?done)
+    SBSM	(?in hand)
+  Pre-compiled MIBs
+
+Traps:
+  Separate thread in agen
+  Pluggable modules    (?done)
+  Dynamic loading
+  Persistent connection
+  Threaded handler
+ 
+Documentation:
+  Tutorials
+  Extending the agent
+  Agent internals
+

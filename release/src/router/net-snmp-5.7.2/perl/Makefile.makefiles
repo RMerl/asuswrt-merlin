@@ -1,0 +1,12 @@
+GENERATE_LIST=./Makefile.PL \
+	      ./default_store/Makefile.PL \
+	      ./ASN/Makefile.PL \
+	      ./OID/Makefile.PL \
+	      ./agent/Makefile.PL \
+	      ./agent/default_store/Makefile.PL \
+	      ./agent/Support/Makefile.PL \
+	      ./SNMP/Makefile.PL \
+	      ./TrapReceiver/Makefile.PL
+
+all:
+	perl make-perl-makefiles $(GENERATE_LIST)

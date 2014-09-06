@@ -59,6 +59,49 @@
 #undef DEBUG
 #include <linux/usb.h>
 
+/* Added by PaN */
+#include <linux/proc_fs.h>
+#include <asm/uaccess.h>
+// End PaN
+
+/* Added by PaN */
+struct print_buffer
+{
+        int len;
+        char *buf;
+};
+#define MODULE_NAME "usblp"
+#define MAX_CLASS_NAME  16
+#define MAX_MFR         16
+#define MAX_MODEL       32
+#define MAX_DESCRIPT    64
+#define MAX_STATUS_TYPE 6
+
+static struct proc_dir_entry *usblp_dir, *usblpid_file;
+struct parport_splink_device_info {
+        char class_name[MAX_CLASS_NAME];
+        char mfr[MAX_MFR];
+        char model[MAX_MODEL];
+        char description[MAX_DESCRIPT];
+};
+static char *usblp_status_type[MAX_STATUS_TYPE]={ "Lexmark", "Canon", "Hp", "Epson", "EPSON", NULL};
+static int usblp_status_maping[MAX_STATUS_TYPE][4]={ {0,0,0,0},
+                                                     {0, LP_POUTPA, LP_PERRORP, LP_PBUSY},
+                                                     {0,0,0,0},
+                                                     {0,0,0,0},
+                                                     {0,0,0,0},
+                                                     {0,0,0,0}};
+
+static struct parport_splink_device_info usblpid_info;
+struct parport_splink_device_info prn_info_tmp, *prn_info; // Added by JYWeng 20031212:
+char *strunknown="unknown"; // Added by JYWeng 20031212:
+void parseKeywords(char *str_dev_id, char *keyword1, char *keyword2, char *prn_info_data, char *usblpid_info_data);// Added by JYWeng 20031212:
+
+static ssize_t usblp_write(struct file *file, const char *buffer, size_t count, loff_t *ppos);
+static ssize_t usblp_read(struct file *file, char *buffer, size_t count, loff_t *ppos);
+static long usblp_ioctl(struct file *file, unsigned int cmd, unsigned long arg);// modified by Jiahao
+// END PaN
+
 /*
  * Version Information
  */
@@ -68,6 +111,15 @@
 #define USBLP_BUF_SIZE		8192
 #define USBLP_BUF_SIZE_IN	1024
 #define USBLP_DEVICE_ID_SIZE	1024
+
+/****************add by JY 20031118*************************************/
+#define LPGETID         0x0610  /* get printer's device ID */
+#define LPWRITEDATA     0x0613  /* write data to printer */
+#define LPWRITEADDR     0x0614  /* write address to printer */
+#define LPREADDATA      0x0615  /* read data from pinter */
+#define LPREADADDR      0x0616  /* read address from pinter */
+//#define DEVICE_ID_SIZE        1024
+/*******************************************************/
 
 /* ioctls: */
 #define IOCNR_GET_DEVICE_ID		1
@@ -340,6 +392,63 @@ static void usblp_bulk_write(struct urb *urb)
 
 static const char *usblp_messages[] = { "ok", "out of paper", "off-line", "on fire" };
 
+/* Added by PaN */
+static int proc_read_usblpid(char *page, char **start, off_t off, int count, int *eof, void *data)
+{
+        int len=0;
+
+        len=sprintf(page, "Manufacturer=%s\nModel=%s\nClass=%s\nDescription=%s\n\n",
+        usblpid_info.mfr, usblpid_info.model, usblpid_info.class_name, usblpid_info.description);
+
+        return len;
+}
+
+static int proc_get_usblpid(struct usblp *usblp)
+{
+//JYWeng 20031212: set this as global   char *strtmp, *str_dev_id, *strunknown="unknown"; // Added by PaN
+        char *strtmp, *str_dev_id; // Added by PaN: JYWeng 20031212: modified from the above
+        int i, unk = 0; // Added by PaN
+        int length, err;
+        int retval = 0;
+
+        prn_info= &prn_info_tmp; // Added by JYWeng 20031212:
+
+
+        err = usblp_get_id(usblp, 0, usblp->device_id_string, USBLP_DEVICE_ID_SIZE - 1);
+
+        if (err < 0) {
+                dbg ("usblp%d: error = %d reading IEEE-1284 Device ID string",
+                        usblp->minor, err);
+                        usblp->device_id_string[0] = usblp->device_id_string[1] = '\0';
+                retval = -EIO;
+                goto done;
+        }
+
+        length = (usblp->device_id_string[0] << 8) + usblp->device_id_string[1]; /* big-endian */
+        if (length < USBLP_DEVICE_ID_SIZE)
+                usblp->device_id_string[length] = '\0';
+        else
+                usblp->device_id_string[USBLP_DEVICE_ID_SIZE - 1] = '\0';
+
+        dbg ("usblp%d Device ID string [%d]='%s'",
+                usblp->minor, length, &usblp->device_id_string[2]);
+
+        str_dev_id = &usblp->device_id_string[2];
+#if 1//JYWeng 20031212: modified from below
+                                parseKeywords(str_dev_id, "MFG:", "MANUFACTURE:", prn_info->mfr, usblpid_info.mfr);
+                                parseKeywords(str_dev_id, "MDL:", "MODEL:", prn_info->model, usblpid_info.model);
+                                parseKeywords(str_dev_id, "CLS:", "CLASS:", prn_info->class_name, usblpid_info.class_name);
+                                parseKeywords(str_dev_id, "DES:", "DESCRIPTION:", prn_info->description, usblpid_info.description);
+#endif//JYWeng 20031212: end
+
+done:
+        return retval;
+
+}
+// End PaN
+
+
+
 static int usblp_check_status(struct usblp *usblp, int err)
 {
 	unsigned char status, newerr = 0;
@@ -391,6 +500,8 @@ static int usblp_open(struct inode *inode, struct file *file)
 	struct usblp *usblp;
 	struct usb_interface *intf;
 	int retval;
+        unsigned long arg = NULL; // Added by PaN. Modified by Jiahao
+        long ioctl_retval;        // Added by Jiahao
 
 	if (minor < 0)
 		return -ENODEV;
@@ -431,6 +542,12 @@ static int usblp_open(struct inode *inode, struct file *file)
 		file->private_data = NULL;
 		retval = -EIO;
 	}
+
+        /* Added by PaN */
+        if ((ioctl_retval=usblp_ioctl(file, LPGETID, arg)) <0)  // modified by Jiahao
+        {
+                // Update device id failed
+        }
 out:
 	mutex_unlock(&usblp_mutex);
 	return retval;
@@ -439,6 +556,11 @@ out:
 static void usblp_cleanup(struct usblp *usblp)
 {
 	printk(KERN_INFO "usblp%d: removed\n", usblp->minor);
+
+        /* Added by PaN */
+        remove_proc_entry("usblpid", usblp_dir);
+        remove_proc_entry(MODULE_NAME, NULL);
+        /* End PaN */
 
 	kfree(usblp->readbuf);
 	kfree(usblp->device_id_string);
@@ -488,6 +610,9 @@ static unsigned int usblp_poll(struct file *file, struct poll_table_struct *wait
 static long usblp_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 {
 	struct usblp *usblp = file->private_data;
+        struct print_buffer user_buf_tmp, *user_buf; // Added by PaN
+        char *strtmp, *str_dev_id; // Added by PaN: JYWeng 20031212: modified from the above
+        int unk=0; // Added by PaN ---remove declaration of i for i is declared below: JY
 	int length, err, i;
 	unsigned char newChannel;
 	int status;
@@ -650,20 +775,78 @@ static long usblp_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 		}
 	else	/* old-style ioctl value */
 		switch (cmd) {
+                        /*=================================================================================== PaN */
+                        case LPGETID: /* get the DEVICE_ID string */
+                                err = usblp_get_id(usblp, 0, usblp->device_id_string, USBLP_DEVICE_ID_SIZE - 1);
+                                if (err < 0) {
+                                        dbg ("usblp%d: error = %d reading IEEE-1284 Device ID string",
+                                                usblp->minor, err);
+                                        usblp->device_id_string[0] = usblp->device_id_string[1] = '\0';
+                                        retval = -EIO;
+                                        goto done;
+                                }
 
-		case LPGETSTATUS:
-			if ((retval = usblp_read_status(usblp, usblp->statusbuf))) {
-				if (printk_ratelimit())
-					printk(KERN_ERR "usblp%d:"
-					    "failed reading printer status (%d)\n",
-					    usblp->minor, retval);
-				retval = -EIO;
-				goto done;
-			}
-			status = *usblp->statusbuf;
-			if (copy_to_user((void __user *)arg, &status, sizeof(int)))
+                                length = (usblp->device_id_string[0] << 8) + usblp->device_id_string[1]; /* big-endian */
+                                if (length < USBLP_DEVICE_ID_SIZE)
+                                        usblp->device_id_string[length] = '\0';
+                                else
+                                        usblp->device_id_string[USBLP_DEVICE_ID_SIZE - 1] = '\0';
+
+                                dbg ("usblp%d Device ID string [%d/max %d]='%s'",
+                                        usblp->minor, length, cmd, &usblp->device_id_string[2]);
+
+                                str_dev_id = &usblp->device_id_string[2];
+#if 1//JYWeng 20031212: modified from below
+                                parseKeywords(str_dev_id, "MFG:", "MANUFACTURE:", prn_info->mfr, usblpid_info.mfr);
+                                parseKeywords(str_dev_id, "MDL:", "MODEL:", prn_info->model, usblpid_info.model);
+                                parseKeywords(str_dev_id, "CLS:", "CLASS:", prn_info->class_name, usblpid_info.class_name);
+                                parseKeywords(str_dev_id, "DES:", "DESCRIPTION:", prn_info->description, usblpid_info.description);
+#endif//JYWeng 20031212: end
+
+                                dbg ("Parsing USBLPID...");
+                                if (copy_to_user((unsigned char *) arg,
+                                                prn_info, (unsigned long) length)) {
+                                        retval = -EFAULT;
+                                        goto done;
+                                }
+                                break;
+
+                        case LPREADDATA:
+                                mutex_unlock (&usblp_mutex);
+                                user_buf = (struct print_buffer *)arg;
+                                retval = usblp_read(file, user_buf->buf, user_buf->len, NULL);
+                                mutex_lock (&usblp_mutex);
+                                break;
+
+
+                        case LPWRITEDATA:
+                                mutex_unlock (&usblp_mutex);
+                                user_buf = (struct print_buffer *)arg;
+                                retval = usblp_write(file, user_buf->buf, user_buf->len, NULL);
+                                mutex_lock (&usblp_mutex);
+                                break;
+
+                        case LPRESET:
+                                usblp_reset(usblp);
+                                break;
+
+			case LPGETSTATUS:
+				/* OLD USB Code Removed by PaN for Printer Server
+				if ((retval = usblp_read_status(usblp, usblp->statusbuf))) {
+					if (printk_ratelimit())
+						printk(KERN_ERR "usblp%d:"
+					    	"failed reading printer status (%d)\n",
+					    	usblp->minor, retval);
+					retval = -EIO;
+					goto done;
+				}
+				status = *usblp->statusbuf;
+				*/
+				status = 0;
+				if (copy_to_user((void __user *)arg, &status, sizeof(int)))
 				retval = -EFAULT;
 			break;
+/*=================================================================== PaN for Printer Server */
 
 		case LPABORT:
 			if (arg)
@@ -700,6 +883,44 @@ static struct urb *usblp_new_writeurb(struct usblp *usblp, int transfer_length)
 	urb->transfer_flags |= URB_FREE_BUFFER;
 
 	return urb;
+}
+
+/*********************************************************
+** JYWeng 20031212: parsing the information of printers **
+*********************************************************/
+void parseKeywords(char *str_dev_id, char *keyword1, char *keyword2, char *prn_info_data, char *usblpid_info_data)
+{
+        char *strtmp;
+        int i, unk = 0;
+
+        if ( (strtmp = strstr(str_dev_id, keyword1)) == NULL) {
+                if ( (strtmp = strstr(str_dev_id, keyword2)) == NULL) {
+                        for (i=0; i<7; i++) {
+                                prn_info_data[i]= strunknown[i];
+                                usblpid_info_data[i] = strunknown[i];
+                        }
+                        prn_info_data[i]= '\0';
+                        usblpid_info_data[i]='\0';
+                        unk=1;
+
+                        return;
+                }
+                else
+                        strtmp+=strlen(keyword2);
+        }
+        else
+                strtmp+=strlen(keyword1);
+
+        i=0;
+        while (unk==0 && strtmp[i] && strtmp[i] != ';') {
+                prn_info_data[i]= strtmp[i];
+                usblpid_info_data[i] = strtmp[i];
+                i++;
+        }
+        prn_info_data[i]= '\0';
+        usblpid_info_data[i]='\0';
+
+        return;
 }
 
 static ssize_t usblp_write(struct file *file, const char __user *buffer, size_t count, loff_t *ppos)
@@ -1070,6 +1291,7 @@ static ssize_t usblp_show_ieee1284_id(struct device *dev, struct device_attribut
 }
 
 static DEVICE_ATTR(ieee1284_id, S_IRUGO, usblp_show_ieee1284_id, NULL);
+int pan_count = 0;
 
 static int usblp_probe(struct usb_interface *intf,
 		       const struct usb_device_id *id)
@@ -1172,6 +1394,34 @@ static int usblp_probe(struct usb_interface *intf,
 		usblp->current_protocol,
 		le16_to_cpu(usblp->dev->descriptor.idVendor),
 		le16_to_cpu(usblp->dev->descriptor.idProduct));
+
+        /* Added by PaN */
+        /* create directory */
+        if(pan_count < 0)
+                pan_count = 0;
+        ++pan_count;
+        if(pan_count == 1)
+        {
+                usblp_dir = proc_mkdir(MODULE_NAME, NULL);
+                if(usblp_dir == NULL) {
+                        goto outpan;
+                }
+                //usblp_dir->owner = THIS_MODULE;
+
+                usblpid_file = create_proc_read_entry("usblpid", 0444, usblp_dir, proc_read_usblpid, NULL);
+                if(usblpid_file == NULL) {
+                        remove_proc_entry(MODULE_NAME, NULL);
+
+                        goto outpan;
+                }
+                //usblpid_file->owner = THIS_MODULE;
+                /* get device id */
+                if (proc_get_usblpid(usblp) < 0)
+                        dbg ("proc:get usblpid error!!");
+
+        }
+outpan:
+        // End PaN 
 
 	return 0;
 
@@ -1353,6 +1603,9 @@ static void usblp_disconnect(struct usb_interface *intf)
 	mutex_lock(&usblp_mutex);
 	mutex_lock(&usblp->mut);
 	usblp->present = 0;
+        if(pan_count > 0)       // tmp fix
+                --pan_count;
+
 	wake_up(&usblp->wwait);
 	wake_up(&usblp->rwait);
 	usb_set_intfdata(intf, NULL);

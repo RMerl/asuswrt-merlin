@@ -1,0 +1,132 @@
+.TH NETSNMP_AGENT_API 3 "13 Aug 2010" VVERSIONINFO "Net-SNMP"
+.SH NAME
+netsnmp_agent_api - embedding an agent into a external application
+.SH SYNOPSIS
+.nf
+#include <net\-snmp/net\-snmp\-config.h>
+#include <net\-snmp/net\-snmp\-includes.h>
+#include <net\-snmp/agent/net\-snmp\-agent\-includes.h>
+
+int
+main (int argc, char *argv[])
+{
+  int agentx_subagent = 1;  /* Change this if you're a master agent.  */
+
+  snmp_enable_stderrlog();
+
+  /*  If we're an AgentX subagent...  */
+  if (agentx_subagent) {
+      /* ...make us an AgentX client.  */
+      netsnmp_ds_set_boolean(NETSNMP_DS_APPLICATION_ID,
+                             NETSNMP_DS_AGENT_ROLE, 1);
+  }
+
+  init_agent("yourappname");
+
+  /*  Initialize your MIB code here.  */
+  init_my_mib_code();
+
+  /*  `yourappname' will be used to read yourappname.conf files.  */
+  init_snmp("yourappname");
+
+  /*  If we're going to be a SNMP master agent...  */
+  if (!agentx_subagent)
+      init_master_agent();  /*  Listen on default port (161).  */
+
+  /*  Your main loop here...  */
+  while (whatever) {
+      /* if you use select(), see snmp_api(3) */
+      /*     --- OR ---  */
+      agent_check_and_process(0); /* 0 == don't block */
+  }
+
+  /*  At shutdown time:  */
+  snmp_shutdown("yourappname");
+}
+
+Then:
+$(CC) ... `net\-snmp\-config \-\-agent\-libs`
+
+.fi
+.SH DESCRIPTION
+.PP
+Our goal is to create a easy to use interface to the Net-SNMP package
+such that you can take code that you have written that has been
+designed to be a Net-SNMP MIB module and embed it into an external
+application where you can either chose to be a SNMP master agent or an
+AgentX sub-agent using the same MIB module code.  Our suggestion is
+that you use our (or another) SNMP agent as the AgentX master agent
+and chose to become an AgentX subagent which then attaches to the
+master.
+.PP
+The Net-SNMP package provides a pair of libraries that enables easy
+embedding of an SNMP or AgentX agent into an external software
+package. AgentX is an extensible protocol designed to allow multiple
+SNMP sub-agents all run on one machine under a single SNMP master
+agent.  It is defined in RFC 2741.
+.PP
+You will need to perform a few tasks in order to accomplish
+this. First off, you will need to initialize both the SNMP library and
+the SNMP agent library. As indicated above, this is done slightly
+differently depending on whether or not you are going to perform as a
+master agent or an AgentX sub-agent.
+.SH CONFIGURATION
+.PP
+If you intend to operate as an AgentX sub-agent, you will have to
+configured the Net-SNMP package with agentx support (which is turned
+on by default, so just don't turn it off)
+.PP
+Additionally, you will need to link against the Net-SNMP libraries
+(use the output of "net\-snmp\-config \-\-agent\-libs" to get a library
+list) and call subagent_pre_init() as indicated above.
+.SH COMPILING
+.PP
+In order to make use of any of the above API, you will need to link
+against at least the four libraries listed above.
+.SH FUNCTIONS
+.PP This is a brief description of the functions called above and
+where to find out more information on them.  It is certainly not a
+complete list of what is available within all the Net-SNMP libraries. 
+.IP "snmp_enable_stderrlog()"
+Logs error output from the SNMP agent to the standard error stream.
+.IP "netsnmp_ds_set_boolean()"
+Please see the
+.IR default_store(3)
+manual page for more information
+about this API.
+.IP "init_agent(char *name)"
+Initializes the embedded agent.  This should be called before the
+.BR "init_snmp()"
+call.  
+.I name
+is used to dictate what .conf file to read when
+.BR "init_snmp()"
+is called later.
+.IP "init_snmp(char *name)"
+Initializes the SNMP library.  Note that one of the things this will
+do will be to read configuration files in an effort to configure your
+application. It will attempt to read the configuration files named by
+the
+.I name
+string that you passed in.  It can be used to configure access
+control, for instance.   Please see the
+.IR netsnmp_config_api(3) ", " snmp_config(5) ", and " snmpd.conf(5)
+manual pages for further details on this subject.
+.IP "init_master_agent(void)"
+Initializes the master agent and causes it to listen for SNMP requests 
+on its default UDP port of 161.
+.IP "agent_check_and_process(int block)"
+This checks for packets arriving on the SNMP port and processes them
+if some are found.  If 
+.I block
+is non-zero, the function call will block until a packet arrives or an 
+alarm must be run (see
+.IR snmp_alarm(3) ).
+The return value from this function is a positive integer if packets
+were processed, zero if an alarm occurred and \-1 if an error occured.
+.IP "snmp_shutdown(char *name);"
+This shuts down the agent, saving any needed persistent storage, etc.
+.SH "SEE ALSO"
+http://www.net\-snmp.org/tutorial\-5/toolkit/ select(2), snmp_api(3),
+default_store(3), snmp_alarm(3), netsnmp_config_api(3), snmp_config(5),
+snmpd.conf(5)

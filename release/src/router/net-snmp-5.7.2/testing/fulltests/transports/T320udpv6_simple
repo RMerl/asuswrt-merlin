@@ -1,0 +1,16 @@
+#!/bin/sh
+
+. ../support/simple_eval_tools.sh
+
+HEADER UDP6 Transport
+
+SKIPIFNOT NETSNMP_TRANSPORT_UDPIPV6_DOMAIN
+
+#
+# Begin test
+#
+
+SNMP_TRANSPORT_SPEC=udp6
+SNMP_TEST_DEST="[::1]:"
+
+. ./Stransport

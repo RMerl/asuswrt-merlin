@@ -1,0 +1,44 @@
+NOTE NOTE NOTE: this module depends on a modified version of the
+DBD::AnyData module.  Do not get the original version from Jeff
+Zucker.  He and I are working together to resolve the extra features I
+need, but we haven't quite merged yet.  
+
+*** This is currently alpha level code!!! ***
+
+Install steps:
+  0) install the DBI perl module (run: perl -MCPAN -e "install DBI")
+     and the DBD::File perl module (run: perl -MCPAN -e "install DBD::File")
+
+  1) download, and install the modified AnyData perl modules from:
+     http://www.net-snmp.org/AnyData-wes/AnyData-0.05.tar.gz
+     http://www.net-snmp.org/AnyData-wes/DBD-AnyData-0.05.wes.tar.gz
+     http://www.net-snmp.org/AnyData-wes/SQL-Statement-1.004.tar.gz
+
+     Extract each of the above tar balls and in the resulting
+     directories run:
+
+    	perl Makefile.PL
+    	make
+    	make install   (as root)
+
+  2) Then in this directory, run:
+    	perl Makefile.PL
+    	make
+    	make install   (as root)
+
+To use it:
+  SQL like Shell script:
+    netsh [snmpcmd arguments] HOST [SQL COMMAND]
+
+  Example commands to type at the prompt:
+    select * from ifTable
+    select * from ifTable where ifDescr = 'eth0'
+    alias ifconfig select ifDescr, ifAdminStatus where ifDescr = '\1'
+    ifconfig eth0
+
+
+[Jeff Zucker's original (unpatched) AnyData perl modules can be found
+ at http://www.vpservices.com/jeff/programs/AnyData/ .  However, do not
+ use the modules from this site as they won't work with the software in
+ this directory.  (Use the download sites in step 1 below instead.)  It
+ is a good source for documentation about the AnyData modules.]

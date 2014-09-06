@@ -1,0 +1,27 @@
+--- release/src/router/networkmap/networkmap.c	2014-08-18 02:39:48.000000000 -0400
++++ release/src/router/networkmap/networkmap.c	2014-08-28 04:31:18.000000000 -0400
+@@ -444,11 +430,19 @@
+                 	setsockopt(arp_sockfd, SOL_SOCKET, SO_RCVTIMEO, &arp_timeout, sizeof(arp_timeout));//set receive timeout
+ 			NMP_DEBUG("Starting full scan!\n");
+ 			
+-                        //reset client tables
+-			lock = file_lock("networkmap");
+-        		memset(p_client_detail_info_tab, 0x00, sizeof(CLIENT_DETAIL_INFO_TABLE));
+-        		p_client_detail_info_tab->detail_info_num = 0;
+-			file_unlock(lock);
++                        if(nvram_match("refresh_networkmap", "1")) {//reset client tables
++				lock = file_lock("networkmap");
++        			memset(p_client_detail_info_tab, 0x00, sizeof(CLIENT_DETAIL_INFO_TABLE));
++        			//p_client_detail_info_tab->detail_info_num = 0;
++				//p_client_detail_info_tab->ip_mac_num = 0;
++				file_unlock(lock);
++				nvram_unset("refresh_networkmap");
++			}
++			else {
++				int x = 0;
++				for(; x<255; x++)
++					p_client_detail_info_tab->exist[x]=0;
++			}
+ 		    }
+ 		    scan_count++;
+ 		    scan_ipaddr[3]++;

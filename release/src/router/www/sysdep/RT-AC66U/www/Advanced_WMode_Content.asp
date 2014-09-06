@@ -90,10 +90,15 @@ function initial(){
 	else
 		show_wl_wdslist();
 
-	if(!band5g_support){
+	if(!band5g_support)
 		$("wl_5g_mac").style.display = "none";
 		$("wl_unit_field").style.display = "none";
-	}	
+	if(wl_info.band5g_2_support){
+		$("wl_opt1").innerHTML = "5GHz-1";
+		$("wl_opt2").style.display = "";
+		$("wl_5g_mac_2").style.display = "";
+		$("wl_5g_mac_th1").innerHTML = "5GHz-1 MAC";
+	}
 	
 	if(based_modelid == "RT-AC87U" && document.form.wl_unit[1].selected == true){
 		$("wds_mode_field").style.display = "none";
@@ -403,9 +408,15 @@ function wl_bwch_hint(){
 
 				
 				<tr id="wl_5g_mac">
-					<th>5GHz MAC</th>
+					<th id="wl_5g_mac_th1">5GHz MAC</th>
 					<td>
 							<input type="text" maxlength="17" class="input_20_table" id="wl1_hwaddr" name="wl1_hwaddr" value="<% nvram_get("wl1_hwaddr"); %>" readonly>
+					</td>		
+			  </tr>	
+				<tr id="wl_5g_mac_2" style="display:none">
+					<th>5GHz-2 MAC</th>
+					<td>
+							<input type="text" maxlength="17" class="input_20_table" id="wl2_hwaddr" name="wl2_hwaddr" value="<% nvram_get("wl2_hwaddr"); %>" readonly>
 					</td>		
 			  </tr>			  
 
@@ -413,8 +424,9 @@ function wl_bwch_hint(){
 					<th><#Interface#></th>
 					<td>
 						<select name="wl_unit" class="input_option" onChange="change_wl_unit();">
-							<option class="content_input_fd" value="0" <% nvram_match("wl_unit", "0","selected"); %>>2.4GHz</option>
-							<option class="content_input_fd" value="1"<% nvram_match("wl_unit", "1","selected"); %>>5GHz</option>
+							<option id="wl_opt0" class="content_input_fd" value="0" <% nvram_match("wl_unit", "0","selected"); %>>2.4GHz</option>
+							<option id="wl_opt1" class="content_input_fd" value="1"<% nvram_match("wl_unit", "1","selected"); %>>5GHz</option>
+							<option id="wl_opt2" style="display:none" class="content_input_fd" value="2" <% nvram_match("wl_unit", "2","selected"); %>>5GHz-2</option>
 						</select>			
 					</td>
 			  </tr>

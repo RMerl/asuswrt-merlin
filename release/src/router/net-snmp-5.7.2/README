@@ -1,0 +1,357 @@
+	       README file for net-snmp Version: 5.7.2
+
+DISCLAIMER
+
+  The Authors assume no responsibility for damage or loss of system
+  performance as a direct or indirect result of the use of this
+  software.  This software is provided "as is" without express or
+  implied warranty.
+
+TABLE OF CONTENTS
+
+  Disclaimer
+  Table Of Contents
+  Introduction
+* Supported Architectures
+  Availability
+  Web Page
+* Installation
+  Copying And Copyrights
+* Frequently Asked Questions
+  Helping Out
+* Code Update Announcements
+* Mailing Lists
+  Agent Extensibility
+  Example Agent Configuration and Usage
+  Configuration
+  Submitting Bug Reports
+  Closing
+  Thanks
+
+  * = Required Reading.
+
+INTRODUCTION
+
+  This package was originally based on the CMU 2.1.2.1 snmp code.  It
+  has been greatly modified, restructured, enhanced and fixed.  It
+  hardly looks the same as anything that CMU has ever released.  It
+  was renamed from cmu-snmp to ucd-snmp in 1995 and later renamed from
+  ucd-snmp to net-snmp in November 2000.
+
+  This README file serves as a starting place to learn about the
+  package, but very little of the documentation is contained within
+  this file.  The FAQ is an excellent place to start as well.
+  Additionally, there are a bunch of README files for specific
+  architectures and specific features.  You might wish to look at some
+  of these other files as well.
+
+SUPPORTED ARCHITECTURES
+
+  Please see the FAQ for this information.
+
+  Please let us know if you compile it on other OS versions and it
+  works for you so we can add them to the above list.
+
+  Porting:  Please! read the PORTING file.
+
+  Also note that many architecture have architecture specific README
+  files, so you should check to see if there is one appropriate to
+  your platform.
+
+AVAILABILITY
+
+  Download:
+    - http://www.net-snmp.org/download/
+    - ftp://ftp.net-snmp.org/pub/sourceforge/net-snmp/
+  Web page:
+    - http://www.net-snmp.org/
+  Project Wiki:
+    - http://www.net-snmp.org/wiki/
+  Sourceforge Project page:
+    - http://sourceforge.net/projects/net-snmp
+  Mirrors:
+    - US:        ftp://ftp.freesnmp.com/mirrors/net-snmp/
+
+  The old ucd-snmp.ucdavis.edu web site and ftp server is now
+  offline and should not be accessed any longer.
+
+WEB PAGES
+
+  http://www.net-snmp.org/
+  http://sourceforge.net/projects/net-snmp
+  http://www.net-snmp.org/wiki/
+
+INSTALLATION
+
+  See the INSTALL file distributed with this package.
+
+COPYING AND COPYRIGHTS
+
+  See the COPYING file distributed with this package.
+
+FREQUENTLY ASKED QUESTIONS
+
+  See the FAQ file distributed with this package.
+  This is also available on the project Wiki at
+
+     http://www.net-snmp.org/wiki/index.php/FAQ
+
+  so that the wider Net-SNMP community can help maintain it!
+
+HELPING OUT
+
+  This is a project worked on by people around the net.  We'd love
+  your help, but please read the PORTING file first.  Also, subscribe
+  to the net-snmp-coders list described below and mention what you're
+  going to work on to make sure no one else is already doing so!
+  You'll also need to keep up to date with the latest code snap shot,
+  which can be obtained from CVS using the information found at
+  http://www.net-snmp.org/cvs/.
+
+  Contributions to the Net-SNMP source code in any form are greatly
+  appreciated.  We expect the parties providing such contributions to
+  have the right to contribute them to the Net-SNMP project or that
+  the parties that do have the right have directed the person
+  submitting the contribution to do so.  In addition, all contributors
+  need to be aware that if the contribution is accepted and
+  incorporated into the Net-SNMP project, it will be redistributed
+  under the terms of the license agreement used for the entire body of
+  work that comprises the Net-SNMP project (see the COPYING file for
+  details).  If this license agreement ever changes the contribution
+  will continue to be released under any new licenses as well.  Thank
+  you, in advance, for your gracious contributions.
+
+CODE UPDATE ANNOUNCEMENTS
+
+  See the NEWS file and the ChangeLog file for details on what has
+  changed between releases.
+
+  We hate broadcasting announce messages to other mailing lists and
+  newsgroups, so there is a mailing list set up to handle release
+  announcements.  Any time we put new software out for ftp, we'll mail
+  this fact to net-snmp-announce@lists.sourceforge.net.  See the
+  MAILING LISTS section described below to sign up for these
+  announcements.
+
+  We will post new announcements on a very infrequent basis to the
+  other channels (the other snmp mailing lists and newsgroups like
+  comp.protocols.snmp), but only for major code revisions and not for
+  bug-fix patches or small feature upgrades.
+
+MAILING LISTS
+
+  The lists:
+
+    A number of mailing lists have been created for support of the project:
+    The main ones are:
+
+      net-snmp-announce@lists.sourceforge.net  -- For official announcements
+      net-snmp-users@lists.sourceforge.net     -- For usage discussions
+      net-snmp-coders@lists.sourceforge.net    -- For development discussions
+
+    The -coders list is intended for discussion on development of code
+    that will be shipped as part of the package.  The -users list is
+    for general discussion on configuring and using the package,
+    including issues with coding user-developed applications (clients,
+    managers, MIB modules, etc).
+
+    Please do *NOT* send messages to both -users and -coders lists.
+    This is completely unnecessary, and simply serves to further
+    overload (and annoy) the core development team.   If in doubt,
+    just use the -users list.
+
+
+    The other lists of possible interest are:
+
+      net-snmp-cvs@lists.sourceforge.net       -- For cvs update announcements
+      net-snmp-bugs@lists.sourceforge.net      -- For Bug database update announcements
+      net-snmp-patches@lists.sourceforge.net   -- For Patch database update announcements
+
+    Please do NOT post messages to these lists (or to the announce list above).
+    Bug reports and Patches should be submitted via the Source Forge tracker
+    system.  See the main project web pages for details.
+
+    To subscribe to any of these lists, please see:
+  
+      http://www.net-snmp.org/lists/
+
+
+  Archives:
+    The archives for these mailing lists can be found by following links at
+
+      http://www.net-snmp.org/lists/
+
+AGENT EXTENSIBILITY
+
+  The agent that comes with this package is extensible through use of
+  shell scripts and other methods.  See the configuration manual pages
+  (like snmpd.conf) and run the snmpconf perl script for further details.
+
+  You can also extend the agent by writing C code directly.  The agent
+  is extremely modular in nature and you need only create new files,
+  re-run configure and re-compile (or link against its libraries).  No
+  modification of the distributed source files are necessary.  See the
+  following files for details on how to go about this:
+  http://www.net-snmp.org/tutorial-5/toolkit/,
+  agent/mibgroup/examples/*.c
+
+  Also, see the local/mib2c program and its README file for help in
+  turning a textual mib description into a C code template.
+
+  We now support AgentX for subagent extensibility.  The net-snmp
+  agent can run as both a master agent and a subagent.  Additionally,
+  a toolkit is provided that enables users of it to easily embed a
+  agentx client into external applications.  See the tutorial at
+  http://www.net-snmp.org/tutorial-5/toolkit/ for an example of how
+  go about doing this.
+
+CONFIGURATION
+
+  See the man/snmp.conf.5 manual page.
+
+  For the agent, additionally see the man/snmpd.conf.5 manual page.
+
+  For the snmptrapd, see the man/snmptrapd.conf.5 manual page.
+
+  You can also run the snmpconf perl script to help you create some of
+  these files.
+
+SUBMITTING BUG REPORTS
+
+  Important: *Please* include what version of the net-snmp (or
+  ucd-snmp) package you are using and what architecture(s) you're
+  using, as well as detailed information about exactly what is wrong.
+
+  To submit a bug report, please use the web interface at
+  http://www.net-snmp.org/bugs/.  It is a full-fledged
+  bug-tracking system that will allow you to search for already
+  existing bug reports as well as track the status of your report as
+  it is processed by the core developers.
+
+  If you intend to submit a patch as well, please read the PORTING
+  file before you do so and then submit it to
+  http://www.net-snmp.org/patches/.
+
+CLOSING
+
+  We love patches.  Send some to us!  But before you do, please see
+  the 'PORTING' file for information on helping us out with the
+  process of integrating your patches (regardless of whether its a new
+  feature implementation or a new port).
+
+  Also, We're interested if anyone actually uses/likes/hates/whatever
+  this package...  Mail us a note and let us know what you think of it!
+
+  Have fun and may it make your life easier,
+
+    The net-snmp developers
+
+THANKS
+
+  The following people have contributed various patches and
+  improvements.  To them we owe our deepest thanks (and you do too!):
+
+    Wes Hardaker <hardaker@users.sourceforge.net>
+    Steve Waldbusser <waldbusser@nextbeacon.com>
+    Dan A. Dickey <ddickey@transition.com>
+    Dave Shield <D.T.Shield@csc.liv.ac.uk>
+    Giovanni S. Marzot <gmarzot@nortelnetworks.com>
+    Niels Baggesen <nba@users.sourceforge.net>
+    Simon Leinen <simon@limmat.switch.ch>
+    David T. Perkins <dperkins@dsperkins.com>
+    Mike Perik <mikep@crt.com>
+    Sanjai Narain <narain@thumper.bellcore.com>
+    francus@metsny.delphi.com
+    Gary Palmer <gpalmer@freebsd.org>
+    Marc G. Fournier <scrappy@ki.net>
+    Gary A. Hayward <gah@bellcore.com>
+    Jennifer Bray <jbray@origin-at.co.uk>
+    Philip Guenther <guenther@gac.edu>
+    Elwyn B Davies <edavies@origin-at.co.uk>
+    Simon Burge <simonb@telstra.com.au>
+    David Paul Zimmerman <dpz@apple.com>
+    Alan Batie <batie@aahz.jf.intel.com>
+    Michael Douglass <mikedoug@texas.net>
+    Ted Rule <Ted_Rule@FLEXTECH.CO.UK>
+    Craig Bevins <craigb@bitcom.net.au>
+    Arther Hyun <arthur@psi.com>
+    Cristian Estan <Cristian.Estan@net.utcluj.ro>
+    Eugene Polovnikov <eugen@rd.zgik.zaporizhzhe.ua>
+    Jakob Ellerstedt <jakob@dynarc.se>
+    Michael J. Slifcak <slif@bellsouth.net>
+    Jonas Olsson <jolsson@erv.ericsson.se>
+    James H. Young <sysjhy@gsu.edu>
+    Jeff Johnson <jbj@redhat.com>
+    Markku Laukkanen <marlaukk@stybba.ntc.nokia.com>
+    Derek Simkowiak <dereks@kd-dev.com>
+    David F. Newman <dnewman@epnet.com>
+    Nick Amato <naamato@merit.edu>
+    Mike Baer <baerm@calweb.com>
+    Patrick Lawrence <pjlawrence@ucdavis.edu>
+    Russ Mundy <mundy@tislabs.com>
+    Olafur Gudmundsson <ogud@tislabs.com>
+    David Reeder <dreeder@tislabs.com>
+    Ed Lewis <lewis@tislabs.com>
+    Bill Babson <wbabson@tislabs.com>
+    Chris Smith <csmith@platform.com>
+    Mike Michaud <mikemichaud@earthlink.net>
+    Andy Hood <ahood@westpac.com.au>
+    Robert Story <rstory@freesnmp.com>
+    Bert Driehuis <driehuis@playbeing.org>
+    Juergen Schoenwaelder <schoenw@ibr.cs.tu-bs.de>
+    Frank Strauss <strauss@ibr.cs.tu-bs.de>
+    Ragnar Kjørstad <ucd@ragnark.vestdata.no>
+    Jochen Kmietsch <jochen.kmietsch@tu-clausthal.de>
+    Jun-ichiro itojun Hagino <itojun@iijlab.net>
+    John L Villalovos <john.l.villalovos@intel.com>
+    Christoph Mammitzsch <Christoph.Mammitzsch@tu-clausthal.de>
+    Arne Oesleboe <Arne.Oesleboe@item.ntnu.no>
+    Jeff Cours <jeff@ultradns.com>
+    Karl Schilke <karl_schilke@eli.net>
+    John Naylon <jbpn@cambridgebroadband.com>
+    Ken Hornstein <kenh@cmf.nrl.navy.mil>
+    Martin Oldfield <m@mail.tc>
+    Harrie Hazewinkel <harrie@users.sourceforge.net>
+    Mark Ferlatte <ferlatte@users.sourceforge.net>
+    Marus Meissner <marcusmeissner@users.sourceforge.net>
+    Stephan Wenzer <stephanwenzel@users.sourceforge.net>
+    Ron Mevissen <ron.mevissen@eed.ericsson.se>
+    T.J. Mather <tjmather@tjmather.com>
+    Craig Setera <seterajunk@charter.net>
+    Katsuhisa ABE <abekatsu@cysols.com>
+    Axel Kittenberger <Axel.Kittenberger@maxxio.com>
+    Johannes Schmidt-Fischer <jsf@InterFace-AG.com>
+    Jeffrey Watson <nostaw@users.sourceforge.net>
+    Bruce Shaw <Bruce.Shaw@gov.ab.ca>
+    Stefan Radman <sradman@users.sourceforge.net>
+    Stephen J. Friedl <sjfriedl@users.sourceforge.net>
+    Alex Burger <alex_b@users.sourceforge.net>
+    Christophe Varoqui <ext.devoteam.varoqui@sncf.fr>
+    Srikanth Pindiproli <sripindip@users.sourceforge.net>
+    Kevin Graham <kevgraham7@users.sourceforge.net>
+    Xiaofeng Ling <xfling@users.sourceforge.net>
+    Brandon Knitter <knitterb@bl...>
+    Andrew Findlay <andrew.findlay@skills-1st.co.uk>
+    Ron Tabor <rtabor@users.sourceforge.net>
+    Peter Warasin <drg-r3@users.sourceforge.net>
+    Bob Rowlands <robert.rowlands@sun.com>
+    Peter Hicks <Peter.Hicks@POGGS.CO.UK>
+    Andy Smith <wasmith32@earthlink.net>
+    Nick Barkas <nbarkas@users.sourceforge.net>
+    Noah Friedman <friedman@prep.ai.mit.edu>
+    Geert De Peuter <geert@depeuter.org>
+    Magnus Fromreide <magfr@lysator.liu.se>
+    Marcus Meissner <marcusmeissner@users.sourceforge.net>
+    Andrew Rucker Jones <arjones@users.sourceforge.net>
+    Dai.H. <dg-f@users.sourceforge.net>
+    Thomas Anders <tanders@users.sourceforge.net>
+    Vladislav Bogdanov <slava_reg@nsys.by>
+    Peter Martin <pnmartin@users.sourceforge.net>
+    Thomas Lackey <telackey@users.sourceforge.net>
+    Joe Buehler <jbuehler@spirentcom.com>
+    Anders Persson <apersson@users.sourceforge.net>
+    Rojer <rojer@users.sourceforge.net>
+    Bart Van Assche <bart.vanassche@gmail.com>
+
+  We've probably forgotten people on this list.  Let us know if you've
+  contributed code and we've left you out.

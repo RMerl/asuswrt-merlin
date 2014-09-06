@@ -1,0 +1,95 @@
+# -*- autoconf -*-
+#########################################
+##
+# Checks for libraries that are run
+# before the agent module tests.
+##
+#########################################
+
+
+##
+#   RPM checks
+#
+##
+AC_CHECK_HEADERS(rpm/rpmlib.h rpm/header.h)
+
+AC_CHECK_HEADER(rpm/rpmlib.h,rpmlib_h=yes,rpmlib_h=no)
+AC_CHECK_HEADER(rpm/header.h,rpmheader_h=yes,rpmheader_h=no)
+
+if test "x$rpmheader_h" = "xno" -o "x$rpmlib_h" = "xno" ; then
+  if test "x$with_rpm" = "xyes" ; then
+    AC_MSG_ERROR([Could not find either the RPM header files needed and was specifically asked to use RPM support])
+  else
+    with_rpm=no
+  fi
+fi
+
+#
+# rpm libraries only needed for the host resources mib software
+# installed tables (on linux in particular)
+#
+if test "x$with_rpm" != "xno"; then
+  # ARG.  RPM is a real pain.
+  # FWIW librpm.la, librpmio.la, and libpopt.la have correct dependencies.
+  _rpmlibs=""
+
+  # rpm-4.0.x needs rpmio.
+  NETSNMP_SEARCH_LIBS(rpmGetPath, rpmio,,, $LMIBLIBS, _rpmlibs)
+  
+  # rpm-4.0.3 librpmdb actually contains what we need.
+  NETSNMP_SEARCH_LIBS(rpmdbOpen, rpmdb,,, $LMIBLIBS, _rpmlibs)
+  # now check for rpm using the appropriate libraries.
+  NETSNMP_SEARCH_LIBS(rpmReadConfigFiles, rpm, [
+    AC_DEFINE(HAVE_LIBRPM, 1,
+      [Define to 1 if you have the `rpm' library (-lrpm).])
+    LMIBLIBS="$_rpmlibs $LMIBLIBS"
+  ],, $LMIBLIBS, _rpmlibs)
+
+  # rpm 4.6 has incompatible API, turn on the legacy one
+  AC_CHECK_DECL([headerGetEntry],
+    : ,
+    AC_DEFINE([_RPM_4_4_COMPAT], [], [Define if you have RPM 4.6 or newer to turn on legacy API]),
+    [[#include <rpm/rpmlib.h>]]
+  )
+fi
+
+#
+# getfsstat/getvfsstat
+#
+AC_SEARCH_LIBS(getfsstat, [nbutil])
+AC_CHECK_FUNCS(getfsstat)
+AC_CHECK_FUNCS(getvfsstat)
+AC_FUNC_GETMNTENT
+
+#
+# kinfo_get_cpus
+#
+AC_SEARCH_LIBS(kinfo_get_cpus, [kinfo])
+AC_CHECK_FUNCS(kinfo_get_cpus)
+
+#
+# diskIOLAx requires exp which may require -lm
+#
+AC_SEARCH_LIBS(exp, [m])
+
+#
+#   libkvm
+#
+NETSNMP_SEARCH_LIBS(kvm_read, kvm,,,, LAGENTLIBS)
+NETSNMP_SEARCH_LIBS(kvm_openfiles, kvm,,,, LAGENTLIBS)
+NETSNMP_SEARCH_LIBS(kvm_getprocs, kvm,,,, LMIBLIBS)
+NETSNMP_SEARCH_LIBS(kvm_getproc2, kvm,,,, LMIBLIBS)
+NETSNMP_SEARCH_LIBS(kvm_getswapinfo, kvm,,,, LMIBLIBS)
+netsnmp_save_LIBS="$LIBS"
+LIBS="$LAGENTLIBS $LMIBLIBS $LIBS"
+AC_CHECK_FUNCS([kvm_openfiles kvm_getprocs kvm_getproc2 kvm_getswapinfo])
+LIBS="$netsnmp_save_LIBS"
+
+#
+#   dynamic module support
+#
+NETSNMP_SEARCH_LIBS([dlopen], [dl],,, [$LAGENTLIBS $LSNMPLIBS], [LMIBLIBS])
+netsnmp_save_LIBS="$LIBS"
+LIBS="$LMIBLIBS $LAGENTLIBS $LSNMPLIBS $LIBS"
+AC_CHECK_FUNCS([dlopen])
+LIBS="$netsnmp_save_LIBS"

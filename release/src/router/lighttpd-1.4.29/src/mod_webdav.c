@@ -102,7 +102,7 @@ include <uuid/uuid.h>
 #define WEBDAV_FILE_MODE S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH
 #define WEBDAV_DIR_MODE  S_IRWXU | S_IRWXG | S_IRWXO
 
-#define DBG_ENABLE_MOD_SMBDAV 0
+#define DBG_ENABLE_MOD_SMBDAV 1
 #define DBE	DBG_ENABLE_MOD_SMBDAV
 
 /* plugin config for all request/connections */
@@ -2291,8 +2291,7 @@ URIHANDLER_FUNC(mod_webdav_subrequest_handler) {
 						//- ignore the hidden file
 					}
 
-					if ( strcmp(de->d_name, "minidlna")==0 ||
-					 	 strcmp(de->d_name, "asusware")==0) {
+					if ( check_skip_folder_name(de->d_name) == 1 ) {
 						continue;
 					}
 					
@@ -4304,12 +4303,29 @@ propmatch_cleanup:
 		else if( buffer_is_equal_string(media_type, CONST_STR_LEN("0")) ){
 			sprintf(sql_query, "%s where d.MIME glob 'i*' or d.MIME glob 'a*' or d.MIME glob 'v*'", sql_query);
 		}
-		
+
+		#if 0
 		if(!buffer_is_empty(keyword)){			
 			buffer_urldecode_path(keyword);
 			sprintf(sql_query, "%s and ( PATH LIKE '%s%s%s' or TITLE LIKE '%s%s%s' )", sql_query, "%", keyword->ptr, "%", "%", keyword->ptr, "%");			
 		}
+		#else
+		if(!buffer_is_empty(keyword)){			
+			buffer_urldecode_path(keyword);
 
+			Cdbg(DBE, "keyword=%s, rrrr=%d", keyword->ptr, strncmp(keyword->ptr, "*", 1));
+			if(strstr(keyword->ptr, "*")||strstr(keyword->ptr, "?")){
+				char buff[4096];
+				char* tmp = replace_str(keyword->ptr, "*", "%", (char *)&buff[0]);
+				tmp = replace_str(tmp, "?", "_", (char *)&buff[0]);
+				Cdbg(DBE, "keyword=%s", tmp);
+				sprintf(sql_query, "%s and ( PATH LIKE '%s' or TITLE LIKE '%s' )", sql_query, tmp, tmp); 
+			}
+			else
+				sprintf(sql_query, "%s and ( PATH LIKE '%s%s%s' or TITLE LIKE '%s%s%s' )", sql_query, "%", keyword->ptr, "%", "%", keyword->ptr, "%");
+		}
+		#endif
+		
 		if(!buffer_is_empty(parentid)){
 			sprintf(sql_query, "%s and o.PARENT_ID='%s'", sql_query, parentid->ptr );			
 		}

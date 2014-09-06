@@ -1,0 +1,260 @@
+#############################################################  -*- c -*-
+## Defaults
+## $Id$
+########################################################################
+@if "$m2c_node_name" ne "$node"@
+## if $node.accessible != 1, might be inaccessible index node
+@  eval $m2c_node_name = $node@
+@  eval $m2c_node_skip_mapping = $m2c_table_skip_mapping@
+@  eval $m2c_node_needlength = $node.needlength@
+@  eval $m2c_node_get_comments = ""@
+@  eval $m2c_node_set_comments = ""@
+@  eval $m2c_node_skip_get = 0@
+##//how should a function handle a pointer to a buffer that is to small?
+@  eval $m2c_node_realloc = 0@ // 0=fail, 1=realloc, 2=malloc
+########################################################################
+## fix some declarations
+########################################################################
+@  if $node.enums == 1@
+##
+@    if $m2c_node_skip_mapping == -1@
+@       eval $m2c_node_skip_mapping = 0@
+@    end@
+##
+## validate some assumptions
+##
+@    if ("$node.perltype" ne "INTEGER") && ("$node.perltype" ne "BITS")@
+@       print "$node had enums, but isn't INTEGER or BITS! ($node.perltype)\n"@
+@       exit@
+@    end@
+@    if $node.ranges == 1@
+@       print "$node has enums and ranges!\n"@
+@       exit@
+@    end@
+##
+##   for a TC, prefix definition w/syntax to reduce collisions
+##
+@    if $node.syntax ne $node.perltype@
+@       eval $m2c_de_pfx = "${m2c_const_pfx}$node.syntax"@
+@    else@
+@       eval $m2c_de_pfx = "${m2c_const_pfx}$node"@
+@    end@
+@    if $m2c_const_lc == 0@
+@       eval $m2c_de_pfx = uc($m2c_de_pfx)@
+@    end@
+@    if "$node.perltype" eq "BITS"@
+@       eval $m2c_enum_sfx="_flag"@
+@       eval $m2c_enum_mask="${m2c_de_pfx}_flag"@
+@       if $m2c_const_lc == 0@
+@          eval $m2c_enum_sfx = uc($m2c_enum_sfx)@
+@          eval $m2c_enum_mask = uc($m2c_enum_mask)@
+@       end@
+@    else@
+@       eval $m2c_enum_sfx=""@
+@    end@
+##
+##   use longs for enums (w/out length)
+##
+@    eval $m2c_decl = "u_long"@
+@    eval $m2c_node_needlength = 0@
+@    if "$node.perltype" eq "BITS"@
+@      eval $m2c_node_skip_get = 1@
+@    end@
+@  else@
+@    eval $m2c_decl = $node.decl@
+ @  end@ // enums
+########################################################################
+## find max size
+########################################################################
+@  if $node.ranges == 1@
+##
+## I do not *think* you can have both...
+##
+@    if $node.enums == 1@
+@       print "$node has enums and ranges!\n"@
+@       exit@
+@    end@
+@    eval $m2c_node_maxlen = 0@
+@    foreach $a $b range $node@
+@      eval $m2c_node_maxlen = max($m2c_node_maxlen,$b)@
+@    end@
+@  elsif "$node.type" eq "ASN_OBJECT_ID"@
+@    eval $m2c_node_maxlen = 128@
+@  else@ #ranges
+@    eval $m2c_node_maxlen = 65535@
+@  end@ #ranges
+##/*####################################################################
+## set up extra params, based on if we need length
+########################################################################
+## VAR_VAL     : variable value.
+## VAR_VAL_PTR : pointer to variable value.
+## VAR_REF     : variable reference. (pointer to pointer to variable value)
+##*/
+@  if "x$m2c_node_var_name" eq "x"@
+@    eval $m2c_node_var_name="var->"@
+@  end@
+@  eval $m2c_node_var_val_ptr = "($m2c_decl *)${m2c_node_var_name}val.string"@
+@  if $m2c_node_needlength == 1@
+@    eval $m2c_XX = "($m2c_decl **)&${m2c_node_var_name}val.string,"@
+@    eval $m2c_node_var_ref = "$m2c_XX &${m2c_node_var_name}val_len"@
+@    eval $m2c_node_var_val = "$m2c_node_var_val_ptr, ${m2c_node_var_name}val_len"@
+@  else@
+@    eval $m2c_node_var_ref = "($m2c_decl *)${m2c_node_var_name}val.string"@
+@    eval $m2c_node_var_val = "*($m2c_node_var_val_ptr)"@
+@  end@
+##
+##
+@  eval $m2c_node_param_val_name = "${node}_val"@
+@  eval $m2c_node_param_val_lname = "${m2c_node_param_val_name}_len"@
+@  eval $m2c_node_param_ref_name = "${m2c_node_param_val_name}_ptr"@
+@  if $m2c_node_needlength == 1@
+@    eval $m2c_node_param_val_name = "${m2c_node_param_val_name}_ptr"@
+@    eval $m2c_node_param_val_lname = "${m2c_node_param_val_name}_len"@
+@    eval $m2c_node_param_val_call = "${m2c_node_param_val_name}, ${m2c_node_param_val_lname}"@
+@    eval $m2c_node_param_ref_name = "${m2c_node_param_ref_name}_ptr"@
+@    eval $m2c_node_param_ref_lname = "${m2c_node_param_val_lname}_ptr"@
+@    eval $m2c_XX = "$m2c_decl **$m2c_node_param_ref_name,"@
+@    eval $m2c_node_param_ref = "$m2c_XX size_t *$m2c_node_param_ref_lname"@
+@    eval $m2c_XX = "$m2c_decl *$m2c_node_param_val_name,"@
+@    eval $m2c_node_param_val = "$m2c_XX  size_t $m2c_node_param_val_lname"@
+@  else@
+@    eval $m2c_node_param_ref = "$m2c_decl * $m2c_node_param_ref_name"@
+@    eval $m2c_node_param_val = "$m2c_decl $m2c_node_param_val_name"@
+@    eval $m2c_node_param_val_call = "$m2c_node_param_val_name"@
+##
+@  end@
+##
+########################################################################
+## include user overrides
+########################################################################
+@  include -ifexists ${m2c_defaults_dir}node-${node}.m2d@
+########################################################################
+##
+########################################################################
+@  if $m2c_get_use_temp == 1@
+@    eval $m2c_node_lh = "temp_$node"@
+@    eval $m2c_node_lhs = "temp_${node}_len"@
+@  else@
+@    eval $m2c_node_lh = "(* $m2c_node_param_ref_name )"@
+@    eval $m2c_node_lhs = "(* $m2c_node_param_ref_lname )"@
+@  end@
+@  eval $m2c_ctx_lh="$m2c_node_lh"@
+@  eval $m2c_ctx_lhs="$m2c_node_lhs"@
+@  eval $m2c_ctx_lhu="bytes"@
+@  eval $m2c_ctx_rh="${m2c_data_item}${node}"@
+@  eval $m2c_ctx_rhs="${m2c_data_item}${node}_len"@
+@  eval $m2c_ctx_rhu="elements"@
+########################################################################
+##
+########################################################################
+@  if $m2c_node_skip_mapping != 1@
+@    if $m2c_node_needlength == 1@
+@      eval $m2c_XX="$m2c_decl **mib_$m2c_node_param_ref_name,"@
+@      eval $m2c_XX="$m2c_XX size_t *mib_$m2c_node_param_ref_lname,"@
+@      eval $m2c_XX="$m2c_XX $m2c_decl *raw_$m2c_node_param_val_name,"@
+@      eval $m2c_XX="$m2c_XX size_t raw_$m2c_node_param_val_lname,"@
+@      eval $m2c_node_map_param="$m2c_XX int allow_realloc"@
+@    else@
+@      eval $m2c_XX="$m2c_decl *mib_$m2c_node_param_ref_name,"@
+@      eval $m2c_node_map_param="$m2c_XX $m2c_decl raw_$m2c_node_param_val_name"@
+@    end@
+@  end@
+########################################################################
+##
+########################################################################
+@  eval $m2c_node_srh = "$m2c_node_param_val_name"@
+@  eval $m2c_node_srhs = "$m2c_node_param_val_lname"@
+@end@
+########################################################################
+##
+@eval $m2c_node_summary="$node($node.subid)/$node.syntax/$node.type/$node.decl($m2c_decl)/"@
+@if $node.needlength == 0@
+@   eval $m2c_node_summary="$m2c_node_summary/l"@
+@else@
+@   eval $m2c_node_summary="$m2c_node_summary/L"@
+@end@
+@if $node.noaccess == 0@
+@   eval $m2c_node_summary="$m2c_node_summary/A"@
+@else@
+@   eval $m2c_node_summary="$m2c_node_summary/a"@
+@end@
+@if $node.settable == 0@
+@   eval $m2c_node_summary="$m2c_node_summary/w"@
+@else@
+@   eval $m2c_node_summary="$m2c_node_summary/W"@
+@end@
+@if $node.enums == 0@
+@   eval $m2c_node_summary="$m2c_node_summary/e"@
+@else@
+@   eval $m2c_node_summary="$m2c_node_summary/E"@
+@end@
+@if $node.ranges == 0@
+@   eval $m2c_node_summary="$m2c_node_summary/r"@
+@else@
+@   eval $m2c_node_summary="$m2c_node_summary/R"@
+@end@
+@if $node.hasdefval == 0@
+@   eval $m2c_node_summary="$m2c_node_summary/d"@
+@else@
+@   eval $m2c_node_summary="$m2c_node_summary/D"@
+@end@
+@if $node.hashint == 0@
+@   eval $m2c_node_summary="$m2c_node_summary/h"@
+@else@
+@   eval $m2c_node_summary="$m2c_node_summary/H"@
+@end@
+########################################################################
+@  ifconf ${m2c_defaults_dir}node-${node}.m2d@
+@  else@
+@    push@
+@    open ${m2c_defaults_dir}node-${node}.m2d@
+@    eval $m2c_conf_comment = "##"@
+@    eval $m2c_conf_comment_divider = "########################################################################"@
+$m2c_conf_comment_divider
+$m2c_conf_comment
+$m2c_conf_comment mib2c node setting for $node
+$m2c_conf_comment
+$m2c_conf_comment Remove the '##' comment delimeter to change settings
+$m2c_conf_comment
+$m2c_conf_comment_divider
+$m2c_conf_comment Node declaration type? This is the C type to be used when
+$m2c_conf_comment declaring a variable to hold a value for this column. It
+$m2c_conf_comment is strongly recommended that you do not change this value.
+$m2c_conf_comment If you do, it is likely to break lots of generated code that
+$m2c_conf_comment you will have to fix.
+$m2c_conf_comment
+$m2c_conf_comment @eval $@m2c_decl = $m2c_decl@
+$m2c_conf_comment
+$m2c_conf_comment_divider
+$m2c_conf_comment Generate/use mapping functions? Useful if the MIB defines
+$m2c_conf_comment a different format or enumerations than you data store uses.
+$m2c_conf_comment
+$m2c_conf_comment @eval $@m2c_node_skip_mapping = $m2c_node_skip_mapping@
+$m2c_conf_comment
+$m2c_conf_comment_divider
+$m2c_conf_comment Need a length for the value? Most OCTET-STRING based values will
+$m2c_conf_comment need a length, most other types will not. Do not change this one
+$m2c_conf_comment unless you know what you are doing! You will almost certainly need
+$m2c_conf_comment to fix lots of generated code if you do.
+$m2c_conf_comment
+$m2c_conf_comment @eval $@m2c_node_needlength = $m2c_node_needlength@
+$m2c_conf_comment
+$m2c_conf_comment_divider
+$m2c_conf_comment Skip get? Set this to 1 if you do not want to implement a value
+$m2c_conf_comment for this column.
+$m2c_conf_comment
+$m2c_conf_comment @eval $@m2c_node_skip_get = $m2c_node_skip_get@
+$m2c_conf_comment
+@      if $m2c_node_needlength == 1@
+$m2c_conf_comment_divider
+$m2c_conf_comment Allow realloc when data size exceeds length? If your data
+$m2c_conf_comment store for this node is a pointer allocated with one of the
+$m2c_conf_comment alloc family functions, you can set this to 1 to use realloc
+$m2c_conf_comment when a new value length exceeds the old lenght. If you are
+$m2c_conf_comment using a fixed size buffer, this value should be 0.
+$m2c_conf_comment
+$m2c_conf_comment @eval $@m2c_node_realloc = $m2c_node_realloc@
+@      end@
+@    close ${m2c_defaults_dir}node-${node}.m2d@
+@    pop@
+@  end@

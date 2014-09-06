@@ -1,0 +1,57 @@
+Some notes for the Tru64 Unix 5.x port
+======================================
+
+1. Compiling
+------------
+
+The following procedure has been proven to successfully compile net-snmp 
+version 5.2.2 and later on Tru64 Unix 5.1B (Alpha EV5.6) using the Compaq C 6.5 
+compiler:
+
+	./configure --disable-embedded-perl
+	make
+	su -
+	make install
+
+A recent GNU C compiler (gcc) will probably work, too.
+
+Please note that the "host" module doesn't compile on Tru64, so you *cannot*
+run configure with "--with-mib-modules=host".
+
+2. Embedded Perl
+----------------
+
+The Perl package (5.00503) shipped with Tru64 Unix 5.1 isn't complete enough
+to allow to build net-snmp with embedded Perl support. If you need embedded
+Perl support, do your own Perl installation first.
+
+3. IPv6
+-------
+
+Starting with net-snmp 5.4 you can enable the UDPIPv6 and TCPIPv6 transports
+on Tru64 Unix 5.1:
+
+   ./configure --enable-ipv6
+
+There's no support for the IPv6 MIBs, though.
+
+
+4. Known problems
+-----------------
+
+"make test" is known to report the following failure:
+
+  59: testing full snmpwalk (SNMPv2c) against agent (may take time)... FAIL
+
+so it's obvious that there are still problems with some MIB modules on Tru64.
+If you have ideas how to fix them, please let us know!
+
+
+5. Feedback
+-----------
+
+Please also see README and PORTING.
+
+If you have questions, additional insights or (even better) patches regarding
+net-snmp on Tru64 Unix, please refer to the net-snmp mailing lists (see 
+http://www.net-snmp.org/lists).

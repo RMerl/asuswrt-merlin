@@ -28,7 +28,7 @@ SearchRouterInfoStruct searchRouterInfo[MAX_SEARCH_ROUTER];
 
 int asusdiscovery()
 {	
-	printf("----------ASUS_Discovery Start----------\n");
+	//printf("----------ASUS_Discovery Start----------\n");
     
 	int iRet = 0;
 	char router_ipaddr[17];

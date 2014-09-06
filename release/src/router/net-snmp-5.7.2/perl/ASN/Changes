@@ -1,0 +1,6 @@
+Revision history for Perl extension NetSNMP::ASN.
+
+0.01  Fri Jan 18 10:33:43 2002
+	- original version; created by h2xs 1.20 with options
+		-n NetSNMP::ASN myconst.h
+

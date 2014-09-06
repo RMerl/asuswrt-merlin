@@ -1,0 +1,63 @@
+: maketarget
+
+DIRS=`find . -name targets -prune -o -type d ! -name . -print | grep -v CVS | sed s/..//`
+TARGET=${1-`./config.guess`}
+
+rebuild=0
+
+echo Target directory: $TARGET
+echo Sub directories: $DIRS
+
+[ -d targets ] || mkdir targets
+cd targets
+if [ -d $TARGET ]
+then
+  /bin/echo Target already exists. Do you want to rebuild it\? '[y]' \\c
+  read ans
+  case $ans in
+  "" | y* | Y* )
+    rebuild=1
+    ;;
+  n* | N* )
+    exit 0
+    ;;
+  *)
+    echo Bummer.....
+    exit 1
+    ;;
+  esac
+fi
+
+echo Creating target directory: $TARGET
+[ -d $TARGET ] || mkdir $TARGET
+
+cd $TARGET
+for f in . $DIRS
+do
+  echo building $f ...
+  [ -d $f ] || mkdir $f
+  case $f in
+  */*/*/*)
+    echo Too deep nesting...
+    exit 1
+    ;;
+  */*/*)
+    cd $f
+    for f in ../../../../../$f/* ; do [ -d $f ] || ln -sf $f . ; done
+    cd ../../..
+    ;;
+  */*)
+    cd $f
+    for f in ../../../../$f/* ; do [ -d $f ] || ln -sf $f . ; done
+    cd ../..
+    ;;
+  .)
+    for f in ../../$f/* ; do [ -d $f ] || ln -sf $f . ; done
+    ;;
+  *)
+    cd $f
+    for f in ../../../$f/* ; do [ -d $f ] || ln -sf $f . ; done
+    cd ..
+    ;;
+  esac
+done

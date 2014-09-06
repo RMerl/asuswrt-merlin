@@ -1,0 +1,34 @@
+#
+# Makefile for dynamically loadable module `example'
+#
+#DLMODDIR	= $(libdir)/snmp/dlmod
+#UCDTOPDIR	= $(top_srcdir)
+DLMODDIR	= /usr/local/lib/snmp/dlmod
+UCDTOPDIR	= /usr/home/strauss/src/ucd-snmp-ibr
+TARG		= example.so
+OBJS		= example.o
+CC		= gcc
+CFLAGS		= -I$(UCDTOPDIR) -I$(UCDTOPDIR)/snmplib -I$(UCDTOPDIR)/agent -I$(UCDTOPDIR)/agent/mibgroup -shared -fPIC
+#LD		= ld
+#LDFLAGS		= -G -o
+LD		= gcc -shared -o
+LDFLAGS		= 
+INSTALL		= install
+LIBS		= 
+
+all: $(TARG)
+
+.c.o:
+	$(CC) $(CFLAGS) -o $@ -c $<
+
+$(TARG): $(OBJS)
+	$(LD) $(LDFLAGS) $@ $(OBJS) $(LIBS)
+
+clean:
+	rm -f $(OBJS) $(TARG)
+
+install: all installdirs
+	$(INSTALL) $(TARG) $(DLMODDIR)
+
+installdirs:
+	@$(SHELL) $(UCDTOPDIR)/mkinstalldirs $(DLMODDIR)

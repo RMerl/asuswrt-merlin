@@ -1,0 +1,29 @@
+#!/bin/sh
+
+. ../support/simple_eval_tools.sh
+
+HEADER TLS-TCP over IPV6
+
+SKIPIFNOT NETSNMP_TRANSPORT_TLSTCP_DOMAIN
+SKIPIFNOT NETSNMP_TRANSPORT_TLSIPV6_DOMAIN
+
+# ensure we have a localhost6 entry
+
+# XXX: this stems from broken issues in openssl that refuse [::1]:
+# style accept strings (it works for client connections).
+grep localhost6 /etc/hosts > /dev/null 2>&1
+if [ $? = 1 ] ; then
+    SKIP This test requires a localhost6 entry in /etc/hosts
+fi
+
+#
+# Begin test
+#
+
+SNMP_TRANSPORT_SPEC=tlstcp
+SNMP_TEST_DEST='localhost6:'
+export SNMP_TRANSPORT_SPEC
+export SNMP_SNMPD_PORT
+export SNMP_TEST_DEST
+
+. ../transports/Stlstests

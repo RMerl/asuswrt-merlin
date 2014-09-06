@@ -193,11 +193,6 @@ function QIS_load_body(){
 			document.QKform.sw_mode.value = 4;
 	}
 
-	if(navigator.appName.indexOf("Microsoft") >= 0){
-			$("contentM").width = "105%";
-			$("contentM").style.marginLeft = "-45px";			
-	}
-
 	with(document.redirectForm){
 		switch(showCase){
 			case "remind":
@@ -371,7 +366,7 @@ function gotoIndex(){
 function check_DUT(){
 	$j.ajax({
 		url: '/httpd_check.htm',
-		dataType: 'script',
+		dataType: 'text',
 		
 		error: function(xhr){
 			setTimeout("check_DUT();", 3000);

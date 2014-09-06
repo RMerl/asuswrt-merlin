@@ -53,8 +53,10 @@ function initial(){
 	get_domainlist();
 	get_realmlist();
 	get_3gpplist();
+	get_maxassoc();
 	get_passpoint_info();
 	get_radius_setting();
+	get_tmo_radius_setting();
 }
 
 function get_ssid_info(){
@@ -240,8 +242,17 @@ function get_3gpplist(){
 	
 }
 
+function get_maxassoc(){
+	if("<% nvram_get("wl_unit"); %>" == "1"){
+		document.form.wl_maxassoc_x.value = "<% nvram_get("wl1.3_maxassoc"); %>";	
+	}
+	else{
+		document.form.wl_maxassoc_x.value = "<% nvram_get("wl0.3_maxassoc"); %>";
+	}
+}
+
 function get_passpoint_info(){
-		if("<% nvram_get("wl_unit"); %>" == "1"){
+		if("<% nvram_get("wl_unit"); %>" == "0"){
 			if("<% nvram_get("wl0_hs2en"); %>" == "1")
 				var wl0hs2en = "ON";
 			else	
@@ -268,6 +279,18 @@ function get_radius_setting(){
 		document.form.wl_radius_ipaddr.value = "<% nvram_get("wl0.3_radius_ipaddr"); %>";
 		document.form.wl_radius_port.value = "<% nvram_get("wl0.3_radius_port"); %>";
 		document.form.wl_radius_key.value = "<% nvram_get("wl0.3_radius_key"); %>";
+	}
+}
+
+function get_tmo_radius_setting(){
+	if("<% nvram_get("wl_unit"); %>" == "1"){	
+		document.form.wl_tmo_radius_ipaddr.value = "<% nvram_get("wl1.3_tmo_radius_ipaddr"); %>";
+		document.form.wl_tmo_radius_port.value = "<% nvram_get("wl1.3_tmo_radius_port"); %>";
+
+	}
+	else{
+		document.form.wl_tmo_radius_ipaddr.value = "<% nvram_get("wl0.3_tmo_radius_ipaddr"); %>";
+		document.form.wl_tmo_radius_port.value = "<% nvram_get("wl0.3_tmo_radius_port"); %>";	
 	}
 }
 
@@ -316,7 +339,8 @@ function applyRule(){
 						document.form.wl_3gpplist.value += document.getElementById("wl_3gpplist_"+y+"_0").value+":"+document.getElementById("wl_3gpplist_"+y+"_1").value;
 				}		
 		}
-				
+		document.form.wl_maxassoc.value	= document.form.wl_maxassoc_x.value;	
+		
 		showLoading();
 		document.form.submit();
 	}
@@ -324,7 +348,7 @@ function applyRule(){
 
 function validForm(){		
 
-        if(!validate_range(document.form.wl_maxassoc, 1, 128))
+        if(!validate_range(document.form.wl_maxassoc_x, 1, 128))
                         return false;      
 
 	if(!validate_ipaddr_final(document.form.wl_radius_ipaddr, 'hs_radius_ipaddr'))
@@ -335,6 +359,13 @@ function validForm(){
 	
 	if(!validate_string(document.form.wl_radius_key))
 		return false;
+
+	/* Allow ipaddr/URL setting
+	if(!validate_ipaddr_final(document.form.wl_tmo_radius_ipaddr, 'hs_radius_ipaddr'))
+		return false;*/
+        
+	if(!validate_range(document.form.wl_tmo_radius_port, 0, 65535))
+                return false;
 		
 	return true;
 }
@@ -375,6 +406,7 @@ function enable_u11(flag){
 <input type="hidden" name="wl_domainlist" value="">
 <input type="hidden" name="wl_realmlist" value="">
 <input type="hidden" name="wl_3gpplist" value="">
+<input type="hidden" name="wl_maxassoc" value="">
 
 <table class="content" align="center" cellpadding="0" cellspacing="0">
 	<tr>
@@ -508,36 +540,54 @@ function enable_u11(flag){
 			<tr>
 				<th width="30%">Number of Users allowed to connect</th>
 				<td>
-					<input type="text" name="wl_maxassoc" class="input_3_table" maxlength="3" value="<% nvram_get("wl_maxassoc"); %>" onkeypress="return is_number(this, event)">
+					<input type="text" name="wl_maxassoc_x" class="input_3_table" maxlength="3" value="" onkeypress="return is_number(this, event)">
 				</td>
 			</tr>
 			<tr>
-			<th>
-				<a class="hintstyle" href="javascript:void(0);"  onClick="openHint(2,1);">
-			  	AAA <#WLANAuthentication11a_ExAuthDBIPAddr_itemname#></a>			  
-			</th>
-			<td>
-				<input type="text" maxlength="15" class="input_15_table" name="wl_radius_ipaddr" value="" onKeyPress="return is_ipaddr(this, event)">
-			</td>
-		</tr>
-		<tr>
-			<th>
-				<a class="hintstyle" href="javascript:void(0);"  onClick="openHint(2,2);">
-			  	AAA <#WLANAuthentication11a_ExAuthDBPortNumber_itemname#></a>
-			</th>
-			<td>
-				<input type="text" maxlength="5" class="input_6_table" name="wl_radius_port" value="" onkeypress="return is_number(this,event)"/>
-			</td>
-		</tr>
-		<tr>
-			<th >
-				<a class="hintstyle" href="javascript:void(0);"  onClick="openHint(2,3);">
-				AAA <#WLANAuthentication11a_ExAuthDBPassword_itemname#></a>
-			</th>
-			<td>
-				<input type="password" autocapitalization="off" maxlength="64" class="input_32_table" name="wl_radius_key" value="">
-			</td>
-		</tr>
+				<th>
+					<a class="hintstyle" href="javascript:void(0);"  onClick="openHint(2,1);">
+				  	AAA <#WLANAuthentication11a_ExAuthDBIPAddr_itemname#></a>			  
+				</th>
+				<td>
+					<input type="text" maxlength="15" class="input_15_table" name="wl_radius_ipaddr" value="" onKeyPress="return is_ipaddr(this, event)">
+				</td>
+			</tr>
+			<tr>
+				<th>
+					<a class="hintstyle" href="javascript:void(0);"  onClick="openHint(2,2);">
+				  	AAA <#WLANAuthentication11a_ExAuthDBPortNumber_itemname#></a>
+				</th>
+				<td>
+					<input type="text" maxlength="5" class="input_6_table" name="wl_radius_port" value="" onkeypress="return is_number(this,event)"/>
+				</td>
+			</tr>
+			<tr>
+				<th >
+					<a class="hintstyle" href="javascript:void(0);"  onClick="openHint(2,3);">
+					AAA <#WLANAuthentication11a_ExAuthDBPassword_itemname#></a>
+				</th>
+				<td>
+					<input type="password" autocapitalization="off" maxlength="64" class="input_32_table" name="wl_radius_key" value="">
+				</td>
+			</tr>
+		
+			<tr>
+				<th>
+					T-Mobile AAA <#WLANAuthentication11a_ExAuthDBIPAddr_itemname#>
+				</th>
+				<td>
+					<input type="text" maxlength="32" class="input_32_table" name="wl_tmo_radius_ipaddr" value="">
+				</td>
+			</tr>
+			<tr>
+				<th>
+					T-Mobile AAA <#WLANAuthentication11a_ExAuthDBPortNumber_itemname#>
+				</th>
+				<td>
+					<input type="text" maxlength="5" class="input_6_table" name="wl_tmo_radius_port" value="" onkeypress="return is_number(this,event)"/>
+				</td>
+			</tr>
+
 		</table>
 		
 			<div id="submitBtn" class="apply_gen">

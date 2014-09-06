@@ -1,0 +1,523 @@
+#########################################
+##
+# Checks for header files.
+##
+#########################################
+
+##
+#   Standard checks:
+##
+#  Core:
+AC_HEADER_STDC          #  <stdlib.h>, <stdarg.h>,   <string.h>  & <float.h>
+AC_HEADER_DIRENT        #  <dirent.h>, <sys/ndir.h>, <sys/dir.h> & <ndir.h>
+#  Apps:
+AC_HEADER_SYS_WAIT      #  <sys/wait.h>
+
+# allow for quick module/library/etc processing checks
+if test "x$NETSNMP_QUICK_CHECK" = "x" ; then
+
+##
+#   Stand-alone headers:
+##
+#  Core:
+AC_CHECK_HEADERS([getopt.h   pthread.h  regex.h      ] dnl
+                 [string.h   syslog.h   unistd.h     ] dnl
+                 [stdint.h   inttypes.h              ] dnl
+                 [sys/param.h        ] dnl
+                 [sys/select.h       ] dnl
+                 [sys/socket.h       ] dnl
+                 [sys/time.h         ] dnl
+                 [sys/timeb.h        ] dnl
+                 [sys/un.h           ])
+
+#  Library and Agent:
+AC_CHECK_HEADERS([nlist.h],,,[
+AC_INCLUDES_DEFAULT
+[
+#ifndef LIBBSD_DISABLE_DEPRECATED
+#define LIBBSD_DISABLE_DEPRECATED 1
+#endif
+]])
+
+#  Library:
+AC_CHECK_HEADERS([fcntl.h    io.h       kstat.h                 ] dnl
+                 [limits.h   locale.h                  ] dnl
+                 [sys/file.h       sys/ioctl.h         ] dnl
+                 [sys/sockio.h     sys/stat.h          ] dnl
+                 [sys/systemcfg.h  sys/systeminfo.h    ] dnl
+                 [sys/times.h      sys/uio.h           ] dnl
+                 [sys/utsname.h      ] dnl
+                 [netipx/ipx.h       ])
+
+#  Agent:
+AC_CHECK_HEADERS([dlfcn.h    err.h      fcntl.h    fstab.h      ] dnl
+                 [           grp.h      io.h                    ] dnl
+                 [ioctls.h   kstat.h    kvm.h      limits.h     ] dnl
+                 [           mntent.h   mtab.h                  ] dnl
+                 [           pkglocs.h             pwd.h        ] dnl
+                 [           utmpx.h    utsname.h               ])
+
+AC_CHECK_HEADERS([sys/diskio.h  sys/dkio.h                                 ] dnl
+                 [sys/file.h    sys/filio.h   sys/fixpoint.h               ] dnl
+                 [sys/fs.h      sys/ioctl.h   sys/loadavg.h  sys/mntent.h  ] dnl
+                 [sys/mnttab.h  sys/pool.h    sys/protosw.h  sys/pstat.h   ] dnl
+                 [sys/sockio.h  sys/stat.h    sys/statfs.h   sys/statvfs.h ] dnl
+                 [sys/stream.h  sys/sysget.h  sys/sysmp.h                  ] dnl
+                 [sys/tcpipstats.h            sys/utsname.h  sys/vfs.h     ] dnl
+                 [sys/vm.h      sys/vmmac.h   sys/vmmeter.h  sys/vmparam.h ] dnl
+                 [sys/vmsystm.h                                            ])
+
+AC_CHECK_HEADERS([asm/page.h asm/types.h               ] dnl
+                 [inet/mib2.h                          ] dnl
+                 [linux/hdreg.h linux/tasks.h          ] dnl
+                 [machine/param.h                      ] dnl
+                 [netinet/tcp_fsm.h                    ] dnl
+                 [ufs/fs.h                             ] dnl
+                 [uvm/uvm_extern.h uvm/uvm_param.h     ] dnl
+                 [vm/vm.h vm/vm_extern.h vm/vm_param.h ])
+
+#  Apps:
+AC_CHECK_HEADERS([fcntl.h    grp.h      pwd.h      ] dnl
+                 [sys/cdefs.h   sys/ioctl.h        ] dnl
+                 [sys/socket.h  sys/sockio.h       ] dnl
+                 [sys/time.h                       ])
+
+#  Not-Used:
+AC_CHECK_HEADERS([search.h   sgtty.h    xti.h      ] dnl
+                 [sys/dmap.h sys/poll.h            ] dnl
+                 [sys/timeout.h                    ] dnl
+                 [machine/pte.h                    ] dnl
+                 [pci/pci.h                        ])
+
+
+# Valgrind
+AC_CHECK_HEADERS([valgrind/valgrind.h valgrind/memcheck.h])
+# OpenSSL
+AC_CHECK_HEADERS([openssl/aes.h ])     #  (Core)
+AC_CHECK_HEADERS([openssl/dh.h  ])     #  (Apps)
+#  Not-Used:
+AC_CHECK_HEADERS([openssl/des.h  openssl/hmac.h ] dnl
+                 [openssl/evp.h  security/cryptoki.h])
+
+# RPM subdirectory path                   (Agent)
+if test "x$with_rpm" != "xno"; then
+  AC_CHECK_HEADERS([rpm/rpmts.h   rpm/rpmfileutil.h], [], [],
+		   [[#include <rpm/rpmlib.h>]])
+fi
+
+
+##
+#   Pre-requisite on other headers:
+##
+
+#       requiring <sys/param.h>  (MAXPATHLEN)           (OpenBSD 3.4)
+#  Agent:
+#
+AC_CHECK_HEADERS(sys/swap.h,,,
+    AC_INCLUDES_DEFAULT([])
+    [
+#if HAVE_SYS_PARAM_H
+#include <sys/param.h>
+#endif
+    ])
+
+#       requiring <sys/param.h>                         (FreeBSD)
+#
+#  Core:      (? Tested above? )
+AC_CHECK_HEADERS([stdlib.h  ],,,
+    [[
+#if HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#if HAVE_SYS_PARAM_H
+#include <sys/param.h>
+#endif
+    ]])
+#
+#  Library:
+AC_CHECK_HEADERS([malloc.h        net/if_dl.h   sys/sysctl.h    ],,,
+    [[
+#if HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#if HAVE_SYS_PARAM_H
+#include <sys/param.h>
+#endif
+    ]])
+#
+#  Agent:
+AC_CHECK_HEADERS([malloc.h        osreldate.h                   ] dnl
+                 [machine/types.h net/if_dl.h   net/if_types.h  ] dnl
+                 [sys/dkstat.h    sys/conf.h    sys/mbuf.h      ] dnl
+                 [sys/mount.h     sys/proc.h    sys/queue.h     ] dnl
+                 [sys/sysctl.h    sys/user.h                    ],,,
+    [[
+#if HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#if HAVE_SYS_PARAM_H
+#include <sys/param.h>
+#endif
+    ]])
+
+#       requiring <sys/sema.h>                          (IRIX 6.5)
+#  Agent:
+#
+AC_CHECK_HEADERS([sys/sema.h])
+AC_CHECK_HEADERS(sys/hashing.h,,,
+    AC_INCLUDES_DEFAULT([])
+    [
+#if HAVE_SYS_SEMA_H
+#include <sys/sema.h>
+#endif
+    ])
+
+#       requiring <sys/socket.h>                        (Solaris 9)
+#  Agent:
+#
+AC_CHECK_HEADERS(sys/socketvar.h,,,
+    AC_INCLUDES_DEFAULT([])
+    [
+#if HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
+    ])
+
+#       requiring _KMEMUSER and <sys/types.h>           (BSDi3/IRIX)
+#  Agent:
+#
+AC_CHECK_HEADERS(sys/vnode.h,,,
+    [
+#define _KMEMUSER 1
+#if HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+    ])
+
+#       requiring <machine/types.h>                     (NetBSD)
+#  Agent:
+#
+AC_CHECK_HEADERS(sys/disklabel.h,,,
+    [[
+#if HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#if HAVE_SYS_PARAM_H
+#include <sys/param.h>
+#endif
+#if HAVE_MACHINE_TYPES_H
+#include <machine/types.h>
+#endif
+    ]])
+
+#	QNX
+AC_CHECK_HEADERS([nbutil.h])
+
+#       UFS headers
+#  Agent:
+#
+AC_CHECK_HEADERS([ufs/ufs/dinode.h ufs/ufs/quota.h ufs/ufs/inode.h ufs/ffs/fs.h],,,
+    [[
+#if HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#if HAVE_UFS_UFS_DINODE_H
+#include <ufs/ufs/dinode.h>
+#endif
+#if HAVE_UFS_UFS_QUOTA_H
+#include <ufs/ufs/quota.h>
+#endif
+    ]])
+
+#       requiring <vm/vm.h>                             (BSDi2)
+#  Agent:
+#
+AC_CHECK_HEADERS(vm/swap_pager.h,,,
+    [[
+#if HAVE_VM_VM_H
+#include <vm/vm.h>
+#endif
+    ]])
+
+#       netlink/rtnetlink                               (Linux)
+#  Agent:
+#
+AC_CHECK_HEADERS([linux/netlink.h  linux/rtnetlink.h],,,
+    [[
+#if HAVE_ASM_TYPES_H
+#include <asm/types.h>
+#endif
+#if HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
+#if HAVE_LINUX_NETLINK_H
+#include <linux/netlink.h>
+#endif
+    ]])
+
+
+#       Network headers
+#  Core or Library/Agent/Apps:
+#
+AC_CHECK_HEADERS([arpa/inet.h        net/if.h             ] dnl
+                 [netinet/in.h       netdb.h              ],,,
+    [[
+#if HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#if HAVE_SYS_TIMEOUT_H
+#include <sys/timeout.h>
+#endif
+#if HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
+#if HAVE_SYS_SOCKETVAR_H
+#include <sys/socketvar.h>
+#endif
+#if HAVE_ARPA_INET_H
+#include <arpa/inet.h>
+#endif
+#if HAVE_NETINET_IN_SYSTM_H
+#include <netinet/in_systm.h>
+#endif
+#if HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif
+#if HAVE_NETINET_IP_H
+#include <netinet/ip.h>
+#endif
+#if HAVE_NET_IF_H
+#include <net/if.h>
+#endif
+#if HAVE_NETINET_IP_VAR_H
+#include <netinet/ip_var.h>
+#endif
+#if HAVE_NETINET_IP_ICMP_H
+#include <netinet/ip_icmp.h>
+#endif
+#if HAVE_NETINET_TCP_H
+#include <netinet/tcp.h>
+#endif
+#if HAVE_NETINET_UDP_H
+#include <netinet/udp.h>
+#endif
+#if HAVE_NETINET_TCP_TIMER_H
+#include <netinet/tcp_timer.h>
+#endif
+    ]])
+#
+#  Agent:
+AC_CHECK_HEADERS([net/if_arp.h       net/if_mib.h         net/if_var.h     ] dnl
+                 [netinet/if_ether.h netinet/in_systm.h   netinet/in_var.h ] dnl
+                 [netinet/ip.h       netinet/ip_icmp.h                     ] dnl
+                 [netinet/icmp_var.h netinet/ip_var.h                      ] dnl
+                 [netinet/tcp.h      netinet/tcp_timer.h  netinet/tcp_var.h] dnl
+                 [netinet/tcpip.h    netinet/udp.h        netinet/udp_var.h] dnl
+                 [net/route.h        netinet/icmp6.h                       ],,,
+    [[
+#if HAVE_SYS_PARAM_H
+#include <sys/param.h>
+#endif
+#if HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#if HAVE_SYS_TIMEOUT_H
+#include <sys/timeout.h>
+#endif
+#if HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
+#if HAVE_SYS_SOCKETVAR_H
+#include <sys/socketvar.h>
+#endif
+#if HAVE_ARPA_INET_H
+#include <arpa/inet.h>
+#endif
+#if HAVE_NETINET_IN_SYSTM_H
+#include <netinet/in_systm.h>
+#endif
+#if HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif
+#if HAVE_NETINET_IP_H
+#include <netinet/ip.h>
+#endif
+#if HAVE_NET_IF_H
+#include <net/if.h>
+#endif
+#if HAVE_NET_IF_VAR_H
+#include <net/if_var.h>
+#endif
+#if HAVE_NETINET_IP_VAR_H
+#include <netinet/ip_var.h>
+#endif
+#if HAVE_NETINET_IP_ICMP_H
+#include <netinet/ip_icmp.h>
+#endif
+#if HAVE_NETINET_TCP_H
+#include <netinet/tcp.h>
+#endif
+#if HAVE_NETINET_UDP_H
+#include <netinet/udp.h>
+#endif
+#if HAVE_NETINET_TCP_TIMER_H
+#include <netinet/tcp_timer.h>
+#endif
+#if HAVE_NETINET_ICMP6_H
+#include <netinet/icmp6.h>
+#endif
+    ]])
+
+#       KAME (IPv6) headers
+#  Agent:
+#
+# KAME
+AC_CHECK_HEADERS([netinet/ip6.h                               ] dnl
+                 [netinet6/in6_var.h    netinet6/in6_pcb.h    ] dnl
+                 [netinet6/ip6_var.h    netinet6/nd6.h        ] dnl
+                 [netinet6/tcp6.h       netinet6/tcp6_fsm.h   ] dnl
+                 [netinet6/tcp6_timer.h netinet6/tcp6_var.h],,,
+    [[
+#if HAVE_SYS_PARAM_H
+#include <sys/param.h>
+#endif
+#if HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#if HAVE_SYS_QUEUE_H
+#include <sys/queue.h>
+#endif
+#if HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
+#if HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif
+#if HAVE_NETINET_IP6_H
+#include <netinet/ip6.h>
+#endif
+#if HAVE_NET_IF_H
+#include <net/if.h>
+#endif
+#if HAVE_NET_ROUTE_H
+#include <net/route.h>
+#endif
+    ]])
+
+#       requiring <netinet/in.h>                        (OpenBSD 2.6)
+#  Agent:
+#
+AC_CHECK_HEADERS(netinet/in_pcb.h,,,
+    [[
+#if HAVE_SYS_PARAM_H
+#include <sys/param.h>
+#endif
+#if HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#if HAVE_SYS_TIMEOUT_H
+#include <sys/timeout.h>
+#endif
+#if HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
+#if HAVE_SYS_SOCKETVAR_H
+#include <sys/socketvar.h>
+#endif
+#if HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif
+#if HAVE_NETINET_IN_SYSTM_H
+#include <netinet/in_systm.h>
+#endif
+#if HAVE_NETINET_IP_H
+#include <netinet/ip.h>
+#endif
+#if HAVE_NET_ROUTE_H
+#include <net/route.h>
+#endif
+#if HAVE_ARPA_INET_H
+#include <arpa/inet.h>
+#endif
+    ]])
+
+##
+#   Pre-requisite on specific types
+##
+
+#       Special hack to get around various problems on older Linux kernels
+#       (major ugh!)
+#  Agent:
+#
+AC_CHECK_HEADERS([linux/ethtool.h],,,
+[[
+#include <linux/types.h>
+typedef __u64 u64;         /* hack, so we may include kernel's ethtool.h */
+typedef __u32 u32;         /* ditto */
+typedef __u16 u16;         /* ditto */
+typedef __u8 u8;           /* ditto */
+]])
+
+##
+#   Headers requiring particular libraries
+##
+
+#       for HostRes                                     (Solaris 2.x)
+#  Agent:
+#
+AC_CHECK_HEADERS(pkginfo.h,
+    NETSNMP_SEARCH_LIBS(pkginfo, adm,
+        AC_DEFINE(HAVE_PKGINFO, 1, [define if you have pkginfo]),,,LMIBLIBS))
+
+case $target_os in
+    aix*)
+        #       for CPU/memory statistics               (AIX)
+        #  Agent:
+        #
+        AC_CHECK_HEADERS(libperfstat.h,
+            NETSNMP_SEARCH_LIBS(perfstat_cpu_total, perfstat,
+                AC_DEFINE(HAVE_PERFSTAT, 1, [on aix, if you have perfstat]),
+                AC_MSG_ERROR([
+
+*** To monitor CPU/memory values in AIX you need to install
+*** libperfstat which can be found in bos.perf
+]),,
+                LMIBLIBS),,
+    [[
+#if HAVE_SYS_PROTOSW_H
+#include <sys/protosw.h>
+#endif
+    ]])
+        ;;
+    hpux*)
+        #       HP-UX agent needs open_mib       (XXX - not a header check!)
+        #
+        NETSNMP_SEARCH_LIBS(open_mib, nm,
+            AC_DEFINE(HAVE_LIBNM, 1, [define if you have libnm]),,,LMIBLIBS)
+        ;;
+    *)
+        ;;
+esac
+
+#       for MIB-2 info                                  (Cygwin and MinGW)
+#  Core:
+#
+AC_CHECK_HEADERS([windows.h iphlpapi.h], [], [], [
+#ifdef HAVE_WINDOWS_H
+#include <windows.h>
+#endif
+])
+
+#       for MIB-2 info                                  (MinGW)
+#  Core:
+#
+if test x$with_socklib = xwinsock2; then
+  AC_CHECK_HEADERS([winsock.h winsock2.h ws2tcpip.h])
+fi
+
+#
+# for ucd-snmp/lmsensorsMib
+#
+AC_CHECK_HEADERS([sensors/sensors.h picl.h])
+
+fi # NETSNMP_QUICK_CHECK

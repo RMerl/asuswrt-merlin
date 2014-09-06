@@ -1,0 +1,61 @@
+README.osX
+$Id$
+
+This is what I had to do to get it to work for me. Your mileage may vary.
+If this doesn't work for you, or you have fixes for any problems listed,
+please post to <net-snmp-coders@lists.sourceforge.net>. Thanks!
+
+  - ALL
+
+    - nlist doesn't support icmpstat
+
+       - disable the icmp module during configure by specifying
+         "--with-out-mib-modules=mibII/icmp", or at startup by adding
+         "-I -icmp" to the snmpd command line.
+
+
+  - 10.4.7 (Universal) and Leopard with 5.4 sources:
+        [Supplied by Chris Jalbert]
+
+       - build using gcc 4.0 (see below) and configure using:
+                        --with-persistent-directory=/var/db/net-snmp \
+                        --with-defaults \
+                        --without-rpm \
+                        --with-mib-modules="host ucd-snmp/diskio" \
+                        --with-out-mib-modules="mibII/icmp host/hr_swrun" \
+                        --without-kmem-usage
+
+       The first line sets up persistent storage in the OS X standard location.
+
+       The third line is necessary because RPM is not properly disabled.
+
+       The fourth line includes those modules appear to build properly and
+       mostly work. The next line is necessary because those sub-modules
+       do not build.
+
+       The final line is necessary because /dev/kmem was removed in
+       the Intel / Universal builds of the OS, and I believe the APIs will
+       be removed in Leopard.
+         This line is the most critical for proper building on OS X.
+
+
+  - 10.3.x and earlier
+
+     - Some older versions of Apple's cpp doesn't like configure. 
+
+        - run 'gcc_select' to see what version you are using, and
+          'gcc_select -l' to list available versions. I've had success with
+          3.3, selected by running (as root) 'gcc_select 3.3'. (Note: this was
+          on Panther, 10.3.2)
+
+     - Some older versions of net-snmp as installed by Apple contains
+       bad flags in net-snmp-config.
+
+       - build your own version, and install over Apple's version. The
+         configure flags you need for the same configuration:
+
+         configure --prefix=/usr --mandir=/usr/share/man
+                   --infodir=/usr/share/info --with-libwrap --with-defaults
+                   --prefix=/usr --with-persistent-directory=/var/db/ucd-snmp
+                   --with-mib-modules=host
+

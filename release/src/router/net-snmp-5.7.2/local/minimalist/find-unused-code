@@ -1,0 +1,117 @@
+#!/usr/bin/perl
+
+# searches for .o files in the current directory and examines each for
+# defined functions (T) and undefined references (U) and lists
+# anything that isn't required by something else or itself
+
+# useful calling sorted by file:
+#   perl minimal/find-unused-code | sort 
+
+use File::Find;
+use Data::Dumper;
+use strict;
+use Getopt::GUI::Long;
+
+my %opts;
+
+LocalGetOptions(\%opts,
+		['g|grep',      "run find/grep to look for string usages"],
+    );
+
+my (@files, %defined, %lookingfor);
+
+find(\&dot_os, ".");
+
+foreach my $file (@files) {
+    collect_from_file($file);
+}
+
+
+if ($#ARGV > -1) {
+    print "Dumping found symbol usages:\n\n";
+    foreach my $arg (@ARGV) {
+	print "$arg:\n";
+	print "  ", join("\n  ", @{$defined{$arg}{'usages'}}),"\n\n";
+    }
+    exit;
+}
+
+foreach my $function (sort { $defined{$a}{'source'} cmp $defined{$b}{'source'} } keys(%defined)) {
+    if (exists($defined{$function}{'source'}) &&
+	!exists($defined{$function}{'usages'})) {
+	if (check_for_once_only($defined{$function}{'source'}, $function)) {
+	    printf("%-38s %-38s\n", $defined{$function}{'source'}, $function);
+	    if ($opts{'g'}) {
+		open(P,"find . -regex '.*.\\(c\\|xs\\)' | xargs grep -n $function|");
+		while(<P>) {
+		    print "  $_";
+		}
+		close(P);
+		print "\n";
+	    }
+	}
+    }
+}
+
+sub dot_os {
+    return if (!/\.o$/);
+    return if ($File::Find::name =~ /\/.libs\//);
+#    return if ($File::Find::name =~ /\/(perl|python)\//);
+    push @files, $File::Find::name;
+}
+
+sub collect_from_file {
+    my $file = shift;
+#    print "searching $file\n";
+    open(I,"nm $file|");
+    while(<I>) {
+	$defined{$1}{'source'} = $file if (/ T (.*)/);
+	push @{$defined{$1}{'usages'}}, $file if (/ U (.*)/);
+    }
+    close(I);
+}
+	
+sub check_for_once_only {
+    my ($file, $function) = @_;
+    $file =~ s/\.o/.c/;
+    open(I, $file);
+    my $usages = 0;
+    while(<I>) {
+	if (/$function/) {
+	    $usages++;
+	}
+	if ($usages > 1) {
+	    close(I);
+	    return 0;
+	}
+    }
+    return 1;
+}
+
+
+sub LocalGetOptions {
+    if (eval {require Getopt::GUI::Long;}) {
+        import Getopt::GUI::Long;
+        # optional configure call
+        Getopt::GUI::Long::Configure(qw(display_help no_ignore_case capture_output no_gui allow_zero));
+        return GetOptions(@_);
+    }
+    require Getopt::Long;
+    import Getopt::Long;
+    # optional configure call
+    Getopt::Long::Configure(qw(display_help no_ignore_case capture_output));
+    GetOptions(LocalOptionsMap(@_));
+}
+
+sub LocalOptionsMap {
+    my ($st, $cb, @opts) = ((ref($_[0]) eq 'HASH') 
+                            ? (1, 1, $_[0]) : (0, 2));
+    for (my $i = $st; $i <= $#_; $i += $cb) {
+        if ($_[$i]) {
+            next if (ref($_[$i]) eq 'ARRAY' && $_[$i][0] =~ /^GUI:/);
+            push @opts, ((ref($_[$i]) eq 'ARRAY') ? $_[$i][0] : $_[$i]);
+            push @opts, $_[$i+1] if ($cb == 2);
+        }
+    }
+    return @opts;
+}

@@ -61,17 +61,7 @@ ifneq ($(NO_MKTOOLS),y)
 	install -D $(SRCFILE)/hfsplus/tools/newfs_hfs $(INSTALLDIR)/usr/sbin/newfs_hfs
 endif
 endif
-ifeq ($(RTCONFIG_EXFAT),y)
-	cp -f $(SRCFILE)/exfat/kernel-module/texfat.ko $(DSTDIR)
-	install -D $(SRCFILE)/exfat/tools/exfatck $(INSTALLDIR)/usr/sbin/exfatck
-ifneq ($(NO_MKTOOLS),y)
-	install -D $(SRCFILE)/exfat/tools/mkexfat $(INSTALLDIR)/usr/sbin/mkexfat
-	#install -D $(SRCFILE)/exfat/tools/exfatdebug $(INSTALLDIR)/usr/sbin/exfatdebug
-	#install -D $(SRCFILE)/exfat/tools/exfatinfo $(INSTALLDIR)/usr/sbin/exfatinfo
-	#install -D $(SRCFILE)/exfat/tools/exfatlabel $(INSTALLDIR)/usr/sbin/exfatlabel
-endif
-endif
-ifeq ($(or $(RTCONFIG_TFAT),$(RTCONFIG_TUXERA_NTFS),$(RTCONFIG_TUXERA_HFS),$(RTCONFIG_EXFAT)),y)
+ifeq ($(or $(RTCONFIG_TFAT),$(RTCONFIG_TUXERA_NTFS),$(RTCONFIG_TUXERA_HFS)),y)
 #ifeq ($(and $(RTCONFIG_BCMARM),$(RTCONFIG_SAMBA3)),y)
 #	install -D $(SRCFILE)/samba/lib/libstdc++.so.6.0.14 $(INSTALLDIR)/usr/lib/libstdc++.so.6.0.14
 #	cd $(INSTALLDIR)/usr/lib && ln -sf libstdc++.so.6.0.14 libstdc++.so.6 && ln -sf libstdc++.so.6.0.14 libstdc++.so

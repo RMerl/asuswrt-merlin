@@ -1,0 +1,86 @@
+#!/bin/sh
+
+. STlsVars
+
+# this file contains tests common to both tls and dtls usages
+
+export NET_SNMP_CRT_CFGTOOL="${builddir}/net-snmp-config"
+NSCERT="perl $SNMP_BASEDIR/../../../local/net-snmp-cert"
+NSCERTARGS="-I -C $SNMP_TMPDIR"
+
+TLSDIR=$SNMP_TMPDIR/tls
+
+#########################################
+# Create the certificates
+
+# create the ca
+CAPTURE $NSCERT genca --cn ca-net-snmp.org  $NSCERTARGS
+
+# snmpd
+HOSTNAME=`hostname`
+CAPTURE $NSCERT gencert --with-ca ca-net-snmp.org -t snmpd --cn $HOSTNAME $NSCERTARGS
+SERVERFP=`$NSCERT showcerts --fingerprint --brief snmpd  $NSCERTARGS`
+CHECKVALUEISNT "$SERVERFP" "" "generated fingerprint for snmpd certificate"
+
+# user
+CAPTURE $NSCERT gencert --with-ca ca-net-snmp.org -t snmpapp --cn 'testuser'  $NSCERTARGS
+TESTUSERFP=`$NSCERT showcerts --fingerprint --brief snmpapp $NSCERTARGS`
+CHECKVALUEISNT "$TESTUSERFP" "" "generated fingerprint for testuser certificate"
+
+# user2
+CAPTURE $NSCERT gencert --with-ca ca-net-snmp.org -t snmpapp2 --cn 'testuser2'  $NSCERTARGS
+TESTUSER2FP=`$NSCERT showcerts --fingerprint --brief snmpapp2 $NSCERTARGS`
+CHECKVALUEISNT "$TESTUSER2FP" "" "generated fingerprint for testuser2 certificate"
+
+CONFIGAPP serverCert $SERVERFP
+CONFIGAGENT certSecName 9  $TESTUSERFP     --cn
+CONFIGAGENT certSecName 10  $TESTUSER2FP     --cn
+CONFIGAGENT  rwuser -s tsm testuser authpriv
+CONFIGAGENT  rwuser -s tsm $TSM_PREFIX:testuser2 authpriv
+CONFIGAGENT rocommunity public
+
+#
+# Start the agent
+#
+AGENT_FLAGS="-Dtsm udp:9999"
+FLAGS="-On $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT"
+STARTAGENT
+
+CAPTURE "snmpget -Dssl $FLAGS .1.3.6.1.2.1.190.1.2.1.0"
+CHECK ".1.3.6.1.2.1.190.1.2.1.0 = INTEGER: false"
+
+# using user 1 - a common name mapped certificate
+# (using the default "snmpapp" certificate because we don't specify another)
+CAPTURE "snmpget -Dssl $FLAGS .1.3.6.1.2.1.1.3.0"
+
+CHECK       ".1.3.6.1.2.1.1.3.0 = Timeticks:"
+
+# using user 2 should now fail because no prefix is applied
+CAPTURE "snmpget -T our_identity=snmpapp2 -Dssl $FLAGS .1.3.6.1.2.1.1.3.0"
+
+CHECKCOUNT 0 ".1.3.6.1.2.1.1.3.0 = Timeticks:"
+CHECK "authorizationError"
+
+# set the TSM prefix scalar to 1 to turn on prefixing
+CAPTURE "snmpset -Dssl $FLAGS .1.3.6.1.2.1.190.1.2.1.0 i 1"
+
+
+# using user 2 should now work and the prefix should have been added
+# to the securityName, so the agent now accepts it
+CAPTURE "snmpget -T our_identity=snmpapp2 -Dssl $FLAGS .1.3.6.1.2.1.190.1.2.1.0"
+
+CHECK ".1.3.6.1.2.1.190.1.2.1.0 = INTEGER: true"
+
+# using user 1 should now fail because the prefix has added to the
+# securityName, so the agent now accepts it
+CAPTURE "snmpget -Dssl $FLAGS .1.3.6.1.2.1.1.3.0"
+
+CHECKCOUNT 0 ".1.3.6.1.2.1.1.3.0 = Timeticks:"
+CHECK "authorizationError"
+
+CAPTURE "snmpget -v 1 -c public 127.0.0.1:9999 .1.3.6.1.2.1.190.1.2.1.0"
+
+# cleanup
+STOPAGENT
+
+FINISHED

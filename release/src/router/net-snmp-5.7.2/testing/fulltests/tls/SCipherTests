@@ -1,0 +1,62 @@
+. STlsVars
+
+# create a CA
+
+CAPTURE $NSCERT genca --cn ca-net-snmp.org  $NSCERTARGS
+CAFP=`$NSCERT showcas --fingerprint --brief ca-net-snmp.org $NSCERTARGS`
+CHECKVALUEISNT "$CAFP" "" "generated fingerprint for ca-net-snmp.org certificate"
+
+# create a server certificate using the CA certificate
+CAPTURE $NSCERT gencert -t snmpd --with-ca ca-net-snmp.org $checknametype ${checknameprefix}foobar $NSCERTARGS
+SNMPDFP=`$NSCERT showcert --fingerprint --brief snmpd $NSCERTARGS`
+
+CONFIGAGENT '[snmp]' serverCert $SNMPDFP
+
+# create a user certificate
+CAPTURE $NSCERT gencert -t snmpapp --cn 'testuser'  $NSCERTARGS
+TESTUSERFP=`$NSCERT showcerts --fingerprint --brief snmpapp $NSCERTARGS`
+CHECKVALUEISNT "$TESTUSERFP" "" "generated fingerprint for testuser certificate"
+
+CONFIGAGENT  certSecName 10  $TESTUSERFP     --cn
+CONFIGAGENT  rwuser -s tsm testuser authpriv
+
+CONFIGAPP   clientCert  	  $TESTUSERFP
+CONFIGAPP   serverCert  	  $SNMPDFP
+
+CONFIGAPP   trustCert $CAFP
+
+# specify an exact list of ciphers to accept
+CONFIGAGENT '[snmp]' tlsAlgorithms DHE-RSA-AES256-SHA:AES256-SHA:DES-CBC3-SHA
+
+FLAGS="-On $SNMP_FLAGS $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT"
+
+# start up the agent
+STARTAGENT
+
+# ensure we can access it via standard algorithms on the client side
+DOSETTEST defaultAlgs "$FLAGS"
+
+# limit the client to the same set
+CONFIGAPP tlsAlgorithms DHE-RSA-AES256-SHA:AES256-SHA:DES-CBC3-SHA
+
+# and test
+DOSETTEST specificAlgs "$FLAGS"
+
+# drop one cipher
+CONFIGAPP tlsAlgorithms DHE-RSA-AES256-SHA:AES256-SHA
+
+# and test
+DOSETTEST onlyAes256Sha "$FLAGS"
+
+# and finally ensure we can get back to working again
+CONFIGAPP tlsAlgorithms DHE-RSA-AES256-SHA:AES256-SHA
+DOSETTEST worksAgain "$FLAGS"
+
+
+########################################
+# DONE
+
+
+STOPAGENT
+
+FINISHED

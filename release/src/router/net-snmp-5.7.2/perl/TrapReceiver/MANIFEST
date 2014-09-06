@@ -1,0 +1,12 @@
+Changes
+Makefile.PL
+MANIFEST
+perl_snmptrapd.h
+ppport.h
+README
+TrapReceiver.pm
+TrapReceiver.xs
+typemap
+t/1.t
+fallback/const-c.inc
+fallback/const-xs.inc

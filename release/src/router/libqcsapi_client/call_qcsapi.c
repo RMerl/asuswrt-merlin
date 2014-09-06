@@ -188,6 +188,8 @@ static const struct
 	{ e_qcsapi_wifi_set_tx_power,		"set_tx_power" },
 	{ e_qcsapi_wifi_get_bw_power,		"get_bw_power" },
 	{ e_qcsapi_wifi_set_bw_power,		"set_bw_power" },
+	{ e_qcsapi_wifi_get_bf_power,		"get_bf_power" },
+	{ e_qcsapi_wifi_set_bf_power,		"set_bf_power" },
 	{ e_qcsapi_wifi_get_carrier_interference,		"get_carrier_db" },
 	{ e_qcsapi_wifi_get_congestion_idx,		"get_congest_idx" },
 	{ e_qcsapi_wifi_get_supported_tx_power_levels, "get_supported_tx_power" },
@@ -508,6 +510,9 @@ static const struct
 	{ e_qcsapi_wifi_set_bss_isolate,		"set_bss_isolate" },
 	{ e_qcsapi_wifi_get_bss_isolate,		"get_bss_isolate" },
 	{ e_qcsapi_wifi_get_disassoc_reason,	"get_disassoc"},
+	{ e_qcsapi_get_bb_param,	"get_bb_param" },
+	{ e_qcsapi_set_bb_param,	"set_bb_param" },
+
 	{ e_qcsapi_nosuch_api, NULL }
 };
 
@@ -3871,7 +3876,7 @@ static int
 call_qcsapi_wifi_get_list_regulatory_regions( call_qcsapi_bundle *p_calling_bundle, int argc, char *argv[] )
 {
 	int	statval = 0;
-	string_128	supported_regions;
+	string_256	supported_regions;
 	int		qcsapi_retval;
 	qcsapi_output	*print = p_calling_bundle->caller_output;
 
@@ -4521,7 +4526,7 @@ call_qcsapi_wifi_get_bw_power( call_qcsapi_bundle *p_calling_bundle, int argc, c
 	qcsapi_output *print = p_calling_bundle->caller_output;
 
 	if (argc < 1) {
-		print_err( print, "Not enough parameters in call qcsapi get TX power\n" );
+		print_err( print, "Not enough parameters in call qcsapi get_bw_power\n" );
 		print_err( print, "Usage: call_qcsapi get_bw_power <interface> <channel>\n" );
 		statval = 1;
 	}
@@ -4579,6 +4584,86 @@ call_qcsapi_wifi_set_bw_power(call_qcsapi_bundle *p_calling_bundle, int argc, ch
 
 	qcsapi_retval = qcsapi_wifi_set_bw_power(the_interface, channel,
 			power_20M, power_40M, power_80M);
+
+	if (qcsapi_retval >= 0) {
+		if (verbose_flag >= 0)
+			print_out(print, "complete\n");
+	} else {
+		report_qcsapi_error(p_calling_bundle, qcsapi_retval);
+		statval = 1;
+	}
+
+	return statval;
+}
+
+static int
+call_qcsapi_wifi_get_bf_power( call_qcsapi_bundle *p_calling_bundle, int argc, char *argv[] )
+{
+	int	statval = 0;
+	qcsapi_output *print = p_calling_bundle->caller_output;
+
+	if (argc < 2) {
+		print_err( print, "Not enough parameters in call qcsapi get_bf_power\n" );
+		print_err( print, "Usage: call_qcsapi get_bf_power <interface> <channel> <number_ss>\n" );
+		statval = 1;
+	}
+	else {
+		int qcsapi_retval;
+		const char *the_interface = p_calling_bundle->caller_interface;
+		qcsapi_unsigned_int the_channel = atoi(argv[0]);
+		int number_ss = atoi(argv[1]);
+		int power_20M = 0;
+		int power_40M = 0;
+		int power_80M = 0;
+
+		qcsapi_retval = qcsapi_wifi_get_bf_power( the_interface, the_channel,
+				number_ss, &power_20M, &power_40M, &power_80M );
+		if (qcsapi_retval >= 0) {
+			if (verbose_flag >= 0) {
+				print_out( print, " pwr_20M  pwr_40M  pwr_80M\n %7d  %7d  %7d\n",
+						power_20M, power_40M, power_80M );
+			}
+		} else {
+			report_qcsapi_error(p_calling_bundle, qcsapi_retval);
+			statval = 1;
+		}
+	}
+
+	return( statval );
+}
+
+static int
+call_qcsapi_wifi_set_bf_power(call_qcsapi_bundle *p_calling_bundle, int argc, char *argv[])
+{
+	int statval = 0;
+	qcsapi_output *print = p_calling_bundle->caller_output;
+	int qcsapi_retval;
+	const char *the_interface = p_calling_bundle->caller_interface;
+	qcsapi_unsigned_int channel;
+	int power_20M = 0;
+	int power_40M = 0;
+	int power_80M = 0;
+	int number_ss = 0;
+
+	if (argc >= 3) {
+		channel = atoi(argv[0]);
+		number_ss = atoi(argv[1]);
+		power_20M = atoi(argv[2]);
+		if (argc >= 4) {
+			power_40M = atoi(argv[3]);
+			if (argc >= 5) {
+				power_80M = atoi(argv[4]);
+			}
+		}
+	} else {
+		print_err(print, "Not enough parameters in call qcsapi set_bf_power\n");
+		print_err( print, "Usage: call_qcsapi set_bf_power <interface> <channel>"
+				" <number_ss> <power_20M> <power_40M> <power_80M>\n" );
+		return 1;
+	}
+
+	qcsapi_retval = qcsapi_wifi_set_bf_power(the_interface, channel,
+			number_ss, power_20M, power_40M, power_80M);
 
 	if (qcsapi_retval >= 0) {
 		if (verbose_flag >= 0)
@@ -15217,6 +15302,63 @@ call_qcsapi_wifi_get_disassoc_reason(call_qcsapi_bundle *call, int argc, char *a
         return rc;
 }
 
+static int
+call_qcsapi_wifi_get_bb_param( const call_qcsapi_bundle *p_calling_bundle, int argc, char *argv[] )
+{
+        int statval = 0;
+        int qcsapi_retval;
+        qcsapi_output *print = p_calling_bundle->caller_output;
+	const char              *the_interface = p_calling_bundle->caller_interface;
+	qcsapi_unsigned_int      bb_param;
+
+        qcsapi_retval = qcsapi_wifi_get_bb_param(the_interface, &bb_param);
+
+        if (qcsapi_retval >= 0) {
+                print_out(print, "%d\n", bb_param);
+        } else {
+                report_qcsapi_error(p_calling_bundle, qcsapi_retval);
+                statval = 1;
+        }
+
+        return statval;
+}
+
+static int
+call_qcsapi_wifi_set_bb_param(call_qcsapi_bundle *p_calling_bundle, int argc, char *argv[])
+{
+
+        int     statval = 0;
+        qcsapi_output *print = p_calling_bundle->caller_output;
+
+        if (argc < 1)
+        {
+                print_err( print, "Not enough parameters in call qcsapi WiFi bb_param, count is %d\n", argc );
+                statval = 1;
+        }
+        else
+        {
+                qcsapi_unsigned_int      bb_param = atoi( argv[ 0 ] );
+                int                      qcsapi_retval;
+                const char              *the_interface = p_calling_bundle->caller_interface;
+
+                qcsapi_retval = qcsapi_wifi_set_bb_param(the_interface, bb_param);
+                if (qcsapi_retval >= 0)
+                {
+                        if (bb_param >= 0)
+                        {
+                                print_out( print, "complete\n" );
+                        }
+                }
+                else
+                {
+                        report_qcsapi_error(p_calling_bundle, qcsapi_retval );
+                        statval = 1;
+                }
+        }
+
+        return( statval );
+}
+
 /* end of programs to call individual QCSAPIs */
 
 static int
@@ -15544,6 +15686,14 @@ call_particular_qcsapi( call_qcsapi_bundle *p_calling_bundle, int argc, char *ar
 
 	  case e_qcsapi_wifi_set_bw_power:
 		statval = call_qcsapi_wifi_set_bw_power( p_calling_bundle, argc, argv );
+		break;
+
+	  case e_qcsapi_wifi_get_bf_power:
+		statval = call_qcsapi_wifi_get_bf_power( p_calling_bundle, argc, argv );
+		break;
+
+	  case e_qcsapi_wifi_set_bf_power:
+		statval = call_qcsapi_wifi_set_bf_power( p_calling_bundle, argc, argv );
 		break;
 
 	  case e_qcsapi_wifi_get_carrier_interference:
@@ -16535,6 +16685,12 @@ call_particular_qcsapi( call_qcsapi_bundle *p_calling_bundle, int argc, char *ar
 		break;
 	  case e_qcsapi_wifi_get_disassoc_reason:
 		statval = call_qcsapi_wifi_get_disassoc_reason(p_calling_bundle, argc, argv);
+		break;
+	  case e_qcsapi_get_bb_param:
+                statval = call_qcsapi_wifi_get_bb_param(p_calling_bundle, argc, argv);
+                break;
+	  case e_qcsapi_set_bb_param:
+                statval = call_qcsapi_wifi_set_bb_param(p_calling_bundle, argc, argv);
 		break;
 	  default:
 		print_out( print, "no interface program (yet) for QCS API enum %d\n", p_calling_bundle->caller_qcsapi );

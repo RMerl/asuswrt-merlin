@@ -1,0 +1,83 @@
+NET-SNMP-PERIODIC-NOTIFY-MIB DEFINITIONS ::= BEGIN
+
+--
+-- Objects for periodic notifications containing data payloads
+--
+
+IMPORTS
+    netSnmpModuleIDs, netSnmpObjects, netSnmpNotifications FROM NET-SNMP-MIB
+
+    OBJECT-TYPE, NOTIFICATION-TYPE, MODULE-IDENTITY, Integer32, Unsigned32
+        FROM SNMPv2-SMI
+
+    DisplayString FROM SNMPv2-TC;
+
+
+netSnmpPeriodicNotifyMib MODULE-IDENTITY
+    LAST-UPDATED "201104200000Z"
+    ORGANIZATION "www.net-snmp.org"
+    CONTACT-INFO    
+	 "postal:   Wes Hardaker
+                    P.O. Box 382
+                    Davis CA  95617
+
+          email:    net-snmp-coders@lists.sourceforge.net"
+    DESCRIPTION
+	"Objects for periodic notifications containing data payloads"
+    REVISION     "201104200000Z"
+    DESCRIPTION
+	"First revision."
+    ::= { netSnmpModuleIDs 5 }
+
+nsPNScalars                 OBJECT IDENTIFIER ::= {netSnmpPeriodicNotifyMib 1}
+nsPNTables                  OBJECT IDENTIFIER ::= {netSnmpPeriodicNotifyMib 2}
+nsPNotifyObjects            OBJECT IDENTIFIER ::= {netSnmpPeriodicNotifyMib 3}
+nsPNotificationPrefix       OBJECT IDENTIFIER ::= {netSnmpPeriodicNotifyMib 4}
+nsPNotifications            OBJECT IDENTIFIER ::= {nsPNotificationPrefix 0}
+nsPNotificationObjects      OBJECT IDENTIFIER ::= {nsPNotificationPrefix 1}
+
+--
+-- Notification Definitions
+--
+
+nsNotifyPeriodicNotification        NOTIFICATION-TYPE
+    STATUS	current
+    DESCRIPTION
+	"Data delivery notification from a configured list of periodic
+	data sets to deliver.  See the snmpd.conf manual page for
+	details about configuring Net-SNMP agents for sending these
+	notifications out on a regular basis."
+    ::= { nsPNotifications 1 }
+
+--
+-- Objects that can be put into the notifications
+--
+
+nsPNPeriodicTime OBJECT-TYPE
+     SYNTAX      Unsigned32
+     MAX-ACCESS  accessible-for-notify
+     STATUS      current
+     DESCRIPTION
+         "The number of seconds between notifications containing this data set."
+     ::= { nsPNotifyObjects 1 }
+
+nsPNotifyMessageNumber OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Indicates this is the Nth notification in a longer sequence
+        of notifications"
+    ::= { nsPNotifyObjects 2 }
+
+nsPNotifyMaxMessageNumber OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The maximum number of messages this notification sequence
+        will contain."
+    ::= { nsPNotifyObjects 3 }
+
+
+END

@@ -1,0 +1,314 @@
+.\" Portions of this file are subject to the following copyright.  See
+.\" the Net-SNMP's COPYING file for more details and other copyrights
+.\" that may apply:
+.\" /***********************************************************
+.\" 	Copyright 1989 by Carnegie Mellon University
+.\" 
+.\"                       All Rights Reserved
+.\" 
+.\" Permission to use, copy, modify, and distribute this software and its 
+.\" documentation for any purpose and without fee is hereby granted, 
+.\" provided that the above copyright notice appear in all copies and that
+.\" both that copyright notice and this permission notice appear in 
+.\" supporting documentation, and that the name of CMU not be
+.\" used in advertising or publicity pertaining to distribution of the
+.\" software without specific, written prior permission.  
+.\" 
+.\" CMU DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
+.\" ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL
+.\" CMU BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR
+.\" ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
+.\" WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
+.\" ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
+.\" SOFTWARE.
+.\" ******************************************************************/
+.\"
+.\" Copyright (c) 1983, 1988, 1993
+.\"      The Regents of the University of California.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"	@(#)netstat.1	6.8 (Berkeley) 9/20/88
+.\"
+.\" /***********************************************************
+.\" Portions of this file are copyrighted by:
+.\" Copyright Copyright 2003 Sun Microsystems, Inc. All rights reserved.
+.\" Use is subject to license terms specified in the COPYING file
+.\" distributed with the Net-SNMP package.
+.\" ******************************************************************/
+.TH SNMPNETSTAT 1 "20 Jan 2010" VVERSIONINFO "Net-SNMP"
+.SH NAME
+snmpnetstat \- display networking status and configuration information from a network entity via SNMP
+.SH SYNOPSIS
+.B snmpnetstat
+[COMMON OPTIONS] [\-Ca] [\-Cn] AGENT
+.br
+.B snmpnetstat
+[COMMON OPTIONS] [\-Ci] [\-Co] [\-Cr] [\-Cn] [\-Cs] AGENT
+.br
+.B snmpnetstat
+[COMMON OPTIONS] [\-Ci] [\-Cn] [\-CI interface] AGENT [interval]
+.br
+.B snmpnetstat
+[COMMON OPTIONS] [\-Ca] [\-Cn] [\-Cs] [\-Cp protocol] AGENT
+.SH DESCRIPTION
+The
+.B snmpnetstat 
+command symbolically displays the values of various network-related
+information retrieved from a remote system using the SNMP protocol.
+There are a number of output formats,
+depending on the options for the information presented.
+The first form of the command displays a list of active sockets.
+The second form presents the values of other network-related
+information according to the option selected.
+Using the third form, with an 
+.I interval
+specified,
+.I snmpnetstat
+will continuously display the information regarding packet
+traffic on the configured network interfaces.
+The fourth form displays statistics about the named protocol.
+.PP
+.B snmpnetstat
+will issue GETBULK requests to query for information
+if at least protocol version
+.I v2
+is used.
+.PP
+AGENT identifies a target SNMP agent, which is
+instrumented to monitor the given objects.
+At its simplest, the AGENT specification will
+consist of a hostname or an IPv4 address. In this
+situation, the command will attempt communication
+with the agent, using UDP/IPv4 to port 161 of the
+given target host. See snmpcmd(1) for a full list of
+the possible formats for AGENT.
+.PP
+.SH OPTIONS
+The options have the following meaning:
+.PP
+.B COMMON OPTIONS
+ Please see
+.I snmpcmd(1)
+for a list of possible values for common options
+as well as their descriptions.
+.PP
+.B \-Ca
+With the default display,
+show the state of all sockets; normally sockets used by
+server processes are not shown.
+.PP
+.B \-Ci
+Show the state of all of the network interfaces.
+The  interface  display  provides  a  table  of cumulative
+statistics regarding packets transferred, errors, and collisions.
+The  network addresses of the interface and the maximum transmission 
+unit (``mtu'') are also displayed.
+.PP
+.B \-Co
+Show an abbreviated interface status, giving octets in place of packets.
+This is useful when enquiring virtual interfaces (such as Frame-Relay circuits)
+on a router.
+.PP
+.BI \-CI " interface"
+Show information only about this interface;
+used with an
+.I interval
+as described below.
+.PP
+.B \-Cn
+Show network addresses as numbers (normally 
+.I snmpnetstat
+interprets addresses and attempts to display them
+symbolically).
+This option may be used with any of the display formats.
+.PP
+.BI \-Cp " protocol"
+Show statistics about 
+.IR protocol,
+which is either a well-known name for a protocol or an alias for it.  Some
+protocol names and aliases are listed in the file 
+.IR /etc/protocols .
+A null response typically means that there are no interesting numbers to 
+report.
+The program will complain if
+.I protocol
+is unknown or if there is no statistics routine for it.
+.PP
+.B \-Cs
+Show per-protocol statistics.  When used with the
+.B \-Cr
+option, show routing statistics instead.
+.PP
+.B \-Cr
+Show the routing tables.
+When
+.B \-Cs
+is also present, show per-protocol routing statistics instead of 
+the routing tables.
+.PP
+.BI \-CR " repeaters"
+For GETBULK requests,
+.I repeaters
+specifies the max-repeaters value to use.
+.PP
+When  snmpnetstat is invoked with an interval argument, it
+displays a running count of statistics related to  network
+interfaces.
+.I interval
+is the number of seconds between
+reporting of statistics.
+.PP
+.I The Active Sockets Display (default)
+.PP
+The default display, for active sockets, shows the local
+and remote addresses, protocol, and the internal state  of
+the   protocol.    Address   formats   are   of  the  form
+``host.port'' or ``network.port'' if  a  socket's  address
+specifies  a  network  but no specific host address.  When
+known, the host and network addresses are displayed symbolically
+according   to  the  data  bases 
+.I /etc/hosts  and
+.IR /etc/networks,
+respectively.  If a symbolic  name  for  an
+address  is unknown, or if the
+.B \-Cn
+option is specified, the
+address is printed numerically, according to  the  address
+family.  For more information regarding the Internet ``dot
+format,'' refer  to
+.IR inet(3N).
+Unspecified,  or  ``wildcard'', addresses and ports appear as ``*''.
+.PP
+.I The Interface Display
+.PP
+The  interface  display  provides  a  table  of cumulative
+statistics regarding packets transferred, errors, and col-
+lisions.   The  network addresses of the interface and the
+maximum transmission unit (``mtu'') are also displayed.
+.PP
+.I The Routing Table Display
+.PP
+The routing table display indicates the  available  routes
+and  their  status.   Each route consists of a destination
+host or network and a gateway to use in  forwarding  pack-
+ets.   The flags field shows the state of the route (``U''
+if ``up''), whether the route is  to  a  gateway  (``G''),
+whether  the  route  was created dynamically by a redirect
+(``D''), and whether the route  has  been  modified  by  a
+redirect  (``M'').   Direct  routes  are  created for each
+interface attached to the local host;  the  gateway  field
+for  such entries shows the address of the outgoing inter-
+face.  The interface entry indicates the network interface
+utilized for the route.
+.PP
+.I The Interface Display with an Interval
+.PP
+When
+.I snmpnetstat
+is invoked with an
+.I interval
+argument, it
+displays a running count of statistics related to  network
+interfaces.   This  display  consists  of a column for the
+primary interface and a column summarizing information for
+all  interfaces.   The  primary  interface may be replaced
+with another interface with the
+.B \-CI
+option.  The first line
+of each screen of information contains a summary since the
+system was last rebooted.  Subsequent lines of output show
+values accumulated over the preceding interval.
+.PP
+.I The Active Sockets Display for a 
+.I Single Protocol
+.PP
+When a protocol is specified with the
+.B \-Cp
+option, the
+information displayed is similar to that in the
+default display for active sockets, except the
+display is limited to the given protocol.
+.SH EXAMPLES
+Example of using snmpnetstat to display active sockets (default):
+.PP
+% snmpnetstat \-v 2c \-c public \-Ca testhost
+.PP
+.nf
+Active Internet (tcp) Connections (including servers)
+Proto Local Address                Foreign Address                 (state)
+tcp   *.echo                        *.*                            LISTEN
+tcp   *.discard                     *.*                            LISTEN
+tcp   *.daytime                     *.*                            LISTEN
+tcp   *.chargen                     *.*                            LISTEN
+tcp   *.ftp                         *.*                            LISTEN
+tcp   *.telnet                      *.*                            LISTEN
+tcp   *.smtp                        *.*                            LISTEN
+\&...
+
+Active Internet (udp) Connections
+Proto Local Address
+udp    *.echo
+udp    *.discard
+udp    *.daytime
+udp    *.chargen
+udp    *.time
+\&...
+.fi
+.PP
+% snmpnetstat \-v 2c \-c public \-Ci testhost
+.PP
+.nf
+Name     Mtu Network    Address          Ipkts   Ierrs    Opkts Oerrs Queue
+eri0    1500 10.6.9/24  testhost     170548881  245601   687976     0    0
+lo0     8232 127        localhost      7530982       0  7530982     0    0
+.fi
+.PP
+Example of using snmpnetstat to show statistics about a specific protocol:
+.PP
+.nf
+% snmpnetstat \-v 2c \-c public \-Cp tcp testhost
+
+Active Internet (tcp) Connections
+Proto Local Address                Foreign Address                 (state)
+tcp   *.echo                        *.*                            LISTEN
+tcp   *.discard                     *.*                            LISTEN
+tcp   *.daytime                     *.*                            LISTEN
+tcp   *.chargen                     *.*                            LISTEN
+tcp   *.ftp                         *.*                            LISTEN
+tcp   *.telnet                      *.*                            LISTEN
+tcp   *.smtp                        *.*                            LISTEN
+\&...
+.fi
+.SH SEE ALSO
+snmpcmd(1),
+iostat(1),
+vmstat(1),
+hosts(5),
+networks(5),
+protocols(5),
+services(5).
+.SH BUGS
+The notion of errors is ill-defined.

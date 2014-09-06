@@ -1,0 +1,46 @@
+#!/bin/sh
+
+SKIPIFNOT NETSNMP_SECMOD_USM
+
+[ "x$SNMP_SMUX_SOCKET" = "x" ] && SNMP_SMUX_SOCKET=1.0.0.0
+
+CONFIGAGENT [snmp] persistentdir $SNMP_TMP_PERSISTENTDIR
+CONFIGAGENT smuxsocket $SNMP_SMUX_SOCKET
+
+# XXX: auto-switch to a supported protocol instead.
+if test "x$DEFAUTHTYPE" = "x"; then
+    if grep '^#define NETSNMP_USE_OPENSSL 1' $SNMP_UPDIR/include/net-snmp/net-snmp-config.h $SNMP_UPDIR/include/net-snmp/agent/mib_module_config.h > /dev/null ; then
+	DEFAUTHTYPE="SHA"
+    else
+	    DEFAUTHTYPE="MD5"
+    fi
+fi
+
+if test "x$DEFPRIVTYPE" = "x"; then
+  # XXX: HAVE_AES depends on cpp logic, so we need to test for lower-level stuff
+  if grep '^#define NETSNMP_USE_OPENSSL 1' $SNMP_UPDIR/include/net-snmp/net-snmp-config.h $SNMP_UPDIR/include/net-snmp/agent/mib_module_config.h > /dev/null ; then
+    if grep '^#define HAVE_OPENSSL_AES_H 1' $SNMP_UPDIR/include/net-snmp/net-snmp-config.h $SNMP_UPDIR/include/net-snmp/agent/mib_module_config.h > /dev/null ; then
+      if grep '^#define HAVE_AES_CFB128_ENCRYPT 1' $SNMP_UPDIR/include/net-snmp/net-snmp-config.h $SNMP_UPDIR/include/net-snmp/agent/mib_module_config.h > /dev/null ; then
+        DEFPRIVTYPE="AES"
+      else
+        DEFPRIVTYPE="DES"
+      fi
+    else
+      DEFPRIVTYPE="DES"
+    fi
+  else
+    DEFPRIVTYPE=""
+  fi
+fi
+
+CONFIGAGENT createUser initial $DEFAUTHTYPE initial_test_pass_auth $DEFPRIVTYPE
+CONFIGAGENT createUser template $DEFAUTHTYPE template_test_pass_auth $DEFPRIVTYPE
+CONFIGAGENT rwuser initial noauth
+CONFIGAGENT rwuser newtestuser
+
+NOAUTHTESTARGS="-l nanp -u initial -v 3"
+AUTHTESTARGS="-l anp -u initial -v 3 -a $DEFAUTHTYPE -A initial_test_pass_auth"
+PRIVTESTARGS="-l ap -u initial -v 3 -a $DEFAUTHTYPE -A initial_test_pass_auth -x $DEFPRIVTYPE -X initial_test_pass_auth"
+
+AUTHNOPASSTESTARGS="-l anp -u initial -v 3 -a $DEFAUTHTYPE"
+PRIVNOPASSTESTARGS="-l ap -u initial -v 3 -a $DEFAUTHTYPE -x $DEFPRIVTYPE"

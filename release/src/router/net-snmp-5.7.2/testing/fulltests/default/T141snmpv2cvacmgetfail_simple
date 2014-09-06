@@ -1,0 +1,48 @@
+#!/bin/sh
+
+. ../support/simple_eval_tools.sh
+
+HEADER SNMPv2 vacm denial support
+
+SKIPIF NETSNMP_DISABLE_SNMPV2C
+SKIPIF NETSNMP_DISABLE_SET_SUPPORT
+SKIPIF NETSNMP_NO_WRITE_SUPPORT
+SKIPIFNOT USING_MIBII_VACM_CONF_MODULE
+
+#
+# Begin test
+#
+
+
+# standard V1 configuration: testcommunity1 testcommunity2
+# testcommunity1 can access .1.3.6.1.2.1.1.1, others are denied
+# testcommunity2 can access all except .1.3.6.1.2.1.1.1
+# This case test for denied access
+
+snmp_version=v2c
+. ./Svacmconfig
+
+STARTAGENT
+
+
+CAPTURE "snmpget -On $SNMP_FLAGS -c testcommunity1 -v 2c $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT .1.3.6.1.2.1.1.3.0"
+CHECKORDIE ".1.3.6.1.2.1.1.3.0 = No Such Object available on this agent at this OID"
+
+CAPTURE "snmpget -On $SNMP_FLAGS -c testcommunity2 -v 2c $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT .1.3.6.1.2.1.1.1.0"
+CHECKORDIE ".1.3.6.1.2.1.1.1.0 = No Such Object available on this agent at this OID"
+
+CAPTURE "snmpset -On $SNMP_FLAGS -c testcommunity1 -v 2c $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT .1.3.6.1.2.1.1.5.0 s dummy"
+CHECKORDIE "Reason: noAccess"
+
+CAPTURE "snmpset -On $SNMP_FLAGS -c testcommunity2 -v 2c $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT .1.3.6.1.2.1.1.5.0 s dummy"
+CHECKORDIE "Reason: noAccess"
+
+CAPTURE "snmpset -On $SNMP_FLAGS -c testrwcommunity -v 2c $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT .1.3.6.1.2.1.1.5.0 s dummy"
+CHECKORDIE ".1.3.6.1.2.1.1.5.0 = STRING: \"*dummy"
+
+CAPTURE "snmpset -On $SNMP_FLAGS -c testrocommunity -v 2c $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT .1.3.6.1.2.1.1.5.0 s dummy"
+CHECKORDIE "Reason: noAccess"
+
+STOPAGENT
+
+FINISHED

@@ -114,6 +114,7 @@ function showInstallJAVAUI(){
 }
 
 $("document").ready(function() {
+	var vars = getUrlVars();
 	var loc_lan = String(window.navigator.userLanguage || window.navigator.language).toLowerCase();		
 	var lan = ( g_storage.get('lan') == undefined ) ? loc_lan : g_storage.get('lan');
 	m.setLanguage(lan);
@@ -138,16 +139,16 @@ $("document").ready(function() {
 		return;
 	}
 
-	if(getUrlVars()["p"]){
-		storage_key_map["port"] = getUrlVars()["p"];
+	if(vars["p"]){
+		storage_key_map["port"] = vars["p"];
 	}
 	
-	if(getUrlVars()["a"]){
-		storage_key_map["agent"] = getUrlVars()["a"];
+	if(vars["a"]){
+		storage_key_map["agent"] = vars["a"];
 	}
 	
-	if(getUrlVars()["u"]){
-		g_open_url = getUrlVars()["u"];
+	if(vars["u"]){
+		g_open_url = vars["u"];
 	}
 	
 	var media_hostName = window.location.host;
@@ -164,7 +165,7 @@ $("document").ready(function() {
 	applet_html += '</applet>';
 	$(applet_html).appendTo($("#save"));
 	
-	this_url = getUrlVars()["v"];
+	this_url = vars["v"];
 	
 	var select_folder = this_url.split(";");
 	
@@ -341,17 +342,6 @@ function recursiove_propfind(open_url){
 function doCancel(e) {
 	parent.closeJqmWindow(0);
 };
-
-function getUrlVars(){
-	var vars = [], hash;
-  var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
-  for(var i = 0; i < hashes.length; i++){
-  	hash = hashes[i].split('=');
-    vars.push(hash[0]);
-    vars[hash[0]] = hash[1];
-  }
-  return vars;
-}
 
 function get_user_agent(){
    return g_storage.get(storage_key_map["agent"]);

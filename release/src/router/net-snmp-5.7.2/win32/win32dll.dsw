@@ -1,0 +1,374 @@
+Microsoft Developer Studio Workspace File, Format Version 6.00
+# WARNING: DO NOT EDIT OR DELETE THIS WORKSPACE FILE!
+
+###############################################################################
+
+Project: "encode_keychange"=".\encode_keychange\encode_keychange.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libsnmp_dll
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "libagent"=".\libagent\libagent.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libsnmp_dll
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "libnetsnmptrapd"=".\libnetsnmptrapd\libnetsnmptrapd.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libsnmp_dll
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "libsnmp_dll"=".\libsnmp_dll\libsnmp_dll.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "netsnmpmibs"=".\netsnmpmibs\netsnmpmibs.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libsnmp_dll
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "snmpbulkget"=".\snmpbulkget\snmpbulkget.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libsnmp_dll
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "snmpbulkwalk"=".\snmpbulkwalk\snmpbulkwalk.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libsnmp_dll
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "snmpd"=".\snmpd\snmpd.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libagent
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name netsnmpmibs
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libsnmp_dll
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "snmpdelta"=".\snmpdelta\snmpdelta.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libsnmp_dll
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "snmpdf"=".\snmpdf\snmpdf.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libsnmp_dll
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "snmpget"=".\snmpget\snmpget.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libsnmp_dll
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "snmpgetnext"=".\snmpgetnext\snmpgetnext.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libsnmp_dll
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "snmpnetstat"=".\snmpnetstat\snmpnetstat.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libsnmp_dll
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "snmpset"=".\snmpset\snmpset.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libsnmp_dll
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "snmpstatus"=".\snmpstatus\snmpstatus.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libsnmp_dll
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "snmptable"=".\snmptable\snmptable.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libsnmp_dll
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "snmptest"=".\snmptest\snmptest.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libsnmp_dll
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "snmptranslate"=".\snmptranslate\snmptranslate.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libsnmp_dll
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "snmptrap"=".\snmptrap\snmptrap.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libsnmp_dll
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "snmptrapd"=".\snmptrapd\snmptrapd.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libagent
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libnetsnmptrapd
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name netsnmpmibs
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libsnmp_dll
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "snmpusm"=".\snmpusm\snmpusm.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libsnmp_dll
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "snmpvacm"=".\snmpvacm\snmpvacm.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libsnmp_dll
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "snmpwalk"=".\snmpwalk\snmpwalk.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libsnmp_dll
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Global:
+
+Package=<5>
+{{{
+}}}
+
+Package=<3>
+{{{
+}}}
+
+###############################################################################
+

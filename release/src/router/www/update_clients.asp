@@ -1,5 +1,4 @@
-
-originDataTmp = originData;
+﻿originDataTmp = originData;
 originData = {
 	customList: decodeURIComponent('<% nvram_char_to_ascii("", "custom_clientlist"); %>').replace(/&#62/g, ">").replace(/&#60/g, "<").split('<'),
 	asusDevice: decodeURIComponent('<% nvram_char_to_ascii("", "asus_device_list"); %>').replace(/&#62/g, ">").replace(/&#60/g, "<").split('<'),
@@ -10,4 +9,5 @@ originData = {
 	wlList_5g: [<% wl_sta_list_5g(); %>],
 	qosRuleList: decodeURIComponent('<% nvram_char_to_ascii("", "qos_rulelist"); %>').replace(/&#62/g, ">").replace(/&#60/g, "<").split('<')
 }
-mapscanning = <% nvram_get("networkmap_status"); %>;
+networkmap_fullscan = '<% nvram_get("networkmap_fullscan"); %>';
+if(networkmap_fullscan == 1) genClientList();

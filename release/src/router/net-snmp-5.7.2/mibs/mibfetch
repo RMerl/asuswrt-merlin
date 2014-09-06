@@ -1,0 +1,51 @@
+#!/bin/sh
+
+# Usage: mibfetch [ -d outdir ] host directory rfc [mibs]
+#
+# If "rfc" contains a "." it is expected to be a complete file name,
+# otherwise it is assumed to be just the rfc number.
+# If "mibs" is specified, it is a ":" separated list of mibs to extract,
+# otherwise all mibs are extracted.
+#
+# The script fetches the file from the givn directory on the given
+# host, and then runs the file through smistrip to extract the mibs.
+
+exact=0
+verbose=
+
+while getopts xvd: c
+do
+    case $c in
+    d)	mdir="-d $OPTARG"
+    	;;
+    x)	exact=1
+    	;;
+    v)	verbose=-v
+    	;;
+    \?)	exit 2
+    	;;
+    esac
+done
+
+shift `expr $OPTIND - 1`
+
+set -e
+
+host=$1
+dir=$2
+rfc=$3
+
+if [ $exact = 0 -a `echo $rfc | sed 's/\.//'` = $rfc ]; then
+  file=rfc$rfc.txt
+else
+  file=$rfc
+fi
+
+if [ -n "$4" ]; then
+  mibs="-m $4"
+fi
+
+# ncftpget -FV ftp://$host/$dir/$file
+wget -O - -q -nv $host/$dir/$file | \
+	tr -d \\r | \
+	./smistrip $verbose -x .txt $mdir $mibs -

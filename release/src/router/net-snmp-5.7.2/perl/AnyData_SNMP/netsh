@@ -1,0 +1,838 @@
+#!/usr/bin/perl
+
+use Getopt::Std;
+
+use DBI;
+use Term::ReadLine;
+use SNMP;
+use AutoLoader;
+use IO::File;
+
+BEGIN {
+    $opts{'t'} = ! eval { require Text::FormatTable; };
+    $ansicolor = eval { require Term::ANSIColor; };
+}
+
+# override some of the functions to force our colorized semantics.
+# This is really ugly, but if you pass colorized strings directly to
+# Text::FormatTable then it calculates the string lengths incorrectly.
+# Children: don't try this at home.  We're trained professionals.
+if ($colorize) {
+   eval {
+        #
+	# colorized strings.
+	#
+	package color_string;
+
+	require Term::ANSIColor;
+
+	use overload
+	    '""' => \&string_it
+	;
+
+	sub string_it {
+	    if ($_[0][3]) {
+		if ($_[0][3] == 1) {
+		    return color_it();
+		} else {
+		    $_[0][3] -= 1;
+		    return $_[0][1];
+		}
+	    }
+	    return $_[0][1];
+	}
+
+        sub colorize_next {
+	    $_[0][3] = 2;
+	}
+
+	sub color_it {
+	    my $str = $_[1] || $_[0][1];
+	    return $_[0][0] . $str . $_[0][2];
+	}
+
+	sub new {
+	    my $this = [Term::ANSIColor::color($_[2]), $_[1],
+		      Term::ANSIColor::color('reset')];
+	    return bless($this, $_[0]);
+	}
+    }
+}
+
+if ($opts{'t'} == 0 && $colorize) {
+    eval {
+	package Text::FormatTable;
+
+	sub _l_box($$)
+	{
+	    my ($width, $text) = @_;
+	    my $lines = _wrap($width, $text);
+	    map { 
+		if (ref($text) eq "color_string") {
+		    $_ .= $text->color_it($_) . ' 'x($width-length($_));
+		} else {
+		    $_ .= ' 'x($width-length($_));
+		} 
+	    } @$lines;
+	    return $lines;
+	}
+
+	sub _r_box($$)
+	{
+	    my ($width, $text) = @_;
+	    my $lines = _wrap($width, $text);
+	    map { 
+		if (ref($text) eq "color_string") {
+		    $_ = ' 'x($width-length($_)) . $text->color_it($_);
+		} else {
+		    $_ = ' 'x($width-length($_)) . $_;
+		} 
+	    } @$lines;
+	    return $lines;
+	}
+
+    }
+}
+
+if (!$ansicolor) {
+    $begin = $end = "*";
+}
+
+$SNMP::use_enums=1;
+
+
+#defaults
+$opts{'d'} = "\t";
+$opts{'v'} = 1;
+$opts{'l'} = 'authNoPriv';
+$params = "";
+
+getopts('hd:tR:u:l:v:a:A:x:X:p:c:t:r:',\%opts);
+
+usage() if ($#ARGV == -1 || $opts{'h'});
+
+my %parammap = {
+    'v' => 'Version',
+    'u' => 'SecName',
+    'a' => 'AuthProto',
+    'A' => 'AuthPass',
+    'x' => 'PrivProto',
+    'X' => 'PrivPass',
+    'p' => 'RemotePort',
+    't' => 'Timeout',
+    'r' => 'Retries',
+    'c' => 'Community',
+    'l' => 'SecLevel'
+    };
+
+foreach my $x (keys(%opts)) {
+    if ($parammap{$x}) {
+	$params .= ";ad_SNMP_$parammap{$x}=$x";
+    }
+    push @sessparams,$parammap{$x},$x;
+}
+
+my $host = shift @ARGV;
+$params .= ";ad_SNMP_DestHost=" . $host;
+push @sessparms,'DestHost', $host;
+
+# connect to the DBI interface
+$AnyData::Storage::SNMP::debugre = $opts{'R'} if ($opts{'R'});
+($dbh = DBI->connect("dbi:AnyData:ad_default=SNMP$params"))
+    || die "\tConnection problem: $DBI::errstr\n";
+$AnyData::Storage::SNMP::debugre = $opts{'R'} if ($opts{'R'});
+
+$prompt = "netsh> ";
+
+load_rcs();
+
+# setup terminal prompter
+$ENV{'PERL_RL'}='o=0' if (!exists($ENV{'PERL_RL'}));
+# the ornaments are too ugly
+$term = new Term::ReadLine 'netsh';
+
+if ($#ARGV >= 0) {
+    # command line command
+    netsh(join(" ",@ARGV));
+} else {
+    # interactive shell
+    while($cmd = $term->readline($prompt)) {
+	last if ($cmd eq "exit" || $cmd eq "quit" || $cmd eq "q");
+	netsh($cmd, \%conf);
+    }
+}
+
+# load all configuration files we can find.
+sub load_rcs {
+    if (-f "$ENV{'HOME'}/.snmp/netshrc") {
+	source_file("$ENV{'HOME'}/.snmp/netshrc");
+    }
+    if (-d "$ENV{'HOME'}/.snmp/netsh") {
+	foreach my $i (glob("$ENV{'HOME'}/.snmp/netsh/*")) {
+	    if (-f "$i" && "$i" !~ /.*(~|.bak)$/) {
+		source_file("$i");
+	    }
+	}
+    }
+}
+
+# command definition for sourcing a particular file
+sub source_file {
+    my $fh = new IO::File;
+    if ($fh->open("<$_[0]")) {
+	while(<$fh>) {
+	    if (s/<<\s*(\w+)$//) {
+		my $stopat = $1;
+		my $lines = $_;
+		while(<$fh>) {
+		    last if (/$stopat/);
+		    $lines .= $_;
+		}
+		$_ = $lines;
+	    }
+	    netsh($_);
+	}
+    } else {
+	print STDERR "no such file: $_[0]\n";
+    }
+}
+
+# export data into an external file
+sub my_export {
+    shift;
+    if (!$insh) {
+	my $cmd = "create table exporttable (" . join (" varchar(255), ",@{$sth->{NAME}}) . " varchar(255))";
+	$exporth->do($cmd);
+	$cmd = "insert into exporttable values(" . ('?, ' x ($#_)) . "?)";
+	$insh = $exporth->prepare($cmd);
+    }
+    $insh->execute(@_);
+}
+
+# the main processing function.
+sub netsh {
+    my $stmt = shift;
+    chomp($stmt);      # remove trailing white space
+    $stmt =~ s/^\s+//; # remove leading white space
+    $stmt =~ s/;*$//;  # get rid of trailing semicolons
+    return if ($stmt =~ /^\s*$/);
+    return if ($stmt =~ /^\s*\#/);
+    my ($name, $args) = ($stmt =~ /^(\w+)\s*(.*)$/);
+
+    #define alias
+#    print "doing [$multi_alias]: $stmt\n";
+    if ($name eq "alias" || $multi_alias) {
+	if ($multi_alias) {
+	    if ($stmt =~ /^prompt\s+(\d+)\s+[\"\'](.+)[\"\']/) {
+		$aliases{$current_alias}{'prompts'}[$1] = $2;
+		return;
+	    } elsif ($stmt =~ /^prompt\s+(\d+)\s+(.+)/) {
+		my $x = $2;
+		my $spot = $1;
+		$x =~ s/\s+$//;
+		$aliases{$current_alias}{'prompts'}[$spot] = "$x ";
+		return;
+	    } elsif ($stmt =~ /^\s*\}\s*$/) {
+		$prompt = $oprompt;
+		$multi_alias = 0;
+		return;
+	    }
+	    push @{$aliases{$current_alias}{'definition'}},$stmt;
+	    return;
+	}
+	$stmt =~ s/^alias\s+//;
+	if ($args eq "") {
+	    foreach $i (sort keys(%aliases)) {
+		display_alias($i);
+	    }
+	    return;
+	}
+	($name, $args) = ($stmt =~ /^(\w+)\s*(.*)$/);
+	if ($args eq "") {
+	    display_alias($name);
+	    return;
+	}
+#	print "alias: $name $args\n";
+	if ($args eq "{") {
+	    $oprompt = $prompt;
+	    $prompt = "define $name> ";
+	    $current_alias = $name;
+	    $multi_alias = 1;
+	    $aliases{$name}{'definition'} = [];
+	    return;
+	}
+	$aliases{$name}{'definition'} = $args;
+	return;
+    }
+
+    #eval
+    if ($name eq "eval") {
+	eval $args;
+	return;
+    }
+
+    #eval just vars
+    if ($name eq "evalvars") {
+#	print "args1:",$args,"\n";
+	$args =~ s/\$(\w+)/$$1/eg;
+#	print "args2:",$args,"\n";
+	netsh($args);
+	return;
+    }
+
+    #eval aliases
+    while (exists $aliases{$name}) {
+#	print "modified: $stmt -> ";
+	my @ARGS = split(/\s+/,$args);
+	my $statements;
+	if (ref($aliases{$name}{'definition'}) eq "ARRAY") {
+	    $statements = $aliases{$name}{'definition'};
+
+	    # maybe prompt for values
+	    if ($#{$aliases{$name}{'prompts'}} > -1) {
+		my $i;
+		for($i = 1; $i <= $#{$aliases{$name}{'prompts'}}; $i++) {
+		    if (!$ARGS[$i-1] && $term) {
+			$ARGS[$i-1] = 
+			    $term->readline($aliases{$name}{'prompts'}[$i]);
+		    }
+		}
+	    }
+	} else {
+	    $statements = [$aliases{$name}{'definition'}];
+	}
+	foreach my $stmt (@$statements) {
+	    #print "$stmt -> ";
+	    $stmt =~ s/\\(\d+)/$ARGS[$1-1]/g;
+#	    print "running $stmt\n";
+	    ($name, $args) = ($stmt =~ /^(\w+)\s*(.*)$/);
+	    netsh($stmt);
+	}
+	return;
+    }
+
+    if ($stmt =~ /^rehash$/) {
+	load_rcs();
+	return;
+    }
+
+    my $subfn;
+
+    if ($stmt =~ /^eval (.*)/) {
+	eval $1;
+    }
+
+    if ($stmt =~ s/^printf\s+(\".*\")\s*(.*)/$2/) {
+	if ($2 eq "") {
+	    print eval $1;
+	    return;
+	}
+	$subfn = \&my_printf;
+	$stmt = $2;
+	$printfmt = $1;
+    }
+
+    # special show columns statement
+    if ($stmt =~ /^show columns from (\w+)$/) {
+	my $mibnode = $SNMP::MIB{$1};
+	my $entrynode = $mibnode->{children}[0];
+	if (!defined($mibnode) || !defined($entrynode)) {
+	    print STDERR "no such table: $1\n";
+	    return;
+	}
+	if ($opts{'t'}) {
+	    map { print $_->{label},"\n"; } sort { $a->{subID} <=> $b->{subID}} @{$entrynode->{children}};
+	} else {
+	    $table = Text::FormatTable->new('|r|');
+	    $table->rule('-');
+	    $table->head('Column');
+	    $table->rule('-');
+	    map { $table->row($_->{label}); } sort { $a->{subID} <=> $b->{subID}} @{$entrynode->{children}};
+	    $table->rule('-');
+	    print $table->render();
+	}
+	return;
+    }
+
+    if ($stmt =~ /^source\s+(.*)/) {
+	source_file($1);
+	return;
+    }
+
+    if ($stmt =~ s/^export\s+(\S+)\s+(.*)/$2/) {
+	$insh = undef;
+	unlink($1);
+	$exporth = DBI->connect('dbi:AnyData:');
+	$exporth->func('exporttable','CSV',$1,'ad_catalog');
+	$subfn = \&my_export;
+    }
+
+    if ($stmt =~ /^import\s+(\S+)/) {
+	my $exporth = DBI->connect('dbi:AnyData:');
+	$exporth->func('exporttable','CSV',$1,'ad_catalog');
+	my $selh = $exporth->prepare("select * from exporttable");
+	$selh->execute();
+	$old_data = [];
+	while(my $row = $selh->fetchrow_arrayref) {
+	    push @$old_data, @$row;
+	}
+	$selh->finish();
+	$exporth->disconnect();
+	return;
+    }
+    
+    if ($stmt =~ /^diff\s+(.*)/) {
+	$running_watch = 2;
+	netsh($1);
+	$running_watch = 0;
+	return;
+    }
+
+    if ($stmt =~ /^watch\s+(.*)/) {
+	$running_watch = 1;
+	my $cmd = $1;
+	my $delay = 1;
+	my $clear = `clear`;
+	if ($cmd =~ s/^(\d+)\s+(.*)/$2/) {
+	    $delay = $1;
+	    $cmd = $2;
+	}
+	$SIG{'TERM'} = sub { $running_watch = 0; };
+	$SIG{'INT'} = sub { $running_watch = 0; };
+	while($running_watch) {
+	    print $clear;
+	    netsh($cmd);
+	    sleep($delay);
+	}
+	$SIG{'TERM'} = \&exit;
+	$SIG{'INT'} = \&exit;
+	return;
+    }
+
+    # we have an SQL statement.  process it.
+    if ($stmt =~ /^(select|insert|update|delete)/) {
+	$sth = $dbh->prepare($stmt);
+	$sth->execute();
+	if ($stmt =~ /^select/) {
+	    my $table;
+	    my $older_data = $old_data;
+	    if ($running_watch == 1) {
+		$old_data = [];
+	    }
+	    my $oldcount = 0;
+	    while($row = $sth->fetchrow_arrayref) {
+		
+		if ($running_watch) {
+		    $newrow=[];
+		    my $count;
+		    for($count = 0; $count <= $#$row; $count++) {
+			if ($older_data &&
+			    $row->[$count] ne
+			    $older_data->[$oldcount][$count]) {
+			    if ($ansicolor) {
+				push @$newrow, new color_string($row->[$count],'red');
+			    } else {
+				push @$newrow,"$begin$row->[$count]$end";
+			    }
+			} else {
+			    push @$newrow,$row->[$count];
+			}
+			if ($running_watch == 1) {
+			    $old_data->[$oldcount][$count] = $row->[$count];
+			}
+		    }
+		    $oldcount++;
+		    $row = $newrow;
+ 		}
+
+		# self printing;
+		if (ref($subfn) eq "CODE") {
+		    &$subfn($printfmt,@$row);
+		    next;
+		}
+
+		if ($opts{'t'}) {
+		    if ($opts{'d'} eq 'xml') {
+			print "  <row>\n";
+			for(my $xx = 0; $xx < $#{$sth->{NAME}}; $xx++) {
+			    print "    <$sth->{NAME}[$xx]>$row->[$xx]</$sth->{NAME}[$xx]>\n";
+			}
+			print "  </row>\n";
+		    } elsif ($opts{'d'} eq 'xmlshort') {
+			print "  <row ";
+			for(my $xx = 0; $xx < $#{$sth->{NAME}}; $xx++) {
+			    print " $sth->{NAME}[$xx]=\"$row->[$xx]\"";
+			}
+			print "/>\n";
+		    } else {
+			print join($opts{'d'},@$row),"\n";
+		    }
+		} elsif (!$table) {
+		    $table = Text::FormatTable->new('|r' x ($#$row+1) . "|");
+		    $table->rule('-');
+		    $table->head(@{$sth->{NAME}});
+		    $table->rule('-');
+		    $table->row(@$row);
+		} else {
+		    $table->row(@$row);
+		}
+	    }
+	    if ($table) {
+		$table->rule('-');
+		print $table->render();
+	    }
+	}
+	$sth->finish();
+	return;
+    }
+
+    # retrieve just one variable and display it
+    if ($stmt =~ /^(get|)\s*([^\s]+)\s*[^=]/) {
+	my $sess = make_session();
+	if ($sess) {
+	    my @results = split(/[,\s]+/,$stmt);
+	    my $resultsv = new SNMP::VarList();
+	    # expression stolen from the main perl SNMP module
+	    map {  my ($tag, $iid) = 
+		       (/^((?:\.\d+)+|(?:\w+(?:\-*\w+)+))\.?(.*)$/);
+		   push @$resultsv, [$tag, $iid] } @results;
+	    $sess->get($resultsv)  || 
+		print STDERR "Error: $sess->{ErrorNum} $sess->{ErrString}\n";
+  	    @results = ();
+	    map { push @results, $_->[2] } @$resultsv;
+	    if (ref($subfn) eq "CODE") {
+		&$subfn($printfmt,@results);
+	    } else {
+		print join(" ", @results),"\n";
+	    }
+	} else {
+	    print STDERR "could not establish a SNMP session to $host\n";
+	}
+	return;
+    }
+
+    # set something
+    if ($stmt =~ /^(set|)\s*([^\s]+)\s=\s(.*)$/) {
+	my $sess = make_session();
+	if ($sess) {
+	    $sess->set([$2,undef,$1]) || 
+		print STDERR "opps: $sess->{ErrorNum} $sess->{ErrString}\n";
+	} else {
+	    print STDERR "could not establish a SNMP session to $host\n";
+	}
+	return;
+    }
+}
+
+sub auto_snmp {
+    my $node = $SNMP::MIB{$_[0]};
+#    print STDERR "netsh::fetch_snmp $_[0] $node->{label}\n";
+    my $indexes = $node->{parent}{indexes};
+    if ($#$indexes > -1) {
+#	print STDERR "column\n";
+	# table 
+    } else {
+	# scalar
+	if (exists($_[1])) {
+	    my $sess = make_session();
+	    my $val = $sess->set([$_[0],0,$_[1]]) || return;
+#	    print STDERR "scalar set: $val\n";
+	    return $val;
+	} else {
+	    my $sess = make_session();
+	    my $val = $sess->get([$_[0],0]);
+#	    print STDERR "scalar get: $val\n";
+	    return $val;
+	}
+    }
+}
+
+sub AUTOLOAD {
+    my $nodename = $AUTOLOAD;
+    $nodename =~ s/.*:://;
+    print STDERR "netsh::AUTOLOAD $AUTOLOAD $nodename\n";
+    if ($SNMP::MIB{$nodename}) {
+	eval << "END";
+        sub $AUTOLOAD {
+	    auto_snmp($nodename, \@_);
+	}
+END
+	goto &$AUTOLOAD;
+    }
+    print STDERR join(",",@_),"\n";
+}
+
+sub my_printf {
+    # drop quotes
+    my $fmt = shift;
+    $fmt = eval $fmt;
+    map { if (ref($_) eq "color_string") { $_->colorize_next(); } } @_;
+    printf($fmt, @_);
+}
+
+sub display_alias {
+    my $name = shift;
+    if (exists $aliases{$name}{'definition'}) {
+	if (ref($aliases{$name}{'definition'}) eq "ARRAY") {
+	    print "alias $name {\n";
+	    map { print "  $_\n"; } @{$aliases{$name}{'definition'}};
+	    print "}\n";
+	} else {
+	    print "alias $name $aliases{$name}{'definition'}\n";
+	}
+    } else {
+	print "no alias defined for \"$name\"\n";
+    }
+}
+
+sub make_session {
+    if (!$sess) {
+	$sess = new SNMP::Session(@sessparms);
+    }
+    return $sess;
+}
+
+
+sub usage {
+    print STDERR "
+$0 [ARGUMENTS] HOSTNAME [SQL_COMMAND] 
+
+  $0 implements a simple SQL shell which maps onto SNMP.  All
+  statements issued within the shell are converted to SNMP requests and
+  sent to HOSTNAME and the results displayed in a nice table output
+  format if the Text::FormatTable module is available.  If SQL_COMMAND
+  is given on the command line, then it's interpreted and control is
+  returned to the caller.  If not, an interactive prompt is given where
+  multiple commands can be issued.
+
+ARGUMENTS may include:
+
+  -t         delimiter separated output, don't print pretty tables.
+  -d DELIM   use DELIM as the delimiter.  A tab is the default delimiter.
+             'xml' is a special delimiter to produce xml output.
+
+ARGUMENTS also may include the following.  See the net-snmp snmpcmd
+manual page for details on what they mean:
+
+  -v VERSION        (default: 1)
+  -t TIMEOUT
+  -r RETRIES
+  -p PORT
+  -c COMMUNITY
+  -a AUTHPROTOCOL   (default: MD5)
+  -x PRIVPROTOCOL   (default: DES)
+  -A AUTHPASS
+  -X PRIVPASS
+  -l SECURITY_LEVEL (default: authNoPriv)
+  
+";
+    exit;
+}
+
+__END__
+
+=head1 NAME
+
+netsh - A shell environment for interacting with networking devices
+
+=head1 SYNOPSIS
+
+netsh [(subset of) snmpcmd arguments] hostname[,hostname...] [command]
+
+=head1 OPTIONAL PERL MODULES
+
+There are some optional perl modules which make using the shell nicer
+in general.  These modules are:
+
+  Text::FormatTable
+  Term::ReadLine::Gnu or Term::ReadLine::Perl
+  Term::ANSIColor
+
+You can install these by running [as root]:
+
+  perl -MCPAN -e shell
+  cpan> install Text::FormatTable
+  ...
+
+It is B<strongly> recommend you at least install the Text::FormatTable
+module, and if you like command line editing one of the two extra
+Term::ReadLine modules (Gnu being the better of the two).
+
+=head1 DESCRIPTION
+
+The netsh script provides an interactive, console-like environment
+suitable for monitoring and manipulating data within networking
+devices.  The environment is highly extensible through command
+aliases and easy-to-use SQL-like queries.
+
+It is implemented on top of the SNMP protocol using the net-snmp
+package and perl.  See the snmpcmd and snmp.conf manual pages for
+details on configuring net-snmp for authentication information for
+the networking devices you wish to access.
+
+=head1 ABOUT THE EXAMLPES IN THIS DOCUMENT
+
+All the examples in this document are exact cut-n-pastes from the
+inside of the netsh shell.  This includes the "netsh> " prompt and
+possibly other prompts as well.
+
+=head1 COMMANDS
+
+The following is a list of the basic core commands supported by
+netsh.  Many default aliases are also supplied, some of which are
+listed in the next section.  At the command prompt type "alias" for
+a full list of all the aliases and their definitions.
+
+=over
+
+=item show columns from TABLE
+
+=item select ... 
+
+=item update ...
+
+=item insert ...
+
+=item delete ...
+
+netsh supports the standard sql-like language queries of snmp tables.
+These are implemented via the SQL::Statement parser, so any form of
+expression it accepts netsh will accept as well.
+
+Examples:
+
+  netsh> show columns from ifTable
+  +-----------------+
+  |           Column|
+  +-----------------+
+  |          ifIndex|
+  ...
+  netsh> select * from ifTable
+  ... [output not shown]
+  netsh> select tcpConnState, tcpConnRemotelAddress from tcpConnTable where tcpConnState = established
+  ... [output not shown]
+  netsh> update ifTable set ifAdminStatus = up where ifOperStatus = down
+  ... [output not shown]
+
+=item SNMPOBJECT
+
+Simple lists of objects may be given which will directly request or
+operate on those objects.  See printf below for controlling the
+formatting of results
+
+Examples:
+
+  netsh> sysContact.0, sysLocation.0
+  hardaker@somewhere.net my location
+  netsh> sysContact.0 = my new contact information
+
+=item alias my_command some other command
+
+or
+
+=back
+
+alias my_many_commands {
+  command1
+  command2
+  prompt NUMBER question
+
+}
+
+=over
+
+=item
+
+You can create aliases of your frequently used commands by aliasing
+them to an easy to remember name.  \N parameters in the defined
+command will be replaced by the positional argument of options passed
+to the alias name.
+
+For multi-line defined aliases, optional prompts may be given to
+request information from the user when the NUMBERth argument is not
+given to the alias.  If it is not given, the prompt will be printed
+and the user will be asked to input a value for it.  This allows the
+easy definition of interactive commands.  The value will be inserted
+in alias parts containing \N substitution requests.
+
+  netsh> alias interfaces select ifDescr from ifTable
+  netsh> interfaces
+  +-------+
+  |ifDescr|
+  +-------+
+  |     lo|
+  |   eth0|
+  +-------+
+  netsh> alias interface select ifDescr, ifSpeed from ifTable where ifDescr = '\1'
+  netsh> interface eth0
+  +-------+--------+
+  |ifDescr| ifSpeed|
+  +-------+--------+
+  |   eth0|10000000|
+  +-------+--------+
+
+=item printf FORMATSTRING COMMAND
+
+Allows B<careful> formatting of results returned by the commands.
+
+Example:
+
+  netsh> alias interface {
+  define interface> printf "interface %s is running at %d Mb/s\n" select ifDescr, ifSpeed from ifTable where ifDescr = '\1'
+  define interface> prompt 1 Enter the interface to describe:
+  define interface> }
+  netsh> interface
+  Enter the interface to describe: eth0
+  interface eth0 is running at 10000000 Mb/s
+
+To list the definition of an already defined command, simply exclude
+the definition and netsh will report the definition to you:
+
+  netsh> alias interface
+  alias interface {
+    printf "interface %s is running at %d Mb/s\n" select ifDescr, ifSpeed from ifTable where ifDescr = '\1'
+    prompt 1 Enter the interface to describe:
+  }
+
+To list all the aliases defined in the system, just type "alias" by itself.
+
+=item watch [TIME] COMMAND
+
+Continually watches the results of the COMMAND being run, which is run
+every TIME seconds.  For select statements, it will attempt to mark
+the changing values from one screen to the next by surrounding them
+with "*"s or color (assuming you have the Term::ANSIColor perl module
+installed) for easy picking out on the screen.
+
+=item rehash
+
+Re-load the alias definitions files in the common directory, as
+well as those files found in $HOME/.snmp/netsh.
+
+=item source FILE
+
+loads definitons and commands from FILE into the running environment.
+
+=back
+
+=head1 FILES
+
+By default, netsh will source all the definition files it can find.
+It does this by first reading everything in
+/usr/local/share/snmp/netsh/* and then reading everything in
+$HOME/.snmp/netsh/*.  Everything contained in these files are
+commands, but most frequently they entirely consist of aliases
+definitions.
+
+=head1 AUTHOR
+
+bugs, comments, questions to net-snmp-users@lists.sourceforge.net
+
+=head1 Copyright
+
+     Copyright (c) 2002 Networks Associates Technology, Inc. All
+     rights reserved.  This program is free software; you can
+     redistribute it and/or modify it under the same terms as Perl
+     itself.
+
+=cut

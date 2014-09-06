@@ -1,0 +1,71 @@
+#!/bin/sh
+
+# Testing this script is possible by running e.g. the following commands:
+# srcdir=/z/software/net-snmp/trunk builddir=/z/software/net-snmp/trunk-mingw
+# cd $builddir/testing
+# TRAPD_FLAGS="-Dsnmptrapd -Drun:shell" $srcdir/testing/fulltests/support/simple_run $srcdir/testing/fulltests/default/T059trapdtraphandle_simple
+
+# "inline" trap handler
+if [ "x$1" = "xtraphandle" ]; then
+  cat - >>"$2"
+  exit 0
+fi
+
+. ../support/simple_eval_tools.sh
+
+TRAPHANDLE_LOGFILE=${SNMP_TMPDIR}/traphandle.log
+
+HEADER snmptrapd traphandle: launching external shell script
+
+SKIPIF NETSNMP_DISABLE_SNMPV2C
+SKIPIFNOT USING_UTILITIES_EXECUTE_MODULE
+SKIPIFNOT HAVE_SIGHUP
+
+#
+# Begin test
+#
+
+snmp_version=v2c
+TESTCOMMUNITY=testcommunity
+
+# Make the paths of arguments $0 and $1 absolute.
+NETSNMPDIR="`pwd`"
+NETSNMPDIR="`dirname ${NETSNMPDIR}`"
+NETSNMPDIR="`dirname ${NETSNMPDIR}`"
+NETSNMPDIR="`dirname ${NETSNMPDIR}`"
+if [ "`echo $1|cut -c1`" = "/" ]; then
+  traphandle_arg="$1"
+else
+  traphandle_arg="${NETSNMPDIR}/$1"
+fi
+
+CONFIGTRAPD [snmp] persistentDir $SNMP_TMP_PERSISTENTDIR
+CONFIGTRAPD [snmp] tempFilePattern /tmp/snmpd-tmp-XXXXXX
+CONFIGTRAPD authcommunity execute $TESTCOMMUNITY
+CONFIGTRAPD doNotLogTraps true
+if [ "x$OSTYPE" = "xmsys" ]; then
+    CONFIGTRAPD traphandle default $MSYS_SH -c "'" $traphandle_arg traphandle $TRAPHANDLE_LOGFILE "'"
+else
+    CONFIGTRAPD traphandle default $traphandle_arg traphandle $TRAPHANDLE_LOGFILE
+fi
+CONFIGTRAPD agentxsocket /dev/null
+
+STARTTRAPD
+
+## 1) test notification handler
+
+CAPTURE "snmptrap -d -Ci -t $SNMP_SLEEP -$snmp_version -c $TESTCOMMUNITY $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPTRAPD_PORT 0 .1.3.6.1.6.3.1.1.5.1 .1.3.6.1.2.1.1.4.0 s handled_inform_$snmp_version"
+DELAY
+CHECKORDIE "handled_inform_$snmp_version" $TRAPHANDLE_LOGFILE 
+
+## 2) persistency: reconfigure (SIGHUP), re-test
+
+HUPTRAPD
+CAPTURE "snmptrap -d -Ci -t $SNMP_SLEEP -$snmp_version -c $TESTCOMMUNITY $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPTRAPD_PORT 0 .1.3.6.1.6.3.1.1.5.1 .1.3.6.1.2.1.1.4.0 s handled_inform2_$snmp_version"
+DELAY
+CHECKORDIE "handled_inform2_$snmp_version" $TRAPHANDLE_LOGFILE
+
+## stop
+STOPTRAPD
+
+FINISHED

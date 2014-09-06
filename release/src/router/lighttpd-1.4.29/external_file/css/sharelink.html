@@ -62,7 +62,6 @@ var this_url="";
 var this_files="";
 var m = new lang();
 var g_storage = new myStorage();
-var is_private_ip = 0;
 var g_sharelink_array = new Array();
 
 function refreshShareFileList(){
@@ -118,13 +117,14 @@ function refreshShareFileList(){
 }
 
 $("document").ready(function() {
+	var vars = getUrlVars();
 	var loc_lan = String(window.navigator.userLanguage || window.navigator.language).toLowerCase();		
 	var lan = ( g_storage.get('lan') == undefined ) ? loc_lan : g_storage.get('lan');
 	m.setLanguage(lan);
 	
-	this_service = getUrlVars()["s"];
-	this_url = getUrlVars()["u"];
-	this_files = getUrlVars()["f"];
+	this_service = vars["s"];
+	this_url = vars["u"];
+	this_files = vars["f"];
 	
 	var the_array = this_files.split(";");
 	
@@ -194,12 +194,19 @@ $("document").ready(function() {
 		var selectFiles = "";		
 		var webdav_mode = g_storage.get('webdav_mode');
 		var ddns_host_name = g_storage.get('ddns_host_name');    
-						
-		var hostName = (ddns_host_name=="") ? window.location.host : ddns_host_name;
+		var cur_host_name = window.location.host;
+		var hostName = "";
+		var is_private_ip = 0;
+		
+		if(!isPrivateIP(cur_host_name))
+			hostName = cur_host_name;
+		else			
+			hostName = (ddns_host_name=="") ? cur_host_name : ddns_host_name;
+			
 		if(hostName.indexOf(":")!=-1)
 			hostName = hostName.substring(0, hostName.indexOf(":"));
 				
-		var is_private_ip = isPrivateIP(hostName);
+		is_private_ip = isPrivateIP(hostName);
 				
 		if( webdav_mode == 0 ) //- Only enable http
 			hostName = "http://" + hostName + ":" + g_storage.get("http_port");
@@ -264,9 +271,10 @@ $("document").ready(function() {
 					var share_content = "";
 					for(var i=0; i<len; i++){
 						var share_link = hostName + "/" + result_sharelink[i];
-						
 						share_content += share_link;
-						share_content += "<br><br>";
+						
+						if(i!=len-1)
+							share_content += "\n\n";
 					}
 					
 					var url = 'http://twitter.com/home/?status=' + encodeURIComponent(share_content);
@@ -276,12 +284,9 @@ $("document").ready(function() {
 				}
 				else if(this_service=="plurk"){
 					var share_content = "";
-
 					share_content += m.getString('msg_sharelink_desc1') + "\n\n";
-					
 					for(var i=0; i<len; i++){
 						var share_link = hostName + "/" + result_sharelink[i];
-						
 						share_content += share_link;
 						
 						if(i!=len-1)
@@ -379,17 +384,6 @@ $("document").ready(function() {
 function doCancel(e) {
 	parent.closeJqmWindow(0);
 };
-
-function getUrlVars(){
-    var vars = [], hash;
-    var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
-    for(var i = 0; i < hashes.length; i++){
-        hash = hashes[i].split('=');
-        vars.push(hash[0]);
-        vars[hash[0]] = hash[1];
-    }
-    return vars;
-}
 
 function onKeyHandler(e){
 	if(e.keyCode==13)

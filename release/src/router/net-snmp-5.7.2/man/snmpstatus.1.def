@@ -1,0 +1,112 @@
+.\" Portions of this file are subject to the following copyright.  See
+.\" the Net-SNMP's COPYING file for more details and other copyrights
+.\" that may apply:
+.\" /***********************************************************
+.\" 	Copyright 1988, 1989 by Carnegie Mellon University
+.\" 
+.\"                       All Rights Reserved
+.\" 
+.\" Permission to use, copy, modify, and distribute this software and its 
+.\" documentation for any purpose and without fee is hereby granted, 
+.\" provided that the above copyright notice appear in all copies and that
+.\" both that copyright notice and this permission notice appear in 
+.\" supporting documentation, and that the name of CMU not be
+.\" used in advertising or publicity pertaining to distribution of the
+.\" software without specific, written prior permission.  
+.\" 
+.\" CMU DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
+.\" ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL
+.\" CMU BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR
+.\" ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
+.\" WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
+.\" ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
+.\" SOFTWARE.
+.\" ******************************************************************/
+.\" Portions of this file are copyrighted by:
+.\" Copyright Copyright 2003 Sun Microsystems, Inc. All rights reserved.
+.\" Use is subject to license terms specified in the COPYING file
+.\" distributed with the Net-SNMP package.
+.\" ******************************************************************/
+.TH SNMPSTATUS 1 "25 Jul 2003" VVERSIONINFO "Net-SNMP"
+.SH NAME
+snmpstatus - retrieves a fixed set of management information from a network entity
+.SH SYNOPSIS
+.B snmpstatus
+[COMMON OPTIONS] [\-Cf] AGENT
+.SH DESCRIPTION
+.B snmpstatus
+is an SNMP application that retrieves several important statistics
+from a network entity.
+.PP
+AGENT identifies a target SNMP agent, which is instrumented
+to monitor the given objects.  At its simplest, the AGENT
+specification will consist of a hostname or an IPv4 address.
+n this situation, the command will attempt communication with
+the agent, using UDP/IPv4 to port 161 of the given target host.
+.PP
+See the 
+.I snmpcmd(1)
+manual page for a full list of the possible formats for AGENT.
+.PP
+The information returned is:
+.IP
+The IP address of the entity.
+.br
+A textual description of the entity (sysDescr.0)
+.br
+The uptime of the entity's SNMP agent (sysUpTime.0)
+.br
+The sum of received packets on all interfaces
+(ifInUCastPkts.* + ifInNUCastPkts.*)
+.br
+The sum of transmitted packets on all interfaces
+(ifOutUCastPkts.* + ifOutNUCastPkts.*)
+.br
+The number of IP input packets (ipInReceives.0)
+.br
+The number of IP output packets (ipOutRequests.0)
+.PP
+For example:
+.PP
+snmpstatus \-c public \-v 1 netdev\-kbox.cc.cmu.edu
+.PP
+will produce output similar to the following:
+.PP
+[128.2.56.220]=>[Kinetics FastPath2] Up: 1 day, 4:43:31
+.br
+Interfaces: 1,  Recv/Trans packets: 262874/39867 |
+IP: 31603/15805
+.PP
+.B snmpstatus
+also checks the operational status of all interfaces (ifOperStatus.*),
+and if it finds any that are not running, it will report in a manner
+similar to this:
+.PP
+2 interfaces are down!
+.PP
+If the network entity has an error processing the request packet, an
+error packet will be returned and a message will be shown, helping to
+pinpoint in what way the request was malformed.
+.B snmpstatus
+will attempt to reform its request to eliminate the malformed
+variable (unless the
+.B \-Cf
+option is given, see below), but this variable will then be missing
+from the displayed data.
+.PP
+.SH OPTIONS
+.TP
+.B COMMON OPTIONS
+Please see
+.I snmpcmd(1)
+for a list of possible values for COMMON OPTIONS
+as well as their descriptions.
+.TP
+.B \-Cf
+By default, snmpstatus will try to fix errors returned
+by the agent and retry a request. In this situation,
+the command will display the data that it can. If the \-Cf option
+is specified, then snmpstatus will not try to fix
+errors, and the error will cause the command to terminate.
+.SH "SEE ALSO"
+snmpcmd(1), snmpget(1)

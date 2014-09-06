@@ -10,7 +10,7 @@
 #include <stdio.h>
 #include "log.h"
 
-#define DBE 1
+#define DBE 0
 
 /* plugin config for all request/connections */
 typedef struct {
@@ -154,7 +154,7 @@ PHYSICALPATH_FUNC(mod_alias_physical_handler) {
 	int uri_len, basedir_len;
 	char *uri_ptr;
 	size_t k;
-
+	
 	if (con->physical.path->used == 0) return HANDLER_GO_ON;
 
 	mod_alias_patch_connection(srv, con, p);

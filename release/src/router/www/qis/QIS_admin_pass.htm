@@ -35,11 +35,15 @@ for(var i=0; i<accounts.length; i++){
 
 function QKinternettype_load_body(){
 
-	if(tmo_support){
+	if(tmo_support){			
 			document.getElementById("skip_btn").style.display = "";
 			document.getElementById("prev_btn").style.display = "none";
 			document.getElementById("pass_Desc1").innerHTML = "For security purposes, you MUST change your login username/password before continuing.";
+			document.getElementById("tmo_desc4").style.display = "";
 	}
+	else{
+			document.getElementById("general_desc4").style.display = "";
+	}		
 	
 	if(parent.ISMOBILE){
 		parent.document.title = "<#Web_Title2#>";
@@ -353,7 +357,7 @@ function clean_scorebar(obj){
 			<th width="240"><span class="hintstyle"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(11,4)"><#PASS_retype#></a></span></th>
 			<td class="QISformtd">
 				<input type="password" autocapitalization="off" autocomplete="off" value="" name="v_password2" tabindex="3" style="height:25px;" class="input_15_table" maxlength="16" onpaste="return false;" />
-				<div style="margin:-25px 0px 0px 135px;"><input type="checkbox" name="show_pass_1" onclick="pass_checked(document.form.http_passwd);pass_checked(document.form.v_password2);"><#QIS_show_pass#></div>
+				<div style="margin:-25px 0px 0px 135px;"><input type="checkbox" name="show_pass_1" tabindex="4" onclick="pass_checked(document.form.http_passwd);pass_checked(document.form.v_password2);"><#QIS_show_pass#></div>
 			</td>
 		</tr>
 		<tr>
@@ -380,7 +384,7 @@ function clean_scorebar(obj){
 	<div id="adminPassDesc" class="QISTutorFont_admin_pass" style="height:200px;margin-left:-10px;">
 		<ul>
 			<li><#QIS_pass_desc3#>
-			<li><#QIS_pass_desc4#>
+			<li><div id="general_desc4" style="display:none;"><#QIS_pass_desc4#></div><div id="tmo_desc4" style="display:none;"><#QIS_pass_desc4_tmo#></div>
 			<li><#QIS_pass_desc5#>&nbsp;<% nvram_default_get("http_username"); %>&nbsp;/&nbsp;<% nvram_default_get("http_passwd"); %>
 		</ul>
 	</div>
@@ -394,9 +398,9 @@ function clean_scorebar(obj){
 </fieldset>
 
 <div class="apply_gen" id="applyBtn">
-	<span id="skip_btn" style="display:none;"><input type="button" value="Skip" onclick="skipsetting();" class="button_gen"></span>
-	<span id="prev_btn"><input type="button" value="<#CTL_prev#>" onclick="gotoPrev();" class="button_gen"></span>
-	<input type="submit" id="nextButton" 	value="<#CTL_next#>" class="button_gen">
+	<span id="skip_btn" style="display:none;"><input type="button" value="Skip" tabindex="6" onclick="skipsetting();" class="button_gen"></span>
+	<span id="prev_btn"><input type="button" value="<#CTL_prev#>" tabindex="6" onclick="gotoPrev();" class="button_gen"></span>
+	<input type="submit" id="nextButton" tabindex="5"	value="<#CTL_next#>" class="button_gen">
 </div>
 
 </form>

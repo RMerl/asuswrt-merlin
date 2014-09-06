@@ -1,0 +1,359 @@
+#!/usr/bin/perl
+
+use strict;
+use Data::Dumper;
+use Getopt::Std;
+use IO::File;
+our %opts = (d => 'size-tests');
+
+# default arguments go here
+my @sets =
+    ({
+	"with-defaults" => '',
+     });
+
+my %base_args = %{$sets[0]};
+my ($basename, $basenum);
+
+getopts('t:hlcD:nj:o:eb:T', \%opts) || usage();
+
+$opts{'j'} = "-j$opts{j}" if (exists($opts{'j'}));
+
+usage() if ($opts{'h'});
+
+my @argumentsets =
+    (
+     {
+	 title => 'security-types',
+	 arguments =>
+	 {
+	     usm => {
+		 'with-security-modules' => 'usm',
+	     },
+	     dtlsandtls => {
+		 'with-security-modules'     => 'tsm',
+		 'with-out-security-modules' => 'usm',
+		 'with-transports'           => 'DTLSUDP TLSTCP',
+		 'with-mib-modules'          => 'tlstm-mib tsm-mib'
+	     },
+	     usmanddtlsandtls => {
+		 'with-security-modules'     => 'tsm usm',
+		 'with-transports'           => 'DTLSUDP TLSTCP',
+		 'with-mib-modules'          => 'tlstm-mib tsm-mib'
+	     }
+	 }
+     },
+     {
+	 title => 'minimalist',
+	 arguments =>
+	 { 
+	     minimal => {
+		 'enable-minimalist'    => '',
+	     },
+	     'not-minimal' => {
+	     }
+	 }
+     },
+     {
+	 title => 'mib-loading',
+	 arguments =>
+	 { 
+	     'without-mib-loading' => {
+		 'disable-mib-loading'    => '',
+	     },
+	     'with-mib-loading' => {
+	     }
+	 }
+     },
+     {
+	 title => 'debugging',
+	 arguments =>
+	 { 
+	     'without-debugging' => {
+		 'disable-debugging'    => '',
+	     },
+	     'with-debugging' => {
+	     }
+	 }
+     },
+     {
+	 title => 'logging',
+	 arguments =>
+	 { 
+	     'without-logging' => {
+		 'with-out-features'    => 'logging',
+	     },
+	     'with-logging' => {
+	     }
+	 }
+     },
+     {
+	 title => 'agent-mibs',
+	 arguments =>
+	 { 
+	     'full-agent' => {
+	     },
+	     'mini-agent' => {
+		 'enable-mini-agent' => '',
+	     }
+	 }
+     },
+     {
+	 title => 'protocol-support',
+	 arguments =>
+	 {
+	     'everything' => {
+	     },
+	     'read-only' => {
+		 'enable-read-only' => '',
+	     },
+	     'notify-only' => {
+		 'enable-notify-only' => '',
+	     }
+	 }
+     },
+     {
+	 title => 'perl',
+	 arguments =>
+	 { 
+	     'without-perl-modules' => {
+		 'without-perl-modules'    => '',
+		 'disable-embedded-perl' => '',
+	     },
+	     'with-perl-no-embedding' => {
+		 'with-perl-modules'    => '',
+		 'disable-embedded-perl' => '',
+	     },
+	     'with-perl-and-embedding' => {
+		 'with-perl-modules'    => '',
+		 'enable-embedded-perl' => '',
+	     }
+	 }
+     },
+    );
+
+# map these to a referencable lookup hash
+my %argumentsets;
+foreach my $set (@argumentsets) {
+    $argumentsets{$set->{'title'}} = $set;
+}
+
+if ($opts{'l'}) {
+    print "Types available:\n";
+    printf("  %-40.40s %s\n", "Test Title", "Number of subtests");
+    printf("  %-40.40s %s\n", "-" x 39, "-" x length("Number of subtests"));
+    foreach my $type (@argumentsets) {
+	my @keys = keys(%{$type->{'arguments'}});
+	printf("  %-40.40s %s\n", $type->{'title'}, $#keys+1);
+    }
+    exit;
+}
+
+my %types;
+if ($opts{'t'}) {
+    my @types = split(/,\s*/, $opts{'t'});
+    foreach my $type (@types) {
+	$types{$type} = 1;
+    }
+}
+
+if ($opts{'b'}) {
+    # use this set as the base default set of arguments
+    ($basename, $basenum) = ($opts{'b'} =~ /(.*):(\d+)/);
+    if (!exists($argumentsets{$basename})) {
+	printf STDERR "failed to find set for -b argument: %s\n", $basename;
+	exit(1);
+    }
+    @sets = add_in_flags($argumentsets{$basename}, \%base_args, ());
+    @sets = @sets[$basenum];
+    %base_args = %{$sets[0]};
+}
+
+foreach my $set (@argumentsets) {
+    if (!$opts{'t'} || exists($types{$set->{'title'}})) {
+        if ($basename && $set->{'title'} eq $basename) {
+            next;
+        }
+	@sets = add_in_flags($set, \%base_args, @sets);
+    }
+}
+
+if ($opts{'c'}) {
+    # print the configure flags
+    foreach my $set (@sets) {
+	print "$set->{'title'}:\n";
+	print " ", generate_configure_flags($set), "\n";
+    }
+    exit;
+}
+
+my $summaryfile;
+if ($opts{'o'} && !$opts{'n'}) {
+    $summaryfile = new IO::File;
+    $summaryfile->open(">$opts{o}");
+}
+
+my $count = 0;
+foreach my $set (@sets) {
+    $count++;
+    build_set($count, $set);
+}
+
+sub add_in_flags {
+    my ($argumentset, $base_flags, @current_flags) = @_;
+
+    my @new_flags;
+
+    # do a linear search of the options
+    if (! $opts{'e'}) {
+	@new_flags = @current_flags;
+	foreach my $newargs (keys(%{$argumentset->{'arguments'}})) {
+	    my %flags = %$base_flags;
+
+	    $flags{'title'} = "$flags{'title'}:$newargs";
+
+	    foreach my $newflag (keys(%{$argumentset->{'arguments'}{$newargs}})) {
+
+		$flags{$newflag} .= " $argumentset->{'arguments'}{$newargs}{$newflag}";
+	    }
+	    push @new_flags, \%flags;
+	}
+	return @new_flags;
+    }
+
+    # or an exponential search
+    foreach my $flags (@current_flags) {
+	foreach my $newargs (keys(%{$argumentset->{'arguments'}})) {
+	    my %flags = %{$flags};  # copy the existing hash-set of flags
+	    
+	    if (exists($flags{'title'})) {
+		$flags{'title'} .= ", $newargs";
+	    } else {
+		$flags{'title'} .= "$newargs";
+	    }
+	    foreach my $newflag (keys(%{$argumentset->{'arguments'}{$newargs}})) {
+
+		$flags{$newflag} .= " $argumentset->{'arguments'}{$newargs}{$newflag}";
+	    }
+
+	    push @new_flags, \%flags;
+	}
+    }
+
+    return @new_flags;
+}
+
+sub generate_configure_flags {
+    my ($arguments) = @_;
+    my $line = "";
+    foreach my $arg (keys(%$arguments)) {
+	next if ($arg eq 'title');
+	if ($arguments->{$arg} =~ /^\s*$/) {
+	    $line .= " --$arg";
+	} else {
+	    $line .= " --$arg=\"$arguments->{$arg}\"";
+	}
+    }
+    return $line;
+}
+
+sub build_set {
+    my ($num, $arguments) = @_;
+
+    $num = sprintf("%03d", $num);
+
+    my $file;
+
+    if (!$opts{'n'}) {
+	mkdir $opts{'d'} if (! -d $opts{'d'});
+	die "failed to create the $opts{'d'} directory" if (! -d $opts{'d'});
+
+	$file = new IO::File;
+	$file->open(">$opts{'d'}/$num-0-cmd-summary");
+	$file->print("Creating output for: $arguments->{'title'}\n");
+    }
+
+    print "==================== $arguments->{'title'}\n";
+
+
+    System ($file, $num, "1-distclean", "make distclean");
+    System ($file, $num, "2-configure",
+	    "./configure " . generate_configure_flags($arguments));
+    System ($file, $num, "3-features", "make features");
+    System ($file, $num, "4-make", "make $opts{'j'}");
+    System ($file, $num, "5-unused-code", "perl local/minimalist/find-unused-code -g");
+    System ($file, $num, "6-testing", "make -C testing test") if ($opts{'T'});
+
+    if (!$opts{'n'}) {
+	analyze_size($arguments->{'title'}, "$opts{'d'}/$num-9-results");
+    }
+}
+
+sub analyze_size {
+    my ($title, $filename) = @_;
+
+    my $outfile = new IO::File;
+    $outfile->open(">$filename");
+
+    print "Results for: $title\n";
+    printf $outfile "Results for: $title\n";
+    printf ("%-50.50s %10s\n", "-" x 49, "-" x 10);
+    printf $outfile ("%-50.50s %10s\n", "-" x 49, "-" x 10);
+
+    my $totalsize = 0;
+    foreach my $buildfile (glob("snmplib/.libs/lib*.so.*.0.0"),
+			   glob("agent/.libs/lib*.so.*.0.0"),
+			   "agent/.libs/snmpd") {
+
+	my @info = stat($buildfile);
+	printf $outfile ("%-50.50s %10s\n", $buildfile, $info[7]);
+	printf("%-50.50s %10s\n", $buildfile, $info[7]);
+	$totalsize += $info[7];
+    }
+    printf $outfile ("%-50.50s %10s\n", "-" x 49, "-" x 10);
+    printf $outfile ("%-50.50s %10s bytes\n", "TOTAL", $totalsize);
+
+    printf("%-50.50s %10s\n", "-" x 49, "-" x 10);
+    printf("%-50.50s %10s bytes\n", "TOTAL", $totalsize);
+
+    if (defined($summaryfile)) {
+	my $restricted_title = $title;
+	$restricted_title =~ s/[^a-zA-Z]/_/g;
+	printf $summaryfile "%10s %s \n", $totalsize, $title;
+    }
+
+    return $totalsize;
+}
+
+sub usage {
+    print "Usage: $0 [FLAGS]\n\n";
+    print "FLAGS:\n";
+    print "  -h\t\thelp\n";
+    print "  -t TYPES\tSelect types to analyze (default = all)\n";
+    print "  -l\t\tList available types\n";
+    print "  -c\t\tPrint the configuration flags that would be used\n";
+    print "  -D DIR\tSave data results to this directory\n";
+    print "  -o FILE\tSave a complete summary chart to FILE\n"; 
+    print "  -n\t\tDry run -- only show the commands to execute\n";
+    print "  -j NUM\tExecute make with parallel building (-jNUM)\n";
+    print "  -e\t\tUse exponential expansion (all combos) of the requested options\n";
+    print "  -b NAME:NUM\tUse NAME and the NUM'th set as the base arguments to start from\n";
+    print "  -T\t\tRun 'make test' at each step as well\n";
+    exit;
+}
+
+sub System {
+    my $file  = shift;
+    my $num   = shift;
+    my $title = shift;
+    my $pipe = " 2>&1 | tee $opts{'d'}/$num-$title.out\n";
+
+    print "### ", join(" ", @_), $pipe;
+    if (!$opts{'n'} && $file) {
+	print $file "### ", join(" ", @_), "\n";
+    }
+
+    if (!$opts{'n'}) {
+	system(join(" ", @_) . $pipe);
+    }
+}

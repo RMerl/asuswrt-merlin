@@ -1,0 +1,58 @@
+.TH NETSNMP_TRAP_API 3 "13 Aug 2010" VVERSIONINFO "Net-SNMP"
+.SH NAME
+send_easy_trap,
+send_trap_vars,
+send_v2trap - send TRAPs or INFORMs from a Net-SNMP MIB module
+.SH SYNOPSIS
+.B #include <net-snmp/agent/agent_trap.h>
+.PP
+.BI "void send_easy_trap(int " trap ", int " specific ");"
+.PP
+.BI "void send_trap_vars(int " trap ", int " specific ", struct variable_list *" vars ");"
+.PP
+.BI "void send_v2trap(struct variable_list *" vars ");"
+.SH DESCRIPTION
+These three routines may be used to send traps from a MIB module
+within the Net-SNMP agent (including an AgentX subagent).
+.PP
+.B send_easy_trap()
+sends an SNMPv1 trap (or the SNMPv2 equivalent) to the list of
+configured trap destinations (or "sinks"), using the provided values
+for the generic trap type, and specific trap value.
+.PP
+.B send_trap_vars()
+is similar, but appends the supplied list of variable bindings to the
+traps that are sent.
+.PP
+.B send_v2trap()
+uses the supplied list of variable bindings to form an SNMPv2 trap,
+which is sent to SNMPv2-capable sinks on the configured list.  An
+equivalent INFORM is sent to the configuredq list of inform sinks.
+Sinks that can only handle SNMPv1 traps are skipped.
+.PP
+The various "send_trap()" calls allow you to specify traps in different
+formats.  And the various "trapsink" directives allow you to specify
+destinations to receive different formats.
+But *all* traps are sent to *all* destinations, regardless of how they
+were specified.
+.nf
+I.e. it's
+                                         ___  trapsink
+                                        /
+    send_easy_trap \___  [  Trap      ] ____  trap2sink
+                    ___  [ Generator  ]
+    send_v2trap    /     [            ] ----- informsink
+                                        \____
+                                              trapsess
+
+*Not*
+     send_easy_trap  ------------------->  trapsink
+     send_v2trap     ------------------->  trap2sink
+     ????            ------------------->  informsink
+     ????            ------------------->  trapsess
+.fi
+.SH WARNINGS
+These routines are used to send the traps immediately they are called.
+Invoking them at the appropriate time is left to the MIB module programmer.
+.SH "SEE ALSO"
+.BR snmpd.conf "(5), " snmptrapd "(8)"

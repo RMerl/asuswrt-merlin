@@ -1,0 +1,345 @@
+#
+# Makefile for snmpd
+#
+
+top_builddir	= ..
+mysubdir=agent
+
+# use GNU vpath, if available, to only set a path for source and headers
+# VPATH will pick up objects too, which is bad if you are sharing a
+# source dir...
+@GNU_vpath@ %.h $(srcdir)
+@GNU_vpath@ %.c $(srcdir)
+# fallback to regular VPATH for non-gnu...
+@NON_GNU_VPATH@ $(srcdir)
+
+#
+# what to install
+#
+SUBDIRS=helpers mibgroup
+FTSUBDIRS=mibgroup helpers
+
+INSTALLSBINPROGS= @SNMPD@
+INSTALLLIBS	= libnetsnmpagent.$(LIB_EXTENSION)$(LIB_VERSION)
+INSTALLPOSTLIBS	= libnetsnmpmibs.$(LIB_EXTENSION)$(LIB_VERSION)
+
+INCLUDESUBDIR=agent
+HEADERS=\
+	agent_read_config.h \
+	agent_registry.h \
+	agent_index.h \
+	agent_sysORTable.h \
+	agent_trap.h \
+	auto_nlist.h \
+	ds_agent.h \
+	snmp_agent.h \
+	snmp_vars.h \
+	var_struct.h \
+	agent_handler.h \
+	net-snmp-agent-includes.h \
+	mib_modules.h \
+	agent_callbacks.h \
+	sysORTable.h \
+	all_helpers.h \
+	baby_steps.h \
+	bulk_to_next.h \
+	cache_handler.h \
+	debug_handler.h \
+	instance.h \
+	mode_end_call.h \
+	multiplexer.h \
+	null.h \
+	old_api.h \
+	read_only.h \
+	row_merge.h \
+	scalar.h \
+	scalar_group.h \
+	serialize.h \
+	snmp_get_statistic.h \
+	stash_cache.h \
+	stash_to_next.h \
+	table_array.h \
+	table_container.h \
+	table.h \
+	table_data.h \
+	table_dataset.h \
+	table_tdata.h \
+	table_iterator.h \
+	watcher.h
+
+HEADERSONLY=mfd.h set_helper.h
+
+INCLUDESUBDIRHEADERS=$(HEADERS) $(HEADERSONLY)
+
+INSTALLBUILTSUBDIRHEADERS=../include/net-snmp/agent/mib_module_config.h \
+			  ../include/net-snmp/agent/agent_module_config.h \
+			mibgroup/mib_module_includes.h
+INSTALLBUILTSUBDIR=agent
+
+INCLUDEMIBGROUPDIR=agent/mibgroup
+INCLUDEMIBGROUPDIRHEADERS=struct.h util_funcs.h util_funcs/header_generic.h \
+	util_funcs/header_simple_table.h util_funcs/MIB_STATS_CACHE_TIMEOUT.h
+
+OTHERINSTALL=installmibgroupheaders @EMBEDPERLINSTALL@
+OTHERUNINSTALL=@EMBEDPERLUNINSTALL@
+
+# XXX: need to install these  They're really UCD specific, however.
+BROKEINSTALL= \
+	mibgroup/struct.h \
+	mibgroup/util_funcs.h \
+	mibgroup/mibincl.h \
+	mibgroup/ucd-snmp/dlmod.h \
+	mibgroup/utilities/execute.h \
+	mibgroup/header_complex.h
+
+INSTALLUCDHEADERS= \
+	agent_index.h	\
+	agent_read_config.h \
+	agent_registry.h \
+	agent_sysORTable.h \
+	agent_trap.h	\
+	auto_nlist.h	\
+	ds_agent.h	\
+	header_complex.h \
+	mibincl.h	\
+	snmp_agent.h	\
+	ucd-snmp-includes.h	\
+	ucd-snmp-agent-includes.h \
+	util_funcs.h	\
+	var_struct.h
+
+#
+# how to build it info
+#
+USELIBS		= ../snmplib/libnetsnmp.$(LIB_EXTENSION)$(LIB_VERSION)
+AGENTLIB	= libnetsnmpagent.$(LIB_EXTENSION)$(LIB_VERSION)
+MIBLIB		= libnetsnmpmibs.$(LIB_EXTENSION)$(LIB_VERSION)
+
+LAGENTLIBS	= @LAGENTLIBS@
+LMIBLIBS	= @LMIBLIBS@
+VAL_LIBS	= @VAL_LIBS@
+PERLLDOPTS_FOR_APPS = @PERLLDOPTS_FOR_APPS@
+PERLLDOPTS_FOR_LIBS = @PERLLDOPTS_FOR_LIBS@
+LIBS		= $(USELIBS) @AGENTLIBS@ $(PERLLDOPTS_FOR_APPS) $(VAL_LIBS)
+OUR_AGENT_LIBS	= $(AGENTLIB) $(MIBLIB) $(LIBS) @DLLIBS@
+CPPFLAGS	= $(TOP_INCLUDES) -I. $(AGENT_INCLUDES) $(MIBGROUP_INCLUDES) \
+		  $(SNMPLIB_INCLUDES) @CPPFLAGS@ 
+
+
+#
+# Objects
+#
+
+# libnetsnmpmibs objects.
+@mibgroup_list_lo@
+@mibgroup_list_ft@
+@mibgroup_list_o@
+@agentgroup_list_lo@
+@agentgroup_list_ft@
+@agentgroup_list_o@
+FTMIBOBJS	= $(mibgroup_list_ft) mib_modules.ft auto_nlist.ft
+LMIBOBJS	= $(mibgroup_list_lo) mib_modules.lo auto_nlist.lo
+MIBOBJS		= $(mibgroup_list_o) mib_modules.o auto_nlist.o
+
+# libnetsnmpagent objects
+LIBAGENTOBJS= \
+	helpers/all_helpers.o \
+	helpers/baby_steps.o \
+	helpers/bulk_to_next.o \
+	helpers/cache_handler.o \
+	helpers/debug_handler.o \
+	helpers/instance.o \
+	helpers/mode_end_call.o \
+	helpers/multiplexer.o \
+	helpers/null.o \
+	helpers/old_api.o \
+	helpers/read_only.o \
+	helpers/row_merge.o \
+	helpers/scalar.o \
+	helpers/scalar_group.o \
+	helpers/serialize.o \
+	helpers/snmp_get_statistic.o \
+	helpers/stash_cache.o \
+	helpers/stash_to_next.o \
+	helpers/table.o \
+	helpers/table_array.o \
+	helpers/table_container.o \
+	helpers/table_data.o \
+	helpers/table_dataset.o \
+	helpers/table_iterator.o \
+	helpers/table_row.o \
+	helpers/table_tdata.o \
+	helpers/watcher.o \
+	agent_handler.o \
+	agent_index.o \
+	agent_read_config.o \
+	agent_registry.o \
+	agent_sysORTable.o \
+	agent_trap.o \
+	kernel.o \
+	snmp_agent.o \
+	snmp_vars.o \
+	$(agentgroup_list_o) \
+	@OTHERAGENTLIBOBJS@
+
+LLIBAGENTOBJS= \
+	helpers/all_helpers.lo \
+	helpers/baby_steps.lo \
+	helpers/bulk_to_next.lo \
+	helpers/cache_handler.lo \
+	helpers/debug_handler.lo \
+	helpers/instance.lo \
+	helpers/mode_end_call.lo \
+	helpers/multiplexer.lo \
+	helpers/null.lo \
+	helpers/old_api.lo \
+	helpers/read_only.lo \
+	helpers/row_merge.lo \
+	helpers/scalar.lo \
+	helpers/scalar_group.lo \
+	helpers/serialize.lo \
+	helpers/snmp_get_statistic.lo \
+	helpers/stash_cache.lo \
+	helpers/stash_to_next.lo \
+	helpers/table.lo \
+	helpers/table_array.lo \
+	helpers/table_container.lo \
+	helpers/table_data.lo \
+	helpers/table_dataset.lo \
+	helpers/table_iterator.lo \
+	helpers/table_row.lo \
+	helpers/table_tdata.lo \
+	helpers/watcher.lo \
+	agent_handler.lo \
+	agent_index.lo \
+	agent_read_config.lo \
+	agent_registry.lo \
+	agent_sysORTable.lo \
+	agent_trap.lo \
+	kernel.lo \
+	snmp_agent.lo \
+	snmp_vars.lo \
+	$(agentgroup_list_lo) \
+	@OTHERAGENTLIBLOBJS@
+
+LLIBAGENTFTS= \
+	helpers/all_helpers.ft \
+	helpers/baby_steps.ft \
+	helpers/bulk_to_next.ft \
+	helpers/cache_handler.ft \
+	helpers/debug_handler.ft \
+	helpers/instance.ft \
+	helpers/mode_end_call.ft \
+	helpers/multiplexer.ft \
+	helpers/null.ft \
+	helpers/old_api.ft \
+	helpers/read_only.ft \
+	helpers/row_merge.ft \
+	helpers/scalar.ft \
+	helpers/scalar_group.ft \
+	helpers/serialize.ft \
+	helpers/snmp_get_statistic.ft \
+	helpers/stash_cache.ft \
+	helpers/stash_to_next.ft \
+	helpers/table.ft \
+	helpers/table_array.ft \
+	helpers/table_container.ft \
+	helpers/table_data.ft \
+	helpers/table_dataset.ft \
+	helpers/table_iterator.ft \
+	helpers/table_row.ft \
+	helpers/table_tdata.ft \
+	helpers/watcher.ft \
+	agent_handler.ft \
+	agent_index.ft \
+	agent_read_config.ft \
+	agent_registry.ft \
+	agent_sysORTable.ft \
+	agent_trap.ft \
+	kernel.ft \
+	snmp_agent.ft \
+	snmp_vars.ft \
+	$(agentgroup_list_ft) \
+	@OTHERAGENTLIBLFTS@
+
+# The agent objects.
+AGENTOBJS=snmpd.o @other_agentobjs@
+LAGENTOBJS=snmpd.lo @other_lagentobjs@
+FTAGENTOBJS=snmpd.ft @other_ftagentobjs@
+
+#
+# Define OBJS and LOBJS for clean target (just this directory)
+#
+OBJS		= $(LIBAGENTOBJS)  $(AGENTOBJS)  mib_modules.o  auto_nlist.o
+LOBJS		= $(LLIBAGENTOBJS) $(LAGENTOBJS) mib_modules.lo auto_nlist.lo
+FTOBJS		= $(LLIBAGENTFTS) $(FTAGENTOBJS) mib_modules.ft auto_nlist.ft
+
+FEATUREFILE     = $(top_builddir)/include/net-snmp/agent/features.h
+
+all: agentlib subdirs miblib $(INSTALLBINPROGS) $(INSTALLSBINPROGS)
+
+#
+# build stuff targets
+#
+getkstat: getkstat.o
+	$(CC) $(CFLAGS) -o $@ $? $(LIBS)
+
+getkstat.o: mibgroup/kernel_sunos5.c
+	$(CC) $(CFLAGS) -o $@ -D_GETKSTAT_TEST -DDODEBUG -c $? 
+
+getmibstat: getmibstat.o
+	$(CC) $(CFLAGS) -o $@ $? $(LIBS)
+
+getmibstat.o: mibgroup/kernel_sunos5.c
+	$(CC) $(CFLAGS) -o $@ -D_GETMIBSTAT_TEST -DDODEBUG -c $? 
+
+snmpd$(EXEEXT):	${LAGENTOBJS} $(USELIBS) $(AGENTLIB) $(HELPERLIB) $(MIBLIB) $(LIBTARG) 
+	$(LINK) $(CFLAGS) -o $@ ${LAGENTOBJS} ${LDFLAGS} ${OUR_AGENT_LIBS}
+
+libnetsnmpagent.$(LIB_EXTENSION)$(LIB_VERSION):    ${LLIBAGENTOBJS} $(USELIBS)
+	$(LIB_LD_CMD) $(AGENTLIB) ${LLIBAGENTOBJS} $(USELIBS) ${LAGENTLIBS} @LD_NO_UNDEFINED@ $(LDFLAGS) $(PERLLDOPTS_FOR_LIBS) $(LIB_LD_LIBS) @AGENTLIBS@
+	$(RANLIB) $(AGENTLIB)
+
+libnetsnmpmibs.$(LIB_EXTENSION)$(LIB_VERSION): ${LMIBOBJS} $(AGENTLIB) $(USELIBS)
+	$(LIB_LD_CMD) $(MIBLIB) ${LMIBOBJS} $(AGENTLIB) $(USELIBS) @LD_NO_UNDEFINED@ $(LDFLAGS) ${LMIBLIBS} $(PERLLDOPTS_FOR_LIBS) $(LIB_LD_LIBS) @AGENTLIBS@
+	$(RANLIB) $(MIBLIB)
+
+agentlib: $(AGENTLIB)
+
+miblib: $(MIBLIB)
+
+libs: $(AGENTLIB) $(MIBLIB)
+
+embedperlinstall:
+	  @$(SHELL) $(srcdir)/../mkinstalldirs $(INSTALL_PREFIX)$(snmplibdir)
+	  @$(INSTALL_DATA) $(srcdir)/snmp_perl.pl $(INSTALL_PREFIX)$(snmplibdir)/snmp_perl.pl
+	  @echo "install:  installed snmp_perl.pl in $(INSTALL_PREFIX)$(snmplibdir)"
+
+embedperluninstall:
+	  @rm -f $(INSTALL_PREFIX)$(snmplibdir)/snmp_perl.pl
+	  @echo "removed snmp_perl.pl from $(INSTALL_PREFIX)$(snmplibdir)"
+
+installmibgroupheaders:
+	@for it in $(INCLUDEMIBGROUPDIRHEADERS) ; do \
+		itd=`dirname "$(INSTALL_PREFIX)$(includedir)/agent/$$it"` ; \
+		if [ ! -d "$$itd" ] ; then \
+			echo "creating directory $$itd" ; \
+			$(SHELL) "$(top_srcdir)/mkinstalldirs" "$$itd" ; \
+		fi ; \
+		$(INSTALL_DATA) "$(top_srcdir)/$(INCLUDEMIBGROUPDIR)/$$it" \
+			"$$itd" ; \
+		echo "installing $$it in $$itd" ; \
+	done
+
+@module_list_deps@
+@agent_module_list_deps@
+@mib_module_list_deps@
+
+mib_modules.lo: mibgroup/mib_module_inits.h
+#
+# dependency for snmplib object. it's here because the headers listed
+# are relative to the agent directory.
+
+subdirs: agentlib
+# wait for agentlib before building 'subdirs' target
+

@@ -1,0 +1,31 @@
+This directory contains support files for HP-OpenView.  Some of the
+files need to be built and depend on the config.h and sedscript files
+in the top level source directory.  You should, therefore, run 'make'
+before installing these files.  Installation is by hand, since I don't
+want to be responsible for messing up your OpenView configuration.
+
+If you install all these files properly, then do a 'ovstop', an
+'ovstart', an 'ovw -fields', and an 'ovw -verify' you should start
+seeing new icons appear for all ucd-snmp controlled packages.  If they
+don't appear immediately, its probably because OV's netmon process
+hasn't changed the symbol ID for it yet.  You can test a specific host
+by selecting it and then doing a 
+'Diagnose/Network Connectivity/Demand Poll' on it from ovw.
+
+oid_to_sym:      Translates sysObjectID results to OV icon types.
+  -  Append this to /etc/opt/OV/share/conf/C/oid_to_sym
+  -  Optionally replace Computer:UCD with Computer:Workstation if you
+     don't want to install the bitmaps.
+
+oid_to_type:      Translates sysObjectID results to OV description strings
+  -  Append this to /etc/opt/OV/share/conf/oid_to_type
+
+UCD-fields:      Adds the UCD agent types to the "SNMPAgent" OpenView field.
+  -  Copy to /etc/opt/OV/share/fields/C/
+
+UCD-Computer:         OV Computer Class additions
+  -  Copy to /etc/opt/OV/share/symbols/C/
+
+bitmaps/*:        Bitmaps/Icons for ovw
+  -  Copy the contents of the directory to /etc/opt/OV/share/bitmaps/C/computer/
+

@@ -197,6 +197,8 @@ typedef enum {
 	e_qcsapi_wifi_set_tx_power,
 	e_qcsapi_wifi_get_bw_power,
 	e_qcsapi_wifi_set_bw_power,
+	e_qcsapi_wifi_get_bf_power,
+	e_qcsapi_wifi_set_bf_power,
 	e_qcsapi_wifi_get_carrier_interference,
 	e_qcsapi_wifi_get_congestion_idx,
 	e_qcsapi_wifi_get_supported_tx_power_levels,
@@ -513,6 +515,9 @@ typedef enum {
 	e_qcsapi_wifi_set_bss_isolate,
 	e_qcsapi_wifi_get_bss_isolate,
 	e_qcsapi_wifi_get_disassoc_reason,
+	e_qcsapi_get_bb_param,
+	e_qcsapi_set_bb_param,
+
 	e_qcsapi_nosuch_api = 0
 } qcsapi_entry_point;
 

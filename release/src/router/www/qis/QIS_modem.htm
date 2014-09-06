@@ -576,7 +576,6 @@ function setClientIP(apnAddr){
 function showLANIPList(isp_order){
 	var code = "";
 	var show_name = "";
-	var client_list_array = apnlist[isp_order];
 
 	for(var i = 0; i < apnlist[isp_order].length; i++){
 		var apnlist_col = apnlist[isp_order][i].split('&&');
@@ -710,22 +709,22 @@ function inet_ntoa(ip_num){
 		<tr style="display:none">
 			<th><#HSDPAConfig_hsdpa_enable_itemname#></th>
 			<td>
-				<input type="radio" value="1" onclick="switch_modem_mode(document.form.modem_enable_option.value);reloadProfile();" name="modem_enable_radio" checked><#checkbox_Yes#>
-				<input type="radio" value="0" onclick="switch_modem_mode(0);reloadProfile();" name="modem_enable_radio" <% nvram_match("modem_enable", "0", "checked"); %>><#checkbox_No#>
+				<input type="radio" value="1" tabindex="1" onclick="switch_modem_mode(document.form.modem_enable_option.value);reloadProfile();" name="modem_enable_radio" checked><#checkbox_Yes#>
+				<input type="radio" value="0" tabindex="2" onclick="switch_modem_mode(0);reloadProfile();" name="modem_enable_radio" <% nvram_match("modem_enable", "0", "checked"); %>><#checkbox_No#>
 			</td>
 		</tr>
 
 		<tr>
     		<th style="width:40%"><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(21,9);"><#HSDPAConfig_Country_itemname#></a></th>
       		<td>
-      			<select name="modem_country" class="input_option" onchange="switch_modem_mode(document.form.modem_enable_option.value);reloadProfile();"></select>
+      			<select name="modem_country" class="input_option" tabindex="3" onchange="switch_modem_mode(document.form.modem_enable_option.value);reloadProfile();"></select>
 			</td>
 		</tr>
 
 		<tr>
     		<th><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(21,8);"><#HSDPAConfig_ISP_itemname#></a></th>
 			<td>
-      			<select name="modem_isp" class="input_option" onchange="show_APN_list();"></select>
+      			<select name="modem_isp" class="input_option" tabindex="4" onchange="show_APN_list();"></select>
 			</td>
 		</tr>
 
@@ -734,7 +733,7 @@ function inet_ntoa(ip_num){
 				<a class="hintstyle" href="javascript:void(0);" onclick="openHint(21,1);"><#menu5_4_4#></a>
 			</th>
 			<td>
-				<select name="modem_enable_option" id="modem_enable_option" class="input_option" onchange="switch_modem_mode(this.value);reloadProfile();">
+				<select name="modem_enable_option" id="modem_enable_option" tabindex="5" class="input_option" onchange="switch_modem_mode(this.value);reloadProfile();">
 					<option value="1" <% nvram_match("modem_enable", "1", "selected"); %>>WCDMA (UMTS)</option>
 					<option value="2" <% nvram_match("modem_enable", "2", "selected"); %>>CDMA2000 (EVDO)</option>
 					<option value="3" <% nvram_match("modem_enable", "3", "selected"); %>>TD-SCDMA</option>
@@ -748,7 +747,7 @@ function inet_ntoa(ip_num){
 		 <tr>
 			<th><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(21,3);"><#HSDPAConfig_private_apn_itemname#></a></th>
 			<td>
-				<input id="modem_apn" name="modem_apn" class="input_20_table" type="text" value=""/>
+				<input id="modem_apn" type="text" value="" name="modem_apn" tabindex="6" class="input_20_table"/>
      			<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="display:none;position:absolute;*margin-left:-3px;*margin-top:1px;" onclick="pullLANIPList(this);" title="<#select_device_name#>" onmouseover="over_var=1;" onmouseout="over_var=0;">
 				<div id="ClientList_Block_PC" class="ClientList_Block_PC"></div>
 			</td>
@@ -757,14 +756,14 @@ function inet_ntoa(ip_num){
 		<tr>
 			<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(21,10);"><#HSDPAConfig_DialNum_itemname#></a></th>
 			<td>
-				<input id="modem_dialnum" name="modem_dialnum" class="input_20_table" type="text" value=""/>
+				<input id="modem_dialnum" name="modem_dialnum" tabindex="7" class="input_20_table" type="text" value=""/>
 			</td>
 		</tr>
 		
 		<tr style="display:none;">
 			<th><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(21,2);"><#PIN_code#></a></th>
 			<td>
-				<input id="modem_pincode" name="modem_pincode" class="input_20_table" type="password" autocapitalization="off" maxLength="8" value="<% nvram_get("modem_pincode"); %>"/>
+				<input id="modem_pincode" name="modem_pincode" tabindex="8" class="input_20_table" type="password" autocapitalization="off" maxLength="8" value="<% nvram_get("modem_pincode"); %>"/>
 				<br><span id="pincode_status" style="display:none;"><#pincode_wrong#></span>
 			</td>
 		</tr>
@@ -772,21 +771,21 @@ function inet_ntoa(ip_num){
 		<tr>
 			<th><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(21,11);"><#HSDPAConfig_Username_itemname#></a></th>
 			<td>
-			<input id="modem_user" name="modem_user" class="input_20_table" type="text" value="<% nvram_get("modem_user"); %>"/>
+			<input id="modem_user" name="modem_user" tabindex="9" class="input_20_table" type="text" value="<% nvram_get("modem_user"); %>"/>
 			</td>
 		</tr>
                           
 		<tr>
 			<th><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(21,12);"><#PPPConnection_Password_itemname#></a></th>
 			<td>
-				<input id="modem_pass" name="modem_pass" class="input_20_table" type="password" value="<% nvram_get("modem_pass"); %>"/>
+				<input id="modem_pass" name="modem_pass" tabindex="10" class="input_20_table" type="password" value="<% nvram_get("modem_pass"); %>"/>
 			</td>
 		</tr>
 
 		<tr>
 			<th>E-mail</th>
 			<td>
-				<input id="modem_ttlsid" name="modem_ttlsid" class="input_20_table" value="<% nvram_get("modem_ttlsid"); %>"/>
+				<input id="modem_ttlsid" name="modem_ttlsid" tabindex="11" class="input_20_table" value="<% nvram_get("modem_ttlsid"); %>"/>
 			</td>
 		</tr>
                           
@@ -799,8 +798,8 @@ function inet_ntoa(ip_num){
 	</table>
 
 	<div id="applyBtn" class="apply_gen" style="margin-top:20px">
-		<input type="button" id="skipButton" value="Skip" class="button_gen" onclick="goWireless();">
-		<input type="button" id="nextButton" value="<#CTL_Add_enrollee#>" class="button_gen" onclick="submitForm();">
+		<input type="button" id="skipButton" value="Skip" class="button_gen" tabindex="13" onclick="goWireless();">
+		<input type="button" id="nextButton" value="<#CTL_Add_enrollee#>" tabindex="12" class="button_gen" onclick="submitForm();">
 		<img id="loadingIcon" style="display:none;" src="/images/InternetScan.gif">	
 		<span id="loadingNote" style="display:none;"><#Modem_connect_waiting#></span>	
 	</div>

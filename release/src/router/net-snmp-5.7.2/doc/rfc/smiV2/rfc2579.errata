@@ -1,0 +1,58 @@
+Reported By: Juergen Schoenwaelder; j.schoenwaelder@iu-bremen.de
+Date: Tue, 27 July 2004 12:41:36 +0200
+
+The DateAndTime textual convention did not originally define a special
+value which can be used in situations where a DateAndTime value is
+unknown or for some other reason not available. Several MIB modules on
+the IETF standards-track use the value '0000000000000000'H in such
+situations. In order to formally legalize this established practice,
+the following errata to the DESCRIPTION clause of the DateAndTime
+textual convention has been filed:
+
+OLD:
+
+               2       3    month                     1..12
+               3       4    day                       1..31
+
+
+NEW:
+
+               2       3    month                 0 | 1..12
+               3       4    day                   0 | 1..31
+ 
+
+
+Reported By: Juergen Schoenwaelder; schoenw@ibr.cs.tu-bs.de
+Date: Sat, 8 Dec 2001 00:55:51 +0100
+
+In Section 7.1.1
+
+    "The RowStatus textual convention is used to manage the
+    creation and deletion of conceptual rows, and is used as the
+    value of the SYNTAX clause for the status column of a
+    conceptual row (as described in Section 7.7.1 of [2].)
+
+Should be:
+
+    "The RowStatus textual convention is used to manage the
+    creation and deletion of conceptual rows, and is used as the
+    value of the SYNTAX clause for the status column of a
+    conceptual row (as described in Section 7.1.12 of [2].)
+ 
+
+Reported By: Juergen Schoenwaelder; schoenw@ibr.cs.tu-bs.de
+Date: Tue, 31 Jul 2001 16:36:04 +0200
+
+In Section 2:
+
+ RFC 2579 lists an invalid range for the year in the DateAndTime TC:
+ 
+             field  octets  contents                  range
+             -----  ------  --------                  -----
+               1      1-2   year*                     0..65536
+
+Should be:
+
+             field  octets  contents                  range
+             -----  ------  --------                  -----
+               1      1-2   year*                     0..65535

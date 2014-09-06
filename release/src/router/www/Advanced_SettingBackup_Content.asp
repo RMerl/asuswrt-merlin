@@ -85,7 +85,7 @@ function detect_httpd(){
 
 	$j.ajax({
     		url: '/httpd_check.htm',
-    		dataType: 'script',
+    		dataType: 'text',
 				timeout: 1500,
     		error: function(xhr){
     				dead++;
@@ -160,66 +160,76 @@ function detect_httpd(){
 <table class="content" align="center" cellpadding="0" cellspacing="0">
 	<tr>
 		<td width="17">&nbsp;</td>
-		
 		<td valign="top" width="202">				
-		<div  id="mainMenu"></div>	
-		<div  id="subMenu"></div>		
+			<div  id="mainMenu"></div>	
+			<div  id="subMenu"></div>		
 		</td>				
 		
-    <td valign="top">
-	<div id="tabMenu" class="submenuBlock"></div>
-		<!--===================================Beginning of Main Content===========================================-->
-<table width="98%" border="0" align="left" cellpadding="0" cellspacing="0">
-	<tr>
-		<td align="left" valign="top" >
-          
-		<table width="760px" border="0" cellpadding="5" cellspacing="0" class="FormTitle" id="FormTitle">
-		<tbody>
-		<tr>
-		  <td bgcolor="#4D595D" valign="top">
-		  <div>&nbsp;</div>
-		  <div class="formfonttitle"><#menu5_6_adv#> - <#menu5_6_4#></div>
-		  <div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
-		  <div class="formfontdesc"><#Setting_save_upload_desc#></div>
+	    <td valign="top">
+			<div id="tabMenu" class="submenuBlock"></div>
+			<!--===================================Beginning of Main Content===========================================-->
+			<table width="98%" border="0" align="left" cellpadding="0" cellspacing="0">
+				<tr>
+					<td align="left" valign="top" >  
+						<table width="760px" border="0" cellpadding="5" cellspacing="0" class="FormTitle" id="FormTitle">
+							<tbody>
+								<tr>
+			  						<td bgcolor="#4D595D" valign="top">
+				  						<div>&nbsp;</div>
+				  						<div class="formfonttitle"><#menu5_6_adv#> - <#menu5_6_4#></div>
+										<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
+										<div class="formfontdesc"><#Setting_save_upload_desc#></div>
 
-		<table width="100%" border="1" align="center" cellpadding="6" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
-          <tr>
-            <th width="25%" align="right"><a class="hintstyle"  href="javascript:void(0);" onclick="openHint(19,1)"><#Setting_factorydefault_itemname#></a></th>
-            <td>
-              <input class="button_gen" onclick="restoreRule();" type="button" value="<#CTL_restore#>" name="action1" />
-              <input type="hidden" name="wl_gmode_protection_x" value="<% nvram_get("wl_gmode_protection_x"); %>" /></td>
-          </tr>
-          <tr>
-            <th align="right"><a class="hintstyle"  href="javascript:void(0);" onclick="openHint(19,2)"><#Setting_save_itemname#></a></th>
-            <td>
-              <input class="button_gen" onclick="saveSetting();" type="button" value="<#CTL_onlysave#>" name="action2" />
-            </td>
-          </tr>
-          <tr>
-            <th align="right"><a class="hintstyle" href="javascript:void(0);" onclick="openHint(19,3)"><#Setting_upload_itemname#></a></th>
-            <td>
-				<div style="margin-left:-10px;"><table><tr>
-					<td style="border:0px"><input type="button" class="button_gen" onclick="uploadSetting();" value="<#CTL_upload#>"/></td>
-					<td style="border:0px"><input type="file" name="file" class="input" style="color:#FFCC00;"/></td>
-				</tr></table></div>
-            </td>
-          </tr>
-        </table>
-			  </td>
-            </tr>
-          </tbody>
-		</table>
+										<table width="100%" border="1" align="center" cellpadding="6" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
+	          								<tr>
+	            								<th width="25%" align="right">
+	            									<a class="hintstyle"  href="javascript:void(0);" onclick="openHint(19,1)"><#Setting_factorydefault_itemname#></a>
+	            								</th>
+	            								<td>
+									            	<input class="button_gen" onclick="restoreRule();" type="button" value="<#CTL_restore#>" name="action1" />
+	              									<input type="hidden" name="wl_gmode_protection_x" value="<% nvram_get("wl_gmode_protection_x"); %>" />
+	              								</td>
+	          								</tr>
+											<tr>
+												<th align="right">
+													<a class="hintstyle"  href="javascript:void(0);" onclick="openHint(19,2)"><#Setting_save_itemname#></a>
+												</th>
+												<td>
+													<input class="button_gen" onclick="saveSetting();" type="button" value="<#CTL_onlysave#>" name="action2" />
+												</td>
+											</tr>
+											<tr>
+												<th align="right">
+													<a class="hintstyle" href="javascript:void(0);" onclick="openHint(19,3)"><#Setting_upload_itemname#></a>
+												</th>
+												<td>
+													<div style="margin-left:-10px;">
+														<table>
+															<tr>
+																<td style="border:0px">
+																	<input type="button" class="button_gen" onclick="uploadSetting();" value="<#CTL_upload#>"/>
+																</td>
+																<td style="border:0px">
+																	<input type="file" name="file" class="input" style="color:#FFCC00;"/>
+																</td>
+															</tr>
+														</table>
+													</div>
+												</td>
+											</tr>
+										</table>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</td>
+	        	</tr>
+			</table>		
 		</td>
-</form>
-
-
-        </tr>
-      </table>		
-	</td>
-		
-    <td width="10" align="center" valign="top">&nbsp;</td>
+    	<td width="10" align="center" valign="top">&nbsp;</td>
 	</tr>
 </table>
+</form>
 
 <div id="footer"></div>
 

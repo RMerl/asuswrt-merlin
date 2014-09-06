@@ -1,0 +1,208 @@
+# -*- autoconf -*-
+#########################################
+##
+# Checks for types
+##
+#########################################
+
+##
+#   Standard checks:
+##
+
+AC_CHECK_SIZEOF(short)
+AC_CHECK_SIZEOF(int)
+AC_CHECK_SIZEOF(long)
+AC_CHECK_SIZEOF(long long)
+AC_CHECK_SIZEOF(intmax_t)
+
+AC_TYPE_INT8_T
+AC_TYPE_INT16_T
+AC_TYPE_INT32_T
+AC_TYPE_INT64_T
+AC_TYPE_INTMAX_T
+AC_TYPE_UINT8_T
+AC_TYPE_UINT16_T
+AC_TYPE_UINT32_T
+AC_TYPE_UINT64_T
+AC_TYPE_UINTMAX_T
+AC_TYPE_INTPTR_T
+AC_TYPE_UINTPTR_T
+
+##
+#   Other type checks:
+##
+
+AC_CHECK_TYPES([off64_t])
+AC_CHECK_TYPES([nfds_t],,,[#include <sys/poll.h>])
+
+#   Solaris specific checks
+#       (taken from Perl's configure script)
+#
+AC_CHECK_TYPES([Counter64],,,[#include <inet/mib2.h>])
+AC_CHECK_TYPES([mib2_ipIfStatsEntry_t],,,[#include <inet/mib2.h>])
+
+#   N.B:  The above checks could safely be moved to
+#         the later 'config_types' sub-script
+#
+
+
+##
+#   Determine the IPv6 stack type
+##
+
+#       These checks also set the LIBS/CFLAGS variables,
+#       which may be needed for subsequent function tests
+#
+
+if test "x$enable_ipv6" = "xyes"; then
+	v6type=unknown
+	v6lib=none
+	v6trylibc=no
+
+	AC_MSG_CHECKING([[ipv6 stack type]])
+	for i in v6d toshiba kame inria zeta linux-glibc linux-inet6 cygwin winsock2 generic; do
+		case $i in
+		v6d)
+			AC_EGREP_CPP(yes, [
+#include </usr/local/v6/include/sys/types.h>
+#ifdef __V6D__
+yes
+#endif],
+				[v6type=$i; v6lib=v6;
+				v6libdir=/usr/local/v6/lib;
+				CFLAGS="-I/usr/local/v6/include $CFLAGS"])
+			;;
+		toshiba)
+			AC_EGREP_CPP(yes, [
+#include <sys/param.h>
+#ifdef _TOSHIBA_INET6
+yes
+#endif],
+				[v6type=$i; v6lib=inet6;
+				v6libdir=/usr/local/v6/lib;
+				CFLAGS="-DNETSNMP_ENABLE_IPV6 $CFLAGS"])
+			;;
+		kame)
+			AC_EGREP_CPP(yes, [
+#include <netinet/in.h>
+#ifdef __KAME__
+yes
+#endif],
+				[v6type=$i; v6lib=inet6;
+				v6libdir=/usr/local/v6/lib;
+				v6trylibc=yes;
+				CFLAGS="-DNETSNMP_ENABLE_IPV6 $CFLAGS"])
+			;;
+		inria)
+			AC_EGREP_CPP(yes, [
+#include <netinet/in.h>
+#ifdef IPV6_INRIA_VERSION
+yes
+#endif],
+				[v6type=$i;
+				v6lib=dummy;
+				v6libdir=none;
+				v6trylibc=yes;
+				CFLAGS="-DNETSNMP_ENABLE_IPV6 $CFLAGS"])
+			;;
+		zeta)
+			AC_EGREP_CPP(yes, [
+#include <sys/param.h>
+#ifdef _ZETA_MINAMI_INET6
+A
+yes
+#endif],
+				[v6type=$i; v6lib=inet6;
+				v6libdir=/usr/local/v6/lib;
+				CFLAGS="-DNETSNMP_ENABLE_IPV6 $CFLAGS"])
+			;;
+		linux-glibc)
+			AC_EGREP_CPP(yes, [
+#include <features.h>
+#if defined(__GLIBC__) && ((__GLIBC__ == 2 && __GLIBC_MINOR__ >= 1) || (__GLIBC_ > 2))
+yes
+#endif],
+				[v6type=$i;
+				v6lib=dummy;
+				v6libdir=none;
+				v6trylibc=yes;
+				CFLAGS="-DNETSNMP_ENABLE_IPV6 $CFLAGS"])
+			;;
+		linux-inet6)
+			if test -d /usr/inet6; then
+				v6type=$i
+				v6lib=inet6
+				v6libdir=/usr/inet6/lib
+				CFLAGS="-DNETSNMP_ENABLE_IPV6 $CFLAGS"
+			fi
+			;;
+		cygwin)
+			AC_EGREP_CPP(yes, [
+#include <netinet/in.h>
+#ifdef _CYGWIN_IN6_H
+yes
+#endif],
+				[v6type=$i;
+				v6lib=dummy;
+				v6libdir=none
+				v6trylibc=yes;
+				CFLAGS="-DNETSNMP_ENABLE_IPV6 $CFLAGS"])
+                       ;;
+		winsock2)
+			AC_EGREP_CPP(yes, [
+#include <ws2tcpip.h>
+#if defined(_WS2TCPIP_H)
+yes
+#endif],
+				[v6type=$i;
+				v6lib=dummy;
+				v6libdir=none
+				v6trylibc=yes;
+				CFLAGS="-DNETSNMP_ENABLE_IPV6 $CFLAGS"])
+			;;
+		generic)
+                        AC_MSG_RESULT([[postponed]])
+			AC_CHECK_MEMBER([struct sockaddr_in6.sin6_addr],,,[
+AC_INCLUDES_DEFAULT()
+[#ifdef HAVE_SYS_PARAM_H
+#include <sys/param.h>
+#endif
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
+#ifdef HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif
+]])
+	                AC_MSG_CHECKING([[ipv6 stack type]])
+                        if test "x$ac_cv_member_struct_sockaddr_in6_sin6_addr" = "xyes"; then
+				v6type=$i
+				v6lib=dummy
+				v6libdir=none
+				v6trylibc=yes
+				CFLAGS="-DNETSNMP_ENABLE_IPV6 $CFLAGS"
+                        fi
+			;;
+		esac
+		if test "$v6type" != "unknown"; then
+			break
+		fi
+	done
+
+	if test "$v6lib" != "none"; then
+		if test -d $v6libdir -a -f $v6libdir/lib$v6lib.a; then
+			LIBS="-L$v6libdir -l$v6lib $LIBS"
+			enable_ipv6="yes"
+			AC_MSG_RESULT(["$v6type, $enable_ipv6, using lib$v6lib"])
+		elif test "$v6trylibc" = "yes"; then
+			enable_ipv6="yes"
+			AC_MSG_RESULT(["$v6type, $enable_ipv6, using libc"])
+		else
+			AC_MSG_ERROR(no IPv6 library lib$v6lib.a found.)
+			exit 1
+		fi
+	else
+		enable_ipv6="no"
+		AC_MSG_RESULT(["$v6type, $enable_ipv6"])
+	fi
+fi

@@ -1233,6 +1233,9 @@ enum {
 	IEEE80211_PARAM_RX_AMSDU_PMBL_WF_SP = 282,	/* The weight factor of short preamble error for calculating the pmbl error */
 	IEEE80211_PARAM_RX_AMSDU_PMBL_WF_LP = 283,	/* The weight factor of long preamble error for calculating the pmbl error */
 	IEEE80211_PARAM_BA_SETUP_ENABLE = 284,	/* enable the BA according the rssi threshold, 0 - disable, 1 - enable */
+	IEEE80211_PARAM_BB_PARAM = 285,	/* Baseband param */
+	IEEE80211_PARAM_NDPA_DUR = 286,         /* set vht NDPA duration field */
+	IEEE80211_PARAM_TXBF_PKT_CNT = 287,     /* set the pkt cnt per txbf interval to fire sounding to a node */
 };
 
 #define	SIOCG80211STATS			(SIOCDEVPRIVATE+2)

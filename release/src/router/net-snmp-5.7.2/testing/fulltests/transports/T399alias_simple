@@ -1,0 +1,24 @@
+#!/bin/sh
+
+. ../support/simple_eval_tools.sh
+
+HEADER ALIAS Transport
+
+SKIPIFNOT USING_MIBII_SYSTEM_MIB_MODULE
+SKIPIFNOT NETSNMP_TRANSPORT_ALIAS_DOMAIN
+
+#
+# Begin test
+#
+
+# configure the agent to accept user initial with noAuthNoPriv
+. ../default/Sv3config
+
+CONFIGAPP alias aliastest udp:localhost:$SNMP_SNMPD_PORT
+CONFIGAGENT '[snmp]' alias aliastest udp:localhost:$SNMP_SNMPD_PORT
+
+SNMP_TRANSPORT_SPEC=alias
+SNMP_TEST_DEST="aliastest"
+SNMP_SNMPD_PORT=""
+
+. ./Stransport

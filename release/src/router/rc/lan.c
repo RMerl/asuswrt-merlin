@@ -263,7 +263,7 @@ static int wlconf(char *ifname, int unit, int subunit)
 #if 0
 #ifdef RTCONFIG_BCMWL6
 #ifdef RTCONFIG_PROXYSTA
-		if (is_psta(1 - unit))
+		if (psta_exist_except(unit))
 		{
 			eval("wlconf", ifname, "down");
 			eval("wl", "-i", ifname, "radio", "off");
@@ -308,15 +308,20 @@ GEN_CONF:
 			eval("wl", "-i", ifname, "ldpc_cap", "1");	// driver default setting
 #endif
 #ifdef RTCONFIG_BCMWL6
+#ifndef RTCONFIG_BCM7
 		if (nvram_match(strcat_r(prefix, "ack_ratio", tmp), "1"))
 			eval("wl", "-i", ifname, "ack_ratio", "4");
 		else
 			eval("wl", "-i", ifname, "ack_ratio", "2");	// driver default setting
-
+#endif
 		if (nvram_match(strcat_r(prefix, "ampdu_mpdu", tmp), "1"))
 			eval("wl", "-i", ifname, "ampdu_mpdu", "64");
 		else
+#ifndef RTCONFIG_BCM7
 			eval("wl", "-i", ifname, "ampdu_mpdu", "-1");	// driver default setting
+#else
+			eval("wl", "-i", ifname, "ampdu_mpdu", "32");	// driver default setting
+#endif
 #ifdef RTCONFIG_BCMARM
 		if (nvram_match(strcat_r(prefix, "ampdu_rts", tmp), "1"))
 			eval("wl", "-i", ifname, "ampdu_rts", "1");	// driver default setting
@@ -361,7 +366,7 @@ GEN_CONF:
 #else
 //#ifdef RTCONFIG_BCMWL6
 #ifdef RTCONFIG_PROXYSTA
-			if (is_psta(1 - unit))
+			if (psta_exist_except(unit))
 			{
 				eval("wl", "-i", ifname, "closed", "1");
 				eval("wl", "-i", ifname, "maxassoc", "0");
@@ -808,19 +813,15 @@ void apcli_start(void)
 		ch = site_survey_for_channel(0,aif, &ht_ext);
 		if(ch!=-1)
 		{
-#if defined(RTCONFIG_RALINK_MT7620)
-			if (wlc_band == 0)
-#else
 			if (wlc_band == 1)
-#endif
 			{
-				doSystem("iwpriv apcli0 set Channel=%d", ch);
-				doSystem("iwpriv apcli0 set ApCliEnable=1");
+				doSystem("iwpriv %s set Channel=%d", APCLI_5G, ch);
+				doSystem("iwpriv %s set ApCliEnable=1", APCLI_5G);
 			}
 			else
 			{
-				doSystem("iwpriv apclii0 set Channel=%d", ch);
-				doSystem("iwpriv apclii0 set ApCliEnable=1");
+				doSystem("iwpriv %s set Channel=%d", APCLI_2G, ch);
+				doSystem("iwpriv %s set ApCliEnable=1", APCLI_2G);
 			}
 			fprintf(stderr,"##set channel=%d, enable apcli ..#\n",ch);
 		}
@@ -879,7 +880,7 @@ void start_wl(void)
 				else
 #ifdef RTCONFIG_BCMWL6
 #ifdef RTCONFIG_PROXYSTA
-				if (!is_psta(1 - unit))
+				if (!psta_exist_except(unit))
 #endif
 #endif
 				{
@@ -909,21 +910,28 @@ void start_wl(void)
 	if (is_client)
 		xstart("radio", "join");
 
+	/* manual turn on 5g led for some gpio-ctrl-5g-led */
 #ifdef RTCONFIG_BCMWL6
 #if defined(RTAC66U) || defined(BCM4352)
 	if (nvram_match("wl1_radio", "1"))
 	{
+#ifndef RTCONFIG_LED_BTN
+		if (!(nvram_get_int("sw_mode")==SW_MODE_AP && nvram_get_int("wlc_psta")==1 && nvram_get_int("wlc_band")==0)) {
+			nvram_set("led_5g", "1");
+			led_control(LED_5G, LED_ON);
+		}
+#else
 		nvram_set("led_5g", "1");
-#ifdef RTCONFIG_LED_BTN
 		if (nvram_get_int("AllLED"))
+			led_control(LED_5G, LED_ON);
 #endif
-		led_control(LED_5G, LED_ON);
 	}
 	else
 	{
 		nvram_set("led_5g", "0");
 		led_control(LED_5G, LED_OFF);
 	}
+
 #ifdef RTCONFIG_TURBO
 	if ((nvram_match("wl0_radio", "1") || nvram_match("wl1_radio", "1")
 #ifdef RTAC3200
@@ -1120,8 +1128,10 @@ wlconf_ra(const char* wif)
 
 			if (!strcmp(word, WIF_2G))
 				set_wlpara_ra(wif, 0);
+#if defined(RTCONFIG_HAS_5G)
 			else if (!strcmp(word, WIF_5G))
 				set_wlpara_ra(wif, 1);
+#endif	/* RTCONFIG_HAS_5G */
 		}
 
 		unit++;
@@ -1381,8 +1391,8 @@ void start_lan(void)
 #endif
 
 		inet_aton(nvram_safe_get("lan_ipaddr"), (struct in_addr *)&ip);
-#ifdef RTCONFIG_TMOBILE_TMP
-		restore_defaults_tmobile_hs2();
+#ifdef RTCONFIG_TMOBILE
+//		restore_defaults_tmobile_hs2();
 		wl_defaults();
 #endif
 		hwaddrset = 0;
@@ -1870,8 +1880,10 @@ void stop_lan(void)
 
 	update_lan_state(LAN_STATE_STOPPED, 0);
 
+#if 0	/* fa_nvram_adjust only available on reboot */
 #ifdef RTCONFIG_BCMFA
 	fa_nvram_adjust();
+#endif
 #endif
 #ifdef RTCONFIG_GMAC3
 	/* Ajuest GMAC3 NVRAM variables */
@@ -1979,9 +1991,6 @@ void hotplug_net(void)
 	char device_path[128], usb_path[PATH_MAX], usb_node[32], port_path[8];
 	char nvram_name[32];
 	char word[PATH_MAX], *next;
-#ifdef RTCONFIG_USB_BECEEM
-	int i, j;
-#endif
 #endif
 
 	if (!(interface = getenv("INTERFACE")) ||
@@ -2099,6 +2108,7 @@ NEITHER_WDS_OR_PSTA:
 			char buf[8];
 
 			logmessage("hotplug", "add net %s.", interface);
+			_dprintf("hotplug net: add net %s.\n", interface);
 
 			snprintf(device_path, 128, "%s/%s/device", SYS_NET, interface);
 
@@ -2115,6 +2125,7 @@ NEITHER_WDS_OR_PSTA:
 			vid = get_usb_vid(usb_node);
 			pid = get_usb_pid(usb_node);
 logmessage("hotplug", "Got net %s, vid 0x%x, pid 0x%x.", interface, vid, pid);
+_dprintf("hotplug net: Got net %s, vid 0x%x, pid 0x%x.\n", interface, vid, pid);
 
 			snprintf(nvram_name, 32, "usb_path%s_act", port_path);
 			snprintf(word, PATH_MAX, "%s", nvram_safe_get(nvram_name));
@@ -2122,9 +2133,11 @@ logmessage("hotplug", "Got net %s, vid 0x%x, pid 0x%x.", interface, vid, pid);
 			if(!strcmp(word, "usb1") && strcmp(interface, "usb1")){
 				// If there are 2 usbX, use QMI:usb1 to connect.
 				logmessage("hotplug", "skip to set net %s.", interface);
+				_dprintf("hotplug net: skip to set net %s.\n", interface);
 			}
 			else{
 				logmessage("hotplug", "set net %s.", interface);
+				_dprintf("hotplug net: set net %s.\n", interface);
 				nvram_set(nvram_name, interface);
 				//snprintf(nvram_name, 32, "usb_path%s", port_path);
 				//nvram_set(nvram_name, "modem");
@@ -2133,7 +2146,7 @@ logmessage("hotplug", "Got net %s, vid 0x%x, pid 0x%x.", interface, vid, pid);
 				nvram_set("usb_modem_act_vid", buf);
 				snprintf(buf, 8, "%u", pid);
 				nvram_set("usb_modem_act_pid", buf);
-
+				nvram_set("usb_modem_act_dev", interface);
 				nvram_set(strcat_r(prefix, "ifname", tmp), interface);
 			}
 
@@ -2154,6 +2167,7 @@ logmessage("hotplug", "Got net %s, vid 0x%x, pid 0x%x.", interface, vid, pid);
 		}
 		else{
 			logmessage("hotplug", "remove net %s.", interface);
+			_dprintf("hotplug net: remove net %s.\n", interface);
 
 			snprintf(usb_node, 32, "%s", nvram_safe_get("usb_modem_act_path"));
 			if(strlen(usb_node) <= 0)
@@ -2166,9 +2180,11 @@ logmessage("hotplug", "Got net %s, vid 0x%x, pid 0x%x.", interface, vid, pid);
 
 			if(!strcmp(nvram_safe_get(nvram_name), interface)) {
 				nvram_unset(nvram_name);
-				nvram_unset("usb_modem_act_path");
 				nvram_unset("usb_modem_act_vid");
 				nvram_unset("usb_modem_act_pid");
+				nvram_unset("usb_modem_act_path");
+				nvram_unset("usb_modem_act_type");
+				nvram_unset("usb_modem_act_dev");
 			}
 
 			if(strlen(port_path) <= 0)
@@ -2250,6 +2266,7 @@ logmessage("hotplug", "Got net %s, vid 0x%x, pid 0x%x.", interface, vid, pid);
 				if(!strcmp(nvram_safe_get(nvram_name), "")) {
 					nvram_set(nvram_name, interface);
 					nvram_set("usb_modem_act_path", usb_node);
+					nvram_set("usb_modem_act_dev", interface);
 				}
 			}
 			// Beceem dongle.
@@ -2285,7 +2302,16 @@ logmessage("hotplug", "Got net %s, vid 0x%x, pid 0x%x.", interface, vid, pid);
 			if(!strcmp(nvram_safe_get(nvram_name), interface)) {
 				nvram_unset(nvram_name);
 				nvram_unset("usb_modem_act_path");
+				nvram_unset("usb_modem_act_type");
+				nvram_unset("usb_modem_act_dev");
 			}
+
+			char dhcp_pid_file[1024];
+
+			snprintf(dhcp_pid_file, 1024, "/var/run/udhcpc%d.pid", unit);
+
+			kill_pidfile_s(dhcp_pid_file, SIGUSR2);
+			kill_pidfile_s(dhcp_pid_file, SIGTERM);
 
 #ifdef RTCONFIG_USB_BECEEM
 			if(strlen(port_path) <= 0)
@@ -2537,7 +2563,7 @@ static void led_bh_prep(int post)
 			{
 				eval("wl", "ledbh", "10", "7");
 				eval("wl", "-i", "eth2", "ledbh", "10", "7");
-#if defined(RTAC3200)
+#ifdef RTAC3200
 				eval("wl", "-i", "eth3", "ledbh", "10", "7");
 #endif
 			}
@@ -2545,7 +2571,12 @@ static void led_bh_prep(int post)
 			{
 				eval("wl", "ledbh", "10", "1");
 				eval("wl", "-i", "eth2", "ledbh", "10", "1");
+#ifdef RTAC3200
+				eval("wl", "-i", "eth3", "ledbh", "10", "1");
+#endif
+#ifdef BCM4352
 				led_control(LED_5G, LED_ON);
+#endif
 #ifdef RTCONFIG_TURBO
 				led_control(LED_TURBO, LED_ON);
 #endif
@@ -3290,7 +3321,7 @@ void restart_wl(void)
 			else
 #ifdef RTCONFIG_BCMWL6
 #ifdef RTCONFIG_PROXYSTA
-			if (!is_psta(1 - unit))
+			if (!psta_exist_except(unit))
 #endif
 #endif
 			{
@@ -3317,17 +3348,20 @@ void restart_wl(void)
 #if defined(RTAC66U) || defined(BCM4352)
 	if (nvram_match("wl1_radio", "1"))
 	{
-		nvram_set("led_5g", "1");
-nvram_set("rmtest","1");
-#ifdef RTCONFIG_LED_BTN
-		if (nvram_get_int("AllLED"))
+#ifndef RTCONFIG_LED_BTN
+                if (!(nvram_get_int("sw_mode")==SW_MODE_AP && nvram_get_int("wlc_psta")==1 && nvram_get_int("wlc_band")==0)) {
+                        nvram_set("led_5g", "1");
+                        led_control(LED_5G, LED_ON);
+                }
+#else
+                nvram_set("led_5g", "1");
+                if (nvram_get_int("AllLED"))
+                        led_control(LED_5G, LED_ON);
 #endif
-		led_control(LED_5G, LED_ON);
 	}
 	else
 	{
 		nvram_set("led_5g", "0");
-nvram_set("rmtest", "0");
 		led_control(LED_5G, LED_OFF);
 	}
 #ifdef RTCONFIG_TURBO
@@ -3434,8 +3468,11 @@ void restart_wireless(void)
 
 #ifdef RTCONFIG_BCMWL6
 	stop_acsd();
-#ifdef RTCONFIG_HSPOT
+#ifdef BCM_BSD
+	stop_bsd();
+#endif
 	stop_igmp_proxy();
+#ifdef RTCONFIG_HSPOT
 	stop_hspotap();
 #endif
 #endif
@@ -3451,8 +3488,10 @@ void restart_wireless(void)
 	wl_defaults();	// init nvram wlx_ifnames & lan_ifnames
 	sleep(2);	// delay to avoid start interface on stoping.
 
+#if 0	/* fa_nvram_adjust only available on reboot */
 #ifdef RTCONFIG_BCMFA
 	fa_nvram_adjust();
+#endif
 #endif
 #ifdef RTCONFIG_GMAC3
 	/* Ajuest GMAC3 NVRAM variables */
@@ -3471,8 +3510,12 @@ void restart_wireless(void)
 	start_wps();
 #ifdef RTCONFIG_BCMWL6
 #ifdef RTCONFIG_HSPOT
+	start_hspotap();
 #endif
 	start_igmp_proxy();
+#ifdef BCM_BSD
+	start_bsd();
+#endif
 	start_acsd();
 #endif
 #ifndef RTCONFIG_BCMWL6
@@ -3520,11 +3563,12 @@ void restart_wireless(void)
 		start_nat_rules();
 	}
 #endif
-#ifdef RTCONFIG_HSPOT
-	start_hspotap();
-#endif
 
 	nvram_set_int("wlready", 1);
+
+#ifdef RTAC87U
+	if(nvram_get_int("AllLED") == 0) setAllLedOff();
+#endif
 
 	file_unlock(lock);
 }
@@ -3533,13 +3577,19 @@ void restart_wireless(void)
 void restart_wireless_wps(void)
 {
 	int lock = file_lock("wireless");
+#ifdef RTCONFIG_WIRELESSREPEATER
+        char domain_mapping[64];
+#endif
 
 	nvram_set_int("wlready", 0);
 
 #ifdef RTCONFIG_BCMWL6
 	stop_acsd();
-#ifdef RTCONFIG_HSPOT
+#ifdef BCM_BSD
+	stop_bsd();
+#endif
 	stop_igmp_proxy();
+#ifdef RTCONFIG_HSPOT
 	stop_hspotap();
 #endif
 #endif
@@ -3553,6 +3603,11 @@ void restart_wireless_wps(void)
 	stop_lan_wl();
 	wl_defaults_wps();
 	sleep(2);	// delay to avoid start interface on stoping.
+
+#ifdef RTCONFIG_GMAC3
+	/* Ajuest GMAC3 NVRAM variables */
+	gmac3_nvram_adjust();
+#endif
 	start_lan_wl();
 
 	reinit_hwnat(-1);
@@ -3566,8 +3621,12 @@ void restart_wireless_wps(void)
 	start_wps();
 #ifdef RTCONFIG_BCMWL6
 #ifdef RTCONFIG_HSPOT
+	start_hspotap();
 #endif
 	start_igmp_proxy();
+#ifdef BCM_BSD
+	start_bsd();
+#endif
 	start_acsd();
 #endif
 #ifndef RTCONFIG_BCMWL6
@@ -3588,8 +3647,32 @@ void restart_wireless_wps(void)
 		add_EbtablesRules();
 	}
 #endif
-#ifdef RTCONFIG_HSPOT
-	start_hspotap();
+
+#ifdef RTCONFIG_WIRELESSREPEATER
+	// when wlc_mode = 0 & wlc_state = WLC_STATE_CONNECTED, don't notify wanduck yet.
+	// when wlc_mode = 1 & wlc_state = WLC_STATE_CONNECTED, need to notify wanduck.
+	// When wlc_mode = 1 & lan_up, need to set wlc_state be WLC_STATE_CONNECTED always.
+	// wlcconnect often set the wlc_state too late.
+	if(nvram_get_int("sw_mode") == SW_MODE_REPEATER && nvram_get_int("wlc_mode") == 1) {
+		repeater_nat_setting();
+		nvram_set_int("wlc_state", WLC_STATE_CONNECTED);
+
+		logmessage("notify wanduck", "wlc_state change!");
+		_dprintf("%s: notify wanduck: wlc_state=%d.\n", __FUNCTION__, nvram_get_int("wlc_state"));
+		// notify the change to wanduck.
+		kill_pidfile_s("/var/run/wanduck.pid", SIGUSR1);
+	}
+
+	if(get_model() == MODEL_APN12HP &&
+		nvram_get_int("sw_mode") == SW_MODE_AP) {
+		repeater_nat_setting();
+		eval("ebtables", "-t", "broute", "-F");
+		eval("ebtables", "-t", "filter", "-F");
+		eval("ebtables", "-t", "broute", "-I", "BROUTING", "-d", "00:E0:11:22:33:44", "-j", "redirect", "--redirect-target", "DROP");
+		sprintf(domain_mapping, "%x %s", inet_addr(nvram_safe_get("lan_ipaddr")), DUT_DOMAIN_NAME);
+		f_write_string("/proc/net/dnsmqctrl", domain_mapping, 0, 0);
+		start_nat_rules();
+	}
 #endif
 
 	nvram_set_int("wlready", 1);

@@ -1,0 +1,9 @@
+SymbolType "Computer" : "UCD"
+{
+        Filebase "UCD";
+        CursorSize 38;
+
+        Capabilities {
+                isWorkstation = 1;
+        }
+}

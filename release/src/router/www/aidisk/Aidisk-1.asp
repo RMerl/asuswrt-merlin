@@ -57,22 +57,34 @@ function show_share_link(){
 		if(FTP_mode == 1 || dummyShareway == 0){
 			$("ddnslink1").style.display = ""; 
 			showtext($("ddnslink1"), '<#Internet#>&nbsp;<#AiDisk_linktoFTP_fromInternet#>&nbsp;<a id="ddnslink1_link" target="_blank" style="text-decoration: underline; font-family:Lucida Console;">ftp://<% nvram_get("ddns_hostname_x"); %></a>');
-			$("ddnslink1_link").href = 'ftp://<% nvram_get("ddns_hostname_x"); %>';
+			if(getBrowser_info().ie != undefined || getBrowser_info().ie != null)
+				$("ddnslink1_link").href = 'ftp://<% nvram_get("productid"); %>@<% nvram_get("ddns_hostname_x"); %>';
+			else
+				$("ddnslink1_link").href = 'ftp://<% nvram_get("ddns_hostname_x"); %>';
 			
 			$("desc_2").style.display = ""; 
 			$("ddnslink1_LAN").style.display = ""; 			
 			showtext($("ddnslink1_LAN"), '<#t2LAN#>&nbsp;<#AiDisk_linktoFTP_fromInternet#>&nbsp;<a id="ddnslink1_LAN_link" target="_blank" style="text-decoration: underline; font-family:Lucida Console;">ftp://<% nvram_get("lan_ipaddr"); %></a>');
-			$("ddnslink1_LAN_link").href = 'ftp://<% nvram_get("lan_ipaddr"); %>';
+			if(getBrowser_info().ie != undefined || getBrowser_info().ie != null)
+				$("ddnslink1_LAN_link").href = 'ftp://<% nvram_get("productid"); %>@<% nvram_get("lan_ipaddr"); %>';
+			else
+				$("ddnslink1_LAN_link").href = 'ftp://<% nvram_get("lan_ipaddr"); %>';
 		}
 		else if(FTP_mode == 2){
 			$("ddnslink2").style.display = "";
 			showtext($("ddnslink2"), '<#Internet#>&nbsp;<#AiDisk_linktoFTP_fromInternet#>&nbsp;<a id="ddnslink2_link" target="_blank" style="text-decoration: underline; font-family:Lucida Console;">ftp://<% nvram_get("ddns_hostname_x"); %></a>');
-			$("ddnslink2_link").href = 'ftp://<% nvram_get("ddns_hostname_x"); %>';
+			if(getBrowser_info().ie != undefined || getBrowser_info().ie != null)
+				$("ddnslink2_link").href = 'ftp://<% nvram_get("productid"); %>@<% nvram_get("ddns_hostname_x"); %>';
+			else
+				$("ddnslink2_link").href = 'ftp://<% nvram_get("ddns_hostname_x"); %>';
 			
 			$("desc_2").style.display = ""; 
 			$("ddnslink2_LAN").style.display = ""; 			
 			showtext($("ddnslink2_LAN"), '<#t2LAN#>&nbsp;<#AiDisk_linktoFTP_fromInternet#>&nbsp;<a id="ddnslink2_LAN_link" target="_blank" style="text-decoration: underline; font-family:Lucida Console;">ftp://<% nvram_get("lan_ipaddr"); %></a>');
-			$("ddnslink2_LAN_link").href = 'ftp://<% nvram_get("lan_ipaddr"); %>';
+			if(getBrowser_info().ie != undefined || getBrowser_info().ie != null)
+				$("ddnslink2_LAN_link").href = 'ftp://<% nvram_get("productid"); %>@<% nvram_get("lan_ipaddr"); %>';
+			else
+				$("ddnslink2_LAN_link").href = 'ftp://<% nvram_get("lan_ipaddr"); %>';
 			$("ddnslink2_LAN_link").innerHTML = 'ftp://<% nvram_get("lan_ipaddr"); %>';
 		}
 	}
@@ -86,10 +98,16 @@ function show_share_link(){
 			$("ddnslink1_LAN").style.display = "";			
 			if(FTP_mode == 1){
 					showtext($("ddnslink1_LAN"), '<#t2LAN#>&nbsp;<#AiDisk_linktoFTP_fromInternet#>&nbsp;<a id="ddnslink1_LAN_link" target="_blank" style="text-decoration: underline; font-family:Lucida Console;">ftp://<% nvram_get("lan_ipaddr"); %></a>');
-					$("ddnslink1_LAN_link").href = 'ftp://<% nvram_get("lan_ipaddr"); %>';
+					if(getBrowser_info().ie != undefined || getBrowser_info().ie != null)
+						$("ddnslink1_LAN_link").href = 'ftp://<% nvram_get("productid"); %>@<% nvram_get("lan_ipaddr"); %>';
+					else
+						$("ddnslink1_LAN_link").href = 'ftp://<% nvram_get("lan_ipaddr"); %>';
 			}else{
 					showtext($("ddnslink1_LAN"), '<#t2LAN#>&nbsp;<#AiDisk_linktoFTP_fromInternet#>&nbsp;<a id="ddnslink1_LAN_link" target="_blank" style="text-decoration: underline; font-family:Lucida Console;">ftp://<% nvram_get("lan_ipaddr"); %></a>');
-					$("ddnslink1_LAN_link").href = 'ftp://<% nvram_get("lan_ipaddr"); %>';
+					if(getBrowser_info().ie != undefined || getBrowser_info().ie != null)
+						$("ddnslink1_LAN_link").href = 'ftp://<% nvram_get("productid"); %>@<% nvram_get("lan_ipaddr"); %>';
+					else
+						$("ddnslink1_LAN_link").href = 'ftp://<% nvram_get("lan_ipaddr"); %>';		
 			}		
 		}else if(ddns_hostname.length <= 0){
 			showtext($("noWAN_link"), "<#linktoFTP_no_3#>");

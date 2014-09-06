@@ -1,0 +1,8 @@
+#
+# Insert lines in this file to prevent the 'rollup' utility from
+# applying patches to a given branch.  Right now, the file should contain
+# a branch name followed by 'rc' when the branch is in rc phase of a release.
+#
+V5-7-patches rc
+V5-7-patches rc
+V5-7-patches rc

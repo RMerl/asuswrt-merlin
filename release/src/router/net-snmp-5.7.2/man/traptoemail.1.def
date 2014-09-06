@@ -1,0 +1,22 @@
+.TH traptoemail "1" "16 Nov 2006" VVERSIONINFO "Net-SNMP"
+.SH NAME
+traptoemail - snmptrapd handler script to convert snmp traps into emails
+.SH SYNOPSIS
+.PP
+.B traptoemail
+[\fI\-f FROM\fR]
+[\fI\-s SMTPSERVER\fR]
+ADDRESSES
+.SH DESCRIPTION
+.PP
+converts snmp traps into email messages.
+.SH OPTIONS
+.TP
+.B \-f FROM
+sender address, defaults to "root"
+.TP
+.B \-s SMTPSERVER
+SMTP server, defaults to "localhost"
+.TP
+.B ADDRESSES
+recipient addresses

@@ -671,7 +671,7 @@ const char *getifaddr(char *ifname, int family, int flags)
 	static char buf[INET6_ADDRSTRLEN];
 	struct ifaddrs *ifap, *ifa;
 	unsigned char *addr, *netmask;
-	int i, maxlen = 0;
+	unsigned char i, maxlen = 0;
 
 	if (getifaddrs(&ifap) != 0) {
 		_dprintf("getifaddrs failed: %s\n", strerror(errno));
@@ -1351,6 +1351,47 @@ int is_psr(int unit)
 		(nvram_get_int("wlc_psta") == 2) &&
 		(nvram_get_int("wlc_band") == unit))
 		return 1;
+
+	return 0;
+}
+
+int psta_exist()
+{
+	char word[256], *next;
+	int idx = 0;
+
+	foreach (word, nvram_safe_get("wl_ifnames"), next) {
+		if (is_psta(idx)) return 1;
+		idx++;
+	}
+
+	return 0;
+}
+
+int psta_exist_except(int unit)
+{
+	char word[256], *next;
+	int idx = 0;
+
+	foreach (word, nvram_safe_get("wl_ifnames"), next) {
+		if (idx == unit) continue;
+		if (is_psta(idx)) return 1;
+		idx++;
+	}
+
+	return 0;
+}
+
+int psr_exist_except(int unit)
+{
+	char word[256], *next;
+	int idx = 0;
+
+	foreach (word, nvram_safe_get("wl_ifnames"), next) {
+		if (idx == unit) continue;
+		if (is_psr(idx)) return 1;
+		idx++;
+	}
 
 	return 0;
 }

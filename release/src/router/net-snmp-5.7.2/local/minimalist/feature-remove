@@ -1,0 +1,128 @@
+#!/bin/sh
+
+#
+# feature-remove: removes features by defining special variables
+# indicating particular code segments are unneeded.  This is done by
+# examining the list of provided features and defining a REMOVE
+# equivalent if no other module required it.
+#
+# Arguments:
+#   feature-remove mainheader.h globalheader.h THEREST
+#
+# Where THEREST are a list of features to remove (default) or add.
+#
+#   --add switches to "adding" and --remove switches back.
+#
+# E.G.
+#   feature-remove mainheader.h globalheader.h oid_stash --add container_null
+#
+CP=cp
+
+featureheader="$1"
+featureheaderin="$1.in"
+featureheaderglobal="$2"
+shift
+shift
+
+argumenttype="--remove"
+removethese=""
+addthese=""
+
+while test "x$1" != "x" ; do
+    uc=`echo $1 | tr a-z A-Z`
+    case $1 in
+	--*)
+	    argumenttype="$1"
+	    ;;
+
+	*)
+	    if test "x$argumenttype" = "x--remove" ; then
+		removethese="$removethese $uc"
+	    else
+		addthese="$addthese $uc"
+	    fi
+	    ;;
+    esac
+    shift
+done
+
+echo "" > $featureheader
+echo "/* The following defines features that Net-SNMP HAS or has REMOVEd */" >> $featureheader
+
+haslist=" "
+
+for i in `grep NETSNMP_FEATURE_PROVIDE_ $featureheaderin | sed 's/.*FEATURE_PROVIDE_//;s/ .*//'` ; do
+    #
+    # If we were specifically asked to include it, then do so
+    #
+    if echo " $addthese " | grep " ${i} " > /dev/null ; then
+       # The user required it ; report we're using it
+	echo "#define NETSNMP_FEATURE_HAS_$i 1" >> $featureheader
+	haslist="${haslist}${i} "
+
+    #
+    # check to see if something requried it
+    #
+    elif grep "NETSNMP_FEATURE_REQUIRE_${i} " $featureheaderglobal > /dev/null ; then
+	# if so, make sure we weren't asked to remove it
+       	if echo  " $removethese "| grep " $i " > /dev/null ; then
+       	   # Uh oh; they specifically wanted it removed but it was required
+	   echo "Feature Error:"
+       	   echo " Feature '$i' was asked to be removed but something required it"
+       	   echo " See the $featureheaderglobal file for dependency details"
+	   echo ""
+           rm -f $featureheader
+       	   exit 1
+       	fi
+
+       	# something required it ; report we're using it
+       	echo "#define NETSNMP_FEATURE_HAS_$i 1" >> $featureheader
+	haslist="${haslist}${i} "
+
+    #
+    # check to see if something "wanted" it
+    #
+    elif grep "NETSNMP_FEATURE_WANT_${i} " $featureheaderglobal > /dev/null ; then
+	   # nothing required it, but something "wanted" it
+
+	   # check to make sure we weren't asked to exclude it
+           if echo " $removethese " | grep " $i " > /dev/null ; then
+               # we were specifically asked *not* to use this feature
+               echo "#define NETSNMP_FEATURE_REMOVE_$i 1" >> $featureheader
+           else
+	       # something wanted it, so we'll include it
+	       echo "#define NETSNMP_FEATURE_HAS_$i 1" >> $featureheader
+	       haslist="${haslist}${i} "
+           fi
+
+
+    #
+    # check to see if something required a parent
+    #
+    elif egrep NETSNMP_FEATURE_${i}_CHILD_OF $featureheaderglobal > /dev/null ; then
+	parentnames=`egrep NETSNMP_FEATURE_${i}_CHILD_OF $featureheaderglobal | sed 's/.*CHILD_OF_//;s/ .*//;'`
+
+	foundone=0
+	for parentname in $parentnames ; do
+   	    # if the parent was desired, then we are too:
+	    
+	    if test $foundone = 0 ; then
+		if egrep "NETSNMP_FEATURE_HAS_${parentname} " $featureheader > /dev/null ; then
+       		    echo "#define NETSNMP_FEATURE_HAS_$i 1" >> $featureheader
+		    haslist="${haslist}${i} "
+		    foundone=1
+		fi
+	    fi
+        done
+	if test $foundone = 0 ; then
+    	    echo "#define NETSNMP_FEATURE_REMOVE_$i 1" >> $featureheader
+	fi
+
+    #
+    # no one required or wanted it -- it is safe to remove it
+    #
+    else
+    	 echo "#define NETSNMP_FEATURE_REMOVE_$i 1" >> $featureheader
+    fi
+done
+

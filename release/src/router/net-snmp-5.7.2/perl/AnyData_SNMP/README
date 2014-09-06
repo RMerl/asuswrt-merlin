@@ -1,0 +1,21 @@
+The AnyData::SNMP module is really an augmentation to Jeff Zucker's
+excellent perl AnyData and DBD::AnyData modules.  It is designed to
+allow the infamous perl DBI module to translate SQL commands directly
+into network SNMP requests and to manipulate the data in perl
+afterward.  See the perl DBI documentation for further details, as
+well as the AnyData documentation.
+
+The netsh command then implements a standard shell around the sql to
+SNMP mapping, such that commands like the following are possible:
+
+  netsh -c public localhost 'select ifIndex, ifDescr, ifType from ifTable'
+  netsh -c public localhost 'update ifTable set ifAdminStatus = 2 where ifType = 6'
+
+Without a command to run, netsh puts you into an interactive shell
+where the commands can be typed at a command prompt.
+
+See the INSTALL file for the necessary prerequisites.  Note that this
+currently makes use of a patched copy of the DBD::AnyData module.
+This will be fixed in future versions of both this module and the
+DBD::AnyData module as the authors worth toward a common
+infrastructure.

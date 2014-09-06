@@ -1,0 +1,4 @@
+  This column is a DataAndTime object. The local local variables year,
+  month, day, hour, minues, seconds, deci_seconds, utc_offset_direction,
+  utc_offset_hours and utc_offset_minutes should be set from the data
+  context before the netsnmp_dateandtime_set_buf_from_vars function call.

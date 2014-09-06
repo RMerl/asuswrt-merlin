@@ -1,0 +1,173 @@
+#
+# local (scripts) directory Makefile
+#
+top_builddir=..
+
+VPATH		= @srcdir@
+
+#
+# stuff to install
+#
+OTHERINSTALL=localinstall
+OTHERUNINSTALL=localuninstall
+
+#
+# local info
+#
+SNMPCONFPATH=@SNMPCONFPATH@
+PERSISTENT_DIRECTORY=@PERSISTENT_DIRECTORY@
+PERLSCRIPTS=snmpcheck tkmib mib2c fixproc ipf-mod.pl snmpconf traptoemail snmp-bridge-mib net-snmp-cert
+SHELLSCRIPTS=mib2c-update
+SCRIPTSMADEFORPERL=snmpcheck.made tkmib.made mib2c.made fixproc.made \
+	ipf-mod.pl.made snmpconf.made traptoemail.made snmp-bridge-mib.made \
+	net-snmp-cert.made
+DATASRCS=mib2c.conf mib2c.iterate.conf mib2c.iterate_access.conf \
+	mib2c.create-dataset.conf mib2c.mfd.conf \
+	mib2c.array-user.conf mib2c.column_enums.conf \
+	mib2c.column_defines.conf mib2c.column_storage.conf \
+	mib2c.old-api.conf mib2c.scalar.conf \
+	mib2c.check_values.conf mib2c.check_values_local.conf \
+	mib2c.access_functions.conf mib2c.notify.conf \
+	mib2c.int_watch.conf mib2c.genhtml.conf \
+	mib2c.raw-table.conf mib2c.table_data.conf \
+	mib2c.container.conf mib2c.perl.conf
+MIB2CINSTALLDIR=$(snmplibdir)/mib2c-data
+MIB2CDATASRC=mib2c-conf.d
+MIB2CFILES=default-mfd-top.m2c details-enums.m2i details-node.m2i \
+	details-table.m2i generic-ctx-copy.m2i generic-ctx-get.m2i \
+	generic-ctx-set.m2i generic-data-allocate.m2i generic-data-context.m2i \
+	generic-get-char.m2i generic-get-decl-bot.m2i generic-get-decl.m2i \
+	generic-get-long.m2i generic-get-oid.m2i generic-get-U64.m2i \
+	generic-header-bottom.m2i \
+	generic-header-top.m2i generic-source-includes.m2i \
+	generic-table-constants.m2c generic-table-enums.m2c \
+	generic-table-indexes-from-oid.m2i generic-table-indexes-set.m2i \
+	generic-table-indexes-to-oid.m2i \
+	generic-table-indexes-varbind-setup.m2i generic-table-indexes.m2i \
+	generic-table-oids.m2c generic-value-map-func.m2i \
+	generic-value-map-reverse.m2i generic-value-map.m2i \
+	m2c-internal-warning.m2i \
+	m2c_setup_enum.m2i m2c_setup_node.m2i m2c_setup_table.m2i \
+	m2c_table_save_defaults.m2i \
+	mfd-access-container-cached-defines.m2i \
+	mfd-access-unsorted-external-defines.m2i \
+	mfd-data-access.m2c mfd-data-get.m2c mfd-data-set.m2c \
+	mfd-doxygen.m2c mfd-interactive-setup.m2c mfd-interface.m2c \
+	mfd-makefile.m2m mfd-readme.m2c mfd-top.m2c \
+	mfd-persistence.m2i \
+	node-get.m2i node-set.m2i node-storage.m2i \
+	node-validate.m2i node-varbind-validate.m2i \
+	parent-dependencies.m2i parent-set.m2i \
+	subagent.m2c \
+	syntax-COUNTER64-get.m2i syntax-DateAndTime-get.m2d \
+	syntax-DateAndTime-get.m2i syntax-DateAndTime-readme.m2i \
+	syntax-InetAddress-get.m2i syntax-InetAddress-set.m2i \
+	syntax-InetAddressType-get.m2i syntax-InetAddressType-set.m2i \
+	syntax-RowStatus-dependencies.m2i syntax-RowStatus-get.m2i \
+	syntax-RowStatus-varbind-validate.m2i \
+	syntax-StorageType-dependencies.m2i \
+	syntax-TestAndIncr-get.m2i
+
+CONFINSTALLDIR=$(snmplibdir)/snmpconf-data
+CONFDATASRC=snmpconf.dir
+CONFDIRS=snmp-data snmpd-data snmptrapd-data
+CONFFILES=snmpd-data/system snmpd-data/acl snmpd-data/trapsinks \
+	snmpd-data/monitor snmpd-data/extending snmpd-data/operation \
+	snmpd-data/basic_setup snmpd-data/snmpconf-config \
+	snmp-data/authopts snmp-data/debugging snmp-data/output snmp-data/mibs \
+	snmp-data/snmpconf-config \
+	snmptrapd-data/formatting snmptrapd-data/traphandle \
+	snmptrapd-data/authentication snmptrapd-data/logging snmptrapd-data/runtime \
+	snmptrapd-data/snmpconf-config
+
+OTHERCLEANTARGETS=snmpcheck $(SCRIPTSMADEFORPERL)
+
+all: $(SCRIPTSMADEFORPERL) standardall
+
+snmpcheck: $(srcdir)/snmpcheck.def ../sedscript
+	$(SED) -f ../sedscript $(srcdir)/snmpcheck.def > snmpcheck
+
+snmpcheck.made: snmpcheck
+	if test "x$(PERL)" != "x" ; then \
+	  $(PERL) -p -e 's%^#!.*/perl.*%#!$(PERL)%' snmpcheck > snmpcheck.made ; \
+	else \
+	  touch snmpcheck.made ; \
+        fi
+
+tkmib.made: $(srcdir)/tkmib
+	if test "x$(PERL)" != "x" ; then \
+	  $(PERL) -p -e 's%^#!.*/perl.*%#!$(PERL)%' ${srcdir}/tkmib > tkmib.made; \
+	else \
+	  touch tkmib.made; \
+        fi
+
+mib2c.made: $(srcdir)/mib2c
+	if test "x$(PERL)" != "x" ; then \
+	  $(PERL) -p -e 's%^#!.*/perl.*%#!$(PERL)%;s#/usr/local/share/snmp#$(snmplibdir)#;' ${srcdir}/mib2c > mib2c.made; \
+	else \
+	  touch mib2c.made; \
+        fi
+
+net-snmp-cert.made: $(srcdir)/net-snmp-cert
+	if test "x$(PERL)" != "x" ; then \
+	  $(PERL) -p -e 's%^#!.*/perl.*%#!$(PERL)%;s#/usr/local/share/snmp#$(snmplibdir)#;' ${srcdir}/net-snmp-cert > net-snmp-cert.made; \
+	else \
+	  touch net-snmp-cert.made; \
+        fi
+
+
+ipf-mod.pl.made: $(srcdir)/ipf-mod.pl
+	if test "x$(PERL)" != "x" ; then \
+	  $(PERL) -p -e 's%^#!.*/perl.*%#!$(PERL)%' ${srcdir}/ipf-mod.pl > ipf-mod.pl.made; \
+	else \
+	  touch ipf-mod.pl.made; \
+        fi
+
+fixproc.made: $(srcdir)/fixproc
+	if test "x$(PERL)" != "x" ; then \
+	  $(PERL) -p -e 's%^#!.*/perl.*%#!$(PERL)%' ${srcdir}/fixproc > fixproc.made; \
+	else \
+	  touch fixproc.made; \
+        fi
+
+snmpconf.made: $(srcdir)/snmpconf
+	if test "x$(PERL)" != "x" ; then \
+	  $(PERL) -p -e 's%^#!.*/perl.*%#!$(PERL)%; s#/usr/local/share#$(datadir)#g; s#/usr/local/etc/snmp#$(SNMPCONFPATH)#g; s#/var/net-snmp#$(PERSISTENT_DIRECTORY)#g' ${srcdir}/snmpconf > snmpconf.made; \
+	else \
+	  touch snmpconf.made; \
+        fi
+
+traptoemail.made: $(srcdir)/traptoemail
+	if test "x$(PERL)" != "x" ; then \
+	  $(PERL) -p -e 's%^#!.*/perl.*%#!$(PERL)%; s#/usr/local/share#$(datadir)#g; s#/usr/local/etc/snmp#$(TRAPTOEMAILPATH)#g' ${srcdir}/traptoemail > traptoemail.made; \
+	else \
+	  touch traptoemail.made; \
+        fi
+
+snmp-bridge-mib.made: $(srcdir)/snmp-bridge-mib
+	if test "x$(PERL)" != "x" ; then \
+	  $(PERL) -p -e 's%^#!.*/perl.*%#!$(PERL)%' ${srcdir}/snmp-bridge-mib > snmp-bridge-mib.made; \
+	else \
+	  touch snmp-bridge-mib.made; \
+        fi
+
+localinstall: $(SCRIPTSMADEFORPERL)
+	@if test "x$(PERL)" != "x" ; then \
+	  for i in $(PERLSCRIPTS) ; do $(INSTALL) $$i.made $(INSTALL_PREFIX)$(bindir)/$$i ; echo "install:  installed $$i in $(INSTALL_PREFIX)$(bindir)" ; done ; \
+	  for i in $(SHELLSCRIPTS) ; do $(INSTALL) $(srcdir)/$$i $(INSTALL_PREFIX)$(bindir)/$$i ; echo "install:  installed $$i in $(INSTALL_PREFIX)$(bindir)" ; done ; \
+	  $(SHELL) $(srcdir)/../mkinstalldirs $(INSTALL_PREFIX)$(snmplibdir) ; \
+	  for i in $(DATASRCS) ; do $(INSTALL_DATA) $(srcdir)/$$i $(INSTALL_PREFIX)$(snmplibdir)/$$i ; echo "install:  installed $$i in $(INSTALL_PREFIX)$(snmplibdir)" ; done ; \
+	  for i in $(CONFDIRS); do $(SHELL) $(srcdir)/../mkinstalldirs $(INSTALL_PREFIX)$(CONFINSTALLDIR)/$$i ; done ; \
+	  for i in $(CONFFILES); do $(INSTALL_DATA) $(srcdir)/$(CONFDATASRC)/$$i $(INSTALL_PREFIX)$(CONFINSTALLDIR)/$$i; echo "install:  installed $$i in $(INSTALL_PREFIX)$(CONFINSTALLDIR)"; done ; \
+	  $(SHELL) $(srcdir)/../mkinstalldirs $(INSTALL_PREFIX)$(MIB2CINSTALLDIR) ; \
+	  for i in $(MIB2CFILES); do $(INSTALL_DATA) $(srcdir)/$(MIB2CDATASRC)/$$i $(INSTALL_PREFIX)$(MIB2CINSTALLDIR)/$$i; echo "install:  installed $$i in $(INSTALL_PREFIX)$(MIB2CINSTALLDIR)"; done \
+	fi
+
+localuninstall:
+	@if test "x$(PERL)" != "x" ; then \
+	  for i in $(PERLSCRIPTS) ; do rm -f $(INSTALL_PREFIX)$(bindir)/$$i ; echo "removed $$i from $(INSTALL_PREFIX)$(bindir)" ; done ; \
+	  for i in $(SHELLSCRIPTS) ; do rm -f $(INSTALL_PREFIX)$(bindir)/$$i ; echo "removed $$i from $(INSTALL_PREFIX)$(bindir)" ; done ; \
+	  for i in $(DATASRCS) ; do rm -f $(INSTALL_PREFIX)$(snmplibdir)/$$i ; echo "removed $$i from $(INSTALL_PREFIX)$(snmplibdir)" ; done ; \
+	  for i in $(CONFFILES); do rm -f $(INSTALL_PREFIX)$(CONFINSTALLDIR)/$$i; echo "removed $$i from $(INSTALL_PREFIX)$(CONFINSTALLDIR)"; done ; \
+	  for i in $(MIB2CFILES); do rm -f $(INSTALL_PREFIX)$(MIB2CINSTALLDIR)/$$i; echo "removed $$i from $(INSTALL_PREFIX)$(MIB2CINSTALLDIR)"; done \
+	fi

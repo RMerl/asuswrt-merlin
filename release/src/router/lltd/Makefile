@@ -1,13 +1,5 @@
 include $(SRCBASE)/.config
 
-ifneq ($(findstring DSL,$(BUILD_NAME)),)
-MODEL = $(subst -,_,$(BUILD_NAME))
-else
-MODEL = $(subst -,,$(BUILD_NAME))
-endif
-
-export CFLAGS += -D$(MODEL)
-
 all:
 
 install: all

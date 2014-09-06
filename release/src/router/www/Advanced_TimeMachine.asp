@@ -50,8 +50,9 @@ function initial(){
 		$("backupPath_tr").style.display = "";
 		$("volSize_tr").style.display = "";
 	}
-	
-	document.form.tm_vol_size.value = parseInt(document.form.tm_vol_size.value/1024);
+
+	if(document.form.tm_vol_size.value != "")	
+		document.form.tm_vol_size.value = document.form.tm_vol_size.value/1024;
 }
 
 function selPartition(){
@@ -151,19 +152,16 @@ function detectUSBStatusApp(){
 }
 
 function applyRule(){
-	if(parseInt(availSpace) < parseInt(document.form.tm_vol_size.value)){
-		alert("Exceed max available space!");
-		document.form.tm_vol_size.focus();
-		return false;
-	}
-	else{
-		document.form.tm_vol_size.value = parseInt(document.form.tm_vol_size.value*1024);
-	}
-
 	if(document.form.tm_device_name.value == "" && document.form.timemachine_enable.value == "1"){
 		alert("Change the Backup Path button to \"Select\" and the text \"Select the USB storage device that you want to access.\"");
 		return false;
 	}
+
+	if(!validate_range_sp(document.form.tm_vol_size, 0, parseInt(availSpace), document.form.tm_vol_size.value))
+		return false;
+	else
+		document.form.tm_vol_size.value = document.form.tm_vol_size.value*1024;
+
 	document.form.tm_ui_setting.value = "1";
 	showLoading(); 
 	document.form.submit();
@@ -357,7 +355,7 @@ function cal_panel_block(obj_id){
 					<tr id="volSize_tr">
 						<th><#TimeMach_vol_size#></a></th>
 						<td>
-							<input id="tm_vol_size" name="tm_vol_size" maxlength="3" class="input_6_table" type="text" maxLength="8" value="<% nvram_get("tm_vol_size"); %>"/> GB (0: <#Limitless#>)
+							<input id="tm_vol_size" name="tm_vol_size" maxlength="5" class="input_6_table" type="text" maxLength="8" value="<% nvram_get("tm_vol_size"); %>" onKeyPress="return is_number(this,event);" placeholder="0" /> GB (0: <#Limitless#>)
 							&nbsp;<span id="maxVolSize"></span>
 						</td>
 					</tr>

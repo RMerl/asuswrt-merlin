@@ -1,0 +1,68 @@
+title   Extending the Agent
+description	You can extend the snmp agent to have it return information
+description	that you yourself define.
+
+token	exec
+info	run a simple command using exec()
+info	arguments:  [oid] name /path/to/executable arguments
+question 1 The OID where the results table should be display [default=extTable]
+question 2 The "name" to associate with this command when displaying the results.
+question 3 The path to the program to be run.
+question 4 The arguments to pass to $3
+
+token	 pass
+info	 Run a command that intepretes the request for an entire tree.
+info	 The pass program defined here will get called for all
+info	 requests below a certain point in the mib tree.  It is then
+info	 responsible for returning the right data beyond that point.
+info	 #
+info	 arguments: miboid program
+info	 #
+info	 example: pass .1.3.6.1.4.1.2021.255 /path/to/local/passtest
+info	 #
+info	 See the snmpd.conf manual page for further information.
+info	 #
+info	 Consider using "pass_persist" for a performance increase.
+question 1 The OID where the script should take control of
+question 2 The path to the program that should be called 
+
+token pass_persist
+info	 Run a persistant process that intepretes the request for an entire tree.
+info	 The pass program defined here will get called for all
+info	 requests below a certain point in the mib tree.  It is then
+info	 responsible for returning the right data beyond that point.
+info	 The pass_persist scripts must be able to stay running and accept input
+info	 from stdin.
+info	 #
+info	 arguments: miboid program
+info	 #
+info	 example: pass_persist .1.3.6.1.4.1.2021.255 /path/to/local/pass_persisttest
+info	 #
+info	 See the snmpd.conf manual page for further information.
+steal pass
+
+token proxy
+info  Proxy requests to an external agent running somewhere else
+info  This passes all requests for a certain point of the mib tree to
+info  an external agent using snmp requests and then returning the
+info  results to the caller that spoke to our agent.
+info  arguments: [snmpcmd args] host oid [remoteoid]
+question 1 Enter the "snmpcmd" arguments that specify how to talk to the remote host
+question 2 The host you want to pass the requests to
+qusetion 3 The oid that we should pass beyond
+question 4 The oid of the remote site that we should talk to if different from $3 
+
+token	sh
+info	run a simple command using system()
+info	arguments:  [oid] name command arguments
+info	similar to exec, but implemented using system() instead of exec()
+info	#
+info	For security reasons, exec should be preferred.
+steal exec
+
+token dlmod
+info dynamically extend the agent using a shared-object
+info	arguments:  module-name module-path
+question 1 Enter the name of the module
+question 2 Enter the path to the $1 module
+

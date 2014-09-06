@@ -1,0 +1,179 @@
+#!/bin/sh
+#
+# smistrip --
+#
+#	Extract MIB modules from text files, like RFCs or I-Ds.
+#
+# This is variant of smistrip from libsmi-0.2, modified to be somewhat
+# more aggressive in suppressing blank lines, and support the -x option.
+#
+# Copyright (c) 1999 Frank Strauss, Technical University of Braunschweig.
+# Modified by Niels Baggesen
+#
+# See the file "COPYING" for information on usage and redistribution
+# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+#
+# $Id$
+#
+# NOTE, that this script relies on awk (tested with GNU awk) and getopts
+# (shell builtin like in bash or standalone).
+#
+
+AWK=awk
+[ `uname` != SunOS ] || AWK=/usr/bin/nawk
+GETOPTS=getopts
+VERSION=0.3-cvs
+
+
+do_version () {
+    echo "smistrip $VERSION"
+}
+
+
+
+do_usage () {
+    echo "Usage: smistrip [-Vhn] [-d dir] [-s suffix] [-m modules] file ..."
+    echo "-V         show version and license information"
+    echo "-v         verbose"
+    echo "-h         show usage information"
+    echo "-n         do not write module files"
+    echo "-d dir     write module to directory dir"
+    echo "-x suffix  append suffix to the module file name"
+    echo "-m modules strip only the specified modules. For a list of modules"
+    echo "           use : as a separator"
+    echo "file ...   input files to parse (RFCs, I-Ds, ...)"
+}
+
+
+
+do_strip () {
+    cat $1 | $AWK -v test="$test" -v dir="$dir" -v single="$single" -v suffix="$suffix" -v verbose="$verbose" '
+
+    BEGIN {
+	if (length(single) != 0) {
+	    single = ":"single":"
+	}
+	else {
+	    single = ""
+	}
+    }
+
+    END {
+	if (single != "" && single != ":") {
+	    gsub(":", " ", single)
+	    print "WARNING: Module(s) not found:" single
+	}
+    }
+
+    # start of module
+    /^[ \t]*[A-Za-z0-9-]* *DEFINITIONS( +IMPLICIT +TAGS)? *::= *BEGIN/ {
+	module = $1
+	collect = 1
+	macro = 0
+	n = 0
+    }
+
+    # page footer - start skipping
+    /\[Page [iv0-9]*\] */ {
+        collect = 0
+	next
+    }
+
+    /^[ \t]*(::=|DESCRIPTION|SYNTAX|MAX-ACCESS|MIN-ACCESS|ACCESS|STATUS|REFERENCE|INDEX|AUGMENTS|DEFVAL|UNITS|DISPLAY|")/ {
+	if (collect)
+	    if (line[n-1] == "") n--
+    }
+
+    # a blank line - suppress multiple
+    /^[ \t\r]*$/ {
+        if (collect)
+	    if (line[n-1] != "" && line[n-1] !~ /,[ \t\r]*$/) line[n++] = ""    
+	next
+    }
+
+    # collect non-blank line when inside mib module
+    /[^ \f\t]/ {
+	if (length(module) > 0) {
+	    if (!collect)
+		collect = 1	# page header, stop skipping
+	    else
+		line[n++] = $0
+	}
+    }
+
+    # remember when we enter a macro definition
+    / *MACRO *::=/ {
+	macro = 1
+    }
+
+    # end of module
+    /^[ \t]*END[ \t\r]*$/ {
+	if (macro)
+	    macro = 0
+	else if (single == "" || match(single, ":"module":")) {
+	    sub(":"module, "", single)
+	    strip = 99
+	    for (i = 0 ; i < n ; i++) {
+		# find the minimum column that contains non-blank characters
+		# in order to cut a blank prefix off.
+		p = match(line[i], "[^ ]")
+		if (p < strip && length(line[i]) > p) strip = p
+	    }
+
+	    if (test != "1") {
+		if (dir)
+		    f = dir "/" module suffix
+		else
+		    f = module suffix
+		for (i = 0 ; i < n ; i++)
+		    print substr(line[i], strip) >f
+	    }
+
+	    if (verbose) {
+		print module ": " n " lines."
+	    }
+	    module = ""
+	    collect = 0
+	}
+	else
+	    print "NOTE: " module ": ignored."
+    }
+    '
+}
+
+
+while $GETOPTS Vvhnm:d:x: c ; do
+    case $c in
+	v)	verbose=1
+		;;
+	n)	test=1
+		;;
+	m)	single=$OPTARG
+		;;
+	d)	dir=$OPTARG
+		;;
+	x)	suffix=$OPTARG
+		;;
+	h)	do_usage
+		exit 0
+		;;
+	V)	do_version
+		exit 0
+		;;
+	*)	do_usage
+		exit 1
+		;;
+    esac
+done
+
+shift `expr $OPTIND - 1`
+
+if [ $# -eq 0 ] ; then
+    do_strip -
+else 
+    for f in $@ ; do
+	do_strip $f
+    done
+fi
+
+exit 0

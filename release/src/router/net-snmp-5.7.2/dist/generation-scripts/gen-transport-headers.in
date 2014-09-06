@@ -1,0 +1,27 @@
+#!/bin/sh
+
+# we should be able to do this without creating a full configure-like
+# script, but we need to figure out how to call m4 directly.
+AC_INIT([Net-SNMP], [5.6.pre2], [net-snmp-coders@lists.sourceforge.net])
+
+AC_ARG_WITH(transports,
+[  --with-transports="t1 t2 ..."   Compile in the given SNMP transport
+                                    modules (space or comma separated list).])
+AC_ARG_WITH(out_transports,
+[  --with-out-transports="t1 ..."  Exclude listed SNMP transports
+                                    (space or comma separated list).])
+
+AC_ARG_WITH(output,
+[  --with-output="file"            Where to store the header file])
+
+m4_include(dist/generation-scripts/gen-variables)
+
+AC_DEFINE_UNQUOTED(NETSNMP_SYSTEM_INCLUDE_FILE, "$NETSNMP_SYSTEM_INCLUDE_FILE")
+
+if test "x$with_output" != "x" ; then
+    ctor_header=$with_output
+fi
+
+m4_include(configure.d/config_modules_transports)
+
+

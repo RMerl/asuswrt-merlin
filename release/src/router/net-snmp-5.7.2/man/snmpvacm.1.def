@@ -1,0 +1,373 @@
+.TH SNMPVACM 1 "05 Sep 2006" VVERSIONINFO "Net-SNMP"
+.SH NAME
+snmpvacm - creates and maintains SNMPv3 View-based Access Control entries on a network entity
+.SH SYNOPSIS
+.B snmpvacm
+[COMMON OPTIONS] AGENT
+.B createSec2Group
+MODEL SECURITYNAME  GROUPNAME
+.br
+.B snmpvacm
+[COMMON OPTIONS] AGENT
+.B deleteSec2Group
+MODEL SECURITYNAME
+.br
+.B snmpvacm
+[COMMON OPTIONS] AGENT
+.B createView
+[\-Ce] NAME SUBTREE MASK
+.br
+.B snmpvacm
+[COMMON OPTIONS] AGENT
+.B deleteView
+NAME SUBTREE
+.br
+.B snmpvacm
+[COMMON OPTIONS]  AGENT
+.B createAccess
+GROUPNAME [CONTEXTPREFIX] MODEL LEVEL CONTEXTMATCH READVIEW WRITEVIEW NOTIFYVIEW
+.br
+.B snmpvacm
+[COMMON OPTIONS]  AGENT
+.B deleteAccess
+GROUPNAME [CONTEXTPREFIX] MODEL LEVEL
+.br
+.B snmpvacm
+[COMMON OPTIONS]  AGENT
+.B createAuth
+GROUPNAME [CONTEXTPREFIX] MODEL LEVEL AUTHTYPE CONTEXTMATCH VIEW 
+.br
+.B snmpvacm
+[COMMON OPTIONS]  AGENT
+.B deleteAuth
+GROUPNAME [CONTEXTPREFIX] MODEL LEVEL AUTHTYPE
+
+.SH DESCRIPTION
+.B snmpvacm
+is an SNMP application that can be used to do simple maintenance on the
+View-based Control Module (VACM) tables of an SNMP agent.
+The SNMPv3 VACM specifications (see RFC2575) define assorted tables
+to specify groups of users, MIB views, and authorised access settings.
+These
+.BR snmpvacm
+commands effectively create or delete rows in the appropriate one of
+these tables, and match the equivalent configure directives
+which are documented in the
+.I snmpd.conf(5)
+man page.
+.PP
+A fuller explanation of how these operate can be found in the project FAQ.
+.SH SUB-COMMANDS
+
+.SS createSec2Group \fRMODEL SECURITYNAME GROUPNAME\fP
+.PP
+Create an entry in the SNMPv3 security name to group table.  This table
+allows a single access control entry to be applied to a number of users
+(or 'principals'),
+and is indexed by the security model and security name values.
+.PP
+MODEL
+.IP
+An integer representing the security model, taking one of the following
+values:
+.br
+1 - reserved for SNMPv1
+.br
+2 - reserved for SNMPv2c
+.br
+3 - User-based Security Model (USM)
+
+.PP
+SECURITYNAME
+.IP
+A string representing the security name for a principal (represented in
+a security-model-independent format).  For USM-based requests, the security
+name is the same as the username.
+
+.PP
+GROUPNAME
+.IP
+A string identifying the group that this entry (i.e. security name/model
+pair) should belong to.  This group name will then be referenced in the
+access table (see
+.B createAccess
+below).
+.PP
+.SS deleteSec2Group \fRMODEL SECURITYNAME\fP
+.PP
+Delete an entry from the SNMPv3 security name to group table, thus removing
+access control settings for the given principal.  The entry to be removed is
+indexed by the MODEL and SECURITYNAME values, which should match those used
+in the corresponding
+.B createSec2Group
+command (or equivalent).
+
+.SS createView \fR[\-Ce] NAME SUBTREE MASK\fP
+.PP
+Create an entry in the SNMPv3 MIB view table.
+A MIB view consists of a family of view subtrees which may be individually
+included in or (occasionally) excluded from the view.  Each view subtree is
+defined by a combination of an OID subtree together with a bit string mask.
+The view table is indexed by the view name and subtree OID values.
+.PP
+[\-Ce]
+.IP
+An optional flag to indicate that this view subtree should be excluded
+from the named view.
+If not specified, the default is to include the subtree in the view.
+When constructing a view from a mixture of included and excluded subtrees,
+the excluded subtrees should be defined first - particularly if the named
+view is already referenced in one or more access entries.
+.PP
+NAME
+.IP
+A string identifying a particular MIB view, of which this OID subtree/mask
+forms part (possibly the only part).
+.PP
+SUBTREE
+.IP
+The OID defining the root of the subtree to add to (or exclude from) the
+named view.
+.PP
+MASK
+.IP
+A bit mask indicating which sub-identifiers of the associated subtree OID
+should be regarded as significant.
+
+.SS deleteView \fRNAME SUBTREE\fP
+Delete an entry from the SNMPv3 view table, thus removing the subtree from
+the given MIB view.
+Removing the final (or only) subtree will result in the deletion of the view.
+The entry to be removed is indexed by the NAME and SUBTREE values, which
+should match those used in the corresponding
+.B createView
+command (or equivalent).
+.PP
+When removing subtrees from a mixed view (i.e. containing both included and
+excluded subtrees), the included subtrees should be removed first.
+
+.SS createAccess \fRGROUPNAME [CONTEXTPREFIX] MODEL LEVEL CONTEXTMATCH READVIEW WRITEVIEW NOTIFYVIEW\fP
+Create an entry in the SNMPv3 access table, thus allowing a certain level
+of access to particular MIB views for the principals in the specified group
+(given suitable security model and levels in the request).
+The access table is indexed by the group name, context prefix, security model
+and security level values.
+.PP
+GROUPNAME
+.IP
+The name of the group that this access entry applies to
+(as set up by a
+.B createSec2Group
+command, or equivalent)
+.PP
+CONTEXTPREFIX
+.IP
+A string representing a context name (or collection of context names)
+which this access entry applies to.
+The interpretation of this string depends on the value of the
+CONTEXTMATCH field (see below).
+.IP
+If omitted, this will default to the null context "".
+.PP
+MODEL
+.IP
+An integer representing the security model, taking one of the following
+values:
+.br
+1 - reserved for SNMPv1
+.br
+2 - reserved for SNMPv2c
+.br
+3 - User-based Security Model (USM)
+.PP
+LEVEL
+.IP
+An integer representing the minimal security level, taking one of the following
+values:
+.br
+1 - noAuthNoPriv
+.br
+2 - authNoPriv
+.br
+3 - authPriv
+.IP
+This access entry will be applied to requests of this level or higher
+(where authPriv is higher than authNoPriv which is in turn higher than
+noAuthNoPriv).
+.PP
+CONTEXTMATCH
+.IP
+Indicates how to interpret the CONTEXTPREFIX value.
+If this field has the value '1' (representing 'exact') then the context
+name of a request must match the CONTEXTPREFIX value exactly for this
+access entry to be applicable to that request.
+.IP
+If this field has the value '2' (representing 'prefix') then the initial
+substring of the context name of a request must match the CONTEXTPREFIX
+value for this access entry to be applicable to that request.
+This provides a simple form of wildcarding.
+.PP
+READVIEW
+.IP
+The name of the MIB view
+(as set up by
+.B createView
+or equivalent)
+defining the MIB objects for which this request may request the current values.
+.IP
+If there is no view with this name, then read access is not granted.
+.PP
+WRITEVIEW
+.IP
+The name of the MIB view
+(as set up by
+.B createView
+or equivalent)
+defining the MIB objects for which this request may potentially SET new values.
+.IP
+If there is no view with this name, then read access is not granted.
+.PP
+NOTIFYVIEW
+.IP
+The name of the MIB view
+(as set up by
+.B createView
+or equivalent)
+defining the MIB objects which may be included in notification request.
+.IP
+Note that this aspect of access control is not currently supported.
+
+.SS deleteAccess \fRGROUPNAME [CONTEXTPREFIX] MODEL LEVEL\fP
+Delete an entry from the SNMPv3 access table, thus removing the specified
+access control settings.
+The entry to be removed is indexed by the group name, context prefix,
+security model and security level values,
+which should match those used in the corresponding
+.B createAccess
+command (or equivalent).
+
+.SS createAuth \fRGROUPNAME [CONTEXTPREFIX] MODEL LEVEL AUTHTYPE CONTEXTMATCH VIEW\fP
+Create an entry in the Net-SNMP extension to the standard access table,
+thus allowing a certain type of access to the MIB view for the principals
+in the specified group.
+The interpretation of GROUPNAME, CONTEXTPREFIX, MODEL, LEVEL and CONTEXTMATCH
+are the same as for the
+.B createAccess
+directive.
+The extension access table is indexed by the group name, context prefix,
+security model, security level and authtype values.
+.PP
+AUTHTYPE
+.IP
+The style of access that this entry should be applied to.
+See
+.I "snmpd.conf(5)"
+and
+.I "snmptrapd.conf(5)"
+for details of valid tokens.
+.PP
+VIEW
+.IP
+The name of the MIB view
+(as set up by
+.B createView
+or equivalent)
+defining the MIB objects for which this style of access is authorized.
+
+.SS deleteAuth \fRGROUPNAME [CONTEXTPREFIX] MODEL LEVEL AUTHTYPE\fP
+Delete an entry from the extension access table, thus removing the specified
+access control settings.
+The entry to be removed is indexed by the group name, context prefix,
+security model, security level and authtype values,
+which should match those used in the corresponding
+.B createAuth
+command (or equivalent).
+
+.PP
+Note that
+.B snmpget
+REQUIRES  an argument specifying the agent to query
+as described in the .I snmpcmd(1) manual page.
+
+.SH EXAMPLES
+.PP
+Given a pre-existing user
+.I dave
+(which could be set up using the
+.I snmpusm(1)
+command),
+we could configure full read-write access to the whole OID tree
+using the commands:
+
+.IP
+snmpvacm localhost createSec2Group 3 dave RWGroup
+.IP
+snmpvacm localhost createView   all .1 80
+.IP
+snmpvacm localhost createAccess  RWGroup 3 1 1 all all none
+.PP
+This creates a new security group named "RWGroup" containing the SNMPv3 user "dave",
+a new view "all" containing the full OID tree based on
+.I .iso(1)
+, and then allows those users in the group "RWGroup" (i.e. "dave")
+both read- and write-access to the view "all" (i.e. the full OID tree)
+when using authenticated SNMPv3 requests.
+
+.PP
+As a second example,
+we could set up read-only access to a portion
+of the OID tree using the commands:
+
+.IP
+snmpvacm localhost createSec2Group 3 wes ROGroup
+.IP
+snmpvacm localhost createView   sysView  system fe
+.IP
+snmpvacm localhost createAccess  ROGroup 3 0 1 sysView none none
+.PP
+This creates a new security group named "ROGroup" containing the (pre-existing)
+user "wes", a new view "sysView" containing just the OID tree based on
+.I .iso(1).org(3).dod(6).inet(1).mgmt(2).mib\-2(1).system(1)
+, and then allows those users in the group "ROGroup" (i.e. "wes")
+read-access, but not write-access to the view "sysView" (i.e. the system group).
+
+.SH "EXIT STATUS"
+
+.PP
+The following exit values are returned:
+.PP
+0 - Successful completion
+.PP
+1 - A usage syntax error (which displays a suitable usage message)
+or a request timeout.
+.PP
+2 - An error occurred while executing the command
+(which also displays a suitable error message).
+
+.SH "LIMITATIONS"
+
+This utility does not support the configuration of new community strings,
+so is only of use for setting up new access control for SNMPv3 requests.
+It can be used to amend the access settings for existing community strings,
+but not to set up new ones.
+
+.PP
+The use of numeric
+parameters for
+.B secLevel
+and
+.B contextMatch
+parameters is less than intuitive.
+These commands do not provide the full flexibility of the
+equivalent config file directives.
+
+.PP
+There is (currently) no equivalent to the one-shot
+configure directives
+.I rouser
+and
+.I rwuser.
+
+.SH "SEE ALSO"
+snmpcmd(1), snmpusm(1),
+snmpd.conf(5), snmp.conf(5), RFC 2575, Net-SNMP project FAQ

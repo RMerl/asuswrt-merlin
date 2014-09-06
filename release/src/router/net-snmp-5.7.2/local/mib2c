@@ -1,0 +1,1275 @@
+#!/usr/bin/perl
+#!/usr/bin/perl -w
+
+#
+# $Id$
+#
+# Description: 
+#
+# This program, given an OID reference as an argument, creates some
+# template mib module files to be used with the net-snmp agent.  It is
+# far from perfect and will not generate working modules, but it
+# significantly shortens development time by outlining the basic
+# structure.
+#
+# Its up to you to verify what it does and change the default values
+# it returns.
+#
+
+# SNMP
+my $havesnmp = eval {require SNMP;};
+my $havenetsnmpoid = eval {require NetSNMP::OID;};
+
+if (!$havesnmp) {
+    print "
+ERROR: You don't have the SNMP perl module installed.  Please obtain
+this by getting the latest source release of the net-snmp toolkit from
+http://www.net-snmp.org/download/ .  Once you download the source and
+unpack it, the perl module is contained in the perl/SNMP directory.
+See the README file there for instructions.
+
+";
+    exit;
+}
+
+if ($havesnmp) {
+    eval { import SNMP; }
+}
+if ($havenetsnmp) {
+    eval { import NetSNMP::OID; }
+}
+use FileHandle;
+
+#use strict 'vars';
+$SNMP::save_descriptions=1;
+$SNMP::use_long_names=1;
+$SNMP::use_enums=1;
+SNMP::initMib();
+
+$configfile="mib2c.conf";
+$debug=0;
+$quiet=0;
+$strict_unk_token = 0;
+$noindent = 0;
+$nosed = 0;
+$currentline = 0;
+$currentlevel = -1;
+%assignments;
+%outputs;
+@def_search_dirs = (".");
+@search_dirs = ();
+if($ENV{MIB2C_DIR}) {
+   push @def_search_dirs, split(/:/, $ENV{MIB2C_DIR});
+}
+push @def_search_dirs, "/usr/local/share/snmp/";
+push @def_search_dirs, "/usr/local/share/snmp/mib2c-data";
+push @def_search_dirs, "./mib2c-conf.d";
+
+sub usage {
+    print "$0 [-h] [-c configfile] [-f prefix] mibNode\n\n";
+    print "  -h\t\tThis message.\n\n";
+    print "  -c configfile\tSpecifies the configuration file to use\n\t\tthat dictates what the output of mib2c will look like.\n\n";
+    print "  -I PATH\tSpecifies a path to look for configuration files in\n\n";
+    print "  -f prefix\tSpecifies the output prefix to use.  All code\n\t\twill be put into prefix.c and prefix.h\n\n";
+    print "  -d\t\tdebugging output (don't do it.  trust me.)\n\n";
+    print "  -S VAR=VAL\tSet \$VAR variable to \$VAL\n\n";
+    print "  -i\t\tDon't run indent on the resulting code\n\n";
+    print "  -s\t\tDon't look for mibNode.sed and run sed on the resulting code\n\n";
+    print "  mibNode\tThe name of the top level mib node you want to\n\t\tgenerate code for.  By default, the code will be stored in\n\t\tmibNode.c and mibNode.h (use the -f flag to change this)\n\n";
+    1;
+}	
+
+my @origargs = @ARGV;
+my $args_done = 0;
+while($#ARGV >= 0) {
+    $_ = shift;
+    if (/^-/) {
+      if ($args_done != 0) {
+        warn "all argument must be specified before the mibNode!\n";
+        usage;
+        exit 1;
+      } elsif (/^-c/) {
+        $configfile = shift;
+      } elsif (/^-d/) {
+        $debug = 1;
+      } elsif (/^-S/) {
+        my $expr = shift;
+        my ($var, $val) = ($expr =~ /([^=]*)=(.*)/);
+        die "no variable specified for -S flag." if (!$var);
+        $assignments{$var} = $val;
+      } elsif (/^-q/) {
+        $quiet = 1;
+      } elsif (/^-i/) {
+        $noindent = 1;
+      } elsif (/^-s/) {
+        $nosed = 1;
+      } elsif (/^-h/) {
+        usage && exit(1);
+      } elsif (/^-f/) {
+        $outputName = shift;
+      } elsif (/^-I/) {
+	my $dirs = shift;
+	push @search_dirs, split(/,/,$dirs);
+      } else {
+        warn "Unknown option '$_'\n";
+        usage;
+        exit 1;
+      }
+    } else {
+      $args_done = 1;
+      warn "Replacing previous mibNode $oid with $_\n" if ($oid);
+      $oid = $_ ;
+    }
+}
+ 
+#
+# internal conversion tables
+#
+
+%accessToIsWritable = qw(ReadOnly 0 ReadWrite 1 
+			 WriteOnly 1 Create 1);
+%perltoctypes = qw(OCTETSTR   ASN_OCTET_STR
+		   INTEGER    ASN_INTEGER
+		   INTEGER32  ASN_INTEGER
+		   UNSIGNED32 ASN_UNSIGNED
+		   OBJECTID   ASN_OBJECT_ID
+		   COUNTER64  ASN_COUNTER64
+		   COUNTER    ASN_COUNTER
+		   NETADDR    ASN_COUNTER
+		   UINTEGER   ASN_UINTEGER
+		   IPADDR     ASN_IPADDRESS
+		   BITS       ASN_OCTET_STR
+		   TICKS      ASN_TIMETICKS
+		   GAUGE      ASN_GAUGE
+		   OPAQUE     ASN_OPAQUE);
+%perltodecl = ("OCTETSTR",  "char",
+	       "INTEGER",  "long",
+	       "INTEGER32",  "long",
+	       "UNSIGNED32", "u_long",
+	       "UINTEGER", "u_long",
+	       "OBJECTID", "oid",
+	       "COUNTER64", "U64",
+	       "COUNTER", "u_long",
+	       "IPADDR", "in_addr_t",
+	       "BITS", "char",
+	       "TICKS", "u_long",
+	       "GAUGE", "u_long",
+	       "OPAQUE", "u_char");
+%perltolen = ("OCTETSTR",  "1",
+	       "INTEGER",  "0",
+	       "INTEGER32",  "0",
+	       "UNSIGNED32", "0",
+	       "UINTEGER", "0",
+	       "OBJECTID", "1",
+	       "COUNTER64", "0",
+	       "COUNTER", "0",
+	       "IPADDR", "0",
+	       "BITS", "1",
+	       "TICKS", "0",
+	       "GAUGE", "0",
+	       "OPAQUE", "1");
+
+my $mibnode = $SNMP::MIB{$oid};
+
+if (!$mibnode) { 
+
+print STDERR "
+You didn't give mib2c a valid OID to start with.  IE, I could not find
+any information about the mib node \"$oid\".  This could be caused
+because you supplied an incorrectly node, or by the MIB that you're
+trying to generate code from isn't loaded.  To make sure your mib is
+loaded, run mib2c using this as an example:
+
+   env MIBS=\"+MY-PERSONAL-MIB\" mib2c " . join(" ",@origargs) . "
+
+You might wish to start by reading the MIB loading tutorial at:
+
+   http://www.net-snmp.org/tutorial-5/commands/mib-options.html
+
+And making sure you can get snmptranslate to display information about
+your MIB node.  Once snmptranslate works, then come back and try mib2c
+again.
+
+";
+exit 1;
+}
+
+# setup
+$outputName = $mibnode->{'label'} if (!defined($outputName));
+$outputName =~ s/-/_/g;
+$vars{'name'} = $outputName;
+$vars{'oid'} = $oid;
+$vars{'example_start'} = "    /*\n" .
+"    ***************************************************\n" .
+"    ***             START EXAMPLE CODE              ***\n" .
+"    ***---------------------------------------------***/";
+$vars{'example_end'} = "    /*\n" .
+"    ***---------------------------------------------***\n" .
+"    ***              END  EXAMPLE CODE              ***\n" .
+"    ***************************************************/";
+
+# loop through mib nodes, remembering stuff.
+setup_data($mibnode);
+
+if(($ENV{HOME}) && (-f "$ENV{HOME}/.snmp/mib2c.conf")) {
+  $fh = open_conf("$ENV{HOME}/.snmp/mib2c.conf");
+  process("-balanced");
+  $fh->close;
+}
+
+my $defaults = find_conf("default-$configfile",1);
+if (-f "$defaults" ) {
+  $fh = open_conf($defaults);
+  process("-balanced");
+  $fh->close;
+}
+
+my @theassignments = keys(%assignments);
+if ($#theassignments != -1) {
+  foreach $var (@theassignments) {
+    $vars{$var} = $assignments{$var};
+  }
+}
+$configfile = find_conf($configfile,0);
+$fh = open_conf($configfile);
+process("-balanced");
+$fh->close;
+
+if (-f "$outputName.sed" && !$nosed) {
+  foreach $i (keys(%written)) {
+    next if ($i eq "-");
+    next if (!($i =~ /\.[ch]$/));
+    print STDERR "running sed --in-place=.orig --file=$outputName.sed $i\n" if (!$quiet);
+    system("sed --in-place=.orig --file=$outputName.sed $i");
+  }
+}
+
+if (!$noindent) {
+  foreach $i (keys(%written)) {
+    next if ($i eq "-");
+    next if (!($i =~ /\.[ch]$/));
+    print STDERR "running indent on $i\n" if (!$quiet);
+    system("indent -orig -nbc -bap -nut -nfca -T size_t -T netsnmp_mib_handler -T netsnmp_handler_registration -T netsnmp_delegated_cache -T netsnmp_mib_handler_methods -T netsnmp_old_api_info -T netsnmp_old_api_cache -T netsnmp_set_info -T netsnmp_request_info -T netsnmp_set_info -T netsnmp_tree_cache -T netsnmp_agent_request_info -T netsnmp_cachemap -T netsnmp_agent_session -T netsnmp_array_group_item -T netsnmp_array_group -T netsnmp_table_array_callbacks -T netsnmp_table_row -T netsnmp_table_data -T netsnmp_table_data_set_storage -T netsnmp_table_data_set -T netsnmp_column_info -T netsnmp_table_registration_info -T netsnmp_table_request_info -T netsnmp_iterator_info -T netsnmp_data_list -T netsnmp_oid_array_header -T netsnmp_oid_array_header_wrapper -T netsnmp_oid_stash_node -T netsnmp_pdu -T netsnmp_request_list -T netsnmp_callback_pass -T netsnmp_callback_info -T netsnmp_transport -T netsnmp_transport_list -T netsnmp_tdomain $i");
+  }
+}
+
+sub m2c_die {
+  warn "ERROR: ". $_[0] . "\n";
+  die "  at $currentfile:$currentline\n";
+}
+
+sub tocommas {
+    my $oid = $_[0];
+    $oid =~ s/\./,/g;
+    $oid =~ s/^\s*,//;
+    return $oid;
+}
+
+sub oidlength {
+    return (scalar split(/\./, $_[0])) - 1;
+}
+
+# replaces $VAR type expressions and $VAR.subcomponent expressions
+# with data from the mib tree and loop variables.
+# possible uses:
+#
+#   $var               -- as defined by loops, etc.
+#   ${var}otherstuff   -- appending text to variable contents
+#   $var.uc            -- all upper case version of $var
+#
+# NOTE: THESE ARE AUTO-EXTRACTED/PROCESSED BY ../mib2c.extract.pl for man pages
+#
+# Mib components, $var must first expand to a mib node name:
+#
+#   $var.uc            -- all upper case version of $var
+#
+#   $var.objectID      -- dotted, fully-qualified, and numeric OID
+#   $var.commaoid      -- comma separated numeric OID for array initialization
+#   $var.oidlength     -- length of the oid
+#   $var.subid         -- last number component of oid
+#   $var.module        -- MIB name that the object comes from
+#   $var.parent        -- contains the label of the parent node of $var.
+#
+#   $var.isscalar      -- returns 1 if var contains the name of a scalar
+#   $var.iscolumn      -- returns 1 if var contains the name of a column
+#   $var.children      -- returns 1 if var has children
+#
+#   $var.perltype      -- node's perl SYNTAX ($SNMP::MIB{node}{'syntax'})
+#   $var.type          -- node's ASN_XXX type (Net-SNMP specific #define)
+#   $var.decl          -- C data type (char, u_long, ...)
+#
+#   $var.readable      -- 1 if an object is readable, 0 if not
+#   $var.settable      -- 1 if an object is writable, 0 if not
+#   $var.creatable     -- 1 if a column object can be created as part of a new row, 0 if not
+#   $var.noaccess      -- 1 if not-accessible, 0 if not
+#   $var.accessible    -- 1 if accessible, 0 if not
+#   $var.storagetype   -- 1 if an object is a StorageType object, 0 if not
+#   $var.rowstatus     -- 1 if an object is a RowStatus object, 0 if not
+#     'settable', 'creatable', 'lastchange', 'storagetype' and 'rowstatus' can
+#     also be used with table variables to indicate whether it contains
+#     writable, creatable, LastChange, StorageType or RowStatus column objects
+#
+#   $var.hasdefval     -- returns 1 if var has a DEFVAL clause
+#   $var.defval        -- node's DEFVAL
+#   $var.hashint       -- returns 1 if var has a HINT clause
+#   $var.hint          -- node's HINT
+#   $var.ranges        -- returns 1 if var has a value range defined
+#   $var.enums         -- returns 1 if var has enums defined for it.
+#   $var.access        -- node's access type
+#   $var.status        -- node's status
+#   $var.syntax        -- node's syntax
+#   $var.reference     -- node's reference
+#   $var.description   -- node's description
+
+sub process_vars {
+    my $it = shift;
+
+    # mib substitutions ($var.type -> $mibnode->{'type'})
+   if ( $it =~ /\$(\w+)\.(\w+)/ ) {
+    if ($SNMP::MIB{$vars{$1}} && defined($tables{$SNMP::MIB{$vars{$1}}{'label'}})) {
+      $it =~ s/\$(\w+)\.(settable)/(table_is_writable($SNMP::MIB{$vars{$1}}{label}))/eg;
+      $it =~ s/\$(\w+)\.(creatable)/(table_has_create($SNMP::MIB{$vars{$1}}{label}))/eg;
+      $it =~ s/\$(\w+)\.(rowstatus)/(table_has_rowstatus($SNMP::MIB{$vars{$1}}{label}))/eg;
+      $it =~ s/\$(\w+)\.(lastchange)/(table_has_lastchange($SNMP::MIB{$vars{$1}}{label}))/eg;
+      $it =~ s/\$(\w+)\.(storagetype)/(table_has_storagetype($SNMP::MIB{$vars{$1}}{label}))/eg;
+    }
+    $it =~ s/\$(\w+)\.(uc)/uc($vars{$1})/eg; # make something uppercase
+    $it =~ s/\$(\w+)\.(commaoid)/tocommas($SNMP::MIB{$vars{$1}}{objectID})/eg;
+    $it =~ s/\$(\w+)\.(oidlength)/oidlength($SNMP::MIB{$vars{$1}}{objectID})/eg;
+    $it =~ s/\$(\w+)\.(description)/$SNMP::MIB{$vars{$1}}{description}/g;
+    $it =~ s/\$(\w+)\.(perltype)/$SNMP::MIB{$vars{$1}}{type}/g;
+    $it =~ s/\$(\w+)\.(type)/$perltoctypes{$SNMP::MIB{$vars{$1}}{$2}}/g;
+    $it =~ s/\$(\w+)\.(subid)/$SNMP::MIB{$vars{$1}}{subID}/g;
+    $it =~ s/\$(\w+)\.(module)/$SNMP::MIB{$vars{$1}}{moduleID}/g;
+    $it =~ s/\$(\w+)\.(settable)/(($SNMP::MIB{$vars{$1}}{access} =~ \/(ReadWrite|Create|WriteOnly)\/)?1:0)/eg;
+    $it =~ s/\$(\w+)\.(creatable)/(($SNMP::MIB{$vars{$1}}{access} =~ \/(Create)\/)?1:0)/eg;
+    $it =~ s/\$(\w+)\.(readable)/(($SNMP::MIB{$vars{$1}}{access} =~ \/(Read|Create)\/)?1:0)/eg;
+    $it =~ s/\$(\w+)\.(noaccess)/(($SNMP::MIB{$vars{$1}}{access} =~ \/(NoAccess)\/)?1:0)/eg;
+    $it =~ s/\$(\w+)\.(accessible)/(($SNMP::MIB{$vars{$1}}{access} !~ \/(NoAccess)\/)?1:0)/eg;
+    $it =~ s/\$(\w+)\.(objectID|label|subID|access|status|syntax|reference)/$SNMP::MIB{$vars{$1}}{$2}/g;
+    $it =~ s/\$(\w+)\.(decl)/$perltodecl{$SNMP::MIB{$vars{$1}}{type}}/g;
+    $it =~ s/\$(\w+)\.(needlength)/$perltolen{$SNMP::MIB{$vars{$1}}{type}}/g;
+    $it =~ s/\$(\w+)\.(iscolumn)/($SNMP::MIB{$vars{$1}}{'parent'}{'label'} =~ \/Entry$\/) ? 1 : 0/eg;
+    $it =~ s/\$(\w+)\.(isscalar)/($SNMP::MIB{$vars{$1}}{'parent'}{'label'} !~ \/Entry$\/ && $SNMP::MIB{$vars{$1}}{access}) ? 1 : 0/eg;
+    $it =~ s/\$(\w+)\.(parent)/$SNMP::MIB{$vars{$1}}{'parent'}{'label'}/g;
+    $it =~ s/\$(\w+)\.(children)/($#{$SNMP::MIB{$vars{$1}}{'children'}} == 0) ? 0 : 1/eg;
+    $it =~ s/\$(\w+)\.(hasdefval)/(length($SNMP::MIB{$vars{$1}}{'defaultValue'}) == 0) ? 0 : 1/eg;
+    $it =~ s/\$(\w+)\.(defval)/$SNMP::MIB{$vars{$1}}{'defaultValue'}/g;
+    $it =~ s/\$(\w+)\.(hashint)/(length($SNMP::MIB{$vars{$1}}{'hint'}) == 0) ? 0 : 1/eg;
+    $it =~ s/\$(\w+)\.(hint)/$SNMP::MIB{$vars{$1}}{'hint'}/g;
+    $it =~ s/\$(\w+)\.(ranges)/($#{$SNMP::MIB{$vars{$1}}{'ranges'}} == -1) ? 0 : 1/eg;
+    # check for enums
+    $it =~ s/\$(\w+)\.(enums)/(%{$SNMP::MIB{$vars{$1}}{'enums'}} == 0) ? 0 : 1/eg;
+    $it =~ s/\$(\w+)\.(enumrange)/%{$SNMP::MIB{$vars{$1}}{'enums'}}/eg;
+    $it =~ s/\$(\w+)\.(rowstatus)/(($SNMP::MIB{$vars{$1}}{syntax} =~ \/(RowStatus)\/)?1:0)/eg;
+    $it =~ s/\$(\w+)\.(storagetype)/(($SNMP::MIB{$vars{$1}}{syntax} =~ \/(StorageType)\/)?1:0)/eg;
+    if ( $it =~ /\$(\w+)\.(\w+)/ ) {
+      warn "Possible unknown variable attribute \$$1.$2 at $currentfile:$currentline\n";
+    }
+  }
+    # normal variable substitions
+    $it =~ s/\$\{(\w+)\}/$vars{$1}/g;
+    $it =~ s/\$(\w+)/$vars{$1}/g;
+    # use $@var to put literal '$var'
+    $it =~ s/\$\@(\w+)/\$$1/g;
+    return $it;
+}
+
+# process various types of statements
+#
+# NOTE: THESE ARE AUTO-EXTRACTED/PROCESSED BY ../mib2c.extract.pl for man pages
+# which include:
+#   @open FILE@
+#     writes generated output to FILE
+#     note that for file specifications, opening '-' will print to stdout.
+#   @append FILE@
+#     appends the given FILE
+#   @close FILE@
+#     closes the given FILE
+#   @push@
+#     save the current outputs, then clear outputs. Use with @open@
+#     and @pop@ to write to a new file without interfering with current
+#     outputs.
+#   @pop@
+#     pop up the process() stack one level. Use after a @push@ to return to
+#     the previous set of open files.
+#   @foreach $VAR scalar@
+#     repeat iterate over code until @end@ setting $VAR to all known scalars
+#   @foreach $VAR table@
+#     repeat iterate over code until @end@ setting $VAR to all known tables
+#   @foreach $VAR column@
+#     repeat iterate over code until @end@ setting $VAR to all known
+#     columns within a given table.  Obviously this must be called
+#     within a foreach-table clause.
+#   @foreach $VAR nonindex@
+#     repeat iterate over code until @end@ setting $VAR to all known
+#     non-index columns within a given table.  Obviously this must be called
+#     within a foreach-table clause.
+#   @foreach $VAR internalindex@
+#     repeat iterate over code until @end@ setting $VAR to all known internal
+#     index columns within a given table.  Obviously this must be called
+#     within a foreach-table clause.
+#   @foreach $VAR externalindex@
+#     repeat iterate over code until @end@ setting $VAR to all known external
+#     index columns within a given table.  Obviously this must be called
+#     within a foreach-table clause.
+#   @foreach $VAR index@
+#     repeat iterate over code until @end@ setting $VAR to all known
+#     indexes within a given table.  Obviously this must be called
+#     within a foreach-table clause.
+#   @foreach $VAR notifications@
+#     repeat iterate over code until @end@ setting $VAR to all known notifications
+#   @foreach $VAR varbinds@
+#     repeat iterate over code until @end@ setting $VAR to all known varbinds
+#     Obviously this must be called within a foreach-notifications clause.
+#   @foreach $LABEL, $VALUE enum@
+#     repeat iterate over code until @end@ setting $LABEL and $VALUE
+#     to the label and values from the enum list.
+#   @foreach $RANGE_START, $RANGE_END range NODE@
+#     repeat iterate over code until @end@ setting $RANGE_START and $RANGE_END
+#     to the legal accepted range set for a given mib NODE.
+#   @foreach $var stuff a b c d@
+#     repeat iterate over values a, b, c, d as assigned generically
+#     (ie, the values are taken straight from the list with no
+#     mib-expansion, etc).
+#   @while expression@
+#     repeat iterate over code until the expression is false
+#   @eval $VAR = expression@
+#     evaluates expression and assigns the results to $VAR.  This is
+#     not a full perl eval, but sort of a "psuedo" eval useful for
+#     simple expressions while keeping the same variable name space.
+#     See below for a full-blown export to perl.
+#   @perleval STUFF@
+#     evaluates STUFF directly in perl.  Note that all mib2c variables
+#     interpereted within .conf files are in $vars{NAME} and that
+#     a warning will be printed if STUFF does not return 0. (adding a
+#     'return 0;' at the end of STUFF is a workaround.
+#   @startperl@
+#   @endperl@
+#     treats everything between these tags as perl code, and evaluates it.
+#   @next@
+#     restart foreach; should only be used inside a conditional.
+#     skips out of current conditional, then continues to skip to
+#     end for the current foreach clause.
+#   @if expression@
+#     evaluates expression, and if expression is true processes
+#     contained part until appropriate @end@ is reached.  If the
+#     expression is false, the next @elsif expression@ expression
+#     (if it exists) will be evaluated, until an expression is
+#     true. If no such expression exists and an @else@
+#     clause is found, it will be evaluated.
+#   @ifconf file@
+#     If the specified file can be found in the conf file search path,
+#     and if found processes contained part until an appropriate @end@ is
+#     found. As with a regular @if expression@, @elsif expression@ and
+#     @else@ can be used.
+#   @ifdir dir@
+#     If the specified directory exists, process contained part until an
+#     appropriate @end@ is found. As with a regular @if expression@,
+#     @elsif expression@ and @else@ can be used.
+#   @define NAME@
+#   @enddefine@
+#     Memorizes "stuff" between the define and enddefine tags for
+#     later calling as NAME by @calldefine NAME@.
+#   @calldefine NAME@
+#     Executes stuff previously memorized as NAME.
+#   @printf "expression" stuff1, stuff2, ...@
+#     Like all the other printf's you know and love.
+#   @run FILE@
+#     Sources the contents of FILE as a mib2c file,
+#     but does not affect current files opened.
+#   @include FILE@
+#     Sources the contents of FILE as a mib2c file and appends its
+#     output to the current output.
+#   @prompt $var QUESTION@
+#     Presents the user with QUESTION, expects a response and puts it in $var
+#   @print STUFF@
+#     Prints stuff directly to the users screen (ie, not to where
+#     normal mib2c output goes)
+#   @quit@
+#     Bail out (silently)
+#   @exit@
+#     Bail out!
+#
+sub skippart {
+  my $endcount = 1;
+  my $arg = shift;
+  my $rtnelse = 0;
+  while ($arg =~ s/-(\w+)\s*//) {
+    $rtnelse = 1 if ($1 eq "else");
+  }
+  while(get_next_line()) {
+    $currentline++;
+    $_ = process_vars($_) if ($debug);
+    print "$currentfile.$currentline:P$currentlevel:S$endcount.$rtnelse:$_" if ($debug);
+        next if ( /^\s*\#\#/ ); #                          noop, it's a comment
+        next if (! /^\s*\@/ ); #                                        output
+        if (! /^\s*\@.*\@/ ) {
+          warn "$currentfile:$currentline contained a line that started with a @ but did not match any mib2c configuration tokens.\n";
+          warn "(maybe missing the trailing @?)\n";
+          warn "$currentfile:$currentline [$_]\n";
+        }
+	elsif (/\@\s*end\@/) {
+	    return "end" if ($endcount == 1);
+	    $endcount--;
+	}
+	elsif (/\@\s*elseif.*\@/) {
+          m2c_die "use 'elsif' instead of 'elseif'\n";
+        }
+	elsif (/\@\s*else\@/) {
+	    return "else" if (($endcount == 1) && ($rtnelse == 1));
+	}
+	elsif (/\@\s*elsif\s+([^\@]+)\@/) {
+	    return "else" if (($endcount == 1) && ($rtnelse == 1) && (eval(process_vars($1))));
+	}
+	elsif (/\@\s*(foreach|if|while)/) {
+	    $endcount++;
+	}
+    }
+  print "skippart EOF\n";
+  m2c_die "unbalanced code detected in skippart: EOF when $endcount levels deep" if($endcount != 1);
+  return "eof";
+}
+
+sub close_file {
+  my $name = shift;
+  if (!$name) {
+    print "close_file w/out name!\n";
+    return;
+  }
+  if(!$outputs{$name}) {
+    print "no handle for $name\n";
+    return;
+  }
+  $outputs{$name}->close();
+  delete $outputs{$name};
+#  print STDERR "closing $name\n" if (!$quiet);
+}
+
+sub close_files {
+  foreach $name (keys(%outputs)) {
+    close_file($name);
+  }
+}
+
+sub open_file {
+  my $multiple = shift;
+  my $spec = shift;
+  my $name = $spec;
+  $name =~ s/>//;
+  if ($multiple == 0) {
+    close_files();
+  }
+  return if ($outputs{$name});
+  $outputs{$name} = new IO::File;
+  $outputs{$name}->open(">$spec") || m2c_die "failed to open $name";
+  print STDERR "writing to $name\n" if (!$quiet && !$written{$name});
+  $written{$name} = '1';
+}
+
+sub process_file {
+  my ($file, $missingok, $keepvars) = (@_);
+  my $oldfh = $fh;
+  my $oldfile = $currentfile;
+  my $oldline = $currentline;
+  # keep old copy of @vars and just build on it.
+  my %oldvars;
+
+  %oldvars = %vars if ($keepvars != 1);
+
+  $file = find_conf($file,$missingok);
+  return if (! $file);
+
+  $fh = open_conf($file);
+  $currentline = 0;
+  process("-balanced");
+  $fh->close();
+
+  $fh = $oldfh;
+  $currentfile = $oldfile;
+  $currentline = $oldline;
+
+  # don't keep values in replaced vars.  Revert to ours.
+  %vars = %oldvars if ($keepvars != 1);
+}
+
+sub get_next_line {
+    if ($#process_lines > -1) {
+	return $_ = shift @process_lines;
+    }
+    return $_ = <$fh>;
+}
+
+sub do_tell {
+    my $stash;
+    $stash->{'startpos'} = $fh->tell();
+    $stash->{'startline'} = $currentline;
+    @{$stash->{'lines'}} = @process_lines;
+    return $stash;
+}
+
+sub do_seek {
+    my $stash = shift;
+
+    # save current line number
+    $currentline = $stash->{'startline'};
+    $fh->seek($stash->{'startpos'}, 0); # go to top of section.
+
+    # save current process_lines state.
+    @process_lines = @{$stash->{'lines'}};
+
+    # save state of a number of variables (references), and new assignments
+    for (my $i = 0; $i <= $#_; $i += 2) {
+	push @{$stash->{'vars'}}, $_[$i], ${$_[$i]};
+	${$_[$i]} = $_[$i+1];
+    }
+}
+
+sub do_unseek {
+    my $stash = shift;
+    for (my $i = 0; $i <= $#{$stash->{'vars'}}; $i += 2) {
+	${$stash->{'vars'}[$i]} = $stash->{'vars'}[$i+1];
+    }
+}
+
+sub do_a_loop {
+    my $stash = shift;
+    do_seek($stash, @_);
+    my $return = process();
+    do_unseek($stash);
+    return $return;
+}
+
+sub process {
+  my $arg = shift;
+  my $elseok = 0;
+  my $balanced = 0;
+  my $startlevel;
+  my $return = "eof";
+  while ($arg =~ s/-(\w+)\s*//) {
+    $elseok = 1 if ($1 eq "elseok");
+    $balanced = 1 if ($1 eq "balanced");
+  }
+
+  $currentlevel++;
+  $startlevel = $currentlevel;
+  if($balanced) {
+    $balanced = $currentlevel;
+  }
+    while(get_next_line()) {
+      $currentline++;
+      if ($debug) {
+#        my $line = process_vars($_);
+#        chop $line;
+        print "$currentfile.$currentline:P$currentlevel.$elseok:$return:$_";
+      }
+
+        next if (/^\s*\#\#/); #                            noop, it's a comment
+        if (! /^\s*\@/ ) { #                                          output
+          my $line = process_vars($_);
+          foreach $file (values(%outputs)) {
+            print $file "$line";
+          }
+	} ####################################################################
+        elsif (/\@\s*exit\@/) { #                                         EXIT
+            close_files;
+	    die "exiting at conf file ($currentfile:$currentline) request\n";
+        } elsif (/\@\s*quit\@/) { #                                       QUIT
+            close_files;
+            exit;
+	} elsif (/\@\s*debug\s+([^\@]+)\@/) { #                          DEBUG
+          if ($1 eq "on") {
+            $debug = 1;
+          }
+          else {
+            $debug = 0;
+          }
+	} elsif (/\@\s*strict token\s+([^\@]+)\@/) { #                  STRICT
+          if ($1 eq "on") {
+            $strict_unk_token = 1;
+          }
+          else {
+            $strict_unk_token = 0;
+          }
+	} elsif (/\@\s*balanced\@/) { #                               BALANCED
+          $balanced = $currentlevel;
+	} elsif (/\@\s*open\s+([^\@]+)\@/) { #                            OPEN
+	    my $arg = $1;
+	    my ($multiple) = (0);
+	    while ($arg =~ s/-(\w+)\s+//) {
+		$multiple = 1 if ($1 eq 'multiple');
+	    }
+	    my $spec = process_vars($arg);
+            open_file($multiple, $spec);
+	} elsif (/\@\s*close\s+([^\@]+)\@/) { #                          CLOSE
+	    my $spec = process_vars($1);
+            close_file($spec);
+	} elsif (/\@\s*append\s+([^\@]+)\@/) { #                        APPEND
+	    my $arg = $1;
+	    my ($multiple) = (0);
+	    while ($arg =~ s/-(\w+)\s+//) {
+		$multiple = 1 if ($1 eq 'multiple');
+	    }
+	    my $spec = process_vars($arg);
+            $spec=">$spec";
+            open_file($multiple,$spec);
+	} elsif (/\@\s*define\s*(.*)\@/) { #                              DEFINE
+	    my $it = $1;
+	    while (<$fh>) {
+		last if (/\@\s*enddefine\s*@/);
+		push @{$defines{$it}}, $_;
+	    }
+	} elsif (/\@\s*calldefine\s+(\w+)@/) {
+	    if ($#{$defines{$1}} == -1) {
+		warn "called a define of $1 which didn't exist\n";
+		warn "$currentfile:$currentline [$_]\n";
+	    } else {
+		unshift @process_lines, @{$defines{$1}};
+	    }
+      	} elsif (/\@\s*run (.*)\@/) { #                                    RUN
+	    my $arg = $1;
+	    my ($again) = (0);
+	    while ($arg =~ s/-(\w+)\s+//) {
+		$again = 1 if ($1 eq 'again');
+#		if ($1 eq 'file') {
+#		    my ($filearg) = ($arg =~ s/^(\w+)//);
+#		}
+	    }
+	    my $spec = process_vars($arg);
+	    next if (!$again && $ranalready{$spec});
+	    $ranalready{$spec} = 1;
+	    my %oldout = %outputs;
+            my %emptyarray;
+            %outputs = %emptyoutputs;
+            process_file($spec,0,0);
+            close_files;
+	    %outputs = %oldout;
+	} elsif (/\@\s*push\@/) { #                                      PUSH
+	    my %oldout = %outputs;
+            my %emptyarray;
+            %outputs = %emptyoutputs;
+            process($arg);
+            close_files;
+	    %outputs = %oldout;
+	} elsif (/\@\s*pop\s*\@/) { #                                     POP
+          $return = "pop";
+          last;
+	} elsif (/\@\s*include (.*)\@/) { #                            INCLUDE
+	    my $arg = $1;
+	    my ($missingok) = (0);
+	    while ($arg =~ s/-(\w+)\s+//) {
+		$missingok = 1 if ($1 eq 'ifexists');
+	    }
+            my $spec = process_vars($arg);
+            process_file($spec,$missingok,1);
+	} elsif (/\@\s*if([a-z]*)\s+([^@]+)\@/) { #                         IF
+          my ($type,$arg,$ok) = ($1,$2,0);
+          # check condition based on type
+          if (! $type) {
+            $ok = eval(process_vars($arg));
+          } elsif ($type eq conf) {
+            my $file = find_conf(process_vars($arg),1); # missingok
+            $ok = (-f $file);
+          } elsif ($type eq dir) {
+            $ok = (-d $arg);
+          } else {
+            m2c_die "unknown if modifier ($type)\n";
+          }
+          # act on condition
+          if ($ok) {
+            $return = process("-elseok");
+          } else {
+            $return = skippart("-else");
+            $return = process("-elseok") if ($return eq "else");
+          }
+          if ($return eq "next") {
+            $return = skippart();
+            m2c_die("unbalanced code detected while exiting next/2 (returned $return)") if ($return ne "end");
+#            $return = "next";
+            last;
+          }
+          if (($return ne "end") && ($return ne "else")) {
+            m2c_die "unbalanced if / return $return\n";
+          }
+        } elsif (/\@\s*elseif.*\@/) { #                           bogus elseif
+          m2c_die "error: use 'elsif' instead of 'elseif'\n";
+	} elsif (/\@\s*els(e|if).*\@/) { #                          ELSE/ELSIF
+          if ($elseok != 1) {
+            chop $_;
+            m2c_die "unexpected els$1\n";
+          }
+          $return = skippart();
+          if ($return ne "end") {
+            m2c_die "unbalanced els$1 / rtn $rtn\n";
+          }
+          $return = "else";
+          last;
+	} elsif (/\@\s*next\s*\@/) { #                                  NEXT
+          $return = skippart();
+          m2c_die "unbalanced code detected while exiting next/1 (returned $return)" if ($return ne "end");
+          $return = "next";
+          last;
+	} elsif (/\@\s*end\@/) { #                                         END
+          $return = "end";
+          last;
+	} elsif (/\@\s*eval\s+\$(\w+)\s*=\s*([^\@]*)/) { #                EVAL
+	    my ($v, $e) = ($1, $2);
+#	    print STDERR "eval: $e\n";
+	    my $e = process_vars($e);
+	    $vars{$v} = eval($e);
+            if (!defined($vars{$v})) {
+              warn "$@";
+              warn "$currentfile:$currentline [$_]\n";
+            }
+	} elsif (/\@\s*perleval\s*(.*)\@/) { #                        PERLEVAL
+#	    print STDERR "perleval: $1\n";
+	    my $res = eval($1);
+            if ($res) {
+              warn "$@";
+              warn "$currentfile:$currentline [$_]\n";
+            }
+	} elsif (/\@\s*startperl\s*\@/) { #                          STARTPERL
+	    my $text;
+	    while (get_next_line()) {
+		last if (/\@\s*endperl\s*\@/);
+		$text .= $_;
+	    }
+	    my $res = eval($text);
+            if ($res) {
+              warn "$@";
+              warn "$currentfile:$currentline [$_]\n";
+            }
+#	    print STDERR "perleval: $1\n";
+	} elsif (/\@\s*printf\s+(\"[^\"]+\")\s*,?(.*)\@/) { #           PRINTF
+	    my ($f, $rest) = ($1, $2);
+	    $rest = process_vars($rest);
+	    my @args = split(/\s*,\s*/,$rest);
+	    $f = eval $f;
+#	    print STDERR "printf: $f, ", join(", ",@args),"\n";
+	    foreach $file (values(%outputs)) {
+		printf $file (eval {$f}, @args);
+	    }
+	} elsif (/\@\s*foreach\s+\$([^\@]+)\s+scalars*\s*\@/) { #      SCALARS
+	    my $var = $1;
+	    my $stash = do_tell();
+	    my $scalar;
+	    my @thekeys = keys(%scalars);
+	    if ($#thekeys == -1) {
+	      $return = skippart();
+	    } else {
+	      if ($havenetsnmpoid) {
+		  @thekeys = sort {
+				    new NetSNMP::OID($a) <=> 
+				      new NetSNMP::OID($b) } @thekeys;
+	      }
+	      foreach $scalar (@thekeys) {
+		  $return = do_a_loop($stash, \$vars{$var}, $scalar,
+				      \$currentscalar, $scalar,
+				      \$currentvar, $scalar);
+	      }
+	    }
+            m2c_die("foreach did not end with \@end@") if($return ne "end");
+	} elsif (/\@\s*foreach\s+\$([^\@]+)\s+notifications*\s*\@/) {
+	    my $var = $1;
+	    my $stash = do_tell();
+	    my $notify;
+	    my @thekeys = keys(%notifications);
+	    if ($#thekeys == -1) {
+	      $return = skippart();
+	    } else {
+	      if ($havenetsnmpoid) {
+		  @thekeys = sort {
+				    new NetSNMP::OID($a) <=> 
+				      new NetSNMP::OID($b) } @thekeys;
+	      }
+	      foreach $notify (@thekeys) {
+		  $return = do_a_loop($stash, \$vars{$var}, $notify,
+				      \$currentnotify, $notify);
+	      }
+	    }
+            m2c_die("foreach did not end with \@end@") if($return ne "end");
+	  } elsif (/\@\s*foreach\s+\$([^\@]+)\s+varbinds\s*\@/) {
+	    my $var = $1;
+	    my $stash = do_tell();
+	    my $varbind;
+	    if ($#{$notifyvars{$currentnotify}} == -1) {
+	      $return = skippart();
+	    } else {
+	      foreach $varbind (@{$notifyvars{$currentnotify}}) {
+		#		print "looping on $var for $varbind\n";
+		  $return = do_a_loop($stash, \$vars{$var}, $varbind,
+				          \$currentvarbind, $varbind,
+				              \$currentvar, $varbind);
+	      }
+	    }
+            m2c_die("foreach did not end with \@end@") if($return ne "end");
+	  } elsif (/\@\s*foreach\s+\$([^\@]+)\s+tables*\s*\@/) {
+	    my $var = $1;
+	    my $stash = do_tell();
+	    my $table;
+	    my @thekeys = keys(%tables);
+	    if ($#thekeys == -1) {
+	      $return = skippart();
+	    } else {
+	      if ($havenetsnmpoid) {
+		  @thekeys = sort {
+				    new NetSNMP::OID($a) <=> 
+				      new NetSNMP::OID($b) } @thekeys;
+	      }
+	      foreach $table (@thekeys) {
+		  $return = do_a_loop($stash, \$vars{$var}, $table, 
+				      \$currenttable, $table);
+	      }
+	    }
+            m2c_die("foreach did not end with \@end@ ($return)") if($return ne "end");
+	  } elsif (/\@\s*foreach\s+\$([^\@]+)\s+stuff\s*(.*)\@/) {
+	    my $var = $1;
+	    my $stuff = $2;
+	    my @stuff = split(/[,\s]+/, $stuff);
+	    my $stash = do_tell();
+	    if ($#stuff == -1) {
+	      $return = skippart();
+	    } else {
+	      foreach $st (@stuff) {
+		  $return = do_a_loop($stash, \$vars{$var}, $st,
+				      \$currentstuff, $st);
+	      }
+	    }
+            m2c_die("foreach did not end with \@end@ ($return)") if($return ne "end");
+	  } elsif (/\@\s*foreach\s+\$([^\@]+)\s+(column|index|internalindex|externalindex|nonindex)\s*\@/) {
+	    my ($var, $type) = ($1, $2);
+	    my $stash = do_tell();
+	    my $column;
+	    if ($#{$tables{$currenttable}{$type}} == -1) {
+	      $return = skippart();
+	    } else {
+	      foreach $column (@{$tables{$currenttable}{$type}}) {
+		#		print "looping on $var for $type -> $column\n";
+		  $return = do_a_loop($stash, \$vars{$var}, $column,
+				      \$currentcolumn, $column,
+				      \$currentvar, $column);
+	      }
+	    }
+            m2c_die("foreach did not end with \@end@") if($return ne "end");
+	  } elsif (/\@\s*foreach\s+\$([^\@]+)\s+\$([^\@]+)\s+range\s+([^\@]+)\@/) {
+	    my ($svar, $evar, $node) = ($1, $2, $3);
+	    $svar =~ s/,$//;
+	    my $stash = do_tell();
+	    my $range;
+	    $node = $currentcolumn if (!$node);
+	    my $mibn = $SNMP::MIB{process_vars($node)};
+	    die "no such mib node: $node" if (!$mibn);
+	    my @ranges = @{$mibn->{'ranges'}};
+	    if ($#ranges > -1) {
+		foreach $range (@ranges) {
+		    $return = do_a_loop($stash, \$vars{$svar}, $range->{'low'},
+					\$vars{$evar}, $range->{'high'});
+		}
+	    } else {
+		$return = skippart();
+	    }
+            m2c_die("foreach did not end with \@end@") if($return ne "end");
+	} elsif (/\@\s*foreach\s+\$([^\@,]+)\s*,*\s+\$([^\@]+)\s+(enums*)\s*\@/) {
+	    my ($varvar, $varval, $type) = ($1, $2, $3);
+	    my $stash = do_tell();
+	    my $enum, $enum2;
+
+	    my @keys = sort { $SNMP::MIB{$currentvar}{'enums'}{$a} <=>
+				  $SNMP::MIB{$currentvar}{'enums'}{$b} } (keys(%{$SNMP::MIB{$currentvar}{'enums'}}));
+	    if ($#keys > -1) {
+		foreach $enum (@keys) {
+                  ($enum2 = $enum) =~ s/-/_/g;
+		    $return = do_a_loop($stash, \$vars{$varvar}, $enum2,
+					\$vars{$varval},
+					$SNMP::MIB{$currentvar}{'enums'}{$enum});
+		}
+	    } else {
+		$return = skippart();
+	    }
+            m2c_die("foreach did not end with \@end@") if($return ne "end");
+	} elsif (/\@\s*while([a-z]*)\s+([^@]+)\@/) { #                     WHILE
+          my ($type,$arg,$ok) = ($1,$2,0);
+	  my $stash = do_tell();
+          my $loop = 1;
+          my $everlooped = 0;
+
+          while ($loop) {
+            # check condition based on type
+            if (! $type) {
+              $ok = eval(process_vars($arg));
+            } elsif ($type eq conf) {
+              my $file = find_conf(process_vars($arg),1); # missingok
+              $ok = (-f $file);
+            } elsif ($type eq dir) {
+              $ok = (-d $arg);
+            } else {
+              m2c_die "unknown while modifier ($type)\n";
+            }
+
+            # act on condition
+            if ($ok) {
+	      $return = do_a_loop($stash, \$vars{$type}, $ok, \$vars{$args});
+	      $everlooped = 1;
+            } else {
+	      if (!$everlooped) {
+                $return = skippart();
+              }
+	      $loop = 0;
+            }
+          }
+	} elsif (/\@\s*prompt\s+\$(\S+)\s*(.*)\@/) { #                  PROMPT
+	    my ($var, $prompt) = ($1, $2);
+	    if (!$term) {
+		my $haveit = eval { require Term::ReadLine };
+		if ($haveit) {
+		    $term = new Term::ReadLine 'mib2c';
+		}
+	    }
+	    if ($term) {
+		$vars{$var} = $term->readline(process_vars($prompt));
+	    }
+	} elsif (/\@\s*print\s+([^@]*)\@/) { #                           PRINT
+          my $line = process_vars($1);
+          print "$line\n";
+	} else {
+          my $line = process_vars($_);
+	  mib2c_output($line);
+          chop $_;
+          warn "$currentfile:$currentline contained a line that started with a @ but did not match any mib2c configuration tokens.\n";
+          warn "(maybe missing the trailing @?)\n";
+          warn "$currentfile:$currentline [$_]\n";
+          m2c_die if ($strict_unk_token == 1);
+	}
+#      $return = "eof";
+    }
+    print "< Balanced $balanced / level $currentlevel / rtn $return / $_\n" if($debug);
+    if((!$_) && ($return ne "eof")) {
+#      warn "switching return of '$return' to EOF\n" if($debug);
+      $return = "eof";
+    }
+  if ($balanced) {
+    if(($balanced != $currentlevel) || ($return ne "eof")) {
+      m2c_die "\@balanced@ specified, but processing terminated with '$return' before EOF!";
+    }
+  }
+  $currentlevel--;
+  return $return;
+}
+
+sub mib2c_output {
+    my $line = shift;
+    foreach $file (values(%outputs)) {
+	print $file "$line";
+    }
+}
+
+
+sub setup_data {
+    my $mib = shift;
+    if ($mib->{label} =~ /Table$/ && $#{$mib->{children}} != -1) {
+	my $tablename = $mib->{label};
+	my $entry = $mib->{children};
+	my $columns = $entry->[0]{children};
+        my $augments = $entry->[0]{'augments'};
+	foreach my $col (sort { $a->{'subID'} <=> $b->{'subID'} } @$columns) {
+	    # store by numeric key so we can sort them later
+	    push @{$tables{$tablename}{'column'}}, $col->{'label'};
+	}
+        if ($augments) {
+           my $mib = $SNMP::MIB{$augments} || 
+		die "can't find info about augmented table $augments in table $tablename\n";
+           $mib = $mib->{parent} || 
+		die "can't find info about augmented table $augments in table $tablename\n";
+	   my $entry = $mib->{children};
+	   foreach my $index (@{$entry->[0]{'indexes'}}) {
+	       my $node = $SNMP::MIB{$index} || 
+		   die "can't find info about index $index in table $tablename\n";
+	       push @{$tables{$tablename}{'index'}}, $index;
+	       push @{$tables{$tablename}{'externalindex'}}, $index;
+	   }
+           my $columns = $entry->[0]{children};
+        }
+        else {
+          foreach my $index (@{$entry->[0]{'indexes'}}) {
+	    my $node = $SNMP::MIB{$index} || 
+              die "can't find info about index $index in table $tablename\n";
+            push @{$tables{$tablename}{'index'}}, $index;
+            if("@{$tables{$tablename}{'column'}}" =~ /$index\b/ ) {
+#              print "idx INT $index\n";
+              push @{$tables{$tablename}{'internalindex'}}, $index;
+            } else {
+#              print "idx EXT $index\n";
+              push @{$tables{$tablename}{'externalindex'}}, $index;
+            }
+          }
+        }
+	foreach my $col (sort { $a->{'subID'} <=> $b->{'subID'} } @$columns) {
+            next if ( "@{$tables{$tablename}{'index'}}" =~ /$col->{'label'}\b/ );
+            push @{$tables{$tablename}{'nonindex'}}, $col->{'label'};
+	}
+#        print "indexes: @{$tables{$tablename}{'index'}}\n";
+#        print "internal indexes: @{$tables{$tablename}{'internalindex'}}\n";
+#        print "external indexes: @{$tables{$tablename}{'externalindex'}}\n";
+#        print "non-indexes: @{$tables{$tablename}{'nonindex'}}\n";
+    } else {
+	my $children = $mib->{children};
+	if ($#children == -1 && $mib->{type}) {
+	    # scalar
+	    if ($mib->{type} eq "NOTIF" ||
+	        $mib->{type} eq "TRAP") {
+	        my $notifyname = $mib->{label};
+                my @varlist = ();
+	        $notifications{$notifyname} = 1;
+                $notifyvars{$notifyname} = $mib->{varbinds};
+	    } else {
+	        $scalars{$mib->{label}} = 1 if ($mib->{'access'} ne 'Notify');
+	    }
+	} else {
+	    my $i;
+	    for($i = 0; $i <= $#$children; $i++) {
+		setup_data($children->[$i]);
+	    }
+	}
+    }
+}
+
+sub min {
+    return $_[0] if ($_[0] < $_[1]);
+    return $_[1];
+}
+
+sub max {
+    return $_[0] if ($_[0] > $_[1]);
+    return $_[1];
+}
+
+sub find_conf {
+  my ($configfile, $missingok) = (@_);
+
+  foreach my $d (@search_dirs, @def_search_dirs) {
+#      print STDERR "using $d/$configfile" if (-f "$d/$configfile");
+      return "$d/$configfile" if (-f "$d/$configfile");
+  }
+  return $configfile if (-f "$configfile");
+  return if ($missingok);
+
+  print STDERR "Can't find a configuration file called $configfile\n";
+  print STDERR "(referenced at $currentfile:$currentline)\n" if ($currentfile);
+  print STDERR "I looked in:\n";
+  print "  " . join("\n  ", @search_dirs, @def_search_dirs), "\n";
+  exit 1;
+}
+
+sub open_conf {
+    my $configfile = shift;
+# process .conf file
+    if (! -f "$configfile") {
+	print STDERR "Can't find a configuration file called $configfile\n";
+	exit 1;
+    }
+    $currentfile = $configfile;
+    my $fh = new IO::File;
+    $fh->open("$configfile");
+    return $fh;
+}
+
+sub count_scalars {
+    my @k = keys(%scalars);
+    return $#k + 1;
+}
+
+sub count_tables {
+    my @k = keys(%tables);
+    return $#k + 1;
+}
+
+sub count_columns {
+    my $table = shift;
+    return $#{$tables{$table}{'column'}} + 1;
+}
+
+sub table_is_writable {
+    my $table = shift;
+    my $column;
+    my $result = 0;
+    foreach $column (@{$tables{$table}{'column'}}) {
+      if($SNMP::MIB{$column}{access} =~ /(ReadWrite|Create|WriteOnly)/) {
+        $result = 1;
+        last;
+      }
+    }
+    return $result;
+}
+
+sub table_has_create {
+    my $table = shift;
+    my $column;
+    my $result = 0;
+    foreach $column (@{$tables{$table}{'column'}}) {
+      if($SNMP::MIB{$column}{access} =~ /(Create)/) {
+        $result = 1;
+        last;
+      }
+    }
+    return $result;
+}
+
+sub table_has_rowstatus {
+    my $table = shift;
+    my $column;
+    my $result = 0;
+    foreach $column (@{$tables{$table}{'column'}}) {
+      if($SNMP::MIB{$column}{syntax} =~ /(RowStatus)/) {
+        $result = 1;
+        last;
+      }
+    }
+    return $result;
+}
+
+sub table_has_lastchange {
+    my $table = shift;
+    my $column;
+    my $result = 0;
+    foreach $column (@{$tables{$table}{'column'}}) {
+      if(($SNMP::MIB{$column}{syntax} =~ /(TimeStamp)/) &&
+         ($SNMP::MIB{$column}{label} =~ /(LastChange)/)) {
+        $result = 1;
+        last;
+      }
+    }
+    return $result;
+}
+
+sub table_has_storagetype {
+    my $table = shift;
+    my $column;
+    my $result = 0;
+    foreach $column (@{$tables{$table}{'column'}}) {
+      if($SNMP::MIB{$column}{syntax} =~ /(StorageType)/) {
+        $result = 1;
+        last;
+      }
+    }
+    return $result;
+}
+
+sub count_indexes {
+    my $table = shift;
+    return $#{$tables{$table}{'index'}} + 1;
+}
+
+sub count_external_indexes {
+    my $table = shift;
+    return $#{$tables{$table}{'externalindex'}} + 1;
+}
+
+sub count_notifications {
+    my @k = keys(%notifications);
+    return $#k + 1;
+}
+
+sub count_varbinds {
+    my $notify = shift;
+    return $#{$notifyvars{$notify}} + 1;
+}

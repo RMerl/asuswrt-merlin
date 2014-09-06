@@ -1,0 +1,77 @@
+.\" -*- nroff -*-
+.\" Portions of this file are subject to the following copyright.  See
+.\" the Net-SNMP COPYING file for more details and other copyrights
+.\" that may apply:
+.\" /***********************************************************
+.\" 	Copyright 1988, 1989 by Carnegie Mellon University
+.\" 
+.\"                       All Rights Reserved
+.\" 
+.\" Permission to use, copy, modify, and distribute this software and its 
+.\" documentation for any purpose and without fee is hereby granted, 
+.\" provided that the above copyright notice appear in all copies and that
+.\" both that copyright notice and this permission notice appear in 
+.\" supporting documentation, and that the name of CMU not be
+.\" used in advertising or publicity pertaining to distribution of the
+.\" software without specific, written prior permission.  
+.\" 
+.\" CMU DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
+.\" ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL
+.\" CMU BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR
+.\" ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
+.\" WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
+.\" ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
+.\" SOFTWARE.
+.\" ******************************************************************/
+.TH SNMPGETNEXT 1 "04 Mar 2002" VVERSIONINFO "Net-SNMP"
+.SH NAME
+snmpgetnext - communicates with a network entity using SNMP GETNEXT requests
+.SH SYNOPSIS
+.B snmpgetnext
+[COMMON OPTIONS] [\-Cf] AGENT OID [OID]...
+.SH DESCRIPTION
+.B snmpget
+is an SNMP application that uses the SNMP GETNEXT request to query for
+information on a network entity.  One or more object identifiers
+(OIDs) may be given as arguments on the command line.  Each variable
+name is given in the format specified in
+.IR variables(5) .
+For each one, the variable that is lexicographically "next" in the
+remote entity's MIB will be returned.
+.PP
+For example:
+.PP
+snmpgetnext \-c public zeus interfaces.ifTable.ifEntry.ifType.1
+.PP
+will retrieve the variable interfaces.ifTable.ifEntry.ifType.2:
+.PP
+interfaces.ifTable.ifEntry.ifType.2 = softwareLoopback(24)
+.PP
+If the network entity has an error processing the request packet, an
+error message will be shown, helping to pinpoint in what way the
+request was malformed.
+.SH "OPTIONS"
+.TP 8
+.B \-Cf
+If
+.B \-Cf
+is
+.I not
+specified, some applications
+.RB ( snmpdelta ", " snmpget ", " snmpgetnext " and " snmpstatus )
+will try to fix errors returned by the agent that you were talking to
+and resend the request.  The only time this is really useful is if you
+specified a OID that didn't exist in your request and you're using
+SNMPv1 which requires "all or nothing" kinds of requests.
+.PP
+In addition to this option,
+.B snmpgetnext
+takes the common options described in the
+.I snmpcmd(1)
+manual page.
+Note that 
+.B snmpgetnext
+REQUIRES an argument specifying the agent to query
+and at least one OID argument, as described there.
+.SH "SEE ALSO"
+snmpcmd(1), snmpget(1), variables(5).

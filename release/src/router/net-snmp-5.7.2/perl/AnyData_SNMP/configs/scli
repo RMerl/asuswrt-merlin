@@ -1,0 +1,27 @@
+# scli equivelents
+alias scli_system_info {
+    printf "Name:              %s\n" sysName.0
+    #XXX fix:
+    printf "Address:           localhost:161\n";
+    printf "Contact:           %s\n" sysContact.0
+    printf "Location:          %s\n" sysLocation.0
+    printf "Vendor:            %s\n" sysObjectID.0
+    #printf "Current Time:      %s\n"  hrSystemDate.0
+    #printf "Agent Boot Time:   %s\n"  sysUpTime.0
+    #printf "System Boot Time:  %s\n"  2002-06-03 21:33:49 -08:00
+    printf "Users:             %s\n"  hrSystemNumUsers.0
+    printf "Processes:         %s\n"  hrSystemProcesses.0
+    printf "Memory:            %s\n"  select hrStorageSize, hrStorageType from hrStorageTable where hrStorageType = '.1.3.6.1.2.1.25.2.1.2'
+    printf "Interfaces:        %s\n"  ifNumber.0
+}
+
+alias scli_system_devices {
+      printf "%5d: %s\n" select hrDeviceIndex, hrDeviceDescr from hrDeviceTable;
+}
+
+alias scli_system_storage {
+      printf "Storage Area          Size [K]   Used [K]   Free [K] Use%\n"
+      # fix size, use%
+      printf "%-22s %8d %8d %8d %3d (%s)\n" select hrStorageDescr, hrStorageSize, hrStorageUsed, hrStorageSize, hrStorageIndex, hrStorageType from hrStorageTable
+}
+

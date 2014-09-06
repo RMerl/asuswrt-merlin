@@ -1,0 +1,224 @@
+This README describes the ./local/mib2c script.
+
+Author:  Derek Simkowiak
+         dereks@kd-dev.com
+         http://www.kd-dev.com
+         (please mail questions to net-snmp-coders@lists.sourceforge.net,
+         not to the author directly.  Thanks!)
+
+Date:    Wed Jan 20 02:51:06 PST 1999
+-----------------------------------------------------------------------
+mib2c
+
+OVERVIEW
+
+	mib2c is a Perl script that takes a MIB (such as those files found
+in ./mibs/ ) and converts it into C code.  That C code can then be used as a
+"template" to implement your MIB.  Then, when you are done editing the C
+code and recompiling, the UCD-SNMP agent (snmpd) will support your MIB.
+mib2c takes the place of "MIB Compilers" that come with commercial SNMP
+agents.
+
+
+REQUIREMENTS/INSTALLATION
+
+	mib2c requires the SNMP.pm Perl module.  As of this writing the
+latest version of the SNMP.pm module is 1.8.
+
+	The SNMP.pm module can be downloaded from CPAN at 
+
+http://www.cpan.org/modules/by-module/SNMP/
+
+	...the file that you want is probably SNMP-1.8b5.tar.gz .
+If you didn't know that already, most every Perl module can be downloaded
+from CPAN (www.cpan.org).  Follow the installation instructions for the
+module.
+
+	NOTE: If you are running Redhat Linux 5.2 (and perhaps other
+versions), you might get the following errors during the "make test" phase
+of the installation of the SNMP.pm module:
+
+[root@olly SNMP-1.8b5]# make test             # This is the command...
+PERL_DL_NONLAZY=1 /usr/bin/perl -I./blib/arch -I./blib/lib
+-I/usr/lib/perl5/i386-linux/5.00404 -I/usr/lib/perl5 -e 'use Test::Harness
+qw(&runtests $verbose); $verbose=0; runtests @ARGV;' t/*.t
+t/mib...............ok
+t/session...........FAILED tests 7-8
+        Failed 2/14 tests, 85.71% okay
+t/translate.........ok
+Failed Test  Status Wstat Total Fail  Failed  List of failed
+-------------------------------------------------------------------------------
+t/session.t                  14    2  14.29%  7-8
+Failed 1/3 test scripts, 66.67% okay. 2/24 subtests failed, 91.67% okay.
+make: *** [test_dynamic] Error 9
+
+
+	If the "make" went okay, then you can ignore these test failures.
+These indicate you don't have write access to the portions of the mib
+tree that the test script is trying to use.  Please don't email the
+UCD-SNMP list with other errors regarding the SNMP.pm module.
+comp.lang.perl.modules is probably the most appropriate spot to
+discuss problems with the SNMP.pm perl module itself. Interelated
+problems between net-snmp and SNMP could be discussed on the net-snmp
+mailing lists though.
+
+
+USAGE
+
+	mib2c takes one argument: an OID.  It then traces down that OID
+and generates the template C code.  Here is the documentation, from the
+top of the script:
+
+# This program, given an OID reference as an argument, creates some
+# template mib module files to be used with the net-snmp agent.  It is
+# far from perfect and will not generate working modules, but it
+# significantly shortens development time by outlining the basic
+# structure.
+#
+# Its up to you to verify what it does and change the default values
+# it returns.
+#
+# You *must* correct the beginning of the var_XXX() function to
+# correctly determine mib ownership of the incoming request.
+
+
+FINDING YOUR MIB
+
+	Before you can specify the OID for your enterprise/MIB on the
+command line, the script needs to be able to find your MIB so that it can
+read it in and generate template code.  Joe Marzot (gmarzot@nortelnetworks.com)
+tells us:
+--------------------------------------
+you should read (man mib_api). The default behaviour for mib loading
+from within the perl interface uses the environment variables described
+there. You can also override these and explicitly define mibdirs and
+load modules through the perl/SNMP api.
+
+the easiest thing to do is toss the mibs in /usr/local/share/snmp/mibs
+and set the env. var., MIBS, to 'ALL'.
+--------------------------------------
+
+	I recommend following the last two lines of advice.  I simply did
+
+# cp /home/dereks/MY-MIB-FILE.txt /usr/local/share/snmp/mibs/
+# export MIBS=ALL
+
+	...on my Redhat system (with a BASH shell) and it was able to find
+my MIB just fine.
+
+
+EXAMPLES
+
+	Here are some examples from Wes Hardaker (wjhardaker@ucdavis.edu).
+He's using a C shell.  Wes writes:
+--------------------------------------
+Ok, in order to run the thing, you actually need to do something like
+this:
+
+setenv MIBS MY-ITEM-MIB          # assumes csh
+mib2c itemNode
+
+Where, "itemNode" should be a node in the mib tree that you want to
+generate C code for.  Note, pick small pieces not large ones.  Yes, it 
+will generate code for the entire mibII tree if you ask it to, in one
+very large mib file.
+
+Examples:
+
+% mib2c interfaces
+outputing to interfaces.c and interfaces.h ...
+  depth: 3
+  Number of Lines Created:
+178 interfaces.c
+84 interfaces.h
+262 total
+Done.
+
+% mib2c mib-2                             # Don't ever do this.
+outputing to mib-2.c and mib-2.h ...
+  depth: 5
+  Number of Lines Created:
+2783 mib-2.c
+617 mib-2.h
+3400 total
+Done.
+
+It may have some sorting problems with multiple level mib tree
+branches being generated into one piece of code (reorder the .h file
+structure to be in OID lexical order if needed).
+--------------------------------------
+
+WHAT TO DO WITH THE CODE THAT GETS GENERATED
+
+	You will need to edit your generated code to work with your
+hardware.  For instance, if your MIB is for a refrigerator, you will need
+to write the code that talks to the refridgerator (through the serial
+port, maybe?) in Fridge Protocol.
+
+	See the files in ./agent/mibgroup/examples/ and
+./agent/mibgroup/dummy/ for heavily-commented example code.  Don't ask me
+questions about this stuff--I'm just now figuring it out myself...
+
+	[NOTE: If anyone out there has tips about necessary options to
+./configure, or re-compiling snmpd with custom MIB support, please add
+them here...]
+
+WARNING
+
+	As of this writing, the mib2c compiler is a bit outdated and needs
+some work.  Wes writes:
+--------------------------------------
+It already needs changing, because the architecture has changed in the 
+3.6 line (though its backwards compatible, I'd prefer to generate
+code from newer models than older ones).
+--------------------------------------
+	When I asked him to elaborate on the new 3.6 archictecture, all I
+got was:
+--------------------------------------
+It hopefully will be in the new documentation about mib module api
+that Dave Shield is putting together (which is also currently wrong,
+for that matter)...
+--------------------------------------
+	...so I don't know what the hell he's talking about.
+
+
+SOME ERRORS AND THEIR MEANING
+
+	If you get a large number of errors that look like:
+
+[...]
+unknown type:  INTEGER for prIndex
+unknown type:  OCTETSTR for prNames
+unknown type:  INTEGER for prMin
+[...]
+
+	...then you are trying to use an old version of the mib2c script
+that does not support the SNMP.pm module version 1.8.  Get the latest
+version of the script.
+
+	If you get the error 
+
+Couldn't find mib reference: myEnterpriseOID
+
+	...when you know that it should be finding your MIB file(s), then
+you forgot to put the word "END" at the very end of your MIB.  (Uh...I'm
+not speaking from experience here.  Really.)
+
+ACKNOWLEGMENTS
+
+	Many thanks to the people on the UCD-SNMP mailing list
+(net-snmp-users@lists.sourceforge.net).  In particular, many thanks to
+
+Wes Hardaker <wjhardaker@ucdavis.edu>
+Ken McNamara <conmara@tcon.net>
+Joe Marzot <gmarzot@nortelnetworks.com>
+
+	...since about half this document is just cut'n'pasted from emails
+they sent me.
+
+	Good luck with your project.
+
+Derek Simkowiak
+dereks@kd-dev.com
+http://www.kd-dev.com
+

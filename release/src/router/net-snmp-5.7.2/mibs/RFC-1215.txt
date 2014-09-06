@@ -1,0 +1,38 @@
+
+RFC-1215 DEFINITIONS ::= BEGIN
+
+-- This  module is a empty module.  It has been created solely for the 
+-- purpose of allowing other modules to correctly import the TRAP-TYPE 
+-- clause from RFC-1215 where it should be imported from.  It's a
+-- built in type in the UCD-SNMP code, and in fact RFC-1215 doesn't
+-- actually define a mib at all; it only defines macros.  However,
+-- importing the TRAP-TYPE is conventionally done from an import
+-- clause pointing to RFC-1215.
+--
+--   Wes 7/17/98
+
+TRAP-TYPE MACRO ::=
+BEGIN
+    TYPE NOTATION ::= "ENTERPRISE" value
+                      (enterprise OBJECT IDENTIFIER)
+                      VarPart
+                      DescrPart
+                      ReferPart
+    VALUE NOTATION ::= value (VALUE INTEGER)
+    VarPart ::=
+               "VARIABLES" "{" VarTypes "}"
+               | empty
+    VarTypes ::=
+               VarType | VarTypes "," VarType
+    VarType ::=
+               value (vartype ObjectName)
+    DescrPart ::=
+               "DESCRIPTION" value (description DisplayString)
+               | empty
+    ReferPart ::=
+               "REFERENCE" value (reference DisplayString)
+               | empty
+END
+ 
+
+END

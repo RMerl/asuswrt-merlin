@@ -1,0 +1,40 @@
+.TH fixproc 1 "16 Nov 2006" VVERSIONINFO "Net-SNMP"
+.SH NAME
+fixproc - Fixes a process by performing the specified action.
+.SH SYNOPSIS
+.PP
+.B fixproc
+[\fI\-min n\fR]
+[\fI\-max n\fR]
+[\fI\-check | \-kill | \-restart | \-exist | \-fix\fR]
+proc \.\.\.
+.SH DESCRIPTION
+.PP
+Fixes a process named "proc" by performing the specified action.  The
+actions can be check, kill, restart, exist, or fix.  The action is specified
+on the command line or is read from a default database, which describes
+the default action to take for each process.  The database format and
+the meaning of each action are described below.
+.SH OPTIONS
+.TP
+.B \-min n
+minimum number of processes that should be running, defaults to 1
+.TP
+.B \-max n
+maximum number of processes that should be running, defaults to 1
+.TP
+.B \-check
+check process against database /local/etc/fixproc.conf.
+.TP
+.B \-kill
+kill process, wait 5 seconds, kill \-9 if still exist
+.TP
+.B \-restart
+kill process, wait 5 seconds, kill \-9 if still exist, then start again
+.TP
+.B \-exist
+checks if proc exists in ps && (min <= num. of processes <= max)
+.TP
+.B \-fix
+check process against database /local/etc/fixproc.conf. Perform defined
+action, if check fails.

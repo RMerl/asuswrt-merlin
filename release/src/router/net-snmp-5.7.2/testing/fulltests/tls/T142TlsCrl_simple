@@ -1,0 +1,18 @@
+#!/bin/sh
+
+. ../support/simple_eval_tools.sh
+
+HEADER TLS-TCP CRL Handling
+
+SKIPIFNOT NETSNMP_TRANSPORT_TLSTCP_DOMAIN
+
+#
+# Begin test
+#
+
+SNMP_TRANSPORT_SPEC=tlstcp
+export SNMP_TRANSPORT_SPEC
+export SNMP_SNMPD_PORT
+export SNMP_TEST_DEST
+
+. ./SCrl

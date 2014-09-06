@@ -1,0 +1,116 @@
+#!/bin/sh
+
+. ../support/simple_eval_tools.sh
+
+HEADER DISMAN PING MIB
+
+[ "$UID" = 0 ] || SKIP "Not permitted to create raw sockets"
+SKIPIFNOT USING_DISMAN_PING_MIB_MODULE
+SKIPIF NETSNMP_DISABLE_SNMPV1
+
+# SNMPv2-TC
+active=1
+createAndWait=5
+destroy=6
+# DISMAN-PING-MIB
+DISMAN_PING_MIB=.1.3.6.1.2.1.80.1
+pingCtlEntry=${DISMAN_PING_MIB}.2.1
+pingCtlTargetAddressType=${pingCtlEntry}.3
+pingCtlTargetAddresTypeIpv4=1
+pingCtlTargetAddress=${pingCtlEntry}.4
+pingCtlProbeCount=${pingCtlEntry}.7
+pingCtlAdminStatus=${pingCtlEntry}.8
+pingCtlAdminStatusEnabled=1
+pingCtlFrequency=${pingCtlEntry}.10
+pingCtlDescr=${pingCtlEntry}.17
+pingCtlRowStatus=${pingCtlEntry}.23
+pingResultsEntry=${DISMAN_PING_MIB}.3.1
+pingResultsProbeResponses=${pingResultsEntry}.7
+pingResultsSentProbes=${pingResultsEntry}.8
+# Test configuration
+TARGET_ADDRESS=127.0.0.1
+IDXPFX=8.78.101.116.45.83.78.77.80.6.84.49.53.52 # "Net-SNMP"."T154"
+IDXS="${IDXPFX}.95.49 ${IDXPFX}.95.50 ${IDXPFX}.95.51"
+PROBE_COUNT=5
+
+
+#
+# Begin test
+#
+
+# standard V1 configuration: testcommunity
+snmp_write_access='all'
+. ./Sv1config
+
+STARTAGENT
+
+for IDX in $IDXS; do
+
+CAPTURE "snmpset -One $SNMP_FLAGS -c testcommunity -v1          \
+         $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT   \
+         $pingCtlRowStatus.$IDX i $destroy"
+
+CHECK "^$pingCtlRowStatus.$IDX = INTEGER: $destroy"
+
+CAPTURE "snmpset -One $SNMP_FLAGS -c testcommunity -v1          \
+         $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT   \
+         $pingCtlRowStatus.$IDX i $createAndWait"
+
+CHECK "^$pingCtlRowStatus.$IDX = INTEGER: $createAndWait"
+
+CAPTURE "snmpset -One $SNMP_FLAGS -c testcommunity -v1                   \
+         $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT           \
+         $pingCtlTargetAddressType.$IDX i $pingCtlTargetAddresTypeIpv4  \
+         $pingCtlTargetAddress.$IDX s $TARGET_ADDRESS                   \
+         $pingCtlFrequency.$IDX u 1                                     \
+         $pingCtlDescr.$IDX s ScriptGenerated                           \
+         $pingCtlProbeCount.$IDX u ${PROBE_COUNT}                       \
+         $pingCtlAdminStatus.$IDX i $pingCtlAdminStatusEnabled"
+
+CHECK "^$pingCtlAdminStatus.$IDX = INTEGER: $pingCtlAdminStatusEnabled"
+
+CAPTURE "snmpset -One $SNMP_FLAGS -c testcommunity -v1          \
+         $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT   \
+         $pingCtlRowStatus.$IDX i $active"
+
+CHECK "^$pingCtlRowStatus.$IDX = INTEGER: $active"
+
+done
+
+sleep ${PROBE_COUNT}
+sleep 2
+
+for IDX in $IDXS; do
+
+CAPTURE "snmpget -On $SNMP_FLAGS -c testcommunity -v1           \
+         $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT   \
+         $pingResultsSentProbes.$IDX"
+
+CHECK "^$pingResultsSentProbes.$IDX = Gauge32: ${PROBE_COUNT}"
+
+CAPTURE "snmpget -On $SNMP_FLAGS -c testcommunity -v1           \
+         $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT   \
+         $pingResultsProbeResponses.$IDX"
+
+CHECK "^$pingResultsProbeResponses.$IDX = Gauge32: ${PROBE_COUNT}"
+
+done
+
+# Delete first row and leave the remaining rows in the table.
+
+for IDX in $IDXS; do
+
+CAPTURE "snmpset -One $SNMP_FLAGS -c testcommunity -v1          \
+         $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT   \
+         $pingCtlRowStatus.$IDX i $destroy"
+
+CHECK "^$pingCtlRowStatus.$IDX = INTEGER: $destroy"
+
+break
+
+done
+
+STOPAGENT
+
+
+FINISHED

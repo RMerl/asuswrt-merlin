@@ -1,0 +1,80 @@
+#
+# Makefile to install mib files.
+#
+
+top_builddir=..
+
+VPATH		= @srcdir@
+
+#
+# Stuff here
+#
+OTHERINSTALL=mibsinstall
+OTHERUNINSTALL=mibsuninstall
+
+
+V1MIBS	= RFC1155-SMI.txt RFC1213-MIB.txt RFC-1215.txt
+
+V2MIBS = SNMPv2-CONF.txt SNMPv2-SMI.txt SNMPv2-TC.txt SNMPv2-TM.txt \
+	SNMPv2-MIB.txt
+
+V3MIBS	= SNMP-FRAMEWORK-MIB.txt SNMP-MPD-MIB.txt SNMP-TARGET-MIB.txt \
+	SNMP-NOTIFICATION-MIB.txt SNMP-PROXY-MIB.txt \
+	SNMP-USER-BASED-SM-MIB.txt SNMP-VIEW-BASED-ACM-MIB.txt \
+	SNMP-COMMUNITY-MIB.txt TRANSPORT-ADDRESS-MIB.txt
+
+AGENTMIBS = AGENTX-MIB.txt SMUX-MIB.txt
+
+IANAMIBS = IANAifType-MIB.txt IANA-LANGUAGE-MIB.txt \
+	IANA-ADDRESS-FAMILY-NUMBERS-MIB.txt
+
+RFCMIBS	= IF-MIB.txt IF-INVERTED-STACK-MIB.txt \
+	EtherLike-MIB.txt \
+	IP-MIB.txt IP-FORWARD-MIB.txt IANA-RTPROTO-MIB.txt \
+	TCP-MIB.txt UDP-MIB.txt \
+	INET-ADDRESS-MIB.txt HCNUM-TC.txt \
+	HOST-RESOURCES-MIB.txt HOST-RESOURCES-TYPES.txt \
+	RMON-MIB.txt \
+	IPV6-TC.txt IPV6-MIB.txt IPV6-ICMP-MIB.txt IPV6-TCP-MIB.txt \
+	IPV6-UDP-MIB.txt IPV6-FLOW-LABEL-MIB.txt TUNNEL-MIB.txt \
+	DISMAN-EVENT-MIB.txt DISMAN-SCRIPT-MIB.txt DISMAN-SCHEDULE-MIB.txt \
+	NOTIFICATION-LOG-MIB.txt SNMP-USM-AES-MIB.txt \
+	SNMP-USM-DH-OBJECTS-MIB.txt \
+	SCTP-MIB.txt BRIDGE-MIB.txt
+
+NETSNMPMIBS = NET-SNMP-TC.txt NET-SNMP-MIB.txt NET-SNMP-AGENT-MIB.txt \
+	NET-SNMP-EXAMPLES-MIB.txt NET-SNMP-EXTEND-MIB.txt NET-SNMP-PASS-MIB.txt
+
+UCDMIBS = UCD-SNMP-MIB.txt UCD-DEMO-MIB.txt UCD-IPFWACC-MIB.txt \
+	UCD-DLMOD-MIB.txt UCD-DISKIO-MIB.txt
+
+DEFAULTMIBS = @default_mibs_install@
+
+MIBS	= $(V1MIBS) $(V2MIBS) $(V3MIBS) $(RFCMIBS) \
+	$(AGENTMIBS) $(IANAMIBS) \
+	$(NETSNMPMIBS) $(UCDMIBS) $(DEFAULTMIBS)
+
+all: standardall
+
+mibsinstall: installdirs
+	@for i in $(MIBS) ; do \
+		$(INSTALL_DATA) $(srcdir)/$$i $(INSTALL_PREFIX)$(mibdir) ; \
+		echo "install: installed $$i in $(INSTALL_PREFIX)$(mibdir)" ; \
+	done
+
+mibsuninstall: installdirs
+	@for i in $(MIBS) ; do \
+		rm -f $(INSTALL_PREFIX)$(mibdir)/$$i ; \
+		echo "removed $$i from $(INSTALL_PREFIX)$(mibdir)" ; \
+	done
+
+installdirs:
+	@$(SHELL) $(srcdir)/../mkinstalldirs $(INSTALL_PREFIX)$(mibdir)
+
+htmldir:
+	@if test ! -d html ; then \
+		mkdir html ; \
+	fi
+	rm -f html/index.html ; \
+        $(PERL) makehtml.pl -W -M `pwd` -D html $(MIBS) > html/index.html
+

@@ -1518,8 +1518,15 @@ is_invalid_char_for_volname(char c)
 
 	if (c < 0x20)
 		ret = 1;
+#if 0
 	else if (c >= 0x21 && c <= 0x2c)
 		ret = 1;
+#else	/* allow '+' */
+	else if (c >= 0x21 && c <= 0x2a)	/* !"#$%&'()* */
+		ret = 1;
+	else if (c == 0x2c)			/* , */
+		ret = 1;
+#endif
 	else if (c >= 0x2e && c <= 0x2f)
 		ret = 1;
 	else if (c >= 0x3a && c <= 0x40)

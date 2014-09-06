@@ -1,0 +1,15 @@
+#!/bin/sh
+
+. ../support/simple_eval_tools.sh
+
+HEADER DTLS-UDP trap tests
+
+SKIPIFNOT NETSNMP_TRANSPORT_DTLSUDP_DOMAIN
+
+#
+# Begin test
+#
+
+SNMP_TRANSPORT_SPEC=dtlsudp
+
+. ./STlsTrapdUser

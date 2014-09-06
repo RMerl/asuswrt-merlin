@@ -1,0 +1,159 @@
+#!/bin/sh
+
+. ../support/simple_eval_tools.sh
+
+HEADER com2sec directive
+
+SKIPIFNOT NETSNMP_TRANSPORT_UDP_DOMAIN
+SKIPIF NETSNMP_NO_DEBUGGING
+
+#
+# Begin test
+#
+
+# 401a Test missing CONTEXT
+CONFIGAGENT 'com2sec -Cn'
+# 401b Test empty CONTEXT
+CONFIGAGENT 'com2sec -Cn ""'
+# 401c Test overlong CONTEXT (34 chars)
+CONFIGAGENT 'com2sec -Cn 1234567890123456789012345678901234'
+
+# 402a Test missing secName
+CONFIGAGENT 'com2sec'
+# 402b Test empty secName
+CONFIGAGENT 'com2sec ""'
+# 402c Test overlong secName (34 chars)
+CONFIGAGENT 'com2sec 1234567890123456789012345678901234'
+# 402d Test valid context and missing secName
+CONFIGAGENT 'com2sec -Cn 123456789012345678901234567890123'
+# 402e Test valid context and empty secName
+CONFIGAGENT 'com2sec -Cn 123456789012345678901234567890123 ""'
+
+# 403a Test missing network address
+CONFIGAGENT 'com2sec t403a'
+# 403b Test empty network address
+CONFIGAGENT 'com2sec t403b ""'
+# 403c Test forbidden value (now why it is forbidden...)
+CONFIGAGENT 'com2sec t403c NETWORK'
+
+# 404a Test missing community
+CONFIGAGENT 'com2sec t404a default'
+# 404b Test empty community
+CONFIGAGENT 'com2sec t404b default ""'
+# 404c Test forbidden value (now why it is forbidden...)
+CONFIGAGENT 'com2sec t404c default COMMUNITY'
+# 404d Test overlong community (255 chars)
+CONFIGAGENT 'com2sec t404d default 123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345'
+# 404e Test valid community
+CONFIGAGENT 'com2sec t404e default 12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234'
+
+# 405a Test 'default' configuration
+CONFIGAGENT 'com2sec t405a default c405a'
+# 405b Test ip address configuration
+CONFIGAGENT 'com2sec t405b 10.0.0.0 c405b'
+# 405c Test valid numeric mask
+CONFIGAGENT 'com2sec t405c 10.0.0.0/8 c405c'
+# 405d Test invalid numeric mask (too big)
+CONFIGAGENT 'com2sec t405d 10.0.0.0/33 c405d'
+# 405e Test invalid numeric mask (negative)
+CONFIGAGENT 'com2sec t405e 10.0.0.0/-1 c405e'
+# 405f Test valid ip address mask
+CONFIGAGENT 'com2sec t405f 10.0.0.0/255.0.0.0 c405f'
+# 405g Test invalid ip address mask
+CONFIGAGENT 'com2sec t405g 10.0.0.0/512.0.0.0 c405g'
+# 405h Test invalid ip address mask
+CONFIGAGENT 'com2sec t405h 10.0.0.0/hh c405h'
+# 405i Test address with 1 bits not covered by the mask
+CONFIGAGENT 'com2sec t405i 10.0.0.0/3.192.0.0 c405i'
+# 405j Test that 0.0.0.0 works (alias for default)
+CONFIGAGENT 'com2sec t405j 0.0.0.0 c405j'
+# 405k Test that 0.0.0.0/0 works (alias for default)
+CONFIGAGENT 'com2sec t405k 0.0.0.0/0 c405k'
+# 405l Test that 0.0.0.0/0.0.0.0 works (alias for default)
+CONFIGAGENT 'com2sec t405l 0.0.0.0/0.0.0.0 c405l'
+
+# 406a Test maximally long address/mask
+CONFIGAGENT 'com2sec t406a 255.255.255.255/255.255.255.255 c406a'
+
+# 407a Test non existant host name
+CONFIGAGENT 'com2sec t407a no.such.address. c407a'
+# 407b Test maximally long host name/mask
+CONFIGAGENT 'com2sec t407b a23456789012345678901234567890123456789012345678901234567890123.a23456789012345678901234567890123456789012345678901234567890123.a23456789012345678901234567890123456789012345678901234567890123.a234567890123456789012345678901234567890123456789012345678901./255.255.255.255 c407b'
+
+# 408 Lookup tests, require network access
+# 408a Test lookup returning a single host
+CONFIGAGENT 'com2sec t408a www.ietf.org c408a'
+# 408a Test lookup returning multiple hosts
+CONFIGAGENT 'com2sec t408b www.google.com c408b'
+
+# Default agent setup
+CONFIGAGENT "[snmp] persistentdir $SNMP_TMP_PERSISTENTDIR"
+# Dummy config to prevent the basic_setup warning
+CONFIGAGENT 'rocommunity public 127.0.0.0/8'
+
+AGENT_FLAGS='-Dnetsnmp_udp_parse_security,netsnmp_udp6_parse_security,netsnmp_unix_parse_security'
+
+STARTAGENT
+
+SAVECHECKAGENT() {
+    CHECKAGENT "$@"
+    if [ "x$return_value" != "x0" ] ; then
+        FINISHED
+    fi
+}
+
+SAVECHECKAGENT 'line 1: Error: missing CONTEXT_NAME parameter'
+SAVECHECKAGENT 'line 2: Error: missing NAME parameter'
+SAVECHECKAGENT 'line 3: Error: context name too long'
+CHECKAGENTCOUNT atleastone 'line 4: Error: Blank line following com2sec token.'
+SAVECHECKAGENT 'line 5: Error: empty NAME parameter'
+SAVECHECKAGENT 'line 6: Error: security name too long'
+SAVECHECKAGENT 'line 7: Error: missing NAME parameter'
+SAVECHECKAGENT 'line 8: Error: empty NAME parameter'
+SAVECHECKAGENT 'line 9: Error: missing SOURCE parameter'
+SAVECHECKAGENT 'line 10: Error: empty SOURCE parameter'
+SAVECHECKAGENT 'line 11: Error: example config NETWORK not properly configured'
+SAVECHECKAGENT 'line 12: Error: missing COMMUNITY parameter'
+SAVECHECKAGENT 'line 13: Error: empty COMMUNITY parameter'
+SAVECHECKAGENT 'line 14: Error: example config COMMUNITY not properly configured'
+SAVECHECKAGENT 'line 15: Error: community name too long'
+SAVECHECKAGENT '<"12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234", 0.0.0.0/0.0.0.0> => "t404e"'
+SAVECHECKAGENT '<"c405a", 0.0.0.0/0.0.0.0> => "t405a"'
+SAVECHECKAGENT '<"c405b", 10.0.0.0/255.255.255.255> => "t405b"'
+SAVECHECKAGENT '<"c405c", 10.0.0.0/255.0.0.0> => "t405c"'
+SAVECHECKAGENT 'line 20: Error: bad mask length'
+SAVECHECKAGENT 'line 21: Error: bad mask length'
+SAVECHECKAGENT '<"c405f", 10.0.0.0/255.0.0.0> => "t405f"'
+SAVECHECKAGENT 'line 23: Error: bad mask'
+SAVECHECKAGENT 'line 24: Error: bad mask'
+SAVECHECKAGENT 'line 25: Error: source/mask mismatch'
+SAVECHECKAGENT '<"c405j", 0.0.0.0/255.255.255.255> => "t405j"'
+SAVECHECKAGENT '<"c405k", 0.0.0.0/0.0.0.0> => "t405k"'
+SAVECHECKAGENT '<"c405l", 0.0.0.0/0.0.0.0> => "t405l"'
+SAVECHECKAGENT '<"c406a", 255.255.255.255/255.255.255.255> => "t406a"'
+SAVECHECKAGENT 'line 30: Error:' # msg from h_strerror so it varies
+SAVECHECKAGENT 'line 31: Error:' # msg from h_strerror so it varies
+
+CHECKAGENT '<"c408a"'
+if [ "$snmp_last_test_result" -eq 0 ] ; then
+  CHECKAGENT 'line 32: Error:'
+  if [ "$snmp_last_test_result" -ne 1 ] ; then
+    return_value=1
+    FINISHED
+  fi
+elif [ "$snmp_last_test_result" -ne 1 ] ; then
+  return_value=1
+  FINISHED
+fi
+
+CHECKAGENT '<"c408b"'
+if [ "$snmp_last_test_result" -eq 0 ] ; then
+  CHECKAGENT 'line 33: Error:'
+  if [ "$snmp_last_test_result" -ne 1 ] ; then
+    return_value=1
+  fi
+elif [ "$snmp_last_test_result" -ne 1 ] ; then
+  return_value=1
+fi
+
+FINISHED

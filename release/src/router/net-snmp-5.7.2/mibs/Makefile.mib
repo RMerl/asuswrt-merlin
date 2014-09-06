@@ -1,0 +1,225 @@
+# RFCHOST =	ftp://ftp.nordu.net
+RFCHOST =	ftp://ftp.ietf.org
+RFCDIR =	rfc
+
+IANAHOST =	http://www.iana.org
+IANADIR =	assignments
+
+PREFIX =	/usr/local
+ALLDIR =	$(PREFIX)/share/snmp/rfc.orig
+INSTDIR =	$(PREFIX)/share/snmp/rfc
+
+MIBS =	SNMPv2-TC.txt SNMPv2-TM.txt SNMPv2-SMI.txt SNMPv2-MIB.txt \
+	SNMPv2-CONF.txt HCNUM-TC.txt INET-ADDRESS-MIB.txt \
+	SNMP-FRAMEWORK-MIB.txt SNMP-MPD-MIB.txt SNMP-USER-BASED-SM-MIB.txt \
+	SNMP-VIEW-BASED-ACM-MIB.txt SNMP-COMMUNITY-MIB.txt \
+	SNMP-TARGET-MIB.txt SNMP-NOTIFICATION-MIB.txt SNMP-PROXY-MIB.txt \
+	SNMP-USM-DH-OBJECTS-MIB.txt SNMP-USM-AES-MIB.txt \
+	SNMP-TLS-TM-MIB.txt \
+	AGENTX-MIB.txt SMUX-MIB.txt \
+	DISMAN-SCRIPT-MIB.txt DISMAN-SCHEDULE-MIB.txt \
+	DISMAN-PING-MIB.txt DISMAN-TRACEROUTE-MIB.txt \
+	DISMAN-NSLOOKUP-MIB.txt DISMAN-EVENT-MIB.txt \
+	DISMAN-EXPRESSION-MIB.txt NOTIFICATION-LOG-MIB.txt \
+	IANA-LANGUAGE-MIB.txt IANA-ADDRESS-FAMILY-NUMBERS-MIB.txt \
+	IF-MIB.txt IF-INVERTED-STACK-MIB.txt \
+	IP-MIB.txt IP-FORWARD-MIB.txt TCP-MIB.txt UDP-MIB.txt \
+	IANAifType-MIB.txt IANA-RTPROTO-MIB.txt EtherLike-MIB.txt \
+	IPV6-TC.txt IPV6-MIB.txt IPV6-ICMP-MIB.txt \
+	IPV6-TCP-MIB.txt IPV6-UDP-MIB.txt IPV6-FLOW-LABEL-MIB.txt \
+	HOST-RESOURCES-MIB.txt HOST-RESOURCES-TYPES.txt \
+	NETWORK-SERVICES-MIB.txt MTA-MIB.txt \
+	RMON-MIB.txt \
+	TUNNEL-MIB.txt \
+	TRANSPORT-ADDRESS-MIB.txt \
+	RFC1155-SMI.txt RFC1213-MIB.txt\
+	SCTP-MIB.txt BRIDGE-MIB.txt
+
+MIBDEPS = Makefile.mib mibfetch smistrip
+
+all:	$(MIBS)
+
+allmibs:	ianamibs rfcmibs
+
+rfc:	allmibs
+	rm -fr $(INSTDIR)
+	mkdir $(INSTDIR)
+	cp $(ALLDIR)/* $(INSTDIR)
+	if test `uname` = SunOS ; \
+	then gpatch -d $(INSTDIR) < rfcmibs.diff; \
+	else patch -d $(INSTDIR) < rfcmibs.diff; \
+	fi
+	rm -f $(INSTDIR)/*orig
+
+clean:
+	rm $(MIBS)
+
+SNMP-FRAMEWORK-MIB.txt:	$(MIBDEPS)
+	./mibfetch $(RFCHOST) $(RFCDIR) 3411
+
+SNMP-MPD-MIB.txt:	$(MIBDEPS)
+	./mibfetch $(RFCHOST) $(RFCDIR) 3412 SNMP-MPD-MIB
+
+SNMP-TARGET-MIB.txt SNMP-NOTIFICATION-MIB.txt SNMP-PROXY-MIB.txt:	$(MIBDEPS)
+	./mibfetch $(RFCHOST) $(RFCDIR) 3413
+
+SNMP-USER-BASED-SM-MIB.txt:	$(MIBDEPS)
+	./mibfetch $(RFCHOST) $(RFCDIR) 3414 SNMP-USER-BASED-SM-MIB
+
+SNMP-VIEW-BASED-ACM-MIB.txt:	$(MIBDEPS)
+	./mibfetch $(RFCHOST) $(RFCDIR) 3415
+
+SNMP-COMMUNITY-MIB.txt:	$(MIBDEPS)
+	./mibfetch $(RFCHOST) $(RFCDIR) 2576
+
+SNMP-USM-AES-MIB.txt:	$(MIBDEPS)
+	./mibfetch $(RFCHOST) $(RFCDIR) 3826
+
+SNMP-TLS-TM-MIB.txt:	$(MIBDEPS)
+	./mibfetch $(RFCHOST) $(RFCDIR) 6353
+
+SNMP-USM-DH-OBJECTS-MIB.txt:	$(MIBDEPS)
+	./mibfetch $(RFCHOST) $(RFCDIR) 2786
+
+SNMPv2-SMI.txt:	$(MIBDEPS)
+	./mibfetch $(RFCHOST) $(RFCDIR) 2578 SNMPv2-SMI
+
+SNMPv2-TC.txt:	$(MIBDEPS)
+	./mibfetch $(RFCHOST) $(RFCDIR) 2579
+
+SNMPv2-CONF.txt:	$(MIBDEPS)
+	./mibfetch $(RFCHOST) $(RFCDIR) 2580
+
+SNMPv2-TM.txt:	$(MIBDEPS)
+	./mibfetch $(RFCHOST) $(RFCDIR) 3417
+
+SNMPv2-MIB.txt:	$(MIBDEPS)
+	./mibfetch $(RFCHOST) $(RFCDIR) 3418
+
+AGENTX-MIB.txt:	$(MIBDEPS)
+	./mibfetch $(RFCHOST) $(RFCDIR) 2742
+
+SMUX-MIB.txt:	$(MIBDEPS)
+	./mibfetch $(RFCHOST) $(RFCDIR) 1227 SMUX-MIB
+
+DISMAN-SCHEDULE-MIB.txt:	$(MIBDEPS)
+	./mibfetch $(RFCHOST) $(RFCDIR) 3231
+
+DISMAN-SCRIPT-MIB.txt:	$(MIBDEPS)
+	./mibfetch $(RFCHOST) $(RFCDIR) 3165
+
+DISMAN-EXPRESSION-MIB.txt:	$(MIBDEPS)
+	./mibfetch $(RFCHOST) $(RFCDIR) 2982
+
+DISMAN-EVENT-MIB.txt:	$(MIBDEPS)
+	./mibfetch $(RFCHOST) $(RFCDIR) 2981
+
+DISMAN-NSLOOKUP-MIB.txt DISMAN-TRACEROUTE-MIB.txt DISMAN-PING-MIB.txt:	$(MIBDEPS)
+	./mibfetch $(RFCHOST) $(RFCDIR) 4560
+
+NOTIFICATION-LOG-MIB.txt:	$(MIBDEPS)
+	./mibfetch $(RFCHOST) $(RFCDIR) 3014
+
+IF-MIB.txt:	$(MIBDEPS)
+	./mibfetch $(RFCHOST) $(RFCDIR) 2863
+
+IF-INVERTED-STACK-MIB.txt:	$(MIBDEPS)
+	./mibfetch $(RFCHOST) $(RFCDIR) 2864
+
+HCNUM-TC.txt:	$(MIBDEPS)
+	./mibfetch $(RFCHOST) $(RFCDIR) 2856
+
+INET-ADDRESS-MIB.txt:	$(MIBDEPS)
+	./mibfetch $(RFCHOST) $(RFCDIR) 4001
+
+EtherLike-MIB.txt:	$(MIBDEPS)
+	./mibfetch $(RFCHOST) $(RFCDIR) 3635
+
+IANAifType-MIB.txt:	$(MIBDEPS)
+	./mibfetch -x $(IANAHOST) $(IANADIR) ianaiftype-mib
+
+IANA-RTPROTO-MIB.txt:	$(MIBDEPS)
+	./mibfetch -x $(IANAHOST) $(IANADIR) ianaiprouteprotocol-mib
+
+IANA-LANGUAGE-MIB.txt:	$(MIBDEPS)
+	./mibfetch -x $(IANAHOST) $(IANADIR) ianalanguage-mib
+
+IANA-ADDRESS-FAMILY-NUMBERS-MIB.txt:	$(MIBDEPS)
+	./mibfetch -x $(IANAHOST) $(IANADIR) ianaaddressfamilynumbers-mib
+
+IP-MIB.txt:	$(MIBDEPS)
+	./mibfetch $(RFCHOST) $(RFCDIR) 4293
+
+IP-FORWARD-MIB.txt:	$(MIBDEPS)
+	./mibfetch $(RFCHOST) $(RFCDIR) 4292
+
+TCP-MIB.txt:	$(MIBDEPS)
+	./mibfetch $(RFCHOST) $(RFCDIR) 4022
+
+UDP-MIB.txt:	$(MIBDEPS)
+	./mibfetch $(RFCHOST) $(RFCDIR) 4113
+
+TUNNEL-MIB.txt:	$(MIBDEPS)
+	./mibfetch $(RFCHOST) $(RFCDIR) 4087
+
+TRANSPORT-ADDRESS-MIB.txt:	$(MIBDEPS)
+	./mibfetch $(RFCHOST) $(RFCDIR) 3419
+
+IPV6-TC.txt IPV6-MIB.txt:	$(MIBDEPS)
+	./mibfetch $(RFCHOST) $(RFCDIR) 2465
+
+IPV6-ICMP-MIB.txt:	$(MIBDEPS)
+	./mibfetch $(RFCHOST) $(RFCDIR) 2466
+
+IPV6-TCP-MIB.txt:	$(MIBDEPS)
+	./mibfetch $(RFCHOST) $(RFCDIR) 2452
+
+IPV6-UDP-MIB.txt:	$(MIBDEPS)
+	./mibfetch $(RFCHOST) $(RFCDIR) 2454
+
+IPV6-FLOW-LABEL-MIB.txt:	$(MIBDEPS)
+	./mibfetch $(RFCHOST) $(RFCDIR) 3595
+
+HOST-RESOURCES-MIB.txt HOST-RESOURCES-TYPES.txt:	$(MIBDEPS)
+	./mibfetch $(RFCHOST) $(RFCDIR) 2790
+
+RMON-MIB.txt:	$(MIBDEPS)
+	./mibfetch $(RFCHOST) $(RFCDIR) 2819
+
+NETWORK-SERVICES-MIB.txt:	$(MIBDEPS)
+	./mibfetch $(RFCHOST) $(RFCDIR) 2788
+
+MTA-MIB.txt:	$(MIBDEPS)
+	./mibfetch $(RFCHOST) $(RFCDIR) 2789
+
+RFC1155-SMI.txt:	$(MIBDEPS)
+	./mibfetch $(RFCHOST) $(RFCDIR) 1155
+
+RFC1213-MIB.txt:	$(MIBDEPS)
+	./mibfetch $(RFCHOST) $(RFCDIR) 1213
+
+SCTP-MIB.txt:	$(MIBDEPS)
+	./mibfetch $(RFCHOST) $(RFCDIR) 3873
+
+BRIDGE-MIB.txt:	$(MIBDEPS)
+	./mibfetch $(RFCHOST) $(RFCDIR) 4188
+
+ianamibs:	ianalist
+	[ -d $(ALLDIR) ] || mkdir $(ALLDIR)
+	cat ianalist | while read file mibs; \
+		do \
+		  if [ "$$file" != "#" ]; \
+		  then \
+		    ./mibfetch -d $(ALLDIR) -x $(IANAHOST) $(IANADIR) $$file $$mibs; \
+		  fi; \
+		done
+
+rfcmibs:	rfclist
+	[ -d $(ALLDIR) ] || mkdir $(ALLDIR)
+	cat rfclist | while read rfc mibs; \
+		do \
+		  if [ "$$rfc" != "#" ]; \
+		  then \
+		    ./mibfetch -d $(ALLDIR) $(RFCHOST) $(RFCDIR) $$rfc $$mibs; \
+		  fi; \
+		done

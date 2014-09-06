@@ -1,0 +1,29 @@
+#!/bin/sh
+
+# generically set up the user "initial1" and "initial2"  for snmp v3
+# access to the agent.
+
+# Configuration:
+#initial1 can access .1.3.6.1.2.1.1.1, deny others
+#initial2 can access all except .1.3.6.1.2.1.1.1 
+
+# XXX: do autoselection of supported algorithms
+SKIPIF NETSNMP_DISABLE_MD5
+SKIPIF NETSNMP_DISABLE_DES
+SKIPIFNOT NETSNMP_SECMOD_USM
+
+CONFIGAGENT [snmp] persistentdir $SNMP_TMP_PERSISTENTDIR
+
+CONFIGAGENT createUser initial1 MD5 initial_test_pass_auth DES
+CONFIGAGENT createUser initial2 MD5 initial_test_pass_auth DES
+
+
+CONFIGAGENT group   testcommunitygroup1  usm     initial1
+CONFIGAGENT group   testcommunitygroup2  usm     initial2
+
+CONFIGAGENT view    system1     included .1.3.6.1.2.1.1.1 
+CONFIGAGENT view    system2     included .1
+CONFIGAGENT view    system2     excluded .1.3.6.1.2.1.1.1 
+CONFIGAGENT 'access  testcommunitygroup1  "" any auth exact system1 none none'
+CONFIGAGENT 'access  testcommunitygroup2  "" any auth exact system2 none none'
+

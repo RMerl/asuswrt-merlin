@@ -1,0 +1,11 @@
+\.bak$
+\.o$
+~$
+^Makefile$
+^Makefile.old$
+\.bs$
+\.bso$
+\.c
+\.em
+^include
+^host$

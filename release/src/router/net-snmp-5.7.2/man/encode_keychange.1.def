@@ -1,0 +1,71 @@
+.TH encode_keychange 1 "16 Nov 2006" VVERSIONINFO "Net-SNMP"
+.SH NAME
+encode_keychange - produce the KeyChange string for SNMPv3
+.SH SYNOPSIS
+.B encode_keychange 
+\-t md5|sha1
+[\fIOPTIONS\fR]
+.SH DESCRIPTION
+.B encode_keychange
+produces a KeyChange string using the old and new passphrases 
+as described in Section 5 of RFC 2274 "User-based Security Model (USM) for 
+version 3 of the Simple Network Management Protocol (SNMPv3)". \fB\-t\fR
+option is mandatory and specifies the hash transform type to use.
+
+The transform is used to convert passphrase to master key for a given
+user (Ku), convert master key to the localized key (Kul), and to hash the 
+old Kul with the random bits. 
+
+Passphrases are obtained by examining a number of sources until success
+(in order listed):
+.IP
+command line options (see 
+.B \-N
+and
+.B \-O
+options below);
+.IP
+the file 
+.B $HOME/.snmp/passphrase.ek
+which should only contain two lines with old and new passphrase;
+.IP
+standard input \fB\-or\-\fR  user input from the terminal.
+.PP
+
+.SH OPTIONS
+.TP
+\fB\-E\fR [0x]<\fIengineID\fR> EngineID used for Kul generation.
+<\fIengineID\fR> is intepreted as a hex string when preceded by 0x,
+otherwise it is treated as a text string. If no <\fIengineID\fR> is
+specified, it is constructed from the first IP address for the local
+host.
+.TP
+\fB\-f\fR
+Force passphrases to be read from standard input.
+.TP
+\fB\-h\fR
+Display the help message.
+.TP
+\fB\-N\fR "<\fInew_passphrase\fR>"
+Passphrase used to generate the new Ku.
+.TP
+\fB\-O\fR "<\fIold_passphrase\fR>"
+Passphrase used to generate the old Ku.
+.TP
+\fB\-P\fR
+Turn off the prompt for passphrases when getting data from standard input.
+.TP
+\fB\-v\fR
+Be verbose.
+.TP
+\fB\-V\fR
+Echo passphrases to terminal.
+.PP
+                
+.SH "SEE ALSO"
+The localized key method is defined in RFC 2274, Sections 2.6 and A.2, and
+originally documented in
+.IP
+U. Blumenthal, N. C. Hien, B. Wijnen,
+"Key Derivation for Network Management Applications",
+IEEE Network Magazine, April/May issue, 1997.

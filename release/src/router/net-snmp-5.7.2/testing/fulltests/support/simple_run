@@ -1,0 +1,119 @@
+#!/bin/sh
+
+if [ $# = 0 ]; then
+    echo "Usage: $0 <testscript> [<args>]"
+    exit 1
+fi
+
+if [ "x$builddir" = "x" ]; then
+    cd ..
+    builddir=`pwd`
+    if cd testing 2>/dev/null; then
+       :
+    else
+       echo "Error: $0 must be started from inside the testing directory in the source tree."
+       echo "The builddir environment variable can be set to point to the build directory."
+       exit 1
+    fi
+fi
+
+if [ "x$srcdir" = "x" ]; then
+    srcdir=`dirname $0`
+    srcdir=`cd $srcdir; cd ../..; pwd`
+    srcdir=`dirname $srcdir`
+    cd $srcdir
+    if cd testing 2>/dev/null; then
+       :
+    else
+       echo "Error: $0 must be started from inside the testing directory in the source tree."
+       echo "The builddir environment variable can be set to point to the build directory."
+       exit 1
+    fi
+fi
+
+testscript=$1
+if [ `echo $testscript | cut -c 1-1` != '/' ]; then
+    testscript="`pwd`/$1"
+fi
+
+SNMP_BASEDIR=`dirname $0`
+
+## prefer MIB files found in source hierarchy
+SNMP_PREFER_NEAR_MIBS=1
+
+export SNMP_PREFER_NEAR_MIBS
+SNMP_TEST_PREFIX=${SNMP_TEST_PREFIX:=T}
+export SNMP_TEST_PREFIX
+
+SNMP_ORIGDIR=`pwd`	        ## this script may be invoked with relative path
+export SNMP_ORIGDIR
+
+SNMP_UPDIR=${builddir}          ## build directory
+if [ "x$DYNAMIC_ANALYZER" = "x" ]; then
+    SNMP_SLEEP_DEFAULT=1
+else
+    SNMP_SLEEP_DEFAULT=10
+fi
+SNMP_SLEEP=${SNMP_SLEEP:=$SNMP_SLEEP_DEFAULT} 	## default seconds to sleep
+export SNMP_SLEEP
+
+# Find executables in source first, then build, then existing PATH.
+## Add to PATH if a binary is found.
+
+cd $SNMP_UPDIR
+SNMP_UPDIR=`pwd`
+bf=snmpget
+if [ -x "$bf" ] ; then
+   PATH=$SNMP_UPDIR:$PATH
+else
+  for dd in apps bin ; do
+   bf=$dd/snmpget
+   if [ -x "$bf" ] ; then
+      PATH=$SNMP_UPDIR/$dd:$PATH
+      break
+   fi
+  done
+fi
+for dd in agent bin sbin ; do
+   bf=$dd/snmpd
+   if [ -x "$bf" ] ; then
+      PATH=$SNMP_UPDIR/$dd:$PATH
+      break
+   fi
+done
+
+bf=include/net-snmp/net-snmp-config.h
+if [ ! -s "$bf" ] ; then
+   echo "No \"$bf\" in $SNMP_UPDIR . Some tests will be skipped"
+fi
+unset bf
+
+# Run from the test scripts directory.
+cd $SNMP_ORIGDIR ; cd ${SNMP_BASEDIR}
+SNMP_BASEDIR=`pwd`
+export SNMP_BASEDIR
+
+PATH=${SNMP_BASEDIR}:$PATH
+export PATH
+SNMP_PATH=yes
+export SNMP_PATH
+
+export SNMP_UPDIR
+
+#
+# Source the testing configuration file
+#
+
+testnum="`basename $testscript`"
+
+. simple_TESTCONF.sh
+
+. simple_eval_tools.sh
+
+cd `dirname $testscript`
+PATH=`pwd`:$PATH
+export PATH
+
+. `basename $testscript`
+
+FINISHED

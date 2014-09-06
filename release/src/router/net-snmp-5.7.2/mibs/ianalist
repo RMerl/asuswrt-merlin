@@ -1,0 +1,15 @@
+# updated 2010-04-21
+ianaaddressfamilynumbers-mib	IANA-ADDRESS-FAMILY-NUMBERS-MIB
+ianacharset-mib			IANA-CHARSET-MIB
+ianafinisher-mib		IANA-FINISHER-MIB
+ianagmplstc-mib			IANA-GMPLS-TC-MIB
+ianaiftype-mib			IANAifType-MIB
+ianaiprouteprotocol-mib		IANA-RTPROTO-MIB
+# ianaipfixselector-mib		IPFIX-SELECTOR-MIB
+ianaippmmetricsregistry-mib	IANA-IPPM-METRICS-REGISTRY-MIB
+ianaitualarmtc-mib		IANA-ITU-ALARM-TC-MIB
+ianalanguage-mib		IANA-LANGUAGE-MIB
+ianamalloc-mib			IANA-MALLOC-MIB
+ianamau-mib			IANA-MAU-MIB
+ianaprinter-mib			IANA-PRINTER-MIB
+ianatn3270etc-mib		IANATn3270eTC-MIB

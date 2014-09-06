@@ -1,0 +1,665 @@
+PROGNAME=
+CFG=
+OUTDIR=
+INTDIR=
+SDK=
+
+!IF "$(OS)" == "Windows_NT"
+NULL=
+!ELSE 
+NULL=nul
+!ENDIF 
+
+ALL : "..\lib\$(OUTDIR)\$(PROGNAME).lib"
+
+"..\lib\$(OUTDIR)" :
+    if not exist "..\lib\$(OUTDIR)/$(NULL)" mkdir "..\lib\$(OUTDIR)"
+
+"$(INTDIR)" :
+    if not exist "$(INTDIR)/$(NULL)" mkdir "$(INTDIR)"
+
+CPP=cl.exe
+!IF  "$(CFG)" == "release"
+CPP_PROJ=/nologo /MD /W3 /EHsc /Zi /O2 /I "." /I ".." /I "..\..\snmplib" /I "..\.." /I "..\..\include" /I "..\..\agent" /I "..\..\agent\mibgroup" /D "WIN32" /D "_BIND_TO_CURRENT_VCLIBS_VERSION" /D "NDEBUG" /D "_CONSOLE" /D "_CRT_SECURE_NO_WARNINGS" /D "_CRT_NONSTDC_NO_WARNINGS" /D "_MBCS" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\$(PROGNAME).pdb" /FD /c 
+!ELSEIF  "$(CFG)" == "debug"
+CPP_PROJ=/nologo /MDd /W3 /Gm /EHsc /Zi /Od /I "." /I ".." /I "..\..\snmplib" /I "..\.." /I "..\..\include" /I "..\..\agent" /I "..\..\agent\mibgroup" /D "WIN32" /D "_BIND_TO_CURRENT_VCLIBS_VERSION" /D "_DEBUG" /D "_CONSOLE" /D "_CRT_SECURE_NO_WARNINGS" /D "_CRT_NONSTDC_NO_WARNINGS" /D "_MBCS" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\$(PROGNAME).pdb" /FD /c 
+!ENDIF
+
+.c{$(INTDIR)}.obj::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+.cpp{$(INTDIR)}.obj::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+.cxx{$(INTDIR)}.obj::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+.c{$(INTDIR)}.sbr::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+.cpp{$(INTDIR)}.sbr::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+.cxx{$(INTDIR)}.sbr::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+RSC=rc.exe
+LIB32=link.exe -lib
+LIB32_FLAGS=/nologo /out:"..\lib\$(OUTDIR)\$(PROGNAME).lib" 
+LIB32_OBJS1= \
+	"$(INTDIR)\setSerialNo.obj" \
+	"$(INTDIR)\snmp_mib.obj" \
+	"$(INTDIR)\sysORTable.obj" \
+	"$(INTDIR)\system_mib.obj" \
+	"$(INTDIR)\updates.obj" \
+	"$(INTDIR)\vacm_context.obj" \
+	"$(INTDIR)\vacm_conf.obj" \
+	"$(INTDIR)\vacm_vars.obj" \
+	"$(INTDIR)\mteEvent.obj" \
+	"$(INTDIR)\mteEventConf.obj" \
+	"$(INTDIR)\mteEventNotificationTable.obj" \
+	"$(INTDIR)\mteEventSetTable.obj" \
+	"$(INTDIR)\mteEventTable.obj" \
+	"$(INTDIR)\mteObjects.obj" \
+	"$(INTDIR)\mteObjectsConf.obj" \
+	"$(INTDIR)\mteObjectsTable.obj" \
+	"$(INTDIR)\mteScalars.obj" \
+	"$(INTDIR)\mteTriggerBooleanTable.obj" \
+	"$(INTDIR)\mteTrigger.obj" \
+	"$(INTDIR)\mteTriggerConf.obj" \
+	"$(INTDIR)\mteTriggerDeltaTable.obj" \
+	"$(INTDIR)\mteTriggerExistenceTable.obj" \
+	"$(INTDIR)\mteTriggerTable.obj" \
+	"$(INTDIR)\mteTriggerThresholdTable.obj" \
+	"$(INTDIR)\example.obj" \
+	"$(INTDIR)\ucdDemoPublic.obj" \
+	"$(INTDIR)\errormib.obj" \
+	"$(INTDIR)\extensible.obj" \
+	"$(INTDIR)\file.obj"
+LIB32_OBJS2= \
+	"$(INTDIR)\loadave.obj" \
+	"$(INTDIR)\pass.obj" \
+	"$(INTDIR)\pass_common.obj" \
+	"$(INTDIR)\pass_persist.obj" \
+	"$(INTDIR)\proc.obj" \
+	"$(INTDIR)\proxy.obj" \
+	"$(INTDIR)\versioninfo.obj" \
+	"$(INTDIR)\snmpEngine.obj" \
+	"$(INTDIR)\snmpMPDStats.obj" \
+	"$(INTDIR)\usmConf.obj" \
+	"$(INTDIR)\usmStats.obj" \
+	"$(INTDIR)\usmUser.obj" \
+	"$(INTDIR)\snmpNotifyFilterProfileTable.obj" \
+	"$(INTDIR)\snmpNotifyFilterTable.obj" \
+	"$(INTDIR)\snmpNotifyFilterTable_data_access.obj" \
+	"$(INTDIR)\snmpNotifyFilterTable_interface.obj" \
+	"$(INTDIR)\snmpNotifyTable.obj" \
+	"$(INTDIR)\snmpTargetAddrEntry.obj" \
+	"$(INTDIR)\snmpTargetParamsEntry.obj" \
+	"$(INTDIR)\target.obj" \
+	"$(INTDIR)\target_counters.obj" \
+	"$(INTDIR)\agentx_config.obj" \
+	"$(INTDIR)\client.obj" \
+	"$(INTDIR)\master.obj" \
+	"$(INTDIR)\master_admin.obj" \
+	"$(INTDIR)\protocol.obj" \
+	"$(INTDIR)\subagent.obj" \
+	"$(INTDIR)\extend.obj" \
+	"$(INTDIR)\nsCache.obj" \
+	"$(INTDIR)\nsDebug.obj" \
+	"$(INTDIR)\nsLogging.obj" \
+	"$(INTDIR)\nsModuleTable.obj" \
+	"$(INTDIR)\nsTransactionTable.obj" \
+	"$(INTDIR)\execute.obj" \
+	"$(INTDIR)\iquery.obj" \
+	"$(INTDIR)\override.obj" \
+	"$(INTDIR)\header_generic.obj" \
+	"$(INTDIR)\header_simple_table.obj" \
+	"$(INTDIR)\header_complex.obj" \
+	"$(INTDIR)\mib_modules.obj" \
+	"$(INTDIR)\util_funcs.obj" \
+	"$(INTDIR)\Exit.obj" \
+	"$(INTDIR)\restart.obj" \
+	"$(INTDIR)\smux.obj"
+!IF "$(SDK)" == "true"
+LIB32_OBJS3= \
+	"$(INTDIR)\at.obj" \
+	"$(INTDIR)\icmp.obj" \
+	"$(INTDIR)\interfaces.obj" \
+	"$(INTDIR)\ip.obj" \
+	"$(INTDIR)\ipAddr.obj" \
+	"$(INTDIR)\notification_log.obj" \
+	"$(INTDIR)\route_write.obj" \
+	"$(INTDIR)\tcp.obj" \
+	"$(INTDIR)\tcpTable.obj" \
+	"$(INTDIR)\udp.obj" \
+	"$(INTDIR)\udpTable.obj" \
+	"$(INTDIR)\var_route.obj" \
+	"$(INTDIR)\winExtDLL.obj"
+!ENDIF
+LIB32_OBJS=$(LIB32_OBJS1) $(LIB32_OBJS2) $(LIB32_OBJS3)
+
+CLEAN :
+	-@for %f in ($(LIB32_OBJS1)) do erase %%f
+	-@for %f in ($(LIB32_OBJS2)) do erase %%f
+	-@for %f in ($(LIB32_OBJS3)) do erase %%f
+	-@erase "..\lib\$(OUTDIR)\$(PROGNAME).lib"
+
+"..\lib\$(OUTDIR)\$(PROGNAME).lib" : "..\lib\$(OUTDIR)" $(DEF_FILE) $(LIB32_OBJS)
+    $(LIB32) @<<
+  $(LIB32_FLAGS) $(DEF_FLAGS) $(LIB32_OBJS)
+<<
+
+
+!IF "$(NO_EXTERNAL_DEPS)" != "1"
+!IF EXISTS("$(PROGNAME).dep")
+!INCLUDE "$(PROGNAME).dep"
+!ELSE 
+!MESSAGE Warning: cannot find "$(PROGNAME).dep"
+!ENDIF 
+!ENDIF 
+
+
+!IF "$(CFG)" == "release" || "$(CFG)" == "debug"
+SOURCE=..\..\agent\mibgroup\mibII\setSerialNo.c
+
+"$(INTDIR)\setSerialNo.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\mibgroup\mibII\snmp_mib.c
+
+"$(INTDIR)\snmp_mib.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\mibgroup\mibII\sysORTable.c
+
+"$(INTDIR)\sysORTable.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\mibgroup\mibII\system_mib.c
+
+"$(INTDIR)\system_mib.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\mibgroup\mibII\updates.c
+
+"$(INTDIR)\updates.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\mibgroup\mibII\vacm_context.c
+
+"$(INTDIR)\vacm_context.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\mibgroup\mibII\vacm_conf.c
+
+"$(INTDIR)\vacm_conf.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\mibgroup\mibII\vacm_vars.c
+
+"$(INTDIR)\vacm_vars.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\mibgroup\disman\event\mteEvent.c
+
+"$(INTDIR)\mteEvent.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+SOURCE=..\..\agent\mibgroup\disman\event\mteEventConf.c
+
+"$(INTDIR)\mteEventConf.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+SOURCE=..\..\agent\mibgroup\disman\event\mteEventNotificationTable.c
+
+"$(INTDIR)\mteEventNotificationTable.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+SOURCE=..\..\agent\mibgroup\disman\event\mteEventSetTable.c
+
+"$(INTDIR)\mteEventSetTable.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+SOURCE=..\..\agent\mibgroup\disman\event\mteEventTable.c
+
+"$(INTDIR)\mteEventTable.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+SOURCE=..\..\agent\mibgroup\disman\event\mteObjects.c
+
+"$(INTDIR)\mteObjects.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+SOURCE=..\..\agent\mibgroup\disman\event\mteObjectsConf.c
+
+"$(INTDIR)\mteObjectsConf.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+SOURCE=..\..\agent\mibgroup\disman\event\mteObjectsTable.c
+
+"$(INTDIR)\mteObjectsTable.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+SOURCE=..\..\agent\mibgroup\disman\event\mteScalars.c
+
+"$(INTDIR)\mteScalars.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+SOURCE=..\..\agent\mibgroup\disman\event\mteTriggerBooleanTable.c
+
+"$(INTDIR)\mteTriggerBooleanTable.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+SOURCE=..\..\agent\mibgroup\disman\event\mteTrigger.c
+
+"$(INTDIR)\mteTrigger.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+SOURCE=..\..\agent\mibgroup\disman\event\mteTriggerConf.c
+
+"$(INTDIR)\mteTriggerConf.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+SOURCE=..\..\agent\mibgroup\disman\event\mteTriggerDeltaTable.c
+
+"$(INTDIR)\mteTriggerDeltaTable.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+SOURCE=..\..\agent\mibgroup\disman\event\mteTriggerExistenceTable.c
+
+"$(INTDIR)\mteTriggerExistenceTable.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+SOURCE=..\..\agent\mibgroup\disman\event\mteTriggerTable.c
+
+"$(INTDIR)\mteTriggerTable.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+SOURCE=..\..\agent\mibgroup\disman\event\mteTriggerThresholdTable.c
+
+"$(INTDIR)\mteTriggerThresholdTable.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\mibgroup\examples\example.c
+
+"$(INTDIR)\example.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\mibgroup\examples\ucdDemoPublic.c
+
+"$(INTDIR)\ucdDemoPublic.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE="..\..\agent\mibgroup\ucd-snmp\errormib.c"
+
+"$(INTDIR)\errormib.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE="..\..\agent\mibgroup\ucd-snmp\extensible.c"
+
+"$(INTDIR)\extensible.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE="..\..\agent\mibgroup\ucd-snmp\file.c"
+
+"$(INTDIR)\file.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE="..\..\agent\mibgroup\ucd-snmp\loadave.c"
+
+"$(INTDIR)\loadave.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE="..\..\agent\mibgroup\ucd-snmp\pass.c"
+
+"$(INTDIR)\pass.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE="..\..\agent\mibgroup\ucd-snmp\pass_common.c"
+
+"$(INTDIR)\pass_common.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE="..\..\agent\mibgroup\ucd-snmp\pass_persist.c"
+
+"$(INTDIR)\pass_persist.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE="..\..\agent\mibgroup\ucd-snmp\proc.c"
+
+"$(INTDIR)\proc.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE="..\..\agent\mibgroup\ucd-snmp\proxy.c"
+
+"$(INTDIR)\proxy.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE="..\..\agent\mibgroup\ucd-snmp\versioninfo.c"
+
+"$(INTDIR)\versioninfo.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\mibgroup\snmpv3\snmpEngine.c
+
+"$(INTDIR)\snmpEngine.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\mibgroup\snmpv3\snmpMPDStats.c
+
+"$(INTDIR)\snmpMPDStats.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\mibgroup\snmpv3\usmConf.c
+
+"$(INTDIR)\usmConf.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\mibgroup\snmpv3\usmStats.c
+
+"$(INTDIR)\usmStats.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\mibgroup\snmpv3\usmUser.c
+
+"$(INTDIR)\usmUser.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\mibgroup\notification\snmpNotifyFilterProfileTable.c
+
+"$(INTDIR)\snmpNotifyFilterProfileTable.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE="..\..\agent\mibgroup\notification-log-mib\notification_log.c"
+
+"$(INTDIR)\notification_log.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\mibgroup\snmp-notification-mib\snmpNotifyFilterTable\snmpNotifyFilterTable.c
+
+"$(INTDIR)\snmpNotifyFilterTable.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\mibgroup\snmp-notification-mib\snmpNotifyFilterTable\snmpNotifyFilterTable_data_access.c
+
+"$(INTDIR)\snmpNotifyFilterTable_data_access.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\mibgroup\snmp-notification-mib\snmpNotifyFilterTable\snmpNotifyFilterTable_interface.c
+
+"$(INTDIR)\snmpNotifyFilterTable_interface.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\mibgroup\notification\snmpNotifyTable.c
+
+"$(INTDIR)\snmpNotifyTable.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\mibgroup\target\snmpTargetAddrEntry.c
+
+"$(INTDIR)\snmpTargetAddrEntry.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\mibgroup\target\snmpTargetParamsEntry.c
+
+"$(INTDIR)\snmpTargetParamsEntry.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\mibgroup\target\target.c
+
+"$(INTDIR)\target.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\mibgroup\target\target_counters.c
+
+"$(INTDIR)\target_counters.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\mibgroup\agentx\agentx_config.c
+
+"$(INTDIR)\agentx_config.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\mibgroup\agentx\client.c
+
+"$(INTDIR)\client.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\mibgroup\agentx\master.c
+
+"$(INTDIR)\master.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\mibgroup\agentx\master_admin.c
+
+"$(INTDIR)\master_admin.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\mibgroup\agentx\protocol.c
+
+"$(INTDIR)\protocol.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\mibgroup\agentx\subagent.c
+
+"$(INTDIR)\subagent.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\mibgroup\agent\extend.c
+
+"$(INTDIR)\extend.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\mibgroup\agent\nsCache.c
+
+"$(INTDIR)\nsCache.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\mibgroup\agent\nsDebug.c
+
+"$(INTDIR)\nsDebug.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\mibgroup\agent\nsLogging.c
+
+"$(INTDIR)\nsLogging.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\mibgroup\agent\nsModuleTable.c
+
+"$(INTDIR)\nsModuleTable.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\mibgroup\agent\nsTransactionTable.c
+
+"$(INTDIR)\nsTransactionTable.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\mibgroup\utilities\execute.c
+
+"$(INTDIR)\execute.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\mibgroup\utilities\iquery.c
+
+"$(INTDIR)\iquery.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\mibgroup\utilities\override.c
+
+"$(INTDIR)\override.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\mibgroup\util_funcs\header_generic.c
+
+"$(INTDIR)\header_generic.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\mibgroup\util_funcs\header_simple_table.c
+
+"$(INTDIR)\header_simple_table.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\mibgroup\header_complex.c
+
+"$(INTDIR)\header_complex.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\mib_modules.c
+
+"$(INTDIR)\mib_modules.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\mibgroup\util_funcs.c
+
+"$(INTDIR)\util_funcs.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\mibgroup\util_funcs\Exit.c
+
+"$(INTDIR)\Exit.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\mibgroup\util_funcs\restart.c
+
+"$(INTDIR)\restart.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\mibgroup\smux\smux.c
+
+"$(INTDIR)\smux.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\mibgroup\winExtDLL.c
+"$(INTDIR)\winExtDLL.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\mibgroup\mibII\at.c
+"$(INTDIR)\at.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\mibgroup\mibII\icmp.c
+"$(INTDIR)\icmp.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\mibgroup\mibII\interfaces.c
+"$(INTDIR)\interfaces.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\mibgroup\mibII\ip.c
+"$(INTDIR)\ip.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\mibgroup\mibII\ipAddr.c
+"$(INTDIR)\ipAddr.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\mibgroup\mibII\route_write.c
+"$(INTDIR)\route_write.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\mibgroup\mibII\tcp.c
+"$(INTDIR)\tcp.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\mibgroup\mibII\tcpTable.c
+"$(INTDIR)\tcpTable.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\mibgroup\mibII\udp.c
+"$(INTDIR)\udp.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\mibgroup\mibII\udpTable.c
+"$(INTDIR)\udpTable.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\mibgroup\mibII\var_route.c
+"$(INTDIR)\var_route.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 

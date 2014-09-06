@@ -1,0 +1,100 @@
+#!/bin/sh
+#
+# SNMPv3 base config
+#
+# Input+Output variables:
+#   DEFSECURITYLEVEL         noAuthNoPriv|authNoPriv|authPriv
+#   DEFAUTHTYPE              MD5|SHA
+#   DEFPRIVTYPE              DES|AES
+#   TESTNOAUTHUSER           <myuser>
+#   TEST(AUTH|PRIV)USER[2]   <myuser>
+#   TEST(AUTH|PRIV)PASS[2]   <mypass>
+#
+# Input variables:
+#   CREATEUSERENGINEID       <engineid>
+#
+# Output variables:
+#   CREATEAUTHUSER[2]
+#   CREATEPRIVUSER[2]
+#   CREATENOAUTHUSER
+#   TESTNOAUTHARGS
+#   TESTAUTHARGS[NOPASS][2]
+#   TESTPRIVARGS[NOPASS][2]
+#
+
+SKIPIFNOT NETSNMP_SECMOD_USM
+
+## Defaults
+[ "x$DEFSECURITYLEVEL" = "x" ] && DEFSECURITYLEVEL=authPriv
+
+## auto-probe best auth type
+if grep '^#define NETSNMP_USE_OPENSSL 1' $SNMP_UPDIR/include/net-snmp/net-snmp-config.h $SNMP_UPDIR/include/net-snmp/agent/mib_module_config.h > /dev/null ; then
+  MAXAUTHTYPE=SHA
+elif grep '^#define NETSNMP_USE_INTERNAL_CRYPTO 1' $SNMP_UPDIR/include/net-snmp/net-snmp-config.h $SNMP_UPDIR/include/net-snmp/agent/mib_module_config.h > /dev/null ; then
+  MAXAUTHTYPE=SHA
+else
+  # MD5 is always available internally
+  MAXAUTHTYPE=MD5
+fi
+
+## auto-probe best priv type
+# XXX: HAVE_AES depends on cpp logic, so we need to test for lower-level stuff
+if grep '^#define NETSNMP_USE_OPENSSL 1' $SNMP_UPDIR/include/net-snmp/net-snmp-config.h $SNMP_UPDIR/include/net-snmp/agent/mib_module_config.h > /dev/null; then
+  if grep '^#define HAVE_OPENSSL_AES_H 1' $SNMP_UPDIR/include/net-snmp/net-snmp-config.h $SNMP_UPDIR/include/net-snmp/agent/mib_module_config.h > /dev/null && \
+   grep '^#define HAVE_AES_CFB128_ENCRYPT 1' $SNMP_UPDIR/include/net-snmp/net-snmp-config.h $SNMP_UPDIR/include/net-snmp/agent/mib_module_config.h > /dev/null ; then
+    MAXPRIVTYPE=AES
+  else
+    MAXPRIVTYPE=DES
+  fi
+elif grep '^#define NETSNMP_USE_INTERNAL_CRYPTO 1' $SNMP_UPDIR/include/net-snmp/net-snmp-config.h $SNMP_UPDIR/include/net-snmp/agent/mib_module_config.h > /dev/null; then
+    MAXPRIVTYPE=AES
+else
+    MAXPRIVTYPE=""
+fi
+
+CREATEUSERCMD="createUser"
+[ "x$CREATEUSERENGINEID" != "x" ] && CREATEUSERCMD="$CREATEUSERCMD -e $CREATEUSERENGINEID"
+
+## auth setup
+if [ "x$DEFSECURITYLEVEL" = "xauthPriv" -o "x$DEFSECURITYLEVEL" = "xauthNoPriv" ]; then
+  [ "x$MAXAUTHTYPE" = "x" ] && SKIP
+  [ "x$DEFAUTHTYPE" = "xSHA" -a "x$MAXAUTHTYPE" != "xSHA" ] && SKIP
+  [ "x$DEFAUTHTYPE" = "x" ] && DEFAUTHTYPE=$MAXAUTHTYPE
+  # user/pass setup (XXX: randomize)
+  [ "x$TESTAUTHUSER" = "x" ] && TESTAUTHUSER=initial_auth
+  [ "x$TESTAUTHUSER2" = "x" ] && TESTAUTHUSER2=template_auth
+  [ "x$TESTAUTHPASS" = "x" ] && TESTAUTHPASS=initial_test_pass_auth
+  [ "x$TESTAUTHPASS2" = "x" ] && TESTAUTHPASS2=template_test_pass_auth
+  CREATEAUTHUSER="$CREATEUSERCMD $TESTAUTHUSER $DEFAUTHTYPE $TESTAUTHPASS"
+  CREATEAUTHUSER2="$CREATEUSERCMD $TESTAUTHUSER2 $DEFAUTHTYPE $TESTAUTHPASS2"
+  # command args
+  TESTAUTHARGSNOPASS="-v 3 -l anp -u $TESTAUTHUSER -a $DEFAUTHTYPE"
+  TESTAUTHARGSNOPASS2="-v 3 -l anp -u $TESTAUTHUSER2 -a $DEFAUTHTYPE"
+  TESTAUTHARGS="$TESTAUTHARGSNOPASS -A $TESTAUTHPASS"
+  TESTAUTHARGS2="$TESTAUTHARGSNOPASS2 -A $TESTAUTHPASS2"
+fi
+
+## priv setup
+if [ "x$DEFSECURITYLEVEL" = "xauthPriv" ]; then
+  [ "x$MAXPRIVTYPE" = "x" ] && SKIP
+  [ "x$DEFPRIVTYPE" = "xAES" -a "x$MAXPRIVTYPE" != "xAES" ] && SKIP
+  [ "x$DEFPRIVTYPE" = "x" ] && DEFPRIVTYPE=$MAXPRIVTYPE
+  # user/pass setup (XXX: randomize)
+  [ "x$TESTPRIVUSER" = "x" ] && TESTPRIVUSER=initial_priv
+  [ "x$TESTPRIVUSER2" = "x" ] && TESTPRIVUSER2=template_priv
+  [ "x$TESTPRIVPASS" = "x" ] && TESTPRIVPASS=initial_test_pass_priv
+  [ "x$TESTPRIVPASS2" = "x" ] && TESTPRIVPASS2=template_test_pass_priv
+  CREATEPRIVUSER="$CREATEUSERCMD $TESTPRIVUSER $DEFAUTHTYPE $TESTAUTHPASS $DEFPRIVTYPE $TESTPRIVPASS"
+  CREATEPRIVUSER2="$CREATEUSERCMD $TESTPRIVUSER2 $DEFAUTHTYPE $TESTAUTHPASS2 $DEFPRIVTYPE $TESTPRIVPASS2"
+  # command args
+  TESTPRIVARGSNOPASS="-v 3 -l ap -u $TESTPRIVUSER -a $DEFAUTHTYPE -x $DEFPRIVTYPE"
+  TESTPRIVARGSNOPASS2="-v 3 -l ap -u $TESTPRIVUSER2 -a $DEFAUTHTYPE -x $DEFPRIVTYPE"
+  TESTPRIVARGS="$TESTPRIVARGSNOPASS -A $TESTAUTHPASS -X $TESTPRIVPASS"
+  TESTPRIVARGS2="$TESTPRIVARGSNOPASS2 -A $TESTAUTHPASS2 -X $TESTPRIVPASS2"
+fi
+
+## noauth setup
+[ "x$TESTNOAUTHUSER" = "x" ] && TESTNOAUTHUSER=initial
+TESTNOAUTHARGS="-v 3 -l nanp -u $TESTNOAUTHUSER"
+CREATENOAUTHUSER="$CREATEUSERCMD $TESTNOAUTHUSER"
+

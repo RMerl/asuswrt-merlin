@@ -141,6 +141,7 @@ EH1*/
 #define	 QTN_TPZ_SE5003L1_INV				6
 #define  QTN_TPZ_SKY85703				7
 #define  QTN_TPZ_SKY85405_BPF840			8
+#define  QTN_TPZ_SKY85710_NG				11
 
 #ifdef TOPAZ_PLATFORM
 #define QTN_SWITCH_CHANNEL_TIME_AVG	3750	/* microseconds */
@@ -509,6 +510,11 @@ enum qtn_ocac_cmds {
 #define QTN_IS_IPAD_AIR_NODE		0x0000800
 #define QTN_IS_IPAD4_NODE		0x0001000
 #define QTN_DYN_ENABLE_RTS		0x0002000
+
+/* QTN bandwidth definition */
+#define QTN_BW_20M	0
+#define QTN_BW_40M	1
+#define QTN_BW_80M	2
 
 /*
  * Definitions relating to individual fields from phy_stats,

@@ -1,0 +1,168 @@
+#!/bin/sh
+#
+# $Id$
+#
+# this shell script is designed to add new SNMPv3 users
+# to Net-SNMP config file.
+
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+includedir=@includedir@
+libdir=@libdir@
+datarootdir=@datarootdir@
+NSC_LDFLAGS="@LDFLAGS@"
+NSC_INCLUDEDIR=${includedir}
+NSC_LIBDIR=-L${libdir}
+NSC_LIBS="@LIBS@"
+NSC_AGENTLIBS="@AGENTLIBS@ @PERLLDOPTS_FOR_APPS@"
+NSC_PREFIX=$prefix
+NSC_EXEC_PREFIX=$exec_prefix
+NSC_SRCDIR=@srcdir@
+NSC_INCDIR=${NSC_PREFIX}/include
+NSC_BASE_SUBAGENT_LIBS="-lnetsnmpagent -lnetsnmp"
+NSC_BASE_AGENT_LIBS="-lnetsnmpagent -lnetsnmpmibs -lnetsnmp"
+NSC_SRC_LIBDIRS="agent/.libs snmplib/.libs"
+NSC_SRC_LIBDEPS="agent/.libs/libnetsnmpmibs.a agent/.libs/libnetsnmpagent.a snmplib/.libs/libnetsnmp.a"
+
+if test "x$NSC_SRCDIR" = "x." ; then
+   NSC_SRCDIR="NET-SNMP-SOURCE-DIR"
+fi
+
+if @PSCMD@ | egrep ' snmpd *$' > /dev/null 2>&1 ; then
+    echo "Apparently at least one snmpd demon is already running."
+    echo "You must stop them in order to use this command."
+    exit 1
+fi
+
+Aalgorithm="MD5"
+Xalgorithm="DES"
+token=rwuser
+
+while test "x$done" = "x" -a "x$1" != "x" -a "x$usage" != "xyes"; do
+case "$1" in
+    -*=*) optarg=`echo "$1" | sed 's/[-_a-zA-Z0-9]*=//'` ;;
+    *) optarg= ;;
+esac
+
+unset shifted
+case $1 in
+    --version|--ver*)
+      echo @VERSION@
+      ;;
+    --help)
+      usage="yes"
+      ;;
+
+    -A|-a)
+	shift
+	if test "x$1" = "x" ; then
+	    echo "You must specify an authentication algorithm or pass phrase"
+	    exit 1
+	fi
+        case $1 in
+            MD5|SHA)
+	    Aalgorithm=$1
+	    shift
+	    ;;
+            md5|sha)
+	    Aalgorithm=`echo $1 | tr a-z A-Z`
+	    shift
+	    ;;
+            *)
+	    apassphrase=$1
+	    shift
+	    ;;
+        esac
+        ;;
+    -X|-x)
+	shift
+	if test "x$1" = "x" ; then
+	    echo "You must specify an encryption algorithm or pass phrase"
+	    exit 1
+	fi
+        case $1 in
+            DES|AES|AES128)
+	    Xalgorithm=$1
+	    shift
+	    ;;
+            des|aes|aes128)
+	    Xalgorithm=`echo $1 | tr a-z A-Z`
+	    shift
+	    ;;
+            *)
+	    xpassphrase=$1
+	    shift
+	    ;;
+	esac
+	;;
+    -ro)
+        token="rouser"
+	shift
+	;;
+    -*)
+	echo "unknown suboption to $0: $1"
+	usage=yes
+	done=1
+	;;
+    *)
+        done=1
+        ;;
+    esac
+done
+
+if test "x$usage" = "xyes"; then
+    echo ""
+    echo "Usage:"
+    echo "  net-snmp-create-v3-user [-ro] [-A authpass] [-X privpass]"
+    echo "                          [-a MD5|SHA] [-x DES|AES] [username]"
+    echo ""
+    exit
+fi
+
+if test "x$1" = "x" ; then
+    prompt=yes
+    echo "Enter a SNMPv3 user name to create: "
+    read user
+else
+    user=$1
+    shift
+fi
+if test "x$user" = "x" ; then
+    echo "You must specify a user name"
+    exit 1
+fi
+if test "x$apassphrase" = "x" ; then
+    prompt=yes
+    echo "Enter authentication pass-phrase: "
+    read apassphrase
+fi
+if test "x$apassphrase" = "x" ; then
+    echo "You must specify an authentication pass-phrase"
+    exit 1
+fi
+    if test "x$prompt" = "xyes" -a "x$xpassphrase" = "x" ; then
+    echo "Enter encryption pass-phrase: "
+    echo "  [press return to reuse the authentication pass-phrase]"
+    read xpassphrase
+fi
+outdir="@PERSISTENT_DIRECTORY@"
+outfile="$outdir/snmpd.conf"
+line="createUser $user $Aalgorithm \"$apassphrase\" $Xalgorithm $xpassphrase"
+echo "adding the following line to $outfile:"
+echo "  " $line
+# in case it hasn't ever been started yet, start it.
+if test ! -d $outdir ; then
+    mkdir $outdir
+fi
+if test ! -d $outfile ; then
+    touch $outfile
+fi
+echo $line >> $outfile
+outfile="@datadir@/snmp/snmpd.conf"
+line="$token $user"
+echo "adding the following line to $outfile:"
+echo "  " $line
+if test ! -d $outfile ; then
+    touch $outfile
+fi
+echo $line >> $outfile

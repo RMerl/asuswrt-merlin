@@ -161,6 +161,8 @@ legend {
 	padding-left:5px;
 	font-weight:bold;
 	line-height:140%;	
+	color:#FFFFFF;
+	font-family:Arial, Helvetica, sans-serif;
 }
 
 .hackiframe{	/* iframe for Hack IE 6.0 to avoid select menu over DIV layer. */
@@ -301,6 +303,8 @@ legend {
 	-webkit-border-radius: 5px;
 	-moz-border-radius: 5px;
 	border-radius: 5px;
+	*width:105%;
+	*margin-left:-45px;
 }
 
 .QIS_survey{
@@ -325,8 +329,7 @@ legend {
 	/*height:20px;*/
 	border: 1px solid #334044;
 }
-.test_css{
-	padding-left:10px;
+.test_css{	
 	font-size:16px;
 	font-weight:bolder;
 	color:#FFFFFF;

@@ -1,0 +1,25 @@
+#!/bin/sh
+
+. ../support/simple_eval_tools.sh
+
+HEADER SNMPv2c getnext of system.sysUpTime
+
+SKIPIF NETSNMP_DISABLE_SNMPV2C
+SKIPIFNOT USING_MIBII_SYSTEM_MIB_MODULE
+
+#
+# Begin test
+#
+
+# standard V2C configuration: testcomunnity
+. ./Sv2cconfig
+
+STARTAGENT
+
+CAPTURE "snmpgetnext -On $SNMP_FLAGS -c testcommunity -v 2c $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT .1.3.6.1.2.1.1.3"
+
+STOPAGENT
+
+CHECK ".1.3.6.1.2.1.1.3.0 = Timeticks:"
+
+FINISHED

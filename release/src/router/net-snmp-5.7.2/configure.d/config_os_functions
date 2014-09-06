@@ -1,0 +1,324 @@
+# -*- autoconf -*-
+#########################################
+##
+# Checks for library functions.
+##
+#########################################
+
+##
+#   Standard checks:
+##
+AC_FUNC_ALLOCA          #  alloca()
+AC_PROG_GCC_TRADITIONAL
+
+if test "$cross_compiling" = yes -a "${ac_cv_func_memcmp_working+set}" != set
+then
+  # Cross-compiling and ac_cv_func_memcmp_working has not been set - assume
+  # that memcmp() is available.
+  ac_cv_func_memcmp_working=yes
+else
+  # Native compilation - test for the availability of memcmp().
+  AC_FUNC_MEMCMP
+fi
+
+AC_TYPE_SIGNAL
+
+##
+#   Stand-alone function checks:
+##
+#  Core:
+AC_CHECK_FUNCS([lrand48         rand          random    ] dnl
+               [signal          sigset                  ] )
+
+#  Library:
+AC_CHECK_FUNCS([closedir        fgetc_unlocked  flockfile        ] dnl
+               [fork            funlockfile     getipnodebyname  ] dnl
+               [gettimeofday    if_nametoindex  mkstemp          ] dnl
+               [opendir         readdir         regcomp          ] dnl
+               [setenv          setitimer       setlocale        ] dnl
+               [setsid          snprintf        strcasestr       ] dnl
+               [strdup          strerror        strncasecmp      ] dnl
+               [sysconf         times           vsnprintf        ] )
+
+# IPv4/IPv6 function checks. AC_CHECK_FUNC() can't find these on MinGW
+# since these functions have the __cdecl calling convention on MinGW.
+case x$target_os in
+  xmingw*)
+    AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <ws2tcpip.h>],
+    [ gai_strerror(0); ])],
+    [ ac_cv_func_gai_strerror=yes
+      AS_ECHO "#define HAVE_GAI_STRERROR 1" >>confdefs.h
+    ], [ ])
+
+    AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <ws2tcpip.h>],
+    [ getaddrinfo(NULL, NULL, NULL, NULL); ])],
+    [ ac_cv_func_getaddrinfo=yes
+      AS_ECHO "#define HAVE_GETADDRINFO 1" >>confdefs.h
+    ], [ ])
+
+    AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <winsock2.h>],
+    [ gethostbyname(NULL); ])],
+    [ ac_cv_func_gethostbyname=yes
+      AS_ECHO "#define HAVE_GETHOSTBYNAME 1" >>confdefs.h
+    ], [ ])
+
+    AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <winsock2.h>],
+    [ gethostbyaddr(NULL); ])],
+    [ ac_cv_func_gethostaddr=yes
+      AS_ECHO "#define HAVE_GETHOSTBYADDR 1" >>confdefs.h
+    ], [ ])
+
+    AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <winsock2.h>],
+    [ gethostname(NULL, 0); ])],
+    [ ac_cv_func_gethostname=yes
+      AS_ECHO "#define HAVE_GETHOSTNAME 1" >>confdefs.h
+    ], [ ])
+    ;;
+
+  *)
+    AC_CHECK_FUNCS([gai_strerror getaddrinfo gethostbyname gethostbyname2 gethostname gethostbyaddr])
+    ;;
+esac
+
+AC_CONFIG_LIBOBJ_DIR([snmplib])
+
+AC_REPLACE_FUNCS([getopt        inet_ntop     inet_pton        ] dnl
+                 [strlcat       strlcpy       strtok_r         ] dnl
+                 [strtol        strtoul       strtoull         ] )
+
+#  Agent:
+AC_CHECK_FUNCS([cgetnext        chown          execv           ] dnl
+               [gai_strerror                   getgrnam        ] dnl
+               [gethostname     getloadavg                     ] dnl
+               [getpid          getpwnam                       ] dnl
+               [hasmntopt       initgroups                     ] dnl
+               [if_nameindex    if_indextoname if_nametoindex  ] dnl
+               [localtime_r     mkstemp        mktime          ] dnl
+               [poll            regcomp                        ] dnl
+               [setgid          setgroups                      ] dnl
+               [setmntent       setuid                         ] dnl
+               [sigaction       sigblock      sighold          ] dnl
+               [sigprocmask                                    ] dnl
+               [statfs          statvfs       stime            ] dnl
+               [strncasecmp     system                         ] dnl
+               [uname           usleep                         ] )
+
+#  Apps:
+AC_CHECK_FUNCS([getdtablesize                                  ] dnl
+               [getgrnam        getpid        getpwnam         ] dnl
+               [setgid          setgroups     setuid           ] dnl
+               [tcgetattr                                      ] )
+
+#  Not-Used:
+AC_CHECK_FUNCS([if_freenameindex              getpagesize      ] dnl
+               [lseek64         pread64                        ] dnl
+               [select          sigalrm       socket           ] )
+
+
+##
+#   More complex function checks:
+#           (Agent)
+##
+
+#       rpmGetPath check needs clean LIBS environment   (Linux)
+#
+if test "x$with_rpm" != "xno"; then
+    OLDLIBS=$LIBS
+    LIBS=$LMIBLIBS
+    AC_CHECK_FUNCS(rpmGetPath)
+    LIBS=$OLDLIBS
+fi
+
+#       statfs( char *, struct fs_data* )               (Ultrix)
+#
+AC_MSG_CHECKING([[for two-argument statfs with struct fs_data (Ultrix)]])
+AC_CACHE_VAL(
+    fu_cv_sys_stat_fs_data,
+    [AC_RUN_IFELSE([AC_LANG_SOURCE([[
+#ifdef HAVE_SYS_PARAM_H
+#include <sys/param.h>
+#endif
+#include <sys/types.h>
+#ifdef HAVE_SYS_MOUNT_H
+#include <sys/mount.h>
+#endif
+#ifdef HAVE_SYS_FS_TYPES_H
+#include <sys/fs_types.h>
+#endif
+main ()
+{
+struct fs_data fsd;
+/* Ultrix's statfs returns 1 for success,
+   0 for not mounted, -1 for failure.  */
+exit (statfs (".", &fsd) != 1);
+}]])],
+    [fu_cv_sys_stat_fs_data=yes],
+    [fu_cv_sys_stat_fs_data=no],
+    [fu_cv_sys_stat_fs_data=no])])
+AC_MSG_RESULT($fu_cv_sys_stat_fs_data)
+if test $fu_cv_sys_stat_fs_data = yes; then
+    AC_DEFINE(STAT_STATFS_FS_DATA, 1,
+        [Define if statfs takes 2 args and the second argument has
+         type struct fs_data. @<:@Ultrix@:>@])
+fi
+
+
+##
+#   Other function-related checks:
+#           (general build)
+##
+
+#       How to get the name of the current function
+#
+AC_CACHE_CHECK([how to get the name of the current function],
+               [netsnmp_cv__func__name],[
+    netsnmp_cv__func__name=no
+    AC_COMPILE_IFELSE(
+        [AC_LANG_PROGRAM(,[[const char* cp = __func__;]])],
+        [netsnmp_cv__func__name=__func__])
+    if test "$netsnmp_cv__func__name" = no ; then
+      AC_COMPILE_IFELSE(
+        [AC_LANG_PROGRAM(,[[const char* cp = __FUNCTION__;]])],
+        [netsnmp_cv__func__name=__FUNCTION__])
+    fi])
+if test "$netsnmp_cv__func__name" != no; then
+    AC_DEFINE_UNQUOTED([NETSNMP_FUNCTION],[$netsnmp_cv__func__name],
+        [Should evaluate to the name of the current function if defined])
+fi
+
+
+#       Whether static inline functions are broken      (SCO Unixware)
+#
+AC_CACHE_CHECK([[whether static inline functions are broken (Unixware)]],
+                [netsnmp_cv_c_broken_inline],
+    AC_COMPILE_IFELSE([AC_LANG_SOURCE([
+static inline int nested_inline_function(void) {
+  return 0;
+}
+inline int main_inline_function( void ) {
+  return nested_inline_function();
+}
+    ])],
+    netsnmp_cv_broken_inline=no,
+    netsnmp_cv_broken_inline=yes))
+
+
+#       Yes -  static inline functions are broken       (Solaris 2.x)
+#
+case "$target_os" in
+    solaris*)
+        netsnmp_cv_broken_inline=yes
+        ;;
+    *)
+        ;;
+esac
+
+if test "$netsnmp_cv_broken_inline" = yes ; then
+  AC_DEFINE(NETSNMP_BROKEN_INLINE, 1,
+        [Define if static inline functions are unsupported])
+fi
+
+
+##
+#   Mis-placed (non-function) checks:
+##
+
+AC_CACHE_CHECK([for SIOCGIFADDR in sys/ioctl.h],
+               netsnmp_cv_sys_ioctl_h_has_SIOCGIFADDR,
+    AC_COMPILE_IFELSE(
+        [AC_LANG_PROGRAM([[
+#ifdef HAVE_SYS_IOCTL_H
+#include <sys/ioctl.h>
+#endif
+#ifndef SIOCGIFADDR
+No SIOCGIFADDR found here.
+#endif
+        ]])],
+    [netsnmp_cv_sys_ioctl_h_has_SIOCGIFADDR=yes],
+    [netsnmp_cv_sys_ioctl_h_has_SIOCGIFADDR=no]))
+if test $netsnmp_cv_sys_ioctl_h_has_SIOCGIFADDR = yes; then
+  AC_DEFINE(SYS_IOCTL_H_HAS_SIOCGIFADDR, 1,
+   [define if SIOCGIFADDR exists in sys/ioctl.h])
+fi
+
+##
+#   Check how to print a size_t variable
+##
+
+AC_CACHE_CHECK(
+    [the underlying type of a size_t],
+    netsnmp_cv_size_t_type,
+    [m4_foreach([TYPE], [[int],[long],[long long],[short],[char]],
+     [if [[ x$netsnmp_cv_size_t_type = x ]] ; then
+         AC_COMPILE_IFELSE(
+	     [AC_LANG_PROGRAM(
+[AC_INCLUDES_DEFAULT()
+extern unsigned TYPE variable;
+extern size_t variable;],
+                 [])],
+             [netsnmp_cv_size_t_type="TYPE"])
+     fi
+    ])])
+
+AC_MSG_CHECKING([how to printf a size_t])
+case "$netsnmp_cv_size_t_type" in
+    char|short|int) netsnmp_PRIz="" ;;
+    long) netsnmp_PRIz="l" ;;
+    "long long") netsnmp_PRIz="ll" ;;
+    *) AC_MSG_ERROR([underlying type of size_t not known]) ;;
+esac
+AC_MSG_RESULT($netsnmp_PRIz)
+AC_DEFINE_UNQUOTED([NETSNMP_PRIz], ["$netsnmp_PRIz"],
+                   [Size prefix to use to printf a size_t or ssize_t])
+
+##
+#   Check how to print a uint32_t variable
+##
+
+AC_CACHE_CHECK(
+    [the underlying type of an uint32_t],
+    netsnmp_cv_uint32_t_type,
+    [m4_foreach([TYPE], [[char],[short],[int],[long],[long long]],
+     [if [[ x$netsnmp_cv_uint32_t_type = x ]] ; then
+         AC_COMPILE_IFELSE(
+	     [AC_LANG_PROGRAM(
+[AC_INCLUDES_DEFAULT()
+extern unsigned TYPE variable;
+extern uint32_t variable;],
+                 [])],
+             [netsnmp_cv_uint32_t_type="TYPE"])
+     fi
+    ])])
+
+AC_MSG_CHECKING([how to printf a uint32_t])
+case "$netsnmp_cv_uint32_t_type" in
+    char|short|int) netsnmp_PRI32="" ;;
+    long) netsnmp_PRI32="l" ;;
+    "long long") netsnmp_PRI32="ll" ;;
+    *) AC_MSG_ERROR([underlying type of uint32_t not known]) ;;
+esac
+AC_MSG_RESULT($netsnmp_PRI32)
+AC_DEFINE_UNQUOTED([NETSNMP_PRI32], ["$netsnmp_PRI32"],
+                   [Size prefix to use to printf a uint32_t])
+
+# check to see if the openssl is good enough for DTLS
+# (BIO_dgram_get_peer is a macro, not a true function)
+if echo " $transport_result_list " | $GREP "DTLS" > /dev/null; then
+    AC_CACHE_VAL(
+       netsnmp_cv_bio_dgram_get_peer,
+       AC_MSG_CHECKING([[for BIO_dgram_get_peer]])
+       [
+        oldLIBS="$LIBS"
+        LIBS="$LIBS -lcrypto"
+        AC_LINK_IFELSE(
+          [AC_LANG_PROGRAM(
+            [[#include <openssl/bio.h>]],
+            [[BIO_dgram_get_peer(NULL, NULL);]])], [],
+          [AC_MSG_ERROR(DTLS support requires a newer version of OpenSSL)])
+
+        LIBS="$oldLIBS"
+       ]
+       AC_MSG_RESULT(yes)
+    )
+fi
+

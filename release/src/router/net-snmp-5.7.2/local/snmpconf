@@ -1,0 +1,933 @@
+#!/usr/bin/perl -w
+
+#
+# A simple configuration file builder based on questions listed in
+# its own configuration file.  It would certainly be easy to use this
+# for other (non-snmp) programs as well.
+#
+
+use Getopt::Std;
+use Term::ReadLine;
+use IO::File;
+use Data::Dumper;
+use File::Copy;
+if ($^O eq 'MSWin32') {
+  eval 'require Win32::Registry;';
+  if ($@) {
+    print "\nWarning: Perl module Win32::Registry is not installed.  This module is\n";
+    print "         required to read the SNMPSHAREPATH and SNMPCONFPATH values from \n";
+    print "         the registry.  To use snmpconf without the module you need to\n";
+    print "         define SNMPSHAREPATH and SNMPCONFPATH as environment variables\n";
+    print "         or use the -c and -I command line options.\n";
+  }
+}
+
+# globals
+%tokenitems=qw(line 1 info 1 comment 1);
+%arrayitems=qw(question 1 validanswer 1);
+
+# default folder for snmpconf-data
+if (defined(&my_getenv("SNMPSHAREPATH"))) {
+  $opts{'c'} = &my_getenv("SNMPSHAREPATH") . "/snmpconf-data";
+}
+else {
+  $opts{'c'} = "/usr/local/share/snmp/snmpconf-data";
+}
+ 
+# default config file path
+if (defined(&my_getenv("SNMPCONFPATH"))) {
+  $confpath = &my_getenv("SNMPCONFPATH");
+}
+else {
+  $confpath = "/usr/local/share/snmp";
+}
+
+# home environment variable
+if (defined(&my_getenv("HOME"))) {
+  $home = &my_getenv("HOME") . "/.snmp";
+}
+else {
+  $home = "(HOME dir - n/a)";
+}
+
+# read the argument string
+getopts("qadhfc:piI:r:R:g:G", \%opts);
+
+# display help
+if ($opts{'h'}) {
+    print "$0 [options] [FILETOCREATE...]\n";
+    print "options:\n";
+    print "  -f           overwrite existing files without prompting\n";
+    print "  -i           install created files into $confpath.\n";
+    print "  -p           install created files into $home.\n";
+    print "  -I DIR       install created files into DIR.\n";
+    print "  -a           Don't ask any questions, just read in current\n";
+    print "                   current .conf files and comment them\n";
+    print "  -r all|none  Read in all or none of the .conf files found.\n";
+    print "  -R file,...  Read in a particular list of .conf files.\n";
+    print "  -g GROUP     Ask a series of GROUPed questions.\n";
+    print "  -G           List known GROUPs.\n";
+    print "  -c conf_dir  use alternate configuration directory.\n";
+    print "  -q           run more quietly with less advice.\n";
+    print "  -d           turn on debugging output.\n";
+    print "  -D           turn on debugging dumper output.\n";
+    exit;
+}
+
+# setup terminal interface.
+$ENV{'PERL_RL'}='o=0' if (!exists($ENV{'PERL_RL'}));
+$term = new Term::ReadLine 'snmpconf';
+
+# read in configuration file set
+read_config_files($opts{'c'}, \%filetypes);
+debug(my_Dumper(\%filetypes));
+
+if ($opts{'G'}) {
+    Print("\nKnown GROUPs of tokens:\n\n");
+    foreach my $group (keys(%groups)) {
+	print "  $group\n";
+    }
+    Print("\n");
+    exit;
+}
+
+#
+# Expand the search path in case it contains multiple directories
+# separated by : (Unix) or ; (Win32)
+#
+my $ENV_SEPARATOR = ':';
+if ($^O eq 'MSWin32') {
+  $ENV_SEPARATOR = ';';
+}
+my @searchpath = split(/$ENV_SEPARATOR/, $confpath);
+push @searchpath, "/usr/local/etc/snmp";
+push @searchpath, ".";
+push @searchpath, "$home";
+
+# Remove trailing /'s or \'s
+for (my $i=0; $i <= $#searchpath; $i++) {
+  $searchpath[$i] =~ /(.*?)([\/\\])*$/;
+  $searchpath[$i] = $1;
+}
+
+# Determine persistent directory.  Order of preference:
+# 
+# file in SNMP_PERSISTENT_FILE environment variable
+# directory defined by persistentDir snmp.conf variable
+# directory in SNMP_PERSISTENT_DIR environment variable
+# default PERSISTENT_DIRECTORY directory
+my $persistentDir = "";
+my $persistentFile = "";
+
+# SNMP_PERSISTENT_FILE environment variable
+if (defined(&my_getenv("SNMP_PERSISTENT_FILE"))) {
+  $persistentFile = &my_getenv("SNMP_PERSISTENT_FILE");
+  debug ("persistent file: SNMP_PERSISTENT_FILE environment variable set\n");
+}
+
+# snmp.conf persistentDir
+if (!($persistentDir) && !($persistentFile)) {
+  foreach my $i (@searchpath) {
+    debug ("Searching file $i/snmp.conf for persistentDir\n");
+    my $temp = get_persistentDir("$i/snmp.conf");
+    if ($temp) {
+      debug("persistent directory: set to $temp in $i/snmp.conf\n");
+      $persistentDir = $temp;
+      last;
+    }
+  }
+}
+
+# SNMP_PERSISTENT_DIR environment variable
+if (!($persistentDir) && !($persistentFile)) {
+  if (&my_getenv("SNMP_PERSISTENT_DIR")) {
+    $persistentDir = &my_getenv("SNMP_PERSISTENT_DIR");
+    debug ("persistent directory: SNMP_PERSISTENT_DIR environment variable set\n");
+  }
+}
+
+# PERSISTENT_DIRECTORY default variable
+if (!($persistentDir) && !($persistentFile)) {
+  $persistentDir = "/var/net-snmp";
+  debug ("persistent directory: Using default value\n");
+}
+
+# Rebuild search path without persistent folder
+# Note:  persistent file handled in Find existing 
+# files to possibly read in section
+if ($persistentDir) {
+  # Remove trailing /'s or \'s
+  $persistentDir =~ /(.*?)([\/\\])*$/;
+  $persistentDir = $1;
+  debug ("persistent directory: $persistentDir\n");
+
+  my @searchpath_old = @searchpath;
+  @searchpath = ();
+  foreach my $path_temp (@searchpath_old) {
+    if ($path_temp eq $persistentDir) {
+      debug("skipping persistent directory $path_temp\n");
+      next;
+    }
+    push @searchpath, $path_temp;
+  }
+}
+
+# Reset $confpath to the first path
+$confpath = $searchpath[0];
+
+#
+# Find existing files to possibly read in.
+#
+push @searchpath, $opts{I} if ($opts{I});
+foreach my $i (@searchpath) {
+    debug("searching $i\n");
+    foreach my $ft (keys(%filetypes)) {
+        if ("$i/$ft" eq $persistentFile) {
+          debug("skipping persistent file $i/$ft\n");
+          next;
+        }
+	debug("searching for $i/$ft\n");
+	$knownfiles{"$i/$ft"} = $ft if (-f "$i/$ft");
+	my $localft = $ft;
+	$localft =~ s/.conf/.local.conf/;
+	$knownfiles{"$i/$localft"} = $ft if (-f "$i/$localft");
+    }
+}
+
+#
+# Ask the user if they want them to be read in and read them
+#
+if (keys(%knownfiles)) {
+    my @files;
+    if (defined($opts{'r'})) {
+	if ($opts{'r'} eq "all" || $opts{'r'} eq "a") {
+	    @files = keys(%knownfiles);
+	} elsif ($opts{'r'} ne "none" && $opts{'r'} ne "n") {
+	    print "unknown argument to -r: $opts{'r'}\n";
+	    exit(1);
+	}
+    } elsif(defined($opts{'R'})) {
+	@files = split(/\s*,\s*/,$opts{'R'});
+	foreach my $i (@files) {
+	    my $x = $i;
+	    $x =~ s/.*\/([^\/]+)$/$1/;
+	    $knownfiles{$i} = $x;
+	}
+	Print("reading: ", join(",",@files),"\n");
+    } else {
+	@files = display_menu(-head => "The following installed configuration files were found:\n",
+			      -tail => "Would you like me to read them in?  Their content will be merged with the\noutput files created by this session.\n\nValid answer examples: \"all\", \"none\",\"3\",\"1,2,5\"\n",
+			      -multiple => 1,
+			      -question => 'Read in which',
+			      -defaultvalue => 'all',
+			      sort keys(%knownfiles));
+    }
+    foreach my $i (@files) {
+	debug("reading $i\n");
+	read_config($i, $knownfiles{$i});
+    }
+}
+
+if ($opts{'g'}) {
+    my @groups = split(/,:\s/,$opts{'g'});
+    foreach my $group (@groups) {
+	do_group($group);
+    }
+} elsif ($#ARGV >= 0) {
+    #
+    # loop through requested files.
+    #
+    foreach my $i (@ARGV) {
+	if (!defined($filetypes{$i})) {
+	    warn "invalid file: $i\n";
+	} else {
+	    if ($opts{'a'}) {
+		$didfile{$i} = 1;
+	    } else {
+		build_file($term, $i, $filetypes{$i});
+	    }
+	}
+    }
+} else {
+    #
+    # ask user to select file type to operate on.
+    #
+    while(1) {
+	my $line = display_menu(-head => "I can create the following types of configuration files for you.\nSelect the file type you wish to create:\n(you can create more than one as you run this program)\n",
+				-question => 'Select File',
+				-otheranswers => ['quit'],
+				-mapanswers => { 'q' => 'quit' },
+				keys(%filetypes));
+	last if ($line eq "quit");
+	debug("file selected: $line\n");
+	build_file($term, $line, $filetypes{$line});
+    }
+}
+
+#
+# Write out the results to the output files.
+#
+output_files(\%filetypes, $term);
+
+
+#
+# Display the files that have been created for the user.
+#
+Print("\n\nThe following files were created:\n\n");
+@didfiles = keys(%didfile);
+foreach my $i (@didfiles) {
+    if ($didfile{$i} ne "1") {
+	if ($opts{'i'} || $opts{'I'}) {
+          $opts{'I'} = "$confpath" if (!$opts{'I'});
+
+          if (! (-d "$opts{'I'}") && ! (mkdir ("$opts{'I'}", 0755))) {
+	    print "\nCould not create $opts{'I'} directory: $!\n";
+	    print ("File $didfile{$i} left in current directory\n");
+	  }
+	  else {
+            move ("$opts{'I'}/$i", "$opts{'I'}/$i.bak") if (-f "$opts{'I'}/$i");
+            if (move ("$didfile{$i}", "$opts{'I'}")) {
+              print("  $didfile{$i} installed in $opts{'I'}\n");	    
+            }
+            else {
+              print "\nCould not move file $didfile{$i} to $opts{'I'}/$i: $!\n";
+              print ("File $didfile{$i} left in current directory\n");
+            }
+          }
+	} elsif ($opts{'p'}) {
+	  if (! (-d "$home") && ! (mkdir ("$home", 0755))) {
+	    print "\nCould not create $home directory: $!\n";
+	    print ("File $didfile{$i} left in current directory\n");
+	  }
+	  else {	    
+	    move ("$home/$i", "$home/$i.bak") if (-f "$home/$i");
+	    if (move ("$didfile{$i}", "$home")) {
+	      print("  $didfile{$i} installed in $home\n");
+	    }
+	    else {
+	      print "\nCould not move file $didfile{$i} to $home: $!\n";
+	      print ("File $didfile{$i} left in current directory\n");
+  	    }
+	  }
+  	} else {
+	    Print("  $didfile{$i} ",
+	    ($i ne $didfile{$i})?"[ from $i specifications]":" ","\n");
+	    if ($opts{'d'}) {
+		open(I,$didfile{$i});
+		debug("    " . join("    ",<I>) . "\n");
+		close(I);
+	    }
+	}
+    }
+}
+
+if (!$opts{'p'} && !$opts{'i'} && !$opts{'I'}) {
+    Print("\nThese files should be moved to $confpath if you
+want them used by everyone on the system.  In the future, if you add 
+the -i option to the command line I'll copy them there automatically for you.
+
+Or, if you want them for your personal use only, copy them to
+$home .  In the future, if you add the -p option to the
+command line I'll copy them there automatically for you.
+
+");
+}
+
+###########################################################################
+# Functions
+###########################################################################
+
+sub Print {
+    print @_ if (!$opts{'q'});
+}
+#
+# handle a group of questions
+#
+sub get_yn_maybe {
+    my $question = shift;
+    my $ans = "y";
+    if ($question ne "") {
+	$ans = get_answer($term, $question,
+			  valid_answers(qw(yes y no n)), 'y');
+    }
+    return ($ans =~ /^y/)?1:0;
+}
+
+sub do_group {
+    my $group = shift;
+    die "no such group $group\n" if (!$groups{$group});
+    foreach my $token (@{$groups{$group}}) {
+	if ($token->[0] eq "message") {
+	    Print ("$token->[1] $token->[2]\n");
+	} elsif ($token->[0] eq "subgroup") {
+	    do_group($token->[1]) if (get_yn_maybe($token->[2]));
+	} elsif (defined($tokenmap{$token->[1]})) {
+	    if (get_yn_maybe($token->[2])) {
+		do {
+		    do_line($token->[1], $tokenmap{$token->[1]});
+		} until ($token->[0] ne "multiple" ||
+			 get_answer($term, "Do another $token->[1] line?",
+				    valid_answers(qw(yes y no n)), 'y')
+			 =~ /n/);
+	    }
+	} elsif (defined($filetypes{$token->[1]})) {
+	    $didfile{$token->[1]} = 1;
+	} else {
+	    die "invalid member $token->[1] of group $group\n";
+	}
+    }
+}
+
+#
+# build a particular type of file by operating on sections
+#
+sub build_file {
+    my ($term, $filename, $fileconf) = @_;
+    $didfile{$filename} = 1;
+    my (@lines);
+    while(1) {
+	my $line = display_menu(-head => "The configuration information which can be put into $filename is divided\ninto sections.  Select a configuration section for $filename\nthat you wish to create:\n",
+				-otheranswers => ['finished'],
+				-mapanswers => { 'f' => 'finished' },
+				-question => "Select section",
+				-numeric => 1,
+				map { $_->{'title'}[0] } @$fileconf);
+
+	return @lines if ($line eq "finished");
+	do_section($fileconf->[$line-1]);
+    }
+}
+
+#
+# configure a particular section by operating on token types
+#
+sub do_section {
+    my $confsect = shift;
+    my @lines;
+    while(1) {
+	Print ("\nSection: $confsect->{'title'}[0]\n");
+	Print ("Description:\n");
+	Print ("  ", join("\n  ",@{$confsect->{'description'}}),"\n");
+	my $line =
+	    display_menu(-head => "Select from:\n",
+			 -otheranswers => ['finished','list'],
+			 -mapanswers => { 'f' => 'finished',
+					  'l' => 'list' },
+			 -question => 'Select section',
+			 -descriptions => [map { $confsect->{$_}{info}[0] } 
+					   @{$confsect->{'thetokens'}}],
+			 @{$confsect->{'thetokens'}});
+	return @lines if ($line eq "finished");
+	if ($line eq "list") {
+	    print "Lines defined for section \"$confsect->{title}[0]\" so far:\n";
+	    foreach my $i (@{$confsect->{'thetokens'}}) {
+		if ($#{$confsect->{$i}{'results'}} >= 0) {
+		    print "  ",join("\n  ",@{$confsect->{$i}{'results'}}),"\n";
+		}
+	    }
+	    next;
+	}
+	do_line($line, $confsect->{$line});
+    }
+    return;
+}
+
+#
+# Ask all the questions related to a particular line type
+#
+sub do_line {
+    my $token = shift;
+    my $confline = shift;
+    my (@answers, $counter, $i);
+#    debug(my_Dumper($confline));
+    Print ("\nConfiguring: $token\n");
+    Print ("Description:\n  ",join("\n    ",@{$confline->{'info'}}),"\n\n");
+    for($i=0; $i <= $#{$confline->{'question'}}; $i++) {
+	if (defined($confline->{'question'}[$i]) &&
+	    $confline->{'question'}[$i] ne "") {
+	    my $q = $confline->{'question'}[$i];
+	    $q =~ s/\$(\d+)/$answers[$1]/g;
+	    debug("after: $term, $q, ",$confline->{'validanswer'}[$i],"\n");
+	    $answers[$i] = get_answer($term, $q,
+				      $confline->{'validanswer'}[$i]);
+	    $answers[$i] =~ s/\"/\\\"/g;
+	    $answers[$i] = '"' . $answers[$i] . '"' if ($answers[$i] =~ /\s/);
+	}
+    }
+    if ($#{$confline->{'line'}} == -1) {
+	my ($i,$line);
+	for($i=0; $i <= $#{$confline->{'question'}}; $i++) {
+	    next if (!defined($confline->{'question'}[$i]) ||
+		     $confline->{'question'}[$i] eq "");
+	    $line .= " \$" . $i;
+	}
+	push @{$confline->{'line'}}, $line;
+    }
+
+    foreach my $line (@{$confline->{'line'}}) {
+	my $finished = $line;
+	debug("preline: $finished\n");
+	debug("answers: ",my_Dumper(\@answers));
+	$finished =~ s/\$(\d+)/$answers[$1]/g;
+	if ($line =~ s/^eval\s+//) {
+	    debug("eval: $finished\n");
+	    $finished = eval $finished;
+	    debug("eval results: $finished\n");
+	}
+	$finished = $token . " " . $finished;
+	Print ("\nFinished Output: $finished\n");
+	push @{$confline->{'results'}},$finished;
+    }
+}
+
+#
+# read all sets of config files in the various subdirectories.
+#
+sub read_config_files {
+    my $readdir = shift;
+    my $filetypes = shift;
+    opendir(DH, $readdir) || die "no such directory $readdir, did you run make install?\n";
+    my $dir;
+    my $configfilename="snmpconf-config";
+
+    while(defined($dir = readdir(DH))) {
+	next if ($dir =~ /^\./);
+	next if ($dir =~ /CVS/);
+	debug("dir entry: $dir\n");
+	if (-d "$readdir/$dir" && -f "$readdir/$dir/$configfilename") {
+
+	    my $conffile;
+
+	    # read the top level configuration inforamation about the direcotry.
+	    open(I, "$readdir/$dir/$configfilename");
+	    while(<I>) {
+		$conffile = $1 if (/forconffile: (.*)/);
+	    }
+	    close(I);
+
+	    # no README informatino.
+	    if ($conffile eq "") {
+		print STDERR "Warning: No 'forconffile' information in $readdir/$dir/$configfilename\n";
+		next;
+	    }
+
+	    # read all the daat in the directory
+	    $filetypes->{$conffile} = read_config_items("$readdir/$dir", $conffile);
+	} else {
+	    # no README informatino.
+	    print STDERR "Warning: No $configfilename file found in $readdir/$dir\n";
+	}
+    }
+    closedir DH;
+}
+
+#
+# read each configuration file in a directory
+#
+sub read_config_items {
+    my $itemdir = shift;
+    my $type = shift;
+    opendir(ITEMS, $itemdir);
+    my $file;
+    my @results;
+    while(defined($file = readdir(ITEMS))) {
+	next if ($file =~ /~$/);
+	next if ($file =~ /^snmpconf-config$/);
+	if (-f "$itemdir/$file") {
+	    my $res = read_config_item("$itemdir/$file", $type);
+	    if (scalar(keys(%$res)) > 0) {
+		push @results, $res;
+	    }
+	}
+    }
+    closedir(ITEMS);
+    return \@results;
+}
+
+#
+# mark a list of tokens as a special "group"
+#
+sub read_config_group {
+    my ($fh, $group, $type) = @_;
+    my $line;
+    debug("handling group $group\n");
+    push (@{$groups{$group}},['filetype', $type]);
+    while($line = <$fh>) {
+	chomp($line);
+	next if ($line =~ /^\s*$/);
+	next if ($line =~ /^\#/);
+	return $line if ($line !~ /^(single|multiple|message|filetype|subgroup)/);
+	my ($type, $token, $rest) = ($line =~ /^(\w+)\s+([^\s]+)\s*(.*)/);
+	debug ("reading group $group : $type -> $token -> $rest\n");
+	push (@{$groups{$group}}, [$type, $token, $rest]);
+    }
+    return;
+}
+	
+
+#
+# Parse one file
+#
+sub read_config_item {
+    my $itemfile = shift;
+    my $itemcount;
+    my $type = shift;
+    my $fh = new IO::File($itemfile);
+    return if (!defined($fh));
+    my (%results, $curtoken);
+    debug("tokenitems:  ", my_Dumper(\%tokenitems));
+  topwhile:
+    while($line = <$fh>) {
+	next if ($line =~ /^\s*\#/);
+	my ($token, $rest) = ($line =~ /^(\w+)\s+(.*)/);
+	next if (!defined($token) || !defined($rest));
+	while ($token eq 'group') {
+	    # handle special group list
+	    my $next = read_config_group($fh, $rest,$type);
+	    if ($next) {
+		($token, $rest) = ($next =~ /^(\w+)\s+(.*)/);
+	    } else {
+		next topwhile;
+	    }
+	}
+	debug("token: $token => $rest\n");
+	if ($token eq 'steal') {
+	    foreach my $stealfrom (keys(%{$results{$rest}})) {
+		if (!defined($results{$curtoken}{$stealfrom})) {
+		    @{$results{$curtoken}{$stealfrom}} = 
+			@{$results{$rest}{$stealfrom}};
+		}
+	    }
+	} elsif (defined($tokenitems{$token})) {
+	    if (!defined($curtoken)) {
+		die "error in configuration file $itemfile, no token set\n";
+	    }
+	    $rest =~ s/^\#//;
+	    push @{$results{$curtoken}{$token}},$rest;
+	} elsif (defined($arrayitems{$token})) {
+	    if (!defined($curtoken)) {
+		die "error in configuration file $itemfile, no token set\n";
+	    }
+	    my ($num, $newrest) = ($rest =~ /^(\d+)\s+(.*)/);
+	    if (!defined($num) || !defined($newrest)) {
+		warn "invalid config line: $line\n";
+	    } else {
+		$results{$curtoken}{$token}[$num] = $newrest;
+	    }
+	} elsif ($token =~ /^token\s*$/) {
+	    $rest = lc($rest);
+	    $curtoken = $rest;
+	    if (! exists $results{$curtoken}{'defined'}) {
+		push @{$results{'thetokens'}}, $curtoken;
+		$results{$curtoken}{'defined'} = 1;
+	    }
+	    $tokenmap{$curtoken} = $results{$curtoken};
+	    debug("current token set to $token\n");
+	} else {
+	    push @{$results{$token}},$rest;
+	}
+    }
+    return \%results;
+}
+
+sub debug {
+    print @_ if ($opts{'d'});
+}
+
+sub output_files {
+    my $filetypes = shift;
+    my $term = shift;
+    foreach my $ft (keys(%$filetypes)) {
+	next if (!$didfile{$ft});
+	my $outputf = $ft;
+	if (-f $outputf && !$opts{'f'}) {
+	    print "\nError: An $outputf file already exists in this directory.\n\n";
+	    my $ans = get_answer($term,"'overwrite', 'skip', 'rename' or 'append'? ",valid_answers(qw(o overwrite r rename s skip a append)));
+	    next if ($ans =~ /^(s|skip)$/i);
+	    if ($ans =~ /^(a|append)/) {
+		$outputf = ">$outputf";
+	    } elsif ($ans =~ /^(r|rename)$/i) {
+		# default to rename for error conditions
+		$outputf = $term->readline("Save to what new file name instead (or 'skip')? ");
+	    }
+	}
+	$didfile{$ft} = $outputf;
+	open(O,">$outputf") || warn "couldn't write to $outputf\n";
+	print O "#" x 75,"\n";
+	print O "#\n# $ft\n";
+	print O "#\n#   - created by the snmpconf configuration program\n#\n";
+	foreach my $sect (@{$filetypes->{$ft}}) {
+	    my $secthelp = 0;
+	    foreach my $token (@{$sect->{'thetokens'}}) {
+		if ($#{$sect->{$token}{'results'}} >= 0) {
+		    if ($secthelp++ == 0) {
+			print O "#" x 75,"\n# SECTION: ",
+			join("\n#          ", @{$sect->{title}}), "\n#\n";
+			print O "#   ", join("\n#   ",@{$sect->{description}}),
+			"\n";
+		    }
+		    print O "\n# $token: ",
+		    join("\n#   ",@{$sect->{$token}{info}}), "\n\n";
+		    foreach my $result (@{$sect->{$token}{'results'}}) {
+			print O "$result\n";
+		    }
+		}
+	    }
+	    print O "\n\n\n";
+	}
+	if ($#{$unknown{$ft}} > -1) {
+	    print O "#\n# Unknown directives read in from other files by snmpconf\n#\n";
+	    foreach my $unknown (@{$unknown{$ft}}) {
+		print O $unknown,"\n";
+	    }
+	}
+	close(O);
+    }
+}
+
+sub get_answer {
+    my ($term, $question, $regexp, $defaultval) = @_;
+    $question .= " (default = $defaultval)" if (defined($defaultval) && $defaultval ne "");
+    $question .= ": ";
+    my $ans = $term->readline($question);
+    return $defaultval if ($ans eq "" && defined($defaultval) && 
+			   $defaultval ne "");
+    while (!(!defined($regexp) ||
+	     $regexp eq "" ||
+	     $ans =~ /$regexp/)) {
+	print "invalid answer!  It must match this regular expression: $regexp\n";
+	$ans = $term->readline($question);
+    }
+    return $defaultval if ($ans eq "" && defined($defaultval) && 
+			   $defaultval ne "");
+    return $ans;
+}
+    
+sub valid_answers {
+    my @list;
+    foreach $i (@_) {
+	push @list, $i if ($i);
+    }
+    return "^(" . join("|",@list) . ")\$";
+}
+
+sub read_config {
+    my $file = shift;
+    my $filetype = shift;
+    return if (!defined($filetypes{$filetype}));
+    if (! -f $file) {
+	warn "$file does not exist\n";
+	return;
+    }
+    open(I,$file);
+    while(<I>) {
+	next if (/^\s*\#/);
+	next if (/^\s*$/);
+	chomp;
+	my ($token, $rest) = /^\s*(\w+)\s+(.*)/;
+	$token = lc($token);
+	next if (defined($alllines{$_})); # drop duplicate lines
+	if (defined($tokenmap{$token})) {
+	    push @{$tokenmap{$token}{'results'}},$_;
+	} else {
+	    push @{$unknown{$filetype}},$_;
+	}
+	$alllines{$_}++;
+    }
+    close(I);
+}
+
+sub display_menu {
+    my %config;
+
+    while ($#_ > -1 && $_[0] =~ /^-/) {
+	my $key = shift;
+	$config{$key} = shift;
+    }
+
+    my $count=1;
+    print "\n" if (!defined($config{'-dense'}));
+    if ($config{'-head'}) {
+	print $config{'-head'};
+	print "\n" if (!defined($config{'-dense'}));
+    }
+    my @answers = @_;
+    my @list;
+    if (defined($config{'-descriptions'}) && 
+	ref($config{'-descriptions'}) eq "ARRAY") {
+	@list = @{$config{'-descriptions'}}
+    } else {
+	@list = @_;
+    }
+    foreach my $i (@list) {
+	printf "  %2d:  $i\n", $count++ if ($i);
+    }
+    print "\n" if (!defined($config{'-dense'}));
+    if (defined($config{'-otheranswers'})) {
+	if (ref($config{'-otheranswers'}) eq 'ARRAY') {
+	    print "Other options: ", join(", ",
+					  @{$config{'-otheranswers'}}), "\n";
+	    push @answers, @{$config{'-otheranswers'}};
+	    push @answers, keys(%{$config{'-mapanswers'}});
+	} else {
+	    my $maxlen = 0;
+	    push @answers,keys(%{$config{'-otheranswers'}});
+	    foreach my $i (keys(%{$config{'-otheranswers'}})) {
+		$maxlen = length($i) if (length($i) > $maxlen);
+	    }
+	    foreach my $i (keys(%{$config{'-otheranswers'}})) {
+		printf("  %-" . $maxlen . "s: %s\n", $i, 
+		       $config{'-otheranswers'}{$i});
+	    }
+	}
+	print "\n" if (!defined($config{'-dense'}));
+    }
+    if ($config{'-tail'}) {
+	print $config{'-tail'};
+	print "\n" if (!defined($config{'-dense'}));
+    }
+
+    if (defined($config{'-question'})) {
+	while(1) {
+	    my $numexpr;
+	    if ($config{'-multiple'}) {
+		$numexpr = '[\d\s,]+|all|a|none|n';
+	    } else {
+		$numexpr = '\d+';
+	    }
+	    push @answers,"" if ($config{'-defaultvalue'});
+	    $ans = get_answer($term, $config{'-question'},
+			      valid_answers($numexpr,@answers),
+			      $config{'-defaultvalue'});
+	    if ($config{'-mapanswers'}{$ans}) {
+		$ans = $config{'-mapanswers'}{$ans};
+	    }
+
+	    if ($ans =~ /^$numexpr$/) {
+		if ($config{'-multiple'}) {
+		    my @list = split(/\s*,\s*/,$ans);
+		    my @ret;
+		    $count = 0;
+		    foreach my $i (@_) {
+			$count++;
+			if ($ans eq "all" || $ans eq "a" 
+			    || grep(/^$count$/,@list)) {
+			    push @ret, $i;
+			}
+		    }
+		    return @ret;
+		} else {
+		    if ($ans <= 0 || $ans > $#_+1) {
+			warn "invalid selection: $ans [must be 1-" .
+			    ($#_+1) . "]\n";
+		    } else {
+			return $ans if ($config{'-numeric'});
+			$count = 0;
+			foreach my $i (@_) {
+			    $count++;
+			    if ($ans eq $count) {
+				return $i;
+			    }
+			}
+		    }
+		}
+	    } else {
+		return $ans;
+	    }
+	}
+    }
+}
+
+sub my_Dumper {
+    if ($opts{'D'}) {
+	return Dumper(@_);
+    } else {
+	return "\n";
+    }
+}
+
+sub get_persistentDir {
+    my $file = shift;
+    my $result = 0;
+    if (! -f $file) {
+	return 0;
+    }
+    open(I,$file);
+    while(<I>) {
+	next if (/^\s*\#/);
+	next if (/^\s*$/);
+	chomp;
+	my ($token, $rest) = /^\s*(\w+)\s+(.*)/;
+        if (lc($token) eq "persistentdir") {
+          $result = $rest;
+        }
+        next;
+    }
+    close(I);
+    return $result;
+}
+
+# Usage:   &win32_reg_read("key", "value")
+# Example: &win32_reg_read("SOFTWARE\\Net-SNMP","SNMPSHAREPATH");
+# Returns: Value if found in HKCU or HCLM.  Otherwise an empty string.
+sub win32_reg_read {
+  my $sub_key = shift;
+  my $value = shift;
+
+  require Win32::Registry;
+   
+  my ($hkey, %key_values, $temp, $no_warn);
+ 
+  # Try HKCU first
+  $no_warn = $HKEY_CURRENT_USER;
+  if ($HKEY_CURRENT_USER->Open($sub_key, $hkey))
+  {
+    $hkey->GetValues(\%key_values);   
+    foreach $temp (sort keys %key_values) {
+      if ($temp eq $value) {
+        return $key_values{$temp}[2];
+      }
+    }
+    $hkey->Close(); 
+  }
+
+  # Try HKLM second
+  $no_warn = $HKEY_LOCAL_MACHINE;
+  if ($HKEY_LOCAL_MACHINE->Open($sub_key, $hkey))
+  {
+    $hkey->GetValues(\%key_values);
+    foreach $temp (sort keys %key_values) {
+      if ($temp eq $value) {
+        return $key_values{$temp}[2];
+      }
+    }
+    $hkey->Close(); 
+  }
+  return "";
+}
+
+# Usage:   &my_getenv("key")
+# Example: &my_getenv("SNMPSHAREPATH");
+# Returns: Unix:  Environment variable value (undef if not defined)
+#          Win32: HKCU\Software\Net-SNMP\(key) or
+#          Win32: HKLM\Software\Net-SNMP\(key) or
+#          Win32: Environment variable value (undef if not defined)
+sub my_getenv {
+  my $key = shift;
+  
+  # Unix
+  if ($^O ne 'MSWin32') {
+    return $ENV{$key};
+  }
+  # Windows
+  else {
+    my $temp = &win32_reg_read("SOFTWARE\\Net-SNMP","$key");
+    if ($temp ne "") {
+      return $temp;
+    }
+    else {
+      return $ENV{$key};
+    }
+  }
+}
+

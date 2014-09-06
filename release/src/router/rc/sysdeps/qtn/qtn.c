@@ -10,6 +10,11 @@
 #include "web-qtn.h"
 #include "net80211/ieee80211_dfs_reentry.h"
 
+#ifdef RTCONFIG_JFFS2ND_BACKUP
+#include <sys/mount.h>
+#include <sys/statfs.h>
+#endif
+
 static int lock_qtn_apscan = -1;
 
 extern int isValidCountryCode(const char *Ccode);
@@ -973,3 +978,45 @@ int gen_rpc_qcsapi_ip(void)
 #endif
 }
 
+#if defined(RTCONFIG_JFFS2ND_BACKUP)
+#define JFFS_NAME	"jffs2"
+#define SECOND_JFFS2_PARTITION  "asus"
+#define SECOND_JFFS2_PATH	"/asus_jffs"
+void check_2nd_jffs(void)
+{
+	char s[256];
+	int size;
+	int part;
+	struct statfs sf;
+
+	_dprintf("2nd jffs2: %s\n", SECOND_JFFS2_PARTITION);
+
+	if (!mtd_getinfo(SECOND_JFFS2_PARTITION, &part, &size)) {
+		_dprintf("Can not get 2nd jffs2 information!");
+		return;
+	}
+	mount_2nd_jffs2();
+
+	if(access("/asus_jffs/bootcfg.tgz", R_OK ) != -1 ) {
+		logmessage("qtn", "bootcfg.tgz exists");
+	} else {
+		logmessage("qtn", "bootcfg.tgz does not exist");
+		sprintf(s, MTD_BLKDEV(%d), part);
+		umount("/asus_jffs");
+		if (mount(s, SECOND_JFFS2_PATH , JFFS_NAME, MS_NOATIME, "") != 0) {
+			logmessage("qtn", "cannot store bootcfg.tgz");
+		}else{
+			system("cp /tmp/bootcfg.tgz /asus_jffs");
+			logmessage("qtn", "backup bootcfg.tgz ok");
+		}
+	}
+
+	if (umount(SECOND_JFFS2_PATH)){
+		dbG("umount asus_jffs failed\n");
+	}else{
+		dbG("umount asus_jffs ok\n");
+	}
+
+	// format_mount_2nd_jffs2();
+}
+#endif

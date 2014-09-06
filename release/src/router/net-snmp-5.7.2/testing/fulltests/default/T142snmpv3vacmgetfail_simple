@@ -1,0 +1,32 @@
+#!/bin/sh
+
+. ../support/simple_eval_tools.sh
+
+HEADER SNMPv3 vacm denial support
+
+#
+# Begin test
+#
+
+# Configuration:
+#initial1 can access .1.3.6.1.2.1.1.1, deny others
+#initial2 can access all except .1.3.6.1.2.1.1.1 
+#This case test for denied access
+
+snmp_version=v3
+. ./Sv3vacmconfig
+
+STARTAGENT
+
+CAPTURE "snmpget -On $SNMP_FLAGS -v3 -a MD5 -A initial_test_pass_auth -u initial1 -l anp $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT .1.3.6.1.2.1.1.3.0" 
+
+CHECKORDIE ".1.3.6.1.2.1.1.3.0 = No Such Object available on this agent at this OID"
+
+
+CAPTURE "snmpget -On $SNMP_FLAGS -v3 -a MD5 -A initial_test_pass_auth -u initial2 -l anp $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT .1.3.6.1.2.1.1.1.0" 
+
+CHECKORDIE ".1.3.6.1.2.1.1.1.0 = No Such Object available on this agent at this OID"
+
+STOPAGENT
+
+FINISHED

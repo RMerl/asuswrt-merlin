@@ -1,0 +1,87 @@
+.TH net-snmp-config 1 "16 Nov 2006" VVERSIONINFO "Net-SNMP"
+.SH NAME
+net\-snmp\-config - returns information about installed net-snmp libraries and binaries 
+.SH SYNOPSIS
+.PP
+.B net\-snmp\-config
+[OPTIONS]
+.SH DESCRIPTION
+.PP
+The \fInet\-snmp\-config\fP shell script is designed to retrieve the
+configuration information about the libraries and binaries dealing with
+the Simple Network Management Protocol (SNMP), built from the 
+.B net-snmp 
+source package. The information is particularly useful for
+applications that need to link against the SNMP libraries and hence
+must know about any other libraries that must be linked in as well.
+
+.SH OPTIONS
+.TP
+\fB\-\-version\fR
+displays the net-snmp version number
+.TP
+\fB\-\-indent\-options\fR
+displays the indent options from the Coding Style
+.TP
+\fB\-\-debug\-tokens\fR
+displays a example command line to search to source
+code for a list of available debug tokens
+.PP
+SNMP Setup commands:
+.TP
+\fB\-\-create\-snmpv3\-user\fR [\-ro] [\-a authpass] [\-x privpass]
+[\-X DES|AES] [\-A MD5|SHA] [username]
+.PP
+These options produce the various compilation flags needed when
+building external SNMP applications:
+.TP
+\fB\-\-base\-cflags\fR
+lists additional compilation flags needed
+for external applications (excludes \fB\-I\fR. and
+extra developer warning flags, if any)
+.TP
+\fB\-\-cflags\fR
+lists additional compilation flags needed
+.TP
+\fB\-\-libs\fR
+lists libraries needed for building applications
+.TP
+\fB\-\-agent\-libs\fR
+lists libraries needed for building subagents
+.TP
+\fB\-\-netsnmp\-libs\fR
+lists netsnmp specific libraries
+.TP
+\fB\-\-external\-libs\fR
+lists libraries needed by netsnmp libs
+.TP
+\fB\-\-netsnmp\-agent\-libs\fR
+lists netsnmp specific agent libraries
+.HP
+\fB\-\-external\-agent\-libs\fR lists libraries needed by netsnmp libs
+.PP
+Automated subagent building (produces an OUTPUTNAME binary file):
+[This feature has not been extensively tested,  use at your own risk.]
+.TP
+\fB\-\-compile\-subagent\fR OUTPUTNAME [\-\-norm] [\-\-cflags flags]
+[\-\-ldflags flags] mibmodule1.c [...]]
+.TP
+\fB\-\-norm\fR
+leave the generated .c file around to read.
+.TP
+\fB\-\-cflags\fR flags
+extra cflags to use (e.g. \fB\-I\fR...).
+.TP
+\fB\-\-ldflags\fR flags
+extra ld flags to use (e.g. \fB\-L\fR... \fB\-l\fR...).
+.IP
+Details on how the net-nsmp package was compiled:
+.TP
+\fB\-\-configure\-options\fR
+Display original configure arguments
+.TP
+\fB\-\-snmpd\-module\-list\fR
+Display the modules compiled into the agent
+.TP
+\fB\-\-prefix\fR
+Display the installation prefix

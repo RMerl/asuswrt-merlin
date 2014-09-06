@@ -126,10 +126,10 @@ function genClientListOption(){
 							<tr>
 								<td bgcolor="#4D595D" colspan="3" valign="top">
 									<div>&nbsp;</div>
-									<div class="formfonttitle">Adaptive QoS - Web Histroy</div>
+									<div class="formfonttitle"><#Adaptive_QoS#> - Web Histroy</div>
 									<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
 									<div class="formfontdesc">
-										Web History shows clients Web Surfing history. 
+										<#Adaptive_History_desc#>
 									</div>
 									<div style="margin-bottom:5px">
 										<select id="clientListOption" class="input_option" name="clientList" onchange="getWebHistory(this.value);">

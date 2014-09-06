@@ -1,0 +1,351 @@
+#!/usr/bin/perl
+
+use Getopt::GUI::Long;
+use QWizard;
+use QWizard::API;
+use Data::Dumper;
+use Cwd;
+
+use Getopt::Std;
+Getopt::GUI::Long::Configure(qw(display_help no_ignore_case));
+
+use strict;
+
+our %opts =
+(
+ 'd' => $ENV{'HOME'} . "/src/snmp/patme/",
+ 'b' => 'main,5.6,5.5,5.4,5.3',
+ 'p' => '-p0',
+);
+
+# sets the order shown
+our @codetrees = ('main',
+		  '5.6',
+		  '5.5',
+		  '5.4',
+		  '5.3',
+		  '5.2',
+		  '5.1',
+		  '5.0',
+		  'UCD');
+
+our %codetrees = ('5.0' => 'V5-0-patches',
+		  '5.1' => 'V5-1-patches',
+		  '5.2' => 'V5-2-patches',
+		  '5.3' => 'V5-3-patches',
+		  '5.4' => 'V5-4-patches',
+		  '5.5' => 'V5-5-patches',
+		  '5.6' => 'V5-6-patches',
+		  'main' => 'net-snmp',
+		  'UCD' => 'V4-2-patches');
+
+our (@captures, $capfilt, $result, %captures, $capturenum);
+
+GetOptions(\%opts,
+	   ['f|file=s',           'Patch file'],
+	   ['d|base-directory=s', 'Base directory of checkouts'],
+	   ['p|patch-args=s',     'Default patch arguments (-p1)'],
+
+	   ['GUI:separator',   'Patch application specifics;'],
+	   ['b|braches=s',     'Branches to apply to (eg 5.1,5.2,...)'],
+	   ['m|commit-msg=s',  'Default commit message to use'],
+	   ['D|subdir=s',      'Apply patches to a subdirectory'],
+	   ['u|no-update',     'Do not run svn status/update in the directory first.  Only use this if it\'s known clean.'],
+	  );
+
+my %bs;
+if ($opts{'b'}) {
+    map { $bs{$_} = 1; } split(/,\s*/,$opts{'b'}); 
+}
+$opts{'d'} .= "/" if ($opts{'d'} !~ /\/$/);
+
+my $qw = new QWizard();
+my $pris = load_primaries();
+$qw->{'primaries'} = $pris;
+
+$qw->qwparam('svncommit',$opts{'m'}) if ($opts{'m'});
+
+$qw->magic('top');
+
+sub make_tops {
+    my @tops;
+    foreach my $k (@codetrees) {
+	push @tops, 
+	  qw_checkbox($k, "Apply to $k", 1, 0, 
+		      default => $qw->qwparam($k) || $bs{$k},
+		      override => 1);
+    }
+    return @tops;
+}
+
+sub load_primaries {
+    my @tops = make_tops();
+    return
+      {
+       top =>
+       qw_primary('top','Select packages to apply the patch to:', '', 
+		  [@tops,
+		  qw_text('basedir', 'Base code directory:', 
+			  default => $opts{'d'}),
+		  qw_hidden('no_confirm',1),
+		  qw_text('patchfile','Patch file:', default => $opts{f},
+			 check_value => sub { 
+			     return "patch file doesn't exist" if (! -f qwparam('patchfile'))
+			 }),
+		  qw_checkbox('noupdate','Don\'t run svn update/revert first:', 
+			      1, 0, default => $opts{'u'} || 0)],
+		  [],[],sub_modules => ['commit', 'commitmsg', 'maketest',
+					'edit', 'applying', 'check',
+					'patch_info']),
+
+       patch_info =>
+       qw_primary('check','Checking code directory status:', '',
+		  [qw_paragraph('patch pieces:',
+				sub { capture("egrep '^(---|\\+\\+\\+)' " . 
+					      qwparam('patchfile'))},
+				width => 80,
+				height => 30),
+		   qw_text('patchargs','Patch arguments',
+			   default => $opts{'p'}),
+		   qw_text('subdir', 'Apply in package subdir:',
+			   default => $opts{'D'}),
+		   qw_paragraph('Note:','Hitting next below will first clean your local repositories which could take a bit (watch the console for deails on what it\'s doing at any moment)', doif => sub {!qwparam('noupdate')}),
+]),
+
+
+       check =>
+       qw_primary('check','Checking code directory status:', '',
+		  [qw_paragraph('removed .rej files:',
+			       sub { my $it = captureeachdir('find . -name \*.rej');
+				     captureeachdir('find . -name \*.rej | xargs rm -f');
+				     return $it;
+				 },
+				preformatted => 1,
+				width => 80,
+				height => 60,
+			       ),
+		   qw_paragraph('svn update:',
+				sub {
+				    my ($res, $one);
+				    foreach my $k (@codetrees) {
+					next if (!qwparam($k));
+					$res .= "$k:\n";
+					$one = capturedir($codetrees{$k}, 
+							  "svn update");
+					$res .= $one;
+					$one = capturedir($codetrees{$k}, 
+							  "svn revert -R .");
+					$res .= $one;
+				    }
+				    return $res;
+				  },
+				preformatted => 1,
+				width => 80,
+				height => 60,
+				doif => sub{!qwparam('noupdate')}
+			       )		  ],
+		 ),
+
+       applying =>
+       qw_primary("applying", 'Applying patches to the code bases', '',
+		  [{type => 'table',
+		    text => 'Results:',
+		    values => sub {
+			my @tab;
+			foreach my $k (@codetrees) {
+			    next if (!qwparam($k));
+			    push @tab, [$k,
+					qw_paragraph("r$k","", 
+						     preformatted => 1,
+						     width => 80,
+						     height => 20,
+						     values => 
+						     sub { my $cmd = "patch " . qwparam('patchargs') . " < " . qwparam('patchfile');
+							   my $results = "Running on $k: $cmd" . "\n" . capturedir($codetrees{$k},$cmd);
+							   return $results})];
+			}
+			return [\@tab];
+		    }}],[],[]),
+
+       edit =>
+       qw_primary('edit','Fix the following files:','',
+		  [qw_paragraph('Fix these (maybe):',
+			       sub {
+				   $capfilt = '(.*.rej)';
+				   my $res = 
+				     captureeachdir('find . -name \*.rej');
+				   print Dumper(\%captures);
+				   $capfilt = undef;
+				   return $res;
+				 },
+				preformatted => 1,
+				width => 80,
+				height => 60,
+			       ),
+		   qw_label('failed files:',
+			    sub { $capturenum = 0;
+				  map { $capturenum += $#{$captures{$_}} + 1;
+				    } (keys(%captures));
+				  return $capturenum;
+			      }),
+		  qw_checkbox('edithem','Open an editor on the failed files?',
+			      1, 0, doif => sub { return $capturenum > 0 }),
+		  qw_text('editor','Editor:',default => $ENV{'EDITOR'} || 'vi',
+			  doif => sub { return $capturenum > 0 })],
+		  [sub {
+		       if (qwparam('edithem')) {
+			   foreach my $k (keys(%captures)) {
+			       foreach my $f (@{$captures{$k}}) {
+				   my $file = qwparam('basedir') .
+				     $codetrees{$k} .
+				       qwparam('subdir') . '/' . $f->[0];
+				   print STDERR "editing: $file\n";
+				   system(qwparam('editor') . " " . $file);
+			       }
+			   }
+		       }
+		   }]
+		 ),
+
+       maketest =>
+       qw_primary("maketest", "Run make?",'',
+		 [qw_checkbox('makeit','Run make?', 1, 0),
+		  qw_checkbox('maketest', 'Run make test?', 1, 0)
+		 ],
+ 		 [sub {
+ 		      if (qwparam('makeit') || qwparam('maketest')) {
+ 			  $_[0]->add_todos(-early, 'domake');
+ 		      }
+ 		  }]
+		 ),
+
+       domake =>
+       qw_primary("domake", "Make results",'',
+		  [qw_paragraph('Make results:',
+				sub { return captureeachdir('make'); },
+				preformatted => 1,
+				width => 80,
+				height => 20,
+				doif => sub { qwparam('makeit') }
+			       ),
+		   qw_paragraph('Make test results:',
+				sub { return captureeachdir('make test'); },
+				preformatted => 1,
+				width => 80,
+				height => 20,
+				doif => sub { qwparam('maketest') }
+			       )]
+		  ),
+
+       commitmsg =>
+       qw_primary("commitmsg", 'Commit info:', '',
+		  [qw_text('svncommit','Commit message',
+			   default => qwparam('svncommit') || $opts{'m'}),
+		  {type => 'dynamic',
+		   values => sub { my @tops = make_tops(1); return \@tops}}]),
+
+       commit =>
+       qw_primary("commit", 'running commit:', '',
+		  [qw_paragraph('committing files:',
+			       sub { my $msg = qwparam('svncommit');
+				     $msg =~ s/\'/\'\"\'\"\'/g; # escape 's
+				     return capturedir($opts{'d'},
+						       'svn commit -m \'' . $msg . '\' ' . get_codedirs_str()); },
+				preformatted => 1,
+				width => 80,
+				height => 20,
+			       )]),
+
+       editing =>
+       qw_primary("applying", 'Edit the following files:', '',
+		  [{type => 'table',
+		    text => 'Results:',
+		    values => sub { return [\@captures]},
+		   }],[],[])
+      }
+}
+
+sub capture {
+    my $cmd = join(" ",@_);
+    my $results = "Running: $cmd\n";
+    my @a;
+    print $results;
+    open(I,"$cmd 2>&1|");
+    while (<I>) {
+	$results .= $_;
+	print $_;
+	if ($capfilt) {
+	    print "capfilt: $capfilt\n";
+	    @a = /$capfilt/;
+	    print "  capfilt: @a\n";
+	    push @captures, [@a];
+	}
+    }
+    close(I);
+    $result = $? >> 8;
+    $results .= "RESULT: " . (($result) ? "FAIL" : "SUCCESS") . "($result)\n";
+    return $results;
+}
+
+sub capturedir {
+    my $dir = shift;
+    $dir .= "/" if ($dir !~ /\/$/);
+    my $basedir = qwparam('basedir');
+    $basedir .= "/" if ($basedir !~ /\/$/);
+    my $olddir = getcwd();
+    my $newdir = "$basedir$dir" . qwparam('subdir');
+    my $res = "changing to: $newdir\n";
+    print $res;
+    chdir($newdir);
+    $res .= capture(@_);
+    chdir($olddir);
+    return $res;
+}
+
+sub get_codedirs_str() {
+    my $res = "";
+    foreach my $k (@codetrees) {
+	next if (!qwparam($k));
+	$res .= " $opts{'d'}$codetrees{$k}";
+    }
+    $res =~ s/^ //;
+    return $res;
+}
+
+sub captureeachdir {
+    my $out;
+    %captures = ();
+    foreach my $k (@codetrees) {
+	next if (!qwparam($k));
+	$out .= "$k:\n";
+	$out .= capturedir($codetrees{$k}, @_) . "\n";
+	if ($#captures > -1) {
+	    @{$captures{$k}} = @captures;
+	    @captures = ();
+	}
+    }
+    return $out;
+}
+
+sub dodir {
+    my $text = shift;
+    return
+      [{type => 'table',
+	text => $text,
+	values => [[sub {
+			my @tab;
+			foreach my $k (@codetrees) {
+			    next if (!qwparam($k));
+			    push @tab, [$k,
+					qw_paragraph("r$k","", 
+						     preformatted => 1,
+						     width => 80,
+						     height => 20,
+						     values => 
+						     [[sub { $_->[0]($k)}, 
+						       @_]])];
+			}
+			return [\@tab];
+		    }, @_]]
+       }];
+}

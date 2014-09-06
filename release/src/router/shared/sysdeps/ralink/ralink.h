@@ -24,6 +24,8 @@
 extern const char WIF_2G[];
 extern const char WIF_5G[];
 extern const char WDSIF_5G[];
+extern const char APCLI_5G[];
+extern const char APCLI_2G[];
 #define URE	"apcli0"
 
 #ifndef ETHER_ADDR_LEN
@@ -45,6 +47,21 @@ extern const char WDSIF_5G[];
 
 #define INIC_VLAN_ID_START	4 //first vlan id used for RT3352 iNIC MII
 #define INIC_VLAN_IDX_START	2 //first available index to set vlan id and its group.
+
+#if defined(RTCONFIG_WLMODULE_MT7610_AP)
+#define RT_802_11_MAC_ENTRY_for_5G		RT_802_11_MAC_ENTRY_11AC
+#define MACHTTRANSMIT_SETTING_for_5G		MACHTTRANSMIT_SETTING_11AC
+#else
+#define RT_802_11_MAC_ENTRY_for_5G		RT_802_11_MAC_ENTRY_RT3883
+#define MACHTTRANSMIT_SETTING_for_5G		MACHTTRANSMIT_SETTING_2G
+#endif
+
+#if defined(RTN65U)
+#define RT_802_11_MAC_ENTRY_for_2G		RT_802_11_MAC_ENTRY_RT3352_iNIC
+#else
+#define RT_802_11_MAC_ENTRY_for_2G		RT_802_11_MAC_ENTRY_2G
+#endif
+#define MACHTTRANSMIT_SETTING_for_2G		MACHTTRANSMIT_SETTING_2G
 
 // MIMO Tx parameter, ShortGI, MCS, STBC, etc.  these are fields in TXWI. Don't change this definition!!!
 typedef union  _MACHTTRANSMIT_SETTING {
@@ -165,14 +182,14 @@ typedef struct _RT_802_11_MAC_ENTRY_11AC {
     short		SoundingRespSnr[3];
 } RT_802_11_MAC_ENTRY_11AC, *PRT_802_11_MAC_ENTRY_11AC;
 
-typedef struct _RT_802_11_MAC_TABLE {
+typedef struct _RT_802_11_MAC_TABLE_5G {
     unsigned long	Num;
-    RT_802_11_MAC_ENTRY Entry[MAX_NUMBER_OF_MAC];
-} RT_802_11_MAC_TABLE, *PRT_802_11_MAC_TABLE;
+    RT_802_11_MAC_ENTRY_for_5G	Entry[MAX_NUMBER_OF_MAC];
+} RT_802_11_MAC_TABLE_5G, *PRT_802_11_MAC_TABLE_5G;
 
 typedef struct _RT_802_11_MAC_TABLE_2G {
     unsigned long	Num;
-    RT_802_11_MAC_ENTRY_2G Entry[MAX_NUMBER_OF_MAC];
+    RT_802_11_MAC_ENTRY_for_2G	Entry[MAX_NUMBER_OF_MAC];
 } RT_802_11_MAC_TABLE_2G, *PRT_802_11_MAC_TABLE_2G;
 
 typedef struct _SITE_SURVEY_RT3352_iNIC
@@ -291,6 +308,7 @@ typedef enum _RT_802_11_PHY_MODE {
  * associated with parallel NOR Flash and SPI Flash.
  */
 #define OFFSET_MTD_FACTORY	0x40000
+#define OFFSET_EEPROM_VER	0x40002
 #define OFFSET_BOOT_VER		0x4018A
 #define OFFSET_COUNTRY_CODE	0x40188
 #if defined(RTN14U) || defined(RTN11P)

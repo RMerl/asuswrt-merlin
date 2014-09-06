@@ -32,37 +32,17 @@ var g_jplayer_supplied = "mp3";
 var g_audio_playlist = [];
 var g_current_index = 0;
 
-function getUrlVars(){
-	var vars = [], hash;
-  	var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');	
-  	for(var i = 0; i < hashes.length; i++)
-  	{
-  		hash = hashes[i].split('=');
-    	vars.push(hash[0]);
-    	vars[hash[0]] = hash[1];
-  	}
-  	return vars;
-}
- 
-function parseXml(xml) {
-  	if (jQuery.browser.msie) {
-  		var xmlDoc = new ActiveXObject("Microsoft.XMLDOM"); 
-    	xmlDoc.loadXML(xml);
-    	xml = xmlDoc;
-  	}   
-  	return xml;
-}
- 
 $(document).ready(function(){
 	
+	var vars = getUrlVars();
 	var loc_lan = String(window.navigator.userLanguage || window.navigator.language).toLowerCase();		
 	var lan = ( g_storage.get('lan') == undefined ) ? loc_lan : g_storage.get('lan');
 	m.setLanguage(lan);
 	
-	var this_audio = getUrlVars()["a"];
-	var audio_list = getUrlVars()["alist"];
-	g_current_index = getUrlVars()["index"];
-	var generate_sharelink = getUrlVars()["s"];	
+	var this_audio = vars["a"];
+	var audio_list = vars["alist"];
+	g_current_index = vars["index"];
+	var generate_sharelink = vars["s"];	
 	
 	if(audio_list==undefined)
 		return;
@@ -79,7 +59,7 @@ $(document).ready(function(){
 	
 	if( browserVer.indexOf("Chrome") != -1 ||
 	    ( browserVer.indexOf("Safari") != -1 && ( isMacOS() || isWinOS() ) ) ){
-		g_jplayer_solution = "html";
+		g_jplayer_solution = "html,flash";
 		g_jplayer_supplied = "mp3";
 	}
 	else if( isIE() ||
@@ -309,6 +289,10 @@ function initJPlayer(){
 			if(type=="e_no_solution"){
 				$(".jp-no-solution").html(m.getString("title_install_flash"));
 				$(".jp-no-solution").css("display", "block");				
+			}
+			else if(type=="e_url"){
+				if(g_audio_playlist.length>1)
+					audioPlaylist.playlistNext();
 			}
 		}
 	});

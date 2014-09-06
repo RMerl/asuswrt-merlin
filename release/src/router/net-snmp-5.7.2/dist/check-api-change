@@ -1,0 +1,54 @@
+#!/bin/sh
+#
+# simplistic script to check all header files for
+# differences. Intended to help detect api changes
+# between releases.
+#
+# it's not pretty or efficient, and inspection of
+# the results must be done manually.
+#
+# it's also not secure (don't run as root)
+# or portable. Tested on Linux.
+#
+
+if [ "x$1" = "x" -o "x$2" = "x" ]; then
+   echo "Usage: $0 <old-dir> <new-dir>"
+   exit 1
+fi
+
+od=$1
+nd=$2
+DIR=/tmp
+OUTPUT=$DIR/api-diff.pat
+ODT=$DIR/api-od
+
+if [ ! -d $od ]; then
+   echo "old dir $od doesn't exist"
+   exit 1
+fi
+
+if [ ! -d $nd ]; then
+   echo "old dir $nd doesn't exist"
+   exit 1
+fi
+
+# find header in nd
+rm -f $OUTPUT $ODT 2>/dev/null
+(cd $od && find . -type f -name "*.h"|sort > $ODT)
+
+OH=`cat $ODT`
+for h in $OH
+do
+   nh=$nd/$h
+   oh=$od/$h
+   echo "* $nh"
+   if [ -f "$nh" ]; then
+      echo "* diff: $h vs $nh" >> $OUTPUT
+      diff -u $oh $nh >> $OUTPUT 2>&1
+   else
+      echo "* Old header $h not found in new headers" >> $OUTPUT
+   fi
+done
+
+echo "Inspect output in $OUTPUT"
+echo "See Makefile.top for libtool version bumping rules."

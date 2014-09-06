@@ -1,0 +1,8 @@
+#!/bin/sh
+
+snmpusm -e 800007e501d0d6a623 -v 3 -p 1633 localhost create noAuthUser
+snmpusm -e 800007e501d0d6a623 -v 3 -p 1633 localhost create MD5DESUser templateMD5
+snmpusm -e 800007e501d0d6a623 -v 3 -p 1633 localhost create SHADESUser templateSHA
+snmpusm -e 800007e501d0d6a623 -v 3 -p 1633 localhost create MD5User templateMD5
+snmpusm -e 800007e501d0d6a623 -v 3 -p 1633 localhost create SHAUser templateSHA
+snmpset -R -v 3 -p 1633 localhost usmUserPrivProtocol.9.128.0.7.229.1.208.214.166.35.7.77.68.53.85.115.101.114 o .1.3.6.1.6.3.10.1.2.1 usmUserPrivProtocol.9.128.0.7.229.1.208.214.166.35.7.83.72.65.85.115.101.114 o .1.3.6.1.6.3.10.1.2.1

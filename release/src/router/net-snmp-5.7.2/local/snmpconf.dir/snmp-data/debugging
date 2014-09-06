@@ -1,0 +1,39 @@
+title Debugging output options
+description This section allows debugging output of various kinds to
+description be turned on or off.
+
+token doDebugging
+info  Turns debugging output on or off (0|1)
+info  arguments: (0|1)
+question 1 Turn debugging on (0|1)
+validanswer 1 ^(0|1)$
+
+token debugTokens
+info  Debugging tokens specify which lines of debugging
+info  output you'd actually like to see.  Each section of code is most
+info  likely instrumented with a particular "tag".  So, to see that tag you
+info  would specify it here.  Specifying a tag will match against all
+info  tags that begin with that prefix, so the tag "test" will match
+info  "test_function" and "test_something" and...
+info  There are a few special tokens as well:
+info    - ALL:   turns on all the tokens (which generates lots of output)
+info    - trace: prints 'trace' lines showing source code files and
+info    -        line numbers as they're traversed.
+info    - dump:  Nicely breaks down packets as they're parsed or sent out.
+info  command line equivelent: -Dtoken[,token...]
+info  arguments: token[,token...]
+question 1 Enter the tokens (comma seperated) you wish to see output for
+
+token dumpPacket
+info  Print packets as they are received or sent
+info  arguments: (1|yes|true|0|no|false)
+info  command line equivelent: -d
+validanswer 1 ^(1|yes|true|0|no|false)$
+question 1 Print packets as they are received or sent
+
+
+token noTokenWarnings
+info Silence warnings about unknown tokens in configuration files
+question 1 Silence warnings about unknown tokens in configuration files
+info  arguments: (1|yes|true|0|no|false)
+validanswer 1 ^(1|yes|true|0|no|false)$

@@ -1,0 +1,64 @@
+.TH SNMPBULKGET 1 "01 May 2002" VVERSIONINFO "Net-SNMP"
+.SH NAME
+snmpbulkget - communicates with a network entity using SNMP GETBULK requests.
+.SH SYNOPSIS
+.B snmpbulkget
+[COMMON OPTIONS] [-Cn <num>] [-Cr <NUM>] AGENT OID [OID]...
+.SH DESCRIPTION
+.B snmpbulkget
+is an SNMP application that uses the SNMP GETBULK request to query a
+network entity efficiently for information.  One or more object
+identifiers (OIDs) may be given as arguments on the command line.
+Each variable name is given in the format specified in
+.IR variables(5) .
+.PP
+If the network entity has an error processing the request packet, an
+error packet will be returned and a message will be shown, helping to
+pinpoint why the request was malformed.
+.SH OPTIONS
+.TP 8
+.BI \-Cn <NUM>
+Set the
+.I non-repeaters
+field in the GETBULK PDU.  This specifies the number of supplied
+variables that should not be iterated over.  The default is 0.
+.TP
+.BI \-Cr <NUM>
+Set the
+.I max-repetitions
+field in the GETBULK PDU.  This specifies the maximum number of
+iterations over the repeating variables.  The default is 10.
+.PP
+In addition to these options,
+.B snmpbulkget
+takes the common options described in the 
+.I snmpcmd(1)
+manual page.
+Note that
+.B snmpbulkget
+REQUIRES  an argument specifying the agent to query
+and at least one OID argument, as described there.
+.SH EXAMPLE
+The command:
+.PP
+snmpbulkget \-v2c \-Cn1 \-Cr5 \-Os \-c public zeus system ifTable
+.PP
+will retrieve the variable system.sysDescr.0 (which is the
+lexicographically next object to system) and the first 5 objects in
+the ifTable:
+.PP
+sysDescr.0 = STRING: "SunOS zeus.net.cmu.edu 4.1.3_U1 1 sun4m"
+.br
+ifIndex.1 = INTEGER: 1
+.br
+ifIndex.2 = INTEGER: 2
+.br
+ifDescr.1 = STRING: "lo0"
+.br
+et cetera.
+.SH NOTE
+As the name implies,
+.B snmpbulkget
+utilizes the SNMP GETBULK message, which is not available in SNMPv1.
+.SH "SEE ALSO"
+snmpcmd(1), variables(5), RFC 1905.

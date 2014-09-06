@@ -1,0 +1,44 @@
+PREFIX=/opt/OSS
+export PREFIX
+
+PATH=$PREFIX/bin:/usr/bin:/usr/dt/bin:/usr/openwin/bin:/usr/sbin:/usr/ccs/bin:/usr/ucb
+export PATH
+
+LD_LIBRARY_PATH=$PREFIX/lib 
+LD_RUN_PATH=$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH LD_RUN_PATH
+
+CC=gcc
+export CC
+
+CPPFLAGS="-I$PREFIX/include"
+CFLAGS="-mv8 -mtune=ultrasparc"
+LDFLAGS="-L$PREFIX/lib -R$PREFIX/lib"
+export CPPFLAGS CFLAGS LDFLAGS
+
+TMP=/tmp
+export TMP
+
+TOP=/ctbto/idc/cicn/source/build/`basename $PREFIX`
+export TOP
+
+SRC=$TOP/dist
+export SRC
+
+WORK=$TOP/work
+export WORK
+
+
+# for superpack:
+
+CHECKLIST=$TOP/Checklist; export CHECKLIST
+MAKE=$PREFIX/bin/make
+export MAKE
+
+#CATEGORY=OpenSource; export CATEGORY
+#VENDOR="Free Software Foundation"; export VENDOR
+BASEDIR=/opt; export BASEDIR
+PREFIX=$BASEDIR/`basename $TOP`; export PREFIX
+RELEASE_AREA=$TOP/../packages/`/bin/uname -p`/`/bin/uname -r`; export RELEASE_AREA
+
+umask 022

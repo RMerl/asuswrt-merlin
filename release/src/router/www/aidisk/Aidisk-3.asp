@@ -10,6 +10,7 @@
 <link rel="stylesheet" type="text/css" href="aidisk.css">
 <link rel="stylesheet" type="text/css" href="/form_style.css">
 <script type="text/javascript" src="/state.js"></script>
+<script type="text/javaScript" src="/general.js"></script>
 <script type="text/javaScript" src="/jquery.js"></script>
 <script>
 var ddns_server_x = '<% nvram_get("ddns_server_x"); %>';
@@ -81,42 +82,15 @@ function hide_alert_block(){
 
 function check_return_code(){
 
-	if(this.ddns_return_code.indexOf('-1')!=-1)
-		show_alert_block("<#LANHostConfig_x_DDNS_alarm_2#>");
-	else if(this.ddns_return_code.indexOf('200')!=-1)
-		show_alert_block("<#LANHostConfig_x_DDNS_alarm_3#>");
-	else if(this.ddns_return_code.indexOf('203')!=-1)
-		show_alert_block("<#LANHostConfig_x_DDNS_alarm_hostname#> '"+this.ddns_hostname_x+"' <#LANHostConfig_x_DDNS_alarm_registered#>");
-	else if(this.ddns_return_code.indexOf('220')!=-1)
-		show_alert_block("<#LANHostConfig_x_DDNS_alarm_4#>");
-	else if(this.ddns_return_code.indexOf('230')!=-1)
-		show_alert_block("<#LANHostConfig_x_DDNS_alarm_5#>");
-	else if(this.ddns_return_code.indexOf('233')!=-1)
-		show_alert_block("<#LANHostConfig_x_DDNS_alarm_hostname#> '"+this.ddns_hostname_x+"' <#LANHostConfig_x_DDNS_alarm_registered_2#> '"+this.ddns_old_name+"'");
-	else if(this.ddns_return_code.indexOf('296')!=-1)
-		show_alert_block("<#LANHostConfig_x_DDNS_alarm_6#>");
-	else if(this.ddns_return_code.indexOf('297')!=-1)
-		show_alert_block("<#LANHostConfig_x_DDNS_alarm_7#>");
-	else if(this.ddns_return_code.indexOf('298')!=-1)
-		show_alert_block("<#LANHostConfig_x_DDNS_alarm_8#>");
-	else if(this.ddns_return_code.indexOf('299')!=-1)
-		show_alert_block("<#LANHostConfig_x_DDNS_alarm_9#>");
-	else if(this.ddns_return_code.indexOf('401')!=-1)
-		show_alert_block("<#LANHostConfig_x_DDNS_alarm_10#>");
-	else if(this.ddns_return_code.indexOf('407')!=-1)
-		show_alert_block("<#LANHostConfig_x_DDNS_alarm_11#>");
-	else if(this.ddns_return_code == 'Time_out')
-		show_alert_block("<#LANHostConfig_x_DDNS_alarm_12#>");
-  	else if(this.ddns_return_code =='unknown_error')
-    		show_alert_block("<#LANHostConfig_x_DDNS_alarm_2#>");
-	else if(this.ddns_return_code =='connect_fail')
-    		show_alert_block("<#qis_fail_desc7#>");
-  	else if(this.ddns_return_code == 'no_change')
-    		{}
-        else if(ddns_return_code =='connect_fail')
-                alert("<#qis_fail_desc7#>");
-  	else if(this.ddns_return_code !='')
-    		show_alert_block("<#LANHostConfig_x_DDNS_alarm_2#>");
+	if(this.ddns_return_code != 'no_change'){
+		var ddnsHint = getDDNSState(this.ddns_return_code, this.ddns_hostname_x, this.ddns_old_name);
+		if(ddnsHint != ""){
+			if(this.ddns_return_code == 'Time_out')
+				show_alert_block("<#LANHostConfig_x_DDNS_alarm_12#>");
+			else
+				show_alert_block(ddnsHint);
+		}
+	}
 
 	document.getElementById("loadingIcon").style.display = "none";	
 	this.ddns_return_code = "";

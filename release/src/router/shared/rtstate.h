@@ -270,6 +270,7 @@ enum {
 // todo: multiple wan
 
 int wan_primary_ifunit(void);
+extern int is_wan_connect(int unit);
 extern int get_wan_state(int unit);
 extern int get_wan_unit(char *ifname);
 extern char *get_wan_ifname(int unit);

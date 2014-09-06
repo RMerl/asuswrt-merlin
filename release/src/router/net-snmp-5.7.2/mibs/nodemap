@@ -1,0 +1,6 @@
+EtherLike-MIB		dot3
+HOST-RESOURCES-MIB	host
+IP-MIB			ip
+IF-MIB			interfaces
+UDP-MIB			udp
+TCP-MIB			tcp

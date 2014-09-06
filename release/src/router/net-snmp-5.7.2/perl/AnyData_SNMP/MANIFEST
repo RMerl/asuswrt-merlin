@@ -1,0 +1,7 @@
+INSTALL
+README
+MANIFEST
+Makefile.PL
+Format.pm
+Storage.pm
+DBD_AnyData.patch

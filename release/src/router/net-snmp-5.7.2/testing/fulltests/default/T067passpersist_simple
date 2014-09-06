@@ -1,0 +1,63 @@
+#!/bin/sh
+
+. ../support/simple_eval_tools.sh
+
+HEADER "extending agent functionality with pass_persist"
+
+SKIPIF NETSNMP_DISABLE_SNMPV2C
+SKIPIFNOT USING_UCD_SNMP_PASS_PERSIST_MODULE
+
+# Don't run this test on MinGW - local/pass_persisttest is a shell script and
+# hence passing it to the MSVCRT popen() doesn't work.
+[ "x$OSTYPE" = "xmsys" ] && SKIP "MinGW"
+
+[ -x /usr/bin/perl ] || SKIP "/usr/bin/perl not found"
+
+# make sure snmpget and snmpwalk can be executed
+SNMPGET="${builddir}/apps/snmpget"
+[ -x "$SNMPGET" ] || SKIP
+SNMPWALK="${builddir}/apps/snmpwalk"
+[ -x "$SNMPWALK" ] || SKIP
+
+snmp_version=v2c
+TESTCOMMUNITY=testcommunity
+. ./Sv2cconfig
+
+#
+# Begin test
+#
+oid=.1.3.6.1.4.1.8072.2.255  # NET-SNMP-PASS-MIB::netSnmpPassExamples
+CONFIGAGENT pass_persist $oid ${srcdir}/local/pass_persisttest
+
+ORIG_AGENT_FLAGS="$AGENT_FLAGS"
+AGENT_FLAGS="$ORIG_AGENT_FLAGS -Ducd-snmp/pass_persist"
+PASS_PERSIST_PIDFILE="$SNMP_TMPDIR/pass_persist.pid.$$"
+export PASS_PERSIST_PIDFILE
+STARTAGENT
+
+#COMMENT Check a full walk of the sample data
+CAPTURE "$SNMPWALK $SNMP_FLAGS -$snmp_version -c $TESTCOMMUNITY $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT $oid"
+CHECKORDIE "NET-SNMP-PASS-MIB::netSnmpPassString.0 = STRING: Life, the Universe, and Everything"
+CHECKORDIE "NET-SNMP-PASS-MIB::netSnmpPassInteger.1 = INTEGER: 42"
+CHECKORDIE "NET-SNMP-PASS-MIB::netSnmpPassOID.1 = OID: NET-SNMP-PASS-MIB::netSnmpPassOIDValue"
+CHECKORDIE "NET-SNMP-PASS-MIB::netSnmpPassTimeTicks.0 = Timeticks: (363136200) 42 days, 0:42:42.00 "
+CHECKORDIE "NET-SNMP-PASS-MIB::netSnmpPassIpAddress.0 = IpAddress: 127.0.0.1"
+CHECKORDIE "NET-SNMP-PASS-MIB::netSnmpPassCounter.0 = Counter32: 1"
+CHECKORDIE "NET-SNMP-PASS-MIB::netSnmpPassGauge.0 = Gauge32: 42"
+
+#COMMENT A couple of spot checks of GET requests.
+CAPTURE "$SNMPGET $SNMP_FLAGS -$snmp_version -c $TESTCOMMUNITY $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT NET-SNMP-PASS-MIB::netSnmpPassInteger.1"
+CHECKORDIE "INTEGER: 42"
+
+#COMMENT netSnmpPassCounter should increment, since this is pass_persist
+CAPTURE "$SNMPGET $SNMP_FLAGS -$snmp_version -c $TESTCOMMUNITY $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT NET-SNMP-PASS-MIB::netSnmpPassCounter.0"
+CHECKORDIE "Counter32: 2"
+
+#COMMENT now kill the pass_persist script, and check that it recovers.
+STOPPROG $PASS_PERSIST_PIDFILE
+#COMMENT netSnmpPassCounter should have reverted to 1, as this is a new instance.
+CAPTURE "$SNMPGET $SNMP_FLAGS -$snmp_version -c $TESTCOMMUNITY $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT NET-SNMP-PASS-MIB::netSnmpPassCounter.0"
+CHECKORDIE "Counter32: 1"
+
+STOPAGENT
+FINISHED

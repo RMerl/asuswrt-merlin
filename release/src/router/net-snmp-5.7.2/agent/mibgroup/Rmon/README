@@ -1,0 +1,30 @@
+
+Important notes.
+===============
+1. This  implementation  is  actually  a  system  independent
+   template.  It  means  that  the question  "Where  and  how
+   may  I collect the monitored statistics ?"  is  taken  out
+   from the scope. Actually, it is emulated with random values.
+   You are free  to  rewrite  the function 'get_history_data'
+   for your system.  Don't  forget  also to insert DataSourse
+   checking in 'history_Validate'  function.  (Both  functions
+   are in the file history.c).
+
+2. This implementation has two RMON mib understanding extensions
+   (I hope it does not break anything; nevertheless you may  use
+   it in completely standard way).
+
+   2.1. I permit to set VALID entryStatus when entry doesn't exit;
+        in this case PDU has to have  the  necessary & valid  set
+        of non-default values
+
+   2.2. I permit to travel from VALID to 'UNDER_CREATION' state:
+        these ways a manager can change control entry and validate
+        it once more.
+
+
+THANKS
+======
+  Mr. Michael J. Slifcak of Internet Security Systems, Inc has provided
+  a number of remarks, I implemented ALL of them.
+

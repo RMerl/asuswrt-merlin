@@ -13,12 +13,13 @@ function getUrlVars(){
 }
 
 function loadHandler(){
-	var callback =  getUrlVars()["callback"];
-	var token = getUrlVars()["token"];
-	var uid = getUrlVars()["uid"];	
+	var vars = getUrlVars();
+	var callback =  vars["callback"];
+	var token = vars["token"];
+	var uid = vars["uid"];	
 	if (callback) {
 		eval('callback = window.opener.' + callback);
-		callback(token, uid);
+		callback(token, uid, vars);
 	}
 	window.close();
 }

@@ -1,0 +1,202 @@
+PROGNAME=
+CFG=
+OUTDIR=
+INTDIR=
+
+!IF "$(OS)" == "Windows_NT"
+NULL=
+!ELSE 
+NULL=nul
+!ENDIF 
+
+!IF  "$(CFG)" == "release"
+
+ALL : "..\lib\$(OUTDIR)\netsnmptrapd.lib"
+
+
+CLEAN :
+	-@erase "$(INTDIR)\snmptrapd.obj"
+	-@erase "$(INTDIR)\snmptrapd_handlers.obj"
+	-@erase "$(INTDIR)\snmptrapd_log.obj"
+	-@erase "$(INTDIR)\snmptrapd_auth.obj"
+	-@erase "$(INTDIR)\winservice.obj"
+	-@erase "$(INTDIR)\vc??.idb"
+	-@erase "$(INTDIR)\$(PROGNAME).pch"
+	-@erase "..\lib\$(OUTDIR)\netsnmptrapd.lib"
+
+"..\lib\$(OUTDIR)" :
+    if not exist "..\lib\$(OUTDIR)/$(NULL)" mkdir "..\lib\$(OUTDIR)"
+
+"$(INTDIR)" :
+    if not exist "$(INTDIR)/$(NULL)" mkdir "$(INTDIR)"
+
+CPP=cl.exe
+CPP_PROJ=/nologo /MD /W3 /EHsc /Zi /O2 /I "." /I ".." /I "..\..\snmplib" /I "..\.." /I "..\..\include" /I "..\..\agent" /I "..\..\agent\mibgroup" /D "WIN32" /D "_BIND_TO_CURRENT_VCLIBS_VERSION" /D "NDEBUG" /D "_CONSOLE" /D "_CRT_SECURE_NO_WARNINGS" /D "_CRT_NONSTDC_NO_WARNINGS" /D "_MBCS" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\$(PROGNAME).pdb" /FD /c 
+
+.c{$(INTDIR)}.obj::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+.cpp{$(INTDIR)}.obj::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+.cxx{$(INTDIR)}.obj::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+.c{$(INTDIR)}.sbr::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+.cpp{$(INTDIR)}.sbr::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+.cxx{$(INTDIR)}.sbr::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+RSC=rc.exe
+BSC32=bscmake.exe
+BSC32_FLAGS=/nologo /o"$(INTDIR)\libnetsnmptrapd.bsc" 
+BSC32_SBRS= \
+
+LIB32=link.exe -lib
+LIB32_FLAGS=/nologo /out:"..\lib\$(OUTDIR)\netsnmptrapd.lib" 
+LIB32_OBJS= \
+	"$(INTDIR)\snmptrapd.obj" \
+	"$(INTDIR)\snmptrapd_handlers.obj" \
+	"$(INTDIR)\snmptrapd_log.obj" \
+	"$(INTDIR)\snmptrapd_auth.obj" \
+	"$(INTDIR)\winservice.obj"
+
+"..\lib\$(OUTDIR)\netsnmptrapd.lib" : "..\lib\$(OUTDIR)" $(DEF_FILE) $(LIB32_OBJS)
+    $(LIB32) @<<
+  $(LIB32_FLAGS) $(DEF_FLAGS) $(LIB32_OBJS)
+<<
+
+!ELSEIF  "$(CFG)" == "debug"
+
+ALL : "..\lib\$(OUTDIR)\netsnmptrapd.lib"
+
+
+CLEAN :
+	-@erase "$(INTDIR)\snmptrapd.obj"
+	-@erase "$(INTDIR)\snmptrapd_handlers.obj"
+	-@erase "$(INTDIR)\snmptrapd_log.obj"
+	-@erase "$(INTDIR)\snmptrapd_auth.obj"
+	-@erase "$(INTDIR)\winservice.obj"
+	-@erase "$(INTDIR)\vc??.idb"
+	-@erase "$(INTDIR)\vc??.pdb"
+	-@erase "$(INTDIR)\$(PROGNAME).pch"
+	-@erase "..\lib\$(OUTDIR)\netsnmptrapd.lib"
+
+"..\lib\$(OUTDIR)" :
+    if not exist "..\lib\$(OUTDIR)/$(NULL)" mkdir "..\lib\$(OUTDIR)"
+
+"$(INTDIR)" :
+    if not exist "$(INTDIR)/$(NULL)" mkdir "$(INTDIR)"
+
+CPP=cl.exe
+CPP_PROJ=/nologo /MDd /W3 /Gm /EHsc /Zi /Od /I "." /I ".." /I "..\..\snmplib" /I "..\.." /I "..\..\include" /I "..\..\agent" /I "..\..\agent\mibgroup" /D "WIN32" /D "_BIND_TO_CURRENT_VCLIBS_VERSION" /D "_DEBUG" /D "_CONSOLE" /D "_CRT_SECURE_NO_WARNINGS" /D "_CRT_NONSTDC_NO_WARNINGS" /D "_MBCS" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\$(PROGNAME).pdb" /FD /c 
+
+.c{$(INTDIR)}.obj::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+.cpp{$(INTDIR)}.obj::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+.cxx{$(INTDIR)}.obj::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+.c{$(INTDIR)}.sbr::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+.cpp{$(INTDIR)}.sbr::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+.cxx{$(INTDIR)}.sbr::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+RSC=rc.exe
+BSC32=bscmake.exe
+BSC32_FLAGS=/nologo /o"$(INTDIR)\libnetsnmptrapd.bsc" 
+BSC32_SBRS= \
+
+LIB32=link.exe -lib
+LIB32_FLAGS=/nologo /out:"..\lib\$(OUTDIR)\netsnmptrapd.lib" 
+LIB32_OBJS= \
+	"$(INTDIR)\snmptrapd.obj" \
+	"$(INTDIR)\snmptrapd_handlers.obj" \
+	"$(INTDIR)\snmptrapd_log.obj" \
+	"$(INTDIR)\snmptrapd_auth.obj" \
+	"$(INTDIR)\winservice.obj"
+
+"..\lib\$(OUTDIR)\netsnmptrapd.lib" : "..\lib\$(OUTDIR)" $(DEF_FILE) $(LIB32_OBJS)
+    $(LIB32) @<<
+  $(LIB32_FLAGS) $(DEF_FLAGS) $(LIB32_OBJS)
+<<
+
+!ENDIF 
+
+
+!IF "$(NO_EXTERNAL_DEPS)" != "1"
+!IF EXISTS("libnetsnmptrapd.dep")
+!INCLUDE "libnetsnmptrapd.dep"
+!ELSE 
+!MESSAGE Warning: cannot find "libnetsnmptrapd.dep"
+!ENDIF 
+!ENDIF 
+
+
+!IF "$(CFG)" == "release" || "$(CFG)" == "debug"
+SOURCE=..\..\apps\snmptrapd.c
+
+"$(INTDIR)\snmptrapd.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\apps\snmptrapd_handlers.c
+
+"$(INTDIR)\snmptrapd_handlers.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\apps\snmptrapd_log.c
+
+"$(INTDIR)\snmptrapd_log.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\apps\snmptrapd_auth.c
+
+"$(INTDIR)\snmptrapd_auth.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\snmplib\winservice.c
+
+"$(INTDIR)\winservice.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+!ENDIF 
+

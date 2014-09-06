@@ -1,0 +1,17 @@
+title		Trap Handlers
+description	Here we define what programs are run when a trap is
+description	received by the trap receiver.
+
+token	    traphandle
+info	    When traps are received, a program can be run.
+info	    When traps are received, the list of configured trap
+info	    handles is consulted and any configured program is run.
+info	    If no handler is found, any handler with "default" as the
+info	    traphandle type is run instead.  The information contained
+info	    in trap is passed to the program via standard input (see
+info	    the snmptrapd.conf manual page for details).
+info	    #
+info	    arguments: oid|"default" program args
+question 1  The oid of the trap you want to handle.
+question 2  The program you want to run  If the program is a script, specify the script program first (ie /bin/sh /path/to/script).
+question 3  Arguments that you want passed to the program

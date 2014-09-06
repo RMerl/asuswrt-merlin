@@ -1,0 +1,72 @@
+title Monitor Various Aspects of the Running Host
+description The following check up on various aspects of a host.
+
+token proc
+info Check for processes that should be running.
+info #  proc NAME [MAX=0] [MIN=0]
+info #
+info #  NAME:  the name of the process to check for.  It must match
+info #         exactly (ie, http will not find httpd processes).
+info #  MAX:   the maximum number allowed to be running.  Defaults to 0.
+info #  MIN:   the minimum number to be running.  Defaults to 0.
+info #
+info The results are reported in the prTable section of the UCD-SNMP-MIB tree
+info Special Case:  When the min and max numbers are both 0, it assumes
+info you want a max of infinity and a min of 1.
+question 1 Name of the process you want to check on
+question 2 Maximum number of processes named '$1' that should be running [default = 0]
+question 3 Minimum number of processes named '$1' that should be running [default = 0]
+
+token disk
+info Check for disk space usage of a partition.
+info The agent can check the amount of available disk space, and make
+info sure it is above a set limit.  
+info
+info # disk PATH [MIN=100000]
+info #
+info # PATH:  mount path to the disk in question.
+info # MIN:   Disks with space below this value will have the Mib's errorFlag set.
+info #        Can be a raw integer value (units of kB) or a percentage followed by the %
+info #        symbol.  Default value = 100000.
+info #
+info The results are reported in the dskTable section of the UCD-SNMP-MIB tree
+question 1 Enter the mount point for the disk partion to be checked on
+question 2 Enter the minimum amount of space that should be available on $1
+
+token load
+info Check for unreasonable load average values.
+info Watch the load average levels on the machine.
+info
+info # load [1MAX=12.0] [5MAX=12.0] [15MAX=12.0]
+info #
+info # 1MAX:   If the 1 minute load average is above this limit at query
+info #         time, the errorFlag will be set.
+info # 5MAX:   Similar, but for 5 min average.
+info # 15MAX:  Similar, but for 15 min average.
+info #
+info The results are reported in the laTable section of the UCD-SNMP-MIB tree
+question 1 Enter the maximum allowable value for the 1 minute load average
+question 2 Enter the maximum allowable value for the 5 minute load average
+question 3 Enter the maximum allowable value for the 15 minute load average
+validanswer 1 ^[\d\.]+$
+validanswer 2 ^([\d\.]+|)$
+validanswer 3 ^([\d\.]+|)$
+
+token file
+info Check on the size of a file.
+info Display a files size statistics.
+info If it grows to be too large, report an error about it.
+info
+info # file /path/to/file [maxsize_in_kilobytes]
+info #
+info #   if maxsize is not specified, assume only size reporting is needed.
+info #
+info The results are reported in the fileTable section of the UCD-SNMP-MIB tree
+question 1 Enter the path to the file you wish to monitor
+question 2 Enter the maximum size (in kilobytes) allowable for $1
+
+group monitoring_services
+multiple proc Do you want to configure the agents ability to monitor processes?
+multiple disk Do you want to configure the agents ability to monitor disk space?
+multiple load Do you want to configure the agents ability to monitor load average?
+multiple file Do you want to configure the agents ability to monitor file sizes?

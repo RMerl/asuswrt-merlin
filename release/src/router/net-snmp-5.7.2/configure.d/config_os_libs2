@@ -1,0 +1,487 @@
+# -*- autoconf -*-
+#########################################
+##
+# Checks for libraries that are run
+# after the agent module tests.
+##
+#########################################
+
+#   HAVE_LIB Definitions used in the Net-SNMP code base:
+#
+#       HAVE_LIBCRYPTO:	apps
+#       HAVE_LIBRPM:	agent
+#
+
+##
+#   Simple checks:
+##
+
+# AC_CHECK_LIB(des, main)
+# AC_CHECK_LIB(m,   asin)
+
+#   dmalloc
+#
+if test "${with_dmalloc+set}" = set; then
+   if test "$with_dmalloc" = yes -a -d $with_dmalloc ; then
+       AC_ADD_SEARCH_PATH($with_dmalloc)
+   fi
+   AC_CHECK_HEADERS([dmalloc.h])
+   AC_SEARCH_LIBS([dmalloc_message], [dmalloc])
+fi
+
+#   EFence
+#       (This used to be on by default for developer checkout)
+#
+if test "x$use_efence" = "xyes"; then
+    AC_SEARCH_LIBS([EF_Exit], [efence])
+fi
+
+
+#   ELF libraries
+#       Typically used for 'nlist'  (needed for uptime)
+#
+if test "x$with_elf" != "xno"; then
+case $target_os in
+	linux*) # add hosts which don't use nlist here
+                ;;
+	irix*) # Check for nlist in mld (irix)
+		AC_CHECK_LIB(elf, nlist)
+		AC_CHECK_LIB(elf, nlist64)
+		AC_CHECK_LIB(mld, nlist)
+		;;
+	*) # default
+		AC_CHECK_LIB(elf, nlist)
+		;;
+esac
+fi
+ 
+
+#   libsocket
+#       Needed for 'socket(2)'                          (Solaris)
+#       Possibly also for 'gethostname(3)'              (non-Solaris)
+#           (alternatively in libnsl                    (Solaris)
+#            or in libws2_32)                           (MinGW)
+#
+case x$with_socklib in
+xwinsock2)
+  #   libws2_w32                                        (MinGW)
+  #
+  netsnmp_save_LIBS="$LIBS"
+  LIBS="$LIBS -lws2_32"
+  AC_LINK_IFELSE([AC_LANG_PROGRAM([
+    #include <winsock2.h>
+  ], [
+    socket(0, 0, 0);
+    gethostbyname(0);
+  ])], [
+    # Keep LIBS.
+    true
+  ], [
+    # Restore LIBS and complain.
+    LIBS="$netsnmp_save_LIBS"
+    AC_MSG_ERROR([libws2_32 not found.])
+  ])
+  ;;
+*)
+  AC_SEARCH_LIBS(socket, socket,,AC_MSG_ERROR([socket(2) not found.]))
+  AC_SEARCH_LIBS(gethostbyname, [nsl socket])
+  AC_CHECK_FUNCS(gethostbyname)
+  AC_SEARCH_LIBS(gethostbyaddr, [nsl socket])
+  AC_CHECK_FUNCS(gethostbyaddr)
+  ;;
+esac
+
+
+#   libiphlpapi                                         (Cygwin and MinGW)
+#
+netsnmp_save_LIBS="$LIBS"
+LIBS="$LIBS -liphlpapi"
+AC_LINK_IFELSE([AC_LANG_PROGRAM([
+  #include <winsock2.h>
+  #include <iphlpapi.h>
+], [
+  IpRenewAddress(0);
+])], [
+  # Keep LIBS.
+  true
+], [
+  # Restore LIBS and complain.
+  LIBS="$netsnmp_save_LIBS"
+  case x$with_socklib in
+  xwinsock2)
+    AC_MSG_ERROR([libiphlpapi not found.])
+    ;;
+  esac
+])
+
+
+#   libregex                                            (MinGW)
+#
+netsnmp_save_LIBS="$LIBS"
+LIBS="$LIBS -lregex"
+AC_LINK_IFELSE([AC_LANG_PROGRAM([
+  #include <sys/types.h>
+  #include <regex.h>
+], [
+  regcomp(0, 0, 0);
+])], [
+  # Keep LIBS.
+  true
+], [
+  # Restore LIBS.
+  LIBS="$netsnmp_save_LIBS"
+])
+
+
+#   libsnmpapi                                          (MinGW)
+#
+netsnmp_save_LIBS="$LIBS"
+LIBS="$LIBS -lsnmpapi"
+AC_LINK_IFELSE([AC_LANG_PROGRAM([
+  #include <snmp.h>
+], [
+  SnmpUtilMemAlloc(0);
+])], [
+  # Keep LIBS.
+  true
+], [
+  # Restore LIBS.
+  LIBS="$netsnmp_save_LIBS"
+])
+
+
+#   kstat library                                       (Solaris)
+#
+NETSNMP_SEARCH_LIBS(kstat_lookup, kstat,
+        AC_DEFINE(HAVE_LIBKSTAT, 1,
+        	[Define to 1 if you have the `kstat' library (-lkstat).]),,,
+        LNETSNMPLIBS)
+
+
+#
+#   librt
+#
+
+NETSNMP_SEARCH_LIBS(clock_gettime, rt,
+        AC_DEFINE(HAVE_CLOCK_GETTIME, 1,
+                [Define to 1 if you have the `clock_gettime' library]),,,
+        LNETSNMPLIBS)
+
+
+##
+#   MIB-module-specific checks
+##
+
+#   libdevstat
+#        (for diskIO MIB)
+#
+#   Not-Used: HAVE_GETDEVS/HAVE_DEVSTAT_GETDEVS
+#
+echo " $module_list " | $GREP " ucd-snmp/diskio " >/dev/null
+if test $? -eq 0 ; then
+	NETSNMP_SEARCH_LIBS(getdevs, devstat,
+                AC_DEFINE(HAVE_GETDEVS, 1,
+                        [define if you have getdevs()]),,,LMIBLIBS)
+	NETSNMP_SEARCH_LIBS(devstat_getdevs, devstat,
+                AC_DEFINE(HAVE_DEVSTAT_GETDEVS, 1,
+                        [define if you have devstat_getdevs()]),,,LMIBLIBS)
+fi
+
+#   libpci
+#        (for if-mib description)
+#
+NETSNMP_SEARCH_LIBS(pci_lookup_name, pci,
+	AC_DEFINE(HAVE_PCI_LOOKUP_NAME, 1,
+		[define if you have pci_lookup_name()]),,,LMIBLIBS)
+
+#   LM-SENSORS-MIB support
+#
+echo " $module_list " | $GREP -i "ucd-snmp/lmsensor" > /dev/null
+if test $? -eq 0 ; then
+        AC_MSG_CHECKING([for sensors support])
+        case $target_os in
+        solaris*)
+            #  Agent:  HAVE_PICL_H
+            #
+            AC_CHECK_HEADER(picl.h, LMIBLIBS="${LMIBLIBS} -lpicl",)
+            AC_CHECK_HEADERS(picl.h)
+            ;;
+        *)
+            #  Not-Used:  HAVE_SENSORS_SENSORS_H
+            #
+            AC_CHECK_HEADER(sensors/sensors.h,,
+                [AC_MSG_ERROR([asked to use lm_sensors but I couldn't find sensors/sensors.h])])
+            NETSNMP_SEARCH_LIBS(sensors_get_detected_chips, sensors,,
+                [AC_MSG_ERROR([asked to use lm_sensors but I couldn't find -lsensors])],,
+                LMIBLIBS)
+            ;;
+        esac
+fi
+
+#
+# libnl (netlink)
+#
+
+if test "x$with_nl" != "xno"; then
+    case $target_os in
+    linux*) # Check for libnl (linux)
+	NETSNMP_SEARCH_LIBS(
+	    nl_connect, nl,
+	    [AC_CHECK_HEADERS(netlink/netlink.h)],,, LMIBLIBS)
+    ;;
+    esac
+fi
+
+
+
+##
+#   More complex checks:
+##
+
+#   Security related functions
+#
+NONAGENTLIBS=$LIBS	 # save old libraries
+SSHPROG=no
+TLSPROG=no
+if test "x$tryopenssl" != "xno" -a "x$tryopenssl" != "xinternal"; then
+    # check for libpkcs11 if asked
+    if test "x$askedopenssl" != "xyes" -a "x$askedpkcs" = "xyes"; then
+        AC_CHECK_LIB(pkcs11, C_Initialize,
+            AC_DEFINE(HAVE_LIBPKCS11, 1,
+                [Define to 1 if you have the `pkcs11' library (-lpkcs11).])
+		LIBPKCS11="-lpkcs11")
+    else 
+        if test "x$tryrsaref" != "xno"; then
+            AC_CHECK_LIB(rsaref, RSAPrivateDecrypt)
+            AC_CHECK_LIB(RSAglue, RSA_PKCS1_RSAref)
+        fi
+
+        AC_MSG_CHECKING([for -leay32])
+        netsnmp_save_LIBS="$LIBS"
+        LIBS="-leay32"
+        AC_LINK_IFELSE([AC_LANG_PROGRAM([
+                #include <openssl/evp.h>],
+                [return EVP_md5();])],
+            [AC_MSG_RESULT(yes); ac_cv_lib_eay32_EVP_md5=yes; CRYPTO="eay32"],
+            [AC_MSG_RESULT(no)]
+        )
+        LIBS="$netsnmp_save_LIBS"
+
+        if test x$CRYPTO = x; then
+            AC_CHECK_LIB([crypto], [EVP_md5], [CRYPTO="crypto"])
+        fi
+
+        if test x$CRYPTO != x; then
+            AC_DEFINE(HAVE_LIBCRYPTO, 1,
+                [Define to 1 if you have the OpenSSL library (-lcrypto or -leay32).])
+            LIBCRYPTO="-l${CRYPTO}"
+            AC_CHECK_LIB(${CRYPTO}, AES_cfb128_encrypt, 
+                AC_DEFINE(HAVE_AES_CFB128_ENCRYPT, 1,
+                    [Define to 1 if you have the `AES_cfb128_encrypt' function.]))
+
+            AC_CHECK_LIB(${CRYPTO}, EVP_MD_CTX_create,
+                AC_DEFINE([HAVE_EVP_MD_CTX_CREATE], [],
+                    [Define to 1 if you have the `EVP_MD_CTX_create' function.])
+                AC_DEFINE([HAVE_EVP_MD_CTX_DESTROY], [],
+                    [Define to 1 if you have the `EVP_MD_CTX_destroy' function.]))
+        fi
+        if echo " $transport_result_list " | $GREP "DTLS" > /dev/null; then
+	    AC_CHECK_LIB(ssl, DTLSv1_method,
+                AC_DEFINE(HAVE_LIBSSL_DTLS, 1,
+                    [Define to 1 if your `ssl' library supports DTLS (-lssl).])
+                LIBCRYPTO=" -lssl $LIBCRYPTO",	
+		AC_MSG_ERROR([The DTLS based transports require the libssl library from OpenSSL to be available and support DTLS])	,-lcrypto)
+            TLSPROG=yes
+        fi
+        if echo " $transport_result_list " | $GREP "TLS" > /dev/null; then
+	    AC_CHECK_LIB(ssl, SSL_library_init,
+                AC_DEFINE(HAVE_LIBSSL, 1,
+                    [Define to 1 if you have the `ssl' library (-lssl).])
+                LIBCRYPTO=" -lssl $LIBCRYPTO",	
+		AC_MSG_ERROR([The DTLS based transports require the libssl library from OpenSSL to be available])	,-lcrypto)
+            TLSPROG=yes
+        fi
+        if echo " $transport_result_list " | $GREP " SSH " > /dev/null; then
+	    AC_CHECK_LIB(ssh2, libssh2_session_startup,
+                AC_DEFINE(HAVE_LIBSSH2, 1,
+                    [Define to 1 if you have the `ssh2' library (-lssh2).])
+                LIBCRYPTO=" -lssh2 $LIBCRYPTO",
+                AC_MSG_ERROR([The SSH transport requires the libssh2 library to be available]),)
+            SSHPROG=yes
+        fi
+    fi
+elif test "x$askedpkcs" = "xyes"; then
+    AC_CHECK_LIB(pkcs11, C_Initialize,
+        AC_DEFINE(HAVE_LIBPKCS11)
+        LIBPKCS11="-lpkcs11")
+fi
+if test "x$TLSPROG" = "xyes"; then
+   AC_CHECK_DECL([EVP_sha224],
+    : ,
+    AC_DEFINE([HAVE_EVP_SHA224], [], [Define if you have EVP_sha224/256 in openssl]),
+    [[#include <openssl/evp.h>]])
+   AC_CHECK_DECL([EVP_sha384],
+    : ,
+    AC_DEFINE([HAVE_EVP_SHA384], [], [Define if you have EVP_sha384/256 in openssl]),
+    [[#include <openssl/evp.h>]])
+fi
+
+LIBS=$NONAGENTLIBS	 # restore old libraries
+if test "x$SSHPROG" = "xyes"; then
+    NETSNMP_BUILD_SSH_PROG_TRUE=''
+    NETSNMP_BUILD_SSH_PROG_FALSE='#'
+else
+    NETSNMP_BUILD_SSH_PROG_TRUE='#'
+    NETSNMP_BUILD_SSH_PROG_FALSE=''
+fi
+if test "x$TLSPROG" = "xyes" -a "x$enable_read_only" != "xyes" ; then
+    NETSNMP_BUILD_TLS_PROG_TRUE=''
+    NETSNMP_BUILD_TLS_PROG_FALSE='#'
+else
+    NETSNMP_BUILD_TLS_PROG_TRUE='#'
+    NETSNMP_BUILD_TLS_PROG_FALSE=''
+fi
+if echo " ${security_mod_list} " | grep ' usm ' ; then
+    if test "x$enable_read_only" != "xyes" ; then
+    	NETSNMP_BUILD_USM_PROG_TRUE=''
+    	NETSNMP_BUILD_USM_PROG_FALSE='#'
+    else
+    	NETSNMP_BUILD_USM_PROG_TRUE='#'
+    	NETSNMP_BUILD_USM_PROG_FALSE=''
+    fi
+else
+    NETSNMP_BUILD_USM_PROG_TRUE='#'
+    NETSNMP_BUILD_USM_PROG_FALSE=''
+fi
+if test "x$enable_read_only" != "xyes" ; then
+    NETSNMP_BUILD_SET_PROG_TRUE=""
+    NETSNMP_BUILD_SET_PROG_FALSE="#"
+else
+    NETSNMP_BUILD_SET_PROG_TRUE="#"
+    NETSNMP_BUILD_SET_PROG_FALSE=""
+fi
+AC_SUBST(NETSNMP_BUILD_SSH_PROG_TRUE)
+AC_SUBST(NETSNMP_BUILD_SSH_PROG_FALSE)
+AC_SUBST(NETSNMP_BUILD_TLS_PROG_TRUE)
+AC_SUBST(NETSNMP_BUILD_TLS_PROG_FALSE)
+AC_SUBST(NETSNMP_BUILD_USM_PROG_TRUE)
+AC_SUBST(NETSNMP_BUILD_USM_PROG_FALSE)
+AC_SUBST(NETSNMP_BUILD_SET_PROG_TRUE)
+AC_SUBST(NETSNMP_BUILD_SET_PROG_FALSE)
+
+#
+# If we're using internal crypto support we need to compile in extra files
+#
+crypto_files_c=""
+crypto_files_o=""
+crypto_files_lo=""
+if test "x$tryopenssl" != "xno" -a "x$CRYPTO" = "x"; then
+   # If we:
+   #   1) couldn't find needed openssl support
+   #   2) OR were asked to use internal support
+   #   3) AND we have the needed files
+   # then use it
+   CRYPTO="internal"
+   crypto_files_c="openssl/openssl_sha1.c openssl/openssl_md5.c openssl/openssl_set_key.c openssl/openssl_des_enc.c openssl/openssl_cbc_enc.c openssl/openssl_aes_cfb.c openssl/openssl_aes_core.c openssl/openssl_cfb128.c"
+   crypto_files_o="openssl/openssl_sha1.o openssl/openssl_md5.o openssl/openssl_set_key.o openssl/openssl_des_enc.o openssl/openssl_cbc_enc.o openssl/openssl_aes_cfb.o openssl/openssl_aes_core.oo openssl/openssl_cfb128.o"
+   crypto_files_lo="openssl/openssl_sha1.lo openssl/openssl_md5.lo openssl/openssl_set_key.lo openssl/openssl_des_enc.lo openssl/openssl_cbc_enc.lo openssl/openssl_aes_cfb.lo openssl/openssl_aes_core.lo openssl/openssl_cfb128.lo"
+   AC_DEFINE(HAVE_AES_CFB128_ENCRYPT)
+fi
+AC_SUBST(crypto_files_c)
+AC_SUBST(crypto_files_o)
+AC_SUBST(crypto_files_lo)
+
+#
+# if we can do any sort of crypto then note it
+#
+if test "x$CRYPTO" != "x" ; then
+  AC_DEFINE(NETSNMP_CAN_DO_CRYPTO, 1, "Define if crytography support is possible")
+fi
+
+#   TCP wrapper support
+#
+_cppflags="${CPPFLAGS}"
+_ldflags="${LDFLAGS}"
+if test "$with_libwrap" != "no"; then
+  if test "$with_libwrap" != "yes"; then
+    CPPFLAGS="${CPPFLAGS} -I$with_libwrap/include"
+    LDFLAGS="${LDFLAGS} -L$with_libwrap/lib"
+  fi
+
+  _libs=${LIBS}
+  AC_CHECK_HEADER(tcpd.h, ,
+    AC_MSG_ERROR([Asked to use libwrap but I couldn't find tcpd.h.]))
+
+  LIBS="$LIBS -lwrap"
+  AC_MSG_CHECKING([for TCP wrappers library -lwrap])
+  # XXX: should check for hosts_ctl
+  AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <sys/types.h>
+     #include <tcpd.h>
+     int allow_severity = 0;
+     int deny_severity  = 0;]],
+    [[hosts_access((void *)0)]])],
+    [AC_MSG_RESULT([yes])
+     AC_DEFINE(NETSNMP_USE_LIBWRAP)
+     test "$with_libwrap" != no -a "$with_libwrap" != yes && _wraplibs="-L$with_libwrap/lib"
+     _wraplibs="$_wraplibs -lwrap"],
+    [AC_MSG_RESULT([no])
+     # Linux RedHat 6.1 won't link libwrap without libnsl
+     AC_CHECK_FUNC(yp_get_default_domain, ,
+       AC_CHECK_LIB(nsl, yp_get_default_domain))
+     AC_MSG_CHECKING([for TCP wrappers library -lwrap linked with -lnsl])
+     AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <sys/types.h>
+	#include <tcpd.h>
+	int allow_severity = 0;
+	int deny_severity  = 0;]],
+       [[hosts_access((void *)0)]])],
+       [AC_MSG_RESULT(yes)
+	AC_DEFINE(NETSNMP_USE_LIBWRAP)
+	test "$with_libwrap" != no -a "$with_libwrap" != yes && _wraplibs="-L$with_libwrap/lib"
+	_wraplibs="$_wraplibs -lwrap -lnsl"],
+       [AC_MSG_RESULT(no)
+	AC_MSG_ERROR(Asked to use libwrap but I couldn't find it.)])])
+  LAGENTLIBS="$_wraplibs"
+  CPPFLAGS=${_cppflags}
+  LDFLAGS=${_ldflags}
+  LIBS=${_libs}
+fi
+
+
+##
+#   mysql
+##
+if test "x$with_mysql" = "xyes" ; then
+  AC_PATH_PROGS(MYSQLCONFIG,mysql_config)
+  AC_CHECK_HEADERS(mysql/mysql.h)
+  AC_CHECK_HEADER(mysql/mysql.h,mysql_h=yes,mysql_h=no)
+  if test "x$MYSQLCONFIG" = "x" -o "x$mysql_h" = "xno"; then
+     AC_MSG_ERROR([Could not find mysql_config or mysql.h and was specifically asked to use MySQL support])
+  fi
+  MYSQL_LIBS=`$MYSQLCONFIG --libs`
+  MYSQL_INCLUDES=`$MYSQLCONFIG --cflags`
+  AC_MSG_CHECKING([whether MY_INIT() works])
+  _libs="${LIBS}"
+  _cppflags="${CPPFLAGS}"
+  LIBS="${LIBS} ${MYSQL_LIBS}"
+  CPPFLAGS="${CPPFLAGS} ${MYSQL_INCLUDES}"
+  AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <mysql/my_global.h>
+               #include <mysql/my_sys.h>]], [[MY_INIT("my_init_test")]])],[AC_MSG_RESULT(yes)],[AC_MSG_RESULT(no)
+               AC_DEFINE([HAVE_BROKEN_LIBMYSQLCLIENT], 1,
+	                 [Define if using MY_INIT() causes a linker error])])
+  CPPFLAGS="${_cppflags}"
+  LIBS="${_libs}"
+  AC_MSG_CACHE_ADD(MYSQL Trap Logging:         enabled)
+else
+  AC_MSG_CACHE_ADD(MYSQL Trap Logging:         unavailable)
+fi
+AC_SUBST(MYSQL_LIBS)
+AC_SUBST(MYSQL_INCLUDES)
+  
+
+##
+#   Non-library checks
+##
+
+# nlist
+AC_CHECK_FUNCS(nlist nlist64 knlist)
+

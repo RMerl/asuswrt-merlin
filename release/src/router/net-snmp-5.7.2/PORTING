@@ -1,0 +1,104 @@
+--- INTRODUCTION
+
+Just a quick note on porting and sending me patches:
+
+First off, you probably should subscribe to
+net-snmp-coders@lists.sourceforge.net by sending a message to
+net-snmp-coders-request@lists.sourceforge.net with a subject line of
+subscribe.  This is a mailing list to discuss all oft the coding
+aspects of the project.
+
+Additionally, you should probably be developing against the latest
+snapshot of the source code, which can be obtained through the
+net-snmp cvs server.  Details can be found at
+http://www.net-snmp.org/cvs/.
+
+If you send patches to us, it would greatly help us if you sent them
+to us based on the current checked out copy from CVS.  To do this,
+send us the output of "cvs diff -u" run in the top level net-snmp
+source tree after you have modified the files that will fix the
+problem or add the feature you're submitting the patch for.
+
+Quite a while back I started using the GNU autoconf testing suite to
+greatly enhance portability.  Because of this porting to new
+architectures is much easier than before.  However, new people porting
+the package to new architectures rarely take advantage of this setup
+and send me patches with lots of '#ifdef ARCH' type C code in it.  Let
+me say up front, I *hate* this type of coding now (even though I used
+to use it a lot).  What is better is to check for the necessary
+functionality using the configure script and then use the results of
+those tests.
+
+To do this, you need to install the GNU 'autoconf' package which also
+requires the GNU 'm4' (gm4) package as well.  This double installation
+is extremely easy and shouldn't take you more than 15 minutes max.
+After that, modify the configure.in and acconfig.h files as needed
+instead of modifying the config.h or configure files directly.  The
+Makefile will re-produce these files from the first two.
+
+Worst case: Don't put in #ifdef architecture style statements.
+Rather, create a new define in the s/ and m/ system specific header
+files and use those defines to test against in the C code.  This
+should only be done for things that can't be checked using configure
+though.
+
+Some autoconf examples:
+
+--- HEADER FILES
+
+In configure.in:
+  AC_CHECK_HEADERS(headdir/header.h)
+
+Then in your source code:
+  #ifdef HAVE_HEADDIR_HEADER_H
+    #include <headdir/header.h>
+  #ENDIF
+
+--- LIBRARY ROUTIENS
+
+In configure.in:
+  AC_CHECK_LIB(libexample, example_function)
+
+Thats it.  The Makefiles will automatically link against -llibexample
+if example_function is found in the library.
+
+--- FUNCTION CHECKS
+
+In configure.in:
+  AC_CHECK_FUNCS(example_function)
+
+In source code:
+  #ifdef HAVE_EXAMPLE_FUNCTION
+    /* use it */
+  #endif
+
+--- STRUCTURE MEMBER CHECKS
+
+In configure.in:
+  AC_CHECK_MEMBERS([struct STRUCTURE.MEMBER],,,[[
+#include lines
+]])
+                           ^^^^^^^^^ ^^^^^^  (change)
+
+In source code:
+  #ifdef HAVE_STRUCT_STRUCTURE_MEMBER
+    /* use it */
+  #endif
+
+--- READ THE MANUAL
+
+The GNU autoconf info files are extremely well written and easy to
+follow.  Please check them out.
+
+I'd be happy to help you through anything you don't understand or
+through more complex examples (eg, checking for structure parts or
+existance).  I'd be far less happy to get patches ignoring the above
+request.  If you simple can't abide by this, please send the patches
+anyway, but it'll just take me longer to get them applied.
+
+Submit the patch to http://www.net-snmp.org/patches/.
+Please include what version of the net-snmp package it was applied to
+and state the arcitectures you have tested it on.
+
+Thanks a lot for the consideration,
+Wes

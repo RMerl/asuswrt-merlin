@@ -1,0 +1,15 @@
+#!/bin/sh
+
+. ../support/simple_eval_tools.sh
+
+HEADER UDP Transport
+
+SKIPIFNOT NETSNMP_TRANSPORT_UDP_DOMAIN
+
+#
+# Begin test
+#
+
+SNMP_TRANSPORT_SPEC=udp
+
+. ./Stransport

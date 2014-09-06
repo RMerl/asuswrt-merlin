@@ -1,0 +1,217 @@
+PROGNAME=
+CFG=
+OUTDIR=
+INTDIR=
+LINKTYPE=
+SSL=
+
+# Set to 1 to allow the building using the DLL version of SNMPLIB.
+ALLOW_DLL=1
+
+!IF "$(OS)" == "Windows_NT"
+NULL=
+!ELSE 
+NULL=nul
+!ENDIF 
+
+!IF  "$(CFG)" == "release"
+
+ALL : "..\bin\$(OUTDIR)\$(PROGNAME).exe" "$(INTDIR)"
+
+
+CLEAN :
+	-@erase "$(INTDIR)\$(PROGNAME).obj"
+	-@erase "$(INTDIR)\vc??.idb"
+	-@erase "$(INTDIR)\$(PROGNAME).pch"
+	-@erase "..\bin\$(OUTDIR)\$(PROGNAME).exe"
+	-@erase "..\bin\$(OUTDIR)\$(PROGNAME).exe.manifest"
+
+"..\bin\$(OUTDIR)" :
+    if not exist "..\bin\$(OUTDIR)/$(NULL)" mkdir "..\bin\$(OUTDIR)"
+
+"$(INTDIR)" :
+    if not exist "$(INTDIR)/$(NULL)" mkdir "$(INTDIR)"
+
+CPP=cl.exe
+CPP_PROJ=/nologo /MD /W3 /EHsc /Zi /O2 /I "." /I ".." /I "..\..\snmplib" /I "..\.." /I "..\..\include" /D "WIN32" /D "_BIND_TO_CURRENT_VCLIBS_VERSION" /D "NDEBUG" /D "_CONSOLE" /D "_CRT_SECURE_NO_WARNINGS" /D "_CRT_NONSTDC_NO_WARNINGS" /D "_MBCS" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\$(PROGNAME).pdb" /FD /c 
+
+!IF "$(LINKTYPE)" == "dynamic"
+CPP_PROJ=$(CPP_PROJ) /D "NMAKE_NETSNMP_USE_DLL"
+!ENDIF
+
+.c{$(INTDIR)}.obj::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+.cpp{$(INTDIR)}.obj::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+.cxx{$(INTDIR)}.obj::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+.c{$(INTDIR)}.sbr::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+.cpp{$(INTDIR)}.sbr::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+.cxx{$(INTDIR)}.sbr::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+RSC=rc.exe
+BSC32=bscmake.exe
+BSC32_FLAGS=/nologo /o"$(INTDIR)\$(PROGNAME).bsc" 
+BSC32_SBRS= \
+
+LINK32=link.exe
+LINK32_FLAGS=netsnmp.lib advapi32.lib ws2_32.lib kernel32.lib user32.lib /nologo /subsystem:console /pdb:"../bin/$(OUTDIR)/$(PROGNAME).pdb" /debug /out:"..\bin\$(OUTDIR)/$(PROGNAME).exe" /libpath:"../lib/release" 
+LINK32_OBJS= \
+	"$(INTDIR)\$(PROGNAME).obj"
+
+"..\bin\$(OUTDIR)\$(PROGNAME).exe" : "..\bin\$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
+!IF "$(LINKTYPE)" == "static" || "$(ALLOW_DLL)" == "1"
+    $(LINK32) @<<
+  $(LINK32_FLAGS) $(LINK32_OBJS)
+<<
+ if exist "..\bin\$(OUTDIR)\$(PROGNAME).exe.manifest" \
+	    mt.exe -manifest "..\bin\$(OUTDIR)\$(PROGNAME).exe.manifest" -outputresource:"..\bin\$(OUTDIR)\$(PROGNAME).exe";1
+!ELSE	# Linktype check
+	-@echo .
+	-@echo Aborting build.  Applications can not be built using --linktype=dynamic
+	-@echo .
+!ENDIF
+
+!ELSEIF  "$(CFG)" == "debug"
+
+ALL : "..\bin\$(OUTDIR)\$(PROGNAME).exe" "$(INTDIR)\$(PROGNAME).bsc" "$(INTDIR)"
+
+
+CLEAN :
+	-@erase "$(INTDIR)\$(PROGNAME).obj"
+	-@erase "$(INTDIR)\$(PROGNAME).sbr"
+	-@erase "$(INTDIR)\vc??.idb"
+	-@erase "$(INTDIR)\vc??.pdb"
+	-@erase "$(INTDIR)\$(PROGNAME).bsc"
+	-@erase "$(INTDIR)\$(PROGNAME).pdb"
+	-@erase "$(INTDIR)\$(PROGNAME).pch"
+	-@erase "..\bin\$(OUTDIR)\$(PROGNAME).exe"
+	-@erase "..\bin\$(OUTDIR)\$(PROGNAME).exe.manifest"
+
+"..\bin\$(OUTDIR)" :
+    if not exist "..\bin\$(OUTDIR)/$(NULL)" mkdir "..\bin\$(OUTDIR)"
+
+"$(INTDIR)" :
+    if not exist "$(INTDIR)/$(NULL)" mkdir "$(INTDIR)"
+
+CPP=cl.exe
+CPP_PROJ=/nologo /MDd /W3 /Gm /EHsc /Zi /Od /I "." /I ".." /I "..\..\snmplib" /I "..\.." /I "..\..\include" /D "WIN32" /D "_BIND_TO_CURRENT_VCLIBS_VERSION" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /FR"$(INTDIR)\\" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\$(PROGNAME).pdb" /FD /c 
+
+!IF "$(LINKTYPE)" == "dynamic"
+CPP_PROJ=$(CPP_PROJ) /D "NMAKE_NETSNMP_USE_DLL"
+!ENDIF
+
+.c{$(INTDIR)}.obj::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+.cpp{$(INTDIR)}.obj::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+.cxx{$(INTDIR)}.obj::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+.c{$(INTDIR)}.sbr::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+.cpp{$(INTDIR)}.sbr::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+.cxx{$(INTDIR)}.sbr::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+RSC=rc.exe
+BSC32=bscmake.exe
+BSC32_FLAGS=/nologo /o"$(INTDIR)\$(PROGNAME).bsc" 
+BSC32_SBRS= \
+	"$(INTDIR)\$(PROGNAME).sbr"
+
+"$(INTDIR)\$(PROGNAME).bsc" : "..\bin\$(OUTDIR)" $(BSC32_SBRS)
+    $(BSC32) @<<
+  $(BSC32_FLAGS) $(BSC32_SBRS)
+<<
+
+LINK32=link.exe
+LINK32_FLAGS=netsnmp.lib advapi32.lib ws2_32.lib kernel32.lib user32.lib /nologo /subsystem:console /incremental:no /pdb:"../bin/$(OUTDIR)/$(PROGNAME).pdb" /debug /out:"..\bin\$(OUTDIR)/$(PROGNAME).exe" /pdbtype:sept /libpath:"../lib/debug" 
+LINK32_OBJS= \
+	"$(INTDIR)\$(PROGNAME).obj"
+
+"..\bin\$(OUTDIR)\$(PROGNAME).exe" : "..\bin\$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
+!IF "$(LINKTYPE)" == "static" || "$(ALLOW_DLL)" == "1"
+    $(LINK32) @<<
+  $(LINK32_FLAGS) $(LINK32_OBJS)
+<<
+ if exist "..\bin\$(OUTDIR)\$(PROGNAME).exe.manifest" \
+	    mt.exe -manifest "..\bin\$(OUTDIR)\$(PROGNAME).exe.manifest" -outputresource:"..\bin\$(OUTDIR)\$(PROGNAME).exe";1
+!ELSE	# Linktype check
+	-@echo .
+	-@echo Aborting build.  Applications can not be built using --linktype=dynamic
+	-@echo .
+!ENDIF
+
+!ENDIF 
+
+
+!IF "$(NO_EXTERNAL_DEPS)" != "1"
+!IF EXISTS("$(PROGNAME).dep")
+!INCLUDE "$(PROGNAME).dep"
+!ELSE 
+!MESSAGE Warning: cannot find "$(PROGNAME).dep"
+!ENDIF 
+!ENDIF 
+
+
+!IF "$(CFG)" == "release" || "$(CFG)" == "debug"
+SOURCE=..\..\apps\$(PROGNAME).c
+
+!IF  "$(CFG)" == "release"
+
+
+"$(INTDIR)\$(PROGNAME).obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "debug"
+
+
+"$(INTDIR)\$(PROGNAME).obj"	"$(INTDIR)\$(PROGNAME).sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+
+!ENDIF 
+
+

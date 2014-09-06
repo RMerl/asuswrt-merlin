@@ -194,7 +194,9 @@ void convert_dsl_wan_settings(int req)
 	{
 		convert_dsl_config_num();
 		eval("req_dsl_drv", "reloadpvc");
+#ifdef RTCONFIG_DSL_TCLINUX
 		eval("req_dsl_drv", "rmvlan", nvram_safe_get("dslx_rmvlan"));
+#endif
 		convert_dsl_wan();
 	}
 }

@@ -28,6 +28,7 @@
 #if defined(DEBUG) && defined(DMALLOC)
 #include <dmalloc.h>
 #endif
+#include <rtconfig.h>
 
 /* Basic authorization userid and passwd limit */
 #define AUTH_MAX 64

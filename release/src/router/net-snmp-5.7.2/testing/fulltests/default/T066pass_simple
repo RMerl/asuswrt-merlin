@@ -1,0 +1,53 @@
+#!/bin/sh
+
+. ../support/simple_eval_tools.sh
+
+HEADER "extending agent functionality with pass"
+
+SKIPIF NETSNMP_DISABLE_SNMPV2C
+SKIPIFNOT USING_UCD_SNMP_PASS_MODULE
+SKIPIFNOT USING_UTILITIES_EXECUTE_MODULE
+
+# Don't run this test on MinGW - local/passtest is a shell script and
+# hence passing it to the MSVCRT popen() doesn't work.
+[ "x$OSTYPE" = "xmsys" ] && SKIP "MinGW"
+
+# make sure snmpget and snmpwalk can be executed
+SNMPGET="${builddir}/apps/snmpget"
+[ -x "$SNMPGET" ] || SKIP
+SNMPWALK="${builddir}/apps/snmpwalk"
+[ -x "$SNMPWALK" ] || SKIP
+
+snmp_version=v2c
+TESTCOMMUNITY=testcommunity
+. ./Sv2cconfig
+
+#
+# Begin test
+#
+oid=.1.3.6.1.4.1.8072.2.255  # NET-SNMP-PASS-MIB::netSnmpPassExamples
+CONFIGAGENT pass $oid ${srcdir}/local/passtest
+
+ORIG_AGENT_FLAGS="$AGENT_FLAGS"
+AGENT_FLAGS="$ORIG_AGENT_FLAGS -Ducd-snmp/pass"
+STARTAGENT
+
+#COMMENT Check a full walk of the sample data
+CAPTURE "$SNMPWALK $SNMP_FLAGS -$snmp_version -c $TESTCOMMUNITY $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT $oid"
+CHECKORDIE "NET-SNMP-PASS-MIB::netSnmpPassString.0 = STRING: Life, the Universe, and Everything"
+CHECKORDIE "NET-SNMP-PASS-MIB::netSnmpPassInteger.1 = INTEGER: 42"
+CHECKORDIE "NET-SNMP-PASS-MIB::netSnmpPassOID.1 = OID: NET-SNMP-PASS-MIB::netSnmpPassOIDValue"
+CHECKORDIE "NET-SNMP-PASS-MIB::netSnmpPassTimeTicks.0 = Timeticks: (363136200) 42 days, 0:42:42.00 "
+CHECKORDIE "NET-SNMP-PASS-MIB::netSnmpPassIpAddress.0 = IpAddress: 127.0.0.1"
+CHECKORDIE "NET-SNMP-PASS-MIB::netSnmpPassCounter.0 = Counter32: 42"
+CHECKORDIE "NET-SNMP-PASS-MIB::netSnmpPassGauge.0 = Gauge32: 42"
+
+#COMMENT A couple of spot checks of GET requests.
+CAPTURE "$SNMPGET $SNMP_FLAGS -$snmp_version -c $TESTCOMMUNITY $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT NET-SNMP-PASS-MIB::netSnmpPassInteger.1"
+CHECKORDIE "INTEGER: 42"
+
+CAPTURE "$SNMPGET $SNMP_FLAGS -$snmp_version -c $TESTCOMMUNITY $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT NET-SNMP-PASS-MIB::netSnmpPassCounter.0"
+CHECKORDIE "Counter32: 42"
+
+STOPAGENT
+FINISHED

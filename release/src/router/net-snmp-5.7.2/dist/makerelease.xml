@@ -1,0 +1,726 @@
+<!-- this is a makerelease script: http://github.com/hardaker/makerelease -->
+<makerelease>
+  <!-- TODO:
+  - make mancp below happens before configure is run, which
+    doesn't work if it's a complete work.
+  - configure options should be prompted into a variable and used
+  -->
+  <steps>
+    <step type="section" title="Setup Steps" mandatory="1">
+      <text>
+	This set of steps will do some preliminary "safety" checks to
+	ensure the local environment is ok and setup some important
+	information.
+      </text>
+      <steps>
+	<step type="system" title="Old Code">
+	  <text>
+	    This checks for old tarballs (and particularly unpacked
+	    distributions) which might confuse the later processing.
+	    If this step finds outstanding files you need to remove
+	    them before continuing!
+	  </text>
+	  <commands>
+	    <command expectfailure="1">find . -name 'net-snmp-5*' | egrep '^[^\?]'</command>
+	  </commands>
+	</step>
+	<step type="system" title="Setup Check">
+	  <text>
+	    This should show the last version number published in this
+	    branch by looking at the time line in the README file:
+	  </text>
+	  <commands>
+	    <command>head -1 README</command>
+	  </commands>
+	</step>
+	<step type="prompt" prompt="Enter the new version number:"
+	  title="Pick a Version Number"
+	  parameter="VERSION">
+	  <text>
+	    Please enter the version number to publish.  Net-SNMP
+	    convention dictates that this be a version number like 5.4 or
+	    5.4.1.  Pre-releases that occur before a branch freezes should
+	    be appended with ".preN" like 5.4.1.pre2.  Release-candidates
+	    should be labeled ".rcN" like 5.4.1.rc1.
+	  </text>
+	</step>
+	<step type="prompt" prompt="Enter the last version number:"
+	  title="Enter the last version number"
+	  parameter="LASTVERSION">
+	  <text>
+	    Please enter the last version number that the changelog should be
+            generated from.  This should be easy for a new release on a branch,
+            but may be more tricky for a main release.
+	  </text>
+	</step>
+	<step type="perl" title="Defining a second internal version string"
+	  mandatory="1">
+	  <perl>
+	    <code>
+	      # version number with dashes instead of dots
+	      $self->{'parameters'}{'VERSIONTAGNAME'} =
+    	          "v" . $self->{'parameters'}{'VERSION'};
+
+	      $self->{'parameters'}{'LASTVERSIONTAGNAME'} =
+    	          "v" . $self->{'parameters'}{'LASTVERSION'};
+
+	      # target version number (without preN/rcN)
+	      $self->{'parameters'}{'VERSIONTARGET'} =
+    	          $self->{'parameters'}{'VERSION'};
+    	      if ( $self->{'parameters'}{'VERSIONTARGET'} =~ /\.pre.*/ ) {
+    	          $self->{'parameters'}{'VERSIONTARGET'} =~ s/\.pre.*//;
+    	          $self->{'parameters'}{'RELEASETYPE'} = "pre";
+    	      } elsif ( $self->{'parameters'}{'VERSIONTARGET'} =~ /\.rc.*/ ) {
+    	          $self->{'parameters'}{'VERSIONTARGET'} =~ s/\.rc.*//;
+    	          $self->{'parameters'}{'RELEASETYPE'} = "rc";
+    	      } else {
+    	          $self->{'parameters'}{'RELEASETYPE'} = "full";
+    	      }
+
+	      # version in floating point form for perl modules
+              my ($major, $minor, $patch, $opps) =
+	          ($self->{'parameters'}{'VERSION'} =~
+                      /^(\d+)\.(\d+)\.?(\d*)\.?(\d*)/);
+	      $self->{'parameters'}{'VERSIONFLOAT'} = 
+                  $major + $minor/100 + $patch/10000 + $opps/100000;
+
+	      # find out the git branch we're on.
+	      open(GITINFO,"git branch|");
+	      while(&lt;GITINFO&gt;) {
+		  if (/^\*\s+(.*)/) {
+		     $self->{'parameters'}{'BRANCHPATH'} = $1;
+		     my ($nextBranch);
+		     $nextBranch = &lt;GITINFO&gt;;
+		     $nextBranch =~ s/^\s+//;
+		     $self->{'parameters'}{'NEXTBRANCH'} = $nextBranch;
+                     last;
+                  }
+              }
+              close(GITINFO);
+
+	      return 0;
+	    </code>
+	  </perl>
+	</step>
+	<step type="Informational" title="Release Parameter Information" pause="1">
+	  <text>
+	    Here is the configured information we'll be using:
+
+	    VERSION:                 {VERSION}
+
+	    VERSION tag name:        {VERSIONTAGNAME}
+
+	    Floating point VERSION:  {VERSIONFLOAT}
+
+            Git Branch Name:         {BRANCHPATH}
+	  </text>
+	</step>
+	<step type="system" stepname="update" title="update">
+	  <text>We need to make sure your code is up to date and
+	  matches the latest sources in this branch.</text>
+	  <commands>
+	    <command>git pull</command>
+	  </commands>
+	</step>
+	<step type="system" stepname="update" title="Check for changes">
+	  <text>This steps looks for outstanding files that have been
+	  modified.  There should be no outstanding modifications!  If
+	  this step finds outstanding modified files you need to check
+	  them in or revert them before continuing!</text>
+	  <commands>
+	    <command expectfailure="1">git status --porcelain | egrep '^[^\?]'</command>
+	  </commands>
+	</step>
+      </steps>
+    </step>
+    <step type="section" title="Source Code Setup">
+      <text>
+	This set of steps will modify various places within the source
+	code tree to bring it up to date with the new version number
+	about to be published.
+      </text>
+      <steps>
+	<step type="section" title="Libtool / Library versioning setup">
+	  <text>
+	    These steps will modify the various files in the source tree
+	    that contain the version number, show you the changes that
+	    will be made and then check in the resulting changes if you
+	    approve of them.
+	  </text>
+	  <steps>
+	    <step type="informational" pause="true"
+	      skipunless="'{RELEASETYPE}' eq 'pre'"
+	      stepname="version:manualedit" title="version:libtoolmanualedit">
+	      <text>
+		You may need to edit Makefile.top to update the library
+		version numbering - see the comments there about LIBCURRENT,
+		LIBAGE and LIBREVISION for details.  This is usually only
+		needed for the first pre-release of a given version.
+
+		This script will commit the file for you after you're done.
+	      </text>
+	    </step>
+	    <step prompt="true" type="system" stepname="version:libtoolcommit"
+	      title="version:commit">
+	      <text>We'll now commit the Makefile.top file if you've
+		modified it.</text>
+	      <commands>
+		<command ignoreerror="1">git commit -m "version update for {VERSION}" Makefile.top</command>
+	      </commands>
+	    </step>
+	  </steps>
+	</step>
+	<step type="section" title="Change The Version Number">
+	  <text>
+	    These steps will modify the various files in the source tree
+	    that contain the version number, show you the changes that
+	    will be made and then check in the resulting changes if you
+	    approve of them.
+	  </text>
+	  <steps>
+	    <step type="modify" title="Modify the source files"
+	      stepname="release:versionstamp">
+	      <text>
+		We will now modify files through the code to replace the
+		version number with the newer one.
+	      </text>
+	      <modifications>
+		<modify
+		  find="VERSION = '(.*)'"
+		  replace="VERSION = \'{VERSIONFLOAT}\'">
+		  <files>
+		    <file>perl/SNMP/SNMP.pm</file>
+		    <file>perl/agent/agent.pm</file>
+		    <file>perl/agent/Support/Support.pm*</file>
+		    <file>perl/agent/default_store/default_store.pm</file>
+		    <file>perl/default_store/default_store.pm</file>
+		    <file>perl/OID/OID.pm</file>
+		    <file>perl/ASN/ASN.pm</file>
+		    <file>perl/AnyData_SNMP/Storage.pm</file>
+		    <file>perl/AnyData_SNMP/Format.pm</file>
+		    <file>perl/TrapReceiver/TrapReceiver.pm</file>
+		  </files>
+		</modify>
+		<!-- this will fail (ok) against future versions with
+		configure generated PACKAGE_VERSION usage -->
+		<modify
+		  find="NetSnmpVersionInfo = &quot;[\d\.]+&quot;"
+		  replace="NetSnmpVersionInfo = &quot;{VERSION}&quot;">
+		  <files>
+		    <file>snmplib/snmp_version.c</file>
+		  </files>
+		</modify>
+		<modify
+		  find="Version: [\.0-9a-zA-Z]+"
+		  replace="Version: {VERSION}">
+		  <files>
+		    <file>README</file>
+		    <file>FAQ</file>
+		    <file>dist/net-snmp.spec</file>
+		  </files>
+		</modify>
+		<modify
+		  find="VERSION = [\.0-9a-zA-Z]+"
+		  replace="VERSION = {VERSION}">
+		  <files>
+		    <file>dist/Makefile*</file>
+		  </files>
+		</modify>
+		<modify
+		  find="AC_INIT\(\[Net-SNMP\], \[([^\]]+)\]"
+		  replace="AC_INIT([Net-SNMP], [{VERSION}]">
+		  <files>
+		    <file>configure.in*</file>
+		    <file>configure.ac*</file>
+		  </files>
+		</modify>
+		<modify
+		  find="NetSnmpVersionInfo = &quot;[^&quot;]+&quot;"
+		  replace="NetSnmpVersionInfo = &quot;{VERSION}&quot;">
+		  <files>
+		    <file>snmplib/snmp_version.c</file>
+		  </files>
+		</modify>
+	      </modifications>
+	    </step>
+	    <step type="system" stepname="release:versionautoconf"
+	      title="Running autoconf to rebuild configure">
+	      <text>We modified configure.in, so we now need to run
+		autoconf to rebuild configure.</text>
+	      <commands>
+		<command>rm -f configure</command>
+		<command>dist/run-autoconf</command>
+	      </commands>
+	    </step>
+	    <step type="system" stepname="release:versiondiff"
+	      title="Running svn diff to check changes">
+
+	      <text>Check the following changes for proper version number
+		differences before we commit the chances.</text>
+	      <commands>
+		<command>git diff</command>
+	      </commands>
+	    </step>
+	    <step type="system" stepname="release:versioncommit" pause="true"
+	      title="Running git commit to commit the changes">
+
+	      <text>Check the changes in the above diff and then we'll
+		commit the results here if they look ok.</text>
+	      <commands>
+		<command>git commit -a -m "Version number update: {VERSION}"</command>
+	      </commands>
+	    </step>
+	  </steps>
+	</step>
+        <step type="section" title="Handle dist/release">
+          <steps>
+	    <step type="system" skipunless="'{RELEASETYPE}' eq 'rc'">
+	      <text>Note in 'dist/release' that this branch is in release candidate mode
+	      </text>
+	      <commands>
+	        <command>git checkout V5-4-patches</command>
+	        <command>echo {BRANCHPATH} rc >> dist/release </command>
+	        <command ignoreerror="1">git commit -m "Release Candidate for {BRANCHPATH}" dist/release</command>
+	        <command>git checkout {BRANCHPATH} </command>
+	        <command>git merge V5-4-patches    </command>
+	        <command>git commit                </command>
+	      </commands>
+	    </step>
+	    <step type="system" skipif="'{RELEASETYPE}' eq 'rc'">
+	      <text>Ensure that 'dist/release' doesn't reference this branch
+	      </text>
+	      <commands>
+	        <command>git checkout V5-4-patches</command>
+	        <command>grep -v {BRANCHPATH} dist/release > dist/release.new </command>
+	        <command>mv dist/release.new dist/release </command>
+	        <command ignoreerror="1">git commit -m "{BRANCHPATH} out of Release Candidate" dist/release</command>
+	        <command>git checkout {BRANCHPATH} </command>
+	        <command>git merge V5-4-patches    </command>
+	        <command>git commit                </command>
+	      </commands>
+	    </step>
+          </steps>
+        </step>
+	<step type="system" stepname="docs:make" title="docs:make">
+	  <text>This step will create manual pages from doxygen
+	  instrumented code files.</text>
+	  <commands>
+	    <command>
+	       if [ -f Makefile ]
+	       then
+	         make docs
+	         make mancp
+	       fi
+	    </command>
+	  </commands>
+	</step>
+	<step type="system" stepname="docs:update" title="docs:update">
+	  <text>This will run git status to figure out what files have
+	  changed since the previous man page generation steps were
+	  done.  After this step, we'll commit all the modified files.
+
+	  You may find additional files (marked with a ?) that should
+	  be added to the svn repository and you'll need to do this by
+	  hand before going on to the next step.
+
+	  Note: based on a recent net-snmp-admin discussion, we're no
+	  longer going to be adding the bazillions of man pages that
+	  doxygen generates by default.  Only important ones should be
+	  added.</text>
+	  <commands>
+	    <command>git status --porcelain man</command>
+	  </commands>
+	</step>
+	<step type="informational" pause="true" stepname="docs:manualaddnewman" title="docs:manualaddnewman">
+	  <text>
+	    Update man/Makefile.in with details of any new man pages,
+	    and run 'git add' on them.
+
+	    I'll commit these changes for you after you're done.
+	  </text>
+	</step>
+	<step prompt="true" type="system" stepname="docs:commit" title="docs:commit">
+	  <commands>
+	    <command ignoreerror="1">git commit -m "documentation update for {VERSION}" man</command>
+	  </commands>
+	</step>
+      </steps>
+    </step>
+    <step type="section" title="Testing Steps">
+      <text>
+	These steps will help you test the source code to ensure it
+	passes some simple "it works" tests.
+      </text>
+      <steps>
+	<step type="system" stepname="build:distclean" title="build:distclean">
+	  <text>First we need to clean the existing build tree and
+	  start from scratch.</text>
+	  <commands>
+	    <command>NETSNMP_DONT_CHECK_VERSION=1 make distclean</command>
+	  </commands>
+	</step>
+	<step type="system" stepname="build:configure" title="build:configure">
+	  <text>We need to run configure to set up the build tree.</text>
+	  <commands>
+	    <command>./configure --cache=config.cache --with-defaults --with-mib-modules='host examples examples/example testhandler tlstm-mib tsm-mib smux Rmon disman/event-mib' --with-transports="IPX TLSTCP DTLSUDP" --with-security-modules="tsm" --enable-ipv6 --enable-embedded-perl --enable-shared</command>
+	  </commands>
+	</step>
+	<step type="system" stepname="build:make" title="build:make">
+	  <text>Then we need to build the code</text>
+	  <commands>
+	    <command>NETSNMP_DONT_CHECK_VERSION=1 make</command>
+	  </commands>
+	</step>
+	<step type="system" stepname="build:test" title="testing: default tests">
+	  <text>Now we run "make test" which should produce a perfect
+	  set up test results.  If not, this needs to be fixed or at
+	  least understood and accepted as is for some other reason.</text>
+	  <commands>
+	    <command>make test</command>
+	  </commands>
+	</step>
+	<step type="system" stepname="build:test:unit" title="testing: unit-tests">
+	  <text>Now we run the unit-tests which should also produce a perfect
+	  set up test results.  If not, this needs to be fixed or at
+	  least understood and accepted as is for some other reason.</text>
+	  <commands>
+	    <command>cd testing &amp;&amp; ./RUNFULLTESTS -g unit-tests</command>
+	  </commands>
+	</step>
+	<step type="system" stepname="build:test:transports" title="testing: transports">
+	  <text>Now we run the transport tests which should also
+	  produce a perfect set up test results, if your machine
+	  supports all the transports.  If not, this needs to be fixed
+	  or at least understood and accepted as is for some other
+	  reason (like you can't do IPv6 on your system).</text>
+	  <commands>
+	    <command>cd testing &amp;&amp; ./RUNFULLTESTS -g transports</command>
+	  </commands>
+	</step>
+	<step type="system" stepname="code:checkcomments" title="code:checkcomments">
+	  <text>This command looks for source code oddities and policy
+	  violations.</text>
+	  <commands>
+	    <command>make checks</command>
+	  </commands>
+	</step>
+      </steps>
+    </step>
+    <step type="section" title="Release File Steps">
+      <text>Certain files in the distribution are built on a
+	per-release basis.  These steps will help set up these files.</text>
+      <steps>
+	<step type="system" stepname="code:makedepend" title="code:makedepend">
+          <text>This step creates Makefile dependencies using the
+          "distdepend" rule in the top level Makefile.
+
+          Note that if you have any additional MIB module code files in the
+          source tree, these will be included in the Makefile dependency list.
+          You may wish to remove these and re-run "make distdepend" before
+          committing the changes.
+          </text>
+	  <commands>
+	    <command>make distdepend</command>
+	  </commands>
+	</step>
+	<step prompt="true" type="system" stepname="code:commitdepend" title="code:commitdepend">
+          <text>This step commits the dependency changes done in the
+          previous step.</text>
+	  <commands>
+	    <command ignoreerror="1">git commit -m "make depend for {VERSION}" `find . -name Makefile.depend`</command>
+	  </commands>
+	</step>
+	<step type="system" stepname="changelog:create" title="Creating a changelog update">
+          <text>We need to extract the portions of the change logs
+          committed to the repository.</text>
+	  <commands>
+	    <command>git log --no-merges {LASTVERSIONTAGNAME}..HEAD &gt; ChangeLog.add</command>
+	  </commands>
+	</step>
+	<step type="informational" pause="true" stepname="changelog:manualedit" title="changelog:manualedit">
+	  <text>
+	    You need to manually insert the *relevent* portions of
+	    'ChangeLog.add' into the ChangeLog file.
+
+            I also suggest truncating ChangeLog.add to only contain
+            the *relevent* portions for this release, as this will make
+            CHANGES.new2 and NEWS.new2 more accurate later on.
+
+	    I'll commit these changes for you after you finish cutting
+	    out the proper changes.
+	  </text>
+	</step>
+	<step prompt="true" type="system" stepname="changelog:commit" title="changelog:commit">
+	  <commands>
+	    <command>git commit -m "version update for {VERSION}" ChangeLog</command>
+	  </commands>
+	</step>
+	<step type="system" stepname="docs:newnews" title="docs:newnews">
+	  <commands>
+	    <command>perl dist/extractnews -s ----- -e ----- ChangeLog</command>
+	  </commands>
+	</step>
+	<step type="system" stepname="docs:newnews" title="docs:newnews">
+	  <commands>
+	    <command>perl dist/extractnews -c CHANGES.new2 -n NEWS.new2 ChangeLog.add</command>
+	  </commands>
+	</step>
+	<step type="informational" pause="true" stepname="docs:README-and-NEWS" title="docs:README">
+	  <text>
+	    You need to manually insert the relevent portions of
+	    'CHANGES.new' and 'NEWS.new' into the CHANGES and NEWS file.
+	    (There are alternative versions in 'CHANGES.new2' and 'NEWS.new2')
+	    You may wish to update the README file as well.
+	    I'll commit these changes for you afterwards
+	  </text>
+	</step>
+	<step prompt="true" type="system" stepname="docs:commit" title="docs:commit">
+	  <commands>
+	    <command ignoreerror="1">git commit -m "version update for {VERSION}" README NEWS CHANGES</command>
+	  </commands>
+	</step>
+	<step type="system" stepname="release:update" title="release:update">
+	  <text>One more git pull and status to make sure nothing
+	  odd exists in your source tree.  Please check the results!</text>
+	  <commands>
+	    <command>git pull</command>
+	    <command>git status --porcelain</command>
+	  </commands>
+	</step>
+      </steps>
+    </step>
+
+    <step type="section" title="Make the Release" prompt="yes">
+      <text>This is it!  After this point it's much harder to turn
+      back.  If everything is ok until this point and you're ready to
+      actually tag the release in git and make release files, these
+      steps will do that for you.
+      </text>
+      <steps>
+	<step prompt="true" type="system" stepname="release:tag" title="release:tag">
+	  <text>
+	    This will actually svn copy the current checked out branch
+	    to the new tag name.  Specifically:
+
+               git tag -u A77C5329 -s {VERSIONTAGNAME} -m "Tagging of version {VERSION} as {VERSIONTAGNAME}"
+	  </text>
+	  <commands>
+	    <command>git tag -u A77C5329 -s {VERSIONTAGNAME} -m "Tagging of version {VERSION} as {VERSIONTAGNAME}"</command>
+	  </commands>
+	</step>
+	<step prompt="true" type="system" stepname="release:makedist" title="release:makedist">
+	  <commands>
+	    <command>git archive --prefix=net-snmp-{VERSION}/ {BRANCHPATH} | tar xf -</command>
+	  </commands>
+	</step>
+	<step type="system" stepname="release:removefiles" title="release:removefiles">
+	  <commands>
+	    <command>net-snmp-{VERSION}/remove-files net-snmp-{VERSION}</command>
+	  </commands>
+	</step>
+	<step type="system" stepname="release:makedist" title="release:makedist">
+	  <commands>
+	    <command>star artype=ustar -c -z -f net-snmp-{VERSION}.tar.gz  net-snmp-{VERSION}</command>
+	  </commands>
+	</step>
+	<step type="system" stepname="release:makezipclean" title="release:makezipclean">
+	  <commands>
+	    <command>rm -f net-snmp-{VERSION}.zip</command>
+	  </commands>
+	</step>
+	<step type="system" stepname="release:makezip" title="release:makezip">
+	  <commands>
+	    <command>zip -r net-snmp-{VERSION}.zip  net-snmp-{VERSION}</command>
+	  </commands>
+	</step>
+	<step type="system" stepname="release:searching-gpg-keys" title="release:searching-gpg-keys">
+	  <commands>
+	    <command>gpg --list-secret-keys net-snmp-admin</command>
+	  </commands>
+	</step>
+	<step type="system" stepname="release:gpg" title="release:gpg">
+	  <commands>
+	    <command>gpg -u A77C5329 -a --detach-sign net-snmp-{VERSION}.tar.gz</command>
+	  </commands>
+	</step>
+	<step type="system" stepname="release:gpg" title="release:gpg">
+	  <commands>
+	    <command>gpg -u A77C5329 -a --detach-sign net-snmp-{VERSION}.zip</command>
+	  </commands>
+	</step>
+	<step type="command" name="release:nextbranch" title="Don't propagate code modifications"
+	      pause="0" mandatory="0">
+	  <text>
+	    Mark these code modifications as specific to this particular branch
+	  </text>
+	  <commands>
+	    <command>git checkout {NEXTBRANCH}</command>
+	    <command>git merge -s ours -m "Release {VERSION} specific changes" {BRANCHPATH}</command>
+	    <command>git checkout {BRANCHPATH}</command>
+	  </commands>
+	</step>
+	<step type="command" name="release:push" title="Push the code modifications"
+	      pause="0" mandatory="0">
+	  <text>
+	    Push the code modifications to the upstream branch
+	  </text>
+	  <commands>
+	    <command>git push</command>
+	    <command>git push --tags origin {VERSIONTAGNAME}</command>
+	  </commands>
+	</step>
+
+	<step type="section" title="Release File Test">
+	  <text>We'll also re-build the source and retest a few things to
+	    ensure the packaged file can actually be built.
+	  </text>
+	  <steps>
+	    <step type="system" stepname="posttest:untar" title="posttest:untar">
+	      <commands>
+		<command>rm -rf net-snmp-{VERSION}</command>
+	      </commands>
+	    </step>
+	    <step type="system" stepname="posttest:untar" title="posttest:untar">
+	      <commands>
+		<command>tar xzf net-snmp-{VERSION}.tar.gz</command>
+	      </commands>
+	    </step>
+	    <step type="system" stepname="posttest:configure" title="posttest:configure">
+	      <commands>
+		<command>cd net-snmp-{VERSION} &amp;&amp; ./configure --cache=config.cache --with-defaults --with-mib-modules='host examples examples/example     testhandler smux Rmon disman/event-mib' --with-transports=IPX --enable-ipv6 --enable-embedded-perl --enable-shared</command>
+	      </commands>
+	    </step>
+	    <step type="system" stepname="posttest:make" title="posttest:make">
+	      <commands>
+		<command>cd net-snmp-{VERSION} &amp;&amp; make</command>
+	      </commands>
+	    </step>
+	    <step type="system" stepname="posttest:test" title="posttest:test">
+	      <commands>
+		<command>cd net-snmp-{VERSION} &amp;&amp; make test</command>
+	      </commands>
+	    </step>
+	  </steps>
+	</step>
+      </steps>
+    </step>
+    <step type="section" title="Release the results">
+      <text>Now we'll publish the results to the SF server</text>
+      <steps>
+	<step pause="true" type="system" skipif="'{RELEASETYPE}' eq 'full'"
+	      stepname="publish:rsync" title="rsync the new files">
+	  <text>This will copy the results to the SF uploads directory
+	    in your account on frs.sourceforge.net.  The following command
+	    is just as an example - this script does *not* upload the
+	    files automatically.  You must do something like:</text>
+	  <commands>
+	    <command>echo rsync -v net-snmp-{VERSION}.tar.gz net-snmp-{VERSION}.tar.gz.asc net-snmp-{VERSION}.zip net-snmp-{VERSION}.zip.asc hardaker,net-snmp@frs.sourceforge.net:/home/frs/project/n/ne/net-snmp/net-snmp/{VERSIONTARGET}-pre-releases/</command>
+	  </commands>
+	</step>
+	<step pause="true" type="system" skipunless="'{RELEASETYPE}' eq 'full'"
+	      stepname="publish:rsync" title="rsync the new files">
+	  <text>This will copy the results to the SF uploads directory
+	    in your account on frs.sourceforge.net.  The following command
+	    is just as an example - this script does *not* upload the
+	    files automatically.  You must do something like:</text>
+	  <commands>
+	    <command>echo rsync -v net-snmp-{VERSION}.tar.gz net-snmp-{VERSION}.tar.gz.asc net-snmp-{VERSION}.zip net-snmp-{VERSION}.zip.asc hardaker,net-snmp@frs.sourceforge.net:/home/frs/project/n/ne/net-snmp/net-snmp/{VERSIONTARGET}/</command>
+	  </commands>
+	</step>
+	<step type="informational" stepname="publish:editrelease"
+	title="Update the SF release web page">
+	  <text>
+	    Update the project download web page (http://www.net-snmp.org/download.html) to mention this new release
+	  </text>
+<!-- Doesn't work
+	  <commands>
+	    <command>firefox 'http://sourceforge.net/project/admin/editpackages.php?group_id=12694'</command>
+	  </commands>
+ -->
+	</step>
+	<step type="system" stepname="publish:editpatches"
+	      skipunless="'{RELEASETYPE}' eq 'full'"
+	      title="Update the SF Official Patch tracker">
+	  <text>
+	    If this the final version of this release, then:
+	    Any official patches for the previous release should be re-prioritised to level 5.
+	    Any official patches for the earlier releases should be re-prioritised to level 1 and closed.
+	  </text>
+	  <commands>
+	    <command>firefox 'http://www.net-snmp.org/official_patches/'</command>
+	  </commands>
+	</step>
+      </steps>
+    </step>
+    <step type="informational">
+      <text>
+	Binaries: build rpms, .tar.gzs, etc.
+      </text>
+    </step>
+    <step type="Informational" name="cleanup:nsrollup" title="Run nsrollup"
+	  pause="1" mandatory="1">
+      <text>
+	You need to run nsrollup now to sync all the changes we've
+	made into any upstream branches.  This will likely cause merge
+	conflicts because of the version number clashes and will need
+	to be resolved.
+
+	Run (in bash):
+
+ 	  . local/gittools/shell-functions
+	  nsrollup
+	  nssync
+
+	XXX: For conflicts, we can probably pick -s ours but needs to
+     	     be checked and documented.
+      </text>
+    </step>
+    <step type="section" title="Advertise it!">
+      <steps>
+	<step type="system" pause="1" title="Add note to the news system">
+	  <text>Add a note to the source forge news system:
+
+	    http://sourceforge.net/news/submit.php?group_id=12694
+	  </text>
+	  <commands>
+	    <command>echo firefox 'http://sourceforge.net/news/submit.php?group_id=12694'</command>
+	  </commands>
+	</step>
+	<step type="informational" pause="1">
+	  <text>Send an announcement message to one of the following
+	  mailing lists based on its type:
+
+          pre:    net-snmp-coders@lists.sourceforge.net
+
+          rc:     net-snmp-users@lists.sourceforge.net
+
+          final:  net-snmp-announce@lists.sourceforge.net
+                       (one week after the source tarball is made available)
+	  </text>
+	</step>
+	<step type="informational" skipunless="'{RELEASETYPE}' eq 'full'" pause="1">
+	  <text>Update the topic on the #Net-SNMP channel if this is a
+	    trunk based release.
+	  </text>
+	</step>
+	<step type="system" skipunless="'{RELEASETYPE}' eq 'full'" pause="1">
+	  <text>Update the freshmeat listing (Wes needs to do this):
+
+	    http://freshmeat.net/projects/net-snmp/
+	  </text>
+	  <commands>
+	    <command>echo firefox http://freshmeat.net/projects/net-snmp/</command>
+	  </commands>
+	</step>
+      </steps>
+    </step>
+    <step type="informational" skipunless="'{RELEASETYPE}' eq 'full'" pause="1">
+      <text>
+	Advertise: NEWS upload to sf, publish on -announce, freshmeat,
+	and the GNU FSF directory
+	(http://directory.fsf.org/project/net-snmp/)...
+        (send mail to bug-directory@gnu.org)
+      </text>
+    </step>
+  </steps>
+</makerelease>

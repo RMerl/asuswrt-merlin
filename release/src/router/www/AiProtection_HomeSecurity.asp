@@ -74,7 +74,7 @@ function initial(){
 						</tr>
 						<tr>
 							<td>
-								<div class="formfontdesc" style="font-size:14px;font-style:italic;"><#AiProtection_desc1#>&nbsp<#AiProtection_desc2#></div>
+								<div class="formfontdesc" style="font-size:14px;font-style:italic;"><#AiProtection_desc#></div>
 							</td> 
 						</tr>					
 					<!-- Service table -->
@@ -92,10 +92,10 @@ function initial(){
 														<a style="text-decoration: underline;" href="AiProtection_HomeProtection.asp"><#AiProtection_Home#></a>
 													</div>
 													<div class="app_desc" style="height:60px;">
-														<li>Router Security Scan</li>
-														<li>Malicious Sites Blocking</li>
-														<li>Intruder Prevention</li>
-														<li>Infected Device Detection and Blocking</li>														
+														<li><#AiProtection_scan#></li>
+														<li><#AiProtection_sites_blocking#></li>
+														<li><#AiProtection_Vulnerability#></li>
+														<li><#AiProtection_detection_blocking#></li>														
 													</div>
 												</td>
 											</tr>
@@ -110,8 +110,8 @@ function initial(){
 														<a style="text-decoration: underline;" href="AiProtection_WebProtector.asp">Parental Controls</a>
 													</div>
 													<div class="app_desc" style="height:60px;">
-														<li>Time Scheduling</li>
-														<li>Web & Apps Filters</li>											
+														<li><#Time_Scheduling#></li>
+														<li><#AiProtection_filter#></li>											
 													</div>
 												</td>
 											</tr>

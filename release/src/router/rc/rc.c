@@ -82,6 +82,10 @@ static int rctest_main(int argc, char *argv[])
 			if(on) start_wan();
 			else stop_wan();
 		}
+		else if (strcmp(argv[1], "wan_port") == 0) {
+			if(on) start_wan_port();
+			else stop_wan_port();
+		}
 		else if (strcmp(argv[1], "firewall") == 0) {
 			//if(on) start_firewall();
 			//else stop_firewall();
@@ -621,12 +625,14 @@ int main(int argc, char **argv)
 		printf("ATE_ERROR\n");
 		return 0;
 	}
+#if defined(RTCONFIG_HAS_5G)
 	else if (!strcmp(base, "asuscfe_5g")) {
 		if (argc == 2)
 			return asuscfe(argv[1], WIF_5G);
 		else
 			return EINVAL;
 	}
+#endif	/* RTCONFIG_HAS_5G */
 	else if (!strcmp(base, "asuscfe_2g")) {
 		if (argc == 2)
 			return asuscfe(argv[1], WIF_2G);
@@ -636,9 +642,11 @@ int main(int argc, char **argv)
 	else if (!strcmp(base, "stainfo_2g")) {
 		return stainfo(0);
 	}
+#if defined(RTCONFIG_HAS_5G)
 	else if (!strcmp(base, "stainfo_5g")) {
 		return stainfo(1);
 	}
+#endif	/* RTCONFIG_HAS_5G */
 #ifdef RTCONFIG_DSL
 	else if(!strcmp(base, "gen_ralink_config")){
 		if(argc != 3){

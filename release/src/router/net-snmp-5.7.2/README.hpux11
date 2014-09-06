@@ -1,0 +1,22 @@
+Some notes for the HP-UX 11.0/11i port
+======================================
+
+1. Starting the net-snmp daemon via rc script
+---------------------------------------------
+
+When starting the net-snmp daemon via rc script you have to trap some signals
+because otherwise the daemon will die the moment the rc script ends. I trap
+the signals 1, 2 and 3 via "trap '' 1 2 3" immediately before starting the
+daemon. I didn't check whether all these signals need to be trapped, probably
+SIGHUP will suffice. BTW this applies to the HP-UX 10.x version as well. It
+would be a good idea to ignore or handle these signals in the daemon...
+
+2. Author, credits, comments
+----------------------------
+
+The HP-UX 11.0 port was done by Johannes Schmidt-Fischer <jsf@InterFace-AG.com>
+
+If you have questions or problems please feel free to contact me via the
+above mentioned e-mail address. Please send a copy of your e-mail to the 
+net-snmp-coders mailing list - probably someone else can answer your
+question earlier than me;-)

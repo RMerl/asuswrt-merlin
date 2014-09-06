@@ -1,0 +1,77 @@
+title Default Authentication Options
+description This section defines the default authentication
+description information.  Setting these up properly in your
+description ~/.snmp/snmp.conf file will greatly reduce the amount of
+description command line arguments you need to type (especially for snmpv3).
+
+token defaultPort
+info  The default port number to use
+info  This token specifies the default port number you want packets to 
+info  be sent to and received from.
+info  override: with -p on the command line.
+info  arguments: portnum
+question 1 Enter the default port number to use
+
+token defVersion
+info  The default snmp version number to use.
+info  override: with -v on the command line.
+info  arguments: 1|2c|3
+question 1 Enter the default snmp version number to use (1|2c|3)
+validanswer 1 ^(1|2c|3)$
+
+token defCommunity
+info  The default snmpv1 and snmpv2c community name to use when needed.
+info  If this is specified, you don't need to include the community
+info  name as an argument to the snmp applications.  
+info  override: with -c on the command line.
+info  arguments: communityname
+question 1 Enter the default community name to use
+
+token defSecurityName
+info  The default snmpv3 security name to use when using snmpv3
+info  override: with -u on the command line.
+info  arguments: securityname
+question 1 Enter the default security name to use
+
+token defContext
+info  The default snmpv3 context name to use
+info  override: with -n on the command line.
+info  arguments: contextname
+question 1 Enter the default context name to use
+
+token defSecurityLevel
+info  The default snmpv3 security level to use
+info  override: with -l on the command line.
+info  arguments: noAuthNoPriv|authNoPriv|authPriv
+question 1 Enter the default privacy pass phrase to use
+validanswer 1 ^(noAuthNoPriv|authNoPriv|authPriv|nanp|anp|ap)$
+
+token defAuthType
+info  The default snmpv3 authentication type name to use
+info  override: with -a on the command line.
+info  arguments: authtype
+question 1 Enter the default authentication type to use (MD5|SHA)
+validanswer 1 ^(MD5|SHA)$
+
+token defAuthPassphrase
+info  The default snmpv3 authentication pass phrase to use
+info  Note: It must be at least 8 characters long.
+info  override: with -A on the command line.
+info  arguments: passphrase
+question 1 Enter the default authentication pass phrase to use
+
+token defPrivType
+info  The default snmpv3 privacy (encryption) type name to use
+info  override: with -x on the command line.
+info  arguments: privtype
+question 1 Enter the default privacy type to use (DES|AES)
+validanswer 1 ^(DES|AES)$
+
+token defPrivPassphrase
+info  The default snmpv3 privacy pass phrase to use
+info  Note: It must be at least 8 characters long.
+info  override: with -X on the command line.
+info  arguments: passphrase
+question 1 Enter the default privacy pass phrase to use
+
+

@@ -1,0 +1,13 @@
+title           Runtime options
+description     Runtime options
+
+token doNotFork
+info        Do not fork from the shell
+question 1  Do not fork from the shell
+info        arguments: (1|yes|true|0|no|false)
+validanswer 1 ^(1|yes|true|0|no|false)$
+
+token pidFile
+info        Store Process ID in file
+info        arguments: PID file
+question 1  PID file

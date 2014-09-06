@@ -1,0 +1,2 @@
+TYPEMAP
+netsnmp_oid *			T_PTROBJ

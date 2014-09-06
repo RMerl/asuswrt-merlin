@@ -1,0 +1,41 @@
+top_builddir=../..
+mysubdir=agent/mibgroup
+
+# currently assumes gcc:    (XXX: fix via configure tests)
+DLFLAGS=-fPIC -shared
+
+# use GNU vpath, if available, to only set a path for source and headers
+# VPATH will pick up objects too, which is bad if you are sharing a
+# source dir...
+@GNU_vpath@ %.h $(srcdir)
+@GNU_vpath@ %.c $(srcdir)
+# fallback to regular VPATH for non-gnu...
+@NON_GNU_VPATH@ $(srcdir)
+
+
+CPPFLAGS= $(TOP_INCLUDES) -I. $(AGENT_INCLUDES) $(MIBGROUP_INCLUDES) \
+	$(SNMPLIB_INCLUDES) @CPPFLAGS@ $(LIB_CFLAGS)
+
+OTHERCLEANTARGETS=@dllcleans@
+
+FEATUREFILE=../../include/net-snmp/agent/features-mibgroups.h
+
+# Need a special .c -> .o definition here to make sure we place the
+# object files in the sub directory.
+
+.c.o:
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) -o $@ $<
+
+@mib_module_list_o@
+@mib_module_list_lo@
+@mib_module_list_c@
+@mib_module_list_ft@
+
+OBJS   = $(mib_module_list_o)
+LOBJS  = $(mib_module_list_lo)
+SRCS   = $(mib_module_list_c)
+FTOBJS = $(mib_module_list_ft)
+
+all: standardall $(LOBJS)
+
+@module_rules@

@@ -7,425 +7,272 @@
 <link href="/images/map-iconRouter_iphone.png" rel="apple-touch-icon" />
 <link rel="shortcut icon" href="/images/favicon.png">
 <link rel="icon" href="/images/favicon.png">
-<link rel="stylesheet" href="/iui/iui.css" type="text/css" />
-<link rel="stylesheet" href="/iui/default-theme.css"  type="text/css"/>
+<link rel="stylesheet" href="/iui/default.css"  type="text/css"/>
 <script type="text/JavaScript" src="/state.js"></script>
 <script type="text/javascript" src="/popup.js"></script>
 <script type="text/javascript" src="/detect.js"></script>
 <script language="JavaScript" type="text/javascript" src="/jquery.js"></script>
 <script language="JavaScript" type="text/javascript" src="/ajax.js"></script>
 <script>
-var qisFlag = '<% get_parameter("flag"); %>'.toLowerCase();
-if(!isMobile() || sw_mode == 2 || sw_mode == 4 || qisFlag == "sitesurvey" || qisFlag == "sitesurvey_mb")
-	location.href = "QIS_wizard.htm?flag=" + qisFlag;
-
-<% login_state_hook(); %>
-var wireless = [<% wl_auth_list(); %>];	// [[MAC, associated, authorized], ...]
-var arg_wan_nat_x = '<% get_parameter("wan_nat_x"); %>';
-var arg_wan_proto = '<% get_parameter("wan_proto"); %>';
-var arg_wan_route_x = '<% get_parameter("wan_route_x"); %>';
-var arg_prev_page = '<% get_parameter("prev_page"); %>';
-var reduced_internet_type = "disable";
-var targeturl = "/index.htm";
-var firmver = '<% nvram_get("firmver"); %>';
-var w_Setting_tmp = '<% nvram_get("w_Setting"); %>';
-var return_btn = 0;
-var flag_manual = 0;
-var isSubmit = false;
-var isrescan = 0;
-var getBand = '<% get_parameter("band"); %>';
-var ISMOBILE = true;
-
-window.addEventListener("load",function() {  
-	if(navigator.userAgent.indexOf("iP") != -1)
-		setTimeout(function(){window.scrollTo(0, 1);}, 10);
-});
-
-// live update
 var $j = jQuery.noConflict();
-var webs_state_update = '<% nvram_get("webs_state_update"); %>';
-var webs_state_upgrade = '<% nvram_get("webs_state_upgrade"); %>';
-var webs_state_error = '<% nvram_get("webs_state_error"); %>';
-var webs_state_info = '<% nvram_get("webs_state_info"); %>';
-var exist_firmver = "<% nvram_get("firmver"); %>";
-var Latest_firmver = "";
-var Latest_firm = "";
-var Latest_buildno = "";
-var Latest_extendno = "";
-var current_firm = "";
-var current_buildno = "";
-var current_extendno = "";
-var liveUpdateFinish = false;
-var new_FW = false;
-var retry = 0;
+</script>
+<script language="JavaScript" type="text/javascript" src="/iui/registerEvent.js"></script>
 
-var _err = 0;
-var _success = 0;
-function detect_LANStatus(_flag){
-	$j.ajax({
-		url: '/httpd_check.htm',
-		dataType: 'text',
-		timeout: 3000,
-		error: function(xhr){
-			if(_err == 0){
-				alert("<#DrSurf_sweet_advise1#>");
-				_err++;
-			}
-			_success = 0;
-			setTimeout("detect_LANStatus('"+_flag+"');", 1000);
-		},
- 		success: function(){
-			_success++;
-			if(_success > 5)
-				 redirectPage(_flag);
-			else
-				setTimeout("detect_LANStatus('"+_flag+"');", 2000);
-		}
-	});
-}
+<script>
+<% login_state_hook(); %>
+var setFlag = '<% nvram_get("x_Setting"); %>';
+var wireless = [<% wl_auth_list(); %>];	// [[MAC, associated, authorized], ...]
 
-function detect_firmware(){
-	$j.ajax({
-		url: '/detect_firmware.asp',
-		dataType: 'script',
-
-		error: function(xhr){
-				setTimeout("detect_firmware();", 1000);
-		},
- 		success: function(){
-			if(retry > 20){
-				liveUpdateFinish = true;					
-			}
-			else if(webs_state_update==0){
-					setTimeout("detect_firmware();", 1000);
-					retry++;
-			}
-			else{
-				if(webs_state_error != 1){
-					var Latest_firmver = webs_state_info.split("_");
-					var Latest_firm = parseInt(Latest_firmver[0]);
-					var Latest_buildno = parseInt(Latest_firmver[1]);
-					var Latest_extendno = Latest_firmver[2];
-					var Latest_extendno_split = Latest_extendno.split("-g");
-	      			var Latest_extendno_comp = parseInt(Latest_extendno_split[0]);
-
-					if(Latest_firm && Latest_buildno && Latest_extendno){	//match model FW
-						current_firm = parseInt(exist_firmver.replace(/[.]/gi,""));
-      					current_buildno = parseInt("<% nvram_get("buildno"); %>");
-      					current_extendno = "<% nvram_get("extendno"); %>";
-      					current_extendno_split = current_extendno.split("-g");
-      					current_extendno_comp = parseInt(current_extendno_split[0]);
-
-						if((current_buildno < Latest_buildno) || 
-      					(current_firm < Latest_firm && current_buildno == Latest_buildno) ||
-      					(current_extendno_comp < Latest_extendno_comp && current_buildno == Latest_buildno && current_firm == Latest_firm))
-      			{
-							new_FW = true;
-						}
-					}
-				}
-				liveUpdateFinish = true;					
-			}
-		}
-	});
-}
-
-function detect_update(){
-	setTimeout("document.start_update.submit();", 10000);	//delay after restart_time
-}
-
-function set_step(focus_id){
-	if(focus_id == ""){
-		document.getElementById("backBtn").style.display = "none";
+function initial(){
+	if(setFlag == 0){
+		document.getElementById('modify_password_page').style.display = "";
 	}
 	else{
-		document.getElementById("backBtn").style.display = "";
-		document.getElementById("backBtn").onclick = function(){redirectPage(focus_id);}
+		document.getElementById('changessid').style.display = "";
 	}
 }
 
-var pageNumber = 0;
-var pageArray = new Array();
-function hideHidden_slide(divIdtoBeHidden, idArray){
-	document.getElementById("backBtn").style.display = "";
-	document.getElementById("backBtn").style.visibility = "visible";
-
-	document.getElementById("backBtn").onclick = function(){
-		pageNumber--;
-		var _divIdtoBeHidden = pageArray[pageNumber][0];
-		var _idArray = pageArray[pageNumber][1];
-
-		if(document.getElementById("contentM").contentWindow.document.getElementById(_divIdtoBeHidden)){
-			window.scrollTo(0, 1);
-			var sec = 20;
-			setTimeout("document.getElementById(\"contentM\").contentWindow.document.getElementById(\""+_divIdtoBeHidden+"\").style.left=\"20%\";", sec);
-			setTimeout("document.getElementById(\"contentM\").contentWindow.document.getElementById(\""+_divIdtoBeHidden+"\").style.left=\"40%\";", sec*2);
-			setTimeout("document.getElementById(\"contentM\").contentWindow.document.getElementById(\""+_divIdtoBeHidden+"\").style.left=\"60%\";", sec*3);
-			setTimeout("document.getElementById(\"contentM\").contentWindow.document.getElementById(\""+_divIdtoBeHidden+"\").style.left=\"80%\";", sec*4);
-			setTimeout("document.getElementById(\"contentM\").contentWindow.document.getElementById(\""+_divIdtoBeHidden+"\").style.left=\"100%\";", sec*5);
-			setTimeout("document.getElementById(\"contentM\").contentWindow.document.getElementById(\""+_divIdtoBeHidden+"\").style.display=\"none\";", sec*6);
-			for(var i in _idArray)
-				setTimeout("document.getElementById(\"contentM\").contentWindow.document.getElementById(\""+_idArray[i]+"\").style.display=\"\";", sec*7);
-			if(pageNumber == 0){
-				document.getElementById("backBtn").style.display = "none";
-				document.getElementById("backBtn").style.visibility = "hidden";
-			}
-		}
+function check_empty(){
+	if( (document.getElementById('wfps_password1').value.length >= 8 && document.getElementById('wfps_password1').value.length <= 64) &&
+		(document.getElementById('wfps_password2').value.length >= 8 && document.getElementById('wfps_password2').value.length <= 64) &&
+		(document.getElementById('wfps_password1').value == document.getElementById('wfps_password2').value)){		
+			document.getElementById('save_button').disabled = false;
 	}
-
-	window.scrollTo(0, 1);
-	pageArray[pageNumber] = [divIdtoBeHidden, idArray];
-	pageNumber++;
-}
-
-function QIS_load_body(){
-	redirectPage($("flag").value);
-
-	if(tmo_support)
-		document.getElementById("pageTitle").innerHTML = "<div>T-Mobile</div><div>Wi-Fi CellSpot and Router";
-
-	document.getElementById("contentM").height = document.getElementById("screen1").clientHeight+5;
-}
-
-function redirectPage(showCase){
-	if(showCase == null || showCase == "")
-		showCase = "welcome";
-
-	with(document.redirectForm){
-		switch(showCase){
-			case "remind":
-				action = "/qis/QIS_internet_success.htm";
-				submit();
-				break;
-			case "auto_way_static":
-				action = "/qis/QIS_internet_ip.htm";
-				flag.value = showCase;
-				prev_page.value = "/qis/QIS_detect.htm";
-				submit();
-				break;
-			case "auto_way_vpn":
-				action = "/qis/QIS_internet_ip.htm";
-				flag.value = showCase;
-				prev_page.value = "start_apply.htm";
-				submit();
-				break;
-			case "auto_way":
-				action = "/qis/QIS_internet_ip.htm";
-				flag.value = showCase;
-				submit();
-				break;				
-			case "verify_detect":
-				action = "/qis/QIS_verify_detect.htm";
-				flag.value = showCase;
-				submit();
-				break;				
-			case "adv_ap_mode":
-				document.QKform.sw_mode.value = "3";
-				action = "/qis/QIS_lanip.htm";
-				submit();
-				break;				
-			case "pppoe":
-				document.QKform.wan_proto.value = "pppoe";			
-				action = "/qis/QIS_internet_account.htm";
-				submit();
-				break;				
-			case "pptp":
-				document.QKform.wan_proto.value = "pptp";			
-				action = "/qis/QIS_internet_account.htm";
-				submit();
-				break;				
-			case "l2tp":
-				document.QKform.wan_proto.value = "l2tp";
-				action = "/qis/QIS_internet_account.htm";
-				submit();
-				break;				
-			case "account":
-				document.QKform.wan_proto.value = "pptp";
-				action = "/qis/QIS_internet_account.htm";
-				submit();
-				break;				
-			default:
-				if(showCase.split("?").length == 1)
-					action = "/qis/QIS_" + showCase + ".htm";
-				else
-					action = "/qis/QIS_" + showCase.split("?")[0] + ".htm?" + showCase.split("?")[1];
-				submit();
-				break;					
-		}		
+	else{
+		document.getElementById('save_button').disabled = true;;
 	}
 }
 
-function set_internet_type_reducedmode(mode){
-	reduced_internet_type = mode;
+function skip_default_password(){
+	document.getElementById('modify_password_page').style.display = "none";
+	document.getElementById('goBackChangePwd').style.display = "";
 }
 
-function get_internet_type_reducedmode(mode){
-	return reduced_internet_type;
+function save_password(){
+	document.getElementById('modify_password_page').style.display = "none";
+	document.getElementById('congratschangepwd').style.display = "";
+	document.form.http_passwd.value = document.getElementById('wfps_password1').value;
 }
 
-function set_next_step(topage){
-	targeturl = topage;
+function back_to_password(flag){
+	if(flag == "1"){
+		document.getElementById('modify_password_page').style.display = "";
+		document.getElementById('changessid').style.display = "none";
+		document.getElementById('modify_pass_desc').style.display = "";
+		document.getElementById('pass_desc').style.display = "none";
+		document.getElementById('wfps_password_current_label').style.display = "";
+		document.getElementById('wfps_password_current').style.display = "";
+	}
+	else{
+		document.getElementById('modify_password_page').style.display = "";
+		document.getElementById('goBackChangePwd').style.display = "none";
+	}
 }
 
-function get_next_step(){
-	return targeturl;
+function set_SSID(){
+	document.getElementById('congratschangepwd').style.display = "none";
+	document.getElementById('changessid').style.display = "";
 }
 
-var failed_connection_reason = "";
+function save_ssid(){
+	document.getElementById('changessid').style.display = "none";
+	document.getElementById('congratschangessid').style.display = "";
+	
+	document.form.wl0_ssid.value = document.getElementById('networkname_24ghz').value;
+	document.form.wl0_wpa_psk.value = document.getElementById('password_24ghz').value;
+	document.form.wl1_ssid.value = document.getElementById('networkname_5ghz').value;
+	document.form.wl1_wpa_psk.value = document.getElementById('password_5ghz').value;
 
-function set_failed_connection_reason(flag){
-	failed_connection_reason = flag;
 }
 
-function get_failed_connection_reason(){
-	return failed_connection_reason;
+function back_to_ssid(){
+	document.getElementById('changessid').style.display = "";
+	document.getElementById('congratschangessid').style.display = "none";
 }
 
-var auto_detect_time = 0;
-
-function get_detect_time(){
-	return auto_detect_time;
-}
-
-function do_detect(){
-	++auto_detect_time;
-}
-
-var done_autoMAC = 0;
-
-function ifAutoMAC(){
-	return done_autoMAC;
-}
-
-function doAutoMAC(){
-	done_autoMAC = 1;
-}
-
-var done_resetModem = 0;
-
-function ifResetModem(){
-	return done_resetModem;
-}
-
-function doResetModem(){
-	done_resetModem = 1;
-}
-
-var result_of_detectWAN = 0;
-
-function get_detectWAN(){
-	return result_of_detectWAN;
-}
-
-function set_detectWAN(result){
-	result_of_detectWAN = result;
-}
-
-function gotoFinish(forward_page, page_flag){
-	with(document.redirectForm){
-		action = forward_page;
-		target = "";
-		flag.value = page_flag;
+function check_ssid_setting(){
+	if((document.getElementById('networkname_24ghz').value.length >= 1 && document.getElementById('networkname_24ghz').value.length <= 32) &&
+		(document.getElementById('networkname_24ghz').value.length >= 1 && document.getElementById('networkname_24ghz').value.length <= 32) &&
+		(document.getElementById('password_24ghz').value.length >= 8 && document.getElementById('password_24ghz').value.length <= 64) &&
+		(document.getElementById('password_5ghz').value.length >= 8 && document.getElementById('password_5ghz').value.length <= 64)){
 		
-		submit();
+			document.getElementById('saveSSID').disabled = false;
 	}
+	else{
+			document.getElementById('saveSSID').disabled = true;
+	}
+}
+
+function back_stage1(){
+	document.getElementById('congratschangepwd').style.display = "";
+	document.getElementById('changessid').style.display = "none";
+}
+
+function stage1_logout(){
+	document.form.action_script.value = "restart_time";
+	document.form.force_change.value++;
+	document.form.wl0_ssid.disabled = true;
+	document.form.wl0_wpa_psk.disabled = true;
+	document.form.wl0_auth_mode_x.disabled = true;
+	document.form.wl0_crypto.disabled = true;
+	document.form.wl1_ssid.disabled = true;
+	document.form.wl1_wpa_psk.disabled = true;
+	document.form.wl1_auth_mode_x.disabled = true;
+	document.form.wl1_crypto.disabled = true;
+	document.form.submit();
+}
+
+function stage2_logout(){
+	document.form.force_change.value++;
+	document.form.submit();
 }
 </script>
+
 </head>
-<body onload="QIS_load_body();">
-	<div class="toolbar" style="z-index:99;<!--fixed-->">
-		<!--a style="visibility: hidden;" class="button" id="backBtn" onclick="redirectPage('welcome');">&nbsp;&nbsp;Back</a-->
-		<img id="backBtn" src="" onclick="redirectPage('welcome');" style="margin-top:5px;visibility: hidden;position:fixed;width:35px;"></a>
-		<!--a style="visibility: hidden;" class="button_back" id="backBtn" onclick="redirectPage('welcome');"></a-->
-		<h1 id="pageTitle"><#statusTitle_System#></h1>
-		<a style="visibility: hidden;" class="button_right" id="_backBtn" style="right: 6px;" onclick="location.href='Logout.asp';">Logout</a>
+<body onload="initial();">
+<iframe name="hidden_frame" id="hidden_frame" width="0" height="0" frameborder="0" style="display:none"></iframe>
+<form method="post" name="form" action="/start_apply.htm" target="hidden_frame" style="display:none">
+	<input type="hidden" name="current_page" value="/QIS_wizard_m.htm">
+	<input type="hidden" name="next_page" value="/QIS_wizard_m.htm">  
+	<input type="hidden" name="action_mode" value="apply">
+	<input type="hidden" name="action_script" value="restart_time;restart_wireless">
+	<input type="hidden" name="action_wait" value="0">
+	<input type="hidden" name="x_Setting" value="1">
+	<input type="hidden" name="http_passwd" value="<% nvram_get("http_passwd"); %>">
+	<input type="hidden" name="wl0_ssid" value="<% nvram_get("wl0_ssid"); %>">
+	<input type="hidden" name="wl0_wpa_psk" value="<% nvram_get("wl0_wpa_psk"); %>">
+	<input type="hidden" name="wl0_auth_mode_x" id="wl0_auth_mode_x" value="psk2">
+	<input type="hidden" name="wl0_crypto" id="wl0_crypto" value="aes">
+	<input type="hidden" name="wl1_ssid" value="<% nvram_get("wl1_ssid"); %>">
+	<input type="hidden" name="wl1_wpa_psk" value="<% nvram_get("wl1_wpa_psk"); %>">
+	<input type="hidden" name="wl1_auth_mode_x" id="wl1_auth_mode_x" value="psk2">
+	<input type="hidden" name="wl1_crypto" id="wl1_crypto" value="aes">
+	<input type="hidden" name="force_change" value="<% nvram_get("force_change"); %>">
+</form>
+	<div id="modify_password_page" class="container" style="display:none">
+		<header>
+			<a class="brand-logo" href="#">T-Mobile</a>
+			<a class="product-logo">Personal CellSpot&trade;</a>
+		</header>
+		<section>
+			<h1>Wi-Fi CellSpot Router</h1>
+			<p id="pass_desc">For your security, you MUST change your admin password before continuing.</p>
+			<p id="modify_pass_desc" style="display:none;">Change your admin password.</p>
+			<div class="hr"></div>
+				<label for="wfps_password_current" id="wfps_password_current_label" style="display:none">Current admin password</label>
+                <a class="wfps_form_action" data-change="wfps_password_current" href="#">Show</a>
+                <input type="password" name="password_current" id="wfps_password_current" style="display:none" value="<% nvram_get("http_passwd"); %>">
+				<label for="wfps_password1">New admin password <span class="wfps_tip">8 to 64 characters</span></label>
+				<a class="wfps_form_action" data-change="wfps_password1" href="#">Show</a>
+				<input type="password" name="password1" id="wfps_password1" onkeyup="check_empty();" value="" class="match" data-limit-low="8" data-limit-high="64" placeholder="Please enter a new password">
+				<label for="wfps_password2">Confirm admin password <span class="wfps_tip">8 to 64 characters</span></label>
+				<a class="wfps_form_action" data-change="wfps_password2" href="#">Show</a>
+				<input type="password" name="password2" id="wfps_password2" onkeyup="check_empty();" value="" class="match" data-limit-low="8" data-limit-high="64" placeholder="Please reenter a new password">
+				<input type="button" value="Cancel" onclick="skip_default_password();">
+				<input type="button" value="Save" id="save_button" disabled="disabled" onclick="save_password();">
+		</section>
+		<footer>&copy; 2002-2014 T-Mobile USA, Inc.</footer>
+
 	</div>
-	<div id="screen1" title="<#Web_Title2#>" class="panel" selected="true">
-		<iframe scrolling="auto" width="100%" name="contentM" id="contentM" height="auto" frameborder="0" style="background-image:url('/iui/Button_low.jpg');"></iframe>
+	<!--Hint without modifing default password-->
+	<div id="goBackChangePwd" class="container;" style="display:none;">
+		<header>
+			<a class="brand-logo" href="#">T-Mobile</a>
+			<a class="product-logo">Personal CellSpot&trade;</a>
+		</header>
+		<section>
+			<h1>Wi-Fi CellSpot Router</h1>
+			<p>If you'd still like to update your network names and passwords, you'll need to go back and change your admin password first. Or, you can close and do it next time.</p>
+			<div class="hr"></div>
+			<input type="button" value="Log Out">
+			<input type="button" value="Back" id="back_button" onclick="back_to_password();">
+		</section>
+		<footer>&copy; 2002-2014 T-Mobile USA, Inc.</footer>
 	</div>
-
-	<form method="post" name="QKform">
-		<!-- general -->
-		<input type="hidden" name="flag" id="flag" value='<% get_parameter("flag"); %>'>
-		<input type="hidden" name="prev_page" value="">
-		<input type="hidden" name="current_page" value="/QIS_wizard.htm">
-		<input type="hidden" name="next_page" value="">   
-		<input type="hidden" name="action_mode" value="apply">
-		<input type="hidden" name="action_script" value="restart_wan_if">
-		<input type="hidden" name="wan_unit" value="0">
-		<input type="hidden" name="action_wait" value="5">
-		<input type="hidden" name="modified" value="">  
-		<!-- system -->                  
-		<input type="hidden" name="machine_name" value="<% nvram_get("machine_name"); %>">
-		<input type="hidden" name="time_zone" value="<% nvram_get("time_zone"); %>">
-		<input type="hidden" name="wan_nat_x" value="<% nvram_get("wan_nat_x"); %>">
-		<input type="hidden" name="wan_route_x" value="<% nvram_get("wan_route_x"); %>">
-		<input type="hidden" name="http_username" value="<% nvram_get("http_username"); %>">
-		<input type="hidden" name="http_passwd" value=""> 
-		<input type="hidden" name="x_Setting" id="x_Setting" value="<% nvram_get("x_Setting"); %>" disabled>
-		<input type="hidden" name="sw_mode" value="<% nvram_get("sw_mode"); %>">
-		<!-- detect -->
-		<input type="hidden" name="wan_proto" value="<% nvram_get("wan_proto"); %>">
-		<!-- internet IP -->
-		<input type="hidden" name="wan_dhcpenable_x" value="<% nvram_get("wan_dhcpenable_x"); %>">
-		<input type="hidden" name="wan_ipaddr_x" value="<% nvram_get("wan_ipaddr_x"); %>">
-		<input type="hidden" name="wan_netmask_x" value="<% nvram_get("wan_netmask_x"); %>">
-		<input type="hidden" name="wan_gateway_x" value="<% nvram_get("wan_gateway_x"); %>">
-		<input type="hidden" name="vpn_enable" value="">
-		<input type="hidden" name="wan_heartbeat_x" value="<% nvram_get("wan_heartbeat_x"); %>">
-		<input type="hidden" name="wan_dnsenable_x" value="<% nvram_get("wan_dnsenable_x"); %>">
-		<input type="hidden" name="wan_dns1_x" value="<% nvram_get("wan_dns1_x"); %>"> 
-		<input type="hidden" name="wan_dns2_x" value="<% nvram_get("wan_dns2_x"); %>"> 
-		<!-- internet ISP -->
-		<input type="hidden" name="wan_hostname" value="<% nvram_get("wan_hostname"); %>">
-		<input type="hidden" name="wan_hwaddr_x" value="<% nvram_get("wan_hwaddr_x"); %>">
-		<!-- internet Account -->
-		<input type="hidden" name="wan_pppoe_username" value="<% nvram_get("wan_pppoe_username"); %>">
-		<input type="hidden" name="wan_pppoe_passwd" value="<% nvram_get("wan_pppoe_passwd"); %>">
-		<!-- ap lan -->
-		<input type="hidden" name="lan_proto" value="<% nvram_get("lan_proto"); %>">
-		<input type="hidden" name="lan_ipaddr" value="<% nvram_get("lan_ipaddr"); %>">
-		<input type="hidden" name="lan_netmask" value="<% nvram_get("lan_netmask"); %>">
-		<input type="hidden" name="lan_gateway" value="<% nvram_get("lan_gateway"); %>">
-		<input type="hidden" name="lan_dnsenable_x" value="<% nvram_get("lan_dnsenable_x"); %>">
-		<input type="hidden" name="lan_dns1_x" value="<% nvram_get("lan_dns1_x"); %>">
-		<input type="hidden" name="lan_dns2_x" value="<% nvram_get("lan_dns2_x"); %>">
-		<input type="hidden" name="lan_ipaddr_rt" value="<% nvram_get("lan_ipaddr_rt"); %>">
-		<input type="hidden" name="lan_netmask_rt" value="<% nvram_get("lan_netmask_rt"); %>">
-		<!-- unifi -->
-		<input type="hidden" name="switch_wantag" value="<% nvram_get("switch_wantag"); %>">
-		<input type="hidden" name="switch_wan0tagid" value="<% nvram_get("switch_wan0tagid"); %>">
-		<input type="hidden" name="switch_wan0prio" value="<% nvram_get("switch_wan0prio"); %>">
-		<input type="hidden" name="switch_wan1tagid" value="<% nvram_get("switch_wan1tagid"); %>">
-		<input type="hidden" name="switch_wan1prio" value="<% nvram_get("switch_wan1prio"); %>">
-		<input type="hidden" name="switch_wan2tagid" value="<% nvram_get("switch_wan2tagid"); %>">
-		<input type="hidden" name="switch_wan2prio" value="<% nvram_get("switch_wan2prio"); %>">
-		<input type="hidden" name="switch_stb_x" value="<% nvram_get("switch_stb_x"); %>">
-		<!-- wireless client -->
-		<input type="hidden" name="wlc_band" value="<% nvram_get("wlc_band"); %>">
-		<input type="hidden" name="wlc_ssid" value="<% nvram_char_to_ascii("", "wlc_ssid"); %>">
-		<input type="hidden" name="wlc_wep" value="<% nvram_get("wlc_wep"); %>">
-		<input type="hidden" name="wlc_key" value="<% nvram_get("wlc_key"); %>">
-		<input type="hidden" name="wlc_wep_key" value="<% nvram_get("wlc_wep_key"); %>">
-		<input type="hidden" name="wlc_auth_mode" value="<% nvram_get("wlc_auth_mode"); %>">
-		<input type="hidden" name="wlc_crypto" value="<% nvram_get("wlc_crypto"); %>">
-		<input type="hidden" name="wlc_wpa_psk" value="<% nvram_get("wlc_wpa_psk"); %>">
-		<input type="hidden" name="wlc_nbw_cap" value="<% nvram_get("wlc_nbw_cap"); %>">
-	</form>
-
-	<form method="post" name="redirectForm" action="" target="contentM">
-		<input type="hidden" name="flag" value="">
-		<input type="hidden" name="prev_page" value="">
-	</form>
-
-	<form method="post" name="start_update" action="/start_apply2.htm" target="hidden_frame">
-		<input type="hidden" name="productid" value="<% nvram_get("productid"); %>">
-		<input type="hidden" name="flag" value="liveUpdate">
-		<input type="hidden" name="current_page" value="">
-		<input type="hidden" name="next_page" value="">
-		<input type="hidden" name="action_mode" value="apply">
-		<input type="hidden" name="action_script" value="start_webs_update">
-		<input type="hidden" name="action_wait" value="12">
-	</form>
+	
+	<div id="congratschangepwd" class="container;" style="display:none;">
+		<header>
+			<a class="brand-logo" href="#">T-Mobile</a>
+			<a class="product-logo">Personal CellSpot&trade;</a>
+		</header>
+		<section>
+			<h1>Wi-Fi CellSpot Router</h1>
+			<p><strong>Congratulations!</strong><br>
+			Your admin password has been successfully changed.</p>
+			<div class="hr"></div>
+			<p><strong>To change your network names (SSIDs) and passwords, please select "Continue."</strong></p>
+			<form class="wfps_form notop">
+				<input type="button" value="Log Out" onclick="stage1_logout();">
+				<input type="button" value="Continue" id="continueSSID" onclick="set_SSID();">
+			</form>
+		</section>
+		<footer>&copy; 2002-2014 T-Mobile USA, Inc.</footer>
+	</div>
+	
+	<div id="changessid" class="container;" style="display:none;">
+		<header>
+			<a class="brand-logo" href="#">T-Mobile</a>
+			<a class="product-logo">Personal CellSpot&trade;</a>
+		</header>
+		<section>
+			<h1>Wi-Fi CellSpot Router</h1>
+			<p>This is where you can personalize your network names (SSIDs) and update your passwords.</p>
+			<p><a class="caret" onclick="back_to_password(1);">Change admin password</a></p>
+			<div class="hr"></div>
+			<p>Please make your network names unique.</p>
+			<h2>2.4 GHz</h2>
+			<form class="wfps_form notop">
+				<label for="networkname_24ghz">Network Name <span class="wfps_tip">32 characters max</span></label>
+				<input type="text" name="networkname_24ghz" id="networkname_24ghz" onkeyup="check_ssid_setting();" value="<% nvram_get("wl0_ssid"); %>" data-limit-low="1" data-limit-high="32" >
+				<label for="password_24ghz">Password <span class="wfps_tip">8 to 64 characters</span></label>
+				<a class="wfps_form_action" data-change="password_24ghz" href="#">Show</a>
+				<input type="password" name="password_24ghz" id="password_24ghz" onkeyup="check_ssid_setting();" data-limit-low="8" data-limit-high="64">
+				<h2>5 GHz</h2>
+				<label for="networkname_5ghz">Network Name <span class="wfps_tip">32 characters max</span></label>				
+				<input type="text" name="networkname_5ghz" id="networkname_5ghz" onkeyup="check_ssid_setting();" value="<% nvram_get("wl1_ssid"); %>" data-limit-low="1" data-limit-high="32" >
+				<label for="password_5ghz">Password <span class="wfps_tip">8 to 64 characters</span></label>
+				<a class="wfps_form_action" data-change="password_5ghz" href="#">Show</a>
+				<input type="password" name="password_5ghz" id="password_5ghz" onkeyup="check_ssid_setting();" data-limit-low="8" data-limit-high="64">
+				<input type="button" value="Cancel" onclick="back_stage1();">
+				<input type="button" value="Save" id="saveSSID" onclick="save_ssid();" disabled="disabled">
+			</form>
+			<p class="fineprint">For advanced setup functionality, please visit <a href="http://cellspot.router">http://cellspot.router</a> from a desktop computer rather than your mobile device.</p>
+		</section>
+		<footer>&copy; 2002-2014 T-Mobile USA, Inc.</footer>
+	</div>
+	
+	<div id="congratschangessid" class="container;" style="display:none;">
+		<header>
+			<a class="brand-logo" href="#">T-Mobile</a>
+			<a class="product-logo">Personal CellSpot&trade;</a>
+		</header>
+		<div>
+			<section>
+				<h1>Wi-Fi CellSpot Router</h1>
+				<p><strong>Congratulations!</strong><br>
+				Your network names (SSIDs) and passwords have been successfully changed.</p>
+				<div class="hr"></div>
+				<form class="wfps_form notop">
+					<input type="button" value="Back" onclick="back_to_ssid();">
+					<input type="button" value="Log Out" id="ssid_logout" onclick="stage2_logout();">
+				</form>
+			</section>
+		</div>
+		<footer>&copy; 2002-2014 T-Mobile USA, Inc.</footer>
+	</div>
+	
+	<div id="logout_cont" class="container;" style="display:none;">
+		<header>
+			<a class="brand-logo" href="#">T-Mobile</a>
+			<a class="product-logo">Personal CellSpot&trade;</a>
+		</header>
+		<div>
+			<section>
+				<h1><#logoutmessage#></h1>
+			</section>
+		</div>
+		<footer>&copy; 2002-2014 T-Mobile USA, Inc.</footer>
+	</div>
+	
 </body>
 </html>

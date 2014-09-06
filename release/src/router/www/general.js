@@ -356,6 +356,15 @@ function validate_range(o, _min, _max) {
 function validate_range_sp(o, min, max, def) {		//allow to set "0"
 	if (o.value==0) return true;
 
+	for(var i=0; i<o.value.length; i++){		//is_number
+		if (o.value.charAt(i)<'0' || o.value.charAt(i)>'9'){			
+			alert('<#JS_validrange#> ' + min + ' <#JS_validrange_to#> ' + max);
+			o.focus();
+			o.select();
+			return false;
+		}
+	}
+
 	if(o.value<min || o.value>max) {
 		alert('<#JS_validrange#> ' + min + ' <#JS_validrange_to#> ' + max + '.');
 		o.value = def;
@@ -967,7 +976,7 @@ function onSubmitApply(s){
 }
 
 function handle_11ac_80MHz(){
-	if(band5g_support == false || band5g_11ac_support == false || document.form.wl_unit[0].selected == true || document.form.wl_nmode_x.value=='2') {
+	if(band5g_support == false || band5g_11ac_support == false || document.form.wl_unit[0].selected == true || document.form.wl_nmode_x.value=='2' || document.form.wl_nmode_x.value=='1') {
 		document.form.wl_bw[0].text = "20/40 MHz";
 		document.form.wl_bw.remove(3); //remove 80 Mhz when not when not required required
 	} else {
@@ -1463,10 +1472,22 @@ function insertExtChannelOption_5g(){
 							wl_channel_list_5g.splice(i,(wl_channel_list_5g.length - i));
 							break;
 						}
-					//remove ch56 when bw != 20MHz and no ch52 is provided.
+					//remove ch56 when bw == 40MHz or remove ch56,60,64 when bw == 80MHz, on NO ch52 is provided.
 					for(i=0; i < wl_channel_list_5g.length; i++)
+					{
 						if(wl_channel_list_5g[i] == "56" && (i == 0 || wl_channel_list_5g[i-1] != "52"))
-							wl_channel_list_5g.splice(i,1);
+						{
+							if(Rawifi_support && band5g_11ac_support && (document.form.wl_bw.value == "3" || document.form.wl_bw.value == "1"))
+							{
+								for(var j=wl_channel_list_5g.length; j>=i ; j--)
+									if(wl_channel_list_5g[j] >= "56" && wl_channel_list_5g[j] <= "64")
+										wl_channel_list_5g.splice(j,1);
+							} else {
+								wl_channel_list_5g.splice(i,1);
+							}
+							break;
+						}
+					}
 				}
 				if(wl_channel_list_5g[0] != "<#Auto#>")
 						wl_channel_list_5g.splice(0,0,"0");
@@ -2427,4 +2448,49 @@ function limit_auth_method(g_unit){
 	}
 		
 	authentication_method_change(document.form.wl_auth_mode_x);
+}
+
+function getDDNSState(ddns_return_code, ddns_hostname, ddns_old_hostname)
+{
+	var ddnsStateHint = "";
+	if(ddns_return_code.indexOf('-1')!=-1)
+		ddnsStateHint = "<#LANHostConfig_x_DDNS_alarm_2#>";
+	else if(ddns_return_code.indexOf('200')!=-1)
+		ddnsStateHint = "<#LANHostConfig_x_DDNS_alarm_3#>";
+	else if(ddns_return_code.indexOf('203')!=-1)
+		ddnsStateHint = "<#LANHostConfig_x_DDNS_alarm_hostname#> '"+ddns_hostname+"' <#LANHostConfig_x_DDNS_alarm_registered#>";
+	else if(ddns_return_code.indexOf('220')!=-1)
+		ddnsStateHint = "<#LANHostConfig_x_DDNS_alarm_4#>";
+	else if(ddns_return_code.indexOf('230')!=-1)
+		ddnsStateHint = "<#LANHostConfig_x_DDNS_alarm_5#>";
+	else if(ddns_return_code.indexOf('233')!=-1)
+		ddnsStateHint = "<#LANHostConfig_x_DDNS_alarm_hostname#> '"+ddns_hostname+"' <#LANHostConfig_x_DDNS_alarm_registered_2#> '"+ddns_old_hostname+"'";
+	else if(ddns_return_code.indexOf('296')!=-1)
+		ddnsStateHint = "<#LANHostConfig_x_DDNS_alarm_6#>";
+	else if(ddns_return_code.indexOf('297')!=-1)
+		ddnsStateHint = "<#LANHostConfig_x_DDNS_alarm_7#>";
+	else if(ddns_return_code.indexOf('298')!=-1)
+		ddnsStateHint = "<#LANHostConfig_x_DDNS_alarm_8#>";
+	else if(ddns_return_code.indexOf('299')!=-1)
+		ddnsStateHint = "<#LANHostConfig_x_DDNS_alarm_9#>";
+	else if(ddns_return_code.indexOf('401')!=-1)
+		ddnsStateHint = "<#LANHostConfig_x_DDNS_alarm_10#>";
+	else if(ddns_return_code.indexOf('407')!=-1)
+		ddnsStateHint = "<#LANHostConfig_x_DDNS_alarm_11#>";
+	else if(ddns_return_code == 'Time-out')
+		ddnsStateHint = "<#LANHostConfig_x_DDNS_alarm_1#>";
+	else if(ddns_return_code =='unknown_error')
+		ddnsStateHint = "<#LANHostConfig_x_DDNS_alarm_2#>";
+	else if(ddns_return_code =='connect_fail')
+		ddnsStateHint = "<#qis_fail_desc7#>";
+	else if(ddns_return_code =='no_change')
+		ddnsStateHint = "<#LANHostConfig_x_DDNS_alarm_nochange#>";
+	/*else if(ddns_return_code =='ddns_query')
+		ddnsStateHint = "<#LANHostConfig_x_DDNSHostnameCheck_buttonname#>";*/
+	else if(ddns_return_code =='auth_fail')
+		ddnsStateHint = "<#qis_fail_desc1#>";
+	else if(ddns_return_code !='')
+		ddnsStateHint = "<#LANHostConfig_x_DDNS_alarm_2#>";
+
+	return ddnsStateHint;
 }

@@ -161,20 +161,20 @@ function submitenter(myfield,e){
 <div style="width:95%; margin:0 auto; padding-bottom:3px;" id="field_general">
 	<span style="font-size:16px; font-weight:bold;color:white;text-shadow: 1px 1px 0px black">
 		<span id="routerMode">
-			<input type="radio" name="sw_mode_radio" class="input" value="1" onclick="setScenerion(1);" <% nvram_match("sw_mode", "1", "checked"); %>><#OP_GW_item#>
+			<input type="radio" name="sw_mode_radio" class="input" value="1" tabindex="1" onclick="setScenerion(1);" <% nvram_match("sw_mode", "1", "checked"); %>><#OP_GW_item#>
 		</span>
 			&nbsp;&nbsp;
 		<span id="repeaterMode">
-			<input type="radio" name="sw_mode_radio" class="input" value="2" onclick="setScenerion(2);" <% nvram_match("sw_mode", "2", "checked"); %>>
+			<input type="radio" name="sw_mode_radio" class="input" value="2" tabindex="2" onclick="setScenerion(2);" <% nvram_match("sw_mode", "2", "checked"); %>>
 			<span id="repeaterMode_desc"><#OP_RE_item#></span>
 		</span>
 		&nbsp;&nbsp;
 		<span id="APMode">
-			<input type="radio" name="sw_mode_radio" class="input" value="3" onclick="setScenerion(3);" <% nvram_match("sw_mode", "3", "checked"); %>><#OP_AP_item#>
+			<input type="radio" name="sw_mode_radio" class="input" value="3" tabindex="3" onclick="setScenerion(3);" <% nvram_match("sw_mode", "3", "checked"); %>><#OP_AP_item#>
 		</span>
 		&nbsp;&nbsp;
 		<span id="MBMode">
-			<input type="radio" name="sw_mode_radio" class="input" value="4" onclick="setScenerion(4);" <% nvram_match("sw_mode", "4", "checked"); %>>Media bridge
+			<input type="radio" name="sw_mode_radio" class="input" value="4" tabindex="4" onclick="setScenerion(4);" <% nvram_match("sw_mode", "4", "checked"); %>>Media bridge
 		</span>
 	</span>
 
@@ -196,7 +196,7 @@ function submitenter(myfield,e){
 		<tr>
 			<td>
 				<div id="applyBtn" class="apply_gen">
-					<input type="submit" id="nextButton" value="<#CTL_next#>" class="button_gen" >
+					<input type="submit" id="nextButton" value="<#CTL_next#>" tabindex="5" class="button_gen" >
 				</div>
 			</td>
 		</tr>

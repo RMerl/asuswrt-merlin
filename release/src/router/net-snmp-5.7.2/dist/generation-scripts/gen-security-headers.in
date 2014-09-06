@@ -1,0 +1,29 @@
+#!/bin/sh
+
+# we should be able to do this without creating a full configure-like
+# script, but we need to figure out how to call m4 directly.
+AC_INIT([Net-SNMP], [5.6.pre2], [net-snmp-coders@lists.sourceforge.net])
+
+AC_ARG_WITH(security-modules,
+[  --with-security-modules="s1 s2 ..."   Compile in the given SNMP security
+                                    modules (space or comma separated list).])
+AC_ARG_WITH(output-header,
+[  --with-output-header="file"            Where to store the header file])
+AC_ARG_WITH(output-init,
+[  --with-output-init="file"              Where to store the init file])
+
+m4_include(dist/generation-scripts/gen-variables)
+
+AC_DEFINE_UNQUOTED(NETSNMP_SYSTEM_INCLUDE_FILE, "$NETSNMP_SYSTEM_INCLUDE_FILE")
+
+if test "x$with_output_header" != "x" ; then
+    security_incl_file="$with_output_header"
+fi
+
+if test "x$with_output_init" != "x" ; then
+    security_init_file="$with_output_init"
+fi
+
+m4_include(configure.d/config_modules_security_modules)
+
+

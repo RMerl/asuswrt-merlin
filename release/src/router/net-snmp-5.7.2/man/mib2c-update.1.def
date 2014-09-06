@@ -1,0 +1,28 @@
+.TH mib2c-update 1 "07 Apr 2010" VVERSIONINFO "Net-SNMP"
+.SH NAME
+mib2c-update - script to merge custom code into updated mib2c code
+.SH SYNOPSIS
+.PP
+.B mib2c-update
+.SH DESCRIPTION
+.PP
+Use mib2c-update to generate your mib2c code templates, and it will track
+the original code and the changes you make to the code. If the mib2c
+template changes (bug fixes, enhances in later releases), re-running
+mib2c will update the template and then attempt to re-apply your
+changes.
+.PP
+This can be extremely useful when developing your own mib2c templates.
+.PP
+When you first run mib2c-update, it will create several hidden
+directories and a .mib2c-updaterc file. You must edit the .mib2c-udpaterc
+file to specify two values. The first, UPDATE_OID, is the table name
+to specify when running mib2c. The second, UPDATE_CONF, is the mib2c
+configuration file to specify when running mib2c.
+.PP
+Additional mib2c options can be specified in UPDATE_MIB2C_OPTS.
+.PP
+.SH BUGS
+.PP
+mib2c-update has only been tested on individual tables. Specifying
+a scalar or and entire MIB might not work.

@@ -1,0 +1,167 @@
+.\" /************************************************************
+.\" 	Copyright 1997 Niels Baggesen
+.\" 
+.\"                       All Rights Reserved
+.\" 
+.\" Permission to use, copy, modify, and distribute this software and its 
+.\" documentation for any purpose and without fee is hereby granted, 
+.\" provided that the above copyright notice appear in all copies.
+.\" 
+.\" I DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
+.\" ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL
+.\" I BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR
+.\" ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
+.\" WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
+.\" ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
+.\" SOFTWARE.
+.\" ******************************************************************/
+.\" Portions of this file are copyrighted by:
+.\" Copyright Copyright 2003 Sun Microsystems, Inc. All rights reserved.
+.\" Use is subject to license terms specified in the COPYING file
+.\" distributed with the Net-SNMP package.
+.\" ******************************************************************/
+.TH SNMPTABLE 1 "25 Jul 2003" VVERSIONINFO "Net-SNMP"
+.SH NAME
+snmptable - retrieve an SNMP table and display it in tabular form
+.SH SYNOPSIS
+.B snmptable
+[COMMON OPTIONS] [\-Cb] [\-CB] [\-Ch] [\-CH] [\-Ci] [\-Cf STRING] [\-Cw WIDTH]
+AGENT TABLE\-OID
+.SH DESCRIPTION
+.B snmptable
+is an SNMP application that repeatedly uses the SNMP GETNEXT or
+GETBULK requests to query for information on a network entity.  The
+parameter
+.I TABLE\-OID
+must specify an SNMP table.
+.PP
+snmptable is an SNMP application that repeatedly uses the
+SNMP GETNEXT or GETBULK requests to query for  information
+on a network entity.  The parameter TABLE\-OID must specify
+an SNMP table.
+
+AGENT identifies a target SNMP agent, which is instrumented
+to monitor the gievn objects.  At its simplest, the AGENT
+specification will consist of a hostname or an IPv4
+address.  In this situation, the command will attempt
+communication with the agent, using UDP/IPv4 to port 161
+of the given target host. See
+.I  snmpcmd(1)
+for a full list of
+the possible formats for AGENT.
+.SH OPTIONS
+.TP 8
+.B COMMON OPTIONS
+Please see
+.I snmpcmd(1)
+for a list of possible values for COMMON OPTIONS
+as well as their descriptions.
+.TP
+.B \-Cb
+Display only a brief heading. Any common prefix of the table field
+names will be deleted.
+.TP 
+.B \-CB
+Do not use GETBULK requests to retrieve data, only GETNEXT.
+.TP 
+.BI \-Cc " CHARS"
+Print table in columns of
+.I CHARS
+characters width.
+.TP
+.BI \-Cf " STRING"
+The string
+.I STRING
+is used to separate table columns.  With this option, each table entry
+will be printed in compact form, just with the string given to
+separate the columns (useful if you want to import it into a
+database).  Otherwise it is printed in nicely aligned columns.
+.TP
+.B \-Ch
+Display
+.I only
+the column headings.
+.TP
+.B \-CH
+Do not display the column headings.
+.TP
+.B \-Ci
+This option prepends the index of the entry to all printed lines.
+.TP
+.B \-Cl
+Left justify the data in each column.
+.TP 
+.BI \-Cr " REPEATERS"
+For GETBULK requests, 
+.I REPEATERS
+specifies the max-repeaters value to use.  For GETNEXT requests,
+.I REPEATERS
+specifies the number of entries to retrieve at a time.
+.TP 
+.BI \-Cw " WIDTH"
+Specifies the width of the lines when the table is printed.
+If the lines will be longer, the table will be printed in sections of
+at most 
+.I WIDTH 
+characters.  If
+.I WIDTH
+is less than the length of the contents of
+a single column, then that single column will still be printed.
+.PP
+Note that
+.B snmptable
+REQUIRES  an argument specifying the agent to query
+and exactly one OID argument, as described in the 
+.I snmpcmd(1)
+manual page.  This OID \fBmust\fP be that of a MIB table object.
+.SH EXAMPLES
+$ snmptable \-v 2c \-c public localhost at.atTable
+
+SNMP table: at.atTable RFC1213\-MIB::atTable
+
+atIfIndex   atPhysAddress   atNetAddress
+        1  8:0:20:20:0:ab 130.225.243.33
+.PP
+$ snmptable \-v 2c \-c public \-Cf + localhost at.atTable
+
+SNMP table: at.atTable
+
+atIfIndex+atPhysAddress+atNetAddress
+1+8:0:20:20:0:ab+130.225.243.33
+.PP
+.nf
+$ snmptable localhost \-Cl \-CB \-Ci \-OX \-Cb \-Cc 16 \-Cw 64 ifTable
+
+SNMP table: ifTable
+
+Index           Descr           Type            Mtu             
+Speed           PhysAddress     AdminStatus     OperStatus      
+LastChange      InOctets        InUcastPkts     InNUcastPkts    
+InDiscards      InErrors        InUnknownProtos OutOctets       
+OutUcastPkts    OutNUcastPkts   OutDiscards     OutErrors       
+OutQLen         Specific        
+
+index: [1]
+1               lo              softwareLoopbac 16436           
+10000000                        up              up              
+?               2837283786      3052466         ?               
+0               0               ?               2837283786      
+3052466         ?               0               0               
+0               zeroDotZero     
+
+index: [2]
+2               eth0            ethernetCsmacd  1500            
+10000000        0:5:5d:d1:f7:cf up              up              
+?               2052604234      44252973        ?               
+0               0               ?               149778187       
+65897282        ?               0               0               
+0               zeroDotZero     
+.PP
+.SH "BUGS"
+The test for
+.I TABLE\-OID
+actually specifying a table is rather heuristic.  Note also that the
+test requires the defining MIB file to be loaded.
+.PP
+.SH "SEE ALSO"
+snmpcmd(1), variables(5).

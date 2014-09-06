@@ -2331,6 +2331,12 @@ TRACE_PT("writing Parental Control\n");
 		}
 #endif
 
+		//Add for snmp daemon
+		if (nvram_match("snmpd_enable", "1")) {
+			fprintf(fp, "-A INPUT -p udp -s 0/0 --sport 1024:65535 -d %s --dport 161:162 -m state --state NEW,ESTABLISHED -j ACCEPT\n", wan_ipaddr);
+			fprintf(fp, "-A OUTPUT -p udp -s %s --sport 161:162 -d 0/0 --dport 1024:65535 -m state --state ESTABLISHED -j ACCEPT\n", wan_ipaddr);
+		}
+
 #ifdef RTCONFIG_IPV6
 		switch (get_ipv6_service()) {
 		case IPV6_6IN4:
@@ -4507,7 +4513,22 @@ int start_firewall(int wanunit, int lanunit)
 	/* Mcast needs rp filter to be turned off only for non default iface */
 	if (nvram_get_int("mr_enable_x") || nvram_get_int("udpxy_enable_x")) {
 #ifdef RTCONFIG_DSL /* Paul add 2012/9/21 for DSL model, rp_filter should be disabled for br1. */
+#ifdef RTCONFIG_DUALWAN
+		if ( get_dualwan_primary() == WANS_DUALWAN_IF_DSL
+			&& nvram_get_int("dslx_config_num") > 1) {
+				mcast_ifname = "br1";
+		}
+		else {
+			char wan_prefix[] = "wanXXXXXXXXXX_";
+			char *wan_ifname = get_wan_ifname(wan_primary_ifunit());
+			snprintf(wan_prefix, sizeof(wan_prefix), "wan%d_", wan_primary_ifunit());
+			mcast_ifname = nvram_safe_get(strcat_r(wan_prefix, "ifname", tmp));
+			if (wan_ifname && strcmp(wan_ifname, mcast_ifname) == 0)
+				mcast_ifname = NULL;
+		}
+#else
 		mcast_ifname = "br1";
+#endif
 #else
 		char wan_prefix[] = "wanXXXXXXXXXX_";
 		char *wan_ifname = get_wan_ifname(wan_primary_ifunit());

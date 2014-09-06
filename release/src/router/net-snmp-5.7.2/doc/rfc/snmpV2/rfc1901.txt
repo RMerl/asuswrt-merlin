@@ -1,0 +1,451 @@
+
+
+
+
+
+
+Network Working Group                               SNMPv2 Working Group
+Request for Comments: 1901                                       J. Case
+Category: Experimental                               SNMP Research, Inc.
+                                                           K. McCloghrie
+                                                     Cisco Systems, Inc.
+                                                                 M. Rose
+                                            Dover Beach Consulting, Inc.
+                                                           S. Waldbusser
+                                          International Network Services
+                                                            January 1996
+
+
+                 Introduction to Community-based SNMPv2
+
+Status of this Memo
+
+   This document specifies an Experimental protocol for the Internet
+   community.  This memo does not specify an Internet standard of any
+   kind.  Discussion and suggestions for improvement are requested.
+   Distribution of this memo is unlimited.
+
+Table of Contents
+
+   1. Introduction ................................................    1
+   2. Components of the SNMPv2 Framework ..........................    2
+   2.1 Structure of Management Information ........................    2
+   2.2 Textual Conventions ........................................    3
+   2.3 Conformance Statements .....................................    3
+   2.4 Protocol Operations ........................................    3
+   2.5 Transport Mappings .........................................    4
+   2.6 Protocol Instrumentation ...................................    4
+   3. The Community-based Administrative Framework ................    4
+   4. Security Considerations .....................................    5
+   5. Editor's Address ............................................    6
+   6. Acknowledgements ............................................    6
+   7. References ..................................................    7
+
+1.  Introduction
+
+   The purpose of this document is to define the Community-based
+   Administrative Framework for the SNMP version 2 framework (SNMPv2).
+   The SNMPv2 framework is fully described in [1-6].  This framework is
+   derived from the original Internet-standard Network Management
+   Framework (SNMPv1), which consists of these three documents:
+
+      STD 16, RFC 1155 [7] which defines the Structure of Management
+      Information (SMI), the mechanisms used for describing and naming
+      objects for the purpose of management.
+
+
+
+SNMPv2 Working Group          Experimental                      [Page 1]
+
+RFC 1901         Introduction to Community-based SNMPv2     January 1996
+
+
+      STD 16, RFC 1212 [8] which defines a more concise description
+      mechanism, which is wholly consistent with the SMI.
+
+      STD 15, RFC 1157 [9] which defines the Simple Network Management
+      Protocol (SNMP), the protocol used for network access to managed
+      objects.
+
+   For information on coexistence between SNMPv1 and SNMPv2, consult
+   [10].
+
+2.  Components of the SNMPv2 Framework
+
+   A management system contains:  several (potentially many) nodes, each
+   with a processing entity, termed an agent, which has access to
+   management instrumentation; at least one management station; and, a
+   management protocol, used to convey management information between
+   the agents and management stations.  Operations of the protocol are
+   carried out under an administrative framework which defines
+   authentication, authorization, access control, and privacy policies.
+
+   Management stations execute management applications which monitor and
+   control managed elements.  Managed elements are devices such as
+   hosts, routers, terminal servers, etc., which are monitored and
+   controlled via access to their management information.
+
+2.1.  Structure of Management Information
+
+   Management information is viewed as a collection of managed objects,
+   residing in a virtual information store, termed the Management
+   Information Base (MIB).  Collections of related objects are defined
+   in MIB modules.  These modules are written using a subset of OSI's
+   Abstract Syntax Notation One (ASN.1) [11].  It is the purpose of the
+   Structure of Management Information for SNMPv2 document [1] to define
+   that subset.
+
+   The SMI is divided into three parts:  module definitions, object
+   definitions, and, trap definitions.
+
+   (1)  Module definitions are used when describing information modules.
+        An ASN.1 macro, MODULE-IDENTITY, is used to concisely convey the
+        semantics of an information module.
+
+   (2)  Object definitions are used when describing managed objects.  An
+        ASN.1 macro, OBJECT-TYPE, is used to concisely convey the syntax
+        and semantics of a managed object.
+
+   (3)  Notification definitions are used when describing unsolicited
+        transmissions of management information.  An ASN.1 macro,
+
+
+
+SNMPv2 Working Group          Experimental                      [Page 2]
+
+RFC 1901         Introduction to Community-based SNMPv2     January 1996
+
+
+        NOTIFICATION-TYPE, is used to concisely convey the syntax and
+        semantics of a notification.
+
+2.2.  Textual Conventions
+
+   When designing a MIB module, it is often useful to define new types
+   similar to those defined in the SMI.  In comparison to a type defined
+   in the SMI, each of these new types has a different name, a similar
+   syntax, but a more precise semantics.  These newly defined types are
+   termed textual conventions, and are used for the convenience of
+   humans reading the MIB module.  It is the purpose of the Textual
+   Conventions for SNMPv2 document [2] to define the initial set of
+   textual conventions available to all MIB modules.
+
+   Objects defined using a textual convention are always encoded by
+   means of the rules that define their primitive type.  However,
+   textual conventions often have special semantics associated with
+   them.  As such, an ASN.1 macro, TEXTUAL-CONVENTION, is used to
+   concisely convey the syntax and semantics of a textual convention.
+
+2.3.  Conformance Statements
+
+   It may be useful to define the acceptable lower-bounds of
+   implementation, along with the actual level of implementation
+   achieved.  It is the purpose of the Conformance Statements for SNMPv2
+   document [3] to define the notation used for these purposes.  There
+   are two kinds of notations:
+
+   (1)  Compliance statements are used when describing requirements for
+        agents with respect to object definitions.  An ASN.1 macro,
+        MODULE-COMPLIANCE, is used to concisely convey such requirements.
+
+   (2)  Capability statements are used when describing capabilities of
+        agents with respect to object definitions.  An ASN.1 macro, AGENT-
+        CAPABILITIES, is used to concisely convey such capabilities.
+
+   Finally, collections of related objects are grouped together to form
+   a unit of conformance.  An ASN.1 macro, OBJECT-GROUP, is used to
+   concisely convey the syntax and semantics of a group.
+
+2.4.  Protocol Operations
+
+   The management protocol provides for the exchange of messages which
+   convey management information between the agents and the management
+   stations.  The form of these messages is a message "wrapper" which
+   encapsulates a Protocol Data Unit (PDU).
+
+
+
+
+
+SNMPv2 Working Group          Experimental                      [Page 3]
+
+RFC 1901         Introduction to Community-based SNMPv2     January 1996
+
+
+   It is the purpose of the Protocol Operations for SNMPv2 document [4]
+   to define the operations of the protocol with respect to the sending
+   and receiving of the PDUs.
+
+2.5.  Transport Mappings
+
+   The management protocol, version 2 of the Simple Network Management
+   Protocol, may be used over a variety of protocol suites.  It is the
+   purpose of the Transport Mappings for SNMPv2 document [5] to define
+   how the SNMPv2 maps onto an initial set of transport domains.  Other
+   mappings may be defined in the future.
+
+   Although several mappings are defined, the mapping onto UDP is the
+   preferred mapping.  As such, to provide for the greatest level of
+   interoperability, systems which choose to deploy other mappings
+   should also provide for proxy service to the UDP mapping.
+
+2.6.  Protocol Instrumentation
+
+   It is the purpose of the Management Information Base for SNMPv2
+   document [6] to define managed objects which describe the behavior of
+   a SNMPv2 entity.
+
+3.  The Community-based Administrative Framework
+
+   It is the purpose of an administrative framework to define an
+   infrastructure through which effective management can be realized in
+   a variety of configurations and environments.  Specified as a part
+   of, or as extensions of, an administrative framework are security
+   mechanisms used to achieve an administratively-defined level of
+   security for protocol interactions.
+
+   The administrative framework for SNMPv2 identified in this document
+   is the same framework as was defined for SNMPv1 [9].  This
+   administrative framework associates each message with a "community"
+   as defined in [9].  Use of this administrative framework with SNMP
+   Version 2 is commonly known as "Community-based SNMPv2 (SNMPv2C)."
+
+   Specifically, Section 3.2.5 of [9] defines the concept of a
+   community, and Section 4.1 of [9] defines the Elements of Procedure
+   for generating and receiving messages.  The following updates apply:
+
+   (1)  The types of access defined in Section 3.2.5 of [9] are updated
+        by [1].
+
+   (2)  The Elements of Procedure defined in Section 4.1 of [9] are
+        updated with the additional requirement of incrementing the
+        relevant statistics counter as defined in [6].
+
+
+
+SNMPv2 Working Group          Experimental                      [Page 4]
+
+RFC 1901         Introduction to Community-based SNMPv2     January 1996
+
+
+   (3)  The requirement in the Elements of Procedure in Section 4.1 of
+        [9] that the "the source transport address that a response
+        message is sent from shall be identical to the destination
+        transport address that the original request message was sent to"
+        is deleted, i.e., the source transport address of a response
+        message can be any transport address belonging to the agent.
+
+   The form of a message is also taken from [9], with the exception that
+   a new version number is used in the message "wrapper".  Use of a new
+   version number is necessary because of SNMPv2's new PDU types [4],
+   error codes [4], etc.  With this one change, the wrapper becomes:
+
+    COMMUNITY-BASED-SNMPv2 DEFINITIONS ::= BEGIN
+
+    -- top-level message
+
+        Message ::=
+                SEQUENCE {
+                     version
+                        INTEGER {
+                            version(1)  -- modified from RFC 1157
+                        },
+
+                    community           -- community name
+                        OCTET STRING,
+
+                    data                -- PDUs as defined in [4]
+                        ANY
+                }
+        }
+
+    END
+
+   Note that with this administrative framework, the
+   'authorizationError(16)' value defined for the error-status component
+   of an SNMPv2 PDU [4] is unused.  It may, however, be used with future
+   administrative frameworks.
+
+4.  Security Considerations
+
+   Security issues are not discussed in this memo.
+
+
+
+
+
+
+
+
+
+
+SNMPv2 Working Group          Experimental                      [Page 5]
+
+RFC 1901         Introduction to Community-based SNMPv2     January 1996
+
+
+5.  Editor's Address
+
+   Keith McCloghrie
+   Cisco Systems, Inc.
+   170 West Tasman Drive
+   San Jose, CA  95134-1706
+   US
+
+   Phone: +1 408 526 5260
+   EMail: kzm@cisco.com
+
+6.  Acknowledgements
+
+   This document is the result of significant work by the four major
+   contributors:
+
+   Jeffrey D. Case (SNMP Research, case@snmp.com)
+   Keith McCloghrie (Cisco Systems, kzm@cisco.com)
+   Marshall T. Rose (Dover Beach Consulting, mrose@dbc.mtview.ca.us)
+   Steven Waldbusser (International Network Services, stevew@uni.ins.com)
+
+   In addition, the contributions of the SNMPv2 Working Group are
+   acknowledged.  In particular, a special thanks is extended for the
+   contributions of:
+
+     Alexander I. Alten (Novell)
+     Dave Arneson (Cabletron)
+     Uri Blumenthal (IBM)
+     Doug Book (Chipcom)
+     Kim Curran (Bell-Northern Research)
+     Jim Galvin (Trusted Information Systems)
+     Maria Greene (Ascom Timeplex)
+     Iain Hanson (Digital)
+     Dave Harrington (Cabletron)
+     Nguyen Hien (IBM)
+     Jeff Johnson (Cisco Systems)
+     Michael Kornegay (Object Quest)
+     Deirdre Kostick (AT&T Bell Labs)
+     David Levi (SNMP Research)
+     Daniel Mahoney (Cabletron)
+     Bob Natale (ACE*COMM)
+     Brian O'Keefe (Hewlett Packard)
+     Andrew Pearson (SNMP Research)
+     Dave Perkins (Peer Networks)
+     Randy Presuhn (Peer Networks)
+     Aleksey Romanov (Quality Quorum)
+     Shawn Routhier (Epilogue)
+     Jon Saperia (BGS Systems)
+
+
+
+SNMPv2 Working Group          Experimental                      [Page 6]
+
+RFC 1901         Introduction to Community-based SNMPv2     January 1996
+
+
+     Bob Stewart (Cisco Systems, bstewart@cisco.com), chair
+     Kaj Tesink (Bellcore)
+     Glenn Waters (Bell-Northern Research)
+     Bert Wijnen (IBM)
+
+7.  References
+
+[1]  SNMPv2 Working Group, Case, J., McCloghrie, K., Rose, M., and
+     S. Waldbusser, "Structure of Management Information for Version 2
+     of the Simple Network Management Protocol (SNMPv2)", RFC 1902,
+     January 1996.
+
+[2]  SNMPv2 Working Group, Case, J., McCloghrie, K., Rose, M., and
+     S. Waldbusser, "Textual Conventions for Version 2 of the Simple
+     Network Management Protocol (SNMPv2)", RFC 1903, January 1996.
+
+[3]  SNMPv2 Working Group, Case, J., McCloghrie, K., Rose, M., and
+     S. Waldbusser, "Conformance Statements for Version 2 of the Simple
+     Network Management Protocol (SNMPv2)", RFC 1904, January 1996.
+
+[4]  SNMPv2 Working Group, Case, J., McCloghrie, K., Rose, M., and
+     S. Waldbusser, "Protocol Operations for Version 2 of the Simple
+     Network Management Protocol (SNMPv2)", RFC 1905, January 1996.
+
+[5]  SNMPv2 Working Group, Case, J., McCloghrie, K., Rose, M., and
+     S. Waldbusser, "Transport Mappings for Version 2 of the Simple
+     Network Management Protocol (SNMPv2)", RFC 1906, January 1996.
+
+[6]  SNMPv2 Working Group, Case, J., McCloghrie, K., Rose, M., and
+     S. Waldbusser, "Management Information Base for Version 2 of the
+     Simple Network Management Protocol (SNMPv2)", RFC 1907,
+     January 1996.
+
+[7]  Rose, M., and K. McCloghrie, "Structure and Identification of
+     Management Information for TCP/IP-based internets", STD 16, RFC
+     1155, May 1990.
+
+[8]  Rose, M., and K. McCloghrie, "Concise MIB Definitions", STD 16,
+     RFC 1212, March 1991.
+
+[9]  Case, J., Fedor, M., Schoffstall, M., Davin, J., "Simple Network
+     Management Protocol", STD 15, RFC 1157, SNMP Research, Performance
+     Systems International, MIT Laboratory for Computer Science, May
+     1990.
+
+
+
+
+
+
+
+SNMPv2 Working Group          Experimental                      [Page 7]
+
+RFC 1901         Introduction to Community-based SNMPv2     January 1996
+
+
+[10] SNMPv2 Working Group, Case, J., McCloghrie, K., Rose, M., and
+     S. Waldbusser, "Coexistence between Version 1 and Version 2 of the
+     Internet-standard Network Management Framework", RFC 1908,
+     January 1996.
+
+[11] Information processing systems - Open Systems Interconnection -
+     Specification of Abstract Syntax Notation One (ASN.1),
+     International Organization for Standardization.  International
+     Standard 8824, (December, 1987).
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+SNMPv2 Working Group          Experimental                      [Page 8]
+

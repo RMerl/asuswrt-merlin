@@ -1,0 +1,3 @@
+This directory contains compatibility include files to make the newer
+work of the net-snmp code still work with code written for the
+ucd-snmp package.

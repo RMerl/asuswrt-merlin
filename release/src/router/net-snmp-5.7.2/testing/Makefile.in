@@ -1,0 +1,120 @@
+#
+# Makefile for testing
+#
+
+# use GNU vpath, if available, to only set a path for source and headers
+# VPATH will pick up objects too, which is bad if you are sharing a
+# source dir...
+@GNU_vpath@ %.h $(srcdir)
+@GNU_vpath@ %.c $(srcdir)
+# fallback to regular VPATH for non-gnu...
+@NON_GNU_VPATH@ $(srcdir)
+
+USELIBS		= ../snmplib/libsnmp.$(LIB_EXTENSION)$(LIB_VERSION)
+LIBS		= -L../snmplib $(CC_RUNTIME_ARG) -lsnmp @LIBS@
+
+PARSEOBJS	=
+
+CPPFLAGS	= $(SNMPLIB_INCLUDES) @CPPFLAGS@
+CC		= @CC@ $(CPPFLAGS)
+
+all:
+	@echo "Select one of the following targets to run:"
+	@echo ""
+	@echo "  make test        -- default test suites"
+	@echo "  make testall     -- Run all available tests"
+	@echo "  make testfailed  -- Run only the tests that failed last time."
+	@echo "  make testsimple  -- Run tests directly with simple_run"
+	@echo ""
+	@echo "Set additional test parameters with TESTOPTS=args"
+	@echo ""
+	@echo "Also see the RUNFULLTESTS script for details"
+
+test:
+	@if test "x$(PERL)" = "x" \
+	         -o "x@PERL_SYSTEM_INVOKES_POSIX_SHELL@" != xyes \
+		 || { ! $(PERL) -e 'require TAP::Harness;' >/dev/null 2>&1 \
+		    && ! $(PERL) -e 'require Test::Harness;' >/dev/null 2>&1; };\
+	then \
+		echo $(srcdir)/RUNTESTS ; \
+		$(srcdir)/RUNTESTS ; \
+	else \
+		echo $(srcdir)/RUNFULLTESTS $(TESTOPTS) ; \
+		$(PERL) $(srcdir)/RUNFULLTESTS $(TESTOPTS) ; \
+	fi
+
+testsimple:
+	@(export srcdir=$(top_srcdir) ; \
+		export builddir=$(top_builddir) ; \
+		$(srcdir)/fulltests/support/simple_run $(TESTOPTS) \
+	)
+
+testall:
+	$(srcdir)/RUNFULLTESTS -g all $(TESTOPTS)
+
+testfailed:
+	$(srcdir)/RUNFULLTESTS -f $(TESTOPTS)
+
+
+test-mibs:
+	cd $(srcdir)/rfc1213 ; ./run
+
+etest:    etimetest.o $(PARSEOBJS) $(USELIBS)
+	${CC} -o $@ etimetest.o $(PARSEOBJS) ${LDFLAGS} ${LIBS} 
+
+ktest:    keymanagetest.o $(PARSEOBJS) $(USELIBS)
+	${CC} -o $@ keymanagetest.o $(PARSEOBJS) ${LDFLAGS} ${LIBS} 
+
+misctest:    misctest.o $(PARSEOBJS) $(USELIBS)
+	${CC} -o $@ misctest.o $(PARSEOBJS) ${LDFLAGS} ${LIBS} 
+
+stest:    scapitest.o $(PARSEOBJS) $(USELIBS)
+	${CC} -o $@ scapitest.o $(PARSEOBJS) ${LDFLAGS} ${LIBS} 
+
+clean: testclean
+	rm -f *.o core *.core $(TARG)
+
+testclean:
+	-rm -fr /tmp/snmp-test*
+
+install: installdirs $(TARG)
+	@for i in $(TARG) ; \
+		do $(INSTALL) $$i $(INSTALL_PREFIX)$(bindir) ; \
+		echo "install:  installed $$i in $(INSTALL_PREFIX)$(bindir)" ; \
+	done
+
+installdirs:
+	@$(SHELL) $(srcdir)/../mkinstalldirs $(INSTALL_PREFIX)$(snmplibdir) $(INSTALL_PREFIX)$(bindir)
+
+dependlocal: 
+	makedepend $(CPPFLAGS) -o.lo $(srcdir)/*.c
+
+depend: dependlocal
+
+nosysdepend: 
+	makedepend $(CPPFLAGS) -o.lo *.c
+	$(PERL) -n -i.bak $(top_srcdir)/makenosysdepend.pl Makefile
+
+makefileindepend: nosysdepend
+	$(PERL) $(top_srcdir)/makefileindepend.pl
+
+
+# DO NOT DELETE THIS LINE -- make depend depends on it.
+
+
+etimetest.lo: ../config.h ../m/generic.h ../s/generic.h ../s/linux.h
+etimetest.lo: ../snmplib/asn1.h ../snmplib/callback.h ../snmplib/lcd_time.h
+etimetest.lo: ../snmplib/snmp_api.h ../snmplib/snmp_debug.h ../snmplib/tools.h
+etimetest.lo: ../s/sysv.h  
+keymanagetest.lo: ../config.h ../m/generic.h ../s/generic.h ../s/linux.h
+keymanagetest.lo: ../snmplib/asn1.h ../snmplib/callback.h ../snmplib/keytools.h
+keymanagetest.lo: ../snmplib/scapi.h ../snmplib/snmp_api.h ../snmplib/tools.h
+keymanagetest.lo: ../snmplib/transform_oids.h ../s/sysv.h 
+misctest.lo: ../config.h ../m/generic.h ../s/generic.h ../s/linux.h
+misctest.lo: ../snmplib/asn1.h ../snmplib/callback.h ../snmplib/snmp_api.h
+misctest.lo: ../snmplib/tools.h ../snmplib/transform_oids.h ../s/sysv.h
+scapitest.lo: ../config.h ../m/generic.h ../s/generic.h ../s/linux.h
+scapitest.lo: ../snmplib/asn1.h ../snmplib/callback.h ../snmplib/keytools.h
+scapitest.lo: ../snmplib/scapi.h ../snmplib/snmp_api.h ../snmplib/tools.h
+scapitest.lo: ../snmplib/transform_oids.h ../s/sysv.h 
+T.lo: ../config.h ../m/generic.h ../s/generic.h ../s/linux.h ../s/sysv.h

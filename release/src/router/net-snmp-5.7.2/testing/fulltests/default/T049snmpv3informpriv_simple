@@ -1,0 +1,28 @@
+#!/bin/sh
+
+. ../support/simple_eval_tools.sh
+
+DEFSECURITYLEVEL=authPriv
+
+HEADER "SNMPv3 informs (authPriv) received and sent by tools"
+
+SKIPIFNOT NETSNMP_CAN_DO_CRYPTO
+SKIPIFNOT NETSNMP_ENABLE_SCAPI_AUTHPRIV
+
+#
+# Begin test
+#
+
+. ./Sv3usmconfigtrapd
+CONFIGTRAPD authuser log $TESTPRIVUSER $DEFSECURITYLEVEL
+CONFIGTRAPD agentxsocket /dev/null
+
+STARTTRAPD
+
+CAPTURE "snmptrap -Ci -t $SNMP_SLEEP -d $TESTPRIVARGS $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPTRAPD_PORT 0 .1.3.6.1.6.3.1.1.5.1 .1.3.6.1.2.1.1.4.0 s received_inform_$DEFSECURITYLEVEL"
+
+STOPTRAPD
+
+CHECKTRAPD "received_inform_$DEFSECURITYLEVEL"
+
+FINISHED

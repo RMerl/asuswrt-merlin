@@ -1,0 +1,54 @@
+Reported By: Eduardo Cardona; e.cardona@CableLabs.com
+Date: Fri, 20 Feb 2004 15:42
+
+In Section 4.2.1, page 50, in DESCRIPTION clause of snmpNotifyFilterTable:
+
+        A more complete discussion of notification filtering 
+        can be found in section 6. of [SNMP-APPL]." 
+
+
+It should be:
+
+        A more complete discussion of notification filtering 
+        can be found in section 6. of RFC3413." 
+
+
+Additionally, page 52, in DESCRIPTION clause of snmpNotifyFilterType:
+
+        filter.  A more detailed discussion of the use of this 
+        object can be found in section 6. of [SNMP-APPL]." 
+
+
+It should be:
+
+        filter.  A more detailed discussion of the use of this 
+        object can be found in section 6. of RFC3413." 
+
+
+
+Reported By: Guan Hai Bing; guan-hb@cs.sjtu.edu.cn
+Date: Sat, 28 Dec 2002 14:36:59 +0800
+
+In Section 3.5.1.1:
+
+    (2) If appropriate outgoing management target information cannot be
+        found, the proxy forwarder increments the snmpProxyDrops
+        counter [RFC1907], and then calls the Dispatcher using the
+        returnResponsePdu abstract service interface.
+
+Should be:
+
+    (2) If appropriate outgoing management target information cannot be
+        found, the proxy forwarder increments the snmpProxyDrops
+        counter [RFC3418], and then calls the Dispatcher using the
+        returnResponsePdu abstract service interface. 
+
+In Sections 3.2 and 4.1.2:
+
+    by [RFC1905]
+
+Should be:
+
+    by [RFC3416]
+ 
+

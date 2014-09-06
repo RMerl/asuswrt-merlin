@@ -913,17 +913,17 @@ function displayDNSCtrl(){
 <legend>
 	<#Layer3Forwarding_x_UseStaticIP_itemname#>
 	<span id="dhcp_info_radio">
-		<input type="radio" name="wan_dhcpenable_x" class="input" value="0" onclick="show_dhcpenable(this.value);"><#checkbox_Yes#>
-		<input type="radio" name="wan_dhcpenable_x" class="input" value="1" onclick="show_dhcpenable(this.value);"><#checkbox_No#>
+		<input type="radio" name="wan_dhcpenable_x" class="input" value="0" tabindex="1" onclick="show_dhcpenable(this.value);"><#checkbox_Yes#>
+		<input type="radio" name="wan_dhcpenable_x" class="input" value="1" tabindex="2" onclick="show_dhcpenable(this.value);"><#checkbox_No#>
 	</span>	
 </legend>
 	<table id="tblsetting_2" class="QISform" width="400" border="0" align="center" cellpadding="3" cellspacing="0">
 		<tr>
 			<th  width="190">
-				<span onmouseout="return nd();" onclick="overlib('<#IPConnection_ExternalIPAddress_itemdesc#>');" style="cursor:help;"><#IPConnection_ExternalIPAddress_itemname#><img align="right" style="cursor:pointer;margin-top:-14px\9;" style="margin-top:-14px\9;" src="/images/New_ui/helpicon.png"></span>
+				<span onmouseout="return nd();" onclick="overlib('<#IPConnection_ExternalIPAddress_itemdesc#>');" style="cursor:help;"><#IPConnection_ExternalIPAddress_itemname#><img align="right" style="cursor:pointer;margin-top:-14px\9;" src="/images/New_ui/helpicon.png"></span>
 			</th>
 			<td class="QISformtd">
-	    	<input type="text" name="wan_ipaddr_x" value="<% nvram_get("wan_ipaddr_x"); %>" onClick="clean_input(this)" onkeypress="return is_ipaddr(this, event);" size="36" maxlength="15" class="input_20_table" />
+	    	<input type="text" name="wan_ipaddr_x" value="<% nvram_get("wan_ipaddr_x"); %>" tabindex="3" onClick="clean_input(this)" onkeypress="return is_ipaddr(this, event);" size="36" maxlength="15" class="input_20_table" />
 				<!--input type="hidden" id="wan_ipaddr_x" name="wan_ipaddr_x" value="" maxlength="15" onkeypress="return is_ipaddr(this, event);" title="WAN IP"-->
 				<div class="IPaddr_qis" id="wan_ipaddr_x_div" style="display:none;">
 					<input maxlength="3" name="wan_ipaddr_x1"; onkeypress="return checkIP(this,event);" onkeyup="return checkWord(this,event);"
@@ -943,7 +943,7 @@ function displayDNSCtrl(){
 				<span onmouseout="return nd();" onclick="overlib('<#IPConnection_x_ExternalSubnetMask_itemdesc#>');" style="cursor:help;"><#IPConnection_x_ExternalSubnetMask_itemname#><img align="right" style="cursor:pointer;margin-top:-14px\9;" src="/images/New_ui/helpicon.png"></span>
 			</th>
 			<td class="QISformtd">
-	    	<input type="text" name="wan_netmask_x" value="<% nvram_get("wan_netmask_x"); %>" onClick="clean_input(this)" onkeypress="return is_ipaddr(this, event);" size="36" maxlength="15" class="input_20_table" />
+	    	<input type="text" name="wan_netmask_x" value="<% nvram_get("wan_netmask_x"); %>" tabindex="4" onClick="clean_input(this)" onkeypress="return is_ipaddr(this, event);" size="36" maxlength="15" class="input_20_table" />
 				<!--input type="hidden" id="wan_netmask_x" name="wan_netmask_x" value="" maxlength="15"  title="WAN Subnet Mask"-->
 				<div class="IPaddr_qis" id="wan_netmask_x_div" style="display:none;">
 					<input maxlength="3" name="wan_netmask_x1" onkeypress="return checkIP(this,event);" onkeyup="return checkWord(this,event);" onblur="validateIP(this);"
@@ -963,7 +963,7 @@ function displayDNSCtrl(){
 				<span onmouseout="return nd();" onclick="overlib('<#IPConnection_x_ExternalGateway_itemdesc#>');" style="cursor:help;"><#IPConnection_x_ExternalGateway_itemname#><img align="right" style="cursor:pointer;margin-top:-14px\9;" src="/images/New_ui/helpicon.png"></span>
 			</th>
 			<td class="QISformtd">
-	    	<input type="text" name="wan_gateway_x" value="<% nvram_get("wan_gateway_x"); %>" onClick="clean_input(this)" onkeypress="return is_ipaddr(this, event);" size="36" maxlength="15" class="input_20_table" />
+	    	<input type="text" name="wan_gateway_x" value="<% nvram_get("wan_gateway_x"); %>" tabindex="5" onClick="clean_input(this)" onkeypress="return is_ipaddr(this, event);" size="36" maxlength="15" class="input_20_table" />
 				<!--input type="hidden" id="wan_gateway_x" name="wan_gateway_x" value="" maxlength="15" onkeypress="return is_ipaddr(this, event);" class="input"-->
 				<div class="IPaddr_qis" id="wan_gateway_x_div" style="display:none;">
 					<input maxlength="3" onkeypress="return checkIP(this,event);" onkeyup="return checkWord(this,event);" onblur="validateIP(this);" 
@@ -986,8 +986,8 @@ function displayDNSCtrl(){
   <legend>
 	  <span id="dns_info_title"><#IPConnection_x_DNSServerEnable_itemname#></span>
 	  <span id="dns_info_radio">
-  		<input type="radio" name="wan_dnsenable_x" value="1" onclick="show_dnsenable(this.value);" class="input"><#checkbox_Yes#>
-			<input type="radio" name="wan_dnsenable_x" value="0" onclick="show_dnsenable(this.value);" class="input"><#checkbox_No#>
+  		<input type="radio" name="wan_dnsenable_x" value="1" onclick="show_dnsenable(this.value);" tabindex="6" class="input"><#checkbox_Yes#>
+			<input type="radio" name="wan_dnsenable_x" value="0" onclick="show_dnsenable(this.value);" tabindex="7" class="input"><#checkbox_No#>
 	  </span>
   </legend>
   <table id="tblsetting_4" class="QISform" width="400" border=0 align="center" cellpadding="5" cellspacing="0">
@@ -996,7 +996,7 @@ function displayDNSCtrl(){
 			<span onmouseout="return nd();" onclick="overlib('<#IPConnection_x_DNSServer1_itemdesc#>');" style="cursor:help;"><#IPConnection_x_DNSServer1_itemname#><img align="right" style="cursor:pointer;margin-top:-14px\9;" src="/images/New_ui/helpicon.png"></span>
 	  </th>
 	  <td class="QISformtd">
-    	<input type="text" name="wan_dns1_x" value="<% nvram_get("wan_dns1_x"); %>" onkeypress="return is_ipaddr(this, event);" size="36" maxlength="15" class="input_20_table" />
+    	<input type="text" name="wan_dns1_x" value="<% nvram_get("wan_dns1_x"); %>" tabindex="8" onkeypress="return is_ipaddr(this, event);" size="36" maxlength="15" class="input_20_table" />
 			<!--input type="hidden" id="wan_dns1_x" name="wan_dns1_x" value="" onkeypress="return is_ipaddr(this, event);" maxlength="15"-->
 			<div class="IPaddr_qis" id="wan_dns1_x_div" style="display:none;">
 				<input maxlength="3" name="wan_dns1_x1" onkeypress="return checkIP(this,event);" onkeyup="return checkWord(this,event);" onblur="validateIP(this);"
@@ -1016,7 +1016,7 @@ function displayDNSCtrl(){
 			<span onmouseout="return nd();" onclick="overlib('<#IPConnection_x_DNSServer2_itemdesc#>');" style="cursor:help;"><#IPConnection_x_DNSServer2_itemname#><img align="right" style="cursor:pointer;margin-top:-14px\9;" src="/images/New_ui/helpicon.png"></span>
 	  </th>
 	  <td class="QISformtd">
-    	<input type="text" name="wan_dns2_x" value="<% nvram_get("wan_dns2_x"); %>" onkeypress="return is_ipaddr(this, event);" size="36" maxlength="15" class="input_20_table" />
+    	<input type="text" name="wan_dns2_x" value="<% nvram_get("wan_dns2_x"); %>" tabindex="9" onkeypress="return is_ipaddr(this, event);" size="36" maxlength="15" class="input_20_table" />
 			<!--input type="hidden" id="wan_dns2_x" name="wan_dns2_x" value="" maxlength="15" onkeypress="return is_ipaddr(this, event);" -->
 			<div class="IPaddr_qis" id="wan_dns2_x_div" style="display:none;">
 				<input maxlength="3" onkeypress="return checkIP(this,event);" onkeyup="return checkWord(this,event);" onblur="validateIP(this);"
@@ -1043,7 +1043,7 @@ function displayDNSCtrl(){
 				<span onmouseout="return nd();" onclick="overlib('<#BOP_isp_heart_desc2#>');" style="cursor:help;"><#BOP_isp_heart_item#><img align="right" style="cursor:pointer;margin-top:-14px\9;" src="/images/New_ui/helpicon.png"></span>
 			</th>
 			<td class="QISformtd">	<!-- ASUS 2009.12 for maxlen -->
-				<input type="text" name="wan_heartbeat_x" value="" size="36" maxlength="64" title="<#BOP_isp_heart_item#>" class="input_32_table" disabled>
+				<input type="text" name="wan_heartbeat_x" value="" tabindex="10" size="36" maxlength="64" title="<#BOP_isp_heart_item#>" class="input_32_table" disabled>
 			</td>
 		</tr>
 	</table>
@@ -1054,8 +1054,8 @@ function displayDNSCtrl(){
 			</th>
 			<td class="QISformtd">
 				<!-- wan_heartbeat_x -->
-				<input type="radio" name="vpn_enable" value="1" onclick="show_next_button();" class="input"><#checkbox_Yes#>
-				<input type="radio" name="vpn_enable" value="0" onclick="show_next_button();" class="input"><#checkbox_No#>
+				<input type="radio" name="vpn_enable" value="1" tabindex="11" onclick="show_next_button();" class="input"><#checkbox_Yes#>
+				<input type="radio" name="vpn_enable" value="0" tabindex="12" onclick="show_next_button();" class="input"><#checkbox_No#>
 			</td>
 		</tr>
 	</table>
@@ -1070,16 +1070,16 @@ function displayDNSCtrl(){
 			<div onmouseout="return nd();" onclick="overlib('<#PPPConnection_x_MacAddressForISP_itemdesc#>', FIXX, 285, FIXY,50);" style="white-space:normal;cursor:help;"><#BOP_isp_mac_item#><img align="right" style="cursor:pointer;margin-top:-14px \9;" src="/images/New_ui/helpicon.png"></div>
 			</th>
 			<td class="QISformtd">
-				<input type="text" name="wan_hwaddr_x" onkeypress="return is_hwaddr(this,event);" style="height:25px;" class="input_20_table" size="36" maxlength="17" value="">
-				<input type="button" class="button_gen_long" onclick="showMAC();" value="<#BOP_isp_MACclone#>">
+				<input type="text" name="wan_hwaddr_x" tabindex="13" onkeypress="return is_hwaddr(this,event);" style="height:25px;" class="input_20_table" size="36" maxlength="17" value="">
+				<input type="button" class="button_gen_long" tabindex="14" onclick="showMAC();" value="<#BOP_isp_MACclone#>">
 			</td>
 		</tr>
 	</table>
 	</fieldset>
 </div>
 	<div class="apply_gen" style="margin-top:30px">
-  	<input type="button" id="prevButton" value="<#CTL_prev#>" onclick="gotoprev(document.form);" class="button_gen">
-  	<input type="submit" id="nextButton" value="<#CTL_next#>" class="button_gen">
+  	<input type="button" id="prevButton" value="<#CTL_prev#>" tabindex="16" onclick="gotoprev(document.form);" class="button_gen">
+  	<input type="submit" id="nextButton" value="<#CTL_next#>" tabindex="15" class="button_gen">
 		<span id="loadHint" style="display:none"><#SAVE_note#></span>
 		<img id="loadingIcon" style="display:none;" src="/images/InternetScan.gif"></span>
 	</div>

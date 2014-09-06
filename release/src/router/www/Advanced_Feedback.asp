@@ -79,6 +79,14 @@ function isEmail(strE) {
 	else
 		return false;
 }
+
+function textCounter(field, cnt, upper) {
+        if (field.value.length > upper)
+                field.value = field.value.substring(0, upper);
+        else
+                cnt.value = upper - field.value.length;
+}
+
 </script>
 </head>
 <body onload="initial();" onunLoad="return unload_body();">
@@ -184,13 +192,14 @@ function isEmail(strE) {
 		<#feedback_comments#> *
 	</th>
 	<td>
-		<textarea name="fb_comment" maxlength="2000" cols="55" rows="8" style="font-family:'Courier New', Courier, mono; font-size:13px;background:#475A5F;color:#FFFFFF;"></textarea>
-		<br> <#feedback_optional#>
+		<textarea name="fb_comment" maxlength="2000" cols="55" rows="8" style="font-family:'Courier New', Courier, mono; font-size:13px;background:#475A5F;color:#FFFFFF;" onKeyDown="textCounter(this,document.form.msglength,2000);" onKeyUp="textCounter(this,document.form.msglength,2000)"></textarea>
+		<i>Maximum of 2000 characters - characters left : <input type="text" class="input_6_table" name="msglength" id="msglength" maxlength="4" value="2000" readonly></i>
 	</td>
 </tr>
 
 <tr align="center">
-	<td colspan="2">	
+	<td colspan="2">
+		<div style="margin-left:-680px;"><#feedback_optional#></div>
 		<input class="button_gen" onclick="applyRule()" type="button" value="Send"/>
 	</td>	
 </tr>

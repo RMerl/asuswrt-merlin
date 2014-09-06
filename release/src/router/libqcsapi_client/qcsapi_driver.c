@@ -444,6 +444,16 @@ static const qcsapi_entry qcsapi_entry_table[] =
 	  e_qcsapi_none,
 	  e_qcsapi_string
 	},
+	{ e_qcsapi_wifi_get_bf_power,
+	  e_qcsapi_get_api,
+	  e_qcsapi_none,
+	  e_qcsapi_string
+	},
+	{ e_qcsapi_wifi_set_bf_power,
+	  e_qcsapi_set_api,
+	  e_qcsapi_none,
+	  e_qcsapi_string
+	},
 	{ e_qcsapi_wifi_get_carrier_interference,
 	  e_qcsapi_get_api,
 	  e_qcsapi_none,
@@ -1766,6 +1776,16 @@ static const qcsapi_entry qcsapi_entry_table[] =
       e_qcsapi_none,
       e_qcsapi_unsigned_int
     },
+        { e_qcsapi_get_bb_param,
+          e_qcsapi_get_api,
+          e_qcsapi_none,
+          e_qcsapi_unsigned_int
+        },
+        { e_qcsapi_set_bb_param,
+          e_qcsapi_set_api,
+          e_qcsapi_none,
+          e_qcsapi_unsigned_int
+        },
 };
 
 static const unsigned int	sizeof_entry_table = sizeof( qcsapi_entry_table ) / sizeof( qcsapi_entry_table[ 0 ] );

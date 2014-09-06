@@ -1,0 +1,32 @@
+#
+# local (scripts) directory Makefile
+#
+OUTDIR=
+PREFIX=
+PREFIX_DOS=
+
+ALL: snmpconf mib2c traptoemail
+
+"..\bin\$(OUTDIR)" :
+    if not exist "..\bin\$(OUTDIR)/$(NULL)" mkdir "..\bin\$(OUTDIR)"
+
+snmpconf: "..\..\local\snmpconf" "..\bin\$(OUTDIR)"
+	perl -p -e "s#/usr/local#$(PREFIX)#g;" ..\..\local\snmpconf > ..\bin\$(OUTDIR)\snmpconf
+
+mib2c: "..\..\local\mib2c" "..\bin\$(OUTDIR)"
+	perl -p -e "s#/usr/local#$(PREFIX)#g;" ..\..\local\mib2c > ..\bin\$(OUTDIR)\mib2c
+
+traptoemail: "..\..\local\traptoemail" "..\bin\$(OUTDIR)"
+	perl -p -e "s#/usr/local#$(PREFIX)#g;" ..\..\local\traptoemail > ..\bin\$(OUTDIR)\traptoemail
+
+CLEAN: snmpconf_clean mib2c_clean traptoemail_clean
+
+snmpconf_clean:
+	-@erase "..\bin\$(OUTDIR)\snmpconf"
+
+mib2c_clean:
+	-@erase "..\bin\$(OUTDIR)\mib2c"
+
+traptoemail_clean:
+	-@erase "..\bin\$(OUTDIR)\traptoemail"
+

@@ -236,9 +236,18 @@ struct muc_tx_stats {
 	uint32_t	pppc_scale_ncidx;	/* last node to have Tx gain scaling set */
 	uint32_t	pppc_scale_val;		/* Tx gain scaling for this node (0 is max) */
 	uint32_t	pppc_scale_base_cnt;	/* times Tx gain scaling base has been set for any node */
-	uint32_t	pppc_scale_base_20m;	/* times Tx gain scaling base for 20MHz */
-	uint32_t	pppc_scale_base_40m;	/* times Tx gain scaling base for 40MHz */
-	uint32_t	pppc_scale_base_80m;	/* times Tx gain scaling base for 80MHz */
+	uint32_t	pppc_scale_base_1ss_20m;	/* times Tx gain scaling base for 20MHz and 1SS */
+	uint32_t	pppc_scale_base_1ss_40m;	/* times Tx gain scaling base for 40MHz and 1SS */
+	uint32_t	pppc_scale_base_1ss_80m;	/* times Tx gain scaling base for 80MHz and 1SS */
+	uint32_t	pppc_scale_base_2ss_20m;	/* times Tx gain scaling base for 20MHz and 2SS */
+	uint32_t	pppc_scale_base_2ss_40m;	/* times Tx gain scaling base for 40MHz and 2SS */
+	uint32_t	pppc_scale_base_2ss_80m;	/* times Tx gain scaling base for 80MHz and 2SS */
+	uint32_t	pppc_scale_base_3ss_20m;	/* times Tx gain scaling base for 20MHz and 3SS */
+	uint32_t	pppc_scale_base_3ss_40m;	/* times Tx gain scaling base for 40MHz and 3SS */
+	uint32_t	pppc_scale_base_3ss_80m;	/* times Tx gain scaling base for 80MHz and 3SS */
+	uint32_t	pppc_scale_base_4ss_20m;	/* times Tx gain scaling base for 20MHz and 4SS */
+	uint32_t	pppc_scale_base_4ss_40m;	/* times Tx gain scaling base for 40MHz and 4SS */
+	uint32_t	pppc_scale_base_4ss_80m;	/* times Tx gain scaling base for 80MHz and 4SS */
 	uint32_t	pppc_scale_overstep;	/* tx scale exceed the maximum scale indices */
 	uint32_t	pppc_scale_rollback;	/* tx scale roll back because scale index over step */
 	uint32_t	pppc_0_gput;		/* times pppc comparing goodput and both are zero */

@@ -14,8 +14,8 @@
 	background-position:50% 61.10%;
 }
 .appIcons{
-	width:56px;
-	height:56px;
+	width:32px;
+	height:32px;
 	background-repeat:no-repeat;
 	margin-left:10px;
 }
@@ -78,6 +78,7 @@
 .appName{
 	width:180px;
 	font-size:14px;
+	word-break:break-all;
 }
 .trafficNum{
 	position:absolute;

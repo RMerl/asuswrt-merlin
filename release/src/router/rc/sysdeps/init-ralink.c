@@ -637,13 +637,13 @@ static void chk_valid_country_code(char *country_code)
 #endif
 
 #ifdef RA_SINGLE_SKU
-static void create_SingleSKU(const char *path, const char *pAppend, const char *reg_spec)
+static void create_SingleSKU(const char *path, const char *pBand, const char *reg_spec, const char *pFollow)
 {
 	char src[128];
 	char dest[128];
 
-	sprintf(src , "/ra_SKU/SingleSKU%s_%s.dat", pAppend, reg_spec);
-	sprintf(dest, "%s/SingleSKU%s.dat", path, pAppend);
+	sprintf(src , "/ra_SKU/SingleSKU%s_%s%s.dat", pBand, reg_spec, pFollow);
+	sprintf(dest, "%s/SingleSKU%s.dat", path, pBand);
 
 	eval("mkdir", "-p", path);
 	eval("ln", "-s", src, dest);
@@ -763,10 +763,10 @@ void init_syspara(void)
 #else	/* ! RTCONFIG_NEW_REGULATION_DOMAIN */
 	dst = buffer;
 
-#if !defined(RTAC51U) || !defined(RTN54U)
-	reg_spec_def = "FCC";
-#else
+#if defined(RTAC51U) || defined(RTN11P)
 	reg_spec_def = "CE";
+#else
+	reg_spec_def = "FCC";
 #endif
 	bytes = MAX_REGSPEC_LEN;
 	memset(dst, 0, MAX_REGSPEC_LEN+1);
@@ -959,8 +959,25 @@ void init_syspara(void)
 		char *reg_spec;
 
 		reg_spec = nvram_safe_get("reg_spec");
-		create_SingleSKU("/etc/Wireless/RT2860", "", reg_spec);
-		create_SingleSKU("/etc/Wireless/iNIC", "_5G", reg_spec);
+#ifdef RTAC52U	// [0x40002] == 0x00 0x02
+		if (!(FRead(dst, OFFSET_EEPROM_VER, 2) < 0) && dst[0] == 0x00 && dst[1] == 0x02)
+		{
+			create_SingleSKU("/etc/Wireless/RT2860", "", reg_spec, "_0002");
+		}
+		else
+#endif
+		create_SingleSKU("/etc/Wireless/RT2860", "", reg_spec, "");
+
+#ifdef RTCONFIG_HAS_5G
+#ifdef RTAC52U	// [0x40002] == 0x00 0x02
+		if (!(FRead(dst, OFFSET_EEPROM_VER, 2) < 0) && dst[0] == 0x00 && dst[1] == 0x02)
+		{
+			create_SingleSKU("/etc/Wireless/iNIC", "_5G", reg_spec, "_0002");
+		}
+		else
+#endif
+		create_SingleSKU("/etc/Wireless/iNIC", "_5G", reg_spec, "");
+#endif	/* RTCONFIG_HAS_5G */
 	}
 #endif	/* RTAC52U && RTAC51U && RTN54U */
 #endif	/* RA_SINGLE_SKU */
@@ -1163,14 +1180,10 @@ char *get_wlifname(int unit, int subunit, int subunit_x, char *buf)
 #if defined(RTCONFIG_WIRELESSREPEATER)
 	if (nvram_get_int("sw_mode") == SW_MODE_REPEATER  && nvram_get_int("wlc_band") == unit && subunit==1)
 	{   
-#if defined(RTCONFIG_RALINK_MT7620)
-		if(unit == 0)
-#else
 		if(unit == 1)
-#endif
-			sprintf(buf, "%s", "apcli0");
+			sprintf(buf, "%s", APCLI_5G);
 		else
-			sprintf(buf, "%s", "apclii0");
+			sprintf(buf, "%s", APCLI_2G);
 	}	
 	else
 #endif /* RTCONFIG_WIRELESSREPEATER */
@@ -1178,7 +1191,9 @@ char *get_wlifname(int unit, int subunit, int subunit_x, char *buf)
 		memset(wifbuf, 0, sizeof(wifbuf));
 
 		if(unit==0) strncpy(wifbuf, WIF_2G, strlen(WIF_2G)-1);
+#if defined(RTCONFIG_HAS_5G)
 		else strncpy(wifbuf, WIF_5G, strlen(WIF_5G)-1);
+#endif	/* RTCONFIG_HAS_5G */
 
 		snprintf(prefix, sizeof(prefix), "wl%d.%d_", unit, subunit);
 		if (nvram_match(strcat_r(prefix, "bss_enabled", tmp), "1"))

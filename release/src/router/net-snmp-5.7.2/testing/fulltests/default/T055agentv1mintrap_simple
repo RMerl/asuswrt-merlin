@@ -1,0 +1,33 @@
+#!/bin/sh
+
+. ../support/simple_eval_tools.sh
+
+HEADER snmpv1 traps are sent by snmpd without notification mib support
+
+SKIPIFNOT USING_EXAMPLES_EXAMPLE_MODULE
+
+#
+# Begin test
+#
+
+# standard V1 configuration: testcommunity
+. ./Sv3config
+CONFIGAGENT trapsink ${SNMP_TRANSPORT_SPEC}:${SNMP_TEST_DEST}${SNMP_SNMPTRAPD_PORT} public
+CONFIGTRAPD authcommunity log public
+CONFIGTRAPD agentxsocket /dev/null
+
+STARTTRAPD
+
+# initialize only the example mib, and not the notification mib stuff
+AGENT_FLAGS="$AGENT_FLAGS -Dexample,header_generic,add_trap,mib_init,callback -I example,usmUser,usmConf,vacm_vars"
+STARTAGENT
+
+CAPTURE "snmpset -On $SNMP_FLAGS $AUTHTESTARGS $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT .1.3.6.1.4.1.2021.254.7.0 i 1"
+
+STOPAGENT
+
+STOPTRAPD
+
+CHECKTRAPD "Enterprise Specific Trap (99)"
+
+FINISHED

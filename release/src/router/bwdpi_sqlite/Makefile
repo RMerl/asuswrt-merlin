@@ -7,7 +7,8 @@ CFLAGS += -idirafter$(LINUXDIR)/arch/arm/include -idirafter$(LINUXDIR)/include
 
 LDFLAGS += $(EXTRALDFLAGS2)
 LDFLAGS += -L$(TOP)/bwdpi -lbwdpi
-LDFLAGS += -lpthread $(TOP)/sqlite/.libs/libsqlite3.a
+LDFLAGS += -L$(TOP)/sqlite/.libs -lsqlite3
+#LDFLAGS += -lpthread
 
 ifeq ($(RTCONFIG_QTN),y)
 CFLAGS += -I$(TOP)/libqcsapi_client
@@ -15,7 +16,7 @@ LDFLAGS += -L$(TOP)/libqcsapi_client -lqcsapi_client
 endif
 
 # ASUSWRT
-OBJS += main.o table.o
+OBJS += main.o table.o sqlite_stat.o
 
 ifeq ($(RTCONFIG_BCMARM),y)
 vpath %.c $(SRCBASE)/shared
@@ -24,8 +25,9 @@ endif
 ifeq ($(wildcard $(SRCBASE)/router/bwdpi_sqlite/*.c),)
 all:
 	-cp -f prebuilt/bwdpi_sqlite bwdpi_sqlite
+	-cp -f prebuilt/libbwdpi_sql.so libbwdpi_sql.so
 else
-all: bwdpi_sqlite
+all: bwdpi_sqlite libbwdpi_sql.so
 endif
 
 bwdpi_sqlite: $(OBJS)
@@ -33,14 +35,21 @@ bwdpi_sqlite: $(OBJS)
 	@$(CC) -o $@ $^ $(LDFLAGS)
 	@$(STRIP) bwdpi_sqlite
 
+libbwdpi_sql.so: sqlite_stat.o
+	@echo " [bwdpi] LD $@"
+	@$(LD) $(LDFLAGS) -shared -o $@ $^
+
 install: all
 	@echo "[bwdpi_sqlite] Installing..."
 	@install -D bwdpi_sqlite $(INSTALLDIR)/sbin/bwdpi_sqlite
 	@$(STRIP) $(INSTALLDIR)/sbin/bwdpi_sqlite
+	@install -d $(INSTALLDIR)/usr/lib
+	@install -m 755 libbwdpi_sql.so $(INSTALLDIR)/usr/lib
+	@$(STRIP) $(INSTALLDIR)/usr/lib/libbwdpi_sql.so
 
 %.o: %.c
 	@echo " [bwdpi_sqlite] CC $@"
 	$(CC) $(CFLAGS) -c $<
 
 clean:
-	rm -f *.o bwdpi_sqlite
+	rm -f *.o bwdpi_sqlite libbwdpi_sql.so

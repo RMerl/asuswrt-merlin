@@ -1,0 +1,188 @@
+#!/bin/sh
+#
+# $Id$
+# Author: Robert Story <rstory@freesnmp.com>
+#
+########################################################################
+########################################################################
+
+usage()
+{
+   echo "Usage: $0  [optional params] VERSION"
+   echo ""
+   echo " optional params: [-x] [-s SRCD] [-b BUILDD] [-i INSTALLD]"
+   echo "                  [-h host] [-p path]"
+   echo " VERSION    : release number (eg 5.2.2)"
+   echo " -s SRCDIR  : soure directory [$HOME/src/net-snmp-VERSION]"
+   echo " -b BUILDD  : build directory [$HOME/build/]"
+   echo "              NOTE-platform will be appended to build directory"
+   echo " -i INSTALLD: install directory [$HOME/build/\$PLATFORM/usr]"
+   echo ""
+   echo " -x : configure extra features for pre-release testing"
+   echo " -C : don't source $HOME/.snmp/nsb-nightly"
+   echo ""
+   echo " -f : from address for email results"
+   echo " -e : address to email error results to"
+   echo " -o : address to email success results to"
+   echo " -h : host to upload results to"
+   echo " -p : path to upload results to"
+   exit 1
+}
+
+#set -x
+
+# make getopts work on Tru64 by respawning in Posix mode
+if [ "`uname`" = "OSF1" -a "$BIN_SH" != "xpg4" ]; then
+    BIN_SH=xpg4
+    export BIN_SH
+    exec $0 $*
+fi
+
+#
+# find nsb-platform based on the path to this script
+#
+EXE_PATH=`dirname $0`
+if [ ! -f $EXE_PATH/nsb-functions ];then
+   if [ -f $HOME/bin/nsb-functions ]; then
+      EXE_PATH=$HOME/bin
+   elif [ -f nsb-functions ];then
+      EXE_PATH=$PWD
+   else
+      echo "Cannot find nsb-functions in $EXE_PATH, $HOME/bin or $PWD"
+      exit 1
+   fi
+fi
+
+if [ "x$1" = "x-C" ]; then
+    shift
+else
+    if [ -f $HOME/.snmp/nsb-nightly ];then
+        . $HOME/.snmp/nsb-nightly
+    fi
+fi
+
+########################################################################
+########################################################################
+
+# -r : remove build dir before
+# -R : remove build dir after
+PARMS="$PARMS -r"
+NIGHTLY_VERBOSE=0
+NSB_ERR_RESULTS_TO=""
+NSB_OK_RESULTS_TO=""
+
+while getopts b:e:f:i:o:s:xh:p:v opt
+do
+    case "$opt" in
+      b)  NSB_BUILD_DIR=$OPTARG;;
+      e)  NSB_ERR_RESULTS_TO=$OPTARG;;
+      f)  NSB_FROM=$OPTARG;;
+      o)  NSB_OK_RESULTS_TO=$OPTARG;;
+      i)  PARMS="-i $OPTARG $PARMS";;
+      s)  NSB_SRC_DIR=$OPTARG;;
+      h)  NSB_SCP_HOST=$OPTARG
+          PARMS="-h $NSB_SCP_HOST $PARMS"
+          ;;
+      p)  NSB_SCP_DEST=$OPTARG
+          PARMS="-p $NSB_SCP_DEST $PARMS"
+          ;;
+      x)  PARMS="-x $PARMS";;
+      v)  NIGHTLY_VERBOSE=1;;
+      \?)# unknown flag
+        usage;;
+    esac
+done
+shift `expr $OPTIND - 1`
+
+if [ $# -ne 1 ]; then
+   echo "expecting 1 argument, got $# ($@)"
+   usage
+fi
+
+NSB_VERSION=$1
+
+. $EXE_PATH/nsb-functions
+
+nsb_default_paths
+
+PARMS="$PARMS -b $NSB_BUILD_DIR -s $NSB_SRC_DIR"
+
+########################################################################
+########################################################################
+echo "Start: `date`"
+echo "Running nsb-package $PARMS $NSB_VERSION"
+if [ $NIGHTLY_VERBOSE = 1 ]; then
+    $EXE_PATH/nsb-package $PARMS $NSB_VERSION
+else
+    $EXE_PATH/nsb-package $PARMS $NSB_VERSION > /dev/null
+fi
+RC=$?
+echo "Finish: `date`"
+cd $NSB_BUILD_DIR
+case $RC in
+    0)  RESULT="Success"
+        NSB_RESULTS_TO=$NSB_OK_RESULTS_TO
+        FILES=""
+        ;;
+    *) RESULT="Error (rc $RC)"
+       NSB_RESULTS_TO=$NSB_ERR_RESULTS_TO
+       FILES=`ls nsb-make-*-errs.* 2>/dev/null`
+       if [ "x$NSB_SCP_HOST" != "x" ]; then
+          nsb_upload $NSB_BUILD_DIR $NSB_SCP_HOST:$NSB_SCP_DEST/$NSB_VERSION/$NSB_SUFFIX
+       fi
+        ;;
+esac
+echo "Result: $RESULT"
+
+if [ "x$NSB_RESULTS_TO" != "x" ]; then
+   SUBJECT="$NSB_VERSION $RESULT on $NSB_HOST ($NSB_PLATFORM)"
+   echo "Sending mail to $NSB_RESULTS_TO: $SUBJECT"
+   case `uname -s` in
+      OpenBSD|FreeBSD) # mail doesn't allow setting From
+         # seems to be in /usr/sbin, which isn't in all paths
+	 PATH=/usr/sbin/:$PATH
+         echo "From: $NSB_FROM" > mail.results
+         echo "To: $NSB_RESULTS_TO" >> mail.results
+         # mail-related errors to OK address (usully buildmaster)
+         echo "Errors-To: $NSB_OK_RESULTS_TO" >> mail.results
+         echo "Subject: $SUBJECT" >> mail.results
+         echo "" >> mail.results
+         grep CONFIGURE_OPTIONS include/net-snmp/net-snmp-config.h|sed 's:/home/[^ ]*/build:$HOME:g' >> mail.results
+         echo "Result: $RESULT" >> mail.results
+         if [ "x$FILES" != "x" ]; then
+            cat $FILES >> mail.results
+         fi
+         sendmail -t < mail.results
+         ;;
+      SunOS) # no sendmail, no mail -s, need -t for To 
+         echo "From: $NSB_FROM" > mail.results
+         # mail-related errors to OK address (usully buildmaster)
+         echo "Errors-To: $NSB_OK_RESULTS_TO" >> mail.results
+         echo "Subject: $SUBJECT" >> mail.results
+         echo "" >> mail.results
+         grep CONFIGURE_OPTIONS include/net-snmp/net-snmp-config.h|sed 's:/home/[^ ]*/build:$HOME:g' >> mail.results
+         echo "Result: $RESULT" >> mail.results
+         if [ "x$FILES" != "x" ]; then
+            cat $FILES >> mail.results
+         fi
+         mail -t $NSB_RESULTS_TO < mail.results
+         ;;
+      *)
+         echo "Result: $RESULT" >> mail.results
+         if [ "x$FILES" != "x" ]; then
+            cat $FILES >> mail.results
+         fi
+         mail -s "$SUBJECT" $NSB_RESULTS_TO < mail.results
+         ;;
+   esac
+fi
+
+if [ $RC -eq 0 ]; then
+        if [ "x$NSB_BUILD_DIR" = "/" ]; then
+            nsb_abort "Not running rm -fR from /"
+        else
+            /bin/rm -fR $NSB_BUILD_DIR > /dev/null 2>&1
+        fi
+fi
+
+exit $RC

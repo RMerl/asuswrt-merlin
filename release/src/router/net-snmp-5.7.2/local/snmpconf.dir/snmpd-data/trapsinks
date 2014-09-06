@@ -1,0 +1,46 @@
+title		Trap Destinations
+description	Here we define who the agent will send traps to.
+
+token	    trapsink
+info	    A SNMPv1 trap receiver
+info	    arguments: host [community] [portnum]
+question 1  A host name that should receive the trap
+question 2  The community to be used in the trap sent [optional]
+question 3  The port number the trap should be sent to [optional]
+validanswer 3 ^(\d+|)$
+
+token	    trap2sink
+info	    A SNMPv2c trap receiver
+info	    arguments: host [community] [portnum]
+steal	    trapsink
+
+token	    informsink
+info	    A SNMPv2c inform (acknowledged trap) receiver
+info	    arguments: host [community] [portnum]
+steal	    trapsink
+
+token	    trapsess
+info	    A generic trap receiver defined using snmpcmd style arguments.
+info	    Read the snmpcmd manual page for further information.
+info	    arguments: [snmpcmdargs] host
+question 1  Specify the command line snmpcmd style options for this host
+question 2  Specify the host name
+
+token	    trapcommunity
+info	    Default trap sink community to use
+info	    arguments: community-string
+question 1  The default community name to use when sending traps
+
+
+token	    authtrapenable
+info	    Should we send traps when authentication failures occur
+info	    arguments: 1 | 2   (1 = yes, 2 = no)
+question 1  Should traps be sent when authentication failures occur? (1=yes, 2=no)
+validanswer 1 ^(1|2)$
+
+group trapsinks
+single authtrapenable Do you want the agent to send snmp traps on snmp authentication failures?
+single trapcommunity
+multiple informsink Do you want the agent to send snmpv2c informs to a trap receiver
+multiple trap2sink Do you want the agent to send snmpv2c traps to a trap receiver
+multiple trapsink Do you want the agent to send snmpv1 traps to a trap receiver

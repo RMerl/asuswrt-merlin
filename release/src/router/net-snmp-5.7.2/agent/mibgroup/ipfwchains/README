@@ -1,0 +1,4 @@
+Due to GPL restrictions in the most current version of the mib module, 
+the ipfchains package is now distributed separately.  You can get it
+from ftp://ftp.freesnmp.com/mirrors/ucd-snmp/contrib/ucd-ipchains.tar.gz
+instead.

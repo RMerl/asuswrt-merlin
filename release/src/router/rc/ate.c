@@ -338,11 +338,14 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 			stop_wpsaide();
 			stop_wps();
 #ifdef RTCONFIG_BCMWL6
+			stop_igmp_proxy();
 #ifdef RTCONFIG_HSPOT
 			stop_hspotap();
 #endif
-			stop_igmp_proxy();
 			stop_acsd();
+#ifdef BCM_BSD
+			stop_bsd();
+#endif
 #endif
 			stop_upnp();
 			stop_lltd();
@@ -442,6 +445,7 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		getRegDomain_2G();
 		return 0;
 	}
+#if defined(RTCONFIG_HAS_5G)
 	else if (!strcmp(command, "Set_RegulationDomain_5G")) {
 		if (setRegDomain_5G(value) == -1) {
 			puts("ATE_ERROR_INCORRECT_PARAMETER");
@@ -450,6 +454,7 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		getRegDomain_5G();
 		return 0;
 	}
+#endif	/* RTCONFIG_HAS_5G */
 #else	/* ! RTCONFIG_NEW_REGULATION_DOMAIN */
 	else if (!strcmp(command, "Set_RegulationDomain_2G")) {
 		if ( !setCountryCode_2G(value))
@@ -629,6 +634,7 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		}
 		return 0;
 	}
+#if defined(RTCONFIG_HAS_5G)
 	else if (!strcmp(command, "Set_WiFi_5G")) {
 		if( !setWiFi5G(value) )
 		{
@@ -637,6 +643,7 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		}
 		return 0;
 	}
+#endif	/* RTCONFIG_HAS_5G */
 #endif
 #ifdef RTCONFIG_RALINK
 	else if (!strcmp(command, "Set_DevFlags")) {
@@ -741,10 +748,12 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		getRegDomain_2G();
 		return 0;
 	}
+#if defined(RTCONFIG_HAS_5G)
 	else if (!strcmp(command, "Get_RegulationDomain_5G")) {
 		getRegDomain_5G();
 		return 0;
 	}
+#endif	/* RTCONFIG_HAS_5G */
 #else	/* ! RTCONFIG_NEW_REGULATION_DOMAIN */
 	else if (!strcmp(command, "Get_RegulationDomain_2G")) {
 		getCountryCode_2G();
@@ -764,6 +773,7 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		getRegrev_2G();
 		return 0;
 	}
+#if defined(RTCONFIG_HAS_5G)
 	else if (!strcmp(command, "Get_Regrev_5G")) {
 #ifdef RTCONFIG_QTN
 		getRegrev_5G_qtn();
@@ -772,6 +782,7 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 #endif
 		return 0;
 	}
+#endif	/* RTCONFIG_HAS_5G */
 #endif
 	else if (!strcmp(command, "Get_SerialNumber")) {
 		getSN();
@@ -899,9 +910,11 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 	else if (!strcmp(command, "Ra_Asuscfe_2G")) {
 		return asuscfe(value, WIF_2G);
 	}
+#if defined(RTCONFIG_HAS_5G)
 	else if (!strcmp(command, "Ra_Asuscfe_5G")) {
 		return asuscfe(value, WIF_5G);
 	}
+#endif	/* RTCONFIG_HAS_5G */
 	else if (!strcmp(command, "Set_SwitchPort_LEDs")) {
 		if(Set_SwitchPort_LEDs(value, value2) < 0)
 		{
@@ -977,6 +990,7 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 			puts("0");
 		return 0;
 	}
+#if defined(RTCONFIG_HAS_5G)
 	else if (!strcmp(command, "Get_WiFiStatus_5G")) {
 		if(get_radio(1, 0))
 			puts("1");
@@ -984,6 +998,7 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 			puts("0");
 		return 0;
 	}
+#endif	/* RTCONFIG_HAS_5G */
 #endif
 	else if (!strcmp(command, "Set_WiFiStatus_2G")) {
 		int act = !strcmp(value, "on");
@@ -1006,6 +1021,7 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		}
 		return 0;
 	}
+#if defined(RTCONFIG_HAS_5G)
 	else if (!strcmp(command, "Set_WiFiStatus_5G")) {
 		int act = !strcmp(value, "on");
 
@@ -1027,6 +1043,7 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		}
 		return 0;
 	}
+#endif	/* RTCONFIG_HAS_5G */
 	else if (!strcmp(command, "Get_ATEVersion")) {
 		puts(nvram_safe_get("Ate_version"));
 		return 0;

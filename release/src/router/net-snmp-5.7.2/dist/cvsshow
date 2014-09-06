@@ -1,0 +1,69 @@
+#!/bin/sh
+#
+export CVS_RSH=ssh
+TAG=
+
+do_cvs()
+{
+   DIR=$1
+   if [ ! -f $DIR/CVS/Repository ]; then
+	echo "'$DIR' has no CVS/Repository!"
+	exit
+   fi
+
+   if [ ! -f $DIR/CVS/Root ]; then
+	echo "'$DIR' has no CVS/Root!"
+	exit
+   fi
+
+   if [ -f $DIR/CVS/Tag ]; then
+	TAG="-r `cat $DIR/CVS/Tag | cut -c 2-`"
+   fi
+
+   REP="`cat $DIR/CVS/Repository`"
+   ROOT="`cat $DIR/CVS/Root`"
+
+   echo "Directory $DIR is rooted at $ROOT, $TAG $REP..."
+   echo "   update with cvs -z3 -d $ROOT -q co $TAG -d $DIR $REP"
+}
+
+do_svn()
+{
+   DIR=$1
+   if [ ! -d $DIR/.svn ]; then
+	echo "'$DIR' has no .svn/ subdir!"
+	exit
+   fi
+
+   ROOT=`svn info | grep URL|cut -f2 -d " "`
+   if [ -z "$ROOT" ]; then
+      echo "Couldn't find root from $DIR/.svn/entries"
+      exit 1
+   fi
+
+   echo "Directory $DIR is rooted at $ROOT..."
+   echo "   update with svn co $ROOT $DIR"
+}
+
+if [ $# -eq 0 ]; then
+	DIRS=.
+else
+	DIRS=$@
+fi
+
+for d in $DIRS
+do
+   if [ ! -d $d ]; then
+	echo "no such directory '$d'"
+	exit
+   fi
+
+   if [ -d $d/CVS ]; then
+	do_cvs $d
+   elif [ -d $d/.svn ]; then
+	do_svn $d
+   else
+	echo "'$d' has neither CVS nor SVN information!"
+   fi
+done
+

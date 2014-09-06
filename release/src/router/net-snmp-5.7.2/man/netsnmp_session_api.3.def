@@ -1,0 +1,281 @@
+.\" -*- nroff -*-
+.\" Portions of this file are subject to the following copyright.  See
+.\" the Net-SNMP COPYING file for more details and other copyrights
+.\" that may apply:
+.\" /***********************************************************
+.\" 	Copyright 1989 by Carnegie Mellon University
+.\" 
+.\"                       All Rights Reserved
+.\" 
+.\" Permission to use, copy, modify, and distribute this software and its 
+.\" documentation for any purpose and without fee is hereby granted, 
+.\" provided that the above copyright notice appear in all copies and that
+.\" both that copyright notice and this permission notice appear in 
+.\" supporting documentation, and that the name of CMU not be
+.\" used in advertising or publicity pertaining to distribution of the
+.\" software without specific, written prior permission.  
+.\" 
+.\" CMU DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
+.\" ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL
+.\" CMU BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR
+.\" ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
+.\" WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
+.\" ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
+.\" SOFTWARE.
+.\" ******************************************************************/
+.TH NETSNMP_SESSION_API 3 "19 May 2011" VVERSIONINFO "Net-SNMP"
+.SH NAME
+snmp_sess_init,
+snmp_open,
+snmp_send,
+snmp_async_send,
+snmp_select_info,
+snmp_read,
+snmp_timeout,
+snmp_synch_response,
+snmp_close,
+snmp_perror,
+snmp_sess_perror,
+snmp_error,
+snmp_api_errstring \- netsnmp_session_api functions
+.SH SYNOPSIS
+.B #include <net-snmp/session_api.h>
+.PP
+.BI "void snmp_sess_init ( netsnmp_session*" "sess" );
+.PP
+.BI "netsnmp_session* snmp_open ( netsnmp_session *" "sess");
+.RS
+.I /* Input parameter not used in active sessions */
+.RE
+.PP
+.BI "int snmp_send ( netsnmp_session *" "session,"
+.RS
+.BI "netsnmp_pdu *" "pdu" );
+.RE
+.PP
+.BI "int snmp_async_send ( netsnmp_session *" "session,"
+.RS
+.BI "                         netsnmp_pdu *" pdu ", "
+.br
+.BI "                         snmp_callback " callback ", "
+.br
+.BI "                         void *" callbackData ");"
+.RE
+.PP
+.BI "int snmp_select_info ( int * " numfds, "fd_set *" fdset,
+.RS
+.BI "struct timeval *" timeout, "int *" block );
+.RE
+.PP
+.BI "void snmp_read ( fd_set *" fdset );
+.PP
+.B  void snmp_timeout ( void );
+.PP
+.BI "int snmp_synch_response ( netsnmp_session *" "session,"
+.RS
+.BI "netsnmp_pdu *" "pdu" ", "
+.br
+.BI "netsnmp_pdu **" "response" );
+.RE
+.PP
+.BI "int snmp_close ( netsnmp_session *" session );
+.br
+.B  "int snmp_close_sessions ( void );
+.PP
+.SS Error Reporting
+.I (Move to output_api(3))
+.br
+.BI "void snmp_error ( netsnmp_session *session,
+.RS
+.BI "int *" pcliberr, "int *" psnmperr, "char **" pperrstring );
+.RE
+.PP
+.BI "char *snmp_api_errstring ( int" snmperr );
+.PP
+.BI "void snmp_perror ( char *" msg );
+.RS
+.I /* for parsing errors only */
+.RE
+.PP
+.BI "void snmp_sess_perror (char *" msg, "netsnmp_session *" sess );
+.RS
+.I /* all other SNMP library errors */
+.RE
+.PP
+.SH DESCRIPTION
+.I Snmp_sess_init
+prepares a netsnmp_session that sources transport characteristics
+and common information that will be used for a set of SNMP transactions.
+After this structure is passed to
+.I snmp_open
+to create an SNMP session, the structure is not used.
+.PP
+.I Snmp_open
+returns a pointer to a newly-formed
+.I netsnmp_session
+object, which the application must use to reference the
+active SNMP session.
+.PP
+.I snmp_send
+and
+.I snmp_async_send()
+each take as input a pointer to a
+.I netsnmp_pdu
+object.
+This structure contains information that describes a transaction
+that will be performed over an open session.
+.PP
+Consult snmp_api.h for the definitions of these structures.
+.PP
+With the
+.I snmp_async_send()
+call,
+.I snmp_read
+will invoke the specified callback when the response is received.
+.PP
+.I Snmp_read, snmp_select_info,
+and
+.I snmp_timeout
+provide an interface for the use of the
+.IR select(2)
+system call so that SNMP transactions can occur asynchronously.
+.PP
+.I Snmp_select_info
+is given the information that would have been passed to
+.I select
+in the absence of SNMP.  For example, this might include window update information.
+This information is modified so that SNMP will get the service it requires from the
+call to
+.I select.
+In this case,
+.I numfds, fdset,
+and
+.I timeout
+correspond to the
+.I nfds, readfds,
+and
+.I timeout
+arguments to
+.I select,
+respectively.  The only exception is that timeout must always point to an allocated (but perhaps uninitialized)
+.I struct timeval.
+If
+.I timeout
+would have been passed as NULL,
+.I block
+is set to true, and
+.I timeout
+is treated as undefined.  This same rule applies upon return from
+.I snmp_select_info.
+.PP
+After calling
+.I snmp_select_info, select
+is called with the returned data.  When select returns,
+.I snmp_read
+should be called with the
+.I fd_set
+returned from
+.I select
+to read each SNMP socket that has input.
+If
+.I select
+times out,
+.I snmp_timeout
+should be called to see if the timeout was intended for SNMP.
+.PP
+.I snmp_synch_response
+is a convenience routine that will send the request,
+wait for the response and process it before returning.
+See the descriptions of
+.I "snmp_send" ", " "snmp_read"
+etc for details.
+.SH DIAGNOSTICS
+.PP
+Previous versions of the library used
+.IR snmp_get_errno
+to read the global variable
+.I snmp_errno
+which may have held the error status within the SNMP library.
+The existing method
+.I snmp_perror
+should be used to log ASN.1 coding errors only.
+.PP
+The new method
+.I snmp_sess_perror
+is provided to capture errors that occur during the processing
+of a particular SNMP session.
+.I Snmp_sess_perror
+calls
+.IR snmp_error
+function to obtain the "C" library error
+.I errno
+, the SNMP library error
+.I snmperr
+, and the SNMP library detailed error message
+that is associated with an error that occurred during a given session.
+.PP
+Note that in all cases except one,
+.IR snmp_sess_perror
+should be handed the
+.I netsnmp_session *
+pointer returned from
+.IR snmp_open.
+If
+.IR snmp_open
+returns a null pointer, pass the INPUT
+.I netsnmp_session *
+pointer used to call
+.IR snmp_open.
+.PP
+Error return status from 
+.I snmp_close
+and
+.I snmp_send
+is indicated by return of 0.  A successful status will return a 1 for
+.I snmp_close
+and the request id of the packet for
+.I snmp_send.
+Upon successful return from
+.I snmp_send
+the pdu will be freed by the library.
+.PP
+Consult snmp_api.h for the complete set of SNMP library
+error values.
+The SNMP library error value
+.IR snmperr
+can be one of the following values:
+.RS 2n
+.IP SNMPERR_GENERR \w'SNMPERR_BAD_REPETITIONS'u+2n
+A generic error occurred.
+.IP SNMPERR_BAD_LOCPORT \w'SNMPERR_BAD_REPETITIONS'u+2n
+The local port was bad because it had already been
+allocated or permission was denied.
+.IP SNMPERR_BAD_ADDRESS \w'SNMPERR_BAD_REPETITIONS'u+2n
+The host name or address given was not useable.
+.IP SNMPERR_BAD_SESSION \w'SNMPERR_BAD_REPETITIONS'u+2n
+The specified session was not open.
+.IP SNMPERR_TOO_LONG \w'SNMPERR_BAD_REPETITIONS'u+2n
+.IP SNMPERR_NO_SOCKET \w'SNMPERR_BAD_REPETITIONS'u+2n
+.IP SNMPERR_V2_IN_V1 \w'SNMPERR_BAD_REPETITIONS'u+2n
+.IP SNMPERR_V1_IN_V2 \w'SNMPERR_BAD_REPETITIONS'u+2n
+.IP SNMPERR_BAD_REPEATERS \w'SNMPERR_BAD_REPETITIONS'u+2n
+.IP SNMPERR_BAD_REPETITIONS \w'SNMPERR_BAD_REPETITIONS'u+2n
+.IP SNMPERR_BAD_ASN1_BUILD \w'SNMPERR_BAD_REPETITIONS'u+2n
+.IP SNMPERR_BAD_SENDTO \w'SNMPERR_BAD_REPETITIONS'u+2n
+.IP SNMPERR_BAD_PARSE \w'SNMPERR_BAD_REPETITIONS'u+2n
+.IP SNMPERR_BAD_VERSION \w'SNMPERR_BAD_REPETITIONS'u+2n
+.IP SNMPERR_NOAUTH_DESPRIV \w'SNMPERR_BAD_REPETITIONS'u+2n
+.IP SNMPERR_ABORT \w'SNMPERR_BAD_REPETITIONS'u+2n
+.IP SNMPERR_UNKNOWN_PDU \w'SNMPERR_BAD_REPETITIONS'u+2n
+.IP SNMPERR_TIMEOUT \w'SNMPERR_BAD_REPETITIONS'u+2n
+.RE
+.PP
+A string representation of the error code can be obtained with
+.IR snmp_api_errstring ,
+and a standard error message may be printed using
+.I snmp_perror
+that functions like the
+.I perror
+standard routine.
+.SH "SEE ALSO"
+select(2), snmp_api.h

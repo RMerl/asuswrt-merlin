@@ -30,7 +30,6 @@ waitfor 10 "OK","ERR","ERROR"
 if % = -1 goto timeerror
 if % = 0 goto set_parameters2
 system "nvram set g3state_q0=-1"
-goto error
 
 
 :set_parameters2
@@ -57,7 +56,7 @@ let $m=$rpipe("nvram get modem_mode")
 let l=len($m)
 if l=0 let m1=0
 if l!=0 let m1=val($m)
-let $v=$rpipe("nvram get modem_vid")
+let $v=$rpipe("nvram get usb_modem_act_vid")
 let l=len($v)
 if l=0 goto set_apn
 let b=val($v)
@@ -174,6 +173,8 @@ send "\"^m"
 waitfor 10 "OK","ERR","ERROR"
 if % = -1 goto apntimeerror
 if % = 0 goto set_dial
+system "nvram set g3state_apn=-1"
+goto apnerror
 
 
 :set_dial

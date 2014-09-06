@@ -1,0 +1,227 @@
+.\" Portions of this file are subject to the following copyright.  See
+.\" the Net-SNMP's COPYING file for more details and other copyrights
+.\" that may apply:
+.\" /***********************************************************
+.\" Portions of this file are copyrighted by:
+.\" Copyright Copyright 2003 Sun Microsystems, Inc. All rights reserved.
+.\" Use is subject to license terms specified in the COPYING file
+.\" distributed with the Net-SNMP package.
+.\" ******************************************************************/
+.TH MIB2C 1 "05 Apr 2010" VVERSIONINFO "Net-SNMP"
+.SH NAME
+mib2c -- generate template code for extending the agent
+.SH SYNOPSIS
+.B mib2c
+[-h] -c CONFIGFILE [-I PATH] [-f OUTNAME] [-i][-s][-q][-S VAR=VAL] MIBNODE
+.SH DESCRIPTION
+The mib2c tool is designed to take a portion of the MIB tree (as defined
+by a MIB file) and generate the template C code necessary to implement
+the relevant management objects within it.
+.PP
+In order to implement a new MIB module, three files are necessary:
+.PP
+.br
+- MIB definition file
+.br
+- C header file
+.br
+- C implementation file.
+.PP
+The mib2c tool uses the MIB definition file to produce the two C
+code files. Thus, mib2c generates a template that you can edit
+to add logic necessary to obtain information from the
+operating system or application to complete the module.
+.PP
+MIBNODE is the top level mib node you want to generate code for.
+You must give mib2c a mib node (e.g. ifTable) on the command line,
+not a mib file.  This is the single most common mistake.
+.PP
+The mib2c tool accepts both SMIv1 and SMIv2 MIBs.
+.PP
+mib2c needs to be able to find and load a MIB file in order to generate
+C code for the MIB. To enable mib2c to find the MIB file, set the
+MIBS environment variable to include the MIB file you are using.
+An example of setting this environment variable is:
+.PP
+   MIBS=+NET-SNMP-TUTORIAL-MIB
+.PP
+   or
+.PP
+   MIBS=ALL
+.PP
+The first example ensures that mib2c finds the NET-SNMP-TUTORIAL-MIB
+mib, in addition to the default MIB modules. The default list of MIB
+modules is set when the suite is first configured and built and
+basically corresponds to the list of modules that the agent supports.
+The second example ensures that mib2c finds all MIBs in the search
+location for MIB files. The default search location for MIB files is
+DATADIR/snmp/mibs. This search location can be modified
+by the MIBDIRS environment variable.
+.PP
+Both the MIB files to be loaded and the MIB file search location can
+also be configured in the snmp.conf file. Please see snmp.conf(5) for
+more information.
+.PP
+The generated *.c and *.h files will be created in the current working
+directory.
+.SH "OPTIONS"
+.TP
+.BI -h
+Display a help message.
+.TP
+.BI -c " CONFIGFILE"
+Use CONFIGFILE when generating code.  These files will be searched for
+first in the current directory and then in the DATADIR directory
+(which is where the default mib2c configuration files can be found).
+Running mib2c without the -c CONFIGFILE option will display
+a description of the valid values for CONFIGFILE, that is,
+the available config files, including new ones that you might
+author.
+.IP 
+For example,
+.IP 
+% mib2c ifTable
+.IP 
+will display a description of the currently available values
+for CONFIGFILE.
+.IP 
+The following values are supported for CONFIGFILE:
+.IP 
+mib2c.mfd.conf
+.br
+mib2c.scalar.conf
+.br
+mib2c.int_watch.conf
+.br
+mib2c.iterate.conf
+.br
+mib2c.create-dataset.conf
+.br
+mib2c.array-user.conf
+.br
+mib2c.column_defines.conf
+.br
+mib2c.column_enums.conf
+.IP 
+GENERATING CODE FOR SCALAR OBJECTS:
+.IP 
+If you're writing code for some scalars, run:
+
+	mib2c -c mib2c.scalar.conf MIBNODE
+.IP 
+If you want to magically "tie" integer variables to integer
+scalars, use:
+
+	mib2c -c mib2c.int_watch.conf MIBNODE
+.IP 
+GENERATING CODE FOR TABLES:
+
+The recommended configuration file for tables is the MIBs for
+Dummies, or MFD, configuration file. It hides as much of the SNMP
+details as possible, generating small, easy to understand functions.
+It is also the most flexible and well documented configuration file.
+See the agent/mibgroup/if-mib/ifTable/ifTable*.c files for an example:
+
+        mib2c -c mib2c.mfd.conf MIBNODE
+
+If your table data is kept somewhere else (e.g. it's in the
+kernel and not in the memory of the agent itself) and you need to
+"iterate" over it to find the right data for the SNMP row being
+accessed.  See the agent/mibgroup/mibII/vacm_context.c file for an
+example:
+
+	mib2c -c mib2c.iterate.conf MIBNODE
+
+If your table data is kept in the agent (i.e. it's not located in
+an external source) and is purely data driven (i.e. you do not need
+to perform any work when a set occurs).  See the
+agent/mibgroup/examples/data_set.c file for an example of such a
+table:
+
+	mib2c -c mib2c.create-dataset.conf MIBNODE
+
+If your table data is kept in the agent (i.e. it's not located in
+an external source), and you can keep your data sorted by the table
+index but you do need to perform work when a set occurs:
+
+	mib2c -c mib2c.array-user.conf MIBNODE
+
+GENERATING HEADER FILE DEFINITIONS
+
+To generate just a header with a define for each column number in
+your table:
+
+	mib2c -c mib2c.column_defines.conf MIBNODE
+
+To generate just a header with a define for each enum for any
+column containing enums:
+
+	mib2c -c mib2c.column_enums.conf MIBNODE
+
+	GENERATING CODE FOR THE 4.X LINE OF CODE (THE OLDER API)
+
+	mib2c -c mib2c.old-api.conf MIBNODE
+.TP
+.BI -I PATH
+Search for configuration files in PATH.  Multiple paths can be
+specified using multiple -I switches or by using one with a comma
+separated list of paths in it.
+.TP
+.BI -f " OUTNAME"
+Places the output code into OUTNAME.c and OUTNAME.h. Normally, mib2c
+will place the output code into files which correspond to the table
+names it is generating code for, which is probably what you want anyway.
+.TP
+.BI -i
+Do not run indent on the resulting code.
+.TP
+.BI -s
+Do not look for MIBNODE.sed and run sed on the resulting code. This
+is useful to shorten long mib variable names in the code.
+.TP
+.BI -q
+Run in "quiet" mode, which minimizes the status messages
+mib2c generates.
+.TP
+.BI -S VAR=VAL
+Preset a variable VAR, in the mib2c.*.conf file, to the value
+VAL. None of the existing mib2c configuration files
+(mib2c.*.conf) currently makes use of this feature, however,
+so this option should be considered available only for future use.
+.SH EXAMPLES
+.PP
+The following generates C template code for the header and implementation
+files to implement UCD-DEMO-MIB::ucdDemoPublic.
+.IP
+% mib2c -c mib2c.scalar.conf ucdDemoPublic
+.br
+writing to ucdDemoPublic.h
+.br
+writing to ucdDemoPublic.c
+.br
+running indent on ucdDemoPublic.h
+.br
+running indent on ucdDemoPublic.c
+.PP
+The resulting ucdDemoPublic.c and ucdDemoPublic.h files are
+generated the current working directory.
+.PP
+The following generates C template code for the header and implementation
+files  for the module to implement TCP-MIB::tcpConnTable.
+.IP
+% mib2c -c mib2c.iterate.conf tcpConnTable
+.br
+writing to tcpConnTable.h
+.br
+writing to tcpConnTable.c
+.br
+running indent on tcpConnTable.h
+.br
+running indent on tcpConnTable.c
+.PP
+The resulting tcpConnTable.c and tcpConnTable.h files are generated
+in the current working directory.
+.PP
+.SH SEE ALSO
+.PP
+snmpcmd(1), snmp.conf(5)

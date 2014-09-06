@@ -1,0 +1,297 @@
+PROGNAME=
+CFG=
+OUTDIR=
+INTDIR=
+
+!IF "$(OS)" == "Windows_NT"
+NULL=
+!ELSE 
+NULL=nul
+!ENDIF 
+
+ALL : "..\lib\$(OUTDIR)\netsnmpagent.lib"
+
+
+LIB32_OBJS= \
+	"$(INTDIR)\agent_handler.obj" \
+	"$(INTDIR)\agent_index.obj" \
+	"$(INTDIR)\agent_read_config.obj" \
+	"$(INTDIR)\agent_registry.obj" \
+	"$(INTDIR)\agent_sysORTable.obj" \
+	"$(INTDIR)\agent_trap.obj" \
+	"$(INTDIR)\all_helpers.obj" \
+	"$(INTDIR)\baby_steps.obj" \
+	"$(INTDIR)\bulk_to_next.obj" \
+	"$(INTDIR)\cache_handler.obj" \
+	"$(INTDIR)\debug_handler.obj" \
+	"$(INTDIR)\instance.obj" \
+	"$(INTDIR)\mode_end_call.obj" \
+	"$(INTDIR)\multiplexer.obj" \
+	"$(INTDIR)\null.obj" \
+	"$(INTDIR)\old_api.obj" \
+	"$(INTDIR)\read_only.obj" \
+	"$(INTDIR)\row_merge.obj" \
+	"$(INTDIR)\scalar.obj" \
+	"$(INTDIR)\scalar_group.obj" \
+	"$(INTDIR)\serialize.obj" \
+	"$(INTDIR)\snmp_agent.obj" \
+	"$(INTDIR)\snmp_vars.obj" \
+	"$(INTDIR)\stash_cache.obj" \
+	"$(INTDIR)\stash_to_next.obj" \
+	"$(INTDIR)\table.obj" \
+	"$(INTDIR)\table_array.obj" \
+	"$(INTDIR)\table_container.obj" \
+	"$(INTDIR)\table_data.obj" \
+	"$(INTDIR)\table_dataset.obj" \
+	"$(INTDIR)\table_iterator.obj" \
+	"$(INTDIR)\table_tdata.obj" \
+	"$(INTDIR)\watcher.obj"
+
+CLEAN :
+	-@for %f in ($(LIB32_OBJS)) do erase %%f
+	-@erase "$(INTDIR)\vc??.idb"
+	-@erase "..\lib\$(OUTDIR)\netsnmpagent.lib"
+
+"..\lib\$(OUTDIR)" :
+    if not exist "..\lib\$(OUTDIR)/$(NULL)" mkdir "..\lib\$(OUTDIR)"
+
+"$(INTDIR)" :
+    if not exist "$(INTDIR)/$(NULL)" mkdir "$(INTDIR)"
+
+CPP=cl.exe
+!IF  "$(CFG)" == "release"
+CPP_PROJ=/nologo /MD /W3 /EHsc /Zi /O2 /I "." /I ".." /I "..\..\snmplib" /I "..\.." /I "..\..\include" /I "..\..\agent" /I "..\..\agent\mibgroup" /D "WIN32" /D "_BIND_TO_CURRENT_VCLIBS_VERSION" /D "NDEBUG" /D "_CONSOLE" /D "_CRT_SECURE_NO_WARNINGS" /D "_CRT_NONSTDC_NO_WARNINGS" /D "_MBCS" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\$(PROGNAME).pdb" /FD /c 
+!ELSE
+CPP_PROJ=/nologo /MDd /W3 /Gm /EHsc /Zi /Od /I "." /I ".." /I "..\..\snmplib" /I "..\.." /I "..\..\include" /I "..\..\agent" /I "..\..\agent\mibgroup" /D "WIN32" /D "_BIND_TO_CURRENT_VCLIBS_VERSION" /D "_DEBUG" /D "_CONSOLE" /D "_CRT_SECURE_NO_WARNINGS" /D "_CRT_NONSTDC_NO_WARNINGS" /D "_MBCS" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\$(PROGNAME).pdb" /FD /c 
+!ENDIF
+
+.c{$(INTDIR)}.obj::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+.cpp{$(INTDIR)}.obj::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+.cxx{$(INTDIR)}.obj::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+
+RSC=rc.exe
+LIB32=link.exe -lib
+LIB32_FLAGS=/nologo /out:"..\lib\$(OUTDIR)\netsnmpagent.lib" 
+
+"..\lib\$(OUTDIR)\netsnmpagent.lib" : "..\lib\$(OUTDIR)" $(DEF_FILE) $(LIB32_OBJS)
+    $(LIB32) @<<
+  $(LIB32_FLAGS) $(DEF_FLAGS) $(LIB32_OBJS)
+<<
+
+
+!IF "$(NO_EXTERNAL_DEPS)" != "1"
+!IF EXISTS("libagent.dep")
+!INCLUDE "libagent.dep"
+!ELSE 
+!MESSAGE Warning: cannot find "libagent.dep"
+!ENDIF 
+!ENDIF 
+
+
+SOURCE=..\..\agent\agent_handler.c
+
+"$(INTDIR)\agent_handler.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\agent_index.c
+
+"$(INTDIR)\agent_index.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\agent_read_config.c
+
+"$(INTDIR)\agent_read_config.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\agent_registry.c
+
+"$(INTDIR)\agent_registry.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+SOURCE=..\..\agent\agent_sysORTable.c
+
+"$(INTDIR)\agent_sysORTable.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+SOURCE=..\..\agent\agent_trap.c
+
+"$(INTDIR)\agent_trap.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\snmp_agent.c
+
+"$(INTDIR)\snmp_agent.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\snmp_vars.c
+
+"$(INTDIR)\snmp_vars.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\helpers\all_helpers.c
+
+"$(INTDIR)\all_helpers.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\helpers\baby_steps.c
+
+"$(INTDIR)\baby_steps.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\helpers\bulk_to_next.c
+
+"$(INTDIR)\bulk_to_next.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\helpers\cache_handler.c
+
+"$(INTDIR)\cache_handler.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\helpers\debug_handler.c
+
+"$(INTDIR)\debug_handler.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\helpers\instance.c
+
+"$(INTDIR)\instance.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\helpers\mode_end_call.c
+
+"$(INTDIR)\mode_end_call.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\helpers\multiplexer.c
+
+"$(INTDIR)\multiplexer.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\helpers\null.c
+
+"$(INTDIR)\null.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\helpers\old_api.c
+
+"$(INTDIR)\old_api.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\helpers\read_only.c
+
+"$(INTDIR)\read_only.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\helpers\row_merge.c
+
+"$(INTDIR)\row_merge.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\helpers\scalar.c
+
+"$(INTDIR)\scalar.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\helpers\scalar_group.c
+
+"$(INTDIR)\scalar_group.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\helpers\serialize.c
+
+"$(INTDIR)\serialize.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\helpers\stash_cache.c
+
+"$(INTDIR)\stash_cache.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\helpers\stash_to_next.c
+
+"$(INTDIR)\stash_to_next.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\helpers\table.c
+
+"$(INTDIR)\table.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\helpers\table_array.c
+
+"$(INTDIR)\table_array.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\helpers\table_container.c
+
+"$(INTDIR)\table_container.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\helpers\table_data.c
+
+"$(INTDIR)\table_data.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\helpers\table_tdata.c
+
+"$(INTDIR)\table_tdata.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\helpers\table_dataset.c
+
+"$(INTDIR)\table_dataset.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\helpers\table_iterator.c
+
+"$(INTDIR)\table_iterator.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\..\agent\helpers\watcher.c
+
+"$(INTDIR)\watcher.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+

@@ -90,6 +90,9 @@ static void catch_sig(int sig)
 			server_idx = (server_idx + 1) % 2;
 		}
 		else strcpy(servers, "");
+
+		if (pids("ntpclient"))
+			killall_tk("ntpclient");
 	}
 	else if (sig == SIGTSTP)
 	{
@@ -175,7 +178,9 @@ int ntp_main(int argc, char *argv[])
 			}
 			else
 			{
-				sleep(NTP_RETRY_INTERVAL - SECONDS_TO_WAIT);
+				refresh_ntpc();
+				//sleep(NTP_RETRY_INTERVAL - SECONDS_TO_WAIT);
+				sleep(SECONDS_TO_WAIT);
 			}
 		}
 		else pause();

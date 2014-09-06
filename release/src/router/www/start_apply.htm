@@ -15,7 +15,6 @@ var restart_time = 0;
 var rc_support = "<% nvram_get("rc_support"); %>"; 
 var dsl_support = (rc_support.search("dsl") == -1) ? false : true;
 var tmo_support = (rc_support.search("tmo") == -1) ? false : true;
-
 var current_page = '<% get_parameter("current_page"); %>';
 var next_page = '<% get_parameter("next_page"); %>';
 var action_script = '<% get_parameter("action_script"); %>';
@@ -123,7 +122,15 @@ function initial(){
 					setTimeout("parent.detect3GConn();", restart_time*1000);
 					return;
 				}
-				setTimeout("qis_delay_redirect('/qis/QIS_verify_detect.htm');", restart_time*1000);
+				
+				if(tmo_support){	
+					parent.document.getElementById("logout_cont").style.display = "";
+					parent.document.getElementById("congratschangepwd").style.display = "none";
+					parent.document.getElementById("congratschangessid").style.display = "none";
+				}
+				else{
+					setTimeout("qis_delay_redirect('/qis/QIS_verify_detect.htm');", restart_time*1000);
+				}
 			}
 			else{
 				if(getflag == "auto_way_vpn"){
@@ -141,12 +148,17 @@ function initial(){
 					setTimeout("delay_redirect('/qis/QIS_verify_detect.htm');", restart_time*1000);
 					return;
 				}
-				else{
-					parent.showLoading(restart_time, "waiting");
-					if(parent.parent.isWLclient())
-						setTimeout("parent.parent.detectLANstatus('"+next_page+"', '"+getflag+"');", restart_time*1000);
-					else
-						setTimeout("top_delay_redirect('"+next_page+"');", restart_time*1000);
+				else{			
+					//if(tmo_support){
+						//location.href = "Logout.asp";				
+					//}
+					//else{
+						parent.showLoading(restart_time, "waiting");
+						if(parent.parent.isWLclient())
+							setTimeout("parent.parent.detectLANstatus('"+next_page+"', '"+getflag+"');", restart_time*1000);
+						else
+							setTimeout("top_delay_redirect('"+next_page+"');", restart_time*1000);
+					//}
 				}
 			}
 		}

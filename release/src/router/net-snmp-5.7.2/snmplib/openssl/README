@@ -1,0 +1,19 @@
+This directory contains modified crypto code from OpenSSL
+1.0.0.beta5.  Please see the OpenSSL license from that release in the
+OPENSSL-LICENSE which will apply if this code is selected.
+
+Net-SNMP may be compiled with this code using the
+--with-openssl=internal flag to the configure command line.
+
+Note: It is generally a better idea to link with the latest OpenSSL
+library rather than rely on this internal support, as the latest
+OpenSSL code may contain important security or other fixes that may
+not have been incorporated into this snapshot.  Small device vendors,
+however, have requested a stripped down version of the OpenSSL
+cryptography code in order to shrink their memory footprint and this
+feature provides such support.
+
+Note also that the new SNMP over DTLS, SNMP over TLS support also
+available in Net-SNMP 5.6 and beyond is incompatible with the internal
+version of the OpenSSL support since SNMP over (D)TLS requires the
+full TLS support available in OpenSSL.

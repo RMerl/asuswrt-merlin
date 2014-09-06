@@ -310,8 +310,8 @@ function displayDNSCtrl(){
 			<tr>
 			<th width="50%"><#LANHostConfig_x_LAN_DHCP_itemname#></th>
 			<td>
-				<input type="radio" name="lan_proto_radio" class="input" onclick="change_ip_setting('dhcp')" value="dhcp"><#checkbox_Yes#>
-				<input type="radio" name="lan_proto_radio" class="input" onclick="change_ip_setting('static')" value="static"><#checkbox_No#>
+				<input type="radio" name="lan_proto_radio" tabindex="1" class="input" onclick="change_ip_setting('dhcp')" value="dhcp"><#checkbox_Yes#>
+				<input type="radio" name="lan_proto_radio" tabindex="2" class="input" onclick="change_ip_setting('static')" value="static"><#checkbox_No#>
 			</td>
 			</tr>
             
@@ -320,7 +320,7 @@ function displayDNSCtrl(){
 			  <a class="hintstyle" href="javascript:void(0);" onClick="openHint(4,1);"><#IPConnection_ExternalIPAddress_itemname#></a>
 			</th>			
 			<td>
-			  <input type="text" maxlength="15" class="input_15_table" id="lan_ipaddr" name="lan_ipaddr" value="<% nvram_get("lan_ipaddr"); %>" onKeyPress="return is_ipaddr(this, event);">
+			  <input type="text" id="lan_ipaddr" name="lan_ipaddr" value="<% nvram_get("lan_ipaddr"); %>" tabindex="3" onKeyPress="return is_ipaddr(this, event);" maxlength="15" class="input_15_table">
 			</td>
 		  </tr>
 		  
@@ -329,7 +329,7 @@ function displayDNSCtrl(){
 			  <a class="hintstyle"  href="javascript:void(0);" onClick="openHint(4,2);"><#IPConnection_x_ExternalSubnetMask_itemname#></a>
 			</th>
 			<td>
-				<input type="text" maxlength="15" class="input_15_table" name="lan_netmask" value="<% nvram_get("lan_netmask"); %>" onkeypress="return is_ipaddr(this, event);">
+				<input type="text" name="lan_netmask" value="<% nvram_get("lan_netmask"); %>" tabindex="4" onkeypress="return is_ipaddr(this, event);" maxlength="15" class="input_15_table">
 				<input type="hidden" name="dhcp_start" value="<% nvram_get("dhcp_start"); %>">
 				<input type="hidden" name="dhcp_end" value="<% nvram_get("dhcp_end"); %>">
 			</td>
@@ -338,15 +338,15 @@ function displayDNSCtrl(){
 			<tr>
 			<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,3);"><#IPConnection_x_ExternalGateway_itemname#></a></th>
 			<td>
-				<input type="text" name="lan_gateway" maxlength="15" class="input_15_table" value="<% nvram_get("lan_gateway"); %>" onKeyPress="return is_ipaddr(this, event);">
+				<input type="text" name="lan_gateway" value="<% nvram_get("lan_gateway"); %>" tabindex="5" onKeyPress="return is_ipaddr(this, event);" maxlength="15" class="input_15_table">
 			</td>
 			</tr>
 
 			<tr>
       <th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,12);"><#IPConnection_x_DNSServerEnable_itemname#></a></th>
 			<td>
-				<input type="radio" name="lan_dnsenable_x_radio" value="1" onclick="display_lan_dns(1)"><#checkbox_Yes#>
-			  <input type="radio" name="lan_dnsenable_x_radio" value="0" onclick="display_lan_dns(0)"><#checkbox_No#>
+				<input type="radio" name="lan_dnsenable_x_radio" value="1" tabindex="6" onclick="display_lan_dns(1)"><#checkbox_Yes#>
+			  <input type="radio" name="lan_dnsenable_x_radio" value="0" tabindex="7" onclick="display_lan_dns(0)"><#checkbox_No#>
 			</td>
       </tr>          		
           		
@@ -355,7 +355,7 @@ function displayDNSCtrl(){
 				<a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,13);"><#IPConnection_x_DNSServer1_itemname#></a>
 			</th>
       <td>
-				<input type="text" maxlength="15" class="input_15_table" name="lan_dns1_x" value="<% nvram_get("lan_dns1_x"); %>" onkeypress="return is_ipaddr(this, event)" >
+				<input type="text" name="lan_dns1_x" value="<% nvram_get("lan_dns1_x"); %>" tabindex="8" onkeypress="return is_ipaddr(this, event)" maxlength="15" class="input_15_table">
 			</td>
       </tr>
 
@@ -364,7 +364,7 @@ function displayDNSCtrl(){
 				<a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,14);"><#IPConnection_x_DNSServer2_itemname#></a>
 			</th>
       <td>
-				<input type="text" maxlength="15" class="input_15_table" name="lan_dns2_x" value="<% nvram_get("lan_dns2_x"); %>" onkeypress="return is_ipaddr(this, event)" >
+				<input type="text" name="lan_dns2_x" value="<% nvram_get("lan_dns2_x"); %>" tabindex="9" onkeypress="return is_ipaddr(this, event)" maxlength="15" class="input_15_table">
 			</td>
       </tr>  
 		</table>
@@ -372,7 +372,7 @@ function displayDNSCtrl(){
 <div id="applyBtn" class="apply_gen" style="margin-top:30px">
 	<!--input type="button" id="prevButton" value="<#CTL_prev#>" onclick="back_to_Adv();" class="button_gen"-->
 	<!--input type="submit" id="nextButton" value="<#CTL_next#>" class="button_gen"-->
-	<input type="button" id="nextButton" value="<#CTL_next#>" class="button_gen" onclick="submitForm();">
+	<input type="button" id="nextButton" value="<#CTL_next#>" tabindex="10" class="button_gen" onclick="submitForm();">
 </div>
 
 <div style="display:none;margin-top:-20px;" id="field_mobile">

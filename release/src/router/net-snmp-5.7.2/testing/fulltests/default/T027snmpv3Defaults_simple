@@ -1,0 +1,38 @@
+#!/bin/sh
+
+. ../support/simple_eval_tools.sh
+
+HEADER SNMPv3 get using default config of .1.3.6.1.2.1.1.3.0
+
+SKIPIFNOT NETSNMP_CAN_DO_CRYPTO
+SKIPIFNOT NETSNMP_ENABLE_SCAPI_AUTHPRIV
+SKIPIFNOT HAVE_AES_CFB128_ENCRYPT
+
+#
+# Begin test
+#
+
+# standard V3 configuration for templateSHA user
+DEFPRIVTYPE="AES"
+DEFAUTHTYPE="SHA"
+. ./Sv3config
+
+STARTAGENT
+
+CONFIGAPP defPrivType AES
+CONFIGAPP defAuthType SHA
+CONFIGAPP defContext \"\"
+CONFIGAPP defAuthPassPhrase initial_test_pass_auth
+CONFIGAPP defPrivPassPhrase initial_test_pass_auth
+CONFIGAPP defSecurityLevel authPriv
+CONFIGAPP defSecurityName initial
+
+# make sure that the above configuration tokens properly set things up so that
+# no flags are needed
+CAPTURE "snmpget -On $SNMP_FLAGS $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT .1.3.6.1.2.1.1.3.0"
+
+STOPAGENT
+
+CHECK ".1.3.6.1.2.1.1.3.0 = Timeticks:"
+
+FINISHED

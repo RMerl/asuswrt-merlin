@@ -1,0 +1,32 @@
+#!/bin/sh
+
+version=`cat dist/autoconf-version`
+prog='autoconf'
+# TODO: accept a different tool (autoheader) from the command line
+
+searchprefixes="/usr/local"
+for path in $searchprefixes ; do
+    if [ -d "$path/autoconf-$version" ]; then
+	prog="$path/autoconf-$version/bin/$prog"
+	break;
+    fi
+done
+
+echo "trying $prog version"
+echo "$prog --version"
+toolversion=`$prog --version | head -1 | awk '{print $NF}'`
+
+echo "Expected: $version"
+echo "Found:    $toolversion"
+
+if [ "$version" != "$toolversion" ] ; then
+    echo "$prog doesn't match the expected version"
+    echo ""
+    echo "If you want this tool to auto-find versions, build the right"
+    echo "autoconf version using --prefix=/usr/local/autoconf-$version"
+    echo "and then re-run this tool ($0) once it's installed"
+    exit 1
+fi
+
+echo "Running $prog"
+autoconf "$@"

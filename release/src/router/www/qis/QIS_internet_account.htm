@@ -250,14 +250,14 @@ function pass_checked(obj){
   <tr>
 	<th width="180"><span onmouseout="return nd();" onclick="openHint(7, 27);" style="cursor:help;"><#PPPConnection_UserName_itemname#><img align="right" style="cursor:pointer;margin-top:-14px\9;" src="/images/New_ui/helpicon.png"></span></th>
 	<td class="QISformtd">
-	  <input type="text" name="wan_pppoe_username" maxlength="64" value="" onkeypress="return is_string(this, event);" class="input_32_table" size="36"/>
+	  <input type="text" name="wan_pppoe_username" maxlength="64" value="" tabindex="1" onkeypress="return is_string(this, event);" class="input_32_table" size="36"/>
 	</td>
   </tr>
 
   <tr>
 	<th width="180"><span onmouseout="return nd();" onclick="openHint(7, 27);" style="cursor:help;"><#PPPConnection_Password_itemname#><img align="right" style="cursor:pointer;margin-top:-14px\9;" src="/images/New_ui/helpicon.png"></span></th>
 	<td class="QISformtd">
-	  <input type="password" id="wan_pppoe_passwd" name="wan_pppoe_passwd" maxlength="64" value="" onkeypress="return is_string(this, event);" class="input_32_table" size="36"/>	  
+	  <input type="password" id="wan_pppoe_passwd" name="wan_pppoe_passwd" maxlength="64" value="" tabindex="2" onkeypress="return is_string(this, event);" class="input_32_table" size="36"/>	  
 	</td>
   </tr>
 	<tr>
@@ -275,8 +275,8 @@ function pass_checked(obj){
 </table>
 
 <div class="apply_gen" style="margin-top:30px">
-  <input type="button" id="prevButton" value="<#CTL_prev#>" onclick="gotoprev(document.form);" class="button_gen" align="center">
-  <input type="submit" id="nextButton" value="<#CTL_next#>" class="button_gen" align="center">
+  <input type="button" id="prevButton" value="<#CTL_prev#>" tabindex="4" onclick="gotoprev(document.form);" class="button_gen" align="center">
+  <input type="submit" id="nextButton" value="<#CTL_next#>" tabindex="3" class="button_gen" align="center">
 	<span id="loadHint" style="display:none"><#SAVE_note#></span>
 	<img id="loadingIcon" style="display:none;" src="/images/InternetScan.gif"></span>
 </div>

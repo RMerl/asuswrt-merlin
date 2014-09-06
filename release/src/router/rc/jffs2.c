@@ -43,7 +43,7 @@ static void error(const char *message)
 	notice_set("jffs", s);
 }
 
-#ifdef RTCONFIG_TMOBILE
+#if defined(RTCONFIG_TMOBILE) || defined(RTCONFIG_JFFS2ND_BACKUP)
 #define SECOND_JFFS2_PARTITION  "asus"
 
 void mount_2nd_jffs2(void)

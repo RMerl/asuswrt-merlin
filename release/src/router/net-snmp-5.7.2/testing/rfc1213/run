@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+
+cd `dirname $0`
+
+PATH=..:$PATH
+
+. ../eval_tools.sh
+
+. test_fun
+. snmpfun.sh
+
+SNMP_SLEEP=${SNMP_SLEEP:-"1"}
+SNMP_VERBOSE=${SNMP_VERBOSE:-"0"}
+
+trap "STOPAGENT; DELAY; summary; exit 1" 1 2 3 9 15 19
+
+if [ -z "$1" ] ; then
+    LIST="testmib1.sh testmib2.sh testmib3.sh"
+    MULTI="yes"
+else
+    LIST=testmib${1}.sh
+fi
+
+for f in $LIST
+do
+    if [ -n "$MULTI" ] ; then
+	echo         ## start next in series on new line
+    fi
+    if [ $SNMP_VERBOSE -ne 0 ] ; then
+	echo "run test in $f"
+    fi
+
+    . $f
+    dperline=0
+
+    for ic in $iclist
+    do
+        eval tplist=\"\$$ic\"
+        for tp in $tplist
+        do	
+            $tp
+        done
+    done
+
+    STOPAGENT
+    DELAY
+done
+
+summary
+
+if [ $fail_num -ne 0 ] ; then
+    RC=1
+else
+    RC=0
+fi
+
+exit $RC
+

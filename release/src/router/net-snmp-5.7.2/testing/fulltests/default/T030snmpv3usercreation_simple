@@ -1,0 +1,119 @@
+#!/bin/sh
+
+. ../support/simple_eval_tools.sh
+
+HEADER SNMPv3 agent USM user management with snmpusm
+
+SKIPIF NETSNMP_DISABLE_SET_SUPPORT
+SKIPIF NETSNMP_NO_WRITE_SUPPORT
+SKIPIFNOT USING_SNMPV3_USMUSER_MODULE
+SKIPIFNOT NETSNMP_CAN_DO_CRYPTO
+SKIPIFNOT NETSNMP_ENABLE_SCAPI_AUTHPRIV
+
+#
+# Begin test
+#
+
+# standard SNMPv3 USM agent configuration
+DEFSECURITYLEVEL=authPriv
+. ./Sv3usmconfigagent
+
+# test user
+NEWUSER=newtestuser
+NEWAUTHPASS=newauthpass
+NEWPRIVPASS=newprivpass
+NEWAUTHPRIVPASS=newauthprivpass
+
+# configure agent
+CONFIGAGENT rwuser $NEWUSER
+
+# Start the agent
+STARTAGENT
+
+## usmUserTable management
+
+## 1) create, clone, test, delete
+
+# create new (vanilla) user
+CAPTURE "snmpusm $SNMP_FLAGS $TESTPRIVARGS $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT create $NEWUSER"
+CHECKORDIE "User successfully created"
+
+# clone
+CAPTURE "snmpusm $SNMP_FLAGS $TESTPRIVARGS $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT cloneFrom $NEWUSER $TESTPRIVUSER"
+CHECKORDIE "User successfully cloned"
+
+# test (authPriv)
+CAPTURE "snmpget -On $SNMP_FLAGS -v 3 -u $NEWUSER -l ap -a $DEFAUTHTYPE -A $TESTAUTHPASS -x $DEFPRIVTYPE -X $TESTPRIVPASS $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT .1.3.6.1.2.1.1.3.0"
+CHECKORDIE ".1.3.6.1.2.1.1.3.0 = Timeticks:"
+
+# delete 
+CAPTURE "snmpusm $SNMP_FLAGS $TESTPRIVARGS $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT delete $NEWUSER"
+CHECKORDIE "User successfully deleted"
+
+## 2) create w/ clone, passwd (auth), passwd (priv), test (authPriv+authNoPriv)
+
+# create+clone template user
+CAPTURE "snmpusm $SNMP_FLAGS $TESTPRIVARGS $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT create $NEWUSER $TESTPRIVUSER2"
+CHECKORDIE "User successfully created"
+
+# change auth passphrase of new user
+CAPTURE "snmpusm $SNMP_FLAGS $TESTPRIVARGS -Ca $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT passwd $TESTAUTHPASS2 $NEWAUTHPASS $NEWUSER"
+CHECKORDIE "SNMPv3 Key(s) successfully changed"
+
+# change priv passphrase of new user
+CAPTURE "snmpusm $SNMP_FLAGS $TESTPRIVARGS -Cx $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT passwd $TESTPRIVPASS2 $NEWPRIVPASS $NEWUSER"
+CHECKORDIE "SNMPv3 Key(s) successfully changed"
+
+# test (authNoPriv)
+CAPTURE "snmpget -On $SNMP_FLAGS -v 3 -u $NEWUSER -l anp -a $DEFAUTHTYPE -A $NEWAUTHPASS $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT .1.3.6.1.2.1.1.3.0"
+CHECKORDIE ".1.3.6.1.2.1.1.3.0 = Timeticks:"
+
+# test (authPriv)
+CAPTURE "snmpget -On $SNMP_FLAGS -v 3 -u $NEWUSER -l ap -a $DEFAUTHTYPE -A $NEWAUTHPASS -x $DEFPRIVTYPE -X $NEWPRIVPASS $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT .1.3.6.1.2.1.1.3.0"
+CHECKORDIE ".1.3.6.1.2.1.1.3.0 = Timeticks:"
+
+## 3) passwd (priv), passwd (auth+priv), test
+
+# change priv passphrase (to auth passphrase) by the user himself
+CAPTURE "snmpusm $SNMP_FLAGS -v 3 -u $NEWUSER -l ap -a $DEFAUTHTYPE -A $NEWAUTHPASS -x $DEFPRIVTYPE -X $NEWPRIVPASS -Cx $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT passwd $NEWPRIVPASS $NEWAUTHPASS"
+CHECKORDIE "SNMPv3 Key(s) successfully changed"
+
+# change both passphrases at once
+CAPTURE "snmpusm $SNMP_FLAGS -v 3 -u $NEWUSER -l ap -a $DEFAUTHTYPE -A $NEWAUTHPASS -x $DEFPRIVTYPE -X $NEWAUTHPASS $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT passwd $NEWAUTHPASS $NEWAUTHPRIVPASS"
+CHECKORDIE "SNMPv3 Key(s) successfully changed"
+
+# test (authPriv)
+CAPTURE "snmpget -On $SNMP_FLAGS -v 3 -u $NEWUSER -l ap -a $DEFAUTHTYPE -A $NEWAUTHPRIVPASS -x $DEFPRIVTYPE -X $NEWAUTHPRIVPASS $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT .1.3.6.1.2.1.1.3.0"
+CHECKORDIE ".1.3.6.1.2.1.1.3.0 = Timeticks:"
+
+## 5) persistency I: reconfigure (SIGHUP), re-test
+
+if ISDEFINED HAVE_SIGHUP; then
+
+HUPAGENT
+DELAY
+
+# test (authPriv)
+CAPTURE "snmpget -On $SNMP_FLAGS -v 3 -u $NEWUSER -l ap -a $DEFAUTHTYPE -A $NEWAUTHPRIVPASS -x $DEFPRIVTYPE -X $NEWAUTHPRIVPASS $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT .1.3.6.1.2.1.1.3.0"
+CHECKORDIE ".1.3.6.1.2.1.1.3.0 = Timeticks:"
+
+## 5) persistency II: stop, start, re-test
+
+STOPAGENT
+DELAY
+# make sure it picks up persistent config and uses a new logfile
+SNMPCONFPATH="${SNMP_TMPDIR}${SNMP_ENV_SEPARATOR}${SNMP_TMP_PERSISTENTDIR}"
+export SNMPCONFPATH
+SNMP_CONFIG_FILE="does-not-exist"
+SNMP_SNMPD_LOG_FILE=${SNMP_TMPDIR}/snmpd2.log
+STARTAGENT
+
+# test (authPriv)
+CAPTURE "snmpget -On $SNMP_FLAGS -v 3 -u $NEWUSER -l ap -a $DEFAUTHTYPE -A $NEWAUTHPRIVPASS -x $DEFPRIVTYPE -X $NEWAUTHPRIVPASS $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT .1.3.6.1.2.1.1.3.0"
+CHECKORDIE ".1.3.6.1.2.1.1.3.0 = Timeticks:"
+
+fi
+
+## stop agent and finish
+STOPAGENT
+FINISHED

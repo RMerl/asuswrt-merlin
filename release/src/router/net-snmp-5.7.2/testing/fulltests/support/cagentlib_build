@@ -1,0 +1,46 @@
+#!/bin/sh
+
+# build the C test file ...
+
+rm -f "$2.c"
+cat >>"$2.c" <<EOF
+/* net-snmp standard headers */
+#include <net-snmp/net-snmp-config.h>
+#include <net-snmp/net-snmp-includes.h>
+#include <net-snmp/agent/net-snmp-agent-includes.h>
+
+/* testing specific header */
+#include <net-snmp/library/testing.h>
+
+/* standard headers */
+#include <stdio.h>
+#include <sys/types.h>
+#ifdef HAVE_STDLIB_H
+#include <stdlib.h>
+#endif
+#if HAVE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
+
+int
+main(int argc, char *argv[]) {
+
+EOF
+echo >>"$2.c" "#line 1 \"$1\""
+cat >>"$2.c" "$1"
+cat >>"$2.c" <<EOF
+
+   if (__did_plan == 0) {
+       PLAN(__test_counter);
+   }
+
+   return(0);
+}
+
+EOF
+
+# ... and compile it.
+${builddir}/libtool --mode=link `${builddir}/net-snmp-config --build-command` -I$builddir/include -I$srcdir/include -o $2 $2.c ${builddir}/snmplib/libnetsnmp.la ${builddir}/agent/libnetsnmpagent.la `${builddir}/net-snmp-config --external-libs`
+echo $2

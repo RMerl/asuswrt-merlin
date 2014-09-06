@@ -1,0 +1,24 @@
+#!/bin/sh
+
+. ../support/simple_eval_tools.sh
+
+HEADER SNMPv3 get using noAuthNoPriv of .1.3.6.1.2.1.1.3.0
+
+SKIPIFNOT USING_MIBII_SYSTEM_MIB_MODULE
+
+#
+# Begin test
+#
+
+# configure the agent to accept user initial with noAuthNoPriv
+. ./Sv3config
+
+STARTAGENT
+
+CAPTURE "snmpget -On $SNMP_FLAGS $NOAUTHTESTARGS $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT .1.3.6.1.2.1.1.3.0"
+
+STOPAGENT
+
+CHECK ".1.3.6.1.2.1.1.3.0 = Timeticks:"
+
+FINISHED

@@ -39,10 +39,14 @@ function initial(){
 	}
 
 	if(band5g_support && band5g_11ac_support && document.form.wl_unit[1].selected == true){
-		document.form.wl_nmode_x[1].text = "N + AC";	
 		document.getElementById('wl_mode_desc').onclick=function(){return openHint(1, 5)};		
 	}else if(band5g_support && document.form.wl_unit[1].selected == true){
 		document.getElementById('wl_mode_desc').onclick=function(){return openHint(1, 4)};
+	}
+
+	if(band5g_support && band5g_11ac_support && document.form.wl_unit[1].selected == true)
+	{
+		document.form.wl_nmode_x.remove(3); //add "N/AC Mixed" for AC router and in 5G
 	}
 
 	// special case after modifing GuestNetwork
@@ -505,6 +509,7 @@ function high_power_auto_channel(){
 							<option value="0" <% nvram_match("wl_nmode_x", "0","selected"); %>><#Auto#></option>
 							<option value="1" <% nvram_match("wl_nmode_x", "1","selected"); %>>N Only</option>
 							<option value="2" <% nvram_match("wl_nmode_x", "2","selected"); %>>Legacy</option>
+							<option value="8" <% nvram_match("wl_nmode_x", "8","selected"); %>>N/AC Mixed</option>
 						</select>
 						<span id="wl_optimizexbox_span" style="display:none"><input type="checkbox" name="wl_optimizexbox_ckb" id="wl_optimizexbox_ckb" value="<% nvram_get("wl_optimizexbox"); %>" onclick="document.form.wl_optimizexbox.value=(this.checked==true)?1:0;"> <#WLANConfig11b_x_Mode_xbox#></input></span>
 						<span id="wl_gmode_checkbox" style="display:none;"><input type="checkbox" name="wl_gmode_check" id="wl_gmode_check" value="" onClick="wl_gmode_protection_check();"> <#WLANConfig11b_x_Mode_protectbg#></input></span>

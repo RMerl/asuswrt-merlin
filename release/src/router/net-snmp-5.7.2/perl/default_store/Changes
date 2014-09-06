@@ -1,0 +1,6 @@
+Revision history for Perl extension NetSNMP::default_store.
+
+0.01  Thu Jan  3 22:35:38 2002
+	- original version; created by h2xs 1.20 with options
+		-F '-Du_char="unsigned char"' -x -O -n NetSNMP::default_store ucd-snmp/default_store.h
+

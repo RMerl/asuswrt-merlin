@@ -1,0 +1,33 @@
+#!/bin/sh
+
+. ../support/simple_eval_tools.sh
+
+HEADER snmpv2c traps are sent by snmpd API
+
+SKIPIFNOT USING_EXAMPLES_EXAMPLE_MODULE
+
+#
+# Begin test
+#
+
+# standard V1 configuration: testcommunity
+. ./Sv3config
+CONFIGAGENT trap2sink ${SNMP_TRANSPORT_SPEC}:${SNMP_TEST_DEST}${SNMP_SNMPTRAPD_PORT} public
+CONFIGTRAPD authcommunity log public
+CONFIGTRAPD agentxsocket /dev/null
+
+STARTTRAPD
+
+AGENT_FLAGS="$AGENT_FLAGS"
+STARTAGENT
+
+#DELAY
+CAPTURE "snmpset -On -t 3 -r 0 $SNMP_FLAGS $AUTHTESTARGS $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT .1.3.6.1.4.1.2021.254.8.0 i 1"
+
+STOPAGENT
+
+STOPTRAPD
+
+CHECKTRAPD "life the universe and everything"
+
+FINISHED

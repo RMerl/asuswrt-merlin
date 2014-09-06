@@ -1,0 +1,40 @@
+
+1) Memory leak (have not seen this lately)
+
+The following snippet used to grow in memory (and may still) - please
+notify me if anyone still observes this and even better has a fix.
+
+perl -le '
+use SNMP;
+$obj = new SNMP::Session DestHost, "dubravka";
+while (){
+print $obj->get(["ifNumber",0]);
+}
+'
+
+***Note: need to verify this with the async API as well***
+
+2) not sure if this is a bug but I can cause a crash with a 'goto
+LABEL;' from within an async callback function.
+
+3) the following varbind format is not encoded correctly ... I have seen this crash the agent as well
+
+$sess->get(["sysDescr.0"]);
+
+use the following instead:
+
+$sess->get(["sysDescr",0]);
+or
+$sess->get("sysDescr.0");
+
+4) this is not handled yet
+$sess->get(['MODULE-NAME::mibName',0]);
+but strangely
+$sess->get(['MODULE-NAME::mibName.0']);
+works
+
+5) if you are on a system that does not have vsnprintf in libc but you
+do have BerkleyDB installed ucd configure will assume you will get it
+from there - you will need to change hints/solaris.pl to
+
+$self->{LIBS} .= ' -lkstat -ldb';

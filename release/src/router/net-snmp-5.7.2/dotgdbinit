@@ -1,0 +1,138 @@
+#
+# this file defines some utilities for printing various structures
+# found in the net-snmp source code.  You can source it from within
+# gdb and then use it to print variable chains, oids, etc directly
+# from memory.
+# 
+# as an example, consider the variables:
+#
+#   oid    *name;
+#   size_t name_len;
+#
+# normally display oids is difficult under gdb, and the best you can
+# do is to use x/12dw name or so to print the first 12 numbers of the
+# oid array.  however, with this file you can now use:
+#
+#   gdb> printoid name_len name
+#   .1.3.6.1.2.1.1.0
+#
+# which will print oids in a more readable fashion.  etc...
+#
+
+define initme
+  set $varindent = ""
+end
+
+define hookpost-run
+  initme
+end
+
+define printvarval
+  printf "value: "
+  if $arg0->type == 2
+    printf "int: %d\n", $arg0->val.integer
+  end
+  if $arg0->type == 4
+    printf "string: %s\n", $arg0->val.string
+  end
+  if $arg0->type == 5
+    printf "ASN NULL\n"
+  end
+  if $arg0->type == 6
+    printoid (($arg0->val_len)/sizeof(oid)) $arg0->val.objid
+  end
+  if $arg0->type == 128
+    printf "NO SUCH NAME\n"
+  end
+  if $arg0->type == 129
+    printf "NO SUCH INSTANCE\n"
+  end
+  if $arg0->type == 130
+    printf "END OF MIB VIEW\n"
+  end
+  if $arg0->type == 194
+    printf "AGENTX INCL RANGE: "
+    printoid (($arg0->val_len)/sizeof(oid)) $arg0->val.objid
+  end
+  if $arg0->type == 195
+    printf "AGENTX EXCL RANGE: "
+    printoid (($arg0->val_len)/sizeof(oid)) $arg0->val.objid
+  end
+end
+document printvarval
+  printvarval VARPTR
+  prints the value part of a net-snmp "struct variable".
+  This is called from inside printvar.
+end
+
+  
+
+define printvar
+  printf "%stype: %d\n", $varindent, $arg0->type
+  printf "%soid: ", $varindent
+  printoid $arg0->name_length $arg0->name
+  printf "%s", $varindent
+  printvarval $arg0
+end
+document printvar
+  printvar VARPTR
+  prints the variable information contained in a net-snmp struct
+  variable.  printvarval POINTER will print it's oid, value type and
+  value contents
+end
+
+define printvars
+  set $tmpcount = 1
+  set $tmpvar = $arg0
+  set $varindent = "  "
+  while $tmpvar != 0
+    printf "VARIABLE #%d\n", $tmpcount
+    printvar $tmpvar
+    set $tmpvar = $tmpvar->next_variable
+    set $tmpcount = $tmpcount + 1
+  end
+  set $varindent = ""
+end
+document printvars
+  printvars VARPTR
+  calls printvar repeatedly on a chain of variables, displaying all
+  the variables in a net-snmp struct variable chain.
+end
+
+define printoid
+  set $printoid_tmp = 0
+  while $printoid_tmp < $arg0
+    printf ".%d", $arg1[$printoid_tmp]
+    set $printoid_tmp = $printoid_tmp + 1
+  end
+  printf "\n"
+end
+document printoid
+  printoid LENGTH OIDPTR
+  prints an oid (.x.y.z...) given it's length and a pointer.
+end
+
+define poid
+  printoid $arg0_len $arg0
+end
+document poid
+  poid NAME
+  shorthand for 'printoid NAME_len NAME"
+end
+
+define poidl
+  printoid $arg0_length $arg0
+end
+document poidl
+  poid NAME
+  shorthand for 'printoid NAME_length NAME"
+end
+
+define printindex
+  printoid $arg0->len $arg0->oids
+end
+document printindex
+  printindex NETSNMP_INDEX_PTR
+  prints the OID contained in a netsnmp_index struct variable.
+end
+

@@ -1,0 +1,56 @@
+title Textual mib parsing
+description This section controls the textual mib parser.  Textual
+description mibs are parsed in order to convert OIDs, enumerated
+description lists, and ... to and from textual representations
+description and numerical representations.
+
+token mibdirs
+info  Specifies directories to be searched for mibs.
+info  Adding a '+' sign to the front of the argument appends the new
+info  directory to the list of directories already being searched.
+info  arguments: [+]directory[:directory...]
+question 1 Enter the list of directories to search through for mibs
+
+token mibs
+info  Specifies a list of mibs to be searched for and loaded.
+info  Adding a '+' sign to the front of the argument appends the new
+info  mib name to the list of mibs already being searched for.
+info  arguments: [+]mibname[:mibname...]
+question 1 Enter the list of mibs to read
+
+token mibfile
+info  Loads a particular mib file from a particualar path
+info  arguments: /path/to/mibfile
+question 1 Enter the mib file name to read
+
+token showMibErrors
+info  Should errors in mibs be displayed when the mibs are loaded
+question 1  Should errors in mibs be displayed when the mibs are loaded
+info  arguments: (1|yes|true|0|no|false)
+validanswer 1 ^(1|yes|true|0|no|false)$
+
+token mibWarningLevel
+info  Should warnings about mibs be displayed when the mibs are loaded
+question 1  Should warnings about mibs be displayed when the mibs are loaded
+info  arguments: 1|2
+validanswer 1 ^(1|2)$
+
+token strictCommentTerm
+info  Be strict about about mib comment termination.
+info  Strictly follow comment rules about parsing mibs.
+info  arguments: (1|yes|true|0|no|false)
+validanswer 1 ^(1|yes|true|0|no|false)$
+question 1 Be strict about about mib comment termination
+
+token mibAllowUnderline
+info  Should underlines be allowed in mib symbols (illegal)
+info  arguments: (1|yes|true|0|no|false)
+validanswer 1 ^(1|yes|true|0|no|false)$
+question 1 Should underlines be allowed in mib symbols
+
+token mibReplaceWithLatest
+info  Force replacement of older mibs with known updated ones
+question 1  Force replacement of older mibs with known updated ones
+info  arguments: (1|yes|true|0|no|false)
+validanswer 1 ^(1|yes|true|0|no|false)$
+

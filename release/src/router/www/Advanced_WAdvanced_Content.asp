@@ -110,24 +110,24 @@ for(i=0;i<bl_version_array.length;i++){
 
 var wireless = [<% wl_auth_list(); %>];	// [[MAC, associated, authorized], ...]
 var mcast_rates = [
-	["HTMIX 6.5/15", "14", 0, 1],
-	["HTMIX 13/30",	 "15", 0, 1],
-	["HTMIX 19.5/45","16", 0, 1],
-	["HTMIX 13/30",	 "17", 0, 1],
-	["HTMIX 26/60",	 "18", 0, 1],
-	["HTMIX 130/144","13", 0, 1],
-	["OFDM 6",	 "4",  0, 0],
-	["OFDM 9",	 "5",  0, 0],
-	["OFDM 12",	 "7",  0, 0],
-	["OFDM 18",	 "8",  0, 0],
-	["OFDM 24",	 "9",  0, 0],
-	["OFDM 36",	 "10", 0, 0],
-	["OFDM 48",	 "11", 0, 0],
-	["OFDM 54",	 "12", 0, 0],
-	["CCK 1",	 "1",  1, 0],
-	["CCK 2",	 "2",  1, 0],
-	["CCK 5.5",	 "3",  1, 0],
-	["CCK 11",	 "6",  1, 0]
+	["HTMIX 6.5/15", "14", 0, 1, 1],
+	["HTMIX 13/30",	 "15", 0, 1, 1],
+	["HTMIX 19.5/45","16", 0, 1, 1],
+	["HTMIX 13/30",	 "17", 0, 1, 2],
+	["HTMIX 26/60",	 "18", 0, 1, 2],
+	["HTMIX 130/144","13", 0, 1, 2],
+	["OFDM 6",	 "4",  0, 0, 1],
+	["OFDM 9",	 "5",  0, 0, 1],
+	["OFDM 12",	 "7",  0, 0, 1],
+	["OFDM 18",	 "8",  0, 0, 1],
+	["OFDM 24",	 "9",  0, 0, 1],
+	["OFDM 36",	 "10", 0, 0, 1],
+	["OFDM 48",	 "11", 0, 0, 1],
+	["OFDM 54",	 "12", 0, 0, 1],
+	["CCK 1",	 "1",  1, 0, 1],
+	["CCK 2",	 "2",  1, 0, 1],
+	["CCK 5.5",	 "3",  1, 0, 1],
+	["CCK 11",	 "6",  1, 0, 1]
 ];
 
 var flag_week = 0;
@@ -137,6 +137,7 @@ var wl_version = "<% nvram_get("wl_version"); %>";
 var sdk_version_array = new Array();
 sdk_version_array = wl_version.split(".");
 var sdk_6 = sdk_version_array[0] == "6" ? true:false
+var sdk_7 = sdk_version_array[0] == "7" ? true:false
 var wl_user_rssi_onload = '<% nvram_get("wl_user_rssi"); %>';
 
 function initial(){
@@ -148,9 +149,10 @@ function initial(){
 	else
 		$("rssiTr").style.display = "none";
 
-	if(!band5g_support){	
+	if(!band5g_support)
 		$("wl_unit_field").style.display = "none";
-	}
+	if(wl_info.band5g_2_support)
+		regen_band();
 
 	if(sw_mode == "2"){
 		var _rows = $("WAdvTable").rows;
@@ -185,11 +187,15 @@ function initial(){
 		}
 	}
 	
-	if(sdk_6 && !Rawifi_support){		// for BRCM new SDK 6.x
+	if((sdk_6 || sdk_7) && !Rawifi_support){		// for BRCM new SDK 6.x && SDK 7.x
 		inputCtrl(document.form.wl_ampdu_mpdu, 1);
-		inputCtrl(document.form.wl_ack_ratio, 1);
 	}else{
 		inputCtrl(document.form.wl_ampdu_mpdu, 0);
+	}
+
+	if(sdk_6 && !Rawifi_support){		// for BRCM new SDK 6.x
+		inputCtrl(document.form.wl_ack_ratio, 1);
+	}else{
 		inputCtrl(document.form.wl_ack_ratio, 0);
 	}
 	
@@ -249,10 +255,17 @@ function initial(){
 
 	var mcast_rate = '<% nvram_get("wl_mrate_x"); %>';
 	var mcast_unit = '<% nvram_get("wl_unit"); %>';
+	var HtTxStream;
+	if (mcast_unit == 1)
+		HtTxStream = '<% nvram_get("wl1_HT_TxStream"); %>';
+	else
+		HtTxStream = '<% nvram_get("wl0_HT_TxStream"); %>';
 	for (var i = 0; i < mcast_rates.length; i++) {
 		if (mcast_unit == '1' && mcast_rates[i][2]) // 5Ghz && CCK
 			continue;
 		if (!Rawifi_support && mcast_rates[i][3]) // BCM && HTMIX
+			continue;
+		if (Rawifi_support && HtTxStream < mcast_rates[i][4]) // ralink && HtTxStream
 			continue;
 		add_option(document.form.wl_mrate_x,
 			mcast_rates[i][0], mcast_rates[i][1],

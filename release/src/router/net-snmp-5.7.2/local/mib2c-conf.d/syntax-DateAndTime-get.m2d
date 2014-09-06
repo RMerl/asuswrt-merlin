@@ -1,0 +1,9 @@
+##
+##
+@eval $m2c_node_needlength = 0@
+@eval $m2c_decl = "u_char *"@
+##
+@eval $m2c_node_proto_parms = "u_char * ${node}"@
+##
+@eval $m2c_node_proto_comments = "$m2c_node_proto_comments * Param: ${node}\n"@
+@eval $m2c_node_proto_comments = "$m2c_node_proto_comments *        Pointer to storage for a DateAndTime value\n"@

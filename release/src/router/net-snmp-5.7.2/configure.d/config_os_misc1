@@ -1,0 +1,24 @@
+# -*- autoconf -*-
+#########################################
+##
+# Miscellaneous checks
+##
+#########################################
+
+##
+#   Compilation-related
+##
+
+#       Dynamic modules require Position-Independent Code
+#	    LIB_CFLAGS/DLLIBS: used in agent Makefile only
+#
+AC_MSG_CHECKING([whether we have to build PIC code])
+echo " $module_list " | $GREP " ucd-snmp/dlmod " >/dev/null
+if test $? -eq 0 ; then
+    LIB_CFLAGS="$LIB_CFLAGS $SHLIB_CFLAGS"
+    AC_MSG_RESULT(yes)
+else
+    DLLIBS=""
+    AC_MSG_RESULT(no)
+fi
+

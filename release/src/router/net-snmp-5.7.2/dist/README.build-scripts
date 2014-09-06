@@ -1,0 +1,108 @@
+******************************************************************************
+*
+* README.build-scripts
+*
+* Author: Robert Story <rstory@freesnmp.com>
+*
+* $Id$
+*
+******************************************************************************
+
+
+Introduction
+============
+
+The automated build script will automatically run configure, 'make all',
+'make test' and 'make install'. Log files are kept for each step, and the
+scripts should abort when errors occur.
+
+The usage of nsb-package is:
+
+ Usage: nsb-package [-c] [-d] [-p] [-s SRCD] [-b BUILDD] [-i INSTALLD] VERSION
+  
+    VERSION    : release number (eg 5.2.2)
+    -s SRCDIR  : soure directory [$HOME/src/net-snmp-VERSION]
+    -b BUILDD  : build directory [$HOME/build/]
+                 NOTE-platform will be appended to build directory
+    -i INSTALLD: install directory [$HOME/build/\$PLATFORM/usr/local]
+   
+    -c : skip configure
+    -d : dirty build (don't make distclean)
+    -m : skip 'make all'
+    -p : don't pause at prompts in between stages
+    -t : skip 'make test'
+
+
+The defaults assume you have a 'src', 'build' and 'binaries' directory in
+your home directory.
+
+
+
+Recommended Procedure
+=====================
+
+1) Log into Sourceforge Compile Farm Server
+
+2) Update source (this will likely be automated in the future)
+
+   For example, for release 5.0.3:
+
+   $ cd ~/src
+   $ CVS_RSH=ssh cvs -d $USER@cvs.net-snmp.org:/cvsroot/net-snmp \
+         -q co -r Ext-5-0-3 -d ~/src/net-snmp-Ext-5-0-3 net-snmp
+
+3) Run the package script. 
+
+   $ $HOME/src/net-snmp-cvs/dist/nsb-package -r \
+        -s $HOME/src/net-snmp-5.0.5 5.0.5
+
+4) Create tarball (assuming no errors; see next section if there are errors)
+
+   $ cd ~/build/`nsb-platform`
+   $ tar cvf net-snmp-5.0.3-`nsb-platform`.tar usr
+   $ gzip --best *.tar
+
+5) Copy tarball to Sourceforge shell sever
+
+   $ scp *.gz net-snmp.sourceforge.net:~/binaries/
+
+6) Log out of compile farm server, log into shell server
+
+7) Upload to Sourceforge
+
+   $ ftp upload.sourceforge.net
+     >bin
+     >put *.gz
+
+8) Update binaries via Sourceforge admin page
+
+
+
+Builds with errors
+==================
+
+Should you encounter a build error, you will most likely want to skip the
+'make distclean' and configure step (assuming the problem wasn't with
+configure!). To do this, specify the 'dirty' and 'skip configure' options:
+
+   $ nsb-package -p -d -c Ext-5-0-3
+
+
+Should the build succeed, but some tests fail during 'make test', you probably
+can to skip the test step to get to the install step:
+
+   $ nsb-package -p -d -c -t Ext-5-0-3
+
+
+OTHER PROBLEMS
+--------------
+* "Cannot find nsb-functions"
+  
+   It's a hack, but symlink nsb-functions and nsb-package to your local
+   bin directory ($HOME/bin).  I'm trying to think of a better solution.
+
+* "gcc: snmp_version.lo: No such file or directory"
+
+   This is a good indication that you have previously build in your
+   source directory. 'make distclean' in your source directory, or
+   check out a fresh new version from CVS.

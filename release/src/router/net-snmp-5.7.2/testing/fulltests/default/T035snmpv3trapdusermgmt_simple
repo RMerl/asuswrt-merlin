@@ -1,0 +1,126 @@
+#!/bin/sh
+
+. ../support/simple_eval_tools.sh
+
+HEADER SNMPv3 snmptrapd USM user management with snmpusm
+
+SKIPIFNOT USING_AGENTX_MASTER_MODULE
+SKIPIFNOT USING_AGENTX_SUBAGENT_MODULE
+SKIPIFNOT USING_SNMPV3_USMUSER_MODULE
+SKIPIF    NETSNMP_SNMPTRAPD_DISABLE_AGENTX
+SKIPIF    NETSNMP_DISABLE_SET_SUPPORT
+SKIPIF    NETSNMP_NO_WRITE_SUPPORT
+SKIPIFNOT NETSNMP_CAN_DO_CRYPTO
+SKIPIFNOT NETSNMP_ENABLE_SCAPI_AUTHPRIV
+
+#
+# Begin test
+#
+
+# configure AgentX socket
+if [ "x$SNMP_TRANSPORT_SPEC" = "xunix" ]; then
+  AGENT_FLAGS="$AGENT_FLAGS -x $SNMP_TMPDIR/agentx_socket"
+  TRAPD_FLAGS="$TRAPD_FLAGS -x $SNMP_TMPDIR/agentx_socket"
+else
+  AGENT_FLAGS="$AGENT_FLAGS -x tcp:${SNMP_TEST_DEST}${SNMP_AGENTX_PORT}"
+  TRAPD_FLAGS="$TRAPD_FLAGS -x tcp:${SNMP_TEST_DEST}${SNMP_AGENTX_PORT}"
+fi
+
+# standard SNMPv3 USM agent configuration
+DEFSECURITYLEVEL=authPriv
+. ./Sv3usmconfigagent
+
+# save agent access
+AGENT_TESTAUTHARGS=$TESTAUTHARGS
+AGENT_TESTPRIVARGS=$TESTPRIVARGS
+
+# configure agent as AgentX master
+CONFIGAGENT master agentx
+
+# Start the master agent
+STARTAGENT
+
+# standard SNMPv3 USM snmptrapd configuration
+. ./Sv3usmconfigtrapd
+
+# configure snmptrapd
+NEWAUTHKEY=0x7458ead7a0b5a753e21bfcb87f6c9803ebef68cf
+NEWPRIVKEY=0x98e2696d1cf34d904dfcae76bf01c473
+NEWUSER=newtestuser
+NEWAUTHPASS=newauthpass
+NEWPRIVPASS=newprivpass
+NEWUSER2=newtestuser_vanilla
+CONFIGTRAPD authuser log $NEWUSER auth
+
+# start snmptrapd
+STARTTRAPD
+
+# delay to let it connect and register all MIBs
+DELAY
+
+## verify snmptrapd usmUserTable management
+
+SNMPUSM_TRAPD_CONTEXT_ARGS="-n snmptrapd -CE $TRAPD_ENGINEID"
+
+## 1) create, clone, passwd auth, passwd priv, test
+
+# create vanilla user
+CAPTURE "snmpusm $SNMP_FLAGS $AGENT_TESTAUTHARGS $SNMPUSM_TRAPD_CONTEXT_ARGS $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT create $NEWUSER2"
+CHECKORDIE "User successfully created"
+
+# clone template user
+CAPTURE "snmpusm $SNMP_FLAGS $AGENT_TESTAUTHARGS $SNMPUSM_TRAPD_CONTEXT_ARGS $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT create $NEWUSER $TESTPRIVUSER"
+CHECKORDIE "User successfully created"
+
+# change auth passphrase of new user
+CAPTURE "snmpusm $SNMP_FLAGS $AGENT_TESTAUTHARGS $SNMPUSM_TRAPD_CONTEXT_ARGS -Ca $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT passwd $TESTAUTHPASS $NEWAUTHPASS $NEWUSER"
+CHECKORDIE "SNMPv3 Key(s) successfully changed"
+
+# change priv passphrase of new user
+CAPTURE "snmpusm $SNMP_FLAGS $AGENT_TESTPRIVARGS $SNMPUSM_TRAPD_CONTEXT_ARGS -Cx $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT passwd $TESTPRIVPASS $NEWPRIVPASS $NEWUSER"
+CHECKORDIE "SNMPv3 Key(s) successfully changed"
+
+# test (anp)
+CAPTURE "snmptrap -Ci -t $SNMP_SLEEP -d -v 3 -u $NEWUSER -l anp -a $DEFAUTHTYPE -A $NEWAUTHPASS $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPTRAPD_PORT 0 .1.3.6.1.6.3.1.1.5.1 .1.3.6.1.2.1.1.4.0 s received_inform_anp"
+DELAY
+CHECKTRAPDORDIE "received_inform_anp"
+
+# test (ap)
+CAPTURE "snmptrap -Ci -t $SNMP_SLEEP -d -v 3 -u $NEWUSER -l ap -a $DEFAUTHTYPE -A $NEWAUTHPASS -x $DEFPRIVTYPE -X $NEWPRIVPASS $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPTRAPD_PORT 0 .1.3.6.1.6.3.1.1.5.1 .1.3.6.1.2.1.1.4.0 s received_inform_ap"
+DELAY
+CHECKTRAPDORDIE "received_inform_ap"
+
+## 2) change localized auth key, test, change localized priv key, test
+
+# change localized auth key
+CAPTURE "snmpusm $SNMP_FLAGS $AGENT_TESTAUTHARGS $SNMPUSM_TRAPD_CONTEXT_ARGS -Ca -Ck $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT passwd $NEWAUTHPASS $NEWAUTHKEY $NEWUSER"
+CHECKORDIE "SNMPv3 Key(s) successfully changed"
+
+# test (anp)
+CAPTURE "snmptrap -Ci -t $SNMP_SLEEP -d -v 3 -u $NEWUSER -l anp -a $DEFAUTHTYPE -3k $NEWAUTHKEY $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPTRAPD_PORT 0 .1.3.6.1.6.3.1.1.5.1 .1.3.6.1.2.1.1.4.0 s received_inform_anp2"
+DELAY
+CHECKTRAPDORDIE "received_inform_anp2"
+
+# change localized priv key
+CAPTURE "snmpusm $SNMP_FLAGS $AGENT_TESTPRIVARGS $SNMPUSM_TRAPD_CONTEXT_ARGS -Cx -Ck $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPD_PORT passwd $NEWPRIVPASS $NEWPRIVKEY $NEWUSER"
+CHECKORDIE "SNMPv3 Key(s) successfully changed"
+
+# test (ap)
+CAPTURE "snmptrap -Ci -t $SNMP_SLEEP -d -v 3 -u $NEWUSER -l ap -a $DEFAUTHTYPE -3k $NEWAUTHKEY -x $DEFPRIVTYPE -3K $NEWPRIVKEY $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPTRAPD_PORT 0 .1.3.6.1.6.3.1.1.5.1 .1.3.6.1.2.1.1.4.0 s received_inform_ap2"
+DELAY
+CHECKTRAPDORDIE "received_inform_ap2"
+
+## 3) persistency I: reconfigure (SIGHUP), re-test
+
+# reconfigure snmptrapd
+HUPTRAPD
+
+# test (ap)
+CAPTURE "snmptrap -Ci -t $SNMP_SLEEP -d -v 3 -u $NEWUSER -l ap -a $DEFAUTHTYPE -3k $NEWAUTHKEY -x $DEFPRIVTYPE -3K $NEWPRIVKEY $SNMP_TRANSPORT_SPEC:$SNMP_TEST_DEST$SNMP_SNMPTRAPD_PORT 0 .1.3.6.1.6.3.1.1.5.1 .1.3.6.1.2.1.1.4.0 s received_inform_ap3"
+DELAY
+CHECKTRAPDORDIE "received_inform_ap3"
+
+## stop daemons and finish
+STOPTRAPD
+STOPAGENT
+FINISHED

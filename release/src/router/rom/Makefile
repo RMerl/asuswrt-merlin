@@ -1,14 +1,6 @@
 include ../common.mak
 include $(SRCBASE)/.config
 
-ifneq ($(findstring DSL,$(BUILD_NAME)),)
-MODEL = $(subst -,_,$(BUILD_NAME))
-else
-MODEL = $(subst -,,$(BUILD_NAME))
-endif
-
-export CFLAGS += -D$(MODEL)
-
 ifeq ($(RTCONFIG_BCMARM),y)
 	pkg_type=arm
 	DM_VERSION=3.1.0.93

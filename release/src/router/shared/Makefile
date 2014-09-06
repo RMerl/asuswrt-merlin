@@ -39,14 +39,6 @@ endif
 
 include $(SRCBASE)/.config
 
-ifneq ($(findstring DSL,$(BUILD_NAME)),)
-MODEL = $(subst -,_,$(BUILD_NAME))
-else
-MODEL = $(subst -,,$(BUILD_NAME))
-endif
-
-export CFLAGS += -D$(MODEL)
-
 ifeq ($(RTCONFIG_4352_5G),y)
 CFLAGS += -DBCM4352
 endif
@@ -100,7 +92,6 @@ OBJS += $(TOP)/busybox/util-linux/volume_id/fat.o
 OBJS += $(TOP)/busybox/util-linux/volume_id/ntfs.o
 OBJS += $(TOP)/busybox/util-linux/volume_id/linux_swap.o
 OBJS += $(if $(HFS),$(TOP)/busybox/util-linux/volume_id/hfs.o)
-OBJS += $(if $(EXFAT),$(TOP)/busybox/util-linux/volume_id/exfat.o)
 endif
 
 ifeq ($(RTCONFIG_BCMARM),y)

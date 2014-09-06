@@ -967,8 +967,13 @@ void send_page(int wan_unit, int sfd, char *file_dest, char *url){
 		if(sw_mode == SW_MODE_REPEATER || sw_mode == SW_MODE_HOTSPOT)
 			sprintf(buf, "%s%s%s%s%s%s%s" ,buf , "Connection: close\r\n", "Location:http://", dut_addr, "/QIS_wizard.htm?flag=sitesurvey", "\r\nContent-Type: text/plain\r\n", "\r\n<html></html>\r\n");
 		else
+		
 #endif
+#ifdef RTCONFIG_TMOBILE
+			sprintf(buf, "%s%s%s%s%s%s%s" ,buf , "Connection: close\r\n", "Location:http://", dut_addr, "/MobileQIS_Login.asp", "\r\nContent-Type: text/plain\r\n", "\r\n<html></html>\r\n");
+#else
 			sprintf(buf, "%s%s%s%s%s%s%s" ,buf , "Connection: close\r\n", "Location:http://", dut_addr, "/QIS_wizard.htm?flag=welcome", "\r\nContent-Type: text/plain\r\n", "\r\n<html></html>\r\n");
+#endif			
 	}
 	else if(conn_changed_state[wan_unit] == C2D || conn_changed_state[wan_unit] == DISCONN)
 		sprintf(buf, "%s%s%s%s%s%d%s%s" ,buf , "Connection: close\r\n", "Location:http://", dut_addr, "/error_page.htm?flag=", disconn_case[wan_unit], "\r\nContent-Type: text/plain\r\n", "\r\n<html></html>\r\n");
@@ -2091,6 +2096,19 @@ int wanduck_main(int argc, char *argv[]){
 
 #ifdef RTCONFIG_DUALWAN
 		if(sw_mode == SW_MODE_ROUTER && !strcmp(dualwan_mode, "lb")){
+#ifdef RTCONFIG_DSL	//TODO: general case
+			int internet_led = 0;
+			for(wan_unit = WAN_UNIT_FIRST; wan_unit < WAN_UNIT_MAX; ++wan_unit){
+				if(nvram_match(nvram_state[wan_unit], "2")
+					&& nvram_match(nvram_sbstate[wan_unit], "0")
+					&& nvram_match(nvram_auxstate[wan_unit], "0") )	//since not update current_state[wan_unit] in USB modem case
+					internet_led = 1;
+			}
+			if(internet_led)
+				led_control(LED_WAN, LED_ON);
+			else
+				led_control(LED_WAN, LED_OFF);
+#endif
 			;
 		}
 		else
@@ -2147,6 +2165,8 @@ int wanduck_main(int argc, char *argv[]){
 				if(conn_changed_state[current_wan_unit] == C2D){
 #ifdef RTCONFIG_DSL /* Paul add 2012/10/18 */
 					led_control(LED_WAN, LED_OFF);
+#elif RTAC3200
+					led_control(LED_WAN, LED_ON);
 #elif RTAC87U
 					led_control(LED_WAN, LED_ON);
 					eval("et", "robowr", "0", "0x18", "0x01fe");
@@ -2200,6 +2220,8 @@ int wanduck_main(int argc, char *argv[]){
 			if(rule_setup == 1 && !isFirstUse){
 #ifdef RTCONFIG_DSL /* Paul add 2013/7/30 */
 				led_control(LED_WAN, LED_ON);
+#elif RTAC3200
+				led_control(LED_WAN, LED_OFF);
 #elif RTAC87U
 				led_control(LED_WAN, LED_OFF);
 				eval("et", "robowr", "0", "0x18", "0x01ff");

@@ -1595,10 +1595,12 @@ void __nf_ct_refresh_acct(struct nf_conn *ct,
 		   HZ jiffies from the old timeout. Need del_timer for race
 		   avoidance (may already be dying). */
 		if (newtime - ct->timeout.expires >= HZ)
+		{
 #ifdef HNDCTF
 			ct->expire_jiffies = extra_jiffies;
 #endif /* HNDCTF */
 			mod_timer_pending(&ct->timeout, newtime);
+		}
 	}
 
 acct:

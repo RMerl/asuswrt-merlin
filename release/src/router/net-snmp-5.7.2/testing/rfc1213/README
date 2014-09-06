@@ -1,0 +1,25 @@
+#######################################
+#     Ling Xiaofeng
+#
+
+These test cases are to test for accessing RFC-1213MIB variable
+To run test:
+cd this directory and type
+./run
+
+#######################################
+# 07-Apr-2004 Mike Slifcak adapted for use with "make test" [RUNTESTS]
+#
+Options
+  Environment Variables
+
+  SNMP_SLEEP  -- number of seconds delay between actions. Defaults to 1
+  SNMP_VERBOSE - 1=verbose messages; 0=dots plus summary. Defaults to 0
+
+
+Notes for proper operation in certain environments
+
+  Msys/MinGW provides a _minimal_ GNU environment
+  For best results with these tests:
+	copy c:\msys\bin\sh.exe c:\msys\bin\bash.exe
+

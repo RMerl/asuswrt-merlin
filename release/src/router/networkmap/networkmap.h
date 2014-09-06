@@ -91,6 +91,7 @@ typedef struct {
         int             http[255];
         int             printer[255];
         int             itune[255];
+	int		exist[255];
         int             ip_mac_num;
 	int 		detail_info_num;
 } CLIENT_DETAIL_INFO_TABLE, *P_CLIENT_DETAIL_INFO_TABLE;

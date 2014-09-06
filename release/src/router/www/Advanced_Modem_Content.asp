@@ -460,7 +460,6 @@ function setClientIP(apnAddr){
 function showLANIPList(isp_order){
 	var code = "";
 	var show_name = "";
-	var client_list_array = apnlist[isp_order];
 
 	for(var i = 0; i < apnlist[isp_order].length; i++){
 		var apnlist_col = apnlist[isp_order][i].split('&&');

@@ -1,0 +1,47 @@
+  Net-SNMP contains a reasonably full implementation of the AgentX agent
+extensibility protocol (RFC 2741) in as much as it supports all
+the protocol operations described in this document.  The core
+functionality has received a reasonable amount of exposure, and
+is believed to be more or less stable in normal use.   It will
+also handle the non-graceful termination of subagents - returning
+a 'genErr' error for three successive requests before unregistering
+the unresponsive subagent.
+
+  A subagent will attempts to re-establish contact with a dead and
+resurrected master based on the agentxPingInterval setting. The default
+for this configuration variable is 15 seconds. It can be changed by
+putting the following line in your APPLICATION.conf file:
+
+                agentxPingInterval 60
+
+will make the subagent try to ping the master every 60 seconds, and if
+the connection is deemed broken it'll try and reconnect to the master
+agent after that point (once every 60 seconds).
+
+  Similarly, a subagent will not be able to re-register in place of a
+defunct colleague until the master agent has received three requests
+for the dead connection (and hence unregistered it).
+
+  Some of the less frequently used features (index allocation,
+range registration, etc), have received less thorough testing,
+and may well not be fully functional.   Some of the omissions
+of the earlier release (use of GetBulk, the AgentX MIB)
+are still missing from this version.
+
+  AgentX support is now included in the agent by default, but needs
+to be explicitly enabled before use.  Activate it using by putting a line
+
+		master	agentx
+
+in the snmpd.conf file.  This support is also enabled automatically
+when the '-x' flag is given (to specify a different master AgentX socket),
+or when the agent is invoked as an AgentX subagent (i.e. via the name
+'agentxd' or with the '-X' flag).
+
+  See the main project web page for an examples of a simple stand-alone
+subagent.  (http://www.net-snmp.org/tutorial/tutorial-5/toolkit/)
+
+
+  Please report any problems experienced to the net-snmp-coders list.
+
+Dave
