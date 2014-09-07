@@ -164,6 +164,13 @@ function change_v3_priv_type(type){
             </td>
          </tr>
 
+	<tr>
+	   <th>Allow access from WAN</th>
+	   <td>
+		<input type="radio" name="snmpd_wan" class="input" value="1" <% nvram_match_x("", "snmpd_wan", "1", "checked"); %>><#checkbox_Yes#>
+		<input type="radio" name="snmpd_wan" class="input" value="0" <% nvram_match_x("", "snmpd_wan", "0", "checked"); %>><#checkbox_No#>
+	   </td>
+	</tr>
         <tr>
           <th>System Name</th>
           <td><input type="text" maxlength="255" class="input_32_table" name="sysName" value="<% nvram_get("sysName"); %>" ></td>
