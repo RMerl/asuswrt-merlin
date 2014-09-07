@@ -22,7 +22,7 @@ srcdir = .
 top_srcdir = ..
 
 
-prefix = /home/mars/asus-git/asuswrt/release/src-rt/router/libiconv-1.14/out
+prefix = /home/merlin/asuswrt.ac87/release/src-rt-6.x.4708/router/libiconv-1.14/out
 exec_prefix = ${prefix}
 datarootdir = ${prefix}/share
 datadir = ${datarootdir}
@@ -35,12 +35,12 @@ INSTALL_DATA = ${INSTALL} -m 644
 # We use $(mkdir_p).
 # In automake <= 1.9.x, $(mkdir_p) is defined either as "mkdir -p --" or as
 # "$(mkinstalldirs)" or as "$(install_sh) -d". For these automake versions,
-# ${SHELL} /home/mars/asus-git/asuswrt/release/src/router/libiconv-1.14/build-aux/install-sh does not start with $(SHELL), so we add it.
+# ${SHELL} /home/merlin/asuswrt.ac87/release/src/router/libiconv-1.14/build-aux/install-sh does not start with $(SHELL), so we add it.
 # In automake >= 1.10, /bin/mkdir -p is derived from ${MKDIR_P}, which is defined
 # either as "/path/to/mkdir -p" or ".../install-sh -c -d". For these automake
 # versions, $(mkinstalldirs) and $(install_sh) are unused.
-mkinstalldirs = $(SHELL) ${SHELL} /home/mars/asus-git/asuswrt/release/src/router/libiconv-1.14/build-aux/install-sh -d
-install_sh = $(SHELL) ${SHELL} /home/mars/asus-git/asuswrt/release/src/router/libiconv-1.14/build-aux/install-sh
+mkinstalldirs = $(SHELL) ${SHELL} /home/merlin/asuswrt.ac87/release/src/router/libiconv-1.14/build-aux/install-sh -d
+install_sh = $(SHELL) ${SHELL} /home/merlin/asuswrt.ac87/release/src/router/libiconv-1.14/build-aux/install-sh
 MKDIR_P = /bin/mkdir -p
 mkdir_p = /bin/mkdir -p
 
@@ -488,11 +488,11 @@ update-gmo: Makefile $(GMOFILES)
 
 # Recreate Makefile by invoking config.status. Explicitly invoke the shell,
 # because execution permission bits may not work on the current file system.
-# Use /bin/sh, which is the shell determined by autoconf for the use by its
+# Use /bin/bash, which is the shell determined by autoconf for the use by its
 # scripts, not $(SHELL) which is hardwired to /bin/sh and may be deficient.
 Makefile: Makefile.in.in Makevars $(top_builddir)/config.status POTFILES.in LINGUAS
 	cd $(top_builddir) \
-	  && /bin/sh ./config.status $(subdir)/$@.in po-directories
+	  && /bin/bash ./config.status $(subdir)/$@.in po-directories
 
 force:
 

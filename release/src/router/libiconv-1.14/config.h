@@ -92,7 +92,7 @@
 #define HAVE_ALLOCA_H 1
 
 /* Define to 1 if you have the `canonicalize_file_name' function. */
-/* #undef HAVE_CANONICALIZE_FILE_NAME */
+#define HAVE_CANONICALIZE_FILE_NAME 1
 
 /* Define to 1 if you have the MacOS X function CFLocaleCopyCurrent in the
    CoreFoundation framework. */
@@ -190,7 +190,7 @@
 /* #undef HAVE_GETTEXT */
 
 /* Define if you have the iconv() function and it works. */
-#define HAVE_ICONV 1
+/* #undef HAVE_ICONV */
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
@@ -227,7 +227,7 @@
 
 /* Define to 1 if canonicalize_file_name is declared even after undefining
    macros. */
-/* #undef HAVE_RAW_DECL_CANONICALIZE_FILE_NAME */
+#define HAVE_RAW_DECL_CANONICALIZE_FILE_NAME 1
 
 /* Define to 1 if chown is declared even after undefining macros. */
 #define HAVE_RAW_DECL_CHOWN 1
@@ -251,25 +251,25 @@
 /* #undef HAVE_RAW_DECL_EUIDACCESS */
 
 /* Define to 1 if faccessat is declared even after undefining macros. */
-/* #undef HAVE_RAW_DECL_FACCESSAT */
+#define HAVE_RAW_DECL_FACCESSAT 1
 
 /* Define to 1 if fchdir is declared even after undefining macros. */
 #define HAVE_RAW_DECL_FCHDIR 1
 
 /* Define to 1 if fchmodat is declared even after undefining macros. */
-/* #undef HAVE_RAW_DECL_FCHMODAT */
+#define HAVE_RAW_DECL_FCHMODAT 1
 
 /* Define to 1 if fchownat is declared even after undefining macros. */
-/* #undef HAVE_RAW_DECL_FCHOWNAT */
+#define HAVE_RAW_DECL_FCHOWNAT 1
 
 /* Define to 1 if fcntl is declared even after undefining macros. */
 #define HAVE_RAW_DECL_FCNTL 1
 
 /* Define to 1 if ffsl is declared even after undefining macros. */
-/* #undef HAVE_RAW_DECL_FFSL */
+#define HAVE_RAW_DECL_FFSL 1
 
 /* Define to 1 if ffsll is declared even after undefining macros. */
-/* #undef HAVE_RAW_DECL_FFSLL */
+#define HAVE_RAW_DECL_FFSLL 1
 
 /* Define to 1 if fpurge is declared even after undefining macros. */
 /* #undef HAVE_RAW_DECL_FPURGE */
@@ -278,7 +278,7 @@
 #define HAVE_RAW_DECL_FSEEKO 1
 
 /* Define to 1 if fstatat is declared even after undefining macros. */
-/* #undef HAVE_RAW_DECL_FSTATAT */
+#define HAVE_RAW_DECL_FSTATAT 1
 
 /* Define to 1 if fsync is declared even after undefining macros. */
 #define HAVE_RAW_DECL_FSYNC 1
@@ -290,7 +290,7 @@
 #define HAVE_RAW_DECL_FTRUNCATE 1
 
 /* Define to 1 if futimens is declared even after undefining macros. */
-/* #undef HAVE_RAW_DECL_FUTIMENS */
+#define HAVE_RAW_DECL_FUTIMENS 1
 
 /* Define to 1 if getcwd is declared even after undefining macros. */
 #define HAVE_RAW_DECL_GETCWD 1
@@ -350,7 +350,7 @@
 #define HAVE_RAW_DECL_LINK 1
 
 /* Define to 1 if linkat is declared even after undefining macros. */
-/* #undef HAVE_RAW_DECL_LINKAT */
+#define HAVE_RAW_DECL_LINKAT 1
 
 /* Define to 1 if lseek is declared even after undefining macros. */
 #define HAVE_RAW_DECL_LSEEK 1
@@ -368,7 +368,7 @@
 #define HAVE_RAW_DECL_MEMRCHR 1
 
 /* Define to 1 if mkdirat is declared even after undefining macros. */
-/* #undef HAVE_RAW_DECL_MKDIRAT */
+#define HAVE_RAW_DECL_MKDIRAT 1
 
 /* Define to 1 if mkdtemp is declared even after undefining macros. */
 #define HAVE_RAW_DECL_MKDTEMP 1
@@ -377,13 +377,13 @@
 #define HAVE_RAW_DECL_MKFIFO 1
 
 /* Define to 1 if mkfifoat is declared even after undefining macros. */
-/* #undef HAVE_RAW_DECL_MKFIFOAT */
+#define HAVE_RAW_DECL_MKFIFOAT 1
 
 /* Define to 1 if mknod is declared even after undefining macros. */
 #define HAVE_RAW_DECL_MKNOD 1
 
 /* Define to 1 if mknodat is declared even after undefining macros. */
-/* #undef HAVE_RAW_DECL_MKNODAT */
+#define HAVE_RAW_DECL_MKNODAT 1
 
 /* Define to 1 if mkostemp is declared even after undefining macros. */
 /* #undef HAVE_RAW_DECL_MKOSTEMP */
@@ -398,13 +398,13 @@
 /* #undef HAVE_RAW_DECL_MKSTEMPS */
 
 /* Define to 1 if openat is declared even after undefining macros. */
-/* #undef HAVE_RAW_DECL_OPENAT */
+#define HAVE_RAW_DECL_OPENAT 1
 
 /* Define to 1 if pipe is declared even after undefining macros. */
 #define HAVE_RAW_DECL_PIPE 1
 
 /* Define to 1 if pipe2 is declared even after undefining macros. */
-/* #undef HAVE_RAW_DECL_PIPE2 */
+#define HAVE_RAW_DECL_PIPE2 1
 
 /* Define to 1 if popen is declared even after undefining macros. */
 #define HAVE_RAW_DECL_POPEN 1
@@ -431,19 +431,19 @@
 #define HAVE_RAW_DECL_READLINK 1
 
 /* Define to 1 if readlinkat is declared even after undefining macros. */
-/* #undef HAVE_RAW_DECL_READLINKAT */
+#define HAVE_RAW_DECL_READLINKAT 1
 
 /* Define to 1 if realpath is declared even after undefining macros. */
 #define HAVE_RAW_DECL_REALPATH 1
 
 /* Define to 1 if renameat is declared even after undefining macros. */
-/* #undef HAVE_RAW_DECL_RENAMEAT */
+#define HAVE_RAW_DECL_RENAMEAT 1
 
 /* Define to 1 if rmdir is declared even after undefining macros. */
 #define HAVE_RAW_DECL_RMDIR 1
 
 /* Define to 1 if rpmatch is declared even after undefining macros. */
-#define HAVE_RAW_DECL_RPMATCH 1
+/* #undef HAVE_RAW_DECL_RPMATCH */
 
 /* Define to 1 if setenv is declared even after undefining macros. */
 #define HAVE_RAW_DECL_SETENV 1
@@ -545,7 +545,7 @@
 #define HAVE_RAW_DECL_SYMLINK 1
 
 /* Define to 1 if symlinkat is declared even after undefining macros. */
-/* #undef HAVE_RAW_DECL_SYMLINKAT */
+#define HAVE_RAW_DECL_SYMLINKAT 1
 
 /* Define to 1 if tmpfile is declared even after undefining macros. */
 #define HAVE_RAW_DECL_TMPFILE 1
@@ -557,7 +557,7 @@
 #define HAVE_RAW_DECL_UNLINK 1
 
 /* Define to 1 if unlinkat is declared even after undefining macros. */
-/* #undef HAVE_RAW_DECL_UNLINKAT */
+#define HAVE_RAW_DECL_UNLINKAT 1
 
 /* Define to 1 if unlockpt is declared even after undefining macros. */
 #define HAVE_RAW_DECL_UNLOCKPT 1
@@ -569,7 +569,7 @@
 #define HAVE_RAW_DECL_USLEEP 1
 
 /* Define to 1 if utimensat is declared even after undefining macros. */
-/* #undef HAVE_RAW_DECL_UTIMENSAT */
+#define HAVE_RAW_DECL_UTIMENSAT 1
 
 /* Define to 1 if vdprintf is declared even after undefining macros. */
 #define HAVE_RAW_DECL_VDPRINTF 1
@@ -584,7 +584,7 @@
 #define HAVE_READLINK 1
 
 /* Define to 1 if you have the `readlinkat' function. */
-/* #undef HAVE_READLINKAT */
+#define HAVE_READLINKAT 1
 
 /* Define to 1 if you have the `realpath' function. */
 #define HAVE_REALPATH 1
@@ -602,7 +602,7 @@
 #define HAVE_SIGNED_SIG_ATOMIC_T 1
 
 /* Define to 1 if 'wchar_t' is a signed integer type. */
-#define HAVE_SIGNED_WCHAR_T 1
+/* #undef HAVE_SIGNED_WCHAR_T */
 
 /* Define to 1 if 'wint_t' is a signed integer type. */
 /* #undef HAVE_SIGNED_WINT_T */
@@ -684,10 +684,10 @@
 /* #undef HAVE__NSGETEXECUTABLEPATH */
 
 /* Define as const if the declaration of iconv() needs const. */
-#define ICONV_CONST 
+/* #undef ICONV_CONST */
 
 /* Define to the value of ${prefix}, as a string. */
-#define INSTALLPREFIX "/home/mars/asus-git/asuswrt/release/src-rt/router/libiconv-1.14/out"
+#define INSTALLPREFIX "/home/merlin/asuswrt.ac87/release/src-rt-6.x.4708/router/libiconv-1.14/out"
 
 /* Define to 1 if `lstat' dereferences a symlink specified with a trailing
    slash. */
@@ -781,7 +781,7 @@
 
 /* Define to l, ll, u, ul, ull, etc., as suitable for constants of type
    'wchar_t'. */
-#define WCHAR_T_SUFFIX 
+#define WCHAR_T_SUFFIX u
 
 /* Define to l, ll, u, ul, ull, etc., as suitable for constants of type
    'wint_t'. */

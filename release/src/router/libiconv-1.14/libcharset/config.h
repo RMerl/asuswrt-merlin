@@ -51,7 +51,7 @@
 #define HAVE_WORKING_O_NOFOLLOW 0
 
 /* Define to the value of ${prefix}, as a string. */
-#define INSTALLPREFIX "/home/mars/asus-git/asuswrt/release/src-rt/router/libiconv-1.14/out"
+#define INSTALLPREFIX "/home/merlin/asuswrt.ac87/release/src-rt-6.x.4708/router/libiconv-1.14/out"
 
 /* Define to the sub-directory in which libtool stores uninstalled libraries.
    */

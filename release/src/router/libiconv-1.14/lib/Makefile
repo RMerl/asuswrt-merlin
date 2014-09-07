@@ -6,15 +6,15 @@
 srcdir = .
 
 # Directories used by "make install":
-prefix = /home/mars/asus-git/asuswrt/release/src-rt/router/libiconv-1.14/out
+prefix = /home/merlin/asuswrt.ac87/release/src-rt-6.x.4708/router/libiconv-1.14/out
 local_prefix = /usr/local
 exec_prefix = ${prefix}
 libdir = ${exec_prefix}/lib
 
 # Programs used by "make":
-CC = mipsel-uclibc-gcc
-CFLAGS = -DBCMWPA2 -DLINUX26 -DCONFIG_BCMWL5 -DDEBUG_NOISY -DDEBUG_RCTEST -pipe -DBCMWPA2 -funit-at-a-time -Wno-pointer-sign -mtune=mips32 -mips32 -DLINUX_KERNEL_VERSION=132630 -D__CONFIG_WPS__ -fvisibility=hidden
-CPPFLAGS = -I/home/mars/asus-git/asuswrt/release/src-rt/router/libiconv-1.14/out/include
+CC = arm-brcm-linux-uclibcgnueabi-gcc
+CFLAGS = -DBCMWPA2 -DBCMQOS -DBCM_DCS -DEXT_ACS -DD11AC_IOTYPES -DPHYMON -DPROXYARP -DTRAFFIC_MGMT -DTRAFFIC_MGMT_RSSI_POLICY -DLINUX26 -DCONFIG_BCMWL5 -DDEBUG_NOISY -DDEBUG_RCTEST -pipe -DBCMWPA2 -DBCMARM -fno-strict-aliasing -marm -DRTCONFIG_NVRAM_64K -DLINUX_KERNEL_VERSION=132644 -DRTAC87U -O2 -D__CONFIG_EMF__ -D__CONFIG_WPS__ -fvisibility=hidden
+CPPFLAGS = 
 LDFLAGS =  $(LDFLAGS_no)
 LDFLAGS_yes = -Wl,--export-all-symbols
 LDFLAGS_no =
@@ -25,7 +25,7 @@ DEFS = -DLIBDIR=\"$(libdir)\" -DBUILDING_LIBICONV -DBUILDING_DLL \
 -DENABLE_RELOCATABLE=1 -DIN_LIBRARY -DINSTALLDIR=\"$(libdir)\" -DNO_XMALLOC \
 -Dset_relocation_prefix=libiconv_set_relocation_prefix \
 -Drelocate=libiconv_relocate -DHAVE_CONFIG_H
-LIBTOOL = /bin/sh $(top_builddir)/libtool
+LIBTOOL = /bin/bash $(top_builddir)/libtool
 LIBTOOL_COMPILE = $(LIBTOOL) --mode=compile
 LIBTOOL_LINK = $(LIBTOOL) --mode=link
 LIBTOOL_INSTALL = $(LIBTOOL) --mode=install

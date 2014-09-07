@@ -6,14 +6,14 @@
 srcdir = .
 
 # Directories used by "make install":
-prefix = /home/mars/asus-git/asuswrt/release/src-rt/router/libiconv-1.14/out
+prefix = /home/merlin/asuswrt.ac87/release/src-rt-6.x.4708/router/libiconv-1.14/out
 local_prefix = /usr/local
 exec_prefix = ${prefix}
 libdir = ${exec_prefix}/lib
 
 # Programs used by "make":
-CC = mipsel-uclibc-gcc
-CFLAGS = -DBCMWPA2 -DLINUX26 -DCONFIG_BCMWL5 -DDEBUG_NOISY -DDEBUG_RCTEST -pipe -DBCMWPA2 -funit-at-a-time -Wno-pointer-sign -mtune=mips32 -mips32 -DLINUX_KERNEL_VERSION=132630 -D__CONFIG_WPS__ -fvisibility=hidden
+CC = arm-brcm-linux-uclibcgnueabi-gcc
+CFLAGS = -DBCMWPA2 -DBCMQOS -DBCM_DCS -DEXT_ACS -DD11AC_IOTYPES -DPHYMON -DPROXYARP -DTRAFFIC_MGMT -DTRAFFIC_MGMT_RSSI_POLICY -DLINUX26 -DCONFIG_BCMWL5 -DDEBUG_NOISY -DDEBUG_RCTEST -pipe -DBCMWPA2 -DBCMARM -fno-strict-aliasing -marm -DRTCONFIG_NVRAM_64K -DLINUX_KERNEL_VERSION=132644 -DRTAC87U -O2 -D__CONFIG_EMF__ -D__CONFIG_WPS__ -fvisibility=hidden
 CPPFLAGS = 
 LDFLAGS = 
 INCLUDES = -I. -I$(srcdir) -I.. -I$(srcdir)/.. -I../include
@@ -23,7 +23,7 @@ DEFS = -DLIBDIR=\"$(libdir)\" -DBUILDING_LIBCHARSET -DBUILDING_DLL \
 -DENABLE_RELOCATABLE=1 -DIN_LIBRARY -DINSTALLDIR=\"$(libdir)\" -DNO_XMALLOC \
 -Dset_relocation_prefix=libcharset_set_relocation_prefix \
 -Drelocate=libcharset_relocate -DHAVE_CONFIG_H
-LIBTOOL = /bin/sh $(top_builddir)/libtool
+LIBTOOL = /bin/bash $(top_builddir)/libtool
 LIBTOOL_COMPILE = $(LIBTOOL) --mode=compile
 LIBTOOL_LINK = $(LIBTOOL) --mode=link
 LIBTOOL_INSTALL = $(LIBTOOL) --mode=install
@@ -65,7 +65,7 @@ relocatable.lo : $(srcdir)/relocatable.c $(srcdir)/relocatable.h
 	$(LIBTOOL_COMPILE) $(CC) $(INCLUDES) $(CFLAGS) $(CPPFLAGS) $(DEFS) -c $(srcdir)/relocatable.c
 
 charset.alias: $(srcdir)/config.charset
-	$(SHELL) $(srcdir)/config.charset 'mipsel-unknown-linux-gnu' > t-$@
+	$(SHELL) $(srcdir)/config.charset 'arm-unknown-linux-gnu' > t-$@
 	mv t-$@ $@
 
 ref-add.sed : $(srcdir)/ref-add.sin

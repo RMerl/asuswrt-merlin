@@ -6,14 +6,14 @@
 srcdir = .
 
 # Directories used by "make install":
-prefix = /home/mars/asus-git/asuswrt/release/src-rt/router/libiconv-1.14/out
+prefix = /home/merlin/asuswrt.ac87/release/src-rt-6.x.4708/router/libiconv-1.14/out
 local_prefix = /usr/local
 exec_prefix = ${prefix}
 libdir = ${exec_prefix}/lib
 
 # Programs used by "make":
-CC = mipsel-uclibc-gcc
-CFLAGS = -DBCMWPA2 -DLINUX26 -DCONFIG_BCMWL5 -DDEBUG_NOISY -DDEBUG_RCTEST -pipe -DBCMWPA2 -funit-at-a-time -Wno-pointer-sign -mtune=mips32 -mips32 -DLINUX_KERNEL_VERSION=132630 -D__CONFIG_WPS__ -fvisibility=hidden
+CC = arm-brcm-linux-uclibcgnueabi-gcc
+CFLAGS = -DBCMWPA2 -DBCMQOS -DBCM_DCS -DEXT_ACS -DD11AC_IOTYPES -DPHYMON -DPROXYARP -DTRAFFIC_MGMT -DTRAFFIC_MGMT_RSSI_POLICY -DLINUX26 -DCONFIG_BCMWL5 -DDEBUG_NOISY -DDEBUG_RCTEST -pipe -DBCMWPA2 -DBCMARM -fno-strict-aliasing -marm -DRTCONFIG_NVRAM_64K -DLINUX_KERNEL_VERSION=132644 -DRTAC87U -O2 -D__CONFIG_EMF__ -D__CONFIG_WPS__ -fvisibility=hidden
 CPPFLAGS = 
 LDFLAGS = 
 INCLUDES = -I../lib -I$(srcdir)/../lib -I../include -I$(srcdir)/../include -I.. -I$(srcdir)/..
@@ -22,8 +22,8 @@ INCLUDES = -I../lib -I$(srcdir)/../lib -I../include -I$(srcdir)/../include -I.. 
 DEFS = -DLIBDIR=\"$(libdir)\" -DBUILDING_LIBICONV -DBUILDING_DLL \
 -DENABLE_RELOCATABLE=1 -DIN_LIBRARY -DINSTALLDIR=\"$(libdir)\" -DNO_XMALLOC \
 -Dset_relocation_prefix=libiconv_set_relocation_prefix \
--Drelocate=libiconv_relocate -DPACKAGE_NAME=\"\" -DPACKAGE_TARNAME=\"\" -DPACKAGE_VERSION=\"\" -DPACKAGE_STRING=\"\" -DPACKAGE_BUGREPORT=\"\" -DPACKAGE_URL=\"\" -DINSTALLPREFIX=\"/home/mars/asus-git/asuswrt/release/src-rt/router/libiconv-1.14/out\" -DSTDC_HEADERS=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_MEMORY_H=1 -DHAVE_STRINGS_H=1 -DHAVE_INTTYPES_H=1 -DHAVE_STDINT_H=1 -DHAVE_UNISTD_H=1 -D__EXTENSIONS__=1 -D_ALL_SOURCE=1 -D_GNU_SOURCE=1 -D_POSIX_PTHREAD_SEMANTICS=1 -D_TANDEM_SOURCE=1 -DHAVE_DLFCN_H=1 -DLT_OBJDIR=\".libs/\" -DHAVE_VISIBILITY=1
-LIBTOOL = /bin/sh $(top_builddir)/libtool
+-Drelocate=libiconv_relocate -DPACKAGE_NAME=\"\" -DPACKAGE_TARNAME=\"\" -DPACKAGE_VERSION=\"\" -DPACKAGE_STRING=\"\" -DPACKAGE_BUGREPORT=\"\" -DPACKAGE_URL=\"\" -DINSTALLPREFIX=\"/home/merlin/asuswrt.ac87/release/src-rt-6.x.4708/router/libiconv-1.14/out\" -DSTDC_HEADERS=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_MEMORY_H=1 -DHAVE_STRINGS_H=1 -DHAVE_INTTYPES_H=1 -DHAVE_STDINT_H=1 -DHAVE_UNISTD_H=1 -D__EXTENSIONS__=1 -D_ALL_SOURCE=1 -D_GNU_SOURCE=1 -D_POSIX_PTHREAD_SEMANTICS=1 -D_TANDEM_SOURCE=1 -DHAVE_DLFCN_H=1 -DLT_OBJDIR=\".libs/\" -DHAVE_VISIBILITY=1
+LIBTOOL = /bin/bash $(top_builddir)/libtool
 LIBTOOL_COMPILE = $(LIBTOOL) --mode=compile
 LIBTOOL_LINK = $(LIBTOOL) --mode=link
 LN_S = ln -s

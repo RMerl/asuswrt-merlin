@@ -7,7 +7,7 @@
 srcdir = .
 
 # Directories used by "make install":
-prefix = /home/mars/asus-git/asuswrt/release/src-rt/router/libiconv-1.14/out
+prefix = /home/merlin/asuswrt.ac87/release/src-rt-6.x.4708/router/libiconv-1.14/out
 local_prefix = /usr/local
 exec_prefix = ${prefix}
 datarootdir = ${prefix}/share
