@@ -570,6 +570,14 @@ History
 376.47 (xx-xxx-2014)
    - NEW: Merged with Asus GPL 2678 (AC87)
    - NEW: Report Quantenna FW version on Sysinfo page
+   - NEW: Enabled experimental FTP and Samba Cloud Sync support in AiCloud.
+          This feature is still in development by Asus, so it might not be
+          fully functional yet.
+   - NEW: Enabled experimental SNMPD support, under Administration -> SNMP.
+          This feature is still in development by Asus, so it might not be
+          fully functional yet.
+   - NEW: Added option to enable WAN access to SNMPD, defaults to disabled.
+          (Asus's implementation has it open to the WAN by default)
    - CHANGED: Re-increased max allowed FTP user limit to 10 (was reverted
               to 5 in the GPL merge when the setting was moved to the
               FTP page)
