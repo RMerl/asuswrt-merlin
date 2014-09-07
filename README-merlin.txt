@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 376.46 (26-Aug-2014)
+Asuswrt-Merlin - build 376.47 (xx-xxx-2014)
 ===========================================
 
 About
@@ -567,6 +567,14 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
+376.47 (xx-xxx-2014)
+   - NEW: Merged with Asus GPL 2678 (AC87)
+   - NEW: Report Quantenna FW version on Sysinfo page
+   - CHANGED: Re-increased max allowed FTP user limit to 10 (was reverted
+              to 5 in the GPL merge when the setting was moved to the
+              FTP page)
+
+
 376.46 (26-Aug-2014)
    - NEW: Merged with Asus GPL 2061.  This is essentially
           the new QTN driver for the AC87.
