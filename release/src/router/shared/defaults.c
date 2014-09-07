@@ -2041,6 +2041,7 @@ struct nvram_tuple router_defaults[] = {
 
 #ifdef RTCONFIG_SNMPD
         { "snmpd_enable", "0"},
+	{ "snmpd_wan", "0"},
 	{ "sysName", ""},
 	{ "sysContact", ""},
 	{ "sysLocation", ""},
