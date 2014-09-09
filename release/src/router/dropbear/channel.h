@@ -105,6 +105,9 @@ void chancleanup();
 void setchannelfds(fd_set *readfd, fd_set *writefd);
 void channelio(fd_set *readfd, fd_set *writefd);
 struct Channel* getchannel();
+/* Returns an arbitrary channel that is in a ready state - not
+being initialised and no EOF in either direction. NULL if none. */
+struct Channel* get_any_ready_channel();
 
 void recv_msg_channel_open();
 void recv_msg_channel_request();
@@ -128,8 +131,10 @@ int send_msg_channel_open_init(int fd, const struct ChanType *type);
 void recv_msg_channel_open_confirmation();
 void recv_msg_channel_open_failure();
 #endif
+void start_send_channel_request(struct Channel *channel, unsigned char *type);
 
 void send_msg_request_success();
 void send_msg_request_failure();
+
 
 #endif /* _CHANNEL_H_ */
