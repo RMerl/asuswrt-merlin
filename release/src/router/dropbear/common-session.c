@@ -394,19 +394,30 @@ static int ident_readln(int fd, char* buf, int count) {
 	return pos+1;
 }
 
-void ignore_recv_msg_request_failure() {
+void ignore_recv_response() {
 	// Do nothing
-	TRACE(("Ignored msg_request_failure"))
+	TRACE(("Ignored msg_request_response"))
 }
 
 static void send_msg_keepalive() {
 	CHECKCLEARTOWRITE();
 	time_t old_time_idle = ses.last_packet_time_idle;
-	/* Try to force a response from the other end. Some peers will
-	reply with SSH_MSG_REQUEST_FAILURE, some will reply with SSH_MSG_UNIMPLEMENTED */
-	buf_putbyte(ses.writepayload, SSH_MSG_GLOBAL_REQUEST);
-	/* A short string */
-	buf_putstring(ses.writepayload, "k@dropbear.nl", 0);
+
+	struct Channel *chan = get_any_ready_channel();
+
+	if (chan) {
+		/* Channel requests are preferable, more implementations
+		handle them than SSH_MSG_GLOBAL_REQUEST */
+		TRACE(("keepalive channel request %d", chan->index))
+		start_send_channel_request(chan, DROPBEAR_KEEPALIVE_STRING);
+	} else {
+		TRACE(("keepalive global request"))
+		/* Some peers will reply with SSH_MSG_REQUEST_FAILURE, 
+		some will reply with SSH_MSG_UNIMPLEMENTED, some will exit. */
+		buf_putbyte(ses.writepayload, SSH_MSG_GLOBAL_REQUEST); 
+		buf_putstring(ses.writepayload, DROPBEAR_KEEPALIVE_STRING,
+			strlen(DROPBEAR_KEEPALIVE_STRING));
+	}
 	buf_putbyte(ses.writepayload, 1); /* want_reply */
 	encrypt_packet();
 
@@ -435,7 +446,10 @@ static void checktimeouts() {
 		send_msg_kexinit();
 	}
 	
-	if (opts.keepalive_secs > 0) {
+	if (opts.keepalive_secs > 0 && ses.authstate.authdone) {
+		/* Avoid sending keepalives prior to auth - those are
+		not valid pre-auth packet types */
+
 		/* Send keepalives if we've been idle */
 		if (now - ses.last_packet_time_any_sent >= opts.keepalive_secs) {
 			send_msg_keepalive();
