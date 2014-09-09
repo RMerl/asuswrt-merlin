@@ -70,11 +70,15 @@ static const packettype cli_packettypes[] = {
 	{SSH_MSG_USERAUTH_BANNER, recv_msg_userauth_banner}, /* client */
 	{SSH_MSG_USERAUTH_SPECIFIC_60, recv_msg_userauth_specific_60}, /* client */
 	{SSH_MSG_GLOBAL_REQUEST, recv_msg_global_request_cli},
+	{SSH_MSG_CHANNEL_SUCCESS, ignore_recv_response},
+	{SSH_MSG_CHANNEL_FAILURE, ignore_recv_response},
 #ifdef  ENABLE_CLI_REMOTETCPFWD
 	{SSH_MSG_REQUEST_SUCCESS, cli_recv_msg_request_success}, /* client */
 	{SSH_MSG_REQUEST_FAILURE, cli_recv_msg_request_failure}, /* client */
 #else
-	{SSH_MSG_REQUEST_FAILURE, ignore_recv_msg_request_failure}, /* for keepalive */
+	/* For keepalive */
+	{SSH_MSG_REQUEST_SUCCESS, ignore_recv_response},
+	{SSH_MSG_REQUEST_FAILURE, ignore_recv_response},
 #endif
 	{0, 0} /* End */
 };
