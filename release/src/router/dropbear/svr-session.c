@@ -58,7 +58,10 @@ static const packettype svr_packettypes[] = {
 	{SSH_MSG_CHANNEL_OPEN, recv_msg_channel_open},
 	{SSH_MSG_CHANNEL_EOF, recv_msg_channel_eof},
 	{SSH_MSG_CHANNEL_CLOSE, recv_msg_channel_close},
-	{SSH_MSG_REQUEST_FAILURE, ignore_recv_msg_request_failure}, /* for keepalive */
+	{SSH_MSG_CHANNEL_SUCCESS, ignore_recv_response},
+	{SSH_MSG_CHANNEL_FAILURE, ignore_recv_response},
+	{SSH_MSG_REQUEST_FAILURE, ignore_recv_response}, /* for keepalive */
+	{SSH_MSG_REQUEST_SUCCESS, ignore_recv_response}, /* client */
 #ifdef USING_LISTENERS
 	{SSH_MSG_CHANNEL_OPEN_CONFIRMATION, recv_msg_channel_open_confirmation},
 	{SSH_MSG_CHANNEL_OPEN_FAILURE, recv_msg_channel_open_failure},
