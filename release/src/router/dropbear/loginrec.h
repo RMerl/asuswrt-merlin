@@ -79,10 +79,10 @@
 #  if defined(HAVE_UTMP_H) && defined(UTMP_FILE) && !defined(DISABLE_UTMP)
 #    define USE_UTMP
 #  endif
-#  if defined(HAVE_WTMPX_H) && defined(WTMPX_FILE) && !defined(DISABLE_WTMPX)
+#  if defined(WTMPX_FILE) && !defined(DISABLE_WTMPX)
 #    define USE_WTMPX
 #  endif
-#  if defined(HAVE_WTMP_H) && defined(WTMP_FILE) && !defined(DISABLE_WTMP)
+#  if defined(WTMP_FILE) && !defined(DISABLE_WTMP)
 #    define USE_WTMP
 #  endif
 

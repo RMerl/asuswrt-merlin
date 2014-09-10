@@ -89,7 +89,6 @@ void cli_chansess_winchange();
 #ifdef ENABLE_CLI_NETCAT
 void cli_send_netcat_request();
 #endif
-void cli_start_send_channel_request(struct Channel *channel, unsigned char *type);
 
 void svr_chansessinitialise();
 extern const struct ChanType svrchansess;

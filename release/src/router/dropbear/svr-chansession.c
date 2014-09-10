@@ -53,6 +53,7 @@ static void sesssigchild_handler(int val);
 static void closechansess(struct Channel *channel);
 static int newchansess(struct Channel *channel);
 static void chansessionrequest(struct Channel *channel);
+static int sesscheckclose(struct Channel *channel);
 
 static void send_exitsignalstatus(struct Channel *channel);
 static void send_msg_chansess_exitstatus(struct Channel * channel,
@@ -61,6 +62,14 @@ static void send_msg_chansess_exitsignal(struct Channel * channel,
 		struct ChanSess * chansess);
 static void get_termmodes(struct ChanSess *chansess);
 
+const struct ChanType svrchansess = {
+	0, /* sepfds */
+	"session", /* name */
+	newchansess, /* inithandler */
+	sesscheckclose, /* checkclosehandler */
+	chansessionrequest, /* reqhandler */
+	closechansess, /* closehandler */
+};
 
 /* required to clear environment */
 extern char** environ;
@@ -967,16 +976,6 @@ static void execchild(void *user_data) {
 	/* only reached on error */
 	dropbear_exit("Child failed");
 }
-
-const struct ChanType svrchansess = {
-	0, /* sepfds */
-	"session", /* name */
-	newchansess, /* inithandler */
-	sesscheckclose, /* checkclosehandler */
-	chansessionrequest, /* reqhandler */
-	closechansess, /* closehandler */
-};
-
 
 /* Set up the general chansession environment, in particular child-exit
  * handling */

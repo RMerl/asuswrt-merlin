@@ -627,7 +627,12 @@ void recv_msg_channel_request() {
 			&& !channel->close_handler_done) {
 		channel->type->reqhandler(channel);
 	} else {
-		send_msg_channel_failure(channel);
+		int wantreply;
+		buf_eatstring(ses.payload);
+		wantreply = buf_getbool(ses.payload);
+		if (wantreply) {
+			send_msg_channel_failure(channel);
+		}
 	}
 
 	TRACE(("leave recv_msg_channel_request"))
@@ -1133,4 +1138,31 @@ void send_msg_request_failure() {
 	CHECKCLEARTOWRITE();
 	buf_putbyte(ses.writepayload, SSH_MSG_REQUEST_FAILURE);
 	encrypt_packet();
+}
+
+struct Channel* get_any_ready_channel() {
+	if (ses.chancount == 0) {
+		return NULL;
+	}
+	size_t i;
+	for (i = 0; i < ses.chansize; i++) {
+		struct Channel *chan = ses.channels[i];
+		if (chan
+				&& !(chan->sent_eof || chan->recv_eof)
+				&& !(chan->await_open || chan->initconn)) {
+			return chan;
+		}
+	}
+	return NULL;
+}
+
+void start_send_channel_request(struct Channel *channel, 
+		unsigned char *type) {
+
+	CHECKCLEARTOWRITE();
+	buf_putbyte(ses.writepayload, SSH_MSG_CHANNEL_REQUEST);
+	buf_putint(ses.writepayload, channel->remotechan);
+
+	buf_putstring(ses.writepayload, type, strlen(type));
+
 }

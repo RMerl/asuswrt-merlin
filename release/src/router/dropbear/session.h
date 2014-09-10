@@ -47,7 +47,7 @@ void session_loop(void(*loophandler)());
 void session_cleanup();
 void send_session_identification();
 void send_msg_ignore();
-void ignore_recv_msg_request_failure();
+void ignore_recv_response();
 
 void update_channel_prio();
 

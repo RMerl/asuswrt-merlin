@@ -1,370 +1,307 @@
-#!/usr/bin/perl -w
-#
-# MD5 optimized for AMD64.
-#
-# Author: Marc Bevand <bevand_m (at) epita.fr>
-# Licence: I hereby disclaim the copyright on this code and place it
-# in the public domain.
-#
+#!/usr/local/bin/perl
 
-use strict;
+# Normal is the
+# md5_block_x86(MD5_CTX *c, ULONG *X);
+# version, non-normal is the
+# md5_block_x86(MD5_CTX *c, ULONG *X,int blocks);
 
-my $code;
+$normal=0;
 
-# round1_step() does:
-#   dst = x + ((dst + F(x,y,z) + X[k] + T_i) <<< s)
-#   %r10d = X[k_next]
-#   %r11d = z' (copy of z for the next step)
-# Each round1_step() takes about 5.3 clocks (9 instructions, 1.7 IPC)
-sub round1_step
-{
-    my ($pos, $dst, $x, $y, $z, $k_next, $T_i, $s) = @_;
-    $code .= " mov	0*4(%rsi),	%r10d		/* (NEXT STEP) X[0] */\n" if ($pos == -1);
-    $code .= " mov	%edx,		%r11d		/* (NEXT STEP) z' = %edx */\n" if ($pos == -1);
-    $code .= <<EOF;
-	xor	$y,		%r11d		/* y ^ ... */
-	lea	$T_i($dst,%r10d),$dst		/* Const + dst + ... */
-	and	$x,		%r11d		/* x & ... */
-	xor	$z,		%r11d		/* z ^ ... */
-	mov	$k_next*4(%rsi),%r10d		/* (NEXT STEP) X[$k_next] */
-	add	%r11d,		$dst		/* dst += ... */
-	rol	\$$s,		$dst		/* dst <<< s */
-	mov	$y,		%r11d		/* (NEXT STEP) z' = $y */
-	add	$x,		$dst		/* dst += x */
-EOF
-}
+$0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
+push(@INC,"${dir}","${dir}../../perlasm");
+require "x86asm.pl";
 
-# round2_step() does:
-#   dst = x + ((dst + G(x,y,z) + X[k] + T_i) <<< s)
-#   %r10d = X[k_next]
-#   %r11d = z' (copy of z for the next step)
-#   %r12d = z' (copy of z for the next step)
-# Each round2_step() takes about 5.4 clocks (11 instructions, 2.0 IPC)
-sub round2_step
-{
-    my ($pos, $dst, $x, $y, $z, $k_next, $T_i, $s) = @_;
-    $code .= " mov	1*4(%rsi),	%r10d		/* (NEXT STEP) X[1] */\n" if ($pos == -1);
-    $code .= " mov	%edx,		%r11d		/* (NEXT STEP) z' = %edx */\n" if ($pos == -1);
-    $code .= " mov	%edx,		%r12d		/* (NEXT STEP) z' = %edx */\n" if ($pos == -1);
-    $code .= <<EOF;
-	not	%r11d				/* not z */
-	lea	$T_i($dst,%r10d),$dst		/* Const + dst + ... */
-	and	$x,		%r12d		/* x & z */
-	and	$y,		%r11d		/* y & (not z) */
-	mov	$k_next*4(%rsi),%r10d		/* (NEXT STEP) X[$k_next] */
-	or	%r11d,		%r12d		/* (y & (not z)) | (x & z) */
-	mov	$y,		%r11d		/* (NEXT STEP) z' = $y */
-	add	%r12d,		$dst		/* dst += ... */
-	mov	$y,		%r12d		/* (NEXT STEP) z' = $y */
-	rol	\$$s,		$dst		/* dst <<< s */
-	add	$x,		$dst		/* dst += x */
-EOF
-}
+&asm_init($ARGV[0],$0);
 
-# round3_step() does:
-#   dst = x + ((dst + H(x,y,z) + X[k] + T_i) <<< s)
-#   %r10d = X[k_next]
-#   %r11d = y' (copy of y for the next step)
-# Each round3_step() takes about 4.2 clocks (8 instructions, 1.9 IPC)
-sub round3_step
-{
-    my ($pos, $dst, $x, $y, $z, $k_next, $T_i, $s) = @_;
-    $code .= " mov	5*4(%rsi),	%r10d		/* (NEXT STEP) X[5] */\n" if ($pos == -1);
-    $code .= " mov	%ecx,		%r11d		/* (NEXT STEP) y' = %ecx */\n" if ($pos == -1);
-    $code .= <<EOF;
-	lea	$T_i($dst,%r10d),$dst		/* Const + dst + ... */
-	mov	$k_next*4(%rsi),%r10d		/* (NEXT STEP) X[$k_next] */
-	xor	$z,		%r11d		/* z ^ ... */
-	xor	$x,		%r11d		/* x ^ ... */
-	add	%r11d,		$dst		/* dst += ... */
-	rol	\$$s,		$dst		/* dst <<< s */
-	mov	$x,		%r11d		/* (NEXT STEP) y' = $x */
-	add	$x,		$dst		/* dst += x */
-EOF
-}
+$A="eax";
+$B="ebx";
+$C="ecx";
+$D="edx";
+$tmp1="edi";
+$tmp2="ebp";
+$X="esi";
 
-# round4_step() does:
-#   dst = x + ((dst + I(x,y,z) + X[k] + T_i) <<< s)
-#   %r10d = X[k_next]
-#   %r11d = not z' (copy of not z for the next step)
-# Each round4_step() takes about 5.2 clocks (9 instructions, 1.7 IPC)
-sub round4_step
-{
-    my ($pos, $dst, $x, $y, $z, $k_next, $T_i, $s) = @_;
-    $code .= " mov	0*4(%rsi),	%r10d		/* (NEXT STEP) X[0] */\n" if ($pos == -1);
-    $code .= " mov	\$0xffffffff,	%r11d\n" if ($pos == -1);
-    $code .= " xor	%edx,		%r11d		/* (NEXT STEP) not z' = not %edx*/\n"
-    if ($pos == -1);
-    $code .= <<EOF;
-	lea	$T_i($dst,%r10d),$dst		/* Const + dst + ... */
-	or	$x,		%r11d		/* x | ... */
-	xor	$y,		%r11d		/* y ^ ... */
-	add	%r11d,		$dst		/* dst += ... */
-	mov	$k_next*4(%rsi),%r10d		/* (NEXT STEP) X[$k_next] */
-	mov	\$0xffffffff,	%r11d
-	rol	\$$s,		$dst		/* dst <<< s */
-	xor	$y,		%r11d		/* (NEXT STEP) not z' = not $y */
-	add	$x,		$dst		/* dst += x */
-EOF
-}
+# What we need to load into $tmp for the next round
+%Ltmp1=("R0",&Np($C), "R1",&Np($C), "R2",&Np($C), "R3",&Np($D));
+@xo=(
+ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,	# R0
+ 1, 6, 11, 0, 5, 10, 15, 4, 9, 14, 3, 8, 13, 2, 7, 12,	# R1
+ 5, 8, 11, 14, 1, 4, 7, 10, 13, 0, 3, 6, 9, 12, 15, 2,	# R2
+ 0, 7, 14, 5, 12, 3, 10, 1, 8, 15, 6, 13, 4, 11, 2, 9,	# R3
+ );
 
-my $flavour = shift;
-my $output  = shift;
-if ($flavour =~ /\./) { $output = $flavour; undef $flavour; }
+&md5_block("md5_block_asm_data_order");
+&asm_finish();
 
-my $win64=0; $win64=1 if ($flavour =~ /[nm]asm|mingw64/ || $output =~ /\.asm$/);
+sub Np
+	{
+	local($p)=@_;
+	local(%n)=($A,$D,$B,$A,$C,$B,$D,$C);
+	return($n{$p});
+	}
 
-$0 =~ m/(.*[\/\\])[^\/\\]+$/; my $dir=$1; my $xlate;
-( $xlate="${dir}x86_64-xlate.pl" and -f $xlate ) or
-( $xlate="${dir}../../perlasm/x86_64-xlate.pl" and -f $xlate) or
-die "can't locate x86_64-xlate.pl";
+sub R0
+	{
+	local($pos,$a,$b,$c,$d,$K,$ki,$s,$t)=@_;
 
-no warnings qw(uninitialized);
-open OUT,"| \"$^X\" $xlate $flavour $output";
-*STDOUT=*OUT;
+	&mov($tmp1,$C)  if $pos < 0;
+	&mov($tmp2,&DWP($xo[$ki]*4,$K,"",0)) if $pos < 0; # very first one 
 
-$code .= <<EOF;
-.text
-.align 16
+	# body proper
 
-.globl md5_block_asm_data_order
-.type md5_block_asm_data_order,\@function,3
-md5_block_asm_data_order:
-	push	%rbp
-	push	%rbx
-	push	%r12
-	push	%r14
-	push	%r15
-.Lprologue:
+	&comment("R0 $ki");
+	&xor($tmp1,$d); # F function - part 2
 
-	# rdi = arg #1 (ctx, MD5_CTX pointer)
-	# rsi = arg #2 (ptr, data pointer)
-	# rdx = arg #3 (nbr, number of 16-word blocks to process)
-	mov	%rdi,		%rbp	# rbp = ctx
-	shl	\$6,		%rdx	# rdx = nbr in bytes
-	lea	(%rsi,%rdx),	%rdi	# rdi = end
-	mov	0*4(%rbp),	%eax	# eax = ctx->A
-	mov	1*4(%rbp),	%ebx	# ebx = ctx->B
-	mov	2*4(%rbp),	%ecx	# ecx = ctx->C
-	mov	3*4(%rbp),	%edx	# edx = ctx->D
-	# end is 'rdi'
-	# ptr is 'rsi'
-	# A is 'eax'
-	# B is 'ebx'
-	# C is 'ecx'
-	# D is 'edx'
+	&and($tmp1,$b); # F function - part 3
+	&lea($a,&DWP($t,$a,$tmp2,1));
 
-	cmp	%rdi,		%rsi		# cmp end with ptr
-	je	.Lend				# jmp if ptr == end
+	&xor($tmp1,$d); # F function - part 4
 
-	# BEGIN of loop over 16-word blocks
-.Lloop:	# save old values of A, B, C, D
-	mov	%eax,		%r8d
-	mov	%ebx,		%r9d
-	mov	%ecx,		%r14d
-	mov	%edx,		%r15d
-EOF
-round1_step(-1,'%eax','%ebx','%ecx','%edx', '1','0xd76aa478', '7');
-round1_step( 0,'%edx','%eax','%ebx','%ecx', '2','0xe8c7b756','12');
-round1_step( 0,'%ecx','%edx','%eax','%ebx', '3','0x242070db','17');
-round1_step( 0,'%ebx','%ecx','%edx','%eax', '4','0xc1bdceee','22');
-round1_step( 0,'%eax','%ebx','%ecx','%edx', '5','0xf57c0faf', '7');
-round1_step( 0,'%edx','%eax','%ebx','%ecx', '6','0x4787c62a','12');
-round1_step( 0,'%ecx','%edx','%eax','%ebx', '7','0xa8304613','17');
-round1_step( 0,'%ebx','%ecx','%edx','%eax', '8','0xfd469501','22');
-round1_step( 0,'%eax','%ebx','%ecx','%edx', '9','0x698098d8', '7');
-round1_step( 0,'%edx','%eax','%ebx','%ecx','10','0x8b44f7af','12');
-round1_step( 0,'%ecx','%edx','%eax','%ebx','11','0xffff5bb1','17');
-round1_step( 0,'%ebx','%ecx','%edx','%eax','12','0x895cd7be','22');
-round1_step( 0,'%eax','%ebx','%ecx','%edx','13','0x6b901122', '7');
-round1_step( 0,'%edx','%eax','%ebx','%ecx','14','0xfd987193','12');
-round1_step( 0,'%ecx','%edx','%eax','%ebx','15','0xa679438e','17');
-round1_step( 1,'%ebx','%ecx','%edx','%eax', '0','0x49b40821','22');
+	&add($a,$tmp1);
+	&mov($tmp1,&Np($c)) if $pos < 1;	# next tmp1 for R0
+	&mov($tmp1,&Np($c)) if $pos == 1;	# next tmp1 for R1
 
-round2_step(-1,'%eax','%ebx','%ecx','%edx', '6','0xf61e2562', '5');
-round2_step( 0,'%edx','%eax','%ebx','%ecx','11','0xc040b340', '9');
-round2_step( 0,'%ecx','%edx','%eax','%ebx', '0','0x265e5a51','14');
-round2_step( 0,'%ebx','%ecx','%edx','%eax', '5','0xe9b6c7aa','20');
-round2_step( 0,'%eax','%ebx','%ecx','%edx','10','0xd62f105d', '5');
-round2_step( 0,'%edx','%eax','%ebx','%ecx','15', '0x2441453', '9');
-round2_step( 0,'%ecx','%edx','%eax','%ebx', '4','0xd8a1e681','14');
-round2_step( 0,'%ebx','%ecx','%edx','%eax', '9','0xe7d3fbc8','20');
-round2_step( 0,'%eax','%ebx','%ecx','%edx','14','0x21e1cde6', '5');
-round2_step( 0,'%edx','%eax','%ebx','%ecx', '3','0xc33707d6', '9');
-round2_step( 0,'%ecx','%edx','%eax','%ebx', '8','0xf4d50d87','14');
-round2_step( 0,'%ebx','%ecx','%edx','%eax','13','0x455a14ed','20');
-round2_step( 0,'%eax','%ebx','%ecx','%edx', '2','0xa9e3e905', '5');
-round2_step( 0,'%edx','%eax','%ebx','%ecx', '7','0xfcefa3f8', '9');
-round2_step( 0,'%ecx','%edx','%eax','%ebx','12','0x676f02d9','14');
-round2_step( 1,'%ebx','%ecx','%edx','%eax', '0','0x8d2a4c8a','20');
+	&rotl($a,$s);
 
-round3_step(-1,'%eax','%ebx','%ecx','%edx', '8','0xfffa3942', '4');
-round3_step( 0,'%edx','%eax','%ebx','%ecx','11','0x8771f681','11');
-round3_step( 0,'%ecx','%edx','%eax','%ebx','14','0x6d9d6122','16');
-round3_step( 0,'%ebx','%ecx','%edx','%eax', '1','0xfde5380c','23');
-round3_step( 0,'%eax','%ebx','%ecx','%edx', '4','0xa4beea44', '4');
-round3_step( 0,'%edx','%eax','%ebx','%ecx', '7','0x4bdecfa9','11');
-round3_step( 0,'%ecx','%edx','%eax','%ebx','10','0xf6bb4b60','16');
-round3_step( 0,'%ebx','%ecx','%edx','%eax','13','0xbebfbc70','23');
-round3_step( 0,'%eax','%ebx','%ecx','%edx', '0','0x289b7ec6', '4');
-round3_step( 0,'%edx','%eax','%ebx','%ecx', '3','0xeaa127fa','11');
-round3_step( 0,'%ecx','%edx','%eax','%ebx', '6','0xd4ef3085','16');
-round3_step( 0,'%ebx','%ecx','%edx','%eax', '9', '0x4881d05','23');
-round3_step( 0,'%eax','%ebx','%ecx','%edx','12','0xd9d4d039', '4');
-round3_step( 0,'%edx','%eax','%ebx','%ecx','15','0xe6db99e5','11');
-round3_step( 0,'%ecx','%edx','%eax','%ebx', '2','0x1fa27cf8','16');
-round3_step( 1,'%ebx','%ecx','%edx','%eax', '0','0xc4ac5665','23');
+	&mov($tmp2,&DWP($xo[$ki+1]*4,$K,"",0)) if ($pos != 2);
 
-round4_step(-1,'%eax','%ebx','%ecx','%edx', '7','0xf4292244', '6');
-round4_step( 0,'%edx','%eax','%ebx','%ecx','14','0x432aff97','10');
-round4_step( 0,'%ecx','%edx','%eax','%ebx', '5','0xab9423a7','15');
-round4_step( 0,'%ebx','%ecx','%edx','%eax','12','0xfc93a039','21');
-round4_step( 0,'%eax','%ebx','%ecx','%edx', '3','0x655b59c3', '6');
-round4_step( 0,'%edx','%eax','%ebx','%ecx','10','0x8f0ccc92','10');
-round4_step( 0,'%ecx','%edx','%eax','%ebx', '1','0xffeff47d','15');
-round4_step( 0,'%ebx','%ecx','%edx','%eax', '8','0x85845dd1','21');
-round4_step( 0,'%eax','%ebx','%ecx','%edx','15','0x6fa87e4f', '6');
-round4_step( 0,'%edx','%eax','%ebx','%ecx', '6','0xfe2ce6e0','10');
-round4_step( 0,'%ecx','%edx','%eax','%ebx','13','0xa3014314','15');
-round4_step( 0,'%ebx','%ecx','%edx','%eax', '4','0x4e0811a1','21');
-round4_step( 0,'%eax','%ebx','%ecx','%edx','11','0xf7537e82', '6');
-round4_step( 0,'%edx','%eax','%ebx','%ecx', '2','0xbd3af235','10');
-round4_step( 0,'%ecx','%edx','%eax','%ebx', '9','0x2ad7d2bb','15');
-round4_step( 1,'%ebx','%ecx','%edx','%eax', '0','0xeb86d391','21');
-$code .= <<EOF;
-	# add old values of A, B, C, D
-	add	%r8d,	%eax
-	add	%r9d,	%ebx
-	add	%r14d,	%ecx
-	add	%r15d,	%edx
+	&add($a,$b);
+	}
 
-	# loop control
-	add	\$64,		%rsi		# ptr += 64
-	cmp	%rdi,		%rsi		# cmp end with ptr
-	jb	.Lloop				# jmp if ptr < end
-	# END of loop over 16-word blocks
+sub R1
+	{
+	local($pos,$a,$b,$c,$d,$K,$ki,$s,$t)=@_;
 
-.Lend:
-	mov	%eax,		0*4(%rbp)	# ctx->A = A
-	mov	%ebx,		1*4(%rbp)	# ctx->B = B
-	mov	%ecx,		2*4(%rbp)	# ctx->C = C
-	mov	%edx,		3*4(%rbp)	# ctx->D = D
+	&comment("R1 $ki");
 
-	mov	(%rsp),%r15
-	mov	8(%rsp),%r14
-	mov	16(%rsp),%r12
-	mov	24(%rsp),%rbx
-	mov	32(%rsp),%rbp
-	add	\$40,%rsp
-.Lepilogue:
-	ret
-.size md5_block_asm_data_order,.-md5_block_asm_data_order
-EOF
+	&lea($a,&DWP($t,$a,$tmp2,1));
 
-# EXCEPTION_DISPOSITION handler (EXCEPTION_RECORD *rec,ULONG64 frame,
-#		CONTEXT *context,DISPATCHER_CONTEXT *disp)
-if ($win64) {
-my $rec="%rcx";
-my $frame="%rdx";
-my $context="%r8";
-my $disp="%r9";
+	&xor($tmp1,$b); # G function - part 2
+	&and($tmp1,$d); # G function - part 3
 
-$code.=<<___;
-.extern	__imp_RtlVirtualUnwind
-.type	se_handler,\@abi-omnipotent
-.align	16
-se_handler:
-	push	%rsi
-	push	%rdi
-	push	%rbx
-	push	%rbp
-	push	%r12
-	push	%r13
-	push	%r14
-	push	%r15
-	pushfq
-	sub	\$64,%rsp
+	&mov($tmp2,&DWP($xo[$ki+1]*4,$K,"",0)) if ($pos != 2);
+	&xor($tmp1,$c);			# G function - part 4
 
-	mov	120($context),%rax	# pull context->Rax
-	mov	248($context),%rbx	# pull context->Rip
+	&add($a,$tmp1);
+	&mov($tmp1,&Np($c)) if $pos < 1;	# G function - part 1
+	&mov($tmp1,&Np($c)) if $pos == 1;	# G function - part 1
 
-	lea	.Lprologue(%rip),%r10
-	cmp	%r10,%rbx		# context->Rip<.Lprologue
-	jb	.Lin_prologue
+	&rotl($a,$s);
 
-	mov	152($context),%rax	# pull context->Rsp
+	&add($a,$b);
+	}
 
-	lea	.Lepilogue(%rip),%r10
-	cmp	%r10,%rbx		# context->Rip>=.Lepilogue
-	jae	.Lin_prologue
+sub R2
+	{
+	local($n,$pos,$a,$b,$c,$d,$K,$ki,$s,$t)=@_;
+	# This one is different, only 3 logical operations
 
-	lea	40(%rax),%rax
+if (($n & 1) == 0)
+	{
+	&comment("R2 $ki");
+	# make sure to do 'D' first, not 'B', else we clash with
+	# the last add from the previous round.
 
-	mov	-8(%rax),%rbp
-	mov	-16(%rax),%rbx
-	mov	-24(%rax),%r12
-	mov	-32(%rax),%r14
-	mov	-40(%rax),%r15
-	mov	%rbx,144($context)	# restore context->Rbx
-	mov	%rbp,160($context)	# restore context->Rbp
-	mov	%r12,216($context)	# restore context->R12
-	mov	%r14,232($context)	# restore context->R14
-	mov	%r15,240($context)	# restore context->R15
+	&xor($tmp1,$d); # H function - part 2
 
-.Lin_prologue:
-	mov	8(%rax),%rdi
-	mov	16(%rax),%rsi
-	mov	%rax,152($context)	# restore context->Rsp
-	mov	%rsi,168($context)	# restore context->Rsi
-	mov	%rdi,176($context)	# restore context->Rdi
+	&xor($tmp1,$b); # H function - part 3
+	&lea($a,&DWP($t,$a,$tmp2,1));
 
-	mov	40($disp),%rdi		# disp->ContextRecord
-	mov	$context,%rsi		# context
-	mov	\$154,%ecx		# sizeof(CONTEXT)
-	.long	0xa548f3fc		# cld; rep movsq
+	&add($a,$tmp1);
 
-	mov	$disp,%rsi
-	xor	%rcx,%rcx		# arg1, UNW_FLAG_NHANDLER
-	mov	8(%rsi),%rdx		# arg2, disp->ImageBase
-	mov	0(%rsi),%r8		# arg3, disp->ControlPc
-	mov	16(%rsi),%r9		# arg4, disp->FunctionEntry
-	mov	40(%rsi),%r10		# disp->ContextRecord
-	lea	56(%rsi),%r11		# &disp->HandlerData
-	lea	24(%rsi),%r12		# &disp->EstablisherFrame
-	mov	%r10,32(%rsp)		# arg5
-	mov	%r11,40(%rsp)		# arg6
-	mov	%r12,48(%rsp)		# arg7
-	mov	%rcx,56(%rsp)		# arg8, (NULL)
-	call	*__imp_RtlVirtualUnwind(%rip)
+	&rotl($a,$s);
 
-	mov	\$1,%eax		# ExceptionContinueSearch
-	add	\$64,%rsp
-	popfq
-	pop	%r15
-	pop	%r14
-	pop	%r13
-	pop	%r12
-	pop	%rbp
-	pop	%rbx
-	pop	%rdi
-	pop	%rsi
-	ret
-.size	se_handler,.-se_handler
+	&mov($tmp2,&DWP($xo[$ki+1]*4,$K,"",0));
+	&mov($tmp1,&Np($c));
+	}
+else
+	{
+	&comment("R2 $ki");
+	# make sure to do 'D' first, not 'B', else we clash with
+	# the last add from the previous round.
 
-.section	.pdata
-.align	4
-	.rva	.LSEH_begin_md5_block_asm_data_order
-	.rva	.LSEH_end_md5_block_asm_data_order
-	.rva	.LSEH_info_md5_block_asm_data_order
+	&lea($a,&DWP($t,$a,$tmp2,1));
 
-.section	.xdata
-.align	8
-.LSEH_info_md5_block_asm_data_order:
-	.byte	9,0,0,0
-	.rva	se_handler
-___
-}
+	&add($b,$c);			# MOVED FORWARD
+	&xor($tmp1,$d); # H function - part 2
 
-print $code;
+	&xor($tmp1,$b); # H function - part 3
+	&mov($tmp2,&DWP($xo[$ki+1]*4,$K,"",0)) if ($pos != 2);
 
-close STDOUT;
+	&add($a,$tmp1);
+	&mov($tmp1,&Np($c)) if $pos < 1;	# H function - part 1
+	&mov($tmp1,-1) if $pos == 1;		# I function - part 1
+
+	&rotl($a,$s);
+
+	&add($a,$b);
+	}
+	}
+
+sub R3
+	{
+	local($pos,$a,$b,$c,$d,$K,$ki,$s,$t)=@_;
+
+	&comment("R3 $ki");
+
+	# &not($tmp1)
+	&xor($tmp1,$d) if $pos < 0; 	# I function - part 2
+
+	&or($tmp1,$b);				# I function - part 3
+	&lea($a,&DWP($t,$a,$tmp2,1));
+
+	&xor($tmp1,$c); 			# I function - part 4
+	&mov($tmp2,&DWP($xo[$ki+1]*4,$K,"",0))	if $pos != 2; # load X/k value
+	&mov($tmp2,&wparam(0)) if $pos == 2;
+
+	&add($a,$tmp1);
+	&mov($tmp1,-1) if $pos < 1;	# H function - part 1
+	&add($K,64) if $pos >=1 && !$normal;
+
+	&rotl($a,$s);
+
+	&xor($tmp1,&Np($d)) if $pos <= 0; 	# I function - part = first time
+	&mov($tmp1,&DWP( 0,$tmp2,"",0)) if $pos > 0;
+	&add($a,$b);
+	}
+
+
+sub md5_block
+	{
+	local($name)=@_;
+
+	&function_begin_B($name,"",3);
+
+	# parameter 1 is the MD5_CTX structure.
+	# A	0
+	# B	4
+	# C	8
+	# D 	12
+
+	&push("esi");
+	 &push("edi");
+	&mov($tmp1,	&wparam(0)); # edi
+	 &mov($X,	&wparam(1)); # esi
+	&mov($C,	&wparam(2));
+	 &push("ebp");
+	&shl($C,	6);
+	&push("ebx");
+	 &add($C,	$X); # offset we end at
+	&sub($C,	64);
+	 &mov($A,	&DWP( 0,$tmp1,"",0));
+	&push($C);	# Put on the TOS
+	 &mov($B,	&DWP( 4,$tmp1,"",0));
+	&mov($C,	&DWP( 8,$tmp1,"",0));
+	 &mov($D,	&DWP(12,$tmp1,"",0));
+
+	&set_label("start") unless $normal;
+	&comment("");
+	&comment("R0 section");
+
+	&R0(-2,$A,$B,$C,$D,$X, 0, 7,0xd76aa478);
+	&R0( 0,$D,$A,$B,$C,$X, 1,12,0xe8c7b756);
+	&R0( 0,$C,$D,$A,$B,$X, 2,17,0x242070db);
+	&R0( 0,$B,$C,$D,$A,$X, 3,22,0xc1bdceee);
+	&R0( 0,$A,$B,$C,$D,$X, 4, 7,0xf57c0faf);
+	&R0( 0,$D,$A,$B,$C,$X, 5,12,0x4787c62a);
+	&R0( 0,$C,$D,$A,$B,$X, 6,17,0xa8304613);
+	&R0( 0,$B,$C,$D,$A,$X, 7,22,0xfd469501);
+	&R0( 0,$A,$B,$C,$D,$X, 8, 7,0x698098d8);
+	&R0( 0,$D,$A,$B,$C,$X, 9,12,0x8b44f7af);
+	&R0( 0,$C,$D,$A,$B,$X,10,17,0xffff5bb1);
+	&R0( 0,$B,$C,$D,$A,$X,11,22,0x895cd7be);
+	&R0( 0,$A,$B,$C,$D,$X,12, 7,0x6b901122);
+	&R0( 0,$D,$A,$B,$C,$X,13,12,0xfd987193);
+	&R0( 0,$C,$D,$A,$B,$X,14,17,0xa679438e);
+	&R0( 1,$B,$C,$D,$A,$X,15,22,0x49b40821);
+
+	&comment("");
+	&comment("R1 section");
+	&R1(-1,$A,$B,$C,$D,$X,16, 5,0xf61e2562);
+	&R1( 0,$D,$A,$B,$C,$X,17, 9,0xc040b340);
+	&R1( 0,$C,$D,$A,$B,$X,18,14,0x265e5a51);
+	&R1( 0,$B,$C,$D,$A,$X,19,20,0xe9b6c7aa);
+	&R1( 0,$A,$B,$C,$D,$X,20, 5,0xd62f105d);
+	&R1( 0,$D,$A,$B,$C,$X,21, 9,0x02441453);
+	&R1( 0,$C,$D,$A,$B,$X,22,14,0xd8a1e681);
+	&R1( 0,$B,$C,$D,$A,$X,23,20,0xe7d3fbc8);
+	&R1( 0,$A,$B,$C,$D,$X,24, 5,0x21e1cde6);
+	&R1( 0,$D,$A,$B,$C,$X,25, 9,0xc33707d6);
+	&R1( 0,$C,$D,$A,$B,$X,26,14,0xf4d50d87);
+	&R1( 0,$B,$C,$D,$A,$X,27,20,0x455a14ed);
+	&R1( 0,$A,$B,$C,$D,$X,28, 5,0xa9e3e905);
+	&R1( 0,$D,$A,$B,$C,$X,29, 9,0xfcefa3f8);
+	&R1( 0,$C,$D,$A,$B,$X,30,14,0x676f02d9);
+	&R1( 1,$B,$C,$D,$A,$X,31,20,0x8d2a4c8a);
+
+	&comment("");
+	&comment("R2 section");
+	&R2( 0,-1,$A,$B,$C,$D,$X,32, 4,0xfffa3942);
+	&R2( 1, 0,$D,$A,$B,$C,$X,33,11,0x8771f681);
+	&R2( 2, 0,$C,$D,$A,$B,$X,34,16,0x6d9d6122);
+	&R2( 3, 0,$B,$C,$D,$A,$X,35,23,0xfde5380c);
+	&R2( 4, 0,$A,$B,$C,$D,$X,36, 4,0xa4beea44);
+	&R2( 5, 0,$D,$A,$B,$C,$X,37,11,0x4bdecfa9);
+	&R2( 6, 0,$C,$D,$A,$B,$X,38,16,0xf6bb4b60);
+	&R2( 7, 0,$B,$C,$D,$A,$X,39,23,0xbebfbc70);
+	&R2( 8, 0,$A,$B,$C,$D,$X,40, 4,0x289b7ec6);
+	&R2( 9, 0,$D,$A,$B,$C,$X,41,11,0xeaa127fa);
+	&R2(10, 0,$C,$D,$A,$B,$X,42,16,0xd4ef3085);
+	&R2(11, 0,$B,$C,$D,$A,$X,43,23,0x04881d05);
+	&R2(12, 0,$A,$B,$C,$D,$X,44, 4,0xd9d4d039);
+	&R2(13, 0,$D,$A,$B,$C,$X,45,11,0xe6db99e5);
+	&R2(14, 0,$C,$D,$A,$B,$X,46,16,0x1fa27cf8);
+	&R2(15, 1,$B,$C,$D,$A,$X,47,23,0xc4ac5665);
+
+	&comment("");
+	&comment("R3 section");
+	&R3(-1,$A,$B,$C,$D,$X,48, 6,0xf4292244);
+	&R3( 0,$D,$A,$B,$C,$X,49,10,0x432aff97);
+	&R3( 0,$C,$D,$A,$B,$X,50,15,0xab9423a7);
+	&R3( 0,$B,$C,$D,$A,$X,51,21,0xfc93a039);
+	&R3( 0,$A,$B,$C,$D,$X,52, 6,0x655b59c3);
+	&R3( 0,$D,$A,$B,$C,$X,53,10,0x8f0ccc92);
+	&R3( 0,$C,$D,$A,$B,$X,54,15,0xffeff47d);
+	&R3( 0,$B,$C,$D,$A,$X,55,21,0x85845dd1);
+	&R3( 0,$A,$B,$C,$D,$X,56, 6,0x6fa87e4f);
+	&R3( 0,$D,$A,$B,$C,$X,57,10,0xfe2ce6e0);
+	&R3( 0,$C,$D,$A,$B,$X,58,15,0xa3014314);
+	&R3( 0,$B,$C,$D,$A,$X,59,21,0x4e0811a1);
+	&R3( 0,$A,$B,$C,$D,$X,60, 6,0xf7537e82);
+	&R3( 0,$D,$A,$B,$C,$X,61,10,0xbd3af235);
+	&R3( 0,$C,$D,$A,$B,$X,62,15,0x2ad7d2bb);
+	&R3( 2,$B,$C,$D,$A,$X,63,21,0xeb86d391);
+
+	# &mov($tmp2,&wparam(0));	# done in the last R3
+	# &mov($tmp1,	&DWP( 0,$tmp2,"",0)); # done is the last R3
+
+	&add($A,$tmp1);
+	 &mov($tmp1,	&DWP( 4,$tmp2,"",0));
+
+	&add($B,$tmp1);
+	&mov($tmp1,	&DWP( 8,$tmp2,"",0));
+
+	&add($C,$tmp1);
+	&mov($tmp1,	&DWP(12,$tmp2,"",0));
+
+	&add($D,$tmp1);
+	&mov(&DWP( 0,$tmp2,"",0),$A);
+
+	&mov(&DWP( 4,$tmp2,"",0),$B);
+	&mov($tmp1,&swtmp(0)) unless $normal;
+
+	&mov(&DWP( 8,$tmp2,"",0),$C);
+	 &mov(&DWP(12,$tmp2,"",0),$D);
+
+	&cmp($tmp1,$X) unless $normal;			# check count
+	 &jae(&label("start")) unless $normal;
+
+	&pop("eax"); # pop the temp variable off the stack
+	 &pop("ebx");
+	&pop("ebp");
+	 &pop("edi");
+	&pop("esi");
+	 &ret();
+	&function_end_B($name);
+	}
+
