@@ -1217,13 +1217,6 @@ vlan_setup:
 		robo->ops->write_reg(robo, 0x30, 0x62, &val16, sizeof(val16));
 	}
 
-	/* Drop reserved bit, if any */
-	robo->ops->read_reg(robo, PAGE_CTRL, 0x2f, &val8, sizeof(val8));
-	if (robo->devid != DEVID5325 && val8 & (1 << 1)) {
-		val8 &= ~(1 << 1);
-		robo->ops->write_reg(robo, PAGE_CTRL, 0x2f, &val8, sizeof(val8));
-	}
-
 	/* Disable management interface access */
 	if (robo->ops->disable_mgmtif)
 		robo->ops->disable_mgmtif(robo);
@@ -1281,6 +1274,13 @@ bcm_robo_enable_switch(robo_info_t *robo)
 		robo->ops->write_reg(robo, PAGE_CTRL, REG_CTRL_MIIPO, &val8, sizeof(val8));
 		/* Init the EEE feature */
 		robo_eee_advertise_init(robo);
+	}
+
+	/* Drop reserved bit, if any */
+	robo->ops->read_reg(robo, PAGE_CTRL, 0x2f, &val8, sizeof(val8));
+	if (robo->devid != DEVID5325 && val8 & (1 << 1)) {
+		val8 &= ~(1 << 1);
+		robo->ops->write_reg(robo, PAGE_CTRL, 0x2f, &val8, sizeof(val8));
 	}
 
 	/* Disable management interface access */
