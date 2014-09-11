@@ -986,7 +986,9 @@ max_addresses - INTEGER
 	Default: 16
 
 disable_ipv6 - BOOLEAN
-	Disable IPv6 operation.
+	Disable IPv6 operation.  If accept_dad is set to 2, this value
+	will be dynamically set to TRUE if DAD fails for the link-local
+	address.
 	Default: FALSE (enable IPv6 operation)
 
 	When this value is changed from 1 to 0 (IPv6 is being enabled),
@@ -995,6 +997,13 @@ disable_ipv6 - BOOLEAN
 
 	When this value is changed from 0 to 1 (IPv6 is being disabled),
 	it will dynamically delete all address on the given interface.
+
+accept_dad - INTEGER
+	Whether to accept DAD (Duplicate Address Detection).
+	0: Disable DAD
+	1: Enable DAD (default)
+	2: Enable DAD, and disable IPv6 operation if MAC-based duplicate
+	   link-local address has been found.
 
 icmp/*:
 ratelimit - INTEGER
