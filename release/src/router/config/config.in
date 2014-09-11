@@ -379,6 +379,11 @@ config RTCONFIG_KERNEL_HFSPLUS
 	depends on RTCONFIG_HFS
 	default n
 
+config RTCONFIG_EXFAT
+	bool "exFAT Support"
+	depends on RTCONFIG_USB
+	default n
+
 config RTCONFIG_UFSD_DEBUG
 	bool "ufsd debug Support"
 	depends on RTCONFIG_PARAGON_NTFS || RTCONFIG_PARAGON_HFS
