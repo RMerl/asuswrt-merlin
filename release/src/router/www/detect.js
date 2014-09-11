@@ -1,4 +1,4 @@
-﻿// Use AJAX to detect LAN connection
+// Use AJAX to detect LAN connection
 function isWLclient(){  //detect login client is by wireless or wired
 	if(wireless.length > 0){
 		for(var i=0; i < wireless.length; i++){
