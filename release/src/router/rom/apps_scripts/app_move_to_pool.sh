@@ -51,7 +51,7 @@ for obj in $objs; do
 	fi
 
 	if [ "$obj" != "bin" ] && [ "$obj" != "lib" ] && [ ! -e "$APPS_INSTALL_PATH/$obj" ]; then
-		if [ "$APPS_MOUNTED_TYPE" != "vfat" ] && [ "$APPS_MOUNTED_TYPE" != "tfat" ]; then
+		if [ "$APPS_MOUNTED_TYPE" != "vfat" ] && [ "$APPS_MOUNTED_TYPE" != "tfat" ] && [ "$APPS_MOUNTED_TYPE" != "texfat" ]; then
 			cp -rf $APPS_PATH/$obj $APPS_INSTALL_PATH
 			if [ "$?" != "0" ]; then
 				nvram set apps_state_error=10
@@ -74,7 +74,7 @@ for obj in $objs; do
 	fi
 
 	if [ ! -e "$APPS_INSTALL_PATH/bin/$obj" ]; then
-		if [ "$APPS_MOUNTED_TYPE" != "vfat" ] && [ "$APPS_MOUNTED_TYPE" != "tfat" ]; then
+		if [ "$APPS_MOUNTED_TYPE" != "vfat" ] && [ "$APPS_MOUNTED_TYPE" != "tfat" ] && [ "$APPS_MOUNTED_TYPE" != "texfat" ]; then
 			cp -rf $APPS_PATH/bin/$obj $APPS_INSTALL_PATH/bin
 			if [ "$?" != "0" ]; then
 				nvram set apps_state_error=10
@@ -97,7 +97,7 @@ for obj in $objs; do
 	fi
 
 	if [ ! -e "$APPS_INSTALL_PATH/lib/$obj" ]; then
-		if [ "$APPS_MOUNTED_TYPE" != "vfat" ] && [ "$APPS_MOUNTED_TYPE" != "tfat" ]; then
+		if [ "$APPS_MOUNTED_TYPE" != "vfat" ] && [ "$APPS_MOUNTED_TYPE" != "tfat" ] && [ "$APPS_MOUNTED_TYPE" != "texfat" ]; then
 			cp -rf $APPS_PATH/lib/$obj $APPS_INSTALL_PATH/lib
 			if [ "$?" != "0" ]; then
 				nvram set apps_state_error=10
