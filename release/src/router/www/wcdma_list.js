@@ -1,4 +1,4 @@
-﻿/* combined all protocol into this database */
+/* combined all protocol into this database */
 function gen_country_list(){
 	countrylist = new Array();
 	countrylist.push(["Australia", "AU"]);
