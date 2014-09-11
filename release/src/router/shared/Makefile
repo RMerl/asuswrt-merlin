@@ -92,6 +92,7 @@ OBJS += $(TOP)/busybox/util-linux/volume_id/fat.o
 OBJS += $(TOP)/busybox/util-linux/volume_id/ntfs.o
 OBJS += $(TOP)/busybox/util-linux/volume_id/linux_swap.o
 OBJS += $(if $(HFS),$(TOP)/busybox/util-linux/volume_id/hfs.o)
+OBJS += $(if $(EXFAT),$(TOP)/busybox/util-linux/volume_id/exfat.o)
 endif
 
 ifeq ($(RTCONFIG_BCMARM),y)
