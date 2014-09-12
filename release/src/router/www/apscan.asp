@@ -1,4 +1,4 @@
-﻿child_macaddr = '<% nvram_get("lan_hwaddr"); %>';
+child_macaddr = '<% nvram_get("lan_hwaddr"); %>';
 _sw_mode = '<% nvram_get("sw_mode"); %>';
 wlc_state = '<% nvram_get("wlc_state"); %>';
 wlc_sbstate = '<% nvram_get("wlc_sbstate"); %>';

@@ -1,4 +1,4 @@
-﻿var selectedDiskOrder = -1;
+var selectedDiskOrder = -1;
 var selectedPoolOrder = -1;
 var selectedFolderOrder = -1;
 
