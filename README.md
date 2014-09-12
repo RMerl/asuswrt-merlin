@@ -17,6 +17,11 @@ At this time, the supported devices are:
 - RT-AC68U
 - RT-AC87U
 
+NOTE: all the "R" versions (for example RT-N66R) are the same as their 
+"U" counterparts, they are just different packages aimed at large 
+retailers.  The firmware is 100% compatible with both U and R versions 
+of the routers.  Same with the "W" variants that are simply white.
+
 Firmware builds can be downloaded from the official download site:
 
 http://www.lostrealm.ca/asuswrt-merlin/download
