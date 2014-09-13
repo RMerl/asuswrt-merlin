@@ -869,6 +869,11 @@ define RouterOptions
 	elif [ "$(APP)" = "network" ] && [ "$(TMOBILE)" != "y" ]; then \
 		sed -i "/RTCONFIG_APP_NETINSTALLED/d" $(1); \
 		echo "RTCONFIG_APP_NETINSTALLED=y" >>$(1); \
+        elif [ "$(APP)" = "nolocaldm" ] ; then \
+                sed -i "/RTCONFIG_APP_NETINSTALLED/d" $(1); \
+                echo "RTCONFIG_APP_NETINSTALLED=y" >>$(1); \
+                sed -i "/RTCONFIG_APP_NOLOCALDM/d" $(1); \
+                echo "RTCONFIG_APP_NOLOCALDM=y" >>$(1); \
 	fi; \
 	if [ "$(STRACE)" = "y" ] ; then \
 		sed -i "/RTCONFIG_STRACE/d" $(1); \

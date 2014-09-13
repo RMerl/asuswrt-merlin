@@ -434,6 +434,11 @@ config RTCONFIG_APP_NETINSTALLED
 	depends on RTCONFIG_USB
 	default n
 
+config RTCONFIG_APP_NOLOCALDM
+	bool "Apps are preinstalled except for Downloadmaster"
+	depends on RTCONFIG_APP_NETINSTALLED
+	default n
+
 config RTCONFIG_RALINK
 	bool "Ralink Chip Support"
 	default n

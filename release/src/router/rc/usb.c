@@ -499,7 +499,7 @@ void stop_usb_program(int mode)
 #endif
 
 #if defined(RTCONFIG_APP_PREINSTALLED) || defined(RTCONFIG_APP_NETINSTALLED)
-#if defined(RTCONFIG_APP_PREINSTALLED) && defined(RTCONFIG_CLOUDSYNC)
+#if (defined(RTCONFIG_APP_PREINSTALLED) || defined(RTCONFIG_APP_NOLOCALDM)) && defined(RTCONFIG_CLOUDSYNC)
 	if(pids("inotify") || pids("asuswebstorage") || pids("webdav_client") || pids("dropbox_client") || pids("ftpclient") || pids("sambaclient")){
 		_dprintf("%s: stop_cloudsync.\n", __FUNCTION__);
 		stop_cloudsync(-1);
@@ -974,7 +974,7 @@ int umount_mountpoint(struct mntent *mnt, uint flags)
 	//run_userfile(mnt->mnt_dir, ".autostop", mnt->mnt_dir, 5);
 	//run_nvscript("script_autostop", mnt->mnt_dir, 5);
 #if defined(RTCONFIG_APP_PREINSTALLED) || defined(RTCONFIG_APP_NETINSTALLED)
-#if defined(RTCONFIG_APP_PREINSTALLED) && defined(RTCONFIG_CLOUDSYNC)
+#if (defined(RTCONFIG_APP_PREINSTALLED) || defined(RTCONFIG_APP_NOLOCALDM)) && defined(RTCONFIG_CLOUDSYNC)
 	char word[PATH_MAX], *next_word;
 	char *b, *nvp, *nv;
 	int type = 0, enable = 0;
@@ -1299,7 +1299,7 @@ done:
 
 		run_custom_script_blocking("post-mount", mountpoint);
 
-#if defined(RTCONFIG_APP_PREINSTALLED) && defined(RTCONFIG_CLOUDSYNC)
+#if (defined(RTCONFIG_APP_PREINSTALLED) || defined(RTCONFIG_APP_NOLOCALDM)) && defined(RTCONFIG_CLOUDSYNC)
 		char word[PATH_MAX], *next_word;
 		char *cloud_setting, *b, *nvp, *nv;
 		int type = 0, rule = 0, enable = 0;
