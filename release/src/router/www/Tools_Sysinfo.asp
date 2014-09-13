@@ -86,7 +86,7 @@ function update_temperatures(){
 			if (band5g_support) {
 				code += "&nbsp;&nbsp;-&nbsp;&nbsp;<b>5 GHz:</b> <span>" + curr_coreTmp_5_raw + "</span>";
 			}
-			if ((based_modelid == "RT-AC56U") || (based_modelid == "RT-AC68U") || (based_modelid == "RT-AC87U")) {
+			if ((based_modelid == "RT-N18U") || (based_modelid == "RT-AC56U") || (based_modelid == "RT-AC56S") || (based_modelid == "RT-AC68U") || (based_modelid == "RT-AC87U")) {
 				code +="&nbsp;&nbsp;-&nbsp;&nbsp;<b>CPU:</b> <span>" + curr_coreTmp_cpu +"&deg;C</span>";
 			}
 			$("temp_td").innerHTML = code;
@@ -191,7 +191,7 @@ function show_etherstate(){
 
 			if (tmpPort == "8") {		// CPU Port
 				continue;
-			} else if (based_modelid == "RT-AC56U") {
+			} else if ((based_modelid == "RT-AC56U") || (based_modelid == "RT-AC56S")) {
 				tmpPort++;		// Port starts at 0
 				if (tmpPort == "5") tmpPort = 0;	// Last port is WAN
 			} else if (based_modelid == "RT-AC87U") {
