@@ -33,7 +33,7 @@ package/Makefile:
 
 clean:
 	-[ ! -f package/Makefile ] || $(MAKE) -C package $@
-	-rm -f  config.log package/config.status package/config.log package/ifslinux/config.h package/*.ko package/Makefile
+	-rm -f config.log package/config.status package/config.log package/ifslinux/config.h package/*.ko package/Makefile
 
 install:
 	cp -f package/$(BINARY1) $(DSTDIR)
