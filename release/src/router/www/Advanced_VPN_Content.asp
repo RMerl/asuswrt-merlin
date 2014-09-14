@@ -202,7 +202,6 @@ function applyRule(){
 			document.form.action_script.value = "restart_vpnd";
 			document.form.pptpd_clientlist.value = get_group_value("pptpd");
 			document.form.vpn_serverx_clientlist.disabled = true;
-			document.form.pptpd_enable.value = "1";
 
 	}else if (document.form.VPNServer_mode.value == "openvpn"){
 			document.form.action_script.value = "restart_vpnd";
