@@ -49,14 +49,14 @@ Here is a list of features that Asuswrt-merlin brings over the original
 firmware:
 
 System:
-   - Based on 3.0.0.4.376_2061 sources (from RT-AC87U) from Asus
+   - Based on 3.0.0.4.376_2678 sources (from RT-AC87U) from Asus
    - Various bugfixes and optimizations
    - Some components were updated to newer versions, for improved
      stability and security
    - User scripts that run on specific events
    - Cron jobs
    - Ability to customize the config files used by the router services
-   - LED control - put your Dark Knight in Stealth Mode by turning off 
+   - LED control - put your router in "Stealth Mode" by turning off 
      all LEDs
    - Entware easy setup script (alternative to Optware - the two are 
      mutually exclusive) (not available on RT-AC56/RT-AC68/RT-AC87)
@@ -581,6 +581,8 @@ History
    - CHANGED: Re-increased max allowed FTP user limit to 10 (was reverted
               to 5 in the GPL merge when the setting was moved to the
               FTP page)
+   - FIXED: PPTPD was getting enabled every time you clicked Apply while on 
+            the PPTPD VPN Server page
 
 
 376.46 (26-Aug-2014)
