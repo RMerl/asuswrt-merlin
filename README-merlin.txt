@@ -1,5 +1,5 @@
-Asuswrt-Merlin - build 376.47 (xx-xxx-2014)
-===========================================
+Asuswrt-Merlin - build 376.47-Beta 1 (14-Sept-2014)
+===================================================
 
 About
 -----
@@ -567,7 +567,7 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
-376.47 (xx-xxx-2014)
+376.47 Beta 1 (14-Sept-2014)
    - NEW: Merged with Asus GPL 2678 (AC87)
    - NEW: Report Quantenna FW version on Sysinfo page
    - NEW: Enabled experimental FTP and Samba Cloud Sync support in AiCloud.
