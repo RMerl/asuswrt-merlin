@@ -353,6 +353,12 @@ struct qtn_baparams_args {
 
 #define QTN_BAND_FREQ			(0xFF << 0)
 #define QTN_BAND_FREQ_S			(0)
+#define QTN_BAND_PWR20M			(0xFF << 8)
+#define QTN_BAND_PWR20M_S		(8)
+#define QTN_BAND_PWR40M			(0xFF << 16)
+#define QTN_BAND_PWR40M_S		(16)
+#define QTN_BAND_PWR80M			(0xFF << 24)
+#define QTN_BAND_PWR80M_S		(24)
 
 #define	IOCTL_HLINK_DEVATTACH		1	/* Attach device */
 #define	IOCTL_HLINK_DEVDETACH		2	/* Detach device */
@@ -377,6 +383,11 @@ enum {
 	BW_HT80 = 80,
 	BW_HT160 = 160
 };
+
+/* QTN bandwidth defination */
+#define QTN_BW_20M	0
+#define QTN_BW_40M	1
+#define QTN_BW_80M	2
 
 /* Fixed bw command offset */
 #define QTN_BW_FIXED_BW		0x3
