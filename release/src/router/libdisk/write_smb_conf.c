@@ -290,6 +290,7 @@ int main(int argc, char *argv[])
 	fprintf(fp, "host msdfs = no\n");		// ASUS add
 	fprintf(fp, "strict allocate = No\n");		// ASUS add
 //	fprintf(fp, "mangling method = hash2\n");	// ASUS add
+	fprintf(fp, "wide links = no\n"); // ASUS add
 	fprintf(fp, "bind interfaces only = yes\n");    // ASUS add
 
 #ifndef RTCONFIG_BCMARM
@@ -676,6 +677,7 @@ confpage:
 			}
 
         	}
+        if(fp != NULL)
 		fclose(fp);
 
 		if (check_if_file_exist("/jffs/configs/smb.conf")) {
