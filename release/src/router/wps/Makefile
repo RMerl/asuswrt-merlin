@@ -9,7 +9,7 @@
 # or duplicated in any form, in whole or in part, without the prior
 # written permission of Broadcom Corporation.
 #
-# $Id: Makefile 343005 2012-07-05 08:39:28Z $
+# $Id: Makefile 372004 2012-11-30 03:46:58Z $
 #
 
 REBUILD = $(shell if [ -f "prebuilt/wps_monitor" ]; then echo 0; else echo 1; fi)
@@ -79,7 +79,8 @@ wpssubdirs := $(addprefix wps_,$(shell echo "$(VLIST)" | tr A-Z a-z))
 CFLAGS += -DWPS_AP_M2D
 
 # Enable WWTP option cause the security hole described in WSC 2.0 specification section 4.3.1
-#CFLAGS += -DWPS_ADDCLIENT_WWTP
+# But WPS 2 Test plan 4.1.13 still need this feature support.
+CFLAGS += -DWPS_ADDCLIENT_WWTP
 
 CFLAGS += -Wall -Wnested-externs -D_REENTRANT -D__linux__
 #CFLAGS += -Werror
@@ -194,8 +195,8 @@ clean:
 	find . \( -name '*.[od]' -o -name '*.tmp' \) -type f -print | xargs rm -f
 	find -name obj | xargs rm -rf
 	rm -rf lib
-#	find -name wps_monitor | xargs rm -f
-#	rm -rf prebuilt
+	find -name wps_monitor | xargs rm -f
+	rm -rf prebuilt
 
 # install
 install: all
