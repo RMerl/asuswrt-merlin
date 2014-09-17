@@ -152,7 +152,7 @@ size: httpd
 	mipsel-uclibc-nm --print-size --size-sort httpd
 
 # handle prebuilt object here
-ifneq ($(wildcard ./prebuild/),)
+ifneq ($(wildcard, ./prebuild),)
 ifeq ($(RTCONFIG_HTTPS),y)
 pwenc.o:
 	@-cp -f ./prebuild/pwenc$(BCMEX).o pwenc.o
