@@ -892,7 +892,7 @@ function clean_scorebar(obj){
 function check_sshd_enable(obj_value){
 	var state;
 
-	if (flag == 1)
+	if (obj_value == 1)
 		state = "";
 	else
 		state = "none";
@@ -1040,8 +1040,8 @@ function check_sshd_enable(obj_value){
 				<tr>
 					<th>Enable SSH</th>
 					<td>
-						<input type="radio" name="sshd_enable" class="input" onClick="refresh_sshd_options(1);" value="1" <% nvram_match("sshd_enable", "1", "checked"); %>><#checkbox_Yes#>
-						<input type="radio" name="sshd_enable" class="input" onClick="refresh_sshd_options(0);" value="0" <% nvram_match("sshd_enable", "0", "checked"); %>><#checkbox_No#>
+						<input type="radio" name="sshd_enable" class="input" onClick="check_sshd_enable(this.value);" value="1" <% nvram_match("sshd_enable", "1", "checked"); %>><#checkbox_Yes#>
+						<input type="radio" name="sshd_enable" class="input" onClick="check_sshd_enable(this.value);" value="0" <% nvram_match("sshd_enable", "0", "checked"); %>><#checkbox_No#>
 					</td>
 				</tr>
 
