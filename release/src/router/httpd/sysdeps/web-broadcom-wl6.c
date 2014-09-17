@@ -1524,7 +1524,7 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 		if (wl_ioctl(name, WLC_GET_RSSI, &scb_val, sizeof(scb_val_t)))
 			ret += websWrite(wp, "%-8s", "");
 		else
-			ret += websWrite(wp, " %4ddBm ", scb_val.val);
+			ret += websWrite(wp, "%4ddBm ", scb_val.val);
 
 		sta_info_t *sta = wl_sta_info(name, &auth->ea[i]);
 		if (sta && (sta->flags & WL_STA_SCBSTATS))
@@ -1656,7 +1656,7 @@ ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 				if (wl_ioctl(name, WLC_GET_RSSI, &scb_val, sizeof(scb_val_t)))
 					ret += websWrite(wp, "%-8s", "");
 				else
-					ret += websWrite(wp, " %4ddBm ", scb_val.val);
+					ret += websWrite(wp, "%4ddBm ", scb_val.val);
 
 				sta_info_t *sta = wl_sta_info(name, &auth->ea[ii]);
 				if (sta && (sta->flags & WL_STA_SCBSTATS))
