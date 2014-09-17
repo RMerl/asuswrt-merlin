@@ -572,6 +572,10 @@ History
    - CHANGED: Moved OpenVPN postconf scripts right before server/client
               gets started, so you can also use them to modify the other 
               generated files such as the exported ovpn config file.
+  - FIXED: SSHD options visibility (patch by pinwing)
+  - FIXED: EMF/IGMP settings were reverting to the select profile
+           default (Asus bug introduced in GPL 2678)
+  - FIXED: PPTP account list failed to display (regression in Beta 1)
 
 
 376.47 Beta 1 (14-Sept-2014)
