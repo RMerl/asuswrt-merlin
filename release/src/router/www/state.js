@@ -1,4 +1,4 @@
-﻿/* Internet Explorer lacks this array method */
+/* Internet Explorer lacks this array method */
 if (!('indexOf' in Array.prototype)) {
 	Array.prototype.indexOf= function(find, i /*opt*/) {
 		if (i===undefined) i= 0;
@@ -7,6 +7,7 @@ if (!('indexOf' in Array.prototype)) {
 		for (var n= this.length; i<n; i++)
 			if (i in this && this[i]===find)
 				return i;
+		}
 		return -1;
 	};
 }
