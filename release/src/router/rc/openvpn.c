@@ -314,11 +314,6 @@ void start_vpnclient(int clientNum)
 	fprintf(fp, "%s", nvram_safe_get(&buffer[0]));
 	fclose(fp);
 
-	// Run postconf customs cript on it if it exists
-	sprintf(&buffer[0], "openvpnclient%d.postconf", clientNum);
-	sprintf(&buffer2[0], "/etc/openvpn/client%d/config.ovpn", clientNum);
-	run_postconf(&buffer[0], &buffer2[0]);
-
 	vpnlog(VPN_LOG_EXTRA,"Done writing config file");
 
 	// Write certification and key files
@@ -387,6 +382,11 @@ void start_vpnclient(int clientNum)
 		}
 	}
 	vpnlog(VPN_LOG_EXTRA,"Done writing certs/keys");
+
+	// Run postconf custom script on it if it exists
+	sprintf(&buffer[0], "openvpnclient%d.postconf", clientNum);
+	sprintf(&buffer2[0], "/etc/openvpn/client%d/config.ovpn", clientNum);
+	run_postconf(&buffer[0], &buffer2[0]);
 
 	// Start the VPN client
 #ifdef RTCONFIG_BCMARM
@@ -983,11 +983,6 @@ void start_vpnserver(int serverNum)
 	fprintf(fp, "%s", nvram_safe_get(&buffer[0]));
 	fclose(fp);
 
-	// Run postconf customs cript on it if it exists
-	sprintf(&buffer[0], "openvpnserver%d.postconf", serverNum);
-	sprintf(&buffer2[0], "/etc/openvpn/server%d/config.ovpn", serverNum);
-	run_postconf(&buffer[0], &buffer2[0]);
-
 	vpnlog(VPN_LOG_EXTRA,"Done writing server config file");
 
 	// Write certification and key files
@@ -1234,6 +1229,11 @@ void start_vpnserver(int serverNum)
 	fprintf(fp_client, "nobind\n");
 	fclose(fp_client);
 	vpnlog(VPN_LOG_EXTRA,"Done writing client config file");
+
+	// Run postconf custom script on it if it exists
+	sprintf(&buffer[0], "openvpnserver%d.postconf", serverNum);
+	sprintf(&buffer2[0], "/etc/openvpn/server%d/config.ovpn", serverNum);
+	run_postconf(&buffer[0], &buffer2[0]);
 
 #ifdef RTCONFIG_BCMARM
         if (cpu_num > 1)
