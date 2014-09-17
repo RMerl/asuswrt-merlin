@@ -3191,7 +3191,7 @@ static int get_cpu_temperature(int eid, webs_t wp, int argc, char_t **argv)
 	int temperature = -1;
 
 	if ((fp = fopen("/proc/dmu/temperature", "r")) != NULL) {
-		if (fscanf(fp, "%*s %*s %*s %d", &temperature) != 1)
+		if (fscanf(fp, "%*s %*s %*s %d", &temperature) != 1);
 			temperature = -1;
 		fclose(fp);
 	}
