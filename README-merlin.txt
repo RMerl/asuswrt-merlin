@@ -1,5 +1,5 @@
-Asuswrt-Merlin - build 376.47-Beta 1 (14-Sept-2014)
-===================================================
+Asuswrt-Merlin - build 376.47 (xx-xxx-2014)
+============================================
 
 About
 -----
@@ -567,6 +567,13 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
+376.47 Beta 2 (xx-xxx-2014)
+   - NEW: Added sha256 and sha512 HMAC support to dropbear (SSH)
+   - CHANGED: Moved OpenVPN postconf scripts right before server/client
+              gets started, so you can also use them to modify the other 
+              generated files such as the exported ovpn config file.
+
+
 376.47 Beta 1 (14-Sept-2014)
    - NEW: Merged with Asus GPL 2678 (AC87)
    - NEW: Report Quantenna FW version on Sysinfo page
