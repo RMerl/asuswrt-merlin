@@ -23,6 +23,8 @@ var wireless = [<% wl_auth_list(); %>];	// [[MAC, associated, authorized], ...]
 
 var original_switch_stb_x = '<% nvram_get("switch_stb_x"); %>';
 var original_switch_wantag = '<% nvram_get("switch_wantag"); %>';
+var original_emf_enable = '<% nvram_get("emf_enable"); %>';
+var original_mr_enable = '<% nvram_get("mr_enable_x"); %>';
 var original_switch_wan0tagid = '<%nvram_get("switch_wan0tagid"); %>';
 var original_switch_wan0prio  = '<%nvram_get("switch_wan0prio"); %>';
 var original_switch_wan1tagid = '<%nvram_get("switch_wan1tagid"); %>';
@@ -49,6 +51,8 @@ function initial(){
 		ISP_Profile_Selection(original_switch_wantag);
 	}
 	document.form.switch_stb_x.value = original_switch_stb_x;	
+	document.form.emf_enable.value = original_emf_enable;
+	document.form.mr_enable_x.value = original_mr_enable;
 
 	disable_udpxy();
 	
