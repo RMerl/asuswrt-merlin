@@ -358,7 +358,7 @@ int check_tc_firmware_crc()
 // There are two firmware on single TRX.  One is router firmware and the other is modem firmware.
 // Router firmware could upgrade or downgrade depends on end-user. 
 // For ADSL firmware , we will allow end-user to upgrade only because modem firmware updating is really dangerous.
-// That¡¦s okay even uses new modem firmware on old router firmware.
+// ThatÂ¡Â¦s okay even uses new modem firmware on old router firmware.
 // End-user could downgrade router firmware below 1.021 first and then upgrade old TRX again. The modem firmware will be downgraded.
 
 	// get ver number from trx
@@ -683,17 +683,3 @@ int compare_linux_image(void)
 	fprintf(stderr, "trx different\n");
 	return -1;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
