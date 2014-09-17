@@ -45,6 +45,9 @@ function initial(){
 			document.form.dslx_rmvlan_check.checked = false;
 	}
 	show_menu();
+	if(!dsl_support) {
+		ISP_Profile_Selection(original_switch_wantag);
+	}
 	document.form.switch_stb_x.value = original_switch_stb_x;	
 
 	disable_udpxy();
