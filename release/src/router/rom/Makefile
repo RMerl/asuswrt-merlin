@@ -81,8 +81,9 @@ ifeq ($(RTCONFIG_HTTPS),y)
 	cp -f webs_scripts/public.pem $(INSTALLDIR)/usr/sbin/public.pem
 endif
 endif
+
 ifeq ($(RTCONFIG_USB),y)
-# 	cp -f others/usbtest.sh $(INSTALLDIR)/usr/sbin/usbtest.sh
+	cp -f others/usbtest.sh $(INSTALLDIR)/usr/sbin/usbtest.sh
 endif
 
 	# remove comments, compress whitespace
