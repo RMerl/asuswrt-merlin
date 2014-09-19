@@ -5518,7 +5518,12 @@ wps_finish:
                 if(action_para)
                         nvram_set("vpn_server_unit", action_para);
 
-                websRedirect(wp, current_url);
+		action_para = websGetVar(wp, "VPNServer_mode", "");
+
+		if(action_para)
+			nvram_set("VPNServer_mode", action_para);
+
+		websRedirect(wp, current_url);
         }
         else if (!strcmp(action_mode, "change_vpn_client_unit"))
         {
