@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 376.47 (xx-xxx-2014)
+Asuswrt-Merlin - build 376.47 (20-Sept-2014)
 ============================================
 
 About
@@ -60,6 +60,8 @@ System:
      all LEDs
    - Entware easy setup script (alternative to Optware - the two are 
      mutually exclusive) (not available on RT-AC56/RT-AC68/RT-AC87)
+   - Experimental SNMP support (from Asus)
+
 
 Disk sharing:
    - Enable/disable the use of shorter share names
@@ -567,7 +569,7 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
-376.47 Beta 2 (xx-xxx-2014)
+376.47 (20-Sept-2014)
    - NEW: Added sha256 and sha512 HMAC support to dropbear (SSH)
    - CHANGED: Moved OpenVPN postconf scripts right before server/client
               gets started, so you can also use them to modify the other 
@@ -576,6 +578,10 @@ History
   - FIXED: EMF/IGMP settings were reverting to the select profile
            default (Asus bug introduced in GPL 2678)
   - FIXED: PPTP account list failed to display (regression in Beta 1)
+  - FIXED: VPN server page was switching back to PPTP when changing
+           OpenVPN unit and you were initially on the PPTP page
+  - FIXED: Activity indicator wasn't shown during a networkmap
+           scan
 
 
 376.47 Beta 1 (14-Sept-2014)
@@ -586,7 +592,7 @@ History
           fully functional yet.
    - NEW: Enabled experimental SNMPD support, under Administration -> SNMP.
           This feature is still in development by Asus, so it might not be
-          fully functional yet.
+          fully functional yet. (not available on the RT-N16)
    - NEW: Added option to enable WAN access to SNMPD, defaults to disabled.
           (Asus's implementation has it open to the WAN by default)
    - CHANGED: Re-increased max allowed FTP user limit to 10 (was reverted
