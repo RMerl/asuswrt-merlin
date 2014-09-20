@@ -389,7 +389,7 @@ function showpptpd_clientlist(){
 						pptpd_clientlist_col[1]=pptpd_clientlist_col[1].substring(0, 30)+"...";
 						code +='<td width="35%" title="'+overlib_str1[i]+'">'+ pptpd_clientlist_col[1] +'</td>';
 					}else
-						code +='<td width="35%" title="'+pptpd_clientlist_col[0]+'">'+ pptpd_clientlist_col[0] +'</td>';
+						code +='<td width="35%" title="'+pptpd_clientlist_col[1]+'">'+ pptpd_clientlist_col[1] +'</td>';
 				} 
 			}
 			code +='<td width="15%">';
