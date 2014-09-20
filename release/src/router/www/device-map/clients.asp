@@ -200,7 +200,7 @@ function updateClientList(e){
 				drawClientList();
 				parent.show_client_status(totalClientNum.online);
 			}
-			$("loadingIcon").style.display = (mapscanning == 1 ? "" : "none");
+
 			setTimeout("updateClientList();", 3000);				
 		}    
 	});
