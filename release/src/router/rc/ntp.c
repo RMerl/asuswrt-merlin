@@ -42,6 +42,7 @@
 
 static char servers[32];
 static int sig_cur = -1;
+static int server_idx = 0;
 
 static void ntp_service()
 {
@@ -75,26 +76,9 @@ static void ntp_service()
 
 static void catch_sig(int sig)
 {
-	static int server_idx = 0;
-
 	sig_cur = sig;
 
-	if (sig == SIGALRM)
-	{
-		if (strlen(nvram_safe_get("ntp_server0")))
-		{
-			if (server_idx)
-				strcpy(servers, nvram_safe_get("ntp_server1"));
-			else
-				strcpy(servers, nvram_safe_get("ntp_server0"));
-			server_idx = (server_idx + 1) % 2;
-		}
-		else strcpy(servers, "");
-
-		if (pids("ntpclient"))
-			killall_tk("ntpclient");
-	}
-	else if (sig == SIGTSTP)
+	if (sig == SIGTSTP)
 	{
 		ntp_service();
 	}
@@ -109,6 +93,8 @@ int ntp_main(int argc, char *argv[])
 {
 	FILE *fp;
 	int ret;
+	pid_t pid;
+	char *args[] = {"ntpclient", "-h", servers, "-i", "3", "-l", "-s", NULL};
 
 	strcpy(servers, nvram_safe_get("ntp_server0"));
 
@@ -120,7 +106,6 @@ int ntp_main(int argc, char *argv[])
 
 	dbg("starting ntp...\n");
 
-	signal(SIGALRM, catch_sig);
 	signal(SIGTSTP, catch_sig);
 	signal(SIGTERM, catch_sig);
 	signal(SIGCHLD, chld_reap);
@@ -130,23 +115,33 @@ int ntp_main(int argc, char *argv[])
 
 	while (1)
 	{
-		if ((sig_cur != SIGALRM) && (sig_cur != -1))
+		if (sig_cur != -1)
+		{
 			pause();
-		else if (nvram_get_int("sw_mode") == SW_MODE_ROUTER
-				&& !(  nvram_match("link_internet", "1") 
-		        ))
+		}
+		else if (nvram_get_int("sw_mode") == SW_MODE_ROUTER &&
+			!nvram_match("link_internet", "1"))
 		{
 			sleep(NTP_RETRY_INTERVAL);
 		}
 		else if (strlen(servers))
 		{
-			pid_t pid;
-			char *args[] = {"ntpclient", "-h", servers, "-i", "3", "-l", "-s", NULL};
-//			dbg("run ntpclient\n");
+			stop_ntpc();
 
 			nvram_set("ntp_server_tried", servers);
 			ret = _eval(args, NULL, 0, &pid);
 			sleep(SECONDS_TO_WAIT);
+
+			if (strlen(nvram_safe_get("ntp_server0")))
+			{
+				if (server_idx)
+					strcpy(servers, nvram_safe_get("ntp_server1"));
+				else
+					strcpy(servers, nvram_safe_get("ntp_server0"));
+				server_idx = (server_idx + 1) % 2;
+			}
+				else strcpy(servers, "");
+			args[2] = servers;
 
 			if(nvram_get_int("ntp_ready"))
 			{
@@ -178,11 +173,12 @@ int ntp_main(int argc, char *argv[])
 			}
 			else
 			{
-				refresh_ntpc();
-				//sleep(NTP_RETRY_INTERVAL - SECONDS_TO_WAIT);
-				sleep(SECONDS_TO_WAIT);
+				sleep(NTP_RETRY_INTERVAL - SECONDS_TO_WAIT);
 			}
 		}
-		else pause();
+		else
+		{
+			pause();
+		}
 	}
 }

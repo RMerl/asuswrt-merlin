@@ -17,8 +17,6 @@
 <script type="text/javascript" src="/detect.js"></script>
 <script>
 <% login_state_hook(); %>
-<% disk_pool_mapping_info(); %>
-<% available_disk_names_and_sizes(); %>
 <% get_AiDisk_status(); %>
 
 wan_route_x = '<% nvram_get("wan_route_x"); %>';
@@ -168,12 +166,19 @@ function submitChangePermission(account, permission, protocol){
 	if(accounts.length > 0)//*/
 	if($("dummyShareway").value == "1"){
 		$("dummyShareway").value = "";
-		
-		pools = pool_devices();
-		if(pools && pools.length > 0)
-			folderlist = get_sharedfolder_in_pool(pools[0]);
-		
-		submitChangePermission('<% nvram_char_to_ascii("", "http_username"); %>', "3", "ftp");
+
+	 	require(['/require/modules/diskList.js'], function(diskList){
+			pools = [];
+			for(var i=0; i < usbDevicesList.length; i++){
+				for(var j=0; j < usbDevicesList[i].partition.length; j++){
+					pools.push(usbDevicesList[i].partition[j].mountPoint);
+				}
+			}
+			if(pools && pools.length > 0)
+				folderlist = get_sharedfolder_in_pool(pools[0]);
+			
+			submitChangePermission('<% nvram_char_to_ascii("", "http_username"); %>', "3", "ftp");
+	 	});
 	}
 	else
 		switchShareMode("ftp", "account");

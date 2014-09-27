@@ -129,7 +129,6 @@ function high_channel(a, b)
         return a > b ? a : b;
 }
 
-<% available_disk_names_and_sizes(); %>
 function overHint(itemNum){
 	var statusmenu = "";
 	var title2 = 0;
@@ -250,19 +249,22 @@ function overHint(itemNum){
 
 	// printer
 	if(itemNum == 6){
-		for(var i=0; i<usbDevices.length; i++){
-			if(usbDevices[i].deviceType != "printer") continue;
+	 	require(['/require/modules/diskList.js'], function(diskList){
+	 		var usbDevicesList = diskList.list();
+			for(var i=0; i<usbDevicesList.length; i++){
+				if(usbDevicesList[i].deviceType != "printer") continue;
 
-			statusmenu += "<div class='StatusHint' style='margin-top:8px'>" + usbDevices[i].deviceName + ":</div>";
-			if(usbDevices[i].serialNum == '<% nvram_get("u2ec_serial"); %>'){
-				statusmenu += "<div><#CTL_Enabled#></div>";
+				statusmenu += "<div class='StatusHint' style='margin-top:8px'>" + usbDevicesList[i].deviceName + ":</div>";
+				if(usbDevicesList[i].serialNum == '<% nvram_get("u2ec_serial"); %>'){
+					statusmenu += "<div><#CTL_Enabled#></div>";
 
-				if(monoClient != "monoClient=")
-					statusmenu += "<div><#Printing_button_item#>" + monoClient.substring(11, monoClient.length) + "</div>";
+					if(monoClient != "monoClient=")
+						statusmenu += "<div><#Printing_button_item#>" + monoClient.substring(11, monoClient.length) + "</div>";
+				}
+				else
+					statusmenu += "<div><#CTL_Disabled#></div>";
 			}
-			else
-				statusmenu += "<div><#CTL_Disabled#></div>";
-		}
+		});
 	}
 	if(itemNum == 5){
 		statusmenu = "<span class='StatusHint'><#no_printer_detect#></span>";	
@@ -401,8 +403,10 @@ function overHint(itemNum){
 					statusmenu = "<span class='StatusHint'><#APSurvey_msg_connected#></span><br><br>";
 					if(wlc_band == 0)	
 						statusmenu += "<b>Link rate: </b>"+ data_rate_info_2g;
-					else
+					else if(wlc_band == 1)
 						statusmenu += "<b>Link rate: </b>"+ data_rate_info_5g;
+					else if(wlc_band == 2)
+						statusmenu += "<b>Link rate: </b>"+ data_rate_info_5g_2;
 				}	
 				else{
 					if(_wlc_sbstate == "wlc_sbstate=2")
@@ -416,28 +420,35 @@ function overHint(itemNum){
 
 	// usb storage
 	if(itemNum == 2){
-		if(!usbDevices.length){
-			statusmenu = "<div class='StatusHint'><#no_usb_found#></div>";}
-		else{
-			statusmenu = "";
-			for(var i=0; i<usbDevices.length; i++){
-				if(usbDevices[i].deviceType == "printer") continue;
+	 	require(['/require/modules/diskList.js'], function(diskList){
+	 		var usbDevicesList = diskList.list();
 
-				statusmenu += "<div class='StatusHint' style='margin-top:8px'>" + usbDevices[i].deviceName + ":</div>";
-				statusmenu += "<div>" + usbDevices[i].deviceType.charAt(0).toUpperCase() + usbDevices[i].deviceType.substring(1).toLowerCase() + "</div>";
+			if(!usbDevicesList.length){
+				statusmenu = "<div class='StatusHint'><#no_usb_found#></div>";
+			}
+			else{
+				statusmenu = "";
+				for(var i=0; i<usbDevicesList.length; i++){
+					if(usbDevicesList[i].deviceType == "printer") continue;
 
-				if(usbDevices[i].deviceType == "storage" && usbDevices[i].mountNumber == 0)
-					statusmenu += "<div><#DISK_UNMOUNTED#></div>";
-				else if(usbDevices[i].hasErrPart)
-					statusmenu += "<div><#diskUtility_crash_found#></div>";
-				else{				
-					if(usbDevices[i].hasAppDev)
-						statusmenu += "<div><#menu5_4#></div>";
-					if(usbDevices[i].hasTM)
-						statusmenu += "<div>Time Machine</div>";
+					statusmenu += "<div class='StatusHint' style='margin-top:8px'>" + usbDevicesList[i].deviceName + ":</div>";
+					statusmenu += "<div>" + usbDevicesList[i].deviceType.charAt(0).toUpperCase() + usbDevicesList[i].deviceType.substring(1).toLowerCase() + "</div>";
+
+					if(usbDevicesList[i].deviceType == "storage" && usbDevicesList[i].mountNumber == 0)
+						statusmenu += "<div><#DISK_UNMOUNTED#></div>";
+					else if(usbDevicesList[i].hasErrPart)
+						statusmenu += "<div><#diskUtility_crash_found#></div>";
+					else{				
+						if(usbDevicesList[i].hasAppDev)
+							statusmenu += "<div><#menu5_4#></div>";
+						if(usbDevicesList[i].hasTM)
+							statusmenu += "<div>Time Machine</div>";
+					}
 				}
 			}
-		}
+
+			return overlib(statusmenu, OFFSETX, -160, LEFT, DELAY, 400);
+		});
 	}
 
 	return overlib(statusmenu, OFFSETX, -160, LEFT, DELAY, 400);
@@ -504,21 +515,25 @@ function openHint(hint_array_id, hint_show_id, flag){
 			_caption = "Internet Status";
 		}
 		else if(hint_show_id == 2){
-			var statusmenu = "";
+			statusmenu = "";
 
-			for(var i=0; i<usbDevices.length; i++){
-				if(usbDevices[i].mountNumber > 0){
-					statusmenu += "<div style='margin-top:2px;' class='StatusClickHint' onclick='remove_disk("+ usbDevices[i].node +");' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'>";
-					statusmenu += "<#Eject_usb_disk#> <span style='font-weight:normal'>"+ usbDevices[i].deviceName +"</span></div>";
+		 	require(['/require/modules/diskList.js'], function(diskList){
+		 		var usbDevicesList = diskList.list();
+				for(var i=0; i<usbDevicesList.length; i++){
+					if(usbDevicesList[i].mountNumber > 0){
+						statusmenu += "<div style='margin-top:2px;' class='StatusClickHint' onclick='remove_disk("+ usbDevicesList[i].node +");' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'>";
+						statusmenu += "<#Eject_usb_disk#> <span style='font-weight:normal'>"+ usbDevicesList[i].deviceName +"</span></div>";
+					}
 				}
-			}
 
-			if(statusmenu == "")
-				statusmenu = "<span class='StatusHint'><#DISK_UNMOUNTED#></span>";
-			else if(statusmenu.howMany("remove_disk") > 1)
-				statusmenu += "<div style='margin-top:2px;' class='StatusClickHint' onclick='remove_disk(\"all\");' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'>Eject all USB disks</div>";
+				if(statusmenu == "")
+					statusmenu = "<span class='StatusHint'><#DISK_UNMOUNTED#></span>";
+				else if(statusmenu.howMany("remove_disk") > 1)
+					statusmenu += "<div style='margin-top:2px;' class='StatusClickHint' onclick='remove_disk(\"all\");' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'>Eject all USB disks</div>";
 
 				_caption = "USB storage";
+				return overlib(statusmenu, OFFSETX, -160, LEFT, STICKY, CAPTION, " ", CLOSETITLE, '');
+			});
 		}
 		else if(hint_show_id == 1){
 			if(hadPlugged("printer"))

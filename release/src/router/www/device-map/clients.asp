@@ -194,12 +194,14 @@ function updateClientList(e){
 			setTimeout("updateClientList();", 1000);
 		},
 		success: function(response){
-			document.getElementById("loadingIcon").style.visibility = (networkmap_fullscan == 1) ? "visible" : "hidden";
+			document.getElementById("loadingIcon").style.visibility = (networkmap_fullscan == 1 && parent.manualUpdate) ? "visible" : "hidden";
 
 			if(isJsonChanged(originData, originDataTmp)){
 				drawClientList();
 				parent.show_client_status(totalClientNum.online);
 			}
+
+			if(networkmap_fullscan == 0) parent.manualUpdate = false; 
 
 			setTimeout("updateClientList();", 3000);				
 		}    
@@ -320,7 +322,13 @@ function updateClientList(e){
 
 <br/>
 <img height="25" id="leftBtn" onclick="updatePagesVar('-');" style="cursor:pointer;margin-left:10px;" src="/images/arrow-left.png">
-<input type="button" id="refresh_list" class="button_gen" onclick="document.form.submit();" value="<#CTL_refresh#>" style="margin-left:70px;">
+<input type="button" id="refresh_list" class="button_gen" value="<#CTL_refresh#>" style="margin-left:70px;">
+	<script>
+		document.getElementById('refresh_list').onclick = function(){
+			parent.manualUpdate = true;
+			document.form.submit();
+		}
+	</script>
 <img src="/images/InternetScan.gif" id="loadingIcon" style="visibility:hidden">
 <img height="25" id="rightBtn" onclick="updatePagesVar('+');" style="cursor:pointer;margin-left:25px;" src="/images/arrow-right.png">
 </body>

@@ -148,6 +148,15 @@ elif [ "$1" == "ntfs" ] || [ "$1" == "tntfs" ]; then
 		else
 			_set_fsck_code $2 1
 		fi
+
+		# remove the logs. e.q. "Record 676 has wrong SeqNo (378 <> 405)"
+		# The characters: '<', '>' would cause the ajax error.
+		sed -i 's/.*has wrong SeqNo.*$//g' $log_file
+		sed -i 's/ntfs_attr_pread partial read.*$//g' $log_file
+		sed -i 's/ntfs_attr_pwrite partial write.*$//g' $log_file
+		sed -i 's/Unexpected attrlist size.*$//g' $log_file
+		sed -i 's/.*has corrupt allocation size.*$//g' $log_file
+		sed -i '/^$/d' $log_file
 	fi
 elif [ "$1" == "hfs" ] || [ "$1" == "hfsplus" ] || [ "$1" == "thfsplus" ] || [ "$1" == "hfs+j" ] || [ "$1" == "hfs+jx" ]; then
 	if [ "$hfs_mod" == "open" ]; then

@@ -2043,8 +2043,8 @@ int init_nvram(void)
 		// the following values is model dep. so move it from default.c to here
 		nvram_set("wl0_HT_TxStream", "2");
 		nvram_set("wl0_HT_RxStream", "2");
-		nvram_set("wl1_HT_TxStream", "1");
-		nvram_set("wl1_HT_RxStream", "1");
+		nvram_set("wl1_HT_TxStream", "2");
+		nvram_set("wl1_HT_RxStream", "2");
 		break;
 #endif	/* RTN54U */
 #ifdef RTCONFIG_DSL
@@ -3819,7 +3819,6 @@ int init_nvram(void)
 
 #ifdef RTCONFIG_WEBDAV
 	add_rc_support("webdav");
-	nvram_set("start_aicloud", "1");
 #endif
 
 #ifdef RTCONFIG_CLOUDSYNC
@@ -5086,7 +5085,8 @@ dbg("boot/continue fail= %d/%d\n", nvram_get_int("Ate_boot_fail"),nvram_get_int(
 					(get_model() == MODEL_RTAC87U) ||
 					(get_model() == MODEL_RTN12HP) ||
 					(get_model() == MODEL_RTN12HP_B1) ||
-					(get_model() == MODEL_RTN66U)) {
+					(get_model() == MODEL_RTN66U) ||
+					(get_model() == MODEL_RTN18U)) {
 					set_wltxpower();
 				} else if (nvram_contains_word("rc_support", "pwrctrl")) {
 					set_wltxpower();

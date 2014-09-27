@@ -1217,7 +1217,7 @@ setAllLedOn(void)
 }
 
 int
-setWlOffLed()
+setWlOffLed(void)
 {
 	int model;
 	int wlon_unit = nvram_get_int("wlc_band");

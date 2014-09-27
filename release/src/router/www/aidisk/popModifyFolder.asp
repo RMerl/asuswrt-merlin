@@ -8,20 +8,21 @@
 <link rel="icon" href="images/favicon.png">
 <title>Rename Folder</title>
 <link rel="stylesheet" href="../form_style.css"  type="text/css">
-
 <script type="text/javascript" src="../state.js"></script>
 <script type="text/javascript">
 <% get_AiDisk_status(); %>
-var PoolDevice = pool_devices()[parent.getSelectedPoolOrder()];
-var PoolName = pool_names()[parent.getSelectedPoolOrder()];
+
+var PoolDevice = parent.usbDevicesList[parent.getSelectedDiskOrder()].partition[parent.getSelectedPoolOrder()].mountPoint;
 var folderlist = get_sharedfolder_in_pool(PoolDevice);
 var selectedFolder = folderlist[parent.getSelectedFolderOrder()];
 var DisplayFolderName = selectedFolder;
 
 function initial(){
 	DisplayFolderName = check_folder_length(selectedFolder);
-	showtext($("selected_Pool"), PoolName);
+
+	showtext($("selected_Pool"), parent.usbDevicesList[parent.getSelectedDiskOrder()].partition[parent.getSelectedPoolOrder()].partName);
 	showtext($("selected_Folder"), showhtmlspace(showhtmland(DisplayFolderName)));
+
 	document.modifyFolderForm.new_folder.focus();
 	clickevent();
 }

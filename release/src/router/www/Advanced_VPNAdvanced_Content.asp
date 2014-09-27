@@ -1054,10 +1054,10 @@ function cal_panel_block(){
 									<tr>
 										<th>VPN Server mode</th>
 										<td>
-												<select id="pptpd_mode" class="input_option" onchange="change_mode(this.value);">
-													<option value="pptpd" selected>PPTP</option>
-													<option value="openvpn">OpenVPN</option>
-												</select>
+											<select id="pptpd_mode" class="input_option" onchange="change_mode(this.value);">
+												<option value="pptpd" selected>PPTP</option>
+												<option value="openvpn">OpenVPN</option>
+											</select>
 										</td>
 									</tr>
 
@@ -1215,10 +1215,10 @@ function cal_panel_block(){
 									<tr>
 										<th>VPN Server mode</th>
 										<td>
-												<select id="openvpn_mode" name="VPNServer_mode_select" class="input_option" onchange="change_mode(this.value);">
-													<option value="pptpd">PPTP</option>
-													<option value="openvpn" selected>OpenVPN</option>
-												</select>
+											<select id="openvpn_mode" name="VPNServer_mode_select" class="input_option" onchange="change_mode(this.value);">
+												<option value="pptpd">PPTP</option>
+												<option value="openvpn" selected>OpenVPN</option>
+											</select>
 										</td>
 									</tr>
 									<tr id="client_unit">
@@ -1247,13 +1247,13 @@ function cal_panel_block(){
 												<option value="tap" <% nvram_match("vpn_server_if","tap","selected"); %> >TAP</option>
 												<option value="tun" <% nvram_match("vpn_server_if","tun","selected"); %> >TUN</option>
 											</select>
-			   						</td>
+				   						</td>
 									</tr>
 
 									<tr>
 										<th><#IPConnection_VServerProto_itemname#></th>
-			        					<td>
-			       							<select name="vpn_server_proto" class="input_option">
+				        					<td>
+				       							<select name="vpn_server_proto" class="input_option">
 												<option value="tcp-server" <% nvram_match("vpn_server_proto","tcp-server","selected"); %> >TCP</option>
 												<option value="udp" <% nvram_match("vpn_server_proto","udp","selected"); %> >UDP</option>
 											</select>
@@ -1269,8 +1269,8 @@ function cal_panel_block(){
 
 									<tr>
 										<th><#menu5_5#></th>
-			        					<td>
-			        						<select name="vpn_server_firewall" class="input_option">
+				        					<td>
+				        						<select name="vpn_server_firewall" class="input_option">
 												<option value="auto" <% nvram_match("vpn_server_firewall","auto","selected"); %> ><#Auto#></option>
 												<option value="external" <% nvram_match("vpn_server_firewall","external","selected"); %> ><#External#></option>
 												<option value="custom" <% nvram_match("vpn_server_firewall","custom","selected"); %> ><#Custom#></option>
@@ -1293,22 +1293,22 @@ function cal_panel_block(){
 									<tr>
 										<th>Username/Password Authentication</th>
 										<td>
-												<input type="radio" name="vpn_server_userpass_auth" class="input" value="1" onclick="update_visibility();" <% nvram_match_x("", "vpn_server_userpass_auth", "1", "checked"); %>><#checkbox_Yes#>
-												<input type="radio" name="vpn_server_userpass_auth" class="input" value="0" onclick="update_visibility();" <% nvram_match_x("", "vpn_server_userpass_auth", "0", "checked"); %>><#checkbox_No#>
+											<input type="radio" name="vpn_server_userpass_auth" class="input" value="1" onclick="update_visibility();" <% nvram_match_x("", "vpn_server_userpass_auth", "1", "checked"); %>><#checkbox_Yes#>
+											<input type="radio" name="vpn_server_userpass_auth" class="input" value="0" onclick="update_visibility();" <% nvram_match_x("", "vpn_server_userpass_auth", "0", "checked"); %>><#checkbox_No#>
 										</td>
 									</tr>
 									<tr id="server_igncrt">
 										<th><#vpn_openvpn_AuthOnly#></th>
 										<td>
-												<input type="radio" name="vpn_server_igncrt" class="input" value="1" <% nvram_match_x("", "vpn_server_igncrt", "1", "checked"); %>><#checkbox_Yes#>
-												<input type="radio" name="vpn_server_igncrt" class="input" value="0" <% nvram_match_x("", "vpn_server_igncrt", "0", "checked"); %>><#checkbox_No#>
+											<input type="radio" name="vpn_server_igncrt" class="input" value="1" <% nvram_match_x("", "vpn_server_igncrt", "1", "checked"); %>><#checkbox_Yes#>
+											<input type="radio" name="vpn_server_igncrt" class="input" value="0" <% nvram_match_x("", "vpn_server_igncrt", "0", "checked"); %>><#checkbox_No#>
 										</td>
 									</tr>
 
 									<tr>
 										<th><#vpn_openvpn_AuthHMAC#><br><i>(tls-auth)</i></th>
-			        					<td>
-			        						<select name="vpn_server_hmac" class="input_option">
+				        					<td>
+				        						<select name="vpn_server_hmac" class="input_option">
 												<option value="-1" <% nvram_match("vpn_server_hmac","-1","selected"); %> ><#WLANConfig11b_WirelessCtrl_buttonname#></option>
 												<option value="2" <% nvram_match("vpn_server_hmac","2","selected"); %> >Bi-directional</option>
 												<option value="0" <% nvram_match("vpn_server_hmac","0","selected"); %> >Incoming (0)</option>
@@ -1399,8 +1399,8 @@ function cal_panel_block(){
 
 									<tr>
 										<th><#vpn_openvpn_Encrypt#></th>
-			        					<td>
-			        						<select name="vpn_server_cipher" class="input_option">
+				        					<td>
+				        						<select name="vpn_server_cipher" class="input_option">
 												<option value="<% nvram_get("vpn_server_cipher"); %>" selected><% nvram_get("vpn_server_cipher"); %></option>
 											</select>
 			   							</td>
@@ -1408,8 +1408,8 @@ function cal_panel_block(){
 
 									<tr>
 										<th><#vpn_openvpn_Compression#></th>
-			        					<td>
-			        						<select name="vpn_server_comp" class="input_option">
+				        					<td>
+				        						<select name="vpn_server_comp" class="input_option">
 												<option value="-1" <% nvram_match("vpn_server_comp","-1","selected"); %> ><#WLANConfig11b_WirelessCtrl_buttonname#></option>
 												<option value="no" <% nvram_match("vpn_server_comp","no","selected"); %> ><#wl_securitylevel_0#></option>
 												<option value="yes" <% nvram_match("vpn_server_comp","yes","selected"); %> ><#WLANConfig11b_WirelessCtrl_button1name#></option>

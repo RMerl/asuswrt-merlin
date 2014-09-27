@@ -16,6 +16,30 @@ var $j = jQuery.noConflict();
 <script language="JavaScript" type="text/javascript" src="/iui/registerEvent.js"></script>
 <script type="text/javascript">
 var x_setting = '<% nvram_get("x_Setting"); %>';	//0: first time
+function isMobile(){
+	if(	navigator.userAgent.match(/iPhone/i) || 
+		navigator.userAgent.match(/iPod/i)    ||
+		navigator.userAgent.match(/iPad/i)    ||
+		(navigator.userAgent.match(/Android/i) && (navigator.userAgent.match(/Mobile/i) || navigator.userAgent.match(/Tablet/i))) ||
+		//(navigator.userAgent.match(/Android/i) && navigator.userAgent.match(/Mobile/i))||			//Android phone
+		(navigator.userAgent.match(/Opera/i) && (navigator.userAgent.match(/Mobi/i) || navigator.userAgent.match(/Mini/i))) ||		// Opera mobile or Opera Mini
+		navigator.userAgent.match(/IEMobile/i)	||		// IE Mobile
+		navigator.userAgent.match(/BlackBerry/i)		//BlackBerry
+	 ){
+		return true;
+	}
+	else{
+		return false;
+	}
+}
+
+if(!isMobile()){
+	if(x_setting == 0)
+		location.href = "QIS_wizard.htm?flag=welcome";
+	else
+		location.href = "QIS_wizard.htm?flag=detect:";
+}
+
 function login(){
 	var make_base_auth = function (user, password) {
 		var tok = user + ':' + password;

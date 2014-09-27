@@ -44,7 +44,7 @@
 #ifdef RTCONFIG_BCMWL6
 #ifdef RTCONFIG_PROXYSTA
 
-#define NORMAL_PERIOD   30
+#define NORMAL_PERIOD	30
 #define	MAX_STA_COUNT	128
 #define	NVRAM_BUFSIZE	100
 
@@ -264,19 +264,19 @@ static void check_wl_rate(const char *ifname)
 
 	sprintf(rate_buf, "0 Mbps");
 
-        if (wl_ioctl(ifname, WLC_GET_RATE, &rate, sizeof(int)))
+	if (wl_ioctl(ifname, WLC_GET_RATE, &rate, sizeof(int)))
 	{
-                dbG("can not get rate info of %s\n", ifname);
+		dbG("can not get rate info of %s\n", ifname);
 		goto ERROR;
 	}
-        else
-        {
-                rate = dtoh32(rate);
+	else
+	{
+		rate = dtoh32(rate);
 		if ((rate == -1) || (rate == 0))
 			sprintf(rate_buf, "auto");
 		else
 			sprintf(rate_buf, "%d%s Mbps", (rate / 2), (rate & 1) ? ".5" : "");
-        }
+	}
 
 ERROR:
 	logmessage(LOGNAME, "wl interface %s data rate: %s", ifname, rate_buf);
@@ -388,10 +388,10 @@ psta_monitor_exit(int sig)
 {
 	if (sig == SIGTERM)
 	{
-        	alarmtimer(0, 0);
-        	remove("/var/run/psta_monitor.pid");
-        	exit(0);
-        }
+		alarmtimer(0, 0);
+		remove("/var/run/psta_monitor.pid");
+		exit(0);
+	}
 }
 
 int 

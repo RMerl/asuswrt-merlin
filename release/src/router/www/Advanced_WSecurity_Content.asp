@@ -29,12 +29,10 @@ var wireless = [<% wl_auth_list(); %>];	// [[MAC, associated, authorized], ...]
 function initial(){
 	show_menu();
 
+	regen_band();
+
 	if(!band5g_support || based_modelid == "RT-AC87U")	
 		$("wl_unit_field").style.display = "none";
-	if(wl_info.band5g_2_support){
-		$("wl_opt1").innerHTML = "5GHz-1";
-		$("wl_opt2").style.display = "";
-	}
 
 	if((sw_mode == 2 || sw_mode == 4) && '<% nvram_get("wl_unit"); %>' == '<% nvram_get("wlc_band"); %>'){
 		for(var i=4; i>=2; i--)
@@ -121,9 +119,8 @@ function done_validating(action){
 			<th><#Interface#></th>
 			<td>
 				<select name="wl_unit" class="input_option" onChange="change_wl_unit();">
-					<option id="wl_opt0" class="content_input_fd" value="0" <% nvram_match("wl_unit", "0","selected"); %>>2.4GHz</option>
-					<option id="wl_opt1" class="content_input_fd" value="1"<% nvram_match("wl_unit", "1","selected"); %>>5GHz</option>
-					<option id="wl_opt2" style="display:none" class="content_input_fd" value="2" <% nvram_match("wl_unit", "2","selected"); %>>5GHz-2</option>
+					<option class="content_input_fd" value="0" <% nvram_match("wl_unit", "0","selected"); %>>2.4GHz</option>
+					<option class="content_input_fd" value="1"<% nvram_match("wl_unit", "1","selected"); %>>5GHz</option>
 				</select>			
 			</td>
 	  </tr>

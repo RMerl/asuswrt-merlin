@@ -109,14 +109,12 @@ function initial(){
 	if(band5g_support){
 		$("t0").style.display = "";
 		$("t1").style.display = "";
-		if(wl_info.band5g_2_support){
-			$("t2").style.display = "";
-			$("t1").childNodes[1].innerHTML = "5GHz-1";
-			$("t0").style.width = "66px";
-			$("t1").style.width = "66px";
-			$("t2").style.width = "66px";
-			$("t3").style.width = "66px";
-		}
+		if(wl_info.band5g_2_support)
+			tab_reset(0);
+
+	if(smart_connect_support)
+			change_smart_connect('<% nvram_get("smart_connect_x"); %>');	
+	
 		
 		// disallow to use the other band as a wireless AP
 		if(parent.sw_mode == 4 && !localAP_support){
@@ -234,6 +232,59 @@ function detect_CPU_Status(){
   		}
 	});
 }
+
+function tab_reset(v){
+	var tab_array1 = document.getElementsByClassName("tab_NW");
+	var tab_array2 = document.getElementsByClassName("tabclick_NW");
+
+	var tab_width = Math.floor(270/(wl_info.wl_if_total+1));
+	var i = 0;
+	while(i < tab_array1.length){
+		tab_array1[i].style.width=tab_width+'px';
+		tab_array1[i].style.display = "";
+	i++;
+	}
+	if(typeof tab_array2[0] != "undefined"){
+		tab_array2[0].style.width=tab_width+'px';
+		tab_array2[0].style.display = "";
+	}
+	if(v == 0){
+		$("span0").innerHTML = "2.4GHz";
+		if(wl_info.band5g_2_support){
+			$("span1").innerHTML = "5GHz-1";
+			$("span2").innerHTML = "5GHz-2";
+		}else{
+			$("span1").innerHTML = "5GHz";
+			$("t2").style.display = "none";
+		}
+	}else if(v == 1){	//Smart Connect
+		$("span0").innerHTML = "Tri-band Smart Connect";
+		$("t1").style.display = "none";
+		$("t2").style.display = "none";				
+		$("t0").style.width = (tab_width*wl_info.wl_if_total) +'px';
+	}
+	else if(v == 2){ //5GHz Smart Connect
+		$("span0").innerHTML = "2.4GHz";
+		$("span1").innerHTML = "5GHz Smart Connect";
+		$("t2").style.display = "none";	
+		$("t1").style.width = "140px";
+	}
+}
+
+function change_smart_connect(v){
+	switch(v){
+		case '0':
+				tab_reset(0);	
+				break;
+		case '1': 
+				tab_reset(1);
+				break;
+		case '2': 
+				tab_reset(2);
+				break;
+	}
+}
+
 </script>
 </head>
 <body class="statusbody" onload="initial();">
@@ -254,7 +305,7 @@ function detect_CPU_Status(){
 		<table width="100px" border="0" align="left" style="margin-left:8px;" cellpadding="0" cellspacing="0">
 			<td>
 				<div id="t0" class="tab_NW" align="center" style="font-weight: bolder;display:none; margin-right:2px; width:90px;" onclick="tabclickhandler(0)">
-					<span id="span1" style="cursor:pointer;font-weight: bolder;">2.4GHz</span>
+					<span id="span0" style="cursor:pointer;font-weight: bolder;">2.4GHz</span>
 				</div>
 			</td>
 			<td>
@@ -264,12 +315,12 @@ function detect_CPU_Status(){
 			</td>
 			<td>
 				<div id="t2" class="tab_NW" align="center" style="font-weight: bolder;display:none; margin-right:2px; width:90px;" onclick="tabclickhandler(2)">
-					<span id="span1" style="cursor:pointer;font-weight: bolder;">5GHz-2</span>
+					<span id="span2" style="cursor:pointer;font-weight: bolder;">5GHz-2</span>
 				</div>
 			</td>
 			<td>
 				<div id="t3" class="tabclick_NW" align="center" style="font-weight: bolder; margin-right:2px; width:90px;" onclick="tabclickhandler(3)">
-					<span id="span1" style="cursor:pointer;font-weight: bolder;">Status</span>
+					<span id="span3" style="cursor:pointer;font-weight: bolder;">Status</span>
 				</div>
 			</td>
 		</table>

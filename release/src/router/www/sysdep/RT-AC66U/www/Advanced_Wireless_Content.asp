@@ -21,7 +21,10 @@
 <script type="text/javascript" src="/md5.js"></script>
 <script type="text/javascript" src="/detect.js"></script>
 <script type="text/javascript" src="/chanspec.js"></script>
+<script type="text/javascript" src="/jquery.js"></script>
+<script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <script>
+var $j = jQuery.noConflict();
 wan_route_x = '<% nvram_get("wan_route_x"); %>';
 wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
 wan_proto = '<% nvram_get("wan_proto"); %>';
@@ -107,10 +110,30 @@ function initial(){
 	else
 		document.form.wl_gmode_check.checked = false;
 
+	regen_band();
+	if(smart_connect_support){
+		var flag = '<% get_parameter("flag"); %>';		
+		inputCtrl(document.form.smart_connect_t, 1);
+		document.getElementById("smartcon_enable_field").style.display = "";
+
+		var smart_connect_flag_t;
+
+		if(flag == '')
+			smart_connect_flag_t = '<% nvram_get("smart_connect_x"); %>';
+		else
+			smart_connect_flag_t = flag;	
+
+			document.form.smart_connect_x.value = smart_connect_flag_t;
+			if(smart_connect_flag_t == 0)
+				document.form.smart_connect_t.value = 1;
+			else	
+				document.form.smart_connect_t.value = smart_connect_flag_t;	
+
+		enableSmartCon(smart_connect_flag_t);
+	}
+
 	if(!band5g_support)	
 		$("wl_unit_field").style.display = "none";
-	if(wl_info.band5g_2_support)
-		regen_band();
 
 	if(sw_mode == 2 || sw_mode == 4)
 		document.form.wl_subunit.value = ('<% nvram_get("wl_unit"); %>' == '<% nvram_get("wlc_band"); %>') ? 1 : -1;
@@ -309,7 +332,10 @@ function applyRule(){
 					document.form.wl_chanspec.value = document.form.wl_channel.value + document.form.wl_nctrlsb.value;
 				}
 			}	
-		}	
+		}
+
+		if(smart_connect_support && document.form.smart_connect_x.value != 0)
+			document.form.smart_connect_x.value = document.form.smart_connect_t.value;
 
 		if (based_modelid == "RT-AC87U" && "<% nvram_get("wl_unit"); %>" == "1")
 			detect_qtn_ready();
@@ -369,9 +395,34 @@ function disableAdvFn(){
 }
 
 function _change_wl_unit(val){
-	if(sw_mode == 2 || sw_mode == 4)	
+	if(sw_mode == 2 || sw_mode == 4)
 		document.form.wl_subunit.value = (val == '<% nvram_get("wlc_band"); %>') ? 1 : -1;
+	if(smart_connect_support){
+		if(document.form.smart_connect_x.value != 0)
+			document.form.smart_connect_x.value = document.form.smart_connect_t.value;
+		var smart_connect_flag = document.form.smart_connect_x.value;
+		document.form.current_page.value = "Advanced_Wireless_Content.asp?flag=" + smart_connect_flag;
+	}
 	change_wl_unit();
+}
+
+function _change_smart_connect(val){
+	current_band = '<% nvram_get("wl_unit"); %>';
+	$("wl_unit_field").style.display = "";
+	var band_desc = new Array();
+	var band_value = new Array();
+	if(val == 0){
+		band_value = [0, 1, 2];
+		band_desc = ['2.4GHz', '5GHz-1', '5GHz-2'];
+	}else if(val == 1){
+		$("wl_unit_field").style.display = "none";
+		band_value = [0];
+		band_desc = ['2.4GHz, 5GHz-1 and 5GHz-2'];
+	}else if(val == 2){
+		band_value = [0, 1];
+		band_desc = ['2.4GHz', '5GHz-1 and 5GHz-2'];
+	}
+	add_options_x2(document.form.wl_unit, band_desc, band_value, current_band);
 }
 
 function checkBW(){
@@ -439,22 +490,25 @@ function check_NOnly_to_GN(){
 //  Viz add 2012.11.05 restriction for 'N Only' mode  ) end		
 }
 
-function regen_5G_mode(obj,flag){
+function regen_5G_mode(obj,flag){	//please sync to initial() : //Change wireless mode help desc
 	if(flag == 1){
 		free_options(obj);
 		if(based_modelid == "RT-AC87U"){
 			obj.options[0] = new Option("<#Auto#>", 0);
-			obj.options[1] = new Option("N only", 1);
+			obj.options[1] = new Option("N only", 1);			
 		}
-		else if(based_modelid == "DSL-AC68U" || based_modelid == "RT-AC68U" || based_modelid == "RT-AC56U" || based_modelid == "RT-AC53U"){
+		else if(based_modelid == "DSL-AC68U" || based_modelid == "RT-AC68U" || based_modelid == "RT-AC68U_V2" || based_modelid == "RT-AC69U" || 
+				based_modelid == "RT-AC56U" || based_modelid == "RT-AC56S" || 
+				based_modelid == "RT-AC3200" || 
+				based_modelid == "RT-AC53U"){
 			obj.options[0] = new Option("<#Auto#>", 0);
 			obj.options[1] = new Option("N only", 1);
 			obj.options[2] = new Option("N/AC mixed", 8);
-			obj.options[3] = new Option("Legacy", 2);
+			obj.options[3] = new Option("Legacy", 2);	
 		}
 		else{
 			obj.options[0] = new Option("<#Auto#>", 0);
-			obj.options[1] = new Option("N only", 1);
+			obj.options[1] = new Option("N + AC", 1);
 			obj.options[2] = new Option("Legacy", 2);
 		}
 	}
@@ -500,6 +554,18 @@ function check_WPS(){
 		else{	
 			return false;	
 		}
+	}
+}
+
+function enableSmartCon(val){
+	if(val > 0){
+		document.form.smart_connect_x.value = val;
+		document.getElementById("smart_connect_field").style.display = "";
+		_change_smart_connect(val);
+	}else if(val == 0){
+		document.form.smart_connect_x.value = 0;
+		document.getElementById("smart_connect_field").style.display = "none";
+		_change_smart_connect(val);
 	}
 }
 </script>
@@ -586,6 +652,7 @@ function check_WPS(){
 <input type="hidden" name="acs_dfs" value='<% nvram_get("acs_dfs"); %>'>
 <input type="hidden" name="acs_band1" value='<% nvram_get("acs_band1"); %>'>
 <input type="hidden" name="wps_enable" value="<% nvram_get("wps_enable"); %>">
+<input type="hidden" name="smart_connect_x" value="<% nvram_get("smart_connect_x"); %>">
 <table class="content" align="center" cellpadding="0" cellspacing="0">
   <tr>
 	<td width="17">&nbsp;</td>
@@ -613,6 +680,51 @@ function check_WPS(){
       <div class="formfontdesc"><#adv_wl_desc#></div>
 		
 			<table width="99%" border="1" align="center" cellpadding="4" cellspacing="0" id="WLgeneral" class="FormTable">
+
+			<tr id="smartcon_enable_field" style="display:none;">
+			  	<th width="30%"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(13,1);">Enabled Smart Connect</a></th>
+			  	<td>
+			    	<div id="smartcon_enable_block" style="display:none;">
+			    		<span style="color:#FFF;" id="smart_connect_enable_word">&nbsp;&nbsp;</span>
+			    		<input type="button" name="enableSmartConbtn" id="enableSmartConbtn" value="" class="button_gen" onClick="enableSmartCon();">
+			    		<br>
+			    	</div>
+						
+			    	<div class="left" style="width: 94px;" id="radio_smartcon_enable"></div>
+						<div class="clear"></div>					
+						<script type="text/javascript">
+								var flag = '<% get_parameter("flag"); %>';
+								var smart_connect_flag_t;
+
+							if(flag == '')
+								smart_connect_flag_t = '<% nvram_get("smart_connect_x"); %>';
+							else
+								smart_connect_flag_t = flag;
+
+								$j('#radio_smartcon_enable').iphoneSwitch(smart_connect_flag_t>0, 
+								 function() {
+									enableSmartCon(1);
+								 },
+								 function() {
+									enableSmartCon(0);
+								 },
+								 {
+									switch_on_container_path: '/switcherplugin/iphone_switch_container_off.png'
+								 }
+							);
+						</script>
+		  	  </td>
+			</tr>
+
+				<tr id="smart_connect_field" style="display:none;">			
+					<th>Smart Connect Combo</th>						
+					<td id="smart_connect_switch" style="display:;">
+						<select name="smart_connect_t" class="input_option" onChange="_change_smart_connect(this.value);">
+							<option class="content_input_fd" value="1" >Tri-band Smart Connect (2.4GHz, 5GHz-1 and 5GHz-2)</option>
+							<option class="content_input_fd" value="2">5GHz Smart Connect (5GHz-1 and 5GHz-2)</option>
+						</select>			
+					</td>
+		  	</tr>
 
 				<tr id="wl_unit_field">
 					<th><#Interface#></th>

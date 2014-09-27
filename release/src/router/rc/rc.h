@@ -252,6 +252,11 @@ extern int setMN(const char *MN);
 extern int getMN(void);
 #endif
 extern int check_imagefile(char *fname);
+#if defined(RTCONFIG_RALINK) || defined(RTCONFIG_QCA)
+static inline int setWlOffLed(void) { return 0; }
+#else
+extern int setWlOffLed(void);
+#endif
 
 /* board API under sysdeps/ralink/ralink.c */
 #ifdef RTCONFIG_RALINK

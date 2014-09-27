@@ -784,20 +784,26 @@ function keyBoardListener(evt){
 
 function showLANIPList(){
 	var htmlCode = "";
-	for(var i=0; i<clientList.length;i++){
-		var clientObj = clientList[clientList[i]];
 
-		if(clientObj.ip == "offline") clientObj.ip = "";
-		if(clientObj.name.length > 30) clientObj.name = clientObj.name.substring(0, 28) + "..";
-
-		htmlCode += '<a><div onmouseover="over_var=1;" onmouseout="over_var=0;" onclick="setClientIP(\'';
-		htmlCode += clientObj.ip;
-		htmlCode += '\');"><strong>';
-		htmlCode += clientObj.ip + '</strong>&nbsp;&nbsp;(' + clientObj.name + ')';
-		htmlCode += '</strong></div></a><!--[if lte IE 6.5]><iframe class="hackiframe2"></iframe><![endif]-->';	
+	if(clientList.length == 0){
+				document.getElementById("pull_arrow").style.display = "none";
 	}
+	else{
+		for(var i=0; i<clientList.length;i++){
+			var clientObj = clientList[clientList[i]];
 
-	$("ClientList_Block_PC").innerHTML = htmlCode;
+			if(clientObj.ip == "offline") clientObj.ip = "";
+			if(clientObj.name.length > 30) clientObj.name = clientObj.name.substring(0, 28) + "..";
+
+			htmlCode += '<a><div onmouseover="over_var=1;" onmouseout="over_var=0;" onclick="setClientIP(\'';
+			htmlCode += clientObj.ip;
+			htmlCode += '\');"><strong>';
+			htmlCode += clientObj.ip + '</strong>&nbsp;&nbsp;(' + clientObj.name + ')';
+			htmlCode += '</strong></div></a><!--[if lte IE 6.5]><iframe class="hackiframe2"></iframe><![endif]-->';	
+		}
+
+		$("ClientList_Block_PC").innerHTML = htmlCode;
+	}
 }
 
 function setClientIP(ipaddr){

@@ -19,7 +19,6 @@
 <script type="text/javascript" src="/jquery.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <script type="text/javascript" src="/disk_functions.js"></script>
-<script type="text/javascript" src="/aidisk/AiDisk_folder_tree.js"></script>
 <script language="JavaScript" type="text/javascript" src="/md5.js"></script>
 <style type="text/css">
 /* folder tree */
@@ -126,7 +125,6 @@ var $j = jQuery.noConflict();
 <% wanlink(); %>
 <% login_state_hook(); %>
 <% get_AiDisk_status(); %>
-<% disk_pool_mapping_info(); %>
 var wireless = [<% wl_auth_list(); %>];	// [[MAC, associated, authorized], ...]
 wan_route_x = '<% nvram_get("wan_route_x"); %>';
 wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
@@ -529,16 +527,6 @@ function BuildTree(){
 	$("e"+this.FromObject).innerHTML = TempObject;
 }
 
-function get_layer(barcode){
-	var tmp, layer;
-	layer = 0;
-	while(barcode.indexOf('_') != -1){
-		barcode = barcode.substring(barcode.indexOf('_'), barcode.length);
-		++layer;
-		barcode = barcode.substring(1);		
-	}
-	return layer;
-}
 function build_array(obj,layer){
 	var path_temp ="/mnt";
 	var layer2_path ="";

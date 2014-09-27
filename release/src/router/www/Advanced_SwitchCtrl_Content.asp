@@ -8,7 +8,7 @@
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
 <link rel="shortcut icon" href="images/favicon.png">
 <link rel="icon" href="images/favicon.png">
-<title><#Web_Title#> - Switch Control</title>
+<title><#Web_Title#> - <#Switch_itemname#></title>
 <link rel="stylesheet" type="text/css" href="index_style.css"> 
 <link rel="stylesheet" type="text/css" href="form_style.css">
 <link rel="stylesheet" type="text/css" href="other.css">
@@ -150,7 +150,7 @@ function applyRule(){
 <input type="hidden" name="next_page" value="Advanced_SwitchCtrl_Content.asp">
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="action_mode" value="apply">
-<input type="hidden" name="action_script" value="">
+<input type="hidden" name="action_script" value="reboot">
 <input type="hidden" name="action_wait" value="60">
 <input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
@@ -180,7 +180,7 @@ function applyRule(){
 								<tr>
 				  					<td bgcolor="#4D595D" valign="top">
 				  						<div>&nbsp;</div>
-				  						<div class="formfonttitle"><#menu5_2#> - Switch Control</div>
+				  						<div class="formfonttitle"><#menu5_2#> - <#Switch_itemname#></div>
 		      							<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
 										<div class="formfontdesc"><#SwitchCtrl_desc#></div>
 

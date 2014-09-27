@@ -648,12 +648,15 @@ struct nvram_tuple router_defaults[] = {
 #else
 	{ "wl_taf_enable", "0", 0 }, 		/* Disable TAF */
 #endif
-
-	{ "bsd_role", "0", 0 },			/* Disable Band Steer Daemon */
+#ifdef BCM_BSD
+	{ "bsd_role", "3", 0 },			/* Disable Band Steer Daemon */
+						/* 0:Disable, 1:Primary, 2:Helper, 3:Standalone */
 	{ "bsd_hport", "9877", 0 },		/* BSD helper port */
 	{ "bsd_pport", "9878", 0 },		/* BSD Primary port */
 	{ "bsd_helper", "192.168.1.2", 0 },	/* BSD primary ipaddr */
 	{ "bsd_primary", "192.168.1.1", 0 },	/* BSD Helper ipaddr */
+	{ "smart_connect_x", "0"},		/* 0:Disable, 1:Tri-band, 2:5GHz */
+#endif
 #ifdef RTCONFIG_BCM7
 	{ "wl_dfs_pref", "" },			/* DFS Preferred channel value  */
 	{ "wl_probresp_mf", "0", 0 },   	/* MAC filter based probe response  */
@@ -771,7 +774,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "dhcp_wins_x", "" },
 	{ "dhcp_static_x", "0"},
 	{ "dhcp_staticlist", ""},
-	{ "dhcpd_lmax", "253"},
+	//{ "dhcpd_lmax", "253"},
 	{ "dhcpc_mode", "1"},
 	{ "dhcpd_querylog", "1"},
 
@@ -1752,6 +1755,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "vpn_crt_server1_client_crt",	""		},
 	{ "vpn_crt_server1_client_key",	""		},
 	{ "vpn_crt_server1_dh",		""		},
+	{ "vpn_crt_server1_crl",	""		},
 	{ "vpn_server2_poll",		"0"		},
 	{ "vpn_server2_if",		"tun"		},
 	{ "vpn_server2_proto",		"udp"		},
@@ -1789,6 +1793,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "vpn_crt_server2_client_crt",	""		},
 	{ "vpn_crt_server2_client_key",	""		},
 	{ "vpn_crt_server2_dh",		""		},
+	{ "vpn_crt_server2_crl",	""		},
 	{ "vpn_client_unit",		"1"		},
 	{ "vpn_clientx_eas",		""		},
 	{ "vpn_client1_poll",		"0"		},
@@ -1819,6 +1824,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "vpn_crt_client1_ca",		""		},
 	{ "vpn_crt_client1_crt",	""		},
 	{ "vpn_crt_client1_key",	""		},
+	{ "vpn_crt_client1_crl",	""		},
 	{ "vpn_client1_userauth",	"0"		},
 	{ "vpn_client1_username",	""		},
 	{ "vpn_client1_password",	""		},
@@ -1854,6 +1860,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "vpn_crt_client2_ca",		""		},
 	{ "vpn_crt_client2_crt",	""		},
 	{ "vpn_crt_client2_key",	""		},
+	{ "vpn_crt_client2_crl",	""		},
 	{ "vpn_client2_userauth",	"0"		},
 	{ "vpn_client2_username",	""		},
 	{ "vpn_client2_password",	""		},
@@ -2413,7 +2420,6 @@ struct nvram_tuple router_state_defaults[] = {
 	{ "g3state_dial", ""},
 	{ "g3state_conn", ""},
 #endif
-	{ "smart_connect_x", "1"},
 	{ "nmp_client_list",		""},
 	{ NULL, NULL }
 };

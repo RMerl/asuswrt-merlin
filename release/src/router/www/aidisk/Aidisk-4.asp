@@ -102,20 +102,26 @@ function go_pre_page(){
 }
 
 function compute_work_time(){
-	var total_folder_number = 0;
-	
-	for(var i = 0; i < parent.pool_devices().length; ++i){
-		if(parent.pool_devices()[i].indexOf("part") < 0)
-			continue;
-		total_folder_number += parent.get_sharedfolder_in_pool(parent.pool_devices()[i]).length-1;
-	}
-	
-	if(parent.$("dummyShareway").value == "1")
-		return FOLDER_WORK_TIME*total_folder_number*2+SAFE_TIME;
-	else if(parent.$("dummyShareway").value == "2")
-		return FOLDER_WORK_TIME*total_folder_number+SAFE_TIME;
-	else
-		return SAFE_TIME;
+  require(['/require/modules/diskList.js'], function(diskList){
+    var total_folder_number = 0;
+    var usbDevicesList = diskList.list();
+
+    for(var i=0; i < usbDevicesList.length; i++){
+    //Scan all partition of usb device
+      for(var j=0; j < usbDevicesList[i].partition.length; j++){
+        if(usbDevicesList[i].partition[j].mountPoint.indexOf("part") < 0)
+          continue;
+        total_folder_number += parent.get_sharedfolder_in_pool(usbDevicesList[i].partition[j].mountPoint).length-1;
+      }
+    }
+
+    if(parent.$("dummyShareway").value == "1")
+      return FOLDER_WORK_TIME*total_folder_number*2+SAFE_TIME;
+    else if(parent.$("dummyShareway").value == "2")
+      return FOLDER_WORK_TIME*total_folder_number+SAFE_TIME;
+    else
+      return SAFE_TIME;
+  });	
 }
 
 function clickevent(){

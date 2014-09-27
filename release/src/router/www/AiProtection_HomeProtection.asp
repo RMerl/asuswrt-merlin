@@ -16,7 +16,7 @@
 <script type="text/javascript" src="/detect.js"></script>
 <script type="text/javascript" src="/jquery.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
-<script type="text/javascript" src="/aidisk/AiDisk_folder_tree.js"></script>
+<script type="text/javascript" src="/disk_functions.js"></script>
 <style>
 .weakness{
 	width:650px;

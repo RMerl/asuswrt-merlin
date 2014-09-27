@@ -1136,10 +1136,9 @@ unsigned int netdev_calc(char *ifname, char *ifname_desc, unsigned long *rx, uns
 				backup_tx -= *tx;
 
 				*rx2 = backup_rx;
-				*tx2 = backup_tx;				
+				*tx2 = backup_tx;
 				strcpy(ifname_desc2, "INTERNET");
 
-				// Always reset.
 				backup_set = 0;
 			}
 		}//End of switch_wantag
@@ -1170,12 +1169,20 @@ unsigned int netdev_calc(char *ifname, char *ifname_desc, unsigned long *rx, uns
 				strcpy(ifname_desc, "INTERNET");
 				return 1;
 			}
+			else {
+				sprintf(ifname_desc,"INTERNET%d", unit);
+				return 1;
+			}
 		}
 		else if (dualwan_unit__usbif(unit)) {
 			if (unit == wan_primary_ifunit()) {
 				strcpy(ifname_desc, "INTERNET");
 				return 1;
 			}
+			else{
+				sprintf(ifname_desc,"INTERNET%d", unit);
+				return 1;
+ 			}
 		}
 		else {
 			_dprintf("%s: unknown ifname %s\n", __func__, ifname);

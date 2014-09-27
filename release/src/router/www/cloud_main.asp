@@ -223,66 +223,63 @@ function cal_agreement_block(){
 }
 
 function apps_form(_act, _name, _flag){
-	cookie_help.set("apps_last", _name, 1000);
+	cookie.set("apps_last", _name, 1000);
 	document.app_form.apps_action.value = _act;
 	document.app_form.apps_name.value = _name;
 	document.app_form.apps_flag.value = _flag;
 	document.app_form.submit();
 }
 
-var partitions_array = "";
 function show_partition(){
-	var htmlcode = "";
-	var mounted_partition = 0;
-
-	if(pool_names() != "") //  avoid no_disk error
-		partitions_array = pool_devices(); 
-		
-	htmlcode += '<div class="formfontdesc" id="usbHint3">Please select an disk partition to install ASUS AiCloud 2.0 , the one you choose will be the system disk.</div>';
-	htmlcode += '<div class="formfontdesc" id="usbHint4" style="font-size:12px;">Note: Download Master and AiCloud 2.0 should be installed in the same system disk.</div>';	
-	
-	htmlcode += '<table align="center" style="margin:auto;border-collapse:collapse;">';
-
+ 	require(['/require/modules/diskList.js'], function(diskList){
+		var htmlcode = "";
+		var mounted_partition = 0;
 			
-	for(var i = 0; i < partitions_array.length; i++){			
-		var all_accessable_size = simpleNum(pool_kilobytes()[i]-pool_kilobytes_in_use()[i]);
-		var all_total_size = simpleNum(pool_kilobytes()[i]);
+		htmlcode += '<div class="formfontdesc" id="usbHint3">Please select an disk partition to install ASUS AiCloud 2.0 , the one you choose will be the system disk.</div>';
+		htmlcode += '<div class="formfontdesc" id="usbHint4" style="font-size:12px;">Note: Download Master and AiCloud 2.0 should be installed in the same system disk.</div>';			
+		htmlcode += '<table align="center" style="margin:auto;border-collapse:collapse;">';
 
-		if(pool_status()[i] == "unmounted")
-			continue;
+ 		var usbDevicesList = diskList.list();
+		for(var i=0; i < usbDevicesList.length; i++){
+			for(var j=0; j < usbDevicesList[i].partition.length; j++){
+				var all_accessable_size = simpleNum(usbDevicesList[i].partition[j].size-usbDevicesList[i].partition[j].used);
+				var all_total_size = simpleNum(usbDevicesList[i].partition[j].size);
 
-		if(apps_dev == partitions_array[i]){
-			curr_pool_name = pool_names()[i];
-			if(all_accessable_size > 1)
-				htmlcode += '<tr><td class="app_table_radius_left"><div class="iconUSBdisk" onclick="divdisplayctrl(\'none\', \'none\', \'\', \'none\');apps_form(\'install\',\'aicloud\',\''+partitions_array[i]+'\');"></div></td><td class="app_table_radius_right" style="width:200px;">\n';
-			else
-				htmlcode += '<tr><td class="app_table_radius_left"><div class="iconUSBdisk_noquota"></div></td><td class="app_table_radius_right" style="width:200px;">\n';
-			htmlcode += '<div class="app_desc"><b>'+ pool_names()[i] + ' (active)</b></div>';
+				if(usbDevicesList[i].partition[j].status == "unmounted")
+					continue;
+					
+				if(apps_dev == usbDevicesList[i].partition[j].mountPoint){
+					curr_pool_name = usbDevicesList[i].partition[j].partName;
+					if(all_accessable_size > 1)
+						htmlcode += '<tr><td class="app_table_radius_left"><div class="iconUSBdisk" onclick="divdisplayctrl(\'none\', \'none\', \'\', \'none\');apps_form(\'install\',\'aicloud\',\''+usbDevicesList[i].partition[j].mountPoint+'\');"></div></td><td class="app_table_radius_right" style="width:200px;">\n';
+					else
+						htmlcode += '<tr><td class="app_table_radius_left"><div class="iconUSBdisk_noquota"></div></td><td class="app_table_radius_right" style="width:200px;">\n';
+					htmlcode += '<div class="app_desc"><b>'+ usbDevicesList[i].partition[j].partName + ' (active)</b></div>';
+				}
+				else{
+					if(all_accessable_size > 1)
+						htmlcode += '<tr><td class="app_table_radius_left"><div class="iconUSBdisk" onclick="divdisplayctrl(\'none\', \'none\', \'\', \'none\');apps_form(\'switch\',\'aicloud\',\''+usbDevicesList[i].partition[j].mountPoint+'\');"></div></td><td class="app_table_radius_right" style="width:200px;">\n';
+					else
+						htmlcode += '<tr><td class="app_table_radius_left"><div class="iconUSBdisk_noquota"></div></td><td class="app_table_radius_right" style="width:200px;">\n';
+					htmlcode += '<div class="app_desc"><b>'+ usbDevicesList[i].partition[j].partName + '</b></div>'; 
+				}
+
+				if(all_accessable_size > 1)
+					htmlcode += '<div class="app_desc"><#Availablespace#>: <b>'+ all_accessable_size+" GB" + '</b></div>'; 
+				else
+					htmlcode += '<div class="app_desc"><#Availablespace#>: <b>'+ all_accessable_size+" GB <span style=\'color:#FFCC00\'>(Disk quota can not less than 1GB)" + '</span></b></div>'; 
+
+				htmlcode += '<div class="app_desc"><#Totalspace#>: <b>'+ all_total_size+" GB" + '</b></div>'; 
+				htmlcode += '</div><br/><br/></td></tr>\n';
+				mounted_partition++;
+			}
 		}
-		else{
-			if(all_accessable_size > 1)
-				htmlcode += '<tr><td class="app_table_radius_left"><div class="iconUSBdisk" onclick="divdisplayctrl(\'none\', \'none\', \'\', \'none\');apps_form(\'switch\',\'aicloud\',\''+partitions_array[i]+'\');"></div></td><td class="app_table_radius_right" style="width:200px;">\n';
-			else
-				htmlcode += '<tr><td class="app_table_radius_left"><div class="iconUSBdisk_noquota"></div></td><td class="app_table_radius_right" style="width:200px;">\n';
-			htmlcode += '<div class="app_desc"><b>'+ pool_names()[i] + '</b></div>'; 
-		}
 
-		if(all_accessable_size > 1)
-			htmlcode += '<div class="app_desc"><#Availablespace#>: <b>'+ all_accessable_size+" GB" + '</b></div>'; 
-		else
-			htmlcode += '<div class="app_desc"><#Availablespace#>: <b>'+ all_accessable_size+" GB <span style=\'color:#FFCC00\'>(Disk quota can not less than 1GB)" + '</span></b></div>'; 
+		if(mounted_partition == 0)
+			htmlcode += '<tr height="360px"><td colspan="2"><span class="app_name" style="line-height:100%"><#no_usb_found#></span></td></tr>\n';
 
-		htmlcode += '<div class="app_desc"><#Totalspace#>: <b>'+ all_total_size+" GB" + '</b></div>'; 
-		htmlcode += '</div><br/><br/></td></tr>\n';
-		mounted_partition++;
-	}
-
-	if(mounted_partition == 0)
-		htmlcode += '<tr height="360px"><td colspan="2"><span class="app_name" style="line-height:100%"><#no_usb_found#></span></td></tr>\n';
-
-	$("partition_div").innerHTML = htmlcode;
-	//$("usbHint").innerHTML = "<#DM_Install_partition#>";
-	//calHeight(1);
+		$("partition_div").innerHTML = htmlcode;
+	});
 }
 
 
@@ -418,7 +415,7 @@ function check_appstate(){
 				if(installPercent > 99)
 					installPercent = 99;
 				$("loadingicon").style.display = "none";
-				$("apps_state_desc").innerHTML = "[" + getCookie_help("apps_last") + "] " + "<#Excute_processing#> <b>" + Math.round(installPercent) +"</b> <span style='font-size: 16px;'>%</span>";
+				$("apps_state_desc").innerHTML = "[" + cookie.get("apps_last") + "] " + "<#Excute_processing#> <b>" + Math.round(installPercent) +"</b> <span style='font-size: 16px;'>%</span>";
 				installPercent = installPercent + proceed;//*/
 			}
 			else{
@@ -431,9 +428,9 @@ function check_appstate(){
 		else{
 			if(apps_depend_action_target != "terminated" && apps_depend_action_target != "error"){
 				if(apps_depend_action_target == "")
-					$("apps_state_desc").innerHTML = "<b>[" + getCookie_help("apps_last") + "] " + "<#Excute_processing#> </b>";
+					$("apps_state_desc").innerHTML = "<b>[" + cookie.get("apps_last") + "] " + "<#Excute_processing#> </b>";
 				else
-					$("apps_state_desc").innerHTML = "<b>[" + getCookie_help("apps_last") + "] " + "<#Excute_processing#> </b>"
+					$("apps_state_desc").innerHTML = "<b>[" + cookie.get("apps_last") + "] " + "<#Excute_processing#> </b>"
 							+"<br> <span style='font-size: 16px;'> <#Excute_processing#>："+apps_depend_do+"</span>"
 							+"<br> <span style='font-size: 16px;'>"+apps_depend_action+"  "+apps_depend_action_target+"</span>"
 							;
@@ -442,7 +439,7 @@ function check_appstate(){
 				if(installPercent > 99)
 					installPercent = 99;
 				$("loadingicon").style.display = "none";
-				$("apps_state_desc").innerHTML = "[" + getCookie_help("apps_last") + "] " + "<#Excute_processing#> <b>" + Math.round(installPercent) +"</b> <span style='font-size: 16px;'>%</span>";
+				$("apps_state_desc").innerHTML = "[" + cookie.get("apps_last") + "] " + "<#Excute_processing#> <b>" + Math.round(installPercent) +"</b> <span style='font-size: 16px;'>%</span>";
 				installPercent = installPercent + proceed;
 			}
 		}
@@ -544,7 +541,7 @@ function check_appstate(){
 				if(installPercent > 99)
 					installPercent = 99;
 				$("loadingicon").style.display = "none";
-				$("apps_state_desc").innerHTML = "[" + getCookie_help("apps_last") + "] " + "<#Excute_processing#> <b>" + Math.round(installPercent) +"</b> <span style='font-size: 16px;'>%</span>";
+				$("apps_state_desc").innerHTML = "[" + cookie.get("apps_last") + "] " + "<#Excute_processing#> <b>" + Math.round(installPercent) +"</b> <span style='font-size: 16px;'>%</span>";
 				installPercent = installPercent + proceed;//*/
 			}
 			else{
@@ -555,9 +552,9 @@ function check_appstate(){
 		else{
 			if(apps_depend_action_target != "terminated" && apps_depend_action_target != "error"){
 				if(apps_depend_action_target == "")
-					$("apps_state_desc").innerHTML = "<b>[" + getCookie_help("apps_last") + "] " + "<#Excute_processing#> </b>";
+					$("apps_state_desc").innerHTML = "<b>[" + cookie.get("apps_last") + "] " + "<#Excute_processing#> </b>";
 				else
-					$("apps_state_desc").innerHTML = "<b>[" + getCookie_help("apps_last") + "] " + "<#Excute_processing#> </b>"
+					$("apps_state_desc").innerHTML = "<b>[" + cookie.get("apps_last") + "] " + "<#Excute_processing#> </b>"
 							+"<br> <span style='font-size: 16px;'> <#Excute_processing#>："+apps_depend_do+"</span>"
 							+"<br> <span style='font-size: 16px;'>"+apps_depend_action+"  "+apps_depend_action_target+"</span>"
 							;
@@ -566,7 +563,7 @@ function check_appstate(){
 				if(installPercent > 99)
 					installPercent = 99;
 				$("loadingicon").style.display = "none";
-				$("apps_state_desc").innerHTML = "[" + getCookie_help("apps_last") + "] " + "<#Excute_processing#> <b>" + Math.round(installPercent) +"</b> <span style='font-size: 16px;'>%</span>";
+				$("apps_state_desc").innerHTML = "[" + cookie.get("apps_last") + "] " + "<#Excute_processing#> <b>" + Math.round(installPercent) +"</b> <span style='font-size: 16px;'>%</span>";
 				installPercent = installPercent + proceed;
 			}
 		}
@@ -598,7 +595,7 @@ function update_applist(e){
       update_applist();
     },
     success: function(response){
-			if(isinstall > 0 && getCookie_help("apps_last") == "aicloud"){
+			if(isinstall > 0 && cookie.get("apps_last") == "aicloud"){
 				$('cloudsetup_movie').style.display = "none";
 				setTimeout('divdisplayctrl("none", "none", "none", "");', 100);
 			}

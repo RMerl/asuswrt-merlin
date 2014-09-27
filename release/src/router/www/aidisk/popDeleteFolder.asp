@@ -11,13 +11,15 @@
 <script type="text/javascript" src="../state.js"></script>
 <script type="text/javascript" src="/jquery.js"></script>
 <script type="text/javascript">
-var PoolDevice = pool_devices()[parent.getSelectedPoolOrder()];
-var selectedFolder = get_sharedfolder_in_pool(PoolDevice)[parent.getSelectedFolderOrder()];
-var DisplayFolderName = selectedFolder;
-var folderlist = get_sharedfolder_in_pool(PoolDevice);
-var delete_flag = 0;
-var $j = jQuery.noConflict();
 <% get_AiDisk_status(); %>
+
+var $j = jQuery.noConflict();
+
+var PoolDevice = parent.usbDevicesList[parent.getSelectedDiskOrder()].partition[parent.getSelectedPoolOrder()].mountPoint;
+var folderlist = get_sharedfolder_in_pool(PoolDevice);
+var selectedFolder = folderlist[parent.getSelectedFolderOrder()];
+var DisplayFolderName = selectedFolder;
+var delete_flag = 0;
 
 function initial(){
 	DisplayFolderName = check_folder_length(selectedFolder);

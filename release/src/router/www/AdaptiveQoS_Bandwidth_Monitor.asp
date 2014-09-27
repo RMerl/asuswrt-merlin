@@ -94,7 +94,6 @@ AUTOLOGOUT_MAX_MINUTE = 0;
 var detect_interval = 2;	// get information per second
 var $j = jQuery.noConflict();
 window.onresize = cal_agreement_block;
-var custom_name = decodeURIComponent('<% nvram_char_to_ascii("", "custom_clientlist"); %>').replace(/&#62/g, ">").replace(/&#60/g, "<");
 var qos_rulelist = "<% nvram_get("qos_rulelist"); %>".replace(/&#62/g, ">").replace(/&#60/g, "<");
 var curState = '<% nvram_get("apps_analysis"); %>';
 
@@ -299,6 +298,13 @@ function show_clients(priority_type){
 		return false;
 	}
 	
+	if(typeof(priority_type) != "undefined"){
+		document.getElementById('block_all').style.visibility = "visible";
+	}
+	else{
+		document.getElementById('block_all').style.visibility = "hidden";
+	}
+	
 	clearTimeout(device_time_flag);
 	for(i=0; i<clientList.length; i++){
 		var clientObj = clientList[clientList[i]];
@@ -306,20 +312,10 @@ function show_clients(priority_type){
 		if(clientObj.isGateway || !clientObj.isOnline)
 			continue;
 
-		if(typeof(priority_type) != "undefined"){
-			if(priority_type == 5){
-				if(clientObj.qosLevel == ""){
-					code += '<div>';
-				}
-				else{
-					code += '<div style="display:none">';		
-				}	
-			}
-			else if(clientObj.qosLevel != priority_type){
-				code += '<div style="display:none">';
-			}		
+		if(typeof(priority_type) != "undefined"  && clientObj.qosLevel != priority_type){
+			code += '<div style="display:none">';	
 		}
-		else{		// initial, doesn't click priority block
+		else{		// initial or click priority block, show all
 			code += '<div>';
 		}
 
@@ -409,13 +405,15 @@ function show_apps(obj){
 			parent_obj.removeChild(last_element);
 			last_element = parent_obj.lastChild;
 		}
-		
+
 		$j(parent_obj_temp).empty();
 		parent_obj_temp.appendChild(first_element);
 		parent_obj_temp.appendChild(last_element);
+		register_event();
 		obj.setAttribute("class", "closed trafficIcons type" + clientObj.type + " qosLevel" + clientObj.qosLevel);
 	}
 	else{
+		clearTimeout(device_time_flag);
 		if(apps_time_flag != ""){
 			cancel_previous_device_apps(previous_click_device);
 			previous_click_device = obj;
@@ -434,7 +432,8 @@ function show_apps(obj){
 		parent_obj.removeChild(last_element);
 		parent_obj.appendChild(new_element);
 		parent_obj.appendChild(last_element);
-		obj.setAttribute("class", "opened trafficIcons_clicked type" + clientObj.type + "_clicked qosLevel" + clientObj.qosLevel);
+		obj.setAttribute("class", "opened trafficIcons_clicked type" + clientObj.type + " clicked qosLevel" + clientObj.qosLevel);
+		update_device_tarffic();
 		update_apps_tarffic(client_mac, obj, new_element);		
 	}	
 }
@@ -469,6 +468,7 @@ function render_apps(apps_array, obj_icon, apps_field){
 	var code = "";
 	var img = "";
 	
+	apps_array.sort();	//sort apps' name
 	for(i=0;i<apps_array.length;i++){
 		code +='<tr>';
 		code +='<td style="width:70px;">';
@@ -905,8 +905,7 @@ function regen_qos_rule(obj, priority){
 
 	for(i=1;i<qos_rulelist_row.length;i++){
 		var qos_rulelist_col = qos_rulelist_row[i].split(">");
-	
-		if( (target_mac == qos_rulelist_col[1]) && priority == 5){
+		if( (target_mac == qos_rulelist_col[1])){
 			continue;
 		}
 
@@ -939,7 +938,7 @@ function regen_qos_rule(obj, priority){
 		}
 	}	
 
-	if(match_flag != 1 && priority != 5){		//new rule
+	if(match_flag != 1){		//new rule
 		rule_temp += "<" + target_name + ">" + target_mac + ">>any>>" + priority;
 	}	
 	
@@ -1119,7 +1118,7 @@ function cancel(){
 								<div style="margin:-5px 0px;">
 									<table>									
 										<tr>
-											<td style="width:50%;font-family: Arial, Helvetica, sans-serif;text-align:left;padding-left:15px;">
+											<td id="block_all" style="width:50%;font-family: Arial, Helvetica, sans-serif;text-align:left;padding-left:15px;visibility:hidden;">
 												<div style="cursor:pointer;background-color:#444F53;width:113px;border-radius:10px;text-align:center;box-shadow:0px 2px black;" onclick="show_clients()">
 													<table>
 														<tr>																			
@@ -1178,15 +1177,6 @@ function cancel(){
 																		<tr>
 																			<td style="width:25px;"><div style="width:12px;height:12px;border-radius:10px;background-color:#58CCED;margin-left:5px;"></div></td>
 																			<td><#Lowest#></td>
-																		</tr>
-																	</table>											
-																</div>												
-															</td>
-															<td>																		
-																<div id="5" style="cursor:pointer;background-color:#444F53;width:80px;border-radius:10px;text-align:center;box-shadow:0px 2px black;" onclick="show_clients(this.id)">
-																	<table>
-																		<tr>																			
-																			<td><div style="width:73px;"><#Empty#></div></td>
 																		</tr>
 																	</table>											
 																</div>												

@@ -374,18 +374,12 @@ function wl_chanspec_list_change(){
 
 	/* Reconstruct channel array from new chanspecs */
 	document.form.wl_channel.length = chanspecs.length;
-	if(band == 1){
+	if(band == 1 || band == 2){
 		for (var i in chanspecs){
-			if (chanspecs[i] == 0){
+			if (chanspecs[i] == 0)
 				document.form.wl_channel[i] = new Option("<#Auto#>", chanspecs[i]);
-			}
-			else{
-				if(band == "1")
-					document.form.wl_channel[i] = new Option(chanspecs[i].toString().replace("/80", "").replace("u", "").replace("l", ""), chanspecs[i]);
-				else
-					document.form.wl_channel[i] = new Option(chanspecs[i].toString(), chanspecs[i]);
-			}
-
+			else
+				document.form.wl_channel[i] = new Option(chanspecs[i].toString().replace("/80", "").replace("u", "").replace("l", ""), chanspecs[i]);
 			document.form.wl_channel[i].value = chanspecs[i];
 			if (chanspecs[i] == cur && bw_cap == '<% nvram_get("wl_bw"); %>'){
 				document.form.wl_channel[i].selected = true;

@@ -538,6 +538,40 @@ void create_passwd(void)
 	run_postconf("group.postconf","/etc/group");
 }
 
+int get_dhcpd_lmax()
+{
+        unsigned int lstart, lend, lip;
+        int dhlease_size, invalid_ipnum, except_lanip;
+	char *dhcp_start, *dhcp_end, *lan_netmask, *lan_ipaddr;
+
+#ifdef RTCONFIG_WIRELESSREPEATER
+	if(nvram_get_int("sw_mode") == SW_MODE_REPEATER && nvram_get_int("wlc_state") != WLC_STATE_CONNECTED){
+		dhcp_start = nvram_default_get("dhcp_start");
+		dhcp_end = nvram_default_get("dhcp_end");
+		lan_netmask = nvram_default_get("lan_netmask");
+		lan_ipaddr = nvram_default_get("lan_ipaddr");
+	}
+	else
+#endif
+	{
+		dhcp_start = nvram_safe_get("dhcp_start");
+		dhcp_end = nvram_safe_get("dhcp_end");
+		lan_netmask = nvram_safe_get("lan_netmask");
+		lan_ipaddr = nvram_safe_get("lan_ipaddr");
+	}
+
+        lstart = htonl(inet_addr(dhcp_start)) & ~htonl(inet_addr(lan_netmask));
+        lend = htonl(inet_addr(dhcp_end)) & ~htonl(inet_addr(lan_netmask));
+        lip = htonl(inet_addr(lan_ipaddr)) & ~htonl(inet_addr(lan_netmask));
+
+        dhlease_size = lend - lstart + 1;
+        invalid_ipnum = dhlease_size / 256 * 2;
+        except_lanip = (lip >= lstart && lip <= lend)? 1:0;
+        dhlease_size -= invalid_ipnum + except_lanip;
+
+	return dhlease_size;
+}
+
 void start_dnsmasq(int force)
 {
 	FILE *fp;
@@ -777,7 +811,6 @@ void start_dnsmasq(int force)
 		char sipsrvs[64];
 
 		memset(sipsrvs, 0, sizeof(sipsrvs));
-//		for (unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; unit++) {
 		for (unit = WAN_UNIT_FIRST; unit < 1; unit++) {	// support wan0 only
 			char *wan_sip;
 
@@ -902,7 +935,7 @@ void start_dnsmasq(int force)
 
 	if (have_dhcp) {
 		/* Maximum leases */
-		if ((i = nvram_get_int("dhcpd_lmax")) > 0)
+		if ((i = get_dhcpd_lmax()) > 0)
 			fprintf(fp, "dhcp-lease-max=%d\n", i);
 
 		/* Faster for moving clients, if authoritative */
@@ -1757,8 +1790,6 @@ start_wps_pin(int unit)
 	return start_wps_method();
 }
 
-extern int restore_defaults_g;
-
 #ifdef RTCONFIG_WPS
 int
 stop_wpsaide()
@@ -1778,13 +1809,12 @@ start_wpsaide()
 
 	stop_wpsaide();
 
-#ifdef CONFIG_BCMWL5
-	if (!restore_defaults_g)
-#endif
 	ret = _eval(wpsaide_argv, NULL, 0, &pid);
 	return ret;
 }
 #endif
+
+extern int restore_defaults_g;
 
 int
 start_wps(void)
@@ -3513,7 +3543,7 @@ start_services(void)
 #ifdef RTCONFIG_HSPOT
 	start_hspotap();
 #endif
-        start_igmp_proxy();
+	start_igmp_proxy();
 #ifdef RTCONFIG_BCMWL6
 #ifdef BCM_BSD
 	start_bsd();
@@ -3884,19 +3914,19 @@ start_psta_monitor()
 int
 stop_monitor()
 {
-        if (pids("monitor")) {
-                killall_tk("monitor");
-        }
-        return 0;
+	if (pids("monitor")) {
+		killall_tk("monitor");
+	}
+	return 0;
 }
 
 int
 start_monitor()
 {
-        char *monitor_argv[] = {"monitor", NULL};
-        pid_t pid;
+	char *monitor_argv[] = {"monitor", NULL};
+	pid_t pid;
 
-        return _eval(monitor_argv, NULL, 0, &pid);
+	return _eval(monitor_argv, NULL, 0, &pid);
 }
 #endif
 
@@ -4208,9 +4238,9 @@ again:
 #endif
 				{
 					_dprintf(" Write FW to the 2nd partition.\n");
-	                                if (nvram_contains_word("rc_support", "nandflash"))     /* RT-AC56S,U/RT-AC68U/RT-N16UHP */
-         	                               eval("mtd-write2", upgrade_file, "linux2");
-                	                else
+					if (nvram_contains_word("rc_support", "nandflash"))     /* RT-AC56S,U/RT-AC68U/RT-N16UHP */
+						eval("mtd-write2", upgrade_file, "linux2");
+					else
 						eval("mtd-write", "-i", upgrade_file, "-d", "linux2");
 				}
 #endif
@@ -4600,7 +4630,8 @@ check_ddr_done:
 		(get_model() == MODEL_RTN12HP) ||
 		(get_model() == MODEL_RTN12HP_B1) ||
 		(get_model() == MODEL_APN12HP) ||
-		(get_model() == MODEL_RTN66U))
+		(get_model() == MODEL_RTN66U) ||
+		(get_model() == MODEL_RTN18U))
 			set_wltxpower();
 		else
 			dbG("\n\tDon't do this!\n\n");
@@ -5880,7 +5911,14 @@ stop_toads(void)
 #if defined(BCM_BSD)
 int start_bsd(void)
 {
-	int ret = eval("/usr/sbin/bsd");
+	int ret = 0;
+
+	stop_bsd();
+
+	if (!nvram_get_int("smart_connect_x"))
+		ret = -1;
+	else
+		ret = eval("/usr/sbin/bsd");
 
 	return ret;
 }

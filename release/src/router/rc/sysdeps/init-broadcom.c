@@ -1658,7 +1658,8 @@ void fini_wl(void)
 		(get_model() == MODEL_DSLAC68U) ||
 		(get_model() == MODEL_RTAC87U) ||
 		(get_model() == MODEL_RTAC66U) ||
-		(get_model() == MODEL_RTN66U))
+		(get_model() == MODEL_RTN66U) ||
+		(get_model() == MODEL_RTN18U))
 	eval("rmmod","wl");
 #endif
 #ifdef RTCONFIG_BCM7
@@ -2153,7 +2154,8 @@ int set_wltxpower()
 		&& (model != MODEL_DSLAC68U)
 		&& (model != MODEL_RTAC87U)
 		&& (model != MODEL_RTAC68U)
-		&& (model != MODEL_RTAC3200))
+		&& (model != MODEL_RTAC3200)
+		&& (model != MODEL_RTN18U))
 	{
 		dbG("\n\tDon't do this!\n\n");
 		return -1;
@@ -2468,6 +2470,73 @@ int set_wltxpower()
 
 			case MODEL_RTN18U:
 
+				if (set_wltxpower_once) {
+					if (txpower < TXPWR_THRESHOLD_1)
+					{
+						if (!nvram_match(strcat_r(prefix2, "maxp2ga0", tmp2), "58"))
+						{
+							nvram_set(strcat_r(prefix2,"maxp2ga0", tmp2), "58");
+							nvram_set(strcat_r(prefix2,"maxp2ga1", tmp2), "58");
+							nvram_set(strcat_r(prefix2,"maxp2ga2", tmp2), "58");
+							nvram_set(strcat_r(prefix2,"mcsbw202gpo", tmp2), "0x66642000");
+							nvram_set(strcat_r(prefix2,"mcsbw402gpo", tmp2), "0x66642000");
+							nvram_set(strcat_r(prefix2,"dot11agofdmhrbw202gpo", tmp2), "0x6533");
+							commit_needed++;
+						}
+					}
+					else if (txpower < TXPWR_THRESHOLD_2)
+					{
+						if (!nvram_match(strcat_r(prefix2, "maxp2ga0", tmp2), "70"))
+						{
+							nvram_set(strcat_r(prefix2, "maxp2ga0", tmp2), "70");
+                                                        nvram_set(strcat_r(prefix2, "maxp2ga1", tmp2), "70");
+                                                        nvram_set(strcat_r(prefix2, "maxp2ga2", tmp2), "70");
+                                                        nvram_set(strcat_r(prefix2, "mcsbw202gpo", tmp2), "0xA8642000");
+                                                        nvram_set(strcat_r(prefix2, "mcsbw402gpo", tmp2), "0xA8642000");
+                                                        nvram_set(strcat_r(prefix2, "dot11agofdmhrbw202gpo", tmp2), "0x6533");
+							commit_needed++;
+						}
+					}
+					else if (txpower < TXPWR_THRESHOLD_3)
+					{
+						if (!nvram_match(strcat_r(prefix2, "maxp2ga0", tmp2), "82"))
+						{
+							nvram_set(strcat_r(prefix2, "maxp2ga0", tmp2), "82");
+                                                        nvram_set(strcat_r(prefix2, "maxp2ga1", tmp2), "82");
+                                                        nvram_set(strcat_r(prefix2, "maxp2ga2", tmp2), "82");
+                                                        nvram_set(strcat_r(prefix2, "mcsbw202gpo", tmp2), "0xA8642000");
+                                                        nvram_set(strcat_r(prefix2, "mcsbw402gpo", tmp2), "0xA8642000");
+                                                        nvram_set(strcat_r(prefix2, "dot11agofdmhrbw202gpo", tmp2), "0x6533");
+                                                        commit_needed++;
+						}
+					}
+					else if (txpower < TXPWR_THRESHOLD_4)
+					{
+						if (!nvram_match(strcat_r(prefix2, "maxp2ga0", tmp2), "94"))
+						{
+							nvram_set(strcat_r(prefix2, "maxp2ga0", tmp2), "94");
+                                                        nvram_set(strcat_r(prefix2, "maxp2ga1", tmp2), "94");
+                                                        nvram_set(strcat_r(prefix2, "maxp2ga2", tmp2), "94");
+                                                        nvram_set(strcat_r(prefix2, "mcsbw202gpo", tmp2), "0xA8642000");
+                                                        nvram_set(strcat_r(prefix2, "mcsbw402gpo", tmp2), "0xA8642000");
+                                                        nvram_set(strcat_r(prefix2, "dot11agofdmhrbw202gpo", tmp2), "0x6533");
+                                                        commit_needed++;
+						}
+					}
+					else	// txpower = 100%
+					{
+						if (!nvram_match(strcat_r(prefix2, "maxp2ga0", tmp2), "106"))
+						{
+							nvram_set(strcat_r(prefix2, "maxp2ga0", tmp2), "106");
+                                                        nvram_set(strcat_r(prefix2, "maxp2ga1", tmp2), "106");
+                                                        nvram_set(strcat_r(prefix2, "maxp2ga2", tmp2), "106");
+                                                        nvram_set(strcat_r(prefix2, "mcsbw202gpo", tmp2), "0xA8642000");
+                                                        nvram_set(strcat_r(prefix2, "mcsbw402gpo", tmp2), "0xA8642000");
+                                                        nvram_set(strcat_r(prefix2, "dot11agofdmhrbw202gpo", tmp2), "0x6533");
+                                                        commit_needed++;
+						}
+					}
+				}
 				break;
 
 			case MODEL_DSLAC68U:
@@ -3609,6 +3678,27 @@ void generate_wl_para(int unit, int subunit)
 			nvram_set(strcat_r(prefix, "wps_mode", tmp), "enabled");
 		else
 			nvram_set(strcat_r(prefix, "wps_mode", tmp), "disabled");
+
+#ifdef BCM_BSD
+		if (((unit == 0) && nvram_get_int("smart_connect_x") == 1) ||
+		    ((unit == 1) && nvram_get_int("smart_connect_x") == 2)) {
+			for (i = unit + 1; i < 3; i++) {
+				snprintf(prefix2, sizeof(prefix2), "wl%d_", i);
+				nvram_set(strcat_r(prefix2, "ssid", tmp2), nvram_safe_get(strcat_r(prefix, "ssid", tmp)));
+				nvram_set(strcat_r(prefix2, "auth_mode_x", tmp2), nvram_safe_get(strcat_r(prefix, "auth_mode_x", tmp)));
+				nvram_set(strcat_r(prefix2, "wep_x", tmp2), nvram_safe_get(strcat_r(prefix, "wep_x", tmp)));
+				nvram_set(strcat_r(prefix2, "key", tmp2), nvram_safe_get(strcat_r(prefix, "key", tmp)));
+				nvram_set(strcat_r(prefix2, "key1", tmp2), nvram_safe_get(strcat_r(prefix, "key1", tmp)));
+				nvram_set(strcat_r(prefix2, "key2", tmp2), nvram_safe_get(strcat_r(prefix, "key2", tmp)));
+				nvram_set(strcat_r(prefix2, "key3", tmp2), nvram_safe_get(strcat_r(prefix, "key3", tmp)));
+				nvram_set(strcat_r(prefix2, "key4", tmp2), nvram_safe_get(strcat_r(prefix, "key4", tmp)));
+				nvram_set(strcat_r(prefix2, "phrase_x", tmp2), nvram_safe_get(strcat_r(prefix, "phrase_x", tmp)));
+				nvram_set(strcat_r(prefix2, "crypto", tmp2), nvram_safe_get(strcat_r(prefix, "crypto", tmp)));
+				nvram_set(strcat_r(prefix2, "wpa_psk", tmp2), nvram_safe_get(strcat_r(prefix, "wpa_psk", tmp)));
+			}
+		}
+#endif
+
 #ifdef RTCONFIG_PROXYSTA
 		/* See if other interface also has psta or psr enabled */
 		psta = is_psta(unit);

@@ -531,6 +531,12 @@ add_option (char *p[], int line, int unit)
 	{
 		return 0;	// Don't duplicate them
 	}
+	else if (streq (p[0], "crl-verify") && p[1])
+	{
+		if (p[2] && streq(p[2], "dir"))
+			;//TODO: not support?
+		return VPN_UPLOAD_NEED_CRL;
+	}
 	else
 	{
 		sprintf(buf, "vpn_client%d_custom", unit);

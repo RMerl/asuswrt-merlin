@@ -1,10 +1,43 @@
 ﻿var selectedDiskOrder = -1;
 var selectedPoolOrder = -1;
 var selectedFolderOrder = -1;
-
 var selectedDiskBarcode = "";
 var selectedPoolBarcode = "";
 var selectedFolderBarcode = "";
+
+var newDisk = function(){
+	this.usbPath = "";
+	this.deviceIndex = "";
+	this.node = "";
+	this.manufacturer = "";
+	this.deviceName = "";
+	this.deviceType = "";
+	this.totalSize = "";
+	this.totalUsed = "";
+	this.mountNumber = "";
+	this.serialNum = "";
+	this.hasErrPart = false;
+	this.hasAppDev = false;
+	this.hasTM = false;
+	this.partition = new Array(0);
+}
+
+var newPartition = function(){
+	this.partName = "";
+	this.mountPoint = "";
+	this.isAppDev = false;
+	this.isTM = false;
+	this.fsck = "";
+	this.size = "";
+	this.used = "";
+	this.format = "unknown";
+	this.status = "unmounted";
+}
+
+var usbDevicesList = [];
+require(['/require/modules/diskList.js'], function(diskList){
+	usbDevicesList = diskList.list();
+});
 
 function get_layer(barcode){
 	var tmp, layer;
@@ -82,19 +115,11 @@ function getFolderOrder(folder_barcode){
 	return parseInt(folder_barcode.substring(getPoolBarcode(folder_barcode).length+1));
 }
 
-function count_last_pool_num(disk_order){
-	var last_pool_num = 0;
-
-	for(var i = 0; i < this.selectedDiskOrder; ++i)
-		last_pool_num += parseInt(foreign_disk_pool_number()[i]);
-
-	return last_pool_num;
-}
-
 function setSelectedDiskOrder(selectedId){
 	this.selectedDiskBarcode = getDiskBarcode(selectedId.substring(1));
 	this.selectedPoolBarcode = "";
 	this.selectedFolderBarcode = "";
+
 	this.selectedDiskOrder = getDiskOrder(this.selectedDiskBarcode);
 	this.selectedPoolOrder = -1;
 	this.selectedFolderOrder = -1;
@@ -106,7 +131,7 @@ function setSelectedPoolOrder(selectedId){
 	this.selectedFolderBarcode = "";
 	
 	this.selectedDiskOrder = getDiskOrder(this.selectedDiskBarcode);
-	this.selectedPoolOrder = count_last_pool_num(this.selectedDiskOrder)+getPoolOrder(this.selectedPoolBarcode);
+	this.selectedPoolOrder = getPoolOrder(this.selectedPoolBarcode);
 	this.selectedFolderOrder = -1;
 }
 
@@ -114,9 +139,9 @@ function setSelectedFolderOrder(selectedId){
 	this.selectedDiskBarcode = getDiskBarcode(selectedId.substring(1));
 	this.selectedPoolBarcode = getPoolBarcode(selectedId.substring(1));
 	this.selectedFolderBarcode = getFolderBarcode(selectedId.substring(1));
-	
+
 	this.selectedDiskOrder = getDiskOrder(this.selectedDiskBarcode);
-	this.selectedPoolOrder = count_last_pool_num(this.selectedDiskOrder)+getPoolOrder(this.selectedPoolBarcode);
+	this.selectedPoolOrder = getPoolOrder(this.selectedPoolBarcode);
 	this.selectedFolderOrder = 1+getFolderOrder(this.selectedFolderBarcode);
 }
 
@@ -132,117 +157,508 @@ function getSelectedFolderOrder(){
 	return this.selectedFolderOrder;
 }
 
-function getDiskIDfromOtherID(objID){
-	var disk_id_pos, disk_id;
+// =================================== Copy from /aidisk/AiDisk_folder_tree.js =========================================
+
+var list_share_or_folder = 1; // 0: share, 1: folder.
+var isLoading = 0;
+var FromObject = "0";
+var Items = -1;
+var lastClickedObj = 0;
+var clickedFolderBarCode = new Array();	// clickedFolderBarCode[poolName][folderName] = folderBarCode
+
+function popupWindow(w,u){
+	disableCheckChangedStatus();
 	
-	disk_id_pos = objID.indexOf("_", 3);
-	disk_id = objID.substring(0, disk_id_pos);
+	winW_H();
 	
-	return disk_id;
+	$(w).style.width = winW+"px";
+	$(w).style.height = winH+"px";
+	$(w).style.visibility = "visible";
+	
+	$('popupframe').src = u;
 }
 
-function getPoolIDfromOtherID(objID){
-	var part_id_pos, part_id;
-	
-	part_id_pos = objID.lastIndexOf("_");
-	part_id = objID.substring(0, part_id_pos);
-	
-	return part_id;
+function hidePop(flag){
+	if(flag != "apply")
+		enableCheckChangedStatus();
+
+	setTimeout(function(){
+		document.getElementById("popupframe").src = "";
+	}, 100);
+
+	$('OverlayMask').style.visibility = "hidden";
 }
 
-function getShareIDfromOtherID(objID){
-	var share_id_pos, share_id;
+function GetFolderItem(selectedObj, haveSubTree){
+	var barcode, layer = 0;
 	
-	share_id_pos = objID.lastIndexOf("_")+1;
-	share_id = objID.substring(share_id_pos);
+	showClickedObj(selectedObj);
 	
-	return share_id;
+	barcode = selectedObj.id.substring(1);
+	layer = get_layer(barcode);
+	
+	if(layer == 0)
+		alert("Machine: Wrong");
+	else if(layer == 1){
+		// chose Disk
+		setSelectedDiskOrder(selectedObj.id);
+		onEvent();
+	}
+	else if(layer == 2){
+		// chose Partition
+		setSelectedPoolOrder(selectedObj.id);
+		onEvent();
+	}
+	else if(layer == 3){
+		// chose Shared-Folder
+		setSelectedFolderOrder(selectedObj.id);
+		onEvent();
+		showApplyBtn();
+	}
+	
+	if(haveSubTree)
+		GetTree(barcode, 1);
 }
 
-function computepools(diskorder, flag){
-	var pools = new Array();
-	var pools_size = new Array();
-	var pools_available = new Array();
-	var pools_type = new Array();
-	var pools_size_in_use = new Array();
+function getSelectedStatusOfPool(pool){
+	var status = "";
 	
-	for(var i = 0; i < pool_devices().length; ++i){
-		if(per_pane_pool_usage_kilobytes(i, diskorder)[0] && per_pane_pool_usage_kilobytes(i, diskorder)[0] > 0){
-			pools[pools.length] = pool_devices()[i];
-			pools_size[pools_size.length] = per_pane_pool_usage_kilobytes(i, diskorder)[0];
-			pools_available[pools_available.length] = per_pane_pool_usage_kilobytes(i, diskorder)[0]-pool_kilobytes_in_use()[i];
-			pools_type[pools_type.length] = pool_types()[i];
-			pools_size_in_use[pools_size_in_use.length] = pool_kilobytes_in_use()[i];
+	outer_loop:
+		for(var i=0; i < usbDevicesList.length; i++){
+			for(var j=0; j < usbDevicesList[i].partition.length; j++){
+				if(usbDevicesList[i].partition[j].mountPoint == pool){
+					status = usbDevicesList[i].partition[j].status;
+					break outer_loop;
+				}
+			}
+		}
+	
+	return status;
+}
+
+function showClickedObj(clickedObj){
+	if(this.lastClickedObj != 0)
+		this.lastClickedObj.className = "lastfolderClicked";  //this className set in AiDisk_style.css
+	
+	clickedObj.className = "folderClicked";
+
+	this.lastClickedObj = clickedObj;
+}
+
+function GetTree(layer_order, v){
+	if(layer_order == "0"){
+		this.FromObject = layer_order;
+		$('d'+layer_order).innerHTML = '<span class="FdWait">. . . . . . . . . .</span>';
+		setTimeout('get_layer_items("'+layer_order+'", "gettree")', 1);
+		
+		return;
+	}
+	
+	if($('a'+layer_order).className == "FdRead"){
+		$('a'+layer_order).className = "FdOpen";
+		$('a'+layer_order).src = "/images/Tree/vert_line_s"+v+"1.gif";
+		
+		this.FromObject = layer_order;
+		
+		$('e'+layer_order).innerHTML = '<img src="/images/Tree/folder_wait.gif">';
+		setTimeout('get_layer_items("'+layer_order+'", "gettree")', 1);
+	}
+	else if($('a'+layer_order).className == "FdOpen"){
+		$('a'+layer_order).className = "FdClose";
+		$('a'+layer_order).src = "/images/Tree/vert_line_s"+v+"0.gif";
+		
+		$('e'+layer_order).style.position = "absolute";
+		$('e'+layer_order).style.visibility = "hidden";
+	}
+	else if($('a'+layer_order).className == "FdClose"){
+		$('a'+layer_order).className = "FdOpen";
+		$('a'+layer_order).src = "/images/Tree/vert_line_s"+v+"1.gif";
+		
+		$('e'+layer_order).style.position = "";
+		$('e'+layer_order).style.visibility = "";
+	}
+	else
+		alert("Error when show the folder-tree!");
+}
+
+function get_layer_items(new_layer_order, motion){
+	if(list_share_or_folder == 1)
+		document.aidiskForm.action = "/aidisk/getfolderarray.asp";
+	else
+		document.aidiskForm.action = "/aidisk/getsharearray.asp";
+	
+	$("motion").value = motion;
+	$("layer_order").value = new_layer_order;
+	document.aidiskForm.submit();
+}
+
+function get_tree_items(treeitems, motion){
+	this.isLoading = 1;
+	this.Items = treeitems;
+	
+	if(motion == "lookup")
+		;
+	else if(motion == "gettree"){
+		if(this.Items && this.Items.length > 0){
+			BuildTree();
 		}
 	}
-
-	if(flag == "name") return pools;
-	if(flag == "size") return pools_size;
-	if(flag == "available") return pools_available;
-	if(flag == "type") return pools_type;
-	if(flag == "size_in_use") return pools_size_in_use;
 }
 
-function computeallpools(all_disk_order, flag){
-	var pool_array = computepools(all_disk_order, flag);
-	var total_size = 0;
-	
-	if(all_disk_order >= foreign_disks().length)
-		return getDiskTotalSize(all_disk_order);
-	
-	for(var i = 0; i < pool_array.length; ++i)
-		total_size += pool_array[i];
-
-	return simpleNum(total_size);
-}
-
-function getDiskMountedNum(all_disk_order){
-	if(all_disk_order < foreign_disks().length)
-		return foreign_disk_total_mounted_number()[all_disk_order];
-	else
-		return 0;
-}
-
-function getDiskName(all_disk_order){
-	var disk_name;
-	
-	if(all_disk_order < foreign_disks().length)
-		disk_name = decodeURIComponent(foreign_disks()[all_disk_order]);
-	else
-		disk_name = blank_disks()[all_disk_order-foreign_disks().length];
-	
-	return disk_name;
-}
-
-function getDiskPort(all_disk_order){
-	var disk_port;
-	
-	if(all_disk_order < foreign_disks().length)
-		disk_port = foreign_disk_interface_names()[all_disk_order].charAt(0);
-	else
-		disk_port = blank_disk_interface_names()[all_disk_order-foreign_disks().length];
-	
-	return disk_port;
-}
-
-function getDiskModelName(all_disk_order){
-	var disk_model_name;
-	
-	if(all_disk_order < foreign_disks().length)
-		disk_model_name = decodeURIComponent(foreign_disk_model_info()[all_disk_order]);
-	else
-		disk_model_name = blank_disk_model_info()[all_disk_order-foreign_disk_model_info().length];
+function BuildTree(){
+	var ItemText, ItemBarCode, ItemSub, ItemIcon;
+	var vertline, isSubTree;
+	var layer;
+	var shown_permission = "";
+	var short_ItemText = "";
+	var shown_ItemText = "";
 		
-	return disk_model_name;
+	var TempObject = "";
+	
+	for(var i = 0; i < this.Items.length; ++i){
+		this.Items[i] = this.Items[i].split("#");
+		
+		var Item_size = 0;
+		Item_size = this.Items[i].length;
+		if(Item_size > 3){
+			var temp_array = new Array(3);
+			
+			temp_array[2] = this.Items[i][Item_size-1];
+			temp_array[1] = this.Items[i][Item_size-2];
+			
+			temp_array[0] = "";
+			for(var j = 0; j < Item_size-2; ++j){
+				if(j != 0)
+					temp_array[0] += "#";
+				temp_array[0] += this.Items[i][j];
+			}
+			this.Items[i] = temp_array;
+		}
+		
+		ItemText = (this.Items[i][0]).replace(/^[\s]+/gi,"").replace(/[\s]+$/gi,"");
+		ItemBarCode = this.FromObject+"_"+(this.Items[i][1]).replace(/^[\s]+/gi,"").replace(/[\s]+$/gi,"");
+		ItemSub = parseInt((this.Items[i][2]).replace(/^[\s]+/gi,"").replace(/[\s]+$/gi,""));
+
+		layer = get_layer(ItemBarCode.substring(1));
+		
+		if(layer == 3){
+			if(ItemText.length > 21)
+		 		short_ItemText = ItemText.substring(0,18)+"...";
+		 	else
+		 		short_ItemText = ItemText;
+		}
+		else
+			short_ItemText = ItemText;
+		
+		shown_ItemText = showhtmlspace(short_ItemText);
+		
+		if(layer == 1)
+			ItemIcon = 'disk';
+		else if(layer == 2)
+			ItemIcon = 'part';
+		else
+			ItemIcon = 'folders';
+		
+		SubClick = ' onclick="GetFolderItem(this, ';
+		if(ItemSub <= 0){
+			SubClick += '0);"';
+			isSubTree = 'n';
+		}
+		else{
+			SubClick += '1);"';
+			isSubTree = 's';
+		}
+		
+		if(i == this.Items.length-1){
+			vertline = '';
+			isSubTree += '1';
+		}
+		else{
+			vertline = ' background="/images/Tree/vert_line.gif"';
+			isSubTree += '0';
+		}
+		
+		TempObject += 
+'<table class="tree_table">\n'+
+'<tr>\n'+
+	// the line in the front.
+	'<td class="vert_line">\n'+ 
+		'<img id="a'+ItemBarCode+'" onclick=\'$("d'+ItemBarCode+'").onclick();\' class="FdRead" src="/images/Tree/vert_line_'+isSubTree+'0.gif">\n'+
+	'</td>\n';
+	
+		if(layer == 3){
+			TempObject += 		/*a: connect_line b: harddisc+name  c:harddisc  d:name e: next layer forder*/
+	'<td>\n'+
+		'<div id="b'+ItemBarCode+'" class="FdText">\n'+		/* style="float:left; width:117px; overflow:hidden;"*/
+			'<img id="c'+ItemBarCode+'" onclick=\'$("d'+ItemBarCode+'").onclick();\' src="/images/New_ui/advancesetting/'+ItemIcon+'.png">\n'+
+			'<span id="d'+ItemBarCode+'"'+SubClick+' title="'+ItemText+'">'+shown_ItemText+'</span>\n'+
+		'</div>\n'+
+	'</td>\n'+
+	
+	'<td><div id=\"f'+ItemBarCode+'" class="FileStatus" onclick="getChangedPermission(this);"></div></td>\n\n';
+		}
+		else if(layer == 2){
+			TempObject += 
+	'<td>\n';
+			
+			TempObject += 
+'<table class="tree_table">\n'+
+'<tr>\n';
+			
+			TempObject += 
+	'<td class="vert_line">\n'+
+			'<img id="c'+ItemBarCode+'" onclick=\'$("d'+ItemBarCode+'").onclick();\' src="/images/New_ui/advancesetting/'+ItemIcon+'.png">\n'+
+	'</td>\n'+
+	'<td class="FdText">\n'+
+			'<span id="d'+ItemBarCode+'"'+SubClick+' title="'+ItemText+'">'+shown_ItemText+'</span>\n'+
+	'</td>\n';
+			
+			/*if(PROTOCOL == "cifs")
+				TempObject += 
+	'<td><div id=\"f'+ItemBarCode+'" class="FileStatus" onclick="getChangedPermission(this);"></div></td>\n\n';
+			else//*/
+				TempObject += 
+	'<td></td>';
+			
+			TempObject += 
+'</tr>\n'+
+'</table>\n';
+			
+			TempObject += 
+	'</td>\n'+
+'</tr>\n';
+			
+			TempObject += 
+'<tr><td></td>\n';
+			
+			TempObject += 
+	'<td colspan=2><div id="e'+ItemBarCode+'" ></div></td>\n';
+		}
+		else{
+			TempObject += 		/*a: connect_line b: harddisc+name  c:harddisc  d:name e: next layer forder*/
+	'<td>\n'+
+		'<div id="b'+ItemBarCode+'" class="FdText">\n'+		/* style="float:left; width:117px; overflow:hidden;"*/
+			'<img id="c'+ItemBarCode+'" onclick=\'$("d'+ItemBarCode+'").onclick();\' src="/images/New_ui/advancesetting/'+ItemIcon+'.png">\n'+
+			'<span id="d'+ItemBarCode+'"'+SubClick+' title="'+ItemText+'">'+shown_ItemText+'</span>\n'+
+		'</div>\n'+
+	'</td>\n'+
+'</tr>\n';
+			
+			TempObject += 
+'<tr><td></td>\n';
+			
+			TempObject += 
+	'<td><div id="e'+ItemBarCode+'" ></div></td>\n';
+		}
+		
+		TempObject += 
+'</tr>\n';
+	}
+	
+	TempObject += 
+'</table>\n';
+	
+	$("e"+this.FromObject).innerHTML = TempObject;
+	
+	// additional object
+	if(layer == 3){
+		for(var i = 0; i < this.Items.length; ++i){
+			ItemText = (this.Items[i][0]).replace(/^[\s]+/gi,"").replace(/[\s]+$/gi,"");
+			ItemBarCode = this.FromObject+"_"+(this.Items[i][1]).replace(/^[\s]+/gi,"").replace(/[\s]+$/gi,"");
+			
+			// record the barcode of the shown folder
+			var usbPartitionMountPoint = usbDevicesList[getSelectedDiskOrder()].partition[getSelectedPoolOrder()].mountPoint;
+
+			add_folderBarCode_list(usbPartitionMountPoint, ItemText, ItemBarCode);
+
+			// decide if show the permission out
+			if(this.selectedAccount != null && this.selectedAccount.length > 0)
+				shown_permission = get_permission_of_folder(this.selectedAccount, usbPartitionMountPoint, ItemText, PROTOCOL);
+			else
+				shown_permission = 3;
+			
+			showPermissionRadio(ItemBarCode, shown_permission);
+		}
+	}
 }
 
-function getDiskTotalSize(all_disk_order){
-	var TotalSize;
-	
-	if(all_disk_order < foreign_disks().length)
-		TotalSize = simpleNum(foreign_disk_total_size()[all_disk_order]);
+// 0: Share mode, 1: Account mode.
+function get_manage_type(proto){
+	if(proto == "cifs"){
+		if(this.AM_to_cifs == 2 || this.AM_to_cifs == 4)
+			return 1;
+		else
+			return 0;
+	}
+	else if(proto == "ftp"){ // SMB
+		if(this.AM_to_ftp == 2)
+			return 1;
+		else
+			return 0;
+	}
+	else if(proto == "webdav"){ // WEBDAV
+		if(this.AM_to_webdav == 2)
+			return 1;
+		else
+			return 0;
+	}
 	else
-		TotalSize = simpleNum(blank_disk_total_size()[all_disk_order-foreign_disk_total_size().length]);
+		alert("<#ALERT_OF_ERROR_Input2#>");
+}
+
+function getPoolDevice(barCode){
+	var layer = get_layer(barCode);
+	
+	if(layer < 2)
+		return "";
+	
+	
+}
+
+function showPermissionRadio(barCode, permission){
+	var code = "";
+	var layer = get_layer(barCode);
+	var PoolBarCode, PoolDevice, PoolStatus;
+	
+	PoolBarCode = getPoolBarcode(barCode);
+	PoolDevice = usbDevicesList[getSelectedDiskOrder()].partition[getSelectedPoolOrder()].mountPoint;
+	PoolStatus = getSelectedStatusOfPool(PoolDevice);
+	
+	if(layer == 3
+			//|| (layer == 2 && get_manage_type(PROTOCOL) == 1)
+			){
+		code += '<input type="radio" name="g'+barCode+'" value="3"';
+		if(permission == 3)
+			code += ' checked';
+		else if(PROTOCOL == "cifs" && permission == 2)
+			code += ' checked';
+		else if(PROTOCOL == "webdav" && permission == 2)
+			code += ' checked';
 		
-	return TotalSize;
+		if(PoolStatus != "rw"
+				//|| (PROTOCOL == "ftp" && get_manage_type(PROTOCOL) == 0)
+				|| get_manage_type(PROTOCOL) == 0
+				)
+			code += ' disabled';
+		
+		code += '>';
+	}
+	else
+		code += '<span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>\n';
+	
+	if(PROTOCOL == "ftp"){
+		code += '<input type="radio" name="g'+barCode+'" value="2"';
+		if(permission == 2)
+			code += ' checked';
+		
+		if(PoolStatus != "rw"
+			|| get_manage_type(PROTOCOL) == 0)
+		code += ' disabled';
+		
+		code += '>';
+	}
+	else
+		code += '<span>&nbsp;&nbsp;&nbsp;</span>\n';
+	
+	code += '<input type="radio" name="g'+barCode+'" value="1"';
+	if(permission == 1
+			//|| (layer == 2 && permission == 3 && PROTOCOL == "cifs")
+			)
+		code += ' checked';
+	
+	if(PoolStatus != "rw"
+			//|| (PROTOCOL == "ftp" && get_manage_type(PROTOCOL) == 0)
+			|| get_manage_type(PROTOCOL) == 0
+			)
+		code += ' disabled';
+	
+	code += '>';
+	
+	if(PROTOCOL == "cifs" || PROTOCOL == "webdav")
+		code += '<span>&nbsp;&nbsp;&nbsp;</span>\n';
+	
+	code += '<input type="radio" name="g'+barCode+'" value="0"';
+	if(permission == 0)
+		code += ' checked';
+	
+	if(PoolStatus != "rw"
+			//|| (PROTOCOL == "ftp" && get_manage_type(PROTOCOL) == 0)
+			|| get_manage_type(PROTOCOL) == 0
+			)
+		code += ' disabled';
+	
+	code += '>';
+	$("f"+barCode).innerHTML = code;
+}
+
+function getChangedPermission(selectedObj){
+	var selectedBarCode = selectedObj.id.substring(1);
+	var selectedlayer = get_layer(selectedBarCode);
+	var selectedPoolDevice, selectedFolder;
+	var folderObj = $("d"+selectedBarCode);
+	var radioName = "g"+selectedBarCode;
+	var permission, orig_permission;
+	
+	if(!this.selectedAccount)
+		this.selectedAccount = "guest";
+
+	if(selectedlayer == 2)
+		setSelectedPoolOrder(selectedObj.id);
+	else
+		setSelectedFolderOrder(selectedObj.id);
+
+	selectedPoolDevice = usbDevicesList[getSelectedDiskOrder()].partition[getSelectedPoolOrder()].mountPoint;
+
+	permission = getValueofRadio(radioName);
+	if(permission == -1){
+		alert("Can't read the permission when change the radio!");	// system error msg. must not be translate
+		return;
+	}
+	
+	if(get_manage_type(PROTOCOL) == 0 && selectedlayer == 2 && permission > 0)
+		permission = 3;
+	
+	if(!this.changedPermissions[this.selectedAccount])
+		this.changedPermissions[this.selectedAccount] = new Array();
+	
+	if(!this.changedPermissions[this.selectedAccount][selectedPoolDevice])
+		this.changedPermissions[this.selectedAccount][selectedPoolDevice] = new Array();
+	
+	if(selectedlayer == 2)
+		selectedFolder = "";
+	else
+		selectedFolder = parent.get_sharedfolder_in_pool(selectedPoolDevice)[getSelectedFolderOrder()];
+	
+	this.changedPermissions[this.selectedAccount][selectedPoolDevice][selectedFolder] = permission;
+	this.controlApplyBtn = 1;
+
+	showApplyBtn();
+	onEvent();
+}
+
+function getValueofRadio(radioName){
+	var radioObjs = getElementsByName_iefix("input", radioName);
+	var value;
+	for(var i = 0; i < radioObjs.length; ++i)
+		if(radioObjs[i].checked == true)
+			//return parseInt(radioObjs[i].value);
+			return radioObjs[i].value;
+	
+	return -1;
+}
+
+function add_folderBarCode_list(poolName, folderName, folderBarCode){
+	if(!this.clickedFolderBarCode[poolName]){
+		this.clickedFolderBarCode[poolName] = new Array();
+	}
+	
+	this.clickedFolderBarCode[poolName][folderName] = folderBarCode;
+}
+
+function get_folderBarCode_in_pool(poolName, folderName){
+	if(this.clickedFolderBarCode[poolName])
+		if(this.clickedFolderBarCode[poolName][folderName])
+			return this.clickedFolderBarCode[poolName][folderName];
+	
+	return "";
 }

@@ -37,7 +37,7 @@ var $j = jQuery.noConflict();
 function initial(){
 	var code1, code2;
 	show_menu();
-	document.form.fanctrl_fullspeed_temp_unit.selectedIndex = getCookie("CoreTmpUnit");
+	document.form.fanctrl_fullspeed_temp_unit.selectedIndex = cookie.get("CoreTmpUnit");
 	update_coretmp();
 
 	code1 = '<br>Legend: <span style="color: #FF9900;">2.4 GHz</span> - <span style="color: #33CCFF;">5 GHz</span>';
@@ -121,26 +121,8 @@ function applyRule(){
 }
 
 function changeTempUnit(num){
-	setCookie(num);
+	cookie.set("CoreTmpUnit", num, 365);
 	refreshpage();
-}
-
-function setCookie(num){
-	document.cookie = "CoreTmpUnit=" + num;
-}
-
-function getCookie(c_name)
-{
-	if (document.cookie.length > 0){ 
-		c_start=document.cookie.indexOf(c_name + "=")
-		if (c_start!=-1){ 
-			c_start=c_start + c_name.length+1 
-			c_end=document.cookie.indexOf(";",c_start)
-			if (c_end==-1) c_end=document.cookie.length
-			return unescape(document.cookie.substring(c_start,c_end))
-		} 
-	}
-	return null
 }
 </script>
 </head>

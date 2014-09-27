@@ -73,7 +73,7 @@ function gen_list(){
 		protolist = new Array("1");
 		isplist = new Array("Rogers");
 		apnlist = new Array("internet.com");
-		daillist = new Array("");
+		daillist = new Array("*99***1#");
 		userlist = new Array("wapuser1");
 		passlist = new Array("wap");
 	}
@@ -135,7 +135,7 @@ function gen_list(){
 	}
 	else if(country == "IN"){
 		protolist = new Array("1", "1", "1", "1", "1", "2", "1", "2", "2", "2", "2");
-		isplist = new Array("IM2", "INDOSAT", "XL", "Telkomsel Flash", "3", "Smartfren", "Axis", "Esia", "StarOne", "Telkom Flexi", "AHA");
+		isplist = new Array("IM2", "INDOSAT", "XL", "Telkomsel Flash", "3", "SmartFren", "Axis", "Esia", "StarOne", "Telkom Flexi", "AHA");
 		apnlist = new Array("indosatm2", "indosat3g", "www.xlgprs.net", "flash", "3gprs", "", "AXIS", "", "", "", "AHA");
 		daillist = new Array("*99#", "*99#", "*99#", "*99#", "*99***1#", "#777", "*99***1#", "#777", "#777", "#777", "#777");
 		userlist = new Array("", "indosat", "xlgprs", "", "3gprs", "smart", "axis", "esia", "starone", "telkomnet@flexi", "aha@aha.co.id");
@@ -183,7 +183,7 @@ function gen_list(){
 	}
 	else if(country == "TW"){
 		protolist = new Array("1", "1", "1", "1", "1", "1", "4");
-		isplist = new Array("Far Eastern", "Far Eastern(fetims)", "Chunghua Telecom", "Taiwan Mobile", "Vibo", "Taiwan Cellular", "GMC");
+		isplist = new Array("Far Eastone", "Far Eastone(fetims)", "Chunghwa", "Taiwan Mobile", "Vibo", "Taiwan Cellular", "GMC");
 		apnlist = new Array("internet", "fetims", "internet", "internet", "internet", "internet", "");
 		daillist = new Array("*99#", "*99***1#", "*99***1#","*99#" ,"*99#" ,"*99***1#", "");
 		userlist = new Array("", "", "", "", "", "", "");
@@ -343,7 +343,7 @@ function gen_list(){
 	}
 	else if(country == "JP"){
 		protolist = new Array("1", "1", "1");
-		isplist = new Array("Softbank", "b-mobile", "AU");
+		isplist = new Array("Softbank", "B-Mobile", "AU");
 		apnlist = new Array("emb.ne.jp", "dm.jplat.net", "au.NET");
 		daillist = new Array("*99***1#", "*99***1#", "*99**24#");
 		userlist = new Array("em", "bmobile@u300", "au@au-win.ne.jp");

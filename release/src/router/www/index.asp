@@ -76,6 +76,7 @@
 <script type="text/javascript" src="/detect.js"></script>
 <script language="JavaScript" type="text/javascript" src="/jquery.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
+<script type="text/javascript" src="/disk_functions.js"></script>
 <script>
 var $j = jQuery.noConflict();	
 
@@ -168,19 +169,22 @@ function initial(){
 		var tmpDisk = new newDisk();
 		tmpDisk.usbPath = i+1;
 		show_USBDevice(tmpDisk);
-		$("usbPathContianer_"+parseInt(i+1)).style.display = "";
-		
+		$("usbPathContianer_"+parseInt(i+1)).style.display = "";	
 	}
 	
 	check_usb3();
-	for(var i=0; i<usbDevices.length; i++){
-	  var new_option = new Option(usbDevices[i].deviceName, usbDevices[i].deviceIndex);
-		document.getElementById('deviceOption_'+usbDevices[i].usbPath).options.add(new_option);
-		document.getElementById('deviceOption_'+usbDevices[i].usbPath).style.display = "";
 
-		if(typeof usbPorts[usbDevices[i].usbPath-1].deviceType == "undefined" || usbPorts[usbDevices[i].usbPath-1].deviceType == "")
-			show_USBDevice(usbDevices[i]);
-	}
+ 	require(['/require/modules/diskList.js'], function(diskList){
+ 		var usbDevicesList = diskList.list();
+		for(var i=0; i<usbDevicesList.length; i++){
+		  var new_option = new Option(usbDevicesList[i].deviceName, usbDevicesList[i].deviceIndex);
+			document.getElementById('deviceOption_'+usbDevicesList[i].usbPath).options.add(new_option);
+			document.getElementById('deviceOption_'+usbDevicesList[i].usbPath).style.display = "";
+
+			if(typeof usbPorts[usbDevicesList[i].usbPath-1].deviceType == "undefined" || usbPorts[usbDevicesList[i].usbPath-1].deviceType == "")
+				show_USBDevice(usbDevicesList[i]);
+		}
+	});
 
 	showMapWANStatus(sw_mode);
 
@@ -208,7 +212,7 @@ function initial(){
 			$("wanIP_div").style.display = "none";
 	}
 
-	var NM_table_img = getCookie("NM_table_img");
+	var NM_table_img = cookie.get("NM_table_img");
 	if(NM_table_img != "" && NM_table_img != null){
 		customize_NM_table(NM_table_img);
 		$("bgimg").options[NM_table_img[4]].selected = 1;
@@ -254,24 +258,7 @@ var isMD5DDNSName = function(){
 
 function customize_NM_table(img){
 	$("NM_table").style.background = "url('/images/" + img +"')";
-	setCookie(img);
-}
-
-function setCookie(color){
-	document.cookie = "NM_table_img=" + color;
-}
-
-function getCookie(c_name){
-	if (document.cookie.length>0){ 
-		c_start=document.cookie.indexOf(c_name + "=");
-		if (c_start!=-1){ 
-			c_start=c_start + c_name.length+1;
-			c_end=document.cookie.indexOf(";",c_start);
-			if (c_end==-1) c_end=document.cookie.length;
-			return unescape(document.cookie.substring(c_start,c_end));
-		} 
-	}
-	return null;
+	cookie.set("NM_table_img", img, 365);
 }
 
 function set_default_choice(){
@@ -742,29 +729,31 @@ function check_dualwan(flag){
 }
 
 function update_wan_status(e) {
-  $j.ajax({
-    url: '/status.asp',
-    dataType: 'script', 
-	
-    error: function(xhr) {
-      setTimeout("update_wan_status();", 3000);
-    },
-    success: function(response) {
-		wanlink_status = wanlink_statusstr();
-		wanlink_ipaddr = wanlink_ipaddr();
-		secondary_wanlink_status = secondary_wanlink_statusstr();
-		secondary_wanlink_ipaddr = secondary_wanlink_ipaddr();	
-		change_wan_state(wanlink_status,secondary_wanlink_status);
-		setTimeout("update_wan_status();", 3000);
-    }
-  });
+	if(stopFlag == 1) return false;
+
+	$j.ajax({
+		url: '/status.asp',
+		dataType: 'script', 
+
+		error: function(xhr) {
+			setTimeout("update_wan_status();", 3000);
+		},
+		success: function(response) {
+			wanlink_status = wanlink_statusstr();
+			wanlink_ipaddr = wanlink_ipaddr();
+			secondary_wanlink_status = secondary_wanlink_statusstr();
+			secondary_wanlink_ipaddr = secondary_wanlink_ipaddr();	
+			change_wan_state(wanlink_status,secondary_wanlink_status);
+			setTimeout("update_wan_status();", 3000);
+		}
+	});
 }
 
 function change_wan_state(primary_status, secondary_status){
 	if (!dualWAN_support)
 		return true;
 
-	if(wans_mode == "fo"){
+	if(wans_mode == "fo" || wans_mode == "fb"){
 		if(wan_unit == 0){
 			$('primary_status').innerHTML = primary_status;
 			if(primary_status == "Disconnected"){				
@@ -788,7 +777,7 @@ function change_wan_state(primary_status, secondary_status){
 				$('secondary_line').className = "secondary_wan_connected";
 			}
 		}
-		else{
+		else{	//wan_unit : 1
 			if(wanlink_ipaddr != '0.0.0.0' && primary_status != 'Disconnected')
 				primary_status = "Standby";
 				
@@ -812,7 +801,7 @@ function change_wan_state(primary_status, secondary_status){
 			}
 		}	
 	}
-	else{
+	else{	//lb
 		$('primary_status').innerHTML = primary_status;
 		$('seconday_status').innerHTML = secondary_status;
 		if(primary_status == "Disconnected"){				
@@ -1238,7 +1227,7 @@ function check_usb3(){
 						<div id="ddnsHostName_div" style="margin-top:5px;word-break:break-all;word-wrap:break-word;">
 							<span style="font-size:12px;font-family: Verdana, Arial, Helvetica, sans-serif;">DDNS:</span>
 							<strong id="ddnsHostName" class="index_status" style="font-size:14px;"><#QIS_detectWAN_desc2#></strong>
-							<span id="ddns_fail_hint" class="notificationoff" style="position: absolute;margin-top:-5px;" onClick="show_ddns_fail_hint();" onMouseOut="nd();"></span>
+							<span id="ddns_fail_hint" class="notificationoff" onClick="show_ddns_fail_hint();" onMouseOut="nd();"></span>
 						</div>
 						<div id="wlc_band_div" style="margin-top:5px;display:none">
 							<span style="font-size:14px;font-family: Verdana, Arial, Helvetica, sans-serif;"><#Interface#>:</span>
@@ -1358,30 +1347,40 @@ function check_usb3(){
 	initial();
 
 	document.getElementById('deviceOption_1').onchange = function(){
-		show_USBDevice(usbDevices[this.value]);
-		setSelectedDiskOrder('iconUSBdisk_1');
+	 	require(['/require/modules/diskList.js'], function(diskList){
+	 		var usbDevicesList = diskList.list();
+			show_USBDevice(usbDevicesList[document.getElementById('deviceOption_1').value]);
+			setSelectedDiskOrder('iconUSBdisk_1');
 
-		if(usbDevices[this.value].deviceType == "modem")
-			clickEvent(document.getElementById('iconModem_1'));
-		else if(usbDevices[this.value].deviceType == "printer")
-			clickEvent(document.getElementById('iconPrinter_1'));
-		else
-			clickEvent(document.getElementById('iconUSBdisk_1'));
+			if(usbDevicesList[document.getElementById('deviceOption_1').value].deviceType == "modem")
+				clickEvent(document.getElementById('iconModem_1'));
+			else if(usbDevicesList[document.getElementById('deviceOption_1').value].deviceType == "printer")
+				clickEvent(document.getElementById('iconPrinter_1'));
+			else
+				clickEvent(document.getElementById('iconUSBdisk_1'));
+		});
 	}
 
 	document.getElementById('deviceOption_2').onchange = function(){
-		show_USBDevice(usbDevices[this.value]);
-		setSelectedDiskOrder('iconUSBdisk_2');
+	 	require(['/require/modules/diskList.js'], function(diskList){
+	 		var usbDevicesList = diskList.list();
 
-		if(usbDevices[this.value].deviceType == "modem")
-			clickEvent(document.getElementById('iconModem_2'));
-		else if(usbDevices[this.value].deviceType == "printer")
-			clickEvent(document.getElementById('iconPrinter_2'));
-		else
-			clickEvent(document.getElementById('iconUSBdisk_2'));
+			show_USBDevice(usbDevicesList[document.getElementById('deviceOption_2').value]);
+			setSelectedDiskOrder('iconUSBdisk_2');
+
+			if(usbDevicesList[document.getElementById('deviceOption_2').value].deviceType == "modem")
+				clickEvent(document.getElementById('iconModem_2'));
+			else if(usbDevicesList[document.getElementById('deviceOption_2').value].deviceType == "printer")
+				clickEvent(document.getElementById('iconPrinter_2'));
+			else
+				clickEvent(document.getElementById('iconUSBdisk_2'));
+		});
 	}
 
-	setTimeout("document.networkmapdRefresh.submit();", 2000);
+	var manualUpdate = false;
+	setTimeout(function(){
+		document.networkmapdRefresh.submit();
+	}, 2000);
 </script>
 </body>
 

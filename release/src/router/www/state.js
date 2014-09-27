@@ -1,4 +1,6 @@
-﻿/* Internet Explorer lacks this array method */
+﻿document.write('<script type="text/javascript" src="/require/require.min.js"></script>');
+
+/* Internet Explorer lacks this array method */
 if (!('indexOf' in Array.prototype)) {
 	Array.prototype.indexOf= function(find, i /*opt*/) {
 		if (i===undefined) i= 0;
@@ -72,47 +74,41 @@ var httpd_dir = "/cifs1"
 var isFromWAN = false;
 var svc_ready = '<% nvram_get("svc_ready"); %>';
 
-var wl_band = function(){
-	var wl_nband_array = '<% wl_nband_info(); %>'.toArray();
-	var band2g_count = 0;
-	var band5g_count = 0;
-	for (var j=0; j<wl_nband_array.length; j++) {
-		if(wl_nband_array[j] == '2')
-			band2g_count++;
-		else if(wl_nband_array[j] == '1')
-			band5g_count++;
-	}
-	this.band2g_support = function(){
-		if(band2g_count > 0)
-			return true;
-		else
-			return false;
-	}
-	this.band5g_1_support = function(){
-		if(band5g_count > 0)
-			return true;
-		else
-			return false;
-	}
-	this.band5g_2_support = function(){
-		if(band5g_count > 1)
-			return true;
-		else
-			return false;
-	}
-	this.band2g_len = band2g_count;
-	this.band5g_len = band5g_count;
-	this.wl_if_len = wl_nband_array.length;
-};
-var wl = new wl_band();
-var wl_info = {
-	band2g_support:wl.band2g_support(),
-	band5g_1_support:wl.band5g_1_support(),
-	band5g_2_support:wl.band5g_2_support(),
-	wl_if_len:wl.wl_if_len,
-	band2g_len:wl.band2g_len,
-	band5g_len:wl.band5g_len
+//wireless
+var wl_nband_array = '<% wl_nband_info(); %>'.toArray();
+var band2g_count = 0;
+var band5g_count = 0;
+for (var j=0; j<wl_nband_array.length; j++) {
+	if(wl_nband_array[j] == '2')
+		band2g_count++;
+	else if(wl_nband_array[j] == '1')
+		band5g_count++;
 }
+
+var wl_info = {
+	band2g_support:(function(){
+				if(band2g_count > 0)
+					return true;
+				else
+					return false;
+			})(),
+	band5g_support:(function(){
+				if(band5g_count > 0)
+					return true;
+				else
+					return false;
+			})(),
+	band5g_2_support:(function(){
+				if(band5g_count == 2)
+					return true;
+				else
+					return false;
+			})(),
+	band2g_total:band2g_count,
+	band5g_total:band5g_count,
+	wl_if_total:wl_nband_array.length
+};
+//wireless end
 
 // parsing rc_support
 var rc_support = '<% nvram_get("rc_support"); %>';
@@ -154,7 +150,6 @@ var wifi_tog_btn_support = isSupport("wifi_tog_btn");
 
 var usb_support = isSupport("usbX");
 var usbPortMax = rc_support.charAt(rc_support.indexOf("usbX")+4);
-
 var printer_support = isSupport("printer"); 
 var appbase_support = isSupport("appbase");
 var appnet_support = isSupport("appnet");
@@ -248,11 +243,6 @@ var apps_fsck_ret = '<% apps_fsck_ret(); %>'.toArray();
 var apps_dev = '<% nvram_get("apps_dev"); %>';
 var tm_device_name = '<% nvram_get("tm_device_name"); %>';
 
-<% available_disk_names_and_sizes(); %>
-<% disk_pool_mapping_info(); %>
-<% get_printer_info(); %>
-<% get_modem_info(); %>
-
 //notification value
 var notice_acpw_is_default = '<% check_acpw(); %>';
 var noti_auth_mode_2g = '<% nvram_get("wl0_auth_mode_x"); %>';
@@ -293,130 +283,10 @@ if(dsl_support){
     	}	
 }  
 
-var newDisk = function(){
-	this.usbPath = "";
-	this.deviceIndex = "";
-	this.node = "";
-	this.manufacturer = "";
-	this.deviceName = "";
-	this.deviceType = "";
-	this.totalSize = "";
-	this.totalUsed = "";
-	this.mountNumber = "";
-	this.serialNum = "";
-	this.hasErrPart = false;
-	this.hasAppDev = false;
-	this.hasTM = false;
-	this.partition = new Array(0);
-}
-
-var newPartition = function(){
-	this.partName = "";
-	this.mountPoint = "";
-	this.isAppDev = false;
-	this.isTM = false;
-	this.fsck = "";
-	this.size = "";
-	this.used = "";
-	this.format = "";
-}
-
 var allUsbStatus = "";
 var allUsbStatusTmp = "";
 var allUsbStatusArray = '<% show_usb_path(); %>'.toArray();
-var pool_name = new Array();
-if(typeof pool_devices != "undefined") pool_name = pool_devices();
 
-var usbDevices = new Array();
-function genUsbDevices(){
-	var allPartIndex = 0;
-	usbDevices = new Array();
-
-	for(var i=0; i<foreign_disk_interface_names().length; i++){
-		if(foreign_disk_interface_names()[i].charAt(0) > usbPortMax) continue;
-
-		var tmpDisk = new newDisk();
-		tmpDisk.usbPath = foreign_disk_interface_names()[i].charAt(0);
-		tmpDisk.deviceIndex = i;
-		tmpDisk.node = foreign_disk_interface_names()[i];
-		tmpDisk.deviceName = decodeURIComponentSafe(foreign_disks()[i]);
-		tmpDisk.deviceType = "storage";
-		tmpDisk.mountNumber = foreign_disk_total_mounted_number()[i];
-
-		var _mountedPart = 0;	
-		while (_mountedPart < tmpDisk.mountNumber && allPartIndex < pool_name.length){
-			if(pool_types()[allPartIndex] != "unknown" || pool_status()[allPartIndex] != "unmounted"){
-				var tmpParts = new newPartition();
-				tmpParts.partName = pool_names()[allPartIndex];
-				tmpParts.mountPoint = pool_devices()[allPartIndex];
-				if(tmpParts.mountPoint == apps_dev){
-					tmpParts.isAppDev = true;
-					tmpDisk.hasAppDev = true;
-				}
-				if(tmpParts.mountPoint == tm_device_name){
-					tmpParts.isTM = true;
-					tmpDisk.hasTM = true;
-				}		
-				tmpParts.size = parseInt(pool_kilobytes()[allPartIndex]);
-				tmpParts.used = parseInt(pool_kilobytes_in_use()[allPartIndex]);
-				tmpParts.format = pool_types()[allPartIndex];
-				if(apps_fsck_ret.length > 0) {
-					tmpParts.fsck = apps_fsck_ret[allPartIndex][1];
-					if(apps_fsck_ret[allPartIndex][1] == 1){
-						tmpDisk.hasErrPart = true;
-					}
-				}
-
-				tmpDisk.partition.push(tmpParts);
-				tmpDisk.totalSize = parseInt(tmpDisk.totalSize + tmpParts.size);
-				tmpDisk.totalUsed = parseInt(tmpDisk.totalUsed + tmpParts.used);
-				_mountedPart++;
-			}
-
-			allPartIndex++;
-		}
-
-		if(tmpDisk.deviceName != "") usbDevices.push(tmpDisk);
-	}
-
-	for(var i=0; i<allUsbStatusArray.length; i++){
-		for(var j=0; j<allUsbStatusArray[i].length; j++){
-			if(allUsbStatusArray[i][j][0].charAt(0) > usbPortMax) continue;
-
-			if(allUsbStatusArray[i][j].join().search("storage") == -1 || allUsbStatusArray[i][j].length == 0){
-				tmpDisk = new newDisk();
-				tmpDisk.usbPath = allUsbStatusArray[i][j][0].charAt(0);
-				tmpDisk.deviceIndex = usbDevices.length;
-				tmpDisk.node = allUsbStatusArray[i][j][0];
-				tmpDisk.deviceType = allUsbStatusArray[i][j][1];
-
-				if(tmpDisk.deviceType == "printer" && printer_support){
-					var idx = printer_pool().getIndexByValue(tmpDisk.node)
-					if(idx == -1)
-						continue;
-
-					tmpDisk.manufacturer = printer_manufacturers()[idx];
-					tmpDisk.deviceName = tmpDisk.manufacturer + " " + printer_models()[idx].replace(tmpDisk.manufacturer, "");
-					tmpDisk.serialNum = printer_serialn()[idx];
-				}
-				else if(tmpDisk.deviceType == "modem" && modem_support){
-					var idx = modem_pool().getIndexByValue(tmpDisk.node)
-					if(idx == -1)
-						continue;
-
-					tmpDisk.manufacturer = modem_manufacturers()[idx];
-					tmpDisk.deviceName = tmpDisk.manufacturer + " " + modem_models()[idx].replace(tmpDisk.manufacturer, "");
-					tmpDisk.serialNum = modem_serialn()[idx];
-				}
-
-				if(tmpDisk.deviceName != "") usbDevices.push(tmpDisk);
-			}
-		}	
-	}
-}
-
-if(usb_support)
-	genUsbDevices();
 
 var wan_line_state = "<% nvram_get("dsltmp_adslsyncsts"); %>";
 var wlan0_radio_flag = "<% nvram_get("wl0_radio"); %>";
@@ -572,7 +442,7 @@ var tabtitle = new Array();
 tabtitle[0] = new Array("", "<#menu5_1_1#>", "<#menu5_1_2#>", "WDS", "<#menu5_1_4#>", "<#menu5_1_5#>", "<#menu5_1_6#>", "Site Survey");
 tabtitle[1] = new Array("", "Passpoint");
 
-tabtitle[2] = new Array("", "<#menu5_2_1#>", "<#menu5_2_2#>", "<#menu5_2_3#>", "IPTV", "Switch Control");
+tabtitle[2] = new Array("", "<#menu5_2_1#>", "<#menu5_2_2#>", "<#menu5_2_3#>", "IPTV", "<#Switch_itemname#>");
 tabtitle[3] = new Array("", "<#menu5_3_1#>", "<#dualwan#>", "<#menu5_3_3#>", "<#menu5_3_4#>", "<#menu5_3_5#>", "<#menu5_3_6#>", "<#NAT_passthrough_itemname#>", "<#menu5_4_4#>");
 tabtitle[4] = new Array("", "<#UPnPMediaServer#>", "<#menu5_4_1#>", "NFS Exports" , "<#menu5_4_2#>");
 tabtitle[5] = new Array("", "IPv6");
@@ -2001,7 +1871,7 @@ function show_top_status(){
 			$('elliptic_ssid_5g_2').innerHTML = extend_display_ssid(topbanner_ssid_5g_2)+"...";
 		}
 		else{
-			$('topbanner_ssid_5g_2').innerHTML = topbanner_ssid_5g_2;
+			$('elliptic_ssid_5g_2').innerHTML = topbanner_ssid_5g_2;
 		}
 		$('elliptic_ssid_5g_2').title = "5 GHz: \n"+ssid_status_5g_2;
 	}
@@ -2123,7 +1993,12 @@ function extend_display_ssid(ssid){		//"&amp;"5&; "&lt;"4< ; "&gt;"4> ; "&nbsp;"
 }
 
 function go_setting(page){
+	if(tmo_support && isMobile()){
+		location.href = "QIS_wizard_m.htm";
+	}
+	else{
 		location.href = page;
+	}
 }
 
 function go_setting_parent(page){
@@ -2136,7 +2011,7 @@ function show_time(){
 	JS_timeObj3 = checkTime(JS_timeObj.getHours()) + ":" +
 				  			checkTime(JS_timeObj.getMinutes()) + ":" +
 				  			checkTime(JS_timeObj.getSeconds());
-	$('systemtime').innerHTML ="<a href='/Advanced_System_Content.asp'>" + JS_timeObj3 + "</a>";
+	$('systemtime').innerHTML ="<a href='/Advanced_System_Content.asp'>" + JS_timeObj3 + "</a>"; 
 	systime_millsec += 1000;		
 	
 	stime_ID = setTimeout("show_time();", 1000);
@@ -2922,19 +2797,6 @@ function inputHideCtrl(obj, flag){
 	return true;
 }
 
-function detectUSBStatus(){
-	$j.ajax({
-		url: '/update_diskinfo.asp',
-		dataType: 'script',
-		error: function(xhr){
-			detectUSBStatus();
-		},
-		success: function(){
-			genUsbDevices();
-		}
-  });
-}
-
 function hadPlugged(deviceType){
 	if(allUsbStatusArray.join().search(deviceType) != -1)
 		return true;
@@ -3020,6 +2882,7 @@ function refresh_info_status(xmldoc){
 	wlan1_radio_flag = wanStatus[12].firstChild.nodeValue.replace("wlan1_radio_flag=", "");
 	data_rate_info_2g = wanStatus[13].firstChild.nodeValue.replace("data_rate_info_2g=", "");
 	data_rate_info_5g = wanStatus[14].firstChild.nodeValue.replace("data_rate_info_5g=", "");
+	data_rate_info_5g_2 = wanStatus[15].firstChild.nodeValue.replace("data_rate_info_5g_2=", "");
 
 	var vpnStatus = devicemapXML[0].getElementsByTagName("vpn");
 	
@@ -3122,8 +2985,10 @@ function refresh_info_status(xmldoc){
 		if(location.pathname == "/" || location.pathname == "/index.asp"){
 			if(wlc_band == 0)		// show repeater and media bridge date rate
 				var speed_info = data_rate_info_2g;	
-			else
+			else if (wlc_band == 1)
 				var speed_info = data_rate_info_5g;
+			else if (wlc_band == 2)
+				var speed_info = data_rate_info_5g_2;
 			
 			$('speed_status').innerHTML = speed_info;
 		}	
@@ -3185,18 +3050,21 @@ function refresh_info_status(xmldoc){
 				location.href = "/index.asp";
 		}
 
-		if(allUsbStatus.search("storage") == -1 || usbDevices.length == 0){
-			$("usb_status").className = "usbstatusoff";
-			$("usb_status").onclick = function(){overHint(2);}
-		}
-		else{
-			$("usb_status").className = "usbstatuson";
-			$("usb_status").onclick = function(){openHint(24,2);}
-		}
-		$("usb_status").onmouseover = function(){overHint(2);}
-		$("usb_status").onmouseout = function(){nd();}
+	 	require(['/require/modules/diskList.js'], function(diskList){
+	 		var usbDevicesList = diskList.list();
+			if(allUsbStatus.search("storage") == -1 || usbDevicesList.length == 0){
+				$("usb_status").className = "usbstatusoff";
+				$("usb_status").onclick = function(){overHint(2);}
+			}
+			else{
+				$("usb_status").className = "usbstatuson";
+				$("usb_status").onclick = function(){openHint(24,2);}
+			}
+			$("usb_status").onmouseover = function(){overHint(2);}
+			$("usb_status").onmouseout = function(){nd();}
 
-		allUsbStatusTmp = allUsbStatus;
+			allUsbStatusTmp = allUsbStatus;
+		});
 	}
 
 	// usb.printer
@@ -3288,7 +3156,7 @@ var notification = {
 	clickCallBack: [],
 	notiClick: function(){
 		// stop flashing after the event is checked.
-		cookie_help.set("notification_history", [notification.upgrade, notification.wifi_2g ,notification.wifi_5g ,notification.ftp ,notification.samba ,notification.loss_sync ,notification.experience_FB ,notification.notif_hint].join(), 1000);
+		cookie.set("notification_history", [notification.upgrade, notification.wifi_2g ,notification.wifi_5g ,notification.ftp ,notification.samba ,notification.loss_sync ,notification.experience_FB ,notification.notif_hint].join(), 1000);
 		clearInterval(notification.flashTimer);
 		document.getElementById("notification_status").className = "notification_on";
 
@@ -3304,7 +3172,7 @@ var notification = {
 
 		  			if( i == 2 ){					  				
 		  				txt += '<tr><td width="100%"><div style="text-decoration:underline;text-align:right;color:#FFCC00;font-size:14px;cursor: pointer" onclick="' + notification.clickCallBack[i] + '">' + notification.action_desc[i] + '</div></td></tr>';
-		  				if(notification.array[3] != null && notification.array[i] != "off")
+		  				if(band5g_support && notification.array[3] != null && notification.array[i] != "off")
 		  				txt += '<tr><td width="100%"><div style="text-decoration:underline;text-align:right;color:#FFCC00;font-size:14px;cursor: pointer" onclick="' + notification.clickCallBack[i+1] + '">' + notification.action_desc[i+1] + '</div></td></tr>';
 		  				notification.array[3] = "off";
 		  			}else{
@@ -3337,7 +3205,7 @@ var notification = {
 			tarObj1.className = "notification_on1";
 		}
 
-		if(this.flash == "on" && getCookie_help("notification_history") != [notification.upgrade, notification.wifi_2g ,notification.wifi_5g ,notification.ftp ,notification.samba ,notification.loss_sync ,notification.experience_FB ,notification.notif_hint].join()){
+		if(this.flash == "on" && cookie.get("notification_history") != [notification.upgrade, notification.wifi_2g ,notification.wifi_5g ,notification.ftp ,notification.samba ,notification.loss_sync ,notification.experience_FB ,notification.notif_hint].join()){
 			notification.flashTimer = setInterval(function(){
 				tarObj.className = (tarObj.className == "notification_on") ? "notification_off" : "notification_on";
 			}, 1000);
@@ -3407,6 +3275,17 @@ function compareWirelessClient(target1, target2){
 	return 0;
 }
 
+if(usb_support)
+{
+	var pageLength = ((window.location.pathname+window.location.search).split("/")).length - 1;
+	var pagePath = "";
+	for(var i=1; i<pageLength; i++)
+	{
+		pagePath+="../";
+	}
+	document.write('<script type="text/javascript" src='+pagePath+'disk_functions.js></script>');
+}
+
 function addNewScript(scriptName){
 	var script = document.createElement("script");
 	script.type = "text/javascript";
@@ -3420,26 +3299,6 @@ function addNewCSS(cssName){
 	cssNode.rel = 'stylesheet';
 	cssNode.href = cssName;
 	document.getElementsByTagName("head")[0].appendChild(cssNode);
-}
-
-var cookie_help = {
-	set: function(key, value, days) {
-		document.cookie = key + '=' + value + '; expires=' +
-			(new Date(new Date().getTime() + ((days ? days : 14) * 86400000))).toUTCString() + '; path=/';
-	}
-};
-
-function getCookie_help(c_name){
-	if (document.cookie.length > 0){ 
-		c_start=document.cookie.indexOf(c_name + "=")
-		if (c_start!=-1){ 
-			c_start=c_start + c_name.length+1 
-			c_end=document.cookie.indexOf(";",c_start)
-			if (c_end==-1) c_end=document.cookie.length
-			return unescape(document.cookie.substring(c_start,c_end))
-		} 
-	}
-	return null;
 }
 
 function unload_body(){
@@ -3461,8 +3320,9 @@ function isMobile(){
 	
 	if(	navigator.userAgent.match(/iPhone/i) || 
 		navigator.userAgent.match(/iPod/i)    ||
-		//(navigator.userAgent.match(/Android/i) && (navigator.userAgent.match(/Mobile/i) || navigator.userAgent.match(/Tablet/i))) ||
-		(navigator.userAgent.match(/Android/i) && navigator.userAgent.match(/Mobile/i))||			//Android phone
+		navigator.userAgent.match(/iPad/i)    ||
+		(navigator.userAgent.match(/Android/i) && (navigator.userAgent.match(/Mobile/i) || navigator.userAgent.match(/Tablet/i))) ||
+		//(navigator.userAgent.match(/Android/i) && navigator.userAgent.match(/Mobile/i))||			//Android phone
 		(navigator.userAgent.match(/Opera/i) && (navigator.userAgent.match(/Mobi/i) || navigator.userAgent.match(/Mini/i))) ||		// Opera mobile or Opera Mini
 		navigator.userAgent.match(/IEMobile/i)	||		// IE Mobile
 		navigator.userAgent.match(/BlackBerry/i)		//BlackBerry
@@ -3664,19 +3524,36 @@ function regen_band(){
 	var band_desc = new Array();
 	var band_value = new Array();
 	current_band = '<% nvram_get("wl_unit"); %>';
-	for(i=1;i<wl_info.band2g_len+1;i++){
-		if(wl_info.band2g_len == 1)
+	for(i=1;i<wl_info.band2g_total+1;i++){
+		if(wl_info.band2g_total == 1)
 			band_desc.push("2.4GHz");
 		else
 			band_desc.push("2.4GHz-"+i);
 	}
-	for(i=1;i<wl_info.band5g_len+1;i++){
-		if(wl_info.band5g_len == 1)
+	for(i=1;i<wl_info.band5g_total+1;i++){
+		if(wl_info.band5g_total == 1)
 			band_desc.push("5GHz");
 		else
 			band_desc.push("5GHz-"+i);	
 	}
-	for(i=0;i<wl_info.wl_if_len;i++)
+	for(i=0;i<wl_info.wl_if_total;i++)
 		band_value.push(i);
 	add_options_x2(document.form.wl_unit, band_desc, band_value, current_band);
 }
+
+var cookie = {
+	set: function(key, value, days) {
+		document.cookie = key + '=' + value + '; expires=' +
+			(new Date(new Date().getTime() + ((days ? days : 14) * 86400000))).toUTCString() + '; path=/';
+	},
+
+	get: function(key) {
+		var r = ('; ' + document.cookie + ';').match(key + '=(.*?);');
+		return r ? r[1] : null;
+	},
+
+	unset: function(key) {
+		document.cookie = key + '=; expires=' +
+			(new Date(1)).toUTCString() + '; path=/';
+	}
+};

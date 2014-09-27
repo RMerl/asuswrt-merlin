@@ -33,7 +33,6 @@ a:active {
 <script>
 var $j = jQuery.noConflict();
 var diskOrder = parent.getSelectedDiskOrder();
-var _DMDiskNum = (pool_devices().getIndexByValue('<% nvram_get("apps_dev"); %>') < foreign_disk_total_mounted_number()[0])? 0 : 1;
 
 var ddns_result = '<% nvram_get("ddns_return_code_chk");%>'; //Boyau
 <% get_AiDisk_status(); %>

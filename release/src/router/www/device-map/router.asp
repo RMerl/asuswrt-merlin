@@ -15,12 +15,11 @@
 <script type="text/javascript" src="/jquery.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <script>
-
 var $j = jQuery.noConflict();
 <% wl_get_parameter(); %>
+var flag = '<% get_parameter("flag"); %>';
 
 function initial(){
-
 	if(sw_mode == 2){
 		if('<% nvram_get("wl_unit"); %>' == '<% nvram_get("wlc_band"); %>' && '<% nvram_get("wl_subunit"); %>' != '1'){
 			tabclickhandler('<% nvram_get("wl_unit"); %>');
@@ -60,16 +59,18 @@ function initial(){
 	else
 		document.form.wl_subunit.value = -1;
 	
+	if(smart_connect_support)
+		inputCtrl(document.form.smart_connect_x, 1);
+	else
+		inputCtrl(document.form.smart_connect_x, 0);
+
+
 	if(band5g_support){
 		$("t0").style.display = "";
 		$("t1").style.display = "";
 		if(wl_info.band5g_2_support){
 			$("t2").style.display = "";
-			$("span1").innerHTML = "5GHz-1";
-			$("t0").style.width = "66px";
-			$("t1").style.width = "66px";
-			$("t2").style.width = "66px";
-			$("t3").style.width = "66px";
+			tab_reset(0);
 		}
 
 		change_tabclick();
@@ -81,6 +82,19 @@ function initial(){
 	}
 	else{
 		$("t0").style.display = "";	
+	}
+
+	if(smart_connect_support){
+
+		var smart_connect_flag_t;
+
+		if(flag == '')
+			smart_connect_flag_t = '<% nvram_get("smart_connect_x"); %>';
+		else
+			smart_connect_flag_t = flag;	
+
+			document.form.smart_connect_x.value = smart_connect_flag_t;		
+			change_smart_connect(smart_connect_flag_t);	
 	}
 
 	if($("t1").className == "tabclick_NW" && 	parent.Rawifi_support)	//no exist Rawifi
@@ -131,7 +145,12 @@ function tabclickhandler(wl_unit){
 			document.form.wl_subunit.value = -1;
 
 		document.form.wl_unit.value = wl_unit;
-		document.form.current_page.value = "device-map/router.asp";
+
+		if(smart_connect_support){
+			var smart_connect_flag = document.form.smart_connect_x.value;
+			document.form.current_page.value = "device-map/router.asp?flag=" + smart_connect_flag;
+		}else
+			document.form.current_page.value = "device-map/router.asp";
 		FormActions("/apply.cgi", "change_wl_unit", "", "");
 		document.form.target = "";
 		document.form.submit();
@@ -363,7 +382,6 @@ function submitForm(){
 	document.form.wsc_config_state.value = "1";
 
 	parent.showLoading();
-
 	if(based_modelid == "RT-AC87U" && "<% nvram_get("wl_unit"); %>" == "1"){
 		parent.stopFlag = '0';
 		detect_qtn_ready();
@@ -395,6 +413,64 @@ function wpsPBC(obj){
 
 function manualSetup(){
 	return 0;	
+}
+
+function tab_reset(v){
+	var tab_array1 = document.getElementsByClassName("tab_NW");
+	var tab_array2 = document.getElementsByClassName("tabclick_NW");
+
+	var tab_width = Math.floor(270/(wl_info.wl_if_total+1));
+	var i = 0;
+	while(i < tab_array1.length){
+		tab_array1[i].style.width=tab_width+'px';
+		tab_array1[i].style.display = "";
+	i++;
+	}
+	if(typeof tab_array2[0] != "undefined"){
+		tab_array2[0].style.width=tab_width+'px';
+		tab_array2[0].style.display = "";
+	}
+	if(v == 0){
+		$("span0").innerHTML = "2.4GHz";
+		if(wl_info.band5g_2_support){
+			$("span1").innerHTML = "5GHz-1";
+			$("span2").innerHTML = "5GHz-2";
+		}else{
+			$("span1").innerHTML = "5GHz";
+			$("t2").style.display = "none";
+		}
+	}else if(v == 1){	//Smart Connect
+		$("span0").innerHTML = "Tri-band Smart Connect";
+		$("t1").style.display = "none";
+		$("t2").style.display = "none";				
+		$("t0").style.width = (tab_width*wl_info.wl_if_total) +'px';
+	}
+	else if(v == 2){ //5GHz Smart Connect
+		$("span0").innerHTML = "2.4GHz";
+		$("span1").innerHTML = "5GHz Smart Connect";
+		$("t2").style.display = "none";	
+		$("t1").style.width = "140px";
+	}
+}
+
+function change_smart_connect(v){
+	switch(v){
+		case '0':
+				tab_reset(0);	
+				break;
+		case '1': 
+				if('<% nvram_get("wl_unit"); %>' != 0)
+					tabclickhandler(0);
+				else
+					tab_reset(1);
+				break;
+		case '2': 
+				if(!('<% nvram_get("wl_unit"); %>' == 0 || '<% nvram_get("wl_unit"); %>' == 1))
+					tabclickhandler(1);
+				else
+					tab_reset(2);
+				break;
+	}
 }
 </script>
 </head>
@@ -597,8 +673,19 @@ function manualSetup(){
       			<img style="margin-top:5px; *margin-top:-10px;"src="/images/New_ui/networkmap/linetwo2.png">
 			</td>
   		</tr>  		
-  		<!--   Viz add 2011.12 for RT-N56U Ralink   end  }} -->
- 		</table>
+  		<!--   Viz add 2011.12 for RT-N56U Ralink   end  }} -->	
+  		<tr id='smart_connect_x'>
+			<td style="padding:5px 10px 0px 10px; *padding:1px 10px 0px 10px;">
+	  			<p class="formfonttitle_nwm" >Smart Connect Combo</p>
+	  			<select style="*margin-top:-7px;" name="smart_connect_x" class="input_option" onchange="change_smart_connect(this.value);">
+					<option value="0" <% nvram_match("smart_connect_x", "0", "selected"); %>>none</option>
+					<option value="1" <% nvram_match("smart_connect_x", "1", "selected"); %>>Tri-band Smart Connect</option>
+					<option value="2" <% nvram_match("smart_connect_x", "2", "selected"); %>>5Ghz Smart Connect</option>
+	  			</select>	  			
+	  			<img style="margin-top:5px; *margin-top:-10px;"src="/images/New_ui/networkmap/linetwo2.png">
+			</td>
+  		</tr>  		
+ 		</table>		
   	</td>
 </tr>
 

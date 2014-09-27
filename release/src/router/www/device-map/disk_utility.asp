@@ -66,9 +66,9 @@ function initial(){
 }
 
 function load_schedule_value(){
-	document.form.diskmon_usbport.value = parent.getDiskPort(diskOrder);
+	document.form.diskmon_usbport.value = parent.usbDevicesList[diskOrder-1].node;
 
-	if(parseInt(parent.getDiskPort(diskOrder)) == 1){
+	if(parseInt(parent.usbDevicesList[diskOrder-1].usbPath) == 1){
 		document.form.diskmon_freq.value = usb_path1_diskmon_freq;
 		diskmon_freq_row = usb_path1_diskmon_freq_time.split('&#62');
 	}
@@ -173,53 +173,6 @@ function stop_diskmon(){
 	document.form.diskmon_force_stop.disabled = false;
 	document.form.diskmon_force_stop.value = "1";
 	document.form.submit();
-}
-
-function gen_port_option(){
-	var diskmon_usbport = '<% nvram_get("diskmon_usbport"); %>';
-	var Beselected = 0;
-
-	free_options(document.form.diskmon_usbport);
-	for(var i = 0; i < foreign_disk_interface_names().length; ++i){
-		if(foreign_disk_interface_names()[i].charAt(0) == diskmon_usbport)
-			Beselected = 1;
-		else
-			Beselected = 0;
-
-		add_option(document.form.diskmon_usbport, decodeURIComponent(foreign_disk_model_info()[i]), foreign_disk_interface_names()[i].charAt(0), Beselected);
-	}
-
-	gen_part_option();
-}
-
-function gen_part_option(){
-	var diskmon_part = '<% nvram_get("diskmon_part"); %>';
-	var Beselected = 0;
-	var disk_port = document.form.diskmon_usbport.value;
-	var disk_num = -1;
-
-	free_options(document.form.diskmon_part);
-	for(var i = 0; i < foreign_disk_interface_names().length; ++i){
-		if(foreign_disk_interface_names()[i].charAt(0) == disk_port){
-			disk_num = i;
-			break;
-		}
-	}
-	
-	if(disk_num == -1){
-		alert("System Error!");
-		return;
-	}
-
-	for(var i = 0; i < pool_devices().length; ++i){
-		if(pool_devices()[i] == diskmon_part)
-			Beselected = 1;
-		else
-			Beselected = 0;
-
-		if(per_pane_pool_usage_kilobytes(i, disk_num) > 0)
-			add_option(document.form.diskmon_part, pool_names()[i], pool_devices()[i], Beselected);
-	}
 }
 
 function go_scan(){
@@ -350,9 +303,8 @@ function disk_scan_status(){
     		disk_scan_status();
     	},
     	success: function(){
-				parent.apps_fsck_ret = apps_fsck_ret_update;
-				parent.genUsbDevices();
-				check_status(parent.usbPorts[diskOrder-1]);
+			parent.apps_fsck_ret = apps_fsck_ret_update;
+			check_status(parent.usbPorts[diskOrder-1]);
   		}
   });
 }

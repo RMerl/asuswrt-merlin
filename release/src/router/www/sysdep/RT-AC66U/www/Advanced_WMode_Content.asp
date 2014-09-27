@@ -218,6 +218,8 @@ function wds_scan(){
 	var ajaxURL = '/wds_aplist_2g.asp';
 	if('<% nvram_get("wl_unit"); %>' == '1')
 		var ajaxURL = '/wds_aplist_5g.asp';
+	else if('<% nvram_get("wl_unit"); %>' == '1')
+		var ajaxURL = '/wds_aplist_5g_2.asp';
 
 	$j.ajax({
 		url: ajaxURL,

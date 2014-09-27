@@ -746,7 +746,7 @@ loopagain:
 				c = counter[i];
 				sc = sp->last[i];
 				if (c < sc) {
-					diff = (0xFFFFFFFF - sc) + c;
+					diff = (0xFFFFFFFF - sc + 1) + c;
 					if (diff > MAX_ROLLOVER) diff = 0;
 				}
 				else {

@@ -159,7 +159,7 @@
 }
 
 .FdText{
-	width:190px;
+	width:210px;
 	text-align:left;
 	font-size:11px;
 	font-family:Arial, Verdana, Helvetica, sans-serif;
@@ -169,7 +169,7 @@
 .FdText span{
 	vertical-align:top;
 	font-size:11px;
-	font-family:Arial, Verdana, Helvetica, sans-serif;
+	font-family:Courier New;
 	line-height:14px;
 }
 

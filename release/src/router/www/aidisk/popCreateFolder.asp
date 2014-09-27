@@ -10,10 +10,11 @@
 <link rel="stylesheet" href="../form_style.css"  type="text/css">
 <script type="text/javascript" src="../state.js"></script>
 <script type="text/javascript">
+<% get_AiDisk_status(); %>
 
-var PoolDevice = parent.pool_devices()[parent.getSelectedPoolOrder()];
-var PoolName = parent.pool_names()[parent.getSelectedPoolOrder()];
-var folderlist = parent.get_sharedfolder_in_pool(PoolDevice);
+var PoolDevice = parent.usbDevicesList[parent.getSelectedDiskOrder()].partition[parent.getSelectedPoolOrder()].mountPoint;
+var PoolName = parent.usbDevicesList[parent.getSelectedDiskOrder()].partition[parent.getSelectedPoolOrder()].partName;
+var folderlist = get_sharedfolder_in_pool(PoolDevice);
 
 function initial(){
 	showtext($("poolName"), PoolName);

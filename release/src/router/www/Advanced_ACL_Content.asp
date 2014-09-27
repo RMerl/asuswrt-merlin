@@ -82,6 +82,9 @@ var wl_maclist_x_array = '<% nvram_get("wl_maclist_x"); %>';
 
 function initial(){
 	show_menu();
+
+	regen_band();
+
 	if((sw_mode == 2 || sw_mode == 4) && document.form.wl_unit.value == '<% nvram_get("wlc_band"); %>'){
 		for(var i=3; i>=3; i--)
 			document.getElementById("MainTable1").deleteRow(i);
@@ -97,9 +100,6 @@ function initial(){
 	setTimeout("showWLMACList();", 1000);	
 	if(!band5g_support)
 		document.getElementById("wl_unit_field").style.display = "none";
-	
-	if(wl_info.band5g_2_support)
-		regen_band();
 
 	check_macMode();
 }

@@ -335,6 +335,7 @@ ifneq ($(RTCONFIG_BWDPI),y)
 	rm -rf $(INSTALLDIR)/www/images/New_ui/tm_logo_power.png	
 	rm -rf $(INSTALLDIR)/www/images/New_ui/TM_product.png	
 	rm -rf $(INSTALLDIR)/www/images/New_ui/sample_35.png
+	rm -rf $(INSTALLDIR)/www/images/New_ui/app_icons
 ifneq ($(RTCONFIG_ROG),y)
 	rm -rf $(INSTALLDIR)/www/images/New_ui/indicator.png
 	rm -rf $(INSTALLDIR)/www/images/New_ui/speedmeter.png

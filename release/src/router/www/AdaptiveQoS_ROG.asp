@@ -26,7 +26,7 @@ AUTOLOGOUT_MAX_MINUTE = 0;
 var $j = jQuery.noConflict();
 var rogClientList = [];
 var Param = {
-	queryId: "",
+	errCount: "",
 	PEAK: 1024*100,
 	selectedClient: ''
 }
@@ -124,20 +124,21 @@ function retAppsDom(macAddr){
 	return $j(appCode);
 }
 
-function drawTraffic(){
+function drawClient(){
 	// clean up
 	document.getElementById("appTrafficDiv").innerHTML = '';
 
 	var clientCodeToObj;
 	for(var i=0; i<rogClientList.length; i++){
 		var clientCode = "";
-		var thisClient = rogClientList[rogClientList[i]];
 
 		// init a ROG Client
 		clientCode += '<div id=' + rogClientList[i] + '><table><tr>';
 
 		// Icon
-		clientCode += '<td style="width:70px;"><div class="trafficIcons type';
+		clientCode += '<td style="width:70px;"><div id="';
+		clientCode += rogClientList[i].replace(/:/g, "");
+		clientCode += '_Icon" class="trafficIcons type';
 		clientCode += clientList[rogClientList[i]].type;
 		clientCode += '"></div></div></td>';
 
@@ -151,27 +152,40 @@ function drawTraffic(){
 
 		// Apps Traffic Field
 		clientCode += '<div id="'
-		clientCode += rogClientList[i].replace(/:/g, "")
+		clientCode += rogClientList[i].replace(/:/g, "");
 		clientCode += '_Apps"></div>';
 
 		clientCodeToObj = $j(clientCode).click(function(){
 			if(this.id.indexOf("Apps") != -1) return false;
 
+			cookie.set("ROG_SEL_ID", this.id, 30);
 			if(!isSelected(this.id)){				
 				Param.selectedClient = this.id;
 				$j(".appTraffic").remove();
 				updateBarPercent(this.id);
+				$j(".trafficIcons").removeClass("clicked");
+				$j("#" + this.id.replace(/:/g, "") + "_Icon").addClass("clicked");
+				cookie.set("ROG_SEL_ID", this.id, 30);
 			}
 			else{
 				Param.selectedClient = '';
 				$j(".appTraffic").remove();
+				$j(".trafficIcons").removeClass("clicked");
 				calTotalTraffic(0, 'tx');
 				calTotalTraffic(0, 'rx');
+				cookie.set("ROG_SEL_ID", "", 30);
 			}
 		});
 
 		$j("#appTrafficDiv").append(clientCodeToObj);
 		$j("#appTrafficDiv").append('<div class="splitLine"></div>');
+
+		if(rogClientList[i] == cookie.get("ROG_SEL_ID")){
+			Param.selectedClient = rogClientList[i];
+			$j(".appTraffic").remove();
+			$j(".trafficIcons").removeClass("clicked");
+			$j("#" + this.id.replace(/:/g, "") + "_Icon").addClass("clicked");
+		}
 
 		updateBarPercent(rogClientList[i]);
 	}
@@ -195,8 +209,9 @@ function updateClientInfo(target, mac){
 }
 
 function generateRogClientList(){
-	if(clientList.length == 0){
-		setTimeout("generateRogClientList();", 100);
+	if(clientList.length == 0 && Param.errCount < 10){
+		Param.errCount++;
+		setTimeout("generateRogClientList();", 200);
 		return false;
 	}
 
@@ -213,13 +228,20 @@ function generateRogClientList(){
 		}
 	}
 
-	setTimeout("drawTraffic();", 500);
-	
-	Param.queryId = setInterval(function(){
-		for(var i=0; i<rogClientList.length; i++){
-			updateClientInfo("http://" + clientList[rogClientList[i]].ip + ":" + clientList[rogClientList[i]].callback + "/callback.asp?output=netdev&jsoncallback=?", rogClientList[i]);
-		}
-	}, 3000);
+	setTimeout(function(){
+		startQuery();
+		drawClient();
+	}, 500);	
+}
+
+function startQuery(){
+	for(var i=0; i<rogClientList.length; i++){
+		updateClientInfo("http://" + clientList[rogClientList[i]].ip + ":" + clientList[rogClientList[i]].callback + "/callback.asp?output=netdev&jsoncallback=?", rogClientList[i]);
+	}
+
+	setTimeout(function(){
+		startQuery();
+	}, document.getElementById("refreshFreq").value*1000);
 }
 
 function calTotalTraffic(val, narrow){
@@ -268,7 +290,7 @@ function calTotalTraffic(val, narrow){
 }
 </script>
 </head>
-<body onload="initial();" onunload="unload_body();">
+<body onload="initial();" onunload="unload_body();" onSelectStart="event.returnValue=false">
 <div id="TopBanner"></div>
 <div id="Loading" class="popup_bg"></div>
 <iframe name="hidden_frame" id="hidden_frame" width="0" height="0" frameborder="0"></iframe>
@@ -299,9 +321,7 @@ function calTotalTraffic(val, narrow){
 								<td bgcolor="#4D595D" colspan="3" valign="top">
 									<div>&nbsp;</div>
 									<div class="formfonttitle"><#Menu_TrafficManager#> - ROG First</div>
-
 									<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
-
 									<div>
 										<table style="width:99%;">
 											<tr>
@@ -321,10 +341,28 @@ function calTotalTraffic(val, narrow){
 										</table>	
 									</div>
 
-									<div id="appTrafficDiv">
-										<div style="width: 100%;text-align: center;margin-top: 50px;">
+									<div id="appTrafficDiv" style="height:550px;">
+										<div style="width:100%;text-align:center;margin-top:50px;">
 											<img src="/images/InternetScan.gif" style="width: 50px;">
 										</div>
+									</div>
+									<br>
+									<div class="formfonttitle" style="font-size:14px;">
+										<#Spectrum_refresh#>
+										<select class="input_option" id="refreshFreq">
+											<option class="content_input_fd" value="300">Never</option>
+											<option class="content_input_fd" value="1">1</option>
+											<option class="content_input_fd" value="2">2</option>
+											<option class="content_input_fd" value="3">3</option>
+											<option class="content_input_fd" value="4">4</option>
+											<option class="content_input_fd" value="5">5</option>
+										</select>
+										<script>
+											document.getElementById("refreshFreq").value = cookie.get("refreshFreq") ? cookie.get("refreshFreq") : 3;
+											document.getElementById("refreshFreq").onchange = function(){
+												cookie.set("refreshFreq", this.value, 300);
+											};
+										</script>
 									</div>
 								</td>
 							</tr>

@@ -25,12 +25,6 @@
 
 <% login_state_hook(); %>
 var $j = jQuery.noConflict();
-var all_disks = "";
-var all_disk_interface;
-if(usb_support != -1){
-	all_disks = foreign_disks().concat(blank_disks());
-	all_disk_interface = foreign_disk_interface_names().concat(blank_disk_interface_names());
-}
 
 function initial(){
 	show_menu();
@@ -65,54 +59,55 @@ function cancel_folderTree(){
 	$j("#folderTree_panel").fadeOut(300);
 }
 
-var partitions_array = "";
 var apps_dev = "<% nvram_get("tm_device_name"); %>";
 function show_partition(){
-	var htmlcode = "";
-	var mounted_partition = 0;
+ 	require(['/require/modules/diskList.js'], function(diskList){
+		var htmlcode = "";
+		var mounted_partition = 0;
+		
+		htmlcode += '<table align="center" style="margin:auto;border-collapse:collapse;">';
 
-	if(pool_names() != "") // avoid no_disk error
-		partitions_array = pool_devices(); 
-	
-	htmlcode += '<table align="center" style="margin:auto;border-collapse:collapse;">';
+ 		var usbDevicesList = diskList.list();
+		for(var i=0; i < usbDevicesList.length; i++){
+			for(var j=0; j < usbDevicesList[i].partition.length; j++){
+				var all_accessable_size = simpleNum(usbDevicesList[i].partition[j].size-usbDevicesList[i].partition[j].used);
+				var all_total_size = simpleNum(usbDevicesList[i].partition[j].size);
 
-	for(var i = 0; i < partitions_array.length; i++){
-		var all_accessable_size = simpleNum(pool_kilobytes()[i]-pool_kilobytes_in_use()[i]);
-		var all_total_size = simpleNum(pool_kilobytes()[i]);
+				if(usbDevicesList[i].partition[j].status== "unmounted")
+					continue;
 
-		if(pool_status()[i] == "unmounted")
-			continue;
+				if(apps_dev == usbDevicesList[i].partition[j].partName){
+					curr_pool_name = usbDevicesList[i].partition[j].partName;
+					if(all_accessable_size > 1)
+						htmlcode += '<tr style="cursor:pointer;" onclick="setPart(\''+ usbDevicesList[i].partition[j].partName +'\', \''+ all_accessable_size +'\', \''+ all_total_size +'\');"><td class="app_table_radius_left"><div class="iconUSBdisk"></div></td><td class="app_table_radius_right" style="width:250px;">\n';
+					else
+						htmlcode += '<tr><td class="app_table_radius_left"><div class="iconUSBdisk_noquota"></div></td><td class="app_table_radius_right" style="width:250px;">\n';
+					htmlcode += '<div class="app_desc"><b>'+ usbDevicesList[i].partition[j].partName + ' <span style="color:#FC0;">(active)</span></b></div>';
+				}
+				else{
+					if(all_accessable_size > 1)
+						htmlcode += '<tr style="cursor:pointer;" onclick="setPart(\''+ usbDevicesList[i].partition[j].partName +'\', \''+ all_accessable_size +'\', \''+ all_total_size +'\');"><td class="app_table_radius_left"><div class="iconUSBdisk"></div></td><td class="app_table_radius_right" style="width:250px;">\n';
+					else
+						htmlcode += '<tr><td class="app_table_radius_left"><div class="iconUSBdisk_noquota"></div></td><td class="app_table_radius_right" style="width:250px;">\n';
+					htmlcode += '<div class="app_desc"><b>'+ usbDevicesList[i].partition[j].partName + '</b></div>'; 
+				}
 
-		if(apps_dev == pool_names()[i]){
-			curr_pool_name = pool_names()[i];
-			if(all_accessable_size > 1)
-				htmlcode += '<tr style="cursor:pointer;" onclick="setPart(\''+ pool_names()[i] +'\', \''+ all_accessable_size +'\', \''+ all_total_size +'\');"><td class="app_table_radius_left"><div class="iconUSBdisk"></div></td><td class="app_table_radius_right" style="width:250px;">\n';
-			else
-				htmlcode += '<tr><td class="app_table_radius_left"><div class="iconUSBdisk_noquota"></div></td><td class="app_table_radius_right" style="width:250px;">\n';
-			htmlcode += '<div class="app_desc"><b>'+ pool_names()[i] + ' <span style="color:#FC0;">(active)</span></b></div>';
+				if(all_accessable_size > 1)
+					htmlcode += '<div class="app_desc"><#Availablespace#>: <b>'+ all_accessable_size+" GB" + '</b></div>'; 
+				else
+					htmlcode += '<div class="app_desc"><#Availablespace#>: <b>'+ all_accessable_size+" GB <span style=\'color:#FFCC00\'>(Disk quota can not less than 1GB)" + '</span></b></div>'; 
+
+				htmlcode += '<div class="app_desc"><#Totalspace#>: <b>'+ all_total_size+" GB" + '</b></div>'; 
+				htmlcode += '</div><br/><br/></td></tr>\n';
+				mounted_partition++;
+			}
 		}
-		else{
-			if(all_accessable_size > 1)
-				htmlcode += '<tr style="cursor:pointer;" onclick="setPart(\''+ pool_names()[i] +'\', \''+ all_accessable_size +'\', \''+ all_total_size +'\');"><td class="app_table_radius_left"><div class="iconUSBdisk"></div></td><td class="app_table_radius_right" style="width:250px;">\n';
-			else
-				htmlcode += '<tr><td class="app_table_radius_left"><div class="iconUSBdisk_noquota"></div></td><td class="app_table_radius_right" style="width:250px;">\n';
-			htmlcode += '<div class="app_desc"><b>'+ pool_names()[i] + '</b></div>'; 
-		}
 
-		if(all_accessable_size > 1)
-			htmlcode += '<div class="app_desc"><#Availablespace#>: <b>'+ all_accessable_size+" GB" + '</b></div>'; 
-		else
-			htmlcode += '<div class="app_desc"><#Availablespace#>: <b>'+ all_accessable_size+" GB <span style=\'color:#FFCC00\'>(Disk quota can not less than 1GB)" + '</span></b></div>'; 
+		if(mounted_partition == 0)
+			htmlcode += '<tr height="300px"><td colspan="2"><span class="app_name" style="line-height:100%"><#no_usb_found#></span></td></tr>\n';
 
-		htmlcode += '<div class="app_desc"><#Totalspace#>: <b>'+ all_total_size+" GB" + '</b></div>'; 
-		htmlcode += '</div><br/><br/></td></tr>\n';
-		mounted_partition++;
-	}
-
-	if(mounted_partition == 0)
-		htmlcode += '<tr height="300px"><td colspan="2"><span class="app_name" style="line-height:100%"><#no_usb_found#></span></td></tr>\n';
-
-	$("partition_div").innerHTML = htmlcode;
+		$("partition_div").innerHTML = htmlcode;
+	});	
 }
 
 var totalSpace;
@@ -127,28 +122,12 @@ function setPart(_part, _avail, _total){
 	document.form.tm_vol_size.value = "";
 }
 
-var mounted_partition_old = 0;
 function detectUSBStatusApp(){
-	var mounted_partition = 0;
-	$j.ajax({
-    		url: '/update_diskinfo.asp',
-    		dataType: 'script',
-    		error: function(xhr){
-    			detectUSBStatusApp();
-    		},
-    		success: function(){
-					for(i=0; i<foreign_disk_interface_names().length; i++){
-						if(foreign_disk_total_mounted_number()[i] != 0){
-							mounted_partition += foreign_disk_total_mounted_number()[i];
-						}
-					}
-					if(mounted_partition != mounted_partition_old){
-						show_partition();
-					}
-					mounted_partition_old = mounted_partition;
-					setTimeout("detectUSBStatusApp();", 2000);
-  			}
-  });
+ 	require(['/require/modules/diskList.js'], function(diskList){
+		setInterval(function(){
+			diskList.update(show_partition); 
+		}, 2000);
+	});
 }
 
 function applyRule(){
@@ -165,16 +144,6 @@ function applyRule(){
 	document.form.tm_ui_setting.value = "1";
 	showLoading(); 
 	document.form.submit();
-}
-
-function all_foreign_disk_interface_names(){
-	var _foreign_disk_interface_names = new Array();
-	for(var i=0; i<foreign_disk_interface_names().length; i++){
-		for(var k=0; k<foreign_disk_total_mounted_number()[i]; k++){
-			_foreign_disk_interface_names.push(foreign_disk_interface_names()[i].charAt(0));
-		}
-	}
-	return _foreign_disk_interface_names;
 }
 
 function cal_panel_block(obj_id){

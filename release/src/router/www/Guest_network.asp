@@ -45,7 +45,6 @@ wl_channel_list_2g = '<% channel_list_2g(); %>';
 wl_channel_list_5g = '<% channel_list_5g(); %>';
 
 function initial(){
-	$('enable_macfilter').innerHTML = "<#enable_macmode#>";
 	show_menu();	
 	//insertExtChannelOption();		
 
@@ -904,8 +903,8 @@ function genBWTable(_unit){
 					</td>
 			 	</tr>
 
-				<tr id="mac_filter_guest">
-					<th id="enable_macfilter"></th>
+				<tr>
+					<th><#enable_macmode#></th>
 					<td>
 						<select name="wl_macmode_option" class="input_option">
 							<option class="content_input_fd" value="" <% nvram_match("wl_macmode", "","selected"); %>><#checkbox_Yes#></option>

@@ -244,15 +244,17 @@ function PIN_PBC_Check(){
 			array_temp = document.form.wps_sta_pin.value.split("-");
 			document.form.wps_sta_pin.value = array_temp[0] + array_temp[1];
 		}
-			
-		if(document.form.wps_sta_pin.value.length != 8 || !ValidateChecksum(document.form.wps_sta_pin.value)){
-			alert("<#JS_InvalidPIN#>");
-			document.form.wps_sta_pin.focus();
-			document.form.wps_sta_pin.select();
-			return false;
+	
+		if(document.form.wps_sta_pin.value.length != 4 || isNaN(document.form.wps_sta_pin.value/1)){		//new format, 4 digits and doesn't need to checksum
+			if(document.form.wps_sta_pin.value.length != 8 || !ValidateChecksum(document.form.wps_sta_pin.value)){
+				alert("<#JS_InvalidPIN#>");
+				document.form.wps_sta_pin.focus();
+				document.form.wps_sta_pin.select();
+				return false;
+			}
 		}
 	}	
-	
+
 	return true;
 }
 

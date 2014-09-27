@@ -118,6 +118,9 @@ extern int ssl_stream_fd;
 
 extern int ej_wl_sta_list_2g(int eid, webs_t wp, int argc, char_t **argv);
 extern int ej_wl_sta_list_5g(int eid, webs_t wp, int argc, char_t **argv);
+#ifdef RTAC3200
+extern int ej_wl_sta_list_5g_2(int eid, webs_t wp, int argc, char_t **argv);
+#endif
 extern int ej_wl_auth_list(int eid, webs_t wp, int argc, char_t **argv);
 #ifdef CONFIG_BCMWL5
 extern int ej_wl_control_channel(int eid, webs_t wp, int argc, char_t **argv);
@@ -130,11 +133,20 @@ extern int ej_SiteSurvey(int eid, webs_t wp, int argc, char_t **argv);
 
 extern int ej_wl_scan_2g(int eid, webs_t wp, int argc, char_t **argv);
 extern int ej_wl_scan_5g(int eid, webs_t wp, int argc, char_t **argv);
+#ifdef RTAC3200
+extern int ej_wl_scan_5g_2(int eid, webs_t wp, int argc, char_t **argv);
+#endif
 extern int ej_wl_channel_list_2g(int eid, webs_t wp, int argc, char_t **argv);
 extern int ej_wl_channel_list_5g(int eid, webs_t wp, int argc, char_t **argv);
+#ifdef RTAC3200
+extern int ej_wl_channel_list_5g_2(int eid, webs_t wp, int argc, char_t **argv);
+#endif
 #if defined(CONFIG_BCMWL5) || (defined(RTCONFIG_RALINK) && defined(RTCONFIG_WIRELESSREPEATER))
 extern int ej_wl_rate_2g(int eid, webs_t wp, int argc, char_t **argv);
 extern int ej_wl_rate_5g(int eid, webs_t wp, int argc, char_t **argv);
+#ifdef RTAC3200
+extern int ej_wl_rate_5g_2(int eid, webs_t wp, int argc, char_t **argv);
+#endif
 #endif
 #ifdef RTCONFIG_BCMWL6
 #ifdef RTCONFIG_PROXYSTA
@@ -6253,6 +6265,16 @@ do_vpnupload_cgi(char *url, FILE *stream)
 			state = nvram_get_int("vpn_upload_state");
 			nvram_set_int("vpn_upload_state", state & (~VPN_UPLOAD_NEED_STATIC));
 		}
+		else if(!strcmp(filetype, "ccrl")) {
+			sprintf(nv, "vpn_crt_client%s_crl", unit);
+			set_crt_parsed(nv, VPN_CLIENT_UPLOAD);
+			state = nvram_get_int("vpn_upload_state");
+			nvram_set_int("vpn_upload_state", state & (~VPN_UPLOAD_NEED_CRL));
+		}
+		else if(!strcmp(filetype, "scrl")) {
+			sprintf(nv, "vpn_crt_server%s_crl", unit);
+			set_crt_parsed(nv, VPN_CLIENT_UPLOAD);
+		}
 	}
 	else
 	{
@@ -10114,6 +10136,9 @@ struct ej_handler ej_handlers[] = {
 	// system or solution dependant part start from here
 	{ "wl_sta_list_2g", ej_wl_sta_list_2g},
 	{ "wl_sta_list_5g", ej_wl_sta_list_5g},
+#ifdef RTAC3200
+	{ "wl_sta_list_5g_2", ej_wl_sta_list_5g_2},
+#endif
 	{ "wl_auth_list", ej_wl_auth_list},
 #ifdef CONFIG_BCMWL5
 	{ "wl_control_channel", ej_wl_control_channel},
@@ -10126,11 +10151,20 @@ struct ej_handler ej_handlers[] = {
 #endif
 	{ "wl_scan_2g", ej_wl_scan_2g},
 	{ "wl_scan_5g", ej_wl_scan_5g},
+#ifdef RTAC3200
+	{ "wl_scan_5g_2", ej_wl_scan_5g_2},
+#endif
 	{ "channel_list_2g", ej_wl_channel_list_2g},
 	{ "channel_list_5g", ej_wl_channel_list_5g},
+#ifdef RTAC3200
+	{ "channel_list_5g_2", ej_wl_channel_list_5g_2},
+#endif
 #if defined(CONFIG_BCMWL5) || (defined(RTCONFIG_RALINK) && defined(RTCONFIG_WIRELESSREPEATER))
 	{ "wl_rate_2g", ej_wl_rate_2g},
 	{ "wl_rate_5g", ej_wl_rate_5g},
+#ifdef RTAC3200
+	{ "wl_rate_5g_2", ej_wl_rate_5g_2},
+#endif
 #endif
 #ifdef RTCONFIG_BCMWL6
 #ifdef RTCONFIG_PROXYSTA

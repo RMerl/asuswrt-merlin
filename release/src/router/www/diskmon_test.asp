@@ -16,8 +16,6 @@
 
 <script language="JavaScript" type="text/javascript" src="/state.js"></script>
 <script>
-<% available_disk_names_and_sizes(); %>
-<% disk_pool_mapping_info(); %>
 
 var diskmon_status = '<% nvram_get("diskmon_status"); %>';
 var diskmon_freq_time = '<% nvram_get("diskmon_freq_time"); %>';
@@ -58,15 +56,17 @@ function gen_port_option(){
 
 	free_options(document.form.diskmon_usbport);
 
-	for(var i = 0; i < foreign_disk_interface_names().length; ++i){
-		if(foreign_disk_interface_names()[i].charAt(0) == diskmon_usbport)
-			Beselected = 1;
-		else
-			Beselected = 0;
-
-		add_option(document.form.diskmon_usbport, decodeURIComponent(foreign_disk_model_info()[i]), foreign_disk_interface_names()[i], Beselected);
-	}
-
+ 	require(['/require/modules/diskList.js'], function(diskList){
+ 		var usbDevicesList = diskList.list();
+		for(var i = 0; i < usbDevicesList.length; ++i){
+			if(usbDevicesList[i].node == diskmon_usbport) 
+				Beselected = 1;
+			else
+				Beselected = 0;
+			add_option(document.form.diskmon_usbport, usbDevicesList[i].deviceName, usbDevicesList[i].node, Beselected);
+		}
+	});
+	
 	gen_part_option();
 }
 
@@ -78,26 +78,38 @@ function gen_part_option(){
 
 	free_options(document.form.diskmon_part);
 
-	for(var i = 0; i < foreign_disk_interface_names().length; ++i)
-		if(foreign_disk_interface_names()[i].charAt(0) == disk_port){
-			disk_num = i;
-			break;
+ 	require(['/require/modules/diskList.js'], function(diskList){
+ 		var usbDevicesList = diskList.list();
+		for(var i = 0; i < usbDevicesList.length; ++i){
+			if(usbDevicesList[i].node == disk_port){
+				disk_num = i;
+				break;
+			}
 		}
+	});
 
 	if(disk_num == -1){
 		alert("System Error!");
 		return;
 	}
 
-	for(var i = 0; i < pool_devices().length; ++i){
-		if(pool_devices()[i] == diskmon_part)
-			Beselected = 1;
-		else
-			Beselected = 0;
+	//Scan all usb device
+ 	require(['/require/modules/diskList.js'], function(diskList){
+ 		var usbDevicesList = diskList.list();
+		for(var i=0; i < usbDevicesList.length; i++){
+			for(var j=0; j < usbDevicesList[i].partition.length; j++){
+				if(usbDevicesList[i].partition[j].mountPoint == diskmon_part)
+					Beselected = 1;
+				else
+					Beselected = 0;
 
-		if(per_pane_pool_usage_kilobytes(i, disk_num)[0] > 0)
-			add_option(document.form.diskmon_part, pool_names()[i], pool_devices()[i], Beselected);
-	}
+				if(i == disk_num){
+					if(usbDevicesList[i].partition[j].size > 0)
+						add_option(document.form.diskmon_part, usbDevicesList[i].partition[j].partName, usbDevicesList[i].partition[j].mountPoint, Beselected);
+				}
+			}
+		}
+	});
 }
 
 function freq_change(){

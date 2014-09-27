@@ -889,7 +889,7 @@ int timecheck_item(char *activeDate, char *activeTime, char *activeTime2)
 }
 
 
-int svcStatus[8] = { -1, -1, -1, -1, -1, -1, -1, -1};
+int svcStatus[12] = { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
 
 /* Check for time-reated service 	*/
 /* 1. Wireless Radio			*/
@@ -954,10 +954,11 @@ void timecheck(void)
 
 	// guest ssid expire check
 	if ((nvram_get_int("sw_mode") != SW_MODE_REPEATER) &&
-		(strlen(nvram_safe_get("wl0_vifs")) || strlen(nvram_safe_get("wl1_vifs"))))
+		(strlen(nvram_safe_get("wl0_vifs")) || strlen(nvram_safe_get("wl1_vifs")) ||
+		 strlen(nvram_safe_get("wl2_vifs"))))
 	{
 		lan_ifname = nvram_safe_get("lan_ifname");
-		sprintf(wl_vifs, "%s %s", nvram_safe_get("wl0_vifs"), nvram_safe_get("wl1_vifs"));
+		sprintf(wl_vifs, "%s %s %s", nvram_safe_get("wl0_vifs"), nvram_safe_get("wl1_vifs"), nvram_safe_get("wl2_vifs"));
 
 		foreach (word, wl_vifs, next) {
 			snprintf(nv, sizeof(nv) - 1, "%s_expire_tmp", wif_to_vif(word));
@@ -1779,8 +1780,7 @@ void log_sync_time(int xdsl_link_status)
 	pre_uptime = sys_info.uptime;
 
 	time(&secs);
-	tm = localtime(&secs);
-	sprintf(timestamp, "%s", asctime(tm));
+	sprintf(timestamp, "%s", ctime(&secs));
 	timestamp[strlen(timestamp)-1] = '\0';
 
 	if(setting_apply) {
@@ -2208,6 +2208,7 @@ ERROR:
 }
 #endif
 
+#if 0
 static time_t	tt=0, tt_old=0;
 static int 	bcnt=0;
 void
@@ -2231,6 +2232,7 @@ period_chk_cnt()
 		tt = tt_old = bcnt = 0;
 	}
 }
+#endif
 
 /* wathchdog is runned in NORMAL_PERIOD, 1 seconds
  * check in each NORMAL_PERIOD
@@ -2247,8 +2249,9 @@ void watchdog(int sig)
 #ifdef RTCONFIG_PUSH_EMAIL
 	//push_mail();
 #endif
+#if 0
 	period_chk_cnt();
-
+#endif
 	/* handle button */
 	btn_check();
 	if(nvram_match("asus_mfg", "0")

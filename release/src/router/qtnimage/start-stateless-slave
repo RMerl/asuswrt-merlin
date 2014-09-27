@@ -166,4 +166,7 @@ echo "=== skip get tweak_qcomm"
 # sleep 5
 # /mnt/jffs2/tweak_qcomm &
 
+echo_with_logging "=== fix 10M issue"
+${INVOKE_QCSAPI} -q pm off
+
 echo_with_logging "=== Done setting up stateless slave"

@@ -1,10 +1,11 @@
 #include <stdbool.h>
 
-#define	VPN_UPLOAD_DONE			0
+#define	VPN_UPLOAD_DONE				0
 #define	VPN_UPLOAD_NEED_CA_CERT		1
 #define	VPN_UPLOAD_NEED_CERT		2
-#define	VPN_UPLOAD_NEED_KEY		4
+#define	VPN_UPLOAD_NEED_KEY			4
 #define	VPN_UPLOAD_NEED_STATIC		8
+#define VPN_UPLOAD_NEED_CRL			16
 
 #define MAX_PARMS 16
 

@@ -151,8 +151,8 @@ function initial(){
 
 	if(!band5g_support)
 		$("wl_unit_field").style.display = "none";
-	if(wl_info.band5g_2_support)
-		regen_band();
+
+	regen_band();
 
 	if(sw_mode == "2"){
 		var _rows = $("WAdvTable").rows;
@@ -204,7 +204,7 @@ function initial(){
 	inputCtrl(document.form.wl_itxbf, 0);
 	inputCtrl(document.form.usb_usb3, 0);
 
-	if('<% nvram_get("wl_unit"); %>' == '1'){ // 5GHz
+	if('<% nvram_get("wl_unit"); %>' == '1' || '<% nvram_get("wl_unit"); %>' == '2'){ // 5GHz up
 		if(	based_modelid == "RT-AC3200" ||
 			based_modelid == "RT-AC69U" || based_modelid == "TM-AC1900" ||
 			based_modelid == "RT-AC56S" || based_modelid == "RT-AC56U" ||
@@ -429,7 +429,7 @@ function validForm(){
 		if(hw_ver.search("RTN12HP") != -1){
 		  FormActions("start_apply.htm", "apply", "set_wltxpower;reboot", "<% get_default_reboot_time(); %>");
 		}
-		else if(based_modelid == "RT-AC66U" || based_modelid == "RT-N66U"){
+		else if(based_modelid == "RT-AC66U" || based_modelid == "RT-N66U" || based_modelid == "RT-N18U"){
 			FormActions("start_apply.htm", "apply", "set_wltxpower;restart_wireless", "15");
 		}	
 	}

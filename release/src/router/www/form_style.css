@@ -1229,7 +1229,7 @@ div.tabclick {
 	margin-right:2px;
 	text-decoration: none;
 	text-align:center;
-	max-width:130px;
+	max-width:240px;
 }
 .tab_NW span {
 	cursor:pointer;
@@ -1262,7 +1262,7 @@ div.tabclick {
     margin-right:2px;
     text-align:center;
     text-decoration: none;
-	max-width:130px;
+	max-width:240px;
 }
 .tabclick_NW span {
 	cursor:pointer;
@@ -1608,19 +1608,25 @@ padding-top:1px;
 	cursor: pointer;
 }
 .notificationon{
+	position: absolute;
 	display:inline;
 	background-image:url(images/New_ui/notification.png);
 	background-repeat:no-repeat;	
 	background-position:2px 2px;
+	margin-top:-5px;
+	margin-top:3px \9;	/*IE*/
 	height:30px;
 	width:30px;
 	cursor: pointer;
 }
 .notificationoff{
+	position: absolute;
 	display:none;
 	background-image:url(images/New_ui/notification.png);
 	background-repeat:no-repeat;	
 	background-position:2px -48px;
+	margin-top:-5px;
+	margin-top:3px \9;	/*IE*/
 	height:30px;
 	width:30px;
 	cursor: pointer;

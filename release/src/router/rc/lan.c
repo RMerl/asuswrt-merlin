@@ -254,12 +254,7 @@ static int wlconf(char *ifname, int unit, int subunit)
 		   !disable_dhcp_server)
 			disable_dhcp_server = 1;
 #endif
-		if (nvram_match(strcat_r(prefix, "radio", tmp), "0"))
-		{
-			eval("wlconf", ifname, "down");
-			eval("wl", "-i", ifname, "radio", "off");
-			return -1;
-		}
+
 #if 0
 #ifdef RTCONFIG_BCMWL6
 #ifdef RTCONFIG_PROXYSTA
@@ -272,13 +267,22 @@ static int wlconf(char *ifname, int unit, int subunit)
 #endif
 #endif
 #endif
+
 #ifdef RTCONFIG_QTN
 GEN_CONF:
 #endif
+
 		generate_wl_para(unit, subunit);
 
 		for (r = 1; r < MAX_NO_MSSID; r++)	// early convert for wlx.y
 			generate_wl_para(unit, r);
+
+		if (nvram_match(strcat_r(prefix, "radio", tmp), "0"))
+		{
+			eval("wlconf", ifname, "down");
+			eval("wl", "-i", ifname, "radio", "off");
+			return -1;
+		}
 
 #ifdef RTCONFIG_TMOBILE
 		if (disable_dhcp_server)
@@ -766,10 +770,6 @@ void wlconf_pre()
 #endif
 		unit++;
 	}
-
-	if (no_need_to_start_wps() ||
-	    wps_band_ssid_broadcast_off(get_radio_band(nvram_get_int("wps_band"))))
-		nvram_set("wps_enable", "0");
 }
 
 void wlconf_post(const char *ifname)
@@ -1286,7 +1286,8 @@ void start_lan(void)
 		(get_model() == MODEL_RTAC66U) ||
 		(get_model() == MODEL_RTAC53U) ||
 		(get_model() == MODEL_RTAC53U) ||
-		(get_model() == MODEL_RTN66U)) {
+		(get_model() == MODEL_RTN66U) ||
+		(get_model() == MODEL_RTN18U)) {
 #ifdef RTCONFIG_BCM7
 		load_wl();
 #else
@@ -1320,7 +1321,8 @@ void start_lan(void)
 		(get_model() == MODEL_RTAC87U) ||
 		(get_model() == MODEL_RTN12HP) ||
 		(get_model() == MODEL_APN12HP) ||
-		(get_model() == MODEL_RTN66U))
+		(get_model() == MODEL_RTN66U) ||
+		(get_model() == MODEL_RTN18U))
 	set_wltxpower();
 
 	reset_countrycode_2g();
@@ -1337,7 +1339,9 @@ void start_lan(void)
 	}
 #endif
 
-	if (no_need_to_start_wps())
+	if (no_need_to_start_wps() ||
+	    wps_band_radio_off(get_radio_band(nvram_get_int("wps_band"))) ||
+	    wps_band_ssid_broadcast_off(get_radio_band(nvram_get_int("wps_band"))))
 		nvram_set("wps_enable", "0");
 
 	if ((sfd = socket(AF_INET, SOCK_RAW, IPPROTO_RAW)) < 0) return;
@@ -1885,6 +1889,7 @@ void stop_lan(void)
 	fa_nvram_adjust();
 #endif
 #endif
+
 #ifdef RTCONFIG_GMAC3
 	/* Ajuest GMAC3 NVRAM variables */
 	gmac3_nvram_adjust();
@@ -3044,12 +3049,13 @@ void start_lan_wl(void)
 		(get_model() == MODEL_DSLAC68U) ||
 		(get_model() == MODEL_RTAC87U) ||
 		(get_model() == MODEL_RTAC66U) ||
-		(get_model() == MODEL_RTN66U)) {
-#ifdef RTCONFIG_BCM7
+		(get_model() == MODEL_RTN66U) ||
+		(get_model() == MODEL_RTN18U)) {
 #ifdef RTCONFIG_EMF
 		modprobe("emf");
 		modprobe("igs");
 #endif
+#ifdef RTCONFIG_BCM7
 		load_wl();
 #else
 		modprobe("wl");
@@ -3078,7 +3084,8 @@ void start_lan_wl(void)
 		(get_model() == MODEL_RTAC87U) ||
 		(get_model() == MODEL_RTN12HP) ||
 		(get_model() == MODEL_APN12HP) ||
-		(get_model() == MODEL_RTN66U))
+		(get_model() == MODEL_RTN66U) ||
+		(get_model() == MODEL_RTN18U))
 	set_wltxpower();
 
 	reset_countrycode_2g();
@@ -3095,7 +3102,9 @@ void start_lan_wl(void)
 	}
 #endif
 
-	if (no_need_to_start_wps())
+	if (no_need_to_start_wps() ||
+	    wps_band_radio_off(get_radio_band(nvram_get_int("wps_band"))) ||
+	    wps_band_ssid_broadcast_off(get_radio_band(nvram_get_int("wps_band"))))
 		nvram_set("wps_enable", "0");
 
 	lan_ifname = strdup(nvram_safe_get("lan_ifname"));
@@ -3349,14 +3358,14 @@ void restart_wl(void)
 	if (nvram_match("wl1_radio", "1"))
 	{
 #ifndef RTCONFIG_LED_BTN
-                if (!(nvram_get_int("sw_mode")==SW_MODE_AP && nvram_get_int("wlc_psta")==1 && nvram_get_int("wlc_band")==0)) {
-                        nvram_set("led_5g", "1");
-                        led_control(LED_5G, LED_ON);
-                }
+		if (!(nvram_get_int("sw_mode")==SW_MODE_AP && nvram_get_int("wlc_psta")==1 && nvram_get_int("wlc_band")==0)) {
+			nvram_set("led_5g", "1");
+			led_control(LED_5G, LED_ON);
+		}
 #else
-                nvram_set("led_5g", "1");
-                if (nvram_get_int("AllLED"))
-                        led_control(LED_5G, LED_ON);
+		nvram_set("led_5g", "1");
+		if (nvram_get_int("AllLED"))
+			led_control(LED_5G, LED_ON);
 #endif
 	}
 	else
@@ -3493,10 +3502,12 @@ void restart_wireless(void)
 	fa_nvram_adjust();
 #endif
 #endif
+
 #ifdef RTCONFIG_GMAC3
 	/* Ajuest GMAC3 NVRAM variables */
 	gmac3_nvram_adjust();
 #endif
+
 	start_lan_wl();
 
 	reinit_hwnat(-1);
@@ -3578,7 +3589,7 @@ void restart_wireless_wps(void)
 {
 	int lock = file_lock("wireless");
 #ifdef RTCONFIG_WIRELESSREPEATER
-        char domain_mapping[64];
+	char domain_mapping[64];
 #endif
 
 	nvram_set_int("wlready", 0);

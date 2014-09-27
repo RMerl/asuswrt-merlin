@@ -447,7 +447,7 @@ function changeBgColor(obj, num){
 		<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable_table">
 			<thead>
 			<tr>
-              		<td colspan="7">Inbound Firewall Rules&nbsp;(<#List_limit#>&nbsp;128)</td>
+              		<td colspan="7"><#FirewallIPv6_list#>&nbsp;(<#List_limit#>&nbsp;128)</td>
             	</tr>
  		  	</thead>
  		  	

@@ -217,10 +217,8 @@ do { \
 	bcm_mdelay(1); \
 } while (1)
 
-#ifndef RGMII_BCM_FA
 /* a flag to control Manage Mode enable/disable */
 static bool mang_mode_en = FALSE;
-#endif
 
 #define RXTX_FLOW_CTRL_MASK	0x3	/* 53125 flow control capability mask */
 #define RXTX_FLOW_CTRL_SHIFT	4	/* 53125 flow contorl capability offset */
@@ -2141,13 +2139,11 @@ bcm_robo_enable_switch(robo_info_t *robo)
 	/* Switch Mode register (Page 0, Address 0x0B) */
 	robo->ops->read_reg(robo, PAGE_CTRL, REG_CTRL_MODE, &val8, sizeof(val8));
 
-#ifndef RGMII_BCM_FA
 	if (!mang_mode_en) {
 		/* Set unmanaged mode if no any other GMAC enable mang mode */
 		val8 &= (~(1 << 0));
 		robo->ops->write_reg(robo, PAGE_CTRL, REG_CTRL_MODE, &val8, sizeof(val8));
 	}
-#endif
 	/* Bit 1 enables switching/forwarding */
 	if (!(val8 & (1 << 1))) {
 		/* Set unmanaged mode */
@@ -2265,7 +2261,6 @@ bcm_robo_enable_switch(robo_info_t *robo)
 				robo->ops->write_reg(robo, PAGE_VLAN, REG_VLAN_CTRL5,
 					&val8, sizeof(val8));
 
-#ifndef RGMII_BCM_FA
 				/* Switch Mode Register (Page 0, Address 0x0B): Set Managed Mode */
 				val8 = 0;
 				robo->ops->read_reg(robo, PAGE_CTRL, REG_CTRL_MODE,
@@ -2274,7 +2269,7 @@ bcm_robo_enable_switch(robo_info_t *robo)
 				robo->ops->write_reg(robo, PAGE_CTRL, REG_CTRL_MODE,
 					&val8, sizeof(val8));
 				mang_mode_en = TRUE;
-#endif
+
 				/* Enable ports 5 and 7 for SMP dual core 3 GMAC setup */
 
 				/* Port 5 GMII Port States Override Register
@@ -2330,16 +2325,6 @@ bcm_robo_enable_switch(robo_info_t *robo)
 		/* Disable CFP by default */
 		val8 = 0x0;
 		robo->ops->write_reg(robo, PAGE_CFP, REG_CFP_CTL_REG, &val8, sizeof(val8));
-#ifdef RGMII_BCM_FA
-
-		/* Switch Mode Register (Page 0, Address 0x0B): Managed and SW Fwding */
-		val8 = 0;
-		robo->ops->read_reg(robo, PAGE_CTRL, REG_CTRL_MODE, &val8, sizeof(val8));
-		val8 |=
-			(1 << 1) |		/* SW_FWDG_EN Frame Forwarding is enabled */
-			(1 << 0);		/* SW_FWDG_MODE Managed Mode */
-		robo->ops->write_reg(robo, PAGE_CTRL, REG_CTRL_MODE, &val8, sizeof(val8));
-#endif
 	}
 #ifdef RGMII_BCM_FA
 

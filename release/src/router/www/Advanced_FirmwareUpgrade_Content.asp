@@ -115,7 +115,6 @@ function detect_firmware(){
 function detect_update(){
 	
 	if(sw_mode != "1" || (link_status == "2" && link_auxstatus == "0") || (link_status == "2" && link_auxstatus == "2")){
-		//setCookie("after_check", 1, 365);
 		document.start_update.action_mode.value="apply";
 		document.start_update.action_script.value="start_webs_update";  	
 		$('update_states').innerHTML="<#check_proceeding#>";
@@ -128,49 +127,8 @@ function detect_update(){
 	}
 }
 
-function getCookie(c_name)
-{
-var i,x,y,ARRcookies=document.cookie.split(";");
-for (i=0;i<ARRcookies.length;i++)
-  {
-  x=ARRcookies[i].substr(0,ARRcookies[i].indexOf("="));
-  y=ARRcookies[i].substr(ARRcookies[i].indexOf("=")+1);
-  x=x.replace(/^\s+|\s+$/g,"");
-  if (x==c_name)
-    {
-    return unescape(y);
-    }
-  }
-}
-
-function setCookie(c_name,value,exdays)
-{
-var exdate=new Date();
-exdate.setDate(exdate.getDate() + exdays);
-var c_value=escape(value) + ((exdays==null) ? "" : "; expires="+exdate.toUTCString());
-document.cookie=c_name + "=" + c_value;
-}
-
-function checkCookie()
-{
-var aft_chk=getCookie("after_check");
-if (aft_chk!=null && aft_chk!="")
-  {
-  	aft_chk=parseInt(aft_chk)+1;
-  	setCookie("after_check", aft_chk, 365);
-  }
-else
-  {
-    setCookie("after_check", 0, 365);
-  }
-
-return getCookie("after_check");
-}
-
-
 var dead = 0;
 function detect_httpd(){
-
 	$j.ajax({
     		url: '/httpd_check.htm',
     		dataType: 'text',
