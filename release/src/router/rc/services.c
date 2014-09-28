@@ -1002,6 +1002,11 @@ void start_dnsmasq(int force)
 
 	/* Create resolv.conf with empty nameserver list */
 	f_write(dmresolv, NULL, 0, FW_APPEND, 0666);
+
+	// Make the router use dnsmasq for its own local resolution
+	unlink("/etc/resolv.conf");
+	symlink("/rom/etc/resolv.conf", "/etc/resolv.conf");    // nameserver 127.0.0.1
+
 	/* Create resolv.dnsmasq with empty server list */
 #ifdef RTCONFIG_IPV6
 	if (!ipv6_enabled() || !is_routing_enabled())
