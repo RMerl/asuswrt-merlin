@@ -46,7 +46,7 @@ function initial(){
 	}
 	
 	gen_mainTable();	
-	showLANIPList();
+	setTimeout("showLANIPList();", 1000);
 
 	// dnsfilter_enable_x 0: disable, 1: enable, show mainTable & Protection level when enable, otherwise hide it
 	showhide("dnsfilter_mode",document.form.dnsfilter_enable_x.value);
