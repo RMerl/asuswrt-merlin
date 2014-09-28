@@ -1,5 +1,5 @@
-Asuswrt-Merlin - build 376.47 (20-Sept-2014)
-============================================
+Asuswrt-Merlin - build 376.48 (xx-xxx-2014)
+===========================================
 
 About
 -----
@@ -49,7 +49,7 @@ Here is a list of features that Asuswrt-merlin brings over the original
 firmware:
 
 System:
-   - Based on 3.0.0.4.376_2678 sources (from RT-AC87U) from Asus
+   - Based on 3.0.0.4.376_2769 sources (from RT-AC87U) from Asus
    - Various bugfixes and optimizations
    - Some components were updated to newer versions, for improved
      stability and security
@@ -369,6 +369,7 @@ The list of available config overrides:
  * profile (shell profile, only profile.add suypported)
  * radvd.conf
  * smb.conf
+ * snmpd.conf
  * vsftpd.conf
  * upnp (for miniupnpd)
 
@@ -414,6 +415,7 @@ The list of available postconf scripts is:
  * radvd.postconf
  * shadow.postconf
  * smb.postconf
+ * snmpd.postconf
  * upnp.postconf
  * vsftpd.postconf
 
@@ -569,6 +571,16 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
+376.48 (xx-xxxx-2014)
+   - NEW: Merged with Asus GPL 2769 (AC87)
+   - NEW: Enabled numerous modules in net-snmp (based on the list
+          used by OpenWRT)
+   - NEW: Added postconf and custom config support for snmpd.conf
+   - FIXED: DNSFilter client list dropdown would sometime be empty.
+   - FIXED: DNS queries run on the router were forwarded to upstream
+            nameservers instead of dnsmasq
+
+
 376.47 (20-Sept-2014)
    - NEW: Added sha256 and sha512 HMAC support to dropbear (SSH)
    - CHANGED: Moved OpenVPN postconf scripts right before server/client
