@@ -3104,7 +3104,38 @@ curl-7.21.7-clean:
 
 #snmp with asus mib and openssl 1.0.0
 net-snmp-5.7.2/stamp-h1: shared nvram$(BCMEX) $(if $(RTCONFIG_QTN),libqcsapi_client) libnmp
-	cd $(TOP)/net-snmp-5.7.2 && $(CONFIGURE) --prefix=$(INSTALLDIR)/net-snmp-5.7.2/usr --disable-embedded-perl --with-perl-modules=no --disable-debugging --enable-mini-agent --with-transports=UDP --without-kmem-usage --disable-applications --disable-mib-loading --disable-scripts --disable-mibs --disable-manuals --with-openssl=$(TOP)/openssl --with-ldflags="$(if $(RTCONFIG_QTN),-L$(TOP)/libqcsapi_client -lqcsapi_client) -L$(TOP)/openssl -L$(TOP)/nvram$(BCMEX) -L$(TOP)/shared -L$(TOP)/libnmp" --with-libs="-lnvram -lshared -lnmp $(EXTRA_FLAG)" --with-cflags="$(SNMPD_CFLAGS) -I$(TOP)/libnmp" --with-default-snmp-version="3" --with-sys-location=Unknown --with-logfile=/var/log/snmpd.log --with-persistent-directory=/var/net-snmp --with-sys-contact=root@localhost --enable-static=no --with-mib-modules="asus-mib/wireless,asus-mib/lan,asus-mib/wan,asus-mib/ipv6,asus-mib/vpn,asus-mib/firewall,asus-mib/administration,asus-mib/systemLog,asus-mib/guestNetwork,asus-mib/trafficManager,asus-mib/parentalControl,asus-mib/quickInternetSetup"
+	cd $(TOP)/net-snmp-5.7.2 && $(CONFIGURE) --prefix=$(INSTALLDIR)/net-snmp-5.7.2/usr --disable-embedded-perl --with-perl-modules=no --disable-debugging --enable-mini-agent --with-transports=UDP --without-kmem-usage --disable-applications --disable-mib-loading --disable-scripts --disable-mibs --disable-manuals --with-openssl=$(TOP)/openssl --with-ldflags="$(if $(RTCONFIG_QTN),-L$(TOP)/libqcsapi_client -lqcsapi_client) -L$(TOP)/openssl -L$(TOP)/nvram$(BCMEX) -L$(TOP)/shared -L$(TOP)/libnmp" --with-libs="-lnvram -lshared -lnmp $(EXTRA_FLAG)" --with-cflags="$(SNMPD_CFLAGS) -I$(TOP)/libnmp" --with-default-snmp-version="3" --with-sys-location=Unknown --with-logfile=/var/log/snmpd.log --with-persistent-directory=/var/net-snmp --with-sys-contact=root@localhost --enable-static=no --with-mib-modules="\
+	asus-mib/wireless,asus-mib/lan,asus-mib/wan,asus-mib/ipv6,asus-mib/vpn,asus-mib/firewall,asus-mib/administration,asus-mib/systemLog,asus-mib/guestNetwork,asus-mib/trafficManager,asus-mib/parentalControl,asus-mib/quickInternetSetup,\
+	host/hr_device,\
+	host/hr_disk,\
+	host/hr_filesys,\
+	host/hr_network,\
+	host/hr_partition,\
+	host/hr_proc,\
+	host/hr_storage,\
+	host/hr_system,\
+	if-mib/ifXTable,\
+	mibII/at,\
+	mibII/icmp,\
+	mibII/ifTable,\
+	mibII/ip,\
+	mibII/snmp_mib,\
+	mibII/sysORTable,\
+	mibII/system_mib,\
+	mibII/tcp,\
+	mibII/udp,\
+	mibII/vacm_context,\
+	mibII/vacm_vars,\
+	tunnel,\
+	ucd-snmp/disk,\
+	ucd-snmp/dlmod,\
+	ucd-snmp/extensible,\
+	ucd-snmp/loadave,\
+	ucd-snmp/memory,\
+	ucd-snmp/pass,\
+	ucd-snmp/proc,\
+	ucd-snmp/vmstat,\
+	util_funcs"
 	@touch net-snmp-5.7.2/stamp-h1
 
 net-snmp-5.7.2: net-snmp-5.7.2/stamp-h1
