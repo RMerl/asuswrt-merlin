@@ -109,7 +109,10 @@ void start_snmpd(void)
 	if(strlen(nvram_safe_get("sysContact")))
 		fprintf(fp, "sysContact %s\n", nvram_safe_get("sysContact"));
 
+	append_custom_config("snmpd.conf", fp);
 	fclose(fp);
+	use_custom_config("snmpd.conf", "/tmp/snmpd.conf");
+	run_postconf("snmpd.postconf","/tmp/snmpd.conf");
 
 	// Execute snmp daemon
 	ret = eval("snmpd", "-c", "/tmp/snmpd.conf");
