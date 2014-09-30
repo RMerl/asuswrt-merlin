@@ -229,6 +229,9 @@ nflash_check_id(uint8 *id)
 	case NFL_VENDOR_MXIC:
 		name = "Mxic";
 		break;
+	case NFL_VENDOR_WINBOND:
+		name = "Winbond";
+		break;
 	default:
 		if (bootflags)
 		name = "Unknown";

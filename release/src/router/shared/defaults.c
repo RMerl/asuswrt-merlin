@@ -256,6 +256,7 @@ struct nvram_tuple router_defaults[] = {
 #endif
 
 	{ "wl_nband", "2", 0},			/* N-BAND */
+	{ "wl0_nband", "2"},			/* 2.4 GHz */
 #ifdef RTAC3200
 	{ "wl1_nband", "1"},
 	{ "wl2_nband", "1"},
