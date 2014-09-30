@@ -33,6 +33,7 @@
 #define NFL_VENDOR_ZENTEL		0x92
 #endif
 #define NFL_VENDOR_MXIC			0xC2
+#define NFL_VENDOR_WINBOND		0xF1
 
 #define NFL_SECTOR_SIZE			512
 #define NFL_TABLE_END			0xffffffff
