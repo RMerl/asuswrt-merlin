@@ -54,7 +54,10 @@ static void check_dpi_alive()
 	{
 		if(debug) dbg("[bwdpi check] count=%2d\n", count);
 		run_engine();
-	
+
+		// Re-apply rules flushed by closed-source bwdpi code
+		start_firewall(wan_primary_ifunit(), 0);
+
 		count -= 3;
 		if(count <= 0){
 			stop_dpi_engine_service();
