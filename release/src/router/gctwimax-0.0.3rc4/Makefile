@@ -45,7 +45,7 @@ LDFLAGS += -L$(TOP)/zlib -lz
 OBJS_ex = src/wimax.o src/protocol.o src/logging.o src/tap_dev.o src/eap_auth.o src/config.o
 
 gctwimax: $(OBJS_ex)
-	$(LDO) $(LDFLAGS) -o gctwimax $(OBJS_ex) $(LDFLAGS)
+	$(LDO) $(LDFLAGS) -o gctwimax $(OBJS_ex) $(CFLAGS)
 
 install:
 	cp ./gctwimax /sbin/gctwimax

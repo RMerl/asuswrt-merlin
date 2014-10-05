@@ -3634,7 +3634,7 @@ static void update_device()
 #endif
 #endif
 		if (Is_EPSON) {					// EPSON
-			timeout_control_msg = 100;
+			timeout_control_msg = 200;
 			if (single_interface)
 				timeout_bulk_read_msg = 5000;
 			else

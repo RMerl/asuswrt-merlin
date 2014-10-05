@@ -31,9 +31,9 @@ OBJS := bcmgpio.o
 ifeq ($(wildcard ./*.c),)
 all:
 ifeq ($(RTCONFIG_BCMARM),y)
-	cp -f ./prebuild_arm/libbcm.so .
+	cp -f ./prebuilt_arm/libbcm.so .
 else
-	cp -f ./prebuild/libbcm.so .
+	cp -f ./prebuilt/libbcm.so .
 endif
 else
 all: libbcm.so

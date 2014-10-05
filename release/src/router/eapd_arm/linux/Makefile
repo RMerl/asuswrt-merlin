@@ -2,7 +2,7 @@
 
 include $(SRCBASE)/router/.config
 
-INCLUDE += -I. -I.. -I$(SRCBASE)/include -I$(SRCBASE)/shared -I$(SRCBASE)/router/shared -I$(SRCBASE)/router/nas
+INCLUDE += -I. -I.. -I$(SRCBASE)/include -I$(SRCBASE)/common/include -I$(SRCBASE)/shared -I$(SRCBASE)/router/shared -I$(SRCBASE)/router/nas${BCMEX}
 
 CFLAGS += $(INCLUDE)
 CFLAGS += $(WLAN_ComponentIncPath)
@@ -25,7 +25,7 @@ ifeq ($(RTCONFIG_QTN),y)
 LDFLAGS += -L$(TOP)/libqcsapi_client -lqcsapi_client
 endif
 
-vpath %.c $(SRCBASE)/router/eapd $(SRCBASE)/shared
+vpath %.c $(SRCBASE)/router/eapd${BCMEX} $(SRCBASE)/shared
 
 OBJS = eapd.o eapd_linux.o
 OBJS += nas_eap.o wps_eap.o ses_eap.o
@@ -45,12 +45,19 @@ CFLAGS += -DBCM_MEVENT
 endif
 #endif
 
-ifeq ($(wildcard $(SRCBASE)/router/eapd/*.c),)
+#ifdef BCM_BSD
+ifeq ($(CONFIG_BCMBSD),y)
+OBJS += bsd_eap.o
+CFLAGS += -DBCM_BSD
+endif
+#endif
+
+ifeq ($(wildcard $(SRCBASE)/router/eapd${BCMEX}/*.c),)
 all:
 ifeq ($(RTCONFIG_QTN),y)
-	-cp prebuild/eapd_qtn eapd
+	-cp prebuilt/eapd_qtn eapd
 else
-	-cp prebuild/eapd eapd
+	-cp prebuilt/eapd eapd
 endif
 else
 all: eapd

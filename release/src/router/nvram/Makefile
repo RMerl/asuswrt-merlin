@@ -1,13 +1,19 @@
 include ../common.mak
 
-CFLAGS = -O2 -Wall $(EXTRACFLAGS) -fPIC
-CFLAGS += -I$(TOP)/shared -I$(SRCBASE)/include -I.
+CFLAGS  += -I. -I$(SRCBASE)/include -Wall -fPIC $(EXTRACFLAGS)
+#CFLAGS += -g -DDEBUG
+CFLAGS  += -s
+ifeq ($(CONFIG_RTR_OPTIMIZE_SIZE),y)
+CFLAGS  += -Os
+else
+CFLAGS  += -O2
+endif
+LDFLAGS += -L. -L$(TOP)/shared -lshared
+
+CFLAGS += -I$(TOP)/shared
+
 ifeq ($(STATIC),1)
 CFLAGS += -static
-endif
-
-ifeq ($(RTCONFIG_DSL),y)
-CFLAGS += -DRTCONFIG_DSL
 endif
 
 all: libnvram.so libnvram.a nvram
@@ -23,9 +29,9 @@ libnvram.a: nvram_linux.o nvram_convert.o
 nvram: nvram.o ../shared/defaults.o libnvram.so
 	@echo " [nvram] CC $@"
 ifeq ($(STATIC),1)
-	$(CC) $(CFLAGS) -static -o $@ nvram.o ../shared/defaults.o -L. -lnvram -L$(TOP)/shared -lshared
+	$(CC) $(CFLAGS) -static -o $@ nvram.o ../shared/defaults.o $(LDFLAGS) -lnvram
 else
-	@$(CC) $(CFLAGS) -o $@ nvram.o ../shared/defaults.o -L. -lnvram -L$(TOP)/shared -lshared
+	@$(CC) $(CFLAGS) -o $@ nvram.o ../shared/defaults.o $(LDFLAGS) -lnvram
 endif
 	
 	$(SIZECHECK)
