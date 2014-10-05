@@ -1,0 +1,4 @@
+/* GNU ld script
+ * Use the shared library, but some functions are only in
+ * the static library, so try that secondarily. */
+GROUP ( /opt/hndtools-mipsel-linux-uclibc-4.2.3/lib/libc.so.0 /opt/hndtools-mipsel-linux-uclibc-4.2.3/lib/uclibc_nonshared.a  )
