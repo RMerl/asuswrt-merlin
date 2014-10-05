@@ -2303,7 +2303,7 @@ sqlite/stamp-h1:
 	CC=$(CC) CFLAGS="-Os $(EXTRACFLAGS) -ffunction-sections -fdata-sections -fPIC" \
 		LDFLAGS="-ffunction-sections -fdata-sections -Wl,--gc-sections" \
 		$(CONFIGURE) --prefix=/usr --enable-shared --enable-static \
-		--disable-readline --disable-dynamic-extensions --enable-threadsafe \
+		--disable-readline --disable-dynamic-extensions --disable-threadsafe \
 		--disable-dependency-tracking
 	touch $@
 
