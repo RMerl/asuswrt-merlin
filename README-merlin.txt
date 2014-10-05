@@ -572,13 +572,16 @@ https://github.com/RMerl/asuswrt-merlin
 History
 -------
 376.48 (xx-xxxx-2014)
-   - NEW: Merged with Asus GPL 2769 (AC87)
+   - NEW: Merged with Asus 376_2769 AC87 GPL
    - NEW: Enabled numerous modules in net-snmp (based on the list
           used by OpenWRT)
    - NEW: Added postconf and custom config support for snmpd.conf
+   - NEW: Added HID support to ARM kernel (AC56,AC68,AC87)
    - FIXED: DNSFilter client list dropdown would sometime be empty.
    - FIXED: DNS queries run on the router were forwarded to upstream
             nameservers instead of dnsmasq
+   - FIXED: Re-added the USB HID kernel module needed for UPS monitoring
+            (patch by ryzhov_al)
 
 
 376.47 (20-Sept-2014)
