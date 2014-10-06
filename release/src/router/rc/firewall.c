@@ -4252,15 +4252,6 @@ mangle_setting(char *wan_if, char *wan_ip, char *lan_if, char *lan_ip, char *log
                              "-m", "state", "--state", "NEW", "-j", "MARK", "--set-mark", "0x01/0x7");
                 }
 #endif
-
-#if defined(RTCONFIG_PPTPD) || defined(RTCONFIG_ACCEL_PPTPD)
-		//Set mark if ppp connection without encryption
-		if( nvram_match("pptpd_enable", "1") && (nvram_get_int("pptpd_mppe")>7) ) {
-			eval("iptables", "-t", "mangle", "-A", "FORWARD",
-			     "-p", "tcp",
-			     "-m", "state", "--state", "NEW", "-j", "MARK", "--set-mark", "0x01/0x7");
-		}
-#endif
 	}
 #endif
 }
@@ -4362,19 +4353,31 @@ mangle_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)
 		}
 
 #ifdef RTCONFIG_BCMARM
-                /* mark STUN connection*/
-                if (nvram_match("fw_pt_stun", "1")) {
-                        eval("iptables", "-t", "mangle", "-A", "FORWARD",
-                             "-p", "udp",
-                             "-m", "state", "--state", "NEW", "-j", "MARK", "--set-mark", "0x01/0x7");
-                }
-
-#ifdef RTCONFIG_IPV6
-		if (get_ipv6_service() == IPV6_6IN4) {
-			eval("ip6tables", "-t", "mangle", "-A", "FORWARD",
+		/* mark STUN connection*/
+		if (nvram_match("fw_pt_stun", "1")) {
+			eval("iptables", "-t", "mangle", "-A", "FORWARD",
+			     "-p", "udp",
 			     "-m", "state", "--state", "NEW", "-j", "MARK", "--set-mark", "0x01/0x7");
 		}
+#ifdef RTCONFIG_IPV6
+		if (get_ipv6_service() == IPV6_6IN4) {
+#ifdef RTCONFIG_BCMARM
+			eval("ip6tables", "-t", "mangle", "-A", "FORWARD",
+			     "-m", "state", "--state", "NEW", "-j", "MARK", "--set-mark", "0x01/0x7");
+#else
+			eval("ip6tables", "-t", "mangle", "-A", "FORWARD",
+			     "-m", "state", "--state", "NEW", "-j", "SKIPLOG");
 #endif
+		}
+#endif
+
+#if defined(RTCONFIG_PPTPD) || defined(RTCONFIG_ACCEL_PPTPD)
+		//Set mark if ppp connection without encryption
+		if( nvram_match("pptpd_enable", "1") && (nvram_get_int("pptpd_mppe")>7) ) {
+			eval("iptables", "-t", "mangle", "-A", "FORWARD",
+			     "-p", "tcp",
+			     "-m", "state", "--state", "NEW", "-j", "MARK", "--set-mark", "0x01/0x7");
+		}
 #endif
 	}
 #endif
