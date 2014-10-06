@@ -4781,11 +4781,6 @@ int start_firewall(int wanunit, int lanunit)
 #ifdef RTCONFIG_OPENVPN
 	run_vpn_firewall_scripts();
 #endif
-#if 0	// Makes no measurable difference, and creates other issues
-#ifdef RTCONFIG_BCMARM
-	if (pids("smbd")) add_samba_rules();
-#endif
-#endif
 
 	run_custom_script("firewall-start", wan_if);
 
