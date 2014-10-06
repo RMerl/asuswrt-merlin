@@ -2338,8 +2338,6 @@ wan_up(char *wan_ifname)	// oleg patch, replace
 		if(nvram_get_int("qos_type") == 1){
 			stop_dpi_engine_service();
 			start_dpi_engine_service();
-	// Restart firewall so we can reapply rules removed by closed-source bwdpi
-			start_firewall(wan_unit, 0);
 		}
 		else if(nvram_get_int("qos_type") == 0){
 			start_iQos();
