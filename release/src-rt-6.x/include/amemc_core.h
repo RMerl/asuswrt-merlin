@@ -1,7 +1,7 @@
 /*
  * BCM47XX ARM DDR2/DDR3 memory controlers.
  *
- * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -104,11 +104,7 @@
 #define CFG_DDR_REFRESH_PRD     7800000
 
 /* (optional) t_rfc (picoseconds) */
-#if 0
 #define CFG_DDR_T_RFC           105000
-#else	/* 129ns patch */
-#define	CFG_DDR_T_RFC		129000
-#endif
 
 /*
  * Convenient macros
