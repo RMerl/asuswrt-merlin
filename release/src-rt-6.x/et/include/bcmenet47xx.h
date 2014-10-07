@@ -2,7 +2,7 @@
  * Hardware-specific definitions for
  * Broadcom BCM47XX 10/100 Mbps Ethernet cores.
  *
- * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- * $Id: bcmenet47xx.h 376345 2012-12-24 21:13:06Z $
+ * $Id: bcmenet47xx.h 376344 2012-12-24 21:10:09Z $
  */
 
 #ifndef	_bcmenet_47xx_h_

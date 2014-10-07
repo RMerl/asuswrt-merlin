@@ -1,7 +1,7 @@
 /*
  * BCM common config options
  *
- * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: bcm_cfg.h 294399 2011-11-07 03:31:22Z $
+ * $Id: bcm_cfg.h 419467 2013-08-21 09:19:48Z $
  */
 
 #ifndef _bcm_cfg_h_

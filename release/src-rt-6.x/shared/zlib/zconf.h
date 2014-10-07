@@ -81,7 +81,7 @@
 #endif
 
 #ifndef STDC
-#  ifndef const     /* cannot use !defined(STDC) && !defined(const) on Mac */
+#  ifndef const /* cannot use !defined(STDC) && !defined(const) on Mac */
 #    define const
 #  endif
 #endif
@@ -130,7 +130,7 @@
 
                         /* Type declarations */
 
-#ifndef OF     /* function prototypes */
+#ifndef OF /* function prototypes */
 #  if defined(STDC) || defined(_CFE_)
 #    define OF(args)  args
 #  else

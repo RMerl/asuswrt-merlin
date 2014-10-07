@@ -1,7 +1,7 @@
 /*
  * Fundamental types and constants relating to WPA
  *
- * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: wpa.h 353470 2012-08-27 18:08:37Z $
+ * $Id: wpa.h 367468 2012-11-08 05:49:44Z $
  */
 
 #ifndef _proto_wpa_h_
@@ -142,6 +142,8 @@ typedef BWL_PRE_PACKED_STRUCT struct
 #define RSN_CAP_16_REPLAY_CNTRS		3
 #define RSN_CAP_MFPR			0x0040
 #define RSN_CAP_MFPC			0x0080
+#define RSN_CAP_SPPC			0x0400
+#define RSN_CAP_SPPR			0x0800
 
 /* WPA capabilities defined in 802.11i */
 #define WPA_CAP_4_REPLAY_CNTRS		RSN_CAP_4_REPLAY_CNTRS
