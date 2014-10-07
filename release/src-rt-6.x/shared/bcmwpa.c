@@ -1,7 +1,7 @@
 /*
  *   bcmwpa.c - shared WPA-related functions
  *
- * Copyright (C) 2013, Broadcom Corporation
+ * Copyright (C) 2012, Broadcom Corporation
  * All Rights Reserved.
  * 
  * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
@@ -9,7 +9,7 @@
  * or duplicated in any form, in whole or in part, without the prior
  * written permission of Broadcom Corporation.
  *
- * $Id: bcmwpa.c 419467 2013-08-21 09:19:48Z $
+ * $Id: bcmwpa.c 358033 2012-09-20 23:57:22Z $
  */
 
 #include <bcm_cfg.h>
@@ -37,13 +37,13 @@ extern void bzero(void *b, uint len);
 
 #include <wlioctl.h>
 #include <proto/802.11.h>
-#if defined(BCMSUP_PSK) || defined(BCMSUPPL) || defined(WLRXOE)
+#if defined(BCMSUP_PSK) || defined(BCMSUPPL)
 #include <proto/eapol.h>
 #endif	/* defined(BCMSUP_PSK) || defined(BCMSUPPL) */
 #include <bcmutils.h>
 #include <bcmwpa.h>
 
-#if defined(BCMSUP_PSK) || defined(WLRXOE)
+#ifdef	BCMSUP_PSK
 
 #include <bcmcrypto/prf.h>
 #include <bcmcrypto/rc4.h>
@@ -612,20 +612,7 @@ bcm_find_p2pie(uint8 *parse, uint len)
 }
 #endif
 
-bcm_tlv_t *
-bcm_find_hs20ie(uint8 *parse, uint len)
-{
-	bcm_tlv_t *ie;
-
-	while ((ie = bcm_parse_tlvs(parse, (int)len, DOT11_MNG_VS_ID))) {
-		if (bcm_is_hs20_ie((uint8 *)ie, &parse, &len)) {
-			return ie;
-		}
-	}
-	return NULL;
-}
-
-#if defined(BCMSUP_PSK) || defined(BCMSUPPL) || defined(WLRXOE)
+#if defined(BCMSUP_PSK) || defined(BCMSUPPL)
 #define wpa_is_kde(ie, tlvs, len, type)	bcm_has_ie(ie, tlvs, len, \
 	(const uint8 *)WPA2_OUI, WPA2_OUI_LEN, type)
 
