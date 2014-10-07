@@ -2,7 +2,7 @@
  * Linux device driver tunables for
  * Broadcom BCM47XX 10/100Mbps Ethernet Device Driver
  *
- * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- * $Id: et_linux.h 373323 2012-12-07 04:06:16Z $
+ * $Id: et_linux.h 427480 2013-10-03 19:09:47Z $
  */
 
 #ifndef _et_linux_h_
@@ -27,7 +27,7 @@
 #if defined(CONFIG_RAM_SIZE) && ((CONFIG_RAM_SIZE > 0) && (CONFIG_RAM_SIZE <= 16))
 #define NRXBUFPOST      256             /* try to keep this # rbufs posted to the chip */
 #else
-#define NRXBUFPOST      320             /* try to keep this # rbufs posted to the chip */
+#define NRXBUFPOST      511             /* try to keep this # rbufs posted to the chip */
 #endif
 #define	BUFSZ		2048		/* packet data buffer size */
 #define	RXBUFSZ		(BUFSZ - 256)	/* receive buffer size */
@@ -50,18 +50,14 @@
 #if defined(CONFIG_RAM_SIZE) && ((CONFIG_RAM_SIZE > 0) && (CONFIG_RAM_SIZE <= 16))
 #define CTFPOOLSZ	512
 #else
-#ifdef __ARM_ARCH_7A__
-#define CTFPOOLSZ	1024
-#else
 #define CTFPOOLSZ	768
 #endif
-#endif /* CONFIG_RAM_SIZE */
 
 #define	PREFSZ			96
-#ifndef PKTC
-#define ETPREFHDRS(h, sz)	OSL_PREF_RANGE_ST((h), (sz))
-#else
+#ifdef PKTC
 #define ETPREFHDRS(h, sz)
+#else
+#define ETPREFHDRS(h, sz)	OSL_PREF_RANGE_ST((h), (sz))
 #endif
 
 /* dma tunables */
