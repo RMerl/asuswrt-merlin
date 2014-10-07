@@ -4,7 +4,7 @@
  * This file implements the chip-specific routines
  * for Broadcom HNBU Sonics SiliconBackplane enet cores.
  *
- * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -17,7 +17,7 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- * $Id: etc47xx.c 286404 2011-09-27 19:29:08Z $
+ * $Id: etc47xx.c 423696 2013-09-13 00:56:28Z $
  */
 
 #include <et_cfg.h>
@@ -122,6 +122,7 @@ struct chops bcm47xx_et_chops = {
 	chiprxfill,
 	chipgetintrevents,
 	chiperrors,
+	NULL,
 	chipintrson,
 	chipintrsoff,
 	chiptxreclaim,
@@ -973,6 +974,7 @@ chipstatsupd(struct bcm4xxx *ch)
 	 *
 	 * Arbitrarily lump the non-specific dma errors as tx errors.
 	 */
+	etc->rxgiants = ch->di->rxgiants;
 	etc->txerror = m->tx_jabber_pkts + m->tx_oversize_pkts
 		+ m->tx_underruns + m->tx_excessive_cols
 		+ m->tx_late_cols + etc->txnobuf + etc->dmade
@@ -981,7 +983,7 @@ chipstatsupd(struct bcm4xxx *ch)
 		+ m->rx_missed_pkts + m->rx_crc_align_errs
 		+ m->rx_undersize + m->rx_crc_errs
 		+ m->rx_align_errs + m->rx_symbol_errs
-		+ etc->rxnobuf + etc->rxdmauflo + etc->rxoflo + etc->rxbadlen;
+		+ etc->rxnobuf + etc->rxdmauflo + etc->rxoflo + etc->rxbadlen + etc->rxgiants;
 }
 
 static void
