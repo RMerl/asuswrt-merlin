@@ -1,7 +1,7 @@
 /*
  * Fundamental constants relating to TCP Protocol
  *
- * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: bcmtcp.h 327600 2012-04-14 17:50:36Z $
+ * $Id: bcmtcp.h 384540 2013-02-12 04:28:58Z $
  */
 
 #ifndef _bcmtcp_h_
@@ -41,6 +41,8 @@
 #define TCP_FLAG_RST            0x0004
 #define TCP_FLAG_SYN            0x0002
 #define TCP_FLAG_FIN            0x0001
+#define TCP_HLEN_MASK           0xf000
+#define TCP_HLEN_SHIFT          12
 
 /* These fields are stored in network order */
 BWL_PRE_PACKED_STRUCT struct bcmtcp_hdr
