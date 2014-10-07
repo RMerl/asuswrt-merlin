@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2012, Broadcom Corporation. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  *
  * Fundamental constants relating to Neighbor Discovery Protocol
  *
- * $Id: bcmipv6.h 399481 2013-04-30 09:24:20Z $
+ * $Id: bcmipv6.h 352279 2012-08-22 07:21:57Z $
  */
 
 #ifndef _bcmipv6_h_
@@ -28,38 +28,12 @@
 /* This marks the start of a packed structure section. */
 #include <packed_section_start.h>
 
-/* Extension headers */
-#define IPV6_EXT_HOP	0
-#define IPV6_EXT_ROUTE	43
-#define IPV6_EXT_FRAG	44
-#define IPV6_EXT_DEST	60
-#define IPV6_EXT_ESEC	50
-#define IPV6_EXT_AUTH	51
-
-/* Minimum size (extension header "word" length) */
-#define IPV6_EXT_WORD	8
-
-/* Offsets for most extension headers */
-#define IPV6_EXT_NEXTHDR	0
-#define IPV6_EXT_HDRLEN		1
-
-/* Constants specific to fragmentation header */
-#define IPV6_FRAG_MORE_MASK	0x0001
-#define IPV6_FRAG_MORE_SHIFT	0
-#define IPV6_FRAG_OFFS_MASK	0xfff8
-#define IPV6_FRAG_OFFS_SHIFT	3
-
-/* For icmpv6 */
 #define ICMPV6_HEADER_TYPE 	0x3A
 #define ICMPV6_PKT_TYPE_NS	135
 #define ICMPV6_PKT_TYPE_NA	136
 
 #define ICMPV6_ND_OPT_TYPE_TARGET_MAC	2
 #define ICMPV6_ND_OPT_TYPE_SRC_MAC		1
-
-#define ICMPV6_ND_OPT_LEN_LINKADDR		1
-
-#define ICMPV6_ND_OPT_LEN_LINKADDR		1
 
 #define IPV6_VERSION 	6
 #define IPV6_HOP_LIMIT 	255
@@ -121,36 +95,9 @@ BWL_PRE_PACKED_STRUCT struct nd_msg_opt {
 	uint8 mac_addr[ETHER_ADDR_LEN];
 } BWL_POST_PACKED_STRUCT;
 
-/* Ipv6 Fragmentation Header */
-BWL_PRE_PACKED_STRUCT struct ipv6_frag {
-	uint8	nexthdr;
-	uint8	reserved;
-	uint16	frag_offset;
-	uint32	ident;
-} BWL_POST_PACKED_STRUCT;
-
 #endif /* IL_BIGENDIAN */
 
 /* This marks the end of a packed structure section. */
 #include <packed_section_end.h>
-
-static const struct ipv6_addr all_node_ipv6_maddr = {
-									{ 0xff, 0x2, 0, 0,
-									0, 0, 0, 0,
-									0, 0, 0, 0,
-									0, 0, 0, 1
-									}};
-
-#define IPV6_ISMULTI(a) (a[0] == 0xff)
-
-#define IPV6_MCAST_TO_ETHER_MCAST(ipv6, ether) \
-{ \
-	ether[0] = 0x33; \
-	ether[1] = 0x33; \
-	ether[2] = ipv6[12]; \
-	ether[3] = ipv6[13]; \
-	ether[4] = ipv6[14]; \
-	ether[5] = ipv6[15]; \
-}
 
 #endif	/* !defined(_bcmipv6_h_) */
