@@ -2,7 +2,7 @@
  * BCM 57XX driver config options
  *
  *
- * Copyright (C) 2011, Broadcom Corporation
+ * Copyright (C) 2014, Broadcom Corporation
  * All Rights Reserved.
  * 
  * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
