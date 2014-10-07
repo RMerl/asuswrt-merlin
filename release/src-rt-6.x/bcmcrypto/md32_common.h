@@ -212,7 +212,7 @@
 # endif
 #endif /* PEDANTIC */
 
-#if HASH_LONG_LOG2==2	    /* Engage only if sizeof(HASH_LONG)== 4 */
+#if HASH_LONG_LOG2==2	/* Engage only if sizeof(HASH_LONG)== 4 */
 /* A nice byte order reversal from Wei Dai <weidai@eskimo.com> */
 #ifdef ROTATE
 /* 5 instructions with rotate instruction, else 9 */
