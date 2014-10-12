@@ -508,6 +508,7 @@ static bool srvsvc_init_cb(void *ptr)
 	return true;
 }
 
+#ifdef LSA_SUPPORT
 static bool lsarpc_init_cb(void *ptr)
 {
 	struct dcesrv_ep_context *ep_ctx =
@@ -556,6 +557,7 @@ static bool lsarpc_init_cb(void *ptr)
 
 	return true;
 }
+#endif
 
 #ifdef SAMR_SUPPORT
 static bool samr_init_cb(void *ptr)
@@ -1106,12 +1108,14 @@ bool dcesrv_ep_setup(struct tevent_context *ev_ctx,
 	}
 
 
+#ifdef LSA_SUPPORT
 	lsarpc_cb.init         = lsarpc_init_cb;
 	lsarpc_cb.shutdown     = NULL;
 	lsarpc_cb.private_data = ep_ctx;
 	if (!NT_STATUS_IS_OK(rpc_lsarpc_init(&lsarpc_cb))) {
 		return false;
 	}
+#endif
 
 #ifdef SAMR_SUPPORT
 	samr_cb.init         = samr_init_cb;

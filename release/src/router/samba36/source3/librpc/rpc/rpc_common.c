@@ -92,9 +92,11 @@ bool smb_register_ndr_interface(const struct ndr_interface_table *interface)
 
 static bool initialize_interfaces(void)
 {
+#ifdef LSA_SUPPORT
 	if (!smb_register_ndr_interface(&ndr_table_lsarpc)) {
 		return false;
 	}
+#endif
 #ifdef ACTIVE_DIRECTORY
 	if (!smb_register_ndr_interface(&ndr_table_dssetup)) {
 		return false;

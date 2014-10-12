@@ -162,7 +162,9 @@ static void exit_server_common(enum server_exit_reason how,
 #ifdef SAMR_SUPPORT
 		rpc_samr_shutdown();
 #endif
+#ifdef LSA_SUPPORT
 		rpc_lsarpc_shutdown();
+#endif
 	}
 
 	/*

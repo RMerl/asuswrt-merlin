@@ -63,7 +63,10 @@ static bool is_samr_lsa_pipe(const struct ndr_syntax_id *syntax)
 #ifdef SAMR_SUPPORT
 		ndr_syntax_id_equal(syntax, &ndr_table_samr.syntax_id) ||
 #endif
-		ndr_syntax_id_equal(syntax, &ndr_table_lsarpc.syntax_id);
+#ifdef LSA_SUPPORT
+		ndr_syntax_id_equal(syntax, &ndr_table_lsarpc.syntax_id) ||
+#endif
+		false;
 }
 
 size_t num_pipe_handles(struct pipes_struct *p)
