@@ -784,6 +784,10 @@ static bool api_DosPrintQGetInfo(struct smbd_server_connection *sconn,
 	union spoolss_JobInfo *job_info = NULL;
 	union spoolss_PrinterInfo printer_info;
 
+#ifndef PRINTER_SUPPORT
+	return False;
+#endif
+
 	if (!str1 || !str2 || !p) {
 		return False;
 	}
@@ -998,6 +1002,10 @@ static bool api_DosPrintQEnum(struct smbd_server_connection *sconn,
 	union spoolss_PrinterInfo *printer_info;
 	union spoolss_DriverInfo *driver_info;
 	union spoolss_JobInfo **job_info;
+
+#ifndef PRINTER_SUPPORT
+	return False;
+#endif
 
 	if (!param_format || !output_format1 || !p) {
 		return False;
@@ -3105,6 +3113,10 @@ static bool api_RDosPrintJobDel(struct smbd_server_connection *sconn,
 	struct spoolss_DevmodeContainer devmode_ctr;
 	enum spoolss_JobControl command;
 
+#ifndef PRINTER_SUPPORT
+	return False;
+#endif
+
 	if (!str1 || !str2 || !p) {
 		return False;
 	}
@@ -3237,6 +3249,10 @@ static bool api_WPrintQueueCtrl(struct smbd_server_connection *sconn,
 	struct spoolss_DevmodeContainer devmode_ctr;
 	struct sec_desc_buf secdesc_ctr;
 	enum spoolss_PrinterControl command;
+
+#ifndef PRINTER_SUPPORT
+	return False;
+#endif
 
 	if (!str1 || !str2 || !QueueName) {
 		return False;
@@ -3403,6 +3419,10 @@ static bool api_PrintJobInfo(struct smbd_server_connection *sconn,
 	struct spoolss_JobInfoContainer ctr;
 	union spoolss_JobInfo info;
 	struct spoolss_SetJobInfo1 info1;
+
+#ifndef PRINTER_SUPPORT
+	return False;
+#endif
 
 	if (!str1 || !str2 || !p) {
 		return False;
@@ -4547,6 +4567,10 @@ static bool api_WPrintJobGetInfo(struct smbd_server_connection *sconn,
 	struct spoolss_DevmodeContainer devmode_ctr;
 	union spoolss_JobInfo info;
 
+#ifndef PRINTER_SUPPORT
+	return False;
+#endif
+
 	if (!str1 || !str2 || !p) {
 		return False;
 	}
@@ -4684,6 +4708,10 @@ static bool api_WPrintJobEnumerate(struct smbd_server_connection *sconn,
 	struct spoolss_DevmodeContainer devmode_ctr;
 	uint32_t count = 0;
 	union spoolss_JobInfo *info;
+
+#ifndef PRINTER_SUPPORT
+	return False;
+#endif
 
 	if (!str1 || !str2 || !p) {
 		return False;
@@ -4890,6 +4918,10 @@ static bool api_WPrintDestGetInfo(struct smbd_server_connection *sconn,
 	struct spoolss_DevmodeContainer devmode_ctr;
 	union spoolss_PrinterInfo info;
 
+#ifndef PRINTER_SUPPORT
+	return False;
+#endif
+
 	if (!str1 || !str2 || !p) {
 		return False;
 	}
@@ -5026,6 +5058,10 @@ static bool api_WPrintDestEnum(struct smbd_server_connection *sconn,
 	union spoolss_PrinterInfo *info;
 	uint32_t count;
 
+#ifndef PRINTER_SUPPORT
+	return False;
+#endif
+
 	if (!str1 || !str2 || !p) {
 		return False;
 	}
@@ -5129,6 +5165,10 @@ static bool api_WPrintDriverEnum(struct smbd_server_connection *sconn,
 	int succnt;
 	struct pack_desc desc;
 
+#ifndef PRINTER_SUPPORT
+	return False;
+#endif
+
 	if (!str1 || !str2 || !p) {
 		return False;
 	}
@@ -5193,6 +5233,10 @@ static bool api_WPrintQProcEnum(struct smbd_server_connection *sconn,
 	int succnt;
 	struct pack_desc desc;
 
+#ifndef PRINTER_SUPPORT
+	return False;
+#endif
+
 	if (!str1 || !str2 || !p) {
 		return False;
 	}
@@ -5256,6 +5300,10 @@ static bool api_WPrintPortEnum(struct smbd_server_connection *sconn,
 	int uLevel;
 	int succnt;
 	struct pack_desc desc;
+
+#ifndef PRINTER_SUPPORT
+	return False;
+#endif
 
 	if (!str1 || !str2 || !p) {
 		return False;

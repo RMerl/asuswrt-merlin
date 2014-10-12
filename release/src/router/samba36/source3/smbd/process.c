@@ -2423,8 +2423,10 @@ static bool housekeeping_fn(const struct timeval *now, void *private_data)
 
 	change_to_root_user();
 
+#ifdef PRINTER_SUPPORT
 	/* update printer queue caches if necessary */
 	update_monitored_printq_cache(sconn->msg_ctx);
+#endif
 
 	/* check if we need to reload services */
 	check_reload(sconn, time_mono(NULL));

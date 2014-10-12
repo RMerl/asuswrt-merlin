@@ -113,9 +113,11 @@ static bool initialize_interfaces(void)
 	if (!smb_register_ndr_interface(&ndr_table_winreg)) {
 		return false;
 	}
+#ifdef PRINTER_SUPPORT
 	if (!smb_register_ndr_interface(&ndr_table_spoolss)) {
 		return false;
 	}
+#endif
 	if (!smb_register_ndr_interface(&ndr_table_netdfs)) {
 		return false;
 	}

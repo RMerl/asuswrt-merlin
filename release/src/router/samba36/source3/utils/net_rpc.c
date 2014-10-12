@@ -7841,6 +7841,10 @@ int net_rpc_printer(struct net_context *c, int argc, const char **argv)
 		{NULL, NULL, 0, NULL, NULL}
 	};
 
+#ifndef PRINTER_SUPPORT
+	return 0;
+#endif
+
 	if (argc == 0) {
 		if (c->display_usage) {
 			d_printf(_("Usage:\n"));

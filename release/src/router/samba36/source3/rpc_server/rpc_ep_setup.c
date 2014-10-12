@@ -1110,6 +1110,10 @@ bool dcesrv_ep_setup(struct tevent_context *ev_ctx,
 					   "rpc_server",
 					   "spoolss",
 					   "embedded");
+#ifndef PRINTER_SUPPORT
+	if (1) {
+	} else
+#endif
 	if (StrCaseCmp(rpcsrv_type, "embedded") == 0) {
 		spoolss_cb.init         = spoolss_init_cb;
 		spoolss_cb.shutdown     = spoolss_shutdown_cb;

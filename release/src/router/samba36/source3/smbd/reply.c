@@ -5208,7 +5208,11 @@ void reply_printopen(struct smb_request *req)
 		return;
 	}
 
-	if (!CAN_PRINT(conn)) {
+
+#ifdef PRINTER_SUPPORT
+	if (!CAN_PRINT(conn))
+#endif
+	{
 		reply_nterror(req, NT_STATUS_ACCESS_DENIED);
 		END_PROFILE(SMBsplopen);
 		return;
@@ -5314,7 +5318,10 @@ void reply_printqueue(struct smb_request *req)
 	   is really quite gross and only worked when there was only
 	   one printer - I think we should now only accept it if they
 	   get it right (tridge) */
-	if (!CAN_PRINT(conn)) {
+#ifdef PRINTER_SUPPORT
+	if (!CAN_PRINT(conn))
+#endif
+	{
 		reply_nterror(req, NT_STATUS_ACCESS_DENIED);
 		END_PROFILE(SMBsplretq);
 		return;

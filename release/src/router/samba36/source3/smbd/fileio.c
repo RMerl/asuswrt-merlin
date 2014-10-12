@@ -298,6 +298,10 @@ ssize_t write_file(struct smb_request *req,
 		uint32_t t;
 		int ret;
 
+#ifndef PRINTER_SUPPORT
+		return -1;
+#endif
+
 		ret = print_spool_write(fsp, data, n, pos, &t);
 		if (ret) {
 			errno = ret;

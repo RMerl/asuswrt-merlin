@@ -1608,6 +1608,9 @@ static NTSTATUS open_file_ntcreate(connection_struct *conn,
 		 * Most of the passed parameters are ignored.
 		 */
 
+#ifndef PRINTER_SUPPORT
+		return NT_STATUS_ACCESS_DENIED;
+#endif
 		if (pinfo) {
 			*pinfo = FILE_WAS_CREATED;
 		}

@@ -141,7 +141,9 @@ static void exit_server_common(enum server_exit_reason how,
 		rpc_eventlog_shutdown();
 		rpc_ntsvcs_shutdown();
 		rpc_svcctl_shutdown();
+#ifdef PRINTER_SUPPORT
 		rpc_spoolss_shutdown();
+#endif
 
 		rpc_srvsvc_shutdown();
 		rpc_winreg_shutdown();

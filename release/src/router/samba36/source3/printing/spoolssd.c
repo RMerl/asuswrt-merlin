@@ -165,6 +165,10 @@ void start_spoolssd(struct tevent_context *ev_ctx,
 	NTSTATUS status;
 	int ret;
 
+#ifndef PRINTER_SUPPORT
+	return;
+#endif
+
 	DEBUG(1, ("Forking SPOOLSS Daemon\n"));
 
 	pid = sys_fork();

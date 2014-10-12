@@ -643,6 +643,9 @@ static NTSTATUS close_normal_file(struct smb_request *req, files_struct *fsp,
 	status = ntstatus_keeperror(status, tmp);
 
 	if (fsp->print_file) {
+#ifndef PRINTER_SUPPORT
+		return NT_STATUS_OK;
+#endif
 		/* FIXME: return spool errors */
 		print_spool_end(fsp, close_type);
 		file_free(req, fsp);
