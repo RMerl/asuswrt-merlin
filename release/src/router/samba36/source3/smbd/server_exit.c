@@ -156,7 +156,9 @@ static void exit_server_common(enum server_exit_reason how,
 		rpc_winreg_shutdown();
 #endif
 
+#ifdef NETLOGON_SUPPORT
 		rpc_netlogon_shutdown();
+#endif
 		rpc_samr_shutdown();
 		rpc_lsarpc_shutdown();
 	}

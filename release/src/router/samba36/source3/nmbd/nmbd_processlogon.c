@@ -320,6 +320,10 @@ void process_logon_packet(struct packet_struct *p, const char *buf,int len,
 	NTSTATUS status;
 	const char *pdc_name;
 
+#ifndef NETLOGON_SUPPORT
+	return;
+#endif
+
 	in_addr_to_sockaddr_storage(&ss, p->ip);
 	pss = iface_ip((struct sockaddr *)&ss);
 	if (!pss) {

@@ -606,6 +606,7 @@ static bool samr_init_cb(void *ptr)
 	return true;
 }
 
+#ifdef NETLOGON_SUPPORT
 static bool netlogon_init_cb(void *ptr)
 {
 	struct dcesrv_ep_context *ep_ctx =
@@ -654,6 +655,7 @@ static bool netlogon_init_cb(void *ptr)
 
 	return true;
 }
+#endif
 
 static bool spoolss_init_cb(void *ptr)
 {
@@ -1116,12 +1118,15 @@ bool dcesrv_ep_setup(struct tevent_context *ev_ctx,
 		return false;
 	}
 
+#ifdef NETLOGON_SUPPORT
 	netlogon_cb.init         = netlogon_init_cb;
 	netlogon_cb.shutdown     = NULL;
 	netlogon_cb.private_data = ep_ctx;
 	if (!NT_STATUS_IS_OK(rpc_netlogon_init(&netlogon_cb))) {
 		return false;
 	}
+#endif
+
 
 	rpcsrv_type = lp_parm_const_string(GLOBAL_SECTION_SNUM,
 					   "rpc_server",

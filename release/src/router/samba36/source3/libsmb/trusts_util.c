@@ -46,9 +46,11 @@ NTSTATUS trust_pw_change_and_store_it(struct rpc_pipe_client *cli, TALLOC_CTX *m
 	NTSTATUS nt_status;
 
 	switch (sec_channel_type) {
+#ifdef NETLOGON_SUPPORT
 	case SEC_CHAN_WKSTA:
 	case SEC_CHAN_DOMAIN:
 		break;
+#endif
 	default:
 		return NT_STATUS_NOT_SUPPORTED;
 	}
@@ -159,6 +161,11 @@ bool enumerate_domain_trusts( TALLOC_CTX *mem_ctx, const char *domain,
 	*num_domains = 0;
 	*sids = NULL;
 
+#ifndef NETLOGON_SUPPORT
+	return False;
+#endif
+
+
 	/* lookup a DC first */
 
 	if ( !get_dc_name(domain, NULL, dc_name, &dc_ss) ) {
@@ -242,6 +249,10 @@ NTSTATUS change_trust_account_password( const char *domain, const char *remote_m
 	fstring dc_name;
 	struct cli_state *cli = NULL;
 	struct rpc_pipe_client *netlogon_pipe = NULL;
+
+#ifndef NETLOGON_SUPPORT
+	return NT_STATUS_UNSUCCESSFUL;
+#endif
 
 	DEBUG(5,("change_trust_account_password: Attempting to change trust account password in domain %s....\n",
 		domain));

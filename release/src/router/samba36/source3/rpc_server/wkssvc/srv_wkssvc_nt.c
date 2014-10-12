@@ -824,6 +824,10 @@ WERROR _wkssvc_NetrJoinDomain2(struct pipes_struct *p,
 	WERROR werr;
 	struct security_token *token = p->session_info->security_token;
 
+#ifndef NETLOGON_SUPPORT
+	return WERR_NOT_SUPPORTED;
+#endif
+
 	if (!r->in.domain_name) {
 		return WERR_INVALID_PARAM;
 	}
@@ -900,6 +904,10 @@ WERROR _wkssvc_NetrUnjoinDomain2(struct pipes_struct *p,
 	char *admin_account = NULL;
 	WERROR werr;
 	struct security_token *token = p->session_info->security_token;
+
+#ifndef NETLOGON_SUPPORT
+	return WERR_NOT_SUPPORTED;
+#endif
 
 	if (!r->in.account || !r->in.encrypted_password) {
 		return WERR_INVALID_PARAM;
