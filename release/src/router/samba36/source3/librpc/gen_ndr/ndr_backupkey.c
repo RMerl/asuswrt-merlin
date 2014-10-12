@@ -740,7 +740,7 @@ static const struct ndr_interface_call backupkey_calls[] = {
 		sizeof(struct bkrp_BackupKey),
 		(ndr_push_flags_fn_t) ndr_push_bkrp_BackupKey,
 		(ndr_pull_flags_fn_t) ndr_pull_bkrp_BackupKey,
-		(ndr_print_function_t) ndr_print_bkrp_BackupKey,
+		(ndr_print_function_t) ndr_print_disabled,
 		{ 0, NULL },
 		{ 0, NULL },
 	},

@@ -860,7 +860,7 @@ static const struct ndr_interface_call dns_calls[] = {
 		sizeof(struct decode_dns_name_packet),
 		(ndr_push_flags_fn_t) ndr_push_decode_dns_name_packet,
 		(ndr_pull_flags_fn_t) ndr_pull_decode_dns_name_packet,
-		(ndr_print_function_t) ndr_print_decode_dns_name_packet,
+		(ndr_print_function_t) ndr_print_disabled,
 		{ 0, NULL },
 		{ 0, NULL },
 	},

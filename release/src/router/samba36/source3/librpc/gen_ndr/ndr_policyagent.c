@@ -51,7 +51,7 @@ static const struct ndr_interface_call policyagent_calls[] = {
 		sizeof(struct policyagent_Dummy),
 		(ndr_push_flags_fn_t) ndr_push_policyagent_Dummy,
 		(ndr_pull_flags_fn_t) ndr_pull_policyagent_Dummy,
-		(ndr_print_function_t) ndr_print_policyagent_Dummy,
+		(ndr_print_function_t) ndr_print_disabled,
 		{ 0, NULL },
 		{ 0, NULL },
 	},

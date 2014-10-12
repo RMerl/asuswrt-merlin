@@ -1398,7 +1398,7 @@ static const struct ndr_interface_call dfsblobs_calls[] = {
 		sizeof(struct dfs_GetDFSReferral),
 		(ndr_push_flags_fn_t) ndr_push_dfs_GetDFSReferral,
 		(ndr_pull_flags_fn_t) ndr_pull_dfs_GetDFSReferral,
-		(ndr_print_function_t) ndr_print_dfs_GetDFSReferral,
+		(ndr_print_function_t) ndr_print_disabled,
 		{ 0, NULL },
 		{ 0, NULL },
 	},
