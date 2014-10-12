@@ -88,6 +88,10 @@ struct security_descriptor *svcctl_get_secdesc(TALLOC_CTX *mem_ctx,
 	NTSTATUS status;
 	WERROR result = WERR_OK;
 
+#ifndef WINREG_SUPPORT
+	return NULL;
+#endif
+
 	key = talloc_asprintf(mem_ctx,
 			      "%s\\%s\\Security",
 			      TOP_LEVEL_SERVICES_KEY, name);
@@ -160,6 +164,10 @@ bool svcctl_set_secdesc(struct messaging_context *msg_ctx,
 	TALLOC_CTX *tmp_ctx;
 	NTSTATUS status;
 	WERROR result = WERR_OK;
+
+#ifndef WINREG_SUPPORT
+	return false;
+#endif
 
 	tmp_ctx = talloc_stackframe();
 	if (tmp_ctx == NULL) {
@@ -271,6 +279,10 @@ const char *svcctl_get_string_value(TALLOC_CTX *mem_ctx,
 	TALLOC_CTX *tmp_ctx;
 	NTSTATUS status;
 	WERROR result = WERR_OK;
+
+#ifndef WINREG_SUPPORT
+	return NULL;
+#endif
 
 	tmp_ctx = talloc_stackframe();
 	if (tmp_ctx == NULL) {

@@ -95,9 +95,11 @@ bool init_service_op_table( void )
 	svcctl_ops[i].ops  = &netlogon_svc_ops;
 	i++;
 
+#ifdef WINREG_SUPPORT
 	svcctl_ops[i].name = talloc_strdup( svcctl_ops, "RemoteRegistry" );
 	svcctl_ops[i].ops  = &winreg_svc_ops;
 	i++;
+#endif
 
 	svcctl_ops[i].name = talloc_strdup( svcctl_ops, "WINS" );
 	svcctl_ops[i].ops  = &wins_svc_ops;

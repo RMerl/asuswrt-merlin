@@ -150,7 +150,9 @@ static void exit_server_common(enum server_exit_reason how,
 #endif
 
 		rpc_srvsvc_shutdown();
+#ifdef WINREG_SUPPORT
 		rpc_winreg_shutdown();
+#endif
 
 		rpc_netlogon_shutdown();
 		rpc_samr_shutdown();

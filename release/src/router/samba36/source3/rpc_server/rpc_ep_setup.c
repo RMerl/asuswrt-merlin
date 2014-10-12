@@ -409,6 +409,7 @@ static bool epmapper_shutdown_cb(void *ptr)
 	return true;
 }
 
+#ifdef WINREG_SUPPORT
 static bool winreg_init_cb(void *ptr)
 {
 	struct dcesrv_ep_context *ep_ctx =
@@ -456,6 +457,7 @@ static bool winreg_init_cb(void *ptr)
 
 	return true;
 }
+#endif
 
 static bool srvsvc_init_cb(void *ptr)
 {
@@ -710,10 +712,12 @@ static bool svcctl_init_cb(void *ptr)
 					   "epmapper",
 					   "none");
 
+#ifdef WINREG_SUPPORT
 	ok = svcctl_init_winreg(ep_ctx->msg_ctx);
 	if (!ok) {
 		return false;
 	}
+#endif
 
 	/* initialize the control hooks */
 	init_service_op_table();
@@ -785,10 +789,12 @@ static bool eventlog_init_cb(void *ptr)
 					   "epmapper",
 					   "none");
 
+#ifdef WINREG_SUPPORT
 	ok = eventlog_init_winreg(ep_ctx->msg_ctx);
 	if (!ok) {
 		return false;
 	}
+#endif
 
 	if (StrCaseCmp(rpcsrv_type, "embedded") == 0 ||
 	    StrCaseCmp(rpcsrv_type, "daemon") == 0) {
@@ -1077,12 +1083,14 @@ bool dcesrv_ep_setup(struct tevent_context *ev_ctx,
 		}
 	}
 
+#ifdef WINREG_SUPPORT
 	winreg_cb.init         = winreg_init_cb;
 	winreg_cb.shutdown     = NULL;
 	winreg_cb.private_data = ep_ctx;
 	if (!NT_STATUS_IS_OK(rpc_winreg_init(&winreg_cb))) {
 		return false;
 	}
+#endif
 
 	srvsvc_cb.init         = srvsvc_init_cb;
 	srvsvc_cb.shutdown     = NULL;

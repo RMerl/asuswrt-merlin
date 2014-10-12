@@ -642,7 +642,9 @@ static struct cmd_set *rpcclient_command_list[] = {
 	drsuapi_commands,
 	eventlog_commands,
 #endif
+#ifdef WINREG_SUPPORT
 	winreg_commands,
+#endif
 	NULL
 };
 
