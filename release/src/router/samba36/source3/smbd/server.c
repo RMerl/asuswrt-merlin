@@ -1230,8 +1230,10 @@ extern void build_options(bool screen);
 		exit(1);
 	}
 
+#ifdef REGISTRY_BACKEND
 	if (!W_ERROR_IS_OK(registry_init_full()))
 		exit(1);
+#endif
 
 	/* Open the share_info.tdb here, so we don't have to open
 	   after the fork on every single connection.  This is a small

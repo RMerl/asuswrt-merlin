@@ -68,9 +68,12 @@ sbcErr smbconf_init(TALLOC_CTX *mem_ctx, struct smbconf_ctx **conf_ctx,
 		}
 	}
 
+#ifdef REGISTRY_BACKEND
 	if (strequal(backend, "registry") || strequal(backend, "reg")) {
 		err = smbconf_init_reg(mem_ctx, conf_ctx, path);
-	} else if (strequal(backend, "file") || strequal(backend, "txt")) {
+	} else
+#endif
+	if (strequal(backend, "file") || strequal(backend, "txt")) {
 		err = smbconf_init_txt(mem_ctx, conf_ctx, path);
 	} else if (sep == NULL) {
 		/*
