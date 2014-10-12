@@ -19,8 +19,11 @@
 #include "includes.h"
 #include <endian.h>
 #include <stdio.h>
+#include <sys/stat.h>
 
 static char buf[256];
+
+static const char smbpasswd[] = "/etc/samba/smbpasswd";
 
 static void md4hash(const char *passwd, uchar p16[16])
 {
@@ -162,57 +165,40 @@ int main(int argc, char **argv)
 {
 	const char *prog = argv[0];
 	const char *user;
-	char *pw1, *pw2;
 	FILE *fp;
 	bool add = false, delete = false, get_stdin = false, found;
 	int ch;
 	int uid;
+	struct stat st;
 
-	TALLOC_CTX *frame = talloc_stackframe();
-
-	while ((ch = getopt(argc, argv, "asx")) != EOF) {
-		switch (ch) {
-		case 's':
-			get_stdin = true;
-			break;
-		case 'a':
-			add = true;
-			break;
-		case 'x':
-			delete = true;
-			break;
-		default:
-			return usage(prog);
-		}
+	if(argc != 3)
+	{
+		printf("usage for smbpasswd - \n\t%s USERNAME PASSWD\n\t%s -del USERNAME\n", argv[0], argv[0]);
+		exit(1);
 	}
 
-	if (add && delete)
-		return usage(prog);
-
-	argc -= optind;
-	argv += optind;
-
-	if (!argc)
-		return usage(prog);
-
-	user = argv[0];
-	if (!delete) {
+	if(strcmp(argv[1], "-del") == 0) {
+		delete = true;
+		user = argv[2];
 		uid = find_uid_for_user(user);
 		if (uid < 0) {
 			fprintf(stderr, "Could not find user '%s' in /etc/passwd\n", user);
 			return 2;
 		}
+	} else {
+		add = true;
+		user = argv[1];
 	}
 
-	fp = fopen("/etc/samba/smbpasswd", "r+");
+	fp = fopen(smbpasswd, (stat(smbpasswd, &st) == 0) && (!S_ISDIR(st.st_mode)) ? "r+" : "w+");
 	if(!fp) {
-		fprintf(stderr, "Failed to open /etc/samba/smbpasswd");
+		fprintf(stderr, "Failed to open %s\n", smbpasswd);
 		return 3;
 	}
 
 	found = find_passwd_line(fp, user, NULL);
 	if (!add && !found) {
-		fprintf(stderr, "Could not find user '%s' in /etc/samba/smbpasswd\n", user);
+		fprintf(stderr, "Could not find user '%s' in %s\n", smbpasswd, user);
 		return 3;
 	}
 
@@ -221,29 +207,11 @@ int main(int argc, char **argv)
 		goto out;
 	}
 
-	pw1 = get_pass("New SMB password:", get_stdin);
-	if (!pw1)
-		pw1 = strdup("");
-
-	pw2 = get_pass("Retype SMB password:", get_stdin);
-	if (!pw2)
-		pw2 = strdup("");
-
-	if (strcmp(pw1, pw2) != 0) {
-		fprintf(stderr, "Mismatch - password unchanged.\n");
-		goto out_free;
-	}
-
 	if (found)
 		fseek(fp, -strlen(buf), SEEK_CUR);
-	smbpasswd_write_user(fp, user, uid, pw2);
+	smbpasswd_write_user(fp, user, uid, argv[2]);
 
-out_free:
-	free(pw1);
-	free(pw2);
 out:
 	fclose(fp);
-	TALLOC_FREE(frame);
-
 	return 0;
 }
