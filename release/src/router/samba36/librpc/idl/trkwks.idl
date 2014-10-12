@@ -1,0 +1,17 @@
+/*
+  distributed key tracking services
+*/
+
+[
+	uuid("300f3532-38cc-11d0-a3f0-0020af6b0add"),
+	version(1.2),
+	pointer_default(unique),
+	helpstring("Distributed Key Tracking Service")
+]
+interface trkwks
+{
+
+	/*****************/
+	/* Function 0x00 */
+	WERROR trkwks_Unknown0();
+}

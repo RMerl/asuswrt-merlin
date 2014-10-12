@@ -1,0 +1,19 @@
+<samba:parameter name="idmap uid"
+			 type="string"
+                 context="G"
+                 advanced="1" developer="1" hide="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<synonym>winbind uid</synonym>
+<description>
+	<para>
+	The idmap uid parameter specifies the range of user ids for
+	the default idmap configuration. It is now deprecated in favour
+	of <smbconfoption name="idmap config * : range"/>.
+	</para>
+
+	<para>See the <smbconfoption name="idmap config"/> option.</para>
+</description>
+
+<value type="default"></value>
+<value type="example">10000-20000</value>
+</samba:parameter>

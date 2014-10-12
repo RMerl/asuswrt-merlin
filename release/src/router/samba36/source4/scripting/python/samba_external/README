@@ -1,0 +1,4 @@
+This directory is for external python libraries that may not be
+installed on the local system. We always should try to use the
+system version of the library if possible, then use the Samba
+supplied copy if the system copy is unavailable

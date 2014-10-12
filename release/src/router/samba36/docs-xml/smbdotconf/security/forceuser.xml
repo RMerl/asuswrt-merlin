@@ -1,0 +1,27 @@
+<samba:parameter name="force user"
+				 type="string"
+                 context="S"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+    <para>This specifies a UNIX user name that will be 
+    assigned as the default user for all users connecting to this service. 
+    This is useful for sharing files. You should also use it carefully 
+    as using it incorrectly can cause security problems.</para>
+
+    <para>This user name only gets used once a connection is established. 
+    Thus clients still need to connect as a valid user and supply a 
+    valid password. Once connected, all file operations will be performed 
+    as the &quot;forced user&quot;, no matter what username the client connected 
+    as.  This can be very useful.</para>
+
+    <para>In Samba 2.0.5 and above this parameter also causes the 
+    primary group of the forced user to be used as the primary group 
+    for all file activity. Prior to 2.0.5 the primary group was left 
+    as the primary group of the connecting user (this was a bug).</para>
+
+</description>
+
+<related>force group</related>
+<value type="default"/>
+<value type="example">auser</value>
+</samba:parameter>

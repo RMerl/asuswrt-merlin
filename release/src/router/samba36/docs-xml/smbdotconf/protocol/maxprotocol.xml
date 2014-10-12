@@ -1,0 +1,52 @@
+<samba:parameter name="max protocol"
+                 context="G"
+				 type="enum"
+                 developer="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+    <para>The value of the parameter (a string) is the highest 
+    protocol level that will be supported by the server.</para>
+
+    <para>Possible values are :</para>
+    <itemizedlist>
+	<listitem>
+	    <para><constant>CORE</constant>: Earliest version. No 
+	    concept of user names.</para>
+	</listitem>
+			
+	<listitem>
+	    <para><constant>COREPLUS</constant>: Slight improvements on 
+	    CORE for efficiency.</para>
+	</listitem>
+
+	<listitem>
+	    <para><constant>LANMAN1</constant>: First <emphasis>
+	    modern</emphasis> version of the protocol. Long filename
+	    support.</para>
+	</listitem>
+
+	<listitem>
+	    <para><constant>LANMAN2</constant>: Updates to Lanman1 protocol.</para>
+	</listitem>
+
+	<listitem>
+	    <para><constant>NT1</constant>: Current up to date version of the protocol. 
+	    Used by Windows NT. Known as CIFS.</para>
+	</listitem>
+	<listitem>
+	    <para><constant>SMB2</constant>: Re-implementation of the SMB protocol.
+	    Used by Windows Vista and newer.</para>
+	</listitem>
+    </itemizedlist>
+
+    <para>Normally this option should not be set as the automatic 
+    negotiation phase in the SMB protocol takes care of choosing 
+	the appropriate protocol.</para>
+</description>
+
+<related>min protocol</related>
+<synonym>protocol</synonym>
+
+<value type="default">NT1</value>
+<value type="example">LANMAN1</value>
+</samba:parameter>

@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//Samba-Team//DTD DocBook V4.2-Based Variant V1.0//EN" "http://www.samba.org/samba/DTD/samba-doc">
+<refentry id="vfs_crossrename.8">
+
+<refmeta>
+	<refentrytitle>vfs_crossrename</refentrytitle>
+	<manvolnum>8</manvolnum>
+	<refmiscinfo class="source">Samba</refmiscinfo>
+	<refmiscinfo class="manual">System Administration tools</refmiscinfo>
+	<refmiscinfo class="version">3.6</refmiscinfo>
+</refmeta>
+
+
+<refnamediv>
+	<refname>vfs_crossrename</refname>
+	<refpurpose>server side rename files across filesystem boundaries</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+	<cmdsynopsis>
+		<command>vfs objects = crossrename</command>
+	</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1>
+	<title>DESCRIPTION</title>
+
+	<para>This VFS module is part of the
+	<citerefentry><refentrytitle>samba</refentrytitle>
+	<manvolnum>7</manvolnum></citerefentry> suite.</para>
+
+	<para>The <command>vfs_crossrename</command> VFS module allows
+	server side rename operations even if source and target are on
+	different physical devices. A "move" in Explorer is usually a
+	rename operation if it is inside of a single share or device.
+	Usually such a rename operation returns
+	NT_STATUS_NOT_SAME_DEVICE and the client has to move the file by
+	manual copy and delete operations. If the rename by copy is done by the
+	server this can be much more efficient. vfs_crossrename tries to do
+	this server-side cross-device rename operation.
+	</para>
+
+	<para>There are however	limitations that this module currently does not
+	solve:</para>
+
+	<variablelist>
+		<varlistentry>
+		<para>The ACLs of files are not preserved,</para>
+		</varlistentry>
+		<varlistentry>
+		<para>meta data in EAs are not preserved,</para>
+		</varlistentry>
+		<varlistentry>
+		<para>renames of whole subdirectories cannot be done recursively,
+		in that case we still return STATUS_NOT_SAME_DEVICE and
+		let the client decide what to do,</para>
+		</varlistentry>
+		<varlistentry>
+		<para>rename operations of huge files can cause hangs on the
+		client because clients expect a rename operation to
+		return fast.</para>
+		</varlistentry>
+	</variablelist>
+
+	<para>This module is stackable.</para>
+
+</refsect1>
+
+
+<refsect1>
+	<title>OPTIONS</title>
+
+	<variablelist>
+
+		<varlistentry>
+		<term>crossrename:sizelimit = BYTES</term>
+		<listitem>
+		<para>server-side cross-device-renames are only done
+		for files if the filesize is not larger than the defined
+		size in MiB to prevent timeouts. The default sizelimit is
+		20 (MiB)
+		</para>
+		</listitem>
+		</varlistentry>
+	</variablelist>
+</refsect1>
+
+<refsect1>
+	<title>EXAMPLES</title>
+
+	<para>To add server-side cross-device renames inside of a share
+	for all files sized up to 50MB:</para>
+
+<programlisting>
+        <smbconfsection name="[testshare]"/>
+	<smbconfoption name="path">/data/mounts</smbconfoption>
+	<smbconfoption name="vfs objects">crossrename</smbconfoption>
+	<smbconfoption name="crossrename:sizelimit">50</smbconfoption>
+</programlisting>
+</refsect1>
+
+<refsect1>
+	<title>VERSION</title>
+	<para>This man page is correct for version 3.6.0 of the Samba suite.
+	</para>
+</refsect1>
+
+<refsect1>
+	<title>AUTHOR</title>
+
+	<para>The original Samba software and related utilities
+	were created by Andrew Tridgell. Samba is now developed
+	by the Samba Team as an Open Source project similar
+	to the way the Linux kernel is developed.</para>
+
+</refsect1>
+
+</refentry>

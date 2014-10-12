@@ -1,0 +1,2013 @@
+<chapter label="9" id="SAMBA-CH-9">
+<title>Troubleshooting Samba</title>
+
+
+
+
+<para>
+<indexterm id="ch09-idx-953453-0" class="startofrange"><primary>troubleshooting</primary></indexterm>Samba is extremely robust. Once you've got everything set up the way you want, you'll probably forget that it is running. When trouble occurs, it's typically during installation or when you're trying to add something new to the server. Fortunately, there are a wide variety of resources that you can use to diagnose these troubles. While we can't describe in detail the solution to every problem that you might encounter, you should be able to get a good start at a resolution by following the advice given in this chapter.</para>
+
+
+<para>The first section of the chapter lists the tool bag, a collection of tools available for troubleshooting Samba; the second section is a detailed how-to, and the last section lists extra resources you may need to track down particularly stubborn problems.</para>
+
+
+
+
+
+
+
+
+
+
+
+<sect1 role="" label="9.1" id="ch09-36385">
+<title>The Tool Bag</title>
+
+
+<para>
+<indexterm id="ch09-idx-953455-0"><primary>troubleshooting</primary><secondary>where to start</secondary></indexterm>Sometimes Unix seems to be made up of a handful of applications and tools. There are tools to troubleshoot tools. And of course, there are several ways to accomplish the same task. When you are trying to solve a problem related to Samba, a good plan of attack is to check the following:</para>
+
+
+<orderedlist>
+<listitem><para>Samba logs</para></listitem>
+<listitem><para>Fault tree</para></listitem>
+<listitem><para>Unix utilities</para></listitem>
+<listitem><para>Samba test utilities</para></listitem>
+<listitem><para>Documentation and FAQs</para></listitem>
+<listitem><para>Searchable archives</para></listitem>
+<listitem><para>Samba newsgroups</para></listitem>
+</orderedlist>
+
+<para>Let's go over each of these one by one in the following sections.</para>
+
+
+<sect2 role="" label="9.1.1" id="ch09-SECT-1.1">
+<title>Samba Logs</title>
+
+
+<para>
+<indexterm id="ch09-idx-953456-0" class="startofrange"><primary>log files/logging</primary><secondary>troubleshooting from</secondary></indexterm>Your first line of attack should always be to check the log files. The Samba log files can help diagnose the vast majority of the problems that beginning to intermediate Samba administrators are likely to face. Samba is quite flexible when it comes to logging. You can set up the server to log as little or as much as you want. Substitution variables that allow you to isolate individual logs for each machine, share, or combination thereof.</para>
+
+
+<para>By default, logs are placed in <replaceable>samba_directory</replaceable><emphasis>/var/smbd.log</emphasis> and <replaceable>samba_directory</replaceable><emphasis>/var/nmbd.log</emphasis>, where <literal>samba_directory</literal> is the location where Samba was installed (typically, <filename>/usr/local/samba</filename>). As we mentioned in <link linkend="ch04-21486">Chapter 4</link>, you can override the location and name using the <literal>log</literal> <literal>file</literal> configuration option in <filename>smb.conf</filename>. This option accepts all of the substitution variables mentioned in <link linkend="SAMBA-CH-2">Chapter 2</link>, so you could easily have the server keep a separate log for each connecting client by specifying the following in the <literal>[global]</literal> section of <filename>smb.conf </filename>:</para>
+
+
+<programlisting>log file = %m.log</programlisting>
+
+
+<para>Alternatively, you can specify a log directory to use with the <literal>-l</literal> flag on the command line. For example:</para>
+
+
+<programlisting>smbd -l /usr/local/var/samba</programlisting>
+
+
+<para>Another useful trick is to have the server keep a log for each service (share) that is offered, especially if you suspect a particular share is causing trouble. Use the <literal>%S</literal> variable to set this up in the <literal>[global]</literal> section of the configuration file:</para>
+
+
+<programlisting>log file = %S.log</programlisting>
+
+
+<sect3 role="" label="9.1.1.1" id="ch09-28969">
+<title>Log levels</title>
+
+
+<para>
+<indexterm id="ch09-idx-953457-0" class="startofrange"><primary>log files/logging</primary><secondary>levels of</secondary><tertiary>setting</tertiary></indexterm>The level of logging that Samba uses can be set in the <filename>smb.conf</filename> file using the global <literal>log</literal>
+<indexterm id="ch09-idx-954135-0"><primary>log level option</primary></indexterm>
+<indexterm id="ch09-idx-954135-1"><primary>debug level option</primary></indexterm> <literal>level</literal> or <literal>debug</literal> <literal>level</literal> option; they are equivalent. The logging level is an integer which ranges from 0 (no logging), and increases the logging to voluminous by <literal>log</literal> <literal>level</literal> <literal>=</literal> <literal>3</literal>. For example, let's assume that we are going to use a Windows client to browse a directory on a Samba server. For a small amount of log information, you can use <literal>log</literal> <literal>level</literal> <literal>=</literal> <literal>1</literal>, which instructs Samba to show only cursory information, in this case only the connection itself:</para>
+
+
+<programlisting>105/25/98 22:02:11 server (192.168.236.86) connect to service public as user pcguest (uid=503,gid=100) (pid 3377)</programlisting>
+
+
+<para>Higher debug levels produce more detailed information. Usually you won't need any more than level 3; this is more than adequate for most Samba administrators. Levels above 3 are for use by the developers and dump enormous amounts of cryptic information.</para>
+
+
+<para>Here is example output at levels 2 and 3 for the same operation. Don't worry if you don't understand the intricacies of an SMB connection; the point is simply to show you what types of information are shown at the different logging levels:</para>
+
+
+<programlisting>/* Level 2 */
+Got SIGHUP
+Processing section "[homes]"
+Processing section "[public]"
+Processing section "[temp]"
+Allowed connection from 192.168.236.86 (192.168.236.86) to IPC$
+Allowed connection from 192.168.236.86 (192.168.236.86) to IPC/
+
+
+/* Level 3 */
+05/25/98 22:15:09 Transaction 63 of length 67
+switch message SMBtconX (pid 3377)
+Allowed connection from 192.168.236.86 (192.168.236.86) to IPC$
+ACCEPTED: guest account and guest ok
+found free connection number 105
+Connect path is /tmp
+chdir to /tmp
+chdir to /
+05/25/98 22:15:09 server (192.168.236.86) connect to service IPC$ as user pcguest (uid=503,gid=100) (pid 3377)
+05/25/98 22:15:09 tconX service=ipc$ user=pcguest cnum=105
+05/25/98 22:15:09 Transaction 64 of length 99
+switch message SMBtrans (pid 3377)
+chdir to /tmp
+trans &lt;\PIPE\LANMAN&gt; data=0 params=19 setup=0
+Got API command 0 of form &lt;WrLeh&gt; &lt;B13BWz&gt; (tdscnt=0,tpscnt=19,mdrcnt=4096,mprcnt=8)
+Doing RNetShareEnum
+RNetShareEnum gave 4 entries of 4 (1 4096 126 4096)
+05/25/98 22:15:11 Transaction 65 of length 99
+switch message SMBtrans (pid 3377)
+chdir to /
+chdir to /tmp
+trans &lt;\PIPE\LANMAN&gt; data=0 params=19 setup=0
+Got API command 0 of form &lt;WrLeh&gt; &lt;B13BWz&gt; (tdscnt=0,tpscnt=19,mdrcnt=4096,mprcnt=8)
+Doing RNetShareEnum
+RNetShareEnum gave 4 entries of 4 (1 4096 126 4096)
+05/25/98 22:15:11 Transaction 66 of length 95
+switch message SMBtrans2 (pid 3377)
+chdir to /
+chdir to /pcdisk/public
+call_trans2findfirst: dirtype = 0, maxentries = 6, close_after_first=0, close_if_end = 0 requires_resume_key = 0 level = 260, max_data_bytes = 2432
+unix_clean_name [./DESKTOP.INI]
+unix_clean_name [desktop.ini]
+unix_clean_name [./]
+creating new dirptr 1 for path ./, expect_close = 1
+05/25/98 22:15:11 Transaction 67 of length 53
+switch message SMBgetatr (pid 3377)
+chdir to /
+
+[...]</programlisting>
+
+
+<para>We cut off this listing after the first packet because it runs on for many pages. However, you should be aware that log levels above 3 will quickly fill your disk with megabytes of excruciating detail concerning Samba internal operations. Log level 3 is extremely useful for following exactly what the server is doing, and most of the time it will be obvious where an error is occurring by glancing through the log file.</para>
+
+
+<para>A word of warning: using a high log level (3 or above) will <emphasis>seriously</emphasis> slow down the Samba server. Remember that every log message generated causes a write to disk (an inherently slow operation) and log levels greater than 2 produce massive amounts of data. Essentially, you should turn on logging level 3 only when you're actively tracking a problem in the Samba server.<indexterm id="ch09-idx-953461-0" class="endofrange" startref="ch09-idx-953457-0"/></para>
+</sect3>
+
+
+
+<sect3 role="" label="9.1.1.2" id="ch09-SECT-1.1.2">
+<title>Activating and deactivating logging</title>
+
+
+<para>
+<indexterm id="ch09-idx-953474-0"><primary>log files/logging</primary><secondary>activating/deactivating</secondary></indexterm>To turn logging on and off, set the appropriate level in the <literal>[global]</literal> section of <filename>smb.conf</filename>. Then, you can either restart Samba, or force the current daemon to reprocess the configuration file. You also can send the <emphasis>smbd</emphasis> process a SIGUSR1 signal to increase its log level by one while it's running, and a SIGUSR2 signal to decrease it by one:</para>
+
+
+<programlisting># Increase the logging level by 1
+kill -SIGUSR1 1234
+
+# Decrease the logging level by 1
+kill -SIGUSR2 1234</programlisting>
+</sect3>
+
+
+
+<sect3 role="" label="9.1.1.3" id="ch09-34448">
+<title>Logging by individual client machines or users</title>
+
+
+<para>
+<indexterm id="ch09-idx-953475-0"><primary>Windows clients</primary><secondary>individual configuration files for</secondary></indexterm>
+<indexterm id="ch09-idx-953475-1"><primary>configuration files</primary><secondary sortas="individual clients">for individual clients</secondary></indexterm>An effective way to diagnose problems without hampering other users is to assign different log levels for different machines in <literal>[global]</literal> section of the <filename>smb.conf</filename> file. We can do this by building on the strategy we presented earlier:</para>
+
+
+<programlisting>[global]
+	log level = 0
+	log file = /usr/local/samba/lib/log.%m
+	include = /usr/local/samba/lib/smb.conf.%m</programlisting>
+
+
+<para>These options instruct Samba to use unique configuration and log files for each client that connects. Now all you have to do is create an <filename>smb.conf</filename>
+<indexterm id="ch09-idx-953477-0"><primary>smb.conf (Samba configuration) file</primary><secondary>creating</secondary><tertiary sortas="each client">for each client</tertiary></indexterm> file for a specific client machine with a <literal>log</literal> <literal>level</literal> <literal>=</literal> <literal>3</literal> entry in it (the others will pick up the default log level of 0) and use that log file to track down the problem.</para>
+
+
+<para>Similarly, if only particular users are experiencing a problem, and it travels from machine to machine with them, you can isolate logging to a specific user by adding the following to the <filename>smb.conf</filename> file:</para>
+
+
+<programlisting>[global]
+	log level = 0
+	log file = /usr/local/samba/lib/log.%u
+	include = /usr/local/samba/lib/smb.conf.%u</programlisting>
+
+
+<para>Then you can create a unique <filename>smb.conf</filename> file for each user (e.g., <filename>/usr/local/samba/lib/smb.conf.tim</filename>) files containing the configuration option <literal>log</literal> <literal>level</literal> <literal>=</literal> <literal>3</literal> and only those users will get more detailed logging.<indexterm id="ch09-idx-953469-0" class="endofrange" startref="ch09-idx-953456-0"/></para>
+</sect3>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="9.1.2" id="ch09-SECT-1.2">
+<title>Samba Test Utilities</title>
+
+
+<para>
+<indexterm id="ch09-idx-953478-0" class="startofrange"><primary>Samba</primary><secondary>test utilities</secondary></indexterm>
+<indexterm id="ch09-idx-953478-1" class="startofrange"><primary>testing</primary><secondary>test utilities for Samba</secondary></indexterm>A rigorous set of tests that exercise the major parts of Samba are described in various files in the <emphasis>/docs/textdocs</emphasis>
+<indexterm id="ch09-idx-953497-0"><primary>docs directory</primary><secondary>test utilities</secondary></indexterm> directory of the Samba distribution kit, starting with <emphasis>DIAGNOSIS.TXT.</emphasis> The fault tree in this chapter is a more detailed version of the basic tests suggested by the Samba team, but covers only installation and reconfiguration diagnosis, like <emphasis>DIAGNOSIS.TXT.</emphasis> The other files in the <emphasis>/docs</emphasis> subdirectoryies address specific problems (such as Windows NT clients) and instruct you how to troubleshoot items not included in this book. If the fault tree doesn't suffice, be sure to look at <emphasis>DIAGNOSIS.TXT</emphasis> and its friends.</para>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="9.1.3" id="ch09-SECT-1.3">
+<title>Unix Utilities</title>
+
+
+<para>
+<indexterm id="ch09-idx-953505-0"><primary>Unix</primary><secondary>troubleshooting utilities</secondary></indexterm>Sometimes it's useful to use a tool outside of the Samba suite to examine what's happening inside the server. Unix has always been a "kitchen-sink" operating system. Two diagnostic tools can be of particular help in debugging Samba troubles: <emphasis>trace</emphasis> and <emphasis>tcpdump</emphasis>.</para>
+
+
+<sect3 role="" label="9.1.3.1" id="ch09-SECT-1.3.1">
+<indexterm id="ch09-idx-953506-0"><primary>trace utility</primary></indexterm>
+<title>Using trace</title>
+
+
+<para>The <emphasis>trace</emphasis> command masquerades under several different names, depending on the operating system that you are using. On Linux it will be <emphasis>strace</emphasis>, on Solaris you'll use <emphasis>truss</emphasis>, and SGI will have <emphasis>padc</emphasis> and <emphasis>par</emphasis>. All have essentially the same function, which is to display each operating system function call as it is executed. This allows you to follow the execution of a program, such as the Samba server, and will often pinpoint the exact call that is causing the difficulty.</para>
+
+
+<para>One problem that <emphasis>trace</emphasis> can highlight is the location of an incorrect version of a dynamically linked library. This can happen if you've downloaded prebuilt binaries of Samba. You'll typically see the offending call at the end of the <emphasis>trace</emphasis>, just before the program terminates.</para>
+
+
+<para>A sample <literal>strace</literal> output for the Linux operating system follows. This is a small section of a larger file created during the opening of a directory on the Samba server. Each line is a system-call name, and includes its parameters and the return value. If there was an error, the error value (e.g., <literal>ENOENT</literal>) and its explanation are also shown. You can look up the parameter types and the errors that can occur in the appropriate <literal>trace</literal> manual page for the operating system that you are using.</para>
+
+
+<programlisting>chdir("/pcdisk/public")                 = 0
+stat("mini/desktop.ini", 0xbffff7ec)    = -1 ENOENT (No such file or directory)
+stat("mini", {st_mode=S_IFDIR|0755, st_size=1024, ...}) = 0
+stat("mini/desktop.ini", 0xbffff7ec)    = -1 ENOENT (No such file or directory)
+open("mini", O_RDONLY)                  = 5
+fcntl(5, F_SETFD, FD_CLOEXEC)           = 0
+fstat(5, {st_mode=S_IFDIR|0755, st_size=1024, ...}) = 0
+lseek(5, 0, SEEK_CUR)                   = 0
+SYS_141(0x5, 0xbfffdbbc, 0xedc, 0xbfffdbbc, 0x80ba708) = 196
+lseek(5, 0, SEEK_CUR)                   = 1024
+SYS_141(0x5, 0xbfffdbbc, 0xedc, 0xbfffdbbc, 0x80ba708) = 0
+close(5)                                = 0
+stat("mini/desktop.ini", 0xbffff86c)    = -1 ENOENT (No such file or directory)
+write(3, "\0\0\0#\377SMB\10\1\0\2\0\200\1\0"..., 39) = 39
+SYS_142(0xff, 0xbffffc3c, 0, 0, 0xbffffc08) = 1
+read(3, "\0\0\0?", 4)                   = 4
+read(3, "\377SMBu\0\0\0\0\0\0\0\0\0\0\0\0"..., 63) = 63
+time(NULL)                              = 896143871</programlisting>
+
+
+<para>This example shows several <literal>stat</literal> calls failing to find the files they were expecting. You don't have to be a expert to see that the file <emphasis>desktop.ini</emphasis> is missing from that directory. In fact, many difficult problems can be identified by looking for obvious, repeatable errors with <emphasis>trace</emphasis>. Often, you need not look farther than the last message before a crash.</para>
+</sect3>
+
+
+
+<sect3 role="" label="9.1.3.2" id="ch09-SECT-1.3.2">
+<title>Using tcpdump</title>
+
+
+<para>The <emphasis>tcpdump</emphasis>
+<indexterm id="ch09-idx-953802-0" class="startofrange"><primary>tcpdump utility</primary></indexterm> program, written by <indexterm id="ch09-idx-953803-0"><primary>Jacobson, Van</primary></indexterm>
+<indexterm id="ch09-idx-953803-1"><primary>Leres, Craig</primary></indexterm>
+<indexterm id="ch09-idx-953803-2"><primary>McCanne, Steven</primary></indexterm>
+<indexterm id="ch09-idx-953803-3"><primary>Tridgell, Andrew</primary></indexterm>Van Jacobson, Craig Leres, and Steven McCanne, and extended by Andrew Tridgell, allows you to monitor network traffic in real time. A variety of output formats are available and you can filter the output to look at only a particular type of traffic. The <emphasis>tcpdump</emphasis> program lets you examine all conversations between client and server, including SMB and NMB <indexterm id="ch09-idx-953805-0"><primary>broadcasting</primary><secondary>troubleshooting with tcpdump utility</secondary></indexterm>broadcast messages. While its troubleshooting capabilities lie mainly at the OSI network layer, you can still use its output to get a general idea of what the server and client are attempting to accomplish.</para>
+
+
+<para>A sample <emphasis>tcpdump</emphasis> log follows. In this instance, the client has requested a directory listing and the server has responded appropriately, giving the directory names <literal>homes</literal>, <literal>public</literal>, <literal>IPC$</literal>, and <literal>temp</literal> (we've added a few explanations on the right):</para>
+
+
+<programlisting>$<userinput>tcpdump -v -s 255 -i eth0 port not telnet</userinput>
+SMB PACKET: SMBtrans (REQUEST)	                      <replaceable>Request packet</replaceable>
+SMB Command   =  0x25                                 <replaceable>Request was ls or dir</replaceable>.
+
+[000] 01 00 00 10                                     ....
+
+
+&gt;&gt;&gt; NBT Packet
+<replaceable>Outer frame of SMB packe</replaceable>t
+NBT Session Packet
+Flags=0x0
+Length=226
+[lines skipped]
+
+SMB PACKET: SMBtrans (REPLY)                          <replaceable>Beginning of a reply to  request </replaceable>
+SMB Command   =  0x25			              <replaceable>Command was an ls or dir</replaceable>
+Error class   =  0x0
+Error code    =  0
+<replaceable>No errors</replaceable>
+Flags1        =  0x80
+Flags2        =  0x1
+Tree ID       =  105
+Proc ID       =  6075
+UID           =  100
+MID           =  30337
+Word Count    =  10
+TotParamCnt=8
+TotDataCnt=163
+Res1=0
+ParamCnt=8
+ParamOff=55
+Res2=0
+DataCnt=163
+DataOff=63
+Res3=0
+Lsetup=0
+Param Data: (8 bytes)
+[000] 00 00 00 00 05 00 05 00                           ........
+
+Data Data: (135 bytes)
+<replaceable>Actual directory contents:</replaceable>
+[000] 68 6F 6D 65 73 00 00 00  00 00 00 00 00 00 00 00  homes... ........
+[010] 64 00 00 00 70 75 62 6C  69 63 00 00 00 00 00 00  d...publ ic......
+[020] 00 00 00 00 75 00 00 00  74 65 6D 70 00 00 00 00  ....u... temp....
+[030] 00 00 00 00 00 00 00 00  76 00 00 00 49 50 43 24  ........ v...IPC$
+[040] 00 00 00 00 00 00 00 00  00 00 03 00 77 00 00 00  ........ ....w...
+[050] 64 6F 6E 68 61 6D 00 00  00 00 00 00 00 00 00 00  donham.. ........
+[060] 92 00 00 00 48 6F 6D 65  20 44 69 72 65 63 74 6F  ....Home  Directo
+[070] 72 69 65 73 00 00 00 49  50 43 20 53 65 72 76 69  ries...I PC Servi
+[080] 63 65 20 28 53 61 6D                              ce (Sam</programlisting>
+
+
+<para>This is more of the same debugging session as with the <emphasis>trace</emphasis> command; the listing of a directory. The options we used were <literal>-v</literal> (verbose), <literal>-i</literal> <literal>eth0</literal> to tell <emphasis>tcpdump</emphasis> the interface to listen on (an Ethernet port), and <literal>-s</literal> <literal>255</literal> to tell it to save the first 255 bytes of each packet instead of the default: the first 68. The option <literal>port</literal>
+<indexterm id="ch09-idx-954174-0"><primary>port not telnet option</primary></indexterm> <literal>not</literal> <literal>telnet</literal> is used to avoid screens of telnet traffic, since we were logged in to the server remotely. The <emphasis>tcpdump</emphasis> program actually has quite a number of options to filter just the traffic you want to look at. If you've used <emphasis>snoop</emphasis> or <emphasis>etherdump</emphasis>, they'll look vaguely familiar.</para>
+
+
+<para>You can download the modified <emphasis>tcpdump</emphasis>
+<indexterm id="ch09-idx-953518-0"><primary>downloads</primary><secondary>tcpdump utility</secondary></indexterm> from the Samba FTP server at <systemitem role="ftpurl">ftp://samba.anu.edu.au/pub/samba/tcpdump-smb</systemitem>. Other versions don't include support for the SMB protocol; if you don't see output such as that shown in the example, you'll need to<emphasis></emphasis>
+<indexterm id="ch09-idx-953513-0" class="endofrange" startref="ch09-idx-953802-0"/> use the SMB-enabled version.<indexterm id="ch09-idx-953481-0" class="endofrange" startref="ch09-idx-953478-0"/>
+<indexterm id="ch09-idx-953481-1" class="endofrange" startref="ch09-idx-953478-1"/></para>
+</sect3>
+</sect2>
+</sect1>
+
+
+
+
+
+
+
+
+
+<sect1 role="" label="9.2" id="ch09-29538">
+<title>The Fault Tree</title>
+
+
+<para>
+<indexterm id="ch09-idx-953543-0" class="startofrange"><primary>fault tree</primary></indexterm>
+<indexterm id="ch09-idx-953543-1" class="startofrange"><primary>how-tos, fault tree</primary></indexterm>The fault tree is for diagnosing and fixing problems that occur when you're installing and reconfiguring Samba. It's an expanded form of a trouble and diagnostic document that is part of the Samba distribution.</para>
+
+
+<para>
+<indexterm id="ch09-idx-953548-0"><primary>troubleshooting</primary><secondary>information to have on hand</secondary></indexterm>Before you set out to troubleshoot any part of the Samba suite, you should know the following information:</para>
+
+
+<itemizedlist>
+<listitem><para> Your client IP address (we use 192.168.236.10)</para></listitem>
+<listitem><para> Your server IP address (we use 192.168.236.86)</para></listitem>
+<listitem><para> The netmask for your network (typically 255.255.255.0)</para></listitem>
+<listitem><para> Whether the machines are all on the same subnet (ours are)</para></listitem>
+</itemizedlist>
+
+<para>For clarity, we've renamed the server in the following examples to <emphasis>server.example.com</emphasis>, and the client machine to <emphasis>client.example.com</emphasis>.</para>
+
+
+<sect2 role="" label="9.2.1" id="ch09-SECT-2.1">
+<title>How to use the fault tree</title>
+
+
+<para>
+<indexterm id="ch09-idx-953549-0"><primary>fault tree</primary><secondary>how to use</secondary></indexterm>Start the tests here, without skipping forward; it won't take long (about five minutes) and may actually save you time backtracking. Whenever a test succeeds, you will be given a section name and page number to which you can safely skip.</para>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="9.2.2" id="ch09-SECT-2.2">
+<title>Troubleshooting Low-level IP </title>
+
+
+<para>
+<indexterm id="ch09-idx-953556-0" class="startofrange"><primary>services</primary><secondary>testing low-level</secondary></indexterm>The first series of tests is that of the low-level services that Samba needs in order to run. The tests in this section will verify that:</para>
+
+
+<itemizedlist>
+<listitem><para> The IP software works</para></listitem>
+<listitem><para> The Ethernet hardware works</para></listitem>
+<listitem><para> Basic name service is in place</para></listitem>
+</itemizedlist>
+
+<para>Subsequent sections will add TCP software, the Samba daemons <emphasis>smbd</emphasis> and <emphasis>nmbd</emphasis>, host-based access control, authentication and per-user access control, file services, and browsing. The tests are described in considerable detail in order to make them understandable by both technically oriented end users and experienced systems and network administrators.</para>
+
+
+<sect3 role="" label="9.2.2.1" id="ch09-SECT-2.2.1">
+<title>Testing the networking software with ping </title>
+
+
+<para>The first command to enter on both the server and the client is <literal>ping 127.0.0.1</literal>. This is the <firstterm>loopback</firstterm> <emphasis>address</emphasis> and testing it will indicate whether any networking support is functioning at all. On Unix, you can use <literal>ping</literal> <literal>127.0.0.1</literal> with the statistics option and interrupt it after a few lines. On Sun workstations, the command is typically <literal>/usr/etc/ping</literal> <literal>-s</literal> <literal>127.0.0.1</literal>; on Linux, just <literal>ping</literal> <literal>127.0.0.1</literal>. On Windows clients, run <literal>ping</literal> <literal>127.0.0.1</literal> in an MS-DOS window and it will stop by itself after four lines.</para>
+
+
+<para>Here is an example on a Linux server:</para>
+
+
+<programlisting>server% <emphasis role="bold">ping 127.0.0.1</emphasis>
+PING localhost: 56 data bytes 64 bytes from localhost (127.0.0.1):
+icmp-seq=0. time=1. ms 64 bytes from localhost (127.0.0.1):
+icmp-seq=1. time=0. ms 64 bytes from localhost (127.0.0.1):
+icmp-seq=2. time=1. ms ^C
+----127.0.0.1 PING Statistics----
+3 packets transmitted, 3 packets received, 0% packet loss round-trip (ms)
+min/avg/max = 0/0/1</programlisting>
+
+
+<para>If you get "ping: no answer from..." or "100% packet loss," you have no IP networking at all installed on the machine. The address <literal>127.0.0.1</literal> is the internal loopback address and doesn't depend on the computer being physically connected to a network. If this test fails, you have a serious local problem. TCP/IP either isn't installed or is seriously misconfigured. See your operating system documentation if it is a Unix server. If it is a Windows client, follow the instructions in <link linkend="SAMBA-CH-3">Chapter 3</link>, to install networking support.</para>
+
+
+<tip role="ora">
+<para>If <emphasis>you're</emphasis> the network manager, some good references are Craig Hunt's <emphasis>TCP/IP Network Administration</emphasis>, Chapter 11, and Craig Hunt &amp; Robert Bruce Thompson's new book, <emphasis>Windows NT TCP/IP Network Administration,</emphasis> both published by O'Reilly.</para>
+
+</tip>
+</sect3>
+
+
+
+<sect3 role="" label="9.2.2.2" id="ch09-20350">
+<title>Testing local name services with ping </title>
+
+
+<para>
+<indexterm id="ch09-idx-953658-0"><primary>name services</primary><secondary>testing</secondary></indexterm>Next, try to ping <literal>localhost</literal> on the Samba server. <literal>localhost</literal> is the conventional hostname for the 127.0.0.1 loopback, and it should resolve to that address. After typing <literal>ping</literal> <literal>localhost</literal>, you should see output similar to the following:</para>
+
+
+<programlisting>server% <emphasis role="bold">ping localhost</emphasis>
+PING localhost: 56 data bytes  64 bytes from localhost (127.0.0.1):
+icmp-seq=0. time=0. ms  64 bytes from localhost (127.0.0.1):
+icmp-seq=1. time=0. ms  64 bytes from localhost (127.0.0.1):
+icmp-seq=2. time=0. ms  ^C</programlisting>
+
+
+<para>If this succeeds, try the same test on the client. Otherwise:</para>
+
+
+<itemizedlist>
+<listitem><para>If you get "unknown host: localhost," there is a problem resolving the host name localhost into a valid IP address. (This may be as simple as a missing entry in a local <emphasis>hosts</emphasis> file.) From here, skip down to <link linkend="ch09-23768">Section 9.2.8</link>.</para></listitem>
+<listitem><para>If you get "ping: no answer," or "100% packet loss," but pinging 127.0.0.1 worked, then name services is resolving to an address, but it isn't the correct one. Check the file or database (typically <filename>/etc/hosts</filename> on a Unix system) that the name service is using to resolve addresses to ensure that the entry is corrected.</para></listitem>
+</itemizedlist>
+</sect3>
+
+
+
+<sect3 role="" label="9.2.2.3" id="ch09-SECT-2.2.3">
+<title>Testing the networking hardware with ping </title>
+
+
+<para>
+<indexterm id="ch09-idx-953666-0"><primary>networking</primary><secondary>hardware for, testing</secondary></indexterm>Next, ping the server's network IP address from itself. This should get you exactly the same results as pinging 127.0.0.1:</para>
+
+
+<programlisting>server% <emphasis role="bold">ping 192.168.236.86</emphasis>
+PING 192.168.236.86: 56 data bytes 64 bytes from 192.168.236.86 (192.168.236.86):
+icmp-seq=0. time=1. ms 64 bytes from 192.168.236.86 (192.168.236.86):
+icmp-seq=1. time=0. ms 64 bytes from 192.168.236.86 (192.168.236.86):
+icmp-seq=2. time=1. ms ^C
+----192.168.236.86 PING Statistics----
+3 packets transmitted, 3 packets received, 0% packet loss round-trip (ms)
+min/avg/max = 0/0/1</programlisting>
+
+
+<para>If this works on the server, repeat it for the client. Otherwise:</para>
+
+
+<itemizedlist>
+<listitem><para>If <literal>ping</literal> <replaceable>network_ip</replaceable> fails on either the server or client, but ping 127.0.0.1 works on that machine, you have a TCP/IP problem that is specific to the Ethernet network interface card on the computer. Check with the documentation for the network card or the host operating system to determine how to correctly configure it. However, be aware that on some operating systems, the <emphasis>ping</emphasis> command appears to work even if the network is disconnected, so this test doesn't always diagnose all hardware problems.</para></listitem>
+</itemizedlist>
+</sect3>
+
+
+
+<sect3 role="" label="9.2.2.4" id="ch09-84079">
+<title>Testing connections with ping</title>
+
+
+<para>
+<indexterm id="ch09-idx-953831-0" class="startofrange"><primary>connections</primary><secondary>testing</secondary></indexterm>Now, ping the server by name (instead of its IP address), once from the server and once from the client. This is the general test for working network hardware:</para>
+
+
+<programlisting>server% <emphasis role="bold">ping server</emphasis>
+PING server.example.com: 56 data bytes 64 bytes from server.example.com (192.168.236.86):
+icmp-seq=0. time=1. ms 64 bytes from server.example.com (192.168.236.86):
+icmp-seq=1. time=0. ms 64 bytes from server.example.com (192.168.236.86):
+icmp-seq=2. time=1. ms ^C
+----server.example.com PING Statistics----
+3 packets transmitted, 3 packets received, 0% packet loss round-trip (ms)
+min/avg/max = 0/0/1</programlisting>
+
+
+<para>On Microsoft Windows, a ping of the server would look like <link linkend="ch09-91668">Figure 9.1</link>.</para>
+
+
+<figure label="9.1" id="ch09-91668">
+<title>Pinging the Samba server from a Windows client</title>
+
+<graphic width="502" depth="285" fileref="figs/sam.0901.gif"></graphic>
+</figure>
+
+<para>If successful, this test tells us five things:</para>
+
+
+<orderedlist>
+<listitem><para>The hostname (e.g., "server") is being found by your local nameserver.</para></listitem>
+<listitem><para>The hostname has been expanded to the full name (e.g., <emphasis>server.example.com</emphasis>).</para></listitem>
+<listitem><para>Its address is being returned (192.168.236.86).</para></listitem>
+<listitem><para>The client has sent the Samba server four 56-byte UDP/IP packets.</para></listitem>
+<listitem><para>The Samba server has replied to all four packets.</para></listitem>
+</orderedlist>
+
+<para>If this test isn't successful, there can be one of several things wrong with the network:</para>
+
+
+<itemizedlist>
+<listitem><para>First, if you get "ping: no answer," or "100% packet loss," you're not connecting to the network, the other machine isn't connecting, or one of the addresses is incorrect. Check the addresses that the <literal>ping</literal> command reports on each machine, and ensure that they match the ones you set up initially.</para>
+
+
+<para>If not, there is at least one mismatched address between the two machines. Try entering the command <literal>arp</literal> <literal>-a</literal>, and see if there is an entry for the other machine. The <literal>arp</literal> command stands for the Address Resolution Protocol. The <literal>arp</literal> <literal>-a</literal> command lists all the addresses known on the local machine. Here are some things to try:</para>
+
+
+<itemizedlist>
+<listitem><para>If you receive a message like "192.168.236.86 at (incomplete)," the Ethernet address of 192.168.236.86 is unknown. This indicates a complete lack of connectivity, and you're likely having a problem at the very bottom of the TCP/IP Network Administration protocol stack, at the Ethernet-interface layer. This is discussed in Chapters 5 and 6 of <citetitle>TCP/IP Network Administration </citetitle>(O'Reilly).</para></listitem>
+<listitem><para>If you receive a response similar to "server (192.168.236.86) at 8:0:20:12:7c:94," then the server has been reached at some time, or another machine is answering on its behalf. However, this means that <emphasis>ping</emphasis> should have worked: you may have an intermittent networking or ARP problem.</para></listitem>
+<listitem><para>If the IP address from ARP doesn't match the addresses you expected, investigate and correct the addresses manually.</para></listitem>
+</itemizedlist></listitem>
+<listitem><para>If each machine can ping itself but not another, something is wrong on the network between them.</para></listitem>
+<listitem><para>If you get "ping: network unreachable" or "ICMP Host Unreachable," then you're not receiving an answer and there is likely more than one network involved.</para>
+
+
+<para>In principle, you shouldn't try to troubleshoot SMB clients and servers on different networks. Try to test a server and client on the same network. The three tests that follow assume you might be testing between two networks:</para>
+
+
+<orderedlist>
+<listitem><para>First, perform the tests for no answer described earlier in this section. If this doesn't identify the problem, the remaining possibilities are the following: an address is wrong, your netmask is wrong, a network is down, or just possibly you've been stopped by a firewall.</para></listitem>
+<listitem><para>Check both the address and the netmasks on source and destination machines to see if something is obviously wrong. Assuming both machines really are on the same network, they both should have the same netmasks and <emphasis>ping</emphasis> should report the correct addresses. If the addresses are wrong, you'll need to correct them. If they're right, the programs may be confused by an incorrect netmask. See <link linkend="ch09-21203">Section 9.2.9.1</link>, later in this chapter.</para></listitem>
+<listitem><para>If the commands are still reporting that the network is unreachable and neither of the previous two conditions is in error, one network really may be unreachable from the other. This, too, is a network manager issue.</para></listitem>
+</orderedlist></listitem>
+
+<listitem><para>If you get "ICMP Administratively Prohibited," you've struck a firewall of some sort or a misconfigured router. You will need to speak to your network security officer.</para></listitem>
+<listitem><para>If you get "ICMP Host redirect," and <emphasis>ping</emphasis> reports packets getting through, this is generally harmless: you're simply being rerouted over the network.</para></listitem>
+<listitem><para>If you get a host redirect and no <emphasis>ping</emphasis> responses, you are being redirected, but no one is responding. Treat this just like the "Network unreachable" response   and check your addresses and netmasks.</para></listitem>
+<listitem><para>If you get "ICMP Host Unreachable from gateway <emphasis>gateway_name</emphasis>," ping packets are being routed to another network, but the other machine isn't responding and the router is reporting the problem on its behalf. Again, treat this like a "Network unreachable" response and start checking addresses and netmasks.</para></listitem>
+<listitem><para>If you get "ping: unknown host <emphasis>hostname</emphasis>," your machine's name is not known. This tends to indicate a name-service problem, which didn't affect <literal>localhost</literal>. Have a look at <link linkend="ch09-23768">Section 9.2.8</link>," later in this chapter.</para></listitem>
+<listitem><para>If you get a partial success, with some pings failing but others succeeding, you either have an intermittent problem between the machines or an overloaded network. Ping for longer, and see if more than about 3 percent of the packets fail. If so, check it with your network manager: a problem may just be starting. However, if only a few fail, or if you happen to know some massive network program is running, don't worry unduly. Ping's ICMP (and UDP) are designed to drop occasional packets.</para></listitem>
+<listitem><para>If you get a response like "smtsvr.antares.net is alive" when you actually pinged <emphasis>client.example.com</emphasis>, you're either using someone else's address or the machine has multiple names and addresses. If the address is wrong, name service is clearly the culprit; you'll need to change the address in the name service database to refer to the right machine. This is discussed in <link linkend="ch09-23768">Section 9.2.8</link>," later in this chapter.</para>
+
+
+<para>Server machines are often <emphasis>multihomed</emphasis> : connected to more than one network, with different names on each net. If you are getting a response from an unexpected name on a multihomed server, look at the address and see if it's on your network (see <link linkend="ch09-21203">Section 9.2.9.1</link> later in this chapter). If so, you should use that address, rather than one on a different network, for both performance and reliability reasons.</para>
+
+
+<para>Servers may also have multiple names for a single Ethernet address, especially if they are web servers. This is harmless, if otherwise startling. You probably will want to use the official (and permanent) name, rather than an alias which may change.</para></listitem>
+<listitem><para>If everything works, but the IP address reported is 127.0.0.1, you have a name service error. This typically occurs when a operating system installation program generates an <filename>/etc/hosts</filename> line similar to <literal>127.0.0.1</literal> <literal>localhost</literal> <emphasis>hostnamedomainname</emphasis>. The localhost line should say <literal>127.0.0.1</literal> <literal>localhost</literal> or <literal>127.0.0.1</literal> <literal>localhost</literal> <literal>loghost</literal>. Correct it, lest it cause failures to negotiate who is the master browse list holder and who is the master browser. It can, also cause (ambiguous) errors in later tests.</para></listitem>
+</itemizedlist>
+
+<para>If this worked from the server, repeat it from the<indexterm id="ch09-idx-953672-0" class="endofrange" startref="ch09-idx-953831-0"/> client.<indexterm id="ch09-idx-953563-0" class="endofrange" startref="ch09-idx-953556-0"/></para>
+</sect3>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="9.2.3" id="ch09-SECT-2.3">
+<title>Troubleshooting TCP</title>
+
+
+<para>
+<indexterm id="ch09-idx-953568-0"><primary>TCP/IP networking protocol</primary><secondary>TCP, troubleshooting</secondary></indexterm>Now that you've tested IP, UDP, and a name service with <emphasis>ping</emphasis>, it's time to test TCP. <emphasis>ping</emphasis> and browsing use ICMP and UDP; file and print services (shares) use TCP. Both depend on IP as a lower layer and all four depend on name services. Testing TCP is most conveniently done using the FTP (file transfer protocol) program.</para>
+
+
+<sect3 role="" label="9.2.3.1" id="ch09-78512">
+<title>Testing TCP with FTP </title>
+
+
+<para>Try connecting via FTP, once from the server to itself, and once from the client to the server:</para>
+
+
+<programlisting>server%  <userinput>ftp server</userinput>
+Connected to server.example.com.
+220 server.example.com FTP server (Version 6.2/OpenBSD/Linux-0.10) ready.
+ Name (server:davecb):
+331 Password required for davecb.
+Password:
+230 User davecb logged in.
+ ftp&gt;<userinput> quit </userinput>
+221 Goodbye.</programlisting>
+
+
+<para>If this worked, skip to <link linkend="ch09-88968">Section 9.2.4</link>. Otherwise:</para>
+
+
+<itemizedlist>
+<listitem><para>If you received the message "server: unknown host," then nameservice has failed. Go back to the corresponding <emphasis>ping</emphasis> step, <link linkend="ch09-20350">Section 9.2.2.2</link>,"  and rerun those tests to see why name lookup failed.</para></listitem>
+<listitem><para>If you received "ftp: connect: Connection refused," the machine isn't running an FTP daemon. This is mildly unusual on Unix servers. Optionally, you might try this test by connecting to the machine using telnet instead of FTP; the messages are very similar and telnet uses TCP as well.</para></listitem>
+<listitem><para>If there was a long pause, then "ftp: connect: Connection timed out," the machine isn't reachable. Return to <link linkend="ch09-84079">Section 9.2.2.4</link>.</para></listitem>
+<listitem><para>If you received "530 Logon Incorrect," you connected successfully, but you've just found a different problem. You likely provided an incorrect username or password. Try again, making sure you use your username from the Unix server and type your password correctly.</para></listitem>
+</itemizedlist>
+</sect3>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="9.2.4" id="ch09-88968">
+<title>Troubleshooting Server Daemons</title>
+
+
+<para>
+<indexterm id="ch09-idx-953569-0" class="startofrange"><primary>daemons</primary><secondary>troubleshooting</secondary></indexterm>Once you've confirmed that TCP networking is working properly, the next step is to make sure the daemons are running on the server. This takes three separate tests because no single one of the following will decisively prove that they're working correctly.</para>
+
+
+<para>To be sure they're running, you need to find out if:</para>
+
+
+<orderedlist>
+<listitem><para>The daemon has started</para></listitem>
+<listitem><para>The daemons are registered or bound to a TCP/IP port by the operating system</para></listitem>
+<listitem><para>They're actually paying attention</para></listitem>
+</orderedlist>
+
+<sect3 role="" label="9.2.4.1" id="ch09-SECT-2.4.1">
+<title>Before you start</title>
+
+
+<para>First, check the logs. If you've started the daemons, the message "smbd version <emphasis>some_number</emphasis> started" should appear. If it doesn't, you will need to restart the Samba daemons.</para>
+
+
+<para>If the daemon reports that it has indeed started, look out for "bind failed on port 139 socket_addr=0 (Address already in use)". This means another daemon has been started on port 139 (<emphasis>smbd</emphasis> ). Also, <emphasis>nmbd</emphasis> will report a similar failure if it cannot bind to port 137. Either you've started them twice, or the <emphasis>inetd</emphasis> server has tried to provide a daemon for you. If it's the latter, we'll diagnose that in a moment.</para>
+</sect3>
+
+
+
+<sect3 role="" label="9.2.4.2" id="ch09-49239">
+<title>Looking for daemon processes with ps</title>
+
+
+<para>Next, you need to see if the daemons have been started. Use the <literal>ps</literal> command on the server with the <literal>long</literal> option for your machine type (commonly <literal>ps</literal> <literal>ax</literal> or <literal>ps</literal>    <literal>-ef</literal>), and see if you have either <emphasis>smbd</emphasis> and <emphasis>nmbd</emphasis> already running. This often looks like the following:</para>
+
+
+<programlisting>server% <emphasis role="bold">ps ax</emphasis>
+ PID TTY STAT TIME   COMMAND
+ 1   ?   S    0:03   init [2]
+ 2   ?   SW   0:00   (kflushd)
+<emphasis>(...many lines of processes...)</emphasis>
+ 234 ?   S    0:14   nmbd -D3
+ 237 ?   S    0:11   smbd -D3
+<emphasis>(...more lines, possibly including more smbd lines...)</emphasis></programlisting>
+
+
+<para>This example illustrates that <emphasis>smbd</emphasis> and <emphasis>nmbd</emphasis> have already started as stand-alone daemons (the <literal>-D</literal> option) at log level 3.</para>
+</sect3>
+
+
+
+<sect3 role="" label="9.2.4.3" id="ch09-SECT-2.4.3">
+<title>Looking for daemons bound to ports</title>
+
+
+<para>Next, the daemons have to be registered with the operating system so they can get access to TCP/IP ports. The <literal>netstat</literal> command will tell you if this has been done. Run the command <literal>netstat</literal> <literal>-a</literal> on the server, and look for lines mentioning <literal>netbios</literal>, <literal>137</literal> or <literal>139</literal>:</para>
+
+
+<programlisting>server% <emphasis role="bold">netstat -a</emphasis>
+Active Internet connections (including servers)
+Proto Recv-Q Send-Q  Local Address          Foreign Address      (state)
+udp   0      0       *.netbios-             *.*
+tcp   0      0       *.netbios-             *.*
+LISTEN
+tcp   8370   8760    server.netbios-        client.1439
+ESTABLISHED</programlisting>
+
+
+<para>or:</para>
+
+
+<programlisting>server% <emphasis role="bold">netstat -a</emphasis>
+Active Internet connections (including servers)
+Proto Recv-Q Send-Q  Local Address          Foreign Address        (state)
+udp   0      0       *.137                  *.*
+tcp   0      0       *.139                  *.*
+LISTEN
+tcp   8370   8760    server.139             client.1439
+ESTABLISHED</programlisting>
+
+
+<para>Among many similar lines, there should be at least one UDP line for <literal>*.netbios-</literal> or <literal>*.137</literal>. This indicates that the <emphasis>nmbd</emphasis> server is registered and (we hope) is waiting to answer requests. There should also be at least one TCP line mentioning    <literal>*.netbios-</literal> or <literal>*.139</literal>, and it will probably be in the LISTENING state. This means that <emphasis>smbd</emphasis> is up and listening for connections.</para>
+
+
+<para>There may be other TCP lines indicating connections from <emphasis>smbd</emphasis> to clients, one for each client. These are usually in the ESTABLISHED state. If there are <emphasis>smbd</emphasis> lines in the ESTABLISHED state, <emphasis>smbd</emphasis> is definitely running. If there is only one line in the LISTENING state, we're not sure yet. If both of the lines is missing, a daemon has not succeeded in starting, so it's time to check the logs and then go back to <link linkend="SAMBA-CH-2">Chapter 2</link>.</para>
+
+
+<para>If there is a line for each client, it may be coming either from a Samba daemon or from the master IP daemon, <emphasis>inetd</emphasis>. It's quite possible that your <emphasis>inetd</emphasis> startup file contains lines that start Samba daemons without your realizing it; for instance, the lines may have been placed there if you installed Samba as part of a Linux distribution. The daemons started by <emphasis>inetd</emphasis> prevent ours from running. This problem typically produces log messages such as "bind failed on port 139 socket_addr=0 (Address already in use)."</para>
+
+
+<para>Check your <filename>/etc/inetd.conf</filename> ; unless you're intentionally starting the daemons from there, there <emphasis>must not</emphasis> be any <literal>netbios-ns</literal> (udp port 137) or <literal>netbios-ssn</literal> (tcp port 139) servers mentioned there. <emphasis>inetd</emphasis> is a daemon that provides numerous services, controlled by entries in <emphasis>/etc/inetd.conf</emphasis>. If your system is providing an SMB daemon via <emphasis>inetd</emphasis>, there will be lines like the following in the file:</para>
+
+
+<programlisting>netbios-ssn stream tcp nowait root /usr/local/samba/bin/smbd smbd
+netbios-ns dgram udp wait root /usr/local/samba/bin/nmbd nmbd</programlisting>
+</sect3>
+
+
+
+<sect3 role="" label="9.2.4.4" id="ch09-SECT-2.4.4">
+<title>Checking smbd with telnet</title>
+
+
+<para>Ironically, the easiest way to test that the <emphasis>smbd</emphasis>
+<indexterm id="ch09-idx-953678-0"><primary>smbd server, checking with telnet</primary></indexterm> server is actually working is to send it a meaningless message and see if it rejects it. Try something like the following:</para>
+
+
+<programlisting><userinput>echo hello | telnet localhost 139</userinput></programlisting>
+
+
+<para>This sends an erroneous but harmless message to <emphasis>smbd</emphasis>. The <literal>hello</literal> message is important. Don't try telneting to the port and typing just anything; you'll probably just hang your process. <literal>hello</literal>, however, is generally a harmless message.</para>
+
+
+<programlisting>server% <emphasis role="bold">echo "hello" | telnet localhost 139</emphasis>
+Trying
+Trying 192.168.236.86 ...
+Connected to localhost. Escape character is '^]'.
+Connection closed by foreign host.</programlisting>
+
+
+<para>If you get a "Connected" message followed by a "Connection closed" message, the test was a success. You have an <emphasis>smbd</emphasis> daemon listening on the port and rejecting improper connection messages. On the other hand, if you get "telnet: connect: Connection refused," there is probably no daemon present. Check the logs and go back to <link linkend="SAMBA-CH-2">Chapter 2</link>.</para>
+
+
+<para>Regrettably, there isn't an easy test for <emphasis>nmbd</emphasis>. If the <literal>telnet</literal> test and the <literal>netstat</literal> test both say that there is an <emphasis>smbd</emphasis> running, there is a good chance that <literal>netstat</literal> will also be correct about <emphasis>nmbd</emphasis> running.</para>
+</sect3>
+
+
+
+<sect3 role="" label="9.2.4.5" id="ch09-67494">
+<title>Testing daemons with testparm</title>
+
+
+<para>
+<indexterm id="ch09-idx-953679-0"><primary>daemons</primary><secondary>testing</secondary><tertiary>with testparm</tertiary></indexterm>Once you know there's a daemon, you should always run <literal>testparm</literal>, in hopes of getting:</para>
+
+
+<programlisting>server% <emphasis role="bold">testparm</emphasis>
+Load smb config files from /opt/samba/lib/smb.conf
+Processing section "[homes]"
+Processing section "[printers]" ...
+Processing section "[tmp]"
+Loaded services file OK. ...</programlisting>
+
+
+<para>The <literal>testparm</literal> program normally reports processing a series of sections, and responds with "Loaded services file OK" if it succeeds. If not, it will report one or more of the following messages, which will also appear in the logs as noted:</para>
+
+
+<variablelist>
+<varlistentry><term><emphasis>"Allow/Deny connection from account (n) to service"</emphasis></term>
+<listitem><para>A <emphasis>testparm</emphasis>-only message produced if you have valid/invalid user options set in your <emphasis>smb.conf</emphasis>. You will want to make sure that you are on the valid user list, and that root, bin, etc., are on the invalid user list. If you don't, you will not be able to connect, or folks who shouldn't <emphasis>will</emphasis> be able to.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><emphasis>"Warning: You have some share names that are longer than eight chars"</emphasis></term>
+<listitem><para>For anyone using Windows for Workgroups and older clients. They will fail to connect to shares with long names, producing an overflow message that sounds confusingly like a memory overflow.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term>"Warning: [name] service MUST be printable!"</term>
+<listitem><para>A printer share lacks a <literal>printable</literal> <literal>=</literal> <literal>yes</literal> option.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term>"No path in service name using [name]"</term>
+<listitem><para>A file share doesn't know which directory to provide to the user, or a print share doesn't know which directory to use for spooling. If no path is specified, the service will try to run with a path of <emphasis>/tmp</emphasis>, which may not be what you want.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term>"Note: Servicename is flagged unavailable"</term>
+<listitem><para>Just a reminder that you have used the <literal>available</literal> <literal>=</literal> <literal>no</literal> option in a share.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term>"Can't find include file [name]" </term>
+<listitem><para>A configuration file referred to by an <literal>include</literal> option did not exist. If you were including the file unconditionally, this is an error and probably a serious one: the share will not have the configuration you intended. If you were including it based one of the <literal>%</literal> variables, such as <literal>%a</literal> (architecture), you will need to decide if, for example, a missing Windows for Workgroups configuration file is a problem. It often isn't.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term>"Can't copy service name, unable to copy to itself"</term>
+<listitem><para>You tried to copy a <filename>smb.conf</filename> section into itself.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term>"Unable to copy service&mdash;source not found: [name]"</term>
+<listitem><para>Indicates a missing or misspelled section in a <literal>copy</literal> <literal>=</literal> option.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term>"Ignoring unknown parameter name" </term>
+<listitem><para>Typically indicates an obsolete, misspelled or unsupported option.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term>"Global parameter name found in service section" </term>
+<listitem><para>Indicates a global-only parameter has been used in an individual share. Samba will ignore the parameter.</para></listitem>
+</varlistentry>
+</variablelist>
+
+
+<para>After the <literal>testparm</literal> test, repeat it with (exactly) three parameters: the name of your <filename>smb.conf</filename> file, the name of your client, and its IP address:</para>
+
+
+<programlisting>testparm <replaceable>samba_directory</replaceable>/lib/smb.conf client 192.168.236.10</programlisting>
+
+
+<para>This will run one more test that checks the host name and address against <literal>host</literal> <literal>allow</literal> and <literal>host</literal> <literal>deny</literal> options and may produce the "Allow/Deny connection from account account_name" to service message for the client machine. This message indicates you have valid/invalid host options in your <filename>smb.conf</filename>, and they prohibit access from the client machine. Entering <literal>testparm</literal> <literal>/usr/local/lib/experimental.conf</literal> is also an effective way to test an experimental <filename>smb.conf</filename> file before putting it into production.<indexterm id="ch09-idx-953573-0" class="endofrange" startref="ch09-idx-953569-0"/></para>
+</sect3>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="9.2.5" id="ch09-SECT-2.5">
+<title>Troubleshooting SMB Connections</title>
+
+
+<para>
+<indexterm id="ch09-idx-953578-0" class="startofrange"><primary>SMB (Server Message Block)</primary><secondary>troubleshooting connections</secondary></indexterm>Now that you know the servers are up, you need to make sure that they're running properly. We start with the <filename>smb.conf</filename> file in the <replaceable>samba_directory</replaceable><filename>/lib</filename> directory.</para>
+
+
+<sect3 role="" label="9.2.5.1" id="ch09-67928">
+<title>A minimal smb.conf file</title>
+
+
+<para>In the following tests, we assume you have a <literal>[temp]</literal> share suitable for testing, plus at least one account. An <filename>smb.conf</filename> file that includes just these is:</para>
+
+
+<programlisting>[global]
+    workgroup = <replaceable>EXAMPLE</replaceable>
+    security = user
+    browsable = yes
+    local master = yes
+[homes]
+    guest ok = no
+    browseble = no
+[temp]
+    path = /tmp
+    public = yes</programlisting>
+
+
+<para>A word of warning: the <literal>public</literal> <literal>=</literal> <literal>yes</literal> option in the <literal>[temp]</literal> share is just for testing. You probably don't want people without accounts to be able to store things on your Samba server, so you should comment it out when you're done.</para>
+</sect3>
+
+
+
+<sect3 role="" label="9.2.5.2" id="ch09-40595">
+<title>Testing locally with smbclient</title>
+
+
+<para>
+<indexterm id="ch09-idx-953682-0"><primary>SMB (Server Message Block)</primary><secondary>troubleshooting connections</secondary><tertiary>testing locally</tertiary></indexterm>The first test is to ensure the server can list its own services (shares). Run the command <literal>smbclient</literal> with a <literal>-L</literal> option of <literal>localhost</literal> to connect to itself, and a <literal>-U</literal> option of just <literal>%</literal> to specify the guest user. You should see the following:</para>
+
+
+<programlisting>server% <userinput>smbclient -L localhost -U% </userinput>
+Server time is Wed May 27 17:57:40 1998 Timezone is UTC-4.0
+Server=[localhost]
+User=[davecb]
+Workgroup=[EXAMPLE]
+Domain=[EXAMPLE]
+	Sharename      Type      Comment
+	---------           -----       ----------
+	temp               Disk
+	IPC$               IPC       IPC Service (Samba 1.9.18)
+	homes            Disk       Home directories
+This machine does not have a browse list</programlisting>
+
+
+<para>If you received this output, move on to the next test, <link linkend="ch09-77154">Section 9.2.5.3</link>." On the other hand, if you receive an error, check the following:</para>
+
+
+<itemizedlist>
+<listitem><para>If you get "Get_hostbyname: unknown host localhost," either you've spelled its name wrong or there actually is a problem (which should have been seen back in <link linkend="ch09-20350">Section 9.2.2.2</link>) In the latter case, move on to <link linkend="ch09-23768">Section 9.2.8</link>.</para></listitem>
+<listitem><para>If you get "Connect error: Connection refused," the server machine was found, but it wasn't running an <emphasis>nmbd</emphasis> daemon. Skip back to <link linkend="ch09-88968">Section 9.2.4</link>," and retest the daemons.</para></listitem>
+<listitem><para>If you get the message "Your server software is being unfriendly," the initial session request packet got a garbage response from the server. The server may have crashed or started improperly. The common causes of this can be discovered by scanning the logs for:</para>
+
+
+<itemizedlist>
+<listitem><para>Invalid command-line parameters to <emphasis>smbd</emphasis>; see the <emphasis>smbd</emphasis> manual page.</para></listitem>
+<listitem><para>A fatal problem with the <filename>smb.conf</filename> file that prevents the startup of <emphasis>smbd</emphasis>. Always check your changes, as was done in <link linkend="ch09-67494">Section 9.2.4.5</link>.</para></listitem>
+<listitem><para>The directories where Samba keeps its log and lock files are missing.</para></listitem>
+<listitem><para>There is already a server on the port (139 for <emphasis>smbd</emphasis>, 137 for <emphasis>nmbd </emphasis>), preventing it from starting.</para></listitem>
+</itemizedlist></listitem>
+<listitem><para>If you're using <emphasis>inetd</emphasis> instead of stand-alone daemons, check your <filename>/etc/inetd.conf</filename> and <filename>/etc/services</filename> entries against their manual pages for errors as well.</para></listitem>
+<listitem><para>If you get a <literal>Password:</literal> prompt, your guest account is not set up properly. The <literal>%U</literal> option tells <emphasis>smbclient</emphasis> to do a "null login," which requires that the guest account be present but does not require it to have any privileges.</para></listitem>
+<listitem><para>If you get the message "SMBtconX failed. ERRSRV&mdash;ERRaccess," you aren't permitted access to the server. This normally means you have a <literal>valid</literal> <literal>hosts</literal> option that doesn't include the server, or an <literal>invalid</literal> <literal>hosts</literal> option  that does. Recheck with the command <literal>testparm</literal> <literal>smb.conf</literal> <replaceable>your_hostname</replaceable> <replaceable>your_ip_address</replaceable> (see <link linkend="ch09-67494">Section 9.2.4.5</link>) and correct any unintended prohibitions.</para></listitem>
+</itemizedlist>
+</sect3>
+
+
+
+<sect3 role="" label="9.2.5.3" id="ch09-77154">
+<title>Testing connections with smbclient</title>
+
+
+<para>
+<indexterm id="ch09-idx-953689-0"><primary>SMB (Server Message Block)</primary><secondary>troubleshooting connections</secondary><tertiary>testing with smbclient</tertiary></indexterm>Run the command <literal>smbclient</literal> <literal>\\</literal><replaceable>server</replaceable><literal>\temp</literal>, which connects to your server's   <filename>/tmp</filename> share, to see if you can connect to a file service. You should get the following response:</para>
+
+
+<programlisting>server% <emphasis role="bold">smbclient '\\server\temp'</emphasis>
+Server time is Tue May  5 09:49:32 1998 Timezone is UTC-4.0 Password:
+smb: \&gt; <emphasis role="bold">quit</emphasis></programlisting>
+
+
+<itemizedlist>
+<listitem><para>If you get "Get_Hostbyname: Unknown host name," "Connect error: Connection refused," or "Your server software is being unfriendly," see <link linkend="ch09-40595">Section 9.2.5.2</link> for the diagnoses.</para></listitem>
+<listitem><para>If you get the message "servertemp: Not enough `\' characters in service," you likely didn't quote the address, so Unix stripped off backslashes. You can also write the command:</para>
+
+
+<programlisting>smbclient \\\\<replaceable>server</replaceable>\\temp</programlisting>
+
+
+<para>or:</para>
+
+
+<programlisting>smbclient //<replaceable>server</replaceable>/temp</programlisting></listitem>
+</itemizedlist>
+
+<para>Now, provide your Unix account password to the <literal>Password</literal> prompt. If you then get an <literal>smb\&gt;</literal> prompt, it worked. Enter <literal>quit</literal>, and continue on to <link linkend="ch09-97081">Section 9.2.5.4</link>." If you then get "SMBtconX failed. ERRSRV&mdash;ERRinvnetname," the problem can be any of the following:</para>
+
+
+<itemizedlist>
+<listitem><para>A wrong share name: you may have spelled it wrong, it may be too long, it may be in mixed case, or it may not be available. Check that it's what you expect with testparm (see <link linkend="ch09-67494">Section 9.2.4.5</link>.)</para></listitem>
+<listitem><para><literal>security</literal> <literal>=</literal> <literal>share</literal>, in which you may have to add <replaceable>-U your_account</replaceable> to the <emphasis>smbclient</emphasis> command, or know the password of a Unix account named temp.</para></listitem>
+<listitem><para>An erroneous username.</para></listitem>
+<listitem><para>An erroneous password.</para></listitem>
+<listitem><para>An <literal>invalid</literal> <literal>users</literal> or <literal>valid</literal> <literal>users</literal> option in your <emphasis>smb.conf</emphasis> file that doesn't allow your account to connect. Recheck with <literal>testparm</literal> <literal>smb.conf</literal> <replaceable>your_hostname your_ip_address</replaceable> (see <link linkend="ch09-67494">Section 9.2.4.5</link>).</para></listitem>
+<listitem><para>A <literal>valid</literal> <literal>hosts</literal> option that doesn't include the server, or an <literal>invalid</literal> <literal>hosts</literal> option that does. Also test this with <emphasis>testparm</emphasis>.</para></listitem>
+<listitem><para>A problem in authentication, such as if shadow passwords or the PAM (Password Authentication Module) is used on the server, but Samba is not compiled to use it. This is rare, but occasionally happens when a SunOS 4 Samba binary (no shadow passwords) is run without recompilation on a Solaris system (with shadow passwords).</para></listitem>
+<listitem><para>The <literal>encrypted</literal> <literal>passwords</literal> <literal>=</literal> <literal>yes</literal> option in the configuration file, but no password for your account in the <emphasis>smbpasswd</emphasis> file.</para></listitem>
+<listitem><para>You have a null password entry, either in Unix <filename>/etc/passwd</filename> or in the <emphasis>smbpasswd</emphasis> file.</para></listitem>
+<listitem><para>You are connecting to <literal>[temp]</literal>, and you do not have the <literal>guest</literal> <literal>ok</literal> <literal>=</literal> <literal>yes</literal> option in the <literal>[temp]</literal> section of the <emphasis>smb.conf</emphasis> file.</para></listitem>
+<listitem><para>You are connecting to <literal>[temp]</literal> before connecting to your home directory, and your guest account isn't set up correctly. If you can connect to your home directory and then connect to <literal>[temp]</literal>, that's the problem. See <link linkend="SAMBA-CH-2">Chapter 2</link> for more information on creating a basic Samba configuration file.</para>
+
+
+<para>A bad guest account will also prevent you from printing or browsing until after you've logged in to your home directory.</para></listitem>
+</itemizedlist>
+
+<para>There is one more reason for this failure that has nothing at all to do with passwords: the <literal>path</literal> <literal>=</literal>  line in your <filename>smb.conf</filename> file may point somewhere that doesn't exist. This will not be diagnosed by <emphasis>testparm</emphasis>, and most SMB clients can't tell it from other types of bad user accounts. You will have to check it manually.</para>
+
+
+<para>Once you have connected to <literal>[temp]</literal> successfully, repeat the test, this time logging in to your home directory (e.g., map network drive <replaceable>server</replaceable><literal>\davecb</literal>) looking for failures in doing that. If you have to change anything to get that to work, re-test <literal>[temp]</literal> again afterwards.</para>
+</sect3>
+
+
+
+<sect3 role="" label="9.2.5.4" id="ch09-97081">
+<title>Testing connections with NET USE</title>
+
+
+<para>
+<indexterm id="ch09-idx-953696-0" class="startofrange"><primary>SMB (Server Message Block)</primary><secondary>troubleshooting connections</secondary><tertiary>testing with NET USE</tertiary></indexterm>Run the command <literal>net</literal> <literal>use</literal> <literal>*</literal> <literal>\</literal><replaceable>server</replaceable><literal>\temp</literal> on the DOS or Windows client to see if it can connect to the server. You should be prompted for a password, then receive the response "The command was completed successfully," as shown in <link linkend="ch09-99328">Figure 9.2</link>.</para>
+
+
+<figure label="9.2" id="ch09-99328">
+<title>Results of the NET USE command</title>
+
+<graphic width="502" depth="471" fileref="figs/sam.0902.gif"></graphic>
+</figure>
+
+<para>If that succeeded, continue with the steps in <link linkend="ch09-57065">Section 9.2.5.5</link>. Otherwise:</para>
+
+
+<itemizedlist>
+<listitem><para>If you get "The specified shared directory cannot be found," or "Cannot locate specified share name," the directory name is either misspelled or not in the <emphasis>smb.conf</emphasis> file. This message can also warn of a name in mixed case, including spaces, or is longer than eight characters.</para></listitem>
+<listitem><para>If you get "The computer name specified in the network path cannot be located," or "Cannot locate specified computer," the directory name has been misspelled, the name service has failed, there is a networking problem, or the <literal>hosts</literal> <literal>deny</literal> <literal>=</literal> option includes your host.</para>
+
+
+<itemizedlist>
+<listitem><para>If it is not a spelling mistake, you need to double back to at least <link linkend="ch09-77154">Section 9.2.5.3</link>, to investigate why it doesn't connect.</para></listitem>
+<listitem><para>If <emphasis>smbclient</emphasis> does work, it's a name service problem with the client name service, and you need to go forward to <link linkend="ch09-12446">Section 9.2.6.2</link>, and see if you can look up both client and server with <emphasis>nmblookup</emphasis>.</para></listitem>
+</itemizedlist></listitem>
+<listitem><para>If you get "The password is invalid for <literal>\</literal><replaceable>server</replaceable><literal>\</literal><replaceable>username</replaceable>," your locally cached copy on the client doesn't match the one on the server. You will be prompted for a replacement.</para></listitem>
+</itemizedlist>
+
+<tip role="ora">
+<para>Windows 95 and 98 clients keep a local <emphasis>password</emphasis> file, but it's really just a cached copy of the password it sends to Samba and NT servers to authenticate you. That's what is being prompted for here. You can still log on to a Windows machine without a password (but not to NT).</para>
+
+</tip>
+
+<itemizedlist>
+<listitem><para>
+If you provide your password, and it still fails, your password is not being matched on the server, you have a <literal>valid</literal> <literal>users</literal> or <literal>invalid</literal> <literal>users</literal> list denying you permission, NetBEUI is interfering, or the encrypted password problem described in the next paragraph exists.</para></listitem>
+<listitem><para>If your client is NT 4.0, NT 3.5 with Patch 3, Windows 95 with Patch 3, Windows 98 or any of these with Internet Explorer 4.0, these default to using Microsoft encryption for passwords (discussed in <link linkend="SAMBA-CH-6">Chapter 6</link>'s <link linkend="ch06-61393">Section 6.4</link>, along with the alternatives). In general, if you have installed a major Microsoft product recently, you may have applied an update and turned on encrypted passwords.</para></listitem>
+</itemizedlist>
+
+<tip role="ora">
+<para>Because of Internet Explorer's willingness to honor URLs such as <filename>file://somehost/somefile</filename> by making SMB connections, clients up to and including Windows 95 Patch Level 2 would happily send your password, in plaintext, to SMB servers anywhere on the Internet. This was considered a bad idea, and Microsoft quite promptly switched to using only encrypted passwords in the SMB protocol. All subsequent releases of their products have included this correction. Encrypted passwords aren't actually needed unless you're using Internet Explorer 4.0 without a firewall, so it's reasonable to keep using unencrypted passwords on your own networks.</para>
+
+</tip>
+
+<itemizedlist>
+<listitem><para>If you have a mixed-case password on Unix, the client is probably sending it in all one case. If changing your password to all one case works, this was the problem. Regrettably, all but the oldest clients support uppercase passwords, so Samba will try once with it in uppercase and once in lower case. If you wish to use mixed-case passwords, see the <literal>password</literal> <literal>level</literal> option in <link linkend="SAMBA-CH-6">Chapter 6</link> for a workaround.</para></listitem>
+<listitem><para>You may have a <literal>valid</literal> <literal>users</literal> problem, as tested with <emphasis>smbclient</emphasis> (see <link linkend="ch09-77154">Section 9.2.5.3</link>).</para></listitem>
+<listitem><para>You may have the NetBEUI protocol bound to the Microsoft client. This often produces long timeouts and erratic failures, and is known to have caused failures to accept passwords in the past.</para></listitem>
+</itemizedlist>
+
+<tip role="ora">
+<para>The term "bind" is used to mean connecting a piece of software to another in this case. The Microsoft SMB client is "bound to" TCP/IP in the bindings section of the TCP/IP properties panel under the Windows 95/98 Network icon in the Control Panel. TCP/IP in turn is bound to an Ethernet card. This is not the same sense of the word as binding an SMB daemon to a TCP/IP port.<indexterm id="ch09-idx-953703-0" class="endofrange" startref="ch09-idx-953696-0"/></para>
+
+</tip>
+</sect3>
+
+
+
+<sect3 role="" label="9.2.5.5" id="ch09-57065">
+<title>Testing connections with Windows Explorer</title>
+
+
+<para>
+<indexterm id="ch09-idx-953710-0" class="startofrange"><primary>SMB (Server Message Block)</primary><secondary>troubleshooting connections</secondary><tertiary>testing withWindows Explorer</tertiary></indexterm>Start Windows Explorer or NT Explorer (not Internet Explorer), select Tools&rarr;Map Network Drive and specify \\<replaceable>server</replaceable>\<literal>temp</literal> to see if you can make Explorer connect to the <filename>/tmp</filename> directory. You should see a screen similar to the one in <link linkend="ch09-74414">Figure 9.3</link>. If so, you've succeeded and can skip to <link linkend="ch09-23573">Section 9.2.6</link>."</para>
+
+
+<figure label="9.3" id="ch09-74414">
+<title>Accessing the /tmp directory with Windows Explorer</title>
+
+<graphic width="502" depth="336" fileref="figs/sam.0903.gif"></graphic>
+</figure>
+
+<para>A word of caution: Windows Explorer and NT Explorer are rather poor as diagnostic tools: they do tell you that something's wrong, but rarely what it is. If you get a failure, you'll need to track it down with the NET USE command, which has far superior error reporting:</para>
+
+
+<itemizedlist>
+<listitem><para>If you get "The password for this connection that is in your password file is no longer correct," you may have any of the following:</para>
+
+
+<itemizedlist>
+<listitem><para>Your locally cached copy on the client doesn't match the one on the server.</para></listitem>
+<listitem><para>You didn't provide a username and password when logging on to the client. Most Explorers will continue to send a username and password of null, even if you provide a password.</para></listitem>
+<listitem><para>You have misspelled the password.</para></listitem>
+<listitem><para>You have an <literal>invalid</literal> <literal>users</literal> or <literal>valid</literal> <literal>users</literal> list denying permission.</para></listitem>
+<listitem><para>Your client is NT 4.0, NT 3.5 with Patch 3, Windows 95 with Patch 3, Windows 98, or any of these with Internet Explorer 4. They will all want encrypted passwords.</para></listitem>
+<listitem><para>You have a mixed-case password, which the client is supplying in all one case.</para></listitem>
+</itemizedlist></listitem>
+<listitem><para>If you get "The network name is either incorrect, or a network to which you do not have full access," or "Cannot locate specified computer," you may have any of the following:</para>
+
+
+<itemizedlist>
+<listitem><para> Misspelled name</para></listitem>
+<listitem><para> Malfunctioning service</para></listitem>
+<listitem><para> Failed share</para></listitem>
+<listitem><para> Networking problem</para></listitem>
+<listitem><para> Bad <literal>path</literal> line</para></listitem>
+<listitem><para> <literal>hosts</literal> <literal>deny</literal> line that excludes you</para></listitem>
+</itemizedlist></listitem>
+<listitem><para>If you get "You must supply a password to make this connection," the password on the client is out of synchronization with the server, or this is the first time you've tried from this client machine and the client hasn't cached it locally yet.</para></listitem>
+<listitem><para>If you get "Cannot locate specified share name," you have a wrong share name or a syntax error in specifying it, a share name longer than eight characters, or one containing spaces or in mixed case.</para></listitem>
+</itemizedlist>
+
+<para>Once you can reliably connect to the <literal>[temp]</literal> directory, try once again, this time using your home directory. If you have to change something to get home directories working, then retest with <literal>[temp]</literal>, and vice versa, as we showed in <link linkend="ch09-97081">Section 9.2.5.4</link>. As always, if Explorer fails, drop back to that section and debug it<indexterm id="ch09-idx-953717-0" class="endofrange" startref="ch09-idx-953710-0"/> there.<indexterm id="ch09-idx-953581-0" class="endofrange" startref="ch09-idx-953578-0"/></para>
+</sect3>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="9.2.6" id="ch09-23573">
+<title>Troubleshooting Browsing </title>
+
+
+<para>
+<indexterm id="ch09-idx-953586-0" class="startofrange"><primary>browsing</primary><secondary>troubleshooting</secondary></indexterm>Finally, we come to browsing. This was left to last, not because it is hardest, but because it's both optional and partially dependent on a protocol that doesn't guarantee delivery of a packet. Browsing is hard to diagnose if you don't already know all the other services are running.</para>
+
+
+<para>Browsing is purely optional: it's just a way to find the servers on your net and the shares that they provide. Unix has nothing of the sort and happily does without. Browsing also assumes all your machines are on a local area network (LAN) where broadcasts are allowable.</para>
+
+
+<para>First, the browsing mechanism identifies a machine using the unreliable UDP protocol; then it makes a normal (reliable) TCP/IP connection to list the shares the machine provides.</para>
+
+
+<sect3 role="" label="9.2.6.1" id="ch09-96207">
+<title>Testing browsing with smbclient </title>
+
+
+<para>
+<indexterm id="ch09-idx-953724-0" class="startofrange"><primary>browsing</primary><secondary>troubleshooting</secondary><tertiary>with smbclient</tertiary></indexterm>We'll start with testing the reliable connection first. From the server, try listing its own shares via <emphasis>smbclient</emphasis> with a <literal>-L</literal> option of your server's name. You should get:</para>
+
+
+<programlisting>server% <userinput>smbclient -L server</userinput>
+Added interface ip=192.168.236.86 bcast=192.168.236.255 nmask=255.255.255.0 Server time is Tue Apr 28 09:57:28 1998 Timezone is UTC-4.0
+Password:
+Domain=[EXAMPLE]
+OS=[Unix]
+Server=[Samba 1.9.18]
+Server=[server]
+User=[davecb]
+Workgroup=[EXAMPLE]
+Domain=[EXAMPLE]
+   Sharename      Type      Comment
+   ---------      ----      -------
+    cdrom          Disk      CD-ROM
+    cl             Printer   Color Printer 1
+    davecb         Disk      Home Directories
+
+ This machine has a browse list:
+   Server         Comment
+   ---------      -------
+   SERVER          Samba 1.9.18
+
+ This machine has a workgroup list:
+   Workgroup      Master
+    ---------      -------
+    EXAMPLE        SERVER</programlisting>
+
+
+<itemizedlist>
+<listitem><para>If you didn't get a Sharename list, the server is not allowing you to browse any shares. This should not be the case if you've tested any of the shares with Windows Explorer or the NET USE command. If you haven't done the <literal>smbclient</literal> <literal>-L</literal> <literal>localhost</literal> <literal>-U%</literal> test yet (see <link linkend="ch09-40595">Section 9.2.5.2</link>), do it now. An erroneous guest account can prevent the shares from being seen. Also, check the <filename>smb.conf</filename> file to make sure you do not have the option <literal>browsable</literal> <literal>=</literal> <literal>no</literal> anywhere in it: we suggest a minimal <filename>smb.conf</filename> file (see <link linkend="ch09-67928">Section 9.2.5.1</link>) for you to steal from. You need to have <literal>browseable</literal> enabled in order to be able to see at least the <literal>[temp]</literal> share.</para></listitem>
+<listitem><para>If you didn't get a browse list, the server is not providing information about the machines on the network. At least one machine on the net must support browse lists. Make sure you have <literal>local</literal> <literal>master</literal> <literal>=</literal> <literal>yes</literal> in the <filename>smb.conf</filename> file if you want Samba be the local master browser.</para></listitem>
+<listitem><para>If you got a browse list but didn't get <emphasis>/tmp</emphasis>, you probably have a <filename>smb.conf</filename> problem. Go back to <link linkend="ch09-67494">Section 9.2.4.5</link>."</para></listitem>
+<listitem><para>If you didn't get a workgroup list with your workgroup name in it, it is possible that your workgroup is set incorrectly in the <filename>smb.conf</filename> file.</para></listitem>
+<listitem><para>If you didn't get a workgroup list at all, ensure that <literal>workgroup</literal> <literal>=EXAMPLE</literal> is present in the <filename>smb.conf</filename> file.</para></listitem>
+<listitem><para>If you get nothing, try once more with the options <literal>-I</literal> <replaceable>ip_address</replaceable> <literal>-n</literal> <replaceable>netbios_name</replaceable> <literal>-W</literal> <replaceable>workgroup</replaceable> <literal>-d3</literal> with the NetBIOS and workgroup name in uppercase. (The <literal>-d</literal> <literal>3</literal> option sets the log /debugging level to 3.)</para></listitem>
+</itemizedlist>
+
+<para>If you're still getting nothing, you shouldn't have gotten this far. Double back to at least <link linkend="ch09-78512">Section 9.2.3.1</link>," or perhaps <link linkend="ch09-84079">Section 9.2.2.4</link>." On the other hand:</para>
+
+
+<itemizedlist>
+<listitem><para>If you get "SMBtconX failed. ERRSRV&mdash;ERRaccess," you aren't permitted access to the server. This normally means you have a <literal>valid</literal> <literal>hosts</literal> option that doesn't include the server, or an invalid hosts option that does.</para></listitem>
+<listitem><para> If you get "Bad password," then you presumably have one of the following:</para>
+
+
+<itemizedlist>
+
+<listitem><para> An incorrect <literal>hosts</literal> <literal>allow</literal> or <literal>hosts</literal> <literal>deny</literal> line</para></listitem>
+<listitem><para> An incorrect <literal>invalid</literal> <literal>users</literal> or <literal>valid</literal> <literal>users</literal> line</para></listitem>
+<listitem><para> A lowercase password and OS/2 or Windows for Workgroups clients</para></listitem>
+<listitem><para> A missing or invalid guest account</para></listitem>
+</itemizedlist>
+<para>Check what your guest account is (see <link linkend="ch09-40595">Section 9.2.5.2</link>) and verify your <filename>smb.conf</filename> file with <literal>testparm</literal> <literal>smb.conf</literal> <replaceable>your_hostname your_ip_address</replaceable> (see <link linkend="ch09-67494">Section 9.2.4.5</link>) and change or comment out any <literal>hosts</literal> <literal>allow</literal>, <literal>hosts</literal> <literal>deny</literal>, <literal>valid</literal> <literal>users</literal> or <literal>invalid</literal> <literal>users</literal> lines.</para></listitem>
+<listitem><para>If you get "Connection refused," the <emphasis>smbd</emphasis> server is not running or has crashed. Check that it's up, running, and listening to the network with <emphasis>netstat</emphasis>, see step <link linkend="ch09-67494">Section 9.2.4.5</link>."</para></listitem>
+<listitem><para>If you get "Get_Hostbyname: Unknown host name," you've made a spelling error, there is a mismatch between Unix and NetBIOS hostname, or there is a name service problem. Start nameservice debugging with <link linkend="ch09-97081">Section 9.2.5.4</link>." If this works, suspect a name mismatch and go to step <link linkend="ch09-35552">Section 9.2.10</link>."</para></listitem>
+<listitem><para>If you get "Session request failed," the server refused the connection. This usually indicates an internal error, such as insufficient memory to fork a process.</para></listitem>
+<listitem><para>If you get "Your server software is being unfriendly," the initial session request packet received a garbage response from the server. The server may have crashed or started improperly. Go back to <link linkend="ch09-40595">Section 9.2.5.2</link>," where the problem is first analyzed.</para></listitem>
+<listitem><para>If you suspect the server is not running, go back to <link linkend="ch09-49239">Section 9.2.4.2</link> to see why the server daemon isn't responding.<indexterm id="ch09-idx-953731-0" class="endofrange" startref="ch09-idx-953724-0"/></para></listitem>
+</itemizedlist>
+</sect3>
+
+
+
+<sect3 role="" label="9.2.6.2" id="ch09-12446">
+<title>Testing the server with nmblookup</title>
+
+
+<para>This will test the "advertising" system used for Windows name services and browsing. Advertising works by broadcasting one's presence or willingness to provide services. It is the part of browsing that uses an unreliable protocol (UDP), and works only on broadcast networks like Ethernets. The <emphasis>nmblookup</emphasis>
+<indexterm id="ch09-idx-953736-0"><primary>servers</primary><secondary>testing with nmblookup program</secondary></indexterm> program broadcasts name queries for the hostname you provide, and returns its IP address and the name of the machine, much like <emphasis>nslookup</emphasis> does with DNS. Here, the <literal>-d</literal> (debug- or log-level) option, and the <literal>-B</literal> (broadcast address) options direct queries to specific machines.</para>
+
+
+<para>First, we check the server from itself. Run <emphasis>nmblookup</emphasis> with a <literal>-B</literal> option of your server's name to tell it to send the query to the Samba server, and a parameter of  <literal>_ _SAMBA_ _</literal> as the symbolic name to look up. You should get:</para>
+
+
+<programlisting>server% <emphasis role="bold">nmblookup -B</emphasis><replaceable>server</replaceable><emphasis role="bold"> _ _SAMBA_ _</emphasis>
+Added interface ip=192.168.236.86 bcast=192.168.236.255 nmask=255.255.255.0
+Sending queries to 192.168.236.86 192.168.236.86 _ _SAMBA_ _</programlisting>
+
+
+<para>You should get the IP address of the server, followed by the name <literal>_ _SAMBA_ _ </literal>, which means that the server has successfully advertised that it has a service called <literal>_ _SAMBA_ _ </literal>, and therefore at least part of NetBIOS nameservice works.</para>
+
+
+<itemizedlist>
+<listitem><para>If you get "Name_query failed to find name _ _SAMBA_ _" you may have specified the wrong address to the <literal>-B</literal> option, or <emphasis>nmbd</emphasis> is not running. The <literal>-B</literal> option actually takes a broadcast address: we're using a machine-name to get a unicast address, and to ask server if it has claimed <literal>_ _SAMBA_ _</literal>.</para></listitem>
+<listitem><para>Try again with <literal>-B</literal><replaceable> ip_address</replaceable>, and if that fails too, <emphasis>nmbd</emphasis> isn't claiming the name. Go back briefly to "Testing daemons with testparm" to see if <emphasis>nmbd</emphasis> is running. If so, it may not claiming names; this means that Samba is not providing the browsing service&mdash;a configuratiuon problem. If that is the case, make sure that <filename>smb.conf</filename> doesn't contain the option <literal>browsing</literal> <literal>=</literal> <literal>no</literal>.</para></listitem>
+</itemizedlist>
+</sect3>
+
+
+
+<sect3 role="" label="9.2.6.3" id="ch09-32122">
+<title>Testing the client with nmblookup</title>
+
+
+<para>Next, check the IP address of the client from the server with <emphasis>nmblookup</emphasis>
+<indexterm id="ch09-idx-953737-0"><primary>clients, testing with nmblookup program</primary></indexterm> using <literal>-B</literal> option for the client's name and a parameter of <literal>'*'</literal> meaning "anything," as shown here:</para>
+
+
+<programlisting>server% <emphasis role="bold">nmblookup -B client '*'</emphasis>
+Sending queries to 192.168.236.10 192.168.236.10 *
+Got a positive name query response from 192.168.236.10 (192.168.236.10)</programlisting>
+
+
+<itemizedlist>
+<listitem><para>If you receive "Name-query failed to find name *," you have made a spelling mistake, or the client software on the PC isn't installed, started, or bound to TCP/IP. Double back to <link linkend="SAMBA-CH-2">Chapter 2</link> or <link linkend="SAMBA-CH-3">Chapter 3</link> and ensure you have a client installed and listening to the network.</para></listitem>
+</itemizedlist>
+
+<para>Repeat the command with the following options if you had any failures:</para>
+
+
+<itemizedlist>
+<listitem><para>If <literal>nmblookup</literal> <literal>-B</literal> <replaceable>client_IP_address</replaceable>  succeeds but <literal>-B</literal> <replaceable>client_name</replaceable> fails, there is a name service problem with the client's name; go to <link linkend="ch09-23768">Section 9.2.8</link>."</para></listitem>
+<listitem><para>If <literal>nmblookup</literal> <literal>-B</literal> <literal>127.0.0.1'*'</literal> succeeds, but <literal>-B</literal> <replaceable>client_IP_address</replaceable> fails, there is a hardware problem and ping should have failed. See your network manager.</para></listitem>
+</itemizedlist>
+</sect3>
+
+
+
+<sect3 role="" label="9.2.6.4" id="ch09-98123">
+<title>Testing the network with nmblookup</title>
+
+
+<para>Run the command <emphasis>nmblookup</emphasis>
+<indexterm id="ch09-idx-953741-0" class="startofrange"><primary>networking</primary><secondary>nmblookup program, testing with</secondary></indexterm>
+<indexterm id="ch09-idx-953741-1" class="startofrange"><primary>nmblookup program</primary><secondary>networks, testing with</secondary></indexterm> again with a <literal>-d</literal> option (debug level) of 2 and a parameter of <literal>'*'</literal> again. This time we are testing the ability of programs (such as <emphasis>nmbd</emphasis> ) to use broadcast. It's essentially a connectivity test, done via a broadcast to the default broadcast address.</para>
+
+
+<para>A number of NetBIOS/TCP-IP hosts on the network should respond with "got a positive name query response" messages. Samba may not catch all of the responses in the short time it listens, so you won't always see all the SMB clients on the network. However, you should see most of them:</para>
+
+
+<programlisting>server% <emphasis role="bold">nmblookup -d 2 '*'</emphasis>
+Added interface ip=192.168.236.86 bcast=192.168.236.255 nmask=255.255.255.0 Sending queries to 192.168.236.255
+Got a positive name query response from 192.168.236.191 (192.168.236.191)
+Got a positive name query response from 192.168.236.228 (192.168.236.228)
+Got a positive name query response from 192.168.236.75 (192.168.236.75)
+Got a positive name query response from 192.168.236.79 (192.168.236.79)
+Got a positive name query response from 192.168.236.206 (192.168.236.206)
+Got a positive name query response from 192.168.236.207 (192.168.236.207)
+Got a positive name query response from 192.168.236.217 (192.168.236.217)
+Got a positive name query response from 192.168.236.72 (192.168.236.72) 192.168.236.86 *</programlisting>
+
+
+<para>However:</para>
+
+
+<itemizedlist>
+<listitem><para>If this doesn't give at least the client address you previously tested, the default broadcast address is wrong. Try <literal>nmblookup</literal> <literal>-B</literal> <literal>255.255.255.255</literal> <literal>-d</literal> <literal>2</literal> <literal>'*'</literal>, which is a last-ditch variant (a broadcast address of all ones). If this draws responses, the broadcast address you've been using before is wrong. Troubleshooting these is discussed in the <link linkend="ch09-45060">Section 9.2.9.2</link>, later in this chapter.</para></listitem>
+<listitem><para>If the address 255.255.255.255 fails too, check your notes to see if your PC and server are on different subnets, as discovered in <link linkend="ch09-84079">Section 9.2.2.4</link>." You should try to diagnose this with a server and client on the same subnet, but if you can't, you can try specifying the remote subnet's broadcast address with <literal>-B</literal>. Finding that address is discussed in the same place as troubleshooting broadcast addresses, in <link linkend="ch09-45060">Section 9.2.9.2</link>s," later in this chapter. The <literal>-B</literal> option will work if your router supports directed broadcasts; if it doesn't, you may be forced to test with a client on the same network.</para></listitem>
+</itemizedlist>
+</sect3>
+
+
+
+<sect3 role="" label="9.2.6.5" id="ch09-SECT-2.6.5">
+<title>Testing client browsing with net view</title>
+
+
+<para>
+<indexterm id="ch09-idx-953742-0"><primary>browsing</primary><secondary>client-side, testing with net view</secondary></indexterm>On the client, run the command <replaceable>net view \\server</replaceable> in a DOS window to see if you can connect to the client and ask what shares it provides. You should get back a list of available shares on the server, as shown in <link linkend="ch09-83710">Figure 9.4</link>.</para>
+
+
+<figure label="9.4" id="ch09-83710">
+<title>Using the net view command</title>
+
+<graphic width="502" depth="206" fileref="figs/sam.0904.gif"></graphic>
+</figure>
+
+<para>If you received this, continue with <link linkend="ch09-21713">Section 9.2.7</link>."</para>
+
+
+<itemizedlist>
+<listitem><para>If you get "Network name not found" for the name you just tested in  <link linkend="ch09-32122">Section 9.2.6.3</link>," there is a problem with the client software itself. Double-check this by running <emphasis>nmblookup</emphasis> on the client; if it works and NET VIEW doesn't, the client is at fault.</para></listitem>
+<listitem><para>Of course, if <emphasis>nmblookup</emphasis> fails, there is a NetBIOS nameservice problem, as discussed in <link linkend="ch09-35552">Section 9.2.10</link>."</para></listitem>
+<listitem><para>If you get "You do not have the necessary access rights," or "This server is not configured to list shared resources," either your guest account is misconfigured (see <link linkend="ch09-40595">Section 9.2.5.2</link>), or you have a <literal>hosts</literal> <literal>allow</literal> or <literal>hosts</literal> <literal>deny</literal> line that prohibits connections from your machine. These problems should have been detected by the <emphasis>smbclient</emphasis> tests starting in <link linkend="ch09-96207">Section 9.2.6.1</link>."</para></listitem>
+<listitem><para>If you get "The specified computer is not receiving requests," you have misspelled the name, the machine is unreachable by broadcast (tested in "Testing the network with nmblookup"), or it's not running <emphasis>nmbd</emphasis>.</para></listitem>
+<listitem><para>If you get "Bad password error," you're probably encountering the Microsoft-encrypted password problem, as discussed in <link linkend="SAMBA-CH-6">Chapter 6</link>, with its corrections.</para></listitem>
+</itemizedlist>
+</sect3>
+
+
+
+<sect3 role="" label="9.2.6.6" id="ch09-SECT-2.6.6">
+<title>Browsing the server from the client</title>
+
+
+<para>
+<indexterm id="ch09-idx-953743-0"><primary>browsing</primary><secondary>server from client</secondary></indexterm>From the Network Neighborhood (File Manager in older releases), try to browse the server. Your Samba server should appear in the browse list of your local workgroup. You should be able to double click on the name of the server and get a list of shares, as illustrated in <link linkend="ch09-60004">Figure 9.5</link>.</para>
+
+
+<figure label="9.5" id="ch09-60004">
+<title>List of shares on a server</title>
+
+<graphic width="502" depth="202" fileref="figs/sam.0905.gif"></graphic>
+</figure>
+
+<itemizedlist>
+<listitem><para>If you get an "Invalid password" error with NT 4.0, NT 3.5 with Patch 3, Windows 95 with Patch 3, Windows 98 or any of these with Internet Explorer 4.0, it's most likely the encryption problem again. All of these clients default to using Microsoft encryption for passwords (see <link linkend="SAMBA-CH-6">Chapter 6</link>).</para></listitem>
+<listitem><para>If you receive an "Unable to browse the network" error, one of the following has ocurred:</para>
+
+
+<itemizedlist>
+<listitem><para>You have looked too soon, before the broadcasts and updates have completed; try waiting 30 seconds before re-attempting.</para></listitem>
+<listitem><para>There is a network problem you've not yet diagnosed.</para></listitem>
+<listitem><para>There is no browse master. Add the configuration option <literal>local</literal> <literal>master</literal> <literal>=</literal> <literal>yes</literal> to your <emphasis>smb.conf</emphasis> file.</para></listitem>
+<listitem><para>No shares are marked <literal>browsable</literal> in the <emphasis>smb.conf</emphasis> file.</para></listitem>
+
+</itemizedlist></listitem>
+
+<listitem><para>If you receive the message "\\server is not accessible," then:</para>
+
+
+<itemizedlist>
+<listitem><para> You have the encrypted password problem</para></listitem>
+<listitem><para> The machine really isn't accessible</para></listitem>
+<listitem><para> The machine doesn't support browsing<indexterm id="ch09-idx-953589-0" class="endofrange" startref="ch09-idx-953586-0"/></para></listitem>
+</itemizedlist></listitem>
+</itemizedlist>
+</sect3>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="9.2.7" id="ch09-21713">
+<title>Other Things that Fail </title>
+
+
+<para>If you've made it here, either the problem is solved or it's not one we've seen. The next sections cover troubleshooting tasks that are required to have the infrastructure to run Samba, not Samba itself.</para>
+
+
+<sect3 role="" label="9.2.7.1" id="ch09-SECT-2.7.1">
+<title>Not logging on</title>
+
+
+<para>
+<indexterm id="ch09-idx-953594-0"><primary>log files/logging</primary><secondary>troubleshooting</secondary></indexterm>An occasional problem is forgetting to log in to the client or logging in as a wrong (account-less) person. The former is not diagnosed at all: Windows tries to be friendly and lets you on. Locally! The only warning of the latter is that Windows welcomes you and asks about your new account. Either of these leads to repeated refusals to connect and endless requests for passwords. If nothing else seems to work, try logging out or shutting down and logging in again.</para>
+</sect3>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="9.2.8" id="ch09-23768">
+<title>Troubleshooting Name Services</title>
+
+
+<para>
+<indexterm id="ch09-idx-953595-0" class="startofrange"><primary>name services</primary><secondary>troubleshooting</secondary></indexterm>This section looks at simple troubleshooting of all the name services that you will encounter, but only for the common problems that affect Samba.</para>
+
+
+<para>There are several good references for troubleshooting particular name services: Paul Albitz and Cricket Liu's <emphasis>DNS and Bind</emphasis> covers the Domain Name Service (DNS), Hal Stern's <emphasis>NFS and NIS</emphasis> (both from O'Reilly) covers NIS ("Yellow pages") while WINS (Windows Internet Name Service), <filename>hosts/LMHOSTS</filename> files and NIS+ are best covered by their respective vendor's manuals.</para>
+
+
+<para>The problems addressed in this section are:</para>
+
+
+<itemizedlist>
+<listitem><para>Identifying name services</para></listitem>
+<listitem><para>A hostname can't be looked up</para></listitem>
+<listitem><para>The long (FQDN) form of a hostname works but the short form doesn't</para></listitem>
+<listitem><para>The short form of the name works, but the long form doesn't</para></listitem>
+<listitem><para>A long delay ocurrs before the expected result</para></listitem>
+</itemizedlist>
+
+<sect3 role="" label="9.2.8.1" id="ch09-SECT-2.8.1">
+<title>Identifying what's in use</title>
+
+
+<para>
+<indexterm id="ch09-idx-953744-0"><primary>name services</primary><secondary>identifying what is in use</secondary></indexterm>First, see if both the server and the client are using DNS, WINS, NIS, or <filename>hosts</filename> files to look up IP addresses when you give them a name. Each kind of machine will have a different preference:</para>
+
+
+<itemizedlist>
+<listitem><para>Windows 95 and 98 machines will look in WINS and <filename>LMHOSTS</filename> files first, then broadcast, and finally try DNS and <filename>hosts</filename> files.</para></listitem>
+<listitem><para>NT will look in WINS, then broadcast, LMHOSTS files, and finally <filename>hosts</filename> and DNS.</para></listitem>
+<listitem><para>Windows programs using the WINSOCK standard (like PC-NFSs) will use hosts files, DNS, WINS, and then broadcast. Don't assume that if a different program's name service works, the SMB client program's name service will!</para></listitem>
+<listitem><para>Samba daemons will use <filename>LMHOSTS</filename>, WINS, the Unix host's preference, and then broadcast.</para></listitem>
+<listitem><para>Unix hosts can be configured to use any combination of DNS, <filename>hosts</filename> files, and NIS and NIS+, generally in any order.</para></listitem>
+</itemizedlist>
+
+<para>We recommend that the client machines be configured to use WINS and DNS, the Samba daemons to use WINS and DNS, and the Unix server to use DNS. You'll have to look at your notes and the actual machines to see which is in use.</para>
+
+
+<para>On the clients, the name services are all set in the TCP/IP Properties panel of the Networking Control Panel, as discussed in <link linkend="SAMBA-CH-3">Chapter 3</link>. You may need to check there to see what you've actually turned on. On the server, see if an <filename>/etc/resolv.conf</filename> file exists. If it does, you're using DNS. You may be using the others as well, though. You'll need to check for NIS and combinations of services.</para>
+
+
+<para>Check for an <filename>/etc/nsswitch.conf</filename> file on Solaris and other System V Unix operating systems. If you have one, look for a line that begins <literal>host</literal>:, followed by one or more of <literal>files</literal>, <literal>bind</literal>, <literal>nis</literal> or <literal>nis+</literal>. These are the name services to use, in order, with optional extra material in square brackets. <emphasis>files</emphasis> stands for using <emphasis>hosts</emphasis> files, while <emphasis>bind</emphasis> (the Berkeley Internet Name Daemon) stands for using DNS.</para>
+
+
+<para>If the client and server differ, the first thing to do is to get them in sync. Clients can only use only DNS, WINS, <emphasis>hosts</emphasis> files and <emphasis>lmhosts</emphasis> files, not NIS or NIS+. Servers can use <emphasis>hosts</emphasis> files, DNS, and NIS or NIS+, but not WINS&mdash;even if your Samba server provides WINS services. If you can't get all the systems to use the same services, you'll have to carefully check the server and the client for the same data.</para>
+
+
+<para>Samba 2.0 (and late 1.9 versions) added a <literal>-R</literal><option> </option>(resolve order) option to <emphasis>smbclient</emphasis>. If you want to troubleshoot WINS, for example, you'd say:</para>
+
+
+<programlisting>smbclient -L <replaceable>server</replaceable> -R wins</programlisting>
+
+
+<para>The possible settings are <literal>hosts</literal> (which means whatever the Unix machine is using, not just<filename> /etc/hosts</filename> files), <literal>lmhosts</literal>, <literal>wins</literal> and <literal>bcast</literal> (broadcast).</para>
+
+
+<para>In the following sections, we use the term <emphasis>long name</emphasis> for a fully-qualified domain name (FQDN), like <literal>server.example.com </literal>, and the term <emphasis>short name</emphasis> for the host part of a FQDN, like <literal>server</literal>.</para>
+</sect3>
+
+
+
+<sect3 role="" label="9.2.8.2" id="ch09-SECT-2.8.2">
+<title>Cannot look up hostnames</title>
+
+
+<para> <indexterm id="ch09-idx-953745-0"><primary>hostnames</primary><secondary>troubleshooting</secondary><tertiary>lookup</tertiary></indexterm>Try the following:</para>
+
+
+<itemizedlist>
+<listitem><para>In DNS:</para>
+
+
+<para>Run <literal>nslookup</literal> <replaceable>name</replaceable>. If this fails, look for a <filename>resolv.conf</filename> error, a downed DNS server, or a short/long name problem (see the next section). Try the following:</para>
+
+
+<itemizedlist>
+<listitem><para>Your <filename>/etc/resolv.conf</filename> should contain one or more name-server lines, each with an IP address. These are the addresses of your DNS servers.</para></listitem>
+<listitem><para>ping each of the server addresses you find. If this fails for one, suspect the machine. If it fails for each, suspect your network.</para></listitem>
+<listitem><para>Retry the lookup using the full domain name (e.g., <emphasis>server.example.com</emphasis>) if you tried the short name first, or the short name if you tried the long name first. If results differ, skip to the next section.</para></listitem>
+</itemizedlist></listitem>
+<listitem><para>In Broadcast/ WINS:</para>
+
+
+<para>Broadcast/ WINS does only short names such as <literal>server</literal>, (not long ones, such as <literal>server.example.com)</literal>. Run <literal>nmblookup</literal> <literal>-S</literal> <replaceable>server</replaceable>.<replaceable> </replaceable>This reports everything broadcast has registered for the name. In our example, it looks like this:</para></listitem>
+</itemizedlist>
+
+<programlisting>Looking up status of 192.168.236.86
+received 10 names
+        SERVER           &lt;00&gt; -         M &lt;ACTIVE&gt;
+        SERVER           &lt;03&gt; -         M &lt;ACTIVE&gt;
+        SERVER           &lt;1f&gt; -         M &lt;ACTIVE&gt;
+        SERVER           &lt;20&gt; -         M &lt;ACTIVE&gt;
+        .._ _MSBROWSE_ _.&lt;01&gt; - &lt;GROUP&gt; M &lt;ACTIVE&gt;
+        MYGROUP          &lt;00&gt; - &lt;GROUP&gt; M &lt;ACTIVE&gt;
+        MYGROUP          &lt;1b&gt; -         M &lt;ACTIVE&gt;
+        MYGROUP          &lt;1c&gt; - &lt;GROUP&gt; M &lt;ACTIVE&gt;
+        MYGROUP          &lt;1d&gt; -         M &lt;ACTIVE&gt;
+        MYGROUP          &lt;1e&gt; - &lt;GROUP&gt; M &lt;ACTIVE&gt;</programlisting>
+
+
+<itemizedlist>
+<listitem><para>
+The required entry is <literal>SERVER</literal> <literal>&lt;00&gt;</literal>, which identifies <replaceable>server</replaceable> as being this machine's NetBIOS name. You should also see your workgroup mentioned one or more times. If these lines are missing, Broadcast/WINS cannot look up names and will need attention.</para></listitem>
+</itemizedlist>
+
+<tip role="ora">
+<para>The numbers in angle brackets in the previous output identify NetBIOS names as being workgroups, workstations, and file users of the messenger service, master browsers, domain master browsers, domain controllers and a plethora of others. We primarily use <literal>&lt;00&gt;</literal> to identify machine and workgroup names and <literal>&lt;20&gt;</literal> to identify machines as servers. The complete list is available at <systemitem role="url">http://support.microsoft.com/support/kb/articles/q163/4/09.asp</systemitem>.</para>
+
+</tip>
+
+<itemizedlist>
+<listitem><para>In NIS:</para>
+
+
+<para>Try <literal>ypmatch</literal> <literal>name</literal> <literal>hosts</literal>. If this fails, NIS is down. Find out the NIS server's name by running <emphasis>ypwhich</emphasis>, and ping the machine it to see if it's accessible.</para></listitem>
+<listitem><para>In NIS+:</para>
+
+
+<para>If you're running NIS+, try <literal>nismatch</literal> <literal>name</literal> <literal>hosts</literal>. If this fails, NIS is down. Find out the NIS server's name by running <emphasis>niswhich</emphasis>, and ping that machine to see if it's accessible.</para></listitem>
+<listitem><para>In <filename>hosts</filename> files:</para>
+
+
+<para>Inspect <filename>/etc/hosts</filename> on the client (<literal>C:\WINDOWS\HOSTS</literal>). Each line should have an IP number and one or more names, the primary name first, then any optional aliases. An example follows:</para></listitem>
+</itemizedlist>
+
+<programlisting>127.0.0.1         localhost
+        192.168.236.1     dns.svc.example.com
+        192.168.236.10    client.example.com client
+        192.168.236.11    backup.example.com loghost
+        192.168.236.86    server.example.com server
+        192.168.236.254   router.svc.example.com</programlisting>
+
+
+<itemizedlist>
+<listitem><para>
+On Unix, <literal>localhost</literal> should always be 127.0.0.1, although it may be just an alias for a hostname on the PC. On the client, check that there are no <literal>#XXX</literal> directives at the ends of the lines; these are LAN Manager/NetBIOS directives, and should appear only in <emphasis>LMHOSTS</emphasis> files (<literal>C:\WINDOWS\LMHOSTS</literal>).</para></listitem>
+<listitem><para>In <emphasis>LMHOSTS</emphasis> files:</para>
+
+
+<para>This file is a local source for LAN Manager (NetBIOS) names. It has a format very similar to <filename>/etc/hosts</filename> files, but does not support long-form domain names (e.g., <literal>server.example.com</literal>), and may have a number of optional <literal>#XXX</literal> directives following the names. Note there usually is a <emphasis>lmhosts.sam</emphasis> (for sample) file in <literal>C:\WINDOWS</literal>, but it's not used unless renamed to <literal>C:\WINDOWS\LMHOSTS</literal>.</para></listitem>
+</itemizedlist>
+</sect3>
+
+
+
+<sect3 role="" label="9.2.8.3" id="ch09-SECT-2.8.3">
+<title>Long and short hostnames</title>
+
+
+<para>
+<indexterm id="ch09-idx-953754-0"><primary>hostnames</primary><secondary>troubleshooting</secondary><tertiary>long/short</tertiary></indexterm>Where the long (FQDN) form of a hostname works but the short name doesn't (for example, <literal>client.example.com</literal> works but <literal>client</literal> doesn't), consider the following:</para>
+
+
+<itemizedlist>
+<listitem><para>DNS:</para>
+
+
+<para>This usually indicates there is no default domain in which to look up the short names. Look for a <literal>default</literal> line in <filename>/etc/resolv.conf</filename> on the Samba server with your domain in it, or a <literal>search</literal> line with one or more domains in it. One or the other may need to be present to make short names usable; which one depends on vendor and version of the DNS resolver. Try adding <literal>domain</literal> <replaceable>your domain</replaceable> to <filename>resolv.conf</filename> and ask your network or DNS administrator what should have been in the file.</para></listitem>
+<listitem><para>Broadcast/WINS:</para>
+
+
+<para>Broadcast/WINS doesn't support long names; it won't suffer from this problem.</para></listitem>
+<listitem><para>NIS:</para>
+
+
+<para>Try the command <literal>ypmatch</literal> <literal>hostname</literal> <literal>hosts</literal>. If you don't get a match, your tables don't include short names. Speak to your network manager; short names may be missing by accident, or may be unsupported as a matter of policy. Some sites don't ever use (ambiguous) short names.</para></listitem>
+<listitem><para>NIS+ :</para>
+
+
+<para>Try <literal>nismatch</literal> <replaceable>hostname</replaceable> <literal>hosts</literal>, and treat failure exactly as with NIS above.</para></listitem>
+<listitem><para><emphasis>hosts:</emphasis></para>
+
+
+<para>If the short name is not in <filename>/etc/hosts</filename>, consider adding it as an alias. Avoid, if you can, short names as primary names (the first one on a line). Have them as aliases if your system permits.</para></listitem>
+<listitem><para><filename>LMHOSTS</filename>:</para>
+
+
+<para>LAN Manager doesn't support long names, so it won't suffer from this problem.</para></listitem>
+</itemizedlist>
+
+<para>On the other hand, if the short form of the name works and the long doesn't, consider the following:</para>
+
+
+<itemizedlist>
+<listitem><para>DNS:</para>
+
+
+<para>This is bizarre; see your network or DNS administrator, as this is probably a DNS setup bug.</para></listitem>
+<listitem><para>Broadcast/WINS:</para>
+
+
+<para>This is a normal bug; Broadcast/WINS can't use the long form. Optionally, consider DNS. Microsoft has stated that they will switch to DNS, though it's not providing name types like &lt;00&gt;.</para></listitem>
+<listitem><para>NIS:</para>
+
+
+<para>If you can use <literal>ypmatch</literal> to look up the short form but not the long, consider adding the long form to the table as at least an alias.</para></listitem>
+<listitem><para>NIS+:</para>
+
+
+<para>Same as NIS, except you use <literal>nismatch</literal> instead of <literal>ypmatch</literal> to look up names.</para></listitem>
+<listitem><para><filename>hosts:</filename></para>
+
+
+<para>Add the long name as at least an alias, and preferably as the primary form. Also consider using DNS if it's practical.</para></listitem>
+<listitem><para><filename>LMHOSTS</filename>:</para>
+
+
+<para>This is a normal bug. LAN Manager can't use the long form; consider switching to DNS or <filename>hosts</filename>.</para></listitem>
+</itemizedlist>
+</sect3>
+
+
+
+<sect3 role="" label="9.2.8.4" id="ch09-SECT-2.8.4">
+<title>Unusual delays</title>
+
+
+<para>
+<indexterm id="ch09-idx-953755-0"><primary>delays, troubleshooting</primary></indexterm>When there is a long delay before the expected result:</para>
+
+
+<itemizedlist>
+<listitem><para>DNS:</para>
+
+
+<para>Test the same name with the <command>nslookup</command> command on the machine (client or server) that is slow. If <command>nslookup</command> is also slow, you have a DNS problem. If it's slower on a client, you have too many protocols bound to the Ethernet card. Eliminate NetBEUI, which is infamously slow, and optionally, Novel, assuming you don't need them. This is especially important on Windows 95, which is particularly sensitive to excess protocols.</para></listitem>
+<listitem><para>Broadcast/ WINS:</para>
+
+
+<para>Test the client using <literal>nmblookup</literal>, and if it's faster, you probably have the protocols problem as  mentioned in the previous item.</para></listitem>
+<listitem><para>NIS:</para>
+
+
+<para>Try <literal>ypmatch</literal>, and if it's slow, report the problem to your network manager.</para></listitem>
+<listitem><para>NIS+:</para>
+
+
+<para>Try <literal>nismatch</literal>, similarly.</para></listitem>
+<listitem><para><emphasis>hosts</emphasis>:</para>
+
+
+<para><emphasis>hosts</emphasis> files, if of reasonable size, are always fast. You probably have the protocols problem mentioned under DNS, above.</para></listitem>
+<listitem><para><emphasis>LMHOSTS</emphasis>:</para>
+
+
+<para>This is not a name lookup problem; <emphasis>LMHOSTS</emphasis> files are as fast as <emphasis>hosts</emphasis> files.</para></listitem>
+</itemizedlist>
+</sect3>
+
+
+
+<sect3 role="" label="9.2.8.5" id="ch09-SECT-2.8.5">
+<title>Localhost issues</title>
+
+
+<para>
+<indexterm id="ch09-idx-953756-0"><primary>localhost</primary><secondary>troubleshooting</secondary></indexterm>When a localhost isn't 127.0.0.1, try the following:</para>
+
+
+<itemizedlist>
+<listitem><para>DNS:</para>
+
+
+<para>There is probably no record for <literal>localhost.</literal> <literal>A</literal> <literal>127.0.0.1</literal>. Arrange to add one, and a reverse entry, <literal>1.0.0.127.IN-ADDR.ARPA</literal> <literal>PTR</literal> <literal>127.0.0.1</literal>.</para></listitem>
+<listitem><para>Broadcast/WINS:</para>
+
+
+<para>Not applicable.</para></listitem>
+<listitem><para>NIS:</para>
+
+
+<para>If <literal>localhost</literal> isn't in the table, add it.</para></listitem>
+<listitem><para>NIS+:</para>
+
+
+<para>If <literal>localhost</literal> isn't in the table, add it.</para></listitem>
+<listitem><para><filename>hosts:</filename></para>
+
+
+<para>Add a line is the <emphasis>hosts</emphasis> file that says <literal>127.0.0.1</literal> <literal>localhost</literal></para></listitem>
+<listitem><para><filename>LMHOSTS</filename>:</para>
+
+
+<para>Not applicable.<indexterm id="ch09-idx-953603-0" class="endofrange" startref="ch09-idx-953595-0"/></para></listitem>
+</itemizedlist>
+</sect3>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="9.2.9" id="ch09-SECT-2.9">
+<title>Troubleshooting Network Addresses</title>
+
+
+<para>A number of common problems are caused by incorrect Internet address routing or the incorrect assignment of addresses. This section helps you determine what your addresses are.</para>
+
+
+<sect3 role="" label="9.2.9.1" id="ch09-21203">
+<title>Netmasks</title>
+
+
+<para>
+<indexterm id="ch09-idx-953973-0" class="startofrange"><primary>network addresses</primary><secondary>troubleshooting</secondary></indexterm>
+<indexterm id="ch09-idx-953973-1" class="startofrange"><primary>IP address</primary></indexterm>
+<indexterm id="ch09-idx-953973-2" class="startofrange"><primary>troubleshooting</primary><secondary>network addresses</secondary></indexterm>The <indexterm id="ch09-idx-953974-0"><primary>netmasks</primary><secondary>troubleshooting</secondary></indexterm>netmasks tell each machine which addresses can be reached directly (are on your local network) and which addresses require forwarding packets through a router. If the netmask is wrong, the machines will make one of two mistakes. One is to try to route local packets via a router, which is an expensive way to waste time&mdash;it may work reasonably fast, it may run slowly, or it may fail utterly. The second mistake is to fail to send packets for a remote machine to the router, which will prevent them from being forwarded to the remote machine.</para>
+
+
+<para>The netmask is a number like an IP address, with one-bits for the network part of an address and zero-bits for the host portion. The netmask is literally used to mask off parts of the address inside the TCP/IP code. If the mask is 255.255.0.0, the first 2 bytes are the network part and the last 2 are the host part. More common is 255.255.255.0, in which the first 3 bytes are the network part and the last one is the host part.</para>
+
+
+<para>For example, let's say your IP address is 192.168.0.10 and the Samba server is 192.168.236.86. If your netmask happens to be 255.255.255.0, the network part of the addresses is the first 3 bytes and the host part is the last byte. In this case, the network parts are different, and the machines are on different networks:</para>
+
+
+<informaltable>
+<tgroup cols="2">
+<colspec colnum="1" colname="col1"/>
+<colspec colnum="2" colname="col2"/>
+<thead>
+<row>
+
+<entry colname="col1"><para>Network Part</para></entry>
+
+<entry colname="col2"><para>Host Part</para></entry>
+
+</row>
+
+</thead>
+
+<tbody>
+<row>
+
+<entry colname="col1"><para>192 168 000</para></entry>
+
+<entry colname="col2"><para>10</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>192 168 235</para></entry>
+
+<entry colname="col2"><para>86</para></entry>
+
+</row>
+
+</tbody>
+</tgroup>
+</informaltable>
+
+<para>If your netmask happens to be 255.255.0.0, the network part is just the first two bytes. In this case, the network parts match and so the two machines are on the same network:</para>
+
+
+
+<informaltable>
+<tgroup cols="2">
+<colspec colnum="1" colname="col1"/>
+<colspec colnum="2" colname="col2"/>
+<thead>
+<row>
+
+<entry colname="col1"><para>Network Part</para></entry>
+
+<entry colname="col2"><para>Host Part</para></entry>
+
+</row>
+
+</thead>
+
+<tbody>
+<row>
+
+<entry colname="col1"><para>192 168</para></entry>
+
+<entry colname="col2"><para>000 10</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>192 168</para></entry>
+
+<entry colname="col2"><para>236 86</para></entry>
+
+</row>
+
+</tbody>
+</tgroup>
+</informaltable>
+
+<para>Of course, if your netmask says one thing and your network manager says another, the netmask is wrong.</para>
+</sect3>
+
+
+
+<sect3 role="" label="9.2.9.2" id="ch09-45060">
+<title>Broadcast addresses</title>
+
+
+<para>The <indexterm id="ch09-idx-953758-0"><primary>broadcast addresses, troubleshooting</primary></indexterm>broadcast address is a normal address, with the hosts part all one-bits. It means "all hosts on your network." You can compute it easily from your netmask and address: take the address and put one-bits in it for all the bits that are zero at the end of the netmask (the host part). The following table illustrates this:</para>
+
+
+<informaltable>
+<tgroup cols="3">
+<colspec colnum="1" colname="col1"/>
+<colspec colnum="2" colname="col2"/>
+<colspec colnum="3" colname="col3"/>
+<thead>
+<row>
+
+<entry colname="col1"></entry>
+
+<entry colname="col2"><para>Network Part</para></entry>
+
+<entry colname="col3"><para>Host Part</para></entry>
+
+</row>
+
+</thead>
+
+<tbody>
+<row>
+
+<entry colname="col1"><para><emphasis role="bold">IP address</emphasis></para></entry>
+
+<entry colname="col2"><para>192 168 236</para></entry>
+
+<entry colname="col3"><para>86</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><emphasis role="bold">Netmask</emphasis></para></entry>
+
+<entry colname="col2"><para>255 255 255</para></entry>
+
+<entry colname="col3"><para>000</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><emphasis role="bold">Broadcast</emphasis></para></entry>
+
+<entry colname="col2"><para>192 168 236</para></entry>
+
+<entry colname="col3"><para>255</para></entry>
+
+</row>
+
+</tbody>
+</tgroup>
+</informaltable>
+
+<para>In this example, the broadcast address on the 192.168.236 network is 192.168.236.255. There is also an old "universal" broadcast address, 255.255.255.255. Routers are prohibited from forwarding these, but most machines on your local network will respond to broadcasts to this address.</para>
+</sect3>
+
+
+
+<sect3 role="" label="9.2.9.3" id="ch09-SECT-2.9.3">
+<title>Network address ranges</title>
+
+
+<para>
+<indexterm id="ch09-idx-953762-0"><primary>networking</primary><secondary>network address ranges</secondary></indexterm>A number of address ranges have been reserved for testing and for non-connected networks; we use one of these for the book. If you don't have an address yet, feel free to use one of these to start with. They include one class A (large) network, 10.*.*.*, and 254 class C (smaller) networks, 192.168.1.* through to 192.168.254.*. In this book we use one of the latter, 192.168.236.*. The domain <filename>example.com</filename> is also reserved for unconnected networks, explanatory examples, and books.</para>
+
+
+<para>If you're actually connecting to the Internet, you'll need to get a real network and a domain name, probably through the same company that provides your connection.</para>
+</sect3>
+
+
+
+<sect3 role="" label="9.2.9.4" id="ch09-SECT-2.9.4">
+<title>Finding your network address</title>
+
+
+<para>
+<indexterm id="ch09-idx-953761-0"><primary>network addresses</primary><secondary>finding</secondary></indexterm>If you haven't recorded your IP address, it will be displayed by the <command>ifconfig</command> command on Unix or by the IPCONFIG command on Windows 95 and NT. (Check your manual pages for any options required by your brand of Unix: Sun wants <literal>ifconfig</literal> <literal>-a</literal>). You should see output similar to the following:</para>
+
+
+<programlisting>server% ifconfig -a
+le0: flags=63&lt;UP,BROADCAST,NOTRAILERS,RUNNING &gt;
+      inet 192.168.236.11 netmask ffffff00 broadcast 192.168.236.255
+lo0: flags=49&lt;&amp;lt&gt;UP,LOOPBACK,RUNNING&lt;&amp;gt&gt;
+      inet 127.0.0.1 netmask ff000000</programlisting>
+
+
+<para>One of the interfaces will be loopback (in our examples <literal>lo0</literal>), and the other will be the regular IP interface. The flags should show that the interface is running, and Ethernet interfaces will also say they support broadcasts (PPP interfaces don't). The other places to look for IP addresses are <filename>/etc/hosts</filename> files, Windows <emphasis>HOSTS</emphasis> files, Windows <emphasis>LMHOSTS</emphasis> files, NIS, NIS+ and DNS.<indexterm id="ch09-idx-953611-0" class="endofrange" startref="ch09-idx-953973-0"/>
+<indexterm id="ch09-idx-953611-1" class="endofrange" startref="ch09-idx-953973-1"/>
+<indexterm id="ch09-idx-953611-2" class="endofrange" startref="ch09-idx-953973-2"/></para>
+</sect3>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="9.2.10" id="ch09-35552">
+<title>Troubleshooting NetBIOS Names</title>
+
+
+<para>
+<indexterm id="ch09-idx-953616-0"><primary>NetBIOS name</primary><secondary>troubleshooting</secondary></indexterm>Historically, SMB protocols have depended on the NetBIOS name system, also called the LAN Manager name system. This was a simple scheme where each machine had a unique 20-character name and broadcast it on the LAN for everyone to know. With TCP/IP, we tend to use names like <emphasis>client.example.com</emphasis> stored in <filename>/etc/hosts</filename> files, through DNS or WINS.</para>
+
+
+<para>The usual mapping to domain names such as <emphasis>server.example.com</emphasis> simply uses the <emphasis>server</emphasis> part as the NetBIOS name and converts it to uppercase. Alas, this doesn't always work, especially if you have a machine with a 21-character name; not everyone uses the same NetBIOS and DNS names. For example, <emphasis>corpvm1</emphasis> along with <emphasis>vm1.corp.com</emphasis> is not unusual.</para>
+
+
+<para>A machine with a different NetBIOS name and domain name is confusing when you're troubleshooting; we recommend that you try to avoid this wherever possible. NetBIOS names are discoverable with <emphasis>smbclient</emphasis> :</para>
+
+
+<itemizedlist>
+<listitem><para>If you can list shares on your Samba server with <emphasis>smbclient</emphasis> and a <literal>-L</literal> option (list shares) of <replaceable>short_name_of_server</replaceable>, the short name is the NetBIOS name.</para></listitem>
+<listitem><para>If you get "Get_Hostbyname: Unknown host name," there is probably a mismatch. Check in the <filename>smb.conf</filename> file to see if the NetBIOS name is explicitly set.</para></listitem>
+<listitem><para>Try again, specifying <literal>-I</literal> and the IP address of the Samba server (e.g., <literal>smbclient</literal> <literal>-L</literal> <literal>server</literal> <literal>-I</literal> <literal>192.168.236.86</literal>). This overrides the name lookup and forces the packets to go to the IP address. If this works, there was a mismatch.</para></listitem>
+<listitem><para>Try with <literal>-I</literal> and the full domain name of the server (e.g., <literal>smbclient</literal> <literal>-L</literal> <literal>server</literal> <literal>-I</literal> <literal>server.example.com</literal>). This tests the lookup of the domain name, using whatever scheme the Samba server uses (e.g., DNS). If it fails, you have a name service problem. You should reread <link linkend="ch09-23768">Section 9.2.8</link> after you finish troubleshooting the NetBIOS names.</para></listitem>
+<listitem><para>Try with <literal>-n</literal> (NetBIOS name) and the name you expect to work (e.g., <literal>smbclient</literal> <literal>-n</literal> <literal>server</literal> <literal>-L</literal> <literal>server-12</literal>) but without overriding the IP address through <literal>-I</literal>. If this works, the name you specified with <literal>-n</literal> is the actual NetBIOS name of the server. If you receive "Get-Hostbyname: Unknown host MARY," it's not the right server yet.</para></listitem>
+<listitem><para>If nothing is working so far, repeat the tests specifying <literal>-U</literal> <replaceable>username</replaceable> and <literal>-W</literal> <replaceable>workgroup</replaceable>, with the username and workgroup in uppercase, to make sure you're not being derailed by a user or workgroup mismatch.</para></listitem>
+<listitem><para>If nothing works still and you had evidence of a name service problem, troubleshoot name service in <link linkend="ch09-23768">Section 9.2.8</link>," and then return to NetBIOS name<indexterm id="ch09-idx-953533-0" class="endofrange" startref="ch09-idx-953543-0"/>
+<indexterm id="ch09-idx-953533-1" class="endofrange" startref="ch09-idx-953543-1"/> service.<indexterm id="ch09-idx-953526-0" class="endofrange" startref="ch09-idx-953453-0"/></para></listitem>
+</itemizedlist>
+</sect2>
+</sect1>
+
+
+
+
+
+
+
+
+
+<sect1 role="" label="9.3" id="ch09-49719">
+<title>Extra Resources</title>
+
+
+<para>
+<indexterm id="ch09-idx-953618-0" class="startofrange"><primary>resources for further information</primary></indexterm>
+<indexterm id="ch09-idx-953618-1" class="startofrange"><primary>Samba</primary><secondary>resources for further information</secondary></indexterm>At some point during your Samba career, you will want to turn to online or printed resources for news, updates, and aid.</para>
+
+
+<sect2 role="" label="9.3.1" id="ch09-SECT-3.1">
+<title>Documentation and FAQs</title>
+
+
+<para>
+<indexterm id="ch09-idx-953626-0"><primary>documentation for Samba</primary></indexterm>
+<indexterm id="ch09-idx-953626-1"><primary>FAQ, Samba</primary></indexterm>It's okay to read the documentation. Really. Nobody can see you, and we won't tell. In fact, Samba ships with a large set of documentation files, and it is well worth the effort to at least browse through them, either in the distribution directory on your computer under <filename>/docs</filename>, or online at the Samba web site: <indexterm id="ch09-idx-953628-0"><primary>URLs (uniform resource locators)</primary><secondary>Samba</secondary><tertiary>web site</tertiary></indexterm>
+<indexterm id="ch09-idx-953628-1"><primary>Samba</primary><secondary>web site</secondary></indexterm><systemitem role="url">http://samba.anu.edu.au/samba/</systemitem>. The most current FAQ list, bug information, and distribution locations are located at the web site, with links to all of the Samba manual pages and HOW-TOs.</para>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="9.3.2" id="ch09-SECT-3.2">
+<title>Samba Newsgroups</title>
+
+
+<para>
+<indexterm id="ch09-idx-953634-0"><primary>newsgroups for Samba</primary></indexterm>Usenet newsgroups have always been a great place to get advice on just about any topic. In the past few years, though, this vast pool of knowledge has developed something that has made it into an invaluable resource: a memory. Archival and search sites such as DejaNews (<systemitem role="url">http://www.dejanews.com</systemitem>) have made sifting through years of valuable solutions on a topic as simple as a few mouse clicks.</para>
+
+
+<para>The primary newsgroup for Samba is <emphasis>comp.protocols.smb</emphasis>. This should always be your first stop when there's a problem. More often than not, spending five minutes researching an error here will save hours of frustration while trying to debug something yourself.</para>
+
+
+<para>When searching a newsgroup, try to be as specific as possible, but not too wordy. Searching on actual error messages is best. If you don't find an answer immediately in the newsgroup, resist the temptation to post a request for help until you've done a bit more work on the problem. You may find that the answer is in a FAQ or one of the many documentation files that ships with Samba, or a solution might become evident when you run one of Samba's diagnostic tools. If nothing works, post a request in <emphasis>comp.protocols.smb</emphasis>, and be as specific as possible about what you have tried and what you are seeing. Include any error messages that appear. It may be several days before you receive help, so be patient and keep trying things while you wait.</para>
+
+
+<para>Once you post a request for help, keep poking at the problem yourself. Most of us have had the experience of posting a Usenet article containing hundreds of lines of intricate detail, only to solve the problem an hour later after the article has blazed its way across several continents. The rule of thumb goes something like this: the more folks who have read your request, the simpler the solution. Usually this means that once everyone in the Unix community has seen your article, the solution will be something simple like, "Plug the computer into the wall socket."</para>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="9.3.3" id="ch09-SECT-3.3">
+<title>Samba Mailing Lists</title>
+
+
+<para>
+<indexterm id="ch09-idx-953635-0"><primary>mailing lists</primary><secondary sortas="Samba">for Samba</secondary></indexterm>The following are mailing lists for support with Samba. See the Samba homepage, <systemitem role="url">http://www.samba.org/</systemitem> for information on subscribing and unsubscribing to these mailing lists:</para>
+
+
+<variablelist>
+<varlistentry><term><email>samba-binaries@samba.org</email></term>
+<listitem><para>This mailing list has information on precompiled binaries for the Samba platform.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><email>samba-bugs@samba.org</email></term>
+<listitem><para>This mailing list is the place to report suspected bugs in Samba.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><email>samba-ntdom@samba.org</email></term>
+<listitem><para>This mailing list has information on support for domains (particularly Windows NT) with the Samba product.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><email>samba-technical@samba.org</email></term>
+<listitem><para>This mailing list maintains debate about where the future of Samba is headed.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><email>samba@samba.org</email></term>
+<listitem><para>This is the primary Samba mailing list that contains general questions and HOW-TO information on Samba.</para></listitem>
+</varlistentry>
+</variablelist>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="9.3.4" id="ch09-SECT-3.4">
+<title>Samba Discussion Archives</title>
+
+
+<para>
+<indexterm id="ch09-idx-953640-0"><primary>discussion archives for Samba</primary></indexterm>There is a search service for the primary Samba mailing list. At the time this book was written, it was listed under "searchable" in the Sources paragraph on the first page of the Samba site and its mirrors, <systemitem role="url">http://samba.anu.edu.au/listproc/ghindex.html</systemitem>.</para>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="9.3.5" id="ch09-SECT-3.5">
+<title>Further Reading</title>
+
+
+<para>
+<indexterm id="ch09-idx-953645-0"><primary>TCP/IP networking
+protocol</primary><secondary>resources for further
+information</secondary></indexterm>Hunt, Craig; <citetitle>TCP/IP
+Network Administration: 2nd Edition</citetitle>. Sebastopol, CA:
+O'Reilly and Associates, 1997 (ISBN 1-56592-322-7).</para>
+
+
+<para>Hunt, Craig, and Robert Bruce Thompson; <citetitle>Windows NT
+TCP/IP Network Administration</citetitle>. Sebastopol, CA: O'Reilly
+and Associates, 1998 (ISBN 1-56592-377-4).</para>
+
+
+<para>
+<indexterm id="ch09-idx-953646-0"><primary>DNS (ISBN Domain Name
+System)</primary><secondary>resources for further
+information</secondary></indexterm>Albitz, Paul, and Cricket Liu;
+<citetitle>DNS and Bind, 3rd Edition</citetitle>. Sebastopol, CA:
+O'Reilly and Associates, 1998 (ISBN 1-56592-512-2).</para>
+
+
+<para>
+<indexterm id="ch09-idx-953653-0"><primary>NFS (Network File
+System)</primary><secondary>resources for further
+information</secondary></indexterm>
+<indexterm id="ch09-idx-953653-1"><primary>Network File
+System</primary><secondary>resources for further
+information</secondary></indexterm>
+<indexterm id="ch09-idx-953653-2"><primary>resources for further
+information</primary><secondary>NFS (Network File
+System)</secondary></indexterm>
+<indexterm id="ch09-idx-953657-0"><primary>NIS/NIS+
+protocol</primary><secondary>resources for further
+information</secondary></indexterm>Stern, Hal; <citetitle>Managing NFS
+and NIS</citetitle>. Sebastopol, CA: O'Reilly and Associates, 1991
+(ISBN 0-937175-75-7).<indexterm id="ch09-idx-953621-0" class="endofrange" startref="ch09-idx-953618-0"/> <indexterm id="ch09-idx-953621-1" class="endofrange" startref="ch09-idx-953618-1"/></para>
+</sect2>
+</sect1>
+</chapter>

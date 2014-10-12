@@ -1,0 +1,105 @@
+'\" t
+.\"     Title: smbgetrc
+.\"    Author: [see the "AUTHOR" section]
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date: 09/18/2013
+.\"    Manual: File Formats and Conventions
+.\"    Source: Samba 3.6
+.\"  Language: English
+.\"
+.TH "SMBGETRC" "5" "09/18/2013" "Samba 3\&.6" "File Formats and Conventions"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+smbgetrc \- configuration file for smbget
+.SH "SYNOPSIS"
+.PP
+smbgetrc
+.SH "DESCRIPTION"
+.PP
+This manual page documents the format and options of the
+\fIsmbgetrc\fR
+file\&. This is the configuration file used by the
+\fBsmbget\fR(1)
+utility\&. The file contains of key\-value pairs, one pair on each line\&. The key and value should be separated by a space\&.
+.PP
+By default, smbget reads its configuration from
+\fI$HOME/\&.smbgetrc\fR, though other locations can be specified using the command\-line options\&.
+.SH "OPTIONS"
+.PP
+The following keys can be set:
+.PP
+resume on|off
+.RS 4
+Whether aborted downloads should be automatically resumed\&.
+.RE
+.PP
+recursive on|off
+.RS 4
+Whether directories should be downloaded recursively
+.RE
+.PP
+username \fIname\fR
+.RS 4
+Username to use when logging in to the remote server\&. Use an empty string for anonymous access\&.
+.RE
+.PP
+password \fIpass\fR
+.RS 4
+Password to use when logging in\&.
+.RE
+.PP
+workgroup \fIwg\fR
+.RS 4
+Workgroup to use when logging in
+.RE
+.PP
+nonprompt on|off
+.RS 4
+Turns off asking for username and password\&. Useful for scripts\&.
+.RE
+.PP
+debuglevel \fIint\fR
+.RS 4
+(Samba) debuglevel to run at\&. Useful for tracking down protocol level problems\&.
+.RE
+.PP
+dots on|off
+.RS 4
+Whether a single dot should be printed for each block that has been downloaded, instead of the default progress indicator\&.
+.RE
+.PP
+blocksize \fIint\fR
+.RS 4
+Number of bytes to put in a block\&.
+.RE
+.SH "VERSION"
+.PP
+This man page is correct for version 3 of the Samba suite\&.
+.SH "SEE ALSO"
+.PP
+\fBsmbget\fR(1)
+and
+\fBSamba\fR(7)\&.
+.SH "AUTHOR"
+.PP
+The original Samba software and related utilities were created by Andrew Tridgell\&. Samba is now developed by the Samba Team as an Open Source project similar to the way the Linux kernel is developed\&.
+.PP
+This manual page was written by Jelmer Vernooij

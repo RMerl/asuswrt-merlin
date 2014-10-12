@@ -1,0 +1,16 @@
+#!/usr/bin/env python
+
+bld.SAMBA_LIBRARY('authkrb5',
+                  source='kerberos.c clikrb5.c kerberos_heimdal.c kerberos_pac.c gssapi_parse.c krb5_init_context.c keytab_copy.c',
+                  autoproto='proto.h',
+                  public_deps='krb5 ndr-krb5pac samba_socket LIBCLI_RESOLVE com_err asn1',
+                  deps='ASN1_UTIL auth_sam_reply tevent LIBPACKET ndr ldb',
+                  private_library=True
+                  )
+
+bld.SAMBA_SUBSYSTEM('KERBEROS_UTIL',
+	autoproto='kerberos_util.h',
+	source='kerberos_util.c',
+	deps='authkrb5 com_err ldb CREDENTIALS_KRB5 SECRETS',
+	)
+

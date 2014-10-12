@@ -1,0 +1,13 @@
+<samba:parameter name="ncalrpc dir"
+                 context="G"
+                 advanced="1" developer="1"
+		 type="string"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>This directory will hold a series of named pipes to allow RPC over inter-process communication.  </para>.
+	<para>This will allow Samba and other unix processes to interact over DCE/RPC without using TCP/IP.  Additionally a sub-directory 'np' has restricted permissions, and allows a trusted communication channel between Samba processes</para>
+</description>
+
+<value type="default">${prefix}/var/ncalrpc</value>
+<value type="example">/var/run/samba/ncalrpc</value>
+</samba:parameter>

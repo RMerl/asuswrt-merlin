@@ -1,0 +1,60 @@
+<samba:parameter name="dfree command"
+	         context="S"
+			 type="string"
+		 advanced="1" developer="1"
+		 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+
+	<para>
+	The <parameter moreinfo="none">dfree command</parameter> setting should only be used on systems where a
+	problem occurs with the internal disk space calculations. This has been known to happen with Ultrix, but may
+	occur with other operating systems. The symptom that was seen was an error of &quot;Abort Retry Ignore&quot;
+	at the end of each directory listing.
+	</para>
+
+	<para>
+	This setting allows the replacement of the internal routines to calculate the total disk space and amount
+	available with an external routine. The example below gives a possible script that might fulfill this
+	function.
+	</para>
+
+	<para>
+	In Samba version 3.0.21 this parameter has been changed to be a per-share parameter, and in addition the
+	parameter <smbconfoption name="dfree cache time"/> was added to allow the output of this script to be cached
+	for systems under heavy load.
+	</para>
+
+	<para>
+	The external program will be passed a single parameter indicating a directory in the filesystem being queried.
+	This will typically consist of the string <filename moreinfo="none">./</filename>. The script should return
+	two integers in ASCII. The first should be the total disk space in blocks, and the second should be the number
+	of available blocks. An optional third return value can give the block size in bytes. The default blocksize is
+	1024 bytes.
+	</para>
+
+	<para>
+	Note: Your script should <emphasis>NOT</emphasis> be setuid or setgid and should be owned by (and writeable
+	only by) root!
+	</para>
+
+	<para>
+	Where the script dfree (which must be made executable) could be:
+<programlisting format="linespecific"> 
+#!/bin/sh
+df $1 | tail -1 | awk '{print $(NF-4),$(NF-2)}'
+</programlisting>
+	or perhaps (on Sys V based systems):
+<programlisting format="linespecific"> 
+#!/bin/sh
+/usr/bin/df -k $1 | tail -1 | awk '{print $3&quot; &quot;$5}'
+</programlisting>
+	Note that you may have to replace the command names with full path names on some systems.
+	</para>
+
+	<para>
+	By default internal routines for determining the disk capacity and remaining space will be used.
+	</para>
+
+</description>
+<value type="example">/usr/local/samba/bin/dfree</value>
+</samba:parameter>

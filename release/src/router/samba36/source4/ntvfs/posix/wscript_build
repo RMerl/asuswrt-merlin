@@ -1,0 +1,55 @@
+#!/usr/bin/env python
+
+bld.SAMBA_SUBSYSTEM('pvfs_acl',
+	source='pvfs_acl.c',
+	autoproto='vfs_acl_proto.h',
+	deps='events',
+	)
+
+
+bld.SAMBA_MODULE('pvfs_acl_xattr',
+	source='pvfs_acl_xattr.c',
+	subsystem='pvfs_acl',
+	init_function='pvfs_acl_xattr_init',
+	deps='NDR_XATTR events'
+	)
+
+
+bld.SAMBA_MODULE('pvfs_acl_nfs4',
+	source='pvfs_acl_nfs4.c',
+	subsystem='pvfs_acl',
+	init_function='pvfs_acl_nfs4_init',
+	deps='NDR_NFS4ACL samdb events'
+	)
+
+
+bld.SAMBA_SUBSYSTEM('pvfs_aio',
+	source='pvfs_aio.c',
+	deps='tevent',
+        enabled=False
+	)
+
+
+bld.SAMBA_MODULE('ntvfs_posix',
+	source='vfs_posix.c pvfs_util.c pvfs_search.c pvfs_dirlist.c pvfs_fileinfo.c pvfs_unlink.c pvfs_mkdir.c pvfs_open.c pvfs_read.c pvfs_flush.c pvfs_write.c pvfs_fsinfo.c pvfs_qfileinfo.c pvfs_setfileinfo.c pvfs_rename.c pvfs_resolve.c pvfs_shortname.c pvfs_lock.c pvfs_oplock.c pvfs_wait.c pvfs_seek.c pvfs_ioctl.c pvfs_xattr.c pvfs_streams.c pvfs_notify.c pvfs_sys.c xattr_system.c xattr_tdb.c',
+	autoproto='vfs_posix_proto.h',
+	subsystem='ntvfs',
+	init_function='ntvfs_posix_init',
+	deps='NDR_XATTR wrap_xattr ntvfs_common MESSAGING LIBWBCLIENT_OLD pvfs_acl pvfs_aio',
+	internal_module=True
+	)
+
+
+bld.SAMBA_PYTHON('python_xattr_native',
+	source='python/pyxattr_native.c',
+	deps='ndr ldb samdb credentials pyparam_util wrap_xattr attr',
+	realname='samba/xattr_native.so'
+	)
+
+
+bld.SAMBA_PYTHON('python_xattr_tdb',
+	source='python/pyxattr_tdb.c xattr_tdb.c',
+	deps='ndr ldb pyparam_util share attr',
+	realname='samba/xattr_tdb.so'
+	)
+

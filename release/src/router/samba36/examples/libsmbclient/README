@@ -1,0 +1,17 @@
+Some simple example programs for libsmbclient ...
+
+testsmbc.c is kinda broken as it has many hardcoded bits in it
+
+testbrowse.c opens a remote folder and displays its contents
+
+teststat.c allows comparing the results of smbc_stat() against a local stat() of
+the same file.
+
+tree.c is an example of how you might do some of these things with GTK+
+It needs lots of work but shows you some ways to use libsmbclient.
+
+smbwrapper implements the old smbsh/smbwrapper mechanism using libsmbclient, in
+such a way that it works on Linux
+
+Richard Sharpe, 17 May 2001
+Derrell Lipman, 30 Mar 2005

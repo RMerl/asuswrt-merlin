@@ -1,0 +1,1942 @@
+/*
+  libnetapi interface definition
+*/
+
+cpp_quote("#define LIBNETAPI_LOCAL_SERVER(x) (!x || is_myname_or_ipaddr(x))")
+cpp_quote("#ifndef MAXSUBAUTHS")
+cpp_quote("#define MAXSUBAUTHS 15 /* max sub authorities in a SID */")
+cpp_quote("#endif")
+
+import "misc.idl";
+
+[
+	pointer_default(unique)
+]
+interface libnetapi
+{
+	const int ERROR_MORE_DATA = 234L;
+
+	[public] typedef [v1_enum] enum {
+		NERR_Success=0
+	} NET_API_STATUS;
+
+	[public] typedef struct {
+		uint8 sid_rev_num;
+		uint8 num_auths;
+		uint8 id_auth[6];
+		uint32 sub_auths[MAXSUBAUTHS];
+	} domsid;
+
+	/*******************************************/
+	/* NetJoinDomain                           */
+	/*******************************************/
+
+	typedef [public,bitmap32bit] bitmap {
+		NETSETUP_JOIN_DOMAIN			= 0x00000001,
+		NETSETUP_ACCT_CREATE			= 0x00000002,
+		NETSETUP_ACCT_DELETE			= 0x00000004,
+		NETSETUP_WIN9X_UPGRADE			= 0x00000010,
+		NETSETUP_DOMAIN_JOIN_IF_JOINED		= 0x00000020,
+		NETSETUP_JOIN_UNSECURE			= 0x00000040,
+		NETSETUP_MACHINE_PWD_PASSED		= 0x00000080,
+		NETSETUP_DEFER_SPN_SET			= 0x00000100,
+		NETSETUP_JOIN_DC_ACCOUNT		= 0x00000200,
+		NETSETUP_JOIN_WITH_NEW_NAME		= 0x00000400,
+		NETSETUP_INSTALL_INVOCATION		= 0x00040000,
+		NETSETUP_IGNORE_UNSUPPORTED_FLAGS	= 0x10000000
+	} NetJoinFlags;
+
+	[nopush,nopull] NET_API_STATUS NetJoinDomain(
+		[in,unique] string *server,
+		[in,ref] string *domain,
+		[in,unique] string *account_ou,
+		[in,unique] string *account,
+		[in,unique] string *password,
+		[in] NetJoinFlags join_flags
+		);
+
+	/*******************************************/
+	/* NetUnjoinDomain                         */
+	/*******************************************/
+
+	[nopush,nopull] NET_API_STATUS NetUnjoinDomain(
+		[in,unique] string *server_name,
+		[in,unique] string *account,
+		[in,unique] string *password,
+		[in] NetJoinFlags unjoin_flags
+		);
+
+	/*******************************************/
+	/* NetGetJoinInformation                   */
+	/*******************************************/
+
+	typedef enum {
+		NetSetupUnknownStatus = 0,
+		NetSetupUnjoined = 1,
+		NetSetupWorkgroupName = 2,
+		NetSetupDomainName = 3
+	} NETSETUP_JOIN_STATUS;
+
+	[nopush,nopull] NET_API_STATUS NetGetJoinInformation(
+		[in,unique] string *server_name,
+		[out] string **name_buffer,
+		[out] uint16 *name_type
+		);
+
+	/*******************************************/
+	/* NetGetJoinableOUs                       */
+	/*******************************************/
+
+	[nopush,nopull] NET_API_STATUS NetGetJoinableOUs(
+		[in,unique] string *server_name,
+		[in,ref] string *domain,
+		[in,unique] string *account,
+		[in,unique] string *password,
+		[out] uint32 *ou_count,
+		[out] string ***ous
+		);
+
+	/*******************************************/
+	/* NetRenameMachineInDomain                */
+	/*******************************************/
+
+	[nopush,nopull] NET_API_STATUS NetRenameMachineInDomain(
+		[in] string server_name,
+		[in] string new_machine_name,
+		[in] string account,
+		[in] string password,
+		[in] uint32 rename_options
+		);
+
+	/*******************************************/
+	/* NetServerGetInfo                        */
+	/*******************************************/
+
+	[public] typedef struct {
+		uint32 sv100_platform_id;
+		string sv100_name;
+	} SERVER_INFO_100;
+
+	[public] typedef struct {
+		uint32 sv101_platform_id;
+		string sv101_name;
+		uint32 sv101_version_major;
+		uint32 sv101_version_minor;
+		uint32 sv101_type;
+		string sv101_comment;
+	} SERVER_INFO_101;
+
+	[public] typedef struct {
+		uint32 sv102_platform_id;
+		string sv102_name;
+		uint32 sv102_version_major;
+		uint32 sv102_version_minor;
+		uint32 sv102_type;
+		string sv102_comment;
+		uint32 sv102_users;
+		uint32 sv102_disc;
+		boolean8 sv102_hidden;
+		uint32 sv102_announce;
+		uint32 sv102_anndelta;
+		uint32 sv102_licenses;
+		string sv102_userpath;
+	} SERVER_INFO_102;
+
+	[public] typedef struct {
+		uint32 sv402_ulist_mtime;
+		uint32 sv402_glist_mtime;
+		uint32 sv402_alist_mtime;
+		string sv402_alerts;
+		uint32 sv402_security;
+		uint32 sv402_numadmin;
+		uint32 sv402_lanmask;
+		string sv402_guestacct;
+		uint32 sv402_chdevs;
+		uint32 sv402_chdevq;
+		uint32 sv402_chdevjobs;
+		uint32 sv402_connections;
+		uint32 sv402_shares;
+		uint32 sv402_openfiles;
+		uint32 sv402_sessopens;
+		uint32 sv402_sessvcs;
+		uint32 sv402_sessreqs;
+		uint32 sv402_opensearch;
+		uint32 sv402_activelocks;
+		uint32 sv402_numreqbuf;
+		uint32 sv402_sizreqbuf;
+		uint32 sv402_numbigbuf;
+		uint32 sv402_numfiletasks;
+		uint32 sv402_alertsched;
+		uint32 sv402_erroralert;
+		uint32 sv402_logonalert;
+		uint32 sv402_accessalert;
+		uint32 sv402_diskalert;
+		uint32 sv402_netioalert;
+		uint32 sv402_maxauditsz;
+		string sv402_srvheuristics;
+	} SERVER_INFO_402;
+
+	[public] typedef struct {
+		uint32 sv403_ulist_mtime;
+		uint32 sv403_glist_mtime;
+		uint32 sv403_alist_mtime;
+		string sv403_alerts;
+		uint32 sv403_security;
+		uint32 sv403_numadmin;
+		uint32 sv403_lanmask;
+		string sv403_guestacct;
+		uint32 sv403_chdevs;
+		uint32 sv403_chdevq;
+		uint32 sv403_chdevjobs;
+		uint32 sv403_connections;
+		uint32 sv403_shares;
+		uint32 sv403_openfiles;
+		uint32 sv403_sessopens;
+		uint32 sv403_sessvcs;
+		uint32 sv403_sessreqs;
+		uint32 sv403_opensearch;
+		uint32 sv403_activelocks;
+		uint32 sv403_numreqbuf;
+		uint32 sv403_sizreqbuf;
+		uint32 sv403_numbigbuf;
+		uint32 sv403_numfiletasks;
+		uint32 sv403_alertsched;
+		uint32 sv403_erroralert;
+		uint32 sv403_logonalert;
+		uint32 sv403_accessalert;
+		uint32 sv403_diskalert;
+		uint32 sv403_netioalert;
+		uint32 sv403_maxauditsz;
+		string sv403_srvheuristics;
+		uint32 sv403_auditedevents;
+		uint32 sv403_autoprofile;
+		string sv403_autopath;
+	} SERVER_INFO_403;
+
+	[public] typedef struct {
+		uint32 sv502_sessopens;
+		uint32 sv502_sessvcs;
+		uint32 sv502_opensearch;
+		uint32 sv502_sizreqbuf;
+		uint32 sv502_initworkitems;
+		uint32 sv502_maxworkitems;
+		uint32 sv502_rawworkitems;
+		uint32 sv502_irpstacksize;
+		uint32 sv502_maxrawbuflen;
+		uint32 sv502_sessusers;
+		uint32 sv502_sessconns;
+		uint32 sv502_maxpagedmemoryusage;
+		uint32 sv502_maxnonpagedmemoryusage;
+		boolean8 sv502_enablesoftcompat;
+		boolean8 sv502_enableforcedlogoff;
+		boolean8 sv502_timesource;
+		boolean8 sv502_acceptdownlevelapis;
+		boolean8 sv502_lmannounce;
+	} SERVER_INFO_502;
+
+	[public] typedef struct {
+		uint32 sv503_sessopens;
+		uint32 sv503_sessvcs;
+		uint32 sv503_opensearch;
+		uint32 sv503_sizreqbuf;
+		uint32 sv503_initworkitems;
+		uint32 sv503_maxworkitems;
+		uint32 sv503_rawworkitems;
+		uint32 sv503_irpstacksize;
+		uint32 sv503_maxrawbuflen;
+		uint32 sv503_sessusers;
+		uint32 sv503_sessconns;
+		uint32 sv503_maxpagedmemoryusage;
+		uint32 sv503_maxnonpagedmemoryusage;
+		boolean8 sv503_enablesoftcompat;
+		boolean8 sv503_enableforcedlogoff;
+		boolean8 sv503_timesource;
+		boolean8 sv503_acceptdownlevelapis;
+		boolean8 sv503_lmannounce;
+		string sv503_domain;
+		uint32 sv503_maxcopyreadlen;
+		uint32 sv503_maxcopywritelen;
+		uint32 sv503_minkeepsearch;
+		uint32 sv503_maxkeepsearch;
+		uint32 sv503_minkeepcomplsearch;
+		uint32 sv503_maxkeepcomplsearch;
+		uint32 sv503_threadcountadd;
+		uint32 sv503_numblockthreads;
+		uint32 sv503_scavtimeout;
+		uint32 sv503_minrcvqueue;
+		uint32 sv503_minfreeworkitems;
+		uint32 sv503_xactmemsize;
+		uint32 sv503_threadpriority;
+		uint32 sv503_maxmpxct;
+		uint32 sv503_oplockbreakwait;
+		uint32 sv503_oplockbreakresponsewait;
+		boolean8 sv503_enableoplocks;
+		boolean8 sv503_enableoplockforceclose;
+		boolean8 sv503_enablefcbopens;
+		boolean8 sv503_enableraw;
+		boolean8 sv503_enablesharednetdrives;
+		uint32 sv503_minfreeconnections;
+		uint32 sv503_maxfreeconnections;
+	} SERVER_INFO_503;
+
+	[public] typedef struct {
+		uint32 sv599_sessopens;
+		uint32 sv599_sessvcs;
+		uint32 sv599_opensearch;
+		uint32 sv599_sizreqbuf;
+		uint32 sv599_initworkitems;
+		uint32 sv599_maxworkitems;
+		uint32 sv599_rawworkitems;
+		uint32 sv599_irpstacksize;
+		uint32 sv599_maxrawbuflen;
+		uint32 sv599_sessusers;
+		uint32 sv599_sessconns;
+		uint32 sv599_maxpagedmemoryusage;
+		uint32 sv599_maxnonpagedmemoryusage;
+		boolean8 sv599_enablesoftcompat;
+		boolean8 sv599_enableforcedlogoff;
+		boolean8 sv599_timesource;
+		boolean8 sv599_acceptdownlevelapis;
+		boolean8 sv599_lmannounce;
+		string sv599_domain;
+		uint32 sv599_maxcopyreadlen;
+		uint32 sv599_maxcopywritelen;
+		uint32 sv599_minkeepsearch;
+		uint32 sv599_maxkeepsearch;
+		uint32 sv599_minkeepcomplsearch;
+		uint32 sv599_maxkeepcomplsearch;
+		uint32 sv599_threadcountadd;
+		uint32 sv599_numblockthreads;
+		uint32 sv599_scavtimeout;
+		uint32 sv599_minrcvqueue;
+		uint32 sv599_minfreeworkitems;
+		uint32 sv599_xactmemsize;
+		uint32 sv599_threadpriority;
+		uint32 sv599_maxmpxct;
+		uint32 sv599_oplockbreakwait;
+		uint32 sv599_oplockbreakresponsewait;
+		boolean8 sv599_enableoplocks;
+		boolean8 sv599_enableoplockforceclose;
+		boolean8 sv599_enablefcbopens;
+		boolean8 sv599_enableraw;
+		boolean8 sv599_enablesharednetdrives;
+		uint32 sv599_minfreeconnections;
+		uint32 sv599_maxfreeconnections;
+		uint32 sv599_initsesstable;
+		uint32 sv599_initconntable;
+		uint32 sv599_initfiletable;
+		uint32 sv599_initsearchtable;
+		uint32 sv599_alertschedule;
+		uint32 sv599_errorthreshold;
+		uint32 sv599_networkerrorthreshold;
+		uint32 sv599_diskspacethreshold;
+		uint32 sv599_reserved;
+		uint32 sv599_maxlinkdelay;
+		uint32 sv599_minlinkthroughput;
+		uint32 sv599_linkinfovalidtime;
+		uint32 sv599_scavqosinfoupdatetime;
+		uint32 sv599_maxworkitemidletime;
+	} SERVER_INFO_599;
+
+	[public] typedef struct {
+		uint32 sv598_maxrawworkitems;
+		uint32 sv598_maxthreadsperqueue;
+		uint32 sv598_producttype;
+		uint32 sv598_serversize;
+		uint32 sv598_connectionlessautodisc;
+		uint32 sv598_sharingviolationretries;
+		uint32 sv598_sharingviolationdelay;
+		uint32 sv598_maxglobalopensearch;
+		uint32 sv598_removeduplicatesearches;
+		uint32 sv598_lockviolationoffset;
+		uint32 sv598_lockviolationdelay;
+		uint32 sv598_mdlreadswitchover;
+		uint32 sv598_cachedopenlimit;
+		uint32 sv598_otherqueueaffinity;
+		boolean8  sv598_restrictnullsessaccess;
+		boolean8  sv598_enablewfw311directipx;
+		uint32 sv598_queuesamplesecs;
+		uint32 sv598_balancecount;
+		uint32 sv598_preferredaffinity;
+		uint32 sv598_maxfreerfcbs;
+		uint32 sv598_maxfreemfcbs;
+		uint32 sv598_maxfreelfcbs;
+		uint32 sv598_maxfreepagedpoolchunks;
+		uint32 sv598_minpagedpoolchunksize;
+		uint32 sv598_maxpagedpoolchunksize;
+		boolean8 sv598_sendsfrompreferredprocessor;
+		uint32 sv598_cacheddirectorylimit;
+		uint32 sv598_maxcopylength;
+		boolean8 sv598_enablecompression;
+		boolean8 sv598_autosharewks;
+		boolean8 sv598_autoshareserver;
+		boolean8 sv598_enablesecuritysignature;
+		boolean8 sv598_requiresecuritysignature;
+		uint32 sv598_minclientbuffersize;
+		GUID sv598_serverguid;
+		uint32 sv598_ConnectionNoSessionsTimeout;
+		uint32 sv598_IdleThreadTimeOut;
+		boolean8 sv598_enableW9xsecuritysignature;
+		boolean8 sv598_enforcekerberosreauthentication;
+		boolean8 sv598_disabledos;
+		uint32 sv598_lowdiskspaceminimum;
+		boolean8 sv598_disablestrictnamechecking;
+	} SERVER_INFO_598;
+
+	[public] typedef struct {
+		string sv1005_comment;
+	} SERVER_INFO_1005;
+
+	[public] typedef struct {
+		uint32 sv1107_users;
+	} SERVER_INFO_1107;
+
+	[public] typedef struct {
+		int32 sv1010_disc;
+	} SERVER_INFO_1010;
+
+	[public] typedef struct {
+		boolean8  sv1016_hidden;
+	} SERVER_INFO_1016;
+
+	[public] typedef struct {
+		uint32 sv1017_announce;
+	} SERVER_INFO_1017;
+
+	[public] typedef struct {
+		uint32 sv1018_anndelta;
+	} SERVER_INFO_1018;
+
+	[public] typedef struct {
+		uint32 sv1501_sessopens;
+	} SERVER_INFO_1501;
+
+	[public] typedef struct {
+		uint32 sv1502_sessvcs;
+	} SERVER_INFO_1502;
+
+	[public] typedef struct {
+		uint32 sv1503_opensearch;
+	} SERVER_INFO_1503;
+
+	[public] typedef struct {
+		uint32 sv1506_maxworkitems;
+	} SERVER_INFO_1506;
+
+	[public] typedef struct {
+		uint32 sv1509_maxrawbuflen;
+	} SERVER_INFO_1509;
+
+	[public] typedef struct {
+		uint32 sv1510_sessusers;
+	} SERVER_INFO_1510;
+
+	[public] typedef struct {
+		uint32 sv1511_sessconns;
+	} SERVER_INFO_1511;
+
+	[public] typedef struct {
+		uint32 sv1512_maxnonpagedmemoryusage;
+	} SERVER_INFO_1512;
+
+	[public] typedef struct {
+		uint32 sv1513_maxpagedmemoryusage;
+	} SERVER_INFO_1513;
+
+	[public] typedef struct {
+		boolean8 sv1514_enablesoftcompat;
+	} SERVER_INFO_1514;
+
+	[public] typedef struct {
+		boolean8  sv1515_enableforcedlogoff;
+	} SERVER_INFO_1515;
+
+	[public] typedef struct {
+		boolean8  sv1516_timesource;
+	} SERVER_INFO_1516;
+
+	[public] typedef struct {
+		boolean8  sv1518_lmannounce;
+	} SERVER_INFO_1518;
+
+	[public] typedef struct {
+		uint32 sv1520_maxcopyreadlen;
+	} SERVER_INFO_1520;
+
+	[public] typedef struct {
+		uint32 sv1521_maxcopywritelen;
+	} SERVER_INFO_1521;
+
+	[public] typedef struct {
+		uint32 sv1522_minkeepsearch;
+	} SERVER_INFO_1522;
+
+	[public] typedef struct {
+		uint32 sv1523_maxkeepsearch;
+	} SERVER_INFO_1523;
+
+	[public] typedef struct {
+		uint32 sv1524_minkeepcomplsearch;
+	} SERVER_INFO_1524;
+
+	[public] typedef struct {
+		uint32 sv1525_maxkeepcomplsearch;
+	} SERVER_INFO_1525;
+
+	[public] typedef struct {
+		uint32 sv1528_scavtimeout;
+	} SERVER_INFO_1528;
+
+	[public] typedef struct {
+		uint32 sv1529_minrcvqueue;
+	} SERVER_INFO_1529;
+
+	[public] typedef struct {
+		uint32 sv1530_minfreeworkitems;
+	} SERVER_INFO_1530;
+
+	[public] typedef struct {
+		uint32 sv1533_maxmpxct;
+	} SERVER_INFO_1533;
+
+	[public] typedef struct {
+		uint32 sv1534_oplockbreakwait;
+	} SERVER_INFO_1534;
+
+	[public] typedef struct {
+		uint32 sv1535_oplockbreakresponsewait;
+	} SERVER_INFO_1535;
+
+	[public] typedef struct {
+		boolean8 sv1536_enableoplocks;
+	} SERVER_INFO_1536;
+
+	[public] typedef struct {
+		boolean8 sv1537_enableoplockforceclose;
+	} SERVER_INFO_1537;
+
+	[public] typedef struct {
+		boolean8 sv1538_enablefcbopens;
+	} SERVER_INFO_1538;
+
+	[public] typedef struct {
+		boolean8 sv1539_enableraw;
+	} SERVER_INFO_1539;
+
+	[public] typedef struct {
+		boolean8 sv1540_enablesharednetdrives;
+	} SERVER_INFO_1540;
+
+	[public] typedef struct {
+		boolean8 sv1541_minfreeconnections;
+	} SERVER_INFO_1541;
+
+	[public] typedef struct {
+		boolean8 sv1542_maxfreeconnections;
+	} SERVER_INFO_1542;
+
+	[public] typedef struct {
+		uint32 sv1543_initsesstable;
+	} SERVER_INFO_1543;
+
+	[public] typedef struct {
+		uint32 sv1544_initconntable;
+	} SERVER_INFO_1544;
+
+	[public] typedef struct {
+		uint32 sv1545_initfiletable;
+	} SERVER_INFO_1545;
+
+	[public] typedef struct {
+		uint32 sv1546_initsearchtable;
+	} SERVER_INFO_1546;
+
+	[public] typedef struct {
+		uint32 sv1547_alertschedule;
+	} SERVER_INFO_1547;
+
+	[public] typedef struct {
+		uint32 sv1548_errorthreshold;
+	} SERVER_INFO_1548;
+
+	[public] typedef struct {
+		uint32 sv1549_networkerrorthreshold;
+	} SERVER_INFO_1549;
+
+	[public] typedef struct {
+		uint32 sv1550_diskspacethreshold;
+	} SERVER_INFO_1550;
+
+	[public] typedef struct {
+		uint32 sv1552_maxlinkdelay;
+	} SERVER_INFO_1552;
+
+	[public] typedef struct {
+		uint32 sv1553_minlinkthroughput;
+	} SERVER_INFO_1553;
+
+	[public] typedef struct {
+		uint32 sv1554_linkinfovalidtime;
+	} SERVER_INFO_1554;
+
+	[public] typedef struct {
+		uint32 sv1555_scavqosinfoupdatetime;
+	} SERVER_INFO_1555;
+
+	[public] typedef struct {
+		uint32 sv1556_maxworkitemidletime;
+	} SERVER_INFO_1556;
+
+	[public] typedef struct {
+		uint32 sv1557_maxrawworkitems;
+	} SERVER_INFO_1557;
+
+	[public] typedef struct {
+		uint32 sv1560_producttype;
+	} SERVER_INFO_1560;
+
+	[public] typedef struct {
+		uint32 sv1561_serversize;
+	} SERVER_INFO_1561;
+
+	[public] typedef struct {
+		uint32 sv1562_connectionlessautodisc;
+	} SERVER_INFO_1562;
+
+	[public] typedef struct {
+		uint32 sv1563_sharingviolationretries;
+	} SERVER_INFO_1563;
+
+	[public] typedef struct {
+		uint32 sv1564_sharingviolationdelay;
+	} SERVER_INFO_1564;
+
+	[public] typedef struct {
+		uint32 sv1565_maxglobalopensearch;
+	} SERVER_INFO_1565;
+
+	[public] typedef struct {
+		boolean8 sv1566_removeduplicatesearches;
+	} SERVER_INFO_1566;
+
+	[public] typedef struct {
+		uint32 sv1567_lockviolationretries;
+	} SERVER_INFO_1567;
+
+	[public] typedef struct {
+		uint32 sv1568_lockviolationoffset;
+	} SERVER_INFO_1568;
+
+	[public] typedef struct {
+		uint32 sv1569_lockviolationdelay;
+	} SERVER_INFO_1569;
+
+	[public] typedef struct {
+		uint32 sv1570_mdlreadswitchover;
+	} SERVER_INFO_1570;
+
+	[public] typedef struct {
+		uint32 sv1571_cachedopenlimit;
+	} SERVER_INFO_1571;
+
+	[public] typedef struct {
+		uint32 sv1572_criticalthreads;
+	} SERVER_INFO_1572;
+
+	[public] typedef struct {
+		uint32 sv1573_restrictnullsessaccess;
+	} SERVER_INFO_1573;
+
+	[public] typedef struct {
+		uint32 sv1574_enablewfw311directipx;
+	} SERVER_INFO_1574;
+
+	[public] typedef struct {
+		uint32 sv1575_otherqueueaffinity;
+	} SERVER_INFO_1575;
+
+	[public] typedef struct {
+		uint32 sv1576_queuesamplesecs;
+	} SERVER_INFO_1576;
+
+	[public] typedef struct {
+		uint32 sv1577_balancecount;
+	} SERVER_INFO_1577;
+
+	[public] typedef struct {
+		uint32 sv1578_preferredaffinity;
+	} SERVER_INFO_1578;
+
+	[public] typedef struct {
+		uint32 sv1579_maxfreerfcbs;
+	} SERVER_INFO_1579;
+
+	[public] typedef struct {
+		uint32 sv1580_maxfreemfcbs;
+	} SERVER_INFO_1580;
+
+	[public] typedef struct {
+		uint32 sv1581_maxfreemlcbs;
+	} SERVER_INFO_1581;
+
+	[public] typedef struct {
+		uint32 sv1582_maxfreepagedpoolchunks;
+	} SERVER_INFO_1582;
+
+	[public] typedef struct {
+		uint32 sv1583_minpagedpoolchunksize;
+	} SERVER_INFO_1583;
+
+	[public] typedef struct {
+		uint32 sv1584_maxpagedpoolchunksize;
+	} SERVER_INFO_1584;
+
+	[public] typedef struct {
+		boolean8 sv1585_sendsfrompreferredprocessor;
+	} SERVER_INFO_1585;
+
+	[public] typedef struct {
+		uint32 sv1586_maxthreadsperqueue;
+	} SERVER_INFO_1586;
+
+	[public] typedef struct {
+		uint32 sv1587_cacheddirectorylimit;
+	} SERVER_INFO_1587;
+
+	[public] typedef struct {
+		uint32 sv1588_maxcopylength;
+	} SERVER_INFO_1588;
+
+	[public] typedef struct {
+		uint32 sv1590_enablecompression;
+	} SERVER_INFO_1590;
+
+	[public] typedef struct {
+		uint32 sv1591_autosharewks;
+	} SERVER_INFO_1591;
+
+	[public] typedef struct {
+		uint32 sv1592_autosharewks;
+	} SERVER_INFO_1592;
+
+	[public] typedef struct {
+		uint32 sv1593_enablesecuritysignature;
+	} SERVER_INFO_1593;
+
+	[public] typedef struct {
+		uint32 sv1594_requiresecuritysignature;
+	} SERVER_INFO_1594;
+
+	[public] typedef struct {
+		uint32 sv1595_minclientbuffersize;
+	} SERVER_INFO_1595;
+
+	[public] typedef struct {
+		uint32 sv1596_ConnectionNoSessionsTimeout;
+	} SERVER_INFO_1596;
+
+	[public] typedef struct {
+		uint32 sv1597_IdleThreadTimeOut;
+	} SERVER_INFO_1597;
+
+	[public] typedef struct {
+		uint32 sv1598_enableW9xsecuritysignature;
+	} SERVER_INFO_1598;
+
+	[public] typedef struct {
+		boolean8 sv1598_enforcekerberosreauthentication;
+	} SERVER_INFO_1599;
+
+	[public] typedef struct {
+		boolean8 sv1598_disabledos;
+	} SERVER_INFO_1600;
+
+	[public] typedef struct {
+		uint32 sv1598_lowdiskspaceminimum;
+	} SERVER_INFO_1601;
+
+	[public] typedef struct {
+		boolean8 sv_1598_disablestrictnamechecking;
+	} SERVER_INFO_1602;
+
+	[nopush,nopull] NET_API_STATUS NetServerGetInfo(
+		[in,unique] string *server_name,
+		[in] uint32 level,
+		[out] uint8 **buffer
+		);
+
+	/*******************************************/
+	/* NetServerSetInfo                        */
+	/*******************************************/
+
+	[nopush,nopull] NET_API_STATUS NetServerSetInfo(
+		[in,unique] string *server_name,
+		[in] uint32 level,
+		[in] uint8 *buffer,
+		[out] uint32 *parm_error
+		);
+
+	/*******************************************/
+	/* NetGetDCName                            */
+	/*******************************************/
+
+	[nopush,nopull] NET_API_STATUS NetGetDCName(
+		[in,unique] string *server_name,
+		[in,unique] string *domain_name,
+		[out] uint8 **buffer
+		);
+
+	/*******************************************/
+	/* NetGetAnyDCName                         */
+	/*******************************************/
+
+	[nopush,nopull] NET_API_STATUS NetGetAnyDCName(
+		[in,unique] string *server_name,
+		[in,unique] string *domain_name,
+		[out] uint8 **buffer
+		);
+
+	/*******************************************/
+	/* DsGetDcName                             */
+	/*******************************************/
+
+	[public] typedef [v1_enum] enum {
+		DS_PDC_FLAG			= 0x00000001,
+		DS_GC_FLAG			= 0x00000004,
+		DS_LDAP_FLAG			= 0x00000008,
+		DS_DS_FLAG			= 0x00000010,
+		DS_KDC_FLAG			= 0x00000020,
+		DS_TIMESERV_FLAG		= 0x00000040,
+		DS_CLOSEST_FLAG			= 0x00000080,
+		DS_WRITABLE_FLAG		= 0x00000100,
+		DS_GOOD_TIMESERV_FLAG		= 0x00000200,
+		DS_NDNC_FLAG			= 0x00000400,
+		DS_SELECT_SECRET_DOMAIN_6_FLAG	= 0x00000800,
+		DS_FULL_SECRET_DOMAIN_6_FLAG	= 0x00001000,
+		DS_DNS_CONTROLLER_FLAG		= 0x20000000,
+		DS_DNS_DOMAIN_FLAG		= 0x40000000,
+		DS_DNS_FOREST_FLAG		= 0x80000000
+	} DOMAIN_CONTROLLER_INFO_FLAGS;
+
+	[public] typedef struct {
+		string domain_controller_name;
+		string domain_controller_address;
+		uint32 domain_controller_address_type;
+		GUID domain_guid;
+		string domain_name;
+		string dns_forest_name;
+		DOMAIN_CONTROLLER_INFO_FLAGS flags;
+		string dc_site_name;
+		string client_site_name;
+	} DOMAIN_CONTROLLER_INFO;
+
+	[nopush,nopull] NET_API_STATUS DsGetDcName(
+		[in,unique] string *server_name,
+		[in,ref] string *domain_name,
+		[in,unique] GUID *domain_guid,
+		[in,unique] string *site_name,
+		[in] uint32 flags,
+		[out,ref] DOMAIN_CONTROLLER_INFO **dc_info
+		);
+
+	/*******************************************/
+	/* NetUserAdd                              */
+	/*******************************************/
+
+	[public] typedef struct {
+		string usri0_name;
+	} USER_INFO_0;
+
+	/* priv */
+	const int USER_PRIV_GUEST	= 0;
+	const int USER_PRIV_USER	= 1;
+	const int USER_PRIV_ADMIN	= 2;
+
+	[public] typedef struct {
+		string usri1_name;
+		string usri1_password;
+		uint32 usri1_password_age;
+		uint32 usri1_priv;
+		string usri1_home_dir;
+		string usri1_comment;
+		uint32 usri1_flags;
+		string usri1_script_path;
+	} USER_INFO_1;
+
+	/* auth_flags in USER_INFO_2 */
+
+	const int AF_OP_PRINT		= 0x1;
+	const int AF_OP_COMM		= 0x2;
+	const int AF_OP_SERVER		= 0x4;
+	const int AF_OP_ACCOUNTS	= 0x8;
+	const int AF_SETTABLE_BITS	= (AF_OP_PRINT | AF_OP_COMM | AF_OP_SERVER | AF_OP_ACCOUNTS);
+
+	const int USER_MAXSTORAGE_UNLIMITED = (uint32_t)-1L;
+
+	[public] typedef struct {
+		string usri2_name;
+		string usri2_password;
+		uint32 usri2_password_age;
+		uint32 usri2_priv;
+		string usri2_home_dir;
+		string usri2_comment;
+		uint32 usri2_flags;
+		string usri2_script_path;
+		uint32 usri2_auth_flags;
+		string usri2_full_name;
+		string usri2_usr_comment;
+		string usri2_parms;
+		string usri2_workstations;
+		uint32 usri2_last_logon;
+		uint32 usri2_last_logoff;
+		uint32 usri2_acct_expires;
+		uint32 usri2_max_storage;
+		uint32 usri2_units_per_week;
+		uint8 *usri2_logon_hours;
+		uint32 usri2_bad_pw_count;
+		uint32 usri2_num_logons;
+		string usri2_logon_server;
+		uint32 usri2_country_code;
+		uint32 usri2_code_page;
+	} USER_INFO_2;
+
+	[public] typedef struct {
+		string usri3_name;
+		uint32 usri3_password_age;
+		uint32 usri3_priv;
+		string usri3_home_dir;
+		string usri3_comment;
+		uint32 usri3_flags;
+		string usri3_script_path;
+		uint32 usri3_auth_flags;
+		string usri3_full_name;
+		string usri3_usr_comment;
+		string usri3_parms;
+		string usri3_workstations;
+		uint32 usri3_last_logon;
+		uint32 usri3_last_logoff;
+		uint32 usri3_acct_expires;
+		uint32 usri3_max_storage;
+		uint32 usri3_units_per_week;
+		uint8 *usri3_logon_hours;
+		uint32 usri3_bad_pw_count;
+		uint32 usri3_num_logons;
+		string usri3_logon_server;
+		uint32 usri3_country_code;
+		uint32 usri3_code_page;
+		uint32 usri3_user_id;
+		uint32 usri3_primary_group_id;
+		string usri3_profile;
+		string usri3_home_dir_drive;
+		uint32 usri3_password_expired;
+	} USER_INFO_3;
+
+	[public] typedef struct {
+		string usri4_name;
+		string usri4_password;
+		uint32 usri4_password_age;
+		uint32 usri4_priv;
+		string usri4_home_dir;
+		string usri4_comment;
+		uint32 usri4_flags;
+		string usri4_script_path;
+		uint32 usri4_auth_flags;
+		string usri4_full_name;
+		string usri4_usr_comment;
+		string usri4_parms;
+		string usri4_workstations;
+		uint32 usri4_last_logon;
+		uint32 usri4_last_logoff;
+		uint32 usri4_acct_expires;
+		uint32 usri4_max_storage;
+		uint32 usri4_units_per_week;
+		uint8 *usri4_logon_hours;
+		uint32 usri4_bad_pw_count;
+		uint32 usri4_num_logons;
+		string usri4_logon_server;
+		uint32 usri4_country_code;
+		uint32 usri4_code_page;
+		domsid *usri4_user_sid;
+		uint32 usri4_primary_group_id;
+		string usri4_profile;
+		string usri4_home_dir_drive;
+		uint32 usri4_password_expired;
+	} USER_INFO_4;
+
+	[public] typedef struct {
+		string usri10_name;
+		string usri10_comment;
+		string usri10_usr_comment;
+		string usri10_full_name;
+	} USER_INFO_10;
+
+	[public] typedef struct {
+		string usri11_name;
+		string usri11_comment;
+		string usri11_usr_comment;
+		string usri11_full_name;
+		uint32 usri11_priv;
+		uint32 usri11_auth_flags;
+		uint32 usri11_password_age;
+		string usri11_home_dir;
+		string usri11_parms;
+		uint32 usri11_last_logon;
+		uint32 usri11_last_logoff;
+		uint32 usri11_bad_pw_count;
+		uint32 usri11_num_logons;
+		string usri11_logon_server;
+		uint32 usri11_country_code;
+		string usri11_workstations;
+		uint32 usri11_max_storage;
+		uint32 usri11_units_per_week;
+		uint8 *usri11_logon_hours;
+		uint32 usri11_code_page;
+	} USER_INFO_11;
+
+	[public] typedef struct {
+		string usri20_name;
+		string usri20_full_name;
+		string usri20_comment;
+		uint32 usri20_flags;
+		uint32 usri20_user_id;
+	} USER_INFO_20;
+
+	const int ENCRYPTED_PWLEN = 16;
+
+	[public] typedef struct {
+		uint8 usri21_password[ENCRYPTED_PWLEN];
+	} USER_INFO_21;
+
+	[public] typedef struct {
+		string usri22_name;
+		uint8 usri22_password[ENCRYPTED_PWLEN];
+		uint32 usri22_password_age;
+		uint32 usri22_priv;
+		string usri22_home_dir;
+		string usri22_comment;
+		uint32 usri22_flags;
+		uint32 usri22_script_path;
+		uint32 usri22_auth_flags;
+		string usri22_full_name;
+		string usri22_usr_comment;
+		string usri22_parms;
+		string usri22_workstations;
+		uint32 usri22_last_logon;
+		uint32 usri22_last_logoff;
+		uint32 usri22_acct_expires;
+		uint32 usri22_max_storage;
+		uint32 usri22_units_per_week;
+		uint8 *usri22_logon_hours;
+		uint32 usri22_bad_pw_count;
+		uint32 usri22_num_logons;
+		string usri22_logon_server;
+		uint32 usri22_country_code;
+		uint32 usri22_code_page;
+	} USER_INFO_22;
+
+	[public] typedef struct {
+		string usri23_name;
+		string usri23_full_name;
+		string usri23_comment;
+		uint32 usri23_flags;
+		domsid *usri23_user_sid;
+	} USER_INFO_23;
+
+	[public] typedef struct {
+		string usri1003_password;
+	} USER_INFO_1003;
+
+	[public] typedef struct {
+		uint32 usri1005_priv;
+	} USER_INFO_1005;
+
+	[public] typedef struct {
+		string usri1006_home_dir;
+	} USER_INFO_1006;
+
+	[public] typedef struct {
+		string usri1007_comment;
+	} USER_INFO_1007;
+
+	[public] typedef struct {
+		uint32 usri1008_flags;
+	} USER_INFO_1008;
+
+	[public] typedef struct {
+		string usri1009_script_path;
+	} USER_INFO_1009;
+
+	[public] typedef struct {
+		uint32 usri1010_auth_flags;
+	} USER_INFO_1010;
+
+	[public] typedef struct {
+		string usri1011_full_name;
+	} USER_INFO_1011;
+
+	[public] typedef struct {
+		string usri1012_usr_comment;
+	} USER_INFO_1012;
+
+	[public] typedef struct {
+		string usri1013_parms;
+	} USER_INFO_1013;
+
+	[public] typedef struct {
+		string usri1014_workstations;
+	} USER_INFO_1014;
+
+	[public] typedef struct {
+		uint32 usri1017_acct_expires;
+	} USER_INFO_1017;
+
+	[public] typedef struct {
+		uint32 usri1018_max_storage;
+	} USER_INFO_1018;
+
+	[public] typedef struct {
+		uint32 usri1020_units_per_week;
+		uint8 *usri1020_logon_hours;
+	} USER_INFO_1020;
+
+	[public] typedef struct {
+		string usri1023_logon_server;
+	} USER_INFO_1023;
+
+	[public] typedef struct {
+		uint32 usri1024_country_code;
+	} USER_INFO_1024;
+
+	[public] typedef struct {
+		uint32 usri1025_code_page;
+	} USER_INFO_1025;
+
+	[public] typedef struct {
+		uint32 usri1051_primary_group_id;
+	} USER_INFO_1051;
+
+	[public] typedef struct {
+		string usri1052_profile;
+	} USER_INFO_1052;
+
+	[public] typedef struct {
+		string usri1053_home_dir_drive;
+	} USER_INFO_1053;
+
+	[public] typedef struct {
+		string usriX_name;
+		string usriX_password;
+		uint32 usriX_password_age;
+		uint32 usriX_priv;
+		string usriX_home_dir;
+		string usriX_comment;
+		uint32 usriX_flags;
+		string usriX_script_path;
+		uint32 usriX_auth_flags;
+		string usriX_full_name;
+		string usriX_usr_comment;
+		string usriX_parms;
+		string usriX_workstations;
+		uint32 usriX_last_logon;
+		uint32 usriX_last_logoff;
+		uint32 usriX_acct_expires;
+		uint32 usriX_max_storage;
+		uint32 usriX_units_per_week;
+		uint8 *usriX_logon_hours;
+		uint32 usriX_bad_pw_count;
+		uint32 usriX_num_logons;
+		string usriX_logon_server;
+		uint32 usriX_country_code;
+		uint32 usriX_code_page;
+		string usriX_profile;
+		string usriX_home_dir_drive;
+		uint32 usriX_user_id;
+		uint32 usriX_primary_group_id;
+		uint32 usriX_password_expired;
+	} USER_INFO_X;
+
+	[nopush,nopull] NET_API_STATUS NetUserAdd(
+		[in,unique] string *server_name,
+		[in] uint32 level,
+		[in,ref] uint8 *buffer,
+		[out,ref] uint32 *parm_error
+		);
+
+	/*******************************************/
+	/* NetUserDel                              */
+	/*******************************************/
+
+	[nopush,nopull] NET_API_STATUS NetUserDel(
+		[in,unique] string *server_name,
+		[in,ref] string *user_name
+		);
+
+	/*******************************************/
+	/* NetUserEnum                             */
+	/*******************************************/
+
+	const int FILTER_TEMP_DUPLICATE_ACCOUNT = 0x0001;
+	const int FILTER_NORMAL_ACCOUNT = 0x0002;
+	const int FILTER_INTERDOMAIN_TRUST_ACCOUNT = 0x0008;
+	const int FILTER_WORKSTATION_TRUST_ACCOUNT = 0x0010;
+	const int FILTER_SERVER_TRUST_ACCOUNT = 0x0020;
+
+	[nopush,nopull] NET_API_STATUS NetUserEnum(
+		[in,unique] string *server_name,
+		[in] uint32 level,
+		[in] uint32 filter,
+		[out,ref] uint8 **buffer,
+		[in] uint32 prefmaxlen,
+		[out,ref] uint32 *entries_read,
+		[out,ref] uint32 *total_entries,
+		[in,out,ref] uint32 *resume_handle
+		);
+
+	/*******************************************/
+	/* NetUserChangePassword                   */
+	/*******************************************/
+
+	[nopush,nopull] NET_API_STATUS NetUserChangePassword(
+		[in] string domain_name,
+		[in] string user_name,
+		[in] string old_password,
+		[in] string new_password
+		);
+
+	/*******************************************/
+	/* NetUserGetInfo                          */
+	/*******************************************/
+
+	[nopush,nopull] NET_API_STATUS NetUserGetInfo(
+		[in] string server_name,
+		[in] string user_name,
+		[in] uint32 level,
+		[out] uint8 **buffer
+		);
+
+	/*******************************************/
+	/* NetUserSetInfo                          */
+	/*******************************************/
+
+	[nopush,nopull] NET_API_STATUS NetUserSetInfo(
+		[in] string server_name,
+		[in] string user_name,
+		[in] uint32 level,
+		[in] uint8 *buffer,
+		[out] uint32 *parm_err
+		);
+
+	/*******************************************/
+	/* NetUserGetGroups                        */
+	/*******************************************/
+
+	[public] typedef struct {
+		string grui0_name;
+	} GROUP_USERS_INFO_0;
+
+	[public] typedef struct {
+		string grui1_name;
+		uint32 grui1_attributes;
+	} GROUP_USERS_INFO_1;
+
+	[nopush,nopull] NET_API_STATUS NetUserGetGroups(
+		[in] string server_name,
+		[in] string user_name,
+		[in] uint32 level,
+		[out] uint8 **buffer,
+		[in] uint32 prefmaxlen,
+		[out,ref] uint32 *entries_read,
+		[out,ref] uint32 *total_entries
+		);
+
+	/*******************************************/
+	/* NetUserSetGroups                        */
+	/*******************************************/
+
+	[nopush,nopull] NET_API_STATUS NetUserSetGroups(
+		[in] string server_name,
+		[in] string user_name,
+		[in] uint32 level,
+		[in] uint8 *buffer,
+		[in] uint32 num_entries
+		);
+
+	/*******************************************/
+	/* NetUserGetLocalGroups                   */
+	/*******************************************/
+
+	const int LG_INCLUDE_INDIRECT = 0x0001;
+
+	typedef struct {
+		string lgrui0_name;
+	} LOCALGROUP_USERS_INFO_0;
+
+	[nopush,nopull] NET_API_STATUS NetUserGetLocalGroups(
+		[in] string server_name,
+		[in] string user_name,
+		[in] uint32 level,
+		[in] uint32 flags,
+		[out] uint8 **buffer,
+		[in] uint32 prefmaxlen,
+		[out,ref] uint32 *entries_read,
+		[out,ref] uint32 *total_entries
+		);
+
+	/*******************************************/
+	/* NetUserModalsGet                        */
+	/*******************************************/
+
+	const int TIMEQ_FOREVER = (uint32_t)-1L;
+
+	typedef struct {
+		uint32 usrmod0_min_passwd_len;
+		uint32 usrmod0_max_passwd_age;
+		uint32 usrmod0_min_passwd_age;
+		uint32 usrmod0_force_logoff;
+		uint32 usrmod0_password_hist_len;
+	} USER_MODALS_INFO_0;
+
+	typedef struct {
+		uint32 usrmod1_role;
+		string usrmod1_primary;
+	} USER_MODALS_INFO_1;
+
+	typedef struct {
+		string usrmod2_domain_name;
+		domsid *usrmod2_domain_id;
+	} USER_MODALS_INFO_2;
+
+	typedef struct {
+		uint32 usrmod3_lockout_duration;
+		uint32 usrmod3_lockout_observation_window;
+		uint32 usrmod3_lockout_threshold;
+	} USER_MODALS_INFO_3;
+
+	typedef struct {
+		uint32 usrmod1001_min_passwd_len;
+	} USER_MODALS_INFO_1001;
+
+	typedef struct {
+		uint32 usrmod1002_max_passwd_age;
+	} USER_MODALS_INFO_1002;
+
+	typedef struct {
+		uint32 usrmod1003_min_passwd_age;
+	} USER_MODALS_INFO_1003;
+
+	typedef struct {
+		uint32 usrmod1004_force_logoff;
+	} USER_MODALS_INFO_1004;
+
+	typedef struct {
+		uint32 usrmod1005_password_hist_len;
+	} USER_MODALS_INFO_1005;
+
+	typedef struct {
+		uint32 usrmod1006_role;
+	} USER_MODALS_INFO_1006;
+
+	typedef struct {
+		string usrmod1007_primary;
+	} USER_MODALS_INFO_1007;
+
+	[nopush,nopull] NET_API_STATUS NetUserModalsGet(
+		[in] string server_name,
+		[in] uint32 level,
+		[out,ref] uint8 **buffer
+		);
+
+	/*******************************************/
+	/* NetUserModalsSet                        */
+	/*******************************************/
+
+	[nopush,nopull] NET_API_STATUS NetUserModalsSet(
+		[in] string server_name,
+		[in] uint32 level,
+		[in] uint8 *buffer,
+		[out,ref] uint32 *parm_err
+		);
+
+	/*******************************************/
+	/* NetQueryDisplayInformation              */
+	/*******************************************/
+
+	[public] typedef struct {
+		string usri1_name;
+		string usri1_comment;
+		uint32 usri1_flags;
+		string usri1_full_name;
+		uint32 usri1_user_id;
+		uint32 usri1_next_index;
+	} NET_DISPLAY_USER;
+
+	[public] typedef struct {
+		string usri2_name;
+		string usri2_comment;
+		uint32 usri2_flags;
+		uint32 usri2_user_id;
+		uint32 usri2_next_index;
+	} NET_DISPLAY_MACHINE;
+
+	[public] typedef struct {
+		string grpi3_name;
+		string grpi3_comment;
+		uint32 grpi3_group_id;
+		uint32 grpi3_attributes;
+		uint32 grpi3_next_index;
+	} NET_DISPLAY_GROUP;
+
+	[nopush,nopull] NET_API_STATUS NetQueryDisplayInformation(
+		[in,unique] string *server_name,
+		[in] uint32 level,
+		[in] uint32 idx,
+		[in] uint32 entries_requested,
+		[in] uint32 prefmaxlen,
+		[out,ref] uint32 *entries_read,
+		[out,ref,noprint] void **buffer
+		);
+
+	/*******************************************/
+	/* NetGroupAdd                             */
+	/*******************************************/
+
+	typedef struct {
+		string grpi0_name;
+	} GROUP_INFO_0;
+
+	typedef struct {
+		string grpi1_name;
+		string grpi1_comment;
+	} GROUP_INFO_1;
+
+	typedef struct {
+		string grpi2_name;
+		string grpi2_comment;
+		uint32 grpi2_group_id;
+		uint32 grpi2_attributes;
+	} GROUP_INFO_2;
+
+	typedef struct {
+		string grpi3_name;
+		string grpi3_comment;
+		domsid *grpi3_group_sid;
+		uint32 grpi3_attributes;
+	} GROUP_INFO_3;
+
+	typedef struct {
+		string grpi1002_comment;
+	} GROUP_INFO_1002;
+
+	typedef struct {
+		uint32 grpi1005_attributes;
+	} GROUP_INFO_1005;
+
+	[nopush,nopull] NET_API_STATUS NetGroupAdd(
+		[in] string server_name,
+		[in] uint32 level,
+		[in] uint8 *buffer,
+		[out] uint32 *parm_err
+		);
+
+	/*******************************************/
+	/* NetGroupDel                             */
+	/*******************************************/
+
+	[nopush,nopull] NET_API_STATUS NetGroupDel(
+		[in] string server_name,
+		[in] string group_name
+		);
+
+	/*******************************************/
+	/* NetGroupEnum                            */
+	/*******************************************/
+
+	[nopush,nopull] NET_API_STATUS NetGroupEnum(
+		[in] string server_name,
+		[in] uint32 level,
+		[out,ref] uint8 **buffer,
+		[in] uint32 prefmaxlen,
+		[out,ref] uint32 *entries_read,
+		[out,ref] uint32 *total_entries,
+		[in,out,ref] uint32 *resume_handle
+		);
+
+	/*******************************************/
+	/* NetGroupSetInfo                         */
+	/*******************************************/
+
+	[nopush,nopull] NET_API_STATUS NetGroupSetInfo(
+		[in] string server_name,
+		[in] string group_name,
+		[in] uint32 level,
+		[in] uint8 *buffer,
+		[out] uint32 *parm_err
+		);
+
+	/*******************************************/
+	/* NetGroupGetInfo                         */
+	/*******************************************/
+
+	[nopush,nopull] NET_API_STATUS NetGroupGetInfo(
+		[in] string server_name,
+		[in] string group_name,
+		[in] uint32 level,
+		[out] uint8 **buffer
+		);
+
+	/*******************************************/
+	/* NetGroupAddUser                         */
+	/*******************************************/
+
+	[nopush,nopull] NET_API_STATUS NetGroupAddUser(
+		[in] string server_name,
+		[in] string group_name,
+		[in] string user_name
+		);
+
+	/*******************************************/
+	/* NetGroupDelUser                         */
+	/*******************************************/
+
+	[nopush,nopull] NET_API_STATUS NetGroupDelUser(
+		[in] string server_name,
+		[in] string group_name,
+		[in] string user_name
+		);
+
+	/*******************************************/
+	/* NetGroupGetUsers                        */
+	/*******************************************/
+
+	[nopush,nopull] NET_API_STATUS NetGroupGetUsers(
+		[in] string server_name,
+		[in] string group_name,
+		[in] uint32 level,
+		[out] uint8 **buffer,
+		[in] uint32 prefmaxlen,
+		[out,ref] uint32 *entries_read,
+		[out,ref] uint32 *total_entries,
+		[in,out,ref] uint32 *resume_handle
+		);
+
+	/*******************************************/
+	/* NetGroupSetUsers                        */
+	/*******************************************/
+
+	[nopush,nopull] NET_API_STATUS NetGroupSetUsers(
+		[in] string server_name,
+		[in] string group_name,
+		[in] uint32 level,
+		[in] uint8 *buffer,
+		[in] uint32 num_entries
+		);
+
+	/*******************************************/
+	/* NetLocalGroupAdd                        */
+	/*******************************************/
+
+	typedef struct {
+		string lgrpi0_name;
+	} LOCALGROUP_INFO_0;
+
+	typedef struct {
+		string lgrpi1_name;
+		string lgrpi1_comment;
+	} LOCALGROUP_INFO_1;
+
+	typedef struct {
+		string lgrpi1002_comment;
+	} LOCALGROUP_INFO_1002;
+
+	[nopush,nopull] NET_API_STATUS NetLocalGroupAdd(
+		[in] string server_name,
+		[in] uint32 level,
+		[in] uint8 *buffer,
+		[out,ref] uint32 *parm_err
+		);
+
+	/*******************************************/
+	/* NetLocalGroupDel                        */
+	/*******************************************/
+
+	[nopush,nopull] NET_API_STATUS NetLocalGroupDel(
+		[in] string server_name,
+		[in] string group_name
+		);
+
+	/*******************************************/
+	/* NetLocalGroupGetInfo                    */
+	/*******************************************/
+
+	[nopush,nopull] NET_API_STATUS NetLocalGroupGetInfo(
+		[in] string server_name,
+		[in] string group_name,
+		[in] uint32 level,
+		[out,ref] uint8 **buffer
+		);
+
+	/*******************************************/
+	/* NetLocalGroupSetInfo                    */
+	/*******************************************/
+
+	[nopush,nopull] NET_API_STATUS NetLocalGroupSetInfo(
+		[in] string server_name,
+		[in] string group_name,
+		[in] uint32 level,
+		[in,ref] uint8 *buffer,
+		[out,ref] uint32 *parm_err
+		);
+
+	/*******************************************/
+	/* NetLocalGroupEnum                       */
+	/*******************************************/
+
+	[nopush,nopull] NET_API_STATUS NetLocalGroupEnum(
+		[in] string server_name,
+		[in] uint32 level,
+		[out,ref] uint8 **buffer,
+		[in] uint32 prefmaxlen,
+		[out,ref] uint32 *entries_read,
+		[out,ref] uint32 *total_entries,
+		[in,out,ref] uint32 *resume_handle
+		);
+
+	/*******************************************/
+	/* NetLocalGroupAddMembers                 */
+	/*******************************************/
+
+	typedef enum {
+		SidTypeUser		= 1,
+		SidTypeGroup		= 2,
+		SidTypeDomain		= 3,
+		SidTypeAlias		= 4,
+		SidTypeWellKnownGroup	= 5,
+		SidTypeDeletedAccount	= 6,
+		SidTypeInvalid		= 7,
+		SidTypeUnknown		= 8,
+		SidTypeComputer		= 9,
+		SidTypeLabel		= 10
+	} SID_NAME_USE;
+
+	typedef struct {
+		domsid *lgrmi0_sid;
+	} LOCALGROUP_MEMBERS_INFO_0;
+
+	typedef struct {
+		domsid *lgrmi1_sid;
+		SID_NAME_USE lgrmi1_sidusage;
+		string lgrmi1_name;
+	} LOCALGROUP_MEMBERS_INFO_1;
+
+	typedef struct {
+		domsid *lgrmi2_sid;
+		SID_NAME_USE lgrmi2_sidusage;
+		string lgrmi2_domainandname;
+	} LOCALGROUP_MEMBERS_INFO_2;
+
+	typedef struct {
+		string lgrmi3_domainandname;
+	} LOCALGROUP_MEMBERS_INFO_3;
+
+	[nopush,nopull] NET_API_STATUS NetLocalGroupAddMembers(
+		[in] string server_name,
+		[in] string group_name,
+		[in] uint32 level,
+		[in] uint8 *buffer,
+		[in] uint32 total_entries
+		);
+
+	/*******************************************/
+	/* NetLocalGroupDelMembers                 */
+	/*******************************************/
+
+	[nopush,nopull] NET_API_STATUS NetLocalGroupDelMembers(
+		[in] string server_name,
+		[in] string group_name,
+		[in] uint32 level,
+		[in] uint8 *buffer,
+		[in] uint32 total_entries
+		);
+
+	/*******************************************/
+	/* NetLocalGroupGetMembers                 */
+	/*******************************************/
+
+	[nopush,nopull] NET_API_STATUS NetLocalGroupGetMembers(
+		[in] string server_name,
+		[in] string local_group_name,
+		[in] uint32 level,
+		[out] uint8 **buffer,
+		[in] uint32 prefmaxlen,
+		[out] uint32 *entries_read,
+		[out] uint32 *total_entries,
+		[in,out] uint32 *resume_handle
+		);
+
+	/*******************************************/
+	/* NetLocalGroupSetMembers                 */
+	/*******************************************/
+
+	[nopush,nopull] NET_API_STATUS NetLocalGroupSetMembers(
+		[in] string server_name,
+		[in] string group_name,
+		[in] uint32 level,
+		[in] uint8 *buffer,
+		[in] uint32 total_entries
+		);
+
+	/*******************************************/
+	/* NetRemoteTOD                            */
+	/*******************************************/
+
+	typedef struct {
+		uint32 tod_elapsedt;
+		uint32 tod_msecs;
+		uint32 tod_hours;
+		uint32 tod_mins;
+		uint32 tod_secs;
+		uint32 tod_hunds;
+		int32 tod_timezone;
+		uint32 tod_tinterval;
+		uint32 tod_day;
+		uint32 tod_month;
+		uint32 tod_year;
+		uint32 tod_weekday;
+	} TIME_OF_DAY_INFO;
+
+	[nopush,nopull] NET_API_STATUS NetRemoteTOD(
+		[in] string server_name,
+		[out,ref] uint8 **buffer
+		);
+
+	/*******************************************/
+	/* NetShareAdd                             */
+	/*******************************************/
+
+	typedef struct {
+		string shi0_netname;
+	} SHARE_INFO_0;
+
+	typedef struct {
+		string shi1_netname;
+		uint32 shi1_type;
+		string shi1_remark;
+	} SHARE_INFO_1;
+
+	typedef struct {
+		string shi2_netname;
+		uint32 shi2_type;
+		string shi2_remark;
+		uint32 shi2_permissions;
+		uint32 shi2_max_uses;
+		uint32 shi2_current_uses;
+		string shi2_path;
+		string shi2_passwd;
+	} SHARE_INFO_2;
+
+	typedef struct {
+		string shi501_netname;
+		uint32 shi501_type;
+		string shi501_remark;
+		uint32 shi501_flags;
+	} SHARE_INFO_501;
+
+	typedef struct {
+		string shi1004_remark;
+	} SHARE_INFO_1004;
+
+	const int CSC_MASK = 0x30;
+
+	typedef [public,bitmap32bit] bitmap {
+		SHI1005_FLAGS_DFS				= 0x01,
+		SHI1005_FLAGS_DFS_ROOT				= 0x02,
+		CSC_CACHE_MANUAL_REINT				= 0x00,
+		CSC_CACHE_AUTO_REINT				= 0x10,
+		CSC_CACHE_VDO					= 0x20,
+		CSC_CACHE_NONE					= 0x30,
+		SHI1005_FLAGS_RESTRICT_EXCLUSIVE_OPENS		= 0x0100,
+		SHI1005_FLAGS_FORCE_SHARED_DELETE		= 0x0200,
+		SHI1005_FLAGS_ALLOW_NAMESPACE_CACHING		= 0x0400,
+		SHI1005_FLAGS_ACCESS_BASED_DIRECTORY_ENUM	= 0x0800
+	} SHARE_INFO_1005_FLAGS;
+
+	typedef struct {
+		SHARE_INFO_1005_FLAGS shi1005_flags;
+	} SHARE_INFO_1005;
+
+	typedef struct {
+		uint32 shi1006_max_uses;
+	} SHARE_INFO_1006;
+
+	[nopush,nopull] NET_API_STATUS NetShareAdd(
+		[in] string server_name,
+		[in] uint32 level,
+		[in] uint8 *buffer,
+		[out] uint32 *parm_err
+		);
+
+	/*******************************************/
+	/* NetShareDel                             */
+	/*******************************************/
+
+	[nopush,nopull] NET_API_STATUS NetShareDel(
+		[in] string server_name,
+		[in] string net_name,
+		[in] uint32 reserved
+		);
+
+	/*******************************************/
+	/* NetShareEnum                            */
+	/*******************************************/
+
+	[nopush,nopull] NET_API_STATUS NetShareEnum(
+		[in] string server_name,
+		[in] uint32 level,
+		[out] uint8 **buffer,
+		[in] uint32 prefmaxlen,
+		[out] uint32 *entries_read,
+		[out] uint32 *total_entries,
+		[in,out] uint32 *resume_handle
+		);
+
+	/*******************************************/
+	/* NetShareGetInfo                         */
+	/*******************************************/
+
+	[nopush,nopull] NET_API_STATUS NetShareGetInfo(
+		[in] string server_name,
+		[in] string net_name,
+		[in] uint32 level,
+		[out] uint8 **buffer
+		);
+
+	/*******************************************/
+	/* NetShareSetInfo                         */
+	/*******************************************/
+
+	[nopush,nopull] NET_API_STATUS NetShareSetInfo(
+		[in] string server_name,
+		[in] string net_name,
+		[in] uint32 level,
+		[in] uint8 *buffer,
+		[out] uint32 *parm_err
+		);
+
+	/*******************************************/
+	/* NetFileClose                            */
+	/*******************************************/
+
+	[nopush,nopull] NET_API_STATUS NetFileClose(
+		[in] string server_name,
+		[in] uint32 fileid
+		);
+
+	/*******************************************/
+	/* NetFileGetInfo                          */
+	/*******************************************/
+
+	typedef struct {
+		uint32 fi2_id;
+	} FILE_INFO_2;
+
+	typedef struct {
+		uint32 fi3_id;
+		uint32 fi3_permissions;
+		uint32 fi3_num_locks;
+		string fi3_pathname;
+		string fi3_username;
+	} FILE_INFO_3;
+
+	[nopush,nopull] NET_API_STATUS NetFileGetInfo(
+		[in] string server_name,
+		[in] uint32 fileid,
+		[in] uint32 level,
+		[out] uint8 **buffer
+		);
+
+	/*******************************************/
+	/* NetFileEnum                             */
+	/*******************************************/
+
+	[nopush,nopull] NET_API_STATUS NetFileEnum(
+		[in] string server_name,
+		[in] string base_path,
+		[in] string user_name,
+		[in] uint32 level,
+		[out] uint8 **buffer,
+		[in] uint32 prefmaxlen,
+		[out] uint32 *entries_read,
+		[out] uint32 *total_entries,
+		[in,out] uint32 *resume_handle
+		);
+
+	/*******************************************/
+	/* NetShutdownInit                         */
+	/*******************************************/
+
+	[nopush,nopull] NET_API_STATUS NetShutdownInit(
+		[in] string server_name,
+		[in] string message,
+		[in] uint32 timeout,
+		[in] uint8 force_apps,
+		[in] uint8 do_reboot
+	);
+
+	/*******************************************/
+	/* NetShutdownAbort                        */
+	/*******************************************/
+
+	[nopush,nopull] NET_API_STATUS NetShutdownAbort(
+		[in] string server_name
+	);
+
+	/*******************************************/
+	/* I_NetLogonControl                       */
+	/*******************************************/
+
+	typedef struct {
+		uint32 netlog1_flags;
+		NET_API_STATUS netlog1_pdc_connection_status;
+	} NETLOGON_INFO_1;
+
+	typedef struct {
+		uint32 netlog2_flags;
+		NET_API_STATUS netlog2_pdc_connection_status;
+		string netlog2_trusted_dc_name;
+		NET_API_STATUS netlog2_tc_connection_status;
+	} NETLOGON_INFO_2;
+
+	typedef struct {
+		uint32 netlog1_flags;
+		uint32 netlog3_logon_attempts;
+		uint32 netlog3_reserved1;
+		uint32 netlog3_reserved2;
+		uint32 netlog3_reserved3;
+		uint32 netlog3_reserved4;
+		uint32 netlog3_reserved5;
+	} NETLOGON_INFO_3;
+
+	typedef struct {
+		string netlog4_trusted_dc_name;
+		string netlog4_trusted_domain_name;
+	} NETLOGON_INFO_4;
+
+	[nopush,nopull] NET_API_STATUS I_NetLogonControl(
+		[in] string server_name,
+		[in] uint32 function_code,
+		[in] uint32 query_level,
+		[out,ref] uint8 **buffer
+	);
+
+	/*******************************************/
+	/* I_NetLogonControl2                      */
+	/*******************************************/
+
+	[nopush,nopull] NET_API_STATUS I_NetLogonControl2(
+		[in] string server_name,
+		[in] uint32 function_code,
+		[in] uint32 query_level,
+		[in,unique] uint8 *data,
+		[out,ref] uint8 **buffer
+	);
+}

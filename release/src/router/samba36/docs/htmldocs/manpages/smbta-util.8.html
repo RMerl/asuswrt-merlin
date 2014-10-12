@@ -1,0 +1,25 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>smbta-util</title><link rel="stylesheet" href="../samba.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.75.2"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="refentry" title="smbta-util"><a name="smbta-util.8"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>smbta-util &#8212; control encryption in VFS smb_traffic_analyzer</p></div><div class="refsynopsisdiv" title="Synopsis"><h2>Synopsis</h2><div class="cmdsynopsis"><p><code class="literal">smbta-util</code></p></div><div class="cmdsynopsis"><p><code class="literal">smbta-util</code> [
+		<em class="replaceable"><code>OPTIONS</code></em>
+		...]</p></div></div><div class="refsect1" title="DESCRIPTION"><a name="id266361"></a><h2>DESCRIPTION</h2><p>This tool is part of the
+	<a class="citerefentry" href="samba.7.html"><span class="citerefentry"><span class="refentrytitle">samba</span>(7)</span></a> suite.</p><p><code class="literal">smbta-util</code> is a tool to ease the
+	configuration of the vfs_smb_traffic_analyzer module regarding
+	data encryption.</p><p>The user can generate a key, install a key (activating
+	encryption), or uninstall a key (deactivating encryption).
+	Any operation that installs a key will create a File containing
+	the key. This file can be used by smbta-tool on other machines
+	to install the same key from the file.</p></div><div class="refsect1" title="OPTIONS"><a name="id266850"></a><h2>OPTIONS</h2><div class="variablelist"><dl><dt><span class="term"><code class="option">-h</code></span></dt><dd><p>Show a short help text on the command line.
+		</p></dd><dt><span class="term"><code class="option">-f</code>
+		<em class="replaceable"><code>KEYFILE</code></em></span></dt><dd><p>Open an existing keyfile, read the key from
+		the file, and install the key, activating encryption.
+		</p></dd><dt><span class="term"><code class="option">-g</code>
+		<em class="replaceable"><code>KEYFILE</code></em></span></dt><dd><p>Generate a new random key, install the key,
+		activate encryption, and store the key into the file KEYFILE.
+		</p></dd><dt><span class="term"><code class="option">-u</code></span></dt><dd><p>Uninstall the key, deactivating encryption.
+		</p></dd><dt><span class="term"><code class="option">-s</code></span></dt><dd><p>Check if a key is installed.
+		</p></dd><dt><span class="term"><code class="option">-c</code>
+		<em class="replaceable"><code>KEYFILE</code></em></span></dt><dd><p>Create a KEYFILE from an installed key.
+		</p></dd></dl></div></div><div class="refsect1" title="VERSION"><a name="id265741"></a><h2>VERSION</h2><p>This man page is correct for version 3.6 of the Samba suite.</p></div><div class="refsect1" title="AUTHOR"><a name="id265751"></a><h2>AUTHOR</h2><p> The original version of smbta-util was created by Holger Hetterich.
+	</p><p> The original Samba software and related utilities were
+	created by Andrew Tridgell.  Samba is now developed by the
+	Samba Team as an Open Source project similar to the way the
+	Linux kernel is developed.</p></div></div></body></html>

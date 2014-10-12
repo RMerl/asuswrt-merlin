@@ -1,0 +1,163 @@
+'\" t
+.\"     Title: smbtar
+.\"    Author: [see the "AUTHOR" section]
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date: 09/18/2013
+.\"    Manual: User Commands
+.\"    Source: Samba 3.6
+.\"  Language: English
+.\"
+.TH "SMBTAR" "1" "09/18/2013" "Samba 3\&.6" "User Commands"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+smbtar \- shell script for backing up SMB/CIFS shares directly to UNIX tape drives
+.SH "SYNOPSIS"
+.HP \w'\ 'u
+smbtar [\-r] [\-i] [\-a] [\-v] {\-s\ server} [\-p\ password] [\-x\ services] [\-X] [\-N\ filename] [\-b\ blocksize] [\-d\ directory] [\-l\ loglevel] [\-u\ user] [\-t\ tape] {filenames}
+.SH "DESCRIPTION"
+.PP
+This tool is part of the
+\fBsamba\fR(7)
+suite\&.
+.PP
+smbtar
+is a very small shell script on top of
+\fBsmbclient\fR(1)
+which dumps SMB shares directly to tape\&.
+.SH "OPTIONS"
+.PP
+\-s server
+.RS 4
+The SMB/CIFS server that the share resides upon\&.
+.RE
+.PP
+\-x service
+.RS 4
+The share name on the server to connect to\&. The default is "backup"\&.
+.RE
+.PP
+\-X
+.RS 4
+Exclude mode\&. Exclude filenames\&.\&.\&. from tar create or restore\&.
+.RE
+.PP
+\-d directory
+.RS 4
+Change to initial
+\fIdirectory \fR
+before restoring / backing up files\&.
+.RE
+.PP
+\-v
+.RS 4
+Verbose mode\&.
+.RE
+.PP
+\-p password
+.RS 4
+The password to use to access a share\&. Default: none
+.RE
+.PP
+\-u user
+.RS 4
+The user id to connect as\&. Default: UNIX login name\&.
+.RE
+.PP
+\-a
+.RS 4
+Reset DOS archive bit mode to indicate file has been archived\&.
+.RE
+.PP
+\-t tape
+.RS 4
+Tape device\&. May be regular file or tape device\&. Default:
+\fI$TAPE\fR
+environmental variable; if not set, a file called
+tar\&.out\&.
+.RE
+.PP
+\-b blocksize
+.RS 4
+Blocking factor\&. Defaults to 20\&. See
+tar(1)
+for a fuller explanation\&.
+.RE
+.PP
+\-N filename
+.RS 4
+Backup only files newer than filename\&. Could be used (for example) on a log file to implement incremental backups\&.
+.RE
+.PP
+\-i
+.RS 4
+Incremental mode; tar files are only backed up if they have the archive bit set\&. The archive bit is reset after each file is read\&.
+.RE
+.PP
+\-r
+.RS 4
+Restore\&. Files are restored to the share from the tar file\&.
+.RE
+.PP
+\-l log level
+.RS 4
+Log (debug) level\&. Corresponds to the
+\fI\-d\fR
+flag of
+\fBsmbclient\fR(1)\&.
+.RE
+.SH "ENVIRONMENT VARIABLES"
+.PP
+The
+\fI$TAPE\fR
+variable specifies the default tape device to write to\&. May be overridden with the \-t option\&.
+.SH "BUGS"
+.PP
+The
+smbtar
+script has different options from ordinary tar and from smbclient\*(Aqs tar command\&.
+.SH "CAVEATS"
+.PP
+Sites that are more careful about security may not like the way the script handles PC passwords\&. Backup and restore work on entire shares; should work on file lists\&. smbtar works best with GNU tar and may not work well with other versions\&.
+.SH "DIAGNOSTICS"
+.PP
+See the
+\fIDIAGNOSTICS\fR
+section for the
+\fBsmbclient\fR(1)
+command\&.
+.SH "VERSION"
+.PP
+This man page is correct for version 3 of the Samba suite\&.
+.SH "SEE ALSO"
+.PP
+\fBsmbd\fR(8),
+\fBsmbclient\fR(1),
+\fBsmb.conf\fR(5)\&.
+.SH "AUTHOR"
+.PP
+The original Samba software and related utilities were created by Andrew Tridgell\&. Samba is now developed by the Samba Team as an Open Source project similar to the way the Linux kernel is developed\&.
+.PP
+Ricky Poulten
+wrote the tar extension and this man page\&. The
+smbtar
+script was heavily rewritten and improved by
+Martin Kraemer\&. Many thanks to everyone who suggested extensions, improvements, bug fixes, etc\&. The man page sources were converted to YODL format (another excellent piece of Open Source software, available at
+ftp://ftp\&.icce\&.rug\&.nl/pub/unix/) and updated for the Samba 2\&.0 release by Jeremy Allison\&. The conversion to DocBook for Samba 2\&.2 was done by Gerald Carter\&. The conversion to DocBook XML 4\&.2 for Samba 3\&.0 was done by Alexander Bokovoy\&.

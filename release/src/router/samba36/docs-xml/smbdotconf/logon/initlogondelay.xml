@@ -1,0 +1,15 @@
+<samba:parameter name="init logon delay"
+                 context="G"
+		 type="integer"
+                 advanced="1" developer="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>
+	This parameter specifies a delay in milliseconds for the hosts configured
+	for delayed initial samlogon with
+	<smbconfoption name="init logon delayed hosts"/>.
+	</para>
+</description>
+
+<value type="default">100</value>
+</samba:parameter>

@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//Samba-Team//DTD DocBook V4.2-Based Variant V1.0//EN" "http://www.samba.org/samba/DTD/samba-doc">
+<refentry id="profiles.1">
+
+<refmeta>
+	<refentrytitle>profiles</refentrytitle>
+	<manvolnum>1</manvolnum>
+	<refmiscinfo class="source">Samba</refmiscinfo>
+	<refmiscinfo class="manual">User Commands</refmiscinfo>
+	<refmiscinfo class="version">3.6</refmiscinfo>
+</refmeta>
+
+
+<refnamediv>
+	<refname>profiles</refname>
+	<refpurpose>A utility to report and change SIDs in registry files
+	</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+	<cmdsynopsis>
+		<command>profiles</command>
+		<arg choice="opt">-v</arg>
+		<arg choice="opt">-c SID</arg>
+		<arg choice="opt">-n SID</arg>
+		<arg choice="req">file</arg>
+	</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1>
+	<title>DESCRIPTION</title>
+
+	<para>This tool is part of the <citerefentry><refentrytitle>samba</refentrytitle>
+	<manvolnum>7</manvolnum></citerefentry> suite.</para>
+
+	<para><command>profiles</command> is a utility that 
+	reports and changes SIDs in windows registry files. It currently only 
+	supports NT.
+	</para>
+</refsect1>
+
+
+<refsect1>
+	<title>OPTIONS</title>
+
+	<variablelist>
+		<varlistentry>
+		<term>file</term>
+		<listitem><para>Registry file to view or edit.  </para></listitem>
+		</varlistentry>
+
+
+		<varlistentry>
+		<term>-v,--verbose</term>
+		<listitem><para>Increases verbosity of messages. 
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>-c SID1 -n SID2</term>
+		<listitem><para>Change all occurrences of SID1 in <filename>file</filename> by SID2.
+		</para></listitem>
+		</varlistentry>
+
+		&stdarg.help;
+		
+	</variablelist>
+</refsect1>
+
+<refsect1>
+	<title>VERSION</title>
+
+	<para>This man page is correct for version 3 of the Samba 
+	suite.</para>
+</refsect1>
+
+<refsect1>
+	<title>AUTHOR</title>
+	
+	<para>The original Samba software and related utilities 
+	were created by Andrew Tridgell. Samba is now developed
+	by the Samba Team as an Open Source project similar 
+	to the way the Linux kernel is developed.</para>
+	
+	<para>The profiles man page was written by Jelmer Vernooij. </para>
+</refsect1>
+
+</refentry>

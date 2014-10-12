@@ -1,0 +1,43 @@
+#
+# use nmake /f NMakefile [<target>]
+#
+CFLAGS = /nologo /Zi /MT /Gm- /W4 /FR /D_CRT_SECURE_NO_WARNINGS
+LIBS = kernel32.lib gdi32.lib user32.lib shell32.lib \
+	advapi32.lib ole32.lib ws2_32.lib rpcrt4.lib
+WINSPOOL_LIBS = winspool.lib
+
+all: testspoolss.exe
+
+.cpp.obj:
+	cl /c $(CFLAGS) $*.cpp
+
+.c.obj:
+	cl /c $(CFLAGS) $*.c
+
+clean: cleantmp
+	-del *.dll 2>nul
+
+cleantmp:
+	-del *~ *.o *.obj *.sbr *.bsc *.pdb *.lib *.ilk *.exp 2>nul
+	-del test_s.c test_c.c test.h 2>nul
+
+###############################
+# helpers
+###############################
+
+printlib.obj: printlib.c
+
+error.obj: error.c
+
+torture.obj: torture.c
+
+###############################
+# binaries
+###############################
+
+testspoolss.obj: testspoolss.c
+
+testspoolss.exe: testspoolss.obj printlib.obj error.obj torture.obj
+	cl $(CFLAGS) /Fe$@ testspoolss.obj printlib.obj error.obj torture.obj \
+	/link /incremental:no /subsystem:console $(LIBS) $(WINSPOOL_LIBS)
+

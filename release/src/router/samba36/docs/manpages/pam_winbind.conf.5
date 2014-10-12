@@ -1,0 +1,121 @@
+'\" t
+.\"     Title: pam_winbind.conf
+.\"    Author: [see the "AUTHOR" section]
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date: 09/18/2013
+.\"    Manual: 5
+.\"    Source: Samba 3.6
+.\"  Language: English
+.\"
+.TH "PAM_WINBIND\&.CONF" "5" "09/18/2013" "Samba 3\&.6" "5"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+pam_winbind.conf \- Configuration file of PAM module for Winbind
+.SH "DESCRIPTION"
+.PP
+This configuration file is part of the
+\fBsamba\fR(7)
+suite\&.
+.PP
+pam_winbind\&.conf is the configuration file for the pam_winbind PAM module\&. See
+\fBpam_winbind\fR(8)
+for further details\&.
+.SH "SYNOPSIS"
+.PP
+The pam_winbind\&.conf configuration file is a classic ini\-style configuration file\&. There is only one section (global) where various options are defined\&.
+.SH "OPTIONS"
+.PP
+pam_winbind supports several options which can either be set in the PAM configuration files or in the pam_winbind configuration file situated at
+/etc/security/pam_winbind\&.conf\&. Options from the PAM configuration file take precedence to those from the pam_winbind\&.conf configuration file\&.
+.PP
+debug = yes|no
+.RS 4
+Gives debugging output to syslog\&. Defaults to "no"\&.
+.RE
+.PP
+debug_state = yes|no
+.RS 4
+Gives detailed PAM state debugging output to syslog\&. Defaults to "no"\&.
+.RE
+.PP
+require_membership_of = [SID or NAME]
+.RS 4
+If this option is set, pam_winbind will only succeed if the user is a member of the given SID or NAME\&. A SID can be either a group\-SID, an alias\-SID or even an user\-SID\&. It is also possible to give a NAME instead of the SID\&. That name must have the form:
+\fIMYDOMAIN\e\emygroup\fR
+or
+\fIMYDOMAIN\e\emyuser\fR\&. pam_winbind will, in that case, lookup the SID internally\&. Note that NAME may not contain any spaces\&. It is thus recommended to only use SIDs\&. You can verify the list of SIDs a user is a member of with
+wbinfo \-\-user\-sids=SID\&. This setting is empty by default\&.
+.RE
+.PP
+try_first_pass = yes|no
+.RS 4
+By default, pam_winbind tries to get the authentication token from a previous module\&. If no token is available it asks the user for the old password\&. With this option, pam_winbind aborts with an error if no authentication token from a previous module is available\&. If a primary password is not valid, PAM will prompt for a password\&. Default to "no"\&.
+.RE
+.PP
+krb5_auth = yes|no
+.RS 4
+pam_winbind can authenticate using Kerberos when winbindd is talking to an Active Directory domain controller\&. Kerberos authentication must be enabled with this parameter\&. When Kerberos authentication can not succeed (e\&.g\&. due to clock skew), winbindd will fallback to samlogon authentication over MSRPC\&. When this parameter is used in conjunction with
+\fIwinbind refresh tickets\fR, winbind will keep your Ticket Granting Ticket (TGT) uptodate by refreshing it whenever necessary\&. Defaults to "no"\&.
+.RE
+.PP
+krb5_ccache_type = [type]
+.RS 4
+When pam_winbind is configured to try kerberos authentication by enabling the
+\fIkrb5_auth\fR
+option, it can store the retrieved Ticket Granting Ticket (TGT) in a credential cache\&. The type of credential cache can be set with this option\&. Currently the only supported value is:
+\fIFILE\fR\&. In that case a credential cache in the form of /tmp/krb5cc_UID will be created, where UID is replaced with the numeric user id\&. Leave empty to just do kerberos authentication without having a ticket cache after the logon has succeeded\&. This setting is empty by default\&.
+.RE
+.PP
+cached_login = yes|no
+.RS 4
+Winbind allows to logon using cached credentials when
+\fIwinbind offline logon\fR
+is enabled\&. To use this feature from the PAM module this option must be set\&. Defaults to "no"\&.
+.RE
+.PP
+silent = yes|no
+.RS 4
+Do not emit any messages\&. Defaults to "no"\&.
+.RE
+.PP
+mkhomedir = yes|no
+.RS 4
+Create homedirectory for a user on\-the\-fly, option is valid in PAM session block\&. Defaults to "no"\&.
+.RE
+.PP
+warn_pwd_expire = days
+.RS 4
+Defines number of days before pam_winbind starts to warn about passwords that are going to expire\&. Defaults to 14 days\&.
+.RE
+.SH "SEE ALSO"
+.PP
+\fBpam_winbind\fR(8),
+\fBwbinfo\fR(1),
+\fBwinbindd\fR(8),
+\fBsmb.conf\fR(5)
+.SH "VERSION"
+.PP
+This man page is correct for version 3 of Samba\&.
+.SH "AUTHOR"
+.PP
+The original Samba software and related utilities were created by Andrew Tridgell\&. Samba is now developed by the Samba Team as an Open Source project similar to the way the Linux kernel is developed\&.
+.PP
+This manpage was written by Jelmer Vernooij and Guenther Deschner\&.

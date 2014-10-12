@@ -1,0 +1,335 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//Samba-Team//DTD DocBook V4.2-Based Variant V1.0//EN" "http://www.samba.org/samba/DTD/samba-doc">
+<refentry id="smbcontrol.1">
+
+<refmeta>
+	<refentrytitle>smbcontrol</refentrytitle>
+	<manvolnum>1</manvolnum>
+	<refmiscinfo class="source">Samba</refmiscinfo>
+	<refmiscinfo class="manual">User Commands</refmiscinfo>
+	<refmiscinfo class="version">3.6</refmiscinfo>
+</refmeta>
+
+
+<refnamediv>
+	<refname>smbcontrol</refname>
+	<refpurpose>send messages to smbd, nmbd or winbindd processes</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+	<cmdsynopsis>
+		<command>smbcontrol</command>
+		<arg>-i</arg>
+		<arg>-s</arg>
+	</cmdsynopsis>
+	
+	<cmdsynopsis>
+		<command>smbcontrol</command>
+		<arg>destination</arg>
+		<arg>message-type</arg>
+		<arg>parameter</arg>
+	</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1>
+	<title>DESCRIPTION</title>
+
+	<para>This tool is part of the <citerefentry><refentrytitle>samba</refentrytitle>
+	<manvolnum>7</manvolnum></citerefentry> suite.</para>
+
+	<para><command>smbcontrol</command> is a very small program, which 
+	sends messages to a <citerefentry><refentrytitle>smbd</refentrytitle>
+	<manvolnum>8</manvolnum></citerefentry>, a <citerefentry><refentrytitle>nmbd</refentrytitle>
+	<manvolnum>8</manvolnum></citerefentry>, or a <citerefentry><refentrytitle>winbindd</refentrytitle>
+	<manvolnum>8</manvolnum></citerefentry> daemon running on the system.</para>
+</refsect1>
+
+
+<refsect1>
+	<title>OPTIONS</title>
+
+	<variablelist>
+		&stdarg.help;
+		&stdarg.configfile;
+		<varlistentry>
+		<term>-i</term>
+		<listitem><para>Run interactively. Individual commands 
+		of the form destination message-type parameters can be entered 
+		on STDIN. An empty command line or a "q" will quit the 
+		program.</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>destination</term>
+		<listitem><para>One of <parameter>nmbd</parameter>, <parameter>smbd</parameter> or a process ID.</para>
+
+		<para>The <parameter>all</parameter> destination causes the 
+		message to "broadcast" to all running daemons including nmbd and
+		winbind. This is a change for Samba 3.3, prior to this the
+		parameter smbd used to do this.</para>
+
+		<para>The <parameter>smbd</parameter> destination causes the 
+		message to be sent to the smbd daemon specified in the 
+		<filename>smbd.pid</filename> file.</para>
+
+		<para>The <parameter>nmbd</parameter> destination causes the 
+		message to be sent to the nmbd daemon specified in the 
+		<filename>nmbd.pid</filename> file.</para>
+
+		<para>The <parameter>winbindd</parameter> destination causes the 
+		message to be sent to the winbind daemon specified in the 
+		<filename>winbindd.pid</filename> file.</para>
+
+		<para>If a single process ID is given, the message is sent 
+		to only that process.</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>message-type</term>
+		<listitem><para>Type of message to send. See 
+		the section <constant>MESSAGE-TYPES</constant> for details.
+		</para></listitem></varlistentry>
+		
+
+	
+		<varlistentry>
+		<term>parameters</term>
+		<listitem><para>any parameters required for the message-type</para>
+		</listitem>
+		</varlistentry>
+	</variablelist>
+	
+</refsect1>
+
+<refsect1>
+	<title>MESSAGE-TYPES</title>
+
+	<para>Available message types are:</para>
+
+	<variablelist>
+	<varlistentry><term>close-share</term>
+	<listitem><para>Order smbd to close the client 
+	connections to the named share. Note that this doesn't affect client 
+	connections to any other shares. This message-type takes an argument of the
+	share name for which client connections will be closed, or the
+	"*" character which will close all currently open shares.
+	This may be useful if you made changes to the access controls on the share.
+	This message can only be sent to <constant>smbd</constant>.</para>
+	</listitem>
+	</varlistentry>
+
+	<varlistentry>
+	<term>debug</term>
+	<listitem><para>Set debug level to the value specified by the 
+	parameter. This can be sent to any of the destinations. If this
+	message is sent to either the smbd or winbindd daemons, the parent
+	process will rebroadcast the message to all child processes changing
+	the debug level in each one.</para>
+	</listitem>
+	</varlistentry>
+
+	<varlistentry>
+	<term>force-election</term>
+	<listitem><para>This message causes the <command>nmbd</command> daemon to 
+	force a new browse master election. </para>
+	</listitem></varlistentry>
+
+	<varlistentry>
+	<term>ping</term>
+	<listitem><para>
+	Send specified number of "ping" messages and 
+	wait for the same number of  reply "pong" messages. This can be sent to 
+	any of the destinations.</para>
+	</listitem>
+	</varlistentry>
+
+	<varlistentry>
+	<term>profile</term>
+	<listitem><para>Change profile settings of a daemon, based on the 
+	parameter. The parameter can be "on" to turn on profile stats 
+	collection, "off" to turn off profile stats collection, "count"
+	to enable only collection of count stats (time stats are 
+	disabled), and "flush" to zero the current profile stats. This can 
+	be sent to any smbd or nmbd destinations.</para>
+	</listitem></varlistentry>
+
+	<varlistentry>
+	<term>debuglevel</term>
+	<listitem><para>
+	Request debuglevel of a certain daemon and write it to stdout. This 
+	can be sent to any of the destinations.</para>
+	</listitem>
+	</varlistentry>
+
+	<varlistentry>
+	<term>profilelevel</term>
+	<listitem><para>
+	Request profilelevel of a certain daemon and write it to stdout. 
+	This can be sent to any smbd or nmbd destinations.</para>
+	</listitem>
+	</varlistentry>
+
+	<varlistentry>
+	<term>printnotify</term>
+	<listitem><para>
+	Order smbd to send a printer notify message to any Windows NT clients 
+	connected to a printer. This message-type takes the following arguments:
+	</para>
+	
+	<variablelist>
+
+	    <varlistentry>
+	    <term>queuepause printername</term>
+	    <listitem><para>Send a queue pause change notify
+	    message to the printer specified.</para></listitem>
+ 	    </varlistentry>
+
+	    <varlistentry>
+	    <term>queueresume printername</term>
+	    <listitem><para>Send a queue resume change notify
+	    message for the printer specified.</para></listitem>
+ 	    </varlistentry>
+
+		<varlistentry>
+	    <term>jobpause printername unixjobid</term>
+	    <listitem><para>Send a job pause change notify
+	    message for the printer and unix jobid
+	    specified.</para></listitem> 
+ 	    </varlistentry>
+
+	    <varlistentry>
+	    <term>jobresume printername unixjobid</term>
+	    <listitem><para>Send a job resume change notify
+	    message for the printer and unix jobid
+	    specified.</para></listitem>  
+	    </varlistentry>
+
+	    <varlistentry>
+	    <term>jobdelete printername unixjobid</term>
+	    <listitem><para>Send a job delete change notify
+	    message for the printer and unix jobid
+	    specified.</para></listitem> 
+	    </varlistentry>
+	</variablelist>
+
+	<para>
+	Note that this message only sends notification that an
+	event has occurred.  It doesn't actually cause the
+	event to happen.
+	</para>
+
+	<para>This message can only be sent to <constant>smbd</constant>. </para>
+	</listitem>
+	</varlistentry>
+
+	<varlistentry>
+	<term>samsync</term>
+	<listitem><para>Order smbd to synchronise sam database from PDC (being BDC). Can only be sent to <constant>smbd</constant>. </para>
+	<note><para>Not working at the moment</para></note>
+	</listitem>
+	</varlistentry>
+
+	<varlistentry>
+	<term>samrepl</term>
+	<listitem><para>Send sam replication message, with specified serial. Can only be sent to <constant>smbd</constant>. Should not be used manually.</para></listitem>
+	</varlistentry>
+
+	<varlistentry>
+	<term>dmalloc-mark</term>
+	<listitem><para>Set a mark for dmalloc. Can be sent to both smbd and nmbd. Only available if samba is built with dmalloc support. </para></listitem>
+	</varlistentry>
+
+	<varlistentry>
+	<term>dmalloc-log-changed</term>
+	<listitem><para>
+	Dump the pointers that have changed since the mark set by dmalloc-mark. 
+	Can be sent to both smbd and nmbd. Only available if samba is built with dmalloc support. </para></listitem>
+	</varlistentry>
+
+	<varlistentry>
+	<term>shutdown</term>
+	<listitem><para>Shut down specified daemon. Can be sent to both smbd and nmbd.</para></listitem>
+	</varlistentry>
+
+	<varlistentry>
+	<term>pool-usage</term>
+	<listitem><para>Print a human-readable description of all 
+	talloc(pool) memory usage by the specified daemon/process. Available 
+	for both smbd and nmbd.</para></listitem>
+	</varlistentry>
+
+	<varlistentry>
+	<term>drvupgrade</term>
+	<listitem><para>Force clients of printers using specified driver 
+	to update their local version of the driver. Can only be 
+	sent to smbd.</para></listitem>
+	</varlistentry>
+
+	<varlistentry>
+	<term>reload-config</term>
+	<listitem><para>Force daemon to reload smb.conf configuration file. Can be sent
+	to <constant>smbd</constant>, <constant>nmbd</constant>, or <constant>winbindd</constant>.
+	</para></listitem>
+	</varlistentry>
+
+	<varlistentry>
+	<term>idmap</term>
+	<listitem><para>Notify about changes of id mapping. Can be sent
+	to <constant>smbd</constant> or (not implemented yet) <constant>winbindd</constant>.
+	</para></listitem>
+
+	<variablelist>
+	  <varlistentry>
+	    <term>flush [uid|gid]</term>
+	    <listitem><para>Flush caches for sid &lt;-&gt; gid and/or sid &lt;-&gt; uid mapping.
+	    </para></listitem>
+	  </varlistentry>
+	  <varlistentry>
+	    <term>delete &lt;ID&gt;</term>
+	    <listitem><para>Remove a mapping from cache. The mapping is given by &lt;ID&gt;
+	    which may either be a sid: S-x-..., a gid: "GID number" or a uid: "UID number".
+	    </para></listitem>
+	  </varlistentry>
+	  <varlistentry>
+	    <term>kill &lt;ID&gt;</term>
+	    <listitem><para>Remove a mapping from cache. Terminate <constant>smbd</constant> if
+	    the id is currently in use.</para></listitem>
+	  </varlistentry>
+	</variablelist>
+	</varlistentry>
+
+</variablelist>
+</refsect1>
+
+<refsect1>
+	<title>VERSION</title>
+
+	<para>This man page is correct for version 3 of 
+	the Samba suite.</para>
+</refsect1>
+
+<refsect1>
+	<title>SEE ALSO</title>
+	<para><citerefentry><refentrytitle>nmbd</refentrytitle>
+	<manvolnum>8</manvolnum></citerefentry> and <citerefentry><refentrytitle>smbd</refentrytitle>
+	<manvolnum>8</manvolnum></citerefentry>.</para>
+</refsect1>
+
+<refsect1>
+	<title>AUTHOR</title>
+	
+	<para>The original Samba software and related utilities 
+	were created by Andrew Tridgell. Samba is now developed
+	by the Samba Team as an Open Source project similar 
+	to the way the Linux kernel is developed.</para>
+	
+	<para>The original Samba man pages were written by Karl Auer. 
+	The man page sources were converted to YODL format (another 
+	excellent piece of Open Source software, available at <ulink url="ftp://ftp.icce.rug.nl/pub/unix/">
+	ftp://ftp.icce.rug.nl/pub/unix/</ulink>) and updated for the Samba 2.0 
+	release by Jeremy Allison.  The conversion to DocBook for 
+	Samba 2.2 was done by Gerald Carter. The conversion to DocBook XML 4.2 for
+	Samba 3.0 was done by Alexander Bokovoy.</para>
+</refsect1>
+
+</refentry>

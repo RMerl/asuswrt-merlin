@@ -1,0 +1,12 @@
+prtpub.c contains a program which, when compiled with Visual C, can 
+download a driver for a printer, query the capabilities of the driver,
+then write back the DsDriver keys necessary to publish all the fields
+of a printer in the directory.  After writing back the fields, it issues
+a SetPrinter with info level 7, telling the server to publish the
+printer.
+
+It also writes the fields to stdout.
+
+In order to be distributed, it should be compiled using DLLs for C runtime.
+
+The program takes the UNC name of a printer as the only argument.

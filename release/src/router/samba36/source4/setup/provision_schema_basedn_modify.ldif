@@ -1,0 +1,10 @@
+###############################
+# Schema Naming Context
+###############################
+dn: ${SCHEMADN}
+changetype: modify
+-
+# "masteredBy", "msDs-masteredBy" filled in later
+replace: objectVersion
+objectVersion: 47
+

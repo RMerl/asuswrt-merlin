@@ -1,0 +1,68 @@
+'\" t
+.\"     Title: vfs_netatalk
+.\"    Author: [see the "AUTHOR" section]
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date: 09/18/2013
+.\"    Manual: System Administration tools
+.\"    Source: Samba 3.6
+.\"  Language: English
+.\"
+.TH "VFS_NETATALK" "8" "09/18/2013" "Samba 3\&.6" "System Administration tools"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+vfs_netatalk \- hide \&.AppleDouble files from CIFS clients
+.SH "SYNOPSIS"
+.HP \w'\ 'u
+vfs objects = netatalk
+.SH "DESCRIPTION"
+.PP
+This VFS module is part of the
+\fBsamba\fR(7)
+suite\&.
+.PP
+The
+vfs_netatalk
+VFS module dynamically hides \&.AppleDouble files, preventing spurious errors on some CIFS clients\&. \&.AppleDouble files may be created by historic implementations of AFP (Apple Filing Protocol) on servers\&.
+.PP
+This module is stackable\&.
+.SH "EXAMPLES"
+.PP
+Hide \&.AppleDouble files on the [data] share:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+        \fI[data]\fR
+	\m[blue]\fBvfs objects = netatalk\fR\m[]
+.fi
+.if n \{\
+.RE
+.\}
+.SH "CAVEATS"
+.PP
+This module is largely historic and unlikely to be of use in modern networks since current Apple systems are able to mount CIFS shares natively\&.
+.SH "VERSION"
+.PP
+This man page is correct for version 3\&.0\&.25 of the Samba suite\&.
+.SH "AUTHOR"
+.PP
+The original Samba software and related utilities were created by Andrew Tridgell\&. Samba is now developed by the Samba Team as an Open Source project similar to the way the Linux kernel is developed\&.

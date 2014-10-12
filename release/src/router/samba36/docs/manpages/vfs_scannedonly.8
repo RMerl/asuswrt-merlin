@@ -1,0 +1,164 @@
+'\" t
+.\"     Title: vfs_scannedonly
+.\"    Author: [see the "AUTHOR" section]
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date: 09/18/2013
+.\"    Manual: System Administration tools
+.\"    Source: Samba 3.6
+.\"  Language: English
+.\"
+.TH "VFS_SCANNEDONLY" "8" "09/18/2013" "Samba 3\&.6" "System Administration tools"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+vfs_scannedonly \- Ensures that only files that have been scanned for viruses are visible and accessible to the end user\&.
+.SH "SYNOPSIS"
+.HP \w'\ 'u
+vfs objects = scannedonly
+.SH "DESCRIPTION"
+.PP
+This VFS module is part of the
+\fBsamba\fR(8)
+suite\&.
+.PP
+The
+vfs_scannedonly
+VFS module ensures that only files that have been scanned for viruses are visible and accessible to the end user\&. If non\-scanned files are found an anti\-virus scanning daemon is notified\&. The anti\-virus scanning daemon is not part of the Samba suite\&.
+.PP
+Scannedonly comes in two parts: a samba vfs module and (one or more) daemons\&. The daemon scans files\&. If a certain file is clean, a second file is created with prefix
+\&.scanned:\&. The Samba module simply looks if such a
+\&.scanned:
+file exists, and is newer than the pertinent file\&. If this is the case, the file is shown to the user\&. If this is not the case, the file is not returned in a directory listing (configurable), and cannot be opened (configurable)\&. The Samba vfs module will notify the daemon to scan this file\&.
+.PP
+So what happens for the user in the default configuration\&. The first time a directory is listed, it shows files as \*(Aqfile is being scanned for viruses, but after the first time all files are shown\&. There is a utility scannedonly_prescan that can help you to prescan all directories\&. When new files are written the daemon is notified immediately after the file is complete\&.
+.PP
+If a virus is found by the daemon, a file with a warning message is created in the directory of the user, a warning is sent to the logs, and the file is renamed to have prefix
+\&.virus:\&. Files with the
+\&.virus:
+prefix are never shown to the user and all access is denied\&.
+.PP
+This module is stackable\&.
+.SH "CONFIGURATION"
+.PP
+vfs_scannedonly
+relies on a anti\-virus scanning daemon that listens on the scannedonly socket (unix domain socket or UDP socket)\&.
+.SH "OPTIONS"
+.PP
+scannedonly:domain_socket = True
+.RS 4
+Whether to use a unix domain socket or not (false reverts to use udp)
+.RE
+.PP
+scannedonly:socketname = /var/lib/scannedonly/scan
+.RS 4
+The location of the unix domain socket to connect to
+.RE
+.PP
+scannedonly:portnum = 2020
+.RS 4
+The udp port number to connect to
+.RE
+.PP
+scannedonly:scanhost = localhost
+.RS 4
+When using UDP the host that runs the scanning daemon (this host needs access to the files!)
+.RE
+.PP
+scannedonly:show_special_files = True
+.RS 4
+Whether sockets, devices and fifo\*(Aqs (all not scanned for viruses) should be visible to the user
+.RE
+.PP
+scannedonly:rm_hidden_files_on_rmdir = True
+.RS 4
+Whether files that are not visible (\&.scanned:
+files,
+\&.failed:
+files and
+\&.virus:
+files) should be deleted if the user tries to remove the directory\&. If false, the user will get the "directory is not empty" error\&.
+.RE
+.PP
+scannedonly:hide_nonscanned_files = True
+.RS 4
+If false, all non\-scanned files are visible in directory listings\&. If such files are found in a directory listing the scanning daemon is notified that scanning is required\&. Access to non\-scanned files is still denied (see scannedonly:allow_nonscanned_files)\&.
+.RE
+.PP
+scannedonly:scanning_message = is being scanned for viruses
+.RS 4
+If non\-scanned files are hidden (if scannedonly:hide_nonscanned_files = True), a fake 0 byte file is shown\&. The filename is the original filename with the message as suffix\&.
+.RE
+.PP
+scannedonly:recheck_time_open = 50
+.RS 4
+If a non\-scanned file is opened, the vfs module will wait recheck_tries_open times for recheck_time_open milliseconds for the scanning daemon to create a
+\&.scanned:
+file\&. For small files that are scanned by the daemon within the time (tries * time) the behavior will be just like on\-access scanning\&.
+.RE
+.PP
+scannedonly:recheck_tries_open = 100
+.RS 4
+See recheck_time_open\&.
+.RE
+.PP
+scannedonly:recheck_time_readdir = 50
+.RS 4
+If a non\-scanned file is in a directory listing the vfs module notifies the daemon (once for all files that need scanning in that directory), and waits recheck_tries_readdir times for recheck_time_readdir milliseconds\&. Only used when hide_nonscanned_files is false\&.
+.RE
+.PP
+scannedonly:recheck_tries_readdir = 20
+.RS 4
+See recheck_time_readdir\&.
+.RE
+.PP
+scannedonly:allow_nonscanned_files = False
+.RS 4
+Allow access to non\-scanned files\&. The daemon is notified, however, and special files such as
+\&.scanned:
+files\&.
+\&.virus:
+files and
+\&.failed:
+files are not listed\&.
+.RE
+.SH "EXAMPLES"
+.PP
+Enable anti\-virus scanning:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+        \fI[homes]\fR
+	\m[blue]\fBvfs objects = scannedonly\fR\m[]
+	\m[blue]\fBscannedonly:hide_nonscanned_files = False\fR\m[]
+.fi
+.if n \{\
+.RE
+.\}
+.SH "CAVEATS"
+.PP
+This is not true on\-access scanning\&. However, it is very fast for files that have been scanned already\&.
+.SH "VERSION"
+.PP
+This man page is correct for version 3\&.6\&.0 of the Samba suite\&.
+.SH "AUTHOR"
+.PP
+The original Samba software and related utilities were created by Andrew Tridgell\&. Scannedonly was developed for Samba by Olivier Sessink\&. Samba is now developed by the Samba Team as an Open Source project similar to the way the Linux kernel is developed\&.

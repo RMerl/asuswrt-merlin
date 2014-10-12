@@ -1,0 +1,3 @@
+include LICENSE ChangeLog TODO
+recursive-include examples *.txt *.py
+recursive-include tests *.txt *.py Makefile *.good example

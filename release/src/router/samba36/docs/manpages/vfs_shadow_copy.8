@@ -1,0 +1,172 @@
+'\" t
+.\"     Title: vfs_shadow_copy
+.\"    Author: [see the "AUTHOR" section]
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date: 09/18/2013
+.\"    Manual: System Administration tools
+.\"    Source: Samba 3.6
+.\"  Language: English
+.\"
+.TH "VFS_SHADOW_COPY" "8" "09/18/2013" "Samba 3\&.6" "System Administration tools"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+vfs_shadow_copy \- Make a Samba share read only for a specified time period
+.SH "SYNOPSIS"
+.HP \w'\ 'u
+vfs objects = shadow_copy
+.SH "DESCRIPTION"
+.PP
+This VFS module is part of the
+\fBsamba\fR(7)
+suite\&.
+.PP
+The
+vfs_shadow_copy
+VFS module functionality that is similar to Microsoft Shadow Copy services\&. When setup properly, this module allows Microsoft Shadow Copy clients to browse "shadow copies" on Samba shares\&.
+.PP
+This module is stackable\&.
+.SH "CONFIGURATION"
+.PP
+vfs_shadow_copy
+relies on a filesystem snapshot implementation\&. Many common filesystems have native support for this\&.
+.PP
+Filesystem snapshots must be mounted on specially named directories in order to be recognized by
+vfs_shadow_copy\&. The snapshot mount points must be immediate children of a the directory being shared\&.
+.PP
+The snapshot naming convention is @GMT\-YYYY\&.MM\&.DD\-hh\&.mm\&.ss, where:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+YYYY
+is the 4 digit year
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+MM
+is the 2 digit month
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+DD
+is the 2 digit day
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+hh
+is the 2 digit hour
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+mm
+is the 2 digit minute
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+ss
+is the 2 digit second\&.
+.RE
+.sp
+.RE
+.PP
+The
+vfs_shadow_copy
+snapshot naming convention can be produced with the following
+\fBdate\fR(1)
+command:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+	TZ=GMT date +@GMT\-%Y\&.%m\&.%d\-%H\&.%M\&.%S
+	
+.fi
+.if n \{\
+.RE
+.\}
+.SH "EXAMPLES"
+.PP
+Add shadow copy support to user home directories:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+        \fI[homes]\fR
+	\m[blue]\fBvfs objects = shadow_copy\fR\m[]
+.fi
+.if n \{\
+.RE
+.\}
+.SH "CAVEATS"
+.PP
+This is not a backup, archival, or version control solution\&.
+.PP
+With Samba or Windows servers,
+vfs_shadow_copy
+is designed to be an end\-user tool only\&. It does not replace or enhance your backup and archival solutions and should in no way be considered as such\&. Additionally, if you need version control, implement a version control system\&.
+.SH "VERSION"
+.PP
+This man page is correct for version 3\&.0\&.25 of the Samba suite\&.
+.SH "AUTHOR"
+.PP
+The original Samba software and related utilities were created by Andrew Tridgell\&. Samba is now developed by the Samba Team as an Open Source project similar to the way the Linux kernel is developed\&.

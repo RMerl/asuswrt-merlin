@@ -1,0 +1,42 @@
+dn: ${DOMAINDN}
+changetype: modify
+replace: fSMORoleOwner
+fSMORoleOwner: CN=NTDS Settings,${SERVERDN}
+
+dn: ${SCHEMADN}
+changetype: modify
+replace: fSMORoleOwner
+fSMORoleOwner: CN=NTDS Settings,${SERVERDN}
+
+dn: CN=Infrastructure,${DOMAINDN}
+changetype: modify
+replace: fSMORoleOwner
+fSMORoleOwner: CN=NTDS Settings,${SERVERDN}
+
+dn: CN=RID Manager$,CN=System,${DOMAINDN}
+changetype: modify
+replace: fSMORoleOwner
+fSMORoleOwner: CN=NTDS Settings,${SERVERDN}
+
+dn: CN=Partitions,${CONFIGDN}
+changetype: modify
+replace: fSMORoleOwner
+fSMORoleOwner: CN=NTDS Settings,${SERVERDN}
+
+dn: CN=NTDS Site Settings,CN=${DEFAULTSITE},CN=Sites,${CONFIGDN}
+changetype: modify
+replace: interSiteTopologyGenerator
+interSiteTopologyGenerator: CN=NTDS Settings,${SERVERDN}
+
+dn: CN=RID Set,CN=${NETBIOSNAME},OU=Domain Controllers,${DOMAINDN}
+changetype: add
+objectClass: rIDSet
+rIDAllocationPool: ${RIDALLOCATIONSTART}-${RIDALLOCATIONEND}
+rIDPreviousAllocationPool: ${RIDALLOCATIONSTART}-${RIDALLOCATIONEND}
+rIDUsedPool: 0
+rIDNextRID: ${RIDALLOCATIONSTART}
+
+dn: CN=${NETBIOSNAME},OU=Domain Controllers,${DOMAINDN}
+changetype: modify
+add: rIDSetReferences
+rIDSetReferences: CN=RID Set,CN=${NETBIOSNAME},OU=Domain Controllers,${DOMAINDN}

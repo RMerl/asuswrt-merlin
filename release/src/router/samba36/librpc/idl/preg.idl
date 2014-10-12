@@ -1,0 +1,49 @@
+#include "idl_types.h"
+
+import "misc.idl";
+
+/*
+   IDL structures defining PReg files
+
+   more info can be found at:
+   http://msdn2.microsoft.com/en-us/library/aa374407.aspx
+*/
+
+[
+	pointer_default(unique),
+	helper("../librpc/ndr/ndr_preg.h"),
+	helpstring("PReg structure"),
+	uuid("67655250-0000-0000-0000-00000000")
+]
+	interface preg
+{
+	typedef [public] struct {
+		[charset(DOS),value("["),noprint] uint8 _opening_bracket[2];
+		nstring keyname;
+		[charset(DOS),value(";"),noprint] uint8 _sep1[2];
+		nstring valuename;
+		[charset(DOS),value(";"),noprint] uint8 _sep2[2];
+		winreg_Type type;
+		[charset(DOS),value(";"),noprint] uint8 _sep3[2];
+		uint32 size;
+		[charset(DOS),value(";"),noprint] uint8 _sep4[2];
+		uint8 data[size];
+		[charset(DOS),value("]"),noprint] uint8 _closing_bracket[2];
+	} preg_entry;
+
+	typedef [public] struct {
+		[charset(DOS),value("PReg")] uint8 signature[4];
+		[value(1)] uint32 version;
+	} preg_header;
+
+	typedef [public,flag(NDR_NOALIGN),nopush,nopull] struct {
+		preg_header header;
+		uint32 num_entries;
+		preg_entry entries[num_entries];
+	} preg_file;
+
+	void decode_preg_file(
+		[in] preg_file file
+		);
+
+}

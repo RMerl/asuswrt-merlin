@@ -1,0 +1,15 @@
+<samba:parameter name="async smb echo handler"
+                 context="G"
+				 type="boolean"
+                 advanced="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>This parameter specifies whether Samba should fork the
+	  async smb echo handler. It can be beneficial if your file
+	  system can block syscalls for a very long time. In some
+	  circumstances, it prolongs the timeout that Windows uses to
+	  determine whether a connection is dead.
+	</para>
+</description>
+<value type="default">no</value>
+</samba:parameter>

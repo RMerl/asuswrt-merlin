@@ -1,0 +1,34 @@
+RFC 1823 - The LDAP Application Program Interface
+RFC 2307 - An Approach for Using LDAP as a Network Information Service
+RFC 2696 - LDAP Control Extension for Simple Paged Results Manipulation
+RFC 2849 - The LDAP Data Interchange Format (LDIF) - Technical Specification
+RFC 2891 - LDAP Control Extension for Server Side Sorting of Search Results
+RFC 3296 - Named Subordinate References in LDAP Directories
+
+Expired but used Draft:
+ldapext-ldapv3-vlv-04: LDAP Extensions for Scrolling View Browsing of Search Results
+
+RFC 4510 - Lightweight Directory Access Protocol (LDAP): Technical Specification Road Map
+RFC 4511 - Lightweight Directory Access Protocol (LDAP): The Protocol
+RFC 4512 - Lightweight Directory Access Protocol (LDAP): Directory Information Models
+RFC 4513 - Lightweight Directory Access Protocol (LDAP): Authentication Methods and Security Mechanisms
+RFC 4514 - Lightweight Directory Access Protocol (LDAP): String Representation of Distinguished Names
+RFC 4515 - Lightweight Directory Access Protocol (LDAP): String Representation of Search Filters
+RFC 4516 - Lightweight Directory Access Protocol (LDAP): Uniform Resource Locator
+RFC 4517 - Lightweight Directory Access Protocol (LDAP): Syntaxes and Matching Rules
+RFC 4518 - Lightweight Directory Access Protocol (LDAP): Internationalized String Preparation
+RFC 4519 - Lightweight Directory Access Protocol (LDAP) Schema for User Applications
+RFC 4520 - Internet Assigned Numbers Authority (IANA) Considerations for the Lightweight Directory Access Protocol (LDAP)
+RFC 4521 - Considerations for Lightweight Directory Access Protocol (LDAP) Extensions 
+RFC 4522 - Lightweight Directory Access Protocol (LDAP): The Binary Encoding Option
+RFC 4523 - Lightweight Directory Access Protocol (LDAP) Schema Definitions for X.509 Certificates
+RFC 4524 - COSINE LDAP/X.500 Schema 
+RFC 4525 - Lightweight Directory Access Protocol (LDAP) Modify-Increment Extension 
+RFC 4526 - Lightweight Directory Access Protocol (LDAP) Absolute True and False Filters
+RFC 4527 - Lightweight Directory Access Protocol (LDAP) Read Entry Controls
+RFC 4528 - Lightweight Directory Access Protocol (LDAP) Assertion Control
+RFC 4529 - Requesting Attributes by Object Class in the Lightweight Directory Access Protocol (LDAP) 
+RFC 4530 - Lightweight Directory Access Protocol (LDAP) entryUUID Operational Attribute
+RFC 4531 - Lightweight Directory Access Protocol (LDAP) Turn Operation
+RFC 4532 - Lightweight Directory Access Protocol (LDAP) "Who am I?" Operation
+RFC 4533 - Lightweight Directory Access Protocol (LDAP) Content Synchronization Operation

@@ -1,0 +1,25 @@
+#!/bin/sh
+
+FILES="../../../nsswitch/pam_winbind.c ../../../nsswitch/pam_winbind.h ../../libsmb/nterr.c"
+LANGS="af ar bg bn bs ca cs cy da de el en_GB en_US es et fi fr gl gu he hi hr hu id it ja ka km ko lo lt mk mr nb nl pa pl pt_BR pt ro ru si sk sl sr sv ta th tr uk vi wa xh zh_CN zh_TW zu"
+
+XGETTEXT=xgettext
+MSGMERGE=msgmerge
+
+WIDTH=256
+
+$XGETTEXT --default-domain="pam_winbind" \
+	--add-comments \
+	--keyword=_ --keyword=N_ \
+	--width=${WIDTH} \
+	${FILES}
+
+for lang in ${LANGS}; do
+	echo -n $lang
+	touch ${lang}.po
+	mv ${lang}.po ${lang}.po.old
+	${MSGMERGE} --width=${WIDTH} ${lang}.po.old pam_winbind.po -o ${lang}.po
+	rm -fr ${lang}.po.old
+done
+
+rm -fr pam_winbind.po

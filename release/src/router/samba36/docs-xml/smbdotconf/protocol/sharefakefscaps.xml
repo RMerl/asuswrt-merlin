@@ -1,0 +1,20 @@
+<samba:parameter name="share:fake_fscaps"
+	context="G"
+	type="string"
+		 advanced="1" developer="0"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+
+	<para>
+	This is needed to support some special application that makes
+	QFSINFO calls to check whether we set the SPARSE_FILES bit
+	(0x40). If this bit is not set that particular application
+	refuses to work against
+	Samba. With <smbconfoption name="share:fake_fscaps">64</smbconfoption>
+	the SPARSE_FILES file system capability flag is set. Use other
+	decimal values to specify the bitmask you need to fake.
+	</para>
+
+</description>
+<value type="default">0</value>
+</samba:parameter>

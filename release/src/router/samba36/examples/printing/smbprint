@@ -1,0 +1,176 @@
+#!/bin/bash
+
+# This script is an input filter for printcap printing on a unix machine. It
+# uses the smbclient program to print the file to the specified smb-based 
+# server and service.
+# For example you could have a printcap entry like this
+#
+# smb:lp=/dev/null:sd=/usr/spool/smb:sh:if=/usr/local/samba/smbprint
+#
+# which would create a unix printer called "smb" that will print via this 
+# script. You will need to create the spool directory /usr/spool/smb with
+# appropriate permissions and ownerships for your system.
+
+# Set these to the server and service you wish to print to 
+# In this example I have a WfWg PC called "lapland" that has a printer 
+# exported called "printer" with no password.
+
+#
+# Script further altered by hamiltom@ecnz.co.nz (Michael Hamilton)
+# so that the server, service, and password can be read from 
+# a /usr/var/spool/lpd/PRINTNAME/.config file.
+#
+# Script further modified by Richard Sharpe to fix some things.
+# Get rid of the -x on the first line, and add parameters
+#
+#    -t  now causes translate to be used when sending files
+#
+# Further modifications by Alfred Perlstein to fix some problems and
+# improve the quality of the code (3-Dec-2001).
+#
+# More hacking by Richard Sharpe to improve portability. 9-Dec-2001.
+#
+# In order for this to work the /etc/printcap entry must include an 
+# accounting file (af=...):
+#
+#   cdcolour:\
+#	:cm=CD IBM Colorjet on 6th:\
+#	:sd=/var/spool/lpd/cdcolour:\
+#	:af=/var/spool/lpd/cdcolour/acct:\
+#	:if=/usr/local/etc/smbprint:\
+#	:mx=0:\
+#	:lp=/dev/null:
+#
+# The /usr/var/spool/lpd/PRINTNAME/.config file should contain:
+#   server=PC_SERVER
+#   service=PR_SHARENAME
+#   password="password"
+#
+# E.g.
+#   server=PAULS_PC
+#   service=CJET_371
+#   password=""
+
+#smbclient=/usr/pkg/bin/smbclient
+# Assume that smbclient will be in the same place as smbprint
+
+smbclient="`dirname $0`/smbclient"
+
+#
+# The last parameter to the filter is the accounting file name.
+#   Extract the directory name from the file name.
+#   Concat this with /.config to get the config file.
+#
+TRANS=0
+eval acct_file=\${$#}
+spool_dir=`dirname $acct_file` 
+config_file=$spool_dir/.config
+
+# Should read the following variables set in the config file:
+#   server
+#   service
+#   password
+#   username (optional)
+#   IP (optional)
+#   debug (optional)
+#   debugsmb (optional)
+#   debugfile (optional)
+. $config_file
+
+if [ "x$password" = "x" ] ; then
+	password="-N"
+fi
+
+if [ "x$username" = "x" ] ; then
+	username="$server";
+fi
+
+while test $# -gt 0; do
+	case "$1" in
+	-t)
+		TRANS=1
+		;;
+
+	 *)   # Bad Parameters, ignore them ...
+		;;
+	 esac
+	 shift
+done
+
+command="print - ;"
+if [ $TRANS -eq 1 ]; then
+	command="translate;$command";
+fi
+
+##
+## Some security checks on the logfile if we are using it
+##
+## make the directory containing the logfile is necessary 
+## and set the permissions to be rwx for owner only
+##
+
+debugfile="/tmp/smb-print/logfile"
+logdir=`dirname $debugfile`
+if [ ! -d $logdir ]; then 
+	mkdir -m 0700 $logdir
+fi
+
+##
+## check ownership.  If I don't own it refuse to 
+## create the logfile
+##
+if [ ! -O $logdir ]; then
+	echo "user running script does not own $logdir. Ignoring any debug options."
+	debug=""
+fi
+
+touch $debugfile
+if [ -h $debugfile ]; then
+	echo "$debugful is a symlink.  Turning off debugging!"
+	debug=""
+fi
+
+##
+## We should be safe at this point to create the log file
+## without fear of a symlink attack -- move on to more script work.
+##
+
+if [ "x$debug" = "x" ] ; then 
+		debugfile=/dev/null debugargs=
+else
+        if [ $debug -eq 0 ] ; then
+		debugfile=/dev/null debugargs=
+	else
+		set -x; exec >>$debugfile 2>&1
+		debugargs="$debugfile."
+		#[ "x$debugsmb" = "x" ] || debugargs="$debugargs -d $debugsmb"
+	fi
+fi
+
+if [ "x$smbconf" != "x" ]; then
+
+	smbconf="-s $smbconf"
+
+fi
+
+if [ "x$IP" != "x" ]; then
+
+	IP="-I $IP"
+
+fi
+
+if [ "x$debugargs" != "x" ]; then
+
+	debugargs="-l $debugargs"
+
+fi
+
+$smbclient \
+	"\\\\$server\\$service" \
+	$password \
+	$smbconf \
+	$IP \
+	$debugargs \
+	-U $username \
+	-c "$command"
+#

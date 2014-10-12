@@ -1,0 +1,269 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//Samba-Team//DTD DocBook V4.2-Based Variant V1.0//EN" "http://www.samba.org/samba/DTD/samba-doc">
+<refentry id="vfs_full_audit.8">
+
+<refmeta>
+	<refentrytitle>vfs_full_audit</refentrytitle>
+	<manvolnum>8</manvolnum>
+	<refmiscinfo class="source">Samba</refmiscinfo>
+	<refmiscinfo class="manual">System Administration tools</refmiscinfo>
+	<refmiscinfo class="version">3.6</refmiscinfo>
+</refmeta>
+
+
+<refnamediv>
+	<refname>vfs_full_audit</refname>
+	<refpurpose>record Samba VFS operations in the system log</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+	<cmdsynopsis>
+		<command>vfs objects = full_audit</command>
+	</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1>
+	<title>DESCRIPTION</title>
+
+	<para>This VFS module is part of the
+	<citerefentry><refentrytitle>samba</refentrytitle>
+	<manvolnum>7</manvolnum></citerefentry> suite.</para>
+
+	<para>The <command>vfs_full_audit</command> VFS module records selected
+	client operations to the system log using
+	<citerefentry><refentrytitle>syslog</refentrytitle>
+	<manvolnum>3</manvolnum></citerefentry>.</para>
+
+	<para><command>vfs_full_audit</command> is able to record the
+	complete set of Samba VFS operations:</para>
+
+	<simplelist>
+        <member>aio_cancel</member>
+        <member>aio_error</member>
+        <member>aio_fsync</member>
+        <member>aio_read</member>
+        <member>aio_return</member>
+        <member>aio_suspend</member>
+        <member>aio_write</member>
+        <member>chdir</member>
+        <member>chflags</member>
+        <member>chmod</member>
+        <member>chmod_acl</member>
+        <member>chown</member>
+        <member>close</member>
+        <member>closedir</member>
+        <member>connect</member>
+        <member>disconnect</member>
+        <member>disk_free</member>
+        <member>fchmod</member>
+        <member>fchmod_acl</member>
+        <member>fchown</member>
+        <member>fget_nt_acl</member>
+        <member>fgetxattr</member>
+        <member>flistxattr</member>
+        <member>fremovexattr</member>
+        <member>fset_nt_acl</member>
+        <member>fsetxattr</member>
+        <member>fstat</member>
+        <member>fsync</member>
+        <member>ftruncate</member>
+        <member>get_nt_acl</member>
+        <member>get_quota</member>
+        <member>get_shadow_copy_data</member>
+        <member>getlock</member>
+        <member>getwd</member>
+        <member>getxattr</member>
+        <member>kernel_flock</member>
+        <member>lgetxattr</member>
+        <member>link</member>
+        <member>linux_setlease</member>
+        <member>listxattr</member>
+        <member>llistxattr</member>
+        <member>lock</member>
+        <member>lremovexattr</member>
+        <member>lseek</member>
+        <member>lsetxattr</member>
+        <member>lstat</member>
+        <member>mkdir</member>
+        <member>mknod</member>
+        <member>open</member>
+        <member>opendir</member>
+        <member>pread</member>
+        <member>pwrite</member>
+        <member>read</member>
+        <member>readdir</member>
+        <member>readlink</member>
+        <member>realpath</member>
+        <member>removexattr</member>
+        <member>rename</member>
+        <member>rewinddir</member>
+        <member>rmdir</member>
+        <member>seekdir</member>
+        <member>sendfile</member>
+        <member>set_nt_acl</member>
+        <member>set_quota</member>
+        <member>setxattr</member>
+        <member>stat</member>
+        <member>statvfs</member>
+        <member>symlink</member>
+        <member>sys_acl_add_perm</member>
+        <member>sys_acl_clear_perms</member>
+        <member>sys_acl_create_entry</member>
+        <member>sys_acl_delete_def_file</member>
+        <member>sys_acl_free_acl</member>
+        <member>sys_acl_free_qualifier</member>
+        <member>sys_acl_free_text</member>
+        <member>sys_acl_get_entry</member>
+        <member>sys_acl_get_fd</member>
+        <member>sys_acl_get_file</member>
+        <member>sys_acl_get_perm</member>
+        <member>sys_acl_get_permset</member>
+        <member>sys_acl_get_qualifier</member>
+        <member>sys_acl_get_tag_type</member>
+        <member>sys_acl_init</member>
+        <member>sys_acl_set_fd</member>
+        <member>sys_acl_set_file</member>
+        <member>sys_acl_set_permset</member>
+        <member>sys_acl_set_qualifier</member>
+        <member>sys_acl_set_tag_type</member>
+        <member>sys_acl_to_text</member>
+        <member>sys_acl_valid</member>
+        <member>telldir</member>
+        <member>unlink</member>
+        <member>utime</member>
+        <member>write</member>
+	</simplelist>
+
+	<para>In addition to these operations,
+	<command>vfs_full_audit</command> recognizes the special operation
+	names &quot;all&quot; and &quot;none &quot;, which refer to all
+	the VFS operations and none of the VFS operations respectively.
+	</para>
+
+	<para><command>vfs_full_audit</command> records operations in fixed
+	format consisting of fields separated by '|' characters. The
+	format is: </para>
+	<programlisting>
+		smbd_audit: PREFIX|OPERATION|RESULT|FILE
+	</programlisting>
+
+	<para>The record fields are:</para>
+
+	<itemizedlist>
+	<listitem><para><command>PREFIX</command> - the result of the full_audit:prefix string after variable substitutions</para></listitem>
+	<listitem><para><command>OPERATION</command> - the name of the VFS operation</para></listitem>
+	<listitem><para><command>RESULT</command> - whether the operation succeeded or failed</para></listitem>
+	<listitem><para><command>FILE</command> - the name of the file or directory the operation was performed on</para></listitem>
+
+	</itemizedlist>
+
+	<para>This module is stackable.</para>
+
+</refsect1>
+
+
+<refsect1>
+	<title>OPTIONS</title>
+
+	<variablelist>
+
+		<varlistentry>
+		<term>vfs_full_audit:prefix = STRING</term>
+		<listitem>
+		<para>Prepend audit messages with STRING. STRING is
+		processed for standard substitution variables listed in
+		<citerefentry><refentrytitle>smb.conf</refentrytitle>
+		<manvolnum>5</manvolnum></citerefentry>. The default
+		prefix is &quot;%u|%I&quot;. </para>
+
+		</listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>vfs_full_audit:success = LIST</term>
+		<listitem>
+		<para>LIST is a list of VFS operations that should be
+		recorded if they succeed. Operations are specified using
+		the names listed above. Operations can be unset by prefixing
+		the names with "!".
+		</para>
+
+		</listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>vfs_full_audit:failure = LIST</term>
+		<listitem>
+		<para>LIST is a list of VFS operations that should be
+		recorded if they failed. Operations are specified using
+		the names listed above. Operations can be unset by prefixing
+		the names with "!".
+		</para>
+
+		</listitem>
+		</varlistentry>
+
+                <varlistentry>
+                <term>full_audit:facility = FACILITY</term>
+                <listitem>
+                <para>Log messages to the named
+                <citerefentry><refentrytitle>syslog</refentrytitle>
+                <manvolnum>3</manvolnum></citerefentry> facility.
+
+                </para>
+
+                </listitem>
+                </varlistentry>
+
+                <varlistentry>
+                <term>full_audit:priority = PRIORITY</term>
+                <listitem>
+                <para>Log messages with the named
+                <citerefentry><refentrytitle>syslog</refentrytitle>
+                <manvolnum>3</manvolnum></citerefentry> priority.
+                </para>
+
+                </listitem>
+                </varlistentry>
+
+	</variablelist>
+</refsect1>
+
+<refsect1>
+	<title>EXAMPLES</title>
+
+	<para>Log file and directory open operations on the [records]
+	share using the LOCAL7 facility and ALERT priority, including
+	the username and IP address. Logging excludes the open VFS function
+	on failures:</para>
+
+<programlisting>
+        <smbconfsection name="[records]"/>
+	<smbconfoption name="path">/data/records</smbconfoption>
+	<smbconfoption name="vfs objects">full_audit</smbconfoption>
+	<smbconfoption name="full_audit:prefix">%u|%I</smbconfoption>
+	<smbconfoption name="full_audit:success">open opendir</smbconfoption>
+	<smbconfoption name="full_audit:failure">all !open</smbconfoption>
+	<smbconfoption name="full_audit:facility">LOCAL7</smbconfoption>
+	<smbconfoption name="full_audit:priority">ALERT</smbconfoption>
+</programlisting>
+
+</refsect1>
+
+<refsect1>
+	<title>VERSION</title>
+	<para>This man page is correct for version 3.0.25 of the Samba suite.
+	</para>
+</refsect1>
+
+<refsect1>
+	<title>AUTHOR</title>
+
+	<para>The original Samba software and related utilities
+	were created by Andrew Tridgell. Samba is now developed
+	by the Samba Team as an Open Source project similar
+	to the way the Linux kernel is developed.</para>
+
+</refsect1>
+
+</refentry>

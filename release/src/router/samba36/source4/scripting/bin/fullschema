@@ -1,0 +1,183 @@
+#!/usr/bin/env python
+# 
+# Works out the full schema
+#
+
+import base64
+import optparse
+import sys
+
+# Find right directory when running from source tree
+sys.path.insert(0, "bin/python")
+
+import samba
+from samba import getopt as options, Ldb
+from ldb import SCOPE_SUBTREE, SCOPE_BASE
+import sys
+
+parser = optparse.OptionParser("fullschema <URL>")
+sambaopts = options.SambaOptions(parser)
+parser.add_option_group(sambaopts)
+credopts = options.CredentialsOptions(parser)
+parser.add_option_group(credopts)
+parser.add_option_group(options.VersionOptions(parser))
+parser.add_option("--dump-classes", action="store_true")
+parser.add_option("--dump-attributes", action="store_true")
+
+opts, args = parser.parse_args()
+opts.dump_all = True
+
+if opts.dump_classes:
+    opts.dump_all = False
+if opts.dump_attributes:
+    opts.dump_all = False
+if opts.dump_all:
+    opts.dump_classes = True
+    opts.dump_attributes = True
+
+if len(args) != 1:
+    parser.print_usage()
+    sys.exit(1)
+
+url = args[0]
+
+lp_ctx = sambaopts.get_loadparm()
+
+creds = credopts.get_credentials(lp_ctx)
+ldb = Ldb(url, credentials=creds, lp=lp_ctx, options=["modules:paged_searches"])
+
+# the attributes we need for objectclasses
+class_attrs = ["objectClass", 
+               "cn",
+               "subClassOf", 
+               "governsID", 
+               "possSuperiors", 
+               "possibleInferiors",
+               "mayContain",
+               "mustContain",
+               "auxiliaryClass",
+               "rDNAttID",
+               "adminDisplayName",
+               "adminDescription",
+               "objectClassCategory",
+               "lDAPDisplayName",
+               "schemaIDGUID",
+               "systemOnly",
+               "systemPossSuperiors",
+               "systemMayContain",
+               "systemMustContain",
+               "systemAuxiliaryClass",
+               "defaultSecurityDescriptor",
+               "systemFlags",
+               "defaultHidingValue",
+               "defaultObjectCategory", 
+               
+               # this attributes are not used by w2k3
+               "schemaFlagsEx",
+               "msDs-IntId",
+               "msDs-Schema-Extensions",
+               "classDisplayName",
+               "isDefunct"]
+
+attrib_attrs = ["objectClass",
+                "cn",
+                "attributeID", 
+                "attributeSyntax",
+                "isSingleValued",
+                "rangeLower",
+                "rangeUpper",
+                "mAPIID",
+                "linkID",
+                "adminDisplayName",
+                "oMObjectClass",
+                "adminDescription",
+                "oMSyntax", 
+                "searchFlags",
+                "extendedCharsAllowed",
+                "lDAPDisplayName",
+                "schemaIDGUID",
+                "attributeSecurityGUID",
+                "systemOnly",
+                "systemFlags",
+                "isMemberOfPartialAttributeSet",
+                
+                # this attributes are not used by w2k3
+                "schemaFlagsEx",
+                "msDs-IntId",
+                "msDs-Schema-Extensions",
+                "classDisplayName",
+                "isEphemeral",
+                "isDefunct"]
+
+class Objectclass(dict):
+
+    def __init__(self, ldb, name):
+        """create an objectclass object"""
+        self.name = name
+
+
+class Attribute(dict):
+
+    def __init__(self, ldb, name):
+        """create an attribute object"""
+        self.name = name
+        self["cn"] = get_object_cn(ldb, name)
+
+
+
+def fix_dn(dn):
+    """fix a string DN to use ${SCHEMADN}"""
+    return dn.replace(rootDse["schemaNamingContext"][0], "${SCHEMADN}")
+
+
+def write_ldif_one(o, attrs):
+    """dump an object as ldif"""
+    print "dn: CN=%s,${SCHEMADN}" % o["cn"]
+    for a in attrs:
+        if not o.has_key(a):
+            continue
+        # special case for oMObjectClass, which is a binary object
+        v = o[a]
+        list = []
+        for j in v:
+            value = fix_dn(j)
+            list.append(value)
+        list.sort()
+        for j in list:
+            value = fix_dn(j)
+            if a != "cn":
+                if a == "oMObjectClass":
+                    print "%s:: %s" % (a, base64.b64encode(value))
+                elif a.endswith("GUID"):
+                    print "%s: %s" % (a, ldb.schema_format_value(a, value))
+                else:
+                    print "%s: %s" % (a, value)
+    print ""
+
+
+# get the rootDSE
+res = ldb.search(base="", expression="", scope=SCOPE_BASE, attrs=["schemaNamingContext"])
+rootDse = res[0]
+
+if opts.dump_attributes:
+    res = ldb.search(expression="objectClass=attributeSchema", 
+                     base=rootDse["schemaNamingContext"][0], scope=SCOPE_SUBTREE,attrs=attrib_attrs,
+                     controls=["server_sort:1:0:cn"])
+    
+    for msg in res:
+        o = Objectclass(ldb, msg["ldapDisplayName"])
+        for a in msg:
+            o[a] = msg[a]
+        write_ldif_one(o, attrib_attrs)
+            
+if opts.dump_classes:
+    res = ldb.search(expression="objectClass=classSchema", 
+                     base=rootDse["schemaNamingContext"][0], scope=SCOPE_SUBTREE,attrs=class_attrs,
+                     controls=["server_sort:1:0:cn"])
+
+    for msg in res:
+        o = Objectclass(ldb, msg["ldapDisplayName"])
+        for a in msg:
+            o[a] = msg[a]
+        write_ldif_one(o, class_attrs)
+

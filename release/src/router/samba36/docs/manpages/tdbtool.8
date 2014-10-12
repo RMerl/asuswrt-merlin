@@ -1,0 +1,159 @@
+'\" t
+.\"     Title: tdbtool
+.\"    Author: [see the "AUTHOR" section]
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date: 09/18/2013
+.\"    Manual: System Administration tools
+.\"    Source: Samba 3.6
+.\"  Language: English
+.\"
+.TH "TDBTOOL" "8" "09/18/2013" "Samba 3\&.6" "System Administration tools"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+tdbtool \- manipulate the contents TDB files
+.SH "SYNOPSIS"
+.HP \w'\ 'u
+tdbtool
+.HP \w'\ 'u
+tdbtool \fITDBFILE\fR [\fICOMMANDS\fR...]
+.SH "DESCRIPTION"
+.PP
+This tool is part of the
+\fBsamba\fR(1)
+suite\&.
+.PP
+tdbtool
+a tool for displaying and altering the contents of Samba TDB (Trivial DataBase) files\&. Each of the commands listed below can be entered interactively or provided on the command line\&.
+.SH "COMMANDS"
+.PP
+\fBcreate\fR \fITDBFILE\fR
+.RS 4
+Create a new database named
+\fITDBFILE\fR\&.
+.RE
+.PP
+\fBopen\fR \fITDBFILE\fR
+.RS 4
+Open an existing database named
+\fITDBFILE\fR\&.
+.RE
+.PP
+\fBerase\fR
+.RS 4
+Erase the current database\&.
+.RE
+.PP
+\fBdump\fR
+.RS 4
+Dump the current database as strings\&.
+.RE
+.PP
+\fBcdump\fR
+.RS 4
+Dump the current database as connection records\&.
+.RE
+.PP
+\fBkeys\fR
+.RS 4
+Dump the current database keys as strings\&.
+.RE
+.PP
+\fBhexkeys\fR
+.RS 4
+Dump the current database keys as hex values\&.
+.RE
+.PP
+\fBinfo\fR
+.RS 4
+Print summary information about the current database\&.
+.RE
+.PP
+\fBinsert\fR \fIKEY\fR \fIDATA\fR
+.RS 4
+Insert a record into the current database\&.
+.RE
+.PP
+\fBmove\fR \fIKEY\fR \fITDBFILE\fR
+.RS 4
+Move a record from the current database into
+\fITDBFILE\fR\&.
+.RE
+.PP
+\fBstore\fR \fIKEY\fR \fIDATA\fR
+.RS 4
+Store (replace) a record in the current database\&.
+.RE
+.PP
+\fBshow\fR \fIKEY\fR
+.RS 4
+Show a record by key\&.
+.RE
+.PP
+\fBdelete\fR \fIKEY\fR
+.RS 4
+Delete a record by key\&.
+.RE
+.PP
+\fBlist\fR
+.RS 4
+Print the current database hash table and free list\&.
+.RE
+.PP
+\fBfree\fR
+.RS 4
+Print the current database and free list\&.
+.RE
+.PP
+\fB!\fR \fICOMMAND\fR
+.RS 4
+Execute the given system command\&.
+.RE
+.PP
+\fBfirst\fR
+.RS 4
+Print the first record in the current database\&.
+.RE
+.PP
+\fBnext\fR
+.RS 4
+Print the next record in the current database\&.
+.RE
+.PP
+\fBcheck\fR
+.RS 4
+Check the integrity of the current database\&.
+.RE
+.PP
+\fBquit\fR
+.RS 4
+Exit
+tdbtool\&.
+.RE
+.SH "CAVEATS"
+.PP
+The contents of the Samba TDB files are private to the implementation and should not be altered with
+tdbtool\&.
+.SH "VERSION"
+.PP
+This man page is correct for version 3\&.0\&.25 of the Samba suite\&.
+.SH "AUTHOR"
+.PP
+The original Samba software and related utilities were created by Andrew Tridgell\&. Samba is now developed by the Samba Team as an Open Source project similar to the way the Linux kernel is developed\&.

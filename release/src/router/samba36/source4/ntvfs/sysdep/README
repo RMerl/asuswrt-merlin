@@ -1,0 +1,5 @@
+This directory contains OS depdendent interfaces to facilities that
+are only available on a few of our target systems, and require
+substantial code to abstract.
+
+

@@ -1,0 +1,84 @@
+'\" t
+.\"     Title: vfs_aio_pthread
+.\"    Author: [see the "AUTHOR" section]
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date: 09/18/2013
+.\"    Manual: System Administration tools
+.\"    Source: Samba 3.6
+.\"  Language: English
+.\"
+.TH "VFS_AIO_PTHREAD" "8" "09/18/2013" "Samba 3\&.6" "System Administration tools"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+vfs_aio_pthread \- implement async I/O in Samba vfs using a pthread pool
+.SH "SYNOPSIS"
+.HP \w'\ 'u
+vfs objects = aio_pthread
+.SH "DESCRIPTION"
+.PP
+This VFS module is part of the
+\fBsamba\fR(7)
+suite\&.
+.PP
+The
+aio_pthread
+VFS module enables asynchronous I/O for Samba on platforms which have the pthreads API available, without using the Posix AIO interface\&. Posix AIO can suffer from severe limitations\&. For example, on some Linux versions the real\-time signals that it uses are broken under heavy load\&. Other systems only allow AIO when special kernel modules are loaded or only allow a certain system\-wide amount of async requests being scheduled\&. Systems based on glibc (most Linux systems) only allow a single outstanding request per file descriptor which essentially makes Posix AIO useless on systems using the glibc implementation\&.
+.PP
+To work around all these limitations, the aio_pthread module was written\&. It uses a pthread pool instead of the internal Posix AIO interface to allow read and write calls to be process asynchronously\&. A pthread pool is created which expands dynamically by creating new threads as work is given to it to a maximum of 100 threads per smbd process\&. To change this limit see the "aio num threads" parameter below\&. New threads are not created if idle threads are available when a new read or write request is received, the new work is given to an existing idle thread\&. Threads terminate themselves if idle for one second\&.
+.PP
+Note that the smb\&.conf parameters
+aio read size
+and
+aio write size
+must also be set appropriately for this module to be active\&.
+.PP
+This module MUST be listed last in any module stack as the Samba VFS pread/pwrite interface is not thread\-safe\&. This module makes direct pread and pwrite system calls and does NOT call the Samba VFS pread and pwrite interfaces\&.
+.SH "EXAMPLES"
+.PP
+Straight forward use:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+        \fI[cooldata]\fR
+	\m[blue]\fBpath = /data/ice\fR\m[]
+	\m[blue]\fBaio read size = 1024\fR\m[]
+	\m[blue]\fBaio write size = 1024\fR\m[]
+	\m[blue]\fBvfs objects = aio_pthread\fR\m[]
+.fi
+.if n \{\
+.RE
+.\}
+.SH "OPTIONS"
+.PP
+aio_pthread:aio num threads = INTEGER
+.RS 4
+Limit the maximum number of threads per smbd that will be created in the thread pool to service IO requests\&.
+.sp
+By default this is set to 100\&.
+.RE
+.SH "VERSION"
+.PP
+This man page is correct for version 3\&.6\&.3 of the Samba suite\&.
+.SH "AUTHOR"
+.PP
+The original Samba software and related utilities were created by Andrew Tridgell\&. Samba is now developed by the Samba Team as an Open Source project similar to the way the Linux kernel is developed\&.

@@ -1,0 +1,54 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>idmap_ad</title><link rel="stylesheet" href="../samba.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.75.2"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="refentry" title="idmap_ad"><a name="idmap_ad.8"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>idmap_ad &#8212; Samba's idmap_ad Backend for Winbind</p></div><div class="refsynopsisdiv" title="DESCRIPTION"><h2>DESCRIPTION</h2><p>The idmap_ad plugin provides a way for Winbind to read
+	id mappings from an AD server that uses RFC2307/SFU schema
+	extensions. This module implements only the "idmap"
+	API, and is READONLY. Mappings must be provided in advance
+	by the administrator by adding the posixAccount/posixGroup
+	classes and relative attribute/value pairs to the user and
+	group objects in the AD.</p><p>
+	Note that the idmap_ad module has changed considerably since
+	Samba versions 3.0 and 3.2.
+	Currently, the <em class="parameter"><code>ad</code></em> backend
+	does not work as the the default idmap backend, but one has
+	to configure it separately for each domain for which one wants
+	to use it, using disjoint ranges. One usually needs to configure
+	a writeable default idmap range, using for example the
+	<em class="parameter"><code>tdb</code></em> or <em class="parameter"><code>ldap</code></em>
+	backend, in order to be able to map the BUILTIN sids and
+	possibly other trusted domains. The writeable default config
+	is also needed in order to be able to create group mappings.
+	This catch-all default idmap configuration should have a range
+	that is disjoint from any explicitly configured domain with
+	idmap backend <em class="parameter"><code>ad</code></em>. See the example below.
+	</p></div><div class="refsect1" title="IDMAP OPTIONS"><a name="id266828"></a><h2>IDMAP OPTIONS</h2><div class="variablelist"><dl><dt><span class="term">range = low - high</span></dt><dd><p>
+			Defines the available matching UID and GID range for which the
+			backend is authoritative. Note that the range acts as a filter.
+			If specified any UID or GID stored in AD that fall outside the
+			range is ignored and the corresponding map is discarded.
+			It is intended as a way to avoid accidental UID/GID overlaps
+			between local and remotely defined IDs.
+		</p></dd><dt><span class="term">schema_mode = &lt;rfc2307 | sfu &gt;</span></dt><dd><p>
+			Defines the schema that idmap_ad should use when querying
+			Active Directory regarding user and group information.
+			This can be either the RFC2307 schema support included
+			in Windows 2003 R2 or the Service for Unix (SFU) schema.
+		</p></dd></dl></div></div><div class="refsect1" title="EXAMPLES"><a name="id266865"></a><h2>EXAMPLES</h2><p>
+	The following example shows how to retrieve idmappings from our principal and
+	trusted AD domains. If trusted domains are present id conflicts must be
+	resolved beforehand, there is no
+	guarantee on the order conflicting mappings would be resolved at this point.
+
+	This example also shows how to leave a small non conflicting range for local
+	id allocation that may be used in internal backends like BUILTIN.
+	</p><pre class="programlisting">
+	[global]
+	idmap config * : backend = tdb
+	idmap config * : range = 1000000-1999999
+
+	idmap config CORP : backend  = ad
+	idmap config CORP : range = 1000-999999
+	</pre></div><div class="refsect1" title="AUTHOR"><a name="id266885"></a><h2>AUTHOR</h2><p>
+	The original Samba software and related utilities
+	were created by Andrew Tridgell. Samba is now developed
+	by the Samba Team as an Open Source project similar
+	to the way the Linux kernel is developed.
+	</p></div></div></body></html>

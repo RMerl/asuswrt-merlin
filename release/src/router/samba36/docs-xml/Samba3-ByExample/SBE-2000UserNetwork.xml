@@ -1,0 +1,1636 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE chapter PUBLIC "-//Samba-Team//DTD DocBook V4.2-Based Variant V1.0//EN" "http://www.samba.org/samba/DTD/samba-doc">
+<chapter id="net2000users">
+  <title>A Distributed 2000-User Network</title>
+
+<para>
+There is something indeed mystical about things that are
+big. Large networks exhibit a certain magnetism and exude a sense of
+importance that obscures reality. You and I know that it is no more
+difficult to secure a large network than it is a small one. We all
+know that over and above a particular number of network clients, the
+rules no longer change; the only real dynamic is the size of the domain
+(much like a kingdom) over which the network ruler (oops, administrator)
+has control. The real dynamic then transforms from the technical to the
+political. Then again, that point is often reached well before the
+kingdom (or queendom) grows large.
+</para>
+
+<para>
+If you have systematically worked your way to this chapter, hopefully you
+have found some gems and techniques that are applicable in your
+world. The network designs you have worked with in this book have their
+strong points as well as weak ones. That is to be expected given that
+they are based on real business environments, the specifics of which are
+molded to serve the purposes of this book.
+</para>
+
+<para>
+This chapter is intent on wrapping up issues that are central to
+implementation and design of progressively larger networks. Are you ready
+for this chapter? Good, it is time to move on.
+</para>
+
+<para>
+In previous chapters, you made the assumption that your network
+administration staff need detailed instruction right down to the
+nuts and bolts of implementing the solution. That is still the case,
+but they have graduated now. You decide to document only those issues,
+methods, and techniques that are new or complex. Routine tasks such as
+implementing a DNS or a DHCP server are under control. Even the basics of
+Samba are largely under control. So in this section you focus on the
+specifics of implementing LDAP changes, Samba changes, and approach and
+design of the solution and its deployment.
+</para>
+
+<sect1>
+<title>Introduction</title>
+
+<para>
+Abmas is a miracle company. Most businesses would have collapsed under
+the weight of rapid expansion that this company has experienced. Samba 
+is flexible, so there is no need to reinstall the whole operating 
+system just because you need to implement a new network design. In fact, 
+you can keep an old server running right up to the moment of cutover 
+and then do a near-live conversion. There is no need to reinstall a 
+Samba server just to change the way your network should function.
+</para>
+
+<para>
+<indexterm><primary>LDAP</primary></indexterm>
+Network growth is common to all organizations. In this exercise,
+your preoccupation is with the mechanics of implementing Samba and
+LDAP so that network users on each network segment can work
+without impediment.
+</para>
+
+	<sect2>
+	<title>Assignment Tasks</title>
+
+	<para>
+	Starting with the configuration files for the server called
+	<constant>MASSIVE</constant> in <link linkend="happy"/>, you now deal with the
+	issues that are particular to large distributed networks. Your task
+	is simple &smbmdash; identify the challenges, consider the 
+	alternatives, and then design and implement a solution.
+	</para>
+
+	<para>
+	<indexterm><primary>VPN</primary></indexterm>
+	Remember, you have users based in London (UK), Los Angeles,
+	Washington. DC, and, three buildings in New York. A significant portion
+	of your workforce have notebook computers and roam all over the
+	world. Some dial into the office, others use VPN connections over the
+	Internet, and others just move between buildings.i
+	</para>
+
+	<para>
+	What do you say to an employee who normally uses a desktop
+	system but must spend six weeks on the road with a notebook computer?
+	She is concerned about email access and how to keep coworkers current
+	with changing documents.
+	</para>
+
+		<para>
+	To top it all off, you have one network support person and one 
+	help desk person based in London, a single person dedicated to all 
+	network operations in Los Angeles, five staff for user administration 
+	and help desk in New York, plus one <emphasis>floater</emphasis> for 
+	Washington.
+	</para>
+
+		<para>
+	You have outsourced all desktop deployment and management to
+	DirectPointe. Your concern is server maintenance and third-level
+	support. Build a plan and show what must be done.
+	</para>
+
+	</sect2>
+</sect1>
+
+<sect1>
+<title>Dissection and Discussion</title>
+
+<para>
+<indexterm><primary>passdb backend</primary></indexterm>
+<indexterm><primary>LDAP</primary></indexterm>
+In <link linkend="happy"/>, you implemented an LDAP server that provided the
+<parameter>passdb backend</parameter> for the Samba servers. You
+explored ways to accelerate Windows desktop profile handling and you
+took control of network performance.
+</para>
+
+<para>
+<indexterm><primary>ldapsam</primary></indexterm>
+<indexterm><primary>tdbsam</primary></indexterm>
+<indexterm><primary>smbpasswd</primary></indexterm>
+<indexterm><primary>replicated</primary></indexterm>
+The implementation of an LDAP-based passdb backend (known as
+<emphasis>ldapsam</emphasis> in Samba parlance), or some form of database
+that can be distributed, is essential to permit the deployment of Samba
+Primary and Backup Domain Controllers (PDC/BDCs). You see, the problem
+is that the <emphasis>tdbsam</emphasis>-style passdb backend does not
+lend itself to being replicated. The older plain-text-based
+<emphasis>smbpasswd</emphasis>-style passdb backend can be replicated
+using a tool such as <command>rsync</command>, but
+<emphasis>smbpasswd</emphasis> suffers the drawback that it does not
+support the range of account facilities demanded by modern network
+managers.
+</para>
+
+<para>
+<indexterm><primary>XML</primary></indexterm>
+<indexterm><primary>SQL</primary></indexterm>
+The new <emphasis>tdbsam</emphasis> facility supports functionality
+that is similar to an <emphasis>ldapsam</emphasis>, but the lack of
+distributed infrastructure sorely limits the scope for its
+deployment. This raises the following questions: Why can't I just use
+an XML-based backend, or for that matter, why not use an SQL-based
+backend? Is support for these tools broken? Answers to these
+questions require a bit of background.</para>
+
+<para>
+<indexterm><primary>directory</primary></indexterm>
+<indexterm><primary>database</primary></indexterm>
+<indexterm><primary>transaction processing</primary></indexterm>
+<indexterm><primary>LDAP</primary></indexterm>
+<emphasis>What is a directory?</emphasis> A directory is a
+collection of information regarding objects that can be accessed to
+rapidly find information that is relevant in a particular and
+consistent manner. A directory differs from a database in that it is
+generally more often searched (read) than updated. As a consequence, the
+information is organized to facilitate read access rather than to
+support transaction processing.</para>
+
+<para>
+<indexterm><primary>Lightweight Directory Access Protocol</primary><see>LDAP</see></indexterm>
+<indexterm><primary>LDAP</primary></indexterm>
+<indexterm><primary>master</primary></indexterm>
+<indexterm><primary>slave</primary></indexterm>
+The Lightweight Directory Access Protocol (LDAP) differs
+considerably from a traditional database. It has a simple search
+facility that uniquely makes a highly preferred mechanism for managing
+user identities. LDAP provides a scalable mechanism for distributing
+the data repository and for keeping all copies (slaves) in sync with
+the master repository.</para>
+
+<para>
+<indexterm><primary>identity management</primary></indexterm>
+<indexterm><primary>Active Directory</primary></indexterm>
+<indexterm><primary>OpenLDAP</primary></indexterm>
+Samba is a flexible and powerful file and print sharing
+technology. It can use many external authentication sources and can be
+part of a total authentication and identity management
+infrastructure. The two most important external sources for large sites
+are Microsoft Active Directory and LDAP. Sites that specifically wish to
+avoid the proprietary implications of Microsoft Active Directory
+naturally gravitate toward OpenLDAP.</para>
+
+<para>
+<indexterm><primary>network</primary><secondary>routed</secondary></indexterm>
+In <link linkend="happy"/>, you had to deal with a locally routed
+network. All deployment concerns focused around making users happy,
+and that simply means taking control over all network practices and
+usage so that no one user is disadvantaged by any other. The real
+lesson is one of understanding that no matter how much network
+bandwidth you provide, bandwidth remains a precious resource.</para>
+
+<para>In this chapter, you must now consider how the overall network must
+function. In particular, you must be concerned with users who move
+between offices. You must take into account the way users need to
+access information globally. And you must make the network robust
+enough so that it can sustain partial breakdown without causing loss of
+productivity.</para>
+
+	<sect2>
+	<title>Technical Issues</title>
+
+	<para>
+	There are at least three areas that need to be addressed as you
+	approach the challenge of designing a network solution for the newly
+	expanded business:
+	</para>
+
+	<itemizedlist>
+		<listitem><para><indexterm><primary>mobility</primary></indexterm>
+		User needs such as mobility and data access</para></listitem>
+
+		<listitem><para>The nature of Windows networking protocols</para></listitem>
+
+		<listitem><para>Identity management infrastructure needs</para></listitem>
+	</itemizedlist>
+
+	<para>Let's look at each in turn.</para>
+
+	<sect3>
+	  <title>User Needs</title>
+
+	<para>
+	The new company has three divisions. Staff for each division are spread across
+	the company. Some staff are office-bound and some are mobile users. Mobile
+	users travel globally. Some spend considerable periods working in other offices.
+	Everyone wants to be able to work without constraint of productivity.
+	</para> 
+
+	<para>
+	The challenge is not insignificant. In some parts of the world, even dial-up
+	connectivity is poor, while in other regions political encumbrances severely
+	curtail user needs. Parts of the global Internet infrastructure remain shielded
+	off for reasons outside the scope of this discussion.
+	</para>
+
+	<para>
+	<indexterm><primary>synchronize</primary></indexterm>
+	Decisions must be made regarding where data is to be stored, how it will be
+	replicated (if at all), and what the network bandwidth implications are. For
+	example, one decision that can be made is to give each office its own master
+	file storage area that can be synchronized to a central repository in New
+	York. This would permit global data to be backed up from a single location.
+	The synchronization tool could be <command>rsync,</command> run via a cron
+	job. Mobile users may use off-line file storage under Windows XP Professional.
+	This way, they can synchronize all files that have changed since each logon
+	to the network.
+	</para>
+
+	<para>
+	<indexterm><primary>bandwidth</primary><secondary>requirements</secondary></indexterm>
+	<indexterm><primary>roaming profile</primary></indexterm>
+	No matter which way you look at this, the bandwidth requirements
+	for acceptable performance are substantial even if only 10 percent of
+	staff are global data users. A company with 3,500 employees,
+	280 of whom are mobile users who use a similarly distributed
+	network, found they needed at least 2 Mb/sec connectivity
+	between the UK and US offices. Even over 2 Mb/sec bandwidth, this
+	company abandoned any attempt to run roaming profile usage for
+	mobile users. At that time, the average roaming profile took 480
+	KB, while today the minimum Windows XP Professional roaming
+	profile involves a transfer of over 750 KB from the profile
+	server to and from the client.
+	</para>
+
+	<para>
+	<indexterm><primary>wide-area</primary></indexterm>
+	Obviously then, user needs and wide-area practicalities dictate the economic and
+	technical aspects of your network design as well as for standard operating procedures.
+	</para>
+
+	</sect3>
+
+	<sect3>
+	  <title>The Nature of Windows Networking Protocols</title>
+
+	<para>
+	<indexterm><primary>profile</primary><secondary>mandatory</secondary></indexterm>
+	Network logons that include roaming profile handling requires from 140 KB to 2 MB.
+	The inclusion of support for a minimal set of common desktop applications can push
+	the size of a complete profile to over 15 MB. This has substantial implications
+	for location of user profiles. Additionally, it is a significant factor in
+	determining the nature and style of mandatory profiles that may be enforced as
+	part of a total service-level assurance program that might be implemented.
+	</para>
+
+	<para>
+	<indexterm><primary>logon traffic</primary></indexterm>
+	<indexterm><primary>redirected folders</primary></indexterm>
+	One way to reduce the network bandwidth impact of user logon
+	traffic is through folder redirection. In <link linkend="happy"/>, you
+	implemented this in the new Windows XP Professional standard
+	desktop configuration. When desktop folders such as <guimenu>My
+	Documents</guimenu> are redirected to a network drive, they should
+	also be excluded from synchronization to and from the server on
+	logon or logout. Redirected folders are analogous to network drive
+	connections.
+	</para>
+
+	<para><indexterm><primary>application servers</primary></indexterm>
+	Of course, network applications should only be run off
+	local application servers. As a general rule, even with 2 Mb/sec
+	network bandwidth, it would not make sense at all for someone who
+	is working out of the London office to run applications off a
+	server that is located in New York.
+	</para>
+
+	<para>
+	<indexterm><primary>affordability</primary></indexterm>
+	When network bandwidth becomes a precious commodity (that is most
+	of the time), there is a significant demand to understand network
+	processes and to mold the limits of acceptability around the
+	constraints of affordability.
+	</para>
+
+	<para>
+	When a Windows NT4/200x/XP Professional client user logs onto
+	the network, several important things must happen.
+	</para>
+
+	<itemizedlist>
+		<listitem><para>
+		<indexterm><primary>DHCP</primary></indexterm>
+		The client obtains an IP address via DHCP. (DHCP is
+		necessary so that users can roam between offices.)
+		</para></listitem>
+
+		<listitem><para>
+		<indexterm><primary>WINS</primary></indexterm>
+		<indexterm><primary>DNS</primary></indexterm>
+		The client must register itself with the WINS and/or DNS server.
+		</para></listitem>
+
+		<listitem><para>
+		<indexterm><primary>Domain Controller</primary><secondary>closest</secondary></indexterm>
+		The client must locate the closest domain controller.
+		</para></listitem>
+
+		<listitem><para>
+		The client must log onto a domain controller and obtain as part of
+		that process the location of the user's profile, load it, connect to
+		redirected folders, and establish all network drive and printer connections.
+		</para></listitem>
+
+		<listitem><para>
+		The domain controller must be able to resolve the user's
+		credentials before the logon process is fully implemented.
+		</para></listitem>
+	</itemizedlist>
+
+	<para>
+	Given that this book is about Samba and that it implements the Windows
+	NT4-style domain semantics, it makes little sense to compare Samba with
+	Microsoft Active Directory insofar as the logon protocols and principles
+	of operation are concerned. The following information pertains exclusively
+	to the interaction between a Windows XP Professional workstation and a
+	Samba-3.0.20 server. In the discussion that follows, use is made of DHCP and WINS.
+	</para>
+
+	<para>
+	As soon as the Windows workstation starts up, it obtains an
+	IP address. This is immediately followed by registration of its
+	name both by broadcast and Unicast registration that is directed
+	at the WINS server.
+	</para>
+
+	<para>
+	<indexterm><primary>Unicast</primary></indexterm>
+	<indexterm><primary>broadcast</primary><secondary>directed</secondary>
+	</indexterm><indexterm><primary>NetBIOS</primary></indexterm>
+	Given that the client is already a domain member, it then sends
+	a directed (Unicast) request to the WINS server seeking the list of
+	IP addresses for domain controllers (NetBIOS name type 0x1C). The
+	WINS server replies with the information requested.</para>
+
+	<para>
+	<indexterm><primary>broadcast</primary><secondary>mailslot</secondary></indexterm>
+	<indexterm><primary>Unicast</primary></indexterm>
+	<indexterm><primary>WINS</primary></indexterm>
+	The client sends two netlogon mailslot broadcast requests
+	to the local network and to each of the IP addresses returned by
+	the WINS server. Whichever answers this request first appears to
+	be the machine that the Windows XP client attempts to use to
+	process the network logon. The mailslot messages use UDP broadcast
+	to the local network and UDP Unicast directed at each machine that
+	was listed in the WINS server response to a request for the list of
+	domain controllers.
+	</para>
+
+	<para>
+	<indexterm><primary>protocol</primary><secondary>negotiation</secondary></indexterm>
+	<indexterm><primary>logon server</primary></indexterm>
+	<indexterm><primary>fail</primary></indexterm>
+	The logon process begins with negotiation of the SMB/CIFS
+	protocols that are to be used; this is followed by an exchange of
+	information that ultimately includes the client sending the
+	credentials with which the user is attempting to logon. The logon
+	server must now approve the further establishment of the
+	connection, but that is a good point to halt for now. The priority
+	here must center around identification of network infrastructure
+	needs. A secondary fact we need to know is, what happens when
+	local domain controllers fail or break?
+	</para>
+
+	<para>
+	<indexterm><primary>Domain Controller</primary></indexterm>
+	<indexterm><primary>PDC</primary></indexterm>
+	<indexterm><primary>BDC</primary></indexterm>
+	<indexterm><primary>netlogon</primary></indexterm>
+	Under most circumstances, the nearest domain controller
+	responds to the netlogon mailslot broadcast. The exception to this
+	norm occurs when the nearest domain controller is too busy or is out
+	of service. Herein lies an important fact. This means it is
+	important that every network segment should have at least two
+	domain controllers. Since there can be only one PDC, all additional
+	domain controllers are by definition BDCs.
+	</para>
+
+	<para>
+	<indexterm><primary>authentication</primary></indexterm>
+	<indexterm><primary>Identity Management</primary></indexterm>
+	The provision of sufficient servers that are BDCs is an
+	important design factor. The second important design factor
+	involves how each of the BDCs obtains user authentication
+	data. That is the subject of the next section, which involves key
+	decisions regarding Identity Management facilities.
+	</para>
+
+	</sect3>
+
+	<sect3>
+	<title>Identity Management Needs</title>
+
+	<para>
+	<indexterm><primary>privacy</primary></indexterm>
+	<indexterm><primary>user credentials</primary></indexterm>
+	<indexterm><primary>validated</primary></indexterm>
+	<indexterm><primary>privileges</primary></indexterm>
+	Network managers recognize that in large organizations users
+	generally need to be given resource access based on needs, while
+	being excluded from other resources for reasons of privacy. It is
+	therefore essential that all users identify themselves at the
+	point of network access. The network logon is the principal means
+	by which user credentials are validated and filtered and appropriate
+	rights and privileges are allocated.
+	</para>
+
+	<para>
+	<indexterm><primary>Identity Management</primary></indexterm>
+	<indexterm><primary>Yellow Pages</primary></indexterm>
+	<indexterm><primary>NIS</primary></indexterm>
+	Unfortunately, network resources tend to have their own Identity 
+	Management facilities, the quality and manageability of which varies 
+	from quite poor to exceptionally good. Corporations that use a mixture 
+	of systems soon discover that until recently, few systems were 
+	designed to interoperate. For example, UNIX systems each have an 
+	independent user database. Sun Microsystems developed a facility that 
+	was originally called <constant>Yellow Pages</constant>, and was renamed 
+	when a telephone company objected to the use of its trademark. 
+	What was once called <constant>Yellow Pages</constant> is today known 
+	as <constant>Network Information System</constant> (NIS).
+	</para>
+
+	<para>
+	<indexterm><primary>NIS+</primary></indexterm>
+	NIS gained a strong following throughout the UNIX/VMS space in a short
+	period of time and retained that appeal and use for over a decade.
+	Security concerns and inherent limitations have caused it to enter its
+	twilight. NIS did not gain widespread appeal outside of the UNIX world
+	and was not universally adopted. Sun updated this to a more secure
+	implementation called NIS+, but even it has fallen victim to changing
+	demands as the demand for directory services that can be coupled with
+	other information systems is catching on.
+	</para>
+
+
+	<para>
+	<indexterm><primary>NIS</primary></indexterm>
+	<indexterm><primary>government</primary></indexterm>
+	<indexterm><primary>education</primary></indexterm>
+	Nevertheless, both NIS and NIS+ continue to hold ground in
+	business areas where UNIX still has major sway. Examples of
+	organizations that remain firmly attached to the use of NIS and
+	NIS+ include large government departments, education institutions,
+	and large corporations that have a scientific or engineering
+	focus.
+	</para>
+
+	<para>
+	<indexterm><primary>scalable</primary></indexterm>
+	<indexterm><primary>distributed</primary></indexterm>
+	Today's networking world needs a scalable, distributed Identity 
+	Management infrastructure, commonly called a directory. The most 
+	popular technologies today are Microsoft Active Directory service 
+	and a number of LDAP implementations.
+	</para>
+
+	<para>
+	<indexterm><primary>multiple directories</primary></indexterm>
+	The problem of managing multiple directories has become a focal
+	point over the past decade, creating a large market for
+	metadirectory products and services that allow organizations that
+	have multiple directories and multiple management and control
+	centers to provision information from one directory into
+	another. The attendant benefit to end users is the promise of
+	having to remember and deal with fewer login identities and
+	passwords.</para>
+
+	<para>
+	<indexterm><primary>network</primary><secondary>bandwidth</secondary></indexterm>
+	The challenge of every large network is to find the optimum
+	balance of internal systems and facilities for Identity
+	Management resources. How well the solution is chosen and
+	implemented has potentially significant impact on network bandwidth
+	and systems response needs.</para>
+
+	<para>
+	<indexterm><primary>LDAP server</primary></indexterm>
+	<indexterm><primary>LDAP</primary><secondary>master</secondary></indexterm>
+	<indexterm><primary>LDAP</primary><secondary>slave</secondary></indexterm>
+	In <link linkend="happy"/>, you implemented a single LDAP server for the
+	entire network. This may work for smaller networks, but almost
+	certainly fails to meet the needs of large and complex networks. The
+	following section documents how you may implement a single
+	master LDAP server with multiple slave servers.</para>
+
+	<para>
+	What is the best method for implementing master/slave LDAP
+	servers within the context of a distributed 2,000-user network is a
+	question that remains to be answered.</para>
+
+	<para>
+	<indexterm><primary>distributed domain</primary></indexterm>
+	<indexterm><primary>wide-area</primary></indexterm>
+	One possibility that has great appeal is to create a single,
+	large distributed domain. The practical implications of this
+	design (see <link linkend="chap7net"/>) demands the placement of
+	sufficient BDCs in each location. Additionally, network
+	administrators must make sure that profiles are not transferred
+	over the wide-area links, except as a totally unavoidable
+	measure. Network design must balance the risk of loss of user
+	productivity against the cost of network management and
+	maintenance.
+	</para>
+
+	<para>
+	<indexterm><primary>domain name space</primary></indexterm>
+	The network design in <link linkend="chap7net2"/> takes the approach
+	that management of networks that are too remote to be managed
+	effectively from New York ought to be given a certain degree of
+	autonomy. With this rationale, the Los Angeles and London networks,
+	though fully integrated with those on the East Coast, each have their
+	own domain name space and can be independently managed and controlled.
+	One of the key drawbacks of this design is that it flies in the face of
+	the ability for network users to roam globally without some compromise
+	in how they may access global resources.
+	</para>
+
+	<para>
+	<indexterm><primary>interdomain trusts</primary></indexterm>
+	Desk-bound users need not be negatively affected by this design, since
+	the use of interdomain trusts can be used to satisfy the need for global
+	data sharing.
+	</para>
+
+	<para>
+	<indexterm><primary>LDAP</primary></indexterm>
+	<indexterm><primary>LDAP</primary><secondary>backend</secondary></indexterm>
+	<indexterm><primary>SID</primary></indexterm>
+	When Samba-3 is configured to use an LDAP backend, it stores the domain
+	account information in a directory entry. This account entry contains the
+	domain SID. An unintended but exploitable side effect is that this makes it
+	possible to operate with more than one PDC on a distributed network.
+	</para>
+
+	<para>
+	<indexterm><primary>WINS</primary></indexterm>
+	<indexterm><primary>wins.dat</primary></indexterm>
+	<indexterm><primary>SID</primary></indexterm>
+	How might this peculiar feature be exploited? The answer is simple. It is
+	imperative that each network segment have its own WINS server. Major
+	servers on remote network segments can be given a static WINS entry in
+	the <filename>wins.dat</filename> file on each WINS server. This allows
+	all essential data to be visible from all locations. Each location would,
+	however, function as if it is an independent domain, while all sharing the
+	same domain SID. Since all domain account information can be stored in a
+	single LDAP backend, users have unfettered ability to roam.
+	</para>
+
+	<para>
+	<indexterm><primary>NetBIOS name</primary><secondary>aliases</secondary></indexterm>
+	<indexterm><primary>fail-over</primary></indexterm>
+	This concept has not been exhaustively validated, though we can see no reason
+	why this should not work. The important facets are the following: The name of
+	the domain must be identical in all locations. Each network segment must have
+	its own WINS server. The name of the PDC must be the same in all locations; this
+	necessitates the use of NetBIOS name aliases for each PDC so that they can be
+	accessed globally using the alias and not the PDC's primary name. A single master
+	LDAP server can be based in New York, with multiple LDAP slave servers located
+	on every network segment. Finally, the BDCs should each use failover LDAP servers
+	that are in fact slave LDAP servers on the local segments.
+	</para>
+
+	<para>
+	<indexterm><primary>LDAP</primary><secondary>updates</secondary></indexterm>
+	<indexterm><primary>domain tree</primary></indexterm>
+	<indexterm><primary>LDAP</primary><secondary>database</secondary></indexterm>
+	<indexterm><primary>LDAP</primary><secondary>directory</secondary></indexterm>
+	With a single master LDAP server, all network updates are effected on a single
+	server. In the event that this should become excessively fragile or network
+	bandwidth limiting, one could implement a delegated LDAP domain. This is also
+	known as a partitioned (or multiple partition) LDAP database and as a distributed
+	LDAP directory.
+	</para>
+
+	<para>
+	As the LDAP directory grows, it becomes increasingly important
+	that its structure is implemented in a manner that mirrors
+	organizational needs, so as to limit network update and
+	referential traffic. It should be noted that all directory
+	administrators must of necessity follow the same standard
+	procedures for managing the directory, because retroactive correction of
+	inconsistent directory information can be exceedingly difficult.
+	</para>
+
+	</sect3>
+
+	</sect2>
+
+
+	<sect2>
+		<title>Political Issues</title>
+
+	<para>
+	As organizations grow, the number of points of control increases
+	also. In a large distributed organization, it is important that the
+	Identity Management system be capable of being updated from
+	many locations, and it is equally important that changes made should
+	become usable in a reasonable period, typically
+	minutes rather than days (the old limitation of highly manual
+	systems).
+	</para>
+
+	</sect2>
+
+</sect1>
+
+<sect1>
+	<title>Implementation</title>
+
+	<para>
+	<indexterm><primary>winbind</primary></indexterm>
+	<indexterm><primary>LDAP</primary></indexterm>
+	<indexterm><primary>UID</primary></indexterm>
+	<indexterm><primary>GID</primary></indexterm>
+	Samba-3 has the ability to use multiple password (authentication and
+	identity resolution) backends. The diagram in <link linkend="chap7idres"/>
+	demonstrates how Samba uses winbind, LDAP, and NIS, the traditional system
+	password database. The diagram only documents the mechanisms for
+	authentication and identity resolution (obtaining a UNIX UID/GID)
+	using the specific systems shown.
+	</para>
+
+	<figure id="chap7idres">
+		<title>Samba and Authentication Backend Search Pathways</title>
+		<imagefile scale="55">chap7-idresol</imagefile>
+	</figure>
+
+	<para>
+	<indexterm><primary>smbpasswd</primary></indexterm>
+	<indexterm><primary>xmlsam</primary></indexterm>
+	<indexterm><primary>SMB passwords</primary></indexterm>
+	<indexterm><primary>tdbsam</primary></indexterm>
+	<indexterm><primary>mysqlsam</primary></indexterm>
+	<indexterm><primary>LDAP</primary></indexterm>
+	<indexterm><primary>distributed</primary></indexterm>
+	Samba is capable of using the <constant>smbpasswd</constant>,
+	<constant>tdbsam</constant>, <constant>xmlsam</constant>,
+	and <constant>mysqlsam</constant> authentication databases. The SMB
+	passwords can, of course, also be stored in an LDAP ldapsam
+	backend. LDAP is the preferred passdb backend for distributed network
+	operations.
+	</para>
+
+	<para>
+	<indexterm><primary>passdb backend</primary></indexterm>
+	Additionally, it is possible to use multiple passdb backends
+	concurrently as well as have multiple LDAP backends. As a result, you
+	can specify a failover LDAP backend. The syntax for specifying a
+	single LDAP backend in &smb.conf; is:
+<screen>
+...
+passdb backend = ldapsam:ldap://master.abmas.biz
+...
+</screen>
+	This configuration tells Samba to use a single LDAP server, as shown in <link linkend="ch7singleLDAP"/>.
+	<figure id="ch7singleLDAP">
+		<title>Samba Configuration to Use a Single LDAP Server</title>
+		<imagefile scale="65">ch7-singleLDAP</imagefile>
+	</figure>
+	<indexterm><primary>LDAP</primary><secondary>fail-over</secondary></indexterm>
+	<indexterm><primary>fail-over</primary></indexterm>
+	The addition of a failover LDAP server can simply be done by adding a
+	second entry for the failover server to the single <parameter>ldapsam</parameter>
+	entry, as shown here (note the particular use of the double quotes):
+<screen>
+...
+passdb backend = ldapsam:"ldap://master.abmas.biz \
+	                  ldap://slave.abmas.biz"
+...
+</screen>
+	This configuration tells Samba to use a master LDAP server, with failover to a slave server if necessary,
+	as shown in <link linkend="ch7dualLDAP"/>.
+	<figure id="ch7dualLDAP">
+		<title>Samba Configuration to Use a Dual (Fail-over) LDAP Server</title>
+		<imagefile scale="65">ch7-fail-overLDAP</imagefile>
+	</figure>
+	</para>
+
+	<para>
+	Some folks have tried to implement this without the use of double quotes. This is the type of entry they
+	created:
+<screen>
+...
+passdb backend = ldapsam:ldap://master.abmas.biz \
+                 ldapsam:ldap://slave.abmas.biz
+...
+</screen>
+	<indexterm><primary>contiguous directory</primary></indexterm>
+	The effect of this style of entry is that Samba lists the users
+	that are in both LDAP databases. If both contain the same information,
+	it results in each record being shown twice. This is, of course, not the
+	solution desired for a failover implementation. The net effect of this
+	configuration is shown in <link linkend="ch7dualadd"/>
+	</para>
+
+	<figure id="ch7dualadd">
+		<title>Samba Configuration to Use Dual LDAP Databases - Broken - Do Not Use!</title>
+		<imagefile scale="55">ch7-dual-additive-LDAP</imagefile>
+	</figure>
+
+	<para>
+	If, however, each LDAP database contains unique information, this may 
+	well be an advantageous way to effectively integrate multiple LDAP databases 
+	into one seemingly contiguous directory. Only the first database will be updated.
+	An example of this configuration is shown in <link linkend="ch7dualok"/>.
+	</para>
+
+	<figure id="ch7dualok">
+		<title>Samba Configuration to Use Two LDAP Databases - The result is additive.</title>
+		<imagefile scale="55">ch7-dual-additive-LDAP-Ok</imagefile>
+	</figure>
+
+	<note><para>
+	When the use of ldapsam is specified twice, as shown here, it is imperative
+	that the two LDAP directories must be disjoint. If the entries are for a
+	master LDAP server as well as its own slave server, updates to the LDAP
+	database may end up being lost or corrupted. You may safely use multiple
+	LDAP backends only if both are entirely separate from each other.
+	</para></note>
+
+    <para>
+	It is assumed that the network you are working with follows in a
+	pattern similar to what was covered in <link linkend="happy"/>. The following steps
+    permit the operation of a master/slave OpenLDAP arrangement.
+	</para>
+
+	<procedure>
+	<title>Implementation Steps for an LDAP Slave Server</title>
+
+		<step><para>
+	    <indexterm><primary>SUSE Linux</primary></indexterm>
+		<indexterm><primary>Red Hat Linux</primary></indexterm>
+		Log onto the master LDAP server as <constant>root</constant>.
+		You are about to change the configuration of the LDAP server, so it
+		makes sense to temporarily halt it. Stop OpenLDAP from running on 
+		SUSE Linux by executing:
+<screen>
+&rootprompt; rcldap stop
+</screen>
+		On Red Hat Linux, you can do this by executing:
+<screen>
+&rootprompt; service ldap stop
+</screen>
+		</para></step>
+
+		<step><para>
+		<indexterm><primary>/etc/openldap/slapd.conf</primary></indexterm>
+		Edit the <filename>/etc/openldap/slapd.conf</filename> file so it
+		matches the content of <link linkend="ch7-LDAP-master"/>.
+		</para></step>
+
+		<step><para>
+		Create a file called <filename>admin-accts.ldif</filename> with the following contents:
+<screen>
+dn: cn=updateuser,dc=abmas,dc=biz
+objectClass: person
+cn: updateuser
+sn: updateuser
+userPassword: not24get
+
+dn: cn=sambaadmin,dc=abmas,dc=biz
+objectClass: person
+cn: sambaadmin
+sn: sambaadmin
+userPassword: buttercup
+</screen>
+		</para></step>
+
+		<step><para>
+		Add an account called <quote>updateuser</quote> to the master LDAP server as shown here:
+<screen>
+&rootprompt; slapadd -v -l admin-accts.ldif
+</screen>
+		</para></step>
+
+		<step><para>
+		<indexterm><primary>LDIF</primary></indexterm>
+		<indexterm><primary>LDAP</primary><secondary>preload</secondary></indexterm>
+		Change directory to a suitable place to dump the contents of the
+		LDAP server. The dump file (and LDIF file) is used to preload
+		the slave LDAP server database. You can dump the database by executing:
+<screen>
+&rootprompt; slapcat -v -l LDAP-transfer-LDIF.txt
+</screen>
+		Each record is written to the file.	
+		</para></step>
+
+		<step><para>
+		<indexterm><primary>LDAP-transfer-LDIF.txt</primary></indexterm>
+		Copy the file <filename>LDAP-transfer-LDIF.txt</filename> to the intended
+		slave LDAP server. A good location could be in the directory 
+		<filename>/etc/openldap/preload</filename>.
+		</para></step>
+
+		<step><para>
+		Log onto the slave LDAP server as <constant>root</constant>. You can
+		now configure this server so the <filename>/etc/openldap/slapd.conf</filename>
+		file matches the content of <link linkend="ch7-LDAP-slave"/>.
+		</para></step>
+
+		<step><para>
+		Change directory to the location in which you stored the 
+		<filename>LDAP-transfer-LDIF.txt</filename> file (<filename>/etc/openldap/preload</filename>).
+		While in this directory, execute:
+<screen>
+&rootprompt; slapadd -v -l LDAP-transfer-LDIF.txt
+</screen>
+		If all goes well, the following output confirms that the data is being loaded
+		as intended:
+<screen>
+added: "dc=abmas,dc=biz" (00000001)
+added: "cn=sambaadmin,dc=abmas,dc=biz" (00000002)
+added: "cn=updateuser,dc=abmas,dc=biz" (00000003)
+added: "ou=People,dc=abmas,dc=biz" (00000004)
+added: "ou=Groups,dc=abmas,dc=biz" (00000005)
+added: "ou=Computers,dc=abmas,dc=biz" (00000006)
+added: "uid=Administrator,ou=People,dc=abmas,dc=biz" (00000007)
+added: "uid=nobody,ou=People,dc=abmas,dc=biz" (00000008)
+added: "cn=Domain Admins,ou=Groups,dc=abmas,dc=biz" (00000009)
+added: "cn=Domain Users,ou=Groups,dc=abmas,dc=biz" (0000000a)
+added: "cn=Domain Guests,ou=Groups,dc=abmas,dc=biz" (0000000b)
+added: "uid=bobj,ou=People,dc=abmas,dc=biz" (0000000c)
+added: "sambaDomainName=MEGANET2,dc=abmas,dc=biz" (0000000d)
+added: "uid=stans,ou=People,dc=abmas,dc=biz" (0000000e)
+added: "uid=chrisr,ou=People,dc=abmas,dc=biz" (0000000f)
+added: "uid=maryv,ou=People,dc=abmas,dc=biz" (00000010)
+added: "cn=Accounts,ou=Groups,dc=abmas,dc=biz" (00000011)
+added: "cn=Finances,ou=Groups,dc=abmas,dc=biz" (00000012)
+added: "cn=PIOps,ou=Groups,dc=abmas,dc=biz" (00000013)
+</screen>
+		</para></step>
+
+		<step><para>
+		Now start the LDAP server and set it to run automatically on system reboot by executing:
+<screen>
+&rootprompt; rcldap start
+&rootprompt; chkconfig ldap on
+</screen>
+		On Red Hat Linux, execute the following:
+<screen>
+&rootprompt; service ldap start
+&rootprompt; chkconfig ldap on
+</screen>
+		</para></step>
+
+		<step><para>
+	    <indexterm><primary>chkconfig</primary></indexterm>
+		<indexterm><primary>service</primary></indexterm>
+		<indexterm><primary>rcldap</primary></indexterm>
+		Go back to the master LDAP server. Execute the following to start LDAP as well
+		as <command>slurpd</command>, the synchronization daemon, as shown here:
+<screen>
+&rootprompt; rcldap start
+&rootprompt; chkconfig ldap on
+&rootprompt; rcslurpd start
+&rootprompt; chkconfig slurpd on
+</screen>
+	    <indexterm><primary>slurpd</primary></indexterm>
+		On Red Hat Linux, check the equivalent command to start <command>slurpd</command>.
+		</para></step>
+
+		<step><para>
+		<indexterm><primary>smbldap-useradd</primary></indexterm>
+		On the master LDAP server you may now add an account to validate that replication
+		is working. Assuming the configuration shown in <link linkend="happy"/>, execute:
+<screen>
+&rootprompt; /var/lib/samba/sbin/smbldap-useradd -a fruitloop
+</screen>
+		</para></step>
+
+		<step><para>
+		On the slave LDAP server, change to the directory <filename>/var/lib/ldap</filename>.
+		There should now be a file called <filename>replogfile</filename>. If replication worked
+		as expected, the content of this file should be:
+<screen>
+time: 1072486403
+dn: uid=fruitloop,ou=People,dc=abmas,dc=biz
+changetype: modify
+replace: sambaProfilePath
+sambaProfilePath: \\MASSIVE\profiles\fruitloop
+-
+replace: sambaHomePath
+sambaHomePath: \\MASSIVE\homes
+-
+replace: entryCSN
+entryCSN: 2003122700:43:38Z#0x0005#0#0000
+-
+replace: modifiersName
+modifiersName: cn=Manager,dc=abmas,dc=biz
+-
+replace: modifyTimestamp
+modifyTimestamp: 20031227004338Z
+-
+</screen>
+		</para></step>
+
+		<step><para>
+		Given that this first slave LDAP server is now working correctly, you may now
+		implement additional slave LDAP servers as required.
+		</para></step>
+
+		<step><para>
+		On each machine (PDC and BDCs) after the respective &smb.conf; files have been created as shown in
+		<link linkend="ch7-massmbconfA">Primary Domain Controller &smb.conf; File &smbmdash; Part A + B + C</link> and
+		on BDCs the <link linkend="ch7-slvsmbocnfA">Backup Domain Controller &smb.conf; File &smbmdash; Part A
+		+ B + C</link> execute the following:
+<screen>
+&rootprompt; smbpasswd -w buttercup
+</screen>
+		This will install in the <filename>secrets.tdb</filename> file the password that Samba will need to
+		manage (write to) the LDAP Master server to perform account updates.
+		</para></step>
+
+	</procedure>
+
+<example id="ch7-LDAP-master">
+<title>LDAP Master Server Configuration File &smbmdash; <filename>/etc/openldap/slapd.conf</filename></title>
+<screen>
+include     /etc/openldap/schema/core.schema
+include     /etc/openldap/schema/cosine.schema
+include     /etc/openldap/schema/inetorgperson.schema
+include     /etc/openldap/schema/nis.schema
+include     /etc/openldap/schema/samba.schema
+
+pidfile     /var/run/slapd/slapd.pid
+argsfile    /var/run/slapd/slapd.args
+
+database    bdb
+suffix      "dc=abmas,dc=biz"
+rootdn      "cn=Manager,dc=abmas,dc=biz"
+
+# rootpw = not24get
+rootpw      {SSHA}86kTavd9Dw3FAz6qzWTrCOKX/c0Qe+UV
+
+replica     host=lapdc.abmas.biz:389
+            suffix="dc=abmas,dc=biz"
+            binddn="cn=updateuser,dc=abmas,dc=biz"
+            bindmethod=simple credentials=not24get
+
+access to attrs=sambaLMPassword,sambaNTPassword
+           by dn="cn=sambaadmin,dc=abmas,dc=biz" write
+           by * none
+
+replogfile  /var/lib/ldap/replogfile
+
+directory   /var/lib/ldap
+
+# Indices to maintain
+index objectClass           eq
+index cn                    pres,sub,eq
+index sn                    pres,sub,eq
+index uid                   pres,sub,eq
+index displayName           pres,sub,eq
+index uidNumber             eq
+index gidNumber             eq
+index memberUID             eq
+index sambaSID              eq
+index sambaPrimaryGroupSID  eq
+index sambaDomainName       eq
+index default               sub
+</screen>
+</example>
+
+<example id="ch7-LDAP-slave">
+<title>LDAP Slave Configuration File &smbmdash; <filename>/etc/openldap/slapd.conf</filename></title>
+<screen>
+include     /etc/openldap/schema/core.schema
+include     /etc/openldap/schema/cosine.schema
+include     /etc/openldap/schema/inetorgperson.schema
+include     /etc/openldap/schema/nis.schema
+include     /etc/openldap/schema/samba.schema
+
+pidfile     /var/run/slapd/slapd.pid
+argsfile    /var/run/slapd/slapd.args
+
+database    bdb
+suffix      "dc=abmas,dc=biz"
+rootdn      "cn=Manager,dc=abmas,dc=biz"
+
+# rootpw = not24get
+rootpw      {SSHA}86kTavd9Dw3FAz6qzWTrCOKX/c0Qe+UV
+
+access to *
+            by dn=cn=updateuser,dc=abmas,dc=biz write
+            by * read
+
+updatedn    cn=updateuser,dc=abmas,dc=biz
+updateref   ldap://massive.abmas.biz
+
+directory   /var/lib/ldap
+
+# Indices to maintain
+index objectClass           eq
+index cn                    pres,sub,eq
+index sn                    pres,sub,eq
+index uid                   pres,sub,eq
+index displayName           pres,sub,eq
+index uidNumber             eq
+index gidNumber             eq
+index memberUID             eq
+index sambaSID              eq
+index sambaPrimaryGroupSID  eq
+index sambaDomainName       eq
+index default               sub
+</screen>
+</example>
+
+<example id="ch7-massmbconfA">
+<title>Primary Domain Controller &smb.conf; File &smbmdash; Part A</title>
+<smbconfblock>
+<smbconfcomment>Global parameters</smbconfcomment>
+<smbconfsection name="[global]"/>
+<smbconfoption name="unix charset">LOCALE</smbconfoption>
+<smbconfoption name="workgroup">MEGANET2</smbconfoption>
+<smbconfoption name="passdb backend">ldapsam:ldap://massive.abmas.biz</smbconfoption>
+<smbconfoption name="username map">/etc/samba/smbusers</smbconfoption>
+<smbconfoption name="log level">1</smbconfoption>
+<smbconfoption name="syslog">0</smbconfoption>
+<smbconfoption name="log file">/var/log/samba/%m</smbconfoption>
+<smbconfoption name="max log size">0</smbconfoption>
+<smbconfoption name="smb ports">139</smbconfoption>
+<smbconfoption name="name resolve order">wins bcast hosts</smbconfoption>
+<smbconfoption name="time server">Yes</smbconfoption>
+<smbconfoption name="printcap name">CUPS</smbconfoption>
+<smbconfoption name="add user script">/opt/IDEALX/sbin/smbldap-useradd -m '%u'</smbconfoption>
+<smbconfoption name="delete user script">/opt/IDEALX/sbin/smbldap-userdel '%u'</smbconfoption>
+<smbconfoption name="add group script">/opt/IDEALX/sbin/smbldap-groupadd -p '%g'</smbconfoption>
+<smbconfoption name="delete group script">/opt/IDEALX/sbin/smbldap-groupdel '%g'</smbconfoption>
+<smbconfoption name="add user to group script">/opt/IDEALX/sbin/smbldap-groupmod -m '%g' '%u'</smbconfoption>
+<smbconfoption name="delete user from group script">/opt/IDEALX/sbin/smbldap-groupmod -x '%g' '%u'</smbconfoption>
+<smbconfoption name="set primary group script">/opt/IDEALX/sbin/smbldap-usermod -g '%g' '%u'</smbconfoption>
+<smbconfoption name="add machine script">/opt/IDEALX/sbin/smbldap-useradd -w '%u'</smbconfoption>
+<smbconfoption name="shutdown script">/var/lib/samba/scripts/shutdown.sh</smbconfoption>
+<smbconfoption name="abort shutdown script">/sbin/shutdown -c</smbconfoption>
+<smbconfoption name="logon script">scripts\logon.bat</smbconfoption>
+<smbconfoption name="logon path">\\%L\profiles\%U</smbconfoption>
+<smbconfoption name="logon drive">X:</smbconfoption>
+<smbconfoption name="domain logons">Yes</smbconfoption>
+<smbconfoption name="domain master">Yes</smbconfoption>
+<smbconfoption name="wins support">Yes</smbconfoption>
+<smbconfoption name="ldap suffix">dc=abmas,dc=biz</smbconfoption>
+<smbconfoption name="ldap machine suffix">ou=People</smbconfoption>
+<smbconfoption name="ldap user suffix">ou=People</smbconfoption>
+<smbconfoption name="ldap group suffix">ou=Groups</smbconfoption>
+<smbconfoption name="ldap idmap suffix">ou=Idmap</smbconfoption>
+<smbconfoption name="ldap admin dn">cn=sambaadmin,dc=abmas,dc=biz</smbconfoption>
+<smbconfoption name="idmap backend">ldap://massive.abmas.biz</smbconfoption>
+<smbconfoption name="idmap uid">10000-20000</smbconfoption>
+<smbconfoption name="idmap gid">10000-20000</smbconfoption>
+<smbconfoption name="printer admin">root</smbconfoption>
+<smbconfoption name="printing">cups</smbconfoption>
+</smbconfblock>
+</example>
+
+<example id="ch7-massmbconfB">
+<title>Primary Domain Controller &smb.conf; File &smbmdash; Part B</title>
+<smbconfblock>
+<smbconfsection name="[IPC$]"/>
+<smbconfoption name="path">/tmp</smbconfoption>
+
+<smbconfsection name="[accounts]"/>
+<smbconfoption name="comment">Accounting Files</smbconfoption>
+<smbconfoption name="path">/data/accounts</smbconfoption>
+<smbconfoption name="read only">No</smbconfoption>
+
+<smbconfsection name="[service]"/>
+<smbconfoption name="comment">Financial Services Files</smbconfoption>
+<smbconfoption name="path">/data/service</smbconfoption>
+<smbconfoption name="read only">No</smbconfoption>
+
+<smbconfsection name="[pidata]"/>
+<smbconfoption name="comment">Property Insurance Files</smbconfoption>
+<smbconfoption name="path">/data/pidata</smbconfoption>
+<smbconfoption name="read only">No</smbconfoption>
+
+<smbconfsection name="[homes]"/>
+<smbconfoption name="comment">Home Directories</smbconfoption>
+<smbconfoption name="valid users">%S</smbconfoption>
+<smbconfoption name="read only">No</smbconfoption>
+<smbconfoption name="browseable">No</smbconfoption>
+
+<smbconfsection name="[printers]"/>
+<smbconfoption name="comment">SMB Print Spool</smbconfoption>
+<smbconfoption name="path">/var/spool/samba</smbconfoption>
+<smbconfoption name="guest ok">Yes</smbconfoption>
+<smbconfoption name="printable">Yes</smbconfoption>
+<smbconfoption name="browseable">No</smbconfoption>
+</smbconfblock>
+</example>
+
+<example id="ch7-massmbconfC">
+<title>Primary Domain Controller &smb.conf; File &smbmdash; Part C</title>
+<smbconfblock>
+<smbconfsection name="[apps]"/>
+<smbconfoption name="comment">Application Files</smbconfoption>
+<smbconfoption name="path">/apps</smbconfoption>
+<smbconfoption name="admin users">bjones</smbconfoption>
+<smbconfoption name="read only">No</smbconfoption>
+
+<smbconfsection name="[netlogon]"/>
+<smbconfoption name="comment">Network Logon Service</smbconfoption>
+<smbconfoption name="path">/var/lib/samba/netlogon</smbconfoption>
+<smbconfoption name="admin users">root, Administrator</smbconfoption>
+<smbconfoption name="guest ok">Yes</smbconfoption>
+<smbconfoption name="locking">No</smbconfoption>
+
+<smbconfsection name="[profiles]"/>
+<smbconfoption name="comment">Profile Share</smbconfoption>
+<smbconfoption name="path">/var/lib/samba/profiles</smbconfoption>
+<smbconfoption name="read only">No</smbconfoption>
+<smbconfoption name="profile acls">Yes</smbconfoption>
+
+<smbconfsection name="[profdata]"/>
+<smbconfoption name="comment">Profile Data Share</smbconfoption>
+<smbconfoption name="path">/var/lib/samba/profdata</smbconfoption>
+<smbconfoption name="read only">No</smbconfoption>
+<smbconfoption name="profile acls">Yes</smbconfoption>
+
+<smbconfsection name="[print$]"/>
+<smbconfoption name="comment">Printer Drivers</smbconfoption>
+<smbconfoption name="path">/var/lib/samba/drivers</smbconfoption>
+<smbconfoption name="write list">root</smbconfoption>
+<smbconfoption name="admin users">root, Administrator</smbconfoption>
+</smbconfblock>
+</example>
+
+<example id="ch7-slvsmbocnfA">
+<title>Backup Domain Controller &smb.conf; File &smbmdash; Part A</title>
+<smbconfblock>
+<smbconfcomment># Global parameters</smbconfcomment>
+<smbconfsection name="[global]"/>
+<smbconfoption name="unix charset">LOCALE</smbconfoption>
+<smbconfoption name="workgroup">MEGANET2</smbconfoption>
+<smbconfoption name="netbios name">BLDG1</smbconfoption>
+<smbconfoption name="passdb backend">ldapsam:ldap://lapdc.abmas.biz</smbconfoption>
+<smbconfoption name="username map">/etc/samba/smbusers</smbconfoption>
+<smbconfoption name="log level">1</smbconfoption>
+<smbconfoption name="syslog">0</smbconfoption>
+<smbconfoption name="log file">/var/log/samba/%m</smbconfoption>
+<smbconfoption name="max log size">50</smbconfoption>
+<smbconfoption name="smb ports">139</smbconfoption>
+<smbconfoption name="name resolve order">wins bcast hosts</smbconfoption>
+<smbconfoption name="printcap name">CUPS</smbconfoption>
+<smbconfoption name="show add printer wizard">No</smbconfoption>
+<smbconfoption name="logon script">scripts\logon.bat</smbconfoption>
+<smbconfoption name="logon path">\\%L\profiles\%U</smbconfoption>
+<smbconfoption name="logon drive">X:</smbconfoption>
+<smbconfoption name="domain logons">Yes</smbconfoption>
+<smbconfoption name="os level">63</smbconfoption>
+<smbconfoption name="domain master">No</smbconfoption>
+<smbconfoption name="wins server">192.168.2.1</smbconfoption>
+<smbconfoption name="ldap suffix">dc=abmas,dc=biz</smbconfoption>
+<smbconfoption name="ldap machine suffix">ou=People</smbconfoption>
+<smbconfoption name="ldap user suffix">ou=People</smbconfoption>
+<smbconfoption name="ldap group suffix">ou=Groups</smbconfoption>
+<smbconfoption name="ldap idmap suffix">ou=Idmap</smbconfoption>
+<smbconfoption name="ldap admin dn">cn=sambaadmin,dc=abmas,dc=biz</smbconfoption>
+<smbconfoption name="utmp">Yes</smbconfoption>
+<smbconfoption name="idmap backend">ldap://massive.abmas.biz</smbconfoption>
+<smbconfoption name="idmap uid">10000-20000</smbconfoption>
+<smbconfoption name="idmap gid">10000-20000</smbconfoption>
+<smbconfoption name="printing">cups</smbconfoption>
+
+<smbconfsection name="[accounts]"/>
+<smbconfoption name="comment">Accounting Files</smbconfoption>
+<smbconfoption name="path">/data/accounts</smbconfoption>
+<smbconfoption name="read only">No</smbconfoption>
+
+<smbconfsection name="[service]"/>
+<smbconfoption name="comment">Financial Services Files</smbconfoption>
+<smbconfoption name="path">/data/service</smbconfoption>
+<smbconfoption name="read only">No</smbconfoption>
+</smbconfblock>
+</example>
+
+<example id="ch7-slvsmbocnfB">
+<title>Backup Domain Controller &smb.conf; File &smbmdash; Part B</title>
+<smbconfblock>
+<smbconfsection name="[pidata]"/>
+<smbconfoption name="comment">Property Insurance Files</smbconfoption>
+<smbconfoption name="path">/data/pidata</smbconfoption>
+<smbconfoption name="read only">No</smbconfoption>
+
+<smbconfsection name="[homes]"/>
+<smbconfoption name="comment">Home Directories</smbconfoption>
+<smbconfoption name="valid users">%S</smbconfoption>
+<smbconfoption name="read only">No</smbconfoption>
+<smbconfoption name="browseable">No</smbconfoption>
+
+<smbconfsection name="[printers]"/>
+<smbconfoption name="comment">SMB Print Spool</smbconfoption>
+<smbconfoption name="path">/var/spool/samba</smbconfoption>
+<smbconfoption name="guest ok">Yes</smbconfoption>
+<smbconfoption name="printable">Yes</smbconfoption>
+<smbconfoption name="browseable">No</smbconfoption>
+
+<smbconfsection name="[apps]"/>
+<smbconfoption name="comment">Application Files</smbconfoption>
+<smbconfoption name="path">/apps</smbconfoption>
+<smbconfoption name="admin users">bjones</smbconfoption>
+<smbconfoption name="read only">No</smbconfoption>
+
+<smbconfsection name="[netlogon]"/>
+<smbconfoption name="comment">Network Logon Service</smbconfoption>
+<smbconfoption name="path">/var/lib/samba/netlogon</smbconfoption>
+<smbconfoption name="guest ok">Yes</smbconfoption>
+<smbconfoption name="locking">No</smbconfoption>
+
+<smbconfsection name="[profiles]"/>
+<smbconfoption name="comment">Profile Share</smbconfoption>
+<smbconfoption name="path">/var/lib/samba/profiles</smbconfoption>
+<smbconfoption name="read only">No</smbconfoption>
+<smbconfoption name="profile acls">Yes</smbconfoption>
+
+<smbconfsection name="[profdata]"/>
+<smbconfoption name="comment">Profile Data Share</smbconfoption>
+<smbconfoption name="path">/var/lib/samba/profdata</smbconfoption>
+<smbconfoption name="read only">No</smbconfoption>
+<smbconfoption name="profile acls">Yes</smbconfoption>
+</smbconfblock>
+</example>
+
+	<sect2>
+		<title>Key Points Learned</title>
+
+		<itemizedlist>
+			<listitem><para>
+			<indexterm><primary>LDAP</primary></indexterm><indexterm><primary>BDC</primary></indexterm>
+			Where Samba-3 is used as a domain controller, the use of LDAP is an 
+			essential component to permit the use of BDCs.
+			</para></listitem>
+
+			<listitem><para>
+			<indexterm><primary>wide-area</primary></indexterm>
+			Replication of the LDAP master server to create a network of BDCs
+			is an important mechanism for limiting WAN traffic.
+			</para></listitem>
+
+			<listitem><para>
+			Network administration presents many complex challenges, most of which
+			can be satisfied by good design but that also require sound communication
+			and unification of management practices. This can be highly challenging in
+			a large, globally distributed network.
+			</para></listitem>
+
+			<listitem><para>
+			Roaming profiles must be contained to the local network segment. Any
+			departure from this may clog wide-area arteries and slow legitimate network
+			traffic to a crawl.
+			</para></listitem>
+		</itemizedlist>
+
+	</sect2>
+
+	<figure id="chap7net">
+		<title>Network Topology &smbmdash; 2000 User Complex Design A</title>
+		<imagefile scale="80">chap7-net-Ar</imagefile>
+	</figure>
+
+	<figure id="chap7net2">
+		<title>Network Topology &smbmdash; 2000 User Complex Design B</title>
+		<imagefile scale="80">chap7-net2-Br</imagefile>
+	</figure>
+
+</sect1>
+
+<sect1>
+	<title>Questions and Answers</title>
+
+	<para>
+	There is much rumor and misinformation regarding the use of MS Windows networking protocols.
+	These questions are just a few of those frequently asked.
+	</para>
+
+	<qandaset defaultlabel="chap07qa" type="number">
+	<qandaentry>
+	<question>
+
+	    <para>
+		<indexterm><primary>DHCP</primary></indexterm>
+		<indexterm><primary>network</primary><secondary>bandwidth</secondary></indexterm>
+		Is it true that DHCP uses lots of WAN bandwidth?
+		</para>
+
+	</question>
+	<answer>
+
+	    <para>
+		<indexterm><primary>DHCP</primary><secondary>Relay Agent</secondary></indexterm>
+		<indexterm><primary>routers</primary></indexterm>
+		<indexterm><primary>DHCP</primary><secondary>servers</secondary></indexterm>
+		It is a smart practice to localize DHCP servers on each network segment. As a 
+		rule, there should be two DHCP servers per network segment. This means that if
+		one server fails, there is always another to service user needs. DHCP requests use
+		only UDP broadcast protocols. It is possible to run a DHCP Relay Agent on network
+		routers. This makes it possible to run fewer DHCP servers.
+		</para>
+
+	    <para>
+		<indexterm><primary>DHCP</primary><secondary>request</secondary></indexterm>
+		<indexterm><primary>DHCP</primary><secondary>traffic</secondary></indexterm>
+		A DHCP network address request and confirmation usually results in about six UDP packets.
+		The packets are from 60 to 568 bytes in length. Let us consider a site that has 300 DHCP
+		clients and that uses a 24-hour IP address lease. This means that all clients renew
+		their IP address lease every 24 hours. If we assume an average packet length equal to the
+		maximum (just to be on the safe side), and we have a 128 Kb/sec wide-area connection, 
+		how significant would the DHCP traffic be if all of it were to use DHCP Relay?
+		</para>
+
+		<para>
+		I must stress that this is a bad design, but here is the calculation:
+<screen>
+Daily Network Capacity: 128,000 (Kbits/s) / 8 (bits/byte) 
+                             x 3600 (sec/hr) x 24 (hrs/day)= 2288 Mbytes/day.
+
+DHCP traffic:          300 (clients) x 6 (packets) 
+                                       x 512 (bytes/packet) = 0.9 Mbytes/day.
+</screen>
+		From this can be seen that the traffic impact would be minimal.
+		</para>
+
+	    <para>
+		<indexterm><primary>DNS</primary><secondary>Dynamic</secondary></indexterm>
+		<indexterm><primary>DHCP</primary></indexterm>
+		Even when DHCP is configured to do DNS update (dynamic DNS) over a wide-area link,
+		the impact of the update is no more than the DHCP IP address renewal traffic and thus
+		still insignificant for most practical purposes.
+		</para>
+
+	</answer>
+	</qandaentry>
+
+	<qandaentry>
+	<question>
+
+	    <para>
+		<indexterm><primary>background communication</primary></indexterm>
+		<indexterm><primary>LDAP</primary><secondary>master/slave</secondary><tertiary>background communication</tertiary></indexterm>
+		How much background communication takes place between a master LDAP server and its slave LDAP servers?
+		</para>
+
+	</question>
+	<answer>
+
+	    <para>
+		<indexterm><primary>slurpd</primary></indexterm>
+		The process that controls the replication of data from the master LDAP server to the slave LDAP
+		servers is called <command>slurpd</command>. The <command>slurpd</command> remains nascent (quiet)
+		until an update must be propagated. The propagation traffic per LDAP slave to update (add/modify/delete)
+		two user accounts requires less than 10KB traffic.
+		</para>
+
+	</answer>
+	</qandaentry>
+
+	<qandaentry>
+	<question>
+
+		<para>
+		LDAP has a database. Is LDAP not just a fancy database front end?
+		</para>
+
+	</question>
+	<answer>
+
+	    <para>
+		<indexterm><primary>database</primary></indexterm>
+		<indexterm><primary>LDAP</primary><secondary>database</secondary></indexterm>
+		<indexterm><primary>SQL</primary></indexterm>
+		<indexterm><primary>transactional</primary></indexterm>
+		LDAP does store its data in a database of sorts. In fact, the LDAP backend is an application-specific
+		data storage system. This type of database is indexed so that records can be rapidly located, but the
+		database is not generic and can be used only in particular pre-programmed ways. General external
+		applications do not gain access to the data. This type of database is used also by SQL servers. Both
+		an SQL server and an LDAP server provide ways to access the data. An SQL server has a transactional
+		orientation and typically allows external programs to perform ad hoc queries, even across data tables.
+		An LDAP front end is a purpose-built tool that has a search orientation that is designed around specific
+		simple queries. The term <constant>database</constant> is heavily overloaded and thus much misunderstood.
+		</para>
+
+	</answer>
+	</qandaentry>
+
+	<qandaentry>
+	<question>
+
+	    <para>
+		<indexterm><primary>OpenLDAP</primary></indexterm>
+		Can Active Directory obtain account information from an OpenLDAP server?
+		</para>
+
+	</question>
+	<answer>
+
+	    <para>
+		<indexterm><primary>meta-directory</primary></indexterm>
+		No, at least not directly. It is possible to provision Active Directory from and/or to an OpenLDAP
+		database through use of a metadirectory server. Microsoft MMS (now called MIIS) can interface
+		to OpenLDAP using standard LDAP queries and updates. 
+		</para>
+
+	</answer>
+	</qandaentry>
+
+	<qandaentry>
+	<question>
+
+		<para>
+		What are the parts of a roaming profile? How large is each part?
+		</para>
+
+	</question>
+	<answer>
+
+	    <para><indexterm>
+		<primary>roaming profile</primary>
+	      </indexterm>
+		A roaming profile consists of
+		</para>
+
+		<itemizedlist>
+			<listitem><para>
+			Desktop folders such as <constant>Desktop</constant>, <constant>My Documents</constant>,
+			<constant>My Pictures</constant>, <constant>My Music</constant>, <constant>Internet Files</constant>,
+			<constant>Cookies</constant>, <constant>Application Data</constant>,
+			<constant>Local Settings,</constant> and more. See <link linkend="happy"/>, <link linkend="XP-screen001"/>.
+			</para>
+
+			<para>
+			<indexterm><primary>folder redirection</primary></indexterm>
+			Each of these can be anywhere from a few bytes to gigabytes in capacity. Fortunately, all
+			such folders can be redirected to network drive resources. See <link linkend="redirfold"/>
+			for more information regarding folder redirection.
+			</para></listitem>
+
+			<listitem><para>
+			A static or rewritable portion that is typically only a few files (2-5 KB of information).
+			</para></listitem>
+
+			<listitem><para>
+			<indexterm><primary>NTUSER.DAT</primary></indexterm>
+			<indexterm><primary>HKEY_LOCAL_USER</primary></indexterm>
+			The registry load file that modifies the <constant>HKEY_LOCAL_USER</constant> hive. This is
+			the <filename>NTUSER.DAT</filename> file. It can be from 0.4 to 1.5 MB.
+			</para></listitem>
+		</itemizedlist>
+
+	    <para>
+		<indexterm><primary>Microsoft Outlook</primary><secondary>PST files</secondary></indexterm>
+		Microsoft Outlook PST files may be stored in the <constant>Local Settings\Application Data</constant>
+		folder. It can be up to 2 GB in size per PST file.
+		</para>
+
+	</answer>
+	</qandaentry>
+
+	<qandaentry>
+	<question>
+
+		<para>
+		Can the <constant>My Documents</constant> folder be stored on a network drive?
+		</para>
+
+	</question>
+	<answer>
+
+	    <para>
+		<indexterm><primary>UNC name</primary></indexterm>
+		<indexterm><primary>Universal Naming Convention</primary><see>UNC name</see></indexterm>
+		Yes. More correctly, such folders can be redirected to network shares. No specific network drive
+		connection is required. Registry settings permit this to be redirected directly to a UNC (Universal
+		Naming Convention) resource, though it is possible to specify a network drive letter instead of a
+		UNC name. See <link linkend="redirfold"/>.
+		</para>
+
+	</answer>
+	</qandaentry>
+
+	<qandaentry>
+	<question>
+
+	    <para>
+		<indexterm><primary>wide-area</primary></indexterm>
+		<indexterm><primary>network</primary><secondary>bandwidth</secondary></indexterm>
+		<indexterm><primary>WINS</primary></indexterm>
+		How much WAN bandwidth does WINS consume?
+		</para>
+
+	</question>
+	<answer>
+
+	    <para>
+		<indexterm><primary>NetBIOS</primary><secondary>name cache</secondary></indexterm>
+		<indexterm><primary>WINS server</primary></indexterm>
+		<indexterm><primary>domain replication</primary></indexterm>
+		MS Windows clients cache information obtained from WINS lookups in a local NetBIOS name cache.
+		This keeps WINS lookups to a minimum. On a network with 3500 MS Windows clients and a central WINS
+		server, the total bandwidth demand measured at the WINS server, averaged over an 8-hour working day,
+		was less than 30 KB/sec. Analysis of network traffic over a 6-week period showed that the total
+		of all background traffic consumed about 11 percent of available bandwidth over 64 Kb/sec links.
+		Background traffic consisted of domain replication, WINS queries, DNS lookups, and authentication
+		traffic. Each of 11 branch offices had a 64 Kb/sec wide-area link, with a 1.5 Mb/sec main connection
+		that aggregated the branch office connections plus an Internet connection.
+		</para>
+
+		<para>
+		In conclusion, the total load afforded through WINS traffic is again marginal to total operational
+		usage &smbmdash; as it should be.
+		</para>
+
+	</answer>
+	</qandaentry>
+
+	<qandaentry>
+	<question>
+
+		<para>
+		How many BDCs should I have? What is the right number of Windows clients per server?
+		</para>
+
+	</question>
+	<answer>
+
+		<para>
+		It is recommended to have at least one BDC per network segment, including the segment served
+		by the PDC. Actual requirements vary depending on the working load on each of the BDCs and the
+		load demand pattern of client usage. I have seen sites that function without problem with 200
+		clients served by one BDC, and yet other sites that had one BDC per 20 clients. In one particular
+		company, there was a drafting office that had 30 CAD/CAM operators served by one server, a print
+		server; and an application server. While all three were BDCs, typically only the print server would
+		service network logon requests after the first 10 users had started to use the network. This was
+		a reflection of the service load placed on both the application server and the data server.
+		</para>
+
+		<para>
+		As unsatisfactory as the answer might sound, it all depends on network and server load
+		characteristics.
+		</para>
+
+	</answer>
+	</qandaentry>
+
+	<qandaentry>
+	<question>
+
+	    <para>
+		<indexterm><primary>NIS server</primary></indexterm><indexterm><primary>LDAP</primary></indexterm>
+		I've heard that you can store NIS accounts in LDAP. Is LDAP not just a smarter way to
+		run an NIS server?
+		</para>
+
+	</question>
+	<answer>
+
+		<para>
+		The correct answer to both questions is yes. But do understand that an LDAP server has
+		a configurable schema that can store far more information for many more purposes than
+		just NIS.
+		</para>
+
+	</answer>
+	</qandaentry>
+
+	<qandaentry>
+	<question>
+
+		<para>
+		Can I use NIS in place of LDAP?
+		</para>
+
+	</question>
+	<answer>
+
+	    <para>
+		<indexterm><primary>NIS</primary></indexterm>
+		<indexterm><primary>NIS schema</primary></indexterm>
+		No. The NIS database does not have provision to store Microsoft encrypted passwords and does not deal
+		with the types of data necessary for interoperability with Microsoft Windows networking. The use
+		of LDAP with Samba requires the use of a number of schemas, one of which is the NIS schema, but also
+		a Samba-specific schema extension.
+		</para>
+
+</answer>
+	</qandaentry>
+
+	</qandaset>
+</sect1>
+
+</chapter>
+

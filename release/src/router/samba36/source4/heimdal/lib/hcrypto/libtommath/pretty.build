@@ -1,0 +1,66 @@
+#!/bin/perl -w
+#
+# Cute little builder for perl 
+# Total waste of development time...
+#
+# This will build all the object files and then the archive .a file
+# requires GCC, GNU make and a sense of humour.
+#
+# Tom St Denis
+use strict;
+
+my $count = 0;
+my $starttime = time;
+my $rate  = 0;
+print "Scanning for source files...\n";
+foreach my $filename (glob "*.c") {
+       ++$count;
+}
+print "Source files to build: $count\nBuilding...\n";
+my $i = 0;
+my $lines = 0;
+my $filesbuilt = 0;
+foreach my $filename (glob "*.c") {
+       printf("Building %3.2f%%, ", (++$i/$count)*100.0);
+       if ($i % 4 == 0) { print "/, "; }
+       if ($i % 4 == 1) { print "-, "; }
+       if ($i % 4 == 2) { print "\\, "; }
+       if ($i % 4 == 3) { print "|, "; }
+       if ($rate > 0) {
+           my $tleft = ($count - $i) / $rate;
+           my $tsec  = $tleft%60;
+           my $tmin  = ($tleft/60)%60;
+           my $thour = ($tleft/3600)%60;
+           printf("%2d:%02d:%02d left, ", $thour, $tmin, $tsec);
+       }
+       my $cnt = ($i/$count)*30.0;
+       my $x   = 0;
+       print "[";
+       for (; $x < $cnt; $x++) { print "#"; }
+       for (; $x < 30; $x++)   { print " "; }
+       print "]\r";
+       my $tmp = $filename;
+       $tmp =~ s/\.c/".o"/ge;
+       if (open(SRC, "<$tmp")) {
+          close SRC;
+       } else {
+          !system("make $tmp > /dev/null 2>/dev/null") or die "\nERROR: Failed to make $tmp!!!\n";
+          open( SRC, "<$filename" ) or die "Couldn't open $filename for reading: $!";
+          ++$lines while (<SRC>);
+          close SRC or die "Error closing $filename after reading: $!";
+          ++$filesbuilt;
+       }      
+
+       # update timer 
+       if (time != $starttime) {
+          my $delay = time - $starttime;
+          $rate = $i/$delay;
+       }
+}
+
+# finish building the library 
+printf("\nFinished building source (%d seconds, %3.2f files per second).\n", time - $starttime, $rate);
+print "Compiled approximately $filesbuilt files and $lines lines of code.\n";
+print "Doing final make (building archive...)\n";
+!system("make > /dev/null 2>/dev/null") or die "\nERROR: Failed to perform last make command!!!\n";
+print "done.\n";

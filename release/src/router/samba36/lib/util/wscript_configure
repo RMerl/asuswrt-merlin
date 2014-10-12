@@ -1,0 +1,106 @@
+#!/usr/bin/env python
+
+
+# backtrace could be in libexecinfo or in libc
+conf.CHECK_FUNCS_IN('backtrace', 'execinfo', checklibc=True, headers='execinfo.h')
+
+conf.CHECK_FUNCS('sigprocmask sigblock sigaction')
+
+xattr_headers='sys/attributes.h attr/xattr.h sys/xattr.h'
+conf.CHECK_FUNCS_IN('flistxattr', 'attr', checklibc=True, headers=xattr_headers)
+
+conf.CHECK_CODE('getxattr(NULL, NULL, NULL, 0, 0, 0)',
+                headers=xattr_headers, local_include=False,
+                define='XATTR_ADDITIONAL_OPTIONS',
+                msg='Checking for darwin xattr api')
+
+if conf.CONFIG_SET('HAVE_FLISTXATTR'):
+    conf.DEFINE('HAVE_XATTR_SUPPORT', 1)
+
+
+
+conf.CHECK_STRUCTURE_MEMBER('struct statvfs', 'f_frsize', define='HAVE_FRSIZE', headers='sys/statvfs.h')
+
+# all the different ways of doing statfs
+statfs_types = [
+    ( 'STAT_STATVFS64',
+      'Linux statvfs64',
+      'struct statvfs64 fsd; exit(statvfs64 (".", &fsd))',
+      'sys/statvfs.h' ),
+
+    ( 'STAT_STATVFS',
+      'statvfs (SVR4)',
+      'struct statvfs fsd; exit(statvfs(0, &fsd))',
+      'sys/statvfs.h' ),
+
+    ( 'STAT_STATFS3_OSF1',
+      '3-argument statfs function (DEC OSF/1)',
+      'struct statfs fsd; fsd.f_fsize = 0; exit(statfs(".", &fsd, sizeof(struct statfs)))'
+      'sys/param.h sys/mount.h' ),
+
+    ( 'STAT_STATFS2_BSIZE',
+      'two-argument statfs with statfs.bsize',
+      'struct statfs fsd; fsd.f_bsize = 0; exit(statfs(".", &fsd))',
+      'sys/param.h sys/mount.h  sys/vfs.h' ),
+
+    ( 'STAT_STATFS4',
+      'four-argument statfs  (AIX-3.2.5, SVR3)',
+      'struct statfs fsd; exit(statfs(".", &fsd, sizeof fsd, 0))',
+      'sys/statfs.h' ),
+
+    ( 'STAT_STATFS2_FSIZE',
+      'two-argument statfs with statfs.fsize',
+      'struct statfs fsd; fsd.f_fsize = 0; exit(statfs(".", &fsd))'
+      'sys/param.h sys/mount.h' ),
+
+    ( 'STAT_STATFS2_FS_DATA',
+      'two-argument statfs with struct fs_data (Ultrix)',
+      'struct fs_data fsd; exit(statfs(".", &fsd) != 1)',
+      'sys/param.h sys/mount.h sys/fs_types.h' )
+]
+
+found_statfs=False
+for (define, msg, code, headers) in statfs_types:
+    if conf.CHECK_CODE(code,
+                       define=define,
+                       headers=headers,
+                       msg='Checking for %s' % msg,
+                       local_include=False):
+        found_statfs=True
+        break
+
+if not found_statfs:
+    print("FATAL: Failed to find a statfs method")
+    raise
+
+
+conf.CHECK_CODE('struct statvfs buf; buf.f_fsid = 0',
+                define='HAVE_FSID_INT',
+                msg='Checking if f_fsid is an integer',
+                execute=False,
+                local_include=False,
+                headers='sys/statvfs.h')
+
+# fsusage.c assumes that statvfs has an f_frsize entry. Some weird
+# systems use f_bsize.
+conf.CHECK_CODE('struct statvfs buf; buf.f_frsize = 0',
+                define='HAVE_FRSIZE',
+                msg='Checking that statvfs.f_frsize works',
+                headers='sys/statvfs.h',
+                execute=False,
+                local_include=False)
+
+# Some systems use f_flag in struct statvfs while others use f_flags
+conf.CHECK_CODE('struct statvfs buf; buf.f_flag = 0',
+                define='HAVE_STATVFS_F_FLAG',
+                msg='Checking whether statvfs.f_flag exists',
+                headers='sys/statvfs.h',
+                local_include=False,
+                execute=False)
+
+conf.CHECK_CODE('struct statvfs buf; buf.f_flags = 0',
+                define='HAVE_STATVFS_F_FLAGS',
+                msg='Checking whether statvfs.f_flags exists',
+                headers='sys/statvfs.h',
+                local_include=False,
+                execute=False)

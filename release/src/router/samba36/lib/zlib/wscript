@@ -1,0 +1,31 @@
+#!/usr/bin/env python
+
+def configure(conf):
+    conf.CHECK_HEADERS('zlib.h')
+    conf.CHECK_FUNCS_IN('zlibVersion', 'z')
+
+    conf.CHECK_CODE('''
+                    #if (ZLIB_VERNUM >= 0x1230)
+                    #else
+                    #error "ZLIB_VERNUM < 0x1230"
+                    #endif
+                    ''',
+                    headers='zlib.h',
+                    local_include=False,
+                    msg='Checking for ZLIB_VERNUM >= 0x1230',
+                    define='HAVE_ZLIB')
+
+    # If we don't do this then we will receive an error that lib 'z'
+    # is already declared as a system lib (for the cases where zlibVersion
+    # is defined
+    if not conf.env['HAVE_ZLIB']:
+                conf.LOCAL_CACHE_SET('TARGET_TYPE', 'z', 'EMPTY')
+
+def build(bld):
+    if not bld.CONFIG_SET('HAVE_ZLIB'):
+        bld.SAMBA_LIBRARY('z',
+                          private_library=True,
+                          deps='replace',
+                          source='''adler32.c compress.c crc32.c gzio.c
+                                    uncompr.c deflate.c trees.c zutil.c
+                                    inflate.c infback.c inftrees.c inffast.c''')

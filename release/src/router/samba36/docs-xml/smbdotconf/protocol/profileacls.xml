@@ -1,0 +1,47 @@
+<samba:parameter name="profile acls"
+                 context="S"
+				 type="boolean"
+                 advanced="1" wizard="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>
+	This boolean parameter was added to fix the problems that people have been
+	having with storing user profiles on Samba shares from Windows 2000 or
+	Windows XP clients. New versions of Windows 2000 or Windows XP service
+	packs do security ACL checking on the owner and ability to write of the
+	profile directory stored on a local workstation when copied from a Samba
+	share.
+	</para>
+
+	<para>
+	When not in domain mode with winbindd then the security info copied
+	onto the local workstation has no meaning to the logged in user (SID) on
+	that workstation so the profile storing fails. Adding this parameter
+	onto a share used for profile storage changes two things about the
+	returned Windows ACL. Firstly it changes the owner and group owner
+	of all reported files and directories to be BUILTIN\\Administrators,
+	BUILTIN\\Users respectively (SIDs S-1-5-32-544, S-1-5-32-545). Secondly
+	it adds an ACE entry of "Full Control" to the SID BUILTIN\\Users to
+	every returned ACL. This will allow any Windows 2000 or XP workstation
+	user to access the profile.
+	</para>
+
+	<para>
+	Note that if you have multiple users logging
+	on to a workstation then in order to prevent them from being able to access
+	each others profiles you must remove the "Bypass traverse checking" advanced
+	user right. This will prevent access to other users profile directories as
+	the top level profile directory (named after the user) is created by the
+	workstation profile code and has an ACL restricting entry to the directory
+	tree to the owning user.
+	</para>
+
+	<para>
+	Note that this parameter should be set to yes on dedicated profile shares only.
+	On other shares, it might cause incorrect file ownerships.
+	</para>
+
+</description>
+
+<value type="default">no</value>
+</samba:parameter>

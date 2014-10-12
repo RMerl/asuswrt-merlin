@@ -1,0 +1,16 @@
+This copy of waf-svn is taken from the git mirror of waf
+at:
+
+  git://git.samba.org/tridge/waf-svn.git
+
+using the waf-samba branch
+
+It was built using the command:
+
+  ./waf-light --zip-type=gz --make-waf
+
+See http://code.google.com/p/waf/ for more information on waf
+
+You can get a svn copy of the upstream source with:
+
+  svn checkout http://waf.googlecode.com/svn/trunk/ waf-read-only

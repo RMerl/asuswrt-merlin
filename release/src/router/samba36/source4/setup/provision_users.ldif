@@ -1,0 +1,570 @@
+# Add default primary groups (domain users, domain guests, domain computers &
+# domain controllers) - needed for the users to find valid primary groups
+# (samldb module)
+
+dn: CN=Domain Users,CN=Users,${DOMAINDN}
+objectClass: top
+objectClass: group
+description: All domain users
+objectSid: ${DOMAINSID}-513
+sAMAccountName: Domain Users
+isCriticalSystemObject: TRUE
+
+dn: CN=Domain Guests,CN=Users,${DOMAINDN}
+objectClass: top
+objectClass: group
+description: All domain guests
+objectSid: ${DOMAINSID}-514
+sAMAccountName: Domain Guests
+isCriticalSystemObject: TRUE
+
+dn: CN=Domain Computers,CN=Users,${DOMAINDN}
+objectClass: top
+objectClass: group
+description: All workstations and servers joined to the domain
+objectSid: ${DOMAINSID}-515
+sAMAccountName: Domain Computers
+isCriticalSystemObject: TRUE
+
+dn: CN=Domain Controllers,CN=Users,${DOMAINDN}
+objectClass: top
+objectClass: group
+description: All domain controllers in the domain
+objectSid: ${DOMAINSID}-516
+adminCount: 1
+sAMAccountName: Domain Controllers
+isCriticalSystemObject: TRUE
+
+# Add users
+
+dn: CN=Administrator,CN=Users,${DOMAINDN}
+objectClass: user
+description: Built-in account for administering the computer/domain
+userAccountControl: 512
+objectSid: ${DOMAINSID}-500
+adminCount: 1
+accountExpires: 9223372036854775807
+sAMAccountName: Administrator
+clearTextPassword:: ${ADMINPASS_B64}
+isCriticalSystemObject: TRUE
+
+dn: CN=Guest,CN=Users,${DOMAINDN}
+objectClass: user
+description: Built-in account for guest access to the computer/domain
+userAccountControl: 66082
+primaryGroupID: 514
+objectSid: ${DOMAINSID}-501
+sAMAccountName: Guest
+isCriticalSystemObject: TRUE
+
+dn: CN=krbtgt,CN=Users,${DOMAINDN}
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: user
+description: Key Distribution Center Service Account
+showInAdvancedViewOnly: TRUE
+userAccountControl: 514
+objectSid: ${DOMAINSID}-502
+adminCount: 1
+accountExpires: 9223372036854775807
+sAMAccountName: krbtgt
+servicePrincipalName: kadmin/changepw
+clearTextPassword:: ${KRBTGTPASS_B64}
+isCriticalSystemObject: TRUE
+
+# Add other groups
+
+dn: CN=Enterprise Read-only Domain Controllers,CN=Users,${DOMAINDN}
+objectClass: top
+objectClass: group
+description: Members of this group are Read-Only Domain Controllers in the enterprise
+objectSid: ${DOMAINSID}-498
+sAMAccountName: Enterprise Read-Only Domain Controllers
+groupType: -2147483640
+isCriticalSystemObject: TRUE
+
+dn: CN=Domain Admins,CN=Users,${DOMAINDN}
+objectClass: top
+objectClass: group
+description: Designated administrators of the domain
+member: CN=Administrator,CN=Users,${DOMAINDN}
+objectSid: ${DOMAINSID}-512
+adminCount: 1
+sAMAccountName: Domain Admins
+isCriticalSystemObject: TRUE
+
+dn: CN=Cert Publishers,CN=Users,${DOMAINDN}
+objectClass: top
+objectClass: group
+description: Members of this group are permitted to publish certificates to the directory
+objectSid: ${DOMAINSID}-517
+sAMAccountName: Cert Publishers
+groupType: -2147483644
+isCriticalSystemObject: TRUE
+
+dn: CN=Schema Admins,CN=Users,${DOMAINDN}
+objectClass: top
+objectClass: group
+description: Designated administrators of the schema
+member: CN=Administrator,CN=Users,${DOMAINDN}
+objectSid: ${DOMAINSID}-518
+adminCount: 1
+sAMAccountName: Schema Admins
+groupType: -2147483640
+isCriticalSystemObject: TRUE
+
+dn: CN=Enterprise Admins,CN=Users,${DOMAINDN}
+objectClass: top
+objectClass: group
+description: Designated administrators of the enterprise
+member: CN=Administrator,CN=Users,${DOMAINDN}
+objectSid: ${DOMAINSID}-519
+adminCount: 1
+sAMAccountName: Enterprise Admins
+groupType: -2147483640
+isCriticalSystemObject: TRUE
+
+dn: CN=Group Policy Creator Owners,CN=Users,${DOMAINDN}
+objectClass: top
+objectClass: group
+description: Members in this group can modify group policy for the domain
+member: CN=Administrator,CN=Users,${DOMAINDN}
+objectSid: ${DOMAINSID}-520
+sAMAccountName: Group Policy Creator Owners
+isCriticalSystemObject: TRUE
+
+dn: CN=Read-only Domain Controllers,CN=Users,${DOMAINDN}
+objectClass: top
+objectClass: group
+description: Members of this group are Read-Only Domain Controllers in the domain
+objectSid: ${DOMAINSID}-521
+adminCount: 1
+sAMAccountName: Read-Only Domain Controllers
+isCriticalSystemObject: TRUE
+
+dn: CN=RAS and IAS Servers,CN=Users,${DOMAINDN}
+objectClass: top
+objectClass: group
+description: Servers in this group can access remote access properties of users
+objectSid: ${DOMAINSID}-553
+sAMAccountName: RAS and IAS Servers
+groupType: -2147483644
+isCriticalSystemObject: TRUE
+
+dn: CN=Allowed RODC Password Replication Group,CN=Users,${DOMAINDN}
+objectClass: top
+objectClass: group
+description: Members in this group can have their passwords replicated to all read-only domain controllers in the domain
+objectSid: ${DOMAINSID}-571
+sAMAccountName: Allowed RODC Password Replication Group
+groupType: -2147483644
+isCriticalSystemObject: TRUE
+
+dn: CN=Denied RODC Password Replication Group,CN=Users,${DOMAINDN}
+objectClass: top
+objectClass: group
+description: Members in this group cannot have their passwords replicated to any read-only domain controllers in the domain
+member: CN=Read-only Domain Controllers,CN=Users,${DOMAINDN}
+member: CN=Group Policy Creator Owners,CN=Users,${DOMAINDN}
+member: CN=Domain Admins,CN=Users,${DOMAINDN}
+member: CN=Cert Publishers,CN=Users,${DOMAINDN}
+member: CN=Enterprise Admins,CN=Users,${DOMAINDN}
+member: CN=Schema Admins,CN=Users,${DOMAINDN}
+member: CN=Domain Controllers,CN=Users,${DOMAINDN}
+member: CN=krbtgt,CN=Users,${DOMAINDN}
+objectSid: ${DOMAINSID}-572
+sAMAccountName: Denied RODC Password Replication Group
+groupType: -2147483644
+isCriticalSystemObject: TRUE
+
+# NOTICE: Some other users and groups which rely on automatic SIDs are located
+# in "provision_self_join_modify.ldif"
+
+# Add foreign security principals
+
+dn: CN=S-1-5-4,CN=ForeignSecurityPrincipals,${DOMAINDN}
+objectClass: top
+objectClass: foreignSecurityPrincipal
+objectSid: S-1-5-4
+
+dn: CN=S-1-5-9,CN=ForeignSecurityPrincipals,${DOMAINDN}
+objectClass: top
+objectClass: foreignSecurityPrincipal
+objectSid: S-1-5-9
+
+dn: CN=S-1-5-11,CN=ForeignSecurityPrincipals,${DOMAINDN}
+objectClass: top
+objectClass: foreignSecurityPrincipal
+objectSid: S-1-5-11
+
+dn: CN=S-1-5-17,CN=ForeignSecurityPrincipals,${DOMAINDN}
+objectClass: top
+objectClass: foreignSecurityPrincipal
+objectSid: S-1-5-17
+
+# Add builtin objects
+
+dn: CN=Administrators,CN=Builtin,${DOMAINDN}
+objectClass: top
+objectClass: group
+description: Administrators have complete and unrestricted access to the computer/domain
+member: CN=Domain Admins,CN=Users,${DOMAINDN}
+member: CN=Enterprise Admins,CN=Users,${DOMAINDN}
+member: CN=Administrator,CN=Users,${DOMAINDN}
+objectSid: S-1-5-32-544
+adminCount: 1
+sAMAccountName: Administrators
+systemFlags: -1946157056
+groupType: -2147483643
+isCriticalSystemObject: TRUE
+
+dn: CN=Users,CN=Builtin,${DOMAINDN}
+objectClass: top
+objectClass: group
+description: Users are prevented from making accidental or intentional system-wide changes and can run most applications
+member: CN=Domain Users,CN=Users,${DOMAINDN}
+member: CN=S-1-5-4,CN=ForeignSecurityPrincipals,${DOMAINDN}
+member: CN=S-1-5-11,CN=ForeignSecurityPrincipals,${DOMAINDN}
+objectSid: S-1-5-32-545
+sAMAccountName: Users
+systemFlags: -1946157056
+groupType: -2147483643
+isCriticalSystemObject: TRUE
+
+dn: CN=Guests,CN=Builtin,${DOMAINDN}
+objectClass: top
+objectClass: group
+description: Guests have the same access as members of the Users group by default, except for the Guest account which is further restricted
+member: CN=Domain Guests,CN=Users,${DOMAINDN}
+member: CN=Guest,CN=Users,${DOMAINDN}
+objectSid: S-1-5-32-546
+sAMAccountName: Guests
+systemFlags: -1946157056
+groupType: -2147483643
+isCriticalSystemObject: TRUE
+
+dn: CN=Account Operators,CN=Builtin,${DOMAINDN}
+objectClass: top
+objectClass: group
+description: Members can administer domain user and group accounts
+objectSid: S-1-5-32-548
+adminCount: 1
+sAMAccountName: Account Operators
+systemFlags: -1946157056
+groupType: -2147483643
+isCriticalSystemObject: TRUE
+
+dn: CN=Server Operators,CN=Builtin,${DOMAINDN}
+objectClass: top
+objectClass: group
+description: Members can administer domain servers
+objectSid: S-1-5-32-549
+adminCount: 1
+sAMAccountName: Server Operators
+systemFlags: -1946157056
+groupType: -2147483643
+isCriticalSystemObject: TRUE
+
+dn: CN=Print Operators,CN=Builtin,${DOMAINDN}
+objectClass: top
+objectClass: group
+description: Members can administer domain printers
+objectSid: S-1-5-32-550
+adminCount: 1
+sAMAccountName: Print Operators
+systemFlags: -1946157056
+groupType: -2147483643
+isCriticalSystemObject: TRUE
+
+dn: CN=Backup Operators,CN=Builtin,${DOMAINDN}
+objectClass: top
+objectClass: group
+description: Backup Operators can override security restrictions for the sole purpose of backing up or restoring files
+objectSid: S-1-5-32-551
+adminCount: 1
+sAMAccountName: Backup Operators
+systemFlags: -1946157056
+groupType: -2147483643
+isCriticalSystemObject: TRUE
+
+dn: CN=Replicator,CN=Builtin,${DOMAINDN}
+objectClass: top
+objectClass: group
+description: Supports file replication in a domain
+objectSid: S-1-5-32-552
+adminCount: 1
+sAMAccountName: Replicator
+systemFlags: -1946157056
+groupType: -2147483643
+isCriticalSystemObject: TRUE
+
+dn: CN=Pre-Windows 2000 Compatible Access,CN=Builtin,${DOMAINDN}
+objectClass: top
+objectClass: group
+description: A backward compatibility group which allows read access on all users and groups in the domain
+member: CN=S-1-5-11,CN=ForeignSecurityPrincipals,${DOMAINDN}
+objectSid: S-1-5-32-554
+sAMAccountName: Pre-Windows 2000 Compatible Access
+systemFlags: -1946157056
+groupType: -2147483643
+isCriticalSystemObject: TRUE
+
+dn: CN=Remote Desktop Users,CN=Builtin,${DOMAINDN}
+objectClass: top
+objectClass: group
+description: Members in this group are granted the right to logon remotely
+objectSid: S-1-5-32-555
+sAMAccountName: Remote Desktop Users
+systemFlags: -1946157056
+groupType: -2147483643
+isCriticalSystemObject: TRUE
+
+dn: CN=Network Configuration Operators,CN=Builtin,${DOMAINDN}
+objectClass: top
+objectClass: group
+description: Members in this group can have some administrative privileges to manage configuration of networking features
+objectSid: S-1-5-32-556
+sAMAccountName: Network Configuration Operators
+systemFlags: -1946157056
+groupType: -2147483643
+isCriticalSystemObject: TRUE
+
+dn: CN=Incoming Forest Trust Builders,CN=Builtin,${DOMAINDN}
+objectClass: top
+objectClass: group
+description: Members of this group can create incoming, one-way trusts to this forest
+objectSid: S-1-5-32-557
+sAMAccountName: Incoming Forest Trust Builders
+systemFlags: -1946157056
+groupType: -2147483643
+isCriticalSystemObject: TRUE
+
+dn: CN=Performance Monitor Users,CN=Builtin,${DOMAINDN}
+objectClass: top
+objectClass: group
+description: Members of this group can access performance counter data locally and remotely
+objectSid: S-1-5-32-558
+sAMAccountName: Performance Monitor Users
+systemFlags: -1946157056
+groupType: -2147483643
+isCriticalSystemObject: TRUE
+
+dn: CN=Performance Log Users,CN=Builtin,${DOMAINDN}
+objectClass: top
+objectClass: group
+description: Members of this group may schedule logging of performance counters, enable trace providers, and collect event traces both locally and via remote access to this computer
+objectSid: S-1-5-32-559
+sAMAccountName: Performance Log Users
+systemFlags: -1946157056
+groupType: -2147483643
+isCriticalSystemObject: TRUE
+
+dn: CN=Windows Authorization Access Group,CN=Builtin,${DOMAINDN}
+objectClass: top
+objectClass: group
+description: Members of this group have access to the computed tokenGroupsGlobalAndUniversal attribute on User objects
+member: CN=S-1-5-9,CN=ForeignSecurityPrincipals,${DOMAINDN}
+objectSid: S-1-5-32-560
+sAMAccountName: Windows Authorization Access Group
+systemFlags: -1946157056
+groupType: -2147483643
+isCriticalSystemObject: TRUE
+
+dn: CN=Terminal Server License Servers,CN=Builtin,${DOMAINDN}
+objectClass: top
+objectClass: group
+description: Members of this group can update user accounts in Active Directory with information about license issuance, for the purpose of tracking and reporting TS Per User CAL usage
+objectSid: S-1-5-32-561
+sAMAccountName: Terminal Server License Servers
+systemFlags: -1946157056
+groupType: -2147483643
+isCriticalSystemObject: TRUE
+
+dn: CN=Distributed COM Users,CN=Builtin,${DOMAINDN}
+objectClass: top
+objectClass: group
+description: Members are allowed to launch, activate and use Distributed COM objects on this machine.
+objectSid: S-1-5-32-562
+sAMAccountName: Distributed COM Users
+systemFlags: -1946157056
+groupType: -2147483643
+isCriticalSystemObject: TRUE
+
+dn: CN=IIS_IUSRS,CN=Builtin,${DOMAINDN}
+objectClass: top
+objectClass: group
+description: Built-in group used by Internet Information Services.
+member: CN=S-1-5-17,CN=ForeignSecurityPrincipals,${DOMAINDN}
+objectSid: S-1-5-32-568
+sAMAccountName: IIS_IUSRS
+systemFlags: -1946157056
+groupType: -2147483643
+isCriticalSystemObject: TRUE
+
+dn: CN=Cryptographic Operators,CN=Builtin,${DOMAINDN}
+objectClass: top
+objectClass: group
+description: Members are authorized to perform cryptographic operations.
+objectSid: S-1-5-32-569
+sAMAccountName: Cryptographic Operators
+systemFlags: -1946157056
+groupType: -2147483643
+isCriticalSystemObject: TRUE
+
+dn: CN=Event Log Readers,CN=Builtin,${DOMAINDN}
+objectClass: top
+objectClass: group
+description: Members of this group can read event logs from local machine
+objectSid: S-1-5-32-573
+sAMAccountName: Event Log Readers
+systemFlags: -1946157056
+groupType: -2147483643
+isCriticalSystemObject: TRUE
+
+dn: CN=Certificate Service DCOM Access,CN=Builtin,${DOMAINDN}
+objectClass: top
+objectClass: group
+description: Members of this group are allowed to connect to Certification Authorities in the enterprise
+objectSid: S-1-5-32-574
+sAMAccountName: Certificate Service DCOM Access
+systemFlags: -1946157056
+groupType: -2147483643
+isCriticalSystemObject: TRUE
+
+# Add well known security principals
+
+dn: CN=WellKnown Security Principals,${CONFIGDN}
+objectClass: top
+objectClass: container
+systemFlags: -2147483648
+
+dn: CN=Anonymous Logon,CN=WellKnown Security Principals,${CONFIGDN}
+objectClass: top
+objectClass: foreignSecurityPrincipal
+objectSid: S-1-5-7
+
+dn: CN=Authenticated Users,CN=WellKnown Security Principals,${CONFIGDN}
+objectClass: top
+objectClass: foreignSecurityPrincipal
+objectSid: S-1-5-11
+
+dn: CN=Batch,CN=WellKnown Security Principals,${CONFIGDN}
+objectClass: top
+objectClass: foreignSecurityPrincipal
+objectSid: S-1-5-3
+
+dn: CN=Creator Group,CN=WellKnown Security Principals,${CONFIGDN}
+objectClass: top
+objectClass: foreignSecurityPrincipal
+objectSid: S-1-3-1
+
+dn: CN=Creator Owner,CN=WellKnown Security Principals,${CONFIGDN}
+objectClass: top
+objectClass: foreignSecurityPrincipal
+objectSid: S-1-3-0
+
+dn: CN=Dialup,CN=WellKnown Security Principals,${CONFIGDN}
+objectClass: top
+objectClass: foreignSecurityPrincipal
+objectSid: S-1-5-1
+
+dn: CN=Digest Authentication,CN=WellKnown Security Principals,${CONFIGDN}
+objectClass: top
+objectClass: foreignSecurityPrincipal
+objectSid: S-1-5-64-21
+
+dn: CN=Enterprise Domain Controllers,CN=WellKnown Security Principals,${CONFIGDN}
+objectClass: top
+objectClass: foreignSecurityPrincipal
+objectSid: S-1-5-9
+
+dn: CN=Everyone,CN=WellKnown Security Principals,${CONFIGDN}
+objectClass: top
+objectClass: foreignSecurityPrincipal
+objectSid: S-1-1-0
+
+dn: CN=Interactive,CN=WellKnown Security Principals,${CONFIGDN}
+objectClass: top
+objectClass: foreignSecurityPrincipal
+objectSid: S-1-5-4
+
+dn: CN=IUSR,CN=WellKnown Security Principals,${CONFIGDN}
+objectClass: top
+objectClass: foreignSecurityPrincipal
+objectSid: S-1-5-17
+
+dn: CN=Local Service,CN=WellKnown Security Principals,${CONFIGDN}
+objectClass: top
+objectClass: foreignSecurityPrincipal
+objectSid: S-1-5-19
+
+dn: CN=Network,CN=WellKnown Security Principals,${CONFIGDN}
+objectClass: top
+objectClass: foreignSecurityPrincipal
+objectSid: S-1-5-2
+
+dn: CN=Network Service,CN=WellKnown Security Principals,${CONFIGDN}
+objectClass: top
+objectClass: foreignSecurityPrincipal
+objectSid: S-1-5-20
+
+dn: CN=NTLM Authentication,CN=WellKnown Security Principals,${CONFIGDN}
+objectClass: top
+objectClass: foreignSecurityPrincipal
+objectSid: S-1-5-64-10
+
+dn: CN=Other Organization,CN=WellKnown Security Principals,${CONFIGDN}
+objectClass: top
+objectClass: foreignSecurityPrincipal
+objectSid: S-1-5-1000
+
+dn: CN=Owner Rights,CN=WellKnown Security Principals,${CONFIGDN}
+objectClass: top
+objectClass: foreignSecurityPrincipal
+objectSid: S-1-3-4
+
+dn: CN=Proxy,CN=WellKnown Security Principals,${CONFIGDN}
+objectClass: top
+objectClass: foreignSecurityPrincipal
+objectSid: S-1-5-8
+
+dn: CN=Remote Interactive Logon,CN=WellKnown Security Principals,${CONFIGDN}
+objectClass: top
+objectClass: foreignSecurityPrincipal
+objectSid: S-1-5-14
+
+dn: CN=Restricted,CN=WellKnown Security Principals,${CONFIGDN}
+objectClass: top
+objectClass: foreignSecurityPrincipal
+objectSid: S-1-5-12
+
+dn: CN=SChannel Authentication,CN=WellKnown Security Principals,${CONFIGDN}
+objectClass: top
+objectClass: foreignSecurityPrincipal
+objectSid: S-1-5-64-14
+
+dn: CN=Self,CN=WellKnown Security Principals,${CONFIGDN}
+objectClass: top
+objectClass: foreignSecurityPrincipal
+objectSid: S-1-5-10
+
+dn: CN=Service,CN=WellKnown Security Principals,${CONFIGDN}
+objectClass: top
+objectClass: foreignSecurityPrincipal
+objectSid: S-1-5-6
+
+dn: CN=System,CN=WellKnown Security Principals,${CONFIGDN}
+objectClass: top
+objectClass: foreignSecurityPrincipal
+objectSid: S-1-5-18
+
+dn: CN=Terminal Server User,CN=WellKnown Security Principals,${CONFIGDN}
+objectClass: top
+objectClass: foreignSecurityPrincipal
+objectSid: S-1-5-13
+
+dn: CN=This Organization,CN=WellKnown Security Principals,${CONFIGDN}
+objectClass: top
+objectClass: foreignSecurityPrincipal
+objectSid: S-1-5-15

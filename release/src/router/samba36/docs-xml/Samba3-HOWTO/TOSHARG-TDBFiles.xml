@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE chapter PUBLIC "-//Samba-Team//DTD DocBook V4.2-Based Variant V1.0//EN" "http://www.samba.org/samba/DTD/samba-doc">
+<chapter id="tdb">
+
+<chapterinfo>
+	&author.jht;
+	
+	<pubdate>May 28, 2008</pubdate>
+</chapterinfo>
+
+<title>Managing TDB Files</title>
+
+<sect1>
+<title>Features and Benefits</title>
+
+	<para>
+<indexterm><primary>tdb</primary></indexterm>
+<indexterm><primary>Trivial Database</primary></indexterm>
+	Samba uses a lightweight database called Trivial Database (tdb) in which it stores persistent and transient data.
+	Some tdb files can be disposed of before restarting Samba, but others are used to store information that is vital
+	to Samba configuration and behavior. The following information is provided to help administrators who are seeking
+	to better manage their Samba installations.
+	</para>
+
+	<para>
+<indexterm><primary>tdb</primary></indexterm>
+<indexterm><primary>corrupted</primary></indexterm>
+<indexterm><primary>backup</primary></indexterm>
+<indexterm><primary>restore</primary></indexterm>
+	Those who package Samba for commercial distribution with operating systems and appliances would do well to take
+	note that tdb files can get corrupted, and for this reason ought to be backed up regularly.  An appropriate time
+	is at system shutdown (backup) and startup (restore from backup).
+	</para>
+
+<table frame="all" id="TOSH-TDB">
+                <title>Samba's Trivial Database Files</title>
+                <tgroup align="center" cols="2">
+                <thead>
+                <row><entry>File name</entry><entry>Preserve</entry><entry>Description</entry></row>
+                </thead>
+
+                <tbody>
+                        <row><entry>account_policy.tdb</entry><entry>Y</entry>
+				<entry><para>NT account policy settings such as pw expiration, etc...</para></entry></row>
+                        <row><entry>brlock.tdb</entry><entry>N</entry>
+				<entry><para>Byte range locks.</para></entry></row>
+                        <row><entry>browse.dat</entry><entry>N</entry>
+				<entry><para>Browse lists - gets rebuilt automatically.</para></entry></row>
+                        <row><entry>connections.tdb</entry><entry>N</entry>
+				<entry><para>Share connections. Used to enforce max connections, etc.</para></entry></row>
+                        <row><entry>gencache.tdb</entry><entry>N</entry>
+				<entry><para>Generic caching database.</para></entry></row>
+                        <row><entry>group_mapping.tdb</entry><entry>Y</entry>
+				<entry><para>Stores group mapping information. Not used when using LDAP backend.</para></entry></row>
+                        <row><entry>  lang_en.tdb</entry><entry>Y</entry>
+				<entry><para>Stores language encoding information.</para></entry></row>
+                        <row><entry>locking.tdb</entry><entry>N</entry>
+				<entry><para>Stores share mode and oplock information.</para></entry></row>
+                        <row><entry>login_cache.tdb</entry><entry>N</entry>
+				<entry><para>Keeps a log of bad pw attempts.</para></entry></row>
+                        <row><entry>messages.tdb</entry><entry>N</entry>
+				<entry><para>Used to keep track of Samba internal messaging.</para></entry></row>
+                        <row><entry>netsamlogon_cache.tdb</entry><entry>Y</entry>
+				<entry><para>
+					Cache of user net_info_3 struct from <emphasis>net_samlogon()</emphasis>
+					requests from domain member machines.
+				</para></entry></row>
+                        <row><entry>ntdrivers.tdb</entry><entry>Y</entry>
+				<entry><para>Stores installed printer driver information.</para></entry></row>
+                        <row><entry>ntforms.tdb</entry><entry>Y</entry>
+				<entry><para>Stores installed printer forms information.</para></entry></row>
+                        <row><entry>ntprinters.tdb</entry><entry>Y</entry>
+				<entry><para>Stores installed printers information.</para></entry></row>
+                        <row><entry>printing directory</entry><entry>Y</entry>
+				<entry><para>Directory containing tdb per print queue of cached lpq output.</para></entry></row>
+                        <row><entry>registry.tdb</entry><entry>Y</entry>
+				<entry><para>Windows registry skeleton (connect via regedit.exe).</para></entry></row>
+                        <row><entry>sessionid.tdb</entry><entry>N</entry>
+				<entry><para>Session information to support <literal>utmp = yes</literal> capabilities.</para></entry></row>
+                        <row><entry>share_info.tdb</entry><entry>Y</entry>
+				<entry><para>Stores share-level ACL configuration settings.
+					Default ACL is <emphasis>Everyone - Full Control</emphasis>.
+				</para></entry></row>
+                        <row><entry>unexpected.tdb</entry><entry>N</entry>
+				<entry><para>
+					Unexpected packet queue needed to support windows clients that respond on a 
+					different port that the originating reques.
+				</para></entry></row>
+                        <row><entry>winbindd_cache.tdb</entry><entry>N</entry>
+				<entry><para>Winbind's cache of user lists.</para></entry></row>
+                        <row><entry>winbindd_idmap.tdb</entry><entry>Y</entry>
+				<entry><para>Winbind's local IDMAP database.</para></entry></row>
+                        <row><entry>wins.dat</entry><entry>N</entry>
+				<entry><para>
+				WINS database iused only when <parameter>wins support = yes</parameter>
+				has been set. This gets rebuilt or updated at every restart.
+				</para></entry></row>
+                        <row><entry>wins.tdb</entry><entry>Y</entry>
+				<entry><para>
+				The working permanent storage for all WINS data. This database is used only
+				when <parameter>wins support = yes</parameter> has been set in the &smb.conf; file.
+				Note: This retains all manually configured WINS entries. Manual setting can be done use the net utility.
+				</para></entry></row>
+                        <row><entry>secrets.tdb</entry><entry>Y</entry>
+				<entry><para>
+				This tdb file stores internal settings such as the machine and the domain SID, secret passwords
+				that are used with LDAP, the machine secret token, etc. This is an essential file that is stored
+				in a secure area. Vendors locate this in various folders. Check <command>smbd -b</command> to
+				find its location on your system.
+				</para></entry></row>
+                        <row><entry>schannel_store.tdb</entry><entry>Y</entry>
+				<entry><para>
+				This stores secure channel access token information used with SMB signing.
+				</para></entry></row>
+                        <row><entry>passdb.tdb</entry><entry>Y</entry>
+				<entry><para>
+				This stores the Samba SAM account information when using a tdbsam password backend.
+				</para></entry></row>
+                </tbody>
+        </tgroup>
+        </table>
+
+</sect1>
+
+<sect1>
+<title>Managing TDB Files</title>
+
+	<para>
+	The <command>tdbbackup</command> utility is a tool that may be used to backup samba tdb files.
+	This tool may also be used to verify the integrity of the tdb files prior to Samba startup or
+	during normal operation. If it finds file damage it will search for a prior backup the backup
+	file from which the damaged tdb file will be restored. The <command>tdbbackup</command>
+	utility can safely be run at any time. It was designed so that it can be used at any time to
+	validate the integrity of tdb files, even during Samba operation.
+	</para>
+
+	<para>
+	It is recommended to backup all tdb files as part of the Samba start-up scripts on a Samba
+	server. The following command syntax can be used:
+	</para>
+<screen>
+myserver# > cd /var/lib/samba
+myserver@ > tdbbackup *.tdb
+</screen>
+	<para>
+	The default extension is <filename>.bak</filename>. Any alternate extension can be specified
+	by executing <literal>tdbbackup -s 'new_extension' *.tdb</literal> as part of your startup script.
+	</para>
+
+</sect1>
+
+</chapter>

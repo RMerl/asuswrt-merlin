@@ -1,0 +1,5 @@
+Design notes for client library restructure:
+
+1 - no references to cli_state should exist in libcli/raw.
+2 - all interfaces to functions in this directory should use cli_session or cli_tree as
+	the primary context structure

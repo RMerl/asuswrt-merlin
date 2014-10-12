@@ -1,0 +1,56 @@
+#Standard OpenLDAP attributes
+labeledURI
+createTimeStamp
+objectClass
+userPassword
+seeAlso
+uid
+subSchemaSubEntry
+structuralObjectClass
+distinguishedName
+description
+cn
+top
+uidNumber
+gidNumber
+#The memberOf plugin provides this attribute
+memberOf
+#'name' is the RDN in AD, but 'name' means something else in
+#OpenLDAP.  We use rdnValue for the mapping, but this is provided by
+#the rdnval overlay.
+name
+#These conflict with OpenLDAP builtins
+attributeTypes:samba4AttributeTypes
+2.5.21.5:1.3.6.1.4.1.7165.4.255.7
+dITContentRules:samba4DITContentRules
+2.5.21.2:1.3.6.1.4.1.7165.4.255.6
+objectClasses:samba4ObjectClasses
+2.5.21.6:1.3.6.1.4.1.7165.4.255.5
+subSchema:samba4SubSchema
+2.5.20.1:1.3.6.1.4.1.7165.4.255.4
+#Remap these so that we don't put operational attributes in a schema MAY
+modifyTimeStamp:samba4ModifyTimestamp
+2.5.18.2:1.3.6.1.4.1.7165.4.255.3
+dynamicObject:samba4DynaimcObject
+1.3.6.1.4.1.1466.101.119.2:1.3.6.1.4.1.7165.4.255.8
+entryTTL:samba4EntryTTL
+1.3.6.1.4.1.1466.101.119.3:1.3.6.1.4.1.7165.4.255.9
+#MiddleName has a conflicting OID
+2.16.840.1.113730.3.1.34:1.3.6.1.4.1.7165.4.255.1
+#defaultGroup has a conflicting OID
+1.2.840.113556.1.4.480:1.3.6.1.4.1.7165.4.255.2
+#This large integer format is unimplemented in OpenLDAP 2.3
+1.2.840.113556.1.4.906:1.3.6.1.4.1.1466.115.121.1.27
+#This case insensitive string isn't available
+1.2.840.113556.1.4.905:1.3.6.1.4.1.1466.115.121.1.44
+#Treat Security Descriptors as binary
+1.2.840.113556.1.4.907:1.3.6.1.4.1.1466.115.121.1.40
+#Treat OIDs as case insensitive strings (as otherwise ldap class and
+#attribute names, declared at OIDs fail 
+1.3.6.1.4.1.1466.115.121.1.38:1.3.6.1.4.1.1466.115.121.1.44
+#Treat Object(DN-Binary) as a binary blob
+1.2.840.113556.1.4.903:1.3.6.1.4.1.1466.115.121.1.40
+#Treat Object(DN-String) as a binary blob
+1.2.840.113556.1.4.904:1.3.6.1.4.1.1466.115.121.1.40
+#Treat UTC-Time as GeneralizedTime
+1.3.6.1.4.1.1466.115.121.1.53:1.3.6.1.4.1.1466.115.121.1.24

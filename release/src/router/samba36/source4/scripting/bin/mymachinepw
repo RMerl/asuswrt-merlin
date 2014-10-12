@@ -1,0 +1,59 @@
+#!/usr/bin/env python
+
+# Unix SMB/CIFS implementation.
+# Copyright (C) Volker Lendecke 2008
+# Copyright (C) Stefan Metzmacher 2008
+#
+# Extract our own machine pw from secrets.ldb
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+import samba.param as param, ldb, sys, getopt
+
+optlist, args = getopt.getopt(sys.argv[1:], "s:")
+
+conf = param.LoadParm()
+loaded = False
+
+for o, v in optlist:
+    if o == "-s":
+        if not conf.load(v):
+            print(v + " not found")
+            exit(1)
+        loaded = True
+
+if not loaded:
+    conf.load_default()
+
+path=conf.get("private dir") + "/secrets.ldb"
+netbios=conf.get("netbios name")
+
+secrets = ldb.Ldb(path)
+
+search = "(&(objectclass=primaryDomain)(samaccountname=" + \
+	  netbios + "$))"
+
+msg = secrets.search(expression=search, attrs=['secret'])
+
+if not msg:
+    print "Error:"
+    print "Password for host[%s] not found in path[%s]." % (netbios, path)
+    print "You may want to pass the smb.conf location via the -s option."
+    exit(1)
+
+password=msg[0]['secret'][0]
+
+print(password)
+exit(0)

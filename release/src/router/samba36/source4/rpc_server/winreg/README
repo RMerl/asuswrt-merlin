@@ -1,0 +1,3 @@
+This is the RPC server for the registry for Samba. It is basically a
+front-end for the registry library in lib/registry. See
+lib/registry/README for more details.

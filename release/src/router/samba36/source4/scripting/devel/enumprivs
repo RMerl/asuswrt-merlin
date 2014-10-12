@@ -1,0 +1,58 @@
+#!/usr/bin/env python
+
+# script to enumerate LSA privileges on a server
+
+import sys
+from optparse import OptionParser
+
+sys.path.insert(0, "bin/python")
+
+import samba
+import samba.getopt as options
+from samba.dcerpc import lsa, security
+
+def get_display_name(lsaconn, pol_handle, name):
+    '''get the display name for a privilege'''
+    string = lsa.String()
+    string.string = name
+
+    (disp_names, ret_lang) = lsaconn.LookupPrivDisplayName(pol_handle, string, 0x409, 0)
+    return disp_names.string
+
+
+
+
+########### main code ###########
+if __name__ == "__main__":
+    parser = OptionParser("enumprivs [options] server")
+    sambaopts = options.SambaOptions(parser)
+    credopts = options.CredentialsOptionsDouble(parser)
+    parser.add_option_group(credopts)
+
+    (opts, args) = parser.parse_args()
+
+    lp = sambaopts.get_loadparm()
+    creds = credopts.get_credentials(lp)
+
+    if len(args) != 1:
+        parser.error("You must supply a server")
+
+    if not creds.authentication_requested():
+        parser.error("You must supply credentials")
+
+    server = args[0]
+
+    binding_str = "ncacn_np:%s[print]" % server
+
+    lsaconn = lsa.lsarpc(binding_str, lp, creds)
+
+    objectAttr = lsa.ObjectAttribute()
+    objectAttr.sec_qos = lsa.QosInfo()
+
+    pol_handle = lsaconn.OpenPolicy2(''.decode('utf-8'),
+                                     objectAttr, security.SEC_FLAG_MAXIMUM_ALLOWED)
+
+    (handle, privs) = lsaconn.EnumPrivs(pol_handle, 0, 100)
+    for p in privs.privs:
+        disp_name = get_display_name(lsaconn, pol_handle, p.name.string)
+        print "0x%08x %31s \"%s\"" % (p.luid.low, p.name.string, disp_name)

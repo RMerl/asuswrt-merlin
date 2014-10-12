@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+<refentry id="regshell.1">
+
+<refmeta>
+	<refentrytitle>regshell</refentrytitle>
+	<manvolnum>1</manvolnum>
+</refmeta>
+
+
+<refnamediv>
+	<refname>regshell</refname>
+	<refpurpose>Windows registry file browser using readline</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+	<cmdsynopsis>
+		<command>regshell</command>
+		<arg choice="opt">--help</arg>
+		<arg choice="opt">--backend=BACKEND</arg>
+		<arg choice="opt">--credentials=CREDENTIALS</arg>
+		<arg choice="opt">location</arg>
+	</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1>
+	<title>DESCRIPTION</title>
+
+	<para>
+		regshell is a utility that lets you browse thru a Windows registry 
+		file as if you were using a regular unix shell to browse thru a 
+		file system.
+	</para>
+
+</refsect1>
+
+
+<refsect1>
+	<title>OPTIONS</title>
+
+	<variablelist>
+		<varlistentry>
+		<term>--help</term>
+		<listitem><para>
+		Show list of available options.</para></listitem>
+		</varlistentry>
+		
+		<varlistentry>
+			<term>--backend BACKEND</term>
+			<listitem><para>Name of backend to load. Possible values are: 
+					creg, regf, dir and rpc. The default is <emphasis>dir</emphasis>.
+		</para></listitem>
+		</varlistentry>
+		
+		<varlistentry>
+		<term>--credentials=CREDENTIALS</term>
+		<listitem><para>
+				Credentials to use, if any. Password should be separated from user name by a percent sign.</para></listitem>
+		</varlistentry>
+	</variablelist>
+</refsect1>
+
+<refsect1>
+	<title>COMMANDS</title>
+
+	<variablelist>
+		<varlistentry>
+			<term>ck|cd &lt;keyname&gt;</term>
+			<listitem><para>
+			Go to the specified subkey.
+			</para></listitem>
+		</varlistentry>
+		
+		<varlistentry>
+			<term>ch|predef [predefined-key-name]</term>
+			<listitem><para>
+					Go to the specified predefined key. 
+			</para></listitem>
+		</varlistentry>		
+
+		<varlistentry>
+			<term>list|ls</term>
+			<listitem><para>
+					List subkeys and values of the current key.
+			</para></listitem>
+		</varlistentry>		
+
+		<varlistentry>
+			<term>mkkey|mkdir &lt;keyname&gt;</term>
+			<listitem><para>
+					Create a key with the specified <replaceable>keyname</replaceable> as a subkey of the current key.
+			</para></listitem>
+		</varlistentry>		
+
+		<varlistentry>
+			<term>rmval|rm &lt;valname&gt;</term>
+			<listitem><para>
+					Delete the specified value.
+			</para></listitem>
+		</varlistentry>		
+
+		<varlistentry>
+			<term>rmkey|rmdir &lt;keyname&gt;</term>
+			<listitem><para>
+			Delete the specified subkey recursively.
+			</para></listitem>
+		</varlistentry>		
+
+		<varlistentry>
+			<term>pwd|pwk</term>
+			<listitem><para>Print the full name of the current key.</para></listitem>
+		</varlistentry>		
+
+		<varlistentry>
+			<term>set|update</term>
+			<listitem><para>Update the value of a key value. Not implemented at the moment.</para></listitem>
+		</varlistentry>		
+
+		<varlistentry>
+			<term>help|?</term>
+			<listitem><para>Print a list of available commands.</para></listitem>
+		</varlistentry>		
+		<varlistentry>
+			<term>exit|quit</term>
+			<listitem><para>Leave regshell.</para></listitem>
+		</varlistentry>		
+	</variablelist>
+</refsect1>
+
+<refsect1>
+	<title>EXAMPLES</title>
+
+	<para>Browsing thru a nt4 registry file</para>
+	<screen>
+<userinput>regshell -b nt4 NTUSER.DAT</userinput>
+$$$PROTO.HIV> <userinput>ls</userinput>
+K AppEvents
+K Console
+K Control Panel
+K Environment
+K Identities
+K Keyboard Layout
+K Network
+K Printers
+K Software
+K UNICODE Program Groups
+K Windows 3.1 Migration Status
+$$$PROTO.HIV> <userinput>exit</userinput>
+</screen>
+
+<para>Listing the subkeys of HKEY_CURRENT_USER\AppEvents on a remote computer:</para>
+<screen>
+<userinput>regshell --remote=ncacn_np:aurelia -c "jelmer%secret"</userinput>
+HKEY_CURRENT_MACHINE> <userinput>predef HKEY_CURRENT_USER</userinput>
+HKEY_CURRENT_USER> <userinput>cd AppEvents</userinput>
+Current path is: HKEY_CURRENT_USER\AppEvents
+HKEY_CURRENT_USER\AppEvents> <userinput>ls</userinput>
+K EventLabels
+K Schemes
+HKEY_CURRENT_USER\AppEvents> <userinput>exit</userinput>
+</screen>
+</refsect1>
+
+<refsect1>
+	<title>VERSION</title>
+
+	<para>This man page is correct for version 4.0 of the Samba suite.</para>
+</refsect1>
+
+<refsect1>
+	<title>SEE ALSO</title>
+
+	<para>regtree, regdiff, regpatch, gregedit, samba</para>
+
+</refsect1>
+
+<refsect1>
+	<title>AUTHOR</title>
+
+	<para>This utility is part of the <ulink url="http://www.samba.org/">Samba</ulink> suite, which is developed by the global <ulink url="http://www.samba.org/samba/team/">Samba Team</ulink>.</para>
+	
+	<para>This manpage and regshell were written by Jelmer Vernooij. </para>
+	
+</refsect1>
+
+</refentry>

@@ -1,0 +1,356 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//Samba-Team//DTD DocBook V4.2-Based Variant V1.0//EN" "http://www.samba.org/samba/DTD/samba-doc">
+<refentry id="vfs_gpfs.8">
+
+<refmeta>
+	<refentrytitle>vfs_gpfs</refentrytitle>
+	<manvolnum>8</manvolnum>
+	<refmiscinfo class="source">Samba</refmiscinfo>
+	<refmiscinfo class="manual">System Administration tools</refmiscinfo>
+	<refmiscinfo class="version">3.6</refmiscinfo>
+</refmeta>
+
+
+<refnamediv>
+	<refname>vfs_gpfs</refname>
+	<refpurpose>gpfs specific samba extensions like acls and prealloc</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+	<cmdsynopsis>
+		<command>vfs objects = gpfs</command>
+	</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1>
+	<title>DESCRIPTION</title>
+
+	<para>This VFS module is part of the
+	<citerefentry><refentrytitle>samba</refentrytitle>
+	<manvolnum>7</manvolnum></citerefentry> suite.</para>
+
+	<para>The <command>gpfs</command> VFS module is the home
+	for all gpfs extensions that Samba requires for proper integration
+	with GPFS. It uses the GPL library interfaces provided by GPFS.
+	</para>
+
+	<para>Currently the gpfs vfs module provides extensions in following areas :
+	<itemizedlist>
+	<listitem><para>NFSv4 ACL Interfaces with configurable options for GPFS</para></listitem>
+	<listitem><para>Kernel oplock support on GPFS</para></listitem>
+	<listitem><para>Lease support on GPFS</para></listitem>
+	</itemizedlist>
+	</para>
+
+	<para><command>NOTE:</command>This module follows the posix-acl behaviour
+	and hence allows permission stealing via chown. Samba might allow at a later
+	point in time, to restrict the chown via this module as such restrictions
+	are the responsibility of the underlying filesystem than of Samba.
+	</para>
+
+	<para>This module is stackable.</para>
+
+</refsect1>
+
+
+<refsect1>
+	<title>OPTIONS</title>
+
+	<variablelist>
+
+		<varlistentry>
+
+		<term>gpfs:sharemodes = [ yes | no ]</term>
+		<listitem>
+		<para>
+		Enable/Disable cross node sharemode handling for GPFS.
+		</para>
+
+		<itemizedlist>
+		<listitem><para>
+		<command>yes(default)</command> - propagate sharemodes across all GPFS nodes.
+		</para></listitem>
+		<listitem><para>
+		<command>no</command> - do not propagate sharemodes across all GPFS nodes.
+		This should only be used if the GPFS file system is
+		exclusively exported by Samba. Access by local unix application or
+		NFS exports could lead to corrupted files.
+		</para></listitem>
+		</itemizedlist>
+		</listitem>
+
+		</varlistentry>
+		<varlistentry>
+
+		<term>gpfs:leases = [ yes | no ]</term>
+		<listitem>
+		<para>
+		Enable/Disable cross node leases (oplocks) for GPFS.
+		You should also set the <command>oplocks</command> and <command>kernel oplocks</command>
+		options to the same value.
+		</para>
+
+		<itemizedlist>
+		<listitem><para>
+		<command>yes(default)</command> - propagate leases across all GPFS nodes.
+		</para></listitem>
+		<listitem><para>
+		<command>no</command> - do not propagate leases across all GPFS nodes.
+		This should only be used if the GPFS file system is
+		exclusively exported by Samba. Access by local unix application or
+		NFS exports could lead to corrupted files.
+		</para></listitem>
+		</itemizedlist>
+		</listitem>
+
+		</varlistentry>
+
+		<varlistentry>
+
+		<term>gpfs:hsm = [ yes | no ]</term>
+		<listitem>
+		<para>
+		Enable/Disable announcing if this FS has HSM enabled.
+		</para>
+
+		<itemizedlist>
+		<listitem><para>
+		<command>no(default)</command> - Do not announce HSM.
+		</para></listitem>
+		<listitem><para>
+		<command>no</command> - Announce HSM.
+		</para></listitem>
+		</itemizedlist>
+		</listitem>
+
+		</varlistentry>
+
+		<varlistentry>
+
+		<term>gpfs:getrealfilename = [ yes | no ]</term>
+		<listitem>
+		<para>
+		Enable/Disable usage of the <command>gpfs_get_realfilename_path()</command> function.
+		This improves the casesensitive wildcard file name access.
+		</para>
+
+		<itemizedlist>
+		<listitem><para>
+		<command>yes(default)</command> - use <command>gpfs_get_realfilename_path()</command>.
+		</para></listitem>
+		<listitem><para>
+		<command>no</command> - do not use <command>gpfs_get_realfilename_path()</command>.
+		It seems that <command>gpfs_get_realfilename_path()</command> doesn't work on AIX.
+		</para></listitem>
+		</itemizedlist>
+		</listitem>
+
+		</varlistentry>
+		<varlistentry>
+
+		<term>gpfs:winattr = [ yes | no ]</term>
+		<listitem>
+		<para>
+		Enable/Disable usage of the windows attributes in GPFS.
+		GPFS is able to store windows file attributes e.g. HIDDEN,
+		READONLY, SYSTEM and others natively. That means Samba doesn't
+		need to map them to permission bits or extended attributes.
+		</para>
+
+		<itemizedlist>
+		<listitem><para>
+		<command>no(default)</command> - do not use GPFS windows attributes.
+		</para></listitem>
+		<listitem><para>
+		<command>yes</command> - use GPFS windows attributes.
+		</para></listitem>
+		</itemizedlist>
+		</listitem>
+
+		</varlistentry>
+		<varlistentry>
+
+		<term>gpfs:merge_writeappend = [ yes | no ]</term>
+		<listitem>
+		<para>
+		GPFS ACLs doesn't know about the 'APPEND' right.
+		This optionen lets Samba map the 'APPEND' right to 'WRITE'.
+		</para>
+
+		<itemizedlist>
+		<listitem><para>
+		<command>yes(default)</command> - map 'APPEND' to 'WRITE'.
+		</para></listitem>
+		<listitem><para>
+		<command>no</command> - do not map 'APPEND' to 'WRITE'.
+		</para></listitem>
+		</itemizedlist>
+		</listitem>
+
+		</varlistentry>
+		<varlistentry>
+
+		<term>gpfs:refuse_dacl_protected = [ yes | no ]</term>
+		<listitem>
+		<para>
+		As GPFS does not support the ACE4_FLAG_NO_PROPAGATE NFSv4 flag (which would be
+		the mapping for the DESC_DACL_PROTECTED flag), the status of this flag is
+		currently silently ignored by Samba. That means that if you deselect the "Allow
+		inheritable permissions..." checkbox in Windows' ACL dialog and then apply the
+		ACL, the flag will be back immediately.
+		</para>
+		<para>
+		To make sure that automatic migration with e.g. robocopy does not lead to
+		ACLs silently (and unintentionally) changed, you can set
+		<command>gpfs:refuse_dacl_protected = yes</command> to enable an explicit
+		check for this flag and if set, it will return NT_STATUS_NOT_SUPPORTED so
+		errors are shown up on the Windows side and the Administrator is aware of
+		the ACLs not being settable like intended
+		</para>
+
+		<itemizedlist>
+		<listitem><para>
+		<command>no(default)</command> - ignore the DESC_DACL_PROTECTED flags.
+		</para></listitem>
+		<listitem><para>
+		<command>yes</command> - reject ACLs with DESC_DACL_PROTECTED.
+		</para></listitem>
+		</itemizedlist>
+		</listitem>
+
+		</varlistentry>
+		<varlistentry>
+
+		<term>nfs4:mode = [ simple | special ]</term>
+		<listitem>
+		<para>
+		Enable/Disable substitution of special IDs on GPFS. This parameter
+		should not affect the windows users in anyway. It only ensures that Samba
+		sets the special IDs - OWNER@ and GROUP@ ( mappings to simple uids )
+		that are relevant to GPFS.
+		</para>
+
+		<para>The following MODEs are understood by the module:</para>
+		<itemizedlist>
+		<listitem><para><command>simple(default)</command> - do not use special IDs in GPFS ACEs</para></listitem>
+		<listitem><para><command>special</command> - use special IDs in GPFS ACEs. </para> </listitem>
+		</itemizedlist>
+		</listitem>
+
+		</varlistentry>
+
+
+		<varlistentry>
+		<term>nfs4:acedup = [dontcare|reject|ignore|merge]</term>
+		<listitem>
+		<para>
+		This parameter configures how Samba handles duplicate ACEs encountered in GPFS ACLs.
+		GPFS allows/creates duplicate ACE for different bits for same ID.
+		</para>
+
+		<para>Following is the behaviour of Samba for different values :</para>
+		<itemizedlist>
+		<listitem><para><command>dontcare (default)</command> - copy the ACEs as they come</para></listitem>
+		<listitem><para><command>reject</command> - stop operation and exit with error on ACL set op</para></listitem>
+		<listitem><para><command>ignore</command> - don't include the second matching ACE</para></listitem>
+		<listitem><para><command>merge</command> - bitwise OR the 2 ace.flag fields and 2 ace.mask fields of the 2 duplicate ACEs into 1 ACE</para></listitem>
+		</itemizedlist>
+		</listitem>
+		</varlistentry>
+
+
+		<varlistentry>
+		<term>nfs4:chown = [yes|no]</term>
+		<listitem>
+		<para>This parameter allows enabling or disabling the chown supported
+		by the underlying filesystem. This parameter should be enabled with
+		care as it might leave your system insecure.</para>
+		<para>Some filesystems allow chown as a) giving b) stealing. It is the latter
+		that is considered a risk.</para>
+
+		<para>Following is the behaviour of Samba for different values : </para>
+		<itemizedlist>
+		<listitem><para><command>yes</command> - Enable chown if as supported by the under filesystem</para></listitem>
+		<listitem><para><command>no (default)</command> - Disable chown</para></listitem>
+		</itemizedlist>
+		</listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>gpfs:syncio = [yes|no]</term>
+		<listitem>
+		<para>This parameter makes Samba open all files with O_SYNC.
+		  This triggers optimizations in GPFS for workloads that
+		  heavily share files.</para>
+
+		<para>Following is the behaviour of Samba for different
+		  values:
+		</para>
+		<itemizedlist>
+		<listitem><para><command>yes</command>Open files with O_SYNC
+		</para></listitem>
+		<listitem><para><command>no (default)</command>Open files as
+		    normal Samba would do
+		</para></listitem>
+		</itemizedlist>
+		</listitem>
+		</varlistentry>
+
+	</variablelist>
+</refsect1>
+
+<refsect1>
+	<title>EXAMPLES</title>
+
+	<para>A GPFS mount can be exported via Samba as follows :</para>
+
+<programlisting>
+        <smbconfsection name="[samba_gpfs_share]"/>
+	<smbconfoption name="vfs objects">gpfs</smbconfoption>
+	<smbconfoption name="path">/test/gpfs_mount</smbconfoption>
+	<smbconfoption name="nfs4: mode">special</smbconfoption>
+	<smbconfoption name="nfs4: acedup">merge</smbconfoption>
+</programlisting>
+</refsect1>
+
+<refsect1>
+	<title>CAVEATS</title>
+	<para>
+	Depending on the version of gpfs, the <command>libgpfs_gpl</command>
+	library or the <command>libgpfs</command> library is needed at
+	runtime by the <command>gpfs</command> VFS module:
+	Starting with gpfs 3.2.1 PTF8, the complete <command>libgpfs</command>
+	is available as open source and <command>libgpfs_gpl</command> does no
+	longer exist. With earlier versions of gpfs, only the
+	<command>libgpfs_gpl</command> library was open source and could be
+	used at run time.
+	</para>
+	<para>
+	At build time, only the header file <command>gpfs_gpl.h</command>
+	is required , which is a symlink to <command>gpfs.h</command> in
+	gpfs versions newer than 3.2.1 PTF8.
+	</para>
+</refsect1>
+
+<refsect1>
+	<title>VERSION</title>
+	<para>This man page is correct for version 3.0.25 of the Samba suite.
+	</para>
+</refsect1>
+
+<refsect1>
+	<title>AUTHOR</title>
+
+	<para>The original Samba software and related utilities
+	were created by Andrew Tridgell. Samba is now developed
+	by the Samba Team as an Open Source project similar
+	to the way the Linux kernel is developed.</para>
+
+	<para>The GPFS VFS module was created with contributions from
+	Volker Lendecke and the developers at IBM.
+	</para>
+
+	<para> This manpage was created by the IBM FSCC team </para>
+</refsect1>
+
+</refentry>

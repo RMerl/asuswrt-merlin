@@ -1,0 +1,21 @@
+<samba:parameter name="local master"
+                 context="G"
+                 basic="1" advanced="1" developer="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>This option allows <citerefentry><refentrytitle>nmbd</refentrytitle>
+	<manvolnum>8</manvolnum></citerefentry> to try and become a local master browser 
+	on a subnet. If set to <constant>no</constant> then <command moreinfo="none">
+	nmbd</command> will not attempt to become a local master browser 
+	on a subnet and will also lose in all browsing elections. By
+	default this value is set to <constant>yes</constant>. Setting this value to 
+	<constant>yes</constant> doesn't mean that Samba will <emphasis>become</emphasis> the 
+	local master browser on a subnet, just that <command moreinfo="none">nmbd</command> 
+	will <emphasis>participate</emphasis> in elections for local master browser.</para>
+
+	<para>Setting this value to <constant>no</constant> will cause <command 
+	moreinfo="none">nmbd</command> <emphasis>never</emphasis> to become a local 
+master browser.</para>
+</description>
+<value type="default">yes</value>
+</samba:parameter>

@@ -1,0 +1,138 @@
+Wait for setup of server threads
+
+Test NDR32
+
+ndr32: disable NDR64
+
+ndr32:in => out: ptype[request] flen[39] plen[15]
+
+[000] 03 00 00 00 00 00 02 00  03 00 00 00 AA AA AA     ........ .......
+
+srv_midltests_fn: Start
+srv_midltests_fn: End
+
+ndr32:out => in: ptype[response] flen[28] plen[4]
+
+[000] 54 72 75 65                                       True
+
+ndr32: got NDR32
+
+alloc1:inp: bsize[5000], bcount[0]
+alloc2:inp: bsize[5000], bcount[625]
+pull1:inp: esize[78] ecount[78]
+pull2:inp: esize[78] ecount[1]
+alloc1:inp: bsize[5000], bcount[625]
+alloc2:inp: bsize[5000], bcount[625]
+pull1:inp: esize[78] ecount[78]
+pull2:inp: esize[78] ecount[0]
+ndr32:in => out: ptype[alter_req] flen[72] call[3] contexts[1]
+
+
+ndr32:out => in: ptype[alter_ack] flen[56] call[3]
+
+ndr32:in => out: ptype[request] flen[56] plen[32]
+
+[000] 03 00 00 00 00 00 02 00  03 00 00 00 AA AA AA 00  ........ ........
+[010] 01 00 00 00 DD DD DD DD  DD DD 08 00 00 00 00 00  ........ ........
+
+srv_midltests_fn: Start
+pull inp_len[1]
+pull inp_len[0]
+push outb_len[5]
+push outb_len[4]
+push outb_len[3]
+push outb_len[2]
+push outb_len[1]
+push outb_len[0]
+srv_midltests_fn: End
+
+ndr32:out => in: ptype[response] flen[188] plen[164]
+
+[000] 05 00 00 00 CC CC CC CC  CC CC CC CC CC CC CC CC  ........ ........
+[010] CC CC CC CC CC CC CC CC  CC CC CC CC CC CC CC CC  ........ ........
+[020] CC CC CC CC CC CC CC CC  CC CC 00 00 04 00 00 00  ........ ........
+[030] CC CC CC CC CC CC CC CC  CC CC CC CC CC CC CC CC  ........ ........
+[040] CC CC CC CC CC CC CC CC  CC CC CC CC CC CC 00 00  ........ ........
+[050] 03 00 00 00 CC CC CC CC  CC CC CC CC CC CC CC CC  ........ ........
+[060] CC CC CC CC CC CC CC CC  CC CC 00 00 02 00 00 00  ........ ........
+[070] CC CC CC CC CC CC CC CC  CC CC CC CC CC CC 00 00  ........ ........
+[080] 01 00 00 00 CC CC CC CC  CC CC 00 00 00 00 00 00  ........ ........
+[090] 03 00 00 00 00 00 02 00  03 00 00 00 BB BB BB 00  ........ ........
+[0A0] 54 72 75 65                                       True
+
+alloc1:outp: bsize[6664], bcount[1]
+alloc2:outp: bsize[6664], bcount[833]
+push:outp: ecount[15]
+push:outp: ecount[0]
+NDRTcpThread[ndr32] stop
+
+Test NDR64
+
+ndr64: got NDR64
+
+ndr64:in => out: ptype[request] flen[51] plen[27]
+
+[000] 03 00 00 00 00 00 00 00  00 00 02 00 00 00 00 00  ........ ........
+[010] 03 00 00 00 00 00 00 00  AA AA AA                 ........ ...
+
+srv_midltests_fn: Start
+srv_midltests_fn: End
+
+ndr64:out => in: ptype[response] flen[28] plen[4]
+
+[000] 54 72 75 65                                       True
+
+
+ndr64: got NDR32 downgrade
+
+
+alloc1:inp: bsize[5000], bcount[0]
+alloc2:inp: bsize[5000], bcount[625]
+pull1:inp: esize[78] ecount[78]
+pull2:inp: esize[78] ecount[1]
+alloc1:inp: bsize[5000], bcount[625]
+alloc2:inp: bsize[5000], bcount[625]
+pull1:inp: esize[78] ecount[78]
+pull2:inp: esize[78] ecount[0]
+ndr64:in => out: ptype[alter_req] flen[72] call[3] contexts[1]
+
+
+ndr64:out => in: ptype[alter_ack] flen[56] call[3]
+
+ndr64:in => out: ptype[request] flen[56] plen[32]
+
+[000] 03 00 00 00 00 00 02 00  03 00 00 00 AA AA AA 00  ........ ........
+[010] 01 00 00 00 DD DD DD DD  DD DD 00 00 00 00 00 00  ........ ........
+
+srv_midltests_fn: Start
+pull inp_len[1]
+pull inp_len[0]
+push outb_len[5]
+push outb_len[4]
+push outb_len[3]
+push outb_len[2]
+push outb_len[1]
+push outb_len[0]
+srv_midltests_fn: End
+
+ndr64:out => in: ptype[response] flen[188] plen[164]
+
+[000] 05 00 00 00 CC CC CC CC  CC CC CC CC CC CC CC CC  ........ ........
+[010] CC CC CC CC CC CC CC CC  CC CC CC CC CC CC CC CC  ........ ........
+[020] CC CC CC CC CC CC CC CC  CC CC 00 00 04 00 00 00  ........ ........
+[030] CC CC CC CC CC CC CC CC  CC CC CC CC CC CC CC CC  ........ ........
+[040] CC CC CC CC CC CC CC CC  CC CC CC CC CC CC 00 00  ........ ........
+[050] 03 00 00 00 CC CC CC CC  CC CC CC CC CC CC CC CC  ........ ........
+[060] CC CC CC CC CC CC CC CC  CC CC 00 00 02 00 00 00  ........ ........
+[070] CC CC CC CC CC CC CC CC  CC CC CC CC CC CC 00 00  ........ ........
+[080] 01 00 00 00 CC CC CC CC  CC CC 00 00 00 00 00 00  ........ ........
+[090] 03 00 00 00 00 00 02 00  03 00 00 00 BB BB BB 00  ........ ........
+[0A0] 54 72 75 65                                       True
+
+alloc1:outp: bsize[6664], bcount[1]
+alloc2:outp: bsize[6664], bcount[833]
+push:outp: ecount[15]
+push:outp: ecount[0]
+NDRTcpThread[ndr64] stop
+
+Test OK

@@ -1,0 +1,19 @@
+<samba:parameter name="unix charset"
+	context="G"
+	type="string"
+                 advanced="1" developer="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+        <para>Specifies the charset the unix machine 
+		Samba runs on uses. Samba needs to know this in order to be able to 
+		convert text to the charsets other SMB clients use.
+	</para>
+
+	<para>This is also the charset Samba will use when specifying arguments 
+		to scripts that it invokes.
+	</para>
+</description>
+
+<value type="default">UTF8</value>
+<value type="example">ASCII</value>
+</samba:parameter>

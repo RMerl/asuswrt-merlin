@@ -1,0 +1,75 @@
+'\" t
+.\"     Title: vfs_preopen
+.\"    Author: [see the "AUTHOR" section]
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date: 09/18/2013
+.\"    Manual: System Administration tools
+.\"    Source: Samba 3.6
+.\"  Language: English
+.\"
+.TH "VFS_PREOPEN" "8" "09/18/2013" "Samba 3\&.6" "System Administration tools"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+vfs_preopen \- Hide read latencies for applications reading numbered files
+.SH "SYNOPSIS"
+.HP \w'\ 'u
+vfs objects = preopen
+.SH "DESCRIPTION"
+.PP
+This VFS module is part of the
+\fBsamba\fR(7)
+suite\&.
+.PP
+This module assists applications that want to read numbered files in sequence with very strict latency requirements\&. One area where this happens in video streaming applications that want to read one file per frame\&.
+.PP
+When you use this module, a number of helper processes is started that speculatively open files and read a number of bytes to prime the file system cache, so that later on when the real application\*(Aqs request comes along, no disk access is necessary\&.
+.PP
+This module is stackable\&.
+.SH "OPTIONS"
+.PP
+preopen:names = /pattern/
+.RS 4
+preopen:names specifies the file name pattern which should trigger the preopen helpers to do their work\&. We assume that the files are numbered incrementally\&. So if your file names are numbered FRAME00000\&.frm FRAME00001\&.frm and so on you would list them as
+preopen:names=/FRAME*\&.frm/
+.RE
+.PP
+preopen:num_bytes = BYTES
+.RS 4
+Specifies the number of bytes the helpers should speculatively read, defaults to 1\&.
+.RE
+.PP
+preopen:helpers = NUM\-PROCS
+.RS 4
+Number of forked helper processes, defaults to 1\&.
+.RE
+.PP
+preopen:queuelen = NUM\-FILES
+.RS 4
+Number of files that should be speculatively opened\&. Defaults to the 10 subsequent files\&.
+.RE
+.SH "VERSION"
+.PP
+This man page is correct for version 3\&.3 of the Samba suite\&.
+.SH "AUTHOR"
+.PP
+The original Samba software and related utilities were created by Andrew Tridgell\&. Samba is now developed by the Samba Team as an Open Source project similar to the way the Linux kernel is developed\&.
+.PP
+The PREOPEN VFS module was created with contributions from Volker Lendecke and the developers at IBM\&.

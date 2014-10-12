@@ -1,0 +1,91 @@
+#ifndef MIDLTESTS_C_CODE
+
+/*
+ * For midltests_tcp.exe you may want to
+ * redirect the traffic via rinetd
+ * with a /etc/rinetd.conf like this:
+ *
+ * 172.31.9.1 5032 172.31.9.8 5032
+ * 172.31.9.1 5064 172.31.9.8 5064
+ *
+ * This is useful to watch the traffic with
+ * a network sniffer.
+ */
+/*
+cpp_quote("#define LISTEN_IP \"0.0.0.0\"")
+cpp_quote("#define FORWARD_IP \"127.0.0.1\"")
+cpp_quote("#define CONNECT_IP \"172.31.9.1\"")
+*/
+
+/*
+ * With midltests_tcp.exe NDR64 is enforced by default.
+ * For testing it might be needed to allow downgrades
+ * to NDR32. This is needed when you use 'pipe'.
+ */
+//cpp_quote("#define DONOT_FORCE_NDR64 1")
+
+[
+  uuid("225b9fcb-eb3d-497b-8b0b-591f049a2507"),
+  ms_union,
+  pointer_default(unique)
+]
+interface midltests
+{
+	enum level_enum { ZERO = 0, ONE = 1, TWO = 2, FOUR = 4, EIGHT = 8 };
+
+	[switch_type(enum level_enum)] union u {
+		[case(ZERO)];
+		[case(ONE)] char c;
+		[case(TWO)] short s;
+		[case(FOUR)] long l;
+		[case(EIGHT)] hyper h;
+	};
+
+	union ue switch(enum level_enum level) u { 
+		case(ZERO):;
+		case(ONE): char c;
+		case(TWO): short s;
+		case(FOUR): long l;
+		case(EIGHT): hyper h;
+	};
+
+	void midltests_fn(
+		[in,out,ref] enum level_enum *level,
+		[in,switch_is(*level)] union u u,
+		[out,ref] union ue *ue,
+		[in,out,ref] char *c
+	);
+}
+
+#elif MIDLTESTS_C_CODE
+
+static void midltests(void)
+{
+	enum level_enum level;
+	unsigned char c = 'c';
+	struct ue ue;
+	union u u;
+	u.h = 0xFFFFFFFFFFFFFFFFLL;
+
+	level = ZERO;
+	cli_midltests_fn(&level, u, &ue, &c);
+	level = ONE;
+	cli_midltests_fn(&level, u, &ue, &c);
+	level = TWO;
+	cli_midltests_fn(&level, u, &ue, &c);
+	level = FOUR;
+	cli_midltests_fn(&level, u, &ue, &c);
+	level = EIGHT;
+	cli_midltests_fn(&level, u, &ue, &c);
+}
+
+void srv_midltests_fn(enum level_enum *level, union u u, struct ue *ue, unsigned char *c)
+{
+	printf("srv_midltests_fn: Start\n");
+	ue->level = *level;
+	ue->u.h = u.h;
+	printf("srv_midltests_fn: End\n");
+	return;
+}
+
+#endif

@@ -1,0 +1,8 @@
+#!/usr/bin/env python
+
+bld.SAMBA_SUBSYSTEM('LIBCLI_SMB2',
+	source='transport.c request.c negprot.c session.c tcon.c create.c close.c connect.c getinfo.c write.c read.c setinfo.c find.c ioctl.c logoff.c tdis.c flush.c lock.c notify.c cancel.c keepalive.c break.c util.c signing.c lease_break.c',
+	autoproto='smb2_proto.h',
+	public_deps='LIBCLI_RAW LIBPACKET gensec'
+	)
+

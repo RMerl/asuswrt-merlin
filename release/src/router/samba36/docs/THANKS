@@ -1,0 +1,137 @@
+=====================================================================
+This file is for thanks to individuals or organisations who have
+helped with the development of Samba, other than by coding or bug
+reports. Their contributions are gratefully acknowledged.
+
+Please refer to the manual pages and change-log for a list of those
+who have contributed in the form of patches, bug fixes or other 
+direct changes to the package.
+
+Contributions of any kind are welcomed. If you want to help then
+please contact Andrew.Tridgell@anu.edu.au, or via normal mail at 
+
+	Andrew Tridgell
+	3 Ballow Crescent
+	Macgregor, A.C.T
+	2615 Australia
+=====================================================================
+
+
+Lee Fisher (leefi@microsoft.com)
+Charles Fox (cfox@microsoft.com)
+Dan Perry (danp@exchnge.microsoft.com)
+Paul Leach (paulle@microsoft.com)
+Isaac Heizer (isaache@microsoft.com)
+
+    These Microsoft people have been very helpful and supportive of
+    the development of Samba over some years.
+
+    Lee very kindly supplied me with a copy of the X/Open SMB
+    specs. These have been invaluable in getting the details of the
+    implementation right. They will become even more important as we move
+    towards a Lanman 2.1 compliant server. Lee has provided very
+    useful advice on several aspects of the server.
+    Lee has also provided me with copies of Windows NTAS 3.1, Visual C
+    and a developers CD-ROM. Being able to run NT at home is a
+    great help.
+
+    Charles has helped out in numerous ways with the provision of SMB
+    specifications and helpful advice. He has been following the
+    discussion of Samba on the mailing list and has stepped in
+    regularly to clarify points and to offer help.
+    
+    Dan has put me in touch with NT developers to help sort out bugs and
+    compatability issues. He has also supplied me with a copy of the
+    NT browsing spec, which will help a lot in the development of the
+    Samba browser code.
+
+    Paul was responsible for Microsoft paying my flight to Seattle for the
+    first CIFS conference (see http://samba.org/cifs) and has been
+    generally helpful and cooperative as the SMB community moves towards
+    an Internet-ready specification. Isaac has regularly provided help on
+    the behaviour of NT networks.
+
+Bruce Perens (bruce@pixar.com)
+
+    In appreciation of his effort on Samba we have sent Andrew copies of
+    various Pixar computer-graphics software products. Pixar is best known
+    for its "Renderman" product, the 3-D renderer used by ILM to make special
+    effects for "Terminator II" and "Jurassic Park". We won the first Oscar
+    given to a computer graphic animated feature for our short film "Tin Toy".
+    Our retail products "Typestry" and "Showplace", incorporate the same
+    renderer used on the films, and are available on Windows and the
+    Macintosh.
+
+
+
+Henry Lee (hyl@microplex.co)
+
+    Henry sent me a M202 ethernet print server, making my little lan
+    one of the few home networks to have it's own print server!
+
+  ``Microplex Systems Ltd. is a manufacturer of local and wide area
+    network communications equipment based in beautiful Vancouver, British
+    Columbia, Canada.  Microplex's first products were synchronous wide
+    area network devices used in the mainframe communication networks.  In
+    August 1991 Microplex introduced its first LAN product, the M200 print
+    server, the first high performance print server under US$1,000.''
+
+
+Tom Haapanen (tomh@metrics.com)
+
+    Tom sent me two 16 bit SMC ethernet cards to replace my ancient 8
+    bit ones. The performance is much better!
+
+    Software Metrics Inc. is a small custom software development and
+    consulting firm located in Waterloo, Ontario, Canada.  We work
+    with a variety of environments (such as Windows, Windows NT and
+    Unix), tools and application areas, and can provide assistance for
+    development work ranging from a few days to multiple man-year
+    projects.  You can find more information at http://www.metrics.com/.
+    
+
+Steve Kennedy (steve@gbnet.net)
+
+	Steve sent me 16Mb of ram so that I could install/test
+	NT3.5. I previous had only 8Mb ram in my test machine, which
+	wasn't enough to install a properly functioning copy of
+	NTAS. Being able to directly test NT3.5 allowed me to solve
+	several long standing NT<->Samba problems. Thanks Steve!
+
+John Terpstra (jht@aquasoft.com.au)
+
+        Aquasoft are a specialist consulting company whose Samba-using
+        customers span the world.
+
+        Aquasoft have been avid supporters of the Samba project. As a
+        token of appreciation Aquasoft have donated a 486DX2/66 PC with
+        a 540MB EIDE drive and 20MB RAM.
+
+        John has helped to isolate quite a few little glitches over time
+        and has managed to implement some very interesting installations
+        of Samba.
+
+        The donation of the new PC will make it possible to more fully
+        diagnose and observe the behaviour of Samba in conjuction with
+        other SMB protocol utilising systems.
+
+
+Timothy F. Sipples (tsipple@vnet.IBM.COM)
+Steve Withers (swithers@vnet.IBM.COM)
+
+	Tim and Steve from IBM organised a copy of the OS/2 developers
+	connection CD set for me, and gave lots of help in getting
+	OS/2 Warp installed. I hope this will allow me to finally fix
+	up those annoying OS/2 related Samba bugs that I have been
+	receiving reports of.
+
+Keith Wilkins (wilki1k@nectech.co.uk)
+
+	Keith from NEC in England very generously supplied a PC to
+	Luke Leighton to help with his nmbd development work. At the
+	same time Keith offered to help me with some new hardware, and
+	he sent me a pentium motherboard with 32MB of ram
+	onboard. This was very helpful as it allowed me to upgrade
+	my aging server to be a very powerful system. Thanks!
+
+

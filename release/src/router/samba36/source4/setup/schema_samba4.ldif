@@ -1,0 +1,344 @@
+#
+# Schema elements which do not exist in AD, but which we use in Samba4
+#
+## Samba4 OID allocation from Samba3's examples/LDAP/samba.schema
+## 1.3.6.1.4.1.7165.4.1.x - attributetypes
+
+## 1.3.6.1.4.1.7165.4.2.x - objectclasses
+
+## 1.3.6.1.4.1.7165.4.3.x - LDB/LDAP Controls
+### see dsdb/samdb/samdb.h
+
+## 1.3.6.1.4.1.7165.4.4.x - LDB/LDAP Extended Operations
+### see dsdb/samdb/samdb.h
+
+## 1.3.6.1.4.1.7165.4.255.x - mapped OIDs due to conflicts between AD and standards-track
+#
+#
+
+
+#
+# Not used anymore
+#
+#dn: cn=ntpwdHash,${SCHEMADN}
+#cn: ntpwdHash
+#name: NTPWDHash
+#objectClass: top
+#objectClass: attributeSchema
+#lDAPDisplayName: ntpwdhash
+#isSingleValued: TRUE
+#systemFlags: 17
+#systemOnly: TRUE
+#schemaIDGUID: E961130F-5084-458C-9E9C-DEC16DA08592
+#adminDisplayName: NT-PWD-Hash
+#attributeID: 1.3.6.1.4.1.7165.4.1.1
+#attributeSyntax: 2.5.5.10
+#oMSyntax: 4
+
+#
+# Not used anymore
+#
+#dn: cn=lmpwdHash,${SCHEMADN}
+#cn: lmpwdHash
+#name: lmpwdHash
+#objectClass: top
+#objectClass: attributeSchema
+#lDAPDisplayName: lmpwdhash
+#isSingleValued: TRUE
+#systemFlags: 17
+#systemOnly: TRUE
+#schemaIDGUID: CBD0D18C-9C54-4A77-87C4-5CEEAF781253
+#adminDisplayName: LM-PWD-Hash
+#attributeID: 1.3.6.1.4.1.7165.4.1.2
+#attributeSyntax: 2.5.5.10
+#oMSyntax: 4
+
+#
+# Not used anymore
+#
+#dn: cn=sambaNtPwdHistory,${SCHEMADN}
+#cn: sambaNtPwdHistory
+#name: sambaNtPwdHistory
+#objectClass: top
+#objectClass: attributeSchema
+#lDAPDisplayName: sambaNtPwdHistory
+#isSingleValued: TRUE
+#systemFlags: 17
+#systemOnly: TRUE
+#schemaIDGUID: 8CCD7658-C574-4435-A38C-99572E349E6B
+#adminDisplayName: SAMBA-NT-PWD-History
+#attributeID: 1.3.6.1.4.1.7165.4.1.3
+#attributeSyntax: 2.5.5.10
+#oMSyntax: 4
+
+#
+# Not used anymore
+#
+#dn: cn=sambaLmPwdHistory,${SCHEMADN}
+#cn: sambaLmPwdHistory
+#name: sambaLmPwdHistory
+#objectClass: top
+#objectClass: attributeSchema
+#lDAPDisplayName: sambaLmPwdHistory
+#isSingleValued: FALSE
+#systemFlags: 17
+#systemOnly: TRUE
+#schemaIDGUID: 0EAFE3DD-0F53-495E-8A34-97BB28AF17A4
+#adminDisplayName: SAMBA-LM-PWDHistory
+#attributeID: 1.3.6.1.4.1.7165.4.1.4
+#attributeSyntax: 2.5.5.10
+#oMSyntax: 4
+
+#
+# Not used anymore
+#
+#dn: CN=sambaPassword,${SCHEMADN}
+#objectClass: top
+#objectClass: attributeSchema
+#lDAPDisplayName: sambaPassword
+#isSingleValued: FALSE
+#systemFlags: 17
+#systemOnly: TRUE
+#schemaIDGUID: 87F10301-229A-4E69-B63A-998339ADA37A
+#adminDisplayName: SAMBA-Password
+#attributeID: 1.3.6.1.4.1.7165.4.1.5
+#attributeSyntax: 2.5.5.5
+#oMSyntax: 22
+
+#
+# Not used anymore
+#
+#dn: cn=dnsDomain,${SCHEMADN}
+#objectClass: top
+#objectClass: attributeSchema
+#lDAPDisplayName: dnsDomain
+#isSingleValued: FALSE
+#systemFlags: 17
+#systemOnly: TRUE
+#schemaIDGUID: A40165E6-5E45-44A7-A8FA-186C94333018
+#adminDisplayName: DNS-Domain
+#attributeID: 1.3.6.1.4.1.7165.4.1.6
+#attributeSyntax: 2.5.5.4
+#oMSyntax: 20
+
+# not used anymore
+#dn: cn=privilege,${SCHEMADN}
+#objectClass: top
+#objectClass: attributeSchema
+#cn: privilege
+#lDAPDisplayName: privilege
+#isSingleValued: FALSE
+#systemFlags: 17
+#systemOnly: TRUE
+#schemaIDGUID: 7429BC94-CC6A-4481-8B2C-A97E316EB182
+#adminDisplayName: Privilege
+#attributeID: 1.3.6.1.4.1.7165.4.1.7
+#attributeSyntax: 2.5.5.4
+#oMSyntax: 20
+
+#
+# Not used anymore
+#
+#dn: CN=unixName,${SCHEMADN}
+#cn: unixName
+#name: unixName
+#objectClass: top
+#objectClass: attributeSchema
+#lDAPDisplayName: unixName
+#isSingleValued: TRUE
+#systemFlags: 16
+#systemOnly: FALSE
+#schemaIDGUID: bf9679f2-0de6-11d0-a285-00aa003049e2
+#adminDisplayName: Unix-Name
+#attributeID: 1.3.6.1.4.1.7165.4.1.9
+#attributeSyntax: 2.5.5.4
+#oMSyntax: 20
+
+#
+# Not used anymore
+#
+#dn: cn=krb5Key,${SCHEMADN}
+#cn: krb5Key
+#name: krb5Key
+#objectClass: top
+#objectClass: attributeSchema
+#lDAPDisplayName: krb5Key
+#isSingleValued: FALSE
+#systemFlags: 17
+#systemOnly: TRUE
+#schemaIDGUID: 0EAFE3DD-0F53-495E-8A34-97BB28AF17A4
+#adminDisplayName: krb5-Key
+#attributeID: 1.3.6.1.4.1.5322.10.1.10
+#attributeSyntax: 2.5.5.10
+#oMSyntax: 4
+
+# Controls 1.3.6.1.4.1.7165.4.3.x
+#Allocated: (not used anymore) DSDB_CONTROL_REPLICATED_OBJECT_OID 1.3.6.1.4.1.7165.4.3.1
+#Allocated: DSDB_CONTROL_CURRENT_PARTITION_OID 1.3.6.1.4.1.7165.4.3.2
+#Allocated: DSDB_CONTROL_REPLICATED_UPDATE_OID 1.3.6.1.4.1.7165.4.3.3
+#Allocated: DSDB_CONTROL_DN_STORAGE_FORMAT_OID 1.3.6.1.4.1.7165.4.3.4
+#Allocated: LDB_CONTROL_RECALCULATE_SD_OID 1.3.6.1.4.1.7165.4.3.5
+#Allocated: LDB_CONTROL_REVEAL_INTERNALS 1.3.6.1.4.1.7165.4.3.6
+#Allocated: LDB_CONTROL_AS_SYSTEM_OID 1.3.6.1.4.1.7165.4.3.7
+#Allocated: DSDB_CONTROL_PASSWORD_CHANGE_STATUS_OID 1.3.6.1.4.1.7165.4.3.8
+#Allocated: DSDB_CONTROL_PASSWORD_HASH_VALUES_OID 1.3.6.1.4.1.7165.4.3.9
+#Allocated: DSDB_CONTROL_PASSWORD_CHANGE_OID 1.3.6.1.4.1.7165.4.3.10
+#Allocated: DSDB_CONTROL_APPLY_LINKS 1.3.6.1.4.1.7165.4.3.11
+#Allocated: DSDB_CONTROL_BYPASS_PASSWORD_HASH_OID 1.3.6.1.4.1.7165.4.3.12
+#Allocated: LDB_CONTROL_BYPASS_OPERATIONAL_OID 1.3.6.1.4.1.7165.4.3.13
+#Allocated: DSDB_CONTROL_CHANGEREPLMETADATA_OID 1.3.6.1.4.1.7165.4.3.14
+#Allocated: (not used anymore) DSDB_CONTROL_SEARCH_APPLY_ACCESS 1.3.6.1.4.1.7165.4.3.15
+#Allocated: LDB_CONTROL_PROVISION_OID 1.3.6.1.4.1.7165.4.3.16
+
+# Extended 1.3.6.1.4.1.7165.4.4.x
+#Allocated: DSDB_EXTENDED_REPLICATED_OBJECTS_OID 1.3.6.1.4.1.7165.4.4.1
+#Allocated: DSDB_EXTENDED_SCHEMA_UPDATE_NOW_OID 1.3.6.1.4.1.7165.4.4.2
+#Allocated: LDB_EXTENDED_SEQUENCE_NUMBER 1.3.6.1.4.1.7165.4.4.3
+#Allocated: DSDB_EXTENDED_CREATE_PARTITION_OID 1.3.6.1.4.1.7165.4.4.4
+#Allocated: DSDB_EXTENDED_ALLOCATE_RID_POOL 1.3.6.1.4.1.7165.4.4.5
+
+#Allocated: (middleName) attributeID: 1.3.6.1.4.1.7165.4.255.1
+
+#Allocated: (defaultGroup) attributeID: 1.3.6.1.4.1.7165.4.255.2
+
+#Allocated: (modifyTimestamp) samba4ModifyTimestamp: 1.3.6.1.4.1.7165.4.255.3
+#Allocated: (subSchema) samba4SubSchema: 1.3.6.1.4.1.7165.4.255.4
+#Allocated: (objectClasses) samba4ObjectClasses: 1.3.6.1.4.1.7165.4.255.5
+#Allocated: (ditContentRules) samba4DitContentRules: 1.3.6.1.4.1.7165.4.255.6
+#Allocated: (attributeTypes) samba4AttributeTypes: 1.3.6.1.4.1.7165.4.255.7
+#Allocated: (dynamicObject) samba4DynamicObject: 1.3.6.1.4.1.7165.4.255.8
+#Allocated: (entryTTL) samba4EntryTTL: 1.3.6.1.4.1.7165.4.255.9
+
+#Allocated: (thumbnailPhoto) attributeID: 1.3.6.1.4.1.7165.4.255.10
+#Allocated: (thumbnailLogo) attributeID: 1.3.6.1.4.1.7165.4.255.11
+
+#
+# Based on domainDNS, but without the DNS bits.
+#
+
+#
+# Not used anymore
+#
+#dn: CN=Samba4-Local-Domain,${SCHEMADN}
+#objectClass: top
+#objectClass: classSchema
+#cn: Samba4-Local-Domain
+#subClassOf: top
+#governsID: 1.3.6.1.4.1.7165.4.2.2
+#rDNAttID: cn
+#adminDisplayName: Samba4-Local-Domain
+#adminDescription: Samba4-Local-Domain
+#systemMayContain: msDS-Behavior-Version
+#systemMayContain: managedBy
+#objectClassCategory: 1
+#lDAPDisplayName: samba4LocalDomain
+#schemaIDGUID: 07be1647-8310-4fba-91ae-34e55d5a8293
+#systemOnly: FALSE
+#systemAuxiliaryClass: samDomain
+#defaultSecurityDescriptor: D:(A;;RPLCLORC;;;DA)(A;;RPWPCRCCDCLCLORCWOWDSDDTSW;;;SY)(A;;RPLCLORC;;;AU)
+#systemFlags: 16
+#defaultHidingValue: TRUE
+#defaultObjectCategory: CN=Samba4-Local-Domain,${SCHEMADN}
+
+
+dn: CN=Samba4Top,${SCHEMADN}
+objectClass: top
+objectClass: classSchema
+cn: Samba4Top
+subClassOf: top
+governsID: 1.3.6.1.4.1.7165.4.2.1
+mayContain: msDS-ObjectReferenceBL
+rDNAttID: cn
+adminDisplayName: Samba4TopTop
+adminDescription: Attributes used in top in Samba4 that OpenLDAP does not
+objectClassCategory: 3
+lDAPDisplayName: samba4Top
+schemaIDGUID: 073598d0-635b-4685-a929-da731b98d84e
+systemOnly: TRUE
+systemPossSuperiors: lostAndFound
+systemMayContain: url
+systemMayContain: wWWHomePage
+systemMayContain: wellKnownObjects
+systemMayContain: wbemPath
+systemMayContain: uSNSource
+systemMayContain: uSNLastObjRem
+systemMayContain: USNIntersite
+systemMayContain: uSNDSALastObjRemoved
+systemMayContain: systemFlags
+systemMayContain: subRefs
+systemMayContain: siteObjectBL
+systemMayContain: serverReferenceBL
+systemMayContain: sDRightsEffective
+systemMayContain: revision
+systemMayContain: repsTo
+systemMayContain: repsFrom
+systemMayContain: directReports
+systemMayContain: replUpToDateVector
+systemMayContain: replPropertyMetaData
+systemMayContain: name
+systemMayContain: queryPolicyBL
+systemMayContain: parentGUID
+systemMayContain: proxyAddresses
+systemMayContain: proxiedObjectName
+systemMayContain: possibleInferiors
+systemMayContain: partialAttributeSet
+systemMayContain: partialAttributeDeletionList
+systemMayContain: otherWellKnownObjects
+systemMayContain: objectVersion
+systemMayContain: nonSecurityMemberBL
+systemMayContain: netbootSCPBL
+systemMayContain: ownerBL
+systemMayContain: msDS-ReplValueMetaData
+systemMayContain: msDS-ReplAttributeMetaData
+systemMayContain: msDS-NcType
+systemMayContain: msDS-NonMembersBL
+systemMayContain: msDS-NCReplOutboundNeighbors
+systemMayContain: msDS-NCReplInboundNeighbors
+systemMayContain: msDS-NCReplCursors
+systemMayContain: msDS-TasksForAzRoleBL
+systemMayContain: msDS-TasksForAzTaskBL
+systemMayContain: msDS-OperationsForAzRoleBL
+systemMayContain: msDS-OperationsForAzTaskBL
+systemMayContain: msDS-MembersForAzRoleBL
+systemMayContain: msDs-masteredBy
+systemMayContain: mS-DS-ConsistencyGuid
+systemMayContain: mS-DS-ConsistencyChildCount
+systemMayContain: msDS-Approx-Immed-Subordinates
+systemMayContain: msCOM-PartitionSetLink
+systemMayContain: msCOM-UserLink
+systemMayContain: masteredBy
+systemMayContain: managedObjects
+systemMayContain: lastKnownParent
+systemMayContain: isPrivilegeHolder
+systemMayContain: isDeleted
+systemMayContain: isCriticalSystemObject
+systemMayContain: showInAdvancedViewOnly
+systemMayContain: fSMORoleOwner
+systemMayContain: fRSMemberReferenceBL
+systemMayContain: frsComputerReferenceBL
+systemMayContain: fromEntry
+systemMayContain: flags
+systemMayContain: extensionName
+systemMayContain: dSASignature
+systemMayContain: dSCorePropagationData
+systemMayContain: displayNamePrintable
+systemMayContain: displayName
+systemMayContain: description
+systemMayContain: cn
+systemMayContain: canonicalName
+systemMayContain: bridgeheadServerListBL
+systemMayContain: allowedChildClassesEffective
+systemMayContain: allowedChildClasses
+systemMayContain: allowedAttributesEffective
+systemMayContain: allowedAttributes
+systemMayContain: adminDisplayName
+systemMayContain: adminDescription
+systemMustContain: objectCategory
+systemMustContain: nTSecurityDescriptor
+systemMustContain: instanceType
+defaultSecurityDescriptor: D:(A;;RPWPCRCCDCLCLORCWOWDSDDTSW;;;DA)(A;;RPWPCRCCDCLCLORCWOWDSDDTSW;;;SY)(A;;RPLCLORC;;;AU)
+systemFlags: 16
+defaultHidingValue: TRUE
+objectCategory: CN=Class-Schema,${SCHEMADN}
+defaultObjectCategory: CN=Samba4Top,${SCHEMADN}
+

@@ -1,0 +1,14 @@
+PKG=samba
+NAME=CIFS File and Print server
+ARCH=__ARCH__
+VERSION=__VERSION__
+CATEGORY=system
+VENDOR=Gerald (Jerry) Carter, Samba Team
+DESC=File and printer sharing for Windows workstations
+HOTLINE=Please contact your local UNIX support group
+EMAIL=jerry@samba.org
+CLASSES=none
+INTONLY=1
+ISTATES="S s 1 2 3"
+RSTATES="S s 1 2 3"
+BASEDIR=__BASEDIR__

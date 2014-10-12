@@ -1,0 +1,27 @@
+<samba:parameter name="store dos attributes"
+                 context="S"
+		 type="boolean"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>
+	If this parameter is set Samba attempts to first read DOS attributes (SYSTEM, HIDDEN, ARCHIVE or
+	READ-ONLY) from a filesystem extended attribute, before mapping DOS attributes to UNIX permission bits (such
+	as occurs with <smbconfoption name="map hidden"/> and <smbconfoption name="map readonly"/>).  When set, DOS
+	attributes will be stored onto an extended attribute in the UNIX filesystem, associated with the file or
+	directory.  For no other mapping to occur as a fall-back, the parameters <smbconfoption name="map hidden"/>,
+	<smbconfoption name="map system"/>, <smbconfoption name="map archive"/> and <smbconfoption name="map
+	readonly"/> must be set to off.  This parameter writes the DOS attributes as a string into the extended
+	attribute named "user.DOSATTRIB". This extended attribute is explicitly hidden from smbd clients requesting an
+	EA list. On Linux the filesystem must have been mounted with the mount option user_xattr in order for
+	extended attributes to work, also extended attributes must be compiled into the Linux kernel.
+
+	In Samba 3.5.0 and above the "user.DOSATTRIB" extended attribute has been extended to store
+	the create time for a file as well as the DOS attributes. This is done in a backwards compatible
+	way so files created by Samba 3.5.0 and above can still have the DOS attribute read from this
+	extended attribute by earlier versions of Samba, but they will not be able to read the create
+	time stored there. Storing the create time separately from the normal filesystem meta-data
+	allows Samba to faithfully reproduce NTFS semantics on top of a POSIX filesystem.
+	</para>
+</description>
+<value type="default">no</value>
+</samba:parameter>

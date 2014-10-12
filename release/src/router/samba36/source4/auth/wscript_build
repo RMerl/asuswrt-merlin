@@ -1,0 +1,47 @@
+#!/usr/bin/env python
+
+bld.RECURSE('gensec')
+bld.RECURSE('kerberos')
+bld.RECURSE('ntlmssp')
+bld.RECURSE('ntlm')
+bld.RECURSE('credentials')
+
+bld.SAMBA_SUBSYSTEM('auth_session',
+	source='session.c',
+	autoproto='session_proto.h',
+	public_deps='credentials',
+	public_headers='session.h',
+	header_path='samba',
+	deps='samdb auth4_sam'
+	)
+
+
+bld.SAMBA_SUBSYSTEM('samba_server_gensec',
+	source='samba_server_gensec.c',
+	public_deps='credentials gensec auth4'
+	)
+
+
+bld.SAMBA_SUBSYSTEM('auth_system_session',
+	source='system_session.c',
+	autoproto='system_session_proto.h',
+	public_deps='credentials',
+	deps='auth_session',
+	)
+
+
+bld.SAMBA_SUBSYSTEM('auth4_sam',
+	source='sam.c',
+	autoproto='auth_sam.h',
+	public_deps='samdb security ldb tevent',
+	deps=''
+	)
+
+
+bld.SAMBA_PYTHON('pyauth',
+	source='pyauth.c',
+	public_deps='auth_system_session',
+	deps='samdb pytalloc-util pyparam_util pyldb-util pycredentials auth4',
+	realname='samba/auth.so'
+	)
+

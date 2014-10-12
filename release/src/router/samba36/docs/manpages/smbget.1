@@ -1,0 +1,197 @@
+'\" t
+.\"     Title: smbget
+.\"    Author: [see the "AUTHOR" section]
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date: 09/18/2013
+.\"    Manual: User Commands
+.\"    Source: Samba 3.6
+.\"  Language: English
+.\"
+.TH "SMBGET" "1" "09/18/2013" "Samba 3\&.6" "User Commands"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+smbget \- wget\-like utility for download files over SMB
+.SH "SYNOPSIS"
+.HP \w'\ 'u
+smbget [\-a,\ \-\-guest] [\-r,\ \-\-resume] [\-R,\ \-\-recursive] [\-u,\ \-\-username=STRING] [\-p,\ \-\-password=STRING] [\-w,\ \-\-workgroup=STRING] [\-n,\ \-\-nonprompt] [\-d,\ \-\-debuglevel=INT] [\-D,\ \-\-dots] [\-P,\ \-\-keep\-permissions] [\-o,\ \-\-outputfile] [\-f,\ \-\-rcfile] [\-q,\ \-\-quiet] [\-v,\ \-\-verbose] [\-b,\ \-\-blocksize] [\-O,\ \-\-stdout] [\-?,\ \-\-help] [\-\-usage] {smb://host/share/path/to/file} [smb://url2/] [\&.\&.\&.]
+.SH "DESCRIPTION"
+.PP
+This tool is part of the
+\fBsamba\fR(7)
+suite\&.
+.PP
+smbget is a simple utility with wget\-like semantics, that can download files from SMB servers\&. You can specify the files you would like to download on the command\-line\&.
+.PP
+The files should be in the smb\-URL standard, e\&.g\&. use smb://host/share/file for the UNC path
+\fI\e\e\e\eHOST\e\eSHARE\e\efile\fR\&.
+.SH "OPTIONS"
+.PP
+\-a, \-\-guest
+.RS 4
+Work as user guest
+.RE
+.PP
+\-r, \-\-resume
+.RS 4
+Automatically resume aborted files
+.RE
+.PP
+\-R, \-\-recursive
+.RS 4
+Recursively download files
+.RE
+.PP
+\-u, \-\-username=STRING
+.RS 4
+Username to use
+.RE
+.PP
+\-p, \-\-password=STRING
+.RS 4
+Password to use
+.RE
+.PP
+\-w, \-\-workgroup=STRING
+.RS 4
+Workgroup to use (optional)
+.RE
+.PP
+\-n, \-\-nonprompt
+.RS 4
+Don\*(Aqt ask anything (non\-interactive)
+.RE
+.PP
+\-d, \-\-debuglevel=INT
+.RS 4
+Debuglevel to use
+.RE
+.PP
+\-D, \-\-dots
+.RS 4
+Show dots as progress indication
+.RE
+.PP
+\-P, \-\-keep\-permissions
+.RS 4
+Set same permissions on local file as are set on remote file\&.
+.RE
+.PP
+\-o, \-\-outputfile
+.RS 4
+Write the file that is being downloaded to the specified file\&. Can not be used together with \-R\&.
+.RE
+.PP
+\-O, \-\-stdout
+.RS 4
+Write the file that is being downloaded to standard output\&.
+.RE
+.PP
+\-f, \-\-rcfile
+.RS 4
+Use specified rcfile\&. This will be loaded in the order it was specified \- e\&.g\&. if you specify any options before this one, they might get overridden by the contents of the rcfile\&.
+.RE
+.PP
+\-q, \-\-quiet
+.RS 4
+Be quiet
+.RE
+.PP
+\-v, \-\-verbose
+.RS 4
+Be verbose
+.RE
+.PP
+\-b, \-\-blocksize
+.RS 4
+Number of bytes to download in a block\&. Defaults to 64000\&.
+.RE
+.PP
+\-?, \-\-help
+.RS 4
+Show help message
+.RE
+.PP
+\-\-usage
+.RS 4
+Display brief usage message
+.RE
+.SH "SMB URLS"
+.PP
+SMB URL\*(Aqs should be specified in the following format:
+.PP
+.if n \{\
+.RS 4
+.\}
+.nf
+smb://[[[domain;]user[:password@]]server[/share[/path[/file]]]]
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+.if n \{\
+.RS 4
+.\}
+.nf
+smb:// means all the workgroups
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+.if n \{\
+.RS 4
+.\}
+.nf
+smb://name/ means, if \fIname\fR is a workgroup, all the servers in this workgroup, or if \fIname\fR is a server, all the shares on this server\&.
+.fi
+.if n \{\
+.RE
+.\}
+.SH "EXAMPLES"
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+# Recursively download \*(Aqsrc\*(Aq directory
+smbget \-R smb://rhonwyn/jelmer/src
+# Download FreeBSD ISO and enable resuming
+smbget \-r smb://rhonwyn/isos/FreeBSD5\&.1\&.iso
+# Recursively download all ISOs
+smbget \-Rr smb://rhonwyn/isos
+# Backup my data on rhonwyn
+smbget \-Rr smb://rhonwyn/
+.fi
+.if n \{\
+.RE
+.\}
+.SH "BUGS"
+.PP
+Permission denied is returned in some cases where the cause of the error is unknown (such as an illegally formatted smb:// url or trying to get a directory without \-R turned on)\&.
+.SH "VERSION"
+.PP
+This man page is correct for version 3 of the Samba suite\&.
+.SH "AUTHOR"
+.PP
+The original Samba software and related utilities were created by Andrew Tridgell\&. Samba is now developed by the Samba Team as an Open Source project similar to the way the Linux kernel is developed\&.
+.PP
+The smbget manpage was written by Jelmer Vernooij\&.

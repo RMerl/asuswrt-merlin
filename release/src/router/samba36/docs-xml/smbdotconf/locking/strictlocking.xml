@@ -1,0 +1,29 @@
+<samba:parameter name="strict locking"
+                 context="S"
+				 type="enum"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>
+	This is an enumerated type that controls the handling of file locking in the server. When this is set to <constant>yes</constant>,
+	the server will check every read and write access for file locks, and deny access if locks exist. This can be slow on 
+	some systems.
+	</para>
+
+	<para>
+	When strict locking is set to Auto (the default), the server performs file lock checks only on non-oplocked files.
+	As most Windows redirectors perform file locking checks locally on oplocked files this is a good trade off for
+	improved performance.
+	</para>
+
+	<para>
+	When strict locking is disabled, the server performs file lock checks only when the client explicitly asks for them.
+	</para>
+
+	<para>
+	Well-behaved clients always ask for lock checks when it is important.  So in the vast majority of cases, 
+	 <command moreinfo="none">strict locking = Auto</command> or
+	 <command moreinfo="none">strict locking = no</command> is acceptable.
+	</para>
+</description>
+<value type="default">Auto</value>
+</samba:parameter>

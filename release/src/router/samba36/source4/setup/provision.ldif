@@ -1,0 +1,848 @@
+###############################
+# Default Naming Context
+###############################
+
+dn: CN=Builtin,${DOMAINDN}
+objectClass: top
+objectClass: builtinDomain
+creationTime: ${CREATTIME}
+forceLogoff: -9223372036854775808
+isCriticalSystemObject: TRUE
+lockoutDuration: -18000000000
+lockOutObservationWindow: -18000000000
+lockoutThreshold: 0
+maxPwdAge: -37108517437440
+minPwdAge: 0
+minPwdLength: 0
+modifiedCount: 1
+modifiedCountAtLastProm: 0
+nextRid: 1000
+objectSid: S-1-5-32
+pwdHistoryLength: 0
+pwdProperties: 0
+serverState: 1
+showInAdvancedViewOnly: FALSE
+systemFlags: -1946157056
+uASCompat: 1
+
+dn: CN=Deleted Objects,${DOMAINDN}
+objectClass: top
+objectClass: container
+description: Container for deleted objects
+isDeleted: TRUE
+isCriticalSystemObject: TRUE
+showInAdvancedViewOnly: TRUE
+systemFlags: -1946157056
+
+# Computers located in "provision_computers*.ldif"
+# Users/Groups located in "provision_users*.ldif"
+
+dn: OU=Domain Controllers,${DOMAINDN}
+objectClass: top
+objectClass: organizationalUnit
+description: Default container for domain controllers
+systemFlags: -1946157056
+isCriticalSystemObject: TRUE
+showInAdvancedViewOnly: FALSE
+gPLink: [LDAP://CN={${POLICYGUID_DC}},CN=Policies,CN=System,${DOMAINDN};0]
+
+# Joined DC located in "provision_self_join.ldif"
+
+dn: CN=ForeignSecurityPrincipals,${DOMAINDN}
+objectClass: top
+objectClass: container
+description: Default container for security identifiers (SIDs) associated with objects from external, trusted domains
+systemFlags: -1946157056
+isCriticalSystemObject: TRUE
+showInAdvancedViewOnly: FALSE
+
+# Foreign security principals located in "provision_users.ldif"
+
+dn: CN=Infrastructure,${DOMAINDN}
+objectClass: top
+objectClass: infrastructureUpdate
+systemFlags: -1946157056
+isCriticalSystemObject: TRUE
+
+dn: CN=LostAndFound,${DOMAINDN}
+objectClass: top
+objectClass: lostAndFound
+description: Default container for orphaned objects
+systemFlags: -1946157056
+isCriticalSystemObject: TRUE
+
+dn: CN=NTDS Quotas,${DOMAINDN}
+objectClass: top
+objectClass: msDS-QuotaContainer
+description: Quota specifications container
+msDS-TombstoneQuotaFactor: 100
+systemFlags: -2147483648
+isCriticalSystemObject: TRUE
+
+dn: CN=Program Data,${DOMAINDN}
+objectClass: top
+objectClass: container
+description: Default location for storage of application data.
+
+dn: CN=Microsoft,CN=Program Data,${DOMAINDN}
+objectClass: top
+objectClass: container
+description: Default location for storage of Microsoft application data.
+
+dn: CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+description: Builtin system settings
+systemFlags: -1946157056
+isCriticalSystemObject: TRUE
+
+dn: CN=AdminSDHolder,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+systemFlags: -1946157056
+isCriticalSystemObject: TRUE
+
+dn: CN=ComPartitions,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+systemFlags: -1946157056
+isCriticalSystemObject: TRUE
+
+dn: CN=ComPartitionSets,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+systemFlags: -1946157056
+isCriticalSystemObject: TRUE
+
+dn: CN=Default Domain Policy,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: leaf
+objectClass: domainPolicy
+isCriticalSystemObject: TRUE
+
+dn: CN=AppCategories,CN=Default Domain Policy,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: classStore
+isCriticalSystemObject: TRUE
+
+dn: CN=Dfs-Configuration,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: dfsConfiguration
+isCriticalSystemObject: TRUE
+showInAdvancedViewOnly: FALSE
+
+dn: CN=DFSR-GlobalSettings,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: msDFSR-GlobalSettings
+msDFSR-Flags: 48
+
+dn: CN=Domain System Volume,CN=DFSR-GlobalSettings,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: msDFSR-ReplicationGroup
+msDFSR-ReplicationGroupType: 1
+
+dn: CN=Content,CN=Domain System Volume,CN=DFSR-GlobalSettings,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: msDFSR-Content
+
+dn: CN=Topology,CN=Domain System Volume,CN=DFSR-GlobalSettings,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: msDFSR-Topology
+
+# Here are missing the DFSR objects since we don't support this technique yet
+
+# Domain updates
+
+dn: CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=ActiveDirectoryUpdate,CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+revision: 5
+
+dn: CN=Operations,CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=ab402345-d3c3-455d-9ff7-40268a1099b6,CN=Operations,CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=bab5f54d-06c8-48de-9b87-d78b796564e4,CN=Operations,CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=f3dd09dd-25e8-4f9c-85df-12d6d2f2f2f5,CN=Operations,CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=2416c60a-fe15-4d7a-a61e-dffd5df864d3,CN=Operations,CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=7868d4c8-ac41-4e05-b401-776280e8e9f1,CN=Operations,CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=860c36ed-5241-4c62-a18b-cf6ff9994173,CN=Operations,CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=0e660ea3-8a5e-4495-9ad7-ca1bd4638f9e,CN=Operations,CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=a86fe12a-0f62-4e2a-b271-d27f601f8182,CN=Operations,CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=d85c0bfd-094f-4cad-a2b5-82ac9268475d,CN=Operations,CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=6ada9ff7-c9df-45c1-908e-9fef2fab008a,CN=Operations,CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=10b3ad2a-6883-4fa7-90fc-6377cbdc1b26,CN=Operations,CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=98de1d3e-6611-443b-8b4e-f4337f1ded0b,CN=Operations,CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=f607fd87-80cf-45e2-890b-6cf97ec0e284,CN=Operations,CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=9cac1f66-2167-47ad-a472-2a13251310e4,CN=Operations,CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=6ff880d6-11e7-4ed1-a20f-aac45da48650,CN=Operations,CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=446f24ea-cfd5-4c52-8346-96e170bcb912,CN=Operations,CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=51cba88b-99cf-4e16-bef2-c427b38d0767,CN=Operations,CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=293f0798-ea5c-4455-9f5d-45f33a30703b,CN=Operations,CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=5c82b233-75fc-41b3-ac71-c69592e6bf15,CN=Operations,CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=7ffef925-405b-440a-8d58-35e8cd6e98c3,CN=Operations,CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=4dfbb973-8a62-4310-a90c-776e00f83222,CN=Operations,CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=8437C3D8-7689-4200-BF38-79E4AC33DFA0,CN=Operations,CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=7cfb016c-4f87-4406-8166-bd9df943947f,CN=Operations,CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=f7ed4553-d82b-49ef-a839-2f38a36bb069,CN=Operations,CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=8ca38317-13a4-4bd4-806f-ebed6acb5d0c,CN=Operations,CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=3c784009-1f57-4e2a-9b04-6915c9e71961,CN=Operations,CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=6bcd5678-8314-11d6-977b-00c04f613221,CN=Operations,CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=6bcd5679-8314-11d6-977b-00c04f613221,CN=Operations,CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=6bcd567a-8314-11d6-977b-00c04f613221,CN=Operations,CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=6bcd567b-8314-11d6-977b-00c04f613221,CN=Operations,CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=6bcd567c-8314-11d6-977b-00c04f613221,CN=Operations,CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=6bcd567d-8314-11d6-977b-00c04f613221,CN=Operations,CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=6bcd567e-8314-11d6-977b-00c04f613221,CN=Operations,CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=6bcd567f-8314-11d6-977b-00c04f613221,CN=Operations,CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=6bcd5680-8314-11d6-977b-00c04f613221,CN=Operations,CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=6bcd5681-8314-11d6-977b-00c04f613221,CN=Operations,CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=6bcd5682-8314-11d6-977b-00c04f613221,CN=Operations,CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=6bcd5683-8314-11d6-977b-00c04f613221,CN=Operations,CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=6bcd5684-8314-11d6-977b-00c04f613221,CN=Operations,CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=6bcd5685-8314-11d6-977b-00c04f613221,CN=Operations,CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=6bcd5686-8314-11d6-977b-00c04f613221,CN=Operations,CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=6bcd5687-8314-11d6-977b-00c04f613221,CN=Operations,CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=6bcd5688-8314-11d6-977b-00c04f613221,CN=Operations,CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=6bcd5689-8314-11d6-977b-00c04f613221,CN=Operations,CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=6bcd568a-8314-11d6-977b-00c04f613221,CN=Operations,CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=6bcd568b-8314-11d6-977b-00c04f613221,CN=Operations,CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=6bcd568c-8314-11d6-977b-00c04f613221,CN=Operations,CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=6bcd568d-8314-11d6-977b-00c04f613221,CN=Operations,CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=3051c66f-b332-4a73-9a20-2d6a7d6e6a1c,CN=Operations,CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=3e4f4182-ac5d-4378-b760-0eab2de593e2,CN=Operations,CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=c4f17608-e611-11d6-9793-00c04f613221,CN=Operations,CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=13d15cf0-e6c8-11d6-9793-00c04f613221,CN=Operations,CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=8ddf6913-1c7b-4c59-a5af-b9ca3b3d2c4c,CN=Operations,CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=6E157EDF-4E72-4052-A82A-EC3F91021A22,CN=Operations,CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=0b7fb422-3609-4587-8c2e-94b10f67d1bf,CN=Operations,CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=231fb90b-c92a-40c9-9379-bacfc313a3e3,CN=Operations,CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=2951353e-d102-4ea5-906c-54247eeec741,CN=Operations,CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=4aaabc3a-c416-4b9c-a6bb-4b453ab1c1f0,CN=Operations,CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=4c93ad42-178a-4275-8600-16811d28f3aa,CN=Operations,CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=57428d75-bef7-43e1-938b-2e749f5a8d56,CN=Operations,CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=61b34cb0-55ee-4be9-b595-97810b92b017,CN=Operations,CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=71482d49-8870-4cb3-a438-b6fc9ec35d70,CN=Operations,CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=9738c400-7795-4d6e-b19d-c16cd6486166,CN=Operations,CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=a1789bfb-e0a2-4739-8cc0-e77d892d080a,CN=Operations,CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=a3dac986-80e7-4e59-a059-54cb1ab43cb9,CN=Operations,CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=aed72870-bf16-4788-8ac7-22299c8207f1,CN=Operations,CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=b96ed344-545a-4172-aa0c-68118202f125,CN=Operations,CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=c88227bc-fcca-4b58-8d8a-cd3d64528a02,CN=Operations,CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=dda1d01d-4bd7-4c49-a184-46f9241b560e,CN=Operations,CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=de10d491-909f-4fb0-9abb-4b7865c0fe80,CN=Operations,CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=ebad865a-d649-416f-9922-456b53bbb5b8,CN=Operations,CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=f58300d1-b71a-4DB6-88a1-a8b9538beaca,CN=Operations,CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=Windows2003Update,CN=DomainUpdates,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+revision: 9
+
+# End domain updates
+
+dn: CN=File Replication Service,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: applicationSettings
+objectClass: nTFRSSettings
+systemFlags: -1946157056
+isCriticalSystemObject: TRUE
+
+dn: CN=FileLinks,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: fileLinkTracking
+systemFlags: -1946157056
+isCriticalSystemObject: TRUE
+
+dn: CN=ObjectMoveTable,CN=FileLinks,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: fileLinkTracking
+objectClass: linkTrackObjectMoveTable
+systemFlags: -1946157056
+isCriticalSystemObject: TRUE
+
+dn: CN=VolumeTable,CN=FileLinks,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: fileLinkTracking
+objectClass: linkTrackVolumeTable
+systemFlags: -1946157056
+isCriticalSystemObject: TRUE
+
+# IP security objects
+
+dn: CN=IP Security,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+isCriticalSystemObject: TRUE
+
+dn: CN=ipsecPolicy{72385230-70FA-11D1-864C-14A300000000},CN=IP Security,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: ipsecBase
+objectClass: ipsecPolicy
+description: For all IP traffic, always request security using Kerberos trust. Allow unsecured communication with clients that do not respond to request.
+ipsecName: Server (Request Security)
+ipsecID: {72385230-70FA-11D1-864C-14A300000000}
+ipsecDataType: 598
+ipsecData:: YyEgIkxP0RGGOwCgJI0wIQQAAAAwKgAAAA==
+ipsecISAKMPReference: CN=ipsecISAKMPPolicy{72385231-70FA-11D1-864C-14A300000000},CN=IP Security,CN=System,${DOMAINDN}
+ipsecNFAReference: CN=ipsecNFA{594272E2-071D-11D3-AD22-0060B0ECCA17},CN=IP Security,CN=System,${DOMAINDN}
+ipsecNFAReference: CN=ipsecNFA{59319BE2-5EE3-11D2-ACE8-0060B0ECCA17},CN=IP Security,CN=System,${DOMAINDN}
+ipsecNFAReference: CN=ipsecNFA{72385232-70FA-11D1-864C-14A300000000},CN=IP Security,CN=System,${DOMAINDN}
+isCriticalSystemObject: TRUE
+
+dn: CN=ipsecISAKMPPolicy{72385231-70FA-11D1-864C-14A300000000},CN=IP Security,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: ipsecBase
+objectClass: ipsecISAKMPPolicy
+ipsecID: {72385231-70FA-11D1-864C-14A300000000}
+ipsecDataType: 598
+ipsecData:: uCDcgMgu0RGongCgJI0wIUABAABo0hlRHQfTEa0iAGCw7MoXAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAADNzQMAAABAAAAACAAAAAIAAABAAAAAAAAAAAAAAAAAAAAAAAAAAADNzc0CAAAAAAAAAAAAAACAcAAAzc3NzQAAzc0DAAAAQAAAAAgAAAABAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAzc3NAgAAAAAAAAAAAAAAgHAAAM3Nzc0AAM3NAQAAAEAAAAAIAAAAAgAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAM3NzQEAAAAAAAAAAAAAAIBwAADNzc3NAADNzQEAAABAAAAACAAAAAEAAABAAAAAAAAAAAAAAAAAAAAAAAAAAADNzc0BAAAAAAAAAAAAAACAcAAAzc3NzQA=
+ipsecOwnersReference: CN=ipsecPolicy{72385230-70FA-11D1-864C-14A300000000},CN=IP Security,CN=System,${DOMAINDN}
+isCriticalSystemObject: TRUE
+
+dn: CN=ipsecNFA{72385232-70FA-11D1-864C-14A300000000},CN=IP Security,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: ipsecBase
+objectClass: ipsecNFA
+description: For all IP traffic, always request security using Kerberos trust. Allow unsecured communication with clients that do not respond to request.
+ipsecName: Request Security (Optional) Rule
+ipsecID: {72385232-70FA-11D1-864C-14A300000000}
+ipsecDataType: 598
+ipsecData:: AKy7EY1J0RGGOQCgJI0wISoAAAABAAAABQAAAAIAAAAAAP3///8CAAAAAAAAAAAAAAAAAAEAAAACAAAAAAAA
+ipsecOwnersReference: CN=ipsecPolicy{72385230-70FA-11D1-864C-14A300000000},CN=IP Security,CN=System,${DOMAINDN}
+ipsecNegotiationPolicyReference: CN=ipsecNegotiationPolicy{72385233-70FA-11D1-864C-14A300000000},CN=IP Security,CN=System,${DOMAINDN}
+ipsecFilterReference: CN=ipsecFilter{7238523A-70FA-11D1-864C-14A300000000},CN=IP Security,CN=System,${DOMAINDN}
+isCriticalSystemObject: TRUE
+
+dn: CN=ipsecNFA{59319BE2-5EE3-11D2-ACE8-0060B0ECCA17},CN=IP Security,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: ipsecBase
+objectClass: ipsecNFA
+ipsecID: {59319BE2-5EE3-11D2-ACE8-0060B0ECCA17}
+ipsecDataType: 598
+ipsecData:: AKy7EY1J0RGGOQCgJI0wISoAAAABAAAABQAAAAIAAAAAAP3///8CAAAAAAAAAAAAAAAAAAEAAAACAAAAAAAA
+ipsecOwnersReference: CN=ipsecPolicy{72385230-70FA-11D1-864C-14A300000000},CN=IP Security,CN=System,${DOMAINDN}
+ipsecNegotiationPolicyReference: CN=ipsecNegotiationPolicy{59319BDF-5EE3-11D2-ACE8-0060B0ECCA17},CN=IP Security,CN=System,${DOMAINDN}
+isCriticalSystemObject: TRUE
+
+dn: CN=ipsecNFA{594272E2-071D-11D3-AD22-0060B0ECCA17},CN=IP Security,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: ipsecBase
+objectClass: ipsecNFA
+description: Permit unsecure ICMP packets to pass through.
+ipsecName: Permit unsecure ICMP packets to pass through.
+ipsecID: {594272E2-071D-11D3-AD22-0060B0ECCA17}
+ipsecDataType: 598
+ipsecData:: AKy7EY1J0RGGOQCgJI0wISoAAAABAAAABQAAAAIAAAAAAP3///8CAAAAAAAAAAAAAAAAAAEAAAACAAAAAAAA
+ipsecOwnersReference: CN=ipsecPolicy{72385230-70FA-11D1-864C-14A300000000},CN=IP Security,CN=System,${DOMAINDN}
+ipsecNegotiationPolicyReference: CN=ipsecNegotiationPolicy{7238523B-70FA-11D1-864C-14A300000000},CN=IP Security,CN=System,${DOMAINDN}
+ipsecFilterReference: CN=ipsecFilter{72385235-70FA-11D1-864C-14A300000000},CN=IP Security,CN=System,${DOMAINDN}
+isCriticalSystemObject: TRUE
+
+dn: CN=ipsecNegotiationPolicy{72385233-70FA-11D1-864C-14A300000000},CN=IP Security,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: ipsecBase
+objectClass: ipsecNegotiationPolicy
+description: Accepts unsecured communication, but requests clients to establish trust and security methods.  Will communicate insecurely to untrusted clients if they do not respond to request.
+ipsecName: Request Security (Optional)
+ipsecID: {72385233-70FA-11D1-864C-14A300000000}
+ipsecDataType: 598
+ipsecData:: uSDcgMgu0RGongCgJI0wIZQBAAAFAAAAhAMAAKCGAQAAAAAAAAAAAAEAAAADAAAAAgAAAAIAAABAAAAACAAAAFwAUwBlAHIAdgBpAGMAZQBzAFwAUABvAGwAaQBjAHkAQQBnAGUAbgCEAwAAoIYBAAAAAAAAAAAAAQAAAAEAAAACAAAAAgAAAEAAAAAIAAAAAAAAAFX0sjdcAEwAbwBjABUADwABAAgAIAJlACACZQBYxHYF+M54BSwBAACghgEAAAAAAAAAAAABAAAAAgAAAAAAAAABAAAAQAAAAAgAAAAtADkAQQBDADEALQA0AEQANgBEAC0AQQAxAEIAMAAtADEANQA4ADcALAEAAKCGAQAAAAAAAAAAAAEAAAABAAAAAAAAAAEAAABAAAAACAAAAGUAdABcAFMAZQByAHYAaQBjAGUAcwBcAFAAbwBsAGkAYwB5AEEAZwAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAABAAAAAgAAAEAAAAAIAAAANgBDAC0AMwBCADkANwAtADQANQA1ADIALQA4AEUANAA1AC0AOQA5AAA=
+ipsecOwnersReference: CN=ipsecNFA{72385232-70FA-11D1-864C-14A300000000},CN=IP Security,CN=System,${DOMAINDN}
+isCriticalSystemObject: TRUE
+iPSECNegotiationPolicyType: {62F49E10-6C37-11D1-864C-14A300000000}
+iPSECNegotiationPolicyAction: {3F91A81A-7647-11D1-864D-D46A00000000}
+
+dn: CN=ipsecFilter{7238523A-70FA-11D1-864C-14A300000000},CN=IP Security,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: ipsecBase
+objectClass: ipsecFilter
+description: Matches all IP packets from this computer to any other computer, except broadcast, multicast, Kerberos, RSVP and ISAKMP (IKE).
+ipsecName: All IP Traffic
+ipsecID: {7238523A-70FA-11D1-864C-14A300000000}
+ipsecDataType: 598
+ipsecData:: tSDcgMgu0RGongCgJI0wIUoAAAABAAAAAgAAAAAAAgAAAAAAAgAAAAAA3ZsxWeNe0hGs6ABgsOzKFwEAAAAAAAAA/////wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+ipsecOwnersReference: CN=ipsecNFA{72385232-70FA-11D1-864C-14A300000000},CN=IP Security,CN=System,${DOMAINDN}
+ipsecOwnersReference: CN=ipsecNFA{7238523E-70FA-11D1-864C-14A300000000},CN=IP Security,CN=System,${DOMAINDN}
+isCriticalSystemObject: TRUE
+
+dn: CN=ipsecNegotiationPolicy{59319BDF-5EE3-11D2-ACE8-0060B0ECCA17},CN=IP Security,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: ipsecBase
+objectClass: ipsecNegotiationPolicy
+ipsecID: {59319BDF-5EE3-11D2-ACE8-0060B0ECCA17}
+ipsecDataType: 598
+ipsecData:: uSDcgMgu0RGongCgJI0wIeQBAAAGAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAADAAAAAgAAAAIAAABAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAMAAAABAAAAAgAAAEAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAQAAAAIAAAACAAAAQAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAABAAAAAQAAAAIAAABAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAIAAAAAAAAAAQAAAEAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAQAAAAAAAAABAAAAQAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==
+ipsecOwnersReference: CN=ipsecNFA{59319BE2-5EE3-11D2-ACE8-0060B0ECCA17},CN=IP Security,CN=System,${DOMAINDN}
+isCriticalSystemObject: TRUE
+iPSECNegotiationPolicyType: {62F49E13-6C37-11D1-864C-14A300000000}
+iPSECNegotiationPolicyAction: {8A171DD3-77E3-11D1-8659-A04F00000000}
+
+dn: CN=ipsecNegotiationPolicy{7238523B-70FA-11D1-864C-14A300000000},CN=IP Security,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: ipsecBase
+objectClass: ipsecNegotiationPolicy
+description: Permit unsecured IP packets to pass through.
+ipsecName: Permit
+ipsecID: {7238523B-70FA-11D1-864C-14A300000000}
+ipsecDataType: 598
+ipsecData:: uSDcgMgu0RGongCgJI0wIQQAAAAAAAAAAA==
+ipsecOwnersReference: CN=ipsecNFA{594272E2-071D-11D3-AD22-0060B0ECCA17},CN=IP Security,CN=System,${DOMAINDN}
+ipsecOwnersReference: CN=ipsecNFA{594272FD-071D-11D3-AD22-0060B0ECCA17},CN=IP Security,CN=System,${DOMAINDN}
+isCriticalSystemObject: TRUE
+iPSECNegotiationPolicyType: {62F49E10-6C37-11D1-864C-14A300000000}
+iPSECNegotiationPolicyAction: {8A171DD2-77E3-11D1-8659-A04F00000000}
+
+dn: CN=ipsecFilter{72385235-70FA-11D1-864C-14A300000000},CN=IP Security,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: ipsecBase
+objectClass: ipsecFilter
+description: Matches all ICMP packets between this computer and any other computer.
+ipsecName: All ICMP Traffic
+ipsecID: {72385235-70FA-11D1-864C-14A300000000}
+ipsecDataType: 598
+ipsecData:: tSDcgMgu0RGongCgJI0wIVIAAAABAAAAAgAAAAAAAgAAAAAACgAAAEkAQwBNAFAAAABj0hlRHQfTEa0iAGCw7MoXAQAAAAAAAAD/////AAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAA==
+ipsecOwnersReference: CN=ipsecNFA{594272E2-071D-11D3-AD22-0060B0ECCA17},CN=IP Security,CN=System,${DOMAINDN}
+ipsecOwnersReference: CN=ipsecNFA{594272FD-071D-11D3-AD22-0060B0ECCA17},CN=IP Security,CN=System,${DOMAINDN}
+isCriticalSystemObject: TRUE
+
+dn: CN=ipsecPolicy{72385236-70FA-11D1-864C-14A300000000},CN=IP Security,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: ipsecBase
+objectClass: ipsecPolicy
+description: Communicate normally (unsecured). Use the default response rule to negotiate with servers that request security. Only the requested protocol and port traffic with that server is secured.
+ipsecName: Client (Respond Only)
+ipsecID: {72385236-70FA-11D1-864C-14A300000000}
+ipsecDataType: 598
+ipsecData:: YyEgIkxP0RGGOwCgJI0wIQQAAAAwKgAAAA==
+ipsecISAKMPReference: CN=ipsecISAKMPPolicy{72385237-70FA-11D1-864C-14A300000000},CN=IP Security,CN=System,${DOMAINDN}
+ipsecNFAReference: CN=ipsecNFA{59319C04-5EE3-11D2-ACE8-0060B0ECCA17},CN=IP Security,CN=System,${DOMAINDN}
+isCriticalSystemObject: TRUE
+
+dn: CN=ipsecISAKMPPolicy{72385237-70FA-11D1-864C-14A300000000},CN=IP Security,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: ipsecBase
+objectClass: ipsecISAKMPPolicy
+ipsecID: {72385237-70FA-11D1-864C-14A300000000}
+ipsecDataType: 598
+ipsecData:: uCDcgMgu0RGongCgJI0wIUABAABz7EFfHQfTEa0iAGCw7MoXAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAADNzQMAAABAAAAACAAAAAIAAABAAAAAAAAAAAAAAAAAAAAAAAAAAADNzc0CAAAAAAAAAAAAAACAcAAAzc3NzQAAzc0DAAAAQAAAAAgAAAABAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAzc3NAgAAAAAAAAAAAAAAgHAAAM3Nzc0AAM3NAQAAAEAAAAAIAAAAAgAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAM3NzQEAAAAAAAAAAAAAAIBwAADNzc3NAADNzQEAAABAAAAACAAAAAEAAABAAAAAAAAAAAAAAAAAAAAAAAAAAADNzc0BAAAAAAAAAAAAAACAcAAAzc3NzQA=
+ipsecOwnersReference: CN=ipsecPolicy{72385236-70FA-11D1-864C-14A300000000},CN=IP Security,CN=System,${DOMAINDN}
+isCriticalSystemObject: TRUE
+
+dn: CN=ipsecNFA{59319C04-5EE3-11D2-ACE8-0060B0ECCA17},CN=IP Security,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: ipsecBase
+objectClass: ipsecNFA
+ipsecID: {59319C04-5EE3-11D2-ACE8-0060B0ECCA17}
+ipsecDataType: 598
+ipsecData:: AKy7EY1J0RGGOQCgJI0wISoAAAABAAAABQAAAAIAAAAAAP3///8CAAAAAAAAAAAAAAAAAAEAAAACAAAAAAAA
+ipsecOwnersReference: CN=ipsecPolicy{72385236-70FA-11D1-864C-14A300000000},CN=IP Security,CN=System,${DOMAINDN}
+ipsecNegotiationPolicyReference: CN=ipsecNegotiationPolicy{59319C01-5EE3-11D2-ACE8-0060B0ECCA17},CN=IP Security,CN=System,${DOMAINDN}
+isCriticalSystemObject: TRUE
+
+dn: CN=ipsecNegotiationPolicy{59319C01-5EE3-11D2-ACE8-0060B0ECCA17},CN=IP Security,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: ipsecBase
+objectClass: ipsecNegotiationPolicy
+ipsecID: {59319C01-5EE3-11D2-ACE8-0060B0ECCA17}
+ipsecDataType: 598
+ipsecData:: uSDcgMgu0RGongCgJI0wIeQBAAAGAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAADAAAAAgAAAAIAAABAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAMAAAABAAAAAgAAAEAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAQAAAAIAAAACAAAAQAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAABAAAAAQAAAAIAAABAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAIAAAAAAAAAAQAAAEAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAQAAAAAAAAABAAAAQAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==
+ipsecOwnersReference: CN=ipsecNFA{59319C04-5EE3-11D2-ACE8-0060B0ECCA17},CN=IP Security,CN=System,${DOMAINDN}
+isCriticalSystemObject: TRUE
+iPSECNegotiationPolicyType: {62F49E13-6C37-11D1-864C-14A300000000}
+iPSECNegotiationPolicyAction: {8A171DD3-77E3-11D1-8659-A04F00000000}
+
+dn: CN=ipsecPolicy{7238523C-70FA-11D1-864C-14A300000000},CN=IP Security,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: ipsecBase
+objectClass: ipsecPolicy
+description: For all IP traffic, always require security using Kerberos trust. Do NOT allow unsecured communication with untrusted clients.
+ipsecName: Secure Server (Require Security)
+ipsecID: {7238523C-70FA-11D1-864C-14A300000000}
+ipsecDataType: 598
+ipsecData:: YyEgIkxP0RGGOwCgJI0wIQQAAAAwKgAAAA==
+ipsecISAKMPReference: CN=ipsecISAKMPPolicy{7238523D-70FA-11D1-864C-14A300000000},CN=IP Security,CN=System,${DOMAINDN}
+ipsecNFAReference: CN=ipsecNFA{594272FD-071D-11D3-AD22-0060B0ECCA17},CN=IP Security,CN=System,${DOMAINDN}
+ipsecNFAReference: CN=ipsecNFA{59319BF3-5EE3-11D2-ACE8-0060B0ECCA17},CN=IP Security,CN=System,${DOMAINDN}
+ipsecNFAReference: CN=ipsecNFA{7238523E-70FA-11D1-864C-14A300000000},CN=IP Security,CN=System,${DOMAINDN}
+isCriticalSystemObject: TRUE
+
+dn: CN=ipsecISAKMPPolicy{7238523D-70FA-11D1-864C-14A300000000},CN=IP Security,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: ipsecBase
+objectClass: ipsecISAKMPPolicy
+ipsecID: {7238523D-70FA-11D1-864C-14A300000000}
+ipsecDataType: 598
+ipsecData:: uCDcgMgu0RGongCgJI0wIUABAAD5ckJZHQfTEa0iAGCw7MoXAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAADNzQMAAABAAAAACAAAAAIAAABAAAAAAAAAAAAAAAAAAAAAAAAAAADNzc0CAAAAAAAAAAAAAACAcAAAzc3NzQAAzc0DAAAAQAAAAAgAAAABAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAzc3NAgAAAAAAAAAAAAAAgHAAAM3Nzc0AAM3NAQAAAEAAAAAIAAAAAgAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAM3NzQEAAAAAAAAAAAAAAIBwAADNzc3NAADNzQEAAABAAAAACAAAAAEAAABAAAAAAAAAAAAAAAAAAAAAAAAAAADNzc0BAAAAAAAAAAAAAACAcAAAzc3NzQA=
+ipsecOwnersReference: CN=ipsecPolicy{7238523C-70FA-11D1-864C-14A300000000},CN=IP Security,CN=System,${DOMAINDN}
+isCriticalSystemObject: TRUE
+
+dn: CN=ipsecNFA{7238523E-70FA-11D1-864C-14A300000000},CN=IP Security,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: ipsecBase
+objectClass: ipsecNFA
+description: Accepts unsecured communication, but always requires clients to establish trust and security methods.  Will NOT communicate with untrusted clients.
+ipsecName: Require Security
+ipsecID: {7238523E-70FA-11D1-864C-14A300000000}
+ipsecDataType: 598
+ipsecData:: AKy7EY1J0RGGOQCgJI0wISoAAAABAAAABQAAAAIAAAAAAP3///8CAAAAAAAAAAAAAAAAAAEAAAACAAAAAAAA
+ipsecOwnersReference: CN=ipsecPolicy{7238523C-70FA-11D1-864C-14A300000000},CN=IP Security,CN=System,${DOMAINDN}
+ipsecNegotiationPolicyReference: CN=ipsecNegotiationPolicy{7238523F-70FA-11D1-864C-14A300000000},CN=IP Security,CN=System,${DOMAINDN}
+ipsecFilterReference: CN=ipsecFilter{7238523A-70FA-11D1-864C-14A300000000},CN=IP Security,CN=System,${DOMAINDN}
+isCriticalSystemObject: TRUE
+
+dn: CN=ipsecNFA{59319BF3-5EE3-11D2-ACE8-0060B0ECCA17},CN=IP Security,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: ipsecBase
+objectClass: ipsecNFA
+ipsecID: {59319BF3-5EE3-11D2-ACE8-0060B0ECCA17}
+ipsecDataType: 598
+ipsecData:: AKy7EY1J0RGGOQCgJI0wISoAAAABAAAABQAAAAIAAAAAAP3///8CAAAAAAAAAAAAAAAAAAEAAAACAAAAAAAA
+ipsecOwnersReference: CN=ipsecPolicy{7238523C-70FA-11D1-864C-14A300000000},CN=IP Security,CN=System,${DOMAINDN}
+ipsecNegotiationPolicyReference: CN=ipsecNegotiationPolicy{59319BF0-5EE3-11D2-ACE8-0060B0ECCA17},CN=IP Security,CN=System,${DOMAINDN}
+isCriticalSystemObject: TRUE
+
+dn: CN=ipsecNFA{594272FD-071D-11D3-AD22-0060B0ECCA17},CN=IP Security,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: ipsecBase
+objectClass: ipsecNFA
+description: Permit unsecure ICMP packets to pass through.
+ipsecName: Permit unsecure ICMP packets to pass through.
+ipsecID: {594272FD-071D-11D3-AD22-0060B0ECCA17}
+ipsecDataType: 598
+ipsecData:: AKy7EY1J0RGGOQCgJI0wISoAAAABAAAABQAAAAIAAAAAAP3///8CAAAAAAAAAAAAAAAAAAEAAAACAAAAAAAA
+ipsecOwnersReference: CN=ipsecPolicy{7238523C-70FA-11D1-864C-14A300000000},CN=IP Security,CN=System,${DOMAINDN}
+ipsecNegotiationPolicyReference: CN=ipsecNegotiationPolicy{7238523B-70FA-11D1-864C-14A300000000},CN=IP Security,CN=System,${DOMAINDN}
+ipsecFilterReference: CN=ipsecFilter{72385235-70FA-11D1-864C-14A300000000},CN=IP Security,CN=System,${DOMAINDN}
+isCriticalSystemObject: TRUE
+
+dn: CN=ipsecNegotiationPolicy{7238523F-70FA-11D1-864C-14A300000000},CN=IP Security,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: ipsecBase
+objectClass: ipsecNegotiationPolicy
+description: Accepts unsecured communication, but always requires clients to establish trust and security methods.  Will NOT communicate with untrusted clients.
+ipsecName: Require Security
+ipsecID: {7238523F-70FA-11D1-864C-14A300000000}
+ipsecDataType: 598
+ipsecData:: uSDcgMgu0RGongCgJI0wIUQBAAAEAAAAhAMAAKCGAQAAAAAAAAAAAAEAAAADAAAAAgAAAAIAAABAAAAACAAAAHUAcgByAGUAbgB0AEMAbwBuAHQAcgBvAGwAUwBlAHQAXABTAGUAcgCEAwAAoIYBAAAAAAAAAAAAAQAAAAMAAAABAAAAAgAAAEAAAAAIAAAAcABzAGUAYwBOAEYAQQB7ADcAMgAzADgANQAyADMARQAtADcAMABGAIQDAACghgEAAAAAAAAAAAABAAAAAQAAAAIAAAACAAAAQAAAAAgAAABsAGkAYwB5AFwATABvAGMAYQBsAFwAaQBwAHMAZQBjAE4ARgBBAHsAhAMAAKCGAQAAAAAAAAAAAAEAAAABAAAAAQAAAAIAAABAAAAACAAAAGUAYwBOAEYAQQB7AEIARgBDADcAQwAzADUAQQAtAEIANQA5ADIALQAA
+ipsecOwnersReference: CN=ipsecNFA{7238523E-70FA-11D1-864C-14A300000000},CN=IP Security,CN=System,${DOMAINDN}
+isCriticalSystemObject: TRUE
+iPSECNegotiationPolicyType: {62F49E10-6C37-11D1-864C-14A300000000}
+iPSECNegotiationPolicyAction: {3F91A81A-7647-11D1-864D-D46A00000000}
+
+dn: CN=ipsecNegotiationPolicy{59319BF0-5EE3-11D2-ACE8-0060B0ECCA17},CN=IP Security,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: ipsecBase
+objectClass: ipsecNegotiationPolicy
+ipsecID: {59319BF0-5EE3-11D2-ACE8-0060B0ECCA17}
+ipsecDataType: 598
+ipsecData:: uSDcgMgu0RGongCgJI0wIeQBAAAGAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAADAAAAAgAAAAIAAABAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAMAAAABAAAAAgAAAEAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAQAAAAIAAAACAAAAQAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAABAAAAAQAAAAIAAABAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAIAAAAAAAAAAQAAAEAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAQAAAAAAAAABAAAAQAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==
+ipsecOwnersReference: CN=ipsecNFA{59319BF3-5EE3-11D2-ACE8-0060B0ECCA17},CN=IP Security,CN=System,${DOMAINDN}
+isCriticalSystemObject: TRUE
+iPSECNegotiationPolicyType: {62F49E13-6C37-11D1-864C-14A300000000}
+iPSECNegotiationPolicyAction: {8A171DD3-77E3-11D1-8659-A04F00000000}
+
+dn: CN=ipsecNFA{6A1F5C6F-72B7-11D2-ACF0-0060B0ECCA17},CN=IP Security,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: ipsecBase
+objectClass: ipsecNFA
+description: Version Information Object
+ipsecName: Version Information Object
+ipsecID: {6A1F5C6F-72B7-11D2-ACF0-0060B0ECCA17}
+ipsecDataType: 598
+ipsecData:: b1wfardy0hGs8ABgsOzKF1AAAAAAAAEApmamNhoAAABXAGkAbgBkAG8AdwBzACAAMgAwADAAMAAAABwAAABBAGQAbQBpAG4AaQBzAHQAcgBhAHQAbwByAAAABgAAAA0ACgAAAACsuxGNSdERhjkAoCSNMCEqAAAAAQAAAAUAAAACAAAAAAD9////AgAAAAAAAAAAAAAAAAABAAAAAgAAAAAAAA==
+isCriticalSystemObject: TRUE
+
+# End IP security objects
+
+dn: CN=Meetings,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+isCriticalSystemObject: TRUE
+
+dn: CN=Password Settings Container,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: msDS-PasswordSettingsContainer
+systemFlags: -1946157056
+showInAdvancedViewOnly: TRUE
+
+dn: CN=Policies,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+systemFlags: -1946157056
+isCriticalSystemObject: TRUE
+
+# Group policies located in "provision_group_policy.ldif"
+
+dn: CN=RAS and IAS Servers Access Check,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+systemFlags: -1946157056
+isCriticalSystemObject: TRUE
+
+dn: CN=RID Manager$,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: rIDManager
+systemFlags: -1946157056
+rIDAvailablePool: ${RIDAVAILABLESTART}-1073741823
+isCriticalSystemObject: TRUE
+
+dn: CN=RpcServices,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+objectClass: rpcContainer
+systemFlags: -1946157056
+isCriticalSystemObject: TRUE
+
+dn: CN=Server,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: securityObject
+objectClass: samServer
+systemFlags: -1946157056
+revision: 65543
+isCriticalSystemObject: TRUE
+
+dn: CN=WinsockServices,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+isCriticalSystemObject: TRUE
+
+dn: CN=WMIPolicy,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=PolicyTemplate,CN=WMIPolicy,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=PolicyType,CN=WMIPolicy,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=SOM,CN=WMIPolicy,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container
+
+dn: CN=WMIGPO,CN=WMIPolicy,CN=System,${DOMAINDN}
+objectClass: top
+objectClass: container

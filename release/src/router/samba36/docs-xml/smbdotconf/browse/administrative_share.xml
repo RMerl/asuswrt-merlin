@@ -1,0 +1,16 @@
+<samba:parameter name="administrative share"
+                 context="S"
+                 type="boolean"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+    <para>If this parameter is set to <constant>yes</constant> for
+      a share, then the share will be an administrative share. The Administrative
+      Shares are the default network shares created by all Windows NT-based
+      operating systems. These are shares like C$, D$ or ADMIN$. The type of these
+      shares is STYPE_DISKTREE_HIDDEN.</para>
+
+    <para>See the section below on <smbconfoption name="security"/> for more 
+      information about this option.</para>
+</description>
+<value type="default">no</value>
+</samba:parameter>

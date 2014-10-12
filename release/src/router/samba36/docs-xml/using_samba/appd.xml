@@ -1,0 +1,1615 @@
+<appendix label="D" id="SAMBA-AP-D">
+<title>Summary of Samba Daemons and Commands</title>
+
+
+
+
+<para>This appendix is a reference listing of command-line options and other information to help you use the executables that come with Samba distribution.</para>
+
+
+
+
+
+
+
+
+
+
+
+<sect1 role="" label="D.1" id="appd-SECT-1">
+<title>Samba Distribution Programs</title>
+
+
+<para>The following sections provide information about the command-line parameters for Samba programs.</para>
+
+
+<sect2 role="" label="D.1.1" id="appd-SECT-1.1">
+<title>smbd</title>
+
+
+<para>
+<indexterm id="appd-idx-993627-0" class="startofrange"><primary>smbd daemon</primary></indexterm>
+<indexterm id="appd-idx-993627-1" class="startofrange"><primary>daemons</primary></indexterm>The <emphasis>smbd</emphasis> program provides Samba's file and printer services, using one TCP/IP stream and one daemon per client. It is controlled from the default configuration file, <replaceable>samba_dir</replaceable><emphasis>/lib/smb.conf</emphasis>, and can be overridden by command-line options.</para>
+
+
+<para>The configuration file is automatically re-evaluated every minute. If it has changed, most new options are immediately effective. You can force Samba to immediately reload the configuration file if you send a SIGHUP to <emphasis>smbd</emphasis>. Reloading the configuration file, however, will not affect any clients that are already connected. To escape this "grandfather" configuration, a client would need to disconnect and reconnect, or the server itself would have to be restarted, forcing all clients to reconnect.</para>
+
+
+<sect3 role="" label="D.1.1.1" id="appd-SECT-1.1.1">
+<title>Other signals</title>
+
+
+<para>To shut down a <emphasis>smbd</emphasis> process, send it the termination signal SIGTERM (-15) which allows it to die gracefully instead of a SIGKILL (-9). To increment the debug logging level of <emphasis>smbd</emphasis> at runtime, send the program a SIGUSR1 signal. To decrement it at runtime, send the program a SIGUSR2 signal.</para>
+</sect3>
+
+
+
+<sect3 role="" label="D.1.1.2" id="appd-SECT-1.1.2">
+<title>Command-line options</title>
+
+
+<variablelist>
+<varlistentry><term><literal>-D</literal></term>
+<listitem><para>The <emphasis>smbd</emphasis> program is run as a daemon. This is the recommended way to use <emphasis>smbd</emphasis> (it is also the default action). In addition, <emphasis>smbd</emphasis> can also be run from <emphasis>inetd</emphasis>.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-d</literal> <replaceable>debuglevel</replaceable></term>
+<listitem><para>Sets the debug (sometimes called logging) level. The level can range from 0 all the way to 10. Specifying the value on the command line overrides the value specified in the <filename>smb.conf</filename> file. Debug level 0 logs only the most important messages; level 1 is normal; levels 3 and above are primarily for debugging and slow <emphasis>smbd</emphasis> considerably.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-h</literal> </term>
+<listitem><para>Prints command-line usage information for the <filename>smbd</filename> program.</para></listitem>
+</varlistentry>
+</variablelist>
+</sect3>
+
+
+
+<sect3 role="" label="D.1.1.3" id="appd-SECT-1.1.3">
+<title>Testing/debugging options</title>
+
+
+<variablelist>
+<varlistentry><term><literal>-a</literal></term>
+<listitem><para>If this is specified, each new connection to the Samba server will append all logging messages to the log file. This option is the opposite of <literal>-o</literal>, and is the default.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-i</literal> <replaceable>scope</replaceable></term>
+<listitem><para>This sets a NetBIOS scope identifier. Only machines with the same identifier will communicate with the server. The scope identifier was a predecessor to workgroups, and this option is included only for backwards compatibility.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-l</literal> <replaceable>log_file</replaceable></term>
+<listitem><para>Send the log messages to somewhere other than the location compiled in or specified in the <filename>smb.conf</filename> file. The default is often <filename>/usr/local/samba/var/log.smb</filename>, <filename>/usr/samba/var/log.smb,</filename> or <filename>/var/log/log.smb</filename>. The first two are strongly discouraged on Linux, where <filename>/usr</filename> may be a read-only filesystem.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-O</literal> <replaceable>socket_options</replaceable></term>
+<listitem><para>This sets the TCP/IP socket options, using the same parameters as the <literal>socket</literal> <literal>options</literal> configuration option. It is often used for performance tuning and testing.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-o</literal></term>
+<listitem><para>This option is the opposite of <literal>-a</literal>. It causes log files to be overwritten when opened. Using this option saves hunting for the right log entries if you are performing a series of tests and inspecting the log file each time.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-P</literal></term>
+<listitem><para>This option forces <filename>smbd</filename> not to send any network data out. This option is typically used only by Samba developers.<indexterm id="appd-idx-994096-0" class="endofrange" startref="appd-idx-993627-0"/></para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-P</literal></term>
+<listitem><para>This option forces <filename>smbd</filename> not to send any network data out. This option is typically used only by Samba developers.  <indexterm id="appd-idx-994102-0" class="endofrange" startref="appd-idx-993627-0"/></para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-p</literal> <replaceable>port_number</replaceable></term>
+<listitem><para>This sets the TCP/IP port number that the server will accept requests from. Currently, all Microsoft clients send only to the default port: 139.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-s</literal> <replaceable>configuration_file</replaceable></term>
+<listitem><para>Specifies the location of the Samba configuration file. Although the file defaults to <filename>/usr/local/samba/lib/smb.conf</filename>, you can override it here on the command line, typically for debugging.</para></listitem>
+</varlistentry>
+</variablelist>
+</sect3>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="D.1.2" id="appd-SECT-1.2">
+<title>nmbd</title>
+
+
+<para>
+<indexterm id="appd-idx-993645-0" class="startofrange"><primary>nmbd daemon</primary></indexterm>The <emphasis>nmbd</emphasis> program is Samba's NetBIOS name and browsing daemon. It replies to broadcast NetBIOS over TCP/IP (NBT) name-service requests from SMB clients and optionally to Microsoft's Windows Internet Name Service (WINS) requests. Both of these are versions of the name-to-address lookup required by SMB clients. The broadcast version uses UDP/IP broadcast on the local subnet only, while WINS uses TCP/IP, which may be routed. If running as a WINS server, <emphasis>nmbd</emphasis> keeps a current name and address database in the file <filename>wins.dat</filename> in the <literal>samba_dir</literal><filename>/var/locks</filename> directory.</para>
+
+
+<para>An active <emphasis>nmbd</emphasis> program can also respond to browsing protocol requests used by the Windows Network Neighborhood. Browsing is a combined advertising, service announcement, and active directory protocol. This protocol provides a dynamic directory of servers and the disks and printers that the servers are providing. As with WINS, this was initially done by making UDP/IP broadcasts on the local subnet. Now, with the concept of a local master browser, it is done by making TCP/IP connections to a server. If <emphasis>nmbd</emphasis> is acting as a local master browser, it stores the browsing database in the file <filename>browse.dat</filename> in the <literal>samba_dir</literal><filename>/var/locks</filename> directory.</para>
+
+
+<sect3 role="" label="D.1.2.1" id="appd-SECT-1.2.1">
+<title>Signals</title>
+
+
+<para>Like <emphasis>smbd</emphasis>, the <emphasis>nmbd</emphasis> program responds to several Unix signals. Sending <emphasis>nmbd</emphasis> a SIGHUP signal will cause it to dump the names it knows about to the file <filename>namelist.debug</filename> in the <literal>samba_dir</literal>/<emphasis>locks</emphasis> directory and its browsing database to the <filename>browse.dat </filename>file in the same directory. To shut down a <emphasis>nmbd</emphasis> process send it a SIGTERM (-15) signal instead of a SIGKILL (-9) to allow it to die gracefully. You can increment the debug logging level of <emphasis>nmbd</emphasis> by sending it a SIGUSR1 signal; you can decrement it by sending a SIGUSR2 signal.</para>
+</sect3>
+
+
+
+<sect3 role="" label="D.1.2.2" id="appd-SECT-1.2.2">
+<title>Command-line options</title>
+
+
+<variablelist>
+<varlistentry><term><literal>-D</literal></term>
+<listitem><para>Instructs the <filename>nmbd</filename> program to run as a daemon. This is the recommended way to use <filename>nmbd</filename>. In addition, <filename>nmbd</filename> can also be run from <firstterm>inetd</firstterm>.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-d</literal> <replaceable>debuglevel</replaceable></term>
+<listitem><para>Sets the debug (sometimes called logging) level. The level can range from 0, all the way to 10. Specifying the value on the command line overrides the value specified in the <filename>smb.conf</filename> file. Debug level 0 logs only the most important messages; level 1 is normal; level 3 and above are primarily for debugging, and slow <emphasis>nmbd</emphasis> considerably.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-h</literal> </term>
+<listitem><para>Prints command-line usage information for the <filename>nmbd</filename> program (also <literal>-?</literal>).</para></listitem>
+</varlistentry>
+</variablelist>
+</sect3>
+
+
+
+<sect3 role="" label="D.1.2.3" id="appd-SECT-1.2.3">
+<title>Testing/debugging options</title>
+
+
+<variablelist>
+<varlistentry><term><literal>-a</literal></term>
+<listitem><para>If this is specified, each new connection to the Samba server will append all logging messages to the log file. This option is the opposite of <literal>-o</literal>, and is the default.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-H</literal> <replaceable>hosts_  file</replaceable></term>
+<listitem><para>This option loads a standard <emphasis>hosts</emphasis> file for name resolution.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-i</literal> <replaceable>scope</replaceable></term>
+<listitem><para>This sets a NetBIOS scope identifier. Only machines with the same identifier will communicate with the server. The scope identifier was a predecessor to workgroups, and this option is included only for backward<indexterm id="appd-idx-994134-0" class="endofrange" startref="appd-idx-993627-1"/> compatibility.<indexterm id="appd-idx-994135-0" class="endofrange" startref="appd-idx-993645-0"/></para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-l</literal> <replaceable>log_file</replaceable></term>
+<listitem><para>Sends the log messages to somewhere other than the location compiled-in or specified in the <filename>smb.conf</filename> file. The default is often <filename>/usr/local/samba/var/log.nmb</filename>, <filename>/usr/samba/var/log.nmb,</filename> or <filename>/var/log/log.nmb</filename>. The first two are strongly discouraged on Linux, where <filename>/usr</filename> may be a read-only filesystem.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-n</literal> <replaceable>NetBIOS_name</replaceable></term>
+<listitem><para>This option allows you to override the NetBIOS name by which the daemon will advertise itself. Specifying the option on the command line overrides the <literal>netbios</literal> <literal>name</literal> option in the Samba configuration file.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-O</literal> <replaceable>socket_options</replaceable></term>
+<listitem><para>This sets the TCP/IP socket options, using the same parameters as the <literal>socket</literal> <literal>options</literal> configuration option. It is often used for performance tuning and testing.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-o</literal></term>
+<listitem><para>This option is the opposite of <literal>-a</literal>. It causes log files to be overwritten when opened. Using this option saves hunting for the right log entries if you are performing a series of tests and inspecting the log file each time.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-p</literal> <replaceable>port_number</replaceable></term>
+<listitem><para>This sets the UDP/IP port number from which the server will accept requests. Currently, all Microsoft clients send only to the default port: 137.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-s</literal> <replaceable>configuration_file</replaceable></term>
+<listitem><para>Specifies the location of the Samba configuration file. Although the file defaults to <filename>/usr/local/samba/lib/smb.conf</filename>, you can override it here on the command line, typically for debugging.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-v</literal></term>
+<listitem><para>This option prints the current version of Samba.</para></listitem>
+</varlistentry>
+</variablelist>
+</sect3>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="D.1.3" id="appd-SECT-1.3">
+<title>Samba Startup File </title>
+
+
+<para>
+<indexterm id="appd-idx-993647-0"><primary>Samba</primary><secondary>startup file</secondary></indexterm>
+<indexterm id="appd-idx-993647-1"><primary>scripts</primary><secondary sortas="Samba startup file">for Samba startup file</secondary></indexterm>
+<indexterm id="appd-idx-993647-2"><primary>directories</primary><secondary sortas="Samba startup file">for Samba startup file</secondary></indexterm>Samba is normally started by running it from your Unix system's <filename>rc</filename> files at boot time. For systems with a System V-like set of <filename>/etc/rcN.d</filename> directories, this can be done by placing a suitably named script in the <filename>/rc</filename> directory. Usually, the script  starting Samba is called <emphasis>S91samba</emphasis>, while the script stopping or "killing" Samba is called <emphasis>K91samba.</emphasis> On Linux, the usual subdirectory for the scripts is <filename>/etc/rc2.d.</filename> On Solaris, the directory is <filename>/etc/rc3.d</filename>. For machines with <filename>/etc/rc.local</filename> files, you would normally add the following lines to that file:</para>
+
+
+<programlisting>/usr/local/samba/bin/smbd -D
+/usr/local/samba/bin/nmbd -D</programlisting>
+
+
+<para>The following example script supports two extra commands, <literal>status</literal> and <literal>restart</literal>, in addition to the normal <literal>start</literal> and <literal>stop</literal> for System V machines:</para>
+
+
+<programlisting>#!/bin/sh
+#
+# /etc/rc2.d./S91Samba  --manage the SMB server in a System V manner
+#
+OPTS="-D"
+#DEBUG=-d3
+PS="ps  ax"
+SAMBA_DIR=/usr/local/samba
+case "$1" in
+'start')
+	echo "samba "
+	$SAMBA_DIR/bin/smbd $OPTS $DEBUG
+	$SAMBA_DIR/bin/nmbd $OPTS $DEBUG
+	;;
+'stop')
+	echo "Stopping samba"
+	$PS | awk '/usr.local.samba.bin/ { print $1}' |\
+	xargs kill
+	;;
+'status')
+	x=`$PS | grep -v grep | grep '$SAMBA_DIR/bin'`
+	if [ ! "$x" ]; then
+		echo "No samba processes running"
+	else
+		echo "  PID TT STAT  TIME COMMAND"
+		echo "$x"
+	fi
+	;;
+'restart')
+	/etc/rc2.d/S91samba stop
+	/etc/rc2.d/S91samba start
+	/etc/rc2.d/S91samba status
+	;;
+*)
+	echo "$0: Usage error -- you must say $0 start,  stop, status or restart ."
+	;;
+esac
+exit</programlisting>
+
+
+<para>You'll need to set the actual paths and <literal>ps</literal> options to suit the machine you're using. In addition, you might want to add additional commands to tell Samba to reload its <filename>smb.conf</filename> file or dump its <emphasis>nmbd</emphasis> tables, depending on your actual needs.</para>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="D.1.4" id="appd-SECT-1.4">
+<title>smbsh</title>
+
+
+<para>The <emphasis>smbsh</emphasis>
+<indexterm id="appd-idx-993744-0"><primary>smbsh program</primary></indexterm> program lets you use a remote Windows share on your Samba server as if the share was a regular Unix directory. When it's run, it provides an extra directory tree under <filename>/smb</filename>. Subdirectories of <filename>/smb</filename> are servers, and subdirectories of the servers are their individual disk and printer shares. Commands run by <emphasis>smbsh</emphasis> treat the <filename>/smb</filename> filesystem as if it were local to Unix. This means that you don't need <emphasis>smbmount</emphasis> in your kernel to mount Windows filesystems the way you mount with NFS filesystems. However, you do need to configure Samba with the <literal>--with-smbwrappers</literal> option to enable <filename>smbsh</filename>.</para>
+
+
+<sect3 role="" label="D.1.4.1" id="appd-SECT-1.4.1">
+<title>Options</title>
+
+
+<variablelist>
+<varlistentry><term><literal>-d</literal> debuglevel</term>
+<listitem><para>Sets the debug (sometimes called logging) level. The level can range from 0, the default, all the way to 10. Debug level 0 logs only the most important messages; level 1 is normal; level 3 and above are primarily for debugging, and slow <emphasis>smbsh</emphasis> considerably.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-l</literal> <replaceable>logfile</replaceable></term>
+<listitem><para>Sets the name of the logfile to use.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-P</literal> <replaceable>prefix</replaceable></term>
+<listitem><para>Sets the root directory to mount the SMB filesystem. The default is <filename>/smb</filename>.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-R</literal> <replaceable>resolve order</replaceable></term>
+<listitem><para>Sets the resolve order of the name servers. This option is similar to the <literal>resolve order</literal> configuration option, and can take any of the four parameters, <literal>lmhosts</literal>, <literal>host</literal>, <literal>wins</literal>, and <literal>bcast</literal>, in any order.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-U</literal> <replaceable>user</replaceable></term>
+<listitem><para>Supports <replaceable>user%password.</replaceable></para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-W</literal> <replaceable>workgroup</replaceable></term>
+<listitem><para>Sets the NetBIOS workgroup to which the client will connect.</para></listitem>
+</varlistentry>
+</variablelist>
+</sect3>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="D.1.5" id="appd-SECT-1.5">
+<title>smbclient</title>
+
+
+<para>The <emphasis>smbclient</emphasis>
+<indexterm id="appd-idx-993745-0" class="startofrange"><primary>smbclient program</primary></indexterm>
+<indexterm id="appd-idx-993745-1" class="startofrange"><primary>testing</primary><secondary>smbclient program</secondary></indexterm> program is the maid-of-all-work of the Samba suite. Initially intended as a testing tool, it has become a full command-line Unix client, with an FTP-like interactive client. Some of its options are still used for testing and tuning, and it makes a simple tool for ensuring that Samba is running on a server.</para>
+
+
+<para>It's convenient to look at <emphasis>smbclient</emphasis> as a suite of programs:</para>
+
+
+<itemizedlist>
+<listitem><para>FTP-like interactive file transfer program</para></listitem>
+<listitem><para>Interactive printing program</para></listitem>
+<listitem><para>Interactive tar program</para></listitem>
+<listitem><para>Command-line message program</para></listitem>
+<listitem><para>Command-line <emphasis>tar</emphasis> program (but see <emphasis>smbtar</emphasis> later)</para></listitem>
+<listitem><para>"What services do you have" query program</para></listitem>
+<listitem><para>Command-line debugging program</para></listitem>
+</itemizedlist>
+
+<sect3 role="" label="D.1.5.1" id="appd-SECT-1.5.1">
+<title>General command-line options</title>
+
+
+<para>The program has the usual set of <emphasis>smbd</emphasis>-like options, which apply to all the interactive and command-line use. The syntax is:</para>
+
+
+<programlisting>smbclient //<replaceable>server_name</replaceable>/<replaceable>share_name</replaceable> [<replaceable>password</replaceable>] [-<replaceable>options</replaceable>]</programlisting>
+
+
+<para>Here is an explanation of each of the command-line options:</para>
+
+
+<variablelist>
+<varlistentry><term><literal>-d</literal> <replaceable>debug_level</replaceable></term>
+<listitem><para>Sets the debug (logging) level, from 0 to 10, with <literal>A</literal> for all. Overrides the value in <filename>smb.conf</filename>. Debug level 0 logs only the most important messages; level 1 is normal; debug level 3 and above are for debugging, and slow <emphasis>smbclient</emphasis> considerably.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-h</literal></term>
+<listitem><para>Prints the command-line help information (usage) for smbclient.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-n</literal> <replaceable>NetBIOS_name</replaceable></term>
+<listitem><para>Allows you to override the NetBIOS name by which the program will advertise itself.</para></listitem>
+</varlistentry>
+</variablelist>
+</sect3>
+
+
+
+<sect3 role="" label="D.1.5.2" id="appd-SECT-1.5.2">
+<title>Smbclient operations</title>
+
+
+<para>Running <literal>smbclient</literal> <literal>//</literal><replaceable>server_name</replaceable><literal>/</literal><replaceable>share</replaceable> will cause it to prompt you for a username and password. If the login is successful, it will connect to the share and give you a prompt much like an FTP prompt (the backslash in the prompt will be replaced by the current directory within the share as you move around the filesystem):</para>
+
+
+<programlisting>smb:\&gt;</programlisting>
+
+
+<para>
+<indexterm id="appd-idx-994034-0" class="startofrange"><primary>commands for Samba</primary></indexterm>From this command line, you can use several FTP-like commands, as listed in <link linkend="appd-89417">Table 4.1</link>. Arguments in square brackets are optional.</para>
+
+
+<table label="D.1" id="appd-89417">
+<title>smbclient Commands </title>
+
+<tgroup cols="2">
+<colspec colnum="1" colname="col1"/>
+<colspec colnum="2" colname="col2"/>
+<thead>
+<row>
+
+<entry colname="col1"><para>Command</para></entry>
+
+<entry colname="col2"><para>Description</para></entry>
+
+</row>
+
+</thead>
+
+<tbody>
+<row>
+
+<entry colname="col1"><para><literal>?</literal> <replaceable>command</replaceable></para></entry>
+
+<entry colname="col2"><para>Provides list of commands or help on specified command.</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>help</literal> [<replaceable>command</replaceable>]</para></entry>
+
+<entry colname="col2"><para>Provides list of commands or help on specified command.</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>!</literal> [<replaceable>command</replaceable>]</para></entry>
+
+<entry colname="col2"><para>If a command is specified, it will be run in a local shell. If not, you will be placed into a local shell on the client.</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>dir</literal> [<replaceable>filename</replaceable>]</para></entry>
+
+<entry colname="col2"><para>Displays any files matching <replaceable>filename</replaceable> in the current directory on the server, or all files if <replaceable>filename</replaceable> is omitted.</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>ls</literal> [<replaceable>filename</replaceable>]</para></entry>
+
+<entry colname="col2"><para>Displays any files matching <replaceable>filename</replaceable> in the current directory on the server, or all files if <replaceable>filename</replaceable> is omitted.</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>cd</literal> [<replaceable>directory</replaceable>]</para></entry>
+
+<entry colname="col2"><para>If <replaceable>directory</replaceable> is specified, changes to the specified directory on the remote server. If not, reports the current directory on the remote machine.</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>lcd</literal> [<replaceable>director</replaceable><literal>y</literal>]</para></entry>
+
+<entry colname="col2"><para>If <replaceable>directory</replaceable> is specified, the current directory on the local machine will be changed. If not, the name of the current directory on the local machine will be reported.</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>get</literal> <emphasis>remotefile</emphasis> [<replaceable>localfile</replaceable>]</para></entry>
+
+<entry colname="col2"><para>Copies the file <replaceable>remotefile</replaceable> to the local machine. If a <replaceable>localfile</replaceable> is specified, uses that name to copy the file to. Treats the file as binary; does <emphasis>not</emphasis> do LF to CR/LF conversions.</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>put</literal> <emphasis>localfile</emphasis> [<replaceable>remotefile</replaceable>]</para></entry>
+
+<entry colname="col2"><para>Copies <replaceable>localfile</replaceable> to the remote machine. If a <replaceable>remotefile</replaceable> is specified, uses that as the name to copy to on the remote server. Treats the file as binary; does <emphasis>not</emphasis> do LF to CR/LF conversions.</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>mget</literal> <replaceable>pattern</replaceable></para></entry>
+
+<entry colname="col2"><para>Gets all files matching <replaceable>pattern</replaceable> from the remote machine.</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>mput</literal><replaceable> pattern</replaceable></para></entry>
+
+<entry colname="col2"><para>Places all local files matching <replaceable>pattern</replaceable> on the remote machine.</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>prompt</literal></para></entry>
+
+<entry colname="col2"><para>Toggles interactive prompting on and off for <literal>mget</literal> and <literal>mput</literal>.</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>lowercase ON </literal>(or<literal> OFF </literal>)</para></entry>
+
+<entry colname="col2"><para>If lowercase is on, <emphasis>smbclient</emphasis> will convert filenames to lowercase during an <literal>mget</literal> or <literal>get</literal> (but not a <literal>mput</literal> or <literal>put</literal>).</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>del</literal> <replaceable>filename</replaceable></para></entry>
+
+<entry colname="col2"><para>Delete a file on the remote machine.</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>md</literal> <replaceable>directory</replaceable></para></entry>
+
+<entry colname="col2"><para>Create a directory on the remote machine.</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>mkdir</literal> <replaceable>directory</replaceable></para></entry>
+
+<entry colname="col2"><para>Create a directory on the remote machine.</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>rd</literal> <replaceable>directory</replaceable></para></entry>
+
+<entry colname="col2"><para>Remove the specified directory on the remote machine.</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>rmdir</literal> <replaceable>directory</replaceable></para></entry>
+
+<entry colname="col2"><para>Remove the specified directory on the remote machine.</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>setmode</literal> <replaceable>filename</replaceable> <literal>[+|-]rsha</literal></para></entry>
+
+<entry colname="col2"><para>Set DOS filesystem attribute bits, using Unix-like modes. <literal>r</literal> is read-only, <literal>s</literal> is system, <literal>h</literal> is hidden, and <literal>a</literal> is archive.</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>exit</literal></para></entry>
+
+<entry colname="col2"><para>Exits <emphasis>smbclient</emphasis>.</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>quit</literal></para></entry>
+
+<entry colname="col2"><para>Exits <emphasis>smbclient</emphasis>.</para></entry>
+
+</row>
+
+</tbody>
+</tgroup>
+</table>
+
+
+<para>There are also mask and recursive commands for large copies; see the <filename>smbclient</filename> manual page for details on how to use these. With the exception of mask, recursive, and the lack of an ASCII transfer mode, <emphasis>smbclient</emphasis> works exactly the same as FTP. Note that because it does binary transfers, Windows files copied to Unix will have lines ending in carriage-return and linefeed (<literal>\r\n</literal>), not Unix's linefeed (<literal>\n</literal>).</para>
+</sect3>
+
+
+
+<sect3 role="" label="D.1.5.3" id="appd-SECT-1.5.3">
+<title>Printing commands</title>
+
+
+<para>The <emphasis>smbclient</emphasis> program can also be used for access to a printer by connecting to a print share. Once connected, the commands shown in <link linkend="appd-39300">Table 4.2</link> can be used to print.</para>
+
+
+<table label="D.2" id="appd-39300">
+<title>smbclient Printing Commands </title>
+
+<tgroup cols="2">
+<colspec colnum="1" colname="col1"/>
+<colspec colnum="2" colname="col2"/>
+<thead>
+<row>
+
+<entry colname="col1"><para>Command</para></entry>
+
+<entry colname="col2"><para>Description</para></entry>
+
+</row>
+
+</thead>
+
+<tbody>
+<row>
+
+<entry colname="col1"><para><literal>print</literal><replaceable> filename</replaceable></para></entry>
+
+<entry colname="col2"><para>Prints the file by copying it from the local machine to the remote one and then submitting it as a print job there.</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>printmode</literal> <replaceable>text </replaceable>|<replaceable> graphics</replaceable></para></entry>
+
+<entry colname="col2"><para>Instructs the server that the following files will be plain text (ASCII) or the binary graphics format that the printer requires. It's up to the user to ensure that the file is indeed the right kind.</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>queue</literal></para></entry>
+
+<entry colname="col2"><para>Displays the queue for the print share you're connected to, showing job ID, name, size, and status.</para></entry>
+
+</row>
+
+</tbody>
+</tgroup>
+</table>
+
+
+<para>Finally, to print from the <emphasis>smbclient</emphasis>, use the <literal>-c</literal> option:</para>
+
+
+<programlisting>cat <replaceable>printfile</replaceable> | smbclient //<replaceable>server</replaceable>/<replaceable>printer_name</replaceable>  -c "print -"</programlisting>
+</sect3>
+
+
+
+<sect3 role="" label="D.1.5.4" id="appd-SECT-1.5.4">
+<title>Tar commands</title>
+
+
+<para><emphasis>smbclient</emphasis> can tar up files from a file share. This is normally done from the command line using the <emphasis>smbtar</emphasis> command, but the commands shown in <link linkend="appd-54517">Table 4.3</link> are also available interactively.</para>
+
+
+<table label="D.3" id="appd-54517">
+<title>smbclient Printing Commands </title>
+
+<tgroup cols="2">
+<colspec colnum="1" colname="col1"/>
+<colspec colnum="2" colname="col2"/>
+<thead>
+<row>
+
+<entry colname="col1"><para>Command</para></entry>
+
+<entry colname="col2"><para>Description</para></entry>
+
+</row>
+
+</thead>
+
+<tbody>
+<row>
+
+<entry colname="col1"><para><literal>tar c|x[IXbgNa]</literal> <replaceable>operands</replaceable></para></entry>
+
+<entry colname="col2"><para>Performs a creation or extraction <emphasis>tar</emphasis> similar to the command-line program.</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>blocksize</literal> <replaceable>size</replaceable></para></entry>
+
+<entry colname="col2"><para>Sets the block size to be used by <emphasis>tar</emphasis>, in 512-byte blocks.</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>noreset</literal></para></entry>
+
+<entry colname="col2"><para>Makes <emphasis>tar</emphasis> pay attention to DOS archive bit for all following commands. In <literal>full</literal> mode (the default), <emphasis>tar</emphasis> will back up everything. In <literal>inc</literal> (incremental) mode, <emphasis>tar</emphasis> will back up only those files with the archive bit set. In <literal>reset</literal> mode, <emphasis>tar</emphasis> will reset the archive bit on all files it backs up. (this requires the share to be writable), and in <literal>noreset</literal> mode the archive bit will not be reset even after the file has been backed up.</para></entry>
+
+</row>
+
+</tbody>
+</tgroup>
+</table>
+</sect3>
+
+
+
+<sect3 role="" label="D.1.5.5" id="appd-SECT-1.5.5">
+<title>Command-line message program options</title>
+
+
+<variablelist>
+<varlistentry><term><literal>-M</literal> <replaceable>NetBIOS_machine_name</replaceable></term>
+<listitem><para>This option allows you to send immediate messages using the WinPopup protocol to another computer. Once a connection is established, you can type your message, pressing control-D to end. If WinPopup is not running on the receiving machine, the program returns an error.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-U</literal> <replaceable>user</replaceable> </term>
+<listitem><para>This<replaceable> </replaceable>option allows you to indirectly control the FROM part of the message.</para></listitem>
+</varlistentry>
+</variablelist>
+</sect3>
+
+
+
+<sect3 role="" label="D.1.5.6" id="appd-SECT-1.5.6">
+<title>Command-line tar program options</title>
+
+
+<para>The <literal>-T</literal> (tar), <literal>-D</literal> (starting directory), and <literal>-c</literal> (command) options are used together to tar up files interactively. This is better done with <filename>smbtar</filename>, which will be discussed shortly. We don't recommend using <emphasis>smbclient</emphasis> directly as a <emphasis>tar</emphasis> program.</para>
+
+
+<variablelist>
+<varlistentry><term><literal>-D</literal> <replaceable>initial_directory</replaceable></term>
+<listitem><para>Changes to initial directory before starting.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-c</literal> <replaceable>command_string</replaceable> </term>
+<listitem><para>Passes a command string to the <emphasis>smbclient</emphasis> command interpreter, which treats it as a semicolon-separated list of commands to be executed. This is handy to say things such as <literal>tarmode</literal> <literal>inc</literal>, for example, which forces <literal>smbclient</literal> <literal>-T</literal> to back up only files with the archive bit set.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-T</literal> <replaceable>command filename</replaceable></term>
+<listitem><para>Runs the <emphasis>tar</emphasis> driver, which is <emphasis>gtar</emphasis> compatible. The two main commands are: <literal>c</literal> (create) and <literal>x</literal> (extract), which may be followed by any of:</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>a</literal></term>
+<listitem><para>Resets archive bits once files are saved.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>b</literal> <replaceable>size</replaceable></term>
+<listitem><para>Sets blocksize in 512-byte units.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>g</literal></term>
+<listitem><para>Backs up only files with the archive bit set.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>I</literal> <replaceable>file</replaceable></term>
+<listitem><para>Includes files and directories (this is the default). Does not do pattern-matching.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>N</literal> <replaceable>filename</replaceable></term>
+<listitem><para>Backs up only those files newer than <replaceable>filename.</replaceable></para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>q</literal></term>
+<listitem><para>Does not produce diagnostics.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>X</literal> <replaceable>file</replaceable></term>
+<listitem><para>Excludes files.</para></listitem>
+</varlistentry>
+</variablelist>
+</sect3>
+
+
+
+<sect3 role="" label="D.1.5.7" id="appd-SECT-1.5.7">
+<title>Command-line query program</title>
+
+
+<para>If <filename>smbclient</filename> is run as:</para>
+
+
+<programlisting>smbclient -L <replaceable>server_name</replaceable></programlisting>
+
+
+<para>it will list the shares and other services that machine provides. This is handy if you don't have <filename>smbwrappers</filename>. It can also be helpful as a testing program in its own right.</para>
+</sect3>
+
+
+
+<sect3 role="" label="D.1.5.8" id="appd-SECT-1.5.8">
+<title>Command-line debugging /diagnostic program options</title>
+
+
+<para>Any of the various modes of operation of <emphasis>smbclient</emphasis> can be used with the debugging and testing command-line options:</para>
+
+
+<variablelist>
+<varlistentry><term><literal>-B</literal> <replaceable>IP_addr</replaceable></term>
+<listitem><para>Sets the broadcast address.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-d</literal> <replaceable>debug_level</replaceable></term>
+<listitem><para>Sets the debug (sometimes called logging) level. The level can range from 0 all the way to 10. In addition, you can specify <literal>A</literal> for all debugging options. Debug level 0 logs only the most important messages; level 1 is normal; level 3 and above are primarily for debugging and slow operations considerably.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-E</literal></term>
+<listitem><para>Sends all messages to stderr instead of stdout.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-I</literal> <replaceable>IP_address</replaceable> </term>
+<listitem><para>Sets the IP address of the server to which it connects.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-i</literal> <replaceable>scope</replaceable></term>
+<listitem><para>This sets a NetBIOS scope identifier. Only machines with the same identifier will communicate with the server. The scope identifier was a predecessor to workgroups, and this option is included only for backward compatibility.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-l</literal> <replaceable>log_file</replaceable></term>
+<listitem><para>Sends the log messages to the specified file.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-N</literal></term>
+<listitem><para>Suppresses the password prompt. Unless a password is specified on the command line or this parameter is specified, the client will prompt for a password.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-n</literal> <replaceable>NetBIOS_name</replaceable></term>
+<listitem><para>This option allows you to override the NetBIOS name by which the daemon will advertise itself.</para></listitem>
+</varlistentry>
+</variablelist>
+
+
+<variablelist>
+<varlistentry><term><literal>-O</literal> <replaceable>socket_options</replaceable></term>
+<listitem><para>Sets the TCP/IP socket options using the same parameters as the <literal>socket</literal> <literal>options</literal> configuration option. It is often used for performance tuning and testing.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-p</literal> <replaceable>port_number</replaceable></term>
+<listitem><para>Sets the port number from which the client will accept requests.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-R</literal> <replaceable>resolve_order</replaceable></term>
+<listitem><para>Sets the resolve order of the name servers. This option is similar to the <literal>resolve</literal> <literal>order</literal> configuration option, and can take any of the four parameters, <literal>lmhosts</literal>, <literal>host</literal>, <literal>wins</literal>, and <literal>bcast</literal>, in any order .</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-s</literal> <replaceable>configuration_file</replaceable></term>
+<listitem><para>Specifies the location of the Samba configuration file. Used for debugging.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-t</literal> <replaceable>terminal_code</replaceable></term>
+<listitem><para>Sets the terminal code for Asian languages.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-U</literal> <replaceable>username</replaceable></term>
+<listitem><para>Sets the username and optionally password (e.g., <literal>-U</literal> <literal>fred%secret</literal>).</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-W</literal> <replaceable>workgroup</replaceable></term>
+<listitem><para>Specifies the workgroup that you want the client to connect as.</para></listitem>
+</varlistentry>
+</variablelist>
+
+
+<para>If you want to test a particular name service, run <emphasis>smbclient</emphasis> with <literal>-R</literal> and just the name of the service. This will force <emphasis>smbclient</emphasis> to use only the service you gave.<emphasis></emphasis>
+<indexterm id="appd-idx-993802-0" class="endofrange" startref="appd-idx-993745-0"/>
+<indexterm id="appd-idx-993802-1" class="endofrange" startref="appd-idx-993745-1"/></para>
+</sect3>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="D.1.6" id="appd-SECT-1.6">
+<title>smbstatus</title>
+
+
+<para>The <filename>smbstatus</filename>
+<indexterm id="appd-idx-993754-0"><primary>smbstatus program</primary></indexterm>
+<indexterm id="appd-idx-993754-1"><primary>connections</primary><secondary>current, list of</secondary></indexterm> program lists the current connections on a Samba server. There are three separate sections. The first section lists various shares that are in use by specific users. The second section lists the locked files that Samba currently has on all of its shares. Finally, the third section lists the amount of memory usage for each of the shares. For example:</para>
+
+
+<programlisting># <emphasis role="bold">smbstatus</emphasis>
+Samba version 2.0.3
+Service      uid      gid      pid     machine
+----------------------------------------------
+network      davecb   davecb   7470   phoenix  (192.168.220.101) Sun May 16
+network      davecb   davecb   7589   chimaera (192.168.220.102) Sun May 16
+
+Locked files:
+Pid    DenyMode   R/W        Oplock           Name
+--------------------------------------------------
+7589   DENY_NONE  RDONLY   EXCLUSIVE+BATCH  /home/samba/quicken/inet/common/system/help.bmp
+Sun May 16 21:23:40 1999
+7470   DENY_WRITE RDONLY   NONE             /home/samba/word/office/findfast.exe
+Sun May 16 20:51:08 1999
+7589   DENY_WRITE RDONLY   EXCLUSIVE+BATCH  /home/samba/quicken/lfbmp70n.dll
+Sun May 16 21:23:39 1999
+7589   DENY_WRITE RDWR     EXCLUSIVE+BATCH  /home/samba/quicken/inet/qdata/runtime.dat
+Sun May 16 21:23:41 1999
+7470   DENY_WRITE RDONLY   EXCLUSIVE+BATCH  /home/samba/word/office/osa.exe
+Sun May 16 20:51:09 1999
+7589   DENY_WRITE RDONLY   NONE             /home/samba/quicken/qversion.dll
+Sun May 16 21:20:33 1999
+7470   DENY_WRITE RDONLY   NONE             /home/samba/quicken/qversion.dll
+Sun May 16 20:51:11 1999
+
+Share mode memory usage (bytes):
+   1043432(99%) free + 4312(0%) used + 832(0%) overhead = 1048576(100%) total</programlisting>
+
+
+<sect3 role="" label="D.1.6.1" id="appd-SECT-1.6.1">
+<title>Options</title>
+
+
+<variablelist>
+<varlistentry><term><literal>-b</literal></term>
+<listitem><para>Forces <filename>smbstatus</filename> to produce brief output. This includes the version of Samba and auditing information about the users that have logged into the server.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-d</literal></term>
+<listitem><para>Gives verbose output, including each of the three reporting sections listed in the previous example. This is the default.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-L</literal></term>
+<listitem><para>Forces <filename>smbstatus</filename> to print only the current file locks it has. This corresponds to the second section in a verbose output.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-p</literal></term>
+<listitem><para>Prints a list of <filename>smbd</filename> process IDs only. This is often used for scripts.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-S</literal></term>
+<listitem><para>Prints only a list of shares and their connections. This corresponds to the first section in a verbose output.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-s</literal> <replaceable>configuration_file</replaceable></term>
+<listitem><para>Sets the Samba configuration file to use when processing this command.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-u</literal> <replaceable>username</replaceable></term>
+<listitem><para>Limits the <filename>smbstatus</filename> report to the activity of a single user.</para></listitem>
+</varlistentry>
+</variablelist>
+</sect3>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="D.1.7" id="appd-SECT-1.7">
+<title>smbtar</title>
+
+
+<para>The <emphasis>smbtar</emphasis>
+<indexterm id="appd-idx-993755-0"><primary>smbtar program</primary><secondary>tar operations and</secondary></indexterm>
+<indexterm id="appd-idx-993755-1"><primary>tar operations</primary></indexterm> program is a shell script on top of <emphasis>smbclient</emphasis> that gives the program more intelligible options when doing tar operations. Functionally, it is equivalent to the Unix <emphasis>tar</emphasis> program.</para>
+
+
+<sect3 role="" label="D.1.7.1" id="appd-SECT-1.7.1">
+<title>Options</title>
+
+
+<variablelist>
+<varlistentry><term><literal>-a</literal></term>
+<listitem><para>Resets the archive bit mode</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-b</literal> <replaceable>blocksize</replaceable></term>
+<listitem><para>Blocking size. Defaults to 20.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-d</literal> <replaceable>directory</replaceable></term>
+<listitem><para>Changes to initial directory before restoring or backing up files.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-i</literal></term>
+<listitem><para>Incremental mode; tar files are backed up only if they have the DOS archive bit set. The archive bit is reset after each file is read.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-l</literal> <replaceable>log_level</replaceable></term>
+<listitem><para> Sets the logging level.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-N</literal> <replaceable>filename</replaceable></term>
+<listitem><para>Backs up only the files newer than the last modification date of <replaceable>filename</replaceable>. For incremental backups.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-p</literal> <replaceable>password</replaceable></term>
+<listitem><para>Specifies the password to use to access a share.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-r</literal></term>
+<listitem><para>Restores files to the share from the tar file.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-s</literal> <replaceable>server</replaceable></term>
+<listitem><para>Specifies the SMB/CIFS server in which the share resides.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-t</literal> <replaceable>tape</replaceable></term>
+<listitem><para>Tape device or file. Default is the value of the environment variable <literal>$TAPE</literal>, or <emphasis>tar.out</emphasis> if <literal>$TAPE</literal> isn't set.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-u</literal> <replaceable>user</replaceable></term>
+<listitem><para>Specifies the user to connect to the share as. You can specify the password as well, in the format <replaceable>username</replaceable><literal>%</literal><replaceable>password</replaceable>.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-v</literal></term>
+<listitem><para>Specifies the use of verbose mode.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-X</literal> <replaceable>file</replaceable></term>
+<listitem><para>Tells <firstterm>smbtar</firstterm> to exclude the specified file from the <emphasis>tar</emphasis> create or restore.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-x</literal> <replaceable>share</replaceable></term>
+<listitem><para>States the share name on the server to connect to. The default is <literal>backup</literal>, which is a common share name to perform backups with.</para></listitem>
+</varlistentry>
+</variablelist>
+
+
+<para>For example, a trivial backup command to archive the data for user <literal>sue</literal> is:</para>
+
+
+<programlisting># <emphasis role="bold">smbtar -s pc_name -x sue -u sue -p secret -t sue.tar</emphasis></programlisting>
+</sect3>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="D.1.8" id="appd-SECT-1.8">
+<title>nmblookup</title>
+
+
+<para>The <filename>nmblookup</filename>
+<indexterm id="appd-idx-993756-0"><primary>nmblookup program</primary></indexterm>
+<indexterm id="appd-idx-993756-1"><primary>name services</primary><secondary>nmblookup program</secondary></indexterm> program is a client program that exercises the NetBIOS-over-UDP/IP name service for resolving NBT machine names into IP addresses. The command works by broadcasting its queries on the local subnet until a machine with that name responds. You can think of it as a Windows <emphasis>nslookup(1)</emphasis> or <emphasis>dig(1)</emphasis>. This is useful for looking up both normal NetBIOS names, and the odd ones like <literal>_ _MSBROWSE_ _</literal> that the Windows name services use to provide directory-like services. If you wish to query for a particular type of NetBIOS name, add the NetBIOS <literal>&lt;type&gt;</literal> to the end of the name.</para>
+
+
+<para>The command line is:</para>
+
+
+<programlisting>nmblookup [-options] <replaceable>name</replaceable></programlisting>
+
+
+<para>The options supported are:</para>
+
+
+<variablelist>
+<varlistentry><term><literal>-A</literal></term>
+<listitem><para>Interprets <replaceable>name</replaceable> as an IP address and do a node-status query on this address.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-B</literal> <replaceable>broadcast _address</replaceable></term>
+<listitem><para>Sends the query to the given broadcast address. The default is to send the query to the broadcast address of the primary network interface.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-d</literal> <replaceable>debuglevel</replaceable></term>
+<listitem><para>Sets the debug (sometimes called logging) level. The level can range from 0 all the way to 10. Debug level 0 logs only the most important messages; level 1 is normal; level 3 and above are primarily for debugging and slow the program considerably.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-h</literal></term>
+<listitem><para>Prints command-line usage information for the program.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-i</literal> <replaceable>scope</replaceable></term>
+<listitem><para>Sets a NetBIOS scope identifier. Only machines with the same identifier will communicate with the server. The scope identifier was a predecessor to workgroups, and this option is included only for backward compatibility.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-M</literal></term>
+<listitem><para>Searches for a local master browser. This is done with a broadcast searching for a machine that will respond to the special name <literal>_ _MSBROWSE_ _ </literal>, and then asking that machine for information, instead of broadcasting the query itself.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-R</literal></term>
+<listitem><para>Sets the recursion desired bit in the packet. This will cause the machine that responds to try to do a WINS lookup and return the address and any other information the WINS server has saved.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-r</literal></term>
+<listitem><para>Use the root port of 137 for Windows 95 machines.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-S</literal></term>
+<listitem><para>Once the name query has returned an IP address, does a node status query as well. This returns all the resource types that the machine knows about, with their numeric attributes. For example:</para></listitem>
+</varlistentry>
+</variablelist>
+
+
+<programlisting>% <emphasis role="bold">nmblookup -d 4 -S elsbeth</emphasis>
+received 6 names
+      ELSBETH                &lt;00&gt; - &lt;GROUP&gt; B &lt;ACTIVE&gt;
+      ELSBETH                &lt;03&gt; -         B &lt;ACTIVE&gt;
+      ELSBETH                &lt;1d&gt; -         B &lt;ACTIVE&gt;
+      ELSBETH                &lt;1e&gt; - &lt;GROUP&gt; B &lt;ACTIVE&gt;
+      ELSBETH                &lt;20&gt; -         B &lt;ACTIVE&gt;
+      .._ _MSBROWSE_   _..   &lt;01&gt; - &lt;GROUP&gt; B &lt;ACTIVE&gt;</programlisting>
+
+
+<variablelist>
+<varlistentry><term><literal>-s</literal> <replaceable>configuration_file</replaceable></term>
+<listitem><para>Specifies the location of the Samba configuration file. Although the file defaults to <filename>/usr/local/samba/lib/smb.conf</filename>, you can override it here on the command-line, normally for debugging.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-T</literal></term>
+<listitem><para>This option can be used to translate IP addresses into resolved names.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-U</literal> <replaceable>unicast_address</replaceable></term>
+<listitem><para>Performs a unicast query to the specified address. Used with <literal>-R</literal> to query WINS servers.</para></listitem>
+</varlistentry>
+</variablelist>
+
+
+<para>Note that there is no workgroup option for <emphasis>nmblookup</emphasis> ; you can get around this by putting <literal>workgroup</literal> <literal>=</literal> <replaceable>workgroup_name </replaceable>in a file and passing it to <emphasis>nmblookup</emphasis> with the <literal>-s</literal> <replaceable>smb.conf_file</replaceable> option.</para>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="D.1.9" id="appd-SECT-1.9">
+<title>smbpasswd</title>
+
+
+<para>The <emphasis>smbpasswd</emphasis>
+<indexterm id="appd-idx-993757-0"><primary>smbpasswd program</primary></indexterm>
+<indexterm id="appd-idx-993757-1"><primary>passwords</primary><secondary>smbpasswd program </secondary></indexterm> password has two distinct sets of functions. When run by users, it changes their encrypted passwords. When run by <literal>root</literal>, it updates the encrypted password file. When run by an ordinary user with no options, it connects to the primary domain controller and changes his or her Windows password.</para>
+
+
+<para>The program will fail if <emphasis>smbd</emphasis> is not operating, if the <literal>hosts</literal> <literal>allow</literal> or <literal>hosts</literal> <literal>deny</literal> configuration options will not permit connections from localhost (IP address 127.0.0.1), or the <literal>encrypted</literal> <literal>passwords</literal> <literal>=</literal> <literal>no</literal> option is set.</para>
+
+
+<sect3 role="" label="D.1.9.1" id="appd-SECT-1.9.1">
+<title>Regular user options</title>
+
+
+<variablelist>
+<varlistentry><term><literal>-D</literal> <replaceable>debug_level</replaceable></term>
+<listitem><para>Sets the debug (also called logging) level. The level can range from 0 to 10. Debug level 0 logs only the most important messages; level 1 is normal; level 3 and above are primarily for debugging and slow the program considerably.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-h</literal></term>
+<listitem><para>Prints command-line usage information for the program.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-r</literal> <replaceable>remote_machine_name</replaceable></term>
+<listitem><para>Specifies on which machine the password should change. The remote machine must be a primary domain controller (PDC).</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-R</literal> <replaceable>resolve_order</replaceable></term>
+<listitem><para>Sets the resolve order of the name servers. This option is similar to the <literal>resolve</literal> <literal>order</literal> configuration option, and can take any of the four parameters, <literal>lmhosts</literal>, <literal>host</literal>, <literal>wins</literal>, and <literal>bcast</literal>,<literal> </literal>in any order.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-U</literal> <replaceable>username</replaceable></term>
+<listitem><para>Used only with <literal>-r</literal>, to modify a username that is spelled differently on the remote machine.</para></listitem>
+</varlistentry>
+</variablelist>
+</sect3>
+
+
+
+<sect3 role="" label="D.1.9.2" id="appd-SECT-1.9.2">
+<title>Root-only options</title>
+
+
+<variablelist>
+<varlistentry><term><literal>-a</literal> <replaceable>username</replaceable></term>
+<listitem><para>Adds a user to the encrypted password file.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-d</literal> <replaceable>username</replaceable></term>
+<listitem><para>Disables a user in the encrypted password file.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-e</literal> <replaceable>username</replaceable></term>
+<listitem><para>Enables a disabled user in the encrypted password file.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-m</literal> <replaceable>machine_name</replaceable></term>
+<listitem><para>Changes a machine account's password. The machine accounts are used to authenticate machines when they connect to a primary or backup domain controller.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-j</literal> <replaceable>domain_name</replaceable></term>
+<listitem><para>Adds a Samba server to a Windows NT Domain.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-n</literal></term>
+<listitem><para>Sets no password for the user.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-s</literal> <replaceable>username</replaceable></term>
+<listitem><para>Causes <emphasis>smbpasswd</emphasis> to be silent and to read its old and new passwords from standard input, rather than from <filename>/dev/tty</filename>. This is useful for writing scripts.</para></listitem>
+</varlistentry>
+</variablelist>
+</sect3>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="D.1.10" id="appd-SECT-1.10">
+<title>testparm</title>
+
+
+<para>The <emphasis>testparm</emphasis>
+<indexterm id="appd-idx-993999-0"><primary>testparm program</primary></indexterm>
+<indexterm id="appd-idx-993999-1"><primary>smb.conf (Samba configuration) file</primary><secondary>testparm program for</secondary></indexterm> program checks an <filename>smb.conf</filename> file for obvious errors and self-consistency. Its command line is:</para>
+
+
+<programlisting>testparm [options] <replaceable>configfile_name [hostname IP_addr]</replaceable></programlisting>
+
+
+<para>If the configuration file is not specified, the file at <replaceable>samba_dir</replaceable><filename>/lib/smb.conf</filename> is checked by default. If you specify a hostname and an IP address, an extra check will be made to ensure that the specified machine would be allowed to connect to Samba. If a hostname is specified, an IP address should be present as well.</para>
+
+
+<sect3 role="" label="D.1.10.1" id="appd-SECT-1.10.1">
+<title>Options</title>
+
+
+<variablelist>
+<varlistentry><term><literal>-h</literal></term>
+<listitem><para>Prints command-line information for the program.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-L</literal> server_name</term>
+<listitem><para>Resets the <literal>%L</literal> configuration variable to the specified server name.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-s</literal></term>
+<listitem><para>This option prevents the <emphasis>testparm</emphasis> program from prompting the user to press the Enter key before printing a list of the configuration options for the server.</para></listitem>
+</varlistentry>
+</variablelist>
+</sect3>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="D.1.11" id="appd-SECT-1.11">
+<title>testprns</title>
+
+
+<para>The<indexterm id="appd-idx-993761-0"><primary>testprns program</primary></indexterm>
+<indexterm id="appd-idx-993761-1"><primary>printers</primary><secondary>names</secondary><tertiary>checking</tertiary></indexterm> <emphasis>testprns</emphasis> program checks a specified printer name against the system printer capabilities (<filename>printcap</filename>) file. Its command line is:</para>
+
+
+<programlisting>testprns <replaceable>printername</replaceable> [<replaceable>printcapname</replaceable>]</programlisting>
+
+
+<para>If the <literal>printcapname</literal> isn't specified, Samba attempts to use one located in the <filename>smb.conf</filename> file. If one isn't specified there, Samba will try <filename>/etc/printcap</filename>. If that fails, the program will generate an error.</para>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="D.1.12" id="appd-SECT-1.12">
+<title>rpcclient</title>
+
+
+<para>This is a new client that exercises the <indexterm id="appd-idx-993762-0"><primary>RPC (remote procedure call)</primary></indexterm>
+<indexterm id="appd-idx-993762-1"><primary>remote procedure call (RPC)</primary></indexterm>RPC (remote procedure call) interfaces of an SMB server. Like <emphasis>smbclient</emphasis>, <emphasis>rpcclient</emphasis>
+<indexterm id="appd-idx-993763-0"><primary>rpcclient program</primary></indexterm> started its life as a test program for the Samba developers and will likely stay that way for a while. Its command line is:</para>
+
+
+<programlisting>rpcclient //<replaceable>server</replaceable>/<replaceable>share</replaceable></programlisting>
+
+
+<para>The command-line options are the same as the Samba 2.0 <emphasis>smbclient</emphasis>, and the operations you can try are listed in <link linkend="appd-65243">Table 4.4</link>.</para>
+
+
+<table label="D.4" id="appd-65243">
+<title>rpcclient commands </title>
+
+<tgroup cols="2">
+<colspec colnum="1" colname="col1"/>
+<colspec colnum="2" colname="col2"/>
+<thead>
+<row>
+
+<entry colname="col1"><para>Command</para></entry>
+
+<entry colname="col2"><para>Description</para></entry>
+
+</row>
+
+</thead>
+
+<tbody>
+<row>
+
+<entry colname="col1"><para><literal>regenum keyname</literal></para></entry>
+
+<entry colname="col2"><para>Registry Enumeration (keys, values)</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>regdeletekey keyname </literal></para></entry>
+
+<entry colname="col2"><para>Registry Key Delete</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>regcreatekey keyname [keyvalue]</literal></para></entry>
+
+<entry colname="col2"><para>Registry Key Create</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>regquerykey keyname</literal></para></entry>
+
+<entry colname="col2"><para>Registry Key Query</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>regdeleteval valname</literal></para></entry>
+
+<entry colname="col2"><para>Registry Value Delete</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>regcreateval valname valtype value</literal></para></entry>
+
+<entry colname="col2"><para>Registry Key Create</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>reggetsec keyname</literal></para></entry>
+
+<entry colname="col2"><para>Registry Key Security</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>regtestsec keyname</literal></para></entry>
+
+<entry colname="col2"><para>Test Registry Key Security</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>ntlogin [username] [password]</literal></para></entry>
+
+<entry colname="col2"><para>NT Domain Login Test</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>wksinfo</literal></para></entry>
+
+<entry colname="col2"><para>Workstation Query Info</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>srvinfo</literal></para></entry>
+
+<entry colname="col2"><para>Server Query Info</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>srvsessions</literal></para></entry>
+
+<entry colname="col2"><para>List Sessions on a Server</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>srvshares</literal></para></entry>
+
+<entry colname="col2"><para>List shares on a server</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>srvconnections</literal></para></entry>
+
+<entry colname="col2"><para>List connections on a server</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>srvfiles</literal></para></entry>
+
+<entry colname="col2"><para>List files on a server</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>lsaquery</literal></para></entry>
+
+<entry colname="col2"><para>Query Info Policy (domain member or server)</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>lookupsids</literal></para></entry>
+
+<entry colname="col2"><para>Resolve names from SIDs</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>ntpass</literal></para></entry>
+
+<entry colname="col2"><para>NT SAM Password Change</para></entry>
+
+</row>
+
+</tbody>
+</tgroup>
+</table>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="D.1.13" id="appd-SECT-1.13">
+<title>tcpdump</title>
+
+
+<para>The <emphasis>tcpdump</emphasis>
+<indexterm id="appd-idx-993765-0"><primary>tcpdump utility</primary></indexterm>
+<indexterm id="appd-idx-993765-1"><primary>packets</primary><secondary>headers for, tcpdump utility and</secondary></indexterm> utility, a classic system administration tool, dumps all the packet headers it sees on an interface that match an expression. The version included in the Samba distribution is enhanced to understand the SMB protocol. The <emphasis>expression</emphasis> is a logical expression with "and," "or," and "not," although sometimes it's very simple. For example, <literal>host</literal> <literal>escrime</literal> would select every packet going to or from <literal>escrime</literal>. The expression is normally one or more of:</para>
+
+
+<itemizedlist>
+
+<listitem><para><literal>host</literal> <replaceable>name</replaceable></para></listitem>
+
+<listitem><para><literal>ne</literal>t <replaceable>network_number</replaceable></para></listitem>
+<listitem><para><literal>port</literal> <replaceable>number</replaceable></para></listitem>
+<listitem><para><literal>src</literal> <replaceable>name </replaceable></para></listitem>
+<listitem><para><literal>dst</literal> <replaceable>name</replaceable></para></listitem>
+</itemizedlist>
+
+<para>The most common options are <literal>src</literal> (source), <literal>dst</literal> (destination), and <literal>port</literal>. For example, in the book we used the command:</para>
+
+
+<programlisting>tcpdump port not telnet</programlisting>
+
+
+<para>This dumps all the packets except telnet; we were logged-in via telnet and  wanted to see only the SMB packets.</para>
+
+
+<para>Another <emphasis>tcpdump</emphasis> example is selecting traffic between server and either <literal>sue</literal> or <literal>joe</literal>:</para>
+
+
+<programlisting>tcpdump host server and \( sue or joe \)</programlisting>
+
+
+<para>We recommend using the <literal>-s</literal> <literal>1500</literal> option so that you capture all of the SMB messages sent, instead of just the header information.</para>
+
+
+<sect3 role="" label="D.1.13.1" id="appd-SECT-1.13.1">
+<title>Options</title>
+
+
+<para>There are many options, and many other kinds of expressions that can be used with <emphasis>tcpdump</emphasis>. See the manual page for details on the advanced options. The most common options are as follows:</para>
+
+
+<variablelist>
+<varlistentry><term><literal>-c</literal> <replaceable>count</replaceable></term>
+<listitem><para>Forces the program to exit after receiving the specified number of packets.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-F</literal> <replaceable>file</replaceable></term>
+<listitem><para>Reads the expression from the specified file and ignores expressions on the command line.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-i</literal> <replaceable>interface</replaceable></term>
+<listitem><para>Forces the program to listen on the specified interface.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-r</literal> <replaceable>file</replaceable></term>
+<listitem><para>Reads packets from the specified file (captured with <literal>-w</literal>).</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-s</literal> <replaceable>length</replaceable></term>
+<listitem><para>Saves the specified number of bytes of data from each packet (rather than 68 bytes).</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>-w</literal> <replaceable>file</replaceable></term>
+<listitem><para>Writes the packets to the specified file.<indexterm id="appd-idx-993743-0" class="endofrange" startref="appd-idx-994034-0"/></para></listitem>
+</varlistentry>
+</variablelist>
+</sect3>
+</sect2>
+</sect1>
+
+
+
+
+
+
+
+
+</appendix>

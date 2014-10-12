@@ -1,0 +1,46 @@
+/**
+  DCOM interfaces
+  http://www.grimes.demon.co.uk/DCOM/DCOMSpec.htm
+ */
+
+import "misc.idl", "orpc.idl";
+
+[
+	uuid("4d9f4ab8-7d1c-11cf-861e-0020af6e7c57"),
+	pointer_default(unique),
+	endpoint("ncalrpc:", "ncacn_ip_tcp:[135]", "ncacn_np:[\\pipe\\epmapper]")
+]
+interface IRemoteActivation
+{
+	typedef enum 
+	{
+		RPC_C_IMP_LEVEL_DEFAULT = 0,
+		RPC_C_IMP_LEVEL_ANONYMOUS = 1,
+		RPC_C_IMP_LEVEL_IDENTIFY = 2,
+		RPC_C_IMP_LEVEL_IMPERSONATE = 3,
+		RPC_C_IMP_LEVEL_DELEGATE = 4
+	} imp_levels;
+
+	const uint32 MODE_GET_CLASS_OBJECT = 0xffffffff;
+	WERROR RemoteActivation (
+			[in] ORPCTHIS this_object,
+			[out,ref] ORPCTHAT *that,
+			[in] GUID Clsid,
+			[in] [string,charset(UTF16)] uint16 *pwszObjectName,
+			[in] MInterfacePointer *pObjectStorage,
+			[in] uint32 ClientImpLevel,
+			[in] uint32 Mode,
+			[in,range(1,32768)] uint32 Interfaces,
+			[in,size_is(Interfaces)] GUID *pIIDs,
+			[in] uint16 num_protseqs,
+			[in, size_is(num_protseqs)] uint16 protseq[*],
+			[out,ref] hyper *pOxid,
+			[out,ref] DUALSTRINGARRAY *pdsaOxidBindings,
+			[out,ref] GUID *ipidRemUnknown,
+			[out,ref] uint32 *AuthnHint,
+			[out,ref] COMVERSION *ServerVersion,
+			[out,ref] WERROR *hr,
+			[out,size_is(Interfaces)] MInterfacePointer *ifaces[],
+			[out,size_is(Interfaces)] WERROR results[]
+			);
+}

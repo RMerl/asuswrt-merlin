@@ -1,0 +1,558 @@
+# This file is distributed under the same license as the package.
+#
+# Copyright (C) 2009 Lars Mueller <lars@samba.org>
+msgid ""
+msgstr ""
+"Project-Id-Version: pam_winbind\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2010-03-06 01:55+0800\n"
+"PO-Revision-Date: 2009-02-04 15:44\n"
+"Last-Translator: Novell Language <language@novell.com>\n"
+"Language-Team: Novell Language <language@novell.com>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: ../../../nsswitch/pam_winbind.c:583 ../../libsmb/nterr.c:558
+msgid "Success"
+msgstr "成功"
+
+#: ../../../nsswitch/pam_winbind.c:585
+msgid "No primary Domain Controler available"
+msgstr "無可用的主要領域控制器"
+
+#: ../../../nsswitch/pam_winbind.c:587
+msgid "No domain controllers found"
+msgstr "找不到領域控制器"
+
+#: ../../../nsswitch/pam_winbind.c:589 ../../libsmb/nterr.c:566
+msgid "No logon servers"
+msgstr "沒有登入伺服器"
+
+#: ../../../nsswitch/pam_winbind.c:591
+msgid "Password too short"
+msgstr "密碼太短"
+
+#: ../../../nsswitch/pam_winbind.c:593
+msgid "The password of this user is too recent to change"
+msgstr "此使用者的密碼太新，無法變更"
+
+#: ../../../nsswitch/pam_winbind.c:595
+msgid "Password is already in password history"
+msgstr "密碼歷程記錄中已存在此密碼"
+
+#: ../../../nsswitch/pam_winbind.c:597
+msgid "Your password has expired"
+msgstr "您的密碼已過期"
+
+#: ../../../nsswitch/pam_winbind.c:599
+msgid "You need to change your password now"
+msgstr "您需要立即變更密碼"
+
+#: ../../../nsswitch/pam_winbind.c:601
+msgid "You are not allowed to logon from this workstation"
+msgstr "您不允許從此工作站登入"
+
+#: ../../../nsswitch/pam_winbind.c:603
+msgid "You are not allowed to logon at this time"
+msgstr "目前您不允許登入"
+
+#: ../../../nsswitch/pam_winbind.c:605
+msgid "Your account has expired. Please contact your System administrator"
+msgstr "您的帳戶已經過期，請聯絡您的系統管理員"
+
+#: ../../../nsswitch/pam_winbind.c:608
+msgid "Your account is disabled. Please contact your System administrator"
+msgstr "您的帳戶已經停用，請聯絡您的系統管理員"
+
+#: ../../../nsswitch/pam_winbind.c:611
+msgid "Your account has been locked. Please contact your System administrator"
+msgstr "您的帳戶已經鎖定，請聯絡您的系統管理員"
+
+#: ../../../nsswitch/pam_winbind.c:614 ../../../nsswitch/pam_winbind.c:616 ../../../nsswitch/pam_winbind.c:618
+msgid "Invalid Trust Account"
+msgstr "無效的信任帳戶"
+
+#: ../../../nsswitch/pam_winbind.c:620
+msgid "Access is denied"
+msgstr "存取遭拒"
+
+#: ../../../nsswitch/pam_winbind.c:818
+#, fuzzy
+msgid "Do you want to change your password now?"
+msgstr "您需要立即變更密碼"
+
+#: ../../../nsswitch/pam_winbind.c:902
+#, fuzzy
+msgid "Your password expires today.\n"
+msgstr "您的密碼今天到期\n"
+
+#: ../../../nsswitch/pam_winbind.c:932
+#, fuzzy, c-format
+msgid "Your password will expire in %d %s.\n"
+msgstr "您的密碼將在  %d %s 之後過期\n"
+
+#: ../../../nsswitch/pam_winbind.c:933
+msgid "days"
+msgstr "日"
+
+#: ../../../nsswitch/pam_winbind.c:933
+msgid "day"
+msgstr "日"
+
+#: ../../../nsswitch/pam_winbind.c:1169 ../../../nsswitch/pam_winbind.c:1193
+#, c-format
+msgid "Cannot convert group %s to sid, please contact your administrator to see if group %s is valid."
+msgstr ""
+
+#: ../../../nsswitch/pam_winbind.c:1387
+msgid "Grace login. Please change your password as soon you're online again"
+msgstr "寬限登入。請於您再次上線時立即變更密碼"
+
+#: ../../../nsswitch/pam_winbind.c:1397
+msgid "Domain Controller unreachable, using cached credentials instead. Network resources may be unavailable"
+msgstr "領域控制器無法連線，改用快取的身份證明。網路資源可能不可用"
+
+#: ../../../nsswitch/pam_winbind.c:1422
+msgid ""
+"Failed to establish your Kerberos Ticket cache due time differences\n"
+"with the domain controller.  Please verify the system time.\n"
+msgstr ""
+
+#: ../../../nsswitch/pam_winbind.c:1490
+msgid "Your password "
+msgstr "您的密碼"
+
+#: ../../../nsswitch/pam_winbind.c:1497
+#, c-format
+msgid "must be at least %d characters; "
+msgstr "必須至少包含 %d 個字元；"
+
+#: ../../../nsswitch/pam_winbind.c:1506
+#, c-format
+msgid "cannot repeat any of your previous %d passwords; "
+msgstr "不能重複使用前 %d 個密碼；"
+
+#: ../../../nsswitch/pam_winbind.c:1516
+msgid "must contain capitals, numerals or punctuation; and cannot contain your account or full name; "
+msgstr "必須包含大寫字母、數字或標點符號；並且不能包含您的帳戶或全名；"
+
+#: ../../../nsswitch/pam_winbind.c:1526
+msgid "Please type a different password. Type a password which meets these requirements in both text boxes."
+msgstr "請輸入另一個密碼。請在兩個文字方塊中輸入符合這些要求的密碼。"
+
+#: ../../../nsswitch/pam_winbind.c:1553
+#, c-format
+msgid "Creating directory: %s failed: %s"
+msgstr ""
+
+#: ../../../nsswitch/pam_winbind.c:2018
+msgid "Password does not meet complexity requirements"
+msgstr "密碼不符合複雜性要求"
+
+#.
+#. * First get the name of a user
+#.
+#: ../../../nsswitch/pam_winbind.c:2489 ../../../nsswitch/pam_winbind.c:3035
+msgid "Username: "
+msgstr ""
+
+#: ../../../nsswitch/pam_winbind.c:2665
+msgid "Password: "
+msgstr "密碼："
+
+#. instruct user what is happening
+#: ../../../nsswitch/pam_winbind.c:3073
+msgid "Changing password for"
+msgstr "變更密碼 -"
+
+#: ../../../nsswitch/pam_winbind.c:3086
+msgid "(current) NT password: "
+msgstr "(目前) NT 密碼："
+
+#: ../../../nsswitch/pam_winbind.c:3156
+msgid "Enter new NT password: "
+msgstr "輸入新 NT 密碼︰"
+
+#: ../../../nsswitch/pam_winbind.c:3157
+msgid "Retype new NT password: "
+msgstr "重新輸入新 NT 密碼："
+
+#.
+#. * here is the string to inform the user that the new passwords they
+#. * typed were not the same.
+#.
+#: ../../../nsswitch/pam_winbind.h:128
+msgid "Sorry, passwords do not match"
+msgstr ""
+
+#: ../../libsmb/nterr.c:559
+msgid "Undetermined error"
+msgstr ""
+
+#: ../../libsmb/nterr.c:560
+#, fuzzy
+msgid "Access denied"
+msgstr "存取遭拒"
+
+#: ../../libsmb/nterr.c:561
+msgid "Account locked out"
+msgstr ""
+
+#: ../../libsmb/nterr.c:562
+#, fuzzy
+msgid "Must change password"
+msgstr "您需要立即變更密碼"
+
+#: ../../libsmb/nterr.c:563
+#, fuzzy
+msgid "Password is too short"
+msgstr "密碼太短"
+
+#: ../../libsmb/nterr.c:564
+#, fuzzy
+msgid "Password is too recent"
+msgstr "密碼太短"
+
+#: ../../libsmb/nterr.c:565
+#, fuzzy
+msgid "Password history conflict"
+msgstr "密碼太短"
+
+#: ../../libsmb/nterr.c:567
+msgid "Improperly formed account name"
+msgstr ""
+
+#: ../../libsmb/nterr.c:568
+msgid "User exists"
+msgstr ""
+
+#: ../../libsmb/nterr.c:569
+msgid "No such user"
+msgstr ""
+
+#: ../../libsmb/nterr.c:570
+msgid "Group exists"
+msgstr ""
+
+#: ../../libsmb/nterr.c:571
+msgid "No such group"
+msgstr ""
+
+#: ../../libsmb/nterr.c:572
+msgid "Member not in group"
+msgstr ""
+
+#: ../../libsmb/nterr.c:573
+#, fuzzy
+msgid "Wrong Password"
+msgstr "密碼："
+
+#: ../../libsmb/nterr.c:574
+#, fuzzy
+msgid "Ill formed password"
+msgstr "您的密碼"
+
+#: ../../libsmb/nterr.c:575
+#, fuzzy
+msgid "Password restriction"
+msgstr "密碼太短"
+
+#: ../../libsmb/nterr.c:576
+msgid "Logon failure"
+msgstr ""
+
+#: ../../libsmb/nterr.c:577
+msgid "Account restriction"
+msgstr ""
+
+#: ../../libsmb/nterr.c:578
+msgid "Invalid logon hours"
+msgstr ""
+
+#: ../../libsmb/nterr.c:579
+#, fuzzy
+msgid "Invalid workstation"
+msgstr "無效的信任帳戶"
+
+#: ../../libsmb/nterr.c:580
+#, fuzzy
+msgid "Password expired"
+msgstr "您的密碼已過期"
+
+#: ../../libsmb/nterr.c:581
+msgid "Account disabled"
+msgstr ""
+
+#: ../../libsmb/nterr.c:582
+msgid "Memory allocation error"
+msgstr ""
+
+#: ../../libsmb/nterr.c:583
+#, fuzzy
+msgid "No domain controllers located"
+msgstr "找不到領域控制器"
+
+#: ../../libsmb/nterr.c:584
+msgid "Named pipe not available"
+msgstr ""
+
+#: ../../libsmb/nterr.c:585
+msgid "Not implemented"
+msgstr ""
+
+#: ../../libsmb/nterr.c:586
+msgid "Invalid information class"
+msgstr ""
+
+#: ../../libsmb/nterr.c:587
+msgid "Information length mismatch"
+msgstr ""
+
+#: ../../libsmb/nterr.c:588
+msgid "Access violation"
+msgstr ""
+
+#: ../../libsmb/nterr.c:589
+msgid "Invalid handle"
+msgstr ""
+
+#: ../../libsmb/nterr.c:590
+msgid "Invalid parameter"
+msgstr ""
+
+#: ../../libsmb/nterr.c:591
+msgid "No memory"
+msgstr ""
+
+#: ../../libsmb/nterr.c:592
+msgid "Buffer too small"
+msgstr ""
+
+#: ../../libsmb/nterr.c:593
+msgid "Revision mismatch"
+msgstr ""
+
+#: ../../libsmb/nterr.c:594
+#, fuzzy
+msgid "No such logon session"
+msgstr "沒有登入伺服器"
+
+#: ../../libsmb/nterr.c:595
+msgid "No such privilege"
+msgstr ""
+
+#: ../../libsmb/nterr.c:596
+msgid "Procedure not found"
+msgstr ""
+
+#: ../../libsmb/nterr.c:597
+msgid "Server disabled"
+msgstr ""
+
+#: ../../libsmb/nterr.c:598
+msgid "Invalid pipe state"
+msgstr ""
+
+#: ../../libsmb/nterr.c:599
+msgid "Named pipe busy"
+msgstr ""
+
+#: ../../libsmb/nterr.c:600
+msgid "Illegal function"
+msgstr ""
+
+#: ../../libsmb/nterr.c:601
+msgid "Named pipe disconnected"
+msgstr ""
+
+#: ../../libsmb/nterr.c:602
+msgid "Named pipe closing"
+msgstr ""
+
+#: ../../libsmb/nterr.c:603
+msgid "Remote host not listening"
+msgstr ""
+
+#: ../../libsmb/nterr.c:604
+msgid "Duplicate name on network"
+msgstr ""
+
+#: ../../libsmb/nterr.c:605
+msgid "Print queue is full"
+msgstr ""
+
+#: ../../libsmb/nterr.c:606
+#, fuzzy
+msgid "No print spool space available"
+msgstr "無可用的主要領域控制器"
+
+#: ../../libsmb/nterr.c:607
+msgid "The network name cannot be found"
+msgstr ""
+
+#: ../../libsmb/nterr.c:608
+msgid "The connection was refused"
+msgstr ""
+
+#: ../../libsmb/nterr.c:609
+msgid "Too many names"
+msgstr ""
+
+#: ../../libsmb/nterr.c:610
+msgid "Too many sessions"
+msgstr ""
+
+#: ../../libsmb/nterr.c:611
+msgid "Invalid server state"
+msgstr ""
+
+#: ../../libsmb/nterr.c:612
+msgid "Invalid domain state"
+msgstr ""
+
+#: ../../libsmb/nterr.c:613
+msgid "Invalid domain role"
+msgstr ""
+
+#: ../../libsmb/nterr.c:614
+msgid "No such domain"
+msgstr ""
+
+#: ../../libsmb/nterr.c:615
+msgid "Domain exists"
+msgstr ""
+
+#: ../../libsmb/nterr.c:616
+msgid "Domain limit exceeded"
+msgstr ""
+
+#: ../../libsmb/nterr.c:617
+msgid "Bad logon session state"
+msgstr ""
+
+#: ../../libsmb/nterr.c:618
+msgid "Logon session collision"
+msgstr ""
+
+#: ../../libsmb/nterr.c:619
+msgid "Invalid logon type"
+msgstr ""
+
+#: ../../libsmb/nterr.c:620
+msgid "Cancelled"
+msgstr ""
+
+#: ../../libsmb/nterr.c:621
+msgid "Invalid computer name"
+msgstr ""
+
+#: ../../libsmb/nterr.c:622
+msgid "Logon server conflict"
+msgstr ""
+
+#: ../../libsmb/nterr.c:623
+msgid "Time difference at domain controller"
+msgstr ""
+
+#: ../../libsmb/nterr.c:624
+msgid "Pipe broken"
+msgstr ""
+
+#: ../../libsmb/nterr.c:625
+msgid "Registry corrupt"
+msgstr ""
+
+#: ../../libsmb/nterr.c:626
+msgid "Too many secrets"
+msgstr ""
+
+#: ../../libsmb/nterr.c:627
+msgid "Too many SIDs"
+msgstr ""
+
+#: ../../libsmb/nterr.c:628
+msgid "Lanmanager cross encryption required"
+msgstr ""
+
+#: ../../libsmb/nterr.c:629
+msgid "Log file full"
+msgstr ""
+
+#: ../../libsmb/nterr.c:630
+msgid "No trusted LSA secret"
+msgstr ""
+
+#: ../../libsmb/nterr.c:631
+#, fuzzy
+msgid "No trusted SAM account"
+msgstr "無效的信任帳戶"
+
+#: ../../libsmb/nterr.c:632
+msgid "Trusted domain failure"
+msgstr ""
+
+#: ../../libsmb/nterr.c:633
+msgid "Trust relationship failure"
+msgstr ""
+
+#: ../../libsmb/nterr.c:634
+msgid "Trust failure"
+msgstr ""
+
+#: ../../libsmb/nterr.c:635
+msgid "Netlogon service not started"
+msgstr ""
+
+#: ../../libsmb/nterr.c:636
+msgid "Account expired"
+msgstr ""
+
+#: ../../libsmb/nterr.c:637
+msgid "Network credential conflict"
+msgstr ""
+
+#: ../../libsmb/nterr.c:638
+msgid "Remote session limit"
+msgstr ""
+
+#: ../../libsmb/nterr.c:639
+msgid "No logon interdomain trust account"
+msgstr ""
+
+#: ../../libsmb/nterr.c:640
+msgid "No logon workstation trust account"
+msgstr ""
+
+#: ../../libsmb/nterr.c:641
+#, fuzzy
+msgid "No logon server trust account"
+msgstr "沒有登入伺服器"
+
+#: ../../libsmb/nterr.c:642
+msgid "Domain trust inconsistent"
+msgstr ""
+
+#: ../../libsmb/nterr.c:643
+msgid "No user session key available"
+msgstr ""
+
+#: ../../libsmb/nterr.c:644
+msgid "User session deleted"
+msgstr ""
+
+#: ../../libsmb/nterr.c:645
+msgid "Insufficient server resources"
+msgstr ""
+
+#: ../../libsmb/nterr.c:646
+msgid "Insufficient logon information"
+msgstr ""
+
+#: ../../libsmb/nterr.c:648
+msgid "License quota exceeded"
+msgstr ""
+
+#: ../../libsmb/nterr.c:649
+msgid "No more files"
+msgstr ""

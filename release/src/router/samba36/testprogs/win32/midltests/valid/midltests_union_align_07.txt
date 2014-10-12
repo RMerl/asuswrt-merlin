@@ -1,0 +1,38 @@
+Wait for setup of server threads
+
+Test NDR32
+
+ndr32: disable NDR64
+
+ndr32:in => out: ptype[request] flen[40] plen[16] ahint[16]
+
+[000] 01 01 00 00 00 00 00 00  43 00 00 00 00 00 00 00  ........ C.......
+
+srv_midltests_fn: Start
+srv_midltests_fn: End
+
+ndr32:out => in: ptype[response] flen[28] plen[4] ahint[4]
+
+[000] 54 72 75 65                                       True 
+
+NDRTcpThread[ndr32] stop
+
+Test NDR64
+
+ndr64: got NDR64
+
+ndr64:in => out: ptype[request] flen[48] plen[24] ahint[24]
+
+[000] 01 00 00 00 00 00 00 00  01 00 00 00 00 00 00 00  ........ ........
+[010] 43 00 00 00 00 00 00 00                           C....... 
+
+srv_midltests_fn: Start
+srv_midltests_fn: End
+
+ndr64:out => in: ptype[response] flen[28] plen[4] ahint[4]
+
+[000] 54 72 75 65                                       True 
+
+NDRTcpThread[ndr64] stop
+
+Test OK

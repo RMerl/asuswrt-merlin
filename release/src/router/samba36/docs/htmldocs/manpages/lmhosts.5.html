@@ -1,0 +1,41 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>lmhosts</title><link rel="stylesheet" href="../samba.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.75.2"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="refentry" title="lmhosts"><a name="lmhosts.5"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>lmhosts &#8212; The Samba NetBIOS hosts file</p></div><div class="refsynopsisdiv" title="Synopsis"><h2>Synopsis</h2><p><code class="filename">lmhosts</code> is the <a class="citerefentry" href="samba.7.html"><span class="citerefentry"><span class="refentrytitle">samba</span>(7)</span></a> NetBIOS name to IP address mapping file.</p></div><div class="refsect1" title="DESCRIPTION"><a name="id266346"></a><h2>DESCRIPTION</h2><p>This file is part of the <a class="citerefentry" href="samba.7.html"><span class="citerefentry"><span class="refentrytitle">samba</span>(7)</span></a> suite.</p><p><code class="filename">lmhosts</code> is the <span class="emphasis"><em>Samba
+	</em></span> NetBIOS name to IP address mapping file.  It 
+	is very similar to the <code class="filename">/etc/hosts</code> file 
+	format, except that the hostname component must correspond 
+	to the NetBIOS naming format.</p></div><div class="refsect1" title="FILE FORMAT"><a name="id266838"></a><h2>FILE FORMAT</h2><p>It is an ASCII file containing one line for NetBIOS name. 
+	The two fields on each line are separated from each other by 
+	white space. Any entry beginning with '#' is ignored. Each line 
+	in the lmhosts file contains the following information:</p><div class="itemizedlist"><ul class="itemizedlist" type="disc"><li class="listitem"><p>IP Address - in dotted decimal format.</p></li><li class="listitem"><p>NetBIOS Name - This name format is a 
+		maximum fifteen character host name, with an optional 
+		trailing '#' character followed by the NetBIOS name type 
+		as two hexadecimal digits.</p><p>If the trailing '#' is omitted then the given IP 
+		address will be returned for all names that match the given 
+		name, whatever the NetBIOS name type in the lookup.</p></li></ul></div><p>An example follows:
+</p><pre class="programlisting">
+#
+# Sample Samba lmhosts file.
+#
+192.9.200.1	TESTPC
+192.9.200.20	NTSERVER#20
+192.9.200.21	SAMBASERVER
+</pre><p>
+	</p><p>Contains three IP to NetBIOS name mappings. The first 
+	and third will be returned for any queries for the names "TESTPC" 
+	and "SAMBASERVER" respectively, whatever the type component of 
+	the NetBIOS name requested.</p><p>The second mapping will be returned only when the "0x20" name 
+	type for a name "NTSERVER" is queried. Any other name type will not 
+	be resolved.</p><p>The default location of the <code class="filename">lmhosts</code> file 
+	is in the same directory as the <a class="citerefentry" href="smb.conf.5.html"><span class="citerefentry"><span class="refentrytitle">smb.conf</span>(5)</span></a> file.</p></div><div class="refsect1" title="FILES"><a name="id265703"></a><h2>FILES</h2><p>lmhosts is loaded from the configuration directory. This is 
+		usually <code class="filename">/etc/samba</code> or <code class="filename">/usr/local/samba/lib</code>.
+	</p></div><div class="refsect1" title="VERSION"><a name="id265724"></a><h2>VERSION</h2><p>This man page is correct for version 3 of the Samba suite.</p></div><div class="refsect1" title="SEE ALSO"><a name="id265734"></a><h2>SEE ALSO</h2><p><a class="citerefentry" href="smbclient.1.html"><span class="citerefentry"><span class="refentrytitle">smbclient</span>(1)</span></a>, <a class="citerefentry" href="smb.conf.5.html"><span class="citerefentry"><span class="refentrytitle">smb.conf</span>(5)</span></a>, and <a class="citerefentry" href="smbpasswd.8.html"><span class="citerefentry"><span class="refentrytitle">smbpasswd</span>(8)</span></a>
+	</p></div><div class="refsect1" title="AUTHOR"><a name="id265769"></a><h2>AUTHOR</h2><p>The original Samba software and related utilities 
+	were created by Andrew Tridgell. Samba is now developed
+	by the Samba Team as an Open Source project similar 
+	to the way the Linux kernel is developed.</p><p>The original Samba man pages were written by Karl Auer. 
+	The man page sources were converted to YODL format (another 
+	excellent piece of Open Source software, available at
+	<a class="ulink" href="ftp://ftp.icce.rug.nl/pub/unix/" target="_top">
+	ftp://ftp.icce.rug.nl/pub/unix/</a>) and updated for the Samba 2.0 
+	release by Jeremy Allison.  The conversion to DocBook for 
+	Samba 2.2 was done by Gerald Carter. The conversion to DocBook
+	XML 4.2 was done by Alexander Bokovoy.</p></div></div></body></html>

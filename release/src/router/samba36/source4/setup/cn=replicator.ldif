@@ -1,0 +1,12 @@
+dn: cn=replicator
+objectClass: top
+objectClass: person
+cn: replicator
+userPassword:: ${MMR_PASSWORD_B64}
+structuralObjectClass: person
+entryUUID: ${UUID}
+creatorsName:
+createTimestamp: ${LDAPTIME}
+entryCSN: 20080714010529.241039Z#000000#000#000000
+modifiersName:
+modifyTimestamp: ${LDAPTIME}

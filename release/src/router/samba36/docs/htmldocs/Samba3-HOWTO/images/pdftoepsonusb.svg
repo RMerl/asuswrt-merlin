@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   version="1.0"
+   width="18.5cm"
+   height="4.9990001cm"
+   viewBox="5.85 2.808 24.35 7.807"
+   id="svg2">
+  <defs
+     id="defs59" />
+  <rect
+     width="4.0999999"
+     height="1"
+     x="5.9000001"
+     y="3"
+     id="rect4"
+     style="fill:#ffffff;stroke:none;stroke-width:0" />
+  <rect
+     width="4.0999999"
+     height="1"
+     x="5.9000001"
+     y="3"
+     id="rect6"
+     style="fill:none;stroke:#000000;stroke-width:0.1" />
+  <text
+     x="6.8039999"
+     y="3.8"
+     id="text8"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:sans">pdftops</text>
+  <rect
+     width="4.0999999"
+     height="1"
+     x="12.8"
+     y="3"
+     id="rect10"
+     style="fill:#ffffff;stroke:none;stroke-width:0" />
+  <rect
+     width="4.0999999"
+     height="1"
+     x="12.8"
+     y="3"
+     id="rect12"
+     style="fill:none;stroke:#000000;stroke-width:0.1" />
+  <text
+     x="13.835"
+     y="3.8"
+     id="text14"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:sans">pstops</text>
+  <rect
+     width="4.0999999"
+     height="1"
+     x="19.9"
+     y="3"
+     id="rect16"
+     style="fill:#ffffff;stroke:none;stroke-width:0" />
+  <rect
+     width="4.7609506"
+     height="0.99263805"
+     x="19.903681"
+     y="3.0036809"
+     id="rect18"
+     style="fill:none;stroke:#000000;stroke-width:0.10736195" />
+  <text
+     x="20.409"
+     y="3.8"
+     id="text20"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:sans">pstoraster</text>
+  <polygon
+     points="10.5,3.225 11.5,3.225 11.5,2.9 12.5,3.55 11.5,4.2 11.5,3.875 10.5,3.875 10.5,3.225 "
+     id="polygon22"
+     style="fill:#ffffff;stroke:none;stroke-width:0.1" />
+  <polygon
+     points="10.5,3.225 11.5,3.225 11.5,2.9 12.5,3.55 11.5,4.2 11.5,3.875 10.5,3.875 10.5,3.225 "
+     id="polygon24"
+     style="fill:none;stroke:#000000;stroke-width:0.1" />
+  <polygon
+     points="10.5,3.225 11.5,3.225 11.5,2.9 12.5,3.55 11.5,4.2 11.5,3.875 10.5,3.875 10.5,3.225 "
+     id="polygon26"
+     style="fill:none;stroke:#000000;stroke-width:0.01" />
+  <polygon
+     points="17.4,3.225 18.4,3.225 18.4,2.9 19.4,3.55 18.4,4.2 18.4,3.875 17.4,3.875 17.4,3.225 "
+     id="polygon28"
+     style="fill:#ffffff;stroke:none;stroke-width:0.1" />
+  <polygon
+     points="17.4,3.225 18.4,3.225 18.4,2.9 19.4,3.55 18.4,4.2 18.4,3.875 17.4,3.875 17.4,3.225 "
+     id="polygon30"
+     style="fill:none;stroke:#000000;stroke-width:0.1" />
+  <polygon
+     points="17.4,3.225 18.4,3.225 18.4,2.9 19.4,3.55 18.4,4.2 18.4,3.875 17.4,3.875 17.4,3.225 "
+     id="polygon32"
+     style="fill:none;stroke:#000000;stroke-width:0.01" />
+  <rect
+     width="4.8000002"
+     height="1"
+     x="19.5"
+     y="6.3000002"
+     id="rect34"
+     style="fill:#ffffff;stroke:none;stroke-width:0" />
+  <rect
+     width="6.0224352"
+     height="0.9886266"
+     x="19.505686"
+     y="6.305687"
+     id="rect36"
+     style="fill:none;stroke:#000000;stroke-width:0.11137342" />
+  <text
+     x="19.865999"
+     y="7.0999999"
+     id="text38"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:sans">rastertoepson</text>
+  <polygon
+     points="21.6,4.4 21.6,5.2 21.2,5.2 22,6 22.8,5.2 22.4,5.2 22.4,4.4 21.6,4.4 "
+     id="polygon40"
+     style="fill:#ffffff;stroke:none;stroke-width:0.1" />
+  <polygon
+     points="21.6,4.4 21.6,5.2 21.2,5.2 22,6 22.8,5.2 22.4,5.2 22.4,4.4 21.6,4.4 "
+     id="polygon42"
+     style="fill:none;stroke:#000000;stroke-width:0.1" />
+  <polygon
+     points="21.6,4.4 21.6,5.2 21.2,5.2 22,6 22.8,5.2 22.4,5.2 22.4,4.4 21.6,4.4 "
+     id="polygon44"
+     style="fill:none;stroke:#000000;stroke-width:0.01" />
+  <rect
+     width="4.0999999"
+     height="1"
+     x="12.5"
+     y="6.3000002"
+     id="rect46"
+     style="fill:#ffffff;stroke:none;stroke-width:0" />
+  <rect
+     width="4.0999999"
+     height="1"
+     x="12.5"
+     y="6.3000002"
+     id="rect48"
+     style="fill:none;stroke:#000000;stroke-width:0.1" />
+  <text
+     x="13.979"
+     y="7.0999999"
+     id="text50"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:sans">usb</text>
+  <polygon
+     points="18.886,6.422 18.043,6.422 18.043,6 17.2,6.843 18.043,7.686 18.043,7.265 18.886,7.265 18.886,6.422 "
+     id="polygon52"
+     style="fill:#ffffff;stroke:none;stroke-width:0.1" />
+  <polygon
+     points="18.886,6.422 18.043,6.422 18.043,6 17.2,6.843 18.043,7.686 18.043,7.265 18.886,7.265 18.886,6.422 "
+     id="polygon54"
+     style="fill:none;stroke:#000000;stroke-width:0.1" />
+  <polygon
+     points="18.886,6.422 18.043,6.422 18.043,6 17.2,6.843 18.043,7.686 18.043,7.265 18.886,7.265 18.886,6.422 "
+     id="polygon56"
+     style="fill:none;stroke:#000000;stroke-width:0.01" />
+</svg>

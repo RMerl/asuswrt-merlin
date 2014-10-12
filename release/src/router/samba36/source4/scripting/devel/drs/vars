@@ -1,0 +1,12 @@
+DNSDOMAIN=ad.samba.example.com
+PREFIX="/data/samba/samba4/prefix.ad"
+export PYTHONPATH=$PYTHONPATH:$PREFIX/lib/python2.6/site-packages
+pass="penguin"
+machine="ruth"
+machine_ip="192.168.122.1"
+workgroup=adruth
+dn="DC=ad,DC=samba,DC=example,DC=com"
+server=win2008-1
+server_ip=192.168.122.53
+site="Default-First-Site-Name"
+

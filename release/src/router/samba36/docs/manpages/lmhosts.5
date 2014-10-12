@@ -1,0 +1,125 @@
+'\" t
+.\"     Title: lmhosts
+.\"    Author: [see the "AUTHOR" section]
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date: 09/18/2013
+.\"    Manual: File Formats and Conventions
+.\"    Source: Samba 3.6
+.\"  Language: English
+.\"
+.TH "LMHOSTS" "5" "09/18/2013" "Samba 3\&.6" "File Formats and Conventions"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+lmhosts \- The Samba NetBIOS hosts file
+.SH "SYNOPSIS"
+.PP
+lmhosts
+is the
+\fBsamba\fR(7)
+NetBIOS name to IP address mapping file\&.
+.SH "DESCRIPTION"
+.PP
+This file is part of the
+\fBsamba\fR(7)
+suite\&.
+.PP
+lmhosts
+is the
+\fISamba \fR
+NetBIOS name to IP address mapping file\&. It is very similar to the
+/etc/hosts
+file format, except that the hostname component must correspond to the NetBIOS naming format\&.
+.SH "FILE FORMAT"
+.PP
+It is an ASCII file containing one line for NetBIOS name\&. The two fields on each line are separated from each other by white space\&. Any entry beginning with \*(Aq#\*(Aq is ignored\&. Each line in the lmhosts file contains the following information:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+IP Address \- in dotted decimal format\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+NetBIOS Name \- This name format is a maximum fifteen character host name, with an optional trailing \*(Aq#\*(Aq character followed by the NetBIOS name type as two hexadecimal digits\&.
+.sp
+If the trailing \*(Aq#\*(Aq is omitted then the given IP address will be returned for all names that match the given name, whatever the NetBIOS name type in the lookup\&.
+.RE
+.sp
+.RE
+.PP
+An example follows:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+#
+# Sample Samba lmhosts file\&.
+#
+192\&.9\&.200\&.1	TESTPC
+192\&.9\&.200\&.20	NTSERVER#20
+192\&.9\&.200\&.21	SAMBASERVER
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+Contains three IP to NetBIOS name mappings\&. The first and third will be returned for any queries for the names "TESTPC" and "SAMBASERVER" respectively, whatever the type component of the NetBIOS name requested\&.
+.PP
+The second mapping will be returned only when the "0x20" name type for a name "NTSERVER" is queried\&. Any other name type will not be resolved\&.
+.PP
+The default location of the
+lmhosts
+file is in the same directory as the
+\fBsmb.conf\fR(5)
+file\&.
+.SH "FILES"
+.PP
+lmhosts is loaded from the configuration directory\&. This is usually
+/etc/samba
+or
+/usr/local/samba/lib\&.
+.SH "VERSION"
+.PP
+This man page is correct for version 3 of the Samba suite\&.
+.SH "SEE ALSO"
+.PP
+\fBsmbclient\fR(1),
+\fBsmb.conf\fR(5), and
+\fBsmbpasswd\fR(8)
+.SH "AUTHOR"
+.PP
+The original Samba software and related utilities were created by Andrew Tridgell\&. Samba is now developed by the Samba Team as an Open Source project similar to the way the Linux kernel is developed\&.
+.PP
+The original Samba man pages were written by Karl Auer\&. The man page sources were converted to YODL format (another excellent piece of Open Source software, available at
+ftp://ftp\&.icce\&.rug\&.nl/pub/unix/) and updated for the Samba 2\&.0 release by Jeremy Allison\&. The conversion to DocBook for Samba 2\&.2 was done by Gerald Carter\&. The conversion to DocBook XML 4\&.2 was done by Alexander Bokovoy\&.

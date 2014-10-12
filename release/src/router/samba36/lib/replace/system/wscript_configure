@@ -1,0 +1,26 @@
+#!/usr/bin/env python
+
+conf.CHECK_HEADERS('sys/capability.h')
+conf.CHECK_FUNCS('getpwnam_r getpwuid_r getpwent_r')
+
+# solaris varients of getXXent_r
+conf.CHECK_C_PROTOTYPE('getpwent_r',
+                       'struct passwd *getpwent_r(struct passwd *src, char *buf, int buflen)',
+                       define='SOLARIS_GETPWENT_R', headers='pwd.h')
+conf.CHECK_C_PROTOTYPE('getgrent_r',
+                       'struct group *getgrent_r(struct group *src, char *buf, int buflen)',
+                       define='SOLARIS_GETGRENT_R', headers='grp.h')
+
+# the irix varients
+conf.CHECK_C_PROTOTYPE('getpwent_r',
+                       'struct passwd *getpwent_r(struct passwd *src, char *buf, size_t buflen)',
+                       define='SOLARIS_GETPWENT_R', headers='pwd.h')
+conf.CHECK_C_PROTOTYPE('getgrent_r',
+                       'struct group *getgrent_r(struct group *src, char *buf, size_t buflen)',
+                       define='SOLARIS_GETGRENT_R', headers='grp.h')
+
+conf.CHECK_FUNCS('getgrouplist')
+conf.CHECK_HEADERS('ctype.h locale.h langinfo.h')
+conf.CHECK_HEADERS('fnmatch.h locale.h langinfo.h')
+conf.CHECK_HEADERS('sys/ipc.h sys/mman.h sys/shm.h')
+conf.CHECK_HEADERS('termios.h termio.h sys/termio.h')

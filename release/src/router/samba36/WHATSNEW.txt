@@ -1,0 +1,2761 @@
+                   ==============================
+                   Release Notes for Samba 3.6.24
+                           June 23, 2014
+                   ==============================
+
+
+This is a security release in order to address
+CVE-2014-0244 (Denial of service - CPU loop) and
+CVE-2014-3493 (Denial of service - Server crash/memory corruption).
+
+o  CVE-2014-0244:
+   All current released versions of Samba are vulnerable to a denial of
+   service on the nmbd NetBIOS name services daemon. A malformed packet
+   can cause the nmbd server to loop the CPU and prevent any further
+   NetBIOS name service.
+
+   This flaw is not exploitable beyond causing the code to loop expending
+   CPU resources.
+
+o  CVE-2014-3493:
+   All current released versions of Samba are affected by a denial of service
+   crash involving overwriting memory on an authenticated connection to the
+   smbd file server.
+
+
+Changes since 3.6.22:
+---------------------
+
+o   Jeremy Allison <jra@samba.org>
+    * BUG 10633: CVE-2014-0244: Fix nmbd denial of service.
+    * BUG 10654: CVE-2014-3493: Fix segmentation fault in
+      smbd_marshall_dir_entry()'s SMB_FIND_FILE_UNIX handler.
+
+
+######################################################################
+Reporting bugs & Development Discussion
+#######################################
+
+Please discuss this release on the samba-technical mailing list or by
+joining the #samba-technical IRC channel on irc.freenode.net.
+
+If you do report problems then please try to send high quality
+feedback. If you don't provide vital information to help us track down
+the problem then you will probably be ignored.  All bug reports should
+be filed under the Samba 3.6 product in the project's Bugzilla
+database (https://bugzilla.samba.org/).
+
+
+======================================================================
+== Our Code, Our Bugs, Our Responsibility.
+== The Samba Team
+======================================================================
+
+
+Release notes for older releases follow:
+----------------------------------------
+
+                   ==============================
+                   Release Notes for Samba 3.6.23
+                           March 11, 2014
+                   ==============================
+
+
+This is a security release in order to address
+CVE-2013-4496 (Password lockout not enforced for SAMR password changes).
+
+o  CVE-2013-4496:
+   Samba versions 3.4.0 and above allow the administrator to implement
+   locking out Samba accounts after a number of bad password attempts.
+
+   However, all released versions of Samba did not implement this check for
+   password changes, such as are available over multiple SAMR and RAP
+   interfaces, allowing password guessing attacks.
+
+
+Changes since 3.6.22:
+---------------------
+
+o   Andrew Bartlett <abartlet@samba.org>
+    * BUG 10245: CVE-2013-4496: Enforce password lockout for SAMR password
+      changes.
+
+
+o   Stefan Metzmacher <metze@samba.org>
+    * BUG 10245: CVE-2013-4496: Enforce password lockout for SAMR password
+      changes.
+
+
+######################################################################
+Reporting bugs & Development Discussion
+#######################################
+
+Please discuss this release on the samba-technical mailing list or by
+joining the #samba-technical IRC channel on irc.freenode.net.
+
+If you do report problems then please try to send high quality
+feedback. If you don't provide vital information to help us track down
+the problem then you will probably be ignored.  All bug reports should
+be filed under the Samba 3.6 product in the project's Bugzilla
+database (https://bugzilla.samba.org/).
+
+
+======================================================================
+== Our Code, Our Bugs, Our Responsibility.
+== The Samba Team
+======================================================================
+
+
+----------------------------------------------------------------------
+
+
+                   ==============================
+                   Release Notes for Samba 3.6.22
+                          December 9, 2013
+                   ==============================
+
+
+This is a security release in order to address
+CVE-2013-4408 (DCE-RPC fragment length field is incorrectly checked) and
+CVE-2012-6150 (pam_winbind login without require_membership_of restrictions).
+
+o  CVE-2013-4408:
+   Samba versions 3.4.0 and above (versions 3.4.0 - 3.4.17, 3.5.0 -
+   3.5.22, 3.6.0 - 3.6.21, 4.0.0 - 4.0.12 and including 4.1.2) are
+   vulnerable to buffer overrun exploits in the client processing of
+   DCE-RPC packets. This is due to incorrect checking of the DCE-RPC
+   fragment length in the client code.
+
+   This is a critical vulnerability as the DCE-RPC client code is part of
+   the winbindd authentication and identity mapping daemon, which is
+   commonly configured as part of many server installations (when joined
+   to an Active Directory Domain). A malicious Active Directory Domain
+   Controller or man-in-the-middle attacker impersonating an Active
+   Directory Domain Controller could achieve root-level access by
+   compromising the winbindd process.
+
+   Samba server versions 3.4.0 - 3.4.17 and versions 3.5.0 - 3.5.22 are
+   also vulnerable to a denial of service attack (server crash) due to a
+   similar error in the server code of those versions.
+
+   Samba server versions 3.6.0 and above (including all 3.6.x versions,
+   all 4.0.x versions and 4.1.x) are not vulnerable to this problem.
+
+   In addition range checks were missing on arguments returned from calls
+   to the DCE-RPC functions LookupSids (lsa and samr), LookupNames (lsa and samr)
+   and LookupRids (samr) which could also cause similar problems.
+
+   As this was found during an internal audit of the Samba code there are
+   no currently known exploits for this problem (as of December 9th 2013).
+
+o  CVE-2012-6150:
+   Winbind allows for the further restriction of authenticated PAM logins using
+   the require_membership_of parameter. System administrators may specify a list
+   of SIDs or groups for which an authenticated user must be a member of. If an
+   authenticated user does not belong to any of the entries, then login should
+   fail. Invalid group name entries are ignored.
+
+   Samba versions 3.3.10, 3.4.3, 3.5.0 and later incorrectly allow login from
+   authenticated users if the require_membership_of parameter specifies only
+   invalid group names.
+
+   This is a vulnerability with low impact. All require_membership_of group
+   names must be invalid for this bug to be encountered.
+
+
+Changes since 3.6.21:
+---------------------
+
+o   Jeremy Allison <jra@samba.org>
+    * BUG 10185: CVE-2013-4408: Correctly check DCE-RPC fragment length field.
+
+
+o   Stefan Metzmacher <metze@samba.org>
+    * BUG 10185: CVE-2013-4408: Correctly check DCE-RPC fragment length field.
+
+
+o   Noel Power <noel.power@suse.com>
+    * BUGs 10300, 10306: CVE-2012-6150: Fail authentication if user isn't
+      member of *any* require_membership_of specified groups.
+
+
+######################################################################
+Reporting bugs & Development Discussion
+#######################################
+
+Please discuss this release on the samba-technical mailing list or by
+joining the #samba-technical IRC channel on irc.freenode.net.
+
+If you do report problems then please try to send high quality
+feedback. If you don't provide vital information to help us track down
+the problem then you will probably be ignored.  All bug reports should
+be filed under the Samba 3.6 product in the project's Bugzilla
+database (https://bugzilla.samba.org/).
+
+
+======================================================================
+== Our Code, Our Bugs, Our Responsibility.
+== The Samba Team
+======================================================================
+
+
+----------------------------------------------------------------------
+
+
+                   ==============================
+                   Release Notes for Samba 3.6.21
+                         November 29, 2013
+                   ==============================
+
+
+This is is the latest stable release of Samba 3.6.
+
+
+Changes since 3.6.20:
+---------------------
+
+o   Jeremy Allison <jra@samba.org>
+    * BUG 10139: Valid utf8 filenames cause "invalid conversion error"
+      messages.
+    * BUG 10167: s3-smb2 server: smb2 breaks "smb encryption = mandatory".
+    * BUG 10187: Missing talloc_free can leak stackframe in error path.
+    * BUG 10247: xattr: Fix listing EAs on *BSD for non-root users.
+
+
+o   Korobkin <korobkin+samba@gmail.com>
+    * BUG 10118: Raise debug level for being unable to open a printer.
+
+
+o   Volker Lendecke <vl@samba.org>
+    * BUG 10195: nsswitch: Fix short writes in winbind_write_sock.
+
+
+o   Arvid Requate <requate@univention.de>
+    * BUG 10267: Fix Windows 8 printing via local printer drivers.
+
+
+o   Andreas Schneider <asn@cryptomilk.org>
+    * BUG 10194: Make offline logon cache updating for cross child domain
+      group membership.
+
+
+######################################################################
+Reporting bugs & Development Discussion
+#######################################
+
+Please discuss this release on the samba-technical mailing list or by
+joining the #samba-technical IRC channel on irc.freenode.net.
+
+If you do report problems then please try to send high quality
+feedback. If you don't provide vital information to help us track down
+the problem then you will probably be ignored.  All bug reports should
+be filed under the Samba 3.6 product in the project's Bugzilla
+database (https://bugzilla.samba.org/).
+
+
+======================================================================
+== Our Code, Our Bugs, Our Responsibility.
+== The Samba Team
+======================================================================
+
+
+----------------------------------------------------------------------
+
+
+                   ==============================
+                   Release Notes for Samba 3.6.20
+                         November 11, 2013
+                   ==============================
+
+
+This is a security release in order to address
+CVE-2013-4475 (ACLs are not checked on opening an alternate
+data stream on a file or directory).
+
+o  CVE-2013-4475:
+   Samba versions 3.2.0 and above (all versions of 3.2.x, 3.3.x,
+   3.4.x, 3.5.x, 3.6.x, 4.0.x and 4.1.x) do not check the underlying
+   file or directory ACL when opening an alternate data stream.
+
+   According to the SMB1 and SMB2+ protocols the ACL on an underlying
+   file or directory should control what access is allowed to alternate
+   data streams that are associated with the file or directory.
+
+   By default no version of Samba supports alternate data streams
+   on files or directories.
+
+   Samba can be configured to support alternate data streams by loading
+   either one of two virtual file system modues (VFS) vfs_streams_depot or
+   vfs_streams_xattr supplied with Samba, so this bug only affects Samba
+   servers configured this way.
+
+   To determine if your server is vulnerable, check for the strings
+   "streams_depot" or "streams_xattr" inside your smb.conf configuration
+   file.
+
+
+Changes since 3.6.19:
+---------------------
+
+o   Jeremy Allison <jra@samba.org>
+    * BUGs 10234 + 10229: CVE-2013-4475: Fix access check verification on stream
+      files.
+
+
+######################################################################
+Reporting bugs & Development Discussion
+#######################################
+
+Please discuss this release on the samba-technical mailing list or by
+joining the #samba-technical IRC channel on irc.freenode.net.
+
+If you do report problems then please try to send high quality
+feedback. If you don't provide vital information to help us track down
+the problem then you will probably be ignored.  All bug reports should
+be filed under the Samba 3.6 product in the project's Bugzilla
+database (https://bugzilla.samba.org/).
+
+
+======================================================================
+== Our Code, Our Bugs, Our Responsibility.
+== The Samba Team
+======================================================================
+
+
+----------------------------------------------------------------------
+
+
+                   ==============================
+                   Release Notes for Samba 3.6.19
+                         September 25, 2013
+                   ==============================
+
+
+This is is the latest maintenance release of Samba 3.6.
+
+Please note that this will probably be the last maintenance release
+of the Samba 3.6 release series. With the release of Samba 4.1.0, the
+3.6 release series will be turned into the "security fixes only" mode.
+
+
+Changes since 3.6.18:
+---------------------
+
+o   Jeremy Allison <jra@samba.org>
+    * BUG 5917: Make Samba work on site with Read Only Domain Controller.
+
+
+o   Christian Ambach <ambi@samba.org>
+    * BUG 8955: NetrServerPasswordSet2 timeout is too short.
+
+
+o   Günther Deschner <gd@samba.org>
+    * BUG 9899: Fix fallback to ncacn_np in cm_connect_lsat().
+    * BUG 9615: Fix fallback to ncacn_np in cm_connect_lsat().
+    * BUG 10127: Fix 'smbstatus' as non-root user.
+
+
+o   Volker Lendecke <vl@samba.org>
+    * BUG 8955: Give machine password changes 10 minutes of time.
+    * BUG 10106: Honour output buffer length set by the client for SMB2 GetInfo
+      requests.
+    * BUG 10114: Handle Dropbox (write-only-directory) case correctly in
+      pathname lookup.
+
+
+o   Karolin Seeger <kseeger@samba.org>
+    * BUG 10076: Fix variable list in man vfs_crossrename.
+
+
+o   Andreas Schneider <asn@samba.org>
+    * BUG 9994: s3-winbind: Do not delete an existing valid credential cache.
+    * BUG 10073: 'net ads join': Fix segmentation fault in
+      create_local_private_krb5_conf_for_domain.
+
+
+o   Richard Sharpe <realrichardsharpe@gmail.com>
+    * BUG 10097: MacOSX 10.9 will not follow path-based DFS referrals handed
+      out by Samba.
+
+
+######################################################################
+Reporting bugs & Development Discussion
+#######################################
+
+Please discuss this release on the samba-technical mailing list or by
+joining the #samba-technical IRC channel on irc.freenode.net.
+
+If you do report problems then please try to send high quality
+feedback. If you don't provide vital information to help us track down
+the problem then you will probably be ignored.  All bug reports should
+be filed under the Samba 3.6 product in the project's Bugzilla
+database (https://bugzilla.samba.org/).
+
+
+======================================================================
+== Our Code, Our Bugs, Our Responsibility.
+== The Samba Team
+======================================================================
+
+
+----------------------------------------------------------------------
+
+
+                   ==============================
+                   Release Notes for Samba 3.6.18
+                          August 14, 2013
+                   ==============================
+
+
+This is is the latest stable release of Samba 3.6.
+
+
+Changes since 3.6.17:
+---------------------
+
+o   Jeremy Allison <jra@samba.org>
+    * BUG 9777: vfs_dirsort uses non-stackable calls, dirfd(), malloc instead
+      of talloc and doesn't cope with directories being modified whilst reading.
+
+
+o   Gregor Beck <gbeck@sernet.de>
+    * BUG 9678: Windows 8 Roaming profiles fail.
+
+
+o   Alexander Bokovoy <ab@samba.org>
+    * BUG 9636: Fix parsing linemarkers in preprocessor output.
+
+
+o   Björn Jacke <bj@sernet.de>
+    * BUG 9880: Use of wrong RFC2307 primary group field.
+    * BUG 9983: Fix output of syslog-facility check.
+
+
+o   Ralph Wuerthner <ralphw@de.ibm.com>
+    * BUG 10064: Linux kernel oplock breaks can miss signals.
+
+
+######################################################################
+Reporting bugs & Development Discussion
+#######################################
+
+Please discuss this release on the samba-technical mailing list or by
+joining the #samba-technical IRC channel on irc.freenode.net.
+
+If you do report problems then please try to send high quality
+feedback. If you don't provide vital information to help us track down
+the problem then you will probably be ignored.  All bug reports should
+be filed under the Samba 3.6 product in the project's Bugzilla
+database (https://bugzilla.samba.org/).
+
+
+======================================================================
+== Our Code, Our Bugs, Our Responsibility.
+== The Samba Team
+======================================================================
+
+
+----------------------------------------------------------------------
+
+
+                   ==============================
+                   Release Notes for Samba 3.6.17
+                          August 05, 2013
+                   ==============================
+
+
+This is a security release in order to address
+CVE-2013-4124 (Missing integer wrap protection in EA list reading can cause
+server to loop with DOS).
+
+o  CVE-2013-4124:
+   All current released versions of Samba are vulnerable to a denial of
+   service on an authenticated or guest connection. A malformed packet
+   can cause the smbd server to loop the CPU performing memory
+   allocations and preventing any further service.
+
+   A connection to a file share, or a local account is needed to exploit
+   this problem, either authenticated or unauthenticated if guest
+   connections are allowed.
+
+   This flaw is not exploitable beyond causing the code to loop
+   allocating memory, which may cause the machine to exceed memory
+   limits.
+
+
+Changes since 3.6.16:
+---------------------
+
+o   Jeremy Allison <jra@samba.org>
+    * BUG 10010: CVE-2013-4124: Missing integer wrap protection in EA list
+      reading can cause server to loop with DOS.
+
+
+######################################################################
+Reporting bugs & Development Discussion
+#######################################
+
+Please discuss this release on the samba-technical mailing list or by
+joining the #samba-technical IRC channel on irc.freenode.net.
+
+If you do report problems then please try to send high quality
+feedback. If you don't provide vital information to help us track down
+the problem then you will probably be ignored.  All bug reports should
+be filed under the Samba 3.6 product in the project's Bugzilla
+database (https://bugzilla.samba.org/).
+
+
+======================================================================
+== Our Code, Our Bugs, Our Responsibility.
+== The Samba Team
+======================================================================
+
+
+----------------------------------------------------------------------
+
+
+                   ==============================
+                   Release Notes for Samba 3.6.16
+                           June 19, 2013
+                   ==============================
+
+
+This is is the latest stable release of Samba 3.6.
+
+Major enhancements in Samba 3.6.16 include:
+
+o  Fix crash bug during Win8 sync (bug #9822).
+o  Properly handle Oplock breaks in compound requests (bug #9722).
+
+
+Changes since 3.6.15:
+---------------------
+
+o   Michael Adam <obnox@samba.org>
+    * BUG 9881: Link dbwrap_tool and dbwrap_torture against libtevent.
+
+
+o   Jeremy Allison <jra@samba.org>
+    * BUG 9722: Properly handle Oplock breaks in compound requests.
+    * BUG 9822: Fix crash bug during Win8 sync.
+
+
+o   Anand Avati <avati@redhat.com>
+    * BUG 9927: errno gets overwritten in call to check_parent_exists().
+
+
+o   David Disseldorp <ddiss@samba.org>
+    * BUG 8997: Change libreplace GPL source to LGPL.
+    * BUG 9900: is_printer_published GUID retrieval.
+
+
+o   Peng Haitao <penght@cn.fujitsu.com>
+    * BUG 9941: Fix a bug of drvupgrade of smbcontrol.
+
+
+o   Volker Lendecke <vl@samba.org>
+    * BUG 9868: Don't know how to make LIBNDR_PREG_OBJ.
+
+
+o   SATOH Fumiyasu <fumiyas@osstech.co.jp>
+    * BUG 9688: Remove "experimental" label on "max protocol=SMB2" parameter.
+
+
+o   Andreas Schneider <asn@samba.org>
+    * BUG 9881: Check for system libtevent.
+
+
+######################################################################
+Reporting bugs & Development Discussion
+#######################################
+
+Please discuss this release on the samba-technical mailing list or by
+joining the #samba-technical IRC channel on irc.freenode.net.
+
+If you do report problems then please try to send high quality
+feedback. If you don't provide vital information to help us track down
+the problem then you will probably be ignored.  All bug reports should
+be filed under the Samba 3.6 product in the project's Bugzilla
+database (https://bugzilla.samba.org/).
+
+
+----------------------------------------------------------------------
+
+
+                   ==============================
+                   Release Notes for Samba 3.6.15
+                            May 08, 2013
+                   ==============================
+
+
+This is is the latest stable release of Samba 3.6.
+
+Major enhancements in Samba 3.6.15 include:
+
+o  Fix crash bug in Winbind (bug #9854).
+
+
+Changes since 3.6.14:
+---------------------
+
+o   Andrew Bartlett <abartlet@samba.org>
+    * BUG 9746: Fix "guest ok", "force user" and "force group" for guest users.
+
+
+o   David Disseldorp <ddiss@samba.org>
+    * BUG 9830: Fix panic in nt_printer_publish_ads.
+
+
+o   Volker Lendecke <vl@samba.org>
+    * BUG 9854: Fix crash bug in Winbind.
+
+
+o   Andreas Schneider <asn@samba.org>
+    * BUG 9817: Fix 'map untrusted to domain' with NTLMv2.
+
+
+######################################################################
+Reporting bugs & Development Discussion
+#######################################
+
+Please discuss this release on the samba-technical mailing list or by
+joining the #samba-technical IRC channel on irc.freenode.net.
+
+If you do report problems then please try to send high quality
+feedback. If you don't provide vital information to help us track down
+the problem then you will probably be ignored.  All bug reports should
+be filed under the Samba 3.6 product in the project's Bugzilla
+database (https://bugzilla.samba.org/).
+
+
+-----------------------------------------------------------------------
+
+
+                   ==============================
+                   Release Notes for Samba 3.6.14
+                           April 29, 2013
+                   ==============================
+
+
+This is is the latest stable release of Samba 3.6.
+
+Major enhancements in Samba 3.6.14 include:
+
+o  Certain xattrs cause Windows error 0x800700FF (bug #9130).
+
+Changes since 3.6.13:
+---------------------
+
+o   Jeremy Allison <jra@samba.org>
+    * BUG 9130: Certain xattrs cause Windows error 0x800700FF.
+    * BUG 9724: Use is_encrypted_packet() function correctly inside server.
+    * BUG 9733: Fix 'smbcontrol close-share' is not working.
+    * BUG 9747: Make sure that we only propogate the INHERITED flag when we are
+      allowed to.
+    * BUG 9748: Remove unneeded fstat system call from hot read path.
+    * BUG 9811: Fix bug in old create temp SMB request. Only use VFS functions.
+
+
+o   David Disseldorp <ddiss@samba.org>
+    * BUG 9650: New or deleted CUPS printerqueues are not recognized by Samba.
+    * BUG 9807: wbinfo: Fix segfault in wbinfo_pam_logon.
+
+
+o   Volker Lendecke <vl@samba.org>
+    * BUG 9727: wkssvc: Fix NULL pointer dereference.
+    * BUG 9736: smbd: Tune "dir" a bit.
+    * BUG 9775: Fix segfault for "artificial" conn_structs.
+    * BUG 9809: RHEL SPEC: Package dbwrap_tool man page.
+
+
+o   Andreas Schneider <asn@samba.org>
+    * BUG 9139: Fix the username map optimization.
+    * BUG 9699: Fix adding case sensitive spn.
+    * BUG 9723: Add a tool to migrate latin1 printing tdbs to registry.
+    * BUG 9735: Fix Winbind separator in upn to username conversion.
+    * BUG 9766: Cache name_to_sid/sid_to_name correctly.
+
+
+Note about upgrading from older versions:
+-----------------------------------------
+
+It is still the case that there are printing tdbs (ntprinting.tdb, ntforms.tdb,
+ntdrivers.tdb) which are in latin1 or other encodings. When updating from
+Samba 3.5 or earlier to Samba 3.6 or 4.0 these tdbs need to be migrated to our
+new registry based printing management.  This means during the migration we
+also need to do charset conversion. This can only been done manually cause we don't
+know in which encoding the tdb is. You have to specify the correct code page
+for the conversion, see iconv -l and Wikipedia [1] for the available codepages.
+The mostly used one is Windows Latin1 which is CP1252.
+
+We've extended the 'net printing dump' and 'net printing migrate' commands to
+define the encoding of the tdb. So you can correctly view the tdb with:
+
+  net printing dump encoding=CP1252 /path/to/ntprinters.tdb
+
+or migrate it with e.g.:
+
+  net printing migrate encoding=CP1252 /path/to/ntprinters.tdb
+
+If you migrate printers we suggest you do it in the following order.
+
+ntforms.tdb
+ntdrivers.tdb
+ntprinting.tdb
+
+Don't forget to rename, move or delete these files in /var/lib/samba after the
+migration.
+
+[1] https://en.wikipedia.org/wiki/Code_page
+
+
+######################################################################
+Reporting bugs & Development Discussion
+#######################################
+
+Please discuss this release on the samba-technical mailing list or by
+joining the #samba-technical IRC channel on irc.freenode.net.
+
+If you do report problems then please try to send high quality
+feedback. If you don't provide vital information to help us track down
+the problem then you will probably be ignored.  All bug reports should
+be filed under the Samba 3.6 product in the project's Bugzilla
+database (https://bugzilla.samba.org/).
+
+
+======================================================================
+== Our Code, Our Bugs, Our Responsibility.
+== The Samba Team
+======================================================================
+
+
+----------------------------------------------------------------------
+
+
+                   ==============================
+                   Release Notes for Samba 3.6.13
+                           March 18, 2013
+                   ==============================
+
+
+This is is the latest stable release of Samba 3.6.
+
+Major enhancements in Samba 3.6.13 include:
+
+o  Fix two resource leaks in winbindd (bug #9684).
+o  Unlink after open causes smbd to panic (bug #9571).
+
+
+Changes since 3.6.12:
+--------------------
+
+o   Jeremy Allison <jra@samba.org>
+    * BUG 9519: Samba returns unexpected error on SMB posix open.
+    * BUG 9585: Samba 3.6.x not correctly signing any but the last response in
+      a compound request/response.
+    * BUG 9586: smbd[29175]: disk_free: sys_popen() failed" message logged in
+      /var/log/messages many times.
+    * BUG 9587: Archive flag is always set on directories.
+    * BUG 9588: ACLs are not inherited to directories for DFS shares.
+    * BUG 9637: Renaming directories as guest user in security share mode
+      doesn't work.
+
+
+o   Björn Baumbach <bb@sernet.de>
+    * BUG 9568: Add dbwrap_tool.1 manual page.
+
+
+o   Ira Cooper <ira@samba.org>
+    * BUG 9646: Make SMB2_GETINFO multi-volume aware.
+
+
+o   Günther Deschner <gd@samba.org>
+    * BUG 9474: Downgrade v4 printer driver requests to v3.
+
+
+o   David Disseldorp <ddiss@samba.org>
+    * BUG 9378: Add extra attributes for AD printer publishing.
+    * BUG 9658: Fix initial large PAC sess setup response.
+
+
+o   Björn Jacke <bj@sernet.de>
+    * BUG 7825: Fix GNU ld version detection with
+      old gcc releases.
+
+
+o   Daniel Kobras <d.kobras@science-computing.de>
+    * BUG 9039: 'map untrusted to domain' treats WORKSTATION as bogus domain.
+
+
+o   Guenter Kukkukk <kukks@samba.org>
+    * BUG 9701: Fix vfs_catia module.
+
+
+o   Volker Lendecke <vl@samba.org>
+    * BUG 9541: Add support for posix_openpt.
+
+
+o   Stefan Metzmacher <metze@samba.org>
+    * Bug 9625: wbcAuthenticateEx gives unix times.
+
+
+o   Andreas Schneider <asn@samba.org>
+    * BUG 9574: Fix a possible null pointer dereference in spoolss.
+    * BUG 9684: Fix two resource leaks in winbindd.
+    * BUG 9686: Fix a possible buffer overrun in pdb_smbpasswd.
+
+
+o   Pavel Shilovsky <piastry@etersoft.ru>
+    * Bug #9571: Unlink after open causes smbd to panic.
+
+
+######################################################################
+Reporting bugs & Development Discussion
+#######################################
+
+Please discuss this release on the samba-technical mailing list or by
+joining the #samba-technical IRC channel on irc.freenode.net.
+
+If you do report problems then please try to send high quality
+feedback. If you don't provide vital information to help us track down
+the problem then you will probably be ignored.  All bug reports should
+be filed under the Samba 3.6 product in the project's Bugzilla
+database (https://bugzilla.samba.org/).
+
+
+======================================================================
+== Our Code, Our Bugs, Our Responsibility.
+== The Samba Team
+======================================================================
+
+
+----------------------------------------------------------------------
+
+
+                   ==============================
+                   Release Notes for Samba 3.6.12
+                          January 30, 2013
+                   ==============================
+
+
+This is a security release in order to address
+CVE-2013-0213 (Clickjacking issue in SWAT) and
+CVE-2013-0214 (Potential XSRF in SWAT).
+
+o  CVE-2013-0213:
+   All current released versions of Samba are vulnerable to clickjacking in the
+   Samba Web Administration Tool (SWAT). When the SWAT pages are integrated into
+   a malicious web page via a frame or iframe and then overlaid by other content,
+   an attacker could trick an administrator to potentially change Samba settings.
+
+   In order to be vulnerable, SWAT must have been installed and enabled
+   either as a standalone server launched from inetd or xinetd, or as a
+   CGI plugin to Apache. If SWAT has not been installed or enabled (which
+   is the default install state for Samba) this advisory can be ignored.
+
+o  CVE-2013-0214:
+   All current released versions of Samba are vulnerable to a cross-site
+   request forgery in the Samba Web Administration Tool (SWAT). By guessing a
+   user's password and then tricking a user who is authenticated with SWAT into
+   clicking a manipulated URL on a different web page, it is possible to manipulate
+   SWAT.
+
+   In order to be vulnerable, the attacker needs to know the victim's password.
+   Additionally SWAT must have been installed and enabled either as a standalone
+   server launched from inetd or xinetd, or as a CGI plugin to Apache. If SWAT has
+   not been installed or enabled (which is the default install state for Samba)
+   this advisory can be ignored.
+
+
+Changes since 3.6.11:
+--------------------
+
+o   Kai Blin <kai@samba.org>
+    * BUG 9576: CVE-2013-0213: Fix clickjacking issue in SWAT.
+    * BUG 9577: CVE-2013-0214: Fix potential XSRF in SWAT.
+
+
+######################################################################
+Reporting bugs & Development Discussion
+#######################################
+
+Please discuss this release on the samba-technical mailing list or by
+joining the #samba-technical IRC channel on irc.freenode.net.
+
+If you do report problems then please try to send high quality
+feedback. If you don't provide vital information to help us track down
+the problem then you will probably be ignored.  All bug reports should
+be filed under the Samba 3.6 product in the project's Bugzilla
+database (https://bugzilla.samba.org/).
+
+
+======================================================================
+== Our Code, Our Bugs, Our Responsibility.
+== The Samba Team
+======================================================================
+
+
+----------------------------------------------------------------------
+
+
+                   ==============================
+                   Release Notes for Samba 3.6.11
+                         January 21, 2013
+                   ==============================
+
+
+This is is the latest stable release of Samba 3.6.
+
+Major enhancements in Samba 3.6.11 include:
+
+o   defer_open is triggered multiple times on the same request (bug #9196).
+o   Fix SEGV wh_n using second vfs module (bug #9471).
+
+
+Changes since 3.6.10:
+--------------------
+
+o   Jeremy Allison <jra@samba.org>
+    * BUG 9196: defer_open is triggered multiple times on the same request.
+    * BUG 9550: Mask off signals the correct way from the signal handler.
+
+
+o   Björn Baumbach <bb@sernet.de>
+    * BUG 9569: ntlm_auth.1: Fix format and make examples visible.
+
+
+o   Tsukasa Hamano <hamano@osstech.co.jp>
+    * BUG 9471: Fix SEGV when using second vfs module.
+
+
+o   Volker Lendecke <vl@samba.org>
+    * BUG 9548: Correctly detect O_DIRECT.
+    * BUG 9546: Fix aio_suspend detection on FreeBSD.
+
+
+######################################################################
+Reporting bugs & Development Discussion
+#######################################
+
+Please discuss this release on the samba-technical mailing list or by
+joining the #samba-technical IRC channel on irc.freenode.net.
+
+If you do report problems then please try to send high quality
+feedback. If you don't provide vital information to help us track down
+the problem then you will probably be ignored.  All bug reports should
+be filed under the Samba 3.6 product in the project's Bugzilla
+database (https://bugzilla.samba.org/).
+
+
+======================================================================
+== Our Code, Our Bugs, Our Responsibility.
+== The Samba Team
+======================================================================
+
+
+----------------------------------------------------------------------
+
+
+                   ==============================
+                   Release Notes for Samba 3.6.10
+                         December 10, 2012
+                   ==============================
+
+
+This is is the latest stable release of Samba 3.6.
+
+Major enhancements in Samba 3.6.10 include:
+
+o  Respond correctly to FILE_STREAM_INFO requests (bug #9460).
+o  Fix segfault when "default devmode" is disabled (bug #9433).
+o  Fix segfaults in "log level = 10" on Solaris (bug #9390).
+
+
+Changes since 3.6.9:
+--------------------
+
+o   Jeremy Allison <jra@samba.org>
+    * BUG 9236: ACL masks incorrectly applied when setting ACLs.
+    * BUG 9374: Allow smb2.acls torture test to pass against smbd with a POSIX
+      ACLs backend.
+
+
+o   Björn Baumbach <bb@sernet.de>
+    * BUG 9345: Manpages: Fix use of <smbconfoption> tag.
+
+
+o   Sumit Bose <sbose@redhat.com>
+    * BUG 9367: Use work around for 'winbind use default domain' only if it is
+      set.
+
+
+o   Günther Deschner <gd@samba.org>
+    * BUG 9272: 'net ads join' does not provide AES keys in host keytab.
+    * BUG 9426: Lookup nametype 0x20 in rpc_pipe_open_tcp_port().
+    * BUG 9439: Fix ncacn_ip_tcp reconnection code for lsa lookups.
+    * BUG 9451: Allow to force DNS updates using net.
+
+
+o   David Disseldorp <ddiss@samba.org>
+    * BUG 9433: Fix segfault when "default devmode" is disabled.
+
+
+o   Volker Lendecke <vl@samba.org>
+    * BUG 9359: Optimization needed for SMB2 performance sensitive workloads.
+    * BUG 9422: Large read requests cause server to issue malformed reply.
+    * BUG 9439: Fix ncacn_ip_tcp reconnection code for lsa lookups.
+
+
+o   Stefan Metzmacher <metze@samba.org>
+    * BUG 9209: Improve the smb2.create.blob test.
+    * BUG 9272: 'net ads join' does not provide AES keys in host keytab.
+    * BUG 9390: Fix segfaults in "log level = 10" on Solaris.
+    * BUG 9402: lib/addns doesn't work with a bind9 server.
+
+
+o   Matthieu Patou <mat@matws.net>
+    * BUG 9418: Fix MD5 detection in the autoconf build.
+
+
+o   Andreas Schneider <asn@samba.org>
+    * BUG 8564: Fix segfault in pam_sm_authenticate().
+    * BUG 9326: Fix 'net ads join' message for the dns domain.
+    * BUG 9386: Winbind: Failover if netlogon pipe is not available.
+    * BUG 9436: Fix leaking sockets of SMB connections to a DC.
+
+
+o   Richard Sharpe <realrichardsharpe@gmail.com>
+    * BUG 9460: Respond correctly to FILE_STREAM_INFO requests.
+
+
+######################################################################
+Reporting bugs & Development Discussion
+#######################################
+
+Please discuss this release on the samba-technical mailing list or by
+joining the #samba-technical IRC channel on irc.freenode.net.
+
+If you do report problems then please try to send high quality
+feedback. If you don't provide vital information to help us track down
+the problem then you will probably be ignored.  All bug reports should
+be filed under the Samba 3.6 product in the project's Bugzilla
+database (https://bugzilla.samba.org/).
+
+
+======================================================================
+== Our Code, Our Bugs, Our Responsibility.
+== The Samba Team
+======================================================================
+
+
+----------------------------------------------------------------------
+
+
+                   =============================
+                   Release Notes for Samba 3.6.9
+                         October 29, 2012
+                   =============================
+
+
+This is is the latest stable release of Samba 3.6.
+
+Major enhancements in Samba 3.6.9 include:
+
+o  When setting a non-default ACL, don't forget to apply masks to
+   SMB_ACL_USER and SMB_ACL_GROUP entries (bug #9236).
+o  Winbind can't fetch user or group info from AD via LDAP (bug #9147).
+o  Fix segfault in smbd if user specified ports out for range (bug #9218).
+
+
+Changes since 3.6.8:
+--------------------
+
+o   Michael Adam <obnox@samba.org>
+    * BUG 9173: Make SMB2 compound request create/delete_on_close/close work as
+      Windows.
+
+
+o   Jeremy Allison <jra@samba.org>
+    * BUG 8966: Fix 'net rpc share allowedusers' to work with 2008r2.
+    * BUG 9016: Connection to outbound trusted domain goes offline.
+    * BUG 9117: 'smbclient' can't connect to a Windows 7 server using NTLMv2.
+    * BUG 9147: Winbind can't fetch user or group info from AD via LDAP.
+    * BUG 9174: Empty SPNEGO packet can cause smbd to crash.
+    * BUG 9189: SMB2 Create doesn't return correct MAX ACCESS access mask in
+      blob.
+    * BUG 9209: Parse of invalid SMB2 create blob can cause smbd crash.
+    * BUG 9213: Bad ASN.1 NegTokenInit packet can cause invalid free.
+    * BUG 9222: Signing cannot be disabled for SMB2 by design, so fix the
+      documentation instead.
+    * BUG 9236: When setting a non-default ACL, don't forget to apply masks to
+      SMB_ACL_USER and SMB_ACL_GROUP entries.
+
+
+o   Andrew Bartlett <abartlet@samba.org>
+    * BUG 8788: Initialise ticket to ensure we do not invalid memory.
+
+
+o   Ira Cooper <ira@samba.org>
+    * BUG 9173: Compound requests should continue processing.
+
+
+o   Günther Deschner <gd@samba.org>
+    * BUG 9177: pam_winbind: Match more return codes when wbcGetPwnam has failed.
+
+
+o   Björn Jacke <bj@sernet.de>
+    * BUG 3272: quota: Don't force the block size to 512.
+    * BUG 8107: Add some includes for poll.h.
+    * BUG 8146: Fix wrong test == syntax in configure.
+    * BUG 8344: Fix --with(out)-sendfile-support option handling in autoconf.
+    * BUG 9172: Add quota support for gfs2.
+
+
+o   Volker Lendecke <vl@samba.org>
+    * BUG 9188: Fix crash bug in idmap_hash.
+    * BUG 9268: Make tdb robust against improper CLEAR_IF_FIRST restart.
+
+
+o   Luca Lorenzetto <lorenzetto-luca@ubuntu-it.org>
+    * BUG 9013: Fix crash on null pam change pw response.
+
+
+o   Vladimir Marek <Vladimir.Marek@Oracle.COM>
+    * BUG 9192: Fix service control for non-internal services.
+
+
+o   Stefan Metzmacher <metze@samba.org>
+    * BUG 9173: Make SMB2 compound request create/delete_on_close/close work as
+      Windows.
+    * BUG 9196: Don't take 'state->te' as indication for "was_deferred".
+    * BUG 9209: Fix unitialized padding in smb2_create_blob_push_one().
+
+
+o   Matthieu Patou <mat@matws.net>
+    * BUG 9259: lib-addns: ensure that allocated buffer are pre set to 0.
+
+
+o   Rusty Russell <rusty@rustcorp.com.au>
+    * BUG 9268: Make robust against shrinking tdbs.
+
+
+o   Joachim Schmitz <schmitz@hp.com>
+    * BUG 8107: Fix poll replacement to become a msleep replacement.
+
+
+o   Andreas Schneider <asn@samba.org>
+    * BUG 8632: Fix builtin forms order to match Windows again.
+    * BUG 8769: Fix RAW printing for normal users.
+    * BUG 9112: Increase debug level for info that the db is empty.
+    * BUG 9154: Open printers with the right access mask.
+    * BUG 9171: Remove non-existent option '-Y' from winbindd manpage.
+    * BUG 9218: Fix segfault in smbd if user specified ports out for range.
+    * BUG 9231: Fix NT_STATUS_IO_TIMEOUT during slow import of printers into
+      registry.
+    * BUG 9280: Add support for reloading systemd services.
+
+
+o   Karolin Seeger <kseeger@samba.org>
+    * BUG 9165: Fix makerpms.sh on RHEL.
+
+
+######################################################################
+Reporting bugs & Development Discussion
+#######################################
+
+Please discuss this release on the samba-technical mailing list or by
+joining the #samba-technical IRC channel on irc.freenode.net.
+
+If you do report problems then please try to send high quality
+feedback. If you don't provide vital information to help us track down
+the problem then you will probably be ignored.  All bug reports should
+be filed under the Samba 3.6 product in the project's Bugzilla
+database (https://bugzilla.samba.org/).
+
+
+======================================================================
+== Our Code, Our Bugs, Our Responsibility.
+== The Samba Team
+======================================================================
+
+
+----------------------------------------------------------------------
+
+
+                   =============================
+                   Release Notes for Samba 3.6.8
+                         September 17, 2012
+                   =============================
+
+
+This is is the latest stable release of Samba 3.6.
+
+Major enhancements in Samba 3.6.8 include:
+
+o  Fix crash bug in smbd caused by a blocking lock followed by
+   close (bug #9084).
+o  Fix Winbind panic if we couldn't find the domain (bug #9135).
+
+
+Changes since 3.6.7:
+--------------------
+
+o   Jeremy Allison <jra@samba.org>
+    * BUG 9058: Fix smbstatus code dump when a file entry has delete tokens.
+    * BUG 9098: Fix refreshing of Kerberos tickets in Winbind.
+    * BUG 9124: Fix setting of "inherited" bit on inherited ACE's.
+
+
+o   Christian Ambach <ambi@samba.org>
+    * BUG 9137: Make 'smbclient allinfo' show the snapshot list.
+
+
+o   Andrew Bartlett <abartlet@samba.org>
+    * BUG 9066: "Domain Users" incorrectly added as additional group on domain
+      members.
+    * BUG 9067: Use correct RID for "Domain Guests" primary group.
+
+
+o   David Binderman <dcb314@hotmail.com>
+    * BUG 9065: Fix bad call to memcpy source3/registry/regfio.c.
+
+
+o   David Disseldorp <ddiss@samba.org>
+    * BUG 9123: Fix lprng job tracking errors.
+
+
+o   Salvador I. Gonzalez <sgonzalez@codejunkie.net>
+    * BUG 9088: Fix smbclient/tarmode panic when connecting to Windows 2000
+      clients.
+
+
+o   Hargagan <shargagan@novell.com>
+    * BUG 9085: Fix NMB registration for a duplicate workstation.
+
+
+o   Björn Jacke <bj@sernet.de>
+    * BUG 9037: Open and netbsd have the md5 symbols in libc.
+    * BUG 9144: Fix nfs quota support with Linux nfs4 mounts.
+
+
+o   Volker Lendecke <vl@samba.org>
+    * BUG 9037: Fix name clash in MD5 causing the "net ads join" to fail on
+      T4 (sun4v) systems on Solaris 10.
+    * BUG 9058: Backport FSCTL codes from master.
+    * BUG 9084: Fix crash bug in smbd caused by a blocking lock followed by
+      close.
+    * BUG 9150: Valid open requests can cause smbd assert due to incorrect
+      oplock handling on delete requests.
+
+
+o   Herb Lewis <hlewis@panasas.com>
+    * BUG 9104: Fix identification of idle clients in Winbind to avoid crashes
+      and NDR parsing errors.
+
+
+o   Stefan Metzmacher <metze@samba.org>
+    * BUG 9058: Fix segfault in smbstatus.
+
+
+o   Andreas Schneider <asn@samba.org>
+    * BUG 9111: Fix compilation with newer MIT Kerberos which hides internal
+      symbols.
+    * BUG 9112: Fix flooding the logs with records we don't find in pcap.
+    * BUG 9122: Initialize the print backend after we setup winreg.
+    * BUG 9135: Fix Winbind panic if we couldn't find the domain.
+
+
+######################################################################
+Reporting bugs & Development Discussion
+#######################################
+
+Please discuss this release on the samba-technical mailing list or by
+joining the #samba-technical IRC channel on irc.freenode.net.
+
+If you do report problems then please try to send high quality
+feedback. If you don't provide vital information to help us track down
+the problem then you will probably be ignored.  All bug reports should
+be filed under the Samba 3.6 product in the project's Bugzilla
+database (https://bugzilla.samba.org/).
+
+
+======================================================================
+== Our Code, Our Bugs, Our Responsibility.
+== The Samba Team
+======================================================================
+
+
+----------------------------------------------------------------------
+
+
+                   =============================
+                   Release Notes for Samba 3.6.7
+                           August 6, 2012
+                   =============================
+
+
+This is is the latest stable release of Samba 3.6.
+
+Major enhancements in Samba 3.6.7 include:
+
+o  Fix resolving our own "Domain Local" groups (bug #9052).
+o  Fix migrating printers while upgrading from 3.5.x (bug #9026).
+
+
+Changes since 3.6.6:
+--------------------
+
+o   Jeremy Allison <jra@samba.org>
+    * BUG 8974: Fix kernel oplocks when uid(file) != uid(process).
+    * BUG 8989: Send correct responses to NT Transact Secondary when no data
+      and no params for the Trans2 calls are set.
+    * BUG 9034: Fix typo in set_re_uid() call when USE_SETRESUID selected in
+      configure.
+
+
+o   David Binderman <dcb314@hotmail.com>
+    * BUG 9062: rpcclient: Fix bad call to data_blob_const.
+
+
+o   Günther Deschner <gd@samba.org>
+    * BUG 9026: Fix migrating printers while upgrading from 3.5.x.
+
+
+o   David Disseldorp <ddiss@samba.org>
+    * BUG 8719: Printing fails in function cups_job_submit.
+    * BUG 9026: Fix migrating printers while upgrading from 3.5.x.
+
+
+o   Olaf Flebbe <o.flebbe@science-computing.de>
+    * BUG 8552: Correct documentation of "case sensitive".
+
+
+o   Björn Jacke <bj@sernet.de>
+    * BUG 8996: Fix build without ads support.
+
+
+o   Volker Lendecke <vl@samba.org>
+    * BUG 9003: Fix posix acl on gpfs.
+    * BUG 9040: Using asynchronous IO with SMB2 can return NT_STATUS_FILE_CLOSED
+      in error instead ofNT_STATUS_FILE_LOCK_CONFLICT.
+
+
+o   Stefan Metzmacher <metze@samba.org>
+    * BUG 9002: Don't turn negative cache entries into valid idmappings.
+    * BUG 9022: Make vfs_gpfs less verbose in get/set_xattr functions.
+    * BUG 9057: Fix bugs in SMB2 credit handling code.
+
+
+o   Jiri Popelka <jpopelka@redhat.com>
+    * BUG 9055: Fix build against CUPS 1.6.
+
+
+o   Jura Sasek <jiri.sasek@oracle.com>
+    * BUG 9037: Fix 'net ads join' on T4 (sun4v) systems on Solaris 10.
+
+
+o   Andreas Schneider <asn@samba.org>
+    * BUG 9052: Fix resolving our own "Domain Local" groups.
+
+
+######################################################################
+Reporting bugs & Development Discussion
+#######################################
+
+Please discuss this release on the samba-technical mailing list or by
+joining the #samba-technical IRC channel on irc.freenode.net.
+
+If you do report problems then please try to send high quality
+feedback. If you don't provide vital information to help us track down
+the problem then you will probably be ignored.  All bug reports should
+be filed under the Samba 3.6 product in the project's Bugzilla
+database (https://bugzilla.samba.org/).
+
+
+======================================================================
+== Our Code, Our Bugs, Our Responsibility.
+== The Samba Team
+======================================================================
+
+
+----------------------------------------------------------------------
+
+
+                   =============================
+                   Release Notes for Samba 3.6.6
+                           June 25, 2012
+                   =============================
+
+
+This is is the latest stable release of Samba 3.6.
+
+Major enhancements in Samba 3.6.6 include:
+
+o  Fix possible memory leaks in the Samba master process (bug #8970).
+o  Fix uninitialized memory read in talloc_free().
+o  Fix joining of XP Pro workstations to 3.6 DCs (bug #8373).
+
+
+Changes since 3.6.5:
+--------------------
+
+o   Michael Adam <obnox@samba.org>
+    * BUG 8738: SMB2 server will not release unused shares.
+    * BUG 8749: Sign non guest sessions in SessionSetup.
+    * BUG 8921: Fix race writing registry values.
+
+
+o   Jeremy Allison <jra@samba.org>
+    * BUG 8373: Fix joining of XP Pro workstations to 3.6 DCs.
+    * BUG 8627: Fix crash bug in dns_create_probe when dns_create_update fails.
+    * BUG 8723: Add pthread-based aio VFS module.
+    * BUG 8784: When calculating the share security mask, take priviliges into
+      account for the connecting user.
+    * BUG 8811: sd_has_inheritable_components segfaults on an SD that
+      se_access_check accepts.
+    * BUG 8837: Fix crash in smbd when deleting directory and veto files are
+      enabled.
+    * BUG 8857: Setting traverse rights fails to enable directory traversal when
+      acl_xattr in use.
+    * BUG 8882: Broken processing of %U with vfs_full_audit when force user is
+      set.
+    * BUG 8897: Make winbind_krb5_locator not only returning one IP address.
+    * BUG 8910: resolve_ads() code can return zero addresses and miss valid
+      DC IP addresses.
+    * BUG 8922: smbclient's tarmode insists on listing excluded directories.
+    * BUG 8953: Winbind can hang as nbt_getdc() has no timeout.
+    * BUG 8957: Typo in pam_winbindd code MUST fix.
+    * BUG 8970: Fix possible memory leaks in the Samba master process.
+    * BUG 8971: cleanup_timeout_fn() is called too often, on exiting when an
+      smbd is idle.
+    * BUG 8972: Directory group write permission bit is set if unix extensions
+      are enabled.
+
+
+o   Christian Ambach <ambi@samba.org>
+    * BUG 8406: Fix a return code check in Winbind.
+    * BUG 8807: Fix crash in dcerpc_lsa_lookup_sids_noalloc() crashes when
+      groups has more than 1000 groups.
+
+
+o   Andrew Bartlett <abartlet@samba.org>
+    * BUG 8599: Only use SamLogonEx when we can get unencrypted session keys.
+    * BUG 8727: Fix smbclients with posix large reads.
+    * BUG 8943: Slow but responsive DC can lock up Winbind for > 10 minutes
+      at a time.
+
+
+o   Björn Baumbach <bb@sernet.de>
+    * BUG 7564: Fix default name resolve order in the manpage.
+    * BUG 8554, 8612, 8748: Add new printers to registry.
+    * BUG 8789: Remove whitespace in example samba.ldif.
+
+
+o   Alexander Bokovoy <ab@samba.org>
+    * BUG 8988: Avoid crash with MIT krb5 1.10.0 in gss_get_name_attribute().
+
+
+o   Alejandro Escanero Blanco <aescanero@gmail.com>
+    * BUG 8798: The primary rid should be in the groups rid array.
+
+
+o   Ira Cooper <samba@ira.wakeful.net>
+    * BUG 8729: Fix getpass regressions on Solaris/Illumos.
+    * BUG 8743: Fix configure.developer builds on Solaris.
+    * BUG 8910: Fix bad bugfix for bug #8910.
+    * BUG 8952: Fix negative SID->uid/gid cache handling.
+    * BUG 8995: Use fsp_persistent_id() as persistent_file_id part for SMB2.
+
+
+o   David Disseldorp <ddiss@samba.org>
+    * BUG 8762: Fix crash in printer_list_set_printer().
+
+
+o   Olaf Flebbe <o.flebbe@science-computing.de>
+    * BUG 8859: Fix assertion in reg_parse.
+
+
+o   Björn Jacke <bj@sernet.de>
+    * BUG 8732: Fix compile of krb5 locator on Solaris.
+    * BUG 8869: Remove outdated netscape ds 5 schema file.
+    * BUG 8978: Remove dependency on automake for 'make everything'.
+
+
+o   Steve Langasek <steve.langasek@ubuntu.com>
+    * BUG 8920: Fix null dereference in pdb_interface.
+
+
+o   Volker Lendecke <vl@samba.org>
+    * Fix uninitialized memory read in talloc_free().
+    * BUG 8567: Fix segfault in dom_sid_compare.
+    * BUG 8733: Delete streams on directories (streams_depot).
+    * BUG 8760: Add SERVERID_UNIQUE_ID_NOT_TO_VERIFY.
+    * BUG 8836: Fix segfaults on "smbcontrol close-share" in aio_fork.
+    * BUG 8861: Fix a segfault with debug level 3 on Solaris.
+    * BUG 8904: Fix Winbind crash triggered by 'wbinfo --lookup-sids ""'.
+    * BUG 8998: Notify code can miss a ChDir.
+
+
+o   Stefan Metzmacher <metze@samba.org>
+    * BUG 8139: Ignore SMBecho errors (the server may not support it).
+    * BUG 8527: db_ctdb_traverse fails to traverse records created within the
+      current transaction.
+    * BUG 8311: Winzip occasionally can not read files out of an open winzip
+      dialog.
+    * BUG 8739: Fill the sids array of the info in
+      wbcAuthUserInfo_to_netr_SamInfo3().
+    * BUG 8749: Sign non guest sessions in SessionSetup.
+    * BUG 8995: Use fsp_persistent_id() as persistent_file_id part for SMB2.
+
+
+o   Matthieu Patou <mat@matws.net>
+    * BUG 8599: Set the can_do_validation6 also for trusted domain.
+    * BUG 8714: Catch with pid filename's change when config file is not
+      smb.conf.
+    * BUG 8734: Don't try to do clever thing if the username is not found while
+      authenticating through Winbind.
+    * BUG 8771: Winbind takes up to 20 minutes to change from DC 1 to DC 2.
+    * BUG 8975: Call dump_core_setup after command line option has been parsed.
+
+
+o   SATOH Fumiyasu <fumiyas@osstech.co.jp>
+    * BUG 8826: Prepend '/' to filename argument (docs).
+
+
+o   Andreas Schneider <asn@samba.org>
+    * BUG 8944 and 8567: Don't lookup the system user in pdb.
+
+
+o   Richard Sharpe <realrichardsharpe@gmail.com>
+    * BUG 8768: Honor SeTakeOwnershipPrivilege when file opened with
+      SEC_STD_WRITE_OWNER.
+    * BUG 8797: Correctly handle DENY ACEs when privileges apply.
+    * BUG 8822: Fix building out-of-tree modules.
+    * BUG 8945: vfs_acl_common discards errors from writing to the underlying
+      storage.
+    * BUG 8970: Fix possible memory leaks in the Samba master process.
+
+
+o   Simo Sorce <idra@samba.org>
+    * BUG 8915: Fix pam_winbind build against newer iniparser library.
+
+
+o   Joseph Tam <jtam.home@gmail.com>
+    * BUG 8877: Syslog broken owing to mistyping of debug_settings.syslog.
+
+
+o   Ralph Wuerthner <ralph.wuerthner@de.ibm.com>
+    * BUG 8845: Move print_backend_init() behind init_system_info().
+
+
+######################################################################
+Reporting bugs & Development Discussion
+#######################################
+
+Please discuss this release on the samba-technical mailing list or by
+joining the #samba-technical IRC channel on irc.freenode.net.
+
+If you do report problems then please try to send high quality
+feedback. If you don't provide vital information to help us track down
+the problem then you will probably be ignored.  All bug reports should
+be filed under the Samba 3.6 product in the project's Bugzilla
+database (https://bugzilla.samba.org/).
+
+
+======================================================================
+== Our Code, Our Bugs, Our Responsibility.
+== The Samba Team
+======================================================================
+
+
+----------------------------------------------------------------------
+
+
+                   =============================
+                   Release Notes for Samba 3.6.5
+                          April 30, 2012
+                   =============================
+
+
+This is a security release in order to address
+CVE-2012-2111 (Incorrect permission checks when granting/removing
+privileges can compromise file server security).
+
+o  CVE-2012-2111:
+   Samba 3.4.x to 3.6.4 are affected by a
+   vulnerability that allows arbitrary users
+   to modify privileges on a file server.
+
+
+Changes since 3.6.4:
+--------------------
+
+
+o   Jeremy Allison <jra@samba.org>
+    * Fix  incorrect permission checks when granting/removing
+      privileges (CVE-2012-2111).
+
+
+######################################################################
+Reporting bugs & Development Discussion
+#######################################
+
+Please discuss this release on the samba-technical mailing list or by
+joining the #samba-technical IRC channel on irc.freenode.net.
+
+If you do report problems then please try to send high quality
+feedback. If you don't provide vital information to help us track down
+the problem then you will probably be ignored.  All bug reports should
+be filed under the Samba 3.6 product in the project's Bugzilla
+database (https://bugzilla.samba.org/).
+
+
+======================================================================
+== Our Code, Our Bugs, Our Responsibility.
+== The Samba Team
+======================================================================
+
+
+----------------------------------------------------------------------
+
+
+                   =============================
+                   Release Notes for Samba 3.6.4
+                          April 10, 2012
+                   =============================
+
+
+This is a security release in order to address
+CVE-2012-1182 ("root" credential remote code execution).
+
+o  CVE-2012-1182:
+   Samba 3.0.x to 3.6.3 are affected by a
+   vulnerability that allows remote code
+   execution as the "root" user.
+
+
+Changes since 3.6.3:
+--------------------
+
+
+o   Stefan Metzmacher <metze@samba.org>
+    *BUG 8815: PIDL based autogenerated code allows overwriting beyond of
+     allocated array (CVE-2012-1182).
+
+
+######################################################################
+Reporting bugs & Development Discussion
+#######################################
+
+Please discuss this release on the samba-technical mailing list or by
+joining the #samba-technical IRC channel on irc.freenode.net.
+
+If you do report problems then please try to send high quality
+feedback. If you don't provide vital information to help us track down
+the problem then you will probably be ignored.  All bug reports should
+be filed under the Samba 3.6 product in the project's Bugzilla
+database (https://bugzilla.samba.org/).
+
+
+======================================================================
+== Our Code, Our Bugs, Our Responsibility.
+== The Samba Team
+======================================================================
+
+
+----------------------------------------------------------------------
+
+
+                   =============================
+                   Release Notes for Samba 3.6.3
+                         January 29, 2012
+                   =============================
+
+
+This is a security release in order to address
+CVE-2012-0817 (Memory leak/Denial of service).
+
+o  CVE-2012-0817:
+   The Samba File Serving daemon (smbd) in Samba versions
+   3.6.0 to 3.6.2 is affected by a memory leak that can
+   cause a server denial of service.
+
+
+Changes since 3.6.2:
+--------------------
+
+
+o   Jeremy Allison <jra@samba.org>
+    * BUG 8724: Fix memory leak in parent smbd on connection.
+
+
+o   Ira Cooper <samba@ira.wakeful.net>
+    * BUG 8724: Fix memory leak in parent smbd on connection.
+
+
+######################################################################
+Reporting bugs & Development Discussion
+#######################################
+
+Please discuss this release on the samba-technical mailing list or by
+joining the #samba-technical IRC channel on irc.freenode.net.
+
+If you do report problems then please try to send high quality
+feedback. If you don't provide vital information to help us track down
+the problem then you will probably be ignored.  All bug reports should
+be filed under the Samba 3.6 product in the project's Bugzilla
+database (https://bugzilla.samba.org/).
+
+
+======================================================================
+== Our Code, Our Bugs, Our Responsibility.
+== The Samba Team
+======================================================================
+
+
+----------------------------------------------------------------------
+
+
+                   =============================
+                   Release Notes for Samba 3.6.2
+                         January 25, 2012
+                   =============================
+
+
+This is the latest stable release of Samba 3.6.
+
+Major enhancements in Samba 3.6.2 include:
+
+o  Make Winbind receive user/group information (bug #8371).
+o  Several SMB2 fixes.
+
+
+Changes since 3.6.1:
+--------------------
+
+
+o   Michael Adam <obnox@samba.org>
+    * BUG 8528: Fix SEGFAULT from net registry export on not zero terminated
+      REG_SZ values.
+
+
+o   Jeremy Allison <jra@samba.org>
+    * BUG 8541: readlink() on Linux clients fails if the symlink target is
+      outside of the share.
+    * BUG 8542: smbclient posix_open command fails to return correct info on
+      open file.
+    * BUG 8548: winbind_samlogon_retry_loop ignores logon_parameters flags.
+    * BUG 8561: Password change settings not fully observed.
+    * BUG 8562: Fix double free error in talloc.
+    * BUG 8614: Ensure we correctly calculate reply credits over all returned
+      SMB2 replies.
+    * BUG 8631: POSIX ACE x permission becomes rx following mapping to and from
+      a DACL.
+    * BUG 8636: When returning an ACL without SECINFO_DACL requested, we still
+      set SEC_DESC_DACL_PRESENT in the type field.
+    * BUG 8644: vfs_acl_xattr and vfs_acl_tdb modules can fail to add
+      inheritable entries on a directory with no stored ACL.
+    * BUG 8663: Fix deleting a symlink if the symlink target is outside of
+    * the share.
+    * BUG 8664: Fix renaming a symlink if the symlink target is outside of
+      the share.
+    * BUG 8673: Fix NT ACL issue.
+    * BUG 8674: Fix buffer overflow issue with AES encryption in samba traffic
+      analyzer.
+    * BUG 8679: recvfile code path using splice() on Linux leaves data in the
+      pipe on short write.
+    * BUG 8687: Fix typo in 'net memberships' usage.
+    * BUG 8710: Fix major leak with SMB2 in connections.tdb.
+    * Fix a crash bug in the spoolss code.
+    * Add new contributing FAQ announcing acceptance of corporate (C).
+
+
+o   Christian Ambach <ambi@samba.org>
+    * BUG 8444: Add an allocation pool to idmap_autorid.
+    * BUG 8585: Increase a debug level.
+
+
+o   Andrew Bartlett <abartlet@samba.org>
+    * BUG 8623: Fix crash bug when trying to browse Samba printers.
+
+
+o   Björn Baumbach <bb@sernet.de>
+    * BUG 8580: Enable inotify if sys or kernel inotify is available.
+    * BUG 8618: Fix migrate printer code.
+
+
+o   Gregor Beck <gbeck@sernet.de>
+    * BUG 8528: Fix SEGFAULT from net registry export on not zero terminated
+      REG_SZ values.
+
+
+o   Günther Deschner <gd@samba.org>
+    * BUG 7465: Remove pointless use_memory_krb5_ccache.
+    * BUG 8176: Fix perl path.
+    * BUG 8591: Fix marshalling of samr_ChangePasswordUser3.
+    * BUG 8692: libads: Fix malloc/talloc mismatch in
+      ads_keytab_verify_ticket().
+
+
+o   David Disseldorp <ddiss@suse.de>
+    * BUG 4942: DeletePrinterDriverEx deletes files in use.
+    * BUG 8575: Add systemd service files.
+    * BUG 8606: Fix intermittent print job failures caused by character
+      conversion errors.
+    * BUG 8697: Make DeletePrinterDriverEx remove printer driver files.
+
+
+o   Björn Jacke <bj@sernet.de>
+    * BUG 8531: Make DSO_EXPORTS_CMD more portable.
+    * BUG 8616: Allow to set TCP_NODELAYACK socket option on AIX.
+    * BUG 8652: Document the "ignore system acls" option of vfs_acl_xattr and
+      vfs_acl_tdb vfs modules.
+
+
+o   Frank Lahm <franklahm@googlemail.com>
+    * BUG 8419: Make VFS op "streaminfo" stackable.
+
+
+o   Volker Lendecke <vl@samba.org>
+    * BUG 8371: Make Winbind receive user/group information.
+    * BUG 8639: Fix the vfs_commit module.
+    * BUG 8686: Packet validation checks can be done before length validation
+      causing uninitialized memory read.
+
+
+o   Stefan Metzmacher <metze@samba.org>
+    * BUG 5326: Fix cli_write_and_x() against OS/2 print shares.
+    * BUG 8357: Grant credits in async interim responses (SMB2).
+    * BUG 8560: Make SMB2 handle compound request headers in the same way
+      as Windows.
+    * BUG 8573: Fix alignment in the non-extended-security negprot.
+    * BUG 8586: libsmb: Only align unicode pipe_name.
+    * BUG 8579: smb2_flush: Don't send uninitialized memory.
+    * BUG 8592: Don't limit the number of open dptrs for SMB2.
+    * BUG 8593: Fix a crash bug in cldap_socket_recv_dgram().
+    * BUG 8684: Try ctdbd_init_connection() as root.
+
+
+o   Masafumi Nakayama <MASA23@jp.ibm.com>
+    * BUG 563: Fix 'smbclient tar' for files greater than 8GB on BE machines.
+
+
+o   Matthieu Patou <mat@matws.net>
+    * BUG 8600: Make cldap work over IPv6.
+    * BUG 8674: Fix buffer overflow issue with AES encryption in samba traffic
+      analyzer.
+
+
+o   Andreas Schneider <asn@samba.org>
+    * BUG 8550: Fix setting the machine account password.
+    * BUG 8575: Add systemd service files.
+    * BUG 8608: Winbind: Don't fail on users without a uid.
+    * BUG 8628: libsmb: Don't duplicate Kerberos service tickets.
+    * BUG 8643: Add an update function for Winbind cache.
+    * BUG 8678: Fix Winbind segfault if we can't map the last user.
+
+
+o   Karolin Seeger <kseeger@samba.org>
+    * BUG 7705: Fix some RHEL packaging issues.
+
+
+o   Richard Sharpe <realrichardsharpe@gmail.com>
+    * BUG 8607: Improve configure.in so it can be used outside the Samba source
+      tree.
+
+
+o   Brad Smith <brad@comstyle.com>
+    * BUG 8525: Fix bug with sys_fseek() wrapper on *BSD / OS X).
+
+
+o   Henry Wong <henry@stuffedcow.net>
+    * BUG 8384: Fix Windows XP clients crashing smbd process every once in a
+      while.
+
+
+######################################################################
+Reporting bugs & Development Discussion
+#######################################
+
+Please discuss this release on the samba-technical mailing list or by
+joining the #samba-technical IRC channel on irc.freenode.net.
+
+If you do report problems then please try to send high quality
+feedback. If you don't provide vital information to help us track down
+the problem then you will probably be ignored.  All bug reports should
+be filed under the Samba 3.6 product in the project's Bugzilla
+database (https://bugzilla.samba.org/).
+
+
+======================================================================
+== Our Code, Our Bugs, Our Responsibility.
+== The Samba Team
+======================================================================
+
+
+----------------------------------------------------------------------
+
+
+                   =============================
+                   Release Notes for Samba 3.6.1
+                          October 20, 2011
+                   =============================
+
+
+This is the latest stable release of Samba 3.6.
+
+Major enhancements in Samba 3.6.1 include:
+
+o  Fix smbd crashes triggered by Windows XP clients (bug #8384).
+o  Fix a Winbind race leading to 100% CPU load (bug #8409).
+o  Several SMB2 fixes.
+o  The VFS ACL modules are no longer experimental but production-ready.
+
+
+Changes since 3.6.0:
+--------------------
+
+
+o   Michael Adam <obnox@samba.org>
+    * BUG 8368: Fix the fallback to the deprecated spelling idmap:script.
+
+
+o   Jeremy Allison <jra@samba.org>
+    * BUG 7509: smb_acl_to_posix: ACL is invalid for set (Invalid argument).
+    * BUG 8229: Fix 'widelinks' regression.
+    * BUG 8370: Fix vfs_chown_fsp.
+    * BUG 8412: Fix "saving as" of MS Office 2007 (Word) documents on Samba
+      shares with SMB2.
+    * BUG 8422: Fix infinite loop in ACL module code.
+    * BUG 8429: Compound SMB2 requests on an IPC connection can corrupt the
+      reply stream.
+    * BUG 8443: Be smarter about setting default permissions when a ACL_USER_OBJ
+      isn't given.
+    * BUG 8453: Fix smbclient segfaults when dialect option -m is used for
+      legacy dialects.
+    * BUG 8458: IE9 on Windows 7 cannot download files to samba 3.5.11 share.
+    * BUG 8473: smb2_find uses a hard coded max reply size of 0x10000 instead of
+      smb2_max_trans.
+    * BUG 8474: SMB2 create doesn't cope with an Apple client using NULL blob in
+      create.
+    * BUG 8476: Samba asserts when SMB2 client breaks the crediting rules.
+    * BUG 8477: Map to guest can return uninitialized blob of data.
+    * BUG 8493: DFS breaks zip file extracting unless "follow symlinks = no"
+      set.
+    * BUG 8494: Remove "experimental" label on VFS ACL modules.
+    * BUG 8507: smbd doesn't correctly honor the "force create mode" bits from a
+      cifsfs create.
+    * BUG 8509: Read-only handles on SAMR allow SAMR_DOMAIN_ACCESS_CREATE_USER.
+    * BUG 8521: Winbind cache timeout expiry test was reversed.
+
+
+o   Christian Ambach <ambi@samba.org>
+    * BUG 8428: Fix wrong reply to DHnC (durable handle reconnect).
+    * BUG 8518: SMB2 create call returns incorrect file allocation size.
+
+
+o   Björn Baumbach <bb@sernet.de>
+    * BUG 8364: Fix the build of gpfs.c on RHEL 6.0 with gpfs 3.4.0-4.
+
+
+o   Bram <fnzon@lists.wizbit.be>
+    * BUG 7551: Return error of cli_push when 'put - /some/file' is used.
+
+
+o   Ira Cooper <ira@wakeful.net>
+    * BUG 8395: Optimize serverid_exists() for Solaris.
+    * BUG 8442: NFSv4 DENY ACLs always include SYNCHRONIZE flag - blocking
+      renames.
+
+
+o   Günther Deschner <gd@samba.org>
+    * BUG 8401: registry/reg_format.c must include includes.h.
+    * BUG 7465: Fix 'net ads join -k' when KRB5CCNAME is not set.
+
+
+o   David Disseldorp <ddiss@suse.de>
+    * BUG 8480: acl_xattr can free an invalid pointer if no blob is loaded.
+    * BUG 8520: Fix SMB2 SMB2_OP_GETINFO and SMB2_OP_IOCTL parsing requirements.
+
+
+o   Wilco Baan Hofman <wilco@baanhofman.nl>
+    * BUG 8455: Fix uninitialized memory problem in group_sids_to_info3.
+
+
+o   Björn Jacke <bj@sernet.de>
+    * BUG 8256: Add man vfs_aio_fork.
+    * BUG 8363: Fix build of vfs_prealloc on SLES8.
+
+
+o   Volodymyr Khomenko <Volodymyr_Khomenko@dell.com>
+    * BUG 8515: Disallow "." in can_set_delete_on_close().
+
+
+o   Volker Lendecke <vl@samba.org>
+    * BUG 7864: Fix usage of cli_errstr().
+    * BUG 8334: smb2: smbd logs "Invalid SMB packet: first request: 0x0008" and crashes.
+    * BUG 8338: Add a fallback for missing open&x support in MAC OS/X Lion.
+    * BUG 8360: OS/2 sends an unexpected write&x/read&x chain.
+    * BUG 8385: Fix smbclient access to NT4 shares.
+    * BUG 8409: Fix a Winbind race leading to 100% CPU load.
+    * BUG 8420: Fix 'getent group' if trusted domains are not reachable.
+    * BUG 8433: Fix segfault in iconv.c.
+    * BUG 8455: Samba PDC is looking up only primary user group.
+
+
+o   Herb Lewis <hlewis@panasas.com>
+    * BUG 8365: Fix warning messages on Freebsd 4.6.2.
+
+
+o   Stefan Metzmacher <metze@samba.org>
+    * BUG 8407: SMB2 server can return requests out-of-order when processing
+      a compound request.
+    * BUG 8452: Check the wct of the incoming SMBnegprot responses.
+    * BUG 8473: smb2_find uses a hard coded max reply size of 0x10000 instead of
+      smb2_max_trans.
+    * BUG 8476: Don't call smbd_terminate_connection in
+      smb2_validate_message_id().
+    * BUG 8503: SMB2_OP_CANCEL requests don't have to be signed.
+    * BUG 8520: Fix SMB2 SMB2_OP_GETINFO and SMB2_OP_IOCTL parsing requirements.
+
+
+o   SATOH Fumiyasu <fumiyas@osstech.co.jp>
+    * BUG 8390: Fix the build of vfs_aixacl2.c.
+
+
+o   Andreas Schneider <asn@samba.org>
+    * BUG 8236: Empty notify servername.
+    * BUG 8351: While migrating forms, don't fail if the form already exists.
+
+
+o   Andrew Tridgell <tridge@samba.org>
+    * BUG 8384: Fix smbd crashes triggered by Windows XP clients.
+
+
+######################################################################
+Reporting bugs & Development Discussion
+#######################################
+
+Please discuss this release on the samba-technical mailing list or by
+joining the #samba-technical IRC channel on irc.freenode.net.
+
+If you do report problems then please try to send high quality
+feedback. If you don't provide vital information to help us track down
+the problem then you will probably be ignored.  All bug reports should
+be filed under the Samba 3.6 product in the project's Bugzilla
+database (https://bugzilla.samba.org/).
+
+
+======================================================================
+== Our Code, Our Bugs, Our Responsibility.
+== The Samba Team
+======================================================================
+
+
+----------------------------------------------------------------------
+
+
+                   =============================
+                   Release Notes for Samba 3.6.0
+                          August 9, 2011
+                   =============================
+
+
+This is the first release of Samba 3.6.0.
+
+Major enhancements in Samba 3.6.0 include:
+
+
+Changed security defaults
+-------------------------
+
+Samba 3.6 has adopted a number of improved security defaults that will
+impact on existing users of Samba.
+
+ client ntlmv2 auth = yes
+ client use spnego principal = no
+ send spnego principal = no
+
+The impact of 'client ntlmv2 auth = yes' is that by default we will not
+use NTLM authentication as a client.  This applies to the Samba client
+tools such as smbclient and winbind, but does not change the separately
+released in-kernel CIFS client.  To re-enable the poorer NTLM encryption
+set '--option=clientusentlmv2auth=no' on your smbclient command line, or
+set 'client ntlmv2 auth = no' in your smb.conf
+
+The impact of 'client use spnego principal = no' is that Samba will
+use CIFS/hostname to obtain a kerberos ticket, acting more like
+Windows when using Kerberos against a CIFS server in smbclient,
+winbind and other Samba client tools.  This will change which servers
+we will successfully negotiate kerberos connections to.  This is due
+to Samba no longer trusting a server-provided hint which is not
+available from Windows 2008 or later.  For correct operation with all
+clients, all aliases for a server should be recorded as a as a
+servicePrincipalName on the server's record in AD.  (For this reason,
+this behavior change and parameter was also made in Samba 3.5.9)
+
+The impact of 'send spnego principal = no' is to match Windows 2008 and
+not to send this principal, making existing clients give more consistent
+behaviour (more likely to fall back to NTLMSSP) between Samba and
+Windows 2008, and between Windows versions that did and no longer use
+this insecure hint.
+
+
+SMB2 support
+------------
+
+SMB2 support in 3.6.0 is fully functional (with one omission),
+and can be enabled by setting:
+
+max protocol = SMB2
+
+in the [global] section of your smb.conf and re-starting
+Samba. All features should work over SMB2 except the modification
+of user quotas using the Windows quota management tools.
+
+As this is the first release containing what we consider
+to be a fully featured SMB2 protocol, we are not enabling
+this by default, but encourage users to enable SMB2 and
+test it. Once we have enough confirmation from Samba
+users and OEMs that SMB2 support is stable in wide user
+testing we will enable SMB2 by default in a future Samba
+release.
+
+
+Internal Winbind passdb changes
+-------------------------------
+
+Winbind has been changed to use the internal samr and lsa rpc pipe to get
+local user and group information instead of calling passdb functions. The
+reason is to use more of our infrastructure and test this infrastructure by
+using it. With this approach more code in Winbind is shared.
+
+
+New Spoolss code
+----------------
+
+The spoolss and the old RAP printing code have been completely
+overhauled and refactored.
+
+All calls from lanman/printing code has been changed to go through the
+spoolss RPC interfaces, this allows us to keep all checks in one place
+and avoid special cases in the main printing code.
+Printing code has been therefore confined within the spoolss code.
+
+All the printing code, including the spoolss RPC interfaces has been
+changed to use the winreg RPC interfaces to store all data.
+All data has been migrated from custom, arbitrary TDB files to the
+registry interface. This transition allow us to present correct data to
+windows client accessing the server registry through the winreg RPC
+interfaces to query for printer data. Data is served out from a real
+registry implementation and therefore arguably 100% forward compatible.
+
+Migration code from the previous TDB files formats is provided. This
+code is automatically invoked the first time the new code is run on the
+server. Although manual migration is also available using the 'net
+printer migrate' command.
+
+These changes not only make all the spoolss code much more closer to
+"the spec", it also greatly improves our internal testing of both
+spoolss and winreg interfaces, and reduces overall code duplication.
+
+As part of this work, new tests have been also added to increase
+coverage.
+
+This code will also allow, in future, an easy transition to split out
+the spooling functions into a separate daemon for those OEMs that do not
+need printing functionality in their appliances, reducing the code
+footprint.
+
+
+ID Mapping Changes
+------------------
+
+The id mapping configuration has been a source of much grief in the past.
+For this release, id mapping has been rewritten yet again with the goal
+of making the configuration more simple and more coherent while keeping
+the needed flexibility and even adding to the flexibility in some respects.
+
+The major change that implies the configuration simplifications is at
+the heart of the id mapping system: The separation of the "idmap alloc
+system" that is responsible for the unix id counters in the tdb, tdb2
+and ldap idmap backends from the id mapping code itself has been removed.
+The sids_to_unixids operation is now atomic and encapsulates (if needed)
+the action of allocating a unix id for a mapping that is to be created.
+Consequently all idmap alloc configuration parameters have vanished and
+it is hence now also not possible any more to specify an idmap alloc
+backend different from the idmap backend. Each idmap backend uses its
+own idmap unixid creation mechanism transparently.
+
+As a consequence of the id mapping changes, the methods that are used
+for storing and deleting id mappings have been removed from the winbindd
+API. The "net idmap dump/restore" commands have been rewritten to
+not speak through winbindd any more but directly act on the databases.
+This is currently available for the tdb and tdb2 backends, the implementation
+for ldap still missing.
+
+The allocate_id functionality is preserved for the unix id creator of the
+default idmap configuration is also used as the source of unix ids
+for the group mapping database and for the posix attributes in a
+ldapsam:editposix setup.
+
+As part of the changes, the default idmap configuration has been
+changed to be more coherent with the per-domain configuration.
+The parameters "idmap uid", "idmap gid" and "idmap range" are now
+deprecated in favour of the systematic "idmap config * : range"
+and "idmap config * : backend" parameters. The reason for this change
+is that the old options only provided an incomplete and hence deceiving
+backwards compatibility, which was a source of many problems with
+upgrades. By introducing this change in configuration, it should be
+brought to the conciousness of the users that even the simple
+id mapping is not working exactly as in Samba 3.0 versions any more.
+
+
+Endpoint Mapper
+---------------
+
+As Microsoft is more and more relying on endpoint mapper and we didn't have a
+complete implementation we decided to create an instance for Samba. The
+endpoint mapper is like a DNS server but for ports. If you want to talk to a
+certain RPC service over TCP/IP, you just ask the endpoint mapper on which
+port it is running. Then you can connect to the service and make sure that it
+is running.
+
+The code is deactivated by default, because it needs more testing and it
+doesn't scale yet. If you want to enable and test the endpoint mapper
+you can set "rpc_server:epmapper = daemon" in the smb.conf file.
+
+
+Internal restructuring
+----------------------
+
+Ongoing internal restructuring for better separation of internal subsystem to
+achieve a faster build, smaller binaries and cleaner dependencies for the samba3
+waf build.
+
+
+SMB Traffic Analyzer
+--------------------
+
+Added the new SMB Traffic Analyzer (SMBTA) VFS module protocol 2
+featuring encryption, multiple arguments, and easier parseability. A new
+tool 'smbta-util' has been created to control the encryption behaviour
+of SMBTA. For compatibility, SMBTA by default operates on version 1.
+There are programs consuming the data that the module sends.
+
+More information can be found on
+http://holger123.wordpress.com/smb-traffic-analyzer/
+
+
+NFS quota backend on Linux
+--------------------------
+
+A new nfs quota backend for Linux has been added that is based
+on the existing Solaris/FreeBSD implementation. This allows samba
+to communicate correct diskfree information for nfs imports that
+are re-exported as samba shares.
+
+
+######################################################################
+Changes
+#######
+
+smb.conf changes
+----------------
+
+   Parameter Name                      Description     Default
+   --------------                      -----------     -------
+
+   async smb echo handler	       New	       No
+   client ntlmv2 auth		       Changed Default Yes
+   client use spnego principal	       New	       No
+   ctdb locktime warn threshold	       New	       0
+   idmap alloc backend		       Removed
+   log writeable files on exit	       New	       No
+   multicast dns register	       New	       Yes
+   ncalrpc dir			       New
+   send spnego principal	       New	       No
+   smb2 max credits		       New	       8192
+   smb2 max read		       New	       1048576
+   smb2 max trans		       New	       1048576
+   smb2 max write		       New	       1048576
+   username map cache time	       New	       0
+   winbind max clients		       New	       200
+
+   The variable substitutions for %i and %I no longer
+   use IPv4 addresses mapped to IPv6, e.g. '::ffff:192.168.0.1',
+   if the host has IPv6 enabled. Now %i and %I contain just
+   '192.168.0.1'.
+
+Commit Highlights
+-----------------
+
+o   Michael Adam <obnox@samba.org>
+    * ID Mapping changes.
+
+
+o   Jeremy Allison <jra@samba.org>
+    * Implement SMB2 support.
+
+
+o   Stefan Metzmacher <metze@samba.org>
+    * Implement SMB2 support.
+
+
+o   Andreas Schneider <asn@samba.org>
+    * Add an Endpoint Mapper daemon.
+
+
+Changes since 3.6.0rc3
+----------------------
+
+o   Michael Adam <obnox@samba.org>
+    * BUG 8327: Fix the reload of the configuration, also reload activated
+      registry shares.
+    * BUG 8328: Cleanup of idmap_tdb2 code.
+
+
+o   Jeremy Allison <jra@samba.org>
+    * BUG 7462: Make SA_RESETHAND conditional on its existance.
+    * BUG 8324: smbclient cannot list directories from a big-endian machine.
+    * BUG 8335: File copy aborts with smb2_validate_message_id: bad message_id.
+
+
+o   Christian Ambach <ambi@samba.org>
+    * BUG 8330: Fix NFSv4 ACL merging logic.
+
+
+o   Andrew Bartlett <abartlet@samba.org>
+    * BUG 8326: WinXP cannot join a Samba3 domain with a 'even' hostname.
+
+
+o   Björn Baumbach <bb@sernet.de>
+    * BUG 8303: db_ctdb_send_schedule_for_deletion() is not defined.
+
+
+o   Alban Browaeys <prahal@yahoo.com>
+    * BUG 8341: Fix segfault in libsmbclient.
+
+
+o   Björn Jacke <bj@sernet.de>
+    * BUG 8362: Fix build issue on old glibc systems.
+
+
+o   Volker Lendecke <vlendec@samba.org>
+    * BUG 8343: Fix SMB2 crash reading with aio_fork beyond the end of file.
+
+
+o   Stefan Metzmacher <metze@samba.org>
+    * BUG 8347: Fix regression for HP-UX, AIX and OSF.
+    * BUG 8357: Make sure we grant credits on async read/write operations.
+    * BUG 8358: Fix a bug in run_poll_events().
+
+
+Changes since 3.6.0rc2
+----------------------
+
+o   Michael Adam <obnox@samba.org>
+    * BUG 8213: Fixes in idmap_autorid.
+    * BUG 8217: Do not stat-check the share path in 'net conf addshare'.
+    * BUG 8281: Fix build of examples/VFS/*.
+
+
+o   Jeremy Allison <jra@samba.org>
+    * BUG 8083: Fix "inherit owner = yes" with vfs_acl_xattr or vfs_acl_tdb
+      module.
+    * BUG 8211: Fix "inherit owner = yes" when "inherit permissions = yes"
+      is set.
+    * BUG 8219: Fix SMB Panic from Windows 7 client.
+    * BUG 8254: Fix "acl check permissions = no".
+    * BUG 8293: Fix log file rotating in SMB2.
+    * BUG 8304: Fix uninitialized variable in error path.
+    * BUG 8307: brl_close_fnum does not call SMB_VFS_BRL_UNLOCK_WINDOWS on all
+      locks.
+    * BUG 8310: toupper_ascii() is broken on big-endian systems.
+    * BUG 8314: Fix smbd crash with unknown user.
+
+
+o   Christian Ambach <ambi@samba.org>
+    * BUG 8231: Fix crash bug in 'net cache get'.
+    * BUG 8244: Fix copying files larger than 2 GB to a Samba share.
+    * BUG 8263: Fix build with --with-fake-kaserver or --with-vfs-afsacl.
+    * BUG 8278: Fix smbd panic when CTDB is unhealthy.
+    * BUG 8286: Fix smbd crash on premature end of smb2 conn.
+
+
+o   Andrew Bartlett <abartlet@samba.org>
+    * BUG 8230: Move .nmbd socket directory to non-hidden name PREFIX/var/nmbd.
+    * Mark 'time offset' parameter as deprecated.
+
+
+o   Gregor Beck <gbeck@sernet.de>
+    * BUG 8193: Add new command 'enumerate_recursive'.
+    * BUG 8253: Fix Winbind panic if verify_idpool() fails.
+
+
+o   Kai Blin <kai@samba.org>
+    * BUG 8289: Fix possible XSS attack (CVE-2011-2694).
+    * BUG 8290: Fix Cross-Site Request Forgery in SWAT (CVE-2011-2522).
+
+
+o   Günther Deschner <gd@samba.org>
+    * BUG 7888: Deal with buggy 3.0 based PDCs.
+    * BUG 8214: Fix smbd crash on printer driver upgrade.
+    * BUG 8235: Fix smbd crash on startup caused by migrate_printer().
+
+
+o   Björn Jacke <bj@sernet.de>
+    * BUG 8262: Fix build of vfs_commit.
+
+
+o   Günter Kukkukk <linux@kukkukk.com>
+    * BUG 8305: Fix segfault in nmbd when using 'smbtree ...'..
+
+
+o   Volker Lendecke <vl@samba.org>
+    * BUG 7841: Explicitly pass domain_sid to wbint_LookupRids().
+    * BUG 8102: Do not allow to change file ACLs from normal domusers.
+    * BUG 8247: Fix Coverity ID 2582: FORWARD_NULL.
+
+
+o   Herb Lewis <hlewis@panasas.com>
+    * BUG 8216: Make Winbind returning correct results with 'sids2xids'.
+
+
+o   Stefan Metzmacher <metze@samba.org>
+    * BUG 8102: Do not allow to change file ACLs from normal domusers.
+    * BUG 8195: Make rpc client code working against NT4 servers.
+    * BUG 8224: Fix the build on FreeBSD.
+    * BUG 8226: Use c99 initializers which are supported by old gcc 2.95
+      compilers.
+    * BUG 8260: Fix DCERPC responses with fragments larger than 1024 bytes.
+    * BUG 8264: Fix Valgrind bugs in svcctl.
+    * BUG 8276: Close all sockets attached to a subnet in close_subnet().
+    * BUG 8292: Fix a major architectural flaw in the SMB2 server code.
+
+
+o   Andreas Schneider <asn@samba.org>
+    * BUG 8215: Fix Winbind unix username lookup.
+    * BUG 8240: Fix Valgrind warnings in winreg/spoolss code.
+
+
+Changee since 3.6.0rc1
+----------------------
+
+o   Michael Adam <obnox@samba.org>
+    * BUG 8200: Add support for multiple writeable ldap idmap domains.
+
+
+o   Jeremy Allison <jra@samba.org>
+    * BUG 6911: Fix Kerberos authentication from Vista to Samba.
+    * BUG 7054: Fix X account flag when "pwdlastset" is "0".
+    * BUG 8133: Fix strange behavior for the file (whose filename first
+      character is period ) in SMB2 case.
+    * BUG 8144: Fix setting timestamp when touching files with CIFS clients.
+    * BUG 8150: Ban "dos charset = utf8".
+    * BUG 8153: Fix setting up getaddrinfo on IPv6-only machines.
+    * BUG 8156: Fix 'net ads join' using the user's Kerberos ticket.
+    * BUG 8157: Fix parsing a cups printcap file.
+    * BUG 8163: Fix our asn.1 parser to handle negative numbers.
+    * BUG 8175: Fix smbd deadlock.
+    * BUG 8191: Split the ACE flag mapping between nfs4 and Windows into two
+      separate functions.
+    * BUG 8197: Winbind does not properly detect when a DC connection is dead.
+    * BUG 8203: Winbind needs to reset the DC connection if an RPC times out.
+
+
+o   Christian Ambach <ambi@samba.org>
+    * BUG 8152: Fix smbd crash in release_ip().
+
+
+o   Andrew Bartlett <abartlet@samba.org>
+    * BUG 8151: Deprecate security parameters.
+
+
+o   Gregor Beck <gbeck@sernet.de>
+    * BUG 8191: nfs4_acls: Pass ACE_FLAG_INHERITED_ACE up to the client/down
+      from the client.
+    * BUG 8192: Fix parsing of multiple flags in 'smbcacls'.
+
+
+o   Sumit Bose <sbose@redhat.com>
+    * BUG 8142: Fix typos in LDAP schema files.
+
+
+o   Holger Hetterich <hhetter@novell.com>
+    * BUG 8148: Default to protocol version 2 for SMB Traffic Analyzer.
+    * BUG 8154: Actually make use of SMBTA subversion numbers.
+
+
+o   Björn Jacke <bj@sernet.de>
+    * BUG 7998: Remove warning if IOV_MAX is not defined.
+
+
+o   Jim McDonough <jmcd@samba.org>
+    * BUG 8166: Don't lockout users when offline.
+
+
+o   Stefan Metzmacher <metze@samba.org>
+    * BUG 8140: talloc: Fix Valgrind false positives and other backports.
+    * BUG 8141: Fix wrong permissions on lp_ncalrpc_dir().
+
+
+o   Andreas Schneider <asn@samba.org>
+    * BUG 8155: Fix registering only named pipes on EPM for a service.
+
+
+o   Volker Lendecke <vl@samba.org>
+    * BUG 8159: Fix memory corruption in fetching cli->server_domain from the
+      server.
+    * BUG 8185: "security=server" does not obey guest login field.
+    * BUG 8189: Support shadow copy display over SMB2.
+    * BUG 8199: Fix potential crash in smbd handling smb2.
+
+
+o   Samuel Thibault <sthibault@debian.org>
+    * BUG 7998: Fix build on Hurd.
+
+
+Changes since 3.6.0pre3
+-----------------------
+
+o   Jeremy Allison <jra@samba.org>
+    * BUG 8111: CIFS VFS: Fix unexpected error on SMB posix open.
+    * BUG 8112: POSIX extension opens of a directory are denied with EISDIR.
+    * Remove fstrings from client struct.
+    * BUGFIX when converting from safe_strcpy to strlcpy.
+    * Fix off-by-one calculations with strlcpy.
+    * Ensure we always write the correct incoming mid into the share mode table
+      entries.
+    * Fix the SMB2 oplock showstopper.
+
+
+o   Christian Ambach <christian.ambach@de.ibm.com>
+    * Convert user-specified domain to uppercase in libsmb.
+
+
+o   Günther Deschner <gd@samba.org>
+    * BUG 8132: Fix filling printers location field when using cups.
+    * Fix Coverity CID #2302: FORWARD_NULL.
+    * Fix cups_pull_comment_location().
+    * Fix double free of cups request.
+    * Make cups_pull_comment_location() work again.
+    * Fix potential crash bug in display_print_driver3().
+
+
+o   Volker Lendecke <vl@samba.org>
+    * Properly clean up in pthreadpool_init in case of failure.
+    * Make plaintext session setup async.
+    * Reduce fd load in Winbind children.
+    * Avoid a potential 100% CPU loop in Winbind.
+    * Tune broadcast namequeries for unique names.
+    * Properly deal with exited winbind children.
+    * Fix dup_smb2_vec3.
+    * Fix return check in nss_wins.
+
+
+Changes since 3.6.0pre2
+-----------------------
+
+o   Michael Adam <obnox@samba.org>
+    * Fix build of tdb2.
+
+
+o   Jeremy Allison <jra@samba.org>
+    * BUG 8083: "inherit owner = yes" doesn't interact correctly with
+      vfs_acl_xattr or vfs_acl_tdb module.
+    * BUG 8088: rpccli_samr_chng_pswd_auth_crap segfaults if any input blobs
+      are null.
+    * Correctly detect and deny symlinks anywhere in a path (not just the last
+      component) if "follow symlinks = no".
+
+
+o   Günther Deschner <gd@samba.org>
+    * BUG 8106: Fix the build of 'smbget' on HP NonStop.
+    * Fix timeout in rpc_pipe_open_tcp_port().
+    * Fix the build of "--with-profiling-data".
+    * Fix the AIX 5.3 build.
+
+
+o   Sergey Korsak <skif@1plus1.net>
+    * BUG #8099: setpwent() actually does endpwent() and vice versa on FreeBSD.
+
+
+o   Volker Lendecke <vl@samba.org>
+    * BUG 8066: Fix wrong output in 'smbget'.
+    * Fix Coverity IDs 986, 1340, 2047, 2299, 2307, 2325, 2335, 2336, 2470,
+      2471, 2478.
+    * nsswitch: Add 'wbinfo --lookup-sids'.
+    * nsswitch: Add 'wbinfo --sids-to-unix-ids'.
+    * Fix smbd with the async echo responder.
+    * Fix the build of vfs_gpfs.c.
+    * Add a 10-second timeout for the 445 or netbios connection to a DC.
+    * Many pthreadpool fixes.
+
+
+o   Stefan Metzmacher <metze@samba.org>
+    * BUG 7383: Listen on IPv6 addresses with IPV6_ONLY.
+
+
+o   Rusty Russell <rusty@rustcorp.com.au>
+    * Fix transaction recovery area for converted tdbs.
+
+
+
+Changes since 3.6.0pre1
+-----------------------
+
+o   Michael Adam <obnox@samba.org>
+    * ID Mapping changes.
+    * Add "--option" to 'testparm'.
+
+
+o   Jeremy Allison <jra@samba.org>
+    * BUG 7080: Quota only shown when logged as root.
+    * BUG 7863: Unlink may unlink wrong file when hardlinks are involved.
+    * BUG 7996: Sgid bit lost on folder rename.
+    * BUG 8040: Fix smbclient segfault with Cyrillic netbios names.
+    * Fix crash bug on smbd shutdown when using FOPENDIR().
+    * Ensure we don't return an incorrect access mask.
+    * Fix bug against the new Mac client.
+    * Fix leak in error path.
+    * Fix error where Windows client spoolss returns WERR_INVALID_DATA.
+
+
+o   Christian Ambach <christian.ambach@de.ibm.com>
+    * Fix a segfault in the krb5 locator plugin.
+    * Enable sharesec for registry shares.
+
+
+o   Andrew Bartlett <abartlet@samba.org>
+    * Fix memory leak in "security=share" and "force user".
+
+
+o   Björn Baumbach <bb@sernet.de>
+    * BUG 7875: Fix 'nmbd --port'.
+    * BUG 7880: cmd_spoolss_deletedriver() returned without checking all
+      architectures.
+
+
+o   Gregor Beck <gbeck@sernet.de>
+    * Add new 'net idmap check' command.
+    * Add new 'net idmap delete' command.
+    * Fix segfault on missing input file in 'net idmap restore'.
+
+
+o   Olly Betts <olly@survex.com>
+    * Fix 'net usersidlist' not to skip every other user.
+
+
+o   Günther Deschner <gd@samba.org>
+    * BUG 7690: Retry DNS updates when connection to one nameserver has failed.
+    * BUG 7945: Let winbind try to use samlogon validation level 6.
+    * Fix Coverity ID 2041.
+    * Fix potential crash bug in spoolss_PrinterEnumValues push path.
+    * Internal restructuring.
+    * Don't wipe out all printer drivers when only one should be deleted.
+    * Fix winbindd_dual_pam_auth_samlogon() for NT4 domains.
+
+
+o   David Disseldorp <ddiss@suse.de>
+    * BUG 7915: Fix cups pcap reload with no printers.
+    * BUG 8040: Fix smbclient segfault with Cyrillic netbios names.
+    * Fix memory leak in print_cups.c.
+    * Remove duplicate cups response processing code.
+    * Follow force user/group for driver IO.
+    * Initiate pcap reload from parent smbd.
+    * Reload shares after pcap cache fill.
+
+
+o   Björn Jacke <bj@sernet.de>
+    * BUG 8033: Add explicit configure option whether or not to enable dmapi
+      support.
+
+
+o   Volker Lendecke <vl@samba.org>
+    * BUG 7917: Fix bug in chain_reply.
+    * BUG 7940: Fall back for utimes calls.
+    * BUG 8009: Fix getting username in 'net rap session'.
+    * BUG 8010: Use jenkins hash for str_checksum.
+    * BUG 8042: Fix file creation on OS/X.
+    * Fix numerous Coverity IDs.
+    * Fix a memory leak in check_sam_security_info3.
+    * Fix a segfault in the nss wrapper when libnss_winbind.so is not loadable.
+    * Make "net sam list [users|workstations]" list only the right things.
+    * Fix a potential memleak in secrets_fetch_trusted_domain_password.
+    * Use the right credentials in check_netlogond_security.
+    * Add support for AF_NETLINK addr notifications.
+    * Fork multiple Winbind children per domain.
+    * Fix a deadlock between smbd and ctdbd.
+    * Add 'wbinfo --dc-info'.
+    * Make "nmbd socket dir" configurable.
+    * Fix a valgrind error.
+    * Fix a memleak in receive_getdc_response.
+
+
+o   Nikolay Martynov <mar.kolya@gmail.com>
+    * BUG 8010: Fix inode generation so nautilus can count total dir size
+      correctly.
+
+
+o   Stefan Metzmacher <metze@samba.org>
+    * BUG 7567: Fix printing from Windows 7.
+    * BUG 7899: Don't return "-1" on success in 'net rpc vampire keytab'.
+    * BUG 7944: Catch lookup_names/sids schannel errors over ncacn_ip_tcp.
+    * Don't grant SEC_STD_DELETE always to the owner of a file.
+    * Fix segfaults on addrchange errors in Winbind.
+    * Allow machine accounts as members in groupdb.
+
+
+o   Jonathan Nieder <jrnieder@gmail.com>
+    * BUG 6837: Make "rlimit_max below minimum Windows limit" notification less
+      scary.
+
+
+o   Andreas Schneider <asn@samba.org>
+    * Add an Endpoint Mapper daemon.
+    * Add IPv6 support for the endpoint mapper.
+    * Free unused memory in the rpc server.
+    * Fix possible segfaults in svcctl server.
+    * Fix possible segfault with client_id in rpc server.
+    * Add a 'svcctl shutdown' function to rpc server.
+    * Fix a resource leak in net_afs.
+    * Fix a resource leak in smbta-util.
+    * Fix possible resource leak in net_usershare.
+    * Fix possible resource leak in 'smbget'.
+    * Fix possible resource leak in 'smbfilter'.
+    * Fix a possible null pointer dereference in smbd.
+
+
+o   Pavel Shilovsky <piastry@etersoft.ru>
+    * BUG 7928: Fix problems with "kernel oplocks" option set to "no".
+    * Ensure we send the direct levelII oplock break to the correct fid.
+
+
+o   Simo Sorce <idra@samba.org>
+    * Fix private libdir and codepages paths.
+
+
+o   Andrew Tridgell <tridge@samba.org>
+    * Fix a valgrind error.
+
+
+######################################################################
+Reporting bugs & Development Discussion
+#######################################
+
+Please discuss this release on the samba-technical mailing list or by
+joining the #samba-technical IRC channel on irc.freenode.net.
+
+If you do report problems then please try to send high quality
+feedback. If you don't provide vital information to help us track down
+the problem then you will probably be ignored.  All bug reports should
+be filed under the Samba 3.6 product in the project's Bugzilla
+database (https://bugzilla.samba.org/).
+
+
+======================================================================
+== Our Code, Our Bugs, Our Responsibility.
+== The Samba Team
+======================================================================
+

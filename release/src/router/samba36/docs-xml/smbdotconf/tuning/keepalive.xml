@@ -1,0 +1,20 @@
+<samba:parameter name="keepalive"
+                 context="G"
+				 type="integer"
+                 advanced="1" developer="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+    <para>The value of the parameter (an integer) represents 
+    the number of seconds between <parameter moreinfo="none">keepalive</parameter> 
+    packets. If this parameter is zero, no keepalive packets will be 
+    sent. Keepalive packets, if sent, allow the server to tell whether 
+    a client is still present and responding.</para>
+
+    <para>Keepalives should, in general, not be needed if the socket 
+    has the SO_KEEPALIVE attribute set on it by default. (see <smbconfoption name="socket options"/>). 
+Basically you should only use this option if you strike difficulties.</para>
+</description>
+
+<value type="default">300</value>
+<value type="example">600</value>
+</samba:parameter>

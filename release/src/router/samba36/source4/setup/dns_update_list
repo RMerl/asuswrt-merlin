@@ -1,0 +1,22 @@
+# this is a list of DNS entries which will be put into DNS using
+# dynamic DNS update. It is processed by the samba_dnsupdate script
+A                                                        ${DNSDOMAIN} $IP
+A                                                        ${HOSTNAME} $IP
+CNAME ${NTDSGUID}._msdcs.${DNSDOMAIN}                    ${HOSTNAME}
+SRV _kerberos._tcp.${SITE}._sites.dc._msdcs.${DNSDOMAIN} ${HOSTNAME} 88
+SRV _ldap._tcp.${SITE}._sites.dc._msdcs.${DNSDOMAIN}     ${HOSTNAME} 389
+SRV _kerberos._tcp.dc._msdcs.${DNSDOMAIN}                ${HOSTNAME} 88
+SRV _ldap._tcp.dc._msdcs.${DNSDOMAIN}                    ${HOSTNAME} 389
+SRV _ldap._tcp.${DOMAINGUID}.domains._msdcs.${DNSDOMAIN} ${HOSTNAME} 389
+SRV _ldap._tcp.${SITE}._sites.gc._msdcs.${DNSDOMAIN}     ${HOSTNAME} 3268
+SRV _ldap._tcp.gc._msdcs.${DNSDOMAIN}                    ${HOSTNAME} 3268
+SRV _ldap._tcp.pdc._msdcs.${DNSDOMAIN}                   ${HOSTNAME} 389
+SRV _gc._tcp.${SITE}._sites.${DNSDOMAIN}                 ${HOSTNAME} 3268
+SRV _kerberos._tcp.${SITE}._sites.${DNSDOMAIN}           ${HOSTNAME} 88
+SRV _ldap._tcp.${SITE}._sites.${DNSDOMAIN}	         ${HOSTNAME} 389
+SRV _gc._tcp.${DNSDOMAIN}                                ${HOSTNAME} 3268
+SRV _kerberos._tcp.${DNSDOMAIN}                          ${HOSTNAME} 88
+SRV _kpasswd._tcp.${DNSDOMAIN}                           ${HOSTNAME} 464
+SRV _ldap._tcp.${DNSDOMAIN}                              ${HOSTNAME} 389
+SRV _kerberos._udp.${DNSDOMAIN}                          ${HOSTNAME} 88
+SRV _kpasswd._udp.${DNSDOMAIN}                           ${HOSTNAME} 464

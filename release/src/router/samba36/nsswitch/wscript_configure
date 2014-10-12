@@ -1,0 +1,6 @@
+#!/usr/bin/env python
+
+conf.CHECK_HEADERS('nss.h nss_common.h ns_api.h')
+
+conf.CHECK_HEADERS('security/pam_appl.h security/pam_modules.h pam/pam_modules.h', together=True)
+conf.CHECK_FUNCS_IN('pam_start', 'pam', checklibc=True, headers='security/pam_appl.h')

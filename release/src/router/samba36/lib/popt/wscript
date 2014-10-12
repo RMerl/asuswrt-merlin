@@ -1,0 +1,18 @@
+#!/usr/bin/env python
+
+import Options
+
+def configure(conf):
+    conf.CHECK_HEADERS('float.h')
+
+    if conf.CHECK_BUNDLED_SYSTEM('popt', checkfunctions='poptGetContext', headers='popt.h'):
+        conf.define('USING_SYSTEM_POPT', 1)
+
+def build(bld):
+    if bld.CONFIG_SET('USING_SYSTEM_POPT'):
+        return
+
+    bld.SAMBA_LIBRARY('popt',
+                      source='findme.c popt.c poptconfig.c popthelp.c poptparse.c',
+                      cflags='-DDBL_EPSILON=__DBL_EPSILON__',
+                      private_library=True)

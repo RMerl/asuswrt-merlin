@@ -1,0 +1,34 @@
+<samba:parameter name="auth methods"
+                 context="G"
+				 type="list"
+                 basic="1" advanced="1" wizard="1" developer="1"
+		 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+
+    <para>
+    This option allows the administrator to chose what authentication methods <command  moreinfo="none">smbd</command> 
+    will use when authenticating a user. This option defaults to sensible values based on <smbconfoption name="security"/>.  
+    This should be considered a developer option and used only in rare circumstances.  In the majority (if not all) 
+    of production servers, the default setting should be adequate.
+    </para>
+
+    <para>
+    Each entry in the list attempts to authenticate the user in turn, until
+    the user authenticates.  In practice only one method will ever actually 
+    be able to complete the authentication.
+    </para>
+
+    <para>
+    Possible options include <constant>guest</constant> (anonymous access), 
+    <constant>sam</constant> (lookups in local list of accounts based on netbios 
+    name or domain name), <constant>winbind</constant> (relay authentication requests
+    for remote users through winbindd), <constant>ntdomain</constant> (pre-winbindd 
+    method of authentication for remote domain users; deprecated in favour of winbind method), 
+    <constant>trustdomain</constant> (authenticate trusted users by contacting the 
+    remote DC directly from smbd; deprecated in favour of winbind method).
+    </para>
+
+</description>
+<value type="default"/>
+<value type="example">guest sam winbind</value>
+</samba:parameter>

@@ -1,0 +1,8 @@
+#!/usr/bin/env python
+
+bld.SAMBA_SUBSYSTEM('SMB_PROTOCOL',
+	source='receive.c negprot.c nttrans.c reply.c request.c search.c service.c sesssetup.c srvtime.c trans2.c signing.c',
+	autoproto='smb_proto.h',
+	public_deps='ntvfs LIBPACKET credentials samba_server_gensec'
+	)
+

@@ -1,0 +1,7 @@
+#!/usr/bin/env python
+
+bld.SAMBA_SUBSYSTEM('GENCACHE',
+	source='../../source3/lib/gencache.c',
+        enabled=False,
+	deps='tdb-wrap'
+	)

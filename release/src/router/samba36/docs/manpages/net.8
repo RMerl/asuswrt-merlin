@@ -1,0 +1,1570 @@
+'\" t
+.\"     Title: net
+.\"    Author: [see the "AUTHOR" section]
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date: 09/18/2013
+.\"    Manual: System Administration tools
+.\"    Source: Samba 3.6
+.\"  Language: English
+.\"
+.TH "NET" "8" "09/18/2013" "Samba 3\&.6" "System Administration tools"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+net \- Tool for administration of Samba and remote CIFS servers\&.
+.SH "SYNOPSIS"
+.HP \w'\ 'u
+net {<ads|rap|rpc>} [\-h] [\-w\ workgroup] [\-W\ myworkgroup] [\-U\ user] [\-I\ ip\-address] [\-p\ port] [\-n\ myname] [\-s\ conffile] [\-S\ server] [\-l] [\-P] [\-d\ debuglevel] [\-V] [\-\-request\-timeout\ seconds]
+.SH "DESCRIPTION"
+.PP
+This tool is part of the
+\fBsamba\fR(7)
+suite\&.
+.PP
+The Samba net utility is meant to work just like the net utility available for windows and DOS\&. The first argument should be used to specify the protocol to use when executing a certain command\&. ADS is used for ActiveDirectory, RAP is using for old (Win9x/NT3) clients and RPC can be used for NT4 and Windows 2000\&. If this argument is omitted, net will try to determine it automatically\&. Not all commands are available on all protocols\&.
+.SH "OPTIONS"
+.PP
+\-h|\-\-help
+.RS 4
+Print a summary of command line options\&.
+.RE
+.PP
+\-k|\-\-kerberos
+.RS 4
+Try to authenticate with kerberos\&. Only useful in an Active Directory environment\&.
+.RE
+.PP
+\-w target\-workgroup
+.RS 4
+Sets target workgroup or domain\&. You have to specify either this option or the IP address or the name of a server\&.
+.RE
+.PP
+\-W workgroup
+.RS 4
+Sets client workgroup or domain
+.RE
+.PP
+\-U user
+.RS 4
+User name to use
+.RE
+.PP
+\-I ip\-address
+.RS 4
+IP address of target server to use\&. You have to specify either this option or a target workgroup or a target server\&.
+.RE
+.PP
+\-p port
+.RS 4
+Port on the target server to connect to (usually 139 or 445)\&. Defaults to trying 445 first, then 139\&.
+.RE
+.PP
+\-n|\-\-netbiosname <primary NetBIOS name>
+.RS 4
+This option allows you to override the NetBIOS name that Samba uses for itself\&. This is identical to setting the
+\m[blue]\fBnetbios name\fR\m[]
+parameter in the
+smb\&.conf
+file\&. However, a command line setting will take precedence over settings in
+smb\&.conf\&.
+.RE
+.PP
+\-s|\-\-configfile <configuration file>
+.RS 4
+The file specified contains the configuration details required by the server\&. The information in this file includes server\-specific information such as what printcap file to use, as well as descriptions of all the services that the server is to provide\&. See
+smb\&.conf
+for more information\&. The default configuration file name is determined at compile time\&.
+.RE
+.PP
+\-S server
+.RS 4
+Name of target server\&. You should specify either this option or a target workgroup or a target IP address\&.
+.RE
+.PP
+\-l
+.RS 4
+When listing data, give more information on each item\&.
+.RE
+.PP
+\-P
+.RS 4
+Make queries to the external server using the machine account of the local server\&.
+.RE
+.PP
+\-\-request\-timeout 30
+.RS 4
+Let client requests timeout after 30 seconds the default is 10 seconds\&.
+.RE
+.PP
+\-d|\-\-debuglevel=level
+.RS 4
+\fIlevel\fR
+is an integer from 0 to 10\&. The default value if this parameter is not specified is 0\&.
+.sp
+The higher this value, the more detail will be logged to the log files about the activities of the server\&. At level 0, only critical errors and serious warnings will be logged\&. Level 1 is a reasonable level for day\-to\-day running \- it generates a small amount of information about operations carried out\&.
+.sp
+Levels above 1 will generate considerable amounts of log data, and should only be used when investigating a problem\&. Levels above 3 are designed for use only by developers and generate HUGE amounts of log data, most of which is extremely cryptic\&.
+.sp
+Note that specifying this parameter here will override the
+\m[blue]\fBlog level\fR\m[]
+parameter in the
+smb\&.conf
+file\&.
+.RE
+.SH "COMMANDS"
+.SS "CHANGESECRETPW"
+.PP
+This command allows the Samba machine account password to be set from an external application to a machine account password that has already been stored in Active Directory\&. DO NOT USE this command unless you know exactly what you are doing\&. The use of this command requires that the force flag (\-f) be used also\&. There will be NO command prompt\&. Whatever information is piped into stdin, either by typing at the command line or otherwise, will be stored as the literal machine password\&. Do NOT use this without care and attention as it will overwrite a legitimate machine password without warning\&. YOU HAVE BEEN WARNED\&.
+.SS "TIME"
+.PP
+The
+NET TIME
+command allows you to view the time on a remote server or synchronise the time on the local server with the time on the remote server\&.
+.SS "TIME"
+.PP
+Without any options, the
+NET TIME
+command displays the time on the remote server\&.
+.SS "TIME SYSTEM"
+.PP
+Displays the time on the remote server in a format ready for
+/bin/date\&.
+.SS "TIME SET"
+.PP
+Tries to set the date and time of the local server to that on the remote server using
+/bin/date\&.
+.SS "TIME ZONE"
+.PP
+Displays the timezone in hours from GMT on the remote computer\&.
+.SS "[RPC|ADS] JOIN [TYPE] [\-U username[%password]] [createupn=UPN] [createcomputer=OU] [options]"
+.PP
+Join a domain\&. If the account already exists on the server, and [TYPE] is MEMBER, the machine will attempt to join automatically\&. (Assuming that the machine has been created in server manager) Otherwise, a password will be prompted for, and a new account may be created\&.
+.PP
+[TYPE] may be PDC, BDC or MEMBER to specify the type of server joining the domain\&.
+.PP
+[UPN] (ADS only) set the principalname attribute during the join\&. The default format is host/netbiosname@REALM\&.
+.PP
+[OU] (ADS only) Precreate the computer account in a specific OU\&. The OU string reads from top to bottom without RDNs, and is delimited by a \*(Aq/\*(Aq\&. Please note that \*(Aq\e\*(Aq is used for escape by both the shell and ldap, so it may need to be doubled or quadrupled to pass through, and it is not used as a delimiter\&.
+.SS "[RPC] OLDJOIN [options]"
+.PP
+Join a domain\&. Use the OLDJOIN option to join the domain using the old style of domain joining \- you need to create a trust account in server manager first\&.
+.SS "[RPC|ADS] USER"
+.SS "[RPC|ADS] USER"
+.PP
+List all users
+.SS "[RPC|ADS] USER DELETE target"
+.PP
+Delete specified user
+.SS "[RPC|ADS] USER INFO target"
+.PP
+List the domain groups of the specified user\&.
+.SS "[RPC|ADS] USER RENAME oldname newname"
+.PP
+Rename specified user\&.
+.SS "[RPC|ADS] USER ADD name [password] [-F user flags] [-C comment]"
+.PP
+Add specified user\&.
+.SS "[RPC|ADS] GROUP"
+.SS "[RPC|ADS] GROUP [misc options] [targets]"
+.PP
+List user groups\&.
+.SS "[RPC|ADS] GROUP DELETE name [misc. options]"
+.PP
+Delete specified group\&.
+.SS "[RPC|ADS] GROUP ADD name [-C comment]"
+.PP
+Create specified group\&.
+.SS "[RAP|RPC] SHARE"
+.SS "[RAP|RPC] SHARE [misc. options] [targets]"
+.PP
+Enumerates all exported resources (network shares) on target server\&.
+.SS "[RAP|RPC] SHARE ADD name=serverpath [-C comment] [-M maxusers] [targets]"
+.PP
+Adds a share from a server (makes the export active)\&. Maxusers specifies the number of users that can be connected to the share simultaneously\&.
+.SS "SHARE DELETE sharename"
+.PP
+Delete specified share\&.
+.SS "[RPC|RAP] FILE"
+.SS "[RPC|RAP] FILE"
+.PP
+List all open files on remote server\&.
+.SS "[RPC|RAP] FILE CLOSE fileid"
+.PP
+Close file with specified
+\fIfileid\fR
+on remote server\&.
+.SS "[RPC|RAP] FILE INFO fileid"
+.PP
+Print information on specified
+\fIfileid\fR\&. Currently listed are: file\-id, username, locks, path, permissions\&.
+.SS "[RAP|RPC] FILE USER user"
+.PP
+List files opened by specified
+\fIuser\fR\&. Please note that
+net rap file user
+does not work against Samba servers\&.
+.SS "SESSION"
+.SS "RAP SESSION"
+.PP
+Without any other options, SESSION enumerates all active SMB/CIFS sessions on the target server\&.
+.SS "RAP SESSION DELETE|CLOSE CLIENT_NAME"
+.PP
+Close the specified sessions\&.
+.SS "RAP SESSION INFO CLIENT_NAME"
+.PP
+Give a list with all the open files in specified session\&.
+.SS "RAP SERVER \fIDOMAIN\fR"
+.PP
+List all servers in specified domain or workgroup\&. Defaults to local domain\&.
+.SS "RAP DOMAIN"
+.PP
+Lists all domains and workgroups visible on the current network\&.
+.SS "RAP PRINTQ"
+.SS "RAP PRINTQ INFO QUEUE_NAME"
+.PP
+Lists the specified print queue and print jobs on the server\&. If the
+\fIQUEUE_NAME\fR
+is omitted, all queues are listed\&.
+.SS "RAP PRINTQ DELETE JOBID"
+.PP
+Delete job with specified id\&.
+.SS "RAP VALIDATE \fIuser\fR [\fIpassword\fR]"
+.PP
+Validate whether the specified user can log in to the remote server\&. If the password is not specified on the commandline, it will be prompted\&.
+.if n \{\
+.sp
+.\}
+.RS 4
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fBNote\fR
+.ps -1
+.br
+.PP
+Currently NOT implemented\&.
+.sp .5v
+.RE
+.SS "RAP GROUPMEMBER"
+.SS "RAP GROUPMEMBER LIST GROUP"
+.PP
+List all members of the specified group\&.
+.SS "RAP GROUPMEMBER DELETE GROUP USER"
+.PP
+Delete member from group\&.
+.SS "RAP GROUPMEMBER ADD GROUP USER"
+.PP
+Add member to group\&.
+.SS "RAP ADMIN \fIcommand\fR"
+.PP
+Execute the specified
+\fIcommand\fR
+on the remote server\&. Only works with OS/2 servers\&.
+.if n \{\
+.sp
+.\}
+.RS 4
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fBNote\fR
+.ps -1
+.br
+.PP
+Currently NOT implemented\&.
+.sp .5v
+.RE
+.SS "RAP SERVICE"
+.SS "RAP SERVICE START NAME [arguments...]"
+.PP
+Start the specified service on the remote server\&. Not implemented yet\&.
+.if n \{\
+.sp
+.\}
+.RS 4
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fBNote\fR
+.ps -1
+.br
+.PP
+Currently NOT implemented\&.
+.sp .5v
+.RE
+.SS "RAP SERVICE STOP"
+.PP
+Stop the specified service on the remote server\&.
+.if n \{\
+.sp
+.\}
+.RS 4
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fBNote\fR
+.ps -1
+.br
+.PP
+Currently NOT implemented\&.
+.sp .5v
+.RE
+.SS "RAP PASSWORD \fIUSER\fR \fIOLDPASS\fR \fINEWPASS\fR"
+.PP
+Change password of
+\fIUSER\fR
+from
+\fIOLDPASS\fR
+to
+\fINEWPASS\fR\&.
+.SS "LOOKUP"
+.SS "LOOKUP HOST HOSTNAME [TYPE]"
+.PP
+Lookup the IP address of the given host with the specified type (netbios suffix)\&. The type defaults to 0x20 (workstation)\&.
+.SS "LOOKUP LDAP [DOMAIN]"
+.PP
+Give IP address of LDAP server of specified
+\fIDOMAIN\fR\&. Defaults to local domain\&.
+.SS "LOOKUP KDC [REALM]"
+.PP
+Give IP address of KDC for the specified
+\fIREALM\fR\&. Defaults to local realm\&.
+.SS "LOOKUP DC [DOMAIN]"
+.PP
+Give IP\*(Aqs of Domain Controllers for specified
+\fI DOMAIN\fR\&. Defaults to local domain\&.
+.SS "LOOKUP MASTER DOMAIN"
+.PP
+Give IP of master browser for specified
+\fIDOMAIN\fR
+or workgroup\&. Defaults to local domain\&.
+.SS "CACHE"
+.PP
+Samba uses a general caching interface called \*(Aqgencache\*(Aq\&. It can be controlled using \*(AqNET CACHE\*(Aq\&.
+.PP
+All the timeout parameters support the suffixes:
+.RS 4
+s \- Seconds
+.RE
+.RS 4
+m \- Minutes
+.RE
+.RS 4
+h \- Hours
+.RE
+.RS 4
+d \- Days
+.RE
+.RS 4
+w \- Weeks
+.RE
+.SS "CACHE ADD key data time-out"
+.PP
+Add specified key+data to the cache with the given timeout\&.
+.SS "CACHE DEL key"
+.PP
+Delete key from the cache\&.
+.SS "CACHE SET key data time-out"
+.PP
+Update data of existing cache entry\&.
+.SS "CACHE SEARCH PATTERN"
+.PP
+Search for the specified pattern in the cache data\&.
+.SS "CACHE LIST"
+.PP
+List all current items in the cache\&.
+.SS "CACHE FLUSH"
+.PP
+Remove all the current items from the cache\&.
+.SS "GETLOCALSID [DOMAIN]"
+.PP
+Prints the SID of the specified domain, or if the parameter is omitted, the SID of the local server\&.
+.SS "SETLOCALSID S\-1\-5\-21\-x\-y\-z"
+.PP
+Sets SID for the local server to the specified SID\&.
+.SS "GETDOMAINSID"
+.PP
+Prints the local machine SID and the SID of the current domain\&.
+.SS "SETDOMAINSID"
+.PP
+Sets the SID of the current domain\&.
+.SS "GROUPMAP"
+.PP
+Manage the mappings between Windows group SIDs and UNIX groups\&. Common options include:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+unixgroup \- Name of the UNIX group
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+ntgroup \- Name of the Windows NT group (must be resolvable to a SID
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+rid \- Unsigned 32\-bit integer
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+sid \- Full SID in the form of "S\-1\-\&.\&.\&."
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+type \- Type of the group; either \*(Aqdomain\*(Aq, \*(Aqlocal\*(Aq, or \*(Aqbuiltin\*(Aq
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+comment \- Freeform text description of the group
+.RE
+.sp
+.RE
+.SS "GROUPMAP ADD"
+.PP
+Add a new group mapping entry:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+net groupmap add {rid=int|sid=string} unixgroup=string \e
+	[type={domain|local}] [ntgroup=string] [comment=string]
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+
+.SS "GROUPMAP DELETE"
+.PP
+Delete a group mapping entry\&. If more than one group name matches, the first entry found is deleted\&.
+.PP
+net groupmap delete {ntgroup=string|sid=SID}
+.SS "GROUPMAP MODIFY"
+.PP
+Update en existing group entry\&.
+.PP
+
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+net groupmap modify {ntgroup=string|sid=SID} [unixgroup=string] \e
+       [comment=string] [type={domain|local}]
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+
+.SS "GROUPMAP LIST"
+.PP
+List existing group mapping entries\&.
+.PP
+net groupmap list [verbose] [ntgroup=string] [sid=SID]
+.SS "MAXRID"
+.PP
+Prints out the highest RID currently in use on the local server (by the active \*(Aqpassdb backend\*(Aq)\&.
+.SS "RPC INFO"
+.PP
+Print information about the domain of the remote server, such as domain name, domain sid and number of users and groups\&.
+.SS "[RPC|ADS] TESTJOIN"
+.PP
+Check whether participation in a domain is still valid\&.
+.SS "[RPC|ADS] CHANGETRUSTPW"
+.PP
+Force change of domain trust password\&.
+.SS "RPC TRUSTDOM"
+.SS "RPC TRUSTDOM ADD DOMAIN"
+.PP
+Add a interdomain trust account for
+\fIDOMAIN\fR\&. This is in fact a Samba account named
+\fIDOMAIN$\fR
+with the account flag
+\fB\*(AqI\*(Aq\fR
+(interdomain trust account)\&. This is required for incoming trusts to work\&. It makes Samba be a trusted domain of the foreign (trusting) domain\&. Users of the Samba domain will be made available in the foreign domain\&. If the command is used against localhost it has the same effect as
+smbpasswd \-a \-i DOMAIN\&. Please note that both commands expect a appropriate UNIX account\&.
+.SS "RPC TRUSTDOM DEL DOMAIN"
+.PP
+Remove interdomain trust account for
+\fIDOMAIN\fR\&. If it is used against localhost it has the same effect as
+smbpasswd \-x DOMAIN$\&.
+.SS "RPC TRUSTDOM ESTABLISH DOMAIN"
+.PP
+Establish a trust relationship to a trusted domain\&. Interdomain account must already be created on the remote PDC\&. This is required for outgoing trusts to work\&. It makes Samba be a trusting domain of a foreign (trusted) domain\&. Users of the foreign domain will be made available in our domain\&. You\*(Aqll need winbind and a working idmap config to make them appear in your system\&.
+.SS "RPC TRUSTDOM REVOKE DOMAIN"
+.PP
+Abandon relationship to trusted domain
+.SS "RPC TRUSTDOM LIST"
+.PP
+List all interdomain trust relationships\&.
+.SS "RPC TRUSTDOM LIST"
+.PP
+List all interdomain trust relationships\&.
+.SS "RPC TRUST"
+.SS "RPC TRUST CREATE"
+.PP
+Create a trust trust object by calling lsaCreateTrustedDomainEx2\&. The can be done on a single server or on two servers at once with the possibility to use a random trust password\&.
+.PP
+\fBOptions:\fR
+.PP
+otherserver
+.RS 4
+Domain controller of the second domain
+.RE
+.PP
+otheruser
+.RS 4
+Admin user in the second domain
+.RE
+.PP
+otherdomainsid
+.RS 4
+SID of the second domain
+.RE
+.PP
+other_netbios_domain
+.RS 4
+NetBIOS (short) name of the second domain
+.RE
+.PP
+otherdomain
+.RS 4
+DNS (full) name of the second domain
+.RE
+.PP
+trustpw
+.RS 4
+Trust password
+.RE
+.PP
+\fBExamples:\fR
+.PP
+Create a trust object on srv1\&.dom1\&.dom for the domain dom2
+.RS 4
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+net rpc trust create \e
+    otherdomainsid=S\-x\-x\-xx\-xxxxxxxxxx\-xxxxxxxxxx\-xxxxxxxxx \e
+    other_netbios_domain=dom2 \e
+    otherdomain=dom2\&.dom \e
+    trustpw=12345678 \e
+    \-S srv1\&.dom1\&.dom
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
+Create a trust relationship between dom1 and dom2
+.RS 4
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+net rpc trust create \e
+    otherserver=srv2\&.dom2\&.test \e
+    otheruser=dom2adm \e
+    \-S srv1\&.dom1\&.dom
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.SS "RPC TRUST DELETE"
+.PP
+Delete a trust trust object by calling lsaDeleteTrustedDomain\&. The can be done on a single server or on two servers at once\&.
+.PP
+\fBOptions:\fR
+.PP
+otherserver
+.RS 4
+Domain controller of the second domain
+.RE
+.PP
+otheruser
+.RS 4
+Admin user in the second domain
+.RE
+.PP
+otherdomainsid
+.RS 4
+SID of the second domain
+.RE
+.PP
+\fBExamples:\fR
+.PP
+Delete a trust object on srv1\&.dom1\&.dom for the domain dom2
+.RS 4
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+net rpc trust delete \e
+    otherdomainsid=S\-x\-x\-xx\-xxxxxxxxxx\-xxxxxxxxxx\-xxxxxxxxx \e
+    \-S srv1\&.dom1\&.dom
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
+Delete a trust relationship between dom1 and dom2
+.RS 4
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+net rpc trust delete \e
+    otherserver=srv2\&.dom2\&.test \e
+    otheruser=dom2adm \e
+    \-S srv1\&.dom1\&.dom
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.SS ""
+.SS "RPC RIGHTS"
+.PP
+This subcommand is used to view and manage Samba\*(Aqs rights assignments (also referred to as privileges)\&. There are three options currently available:
+\fIlist\fR,
+\fIgrant\fR, and
+\fIrevoke\fR\&. More details on Samba\*(Aqs privilege model and its use can be found in the Samba\-HOWTO\-Collection\&.
+.SS "RPC ABORTSHUTDOWN"
+.PP
+Abort the shutdown of a remote server\&.
+.SS "RPC SHUTDOWN [\-t timeout] [\-r] [\-f] [\-C message]"
+.PP
+Shut down the remote server\&.
+.PP
+\-r
+.RS 4
+Reboot after shutdown\&.
+.RE
+.PP
+\-f
+.RS 4
+Force shutting down all applications\&.
+.RE
+.PP
+\-t timeout
+.RS 4
+Timeout before system will be shut down\&. An interactive user of the system can use this time to cancel the shutdown\&.
+.RE
+.PP
+\-C message
+.RS 4
+Display the specified message on the screen to announce the shutdown\&.
+.RE
+.SS "RPC SAMDUMP"
+.PP
+Print out sam database of remote server\&. You need to run this against the PDC, from a Samba machine joined as a BDC\&.
+.SS "RPC VAMPIRE"
+.PP
+Export users, aliases and groups from remote server to local server\&. You need to run this against the PDC, from a Samba machine joined as a BDC\&.
+.SS "RPC VAMPIRE KEYTAB"
+.PP
+Dump remote SAM database to local Kerberos keytab file\&.
+.SS "RPC VAMPIRE LDIF"
+.PP
+Dump remote SAM database to local LDIF file or standard output\&.
+.SS "RPC GETSID"
+.PP
+Fetch domain SID and store it in the local
+secrets\&.tdb\&.
+.SS "ADS LEAVE"
+.PP
+Make the remote host leave the domain it is part of\&.
+.SS "ADS STATUS"
+.PP
+Print out status of machine account of the local machine in ADS\&. Prints out quite some debug info\&. Aimed at developers, regular users should use
+NET ADS TESTJOIN\&.
+.SS "ADS PRINTER"
+.SS "ADS PRINTER INFO [PRINTER] [SERVER]"
+.PP
+Lookup info for
+\fIPRINTER\fR
+on
+\fISERVER\fR\&. The printer name defaults to "*", the server name defaults to the local host\&.
+.SS "ADS PRINTER PUBLISH PRINTER"
+.PP
+Publish specified printer using ADS\&.
+.SS "ADS PRINTER REMOVE PRINTER"
+.PP
+Remove specified printer from ADS directory\&.
+.SS "ADS SEARCH \fIEXPRESSION\fR \fIATTRIBUTES\&.\&.\&.\fR"
+.PP
+Perform a raw LDAP search on a ADS server and dump the results\&. The expression is a standard LDAP search expression, and the attributes are a list of LDAP fields to show in the results\&.
+.PP
+Example:
+\fBnet ads search \*(Aq(objectCategory=group)\*(Aq sAMAccountName\fR
+.SS "ADS DN \fIDN\fR \fI(attributes)\fR"
+.PP
+Perform a raw LDAP search on a ADS server and dump the results\&. The DN standard LDAP DN, and the attributes are a list of LDAP fields to show in the result\&.
+.PP
+Example:
+\fBnet ads dn \*(AqCN=administrator,CN=Users,DC=my,DC=domain\*(Aq SAMAccountName\fR
+.SS "ADS WORKGROUP"
+.PP
+Print out workgroup name for specified kerberos realm\&.
+.SS "SAM CREATEBUILTINGROUP <NAME>"
+.PP
+(Re)Create a BUILTIN group\&. Only a wellknown set of BUILTIN groups can be created with this command\&. This is the list of currently recognized group names: Administrators, Users, Guests, Power Users, Account Operators, Server Operators, Print Operators, Backup Operators, Replicator, RAS Servers, Pre\-Windows 2000 compatible Access\&. This command requires a running Winbindd with idmap allocation properly configured\&. The group gid will be allocated out of the winbindd range\&.
+.SS "SAM CREATELOCALGROUP <NAME>"
+.PP
+Create a LOCAL group (also known as Alias)\&. This command requires a running Winbindd with idmap allocation properly configured\&. The group gid will be allocated out of the winbindd range\&.
+.SS "SAM DELETELOCALGROUP <NAME>"
+.PP
+Delete an existing LOCAL group (also known as Alias)\&.
+.SS "SAM MAPUNIXGROUP <NAME>"
+.PP
+Map an existing Unix group and make it a Domain Group, the domain group will have the same name\&.
+.SS "SAM UNMAPUNIXGROUP <NAME>"
+.PP
+Remove an existing group mapping entry\&.
+.SS "SAM ADDMEM <GROUP> <MEMBER>"
+.PP
+Add a member to a Local group\&. The group can be specified only by name, the member can be specified by name or SID\&.
+.SS "SAM DELMEM <GROUP> <MEMBER>"
+.PP
+Remove a member from a Local group\&. The group and the member must be specified by name\&.
+.SS "SAM LISTMEM <GROUP>"
+.PP
+List Local group members\&. The group must be specified by name\&.
+.SS "SAM LIST <users|groups|localgroups|builtin|workstations> [verbose]"
+.PP
+List the specified set of accounts by name\&. If verbose is specified, the rid and description is also provided for each account\&.
+.SS "SAM RIGHTS LIST"
+.PP
+List all available privileges\&.
+.SS "SAM RIGHTS GRANT <NAME> <PRIVILEGE>"
+.PP
+Grant one or more privileges to a user\&.
+.SS "SAM RIGHTS REVOKE <NAME> <PRIVILEGE>"
+.PP
+Revoke one or more privileges from a user\&.
+.SS "SAM SHOW <NAME>"
+.PP
+Show the full DOMAIN\e\eNAME the SID and the type for the corresponding account\&.
+.SS "SAM SET HOMEDIR <NAME> <DIRECTORY>"
+.PP
+Set the home directory for a user account\&.
+.SS "SAM SET PROFILEPATH <NAME> <PATH>"
+.PP
+Set the profile path for a user account\&.
+.SS "SAM SET COMMENT <NAME> <COMMENT>"
+.PP
+Set the comment for a user or group account\&.
+.SS "SAM SET FULLNAME <NAME> <FULL NAME>"
+.PP
+Set the full name for a user account\&.
+.SS "SAM SET LOGONSCRIPT <NAME> <SCRIPT>"
+.PP
+Set the logon script for a user account\&.
+.SS "SAM SET HOMEDRIVE <NAME> <DRIVE>"
+.PP
+Set the home drive for a user account\&.
+.SS "SAM SET WORKSTATIONS <NAME> <WORKSTATIONS>"
+.PP
+Set the workstations a user account is allowed to log in from\&.
+.SS "SAM SET DISABLE <NAME>"
+.PP
+Set the "disabled" flag for a user account\&.
+.SS "SAM SET PWNOTREQ <NAME>"
+.PP
+Set the "password not required" flag for a user account\&.
+.SS "SAM SET AUTOLOCK <NAME>"
+.PP
+Set the "autolock" flag for a user account\&.
+.SS "SAM SET PWNOEXP <NAME>"
+.PP
+Set the "password do not expire" flag for a user account\&.
+.SS "SAM SET PWDMUSTCHANGENOW <NAME> [yes|no]"
+.PP
+Set or unset the "password must change" flag for a user account\&.
+.SS "SAM POLICY LIST"
+.PP
+List the available account policies\&.
+.SS "SAM POLICY SHOW <account policy>"
+.PP
+Show the account policy value\&.
+.SS "SAM POLICY SET <account policy> <value>"
+.PP
+Set a value for the account policy\&. Valid values can be: "forever", "never", "off", or a number\&.
+.SS "SAM PROVISION"
+.PP
+Only available if ldapsam:editposix is set and winbindd is running\&. Properly populates the ldap tree with the basic accounts (Administrator) and groups (Domain Users, Domain Admins, Domain Guests) on the ldap tree\&.
+.SS "IDMAP DUMP <local tdb file name>"
+.PP
+Dumps the mappings contained in the local tdb file specified\&. This command is useful to dump only the mappings produced by the idmap_tdb backend\&.
+.SS "IDMAP RESTORE [input file]"
+.PP
+Restore the mappings from the specified file or stdin\&.
+.SS "IDMAP SECRET <DOMAIN> <secret>"
+.PP
+Store a secret for the specified domain, used primarily for domains that use idmap_ldap as a backend\&. In this case the secret is used as the password for the user DN used to bind to the ldap server\&.
+.SS "IDMAP DELETE [\-f] [\-\-db=<DB>] <ID>"
+.PP
+Delete a mapping sid <\-> gid or sid <\-> uid from the IDMAP database\&. The mapping is given by <ID> which may either be a sid: S\-x\-\&.\&.\&., a gid: "GID number" or a uid: "UID number"\&. Use \-f to delete an invalid partial mapping <ID> \-> xx
+.PP
+Use "smbcontrol all idmap \&.\&.\&." to notify running smbd instances\&. See the
+\fBsmbcontrol\fR(1)
+manpage for details\&.
+.SS "IDMAP CHECK [\-v] [\-r] [\-a] [\-T] [\-f] [\-l] [\-\-db=<DB>]"
+.PP
+Check and repair the IDMAP database\&. If no option is given a read only check of the database is done\&. Among others an interactive or automatic repair mode may be chosen with one of the following options:
+.PP
+\-r|\-\-repair
+.RS 4
+Interactive repair mode, ask a lot of questions\&.
+.RE
+.PP
+\-a|\-\-auto
+.RS 4
+Noninteractive repair mode, use default answers\&.
+.RE
+.PP
+\-v|\-\-verbose
+.RS 4
+Produce more output\&.
+.RE
+.PP
+\-f|\-\-force
+.RS 4
+Try to apply changes, even if they do not apply cleanly\&.
+.RE
+.PP
+\-T|\-\-test
+.RS 4
+Dry run, show what changes would be made but don\*(Aqt touch anything\&.
+.RE
+.PP
+\-l|\-\-lock
+.RS 4
+Lock the database while doing the check\&.
+.RE
+.PP
+\-\-db <DB>
+.RS 4
+Check the specified database\&.
+.RE
+.PP
+.RS 4
+.RE
+It reports about the finding of the following errors:
+.PP
+Missing reverse mapping:
+.RS 4
+A record with mapping A\->B where there is no B\->A\&. Default action in repair mode is to "fix" this by adding the reverse mapping\&.
+.RE
+.PP
+Invalid mapping:
+.RS 4
+A record with mapping A\->B where B\->C\&. Default action is to "delete" this record\&.
+.RE
+.PP
+Missing or invalid HWM:
+.RS 4
+A high water mark is not at least equal to the largest ID in the database\&. Default action is to "fix" this by setting it to the largest ID found +1\&.
+.RE
+.PP
+Invalid record:
+.RS 4
+Something we failed to parse\&. Default action is to "edit" it in interactive and "delete" it in automatic mode\&.
+.RE
+.SS "USERSHARE"
+.PP
+Starting with version 3\&.0\&.23, a Samba server now supports the ability for non\-root users to add user defined shares to be exported using the "net usershare" commands\&.
+.PP
+To set this up, first set up your smb\&.conf by adding to the [global] section: usershare path = /usr/local/samba/lib/usershares Next create the directory /usr/local/samba/lib/usershares, change the owner to root and set the group owner to the UNIX group who should have the ability to create usershares, for example a group called "serverops"\&. Set the permissions on /usr/local/samba/lib/usershares to 01770\&. (Owner and group all access, no access for others, plus the sticky bit, which means that a file in that directory can be renamed or deleted only by the owner of the file)\&. Finally, tell smbd how many usershares you will allow by adding to the [global] section of smb\&.conf a line such as : usershare max shares = 100\&. To allow 100 usershare definitions\&. Now, members of the UNIX group "serverops" can create user defined shares on demand using the commands below\&.
+.PP
+The usershare commands are:
+.RS 4
+net usershare add sharename path [comment [acl] [guest_ok=[y|n]]] \- to add or change a user defined share\&.
+.RE
+.RS 4
+net usershare delete sharename \- to delete a user defined share\&.
+.RE
+.RS 4
+net usershare info [\-l|\-\-long] [wildcard sharename] \- to print info about a user defined share\&.
+.RE
+.RS 4
+net usershare list [\-l|\-\-long] [wildcard sharename] \- to list user defined shares\&.
+.RE
+.SS "USERSHARE ADD sharename path [comment] [acl] [guest_ok=[y|n]]"
+.PP
+Add or replace a new user defined share, with name "sharename"\&.
+.PP
+"path" specifies the absolute pathname on the system to be exported\&. Restrictions may be put on this, see the global smb\&.conf parameters: "usershare owner only", "usershare prefix allow list", and "usershare prefix deny list"\&.
+.PP
+The optional "comment" parameter is the comment that will appear on the share when browsed to by a client\&.
+.PP
+The optional "acl" field specifies which users have read and write access to the entire share\&. Note that guest connections are not allowed unless the smb\&.conf parameter "usershare allow guests" has been set\&. The definition of a user defined share acl is: "user:permission", where user is a valid username on the system and permission can be "F", "R", or "D"\&. "F" stands for "full permissions", ie\&. read and write permissions\&. "D" stands for "deny" for a user, ie\&. prevent this user from accessing this share\&. "R" stands for "read only", ie\&. only allow read access to this share (no creation of new files or directories or writing to files)\&.
+.PP
+The default if no "acl" is given is "Everyone:R", which means any authenticated user has read\-only access\&.
+.PP
+The optional "guest_ok" has the same effect as the parameter of the same name in smb\&.conf, in that it allows guest access to this user defined share\&. This parameter is only allowed if the global parameter "usershare allow guests" has been set to true in the smb\&.conf\&.
+
+
+There is no separate command to modify an existing user defined share,
+just use the "net usershare add [sharename]" command using the same
+sharename as the one you wish to modify and specify the new options
+you wish\&. The Samba smbd daemon notices user defined share modifications
+at connect time so will see the change immediately, there is no need
+to restart smbd on adding, deleting or changing a user defined share\&.
+.SS "USERSHARE DELETE sharename"
+.PP
+Deletes the user defined share by name\&. The Samba smbd daemon immediately notices this change, although it will not disconnect any users currently connected to the deleted share\&.
+.SS "USERSHARE INFO [-l|--long] [wildcard sharename]"
+.PP
+Get info on user defined shares owned by the current user matching the given pattern, or all users\&.
+.PP
+net usershare info on its own dumps out info on the user defined shares that were created by the current user, or restricts them to share names that match the given wildcard pattern (\*(Aq*\*(Aq matches one or more characters, \*(Aq?\*(Aq matches only one character)\&. If the \*(Aq\-l\*(Aq or \*(Aq\-\-long\*(Aq option is also given, it prints out info on user defined shares created by other users\&.
+.PP
+The information given about a share looks like: [foobar] path=/home/jeremy comment=testme usershare_acl=Everyone:F guest_ok=n And is a list of the current settings of the user defined share that can be modified by the "net usershare add" command\&.
+.SS "USERSHARE LIST [-l|--long] wildcard sharename"
+.PP
+List all the user defined shares owned by the current user matching the given pattern, or all users\&.
+.PP
+net usershare list on its own list out the names of the user defined shares that were created by the current user, or restricts the list to share names that match the given wildcard pattern (\*(Aq*\*(Aq matches one or more characters, \*(Aq?\*(Aq matches only one character)\&. If the \*(Aq\-l\*(Aq or \*(Aq\-\-long\*(Aq option is also given, it includes the names of user defined shares created by other users\&.
+.SS "CONF"
+.PP
+Starting with version 3\&.2\&.0, a Samba server can be configured by data stored in registry\&. This configuration data can be edited with the new "net conf" commands\&.
+.PP
+The deployment of this configuration data can be activated in two levels from the
+\fIsmb\&.conf\fR
+file: Share definitions from registry are activated by setting
+\fIregistry shares\fR
+to
+\(lqyes\(rq
+in the [global] section and global configuration options are activated by setting
+\m[blue]\fBinclude = registry\fR\m[]
+in the [global] section for a mixed configuration or by setting
+\m[blue]\fBconfig backend = registry\fR\m[]
+in the [global] section for a registry\-only configuration\&. See the
+\fBsmb.conf\fR(5)
+manpage for details\&.
+.PP
+The conf commands are:
+.RS 4
+net conf list \- Dump the complete configuration in smb\&.conf like
+format\&.
+.RE
+.RS 4
+net conf import \- Import configuration from file in smb\&.conf
+format\&.
+.RE
+.RS 4
+net conf listshares \- List the registry shares\&.
+.RE
+.RS 4
+net conf drop \- Delete the complete configuration from
+registry\&.
+.RE
+.RS 4
+net conf showshare \- Show the definition of a registry share\&.
+.RE
+.RS 4
+net conf addshare \- Create a new registry share\&.
+.RE
+.RS 4
+net conf delshare \- Delete a registry share\&.
+.RE
+.RS 4
+net conf setparm \- Store a parameter\&.
+.RE
+.RS 4
+net conf getparm \- Retrieve the value of a parameter\&.
+.RE
+.RS 4
+net conf delparm \- Delete a parameter\&.
+.RE
+.RS 4
+net conf getincludes \- Show the includes of a share definition\&.
+.RE
+.RS 4
+net conf setincludes \- Set includes for a share\&.
+.RE
+.RS 4
+net conf delincludes \- Delete includes from a share definition\&.
+.RE
+.SS "CONF LIST"
+.PP
+Print the configuration data stored in the registry in a smb\&.conf\-like format to standard output\&.
+.SS "CONF IMPORT [--test|-T] filename [section]"
+.PP
+This command imports configuration from a file in smb\&.conf format\&. If a section encountered in the input file is present in registry, its contents is replaced\&. Sections of registry configuration that have no counterpart in the input file are not affected\&. If you want to delete these, you will have to use the "net conf drop" or "net conf delshare" commands\&. Optionally, a section may be specified to restrict the effect of the import command to that specific section\&. A test mode is enabled by specifying the parameter "\-T" on the commandline\&. In test mode, no changes are made to the registry, and the resulting configuration is printed to standard output instead\&.
+.SS "CONF LISTSHARES"
+.PP
+List the names of the shares defined in registry\&.
+.SS "CONF DROP"
+.PP
+Delete the complete configuration data from registry\&.
+.SS "CONF SHOWSHARE sharename"
+.PP
+Show the definition of the share or section specified\&. It is valid to specify "global" as sharename to retrieve the global configuration options from registry\&.
+.SS "CONF ADDSHARE sharename path [writeable={y|N} [guest_ok={y|N} [comment]]] "
+.PP
+Create a new share definition in registry\&. The sharename and path have to be given\&. The share name may
+\fInot\fR
+be "global"\&. Optionally, values for the very common options "writeable", "guest ok" and a "comment" may be specified\&. The same result may be obtained by a sequence of "net conf setparm" commands\&.
+.SS "CONF DELSHARE sharename"
+.PP
+Delete a share definition from registry\&.
+.SS "CONF SETPARM section parameter value"
+.PP
+Store a parameter in registry\&. The section may be global or a sharename\&. The section is created if it does not exist yet\&.
+.SS "CONF GETPARM section parameter"
+.PP
+Show a parameter stored in registry\&.
+.SS "CONF DELPARM section parameter"
+.PP
+Delete a parameter stored in registry\&.
+.SS "CONF GETINCLUDES section"
+.PP
+Get the list of includes for the provided section (global or share)\&.
+.PP
+Note that due to the nature of the registry database and the nature of include directives, the includes need special treatment: Parameters are stored in registry by the parameter name as valuename, so there is only ever one instance of a parameter per share\&. Also, a specific order like in a text file is not guaranteed\&. For all real parameters, this is perfectly ok, but the include directive is rather a meta parameter, for which, in the smb\&.conf text file, the place where it is specified between the other parameters is very important\&. This can not be achieved by the simple registry smbconf data model, so there is one ordered list of includes per share, and this list is evaluated after all the parameters of the share\&.
+.PP
+Further note that currently, only files can be included from registry configuration\&. In the future, there will be the ability to include configuration data from other registry keys\&.
+.SS "CONF SETINCLUDES section [filename]+"
+.PP
+Set the list of includes for the provided section (global or share) to the given list of one or more filenames\&. The filenames may contain the usual smb\&.conf macros like %I\&.
+.SS "CONF DELINCLUDES section"
+.PP
+Delete the list of includes from the provided section (global or share)\&.
+.SS "REGISTRY"
+.PP
+Manipulate Samba\*(Aqs registry\&.
+.PP
+The registry commands are:
+.RS 4
+net registry enumerate   \- Enumerate registry keys and values\&.
+.RE
+.RS 4
+net registry enumerate_recursive \- Enumerate registry key and its subkeys\&.
+.RE
+.RS 4
+net registry createkey   \- Create a new registry key\&.
+.RE
+.RS 4
+net registry deletekey   \- Delete a registry key\&.
+.RE
+.RS 4
+net registry deletekey_recursive \- Delete a registry key with subkeys\&.
+.RE
+.RS 4
+net registry getvalue    \- Print a registry value\&.
+.RE
+.RS 4
+net registry getvalueraw \- Print a registry value (raw format)\&.
+.RE
+.RS 4
+net registry setvalue    \- Set a new registry value\&.
+.RE
+.RS 4
+net registry increment   \- Increment a DWORD registry value under a lock\&.
+.RE
+.RS 4
+net registry deletevalue \- Delete a registry value\&.
+.RE
+.RS 4
+net registry getsd       \- Get security descriptor\&.
+.RE
+.RS 4
+net registry getsd_sdd1  \- Get security descriptor in sddl format\&.
+.RE
+.RS 4
+net registry setsd_sdd1  \- Set security descriptor from sddl format
+string\&.
+.RE
+.RS 4
+net registry import      \- Import a registration entries (\&.reg) file\&.
+.RE
+.RS 4
+net registry export      \- Export a registration entries (\&.reg) file\&.
+.RE
+.RS 4
+net registry convert     \- Convert a registration entries (\&.reg) file\&.
+.RE
+.SS "REGISTRY ENUMERATE key "
+.PP
+Enumerate subkeys and values of
+\fIkey\fR\&.
+.SS "REGISTRY ENUMERATE_RECURSIVE key "
+.PP
+Enumerate values of
+\fIkey\fR
+and its subkeys\&.
+.SS "REGISTRY CREATEKEY key "
+.PP
+Create a new
+\fIkey\fR
+if not yet existing\&.
+.SS "REGISTRY DELETEKEY key "
+.PP
+Delete the given
+\fIkey\fR
+and its values from the registry, if it has no subkeys\&.
+.SS "REGISTRY DELETEKEY_RECURSIVE key "
+.PP
+Delete the given
+\fIkey\fR
+and all of its subkeys and values from the registry\&.
+.SS "REGISTRY GETVALUE key name"
+.PP
+Output type and actual value of the value
+\fIname\fR
+of the given
+\fIkey\fR\&.
+.SS "REGISTRY GETVALUERAW key name"
+.PP
+Output the actual value of the value
+\fIname\fR
+of the given
+\fIkey\fR\&.
+.SS "REGISTRY SETVALUE key name type value ..."
+.PP
+Set the value
+\fIname\fR
+of an existing
+\fIkey\fR\&.
+\fItype\fR
+may be one of
+\fIsz\fR,
+\fImulti_sz\fR
+or
+\fIdword\fR\&. In case of
+\fImulti_sz\fR
+\fIvalue\fR
+may be given multiple times\&.
+.SS "REGISTRY INCREMENT key name [inc]"
+.PP
+Increment the DWORD value
+\fIname\fR
+of
+\fIkey\fR
+by
+\fIinc\fR
+while holding a g_lock\&.
+\fIinc\fR
+defaults to 1\&.
+.SS "REGISTRY DELETEVALUE key name"
+.PP
+Delete the value
+\fIname\fR
+of the given
+\fIkey\fR\&.
+.SS "REGISTRY GETSD key"
+.PP
+Get the security descriptor of the given
+\fIkey\fR\&.
+.SS "REGISTRY GETSD_SDDL key"
+.PP
+Get the security descriptor of the given
+\fIkey\fR
+as a Security Descriptor Definition Language (SDDL) string\&.
+.SS "REGISTRY SETSD_SDDL keysd"
+.PP
+Set the security descriptor of the given
+\fIkey\fR
+from a Security Descriptor Definition Language (SDDL) string
+\fIsd\fR\&.
+.SS "REGISTRY IMPORT file[opt]"
+.PP
+Import a registration entries (\&.reg)
+\fIfile\fR\&.
+.SS "REGISTRY EXPORT keyfile[opt]"
+.PP
+Export a
+\fIkey\fR
+to a registration entries (\&.reg)
+\fIfile\fR\&.
+.SS "REGISTRY CONVERT in out [[inopt] outopt]"
+.PP
+Convert a registration entries (\&.reg) file
+\fIin\fR\&.
+.SS "EVENTLOG"
+.PP
+Starting with version 3\&.4\&.0 net can read, dump, import and export native win32 eventlog files (usually *\&.evt)\&. evt files are used by the native Windows eventviewer tools\&.
+.PP
+The import and export of evt files can only succeed when
+\fIeventlog list\fR
+is used in
+\fIsmb\&.conf\fR
+file\&. See the
+\fBsmb.conf\fR(5)
+manpage for details\&.
+.PP
+The eventlog commands are:
+.RS 4
+net eventlog dump \- Dump a eventlog *\&.evt file on the screen\&.
+.RE
+.RS 4
+net eventlog import \- Import a eventlog *\&.evt into the samba internal
+tdb based representation of eventlogs\&.
+.RE
+.RS 4
+net eventlog export \- Export the samba internal tdb based representation
+of eventlogs into an eventlog *\&.evt file\&.
+.RE
+.SS "EVENTLOG DUMP filename"
+.PP
+Prints a eventlog *\&.evt file to standard output\&.
+.SS "EVENTLOG IMPORT filename eventlog"
+.PP
+Imports a eventlog *\&.evt file defined by
+\fIfilename\fR
+into the samba internal tdb representation of eventlog defined by
+\fIeventlog\fR\&.
+\fIeventlog\fR
+needs to part of the
+\fIeventlog list\fR
+defined in smb\&.conf\&. See the
+\fBsmb.conf\fR(5)
+manpage for details\&.
+.SS "EVENTLOG EXPORT filename eventlog"
+.PP
+Exports the samba internal tdb representation of eventlog defined by
+\fIeventlog\fR
+to a eventlog *\&.evt file defined by
+\fIfilename\fR\&.
+\fIeventlog\fR
+needs to part of the
+\fIeventlog list\fR
+defined in smb\&.conf\&. See the
+\fBsmb.conf\fR(5)
+manpage for details\&.
+.SS "DOM"
+.PP
+Starting with version 3\&.2\&.0 Samba has support for remote join and unjoin APIs, both client and server\-side\&. Windows supports remote join capabilities since Windows 2000\&.
+.PP
+In order for Samba to be joined or unjoined remotely an account must be used that is either member of the Domain Admins group, a member of the local Administrators group or a user that is granted the SeMachineAccountPrivilege privilege\&.
+.PP
+The client side support for remote join is implemented in the net dom commands which are:
+.RS 4
+net dom join \- Join a remote computer into a domain\&.
+.RE
+.RS 4
+net dom unjoin \- Unjoin a remote computer from a domain\&.
+.RE
+.RS 4
+net dom renamecomputer \- Renames a remote computer joined to a domain\&.
+.RE
+.SS "DOM JOIN	domain=DOMAIN ou=OU account=ACCOUNT password=PASSWORD reboot"
+.PP
+Joins a computer into a domain\&. This command supports the following additional parameters:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fIDOMAIN\fR
+can be a NetBIOS domain name (also known as short domain name) or a DNS domain name for Active Directory Domains\&. As in Windows, it is also possible to control which Domain Controller to use\&. This can be achieved by appending the DC name using the \e separator character\&. Example: MYDOM\eMYDC\&. The
+\fIDOMAIN\fR
+parameter cannot be NULL\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fIOU\fR
+can be set to a RFC 1779 LDAP DN, like
+\fIou=mymachines,cn=Users,dc=example,dc=com\fR
+in order to create the machine account in a non\-default LDAP container\&. This optional parameter is only supported when joining Active Directory Domains\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fIACCOUNT\fR
+defines a domain account that will be used to join the machine to the domain\&. This domain account needs to have sufficient privileges to join machines\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fIPASSWORD\fR
+defines the password for the domain account defined with
+\fIACCOUNT\fR\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fIREBOOT\fR
+is an optional parameter that can be set to reboot the remote machine after successful join to the domain\&.
+.RE
+.sp
+.RE
+.PP
+Note that you also need to use standard net parameters to connect and authenticate to the remote machine that you want to join\&. These additional parameters include: \-S computer and \-U user\&.
+.PP
+Example: net dom join \-S xp \-U XP\e\eadministrator%secret domain=MYDOM account=MYDOM\e\eadministrator password=topsecret reboot\&.
+.PP
+This example would connect to a computer named XP as the local administrator using password secret, and join the computer into a domain called MYDOM using the MYDOM domain administrator account and password topsecret\&. After successful join, the computer would reboot\&.
+.SS "DOM UNJOIN account=ACCOUNT password=PASSWORD reboot"
+.PP
+Unjoins a computer from a domain\&. This command supports the following additional parameters:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fIACCOUNT\fR
+defines a domain account that will be used to unjoin the machine from the domain\&. This domain account needs to have sufficient privileges to unjoin machines\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fIPASSWORD\fR
+defines the password for the domain account defined with
+\fIACCOUNT\fR\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fIREBOOT\fR
+is an optional parameter that can be set to reboot the remote machine after successful unjoin from the domain\&.
+.RE
+.sp
+.RE
+.PP
+Note that you also need to use standard net parameters to connect and authenticate to the remote machine that you want to unjoin\&. These additional parameters include: \-S computer and \-U user\&.
+.PP
+Example: net dom unjoin \-S xp \-U XP\e\eadministrator%secret account=MYDOM\e\eadministrator password=topsecret reboot\&.
+.PP
+This example would connect to a computer named XP as the local administrator using password secret, and unjoin the computer from the domain using the MYDOM domain administrator account and password topsecret\&. After successful unjoin, the computer would reboot\&.
+.SS "DOM RENAMECOMPUTER newname=NEWNAME account=ACCOUNT password=PASSWORD reboot"
+.PP
+Renames a computer that is joined to a domain\&. This command supports the following additional parameters:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fINEWNAME\fR
+defines the new name of the machine in the domain\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fIACCOUNT\fR
+defines a domain account that will be used to rename the machine in the domain\&. This domain account needs to have sufficient privileges to rename machines\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fIPASSWORD\fR
+defines the password for the domain account defined with
+\fIACCOUNT\fR\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fIREBOOT\fR
+is an optional parameter that can be set to reboot the remote machine after successful rename in the domain\&.
+.RE
+.sp
+.RE
+.PP
+Note that you also need to use standard net parameters to connect and authenticate to the remote machine that you want to rename in the domain\&. These additional parameters include: \-S computer and \-U user\&.
+.PP
+Example: net dom renamecomputer \-S xp \-U XP\e\eadministrator%secret newname=XPNEW account=MYDOM\e\eadministrator password=topsecret reboot\&.
+.PP
+This example would connect to a computer named XP as the local administrator using password secret, and rename the joined computer to XPNEW using the MYDOM domain administrator account and password topsecret\&. After successful rename, the computer would reboot\&.
+.SS "G_LOCK"
+.PP
+Manage global locks\&.
+.SS "G_LOCK DO lockname timeout command"
+.PP
+Execute a shell command under a global lock\&. This might be useful to define the order in which several shell commands will be executed\&. The locking information is stored in a file called
+g_lock\&.tdb\&. In setups with CTDB running, the locking information will be available on all cluster nodes\&.
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fILOCKNAME\fR
+defines the name of the global lock\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fITIMEOUT\fR
+defines the timeout\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fICOMMAND\fR
+defines the shell command to execute\&.
+.RE
+.SS "G_LOCK LOCKS"
+.PP
+Print a list of all currently existing locknames\&.
+.SS "G_LOCK DUMP lockname"
+.PP
+Dump the locking table of a certain global lock\&.
+.SS "HELP [COMMAND]"
+.PP
+Gives usage information for the specified command\&.
+.SH "VERSION"
+.PP
+This man page is complete for version 3 of the Samba suite\&.
+.SH "AUTHOR"
+.PP
+The original Samba software and related utilities were created by Andrew Tridgell\&. Samba is now developed by the Samba Team as an Open Source project similar to the way the Linux kernel is developed\&.
+.PP
+The net manpage was written by Jelmer Vernooij\&.

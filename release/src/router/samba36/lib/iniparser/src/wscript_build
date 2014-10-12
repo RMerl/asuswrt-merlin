@@ -1,0 +1,7 @@
+#!/usr/bin/env python
+
+bld.SAMBA_SUBSYSTEM('LIBINIPARSER',
+                    source='../../iniparser_build/iniparser.c ../../iniparser_build/dictionary.c ../../iniparser_build/strlib.c',
+                    deps='replace',
+                    cflags=''
+                    )

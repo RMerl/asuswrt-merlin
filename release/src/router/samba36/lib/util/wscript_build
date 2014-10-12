@@ -1,0 +1,103 @@
+#!/usr/bin/env python
+
+# as we move files into common between samba-util and samba-util3, move them here.
+# Both samba-util and samba-util3 depend on this private library
+bld.SAMBA_LIBRARY('samba-util-common',
+                  source='''talloc_stack.c smb_threads.c xfile.c
+                  util_file.c time.c rbtree.c rfc1738.c select.c
+                  genrand.c fsusage.c blocking.c become_daemon.c
+                  signal.c system.c params.c util.c util_id.c util_net.c
+                  util_strlist.c idtree.c debug.c''',
+                  public_deps='talloc pthread LIBCRYPTO',
+                  # until we get all the dependencies in this library in common
+                  # we need to allow this library to be built with unresolved symbols
+                  allow_undefined_symbols=True,
+                  local_include=False,
+                  public_headers='debug.h',
+                  header_path= [('*', 'util') ],
+                  private_library=True
+                  )
+
+if bld.env._SAMBA_BUILD_ == 4:
+    bld.SAMBA_LIBRARY('samba-util',
+                      source='''dprintf.c fault.c data_blob.c
+                      ms_fnmatch.c parmlist.c substitute.c util_str.c
+                      ''',
+                      deps='samba-util-common',
+                      public_deps='talloc CHARSET execinfo uid_wrapper',
+                      public_headers='attr.h byteorder.h data_blob.h memory.h safe_string.h time.h talloc_stack.h xfile.h dlinklist.h util.h',
+                      header_path= [ ('dlinklist.h util.h', '.'), ('*', 'util') ],
+                      local_include=False,
+                      vnum='0.0.1',
+                      pc_files='samba-util.pc'
+                      )
+
+
+bld.SAMBA_SUBSYSTEM('ASN1_UTIL',
+                    source='asn1.c',
+                    deps='talloc',
+                    local_include=False)
+
+
+bld.SAMBA_SUBSYSTEM('UNIX_PRIVS',
+	source='unix_privs.c',
+	autoproto='unix_privs.h',
+	deps='replace talloc',
+	local_include=False,
+	)
+
+
+bld.SAMBA_LIBRARY('wrap_xattr',
+	source='wrap_xattr.c',
+	public_deps='attr',
+	deps='talloc',
+	local_include=False,
+	private_library=True
+	)
+
+
+bld.SAMBA_SUBSYSTEM('UTIL_TDB',
+	source='util_tdb.c',
+	local_include=False,
+	public_deps='tdb talloc'
+	)
+
+bld.SAMBA_SUBSYSTEM('UTIL_TEVENT',
+	source='tevent_unix.c tevent_ntstatus.c tevent_werror.c',
+	local_include=False,
+	public_deps='tevent',
+	public_headers='tevent_ntstatus.h tevent_unix.h tevent_werror.h',
+	header_path=[ ('*', 'util') ],
+	)
+
+
+if bld.env._SAMBA_BUILD_ == 4:
+    bld.SAMBA_SUBSYSTEM('UTIL_LDB',
+	source='util_ldb.c',
+        local_include=False,
+	public_deps='ldb',
+        public_headers='util_ldb.h'
+	)
+
+
+bld.SAMBA_SUBSYSTEM('UTIL_RUNCMD',
+	source='util_runcmd.c',
+	local_include=False,
+	public_deps='tevent'
+	)
+
+bld.SAMBA_SUBSYSTEM('UTIL_PW',
+	source='util_pw.c',
+	local_include=False,
+	public_deps='talloc'
+	)
+
+
+bld.SAMBA_LIBRARY('tdb-wrap',
+                  source='tdb_wrap.c',
+                  deps='tdb talloc samba-util',
+                  public_headers='tdb_wrap.h',
+                  private_library=True,
+                  local_include=False
+                  )
+

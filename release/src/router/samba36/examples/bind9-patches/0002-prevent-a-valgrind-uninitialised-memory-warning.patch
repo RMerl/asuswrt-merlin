@@ -1,0 +1,34 @@
+From 31059dee4a706bb4f25f3dccaae7616451eabd8b Mon Sep 17 00:00:00 2001
+From: Andrew Tridgell <tridge@samba.org>
+Date: Wed, 17 Feb 2010 10:59:42 +1100
+Subject: [PATCH 2/5] prevent a valgrind uninitialised memory warning
+
+epoll uses a union, so to prevent passing uninitialised data in a
+syscall we need to zero it before use.
+---
+ lib/isc/unix/socket.c |    2 ++
+ 1 files changed, 2 insertions(+), 0 deletions(-)
+
+diff --git a/lib/isc/unix/socket.c b/lib/isc/unix/socket.c
+index d09fe51..4796ee4 100644
+--- a/lib/isc/unix/socket.c
++++ b/lib/isc/unix/socket.c
+@@ -652,6 +652,7 @@ watch_fd(isc_socketmgr_t *manager, int fd, int msg) {
+		event.events = EPOLLIN;
+	else
+		event.events = EPOLLOUT;
++	memset(&event.data, 0, sizeof(event.data));
+	event.data.fd = fd;
+	if (epoll_ctl(manager->epoll_fd, EPOLL_CTL_ADD, fd, &event) == -1 &&
+	    errno != EEXIST) {
+@@ -719,6 +720,7 @@ unwatch_fd(isc_socketmgr_t *manager, int fd, int msg) {
+		event.events = EPOLLIN;
+	else
+		event.events = EPOLLOUT;
++	memset(&event.data, 0, sizeof(event.data));
+	event.data.fd = fd;
+	if (epoll_ctl(manager->epoll_fd, EPOLL_CTL_DEL, fd, &event) == -1 &&
+	    errno != ENOENT) {
+--
+1.6.3.3
+

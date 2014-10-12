@@ -1,0 +1,364 @@
+GTK_FLAGS=`pkg-config gtk+-2.0 --cflags`
+GTK_LIBS=`pkg-config gtk+-2.0 --libs`
+
+KRB5LIBS=@KRB5_LIBS@
+LDAP_LIBS=@LDAP_LIBS@
+LIBS=@LIBS@ -lnetapi -ltdb -ltalloc
+DEVELOPER_CFLAGS=@DEVELOPER_CFLAGS@
+CCFLAGS=-I../ -L../../../bin @CFLAGS@ $(GTK_FLAGS)
+CC=@CC@
+PICFLAG=@PICFLAG@
+LDFLAGS=@PIE_LDFLAGS@ @LDFLAGS@
+DYNEXP=@DYNEXP@
+NETAPI_LIBS=$(LIBS) $(KRB5LIBS) $(LDAP_LIBS)
+CMDLINE_LIBS=$(NETAPI_LIBS) @POPTLIBS@
+
+# Compile a source file.
+COMPILE_CC = $(CC) -I. $(CCFLAGS) $(PICFLAG) -c $< -o $@
+COMPILE = $(COMPILE_CC)
+
+PROGS = bin/getdc@EXEEXT@ \
+	bin/dsgetdc@EXEEXT@ \
+	bin/netdomjoin@EXEEXT@ \
+	bin/netdomjoin-gui@EXEEXT@ \
+	bin/getjoinableous@EXEEXT@ \
+	bin/getjoininformation@EXEEXT@ \
+	bin/rename_machine@EXEEXT@ \
+	bin/user_add@EXEEXT@ \
+	bin/user_del@EXEEXT@ \
+	bin/user_enum@EXEEXT@ \
+	bin/user_dispinfo@EXEEXT@ \
+	bin/user_chgpwd@EXEEXT@ \
+	bin/user_getinfo@EXEEXT@ \
+	bin/user_setinfo@EXEEXT@ \
+	bin/user_modalsget@EXEEXT@ \
+	bin/user_modalsset@EXEEXT@ \
+	bin/user_getgroups@EXEEXT@ \
+	bin/user_setgroups@EXEEXT@ \
+	bin/user_getlocalgroups@EXEEXT@ \
+	bin/group_add@EXEEXT@ \
+	bin/group_del@EXEEXT@ \
+	bin/group_enum@EXEEXT@ \
+	bin/group_setinfo@EXEEXT@ \
+	bin/group_getinfo@EXEEXT@ \
+	bin/group_adduser@EXEEXT@ \
+	bin/group_deluser@EXEEXT@ \
+	bin/group_getusers@EXEEXT@ \
+	bin/group_setusers@EXEEXT@ \
+	bin/localgroup_add@EXEEXT@ \
+	bin/localgroup_del@EXEEXT@ \
+	bin/localgroup_getinfo@EXEEXT@ \
+	bin/localgroup_setinfo@EXEEXT@ \
+	bin/localgroup_enum@EXEEXT@ \
+	bin/localgroup_addmembers@EXEEXT@ \
+	bin/localgroup_delmembers@EXEEXT@ \
+	bin/localgroup_setmembers@EXEEXT@ \
+	bin/localgroup_getmembers@EXEEXT@ \
+	bin/remote_tod@EXEEXT@ \
+	bin/server_getinfo@EXEEXT@ \
+	bin/share_add@EXEEXT@ \
+	bin/share_del@EXEEXT@ \
+	bin/share_enum@EXEEXT@ \
+	bin/share_getinfo@EXEEXT@ \
+	bin/share_setinfo@EXEEXT@ \
+	bin/file_close@EXEEXT@ \
+	bin/file_getinfo@EXEEXT@ \
+	bin/file_enum@EXEEXT@ \
+	bin/shutdown_init@EXEEXT@ \
+	bin/shutdown_abort@EXEEXT@ \
+	bin/netlogon_control@EXEEXT@ \
+	bin/netlogon_control2@EXEEXT@ \
+	bin/nltest@EXEEXT@
+
+all: $(PROGS)
+
+MAKEDIR = || exec false; \
+	  if test -d "$$dir"; then :; else \
+	  echo mkdir "$$dir"; \
+	  mkdir -p "$$dir" >/dev/null 2>&1 || \
+	  test -d "$$dir" || \
+	  mkdir "$$dir" || \
+	  exec false; fi || exec false
+
+BINARY_PREREQS = bin/.dummy
+
+bin/.dummy:
+	@if (: >> $@ || : > $@) >/dev/null 2>&1; then :; else \
+	  dir=bin $(MAKEDIR); fi
+	@: >> $@ || : > $@ # what a fancy emoticon!
+
+.c.o:
+	@if (: >> $@ || : > $@) >/dev/null 2>&1; then rm -f $@; else \
+	 dir=`echo $@ | sed 's,/[^/]*$$,,;s,^$$,.,'` $(MAKEDIR); fi
+	@echo Compiling $*.c
+	@$(COMPILE) && exit 0;\
+		echo "The following command failed:" 1>&2;\
+		echo "$(COMPILE_CC)" 1>&2;\
+		$(COMPILE_CC) >/dev/null 2>&1
+
+CMDLINE_OBJ = common.o
+GETDC_OBJ = getdc/getdc.o $(CMDLINE_OBJ)
+DSGETDC_OBJ = dsgetdc/dsgetdc.o $(CMDLINE_OBJ)
+NETDOMJOIN_OBJ = join/netdomjoin.o $(CMDLINE_OBJ)
+NETDOMJOIN_GUI_OBJ = netdomjoin-gui/netdomjoin-gui.o
+GETJOINABLEOUS_OBJ = join/getjoinableous.o $(CMDLINE_OBJ)
+GETJOININFORMATION_OBJ = join/getjoininformation.o $(CMDLINE_OBJ)
+RENAMEMACHINE_OBJ = join/rename_machine.o $(CMDLINE_OBJ)
+USERADD_OBJ = user/user_add.o $(CMDLINE_OBJ)
+USERDEL_OBJ = user/user_del.o $(CMDLINE_OBJ)
+USERENUM_OBJ = user/user_enum.o $(CMDLINE_OBJ)
+USERDISPINFO_OBJ = user/user_dispinfo.o $(CMDLINE_OBJ)
+USERCHGPWD_OBJ = user/user_chgpwd.o $(CMDLINE_OBJ)
+USERGETINFO_OBJ = user/user_getinfo.o $(CMDLINE_OBJ)
+USERSETINFO_OBJ = user/user_setinfo.o $(CMDLINE_OBJ)
+USERMODALSGET_OBJ = user/user_modalsget.o $(CMDLINE_OBJ)
+USERMODALSSET_OBJ = user/user_modalsset.o $(CMDLINE_OBJ)
+USERGETGROUPS_OBJ = user/user_getgroups.o $(CMDLINE_OBJ)
+USERSETGROUPS_OBJ = user/user_setgroups.o $(CMDLINE_OBJ)
+USERGETLOCALGROUPS_OBJ = user/user_getlocalgroups.o $(CMDLINE_OBJ)
+GROUPADD_OBJ = group/group_add.o $(CMDLINE_OBJ)
+GROUPDEL_OBJ = group/group_del.o $(CMDLINE_OBJ)
+GROUPENUM_OBJ = group/group_enum.o $(CMDLINE_OBJ)
+GROUPSETINFO_OBJ = group/group_setinfo.o $(CMDLINE_OBJ)
+GROUPGETINFO_OBJ = group/group_getinfo.o $(CMDLINE_OBJ)
+GROUPADDUSER_OBJ = group/group_adduser.o $(CMDLINE_OBJ)
+GROUPDELUSER_OBJ = group/group_deluser.o $(CMDLINE_OBJ)
+GROUPGETUSERS_OBJ = group/group_getusers.o $(CMDLINE_OBJ)
+GROUPSETUSERS_OBJ = group/group_setusers.o $(CMDLINE_OBJ)
+LOCALGROUPADD_OBJ = localgroup/localgroup_add.o $(CMDLINE_OBJ)
+LOCALGROUPDEL_OBJ = localgroup/localgroup_del.o $(CMDLINE_OBJ)
+LOCALGROUPGETINFO_OBJ = localgroup/localgroup_getinfo.o $(CMDLINE_OBJ)
+LOCALGROUPSETINFO_OBJ = localgroup/localgroup_setinfo.o $(CMDLINE_OBJ)
+LOCALGROUPENUM_OBJ = localgroup/localgroup_enum.o $(CMDLINE_OBJ)
+LOCALGROUPADDMEMBERS_OBJ = localgroup/localgroup_addmembers.o $(CMDLINE_OBJ)
+LOCALGROUPDELMEMBERS_OBJ = localgroup/localgroup_delmembers.o $(CMDLINE_OBJ)
+LOCALGROUPSETMEMBERS_OBJ = localgroup/localgroup_setmembers.o $(CMDLINE_OBJ)
+LOCALGROUPGETMEMBERS_OBJ = localgroup/localgroup_getmembers.o $(CMDLINE_OBJ)
+REMOTETOD_OBJ = server/remote_tod.o $(CMDLINE_OBJ)
+SERVERGETINFO_OBJ = server/server_getinfo.o $(CMDLINE_OBJ)
+SHAREADD_OBJ = share/share_add.o $(CMDLINE_OBJ)
+SHAREDEL_OBJ = share/share_del.o $(CMDLINE_OBJ)
+SHAREENUM_OBJ = share/share_enum.o $(CMDLINE_OBJ)
+SHAREGETINFO_OBJ = share/share_getinfo.o $(CMDLINE_OBJ)
+SHARESETINFO_OBJ = share/share_setinfo.o $(CMDLINE_OBJ)
+FILECLOSE_OBJ = file/file_close.o $(CMDLINE_OBJ)
+FILEGETINFO_OBJ = file/file_getinfo.o $(CMDLINE_OBJ)
+FILEENUM_OBJ = file/file_enum.o $(CMDLINE_OBJ)
+SHUTDOWNINIT_OBJ = shutdown/shutdown_init.o $(CMDLINE_OBJ)
+SHUTDOWNABORT_OBJ = shutdown/shutdown_abort.o $(CMDLINE_OBJ)
+NETLOGONCONTROL_OBJ = netlogon/netlogon_control.o $(CMDLINE_OBJ)
+NETLOGONCONTROL2_OBJ = netlogon/netlogon_control2.o $(CMDLINE_OBJ)
+NLTEST_OBJ = netlogon/nltest.o $(CMDLINE_OBJ)
+
+bin/getdc@EXEEXT@: $(BINARY_PREREQS) $(GETDC_OBJ)
+	@echo Linking $@
+	@$(CC) $(CCFLAGS) -o $@ $(GETDC_OBJ) $(LDFLAGS) $(DYNEXP) $(CMDLINE_LIBS)
+
+bin/dsgetdc@EXEEXT@: $(BINARY_PREREQS) $(DSGETDC_OBJ)
+	@echo Linking $@
+	@$(CC) $(CCFLAGS) -o $@ $(DSGETDC_OBJ) $(LDFLAGS) $(DYNEXP) $(CMDLINE_LIBS)
+
+bin/getjoinableous@EXEEXT@: $(BINARY_PREREQS) $(GETJOINABLEOUS_OBJ)
+	@echo Linking $@
+	@$(CC) $(CCFLAGS) -o $@ $(GETJOINABLEOUS_OBJ) $(LDFLAGS) $(DYNEXP) $(CMDLINE_LIBS)
+
+bin/getjoininformation@EXEEXT@: $(BINARY_PREREQS) $(GETJOININFORMATION_OBJ)
+	@echo Linking $@
+	@$(CC) $(CCFLAGS) -o $@ $(GETJOININFORMATION_OBJ) $(LDFLAGS) $(DYNEXP) $(CMDLINE_LIBS)
+
+bin/rename_machine@EXEEXT@: $(BINARY_PREREQS) $(RENAMEMACHINE_OBJ)
+	@echo Linking $@
+	@$(CC) $(CCFLAGS) -o $@ $(RENAMEMACHINE_OBJ) $(LDFLAGS) $(DYNEXP) $(CMDLINE_LIBS)
+
+bin/netdomjoin@EXEEXT@: $(BINARY_PREREQS) $(NETDOMJOIN_OBJ)
+	@echo Linking $@
+	@$(CC) $(CCFLAGS) -o $@ $(NETDOMJOIN_OBJ) $(LDFLAGS) $(DYNEXP) $(CMDLINE_LIBS)
+
+bin/netdomjoin-gui@EXEEXT@: $(BINARY_PREREQS) $(NETDOMJOIN_GUI_OBJ)
+	@echo Linking $@
+	@$(CC) $(CCFLAGS) $(GTK_FLAGS) -o $@ $(NETDOMJOIN_GUI_OBJ) $(LDFLAGS) $(DYNEXP) $(LIBS) $(KRB5LIBS) $(LDAP_LIBS) $(GTK_LIBS)
+
+bin/user_add@EXEEXT@: $(BINARY_PREREQS) $(USERADD_OBJ)
+	@echo Linking $@
+	@$(CC) $(CCFLAGS) -o $@ $(USERADD_OBJ) $(LDFLAGS) $(DYNEXP) $(CMDLINE_LIBS)
+
+bin/user_del@EXEEXT@: $(BINARY_PREREQS) $(USERDEL_OBJ)
+	@echo Linking $@
+	@$(CC) $(CCFLAGS) -o $@ $(USERDEL_OBJ) $(LDFLAGS) $(DYNEXP) $(CMDLINE_LIBS)
+
+bin/user_enum@EXEEXT@: $(BINARY_PREREQS) $(USERENUM_OBJ)
+	@echo Linking $@
+	@$(CC) $(CCFLAGS) -o $@ $(USERENUM_OBJ) $(LDFLAGS) $(DYNEXP) $(CMDLINE_LIBS)
+
+bin/user_dispinfo@EXEEXT@: $(BINARY_PREREQS) $(USERDISPINFO_OBJ)
+	@echo Linking $@
+	@$(CC) $(CCFLAGS) -o $@ $(USERDISPINFO_OBJ) $(LDFLAGS) $(DYNEXP) $(CMDLINE_LIBS)
+
+bin/user_chgpwd@EXEEXT@: $(BINARY_PREREQS) $(USERCHGPWD_OBJ)
+	@echo Linking $@
+	@$(CC) $(CCFLAGS) -o $@ $(USERCHGPWD_OBJ) $(LDFLAGS) $(DYNEXP) $(CMDLINE_LIBS)
+
+bin/user_getinfo@EXEEXT@: $(BINARY_PREREQS) $(USERGETINFO_OBJ)
+	@echo Linking $@
+	@$(CC) $(CCFLAGS) -o $@ $(USERGETINFO_OBJ) $(LDFLAGS) $(DYNEXP) $(CMDLINE_LIBS)
+
+bin/user_setinfo@EXEEXT@: $(BINARY_PREREQS) $(USERSETINFO_OBJ)
+	@echo Linking $@
+	@$(CC) $(CCFLAGS) -o $@ $(USERSETINFO_OBJ) $(LDFLAGS) $(DYNEXP) $(CMDLINE_LIBS)
+
+bin/user_modalsget@EXEEXT@: $(BINARY_PREREQS) $(USERMODALSGET_OBJ)
+	@echo Linking $@
+	@$(CC) $(CCFLAGS) -o $@ $(USERMODALSGET_OBJ) $(LDFLAGS) $(DYNEXP) $(CMDLINE_LIBS)
+
+bin/user_modalsset@EXEEXT@: $(BINARY_PREREQS) $(USERMODALSSET_OBJ)
+	@echo Linking $@
+	@$(CC) $(CCFLAGS) -o $@ $(USERMODALSSET_OBJ) $(LDFLAGS) $(DYNEXP) $(CMDLINE_LIBS)
+
+bin/user_getgroups@EXEEXT@: $(BINARY_PREREQS) $(USERGETGROUPS_OBJ)
+	@echo Linking $@
+	@$(CC) $(CCFLAGS) -o $@ $(USERGETGROUPS_OBJ) $(LDFLAGS) $(DYNEXP) $(CMDLINE_LIBS)
+
+bin/user_setgroups@EXEEXT@: $(BINARY_PREREQS) $(USERSETGROUPS_OBJ)
+	@echo Linking $@
+	@$(CC) $(CCFLAGS) -o $@ $(USERSETGROUPS_OBJ) $(LDFLAGS) $(DYNEXP) $(CMDLINE_LIBS)
+
+bin/user_getlocalgroups@EXEEXT@: $(BINARY_PREREQS) $(USERGETLOCALGROUPS_OBJ)
+	@echo Linking $@
+	@$(CC) $(CCFLAGS) -o $@ $(USERGETLOCALGROUPS_OBJ) $(LDFLAGS) $(DYNEXP) $(CMDLINE_LIBS)
+
+bin/group_add@EXEEXT@: $(BINARY_PREREQS) $(GROUPADD_OBJ)
+	@echo Linking $@
+	@$(CC) $(CCFLAGS) -o $@ $(GROUPADD_OBJ) $(LDFLAGS) $(DYNEXP) $(CMDLINE_LIBS)
+
+bin/group_del@EXEEXT@: $(BINARY_PREREQS) $(GROUPDEL_OBJ)
+	@echo Linking $@
+	@$(CC) $(CCFLAGS) -o $@ $(GROUPDEL_OBJ) $(LDFLAGS) $(DYNEXP) $(CMDLINE_LIBS)
+
+bin/group_enum@EXEEXT@: $(BINARY_PREREQS) $(GROUPENUM_OBJ)
+	@echo Linking $@
+	@$(CC) $(CCFLAGS) -o $@ $(GROUPENUM_OBJ) $(LDFLAGS) $(DYNEXP) $(CMDLINE_LIBS)
+
+bin/group_setinfo@EXEEXT@: $(BINARY_PREREQS) $(GROUPSETINFO_OBJ)
+	@echo Linking $@
+	@$(CC) $(CCFLAGS) -o $@ $(GROUPSETINFO_OBJ) $(LDFLAGS) $(DYNEXP) $(CMDLINE_LIBS)
+
+bin/group_getinfo@EXEEXT@: $(BINARY_PREREQS) $(GROUPGETINFO_OBJ)
+	@echo Linking $@
+	@$(CC) $(CCFLAGS) -o $@ $(GROUPGETINFO_OBJ) $(LDFLAGS) $(DYNEXP) $(CMDLINE_LIBS)
+
+bin/group_adduser@EXEEXT@: $(BINARY_PREREQS) $(GROUPADDUSER_OBJ)
+	@echo Linking $@
+	@$(CC) $(CCFLAGS) -o $@ $(GROUPADDUSER_OBJ) $(LDFLAGS) $(DYNEXP) $(CMDLINE_LIBS)
+
+bin/group_deluser@EXEEXT@: $(BINARY_PREREQS) $(GROUPDELUSER_OBJ)
+	@echo Linking $@
+	@$(CC) $(CCFLAGS) -o $@ $(GROUPDELUSER_OBJ) $(LDFLAGS) $(DYNEXP) $(CMDLINE_LIBS)
+
+bin/group_getusers@EXEEXT@: $(BINARY_PREREQS) $(GROUPGETUSERS_OBJ)
+	@echo Linking $@
+	@$(CC) $(CCFLAGS) -o $@ $(GROUPGETUSERS_OBJ) $(LDFLAGS) $(DYNEXP) $(CMDLINE_LIBS)
+
+bin/group_setusers@EXEEXT@: $(BINARY_PREREQS) $(GROUPSETUSERS_OBJ)
+	@echo Linking $@
+	@$(CC) $(CCFLAGS) -o $@ $(GROUPSETUSERS_OBJ) $(LDFLAGS) $(DYNEXP) $(CMDLINE_LIBS)
+
+bin/localgroup_add@EXEEXT@: $(BINARY_PREREQS) $(LOCALGROUPADD_OBJ)
+	@echo Linking $@
+	@$(CC) $(CCFLAGS) -o $@ $(LOCALGROUPADD_OBJ) $(LDFLAGS) $(DYNEXP) $(CMDLINE_LIBS)
+
+bin/localgroup_del@EXEEXT@: $(BINARY_PREREQS) $(LOCALGROUPDEL_OBJ)
+	@echo Linking $@
+	@$(CC) $(CCFLAGS) -o $@ $(LOCALGROUPDEL_OBJ) $(LDFLAGS) $(DYNEXP) $(CMDLINE_LIBS)
+
+bin/localgroup_getinfo@EXEEXT@: $(BINARY_PREREQS) $(LOCALGROUPGETINFO_OBJ)
+	@echo Linking $@
+	@$(CC) $(CCFLAGS) -o $@ $(LOCALGROUPGETINFO_OBJ) $(LDFLAGS) $(DYNEXP) $(CMDLINE_LIBS)
+
+bin/localgroup_setinfo@EXEEXT@: $(BINARY_PREREQS) $(LOCALGROUPSETINFO_OBJ)
+	@echo Linking $@
+	@$(CC) $(CCFLAGS) -o $@ $(LOCALGROUPSETINFO_OBJ) $(LDFLAGS) $(DYNEXP) $(CMDLINE_LIBS)
+
+bin/localgroup_enum@EXEEXT@: $(BINARY_PREREQS) $(LOCALGROUPENUM_OBJ)
+	@echo Linking $@
+	@$(CC) $(CCFLAGS) -o $@ $(LOCALGROUPENUM_OBJ) $(LDFLAGS) $(DYNEXP) $(CMDLINE_LIBS)
+
+bin/localgroup_addmembers@EXEEXT@: $(BINARY_PREREQS) $(LOCALGROUPADDMEMBERS_OBJ)
+	@echo Linking $@
+	@$(CC) $(CCFLAGS) -o $@ $(LOCALGROUPADDMEMBERS_OBJ) $(LDFLAGS) $(DYNEXP) $(CMDLINE_LIBS)
+
+bin/localgroup_delmembers@EXEEXT@: $(BINARY_PREREQS) $(LOCALGROUPDELMEMBERS_OBJ)
+	@echo Linking $@
+	@$(CC) $(CCFLAGS) -o $@ $(LOCALGROUPDELMEMBERS_OBJ) $(LDFLAGS) $(DYNEXP) $(CMDLINE_LIBS)
+
+bin/localgroup_setmembers@EXEEXT@: $(BINARY_PREREQS) $(LOCALGROUPSETMEMBERS_OBJ)
+	@echo Linking $@
+	@$(CC) $(CCFLAGS) -o $@ $(LOCALGROUPSETMEMBERS_OBJ) $(LDFLAGS) $(DYNEXP) $(CMDLINE_LIBS)
+
+bin/localgroup_getmembers@EXEEXT@: $(BINARY_PREREQS) $(LOCALGROUPGETMEMBERS_OBJ)
+	@echo Linking $@
+	@$(CC) $(CCFLAGS) -o $@ $(LOCALGROUPGETMEMBERS_OBJ) $(LDFLAGS) $(DYNEXP) $(CMDLINE_LIBS)
+
+bin/remote_tod@EXEEXT@: $(BINARY_PREREQS) $(REMOTETOD_OBJ)
+	@echo Linking $@
+	@$(CC) $(CCFLAGS) -o $@ $(REMOTETOD_OBJ) $(LDFLAGS) $(DYNEXP) $(CMDLINE_LIBS)
+
+bin/server_getinfo@EXEEXT@: $(BINARY_PREREQS) $(SERVERGETINFO_OBJ)
+	@echo Linking $@
+	@$(CC) $(CCFLAGS) -o $@ $(SERVERGETINFO_OBJ) $(LDFLAGS) $(DYNEXP) $(CMDLINE_LIBS)
+
+bin/share_add@EXEEXT@: $(BINARY_PREREQS) $(SHAREADD_OBJ)
+	@echo Linking $@
+	@$(CC) $(CCFLAGS) -o $@ $(SHAREADD_OBJ) $(LDFLAGS) $(DYNEXP) $(CMDLINE_LIBS)
+
+bin/share_del@EXEEXT@: $(BINARY_PREREQS) $(SHAREDEL_OBJ)
+	@echo Linking $@
+	@$(CC) $(CCFLAGS) -o $@ $(SHAREDEL_OBJ) $(LDFLAGS) $(DYNEXP) $(CMDLINE_LIBS)
+
+bin/share_enum@EXEEXT@: $(BINARY_PREREQS) $(SHAREENUM_OBJ)
+	@echo Linking $@
+	@$(CC) $(CCFLAGS) -o $@ $(SHAREENUM_OBJ) $(LDFLAGS) $(DYNEXP) $(CMDLINE_LIBS)
+
+bin/share_getinfo@EXEEXT@: $(BINARY_PREREQS) $(SHAREGETINFO_OBJ)
+	@echo Linking $@
+	@$(CC) $(CCFLAGS) -o $@ $(SHAREGETINFO_OBJ) $(LDFLAGS) $(DYNEXP) $(CMDLINE_LIBS)
+
+bin/share_setinfo@EXEEXT@: $(BINARY_PREREQS) $(SHARESETINFO_OBJ)
+	@echo Linking $@
+	@$(CC) $(CCFLAGS) -o $@ $(SHARESETINFO_OBJ) $(LDFLAGS) $(DYNEXP) $(CMDLINE_LIBS)
+
+bin/file_close@EXEEXT@: $(BINARY_PREREQS) $(FILECLOSE_OBJ)
+	@echo Linking $@
+	@$(CC) $(CCFLAGS) -o $@ $(FILECLOSE_OBJ) $(LDFLAGS) $(DYNEXP) $(CMDLINE_LIBS)
+
+bin/file_getinfo@EXEEXT@: $(BINARY_PREREQS) $(FILEGETINFO_OBJ)
+	@echo Linking $@
+	@$(CC) $(CCFLAGS) -o $@ $(FILEGETINFO_OBJ) $(LDFLAGS) $(DYNEXP) $(CMDLINE_LIBS)
+
+bin/file_enum@EXEEXT@: $(BINARY_PREREQS) $(FILEENUM_OBJ)
+	@echo Linking $@
+	@$(CC) $(CCFLAGS) -o $@ $(FILEENUM_OBJ) $(LDFLAGS) $(DYNEXP) $(CMDLINE_LIBS)
+
+bin/shutdown_init@EXEEXT@: $(BINARY_PREREQS) $(SHUTDOWNINIT_OBJ)
+	@echo Linking $@
+	@$(CC) $(CCFLAGS) -o $@ $(SHUTDOWNINIT_OBJ) $(LDFLAGS) $(DYNEXP) $(CMDLINE_LIBS)
+
+bin/shutdown_abort@EXEEXT@: $(BINARY_PREREQS) $(SHUTDOWNABORT_OBJ)
+	@echo Linking $@
+	@$(CC) $(CCFLAGS) -o $@ $(SHUTDOWNABORT_OBJ) $(LDFLAGS) $(DYNEXP) $(CMDLINE_LIBS)
+
+bin/netlogon_control@EXEEXT@: $(BINARY_PREREQS) $(NETLOGONCONTROL_OBJ)
+	@echo Linking $@
+	@$(CC) $(CCFLAGS) -o $@ $(NETLOGONCONTROL_OBJ) $(LDFLAGS) $(DYNEXP) $(CMDLINE_LIBS)
+
+bin/netlogon_control2@EXEEXT@: $(BINARY_PREREQS) $(NETLOGONCONTROL2_OBJ)
+	@echo Linking $@
+	@$(CC) $(CCFLAGS) -o $@ $(NETLOGONCONTROL2_OBJ) $(LDFLAGS) $(DYNEXP) $(CMDLINE_LIBS)
+
+bin/nltest@EXEEXT@: $(BINARY_PREREQS) $(NLTEST_OBJ)
+	@echo Linking $@
+	@$(CC) $(CCFLAGS) -o $@ $(NLTEST_OBJ) $(LDFLAGS) $(DYNEXP) $(CMDLINE_LIBS)
+
+clean:
+	-rm -f $(PROGS)
+	-rm -f core */*~ *~ \
+		*/*.o */*/*.o */*/*/*.o

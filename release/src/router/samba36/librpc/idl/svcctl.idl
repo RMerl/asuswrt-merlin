@@ -1,0 +1,692 @@
+#include "idl_types.h"
+
+/*
+  svcctl interface definitions
+*/
+
+import "misc.idl", "security.idl";
+[ uuid("367abb81-9844-35f1-ad32-98f038001003"),
+  version(2.0),
+  pointer_default(unique),
+  endpoint("ncacn_np:[\\pipe\\svcctl]", "ncalrpc:"),
+  helper("../librpc/ndr/ndr_svcctl.h"),
+  helpstring("Service Control")
+] interface svcctl
+{
+	typedef struct {
+		uint32 is_locked;
+		[string,charset(UTF16)] uint16 *lock_owner;
+		uint32 lock_duration;
+	} SERVICE_LOCK_STATUS;
+
+	typedef [v1_enum] enum {
+		SVCCTL_STATE_UNKNOWN		= 0x00000000,	/* only used internally to smbd */
+		SVCCTL_STOPPED			= 0x00000001,
+		SVCCTL_START_PENDING		= 0x00000002,
+		SVCCTL_STOP_PENDING		= 0x00000003,
+		SVCCTL_RUNNING			= 0x00000004,
+		SVCCTL_CONTINUE_PENDING		= 0x00000005,
+		SVCCTL_PAUSE_PENDING		= 0x00000006,
+		SVCCTL_PAUSED			= 0x00000007
+	} svcctl_ServiceStatus;
+
+	const int SVCCTL_ACCEPT_NONE			= 0x00000000;
+
+	typedef [bitmap32bit] bitmap {
+		SVCCTL_ACCEPT_STOP			= 0x00000001,
+		SVCCTL_ACCEPT_PAUSE_CONTINUE		= 0x00000002,
+		SVCCTL_ACCEPT_SHUTDOWN			= 0x00000004,
+		SVCCTL_ACCEPT_PARAMCHANGE		= 0x00000008,
+		SVCCTL_ACCEPT_NETBINDCHANGE		= 0x00000010,
+		SVCCTL_ACCEPT_HARDWAREPROFILECHANGE	= 0x00000020,
+		SVCCTL_ACCEPT_POWEREVENT		= 0x00000040
+	} svcctl_ControlsAccepted;
+
+	typedef struct {
+		uint32 type;
+		svcctl_ServiceStatus state;
+		svcctl_ControlsAccepted controls_accepted;
+		WERROR win32_exit_code;
+		uint32 service_exit_code;
+		uint32 check_point;
+		uint32 wait_hint;
+	} SERVICE_STATUS;
+
+	typedef [public] struct {
+		SERVICE_STATUS status;
+		uint32 process_id;
+		uint32 service_flags;
+	} SERVICE_STATUS_PROCESS;
+
+	typedef [public,gensize] struct {
+		[relative] nstring *service_name;
+		[relative] nstring *display_name;
+		SERVICE_STATUS status;
+	} ENUM_SERVICE_STATUSW;
+
+	typedef [public,gensize] struct {
+		[relative] astring *service_name;
+		[relative] astring *display_name;
+		SERVICE_STATUS status;
+	} ENUM_SERVICE_STATUSA;
+
+	const int SERVICE_TYPE_KERNEL_DRIVER       = 0x01;
+	const int SERVICE_TYPE_FS_DRIVER           = 0x02;
+	const int SERVICE_TYPE_ADAPTER             = 0x04;
+	const int SERVICE_TYPE_RECOGNIZER_DRIVER   = 0x08;
+	const int SERVICE_TYPE_DRIVER=SERVICE_TYPE_KERNEL_DRIVER|SERVICE_TYPE_FS_DRIVER|SERVICE_TYPE_RECOGNIZER_DRIVER;
+	const int SERVICE_TYPE_WIN32_OWN_PROCESS   = 0x10;
+	const int SERVICE_TYPE_WIN32_SHARE_PROCESS = 0x20;
+	const int SERVICE_TYPE_WIN32=SERVICE_TYPE_WIN32_OWN_PROCESS|SERVICE_TYPE_WIN32_SHARE_PROCESS;
+	const int SERVICE_TYPE_INTERACTIVE_PROCESS = 0x100;
+
+	typedef [public,bitmap32bit] bitmap {
+		SV_TYPE_WORKSTATION       = 0x00000001,
+		SV_TYPE_SERVER            = 0x00000002,
+		SV_TYPE_SQLSERVER         = 0x00000004,
+		SV_TYPE_DOMAIN_CTRL       = 0x00000008,
+		SV_TYPE_DOMAIN_BAKCTRL    = 0x00000010,
+		SV_TYPE_TIME_SOURCE       = 0x00000020,
+		SV_TYPE_AFP               = 0x00000040,
+		SV_TYPE_NOVELL            = 0x00000080,
+
+		SV_TYPE_DOMAIN_MEMBER     = 0x00000100,
+		SV_TYPE_PRINTQ_SERVER     = 0x00000200,
+		SV_TYPE_DIALIN_SERVER     = 0x00000400,
+		SV_TYPE_SERVER_UNIX       = 0x00000800,
+		SV_TYPE_NT                = 0x00001000,
+		SV_TYPE_WFW               = 0x00002000,
+		SV_TYPE_SERVER_MFPN       = 0x00004000,
+		SV_TYPE_SERVER_NT         = 0x00008000,
+		SV_TYPE_POTENTIAL_BROWSER = 0x00010000,
+		SV_TYPE_BACKUP_BROWSER    = 0x00020000,
+		SV_TYPE_MASTER_BROWSER    = 0x00040000,
+		SV_TYPE_DOMAIN_MASTER     = 0x00080000,
+		SV_TYPE_SERVER_OSF        = 0x00100000,
+		SV_TYPE_SERVER_VMS        = 0x00200000,
+		SV_TYPE_WIN95_PLUS        = 0x00400000,
+		SV_TYPE_DFS_SERVER        = 0x00800000,
+		SV_TYPE_ALTERNATE_XPORT   = 0x20000000,
+		SV_TYPE_LOCAL_LIST_ONLY   = 0x40000000,
+		SV_TYPE_DOMAIN_ENUM       = 0x80000000
+	} svcctl_ServerType;
+
+	const uint32 SV_TYPE_ALL	= 0xFFFFFFFF;
+
+	/*****************/
+	/* Function 0x00 */
+	WERROR svcctl_CloseServiceHandle(
+		[in,out,ref] policy_handle *handle
+	);
+
+	/*****************/
+	/* Function 0x01 */
+
+	/* Service Controls */
+
+	typedef [v1_enum] enum {
+		SVCCTL_CONTROL_STOP		= 0x00000001,
+		SVCCTL_CONTROL_PAUSE		= 0x00000002,
+		SVCCTL_CONTROL_CONTINUE		= 0x00000003,
+		SVCCTL_CONTROL_INTERROGATE	= 0x00000004,
+		SVCCTL_CONTROL_SHUTDOWN		= 0x00000005
+	} SERVICE_CONTROL;
+
+	WERROR svcctl_ControlService(
+		[in,ref] policy_handle *handle,
+		[in] SERVICE_CONTROL control,
+		[out,ref] SERVICE_STATUS *service_status
+	);
+
+	/*****************/
+	/* Function 0x02 */
+	WERROR svcctl_DeleteService(
+		[in,ref] policy_handle *handle
+	);
+
+	/*****************/
+	/* Function 0x03 */
+
+	WERROR svcctl_LockServiceDatabase(
+		[in,ref] policy_handle *handle,
+		[out,ref] policy_handle *lock
+	);
+
+	/*****************/
+	/* Function 0x04 */
+	WERROR svcctl_QueryServiceObjectSecurity(
+		[in] policy_handle *handle,
+		[in] security_secinfo security_flags,
+		[out,ref,size_is(offered)] uint8 *buffer,
+		[in,range(0,0x40000)] uint32 offered,
+		[out,ref,range(0,0x40000)] uint32 *needed
+	);
+
+	/*****************/
+	/* Function 0x05 */
+	WERROR svcctl_SetServiceObjectSecurity(
+		[in] policy_handle *handle,
+		[in] security_secinfo security_flags,
+		[in,ref,size_is(offered)] uint8 *buffer,
+		[in] uint32 offered
+	);
+
+	/*****************/
+	/* Function 0x06 */
+	WERROR svcctl_QueryServiceStatus(
+		[in,ref] policy_handle *handle,
+		[out,ref] SERVICE_STATUS *service_status
+	);
+
+	/*****************/
+	/* Function 0x07 */
+	[todo] WERROR svcctl_SetServiceStatus(
+	);
+
+	/*****************/
+	/* Function 0x08 */
+	WERROR svcctl_UnlockServiceDatabase(
+		[in,out,ref] policy_handle *lock
+	);
+
+	/*****************/
+	/* Function 0x09 */
+	[todo] WERROR svcctl_NotifyBootConfigStatus(
+	);
+
+	/*****************/
+	/* Function 0x0a */
+	WERROR svcctl_SCSetServiceBitsW(
+		[in,ref] policy_handle *handle,
+		[in] uint32 bits,
+		[in] boolean32 bitson,
+		[in] boolean32 immediate
+	);
+
+	/*****************/
+	/* Function 0x0b */
+
+	typedef [v1_enum] enum {
+		SVCCTL_SVC_ERROR_IGNORE		= 0x00000000,
+		SVCCTL_SVC_ERROR_NORMAL		= 0x00000001,
+		SVCCTL_SVC_ERROR_CRITICAL	= 0x00000002,
+		SVCCTL_SVC_ERROR_SEVERE		= 0x00000003
+	} svcctl_ErrorControl;
+
+	typedef [v1_enum] enum {
+		SVCCTL_BOOT_START		= 0x00000000,
+		SVCCTL_SYSTEM_START		= 0x00000001,
+		SVCCTL_AUTO_START		= 0x00000002,
+		SVCCTL_DEMAND_START		= 0x00000003,
+		SVCCTL_DISABLED			= 0x00000004
+	} svcctl_StartType;
+
+	WERROR svcctl_ChangeServiceConfigW(
+		[in,ref] policy_handle *handle,
+		[in] uint32 type,
+		[in] svcctl_StartType start_type,
+		[in] svcctl_ErrorControl error_control,
+		[in,unique] [string,charset(UTF16)] uint16 *binary_path,
+		[in,unique] [string,charset(UTF16)] uint16 *load_order_group,
+		[out,ref] uint32 *tag_id,
+		[in,unique] [string,charset(UTF16)] uint16 *dependencies,
+		[in,unique] [string,charset(UTF16)] uint16 *service_start_name,
+		[in,unique] [string,charset(UTF16)] uint16 *password,
+		[in,unique] [string,charset(UTF16)] uint16 *display_name
+	);
+
+	/*****************/
+	/* Function 0x0c */
+	WERROR svcctl_CreateServiceW(
+		[in,ref] policy_handle *scmanager_handle,
+		[in] [string,charset(UTF16)] uint16 ServiceName[],
+		[in,unique] [string,charset(UTF16)] uint16 *DisplayName,
+		[in] uint32 desired_access,
+		[in] uint32 type,
+		[in] svcctl_StartType start_type,
+		[in] svcctl_ErrorControl error_control,
+		[in] [string,charset(UTF16)] uint16 binary_path[],
+		[in,unique] [string,charset(UTF16)] uint16 *LoadOrderGroupKey,
+		[in,out,unique] uint32 *TagId,
+		[in,unique,size_is(dependencies_size)] uint8 *dependencies,
+		[in] uint32 dependencies_size,
+		[in,unique] [string,charset(UTF16)] uint16 *service_start_name,
+		[in,unique,size_is(password_size)] uint8 *password,
+		[in] uint32 password_size,
+		[out,ref] policy_handle *handle
+	);
+
+	/*****************/
+	/* Function 0x0d */
+	WERROR svcctl_EnumDependentServicesW(
+		[in,ref] policy_handle *service,
+		[in] svcctl_ServiceState state,
+		[out,ref,size_is(offered)] uint8 *service_status,
+		[in,range(0,0x40000)] uint32 offered,
+		[out,ref,range(0,0x40000)] uint32 *needed,
+		[out,ref,range(0,0x40000)] uint32 *services_returned
+	);
+
+	/*****************/
+	/* Function 0x0e */
+
+	typedef [v1_enum] enum {
+		SERVICE_STATE_ACTIVE	= 0x00000001,
+		SERVICE_STATE_INACTIVE	= 0x00000002,
+		SERVICE_STATE_ALL	= ( SERVICE_STATE_ACTIVE | SERVICE_STATE_INACTIVE )
+	} svcctl_ServiceState;
+
+	WERROR svcctl_EnumServicesStatusW(
+		[in,ref] policy_handle *handle,
+		[in] uint32 type,
+		[in] svcctl_ServiceState state,
+		[out,ref,size_is(offered)] uint8 *service,
+		[in] [range(0,0x40000)] uint32 offered,
+		[out,ref] [range(0,0x40000)] uint32 *needed,
+		[out,ref] [range(0,0x40000)] uint32 *services_returned,
+		[in,out,unique] uint32 *resume_handle
+	);
+
+	/*****************/
+	/* Function 0x0f */
+
+	/* Service Control Manager Bits */
+
+	typedef [bitmap32bit] bitmap {
+		SC_RIGHT_MGR_CONNECT		= 0x0001,
+		SC_RIGHT_MGR_CREATE_SERVICE	= 0x0002,
+		SC_RIGHT_MGR_ENUMERATE_SERVICE	= 0x0004,
+		SC_RIGHT_MGR_LOCK		= 0x0008,
+		SC_RIGHT_MGR_QUERY_LOCK_STATUS	= 0x0010,
+		SC_RIGHT_MGR_MODIFY_BOOT_CONFIG	= 0x0020
+	} svcctl_MgrAccessMask;
+
+	const int SC_MANAGER_READ_ACCESS =
+		(SEC_STD_READ_CONTROL			|
+		 SC_RIGHT_MGR_CONNECT			|
+		 SC_RIGHT_MGR_ENUMERATE_SERVICE		|
+		 SC_RIGHT_MGR_QUERY_LOCK_STATUS);
+
+	const int SC_MANAGER_EXECUTE_ACCESS = SC_MANAGER_READ_ACCESS;
+
+	const int SC_MANAGER_WRITE_ACCESS =
+		(SEC_STD_REQUIRED			|
+		 SC_MANAGER_READ_ACCESS			|
+		 SC_RIGHT_MGR_CREATE_SERVICE		|
+		 SC_RIGHT_MGR_LOCK			|
+		 SC_RIGHT_MGR_MODIFY_BOOT_CONFIG);
+
+	const int SC_MANAGER_ALL_ACCESS = SC_MANAGER_WRITE_ACCESS;
+
+	WERROR svcctl_OpenSCManagerW(
+		[in,unique] [string,charset(UTF16)] uint16 *MachineName,
+		[in,unique] [string,charset(UTF16)] uint16 *DatabaseName,
+		[in] svcctl_MgrAccessMask access_mask,
+		[out,ref] policy_handle *handle
+	);
+
+	/*****************/
+	/* Function 0x10 */
+
+	/* Service Object Bits */
+
+	typedef [bitmap32bit] bitmap {
+		SC_RIGHT_SVC_QUERY_CONFIG		= 0x0001,
+		SC_RIGHT_SVC_CHANGE_CONFIG		= 0x0002,
+		SC_RIGHT_SVC_QUERY_STATUS		= 0x0004,
+		SC_RIGHT_SVC_ENUMERATE_DEPENDENTS	= 0x0008,
+		SC_RIGHT_SVC_START			= 0x0010,
+		SC_RIGHT_SVC_STOP			= 0x0020,
+		SC_RIGHT_SVC_PAUSE_CONTINUE		= 0x0040,
+		SC_RIGHT_SVC_INTERROGATE		= 0x0080,
+		SC_RIGHT_SVC_USER_DEFINED_CONTROL	= 0x0100
+	} svcctl_ServiceAccessMask;
+
+	const int SERVICE_READ_ACCESS =
+		(SEC_STD_READ_CONTROL			|
+		 SC_RIGHT_SVC_ENUMERATE_DEPENDENTS	|
+		 SC_RIGHT_SVC_INTERROGATE		|
+		 SC_RIGHT_SVC_QUERY_CONFIG		|
+		 SC_RIGHT_SVC_QUERY_STATUS		|
+		 SC_RIGHT_SVC_USER_DEFINED_CONTROL);
+
+	const int SERVICE_EXECUTE_ACCESS =
+		(SERVICE_READ_ACCESS 			|
+		 SC_RIGHT_SVC_START			|
+		 SC_RIGHT_SVC_STOP			|
+		 SC_RIGHT_SVC_PAUSE_CONTINUE);
+
+	const int SERVICE_WRITE_ACCESS =
+		(SEC_STD_REQUIRED			|
+		 SERVICE_READ_ACCESS			|
+		 SERVICE_EXECUTE_ACCESS			|
+		 SC_RIGHT_SVC_CHANGE_CONFIG);
+
+	const int SERVICE_ALL_ACCESS = SERVICE_WRITE_ACCESS;
+
+	WERROR svcctl_OpenServiceW(
+		[in,ref] policy_handle *scmanager_handle,
+		[in] [string,charset(UTF16)] uint16 ServiceName[],
+		[in] svcctl_ServiceAccessMask access_mask,
+		[out,ref] policy_handle *handle
+	);
+
+	/*****************/
+	/* Function 0x11 */
+
+	typedef [public,gensize] struct {
+		uint32 service_type;
+		svcctl_StartType start_type;
+		svcctl_ErrorControl error_control;
+		[string,charset(UTF16)] [range(0,8192)] uint16 *executablepath;
+		[string,charset(UTF16)] [range(0,8192)] uint16 *loadordergroup;
+		uint32 tag_id;
+		[string,charset(UTF16)] [range(0,8192)] uint16 *dependencies;
+		[string,charset(UTF16)] [range(0,8192)] uint16 *startname;
+		[string,charset(UTF16)] [range(0,8192)] uint16 *displayname;
+	} QUERY_SERVICE_CONFIG;
+
+	WERROR svcctl_QueryServiceConfigW(
+		[in,ref] policy_handle *handle,
+		[out] QUERY_SERVICE_CONFIG *query,
+		[in] [range(0,8192)] uint32 offered,
+		[out,ref] [range(0,8192)] uint32 *needed
+	);
+
+	/*****************/
+	/* Function 0x12 */
+	WERROR svcctl_QueryServiceLockStatusW(
+		[in,ref] policy_handle *handle,
+		[in] uint32 offered,
+		[out,ref] SERVICE_LOCK_STATUS *lock_status,
+		[out,ref] uint32 *needed
+	);
+
+	/*****************/
+	/* Function 0x13 */
+
+	const int SC_MAX_ARGUMENT_LENGTH = 1024;
+	const int SC_MAX_ARGUMENTS = 1024;
+
+	typedef struct {
+		[string,charset(UTF16),range(0,SC_MAX_ARGUMENT_LENGTH)] uint16 *string;
+	} svcctl_ArgumentString;
+
+	WERROR svcctl_StartServiceW(
+		[in,ref] policy_handle *handle,
+		[in,range(0,SC_MAX_ARGUMENTS)] uint32 NumArgs,
+		[in,unique,size_is(NumArgs)] svcctl_ArgumentString *Arguments
+	);
+
+	/*****************/
+	/* Function 0x14 */
+	WERROR svcctl_GetServiceDisplayNameW(
+		[in,ref] policy_handle *handle,
+		[in,unique] [string,charset(UTF16)] uint16 *service_name,
+		[out,ref] [string,charset(UTF16)] uint16 **display_name,
+		[in,out,unique] uint32 *display_name_length
+	);
+
+	/*****************/
+	/* Function 0x15 */
+	WERROR svcctl_GetServiceKeyNameW(
+		[in,ref] policy_handle *handle,
+		[in,unique] [string,charset(UTF16)] uint16 *service_name,
+		[out,ref] [string,charset(UTF16)] uint16 **key_name,
+		[in,out,unique] uint32 *display_name_length
+	);
+
+	/*****************/
+	/* Function 0x16 */
+	WERROR svcctl_SCSetServiceBitsA(
+		[in,ref] policy_handle *handle,
+		[in] uint32 bits,
+		[in] boolean32 bitson,
+		[in] boolean32 immediate
+	);
+
+	/*****************/
+	/* Function 0x17 */
+	WERROR svcctl_ChangeServiceConfigA(
+		[in,ref] policy_handle *handle,
+		[in] uint32 type,
+		[in] svcctl_StartType start_type,
+		[in] svcctl_ErrorControl error_control,
+		[in,unique] [string,charset(UTF16)] uint16 *binary_path,
+		[in,unique] [string,charset(UTF16)] uint16 *load_order_group,
+		[out,ref] uint32 *tag_id,
+		[in,unique] [string,charset(UTF16)] uint16 *dependencies,
+		[in,unique] [string,charset(UTF16)] uint16 *service_start_name,
+		[in,unique] [string,charset(UTF16)] uint16 *password,
+		[in,unique] [string,charset(UTF16)] uint16 *display_name
+	);
+
+	/*****************/
+	/* Function 0x18 */
+	WERROR svcctl_CreateServiceA(
+		[in,ref] policy_handle *handle,
+		[in,unique] [string,charset(UTF16)] uint16 *ServiceName,
+		[in,unique] [string,charset(UTF16)] uint16 *DisplayName,
+		[in] uint32 desired_access,
+		[in] uint32 type,
+		[in] svcctl_StartType start_type,
+		[in] svcctl_ErrorControl error_control,
+		[in,unique] [string,charset(UTF16)] uint16 *binary_path,
+		[in,unique] [string,charset(UTF16)] uint16 *LoadOrderGroupKey,
+		[out,unique] uint32 *TagId,
+		[in,unique] [string,charset(UTF16)] uint16 *dependencies,
+		[in,unique] [string,charset(UTF16)] uint16 *service_start_name,
+		[in,unique] [string,charset(UTF16)] uint16 *password
+	);
+
+	/*****************/
+	/* Function 0x19 */
+	WERROR svcctl_EnumDependentServicesA(
+		[in,ref] policy_handle *service,
+		[in] svcctl_ServiceState state,
+		[out,unique] ENUM_SERVICE_STATUSA *service_status,
+		[in] uint32 offered,
+		[out,ref] uint32 *needed,
+		[out,ref] uint32 *services_returned
+	);
+
+	/*****************/
+	/* Function 0x1a */
+	WERROR svcctl_EnumServicesStatusA(
+		[in,ref] policy_handle *handle,
+		[in] uint32 type,
+		[in] svcctl_ServiceState state,
+		[in] uint32 offered,
+		[out,size_is(offered)] uint8 service[*],
+		[out,ref] uint32 *needed,
+		[out,ref] uint32 *services_returned,
+		[in,out,unique] uint32 *resume_handle
+	);
+
+	/*****************/
+	/* Function 0x1b */
+	WERROR svcctl_OpenSCManagerA(
+		[in,unique] [string,charset(UTF16)] uint16 *MachineName,
+		[in,unique] [string,charset(UTF16)] uint16 *DatabaseName,
+		[in] uint32 access_mask,
+		[out,ref] policy_handle *handle
+	);
+
+	/*****************/
+	/* Function 0x1c */
+	WERROR svcctl_OpenServiceA(
+		[in,ref] policy_handle *scmanager_handle,
+		[in,unique] [string,charset(UTF16)] uint16 *ServiceName,
+		[in] uint32 access_mask
+	);
+
+	/*****************/
+	/* Function 0x1d */
+	WERROR svcctl_QueryServiceConfigA(
+		[in,ref] policy_handle *handle,
+		[out] uint8 query[offered], /*QUERYU_SERVICE_CONFIG */
+		[in] uint32 offered,
+		[out,ref] uint32 *needed
+	);
+
+	/*****************/
+	/* Function 0x1e */
+	WERROR svcctl_QueryServiceLockStatusA(
+		[in,ref] policy_handle *handle,
+		[in] uint32 offered,
+		[out,ref] SERVICE_LOCK_STATUS *lock_status,
+		[out,ref] uint32 *needed
+	);
+
+	/*****************/
+	/* Function 0x1f */
+	WERROR svcctl_StartServiceA(
+		[in,ref] policy_handle *handle,
+		[in] uint32 NumArgs,
+		[in,unique/*FIXME:,length_is(NumArgs)*/] [string,charset(UTF16)] uint16 *Arguments
+	);
+
+	/*****************/
+	/* Function 0x20 */
+	WERROR svcctl_GetServiceDisplayNameA(
+		[in,ref] policy_handle *handle,
+		[in,unique] [string,charset(UTF16)] uint16 *service_name,
+		[out,ref] [string,charset(UTF16)] uint16 **display_name,
+		[in,out,unique] uint32 *display_name_length
+	);
+
+	/*****************/
+	/* Function 0x21 */
+	WERROR svcctl_GetServiceKeyNameA(
+		[in,ref] policy_handle *handle,
+		[in,unique] [string,charset(UTF16)] uint16 *service_name,
+		[out,ref] [string,charset(UTF16)] uint16 **key_name,
+		[in,out,unique] uint32 *display_name_length
+	);
+
+	/*****************/
+	/* Function 0x22 */
+	[todo] WERROR svcctl_GetCurrentGroupeStateW(
+	);
+
+	/*****************/
+	/* Function 0x23 */
+	[todo] WERROR svcctl_EnumServiceGroupW(
+	);
+
+	/*****************/
+	/* Function 0x24 */
+	WERROR svcctl_ChangeServiceConfig2A(
+		[in,ref] policy_handle *handle,
+		[in] uint32 info_level,
+		[in,unique] uint8 *info
+	);
+
+	/*****************/
+	/* Function 0x25 */
+	WERROR svcctl_ChangeServiceConfig2W(
+		[in,ref] policy_handle *handle,
+		[in] uint32 info_level,
+		[in,unique] uint8 *info
+	);
+
+	/*****************/
+	/* Function 0x26 */
+
+	typedef [v1_enum] enum {
+		SERVICE_CONFIG_DESCRIPTION	= 0x00000001,
+		SERVICE_CONFIG_FAILURE_ACTIONS	= 0x00000002
+	} svcctl_ConfigLevel;
+
+	typedef [gensize,public] struct {
+		[relative] nstring *description;
+	} SERVICE_DESCRIPTION;
+
+	typedef [v1_enum] enum {
+		SC_ACTION_NONE		= 0,
+		SC_ACTION_RESTART	= 1,
+		SC_ACTION_REBOOT	= 2,
+		SC_ACTION_RUN_COMMAND	= 3
+	} SC_ACTION_TYPE;
+
+	typedef struct {
+		SC_ACTION_TYPE type;
+		uint32 delay;
+	} SC_ACTION;
+
+	typedef [public,gensize] struct {
+		uint32 reset_period;
+		[relative] nstring *rebootmsg;
+		[relative] nstring *command;
+		[range(0,1024)] uint32 num_actions;
+		[relative] [size_is(num_actions)] SC_ACTION *actions;
+	} SERVICE_FAILURE_ACTIONS;
+
+	WERROR svcctl_QueryServiceConfig2A(
+		[in,ref] policy_handle *handle,
+		[in] svcctl_ConfigLevel info_level,
+		[out] uint8 buffer[offered],
+		[in] uint32 offered,
+		[out,ref] uint32 *needed
+	);
+
+	/*****************/
+	/* Function 0x27 */
+	WERROR svcctl_QueryServiceConfig2W(
+		[in,ref] policy_handle *handle,
+		[in] svcctl_ConfigLevel info_level,
+		[out,ref,size_is(offered)] uint8 *buffer,
+		[in] [range(0,8192)] uint32 offered,
+		[out,ref] [range(0,8192)] uint32 *needed
+	);
+
+	/*****************/
+	/* Function 0x28 */
+
+	typedef [v1_enum] enum {
+		SVC_STATUS_PROCESS_INFO		= 0x00000000
+	} svcctl_StatusLevel;
+
+	WERROR svcctl_QueryServiceStatusEx(
+		[in,ref] policy_handle *handle,
+		[in] svcctl_StatusLevel info_level,
+		[out,ref,size_is(offered)] uint8 *buffer,
+		[in] [range(0,8192)] uint32 offered,
+		[out,ref] [range(0,8192)] uint32 *needed
+	);
+
+	/*****************/
+	/* Function 0x29 */
+	WERROR EnumServicesStatusExA(
+		[in,ref] policy_handle *scmanager,
+		[in] uint32 info_level,
+		[in] uint32 type,
+		[in] svcctl_ServiceState state,
+		[out] uint8 services[offered],
+		[in] uint32 offered,
+		[out,ref] uint32 *needed,
+		[out,ref] uint32 *service_returned,
+		[in,out,unique] uint32 *resume_handle,
+		[out,ref] [string,charset(UTF16)] uint16 **group_name
+	);
+
+	/*****************/
+	/* Function 0x2a */
+	WERROR EnumServicesStatusExW(
+		[in,ref] policy_handle *scmanager,
+		[in] uint32 info_level,
+		[in] uint32 type,
+		[in] svcctl_ServiceState state,
+		[out,ref,size_is(offered)] uint8 *services,
+		[in] [range(0,0x40000)] uint32 offered,
+		[out,ref] [range(0,0x40000)] uint32 *needed,
+		[out,ref] [range(0,0x40000)] uint32 *service_returned,
+		[in,out,unique] [range(0,0x40000)] uint32 *resume_handle,
+		[in,unique] [string,charset(UTF16)] uint16 *group_name
+	);
+
+	/*****************/
+	/* Function 0x2b */
+	[todo] WERROR svcctl_SCSendTSMessage(
+	);
+}

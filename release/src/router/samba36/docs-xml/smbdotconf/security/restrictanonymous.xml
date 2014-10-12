@@ -1,0 +1,38 @@
+<samba:parameter name="restrict anonymous"
+	type="integer"
+                 context="G"
+                 advanced="1" developer="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+    <para>The setting of this parameter determines whether user and
+    group list information is returned for an anonymous connection.
+    and mirrors the effects of the
+<programlisting>
+HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\
+           Control\LSA\RestrictAnonymous
+</programlisting>
+	registry key in Windows 2000 and Windows NT.  When set to 0, user
+	and group list information is returned to anyone who asks.  When set
+    to 1, only an authenticated user can retrive user and
+    group list information.  For the value 2, supported by
+    Windows 2000/XP and Samba, no anonymous connections are allowed at
+    all.  This can break third party and Microsoft
+    applications which expect to be allowed to perform
+	operations anonymously.</para>
+
+	<para>
+    The security advantage of using restrict anonymous = 1 is dubious,
+    as user and group list information can be obtained using other
+	means.
+	</para>
+
+	<note>
+	<para>
+    The security advantage of using restrict anonymous = 2 is removed
+    by setting <smbconfoption name="guest ok">yes</smbconfoption> on any share.
+	</para>
+	</note>
+</description>
+
+<value type="default">0</value>
+</samba:parameter>

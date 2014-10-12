@@ -1,0 +1,417 @@
+dn: ou=Groups,o=University of Michigan,c=TEST
+objectclass: organizationalUnit
+ou: Groups
+
+dn: ou=Information Technology Division,ou=People,o=University of Michigan,c=TEST
+objectclass: organizationalUnit
+ou: Information Technology Division
+description:: aMODwoPDgsKCw4PCgsOCwotFVlZQw4PCg8OCwoPDg8KCw4LCv0zDg8KDw4LCgsOD
+ woLDgsKKT8ODwoPDgsKDw4PCgsOCwqs6w4PCg8OCwoLDg8KCw4LCjUQkw4PCg8OCwoLDg8KCw4LCi
+ 01QUcODwoPDgsKDw4PCgsOCwr/Dg8KDw4LCg8ODwoLDgsKMw4PCg8OCwoLDg8KCw4LCik/Dg8KDw4
+ LCgsODwoLDgsKLRCQoZitEJMODwoPDgsKCw4PCgsOCwrfDg8KDw4LCg8ODwoLDgsKIw4PCg8OCwoP
+ Dg8KCw4LCgcODwoPDgsKDw4PCgsOCwqHDg8KDw4LCgsODwoLDgsKLRCQkZitEJMODwoPDgsKCw4PC
+ gsOCwrfDg8KDw4LCg8ODwoLDgsKQw4PCg8OCwoPDg8KCw4LCisODwoPDgsKCw4PCgsOCwotFUVZqU
+ MODwoPDgsKDw4PCgsOCwr/Dg8KDw4LCg8ODwoLDgsKAw4PCg8OCwoLDg8KCw4LCik85dCTDg8KDw4
+ LCgsODwoLDgsKFQ8ODwoPDgsKDw4PCgsOCwr/Dg8KDw4LCg8ODwoLDgsK/w4PCg8OCwoPDg8KCw4L
+ Cvzl0JMODwoPDgsKCw4PCgsOCwoXDg8KDw4LCg8ODwoLDgsK/w4PCg8OCwoPDg8KCw4LCv8ODwoPD
+ gsKDw4PCgsOCwr/Dg8KDw4LCgsODwoLDgsKLRCTDg8KDw4LCgsODwoLDgsKDw4PCg8OCwoLDg8KCw
+ 4LCuMODwoPDgsKDw4PCgsOCwoR0Q8ODwoPDgsKCw4PCgsOCwoM9w4PCg8OCwoPDg8KCw4LChMODwo
+ PDgsKDw4PCgsOCwoFOdTrDg8KDw4LCg8ODwoLDgsKHw4PCg8OCwoPDg8KCw4LChMODwoPDgsKDw4P
+ CgsOCwoFOw4PCg8OCwoPDg8KCw4LCqMODwoPDgsKDw4PCgsOCwrtHw4PCg8OCwoLDg8KCw4LChcOD
+ woPDgsKDw4PCgsOCwoDDg8KDw4LCgsODwoLDgsK4dMODwoPDgsKDw4PCgsOCwqjDg8KDw4LCg8ODw
+ oLDgsKtR8ODwoPDgsKCw4PCgsOCwovDg8KDw4LCgsODwoLDgsKLw4PCg8OCwoPDg8KCw4LCiMODwo
+ PDgsKDw4PCgsOCwr9SfGrDg8KDw4LCgsODwoLDgsKLQGgxw4PCg8OCwoPDg8KCw4LCoWhQw4PCg8O
+ CwoPDg8KCw4LCv8ODwoPDgsKDw4PCgsOCwoDDg8KDw4LCgsODwoLDgsKKT8ODwoPDgsKCw4PCgsOC
+ wotEJDDDg8KDw4LCgsODwoLDgsKFw4PCg8OCwoPDg8KCw4LCgHTDg8KDw4LCgsODwoLDgsKDw4PCg
+ 8OCwoPDg8KCw4LCuHXDg8KDw4LCgsODwoLDgsKLRCRqw4PCg8OCwoLDg8KCw4LCi8ODwoPDgsKDw4
+ PCgsOCwojDg8KDw4LCgsODwoLDgsKLw4PCg8OCwoPDg8KCw4LCv8ODwoPDgsKCw4PCgsOCwpPDg8K
+ Dw4LCg8ODwoLDgsKQXV9eW8ODwoPDgsKCw4PCgsOCwoPDg8KDw4LCg8ODwoLDgsKEw4PCg8OCwoPD
+ g8KCw4LCgsODwoPDgsKDw4PCgsOCwozDg8KDw4LCg8ODwoLDgsKMw4PCg8OCwoPDg8KCw4LCjMODw
+ oPDgsKDw4PCgsOCwozDg8KDw4LCg8ODwoLDgsKMw4PCg8OCwoPDg8KCw4LCjMODwoPDgsKDw4PCgs
+ OCwoxWV8ODwoPDgsKCw4PCgsOCwovDg8KDw4LCg8ODwoLDgsKxw4PCg8OCwoLDg8KCw4LCi3wkw4P
+ Cg8OCwoLDg8KCw4LCjcODwoPDgsKCw4PCgsOCwofDg8KDw4LCg8ODwoLDgsKof8ODwoPDgsKDw4PC
+ gsOCwr/Dg8KDw4LCg8ODwoLDgsK/w4PCg8OCwoLDg8KCw4LCg8ODwoPDgsKDw4PCgsOCwrh5w4PCg
+ 8OCwoLDg8KCw4LChzQzw4PCg8OCwoPDg8KCw4LCicODwoPDgsKCw4PCgsOCworDg8KDw4LCgsODwo
+ LDgsKIw4PCg8OCwoLDg8KCw4LCuDFBw4PCg8OCwoPDg8KCw4LCvyTDg8KDw4LCgsODwoLDgsKNdDF
+ Bw4PCg8OCwoLDg8KCw4LCuF9ew4PCg8OCwoPDg8KCw4LCgsODwoPDgsKCw4PCgsOCwrhfXsODwoPD
+ gsKDw4PCgsOCwoLDg8KDw4LCgsODwoLDgsK4X17Dg8KDw4LCg8ODwoLDgsKCw4PCg8OCwoLDg8KCw
+ 4LCi8ODwoPDgsKDw4PCgsOCwo7Dg8KDw4LCgsODwoLDgsKBw4PCg8OCwoPDg8KCw4LCv8ODwoPDgs
+ KCw4PCgsOCwoTDg8KDw4LCgsODwoLDgsKAdcODwoPDgsKDw4PCgsOCwqhtw4PCg8OCwoLDg8KCw4L
+ ChcODwoPDgsKDw4PCgsOCwoDDg8KDw4LCgsODwoLDgsKEw4PCg8OCwoPDg8KCw4LCsMODwoPDgsKC
+ w4PCgsOCwrhfXsODwoPDgsKDw4PCgsOCwoLDg8KDw4LCg8ODwoLDgsKow4PCg8OCwoLDg8KCw4LCt
+ sODwoPDgsKDw4PCgsOCwq7Dg8KDw4LCg8ODwoLDgsK/w4PCg8OCwoPDg8KCw4LCv8ODwoPDgsKCw4
+ PCgsOCwoPDg8KDw4LCg8ODwoLDgsKoZsODwoPDgsKCw4PCgsOCwoPDg8KDw4LCg8ODwoLDgsK4w4P
+ Cg8OCwoLDg8KCw4LCh8ODwoPDgsKDw4PCgsOCwpUzw4PCg8OCwoPDg8KCw4LCicODwoPDgsKCw4PC
+ gsOCworDg8KDw4LCgsODwoLDgsKISDJBw4PCg8OCwoPDg8KCw4LCvyTDg8KDw4LCgsODwoLDgsKNN
+ DJBw4PCg8OCwoLDg8KCw4LCi8ODwoPDgsKCw4PCgsOCwovDg8KDw4LCg8ODwoLDgsKOw4PCg8OCwo
+ PDg8KCw4LCv8ODwoPDgsKCw4PCgsOCwpDDg8KDw4LCg8ODwoLDgsKIw4PCg8OCwoLDg8KCw4LCi8O
+ DwoPDgsKDw4PCgsOCwojDg8KDw4LCg8ODwoLDgsKow4PCg8OCwoPDg8KCw4LCnEzDg8KDw4LCgsOD
+ woLDgsKLSEBmw4PCg8OCwoLDg8KCw4LCg3lwdSTDg8KDw4LCgsODwoLDgsKBw4PCg8OCwoPDg8KCw
+ 4LCv8ODwoPDgsKCw4PCgsOCwobDg8KDw4LCgsODwoLDgsKAw4PCg8OCwoLDg8KCw4LChMODwoPDgs
+ KCw4PCgsOCwp/Dg8KDw4LCgsODwoLDgsKBw4PCg8OCwoPDg8KCw4LCv8ODwoPDgsKCw4PCgsOCwoj
+ Dg8KDw4LCgsODwoLDgsKAw4PCg8OCwoLDg8KCw4LChMODwoPDgsKCw4PCgsOCwpPDg8KDw4LCgsOD
+ woLDgsKBw4PCg8OCwoPDg8KCw4LCv1rDg8KDw4LCgsODwoLDgsKAw4PCg8OCwoLDg8KCw4LChMODw
+ oPDgsKCw4PCgsOCwodqw4PCg8OCwoLDg8KCw4LCi8ODwoPDgsKCw4PCgsOCwoBqaMODwoPDgsKCw4
+ PCgsOCwpBQw4PCg8OCwoPDg8KCw4LCv8ODwoPDgsKDIMODwoPDgsKCw4PCgsOCwopPw4PCg8OCwoL
+ Dg8KCw4LChcODwoPDgsKDw4PCgsOCwoDDg8KDw4LCgsODwoLDgsKOacODwoPDgsKCw4PCgsOCwrhf
+ XsODwoPDgsKDw4PCgsOCwoLDg8KDw4LCgsODwoLDgsK4X17Dg8KDw4LCg8ODwoLDgsKCw4PCg8OCw
+ oLDg8KCw4LCgcODwoPDgsKDw4PCgsOCwr/Dg8KDw4LCgsODwoLDgsKGw4PCg8OCwoLDg8KCw4LCgM
+ ODwoPDgsKCw4PCgsOCwoRJw4PCg8OCwoLDg8KCw4LCgcODwoPDgsKDw4PCgsOCwr/Dg8KDw4LCgsO
+ DwoLDgsKIw4PCg8OCwoLDg8KCw4LCgMODwoPDgsKCw4PCgsOCwoQ9w4PCg8OCwoLDg8KCw4LCgcOD
+ woPDgsKDw4PCgsOCwr9aw4PCg8OCwoLDg8KCw4LCgMODwoPDgsKCw4PCgsOCwoQxw4PCg8OCwoLDg
+ 8KCw4LCuF9ew4PCg8OCwoPDg8KCw4LCgsODwoPDgsKCw4PCgsOCwoM9w4PCg8OCwoPDg8KCw4LCm0
+ 7Dg8KDw4LCgsODwoLDgsKEw4PCg8OCwoLDg8KCw4LCuF9ew4PCg8OCwoPDg8KCw4LCgsODwoPDgsK
+ Cw4PCgsOCwrhfXsODwoPDgsKDw4PCgsOCwoLDg8KDw4LCgsODwoLDgsK4X17Dg8KDw4LCg8ODwoLD
+ gsKCw4PCg8OCwoLDg8KCw4LCuF9ew4PCg8OCwoPDg8KCw4LCgsODwoPDgsKCw4PCgsOCwrhfXsODw
+ oPDgsKDw4PCgsOCwoLDg8KDw4LCgsODwoLDgsKLw4PCg8OCwoLDg8KCw4LCi8ODwoPDgsKDw4PCgs
+ OCwo7Dg8KDw4LCg8ODwoLDgsK/w4PCg8OCwoLDg8KCw4LCkMODwoPDgsKDw4PCgsOCwojDg8KDw4L
+ CgsODwoLDgsKLw4PCg8OCwoPDg8KCw4LCiMODwoPDgsKDw4PCgsOCwqjDg8KDw4LCg8ODwoLDgsK+
+ S8ODwoPDgsKCw4PCgsOCwovDg8KDw4LCg8ODwoLDgsKww4PCg8OCwoPDg8KCw4LCv8ODwoPDgsKDw
+ 4PCgsOCwoTDg8KDw4LCgsODwoLDgsKKT1DDg8KDw4LCg8ODwoLDgsKoRsODwoPDgsKCw4PCgsOCwo
+ vDg8KDw4LCg8ODwoLDgsK4w4PCg8OCwoLDg8KCw4LChcODwoPDgsKDw4PCgsOCwrZ0Y8ODwoPDgsK
+ Cw4PCgsOCwoXDg8KDw4LCg8ODwoLDgsK/dF/Dg8KDw4LCgsODwoLDgsKhdHpPw4PCg8OCwoLDg8KC
+ w4LCi8ODwoPDgsKDw4PCgsOCwo5Qw4PCg8OCwoPDg8KCw4LCqC1Jw4PCg8OCwoLDg8KCw4LChcODw
+ oPDgsKDw4PCgsOCwoB1RMODwoPDgsKCw4PCgsOCwqFwek/Dg8KDw4LCgsODwoLDgsKLw4PCg8OCwo
+ PDg8KCw4LCj1DDg8KDw4LCg8ODwoLDgsKoScODwoPDgsKCw4PCgsOCwoXDg8KDw4LCg8ODwoLDgsK
+ AdTPDg8KDw4LCgsODwoLDgsKhbHpPw4PCg8OCwoLDg8KCw4LCi8ODwoPDgsKDw4PCgsOCwo5Qw4PC
+ g8OCwoPDg8KCw4LCqEnDg8KDw4LCgsODwoLDgsKFw4PCg8OCwoPDg8KCw4LCgHXDg8KDw4LCgsODw
+ oLDgsKhaHpPw4PCg8OCwoLDg8KCw4LCi8ODwoPDgsKDw4PCgsOCwo9Qw4PCg8OCwoPDg8KCw4LCqM
+ ODwoPDgsKDw4PCgsOCwrpIw4PCg8OCwoLDg8KCw4LChcODwoPDgsKDw4PCgsOCwoB1M8ODwoPDgsK
+ Dw4PCgsOCwoBfXsODwoPDgsKDw4PCgsOCwoLDg8KDw4LCgsODwoLDgsK4X17Dg8KDw4LCg8ODwoLD
+ gsKCw4PCg8OCwoLDg8KCw4LCuF9ew4PCg8OCwoPDg8KCw4LCgjPDg8KDw4LCg8ODwoLDgsKAX17Dg
+ 8KDw4LCg8ODwoLDgsKCw4PCg8OCwoLDg8KCw4LCi8ODwoPDgsKDw4PCgsOCwo7Dg8KDw4LCg8ODwo
+ LDgsKoJ8ODwoPDgsKDw4PCgsOCwq3Dg8KDw4LCg8ODwoLDgsK/w4PCg8OCwoPDg8KCw4LCv8ODwoP
+ DgsKCw4PCgsOCwoPDg8KDw4LCg8ODwoLDgsK4aHU5w4PCg8OCwoLDg8KCw4LCi8ODwoPDgsKCw4PC
+ gsOCwovDg8KDw4LCg8ODwoLDgsKOw4PCg8OCwoPDg8KCw4LCv8ODwoPDgsKCw4PCgsOCwpDDg8KDw
+ 4LCg8ODwoLDgsKIw4PCg8OCwoLDg8KCw4LCi8ODwoPDgsKCw4PCgsOCwovDg8KDw4LCg8ODwoLDgs
+ KIw4PCg8OCwoPDg8KCw4LCv8ODwoPDgsKCw4PCgsOCwpLDg8KDw4LCg8ODwoLDgsKEw4PCg8OCwoL
+ Dg8KCw4LChcODwoPDgsKDw4PCgsOCwoB0IcODwoPDgsKCw4PCgsOCwovDg8KDw4LCgsODwoLDgsKA
+ w4PCg8OCwoPDg8KCw4LCtMODwoPDgsKCw4PCgsOCwoXDg8KDw4LCg8ODwoLDgsKAdGbDg8KDw4LCg
+ sODwoLDgsKLQGY9dGY9dTPDg8KDw4LCg8ODwoLDgsKAX17Dg8KDw4LCg8ODwoLDgsKCw4PCg8OCwo
+ LDg8KCw4LCuF9ew4PCg8OCwoPDg8KCw4LCgsODwoPDgsKCw4PCgsOCwrhfXsODwoPDgsKDw4PCgsO
+ CwoIzw4PCg8OCwoPDg8KCw4LCgF9ew4PCg8OCwoPDg8KCw4LCgsODwoPDgsKCw4PCgsOCwovDg8KD
+ w4LCg8ODwoLDgsK/Ri9BUC9BRi9BWi9BZC9BWzBBZC9BZTBBZC9BZC9BbzBBZC9BeTBBw4PCg8OCw
+ oLDg8KCw4LCgzBBMUFhMUFrMUE=
+description:: UF7Dg8KDw4LCg8ODwoLDgsKCw4PCg8OCwoPDg8KCw4LCjMODwoPDgsKDw4PCgsOC
+ wozDg8KDw4LCg8ODwoLDgsKMw4PCg8OCwoPDg8KCw4LCjMODwoPDgsKDw4PCgsOCwozDg8KDw4LCg
+ 8ODwoLDgsKMw4PCg8OCwoPDg8KCw4LCqFDDg8KDw4LCg8ODwoLDgsKpRsODwoPDgsKDw4PCgsOCwo
+ zDg8KDw4LCg8ODwoLDgsKMw4PCg8OCwoPDg8KCw4LCjMODwoPDgsKDw4PCgsOCwozDg8KDw4LCg8O
+ DwoLDgsKMw4PCg8OCwoPDg8KCw4LCjMODwoPDgsKCw4PCgsOCwotEJCDDg8KDw4LCgsODwoLDgsKD
+ w4PCg8OCwoPDg8KCw4LCrMODwoPDgsKCw4PCgsOCwotUJCRTw4PCg8OCwoLDg8KCw4LCi1wkJFbDg
+ 8KDw4LCgsODwoLDgsKJTCRXVVBSU8ODwoPDgsKDw4PCgsOCwqjDg8KDw4LCg8ODwoLDgsKdT8ODwo
+ PDgsKCw4PCgsOCwoN8JDB1w4PCg8OCwoPDg8KCw4LCh8ODwoPDgsKDw4PCgsOCwoDDg8KDw4LCg8O
+ DwoLDgsKBTsODwoPDgsKDw4PCgsOCwqktw4PCg8OCwoLDg8KCw4LCg3wkMHTDg8KDw4LCgsODwoLD
+ gsKDfCQww4PCg8OCwoLDg8KCw4LChTPDg8KDw4LCg8ODwoLDgsK2OTXDg8KDw4LCg8ODwoLDgsKAw
+ 4PCg8OCwoPDg8KCw4LCgU7Dg8KDw4LCgsODwoLDgsKEIMODwoPDgsKCw4PCgsOCwqFIw4PCg8OCwo
+ PDg8KCw4LChU7Dg8KDw4LCgsODwoLDgsKJNcODwoPDgsKDw4PCgsOCwoDDg8KDw4LCg8ODwoLDgsK
+ BTsODwoPDgsKCw4PCgsOCwovDg8KDw4LCg8ODwoLDgsKIw4PCg8OCwoLDg8KCw4LCi8ODwoPDgsKD
+ w4PCgsOCwr9TXMODwoPDgsKCw4PCgsOCwolEJDvDg8KDw4LCg8ODwoLDgsKGw4PCg8OCwoLDg8KCw
+ 4LChMODwoPDgsKCw4PCgsOCwpHDg8KDw4LCgsODwoLDgsKNRCTDg8KDw4LCgsODwoLDgsKLIEjDg8
+ KDw4LCg8ODwoLDgsKFTlDDg8KDw4LCgsODwoLDgsKLw4PCg8OCwoPDg8KCw4LCv1Ngw4PCg8OCwoL
+ Dg8KCw4LCi8ODwoPDgsKDw4PCgsOCwpjDg8KDw4LCgsODwoLDgsKFw4PCg8OCwoPDg8KCw4LCm3Rx
+ w4PCg8OCwoLDg8KCw4LCizvDg8KDw4LCgsODwoLDgsKLw4PCg8OCwoPDg8KCw4LCi8ODwoPDgsKDw
+ 4PCgsOCwr9XaMODwoPDgsKCw4PCgsOCwolEJDvDg8KDw4LCg8ODwoLDgsKGdGLDg8KDw4LCgsODwo
+ LDgsKLf2zDg8KDw4LCgsODwoLDgsKNRCTDg8KDw4LCgsODwoLDgsKLw4PCg8OCwoPDg8KCw4LCi1D
+ Dg8KDw4LCg8ODwoLDgsK/w4PCg8OCwoPDg8KCw4LCl8ODwoPDgsKCw4PCgsOCwovDg8KDw4LCg8OD
+ woLDgsKow4PCg8OCwoLDg8KCw4LChcODwoPDgsKDw4PCgsOCwq10SmgoT03Dg8KDw4LCgsODwoLDg
+ sKLw4PCg8OCwoPDg8KCw4LCjcODwoPDgsKDw4PCgsOCwqggTMODwoPDgsKCw4PCgsOCwoXDg8KDw4
+ LCg8ODwoLDgsKAdDrDg8KDw4LCgsODwoLDgsKNRCTDg8KDw4LCgsODwoLDgsKLTSBQUcODwoPDgsK
+ Dw4PCgsOCwr/Dg8KDw4LCg8ODwoLDgsKMw4PCg8OCwoLDg8KCw4LCik/Dg8KDw4LCgsODwoLDgsKL
+ RCQoZitEJCDDg8KDw4LCgsODwoLDgsK3w4PCg8OCwoPDg8KCw4LCiMODwoPDgsKDw4PCgsOCwoHDg
+ 8KDw4LCg8ODwoLDgsKhw4PCg8OCwoLDg8KCw4LCi0QkJGYrRCTDg8KDw4LCgsODwoLDgsK3w4PCg8
+ OCwoPDg8KCw4LCkMODwoPDgsKDw4PCgsOCworDg8KDw4LCgsODwoLDgsKLRSBRVmpQw4PCg8OCwoP
+ Dg8KCw4LCv8ODwoPDgsKDw4PCgsOCwoDDg8KDw4LCgsODwoLDgsKKTzl0JHXDg8KDw4LCgsODwoLD
+ gsKhOXQkw4PCg8OCwoLDg8KCw4LChW/Dg8KDw4LCg8ODwoLDgsK/w4PCg8OCwoPDg8KCw4LCv8ODw
+ oPDgsKDw4PCgsOCwr/Dg8KDw4LCgsODwoLDgsKhRMODwoPDgsKDw4PCgsOCwoVOw4PCg8OCwoLDg8
+ KCw4LCi8ODwoPDgsKDw4PCgsOCwojDg8KDw4LCgsODwoLDgsKLw4PCg8OCwoPDg8KCw4LCv1Ncw4P
+ Cg8OCwoLDg8KCw4LCiUQkw4PCg8OCwoLDg8KCw4LChcODwoPDgsKDw4PCgsOCwoDDg8KDw4LCgsOD
+ woLDgsKEw4PCg8OCwoPDg8KCw4LCtjPDg8KDw4LCg8ODwoLDgsK2w4PCg8OCwoLDg8KCw4LCjUQkw
+ 4PCg8OCwoLDg8KCw4LCiyBEw4PCg8OCwoPDg8KCw4LChU5Qw4PCg8OCwoLDg8KCw4LCi8ODwoPDgs
+ KDw4PCgsOCwr9TYMODwoPDgsKCw4PCgsOCwovDg8KDw4LCg8ODwoLDgsK4w4PCg8OCwoLDg8KCw4L
+ ChcODwoPDgsKDw4PCgsOCwr/Dg8KDw4LCgsODwoLDgsKEw4PCg8OCwoPDg8KCw4LCkMODwoPDgsKC
+ w4PCgsOCwovDg8KDw4LCgsODwoLDgsKLw4PCg8OCwoPDg8KCw4LCj8ODwoPDgsKDw4PCgsOCwr9Ta
+ MODwoPDgsKCw4PCgsOCwolEJDvDg8KDw4LCg8ODwoLDgsKGw4PCg8OCwoLDg8KCw4LChMODwoPDgs
+ KCw4PCgsOCwr3Dg8KDw4LCgsODwoLDgsKNRCTDg8KDw4LCgsODwoLDgsKLw4PCg8OCwoPDg8KCw4L
+ Cj1DDg8KDw4LCg8ODwoLDgsK/U2zDg8KDw4LCgsODwoLDgsKLw4PCg8OCwoPDg8KCw4LCqMODwoPD
+ gsKCw4PCgsOCwoXDg8KDw4LCg8ODwoLDgsKtw4PCg8OCwoLDg8KCw4LChMODwoPDgsKCw4PCgsOCw
+ p9oMMODwoPDgsKDw4PCgsOCwolMw4PCg8OCwoLDg8KCw4LCi8ODwoPDgsKDw4PCgsOCwo3Dg8KDw4
+ LCg8ODwoLDgsKow4PCg8OCwoPDg8KCw4LCq0vDg8KDw4LCgsODwoLDgsKFw4PCg8OCwoPDg8KCw4L
+ CgMODwoPDgsKCw4PCgsOCwoTDg8KDw4LCgsODwoLDgsKLw4PCg8OCwoLDg8KCw4LCi0QkOcODwoPD
+ gsKCw4PCgsOCwrDDg8KDw4LCg8ODwoLDgsKEdEU5w4PCg8OCwoLDg8KCw4LCtTR0PcODwoPDgsKCw
+ 4PCgsOCwovDg8KDw4LCg8ODwoLDgsKNw4PCg8OCwoPDg8KCw4LCqMODwoPDgsKDw4PCgsOCwo5Lw4
+ PCg8OCwoLDg8KCw4LCi0AgUMODwoPDgsKDw4PCgsOCwr/Dg8KDw4LCgsODwoLDgsKsw4PCg8OCwoL
+ Dg8KCw4LCik/Dg8KDw4LCgsODwoLDgsKFw4PCg8OCwoPDg8KCw4LCgHUow4PCg8OCwoLDg8KCw4LC
+ i8ODwoPDgsKDw4PCgsOCwo3Dg8KDw4LCgsODwoLDgsKJw4PCg8OCwoLDg8KCw4LCtTTDg8KDw4LCg
+ 8ODwoLDgsKow4PCg8OCwoPDg8KCw4LCl8ODwoPDgsKDw4PCgsOCwrtWw4PCg8OCwoLDg8KCw4LCi8
+ ODwoPDgsKDw4PCgsOCwo3Dg8KDw4LCg8ODwoLDgsKow4PCg8OCwoLDg8KCw4LCnw==
+
+#LEAD COMMENT
+
+# another comment
+dn: CN=All Staff,ou=Groups,o=University of Michigan,c=TEST
+#EMBEDDED COMMENT
+member: cn=Manager,o=University of Michigan,c=TEST
+member: cn=Barbara Jensen,ou=Information Technology Division,ou=People,o=Unive
+ rsity of Michigan,c=TEST
+member: cn=Jane Doe,ou=Alumni Association,ou=People,o=University of Michigan,c
+ =US
+member: cn=John Doe,ou=Information Technology Division,ou=People,o=University 
+ of Michigan,c=TEST
+member: cn=Mark Elliot,ou=Alumni Association,ou=People,o=University of Michiga
+ n,c=TEST
+member: cn=James A Jones 1,ou=Alumni Association,ou=People,o=University of Mic
+ higan,c=TEST
+member: cn=James A Jones 2,ou=Information Technology Division,ou=People,o=Univ
+ ersity of Michigan,c=TEST
+member: cn=Jennifer Smith,ou=Alumni Association,ou=People,o=University of Mich
+ igan,c=TEST
+member: cn=Dorothy Stevens,ou=Alumni Association,ou=People,o=University of Mic
+ higan,c=TEST
+member: cn=Ursula Hampster,ou=Alumni Association,ou=People,o=University of Mic
+ higan,c=TEST
+member: cn=Bjorn Jensen,ou=Information Technology Division,ou=People,o=Univers
+ ity of Michigan,c=TEST
+owner: cn=Manager,o=University of Michigan,c=TEST
+cn: All Staff
+description: Everyone in the sample data
+objectclass: groupofnames
+
+dn: cn=Alumni Assoc Staff,ou=Groups,o=University of Michigan,c=TEST
+member: cn=Manager,o=University of Michigan,c=TEST
+member: cn=Dorothy Stevens,ou=Alumni Association,ou=People,o=University of Mic
+ higan,c=TEST
+member: cn=James A Jones 1,ou=Alumni Association,ou=People,o=University of Mic
+ higan,c=TEST
+member: cn=Jane Doe,ou=Alumni Association,ou=People,o=University of Michigan,c
+ =US
+member: cn=Jennifer Smith,ou=Alumni Association,ou=People,o=University of Mich
+ igan,c=TEST
+member: cn=Mark Elliot,ou=Alumni Association,ou=People,o=University of Michiga
+ n,c=TEST
+member: cn=Ursula Hampster,ou=Alumni Association,ou=People,o=University of Mic
+ higan,c=TEST
+owner: cn=Manager,o=University of Michigan,c=TEST
+description: All Alumni Assoc Staff
+cn: Alumni Assoc Staff
+objectclass: groupofnames
+
+dn: ou=Alumni Association,ou=People,o=University of Michigan,c=TEST
+objectclass: organizationalUnit
+ou: Alumni Association
+
+dn: cn=Barbara Jensen,ou=Information Technology Division,ou=People,o=Universit
+ y of Michigan,c=TEST
+objectclass: OpenLDAPperson
+cn: Barbara Jensen
+cn: Babs Jensen
+sn:: IEplbnNlbiA=
+uid:: YmplCW5zZW4
+title: Mythical Manager, Research Systems
+postaladdress: ITD Prod Dev & Deployment $ 535 W. William St. Room 4212 $ Ann 
+ Arbor, MI 48103-4943
+seealso: cn=All Staff,ou=Groups,o=University of Michigan,c=TEST
+userpassword:: YmplbnNlbg==
+mail: bjensen@mailgw.example.com
+homepostaladdress: 123 Wesley $ Ann Arbor, MI 48103
+description: Mythical manager of the rsdd unix project
+drink: water
+homephone: +1 313 555 2333
+pager: +1 313 555 3233
+facsimiletelephonenumber: +1 313 555 2274
+telephonenumber: +1 313 555 9022
+
+dn: cn=Bjorn Jensen,ou=Information Technology Division,ou=People,o=University 
+ of Michigan,c=TEST
+objectclass: OpenLDAPperson
+cn: Bjorn Jensen
+cn: Biiff Jensen
+sn: Jensen
+uid: bjorn
+seealso: cn=All Staff,ou=Groups,o=University of Michigan,c=TEST
+userpassword:: Ympvcm4=
+homepostaladdress: 19923 Seven Mile Rd. $ South Lyon, MI 49999
+drink: Iced Tea
+description: Hiker, biker
+title: Director, Embedded Systems
+postaladdress: Info Tech Division $ 535 W. William St. $ Ann Arbor, MI 48103
+mail: bjorn@mailgw.example.com
+homephone: +1 313 555 5444
+pager: +1 313 555 4474
+facsimiletelephonenumber: +1 313 555 2177
+telephonenumber: +1 313 555 0355
+
+dn: cn=Dorothy Stevens,ou=Alumni Association,ou=People,o=University of Michiga
+ n,c=TEST
+objectclass: OpenLDAPperson
+cn: Dorothy Stevens
+cn: Dot Stevens
+sn: Stevens
+uid: dots
+title: Secretary, UM Alumni Association
+postaladdress: Alumni Association $ 111 Maple St $ Ann Arbor, MI 48109
+seealso: cn=All Staff,ou=Groups,o=University of Michigan,c=TEST
+drink: Lemonade
+homepostaladdress: 377 White St. Apt. 3 $ Ann Arbor, MI 48104
+description: Very tall
+facsimiletelephonenumber: +1 313 555 3223
+telephonenumber: +1 313 555 3664
+mail: dots@mail.alumni.example.com
+homephone: +1 313 555 0454
+
+dn: cn=ITD Staff,ou=Groups,o=University of Michigan,c=TEST
+owner: cn=Manager,o=University of Michigan,c=TEST
+description: All ITD Staff
+cn: ITD Staff
+objectclass: groupofuniquenames
+uniquemember: cn=Manager,o=University of Michigan,c=TEST
+uniquemember: cn=Bjorn Jensen,ou=Information Technology Division,ou=People,o=U
+ niversity of Michigan,c=TEST
+uniquemember: cn=James A Jones 2,ou=Information Technology Division,ou=People,
+ o=University of Michigan,c=TEST
+uniquemember: cn=John Doe,ou=Information Technology Division,ou=People,o=Unive
+ rsity of Michigan,c=TEST
+
+dn: cn=James A Jones 1,ou=Alumni Association,ou=People,o=University of Michiga
+ n,c=TEST
+objectclass: OpenLDAPperson
+cn: James A Jones 1
+cn: James Jones
+cn: Jim Jones
+sn: Jones
+uid: jaj
+postaladdress: Alumni Association $ 111 Maple St $ Ann Arbor, MI 48109
+seealso: cn=All Staff,ou=Groups,o=University of Michigan,c=TEST
+userpassword:: amFq
+homepostaladdress: 3882 Beverly Rd. $ Ann Arbor, MI 48105
+homephone: +1 313 555 4772
+description: Outstanding
+title: Mad Cow Researcher, UM Alumni Association
+pager: +1 313 555 3923
+mail: jaj@mail.alumni.example.com
+facsimiletelephonenumber: +1 313 555 4332
+telephonenumber: +1 313 555 0895
+
+dn: cn=James A Jones 2,ou=Information Technology Division,ou=People,o=Universi
+ ty of Michigan,c=TEST
+objectclass: OpenLDAPperson
+cn: James A Jones 2
+cn: James Jones
+cn: Jim Jones
+sn: Doe
+uid: jjones
+seealso: cn=All Staff,ou=Groups,o=University of Michigan,c=TEST
+homepostaladdress: 933 Brooks $ Ann Arbor, MI 48104
+homephone: +1 313 555 8838
+title: Senior Manager, Information Technology Division
+description: Not around very much
+mail: jjones@mailgw.example.com
+postaladdress: Info Tech Division $ 535 W William $ Ann Arbor, MI 48103
+pager: +1 313 555 2833
+facsimiletelephonenumber: +1 313 555 8688
+telephonenumber: +1 313 555 7334
+
+dn: cn=Jane Doe,ou=Alumni Association,ou=People,o=University of Michigan,c=TEST
+objectclass: OpenLDAPperson
+cn: Jane Doe
+cn: Jane Alverson
+sn: Doe
+uid: jdoe
+title: Programmer Analyst, UM Alumni Association
+postaladdress: Alumni Association $ 111 Maple St $ Ann Arbor, MI 48109
+seealso: cn=All Staff,ou=Groups,o=University of Michigan,c=TEST
+homepostaladdress: 123 Anystreet $ Ann Arbor, MI 48104
+drink: diet coke
+description: Enthusiastic
+mail: jdoe@woof.net
+homephone: +1 313 555 5445
+pager: +1 313 555 1220
+facsimiletelephonenumber: +1 313 555 2311
+telephonenumber: +1 313 555 4774
+
+dn: cn=Jennifer Smith,ou=Alumni Association,ou=People,o=University of Michigan
+ ,c=TEST
+objectclass: OpenLDAPperson
+cn: Jennifer Smith
+cn: Jen Smith
+sn: Smith
+uid: jen
+postaladdress: Alumni Association $ 111 Maple St $ Ann Arbor, MI 48109
+seealso: cn=All Staff,ou=Groups,o=University of Michigan,c=TEST
+drink: Sam Adams
+homepostaladdress: 1000 Maple #44 $ Ann Arbor, MI 48103
+title: Telemarketer, UM Alumni Association
+mail: jen@mail.alumni.example.com
+homephone: +1 313 555 2333
+pager: +1 313 555 6442
+facsimiletelephonenumber: +1 313 555 2756
+telephonenumber: +1 313 555 8232
+
+dn: cn=John Doe,ou=Information Technology Division,ou=People,o=University of M
+ ichigan,c=TEST
+objectclass: OpenLDAPperson
+cn: John Doe
+cn: Jonathon Doe
+sn: Doe
+uid: johnd
+postaladdress: ITD $ 535 W. William $ Ann Arbor, MI 48109
+seealso: cn=All Staff,ou=Groups,o=University of Michigan,c=TEST
+homepostaladdress: 912 East Bllvd $ Ann Arbor, MI 48104
+title: System Administrator, Information Technology Division
+description: overworked!
+mail: johnd@mailgw.example.com
+homephone: +1 313 555 3774
+pager: +1 313 555 6573
+facsimiletelephonenumber: +1 313 555 4544
+telephonenumber: +1 313 555 9394
+
+dn: cn=Manager,o=University of Michigan,c=TEST
+objectclass: person
+cn: Manager
+cn: Directory Manager
+cn: Dir Man
+sn: Manager
+description: Manager of the directory
+userpassword:: c2VjcmV0
+
+dn: cn=Mark Elliot,ou=Alumni Association,ou=People,o=University of Michigan,c=
+ TEST
+objectclass: OpenLDAPperson
+cn: Mark Elliot
+cn: Mark A Elliot
+sn: Elliot
+uid: melliot
+postaladdress: Alumni Association $ 111 Maple St $ Ann Arbor, MI 48109
+seealso: cn=All Staff,ou=Groups,o=University of Michigan,c=TEST
+homepostaladdress: 199 Outer Drive $ Ypsilanti, MI 48198
+homephone: +1 313 555 0388
+drink: Gasoline
+title: Director, UM Alumni Association
+mail: melliot@mail.alumni.example.com
+pager: +1 313 555 7671
+facsimiletelephonenumber: +1 313 555 7762
+telephonenumber: +1 313 555 4177
+
+dn: cn=Ursula Hampster,ou=Alumni Association,ou=People,o=University of Michiga
+ n,c=TEST
+objectclass: OpenLDAPperson
+cn: Ursula Hampster
+sn: Hampster
+uid: uham
+title: Secretary, UM Alumni Association
+postaladdress: Alumni Association $ 111 Maple St $ Ann Arbor, MI 48109
+seealso: cn=All Staff,ou=Groups,o=University of Michigan,c=TEST
+homepostaladdress: 123 Anystreet $ Ann Arbor, MI 48104
+mail: uham@mail.alumni.example.com
+description: a long attribute name, longer than 128 bytes so that we
+ trigger sign extension problems in tdb_pack, no thats not long enough
+ yet, maybe this is. I'll just keep going till it triggers the error
+homephone: +1 313 555 8421
+pager: +1 313 555 2844
+facsimiletelephonenumber: +1 313 555 9700
+telephonenumber: +1 313 555 5331
+
+dn: cn=Fred Bassett,ou=Alumni Association,ou=People,o=University of Michigan,c=TEST
+objectclass: OpenLDAPperson
+cn: Fred Bassett
+sn: Bassett
+uid: Bassett, Fred

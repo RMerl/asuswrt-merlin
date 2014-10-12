@@ -1,0 +1,29 @@
+From 1d97835f07fd5142187629941422f87b33015414 Mon Sep 17 00:00:00 2001
+From: Andrew Tridgell <tridge@samba.org>
+Date: Wed, 17 Feb 2010 10:47:59 +1100
+Subject: [PATCH 1/5] leave the question section in update responses.
+
+This fixes TSIG-GSS updates from windows7 and w2k8r2, which require
+the question to be included in the initial refusal for the unsigned
+update.
+---
+ lib/dns/message.c |    3 ++-
+ 1 files changed, 2 insertions(+), 1 deletions(-)
+
+diff --git a/lib/dns/message.c b/lib/dns/message.c
+index b541635..ae4965f 100644
+--- a/lib/dns/message.c
++++ b/lib/dns/message.c
+@@ -2474,7 +2474,8 @@ dns_message_reply(dns_message_t *msg, isc_boolean_t want_question_section) {
+	if (!msg->header_ok)
+		return (DNS_R_FORMERR);
+	if (msg->opcode != dns_opcode_query &&
+-	    msg->opcode != dns_opcode_notify)
++	    msg->opcode != dns_opcode_notify &&
++	    msg->opcode != dns_opcode_update)
+		want_question_section = ISC_FALSE;
+	if (want_question_section) {
+		if (!msg->question_ok)
+--
+1.6.3.3
+

@@ -1,0 +1,158 @@
+#!/usr/bin/env python
+
+bld.SAMBA_SUBSYSTEM('DCERPC_SHARE',
+	source='common/server_info.c common/share_info.c',
+	autoproto='common/share.h',
+	deps='ldb'
+	)
+
+bld.SAMBA_SUBSYSTEM('DCERPC_COMMON',
+	source='common/forward.c common/reply.c dcesrv_auth.c',
+	autoproto='common/proto.h',
+	deps='ldb DCERPC_SHARE samba_server_gensec'
+	)
+
+
+bld.SAMBA_MODULE('dcerpc_rpcecho',
+	source='echo/rpc_echo.c',
+	subsystem='dcerpc_server',
+	init_function='dcerpc_server_rpcecho_init',
+	deps='ndr-standard events'
+	)
+
+
+bld.SAMBA_MODULE('dcerpc_epmapper',
+	source='epmapper/rpc_epmapper.c',
+	subsystem='dcerpc_server',
+	init_function='dcerpc_server_epmapper_init',
+	deps='NDR_EPMAPPER'
+	)
+
+
+bld.SAMBA_MODULE('dcerpc_remote',
+	source='remote/dcesrv_remote.c',
+	subsystem='dcerpc_server',
+	init_function='dcerpc_server_remote_init',
+	deps='LIBCLI_SMB ndr-table'
+	)
+
+
+bld.SAMBA_MODULE('dcerpc_srvsvc',
+	source='srvsvc/dcesrv_srvsvc.c srvsvc/srvsvc_ntvfs.c',
+	autoproto='srvsvc/proto.h',
+	subsystem='dcerpc_server',
+	init_function='dcerpc_server_srvsvc_init',
+	deps='DCERPC_COMMON NDR_SRVSVC share ntvfs'
+	)
+
+
+bld.SAMBA_MODULE('dcerpc_wkssvc',
+	source='wkssvc/dcesrv_wkssvc.c',
+	subsystem='dcerpc_server',
+	init_function='dcerpc_server_wkssvc_init',
+	deps='DCERPC_COMMON ndr-standard'
+	)
+
+
+bld.SAMBA_MODULE('dcerpc_unixinfo',
+	source='unixinfo/dcesrv_unixinfo.c',
+	subsystem='dcerpc_server',
+	init_function='dcerpc_server_unixinfo_init',
+	deps='DCERPC_COMMON samdb NDR_UNIXINFO LIBWBCLIENT_OLD'
+	)
+
+
+bld.SAMBA_MODULE('dcesrv_samr',
+	source='samr/dcesrv_samr.c samr/samr_password.c',
+	autoproto='samr/proto.h',
+	subsystem='dcerpc_server',
+	init_function='dcerpc_server_samr_init',
+	deps='samdb DCERPC_COMMON ndr-standard'
+	)
+
+
+bld.SAMBA_MODULE('dcerpc_winreg',
+	source='winreg/rpc_winreg.c',
+	subsystem='dcerpc_server',
+	init_function='dcerpc_server_winreg_init',
+	deps='registry ndr-standard',
+	internal_module=True
+	)
+
+
+bld.SAMBA_MODULE('dcerpc_netlogon',
+	source='netlogon/dcerpc_netlogon.c',
+	subsystem='dcerpc_server',
+	init_function='dcerpc_server_netlogon_init',
+	deps='DCERPC_COMMON RPC_NDR_IRPC COMMON_SCHANNEL ndr-standard auth4_sam samba-hostconfig CLDAPD'
+	)
+
+
+bld.SAMBA_MODULE('dcerpc_lsarpc',
+	source='lsa/dcesrv_lsa.c lsa/lsa_init.c lsa/lsa_lookup.c',
+	autoproto='lsa/proto.h',
+	subsystem='dcerpc_server',
+	init_function='dcerpc_server_lsa_init',
+	deps='samdb DCERPC_COMMON ndr-standard LIBCLI_AUTH NDR_DSSETUP com_err security kdc-policy'
+	)
+
+
+bld.SAMBA_MODULE('dcerpc_backupkey',
+	source='backupkey/dcesrv_backupkey.c ',
+	autoproto='backupkey/proto.h',
+	subsystem='dcerpc_server',
+	init_function='dcerpc_server_backupkey_init',
+	deps='samdb DCERPC_COMMON NDR_BACKUPKEY RPC_NDR_BACKUPKEY'
+	)
+
+
+bld.SAMBA_MODULE('dcerpc_spoolss',
+	source='spoolss/dcesrv_spoolss.c',
+	subsystem='dcerpc_server',
+	init_function='dcerpc_server_spoolss_init',
+	deps='DCERPC_COMMON NDR_SPOOLSS ntptr RPC_NDR_SPOOLSS',
+	internal_module=True
+	)
+
+
+bld.SAMBA_MODULE('dcerpc_drsuapi',
+	source='drsuapi/dcesrv_drsuapi.c drsuapi/updaterefs.c drsuapi/getncchanges.c drsuapi/addentry.c drsuapi/writespn.c drsuapi/drsutil.c',
+	subsystem='dcerpc_server',
+	init_function='dcerpc_server_drsuapi_init',
+	deps='samdb DCERPC_COMMON NDR_DRSUAPI security'
+	)
+
+
+bld.SAMBA_MODULE('dcerpc_browser',
+	source='browser/dcesrv_browser.c',
+	subsystem='dcerpc_server',
+	init_function='dcerpc_server_browser_init',
+	deps='DCERPC_COMMON NDR_BROWSER'
+	)
+
+bld.SAMBA_MODULE('dcerpc_eventlog',
+	source='eventlog/dcesrv_eventlog6.c',
+	subsystem='dcerpc_server',
+	init_function='dcerpc_server_eventlog6_init',
+	deps='DCERPC_COMMON'
+	)
+
+bld.SAMBA_LIBRARY('dcerpc_server',
+	source='dcerpc_server.c dcesrv_mgmt.c handles.c',
+	pc_files='dcerpc_server.pc',
+	deps='LIBCLI_AUTH ndr samba_server_gensec dcerpc_remote service',
+	public_deps='dcerpc',
+	autoproto='dcerpc_server_proto.h',
+	public_headers='dcerpc_server.h',
+	vnum='0.0.1'
+	)
+
+bld.SAMBA_MODULE('service_dcerpc',
+	source='service_rpc.c',
+	autoproto='service_rpc.h',
+	subsystem='service',
+	init_function='server_service_rpc_init',
+	internal_module=False,
+	deps='dcerpc_server'
+	)
+

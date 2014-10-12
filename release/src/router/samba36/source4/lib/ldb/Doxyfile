@@ -1,0 +1,26 @@
+PROJECT_NAME           = LDB
+OUTPUT_DIRECTORY       = apidocs
+REPEAT_BRIEF           = YES
+OPTIMIZE_OUTPUT_FOR_C  = YES
+SORT_MEMBER_DOCS       = YES
+SORT_BRIEF_DOCS        = NO
+GENERATE_TODOLIST      = YES
+GENERATE_BUGLIST       = YES
+GENERATE_DEPRECATEDLIST= YES
+SHOW_USED_FILES        = NO
+SHOW_DIRECTORIES       = NO
+WARNINGS               = YES
+WARN_IF_UNDOCUMENTED   = YES
+WARN_IF_DOC_ERROR      = YES
+WARN_NO_PARAMDOC       = NO
+WARN_FORMAT            = "$file:$line: $text"
+INPUT                  = include .
+FILE_PATTERNS          = *.h *.dox
+EXCLUDE                = include/config.h include/dlinklist.h \
+			include/includes.h
+EXAMPLE_PATH           = examples
+GENERATE_HTML          = YES
+HTML_OUTPUT            = html
+GENERATE_MAN           = YES
+ALWAYS_DETAILED_SEC	   = YES
+JAVADOC_AUTOBRIEF	   = YES

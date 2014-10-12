@@ -1,0 +1,25 @@
+<samba:parameter name="cups encrypt"
+	context="G"
+	type="enum"
+	advanced="1" print="1"
+	xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>
+	This parameter is only applicable if <smbconfoption name="printing"/>
+	is set to <constant>cups</constant> and if you use CUPS newer than
+	1.0.x.It is used to define whether or not Samba should use encryption
+	when talking to the CUPS server. Possible values are
+	<emphasis>auto</emphasis>, <emphasis>yes</emphasis> and
+	<emphasis>no</emphasis>
+	</para>
+
+	<para>
+	When set to auto we will try to do a TLS handshake on each CUPS
+	connection setup. If that fails, we will fall back to unencrypted
+	operation.
+	</para>
+
+</description>
+
+<value type="default">"no"</value>
+</samba:parameter>

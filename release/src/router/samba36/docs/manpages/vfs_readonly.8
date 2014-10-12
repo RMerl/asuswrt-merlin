@@ -1,0 +1,87 @@
+'\" t
+.\"     Title: vfs_readonly
+.\"    Author: [see the "AUTHOR" section]
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date: 09/18/2013
+.\"    Manual: System Administration tools
+.\"    Source: Samba 3.6
+.\"  Language: English
+.\"
+.TH "VFS_READONLY" "8" "09/18/2013" "Samba 3\&.6" "System Administration tools"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+vfs_readonly \- make a Samba share read only for a specified time period
+.SH "SYNOPSIS"
+.HP \w'\ 'u
+vfs objects = readonly
+.SH "DESCRIPTION"
+.PP
+This VFS module is part of the
+\fBsamba\fR(7)
+suite\&.
+.PP
+The
+vfs_readonly
+VFS module marks a share as read only for all clients connecting within the configured time period\&. Clients connecting during this time will be denied write access to all files in the share, irrespective of their actual access privileges\&.
+.PP
+This module is stackable\&.
+.SH "OPTIONS"
+.PP
+readonly:period = BEGIN, END
+.RS 4
+Only mark the share as read only if the client connection was made between the times marked by the BEGIN and END date specifiers\&. The syntax of these date specifiers is the same as that accepted by the \-d option of GNU
+\fBdate\fR(1)\&.
+.RE
+.SH "EXAMPLES"
+.PP
+Mark all shares read only:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+        \fI[global]\fR
+	\m[blue]\fBvfs objects = readonly\fR\m[]
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+Mark the [backup] share as read only during business hours:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+        \fI[backup]\fR
+	\m[blue]\fBpath = /readonly\fR\m[]
+	\m[blue]\fBvfs objects = readonly\fR\m[]
+	\m[blue]\fBreadonly:period = readonly:period = "today 9:00","today 17:00"\fR\m[]
+.fi
+.if n \{\
+.RE
+.\}
+.SH "VERSION"
+.PP
+This man page is correct for version 3\&.0\&.25 of the Samba suite\&.
+.SH "AUTHOR"
+.PP
+The original Samba software and related utilities were created by Andrew Tridgell\&. Samba is now developed by the Samba Team as an Open Source project similar to the way the Linux kernel is developed\&.

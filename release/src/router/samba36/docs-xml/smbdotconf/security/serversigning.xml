@@ -1,0 +1,24 @@
+<samba:parameter name="server signing"
+                 context="G"
+				 type="enum"
+                 basic="1"
+		 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+
+    <para>This controls whether the client is allowed or required to use SMB1 and SMB2 signing. Possible values
+    are <emphasis>auto</emphasis>, <emphasis>mandatory</emphasis>
+    and <emphasis>disabled</emphasis>.
+    </para>
+
+    <para>When set to auto, SMB1 signing is offered, but not enforced.
+    When set to mandatory, SMB1 signing is required and if set
+    to disabled, SMB signing is not offered either.</para>
+
+    <para>For the SMB2 protocol, by design, signing cannot be disabled. In the case
+    where SMB2 is negotiated, if this parameter is set to <emphasis>disabled</emphasis>,
+    it will be treated as <emphasis>auto</emphasis>. Setting it to <emphasis>mandatory</emphasis>
+    will still require SMB2 clients to use signing.</para>
+</description>
+
+<value type="default">Disabled</value>
+</samba:parameter>

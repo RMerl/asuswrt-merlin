@@ -1,0 +1,18 @@
+<samba:parameter name="root preexec"
+		 context="S"
+		 type="string"
+		 advanced="1" wizard="1" developer="1"
+		 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>
+	This is the same as the <parameter moreinfo="none">preexec</parameter>
+	parameter except that the command is run as root. This is useful for 
+	mounting filesystems (such as CDROMs) when a connection is opened.
+	</para>
+</description>
+
+<related>preexec</related>
+<related>preexec close</related>
+
+<value type="default"></value>
+</samba:parameter>

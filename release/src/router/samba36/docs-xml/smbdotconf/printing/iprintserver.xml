@@ -1,0 +1,19 @@
+<samba:parameter name="iprint server"
+                 context="G"
+		 type="string"
+		 print="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+    <para>
+    This parameter is only applicable if <smbconfoption name="printing"/> is set to <constant>iprint</constant>.
+    </para>
+
+   <para>
+   If set, this option overrides the ServerName option in the CUPS <filename>client.conf</filename>. This is 
+   necessary if you have virtual samba servers that connect to different CUPS daemons.
+   </para>
+</description>
+
+<value type="default">""</value>
+<value type="example">MYCUPSSERVER</value>
+</samba:parameter>

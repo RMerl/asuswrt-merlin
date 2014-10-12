@@ -1,0 +1,328 @@
+'\" t
+.\"     Title: smbpasswd
+.\"    Author: [see the "AUTHOR" section]
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date: 09/18/2013
+.\"    Manual: System Administration tools
+.\"    Source: Samba 3.6
+.\"  Language: English
+.\"
+.TH "SMBPASSWD" "8" "09/18/2013" "Samba 3\&.6" "System Administration tools"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+smbpasswd \- change a user\*(Aqs SMB password
+.SH "SYNOPSIS"
+.HP \w'\ 'u
+smbpasswd [\-a] [\-c\ <config\ file>] [\-x] [\-d] [\-e] [\-D\ debuglevel] [\-n] [\-r\ <remote\ machine>] [\-R\ <name\ resolve\ order>] [\-m] [\-U\ username[%password]] [\-h] [\-s] [\-w\ pass] [\-W] [\-i] [\-L] [username]
+.SH "DESCRIPTION"
+.PP
+This tool is part of the
+\fBsamba\fR(7)
+suite\&.
+.PP
+The smbpasswd program has several different functions, depending on whether it is run by the
+\fIroot\fR
+user or not\&. When run as a normal user it allows the user to change the password used for their SMB sessions on any machines that store SMB passwords\&.
+.PP
+By default (when run with no arguments) it will attempt to change the current user\*(Aqs SMB password on the local machine\&. This is similar to the way the
+passwd(1)
+program works\&.
+smbpasswd
+differs from how the passwd program works however in that it is not
+\fIsetuid root\fR
+but works in a client\-server mode and communicates with a locally running
+\fBsmbd\fR(8)\&. As a consequence in order for this to succeed the smbd daemon must be running on the local machine\&. On a UNIX machine the encrypted SMB passwords are usually stored in the
+\fBsmbpasswd\fR(5)
+file\&.
+.PP
+When run by an ordinary user with no options, smbpasswd will prompt them for their old SMB password and then ask them for their new password twice, to ensure that the new password was typed correctly\&. No passwords will be echoed on the screen whilst being typed\&. If you have a blank SMB password (specified by the string "NO PASSWORD" in the smbpasswd file) then just press the <Enter> key when asked for your old password\&.
+.PP
+smbpasswd can also be used by a normal user to change their SMB password on remote machines, such as Windows NT Primary Domain Controllers\&. See the (\fI\-r\fR) and
+\fI\-U\fR
+options below\&.
+.PP
+When run by root, smbpasswd allows new users to be added and deleted in the smbpasswd file, as well as allows changes to the attributes of the user in this file to be made\&. When run by root,
+smbpasswd
+accesses the local smbpasswd file directly, thus enabling changes to be made even if smbd is not running\&.
+.SH "OPTIONS"
+.PP
+\-a
+.RS 4
+This option specifies that the username following should be added to the local smbpasswd file, with the new password typed (type <Enter> for the old password)\&. This option is ignored if the username following already exists in the smbpasswd file and it is treated like a regular change password command\&. Note that the default passdb backends require the user to already exist in the system password file (usually
+/etc/passwd), else the request to add the user will fail\&.
+.sp
+This option is only available when running smbpasswd as root\&.
+.RE
+.PP
+\-c
+.RS 4
+This option can be used to specify the path and file name of the
+smb\&.conf
+configuration file when it is important to use other than the default file and / or location\&.
+.RE
+.PP
+\-x
+.RS 4
+This option specifies that the username following should be deleted from the local smbpasswd file\&.
+.sp
+This option is only available when running smbpasswd as root\&.
+.RE
+.PP
+\-d
+.RS 4
+This option specifies that the username following should be
+\fBdisabled\fR
+in the local smbpasswd file\&. This is done by writing a
+\fB\*(AqD\*(Aq\fR
+flag into the account control space in the smbpasswd file\&. Once this is done all attempts to authenticate via SMB using this username will fail\&.
+.sp
+If the smbpasswd file is in the \*(Aqold\*(Aq format (pre\-Samba 2\&.0 format) there is no space in the user\*(Aqs password entry to write this information and the command will FAIL\&. See
+\fBsmbpasswd\fR(5)
+for details on the \*(Aqold\*(Aq and new password file formats\&.
+.sp
+This option is only available when running smbpasswd as root\&.
+.RE
+.PP
+\-e
+.RS 4
+This option specifies that the username following should be
+\fBenabled\fR
+in the local smbpasswd file, if the account was previously disabled\&. If the account was not disabled this option has no effect\&. Once the account is enabled then the user will be able to authenticate via SMB once again\&.
+.sp
+If the smbpasswd file is in the \*(Aqold\*(Aq format, then
+smbpasswd
+will FAIL to enable the account\&. See
+\fBsmbpasswd\fR(5)
+for details on the \*(Aqold\*(Aq and new password file formats\&.
+.sp
+This option is only available when running smbpasswd as root\&.
+.RE
+.PP
+\-D debuglevel
+.RS 4
+\fIdebuglevel\fR
+is an integer from 0 to 10\&. The default value if this parameter is not specified is zero\&.
+.sp
+The higher this value, the more detail will be logged to the log files about the activities of smbpasswd\&. At level 0, only critical errors and serious warnings will be logged\&.
+.sp
+Levels above 1 will generate considerable amounts of log data, and should only be used when investigating a problem\&. Levels above 3 are designed for use only by developers and generate HUGE amounts of log data, most of which is extremely cryptic\&.
+.RE
+.PP
+\-n
+.RS 4
+This option specifies that the username following should have their password set to null (i\&.e\&. a blank password) in the local smbpasswd file\&. This is done by writing the string "NO PASSWORD" as the first part of the first password stored in the smbpasswd file\&.
+.sp
+Note that to allow users to logon to a Samba server once the password has been set to "NO PASSWORD" in the smbpasswd file the administrator must set the following parameter in the [global] section of the
+smb\&.conf
+file :
+.sp
+null passwords = yes
+.sp
+This option is only available when running smbpasswd as root\&.
+.RE
+.PP
+\-r remote machine name
+.RS 4
+This option allows a user to specify what machine they wish to change their password on\&. Without this parameter smbpasswd defaults to the local host\&. The
+\fIremote machine name\fR
+is the NetBIOS name of the SMB/CIFS server to contact to attempt the password change\&. This name is resolved into an IP address using the standard name resolution mechanism in all programs of the Samba suite\&. See the
+\fI\-R name resolve order\fR
+parameter for details on changing this resolving mechanism\&.
+.sp
+The username whose password is changed is that of the current UNIX logged on user\&. See the
+\fI\-U username\fR
+parameter for details on changing the password for a different username\&.
+.sp
+Note that if changing a Windows NT Domain password the remote machine specified must be the Primary Domain Controller for the domain (Backup Domain Controllers only have a read\-only copy of the user account database and will not allow the password change)\&.
+.sp
+\fINote\fR
+that Windows 95/98 do not have a real password database so it is not possible to change passwords specifying a Win95/98 machine as remote machine target\&.
+.RE
+.PP
+\-R name resolve order
+.RS 4
+This option allows the user of smbpasswd to determine what name resolution services to use when looking up the NetBIOS name of the host being connected to\&.
+.sp
+The options are :"lmhosts", "host", "wins" and "bcast"\&. They cause names to be resolved as follows:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fBlmhosts\fR: Lookup an IP address in the Samba lmhosts file\&. If the line in lmhosts has no name type attached to the NetBIOS name (see the
+\fBlmhosts\fR(5)
+for details) then any name type matches for lookup\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fBhost\fR: Do a standard host name to IP address resolution, using the system
+/etc/hosts, NIS, or DNS lookups\&. This method of name resolution is operating system depended for instance on IRIX or Solaris this may be controlled by the
+/etc/nsswitch\&.conf
+file)\&. Note that this method is only used if the NetBIOS name type being queried is the 0x20 (server) name type, otherwise it is ignored\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fBwins\fR: Query a name with the IP address listed in the
+\fIwins server\fR
+parameter\&. If no WINS server has been specified this method will be ignored\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fBbcast\fR: Do a broadcast on each of the known local interfaces listed in the
+\fIinterfaces\fR
+parameter\&. This is the least reliable of the name resolution methods as it depends on the target host being on a locally connected subnet\&.
+.RE
+.sp
+.RE
+The default order is
+lmhosts, host, wins, bcast
+and without this parameter or any entry in the
+\fBsmb.conf\fR(5)
+file the name resolution methods will be attempted in this order\&.
+.RE
+.PP
+\-m
+.RS 4
+This option tells smbpasswd that the account being changed is a MACHINE account\&. Currently this is used when Samba is being used as an NT Primary Domain Controller\&.
+.sp
+This option is only available when running smbpasswd as root\&.
+.RE
+.PP
+\-U username
+.RS 4
+This option may only be used in conjunction with the
+\fI\-r\fR
+option\&. When changing a password on a remote machine it allows the user to specify the user name on that machine whose password will be changed\&. It is present to allow users who have different user names on different systems to change these passwords\&.
+.RE
+.PP
+\-h
+.RS 4
+This option prints the help string for
+smbpasswd, selecting the correct one for running as root or as an ordinary user\&.
+.RE
+.PP
+\-s
+.RS 4
+This option causes smbpasswd to be silent (i\&.e\&. not issue prompts) and to read its old and new passwords from standard input, rather than from
+/dev/tty
+(like the
+passwd(1)
+program does)\&. This option is to aid people writing scripts to drive smbpasswd
+.RE
+.PP
+\-w password
+.RS 4
+This parameter is only available if Samba has been compiled with LDAP support\&. The
+\fI\-w\fR
+switch is used to specify the password to be used with the
+\m[blue]\fBldap admin dn\fR\m[]\&. Note that the password is stored in the
+secrets\&.tdb
+and is keyed off of the admin\*(Aqs DN\&. This means that if the value of
+\fIldap admin dn\fR
+ever changes, the password will need to be manually updated as well\&.
+.RE
+.PP
+\-W
+.RS 4
+NOTE:
+This option is same as "\-w" except that the password should be entered using stdin\&.
+.sp
+This parameter is only available if Samba has been compiled with LDAP support\&. The
+\fI\-W\fR
+switch is used to specify the password to be used with the
+\m[blue]\fBldap admin dn\fR\m[]\&. Note that the password is stored in the
+secrets\&.tdb
+and is keyed off of the admin\*(Aqs DN\&. This means that if the value of
+\fIldap admin dn\fR
+ever changes, the password will need to be manually updated as well\&.
+.RE
+.PP
+\-i
+.RS 4
+This option tells smbpasswd that the account being changed is an interdomain trust account\&. Currently this is used when Samba is being used as an NT Primary Domain Controller\&. The account contains the info about another trusted domain\&.
+.sp
+This option is only available when running smbpasswd as root\&.
+.RE
+.PP
+\-L
+.RS 4
+Run in local mode\&.
+.RE
+.PP
+username
+.RS 4
+This specifies the username for all of the
+\fIroot only\fR
+options to operate on\&. Only root can specify this parameter as only root has the permission needed to modify attributes directly in the local smbpasswd file\&.
+.RE
+.SH "NOTES"
+.PP
+Since
+smbpasswd
+works in client\-server mode communicating with a local smbd for a non\-root user then the smbd daemon must be running for this to work\&. A common problem is to add a restriction to the hosts that may access the
+smbd
+running on the local machine by specifying either
+\fIallow hosts\fR
+or
+\fIdeny hosts\fR
+entry in the
+\fBsmb.conf\fR(5)
+file and neglecting to allow "localhost" access to the smbd\&.
+.PP
+In addition, the smbpasswd command is only useful if Samba has been set up to use encrypted passwords\&.
+.SH "VERSION"
+.PP
+This man page is correct for version 3 of the Samba suite\&.
+.SH "SEE ALSO"
+.PP
+\fBsmbpasswd\fR(5),
+\fBSamba\fR(7)\&.
+.SH "AUTHOR"
+.PP
+The original Samba software and related utilities were created by Andrew Tridgell\&. Samba is now developed by the Samba Team as an Open Source project similar to the way the Linux kernel is developed\&.
+.PP
+The original Samba man pages were written by Karl Auer\&. The man page sources were converted to YODL format (another excellent piece of Open Source software, available at
+ftp://ftp\&.icce\&.rug\&.nl/pub/unix/) and updated for the Samba 2\&.0 release by Jeremy Allison\&. The conversion to DocBook for Samba 2\&.2 was done by Gerald Carter\&. The conversion to DocBook XML 4\&.2 for Samba 3\&.0 was done by Alexander Bokovoy\&.

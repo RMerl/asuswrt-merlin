@@ -1,0 +1,2896 @@
+<chapter label="6" id="SAMBA-CH-6">
+<title>Users, Security, and Domains </title>
+
+
+
+
+<para>This chapter discusses how to configure users with the Samba server. This topic may seem straightforward at first, but you'll soon discover that there are several ancillary problems that can crop up. One issue that Samba administrators have difficulty with is user authentication&mdash;password and security problems are by far the most common support questions on the Samba mailing lists. Learning why various authentication mechanisms work on certain architectures (and don't on others) can save you a tremendous amount of time testing and debugging Samba users in the future.</para>
+
+
+
+
+
+
+
+
+
+
+
+<sect1 role="" label="6.1" id="ch06-92902">
+<title>Users and Groups</title>
+
+
+<para>
+<indexterm id="ch06-idx-967489-0" class="startofrange"><primary>users</primary></indexterm>
+<indexterm id="ch06-idx-967489-1" class="startofrange"><primary>groups</primary></indexterm>Before we start, we need to warn you up front that if you are connecting to Samba with a Windows 98 or NT 4.0 Workstation SP3, you need to configure your server for encrypted passwords before you can make a connection; otherwise, the clients will refuse to connect to the Samba server. This is because each of those Windows clients sends encrypted passwords, and Samba needs to be configured to expect and decrypt them. We'll show you how to set up Samba for this task later in the chapter, assuming you haven't already tackled this problem in <link linkend="SAMBA-CH-2">Chapter 2</link>.</para>
+
+
+<para>
+<indexterm id="ch06-idx-967590-0"><primary>users</primary><secondary>setting up</secondary></indexterm>
+<indexterm id="ch06-idx-967590-1"><primary>client users</primary><see>users</see></indexterm>Let's start with a single user. The easiest way to set up a client user is to create a Unix account (and <indexterm id="ch06-idx-967591-0"><primary>home directory, user's</primary></indexterm>home directory) for that individual on the server, and notify Samba of the user's existence. You can do the latter by creating a disk share that maps to the user's home directory in the Samba configuration file, and restricting access to that user with the <literal>valid</literal> <literal>users</literal> option. For example:</para>
+
+
+<programlisting>[dave]
+                path = /home/dave
+                comment = Dave's home directory
+                writeable = yes
+<emphasis role="bold">                valid users = dave</emphasis></programlisting>
+
+
+<para>The <literal>valid</literal> <literal>users</literal> option lists the users that will be allowed to access the share.  In this case, only the user <literal>dave</literal> is allowed to access the share. In the previous chapters, we specified that any user could access a disk share using the <literal>guest</literal> <literal>ok</literal> parameter. Because we don't wish to allow guest access, that option is absent here. We could grant both authenticated users and guest users access to a specific share if we wanted to. The difference between the two typically involves access rights for each of the files.</para>
+
+
+<para>Remember that you can abbreviate the user's home directory by using the <literal>%H</literal> variable. In addition, you can use the Unix username variable <literal>%u</literal> and/or the client username variable <literal>%U</literal> in your options as well. For example:</para>
+
+
+<programlisting>[dave]
+	comment = %U home directory
+	writeable = yes
+	valid users = dave
+	path = %H</programlisting>
+
+
+<para>Both of these examples work as long as the Unix user that Samba uses to represent the client has read/write access to the directory referenced by the <literal>path</literal> option. In other words, a client must first pass Samba's security mechanisms (e.g., encrypted passwords, the <literal>valid users</literal> option, etc.) as well as the normal Unix file and directory permissions of its Unix-side user <emphasis>before</emphasis> it can gain read/write access to a share.</para>
+
+
+<para>With a single user accessing a home directory, access permissions are taken care of when the operating system creates the user account. However, if you're creating a shared directory for group access, there are a few more steps you need to perform. Let's take a stab at a group share for the accounting department in the <emphasis>smb.conf</emphasis> file:</para>
+
+
+<programlisting>[accounting]
+	comment = Accounting Department Directory
+	writeable = yes
+	valid users = @account
+	path = /home/samba/accounting
+	create mode = 0660
+	directory mode = 0770</programlisting>
+
+
+<para>The first thing that you might notice we did differently is to specify <literal>@account</literal> as the valid user instead of one or more individual usernames. This is shorthand for saying that the valid users are represented by the Unix group <literal>account</literal>. These users will need to be added to the group entry <literal>account</literal> in the system group file ( <filename>/etc/group</filename> or equivalent) to be recognized as part of the group. Once they are, Samba will recognize those users as valid users for the share.</para>
+
+
+<para>In addition, you will need to create a <indexterm id="ch06-idx-967592-0"><primary>shares</primary><secondary>access to</secondary><tertiary>creating for groups</tertiary></indexterm>shared directory that the members of the group can access, which is pointed to by the <literal>path</literal> configuration option. Here are the Unix commands that create the shared directory for the accounting department (assuming <emphasis>/home/samba</emphasis> already exists):</para>
+
+
+<programlisting># <emphasis role="bold">mkdir /home/samba/accounting</emphasis># <emphasis role="bold">chgrp account /home/samba/accounting</emphasis># <emphasis role="bold">chmod 770 /home/samba/accounting</emphasis></programlisting>
+
+
+<para>There are two other options in this <filename>smb.conf</filename> example, both of which we saw in the previous chapter. These options are <literal>create</literal> <literal>mode</literal> and <literal>directory</literal> <literal>mode</literal>. These options set the maximum file and directory permissions that a new file or directory can have. In this case, we have denied all world access to the contents of this share. (This is reinforced by the <emphasis>chmod</emphasis> command, shown earlier.).</para>
+
+
+<sect2 role="" label="6.1.1" id="ch06-SECT-1.1">
+<title>The [ homes] Share</title>
+
+
+<para>Let's return to user shares for a moment. If we have several users to set up home directory shares for, we probably want to use the special <literal>[homes]</literal> share that we introduced in <link linkend="SAMBA-CH-5">Chapter 5</link>. With the <literal>[homes]</literal>
+<indexterm id="ch06-idx-967594-0"><primary sortas="homes share">[homes] share</primary></indexterm>
+<indexterm id="ch06-idx-967594-1"><primary>users</primary><secondary>shares for, setting up</secondary></indexterm> share, all we need to say is:</para>
+
+
+<programlisting>[homes]
+	browsable = no
+	writable = yes</programlisting>
+
+
+<para>The <literal>[homes]</literal> share is a special section of the Samba configuration file. If a user attempts to connect to an ordinary share that doesn't appear in the <filename>smb.conf</filename> file (such as specifying it with a UNC in Windows Explorer), Samba will search for a <literal>[homes]</literal> share. If one exists, the incoming share name is assumed to be a username and is queried as such in the password database ( <filename>/etc/passwd</filename> or equivalent) file of the Samba server. If it appears, Samba assumes the client is a Unix user trying to connect to his or her home directory.</para>
+
+
+<para>As an illustration, let's assume that <literal>sofia</literal> is attempting to connect to a share called [<literal>sofia]</literal> on the Samba server. There is no share by that name in the configuration file, but a <literal>[homes]</literal> share exists and user <literal>sofia</literal> is present in the password database, so Samba takes the following steps:</para>
+
+
+<orderedlist>
+<listitem><para>Samba creates a new disk share called <literal>[sofia]</literal> with the <literal>path</literal> specified in the <literal>[homes]</literal> section. If there is no <literal>path</literal> option specified in <literal>[homes]</literal>, Samba initializes it to her home directory.</para></listitem>
+<listitem><para>Samba initializes the new share's options from the defaults in <literal>[globals]</literal>, and any overriding options in <literal>[homes]</literal> with the exception of <literal>browseable</literal>.</para></listitem>
+<listitem><para>Samba connects <literal>sofia</literal>'s client to that share.</para></listitem>
+</orderedlist>
+
+<para>The <literal>[homes]</literal> share is a fast, painless way to create shares for your user community without having to duplicate the information from the password database file in the <filename>smb.conf</filename> file. It does have some peculiarities, however, that we need to point out:</para>
+
+
+<itemizedlist>
+<listitem><para>The <literal>[homes]</literal> section can represent any account on the machine, which isn't always desirable. For example, it can potentially create a share for <emphasis>root</emphasis>, <emphasis>bin</emphasis>, <emphasis>sys</emphasis>, <emphasis>uucp</emphasis>, and the like. (You can set a global <literal>invalid</literal> <literal>users</literal> option to protect against this.)</para></listitem>
+<listitem><para>The meaning of the <literal>browseable</literal> configuration option is different from other shares; it indicates only that a <literal>[homes]</literal> section won't show up in the local browse list, not that the <literal>[alice]</literal> share won't. When the <literal>[alice]</literal> section is created (after the initial connection), it will use the browsable value from the <literal>[globals]</literal> section for that share, not the value from <literal>[homes]</literal>.</para></listitem>
+</itemizedlist>
+
+<para>As we mentioned, there is no need for a path statement in <literal>[homes]</literal> if the users have Unix home directories in the server's <filename>/etc/passwd</filename> file. You should ensure that a valid home directory does exist, however, as Samba will not automatically create a home directory for a user, and will refuse a tree connect if the user's directory does not exist or is not accessible.<indexterm id="ch06-idx-967568-0" class="endofrange" startref="ch06-idx-967489-0"/>
+<indexterm id="ch06-idx-967568-1" class="endofrange" startref="ch06-idx-967489-1"/></para>
+</sect2>
+</sect1>
+
+
+
+
+
+
+
+
+
+<sect1 role="" label="6.2" id="ch06-27678">
+<title>Controlling Access to Shares</title>
+
+
+<para>
+<indexterm id="ch06-idx-967497-0" class="startofrange"><primary>shares</primary><secondary>access to</secondary><tertiary>controlling</tertiary></indexterm>
+<indexterm id="ch06-idx-967497-1" class="startofrange"><primary>security</primary><secondary>restricting access to shares</secondary></indexterm>Often you will need to restrict the users who can access a specific share for security reasons. This is very easy to do with Samba since it contains a wealth of options for creating practically any security configuration. Let's introduce a few configurations that you might want to use in your own Samba setup.</para>
+
+
+<warning role="ora">
+<para>Again, if you are connecting with Windows 98 or NT 4.0 with Service Pack 3 (or above), those clients will send encrypted passwords to the Samba server. If Samba is not configured for this, it will continually refuse the connection. This chapter describes how to set up Samba for encrypted passwords. See <link linkend="ch06-61393">Section 6.4</link>.</para>
+
+</warning>
+
+<para>We've seen what happens when you specify valid users. However, you are also allowed to specify a list of invalid <indexterm id="ch06-idx-967599-0"><primary>users</primary><secondary>invalid, specifying</secondary></indexterm>users&mdash;users who should never be allowed access to Samba or its shares. This is done with the <literal>invalid</literal> <literal>users</literal> option. We hinted at one frequent use of this option earlier: a global default with the <literal>[homes]</literal> section to ensure that various system users and superusers cannot be forged for access. For example:</para>
+
+
+<programlisting>[global]
+	invalid users = root bin daemon adm sync shutdown \
+                             halt mail news uucp operator gopher
+	auto services = dave peter bob
+
+[homes]
+	browsable = no
+	writeable = yes</programlisting>
+
+
+<para>The <literal>invalid</literal> <literal>users</literal> option, like <literal>valid</literal> <literal>users</literal>, can take group names as well as usernames. In the event that a user or group appears in both lists, the <literal>invalid</literal> <literal>users</literal> option takes precedence and the user or group will be denied access to the share.</para>
+
+
+<para>At the other end of the spectrum, you can explicitly specify users who will be allowed <indexterm id="ch06-idx-967600-0"><primary>root user</primary><secondary>access</secondary></indexterm>
+<indexterm id="ch06-idx-967600-1"><primary>users</primary><secondary>allowing superuser (root) access to</secondary></indexterm>
+<indexterm id="ch06-idx-967600-2"><primary>superuser</primary><see>root user</see></indexterm>superuser (root) access to a share with the <literal>admin</literal> <literal>users</literal> option. An example follows:</para>
+
+
+<programlisting>[sales]
+		path = /home/sales
+		comment = Fiction Corp Sales Data
+		writeable = yes
+		valid users = tom dick harry
+		admin users = mike</programlisting>
+
+
+<para>This option takes both group names and usernames. In addition, you can specify NIS netgroups by preceding them with an <literal>@</literal> as well; if the netgroup is not found, Samba will assume that you are referring to a standard Unix group.</para>
+
+
+<para>Be careful if you assign an entire <indexterm id="ch06-idx-967601-0"><primary>groups</primary><secondary>administrative privileges for</secondary></indexterm>group administrative privileges to a share. The Samba team highly recommends you avoid using this option, as it essentially gives root access to the specified users or groups for that share.</para>
+
+
+<para>If you wish to force <indexterm id="ch06-idx-967602-0"><primary>read-only/read-write access</primary></indexterm>
+<indexterm id="ch06-idx-967602-1"><primary>users</primary><secondary>read-only/read-write access</secondary></indexterm>read-only or read-write access to users who access a share, you can do so with the <literal>read</literal> <literal>list</literal> and <literal>write</literal> <literal>list</literal> options, respectively. These options can be used on a per-share basis to restrict a writable share or grant write access to specific users in a read-only share, respectively. For example:</para>
+
+
+<programlisting>[sales]
+		path = /home/sales
+		comment = Fiction Corp Sales Data
+		read only = yes
+		write list = tom dick</programlisting>
+
+
+<para>The <literal>write</literal> <literal>list</literal> option cannot override <indexterm id="ch06-idx-968868-0"><primary>Unix</primary><secondary>permissions, share write access and</secondary></indexterm>Unix permissions. If you've created the share without giving the write-list user write permission on the Unix system, he or she will be denied write access regardless of the setting of <literal>write</literal> <literal>list</literal>.</para>
+
+
+<sect2 role="" label="6.2.1" id="ch06-SECT-2.1">
+<title>Guest Access</title>
+
+
+<para>
+<indexterm id="ch06-idx-967606-0" class="startofrange"><primary>guest access</primary></indexterm>As mentioned earlier, you can specify users who have guest access to a share. The options that control guest access are easy to work with. The first option, <literal>guest</literal> <literal>account</literal>, specifies the Unix account that guest users should be assigned when connecting to the Samba server. The default value for this is set during compilation, and is typically <literal>nobody</literal>. However, you may want to reset the guest user to <literal>ftp</literal> if you have trouble accessing various system services.</para>
+
+
+<para>If you wish to restrict access in a share only to guests&mdash;in other words, all clients connect as the guest account when accessing the share&mdash;you can use the <literal>guest</literal> <literal>only</literal> option in conjunction with the <literal>guest ok</literal> option, as shown in the following example:</para>
+
+
+<programlisting>[sales]
+		path = /home/sales
+		comment = Fiction Corp Sales Data
+		writeable = yes
+		guest ok = yes
+		guest account = ftp
+		guest only = yes</programlisting>
+
+
+<para>Make sure you specify <literal>yes</literal> for both <literal>guest only</literal> and <literal>guest ok</literal> in this scenario; otherwise, Samba will not use the guest acount that you specify.</para>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="6.2.2" id="ch06-SECT-2.2">
+<title>Access Control Options</title>
+
+
+<para>
+<indexterm id="ch06-idx-967608-0" class="startofrange"><primary>access-control options (shares)</primary></indexterm><link linkend="ch06-28077">Table 6.1</link> summarizes the options that you can use to control access to shares.</para>
+
+
+<table label="6.1" id="ch06-28077">
+<title>Share-level Access Options </title>
+
+<tgroup cols="5">
+<colspec colnum="1" colname="col1"/>
+<colspec colnum="2" colname="col2"/>
+<colspec colnum="3" colname="col3"/>
+<colspec colnum="4" colname="col4"/>
+<colspec colnum="5" colname="col5"/>
+<thead>
+<row>
+
+<entry colname="col1"><para>Option</para></entry>
+
+<entry colname="col2"><para>Parameters</para></entry>
+
+<entry colname="col3"><para>Function</para></entry>
+
+<entry colname="col4"><para>Default</para></entry>
+
+<entry colname="col5"><para>Scope</para></entry>
+
+</row>
+
+</thead>
+
+<tbody>
+<row>
+
+<entry colname="col1"><para><literal>admin users</literal></para></entry>
+
+<entry colname="col2"><para>string (list of usernames)</para></entry>
+
+<entry colname="col3"><para>Specifies a list of users who can perform operations as root.</para></entry>
+
+<entry colname="col4"><para>None</para></entry>
+
+<entry colname="col5"><para>Share</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>valid users</literal></para></entry>
+
+<entry colname="col2"><para>string (list of usernames)</para></entry>
+
+<entry colname="col3"><para>Specifies a list of users that can connect to a share.</para></entry>
+
+<entry colname="col4"><para>None</para></entry>
+
+<entry colname="col5"><para>Share</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>invalid users</literal></para></entry>
+
+<entry colname="col2"><para>string (list of usernames)</para></entry>
+
+<entry colname="col3"><para>Specifies a list of users that will be denied access to a share.</para></entry>
+
+<entry colname="col4"><para>None</para></entry>
+
+<entry colname="col5"><para>Share</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>read list</literal></para></entry>
+
+<entry colname="col2"><para>string (list of usernames)</para></entry>
+
+<entry colname="col3"><para>Specifies a list of users that have read-only access to a writable share.</para></entry>
+
+<entry colname="col4"><para>None</para></entry>
+
+<entry colname="col5"><para>Share</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>write list</literal></para></entry>
+
+<entry colname="col2"><para>string (list of usernames)</para></entry>
+
+<entry colname="col3"><para>Specifies a list of users that have read-write access to a read-only share.</para></entry>
+
+<entry colname="col4"><para>None</para></entry>
+
+<entry colname="col5"><para>Share</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>max connections</literal></para></entry>
+
+<entry colname="col2"><para>numerical</para></entry>
+
+<entry colname="col3"><para>Indicates the maximum number of connections for a share at a given time.</para></entry>
+
+<entry colname="col4"><para><literal>0</literal></para></entry>
+
+<entry colname="col5"><para>Share</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>guest only (only guest)</literal></para></entry>
+
+<entry colname="col2"><para>boolean</para></entry>
+
+<entry colname="col3"><para>Specifies that this share allows only guest access.</para></entry>
+
+<entry colname="col4"><para><literal>no</literal></para></entry>
+
+<entry colname="col5"><para>Share</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>guest account</literal></para></entry>
+
+<entry colname="col2"><para>string (name of account)</para></entry>
+
+<entry colname="col3"><para>Names the Unix account that will be used for guest access.</para></entry>
+
+<entry colname="col4"><para><literal>nobody</literal></para></entry>
+
+<entry colname="col5"><para>Share</para></entry>
+
+</row>
+
+</tbody>
+</tgroup>
+</table>
+
+
+<sect3 role="" label="6.2.2.1" id="ch06-SECT-2.2.1">
+<indexterm id="ch06-idx-969448-0"><primary>admin users option</primary></indexterm>
+<title>
+admin users</title>
+
+
+<para>This option specifies a list of users that perform file operations as if they were <literal>root</literal>. This means that they can modify or destroy any other user's work, no matter what the permissions. Any files that they create will have root ownership and will use the default group of the admin user. The <literal>admin</literal> <literal>users</literal> option is used to allow PC users to act as administrators for particular shares. We urge you to avoid this option.</para>
+</sect3>
+
+
+
+<sect3 role="" label="6.2.2.2" id="ch06-SECT-2.2.2">
+<indexterm id="ch06-idx-969449-0"><primary>alid users option</primary></indexterm>
+<indexterm id="ch06-idx-969449-1"><primary>invalid users option</primary></indexterm>
+<title>v
+alid users and invalid users</title>
+
+
+<para>These two options let you enumerate the users and groups who are granted or denied access to a particular share. You can enter a list of comma-delimited users, or indicate an NIS or Unix group name by prefixing the name with an at-sign (<literal>@</literal>).</para>
+
+
+<para>The important rule to remember with these options is that any name or group in the <literal>invalid</literal> <literal>users</literal> list will <emphasis>always</emphasis> be denied access, even if it is included (in any form) in the <literal>valid</literal> <literal>users</literal> list. By default, neither option has a value associated with it. If both options have no value, any user is allowed to access the share.</para>
+</sect3>
+
+
+
+<sect3 role="" label="6.2.2.3" id="ch06-SECT-2.2.3">
+<indexterm id="ch06-idx-969450-0"><primary>read list option</primary></indexterm>
+<indexterm id="ch06-idx-969450-1"><primary>write list option</primary></indexterm>
+<title>
+
+read list and write list</title>
+
+
+<para>Like the <literal>valid</literal> <literal>users</literal> <literal>and</literal> <literal>invalid</literal> <literal>users</literal> options, this pair of options specifies which users have read-only access to a writeable share and read-write access to a read-only share, respectively. The value of either options is a list of users. <literal>read</literal> <literal>list</literal> overrides any other Samba permissions granted&mdash;as well as Unix file permissions on the server system&mdash;to deny users write access. <literal>write</literal> <literal>list</literal> overrides other Samba permissions to grant write access, but cannot grant write access if the user lacks write permissions for the file on the Unix system. You can specify NIS or Unix group names by prefixing the name with an at sign (such as <literal>@users</literal>). Neither configuration option has a default value associated with it.</para>
+</sect3>
+
+
+
+<sect3 role="" label="6.2.2.4" id="ch06-SECT-2.2.4">
+<indexterm id="ch06-idx-969451-0"><primary>max connections option</primary></indexterm>
+<title>
+max connections</title>
+
+
+<para>This option specifies the maximum number of client connections that a share can have at any given time. Any connections that are attempted after the maximum is reached will be rejected. The default value is <literal>0</literal>, which means that an unlimited number of connections are allowed. You can override it per share as follows:</para>
+
+
+<programlisting>[accounting]
+	max connections = 30</programlisting>
+
+
+<para>This option is useful in the event that you need to limit the number of users who are accessing a licensed program or piece of data concurrently.</para>
+</sect3>
+
+
+
+<sect3 role="" label="6.2.2.5" id="ch06-SECT-2.2.5">
+<indexterm id="ch06-idx-969452-0"><primary>guest only option</primary></indexterm>
+<title>
+guest only</title>
+
+
+<para>This share-level option (sometimes called <literal>only</literal> <literal>guest</literal>) forces a connection to a share to be performed with the user specified by the <literal>guest</literal> <literal>account</literal> option. The share to which this is applied must explicitly specify <literal>guest</literal> <literal>ok</literal> <literal>=</literal> <literal>yes</literal> in order for this option to be recognized by Samba. The default value for this option is <literal>no</literal>.</para>
+</sect3>
+
+
+
+<sect3 role="" label="6.2.2.6" id="ch06-SECT-2.2.6">
+<indexterm id="ch06-idx-969453-0"><primary>guest account option</primary></indexterm>
+<title>
+guest account</title>
+
+
+<para>This option specifies the name of account to be used for guest access to shares in Samba. The default for this option varies from system to system, but it is often set to <literal>nobody</literal>. Some default user accounts have trouble connecting as guest users. If that occurs on your system, the Samba team recommends using the ftp account as the guest<indexterm id="ch06-idx-967617-0" class="endofrange" startref="ch06-idx-967608-0"/> user.<indexterm id="ch06-idx-967607-0" class="endofrange" startref="ch06-idx-967606-0"/></para>
+</sect3>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="6.2.3" id="ch06-SECT-2.3">
+<title>Username Options</title>
+
+
+<para>
+<indexterm id="ch06-idx-967622-0" class="startofrange"><primary>usernames</primary><secondary>options for</secondary></indexterm><link linkend="ch06-82964">Table 6.2</link> shows two additional options that Samba can use to correct for incompatibilities in usernames between Windows and Unix.</para>
+
+
+<table label="6.2" id="ch06-82964">
+<title>Username Options </title>
+
+<tgroup cols="5">
+<colspec colnum="1" colname="col1"/>
+<colspec colnum="2" colname="col2"/>
+<colspec colnum="3" colname="col3"/>
+<colspec colnum="4" colname="col4"/>
+<colspec colnum="5" colname="col5"/>
+<thead>
+<row>
+
+<entry colname="col1"><para>Option</para></entry>
+
+<entry colname="col2"><para>Parameters</para></entry>
+
+<entry colname="col3"><para>Function</para></entry>
+
+<entry colname="col4"><para>Default</para></entry>
+
+<entry colname="col5"><para>Scope</para></entry>
+
+</row>
+
+</thead>
+
+<tbody>
+<row>
+
+<entry colname="col1"><para><literal>username map</literal></para></entry>
+
+<entry colname="col2"><para>string (fully-qualified pathname)</para></entry>
+
+<entry colname="col3"><para>Sets the name of the username mapping file.</para></entry>
+
+<entry colname="col4"><para>None</para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>username level</literal></para></entry>
+
+<entry colname="col2"><para>numerical</para></entry>
+
+<entry colname="col3"><para>Indicates the number of capital letters to use when trying to match a username.</para></entry>
+
+<entry colname="col4"><para><literal>0</literal></para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+</tbody>
+</tgroup>
+</table>
+
+
+<sect3 role="" label="6.2.3.1" id="ch06-SECT-2.3.1">
+<indexterm id="ch06-idx-969456-0"><primary>username map option</primary></indexterm>
+<title>
+username map</title>
+
+
+<para>
+<indexterm id="ch06-idx-967632-0"><primary>usernames</primary><secondary>SMB vs. Unix networks</secondary></indexterm>
+<indexterm id="ch06-idx-967632-1"><primary>SMB (Server Message Block)</primary><secondary>networks</secondary><tertiary>usernames and</tertiary></indexterm>
+<indexterm id="ch06-idx-967632-2"><primary>Unix</primary><secondary>networks, usernames and</secondary></indexterm>Client usernames on an SMB network can be relatively large (up to 255 characters), while usernames on a Unix network often cannot be larger than eight characters. This means that an individual user may have one username on a client and another (shorter) one on the Samba server. You can get past this issue by<firstterm> mapping</firstterm> a free-form client username to a Unix username of eight or fewer characters. It is placed in a standard text file, using a format that we'll describe shortly. You can then specify the pathname to Samba with the global <literal>username</literal> <literal>map</literal> option. Be sure to restrict access to this file; make the root user the file's owner and deny write access to others. Otherwise, an untrusted user who can access the file can easily map their client username to the root user of the Samba server.</para>
+
+
+<para>You can specify this option as follows:</para>
+
+
+<programlisting>[global]
+	username map = /etc/samba/usermap.txt</programlisting>
+
+
+<para>Each of the entries in the username map file should be listed as follows: the Unix username, followed by an equal sign (<literal>=</literal>), followed by one or more whitespace-separated SMB client usernames. Note that unless instructed otherwise, (i.e., a guest connection), Samba will expect both the client and the server user to have the same password. You can also map NT groups to one or more specific Unix groups using the <literal>@</literal> sign. Here are some examples:</para>
+
+
+<programlisting>jarwin = JosephArwin
+manderso = MarkAnderson
+users = @account</programlisting>
+
+
+<para>Also, you can use the asterisk to specify a wildcard that matches any free-form client username as an entry in the username map file:</para>
+
+
+<programlisting>nobody = *</programlisting>
+
+
+<para>Comments in the file can be specified as lines beginning with (#) and (<literal>;</literal>).</para>
+
+
+<para>Note that you can also use this file to redirect one Unix user to another user. Be careful if you do so because Samba and your client may not notify the user that the mapping has been made and Samba may be expecting a different password.</para>
+</sect3>
+
+
+
+<sect3 role="" label="6.2.3.2" id="ch06-SECT-2.3.2">
+<indexterm id="ch06-idx-969459-0"><primary>username level option</primary></indexterm>
+<title>
+username level</title>
+
+
+<para>
+<indexterm id="ch06-idx-967633-0"><primary>usernames</primary><secondary>case sensitivity and</secondary></indexterm>
+<indexterm id="ch06-idx-967633-1"><primary>case sensitivity</primary><secondary>usernames and</secondary></indexterm>SMB clients (such as Windows) will often send usernames in SMB connection requests entirely in capital letters; in other words, client usernames are not necessarily case sensitive. On a Unix server, however, usernames <emphasis>are</emphasis> case sensitive: the user <literal>ANDY</literal> is different from the user <literal>andy</literal>. By default, Samba attacks this problem by doing the following:</para>
+
+
+<orderedlist>
+<listitem><para>Checking for a user account with the exact name sent by the client</para></listitem>
+<listitem><para>Testing the username in all lowercase letters</para></listitem>
+<listitem><para>Testing the username in lowercase letters with only the first letter capitalized</para></listitem>
+</orderedlist>
+
+<para>If you wish to have Samba attempt more combinations of uppercase and lowercase letters, you can use the <literal>username</literal> <literal>level</literal> global configuration option. This option takes an integer value that specifies how many letters in the username should be capitalized when attempting to connect to a share. You can specify this options as follows:</para>
+
+
+<programlisting>[global]
+	username level = 3</programlisting>
+
+
+<para>In this case, Samba will then attempt all permutations of usernames it can compute having three capital letters. The larger the number, the more computations Samba will have to perform to match the username and the longer the authentication wil<indexterm id="ch06-idx-967629-0" class="endofrange" startref="ch06-idx-967622-0"/>l take.<indexterm id="ch06-idx-967624-0" class="endofrange" startref="ch06-idx-967497-0"/>
+<indexterm id="ch06-idx-967624-1" class="endofrange" startref="ch06-idx-967497-1"/></para>
+</sect3>
+</sect2>
+</sect1>
+
+
+
+
+
+
+
+
+
+<sect1 role="" label="6.3" id="ch06-88596">
+<title>Authentication Security</title>
+
+
+<para>
+<indexterm id="ch06-idx-967505-0" class="startofrange"><primary>authentication</primary></indexterm>
+<indexterm id="ch06-idx-967505-1" class="startofrange"><primary>security</primary></indexterm>At this point, we should discuss how Samba authenticates users. Each user who attempts to connect to a share that does not allow guest access must provide a password to make a successful connection. What Samba does with that password&mdash;and consequently the strategy Samba will use to handle user authentication&mdash;is the arena of the <literal>security</literal> configuration option. There are currently four <indexterm id="ch06-idx-967637-0"><primary>security</primary><secondary>levels of</secondary></indexterm>security levels that Samba supports on its network: <firstterm>share</firstterm>, <firstterm>user</firstterm>, <firstterm>server</firstterm>, and <firstterm>domain</firstterm>.</para>
+
+
+<variablelist>
+<varlistentry><term>
+<indexterm id="ch06-idx-967638-0"><primary>share-level security</primary></indexterm>Share-level security</term>
+<listitem><para>Each share in the workgroup has one or more passwords associated with it. Anyone who knows a valid password for the share can access it.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term>
+<indexterm id="ch06-idx-967639-0"><primary>user-level security</primary></indexterm>User-level security</term>
+<listitem><para>Each share in the workgroup is configured to allow access from certain users. With each initial tree connection, the Samba server verifies users and their passwords to allow them access to the share.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term>Server-level security</term>
+<listitem><para>This is the same as user-level security, except that the Samba server uses a separate SMB server to validate users and their passwords before granting access to the share.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term>
+<indexterm id="ch06-idx-967641-0"><primary>domain-level security</primary></indexterm>Domain-level security</term>
+<listitem><para>Samba becomes a member of a Windows domain and uses the domain's <indexterm id="ch06-idx-967642-0"><primary>PDC (primary domain controller)</primary><secondary>domain-level security and</secondary></indexterm>primary domain controller (PDC) to perform authentication. Once authenticated, the user is given a special token that allows him or her access to any share with appropriate access rights. With this token, the PDC will not have to revalidate the user's password each time he or she attempts to access another share within the domain.</para></listitem>
+</varlistentry>
+</variablelist>
+
+
+<para>Each of these security policies can be implemented with the global <literal>security</literal> option, as shown in <link linkend="ch06-73905">Table 6.3</link>.</para>
+
+
+<table label="6.3" id="ch06-73905">
+<title>Security Option </title>
+
+<tgroup cols="5">
+<colspec colnum="1" colname="col1"/>
+<colspec colnum="2" colname="col2"/>
+<colspec colnum="3" colname="col3"/>
+<colspec colnum="4" colname="col4"/>
+<colspec colnum="5" colname="col5"/>
+<thead>
+<row>
+
+<entry colname="col1"><para>Option</para></entry>
+
+<entry colname="col2"><para>Parameters</para></entry>
+
+<entry colname="col3"><para>Function</para></entry>
+
+<entry colname="col4"><para>Default</para></entry>
+
+<entry colname="col5"><para>Scope</para></entry>
+
+</row>
+
+</thead>
+
+<tbody>
+<row>
+
+<entry colname="col1"><para><literal>security</literal></para></entry>
+
+<entry colname="col2"><para>
+<indexterm id="ch06-idx-968919-0"><primary>security</primary><secondary>options for</secondary></indexterm><literal>domain</literal>, <literal>server</literal>, <literal>share</literal>, or <literal>user</literal></para></entry>
+
+<entry colname="col3"><para>Indicates the type of security that the Samba server will use.</para></entry>
+
+<entry colname="col4"><para><literal>user</literal> (Samba 2.0) or <literal>share</literal> (Samba 1.9)</para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+</tbody>
+</tgroup>
+</table>
+
+
+<sect2 role="" label="6.3.1" id="ch06-SECT-3.1">
+<title>Share-level Security</title>
+
+
+<para>
+<indexterm id="ch06-idx-967644-0" class="startofrange"><primary>share-level security</primary></indexterm>
+<indexterm id="ch06-idx-967644-1" class="startofrange"><primary>security</primary><secondary>share-level</secondary></indexterm>With share-level security, each share has one or more passwords associated with it. This differs from the other modes of security in that there are no restrictions as to whom can access a share, as long as that individual knows the correct password. Shares often have multiple passwords. For example, one password may grant read-only access, while another may grant read-write access, and so on. Security is maintained as long as unauthorized users do not discover the password for a share to which they shouldn't have access.</para>
+
+
+<para>
+<indexterm id="ch06-idx-967666-0"><primary>OS/2, support for share-level security</primary></indexterm>
+<indexterm id="ch06-idx-967666-1"><primary>Windows 95/98</primary><secondary>share-level security, support for</secondary></indexterm>OS/2 and Window 95/98 both support share-level security on their resources. You can set up share-level security with Windows 95/98 by first enabling share-level security using the Access Control tab of the Network Control Panel dialog. Then select the Share-level Access Control radio button (which deselects the user-level access control radio button), as shown in <link linkend="ch06-33100">Figure 6.1</link>, and press the OK button.</para>
+
+
+<figure label="6.1" id="ch06-33100">
+<title>Selecting share-level security on a Windows machine</title>
+
+<graphic width="502" depth="284" fileref="figs/sam.0601.gif"></graphic>
+</figure>
+
+<para>Next, right click on a resource&mdash;such as a hard drive or a CD-ROM&mdash;and select the Properties menu item. This will bring up the Resource Properties dialog box. Select the Sharing tab at the top of the dialog box and enable the resource as Shared As. From here, you can configure how the shared resource will appear to individual users, as well as assigning whether the resource will appear as read-only, read-write, or a mix, depending on the password that is supplied.</para>
+
+
+<para>You might be thinking that this security model is not a good fit for Samba&mdash;and you would be right. In fact, if you set the <literal>security</literal> <literal>=</literal> <literal>share</literal> option in the Samba configuration file, Samba will still reuse the username/passwords combinations in the system password files to authenticate access. More precisely, Samba will take the following steps when a client requests a connection using <indexterm id="ch06-idx-967667-0"><primary>share-level security</primary><secondary>steps in taken by Samba</secondary></indexterm>share-level security:</para>
+
+
+<orderedlist>
+<listitem><para>When a connection is requested, Samba will accept the password and (if sent) the username of the client.</para></listitem>
+<listitem><para>If the share is <literal>guest</literal> <literal>only </literal>, the user is immediately granted access to the share with the rights of the user specified by the <literal>guest</literal> <literal>account</literal> parameter; no password checking is performed.</para></listitem>
+<listitem><para>For other shares, Samba appends the username to a list of users who are allowed access to the share. It then attempts to validate the password given in association with that username. If successful, Samba grants the user access to the share with the rights assigned to that user. The user will not need to authenticate again unless a <literal>revalidate</literal> <literal>=</literal> <literal>yes</literal> option has been set inside the share.</para></listitem>
+<listitem><para>If the authentication is unsuccessful, Samba will attempt to validate the password against the list of users it has previously compiled throughout the attempted connections, as well as any specified under the share in the configuration file. If the password does not match any usernames (as specified in the system password file, typically <filename>/etc/passwd </filename>), the user is not granted access to the share under that username.</para></listitem>
+<listitem><para>However, if the share has a <literal>guest</literal> <literal>ok</literal> or <literal>public</literal> option set, the user will default to access with the rights of the user specified by the <literal>guest</literal> <literal>account</literal> option.</para></listitem>
+</orderedlist>
+
+<para>You can indicate in the configuration file which users should be initially placed on the share-level security user list by using the <literal>username</literal> configuration option, as shown below:</para>
+
+
+<programlisting>[global]
+	security = share
+[accounting1]
+	path = /home/samba/accounting1
+	guest ok = no
+	writable = yes
+	username = davecb, pkelly, andyo</programlisting>
+
+
+<para>Here, when a user attempts to connect to a share, Samba will verify the password that was sent against each of the users in its own list, in addition to the passwords of users <literal>davecb</literal>, <literal>pkelly</literal>, and <literal>andyo</literal>. If any of the passwords match, the connection will be verified and the user will be allowed. Otherwise, connection to the specific share will fail.</para>
+
+
+<sect3 role="" label="6.3.1.1" id="ch06-SECT-3.1.1">
+<indexterm id="ch06-idx-967668-0"><primary>share-level security</primary><secondary>options for</secondary></indexterm>
+<indexterm id="ch06-idx-967668-1"><primary>security</primary><secondary>share-level</secondary><tertiary>options for</tertiary></indexterm>
+<title>
+
+Share Level Security Options</title>
+
+
+<para><link linkend="ch06-80998">Table 6.4</link> shows the options typically associated with share-level security.</para>
+
+
+<table label="6.4" id="ch06-80998">
+<title>Share-Level Access Options </title>
+
+<tgroup cols="5">
+<colspec colnum="1" colname="col1"/>
+<colspec colnum="2" colname="col2"/>
+<colspec colnum="3" colname="col3"/>
+<colspec colnum="4" colname="col4"/>
+<colspec colnum="5" colname="col5"/>
+<thead>
+<row>
+
+<entry colname="col1"><para>Option</para></entry>
+
+<entry colname="col2"><para>Parameters</para></entry>
+
+<entry colname="col3"><para>Function</para></entry>
+
+<entry colname="col4"><para>Default</para></entry>
+
+<entry colname="col5"><para>Scope</para></entry>
+
+</row>
+
+</thead>
+
+<tbody>
+<row>
+
+<entry colname="col1"><para><literal>only user</literal></para></entry>
+
+<entry colname="col2"><para>boolean</para></entry>
+
+<entry colname="col3"><para>Indicates whether usernames specified by <literal>username</literal> will be the only ones allowed.</para></entry>
+
+<entry colname="col4"><para><literal>no</literal></para></entry>
+
+<entry colname="col5"><para>Share</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>username </literal>(user or users)</para></entry>
+
+<entry colname="col2"><para>string (list of usernames)</para></entry>
+
+<entry colname="col3"><para>Specifies a list of users against which a client's password will be tested.</para></entry>
+
+<entry colname="col4"><para>None</para></entry>
+
+<entry colname="col5"><para>Share</para></entry>
+
+</row>
+
+</tbody>
+</tgroup>
+</table>
+</sect3>
+
+
+
+<sect3 role="" label="6.3.1.2" id="ch06-SECT-3.1.2">
+<title>only user</title>
+
+
+<para>This boolean option indicates whether Samba will allow connections to a share using share-level security based solely on the individuals specified in the <literal>username</literal> option, instead of those users compiled on Samba's internal list. The default value for this option is <literal>no</literal>. You can override it per share as follows:</para>
+
+
+<programlisting>[global]
+    security = share
+[data]
+    username = andy, peter, valerie
+    only user = yes</programlisting>
+</sect3>
+
+
+
+<sect3 role="" label="6.3.1.3" id="ch06-SECT-3.1.3">
+<indexterm id="ch06-idx-969462-0"><primary>username option</primary></indexterm>
+<title>
+username</title>
+
+
+<para>This option presents a list of users against which Samba will test a connection password to allow access. It is typically used with clients that have share-level security to allow connections to a particular service based solely on a qualifying password&mdash;in this case, one that matches a password set up for a specific user:</para>
+
+
+<programlisting>[global]
+    security = share
+[data]
+     username = andy, peter, terry</programlisting>
+
+
+<para>We recommend against using this option unless you are implementing a Samba server with share-level security.<indexterm id="ch06-idx-967645-0" class="endofrange" startref="ch06-idx-967644-0"/>
+<indexterm id="ch06-idx-967645-1" class="endofrange" startref="ch06-idx-967644-1"/></para>
+</sect3>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="6.3.2" id="ch06-SECT-3.2">
+<title>User-level Security</title>
+
+
+<para>
+<indexterm id="ch06-idx-967646-0"><primary>user-level security</primary></indexterm>
+<indexterm id="ch06-idx-967646-1"><primary>security</primary><secondary>user-level</secondary></indexterm>The preferred mode of security with Samba is <firstterm>user-level security</firstterm>. With this method, each share is assigned specific users that can access it. When a user requests a connection to a share, Samba authenticates by validating the given username and password with the authorized users in the configuration file and the passwords in the password database of the Samba server. As mentioned earlier in the chapter, one way to isolate which users are allowed access to a specific <indexterm id="ch06-idx-967676-0"><primary>shares</primary><secondary>option for identifying users allowed access to</secondary></indexterm>share is by using the <literal>valid</literal> <literal>users</literal> option for each share:</para>
+
+
+<programlisting>[global]
+	security = user
+[accounting1]
+	writable = yes
+	valid users = bob, joe, sandy</programlisting>
+
+
+<para>Each of the users listed will be allowed to connect to the share if the password provided matches the password stored in the system password database on the server. Once the initial authentication succeeds, the user will not need to re-enter a password again to access that share unless the <literal>revalidate</literal> <literal>=</literal> <literal>yes</literal> option has been set.</para>
+
+
+<para>
+<indexterm id="ch06-idx-967677-0"><primary>passwords</primary><secondary>user-level security and</secondary></indexterm>Passwords can be sent to the Samba server in either an encrypted or a non-encrypted format. If you have both types of systems on your network, you should ensure that the passwords represented by each user are stored both in a traditional account database and Samba's encrypted password database. This way, authorized users can gain access to their shares from any type of client.<footnote label="1" id="ch06-pgfId-968956">
+
+
+<para>Having both encrypted and non-encrypted password clients on your network is another reason why Samba allows you to include (or not include) various options in the Samba configuration file based on the client operating system or machine name variables.</para>
+
+
+</footnote> However, we recommend that you move your system to encrypted passwords and abandon non-encrypted passwords if security is an issue. <link linkend="ch06-61393">Section 6.4</link> in this chapter explains how to use encrypted as well as non-encrypted passwords.</para>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="6.3.3" id="ch06-SECT-3.3">
+<title>Server-level Security</title>
+
+
+<para>
+<indexterm id="ch06-idx-967648-0"><primary>server-level security</primary></indexterm>
+<indexterm id="ch06-idx-967648-1"><primary>security</primary><secondary>server-level</secondary></indexterm>Server-level security is similar to user-level security. However, with server-level security, Samba delegates password authentication to another <indexterm id="ch06-idx-967679-0"><primary>SMB (Server Message Block)</primary><secondary>password server</secondary></indexterm>SMB password server, typically another Samba server or a Windows NT Server acting as a <indexterm id="ch06-idx-967680-0"><primary>PDC (primary domain controller)</primary><secondary>sever-level security and</secondary></indexterm>PDC on the network. Note that Samba still maintains its list of shares and their configuration in its <filename>smb.conf</filename> file. When a client attempts to make a connection to a particular share, Samba validates that the user is indeed authorized to connect to the share. Samba will then attempt to validate the password by contacting the SMB password server through a known protocol and presenting the username and password to the SMB password server. If the password is accepted, a session will be established with the client. See <link linkend="ch06-89929">Figure 6.2</link> for an illustration of this setup.</para>
+
+
+<figure label="6.2" id="ch06-89929">
+<title>A typical system setup using server level security</title>
+
+<graphic width="502" depth="177" fileref="figs/sam.0602.gif"></graphic>
+</figure>
+
+<para>You can configure Samba to use a separate password server under server-level security with the use of the <literal>password</literal> <literal>server</literal> global configuration option, as follows:</para>
+
+
+<programlisting>[global]
+	security = server
+	password server = PHOENIX120 HYDRA134</programlisting>
+
+
+<para>Note that you can specify more than one machine as the target of the <literal>password</literal> <literal>server </literal>; Samba will move down the list of servers in the event that its first choice is unreachable. The servers identified by the <literal>password</literal> <literal>server</literal> option are given as NetBIOS names, not their DNS names or equivalent IP addresses. Also, if any of the servers reject the given password, the connection will automatically fail&mdash;Samba will not attempt another server.</para>
+
+
+<para>One caveat: when using this option, you will still need an account representing that user on the regular Samba server. This is because the Unix operating system needs a username to perform various I/O operations. The preferable method of handling this is to give the user an account on the Samba server but disable the account's password by replacing it in the system password file (e.g., <filename>/etc/passwd  </filename>) with an <indexterm id="ch06-idx-967681-0"><primary>asterisk (*), in system password file</primary></indexterm>
+<indexterm id="ch06-idx-967681-1"><primary>* (asterisk)</primary></indexterm>asterisk (*).</para>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="6.3.4" id="ch06-SECT-3.4">
+<title>Domain-level Security</title>
+
+
+<para>
+<indexterm id="ch06-idx-967649-0" class="startofrange"><primary>domain-level security</primary></indexterm>
+<indexterm id="ch06-idx-967649-1" class="startofrange"><primary>security</primary><secondary>domain-level</secondary></indexterm>Domain-level security is similar to server-level security. However, with domainlevel security, the Samba server is acting as a member of a Windows domain. Recall from <link linkend="ch01-48078">Chapter 1</link> that each domain has a <firstterm>domain controller</firstterm>
+<indexterm id="ch06-idx-967685-0"><primary>domain controllers</primary></indexterm>, which is usually a Windows NT server offering password authentication. Including these controllers provides the workgroup with a definitive password server. The domain controllers keep track of users and passwords in their own <indexterm id="ch06-idx-967688-0"><primary>SAM (security account manager)</primary></indexterm>
+<indexterm id="ch06-idx-967688-1"><primary>security account manager (SAM)</primary></indexterm>security authentication module (SAM), and authenticates each user when he or she first logs on and wishes to access another machine's shares.</para>
+
+
+<para>As mentioned earlier in this chapter, Samba has a similar ability to offer user-level security, but this option is Unix-centric and assumes that the authentication occurs via <indexterm id="ch06-idx-967689-0"><primary>Unix</primary><secondary>password files</secondary></indexterm>Unix password files. If the Unix machine is part of a <indexterm id="ch06-idx-967690-0"><primary>NIS/NIS+ protocol</primary></indexterm>NIS or NIS+ domain, Samba will authenticate the users transparently against a shared password file, in typical Unix fashion. Samba then provides access to the NIS or NIS+ domain from Windows. There is, of course, no relationship between the NIS concept of a domain and the Windows concept of a domain.</para>
+
+
+<para>
+<indexterm id="ch06-idx-967696-0"><primary>domains</primary><secondary>Windows</secondary><tertiary>authentication</tertiary></indexterm>
+<indexterm id="ch06-idx-967696-1"><primary>authentication</primary><secondary>NT domain</secondary></indexterm>With domain-level security, we now have the option of using the native NT mechanism. This has a number of advantages:</para>
+
+
+<itemizedlist>
+<listitem><para>It provides far better integration with NT: there are fewer "kludges" in the <filename>smb.conf</filename> options dealing with domains than with most Windows features. This allows more extensive use of NT management tools, such as the User Manager for Domains tool allowing PC support individuals to treat Samba servers as if they were large NT machines.</para></listitem>
+<listitem><para>With the better integration comes protocol and code cleanups, allowing the Samba team to track the evolving NT implementation. NT Service Pack 4 corrects several problems in the protocol, and Samba's better integration makes it easier to track and adapt to these changes.</para></listitem>
+<listitem><para>There is less overhead on the PDC because there is one less permanent network connection between it and the Samba server. Unlike the protocol used by the <literal>security</literal> <literal>=</literal> <literal>server</literal> option, the Samba server can make a Remote Procedure Call (RPC) call only when it needs authentication information. It can not keep a connection permanently up just for that.</para></listitem>
+<listitem><para>Finally, the NT domain authentication scheme returns the full set of user attributes, not just success or failure. The attributes include a longer, more network-oriented version of the Unix uid, NT groups, and other information. This includes:</para>
+
+<itemizedlist>
+<listitem><para>Username</para></listitem>
+<listitem><para>Full name</para></listitem>
+<listitem><para>Description</para></listitem>
+<listitem><para>Security identifier (a domain-wide extension of the Unix uid)</para></listitem>
+<listitem><para>NT group memberships</para></listitem>
+<listitem><para>Logon hours, and whether to force the user to log out immediately</para></listitem>
+<listitem><para>Workstations the user is allowed to use</para></listitem>
+<listitem><para>Account expiration date</para></listitem>
+<listitem><para>Home directory</para></listitem>
+<listitem><para>Login script</para></listitem>
+<listitem><para>Profile</para></listitem>
+<listitem><para>Account type</para></listitem>
+</itemizedlist></listitem>
+<listitem><para>The Samba developers used domain-level security in Samba version 2.0.4 to add and delete domain <indexterm id="ch06-idx-967702-0"><primary>users</primary><secondary>domain, semi-automatic deletion</secondary></indexterm>users on Samba servers semi-automatically. In addition, it adds room for other NT-like additions, such as supporting access control lists and changing permissions of files from the client.</para></listitem>
+</itemizedlist>
+
+<para>The advantage to this approach is less administration; there is only one authentication database to keep synchronized. The only local administration required on the Samba server will be creating directories for users to work in and <filename>/etc/passwd</filename> entries to keep their UIDs and groups in.</para>
+
+
+<sect3 role="" label="6.3.4.1" id="ch06-SECT-3.4.1">
+<title>Adding a Samba server to a Windows NT Domain</title>
+
+
+<para>If you already have an NT <indexterm id="ch06-idx-967704-0"><primary>domains</primary><secondary>adding Samba server to Windows NT domain</secondary></indexterm>domain, you can easily add a Samba server to it. First, you will need to stop the Samba daemons. Then, add the Samba server to the NT domain on the PDC using the <indexterm id="ch06-idx-967706-0"><primary>Windows NT Server Manager for Domains tool</primary></indexterm>"Windows NT Server Manager for Domains" tool. When it asks for the computer type, choose "Windows NT Workstation or Server," and give it the NetBIOS name of the Samba server. This creates the machine account on the NT server.</para>
+
+
+<para>Next, generate a Microsoft-format machine password using the <filename>smbpasswd</filename>
+<indexterm id="ch06-idx-967707-0"><primary>smbpasswd program</primary></indexterm> tool, which is explained in further detail in the next section. For example, if our domain is SIMPLE and the Windows NT PDC is <literal>beowulf</literal>, we could use the following command on the Samba server to accomplish this:</para>
+
+
+<programlisting>smbpasswd -j SIMPLE -r beowulf</programlisting>
+
+
+<para>Finally, add the following options to the <literal>[global]</literal> section of your <filename>smb.conf</filename> and restart the Samba daemons.</para>
+
+
+<programlisting>[global]
+	security = domain
+	domain logins = yes
+	workgroup = SIMPLE
+	password server = beowulf</programlisting>
+
+
+<para>Samba should now be configured for domain-level security. The <literal>domain</literal> <literal>logins</literal> option is explained in more detail later in this<indexterm id="ch06-idx-967657-0" class="endofrange" startref="ch06-idx-967649-0"/>
+<indexterm id="ch06-idx-967657-1" class="endofrange" startref="ch06-idx-967649-1"/> chapter.<indexterm id="ch06-idx-967506-0" class="endofrange" startref="ch06-idx-967505-0"/>
+<indexterm id="ch06-idx-967506-1" class="endofrange" startref="ch06-idx-967505-1"/></para>
+</sect3>
+</sect2>
+</sect1>
+
+
+
+
+
+
+
+
+
+<sect1 role="" label="6.4" id="ch06-61393">
+<title>Passwords</title>
+
+
+<para>
+<indexterm id="ch06-idx-967574-0" class="startofrange"><primary>passwords</primary></indexterm>Passwords are a thorny issue with Samba. So much so, in fact, that they are almost always the first major problem that users encounter when they install Samba, and generate by far the most questions sent to Samba support groups. In previous chapters, we've gotten around the need for passwords by placing the <literal>guest</literal> <literal>ok</literal> option in each of our configuration files, which allows connections without authenticating passwords. However, at this point, we need to delve deeper into Samba to discover what is happening on the network.</para>
+
+
+<para>
+<indexterm id="ch06-idx-967709-0"><primary>passwords</primary><secondary>encrypted</secondary><tertiary sortas="non-encrypted">vs. non-encrypted</tertiary></indexterm>
+<indexterm id="ch06-idx-967709-1"><primary>encrypted passwords</primary></indexterm>Passwords sent from individual clients can be either encrypted or non-encrypted. Encrypted passwords are, of course, more secure. A <indexterm id="ch06-idx-967710-0"><primary>non-encrypted passwords</primary></indexterm>non-encrypted password can be easily read with a packet sniffing program, such as the modified <emphasis>tcpdump</emphasis>
+<indexterm id="ch06-idx-967712-0"><primary>tcpdump utility</primary><secondary>passwords, reading</secondary></indexterm> program for Samba that we used in <link linkend="SAMBA-CH-3">Chapter 3</link>. Whether passwords are encrypted depends on the operating system that the client is using to connect to the Samba server. <link linkend="ch06-75183">Table 6.5</link> lists which Windows operating systems encrypt their passwords before sending them to the primary domain controller for authentication. If your client is not Windows, check the system documentation to see if SMB passwords are encrypted.</para>
+
+
+<table label="6.5" id="ch06-75183">
+<title>Windows Operating Systems with Encrypted Passwords </title>
+
+<tgroup cols="2">
+<colspec colnum="1" colname="col1"/>
+<colspec colnum="2" colname="col2"/>
+<thead>
+<row>
+
+<entry colname="col1"><para>Operating System</para></entry>
+
+<entry colname="col2"><para>Encrypted or Non-encrypted</para></entry>
+
+</row>
+
+</thead>
+
+<tbody>
+<row>
+
+<entry colname="col1"><para><literal></literal>
+<indexterm id="ch06-idx-967714-0"><primary>operating systems</primary><secondary>encrypted/non-encrypted passwords</secondary></indexterm>Windows 95</para></entry>
+
+<entry colname="col2"><para>Non-encrypted</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>Windows 95 with SMB Update</para></entry>
+
+<entry colname="col2"><para>Encrypted</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>Windows 98</para></entry>
+
+<entry colname="col2"><para>Encrypted</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>Windows NT 3.<emphasis>x</emphasis></para></entry>
+
+<entry colname="col2"><para>Non-encrypted</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>Windows NT 4.0 before SP 3</para></entry>
+
+<entry colname="col2"><para>Non-encrypted</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>Windows NT 4.0 after SP 3</para></entry>
+
+<entry colname="col2"><para>Encrypted</para></entry>
+
+</row>
+
+</tbody>
+</tgroup>
+</table>
+
+
+<para>There are actually two different encryption methods used: one for <indexterm id="ch06-idx-967715-0"><primary>Windows 95/98</primary><secondary>passwords, encrypted</secondary></indexterm>Windows 95 and 98 clients that reuses Microsoft's LAN Manager encryption style, and a separate one for <indexterm id="ch06-idx-967716-0"><primary>Windows NT</primary><secondary>passwords</secondary><tertiary>encrypted</tertiary></indexterm>Windows NT clients and servers. Windows 95 and 98 use an older encryption system inherited from the LAN Manager network software, while Windows NT clients and servers use a newer encryption system.</para>
+
+
+<para>If encrypted passwords are supported, Samba stores the encrypted passwords in a file called <filename>smbpasswd</filename>
+<indexterm id="ch06-idx-967717-0"><primary>smbpasswd file</primary></indexterm>
+<indexterm id="ch06-idx-967717-1"><primary>passwords</primary><secondary>stored by Samba</secondary></indexterm>. By default, this file is located in the <filename>private</filename>
+<indexterm id="ch06-idx-967719-0"><primary>private directory (Samba distribution)</primary></indexterm> directory of the Samba distribution (<filename>/usr/local/samba/private</filename>). At the same time, the client stores an encrypted version of a user's password on its own system. The plaintext password is never stored on either system. Each system encrypts the password automatically using a known algorithm when the password is set or changed.</para>
+
+
+<para>When a client requests a connection to an SMB server that supports encrypted passwords (such as Samba or Windows NT), the two computers undergo the following negotiations:</para>
+
+
+<orderedlist>
+<listitem><para>The client attempts to negotiate a protocol with the server.</para></listitem>
+<listitem><para>The server responds with a protocol and indicates that it supports encrypted passwords. At this time, it sends back a randomly-generated 8-byte challenge string.</para></listitem>
+<listitem><para>The client uses the challenge string as a key to encrypt its already encrypted password using an algorithm predefined by the negotiated protocol. It then sends the result to the server.</para></listitem>
+<listitem><para>The server does the same thing with the encrypted password stored in its database. If the results match, the passwords are equivalent and the user is authenticated.</para></listitem>
+</orderedlist>
+
+<para>Note that even though the original passwords are not involved in the authentication process, you need to be very careful that the encrypted passwords located inside of the <filename>smbpasswd</filename>
+<indexterm id="ch06-idx-967721-0"><primary>smbpasswd file</primary><secondary>caution with</secondary></indexterm> file are guarded from unauthorized users. If they are compromised, an unauthorized user can break into the system by replaying the steps of the previous algorithm. The <indexterm id="ch06-idx-967722-0"><primary>passwords</primary><secondary>encrypted</secondary><tertiary sortas="plaintext">vs. plaintext</tertiary></indexterm>
+<indexterm id="ch06-idx-967722-1"><primary>plaintext passwords</primary></indexterm>
+<indexterm id="ch06-idx-967722-2"><primary sortas="encryptes passwords">encrypted passwords</primary><secondary sortas="plaintext passwords">vs. plaintext passwords</secondary></indexterm>encrypted passwords are just as sensitive as the plaintext passwords&mdash;this is known as <firstterm>plaintext-equivalent</firstterm> data in the cryptography world. Of course, you should also ensure that the clients safeguard their plaintext-equivalent passwords as well.</para>
+
+
+<para>You can configure Samba to accept encrypted passwords with the following global additions to <filename>smb.conf</filename>. Note that we explicitly name the location of the Samba password file:</para>
+
+
+<programlisting>[global]
+	security = user
+	encrypt passwords = yes
+	smb passwd file = /usr/local/samba/private/smbpasswd</programlisting>
+
+
+<para>Samba, however, will not accept any users until the <filename>smbpasswd</filename> file has been initialized.</para>
+
+
+<sect2 role="" label="6.4.1" id="ch06-SECT-4.0.1">
+<title>Disabling encrypted passwords on the client</title>
+
+
+<para>
+<indexterm id="ch06-idx-967724-0"><primary>passwords</primary><secondary>encrypted</secondary><tertiary>disabling on Windows computers</tertiary></indexterm>While Unix authentication has been in use for decades, including the use of <emphasis>telnet</emphasis> and <emphasis>rlogin</emphasis> access across the Internet, it embodies well-known security risks. Plaintext passwords are sent over the Internet and can be retrieved from TCP packets by malicious snoopers. However, if you feel that your network is secure and you wish to use standard Unix <filename>/etc/passwd</filename> authentication for all clients, you can do so, but you must disable encrypted passwords on those Windows clients that default to using them.</para>
+
+
+<para>In order to do this, you must modify the Windows registry by installing two files on each system. Depending on the platform involved, the files are either <filename>NT4_PlainPassword.reg</filename> or <filename>Win95_PlainPassword.reg</filename>. You can perform this installation by copying the appropriate <filename>.reg</filename> files from the Samba distribution's <filename>/docs</filename> directory to a DOS floppy, and running it from the Run menu item on the client's Start Menu button. Incidentally, the Windows 95 <filename>.reg</filename> file works fine on Windows 98 as well.</para>
+
+
+<para>After you reboot the machine, the client will not encrypt its hashed passwords before sending them to the server. This means that the plaintext-equivalent passwords can been seen in the TCP packets that are broadcast across the network. Again, we encourage you not to do this unless you are absolutely sure that your network is secure.</para>
+
+
+<para>If passwords are not encrypted, you can indicate as much in your Samba configuration file:</para>
+
+
+<programlisting>[global]
+	security = user
+	encrypt passwords = no</programlisting>
+</sect2>
+
+
+
+
+<sect2 role="" label="6.4.2" id="ch06-17782">
+<title>The smbpasswd File</title>
+
+
+<para><filename></filename>
+<indexterm id="ch06-idx-967731-0" class="startofrange"><primary>smbpasswd file</primary></indexterm>Samba stores its encrypted passwords in a file called <filename>smbpasswd</filename>, which by default resides in the <filename>/usr/local/samba/private</filename> directory. The <filename>smbpasswd</filename>
+<indexterm id="ch06-idx-967742-0"><primary>smbpasswd file</primary><secondary>caution with</secondary></indexterm> file should be guarded as closely as the <filename>passwd</filename> file; it should be placed in a directory to which only the root user has read/write access. All other users should not be able to read from the directory at all. In addition, the file should have all access closed off to all users except for root.</para>
+
+
+<para>Before you can use encrypted passwords, you will need to create an entry for each Unix user in the <filename>smbpasswd</filename> file. The structure of the file is somewhat similar to a Unix <filename>passwd</filename> file, but has different fields. <link linkend="ch06-54128">Figure 6.3</link> illustrates the layout of the <filename>smbpasswd</filename> file; the entry shown is actually one line in the file.</para>
+
+
+<figure label="6.3" id="ch06-54128">
+<title>Structure of the smbpasswd file entry (actually one line)</title>
+
+<graphic width="502" depth="177" fileref="figs/sam.0603.gif"></graphic>
+</figure>
+
+<para>Here is a breakdown of the individual fields:</para>
+
+
+<variablelist>
+<varlistentry><term>Username</term>
+<listitem><para>This is the username of the account. It is taken directly from the system password file.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term>UID</term>
+<listitem><para>This is the user ID of the account. Like the username, it is taken directly from the system password file and must match the user it represents there.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term>LAN Manager Password Hash</term>
+<listitem><para>This is a 32-bit hexadecimal sequence that represents the password Windows 95 and 98 clients will use. It is derived by encrypting the string <literal>KGS!@#$%</literal> with a 56-bit DES algorithm using the user's password (forced to 14 bytes and converted to capital letters) twice repeated as the key. If there is currently no password for this user, the first 11 characters of the hash will consist of the sequence <literal>NO</literal> <literal>PASSWORD</literal> followed by <literal>X</literal> characters for the remainder. Anyone can access the share with no password. On the other hand, if the password has been disabled, it will consist of 32 <literal>X</literal> characters. Samba will not grant access to a user without a password unless the <literal>null</literal> <literal>passwords</literal> option has been set.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term>NT Password Hash</term>
+<listitem><para>This is a 32-bit hexadecimal sequence that represents the password Windows NT clients will use. It is derived by hashing the user's password (represented as a 16-bit little-endian Unicode sequence) with an MD4 hash. The password is not converted to uppercase letters first.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term>Account Flags</term>
+<listitem><para>This field consists of 11 characters between two braces ( [ ] ). Any of the following characters can appear in any order; the remaining characters should be spaces:</para>
+
+
+<variablelist>
+<varlistentry><term>U</term>
+<listitem><para>This account is a standard user account.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term>D</term>
+<listitem><para>This account is currently disabled and Samba should not allow any logins.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term>N</term>
+<listitem><para>This account has no password associated with it.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term>W</term>
+<listitem><para>This is a workstation trust account that can be used to configure Samba as a primary domain controller (PDC) when allowing Windows NT machines to join its domain.</para></listitem>
+</varlistentry>
+</variablelist></listitem>
+</varlistentry>
+
+
+<varlistentry><term>Last Change Time</term>
+<listitem><para>This code consists of the characters <literal>LCT-</literal> followed by a hexidecimal representation of the amount of seconds since the epoch (midnight on January 1, 1970) that the entry was last changed.</para></listitem>
+</varlistentry>
+</variablelist>
+
+
+<sect3 role="" label="6.4.2.1" id="ch06-SECT-4.1.1">
+<title>Adding entries to smbpasswd</title>
+
+
+<para><filename></filename>
+<indexterm id="ch06-idx-967757-0"><primary>smbpasswd file</primary><secondary>adding entries to</secondary></indexterm>There are a few ways you can add a new entry to the <filename>smbpasswd</filename> file:</para>
+
+
+<itemizedlist>
+<listitem><para>You can use the <firstterm>smbpasswd</firstterm> program with the <literal>-a</literal> option to automatically add any user that currently has a standard Unix system account on the server. This program resides in the <filename>/usr/local/samba/bin</filename> directory.</para></listitem>
+<listitem><para>You can use the <firstterm>addtosmbpass</firstterm>
+<indexterm id="ch06-idx-967763-0"><primary>addtosmbpass executable</primary></indexterm> executable inside the <firstterm>/usr/local/samba/bin</firstterm> directory. This is actually a simple <emphasis>awk</emphasis>
+<indexterm id="ch06-idx-967764-0"><primary>awk script</primary></indexterm> script that parses a system password file and extracts the username and UID of each entry you wish to add to the SMB password file. It then adds default fields for the remainder of the user's entry, which can be updated using the <filename>smbpasswd</filename> program later. In order to use this program, you will probably need to edit the first line of the file to correctly point to <emphasis>awk</emphasis> on your system.</para></listitem>
+<listitem><para>In the event that the neither of those options work for you, you can create a default entry by hand in the <filename>smbpasswd</filename> file. The entry should be entirely on one line. Each field should be colon-separated and should look similar to the following:</para>
+
+
+<programlisting>dave:500:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX:[U          ]:LCT-00000000:</programlisting>
+
+
+<para>This consists of the username and the UID as specified in the system password file, followed by two sets of exactly 32 <literal>X</literal> characters, followed by the account flags and last change time as it appears above. After you've added this entry, you must use the <firstterm>smbpasswd</firstterm> program to change the password for the user.</para></listitem>
+</itemizedlist>
+</sect3>
+
+
+
+<sect3 role="" label="6.4.2.2" id="ch06-SECT-4.1.2">
+<title>Changing the encrypted password</title>
+
+
+<para>
+<indexterm id="ch06-idx-967765-0"><primary>passwords</primary><secondary>encrypted</secondary><tertiary>changing</tertiary></indexterm>If you need to change the encrypted password in the <filename>smbpasswd</filename> file, you can also use the <filename>smbpasswd</filename>
+<indexterm id="ch06-idx-967766-0"><primary>smbpasswd program</primary><secondary>changing encrypted passwords with</secondary></indexterm> program. Note that this program shares the same name as the encrypted password file itself, so be sure not to accidentally confuse the password file with the password-changing program.</para>
+
+
+<para>The <filename>smbpasswd</filename> program is almost identical to the <filename>passwd</filename> program that is used to change Unix account passwords. The program simply asks you to enter your old password (unless you're the root user), and duplicate entries of your new password. No password characters are shown on the screen.</para>
+
+
+<programlisting># <emphasis role="bold">smbpasswd dave</emphasis>
+Old SMB password:
+New SMB password:
+Retype new SMB password:
+Password changed for user dave</programlisting>
+
+
+<para>You can look at the <filename>smbpasswd</filename> file after this command completes to verify that both the LAN Manager and the NT hashes of the passwords have been stored in their respective positions. Once users have encrypted password entries in the database, they should be able to connect to shares using encrypted passwords!<filename></filename>
+<indexterm id="ch06-idx-967737-0" class="endofrange" startref="ch06-idx-967731-0"/></para>
+</sect3>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="6.4.3" id="ch06-97004">
+<title>Password Synchronization</title>
+
+
+<para>
+<indexterm id="ch06-idx-967768-0" class="startofrange"><primary>passwords</primary><secondary>synchronizing</secondary></indexterm>
+<indexterm id="ch06-idx-967768-1" class="startofrange"><primary>synchronizing</primary><secondary>passwords</secondary></indexterm>Having a regular password and an encrypted version of the same password can be troublesome when you need to change both of them. Luckily, Samba affords you a limited ability to keep your passwords synchronized. Samba has a pair of configuration options that can be used to automatically update a user's regular Unix password when the encrypted password is changed on the system. The feature can be activated by specifying the <literal>unix</literal> <literal>password</literal> <literal>sync</literal> global configuration option:</para>
+
+
+<programlisting>[global]
+	encrypt passwords = yes
+	smb passwd file = /usr/local/samba/private/smbpasswd
+
+	unix password sync = yes</programlisting>
+
+
+<para>With this option enabled, Samba will attempt to change the user's regular password (as <literal>root</literal>) when the encrypted version is changed with <filename>smbpasswd</filename>. However, there are two other options that have to be set correctly in order for this to work.</para>
+
+
+<para>The easier of the two is <literal>passwd</literal> <literal>program</literal>. This option simply specifies the Unix command used to change a user's standard system password. It is set to <literal>/bin/passw</literal>d <literal>%u</literal> by default. With some Unix systems, this is sufficient and you do not need to change anything. Others, such as Red Hat Linux, use <filename>/usr/bin/passwd</filename> instead. In addition, you may want to change this to another program or script at some point in the future. For example, let's assume that you want to use a script called <literal>changepass</literal> to change a user's password. Recall that you can use the variable <literal>%u</literal> to represent the current Unix username. So the example becomes:</para>
+
+
+<programlisting>[global]
+	encrypt passwords = yes
+	smb passwd file = /usr/local/samba/private/smbpasswd
+
+	unix password sync = yes
+	passwd program = changepass %u</programlisting>
+
+
+<para>Note that this program will be called as the <literal>root</literal> user when the <literal>unix</literal> <literal>password</literal> <literal>sync</literal> option is set to <literal>yes</literal>. This is because Samba does not necessarily have the plaintext old password of the user.</para>
+
+
+<para>The harder option to configure is <literal>passwd</literal> <literal>chat</literal>. The <literal>passwd</literal> <literal>chat</literal> option works like a Unix chat script. It specifies a series of strings to send as well as responses to expect from the program specified by the <literal>passwd</literal> <literal>program</literal> option. For example, this is what the default <literal>passwd</literal> <literal>chat</literal> looks like. The delimiters are the spaces between each groupings of characters:</para>
+
+
+<programlisting>passwd chat = *old*password* %o\n *new*password* %n\n *new*password* %n\n *changed*</programlisting>
+
+
+<para>The first grouping represents a response expected from the password-changing program. Note that it can contain <indexterm id="ch06-idx-967780-0"><primary>wildcards (*) in password changing program</primary></indexterm>
+<indexterm id="ch06-idx-967780-1"><primary>* wildcards</primary></indexterm>wildcards (*), which help to generalize the chat programs to be able to handle a variety of similar outputs. Here, <literal>*old*password*</literal> indicates that Samba is expecting any line from the password program containing the letters <literal>old</literal> followed by the letters <literal>password</literal>, without regard for what comes on either side or between them. Once instructed to, Samba will wait indefinitely for such a match. Is Samba does not receive the expected response, the password will fail.</para>
+
+
+<para>The second grouping indicates what Samba should send back once the data in the first grouping has been matched. In this case, you see <literal>%o\n</literal>. This response is actually two items: the variable <literal>%o</literal> represents the old password, while the <literal>\n</literal> is a newline character. So, in effect, this will "type" the old password into the standard input of the password changing program, and then "press" Enter.</para>
+
+
+<para>Following that is another response grouping, followed by data that will be sent back to the password changing program. (In fact, this response/send pattern continues indefinitely in any standard Unix <emphasis>chat</emphasis> script.) The script continues until the final pattern is matched.<footnote label="2" id="ch06-pgfId-969009">
+
+
+<para>This may not work under Red Hat Linux, as the password program typically responds "All authentication tokens updated successfully," instead of "Password changed." We provide a fix for this later in this section.</para>
+
+
+</footnote></para>
+
+
+<para>You can help match the response strings sent from the password program with the characters listed in <link linkend="ch06-77246">Table 6.6</link>. In addition, you can use the characters listed in <link linkend="ch06-38512">Table 6.7</link> to help formulate your response.</para>
+
+
+<table label="6.6" id="ch06-77246">
+<title>Password Chat Response Characters </title>
+
+<tgroup cols="2">
+<colspec colnum="1" colname="col1"/>
+<colspec colnum="2" colname="col2"/>
+<thead>
+<row>
+
+<entry colname="col1"><para>Character</para></entry>
+
+<entry colname="col2"><para>Definition</para></entry>
+
+</row>
+
+</thead>
+
+<tbody>
+<row>
+
+<entry colname="col1"><para><literal>*</literal></para></entry>
+
+<entry colname="col2"><para>
+<indexterm id="ch06-idx-967781-0"><primary>passwords</primary><secondary>chat characters for</secondary></indexterm>
+<indexterm id="ch06-idx-967781-1"><primary>chat characters for passwords</primary></indexterm>Zero or more occurrences of any character.</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>" "</literal></para></entry>
+
+<entry colname="col2"><para>Allows you to include matching strings that contain spaces. Asterisks are still considered wildcards even inside of quotes, and you can represent a null response with empty quotes.</para></entry>
+
+</row>
+
+</tbody>
+</tgroup>
+</table>
+
+
+<table label="6.7" id="ch06-38512">
+<title>Password Chat Send Characters </title>
+
+<tgroup cols="2">
+<colspec colnum="1" colname="col1"/>
+<colspec colnum="2" colname="col2"/>
+<thead>
+<row>
+
+<entry colname="col1"><para>Character</para></entry>
+
+<entry colname="col2"><para>Definition</para></entry>
+
+</row>
+
+</thead>
+
+<tbody>
+<row>
+
+<entry colname="col1"><para><literal>%o</literal></para></entry>
+
+<entry colname="col2"><para>The user's old password</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>%n</literal></para></entry>
+
+<entry colname="col2"><para>The user's new password</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>\n</literal></para></entry>
+
+<entry colname="col2"><para>The linefeed character</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>\r</literal></para></entry>
+
+<entry colname="col2"><para>The carriage-return character</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>\t</literal></para></entry>
+
+<entry colname="col2"><para>The tab character</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>\s</literal></para></entry>
+
+<entry colname="col2"><para>A space</para></entry>
+
+</row>
+
+</tbody>
+</tgroup>
+</table>
+
+
+<para>For example, you may want to change your password chat to the following entry. This will handle scenarios in which you do not have to enter the old password. In addition, this will also handle the new <literal>all</literal> <literal>tokens</literal> <literal>updated</literal> <literal>successfully</literal> string that Red Hat Linux sends:</para>
+
+
+<programlisting>passwd chat = *new password* %n\n *new password* %n\n *success*</programlisting>
+
+
+<para>Again, the default chat should be sufficient for many Unix systems. If it isn't, you can use the <literal>passwd</literal> <literal>chat</literal> <literal>debug</literal> global option to set up a new chat script for the password change program. The <literal>passwd</literal> <literal>chat</literal> <literal>debug</literal> option logs everything during a password chat. This option is a simple boolean, as shown below:</para>
+
+
+<programlisting>[global]
+    encrypted passwords = yes
+    smb passwd file = /usr/local/samba/private/smbpasswd
+
+    unix password sync = yes
+    passwd chat debug = yes
+    log level = 100</programlisting>
+
+
+<para>After you activate the password chat debug feature, all I/O received by Samba through the password chat will be sent to the Samba logs with a debug level of 100, which is why we entered a new log level option as well. As this can often generate multitudes of error logs, it may be more efficient to use your own script, by setting the <literal>passwd</literal> <literal>program</literal> option, in place of <filename>/bin/passwd</filename> to record what happens during the exchange. Also, make sure to protect your log files with strict file permissions and to delete them as soon as you've grabbed the information you need, because they contain the passwords in plaintext.</para>
+
+
+<para>The operating system on which Samba is running may have strict requirements for valid passwords in order to make them more impervious to dictionary attacks and the like. Users should be made aware of these restrictions when changing their passwords.</para>
+
+
+<para>Earlier we said that password synchronization is limited. This is because there is no reverse synchronization of the encrypted <filename>smbpasswd</filename> file when a standard Unix password is updated by a user. There are various strategies to get around this, including NIS and freely available implementations of the <indexterm id="ch06-idx-967787-0"><primary>PAM (pluggable authentication modules)</primary></indexterm>
+<indexterm id="ch06-idx-967787-1"><primary>pluggable authentication modules (PAM)</primary></indexterm>pluggable authentication modules (PAM) standard, but none of them really solve all the problems yet. In the future, when Windows 2000 emerges, we will see more compliance with the <indexterm id="ch06-idx-967788-0"><primary>LDAP (Lightweight Directory Access Protocol)</primary><secondary>replacement for password snychronization</secondary></indexterm>Lightweight Directory Access Protocol (LDAP), which promises to make password synchronization a thing of the past.<indexterm id="ch06-idx-967772-0" class="endofrange" startref="ch06-idx-967768-0"/>
+<indexterm id="ch06-idx-967772-1" class="endofrange" startref="ch06-idx-967768-1"/></para>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="6.4.4" id="ch06-SECT-4.3">
+<title>Password Configuration Options</title>
+
+
+<para>The options in <link linkend="ch06-68460">Table 6.8</link> will help you work with passwords in Samba.</para>
+
+
+<table label="6.8" id="ch06-68460">
+<title>Password Configuration Options </title>
+
+<tgroup cols="5">
+<colspec colnum="1" colname="col1"/>
+<colspec colnum="2" colname="col2"/>
+<colspec colnum="3" colname="col3"/>
+<colspec colnum="4" colname="col4"/>
+<colspec colnum="5" colname="col5"/>
+<thead>
+<row>
+
+<entry colname="col1"><para>Option</para></entry>
+
+<entry colname="col2"><para>Parameters</para></entry>
+
+<entry colname="col3"><para>Function</para></entry>
+
+<entry colname="col4"><para>Default</para></entry>
+
+<entry colname="col5"><para>Scope</para></entry>
+
+</row>
+
+</thead>
+
+<tbody>
+<row>
+
+<entry colname="col1"><para><literal>encrypt passwords</literal></para></entry>
+
+<entry colname="col2"><para>boolean</para></entry>
+
+<entry colname="col3"><para>
+<indexterm id="ch06-idx-969358-0" class="startofrange"><primary>passwords</primary><secondary>options for</secondary></indexterm>Turns on encrypted passwords.</para></entry>
+
+<entry colname="col4"><para><literal>no</literal></para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>unix password sync </literal></para></entry>
+
+<entry colname="col2"><para>boolean</para></entry>
+
+<entry colname="col3"><para>If <literal>yes</literal>, Samba updates the standard Unix password database when a user changes his or her encrypted password.</para></entry>
+
+<entry colname="col4"><para><literal>no</literal></para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>passwd chat</literal></para></entry>
+
+<entry colname="col2"><para>string (chat commands)</para></entry>
+
+<entry colname="col3"><para>Sets a sequence of commands that will be sent to the password program.</para></entry>
+
+<entry colname="col4"><para>See earlier section on this option</para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>passwd chat debug</literal></para></entry>
+
+<entry colname="col2"><para>boolean</para></entry>
+
+<entry colname="col3"><para>Sends debug logs of the password-change process to the log files with a level of 100.</para></entry>
+
+<entry colname="col4"><para><literal>no</literal></para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>passwd program</literal></para></entry>
+
+<entry colname="col2"><para>string (Unix command)</para></entry>
+
+<entry colname="col3"><para>Sets the program to be used to change passwords.</para></entry>
+
+<entry colname="col4"><para><literal>/bin/passwd %u</literal></para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>password level</literal></para></entry>
+
+<entry colname="col2"><para>numeric</para></entry>
+
+<entry colname="col3"><para>Sets the number of capital letter permutations to attempt when matching a client's password.</para></entry>
+
+<entry colname="col4"><para>None</para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>null passwords</literal></para></entry>
+
+<entry colname="col2"><para>boolean</para></entry>
+
+<entry colname="col3"><para>If <literal>yes</literal>, Samba allows access for users with null passwords.</para></entry>
+
+<entry colname="col4"><para><literal>no</literal></para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>smb passwd file</literal></para></entry>
+
+<entry colname="col2"><para>string (fully-qualified pathname)</para></entry>
+
+<entry colname="col3"><para>Specifies the name of the encrypted password file.</para></entry>
+
+<entry colname="col4"><para><literal>/usr/local/samba/private/smbpasswd</literal></para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>hosts equiv</literal></para></entry>
+
+<entry colname="col2"><para>string (fully-qualified pathname)</para></entry>
+
+<entry colname="col3"><para>Specifies the name of a file that contains hosts and users that can connect without using a password.</para></entry>
+
+<entry colname="col4"><para>None</para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>use rhosts</literal></para></entry>
+
+<entry colname="col2"><para>string (fully-qualified pathname)</para></entry>
+
+<entry colname="col3"><para>.<emphasis>rhosts</emphasis> file that allows users to connect without using a password.</para></entry>
+
+<entry colname="col4"><para>None</para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+</tbody>
+</tgroup>
+</table>
+
+
+<sect3 role="" label="6.4.4.1" id="ch06-SECT-4.3.1">
+<indexterm id="ch06-idx-969469-0"><primary>unix password sync option</primary></indexterm>
+<title>
+unix password sync</title>
+
+
+<para>The <literal>unix</literal> <literal>password</literal> <literal>sync</literal> global option allows Samba to update the standard Unix password file when a user changes his or her encrypted password. The encrypted password is stored on a Samba server in the <filename>smbpasswd</filename> file, which is located in <filename>/usr/local/samba/private</filename> by default. You can activate this feature as follows:</para>
+
+
+<programlisting>[global]
+	unix password sync = yes</programlisting>
+
+
+<para>If this option is enabled, Samba changes the encrypted password and, in addition, attempts to change the standard Unix password by passing the username and new password to the program specified by the <literal>passwd</literal> <literal>program</literal> option (described earlier). Note that Samba does not necessarily have access to the plaintext password for this user, so the password changing program must be invoked as <literal>root</literal>.<footnote label="3" id="ch06-pgfId-959675">
+
+
+<para>This is because the Unix <emphasis>passwd</emphasis> program, which is the usual target for this operation, allows <literal>root</literal> to change a user's password without the security restriction that requests the old password of that user.</para>
+
+
+</footnote> If the Unix password change does not succeed, for whatever reason, the SMB password will not be changed either.</para>
+</sect3>
+
+
+
+<sect3 role="" label="6.4.4.2" id="ch06-SECT-4.3.2">
+<indexterm id="ch06-idx-969472-0"><primary>encrypt passwords option</primary></indexterm>
+<title>
+encrypt passwords</title>
+
+
+<para>
+<indexterm id="ch06-idx-967797-0"><primary>encrypted passwords</primary><secondary>option for</secondary></indexterm>The <literal>encrypt</literal> <literal>passwords</literal> global option switches Samba from using plaintext passwords to encrypted passwords for authentication. Encrypted passwords will be expected from clients if the option is set to <literal>yes</literal>:</para>
+
+
+<programlisting>encrypt passwords = yes</programlisting>
+
+
+<para>By default, Windows NT 4.0 with Service Pack 3 or above and Windows 98 transmit encrypted passwords over the network. If you are enabling encrypted passwords, you must have a valid <filename>smbpasswd</filename> file in place and populated with usernames that will authenticate with encrypted passwords. (See <link linkend="ch06-17782">Section 6.4.2</link> earlier in this chapter.) In addition, Samba must know the location of the <filename>smbpasswd</filename> file; if it is not in the default location (typically <filename>/usr/local/samba/private/smbpasswd</filename>), you can explicitly name it using the <literal>smb</literal> <literal>passwd</literal> <literal>file</literal> option.</para>
+
+
+<para>If you wish, you can use the <literal>update</literal> <literal>encrypted</literal> to force Samba to update the <filename>smbpasswd</filename> file with encrypted passwords each time a client connects to a non-encrypted password.</para>
+
+
+<para>A common strategy to ensure that hosts who need encrypted password authentication indeed receive it is with the <literal>include</literal> option. With this, you can create individual configuration files that will be read in based on OS-type (<literal>%a</literal>) or client name (<literal>%m</literal>). These host-specific or OS-specific configuration files can contain an <literal>encrypted</literal> <literal>passwords</literal> <literal>=</literal> <literal>yes</literal> option that will activate only when those clients are connecting to the server.</para>
+</sect3>
+
+
+
+<sect3 role="" label="6.4.4.3" id="ch06-SECT-4.3.3">
+<indexterm id="ch06-idx-969475-0"><primary>passwd program option</primary></indexterm>
+<title>
+passwd program</title>
+
+
+<para>The <literal>passwd</literal>
+<indexterm id="ch06-idx-967798-0"><primary>passwords</primary><secondary>passwd program</secondary></indexterm> <literal>program</literal> is used to specify a program on the Unix Samba server that Samba can use to update the standard system password file when the encrypted password file is updated. This option defaults to the standard <emphasis>passwd</emphasis> program, usually located in the <filename>/bin</filename> directory. The <literal>%u</literal> variable is typically used here as the requesting user when the command is executed. The actual handling of input and output to this program during execution is handled through the <literal>passwd</literal> <literal>chat</literal> option. <link linkend="ch06-97004">Section 6.4.3</link>, earlier in this chapter, covers this option in detail.</para>
+</sect3>
+
+
+
+<sect3 role="" label="6.4.4.4" id="ch06-SECT-4.3.4">
+<indexterm id="ch06-idx-969476-0"><primary>passwd chat option</primary></indexterm>
+<title>
+passwd chat</title>
+
+
+<para>This option specifies a series of send/response strings similar to a Unix chat script, which are used to interface with the password-changing program on the Samba server. <link linkend="ch06-97004">Section 6.4.3</link>, earlier in this chapter, covers this option in detail.</para>
+</sect3>
+
+
+
+<sect3 role="" label="6.4.4.5" id="ch06-SECT-4.3.5">
+<indexterm id="ch06-idx-969477-0"><primary>passwd chat debug option</primary></indexterm>
+<title>
+passwd chat debug</title>
+
+
+<para>If set to <literal>yes</literal>, the <literal>passwd</literal> <literal>chat</literal> <literal>debug</literal> global option logs everything sent or received by Samba during a password chat. All the I/O received by Samba through the password chat is sent to the Samba logs with a debug level of 100; you will need to specify <literal>log</literal> <literal>level</literal> <literal>=</literal> <literal>100</literal> in order for the information to be recorded. <link linkend="ch06-97004">Section 6.4.3</link> earlier in this chapter, describes this option in more detail. Be aware that if you do set this option, the plaintext passwords will be visible in the debugging logs, which could be a security hazard if they are not properly secured.</para>
+</sect3>
+
+
+
+<sect3 role="" label="6.4.4.6" id="ch06-SECT-4.3.6">
+<indexterm id="ch06-idx-969478-0"><primary>password level option</primary></indexterm>
+<title>
+password level</title>
+
+
+<para>With SMB, non-encrypted (or plaintext) passwords are sent with capital letters, just like the usernames mentioned previously. Many Unix users, however, choose passwords with both uppercase and lowercase letters. Samba, by default, only attempts to match the password entirely in lowercase letters, and not capitalizing the first letter.</para>
+
+
+<para>Like <literal>username</literal> <literal>level</literal>, there is a <literal>password</literal> <literal>level</literal> option that can be used to attempt various permutations of the password with capital letters. This option takes an integer value that specifies how many letters in the password should be capitalized when attempting to connect to a share. You can specify this options as follows:</para>
+
+
+<programlisting>[global]
+	password level = 3</programlisting>
+
+
+<para>In this case, Samba will then attempt all permutations of the password it can compute having three capital letters. The larger the number, the more computations Samba will have to perform to match the password, and the longer a connection to a specific share may take.</para>
+</sect3>
+
+
+
+<sect3 role="" label="6.4.4.7" id="ch06-SECT-4.3.7">
+<title>null passwords</title>
+
+
+<para>This global option tells Samba whether or not to allow access from users that have <indexterm id="ch06-idx-967801-0"><primary>null passwords</primary></indexterm>
+<indexterm id="ch06-idx-967801-1"><primary>passwords</primary><secondary>null</secondary></indexterm>null passwords (encrypted or non-encrypted) set in their accounts. The default value is <literal>no</literal>. You can override it as follows:</para>
+
+
+<programlisting>null passwords = yes</programlisting>
+
+
+<para>We highly recommend against doing so unless you are familiar with the security risks this option can present to your system, including inadvertent access to system users (such as <filename>bin</filename>) in the system password file who have null passwords set.</para>
+</sect3>
+
+
+
+<sect3 role="" label="6.4.4.8" id="ch06-SECT-4.3.8">
+<indexterm id="ch06-idx-969483-0"><primary>smb passwd file option</primary></indexterm>
+<title>
+smb passwd file</title>
+
+
+<para>
+<indexterm id="ch06-idx-968245-0"><primary>smbpasswd file</primary><secondary>option for location of</secondary></indexterm>This global option identifies the location of the encrypted password database. By default, it is set to <filename>/usr/local/samba/private/smbpasswd</filename>. You can override it as follows:</para>
+
+
+<programlisting>[global]
+	smb passwd file = /etc/smbpasswd</programlisting>
+
+
+<para>This location, for example, is common on many Red Hat distributions.</para>
+</sect3>
+
+
+
+<sect3 role="" label="6.4.4.9" id="ch06-SECT-4.3.9">
+<indexterm id="ch06-idx-969486-0"><primary>hosts equiv option</primary></indexterm>
+<title>
+hosts equiv</title>
+
+
+<para>This global option specifies the name of a standard Unix <filename>hosts.equiv</filename> file that will allow hosts or users to access shares without specifying a password. You can specify the location of such a file as follows:</para>
+
+
+<programlisting>[global]
+	hosts equiv = /etc/hosts.equiv</programlisting>
+
+
+<para>The default value for this option does not specify any <filename>hosts.equiv</filename> file. Because using such a file is essentially a huge security risk, we highly recommend that you do not use this option unless you are confident in the security of your network.</para>
+</sect3>
+
+
+
+<sect3 role="" label="6.4.4.10" id="ch06-SECT-4.3.10">
+<indexterm id="ch06-idx-969487-0"><primary>use rhosts option</primary></indexterm>
+<title>
+use rhosts</title>
+
+
+<para>This global option specifies the name of a standard Unix user's <filename>.rhosts</filename> file that will allow foreign hosts to access <indexterm id="ch06-idx-967803-0"><primary>shares</primary><secondary>access to</secondary><tertiary sortas="foreign hosts, option for">by foreign hosts, option for</tertiary></indexterm>shares without specifying a password. You can specify the location of such a file as follows:</para>
+
+
+<programlisting>[global]
+	use rhosts = /home/dave/.rhosts</programlisting>
+
+
+<para>The default value for this option does not specify any <filename>.rhosts</filename> file. Like the <literal>hosts</literal> <literal>equiv</literal> option above, using such a file is a security risk. We highly recommend that you do use this option unless you are confident in the security of<indexterm id="ch06-idx-968233-0" class="endofrange" startref="ch06-idx-969358-0"/> your network.<indexterm id="ch06-idx-968235-0" class="endofrange" startref="ch06-idx-967574-0"/></para>
+</sect3>
+</sect2>
+</sect1>
+
+
+
+
+
+
+
+
+
+<sect1 role="" label="6.5" id="ch06-23084">
+<title>Windows Domains</title>
+
+
+<para>
+<indexterm id="ch06-idx-967533-0" class="startofrange"><primary>domains</primary><secondary>Windows</secondary></indexterm>
+<indexterm id="ch06-idx-967533-1" class="startofrange"><primary>Windows 95/98</primary><secondary>domains</secondary></indexterm>
+<indexterm id="ch06-idx-967533-2" class="startofrange"><primary>Windows NT</primary><secondary>domains</secondary></indexterm>Now that you are comfortable with users and passwords on a Samba server, we can show you how to set up Samba to become a <indexterm id="ch06-idx-967819-0"><primary>PDC (primary domain controller)</primary><secondary>Samba, setting up as</secondary></indexterm>primary domain controller for Windows 95/98 and NT machines. Why use domains? The answer probably isn't obvious until you look behind the scenes, especially with Windows 95/98.</para>
+
+
+<para>Recall that with traditional workgroups, Windows 95/98 simply accepts each username and password that you enter when logging on to the system. There are no unauthorized users with Windows 95/98; if a new user logs on, the operating system simply asks for a new password and authenticates the user against that password from then on. The only time that Windows 95/98 attempts to use the password you entered is when connecting to another share.</para>
+
+
+<para>
+<indexterm id="ch06-idx-967805-0"><primary>domain logons</primary></indexterm>Domain logons, on the other hand, are similar to Unix systems. In order to log on to the domain, a valid username and password must be presented at startup, which is then authenticated against the primary domain controller's password database. If the password is invalid, the user is immediately notified and they cannot log on to the domain.</para>
+
+
+<para>There's more good news: once you have successfully logged on to the domain, you can access any of the shares in the domain to which you have rights without having to reauthenticate yourself. More precisely, the primary domain controller returns a token to the client machine that allows it to access any share without consulting the PDC again. Although you probably won't notice the shift, this can be beneficial in cutting down network traffic. (You can disable this behavior if you wish by using the <literal>revalidate</literal> option.)</para>
+
+
+<sect2 role="" label="6.5.1" id="ch06-36822">
+<title>Configuring Samba for Windows Domain Logons</title>
+
+
+<para>If you wish to allow Samba to act as a domain controller, use the following sections to configure Samba and your clients to allow domain access.</para>
+
+
+<tip role="ora">
+<para>If you would like more information on how to set up domains, see the <filename>DOMAINS.TXT</filename> file that comes with the Samba distribution.</para>
+
+</tip>
+
+<sect3 role="" label="6.5.1.1" id="ch06-SECT-5.1.1">
+<title>Windows 95/98 clients</title>
+
+
+<para>
+<indexterm id="ch06-idx-967815-0"><primary>Windows 95/98</primary><secondary>domain logons, configuring</secondary></indexterm>Setting up Samba as a PDC for Windows 95/98 clients is somewhat anticlimactic. All you really need to do on the server side is ensure that:</para>
+
+
+<itemizedlist>
+<listitem><para>Samba is the only primary domain controller for the current workgroup.</para></listitem>
+<listitem><para>There is a <indexterm id="ch06-idx-967817-0"><primary>WINS (Windows Internet Name Service)</primary><secondary>server</secondary><tertiary>configuring  Windows domain logons and</tertiary></indexterm>WINS server available on the network, either a Samba machine or a Windows NT server. (See <link linkend="SAMBA-CH-7">Chapter 7</link>, for more information on WINS.)</para></listitem>
+<listitem><para>Samba is using user-level security (i.e., it doesn't hand off password authentication to anyone else). You do not want to use domain-level security if Samba itself is acting as the PDC.</para></listitem>
+</itemizedlist>
+
+<para>At that point, you can insert the following options into your Samba configuration file:</para>
+
+
+<programlisting>[global]
+	workgroup = SIMPLE
+	domain logons = yes
+
+# Be sure to set user-level security!
+
+	security = user
+
+# Be sure to become the primary domain controller!
+
+	os level = 34
+	local master = yes
+	preferred master = yes
+	domain master = yes</programlisting>
+
+
+<para>The <literal>domain</literal> <literal>logons</literal> option enables Samba to perform domain authentication on behalf of other clients that request it. The name of the domain will be the same as the workgroup listed in the Samba configuration file, in this case: SIMPLE.</para>
+
+
+<para>After that, you need to create a non-writable, non-public, non-browesable disk share called <literal>[netlogon]</literal> (it does not matter where this share points to as long as each Windows client can connect to it):</para>
+
+
+<programlisting>[netlogon]
+	comment = The domain logon service
+	path = /export/samba/logon
+	public = no
+	writeable = no
+	browsable = no</programlisting>
+</sect3>
+
+
+
+<sect3 role="" label="6.5.1.2" id="ch06-SECT-5.1.2">
+<title>Windows NT clients</title>
+
+
+<para>
+<indexterm id="ch06-idx-967816-0"><primary>Windows NT</primary><secondary>configuring domain logons</secondary></indexterm>If you have Window NT clients on your system, there are a few more steps that need to be taken in order for Samba to act as their primary domain controller.</para>
+
+
+<warning role="ora">
+<para>You will need to use at least <indexterm id="ch06-idx-967821-0"><primary>Samba</primary><secondary>version 2.1</secondary><tertiary>PDC functionality and</tertiary></indexterm>
+<indexterm id="ch06-idx-967821-1"><primary>PDC (primary domain controller)</primary><secondary>Samba 2.1 and</secondary></indexterm>
+<indexterm id="ch06-idx-967821-2"><primary>Windows NT</primary><secondary>user authentication and</secondary></indexterm>Samba 2.1 to ensure that PDC functionality for Windows NT clients is present. Prior to Samba 2.1, only limited user authentication for NT clients was present. At the time this book went to press, Samba 2.0.5 was the latest version, but Samba  2.1 was available through CVS download. Instructions on downloading alpha versions of Samba are given in <link linkend="SAMBA-AP-E">Appendix E</link>.</para>
+
+</warning>
+
+<para>As before, you need to ensure that Samba is a primary domain controller for the current workgroup and is using user-level security. However, you must also ensure that Samba is using encrypted passwords. In other words, alter the <literal>[global]</literal> options the previous example to include the <literal>encrypted</literal> <literal>passwords</literal> <literal>=</literal> <literal>yes</literal> option, as shown here:</para>
+
+
+<programlisting>[global]
+	workgroup = SIMPLE
+	encrypted passwords = yes
+	domain logons = yes
+
+	security = user</programlisting>
+</sect3>
+
+
+
+<sect3 role="" label="6.5.1.3" id="ch06-SECT-5.1.3">
+<title>Creating trust accounts for NT clients</title>
+
+
+<para>This step is exclusively for Windows NT clients. All NT clients that connect to a primary domain controller make use of <firstterm>trust accounts</firstterm>
+<indexterm id="ch06-idx-967823-0"><primary>trust accounts, creating</primary></indexterm>. These accounts allow a machine to log in to the <indexterm id="ch06-idx-967824-0"><primary>PDC (primary domain controller)</primary><secondary>trust accounts and</secondary></indexterm>PDC itself (not one of its shares), which means that the PDC can trust any further connections from users on that client. For all intents and purposes, a trust account is identical to a user account. In fact, we will be using standard Unix user accounts to emulate trust accounts for the Samba server.</para>
+
+
+<para>The login name of a machine's trust account is the name of the machine with a dollar sign appended to it. For example, if our Windows NT machine is named <literal>chimaera</literal>, the login account would be <literal>chimaera$</literal>. The initial password of the account is simply the name of the machine in lowercase letters. In order to forge the trust account on the Samba server, you need to create a Unix account with the appropriate machine name, as well as an encrypted password entry in the <filename>smbpasswd</filename> database.</para>
+
+
+<para>Let's tackle the first part. Here, we only need to modify the <filename>/etc/passwd</filename> file to support the trust account; there is no need to create a home directory or assign a shell to the "user" because the only part we are interested in is whether a login is permitted. Therefore, we can create a "dummy" account with the following entry:</para>
+
+
+<programlisting>chimaera$:*:1000:900:Trust Account:/dev/null:/dev/null</programlisting>
+
+
+<para>Note that we have also disabled the password field by placing a <literal>*</literal> in it. This is because Samba will use the <filename>smbpasswd</filename> file to contain the password instead, and we don't want anyone to telnet into the machine using that account. In fact, the only value other than the account name that is used here is the UID of the account for the encrypted password database (1000). This number must map to a unique resource ID on the NT server and cannot conflict with any other resource IDs. Hence, no NT user or group should map to this number or a networking error will occur.</para>
+
+
+<para>Next, add the encrypted password using the <filename>smbpasswd</filename> command, as follows:</para>
+
+
+<programlisting># <userinput>smbpasswd -a -m chimaera</userinput>
+Added user chimaera$
+Password changed for user chimaera$</programlisting>
+
+
+<para>The <literal>-m</literal> option specifies that a machine trust account is being generated. The <filename>smbpasswd</filename> program will automatically set the initial encrypted password as the NetBIOS name of the machine in lowercase letters; you don't need to enter it. When specifying this option on the command line, do not put a dollar sign after the machine name&mdash;it will be appended automatically. Once the encrypted password has been added, Samba is ready to handle domain logins from a NT client.</para>
+</sect3>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="6.5.2" id="ch06-SECT-5.2">
+<title>Configuring Windows Clients for Domain Logons</title>
+
+
+<para>Once you have Samba configured for domain logons, you need to set up your Windows clients to log on to the domain at startup.</para>
+
+
+<sect3 role="" label="6.5.2.1" id="ch06-SECT-5.2.1">
+<title>Windows 95/98</title>
+
+
+<para>
+<indexterm id="ch06-idx-969407-0"><primary>domain logons</primary><secondary>configuring Windows 95/98 for</secondary></indexterm>
+<indexterm id="ch06-idx-969407-1"><primary>domains</primary><secondary>logons</secondary><see>domain logons</see></indexterm>With Windows 95/98, this can be done by raising the Network configuration dialog in the Windows Control Panel and selecting the Properties for "Client for Microsoft Networks." At this point, you should see a dialog box similar to <link linkend="ch06-48609">Figure 6.4</link>. Select the "Logon to Windows Domain" checkbox at the top of the dialog box, and enter the workgroup that is listed in the Samba configuration file as the Windows NT domain. Then click on OK and reboot the machine when asked.</para>
+
+
+<figure label="6.4" id="ch06-48609">
+<title>Configuring a Windows 95/98 client for domain logons</title>
+
+<graphic width="502" depth="359" fileref="figs/sam.0604.gif"></graphic>
+</figure>
+
+<warning role="ora">
+<para>If Windows complains that you are already logged into the domain,  you probably have an active connection to a share in the workgroup (such as a mapped network drive). Simply disconnect the resource temporarily by right-clicking on its icon and choosing the Disconnect pop-up menu item.</para>
+
+</warning>
+
+<para>When Windows reboots, you should see the standard <indexterm id="ch06-idx-967825-0"><primary>login dialog box, domain logons</primary><secondary>Windows 95/98</secondary></indexterm>login dialog with an addition: a field for a domain. The domain name should already be filled in, so simply enter your password and click on the OK button. At this point, Windows should consult the primary domain controller (Samba) to see if the password is correct. (You can check the log files if you want to see this in action.) If it worked, congratulations! You have properly configured Samba to act as a domain controller for Windows 95/98 machines and your client is successfully connected.</para>
+</sect3>
+
+
+
+<sect3 role="" label="6.5.2.2" id="ch06-SECT-5.2.2">
+<title>Windows NT 4.0</title>
+
+
+<para>
+<indexterm id="ch06-idx-967826-0"><primary>domain logons</primary><secondary>configuring Windows NT 4.0 for</secondary></indexterm>To configure Windows NT for domain logons, open the Network configuration dialog in the Windows NT Control Panel. The first tab that you see should list the identification of the machine.</para>
+
+
+<para>Press the Change button and you should see the dialog box shown in <link linkend="ch06-89804">Figure 6.5</link>. In this dialog box, you can choose to have the Windows NT client become a member of the domain by selecting the radio button marked Domain in the "Member of " box. Then, type in the domain that you wish the client to login to; it should be the same as the workgroup that you specified in the Samba configuration file. Do not check the box marked "Create a Computer Account in the Domain"&mdash;Samba does not currently support this functionality.</para>
+
+
+<figure label="6.5" id="ch06-89804">
+<title>Configuring a Windows NT client for domain logons</title>
+
+<graphic width="502" depth="359" fileref="figs/sam.0605.gif"></graphic>
+</figure>
+
+<warning role="ora">
+<para>Like Windows 95/98, if NT complains that you are already logged in, you probably have an active connection to a share in the workgroup (such as a mapped network drive). Disconnect the resource temporarily by right-clicking on its icon and choosing the Disconnect pop-up menu item.</para>
+
+</warning>
+
+<para>After you press the OK button, Windows should present you with a small <indexterm id="ch06-idx-967838-0"><primary>login dialog box, domain logons</primary><secondary>Windows NT</secondary></indexterm>dialog box welcoming you to the domain. At this point, you will need to reset the Windows NT machine. Once it comes up again, the machine will automatically present you with a log on screen similar to the one for Windows 95/98 clients. You can now log in using any account that you have already on the Samba server that is configured to accept logins.</para>
+
+
+<warning role="ora">
+<para>Be sure to select the correct domain in the <indexterm id="ch06-idx-967844-0"><primary>domains</primary><secondary>Windows</secondary><tertiary>caution when selecting</tertiary></indexterm>
+<indexterm id="ch06-idx-967844-1"><primary>Windows NT</primary><secondary>domains</secondary><tertiary>caution when selecting</tertiary></indexterm>Windows NT logon dialog box. Once selected, it may take a moment for Windows NT to build the list of available domains.</para>
+
+</warning>
+
+<para>After you enter the password, Windows NT should consult the primary domain controller (Samba) to see if the password is correct. Again, you can check the log files if you want to see this in action. If it worked, you have successfully configured Samba to act as a domain controller for Windows NT machines.</para>
+</sect3>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="6.5.3" id="ch06-SECT-5.3">
+<title>Domain Options</title>
+
+
+<para><link linkend="ch06-53106">Table 6.9</link> shows the options that are commonly used in association with domain logons.</para>
+
+
+<table label="6.9" id="ch06-53106">
+<title>Windows 95/98 Domain Logon Options </title>
+
+<tgroup cols="5">
+<colspec colnum="1" colname="col1"/>
+<colspec colnum="2" colname="col2"/>
+<colspec colnum="3" colname="col3"/>
+<colspec colnum="4" colname="col4"/>
+<colspec colnum="5" colname="col5"/>
+<thead>
+<row>
+
+<entry colname="col1"><para>Option</para></entry>
+
+<entry colname="col2"><para>Parameters</para></entry>
+
+<entry colname="col3"><para>Function</para></entry>
+
+<entry colname="col4"><para>Default</para></entry>
+
+<entry colname="col5"><para>Scope</para></entry>
+
+</row>
+
+</thead>
+
+<tbody>
+<row>
+
+<entry colname="col1"><para><literal>domain logons</literal></para></entry>
+
+<entry colname="col2"><para>boolean</para></entry>
+
+<entry colname="col3"><para>Indicates whether Windows domain logons are to be used.</para></entry>
+
+<entry colname="col4"><para><literal>no</literal></para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>domain group map</literal></para></entry>
+
+<entry colname="col2"><para>string (fully-qualified pathname)</para></entry>
+
+<entry colname="col3"><para>Name of the file used to map Unix to Windows NT domain groups.</para></entry>
+
+<entry colname="col4"><para>None</para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>domain user map</literal></para></entry>
+
+<entry colname="col2"><para>string (fully-qualified pathname)</para></entry>
+
+<entry colname="col3"><para>Name of the file used to map Unix to Windows NT domain users.</para></entry>
+
+<entry colname="col4"><para>None</para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>local group map</literal></para></entry>
+
+<entry colname="col2"><para>string (fully-qualified pathname)</para></entry>
+
+<entry colname="col3"><para>Name of the file used to map Unix to Windows NT local groups.</para></entry>
+
+<entry colname="col4"><para>None</para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>revalidate</literal></para></entry>
+
+<entry colname="col2"><para>boolean</para></entry>
+
+<entry colname="col3"><para>If <literal>yes</literal>, Samba forces users to authenticate themselves with each connection to a share.</para></entry>
+
+<entry colname="col4"><para><literal>no</literal></para></entry>
+
+<entry colname="col5"><para>Share</para></entry>
+
+</row>
+
+</tbody>
+</tgroup>
+</table>
+
+
+<sect3 role="" label="6.5.3.1" id="ch06-SECT-5.3.1">
+<indexterm id="ch06-idx-969495-0"><primary>domain logons option</primary></indexterm>
+<title>
+domain logons</title>
+
+
+<para>This option configures Samba to accept domain logons as a <indexterm id="ch06-idx-968113-0"><primary>PDC (primary domain controller)</primary><secondary>domain option for</secondary></indexterm>primary domain controller. When a client successfully logs on to the domain, Samba will return a special token to the client that allows the client to access domain shares without consulting the PDC again for authentication. Note that the Samba machine must be in user-level security (<literal>security</literal> <literal>=</literal> <literal>user</literal>) and must be the PDC in order for this option to function. In addition, Windows machines will expect a <literal>[netlogon]</literal> share to exist on the Samba server (see <link linkend="ch06-36822">Section 6.5.1</link> earlier in this chapter).</para>
+</sect3>
+
+
+
+<sect3 role="" label="6.5.3.2" id="ch06-SECT-5.3.2">
+<indexterm id="ch06-idx-969498-0"><primary>domain group map option</primary></indexterm>
+<title>
+domain group map</title>
+
+
+<para>This option specifies the location of a <indexterm id="ch06-idx-968114-0"><primary>mapping</primary><secondary>files, options for location of</secondary></indexterm>mapping file designed to translate Windows NT domain group names to Unix group names. The file should reside on the Samba server. For example:</para>
+
+
+<programlisting>/usr/local/samba/private/groups.mapping</programlisting>
+
+
+<para>The file has a simple format:</para>
+
+
+<programlisting><replaceable>UnixGroup = NTGroup</replaceable></programlisting>
+
+
+<para>An example is:</para>
+
+
+<programlisting>admin = Administrative</programlisting>
+
+
+<para>The specified Unix group should be a valid group in the <filename>/etc/group</filename> file. The NT group should be the name to which you want the Unix group to map on an NT client. This option will work only with Windows NT clients.</para>
+</sect3>
+
+
+
+<sect3 role="" label="6.5.3.3" id="ch06-SECT-5.3.3">
+<indexterm id="ch06-idx-969499-0"><primary>domain user map option</primary></indexterm>
+<title>
+domain user map</title>
+
+
+<para>This option specifies the location of a mapping file designed to translate Unix usernames to Windows NT domain usernames. The file should reside on the Samba server. For example:</para>
+
+
+<programlisting>/usr/local/samba/private/domainuser.mapping</programlisting>
+
+
+<para>The file has a simple format:</para>
+
+
+<programlisting><replaceable>UnixUsername</replaceable> = [\\<replaceable>Domain</replaceable>\\]<replaceable>NTUserName</replaceable></programlisting>
+
+
+<para>An example entry is:</para>
+
+
+<programlisting>joe = Joseph Miller</programlisting>
+
+
+<para>The Unix name specified should be a valid username in the <filename>/etc/passwd</filename> file. The NT name should be the username to which you want to Unix username to map on an NT client. This option will work with Windows NT clients only.</para>
+
+
+<tip role="ora">
+<para>If you would like more information on how Windows NT uses domain usernames and local groups, we recommend Eric Pearce's <citetitle>Windows NT in a Nutshell</citetitle>, published by O'Reilly.</para>
+
+</tip>
+</sect3>
+
+
+
+<sect3 role="" label="6.5.3.4" id="ch06-SECT-5.3.4">
+<indexterm id="ch06-idx-969502-0"><primary>local group map option</primary></indexterm>
+<title>
+local group map</title>
+
+
+<para>This option specifies the location of a mapping file designed to translate Windows NT local group names to Unix group names. Local group names include those such as Administrator and Users. The file should reside on the Samba server. For example:</para>
+
+
+<programlisting>/usr/local/samba/private/localgroup.mapping</programlisting>
+
+
+<para>The file has a simple format:</para>
+
+
+<programlisting><replaceable>UnixGroup</replaceable> = [BUILTIN\]<replaceable>NTGroup</replaceable></programlisting>
+
+
+<para>An example entry is:</para>
+
+
+<programlisting>root = BUILTIN\Administrators</programlisting>
+
+
+<para>This option will work with Windows NT clients only. For more information, see Eric Pearce's <citetitle>Windows NT in a Nutshell</citetitle> (O'Reilly).</para>
+</sect3>
+
+
+
+<sect3 role="" label="6.5.3.5" id="ch06-SECT-5.3.5">
+<title>revalidate</title>
+
+
+<para>This share-level option tells Samba to force users to authenticate with <indexterm id="ch06-idx-968116-0"><primary>passwords</primary><secondary>options for</secondary><tertiary>share-level</tertiary></indexterm>
+<indexterm id="ch06-idx-968116-1"><primary>authentication</primary><secondary>share-level option for</secondary></indexterm>
+<indexterm id="ch06-idx-968116-2"><primary>users</primary><secondary>share-level option for authentication of</secondary></indexterm>
+<indexterm id="ch06-idx-968116-3"><primary>revalidation of users</primary></indexterm>passwords each time they connect to a different share on a machine, no matter what level of security is in place on the Samba server. The default value is <literal>no</literal>, which allows users to be trusted once they successfully authenticate themselves. You can override it as:</para>
+
+
+<programlisting>revalidate = yes</programlisting>
+
+
+<para>You can use this option to increase security on your system. However, you should weigh it against the inconvenience of having users revalidate themselves to every share.<indexterm id="ch06-idx-968204-0" class="endofrange" startref="ch06-idx-967533-0"/>
+<indexterm id="ch06-idx-968204-1" class="endofrange" startref="ch06-idx-967533-1"/>
+<indexterm id="ch06-idx-968204-2" class="endofrange" startref="ch06-idx-967533-2"/></para>
+</sect3>
+</sect2>
+</sect1>
+
+
+
+
+
+
+
+
+
+<sect1 role="" label="6.6" id="ch06-38153">
+<title>Logon Scripts</title>
+
+
+<para>
+<indexterm id="ch06-idx-967542-0" class="startofrange"><primary>logon scripts</primary></indexterm>
+<indexterm id="ch06-idx-967542-1" class="startofrange"><primary>scripts</primary><secondary>logon</secondary></indexterm>
+<indexterm id="ch06-idx-967542-2" class="startofrange"><primary>domain logons</primary><secondary>scripts for</secondary></indexterm>Samba supports the execution of Windows logon scripts, which are scripts (<indexterm id="ch06-idx-968119-0"><primary sortas="BAT scripts">.BAT scripts</primary></indexterm>
+<indexterm id="ch06-idx-968119-1"><primary sortas="CMD scripts"> .CMD scripts</primary></indexterm>.BAT or .CMD) that are executed on the client when a user logs on to a Windows domain. Note that these scripts are stored on the Unix side, but are transported across the network to the client side and executed once a user logs on. These scripts are invaluable for dynamically setting up network configurations for users when they log on. The downside is that because they run on Windows, they must use the <indexterm id="ch06-idx-968120-0"><primary>network configuration commands</primary></indexterm>
+<indexterm id="ch06-idx-968120-1"><primary>resources for further information</primary><secondary>Windows network configuration commands</secondary></indexterm>Windows network configuration commands.</para>
+
+
+<tip role="ora">
+<para>If you would like more information on NET commands, we recommend the following O'Reilly handbooks: <emphasis>Windows NT in a Nutshell</emphasis>, <emphasis>Windows 95 in a Nutshell</emphasis>, and <emphasis>Windows 98 in a Nutshell.</emphasis></para>
+
+</tip>
+
+<para>You can instruct Samba to use a logon script with the <literal>logon</literal> <literal>script</literal> option, as follows:</para>
+
+
+<programlisting>[global]
+	domain logons = yes
+	security = user
+	workgroup = SIMPLE
+
+	os level = 34
+	local master = yes
+	preferred master = yes
+	domain master = yes
+	logon script = %U.bat
+
+[netlogon]
+	comment = The domain logon service
+	path = /export/samba/logon
+	public = no
+	writeable = no
+	browsable = no</programlisting>
+
+
+<para>Note that this example uses the <literal>%U</literal> variable, which will individualize the script based on the user that is logging in. It is common to customize logon scripts based on the user or machine name that is logging onto the domain. These scripts can then be used to configure individual settings for users or clients.</para>
+
+
+<para>Each logon script should be stored at the base of the <literal>[netlogon]</literal> share. For example, if the base of the <literal>[netlogon]</literal> share is <filename>/export/samba/logon</filename> and the logon script is <filename>jeff.bat</filename>, the file should be located at <filename>/export/samba/logon/jeff.bat</filename>. When a user logs on to a domain that contains a startup script, he or she will see a small dialog that informs them that the script is executing, as well as any output the script generates in an MS-DOS-like box.</para>
+
+
+<para>One warning: because these scripts are loaded by Windows and executed on the Windows side, they must consist of DOS formatted <indexterm id="ch06-idx-968122-0"><primary>carriage-returns for scripts</primary></indexterm>
+<indexterm id="ch06-idx-968122-1"><primary>DOS-formated carriage returns</primary></indexterm>
+<indexterm id="ch06-idx-968122-2"><primary>Unix</primary><secondary> carriage returns</secondary></indexterm>carriage-return/linefeed characters instead of Unix carriage returns. It's best to use a DOS- or Windows-based editor to create them.</para>
+
+
+<para>Here is an example of a logon script that sets the current time to match that of the Samba server and maps two network drives, <literal>h</literal> and <literal>i</literal>, to individual shares on the server:</para>
+
+
+<programlisting>#  Reset the current time to that shown by the server.
+#  We must have the "time server = yes" option in the
+#  smb.conf for this to work.
+
+echo Setting Current Time...
+net time \\hydra /set /yes
+
+#  Here we map network drives to shares on the Samba
+#  server
+echo Mapping Network Drives to Samba Server Hydra...
+net use h: \\hydra\data
+net use i: \\hydra\network</programlisting>
+
+
+<sect2 role="" label="6.6.1" id="ch06-SECT-6.0.1">
+<title>Roaming profiles</title>
+
+
+<para><firstterm></firstterm>
+<indexterm id="ch06-idx-968132-0" class="startofrange"><primary>profiles</primary><secondary>roaming</secondary></indexterm>
+<indexterm id="ch06-idx-968132-1" class="startofrange"><primary>roaming profiles</primary></indexterm>In Windows 95 and NT, each user can have his or her own <firstterm>profile</firstterm>
+<indexterm id="ch06-idx-968123-0"><primary>profiles</primary></indexterm>. A profile bundles information such as: the appearance of a user's desktop, the applications that appear on the start menus, the background, and other miscellaneous items. If the profile is stored on a local disk, it's called a <firstterm>local profile</firstterm>
+<indexterm id="ch06-idx-968124-0"><primary>profiles</primary><secondary>local</secondary></indexterm>
+<indexterm id="ch06-idx-968124-1"><primary>local profiles</primary></indexterm>, since it describes what a user's environment is like on one machine. If the profile is stored on a server, on the other hand, the user can download the same profile to any client machine that is connected to the server. The latter is called a <firstterm>roaming profile</firstterm> because the user can roam around from machine to machine and still use the same profile. This makes it particularly convenient when someone might be logging in from his or her desk one day and from a portable in the field the next. <link linkend="ch06-71393">Figure 6.6</link> illustrates local and roaming profiles.</para>
+
+
+<figure label="6.6" id="ch06-71393">
+<title>Local profiles versus roaming profiles</title>
+
+<graphic width="502" depth="303" fileref="figs/sam.0606.gif"></graphic>
+</figure>
+
+<para>Samba will provide roaming profiles if it is configured for domain logons and you provide a tree of directories pointed to by the <literal>logon</literal> <literal>path</literal> option. This option is typically used with one of the user variables, as shown in this example:</para>
+
+
+<programlisting>[global]
+	domain logons = yes
+	security = user
+	workgroup = SIMPLE
+	os level = 34
+	local master = yes
+	preferred master = yes
+	domain master = yes
+
+	logon path =  \\hydra\profile\%U</programlisting>
+
+
+<para>We need to create a new share to support the profiles, which is a basic disk share accessible only by the Samba process' user (<literal>root</literal>). This share must be writeable, but should not be browseable. In addition, we must create a directory for each user who wishes to log on (based on how we specified our <literal>logon</literal> <literal>path</literal> in the example above), which is accessible only by that user. For an added measure of security, we use the <literal>directory</literal> <literal>mode</literal> and <literal>create</literal> <literal>mode</literal> options to keep anyone who connects to it from viewing or altering the files created in those directories:</para>
+
+
+<programlisting>[profile]
+  comment = User profiles
+  path = /export/samba/profile
+  create mode = 0600
+  directory mode = 0700
+  writable = yes
+  browsable = no</programlisting>
+
+
+<para>Once a user initially logs on, the Windows client will create a <filename>user.dat</filename> or <filename>ntuser.dat</filename> file&mdash;depending on which operating system the client is running. The client then uploads the contents of the desktop, the Start Menu, the Network Neighborhood, and the programs folders in individual folders in the directory. When the user subsequently logs on, those contents will be downloaded from the server and activated for the client machine with which the user is logging on. When he or she logs off, those contents will be uploaded back on the server until the next time the user connects. If you look at the directory listing of a profile folder, you'll see the following:</para>
+
+
+<programlisting># ls -al
+
+total 321
+drwxrwxr-x   9 root  simple    Jul 21 20:44 .
+drwxrwxr-x   4 root  simple    Jul 22 14:32 ..
+drwxrwx---   3 fred  develope  Jul 12 07:15 Application Data
+drwxrwx---   3 fred  develope  Jul 12 07:15 Start Menu
+drwxrwx---   2 fred  develope  Jul 12 07:15 cookies
+drwxrwx---   2 fred  develope  Jul 12 07:15 desktop
+drwxrwx---   7 fred  develope  Jul 12 07:15 history
+drwxrwx---   2 fred  develope  Jul 12 07:15 nethood
+drwxrwx---   2 fred  develope  Jul 19 21:05 recent
+-rw-------   1 fred  develope  Jul 21 21:59 user.dat</programlisting>
+
+
+<para>The <filename>user.dat</filename> files are binary configuration files, created automatically by Windows. They can be edited with the Profile Editor on a Windows client, but they can be somewhat tricky to get correct. Samba supports them correctly for all clients up to NT 5.0 beta, but they're still relatively new<firstterm></firstterm>
+<indexterm id="ch06-idx-968138-0" class="endofrange" startref="ch06-idx-968132-0"/>
+<indexterm id="ch06-idx-968138-1" class="endofrange" startref="ch06-idx-968132-1"/>.</para>
+
+
+<tip role="ora">
+<para>Hints and HOWTOs for handling logon scripts are available in the Samba documentation tree, in both <filename>docs/textdocs/DOMAIN.txt</filename> and <filename>docs/textdocs/PROFILES.txt</filename>.<firstterm></firstterm>
+<indexterm id="ch06-idx-968148-0"><primary>profiles</primary><secondary>roaming</secondary></indexterm>
+<indexterm id="ch06-idx-968148-1"><primary>roaming profiles</primary></indexterm></para>
+
+</tip>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="6.6.2" id="ch06-SECT-6.0.2">
+<title>Mandatory profiles</title>
+
+
+<para>
+<indexterm id="ch06-idx-968144-0"><primary>profiles</primary><secondary>mandatory</secondary></indexterm>
+<indexterm id="ch06-idx-968144-1"><primary>mandatory profiles</primary></indexterm>Users can also have <firstterm>mandatory profiles</firstterm>, which are roaming profiles that they cannot change. For example, with a mandatory profile, if a user adds a command to the Start Menu on Tuesday, it will be gone when he or she logs in again on Wednesday. The mandatory profile is simply a <filename>user.dat</filename> file that has been renamed to <filename>user.man</filename> and made read-only on the Unix server. It normally contains settings that the administrator wishes to ensure the user always executes. For example, if an administrator wants to create a <indexterm id="ch06-idx-968145-0"><primary>fixed user configuration</primary></indexterm>fixed user configuration, he or she can do the following:</para>
+
+
+<orderedlist>
+<listitem><para>Create the read-write directory on the Samba server.</para></listitem>
+<listitem><para>Set the <literal>logon</literal> <literal>path</literal> option in the <emphasis>smb.conf</emphasis> file to point to this directory.</para></listitem>
+<listitem><para>Logon as the user from Windows 95/98 to have the client populate the directory.</para></listitem>
+<listitem><para>Rename the resulting <filename>user.dat</filename> to <filename>user.man</filename>.</para></listitem>
+<listitem><para>Make the directory and its contents read only.</para></listitem>
+</orderedlist>
+
+<para>Mandatory profiles are fairly unusual. Roaming profiles, on the other hand, are one of the more desirable features of Windows that Samba can support.</para>
+</sect2>
+
+
+
+
+<sect2 role="" label="6.6.3" id="ch06-SECT-6.1">
+<title>Logon Script Options</title>
+
+
+<para>
+<indexterm id="ch06-idx-968152-0" class="startofrange"><primary>logon scripts</primary><secondary>options for</secondary></indexterm><link linkend="ch06-46661">Table 6.10</link> summarizes the options commonly used in association with Windows domain logon scripts.</para>
+
+
+<table label="6.10" id="ch06-46661">
+<title>Logon Script Options </title>
+
+<tgroup cols="5">
+<colspec colnum="1" colname="col1"/>
+<colspec colnum="2" colname="col2"/>
+<colspec colnum="3" colname="col3"/>
+<colspec colnum="4" colname="col4"/>
+<colspec colnum="5" colname="col5"/>
+<thead>
+<row>
+
+<entry colname="col1"><para>Option</para></entry>
+
+<entry colname="col2"><para>Parameters</para></entry>
+
+<entry colname="col3"><para>Function</para></entry>
+
+<entry colname="col4"><para>Default</para></entry>
+
+<entry colname="col5"><para>Scope</para></entry>
+
+</row>
+
+</thead>
+
+<tbody>
+<row>
+
+<entry colname="col1"><para><literal>logon script</literal></para></entry>
+
+<entry colname="col2"><para>string (DOS path)</para></entry>
+
+<entry colname="col3"><para>Name of DOS/NT batch file</para></entry>
+
+<entry colname="col4"><para>None</para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>logon path</literal></para></entry>
+
+<entry colname="col2"><para>string (UNC server and share name)</para></entry>
+
+<entry colname="col3"><para>Location of roaming profile for user</para></entry>
+
+<entry colname="col4"><para><literal>\\%N\%U\profile</literal></para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>logon drive</literal></para></entry>
+
+<entry colname="col2"><para>string (drive letter)</para></entry>
+
+<entry colname="col3"><para>Specifies the logon drive for a home directory (NT only)</para></entry>
+
+<entry colname="col4"><para><literal>Z</literal>:</para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>logon home</literal></para></entry>
+
+<entry colname="col2"><para>string (UNC server and share name)</para></entry>
+
+<entry colname="col3"><para>Specifies a location for home directories for clients logging on to the domain</para></entry>
+
+<entry colname="col4"><para><literal>\\%N\%U</literal></para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+</tbody>
+</tgroup>
+</table>
+
+
+<sect3 role="" label="6.6.3.1" id="ch06-SECT-6.1.1">
+<indexterm id="ch06-idx-969510-0"><primary>logon script option</primary></indexterm>
+<title>
+logon script</title>
+
+
+<para>This option specifies a Windows .BAT or .CMD file with lines ending in carriage-return/line feed that will be executed on the client after a user has logged on to the domain. Each logon script should be stored at the base of a share entitled <literal>[netlogin]</literal> (see <link linkend="ch06-36822">Section 6.5.1</link> for details.) This option frequently uses the <literal>%U</literal> or <literal>%m</literal> variables (user or NetBIOS name) to point to an individual script. For example:</para>
+
+
+<programlisting>logon script = %U.bat</programlisting>
+
+
+<para>will execute a script based on the username located at the base of the <literal>[netlogin]</literal> share. If the user who is connecting is <literal>fred</literal> and the path of the <literal>[netlogin]</literal> share maps to the directory <filename>/export/samba/netlogin</filename>, the script should be <filename>/export/samba/netlogin/fred.bat</filename>. Because these scripts are downloaded to the client and executed on the Windows side, they must consist of DOS formatted carriage-return/linefeed characters instead of Unix carriage returns.</para>
+</sect3>
+
+
+
+<sect3 role="" label="6.6.3.2" id="ch06-SECT-6.1.2">
+<indexterm id="ch06-idx-969513-0"><primary>logon path option</primary></indexterm>
+<title>
+logon path</title>
+
+
+<para>This option provides a location for <indexterm id="ch06-idx-968161-0"><primary>roaming profiles</primary><secondary>option for location of</secondary></indexterm>
+<indexterm id="ch06-idx-968161-1"><primary>profiles</primary><secondary>roaming</secondary><tertiary>option for location of</tertiary></indexterm>roaming profiles. When the user logs on, a roaming profile will be downloaded from the server to the client and activated for the user who is logging on. When the user logs off, those contents will be uploaded back on the server until the next time the user connects.</para>
+
+
+<para>It is often more secure to create a separate share exclusively for storing user profiles:</para>
+
+
+<programlisting>logon path =  \\hydra\profile\%U</programlisting>
+
+
+<para>For more informaiton on this option, see <link linkend="ch06-38153">Section 6.6</link> earlier in this chapter.</para>
+</sect3>
+
+
+
+<sect3 role="" label="6.6.3.3" id="ch06-SECT-6.1.3">
+<indexterm id="ch06-idx-969514-0"><primary>logon drive option</primary></indexterm>
+<title>
+logon drive</title>
+
+
+<para>This option specifies the drive letter on an NT client to which the home directory specified with the <literal>logon</literal> <literal>home</literal> option will be mapped. Note that this option will work with Windows NT clients only. For example:</para>
+
+
+<programlisting>logon home = I:</programlisting>
+
+
+<para>You should always use drive letters that will not conflict with fixed drives on the client machine. The default is Z:, which is a good choice because it is as far away from A:, C:, and D: as possible.</para>
+</sect3>
+
+
+
+<sect3 role="" label="6.6.3.4" id="ch06-SECT-6.1.4">
+<indexterm id="ch06-idx-969517-0"><primary>logon home option</primary></indexterm>
+<title>
+logon home </title>
+
+
+<para>This option specifies the location of a user's <indexterm id="ch06-idx-968162-0"><primary>home directory, user's</primary><secondary>logon script option for location of</secondary></indexterm>
+<indexterm id="ch06-idx-968162-1"><primary>users</primary><secondary>home directory</secondary><tertiary>logon script option for location of</tertiary></indexterm>home directory for use by the DOS NET commands. For example, to specify a home directory as a share on a Samba server, use the following:</para>
+
+
+<programlisting>logon home = \\hydra\%U</programlisting>
+
+
+<para>Note that this works nicely with the <literal>[homes]</literal> service, although you can specify any directory you wish. Home directories can be mapped with a logon script using the following command:</para>
+
+
+<programlisting>NET USE I: /HOME</programlisting>
+
+
+<para>In addition, you can use the User Environment Profile under User Properties in the Windows NT User Manager to verify that the home directory has automatically been set.<indexterm id="ch06-idx-968155-0" class="endofrange" startref="ch06-idx-968152-0"/></para>
+</sect3>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="6.6.4" id="ch06-SECT-6.2">
+<title>Other Connection Scripts</title>
+
+
+<para>
+<indexterm id="ch06-idx-968164-0"><primary>scripts</primary><secondary>connection</secondary></indexterm>
+<indexterm id="ch06-idx-968164-1"><primary>connections</primary><secondary>scripts for</secondary></indexterm>After a user successfully makes a connection to any Samba share, you may want the Samba server to execute a program on its side to prepare the share for use. Samba allows scripts to be executed before and after someone connects to a share. You do not need to be using Windows domains to take advantage of the options. <link linkend="ch06-67528">Table 6.11</link> introduces some of the configuration options provided for setting up users.</para>
+
+
+<table label="6.11" id="ch06-67528">
+<title>Connection Script Options </title>
+
+<tgroup cols="5">
+<colspec colnum="1" colname="col1"/>
+<colspec colnum="2" colname="col2"/>
+<colspec colnum="3" colname="col3"/>
+<colspec colnum="4" colname="col4"/>
+<colspec colnum="5" colname="col5"/>
+<thead>
+<row>
+
+<entry colname="col1"><para>Option</para></entry>
+
+<entry colname="col2"><para>Parameters</para></entry>
+
+<entry colname="col3"><para>Function</para></entry>
+
+<entry colname="col4"><para>Default</para></entry>
+
+<entry colname="col5"><para>Scope</para></entry>
+
+</row>
+
+</thead>
+
+<tbody>
+<row>
+
+<entry colname="col1"><para><literal>root preexec</literal></para></entry>
+
+<entry colname="col2"><para>string (Unix command)</para></entry>
+
+<entry colname="col3"><para>Sets a command to run as <literal>root</literal>, before connecting to the share.</para></entry>
+
+<entry colname="col4"><para>None</para></entry>
+
+<entry colname="col5"><para>Share</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>preexec (exec)</literal></para></entry>
+
+<entry colname="col2"><para>string (Unix command)</para></entry>
+
+<entry colname="col3"><para>Sets a Unix command to run as the user before connecting to the share.</para></entry>
+
+<entry colname="col4"><para>None</para></entry>
+
+<entry colname="col5"><para>Share</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>postexec</literal></para></entry>
+
+<entry colname="col2"><para>string (Unix command)</para></entry>
+
+<entry colname="col3"><para>Sets a Unix command to run as the user after disconnecting from the share.</para></entry>
+
+<entry colname="col4"><para>None</para></entry>
+
+<entry colname="col5"><para>Share</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>root postexec</literal></para></entry>
+
+<entry colname="col2"><para>string (Unix command)</para></entry>
+
+<entry colname="col3"><para>Sets a Unix command to run as <literal>root</literal> after disconnecting from the share.</para></entry>
+
+<entry colname="col4"><para>None</para></entry>
+
+<entry colname="col5"><para>Share</para></entry>
+
+</row>
+
+</tbody>
+</tgroup>
+</table>
+
+
+<sect3 role="" label="6.6.4.1" id="ch06-SECT-6.2.1">
+<indexterm id="ch06-idx-969520-0"><primary>root preexec option</primary></indexterm>
+<title>
+root preexec</title>
+
+
+<para>The first form of the logon command is called <literal>root</literal> <literal>preexec</literal>. This option specifies a Unix command as its value that will be run <emphasis>as the root user</emphasis> before any connection to a share is completed. You should use this option specifically for performing actions that require <indexterm id="ch06-idx-968166-0"><primary>root user</primary></indexterm>
+<indexterm id="ch06-idx-968166-1"><primary>privileges, option for</primary></indexterm>root privilege. For example, <literal>root</literal> <literal>preexec</literal> can be used to mount CD-ROMs for a share that makes them available to the clients, or to create necessary directories. If no <literal>root</literal> <literal>preexec</literal> option is specified, there is no default action. Here is an example of how you can use the command to mount a CD-ROM:</para>
+
+
+<programlisting>[homes]
+	browseable = no
+	writeable = yes
+	root preexec = /etc/mount /dev/cdrom2</programlisting>
+
+
+<para>Remember that these commands will be run as the root user. Therefore, in order to ensure security, users should never be able to modify the target of the <literal>root</literal> <literal>preexec</literal> command.</para>
+</sect3>
+
+
+
+<sect3 role="" label="6.6.4.2" id="ch06-SECT-6.2.2">
+<indexterm id="ch06-idx-969523-0"><primary>preexec option</primary></indexterm>
+<title>
+preexec</title>
+
+
+<para>The next option run before logon is the <literal>preexec</literal> option, sometimes just called <literal>exec</literal>. This is an ordinary unprivileged command run by Samba as the user specified by the variable <literal>%u</literal>. For example, a common use of this option is to perform <indexterm id="ch06-idx-968167-0"><primary>log files/logging</primary><secondary>options for</secondary></indexterm>logging, such as the following:</para>
+
+
+<programlisting>[homes]
+<userinput>preexec = echo "%u connected to %S from %m (%I)\" &gt;&gt;/tmp/.log</userinput></programlisting>
+
+
+<para>Be warned that any information the command sends to standard output will not be seen by the user, but is instead thrown away. If you intend to use a <literal>preexec</literal> script, you should ensure that it will run correctly before having Samba invoke it.</para>
+</sect3>
+
+
+
+<sect3 role="" label="6.6.4.3" id="ch06-SECT-6.2.3">
+<indexterm id="ch06-idx-969524-0"><primary>postexec option</primary></indexterm>
+<title>
+postexec</title>
+
+
+<para>Once the user disconnects from the share, the command specified with <literal>postexec</literal> is run as the user on the Samba server to do any necessary cleanup. This option is essentially the same as the <literal>preexec</literal> option. Again, remember that the command is run as the user represented by <literal>%u</literal> and any information sent to standard output will be ignored.</para>
+</sect3>
+
+
+
+<sect3 role="" label="6.6.4.4" id="ch06-SECT-6.2.4">
+<indexterm id="ch06-idx-969525-0"><primary>root postexec option</primary></indexterm>
+<title>
+root postexec</title>
+
+
+<para>Following the <literal>postexec</literal> option, the <literal>root</literal> <literal>postexec</literal> command is run, if one has been specified. Again, this option specifies a Unix command as its value that will be run <emphasis>as the</emphasis> <indexterm id="ch06-idx-968179-0"><primary>root user</primary></indexterm>
+<indexterm id="ch06-idx-968179-1"><primary>privileges, option for</primary></indexterm><emphasis>root user</emphasis> before disconnecting from a share. You should use this option specifically for performing actions that require root privilege.</para>
+</sect3>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="6.6.5" id="ch06-SECT-6.3">
+<title>Working with NIS and NFS</title>
+
+
+<para>Finally, Samba has the ability to work with <indexterm id="ch06-idx-968184-0"><primary>NIS/NIS+ protocol</primary><secondary>how Samba works with</secondary></indexterm>NIS and NIS+. If there is more than one file server, and each runs Samba, it may be desirable to have the SMB client connect to the server whose disks actually house the user's home directory. It isn't normally a good idea to ship files across the network once via NFS to a Samba server, only to be sent across the network once again to the client via SMB. (For one thing, it's slow&mdash;about 30 percent of normal Samba speed). Therefore, there are a pair of options to tell Samba that NIS knows the name of the right server and indicate in which NIS map the information lives.</para>
+
+
+<para><link linkend="ch06-27466">Table 6.12</link> introduces some of the other configuration options specifically for setting up users.</para>
+
+
+<table label="6.12" id="ch06-27466">
+<title>NIS Options </title>
+
+<tgroup cols="5">
+<colspec colnum="1" colname="col1"/>
+<colspec colnum="2" colname="col2"/>
+<colspec colnum="3" colname="col3"/>
+<colspec colnum="4" colname="col4"/>
+<colspec colnum="5" colname="col5"/>
+<thead>
+<row>
+
+<entry colname="col1"><para>Option</para></entry>
+
+<entry colname="col2"><para>Parameters</para></entry>
+
+<entry colname="col3"><para>Function</para></entry>
+
+<entry colname="col4"><para>Default</para></entry>
+
+<entry colname="col5"><para>Scope</para></entry>
+
+</row>
+
+</thead>
+
+<tbody>
+<row>
+
+<entry colname="col1"><para><literal>nis homedir</literal></para></entry>
+
+<entry colname="col2"><para>boolean</para></entry>
+
+<entry colname="col3"><para>If <literal>yes</literal>, use NIS instead of <filename>/etc/passwd</filename> to look up the path of a user's home directory</para></entry>
+
+<entry colname="col4"><para><literal>no</literal></para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>homedir map</literal></para></entry>
+
+<entry colname="col2"><para>string (NIS map name)</para></entry>
+
+<entry colname="col3"><para>Sets the NIS map to use to look up a user's home directory</para></entry>
+
+<entry colname="col4"><para>None</para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+</tbody>
+</tgroup>
+</table>
+
+
+<sect3 role="" label="6.6.5.1" id="ch06-SECT-6.3.1">
+<title>nis homedir and homedir map</title>
+
+
+<para>The <literal>nis</literal>
+<indexterm id="ch06-idx-969528-0"><primary>nis homedir option</primary></indexterm>
+<indexterm id="ch06-idx-969528-1"><primary>homedir map option</primary></indexterm> <literal>homedir</literal> and <literal>homedir</literal> <literal>map</literal> options are for Samba servers on network sites where Unix home directories are provided using NFS, the automounter, and NIS (Yellow Pages).</para>
+
+
+<para>The <literal>nis</literal> <literal>homedir</literal> option indicates that the home directory server for the user needs to be looked up in NIS. The <literal>homedir</literal> <literal>map</literal> option tells Samba what NIS map to look in for the server that has the user's home directory. The server needs to be a Samba server, so the client can do an SMB connect to it, and the other Samba servers need to have NIS installed so they can do the lookup.</para>
+
+
+<para>For example, if user <literal>joe</literal> asks for a share called <literal>[joe]</literal>, and the <literal>nis</literal> <literal>homedir</literal> option is set to <literal>yes</literal>, Samba will look in the file specified by <literal>homedir</literal> <literal>map</literal> for a home directory for <literal>joe</literal>. If it finds one, Samba will return the associated machine name to the client. The client will then try to connect to <emphasis>that</emphasis> machine and get the share from there. Enabling NIS lookups looks<indexterm id="ch06-idx-967545-0" class="endofrange" startref="ch06-idx-967542-0"/>
+<indexterm id="ch06-idx-967545-1" class="endofrange" startref="ch06-idx-967542-1"/>
+<indexterm id="ch06-idx-967545-2" class="endofrange" startref="ch06-idx-967542-2"/> like the following:</para>
+
+
+<programlisting>[globals]
+	nis homedir = yes
+	homedir map = amd.map</programlisting>
+</sect3>
+</sect2>
+</sect1>
+</chapter>

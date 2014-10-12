@@ -1,0 +1,14 @@
+<samba:parameter name="preload modules"
+		type="list"
+		 context="G"
+		 basic="1"
+		 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>This is a list of paths to modules that should
+	be loaded into smbd before a client connects. This improves
+	the speed of smbd when reacting to new connections somewhat. </para>
+</description>
+
+<value type="default"></value>
+<value type="example">/usr/lib/samba/passdb/mysql.so</value>
+</samba:parameter>

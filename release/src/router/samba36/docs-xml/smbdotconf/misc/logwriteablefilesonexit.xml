@@ -1,0 +1,23 @@
+<samba:parameter name="log writeable files on exit"
+		 context="G"
+		 type="boolean"
+		 advanced="1" developer="0"
+		 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>
+	When the network connection between a CIFS client and Samba
+	dies, Samba has no option but to simply shut down the server
+	side of the network connection. If this happens, there is a
+	risk of data corruption because the Windows client did not
+	complete all write operations that the Windows application
+	requested. Setting this option to "yes" makes smbd log with
+	a level 0 message a list of all files that have been opened
+	for writing when the network connection died. Those are the
+	files that are potentially corrupted. It is meant as an aid
+	for the administrator to give him a list of files to do
+	consistency checks on.
+	</para>
+</description>
+
+<value type="default">no</value>
+</samba:parameter>

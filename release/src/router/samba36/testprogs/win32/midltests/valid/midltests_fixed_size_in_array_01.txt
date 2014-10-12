@@ -1,0 +1,6 @@
+[in] Buffer[8/24]
+[000] 01 00 00 00 02 00 00 00                           ........ 
+srv_midltests_fn: Start
+srv_midltests_fn: End
+[out] Buffer[4]
+[000] 54 72 75 65                                       True 

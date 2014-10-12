@@ -1,0 +1,85 @@
+'\" t
+.\"     Title: smbta-util
+.\"    Author: [see the "AUTHOR" section]
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date: 09/18/2013
+.\"    Manual: System Administration tools
+.\"    Source: Samba 3.6
+.\"  Language: English
+.\"
+.TH "SMBTA\-UTIL" "8" "09/18/2013" "Samba 3\&.6" "System Administration tools"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+smbta-util \- control encryption in VFS smb_traffic_analyzer
+.SH "SYNOPSIS"
+.HP \w'\ 'u
+smbta\-util
+.HP \w'\ 'u
+smbta\-util [\fIOPTIONS\fR...]
+.SH "DESCRIPTION"
+.PP
+This tool is part of the
+\fBsamba\fR(7)
+suite\&.
+.PP
+smbta\-util
+is a tool to ease the configuration of the vfs_smb_traffic_analyzer module regarding data encryption\&.
+.PP
+The user can generate a key, install a key (activating encryption), or uninstall a key (deactivating encryption)\&. Any operation that installs a key will create a File containing the key\&. This file can be used by smbta\-tool on other machines to install the same key from the file\&.
+.SH "OPTIONS"
+.PP
+\fB\-h\fR
+.RS 4
+Show a short help text on the command line\&.
+.RE
+.PP
+\fB\-f\fR \fIKEYFILE\fR
+.RS 4
+Open an existing keyfile, read the key from the file, and install the key, activating encryption\&.
+.RE
+.PP
+\fB\-g\fR \fIKEYFILE\fR
+.RS 4
+Generate a new random key, install the key, activate encryption, and store the key into the file KEYFILE\&.
+.RE
+.PP
+\fB\-u\fR
+.RS 4
+Uninstall the key, deactivating encryption\&.
+.RE
+.PP
+\fB\-s\fR
+.RS 4
+Check if a key is installed\&.
+.RE
+.PP
+\fB\-c\fR \fIKEYFILE\fR
+.RS 4
+Create a KEYFILE from an installed key\&.
+.RE
+.SH "VERSION"
+.PP
+This man page is correct for version 3\&.6 of the Samba suite\&.
+.SH "AUTHOR"
+.PP
+The original version of smbta\-util was created by Holger Hetterich\&.
+.PP
+The original Samba software and related utilities were created by Andrew Tridgell\&. Samba is now developed by the Samba Team as an Open Source project similar to the way the Linux kernel is developed\&.

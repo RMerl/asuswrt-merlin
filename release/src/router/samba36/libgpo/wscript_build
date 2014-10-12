@@ -1,0 +1,8 @@
+#!/usr/bin/env python
+
+bld.SAMBA_SUBSYSTEM('LIBGPO',
+	source='gpo_util.c gpo_sec.c ../libgpo/gpext/gpext.c gpo_fetch.c gpo_ini.c ../source4/libgpo/ads_convenience.c ../source3/libgpo/gpo_filesync.c ../source4/libgpo/gpo_filesync.c',
+	deps='ldb samba-net',
+	enabled=False
+	)
+

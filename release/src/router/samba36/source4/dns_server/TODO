@@ -1,0 +1,15 @@
+DNS server todo list
+--------------------
+
+Just so we don't forget the required features for an AD-compatible DNS server:
+
+- Forwarding to other nameservers if we don't know the domain
+- Additional record handling (especially in SOA records, but we'll want off of
+  this stuff)
+- TSIG-GSSAPI handling
+- Symmetric Bind-style key handling (not strictly needed for AD, but needed for
+  integration to other name servers / tools)
+- Command line tools that unix admins are used to
+- Zone transfer support (XFER, IFER)
+- Caching
+- Tests, tests, tests (probably based on python's dns implementation)

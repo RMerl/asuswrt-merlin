@@ -1,0 +1,16 @@
+#!/usr/bin/env python
+
+bld.SAMBA_MODULE('ntptr_simple_ldb',
+	source='simple_ldb/ntptr_simple_ldb.c',
+	subsystem='ntptr',
+	init_function='ntptr_simple_ldb_init',
+	deps='ldb NDR_SPOOLSS DCERPC_COMMON ldbsamba'
+	)
+
+
+bld.SAMBA_SUBSYSTEM('ntptr',
+	source='ntptr_base.c ntptr_interface.c',
+	autoproto='ntptr_proto.h',
+	public_deps='DCERPC_COMMON'
+	)
+

@@ -1,0 +1,63 @@
+#!/usr/bin/env python
+
+bld.SAMBA_LIBRARY('gensec',
+	source='gensec.c socket.c gensec_tstream.c',
+	pc_files='gensec.pc',
+	autoproto='gensec_proto.h',
+	public_deps='UTIL_TEVENT samba-util errors LIBPACKET auth_system_session',
+	public_headers='gensec.h',
+	deps='com_err',
+	vnum='0.0.1'
+	)
+
+bld.SAMBA_MODULE('gensec_krb5',
+	source='gensec_krb5.c',
+	subsystem='gensec',
+	init_function='gensec_krb5_init',
+	deps='credentials authkrb5 auth_session com_err',
+	internal_module=False,
+	)
+
+
+bld.SAMBA_MODULE('gensec_gssapi',
+	source='gensec_gssapi.c',
+	subsystem='gensec',
+	init_function='gensec_gssapi_init',
+	deps='gssapi credentials authkrb5 com_err'
+	)
+
+
+bld.SAMBA_MODULE('cyrus_sasl',
+	source='cyrus_sasl.c',
+	subsystem='gensec',
+	init_function='gensec_sasl_init',
+	deps='credentials sasl2',
+	enabled=bld.CONFIG_SET('HAVE_SASL')
+	)
+
+
+bld.SAMBA_MODULE('gensec_spnego',
+	source='spnego.c',
+	autoproto='spnego_proto.h',
+	subsystem='gensec',
+	init_function='gensec_spnego_init',
+	deps='ASN1_UTIL credentials SPNEGO_PARSE'
+	)
+
+
+bld.SAMBA_MODULE('gensec_schannel',
+	source='schannel.c',
+	subsystem='gensec',
+	deps='COMMON_SCHANNEL NDR_SCHANNEL credentials ndr auth_session',
+	internal_module=True,
+	autoproto='schannel_proto.h',
+	init_function='gensec_schannel_init'
+	)
+
+
+bld.SAMBA_PYTHON('pygensec',
+	source='pygensec.c',
+	deps='gensec pytalloc-util pyparam_util',
+	realname='samba/gensec.so'
+	)
+

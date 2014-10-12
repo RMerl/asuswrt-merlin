@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE chapter PUBLIC "-//Samba-Team//DTD DocBook V4.2-Based Variant V1.0//EN" "http://www.samba.org/samba/DTD/samba-doc">
+<chapter id="modules">
+<chapterinfo>
+	<author>
+		<firstname>Jelmer</firstname><surname>Vernooij</surname>
+		<affiliation>
+			<orgname>Samba Team</orgname>
+			<address><email>jelmer@samba.org</email></address>
+		</affiliation>
+	</author>
+	<pubdate> 19 March 2003 </pubdate>
+</chapterinfo>
+
+<title>Modules</title>
+
+<sect1>
+<title>Advantages</title>
+
+<para>
+The new modules system has the following advantages:
+</para>
+
+<simplelist>
+<member>Transparent loading of static and shared modules (no need 
+for a subsystem to know about modules)</member>
+<member>Simple selection between shared and static modules at configure time</member>
+<member>"preload modules" option for increasing performance for stable modules</member>
+<member>No nasty #define stuff anymore</member>
+<member>All backends are available as plugin now (including pdb_ldap and pdb_tdb)</member>
+</simplelist>
+</sect1>
+
+<sect1>
+<title>Loading modules</title>
+
+<para>
+Some subsystems in samba use different backends. These backends can be 
+either statically linked in to samba or available as a plugin. A subsystem 
+should have a function that allows a module to register itself. For example, 
+the passdb subsystem has: 
+</para>
+
+<para><programlisting>
+NTSTATUS smb_register_passdb(int version, const char *name, pdb_init_function init);
+</programlisting></para>
+
+<para>
+This function will be called by the initialisation function of the module to 
+register itself. 
+</para>
+
+<sect2>
+<title>Static modules</title>
+
+<para>
+The modules system compiles a list of initialisation functions for the 
+static modules of each subsystem. This is a define. For example, 
+it is here currently (from <filename>include/config.h</filename>): 
+</para>
+
+<para><programlisting>
+/* Static init functions */
+#define static_init_pdb { pdb_mysql_init(); pdb_ldap_init(); pdb_smbpasswd_init(); pdb_tdbsam_init(); pdb_guest_init();}
+</programlisting></para>
+
+<para>
+These functions should be called before the subsystem is used. That 
+should be done when the subsystem is initialised or first used. 
+</para>
+
+</sect2>
+
+<sect2>
+<title>Shared modules</title>
+
+<para>
+If a subsystem needs a certain backend, it should check if it has 
+already been registered. If the backend hasn't been registered already, 
+the subsystem should call smb_probe_module(char *subsystem, char *backend).
+This function tries to load the correct module from a certain path
+($LIBDIR/subsystem/backend.so). If the first character in 'backend' 
+is a slash, smb_probe_module() tries to load the module from the 
+absolute path specified in 'backend'.
+</para>
+
+<para>After smb_probe_module() has been executed, the subsystem 
+should check again if the module has been registered. 
+</para>
+
+</sect2>
+</sect1>
+
+<sect1>
+<title>Writing modules</title>
+
+<para>
+Each module has an initialisation function. For modules that are 
+included with samba this name is '<replaceable>subsystem</replaceable>_<replaceable>backend</replaceable>_init'. For external modules (that will never be built-in, but only available as a module) this name is always 'init_module'. (In the case of modules included with samba, the configure system will add a #define subsystem_backend_init() init_module()).
+The prototype for these functions is:
+</para>
+
+<para><programlisting>
+NTSTATUS init_module(void);
+</programlisting></para>
+
+<para>This function should call one or more 
+registration functions. The function should return NT_STATUS_OK on success and  
+NT_STATUS_UNSUCCESSFUL or a more useful nt error code on failure.</para>
+
+<para>For example, pdb_ldap_init() contains: </para>
+
+<para><programlisting>
+NTSTATUS pdb_ldap_init(void)
+{
+smb_register_passdb(PASSDB_INTERFACE_VERSION, "ldapsam", pdb_init_ldapsam);
+smb_register_passdb(PASSDB_INTERFACE_VERSION, "ldapsam_nua", pdb_init_ldapsam_nua);
+	return NT_STATUS_OK;
+}
+</programlisting></para>
+
+<sect2>
+<title>Static/Shared selection in configure.in</title>
+
+<para>
+Some macros in configure.in generate the various defines and substs that 
+are necessary for the system to work correct. All modules that should 
+be built by default have to be added to the variable 'default_modules'. 
+For example, if ldap is found, pdb_ldap is added to this variable.
+</para>
+
+<para>
+On the bottom of configure.in, SMB_MODULE() should be called 
+for each module and SMB_SUBSYSTEM() for each subsystem.
+</para>
+
+<para>Syntax:</para>
+
+<para><programlisting>
+SMB_MODULE(<replaceable>subsystem</replaceable>_<replaceable>backend</replaceable>, <replaceable>object files</replaceable>, <replaceable>plugin name</replaceable>, <replaceable>subsystem name</replaceable>, <replaceable>static_action</replaceable>, <replaceable>shared_action</replaceable>)
+SMB_SUBSYSTEM(<replaceable>subsystem</replaceable>,<replaceable>depfile</replaceable>)
+</programlisting></para>
+
+<para>The depfile for a certain subsystem is the file that calls the 
+initialisation functions for the statically built in modules.</para>
+
+<para>
+<replaceable>@SUBSYSTEM_MODULES@</replaceable> in Makefile.in will 
+be replaced with the names of the plugins to build.
+</para>
+
+<para>You must make sure all .c files that contain defines that can 
+be changed by ./configure are rebuilded in the 'modules_clean' make target. 
+Practically, this means all c files that contain <command>static_init_subsystem;</command> calls need to be rebuilded.
+</para>
+
+<note>
+<para>
+There currently also is a configure.in command called SMB_MODULE_PROVIVES().
+This is used for modules that register multiple things. It should not 
+be used as probing will most likely disappear in the future.</para>
+</note>
+
+</sect2>
+</sect1>
+</chapter>

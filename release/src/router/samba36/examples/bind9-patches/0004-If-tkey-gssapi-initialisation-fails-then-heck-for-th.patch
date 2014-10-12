@@ -1,0 +1,94 @@
+From c73ceb48ffc518e171d1d40b82ae2b5f603fe038 Mon Sep 17 00:00:00 2001
+From: Andrew Tridgell <tridge@samba.org>
+Date: Wed, 17 Feb 2010 15:27:44 +1100
+Subject: [PATCH 4/5] If tkey-gssapi initialisation fails, then heck for the most common
+ configuration errors so that the admin doesn't spend all day trying to
+ work out why the config is broken.
+
+---
+ lib/dns/gssapictx.c |   48 ++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 files changed, 48 insertions(+), 0 deletions(-)
+
+diff --git a/lib/dns/gssapictx.c b/lib/dns/gssapictx.c
+index 11eadb9..879393c 100644
+--- a/lib/dns/gssapictx.c
++++ b/lib/dns/gssapictx.c
+@@ -66,6 +66,7 @@
+  * we include SPNEGO's OID.
+  */
+ #if defined(GSSAPI)
++#include <krb5/krb5.h>
+
+ static unsigned char krb5_mech_oid_bytes[] = {
+	0x2a, 0x86, 0x48, 0x86, 0xf7, 0x12, 0x01, 0x02, 0x02
+@@ -191,6 +192,50 @@ log_cred(const gss_cred_id_t cred) {
+ }
+ #endif
+
++#ifdef GSSAPI
++/*
++ * check for the most common configuration errors.
++ *
++ * The errors checked for are:
++ *   - tkey-gssapi-credential doesn't start with DNS/
++ *   - the default realm in /etc/krb5.conf and the
++ *     tkey-gssapi-credential bind config option don't match
++ */
++static void dst_gssapi_check_config(const char *gss_name)
++{
++	const char *p;
++	krb5_context krb5_ctx;
++	char *krb5_realm = NULL;
++
++	if (strncasecmp(gss_name, "DNS/", 4) != 0) {
++		gss_log(ISC_LOG_ERROR, "tkey-gssapi-credential (%s) should start with 'DNS/'");
++		return;
++	}
++
++	if (krb5_init_context(&krb5_ctx) != 0) {
++		gss_log(ISC_LOG_ERROR, "Unable to initialise krb5 context");
++		return;
++	}
++	if (krb5_get_default_realm(krb5_ctx, &krb5_realm) != 0) {
++		gss_log(ISC_LOG_ERROR, "Unable to get krb5 default realm");
++		krb5_free_context(krb5_ctx);
++		return;
++	}
++	if (!(p = strchr(gss_name, '/'))) {
++		gss_log(ISC_LOG_ERROR, "badly formatted tkey-gssapi-credentials (%s)", gss_name);
++		krb5_free_context(krb5_ctx);
++		return;
++	}
++	if (strcasecmp(p+1, krb5_realm) != 0) {
++		gss_log(ISC_LOG_ERROR,"default realm from krb5.conf (%s) does not match tkey-gssapi-credential (%s)",
++			krb5_realm, gss_name);
++		krb5_free_context(krb5_ctx);
++		return;
++	}
++	krb5_free_context(krb5_ctx);
++}
++#endif
++
+ isc_result_t
+ dst_gssapi_acquirecred(dns_name_t *name, isc_boolean_t initiate,
+		       gss_cred_id_t *cred)
+@@ -223,6 +268,8 @@ dst_gssapi_acquirecred(dns_name_t *name, isc_boolean_t initiate,
+		gret = gss_import_name(&minor, &gnamebuf,
+				       GSS_C_NO_OID, &gname);
+		if (gret != GSS_S_COMPLETE) {
++			dst_gssapi_check_config((char *)array);
++
+			gss_log(3, "failed gss_import_name: %s",
+				gss_error_tostring(gret, minor, buf,
+						   sizeof(buf)));
+@@ -254,6 +301,7 @@ dst_gssapi_acquirecred(dns_name_t *name, isc_boolean_t initiate,
+			initiate ? "initiate" : "accept",
+			(char *)gnamebuf.value,
+			gss_error_tostring(gret, minor, buf, sizeof(buf)));
++		dst_gssapi_check_config((char *)array);
+		return (ISC_R_FAILURE);
+	}
+
+--
+1.6.3.3
+

@@ -1,0 +1,39 @@
+#!/usr/bin/env python
+
+bld.SAMBA_LIBRARY('samba_python',
+	source=[],
+	deps='LIBPYTHON pytalloc-util pyrpc_util',
+	grouping_library=True,
+	private_library=True,
+	pyext=True)
+
+bld.SAMBA_SUBSYSTEM('LIBPYTHON',
+	source='modules.c',
+	public_deps='',
+	init_function_sentinal='{NULL,NULL}',
+	deps='talloc',
+	pyext=True,
+	)
+
+
+bld.SAMBA_PYTHON('python_uuid',
+	source='uuidmodule.c',
+	deps='ndr',
+	realname='uuid.so',
+	enabled = float(bld.env.PYTHON_VERSION) <= 2.4
+	)
+
+
+bld.SAMBA_PYTHON('python_glue',
+	source='pyglue.c',
+	deps='pyparam_util samba-util netif pytalloc-util',
+	realname='samba/_glue.so'
+	)
+
+
+# install out various python scripts for use by make test
+bld.SAMBA_SCRIPT('samba_python',
+                 pattern='samba/**/*.py',
+                 installdir='python')
+
+bld.INSTALL_WILDCARD('${PYTHONARCHDIR}', 'samba/**/*.py', flat=False)

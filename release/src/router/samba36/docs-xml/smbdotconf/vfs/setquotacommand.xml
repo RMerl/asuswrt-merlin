@@ -1,0 +1,44 @@
+<samba:parameter name="set quota command"
+                 context="G"
+				 type="string"
+                 advanced="1" developer="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>The <command>set quota command</command> should only be used 
+	whenever there is no operating system API available from the OS that 
+	samba can use.</para>
+
+	<para>This option is only available if Samba was configured with the argument <command>--with-sys-quotas</command> or 
+	on linux when <command>./configure --with-quotas</command> was used and a working quota api 
+	was found in the system. Most packages are configured with these options already.</para>
+
+	<para>This parameter should specify the path to a script that 
+	can set quota for the specified arguments.</para>
+
+	<para>The specified script should take the following arguments:</para>
+
+	<itemizedlist>
+		<listitem><para>1 - quota type
+			<itemizedlist>
+				<listitem><para>1 - user quotas</para></listitem>
+				<listitem><para>2 - user default quotas (uid = -1)</para></listitem>
+				<listitem><para>3 - group quotas</para></listitem>
+				<listitem><para>4 - group default quotas (gid = -1)</para></listitem>
+			</itemizedlist></para></listitem>
+		<listitem><para>2 - id (uid for user, gid for group, -1 if N/A)</para></listitem>
+		<listitem><para>3 - quota state (0 = disable, 1 = enable, 2 = enable and enforce)</para></listitem>
+		<listitem><para>4 - block softlimit</para></listitem>
+		<listitem><para>5 - block hardlimit</para></listitem>
+		<listitem><para>6 - inode softlimit</para></listitem>
+		<listitem><para>7 - inode hardlimit</para></listitem>
+		<listitem><para>8(optional) - block size, defaults to 1024</para></listitem>
+	</itemizedlist>
+
+	<para>The script should output at least one line of data on success. And nothing on failure.</para>
+</description>
+
+<related>get quota command</related>
+
+<value type="default"></value>
+<value type="example">/usr/local/sbin/set_quota</value>
+</samba:parameter>

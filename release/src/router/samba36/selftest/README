@@ -1,0 +1,123 @@
+# vim: ft=rst
+
+This directory contains test scripts that are useful for running a
+bunch of tests all at once. 
+
+There are two parts to this: 
+
+ * The test runner (selftest/selftest.pl)
+ * The test formatter
+
+selftest.pl simply outputs subunit, which can then be formatted or analyzed 
+by tools that understand the subunit protocol. One of these tools is 
+format-subunit, which is used by default as part of "make test".
+
+Available testsuites
+====================
+The available testsuites are obtained from a script, usually 
+source{3,4}/selftest/tests.sh. This script should for each testsuite output 
+the name of the test, the command to run and the environment that should be 
+provided. Use the included "plantest" function to generate the required output.
+
+Testsuite behaviour
+===================
+
+Exit code
+------------
+The testsuites should exit with a non-zero exit code if at least one 
+test failed. Skipped tests should not influence the exit code.
+
+Output format
+-------------
+Testsuites can simply use the exit code to indicate whether all of their 
+tests have succeeded or one or more have failed. It is also possible to 
+provide more granular information using the Subunit protocol. 
+
+This protocol works by writing simple messages to standard output. Any 
+messages that can not be interpreted by this protocol are considered comments 
+for the last announced test.
+
+For a full description of the subunit protocol, see ../lib/subunit/README.
+
+The following commands are Samba extensions to Subunit:
+
+testsuite-count
+~~~~~~~~~~~~~~~
+testsuite-count: number
+
+Announce the number of tests that is going to be run.
+
+start-testsuite
+~~~~~~~~~~~~~~~
+start-testsuite: name
+
+The testsuite name is used as prefix for all containing tests.
+
+skip-testsuite
+~~~~~~~~~~~~~~
+skip-testsuite: name
+
+Mark the testsuite with the specified name as skipped.
+
+testsuite-success
+~~~~~~~~~~~~~~~~~
+testsuite-success: name
+
+Indicate that the testsuite has succeeded successfully.
+
+testsuite-fail
+~~~~~~~~~~~~~~
+testsuite-fail: name
+
+Indicate that a testsuite has failed.
+
+Environments
+============
+Tests often need to run against a server with particular things set up, 
+a "environment". This environment is provided by the test "target": Samba 3, 
+Samba 4 or Windows.
+
+The following environments are currently available:
+
+ - none: No server set up, no variables set.
+ - dc: Domain controller set up. The following environment variables will 
+   be set:
+
+     * USERNAME: Administrator user name
+	 * PASSWORD: Administrator password
+	 * DOMAIN: Domain name
+	 * REALM: Realm name
+	 * SERVER: DC host name 
+	 * SERVER_IP: DC IPv4 address
+	 * NETBIOSNAME: DC NetBIOS name
+	 * NETIOSALIAS: DC NetBIOS alias
+
+ - member: Domain controller and member server that is joined to it set up. The
+   following environment variables will be set:
+
+     * USERNAME: Domain administrator user name
+	 * PASSWORD: Domain administrator password
+	 * DOMAIN: Domain name
+	 * REALM: Realm name
+	 * SERVER: Name of the member server
+
+
+Running tests
+=============
+
+To run all the tests use::
+
+   make test
+
+To run a quick subset (aiming for about 1 minute of testing) run::
+
+   make quicktest
+
+To run a specific test, use this syntax::
+
+   make test TESTS=testname
+
+for example::
+
+   make test TESTS=samba4.BASE-DELETE
+

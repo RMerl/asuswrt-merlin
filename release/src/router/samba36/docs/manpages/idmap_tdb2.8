@@ -1,0 +1,121 @@
+'\" t
+.\"     Title: idmap_tdb2
+.\"    Author: [see the "AUTHOR" section]
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date: 09/18/2013
+.\"    Manual: System Administration tools
+.\"    Source: Samba 3.6
+.\"  Language: English
+.\"
+.TH "IDMAP_TDB2" "8" "09/18/2013" "Samba 3\&.6" "System Administration tools"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+idmap_tdb2 \- Samba\*(Aqs idmap_tdb2 Backend for Winbind
+.SH "DESCRIPTION"
+.PP
+The idmap_tdb2 plugin is a substitute for the default idmap_tdb backend used by winbindd for storing SID/uid/gid mapping tables in clustered environments with Samba and CTDB\&.
+.PP
+In contrast to read only backends like idmap_rid, it is an allocating backend: This means that it needs to allocate new user and group IDs in order to create new mappings\&.
+.SH "IDMAP OPTIONS"
+.PP
+range = low \- high
+.RS 4
+Defines the available matching uid and gid range for which the backend is authoritative\&.
+.RE
+.PP
+script
+.RS 4
+This option can be used to configure an external program for performing id mappings instead of using the tdb counter\&. The mappings are then stored int tdb2 idmap database\&. For details see the section on IDMAP SCRIPT below\&.
+.RE
+.SH "IDMAP SCRIPT"
+.PP
+The tdb2 idmap backend supports an external program for performing id mappings through the smb\&.conf option
+\fIidmap config * : script\fR
+or its deprecated legacy form
+\fIidmap : script\fR\&.
+.PP
+The mappings obtained by the script are then stored in the idmap tdb2 database instead of mappings created by the incrementing id counters\&. It is therefore important that the script covers the complete range of SIDs that can be passed in for SID to Unix ID mapping, since otherwise SIDs unmapped by the script might get mapped to IDs that had previously been mapped by the script\&.
+.PP
+The script should accept the following command line options\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+	SIDTOID S\-1\-xxxx
+	IDTOSID UID xxxx
+	IDTOSID GID xxxx
+	
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+And it should return one of the following responses as a single line of text\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+	UID:yyyy
+	GID:yyyy
+	SID:yyyy
+	ERR:yyyy
+	
+.fi
+.if n \{\
+.RE
+.\}
+.SH "EXAMPLES"
+.PP
+This example shows how tdb2 is used as a the default idmap backend\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+	[global]
+	idmap config * : backend = tdb2
+	idmap config * : range = 1000000\-2000000
+	
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+This example shows how tdb2 is used as a the default idmap backend using an external program via the script parameter:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+	[global]
+	idmap config * : backend = tdb2
+	idmap config * : range = 1000000\-2000000
+	idmap config * : script = /usr/local/samba/bin/idmap_script\&.sh
+	
+.fi
+.if n \{\
+.RE
+.\}
+.SH "AUTHOR"
+.PP
+The original Samba software and related utilities were created by Andrew Tridgell\&. Samba is now developed by the Samba Team as an Open Source project similar to the way the Linux kernel is developed\&.

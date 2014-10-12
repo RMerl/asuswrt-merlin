@@ -1,0 +1,10 @@
+################################
+## Domain Naming Context
+################################
+dn: ${DOMAINDN}
+objectClass: top
+objectClass: domaindns
+instanceType: 5
+objectSid: ${DOMAINSID}
+nTSecurityDescriptor:: ${DESCRIPTOR}
+${DOMAINGUID}

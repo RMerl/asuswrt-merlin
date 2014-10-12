@@ -1,0 +1,534 @@
+'\" t
+.\"     Title: vfs_gpfs
+.\"    Author: [see the "AUTHOR" section]
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date: 09/18/2013
+.\"    Manual: System Administration tools
+.\"    Source: Samba 3.6
+.\"  Language: English
+.\"
+.TH "VFS_GPFS" "8" "09/18/2013" "Samba 3\&.6" "System Administration tools"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+vfs_gpfs \- gpfs specific samba extensions like acls and prealloc
+.SH "SYNOPSIS"
+.HP \w'\ 'u
+vfs objects = gpfs
+.SH "DESCRIPTION"
+.PP
+This VFS module is part of the
+\fBsamba\fR(7)
+suite\&.
+.PP
+The
+gpfs
+VFS module is the home for all gpfs extensions that Samba requires for proper integration with GPFS\&. It uses the GPL library interfaces provided by GPFS\&.
+.PP
+Currently the gpfs vfs module provides extensions in following areas :
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+NFSv4 ACL Interfaces with configurable options for GPFS
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Kernel oplock support on GPFS
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Lease support on GPFS
+.RE
+.sp
+.RE
+.PP
+NOTE:This module follows the posix\-acl behaviour and hence allows permission stealing via chown\&. Samba might allow at a later point in time, to restrict the chown via this module as such restrictions are the responsibility of the underlying filesystem than of Samba\&.
+.PP
+This module is stackable\&.
+.SH "OPTIONS"
+.PP
+gpfs:sharemodes = [ yes | no ]
+.RS 4
+Enable/Disable cross node sharemode handling for GPFS\&.
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+yes(default)
+\- propagate sharemodes across all GPFS nodes\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+no
+\- do not propagate sharemodes across all GPFS nodes\&. This should only be used if the GPFS file system is exclusively exported by Samba\&. Access by local unix application or NFS exports could lead to corrupted files\&.
+.RE
+.sp
+.RE
+.RE
+.PP
+gpfs:leases = [ yes | no ]
+.RS 4
+Enable/Disable cross node leases (oplocks) for GPFS\&. You should also set the
+oplocks
+and
+kernel oplocks
+options to the same value\&.
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+yes(default)
+\- propagate leases across all GPFS nodes\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+no
+\- do not propagate leases across all GPFS nodes\&. This should only be used if the GPFS file system is exclusively exported by Samba\&. Access by local unix application or NFS exports could lead to corrupted files\&.
+.RE
+.sp
+.RE
+.RE
+.PP
+gpfs:hsm = [ yes | no ]
+.RS 4
+Enable/Disable announcing if this FS has HSM enabled\&.
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+no(default)
+\- Do not announce HSM\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+no
+\- Announce HSM\&.
+.RE
+.sp
+.RE
+.RE
+.PP
+gpfs:getrealfilename = [ yes | no ]
+.RS 4
+Enable/Disable usage of the
+gpfs_get_realfilename_path()
+function\&. This improves the casesensitive wildcard file name access\&.
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+yes(default)
+\- use
+gpfs_get_realfilename_path()\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+no
+\- do not use
+gpfs_get_realfilename_path()\&. It seems that
+gpfs_get_realfilename_path()
+doesn\*(Aqt work on AIX\&.
+.RE
+.sp
+.RE
+.RE
+.PP
+gpfs:winattr = [ yes | no ]
+.RS 4
+Enable/Disable usage of the windows attributes in GPFS\&. GPFS is able to store windows file attributes e\&.g\&. HIDDEN, READONLY, SYSTEM and others natively\&. That means Samba doesn\*(Aqt need to map them to permission bits or extended attributes\&.
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+no(default)
+\- do not use GPFS windows attributes\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+yes
+\- use GPFS windows attributes\&.
+.RE
+.sp
+.RE
+.RE
+.PP
+gpfs:merge_writeappend = [ yes | no ]
+.RS 4
+GPFS ACLs doesn\*(Aqt know about the \*(AqAPPEND\*(Aq right\&. This optionen lets Samba map the \*(AqAPPEND\*(Aq right to \*(AqWRITE\*(Aq\&.
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+yes(default)
+\- map \*(AqAPPEND\*(Aq to \*(AqWRITE\*(Aq\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+no
+\- do not map \*(AqAPPEND\*(Aq to \*(AqWRITE\*(Aq\&.
+.RE
+.sp
+.RE
+.RE
+.PP
+gpfs:refuse_dacl_protected = [ yes | no ]
+.RS 4
+As GPFS does not support the ACE4_FLAG_NO_PROPAGATE NFSv4 flag (which would be the mapping for the DESC_DACL_PROTECTED flag), the status of this flag is currently silently ignored by Samba\&. That means that if you deselect the "Allow inheritable permissions\&.\&.\&." checkbox in Windows\*(Aq ACL dialog and then apply the ACL, the flag will be back immediately\&.
+.sp
+To make sure that automatic migration with e\&.g\&. robocopy does not lead to ACLs silently (and unintentionally) changed, you can set
+gpfs:refuse_dacl_protected = yes
+to enable an explicit check for this flag and if set, it will return NT_STATUS_NOT_SUPPORTED so errors are shown up on the Windows side and the Administrator is aware of the ACLs not being settable like intended
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+no(default)
+\- ignore the DESC_DACL_PROTECTED flags\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+yes
+\- reject ACLs with DESC_DACL_PROTECTED\&.
+.RE
+.sp
+.RE
+.RE
+.PP
+nfs4:mode = [ simple | special ]
+.RS 4
+Enable/Disable substitution of special IDs on GPFS\&. This parameter should not affect the windows users in anyway\&. It only ensures that Samba sets the special IDs \- OWNER@ and GROUP@ ( mappings to simple uids ) that are relevant to GPFS\&.
+.sp
+The following MODEs are understood by the module:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+simple(default)
+\- do not use special IDs in GPFS ACEs
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+special
+\- use special IDs in GPFS ACEs\&.
+.RE
+.sp
+.RE
+.RE
+.PP
+nfs4:acedup = [dontcare|reject|ignore|merge]
+.RS 4
+This parameter configures how Samba handles duplicate ACEs encountered in GPFS ACLs\&. GPFS allows/creates duplicate ACE for different bits for same ID\&.
+.sp
+Following is the behaviour of Samba for different values :
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+dontcare (default)
+\- copy the ACEs as they come
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+reject
+\- stop operation and exit with error on ACL set op
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+ignore
+\- don\*(Aqt include the second matching ACE
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+merge
+\- bitwise OR the 2 ace\&.flag fields and 2 ace\&.mask fields of the 2 duplicate ACEs into 1 ACE
+.RE
+.sp
+.RE
+.RE
+.PP
+nfs4:chown = [yes|no]
+.RS 4
+This parameter allows enabling or disabling the chown supported by the underlying filesystem\&. This parameter should be enabled with care as it might leave your system insecure\&.
+.sp
+Some filesystems allow chown as a) giving b) stealing\&. It is the latter that is considered a risk\&.
+.sp
+Following is the behaviour of Samba for different values :
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+yes
+\- Enable chown if as supported by the under filesystem
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+no (default)
+\- Disable chown
+.RE
+.sp
+.RE
+.RE
+.PP
+gpfs:syncio = [yes|no]
+.RS 4
+This parameter makes Samba open all files with O_SYNC\&. This triggers optimizations in GPFS for workloads that heavily share files\&.
+.sp
+Following is the behaviour of Samba for different values:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+yesOpen files with O_SYNC
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+no (default)Open files as normal Samba would do
+.RE
+.sp
+.RE
+.RE
+.SH "EXAMPLES"
+.PP
+A GPFS mount can be exported via Samba as follows :
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+        \fI[samba_gpfs_share]\fR
+	\m[blue]\fBvfs objects = gpfs\fR\m[]
+	\m[blue]\fBpath = /test/gpfs_mount\fR\m[]
+	\m[blue]\fBnfs4: mode = special\fR\m[]
+	\m[blue]\fBnfs4: acedup = merge\fR\m[]
+.fi
+.if n \{\
+.RE
+.\}
+.SH "CAVEATS"
+.PP
+Depending on the version of gpfs, the
+libgpfs_gpl
+library or the
+libgpfs
+library is needed at runtime by the
+gpfs
+VFS module: Starting with gpfs 3\&.2\&.1 PTF8, the complete
+libgpfs
+is available as open source and
+libgpfs_gpl
+does no longer exist\&. With earlier versions of gpfs, only the
+libgpfs_gpl
+library was open source and could be used at run time\&.
+.PP
+At build time, only the header file
+gpfs_gpl\&.h
+is required , which is a symlink to
+gpfs\&.h
+in gpfs versions newer than 3\&.2\&.1 PTF8\&.
+.SH "VERSION"
+.PP
+This man page is correct for version 3\&.0\&.25 of the Samba suite\&.
+.SH "AUTHOR"
+.PP
+The original Samba software and related utilities were created by Andrew Tridgell\&. Samba is now developed by the Samba Team as an Open Source project similar to the way the Linux kernel is developed\&.
+.PP
+The GPFS VFS module was created with contributions from Volker Lendecke and the developers at IBM\&.
+.PP
+This manpage was created by the IBM FSCC team

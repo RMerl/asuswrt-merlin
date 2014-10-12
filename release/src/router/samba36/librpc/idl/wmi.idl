@@ -1,0 +1,715 @@
+/* 
+ * WMI IDL.  
+ * See http://en.wikipedia.org/wiki/Windows_Management_Instrumentation for more information.
+ */
+#include "idl_types.h"
+
+import "dcom.idl";
+import "misc.idl";
+
+[
+	uuid("8BC3F05E-D86B-11d0-A075-00C04FB68820")
+] coclass WbemLevel1Login
+{
+    interface IWbemLevel1Login;
+
+};
+
+[
+	local,
+	object,
+	uuid("dc12a681-737f-11cf-884d-00aa004b2e24")
+]
+interface IWbemClassObject : IUnknown
+{
+
+	typedef [noprint] struct {
+		[value(0x72657355)] uint32 flags;
+		[string, charset(UTF16)] uint16 data[];
+	} BSTR;
+
+    WERROR Delete(
+        [in, string, charset(UTF16)] uint16 *wszName
+        );
+
+};
+
+[
+    uuid(9A653086-174F-11d2-B5F9-00104B703EFD)
+]
+coclass WbemClassObject
+{
+	    interface IWbemClassObject;
+};
+
+
+[
+	uuid("9556dc99-828c-11cf-a37e-00aa003240c7"),
+	object,
+        pointer_default(unique)
+] interface IWbemServices : IUnknown
+{
+    typedef [v1_enum] enum
+    {
+	RPC_S_CALL_FAILED		= 1726,
+
+        WBEM_NO_ERROR = 0,
+        WBEM_S_NO_ERROR = 0,
+        WBEM_S_SAME = 0,
+        WBEM_S_FALSE = 1,
+        WBEM_S_ALREADY_EXISTS           = 0x40001,
+        WBEM_S_RESET_TO_DEFAULT         = 0x40002,
+        WBEM_S_DIFFERENT                = 0x40003,
+        WBEM_S_TIMEDOUT                 = 0x40004,
+        WBEM_S_NO_MORE_DATA             = 0x40005,
+        WBEM_S_OPERATION_CANCELLED      = 0x40006,
+        WBEM_S_PENDING                  = 0x40007,
+        WBEM_S_DUPLICATE_OBJECTS        = 0x40008,
+        WBEM_S_ACCESS_DENIED            = 0x40009,
+        WBEM_S_PARTIAL_RESULTS          = 0x40010,
+        WBEM_S_NO_POSTHOOK              = 0x40011,
+        WBEM_S_POSTHOOK_WITH_BOTH       = 0x40012,
+        WBEM_S_POSTHOOK_WITH_NEW        = 0x40013,
+        WBEM_S_POSTHOOK_WITH_STATUS     = 0x40014,
+        WBEM_S_POSTHOOK_WITH_OLD        = 0x40015,
+        WBEM_S_REDO_PREHOOK_WITH_ORIGINAL_OBJECT = 0x40016,
+        WBEM_S_SOURCE_NOT_AVAILABLE     = 0x40017,
+        WBEM_E_FAILED                           = 0x80041001,
+        WBEM_E_NOT_FOUND                        = 0x80041002,
+        WBEM_E_ACCESS_DENIED                    = 0x80041003,
+        WBEM_E_PROVIDER_FAILURE                 = 0x80041004,
+        WBEM_E_TYPE_MISMATCH                    = 0x80041005,
+        WBEM_E_OUT_OF_MEMORY                    = 0x80041006,
+        WBEM_E_INVALID_CONTEXT                  = 0x80041007,
+        WBEM_E_INVALID_PARAMETER                = 0x80041008,
+        WBEM_E_NOT_AVAILABLE                    = 0x80041009,
+        WBEM_E_CRITICAL_ERROR                   = 0x8004100A,
+        WBEM_E_INVALID_STREAM                   = 0x8004100B,
+        WBEM_E_NOT_SUPPORTED                    = 0x8004100C,
+        WBEM_E_INVALID_SUPERCLASS               = 0x8004100D,
+        WBEM_E_INVALID_NAMESPACE                = 0x8004100E,
+        WBEM_E_INVALID_OBJECT                   = 0x8004100F,
+        WBEM_E_INVALID_CLASS                    = 0x80041010,
+        WBEM_E_PROVIDER_NOT_FOUND               = 0x80041011,
+        WBEM_E_INVALID_PROVIDER_REGISTRATION    = 0x80041012,
+        WBEM_E_PROVIDER_LOAD_FAILURE            = 0x80041013,
+        WBEM_E_INITIALIZATION_FAILURE           = 0x80041014,
+        WBEM_E_TRANSPORT_FAILURE                = 0x80041015,
+        WBEM_E_INVALID_OPERATION                = 0x80041016,
+        WBEM_E_INVALID_QUERY                    = 0x80041017,
+        WBEM_E_INVALID_QUERY_TYPE               = 0x80041018,
+        WBEM_E_ALREADY_EXISTS                   = 0x80041019,
+        WBEM_E_OVERRIDE_NOT_ALLOWED             = 0x8004101A,
+        WBEM_E_PROPAGATED_QUALIFIER             = 0x8004101B,
+        WBEM_E_PROPAGATED_PROPERTY              = 0x8004101C,
+        WBEM_E_UNEXPECTED                       = 0x8004101D,
+        WBEM_E_ILLEGAL_OPERATION                = 0x8004101E,
+        WBEM_E_CANNOT_BE_KEY                    = 0x8004101F,
+        WBEM_E_INCOMPLETE_CLASS                 = 0x80041020,
+        WBEM_E_INVALID_SYNTAX                   = 0x80041021,
+        WBEM_E_NONDECORATED_OBJECT              = 0x80041022,
+        WBEM_E_READ_ONLY                        = 0x80041023,
+        WBEM_E_PROVIDER_NOT_CAPABLE             = 0x80041024,
+        WBEM_E_CLASS_HAS_CHILDREN               = 0x80041025,
+        WBEM_E_CLASS_HAS_INSTANCES              = 0x80041026,
+        WBEM_E_QUERY_NOT_IMPLEMENTED            = 0x80041027,
+        WBEM_E_ILLEGAL_NULL                     = 0x80041028,
+        WBEM_E_INVALID_QUALIFIER_TYPE           = 0x80041029,
+        WBEM_E_INVALID_PROPERTY_TYPE            = 0x8004102A,
+        WBEM_E_VALUE_OUT_OF_RANGE               = 0x8004102B,
+        WBEM_E_CANNOT_BE_SINGLETON              = 0x8004102C,
+        WBEM_E_INVALID_CIM_TYPE                 = 0x8004102D,
+        WBEM_E_INVALID_METHOD                   = 0x8004102E,
+        WBEM_E_INVALID_METHOD_PARAMETERS        = 0x8004102F,
+        WBEM_E_SYSTEM_PROPERTY                  = 0x80041030,
+        WBEM_E_INVALID_PROPERTY                 = 0x80041031,
+        WBEM_E_CALL_CANCELLED                   = 0x80041032,
+        WBEM_E_SHUTTING_DOWN                    = 0x80041033,
+        WBEM_E_PROPAGATED_METHOD                = 0x80041034,
+        WBEM_E_UNSUPPORTED_PARAMETER            = 0x80041035,
+        WBEM_E_MISSING_PARAMETER_ID             = 0x80041036,
+        WBEM_E_INVALID_PARAMETER_ID             = 0x80041037,
+        WBEM_E_NONCONSECUTIVE_PARAMETER_IDS     = 0x80041038,
+        WBEM_E_PARAMETER_ID_ON_RETVAL           = 0x80041039,
+        WBEM_E_INVALID_OBJECT_PATH              = 0x8004103A,
+        WBEM_E_OUT_OF_DISK_SPACE                = 0x8004103B,
+        WBEM_E_BUFFER_TOO_SMALL                 = 0x8004103C,
+        WBEM_E_UNSUPPORTED_PUT_EXTENSION        = 0x8004103D,
+        WBEM_E_UNKNOWN_OBJECT_TYPE              = 0x8004103E,
+        WBEM_E_UNKNOWN_PACKET_TYPE              = 0x8004103F,
+        WBEM_E_MARSHAL_VERSION_MISMATCH         = 0x80041040,
+        WBEM_E_MARSHAL_INVALID_SIGNATURE        = 0x80041041,
+        WBEM_E_INVALID_QUALIFIER                = 0x80041042,
+        WBEM_E_INVALID_DUPLICATE_PARAMETER      = 0x80041043,
+        WBEM_E_TOO_MUCH_DATA                    = 0x80041044,
+        WBEM_E_SERVER_TOO_BUSY                  = 0x80041045,
+        WBEM_E_INVALID_FLAVOR                   = 0x80041046,
+        WBEM_E_CIRCULAR_REFERENCE               = 0x80041047,
+        WBEM_E_UNSUPPORTED_CLASS_UPDATE         = 0x80041048,
+        WBEM_E_CANNOT_CHANGE_KEY_INHERITANCE    = 0x80041049,
+        WBEM_E_CANNOT_CHANGE_INDEX_INHERITANCE  = 0x80041050,
+        WBEM_E_TOO_MANY_PROPERTIES              = 0x80041051,
+        WBEM_E_UPDATE_TYPE_MISMATCH             = 0x80041052,
+        WBEM_E_UPDATE_OVERRIDE_NOT_ALLOWED      = 0x80041053,
+        WBEM_E_UPDATE_PROPAGATED_METHOD         = 0x80041054,
+        WBEM_E_METHOD_NOT_IMPLEMENTED           = 0x80041055,
+        WBEM_E_METHOD_DISABLED                  = 0x80041056,
+        WBEM_E_REFRESHER_BUSY                   = 0x80041057,
+        WBEM_E_UNPARSABLE_QUERY                 = 0x80041058,
+        WBEM_E_NOT_EVENT_CLASS                  = 0x80041059,
+        WBEM_E_MISSING_GROUP_WITHIN             = 0x8004105A,
+        WBEM_E_MISSING_AGGREGATION_LIST         = 0x8004105B,
+        WBEM_E_PROPERTY_NOT_AN_OBJECT           = 0x8004105C,
+        WBEM_E_AGGREGATING_BY_OBJECT            = 0x8004105D,
+        WBEM_E_UNINTERPRETABLE_PROVIDER_QUERY   = 0x8004105F,
+        WBEM_E_BACKUP_RESTORE_WINMGMT_RUNNING   = 0x80041060,
+        WBEM_E_QUEUE_OVERFLOW                   = 0x80041061,
+        WBEM_E_PRIVILEGE_NOT_HELD               = 0x80041062,
+        WBEM_E_INVALID_OPERATOR                 = 0x80041063,
+        WBEM_E_LOCAL_CREDENTIALS                = 0x80041064,
+        WBEM_E_CANNOT_BE_ABSTRACT               = 0x80041065,
+        WBEM_E_AMENDED_OBJECT                   = 0x80041066,
+        WBEM_E_CLIENT_TOO_SLOW                  = 0x80041067,
+        WBEM_E_NULL_SECURITY_DESCRIPTOR         = 0x80041068,
+        WBEM_E_TIMED_OUT                        = 0x80041069,
+        WBEM_E_INVALID_ASSOCIATION              = 0x8004106A,
+        WBEM_E_AMBIGUOUS_OPERATION              = 0x8004106B,
+        WBEM_E_QUOTA_VIOLATION                  = 0x8004106C,
+        WBEM_E_RESERVED_001                     = 0x8004106D,
+        WBEM_E_RESERVED_002                     = 0x8004106E,
+        WBEM_E_UNSUPPORTED_LOCALE               = 0x8004106F,
+        WBEM_E_HANDLE_OUT_OF_DATE               = 0x80041070,
+        WBEM_E_CONNECTION_FAILED                = 0x80041071,
+        WBEM_E_INVALID_HANDLE_REQUEST           = 0x80041072,
+        WBEM_E_PROPERTY_NAME_TOO_WIDE           = 0x80041073,
+        WBEM_E_CLASS_NAME_TOO_WIDE              = 0x80041074,
+        WBEM_E_METHOD_NAME_TOO_WIDE             = 0x80041075,
+        WBEM_E_QUALIFIER_NAME_TOO_WIDE          = 0x80041076,
+        WBEM_E_RERUN_COMMAND                    = 0x80041077,
+        WBEM_E_DATABASE_VER_MISMATCH            = 0x80041078,
+        WBEM_E_VETO_DELETE                      = 0x80041079,
+        WBEM_E_VETO_PUT                         = 0x8004107A,
+        WBEM_E_INVALID_LOCALE                   = 0x80041080,
+        WBEM_E_PROVIDER_SUSPENDED               = 0x80041081,
+        WBEM_E_SYNCHRONIZATION_REQUIRED         = 0x80041082,
+        WBEM_E_NO_SCHEMA                        = 0x80041083,
+        WBEM_E_PROVIDER_ALREADY_REGISTERED      = 0x80041084,
+        WBEM_E_PROVIDER_NOT_REGISTERED          = 0x80041085,
+        WBEM_E_FATAL_TRANSPORT_ERROR            = 0x80041086,
+        WBEM_E_ENCRYPTED_CONNECTION_REQUIRED    = 0x80041087,
+        WBEM_E_PROVIDER_TIMED_OUT               = 0x80041088,
+        WBEM_E_NO_KEY                           = 0x80041089,
+        WBEM_E_PROVIDER_DISABLED                = 0x8004108a
+    }   WBEMSTATUS;
+
+    typedef [public] bitmap
+    {
+        WBEM_FLAG_RETURN_WBEM_COMPLETE 		= 0,
+        WBEM_FLAG_BIDIRECTIONAL 			= 0,
+        WBEM_FLAG_RETURN_IMMEDIATELY 		= 0x000010,
+        WBEM_FLAG_FORWARD_ONLY 				= 0x000020,
+        WBEM_FLAG_NO_ERROR_OBJECT 			= 0x000040,
+        WBEM_FLAG_SEND_STATUS 				= 0x000080,
+        WBEM_FLAG_ENSURE_LOCATABLE 			= 0x000100,
+        WBEM_FLAG_DIRECT_READ 				= 0x000200,
+        WBEM_FLAG_USE_AMENDED_QUALIFIERS 	= 0x020000,
+        WBEM_FLAG_STRONG_VALIDATION 		= 0x100000,
+        WBEM_FLAG_RETURN_ERROR_OBJECT 		= 0,
+        WBEM_FLAG_DONT_SEND_STATUS 			= 0,
+        WBEM_FLAG_SEND_ONLY_SELECTED 		= 0,
+
+        WBEM_RETURN_WHEN_COMPLETE 			= 0,
+        WBEM_RETURN_IMMEDIATELY 			= WBEM_FLAG_RETURN_IMMEDIATELY,
+
+        WBEM_MASK_RESERVED_FLAGS 			= 0x001F000
+    } WBEM_GENERIC_FLAG_TYPE;
+
+    typedef [public,v1_enum] enum tag_WBEM_TIMEOUT_TYPE
+    {
+        WBEM_NO_WAIT = 0,
+        WBEM_INFINITE = 0xFFFFFFFF
+    } WBEM_TIMEOUT_TYPE;
+
+    typedef [public,v1_enum] enum
+    {
+        CIM_EMPTY  		= 0,
+        CIM_SINT16 		= 2,
+        CIM_SINT32 		= 3,
+        CIM_REAL32 		= 4,
+        CIM_REAL64 		= 5,
+        CIM_STRING 		= 8,
+
+        CIM_BOOLEAN 	= 11,
+        CIM_OBJECT  	= 13,
+        CIM_SINT8   	= 16,
+        CIM_UINT8   	= 17,
+        CIM_UINT16  	= 18,
+        CIM_UINT32  	= 19,
+        CIM_SINT64  	= 20,
+        CIM_UINT64  	= 21,
+        CIM_DATETIME 	= 101,
+        CIM_REFERENCE 	= 102,
+        CIM_CHAR16 		= 103,
+
+        CIM_FLAG_ARRAY 	= 0x2000,
+        CIM_ILLEGAL 	= 0x0fff,
+        CIM_TYPEMASK 	= 0x2fff,
+
+        CIM_ARR_SINT8 = CIM_FLAG_ARRAY | CIM_SINT8,
+        CIM_ARR_UINT8 = CIM_FLAG_ARRAY | CIM_UINT8,
+        CIM_ARR_SINT16 = CIM_FLAG_ARRAY | CIM_SINT16,
+        CIM_ARR_UINT16 = CIM_FLAG_ARRAY | CIM_UINT16,
+        CIM_ARR_SINT32 = CIM_FLAG_ARRAY | CIM_SINT32,
+        CIM_ARR_UINT32 = CIM_FLAG_ARRAY | CIM_UINT32,
+        CIM_ARR_SINT64 = CIM_FLAG_ARRAY | CIM_SINT64,
+        CIM_ARR_UINT64 = CIM_FLAG_ARRAY | CIM_UINT64,
+        CIM_ARR_REAL32 = CIM_FLAG_ARRAY | CIM_REAL32,
+        CIM_ARR_REAL64 = CIM_FLAG_ARRAY | CIM_REAL64,
+        CIM_ARR_BOOLEAN = CIM_FLAG_ARRAY | CIM_BOOLEAN,
+        CIM_ARR_STRING = CIM_FLAG_ARRAY | CIM_STRING,
+        CIM_ARR_DATETIME = CIM_FLAG_ARRAY | CIM_DATETIME,
+        CIM_ARR_REFERENCE = CIM_FLAG_ARRAY | CIM_REFERENCE,
+        CIM_ARR_CHAR16 = CIM_FLAG_ARRAY | CIM_CHAR16,
+        CIM_ARR_OBJECT = CIM_FLAG_ARRAY | CIM_OBJECT
+
+    } CIMTYPE_ENUMERATION;
+
+    typedef [public,bitmap8bit] bitmap
+    {
+        WBEM_FLAVOR_FLAG_PROPAGATE_TO_INSTANCE = 0x1,
+        WBEM_FLAVOR_FLAG_PROPAGATE_TO_DERIVED_CLASS = 0x2,
+/*        WBEM_FLAVOR_MASK_PROPAGATION = 0x0F, */
+
+        WBEM_FLAVOR_NOT_OVERRIDABLE = 0x10,
+/*        WBEM_FLAVOR_MASK_PERMISSIONS = 0x10, */
+
+        WBEM_FLAVOR_ORIGIN_PROPAGATED = 0x20,
+        WBEM_FLAVOR_ORIGIN_SYSTEM = 0x40,
+/*        WBEM_FLAVOR_MASK_ORIGIN = 0x60, */
+
+        WBEM_FLAVOR_AMENDED = 0x80
+/*        WBEM_FLAVOR_MASK_AMENDED = 0x80 */
+
+    } WBEM_FLAVOR_TYPE;
+
+    typedef [public,bitmap8bit] bitmap
+    {
+		WCF_DECORATIONS = 1,
+		WCF_INSTANCE = 2,
+		WCF_CLASS = 4,
+		WCF_CLASS_PART_INTERNAL = 8
+	/*	WCF_CLASS_PART_SHARED = 0x104 */
+	} WCO_FLAGS;
+
+	typedef struct
+	{
+		uint32 count;
+		[ref,charset(UTF16)] uint16 *item[count];
+	} CIMSTRINGS;
+
+	typedef [public,bitmap8bit] bitmap {
+		DEFAULT_FLAG_EMPTY = 1,
+		DEFAULT_FLAG_INHERITED = 2
+	} DEFAULT_FLAGS;
+
+	WERROR OpenNamespace(
+		[in] BSTR strNamespace,
+		[in] long lFlags,
+		[in] IWbemContext* pCtx,
+		[out, in, unique] IWbemServices** ppWorkingNamespace,
+		[out, in, unique] IWbemCallResult** ppResult
+		);
+
+	WERROR CancelAsyncCall(
+		[in] IWbemObjectSink* pSink
+		);
+
+	WERROR QueryObjectSink(
+		[in] long lFlags,
+		[out] IWbemObjectSink** ppResponseHandler
+		);
+
+	WERROR GetObject(
+		[in] BSTR strObjectPath,
+		[in] long lFlags,
+		[in] IWbemContext* pCtx,
+		[out, in, unique] IWbemClassObject** ppObject,
+		[out, in, unique] IWbemCallResult** ppCallResult
+		);
+
+
+	WERROR GetObjectAsync(
+		[in] BSTR strObjectPath,
+		[in] long lFlags,
+		[in] IWbemContext* pCtx,
+		[in] IWbemObjectSink* pResponseHandler
+		);
+
+	WERROR PutClass(
+		[in] IWbemClassObject* pObject,
+		[in] long lFlags,
+		[in] IWbemContext* pCtx,
+		[out, in, unique] IWbemCallResult** ppCallResult
+		);
+
+	WERROR PutClassAsync(
+		[in] IWbemClassObject* pObject,
+		[in] long lFlags,
+		[in] IWbemContext* pCtx,
+		[in] IWbemObjectSink* pResponseHandler
+		);
+
+	WERROR DeleteClass(
+		[in] BSTR strClass,
+		[in] long lFlags,
+		[in] IWbemContext* pCtx,
+		[out, in, unique] IWbemCallResult** ppCallResult
+		);
+
+	WERROR DeleteClassAsync(
+		[in] BSTR strClass,
+		[in] long lFlags,
+		[in] IWbemContext* pCtx,
+		[in] IWbemObjectSink* pResponseHandler
+		);
+
+	WERROR CreateClassEnum(
+		[in] BSTR strSuperclass,
+		[in] long lFlags,
+		[in] IWbemContext* pCtx,
+		[out] IEnumWbemClassObject** ppEnum
+		);
+
+	WERROR CreateClassEnumAsync(
+		[in] BSTR strSuperclass,
+		[in] long lFlags,
+		[in] IWbemContext* pCtx,
+		[in] IWbemObjectSink* pResponseHandler
+		);
+
+	WERROR PutInstance(
+		[in] IWbemClassObject* pInst,
+		[in] long lFlags,
+		[in] IWbemContext* pCtx,
+		[out, in, unique] IWbemCallResult** ppCallResult
+		);
+
+	WERROR PutInstanceAsync(
+		[in] IWbemClassObject* pInst,
+		[in] long lFlags,
+		[in] IWbemContext* pCtx,
+		[in] IWbemObjectSink* pResponseHandler
+		);
+
+
+	WERROR DeleteInstance(
+		[in] BSTR strObjectPath,
+		[in] long lFlags,
+		[in] IWbemContext* pCtx,
+		[out, in, unique] IWbemCallResult** ppCallResult
+		);
+
+
+	WERROR DeleteInstanceAsync(
+		[in] BSTR strObjectPath,
+		[in] long lFlags,
+		[in] IWbemContext* pCtx,
+		[in] IWbemObjectSink* pResponseHandler
+		);
+
+
+    WERROR CreateInstanceEnum(
+        [in] BSTR strFilter,          /* allow more things than a class name */
+        [in] long lFlags,
+        [in,unique]  IWbemContext* pCtx,
+        [out] IEnumWbemClassObject** ppEnum
+        );
+
+	WERROR CreateInstanceEnumAsync(
+		[in] BSTR strSuperClass,
+		[in] long lFlags,
+		[in] IWbemContext* pCtx,
+		[in] IWbemObjectSink* pResponseHandler
+		);
+
+    WERROR ExecQuery(
+        [in] BSTR strQueryLanguage,
+        [in] BSTR strQuery,
+        [in]  long lFlags,
+        [in,unique]  IWbemContext* pCtx,
+        [out] IEnumWbemClassObject** ppEnum
+        );
+
+	WERROR ExecQueryAsync(
+		[in] BSTR strQueryLanguage,
+		[in] BSTR strQuery,
+		[in] long lFlags,
+		[in] IWbemContext* pCtx,
+		[in] IWbemObjectSink* pResponseHandler
+		);
+
+    WERROR ExecNotificationQuery(
+        [in] BSTR strQueryLanguage,
+        [in] BSTR strQuery,
+        [in] long lFlags,
+        [in,unique]  IWbemContext* pCtx,
+        [out] IEnumWbemClassObject** ppEnum
+        );
+
+	WERROR ExecNotificationQueryAsync(
+		[in] BSTR strQueryLanguage,
+		[in] BSTR strQuery,
+		[in] long lFlags,
+		[in] IWbemContext* pCtx,
+		[in] IWbemObjectSink* pResponseHandler
+		);
+
+    WERROR ExecMethod(
+        [in] BSTR strObjectPath,
+        [in] BSTR strMethodName,
+        [in] long lFlags,
+        [in,unique] IWbemContext* pCtx,
+        [in,unique] IWbemClassObject* pInParams,
+        [in,out,unique] IWbemClassObject** ppOutParams,
+        [in,out,unique] IWbemCallResult** ppCallResult
+        );
+
+	WERROR ExecMethodAsync(
+		[in] BSTR strObjectPath,
+		[in] BSTR strMethodName,
+		[in] uint32 lFlags,
+		[in] IWbemContext* pCtx,
+		[in] IWbemClassObject* pInParams,
+		[in] IWbemObjectSink* pResponseHandler
+		);
+}
+
+[
+	object, 
+	uuid(027947e1-d731-11ce-a357-000000000001),
+	pointer_default(unique)
+] interface IEnumWbemClassObject : IUnknown
+{
+    WERROR Reset();
+
+    [call_as(Next)] WERROR IEnumWbemClassObject_Next(
+        [in]  int32 lTimeout,
+        [in]  uint32 uCount,
+		[out, size_is(uCount), length_is(*puReturned)] IWbemClassObject** apObjects,
+		[out] uint32* puReturned
+        );
+
+    WERROR NextAsync(
+        [in]  uint32 uCount,
+        [in]  IWbemObjectSink* pSink
+        );
+
+    WERROR IEnumWbemClassObject_Clone(
+        [out] IEnumWbemClassObject** ppEnum
+        );
+
+    WERROR Skip(
+        [in]  int32 lTimeout,
+        [in] uint32 nCount
+        );
+};
+
+[
+	object, 
+	local, 
+	uuid("44aca674-e8fc-11d0-a07c-00c04fb68820"),
+	pointer_default(unique)
+] interface IWbemContext : IUnknown
+{
+    WERROR Clone([out] IWbemContext** ppNewCopy);
+
+    WERROR GetNames(
+/*        [in] long lFlags, */
+/*        [out] SAFEARRAY (BSTR)* pNames */
+        );
+
+    WERROR BeginEnumeration([in] long lFlags);
+
+    WERROR Next(
+/*        [in]  long lFlags, */
+/*        [out] BSTR* pstrName, */
+/*        [out] VARIANT* pValue */
+        );
+
+    WERROR EndEnumeration();
+
+
+    WERROR SetValue(
+/*        [in, string] LPCWSTR wszName, */
+/*        [in] long lFlags */
+/*        [in] VARIANT* pValue */
+        );
+
+    WERROR GetValue(
+/*        [in, string] LPCWSTR wszName, */
+/*        [in] long lFlags, */
+/*        [out] VARIANT* pValue */
+        );
+
+    WERROR DeleteValue(
+/*        [in, string] LPCWSTR wszName, */
+/*        [in] long lFlags */
+        );
+
+    WERROR DeleteAll();
+}
+
+[
+	object,
+	uuid("F309AD18-D86A-11d0-A075-00C04FB68820"),
+	pointer_default(unique)
+] interface IWbemLevel1Login :  IUnknown
+{
+	WERROR EstablishPosition(
+		[in, unique, string, charset(UTF16)] uint16* wszLocaleList,
+		[in] DWORD dwNumLocales,
+		[out] DWORD* reserved
+		);
+	WERROR RequestChallenge(
+		[in, unique, string, charset(UTF16)] uint16* wszNetworkResource,
+		[in, unique, string, charset(UTF16)] uint16* wszUser,
+		[out, size_is(16), length_is(16)] uint8 * Nonce
+		);
+	WERROR WBEMLogin(
+		[in, unique, string, charset(UTF16)] uint16* wszPreferredLocale,
+		[in, size_is(16), length_is(16), unique] uint8 * AccessToken,
+		[in] long lFlags,
+		[in] IWbemContext* pCtx,
+		[out] IWbemServices** ppNamespace
+		);
+
+
+	WERROR NTLMLogin(
+		[in,unique,string,charset(UTF16)] uint16 *wszNetworkResource,
+		[in,unique,string,charset(UTF16)] uint16 *wszPreferredLocale,
+		[in]   long lFlags,
+		[in,unique]   IWbemContext* pCtx,
+		[out,ref]  IWbemServices** ppNamespace
+		);
+
+}
+
+[
+	object,
+	uuid("423ec01e-2e35-11d2-b604-00104b703efd"),
+	pointer_default(unique)
+] interface IWbemWCOSmartEnum : IUnknown
+{
+	typedef struct {
+		uint32 size;
+		char data[size];
+	} WBEMDATA;
+
+	typedef enum {
+		WTYPE_SCHEMA = 1,
+		WTYPE_CLASS = 2,
+		WTYPE_OBJECT = 3
+	} WTYPES;
+
+	typedef [relative_base] struct {
+		/*	[relative] WBEMDATA4 *data; */ /* 0x9 */
+		uint32 data_size;
+		uint8 wtype;
+	} WBEMDATA4;
+
+	typedef [relative_base] struct {
+		[relative] WBEMDATA4 *data; /* 0x9 */
+		uint32 data_size;
+		uint8 wtype;
+	} WBEMDATA3;
+
+	typedef [relative_base] struct {
+		[relative,size_is(obj_num)] WBEMDATA3 *data; /* 0x8 */
+		uint32 data_size;
+		uint32 obj_num;
+	} WBEMDATA2;
+
+	typedef [relative_base] struct {
+		[relative] WBEMDATA2 *data; /* 0x8 */
+		uint32 data_size;
+	} WBEMDATA1;
+
+	typedef [relative_base] struct {
+		uint32 u1_0; /* 0 */
+		hyper signature; /* 'WBEMDATA' */
+		[relative] WBEMDATA1 *data; /* 0x1A */
+		uint32 data_size;
+		uint32 u2_0; /* 0 */
+		uint8 ver_major; /* 1 */
+		uint8 ver_minor; /* 0 - Win2000, 1 - WinXP/2003 */
+	} WBEMDATA0;
+
+	WERROR IWbemWCOSmartEnum_Next(
+		[in,ref] GUID *gEWCO,
+		[in] uint32 lTimeOut,
+		[in] uint32 uCount,
+		[in] uint32 unknown,
+		[in,ref] GUID *gWCO,
+		[out,ref] uint32 *puReturned,
+		[out,ref] uint32 *pSize,
+		[out,ref,size_is(,*pSize)] uint8 **pData
+		);
+}
+
+[
+	object,
+	uuid("1c1c45ee-4395-11d2-b60b-00104b703efd"),
+	pointer_default(unique)
+] interface IWbemFetchSmartEnum : IUnknown
+{
+	WERROR Fetch([out]	IWbemWCOSmartEnum** ppEnum);
+	WERROR Test([out]	IWbemClassObject** ppEnum);
+}
+
+[
+	object,
+	/*	restricted, */
+	uuid(44aca675-e8fc-11d0-a07c-00c04fb68820)
+] interface IWbemCallResult : IUnknown
+{
+	WERROR GetResultObject(
+						   [in]  long lTimeout,
+						   [out] IWbemClassObject** ppResultObject
+						  );
+
+	WERROR GetResultString(
+						   [in]  long lTimeout,
+						   [out] BSTR* pstrResultString
+						  );
+
+	WERROR GetResultServices(
+							 [in]  long lTimeout,
+							 [out] IWbemServices** ppServices
+							);
+
+	WERROR GetCallStatus(
+						 [in]  long lTimeout,
+						 [out] long* plStatus
+						);
+}
+
+
+[
+	object,
+	restricted,
+	uuid(7c857801-7381-11cf-884d-00aa004b2e24)
+]
+interface IWbemObjectSink : IUnknown
+{
+	WERROR SetStatus(
+					 [in] long lFlags,
+					 [in] WERROR hResult,
+					 [in] BSTR strParam,
+					 [in] IWbemClassObject* pObjParam
+					);
+	WERROR Indicate(
+					[in] long lObjectCount,
+					[in, size_is(lObjectCount)] IWbemClassObject** apObjArray
+				   );
+};
+

@@ -1,0 +1,69 @@
+'\" t
+.\"     Title: vfs_cap
+.\"    Author: [see the "AUTHOR" section]
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date: 09/18/2013
+.\"    Manual: System Administration tools
+.\"    Source: Samba 3.6
+.\"  Language: English
+.\"
+.TH "VFS_CAP" "8" "09/18/2013" "Samba 3\&.6" "System Administration tools"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+vfs_cap \- CAP encode filenames
+.SH "SYNOPSIS"
+.HP \w'\ 'u
+vfs objects = cap
+.SH "DESCRIPTION"
+.PP
+This VFS module is part of the
+\fBsamba\fR(7)
+suite\&.
+.PP
+CAP (Columbia Appletalk Protocol) encoding is a technique for representing non\-ASCII filenames in ASCII\&. The
+vfs_cap
+VFS module translates filenames to and from CAP format, allowing users to name files in their native encoding\&.
+.PP
+CAP encoding is most commonly used in Japanese language environments\&.
+.PP
+This module is stackable\&.
+.SH "EXAMPLES"
+.PP
+On a system using GNU libiconv, use CAP encoding to support users in the Shift_JIS locale:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+        \fI[global]\fR
+	\m[blue]\fBdos charset = CP932\fR\m[]
+	\m[blue]\fBdos charset = CP932\fR\m[]
+	\m[blue]\fBvfs objects = cap\fR\m[]
+.fi
+.if n \{\
+.RE
+.\}
+.SH "VERSION"
+.PP
+This man page is correct for version 3\&.0\&.25 of the Samba suite\&.
+.SH "AUTHOR"
+.PP
+The original Samba software and related utilities were created by Andrew Tridgell\&. Samba is now developed by the Samba Team as an Open Source project similar to the way the Linux kernel is developed\&.

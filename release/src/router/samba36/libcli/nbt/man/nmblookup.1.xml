@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+<refentry id="nmblookup">
+
+<refmeta>
+	<refentrytitle>nmblookup</refentrytitle>
+	<manvolnum>1</manvolnum>
+	<refmiscinfo class="source">Samba</refmiscinfo>
+	<refmiscinfo class="manual">User Commands</refmiscinfo>
+	<refmiscinfo class="version">3.2</refmiscinfo>
+</refmeta>
+
+
+<refnamediv>
+	<refname>nmblookup</refname>
+	<refpurpose>NetBIOS over TCP/IP client used to lookup NetBIOS 
+	names</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+	<cmdsynopsis>
+		<command>nmblookup</command>
+		<arg choice="opt">-M</arg>
+		<arg choice="opt">-R</arg>
+		<arg choice="opt">-S</arg>
+		<arg choice="opt">-r</arg>
+		<arg choice="opt">-A</arg>
+		<arg choice="opt">-h</arg>
+		<arg choice="opt">-B &lt;broadcast address&gt;</arg>
+		<arg choice="opt">-U &lt;unicast address&gt;</arg>
+		<arg choice="opt">-d &lt;debug level&gt;</arg>
+		<arg choice="opt">-s &lt;smb config file&gt;</arg>
+		<arg choice="opt">-i &lt;NetBIOS scope&gt;</arg>
+		<arg choice="opt">-T</arg>
+		<arg choice="opt">-f</arg>
+		<arg choice="req">name</arg>
+	</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1>
+	<title>DESCRIPTION</title>
+
+	<para>This tool is part of the <citerefentry><refentrytitle>samba</refentrytitle>
+	<manvolnum>7</manvolnum></citerefentry> suite.</para>
+
+	<para><command>nmblookup</command> is used to query NetBIOS names 
+	and map them to IP addresses in a network using NetBIOS over TCP/IP 
+	queries. The options allow the name queries to be directed at a 
+	particular IP broadcast area or to a particular machine. All queries 
+	are done over UDP.</para>
+</refsect1>
+
+<refsect1>
+	<title>OPTIONS</title>
+
+	<variablelist>
+		<varlistentry>
+		<term>-M</term>
+		<listitem><para>Searches for a master browser by looking 
+		up the  NetBIOS name <replaceable>name</replaceable> with a 
+		type of <constant>0x1d</constant>. If <replaceable>
+		name</replaceable> is "-" then it does a lookup on the special name 
+		<constant>__MSBROWSE__</constant>. Please note that in order to 
+		use the name "-", you need to make sure "-" isn't parsed as an 
+		argument, e.g. use : 
+		<userinput>nmblookup -M -- -</userinput>.</para></listitem> 
+		</varlistentry>
+		
+		<varlistentry>
+		<term>-R</term>
+		<listitem><para>Set the recursion desired bit in the packet 
+		to do a recursive lookup. This is used when sending a name 
+		query to a machine running a WINS server and the user wishes 
+		to query the names in the WINS server.  If this bit is unset 
+		the normal (broadcast responding) NetBIOS processing code 
+		on a machine is used instead. See RFC1001, RFC1002 for details.
+		</para></listitem>
+		</varlistentry>
+		
+		<varlistentry>
+		<term>-S</term>
+		<listitem><para>Once the name query has returned an IP 
+		address then do a node status query as well. A node status 
+		query returns the NetBIOS names registered by a host.
+		</para></listitem>
+		</varlistentry>
+
+
+		<varlistentry>
+		<term>-r</term> 
+		<listitem><para>Try and bind to UDP port 137 to send and receive UDP
+		datagrams. The reason for this option is a bug in Windows 95 
+		where it ignores the source port of the requesting packet 
+	 	and only replies to UDP port 137. Unfortunately, on most UNIX 
+		systems root privilege is needed to bind to this port, and 
+		in addition, if the <citerefentry><refentrytitle>nmbd</refentrytitle>
+		<manvolnum>8</manvolnum></citerefentry> daemon is running on this machine it also binds to this port.
+		</para></listitem>
+		</varlistentry>
+
+
+		<varlistentry>
+		<term>-A</term>
+		<listitem><para>Interpret <replaceable>name</replaceable> as 
+		an IP Address and do a node status query on this address.</para>
+		</listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>-B &lt;broadcast address&gt;</term> 
+		<listitem><para>Send the query to the given broadcast address. Without 
+		this option the default behavior of nmblookup is to send the 
+		query to the broadcast address of the network interfaces as 
+		either auto-detected or defined in the <ulink 
+		url="smb.conf.5.html#INTERFACES"><parameter>interfaces</parameter>
+		</ulink> parameter of the <citerefentry><refentrytitle>smb.conf</refentrytitle>
+	<manvolnum>5</manvolnum></citerefentry> file.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>-U &lt;unicast address&gt;</term>
+		<listitem><para>Do a unicast query to the specified address or 
+		host <replaceable>unicast address</replaceable>. This option 
+		(along with the <parameter>-R</parameter> option) is needed to 
+		query a WINS server.</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>-T</term> 
+		<listitem><para>This causes any IP addresses found in the 
+		lookup to be looked up via a reverse DNS lookup into a 
+		DNS name, and printed out before each</para>
+		
+		<para><emphasis>IP address .... NetBIOS name</emphasis></para>
+		
+		<para> pair that is the normal output.</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>-f</term>
+		<listitem><para>
+		Show which flags apply to the name that has been looked up. Possible 
+		answers are zero or more of: Response, Authoritative, 
+		Truncated, Recursion_Desired, Recursion_Available, Broadcast.
+		</para></listitem>
+		</varlistentry>
+
+
+		<varlistentry>
+		<term>name</term>
+		<listitem><para>This is the NetBIOS name being queried. Depending 
+		upon the previous options this may be a NetBIOS name or IP address. 
+		If a NetBIOS name then the different name types may be specified 
+		by appending '#&lt;type&gt;' to the name. This name may also be
+		'*', which will return all registered names within a broadcast 
+		area.</para></listitem>
+		</varlistentry>
+	</variablelist>
+</refsect1>
+
+
+<refsect1>
+	<title>EXAMPLES</title>
+
+		<para><command>nmblookup</command> can be used to query 
+		a WINS server (in the same way <command>nslookup</command> is 
+		used to query DNS servers). To query a WINS server, <command>nmblookup</command> 
+		must be called like this:</para>
+
+		<para><command>nmblookup -U server -R 'name'</command></para>
+
+		<para>For example, running :</para>
+
+		<para><command>nmblookup -U samba.org -R 'IRIX#1B'</command></para>
+
+		<para>would query the WINS server samba.org for the domain 
+		master browser (1B name type) for the IRIX workgroup.</para>
+</refsect1>
+
+<refsect1>
+	<title>VERSION</title>
+
+	<para>This man page is correct for version 3 of 
+	the Samba suite.</para>
+</refsect1>
+
+<refsect1>
+	<title>SEE ALSO</title>
+	<para><citerefentry><refentrytitle>nmbd</refentrytitle>
+	<manvolnum>8</manvolnum></citerefentry>, <citerefentry><refentrytitle>samba</refentrytitle>
+	<manvolnum>7</manvolnum></citerefentry>, and <citerefentry><refentrytitle>smb.conf</refentrytitle>
+	<manvolnum>5</manvolnum></citerefentry>.</para>
+</refsect1>
+
+<refsect1>
+	<title>AUTHOR</title>
+	
+	<para>The original Samba software and related utilities 
+	were created by Andrew Tridgell. Samba is now developed
+	by the Samba Team as an Open Source project similar 
+	to the way the Linux kernel is developed.</para>
+	
+	<para>The original Samba man pages were written by Karl Auer. 
+	The man page sources were converted to YODL format (another 
+	excellent piece of Open Source software, available at <ulink url="ftp://ftp.icce.rug.nl/pub/unix/">
+	ftp://ftp.icce.rug.nl/pub/unix/</ulink>) and updated for the Samba 2.0 
+	release by Jeremy Allison.  The conversion to DocBook for 
+	Samba 2.2 was done by Gerald Carter. The conversion to DocBook
+	XML 4.2 for Samba 3.0 was done by Alexander Bokovoy.</para>
+</refsect1>
+
+</refentry>

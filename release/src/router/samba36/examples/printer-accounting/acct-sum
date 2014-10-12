@@ -1,0 +1,29 @@
+#!/usr/bin/perl
+
+while (<>) {
+        ($date, $user, $machine, $size, $pages) = split(' ');
+
+        $Printer{$ARGV}++;
+        $PrinterPages{$ARGV} += $pages;
+
+        $Jobs{$user}++;
+        $Size{$user}+= $size;
+        $Pages{$user}+= $pages;
+}
+
+printf "%-15s %5s %8s %8s\n", qw(User Jobs Pages Size);
+foreach $user (sort keys %Jobs) {
+        printf "%-15s %5d %8d %8d \KB\n",
+                $user, $Jobs{$user},  $Pages{$user}, $Size{$user}/1024;
+}
+
+
+print "\n\n";
+printf "%-15s %5s %8s %8s\n", qw(Printer Jobs Pages);
+foreach $prn (sort keys %Printer) {
+        ($name = $prn) =~ s=.*/==;
+        printf "%-15s %5d %8d\n",
+                $name, $Printer{$prn}, $PrinterPages{$prn};
+}
+
+

@@ -1,0 +1,25 @@
+<samba:parameter name="ldap replication sleep"
+                 context="G"
+                 advanced="1" developer="1"
+				 type="integer"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>
+	When Samba is asked to write to a read-only LDAP replica, we are redirected to talk to the read-write master server.
+	This server then replicates our changes back to the 'local' server, however the replication might take some seconds, 
+	especially over slow links.  Certain client activities, particularly domain joins, can become confused by the 'success' 
+	that does not immediately change the LDAP back-end's data.
+	</para>
+        
+	<para>
+	This option simply causes Samba to wait a short time, to allow the LDAP server to catch up.  If you have a particularly
+	high-latency network, you may wish to time the LDAP replication with a network sniffer, and increase this value accordingly.  
+	Be aware that no checking is performed that the data has actually replicated.
+	</para>
+	
+        <para>
+	The value is specified in milliseconds, the maximum value is 5000 (5 seconds).
+	</para>
+</description>
+<value type="default">1000</value>
+</samba:parameter>

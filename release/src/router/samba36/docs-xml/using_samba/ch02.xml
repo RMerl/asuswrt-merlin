@@ -1,0 +1,1091 @@
+<chapter label="2" id="SAMBA-CH-2">
+<title>Installing Samba on a Unix System</title>
+
+
+
+
+<para>
+<indexterm id="ch02-idx-947293-0" class="startofrange"><primary>installing Samba</primary></indexterm>
+<indexterm id="ch02-idx-947293-1"><primary>Samba</primary><secondary>installing</secondary><see>installing Samba</see></indexterm>Now that you know what Samba can do for you and your users, it's time to get your own network set up. Let's start with the installation of Samba itself on a Unix system. When dancing the samba, one learns by taking small steps. It's just the same when installing Samba; we need to teach it step by step. This chapter will help you to start off on the right foot.</para>
+
+
+<para>For illustrative purposes, we will be installing the 2.0.4 version of the Samba server on a <indexterm id="ch02-idx-947307-0"><primary>Linux</primary><secondary>installing Samba on Linux system</secondary></indexterm>Linux<footnote label="1" id="ch02-pgfId-939741">
+
+
+<para>If you haven't heard of Linux yet, then you're in for a treat. Linux is a freely distributed Unix-like operating system that runs on the Intel x86, Motorola PowerPC, and Sun Sparc platforms. The operating system is relatively easy to configure, extremely robust, and is gaining in popularity. You can get more information on the Linux operating system at <systemitem role="url">http://www.linux.org/</systemitem>.</para>
+
+
+</footnote> system running version 2.0.31 of the kernel. However, the installation steps are the same for all of the platforms that Samba supports. A typical installation will take about an <indexterm id="ch02-idx-947305-0"><primary>installing Samba</primary><secondary>time required</secondary></indexterm>hour to complete, including downloading the source files and compiling them, setting up the configuration files, and testing the server.</para>
+
+
+<para>
+<indexterm id="ch02-idx-947306-0"><primary>installing Samba</primary><secondary>steps in</secondary></indexterm>Here is an overview of the steps:</para>
+
+
+<orderedlist>
+<listitem><para>Download the source or binary files.</para></listitem>
+<listitem><para>Read the installation documentation.</para></listitem>
+<listitem><para>Configure a makefile.</para></listitem>
+<listitem><para>Compile the server code.</para></listitem>
+<listitem><para>Install the server files.</para></listitem>
+<listitem><para>Create a Samba configuration file.</para></listitem>
+<listitem><para>Test the configuration file.</para></listitem>
+<listitem><para>Start the Samba daemons.</para></listitem>
+<listitem><para>Test the Samba daemons.</para></listitem>
+</orderedlist>
+
+
+
+
+
+
+
+
+
+
+
+<sect1 role="" label="2.1" id="ch02-85028">
+<title>Downloading the Samba Distribution</title>
+
+
+<para>
+<indexterm id="ch02-idx-947308-0" class="startofrange"><primary>Samba</primary><secondary>downloading</secondary></indexterm>
+<indexterm id="ch02-idx-947308-1" class="startofrange"><primary>Samba</primary><secondary>distribution</secondary></indexterm>
+
+<!-- CD-ROM REFERENCE COMMENTED OUT FOR SAFARI VERSION OF THIS TITLE.
+
+If
+you want to get started quickly, the <indexterm
+id="ch02-idx-947316-0" id="IXT-2-126769"><primary>CD-ROM with this
+book</primary><secondary>Samba
+distribution</secondary></indexterm>CD-ROM packaged with this book
+contains both the sources and binaries of Samba that were available as
+this book went to print. The CD is a mirror image of the files and
+directories on the Samba download server: <systemitem
+role="url">ftp.samba.org</systemitem> <indexterm
+id="ch02-idx-947317-0" id="IXT-2-126770"><primary>FTP (File Transfer
+Protocol)</primary><secondary>sites for Samba
+downloads</secondary></indexterm> <indexterm
+id="ch02-idx-947317-1" id="IXT-2-126771"><primary>downloads</primary><secondary>Samba</secondary></indexterm>.</para>
+
+<para>On the other hand, if
+
+--></para>
+
+
+<para>If you want to download the latest version, the primary web site
+for the Samba software is <indexterm id="ch02-idx-947318-0"><primary>URLs (uniform resource
+locators)</primary><secondary>Samba</secondary></indexterm><systemitem role="url">http://www.samba.org</systemitem>. Once connected to this
+page, you'll see links to several Samba mirror sites across the
+world, both for the standard Samba web pages and sites devoted
+exclusively to downloading Samba. For the best performance, choose a
+site that is closest to your own geographic location.</para>
+
+
+<para>The standard <indexterm id="ch02-idx-947320-0"><primary>Samba</primary><secondary>web
+site</secondary></indexterm> <indexterm id="ch02-idx-947320-1"><primary>resources for further
+information</primary><secondary>Samba</secondary></indexterm>Samba web
+sites have Samba documentation and tutorials, mailing list archives,
+and the latest Samba news, as well as source and binary distributions
+of Samba. The download sites (sometimes called <emphasis>FTP
+sites</emphasis>) have only the source and binary
+distributions. Unless you specifically want an older version of the
+Samba server or are going to install a binary distribution, download
+the latest source distribution from the closest mirror site. This
+distribution is always named:</para>
+
+
+<programlisting>samba-latest.tar.gz</programlisting>
+
+
+<!-- CD-ROM REFERENCE COMMENTED OUT FOR SAFARI VERSION OF THIS TITLE.
+
+<para>If you choose to use the version of Samba that is located on the
+CD-ROM packaged with this book, you should find the latest Samba
+distribution in the base directory.</para>
+
+-->
+
+<sect2 role="" label="2.1.1" id="ch02-SECT-1.1">
+<title>Binary or Source?</title>
+
+
+<para>
+<indexterm id="ch02-idx-947323-0"><primary>binary vs. source files</primary></indexterm>
+<indexterm id="ch02-idx-947323-1"><primary>source vs. binary files</primary></indexterm>Precompiled packages are also available for a large number of Unix platforms. These packages contain binaries for each of the Samba executables as well as the standard Samba documentation. Note that while installing a binary distribution can save you a fair amount of trouble and time, there are a couple of issues that you should keep in mind when deciding whether to use the binary or compile the source yourself:</para>
+
+
+<itemizedlist>
+<listitem><para>The binary packages can lag behind the latest version
+of the software by one or two (maybe more) minor releases, especially
+after a series of small changes and for less popular
+platforms. Compare the release notes for the source and binary
+packages to make sure that there aren't any new features that
+you need on your platform.
+
+<!-- CD-ROM REFERENCE COMMENTED OUT FOR SAFARI VERSION OF THIS TITLE.
+
+This is especially true of the sources and
+binaries on the CD-ROM: at the time this book went to print, they were
+from the latest production release of Samba. However, development is
+ongoing, so the beta-test versions on the Internet will be
+newer.
+
+--></para></listitem>
+<listitem><para>If you use a precompiled binary, you will need to ensure that you have the correct libraries required by the executables. On some platforms the executables are statically linked so this isn't an issue, but on modern Unix operating systems (e.g., Linux, SGI Irix, Solaris, HP-UX, etc.), libraries are often <indexterm id="ch02-idx-947325-0"><primary>dynamically linked libraries</primary></indexterm>dynamically linked. This means that the binary looks for the right version of each library on your system, so you may have to install a new version of a library. The <filename>README</filename> file or <filename>makefile</filename>
+<indexterm id="ch02-idx-947333-0"><primary>makefiles</primary></indexterm> that accompanies the binary distribution should list any special requirements.<footnote label="2" id="ch02-pgfId-943622">
+
+
+<para>This is especially true with programs that use <emphasis>glibc-2.1</emphasis> (which comes standard with Red Hat Linux 6). This library caused quite a consternation in the development community when it was released because it was incompatable with previous versions of <emphasis>g</emphasis><filename>libc</filename>.</para>
+
+
+</footnote></para>
+
+
+<para>Many machines with shared libraries come with a nifty tool called <emphasis>ldd</emphasis>
+<indexterm id="ch02-idx-947322-0"><primary>ldd tool</primary></indexterm>. This tool will tell you which libraries a specific binary requires and which libraries on the system satisfy that requirement. For example, checking the <emphasis>smbd</emphasis> program on our test machine gave us:</para></listitem>
+</itemizedlist>
+
+<programlisting>$ <emphasis role="bold">ldd smbd</emphasis>
+libreadline.so.3 =&gt; /usr/lib/libreadline.so.3
+libdl.so.2 =&gt; /lib/libdl.so.2
+libcrypt.so.1 =&gt; /lib/libcrypt.so.1
+libc.so.6 =&gt; /lib/libc.so.6
+libtermcap.so.2 =&gt; /lib/libtermcap.so.2
+/lib/ld-linux.so.2 =&gt; /lib/ld-linux.so.2</programlisting>
+
+
+<itemizedlist>
+<listitem><para>If there are any incompatibilities between Samba and specific libraries on your machine, the distribution-specific documentation should highlight those.</para></listitem>
+<listitem><para>Keep in mind that each binary distribution carries preset values about the target platform, such as default directories and configuration option values. Again, check the documentation and the makefile included in the source directory to see which directives and variables were used when the binary was compiled. In some cases, these will not be appropriate for your situation.</para>
+
+
+<para>A few configuration items can be reset with command-line options at runtime instead of at compile time. For example, if your binary tries to place any log, lock, or status files in the "wrong" place (for example, in <filename>/usr/local</filename>  ), you can override this without recompiling.</para></listitem>
+</itemizedlist>
+
+<para>One point worth mentioning is that the Samba source requires an <indexterm id="ch02-idx-947324-0"><primary>ANSI C compilers</primary></indexterm>
+<indexterm id="ch02-idx-947324-1"><primary>non-ANSI compilers</primary></indexterm>
+<indexterm id="ch02-idx-947324-2"><primary>compilers</primary></indexterm>ANSI C compiler. If you are on a platform with a non-ANSI compiler, such as the <emphasis>cc</emphasis> compiler on SunOS version 4, you'll have to install an ANSI-compliant compiler such as <emphasis>gcc</emphasis> before you do anything else.<footnote label="3" id="ch02-pgfId-939049">
+
+
+<para><emphasis>gcc</emphasis> binaries are available for almost every modern machine. See <systemitem role="url">http://www.gnu.org/</systemitem> for a list of sites with <emphasis>gcc</emphasis> and other GNU software.</para>
+
+
+</footnote> If installing a compiler isn't something you want to wrestle with, you can start off with a binary package. However, for the most flexibility and compatibility on your system, we always recommend compiling from the latest source.</para>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="2.1.2" id="ch02-SECT-1.2">
+<title>Read the Documentation</title>
+
+
+<para>
+<indexterm id="ch02-idx-947327-0"><primary>documentation for Samba</primary><secondary>importance of reading</secondary></indexterm>
+<indexterm id="ch02-idx-947327-1"><primary>reading documentation, importance of</primary></indexterm>
+<indexterm id="ch02-idx-947327-2"><primary>Samba</primary><secondary>documentation, importance of reading</secondary></indexterm>This sounds like an obvious thing to say, but there have probably been times where you have uncompressed a package, blindly typed <literal>configure</literal>, <literal>make</literal>, and <literal>make</literal> <literal>install</literal>, and walked away to get another cup of coffee. We'll be the first to admit that we do that, many more times than we should. It's a bad idea&mdash;especially when planning a network with Samba.</para>
+
+
+<para>Samba 2.0 automatically configures itself prior to compilation. This reduces the likelihood of a machine-specific problem, but there may be an option mentioned in the <filename>README</filename> file that you end up wishing for after Samba's been installed. With both source and binary packages you'll find a large number of documents in the <filename>docs</filename>
+<indexterm id="ch02-idx-947328-0"><primary>docs directory</primary></indexterm> directory, in a variety of formats. The most important files to look at in the distribution are:</para>
+
+
+<programlisting><indexterm id="ch02-idx-947329-0"><primary>Samba</primary><secondary>new features file</secondary></indexterm>
+<indexterm id="ch02-idx-947329-1"><primary>installing Samba</primary><secondary>common problems</secondary></indexterm>WHATSNEW.txt
+docs/textdocs/UNIX_INSTALL.txt</programlisting>
+
+
+<para>These files tell you what features you can expect in your Samba distribution, and will highlight common installation problems that you're likely to face. Be sure to look over both of them before you start the compilation process.<indexterm id="ch02-idx-947311-0" class="endofrange" startref="ch02-idx-947308-0"/></para>
+</sect2>
+</sect1>
+
+
+
+
+
+
+
+
+
+<sect1 role="" label="2.2" id="ch02-28558">
+<title>Configuring Samba</title>
+
+
+<para>
+<indexterm id="ch02-idx-947339-0" class="startofrange"><primary>configuring Samba</primary></indexterm>
+<indexterm id="ch02-idx-947339-1"><primary>configuring Samba</primary><secondary>configuration file</secondary><seealso>smb.conf (Samba configuration) file</seealso></indexterm>The <indexterm id="ch02-idx-947330-0"><primary>Samba</primary><secondary>configuring</secondary><see>configuring Samba</see></indexterm>source distribution of Samba 2.0 and above doesn't initially have a <indexterm id="ch02-idx-947337-0"><primary>makefiles</primary></indexterm>makefile. Instead, one is generated through a GNU <filename>configure</filename>
+<indexterm id="ch02-idx-947338-0"><primary>configuring Samba</primary><secondary>configure script</secondary><tertiary>GNU</tertiary></indexterm>
+<indexterm id="ch02-idx-947338-1"><primary>GNU configure script</primary></indexterm> script, which is located in the <filename>samba-2.0.x /source/</filename> directory. The <firstterm>configure</firstterm> script, which must be run as root, takes care of the machine-specific issues of building Samba. However, you still may want to decide on some global options. Global options can be set by passing options on the command-line:</para>
+
+
+<programlisting># ./configure --with-ssl</programlisting>
+
+
+<para>For example, this will configure the Samba makefile with support for the<indexterm id="ch02-idx-947347-0"><primary>SSL (Secure Sockets Layer) protocol</primary><secondary>support for</secondary></indexterm>
+<indexterm id="ch02-idx-947347-1"><primary>Secure Sockets Layer protocol</primary><see>SSL</see></indexterm> Secure Sockets Layer (SSL) encryption protocol. If you would like a complete list of <indexterm id="ch02-idx-947348-0" class="startofrange"><primary>configuring Samba</primary><secondary>options</secondary></indexterm>options, type the following:</para>
+
+
+<programlisting>#./configure --help</programlisting>
+
+
+<para>
+<indexterm id="ch02-idx-947349-0"><primary>enabling/disabling features</primary></indexterm>
+<indexterm id="ch02-idx-947349-1"><primary>disabling/enabling features</primary></indexterm>Each of these options enable or disable various features. You typically enable a feature by specifying the <literal>--with-</literal><replaceable>feature</replaceable> option, which will cause the feature to be compiled and installed. Likewise, if you specify a <literal>--without-</literal><replaceable>feature</replaceable> option, the feature will be disabled. As of Samba 2.0.5, each of the following features is disabled by default:</para>
+
+
+<variablelist>
+<varlistentry><term><literal>--with-smbwrapper</literal></term>
+<listitem><para>Include SMB <indexterm id="ch02-idx-947350-0"><primary>SMB (Server Message Block)</primary><secondary>wrapper support</secondary></indexterm>
+<indexterm id="ch02-idx-947350-1"><primary>wrapper support for SMB (Server Message Block)</primary></indexterm>wrapper support, which allows executables on the Unix side to access <indexterm id="ch02-idx-947351-0"><primary>SMB/CIFS protocol</primary><secondary>filesystems</secondary></indexterm>SMB/CIFS filesystems as if they were regular Unix filesystems. We recommend using this option. However, at this time this book went to press, there were several incompatibilities between the <filename>smbwrapper</filename>
+<indexterm id="ch02-idx-947352-0"><primary>smbwrapper package</primary></indexterm> package and the GNU <filename>libc</filename> version 2.1, and it would not compile on Red Hat 6.0. Look for more information on these incompatibilities on the Samba home page.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>--with-afs</literal></term>
+<listitem><para>Include support of the <indexterm id="ch02-idx-947353-0"><primary>Andrew Filesystem</primary><see>AFS files</see></indexterm>Andrew Filesystem from <indexterm id="ch02-idx-947354-0"><primary>Carnegie Mellon University</primary></indexterm>Carnegie Mellon University. If you're going to serve <indexterm id="ch02-idx-947355-0"><primary>AFS files, support for</primary></indexterm>AFS files via Samba, we recommend compiling Samba once first without enabling this feature to ensure that everything runs smoothly. Once that version is working smoothly, recompile Samba with this feature enabled and compare any errors you might receive against the previous setup.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>--with-dfs</literal></term>
+<listitem><para>Include support for <indexterm id="ch02-idx-947356-0"><primary>DFS, support for</primary></indexterm>DFS, a later version of AFS, used by <indexterm id="ch02-idx-947357-0"><primary>OSF/1 (Digital Unix)</primary></indexterm>OSF/1 (Digital Unix). Note that this is <emphasis>not</emphasis> the same as Microsoft DFS, which is an entirely different filesystem. Again, we recommend compiling Samba once first without this feature to ensure that everything runs smoothly, then recompile with this feature to compare any errors against the previous setup.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>--with-krb4</literal>=<replaceable>base-directory</replaceable></term>
+<listitem><para>Include support for <indexterm id="ch02-idx-947358-0"><primary>Kerberos, support for</primary></indexterm>Kerberos version 4.0, explicitly specifying the base directory of the distribution. Kerberos is a network security protocol from <indexterm id="ch02-idx-947359-0"><primary>MIT</primary></indexterm>MIT that uses <indexterm id="ch02-idx-947360-0"><primary>private key cryptography</primary></indexterm>
+<indexterm id="ch02-idx-947360-1"><primary>cryptography, private key</primary></indexterm>private key cryptography to provide strong security between nodes. Incidentally, Microsoft has announced that Kerberos 5.0 will be the standard <indexterm id="ch02-idx-947362-0"><primary>authentication</primary><secondary>mechanisms for</secondary></indexterm>authentication mechanism for Microsoft Windows 2000 (NT 5.0). However, the Kerberos 5.0 authentication mechanisms are quite different from the Kerberos 4.0 <indexterm id="ch02-idx-947363-0"><primary>security</primary></indexterm>security mechanisms. If you have Kerberos version 4 on your system, the Samba team recommends that you upgrade and use the <literal>--with-krb5</literal> option (see the next item). You can find more information on <indexterm id="ch02-idx-947364-0"><primary>URLs (uniform resource locators)</primary><secondary>Kerberos</secondary></indexterm>Kerberos at <systemitem role="url">http://web.mit.edu/kerberos/www</systemitem>.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>--with-krb5</literal>=<replaceable>base-directory</replaceable></term>
+<listitem><para>Include support for Kerberos version 5.0, explicitly specifying the base directory of the distribution. Microsoft has announced that Kerberos 5.0 will be the standard authentication mechanism for Microsoft Windows 2000 (NT 5.0). However, there is no guarantee that Microsoft will not extend Kerberos for their own needs in the future. Currently, Samba's Kerberos support only uses a plaintext password interface and not an encrypted one. You can find more information on Kerberos at its home page: <systemitem role="url">http://web.mit.edu/kerberos/www</systemitem>.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>--with-automount</literal></term>
+<listitem><para>Include support for <indexterm id="ch02-idx-947365-0"><primary>automounter, support for</primary></indexterm>automounter, a feature often used on sites that offer NFS.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>--with-smbmount</literal></term>
+<listitem><para>Include <emphasis>smbmount</emphasis>
+<indexterm id="ch02-idx-947366-0"><primary>smbmount, support for</primary></indexterm> support, which is for <indexterm id="ch02-idx-947367-0"><primary>Linux</primary><secondary>submount and</secondary></indexterm>Linux only. This feature wasn't being maintained at the time the book was written, so the Samba team made it an optional feature and provided <emphasis>smbwrapper</emphasis> instead. The <emphasis>smbwrapper</emphasis> feature works on more Unix platforms than <emphasis>smbmount</emphasis>, so you'll usually want to use <literal>--with-smbwrapper</literal> instead of this option.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>--with-pam</literal></term>
+<listitem><para>Include support for <indexterm id="ch02-idx-947368-0"><primary>pluggable authentication modules (PAM)</primary><secondary>support for</secondary></indexterm>
+<indexterm id="ch02-idx-947368-1"><primary>PAM (pluggable authentication modules)</primary><secondary>support for</secondary></indexterm>pluggable authentication modules (PAM), an authentication feature common in the Linux operating system.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>--with-ldap</literal></term>
+<listitem><para>Include support for the <indexterm id="ch02-idx-947369-0"><primary>Lightweight Directory Access Protocol</primary><see>LDAP</see></indexterm>
+<indexterm id="ch02-idx-947369-1"><primary>LDAP (Lightweight Directory Access Protocol)</primary><secondary>support for</secondary></indexterm>Lightweight Directory Access Protocol (LDAP). A future version of LDAP will be used in the Windows 2000 (NT 5.0) operating system; this Samba support is experimental. LDAP is a flexible client-server directory protocol that can carry information such as certificates and group memberships.<footnote label="4" id="ch02-pgfId-943655">
+
+
+<para>By <emphasis>directory</emphasis>, we don't mean a directory in a file system, but instead an indexed directory (such as a phone directory). Information is stored and can be easily retrieved in a public LDAP system.</para>
+
+
+</footnote></para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>--with-nis</literal></term>
+<listitem><para>Include support for getting password-file information from <indexterm id="ch02-idx-947370-0"><primary>NIS/NIS+ protocol</primary></indexterm>NIS (network yellow pages).</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>--with-nisplus</literal></term>
+<listitem><para>Include support for obtaining password-file information from NIS+, the successor to NIS.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>--with-ssl</literal></term>
+<listitem><para>Include experimental support for the <indexterm id="ch02-idx-947374-0"><primary>SSL (Secure Sockets Layer) protocol</primary><secondary>support for</secondary></indexterm>Secure Sockets Layer (SSL), which is used to provide encrypted connections from client to server. <link linkend="SAMBA-AP-A">Appendix A</link>, describes setting up Samba with SSL support.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>--with-nisplus-home</literal></term>
+<listitem><para>Include support for locating which server contains a particular user's <indexterm id="ch02-idx-947380-0"><primary>home directory, user's</primary></indexterm>
+<indexterm id="ch02-idx-947380-1"><primary>users</primary><secondary>home directory</secondary></indexterm>home directory and telling the client to connect to it. Requires <literal>--with-nis</literal> and, usually, <literal>--with-automounter</literal>.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>--with-mmap</literal></term>
+<listitem><para>Include experimental<indexterm id="ch02-idx-947381-0"><primary>mmap code</primary></indexterm> memory mapping code. This is not required for <indexterm id="ch02-idx-947382-0"><primary>fast locking</primary></indexterm>fast locking, which already uses mmap or System V shared memory.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>--with-syslog</literal></term>
+<listitem><para>Include support for using the <indexterm id="ch02-idx-947383-0"><primary>SYSLOG utility</primary><secondary>support for</secondary></indexterm>SYSLOG utility for logging information generated from the Samba server. There are a couple of Samba configuration options that you can use to enable SYSLOG support; <link linkend="ch04-21486">Chapter 4</link>, discusses these options.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>--with-netatalk</literal></term>
+<listitem><para>Include experimental support for interoperating with the (Macintosh) <indexterm id="ch02-idx-947412-0"><primary>Netatalk (Macintosh), support for interoperating with</primary></indexterm>Netatalk file server.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>--with-quotas</literal></term>
+<listitem><para>Include <indexterm id="ch02-idx-947413-0"><primary>disk quotas, support for</primary></indexterm>disk-quota support.</para></listitem>
+</varlistentry>
+</variablelist>
+
+
+<para>Because each of these options is disabled by default, none of these features are essential to Samba. However, you may want to come back and build a modified version of Samba if you discover that you need one at a later time.</para>
+
+
+<para>In addition, <link linkend="ch02-85125">Table 2.1</link> shows some other parameters that you can give the <filename>configure</filename> script if you wish to store parts of the Samba distribution in different places, perhaps to make use of multiple disks or partitions. Note that the defaults sometimes refer to a prefix specified earlier in the table.</para>
+
+
+<table label="2.1" id="ch02-85125">
+<title>Additional Configure Options </title>
+
+<tgroup cols="3">
+<colspec colnum="1" colname="col1"/>
+<colspec colnum="2" colname="col2"/>
+<colspec colnum="3" colname="col3"/>
+<thead>
+<row>
+
+<entry colname="col1"><para>Option</para></entry>
+
+<entry colname="col2"><para>Meaning</para></entry>
+
+<entry colname="col3"><para>Default</para></entry>
+
+</row>
+
+</thead>
+
+<tbody>
+<row>
+
+<entry colname="col1"><para><literal>--prefix</literal>=<replaceable>directory</replaceable></para></entry>
+
+<entry colname="col2"><para>Install architecture-independent files at the base directory specified.</para></entry>
+
+<entry colname="col3"><para><filename>/usr/local/samba</filename></para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>--eprefix</literal>=<replaceable>directory</replaceable></para></entry>
+
+<entry colname="col2"><para>Install architecture-dependent files at the base directory specified.</para></entry>
+
+<entry colname="col3"><para><filename>/usr/local/samba</filename></para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>--bindir</literal>=<replaceable>directory</replaceable></para></entry>
+
+<entry colname="col2"><para>Install user executables in the directory specified.</para></entry>
+
+<entry colname="col3"><para><replaceable>eprefix</replaceable><filename>/bin</filename></para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>--sbindir</literal>=<replaceable>directory</replaceable></para></entry>
+
+<entry colname="col2"><para>Install administrator executables in the directory specified.</para></entry>
+
+<entry colname="col3"><para><replaceable>eprefix</replaceable><filename>/bin</filename></para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>--libexecdir</literal>=<replaceable>directory</replaceable></para></entry>
+
+<entry colname="col2"><para>Install program executables in the directory specified.</para></entry>
+
+<entry colname="col3"><para><replaceable>eprefix</replaceable><filename>/libexec</filename></para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>--datadir</literal>=<replaceable>directory</replaceable></para></entry>
+
+<entry colname="col2"><para>Install read-only architecture independent data in the directory specified.</para></entry>
+
+<entry colname="col3"><para><replaceable>prefix</replaceable><filename>/share</filename></para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>--libdir</literal>=<replaceable>directory</replaceable></para></entry>
+
+<entry colname="col2"><para>Install program libraries in the directory specified.</para></entry>
+
+<entry colname="col3"><para><replaceable>eprefix</replaceable><filename>/lib</filename></para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>--includedir</literal>=<replaceable>directory</replaceable></para></entry>
+
+<entry colname="col2"><para>Install package include files in the directory specified.</para></entry>
+
+<entry colname="col3"><para><replaceable>prefix</replaceable><filename>/include</filename></para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>--infodir</literal>=<replaceable>directory</replaceable></para></entry>
+
+<entry colname="col2"><para>Install additional information files in the directory specified.</para></entry>
+
+<entry colname="col3"><para><replaceable>prefix</replaceable><filename>/info</filename></para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>--mandir</literal>=<replaceable>directory</replaceable></para></entry>
+
+<entry colname="col2"><para>Install manual pages in the directory specified.<indexterm id="ch02-idx-947428-0" class="endofrange" startref="ch02-idx-947348-0"/></para></entry>
+
+<entry colname="col3"><para><replaceable>prefix</replaceable><filename>/man</filename></para></entry>
+
+</row>
+
+</tbody>
+</tgroup>
+</table>
+
+
+<para>Again, before running the <filename>configure</filename> script, it is important that you are the <indexterm id="ch02-idx-947433-0"><primary>root user</primary></indexterm>root user on the system. Otherwise, you may get a warning such as:</para>
+
+
+<programlisting>configure: warning: running as non-root will disable some tests</programlisting>
+
+
+<para>You don't want any test to be disabled when the Samba makefile is being created; this leaves the potential for errors down the road when compiling or running Samba on your system.</para>
+
+
+<para>Here is a sample execution of the <filename>configure</filename>
+<indexterm id="ch02-idx-947434-0"><primary>configuring Samba</primary><secondary>configure script</secondary><tertiary>sample execution</tertiary></indexterm> script, which creates a Samba 2.0.4 makefile for the Linux platform. Note that you must run the configure script in the <emphasis>source</emphasis> directory, and that several lines from the middle of the excerpt have been omitted:</para>
+
+
+<programlisting># cd samba-2.0.4b/source/
+# ./configure | tee mylog
+
+loading cache ./config.cache
+checking for gcc... (cached) gcc
+checking whether the C compiler (gcc -O ) works... yes
+checking whether the C compiler (gcc -O ) is a cross-compiler... no
+checking whether we are using GNU C... (cached) yes
+checking whether gcc accepts -g... (cached) yes
+checking for a BSD compatible install... (cached) /usr/bin/install -c
+
+<emphasis>...(content omitted)...</emphasis>
+
+checking configure summary
+configure OK
+creating ./config.status
+creating include/stamp-h
+creating Makefile
+creating include/config.h</programlisting>
+
+
+<para>In general, any message from <filename>configure</filename> that doesn't begin with the words <literal>checking</literal> or <literal>creating</literal> is an error; it often helps to redirect the output of the configure script to a file so you can quickly search for <indexterm id="ch02-idx-947435-0"><primary>errors</primary><secondary>searching for</secondary></indexterm>errors, as we did with the <literal>tee</literal> command above. If there was an error during configuration, more detailed information about it can be found in the <filename>config.log</filename> file, which is written to the local directory by the <filename>configure</filename> script.</para>
+
+
+<para>If the configuration works, you'll see a <literal>checking</literal> <literal>configure</literal> <literal>summary</literal> message followed by a <literal>configure</literal> <literal>OK</literal> message and four or five file creation messages. So far, so good.... Next step: compiling.<indexterm id="ch02-idx-947719-0" class="endofrange" startref="ch02-idx-947339-0"/></para>
+</sect1>
+
+
+
+
+
+
+
+
+
+<sect1 role="" label="2.3" id="ch02-13217">
+<title>Compiling and Installing Samba</title>
+
+
+<para>
+<indexterm id="ch02-idx-947438-0" class="startofrange"><primary>compiling Samba</primary></indexterm>At <indexterm id="ch02-idx-947440-0"><primary>Samba</primary><secondary>compiling</secondary><see>compiling Samba</see></indexterm>this point you should be ready to build the Samba executables. Compiling is also easy: in the <filename>source</filename> directory, type <literal>make</literal> on the command line. The <filename>make</filename>
+<indexterm id="ch02-idx-947436-0"><primary>make utility</primary></indexterm> utility will produce a stream of explanatory and success messages, beginning with:</para>
+
+
+<programlisting>Using FLAGS = -O -Iinclude ...</programlisting>
+
+
+<para>This build includes compiles for both <emphasis>smbd</emphasis> and <emphasis>nmbd</emphasis>, and ends in a linking command for <filename>bin/make_ printerdef</filename>. For example, here is a sample make of Samba version 2.0.4 on a Linux server:</para>
+
+
+<programlisting># make
+Using FLAGS =  -O -Iinclude -I./include -I./ubiqx -I./smbwrapper -DSMBLOGFILE="/
+usr/local/samba/var/log.smb" -DNMBLOGFILE="/usr/local/samba/var/log.nmb" -
+DCONFIGFILE="/usr/local/samba/lib/smb.conf" -DLMHOSTSFILE="/usr/local/samba/lib/
+lmhosts"   -DSWATDIR="/usr/local/samba/swat" -DSBINDIR="/usr/local/samba/bin" -
+DLOCKDIR="/usr/local/samba/var/locks" -DSMBRUN="/usr/local/samba/bin/smbrun" -
+DCODEPAGEDIR="/usr/local/samba/lib/codepages" -DDRIVERFILE="/usr/local/samba/lib/
+printers.def" -DBINDIR="/usr/local/samba/bin" -DHAVE_INCLUDES_H -DPASSWD_
+PROGRAM="/bin/passwd" -DSMB_PASSWD_FILE="/usr/local/samba/private/smbpasswd"
+Using FLAGS32 =  -O -Iinclude -I./include -I./ubiqx -I./smbwrapper  -
+DSMBLOGFILE="/usr/local/samba/var/log.smb" -DNMBLOGFILE="/usr/local/samba/var/log.
+nmb" -DCONFIGFILE="/usr/local/samba/lib/smb.conf" -DLMHOSTSFILE="/usr/local/samba/
+lib/lmhosts"   -DSWATDIR="/usr/local/samba/swat" -DSBINDIR="/usr/local/samba/bin"
+-DLOCKDIR="/usr/local/samba/var/locks" -DSMBRUN="/usr/local/samba/bin/smbrun" -
+DCODEPAGEDIR="/usr/local/samba/lib/codepages" -DDRIVERFILE="/usr/local/samba/lib/
+printers.def" -DBINDIR="/usr/local/samba/bin" -DHAVE_INCLUDES_H -DPASSWD_
+PROGRAM="/bin/passwd" -DSMB_PASSWD_FILE="/usr/local/samba/private/smbpasswd"
+Using LIBS = -lreadline -ldl  -lcrypt -lpam
+Compiling smbd/server.c
+Compiling smbd/files.c
+Compiling smbd/chgpasswd.c
+
+<emphasis>...(content omitted)...</emphasis>
+
+Compiling rpcclient/cmd_samr.c
+Compiling rpcclient/cmd_reg.c
+Compiling rpcclient/cmd_srvsvc.c
+Compiling rpcclient/cmd_netlogon.c
+Linking bin/rpcclient
+Compiling utils/smbpasswd.c
+Linking bin/smbpasswd
+Compiling utils/make_smbcodepage.c
+Linking bin/make_smbcodepage
+Compiling utils/nmblookup.c
+Linking bin/nmblookup
+Compiling utils/make_printerdef.c
+Linking bin/make_printerdef</programlisting>
+
+
+<para>If you encounter problems when compiling, check the Samba documentation to see if it is easily fixable. Another possibility is to search or post to the <indexterm id="ch02-idx-947437-0"><primary>mailing lists</primary><secondary>posting to</secondary></indexterm>Samba mailing lists, which are given at the end of <link linkend="SAMBA-AP-D">Appendix D</link>, and on the Samba home page. Most compilation issues are system specific and almost always easy to overcome.</para>
+
+
+<para>Now that the files have been compiled, you can install them into the directories you identified with the command:</para>
+
+
+<programlisting>#<userinput> make install</userinput></programlisting>
+
+
+<para>If you happen to be upgrading, your old Samba files will be saved with the extension <emphasis>.old</emphasis> <indexterm id="ch02-idx-947448-0"><primary sortas="old files">.old files</primary></indexterm>, and you can go back to that previous version with the command <literal>make</literal> <literal>revert</literal>. After doing a <literal>make</literal> <literal>install</literal>, you should copy the <emphasis>.old</emphasis> files (if they exist) to a new location or name. Otherwise, the next time you install Samba, the original <emphasis>.old</emphasis>  will be overwritten without warning and you could lose your earlier version. If you configured Samba to use the default locations for files, the new files will be installed in the directories listed in <link linkend="SAMBA-CH-2-TBL-2.2">Table 2.2</link>. Remember that you need to  perform the installation from an account that has <indexterm id="ch02-idx-947451-0"><primary>write privileges</primary></indexterm>write privileges on these target <indexterm id="ch02-idx-947452-0"><primary>directories</primary><secondary>target</secondary></indexterm>directories; this is typically the root account.</para>
+
+
+<table label="2.2" id="SAMBA-CH-2-TBL-2.2">
+<title>Samba Installation Directories </title>
+
+<tgroup cols="2">
+<colspec colnum="1" colname="col1"/>
+<colspec colnum="2" colname="col2"/>
+<thead>
+<row>
+
+<entry colname="col1"><para>Directory</para></entry>
+
+<entry colname="col2"><para>Description</para></entry>
+
+</row>
+
+</thead>
+
+<tbody>
+<row>
+
+<entry colname="col1"><para><emphasis>/usr/local/samba</emphasis></para></entry>
+
+<entry colname="col2"><para>
+<indexterm id="ch02-idx-947450-0"><primary>installing Samba</primary><secondary>installation directories</secondary></indexterm>
+<indexterm id="ch02-idx-947450-1"><primary>directories</primary><secondary>installation</secondary></indexterm>Main tree</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><emphasis>/usr/local/samba/bin</emphasis></para></entry>
+
+<entry colname="col2"><para>Binaries</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><emphasis>/usr/local/samba/lib</emphasis></para></entry>
+
+<entry colname="col2"><para><emphasis>smb.conf</emphasis>, <emphasis>lmhosts</emphasis>, configuration files, etc.</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><emphasis>/usr/local/samba/man</emphasis></para></entry>
+
+<entry colname="col2"><para>Samba documentation</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><emphasis>/usr/local/samba/private</emphasis></para></entry>
+
+<entry colname="col2"><para>Samba encrypted password file</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><emphasis>/usr/local/samba/swat</emphasis></para></entry>
+
+<entry colname="col2"><para>SWAT files</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><emphasis>/usr/local/samba/var</emphasis></para></entry>
+
+<entry colname="col2"><para>Samba log files, lock files, browse list info, shared memory files, process ID files</para></entry>
+
+</row>
+
+</tbody>
+</tgroup>
+</table>
+
+
+<para>Throughout the remainder of the book, we occasionally refer to the location of the <indexterm id="ch02-idx-947454-0"><primary>main tree</primary></indexterm>main tree as <replaceable>samba_dir</replaceable>. In most configurations, this is the <indexterm id="ch02-idx-947479-0"><primary>base directory</primary></indexterm>base directory of the installed Samba package: <filename>/usr/local/samba </filename>
+<indexterm id="ch02-idx-947455-0"><primary sortas="usr/local/samba file">/usr/local/samba file</primary></indexterm>.</para>
+
+
+<warning role="ora">
+<para>Watch out if you've made <filename>/usr</filename> a <indexterm id="ch02-idx-947472-0"><primary>read-only partitions</primary></indexterm>read-only partition. You will want to put the logs, locks, and password files somewhere else.</para>
+
+</warning>
+
+<para>Here is the installation that we performed on our machine. You can see that we used <filename>/usr/local/samba</filename> as the base directory for the distribution (e.g., <replaceable>samba_dir</replaceable>):</para>
+
+
+<programlisting># <userinput>make install</userinput>
+Using FLAGS = -O -Iinclude -I./include -I./ubiqx -I./smbwrapper -DSMBLOGFILE="/
+usr/local/samba/var/log.smb" -DNMBLOGFILE="/usr/local/samba/var/log.nmb" -
+DCONFIGFILE="/usr/local/samba/lib/smb.conf" -
+
+<lineannotation>...(content omitted)...</lineannotation>
+
+The binaries are installed. You may restore the old binaries
+(if there were any) using the command "make revert". You may
+uninstall the binaries using the command "make uninstallbin"
+or "make uninstall" to uninstall binaries, man pages and shell
+scripts.
+
+<lineannotation>...(content omitted)...</lineannotation>
+
+============================================================
+The SWAT files have been installed. Remember to read the
+README for information on enabling and using SWAT.
+============================================================</programlisting>
+
+
+<para>If the last message is about SWAT, you've successfully installed all the files. Congratulations! You now have Samba on your system!</para>
+
+
+<sect2 role="" label="2.3.1" id="ch02-SECT-3.1">
+<title>Final Installation Steps</title>
+
+
+<para>
+<indexterm id="ch02-idx-947480-0"><primary>installing Samba</primary><secondary>steps in</secondary><tertiary>final</tertiary></indexterm>There are a couple of final steps to perform. Specifically, add the <indexterm id="ch02-idx-947486-0"><primary>SWAT tool</primary><secondary>adding to configuration files</secondary></indexterm>
+<indexterm id="ch02-idx-947486-1"><primary>Samba Web Administration Tool</primary><see>SWAT tool</see></indexterm>Samba Web Administration Tool (SWAT) to the <filename>/etc/services</filename>
+<indexterm id="ch02-idx-947491-0"><primary sortas="etc.services configuration files">/etc/services configuration file, adding SWAT tool to</primary></indexterm> and <filename>/etc/inetd.conf</filename>
+<indexterm id="ch02-idx-947493-0"><primary sortas="etc/inetd.conf configuration file">/etc/inetd.conf configuration files</primary><secondary>adding SWAT tool to</secondary></indexterm> configuration files. SWAT runs as a daemon under <emphasis>inetd</emphasis> and provides a forms-based editor in your web browser for creating and modifying SMB configuration files.</para>
+
+
+<orderedlist>
+<listitem><para>To add SWAT, add the following line to the end of the <filename>/etc/services</filename> file:</para>
+
+<programlisting>swat   901/tcp</programlisting></listitem>
+
+<listitem><para>Add these lines to <filename>/etc/inetd.conf.</filename> (Check your <filename>inetd.conf</filename> manual page to see the exact format of the<filename> inetd.conf</filename> file if it differs from the following example.) Don't forget to change the path to the SWAT binary if you installed it in a different location from the default <filename>/usr/local/samba</filename>.</para>
+
+
+<programlisting>swat   stream  tcp  nowait.400  root  /usr/local/samba/bin/swat  swat</programlisting></listitem>
+</orderedlist>
+
+<para>And that's pretty much it for the installation. Before you can start up Samba, however, you need to create a configuration file for it.<indexterm id="ch02-idx-947442-0" class="endofrange" startref="ch02-idx-947438-0"/></para>
+</sect2>
+</sect1>
+
+
+
+
+
+
+
+
+
+<sect1 role="" label="2.4" id="ch02-13464">
+<title>A Basic Samba Configuration File</title>
+
+
+<para>The <indexterm id="ch02-idx-947692-0" class="startofrange"><primary>configuring Samba</primary><secondary>configuration file</secondary><tertiary>creating</tertiary></indexterm>key to configuring Samba is its lone configuration file: <filename>smb.conf</filename>
+<indexterm id="ch02-idx-947693-0"><primary>smb.conf (Samba configuration) file</primary></indexterm>. This configuration file can be very simple or extremely complex, and the rest of this book is devoted to helping you get deeply personal with this file. For now, however, we'll show you how to set up a single file service, which will allow you to fire up the Samba daemons and see that everything is running as it should be. In later chapters, you will see how to configure Samba for more complicated and interesting tasks.</para>
+
+
+<para>The installation process does not automatically create an <filename>smb.conf</filename> configuration file, although several example files are included in the Samba distribution. <indexterm id="ch02-idx-947541-0" class="startofrange"><primary>testing</primary><secondary>Samba</secondary></indexterm>To test the server software, though, we'll use the following file. It should be named <filename>smb.conf</filename> and placed in the <emphasis>/usr/local/samba/lib</emphasis> directory.<footnote label="5" id="ch02-pgfId-943223">
+
+
+<para>If you did not compile Samba, but instead downloaded a binary, check with the documentation for the package to find out where it expects the <filename>smb.conf</filename> file. If Samba came preinstalled with your Unix system, there is probably already an <filename>smb.conf</filename> file somewhere on your system.</para>
+
+
+</footnote></para>
+
+
+<programlisting>[global]
+	workgroup = SIMPLE
+[test]
+	comment = For testing only, please
+	path = /export/samba/test
+	read only = no
+	guest ok = yes</programlisting>
+
+
+<para>This brief configuration file tells the Samba server to offer the directory <filename>/export/samba/test</filename>
+<indexterm id="ch02-idx-947498-0"><primary sortas="export/samba/test directory">/export/samba/test directory</primary></indexterm> on the server as an SMB/CIFS share called <indexterm id="ch02-idx-947499-0"><primary>test share</primary></indexterm><literal>test</literal>. The server also becomes part of the named workgroup SIMPLE, which each of the clients must also be a part of. (Use your own workgroup here if you already know what it is.) We'll use the <literal>[test]</literal> share in the next chapter to set up the Windows clients. For now, you can complete the setup by performing the following commands as root on your Unix server:</para>
+
+
+<programlisting># <userinput>mkdir /export/samba/test</userinput>
+# <userinput>chmod 777 /export/samba/test</userinput></programlisting>
+
+
+<para>We should point out that in terms of system security, this is the worst setup possible. For the moment, however, we only wish to test Samba, so we'll leave security out of the picture. In addition, there are some encrypted password issues that we will encounter with Windows clients later on, so this setup will afford us the least amount of headaches.</para>
+
+
+<tip role="ora">
+<para>If you are using Windows 98 or Windows NT Service Pack 3 or above, you must add the following entry to the <literal>[global]</literal> section of the Samba configuration file: <literal>encrypt passwords = yes</literal>. In addition, you must use the <filename>smbpassword</filename> program (typically located in    <filename>/usr/local/samba/bin/ </filename>) to reenter the username/password combinations of those users on the Unix server who should be able to access shares into Samba's encrypted client database. For example, if you wanted to allow Unix user <literal>steve</literal> to access shares from an SMB client, you could type: <literal>smbpassword -a steve</literal>. The first time a user is added, the program will output an error saying that the encrypted password database does not exist. Don't worry, it will then create the database for you. Make sure that the username/password combinations that you add to the encrypted database match the usernames and passwords that you intend to use on the Windows client side.</para>
+
+</tip>
+
+<sect2 role="" label="2.4.1" id="ch02-SECT-4.1">
+<title>Using SWAT</title>
+
+
+<para>
+<indexterm id="ch02-idx-947510-0" class="startofrange"><primary>SWAT tool</primary><secondary>creating configuration file with</secondary></indexterm>With Samba 2.0, creating a configuration file is even easier than writing a configuration file by hand. You can use your browser to connect to <emphasis>http://localhost:901</emphasis>, and log on as the root account, as shown in <link linkend="ch02-60915">Figure 2.1</link>.</para>
+
+
+<figure label="2.1" id="ch02-60915">
+<title>SWAT login</title>
+
+<graphic width="502" depth="188" fileref="figs/sam.0201.gif"></graphic>
+</figure>
+
+<para>After logging in, press the GLOBALS button at the top of the screen. You should see the Global Variables page shown in <link linkend="ch02-49138">Figure 2.2</link>.</para>
+
+
+<figure label="2.2" id="ch02-49138">
+<title>SWAT Global Variables page</title>
+
+<graphic width="502" depth="455" fileref="figs/sam.0202.gif"></graphic>
+</figure>
+
+<para>In this example, set the workgroup field to SIMPLE and the security field to USER. The only other option you need to change from the menu is one determining which system on the LAN resolves NetBIOS addresses; this system is called the <emphasis>WINS server</emphasis>
+<indexterm id="ch02-idx-947528-0"><primary>WINS (Windows Internet Name Service)</primary><secondary>server</secondary></indexterm>. At the very bottom of the page, set the wins support field to Yes, unless you already have a WINS server on your network. If you do, put the WINS server's IP address in the wins server field instead. Then return to the top and press the Commit Changes button to write the changes out to the <emphasis>smb.conf</emphasis> file.</para>
+
+
+<figure label="2.3" id="ch02-29175">
+<title>SWAT Share Creation screen</title>
+
+<graphic width="502" depth="392" fileref="figs/sam.0203.gif"></graphic>
+</figure>
+
+<para>Next, press the Shares icon. You should see a page similar to <link linkend="ch02-29175">Figure 2.3</link>. Choose Test in the field beside the Choose Share button. You will see the Share Parameters screen, as shown in <link linkend="ch02-37186">Figure 2.4</link>. We added a comment to remind us that this is a test share in the <filename>smb.conf</filename> file. SWAT has copies of all that information here.</para>
+
+
+<figure label="2.4" id="ch02-37186">
+<title>SWAT Share Parameters screen</title>
+
+<graphic width="502" depth="407" fileref="figs/sam.0204.gif"></graphic>
+</figure>
+
+<para>If you press the View button, SWAT shows you the following <filename>smb.conf</filename> file:</para>
+
+
+<programlisting># Samba config file created using SWAT
+# from localhost (127.0.0.1)
+# Date: 1998/11/27 15:42:40
+
+# Global parameters
+        workgroup = SIMPLE
+[test]
+        comment = For testing only, please
+        path = /export/samba/test
+        read only = no
+        guest ok = yes</programlisting>
+
+
+<para>Once this configuration file is completed, you can skip the next step because the output of SWAT is guaranteed to be syntactically correct.<indexterm id="ch02-idx-947704-0" class="endofrange" startref="ch02-idx-947692-0"/></para>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="2.4.2" id="ch02-SECT-4.2">
+<title>Testing the Configuration File</title>
+
+
+<para>
+<indexterm id="ch02-idx-947573-0"><primary>configuring Samba</primary><secondary>configuration file</secondary><tertiary>testing</tertiary></indexterm>
+<indexterm id="ch02-idx-947573-1"><primary>testing</primary><secondary>configuration file</secondary></indexterm>If you didn't use SWAT to create your configuration file, you should probably test it to ensure that it is syntactically correct. It may seem silly to run a test program against an eight-line configuration file, but it's good practice for the real ones that we'll be writing later on.</para>
+
+
+<para>The<indexterm id="ch02-idx-947577-0"><primary>test parser</primary></indexterm> test parser, <filename>testparm</filename>
+<indexterm id="ch02-idx-947578-0"><primary>testparm test parser</primary></indexterm>, examines an <filename>smb.conf</filename> file for <indexterm id="ch02-idx-947583-0"><primary>syntax errors</primary></indexterm>
+<indexterm id="ch02-idx-947583-1"><primary>errors</primary><secondary>syntax</secondary></indexterm>syntax errors and reports any it finds along with a list of the <indexterm id="ch02-idx-947579-0"><primary>services</primary><secondary>list of enabled on machine</secondary></indexterm>services enabled on your machine. An example follows; you'll notice that in our haste to get the server running we mistyped <literal>workgroup</literal> as <literal>workgrp</literal> (the output is often lengthy, so we recommend capturing the last parts with the <literal>tee</literal> command):</para>
+
+
+<programlisting>Load smb config files from smb.conf
+Unknown parameter encountered: "workgrp"
+Ignoring unknown parameter "workgrp"
+Processing section "[test]"
+Loaded services file OK.
+Press enter to see a dump of your service definitions
+# Global parameters
+[global]
+        workgroup = WORKGROUP
+        netbios name =
+        netbios aliases =
+        server string = Samba 2.0.5a
+        interfaces =
+        bind interfaces only = No
+
+<lineannotation>...(content omitted)...</lineannotation>
+
+[test]
+        comment = For testing only, please
+    path = /export/samba/test
+        read only = No
+        guest ok = Yes</programlisting>
+
+
+<para>The interesting parts are at the top and bottom. The top of the output will flag any syntax errors that you may have made, and the bottom lists the services that the server thinks it should offer. A word of advice: make sure that you and the server have the same expectations.<indexterm id="ch02-idx-947566-0" class="endofrange" startref="ch02-idx-947541-0"/></para>
+
+
+<para>If everything looks good, then you are ready to fire up the server daemons!</para>
+</sect2>
+</sect1>
+
+
+
+
+
+
+
+
+
+<sect1 role="" label="2.5" id="ch02-29069">
+<title>Starting the Samba Daemons</title>
+
+
+<para>There <indexterm id="ch02-idx-947584-0" class="startofrange"><primary>daemons</primary><secondary>starting</secondary></indexterm>
+<indexterm id="ch02-idx-947584-1"><primary>Samba</primary><secondary>daemons</secondary><see>daemons</see></indexterm>are two Samba processes, <emphasis>smbd</emphasis>
+<indexterm id="ch02-idx-947586-0"><primary>smbd daemon</primary><secondary>starting</secondary></indexterm> and <emphasis>nmbd</emphasis>
+<indexterm id="ch02-idx-947587-0"><primary>nmbd daemon</primary><secondary>starting</secondary></indexterm>, that need to be running for Samba to work correctly. There are three ways to start:</para>
+
+
+<itemizedlist>
+<listitem><para>By hand</para></listitem>
+<listitem><para>As stand-alone daemons</para></listitem>
+<listitem><para>From <emphasis>inetd</emphasis></para></listitem>
+</itemizedlist>
+
+<sect2 role="" label="2.5.1" id="ch02-SECT-5.1">
+<title>Starting the Daemons by Hand</title>
+
+
+<para>If you're in a hurry, you can start the Samba daemons by hand. As root, simply enter the following commands:</para>
+
+
+<programlisting>#<userinput> /usr/local/samba/bin/smbd -D</userinput>
+#<userinput> /usr/local/samba/bin/nmbd -D</userinput></programlisting>
+
+
+<para>At this point, Samba will be running on your system and will be ready to accept connections.</para>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="2.5.2" id="ch02-SECT-5.2">
+<title>Stand-alone Daemons</title>
+
+
+<para>To run the Samba processes as <indexterm id="ch02-idx-947591-0"><primary>stand-alone daemons</primary></indexterm>
+<indexterm id="ch02-idx-947591-1"><primary>daemons</primary><secondary>stand-alone</secondary></indexterm>stand-alone daemons, you need to add the commands listed in the previous section to your standard Unix startup scripts. This varies depending on whether you have a BSD-style <indexterm id="ch02-idx-947596-0"><primary>Unix</primary><secondary>System V</secondary></indexterm>Unix system or a System V Unix.</para>
+
+
+<sect3 role="" label="2.5.2.1" id="ch02-SECT-5.2.1">
+<title>BSD Unix</title>
+
+
+<para>WIth a <indexterm id="ch02-idx-947597-0"><primary>BSD-style Unix system</primary></indexterm>BSD-style Unix, you need to append the following code to the <filename>rc.local </filename>
+<indexterm id="ch02-idx-947598-0"><primary>rc.local file</primary></indexterm>file, which is typically found in the <filename>/etc</filename>
+<indexterm id="ch02-idx-947599-0"><primary sortas="etc directory">/etc directory</primary></indexterm>
+<indexterm id="ch02-idx-947599-1"><primary sortas="etc/rc/d directory">/etc/rc.d directory</primary></indexterm> or <filename>/etc/rc.d</filename> directories:</para>
+
+
+<programlisting>if [ -x /usr/local/samba/bin/smbd]; then
+	echo "Starting smbd..."
+	/usr/local/samba/bin/smbd -D
+	echo "Starting nmbd..."
+	/usr/local/samba/bin/nmbd -D
+fi</programlisting>
+
+
+<para>This code is very simple; it checks to see if the <filename>smbd</filename>
+<indexterm id="ch02-idx-947600-0"><primary>smbd daemon</primary><secondary>file</secondary></indexterm> file has <indexterm id="ch02-idx-947601-0"><primary>execute permissions</primary></indexterm>execute permissions on it, and if it does, it starts up each of the Samba daemons on system boot.</para>
+</sect3>
+
+
+
+<sect3 role="" label="2.5.2.2" id="ch02-SECT-5.2.2">
+<title>System V Unix</title>
+
+
+<para>With<indexterm id="ch02-idx-947602-0"><primary>System V Unix</primary></indexterm> System V, things can get a little more complex. System V typically uses scripts to start and stop daemons on the system. Hence, you need to instruct Samba how to operate when it starts and when it stops. You can modify the contents of the <filename>/etc/rc.local</filename> directory and add something similar to the following program entitled <filename>smb </filename>:</para>
+
+
+<programlisting>#!/bin/sh
+
+# Contains the "killproc" function on Red Hat Linux
+./etc/rc.d/init.d/functions
+
+PATH="/usr/local/samba/bin:$PATH"
+
+case $1 in
+	'start')
+		echo "Starting smbd..."
+		smbd -D
+		echo "Starting nmbd..."
+		nmbd -D
+		;;
+	'stop')
+		echo "Stopping smbd and nmbd..."
+		killproc smbd
+		killproc nmbd
+		rm -f /usr/local/samba/var/locks/smbd.pid
+		rm -f /usr/local/samba/var/locks/nmbd.pid
+		;;
+	*)
+		echo "usage: smb {start|stop}"
+		;;
+esac</programlisting>
+
+
+<para>With this script, you can start and stop the SMB service with the following commands:</para>
+
+
+<programlisting># /etc/rc.local/smb start
+Starting smbd...
+Starting nmbd...
+# /etc/rc.local/smb stop
+Stopping smbd and nmbd...</programlisting>
+</sect3>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="2.5.3" id="ch02-SECT-5.3">
+<title>Starting From Inetd</title>
+
+
+<para>The <emphasis>inetd</emphasis>
+<indexterm id="ch02-idx-947588-0"><primary>inetd daemon, starting other daemons from</primary></indexterm> daemon is a Unix system's Internet "super daemon." It listens on TCP ports defined in <filename>/etc/services</filename>
+<indexterm id="ch02-idx-947610-0"><primary sortas="etc.services configuration files">/etc/services configuration file, adding SWAT tool to</primary></indexterm> and executes the appropriate program for each port, which is defined in <filename>/etc/inetd.conf</filename>
+<indexterm id="ch02-idx-947618-0"><primary sortas="etc/inetd.conf configuration file">/etc/inetd.conf configuration files</primary></indexterm>. The advantage of this scheme is that you can have a large number of daemons ready to answer queries, but they don't all have to be running. Instead, the <emphasis>inetd</emphasis> daemon listens in places of all the others. The penalty is a small overhead cost of creating a new daemon process, and the fact that you need to edit two files rather than one to set things up. This is handy if you have only one or two users or your machine has too many daemons already. It's also easier to perform an upgrade without disturbing an existing connection.</para>
+
+
+<para>If you wish to start from <filename>inetd</filename>, first open <filename>/etc/services</filename> in your text editor. If you don't already have them defined, add the following two lines:</para>
+
+
+<programlisting>netbios-ssn     139/tcp
+netbios-ns      137/udp</programlisting>
+
+
+<para>Next, edit <filename>/etc/inetd.conf</filename>. Look for the following two lines and add them if they don't exist. If you already have <literal>smbd</literal> and <literal>nmbd</literal> lines in the file, edit them to point at the new <emphasis>smbd</emphasis> and <emphasis>nmbd</emphasis> you've installed. Your brand of Unix may use a slightly different syntax in this file; use the existing entries and the <filename>inetd.conf </filename><command> </command>manual page<command> </command>as a guide:</para>
+
+
+<programlisting>netbios-ssn stream tcp nowait root /usr/local/samba/bin/smbd smbd
+netbios-ns  dgram  udp wait   root /usr/local/samba/bin/nmbd nmbd</programlisting>
+
+
+<para>Finally, kill any <emphasis>smbd</emphasis>
+<indexterm id="ch02-idx-947623-0"><primary>smbd daemon</primary><secondary>killing</secondary></indexterm> or <emphasis>nmbd</emphasis>
+<indexterm id="ch02-idx-947634-0"><primary>nmbd daemon</primary><secondary>killing</secondary></indexterm>
+<indexterm id="ch02-idx-947634-1"><primary>daemons</primary><secondary>killing</secondary></indexterm> processes and send the <emphasis>inetd</emphasis> process a <indexterm id="ch02-idx-947624-0"><primary>hangup (HUP) signal</primary></indexterm>
+<indexterm id="ch02-idx-947624-1"><primary>HUP (hangup) signal</primary></indexterm>hangup (HUP) signal. (The <emphasis>inetd</emphasis> daemon rereads its configuration file on a HUP signal.) To do this, use the <literal>ps</literal> command to find its process ID, then signal it with the following command:</para>
+
+
+<programlisting># <userinput>kill -HUP process_id</userinput></programlisting>
+
+
+<para>After that, Samba should be up and running.<indexterm id="ch02-idx-947585-0" class="endofrange" startref="ch02-idx-947584-0"/></para>
+</sect2>
+</sect1>
+
+
+
+
+
+
+
+
+
+<sect1 role="" label="2.6" id="ch02-67898">
+<title>Testing the Samba Daemons</title>
+
+
+<para>
+<indexterm id="ch02-idx-947635-0"><primary>daemons</primary><secondary>testing</secondary></indexterm>
+<indexterm id="ch02-idx-947635-1"><primary>testing</primary><secondary>daemons</secondary></indexterm>It's hard to believe, but we're nearly done with the Samba server setup. All that's left to do is to make sure that everything is working as we think it should. A convenient way to do this is to use the <filename>smbclient</filename>
+<indexterm id="ch02-idx-947636-0"><primary>smbclient program</primary></indexterm> program to examine what the server is offering to the network. If everything is set up properly, you should be able to do the following:</para>
+
+
+<programlisting><userinput># smbclient -U% -L localhost</userinput>
+
+Added interface ip=192.168.220.100 bcast=192.168.220.255 nmask=255.255.255.0
+Domain=[SIMPLE] OS=[Unix] Server=[Samba 2.0.5a]
+
+        Sharename      Type      Comment
+        ---------      ----      -------
+        test           Disk      For testing only, please
+        IPC$           IPC       IPC Service (Samba 2.0.5a)
+
+        Server               	    Comment
+        ---------            	    -------
+        HYDRA                	    Samba 2.0.5a
+
+        Workgroup            	    Master
+        ---------            	    -------
+        SIMPLE               	    HYDRA</programlisting>
+
+
+<para>If there is a problem, don't panic! Try to start the daemons manually, and check the system output or the <indexterm id="ch02-idx-947637-0"><primary>debug files</primary></indexterm>debug files at <filename>/usr/local/samba/var/log.smb</filename>
+<indexterm id="ch02-idx-947638-0"><primary sortas="usr/local/samba/var/log.smb file">/usr/local/samba/var/log.smb file</primary></indexterm> to see if you can determine what happened. If you think it may be a more serious problem, skip to <link linkend="SAMBA-CH-7">Chapter 7</link>, for help on troubleshooting the Samba daemons.</para>
+
+
+<para>If it worked, congratulations! You now have successfully set up the Samba server with a <indexterm id="ch02-idx-947664-0"><primary>disk shares</primary></indexterm>disk share. It's a simple one, but we can use it to set up and test the Windows 95 and NT clients in the next chapter. Then we will start making it more interesting by adding services such as home directories, printers, and security, and seeing how to integrate the server into a larger Windows domain.<indexterm id="ch02-idx-947297-0" class="endofrange" startref="ch02-idx-947293-0"/></para>
+</sect1>
+</chapter>

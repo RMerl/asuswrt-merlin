@@ -1,0 +1,23 @@
+[
+	uuid("0a74ef1c-41a4-4e06-83ae-dc74fb1cdd53"),
+	version(1.0),
+	pointer_default(unique),
+	helpstring("Audio Server")
+] interface audiosrv
+{
+	[todo] void audiosrv_CreatezoneFactoriesList();
+	[todo] void audiosrv_CreateGfxFactoriesList();
+	[todo] void audiosrv_CreateGfxList();
+	[todo] void audiosrv_RemoveGfx();
+	[todo] void audiosrv_AddGfx();
+	[todo] void audiosrv_ModifyGfx();
+	[todo] void audiosrv_OpenGfx();
+	[todo] void audiosrv_Logon();
+	[todo] void audiosrv_Logoff();
+	[todo] void audiosrv_RegisterSessionNotificationEvent();
+	[todo] void audiosrv_UnregisterSessionNotificationEvent();
+	[todo] void audiosrv_SessionConnectState();
+	[todo] void audiosrv_DriverOpenDrvRegKey();
+	[todo] void audiosrv_AdvisePreferredDeviceChange();
+	[todo] void audiosrv_GetPnpInfo();
+}

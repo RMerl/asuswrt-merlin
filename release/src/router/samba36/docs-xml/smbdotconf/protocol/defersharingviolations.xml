@@ -1,0 +1,26 @@
+<samba:parameter name="defer sharing violations"
+                 context="G"
+		 type="boolean"
+                 developer="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>
+	Windows allows specifying how a file will be shared with 
+	other processes when it is opened. Sharing violations occur when 
+	a file is opened by a different process using options that violate 
+	the share settings specified by other processes. This parameter causes
+	smbd to act as a Windows server does, and defer returning a "sharing
+	violation" error message for up to one second, allowing the client
+	to close the file causing the violation in the meantime.
+	</para>
+
+	<para>UNIX by default does not have this behaviour.</para>
+
+	<para>
+	There should be no reason to turn off this parameter, as it is
+	designed to enable Samba to more correctly emulate Windows.
+	</para>
+</description>
+
+<value type="default">True</value>
+</samba:parameter>

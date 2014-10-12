@@ -1,0 +1,8 @@
+This is an example script for doing dynamic DNS updates from the WINS
+database. You use this by putting the full path to the script in the
+"wins hook" option in smb.conf. Remember to mark the script executable
+and to set the right domain at the top of the script.
+
+See the BIND documentation for how to enable dynamic DNS
+updates. Remember to restrict the updates as far as you can to reduce
+the security risks inherent in dynamic DNS.

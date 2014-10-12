@@ -1,0 +1,167 @@
+#include "idl_types.h"
+
+/*
+  old s3 spoolss tdb on-disc interface definitions
+*/
+
+[
+	pointer_default(unique),
+	helpstring("s3 printing tdb formats"),
+	uuid("a025d3cb-c605-40d6-86e1-4cff18e7dd94"),
+	helper("../librpc/ndr/ndr_ntprinting.h")
+]
+interface ntprinting
+{
+	/* Samba 3 tdb storage format: forms
+	 * "dddddddd" */
+
+	typedef [flag(NDR_NOALIGN),public] struct {
+		uint32 position;
+		uint32 flag;
+		uint32 width;
+		uint32 length;
+		uint32 left;
+		uint32 top;
+		uint32 right;
+		uint32 bottom;
+	} ntprinting_form;
+
+	[public] void decode_ntprinting_form(
+		[in] ntprinting_form form
+		);
+
+	/*
+	 * First the string flags and then the Samba 3 tdb storage
+	 * format: drivers
+	 * "dffffffff" followed by a remaining buffer of "f" array */
+
+	typedef [flag(NDR_NOALIGN),public] struct {
+		[skip] uint32 string_flags;
+
+		uint32 version;
+		[flag(ndr_ntprinting_string_flags(r->string_flags))] string name;
+		[flag(ndr_ntprinting_string_flags(r->string_flags))] string environment;
+		[flag(ndr_ntprinting_string_flags(r->string_flags))] string driverpath;
+		[flag(ndr_ntprinting_string_flags(r->string_flags))] string datafile;
+		[flag(ndr_ntprinting_string_flags(r->string_flags))] string configfile;
+		[flag(ndr_ntprinting_string_flags(r->string_flags))] string helpfile;
+		[flag(ndr_ntprinting_string_flags(r->string_flags))] string monitorname;
+		[flag(ndr_ntprinting_string_flags(r->string_flags))] string defaultdatatype;
+		[flag((ndr_ntprinting_string_flags(r->string_flags)&~STR_NULLTERM)|STR_NOTERM|NDR_REMAINING)] string_array dependent_files;
+	} ntprinting_driver;
+
+	[public] void decode_ntprinting_driver(
+		[in] ntprinting_driver driver
+		);
+
+	/* Samba 3 tdb storage format: devicemode
+	 * "p" ptr to devicemode
+	 * "ffwwwwwwwwwwwwwwwwwwdddddddddddddd"
+	 * "p" ptr to devicemode private data
+	 * "B" private data blob */
+
+	typedef [flag(NDR_NOALIGN),public] struct {
+		[skip] uint32 string_flags;
+
+		/* uint32 devicemode_ptr; */
+		[flag(ndr_ntprinting_string_flags(r->string_flags))] string devicename;
+		[flag(ndr_ntprinting_string_flags(r->string_flags))] string formname;
+		uint16 specversion;
+		uint16 driverversion;
+		uint16 size;
+		uint16 driverextra;
+		uint16 orientation;
+		uint16 papersize;
+		uint16 paperlength;
+		uint16 paperwidth;
+		uint16 scale;
+		uint16 copies;
+		uint16 defaultsource;
+		uint16 printquality;
+		uint16 color;
+		uint16 duplex;
+		uint16 yresolution;
+		uint16 ttoption;
+		uint16 collate;
+		uint16 logpixels;
+		uint32 fields;
+		uint32 bitsperpel;
+		uint32 pelswidth;
+		uint32 pelsheight;
+		uint32 displayflags;
+		uint32 displayfrequency;
+		uint32 icmmethod;
+		uint32 icmintent;
+		uint32 mediatype;
+		uint32 dithertype;
+		uint32 reserved1;
+		uint32 reserved2;
+		uint32 panningwidth;
+		uint32 panningheight;
+		DATA_BLOB *nt_dev_private;
+	} ntprinting_devicemode;
+
+	/*
+	 * First the string flags and then the Samba 3 tdb storage
+	 * format: printer_data
+	 * "p" ptr to printer_data
+	 * "fdB" */
+
+	typedef [flag(NDR_NOALIGN),public] struct {
+		[skip] uint32 string_flags;
+
+		uint32 ptr;
+		[flag(ndr_ntprinting_string_flags(r->string_flags))] string name;
+		uint32 type;
+		DATA_BLOB data;
+	} ntprinting_printer_data;
+
+	/*
+	 * First the string flags and then the Samba 3 tdb storage
+	 * format: printer_info
+	 * "dddddddddddfffffPfffff"
+	 */
+
+	typedef [flag(NDR_NOALIGN),public] struct {
+		[skip] uint32 string_flags;
+
+		uint32 attributes;
+		uint32 priority;
+		uint32 default_priority;
+		uint32 starttime;
+		uint32 untiltime;
+		uint32 status;
+		uint32 cjobs;
+		uint32 averageppm;
+		uint32 changeid;
+		uint32 c_setprinter;
+		uint32 setuptime;
+		[flag(ndr_ntprinting_string_flags(r->string_flags))] string servername;
+		[flag(ndr_ntprinting_string_flags(r->string_flags))] string printername;
+		[flag(ndr_ntprinting_string_flags(r->string_flags))] string sharename;
+		[flag(ndr_ntprinting_string_flags(r->string_flags))] string portname;
+		[flag(ndr_ntprinting_string_flags(r->string_flags))] string drivername;
+		[flag(ndr_ntprinting_string_flags(r->string_flags))] string comment;
+		[flag(ndr_ntprinting_string_flags(r->string_flags))] string location;
+		[flag(ndr_ntprinting_string_flags(r->string_flags))] string sepfile;
+		[flag(ndr_ntprinting_string_flags(r->string_flags))] string printprocessor;
+		[flag(ndr_ntprinting_string_flags(r->string_flags))] string datatype;
+		[flag(ndr_ntprinting_string_flags(r->string_flags))] string parameters;
+	} ntprinting_printer_info;
+
+	/* Abstract Samba 3 printer
+	 * printer_info
+	 * followed by ntprinting_devicemode
+	 * followed by remaining buffer of ntprinting_printer_data array */
+
+	typedef [flag(NDR_NOALIGN),public,nopull] struct {
+		ntprinting_printer_info info;
+		ntprinting_devicemode *devmode;
+		uint32 count;
+		ntprinting_printer_data printer_data[count];
+	} ntprinting_printer;
+
+	[public] void decode_ntprinting_printer(
+		[in] ntprinting_printer printer
+		);
+}

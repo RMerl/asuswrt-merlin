@@ -1,0 +1,27 @@
+<samba:parameter name="os level"
+                 context="G"
+				 type="integer"
+                 basic="1" advanced="1" developer="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>
+	This integer value controls what level Samba advertises itself as for browse elections. The value of this
+	parameter determines whether <citerefentry><refentrytitle>nmbd</refentrytitle>
+	<manvolnum>8</manvolnum></citerefentry> has a chance of becoming a local master browser for the <smbconfoption
+	name="workgroup"/> in the local broadcast area.
+</para>
+		
+	<para><emphasis>
+	Note:</emphasis> By default, Samba will win a local master browsing election over all Microsoft operating
+	systems except a Windows NT 4.0/2000 Domain Controller. This means that a misconfigured Samba host can
+	effectively isolate a subnet for browsing purposes. This parameter is largely auto-configured in the Samba-3
+	release series and it is seldom necessary to manually override the default setting. Please refer to
+	the chapter on Network Browsing in the Samba-3 HOWTO document for further information regarding the use
+	of this parameter.
+	<emphasis>Note:</emphasis> The maximum value for this parameter is 255. If you use higher values, counting
+	will start at 0!
+	</para>
+</description>
+<value type="default">20</value>
+<value type="example">65</value>
+</samba:parameter>

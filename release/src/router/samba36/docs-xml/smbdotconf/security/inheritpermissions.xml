@@ -1,0 +1,35 @@
+<samba:parameter name="inherit permissions"
+                 context="S"
+				 type="boolean"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+    <para>
+	The permissions on new files and directories are normally governed by <smbconfoption name="create mask"/>,
+	<smbconfoption name="directory mask"/>, <smbconfoption name="force create mode"/> and <smbconfoption
+	name="force directory mode"/> but the boolean inherit permissions parameter overrides this.
+	</para>
+		
+    <para>New directories inherit the mode of the parent directory,
+    including bits such as setgid.</para>
+
+    <para>
+	New files inherit their read/write bits from the parent directory.  Their execute bits continue to be
+	determined by <smbconfoption name="map archive"/>, <smbconfoption name="map hidden"/> and <smbconfoption
+	name="map system"/> as usual.
+	</para>
+
+    <para>Note that the setuid bit is <emphasis>never</emphasis> set via 
+    inheritance (the code explicitly prohibits this).</para>
+
+    <para>This can be particularly useful on large systems with 
+    many users, perhaps several thousand, to allow a single [homes] 
+    share to be used flexibly by each user.</para>
+</description>
+
+<related>create mask</related>
+<related>directory mask</related>
+<related>force create mode</related>
+<related>force directory mode</related>
+
+<value type="default">no</value>
+</samba:parameter>

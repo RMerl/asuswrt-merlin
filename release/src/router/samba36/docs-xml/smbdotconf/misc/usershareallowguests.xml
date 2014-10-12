@@ -1,0 +1,16 @@
+<samba:parameter name="usershare allow guests"
+	         context="G"
+		 basic="1" advanced="1"
+		 type="boolean"
+		 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>This parameter controls whether user defined shares are allowed
+	to be accessed by non-authenticated users or not. It is the equivalent
+	of allowing people who can create a share the option of setting
+	<parameter moreinfo="none">guest ok = yes</parameter> in a share
+	definition. Due to its security sensitive nature, the default
+	is set to off.</para>
+
+</description>
+<value type="default">no</value>
+</samba:parameter>

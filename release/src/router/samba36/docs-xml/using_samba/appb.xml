@@ -1,0 +1,1702 @@
+<appendix label="B" id="SAMBA-AP-B">
+<title>Samba Performance Tuning</title>
+
+
+
+
+<para>
+<indexterm id="appb-idx-959725-0" class="startofrange"><primary>Samba</primary><secondary>performance tuning</secondary></indexterm>
+<indexterm id="appb-idx-959725-1" class="startofrange"><primary>performance tuning</primary></indexterm>
+<indexterm id="appb-idx-959725-2" class="startofrange"><primary>configuring Samba</primary><secondary>performance tuning</secondary></indexterm>This appendix discusses various ways of performance tuning and system sizing with Samba. <firstterm>Performance tuning</firstterm> is the art of finding bottlenecks and adjusting to eliminate them. <emphasis>Sizing</emphasis> is the practice of eliminating bottlenecks by spending money to avoid having them in the first place. Normally, you won't have to worry about either with Samba. On a completely untuned server, Samba will happily support a small community of users. However, on a properly tuned server, Samba will support at least twice as many users. This chapter is devoted to outlining various performance-tuning and sizing techniques that you can use if you want to stretch your Samba server to the limit.</para>
+
+
+
+
+
+
+
+
+
+
+
+<sect1 role="" label="B.1" id="appb-47134">
+<title>A Simple Benchmark</title>
+
+
+<para>
+<indexterm id="appb-idx-959739-0"><primary>Samba</primary><secondary>performance tuning</secondary><tertiary>benchmark for</tertiary></indexterm>
+<indexterm id="appb-idx-959739-1"><primary>performance tuning</primary><secondary>benchmark for</secondary></indexterm>
+<indexterm id="appb-idx-959739-2"><primary>configuring Samba</primary><secondary>performance tuning</secondary><tertiary>benchmark for</tertiary></indexterm>How do you know if you're getting reasonable performance? A simple benchmark is to compare Samba with FTP. <link linkend="appb-73167">Table 2.1</link> shows the throughput, in kilobytes per second, of a pair of servers: a medium-size Sun SPARC Ultra and a small Linux Pentium server. Numbers are reported in kilobytes per second (KB/s).</para>
+
+
+<table label="B.1" id="appb-73167">
+<title>Sample Benchmark Benchmarks </title>
+
+<tgroup cols="4">
+<colspec colnum="1" colname="col1"/>
+<colspec colnum="2" colname="col2"/>
+<colspec colnum="3" colname="col3"/>
+<colspec colnum="4" colname="col4"/>
+<thead>
+<row>
+
+<entry colname="col1"><para>Command</para></entry>
+
+<entry colname="col2"><para>FTP</para></entry>
+
+<entry colname="col3"><para>Untuned Samba</para></entry>
+
+<entry colname="col4"><para>Tuned Samba</para></entry>
+
+</row>
+
+</thead>
+
+<tbody>
+<row>
+
+<entry colname="col1"><para>Sparc get</para></entry>
+
+<entry colname="col2"><para>1014.5</para></entry>
+
+<entry colname="col3"><para>645.3</para></entry>
+
+<entry colname="col4"><para>866.7</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>Sparc put</para></entry>
+
+<entry colname="col2"><para>379.8</para></entry>
+
+<entry colname="col3"><para>386.1</para></entry>
+
+<entry colname="col4"><para>329.5</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>Pentium get</para></entry>
+
+<entry colname="col2"><para>973.27</para></entry>
+
+<entry colname="col3"><para>N/A</para></entry>
+
+<entry colname="col4"><para>725</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>Pentium put</para></entry>
+
+<entry colname="col2"><para>1014.5</para></entry>
+
+<entry colname="col3"><para>N/A</para></entry>
+
+<entry colname="col4"><para>1100</para></entry>
+
+</row>
+
+</tbody>
+</tgroup>
+</table>
+
+
+<para>If you run the same tests on your server, you probably won't see the same numbers. However, you <emphasis>should</emphasis> see similar ratios of Samba to FTP, probably in the range of 68 to 80 percent. It's not a good idea to base <emphasis>all</emphasis> of Samba's throughput against FTP. The golden rule to remember is this: if Samba is much slower than FTP, it's time to tune it.</para>
+
+
+<para>You might think that an equivalent test would be to compare Samba to NFS. In reality, however, it's much less useful to compare their speeds. Depending entirely on whose version of NFS you have and how well it's tuned, Samba can be slower or faster than NFS. We usually find that Samba is faster, but watch out; NFS uses a different algorithm from Samba, so tuning options that are optimal for NFS may be detrimental for Samba. If you run Samba on a well-tuned NFS server, Samba may perform rather badly.</para>
+
+
+<para>A more popular benchmark is Ziff-Davis' <emphasis>NetBench,</emphasis> a simulation of many users on client machines running word processors and accessing data on the SMB server. It's not a prefect measure (each NetBench client does about ten times the work of a normal user on our site), but it is a fair comparison of similar servers. In tests performed by Jeremy Allison in November 1998, Samba 2.0 on a SGI multiprocessor outperformed NT Server 4.0 (Patch Level 2) on an equivalent high-end Compaq. This was confirmed and strengthened by a Sm@rt Reseller test of NT and Linux on identical hardware in February 1999.</para>
+
+
+<para>In April 1999, the Mindcraft test lab released a report about a test showing that Samba on a four-processor Linux machine was significantly slower than native file serving on the same machine running Windows NT. While the original report was slammed by the Open Source community because it was commissioned by Microsoft and tuned the systems to favor Windows NT, a subsequent test was fairer and generally admitted to reveal some areas where Linux needed to improve its performance, especially on multiprocessors. Little was said about Samba itself. Samba is known to scale well on multiprocessors, and exceeds 440MB/s on a four-processor SGI O200, beating Mindcraft's 310MB/s.</para>
+
+
+<para>Relative performance will probably change as NT and PC hardware get faster, of course, but Samba is improving as well. For example, Samba 1.9.18 was faster only with more than 35 clients. Samba 2.0, however, is faster regardless of the number of clients. In short, Samba is very competitive with the best networking software in the industry, and is only getting better.</para>
+
+
+<para>As we went to press, Andrew Tridgell released the alpha-test version suite of benchmarking programs for Samba and SMB networks. Expect even more work on performance from the Samba team in the future.</para>
+</sect1>
+
+
+
+
+
+
+
+
+
+<sect1 role="" label="B.2" id="appb-50295">
+<title>Samba Tuning</title>
+
+
+<para>
+<indexterm id="appb-idx-959765-0"><primary>tuning</primary><see>performance tuning</see></indexterm>That being said, let's discuss how you can take an already fast networking package and make it even faster.</para>
+
+
+<sect2 role="" label="B.2.1" id="appb-SECT-2.1">
+<title>Benchmarking</title>
+
+
+<para>
+<indexterm id="appb-idx-959749-0"><primary>Samba</primary><secondary>performance tuning</secondary><tertiary>benchmark for</tertiary></indexterm>
+<indexterm id="appb-idx-959749-1"><primary>performance tuning</primary><secondary>benchmark for</secondary></indexterm>
+<indexterm id="appb-idx-959749-2"><primary>configuring Samba</primary><secondary>performance tuning</secondary><tertiary>benchmark for</tertiary></indexterm>Benchmarking is an arcane and somewhat black art, but the level of expertise needed for simple performance tuning is fairly low. Since the Samba server's goal in life is to transfer files, we will examine only throughput, not response time to particular events, under the benchmarking microscope. After all, it's relatively easy to measure file transfer speed, and Samba doesn't suffer too badly from response-time problems that would require more sophisticated techniques.</para>
+
+
+<para>Our basic strategy for this work will be:</para>
+
+
+<itemizedlist>
+
+<listitem><para>Find a reasonably-sized file to copy and a program that reports on copy speeds, such as <filename>smbclient</filename>.</para></listitem>
+
+<listitem><para>Find a quiet (or typical) time to do the test.</para></listitem>
+
+<listitem><para>Pre-run each test a few times to preload buffers.</para></listitem>
+
+<listitem><para>Run tests several times and watch for unusual results.</para></listitem>
+
+<listitem><para>Record each run in detail.</para></listitem>
+
+<listitem><para>Compare the average of the valid runs to expected values.</para></listitem>
+
+</itemizedlist>
+
+<para>After establishing a baseline using this method, we can adjust a single parameter and do the measurements all over again. An empty table for your tests is provided at the end of this chapter.</para>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="B.2.2" id="appb-SECT-2.2">
+<title>Things to Tweak</title>
+
+
+<para>There are literally thousands of Samba setting combinations that you can use in search of that perfect server. Those of us with lives outside of system administration, however, can narrow down the number of options to those listed in this section, which are the most likely to affect overall throughput. They are presented  roughly in order of impact.</para>
+
+
+<sect3 role="" label="B.2.2.1" id="appb-SECT-2.2.1">
+<title>Log level</title>
+
+
+<para>
+<indexterm id="appb-idx-959753-0"><primary>log files/logging</primary><secondary>levels of</secondary><tertiary>tuning</tertiary></indexterm>This is an obvious one. Increasing the logging level (<literal>log</literal>
+<indexterm id="appb-idx-960330-0"><primary>log level option</primary></indexterm>
+<indexterm id="appb-idx-960330-1"><primary>debug level option</primary></indexterm> <literal>level</literal> or <literal>debug</literal> <literal>level</literal> configuration options) is a good way to debug a problem, unless you happen to be searching for a performance problem! As mentioned in <link linkend="ch04-21486">Chapter 4</link>, Samba produces a ton of debugging messages at level 3 and above, and writing them to disk or syslog is a slow operation. In our <filename>smbclient/ftp</filename> tests, raising the log level from 0 to 3 cut the untuned <literal>get</literal> <literal>speed</literal> from 645.3 to 622.2KB/s, or roughly 5 percent. Higher log levels were even worse.</para>
+</sect3>
+
+
+
+<sect3 role="" label="B.2.2.2" id="appb-SECT-2.2.2">
+<title>Socket options</title>
+
+
+<para>The next thing to look at are the <literal>socket</literal>
+<indexterm id="appb-idx-960332-0"><primary>socket options configuration options</primary></indexterm> <literal>options</literal> configuration options. These are really host system tuning options, but they're set on a per-connection basis, and can be reset by Samba on the sockets it employs by adding <literal>socket</literal> <literal>options</literal> <literal>=</literal> <literal>option</literal> to the <literal>[global]</literal> section of your <filename>smb.conf </filename>file. Not all of these options are supported by all vendors; check your vendor's manual pages on <emphasis>setsockopt </emphasis>(1) or <emphasis>socket </emphasis>(5) for details.</para>
+
+
+<para>The main options are:</para>
+
+
+<variablelist>
+<varlistentry><term><literal>TCP_NODELAY</literal></term>
+<listitem><para>Have the server send as many packets as necessary to keep delay low. This is used on telnet connections to give good response time, and is used&mdash;somewhat counter-intuitively&mdash;to get good speed even when doing small requests or when acknowledgments are delayed (as seems to occur with Microsoft TCP/IP). This is worth a 30-50 percent speedup by itself. Incidentally, in Samba 2.0.4, <literal>socket</literal> <literal>options</literal> <literal>=</literal> <literal>TCP_NODELAY</literal> became the default value for that option.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>IPTOS_LOWDELAY</literal></term>
+<listitem><para>This is another option that trades off throughput for lower delay, but which affects routers and other systems, not the server. All the IPTOS options are new; they're not supported by all operating systems and routers. If they are supported, set <literal>IPTOS_LOWDELAY</literal> whenever you set <literal>TCP_NODELAY</literal>.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>SO_SNDBUF</literal> <literal>and</literal> <literal>SO_RCVBUF</literal></term>
+<listitem><para>The send and receive buffers can often be the reset to a value higher than that of the operating system. This yields a marginal increase of speed (until it reaches a point of diminishing returns).</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>SO_KEEPALIVE</literal></term>
+<listitem><para>This initiates a periodic (four-hour) check to see if the client has disappeared. Expired connections are addressed somewhat better with Samba's <literal>keepalive</literal> and <literal>dead</literal> <literal>time</literal> options. All three eventually arrange to close dead connections, returning unused memory and process-table entries to the operating system.</para></listitem>
+</varlistentry>
+</variablelist>
+
+
+<para>There are several other socket options you might look at, (e.g., <literal>SO_SNDLOWAT</literal>), but they vary in availability from vendor to vendor. You probably want to look at <citetitle>TCP/IP Illustrated</citetitle> if you're interested in exploring more of these options for performance tuning with Samba.</para>
+</sect3>
+
+
+
+<sect3 role="" label="B.2.2.3" id="appb-SECT-2.2.3">
+<title>read raw and write raw</title>
+
+
+<para>
+<indexterm id="appb-idx-959754-0"><primary>read raw, tuning</primary></indexterm>
+<indexterm id="appb-idx-959754-1"><primary>write raw, tuning</primary></indexterm>These are important performance configuration options; they enable Samba to use large reads and writes to the network, of up to 64KB in a single SMB request. They also require the largest SMB packet structures, <literal>SMBreadraw</literal> and <literal>SMBwriteraw</literal>, from which the options take their names. Note that this is not the same as a Unix <emphasis>raw read</emphasis>. This Unix term usually refers to reading disks without using the files system, quite a different sense from the one described here for Samba.</para>
+
+
+<para>In the past, some client programs failed if you tried to use <literal>read</literal> <literal>raw</literal>. As far as we know, no client suffers from this problem any more. Read and write raw default to <literal>yes</literal>, and should be left on unless you find you have one of the buggy clients.</para>
+</sect3>
+
+
+
+<sect3 role="" label="B.2.2.4" id="appb-SECT-2.2.4">
+<title>Opportunistic locking</title>
+
+
+<para>
+<indexterm id="appb-idx-959755-0"><primary>opportunistic locking</primary><secondary>tuning</secondary></indexterm>
+<indexterm id="appb-idx-959755-1"><primary>locks/locking files</primary><secondary>opportunistic locking</secondary><tertiary>tuning of</tertiary></indexterm>Opportunistic locks, or <emphasis>oplocks</emphasis>, allow clients to cache files locally, improving performance on the order of 30 percent. This option is now enabled by default. For read-only files, the <literal>fake</literal> <literal>oplocks</literal> provides the same functionality without actually doing any caching. If you have files that cannot be cached, <emphasis>oplocks</emphasis> can be turned off.</para>
+
+
+<para>Database files should never be cached, nor should any files that are updated both on the server and the client and whose changes must be immediately visible. For these files, the <literal>veto</literal> <literal>oplock</literal>
+<indexterm id="appb-idx-960336-0"><primary>oplock files option</primary></indexterm> <literal>files</literal> option allows you to specify a list of individual files or a pattern containing wildcards to avoid caching. <emphasis>oplocks</emphasis> can be turned off on a share-by-share basis if you have large groups of files you don't want cached on clients. See <link linkend="SAMBA-CH-5">Chapter 5</link>, for more information on opportunistic locks.</para>
+</sect3>
+
+
+
+<sect3 role="" label="B.2.2.5" id="appb-SECT-2.2.5">
+<title>IP packet size (MTU)</title>
+
+
+<para>
+<indexterm id="appb-idx-959756-0"><primary>IP packet size, tuning</primary></indexterm>Networks generally set a limit to the size of an individual transmission or packet This is called the Maximum Segment Size, or if the packet header size is included, the <indexterm id="appb-idx-959757-0"><primary>Maximum Transport Unit (MTU)</primary></indexterm>
+<indexterm id="appb-idx-959757-1"><primary>MTU (Maximum Transport Unit)</primary></indexterm>Maximum Transport Unit (MTU). This MTU is not set by Samba, but Samba needs to use a <literal>max</literal> <literal>xmit</literal> (write size) bigger than the MTU, or throughput will be reduced. This is discussed in further detail in the following note. The MTU is normally preset to 1500 bytes on an Ethernet and 4098 bytes on FDDI. In general, having it too low cuts throughput, and having it too high causes a sudden performance dropoff due to fragmentation and retransmissions.</para>
+
+
+<tip role="ora">
+<para>If you are communicating over a router, some systems will assume the router is a serial link (e.g., a T1) and set the MTU to more or less 536 bytes. Windows 95 makes this mistake, which causes nearby clients to perform well, but clients on the other side of the router to be noticeably slower. If the client makes the opposite error and uses a large MTU on a link which demands a small one, the packets will be broken up into fragments. This slows transfers slightly, and any networking errors will cause multiple fragments to be retransmitted, which slows Samba significantly. Fortunately, you can modify the Windows MTU size to prevent either error. To understand this in more detail, see "The Windows 95 Networking Frequently Asked Questions (FAQ)" at <systemitem role="url">http://www.stanford.edu/~llurch/win95netbugs/faq.html</systemitem>, which explains how to override the Windows MTU and Window Size.</para>
+
+</tip>
+</sect3>
+
+
+
+<sect3 role="" label="B.2.2.6" id="appb-19919">
+<title>The TCP receive window</title>
+
+
+<para>
+<indexterm id="appb-idx-959758-0"><primary>TCP/IP  networking protocol</primary><secondary>receive window, tuning</secondary></indexterm>TCP/IP works by breaking down data into small packets that can be transmitted from one machine to another. When each packet is transmitted, it contains a checksum that allows the receiver to check the packet data for potential errors in transmission. Theoretically, when a packet is received and verified, an acknowledgment packet should be sent back to the sender that essentially says, "Everything arrived intact: please continue."</para>
+
+
+<para>In order to keep things moving, however, TCP accepts a range (window) of packets that allows a sender to keep transmitting without having to wait for an acknowledgment of every single packet. (It can then bundle a group of acknowledgments and transmit them back to the sender at the same time.) In other words, this receive window is the number of bytes that the sender can transmit before it has to stop and wait for a receiver's acknowledgment. Like the MTU, it is automatically set based on the type of connection. Having the window too small causes a lot of unnecessary waiting for acknowledgment messages. Various operating systems set moderate buffer sizes on a per-socket basis to keep one program from hogging all the memory.</para>
+
+
+<para>The buffer sizes are assigned in bytes, such as <literal>SO_SNDBUF=8192</literal> in the <literal>socket</literal> <literal>options</literal> line. Thus, an example <literal>socket</literal> <literal>options</literal> configuration option is:</para>
+
+
+<programlisting>socket options = SO_SNDBUF=8192</programlisting>
+
+
+<para>Normally, one tries to set these socket options higher than the default: 4098 in SunOS 4.1.3 and SVR4, and 8192-16384 in AIX, Solaris, and BSD. 16384 has been suggested as a good starting point: in a non-Samba test mentioned in Stevens' book, it yielded a 40 percent improvement. You'll need to experiment, because performance will fall off again if you set the sizes too high. This is illustrated in <link linkend="appb-34738">Figure 2.1</link>, a test done on a particular Linux system.</para>
+
+
+<figure label="B.1" id="appb-34738">
+<title>SO_SNDBUF size and performance</title>
+
+<graphic width="502" depth="263" fileref="figs/sam.ab01.gif"></graphic>
+</figure>
+
+<para>Setting the socket options <literal>O_SNDBUF</literal> and <literal>SO_RCVBUF</literal> to less than the default is inadvisable. Setting them higher improves performance, up to a network-specific limit. However, once you exceed that limit, performance will abruptly level off.</para>
+</sect3>
+
+
+
+<sect3 role="" label="B.2.2.7" id="appb-SECT-2.2.7">
+<indexterm id="appb-idx-960371-0"><primary>max xmit option</primary></indexterm>
+<title>
+max xmit</title>
+
+
+<para>
+<indexterm id="appb-idx-960373-0"><primary>write size, tuning</primary></indexterm>In Samba, the option that is directly related with the MTU and window size is <literal>max</literal> <literal>xmit</literal>. This option sets the largest block of data Samba will try to write at any one time. It's sometimes known as the <firstterm>write size</firstterm>, although that is not the name of the Samba configuration option.</para>
+
+
+<para>Because the percentage of each block required for overhead falls as the blocks get larger, max xmit is conventionally set as large as possible. It defaults to the protocol's upper limit, which is 64 kilobytes. The smallest value that doesn't cause significant slowdowns is 2048. If it is set low enough, it will limit the largest packet size that Samba will be able to negotiate. This can be used to simulate a small MTU if you need to test an unreliable network connection. However, such a test should not be used in production for reducing the effective MTU.</para>
+</sect3>
+
+
+
+<sect3 role="" label="B.2.2.8" id="appb-SECT-2.2.8">
+<title>read size</title>
+
+
+<para>
+<indexterm id="appb-idx-959760-0"><primary>read size, tuning</primary></indexterm>If <literal>max</literal> <literal>xmit</literal> is commonly called the write size, you'd expect <literal>read</literal> <literal>size</literal> to be the maximum amount of data that Samba would want to read from the client via the network. Actually, it's not. In fact, it's an option to trigger <firstterm>write ahead</firstterm>
+<indexterm id="appb-idx-959764-0"><primary>write ahead, tuning</primary></indexterm>. This means that if Samba gets behind reading from the disk and writing to the network (or vice versa) by the specified amount, it will start overlapping network writes with disk reads (or vice versa).</para>
+
+
+<para>The read size doesn't have a big performance effect on Unix, unless you set its value quite small. At that point, it causes a detectable slowdown. For this reason, it defaults to 2048 and can't be set lower than 1024.</para>
+</sect3>
+
+
+
+<sect3 role="" label="B.2.2.9" id="appb-SECT-2.2.9">
+<title>read prediction </title>
+
+
+<para>
+<indexterm id="appb-idx-959766-0"><primary>read prediction, testing</primary></indexterm>Besides being counterintuitive, this option is also obsolete. It enables Samba to read ahead on files opened read only by the clients. The option is disabled in Samba 2.0 (and late 1.9) Because it interferes with opportunistic locking.</para>
+</sect3>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="B.2.3" id="appb-SECT-2.3">
+<title>Other Samba Options</title>
+
+
+<para>
+<indexterm id="appb-idx-959775-0" class="startofrange"><primary>Samba</primary><secondary>performance tuning</secondary><tertiary>other options for</tertiary></indexterm>
+<indexterm id="appb-idx-959775-1" class="startofrange"><primary>performance tuning</primary><secondary>other options for</secondary></indexterm>
+<indexterm id="appb-idx-959775-2" class="startofrange"><primary>configuring Samba</primary><secondary>performance tuning</secondary><tertiary>other options for</tertiary></indexterm>The following Samba options will affect performance if they're set incorrectly, much like the debug level. They're mentioned here so you will know what to look out for:</para>
+
+
+<variablelist>
+<varlistentry><term>
+<indexterm id="appb-idx-960358-0"><primary>hidden files</primary><secondary>options for</secondary></indexterm><literal>hide files</literal></term>
+<listitem><para>Providing a pattern to identify files hidden by the Windows client <literal>hide</literal> <literal>files</literal> will result in any file matching the pattern being passed to the client with the DOS hidden attribute set. It requires a pattern match per file when listing directories, and slows the server noticeably.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>lpq cache time</literal>
+<indexterm id="appb-idx-960359-0"><primary>lpq cache time option</primary></indexterm></term>
+<listitem><para>If your <literal>lpq</literal> (printer queue contents) command takes a long time to complete, you should increase <literal>lpq</literal> <literal>cache</literal> <literal>time</literal> to a value higher than the actual time required for <literal>lpq</literal> to execute, so as to keep Samba from starting a new query when one's already running. The default is 10 seconds, which is reasonable.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>strict locking</literal>
+<indexterm id="appb-idx-960360-0"><primary>strict locking option</primary></indexterm></term>
+<listitem><para>Setting the <literal>strict</literal> <literal>locking</literal> option causes Samba to check for locks on every access, not just when asked to by the client. The option is primarily a bug-avoidance feature, and can prevent ill-behaved DOS and Windows applications from corrupting shared files. However, it is slow and should typically be avoided.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>strict sync</literal>
+<indexterm id="appb-idx-960361-0"><primary>strict sync option</primary></indexterm></term>
+<listitem><para>Setting <literal>strict</literal> <literal>sync</literal> will cause Samba to write each packet to disk and wait for the write to complete whenever the client sets the sync bit in a packet. Windows 98 Explorer sets the bit in all packets transmitted, so if you turn this on, anyone with Windows 98 will think Samba servers are horribly slow.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term><literal>sync always</literal>
+<indexterm id="appb-idx-960362-0"><primary>sync always option</primary></indexterm></term>
+<listitem><para>Setting <literal>sync</literal> <literal>always</literal> causes Samba to flush every write to disk. This is good if your server crashes constantly, but the performance costs are immense. SMB servers normally use oplocks and automatic reconnection to avoid the ill effects of crashes, so setting this option is not normally necessary.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term>
+<indexterm id="appb-idx-960363-0"><primary>wide links option</primary></indexterm><literal>wide links</literal></term>
+<listitem><para>Turning off <literal>wide</literal> <literal>links</literal> prevents Samba from following symbolic links in one file share to files that are not in the share. It is turned on by default, since following links in Unix is not a security problem. Turning it off requires extra processing on every file open. If you do turn off wide links, be sure to turn on <literal>getwd</literal> <literal>cache</literal> to cache some of the required data.</para>
+
+
+<para>There is also a <literal>follow</literal> <literal>symlinks</literal> option that can be turned off to prevent following any symbolic links at all. However, this option does not pose a performance problem.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term>
+<indexterm id="appb-idx-960364-0"><primary>getwd cache option</primary></indexterm><literal>getwd cache</literal></term>
+<listitem><para>This option caches the path to the current directory, avoiding long tree-walks to discover it. It's a nice performance improvement on a printer server or if you've turned off <literal>wide</literal> <literal>links</literal>.</para></listitem>
+</varlistentry>
+</variablelist>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="B.2.4" id="appb-SECT-2.4">
+<title>Our Recommendations </title>
+
+
+<para>
+<indexterm id="appb-idx-959782-0"><primary>performance tuning</primary><secondary>recommended enhancements</secondary></indexterm>Here's an <filename>smb.conf</filename> file that incorporates the recommended performance enhancements so far. Comments have been added on the right side.</para>
+
+
+<programlisting>[global]
+	log level = 1                      # Default is 0
+	socket options = TCP_NODELAY IPTOS_LOWDELAY
+	read raw = yes                     # Default
+	write raw = yes                    # Default
+	oplocks = yes                      # Default
+	max xmit = 65535                   # Default
+	dead time = 15                     # Default is 0
+	getwd cache = yes
+	lpq cache = 30
+[okplace]
+	veto oplock files = this/that/theotherfile
+[badplace]
+	oplocks = no</programlisting>
+</sect2>
+</sect1>
+
+
+
+
+
+
+
+
+
+<sect1 role="" label="B.3" id="appb-22511">
+<title>Sizing Samba Servers</title>
+
+
+<para>
+<indexterm id="appb-idx-959783-0" class="startofrange"><primary>Samba server</primary><secondary>sizing</secondary></indexterm>
+<indexterm id="appb-idx-959783-1" class="startofrange"><primary>sizing Samba servers</primary></indexterm>Sizing is a way to prevent bottlenecks before they occur. The preferred way to do this is to know how many requests per second or how many kilobytes per second the clients will need, and ensure that all the components of the server provide at least that many.</para>
+
+
+<sect2 role="" label="B.3.1" id="appb-SECT-3.1">
+<title>The Bottlenecks</title>
+
+
+<para>
+<indexterm id="appb-idx-959791-0" class="startofrange"><primary>bottlenecks</primary></indexterm>The <indexterm id="appb-idx-959799-0"><primary>bottlenecks</primary><secondary>types of</secondary></indexterm>three primary bottlenecks you should worry about are CPU, disk I/O, and the network. For most machines, CPUs are rarely a bottleneck. A single Sun SPARC 10 CPU can start (and complete) between 700 and 800 I/O operations a second, giving approximately 5,600 to 6,400KB/s of throughput when the data averages around 8KBs (a common buffer size). A single Intel Pentium 133 can do less only because of somewhat slower cache and bus interfaces, not due to lack of CPU power. Purpose-designed Pentium servers, like some Compaq servers, will be able to start 700 operations per CPUs, on up to four CPUs.</para>
+
+
+<para>Too little memory, on the other hand, can easily be a bottleneck; each Samba process will use between 600 and 800KB on Intel Linux, and more on RISC CPUs. Having less will cause an increase in virtual memory paging and therefore a performance hit. On Solaris, where it has been measured, <emphasis>smbd</emphasis> will use 2.6 MB for program and shared libraries, plus 768KB for each connected client. <emphasis>nmbd</emphasis> occupies 2.1 MB, plus 496KB extra for its (single) auxiliary process.</para>
+
+
+<para>Hard disks will always bottleneck at a specific number of I/O operations per second: for example, each 7200 RPM SCSI disk is capable of performing 70 operations per second, for a throughput of 560KB/s; a 4800 RPM disk will perform fewer than 50, for a throughput of 360KB/s. A single IDE disk will do still fewer. If the disks are independent, or striped together in a RAID 1 configuration, they will each peak out at 400 to 560KB/s and will scale linearly as you add more. Note that this is true only of RAID 1. RAID levels other than 1 (striping) add extra overhead.</para>
+
+
+<para>Ethernets (and other networks) are obvious bottleneck: a 10 Mb/s (mega<emphasis>bits</emphasis>/second) Ethernet will handle around 1100KB/s (kilo<emphasis>bytes</emphasis>/s) using 1500-byte packets A 100 Mb/s Fast Ethernet will bottleneck below 65,000KB/s with the same packet size. FDDI, at 155 Mb/s will top out at approximately 6,250KB/s, but gives good service at even 100 percent load and transmits much larger packets (4KB).</para>
+
+
+<para>ATM should be much better, but as of the writing of this book it was too new to live up to its potential; it seems to deliver around 7,125 Mb/s using 9KB packets.</para>
+
+
+<para>Of course, there can be other bottlenecks: more than one IDE disk per controller is not good, as are more than three 3600 SCSI-I disks per slow/narrow controller, or more than three 7200 SCSI-II disks per SCSI-II fast/wide controller. RAID 5 is also slow, as it requires twice as many writes as independent disks or RAID 1.</para>
+
+
+<para>After the second set of Ethernets and the second disk controller, start worrying about bus bandwidth, especially if you are using ISA/EISA buses.</para>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="B.3.2" id="appb-SECT-3.2">
+<title>Reducing Bottlenecks </title>
+
+
+<para>
+<indexterm id="appb-idx-959800-0" class="startofrange"><primary>bottlenecks</primary><secondary>reducing</secondary></indexterm>From the information above we can work out a model that will tell us the maximum capability of a given machine. The data is mostly taken from <indexterm id="appb-idx-959815-0"><primary>Wong, Brian</primary></indexterm>
+<indexterm id="appb-idx-959815-1"><primary>resources for further information</primary><secondary>Solaris servers</secondary></indexterm>Brian Wong's <citetitle>Configuration and Capacity Planning for Solaris Servers</citetitle>,<citetitle>
+<footnote label="1" id="appb-pgfId-951214">
+
+
+<para>See Wong. Brian L, <emphasis>Configuration and Capacity Planning for Solaris Servers</emphasis>, Englewood Cliffs, NJ (Sun/Prentice-Hall), 1997, ISBN 0-13-349952-9.</para>
+
+
+</footnote></citetitle> so there is a slight Sun bias to our examples.</para>
+
+
+<para>A word of warning: this is not a complete model. Don't assume that this model will predict every bottleneck or even be within 10 percent in its estimates. A model to predict performance instead of one to warn you of bottlenecks would be much more complex and would contain rules like "not more than three disks per SCSI chain". (A good book on real models is Raj Jain's <citetitle>The Art of Computer Systems Performance Analysis</citetitle>.<footnote label="2" id="appb-pgfId-951230">
+
+
+<para>See Jain, Raj, <emphasis>The Art of Computer Systems Performance Analysis</emphasis>, New York, NY (John Wiley and Sons), 1991, ISBN 0-47-150336-3.</para>
+
+
+</footnote>) With that warning, we present the system in <link linkend="appb-98866">Figure 2.2</link>.</para>
+
+
+<figure label="B.2" id="appb-98866">
+<title>Data flow through a Samba server, with possible bottlenecks</title>
+
+<graphic width="502" depth="185" fileref="figs/sam.ab02.gif"></graphic>
+</figure>
+
+<para>The flow of data should be obvious. For example, on a read, data flows from the disk, across the bus, through or past the CPU, and to the network interface card (NIC). It is then broken up into packets and sent across the network. Our strategy here is to follow the data through the system and see what bottlenecks will choke it off. Believe it or not, it's rather easy to make a set of tables that list the maximum performance of common disks, CPUs, and network cards on a system. So that's exactly what we're going to do.</para>
+
+
+<para>Let's take a concrete example: a Linux Pentium 133 MHz machine with a single 7200 RPM data disk, a PCI bus, and a 10-Mb/s Ethernet card. This is a perfectly reasonable server. We start with <link linkend="appb-78077">Table 2.2</link>, which describes the hard drive&mdash;the first potential bottleneck in the system.</para>
+
+
+<table label="B.2" id="appb-78077">
+<title>Disk Throughput </title>
+
+<tgroup cols="3">
+<colspec colnum="1" colname="col1"/>
+<colspec colnum="2" colname="col2"/>
+<colspec colnum="3" colname="col3"/>
+<thead>
+<row>
+
+<entry colname="col1"><para>Disk RPM</para></entry>
+
+<entry colname="col2"><para>I/O Operations/second</para></entry>
+
+<entry colname="col3"><para>KB/second</para></entry>
+
+</row>
+
+</thead>
+
+<tbody>
+<row>
+
+<entry colname="col1"><para>7200</para></entry>
+
+<entry colname="col2"><para>70</para></entry>
+
+<entry colname="col3"><para>560</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>4800</para></entry>
+
+<entry colname="col2"><para>60</para></entry>
+
+<entry colname="col3"><para>480</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>3600</para></entry>
+
+<entry colname="col2"><para>40</para></entry>
+
+<entry colname="col3"><para>320</para></entry>
+
+</row>
+
+</tbody>
+</tgroup>
+</table>
+
+
+<para>Disk throughput is the number of kilobytes of data that a disk can transfer per second. It is computed from the number of 8KB I/O operations per second a disk can perform, which in turn is strongly influenced by disk RPM and bit density. In effect, the question is: how much data can pass below the drive heads in one second? With a single 7200 RPM disk, the example server will give us 70 I/O operations per second at roughly 560KB/s.</para>
+
+
+<para>The second possible bottleneck is the CPU. The data doesn't actually flow through the CPU on any modern machines, so we have to compute throughput somewhat indirectly.</para>
+
+
+<para>The CPU has to issue I/O requests and handle the interrupts coming back, then transfer the data across the bus to the network card. From much past experimentation, we know that the overhead that dominates the processing is consistently in the filesystem code, so we can ignore the other software being run. We compute the throughput by just multiplying the (measured) number of file I/O operations per second that a CPU can process by the same 8K average request size. This gives us the results shown in <link linkend="appb-42029">Table 2.3</link>.</para>
+
+
+<table label="B.3" id="appb-42029">
+<title>CPU Throughput </title>
+
+<tgroup cols="3">
+<colspec colnum="1" colname="col1"/>
+<colspec colnum="2" colname="col2"/>
+<colspec colnum="3" colname="col3"/>
+<thead>
+<row>
+
+<entry colname="col1"><para>CPU</para></entry>
+
+<entry colname="col2"><para>I/O Operations/second</para></entry>
+
+<entry colname="col3"><para>KB/second</para></entry>
+
+</row>
+
+</thead>
+
+<tbody>
+<row>
+
+<entry colname="col1"><para>Intel Pentium 133</para></entry>
+
+<entry colname="col2"><para>700</para></entry>
+
+<entry colname="col3"><para>5,600</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>Dual Pentium 133</para></entry>
+
+<entry colname="col2"><para>1,200</para></entry>
+
+<entry colname="col3"><para>9,600</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>Sun SPARC II</para></entry>
+
+<entry colname="col2"><para>660</para></entry>
+
+<entry colname="col3"><para>5,280</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>Sun SPARC 10</para></entry>
+
+<entry colname="col2"><para>750</para></entry>
+
+<entry colname="col3"><para>6,000</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>Sun Ultra 200</para></entry>
+
+<entry colname="col2"><para>2,650</para></entry>
+
+<entry colname="col3"><para>21,200</para></entry>
+</row>
+
+</tbody>
+</tgroup>
+</table>
+
+
+<para>Now we put the disk and the CPU together: in the Linux example, we have a single 7200 RPM disk, which can give us 560KB/s, and a CPU capable of starting 700 I/O operations, which could give us 5600KB/s. So far, as you would expect, our bottleneck is clearly going to be the hard disk.</para>
+
+
+<para>The last potential bottleneck is the network. If the network speed is below 100 Mb/s, the bottleneck will be the network speed. After that, the design of the network card is more likely to slow us down. <link linkend="appb-67604">Table 2.4</link> shows us the average throughput of many types of data networks. Although network speed is conventionally measured in bits per second, <link linkend="appb-67604">Table 2.4</link> lists bytes per second to make comparison with the disk and CPU (<link linkend="appb-78077">Table 2.2</link> and <link linkend="appb-42029">Table 2.3</link>) easier.</para>
+
+
+
+<table label="B.4" id="appb-67604">
+<title>Network Throughput </title>
+
+<tgroup cols="2">
+<colspec colnum="1" colname="col1"/>
+<colspec colnum="2" colname="col2"/>
+<thead>
+<row>
+
+<entry colname="col1"><para>Network Type</para></entry>
+
+<entry colname="col2"><para>KB/second</para></entry>
+
+</row>
+
+</thead>
+
+<tbody>
+<row>
+
+<entry colname="col1"><para> ISDN</para></entry>
+
+<entry colname="col2"><para> 16</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para> T1</para></entry>
+
+<entry colname="col2"><para> 197</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para> Ethernet 10m</para></entry>
+
+<entry colname="col2"><para> 1,113</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para> Token ring</para></entry>
+
+<entry colname="col2"><para> 1,500</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para> FDDI</para></entry>
+
+<entry colname="col2"><para> 6,250</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para> Ethernet 100m</para></entry>
+
+<entry colname="col2"><para> 6,500<footnote label="3" id="appb-pgfId-960131">
+
+
+<para>These will increase. For example, Crays, Sun Ultras, and DEC/Compaq Alphas already have bettered these figures.</para>
+
+
+</footnote></para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para> ATM 155</para></entry>
+
+<entry colname="col2"><para> 7,125a</para></entry>
+
+</row>
+
+</tbody>
+</tgroup>
+</table>
+
+
+<para>In the running example, we have a bottleneck at 560KB/s due to the disk. <link linkend="appb-67604">Table 2.4</link> shows us that a standard 10 megabit per second Ethernet (1,113KB/s) is far faster than the disk. Therefore, the hard disk is still the limiting factor. (This scenario, by the way, is very common.) Just by looking at the tables, we can predict that small servers won't have CPU problems, and that large ones with multiple CPUs will support striping and multiple Ethernets long before they start running out of CPU power. This, in fact, is exactly what happens.</para>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="B.3.3" id="appb-SECT-3.3">
+<title>Practical Examples</title>
+
+
+<para>An example from <emphasis>Configuration and Capacity Planning for Solaris Servers</emphasis> (Wong) shows that a dual-processor SPARCstation 20/712 with four Ethernets and six 2.1 GB disks will spend all its time waiting for the disks to return some data. If it was loaded with disks (Brian Wong suggests as many as 34 of them), it would still be held below 1,200KB/s by the Ethernet cards. To get the performance the machine is capable of, we would need to configure multiple Ethernets, 100 Mbps Fast Ethernet, or 155 Mbps FDDI.</para>
+
+
+<para>The progression you'd work through to get that conclusion looks something like <link linkend="appb-26613">Table 2.5</link>.</para>
+
+
+<table label="B.5" id="appb-26613">
+<title>Tuning a Medium-Sized Server </title>
+
+<tgroup cols="5">
+<colspec colnum="1" colname="col1"/>
+<colspec colnum="2" colname="col2"/>
+<colspec colnum="3" colname="col3"/>
+<colspec colnum="4" colname="col4"/>
+<colspec colnum="5" colname="col5"/>
+<thead>
+<row>
+
+<entry colname="col1"><para>Machine</para></entry>
+
+<entry colname="col2"><para>Disk Throughput</para></entry>
+
+<entry colname="col3"><para>CPU Throughput</para></entry>
+
+<entry colname="col4"><para>Network Throughput</para></entry>
+
+<entry colname="col5"><para>Actual Throughput</para></entry>
+
+</row>
+
+</thead>
+
+<tbody>
+<row>
+
+<entry colname="col1"><para>Dual SPARC 10, 1 disk</para></entry>
+
+<entry colname="col2"><para>560</para></entry>
+
+<entry colname="col3"><para>6000</para></entry>
+
+<entry colname="col4"><para>1,113</para></entry>
+
+<entry colname="col5"><para>560</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>Add 5 more disks</para></entry>
+
+<entry colname="col2"><para>3,360</para></entry>
+
+<entry colname="col3"><para>6000</para></entry>
+
+<entry colname="col4"><para>1,113</para></entry>
+
+<entry colname="col5"><para>1,113</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>Add 3 more Ethernets</para></entry>
+
+<entry colname="col2"><para>3,360</para></entry>
+
+<entry colname="col3"><para>16000</para></entry>
+
+<entry colname="col4"><para>4,452</para></entry>
+
+<entry colname="col5"><para>3,360</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>Change to using a 20-disk array</para></entry>
+
+<entry colname="col2"><para>11,200</para></entry>
+
+<entry colname="col3"><para>6000</para></entry>
+
+<entry colname="col4"><para>4,452</para></entry>
+
+<entry colname="col5"><para>4,452</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>Use dual 100 Mbps ether</para></entry>
+
+<entry colname="col2"><para>11,200</para></entry>
+
+<entry colname="col3"><para>6000</para></entry>
+
+<entry colname="col4"><para>13,000</para></entry>
+
+<entry colname="col5"><para>11,200</para></entry>
+
+</row>
+
+</tbody>
+</tgroup>
+</table>
+
+
+<para>Initially, the bottleneck is the disk with only 560 MB/s of throughput available. Our solution is to add five more disks. This gives us more throughput on the disks than on the Ethernet, so then the Ethernet becomes the problem. Consequently, as we continue to expand, we go back and forth several times between these two. As you add disks, CPUs, and network cards, the bottleneck moves. Essentially, the strategy is to add more equipment to try to avoid each bottleneck until you reach your target performance, or (unfortunately) you either can't add any more or run out of money.</para>
+
+
+<para>Our experience bears out this kind of calculation; a large SPARC 10 file server that one author maintained was quite capable of saturating an Ethernet plus about a third of an FDDI ring when using two processors. It did nearly as well with a single processor, albeit with a fast operating system and judicious over-optimization.</para>
+
+
+<para>The same process applies to other brands of purpose-designed servers. We found the same rules applied to DECstation 2100s as to the newest Alphas or Compaqs, old MIPS 3350s and new SGI O2s. In general, a machine offering multi-CPU server configurations will have enough bus bandwidth and CPU power to reliably bottleneck on hard disk I/O when doing file service. As one would hope, considering the cost!</para>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="B.3.4" id="appb-SECT-3.4">
+<title>How Many Clients can Samba Handle?</title>
+
+
+<para>Well, that depends entirely on how much data each user consumes. A small server with three SCSI-1 disks, which can serve about 960KB/s of data, will support between 36 and 80 clients in an ordinary office environment where they are typically loading, and saving equal-sized spreadsheets or word processing documents (36 clients  &times;  2.3 transfers/second  &times;  12k file 1 MB/s).</para>
+
+
+<para>On the same server in a development environment with programmers running a fairly heavy edit-compile-test cycle, one can easily see requests for 1 MB/s, limiting the server to 25 or fewer clients. To take this a bit further, an imaging system whose clients each require 10 MB/s will perform poorly no matter how big a server is if they're all on a 10 MB/s Ethernet. And so on.</para>
+
+
+<para>If you don't know how much data an average user consumes, you can size your Samba servers by patterning them after existing NFS, Netware, or LAN Manager servers. You should be especially careful that the new servers have as many disks and disk controllers as the ones you've copied. This technique is appropriately called "punt and hope."</para>
+
+
+<para>If you know how many clients an existing server can support, you're in <emphasis>much</emphasis> better shape. You can analyze the server to see what its maximum capacity is and use that to estimate how much data they must be demanding. For example, if serving home directories to 30 PCs from a PC server with two IDE disks is just too slow, and 25 clients is about right, then you can safely assume you're bottlenecked on Ethernet I/O (approximately 375KB) rather than disk I/O (up to 640KB). If so, you can then conclude that the clients are demanding 15 (that is, 375/25)KB/s on average.</para>
+
+
+<para>Supporting a new lab of 75 clients will mean you'll need 1,125KB/s, spread over multiple (preferably three) Ethernets, and a server with at least three 7200 RPM disks and a CPU capable of keeping up. These requirements can be met by a Pentium 133 or above with the bus architecture to drive them all at full speed (e.g., PCI).</para>
+
+
+<para>A custom-built PC server or a multiprocessor-capable workstation like a Sun Sparc, a DEC/Compaq Alpha, an SGI, or the like, would scale up easier, as would a machine with fast Ethernet, plus a switching hub to drive the client machines on individual 10 MB/s Ethernets.</para>
+
+
+<sect3 role="" label="B.3.4.1" id="appb-SECT-3.4.1">
+<title>How to guess</title>
+
+
+<para>If you have no idea at all what you need, the best thing is to try to guess based on someone else's experience. Each individual client machine can average from less than 1 I/O per second (normal PC or Mac used for sales/accounting) to as much as 4 (fast workstation using large applications). A fast workstation running a compiler can happily average 3-4 MB/s in data transfer requests, and an imaging system can demand even more.</para>
+
+
+<para>Our recommendation? Spy on someone with a similar configuration and try to estimate their bandwidth requirements from their bottlenecks and the volume of the screams from their users. We also recommend Brian Wong's <citetitle>Configuration and Capacity Planning for Solaris Servers</citetitle>. While he uses Sun Solaris foremost in his examples, his bottlenecks are disks and network cards, which are common among all the major vendors. His tables for FTP servers also come very close to what we calculated for Samba servers, and make a good starting point.<indexterm id="appb-idx-959809-0" class="endofrange" startref="appb-idx-959800-0"/></para>
+</sect3>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="B.3.5" id="appb-90359">
+<title>Measurement Forms</title>
+
+
+<para>
+<indexterm id="appb-idx-959816-0"><primary>measurement forms</primary></indexterm><link linkend="appb-82208">Table 2.6</link> and <link linkend="appb-34846">Table 2.7</link> are empty tables that you can use for copying and recording data. The bottleneck calculation in the previous example can be done in a spreadsheet, or manually with <link linkend="appb-51003">Table 2.8</link>. If Samba is as good as or better than FTP, and if there aren't any individual test runs that are much different from the average, you have a well-configured system. If loopback isn't much faster than anything else, you have a problem with your TCP/IP software. If both FTP and Samba are slow, you probably have a problem with your networking: a faulty Ethernet card will produce this, as will accidentally setting an Ethernet card to half-duplex when it's not connected to a half-duplex hub. Remember that CPU and disk speeds are commonly measured in bytes, network speeds in bits.</para>
+
+
+<para>We've included columns for both bytes and bits in the tables. In the last column, we compare results to 10 Mb/s because that's the speed of a traditional Ethernet.</para>
+
+
+<table label="B.6" id="appb-82208">
+<title>Ethernet Interface to Same Host: FTP </title>
+
+<tgroup cols="6">
+<colspec colnum="1" colname="col1"/>
+<colspec colnum="2" colname="col2"/>
+<colspec colnum="3" colname="col3"/>
+<colspec colnum="4" colname="col4"/>
+<colspec colnum="5" colname="col5"/>
+<colspec colnum="6" colname="col6"/>
+<thead>
+<row>
+
+<entry colname="col1"><para>Run No</para></entry>
+
+<entry colname="col2"><para>Size in Bytes</para></entry>
+
+<entry colname="col3"><para>Time (sec)</para></entry>
+
+<entry colname="col4"><para>Bytes/sec</para></entry>
+
+<entry colname="col5"><para>Bits/sec</para></entry>
+
+<entry colname="col6"><para>% of 10 Mb/s</para></entry>
+
+</row>
+
+</thead>
+
+<tbody>
+<row>
+
+<entry colname="col1"><para>1</para></entry>
+
+<entry colname="col2"></entry>
+
+<entry colname="col3"></entry>
+
+<entry colname="col4"></entry>
+
+<entry colname="col5"></entry>
+
+<entry colname="col6"></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>2</para></entry>
+
+<entry colname="col2"></entry>
+
+<entry colname="col3"></entry>
+
+<entry colname="col4"></entry>
+
+<entry colname="col5"></entry>
+
+<entry colname="col6"></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>3</para></entry>
+
+<entry colname="col2"></entry>
+
+<entry colname="col3"></entry>
+
+<entry colname="col4"></entry>
+
+<entry colname="col5"></entry>
+
+<entry colname="col6"></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>4</para></entry>
+
+<entry colname="col2"></entry>
+
+<entry colname="col3"></entry>
+
+<entry colname="col4"></entry>
+
+<entry colname="col5"></entry>
+
+<entry colname="col6"></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>5</para></entry>
+
+<entry colname="col2"></entry>
+
+<entry colname="col3"></entry>
+
+<entry colname="col4"></entry>
+
+<entry colname="col5"></entry>
+
+<entry colname="col6"></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>Average:</para></entry>
+
+<entry colname="col2"></entry>
+
+<entry colname="col3"></entry>
+
+<entry colname="col4"></entry>
+
+<entry colname="col5"></entry>
+
+<entry colname="col6"></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>Deviation:</para></entry>
+
+<entry colname="col2"></entry>
+
+<entry colname="col3"></entry>
+
+<entry colname="col4"></entry>
+
+<entry colname="col5"></entry>
+
+<entry colname="col6"></entry>
+
+</row>
+
+</tbody>
+</tgroup>
+</table>
+
+
+<table label="B.7" id="appb-34846">
+<title>Ethernet Interface to Same Host: FTP </title>
+
+<tgroup cols="6">
+<colspec colnum="1" colname="col1"/>
+<colspec colnum="2" colname="col2"/>
+<colspec colnum="3" colname="col3"/>
+<colspec colnum="4" colname="col4"/>
+<colspec colnum="5" colname="col5"/>
+<colspec colnum="6" colname="col6"/>
+<thead>
+<row>
+
+<entry colname="col1"><para>Run No</para></entry>
+
+<entry colname="col2"><para>Size in Bytes</para></entry>
+
+<entry colname="col3"><para>Time, sec</para></entry>
+
+<entry colname="col4"><para>Bytes/sec</para></entry>
+
+<entry colname="col5"><para>Bits/sec</para></entry>
+
+<entry colname="col6"><para>% of 10 Mb/s</para></entry>
+
+</row>
+
+</thead>
+
+<tbody>
+<row>
+
+<entry colname="col1"><para>1</para></entry>
+
+<entry colname="col2"></entry>
+
+<entry colname="col3"></entry>
+
+<entry colname="col4"></entry>
+
+<entry colname="col5"></entry>
+
+<entry colname="col6"></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>2</para></entry>
+
+<entry colname="col2"></entry>
+
+<entry colname="col3"></entry>
+
+<entry colname="col4"></entry>
+
+<entry colname="col5"></entry>
+
+<entry colname="col6"></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>3</para></entry>
+
+<entry colname="col2"></entry>
+
+<entry colname="col3"></entry>
+
+<entry colname="col4"></entry>
+
+<entry colname="col5"></entry>
+
+<entry colname="col6"></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>4</para></entry>
+
+<entry colname="col2"></entry>
+
+<entry colname="col3"></entry>
+
+<entry colname="col4"></entry>
+
+<entry colname="col5"></entry>
+
+<entry colname="col6"></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>5</para></entry>
+
+<entry colname="col2"></entry>
+
+<entry colname="col3"></entry>
+
+<entry colname="col4"></entry>
+
+<entry colname="col5"></entry>
+
+<entry colname="col6"></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>Average:</para></entry>
+
+<entry colname="col2"></entry>
+
+<entry colname="col3"></entry>
+
+<entry colname="col4"></entry>
+
+<entry colname="col5"></entry>
+
+<entry colname="col6"></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>Deviation:</para></entry>
+
+<entry colname="col2"></entry>
+
+<entry colname="col3"></entry>
+
+<entry colname="col4"></entry>
+
+<entry colname="col5"></entry>
+
+<entry colname="col6"></entry>
+
+</row>
+
+</tbody>
+</tgroup>
+</table>
+
+
+<table label="B.8" id="appb-51003">
+<title>Bottleneck Calculation Table</title>
+
+<tgroup cols="7">
+<colspec colnum="1" colname="col1"/>
+<colspec colnum="2" colname="col2"/>
+<colspec colnum="3" colname="col3"/>
+<colspec colnum="4" colname="col4"/>
+<colspec colnum="5" colname="col5"/>
+<colspec colnum="6" colname="col6"/>
+<colspec colnum="7" colname="col7"/>
+<thead>
+<row>
+
+<entry colname="col1"><para>CPU</para></entry>
+
+<entry colname="col2"><para>Throughput</para></entry>
+
+<entry colname="col3"><para>of Disks</para></entry>
+
+<entry colname="col4"><para>Disk Throughput</para></entry>
+
+<entry colname="col5"><para>Number of Networks</para></entry>
+
+<entry colname="col6"><para>Network Throughput</para></entry>
+
+<entry colname="col7"><para>Total Throughput</para></entry>
+
+</row>
+
+</thead>
+
+<tbody>
+<row>
+
+<entry colname="col1"></entry>
+
+<entry colname="col2"></entry>
+
+<entry colname="col3"></entry>
+
+<entry colname="col4"></entry>
+
+<entry colname="col5"></entry>
+
+<entry colname="col6"></entry>
+
+<entry colname="col7"></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"></entry>
+
+<entry colname="col2"></entry>
+
+<entry colname="col3"></entry>
+
+<entry colname="col4"></entry>
+
+<entry colname="col5"></entry>
+
+<entry colname="col6"></entry>
+
+<entry colname="col7"></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"></entry>
+
+<entry colname="col2"></entry>
+
+<entry colname="col3"></entry>
+
+<entry colname="col4"></entry>
+
+<entry colname="col5"></entry>
+
+<entry colname="col6"></entry>
+
+<entry colname="col7"></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"></entry>
+
+<entry colname="col2"></entry>
+
+<entry colname="col3"></entry>
+
+<entry colname="col4"></entry>
+
+<entry colname="col5"></entry>
+
+<entry colname="col6"></entry>
+
+<entry colname="col7"></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"></entry>
+
+<entry colname="col2"></entry>
+
+<entry colname="col3"></entry>
+
+<entry colname="col4"></entry>
+
+<entry colname="col5"></entry>
+
+<entry colname="col6"></entry>
+
+<entry colname="col7"></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"></entry>
+
+<entry colname="col2"></entry>
+
+<entry colname="col3"></entry>
+
+<entry colname="col4"></entry>
+
+<entry colname="col5"></entry>
+
+<entry colname="col6"></entry>
+
+<entry colname="col7"></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"></entry>
+
+<entry colname="col2"></entry>
+
+<entry colname="col3"></entry>
+
+<entry colname="col4"></entry>
+
+<entry colname="col5"></entry>
+
+<entry colname="col6"></entry>
+
+<entry colname="col7"></entry>
+
+</row>
+
+</tbody>
+</tgroup>
+</table>
+
+
+<para>In <link linkend="appb-51003">Table 2.8</link>:</para>
+
+
+<itemizedlist>
+
+<listitem><para>CPU throughput = (KB/second from <link linkend="ch06-89804">Figure 6.5</link>)  &times;  (number of CPUs)</para></listitem>
+
+<listitem><para>Disk throughput = (KB/second from <link linkend="ch06-48609">Figure 6.4</link>)  &times;  (number of disks)</para></listitem>
+
+<listitem><para>Network throughput = (KB/second from <link linkend="ch06-71393">Figure 6.6</link>)  &times;  (number of networks)</para></listitem>
+
+<listitem><para>Total throughput = min (Disk, CPU, and Network throughput)</para></listitem>
+
+</itemizedlist>
+
+<para>A typical test, in this case for an FTP <literal>get</literal>, would be entered as in <link linkend="appb-37370">Table 2.9</link></para>
+
+
+<table label="B.9" id="appb-37370">
+<title>Ethernet Interface to Same Host: FTP </title>
+
+<tgroup cols="6">
+<colspec colnum="1" colname="col1"/>
+<colspec colnum="2" colname="col2"/>
+<colspec colnum="3" colname="col3"/>
+<colspec colnum="4" colname="col4"/>
+<colspec colnum="5" colname="col5"/>
+<colspec colnum="6" colname="col6"/>
+<thead>
+<row>
+
+<entry colname="col1"><para>Run No</para></entry>
+
+<entry colname="col2"><para>Size in Bytes</para></entry>
+
+<entry colname="col3"><para>Time, sec</para></entry>
+
+<entry colname="col4"><para>Bytes/sec</para></entry>
+
+<entry colname="col5"><para>Bits/sec</para></entry>
+
+<entry colname="col6"><para>% of 10 Mb/s</para></entry>
+
+</row>
+
+</thead>
+
+<tbody>
+<row>
+
+<entry colname="col1"><para>1</para></entry>
+
+<entry colname="col2"><para>1812898</para></entry>
+
+<entry colname="col3"><para>2.3</para></entry>
+
+<entry colname="col4"><para>761580</para></entry>
+
+<entry colname="col5"></entry>
+
+<entry colname="col6"></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>2</para></entry>
+
+<entry colname="col2"></entry>
+
+<entry colname="col3"><para>2.3</para></entry>
+
+<entry colname="col4"><para>767820</para></entry>
+
+<entry colname="col5"></entry>
+
+<entry colname="col6"></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>3</para></entry>
+
+<entry colname="col2"></entry>
+
+<entry colname="col3"><para>2.4</para></entry>
+
+<entry colname="col4"><para>747420</para></entry>
+
+<entry colname="col5"></entry>
+
+<entry colname="col6"></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>4</para></entry>
+
+<entry colname="col2"></entry>
+
+<entry colname="col3"><para>2.3</para></entry>
+
+<entry colname="col4"><para>760020</para></entry>
+
+<entry colname="col5"></entry>
+
+<entry colname="col6"></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>5</para></entry>
+
+<entry colname="col2"></entry>
+
+<entry colname="col3"><para>2.3</para></entry>
+
+<entry colname="col4"><para>772700</para></entry>
+
+<entry colname="col5"></entry>
+
+<entry colname="col6"></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>Average:</para></entry>
+
+<entry colname="col2"></entry>
+
+<entry colname="col3"><para>2.32</para></entry>
+
+<entry colname="col4"><para>777310</para></entry>
+
+<entry colname="col5"><para>6218480</para></entry>
+
+<entry colname="col6"><para>62</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>Deviation:</para></entry>
+
+<entry colname="col2"></entry>
+
+<entry colname="col3"><para>0.04</para></entry>
+
+<entry colname="col4"></entry>
+
+<entry colname="col5"></entry>
+
+<entry colname="col6"></entry>
+
+</row>
+
+</tbody>
+</tgroup>
+</table>
+
+
+<para>The Sparc example we used earlier would look like <link linkend="SAMBA-AP-B-TBL-10">Table 2.10</link>.</para>
+
+
+<table label="B.10" id="SAMBA-AP-B-TBL-10">
+<title>Sparc 20 Example, Redux</title>
+
+<tgroup cols="7">
+<colspec colnum="1" colname="col1"/>
+<colspec colnum="2" colname="col2"/>
+<colspec colnum="3" colname="col3"/>
+<colspec colnum="4" colname="col4"/>
+<colspec colnum="5" colname="col5"/>
+<colspec colnum="6" colname="col6"/>
+<colspec colnum="7" colname="col7"/>
+<thead>
+<row>
+
+<entry colname="col1"><para>CPU</para></entry>
+
+<entry colname="col2"><para>CPU Throughput</para></entry>
+
+<entry colname="col3"><para>Number of Disks</para></entry>
+
+<entry colname="col4"><para>Disk Throughput</para></entry>
+
+<entry colname="col5"><para>Number of Networks</para></entry>
+
+<entry colname="col6"><para>Network Throughput</para></entry>
+
+<entry colname="col7"><para>Total Throughput</para></entry>
+
+</row>
+
+</thead>
+
+<tbody>
+<row>
+
+<entry colname="col1"><para>2</para></entry>
+
+<entry colname="col2"><para>6,000</para></entry>
+
+<entry colname="col3"><para>1</para></entry>
+
+<entry colname="col4"><para>560</para></entry>
+
+<entry colname="col5"><para>1 10base2</para></entry>
+
+<entry colname="col6"><para>1,113</para></entry>
+
+<entry colname="col7"><para>560</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>2</para></entry>
+
+<entry colname="col2"><para>6,000</para></entry>
+
+<entry colname="col3"><para>6</para></entry>
+
+<entry colname="col4"><para>3,360</para></entry>
+
+<entry colname="col5"><para>1</para></entry>
+
+<entry colname="col6"><para>1,113</para></entry>
+
+<entry colname="col7"><para>1,113</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>2</para></entry>
+
+<entry colname="col2"><para>6,000</para></entry>
+
+<entry colname="col3"><para>6</para></entry>
+
+<entry colname="col4"><para>3,360</para></entry>
+
+<entry colname="col5"><para>4 10base2</para></entry>
+
+<entry colname="col6"><para>4,452</para></entry>
+
+<entry colname="col7"><para>3,360</para></entry>
+
+</row>
+
+
+<row>
+
+<entry colname="col1"><para>2</para></entry>
+
+<entry colname="col2"><para>6,000</para></entry>
+
+<entry colname="col3"><para>20</para></entry>
+
+<entry colname="col4"><para>11,200</para></entry>
+
+<entry colname="col5"><para>4</para></entry>
+
+<entry colname="col6"><para>4,452</para></entry>
+
+<entry colname="col7"><para>4,452</para></entry>
+
+</row>
+
+
+<row>
+
+<entry colname="col1"><para>2</para></entry>
+
+<entry colname="col2"><para>6,000</para></entry>
+
+<entry colname="col3"><para>20</para></entry>
+
+<entry colname="col4"><para>11,200</para></entry>
+
+<entry colname="col5"><para>2 100base2</para></entry>
+
+<entry colname="col6"><para>13,000</para></entry>
+
+<entry colname="col7"><para>11,200</para></entry>
+
+</row>
+
+
+</tbody>
+</tgroup>
+</table>
+</sect2>
+</sect1>
+
+
+
+
+
+
+
+
+</appendix>

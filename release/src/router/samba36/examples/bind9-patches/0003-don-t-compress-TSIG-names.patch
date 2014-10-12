@@ -1,0 +1,58 @@
+From ec22ed6c9797dbdcd820e352167bef8500ca00c6 Mon Sep 17 00:00:00 2001
+From: Andrew Tridgell <tridge@samba.org>
+Date: Wed, 17 Feb 2010 12:20:35 +1100
+Subject: [PATCH 3/5] don't compress TSIG names
+
+windows DNS servers will refuse TSIG-GSS requests with compressed
+names
+---
+ bin/nsupdate/nsupdate.c |    4 ++++
+ lib/dns/message.c       |    2 ++
+ lib/dns/tsig.c          |    3 +++
+ 3 files changed, 9 insertions(+), 0 deletions(-)
+
+diff --git a/bin/nsupdate/nsupdate.c b/bin/nsupdate/nsupdate.c
+index 6cf4cf4..f7ce6db 100644
+--- a/bin/nsupdate/nsupdate.c
++++ b/bin/nsupdate/nsupdate.c
+@@ -1985,6 +1985,10 @@ send_update(dns_name_t *zonename, isc_sockaddr_t *master,
+		fprintf(stderr, "Sending update to %s\n", addrbuf);
+	}
+
++	/* windows doesn't like the tsig name to be compressed */
++	if (updatemsg->tsigname)
++		updatemsg->tsigname->attributes |= DNS_NAMEATTR_NOCOMPRESS;
++
+	result = dns_request_createvia3(requestmgr, updatemsg, srcaddr,
+					master, options, tsigkey, timeout,
+					udp_timeout, udp_retries, global_task,
+diff --git a/lib/dns/message.c b/lib/dns/message.c
+index ae4965f..cb4528f 100644
+--- a/lib/dns/message.c
++++ b/lib/dns/message.c
+@@ -1531,6 +1531,8 @@ getsection(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t *dctx,
+		} else if (rdtype == dns_rdatatype_tsig && msg->tsig == NULL) {
+			msg->tsig = rdataset;
+			msg->tsigname = name;
++			/* TSIG names should not be compressed */
++			msg->tsigname->attributes |= DNS_NAMEATTR_NOCOMPRESS;
+			rdataset = NULL;
+			free_rdataset = ISC_FALSE;
+			free_name = ISC_FALSE;
+diff --git a/lib/dns/tsig.c b/lib/dns/tsig.c
+index 74a7af3..3223942 100644
+--- a/lib/dns/tsig.c
++++ b/lib/dns/tsig.c
+@@ -889,6 +889,9 @@ dns_tsig_sign(dns_message_t *msg) {
+	msg->tsig = dataset;
+	msg->tsigname = owner;
+
++	/* windows does not like the tsig name being compressed */
++	msg->tsigname->attributes |= DNS_NAMEATTR_NOCOMPRESS;
++
+	return (ISC_R_SUCCESS);
+
+  cleanup_rdatalist:
+--
+1.6.3.3
+

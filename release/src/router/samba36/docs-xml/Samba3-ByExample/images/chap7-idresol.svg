@@ -1,0 +1,514 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   version="1.0"
+   width="17.290001cm"
+   height="13.335cm"
+   viewBox="23.46 19.665 40.75 33"
+   id="svg2">
+  <defs
+     id="defs177" />
+  <rect
+     width="2"
+     height="2"
+     x="29.1"
+     y="23"
+     id="rect4"
+     style="fill:#fff4db;stroke:none;stroke-width:0" />
+  <rect
+     width="2"
+     height="2"
+     x="29.1"
+     y="23"
+     id="rect6"
+     style="fill:none;stroke:#000000;stroke-width:0.1" />
+  <rect
+     width="2"
+     height="2"
+     x="32.035"
+     y="27.59"
+     id="rect8"
+     style="fill:#d8d8d8;stroke:none;stroke-width:0" />
+  <rect
+     width="2"
+     height="2"
+     x="32.035"
+     y="27.59"
+     id="rect10"
+     style="fill:none;stroke:#000000;stroke-width:0.1" />
+  <rect
+     width="2"
+     height="2.04"
+     x="29.184999"
+     y="27.549999"
+     id="rect12"
+     style="fill:#d0d0d0;stroke:none;stroke-width:0" />
+  <rect
+     width="2"
+     height="2.04"
+     x="29.184999"
+     y="27.549999"
+     id="rect14"
+     style="fill:none;stroke:#000000;stroke-width:0.1" />
+  <rect
+     width="2.8399999"
+     height="1.735"
+     x="23.51"
+     y="23.139999"
+     id="rect16"
+     style="fill:#a9d8cb;stroke:none;stroke-width:0" />
+  <rect
+     width="2.8399999"
+     height="1.735"
+     x="23.51"
+     y="23.139999"
+     id="rect18"
+     style="fill:none;stroke:#000000;stroke-width:0.1" />
+  <rect
+     width="2.825"
+     height="1.885"
+     x="32.674999"
+     y="20.940001"
+     id="rect20"
+     style="fill:#dedede;stroke:none;stroke-width:0" />
+  <rect
+     width="2.825"
+     height="1.885"
+     x="32.674999"
+     y="20.940001"
+     id="rect22"
+     style="fill:none;stroke:#000000;stroke-width:0.1" />
+  <rect
+     width="2.6500001"
+     height="2.01"
+     x="37.799999"
+     y="19.715"
+     id="rect24"
+     style="fill:#ffffff;stroke:none;stroke-width:0" />
+  <rect
+     width="2.6500001"
+     height="2.01"
+     x="37.799999"
+     y="19.715"
+     id="rect26"
+     style="fill:none;stroke:#000000;stroke-width:0.1" />
+  <rect
+     width="2.3"
+     height="2.0150001"
+     x="38.025002"
+     y="22.1"
+     id="rect28"
+     style="fill:#ffffff;stroke:none;stroke-width:0" />
+  <rect
+     width="2.3"
+     height="2.0150001"
+     x="38.025002"
+     y="22.1"
+     id="rect30"
+     style="fill:none;stroke:#000000;stroke-width:0.1" />
+  <rect
+     width="2.25"
+     height="2.0599999"
+     x="35.150002"
+     y="27.565001"
+     id="rect32"
+     style="fill:#d8d8d8;stroke:none;stroke-width:0" />
+  <rect
+     width="2.25"
+     height="2.0599999"
+     x="35.150002"
+     y="27.565001"
+     id="rect34"
+     style="fill:none;stroke:#000000;stroke-width:0.1" />
+  <text
+     x="24.200001"
+     y="23.9"
+     id="text36"
+     style="font-size:0.60000002px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:arial">Windows</text>
+  <text
+     x="24.462999"
+     y="24.5"
+     id="text38"
+     style="font-size:0.60000002px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:arial">Client</text>
+  <text
+     x="29.659"
+     y="24.15"
+     id="text40"
+     style="font-size:0.60000002px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:arial">smbd</text>
+  <text
+     x="33.388"
+     y="22.051001"
+     id="text42"
+     style="font-size:0.60000002px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:arial">winbindd</text>
+  <text
+     x="29.76"
+     y="28.676001"
+     id="text44"
+     style="font-size:0.60000002px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:arial">NSS</text>
+  <text
+     x="32.653999"
+     y="28.775999"
+     id="text46"
+     style="font-size:0.60000002px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:arial">PAM</text>
+  <text
+     x="35.763"
+     y="28.700001"
+     id="text48"
+     style="font-size:0.60000002px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:arial">LDAP</text>
+  <text
+     x="38.696999"
+     y="23"
+     id="text50"
+     style="font-size:0.60000002px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:arial">W2Kx</text>
+  <text
+     x="38.805"
+     y="23.6"
+     id="text52"
+     style="font-size:0.60000002px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:arial">ADS</text>
+  <text
+     x="38.759998"
+     y="20.6"
+     id="text54"
+     style="font-size:0.60000002px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:arial">NT4</text>
+  <text
+     x="38.477001"
+     y="21.200001"
+     id="text56"
+     style="font-size:0.60000002px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:arial">Domain</text>
+  <line
+     x1="26.9"
+     y1="24.006001"
+     x2="28.549999"
+     y2="24.000999"
+     stroke="#000000"
+     stroke-width="0.100"
+     id="line58"
+     style="stroke:#000000;stroke-width:0.1" />
+  <polygon
+     points="26.899,23.756 26.4,24.007 26.901,24.256 26.899,23.756 "
+     id="polygon60"
+     style="fill:#000000;stroke:none;stroke-width:0.1" />
+  <polygon
+     points="28.551,24.251 29.05,24 28.549,23.752 28.551,24.251 "
+     id="polygon62"
+     style="fill:#000000;stroke:none;stroke-width:0.1" />
+  <line
+     x1="29.52"
+     y1="25.575001"
+     x2="29.504999"
+     y2="27"
+     stroke="#000000"
+     stroke-width="0.100"
+     id="line64"
+     style="stroke:#000000;stroke-width:0.1" />
+  <polygon
+     points="29.77,25.577 29.525,25.075 29.27,25.572 29.77,25.577 "
+     id="polygon66"
+     style="fill:#000000;stroke:none;stroke-width:0.1" />
+  <polygon
+     points="29.255,26.998 29.5,27.5 29.755,27.003 29.255,26.998 "
+     id="polygon68"
+     style="fill:#000000;stroke:none;stroke-width:0.1" />
+  <line
+     x1="31.393999"
+     y1="25.190001"
+     x2="32.605999"
+     y2="27.110001"
+     stroke="#000000"
+     stroke-width="0.100"
+     id="line70"
+     style="stroke:#000000;stroke-width:0.1" />
+  <polygon
+     points="31.605,25.057 31.127,24.767 31.182,25.324 31.605,25.057 "
+     id="polygon72"
+     style="fill:#000000;stroke:none;stroke-width:0.1" />
+  <polygon
+     points="32.395,27.243 32.873,27.533 32.818,26.976 32.395,27.243 "
+     id="polygon74"
+     style="fill:#000000;stroke:none;stroke-width:0.1" />
+  <line
+     x1="31.481001"
+     y1="23.128"
+     x2="32.293999"
+     y2="22.278999"
+     stroke="#000000"
+     stroke-width="0.100"
+     id="line76"
+     style="stroke:#000000;stroke-width:0.1" />
+  <polygon
+     points="31.3,22.955 31.135,23.489 31.661,23.301 31.3,22.955 "
+     id="polygon78"
+     style="fill:#000000;stroke:none;stroke-width:0.1" />
+  <polygon
+     points="32.475,22.453 32.64,21.919 32.114,22.106 32.475,22.453 "
+     id="polygon80"
+     style="fill:#000000;stroke:none;stroke-width:0.1" />
+  <line
+     x1="31.552999"
+     y1="24.312"
+     x2="35.821999"
+     y2="27.253"
+     stroke="#000000"
+     stroke-width="0.100"
+     id="line82"
+     style="stroke:#000000;stroke-width:0.1" />
+  <polygon
+     points="31.695,24.106 31.141,24.028 31.411,24.518 31.695,24.106 "
+     id="polygon84"
+     style="fill:#000000;stroke:none;stroke-width:0.1" />
+  <polygon
+     points="35.68,27.459 36.234,27.537 35.964,27.047 35.68,27.459 "
+     id="polygon86"
+     style="fill:#000000;stroke:none;stroke-width:0.1" />
+  <line
+     x1="36.066002"
+     y1="21.360001"
+     x2="37.284"
+     y2="20.91"
+     stroke="#000000"
+     stroke-width="0.100"
+     id="line88"
+     style="stroke:#000000;stroke-width:0.1" />
+  <polygon
+     points="35.979,21.125 35.597,21.533 36.153,21.594 35.979,21.125 "
+     id="polygon90"
+     style="fill:#000000;stroke:none;stroke-width:0.1" />
+  <polygon
+     points="37.371,21.145 37.753,20.737 37.197,20.676 37.371,21.145 "
+     id="polygon92"
+     style="fill:#000000;stroke:none;stroke-width:0.1" />
+  <line
+     x1="36.013"
+     y1="22.323999"
+     x2="37.512001"
+     y2="22.908001"
+     stroke="#000000"
+     stroke-width="0.100"
+     id="line94"
+     style="stroke:#000000;stroke-width:0.1" />
+  <polygon
+     points="36.103,22.091 35.547,22.143 35.922,22.557 36.103,22.091 "
+     id="polygon96"
+     style="fill:#000000;stroke:none;stroke-width:0.1" />
+  <polygon
+     points="37.422,23.141 37.978,23.089 37.603,22.675 37.422,23.141 "
+     id="polygon98"
+     style="fill:#000000;stroke:none;stroke-width:0.1" />
+  <rect
+     width="2.95"
+     height="2.01"
+     x="37.75"
+     y="24.565001"
+     id="rect100"
+     style="fill:#ffffff;stroke:none;stroke-width:0" />
+  <rect
+     width="2.95"
+     height="2.01"
+     x="37.75"
+     y="24.565001"
+     id="rect102"
+     style="fill:none;stroke:#000000;stroke-width:0.1" />
+  <text
+     x="38.654999"
+     y="25.424999"
+     id="text104"
+     style="font-size:0.60000002px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:arial">Samba</text>
+  <text
+     x="38.414001"
+     y="26.025"
+     id="text106"
+     style="font-size:0.60000002px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:arial">PDC/BDC</text>
+  <line
+     x1="34.959"
+     y1="23.228001"
+     x2="37.328999"
+     y2="25.216999"
+     stroke="#000000"
+     stroke-width="0.100"
+     id="line108"
+     style="stroke:#000000;stroke-width:0.1" />
+  <polygon
+     points="35.12,23.037 34.576,22.907 34.798,23.42 35.12,23.037 "
+     id="polygon110"
+     style="fill:#000000;stroke:none;stroke-width:0.1" />
+  <polygon
+     points="37.168,25.408 37.712,25.538 37.489,25.025 37.168,25.408 "
+     id="polygon112"
+     style="fill:#000000;stroke:none;stroke-width:0.1" />
+  <rect
+     width="3.915"
+     height="1.76"
+     x="29.01"
+     y="31.190001"
+     id="rect114"
+     style="fill:#ffffff;stroke:none;stroke-width:0" />
+  <rect
+     width="3.915"
+     height="1.76"
+     x="29.01"
+     y="31.190001"
+     id="rect116"
+     style="fill:none;stroke:#000000;stroke-width:0.1" />
+  <line
+     x1="30.181999"
+     y1="30.139999"
+     x2="30.177999"
+     y2="30.65"
+     stroke="#000000"
+     stroke-width="0.100"
+     id="line118"
+     style="stroke:#000000;stroke-width:0.1" />
+  <polygon
+     points="30.432,30.142 30.185,29.64 29.932,30.138 30.432,30.142 "
+     id="polygon120"
+     style="fill:#000000;stroke:none;stroke-width:0.1" />
+  <polygon
+     points="29.928,30.648 30.175,31.15 30.428,30.652 29.928,30.648 "
+     id="polygon122"
+     style="fill:#000000;stroke:none;stroke-width:0.1" />
+  <line
+     x1="31.402"
+     y1="30.853001"
+     x2="32.599998"
+     y2="29.927"
+     stroke="#000000"
+     stroke-width="0.100"
+     id="line124"
+     style="stroke:#000000;stroke-width:0.1" />
+  <polygon
+     points="31.249,30.656 31.007,31.159 31.555,31.051 31.249,30.656 "
+     id="polygon126"
+     style="fill:#000000;stroke:none;stroke-width:0.1" />
+  <polygon
+     points="32.753,30.124 32.995,29.621 32.447,29.729 32.753,30.124 "
+     id="polygon128"
+     style="fill:#000000;stroke:none;stroke-width:0.1" />
+  <line
+     x1="34.584999"
+     y1="28.591999"
+     x2="34.599998"
+     y2="28.593"
+     stroke="#000000"
+     stroke-width="0.100"
+     id="line130"
+     style="stroke:#000000;stroke-width:0.1" />
+  <polygon
+     points="34.586,28.342 34.085,28.59 34.584,28.842 34.586,28.342 "
+     id="polygon132"
+     style="fill:#000000;stroke:none;stroke-width:0.1" />
+  <polygon
+     points="34.599,28.843 35.1,28.595 34.601,28.343 34.599,28.843 "
+     id="polygon134"
+     style="fill:#000000;stroke:none;stroke-width:0.1" />
+  <text
+     x="30.027"
+     y="31.975"
+     id="text136"
+     style="font-size:0.60000002px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:arial">/etc/passwd</text>
+  <text
+     x="30.179001"
+     y="32.575001"
+     id="text138"
+     style="font-size:0.60000002px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:arial">/etc/group</text>
+  <rect
+     width="2.0650001"
+     height="1.76"
+     x="33.535"
+     y="31.190001"
+     id="rect140"
+     style="fill:#ffffff;stroke:none;stroke-width:0" />
+  <rect
+     width="2.0650001"
+     height="1.76"
+     x="33.535"
+     y="31.190001"
+     id="rect142"
+     style="fill:none;stroke:#000000;stroke-width:0.1" />
+  <text
+     x="34.049"
+     y="32.25"
+     id="text144"
+     style="font-size:0.60000002px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:arial">NIS[+]</text>
+  <line
+     x1="34.515999"
+     y1="30.754"
+     x2="33.839001"
+     y2="29.987"
+     stroke="#000000"
+     stroke-width="0.100"
+     id="line146"
+     style="stroke:#000000;stroke-width:0.1" />
+  <polygon
+     points="34.329,30.919 34.847,31.129 34.704,30.588 34.329,30.919 "
+     id="polygon148"
+     style="fill:#000000;stroke:none;stroke-width:0.1" />
+  <polygon
+     points="34.027,29.822 33.508,29.612 33.652,30.153 34.027,29.822 "
+     id="polygon150"
+     style="fill:#000000;stroke:none;stroke-width:0.1" />
+  <line
+     x1="33.080002"
+     y1="30.879999"
+     x2="31.639999"
+     y2="29.9"
+     stroke="#000000"
+     stroke-width="0.100"
+     id="line152"
+     style="stroke:#000000;stroke-width:0.1" />
+  <polygon
+     points="32.94,31.087 33.494,31.162 33.221,30.674 32.94,31.087 "
+     id="polygon154"
+     style="fill:#000000;stroke:none;stroke-width:0.1" />
+  <polygon
+     points="31.78,29.693 31.226,29.618 31.499,30.106 31.78,29.693 "
+     id="polygon156"
+     style="fill:#000000;stroke:none;stroke-width:0.1" />
+  <path
+     d="M 34.773,27.172 C 33.554243,26.096992 31.732941,26.07362 30.487,27.117"
+     id="path158"
+     style="fill:none;stroke:#000000;stroke-width:0.1" />
+  <polygon
+     points="30.268,26.92 30.133,27.462 30.648,27.245 30.268,26.92 "
+     id="polygon160"
+     style="fill:#000000;stroke:none;stroke-width:0.1" />
+  <polygon
+     points="34.609,27.296 35.118,27.526 34.997,26.98 34.609,27.296 "
+     id="polygon162"
+     style="fill:#000000;stroke:none;stroke-width:0.1" />
+  <line
+     x1="33.568001"
+     y1="27.028999"
+     x2="34.02"
+     y2="23.371"
+     stroke="#000000"
+     stroke-width="0.100"
+     id="line164"
+     style="stroke:#000000;stroke-width:0.1" />
+  <polygon
+     points="33.319,26.998 33.506,27.525 33.816,27.06 33.319,26.998 "
+     id="polygon166"
+     style="fill:#000000;stroke:none;stroke-width:0.1" />
+  <polygon
+     points="34.268,23.402 34.081,22.875 33.772,23.34 34.268,23.402 "
+     id="polygon168"
+     style="fill:#000000;stroke:none;stroke-width:0.1" />
+  <line
+     x1="31.264999"
+     y1="27.030001"
+     x2="33.073002"
+     y2="23.292"
+     stroke="#000000"
+     stroke-width="0.100"
+     id="line170"
+     style="stroke:#000000;stroke-width:0.1" />
+  <polygon
+     points="31.039,26.921 31.047,27.48 31.49,27.139 31.039,26.921 "
+     id="polygon172"
+     style="fill:#000000;stroke:none;stroke-width:0.1" />
+  <polygon
+     points="33.298,23.401 33.291,22.842 32.848,23.183 33.298,23.401 "
+     id="polygon174"
+     style="fill:#000000;stroke:none;stroke-width:0.1" />
+</svg>

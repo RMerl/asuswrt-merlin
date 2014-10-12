@@ -1,0 +1,41 @@
+#!/usr/bin/env python
+
+bld.SAMBA_LIBRARY('winbind-client',
+	source='wb_common.c',
+	deps='replace',
+	cflags='-DSOCKET_WRAPPER_DISABLE=1 -DWINBINDD_SOCKET_DIR=\"%s\"' % bld.env.WINBINDD_SOCKET_DIR,
+	private_library=True
+	)
+
+
+bld.SAMBA_BINARY('nsstest',
+	source='nsstest.c',
+	deps='replace dl'
+	)
+
+
+bld.SAMBA_LIBRARY('nss_winbind',
+	source='winbind_nss_linux.c',
+	deps='winbind-client',
+	realname='libnss_winbind.so.2',
+	vnum='2')
+
+
+if bld.CONFIG_SET('WITH_PAM_MODULES') or bld.CONFIG_SET('HAVE_PAM_START'):
+	bld.SAMBA_LIBRARY('pamwinbind',
+		source='pam_winbind.c',
+		deps='intl talloc wbclient winbind-client LIBINIPARSER pam',
+		cflags='-DLOCALEDIR=\"%s/locale\"' % bld.env.DATADIR,
+		realname='pam_winbind.so',
+		)
+
+if bld.CONFIG_SET('HAVE_KRB5_LOCATE_PLUGIN_H'):
+	bld.SAMBA_LIBRARY('winbind_krb5_locator',
+		source='winbind_krb5_locator.c',
+		deps='wbclient krb5',
+		realname='winbind_krb5_locator.so')
+
+bld.SAMBA_SUBSYSTEM('WB_REQTRANS',
+	source='wb_reqtrans.c',
+	deps='talloc tevent LIBASYNC_REQ'
+	)

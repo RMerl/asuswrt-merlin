@@ -1,0 +1,99 @@
+'\" t
+.\"     Title: vfs_fileid
+.\"    Author: [see the "AUTHOR" section]
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date: 09/18/2013
+.\"    Manual: System Administration tools
+.\"    Source: Samba 3.6
+.\"  Language: English
+.\"
+.TH "VFS_FILEID" "8" "09/18/2013" "Samba 3\&.6" "System Administration tools"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+vfs_fileid \- Generates file_id structs with unique device id values for cluster setups
+.SH "SYNOPSIS"
+.HP \w'\ 'u
+vfs objects = fileid
+.SH "DESCRIPTION"
+.PP
+This VFS module is part of the
+\fBsamba\fR(7)
+suite\&.
+.PP
+Samba uses file_id structs to uniquely identify files for locking purpose\&. By default the file_id contains the device and inode number returned by the
+stat()
+system call\&. As the file_id is a unique identifier of a file, it must be the same on all nodes in a cluster setup\&. This module overloads the
+SMB_VFS_FILE_ID_CREATE()
+operation and generates the device number based on the configured algorithm (see the "fileid:algorithm" option)\&.
+.SH "OPTIONS"
+.PP
+fileid:algorithm = ALGORITHM
+.RS 4
+Available algorithms are
+fsname
+and
+fsid\&. The default value is
+fsname\&.
+.sp
+The
+fsname
+algorithm generates device id by hashing the kernel device name\&.
+.sp
+The
+fsid
+algorithm generates the device id from the
+f_fsid
+returned from the
+statfs()
+syscall\&.
+.RE
+.PP
+fileid:mapping = ALGORITHM
+.RS 4
+This option is the legacy version of the
+fileid:algorithm
+option, which was used in earlier versions of fileid mapping feature in custom Samba 3\&.0 versions\&.
+.RE
+.SH "EXAMPLES"
+.PP
+Usage of the
+fileid
+module with the
+fsid
+algorithm:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+        \fI[global]\fR
+	\m[blue]\fBvfs objects = fileid\fR\m[]
+	\m[blue]\fBfileid:algorithm = fsid\fR\m[]
+.fi
+.if n \{\
+.RE
+.\}
+.SH "VERSION"
+.PP
+This man page is correct for version 3\&.2 of the Samba suite\&.
+.SH "AUTHOR"
+.PP
+The original Samba software and related utilities were created by Andrew Tridgell\&. Samba is now developed by the Samba Team as an Open Source project similar to the way the Linux kernel is developed\&.

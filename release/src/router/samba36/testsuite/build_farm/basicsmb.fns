@@ -1,0 +1,204 @@
+#! /bin/sh
+
+# Common functions for Samba build scripts.
+
+# Copyright (C) 2001 by Martin Pool <mbp@samba.org> and others
+
+# The following variables are passed in by the calling script.  They
+# originate in either the buildfarm scripts or the configured
+# Makefile.
+
+# PREFIX = Installed prefix of samba test installation.  Used to
+# locate binaries, configuration files, etc.  
+
+# XXX: It's pretty bad to clobber the installed configuration file and
+# other data in $prefix, because somebody might unwittingly run this
+# with prefix=/usr.  
+
+# Really what we want is a consistent way to pass the location of the
+# configuration and all other files into *all* Samba programs
+# (smbclient, smd, ...) and be able to set them to a temporary
+# directory when testing.  Some of them take a -c parameter, but tpot
+# says it's not done consistently.
+
+template_setup() {
+	cat template/$1 | \
+              sed "s|PREFIX|$prefix|g" | \
+	      sed "s|BUILD_FARM|$test_root|g" | \
+	      sed "s|WHOAMI|$whoami|g" | \
+	      sed "s|LOGLEVEL|$loglevel|g" \
+        > $prefix/$2
+	echo "template_setup: Created $prefix/$2"
+}
+
+template_smb_conf_setup() {
+    template_setup "basicsmb.smb.conf$1" "lib/smb.conf$1"
+}
+
+test_smb_conf_setup() {
+    echo "test_smb_conf_setup: Configuring: "
+    echo "    PREFIX=$prefix"
+    echo "    BUILD_FARM=$test_root"
+    echo "    WHOAMI=$whoami"
+    echo "    LOGLEVEL=$loglevel"
+    echo "    TREE=$tree"
+
+    case "$prefix" in
+    /usr*|/|//)
+        echo "** I don't want to clobber your installation in "
+	echo "**     $prefix"
+	echo "** by running tests there.  Please reconfigure this source tree to"
+	echo "** use a different prefix."
+	exit 1
+    esac
+
+#   Please keep these names under 15 characters,
+#   so that the final name is 31 characters or fewer.
+
+    template_smb_conf_setup 
+    template_smb_conf_setup .hostsequiv
+    template_smb_conf_setup .validusers
+    template_smb_conf_setup .invalidusers
+    template_smb_conf_setup .preexec
+    template_smb_conf_setup .preexec_close
+    template_smb_conf_setup .preexec_cl_fl
+
+    template_smb_conf_setup .share
+    template_smb_conf_setup .user
+    template_smb_conf_setup .server
+    template_smb_conf_setup .domain
+
+    template_setup preexec lib/preexec
+
+    touch $prefix/lib/smb.conf.
+    touch $prefix/lib/smb.conf.localhost
+
+	echo "127.0.0.1    localhost">$prefix/lib/lmhosts
+	echo "127.0.0.2    BUILDFARM">>$prefix/lib/lmhosts
+    echo "127.0.0.3    SHARE">>$prefix/lib/lmhosts
+    echo "127.0.0.4    USER">>$prefix/lib/lmhosts
+    echo "127.0.0.5    SERVER">>$prefix/lib/lmhosts
+    echo "127.0.0.6    DOMAIN">>$prefix/lib/lmhosts
+    echo "127.0.0.7    HOSTSEQUIV">>$prefix/lib/lmhosts
+    echo "127.0.0.7    VALIDUSERS">>$prefix/lib/lmhosts
+    echo "127.0.0.7    INVALIDUSERS">>$prefix/lib/lmhosts
+    echo "127.0.0.7    PREEXEC">>$prefix/lib/lmhosts
+    echo "127.0.0.7    PREEXEC_CLOSE">>$prefix/lib/lmhosts
+    echo "127.0.0.7    PREEXEC_CL_FL">>$prefix/lib/lmhosts
+
+
+	echo "127.0.0.1" > $prefix/lib/hosts.equiv
+
+}
+
+test_smbpasswd() {
+	test_smbpasswd_password="$1"
+	rm -f $prefix/private/smbpasswd
+	echo "( echo $test_smbpasswd_password ; echo $test_smbpasswd_password; ) | $prefix/bin/smbpasswd -L -D $loglevel -s -a $whoami"
+	( echo $test_smbpasswd_password; echo $test_smbpasswd_password; ) | $prefix/bin/smbpasswd -L -D $loglevel -s -a $whoami
+	status=$?
+	if [ $status = 0 ]; then
+	    echo "smbpasswd correctly set initial password ($test_smbpasswd_password)"
+	else
+	    echo "smbpasswd failed to set initial password ($test_smbpasswd_password)! (status $status)"
+	    return 1
+	fi
+	return 0
+}
+
+test_smbpasswd_remote() {
+	test_smbpasswd_rem_password="$1"
+	test_smbpasswd_rem_newpassword="$2"
+	echo "( echo $test_smbpasswd_rem_password; echo $test_smbpasswd_rem_newpassword; echo $test_smbpasswd_rem_newpassword; ) | $prefix/bin/smbpasswd -r localhost -s -U $whoami"
+	( echo $test_smbpasswd_rem_password; echo $test_smbpasswd_rem_newpassword; echo $test_smbpasswd_rem_newpassword; ) | $prefix/bin/smbpasswd -r localhost -s -U $whoami
+	status=$?
+	if [ $status = 0 ]; then
+	    echo "smbpasswd correctly remotely changed password ($test_smbpasswd_rem_password -> $test_smbpasswd_rem_newpassword)"
+	else
+	    echo "smbpasswd failed to remotely changed password ($test_smbpasswd_rem_password -> $test_smbpasswd_rem_newpassword)! (status $status)"
+	    return 1
+	fi
+	return 0
+}
+
+test_smbpasswd_local() {
+	test_smbpasswd_newpassword="$2"
+	echo "( echo $test_smbpasswd_newpassword ; echo $test_smbpasswd_newpassword; ) | $prefix/bin/smbpasswd -L -s $whoami"
+	( echo $test_smbpasswd_newpassword ; echo $test_smbpasswd_newpassword; ) | $prefix/bin/smbpasswd -L -s $whoami
+	status=$?
+	if [ $status = 0 ]; then
+	    echo "smbpasswd correctly locally changed password ($test_smbpasswd_password -> $test_smbpasswd_newpassword)"
+	else
+	    echo "smbpasswd failed to locallly changed password ($test_smbpasswd_password -> $test_smbpasswd_newpassword)! (status $status)"
+	    return 1
+	fi
+	return 0
+}
+
+test_listfilesauth() {
+	remote_name="$1"
+	echo $prefix/bin/smbclient //$remote_name/samba  -n buildclient -U$whoami%$password -c 'ls'
+	$prefix/bin/smbclient //$remote_name/samba  -n buildclient -U$whoami%$password -c 'ls'
+	status=$?
+	if [ $status = 0 ]; then
+		echo "listed files OK"
+	else 
+		echo "listing files with smbd failed with status $status"
+		return 1
+	fi
+	return 0
+}
+
+test_listfilesnpw() {
+	remote_name="$1"
+	echo $prefix/bin/smbclient //$remote_name/samba -n buildclient -U$whoami%  -c 'ls'
+	$prefix/bin/smbclient //$remote_name/samba -n buildclient -U$whoami% -c 'ls'
+	status=$?
+	if [ $status = 0 ]; then
+		echo "smbd listed files with NO PASSWORD on an authenticated share!"
+		return 1
+	else 
+		echo "listing files with smbd failed with status $status (correct)"
+	fi
+	return 0
+}
+
+test_listfilesauth_should_deny() {
+	remote_name="$1"
+	echo $prefix/bin/smbclient //$remote_name/samba -n buildclient -U$whoami%$password  -c 'ls'
+	$prefix/bin/smbclient //$remote_name/samba -n buildclient -U$whoami%$password -c 'ls'
+	status=$?
+	if [ $status = 0 ]; then
+		echo "smbd LISTED FILES despite smb.conf entires to the contary!"
+		return 1
+	else 
+		echo "listing files with smbd failed with status $status (correct)"
+	fi
+	return 0
+}
+
+echo "LIBSMB_PROG=$LIBSMB_PROG" >&2
+
+
+
+# Give sensible defaults to some variables.  
+
+# "What's my age again?"
+
+if [ ! $USER = "" ]; then
+    whoami=$USER
+else 
+    if [ ! $LOGNAME = "" ]; then
+	whoami=$LOGNAME
+    else
+	whoami=build
+    fi
+fi
+
+
+
+if test -z "$loglevel"
+then
+    loglevel=1
+fi
+

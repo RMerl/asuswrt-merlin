@@ -1,0 +1,4 @@
+
+bld.SAMBA_SUBSYSTEM('flag_mapping',
+                    public_deps='talloc replace',
+                    source='flag_mapping.c')

@@ -1,0 +1,386 @@
+'\" t
+.\"     Title: wbinfo
+.\"    Author: [see the "AUTHOR" section]
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date: 09/18/2013
+.\"    Manual: User Commands
+.\"    Source: Samba 3.6
+.\"  Language: English
+.\"
+.TH "WBINFO" "1" "09/18/2013" "Samba 3\&.6" "User Commands"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+wbinfo \- Query information from winbind daemon
+.SH "SYNOPSIS"
+.HP \w'\ 'u
+wbinfo [\-a\ user%password] [\-\-all\-domains] [\-\-allocate\-gid] [\-\-allocate\-uid] [\-c] [\-\-ccache\-save] [\-\-change\-user\-password] [\-D\ domain] [\-\-domain\ domain] [\-\-dsgetdcname\ domain] [\-g] [\-\-getdcname\ domain] [\-\-get\-auth\-user] [\-G\ gid] [\-\-gid\-info] [\-\-group\-info] [\-\-help|\-?] [\-i\ user] [\-I\ ip] [\-K\ user%password] [\-\-lanman] [\-m] [\-n\ name] [\-N\ netbios\-name] [\-\-ntlmv2] [\-\-online\-status] [\-\-own\-domain] [\-p] [\-P|\-\-ping\-dc] [\-r\ user] [\-R|\-\-lookup\-rids] [\-s\ sid] [\-\-separator] [\-\-set\-auth\-user\ user%password] [\-S\ sid] [\-\-sid\-aliases] [\-\-sid\-to\-fullname] [\-t] [\-u] [\-\-uid\-info\ uid] [\-\-usage] [\-\-user\-domgroups\ sid] [\-\-user\-sids\ sid] [\-U\ uid] [\-V] [\-\-verbose] [\-Y\ sid]
+.SH "DESCRIPTION"
+.PP
+This tool is part of the
+\fBsamba\fR(7)
+suite\&.
+.PP
+The
+wbinfo
+program queries and returns information created and used by the
+\fBwinbindd\fR(8)
+daemon\&.
+.PP
+The
+\fBwinbindd\fR(8)
+daemon must be configured and running for the
+wbinfo
+program to be able to return information\&.
+.SH "OPTIONS"
+.PP
+\-a|\-\-authenticate \fIusername%password\fR
+.RS 4
+Attempt to authenticate a user via
+\fBwinbindd\fR(8)\&. This checks both authentication methods and reports its results\&.
+.if n \{\
+.sp
+.\}
+.RS 4
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fBNote\fR
+.ps -1
+.br
+Do not be tempted to use this functionality for authentication in third\-party applications\&. Instead use
+\fBntlm_auth\fR(1)\&.
+.sp .5v
+.RE
+.RE
+.PP
+\-\-allocate\-gid
+.RS 4
+Get a new GID out of idmap
+.RE
+.PP
+\-\-allocate\-uid
+.RS 4
+Get a new UID out of idmap
+.RE
+.PP
+\-\-all\-domains
+.RS 4
+List all domains (trusted and own domain)\&.
+.RE
+.PP
+\-c|\-\-change\-secret
+.RS 4
+Change the trust account password\&. May be used in conjunction with
+\fBdomain\fR
+in order to change interdomain trust account passwords\&.
+.RE
+.PP
+\-\-ccache\-save \fIusername%password\fR
+.RS 4
+Store user and password for ccache\&.
+.RE
+.PP
+\-\-change\-user\-password \fIusername\fR
+.RS 4
+Change the password of a user\&. The old and new password will be prompted\&.
+.RE
+.PP
+\-\-domain \fIname\fR
+.RS 4
+This parameter sets the domain on which any specified operations will performed\&. If special domain name \*(Aq\&.\*(Aq is used to represent the current domain to which
+\fBwinbindd\fR(8)
+belongs\&. Currently only the
+\fB\-u\fR, and
+\fB\-g\fR
+options honor this parameter\&.
+.RE
+.PP
+\-D|\-\-domain\-info \fIdomain\fR
+.RS 4
+Show most of the info we have about the specified domain\&.
+.RE
+.PP
+\-\-dsgetdcname \fIdomain\fR
+.RS 4
+Find a DC for a domain\&.
+.RE
+.PP
+\-\-gid\-info \fIgid\fR
+.RS 4
+Get group info from gid\&.
+.RE
+.PP
+\-\-group\-info \fIuser\fR
+.RS 4
+Get group info for user\&.
+.RE
+.PP
+\-g|\-\-domain\-groups
+.RS 4
+This option will list all groups available in the Windows NT domain for which the
+\fBsamba\fR(7)
+daemon is operating in\&. Groups in all trusted domains will also be listed\&. Note that this operation does not assign group ids to any groups that have not already been seen by
+\fBwinbindd\fR(8)\&.
+.RE
+.PP
+\-\-get\-auth\-user
+.RS 4
+Print username and password used by
+\fBwinbindd\fR(8)
+during session setup to a domain controller\&. Username and password can be set using
+\fB\-\-set\-auth\-user\fR\&. Only available for root\&.
+.RE
+.PP
+\-\-getdcname \fIdomain\fR
+.RS 4
+Get the DC name for the specified domain\&.
+.RE
+.PP
+\-G|\-\-gid\-to\-sid \fIgid\fR
+.RS 4
+Try to convert a UNIX group id to a Windows NT SID\&. If the gid specified does not refer to one within the idmap gid range then the operation will fail\&.
+.RE
+.PP
+\-?
+.RS 4
+Print brief help overview\&.
+.RE
+.PP
+\-i|\-\-user\-info \fIuser\fR
+.RS 4
+Get user info\&.
+.RE
+.PP
+\-I|\-\-WINS\-by\-ip \fIip\fR
+.RS 4
+The
+\fI\-I\fR
+option queries
+\fBwinbindd\fR(8)
+to send a node status request to get the NetBIOS name associated with the IP address specified by the
+\fIip\fR
+parameter\&.
+.RE
+.PP
+\-K|\-\-krb5auth \fIusername%password\fR
+.RS 4
+Attempt to authenticate a user via Kerberos\&.
+.RE
+.PP
+\-\-lanman
+.RS 4
+Use lanman cryptography for user authentication\&.
+.RE
+.PP
+\-m|\-\-trusted\-domains
+.RS 4
+Produce a list of domains trusted by the Windows NT server
+\fBwinbindd\fR(8)
+contacts when resolving names\&. This list does not include the Windows NT domain the server is a Primary Domain Controller for\&.
+.RE
+.PP
+\-n|\-\-name\-to\-sid \fIname\fR
+.RS 4
+The
+\fI\-n\fR
+option queries
+\fBwinbindd\fR(8)
+for the SID associated with the name specified\&. Domain names can be specified before the user name by using the winbind separator character\&. For example CWDOM1/Administrator refers to the Administrator user in the domain CWDOM1\&. If no domain is specified then the domain used is the one specified in the
+\fBsmb.conf\fR(5)
+\fIworkgroup \fR
+parameter\&.
+.RE
+.PP
+\-N|\-\-WINS\-by\-name \fIname\fR
+.RS 4
+The
+\fI\-N\fR
+option queries
+\fBwinbindd\fR(8)
+to query the WINS server for the IP address associated with the NetBIOS name specified by the
+\fIname\fR
+parameter\&.
+.RE
+.PP
+\-\-ntlmv2
+.RS 4
+Use NTLMv2 cryptography for user authentication\&.
+.RE
+.PP
+\-\-online\-status \fIdomain\fR
+.RS 4
+Show whether domains are marked as online or offline\&. An optional domain argument limits the output to the online status of a given domain\&.
+.RE
+.PP
+\-\-own\-domain
+.RS 4
+List own domain\&.
+.RE
+.PP
+\-p|\-\-ping
+.RS 4
+Check whether
+\fBwinbindd\fR(8)
+is still alive\&. Prints out either \*(Aqsucceeded\*(Aq or \*(Aqfailed\*(Aq\&.
+.RE
+.PP
+\-P|\-\-ping\-dc
+.RS 4
+Issue a no\-effect command to our DC\&. This checks if our secure channel connection to our domain controller is still alive\&. It has much less impact than wbinfo \-t\&.
+.RE
+.PP
+\-r|\-\-user\-groups \fIusername\fR
+.RS 4
+Try to obtain the list of UNIX group ids to which the user belongs\&. This only works for users defined on a Domain Controller\&.
+.RE
+.PP
+\-R|\-\-lookup\-rids \fIrid1, rid2, rid3\&.\&.\&.\fR
+.RS 4
+Converts RIDs to names\&. Uses a comma separated list of rids\&.
+.RE
+.PP
+\-s|\-\-sid\-to\-name \fIsid\fR
+.RS 4
+Use
+\fI\-s\fR
+to resolve a SID to a name\&. This is the inverse of the
+\fI\-n \fR
+option above\&. SIDs must be specified as ASCII strings in the traditional Microsoft format\&. For example, S\-1\-5\-21\-1455342024\-3071081365\-2475485837\-500\&.
+.RE
+.PP
+\-\-separator
+.RS 4
+Get the active winbind separator\&.
+.RE
+.PP
+\-\-set\-auth\-user \fIusername%password\fR
+.RS 4
+Store username and password used by
+\fBwinbindd\fR(8)
+during session setup to a domain controller\&. This enables winbindd to operate in a Windows 2000 domain with Restrict Anonymous turned on (a\&.k\&.a\&. Permissions compatible with Windows 2000 servers only)\&.
+.RE
+.PP
+\-S|\-\-sid\-to\-uid \fIsid\fR
+.RS 4
+Convert a SID to a UNIX user id\&. If the SID does not correspond to a UNIX user mapped by
+\fBwinbindd\fR(8)
+then the operation will fail\&.
+.RE
+.PP
+\-\-sid\-aliases \fIsid\fR
+.RS 4
+Get SID aliases for a given SID\&.
+.RE
+.PP
+\-\-sid\-to\-fullname \fIsid\fR
+.RS 4
+Converts a SID to a full username (DOMAIN\eusername)\&.
+.RE
+.PP
+\-t|\-\-check\-secret
+.RS 4
+Verify that the workstation trust account created when the Samba server is added to the Windows NT domain is working\&. May be used in conjunction with
+\fBdomain\fR
+in order to verify interdomain trust accounts\&.
+.RE
+.PP
+\-u|\-\-domain\-users
+.RS 4
+This option will list all users available in the Windows NT domain for which the
+\fBwinbindd\fR(8)
+daemon is operating in\&. Users in all trusted domains will also be listed\&. Note that this operation does not assign user ids to any users that have not already been seen by
+\fBwinbindd\fR(8)
+\&.
+.RE
+.PP
+\-\-uid\-info \fIuid\fR
+.RS 4
+Get user info for the user connected to user id UID\&.
+.RE
+.PP
+\-\-usage
+.RS 4
+Print brief help overview\&.
+.RE
+.PP
+\-\-user\-domgroups \fIsid\fR
+.RS 4
+Get user domain groups\&.
+.RE
+.PP
+\-\-user\-sids \fIsid\fR
+.RS 4
+Get user group SIDs for user\&.
+.RE
+.PP
+\-U|\-\-uid\-to\-sid \fIuid\fR
+.RS 4
+Try to convert a UNIX user id to a Windows NT SID\&. If the uid specified does not refer to one within the idmap range then the operation will fail\&.
+.RE
+.PP
+\-\-verbose
+.RS 4
+Print additional information about the query results\&.
+.RE
+.PP
+\-Y|\-\-sid\-to\-gid \fIsid\fR
+.RS 4
+Convert a SID to a UNIX group id\&. If the SID does not correspond to a UNIX group mapped by
+\fBwinbindd\fR(8)
+then the operation will fail\&.
+.RE
+.PP
+\-V|\-\-version
+.RS 4
+Prints the program version number\&.
+.RE
+.PP
+\-h|\-\-help
+.RS 4
+Print a summary of command line options\&.
+.RE
+.SH "EXIT STATUS"
+.PP
+The wbinfo program returns 0 if the operation succeeded, or 1 if the operation failed\&. If the
+\fBwinbindd\fR(8)
+daemon is not working
+wbinfo
+will always return failure\&.
+.SH "VERSION"
+.PP
+This man page is correct for version 3 of the Samba suite\&.
+.SH "SEE ALSO"
+.PP
+\fBwinbindd\fR(8)
+and
+\fBntlm_auth\fR(1)
+.SH "AUTHOR"
+.PP
+The original Samba software and related utilities were created by Andrew Tridgell\&. Samba is now developed by the Samba Team as an Open Source project similar to the way the Linux kernel is developed\&.
+.PP
+wbinfo
+and
+winbindd
+were written by Tim Potter\&.
+.PP
+The conversion to DocBook for Samba 2\&.2 was done by Gerald Carter\&. The conversion to DocBook XML 4\&.2 for Samba 3\&.0 was done by Alexander Bokovoy\&.

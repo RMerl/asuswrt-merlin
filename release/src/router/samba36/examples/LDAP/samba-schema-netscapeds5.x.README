@@ -1,0 +1,2 @@
+The LDAP schema file for the Netscape DS 5 has been outdated since years.
+Please use the LDIF based FDS schema file instead.

@@ -1,0 +1,23 @@
+<samba:parameter name="winbind enum users"
+                 context="G"
+                 advanced="1" developer="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>On large installations using <citerefentry><refentrytitle>winbindd</refentrytitle>
+	<manvolnum>8</manvolnum></citerefentry> it may be
+	necessary to suppress the enumeration of users through the <command moreinfo="none">setpwent()</command>,
+	 <command moreinfo="none">getpwent()</command> and
+	 <command moreinfo="none">endpwent()</command> group of system calls.  If
+	the <parameter moreinfo="none">winbind enum users</parameter> parameter is
+	 <constant>no</constant>, calls to the <command moreinfo="none">getpwent</command> system call
+	will not return any data. </para>
+
+<warning><para>Turning off user
+	enumeration may cause some programs to behave oddly.  For
+	example, the finger program relies on having access to the
+	full user list when searching for matching
+	usernames. </para></warning>
+</description>
+
+<value type="default">no</value>
+</samba:parameter>

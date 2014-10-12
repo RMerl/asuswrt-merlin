@@ -1,0 +1,40 @@
+#!/usr/bin/env python
+
+bld.SAMBA_LIBRARY('cliauth',
+                  source='',
+                  deps='NTLMSSP_COMMON MSRPC_PARSE LIBCLI_AUTH COMMON_SCHANNEL PAM_ERRORS SPNEGO_PARSE',
+                  private_library=True,
+                  grouping_library=True)
+
+bld.SAMBA_SUBSYSTEM('NTLMSSP_COMMON',
+                    source='ntlmssp.c ntlmssp_ndr.c ntlmssp_server.c ntlmssp_sign.c ntlm_check.c',
+                    deps='samba-util NDR_NTLMSSP MSRPC_PARSE')
+
+
+bld.SAMBA_SUBSYSTEM('MSRPC_PARSE',
+	source='msrpc_parse.c',
+	deps='talloc'
+	)
+
+
+bld.SAMBA_SUBSYSTEM('LIBCLI_AUTH',
+	source='credentials.c session.c smbencrypt.c smbdes.c',
+	public_deps='MSRPC_PARSE',
+	public_headers='credentials.h:domain_credentials.h'
+	)
+
+
+bld.SAMBA_SUBSYSTEM('COMMON_SCHANNEL',
+	source='schannel_state_tdb.c schannel_sign.c',
+	deps='tdb-wrap UTIL_TDB'
+	)
+
+
+bld.SAMBA_SUBSYSTEM('PAM_ERRORS',
+	source='pam_errors.c',
+	deps='talloc'
+	)
+
+bld.SAMBA_SUBSYSTEM('SPNEGO_PARSE',
+                    source='spnego_parse.c',
+                    deps='ASN1_UTIL')

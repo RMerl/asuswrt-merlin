@@ -1,0 +1,70 @@
+<samba:parameter name="name resolve order"
+                 context="G"
+				 type="list"
+                 advanced="1" wizard="1" developer="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc"> 
+<description>
+    <para>This option is used by the programs in the Samba 
+    suite to determine what naming services to use and in what order 
+    to resolve host names to IP addresses. Its main purpose to is to
+    control how netbios name resolution is performed.  The option takes a space 
+    separated string of name resolution options.</para>
+
+    <para>The options are: &quot;lmhosts&quot;, &quot;host&quot;,
+    &quot;wins&quot; and &quot;bcast&quot;. They cause names to be
+    resolved as follows:</para>
+
+    <itemizedlist>
+	<listitem>
+	    <para>
+		<constant>lmhosts</constant> : Lookup an IP address in the Samba lmhosts file. If the line in lmhosts has 
+	    no name type attached to the NetBIOS name (see the manpage for lmhosts for details) then
+	    any name type matches for lookup.
+		</para>
+	</listitem>
+
+	<listitem>
+	    <para>
+		<constant>host</constant> : Do a standard host name to IP address resolution, using the system
+		<filename moreinfo="none">/etc/hosts </filename>, NIS, or DNS lookups. This method of name resolution is
+		operating system depended for instance on IRIX or Solaris this may be controlled by the <filename
+		moreinfo="none">/etc/nsswitch.conf</filename> file.  Note that this method is used only if the NetBIOS name
+		type being queried is the 0x20 (server) name type or 0x1c (domain controllers).  The latter case is only
+		useful for active directory domains and results in a DNS query for the SRV RR entry matching
+		_ldap._tcp.domain.
+	</para>
+	</listitem>
+
+	<listitem>
+	    <para><constant>wins</constant> : Query a name with 
+	    the IP address listed in the <smbconfoption name="WINSSERVER"><parameter moreinfo="none">
+	    wins server</parameter></smbconfoption> parameter.  If no WINS server has
+	    been specified this method will be ignored.</para>
+	</listitem>
+
+	<listitem>
+	    <para><constant>bcast</constant> : Do a broadcast on 
+	    each of the known local interfaces listed in the <smbconfoption name="interfaces"/> 
+	    parameter. This is the least reliable of the name resolution 
+	    methods as it depends on the target host being on a locally 
+	    connected subnet.</para>
+	</listitem>
+</itemizedlist>
+
+    <para>The example below will cause the local lmhosts file to be examined 
+    first, followed by a broadcast attempt, followed by a normal 
+    system hostname lookup.</para>
+
+    <para>When Samba is functioning in ADS security mode (<command moreinfo="none">security = ads</command>)
+    it is advised to use following settings for <parameter moreinfo="none">name resolve order</parameter>:</para>
+
+    <para><command moreinfo="none">name resolve order = wins bcast</command></para>
+
+    <para>DC lookups will still be done via DNS, but fallbacks to netbios names will
+		not inundate your DNS servers with needless querys for DOMAIN&lt;0x1c&gt; lookups.</para>
+ 
+</description>
+
+<value type="default">lmhosts wins host bcast</value>
+<value type="example">lmhosts bcast host</value>
+</samba:parameter>

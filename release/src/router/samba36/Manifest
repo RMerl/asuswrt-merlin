@@ -1,0 +1,78 @@
+Copyright (C) 1997-2003 - Samba-Team
+
+The Samba package you have just unpacked contains the following:
+
+Directory	Notes:
+=========	======
+
+docs		(Samba Documentation):
+----		----------------------
+
+	All the Samba documentation for the 3.0 release have been converted to
+	docbook format. Because of this the man pages are now available 
+	in both traditional man page format (in the docs/manpages directory) 
+	and in HTML format (in the docs/htmldocs directory).
+
+	The Samba HOWTO Collection has undergone some rather large changes 
+	and covers all parts of configuration now. It is available 
+	as PDF (docs/Samba3-HOWTO.pdf) or in HTML format (in 
+	the docs/htmldocs directory). Those with the docbook utilities installed 
+	can generate PostScript and text versions of the HOWTO as well.
+
+	The Samba FAQ is still a work in progress, but can be found in 
+	HTML format in docs/htmldocs.
+
+
+examples	(Example configuration files):
+--------	------------------------------
+
+	Please pay close attention to the reference smb.conf file
+	smb.conf.default that has now been included as the master guide.
+
+	Do read the smb.conf manual page in considering what settings are
+	appropriate for your site.
+
+
+packaging	(Only for those wishing to build binary distributions):
+---------	-------------------------------------------------------
+
+	Currently support is included for the following Linux Distributions :
+	
+		RedHat and SuSE.
+
+	In addition, packaging support is available for SGI and Solaris systems.
+	We hope that other Unix OS vendors will contribute their binary
+	distribution packaging control files - and we hope to make their binary
+	packages available on the master ftp site under:
+
+		ftp://samba.org/pub/samba/Binary_Packages/"OS_Vendor"
+
+
+source		(The official Samba source files - expect more of these!):
+------		----------------------------------------------------------
+
+	To build your own binary files you will need a suitable ansi C
+	compiler.
+
+	Samba uses the GNU autoconf system. In
+	order to build a default Samba for your platform cd into
+	the source3/ directory and then type :
+
+		./configure
+
+	followed by :
+
+		make
+
+	To install the binaries built by the above type :
+
+		make install
+ 
+	then set up your configuration files.
+
+	NOTE: OS Vendors who provide Samba binary packages will generally
+	integrate all Samba files into their preferred directory locations.
+	These may differ from the default location ALWAYS used by the Samba
+	sources. Please be careful when upgrading a vendor provided binary
+	distribution from files you have built yourself.
+

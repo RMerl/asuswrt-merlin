@@ -1,0 +1,142 @@
+'\" t
+.\"     Title: vfs_recycle
+.\"    Author: [see the "AUTHOR" section]
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date: 09/18/2013
+.\"    Manual: System Administration tools
+.\"    Source: Samba 3.6
+.\"  Language: English
+.\"
+.TH "VFS_RECYCLE" "8" "09/18/2013" "Samba 3\&.6" "System Administration tools"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+vfs_recycle \- Samba VFS recycle bin
+.SH "SYNOPSIS"
+.HP \w'\ 'u
+vfs objects = recycle
+.SH "DESCRIPTION"
+.PP
+This VFS module is part of the
+\fBsamba\fR(7)
+suite\&.
+.PP
+The
+vfs_recycle
+intercepts file deletion requests and moves the affected files to a temporary repository rather than deleting them immediately\&. This gives the same effect as the Recycle Bin on Windows computers\&.
+.PP
+The Recycle Bin will not appear in Windows Explorer views of the network file system (share) nor on any mapped drive\&. Instead, a directory called \&.recycle will be automatically created when the first file is deleted and recycle:repository is not configured\&. If recycle:repository is configured, the name of the created directory depends on recycle:repository\&. Users can recover files from the recycle bin\&. If the recycle:keeptree option has been specified, deleted files will be found in a path identical with that from which the file was deleted\&.
+.PP
+This module is stackable\&.
+.SH "OPTIONS"
+.PP
+recycle:repository = PATH
+.RS 4
+Path of the directory where deleted files should be moved\&.
+.sp
+If this option is not set, the default path \&.recycle is used\&.
+.RE
+.PP
+recycle:directory_mode = MODE
+.RS 4
+Set MODE to the octal mode the recycle repository should be created with\&. The recycle repository will be created when first file is deleted\&. If recycle:subdir_mode is not set, MODE also applies to subdirectories\&.
+.sp
+If this option is not set, the default mode 0700 is used\&.
+.RE
+.PP
+recycle:subdir_mode = MODE
+.RS 4
+Set MODE to the octal mode with which sub directories of the recycle repository should be created\&.
+.sp
+If this option is not set, subdirectories will be created with the mode from recycle:directory_mode\&.
+.RE
+.PP
+recycle:keeptree = BOOL
+.RS 4
+Specifies whether the directory structure should be preserved or whether the files in a directory that is being deleted should be kept separately in the repository\&.
+.RE
+.PP
+recycle:versions = BOOL
+.RS 4
+If this option is True, two files with the same name that are deleted will both be kept in the repository\&. Newer deleted versions of a file will be called "Copy #x of filename"\&.
+.RE
+.PP
+recycle:touch = BOOL
+.RS 4
+Specifies whether a file\*(Aqs access date should be updated when the file is moved to the repository\&.
+.RE
+.PP
+recycle:touch_mtime = BOOL
+.RS 4
+Specifies whether a file\*(Aqs last modified date should be updated when the file is moved to the repository\&.
+.RE
+.PP
+recycle:minsize = BYTES
+.RS 4
+Files that are smaller than the number of bytes specified by this parameter will not be put into the repository\&.
+.RE
+.PP
+recycle:maxsize = BYTES
+.RS 4
+Files that are larger than the number of bytes specified by this parameter will not be put into the repository\&.
+.RE
+.PP
+recycle:exclude = LIST
+.RS 4
+List of files that should not be put into the repository when deleted, but deleted in the normal way\&. Wildcards such as * and ? are supported\&.
+.RE
+.PP
+recycle:exclude_dir = LIST
+.RS 4
+List of directories whose files should not be put into the repository when deleted, but deleted in the normal way\&. Wildcards such as * and ? are supported\&.
+.RE
+.PP
+recycle:noversions = LIST
+.RS 4
+Specifies a list of paths (wildcards such as * and ? are supported) for which no versioning should be used\&. Only useful when recycle:versions is enabled\&.
+.RE
+.SH "EXAMPLES"
+.PP
+Move files "deleted" on
+\fIshare\fR
+to
+\fI/data/share/\&.recycle\fR
+instead of deleting them:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+        \fI[share]\fR
+	\m[blue]\fBpath = /data/share\fR\m[]
+	\m[blue]\fBvfs objects = recycle\fR\m[]
+	\m[blue]\fBrecycle:repository = \&.recycle\fR\m[]
+	\m[blue]\fBrecycle:keeptree = yes\fR\m[]
+	\m[blue]\fBrecycle:versions = yes\fR\m[]
+.fi
+.if n \{\
+.RE
+.\}
+.SH "VERSION"
+.PP
+This man page is correct for version 3\&.0\&.25 of the Samba suite\&.
+.SH "AUTHOR"
+.PP
+The original Samba software and related utilities were created by Andrew Tridgell\&. Samba is now developed by the Samba Team as an Open Source project similar to the way the Linux kernel is developed\&.

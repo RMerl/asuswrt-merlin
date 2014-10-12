@@ -1,0 +1,17 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>vfs_cap</title><link rel="stylesheet" href="../samba.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.75.2"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="refentry" title="vfs_cap"><a name="vfs_cap.8"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>vfs_cap &#8212; CAP encode filenames</p></div><div class="refsynopsisdiv" title="Synopsis"><h2>Synopsis</h2><div class="cmdsynopsis"><p><code class="literal">vfs objects = cap</code></p></div></div><div class="refsect1" title="DESCRIPTION"><a name="id266340"></a><h2>DESCRIPTION</h2><p>This VFS module is part of the
+	<a class="citerefentry" href="samba.7.html"><span class="citerefentry"><span class="refentrytitle">samba</span>(7)</span></a> suite.</p><p>CAP (Columbia Appletalk Protocol) encoding is a
+	technique for representing non-ASCII filenames in ASCII. The
+	<code class="literal">vfs_cap</code> VFS module translates filenames to and
+	from CAP format, allowing users to name files in their native
+	encoding.  </p><p>CAP encoding is most commonly
+	used in Japanese language environments. </p><p>This module is stackable.</p></div><div class="refsect1" title="EXAMPLES"><a name="id266832"></a><h2>EXAMPLES</h2><p>On a system using GNU libiconv, use CAP encoding to support
+	users in the Shift_JIS locale:</p><pre class="programlisting">
+        <em class="parameter"><code>[global]</code></em>
+	<a class="link" href="smb.conf.5.html#DOSCHARSET" target="_top">dos charset = CP932</a>
+	<a class="link" href="smb.conf.5.html#DOSCHARSET" target="_top">dos charset = CP932</a>
+	<a class="link" href="smb.conf.5.html#VFSOBJECTS" target="_top">vfs objects = cap</a>
+</pre></div><div class="refsect1" title="VERSION"><a name="id266884"></a><h2>VERSION</h2><p>This man page is correct for version 3.0.25 of the Samba suite.
+	</p></div><div class="refsect1" title="AUTHOR"><a name="id266893"></a><h2>AUTHOR</h2><p>The original Samba software and related utilities
+	were created by Andrew Tridgell. Samba is now developed
+	by the Samba Team as an Open Source project similar
+	to the way the Linux kernel is developed.</p></div></div></body></html>

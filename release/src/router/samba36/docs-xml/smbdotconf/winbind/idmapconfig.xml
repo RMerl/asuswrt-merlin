@@ -1,0 +1,128 @@
+<samba:parameter name="idmap config"
+                 context="G"
+		 type="string"
+                 advanced="1" developer="1" hide="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+
+	<para>
+	ID mapping in Samba is the mapping between Windows SIDs and Unix user
+	and group IDs. This is performed by Winbindd with a configurable plugin
+	interface. Samba's ID mapping is configured by options starting with the
+	<smbconfoption name="idmap config"/> prefix.
+	An idmap option consists of the <smbconfoption name="idmap config"/>
+	prefix, followed by a domain name or the asterisk character (*),
+	a colon, and the name of an idmap setting for the chosen domain.
+	</para>
+
+	<para>
+	The idmap configuration is hence divided into groups, one group
+	for each domain to be configured, and one group with the the
+	asterisk instead of a proper domain name, which speifies the
+	default configuration that is used to catch all domains that do
+	not have an explicit idmap configuration of their own.
+	</para>
+
+	<para>
+	There are three general options available:
+	</para>
+
+	<variablelist>
+		<varlistentry>
+		<term>backend = backend_name</term>
+		<listitem><para>
+		This specifies the name of the idmap plugin to use as the
+		SID/uid/gid backend for this domain. The standard backends are
+		tdb
+		(<citerefentry><refentrytitle>idmap_tdb</refentrytitle> <manvolnum>8</manvolnum> </citerefentry>),
+		tdb2
+		(<citerefentry><refentrytitle>idmap_tdb2</refentrytitle> <manvolnum>8</manvolnum></citerefentry>),
+		ldap
+		(<citerefentry><refentrytitle>idmap_ldap</refentrytitle> <manvolnum>8</manvolnum></citerefentry>),
+		,
+		rid
+		(<citerefentry><refentrytitle>idmap_rid</refentrytitle> <manvolnum>8</manvolnum></citerefentry>),
+		,
+		hash
+		(<citerefentry><refentrytitle>idmap_hash</refentrytitle> <manvolnum>8</manvolnum></citerefentry>),
+		,
+		autorid
+		(<citerefentry><refentrytitle>idmap_autorid</refentrytitle> <manvolnum>8</manvolnum></citerefentry>),
+		,
+		ad
+		(<citerefentry><refentrytitle>idmap_ad</refentrytitle> <manvolnum>8</manvolnum></citerefentry>),
+		,
+		adex
+		(<citerefentry><refentrytitle>idmap_adex</refentrytitle> <manvolnum>8</manvolnum></citerefentry>),
+		,
+		and nss.
+		(<citerefentry><refentrytitle>idmap_nss</refentrytitle> <manvolnum>8</manvolnum></citerefentry>),
+		The corresponding manual pages contain the details, but
+		here is a summary.
+		</para>
+		<para>
+		The first three of these create mappings of their own using
+		internal unixid counters and store the mappings in a database.
+		These are suitable for use in the default idmap configuration.
+		The rid and hash backends use a pure algorithmic calculation
+		to determine the unixid for a SID. The autorid module is a
+		mixture of the tdb and rid backend. It creates ranges for
+		each domain encountered and then uses the rid algorithm for each
+		of these automatically configured domains individually.
+		The ad and adex
+		backends both use unix IDs stored in Active Directory via
+		the standard schema extensions. The nss backend reverses
+		the standard winbindd setup and gets the unixids via names
+		from nsswitch which can be useful in an ldap setup.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>range = low - high</term>
+		<listitem><para>
+		Defines the available matching uid and gid range for which the
+		backend is authoritative. For allocating backends, this also
+		defines the start and the end of the range for allocating
+		new unid IDs.
+		</para>
+		<para>
+		winbind uses this parameter to find the backend that is
+		authoritative for a unix ID to SID mapping, so it must be set
+		for each individually configured domain and for the default
+		configuration. The configured ranges must be mutually disjoint.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>read only = yes|no</term>
+		<listitem><para>
+		This option can be used to turn the writing backends
+		tdb, tdb2, and ldap into read only mode. This can be useful
+		e.g. in cases where a pre-filled database exists that should
+		not be extended automatically.
+		</para></listitem>
+		</varlistentry>
+	</variablelist>
+
+	<para>
+	The following example illustrates how to configure the <citerefentry>
+	<refentrytitle>idmap_ad</refentrytitle> <manvolnum>8</manvolnum>
+	</citerefentry> backend for the CORP domain and the
+	<citerefentry><refentrytitle>idmap_tdb</refentrytitle>
+	<manvolnum>8</manvolnum></citerefentry> backend for all other
+	domains. This configuration assumes that the admin of CORP assigns
+	unix ids below 1000000 via the SFU extensions, and winbind is supposed
+	to use the next million entries for its own mappings from trusted
+	domains and for local groups for example.
+	</para>
+
+	<programlisting>
+	idmap config * : backend = tdb
+	idmap config * : range = 1000000-1999999
+
+	idmap config CORP : backend  = ad
+	idmap config CORP : range = 1000-999999
+	</programlisting>
+	
+</description>
+</samba:parameter>

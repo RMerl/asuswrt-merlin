@@ -1,0 +1,259 @@
+#!/usr/bin/env python
+#
+# Unix SMB/CIFS implementation.
+# provision a Samba4 server
+# Copyright (C) Jelmer Vernooij <jelmer@samba.org> 2007-2008
+# Copyright (C) Andrew Bartlett <abartlet@samba.org> 2008
+#
+# Based on the original in EJS:
+# Copyright (C) Andrew Tridgell 2005
+#   
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#   
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#   
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+import logging
+import optparse
+import sys
+import tempfile
+
+# Find right directory when running from source tree
+sys.path.insert(0, "bin/python")
+
+import samba
+import samba.ntacls
+from samba.credentials import DONT_USE_KERBEROS
+from samba.auth import system_session
+import samba.getopt as options
+from samba.provision import provision, FILL_FULL, FILL_NT4SYNC, FILL_DRS, ProvisioningError
+from samba.dsdb import (
+	DS_DOMAIN_FUNCTION_2000,
+	DS_DOMAIN_FUNCTION_2003,
+	DS_DOMAIN_FUNCTION_2008,
+	DS_DOMAIN_FUNCTION_2008_R2,
+	)
+
+# how do we make this case insensitive??
+
+parser = optparse.OptionParser("provision [options]")
+sambaopts = options.SambaOptions(parser)
+parser.add_option_group(sambaopts)
+parser.add_option_group(options.VersionOptions(parser))
+credopts = options.CredentialsOptions(parser)
+parser.add_option_group(credopts)
+parser.add_option("--interactive", help="Ask for names", action="store_true")
+parser.add_option("--domain", type="string", metavar="DOMAIN",
+				  help="set domain")
+parser.add_option("--domain-guid", type="string", metavar="GUID", 
+		help="set domainguid (otherwise random)")
+parser.add_option("--domain-sid", type="string", metavar="SID", 
+		help="set domainsid (otherwise random)")
+parser.add_option("--ntds-guid", type="string", metavar="GUID", 
+		  help="set NTDS object GUID (otherwise random)")
+parser.add_option("--invocationid", type="string", metavar="GUID", 
+		  help="set invocationid (otherwise random)")
+parser.add_option("--host-name", type="string", metavar="HOSTNAME", 
+		help="set hostname")
+parser.add_option("--host-ip", type="string", metavar="IPADDRESS", 
+		help="set IPv4 ipaddress")
+parser.add_option("--host-ip6", type="string", metavar="IP6ADDRESS", 
+		help="set IPv6 ipaddress")
+parser.add_option("--adminpass", type="string", metavar="PASSWORD", 
+		help="choose admin password (otherwise random)")
+parser.add_option("--krbtgtpass", type="string", metavar="PASSWORD", 
+		help="choose krbtgt password (otherwise random)")
+parser.add_option("--machinepass", type="string", metavar="PASSWORD", 
+		help="choose machine password (otherwise random)")
+parser.add_option("--dnspass", type="string", metavar="PASSWORD", 
+		help="choose dns password (otherwise random)")
+parser.add_option("--ldapadminpass", type="string", metavar="PASSWORD", 
+		help="choose password to set between Samba and it's LDAP backend (otherwise random)")
+parser.add_option("--root", type="string", metavar="USERNAME", 
+		help="choose 'root' unix username")
+parser.add_option("--nobody", type="string", metavar="USERNAME", 
+		help="choose 'nobody' user")
+parser.add_option("--wheel", type="string", metavar="GROUPNAME", 
+		help="choose 'wheel' privileged group")
+parser.add_option("--users", type="string", metavar="GROUPNAME", 
+		help="choose 'users' group")
+parser.add_option("--quiet", help="Be quiet", action="store_true")
+parser.add_option("--blank", action="store_true",
+		help="do not add users or groups, just the structure")
+parser.add_option("--ldap-backend-extra-port", type="int", metavar="LDAP-BACKEND-EXTRA-PORT", 
+		help="Additional TCP port for LDAP backend server (to use for replication)")
+parser.add_option("--ldap-backend-forced-uri", type="string", metavar="LDAP-BACKEND-FORCED-URI", 
+		help="Force the LDAP backend connection to be to a particular URI.  Use this ONLY for 'existing' backends, or when debugging the interaction with the LDAP backend and you need to intercept the LDAP traffic")
+parser.add_option("--ldap-backend-type", type="choice", metavar="LDAP-BACKEND-TYPE", 
+		help="LDAP backend type (fedora-ds or openldap)",
+		choices=["fedora-ds", "openldap"])
+parser.add_option("--ldap-backend-nosync", help="Configure LDAP backend not to call fsync() (for performance in test environments)", action="store_true")
+parser.add_option("--server-role", type="choice", metavar="ROLE",
+		  choices=["domain controller", "dc", "member server", "member", "standalone"],
+		help="The server role (domain controller | dc | member server | member | standalone). Default is standalone.")
+parser.add_option("--function-level", type="choice", metavar="FOR-FUN-LEVEL",
+		  choices=["2000", "2003", "2008", "2008_R2"],
+		help="The domain and forest function level (2000 | 2003 | 2008 | 2008_R2 - always native). Default is (Windows) 2003 Native.")
+parser.add_option("--next-rid", type="int", metavar="NEXTRID", default=1000,
+		help="The initial nextRid value (only needed for upgrades).  Default is 1000.")
+parser.add_option("--partitions-only", 
+		help="Configure Samba's partitions, but do not modify them (ie, join a BDC)", action="store_true")
+parser.add_option("--targetdir", type="string", metavar="DIR", 
+		          help="Set target directory")
+parser.add_option("--ol-mmr-urls", type="string", metavar="LDAPSERVER",
+                help="List of LDAP-URLS [ ldap://<FQHN>:<PORT>/  (where <PORT> has to be different than 389!) ] separated with comma (\",\") for use with OpenLDAP-MMR (Multi-Master-Replication), e.g.: \"ldap://s4dc1:9000,ldap://s4dc2:9000\"")
+parser.add_option("--slapd-path", type="string", metavar="SLAPD-PATH", 
+		help="Path to slapd for LDAP backend [e.g.:'/usr/local/libexec/slapd']. Required for Setup with LDAP-Backend. OpenLDAP Version >= 2.4.17 should be used.") 
+parser.add_option("--setup-ds-path", type="string", metavar="SETUP_DS-PATH", 
+		help="Path to setup-ds.pl script for Fedora DS LDAP backend [e.g.:'/usr/sbin/setup-ds.pl']. Required for Setup with Fedora DS backend.") 
+parser.add_option("--use-xattrs", type="choice", choices=["yes","no","auto"], help="Define if we should use the native fs capabilities or a tdb file for storing attributes likes ntacl, auto tries to make an inteligent guess based on the user rights and system capabilities", default="auto")
+parser.add_option("--ldap-dryrun-mode", help="Configure LDAP backend, but do not run any binaries and exit early.  Used only for the test environment.  DO NOT USE", action="store_true")
+
+opts = parser.parse_args()[0]
+
+logger = logging.getLogger("provision")
+logger.addHandler(logging.StreamHandler(sys.stdout))
+if opts.quiet:
+	logger.setLevel(logging.WARNING)
+else:
+	logger.setLevel(logging.INFO)
+
+if len(sys.argv) == 1:
+	opts.interactive = True
+
+if opts.interactive:
+	from getpass import getpass
+	import socket
+	def ask(prompt, default=None):
+		if default is not None:
+			print "%s [%s]: " % (prompt,default),
+		else:
+			print "%s: " % (prompt,),
+		return sys.stdin.readline().rstrip("\n") or default
+	try:
+		default = socket.getfqdn().split(".", 1)[1].upper()
+	except IndexError:
+		default = None
+	opts.realm = ask("Realm", default)
+	if opts.realm in (None, ""):
+		print >>sys.stderr, "No realm set!"
+		sys.exit(1)
+
+	try:
+		default = opts.realm.split(".")[0]
+	except IndexError:
+		default = None
+	opts.domain = ask("Domain", default)
+	if opts.domain is None:
+		print >> sys.stderr, "No domain set!"
+		sys.exit(1)
+
+	opts.server_role = ask("Server Role (dc, member, standalone)", "dc")
+	for i in range(3):
+		opts.adminpass = getpass("Administrator password: ")
+		if not opts.adminpass:
+			print >>sys.stderr, "Invalid administrator password."
+		else:
+			break
+else:
+	if opts.realm in (None, ""):
+		opts.realm = sambaopts._lp.get('realm')
+	if opts.realm is None or opts.domain is None:
+		if opts.realm is None:
+			print >>sys.stderr, "No realm set!"
+		if opts.domain is None:
+			print >> sys.stderr, "No domain set!"
+		parser.print_usage()
+		sys.exit(1)
+
+if not opts.adminpass:
+	logger.info("Administrator password will be set randomly!")
+
+lp = sambaopts.get_loadparm()
+smbconf = lp.configfile
+
+if opts.server_role == "dc":
+	server_role = "domain controller"
+elif opts.server_role == "member":
+	server_role = "member server"
+else:
+	server_role = opts.server_role
+
+if opts.function_level is None:
+	dom_for_fun_level = None
+elif opts.function_level == "2000":
+	dom_for_fun_level = DS_DOMAIN_FUNCTION_2000
+elif opts.function_level == "2003":
+	dom_for_fun_level = DS_DOMAIN_FUNCTION_2003
+elif opts.function_level == "2008":
+	dom_for_fun_level = DS_DOMAIN_FUNCTION_2008
+elif opts.function_level == "2008_R2":
+	dom_for_fun_level = DS_DOMAIN_FUNCTION_2008_R2
+
+creds = credopts.get_credentials(lp)
+
+creds.set_kerberos_state(DONT_USE_KERBEROS)
+
+samdb_fill = FILL_FULL
+if opts.blank:
+    samdb_fill = FILL_NT4SYNC
+elif opts.partitions_only:
+    samdb_fill = FILL_DRS
+
+eadb = True
+if opts.use_xattrs == "yes":
+	eadb = False
+elif opts.use_xattrs == "auto" and not lp.get("posix:eadb"):
+	file = tempfile.NamedTemporaryFile()
+	try:
+		samba.ntacls.setntacl(lp, file.name, 
+			"O:S-1-5-32G:S-1-5-32", "S-1-5-32", "native")
+		eadb = False
+	except:
+		logger.info("You are not root or your system do not support xattr, using tdb backend for attributes. "
+			    "If you intend to use this provision in production, rerun the script as root on a system supporting xattrs.")
+	file.close()
+
+
+if opts.ldap_backend_type == "existing":
+	if opts.ldap_backend_forced_uri is not None:
+		logger.warn("You have specified to use an existing LDAP server as the backend, please make sure an LDAP server is running at %s" % opts.ldap_backend_forced_uri)
+	else:
+		logger.info("You have specified to use an existing LDAP server as the backend, please make sure an LDAP server is running at the default location")
+else:
+	if opts.ldap_backend_forced_uri is not None:
+		logger.warn("You have specified to use an fixed URI %s for connecting to your LDAP server backend.  This is NOT RECOMMENDED, as our default communiation over ldapi:// is more secure and much less prone to unexpected failure or interaction" % opts.ldap_backend_forced_uri)
+	
+session = system_session()
+try:
+	provision(logger,
+		  session, creds, smbconf=smbconf, targetdir=opts.targetdir,
+		  samdb_fill=samdb_fill, realm=opts.realm, domain=opts.domain,
+		  domainguid=opts.domain_guid, domainsid=opts.domain_sid,
+		  hostname=opts.host_name,
+		  hostip=opts.host_ip, hostip6=opts.host_ip6,
+		  ntdsguid=opts.ntds_guid,
+		  invocationid=opts.invocationid, adminpass=opts.adminpass,
+		  krbtgtpass=opts.krbtgtpass, machinepass=opts.machinepass,
+		  dnspass=opts.dnspass, root=opts.root, nobody=opts.nobody,
+		  wheel=opts.wheel, users=opts.users,
+		  serverrole=server_role, dom_for_fun_level=dom_for_fun_level,
+		  ldap_backend_extra_port=opts.ldap_backend_extra_port,
+		  ldap_backend_forced_uri=opts.ldap_backend_forced_uri,
+		  backend_type=opts.ldap_backend_type,
+		  ldapadminpass=opts.ldapadminpass, ol_mmr_urls=opts.ol_mmr_urls,
+		  slapd_path=opts.slapd_path, setup_ds_path=opts.setup_ds_path,
+		  nosync=opts.ldap_backend_nosync, ldap_dryrun_mode=opts.ldap_dryrun_mode, 
+		  useeadb=eadb, next_rid=opts.next_rid, lp=lp)
+except ProvisioningError, e:
+	print str(e)
+	exit(1)

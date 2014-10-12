@@ -1,0 +1,107 @@
+dn: CN=DnsAdmins,CN=Users,${DOMAINDN}
+objectClass: group
+description: DNS Administrators Group
+sAMAccountName: DnsAdmins
+groupType: -2147483644
+
+dn: CN=DnsUpdateProxy,CN=Users,${DOMAINDN}
+objectClass: group
+description: DNS clients who are permitted to perform dynamic updates on behal
+ f of some other clients (such as DHCP servers).
+sAMAccountName: DnsUpdateProxy
+groupType: -2147483646
+
+dn: CN=MicrosoftDNS,CN=System,${DOMAINDN}
+objectClass: container
+displayName: DNS Servers
+
+dn: DC=RootDNSServers,CN=MicrosoftDNS,CN=System,${DOMAINDN}
+objectClass: dnsZone
+
+dn: DC=@,DC=RootDNSServers,CN=MicrosoftDNS,CN=System,${DOMAINDN}
+objectClass: dnsNode
+dnsRecord:: FgACAAUIAAAAAAAAAAAAAAAAAAAAAAAAFAMBagxyb290LXNlcnZlcnMDbmV0AA==
+dnsRecord:: FgACAAUIAAAAAAAAAAAAAAAAAAAAAAAAFAMBZAxyb290LXNlcnZlcnMDbmV0AA==
+dnsRecord:: FgACAAUIAAAAAAAAAAAAAAAAAAAAAAAAFAMBYgxyb290LXNlcnZlcnMDbmV0AA==
+dnsRecord:: FgACAAUIAAAAAAAAAAAAAAAAAAAAAAAAFAMBYQxyb290LXNlcnZlcnMDbmV0AA==
+dnsRecord:: FgACAAUIAAAAAAAAAAAAAAAAAAAAAAAAFAMBaQxyb290LXNlcnZlcnMDbmV0AA==
+dnsRecord:: FgACAAUIAAAAAAAAAAAAAAAAAAAAAAAAFAMBbAxyb290LXNlcnZlcnMDbmV0AA==
+dnsRecord:: FgACAAUIAAAAAAAAAAAAAAAAAAAAAAAAFAMBbQxyb290LXNlcnZlcnMDbmV0AA==
+dnsRecord:: FgACAAUIAAAAAAAAAAAAAAAAAAAAAAAAFAMBZwxyb290LXNlcnZlcnMDbmV0AA==
+dnsRecord:: FgACAAUIAAAAAAAAAAAAAAAAAAAAAAAAFAMBZQxyb290LXNlcnZlcnMDbmV0AA==
+dnsRecord:: FgACAAUIAAAAAAAAAAAAAAAAAAAAAAAAFAMBawxyb290LXNlcnZlcnMDbmV0AA==
+dnsRecord:: FgACAAUIAAAAAAAAAAAAAAAAAAAAAAAAFAMBZgxyb290LXNlcnZlcnMDbmV0AA==
+dnsRecord:: FgACAAUIAAAAAAAAAAAAAAAAAAAAAAAAFAMBYwxyb290LXNlcnZlcnMDbmV0AA==
+dnsRecord:: FgACAAUIAAAAAAAAAAAAAAAAAAAAAAAAFAMBaAxyb290LXNlcnZlcnMDbmV0AA==
+
+dn: DC=h.root-servers.net,DC=RootDNSServers,CN=MicrosoftDNS,CN=System,${DOMAINDN}
+objectClass: dnsNode
+dnsRecord:: BAABAAUIAAAAAAAAAAAAAAAAAAAAAAAAgD8CNQ==
+
+dn: DC=c.root-servers.net,DC=RootDNSServers,CN=MicrosoftDNS,CN=System,${DOMAINDN}
+objectClass: dnsNode
+dnsRecord:: BAABAAUIAAAAAAAAAAAAAAAAAAAAAAAAwCEEDA==
+
+dn: DC=f.root-servers.net,DC=RootDNSServers,CN=MicrosoftDNS,CN=System,${DOMAINDN}
+objectClass: dnsNode
+dnsRecord:: BAABAAUIAAAAAAAAAAAAAAAAAAAAAAAAwAUF8Q==
+
+dn: DC=k.root-servers.net,DC=RootDNSServers,CN=MicrosoftDNS,CN=System,${DOMAINDN}
+objectClass: dnsNode
+dnsRecord:: BAABAAUIAAAAAAAAAAAAAAAAAAAAAAAAwQAOgQ==
+
+dn: DC=e.root-servers.net,DC=RootDNSServers,CN=MicrosoftDNS,CN=System,${DOMAINDN}
+objectClass: dnsNode
+dnsRecord:: BAABAAUIAAAAAAAAAAAAAAAAAAAAAAAAwMvmCg==
+
+dn: DC=g.root-servers.net,DC=RootDNSServers,CN=MicrosoftDNS,CN=System,${DOMAINDN}
+objectClass: dnsNode
+dnsRecord:: BAABAAUIAAAAAAAAAAAAAAAAAAAAAAAAwHAkBA==
+
+dn: DC=m.root-servers.net,DC=RootDNSServers,CN=MicrosoftDNS,CN=System,${DOMAINDN}
+objectClass: dnsNode
+dnsRecord:: BAABAAUIAAAAAAAAAAAAAAAAAAAAAAAAygwbIQ==
+
+dn: DC=l.root-servers.net,DC=RootDNSServers,CN=MicrosoftDNS,CN=System,${DOMAINDN}
+objectClass: dnsNode
+dnsRecord:: BAABAAUIAAAAAAAAAAAAAAAAAAAAAAAAxwdTKg==
+
+dn: DC=i.root-servers.net,DC=RootDNSServers,CN=MicrosoftDNS,CN=System,${DOMAINDN}
+objectClass: dnsNode
+dnsRecord:: BAABAAUIAAAAAAAAAAAAAAAAAAAAAAAAwCSUEQ==
+
+dn: DC=a.root-servers.net,DC=RootDNSServers,CN=MicrosoftDNS,CN=System,${DOMAINDN}
+objectClass: dnsNode
+dnsRecord:: BAABAAUIAAAAAAAAAAAAAAAAAAAAAAAAxikABA==
+
+dn: DC=b.root-servers.net,DC=RootDNSServers,CN=MicrosoftDNS,CN=System,${DOMAINDN}
+objectClass: dnsNode
+dnsRecord:: BAABAAUIAAAAAAAAAAAAAAAAAAAAAAAAwORPyQ==
+
+dn: DC=d.root-servers.net,DC=RootDNSServers,CN=MicrosoftDNS,CN=System,${DOMAINDN}
+objectClass: dnsNode
+dnsRecord:: BAABAAUIAAAAAAAAAAAAAAAAAAAAAAAAgAgKWg==
+
+dn: DC=j.root-servers.net,DC=RootDNSServers,CN=MicrosoftDNS,CN=System,${DOMAINDN}
+objectClass: dnsNode
+dnsRecord:: BAABAAUIAAAAAAAAAAAAAAAAAAAAAAAAwDqAHg==
+
+
+# NOTE: This account is SAMBA4 specific!
+# we have it to avoid the need for the bind daemon to
+# have access to the whole secrets.keytab for the domain,
+# otherwise bind could impersonate any user
+dn: CN=dns-${HOSTNAME},CN=Users,${DOMAINDN}
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: user
+description: DNS Service Account for ${HOSTNAME}
+userAccountControl: 512
+accountExpires: 9223372036854775807
+sAMAccountName: dns-${HOSTNAME}
+servicePrincipalName: DNS/${DNSNAME}
+servicePrincipalName: DNS/${DNSDOMAIN}
+clearTextPassword:: ${DNSPASS_B64}
+isCriticalSystemObject: TRUE
+

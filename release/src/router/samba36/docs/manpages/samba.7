@@ -1,0 +1,272 @@
+'\" t
+.\"     Title: samba
+.\"    Author: [see the "AUTHOR" section]
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date: 09/18/2013
+.\"    Manual: Miscellanea
+.\"    Source: Samba 3.6
+.\"  Language: English
+.\"
+.TH "SAMBA" "7" "09/18/2013" "Samba 3\&.6" "Miscellanea"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+samba \- A Windows SMB/CIFS fileserver for UNIX
+.SH "SYNOPSIS"
+.HP \w'\ 'u
+samba
+.SH "DESCRIPTION"
+.PP
+The Samba software suite is a collection of programs that implements the Server Message Block (commonly abbreviated as SMB) protocol for UNIX systems\&. This protocol is sometimes also referred to as the Common Internet File System (CIFS)\&. For a more thorough description, see
+http://www\&.ubiqx\&.org/cifs/\&. Samba also implements the NetBIOS protocol in nmbd\&.
+.PP
+\fBsmbd\fR(8)
+.RS 4
+The
+smbd
+daemon provides the file and print services to SMB clients, such as Windows 95/98, Windows NT, Windows for Workgroups or LanManager\&. The configuration file for this daemon is described in
+\fBsmb.conf\fR(5)
+.RE
+.PP
+\fBnmbd\fR(8)
+.RS 4
+The
+nmbd
+daemon provides NetBIOS nameservice and browsing support\&. The configuration file for this daemon is described in
+\fBsmb.conf\fR(5)
+.RE
+.PP
+\fBsmbclient\fR(1)
+.RS 4
+The
+smbclient
+program implements a simple ftp\-like client\&. This is useful for accessing SMB shares on other compatible servers (such as Windows NT), and can also be used to allow a UNIX box to print to a printer attached to any SMB server (such as a PC running Windows NT)\&.
+.RE
+.PP
+\fBtestparm\fR(1)
+.RS 4
+The
+testparm
+utility is a simple syntax checker for Samba\*(Aqs
+\fBsmb.conf\fR(5)
+configuration file\&.
+.RE
+.PP
+\fBtestprns\fR(1)
+.RS 4
+The
+testprns
+utility supports testing printer names defined in your
+printcap
+file used by Samba\&.
+.RE
+.PP
+\fBsmbstatus\fR(1)
+.RS 4
+The
+smbstatus
+tool provides access to information about the current connections to
+smbd\&.
+.RE
+.PP
+\fBnmblookup\fR(1)
+.RS 4
+The
+nmblookup
+tools allows NetBIOS name queries to be made from a UNIX host\&.
+.RE
+.PP
+\fBsmbpasswd\fR(8)
+.RS 4
+The
+smbpasswd
+command is a tool for changing LanMan and Windows NT password hashes on Samba and Windows NT servers\&.
+.RE
+.PP
+\fBsmbcacls\fR(1)
+.RS 4
+The
+smbcacls
+command is a tool to set ACL\*(Aqs on remote CIFS servers\&.
+.RE
+.PP
+\fBsmbsh\fR(1)
+.RS 4
+The
+smbsh
+command is a program that allows you to run a unix shell with with an overloaded VFS\&.
+.RE
+.PP
+\fBsmbtree\fR(1)
+.RS 4
+The
+smbtree
+command is a text\-based network neighborhood tool\&.
+.RE
+.PP
+\fBsmbtar\fR(1)
+.RS 4
+The
+smbtar
+can make backups of data on CIFS/SMB servers\&.
+.RE
+.PP
+\fBsmbspool\fR(8)
+.RS 4
+smbspool
+is a helper utility for printing on printers connected to CIFS servers\&.
+.RE
+.PP
+\fBsmbcontrol\fR(1)
+.RS 4
+smbcontrol
+is a utility that can change the behaviour of running samba daemons\&.
+.RE
+.PP
+\fBrpcclient\fR(1)
+.RS 4
+rpcclient
+is a utility that can be used to execute RPC commands on remote CIFS servers\&.
+.RE
+.PP
+\fBpdbedit\fR(8)
+.RS 4
+The
+pdbedit
+command can be used to maintain the local user database on a samba server\&.
+.RE
+.PP
+\fBfindsmb\fR(1)
+.RS 4
+The
+findsmb
+command can be used to find SMB servers on the local network\&.
+.RE
+.PP
+\fBnet\fR(8)
+.RS 4
+The
+net
+command is supposed to work similar to the DOS/Windows NET\&.EXE command\&.
+.RE
+.PP
+\fBswat\fR(8)
+.RS 4
+swat
+is a web\-based interface to configuring
+smb\&.conf\&.
+.RE
+.PP
+\fBwinbindd\fR(8)
+.RS 4
+winbindd
+is a daemon that is used for integrating authentication and the user database into unix\&.
+.RE
+.PP
+\fBwbinfo\fR(1)
+.RS 4
+wbinfo
+is a utility that retrieves and stores information related to winbind\&.
+.RE
+.PP
+\fBprofiles\fR(1)
+.RS 4
+profiles
+is a command\-line utility that can be used to replace all occurrences of a certain SID with another SID\&.
+.RE
+.PP
+\fBlog2pcap\fR(1)
+.RS 4
+log2pcap
+is a utility for generating pcap trace files from Samba log files\&.
+.RE
+.PP
+\fBvfstest\fR(1)
+.RS 4
+vfstest
+is a utility that can be used to test vfs modules\&.
+.RE
+.PP
+\fBntlm_auth\fR(1)
+.RS 4
+ntlm_auth
+is a helper\-utility for external programs wanting to do NTLM\-authentication\&.
+.RE
+.PP
+\fBsmbmount\fR(8), \fBsmbumount\fR(8), \fBsmbmnt\fR(8)
+.RS 4
+smbmount,smbumount
+and
+smbmnt
+are commands that can be used to mount CIFS/SMB shares on Linux\&.
+.RE
+.PP
+\fBsmbcquotas\fR(1)
+.RS 4
+smbcquotas
+is a tool that can set remote QUOTA\*(Aqs on server with NTFS 5\&.
+.RE
+.SH "COMPONENTS"
+.PP
+The Samba suite is made up of several components\&. Each component is described in a separate manual page\&. It is strongly recommended that you read the documentation that comes with Samba and the manual pages of those components that you use\&. If the manual pages and documents aren\*(Aqt clear enough then please visit
+http://devel\&.samba\&.org
+for information on how to file a bug report or submit a patch\&.
+.PP
+If you require help, visit the Samba webpage at
+http://www\&.samba\&.org/
+and explore the many option available to you\&.
+.SH "AVAILABILITY"
+.PP
+The Samba software suite is licensed under the GNU Public License(GPL)\&. A copy of that license should have come with the package in the file COPYING\&. You are encouraged to distribute copies of the Samba suite, but please obey the terms of this license\&.
+.PP
+The latest version of the Samba suite can be obtained via anonymous ftp from samba\&.org in the directory pub/samba/\&. It is also available on several mirror sites worldwide\&.
+.PP
+You may also find useful information about Samba on the newsgroup
+comp\&.protocol\&.smb
+and the Samba mailing list\&. Details on how to join the mailing list are given in the README file that comes with Samba\&.
+.PP
+If you have access to a WWW viewer (such as Mozilla or Konqueror) then you will also find lots of useful information, including back issues of the Samba mailing list, at
+http://lists\&.samba\&.org\&.
+.SH "VERSION"
+.PP
+This man page is correct for version 3 of the Samba suite\&.
+.SH "CONTRIBUTIONS"
+.PP
+If you wish to contribute to the Samba project, then I suggest you join the Samba mailing list at
+http://lists\&.samba\&.org\&.
+.PP
+If you have patches to submit, visit
+http://devel\&.samba\&.org/
+for information on how to do it properly\&. We prefer patches in
+diff \-u
+format\&.
+.SH "CONTRIBUTORS"
+.PP
+Contributors to the project are now too numerous to mention here but all deserve the thanks of all Samba users\&. To see a full list, look at the
+change\-log
+in the source package for the pre\-CVS changes and at
+http://cvs\&.samba\&.org/
+for the contributors to Samba post\-CVS\&. CVS is the Open Source source code control system used by the Samba Team to develop Samba\&. The project would have been unmanageable without it\&.
+.SH "AUTHOR"
+.PP
+The original Samba software and related utilities were created by Andrew Tridgell\&. Samba is now developed by the Samba Team as an Open Source project similar to the way the Linux kernel is developed\&.
+.PP
+The original Samba man pages were written by Karl Auer\&. The man page sources were converted to YODL format (another excellent piece of Open Source software, available at
+ftp://ftp\&.icce\&.rug\&.nl/pub/unix/) and updated for the Samba 2\&.0 release by Jeremy Allison\&. The conversion to DocBook for Samba 2\&.2 was done by Gerald Carter\&. The conversion to DocBook XML 4\&.2 for Samba 3\&.0 was done by Alexander Bokovoy\&.

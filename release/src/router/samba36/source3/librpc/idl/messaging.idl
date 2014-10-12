@@ -1,0 +1,134 @@
+#include "idl_types.h"
+
+import "server_id.idl";
+
+/*
+   IDL structures for messaging code
+*/
+
+[
+  pointer_default(unique)
+]
+interface messaging
+{
+	const int MSG_TYPE_MASK = 0xFFFF;
+
+	typedef [v1_enum,public] enum {
+
+		/* general messages */
+		MSG_DEBUG			= 0x0001,
+		MSG_PING			= 0x0002,
+		MSG_PONG			= 0x0003,
+		MSG_PROFILE			= 0x0004,
+		MSG_REQ_DEBUGLEVEL		= 0x0005,
+		MSG_DEBUGLEVEL			= 0x0006,
+		MSG_REQ_PROFILELEVEL		= 0x0007,
+		MSG_PROFILELEVEL		= 0x0008,
+		MSG_REQ_POOL_USAGE		= 0x0009,
+		MSG_POOL_USAGE			= 0x000A,
+
+		/* If dmalloc is included, set a steady-state mark */
+		MSG_REQ_DMALLOC_MARK		= 0x000B,
+
+		/* If dmalloc is included, dump to the dmalloc log a description of
+		 * what has changed since the last MARK */
+		MSG_REQ_DMALLOC_LOG_CHANGED	= 0x000C,
+		MSG_SHUTDOWN			= 0x000D,
+
+		MSG_IDMAP_FLUSH                 = 0x000E,
+		MSG_IDMAP_DELETE                = 0x000F,
+		MSG_IDMAP_KILL                  = 0x0010,
+
+		/* nmbd messages */
+		MSG_FORCE_ELECTION		= 0x0101,
+		MSG_WINS_NEW_ENTRY		= 0x0102,
+		MSG_SEND_PACKET			= 0x0103,
+
+		/* printing messages */
+		MSG_PRINTER_NOTIFY		= 0x2001, /* Obsolete */
+		MSG_PRINTER_NOTIFY2		= 0x0202,
+		MSG_PRINTER_DRVUPGRADE		= 0x0203,
+		MSG_PRINTERDATA_INIT_RESET	= 0x0204,
+		MSG_PRINTER_UPDATE		= 0x0205,
+		MSG_PRINTER_MOD			= 0x0206,
+		MSG_PRINTER_PCAP		= 0x0207,
+
+		/* smbd messages */
+		MSG_SMB_CONF_UPDATED		= 0x0301,
+		MSG_SMB_FORCE_TDIS		= 0x0302,
+		MSG_SMB_SAM_SYNC		= 0x0303,
+		MSG_SMB_SAM_REPL		= 0x0304,
+		MSG_SMB_UNLOCK			= 0x0305,
+		MSG_SMB_BREAK_REQUEST		= 0x0306,
+		MSG_SMB_BREAK_RESPONSE		= 0x0307,
+		MSG_SMB_ASYNC_LEVEL2_BREAK	= 0x0308,
+		MSG_SMB_OPEN_RETRY		= 0x0309,
+		MSG_SMB_KERNEL_BREAK		= 0x030A,
+		MSG_SMB_FILE_RENAME		= 0x030B,
+		MSG_SMB_INJECT_FAULT		= 0x030C,
+		MSG_SMB_BLOCKING_LOCK_CANCEL	= 0x030D,
+		MSG_SMB_NOTIFY			= 0x030E,
+		MSG_SMB_STAT_CACHE_DELETE	= 0x030F,
+
+		/* Samba4 compatibility */
+		MSG_PVFS_NOTIFY			= 0x0310,
+
+		/* cluster reconfigure events */
+		MSG_SMB_BRL_VALIDATE		= 0x0311,
+		MSG_SMB_RELEASE_IP		= 0x0312,
+
+		/*Close a specific file given a share entry. */
+		MSG_SMB_CLOSE_FILE		= 0x0313,
+
+		/* winbind messages */
+		MSG_WINBIND_FINISHED		= 0x0401,
+		MSG_WINBIND_FORGET_STATE	= 0x0402,
+		MSG_WINBIND_ONLINE		= 0x0403,
+		MSG_WINBIND_OFFLINE		= 0x0404,
+		MSG_WINBIND_ONLINESTATUS	= 0x0405,
+		MSG_WINBIND_TRY_TO_GO_ONLINE	= 0x0406,
+		MSG_WINBIND_FAILED_TO_GO_ONLINE = 0x0407,
+		MSG_WINBIND_VALIDATE_CACHE	= 0x0408,
+		MSG_WINBIND_DUMP_DOMAIN_LIST	= 0x0409,
+		MSG_WINBIND_IP_DROPPED		= 0x040A,
+		MSG_WINBIND_DOMAIN_ONLINE	= 0x040B,
+		MSG_WINBIND_DOMAIN_OFFLINE	= 0x040C,
+
+		/* event messages */
+		MSG_DUMP_EVENT_LIST		= 0x0500,
+
+		/* dbwrap messages 4001-4999 */
+		MSG_DBWRAP_TDB2_CHANGES		= 4001,
+		MSG_DBWRAP_G_LOCK_RETRY		= 4002
+	} messaging_type;
+
+	/* messaging struct sent across the sockets and stored in the tdb */
+
+	typedef [public] struct {
+		uint32 msg_version;
+		messaging_type msg_type;
+		server_id dest;
+		server_id src;
+		DATA_BLOB buf;
+	} messaging_rec;
+
+	typedef [public] struct {
+		uint32 num_messages;
+		messaging_rec messages[num_messages];
+	} messaging_array;
+
+	/*
+	 * struct used for change notify messages
+	 * in the dbwrap_tdb2 code
+	 */
+	typedef [public] struct {
+		[charset(DOS),value("TDB2")] uint8 magic_string[4];
+		[value(1)] uint32 magic_version;
+		[charset(UTF8),string] uint8 name[];
+		uint32 old_seqnum;
+		uint32 new_seqnum;
+		uint32 num_changes;
+		uint32 num_keys;
+		DATA_BLOB keys[num_keys];
+	} dbwrap_tdb2_changes;
+}

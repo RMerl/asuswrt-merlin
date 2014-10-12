@@ -1,0 +1,20 @@
+[
+  uuid("225b9fcb-eb3d-497b-8b0b-591f049a2507"),
+  pointer_default(ptr)
+]
+interface midltests
+{
+	struct midltests_struct {
+		[ref] long ****p;
+		[ref] long **a;
+		[ref] long **b;
+		[ref] long **c;
+	};
+
+	void midltests_fn(
+		//[in] long size,
+		[in,out,ref] struct midltests_struct *s
+		//[in,ref,size_is(,size)] long ***array
+	);
+
+}

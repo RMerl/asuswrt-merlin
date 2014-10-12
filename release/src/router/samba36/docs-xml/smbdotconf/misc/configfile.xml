@@ -1,0 +1,24 @@
+<samba:parameter name="config file"
+                 context="G"
+				 type="string"
+		 hide="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>This allows you to override the config file 
+	to use, instead of the default (usually <filename moreinfo="none">smb.conf</filename>). 
+	There is a chicken and egg problem here as this option is set 
+	in the config file!</para>
+
+	<para>For this reason, if the name of the config file has changed 
+	when the parameters are loaded then it will reload them from 
+	the new config file.</para>
+
+	<para>This option takes the usual substitutions, which can 
+	be very useful.</para>
+
+	<para>If the config file doesn't exist then it won't be loaded 
+	(allowing you to special case the config files of just a few 
+	clients).</para>
+</description>
+<value type="example">/usr/local/samba/lib/smb.conf.%m</value>
+</samba:parameter>

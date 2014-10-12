@@ -1,0 +1,343 @@
+#include "idl_types.h"
+
+
+import "misc.idl";
+
+cpp_quote("#define MAX_RPC_GUID_ARRAY_COUNT (MAX_PAYLOAD / sizeof(struct GUID))")
+cpp_quote("#define eventlog6_EvtRpcSubscribePull    0x10000000")
+cpp_quote("#define eventlog6_EvtRpcVarFlagsModified 0x00000001")
+
+[
+    uuid (f6beaff7-1e19-4fbb-9f8f-b89e2018337c),
+    version(1.0),
+    endpoint("ncacn_ip_tcp:"),
+    helpstring("Eventlog6"),
+    pointer_default(unique)
+]
+interface eventlog6
+{
+	const int MAX_PAYLOAD                  = 2 * 1024 * 1024;
+	const int MAX_RPC_QUERY_LENGTH         = MAX_PAYLOAD / sizeof(uint16_t);
+	const int MAX_RPC_CHANNEL_NAME_LENGTH  = 512;
+	const int MAX_RPC_QUERY_CHANNEL_SIZE   = 512;
+	const int MAX_RPC_EVENT_ID_SIZE        = 256;
+	const int MAX_RPC_FILE_PATH_LENGTH     = 32768;
+	const int MAX_RPC_CHANNEL_PATH_LENGTH  = 32768;
+	const int MAX_RPC_BOOKMARK_LENGTH      = MAX_PAYLOAD / sizeof(uint16_t);
+	const int MAX_RPC_PUBLISHER_ID_LENGTH  = 2048;
+	const int MAX_RPC_PROPERTY_BUFFER_SIZE = MAX_PAYLOAD;
+	const int MAX_RPC_FILTER_LENGTH        = MAX_RPC_QUERY_LENGTH;
+	const int MAX_RPC_RECORD_COUNT         = 1024;
+	const int MAX_RPC_EVENT_SIZE           = MAX_PAYLOAD;
+	const int MAX_RPC_BATCH_SIZE           = MAX_PAYLOAD;
+	const int MAX_RPC_RENDERED_STRING_SIZE = MAX_PAYLOAD;
+	const int MAX_RPC_CHANNEL_COUNT        = 8192;
+	const int MAX_RPC_PUBLISHER_COUNT      = 8192;
+	const int MAX_RPC_EVENT_METADATA_COUNT = 256;
+	const int MAX_RPC_VARIANT_LIST_COUNT   = 256;
+	const int MAX_RPC_BOOLEAN8_ARRAY_COUNT = MAX_PAYLOAD / sizeof(uint8_t);
+	const int MAX_RPC_UINT32_ARRAY_COUNT   = MAX_PAYLOAD / sizeof(uint32_t);
+	const int MAX_RPC_UINT64_ARRAY_COUNT   = MAX_PAYLOAD / sizeof(uint64_t);
+	const int MAX_RPC_STRING_ARRAY_COUNT   = MAX_PAYLOAD / 512;
+	const int MAX_RPC_STRING_LENGTH        = MAX_PAYLOAD / sizeof(uint16_t);
+
+	typedef struct {
+		uint32 error;
+		uint32 sub_err;
+		uint32 sub_err_param;
+	} eventlog6_RpcInfo;
+
+	typedef struct {
+		[range(0, MAX_RPC_BOOLEAN8_ARRAY_COUNT)] uint32 count;
+		[size_is(count)] boolean8* ptr;
+	} eventlog6_boolean8Array;
+
+	typedef struct {
+		[range(0, MAX_RPC_UINT32_ARRAY_COUNT)] uint32 count;
+		[size_is(count)] uint32* ptr;
+	} eventlog6_UInt32Array;
+
+	typedef struct {
+		[range(0, MAX_RPC_UINT64_ARRAY_COUNT)] uint32 count;
+		[size_is(count)] hyper* ptr;
+	} eventlog6_UInt64Array;
+
+	typedef struct {
+		[range(0, MAX_RPC_STRING_ARRAY_COUNT)] uint32 count;
+		[size_is(count),charset(UTF16),string] uint16 *ptr;
+	} eventlog6_StringArray;
+
+	typedef struct {
+		[range(0, MAX_RPC_GUID_ARRAY_COUNT)] uint32 count;
+		[size_is(count)] GUID* ptr;
+	} eventlog6_GuidArray;
+
+	typedef [v1_enum] enum {
+		EvtRpcVarTypeNull          = 0,
+		EvtRpcVarTypeboolean8      = 1,
+		EvtRpcVarTypeUInt32        = 2,
+		EvtRpcVarTypeUInt64        = 3,
+		EvtRpcVarTypeString        = 4,
+		EvtRpcVarTypeGuid          = 5,
+		EvtRpcVarTypeboolean8Array = 6,
+		EvtRpcVarTypeUInt32Array   = 7,
+		EvtRpcVarTypeUInt64Array   = 8,
+		EvtRpcVarTypeStringArray   = 9,
+		EvtRpcVarTypeGuidArray     = 10
+	} eventlog6_EvtRpcVariantType;
+
+	typedef [v1_enum] enum {
+		EvtRpcChannelPath   = 0,
+		EvtRpcPublisherName = 1
+	} eventlog6_EvtRpcAssertConfigFlags;
+
+	typedef [switch_type(eventlog6_EvtRpcVariantType)] union {
+		[case(EvtRpcVarTypeNull)] int nullVal;
+		[case(EvtRpcVarTypeboolean8)] boolean8 boolean8Val;
+		[case(EvtRpcVarTypeUInt32)] uint32 uint32Val;
+		[case(EvtRpcVarTypeUInt64)] hyper uint64Val;
+		[case(EvtRpcVarTypeString)] [charset(UTF16),string] uint16 *stringVal;
+		[case(EvtRpcVarTypeGuid)] GUID *guidVal;
+		[case(EvtRpcVarTypeboolean8Array)] eventlog6_boolean8Array boolean8Array;
+		[case(EvtRpcVarTypeUInt32Array)] eventlog6_UInt32Array uint32Array;
+		[case(EvtRpcVarTypeUInt64Array)] eventlog6_UInt64Array uint64Array;
+		[case(EvtRpcVarTypeStringArray)] eventlog6_StringArray stringArray;
+		[case(EvtRpcVarTypeGuidArray)] eventlog6_GuidArray guidArray;
+	} eventlog6_EvtRpcVariantUnion;
+
+	typedef struct {
+		eventlog6_EvtRpcVariantType type;
+		uint32 flags;
+		[in,ref,switch_is(type)] eventlog6_EvtRpcVariantUnion *var;
+	} eventlog6_EvtRpcVariant;
+
+	typedef struct {
+		[range(0, MAX_RPC_VARIANT_LIST_COUNT)] uint32 count;
+		[size_is(count)] eventlog6_EvtRpcVariant* props;
+	} eventlog6_EvtRpcVariantList;
+
+	typedef struct {
+		[charset(UTF16),string] uint16 *name;
+		uint32 status;
+	} eventlog6_EvtRpcQueryChannelInfo;
+
+	WERROR eventlog6_EvtRpcRegisterRemoteSubscription(
+		[in, unique, range(0, MAX_RPC_CHANNEL_NAME_LENGTH),charset(UTF16),string] uint16 *channelPath,
+		[in, range(1, MAX_RPC_QUERY_LENGTH),charset(UTF16),string] uint16 *query,
+		[in, unique, range(0, MAX_RPC_BOOKMARK_LENGTH),charset(UTF16),string] uint16 *bookmarkXml,
+		[in] uint32 flags,
+		[out, ref] policy_handle *handle,
+		[out, ref] policy_handle *control,
+		[out, ref] uint32 *queryChannelInfoSize,
+		[out, size_is(,*queryChannelInfoSize), range(0, MAX_RPC_QUERY_CHANNEL_SIZE)]
+		eventlog6_EvtRpcQueryChannelInfo **queryChannelInfo,
+		[out, ref] eventlog6_RpcInfo *error);
+
+	WERROR eventlog6_EvtRpcRemoteSubscriptionNextAsync(
+		[in, ref] policy_handle *handle,
+		[in] uint32 numRequestedRecords,
+		[in] uint32 flags,
+		[out, ref] uint32 *numActualRecords,
+		[out, size_is(,*numActualRecords), range(0, MAX_RPC_RECORD_COUNT)]
+		uint32 **eventDataIndices,
+		[out, size_is(,*numActualRecords), range(0, MAX_RPC_RECORD_COUNT)]
+		uint32 **eventDataSizes,
+		[out, ref] uint32* resultBufferSize,
+		[out, size_is(,*resultBufferSize), range(0, MAX_RPC_BATCH_SIZE)]
+		uint8 **resultBuffer);
+
+	WERROR eventlog6_EvtRpcRemoteSubscriptionNext(
+		[in, ref] policy_handle *handle,
+		[in] uint32 numRequestedRecords,
+		[in] uint32 timeOut,
+		[in] uint32 flags,
+		[out, ref] uint32 *numActualRecords,
+		[out, size_is(,*numActualRecords), range(0, MAX_RPC_RECORD_COUNT)]
+		uint32 **eventDataIndices,
+		[out, size_is(,*numActualRecords), range(0, MAX_RPC_RECORD_COUNT)]
+		uint32 **eventDataSizes,
+		[out, ref] uint32 *resultBufferSize,
+		[out, size_is(,*resultBufferSize), range(0, MAX_RPC_BATCH_SIZE)]
+		uint8 **resultBuffer);
+
+	WERROR eventlog6_EvtRpcRemoteSubscriptionWaitAsync(
+		[in, ref] policy_handle *handle);
+
+	WERROR eventlog6_EvtRpcRegisterControllableOperation(
+		[out, ref] policy_handle *handle);
+
+	WERROR eventlog6_EvtRpcRegisterLogQuery(
+		[in, unique, range(0, MAX_RPC_CHANNEL_PATH_LENGTH),charset(UTF16),string] uint16 *path,
+		[in, range(1, MAX_RPC_QUERY_LENGTH),charset(UTF16),string] uint16 *query,
+		[in] uint32 flags,
+		[out, ref] policy_handle *handle,
+		[out, ref] policy_handle *opControl,
+		[out, ref] uint32 *queryChannelInfoSize,
+		[out, size_is(,*queryChannelInfoSize), range(0, MAX_RPC_QUERY_CHANNEL_SIZE)]
+		eventlog6_EvtRpcQueryChannelInfo **queryChannelInfo,
+		[out, ref] eventlog6_RpcInfo *error);
+
+	WERROR eventlog6_EvtRpcClearLog(
+		[in, ref] policy_handle *control,
+		[in, range(0, MAX_RPC_CHANNEL_NAME_LENGTH),charset(UTF16),string] uint16 *channelPath,
+		[in, unique, range(0, MAX_RPC_FILE_PATH_LENGTH),charset(UTF16),string] uint16 *backupPath,
+		[in] uint32 flags,
+		[out, ref] eventlog6_RpcInfo *error);
+
+	WERROR 	eventlog6_EvtRpcExportLog(
+		[in, ref] policy_handle *control,
+		[in, unique, range(0, MAX_RPC_CHANNEL_NAME_LENGTH),charset(UTF16),string] uint16 *channelPath,
+		[in, range(1, MAX_RPC_QUERY_LENGTH),charset(UTF16),string] uint16 *query,
+		[in, range(1, MAX_RPC_FILE_PATH_LENGTH),charset(UTF16),string] uint16 *backupPath,
+		[in] uint32 flags,
+		[out, ref] eventlog6_RpcInfo *error);
+
+	WERROR eventlog6_EvtRpcLocalizeExportLog(
+		[in, ref] policy_handle *control,
+		[in, range(1, MAX_RPC_FILE_PATH_LENGTH),charset(UTF16),string] uint16 *logFilePath,
+		[in] uint32 locale,
+		[in] uint32 flags,
+		[out, ref] eventlog6_RpcInfo *error);
+
+	WERROR eventlog6_EvtRpcMessageRender(
+		[in, ref] policy_handle *pubCfgObj,
+		[in, range(1, MAX_RPC_EVENT_ID_SIZE)] uint32 sizeEventId,
+		[in, size_is(sizeEventId)] uint8 *eventId,
+		[in] uint32 messageId,
+		[in] eventlog6_EvtRpcVariantList *values,
+		[in] uint32 flags,
+		[in] uint32 maxSizeString,
+		[out, ref] uint32 *actualSizeString,
+		[out, ref] uint32 *neededSizeString,
+		[out, size_is(,*actualSizeString), range(0, MAX_RPC_RENDERED_STRING_SIZE)]
+		uint8 **string,
+		[out, ref] eventlog6_RpcInfo *error);
+
+	WERROR eventlog6_EvtRpcMessageRenderDefault(
+		[in, range(1, MAX_RPC_EVENT_ID_SIZE)] uint32 sizeEventId,
+		[in, size_is(sizeEventId)] uint8 *eventId,
+		[in] uint32 messageId,
+		[in] eventlog6_EvtRpcVariantList *values,
+		[in] uint32 flags,
+		[in] uint32 maxSizeString,
+		[out, ref] uint32 *actualSizeString,
+		[out, ref] uint32 *neededSizeString,
+		[out, size_is(,*actualSizeString), range(0, MAX_RPC_RENDERED_STRING_SIZE)]
+		uint8 **string,
+		[out, ref] eventlog6_RpcInfo *error);
+
+	WERROR eventlog6_EvtRpcQueryNext(
+		[in, ref] policy_handle *logQuery,
+		[in] uint32 numRequestedRecords,
+		[in] uint32 timeOutEnd,
+		[in] uint32 flags,
+		[out, ref] uint32 *numActualRecords,
+		[out, size_is(,*numActualRecords), range(0, MAX_RPC_RECORD_COUNT)]
+		uint32 **eventDataIndices,
+		[out, size_is(,*numActualRecords), range(0, MAX_RPC_RECORD_COUNT)]
+		uint32 **eventDataSizes,
+		[out, ref] uint32 *resultBufferSize,
+		[out, size_is(,*resultBufferSize), range(0, MAX_RPC_BATCH_SIZE)]
+		uint8 **resultBuffer);
+
+	WERROR eventlog6_EvtRpcQuerySeek(
+		[in, ref] policy_handle *logQuery,
+		[in] hyper pos,
+		[in, unique, range(0, MAX_RPC_BOOKMARK_LENGTH),charset(UTF16),string] uint16 *bookmarkXml,
+		[in] uint32 timeOut,
+		[in] uint32 flags,
+		[out, ref] eventlog6_RpcInfo *error);
+
+	WERROR eventlog6_EvtRpcClose(
+		[in, out, ref] policy_handle **handle);
+
+	WERROR eventlog6_EvtRpcCancel(
+		[in, ref] policy_handle *handle);
+
+	WERROR eventlog6_EvtRpcAssertConfig(
+		[in, range(1, MAX_RPC_CHANNEL_NAME_LENGTH),charset(UTF16),string] uint16 *path,
+		[in] uint32 flags);
+
+	WERROR eventlog6_EvtRpcRetractConfig(
+		[in, range(1, MAX_RPC_CHANNEL_NAME_LENGTH),charset(UTF16),string] uint16 *path,
+		[in] uint32 flags );
+
+	WERROR eventlog6_EvtRpcOpenLogHandle(
+		[in, range(1, MAX_RPC_CHANNEL_NAME_LENGTH),charset(UTF16),string] uint16 *channel,
+		[in] uint32 flags,
+		[out, ref] policy_handle *handle,
+		[out, ref] eventlog6_RpcInfo *error);
+
+	WERROR eventlog6_EvtRpcGetLogFileInfo(
+		[in, ref] policy_handle *logHandle,
+		[in] uint32 propertyId,
+		[in, range(0, MAX_RPC_PROPERTY_BUFFER_SIZE)]
+		uint32 propertyValueBufferSize,
+		[out, size_is(propertyValueBufferSize)] uint8 *propertyValueBuffer,
+		[out, ref] uint32 *propertyValueBufferLength);
+
+	WERROR eventlog6_EvtRpcGetChannelList(
+		[in] uint32 flags,
+		[out, ref] uint32 *numChannelPaths,
+		[out, size_is(,*numChannelPaths), range(0, MAX_RPC_CHANNEL_COUNT),charset(UTF16),string]
+		uint16 ***channelPaths);
+
+	WERROR eventlog6_EvtRpcGetChannelConfig(
+		[in, range(1, MAX_RPC_CHANNEL_NAME_LENGTH),charset(UTF16),string] uint16 *channelPath,
+		[in] uint32 flags,
+		[out, ref] eventlog6_EvtRpcVariantList* props);
+
+	WERROR eventlog6_EvtRpcPutChannelConfig(
+		[in, range(1, MAX_RPC_CHANNEL_NAME_LENGTH),charset(UTF16),string] uint16 *channelPath,
+		[in] uint32 flags,
+		[in] eventlog6_EvtRpcVariantList* props,
+		[out, ref] eventlog6_RpcInfo *error);
+
+	WERROR eventlog6_EvtRpcGetPublisherList(
+		[in] uint32 flags,
+		[out, ref] uint32 *numPublisherIds,
+		[out, size_is(,*numPublisherIds), range(0, MAX_RPC_PUBLISHER_COUNT),charset(UTF16),string]
+		uint16 ***publisherIds);
+
+	WERROR eventlog6_EvtRpcGetPublisherListForChannel(
+		[in] uint16 *channelName,
+		[in] uint32 flags,
+		[out, ref] uint32* numPublisherIds,
+		[out, size_is(,*numPublisherIds), range(0, MAX_RPC_PUBLISHER_COUNT),charset(UTF16),string]
+		uint16 ***publisherIds);
+
+	WERROR eventlog6_EvtRpcGetPublisherMetadata(
+		[in, unique, range(0, MAX_RPC_PUBLISHER_ID_LENGTH),charset(UTF16),string] uint16 *publisherId,
+		[in, unique, range(0, MAX_RPC_FILE_PATH_LENGTH),charset(UTF16),string] uint16 *logFilePath,
+		[in] uint32 locale,
+		[in] uint32 flags,
+		[out, ref] eventlog6_EvtRpcVariantList* pubMetadataProps,
+		[out, ref] policy_handle *pubMetadata);
+
+	WERROR eventlog6_EvtRpcGetPublisherResourceMetadata(
+		[in, ref] policy_handle *handle,
+		[in] uint32 propertyId,
+		[in] uint32 flags,
+		[out, ref] eventlog6_EvtRpcVariantList *pubMetadataProps);
+
+	WERROR eventlog6_EvtRpcGetEventMetadataEnum(
+		[in, ref] policy_handle *pubMetadata,
+		[in] uint32 flags,
+		[in, unique, range(0, MAX_RPC_FILTER_LENGTH),charset(UTF16),string] uint16 *reservedForFilter,
+		[out, ref] policy_handle *eventMetaDataEnum);
+
+	WERROR eventlog6_EvtRpcGetNextEventMetadata(
+		[in, ref] policy_handle *eventMetaDataEnum,
+		[in] uint32 flags,
+		[in] uint32 numRequested,
+		[out, ref] uint32 *numReturned,
+		[out, size_is(,*numReturned), range(0, MAX_RPC_EVENT_METADATA_COUNT)]
+		eventlog6_EvtRpcVariantList **eventMetadataInstances);
+
+	WERROR eventlog6_EvtRpcGetClassicLogDisplayName(
+		[in, range(1, MAX_RPC_CHANNEL_NAME_LENGTH),charset(UTF16),string] uint16 *logName,
+		[in] uint32 locale,
+		[in] uint32 flags,
+		[out] uint16 **displayName);
+}
+

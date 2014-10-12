@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE preface PUBLIC "-//Samba-Team//DTD DocBook V4.2-Based Variant V1.0//EN" "http://www.samba.org/samba/DTD/samba-doc">
+<preface lang="en-US">
+<title>About the Cover Artwork</title>
+
+	<para>
+	The cover artwork of this book continues the freedom theme of the first edition of <quote>The Official Samba-3
+	HOWTO and Reference Guide</quote>.  We may look back upon the past to question the motives of those who have
+	gone before us. Seldom do we realise that the past owes us no answer, and despite what we may think of the
+	actions of those who have travelled lifes' road before us, we must feel a sense of pride and gratitude for
+	those who, in the past, have protected our liberties.
+	</para>
+
+	<para>
+	Developments in information technology continue to move at an alarming pace. Human nature causes us
+	to adopt and embrace new developments that appear to answer the needs of the moment, but that can entrap
+	us at a future date. There are many examples in the short history of information technology. MS-DOS was
+	seen as a tool that liberated users from the tyrany of large computer system operating costs, and that
+	made possible the rapid progres we are beneficiaries of today. Yet today we are inclined to look back with
+	disdain on MS-DOS as an obsolete and constraining technology that belongs are an era that is best
+	forgotten.
+	</para>
+
+	<para>
+	The embrace of Windows networking, Windows NT4, and MS Active Directory in more recent times, may seem
+	modern and progressive today, but sooner or later something better will replace them. The current
+	preoccupation with extended identity management solutions and with directories is not unexpected.
+	The day will come that these too will be evaluated, and what may seem refreshing and powerful may
+	be better recogized as the chilly winds of the night. To argue against progress is unthinkable,
+	no matter what may lie ahead.
+	</para>
+
+	<para>
+	The development of Samba is moving forwards. The changes since Samba 3.0.0 are amazing, yet many
+	users would like to see more and faster progress. The benefits of recent developments can be realized
+	quickly, but documentation is necessary to unlock the pandoras' box. It is our hope that this book
+	will help the network administrator to rapidly deploy the new features with minimum effort. As you
+	deploy and gain mileage from the new enablement, take the time to think through what may lie ahead.
+	Above all, take stock of the freedom of choice that Samba provides in your world, and enjoy the new 
+	potential for seamless interoperability.
+	</para>
+
+</preface>

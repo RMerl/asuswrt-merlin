@@ -1,0 +1,12 @@
+This module (ntvfs 'cifsposix') provides a simple posix backend which
+provides better semantics for clients which implement the cifs unix
+extensions or the newer cifs posix extensions
+
+WARNING: All file access is done as user 'root'!!!
+	 Only use this module for testing, with only test data!!! 
+
+For activating this module use:
+
+[testshare]
+	path = /tmp/testshare
+	nfvfs handler = cifsposix 

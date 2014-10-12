@@ -1,0 +1,48 @@
+#!/usr/bin/env python
+
+PDB_TDBSAM_SRC =    'pdb_tdb.c'
+PDB_LDAP_SRC =      'pdb_ldap.c pdb_nds.c pdb_ipa.c'
+PDB_ADS_SRC =       'pdb_ads.c'
+PDB_SMBPASSWD_SRC = 'pdb_smbpasswd.c'
+PDB_WBC_SAM_SRC =   'pdb_wbc_sam.c'
+
+bld.SAMBA3_SUBSYSTEM('pdb',
+                    source='pdb_interface.c',
+                    deps='',
+                    vars=locals())
+
+bld.SAMBA3_MODULE('pdb_tdbsam',
+                 subsystem='pdb',
+                 source=PDB_TDBSAM_SRC,
+                 init_function='',
+                 internal_module=bld.SAMBA3_IS_STATIC_MODULE('pdb_tdbsam'),
+                 enabled=bld.SAMBA3_IS_ENABLED_MODULE('pdb_tdbsam'))
+
+bld.SAMBA3_MODULE('pdb_ldap',
+                 subsystem='pdb',
+                 source=PDB_LDAP_SRC,
+                 init_function='',
+                 internal_module=bld.SAMBA3_IS_STATIC_MODULE('pdb_ldap'),
+                 enabled=bld.SAMBA3_IS_ENABLED_MODULE('pdb_ldap') and bld.env.HAVE_LDAP)
+
+bld.SAMBA3_MODULE('pdb_ads',
+                 subsystem='pdb',
+                 source=PDB_ADS_SRC,
+                 deps='LIBCLI_LDAP_NDR TLDAP',
+                 init_function='',
+                 internal_module=bld.SAMBA3_IS_STATIC_MODULE('pdb_ads'),
+                 enabled=bld.SAMBA3_IS_ENABLED_MODULE('pdb_ads'))
+
+bld.SAMBA3_MODULE('pdb_smbpasswd',
+                 subsystem='pdb',
+                 source=PDB_SMBPASSWD_SRC,
+                 init_function='',
+                 internal_module=bld.SAMBA3_IS_STATIC_MODULE('pdb_smbpasswd'),
+                 enabled=bld.SAMBA3_IS_ENABLED_MODULE('pdb_smbpasswd'))
+
+bld.SAMBA3_MODULE('pdb_wbc_sam',
+                 subsystem='pdb',
+                 source=PDB_WBC_SAM_SRC,
+                 init_function='',
+                 internal_module=bld.SAMBA3_IS_STATIC_MODULE('pdb_wbc_sam'),
+                 enabled=bld.SAMBA3_IS_ENABLED_MODULE('pdb_wbc_sam'))

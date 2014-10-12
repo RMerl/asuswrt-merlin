@@ -1,0 +1,68 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>vfs_shadow_copy2</title><link rel="stylesheet" href="../samba.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.75.2"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="refentry" title="vfs_shadow_copy2"><a name="vfs_shadow_copy2.8"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>vfs_shadow_copy2 &#8212; Expose snapshots to Windows clients as shadow copies.</p></div><div class="refsynopsisdiv" title="Synopsis"><h2>Synopsis</h2><div class="cmdsynopsis"><p><code class="literal">vfs objects = shadow_copy2</code></p></div></div><div class="refsect1" title="DESCRIPTION"><a name="id266340"></a><h2>DESCRIPTION</h2><p>This VFS module is part of the
+	<a class="citerefentry" href="samba.7.html"><span class="citerefentry"><span class="refentrytitle">samba</span>(7)</span></a> suite.</p><p>The <code class="literal">vfs_shadow_copy2</code> VFS module functionality
+	that is similar to Microsoft Shadow Copy services. When setup properly,
+	this module allows Microsoft Shadow Copy clients to browse
+	"shadow copies" on Samba shares.
+	</p><p>This is a 2nd implementation of a shadow copy module. This
+	version has the following features:</p><div class="orderedlist"><ol class="orderedlist" type="1"><li class="listitem"><p>You don't need to populate your shares with symlinks to the
+	snapshots. This can be very important when you have thousands of
+	shares, or use [homes].</p></li><li class="listitem"><p>The inode number of the files is altered so it is different
+	from the original. This allows the 'restore' button to work
+	without a sharing violation.</p></li></ol></div><p>This module is stackable.</p></div><div class="refsect1" title="CONFIGURATION"><a name="id266853"></a><h2>CONFIGURATION</h2><p><code class="literal">vfs_shadow_copy2</code> relies on a filesystem
+	snapshot implementation. Many common filesystems have native
+	support for this.
+	</p><p>Filesystem snapshots must be mounted on
+	specially named directories in order to be recognized by
+	<code class="literal">vfs_shadow_copy2</code>. The snapshot mount points must
+	be immediate children of a the directory being shared.</p><p>The snapshot naming convention is @GMT-YYYY.MM.DD-hh.mm.ss,
+	where:
+	</p><div class="itemizedlist"><ul class="itemizedlist" type="disc"><li class="listitem"><p><code class="literal">YYYY</code> is the 4 digit year</p></li><li class="listitem"><p><code class="literal">MM</code> is the 2 digit month</p></li><li class="listitem"><p><code class="literal">DD</code> is the 2 digit day</p></li><li class="listitem"><p><code class="literal">hh</code> is the 2 digit hour</p></li><li class="listitem"><p><code class="literal">mm</code> is the 2 digit minute</p></li><li class="listitem"><p><code class="literal">ss</code> is the 2 digit second.</p></li></ul></div><p>
+	</p><p>The <code class="literal">vfs_shadow_copy2</code> snapshot naming convention can be
+	produced with the following <a class="citerefentry" href="date.1.html"><span class="citerefentry"><span class="refentrytitle">date</span>(1)</span></a> command:
+	</p><pre class="programlisting">
+	TZ=GMT date +@GMT-%Y.%m.%d-%H.%M.%S
+	</pre></div><div class="refsect1" title="OPTIONS"><a name="id265758"></a><h2>OPTIONS</h2><div class="variablelist"><dl><dt><span class="term">shadow:snapdir = SNAPDIR
+                </span></dt><dd><p>Path to the directory where snapshots are kept.
+                </p></dd><dt><span class="term">shadow:basedir = BASEDIR
+		</span></dt><dd><p>Path to the base directory that snapshots are from.
+                </p></dd><dt><span class="term">shadow:sort = asc/desc, or not specified for unsorted (default)
+                </span></dt><dd><p>By this parameter one can specify that the shadow
+		copy directories should be sorted before they are sent to the
+		client.  This can be beneficial as unix filesystems are usually
+		not listed alphabetically sorted. If enabled, you typically
+		want to specify descending order.
+                </p></dd><dt><span class="term">shadow:localtime = yes/no
+                </span></dt><dd><p>This is an optional parameter that indicates whether the
+		snapshot names are in UTC/GMT or in local time. By default
+		UTC is expected.
+                </p></dd><dt><span class="term">shadow:format = format specification for snapshot names
+                </span></dt><dd><p>This is an optional parameter that specifies the format
+		specification for the naming of snapshots.  The format must
+		be compatible with the conversion specifications recognized
+		by str[fp]time.  The default value is "@GMT-%Y.%m.%d-%H.%M.%S".
+                </p></dd><dt><span class="term">shadow:fixinodes = yes/no
+                </span></dt><dd><p>If you enable <code class="literal">shadow:fixinodes
+		</code> then this module will modify the apparent inode
+		number of files in the snapshot directories using a hash of the
+		files path. This is needed for snapshot systems where the
+		snapshots have the same device:inode number as the original
+		files (such as happens with GPFS snapshots). If you don't set
+		this option then the 'restore' button in the shadow copy UI
+		will fail with a sharing violation.
+                </p></dd></dl></div></div><div class="refsect1" title="EXAMPLES"><a name="id265863"></a><h2>EXAMPLES</h2><p>Add shadow copy support to user home directories:</p><pre class="programlisting">
+        <em class="parameter"><code>[homes]</code></em>
+	<a class="link" href="smb.conf.5.html#VFSOBJECTS" target="_top">vfs objects = shadow_copy2</a>
+	<a class="link" href="smb.conf.5.html#SHADOW:SNAPDIR" target="_top">shadow:snapdir = /data/snapshots</a>
+	<a class="link" href="smb.conf.5.html#SHADOW:BASEDIR" target="_top">shadow:basedir = /data/home</a>
+	<a class="link" href="smb.conf.5.html#SHADOW:SORT" target="_top">shadow:sort = desc</a>
+</pre></div><div class="refsect1" title="CAVEATS"><a name="id265927"></a><h2>CAVEATS</h2><p>This is not a backup, archival, or version control solution.
+	</p><p>With Samba or Windows servers,
+	<code class="literal">vfs_shadow_copy2</code> is designed to be an end-user
+	tool only. It does not replace or enhance your backup and
+	archival solutions and should in no way be considered as
+	such. Additionally, if you need version control, implement a
+	version control system.</p></div><div class="refsect1" title="VERSION"><a name="id265949"></a><h2>VERSION</h2><p>This man page is correct for version 3.2.7 of the Samba suite.
+	</p></div><div class="refsect1" title="AUTHOR"><a name="id265959"></a><h2>AUTHOR</h2><p>The original Samba software and related utilities
+	were created by Andrew Tridgell. Samba is now developed
+	by the Samba Team as an Open Source project similar
+	to the way the Linux kernel is developed.</p></div></div></body></html>

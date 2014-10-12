@@ -1,0 +1,30 @@
+From 0f6a49d9fb4a3b9f917ee9caed3a94e44db045a5 Mon Sep 17 00:00:00 2001
+From: Andrew Tridgell <tridge@samba.org>
+Date: Wed, 17 Feb 2010 15:28:51 +1100
+Subject: [PATCH 5/5] windows doesn't return valid GSSAPI sequence numbers on its
+ TSIG-GSS DNS update replies
+
+---
+ lib/dns/gssapictx.c |    5 ++++-
+ 1 files changed, 4 insertions(+), 1 deletions(-)
+
+diff --git a/lib/dns/gssapictx.c b/lib/dns/gssapictx.c
+index 879393c..69b66c5 100644
+--- a/lib/dns/gssapictx.c
++++ b/lib/dns/gssapictx.c
+@@ -536,8 +536,11 @@ dst_gssapi_initctx(dns_name_t *name, isc_buffer_t *intoken,
+		gintokenp = NULL;
+	}
+
++	/* note that we don't set GSS_C_SEQUENCE_FLAG as Windows DNS
++	 * servers don't like it
++	 */
+	flags = GSS_C_REPLAY_FLAG | GSS_C_MUTUAL_FLAG | GSS_C_DELEG_FLAG |
+-		GSS_C_SEQUENCE_FLAG | GSS_C_INTEG_FLAG;
++		GSS_C_INTEG_FLAG;
+
+	gret = gss_init_sec_context(&minor, GSS_C_NO_CREDENTIAL, gssctx,
+				    gname, GSS_SPNEGO_MECHANISM, flags,
+--
+1.6.3.3
+

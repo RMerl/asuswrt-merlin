@@ -1,0 +1,114 @@
+'\" t
+.\"     Title: idmap_rid
+.\"    Author: [see the "AUTHOR" section]
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date: 09/18/2013
+.\"    Manual: System Administration tools
+.\"    Source: Samba 3.6
+.\"  Language: English
+.\"
+.TH "IDMAP_RID" "8" "09/18/2013" "Samba 3\&.6" "System Administration tools"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+idmap_rid \- Samba\*(Aqs idmap_rid Backend for Winbind
+.SH "DESCRIPTION"
+.PP
+The idmap_rid backend provides a way to use an algorithmic mapping scheme to map UIDs/GIDs and SIDs\&. No database is required in this case as the mapping is deterministic\&.
+.PP
+Note that the idmap_rid module has changed considerably since Samba versions 3\&.0\&. and 3\&.2\&. Currently, there should to be an explicit idmap configuration for each domain that should use the idmap_rid backend, using disjoint ranges\&. One usually needs to define a writeable default idmap range, using a backent like
+\fItdb\fR
+or
+\fIldap\fR
+that can create unix ids, in order to be able to map the BUILTIN sids and other domains, and also in order to be able to create group mappings\&. See the example below\&.
+.PP
+Note that the old syntax
+\fIidmap backend = rid:"DOM1=range DOM2=range2 \&.\&.\&."\fR
+is not supported any more since Samba version 3\&.0\&.25\&.
+.SH "IDMAP OPTIONS"
+.PP
+range = low \- high
+.RS 4
+Defines the available matching uid and gid range for which the backend is authoritative\&. Note that the range acts as a filter\&. If algorithmically determined UID or GID fall outside the range, they are ignored and the corresponding map is discarded\&. It is intended as a way to avoid accidental UID/GID overlaps between local and remotely defined IDs\&.
+.RE
+.PP
+base_rid = INTEGER
+.RS 4
+Defines the base integer used to build SIDs out of a UID or a GID, and to rebase the UID or GID to be obtained from a SID\&. This means SIDs with a RID less than the base rid are filtered\&. The default is not to restrict the allowed rids at all, i\&.e\&. a base_rid value of 0\&. A good value for the base_rid can be 1000, since user RIDs by default start at 1000 (512 hexadecimal)\&.
+.sp
+Use of this parameter is deprecated\&.
+.RE
+.SH "THE MAPPING FORMULAS"
+.PP
+The Unix ID for a RID is calculated this way:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+			ID = RID \- BASE_RID + LOW_RANGE_ID\&.
+		
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+Correspondingly, the formula for calculating the RID for a given Unix ID is this:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+			RID = ID + BASE_RID \- LOW_RANGE_ID\&.
+		
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.SH "EXAMPLES"
+.PP
+This example shows how to configure two domains with idmap_rid, the principal domain and a trusted domain, leaving the default id mapping scheme at tdb\&. The example also demonstrates the use of the base_rid parameter for the trusted domain\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+	[global]
+	security = domain
+	workgroup = MAIN
+
+	idmap config * : backend        = tdb
+	idmap config * : range          = 1000000\-1999999
+
+	idmap config MAIN : backend     = rid
+	idmap config MAIN : range       = 10000 \- 49999
+
+	idmap config TRUSTED : backend  = rid
+	idmap config TRUSTED : range    = 50000 \- 99999
+	idmap config TRUSTED : base_rid = 1000
+	
+.fi
+.if n \{\
+.RE
+.\}
+.SH "AUTHOR"
+.PP
+The original Samba software and related utilities were created by Andrew Tridgell\&. Samba is now developed by the Samba Team as an Open Source project similar to the way the Linux kernel is developed\&.

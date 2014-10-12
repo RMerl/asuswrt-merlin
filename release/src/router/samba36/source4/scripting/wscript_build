@@ -1,0 +1,8 @@
+#!/usr/bin/env python
+
+from samba_utils import MODE_755
+
+bld.INSTALL_FILES('${SBINDIR}','bin/upgradeprovision bin/samba_dnsupdate bin/samba_spnupdate',
+                  chmod=MODE_755, python_fixup=True, flat=True)
+bld.INSTALL_FILES('${BINDIR}','bin/testparm',
+                  chmod=MODE_755, python_fixup=True, flat=True)

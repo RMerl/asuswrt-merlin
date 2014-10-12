@@ -1,0 +1,178 @@
+'\" t
+.\"     Title: pam_winbind
+.\"    Author: [see the "AUTHOR" section]
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date: 09/18/2013
+.\"    Manual: 8
+.\"    Source: Samba 3.6
+.\"  Language: English
+.\"
+.TH "PAM_WINBIND" "8" "09/18/2013" "Samba 3\&.6" "8"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+pam_winbind \- PAM module for Winbind
+.SH "DESCRIPTION"
+.PP
+This tool is part of the
+\fBsamba\fR(7)
+suite\&.
+.PP
+pam_winbind is a PAM module that can authenticate users against the local domain by talking to the Winbind daemon\&.
+.SH "SYNOPSIS"
+.PP
+Edit the PAM system config /etc/pam\&.d/service and modify it as the following example shows:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+			    \&.\&.\&.
+			    auth      required        pam_env\&.so
+			    auth      sufficient      pam_unix2\&.so
+			+++ auth      required        pam_winbind\&.so  use_first_pass
+			    account   requisite       pam_unix2\&.so
+			+++ account   required        pam_winbind\&.so  use_first_pass
+			+++ password  sufficient      pam_winbind\&.so
+			    password  requisite       pam_pwcheck\&.so  cracklib
+			    password  required        pam_unix2\&.so    use_authtok
+			    session   required        pam_unix2\&.so
+			+++ session   required        pam_winbind\&.so
+			    \&.\&.\&.
+		
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+Make sure that pam_winbind is one of the first modules in the session part\&. It may retrieve kerberos tickets which are needed by other modules\&.
+.SH "OPTIONS"
+.PP
+pam_winbind supports several options which can either be set in the PAM configuration files or in the pam_winbind configuration file situated at
+/etc/security/pam_winbind\&.conf\&. Options from the PAM configuration file take precedence to those from the configuration file\&. See
+\fBpam_winbind.conf\fR(5)
+for further details\&.
+.PP
+debug
+.RS 4
+Gives debugging output to syslog\&.
+.RE
+.PP
+debug_state
+.RS 4
+Gives detailed PAM state debugging output to syslog\&.
+.RE
+.PP
+require_membership_of=[SID or NAME]
+.RS 4
+If this option is set, pam_winbind will only succeed if the user is a member of the given SID or NAME\&. A SID can be either a group\-SID, an alias\-SID or even an user\-SID\&. It is also possible to give a NAME instead of the SID\&. That name must have the form:
+\fIMYDOMAIN\e\emygroup\fR
+or
+\fIMYDOMAIN\e\emyuser\fR\&. pam_winbind will, in that case, lookup the SID internally\&. Note that NAME may not contain any spaces\&. It is thus recommended to only use SIDs\&. You can verify the list of SIDs a user is a member of with
+wbinfo \-\-user\-sids=SID\&.
+.RE
+.PP
+use_first_pass
+.RS 4
+By default, pam_winbind tries to get the authentication token from a previous module\&. If no token is available it asks the user for the old password\&. With this option, pam_winbind aborts with an error if no authentication token from a previous module is available\&.
+.RE
+.PP
+try_first_pass
+.RS 4
+Same as the use_first_pass option (previous item), except that if the primary password is not valid, PAM will prompt for a password\&.
+.RE
+.PP
+use_authtok
+.RS 4
+Set the new password to the one provided by the previously stacked password module\&. If this option is not set pam_winbind will ask the user for the new password\&.
+.RE
+.PP
+krb5_auth
+.RS 4
+pam_winbind can authenticate using Kerberos when winbindd is talking to an Active Directory domain controller\&. Kerberos authentication must be enabled with this parameter\&. When Kerberos authentication can not succeed (e\&.g\&. due to clock skew), winbindd will fallback to samlogon authentication over MSRPC\&. When this parameter is used in conjunction with
+\fIwinbind refresh tickets\fR, winbind will keep your Ticket Granting Ticket (TGT) uptodate by refreshing it whenever necessary\&.
+.RE
+.PP
+krb5_ccache_type=[type]
+.RS 4
+When pam_winbind is configured to try kerberos authentication by enabling the
+\fIkrb5_auth\fR
+option, it can store the retrieved Ticket Granting Ticket (TGT) in a credential cache\&. The type of credential cache can be set with this option\&. Currently the only supported value is:
+\fIFILE\fR\&. In that case a credential cache in the form of /tmp/krb5cc_UID will be created, where UID is replaced with the numeric user id\&. Leave empty to just do kerberos authentication without having a ticket cache after the logon has succeeded\&.
+.RE
+.PP
+cached_login
+.RS 4
+Winbind allows to logon using cached credentials when
+\fIwinbind offline logon\fR
+is enabled\&. To use this feature from the PAM module this option must be set\&.
+.RE
+.PP
+silent
+.RS 4
+Do not emit any messages\&.
+.RE
+.PP
+mkhomedir
+.RS 4
+Create homedirectory for a user on\-the\-fly, option is valid in PAM session block\&.
+.RE
+.PP
+warn_pwd_expire
+.RS 4
+Defines number of days before pam_winbind starts to warn about passwords that are going to expire\&. Defaults to 14 days\&.
+.RE
+.SH "PAM DATA EXPORTS"
+.PP
+This section describes the data exported in the PAM stack which could be used in other PAM modules\&.
+.PP
+PAM_WINBIND_HOMEDIR
+.RS 4
+This is the Windows Home Directory set in the profile tab in the user settings on the Active Directory Server\&. This could be a local path or a directory on a share mapped to a drive\&.
+.RE
+.PP
+PAM_WINBIND_LOGONSCRIPT
+.RS 4
+The path to the logon script which should be executed if a user logs in\&. This is normally a relative path to the script stored on the server\&.
+.RE
+.PP
+PAM_WINBIND_LOGONSERVER
+.RS 4
+This exports the Active Directory server we are authenticating against\&. This can be used as a variable later\&.
+.RE
+.PP
+PAM_WINBIND_PROFILEPATH
+.RS 4
+This is the profile path set in the profile tab in the user settings\&. Normally the home directory is synced with this directory on a share\&.
+.RE
+.SH "SEE ALSO"
+.PP
+\fBpam_winbind.conf\fR(5),
+\fBwbinfo\fR(1),
+\fBwinbindd\fR(8),
+\fBsmb.conf\fR(5)
+.SH "VERSION"
+.PP
+This man page is correct for version 3 of Samba\&.
+.SH "AUTHOR"
+.PP
+The original Samba software and related utilities were created by Andrew Tridgell\&. Samba is now developed by the Samba Team as an Open Source project similar to the way the Linux kernel is developed\&.
+.PP
+This manpage was written by Jelmer Vernooij and Guenther Deschner\&.

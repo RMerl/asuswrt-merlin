@@ -1,0 +1,319 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>Chapter 25. Advanced Network Management</title><link rel="stylesheet" href="../samba.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.75.2"><link rel="home" href="index.html" title="The Official Samba 3.5.x HOWTO and Reference Guide"><link rel="up" href="optional.html" title="Part III. Advanced Configuration"><link rel="prev" href="winbind.html" title="Chapter 24. Winbind: Use of Domain Accounts"><link rel="next" href="PolicyMgmt.html" title="Chapter 26. System and Account Policies"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">Chapter 25. Advanced Network Management</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="winbind.html">Prev</a> </td><th width="60%" align="center">Part III. Advanced Configuration</th><td width="20%" align="right"> <a accesskey="n" href="PolicyMgmt.html">Next</a></td></tr></table><hr></div><div class="chapter" title="Chapter 25. Advanced Network Management"><div class="titlepage"><div><div><h2 class="title"><a name="AdvancedNetworkManagement"></a>Chapter 25. Advanced Network Management</h2></div><div><div class="author"><h3 class="author"><span class="firstname">John</span> <span class="othername">H.</span> <span class="surname">Terpstra</span></h3><div class="affiliation"><span class="orgname">Samba Team<br></span><div class="address"><p><code class="email">&lt;<a class="email" href="mailto:jht@samba.org">jht@samba.org</a>&gt;</code></p></div></div></div></div><div><p class="pubdate">June 15 2005</p></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="sect1"><a href="AdvancedNetworkManagement.html#id421386">Features and Benefits</a></span></dt><dt><span class="sect1"><a href="AdvancedNetworkManagement.html#id421408">Remote Server Administration</a></span></dt><dt><span class="sect1"><a href="AdvancedNetworkManagement.html#id421545">Remote Desktop Management</a></span></dt><dd><dl><dt><span class="sect2"><a href="AdvancedNetworkManagement.html#id421570">Remote Management from NoMachine.Com</a></span></dt><dt><span class="sect2"><a href="AdvancedNetworkManagement.html#id421909">Remote Management with ThinLinc</a></span></dt></dl></dd><dt><span class="sect1"><a href="AdvancedNetworkManagement.html#id422084">Network Logon Script Magic</a></span></dt><dd><dl><dt><span class="sect2"><a href="AdvancedNetworkManagement.html#id422250">Adding Printers without User Intervention</a></span></dt><dt><span class="sect2"><a href="AdvancedNetworkManagement.html#id422290">Limiting Logon Connections</a></span></dt></dl></dd></dl></div><p>
+<a class="indexterm" name="id421376"></a>
+This section documents peripheral issues that are of great importance to network
+administrators who want to improve network resource access control, to automate the user
+environment, and to make their lives a little easier.
+</p><div class="sect1" title="Features and Benefits"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id421386"></a>Features and Benefits</h2></div></div></div><p>
+Often the difference between a working network environment and a well-appreciated one can
+best be measured by the <span class="emphasis"><em>little things</em></span> that make everything work more
+harmoniously. A key part of every network environment solution is the ability to remotely
+manage MS Windows workstations, remotely access the Samba server, provide customized
+logon scripts, as well as other housekeeping activities that help to sustain more reliable
+network operations.
+</p><p>
+This chapter presents information on each of these areas. They are placed here, and not in
+other chapters, for ease of reference.
+</p></div><div class="sect1" title="Remote Server Administration"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id421408"></a>Remote Server Administration</h2></div></div></div><p><span class="quote">&#8220;<span class="quote">How do I get User Manager and Server Manager?</span>&#8221;</span></p><p>
+<a class="indexterm" name="id421420"></a>
+<a class="indexterm" name="id421427"></a>
+<a class="indexterm" name="id421434"></a>
+Since I do not need to buy an <span class="application">NT4 server</span>, how do I get the User Manager for Domains
+and the Server Manager?
+</p><p>
+<a class="indexterm" name="id421451"></a>
+<a class="indexterm" name="id421458"></a>
+Microsoft distributes a version of these tools called <code class="filename">Nexus.exe</code> for installation 
+on <span class="application">Windows 9x/Me</span> systems. The tools set includes:
+</p><div class="itemizedlist"><ul class="itemizedlist" type="disc"><li class="listitem"><p>Server Manager</p></li><li class="listitem"><p>User Manager for Domains</p></li><li class="listitem"><p>Event Viewer</p></li></ul></div><p>
+Download the archived file at the Microsoft <a class="ulink" href="ftp://ftp.microsoft.com/Softlib/MSLFILES/NEXUS.EXE" target="_top">Nexus</a> link.
+</p><p>
+<a class="indexterm" name="id421509"></a>
+<a class="indexterm" name="id421516"></a>
+<a class="indexterm" name="id421523"></a>
+The <span class="application">Windows NT 4.0</span> version of the User Manager for 
+Domains and Server Manager are available from Microsoft
+<a class="ulink" href="ftp://ftp.microsoft.com/Softlib/MSLFILES/SRVTOOLS.EXE" target="_top">via ftp</a>.
+</p></div><div class="sect1" title="Remote Desktop Management"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id421545"></a>Remote Desktop Management</h2></div></div></div><p>
+<a class="indexterm" name="id421552"></a>
+<a class="indexterm" name="id421559"></a>
+There are a number of possible remote desktop management solutions that range from free
+through costly. Do not let that put you off. Sometimes the most costly solution is the
+most cost effective. In any case, you will need to draw your own conclusions as to which
+is the best tool in your network environment.
+</p><div class="sect2" title="Remote Management from NoMachine.Com"><div class="titlepage"><div><div><h3 class="title"><a name="id421570"></a>Remote Management from NoMachine.Com</h3></div></div></div><p>
+	<a class="indexterm" name="id421577"></a>
+	The following information was posted to the Samba mailing list at Apr 3 23:33:50 GMT 2003.
+	It is presented in slightly edited form (with author details omitted for privacy reasons).
+	The entire answer is reproduced below with some comments removed.
+	</p><p><span class="quote">&#8220;<span class="quote">
+<a class="indexterm" name="id421591"></a>
+		I have a wonderful Linux/Samba server running as PDC for a network. Now I would like to add remote
+		desktop capabilities so users outside could login to the system and get their desktop up from home or
+		another country.
+		</span>&#8221;</span></p><p><span class="quote">&#8220;<span class="quote">
+<a class="indexterm" name="id421604"></a>
+<a class="indexterm" name="id421611"></a>
+<a class="indexterm" name="id421617"></a>
+<a class="indexterm" name="id421624"></a>
+		Is there a way to accomplish this? Do I need a Windows Terminal server?  Do I need to configure it so
+		it is a member of the domain or a BDC or PDC? Are there any hacks for MS Windows XP to enable remote login
+		even if the computer is in a domain?
+		</span>&#8221;</span></p><p>
+		Answer provided: Check out the new offer of <span class="quote">&#8220;<span class="quote">NX</span>&#8221;</span> software from
+		<a class="ulink" href="http://www.nomachine.com/" target="_top">NoMachine</a>.
+		</p><p>
+<a class="indexterm" name="id421652"></a>
+<a class="indexterm" name="id421659"></a>
+<a class="indexterm" name="id421665"></a>
+	It implements an easy-to-use interface to the Remote X protocol as
+	well as incorporating VNC/RFB and rdesktop/RDP into it, but at a speed
+	performance much better than anything you may have ever seen.
+	</p><p>
+<a class="indexterm" name="id421677"></a>
+	Remote X is not new at all, but what they did achieve successfully is
+	a new way of compression and caching technologies that makes the thing
+	fast enough to run even over slow modem/ISDN connections.
+	</p><p>
+<a class="indexterm" name="id421689"></a>
+<a class="indexterm" name="id421696"></a>
+<a class="indexterm" name="id421703"></a>
+<a class="indexterm" name="id421710"></a>
+	I test drove their (public) Red Hat machine in Italy, over a loaded
+	Internet connection, with enabled thumbnail previews in KDE konqueror,
+	which popped up immediately on <span class="quote">&#8220;<span class="quote">mouse-over</span>&#8221;</span>. From inside that (remote X)
+	session I started a rdesktop session on another, a Windows XP machine.
+	To test the performance, I played Pinball. I am proud to announce
+	that my score was 631,750 points at first try.
+	</p><p>
+<a class="indexterm" name="id421725"></a>
+<a class="indexterm" name="id421732"></a>
+<a class="indexterm" name="id421739"></a>
+<a class="indexterm" name="id421745"></a>
+	NX performs better on my local LAN than any of the other <span class="quote">&#8220;<span class="quote">pure</span>&#8221;</span>
+	connection methods I use from time to time: TightVNC, rdesktop or
+	Remote X. It is even faster than a direct crosslink connection between
+	two nodes.
+	</p><p>
+<a class="indexterm" name="id421761"></a>
+<a class="indexterm" name="id421768"></a>
+<a class="indexterm" name="id421775"></a>
+	I even got sound playing from the Remote X app to my local boxes, and
+	had a working <span class="quote">&#8220;<span class="quote">copy'n'paste</span>&#8221;</span> from an NX  window (running a KDE session
+	in Italy) to my Mozilla mailing agent. These guys are certainly doing
+	something right!
+	</p><p>
+	I recommend test driving NX to anybody with a only a passing interest in remote computing
+	the <a class="ulink" href="http://www.nomachine.com/testdrive.php" target="_top">NX</a> utility.
+	</p><p>
+	Just download the free-of-charge client software (available for Red Hat,
+	SuSE, Debian and Windows) and be up and running within 5 minutes (they
+	need to send you your account data, though, because you are assigned
+	a real UNIX account on their testdrive.nomachine.com box).
+	</p><p>
+	They plan to get to the point were you can have NX application servers
+	running as a cluster of nodes, and users simply start an NX session locally
+	and can select applications to run transparently (apps may even run on
+	another NX node, but pretend to be on the same as used for initial login,
+	because it displays in the same window. You also can run it
+	full-screen, and after a short time you forget that it is a remote session
+	at all).
+	</p><p>
+<a class="indexterm" name="id421815"></a>
+	Now the best thing for last: All the core compression and caching
+	technologies are released under the GPL and available as source code
+	to anybody who wants to build on it! These technologies are working,
+	albeit started from the command line only (and very inconvenient to
+	use in order to get a fully running remote X session up and running).
+	</p><p>
+	To answer your questions:
+	</p><div class="itemizedlist"><ul class="itemizedlist" type="disc"><li class="listitem"><p>
+		You do not need to install a terminal server; XP has RDP support built in.
+		</p></li><li class="listitem"><p>
+		NX is much cheaper than Citrix  and comparable in performance, probably faster.
+		</p></li><li class="listitem"><p>
+		You do not need to hack XP  it just works.
+		</p></li><li class="listitem"><p>
+		You log into the XP box from remote transparently (and I think there is no
+		need to change anything to get a connection, even if authentication is against a domain).
+		</p></li><li class="listitem"><p>
+		The NX core technologies are all Open Source and released under the GPL 
+		you can now use a (very inconvenient) command line at no cost,
+		but you can buy a comfortable (proprietary) NX GUI front end for money.
+		</p></li><li class="listitem"><p>
+<a class="indexterm" name="id421870"></a>
+<a class="indexterm" name="id421876"></a>
+<a class="indexterm" name="id421883"></a>
+<a class="indexterm" name="id421890"></a>
+<a class="indexterm" name="id421897"></a>
+		NoMachine is encouraging and offering help to OSS/Free Software implementations
+		for such a front-end too, even if it means competition to them (they have written
+		to this effect even to the LTSP, KDE, and GNOME developer mailing lists).
+		</p></li></ul></div></div><div class="sect2" title="Remote Management with ThinLinc"><div class="titlepage"><div><div><h3 class="title"><a name="id421909"></a>Remote Management with ThinLinc</h3></div></div></div><p>
+	Another alternative for remote access is <span class="emphasis"><em>ThinLinc</em></span> from Cendio.
+	</p><p>
+<a class="indexterm" name="id421924"></a>
+<a class="indexterm" name="id421931"></a>
+<a class="indexterm" name="id421938"></a>
+<a class="indexterm" name="id421945"></a>
+<a class="indexterm" name="id421951"></a>
+<a class="indexterm" name="id421958"></a>
+<a class="indexterm" name="id421965"></a>
+<a class="indexterm" name="id421971"></a>
+	ThinLinc is a terminal server solution that is available for Linux and Solaris based on standard
+	protocols such as SSH, TightVNC, NFS and PulseAudio.
+	</p><p>
+<a class="indexterm" name="id421983"></a>
+<a class="indexterm" name="id421989"></a>
+	ThinLinc can be used both in the LAN environment to implement a Thin Client strategy for an organization, and as
+	secure remote access solution for people working from remote locations, even over smallband connections.
+	ThinLinc is free to use for a single concurrent user.
+	</p><p>
+<a class="indexterm" name="id422002"></a>
+<a class="indexterm" name="id422008"></a>
+<a class="indexterm" name="id422015"></a>
+	The product can also be used as a frontend to access Windows Terminal Server or Citrix farms, or even Windows
+	XP machines, securing the connection via the ssh protocol. The client is available both for Linux (supporting
+	all Linux distributions as well as numerous thin terminals) and for Windows. A Java-based Web client is also
+	available.
+	</p><p>
+	ThinLinc may be evaluated by connecting to Cendio's demo system, see
+	<a class="ulink" href="http://www.cendio.com" target="_top">Cendio's</a> web site
+	<a class="ulink" href="http://www.cendio.com/testdrive" target="_top">testdrive</a> center.
+	</p><p>
+	Cendio is a major contributor to several open source projects including
+	<a class="ulink" href="http://www.tightvnc.com" target="_top">TightVNC</a>,
+	<a class="ulink" href="http://pulseaudio.org" target="_top">PulseAudio</a> , unfsd,
+	<a class="ulink" href="http://www.python.org" target="_top">Python</a> and
+	<a class="ulink" href="http://www.rdesktop.org" target="_top">rdesktop</a>.
+	</p></div></div><div class="sect1" title="Network Logon Script Magic"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id422084"></a>Network Logon Script Magic</h2></div></div></div><p>
+There are several opportunities for creating a custom network startup configuration environment.
+</p><div class="itemizedlist"><ul class="itemizedlist" type="disc"><li class="listitem"><p>No Logon Script.</p></li><li class="listitem"><p>Simple universal Logon Script that applies to all users.</p></li><li class="listitem"><p>Use of a conditional Logon Script that applies per-user or per-group attributes.</p></li><li class="listitem"><p>Use of Samba's preexec and postexec functions on access to the NETLOGON share to create
+		a custom logon script and then execute it.</p></li><li class="listitem"><p>User of a tool such as KixStart.</p></li></ul></div><p>
+The Samba source code tree includes two logon script generation/execution tools.
+See <code class="filename">examples</code> directory <code class="filename">genlogon</code> and
+<code class="filename">ntlogon</code> subdirectories.
+</p><p>
+The following listings are from the genlogon directory.
+</p><p>
+<a class="indexterm" name="id422150"></a>
+This is the <code class="filename">genlogon.pl</code> file:
+
+</p><pre class="programlisting">
+	#!/usr/bin/perl
+	#
+	# genlogon.pl
+	#
+	# Perl script to generate user logon scripts on the fly, when users
+	# connect from a Windows client. This script should be called from 
+	# smb.conf with the %U, %G and %L parameters. I.e:
+	#
+	#       root preexec = genlogon.pl %U %G %L
+	#
+	# The script generated will perform
+	# the following:
+	#
+	# 1. Log the user connection to /var/log/samba/netlogon.log
+	# 2. Set the PC's time to the Linux server time (which is maintained
+	#    daily to the National Institute of Standards Atomic clock on the
+	#    internet.
+	# 3. Connect the user's home drive to H: (H for Home).
+	# 4. Connect common drives that everyone uses.
+	# 5. Connect group-specific drives for certain user groups.
+	# 6. Connect user-specific drives for certain users.
+	# 7. Connect network printers.
+
+	# Log client connection
+	#($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
+	($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
+	open LOG, "&gt;&gt;/var/log/samba/netlogon.log";
+	print LOG "$mon/$mday/$year $hour:$min:$sec";
+	print LOG " - User $ARGV[0] logged into $ARGV[1]\n";
+	close LOG;
+
+	# Start generating logon script
+	open LOGON, "&gt;/shared/netlogon/$ARGV[0].bat";
+	print LOGON "\@ECHO OFF\r\n";
+
+	# Connect shares just use by Software Development group
+	if ($ARGV[1] eq "SOFTDEV" || $ARGV[0] eq "softdev")
+	{
+		print LOGON "NET USE M: \\\\$ARGV[2]\\SOURCE\r\n";
+	}
+
+	# Connect shares just use by Technical Support staff
+	if ($ARGV[1] eq "SUPPORT" || $ARGV[0] eq "support")
+	{
+		print LOGON "NET USE S: \\\\$ARGV[2]\\SUPPORT\r\n";
+	}
+
+	# Connect shares just used by Administration staff
+	If ($ARGV[1] eq "ADMIN" || $ARGV[0] eq "admin")
+	{
+		print LOGON "NET USE L: \\\\$ARGV[2]\\ADMIN\r\n";
+		print LOGON "NET USE K: \\\\$ARGV[2]\\MKTING\r\n";
+	}
+
+	# Now connect Printers. We handle just two or three users a little
+	# differently, because they are the exceptions that have desktop
+	# printers on LPT1: - all other user's go to the LaserJet on the
+	# server.
+	if ($ARGV[0] eq 'jim'
+	    || $ARGV[0] eq 'yvonne')
+	{
+		print LOGON "NET USE LPT2: \\\\$ARGV[2]\\LJET3\r\n";
+		print LOGON "NET USE LPT3: \\\\$ARGV[2]\\FAXQ\r\n";
+	}
+	else
+	{
+		print LOGON "NET USE LPT1: \\\\$ARGV[2]\\LJET3\r\n";
+		print LOGON "NET USE LPT3: \\\\$ARGV[2]\\FAXQ\r\n";
+	}
+
+	# All done! Close the output file.
+	close LOGON;
+</pre><p>
+</p><p>
+Those wishing to use a more elaborate or capable logon processing system should check out these sites:
+</p><div class="itemizedlist"><ul class="itemizedlist" type="disc"><li class="listitem"><p><a class="ulink" href="http://www.craigelachie.org/rhacer/ntlogon" target="_top">http://www.craigelachie.org/rhacer/ntlogon</a></p></li><li class="listitem"><p><a class="ulink" href="http://www.kixtart.org" target="_top">http://www.kixtart.org</a></p></li></ul></div><div class="sect2" title="Adding Printers without User Intervention"><div class="titlepage"><div><div><h3 class="title"><a name="id422250"></a>Adding Printers without User Intervention</h3></div></div></div><p>
+<a class="indexterm" name="id422258"></a>
+Printers may be added automatically during logon script processing through the use of:
+</p><pre class="screen">
+<code class="prompt">C:\&gt; </code><strong class="userinput"><code>rundll32 printui.dll,PrintUIEntry /?</code></strong>
+</pre><p>
+
+See the documentation in the <a class="ulink" href="http://support.microsoft.com/default.asp?scid=kb;en-us;189105" target="_top">Microsoft Knowledge Base article 189105</a>.
+</p></div><div class="sect2" title="Limiting Logon Connections"><div class="titlepage"><div><div><h3 class="title"><a name="id422290"></a>Limiting Logon Connections</h3></div></div></div><p>
+		Sometimes it is necessary to limit the number of concurrent connections to a
+		Samba shared resource. For example, a site may wish to permit only one network
+		logon per user.
+	</p><p>
+		The Samba <em class="parameter"><code>preexec script</code></em> parameter can be used to permit only one
+		connection per user. Though this method is not foolproof and may have side effects,
+		the following contributed method may inspire someone to provide a better solution.
+	</p><p>
+		This is not a perfect solution because Windows clients can drop idle connections
+		with an auto-reconnect capability that could result in the appearance that a share
+		is no longer in use, while actually it is. Even so, it demonstrates the principle
+		of use of the <em class="parameter"><code>preexec script</code></em> parameter.
+	</p><p>
+		The following share configuration demonstrates use of the script shown in <a class="link" href="AdvancedNetworkManagement.html#Tpees" title="Example 25.1. Script to Enforce Single Resource Logon">&#8220;Script to Enforce Single Resource Logon&#8221;</a>.
+</p><pre class="programlisting">
+[myshare]
+	...
+	preexec script = /sbin/PermitSingleLogon.sh
+	preexec close = Yes
+	...
+</pre><p>
+	</p><div class="example"><a name="Tpees"></a><p class="title"><b>Example 25.1. Script to Enforce Single Resource Logon</b></p><div class="example-contents"><pre class="screen">
+#!/bin/bash
+
+IFS="-"
+RESULT=$(smbstatus -S -u $1 2&gt; /dev/null | awk 'NF \
+        &gt; 6 {print $1}' | sort | uniq -d)
+
+if [ "X${RESULT}" == X  ]; then
+  exit 0
+else
+  exit 1
+fi
+</pre></div></div><br class="example-break"></div></div></div><div class="navfooter"><hr><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="winbind.html">Prev</a> </td><td width="20%" align="center"><a accesskey="u" href="optional.html">Up</a></td><td width="40%" align="right"> <a accesskey="n" href="PolicyMgmt.html">Next</a></td></tr><tr><td width="40%" align="left" valign="top">Chapter 24. Winbind: Use of Domain Accounts </td><td width="20%" align="center"><a accesskey="h" href="index.html">Home</a></td><td width="40%" align="right" valign="top"> Chapter 26. System and Account Policies</td></tr></table></div></body></html>

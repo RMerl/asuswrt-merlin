@@ -1,0 +1,10 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: samba-hostconfig
+Description: Host-wide Samba configuration
+Version: @PACKAGE_VERSION@
+Libs: @LIB_RPATH@ -L${libdir} -lsamba-hostconfig
+Cflags: -I${includedir}  -DHAVE_IMMEDIATE_STRUCTURES=1

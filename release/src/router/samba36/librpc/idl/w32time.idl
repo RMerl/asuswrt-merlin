@@ -1,0 +1,21 @@
+/*
+  w32time interface definitions
+*/
+
+[
+  uuid("8fb6d884-2388-11d0-8c35-00c04fda2795"),
+  endpoint("ncacn_np:[\\pipe\\srvsvc]","ncacn_np:[\\pipe\\atsvc]","ncacn_np:[\\pipe\\browser]","ncacn_np:[\\pipe\\keysvc]","ncacn_np:[\\pipe\\wkssvc]"),
+  version(4.1),
+  pointer_default(unique),
+  helpstring("Win32 Time Server")
+]
+interface w32time
+{
+
+	/*****************/
+	/* Function 0x00 */
+	[todo] WERROR w32time_SyncTime();
+
+	[todo] WERROR w32time_GetNetLogonServiceBits();
+	[todo] WERROR w32time_QueryProviderStatus();
+}

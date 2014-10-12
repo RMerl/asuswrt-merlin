@@ -1,0 +1,18 @@
+<samba:parameter name="lm interval"
+                 context="G"
+                 advanced="1" developer="1"
+				 type="integer"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>If Samba is set to produce Lanman announce 
+	broadcasts needed by OS/2 clients (see the 
+		<smbconfoption name="lm announce"/> parameter) then this 
+	parameter defines the frequency in seconds with which they will be 
+	made.  If this is set to zero then no Lanman announcements will be 
+	made despite the setting of the <smbconfoption name="lm announce"/> 
+	parameter.</para>
+</description>
+<related>lm announce</related>
+<value type="default">60</value>
+<value type="example">120</value>
+</samba:parameter>

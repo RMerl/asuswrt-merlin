@@ -1,0 +1,258 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE glossary PUBLIC "-//Samba-Team//DTD DocBook V4.2-Based Variant V1.0//EN" "http://www.samba.org/samba/DTD/samba-doc">
+<glossary>
+	<title>Glossary</title>
+
+	<glossentry>
+		<glossterm>Access Control List</glossterm>
+		<acronym>ACL</acronym>
+		<glossdef><para>
+		A detailed list of permissions granted to users or groups with respect to file and network
+		resource access.
+		</para></glossdef>
+	</glossentry>
+
+	<glossentry>
+                <glossterm>Active Directory Service</glossterm>
+		<acronym>ADS</acronym>
+		<glossdef><para>
+		A service unique to Microsoft Windows 200x servers that provides a centrally managed
+		directory for management of user identities and computer objects, as well as the
+		permissions each user or computer may be granted to access distributed network resources.
+		ADS uses Kerberos-based authentication and LDAP over Kerberos for directory access.
+		</para></glossdef>
+        </glossentry>
+
+	<glossentry>
+		<glossterm>Common Internet File System</glossterm>
+		<acronym>CIFS</acronym>
+		<glossdef><para>
+		The new name for SMB. Microsoft renamed the SMB protocol to CIFS during
+		the Internet hype in the 1990s. At about the time that the SMB protocol was renamed
+		to CIFS, an additional dialect of the SMB protocol was in development. The need for the
+		deployment of the NetBIOS layer was also removed, thus paving the way for use of the SMB
+		protocol natively over TCP/IP (known as NetBIOS-less SMB or <quote>naked</quote> TCP
+		transport).
+		</para></glossdef>
+	</glossentry>
+
+	<glossentry>
+		<glossterm>Common UNIX Printing System</glossterm>
+		<acronym>CUPS</acronym>
+		<glossdef><para>
+		A recent implementation of a high-capability printing system for UNIX developed by
+		<ulink url="http://www.easysw.com/">Easy Software Inc.</ulink>. The design objective
+		of CUPS was to provide a rich print processing system that has built-in intelligence
+		that is capable of correctly rendering (processing) a file that is submitted for
+		printing even if it was formatted for an entirely different printer.
+		</para>
+		</glossdef>
+	</glossentry>
+
+	<glossentry>
+		<glossterm>Domain Master Browser</glossterm>
+		<acronym>DMB</acronym>
+		<glossdef><para>
+		The Domain Master Browser maintains a list of all the servers that
+		have announced their services within a given workgroup or NT domain.
+		</para></glossdef>
+	</glossentry>
+
+	<glossentry>
+                <glossterm>Domain Name Service</glossterm>
+		<acronym>DNS</acronym>
+		<glossdef><para>
+		A protocol by which computer hostnames may be resolved to the matching IP address/es.
+		DNS is implemented by the Berkeley Internet Name Daemon. There exists a recent version
+		of DNS that allows dynamic name registration by network clients or by a DHCP server.
+		This recent protocol is known as dynamic DNS (DDNS).
+		</para></glossdef>
+        </glossentry>
+
+	<glossentry>
+                <glossterm>Dynamic Host Configuration Protocol</glossterm>
+		<acronym>DHCP</acronym>
+		<glossdef><para>
+		A protocol that was based on the BOOTP protocol that may be used to dynamically assign
+		an IP address, from a reserved pool of addresses, to a network client or device.
+		Additionally, DHCP may assign all network configuration settings and may be used to
+		register a computer name and its address with a dynamic DNS server.
+		</para></glossdef>
+        </glossentry>
+
+	<glossentry>
+		<glossterm>Group IDentifier</glossterm>
+		<acronym>GID</acronym>
+		<glossdef><para>
+		The UNIX system group identifier; on older systems, a 32-bit unsigned integer, and on
+		newer systems, an unsigned 64-bit integer. The GID is used in UNIX-like operating systems
+		for all group-level access control.
+		</para></glossdef>
+	</glossentry>
+
+	<glossentry>
+		<glossterm>Key Distribution Center</glossterm>
+		<acronym>KDC</acronym>
+		<glossdef><para>
+		The Kerberos authentication protocol makes use of security keys (also called a ticket)
+		by which access to network resources is controlled. The issuing of Kerberos tickets
+		is effected by a KDC.
+		</para></glossdef>
+	</glossentry>
+
+    <glossentry>
+      <glossterm>Lightweight Directory Access Protocol</glossterm>
+      <acronym>LDAP</acronym>
+      <glossdef>
+	<para>
+	The Lightweight Directory Access Protocol is a technology that
+	  originated from the development of X.500 protocol specifications and
+	  implementations. LDAP was designed as a means of rapidly searching
+	  through X.500 information. Later LDAP was adapted as an engine that
+	  could drive its own directory database. LDAP is not a database per
+	  se; rather it is a technology that enables high-volume search and
+	  locate activity from clients that wish to obtain simply defined
+	  information about a subset of records that are stored in a
+	  database. LDAP does not have a particularly efficient mechanism for
+	  storing records in the database, and it has no concept of transaction
+	  processing nor of mechanisms for preserving data consistency. LDAP is
+	  premised around the notion that the search and read activity far
+	  outweigh any need to add, delete, or modify records. LDAP does
+	  provide a means for replication of the database to keep slave
+	  servers up to date with a master. It also has built-in capability to
+	  handle external references and deferral.
+	</para></glossdef>
+    </glossentry>
+
+	<glossentry>
+		<glossterm>Local Master Browser</glossterm>
+		<acronym>LMB</acronym>
+		<glossdef><para>
+		The Local Master Browser maintains a list of all servers that have announced themselves
+		within a given workgroup or NT domain on a particular broadcast isolated subnet.
+		</para></glossdef>
+	</glossentry>
+
+        <glossentry>
+                <glossterm>Media Access Control</glossterm>
+		<acronym>MAC</acronym>
+                <glossdef><para>
+		The hard-coded address of the physical-layer device that is attached to the network.
+		All network interface controllers must have a hard-coded and unique MAC address. The
+		MAC address is 48 bits long.
+                </para></glossdef>
+	</glossentry>
+
+	<glossentry>
+		<glossterm>NetBIOS Extended User Interface</glossterm>
+		<acronym>NetBEUI</acronym>
+		<glossdef><para>
+		Very simple network protocol invented by IBM and Microsoft. It is used to do NetBIOS
+		over Ethernet with low overhead. NetBEUI is a non-routable protocol.
+		</para></glossdef>
+	</glossentry>
+
+	<glossentry>
+		<glossterm>Network Address Translation</glossterm>
+                <acronym>NAT</acronym>
+                <glossdef><para>
+		Network address translation is a form of IP address masquerading. It ensures that internal
+		private (RFC1918) network addresses from packets inside the network are rewritten so
+		that TCP/IP packets that leave the server over a public connection are seen to come only
+		from the external network address.
+		</para></glossdef>
+	</glossentry>
+
+	<glossentry>
+		<glossterm>Network Basic Input/Output System</glossterm>
+		<acronym>NetBIOS</acronym>
+		<glossdef><para>
+		NetBIOS is a simple application programming interface (API) invented in the 1980s
+		that allows programs to send data to certain network names. NetBIOS is always run over
+		another network protocol such as IPX/SPX, TCP/IP, or Logical Link Control (LLC).
+		NetBIOS run over LLC is best known as NetBEUI (the NetBIOS Extended User Interface
+		&smbmdash; a complete misnomer!).
+		</para></glossdef>
+	</glossentry>
+
+	<glossentry>
+		<glossterm>NetBT</glossterm>
+		<acronym>NBT</acronym>
+		<glossdef><para>
+		Protocol for transporting NetBIOS frames over TCP/IP. Uses ports 137, 138, and 139.
+		NetBT is a fully routable protocol.
+		</para></glossdef>
+	</glossentry>
+
+	<glossentry>
+		<glossterm>NT/LanManager Security Support Provider</glossterm>
+		<acronym>NTLMSSP</acronym>
+		<glossdef><para>
+		The NTLM Security Support Provider (NTLMSSP) service in Windows NT4/200x/XP is responsible for
+		handling all NTLM authentication requests. It is the front end for protocols such as SPNEGO,
+		Schannel, and other technologies. The generic protocol family supported by NTLMSSP is known as
+		GSSAPI, the Generic Security Service Application Program Interface specified in RFC2078.
+		</para></glossdef>
+	</glossentry>
+
+	<glossentry>
+		<glossterm>Server Message Block</glossterm>
+		<acronym>SMB</acronym>
+		<glossdef><para>
+		SMB was the original name of the protocol spoken by Samba. It was invented in the 1980s
+		by IBM and adopted and extended further by Microsoft. Microsoft renamed the protocol to
+		CIFS during the Internet hype in the 1990s.
+		</para></glossdef>
+	</glossentry>
+
+	<glossentry>
+		<glossterm>The Simple and Protected GSS-API Negotiation</glossterm>
+                <acronym>SPNEGO</acronym>
+                <glossdef><para>
+		The purpose of SPNEGO is to allow a client and server to negotiate a security mechanism for
+		authentication. The protocol is specified in RFC2478 and uses tokens as built via ASN.1 DER.
+		DER refers to Distinguished Encoding Rules. These are a set of common rules for creating
+		binary encodings in a platform-independent manner. Samba has support for SPNEGO.
+                </para></glossdef>
+	</glossentry>
+
+	<glossentry>
+		<glossterm>The Official Samba-3 HOWTO and Reference Guide, Second Edition</glossterm>
+		<acronym>TOSHARG2</acronym>
+		<glossdef><para>
+		This book makes repeated reference to <quote>The Official Samba-3 HOWTO and Reference Guide, Second
+		Edition</quote> by John H. Terpstra and Jelmer R. Vernooij. This publication is available from
+		Amazon.com. Publisher: Prentice Hall PTR (August 2005),
+		ISBN: 013122282.
+		</para></glossdef>
+	</glossentry>
+
+	<glossentry>
+		<glossterm>User IDentifier</glossterm>
+		<acronym>UID</acronym>
+		<glossdef><para>
+		The UNIX system user identifier; on older systems, a 32-bit unsigned integer, and on newer systems,
+		an unsigned 64-bit integer. The UID is used in UNIX-like operating systems for all user-level access
+		control.
+		</para></glossdef>
+	</glossentry>
+
+	<glossentry>
+		<glossterm>Universal Naming Convention</glossterm>
+		<acronym>UNC</acronym>
+		<glossdef><para>A syntax for specifying the location of network resources (such as file shares).
+		The UNC syntax was developed in the early days of MS DOS 3.x and is used internally by the SMB protocol.
+		</para></glossdef>
+	</glossentry>
+
+	<glossentry>
+		<glossterm>Wireshark</glossterm>
+		<acronym>wireshark</acronym>
+		<glossdef><para>
+		A network analyzer, also known as a network sniffer or a protocol analyzer. Formerly known as Ethereal, Wireshark is
+		freely available for UNIX/Linux and Microsoft Windows systems from
+		<ulink url="http://www.wireshark.org">the Wireshark Web site</ulink>.
+		</para></glossdef>
+	</glossentry>
+
+</glossary>

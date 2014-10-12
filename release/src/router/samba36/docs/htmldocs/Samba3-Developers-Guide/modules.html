@@ -1,0 +1,70 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>Chapter 8. Modules</title><link rel="stylesheet" href="../samba.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.75.2"><link rel="home" href="index.html" title="SAMBA Developers Guide"><link rel="up" href="pt02.html" title="Part II. Samba Basics"><link rel="prev" href="contributing.html" title="Chapter 7. Contributing code"><link rel="next" href="pt03.html" title="Part III. Samba Subsystems"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">Chapter 8. Modules</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="contributing.html">Prev</a> </td><th width="60%" align="center">Part II. Samba Basics</th><td width="20%" align="right"> <a accesskey="n" href="pt03.html">Next</a></td></tr></table><hr></div><div class="chapter" title="Chapter 8. Modules"><div class="titlepage"><div><div><h2 class="title"><a name="modules"></a>Chapter 8. Modules</h2></div><div><div class="author"><h3 class="author"><span class="firstname">Jelmer</span> <span class="surname">Vernooij</span></h3><div class="affiliation"><span class="orgname">Samba Team<br></span><div class="address"><p><code class="email">&lt;<a class="email" href="mailto:jelmer@samba.org">jelmer@samba.org</a>&gt;</code></p></div></div></div></div><div><p class="pubdate"> 19 March 2003 </p></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="sect1"><a href="modules.html#id330392">Advantages</a></span></dt><dt><span class="sect1"><a href="modules.html#id330426">Loading modules</a></span></dt><dd><dl><dt><span class="sect2"><a href="modules.html#id330448">Static modules</a></span></dt><dt><span class="sect2"><a href="modules.html#id330476">Shared modules</a></span></dt></dl></dd><dt><span class="sect1"><a href="modules.html#id330495">Writing modules</a></span></dt><dd><dl><dt><span class="sect2"><a href="modules.html#id330536">Static/Shared selection in configure.in</a></span></dt></dl></dd></dl></div><div class="sect1" title="Advantages"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id330392"></a>Advantages</h2></div></div></div><p>
+The new modules system has the following advantages:
+</p><table border="0" summary="Simple list" class="simplelist"><tr><td>Transparent loading of static and shared modules (no need 
+for a subsystem to know about modules)</td></tr><tr><td>Simple selection between shared and static modules at configure time</td></tr><tr><td>"preload modules" option for increasing performance for stable modules</td></tr><tr><td>No nasty #define stuff anymore</td></tr><tr><td>All backends are available as plugin now (including pdb_ldap and pdb_tdb)</td></tr></table></div><div class="sect1" title="Loading modules"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id330426"></a>Loading modules</h2></div></div></div><p>
+Some subsystems in samba use different backends. These backends can be 
+either statically linked in to samba or available as a plugin. A subsystem 
+should have a function that allows a module to register itself. For example, 
+the passdb subsystem has: 
+</p><pre class="programlisting">
+NTSTATUS smb_register_passdb(int version, const char *name, pdb_init_function init);
+</pre><p>
+This function will be called by the initialisation function of the module to 
+register itself. 
+</p><div class="sect2" title="Static modules"><div class="titlepage"><div><div><h3 class="title"><a name="id330448"></a>Static modules</h3></div></div></div><p>
+The modules system compiles a list of initialisation functions for the 
+static modules of each subsystem. This is a define. For example, 
+it is here currently (from <code class="filename">include/config.h</code>): 
+</p><pre class="programlisting">
+/* Static init functions */
+#define static_init_pdb { pdb_mysql_init(); pdb_ldap_init(); pdb_smbpasswd_init(); pdb_tdbsam_init(); pdb_guest_init();}
+</pre><p>
+These functions should be called before the subsystem is used. That 
+should be done when the subsystem is initialised or first used. 
+</p></div><div class="sect2" title="Shared modules"><div class="titlepage"><div><div><h3 class="title"><a name="id330476"></a>Shared modules</h3></div></div></div><p>
+If a subsystem needs a certain backend, it should check if it has 
+already been registered. If the backend hasn't been registered already, 
+the subsystem should call smb_probe_module(char *subsystem, char *backend).
+This function tries to load the correct module from a certain path
+($LIBDIR/subsystem/backend.so). If the first character in 'backend' 
+is a slash, smb_probe_module() tries to load the module from the 
+absolute path specified in 'backend'.
+</p><p>After smb_probe_module() has been executed, the subsystem 
+should check again if the module has been registered. 
+</p></div></div><div class="sect1" title="Writing modules"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id330495"></a>Writing modules</h2></div></div></div><p>
+Each module has an initialisation function. For modules that are 
+included with samba this name is '<em class="replaceable"><code>subsystem</code></em>_<em class="replaceable"><code>backend</code></em>_init'. For external modules (that will never be built-in, but only available as a module) this name is always 'init_module'. (In the case of modules included with samba, the configure system will add a #define subsystem_backend_init() init_module()).
+The prototype for these functions is:
+</p><pre class="programlisting">
+NTSTATUS init_module(void);
+</pre><p>This function should call one or more 
+registration functions. The function should return NT_STATUS_OK on success and  
+NT_STATUS_UNSUCCESSFUL or a more useful nt error code on failure.</p><p>For example, pdb_ldap_init() contains: </p><pre class="programlisting">
+NTSTATUS pdb_ldap_init(void)
+{
+smb_register_passdb(PASSDB_INTERFACE_VERSION, "ldapsam", pdb_init_ldapsam);
+smb_register_passdb(PASSDB_INTERFACE_VERSION, "ldapsam_nua", pdb_init_ldapsam_nua);
+	return NT_STATUS_OK;
+}
+</pre><div class="sect2" title="Static/Shared selection in configure.in"><div class="titlepage"><div><div><h3 class="title"><a name="id330536"></a>Static/Shared selection in configure.in</h3></div></div></div><p>
+Some macros in configure.in generate the various defines and substs that 
+are necessary for the system to work correct. All modules that should 
+be built by default have to be added to the variable 'default_modules'. 
+For example, if ldap is found, pdb_ldap is added to this variable.
+</p><p>
+On the bottom of configure.in, SMB_MODULE() should be called 
+for each module and SMB_SUBSYSTEM() for each subsystem.
+</p><p>Syntax:</p><pre class="programlisting">
+SMB_MODULE(<em class="replaceable"><code>subsystem</code></em>_<em class="replaceable"><code>backend</code></em>, <em class="replaceable"><code>object files</code></em>, <em class="replaceable"><code>plugin name</code></em>, <em class="replaceable"><code>subsystem name</code></em>, <em class="replaceable"><code>static_action</code></em>, <em class="replaceable"><code>shared_action</code></em>)
+SMB_SUBSYSTEM(<em class="replaceable"><code>subsystem</code></em>,<em class="replaceable"><code>depfile</code></em>)
+</pre><p>The depfile for a certain subsystem is the file that calls the 
+initialisation functions for the statically built in modules.</p><p>
+<em class="replaceable"><code>@SUBSYSTEM_MODULES@</code></em> in Makefile.in will 
+be replaced with the names of the plugins to build.
+</p><p>You must make sure all .c files that contain defines that can 
+be changed by ./configure are rebuilded in the 'modules_clean' make target. 
+Practically, this means all c files that contain <code class="literal">static_init_subsystem;</code> calls need to be rebuilded.
+</p><div class="note" title="Note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3><p>
+There currently also is a configure.in command called SMB_MODULE_PROVIVES().
+This is used for modules that register multiple things. It should not 
+be used as probing will most likely disappear in the future.</p></div></div></div></div><div class="navfooter"><hr><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="contributing.html">Prev</a> </td><td width="20%" align="center"><a accesskey="u" href="pt02.html">Up</a></td><td width="40%" align="right"> <a accesskey="n" href="pt03.html">Next</a></td></tr><tr><td width="40%" align="left" valign="top">Chapter 7. Contributing code </td><td width="20%" align="center"><a accesskey="h" href="index.html">Home</a></td><td width="40%" align="right" valign="top"> Part III. Samba Subsystems</td></tr></table></div></body></html>

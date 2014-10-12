@@ -1,0 +1,53 @@
+#!/usr/bin/env python
+
+import Options
+from optparse import SUPPRESS_HELP
+
+def set_options(opt):
+    # allow users to disable gnutls
+    opt.add_option('--enable-gnutls',
+                   help=("Enable use of gnutls"),
+                   action="store_true", dest='enable_gnutls', default=True)
+    opt.add_option('--disable-gnutls', help=SUPPRESS_HELP, action="store_false", dest='enable_gnutls')
+
+
+def configure(conf):
+    conf.env.enable_gnutls = Options.options.enable_gnutls
+    if not conf.env.enable_gnutls:
+        conf.SET_TARGET_TYPE('gnutls', 'DISABLED')
+        conf.SET_TARGET_TYPE('gcrypt', 'DISABLED')
+        conf.SET_TARGET_TYPE('gpg-error', 'DISABLED')
+        return
+
+    conf.check_cfg(package='gnutls',
+                   args='"gnutls >= 1.4.0 gnutls != 2.2.4 gnutls != 2.8.0 gnutls != 2.8.1" --cflags --libs',
+                   msg='Checking for gnutls >= 1.4.0 and broken versions', mandatory=False)
+
+    if 'HAVE_GNUTLS' in conf.env:
+        conf.DEFINE('ENABLE_GNUTLS', 1)
+
+    conf.CHECK_FUNCS_IN('gnutls_global_init', 'gnutls',
+                        headers='gnutls/gnutls.h')
+
+    conf.CHECK_VARIABLE('gnutls_x509_crt_set_version',
+                        headers='gnutls/gnutls.h gnutls/x509.h',
+                        define='HAVE_GNUTLS_X509_CRT_SET_VERSION',
+                        lib='gnutls')
+    conf.CHECK_VARIABLE('gnutls_x509_crt_set_subject_key_id',
+                        headers='gnutls/gnutls.h gnutls/x509.h',
+                        define='HAVE_GNUTLS_X509_CRT_SET_SUBJECT_KEY_ID',
+                        lib='gnutls')
+
+    # check for gnutls_datum types
+    conf.CHECK_TYPES('gnutls_datum gnutls_datum_t',
+                     headers='gnutls/gnutls.h', lib='gnutls')
+
+    conf.CHECK_FUNCS_IN('gcry_control', 'gcrypt', headers='gcrypt.h')
+    conf.CHECK_FUNCS_IN('gpg_err_code_from_errno', 'gpg-error')
+
+
+def build(bld):
+    bld.SAMBA_SUBSYSTEM('LIBTLS',
+                        source='tls.c tlscert.c tls_tstream.c',
+                        public_deps='talloc gnutls gcrypt samba-hostconfig samba_socket LIBTSOCKET tevent UTIL_TEVENT'
+                        )

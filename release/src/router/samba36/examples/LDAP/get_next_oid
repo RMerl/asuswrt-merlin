@@ -1,0 +1,15 @@
+#!/bin/bash
+
+nextattrib=`cat samba.schema | grep -i attributetype.*\(.*1.3.6.1.4.1.7165. | grep -v '^#' | \
+   awk '{print $3}' | cut -d. -f 10 | sort -n | tail -1`
+
+(( nextattrib += 1 ))
+
+echo "attributetype ( 1.3.6.1.4.1.7165.2.1.$nextattrib NAME ...."
+
+nextoc=`cat samba.schema | grep -i objectclass.*\(.*1.3.6.1.4.1.7165. | grep -v '^#' | \
+    awk '{print $3}' | cut -d. -f 10 | sort -n | tail -1`
+
+(( nextoc += 1 ))
+
+echo "objectclass ( 1.3.6.1.4.1.7165.2.2.$nextoc NAME ...."

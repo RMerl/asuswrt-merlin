@@ -1,0 +1,78 @@
+dn: @INDEXLIST
+@IDXATTR: name
+@IDXATTR: sAMAccountName
+@IDXATTR: objectSid
+@IDXATTR: objectClass
+@IDXATTR: objectCategory
+@IDXATTR: member
+@IDXATTR: uidNumber
+@IDXATTR: gidNumber
+@IDXATTR: unixName
+@IDXATTR: privilege
+@IDXATTR: nCName
+
+dn: @ATTRIBUTES
+userPrincipalName: CASE_INSENSITIVE
+servicePrincipalName: CASE_INSENSITIVE
+dnsDomain: CASE_INSENSITIVE
+dnsRoot: CASE_INSENSITIVE
+nETBIOSName: CASE_INSENSITIVE
+cn: CASE_INSENSITIVE
+dc: CASE_INSENSITIVE
+name: CASE_INSENSITIVE
+dn: CASE_INSENSITIVE
+sAMAccountName: CASE_INSENSITIVE
+objectClass: CASE_INSENSITIVE
+sambaPassword: HIDDEN
+krb5Key: HIDDEN
+ntPwdHash: HIDDEN
+sambaNTPwdHistory: HIDDEN
+lmPwdHash: HIDDEN
+sambaLMPwdHistory: HIDDEN
+createTimestamp: HIDDEN
+modifyTimestamp: HIDDEN
+groupType: INTEGER
+sAMAccountType: INTEGER
+systemFlags: INTEGER
+userAccountControl: INTEGER
+
+dn: @SUBCLASSES
+top: domain
+top: person
+top: group
+domain: domainDNS
+domain: builtinDomain
+person: organizationalPerson
+organizationalPerson: user
+user: computer
+template: userTemplate
+template: groupTemplate
+
+dn: @KLUDGEACL
+passwordAttribute: sambaPassword
+passwordAttribute: ntPwdHash
+passwordAttribute: sambaNTPwdHistory
+passwordAttribute: lmPwdHash
+passwordAttribute: sambaLMPwdHistory
+passwordAttribute: krb5key
+
+# the rootDSE module looks in this record for its base data
+dn: @ROOTDSE
+subschemaSubentry: CN=Aggregate,CN=Schema,CN=Configuration,${BASEDN}
+dsServiceName: CN=NTDS Settings,CN=${NETBIOSNAME},CN=Servers,CN=Default-First-Site-Name,CN=Sites,CN=Configuration,${BASEDN}
+defaultNamingContext: ${BASEDN}
+rootDomainNamingContext: ${BASEDN}
+configurationNamingContext: CN=Configuration,${BASEDN}
+schemaNamingContext: CN=Schema,CN=Configuration,${BASEDN}
+supportedLDAPVersion: 2
+supportedLDAPVersion: 3
+dnsHostName: ${DNSNAME}
+ldapServiceName: ${DNSDOMAIN}:${NETBIOSNAME}$@${REALM}
+serverName: CN=${NETBIOSNAME},CN=Servers,CN=Default-First-Site,CN=Sites,CN=Configuration,${BASEDN}
+domainFunctionality: 0
+forestFunctionality: 0
+domainControllerFunctionality: 4
+isSynchronized: TRUE
+vendorName: Samba Team (http://samba.org)
+vendorVersion: ${VERSION}
+

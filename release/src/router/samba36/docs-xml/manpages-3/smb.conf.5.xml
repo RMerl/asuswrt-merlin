@@ -1,0 +1,880 @@
+<refentry id="smb.conf.5" xmlns:xi="http://www.w3.org/2003/XInclude"
+	                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+	
+<refmeta>
+	<refentrytitle>smb.conf</refentrytitle>
+	<manvolnum>5</manvolnum>
+	<refmiscinfo class="source">Samba</refmiscinfo>
+	<refmiscinfo class="manual">File Formats and Conventions</refmiscinfo>
+	<refmiscinfo class="version">3.6</refmiscinfo>
+</refmeta>
+
+
+<refnamediv>
+	<refname>smb.conf</refname>
+	<refpurpose>The configuration file for the Samba suite</refpurpose>
+</refnamediv>
+
+<refsect1>
+	<title>SYNOPSIS</title>
+
+	<para>
+	The <filename moreinfo="none">smb.conf</filename> file is a configuration  file for the Samba suite. <filename
+	moreinfo="none">smb.conf</filename> contains  runtime configuration information for the Samba programs. The
+	 <filename moreinfo="none">smb.conf</filename> file is designed to be configured and administered by the
+	 <citerefentry><refentrytitle>swat</refentrytitle> <manvolnum>8</manvolnum></citerefentry> program. The
+	complete description of the file format and possible parameters held within are here for reference purposes.
+	</para> 
+</refsect1>
+
+<refsect1 id="FILEFORMATSECT">
+	<title>FILE FORMAT</title>
+
+	<para>
+	The file consists of sections and parameters. A section begins with the name of the section in square brackets
+	and continues until the next section begins. Sections contain parameters of the form:
+<programlisting>
+<replaceable>name</replaceable> = <replaceable>value </replaceable>
+</programlisting>
+	</para>
+
+	<para>
+	The file is line-based - that is, each newline-terminated line represents either a comment, a section name or
+	a parameter.
+	</para>
+
+	<para>Section and parameter names are not case sensitive.</para>
+
+	<para>
+	Only the first equals sign in a parameter is significant.  Whitespace before or after the first equals sign is
+	discarded.  Leading, trailing and internal whitespace in section and parameter names is irrelevant. Leading
+	and trailing whitespace in a parameter value is discarded. Internal whitespace within a parameter value is
+	retained verbatim.
+	</para>
+
+	<para>
+	Any line beginning with a semicolon (<quote>;</quote>) or a hash (<quote>#</quote>) 
+	character is ignored, as are lines containing only whitespace.
+	</para>
+
+	<para>
+	Any line ending in a <quote><literal>\</literal></quote> is continued on the next line in the customary UNIX fashion.
+	</para>
+
+	<para>
+	The values following the equals sign in parameters are all either a string (no quotes needed) or a boolean,
+	which may be given as yes/no, 1/0 or true/false. Case is not significant in boolean values, but is preserved
+	in string values. Some items such as create masks are numeric.
+	</para>
+
+</refsect1>
+
+<refsect1>
+	<title>SECTION DESCRIPTIONS</title>
+
+	<para>
+	Each section in the configuration file (except for the [global] section) describes a shared resource (known as
+	a <quote>share</quote>). The section name is the name of the shared resource and the parameters within the
+	section define the shares attributes.
+	</para>
+
+	<para>
+	There are three special sections, [global], [homes] and [printers], which are described under
+	 <emphasis>special sections</emphasis>. The following notes apply to ordinary section descriptions.
+	</para>
+
+	<para>
+	A share consists of a directory to which access is being given plus a description of the access rights
+	which are granted to the user of the service. Some housekeeping options are also specifiable.
+	</para>
+	
+	<para>
+	Sections are either file share services (used by the client as an extension of their native file systems)
+	or printable services (used by the client to access print services on the host running the server).
+	</para>
+	
+	<para>
+	Sections may be designated <emphasis>guest</emphasis> services, in which case no password is required to
+	access them. A specified UNIX <emphasis>guest account</emphasis> is used to define access privileges in this
+	case.
+	</para>
+
+	<para>
+	Sections other than guest services will require a password to access them. The client provides the
+	username. As older clients only provide passwords and not usernames, you may specify a list of usernames to
+	check against the password using the <literal>user =</literal> option in the share definition. For modern clients
+	such as Windows 95/98/ME/NT/2000, this should not be necessary.
+	</para> 
+
+	<para>
+	The access rights granted by the server are masked by the access rights granted to the specified or guest
+	UNIX user by the host system. The server does not grant more access than the host system grants.
+	</para>
+	
+	<para>
+	The following sample section defines a file space share.  The user has write access to the path <filename
+	moreinfo="none">/home/bar</filename>.  The share is accessed via the share name <literal>foo</literal>:
+<programlisting>
+	<smbconfsection name="[foo]"/>
+	<smbconfoption name="path">/home/bar</smbconfoption>
+	<smbconfoption name="read only">no</smbconfoption>
+</programlisting>
+	</para>
+
+	<para>
+	The following sample section defines a printable share.  The share is read-only, but printable. That is,
+	the only write access permitted is via calls to open, write to and close a spool file. The <emphasis>guest
+	ok</emphasis> parameter means access will be permitted as the default guest user (specified elsewhere):
+<programlisting>
+	<smbconfsection name="[aprinter]"/>
+	<smbconfoption name="path">/usr/spool/public</smbconfoption>
+	<smbconfoption name="read only">yes</smbconfoption>
+	<smbconfoption name="printable">yes</smbconfoption>
+	<smbconfoption name="guest ok">yes</smbconfoption>
+</programlisting>
+	</para>
+
+</refsect1>
+
+<refsect1>
+	<title>SPECIAL SECTIONS</title>
+	
+	<refsect2>
+		<title>The [global] section</title>
+		
+		<para>
+		Parameters in this section apply to the server as a whole, or are defaults for sections that do not
+		specifically define certain items. See the notes under PARAMETERS for more information.
+		</para>
+	</refsect2>
+	
+	<refsect2 id="HOMESECT">
+		<title>The [homes] section</title>
+		
+		<para>
+		If a section called [homes] is included in the configuration file, services connecting clients
+		to their home directories can be created on the fly by the server.
+		</para>
+
+		<para>
+		When the connection request is made, the existing sections are scanned. If a match is found, it is
+		used. If no match is found, the requested section name is treated as a username and looked up in the local
+		password file. If the name exists and the correct password has been given, a share is created by cloning the
+		[homes] section.
+		</para>
+		
+		<para>
+		Some modifications are then made to the newly created share:
+		</para>
+		
+		<itemizedlist>
+			<listitem><para>
+			The share name is changed from homes to the located username.
+			</para></listitem>
+
+			<listitem><para>
+			If no path was given, the path is set to the user's home directory.
+			</para></listitem>
+		</itemizedlist>
+
+		<para>
+		If you decide to use a <emphasis>path =</emphasis> line in your [homes] section, it may be useful 
+		to use the %S macro. For example:
+<programlisting>
+<userinput moreinfo="none">path = /data/pchome/%S</userinput>
+</programlisting>
+		is useful if you have different home directories for your PCs than for UNIX access.
+		</para>
+
+		<para>
+		This is a fast and simple way to give a large number of clients access to their home directories with a minimum 
+		of fuss.
+		</para>
+
+		<para>
+		A similar process occurs if the requested section name is <quote>homes</quote>, except that the share
+		name is not changed to that of the requesting user. This method of using the [homes] section works well if
+		different users share a client PC.
+		</para>
+		
+		<para>
+		The [homes] section can specify all the parameters a normal service section can specify, though some make more sense 
+		than others. The following is a typical and suitable [homes] section:
+<programlisting>
+<smbconfsection name="[homes]"/>
+<smbconfoption name="read only">no</smbconfoption>
+</programlisting>
+		</para>
+	
+		<para>
+		An important point is that if guest access is specified in the [homes] section, all home directories will be 
+		visible to all clients <emphasis>without a password</emphasis>.  In the very unlikely event that this is actually
+		desirable, it is wise to also specify <emphasis>read only access</emphasis>.
+		</para>
+
+		<para>
+		The <emphasis>browseable</emphasis> flag for auto home directories will be inherited from the global browseable 
+		flag, not the [homes] browseable flag. This is useful as it means setting <emphasis>browseable = no</emphasis> in
+		the [homes] section will hide the [homes] share but make any auto home directories visible.
+		</para>
+	</refsect2>
+
+	<refsect2 id="PRINTERSSECT">
+		<title>The [printers] section</title>
+		
+		<para>
+		This section works like [homes], but for printers.
+		</para>
+
+		<para>
+		If a [printers] section occurs in the configuration file, users are able to connect to any printer 
+		specified in the local host's printcap file.
+		</para>
+
+		<para>
+		When a connection request is made, the existing sections are scanned. If a match is found, it is used.
+		If no match is found, but a [homes] section exists, it is used as described above. Otherwise, the requested
+		section name is treated as a printer name and the appropriate printcap file is scanned to see if the requested
+		section name is a valid printer share name. If a match is found, a new printer share is created by cloning the
+		[printers] section.
+		</para>
+
+		<para>
+		A few modifications are then made to the newly created share:
+		</para>
+
+		<itemizedlist>
+			<listitem><para>The share name is set to the located printer name</para></listitem>
+
+			<listitem><para>If no printer name was given, the printer name is set to the located printer name</para></listitem>
+
+			<listitem><para>If the share does not permit guest access and no username was given, the username is set
+				to the located printer name.</para></listitem>
+		</itemizedlist>
+
+		<para>
+		The [printers] service MUST be printable - if you specify otherwise, the server will refuse 
+		to load the configuration file.
+		</para>
+		
+		<para>
+		Typically the path specified is that of a world-writeable spool directory with the sticky bit set on 
+		it. A typical [printers] entry looks like this:
+<programlisting>
+<smbconfsection name="[printers]"/>
+<smbconfoption name="path">/usr/spool/public</smbconfoption>
+<smbconfoption name="guest ok">yes</smbconfoption>
+<smbconfoption name="printable">yes</smbconfoption>
+</programlisting>
+		</para>
+
+		<para>
+		All aliases given for a printer in the printcap file are legitimate printer names as far as the server is concerned. 
+		If your printing subsystem doesn't work like that, you will have to set up a pseudo-printcap. This is a file
+		consisting of one or more lines like this:
+<programlisting>
+alias|alias|alias|alias...    
+</programlisting>
+		</para>
+
+		<para>
+		Each alias should be an acceptable printer name for your printing subsystem. In the [global] section,
+		specify the new file as your printcap.  The server will only recognize names found in your pseudo-printcap,
+		which of course can contain whatever aliases you like. The same technique could be used simply to limit access
+		to a subset of your local printers.
+		</para>
+
+		<para>
+		An alias, by the way, is defined as any component of the first entry of a printcap record. Records are separated by newlines,
+		components (if there are more than one) are separated by vertical bar symbols (<literal>|</literal>).
+		</para>
+		
+		<note><para>
+		On SYSV systems which use lpstat to determine what printers are defined on the system you may be able to use
+		<literal>printcap name = lpstat</literal> to automatically obtain a list of printers. See the
+		<literal>printcap name</literal> option for more details.
+		</para></note>
+	</refsect2>
+</refsect1>
+
+<refsect1>
+	<title>USERSHARES</title>
+
+	<para>Starting with Samba version 3.0.23 the capability for non-root users to add, modify, and delete
+	their own share definitions has been added. This capability is called <emphasis>usershares</emphasis> and
+	is controlled by a set of parameters in the [global] section of the smb.conf.
+	The relevant parameters are :
+	</para>
+
+	<variablelist>
+		<varlistentry>
+		<term>usershare allow guests</term>
+		<listitem><para>Controls if usershares can permit guest access.</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>usershare max shares</term>
+		<listitem><para>Maximum number of user defined shares allowed.</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>usershare owner only</term>
+		<listitem><para>If set only directories owned by the sharing user can be shared.</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>usershare path</term>
+		<listitem><para>Points to the directory containing the user defined share definitions.
+		The filesystem permissions on this directory control who can create user defined shares.</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>usershare prefix allow list</term>
+		<listitem><para>Comma-separated list of absolute pathnames restricting what directories
+		can be shared. Only directories below the pathnames in this list are permitted.</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>usershare prefix deny list</term>
+		<listitem><para>Comma-separated list of absolute pathnames restricting what directories
+		can be shared. Directories below the pathnames in this list are prohibited.</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>usershare template share</term>
+		<listitem><para>Names a pre-existing share used as a template for creating new usershares.
+		All other share parameters not specified in the user defined share definition
+		are copied from this named share.</para></listitem>
+		</varlistentry>
+	</variablelist>
+
+	<para>To allow members of the UNIX group <literal>foo</literal> to create user defined
+	shares, create the directory to contain the share definitions as follows:
+	</para>
+	<para>Become root:</para>
+<programlisting>
+mkdir /usr/local/samba/lib/usershares
+chgrp foo /usr/local/samba/lib/usershares
+chmod 1770 /usr/local/samba/lib/usershares
+</programlisting>
+<para>Then add the parameters 
+
+<programlisting>
+	<smbconfoption name="usershare path">/usr/local/samba/lib/usershares</smbconfoption>
+	<smbconfoption name="usershare max shares">10</smbconfoption> # (or the desired number of shares)
+</programlisting> 
+
+	to the global
+	section of your <filename>smb.conf</filename>. Members of the group foo may then manipulate the user defined shares
+	using the following commands.</para>
+
+	<variablelist>
+		<varlistentry>
+		<term>net usershare add sharename path [comment] [acl] [guest_ok=[y|n]]</term>
+		<listitem><para>To create or modify (overwrite) a user defined share.</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>net usershare delete sharename</term>
+		<listitem><para>To delete a user defined share.</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>net usershare list wildcard-sharename</term>
+		<listitem><para>To list user defined shares.</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>net usershare info wildcard-sharename</term>
+		<listitem><para>To print information about user defined shares.</para></listitem>
+		</varlistentry>
+	</variablelist>
+</refsect1>
+	
+<refsect1>
+	<title>PARAMETERS</title>
+
+	<para>Parameters define the specific attributes of sections.</para>
+
+	<para>
+	Some parameters are specific to the [global] section (e.g., <emphasis>security</emphasis>).  Some parameters
+	are usable in all sections (e.g., <emphasis>create mask</emphasis>). All others are permissible only in normal
+	sections. For the purposes of the following descriptions the [homes] and [printers] sections will be
+	considered normal.  The letter <emphasis>G</emphasis> in parentheses indicates that a parameter is specific to
+	the [global] section. The letter <emphasis>S</emphasis> indicates that a parameter can be specified in a
+	service specific section. All <emphasis>S</emphasis> parameters can also be specified in the [global] section
+	- in which case they will define the default behavior for all services.
+	</para>
+
+	<para>
+	Parameters are arranged here in alphabetical order - this may not create best bedfellows, but at least you can
+	find them! Where there are synonyms, the preferred synonym is described, others refer to the preferred
+	synonym.
+	</para>
+</refsect1>
+
+<refsect1>
+	<title>VARIABLE SUBSTITUTIONS</title>
+
+	<para>
+	Many of the strings that are settable in the config file can take substitutions. For example the option
+	<quote>path = /tmp/%u</quote> is interpreted as <quote>path = /tmp/john</quote> if the user connected with the
+	username john.
+	</para>
+
+	<para>
+	These substitutions are mostly noted in the descriptions below, but there are some general substitutions
+	which apply whenever they might be relevant. These are:
+	</para>
+
+	<variablelist>
+		<varlistentry>
+		<term>%U</term>
+		<listitem><para>session username (the username that the client wanted, not
+			necessarily the same as the one they got).</para></listitem>
+		</varlistentry>
+		
+		<varlistentry>
+		<term>%G</term>
+		<listitem><para>primary group name of %U.</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>%h</term>
+		<listitem><para>the Internet hostname that Samba is running on.</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>%m</term>
+		<listitem><para>the NetBIOS name of the client machine (very useful).</para>
+
+			<para>This parameter is not available when Samba listens on port 445, as clients no longer
+			send this information. If you use this macro in an include statement on a domain that has
+			a Samba domain controller be sure to set in the [global] section <parameter>smb ports =
+			139</parameter>. This will cause Samba to not listen on port 445 and will permit include
+			functionality to function as it did with Samba 2.x.
+			</para></listitem>
+
+		</varlistentry>
+		
+		<varlistentry>
+		<term>%L</term>
+		<listitem><para>the NetBIOS name of the server. This allows you to change your config based on what
+			the client calls you. Your server can have a <quote>dual personality</quote>.
+		</para></listitem>
+		</varlistentry>
+		
+		<varlistentry>
+		<term>%M</term>
+		<listitem><para>the Internet name of the client machine.
+		</para></listitem>
+		</varlistentry>
+		
+		<varlistentry>
+		<term>%R</term>
+		<listitem><para>the selected protocol level after protocol negotiation. It can be one of CORE, COREPLUS, 
+			LANMAN1, LANMAN2 or NT1.</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>%d</term>
+		<listitem><para>the process id of the current server
+			process.</para></listitem>
+		</varlistentry>
+		
+		<varlistentry>
+		<term>%a</term>
+		<listitem><para>
+		    The architecture of the remote
+		    machine.  It currently recognizes Samba (<constant>Samba</constant>), 
+		    the Linux CIFS file system (<constant>CIFSFS</constant>), OS/2, (<constant>OS2</constant>),
+		    Mac OS X (<constant>OSX</constant>), Windows for Workgroups (<constant>WfWg</constant>), Windows 9x/ME 
+		    (<constant>Win95</constant>), Windows NT (<constant>WinNT</constant>),
+		    Windows 2000 (<constant>Win2K</constant>),
+		    Windows XP (<constant>WinXP</constant>),
+		    Windows XP 64-bit(<constant>WinXP64</constant>),
+		    Windows 2003 including
+		    2003R2 (<constant>Win2K3</constant>), and Windows
+		    Vista (<constant>Vista</constant>).  Anything else will be known as 
+		    <constant>UNKNOWN</constant>.</para> 
+		</listitem>
+		</varlistentry>
+		
+		<varlistentry>
+		<term>%I</term>
+		<listitem><para>the IP address of the client machine.</para>
+		<para>Before 3.6.0 it could contain IPv4 mapped IPv6 addresses,
+			now it only contains IPv4 or IPv6 addresses.</para>
+		</listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>%i</term>
+		<listitem><para>the local IP address to which a client connected.</para>
+		<para>Before 3.6.0 it could contain IPv4 mapped IPv6 addresses,
+			now it only contains IPv4 or IPv6 addresses.</para>
+		</listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>%T</term>
+		<listitem><para>the current date and time.</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>%D</term>
+		<listitem><para>name of the domain or workgroup of the current user.</para></listitem>
+		</varlistentry>
+		
+		<varlistentry>
+		<term>%w</term>
+		<listitem><para>the winbind separator.</para></listitem>
+		</varlistentry>
+		
+		<varlistentry>
+		<term>%$(<replaceable>envvar</replaceable>)</term>
+		<listitem><para>the value of the environment variable
+		<replaceable>envar</replaceable>.</para></listitem>
+		</varlistentry>
+	</variablelist>
+
+	<para>
+	The following substitutes apply only to some configuration options (only those that are
+	used when a connection has been established):
+	</para>
+
+	<variablelist>
+		<varlistentry>
+		<term>%S</term>
+		<listitem><para>the name of the current service, if any.</para>
+		</listitem>
+		</varlistentry>
+	
+		<varlistentry>
+		<term>%P</term>
+		<listitem><para>the root directory of the current service, if any.</para></listitem>
+		</varlistentry>
+	
+		<varlistentry>
+		<term>%u</term>
+		<listitem><para>username of the current service, if any.</para>
+		</listitem>
+		</varlistentry>
+	
+		<varlistentry>
+		<term>%g</term>
+		<listitem><para>primary group name of %u.</para></listitem>
+		</varlistentry>
+	
+		<varlistentry>
+		<term>%H</term>
+		<listitem><para>the home directory of the user given by %u.</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>%N</term>
+		<listitem><para>
+			the name of your NIS home directory server.  This is obtained from your NIS auto.map entry. 
+			If you have not compiled Samba with the <emphasis>--with-automount</emphasis> option, this
+			value will be the same as %L.</para></listitem>
+		</varlistentry>
+	
+		<varlistentry>
+		<term>%p</term>
+		<listitem><para>
+			the path of the service's home directory, obtained from your NIS auto.map entry. The NIS
+			auto.map entry is split up as <literal>%N:%p</literal>.</para></listitem>
+		</varlistentry>
+	</variablelist>
+	
+	<para>
+	There are some quite creative things that can be done with these substitutions and other
+	<filename moreinfo="none">smb.conf</filename> options.
+	</para>
+</refsect1>
+
+<refsect1 id="NAMEMANGLINGSECT">
+	<title>NAME MANGLING</title>
+	
+	<para>
+	Samba supports <literal>name mangling</literal> so that DOS and Windows clients can use files that don't
+	conform to the 8.3 format. It can also be set to adjust the case of 8.3 format filenames.
+	</para>
+
+	<para>
+	There are several options that control the way mangling is performed, and they are grouped here rather
+	than listed separately. For the defaults look at the output of the testparm program.
+	</para>
+
+	<para>
+	These options can be set separately for each service.
+	</para>
+
+	<para>
+	The options are:
+	</para>
+	
+	<variablelist>
+	
+	<varlistentry>
+		<term>case sensitive = yes/no/auto</term>
+		<listitem><para>
+		controls whether filenames are case sensitive. If they aren't, Samba must do a filename search and match on
+		passed names. The default setting of auto allows clients that support case sensitive filenames (Linux CIFSVFS
+		and smbclient 3.0.5 and above currently) to tell the Samba server on a per-packet basis that they wish to
+		access the file system in a case-sensitive manner (to support UNIX case sensitive semantics). No Windows or
+		DOS system supports case-sensitive filename so setting this option to auto is that same as setting it to no
+		for them. Default <emphasis>auto</emphasis>.
+		</para></listitem>
+		</varlistentry> 
+
+		<varlistentry>
+		<term>default case = upper/lower</term>
+		<listitem><para>
+		controls what the default case is for new filenames (ie. files that don't currently exist in the filesystem).
+		Default <emphasis>lower</emphasis>.  IMPORTANT NOTE: As part of the optimizations for directories containing
+		large numbers of files, the following special case applies. If the options
+		<smbconfoption 	name="case sensitive">yes</smbconfoption>, <smbconfoption name="preserve case">No</smbconfoption>, and
+		<smbconfoption name="short preserve case">No</smbconfoption> are set, then the case of <emphasis>all</emphasis>
+		incoming client filenames, not just new filenames, will be modified. See additional notes below.
+		</para></listitem>
+		</varlistentry> 
+	
+		<varlistentry>
+		<term>preserve case = yes/no</term>
+		<listitem><para>
+		controls whether new files (ie. files that don't currently exist in the filesystem) are created with the case
+		that the client passes, or if they are forced to be the <literal>default</literal> case. Default
+		<emphasis>yes</emphasis>.
+		</para></listitem>
+		</varlistentry> 
+
+		<varlistentry>
+		<term>short preserve case = yes/no</term>
+		<listitem><para>
+		controls if new files (ie. files that don't currently exist in the filesystem) which conform to 8.3 syntax,
+		that is all in upper case and of suitable length, are created upper case, or if they are forced to be the
+		<literal>default</literal> case. This option can be used with <literal>preserve case = yes</literal> to permit
+		long filenames to retain their case, while short names are lowercased. Default <emphasis>yes</emphasis>.
+		</para></listitem>
+		</varlistentry> 
+	</variablelist>
+	
+	<para>
+	By default, Samba 3.0 has the same semantics as a Windows NT server, in that it is case insensitive
+	but case preserving. As a special case for directories with large numbers of files, if the case
+	options are set as follows, "case sensitive = yes", "case preserve = no", "short preserve case = no"
+	then the "default case" option will be applied and will modify all filenames sent from the client
+	when accessing this share.
+	</para>
+	
+</refsect1>
+
+<refsect1 id="VALIDATIONSECT">
+	<title>NOTE ABOUT USERNAME/PASSWORD VALIDATION</title>
+
+	<para>
+	There are a number of ways in which a user can connect to a service. The server uses the following steps
+	in determining if it will allow a connection to a specified service. If all the steps fail, the connection
+	request is rejected.  However, if one of the steps succeeds, the following steps are not checked.
+	</para>
+
+	<para>
+	If the service is marked <quote>guest only = yes</quote> and the server is running with share-level
+	security (<quote>security = share</quote>, steps 1 to 5 are skipped.
+	</para>
+
+
+	<orderedlist continuation="restarts" inheritnum="ignore" numeration="arabic">
+		<listitem><para>
+		If the client has passed a username/password pair and that username/password pair is validated by the UNIX 
+		system's password programs, the connection is made as that username. This includes the
+		<literal>\\server\service</literal>%<replaceable>username</replaceable> method of passing a username.
+		</para></listitem>
+
+		<listitem><para>
+		If the client has previously registered a username with the system and now supplies a correct password for that 
+		username, the connection is allowed.
+		</para></listitem>
+		
+		<listitem><para>
+		The client's NetBIOS name and any previously used usernames are checked against the supplied password. If 
+		they match, the connection is allowed as the corresponding user.
+		</para></listitem>
+		
+		<listitem><para>
+		If the client has previously validated a username/password pair with the server and the client has passed 
+		the validation token, that username is used.
+		</para></listitem>
+
+		<listitem><para>
+		If a <literal>user = </literal> field is given in the <filename moreinfo="none">smb.conf</filename> file for the
+		service and the client has supplied a password, and that password matches (according to the UNIX system's
+		password checking) with one of the usernames from the <literal>user =</literal> field, the connection is made as
+		the username in the <literal>user =</literal> line. If one of the usernames in the <literal>user =</literal> list
+		begins with a <literal>@</literal>, that name expands to a list of names in the group of the same name.
+		</para></listitem>
+
+		<listitem><para>
+		If the service is a guest service, a connection is made as the username given in the <literal>guest account
+		=</literal> for the service, irrespective of the supplied password.
+		</para></listitem>
+	</orderedlist>
+
+</refsect1>
+
+<refsect1>
+	<title>REGISTRY-BASED CONFIGURATION</title>
+
+	<para>
+		Starting with Samba version 3.2.0, the capability to
+		store Samba configuration in the registry is available.
+		The configuration is stored in the registry key
+		 <emphasis><literal>HKLM\Software\Samba\smbconf</literal></emphasis>.
+		There are two levels of registry configuration:
+	</para>
+
+	<orderedlist continuation="restarts" inheritnum="ignore" numeration="arabic">
+		<listitem><para>Share definitions stored in registry are used.
+		This is triggered by setting the global 
+		parameter <parameter>registry shares</parameter>
+		to <quote>yes</quote> in <emphasis>smb.conf</emphasis>.
+		</para>
+
+		<para>The registry shares are loaded not at startup but
+		on demand at runtime by <emphasis>smbd</emphasis>.
+		Shares defined in <emphasis>smb.conf</emphasis> take
+		priority over shares of the same name defined in
+		registry.</para></listitem>
+
+		<listitem>
+		<para>Global <emphasis>smb.conf</emphasis>
+		options stored in registry are used. This can be activated
+		in two different ways:</para>
+
+		<para>Firstly, a registry only configuration is triggered
+		by setting
+		<smbconfoption name="config backend">registry</smbconfoption>
+		in the [global] section of <emphasis>smb.conf</emphasis>.
+		This resets everything that has been read from config files
+		to this point and reads the content of the global configuration
+		section from the registry.
+		This is the recommended method of using registry based
+		configuration.</para>
+
+		<para>Secondly, a mixed configuration can be activated
+		by a special new meaning of the parameter
+		<smbconfoption name="include">registry</smbconfoption>
+		in the [global] section of <emphasis>smb.conf</emphasis>.
+		This reads the global options from registry with the same
+		priorities as for an include of a text file.
+		This may be especially useful in cases where an initial
+		configuration is needed to access the registry.</para>
+
+		<para>Activation of global registry options automatically
+		activates registry shares. So in the registry only case,
+		shares are loaded on demand only.</para>
+		</listitem>
+	</orderedlist>
+
+	<para>
+		Note: To make registry-based configurations foolproof
+		at least to a certain extent, the use
+		of <parameter>lock directory</parameter> and
+		 <parameter>config backend</parameter>
+		inside the registry configuration has been disabled:
+		Especially by changing the
+		 <parameter>lock directory</parameter> inside the registry
+		configuration, one would create a broken setup where the daemons
+		do not see the configuration they loaded once it is active.
+	</para>
+
+	<para>
+		The registry configuration can be accessed with
+		tools like <emphasis>regedit</emphasis> or <emphasis>net (rpc)
+		registry</emphasis> in the key
+		 <emphasis><literal>HKLM\Software\Samba\smbconf</literal></emphasis>.
+
+		More conveniently, the <emphasis>conf</emphasis> subcommand of the
+		 <citerefentry><refentrytitle>net</refentrytitle>
+		<manvolnum>8</manvolnum></citerefentry> utility
+		offers a dedicated interface to read and write the
+		registry based configuration locally, i.e. directly
+		accessing the database file, circumventing the
+		server.
+	</para>
+
+</refsect1>
+
+<refsect1>
+	<title>EXPLANATION OF EACH PARAMETER</title>
+	
+	<samba:parameterlist>
+		<xi:include href="../smbdotconf/parameters.all.xml" parse="xml"/>
+	</samba:parameterlist>
+
+</refsect1>
+
+<refsect1>
+	<title>WARNINGS</title>
+	
+	<para>
+	Although the configuration file permits service names to contain spaces, your client software may not.
+	Spaces will be ignored in comparisons anyway, so it shouldn't be a problem - but be aware of the possibility.
+	</para>
+
+	<para>
+	On a similar note, many clients - especially DOS clients - limit service names to eight characters.
+	<citerefentry><refentrytitle>smbd</refentrytitle> <manvolnum>8</manvolnum></citerefentry> has no such
+	limitation, but attempts to connect from such clients will fail if they truncate the service names.  For this
+	reason you should probably keep your service names down to eight characters in length.
+	</para>
+
+	<para>
+	Use of the <literal>[homes]</literal> and <literal>[printers]</literal> special sections make life 
+	for an administrator easy, but the various combinations of default attributes can be tricky. Take extreme
+	care when designing these sections. In particular, ensure that the permissions on spool directories are
+	correct.
+	</para>
+
+</refsect1>
+
+<refsect1>
+	<title>VERSION</title>
+
+	<para>This man page is correct for version 3 of the Samba suite.</para>
+</refsect1>
+
+<refsect1>
+	<title>SEE ALSO</title>
+	<para>
+	<citerefentry><refentrytitle>samba</refentrytitle>
+	<manvolnum>7</manvolnum></citerefentry>, <citerefentry><refentrytitle>smbpasswd</refentrytitle>
+	<manvolnum>8</manvolnum></citerefentry>, <citerefentry><refentrytitle>swat</refentrytitle>
+	<manvolnum>8</manvolnum></citerefentry>, <citerefentry><refentrytitle>smbd</refentrytitle>
+	<manvolnum>8</manvolnum></citerefentry>, <citerefentry><refentrytitle>nmbd</refentrytitle>
+	<manvolnum>8</manvolnum></citerefentry>, <citerefentry><refentrytitle>smbclient</refentrytitle>
+	<manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>nmblookup</refentrytitle>
+	<manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>testparm</refentrytitle>
+	<manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>testprns</refentrytitle>
+	<manvolnum>1</manvolnum></citerefentry>.</para>
+</refsect1>
+
+<refsect1>
+	<title>AUTHOR</title>
+	
+	<para>
+	The original Samba software and related utilities were created by Andrew Tridgell. Samba is now developed
+	by the Samba Team as an Open Source project similar to the way the Linux kernel is developed.
+	</para>
+	
+	<para>
+	The original Samba man pages were written by Karl Auer. The man page sources were converted to YODL format (another 
+	excellent piece of Open Source software, available at <ulink noescape="1" url="ftp://ftp.icce.rug.nl/pub/unix/">
+	ftp://ftp.icce.rug.nl/pub/unix/</ulink>) and updated for the Samba 2.0 release by Jeremy Allison.  The conversion
+	to DocBook for Samba 2.2 was done by Gerald Carter. The conversion to DocBook XML 4.2 for Samba 3.0 was done by
+	Alexander Bokovoy.
+	</para>
+</refsect1>
+
+</refentry>

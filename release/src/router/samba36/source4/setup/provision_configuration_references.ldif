@@ -1,0 +1,14 @@
+###############################
+# Configuration Naming Context
+###############################
+dn: ${CONFIGDN}
+changetype: modify
+-
+# "masteredBy", "msDs-masteredBy" filled in later
+replace: subRefs
+subRefs: ${SCHEMADN}
+-
+add: wellKnownObjects
+wellKnownObjects: B:32:6227f0af1fc2410d8e3bb10615bb5b0f:CN=NTDS Quotas,${CONFIGDN}
+wellKnownObjects: B:32:ab8153b7768811d1aded00c04fd8d5cd:CN=LostAndFoundConfig,${CONFIGDN}
+wellKnownObjects: B:32:18e2ea80684f11d2b9aa00c04f79f805:CN=Deleted Objects,${CONFIGDN}

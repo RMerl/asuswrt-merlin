@@ -1,0 +1,299 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//Samba-Team//DTD DocBook V4.2-Based Variant V1.0//EN" "http://www.samba.org/samba/DTD/samba-doc">
+<refentry id="vfs_smb_traffic_analyzer.8">
+
+<refmeta>
+	<refentrytitle>smb_traffic_analyzer</refentrytitle>
+	<manvolnum>8</manvolnum>
+	<refmiscinfo class="source">Samba</refmiscinfo>
+	<refmiscinfo class="manual">System Administration tools</refmiscinfo>
+	<refmiscinfo class="version">3.6</refmiscinfo>
+</refmeta>
+
+
+<refnamediv>
+	<refname>vfs_smb_traffic_analyzer</refname>
+	<refpurpose>log Samba VFS read and write operations through a socket
+	to a helper application</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+	<cmdsynopsis>
+		<command>vfs objects = smb_traffic_analyzer</command>
+	</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1>
+	<title>DESCRIPTION</title>
+
+	<para>This VFS module is part of the
+	<citerefentry><refentrytitle>samba</refentrytitle>
+	<manvolnum>7</manvolnum></citerefentry> suite.</para>
+
+	<para>The <command>vfs_smb_traffic_analyzer</command> VFS module logs
+	client file operations on a Samba server and sends this data
+	over a socket to a helper program (in the following the "Receiver"),
+	which feeds a SQL database. More
+	information on the helper programs can be obtained from the
+	homepage of the project at:
+	http://holger123.wordpress.com/smb-traffic-analyzer/
+	Since the VFS module depends on a receiver that is doing something with
+	the data, it is evolving in it's development. Therefore, the module
+	works with different protocol versions, and the receiver has to be able
+	to decode the protocol that is used. The protocol version 1 was
+	introduced to Samba at September 25, 2008. It was a very simple
+	protocol, supporting only a small list of VFS operations, and had
+	several drawbacks. The protocol version 2 is a try to solve the
+	problems version 1 had while at the same time adding new features.
+	With the release of Samba 3.6.0, the module will run protocol version 2
+	by default.
+	</para>
+</refsect1>
+
+<refsect1>
+	<title>Protocol version 1 documentation</title>
+	<para><command>vfs_smb_traffic_analyzer</command> protocol version 1 is aware
+		of the following VFS operations:</para>
+
+	<simplelist>
+        <member>write</member>
+        <member>pwrite</member>
+	<member>read</member>
+	<member>pread</member>
+	</simplelist>
+
+	<para><command>vfs_smb_traffic_analyzer</command> sends the following data
+	in a fixed format separated by a comma through either an internet or a
+	unix domain socket:</para>
+	<programlisting>
+	BYTES|USER|DOMAIN|READ/WRITE|SHARE|FILENAME|TIMESTAMP
+	</programlisting>
+
+	<para>Description of the records:
+
+	<itemizedlist>
+	<listitem><para><command>BYTES</command> - the length in bytes of the VFS operation</para></listitem>
+	<listitem><para><command>USER</command> - the user who initiated the operation</para></listitem>
+	<listitem><para><command>DOMAIN</command> - the domain of the user</para></listitem>
+	<listitem><para><command>READ/WRITE</command> - either "W" for a write operation or "R" for read</para></listitem>
+	<listitem><para><command>SHARE</command> - the name of the share on which the VFS operation occurred</para></listitem>
+	<listitem><para><command>FILENAME</command> - the name of the file that was used by the VFS operation</para></listitem>
+	<listitem><para><command>TIMESTAMP</command> - a timestamp, formatted as "yyyy-mm-dd hh-mm-ss.ms" indicating when the VFS operation occurred</para></listitem>
+	<listitem><para><command>IP</command> - The IP Address (v4 or v6) of the client machine that initiated the VFS operation.</para></listitem>
+	</itemizedlist>
+
+	</para>
+
+	<para>This module is stackable.</para>
+
+</refsect1>
+
+<refsect1>
+	<title>Drawbacks of protocol version 1</title>
+	<para>Several drawbacks have been seen with protocol version 1 over time.</para>
+	<itemizedlist>
+	<listitem>
+		<para>
+			<command>Problematic parsing - </command>
+			Protocol version 1 uses hyphen and comma to seperate blocks of data. Once there is a
+			filename with a hyphen, you will run into problems because the receiver decodes the
+			data in a wrong way.
+		</para>
+	</listitem>
+	<listitem>
+		<para>
+			<command>Insecure network transfer - </command>
+			Protocol version 1 sends all it's data as plaintext over the network.
+		</para>
+	</listitem>
+	<listitem>
+		<para>
+			<command>Limited set of supported VFS operations - </command>
+			Protocol version 1 supports only four VFS operations.
+		</para>
+	</listitem>
+	<listitem>
+		<para>
+			<command>No subreleases of the protocol - </command>
+			Protocol version 1 is fixed on it's version, making it unable to introduce new
+			features or bugfixes through compatible sub-releases.
+		</para>
+	</listitem>
+	</itemizedlist>
+</refsect1>
+<refsect1>
+	<title>Version 2 of the protocol</title>
+	<para>Protocol version 2 is an approach to solve the problems introduced with protcol v1.
+	From the users perspective, the following changes are most prominent among other enhancements:
+	</para>
+	<itemizedlist>
+		<listitem>
+		<para>
+		The data from the module may be send encrypted, with a key stored in secrets.tdb. The
+		Receiver then has to use the same key. The module does AES block encryption over the
+		data to send.
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+		The module now can identify itself against the receiver with a sub-release number, where
+		the receiver may run with a different sub-release number than the module. However, as
+		long as both run on the V2.x protocol, the receiver will not crash, even if the module
+		uses features only implemented in the newer subrelease. If the module uses
+		a new feature from a newer subrelease, and the receiver runs an older protocol, it is just
+		ignoring the functionality. Of course it is best to have both the receiver and the module
+		running the same subrelease of the protocol.
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+		The parsing problems of protocol V1 can no longer happen, because V2 is marshalling the
+		data packages in a proper way.
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+		The module now potientially has the ability to create data on every VFS function. As of
+		protocol V2.0, there is support for 8 VFS functions, namely write,read,pread,pwrite,
+		rename,chdir,mkdir and rmdir. Supporting more VFS functions is one of the targets for the
+		upcoming sub-releases.
+		</para>
+		</listitem>
+	</itemizedlist>
+	<para>
+		To enable protocol V2, the protocol_version vfs option has to be used (see OPTIONS).
+	</para>
+		
+</refsect1>		
+
+<refsect1>
+	<title>OPTIONS with protocol V1 and V2.x</title>
+
+	<variablelist>
+
+		<varlistentry>
+                <term>smb_traffic_analyzer:mode = STRING</term>
+                <listitem>
+                <para>If STRING matches to "unix_domain_socket", the module will
+		use a unix domain socket located at /var/tmp/stadsocket, if
+		STRING contains an different string or is not defined, the module will
+		use an internet domain socket for data transfer.</para>
+
+                </listitem>
+                </varlistentry>
+
+
+		<varlistentry>
+		<term>smb_traffic_analyzer:host = STRING</term>
+		<listitem>
+		<para>The module will send the data to the system named with
+		the hostname STRING.</para>
+
+		</listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>smb_traffic_analyzer:port = STRING</term>
+		<listitem>
+		<para>The module will send the data using the TCP port given
+		in STRING.
+		</para>
+		</listitem>
+		</varlistentry>
+		<varlistentry>
+		<term>smb_traffic_analyzer:anonymize_prefix = STRING</term>
+		<listitem>
+		<para>The module will replace the user names with a prefix
+		given by STRING and a simple hash number. In version 2.x
+		of the protocol, the users SID will also be anonymized.
+		</para>
+
+		</listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>smb_traffic_analyzer:total_anonymization = STRING</term>
+		<listitem>
+		<para>If STRING matches to 'yes', the module will replace
+		any user name with the string given by the option 
+		smb_traffic_analyzer:anonymize_prefix, without generating
+		an additional hash number. This means that any transfer data
+		will be mapped to a single user, leading to a total 
+		anonymization of user related data. In version 2.x of the
+		protocol, the users SID will also be anonymized.</para>
+		</listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>smb_traffic_analyzer:protocol_version = STRING</term>
+		<listitem>
+		<para>If STRING matches to V1, the module will use version 1 of the
+		protocol. If STRING is not given, the module will use version 2 of the
+		protocol, which is the default.
+		</para>
+		</listitem>
+		</varlistentry>
+
+	</variablelist>
+</refsect1>
+
+<refsect1>
+	<title>EXAMPLES</title>
+	<para>Running protocol V2 on share "example_share", using an internet socket.</para>
+	<programlisting>
+	<smbconfsection name="[example_share]"/>
+	<smbconfoption name="path">/data/example</smbconfoption>
+	<smbconfoption name="vfs_objects">smb_traffic_analyzer</smbconfoption>
+	<smbconfoption name="smb_traffic_analyzer:host">examplehost</smbconfoption>
+	<smbconfoption name="smb_traffic_analyzer:port">3491</smbconfoption>
+	</programlisting>
+
+	<para>The module running on share "example_share", using a unix domain socket</para>
+	<programlisting>
+	<smbconfsection name="[example_share]"/>
+	<smbconfoption name="path">/data/example</smbconfoption>
+	<smbconfoption name="vfs objects">smb_traffic_analyzer</smbconfoption>
+	<smbconfoption name="smb_traffic_analyzer:mode">unix_domain_socket</smbconfoption>
+	</programlisting>
+
+	<para>The module running on share "example_share", using an internet socket,
+	connecting to host "examplehost" on port 3491.</para>
+	<programlisting>
+	<smbconfsection name="[example_share]"/>
+	<smbconfoption name="path">/data/example</smbconfoption>
+	<smbconfoption name="vfs objects">smb_traffic_analyzer</smbconfoption>
+	<smbconfoption name="smb_traffic_analyzer:host">examplehost</smbconfoption>
+	<smbconfoption name="smb_traffic_analyzer:port">3491</smbconfoption>
+	</programlisting>
+
+	<para>The module running on share "example_share", using an internet socket,
+	connecting to host "examplehost" on port 3491, anonymizing user names with
+	the prefix "User".</para>
+	<programlisting>
+	<smbconfsection name="[example_share]"/>
+	<smbconfoption name="path">/data/example</smbconfoption>
+	<smbconfoption name="vfs objects">smb_traffic_analyzer</smbconfoption>
+	<smbconfoption name="smb_traffic_analyzer:host">examplehost</smbconfoption>
+	<smbconfoption name="smb_traffic_analyzer:port">3491</smbconfoption>
+	<smbconfoption name="smb_traffic_analyzer:anonymize_prefix">User</smbconfoption>
+	</programlisting>
+</refsect1>
+
+<refsect1>
+	<title>VERSION</title>
+	<para>This man page is correct for version 3.3 of the Samba suite.
+	</para>
+</refsect1>
+
+<refsect1>
+	<title>AUTHOR</title>
+
+	<para>The original Samba software and related utilities
+	were created by Andrew Tridgell. Samba is now developed
+	by the Samba Team as an Open Source project similar
+	to the way the Linux kernel is developed.</para>
+
+	<para>The original version of the VFS module and the
+	helper tools were created by Holger Hetterich.</para>
+</refsect1>
+</refentry>

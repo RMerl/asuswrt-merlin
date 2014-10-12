@@ -1,0 +1,38 @@
+<samba:parameter name="directory mask"
+	context="S"
+	type="string"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<synonym>directory mode</synonym>
+<description>
+    <para>This parameter is the octal modes which are 
+    used when converting DOS modes to UNIX modes when creating UNIX 
+    directories.</para>
+
+    <para>When a directory is created, the necessary permissions are 
+    calculated according to the mapping from DOS modes to UNIX permissions, 
+    and the resulting UNIX mode is then bit-wise 'AND'ed with this 
+    parameter. This parameter may be thought of as a bit-wise MASK for 
+    the UNIX modes of a directory. Any bit <emphasis>not</emphasis> set 
+    here will be removed from the modes set on a directory when it is 
+    created.</para>
+
+    <para>The default value of this parameter removes the 'group' 
+    and 'other' write bits from the UNIX mode, allowing only the 
+    user who owns the directory to modify it.</para>
+		
+    <para>Following this Samba will bit-wise 'OR' the UNIX mode 
+    created from this parameter with the value of the <smbconfoption name="force directory mode"/> parameter. 
+    This parameter is set to 000 by default (i.e. no extra mode bits are added).</para>
+
+    <para>Note that this parameter does not apply to permissions
+    set by Windows NT/2000 ACL editors. If the administrator wishes to enforce
+    a mask on access control lists also, they need to set the <smbconfoption name="directory security mask"/>.</para>
+</description>
+
+<related>force directory mode</related>
+<related>create mask</related>
+<related>directory security mask</related>
+<related>inherit permissions</related>
+<value type="default">0755</value>
+<value type="example">0775</value>
+</samba:parameter>

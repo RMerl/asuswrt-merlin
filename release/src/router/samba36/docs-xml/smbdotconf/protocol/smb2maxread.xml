@@ -1,0 +1,17 @@
+<samba:parameter name="smb2 max read"
+		type="integer"
+		context="G"
+		advanced="1" developer="1"
+		xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+<para>This option specifies the protocol value that <citerefentry><refentrytitle>smbd</refentrytitle>
+<manvolnum>8</manvolnum></citerefentry> will return to a client, informing the client of the largest
+size that may be returned by a single SMB2 read call.
+</para>
+<para>The maximum is 65536 bytes (64KB), which is the same as a Windows Vista SMB2 server.</para>
+</description>
+
+<related>smb2 max write</related>
+<related>smb2 max trans</related>
+<value type="default">65536</value>
+</samba:parameter>

@@ -1,0 +1,21 @@
+<samba:parameter name="winbind separator"
+                 context="G"
+                 advanced="1" developer="1"
+				 type="string"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>This parameter allows an admin to define the character 
+	used when listing a username of the form of <replaceable>DOMAIN
+	</replaceable>\<replaceable>user</replaceable>.  This parameter 
+	is only applicable when using the <filename moreinfo="none">pam_winbind.so</filename>
+	and <filename moreinfo="none">nss_winbind.so</filename> modules for UNIX services.
+	</para>
+
+	<para>Please note that setting this parameter to + causes problems
+	with group membership at least on glibc systems, as the character +
+	is used as a special character for NIS in /etc/group.</para>
+</description>
+
+<value type="default">'\'</value>
+<value type="example">+</value>
+</samba:parameter>

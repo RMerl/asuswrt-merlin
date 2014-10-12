@@ -1,0 +1,2 @@
+. torture_setup.fns
+test_torture "TRANS2"

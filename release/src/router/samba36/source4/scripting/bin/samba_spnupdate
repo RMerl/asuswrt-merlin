@@ -1,0 +1,227 @@
+#!/usr/bin/env python
+#
+# update our servicePrincipalName names from spn_update_list
+#
+# Copyright (C) Andrew Tridgell 2010
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
+import os, sys
+
+# ensure we get messages out immediately, so they get in the samba logs,
+# and don't get swallowed by a timeout
+os.environ['PYTHONUNBUFFERED'] = '1'
+
+# forcing GMT avoids a problem in some timezones with kerberos. Both MIT
+# heimdal can get mutual authentication errors due to the 24 second difference
+# between UTC and GMT when using some zone files (eg. the PDT zone from
+# the US)
+os.environ["TZ"] = "GMT"
+
+# Find right directory when running from source tree
+sys.path.insert(0, "bin/python")
+
+import samba, ldb
+import optparse
+from samba import Ldb
+from samba import getopt as options
+from samba.auth import system_session
+from samba.samdb import SamDB
+from samba.credentials import Credentials, DONT_USE_KERBEROS
+
+parser = optparse.OptionParser("samba_spnupdate")
+sambaopts = options.SambaOptions(parser)
+parser.add_option_group(sambaopts)
+parser.add_option_group(options.VersionOptions(parser))
+parser.add_option("--verbose", action="store_true")
+
+credopts = options.CredentialsOptions(parser)
+parser.add_option_group(credopts)
+
+ccachename = None
+
+opts, args = parser.parse_args()
+
+if len(args) != 0:
+    parser.print_usage()
+    sys.exit(1)
+
+lp = sambaopts.get_loadparm()
+creds = credopts.get_credentials(lp)
+
+domain = lp.get("realm")
+host = lp.get("netbios name")
+
+
+# get the list of substitution vars
+def get_subst_vars(samdb):
+    global lp
+    vars = {}
+
+    vars['DNSDOMAIN'] = lp.get('realm').lower()
+    vars['HOSTNAME']  = lp.get('netbios name').lower() + "." + vars['DNSDOMAIN']
+    vars['NETBIOSNAME'] = lp.get('netbios name').upper()
+    vars['WORKGROUP'] = lp.get('workgroup')
+    vars['NTDSGUID']  = samdb.get_ntds_GUID()
+    res = samdb.search(base=None, scope=ldb.SCOPE_BASE, attrs=["objectGUID"])
+    guid = samdb.schema_format_value("objectGUID", res[0]['objectGUID'][0])
+    vars['DOMAINGUID'] = guid
+    return vars
+
+try:
+    private_dir = lp.get("private dir")
+    secrets_path = os.path.join(private_dir, lp.get("secrets database"))
+
+    secrets_db = Ldb(url=secrets_path, session_info=system_session(),
+                     credentials=creds, lp=lp)
+    res = secrets_db.search(base=None,
+                            expression="(&(objectclass=ldapSecret)(cn=SAMDB Credentials))",
+                            attrs=["samAccountName", "secret"])
+
+    if len(res) == 1:
+        credentials = Credentials()
+        credentials.set_kerberos_state(DONT_USE_KERBEROS)
+
+        if "samAccountName" in res[0]:
+            credentials.set_username(res[0]["samAccountName"][0])
+
+        if "secret" in res[0]:
+            credentials.set_password(res[0]["secret"][0])
+
+    else:
+        credentials = None
+
+    samdb = SamDB(url=lp.get("sam database"), session_info=system_session(), credentials=credentials, lp=lp)
+except ldb.LdbError, (num, msg):
+    print("Unable to open sam database %s : %s" % (lp.get("sam database"), msg))
+    sys.exit(1)
+
+
+# get the substitution dictionary
+sub_vars = get_subst_vars(samdb)
+
+# get the list of SPN entries we should have
+spn_update_list = lp.private_path('spn_update_list')
+
+file = open(spn_update_list, "r")
+
+spn_list = []
+
+# build the spn list
+for line in file:
+    line = line.strip()
+    if line == '' or line[0] == "#":
+        continue
+    line = samba.substitute_var(line, sub_vars)
+    spn_list.append(line)
+
+# get the current list of SPNs in our sam
+res = samdb.search(base="",
+                   expression='(&(objectClass=computer)(samaccountname=%s$))' % sub_vars['NETBIOSNAME'],
+                   attrs=["servicePrincipalName"])
+if not res or len(res) != 1:
+    print("Failed to find computer object for %s$" % sub_vars['NETBIOSNAME'])
+    sys.exit(1)
+
+machine_dn = res[0]["dn"]
+
+old_spns = []
+if "servicePrincipalName" in res[0]:
+    for s in res[0]["servicePrincipalName"]:
+        old_spns.append(s)
+
+if opts.verbose:
+    print("Existing SPNs: %s" % old_spns)
+
+add_list = []
+
+# work out what needs to be added
+for s in spn_list:
+    in_list = False
+    for s2 in old_spns:
+        if s2.upper() == s.upper():
+            in_list = True
+            break
+    if not in_list:
+        add_list.append(s)
+
+if opts.verbose:
+    print("New SPNs: %s" % add_list)
+
+if add_list == []:
+    if opts.verbose:
+        print("Nothing to add")
+    sys.exit(0)
+
+def local_update(add_list):
+    '''store locally'''
+    global res
+    msg = ldb.Message()
+    msg.dn = res[0]['dn']
+    msg[""] = ldb.MessageElement(add_list,
+                                 ldb.FLAG_MOD_ADD, "servicePrincipalName")
+    res = samdb.modify(msg)
+
+def call_rodc_update(d):
+    '''RODCs need to use the writeSPN DRS call'''
+    global lp, sub_vars
+    from samba import drs_utils
+    from samba.dcerpc import drsuapi, nbt
+    from samba.net import Net
+
+    if opts.verbose:
+        print("Using RODC SPN update")
+
+    creds = credopts.get_credentials(lp)
+    creds.set_machine_account(lp)
+
+    net = Net(creds=creds, lp=lp)
+    try:
+        cldap_ret = net.finddc(domain, nbt.NBT_SERVER_DS | nbt.NBT_SERVER_WRITABLE)
+    except Exception, reason:
+        print("Unable to find writeable DC for domain '%s' to send DRS writeSPN to : %s" % (domain, reason))
+        sys.exit(1)
+    server = cldap_ret.pdc_dns_name
+    try:
+        binding_options = "seal"
+        if lp.get("log level") >= 5:
+            binding_options += ",print"
+        drs = drsuapi.drsuapi('ncacn_ip_tcp:%s[%s]' % (server, binding_options), lp, creds)
+        (drs_handle, supported_extensions) = drs_utils.drs_DsBind(drs)
+    except Exception, reason:
+        print("Unable to connect to DC '%s' for domain '%s' : %s" % (server, domain, reason))
+        sys.exit(1)
+    req1 = drsuapi.DsWriteAccountSpnRequest1()
+    req1.operation = drsuapi.DRSUAPI_DS_SPN_OPERATION_ADD
+    req1.object_dn = str(machine_dn)
+    req1.count = 0
+    spn_names = []
+    for n in add_list:
+        if n.find('E3514235-4B06-11D1-AB04-00C04FC2DCD2') != -1:
+            # this one isn't allowed for RODCs, but we don't know why yet
+            continue
+        ns = drsuapi.DsNameString()
+        ns.str = n
+        spn_names.append(ns)
+        req1.count = req1.count + 1
+    if spn_names == []:
+        return
+    req1.spn_names = spn_names
+    (level, res) = drs.DsWriteAccountSpn(drs_handle, 1, req1)
+
+if samdb.am_rodc():
+    call_rodc_update(add_list)
+else:
+    local_update(add_list)

@@ -1,0 +1,41 @@
+#!/usr/bin/env python
+
+# this is useful for running samba tools with a different prefix
+
+# for example:
+# samba-tool $(scripting/devel/config_base /tmp/testprefix) join .....
+
+import sys, os
+
+vars = {
+    "ncalrpc dir" : "${PREFIX}/var/ncalrpc",
+    "private dir" : "${PREFIX}/private",
+    "lock dir" : "${PREFIX}/var/locks",
+    "pid directory" : "${PREFIX}/var/run",
+    "winbindd socket directory" : "${PREFIX}/var/run/winbindd",
+    "winbindd privileged socket directory" : "${PREFIX}/var/lib/winbindd_privileged",
+    "ntp signd socket directory" : "${PREFIX}/var/run/ntp_signd"
+}
+
+if len(sys.argv) != 2:
+    print("Usage: config_base BASEDIRECTORY")
+    sys.exit(1)
+
+prefix = sys.argv[1]
+
+config_dir  = prefix + "/etc"
+config_file = config_dir + "/smb.conf"
+
+if not os.path.isdir(config_dir):
+    os.makedirs(config_dir, mode=0755)
+if not os.path.isfile(config_file):
+    open(config_file, mode='w').close()
+
+options = " --configfile=${PREFIX}/etc/smb.conf"
+
+for v in vars:
+    options += " --option=%s=%s" % (v.replace(" ",""), vars[v])
+
+options = options.replace("${PREFIX}", prefix)
+
+print options

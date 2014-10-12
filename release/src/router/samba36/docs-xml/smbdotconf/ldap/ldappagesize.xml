@@ -1,0 +1,18 @@
+<samba:parameter name="ldap page size"
+	context="G"
+	type="integer"
+	advanced="1" developer="1"
+        xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>
+	This parameter specifies the number of entries per page.
+	</para>
+
+	<para>If the LDAP server supports paged results, clients can
+	request	subsets of search results (pages) instead of the entire list.
+	This parameter specifies the size of these pages.
+	</para>
+</description>
+<value type="default">1024</value>
+<value type="example">512</value>
+</samba:parameter>

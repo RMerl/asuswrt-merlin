@@ -1,0 +1,16 @@
+#
+# use nmake /f NMakefile [<target>]
+#
+INCLUDES=-I
+CFLAGS=$(INCLUDES) -Zi -nologo -Dsnprintf=sprintf_s
+LIBS=advapi32.lib
+
+PREPARE_DCPROMO = prepare_dcpromo.exe
+
+all: $(PREPARE_DCPROMO)
+
+clean:
+	del *~ *.obj *.exe
+
+prepare_dcpromo.exe: prepare_dcpromo.obj
+	$(CC) $(CFLAGS) -o prepare_dcpromo.exe prepare_dcpromo.obj $(LIBS)

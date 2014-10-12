@@ -1,0 +1,65 @@
+#!/bin/sh
+#
+# Copyright (C) Matthieu Patou <mat@matws.net> 2010
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+FROMWHERE=/usr/local/samba
+WHERE=/usr/local/backups
+if [ -n "$1" ] && [ "$1" = "-h" -o "$1" = "--usage" ]; then
+	echo "samba_backup [provisiondir] [destinationdir]"
+	echo "Will backup your provision located in provisiondir to archive stored in destinationdir"
+	echo "Default provisiondir: $FROMWHERE"
+	echo "Default destinationdir: $WHERE"
+	exit 0
+fi
+
+[ -n "$1" -a -d "$1" ]&&FROMWHERE=$1
+[ -n "$2" -a -d "$2" ]&&WHERE=$2
+
+DIRS="private etc sysvol"
+#Number of days to keep the backup
+DAYS=90
+WHEN=`date +%d%m%y`
+
+cd $FROMWHERE
+for d in $DIRS;do
+	relativedirname=`find . -type d -name "$d" -prune`
+	n=`echo $d | sed 's/\//_/g'`
+	if [ "$d" = "private" ]; then
+		find $relativedirname -name "*.ldb.bak" -exec rm {} \;
+		for ldb in `find $relativedirname -name "*.ldb"`; do
+			tdbbackup $ldb
+			if [ $? -ne 0 ]; then
+				echo "Error while backuping $ldb"
+				exit 1
+			fi
+		done
+		tar cjf ${WHERE}/samba4_${n}.${WHEN}.tar.bz2  $relativedirname --exclude=*.ldb >/dev/null 2>&1
+		if [ $? -ne 0 ]; then
+			echo "Error while archiving ${WHERE}/samba4_${n}.${WHEN}.tar.bz2"
+			exit 1
+		fi
+		find $relativedirname -name "*.ldb.bak" -exec rm {} \;
+	else
+		tar cjf ${WHERE}/${n}.${WHEN}.tar.bz2  $relativedirname >/dev/null 2>&1
+		if [ $? -ne 0 ]; then
+			echo "Error while archiving ${WHERE}/${n}.${WHEN}.tar.bz2"
+			exit 1
+		fi
+	fi
+done
+
+find $WHERE -name "samba4_*bz2" -mtime +90 -exec rm  {} \; >/dev/null 2>&1

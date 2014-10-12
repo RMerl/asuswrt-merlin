@@ -1,0 +1,611 @@
+'\" t
+.\"     Title: pdbedit
+.\"    Author: [see the "AUTHOR" section]
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date: 09/18/2013
+.\"    Manual: System Administration tools
+.\"    Source: Samba 3.6
+.\"  Language: English
+.\"
+.TH "PDBEDIT" "8" "09/18/2013" "Samba 3\&.6" "System Administration tools"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+pdbedit \- manage the SAM database (Database of Samba Users)
+.SH "SYNOPSIS"
+.HP \w'\ 'u
+pdbedit [\-a] [\-b\ passdb\-backend] [\-c\ account\-control] [\-C\ value] [\-d\ debuglevel] [\-D\ drive] [\-e\ passdb\-backend] [\-f\ fullname] [\-\-force\-initialized\-passwords] [\-g] [\-h\ homedir] [\-i\ passdb\-backend] [\-I\ domain] [\-K] [\-L] [\-m] [\-M\ SID|RID] [\-N\ description] [\-P\ account\-policy] [\-p\ profile] [\-\-policies\-reset] [\-r] [\-s\ configfile] [\-S\ script] [\-t] [\-\-time\-format] [\-u\ username] [\-U\ SID|RID] [\-v] [\-V] [\-w] [\-x] [\-y] [\-z] [\-Z]
+.SH "DESCRIPTION"
+.PP
+This tool is part of the
+\fBsamba\fR(7)
+suite\&.
+.PP
+The pdbedit program is used to manage the users accounts stored in the sam database and can only be run by root\&.
+.PP
+The pdbedit tool uses the passdb modular interface and is independent from the kind of users database used (currently there are smbpasswd, ldap, nis+ and tdb based and more can be added without changing the tool)\&.
+.PP
+There are five main ways to use pdbedit: adding a user account, removing a user account, modifying a user account, listing user accounts, importing users accounts\&.
+.SH "OPTIONS"
+.PP
+\-L|\-\-list
+.RS 4
+This option lists all the user accounts present in the users database\&. This option prints a list of user/uid pairs separated by the \*(Aq:\*(Aq character\&.
+.sp
+Example:
+pdbedit \-L
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+sorce:500:Simo Sorce
+samba:45:Test User
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
+\-v|\-\-verbose
+.RS 4
+This option enables the verbose listing format\&. It causes pdbedit to list the users in the database, printing out the account fields in a descriptive format\&.
+.sp
+Example:
+pdbedit \-L \-v
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-
+username:       sorce
+user ID/Group:  500/500
+user RID/GRID:  2000/2001
+Full Name:      Simo Sorce
+Home Directory: \e\eBERSERKER\esorce
+HomeDir Drive:  H:
+Logon Script:   \e\eBERSERKER\enetlogon\esorce\&.bat
+Profile Path:   \e\eBERSERKER\eprofile
+\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-
+username:       samba
+user ID/Group:  45/45
+user RID/GRID:  1090/1091
+Full Name:      Test User
+Home Directory: \e\eBERSERKER\esamba
+HomeDir Drive:  
+Logon Script:   
+Profile Path:   \e\eBERSERKER\eprofile
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
+\-w|\-\-smbpasswd\-style
+.RS 4
+This option sets the "smbpasswd" listing format\&. It will make pdbedit list the users in the database, printing out the account fields in a format compatible with the
+smbpasswd
+file format\&. (see the
+\fBsmbpasswd\fR(5)
+for details)
+.sp
+Example:
+pdbedit \-L \-w
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+sorce:500:508818B733CE64BEAAD3B435B51404EE:
+          D2A2418EFC466A8A0F6B1DBB5C3DB80C:
+          [UX         ]:LCT\-00000000:
+samba:45:0F2B255F7B67A7A9AAD3B435B51404EE:
+          BC281CE3F53B6A5146629CD4751D3490:
+          [UX         ]:LCT\-3BFA1E8D:
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
+\-u|\-\-user username
+.RS 4
+This option specifies the username to be used for the operation requested (listing, adding, removing)\&. It is
+\fIrequired\fR
+in add, remove and modify operations and
+\fIoptional\fR
+in list operations\&.
+.RE
+.PP
+\-f|\-\-fullname fullname
+.RS 4
+This option can be used while adding or modifying a user account\&. It will specify the user\*(Aqs full name\&.
+.sp
+Example:
+\-f "Simo Sorce"
+.RE
+.PP
+\-h|\-\-homedir homedir
+.RS 4
+This option can be used while adding or modifying a user account\&. It will specify the user\*(Aqs home directory network path\&.
+.sp
+Example:
+\-h "\e\e\e\eBERSERKER\e\esorce"
+.RE
+.PP
+\-D|\-\-drive drive
+.RS 4
+This option can be used while adding or modifying a user account\&. It will specify the windows drive letter to be used to map the home directory\&.
+.sp
+Example:
+\-D "H:"
+.RE
+.PP
+\-S|\-\-script script
+.RS 4
+This option can be used while adding or modifying a user account\&. It will specify the user\*(Aqs logon script path\&.
+.sp
+Example:
+\-S "\e\e\e\eBERSERKER\e\enetlogon\e\esorce\&.bat"
+.RE
+.PP
+\-p|\-\-profile profile
+.RS 4
+This option can be used while adding or modifying a user account\&. It will specify the user\*(Aqs profile directory\&.
+.sp
+Example:
+\-p "\e\e\e\eBERSERKER\e\enetlogon"
+.RE
+.PP
+\-M|\*(Aq\-\-machine SID\*(Aq SID|rid
+.RS 4
+This option can be used while adding or modifying a machine account\&. It will specify the machines\*(Aq new primary group SID (Security Identifier) or rid\&.
+.sp
+Example:
+\-M S\-1\-5\-21\-2447931902\-1787058256\-3961074038\-1201
+.RE
+.PP
+\-U|\*(Aq\-\-user SID\*(Aq SID|rid
+.RS 4
+This option can be used while adding or modifying a user account\&. It will specify the users\*(Aq new SID (Security Identifier) or rid\&.
+.sp
+Example:
+\-U S\-1\-5\-21\-2447931902\-1787058256\-3961074038\-5004
+.sp
+Example:
+\*(Aq\-\-user SID\*(Aq S\-1\-5\-21\-2447931902\-1787058256\-3961074038\-5004
+.sp
+Example:
+\-U 5004
+.sp
+Example:
+\*(Aq\-\-user SID\*(Aq 5004
+.RE
+.PP
+\-c|\-\-account\-control account\-control
+.RS 4
+This option can be used while adding or modifying a user account\&. It will specify the users\*(Aq account control property\&. Possible flags are listed below\&.
+.sp
+
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+N: No password required
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+D: Account disabled
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+H: Home directory required
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+T: Temporary duplicate of other account
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+U: Regular user account
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+M: MNS logon user account
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+W: Workstation Trust Account
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+S: Server Trust Account
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+L: Automatic Locking
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+X: Password does not expire
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+I: Domain Trust Account
+.RE
+.sp
+.RE
+.sp
+Example:
+\-c "[X ]"
+.RE
+.PP
+\-K|\-\-kickoff\-time
+.RS 4
+This option is used to modify the kickoff time for a certain user\&. Use "never" as argument to set the kickoff time to unlimited\&.
+.sp
+Example:
+pdbedit \-K never user
+.RE
+.PP
+\-a|\-\-create
+.RS 4
+This option is used to add a user into the database\&. This command needs a user name specified with the \-u switch\&. When adding a new user, pdbedit will also ask for the password to be used\&.
+.sp
+Example:
+pdbedit \-a \-u sorce
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+new password:
+retype new password
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.sp
+.\}
+.RS 4
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fBNote\fR
+.ps -1
+.br
+pdbedit does not call the unix password syncronisation script if
+\m[blue]\fBunix password sync\fR\m[]
+has been set\&. It only updates the data in the Samba user database\&.
+.sp
+If you wish to add a user and synchronise the password that immediately, use
+smbpasswd\*(Aqs
+\fB\-a\fR
+option\&.
+.sp .5v
+.RE
+.RE
+.PP
+\-t|\-\-password\-from\-stdin
+.RS 4
+This option causes pdbedit to read the password from standard input, rather than from /dev/tty (like the
+passwd(1)
+program does)\&. The password has to be submitted twice and terminated by a newline each\&.
+.RE
+.PP
+\-r|\-\-modify
+.RS 4
+This option is used to modify an existing user in the database\&. This command needs a user name specified with the \-u switch\&. Other options can be specified to modify the properties of the specified user\&. This flag is kept for backwards compatibility, but it is no longer necessary to specify it\&.
+.RE
+.PP
+\-m|\-\-machine
+.RS 4
+This option may only be used in conjunction with the
+\fI\-a\fR
+option\&. It will make pdbedit to add a machine trust account instead of a user account (\-u username will provide the machine name)\&.
+.sp
+Example:
+pdbedit \-a \-m \-u w2k\-wks
+.RE
+.PP
+\-x|\-\-delete
+.RS 4
+This option causes pdbedit to delete an account from the database\&. It needs a username specified with the \-u switch\&.
+.sp
+Example:
+pdbedit \-x \-u bob
+.RE
+.PP
+\-i|\-\-import passdb\-backend
+.RS 4
+Use a different passdb backend to retrieve users than the one specified in smb\&.conf\&. Can be used to import data into your local user database\&.
+.sp
+This option will ease migration from one passdb backend to another\&.
+.sp
+Example:
+pdbedit \-i smbpasswd:/etc/smbpasswd\&.old
+.RE
+.PP
+\-e|\-\-export passdb\-backend
+.RS 4
+Exports all currently available users to the specified password database backend\&.
+.sp
+This option will ease migration from one passdb backend to another and will ease backing up\&.
+.sp
+Example:
+pdbedit \-e smbpasswd:/root/samba\-users\&.backup
+.RE
+.PP
+\-g|\-\-group
+.RS 4
+If you specify
+\fI\-g\fR, then
+\fI\-i in\-backend \-e out\-backend\fR
+applies to the group mapping instead of the user database\&.
+.sp
+This option will ease migration from one passdb backend to another and will ease backing up\&.
+.RE
+.PP
+\-b|\-\-backend passdb\-backend
+.RS 4
+Use a different default passdb backend\&.
+.sp
+Example:
+pdbedit \-b xml:/root/pdb\-backup\&.xml \-l
+.RE
+.PP
+\-P|\-\-account\-policy account\-policy
+.RS 4
+Display an account policy
+.sp
+Valid policies are: minimum password age, reset count minutes, disconnect time, user must logon to change password, password history, lockout duration, min password length, maximum password age and bad lockout attempt\&.
+.sp
+Example:
+pdbedit \-P "bad lockout attempt"
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+account policy value for bad lockout attempt is 0
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
+\-C|\-\-value account\-policy\-value
+.RS 4
+Sets an account policy to a specified value\&. This option may only be used in conjunction with the
+\fI\-P\fR
+option\&.
+.sp
+Example:
+pdbedit \-P "bad lockout attempt" \-C 3
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+account policy value for bad lockout attempt was 0
+account policy value for bad lockout attempt is now 3
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
+\-y|\-\-policies
+.RS 4
+If you specify
+\fI\-y\fR, then
+\fI\-i in\-backend \-e out\-backend\fR
+applies to the account policies instead of the user database\&.
+.sp
+This option will allow to migrate account policies from their default tdb\-store into a passdb backend, e\&.g\&. an LDAP directory server\&.
+.sp
+Example:
+pdbedit \-y \-i tdbsam: \-e ldapsam:ldap://my\&.ldap\&.host
+.RE
+.PP
+\-\-force\-initialized\-passwords
+.RS 4
+This option forces all users to change their password upon next login\&.
+.RE
+.PP
+\-N|\-\-account\-desc description
+.RS 4
+This option can be used while adding or modifying a user account\&. It will specify the user\*(Aqs description field\&.
+.sp
+Example:
+\-N "test description"
+.RE
+.PP
+\-Z|\-\-logon\-hours\-reset
+.RS 4
+This option can be used while adding or modifying a user account\&. It will reset the user\*(Aqs allowed logon hours\&. A user may login at any time afterwards\&.
+.sp
+Example:
+\-Z
+.RE
+.PP
+\-z|\-\-bad\-password\-count\-reset
+.RS 4
+This option can be used while adding or modifying a user account\&. It will reset the stored bad login counter from a specified user\&.
+.sp
+Example:
+\-z
+.RE
+.PP
+\-\-policies\-reset
+.RS 4
+This option can be used to reset the general password policies stored for a domain to their default values\&.
+.sp
+Example:
+\-\-policies\-reset
+.RE
+.PP
+\-I|\-\-domain
+.RS 4
+This option can be used while adding or modifying a user account\&. It will specify the user\*(Aqs domain field\&.
+.sp
+Example:
+\-I "MYDOMAIN"
+.RE
+.PP
+\-\-time\-format
+.RS 4
+This option is currently not being used\&.
+.RE
+.PP
+\-h|\-\-help
+.RS 4
+Print a summary of command line options\&.
+.RE
+.PP
+\-d|\-\-debuglevel=level
+.RS 4
+\fIlevel\fR
+is an integer from 0 to 10\&. The default value if this parameter is not specified is 0\&.
+.sp
+The higher this value, the more detail will be logged to the log files about the activities of the server\&. At level 0, only critical errors and serious warnings will be logged\&. Level 1 is a reasonable level for day\-to\-day running \- it generates a small amount of information about operations carried out\&.
+.sp
+Levels above 1 will generate considerable amounts of log data, and should only be used when investigating a problem\&. Levels above 3 are designed for use only by developers and generate HUGE amounts of log data, most of which is extremely cryptic\&.
+.sp
+Note that specifying this parameter here will override the
+\m[blue]\fBlog level\fR\m[]
+parameter in the
+smb\&.conf
+file\&.
+.RE
+.PP
+\-V|\-\-version
+.RS 4
+Prints the program version number\&.
+.RE
+.PP
+\-s|\-\-configfile <configuration file>
+.RS 4
+The file specified contains the configuration details required by the server\&. The information in this file includes server\-specific information such as what printcap file to use, as well as descriptions of all the services that the server is to provide\&. See
+smb\&.conf
+for more information\&. The default configuration file name is determined at compile time\&.
+.RE
+.PP
+\-l|\-\-log\-basename=logdirectory
+.RS 4
+Base directory name for log/debug files\&. The extension
+\fB"\&.progname"\fR
+will be appended (e\&.g\&. log\&.smbclient, log\&.smbd, etc\&.\&.\&.)\&. The log file is never removed by the client\&.
+.RE
+.SH "NOTES"
+.PP
+This command may be used only by root\&.
+.SH "VERSION"
+.PP
+This man page is correct for version 3 of the Samba suite\&.
+.SH "SEE ALSO"
+.PP
+\fBsmbpasswd\fR(5),
+\fBsamba\fR(7)
+.SH "AUTHOR"
+.PP
+The original Samba software and related utilities were created by Andrew Tridgell\&. Samba is now developed by the Samba Team as an Open Source project similar to the way the Linux kernel is developed\&.
+.PP
+The pdbedit manpage was written by Simo Sorce and Jelmer Vernooij\&.

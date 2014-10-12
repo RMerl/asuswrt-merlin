@@ -1,0 +1,28 @@
+<samba:parameter name="client lanman auth"
+                 context="G"
+				 type="boolean"
+                 advanced="1" developer="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+    <para>This parameter determines whether or not <citerefentry><refentrytitle>smbclient</refentrytitle>
+    <manvolnum>8</manvolnum></citerefentry> and other samba client
+    tools will attempt to authenticate itself to servers using the
+    weaker LANMAN password hash. If disabled, only server which support NT 
+    password hashes (e.g. Windows NT/2000, Samba, etc... but not 
+    Windows 95/98) will be able to be connected from the Samba client.</para>
+
+    <para>The LANMAN encrypted response is easily broken, due to its
+    case-insensitive nature, and the choice of algorithm.  Clients
+    without Windows 95/98 servers are advised to disable
+    this option.  </para>
+
+    <para>Disabling this option will also disable the <command
+    moreinfo="none">client plaintext auth</command> option.</para>
+
+    <para>Likewise, if the <command moreinfo="none">client ntlmv2
+    auth</command> parameter is enabled, then only NTLMv2 logins will be
+    attempted.</para>
+</description>
+
+<value type="default">no</value>
+</samba:parameter>

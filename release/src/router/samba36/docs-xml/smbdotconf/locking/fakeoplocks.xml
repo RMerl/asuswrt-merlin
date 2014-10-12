@@ -1,0 +1,30 @@
+<samba:parameter name="fake oplocks"
+				 type="boolean"
+                 context="S"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>Oplocks are the way that SMB clients get permission 
+	from a server to locally cache file operations. If a server grants 
+	an oplock (opportunistic lock) then the client is free to assume 
+	that it is the only one accessing the file and it will aggressively 
+	cache file data. With some oplock types the client may even cache 
+	file open/close operations. This can give enormous performance benefits.
+	</para>
+
+	<para>When you set <command moreinfo="none">fake oplocks = yes</command>, <citerefentry>
+	<refentrytitle>smbd</refentrytitle><manvolnum>8</manvolnum></citerefentry> will
+	always grant oplock requests no matter how many clients are using the file.</para>
+
+	<para>It is generally much better to use the real <smbconfoption name="oplocks"/> support rather 
+	than this parameter.</para>
+		
+	<para>If you enable this option on all read-only shares or 
+	shares that you know will only be accessed from one client at a 
+	time such as physically read-only media like CDROMs, you will see 
+	a big performance improvement on many operations. If you enable 
+	this option on shares where multiple clients may be accessing the 
+	files read-write at the same time you can get data corruption. Use 
+	this option carefully!</para>
+</description>
+<value type="default">no</value>
+</samba:parameter>

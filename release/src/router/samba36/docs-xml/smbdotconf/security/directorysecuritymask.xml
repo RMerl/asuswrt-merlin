@@ -1,0 +1,39 @@
+<samba:parameter name="directory security mask"
+                 context="S"
+				 type="string"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+    <para>This parameter controls what UNIX permission bits
+    will be set when a Windows NT client is manipulating the UNIX
+    permission on a directory using the native NT security dialog
+    box.</para>
+
+    <para>
+	This parameter is applied as a mask (AND'ed with) to the incoming permission bits, thus resetting
+        any bits not in this mask.  Make sure not to mix up this parameter with <smbconfoption name="force
+	directory security mode"/>, which works similar like this one but uses logical OR instead of AND.
+	Essentially, zero bits in this mask are a set of bits that will always be set to zero.
+	</para>
+
+    <para>
+	Essentially, all bits set to zero in this mask will result in setting to zero the corresponding bits on the
+	file permissions regardless of the previous status of this bits on the file.
+    </para>
+
+    <para>If not set explicitly this parameter is set to 0777
+    meaning a user is allowed to set all the user/group/world
+    permissions on a directory.</para>
+
+    <para><emphasis>Note</emphasis> that users who can access the 
+    Samba server through other means can easily bypass this restriction, 
+    so it is primarily useful for standalone &quot;appliance&quot; systems.  
+    Administrators of most normal systems will probably want to leave
+	it as the default of <constant>0777</constant>.</para>
+</description>
+
+<related>force directory security mode</related>
+<related>security mask</related>
+<related>force security mode</related>
+<value type="default">0777</value>
+<value type="example">0700</value>
+</samba:parameter>

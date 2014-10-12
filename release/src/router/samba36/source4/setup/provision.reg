@@ -1,0 +1,45 @@
+REGEDIT4
+
+[HKEY_LOCAL_MACHINE]
+
+[HKEY_LOCAL_MACHINE\SOFTWARE]
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft]
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT]
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion]
+"CurrentVersion"="6.1"
+
+[HKEY_LOCAL_MACHINE\SYSTEM]
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet]
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control]
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\ProductOptions]
+"ProductType"="LanmanNT"
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Print]
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Terminal Server]
+
+[HKEY_LOCAL_MACHINE\SYSTEM]
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet]
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services]
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Netlogon]
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Netlogon\Parameters]
+"RefusePasswordChange"=dword:00000000
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Alerter]
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Alerter\Parameters]
+
+[HKEY_USERS]
+
+[HKEY_CLASSES_ROOT]
+

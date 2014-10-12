@@ -1,0 +1,15 @@
+<samba:parameter name="dedicated keytab file" context="G" type="string"
+		 advanced="1" developer="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>
+	  Specifies the path to the kerberos keytab file when
+	  <smbconfoption name="kerberos method"/> is set to "dedicated
+	  keytab".
+	</para>
+</description>
+<related>kerberos method</related>
+<value type="default"/>
+<value type="example">/usr/local/etc/krb5.keytab</value>
+</samba:parameter>
+

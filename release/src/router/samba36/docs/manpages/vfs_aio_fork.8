@@ -1,0 +1,68 @@
+'\" t
+.\"     Title: vfs_aio_fork
+.\"    Author: [see the "AUTHOR" section]
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date: 09/18/2013
+.\"    Manual: System Administration tools
+.\"    Source: Samba 3.6
+.\"  Language: English
+.\"
+.TH "VFS_AIO_FORK" "8" "09/18/2013" "Samba 3\&.6" "System Administration tools"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+vfs_aio_fork \- implement async I/O in Samba vfs
+.SH "SYNOPSIS"
+.HP \w'\ 'u
+vfs objects = aio_fork
+.SH "DESCRIPTION"
+.PP
+This VFS module is part of the
+\fBsamba\fR(7)
+suite\&.
+.PP
+The
+aio_fork
+VFS module enables async I/O for Samba on platforms where the system level Posix AIO interface is insufficient\&. Posix AIO can suffer from severe limitations\&. For example, on some Linux versions the real\-time signals that it uses are broken under heavy load\&. Other systems only allow AIO when special kernel modules are loaded or only allow a certain system\-wide amount of async requests being scheduled\&. Systems based on glibc (most Linux systems) only allow a single outstanding request per file descriptor\&.
+.PP
+To work around all these limitations, the aio_fork module was written\&. It uses forked helper processes instead of the internal Posix AIO interface to create asynchronousity for read and write calls\&. It has no parameters, it will create helper processes when async requests come in as needed\&. Idle helper processes will be removed every 30 seconds\&.
+.PP
+This module is stackable\&.
+.SH "EXAMPLES"
+.PP
+Straight forward use:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+        \fI[cooldata]\fR
+	\m[blue]\fBpath = /data/ice\fR\m[]
+	\m[blue]\fBvfs objects = aio_fork\fR\m[]
+.fi
+.if n \{\
+.RE
+.\}
+.SH "VERSION"
+.PP
+This man page is correct for version 3\&.6\&.0 of the Samba suite\&.
+.SH "AUTHOR"
+.PP
+The original Samba software and related utilities were created by Andrew Tridgell\&. Samba is now developed by the Samba Team as an Open Source project similar to the way the Linux kernel is developed\&.

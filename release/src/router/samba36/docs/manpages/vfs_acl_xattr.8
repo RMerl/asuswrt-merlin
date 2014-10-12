@@ -1,0 +1,66 @@
+'\" t
+.\"     Title: vfs_acl_xattr
+.\"    Author: [see the "AUTHOR" section]
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date: 09/18/2013
+.\"    Manual: System Administration tools
+.\"    Source: Samba 3.6
+.\"  Language: English
+.\"
+.TH "VFS_ACL_XATTR" "8" "09/18/2013" "Samba 3\&.6" "System Administration tools"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+vfs_acl_xattr \- Save NTFS\-ACLs in Extended Attributes (EAs)
+.SH "SYNOPSIS"
+.HP \w'\ 'u
+vfs objects = acl_xattr
+.SH "DESCRIPTION"
+.PP
+This VFS module is part of the
+\fBsamba\fR(7)
+suite\&.
+.PP
+The
+vfs_acl_xattr
+VFS module stores NTFS Access Control Lists (ACLs) in Extended Attributes (EAs)\&. This enables the full mapping of Windows ACLs on Samba servers\&.
+.PP
+The ACLs are stored in the Extended Attribute
+\fIsecurity\&.NTACL\fR
+of a file or directory\&. This Attribute is
+\fInot\fR
+listed by
+getfattr \-d filename\&. To show the current value, the name of the EA must be specified (e\&.g\&.
+getfattr \-n security\&.NTACL filename)\&.
+.PP
+This module is stackable\&.
+.SH "OPTIONS"
+.PP
+acl_xattr:ignore system acls = [yes|no]
+.RS 4
+When set to
+\fIyes\fR, a best effort mapping from/to the POSIX ACL layer will
+\fInot\fR
+be done by this module\&. The default is
+\fIno\fR, which means that Samba keeps setting and evaluating both the system ACLs and the NT ACLs\&. This is better if you need your system ACLs be set for local or NFS file access, too\&. If you only access the data via Samba you might set this to yes to achieve better NT ACL compatibility\&.
+.RE
+.SH "AUTHOR"
+.PP
+The original Samba software and related utilities were created by Andrew Tridgell\&. Samba is now developed by the Samba Team as an Open Source project similar to the way the Linux kernel is developed\&.

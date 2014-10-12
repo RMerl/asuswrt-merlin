@@ -1,0 +1,201 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>Chapter 7. Standalone Servers</title><link rel="stylesheet" href="../samba.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.75.2"><link rel="home" href="index.html" title="The Official Samba 3.5.x HOWTO and Reference Guide"><link rel="up" href="type.html" title="Part II. Server Configuration Basics"><link rel="prev" href="domain-member.html" title="Chapter 6. Domain Membership"><link rel="next" href="ClientConfig.html" title="Chapter 8. MS Windows Network Configuration Guide"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">Chapter 7. Standalone Servers</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="domain-member.html">Prev</a> </td><th width="60%" align="center">Part II. Server Configuration Basics</th><td width="20%" align="right"> <a accesskey="n" href="ClientConfig.html">Next</a></td></tr></table><hr></div><div class="chapter" title="Chapter 7. Standalone Servers"><div class="titlepage"><div><div><h2 class="title"><a name="StandAloneServer"></a>Chapter 7. Standalone Servers</h2></div><div><div class="author"><h3 class="author"><span class="firstname">John</span> <span class="othername">H.</span> <span class="surname">Terpstra</span></h3><div class="affiliation"><span class="orgname">Samba Team<br></span><div class="address"><p><code class="email">&lt;<a class="email" href="mailto:jht@samba.org">jht@samba.org</a>&gt;</code></p></div></div></div></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="sect1"><a href="StandAloneServer.html#id344722">Features and Benefits</a></span></dt><dt><span class="sect1"><a href="StandAloneServer.html#id344808">Background</a></span></dt><dt><span class="sect1"><a href="StandAloneServer.html#id344984">Example Configuration</a></span></dt><dd><dl><dt><span class="sect2"><a href="StandAloneServer.html#RefDocServer">Reference Documentation Server</a></span></dt><dt><span class="sect2"><a href="StandAloneServer.html#SimplePrintServer">Central Print Serving</a></span></dt></dl></dd><dt><span class="sect1"><a href="StandAloneServer.html#id345921">Common Errors</a></span></dt></dl></div><p>
+<a class="indexterm" name="id344698"></a>
+<a class="indexterm" name="id344704"></a>
+<a class="indexterm" name="id344711"></a>
+Standalone servers are independent of domain controllers on the network.
+They are not domain members and function more like workgroup servers. In many
+cases a standalone server is configured with a minimum of security control
+with the intent that all data served will be readily accessible to all users.
+</p><div class="sect1" title="Features and Benefits"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id344722"></a>Features and Benefits</h2></div></div></div><p>
+<a class="indexterm" name="id344730"></a>
+<a class="indexterm" name="id344736"></a>
+Standalone servers can be as secure or as insecure as needs dictate. They can
+have simple or complex configurations. Above all, despite the hoopla about
+domain security, they remain a common installation.
+</p><p>
+<a class="indexterm" name="id344748"></a>
+<a class="indexterm" name="id344755"></a>
+<a class="indexterm" name="id344762"></a>
+<a class="indexterm" name="id344769"></a>
+If all that is needed is a server for read-only files, or for
+printers alone, it may not make sense to effect a complex installation.
+For example, a drafting office needs to store old drawings and reference
+standards. Nobody can write files to the server because it is legislatively
+important that all documents remain unaltered. A share-mode read-only standalone
+server is an ideal solution.
+</p><p>
+<a class="indexterm" name="id344782"></a>
+<a class="indexterm" name="id344789"></a>
+<a class="indexterm" name="id344796"></a>
+Another situation that warrants simplicity is an office that has many printers
+that are queued off a single central server. Everyone needs to be able to print
+to the printers, there is no need to effect any access controls, and no files will
+be served from the print server. Again, a share-mode standalone server makes
+a great solution.
+</p></div><div class="sect1" title="Background"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id344808"></a>Background</h2></div></div></div><p>
+<a class="indexterm" name="id344815"></a>
+<a class="indexterm" name="id344822"></a>
+<a class="indexterm" name="id344829"></a>
+The term <span class="emphasis"><em>standalone server</em></span> means that it will provide local authentication and access
+control for all resources that are available from it. In general this means that there will be a local user
+database. In more technical terms, it means resources on the machine will be made available in either
+<span class="emphasis"><em>share</em></span> mode or in <span class="emphasis"><em>user</em></span> mode.
+</p><p>
+<a class="indexterm" name="id344853"></a>
+<a class="indexterm" name="id344859"></a>
+<a class="indexterm" name="id344866"></a>
+No special action is needed other than to create user accounts. Standalone
+servers do not provide network logon services. This means that machines that
+use this server do not perform a domain logon to it. Whatever logon facility
+the workstations are subject to is independent of this machine. It is, however,
+necessary to accommodate any network user so the logon name he or she uses will
+be translated (mapped) locally on the standalone server to a locally known
+user name. There are several ways this can be done.
+</p><p>
+<a class="indexterm" name="id344881"></a>
+<a class="indexterm" name="id344888"></a>
+<a class="indexterm" name="id344894"></a>
+Samba tends to blur the distinction a little in defining
+a standalone server. This is because the authentication database may be
+local or on a remote server, even if from the SMB protocol perspective
+the Samba server is not a member of a domain security context.
+</p><p>
+<a class="indexterm" name="id344907"></a>
+<a class="indexterm" name="id344913"></a>
+<a class="indexterm" name="id344920"></a>
+<a class="indexterm" name="id344926"></a>
+<a class="indexterm" name="id344933"></a>
+<a class="indexterm" name="id344940"></a>
+<a class="indexterm" name="id344947"></a>
+<a class="indexterm" name="id344953"></a>
+Through the use of Pluggable Authentication Modules (PAM) (see <a class="link" href="pam.html" title="Chapter 28. PAM-Based Distributed Authentication">the chapter on PAM</a>)
+and the name service switcher (NSS), which maintains the UNIX-user database, the source of authentication may
+reside on another server. We would be inclined to call this the authentication server.  This means that the
+Samba server may use the local UNIX/Linux system password database (<code class="filename">/etc/passwd</code> or
+<code class="filename">/etc/shadow</code>), may use a local smbpasswd file, or may use an LDAP backend, or even via PAM
+and Winbind another CIFS/SMB server for authentication.
+</p></div><div class="sect1" title="Example Configuration"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id344984"></a>Example Configuration</h2></div></div></div><p>
+<a class="indexterm" name="id344992"></a>
+<a class="indexterm" name="id344999"></a>
+<a class="link" href="StandAloneServer.html#simplynice" title="Example 7.1. smb.conf for Reference Documentation Server">The example Reference Documentation Server</a> and <a class="link" href="StandAloneServer.html#SimplePrintServer" title="Central Print Serving">Central Print Serving</a> are designed to inspire simplicity. It is too easy to
+attempt a high level of creativity and to introduce too much complexity in server and network design.
+</p><div class="sect2" title="Reference Documentation Server"><div class="titlepage"><div><div><h3 class="title"><a name="RefDocServer"></a>Reference Documentation Server</h3></div></div></div><p>
+<a class="indexterm" name="id345034"></a>
+<a class="indexterm" name="id345040"></a>
+<a class="indexterm" name="id345047"></a>
+<a class="indexterm" name="id345054"></a>
+Configuration of a read-only data server that everyone can access is very simple. By default, all shares are
+read-only, unless set otherwise in the <code class="filename">smb.conf</code> file. <a class="link" href="StandAloneServer.html#simplynice" title="Example 7.1. smb.conf for Reference Documentation Server">The example - Reference
+Documentation Server</a> is the <code class="filename">smb.conf</code> file that will do this. Assume that all the reference documents
+are stored in the directory <code class="filename">/export</code>, and the documents are owned by a user other than
+nobody. No home directories are shared, and there are no users in the <code class="filename">/etc/passwd</code> UNIX
+system database. This is a simple system to administer.
+</p><div class="example"><a name="simplynice"></a><p class="title"><b>Example 7.1. smb.conf for Reference Documentation Server</b></p><div class="example-contents"><table border="0" summary="Simple list" class="simplelist"><tr><td>#  Global parameters</td></tr><tr><td> </td></tr><tr><td><em class="parameter"><code>[global]</code></em></td></tr><tr><td><a class="indexterm" name="id345123"></a><em class="parameter"><code>workgroup = MIDEARTH</code></em></td></tr><tr><td><a class="indexterm" name="id345135"></a><em class="parameter"><code>netbios name = GANDALF</code></em></td></tr><tr><td><a class="indexterm" name="id345146"></a><em class="parameter"><code>security = SHARE</code></em></td></tr><tr><td><a class="indexterm" name="id345158"></a><em class="parameter"><code>passdb backend = guest</code></em></td></tr><tr><td><a class="indexterm" name="id345169"></a><em class="parameter"><code>wins server = 192.168.1.1</code></em></td></tr><tr><td> </td></tr><tr><td><em class="parameter"><code>[data]</code></em></td></tr><tr><td><a class="indexterm" name="id345190"></a><em class="parameter"><code>comment = Data</code></em></td></tr><tr><td><a class="indexterm" name="id345201"></a><em class="parameter"><code>path = /export</code></em></td></tr><tr><td><a class="indexterm" name="id345212"></a><em class="parameter"><code>guest only = Yes</code></em></td></tr></table></div></div><br class="example-break"><div class="blockquote"><table border="0" width="100%" cellspacing="0" cellpadding="0" class="blockquote" summary="Block quote"><tr><td width="10%" valign="top"> </td><td width="80%" valign="top"><p>
+I would have spoken more briefly, if I'd had more time to prepare.
+</p></td><td width="10%" valign="top"> </td></tr><tr><td width="10%" valign="top"> </td><td colspan="2" align="right" valign="top">--<span class="attribution">Mark Twain</span></td></tr></table></div><p>
+<a class="indexterm" name="id345238"></a>
+<a class="indexterm" name="id345244"></a>
+<a class="indexterm" name="id345251"></a>
+<a class="indexterm" name="id345258"></a>
+In <a class="link" href="StandAloneServer.html#simplynice" title="Example 7.1. smb.conf for Reference Documentation Server">this example</a>, the machine name is set to GANDALF, and the
+workgroup is set to the name of the local workgroup (MIDEARTH) so the machine will appear together
+with systems with which users are familiar. The only password backend required is the <span class="quote">&#8220;<span class="quote">guest</span>&#8221;</span>
+backend to allow default unprivileged account names to be used. As there is a WINS server on this network, we
+of course make use of it.
+</p><p>
+A US Air Force Colonel was renowned for saying: <span class="quote">&#8220;<span class="quote">Better is the enemy of good enough!</span>&#8221;</span> There are often
+sound reasons for avoiding complexity as well as for avoiding a technically perfect solution. Unfortunately,
+many network administrators still need to learn the art of doing just enough to keep out of trouble.
+</p></div><div class="sect2" title="Central Print Serving"><div class="titlepage"><div><div><h3 class="title"><a name="SimplePrintServer"></a>Central Print Serving</h3></div></div></div><p>
+<a class="indexterm" name="id345301"></a>
+<a class="indexterm" name="id345308"></a>
+Configuration of a simple print server is easy if you have all the right tools on your system.
+</p><div class="orderedlist" title="Assumptions"><p class="title"><b> Assumptions</b></p><ol class="orderedlist" type="1"><li class="listitem"><p>
+	The print server must require no administration.
+	</p></li><li class="listitem"><p>
+	The print spooling and processing system on our print server will be CUPS.
+	(Please refer to <a class="link" href="CUPS-printing.html" title="Chapter 22. CUPS Printing Support">CUPS Printing Support</a>, for more information).
+	</p></li><li class="listitem"><p>
+	The print server will service only network printers. The network administrator
+	will correctly configure the CUPS environment to support the printers.
+	</p></li><li class="listitem"><p>
+	All workstations will use only PostScript drivers. The printer driver
+	of choice is the one shipped with the Windows OS for the Apple Color LaserWriter.
+	</p></li></ol></div><p>
+<a class="indexterm" name="id345358"></a>
+<a class="indexterm" name="id345365"></a>
+<a class="indexterm" name="id345372"></a>
+In this example our print server will spool all incoming print jobs to
+<code class="filename">/var/spool/samba</code> until the job is ready to be submitted by
+Samba to the CUPS print processor. Since all incoming connections will be as
+the anonymous (guest) user, two things will be required to enable anonymous printing.
+</p><div class="itemizedlist" title="Enabling Anonymous Printing"><p class="title"><b>Enabling Anonymous Printing</b></p><ul class="itemizedlist" type="disc"><li class="listitem"><p>
+<a class="indexterm" name="id345397"></a>
+<a class="indexterm" name="id345404"></a>
+<a class="indexterm" name="id345411"></a>
+	The UNIX/Linux system must have a <code class="literal">guest</code> account.
+	The default for this is usually the account <code class="literal">nobody</code>.
+	To find the correct name to use for your version of Samba, do the 
+	following:
+</p><pre class="screen">
+<code class="prompt">$ </code><strong class="userinput"><code>testparm -s -v | grep "guest account"</code></strong>
+</pre><p>
+<a class="indexterm" name="id345447"></a>
+	Make sure that this account exists in your system password
+	database (<code class="filename">/etc/passwd</code>).
+	</p><p>
+<a class="indexterm" name="id345463"></a>
+<a class="indexterm" name="id345470"></a>
+<a class="indexterm" name="id345477"></a>
+	It is a good idea either to set a password on this account, or else to lock it
+	from UNIX use. Assuming that the guest account is called <code class="literal">pcguest</code>,
+	it can be locked by executing:
+</p><pre class="screen">
+<code class="prompt">root# </code> passwd -l pcguest
+</pre><p>
+	The exact command may vary depending on your UNIX/Linux distribution.
+	</p></li><li class="listitem"><p>
+<a class="indexterm" name="id345508"></a>
+<a class="indexterm" name="id345515"></a>
+<a class="indexterm" name="id345521"></a>
+<a class="indexterm" name="id345528"></a>
+<a class="indexterm" name="id345535"></a>
+<a class="indexterm" name="id345542"></a>
+	The directory into which Samba will spool the file must have write
+	access for the guest account. The following commands will ensure that
+	this directory is available for use:
+</p><pre class="screen">
+<code class="prompt">root# </code><strong class="userinput"><code>mkdir /var/spool/samba</code></strong>
+<code class="prompt">root# </code><strong class="userinput"><code>chown nobody.nobody /var/spool/samba</code></strong>
+<code class="prompt">root# </code><strong class="userinput"><code>chmod a+rwt /var/spool/samba</code></strong>
+</pre><p>
+	</p></li></ul></div><p>
+The contents of the <code class="filename">smb.conf</code> file is shown in <a class="link" href="StandAloneServer.html#AnonPtrSvr" title="Example 7.2. smb.conf for Anonymous Printing">the Anonymous Printing example</a>.
+</p><div class="example"><a name="AnonPtrSvr"></a><p class="title"><b>Example 7.2. <code class="filename">smb.conf</code> for Anonymous Printing</b></p><div class="example-contents"><table border="0" summary="Simple list" class="simplelist"><tr><td>#  Global parameters</td></tr><tr><td> </td></tr><tr><td><em class="parameter"><code>[global]</code></em></td></tr><tr><td><a class="indexterm" name="id345638"></a><em class="parameter"><code>workgroup = MIDEARTH</code></em></td></tr><tr><td><a class="indexterm" name="id345649"></a><em class="parameter"><code>netbios name = GANDALF</code></em></td></tr><tr><td><a class="indexterm" name="id345661"></a><em class="parameter"><code>security = SHARE</code></em></td></tr><tr><td><a class="indexterm" name="id345672"></a><em class="parameter"><code>passdb backend = guest</code></em></td></tr><tr><td><a class="indexterm" name="id345684"></a><em class="parameter"><code>printing = cups</code></em></td></tr><tr><td><a class="indexterm" name="id345695"></a><em class="parameter"><code>printcap name = cups</code></em></td></tr><tr><td> </td></tr><tr><td><em class="parameter"><code>[printers]</code></em></td></tr><tr><td><a class="indexterm" name="id345715"></a><em class="parameter"><code>comment = All Printers</code></em></td></tr><tr><td><a class="indexterm" name="id345727"></a><em class="parameter"><code>path = /var/spool/samba</code></em></td></tr><tr><td><a class="indexterm" name="id345738"></a><em class="parameter"><code>printer admin = root</code></em></td></tr><tr><td><a class="indexterm" name="id345750"></a><em class="parameter"><code>guest ok = Yes</code></em></td></tr><tr><td><a class="indexterm" name="id345761"></a><em class="parameter"><code>printable = Yes</code></em></td></tr><tr><td><a class="indexterm" name="id345773"></a><em class="parameter"><code>use client driver = Yes</code></em></td></tr><tr><td><a class="indexterm" name="id345784"></a><em class="parameter"><code>browseable = No</code></em></td></tr></table></div></div><br class="example-break"><div class="note" title="Note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3><p>
+<a class="indexterm" name="id345800"></a>
+<a class="indexterm" name="id345809"></a>
+<a class="indexterm" name="id345816"></a>
+<a class="indexterm" name="id345822"></a>
+<a class="indexterm" name="id345829"></a>
+On CUPS-enabled systems there is a facility to pass raw data directly to the printer without intermediate
+processing via CUPS print filters. Where use of this mode of operation is desired, it is necessary to
+configure a raw printing device. It is also necessary to enable the raw mime handler in the
+<code class="filename">/etc/mime.conv</code> and <code class="filename">/etc/mime.types</code> files. Refer to <a class="link" href="CUPS-printing.html" title="Chapter 22. CUPS Printing Support">CUPS Printing Support</a>, <a class="link" href="CUPS-printing.html#cups-raw" title="Explicitly Enable &#8220;raw&#8221; Printing for application/octet-stream">Explicitly Enable raw Printing
+for application/octet-stream</a>.
+</p></div><p>
+<a class="indexterm" name="id345868"></a>
+<a class="indexterm" name="id345874"></a>
+<a class="indexterm" name="id345881"></a>
+<a class="indexterm" name="id345888"></a>
+The example in <a class="link" href="StandAloneServer.html#AnonPtrSvr" title="Example 7.2. smb.conf for Anonymous Printing">the Anonymous Printing example</a> uses CUPS for direct printing
+via the CUPS libarary API. This means that all printers will be exposed to Windows users without need to
+configure a printcap file. If there is necessity to expose only a sub-set of printers, or to define a special
+type of printer (for example, a PDF filter) the <em class="parameter"><code>printcap name = cups</code></em> can be replaced
+with the entry <em class="parameter"><code>printcap name = /etc/samba/myprintcap</code></em>. In this case the file specified
+should contain a list of the printer names that should be exposed to Windows network users.
+</p></div></div><div class="sect1" title="Common Errors"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id345921"></a>Common Errors</h2></div></div></div><p>
+<a class="indexterm" name="id345929"></a>
+<a class="indexterm" name="id345935"></a>
+The greatest mistake so often made is to make a network configuration too complex.
+It pays to use the simplest solution that will meet the needs of the moment.
+</p></div></div><div class="navfooter"><hr><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="domain-member.html">Prev</a> </td><td width="20%" align="center"><a accesskey="u" href="type.html">Up</a></td><td width="40%" align="right"> <a accesskey="n" href="ClientConfig.html">Next</a></td></tr><tr><td width="40%" align="left" valign="top">Chapter 6. Domain Membership </td><td width="20%" align="center"><a accesskey="h" href="index.html">Home</a></td><td width="40%" align="right" valign="top"> Chapter 8. MS Windows Network Configuration Guide</td></tr></table></div></body></html>

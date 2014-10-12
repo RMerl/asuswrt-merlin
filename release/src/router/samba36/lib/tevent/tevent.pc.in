@@ -1,0 +1,12 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: tevent
+Description: An event system library
+Version: @PACKAGE_VERSION@
+Requires: talloc
+Libs: -L${libdir} -ltevent
+Cflags: @LIB_RPATH@ -I${includedir}
+URL: http://samba.org/

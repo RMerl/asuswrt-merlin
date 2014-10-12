@@ -1,0 +1,58 @@
+#include "idl_types.h"
+/*
+  miscellaneous IDL structures
+*/
+
+import "netlogon.idl", "security.idl", "auth.idl";
+
+[
+	pointer_default(unique)
+]
+interface named_pipe_auth
+{
+	const char *NAMED_PIPE_AUTH_MAGIC = "NPAM";
+
+	typedef struct {
+		[charset(UTF8),string] uint8 *client_name;
+		[charset(DOS),string] uint8 *client_addr;
+		uint16 client_port;
+		[charset(UTF8),string] uint8 *server_name;
+		[charset(DOS),string] uint8 *server_addr;
+		uint16 server_port;
+		auth_session_info_transport *session_info;
+	} named_pipe_auth_req_info4;
+
+	typedef [switch_type(uint32)] union {
+		[case(4)] named_pipe_auth_req_info4 info4;
+	} named_pipe_auth_req_info;
+
+	typedef [public,gensize] struct {
+		[flag(NDR_BIG_ENDIAN),
+		 value(ndr_size_named_pipe_auth_req(r,ndr->flags)-4)]
+			uint32 length;
+		[charset(DOS),value(NAMED_PIPE_AUTH_MAGIC)] uint8 magic[4];
+		uint32 level;
+		[switch_is(level)] named_pipe_auth_req_info info;
+	} named_pipe_auth_req;
+
+	typedef struct {
+		uint16 file_type;
+		uint16 device_state;
+		hyper allocation_size;
+	} named_pipe_auth_rep_info4;
+
+	typedef [switch_type(uint32)] union {
+		[case(4)] named_pipe_auth_rep_info4 info4;
+	} named_pipe_auth_rep_info;
+
+	typedef [public,gensize] struct {
+		[flag(NDR_BIG_ENDIAN),
+		 value(ndr_size_named_pipe_auth_rep(r,ndr->flags)-4)]
+			uint32 length;
+		[charset(DOS),value(NAMED_PIPE_AUTH_MAGIC)] uint8 magic[4];
+		uint32 level;
+		[switch_is(level)] named_pipe_auth_rep_info info;
+		NTSTATUS status;
+	} named_pipe_auth_rep;
+}
+

@@ -1,0 +1,199 @@
+#include "idl_types.h"
+
+import "misc.idl", "security.idl", "nbt.idl", "netlogon.idl";
+
+/*
+  definitions for irpc primitives
+*/
+[ uuid("e770c620-0b06-4b5e-8d87-a26e20f28340"),
+  version(1.0),
+  pointer_default(unique)
+] interface irpc
+{
+	typedef bitmap {
+		IRPC_FLAG_REPLY    = 0x0001
+	} irpc_flags;
+
+	typedef struct {
+		security_token *token;
+	} irpc_creds;
+
+	typedef [public] struct {
+		GUID uuid;
+		uint32 if_version;
+		uint32 callnum;
+		uint32 callid;
+		irpc_flags flags;
+		NTSTATUS status;
+		[subcontext(4)] irpc_creds creds;
+		[flag(NDR_ALIGN8)] DATA_BLOB _pad;
+	} irpc_header;
+
+	/******************************************************
+         uptime call - supported by all messaging servers
+	*******************************************************/
+	void irpc_uptime([out,ref] NTTIME *start_time);
+
+	/******************************************************
+         management calls for the nbt server
+	******************************************************/
+	typedef [v1_enum] enum {
+		NBTD_INFO_STATISTICS
+	} nbtd_info_level;
+
+	typedef struct {
+		hyper total_received;
+		hyper total_sent;
+		hyper query_count;
+		hyper register_count;
+		hyper release_count;
+	} nbtd_statistics;
+
+	typedef [switch_type(nbtd_info_level)] union {
+		[case(NBTD_INFO_STATISTICS)] nbtd_statistics *stats;
+	} nbtd_info;
+
+	void nbtd_information(
+		[in]  nbtd_info_level level,
+		[out,switch_is(level)] nbtd_info info
+		);
+
+	/* Send a GetDCName from the privileged port (owned by nbtd),
+	 * and await a reply */
+
+	void nbtd_getdcname(
+		[in] astring domainname,
+		[in] astring ip_address,
+		[in] astring my_computername,
+		[in] astring my_accountname,
+		[in] uint32 account_control,
+		[in] dom_sid *domain_sid,
+		[out,unique] astring *dcname
+		);
+
+	typedef struct {
+		ipv4address addr;
+	} nbtd_proxy_wins_addr;
+
+	void nbtd_proxy_wins_challenge(
+		[in] nbt_name name,
+		[in,out] uint32 num_addrs,
+		[in,out] nbtd_proxy_wins_addr addrs[num_addrs]
+		);
+
+	void nbtd_proxy_wins_release_demand(
+		[in] nbt_name name,
+		[in] uint32 num_addrs,
+		[in] nbtd_proxy_wins_addr addrs[num_addrs]
+		);
+
+	/*
+	  Generic Kerberos package call (on the NETLOGON pipe, as a SamLogon)
+
+	  The normal use for this call is to check the PAC signature in the KDC
+	  
+	  The KDC has the routines to check this, so it is easier to
+	  proxy the request over by IRPC than set up the environment
+	 */
+
+	void kdc_check_generic_kerberos(
+		[in] DATA_BLOB generic_request,
+		[out] DATA_BLOB generic_reply
+		);
+
+	/******************************************************
+         management calls for the smb server
+	******************************************************/
+	typedef [v1_enum] enum {
+		SMBSRV_INFO_SESSIONS,
+		SMBSRV_INFO_TCONS
+	} smbsrv_info_level;
+
+	typedef struct {
+		hyper vuid;
+		astring account_name;
+		astring domain_name;
+		astring client_ip;
+		NTTIME  connect_time;
+		NTTIME  auth_time;
+		NTTIME  last_use_time;
+	} smbsrv_session_info;
+
+	typedef struct {
+		uint32 num_sessions;
+		[size_is(num_sessions)] smbsrv_session_info *sessions;
+	} smbsrv_sessions;
+
+	typedef struct {
+		uint32 tid;
+		astring share_name;
+		astring client_ip;
+		NTTIME  connect_time;
+		NTTIME  last_use_time;
+	} smbsrv_tcon_info;
+
+	typedef struct {
+		uint32 num_tcons;
+		[size_is(num_tcons)] smbsrv_tcon_info *tcons;
+	} smbsrv_tcons;
+
+	typedef [switch_type(smbsrv_info_level)] union {
+		[case(SMBSRV_INFO_SESSIONS)] smbsrv_sessions sessions;
+		[case(SMBSRV_INFO_TCONS)]    smbsrv_tcons    tcons;
+	} smbsrv_info;
+
+	void smbsrv_information(
+		[in]  smbsrv_info_level level,
+		[out,switch_is(level)] smbsrv_info info
+		);
+
+	/*
+	  called when samba should shutdown
+	 */
+	void samba_terminate(
+		[in] astring reason
+		);
+
+	/******************************************************
+         management calls for the drepl server
+	******************************************************/
+	/**
+	 * Force dreplsrv to fefresh internal cache.
+	 * @param partition_dn Partition to refresh cacheh for.
+	 *                     If empy/NULL, refresh all partitions.
+	 */
+	WERROR dreplsrv_refresh();
+
+	/*
+	  called when role transfer is requested via LDAP
+	*/
+	typedef [v1_enum] enum {
+               DREPL_SCHEMA_MASTER,
+               DREPL_RID_MASTER,
+               DREPL_INFRASTRUCTURE_MASTER,
+               DREPL_NAMING_MASTER,
+               DREPL_PDC_MASTER
+	} drepl_role_master;
+
+	WERROR drepl_takeFSMORole(
+		[in] drepl_role_master role
+		);
+
+	/*
+	 * message to tell the drepl server to initiate a REPL_SECRET
+	 * replication of a users secrets
+	 */
+	void drepl_trigger_repl_secret(
+		[in] astring user_dn
+		);
+
+	/*
+	  message to do RODC DNS updates via the dnsupdate task
+	*/
+	NTSTATUS dnsupdate_RODC(
+		[in,unique] dom_sid *dom_sid,
+		[in,unique] [string,charset(UTF16)] uint16 *site_name,
+		[in] uint32 dns_ttl,
+		[in,out,ref] NL_DNS_NAME_INFO_ARRAY *dns_names
+		);
+}

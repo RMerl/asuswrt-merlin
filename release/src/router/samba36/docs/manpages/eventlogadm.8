@@ -1,0 +1,359 @@
+'\" t
+.\"     Title: eventlogadm
+.\"    Author: [see the "AUTHOR" section]
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date: 09/18/2013
+.\"    Manual: System Administration tools
+.\"    Source: Samba 3.6
+.\"  Language: English
+.\"
+.TH "EVENTLOGADM" "8" "09/18/2013" "Samba 3\&.6" "System Administration tools"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+eventlogadm \- push records into the Samba event log store
+.SH "SYNOPSIS"
+.HP \w'\ 'u
+eventlogadm [\fB\-s\fR] [\fB\-d\fR] [\fB\-h\fR] \fB\-o\fR\ addsource\ \fIEVENTLOG\fR\ \fISOURCENAME\fR\ \fIMSGFILE\fR
+.HP \w'\ 'u
+eventlogadm [\fB\-s\fR] [\fB\-d\fR] [\fB\-h\fR] \fB\-o\fR\ write\ \fIEVENTLOG\fR
+.HP \w'\ 'u
+eventlogadm [\fB\-s\fR] [\fB\-d\fR] [\fB\-h\fR] \fB\-o\fR\ dump\ \fIEVENTLOG\fR\ \fIRECORD_NUMBER\fR
+.SH "DESCRIPTION"
+.PP
+This tool is part of the
+\fBsamba\fR(1)
+suite\&.
+.PP
+eventlogadm
+is a filter that accepts formatted event log records on standard input and writes them to the Samba event log store\&. Windows client can then manipulate these record using the usual administration tools\&.
+.SH "OPTIONS"
+.PP
+\fB\-s\fR \fIFILENAME\fR
+.RS 4
+The
+\-s
+option causes
+eventlogadm
+to load the configuration file given as FILENAME instead of the default one used by Samba\&.
+.RE
+.PP
+\fB\-d\fR
+.RS 4
+The
+\-d
+option causes
+eventlogadm
+to emit debugging information\&.
+.RE
+.PP
+\fB\-o\fR addsource \fIEVENTLOG\fR \fISOURCENAME\fR \fIMSGFILE\fR
+.RS 4
+The
+\-o addsource
+option creates a new event log source\&.
+.RE
+.PP
+\fB\-o\fR write \fIEVENTLOG\fR
+.RS 4
+The
+\-o write
+reads event log records from standard input and writes them to the Samba event log store named by EVENTLOG\&.
+.RE
+.PP
+\fB\-o\fR dump \fIEVENTLOG\fR \fIRECORD_NUMBER\fR
+.RS 4
+The
+\-o dump
+reads event log records from a EVENTLOG tdb and dumps them to standard output on screen\&.
+.RE
+.PP
+\fB\-h\fR
+.RS 4
+Print usage information\&.
+.RE
+.SH "EVENTLOG RECORD FORMAT"
+.PP
+For the write operation,
+eventlogadm
+expects to be able to read structured records from standard input\&. These records are a sequence of lines, with the record key and data separated by a colon character\&. Records are separated by at least one or more blank line\&.
+.PP
+The event log record field are:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+LEN
+\- This field should be 0, since
+eventlogadm
+will calculate this value\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+RS1
+\- This must be the value 1699505740\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+RCN
+\- This field should be 0\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+TMG
+\- The time the eventlog record was generated; format is the number of seconds since 00:00:00 January 1, 1970, UTC\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+TMW
+\- The time the eventlog record was written; format is the number of seconds since 00:00:00 January 1, 1970, UTC\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+EID
+\- The eventlog ID\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+ETP
+\- The event type \-\- one of "INFO", "ERROR", "WARNING", "AUDIT SUCCESS" or "AUDIT FAILURE"\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+ECT
+\- The event category; this depends on the message file\&. It is primarily used as a means of filtering in the eventlog viewer\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+RS2
+\- This field should be 0\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+CRN
+\- This field should be 0\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+USL
+\- This field should be 0\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+SRC
+\- This field contains the source name associated with the event log\&. If a message file is used with an event log, there will be a registry entry for associating this source name with a message file DLL\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+SRN
+\- The name of the machine on which the eventlog was generated\&. This is typically the host name\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+STR
+\- The text associated with the eventlog\&. There may be more than one string in a record\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+DAT
+\- This field should be left unset\&.
+.RE
+.SH "EXAMPLES"
+.PP
+An example of the record format accepted by
+eventlogadm:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+	LEN: 0
+	RS1: 1699505740
+	RCN: 0
+	TMG: 1128631322
+	TMW: 1128631322
+	EID: 1000
+	ETP: INFO
+	ECT: 0
+	RS2: 0
+	CRN: 0
+	USL: 0
+	SRC: cron
+	SRN: dmlinux
+	STR: (root) CMD ( rm \-f /var/spool/cron/lastrun/cron\&.hourly)
+	DAT:
+	
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+Set up an eventlog source, specifying a message file DLL:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+	eventlogadm \-o addsource Application MyApplication | \e\e
+	    	%SystemRoot%/system32/MyApplication\&.dll
+	
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+Filter messages from the system log into an event log:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+	tail \-f /var/log/messages | \e\e
+		my_program_to_parse_into_eventlog_records | \e\e
+	      	eventlogadm SystemLogEvents
+	
+.fi
+.if n \{\
+.RE
+.\}
+.SH "VERSION"
+.PP
+This man page is correct for version 3\&.0\&.25 of the Samba suite\&.
+.SH "AUTHOR"
+.PP
+The original Samba software and related utilities were created by Andrew Tridgell\&. Samba is now developed by the Samba Team as an Open Source project similar to the way the Linux kernel is developed\&.

@@ -1,0 +1,76 @@
+'\" t
+.\"     Title: idmap_ad
+.\"    Author: [see the "AUTHOR" section]
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date: 09/18/2013
+.\"    Manual: System Administration tools
+.\"    Source: Samba 3.6
+.\"  Language: English
+.\"
+.TH "IDMAP_AD" "8" "09/18/2013" "Samba 3\&.6" "System Administration tools"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+idmap_ad \- Samba\*(Aqs idmap_ad Backend for Winbind
+.SH "DESCRIPTION"
+.PP
+The idmap_ad plugin provides a way for Winbind to read id mappings from an AD server that uses RFC2307/SFU schema extensions\&. This module implements only the "idmap" API, and is READONLY\&. Mappings must be provided in advance by the administrator by adding the uidNumber attributes for users and gidNumber attributes for groups in the AD\&. Winbind will only map users that have a uidNumber and whose primary group have a gidNumber attribute set\&. It is however recommended that all groups in use have gidNumber attributes assigned, otherwise they are not working\&.
+.PP
+Note that the idmap_ad module has changed considerably since Samba versions 3\&.0 and 3\&.2\&. Currently, the
+\fIad\fR
+backend does not work as the the default idmap backend, but one has to configure it separately for each domain for which one wants to use it, using disjoint ranges\&. One usually needs to configure a writeable default idmap range, using for example the
+\fItdb\fR
+or
+\fIldap\fR
+backend, in order to be able to map the BUILTIN sids and possibly other trusted domains\&. The writeable default config is also needed in order to be able to create group mappings\&. This catch\-all default idmap configuration should have a range that is disjoint from any explicitly configured domain with idmap backend
+\fIad\fR\&. See the example below\&.
+.SH "IDMAP OPTIONS"
+.PP
+range = low \- high
+.RS 4
+Defines the available matching UID and GID range for which the backend is authoritative\&. Note that the range acts as a filter\&. If specified any UID or GID stored in AD that fall outside the range is ignored and the corresponding map is discarded\&. It is intended as a way to avoid accidental UID/GID overlaps between local and remotely defined IDs\&.
+.RE
+.PP
+schema_mode = <rfc2307 | sfu >
+.RS 4
+Defines the schema that idmap_ad should use when querying Active Directory regarding user and group information\&. This can be either the RFC2307 schema support included in Windows 2003 R2 or the Service for Unix (SFU) schema\&.
+.RE
+.SH "EXAMPLES"
+.PP
+The following example shows how to retrieve idmappings from our principal and trusted AD domains\&. If trusted domains are present id conflicts must be resolved beforehand, there is no guarantee on the order conflicting mappings would be resolved at this point\&. This example also shows how to leave a small non conflicting range for local id allocation that may be used in internal backends like BUILTIN\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+	[global]
+	idmap config * : backend = tdb
+	idmap config * : range = 1000000\-1999999
+
+	idmap config CORP : backend  = ad
+	idmap config CORP : range = 1000\-999999
+	
+.fi
+.if n \{\
+.RE
+.\}
+.SH "AUTHOR"
+.PP
+The original Samba software and related utilities were created by Andrew Tridgell\&. Samba is now developed by the Samba Team as an Open Source project similar to the way the Linux kernel is developed\&.

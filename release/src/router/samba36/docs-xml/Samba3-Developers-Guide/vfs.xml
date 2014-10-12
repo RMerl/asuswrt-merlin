@@ -1,0 +1,925 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE chapter PUBLIC "-//Samba-Team//DTD DocBook V4.2-Based Variant V1.0//EN" "http://www.samba.org/samba/DTD/samba-doc">
+<chapter id="vfs">
+<chapterinfo>
+	<author>
+		<firstname>Alexander</firstname><surname>Bokovoy</surname>
+		<affiliation>
+			<address><email>ab@samba.org</email></address>
+		</affiliation>
+	</author>
+	<author>
+		<firstname>Stefan</firstname><surname>Metzmacher</surname>
+		<affiliation>
+			<address><email>metze@samba.org</email></address>
+		</affiliation>
+	</author>
+	<pubdate> 27 May 2003 </pubdate>
+</chapterinfo>
+
+<title>VFS Modules</title>
+
+<sect1>
+<title>The Samba (Posix) VFS layer</title>
+
+<para>While most of Samba deployments are done using POSIX-compatible
+operating systems, there is clearly more to a file system than what is
+required by POSIX when it comes to adopting semantics of NT file
+system. Since Samba 2.2 all file-system related operations go through
+an abstraction layer for virtual file system (VFS) that is modelled
+after both POSIX and additional functions needed to transform NTFS
+semantics.
+</para>
+
+<para>
+This abstraction layer now provides more features than a regular POSIX
+file system could fill in. It is not required that all of them should
+be implemented by your particular file system.  However, when those
+features are available, Samba would advertize them to a CIFS client
+and they might be used by an application and in case of Windows client
+that might mean a client expects even more additional functionality
+when it encounters those features. There is a practical reason to
+allow handling of this snowfall without modifying the Samba core and
+it is fulfilled by providing an infrastructure to dynamically load VFS
+modules at run time.
+</para>
+
+<para>Each VFS module could implement a number of VFS operations. The
+way it does it is irrelevant, only two things actually matter: whether
+specific implementation wants to cooperate with other modules'
+implementations or not, and whether module needs to store additional
+information that is specific to a context it is operating in. Multiple
+VFS modules could be loaded at the same time and it is even possible
+to load several instances of the same VFS module with different
+parameters.
+</para>
+
+<sect2>
+<title>The general interface</title>
+
+<para>A VFS module has three major components:
+<itemizedlist>
+	<listitem><para><emphasis>An initialization function</emphasis> that is
+called during the module load to register implemented
+operations.</para></listitem>
+<listitem><para><emphasis>An operations table</emphasis> representing a
+mapping between statically defined module functions and VFS layer
+operations.</para></listitem>
+<listitem><para><emphasis>Module functions</emphasis> that do actual
+		work.</para></listitem>
+</itemizedlist>
+</para>
+
+<para>While this structure has been first applied to the VFS
+subsystem, it is now commonly used across all Samba 3 subsystems that
+support loadable modules. In fact, one module could provide a number
+of interfaces to different subsystems by exposing different
+<emphasis>operation tables</emphasis> through separate
+<emphasis>initialization functions</emphasis>.</para>
+
+<para><emphasis>An initialization function</emphasis> is used to
+register module with Samba run-time. As Samba internal structures and
+API are changed over lifetime, each released version has a VFS
+interface version that is increased as VFS development progresses or
+any of underlying Samba structures are changed in binary-incompatible
+way. When VFS module is compiled in, VFS interface version of that
+Samba environment is embedded into the module's binary object and is
+checked by the Samba core upon module load. If VFS interface number
+reported by the module isn't the same Samba core knows about, version
+conflict is detected and module dropped to avoid any potential memory
+corruption when accessing (changed) Samba structures.
+</para>
+
+<para>Therefore, initialization function passes three parameters to the
+VFS registration function, <literal>smb_register_vfs()</literal>
+<itemizedlist>
+	<listitem><para><emphasis>interface version number</emphasis>, as constant
+			<literal>SMB_VFS_INTERFACE_VERSION</literal>, </para></listitem>
+	<listitem><para><emphasis>module name</emphasis>, under which Samba core
+			will know it, and</para></listitem>
+	<listitem><para><emphasis>an operations' table</emphasis>.</para></listitem>
+</itemizedlist>
+</para>
+
+<para>The <emphasis>operations' table</emphasis> defines which
+functions in the module would correspond to specific VFS operations
+and how those functions would co-operate with the rest of VFS
+subsystem. Each operation could perform in a following ways:
+<itemizedlist>
+	<listitem><para><emphasis>transparent</emphasis>, meaning that while
+  operation is overriden, the module will still call a previous
+  implementation, before or after its own action. This mode is
+  indicated by the constant
+  <literal>SMB_VFS_LAYER_TRANSPARENT</literal>;</para>
+  </listitem>
+  <listitem><para><emphasis>opaque</emphasis>, for the implementations that
+  are terminating sequence of actions. For example, it is used to
+  implement POSIX operation on top of non-POSIX file system or even
+  not a file system at all, like a database for a personal audio
+  collection. Use constant <literal>SMB_VFS_LAYER_OPAQUE</literal> for
+  this mode;</para></listitem>
+  <listitem><para><emphasis>splitter</emphasis>, a way when some file system
+  activity is done in addition to the transparently calling previous
+  implentation. This usually involves mangling the result of that call
+  before returning it back to the caller. This mode is selected by
+  <literal>SMB_VFS_LAYER_SPLITTER</literal> constant;</para></listitem>
+  <listitem><para><emphasis>logger</emphasis> does not change anything or
+  performs any additional VFS operations. When
+  <emphasis>logger</emphasis> module acts, information about
+  operations is logged somewhere using an external facility (or
+  Samba's own debugging tools) but not the VFS layer. In order to
+  describe this type of activity use constant
+  <literal>SMB_VFS_LAYER_LOGGER</literal>;
+  </para>
+  </listitem>
+  <listitem><para>On contrary, <emphasis>scanner</emphasis> module does call
+  other VFS operations while processing the data that goes through the
+  system. This type of operation is indicated by the
+  <literal>SMB_VFS_LAYER_SCANNER</literal> constant.</para></listitem>
+</itemizedlist>
+</para>
+
+<para>Fundamentally, there are three types:
+<emphasis>transparent</emphasis>, <emphasis>opaque</emphasis>, and
+<emphasis>logger</emphasis>. <emphasis>Splitter</emphasis> and
+<emphasis>scanner</emphasis> may confuse developers (and indeed they
+are confused as our experience has shown) but this separation is to
+better expose the nature of a module's actions. Most of modules
+developed so far are either one of those three fundamental types with
+transparent and opaque being prevalent.
+</para>
+
+<para>
+Each VFS operation has a vfs_op_type, a function pointer and a handle
+pointer in the struct vfs_ops and tree macros to make it easier to
+call the operations.  (Take a look at
+<filename>include/vfs.h</filename> and
+<filename>include/vfs_macros.h</filename>.)
+</para>
+
+<para><programlisting>
+typedef enum _vfs_op_type {
+	SMB_VFS_OP_NOOP = -1,
+
+	...
+
+	/* File operations */
+
+	SMB_VFS_OP_OPEN,
+	SMB_VFS_OP_CLOSE,
+	SMB_VFS_OP_READ,
+	SMB_VFS_OP_WRITE,
+	SMB_VFS_OP_LSEEK,
+	SMB_VFS_OP_SENDFILE,
+
+	...
+
+	SMB_VFS_OP_LAST
+} vfs_op_type;
+</programlisting></para>
+
+<para>This struct contains the function and handle pointers for all operations.<programlisting>
+struct vfs_ops {
+	struct vfs_fn_pointers {
+		...
+		
+		/* File operations */
+		
+		int (*open)(struct vfs_handle_struct *handle,
+			struct connection_struct *conn,
+			const char *fname, int flags, mode_t mode);
+		int (*close)(struct vfs_handle_struct *handle,
+			struct files_struct *fsp, int fd);
+		ssize_t (*read)(struct vfs_handle_struct *handle, 
+			struct files_struct *fsp, int fd, void *data, size_t n);
+		ssize_t (*write)(struct vfs_handle_struct *handle, 
+			struct files_struct *fsp, int fd, 
+			const void *data, size_t n);
+		SMB_OFF_T (*lseek)(struct vfs_handle_struct *handle, 
+			struct files_struct *fsp, int fd, 
+			SMB_OFF_T offset, int whence);
+		ssize_t (*sendfile)(struct vfs_handle_struct *handle, 
+			int tofd, files_struct *fsp, int fromfd, 
+			const DATA_BLOB *header, SMB_OFF_T offset, size_t count);
+
+		...
+	} ops;
+	
+	struct vfs_handles_pointers {
+		...
+		
+		/* File operations */
+		
+		struct vfs_handle_struct *open;
+		struct vfs_handle_struct *close;
+		struct vfs_handle_struct *read;
+		struct vfs_handle_struct *write;
+		struct vfs_handle_struct *lseek;
+		struct vfs_handle_struct *sendfile;
+		
+		...
+	} handles;
+};
+</programlisting></para>
+
+<para>
+This macros SHOULD be used to call any vfs operation.
+DO NOT ACCESS conn-&gt;vfs.ops.* directly !!!
+<programlisting>
+...
+	
+/* File operations */
+#define SMB_VFS_OPEN(conn, fname, flags, mode) \
+	((conn)-&gt;vfs.ops.open((conn)-&gt;vfs.handles.open,\
+	 (conn), (fname), (flags), (mode)))
+#define SMB_VFS_CLOSE(fsp, fd) \
+	((fsp)-&gt;conn-&gt;vfs.ops.close(\
+	(fsp)-&gt;conn-&gt;vfs.handles.close, (fsp), (fd)))
+#define SMB_VFS_READ(fsp, fd, data, n) \
+	((fsp)-&gt;conn-&gt;vfs.ops.read(\
+	(fsp)-&gt;conn-&gt;vfs.handles.read,\
+	 (fsp), (fd), (data), (n)))
+#define SMB_VFS_WRITE(fsp, fd, data, n) \
+	((fsp)-&gt;conn-&gt;vfs.ops.write(\
+	(fsp)-&gt;conn-&gt;vfs.handles.write,\
+	 (fsp), (fd), (data), (n)))
+#define SMB_VFS_LSEEK(fsp, fd, offset, whence) \
+	((fsp)-&gt;conn-&gt;vfs.ops.lseek(\
+	(fsp)-&gt;conn-&gt;vfs.handles.lseek,\
+	 (fsp), (fd), (offset), (whence)))
+#define SMB_VFS_SENDFILE(tofd, fsp, fromfd, header, offset, count) \
+	((fsp)-&gt;conn-&gt;vfs.ops.sendfile(\
+	(fsp)-&gt;conn-&gt;vfs.handles.sendfile,\
+	 (tofd), (fsp), (fromfd), (header), (offset), (count)))
+
+...
+</programlisting></para>
+
+</sect2>
+
+<sect2>
+<title>Possible VFS operation layers</title>
+
+<para>
+These values are used by the VFS subsystem when building the conn-&gt;vfs 
+and conn-&gt;vfs_opaque structs for a connection with multiple VFS modules. 
+Internally, Samba differentiates only opaque and transparent layers at this process.
+Other types are used for providing better diagnosing facilities.
+</para>
+
+<para>
+Most modules will provide transparent layers. Opaque layer is for modules
+which implement actual file system calls (like DB-based VFS). For example,
+default POSIX VFS which is built in into Samba is an opaque VFS module.
+</para>
+
+<para>    
+Other layer types (logger, splitter, scanner) were designed to provide different 
+degree of transparency and for diagnosing VFS module behaviour.
+</para>
+
+<para>
+Each module can implement several layers at the same time provided that only
+one layer is used per each operation.
+</para>
+
+<para><programlisting>
+typedef enum _vfs_op_layer {
+	SMB_VFS_LAYER_NOOP = -1,	/* - For using in VFS module to indicate end of array */
+					/*   of operations description */
+	SMB_VFS_LAYER_OPAQUE = 0,	/* - Final level, does not call anything beyond itself */
+	SMB_VFS_LAYER_TRANSPARENT,	/* - Normal operation, calls underlying layer after */
+					/*   possibly changing passed data */
+	SMB_VFS_LAYER_LOGGER,		/* - Logs data, calls underlying layer, logging may not */
+					/*   use Samba VFS */
+	SMB_VFS_LAYER_SPLITTER,		/* - Splits operation, calls underlying layer _and_ own facility, */
+					/*   then combines result */
+	SMB_VFS_LAYER_SCANNER		/* - Checks data and possibly initiates additional */
+					/*   file activity like logging to files _inside_ samba VFS */
+} vfs_op_layer;
+</programlisting></para>
+
+</sect2>
+
+</sect1>
+
+<sect1>
+<title>The Interaction between the Samba VFS subsystem and the modules</title>
+
+<sect2>
+<title>Initialization and registration</title>
+
+<para>
+As each Samba module a VFS module should have a 
+<programlisting>NTSTATUS vfs_example_init(void);</programlisting> function if it's staticly linked to samba or
+<programlisting>NTSTATUS init_module(void);</programlisting> function if it's a shared module.
+</para>
+
+<para>
+This should be the only non static function inside the module.
+Global variables should also be static!
+</para>
+
+<para>
+The module should register its functions via the
+<programlisting>
+NTSTATUS smb_register_vfs(int version, const char *name, vfs_op_tuple *vfs_op_tuples);
+</programlisting> function.
+</para>
+
+<variablelist>
+
+<varlistentry><term>version</term>
+<listitem><para>should be filled with SMB_VFS_INTERFACE_VERSION</para></listitem>
+</varlistentry>
+
+<varlistentry><term>name</term>
+<listitem><para>this is the name witch can be listed in the 
+<command>vfs objects</command> parameter to use this module.</para></listitem>
+</varlistentry>
+
+<varlistentry><term>vfs_op_tuples</term>
+<listitem><para>
+this is an array of vfs_op_tuple's.
+(vfs_op_tuples is descripted in details below.)
+</para></listitem>
+</varlistentry>
+
+</variablelist>
+
+<para>
+For each operation the module wants to provide it has a entry in the 
+vfs_op_tuple array.
+</para>
+
+<programlisting>
+typedef struct _vfs_op_tuple {
+	void* op;
+	vfs_op_type type;
+	vfs_op_layer layer;
+} vfs_op_tuple;
+</programlisting>
+
+<variablelist>
+
+<varlistentry><term>op</term>
+<listitem><para>the function pointer to the specified function.</para></listitem>
+</varlistentry>
+
+<varlistentry><term>type</term>
+<listitem><para>the vfs_op_type of the function to specified witch operation the function provides.</para></listitem>
+</varlistentry>
+
+<varlistentry><term>layer</term>
+<listitem><para>the vfs_op_layer in whitch the function operates.</para></listitem>
+</varlistentry>
+
+</variablelist>
+
+<para>A simple example:</para>
+
+<programlisting>
+static vfs_op_tuple example_op_tuples[] = {	
+	{SMB_VFS_OP(example_connect),	SMB_VFS_OP_CONNECT,	SMB_VFS_LAYER_TRANSPARENT},
+	{SMB_VFS_OP(example_disconnect),	SMB_VFS_OP_DISCONNECT,	SMB_VFS_LAYER_TRANSPARENT},
+
+	{SMB_VFS_OP(example_rename),	SMB_VFS_OP_RENAME,	SMB_VFS_LAYER_OPAQUE},
+
+	/* This indicates the end of the array */
+	{SMB_VFS_OP(NULL),				SMB_VFS_OP_NOOP,	SMB_VFS_LAYER_NOOP}
+};
+
+NTSTATUS init_module(void)
+{
+	return smb_register_vfs(SMB_VFS_INTERFACE_VERSION, &quot;example&quot;, example_op_tuples);
+}
+</programlisting>
+
+</sect2>
+
+<sect2>
+<title>How the Modules handle per connection data</title>
+
+<para>Each VFS function has as first parameter a pointer to the modules vfs_handle_struct.
+</para>
+
+<programlisting>
+typedef struct vfs_handle_struct {
+	struct vfs_handle_struct  *next, *prev;
+	const char *param;
+	struct vfs_ops vfs_next;
+	struct connection_struct *conn;
+	void *data;
+	void (*free_data)(void **data);
+} vfs_handle_struct;
+</programlisting>
+
+<variablelist>
+
+<varlistentry><term>param</term>
+<listitem><para>this is the module parameter specified in the <command>vfs objects</command> parameter.</para>
+<para>e.g. for 'vfs objects = example:test' param would be &quot;test&quot;.</para></listitem>
+</varlistentry>
+
+<varlistentry><term>vfs_next</term>
+<listitem><para>This vfs_ops struct contains the information for calling the next module operations.
+Use the SMB_VFS_NEXT_* macros to call a next module operations and
+don't access handle-&gt;vfs_next.ops.* directly!</para></listitem>
+</varlistentry>
+
+<varlistentry><term>conn</term>
+<listitem><para>This is a pointer back to the connection_struct to witch the handle belongs.</para></listitem>
+</varlistentry>
+
+<varlistentry><term>data</term>
+<listitem><para>This is a pointer for holding module private data.
+You can alloc data with connection life time on the handle-&gt;conn-&gt;mem_ctx TALLOC_CTX.
+But you can also manage the memory allocation yourself.</para></listitem>
+</varlistentry>
+
+<varlistentry><term>free_data</term>
+<listitem><para>This is a function pointer to a function that free's the module private data.
+If you talloc your private data on the TALLOC_CTX handle-&gt;conn-&gt;mem_ctx,
+you can set this function pointer to NULL.</para></listitem>
+</varlistentry>
+
+</variablelist>
+
+<para>Some useful MACROS for handle private data.
+</para>
+
+<programlisting>
+#define SMB_VFS_HANDLE_GET_DATA(handle, datap, type, ret) { \
+	if (!(handle)||((datap=(type *)(handle)-&gt;data)==NULL)) { \
+		DEBUG(0,(&quot;%s() failed to get vfs_handle-&gt;data!\n&quot;,FUNCTION_MACRO)); \
+		ret; \
+	} \
+}
+
+#define SMB_VFS_HANDLE_SET_DATA(handle, datap, free_fn, type, ret) { \
+	if (!(handle)) { \
+		DEBUG(0,(&quot;%s() failed to set handle-&gt;data!\n&quot;,FUNCTION_MACRO)); \
+		ret; \
+	} else { \
+		if ((handle)-&gt;free_data) { \
+			(handle)-&gt;free_data(&amp;(handle)-&gt;data); \
+		} \
+		(handle)-&gt;data = (void *)datap; \
+		(handle)-&gt;free_data = free_fn; \
+	} \
+}
+
+#define SMB_VFS_HANDLE_FREE_DATA(handle) { \
+	if ((handle) &amp;&amp; (handle)-&gt;free_data) { \
+		(handle)-&gt;free_data(&amp;(handle)-&gt;data); \
+	} \
+}
+</programlisting>
+
+<para>How SMB_VFS_LAYER_TRANSPARENT functions can call the SMB_VFS_LAYER_OPAQUE functions.</para>
+
+<para>The easiest way to do this is to use the SMB_VFS_OPAQUE_* macros.
+</para>
+
+<programlisting>
+...
+/* File operations */
+#define SMB_VFS_OPAQUE_OPEN(conn, fname, flags, mode) \
+	((conn)-&gt;vfs_opaque.ops.open(\
+	(conn)-&gt;vfs_opaque.handles.open,\
+	 (conn), (fname), (flags), (mode)))
+#define SMB_VFS_OPAQUE_CLOSE(fsp, fd) \
+	((fsp)-&gt;conn-&gt;vfs_opaque.ops.close(\
+	(fsp)-&gt;conn-&gt;vfs_opaque.handles.close,\
+	 (fsp), (fd)))
+#define SMB_VFS_OPAQUE_READ(fsp, fd, data, n) \
+	((fsp)-&gt;conn-&gt;vfs_opaque.ops.read(\
+	(fsp)-&gt;conn-&gt;vfs_opaque.handles.read,\
+	 (fsp), (fd), (data), (n)))
+#define SMB_VFS_OPAQUE_WRITE(fsp, fd, data, n) \
+	((fsp)-&gt;conn-&gt;vfs_opaque.ops.write(\
+	(fsp)-&gt;conn-&gt;vfs_opaque.handles.write,\
+	 (fsp), (fd), (data), (n)))
+#define SMB_VFS_OPAQUE_LSEEK(fsp, fd, offset, whence) \
+	((fsp)-&gt;conn-&gt;vfs_opaque.ops.lseek(\
+	(fsp)-&gt;conn-&gt;vfs_opaque.handles.lseek,\
+	 (fsp), (fd), (offset), (whence)))
+#define SMB_VFS_OPAQUE_SENDFILE(tofd, fsp, fromfd, header, offset, count) \
+	((fsp)-&gt;conn-&gt;vfs_opaque.ops.sendfile(\
+	(fsp)-&gt;conn-&gt;vfs_opaque.handles.sendfile,\
+	 (tofd), (fsp), (fromfd), (header), (offset), (count)))
+...
+</programlisting>
+
+<para>How SMB_VFS_LAYER_TRANSPARENT functions can call the next modules functions.</para>
+
+<para>The easiest way to do this is to use the SMB_VFS_NEXT_* macros.
+</para>
+
+<programlisting>
+...
+/* File operations */
+#define SMB_VFS_NEXT_OPEN(handle, conn, fname, flags, mode) \
+	((handle)-&gt;vfs_next.ops.open(\
+	(handle)-&gt;vfs_next.handles.open,\
+	 (conn), (fname), (flags), (mode)))
+#define SMB_VFS_NEXT_CLOSE(handle, fsp, fd) \
+	((handle)-&gt;vfs_next.ops.close(\
+	(handle)-&gt;vfs_next.handles.close,\
+	 (fsp), (fd)))
+#define SMB_VFS_NEXT_READ(handle, fsp, fd, data, n) \
+	((handle)-&gt;vfs_next.ops.read(\
+	(handle)-&gt;vfs_next.handles.read,\
+	 (fsp), (fd), (data), (n)))
+#define SMB_VFS_NEXT_WRITE(handle, fsp, fd, data, n) \
+	((handle)-&gt;vfs_next.ops.write(\
+	(handle)-&gt;vfs_next.handles.write,\
+	 (fsp), (fd), (data), (n)))
+#define SMB_VFS_NEXT_LSEEK(handle, fsp, fd, offset, whence) \
+	((handle)-&gt;vfs_next.ops.lseek(\
+	(handle)-&gt;vfs_next.handles.lseek,\
+	 (fsp), (fd), (offset), (whence)))
+#define SMB_VFS_NEXT_SENDFILE(handle, tofd, fsp, fromfd, header, offset, count) \
+	((handle)-&gt;vfs_next.ops.sendfile(\
+	(handle)-&gt;vfs_next.handles.sendfile,\
+	 (tofd), (fsp), (fromfd), (header), (offset), (count)))
+...
+</programlisting>
+
+</sect2>
+
+</sect1>
+
+<sect1>
+<title>Upgrading to the New VFS Interface</title>
+
+<sect2>
+<title>Upgrading from 2.2.* and 3.0alpha modules</title>
+
+<orderedlist>
+<listitem><para>
+Add &quot;vfs_handle_struct *handle, &quot; as first parameter to all vfs operation functions.
+e.g. example_connect(connection_struct *conn, const char *service, const char *user);
+-&gt;   example_connect(vfs_handle_struct *handle, connection_struct *conn, const char *service, const char *user);
+</para></listitem>
+
+<listitem><para>
+Replace &quot;default_vfs_ops.&quot; with &quot;smb_vfs_next_&quot;.
+e.g. default_vfs_ops.connect(conn, service, user);
+-&gt;   smb_vfs_next_connect(conn, service, user);
+</para></listitem>
+
+<listitem><para>
+Uppercase all &quot;smb_vfs_next_*&quot; functions.
+e.g. smb_vfs_next_connect(conn, service, user);
+-&gt;   SMB_VFS_NEXT_CONNECT(conn, service, user);
+</para></listitem>
+
+<listitem><para>
+Add &quot;handle, &quot; as first parameter to all SMB_VFS_NEXT_*() calls.
+e.g. SMB_VFS_NEXT_CONNECT(conn, service, user);
+-&gt;   SMB_VFS_NEXT_CONNECT(handle, conn, service, user);
+</para></listitem>
+
+<listitem><para>
+(Only for 2.2.* modules) 
+Convert the old struct vfs_ops example_ops to 
+a vfs_op_tuple example_op_tuples[] array.
+e.g.
+<programlisting>
+struct vfs_ops example_ops = {
+	/* Disk operations */
+	example_connect,		/* connect */
+	example_disconnect,		/* disconnect */
+	NULL,				/* disk free *
+	/* Directory operations */
+	NULL,				/* opendir */
+	NULL,				/* readdir */
+	NULL,				/* mkdir */
+	NULL,				/* rmdir */
+	NULL,				/* closedir */
+	/* File operations */
+	NULL,				/* open */
+	NULL,				/* close */
+	NULL,				/* read  */
+	NULL,				/* write */
+	NULL,				/* lseek */
+	NULL,				/* sendfile */
+	NULL,				/* rename */
+	NULL,				/* fsync */
+	example_stat,			/* stat  */
+	example_fstat,			/* fstat */
+	example_lstat,			/* lstat */
+	NULL,				/* unlink */
+	NULL,				/* chmod */
+	NULL,				/* fchmod */
+	NULL,				/* chown */
+	NULL,				/* fchown */
+	NULL,				/* chdir */
+	NULL,				/* getwd */
+	NULL,				/* utime */
+	NULL,				/* ftruncate */
+	NULL,				/* lock */
+	NULL,				/* symlink */
+	NULL,				/* readlink */
+	NULL,				/* link */
+	NULL,				/* mknod */
+	NULL,				/* realpath */
+	NULL,				/* fget_nt_acl */
+	NULL,				/* get_nt_acl */
+	NULL,				/* fset_nt_acl */
+	NULL,				/* set_nt_acl */
+
+	NULL,				/* chmod_acl */
+	NULL,				/* fchmod_acl */
+
+	NULL,				/* sys_acl_get_entry */
+	NULL,				/* sys_acl_get_tag_type */
+	NULL,				/* sys_acl_get_permset */
+	NULL,				/* sys_acl_get_qualifier */
+	NULL,				/* sys_acl_get_file */
+	NULL,				/* sys_acl_get_fd */
+	NULL,				/* sys_acl_clear_perms */
+	NULL,				/* sys_acl_add_perm */
+	NULL,				/* sys_acl_to_text */
+	NULL,				/* sys_acl_init */
+	NULL,				/* sys_acl_create_entry */
+	NULL,				/* sys_acl_set_tag_type */
+	NULL,				/* sys_acl_set_qualifier */
+	NULL,				/* sys_acl_set_permset */
+	NULL,				/* sys_acl_valid */
+	NULL,				/* sys_acl_set_file */
+	NULL,				/* sys_acl_set_fd */
+	NULL,				/* sys_acl_delete_def_file */
+	NULL,				/* sys_acl_get_perm */
+	NULL,				/* sys_acl_free_text */
+	NULL,				/* sys_acl_free_acl */
+	NULL				/* sys_acl_free_qualifier */
+};
+</programlisting>
+-&gt;
+<programlisting> 
+static vfs_op_tuple example_op_tuples[] = {
+	{SMB_VFS_OP(example_connect),	SMB_VFS_OP_CONNECT,	SMB_VFS_LAYER_TRANSPARENT},
+	{SMB_VFS_OP(example_disconnect),	SMB_VFS_OP_DISCONNECT,	SMB_VFS_LAYER_TRANSPARENT},
+	
+	{SMB_VFS_OP(example_fstat), 	SMB_VFS_OP_FSTAT,	SMB_VFS_LAYER_TRANSPARENT},
+	{SMB_VFS_OP(example_stat),		SMB_VFS_OP_STAT,	SMB_VFS_LAYER_TRANSPARENT},
+	{SMB_VFS_OP(example_lstat), 	SMB_VFS_OP_LSTAT,	SMB_VFS_LAYER_TRANSPARENT},
+
+	{SMB_VFS_OP(NULL),				SMB_VFS_OP_NOOP,	SMB_VFS_LAYER_NOOP}
+};
+</programlisting>
+</para></listitem>
+
+<listitem><para>
+Move the example_op_tuples[] array to the end of the file. 
+</para></listitem>
+
+<listitem><para>
+Add the init_module() function at the end of the file.
+e.g.
+<programlisting>
+NTSTATUS init_module(void)
+{
+	return smb_register_vfs(SMB_VFS_INTERFACE_VERSION,&quot;example&quot;,example_op_tuples);
+}
+</programlisting>
+</para></listitem>
+
+<listitem><para>
+Check if your vfs_init() function does more then just prepare the vfs_ops structs or
+remember the struct smb_vfs_handle_struct.
+<simplelist>
+<member>If NOT you can remove the vfs_init() function.</member>
+<member>If YES decide if you want to move the code to the example_connect() operation or to the init_module(). And then remove vfs_init().
+  e.g. a debug class registration should go into init_module() and the allocation of private data should go to example_connect().</member>
+</simplelist>
+</para></listitem>
+
+<listitem><para>
+(Only for 3.0alpha* modules) 
+Check if your vfs_done() function contains needed code.
+<simplelist>
+<member>If NOT you can remove the vfs_done() function.</member>
+<member>If YES decide if you can move the code to the example_disconnect() operation. Otherwise register a SMB_EXIT_EVENT with smb_register_exit_event(); (Described in the <link linkend="modules">modules section</link>) And then remove vfs_done(). e.g. the freeing of private data should go to example_disconnect().
+</member>
+</simplelist>
+</para></listitem>
+
+<listitem><para>
+Check if you have any global variables left.
+Decide if it wouldn't be better to have this data on a connection basis.
+<simplelist>
+  <member>If NOT leave them as they are. (e.g. this could be the variable for the private debug class.)</member>
+  <member>If YES pack all this data into a struct. You can use handle-&gt;data to point to such a struct on a per connection basis.</member>
+</simplelist>
+
+  e.g. if you have such a struct:
+<programlisting>    
+struct example_privates {
+	char *some_string;
+	int db_connection;
+};
+</programlisting>	
+first way of doing it:
+<programlisting>
+static int example_connect(vfs_handle_struct *handle,
+	connection_struct *conn, const char *service, 
+	const char* user)
+{
+	struct example_privates *data = NULL;
+
+	/* alloc our private data */
+	data = (struct example_privates *)talloc_zero(conn-&gt;mem_ctx, sizeof(struct example_privates));
+	if (!data) {
+		DEBUG(0,(&quot;talloc_zero() failed\n&quot;));
+		return -1;
+	}
+
+	/* init out private data */
+	data-&gt;some_string = talloc_strdup(conn-&gt;mem_ctx,&quot;test&quot;);
+	if (!data-&gt;some_string) {
+		DEBUG(0,(&quot;talloc_strdup() failed\n&quot;));
+		return -1;
+	}
+
+	data-&gt;db_connection = open_db_conn();
+
+	/* and now store the private data pointer in handle-&gt;data
+	 * we don't need to specify a free_function here because
+	 * we use the connection TALLOC context.
+	 * (return -1 if something failed.)
+	 */
+	VFS_HANDLE_SET_DATA(handle, data, NULL, struct example_privates, return -1);
+
+	return SMB_VFS_NEXT_CONNECT(handle,conn,service,user);
+}
+
+static int example_close(vfs_handle_struct *handle, files_struct *fsp, int fd)
+{
+	struct example_privates *data = NULL;
+	
+	/* get the pointer to our private data
+	 * return -1 if something failed
+	 */
+	SMB_VFS_HANDLE_GET_DATA(handle, data, struct example_privates, return -1);
+	
+	/* do something here...*/
+	DEBUG(0,(&quot;some_string: %s\n&quot;,data-&gt;some_string));
+	
+	return SMB_VFS_NEXT_CLOSE(handle, fsp, fd);
+}
+</programlisting>
+second way of doing it:
+<programlisting>
+static void free_example_privates(void **datap)
+{
+	struct example_privates *data = (struct example_privates *)*datap;
+	
+	SAFE_FREE(data-&gt;some_string);
+	SAFE_FREE(data);
+	
+	*datap = NULL;
+	
+	return;
+}
+
+static int example_connect(vfs_handle_struct *handle, 
+	connection_struct *conn, const char *service, 
+	const char* user)
+{
+	struct example_privates *data = NULL;
+
+	/* alloc our private data */
+	data = (struct example_privates *)malloc(sizeof(struct example_privates));
+	if (!data) {
+		DEBUG(0,(&quot;malloc() failed\n&quot;));
+		return -1;
+	}
+
+	/* init out private data */
+	data-&gt;some_string = strdup(&quot;test&quot;);
+	if (!data-&gt;some_string) {
+		DEBUG(0,(&quot;strdup() failed\n&quot;));
+		return -1;
+	}
+
+	data-&gt;db_connection = open_db_conn();
+
+	/* and now store the private data pointer in handle-&gt;data
+	 * we need to specify a free_function because we used malloc() and strdup().
+	 * (return -1 if something failed.)
+	 */
+	SMB_VFS_HANDLE_SET_DATA(handle, data, free_example_privates, struct example_privates, return -1);
+
+	return SMB_VFS_NEXT_CONNECT(handle,conn,service,user);
+}
+
+static int example_close(vfs_handle_struct *handle, files_struct *fsp, int fd)
+{
+	struct example_privates *data = NULL;
+	
+	/* get the pointer to our private data
+	 * return -1 if something failed
+	 */
+	SMB_VFS_HANDLE_GET_DATA(handle, data, struct example_privates, return -1);
+	
+	/* do something here...*/
+	DEBUG(0,(&quot;some_string: %s\n&quot;,data-&gt;some_string));
+	
+	return SMB_VFS_NEXT_CLOSE(handle, fsp, fd);
+}
+</programlisting>
+</para></listitem>
+
+<listitem><para>
+To make it easy to build 3rd party modules it would be useful to provide
+configure.in, (configure), install.sh and Makefile.in with the module.
+(Take a look at the example in <filename>examples/VFS</filename>.)
+</para>
+
+<para>
+The configure script accepts <option>--with-samba-source</option> to specify 
+the path to the samba source tree.
+It also accept <option>--enable-developer</option> which lets the compiler 
+give you more warnings.  
+</para>
+
+<para>
+The idea is that you can extend this 
+<filename>configure.in</filename> and <filename>Makefile.in</filename> scripts
+for your module.
+</para></listitem>
+
+<listitem><para>
+Compiling &amp; Testing...
+<simplelist>
+<member><userinput>./configure <option>--enable-developer</option></userinput> ...</member>
+<member><userinput>make</userinput></member>
+<member>Try to fix all compiler warnings</member>
+<member><userinput>make</userinput></member>
+<member>Testing, Testing, Testing ...</member>
+</simplelist>
+</para></listitem>
+</orderedlist>
+</sect2>
+
+</sect1>
+
+<sect1>
+<title>Some Notes</title>
+
+<sect2>
+<title>Implement TRANSPARENT functions</title>
+
+<para>
+Avoid writing functions like this:
+
+<programlisting>
+static int example_close(vfs_handle_struct *handle, files_struct *fsp, int fd)
+{
+	return SMB_VFS_NEXT_CLOSE(handle, fsp, fd);
+}
+</programlisting>
+
+Overload only the functions you really need to!
+</para>
+
+</sect2>
+
+<sect2>
+<title>Implement OPAQUE functions</title>
+
+<para>
+If you want to just implement a better version of a 
+default samba opaque function
+(e.g. like a disk_free() function for a special filesystem) 
+it's ok to just overload that specific function.
+</para>
+
+<para>
+If you want to implement a database filesystem or
+something different from a posix filesystem.
+Make sure that you overload every vfs operation!!!
+</para>
+<para>
+Functions your FS does not support should be overloaded by something like this:
+e.g. for a readonly filesystem.
+</para>
+
+<programlisting>
+static int example_rename(vfs_handle_struct *handle, connection_struct *conn,
+			char *oldname, char *newname)
+{
+	DEBUG(10,(&quot;function rename() not allowed on vfs 'example'\n&quot;));
+	errno = ENOSYS;
+	return -1;
+}
+</programlisting>
+
+</sect2>
+
+</sect1>
+
+</chapter>

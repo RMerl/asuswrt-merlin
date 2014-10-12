@@ -1,0 +1,65 @@
+
+This directory holds sources for a Win32 test utility to test the "spoolss"
+(print spool subsystem) functions of either a Windows or a Samba server. The
+sources are known to build with (free as in beer) Microsoft Visual C++ 2008
+Express Edition's "nmake.exe" on Windows XP Professional.
+
+
+How to build
+------------
+
+Use the Microsoft "nmake" command to build the *.exe. This command is in your
+%path% if you start the "Visual Studio 2008 Command Prompt" from your Start
+menu.
+
+Currently the real build target is named "testspoolss.exe". Run
+
+    nmake /f Makefile
+
+to build the testspoolss.exe. After a successfull build you may want to clean up
+temporary files:
+
+    nmake /f Makefile cleantmp
+
+
+How to use
+----------
+
+Running testspoolss.exe with no additional params displays a short usage info.
+
+..............................................................................
+usage: testspoolss.exe <name> [print] [samba3] [architecture=ARCHITECTURE]
+
+        <name>           can be a server or printer name URI
+        [print]          will print all data that has been retrieved
+                         from the printserver
+        [samba3]         will skip some tests samba servers are known
+                         not to have implemented
+        [architecture=X] allows to define a specific
+                         architecture to test with. choose between:
+                         "Windows NT x86" or "Windows x64"
+..............................................................................
+
+The utility may be most useful if you use the "print" parameter to output all
+data received from the print server. You may re-direct the data into log files
+for later evaluation like this:
+
+   testspoolss.exe \\smbserver print samba3 1>smbserver.log 2>smbserver.err
+   testspoolss.exe \\smbserver print        1>smbserver.log 2>smbserver.err
+   testspoolss.exe \\winserver print        1>winserver.log 2>winserver.err
+
+One interesting source of learning could be to compare the output for (maybe
+"the same") printers/drivers as installed on a Windows and on a Samba print
+server:
+
+   testspoolss.exe \\winserver\printername print 1>winprinter.log 2>winprinter.err
+   testspoolss.exe \\smbserver\printername print 1>smbprinter.log 2>smbprinter.err
+
+and then compare the respective log files with a diff utility of your choice.
+To install "the same" printer/driver on a Samba server as on a Windows server,
+you can use the Samba "net" utility, which has the following syntax:
+
+   net rpc printer MIGRATE PRINTERS printername \
+       --server=winserver \
+       --destination=smbserver \
+       -UAdministrator%secretpassword

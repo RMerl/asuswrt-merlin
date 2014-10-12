@@ -1,0 +1,7 @@
+dn: cn=${ATTR},cn=default indexes,cn=config,cn=ldbm database,cn=plugins,cn=config
+objectClass: top
+objectClass: nsIndex
+cn: ${ATTR}
+nsSystemIndex: false
+nsIndexType: eq
+

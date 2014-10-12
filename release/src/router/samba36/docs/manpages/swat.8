@@ -1,0 +1,254 @@
+'\" t
+.\"     Title: swat
+.\"    Author: [see the "AUTHOR" section]
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date: 09/18/2013
+.\"    Manual: System Administration tools
+.\"    Source: Samba 3.6
+.\"  Language: English
+.\"
+.TH "SWAT" "8" "09/18/2013" "Samba 3\&.6" "System Administration tools"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+swat \- Samba Web Administration Tool
+.SH "SYNOPSIS"
+.HP \w'\ 'u
+swat [\-s\ <smb\ config\ file>] [\-a] [\-P]
+.SH "DESCRIPTION"
+.PP
+This tool is part of the
+\fBsamba\fR(7)
+suite\&.
+.PP
+swat
+allows a Samba administrator to configure the complex
+\fBsmb.conf\fR(5)
+file via a Web browser\&. In addition, a
+swat
+configuration page has help links to all the configurable options in the
+smb\&.conf
+file allowing an administrator to easily look up the effects of any change\&.
+.PP
+swat
+is run from
+inetd
+.SH "OPTIONS"
+.PP
+\-s smb configuration file
+.RS 4
+The default configuration file path is determined at compile time\&. The file specified contains the configuration details required by the
+\fBsmbd\fR(8)
+server\&. This is the file that
+swat
+will modify\&. The information in this file includes server\-specific information such as what printcap file to use, as well as descriptions of all the services that the server is to provide\&. See
+smb\&.conf
+for more information\&.
+.RE
+.PP
+\-a
+.RS 4
+This option disables authentication and places
+swat
+in demo mode\&. In that mode anyone will be able to modify the
+smb\&.conf
+file\&.
+.sp
+\fIWARNING: Do NOT enable this option on a production server\&. \fR
+.RE
+.PP
+\-P
+.RS 4
+This option restricts read\-only users to the password management page\&.
+swat
+can then be used to change user passwords without users seeing the "View" and "Status" menu buttons\&.
+.RE
+.PP
+\-d|\-\-debuglevel=level
+.RS 4
+\fIlevel\fR
+is an integer from 0 to 10\&. The default value if this parameter is not specified is 0\&.
+.sp
+The higher this value, the more detail will be logged to the log files about the activities of the server\&. At level 0, only critical errors and serious warnings will be logged\&. Level 1 is a reasonable level for day\-to\-day running \- it generates a small amount of information about operations carried out\&.
+.sp
+Levels above 1 will generate considerable amounts of log data, and should only be used when investigating a problem\&. Levels above 3 are designed for use only by developers and generate HUGE amounts of log data, most of which is extremely cryptic\&.
+.sp
+Note that specifying this parameter here will override the
+\m[blue]\fBlog level\fR\m[]
+parameter in the
+smb\&.conf
+file\&.
+.RE
+.PP
+\-V|\-\-version
+.RS 4
+Prints the program version number\&.
+.RE
+.PP
+\-s|\-\-configfile <configuration file>
+.RS 4
+The file specified contains the configuration details required by the server\&. The information in this file includes server\-specific information such as what printcap file to use, as well as descriptions of all the services that the server is to provide\&. See
+smb\&.conf
+for more information\&. The default configuration file name is determined at compile time\&.
+.RE
+.PP
+\-l|\-\-log\-basename=logdirectory
+.RS 4
+Base directory name for log/debug files\&. The extension
+\fB"\&.progname"\fR
+will be appended (e\&.g\&. log\&.smbclient, log\&.smbd, etc\&.\&.\&.)\&. The log file is never removed by the client\&.
+.RE
+.PP
+\-h|\-\-help
+.RS 4
+Print a summary of command line options\&.
+.RE
+.SH "INSTALLATION"
+.PP
+Swat is included as binary package with most distributions\&. The package manager in this case takes care of the installation and configuration\&. This section is only for those who have compiled swat from scratch\&.
+.PP
+After you compile SWAT you need to run
+make install
+to install the
+swat
+binary and the various help files and images\&. A default install would put these in:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+/usr/local/samba/sbin/swat
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+/usr/local/samba/swat/images/*
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+/usr/local/samba/swat/help/*
+.RE
+.sp
+.RE
+.SS "Inetd Installation"
+.PP
+You need to edit your
+/etc/inetd\&.conf
+and
+/etc/services
+to enable SWAT to be launched via
+inetd\&.
+.PP
+In
+/etc/services
+you need to add a line like this:
+.PP
+swat 901/tcp
+.PP
+Note for NIS/YP and LDAP users \- you may need to rebuild the NIS service maps rather than alter your local
+/etc/services
+file\&.
+.PP
+the choice of port number isn\*(Aqt really important except that it should be less than 1024 and not currently used (using a number above 1024 presents an obscure security hole depending on the implementation details of your
+inetd
+daemon)\&.
+.PP
+In
+/etc/inetd\&.conf
+you should add a line like this:
+.PP
+swat stream tcp nowait\&.400 root /usr/local/samba/sbin/swat swat
+.PP
+Once you have edited
+/etc/services
+and
+/etc/inetd\&.conf
+you need to send a HUP signal to inetd\&. To do this use
+kill \-1 PID
+where PID is the process ID of the inetd daemon\&.
+.SH "LAUNCHING"
+.PP
+To launch SWAT just run your favorite web browser and point it at "http://localhost:901/"\&.
+.PP
+Note that you can attach to SWAT from any IP connected machine but connecting from a remote machine leaves your connection open to password sniffing as passwords will be sent in the clear over the wire\&.
+.SH "FILES"
+.PP
+/etc/inetd\&.conf
+.RS 4
+This file must contain suitable startup information for the meta\-daemon\&.
+.RE
+.PP
+/etc/services
+.RS 4
+This file must contain a mapping of service name (e\&.g\&., swat) to service port (e\&.g\&., 901) and protocol type (e\&.g\&., tcp)\&.
+.RE
+.PP
+/usr/local/samba/lib/smb\&.conf
+.RS 4
+This is the default location of the
+\fBsmb.conf\fR(5)
+server configuration file that swat edits\&. Other common places that systems install this file are
+/usr/samba/lib/smb\&.conf
+and
+/etc/smb\&.conf\&. This file describes all the services the server is to make available to clients\&.
+.RE
+.SH "WARNINGS"
+.PP
+swat
+will rewrite your
+\fBsmb.conf\fR(5)
+file\&. It will rearrange the entries and delete all comments,
+\fIinclude=\fR
+and
+\fIcopy= \fR
+options\&. If you have a carefully crafted
+smb\&.conf
+then back it up or don\*(Aqt use swat!
+.SH "VERSION"
+.PP
+This man page is correct for version 3 of the Samba suite\&.
+.SH "SEE ALSO"
+.PP
+inetd(5),
+\fBsmbd\fR(8),
+\fBsmb.conf\fR(5)
+.SH "AUTHOR"
+.PP
+The original Samba software and related utilities were created by Andrew Tridgell\&. Samba is now developed by the Samba Team as an Open Source project similar to the way the Linux kernel is developed\&.
+.PP
+The original Samba man pages were written by Karl Auer\&. The man page sources were converted to YODL format (another excellent piece of Open Source software, available at
+ftp://ftp\&.icce\&.rug\&.nl/pub/unix/) and updated for the Samba 2\&.0 release by Jeremy Allison\&. The conversion to DocBook for Samba 2\&.2 was done by Gerald Carter\&. The conversion to DocBook XML 4\&.2 for Samba 3\&.0 was done by Alexander Bokovoy\&.

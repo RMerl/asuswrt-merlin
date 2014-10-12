@@ -1,0 +1,352 @@
+#!/usr/bin/perl -w
+# update a win2000 DNS server using gss-tsig 
+# tridge@samba.org, October 2002
+
+# jmruiz@animatika.net
+# updated, 2004-Enero
+
+# tridge@samba.org, September 2009
+# added --verbose, --noverify, --ntype and --nameserver
+
+# See draft-ietf-dnsext-gss-tsig-02, RFC2845 and RFC2930
+
+use strict;
+use lib "GSSAPI";
+use Net::DNS;
+use GSSAPI;
+use Getopt::Long;
+
+my $opt_wipe = 0;
+my $opt_add = 0;
+my $opt_noverify = 0;
+my $opt_verbose = 0;
+my $opt_help = 0;
+my $opt_nameserver;
+my $opt_realm;
+my $opt_ntype = "A";
+
+# main program
+GetOptions (
+	    'h|help|?' => \$opt_help,
+	    'wipe' => \$opt_wipe,
+	    'realm=s' => \$opt_realm,
+	    'nameserver=s' => \$opt_nameserver,
+	    'ntype=s' => \$opt_ntype,
+	    'add' => \$opt_add,
+	    'noverify' => \$opt_noverify,
+	    'verbose' => \$opt_verbose
+	    );
+
+#########################################
+# display help text
+sub ShowHelp()
+{
+    print "
+ nsupdate with gssapi
+ Copyright (C) tridge\@samba.org
+
+ Usage: nsupdate-gss [options] HOST DOMAIN TARGET TTL
+
+ Options:
+         --wipe               wipe all records for this name
+         --add                add to any existing records
+         --ntype=TYPE         specify name type (default A)
+         --nameserver=server  specify a specific nameserver
+         --noverify           don't verify the MIC of the reply
+         --verbose            show detailed steps
+           
+";
+    exit(0);
+}
+
+if ($opt_help) {
+	ShowHelp();
+}
+
+if ($#ARGV != 3) {
+	ShowHelp();
+}
+
+
+my $host = $ARGV[0];
+my $domain = $ARGV[1];
+my $target = $ARGV[2];
+my $ttl = $ARGV[3];
+my $alg = "gss.microsoft.com";
+
+
+
+#######################################################################
+# signing callback function for TSIG module
+sub gss_sign($$)
+{
+    my $key = shift;
+    my $data = shift;
+    my $sig;
+    $key->get_mic(0, $data, $sig);
+    return $sig;
+}
+
+
+
+#####################################################################
+# write a string into a file
+sub FileSave($$)
+{
+    my($filename) = shift;
+    my($v) = shift;
+    local(*FILE);
+    open(FILE, ">$filename") || die "can't open $filename";    
+    print FILE $v;
+    close(FILE);
+}
+
+
+#######################################################################
+# verify a TSIG signature from a DNS server reply
+#
+sub sig_verify($$)
+{
+    my $context = shift;
+    my $packet = shift;
+
+    my $tsig = ($packet->additional)[0];
+    $opt_verbose && print "calling sig_data\n";
+    my $sigdata = $tsig->sig_data($packet);
+
+    $opt_verbose && print "sig_data_done\n";
+
+    return $context->verify_mic($sigdata, $tsig->{"mac"}, 0);
+}
+
+
+#######################################################################
+# find the nameserver for the domain
+#
+sub find_nameserver($)
+{
+    my $server_name = shift;
+    return Net::DNS::Resolver->new(
+	    nameservers => [$server_name],
+	    recurse     => 0,
+	    debug       => 0);
+}
+
+
+#######################################################################
+# find a server name for a domain - currently uses the NS record
+sub find_server_name($)
+{
+    my $domain = shift;
+    my $res = Net::DNS::Resolver->new;
+    my $srv_query = $res->query("$domain.", "NS");
+    if (!defined($srv_query)) {
+	return undef;
+    }
+    my $server_name;
+    foreach my $rr (grep { $_->type eq 'NS' } $srv_query->answer) {
+	    $server_name = $rr->nsdname;
+    }
+    return $server_name;
+}
+
+#######################################################################
+# 
+#
+sub negotiate_tkey($$$$)
+{
+
+    my $nameserver = shift;
+    my $domain = shift;
+    my $server_name = shift;
+    my $key_name = shift;
+
+    my $status;
+
+    my $context = GSSAPI::Context->new;
+    my $name = GSSAPI::Name->new;
+
+    # use a principal name of dns/server@REALM
+    $opt_verbose &&
+	print "Using principal dns/" . $server_name . "@" . uc($opt_realm) . "\n";
+    $status = $name->import($name, "dns/" . $server_name . "@" . uc($opt_realm));
+    if (! $status) {
+	    print "import name: $status\n";
+	    return undef;
+    }
+
+    my $flags = 
+	GSS_C_REPLAY_FLAG | GSS_C_MUTUAL_FLAG | 
+	GSS_C_SEQUENCE_FLAG | GSS_C_CONF_FLAG | 
+	GSS_C_INTEG_FLAG | GSS_C_DELEG_FLAG;
+
+
+    $status = GSSAPI::Cred::acquire_cred(undef, 120, undef, GSS_C_INITIATE,
+					 my $cred, my $oidset, my $time);
+
+    if (! $status) {
+	print "acquire_cred: $status\n";
+	return undef;
+    }
+
+    $opt_verbose && print "creds acquired\n";
+
+    # call gss_init_sec_context()
+    $status = $context->init($cred, $name, undef, $flags,
+			     0, undef, "", undef, my $tok,
+			     undef, undef);
+    if (! $status) {
+	    print "init_sec_context: $status\n";
+	    return undef;
+    }
+
+    $opt_verbose && print "init done\n";
+
+    my $gss_query = Net::DNS::Packet->new("$key_name", "TKEY", "IN");
+
+    # note that Windows2000 uses a SPNEGO wrapping on GSSAPI data sent to the nameserver.
+    # I tested using the gen_negTokenTarg() call from Samba 3.0 and it does work, but
+    # for this utility it is better to use plain GSSAPI/krb5 data so as to reduce the
+    # dependence on external libraries. If we ever want to sign DNS packets using
+    # NTLMSSP instead of krb5 then the SPNEGO wrapper could be used
+
+    $opt_verbose && print "calling RR new\n";
+
+    $a = Net::DNS::RR->new(
+			   Name    => "$key_name",
+			   Type    => "TKEY",
+			   TTL     => 0,
+			   Class   => "ANY",
+			   mode => 3,
+			   algorithm => $alg,
+			   inception => time,
+			   expiration => time + 24*60*60,
+			   key => $tok,
+			   other_data => "",
+			   );
+
+    $gss_query->push("answer", $a);
+
+    my $reply = $nameserver->send($gss_query);
+
+    if (!defined($reply) || $reply->header->{'rcode'} ne 'NOERROR') {
+	print "failed to send TKEY\n";
+	return undef;
+    }
+
+    my $key2 = ($reply->answer)[0]->{"key"};
+
+    # call gss_init_sec_context() again. Strictly speaking
+    # we should loop until this stops returning CONTINUE
+    # but I'm a lazy bastard
+    $status = $context->init($cred, $name, undef, $flags,
+			     0, undef, $key2, undef, $tok,
+			     undef, undef);
+    if (! $status) {
+	print "init_sec_context step 2: $status\n";
+	return undef;
+    }
+
+    if (!$opt_noverify) {
+	    $opt_verbose && print "verifying\n";
+
+	    # check the signature on the TKEY reply
+	    my $rc = sig_verify($context, $reply);
+	    if (! $rc) {
+		    print "Failed to verify TKEY reply: $rc\n";
+#		return undef;
+	    }
+
+	    $opt_verbose && print "verifying done\n";
+    }
+
+    return $context;
+}
+
+
+#######################################################################
+# MAIN
+#######################################################################
+
+if (!$opt_realm) {
+	$opt_realm = $domain;
+}
+
+# find the name of the DNS server
+if (!$opt_nameserver) {
+	$opt_nameserver = find_server_name($domain);
+	if (!defined($opt_nameserver)) {
+		print "Failed to find a DNS server name for $domain\n";
+		exit 1;
+	}
+}
+$opt_verbose && print "Using DNS server name $opt_nameserver\n";
+
+# connect to the nameserver
+my $nameserver = find_nameserver($opt_nameserver);
+if (!defined($nameserver) || $nameserver->{'errorstring'} ne 'NOERROR') {
+	print "Failed to connect to nameserver for domain $domain\n";
+	exit 1;
+}
+
+
+# use a long random key name
+my $key_name = int(rand 10000000000000);
+
+# negotiate a TKEY key
+my $gss_context = negotiate_tkey($nameserver, $domain, $opt_nameserver, $key_name);
+if (!defined($gss_context)) {
+    print "Failed to negotiate a TKEY\n";
+    exit 1;
+}
+$opt_verbose && print "Negotiated TKEY $key_name\n";
+
+# construct a signed update
+my $update = Net::DNS::Update->new($domain);
+
+$update->push("pre", yxdomain("$domain"));
+if (!$opt_add) {
+	$update->push("update", rr_del("$host.$domain. $opt_ntype"));
+}
+if (!$opt_wipe) {
+	$update->push("update", rr_add("$host.$domain. $ttl $opt_ntype $target"));
+}
+
+my $sig = Net::DNS::RR->new(
+			    Name    => $key_name,
+			    Type    => "TSIG",
+			    TTL     => 0,
+			    Class   => "ANY",
+			    Algorithm => $alg,
+			    Time_Signed => time,
+			    Fudge => 36000,
+			    Mac_Size => 0,
+			    Mac => "",
+			    Key => $gss_context,
+			    Sign_Func => \&gss_sign,
+			    Other_Len => 0,
+			    Other_Data => "",
+			    Error => 0,
+			    mode => 3,
+			    );
+
+$update->push("additional", $sig);
+
+# send the dynamic update
+my $update_reply = $nameserver->send($update);
+
+if (! defined($update_reply)) {
+    print "No reply to dynamic update\n";
+    exit 1;
+}
+
+# make sure it worked
+my $result = $update_reply->header->{"rcode"};
+
+($opt_verbose || $result ne 'NOERROR') && print "Update gave rcode $result\n";
+
+if ($result ne 'NOERROR') {
+    exit 1;
+}
+
+exit 0;

@@ -1,0 +1,46 @@
+/*
+  NTP signing IRPC interface
+*/
+
+#include "idl_types.h"
+
+[
+  uuid("0da00951-5b6c-4488-9a89-750cac70920c"),
+  version(1.0),
+  pointer_default(unique)
+]
+interface ntp_signd
+{
+
+	const int NTP_SIGND_PROTOCOL_VERSION_0 = 0;
+
+	typedef [v1_enum] enum {
+		SIGN_TO_CLIENT = 0,
+		ASK_SERVER_TO_SIGN = 1,
+		CHECK_SERVER_SIGNATURE = 2,
+		SIGNING_SUCCESS = 3,
+		SIGNING_FAILURE = 4
+	} ntp_signd_op;
+
+	typedef [flag(NDR_BIG_ENDIAN),public] struct {
+		[value(NTP_SIGND_PROTOCOL_VERSION_0)] uint32 version;
+		ntp_signd_op op;
+		uint16 packet_id;
+		[flag(NDR_LITTLE_ENDIAN)] uint32 key_id;
+		[flag(NDR_REMAINING)]	DATA_BLOB packet_to_sign;
+		
+	} sign_request;
+
+	typedef [flag(NDR_BIG_ENDIAN),public] struct samba_key_out {
+		[value(NTP_SIGND_PROTOCOL_VERSION_0)] uint32 version;
+		ntp_signd_op op;
+		uint32 packet_id;
+		[flag(NDR_REMAINING)]	DATA_BLOB signed_packet;
+	} signed_reply;
+
+	void decode_sign_requst(
+		[in] sign_request request
+		);
+
+	
+}
