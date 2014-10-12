@@ -628,7 +628,9 @@ static struct cmd_set *rpcclient_command_list[] = {
 	netlogon_commands,
 	srvsvc_commands,
 	dfs_commands,
+#ifdef DEVELOPER
 	echo_commands,
+#endif
 	epmapper_commands,
 	shutdown_commands,
  	test_commands,

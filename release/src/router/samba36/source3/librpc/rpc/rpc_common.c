@@ -119,9 +119,11 @@ static bool initialize_interfaces(void)
 	if (!smb_register_ndr_interface(&ndr_table_netdfs)) {
 		return false;
 	}
+#ifdef DEVELOPER
 	if (!smb_register_ndr_interface(&ndr_table_rpcecho)) {
 		return false;
 	}
+#endif
 	if (!smb_register_ndr_interface(&ndr_table_initshutdown)) {
 		return false;
 	}
