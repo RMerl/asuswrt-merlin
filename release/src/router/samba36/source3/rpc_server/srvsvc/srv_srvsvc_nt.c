@@ -1533,6 +1533,10 @@ WERROR _srvsvc_NetShareSetInfo(struct pipes_struct *p,
 	TALLOC_CTX *ctx = p->mem_ctx;
 	union srvsvc_NetShareInfo *info = r->in.info;
 
+#ifndef FULL_SRVSVC
+	return WERR_ACCESS_DENIED;
+#endif
+
 	DEBUG(5,("_srvsvc_NetShareSetInfo: %d\n", __LINE__));
 
 	if (!r->in.share_name) {
@@ -1763,6 +1767,10 @@ WERROR _srvsvc_NetShareAdd(struct pipes_struct *p,
 	int max_connections = 0;
 	TALLOC_CTX *ctx = p->mem_ctx;
 
+#ifndef FULL_SRVSVC
+	return WERR_ACCESS_DENIED;
+#endif
+
 	DEBUG(5,("_srvsvc_NetShareAdd: %d\n", __LINE__));
 
 	if (r->out.parm_error) {
@@ -1944,6 +1952,10 @@ WERROR _srvsvc_NetShareDel(struct pipes_struct *p,
 	bool is_disk_op;
 	struct share_params *params;
 	TALLOC_CTX *ctx = p->mem_ctx;
+
+#ifndef FULL_SRVSVC
+	return WERR_ACCESS_DENIED;
+#endif
 
 	DEBUG(5,("_srvsvc_NetShareDel: %d\n", __LINE__));
 
