@@ -918,6 +918,7 @@ static bool netdfs_init_cb(void *ptr)
 	return true;
 }
 
+#ifdef ACTIVE_DIRECTORY
 static bool dssetup_init_cb(void *ptr)
 {
 	struct dcesrv_ep_context *ep_ctx =
@@ -966,6 +967,7 @@ static bool dssetup_init_cb(void *ptr)
 
 	return true;
 }
+#endif
 
 static bool wkssvc_init_cb(void *ptr)
 {
@@ -1172,12 +1174,14 @@ bool dcesrv_ep_setup(struct tevent_context *ev_ctx,
 	}
 #endif
 
+#ifdef ACTIVE_DIRECTORY
 	dssetup_cb.init         = dssetup_init_cb;
 	dssetup_cb.shutdown     = NULL;
 	dssetup_cb.private_data = ep_ctx;
 	if (!NT_STATUS_IS_OK(rpc_dssetup_init(&dssetup_cb))) {
 		return false;
 	}
+#endif
 
 	wkssvc_cb.init         = wkssvc_init_cb;
 	wkssvc_cb.shutdown     = NULL;

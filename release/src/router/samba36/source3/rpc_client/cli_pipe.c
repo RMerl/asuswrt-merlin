@@ -2904,12 +2904,14 @@ NTSTATUS cli_rpc_pipe_open_noauth_transport(struct cli_state *cli,
 	status = rpc_pipe_bind(result, auth);
 	if (!NT_STATUS_IS_OK(status)) {
 		int lvl = 0;
+#ifdef ACTIVE_DIRECTORY
 		if (ndr_syntax_id_equal(interface,
 					&ndr_table_dssetup.syntax_id)) {
 			/* non AD domains just don't have this pipe, avoid
 			 * level 0 statement in that case - gd */
 			lvl = 3;
 		}
+#endif
 		DEBUG(lvl, ("cli_rpc_pipe_open_noauth: rpc_pipe_bind for pipe "
 			    "%s failed with error %s\n",
 			    get_pipe_name_from_syntax(talloc_tos(), interface),

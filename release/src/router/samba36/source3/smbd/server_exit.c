@@ -132,7 +132,9 @@ static void exit_server_common(enum server_exit_reason how,
 
 	if (am_parent) {
 		rpc_wkssvc_shutdown();
+#ifdef ACTIVE_DIRECTORY
 		rpc_dssetup_shutdown();
+#endif
 #ifdef DEVELOPER
 		rpc_rpcecho_shutdown();
 #endif

@@ -95,9 +95,11 @@ static bool initialize_interfaces(void)
 	if (!smb_register_ndr_interface(&ndr_table_lsarpc)) {
 		return false;
 	}
+#ifdef ACTIVE_DIRECTORY
 	if (!smb_register_ndr_interface(&ndr_table_dssetup)) {
 		return false;
 	}
+#endif
 	if (!smb_register_ndr_interface(&ndr_table_samr)) {
 		return false;
 	}
@@ -141,9 +143,11 @@ static bool initialize_interfaces(void)
 	if (!smb_register_ndr_interface(&ndr_table_epmapper)) {
 		return false;
 	}
+#ifdef ACTIVE_DIRECTORY
 	if (!smb_register_ndr_interface(&ndr_table_drsuapi)) {
 		return false;
 	}
+#endif
 	return true;
 }
 
