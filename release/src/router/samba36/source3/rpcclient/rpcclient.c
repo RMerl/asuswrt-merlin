@@ -623,7 +623,9 @@ static struct cmd_set *rpcclient_command_list[] = {
 	rpcclient_commands,
 	lsarpc_commands,
 	ds_commands,
+#ifdef SAMR_SUPPORT
 	samr_commands,
+#endif
 #ifdef PRINTER_SUPPORT
 	spoolss_commands,
 #endif

@@ -100,9 +100,11 @@ static bool initialize_interfaces(void)
 		return false;
 	}
 #endif
+#ifdef SAMR_SUPPORT
 	if (!smb_register_ndr_interface(&ndr_table_samr)) {
 		return false;
 	}
+#endif
 #ifdef NETLOGON_SUPPORT
 	if (!smb_register_ndr_interface(&ndr_table_netlogon)) {
 		return false;

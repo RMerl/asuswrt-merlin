@@ -2353,6 +2353,10 @@ static bool api_RNetGroupEnum(struct smbd_server_connection *sconn,
 	NTSTATUS status, result;
 	struct dcerpc_binding_handle *b;
 
+#ifndef SAMR_SUPPORT
+	return False;
+#endif
+
 	if (!str1 || !str2 || !p) {
 		return False;
 	}
@@ -2540,6 +2544,10 @@ static bool api_NetUserGetGroups(struct smbd_server_connection *sconn,
 	struct samr_RidWithAttributeArray *rids;
 	NTSTATUS status, result;
 	struct dcerpc_binding_handle *b;
+
+#ifndef SAMR_SUPPORT
+	return False;
+#endif
 
 	if (!str1 || !str2 || !UserName || !p) {
 		return False;
@@ -2740,6 +2748,10 @@ static bool api_RNetUserEnum(struct smbd_server_connection *sconn,
 	char *endp = NULL;
 
 	struct dcerpc_binding_handle *b;
+
+#ifndef SAMR_SUPPORT
+	return False;
+#endif
 
 	if (!str1 || !str2 || !p) {
 		return False;
@@ -2978,6 +2990,10 @@ static bool api_SamOEMChangePassword(struct smbd_server_connection *sconn,
 	int errcode = NERR_badpass;
 	int bufsize;
 	struct dcerpc_binding_handle *b;
+
+#ifndef SAMR_SUPPORT
+	return False;
+#endif
 
 	*rparam_len = 4;
 	*rparam = smb_realloc_limit(*rparam,*rparam_len);
@@ -4019,6 +4035,10 @@ static bool api_RNetUserGetInfo(struct smbd_server_connection *sconn,
 	uint32_t rid;
 	union samr_UserInfo *info;
 	struct dcerpc_binding_handle *b = NULL;
+
+#ifndef SAMR_SUPPORT
+	return False;
+#endif
 
 	if (!str1 || !str2 || !UserName || !p) {
 		return False;

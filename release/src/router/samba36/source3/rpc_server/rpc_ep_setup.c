@@ -557,6 +557,7 @@ static bool lsarpc_init_cb(void *ptr)
 	return true;
 }
 
+#ifdef SAMR_SUPPORT
 static bool samr_init_cb(void *ptr)
 {
 	struct dcesrv_ep_context *ep_ctx =
@@ -605,6 +606,7 @@ static bool samr_init_cb(void *ptr)
 
 	return true;
 }
+#endif
 
 #ifdef NETLOGON_SUPPORT
 static bool netlogon_init_cb(void *ptr)
@@ -1111,12 +1113,14 @@ bool dcesrv_ep_setup(struct tevent_context *ev_ctx,
 		return false;
 	}
 
+#ifdef SAMR_SUPPORT
 	samr_cb.init         = samr_init_cb;
 	samr_cb.shutdown     = NULL;
 	samr_cb.private_data = ep_ctx;
 	if (!NT_STATUS_IS_OK(rpc_samr_init(&samr_cb))) {
 		return false;
 	}
+#endif
 
 #ifdef NETLOGON_SUPPORT
 	netlogon_cb.init         = netlogon_init_cb;
