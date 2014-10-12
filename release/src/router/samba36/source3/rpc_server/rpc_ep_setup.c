@@ -881,6 +881,7 @@ static bool rpcecho_init_cb(void *ptr) {
 
 #endif
 
+#ifdef DFS_SUPPORT
 static bool netdfs_init_cb(void *ptr)
 {
 	struct dcesrv_ep_context *ep_ctx =
@@ -928,6 +929,7 @@ static bool netdfs_init_cb(void *ptr)
 
 	return true;
 }
+#endif
 
 #ifdef ACTIVE_DIRECTORY
 static bool dssetup_init_cb(void *ptr)
@@ -1173,12 +1175,14 @@ bool dcesrv_ep_setup(struct tevent_context *ev_ctx,
 		return false;
 	}
 
+#ifdef DFS_SUPPORT
 	netdfs_cb.init         = netdfs_init_cb;
 	netdfs_cb.shutdown     = NULL;
 	netdfs_cb.private_data = ep_ctx;
 	if (!NT_STATUS_IS_OK(rpc_netdfs_init(&netdfs_cb))) {
 		return false;
 	}
+#endif
 
 #ifdef DEVELOPER
 	rpcecho_cb.init         = rpcecho_init_cb;

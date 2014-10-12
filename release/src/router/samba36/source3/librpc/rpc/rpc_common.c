@@ -122,9 +122,11 @@ static bool initialize_interfaces(void)
 		return false;
 	}
 #endif
+#ifdef DFS_SUPPORT
 	if (!smb_register_ndr_interface(&ndr_table_netdfs)) {
 		return false;
 	}
+#endif
 #ifdef DEVELOPER
 	if (!smb_register_ndr_interface(&ndr_table_rpcecho)) {
 		return false;

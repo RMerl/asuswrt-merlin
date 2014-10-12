@@ -138,7 +138,9 @@ static void exit_server_common(enum server_exit_reason how,
 #ifdef DEVELOPER
 		rpc_rpcecho_shutdown();
 #endif
+#ifdef DFS_SUPPORT
 		rpc_netdfs_shutdown();
+#endif
 		rpc_initshutdown_shutdown();
 #ifdef EXTRA_SERVICES
 		rpc_eventlog_shutdown();
