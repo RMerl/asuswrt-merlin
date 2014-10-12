@@ -637,9 +637,11 @@ static struct cmd_set *rpcclient_command_list[] = {
 	shutdown_commands,
  	test_commands,
 	wkssvc_commands,
+#ifdef EXTRA_SERVICES
 	ntsvcs_commands,
 	drsuapi_commands,
 	eventlog_commands,
+#endif
 	winreg_commands,
 	NULL
 };

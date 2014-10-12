@@ -140,9 +140,11 @@ static void exit_server_common(enum server_exit_reason how,
 #endif
 		rpc_netdfs_shutdown();
 		rpc_initshutdown_shutdown();
+#ifdef EXTRA_SERVICES
 		rpc_eventlog_shutdown();
-		rpc_ntsvcs_shutdown();
 		rpc_svcctl_shutdown();
+		rpc_ntsvcs_shutdown();
+#endif
 #ifdef PRINTER_SUPPORT
 		rpc_spoolss_shutdown();
 #endif

@@ -131,6 +131,7 @@ static bool initialize_interfaces(void)
 	if (!smb_register_ndr_interface(&ndr_table_initshutdown)) {
 		return false;
 	}
+#ifdef EXTRA_SERVICES
 	if (!smb_register_ndr_interface(&ndr_table_svcctl)) {
 		return false;
 	}
@@ -140,6 +141,7 @@ static bool initialize_interfaces(void)
 	if (!smb_register_ndr_interface(&ndr_table_ntsvcs)) {
 		return false;
 	}
+#endif
 	if (!smb_register_ndr_interface(&ndr_table_epmapper)) {
 		return false;
 	}

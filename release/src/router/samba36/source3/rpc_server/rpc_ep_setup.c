@@ -697,6 +697,7 @@ static bool spoolss_shutdown_cb(void *ptr)
 	return true;
 }
 
+#ifdef EXTRA_SERVICES
 static bool svcctl_init_cb(void *ptr)
 {
 	struct dcesrv_ep_context *ep_ctx =
@@ -733,6 +734,7 @@ static bool svcctl_init_cb(void *ptr)
 
 	return true;
 }
+#endif
 
 static bool svcctl_shutdown_cb(void *ptr)
 {
@@ -740,6 +742,8 @@ static bool svcctl_shutdown_cb(void *ptr)
 
 	return true;
 }
+
+#ifdef EXTRA_SERVICES
 
 static bool ntsvcs_init_cb(void *ptr)
 {
@@ -802,6 +806,7 @@ static bool eventlog_init_cb(void *ptr)
 
 	return true;
 }
+#endif
 
 static bool initshutdown_init_cb(void *ptr)
 {
@@ -1130,6 +1135,7 @@ bool dcesrv_ep_setup(struct tevent_context *ev_ctx,
 		}
 	}
 
+#ifdef EXTRA_SERVICES
 	svcctl_cb.init         = svcctl_init_cb;
 	svcctl_cb.shutdown     = svcctl_shutdown_cb;
 	svcctl_cb.private_data = ep_ctx;
@@ -1150,6 +1156,7 @@ bool dcesrv_ep_setup(struct tevent_context *ev_ctx,
 	if (!NT_STATUS_IS_OK(rpc_eventlog_init(&eventlog_cb))) {
 		return false;
 	}
+#endif
 
 	initshutdown_cb.init         = initshutdown_init_cb;
 	initshutdown_cb.shutdown     = NULL;
