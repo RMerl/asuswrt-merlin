@@ -31,6 +31,7 @@ struct dcerpc_fault_table {
 static const struct dcerpc_fault_table dcerpc_faults[] =
 {
 #define _FAULT_STR(x) { #x , x }
+#ifdef VERBOSE_ERROR
 	_FAULT_STR(DCERPC_NCA_S_COMM_FAILURE),
 	_FAULT_STR(DCERPC_NCA_S_OP_RNG_ERROR),
 	_FAULT_STR(DCERPC_NCA_S_UNKNOWN_IF),
@@ -78,6 +79,7 @@ static const struct dcerpc_fault_table dcerpc_faults[] =
 	_FAULT_STR(DCERPC_NCA_S_FAULT_CODESET_CONV_ERROR),
 	_FAULT_STR(DCERPC_NCA_S_FAULT_OBJECT_NOT_FOUND),
 	_FAULT_STR(DCERPC_NCA_S_FAULT_NO_CLIENT_STUB),
+#endif
 	{ NULL, 0 }
 #undef _FAULT_STR
 };
@@ -87,12 +89,14 @@ _PUBLIC_ const char *dcerpc_errstr(TALLOC_CTX *mem_ctx, uint32_t fault_code)
 	int idx = 0;
 	WERROR werr = W_ERROR(fault_code);
 
+#ifdef VERBOSE_ERROR
 	while (dcerpc_faults[idx].errstr != NULL) {
 		if (dcerpc_faults[idx].faultcode == fault_code) {
 			return dcerpc_faults[idx].errstr;
 		}
 		idx++;
 	}
+#endif
 
 	return win_errstr(werr);
 }

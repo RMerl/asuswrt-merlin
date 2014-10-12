@@ -604,4 +604,20 @@ _PUBLIC_ enum ndr_err_code ndr_push_enum_uint1632(struct ndr_push *ndr, int ndr_
 
 _PUBLIC_ void ndr_print_bool(struct ndr_print *ndr, const char *name, const bool b);
 
+#ifndef VERBOSE_ERROR
+#define ndr_print_bool(...) do {} while (0)
+#define ndr_print_struct(...) do {} while (0)
+#define ndr_print_null(...) do {} while (0)
+#define ndr_print_enum(...) do {} while (0)
+#define ndr_print_bitmap_flag(...) do {} while (0)
+#define ndr_print_ptr(...) do {} while (0)
+#define ndr_print_union(...) do {} while (0)
+#define ndr_print_bad_level(...) do {} while (0)
+#define ndr_print_array_uint8(...) do {} while (0)
+#define ndr_print_string_array(...) do {} while (0)
+#define ndr_print_string_array(...) do {} while (0)
+#define ndr_print_NTSTATUS(...) do {} while (0)
+#define ndr_print_WERROR(...) do {} while (0)
+#endif
+
 #endif /* __LIBNDR_H__ */

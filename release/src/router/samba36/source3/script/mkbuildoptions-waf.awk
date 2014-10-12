@@ -55,7 +55,7 @@ BEGIN {
 	print "****************************************************************************/";
 	print "void build_options(bool screen)";
 	print "{";
-	print "       if ((DEBUGLEVEL < 4) && (!screen)) {";
+	print "       if ((DEBUGLEVEL < 4) || (!screen)) {";
 	print "	       return;";
 	print "       }";
 	print "";

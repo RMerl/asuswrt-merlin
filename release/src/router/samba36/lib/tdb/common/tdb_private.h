@@ -69,7 +69,11 @@ typedef uint32_t tdb_off_t;
 /* NB assumes there is a local variable called "tdb" that is the
  * current context, also takes doubly-parenthesized print-style
  * argument. */
+#ifdef VERBOSE_DEBUG
 #define TDB_LOG(x) tdb->log.log_fn x
+#else
+#define TDB_LOG(x) do {} while(0)
+#endif
 
 #ifdef TDB_TRACE
 void tdb_trace(struct tdb_context *tdb, const char *op);

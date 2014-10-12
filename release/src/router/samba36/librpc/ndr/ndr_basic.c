@@ -31,6 +31,19 @@
 #define NDR_SIVAL(ndr, ofs, v) do { if (NDR_BE(ndr))  { RSIVAL(ndr->data,ofs,v); } else SIVAL(ndr->data,ofs,v); } while (0)
 #define NDR_SIVALS(ndr, ofs, v) do { if (NDR_BE(ndr))  { RSIVALS(ndr->data,ofs,v); } else SIVALS(ndr->data,ofs,v); } while (0)
 
+#undef ndr_print_bool
+#undef ndr_print_struct
+#undef ndr_print_null
+#undef ndr_print_enum
+#undef ndr_print_bitmap_flag
+#undef ndr_print_ptr
+#undef ndr_print_union
+#undef ndr_print_bad_level
+#undef ndr_print_array_uint8
+#undef ndr_print_string_array
+#undef ndr_print_string_array
+#undef ndr_print_NTSTATUS
+#undef ndr_print_WERROR
 
 /*
   check for data leaks from the server by looking for non-zero pad bytes

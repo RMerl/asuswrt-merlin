@@ -588,6 +588,7 @@ _PUBLIC_ enum ndr_err_code ndr_push_string_array(struct ndr_push *ndr, int ndr_f
 	return NDR_ERR_SUCCESS;
 }
 
+#undef ndr_print_string_array
 _PUBLIC_ void ndr_print_string_array(struct ndr_print *ndr, const char *name, const char **a)
 {
 	uint32_t count;

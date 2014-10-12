@@ -28,6 +28,7 @@ struct werror_code_struct {
 
 static const struct werror_code_struct dos_errs[] =
 {
+#ifdef VERBOSE_ERROR
 	{ "WERR_OK", WERR_OK },
 	{ "WERR_BADFILE", WERR_BADFILE },
 	{ "WERR_ACCESS_DENIED", WERR_ACCESS_DENIED },
@@ -2668,6 +2669,7 @@ static const struct werror_code_struct dos_errs[] =
 	{ "WERR_AMBIGUOUS_SYSTEM_DEVICE", WERR_AMBIGUOUS_SYSTEM_DEVICE },
 	{ "WERR_SYSTEM_DEVICE_NOT_FOUND", WERR_SYSTEM_DEVICE_NOT_FOUND },
 	/* END GENERATED-WIN32-ERROR-CODES */
+#endif
 	{ NULL, W_ERROR(0) }
 };
 
@@ -2684,12 +2686,14 @@ const char *win_errstr(WERROR werror)
         static char msg[40];
         int idx = 0;
 
+#ifdef VERBOSE_ERROR
 	while (dos_errs[idx].dos_errstr != NULL) {
 		if (W_ERROR_V(dos_errs[idx].werror) == 
                     W_ERROR_V(werror))
                         return dos_errs[idx].dos_errstr;
 		idx++;
 	}
+#endif
 
 	slprintf(msg, sizeof(msg), "DOS code 0x%08x", W_ERROR_V(werror));
 
@@ -2702,6 +2706,7 @@ struct werror_str_struct {
 };
 
 const struct werror_str_struct dos_err_strs[] = {
+#ifdef VERBOSE_ERROR
 	{ WERR_OK, "Success" },
 	{ WERR_ACCESS_DENIED, "Access is denied" },
 	{ WERR_INVALID_PARAM, "Invalid parameter" },
@@ -5324,6 +5329,7 @@ const struct werror_str_struct dos_err_strs[] = {
 	{ WERR_AMBIGUOUS_SYSTEM_DEVICE, "The requested system device cannot be identified due to multiple indistinguishable devices potentially matching the identification criteria." },
 	{ WERR_SYSTEM_DEVICE_NOT_FOUND, "The requested system device cannot be found." },
 	/* END GENERATED-WIN32-ERROR-CODES-DESC */
+#endif
 };
 
 
@@ -5334,6 +5340,7 @@ const struct werror_str_struct dos_err_strs[] = {
 
 const char *get_friendly_werror_msg(WERROR werror)
 {
+#ifdef VERBOSE_ERROR
 	int i = 0;
 
 	for (i = 0; i < ARRAY_SIZE(dos_err_strs); i++) {
@@ -5342,6 +5349,7 @@ const char *get_friendly_werror_msg(WERROR werror)
 			return dos_err_strs[i].friendly_errstr;
 		}
 	}
+#endif
 
 	return win_errstr(werror);
 }
