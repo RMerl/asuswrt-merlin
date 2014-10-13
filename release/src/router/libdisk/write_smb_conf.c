@@ -270,6 +270,11 @@ int main(int argc, char *argv[])
 	fprintf(fp, "encrypt passwords = yes\n");
 	fprintf(fp, "pam password change = no\n");
 	fprintf(fp, "null passwords = yes\n");		// ASUS add
+#ifdef RTCONFIG_SAMBA_NEW
+	fprintf(fp, "passdb backend = smbpasswd\n");
+	fprintf(fp, "smb encrypt = disabled\n");
+	fprintf(fp, "smb passwd file = /etc/samba/smbpasswd\n");
+#endif
 
 	fprintf(fp, "force directory mode = 0777\n");
 	fprintf(fp, "force create mode = 0777\n");

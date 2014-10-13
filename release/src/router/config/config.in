@@ -324,6 +324,11 @@ config RTCONFIG_SAMBA3
 	depends on RTCONFIG_SAMBASRV
 	default n
 
+config RTCONFIG_SAMBA_NEW
+        bool "Compile with modern Samba 3.6.x"
+        depends on RTCONFIG_SAMBASRV
+        default n
+
 config RTCONFIG_NFS 
 	bool "NFS Support" 
 	depends on RTCONFIG_USB
