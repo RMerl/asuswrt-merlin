@@ -349,7 +349,7 @@ endif
 # install before samba3(.6.x) for not overwriting some binaries
 obj-$(RTCONFIG_WEBDAV) += samba-3.5.8
 
-ifneq ($(RTCONFIG_SAMBA_NEW),y)
+ifneq ($(RTCONFIG_SAMBA_MODERN),y)
 obj-$(NEED_SAMBA2) += samba
 ifeq ($(RTCONFIG_BCMARM),y)
 obj-$(NEED_SAMBA3) += samba-3.0.25b

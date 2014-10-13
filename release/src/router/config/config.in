@@ -324,7 +324,7 @@ config RTCONFIG_SAMBA3
 	depends on RTCONFIG_SAMBASRV
 	default n
 
-config RTCONFIG_SAMBA_NEW
+config RTCONFIG_SAMBA_MODERN
         bool "Compile with modern Samba 3.6.x"
         depends on RTCONFIG_SAMBASRV
         default n
