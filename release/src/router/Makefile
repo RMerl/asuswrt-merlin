@@ -346,10 +346,10 @@ RTCONFIG_IPV6 :=
 IPTABLES_IPV6_OPT := --disable-ipv6
 endif
 
-ifneq ($(RTCONFIG_SAMBA_NEW),y)
-
-# install before samba3 for not overwriting some binaries
+# install before samba3(.6.x) for not overwriting some binaries
 obj-$(RTCONFIG_WEBDAV) += samba-3.5.8
+
+ifneq ($(RTCONFIG_SAMBA_NEW),y)
 obj-$(NEED_SAMBA2) += samba
 ifeq ($(RTCONFIG_BCMARM),y)
 obj-$(NEED_SAMBA3) += samba-3.0.25b
@@ -357,7 +357,7 @@ else
 obj-$(NEED_SAMBA3) += samba3
 endif
 
-else # Samba 3.6.x - no need for the 3.5.8 for AiCloud
+else # Samba 3.6.x
 obj-$(NEED_SAMBA3) += samba36
 endif
 
@@ -1936,6 +1936,8 @@ p910nd:
 samba:
 samba3:
 	@$(MAKE) -C samba3
+samba36:
+	@$(MAKE) -C samba36 $(PARALLEL_BUILD)
 samba-3.5.8:
 	@$(MAKE) -C samba-3.5.8 $(PARALLEL_BUILD)
 
