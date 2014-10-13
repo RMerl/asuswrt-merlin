@@ -1351,6 +1351,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "smbd_wins", "0"},
 	{ "smbd_wanac", "0"},
 	{ "smbd_simpler_naming", "0"},
+	{ "smbd_enable_smb2", "0"},
 
 #ifdef RTCONFIG_NFS
 	{ "nfsd_enable", "0"},
