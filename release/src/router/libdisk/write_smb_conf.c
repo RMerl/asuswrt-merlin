@@ -274,7 +274,7 @@ int main(int argc, char *argv[])
 	if (nvram_get_int("smbd_enable_smb2"))
 		fprintf(fp, "max protocol = SMB2\n");
 	else
-		fprintf(fp, "max protocol = SMB1\n");
+		fprintf(fp, "max protocol = NT1\n");
 
 	fprintf(fp, "passdb backend = smbpasswd\n");
 	fprintf(fp, "smb encrypt = disabled\n");
