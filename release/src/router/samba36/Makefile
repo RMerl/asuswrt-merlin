@@ -3,7 +3,7 @@ include ../common.mak
 #srcdir=source
 srcdir=source3
 
-SMBCFLAGS = $(EXTRACFLAGS) -Os -ffunction-sections -fdata-sections
+SMBCFLAGS = $(EXTRACFLAGS) -ffunction-sections -fdata-sections
 SMBLDFLAGS = -ffunction-sections -fdata-sections -Wl,--gc-sections
 
 ifeq ($(RTCONFIG_BCMARM), y)
@@ -123,6 +123,7 @@ apps: .conf
 		--without-winbind \
 		--without-quotas \
 		--without-libtalloc \
+		--without-libtevent \
 		--without-sys-quotas
 	touch .conf
 	mkdir -p $(srcdir)/bin
