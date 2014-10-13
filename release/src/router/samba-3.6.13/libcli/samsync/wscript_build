@@ -1,8 +1,0 @@
-#!/usr/bin/env python
-
-
-bld.SAMBA_SUBSYSTEM('LIBCLI_SAMSYNC',
-	source='decrypt.c',
-	public_deps='LIBCLI_AUTH'
-	)
-

@@ -1,5 +1,0 @@
-# mark the database as syncronized
-dn: @ROOTDSE
-changetype: modify
-replace: isSynchronized
-isSynchronized: TRUE

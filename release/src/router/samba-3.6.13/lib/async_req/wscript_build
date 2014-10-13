@@ -1,9 +1,0 @@
-#!/usr/bin/env python
-
-
-bld.SAMBA_SUBSYSTEM('LIBASYNC_REQ',
-	source='async_sock.c',
-	public_deps='talloc tevent',
-	deps='UTIL_TEVENT'
-	)
-

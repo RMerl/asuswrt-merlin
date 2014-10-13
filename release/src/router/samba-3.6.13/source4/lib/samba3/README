@@ -1,5 +1,0 @@
-This directory contains various files and functions for the purpose of
-Samba3 import, migration and compatibility.
-
-For example, the first file in this directory (smbpasswd.c) handles
-portions of the smbpasswd file format.

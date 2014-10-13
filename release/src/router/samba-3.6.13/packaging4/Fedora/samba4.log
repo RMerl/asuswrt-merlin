@@ -1,7 +1,0 @@
-/var/log/samba4/* {
-    notifempty
-    olddir /var/log/samba4/old
-    missingok
-    sharedscripts
-    copytruncate
-}

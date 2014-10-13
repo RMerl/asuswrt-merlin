@@ -1,3 +1,0 @@
-dn: CN=Users,${DOMAINDN}
-objectClass: top
-objectClass: container

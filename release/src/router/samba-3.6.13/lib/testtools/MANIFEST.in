@@ -1,8 +1,0 @@
-include LICENSE
-include HACKING
-include Makefile
-include MANIFEST.in
-include MANUAL
-include NEWS
-include README
-include .bzrignore

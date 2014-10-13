@@ -1,4 +1,0 @@
-This directory contains "libsamba-hostconfig". 
-
-The libsamba-hostconfig library provides access to all host-wide configuration
-such as the configured shares, default parameter values and host secret keys.

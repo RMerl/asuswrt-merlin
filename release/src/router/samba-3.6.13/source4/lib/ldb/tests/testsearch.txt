@@ -1,5 +1,0 @@
-(blah=foo)
-(objectclass=person)
-(dn=*)
-(&(objectclass=person)(objectclass=person))
-(&(objectclass=person)(objectclass=personx))

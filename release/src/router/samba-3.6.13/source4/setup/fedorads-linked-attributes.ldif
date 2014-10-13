@@ -1,7 +1,0 @@
-# Link ${MEMBER_ATTR} to ${MEMBEROF_ATTR}
-dn: cn=${MEMBER_ATTR} to ${MEMBEROF_ATTR},cn=Linked Attributes,cn=plugins,cn=config
-objectClass: extensibleObject
-cn: ${MEMBER_ATTR} to ${MEMBEROF_ATTR}
-linkType: ${MEMBER_ATTR}
-managedType: ${MEMBEROF_ATTR}
-

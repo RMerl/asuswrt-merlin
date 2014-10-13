@@ -1,4 +1,0 @@
-
-bld.SAMBA_SUBSYSTEM('util_reg',
-                    source='util_reg.c',
-                    deps='ndr')

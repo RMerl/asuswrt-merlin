@@ -1,9 +1,0 @@
-#!/usr/bin/env python
-
-
-bld.SAMBA_LIBRARY('events',
-                  source='tevent_s4.c',
-                  deps='samba-util',
-                  public_deps='tevent',
-                  private_library=True
-                  )

@@ -1,9 +1,0 @@
-###############################
-# Configuration Naming Context
-###############################
-dn: ${CONFIGDN}
-objectClass: top
-objectClass: configuration
-msDS-NcType: 0
-nTSecurityDescriptor:: ${DESCRIPTOR}
-instanceType: 13

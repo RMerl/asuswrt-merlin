@@ -1,9 +1,0 @@
-<?xml version='1.0'?>
-<latexbindings>
-	<latexmapping role="begin">
-	</latexmapping>
-	<latexmapping role="end">
-		<mapping key="glossary" text=""/>
-		<mapping key="index" text=""/>
-	</latexmapping>
-</latexbindings>

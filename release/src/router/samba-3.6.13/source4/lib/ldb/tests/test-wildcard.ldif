@@ -1,5 +1,0 @@
-dn: cn=test_multi_test_multi_test_multi,o=University of Michigan,c=TEST
-objectclass: person
-cn: test_multi_test_multi_test_multi
-sn: multi_test
-description: test multi wildcards matching

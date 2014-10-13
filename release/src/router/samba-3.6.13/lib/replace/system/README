@@ -1,4 +1,0 @@
-This directory contains wrappers around logical groups of system
-include files. The idea is to avoid #ifdef blocks in the main code,
-and instead put all the necessary conditional includes in subsystem
-specific header files in this directory.

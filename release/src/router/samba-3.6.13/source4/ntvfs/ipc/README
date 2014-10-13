@@ -1,5 +1,0 @@
-This is the IPC$ backend for Samba. NTVFS operations that are made on
-IPC$ shares are directed here by default. Most file operations 
-are not supported on IPC$ shares.
-
-

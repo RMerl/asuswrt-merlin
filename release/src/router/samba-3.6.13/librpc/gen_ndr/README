@@ -1,4 +1,0 @@
-This contains the generated files from PIDL for the IDL files in ../idl/*.idl
-
-DO NOT REMOVE THIS FILE. The waf 1.5 build relies on this directory
-existing in the source tree.

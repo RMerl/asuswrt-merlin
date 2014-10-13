@@ -1,7 +1,0 @@
-trees.ps contains an explanation of the Genealogical Representation of Trees
-in Databases which is being used in ldb_sqlite3.  Note that we use fgID
-representation with 4 bytes per level, so we can represent 6.5E+08 subclasses
-of any object class.  This should be adequate for our purposes. :-)
-
-The following document is the primary basis for the schema currently being
-used here:  http://www.research.ibm.com/journal/sj/392/shi.html

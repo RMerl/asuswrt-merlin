@@ -1,8 +1,0 @@
-#!/usr/bin/env python
-
-bld.SAMBA_MODULE('TORTURE_LIBCLI_ECHO',
-        source='echo.c',
-        subsystem='smbtorture',
-        init_function='torture_libcli_echo_init',
-        deps='LIBTSOCKET UTIL_TEVENT LIBCLI_ECHO',
-        internal_module=True);

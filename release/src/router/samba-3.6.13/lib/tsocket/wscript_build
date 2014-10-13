@@ -1,9 +1,0 @@
-#!/usr/bin/env python
-
-
-bld.SAMBA_SUBSYSTEM('LIBTSOCKET',
-	source='tsocket.c tsocket_helpers.c tsocket_bsd.c',
-	public_deps='talloc tevent',
-	public_headers='tsocket.h tsocket_internal.h',
-	)
-

@@ -1,9 +1,0 @@
-. basicsmb.fns
-
-password=samba
-security=SERVER
-(test_smb_conf_setup && test_smbpasswd $password ) || exit 1
-
-test_listfilesauth $security  || exit 1
-test_listfilesnpw $security  || exit 1
-

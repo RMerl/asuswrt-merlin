@@ -1,9 +1,0 @@
-#!/usr/bin/env python
-
-
-bld.SAMBA_SUBSYSTEM('TDR',
-	source='tdr.c',
-	public_deps='talloc samba-util',
-	public_headers='tdr.h'
-	)
-

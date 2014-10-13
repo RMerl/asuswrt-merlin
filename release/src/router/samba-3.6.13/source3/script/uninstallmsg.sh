@@ -1,1 +1,0 @@
-installmsg.sh

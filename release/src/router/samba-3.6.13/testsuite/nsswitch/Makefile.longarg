@@ -1,5 +1,0 @@
-#
-# Makefile for null tests
-#
-
-longarg_getpwnam: longarg_getpwnam.o

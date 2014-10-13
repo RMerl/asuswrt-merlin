@@ -1,6 +1,0 @@
-README.lsb - 1 July 2001
-------------------------
-
-The files in this directory allow you to build an LSB-compliant
-version of SAMBA using the RPM software and the LSB development
-environment.

@@ -1,9 +1,0 @@
-#!/bin/sh
-
-echo ""
-date
-echo ""
-echo "Pages are approximate ..."
-echo ""
-/etc/conf/acct-sum /var/log/lp/*
-echo ""

@@ -1,2 +1,0 @@
-dn: cn=PAM Pass Through Auth,cn=plugins,cn=config
-changetype: delete

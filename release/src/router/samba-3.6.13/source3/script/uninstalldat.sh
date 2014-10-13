@@ -1,1 +1,0 @@
-installdat.sh

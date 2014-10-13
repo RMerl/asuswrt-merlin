@@ -1,9 +1,0 @@
-# This file contains regexes matching tests that are very slow and
-# should be skipped during a normal test run.
-.*base.bench.holdcon.*			# Slow
-raw.bench.lookup				# Slow
-base.utable						# Slow
-base.smb						# Slow
-rpc.scanner						# Slow
-ntvfs.cifs.base.delaywrite	# It's a slow test and having it on the proxy share is not needed
-.*stress.*						# Slow

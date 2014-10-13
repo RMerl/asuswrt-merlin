@@ -1,5 +1,0 @@
-dn: CN=Aggregate,${SCHEMADN}
-objectClass: top
-objectClass: subSchema
-showInAdvancedViewOnly: FALSE
-systemFlags: 134217728

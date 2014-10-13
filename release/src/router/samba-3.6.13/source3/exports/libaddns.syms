@@ -1,5 +1,0 @@
-{
-	# no global exported symbols (yet) in libaddns ...
-
-	local: *;
-};

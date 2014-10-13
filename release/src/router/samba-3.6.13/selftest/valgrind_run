@@ -1,9 +1,0 @@
-#!/bin/sh
-
-ENV="$1"
-
-shift 1
-
-CMD="$ENV valgrind -q --db-attach=yes --num-callers=30 $@"
-echo $CMD
-eval $CMD

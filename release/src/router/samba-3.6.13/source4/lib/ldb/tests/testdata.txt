@@ -1,8 +1,0 @@
-foo=bar5
-(&(|(a=b)(c=d))(e=f))
-(&(|(a=b)(c=d)(g=h))(e=f))
-name=firstname lastname
-(&(sid=S-1-2-3)(name = fred bloggs))
-(&(|(a=b)(c=d))(g=f))
-(&(sid=S-1-2-3)(!(name = fred bloggs)))
-(&(!(|(a=b)(c=d))(g=f)))

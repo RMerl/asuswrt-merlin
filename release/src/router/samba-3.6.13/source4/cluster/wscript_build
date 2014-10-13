@@ -1,8 +1,0 @@
-#!/usr/bin/env python
-
-bld.SAMBA_LIBRARY('cluster',
-                  source='cluster.c local.c',
-                  deps='tdb-wrap samba-hostconfig talloc',
-                  private_library=True
-                  )
-

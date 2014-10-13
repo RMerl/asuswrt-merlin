@@ -1,6 +1,0 @@
-zone "DNSDOMAIN" IN {
-     type forward;
-     forwarders {
-                SERVERIP;
-     };
-};

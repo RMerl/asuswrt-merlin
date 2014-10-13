@@ -1,2 +1,0 @@
-. torture_setup.fns
-test_torture "DELETE"

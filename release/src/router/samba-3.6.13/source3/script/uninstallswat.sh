@@ -1,1 +1,0 @@
-installswat.sh

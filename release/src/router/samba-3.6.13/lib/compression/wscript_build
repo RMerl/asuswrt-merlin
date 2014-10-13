@@ -1,6 +1,0 @@
-#!/usr/bin/env python
-
-bld.SAMBA_SUBSYSTEM('LZXPRESS',
-        deps='replace',
-	source='lzxpress.c'
-	)

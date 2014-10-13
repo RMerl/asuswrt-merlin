@@ -1,4 +1,0 @@
-use
-	hexdump -v -e '12/1 "0x%02x, " "\n"' infile|outfile
-
-to import ndr dumps

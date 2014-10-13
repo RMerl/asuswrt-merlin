@@ -1,9 +1,0 @@
-#!/usr/bin/env python
-
-
-bld.SAMBA_SUBSYSTEM('LIBCLI_SMB_COMMON',
-	source='smb2_create_blob.c',
-	autoproto='smb_common_proto.h',
-	public_deps='talloc'
-	)
-

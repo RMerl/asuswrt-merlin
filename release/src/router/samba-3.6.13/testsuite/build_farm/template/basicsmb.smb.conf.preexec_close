@@ -1,2 +1,0 @@
-preexec close = yes
-preexec = /bin/sh PREFIX/lib/preexec

@@ -1,7 +1,0 @@
-#!/usr/bin/env python
-
-bld.SAMBA_LIBRARY('addns',
-                   source='dnsrecord.c dnsutils.c dnssock.c dnsgss.c dnsmarshall.c error.c',
-                   public_deps='talloc krb5 k5crypto com_err gssapi gssapi_krb5 uuid',
-                   private_library=True,
-                   vars=locals())

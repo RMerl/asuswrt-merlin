@@ -1,8 +1,0 @@
-#!/usr/bin/env python
-
-
-bld.SAMBA_SUBSYSTEM('LIBPACKET',
-	source='packet.c',
-	deps='LIBTLS'
-	)
-

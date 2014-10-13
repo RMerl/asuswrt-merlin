@@ -1,7 +1,0 @@
-As of Sunday March 7th, 2010, the Linux CIFS utilities are no longer
-part of the samba suite of tools and have been split off into their own
-project. Please see this webpage for information on how to acquire and
-build them:
-
-    http://linux-cifs.samba.org/cifs-utils/
-

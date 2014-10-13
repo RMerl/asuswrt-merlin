@@ -1,9 +1,0 @@
-#!/usr/bin/env python
-
-bld.SAMBA_MODULE('ntvfs_unixuid',
-	source='vfs_unixuid.c',
-	subsystem='ntvfs',
-	init_function='ntvfs_unixuid_init',
-	deps='samdb'
-	)
-

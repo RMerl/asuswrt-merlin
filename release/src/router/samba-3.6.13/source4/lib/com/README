@@ -1,9 +1,0 @@
-This directory contains Samba's very simple COM implementation. 
-It is by no means finished yet. 
-
-The main aim of this implementation is for use by our DCOM implementation, 
-which lives in the dcom subdirectory. The local version is used mostly for
-testing.
-
-More information on this effort can be found in the DCOM whitepaper in 
-the lorikeet repository.
