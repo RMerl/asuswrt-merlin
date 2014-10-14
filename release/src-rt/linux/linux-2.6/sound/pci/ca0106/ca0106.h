@@ -1,7 +1,7 @@
 /*
  *  Copyright (c) 2004 James Courtier-Dutton <James@superbug.demon.co.uk>
  *  Driver CA0106 chips. e.g. Sound Blaster Audigy LS and Live 24bit
- *  Version: 0.0.21
+ *  Version: 0.0.22
  *
  *  FEATURES currently supported:
  *    See ca0106_main.c for features.
@@ -47,9 +47,11 @@
  *    Added GPIO info for SB Live 24bit.
  *  0.0.21
  *   Implement support for Line-in capture on SB Live 24bit.
+ *  0.0.22
+ *    Add support for mute control on SB Live 24bit (cards w/ SPI DAC)
  *
  *
- *  This code was initally based on code from ALSA's emu10k1x.c which is:
+ *  This code was initially based on code from ALSA's emu10k1x.c which is:
  *  Copyright (c) by Francisco Moraes <fmoraes@nc.rr.com>
  *
  *   This program is free software; you can redistribute it and/or modify
@@ -173,7 +175,7 @@
 /* CA0106 pointer-offset register set, accessed through the PTR and DATA registers                     */
 /********************************************************************************************************/
                                                                                                                            
-/* Initally all registers from 0x00 to 0x3f have zero contents. */
+/* Initially all registers from 0x00 to 0x3f have zero contents. */
 #define PLAYBACK_LIST_ADDR	0x00		/* Base DMA address of a list of pointers to each period/size */
 						/* One list entry: 4 bytes for DMA address, 
 						 * 4 bytes for period_size << 16.
@@ -186,7 +188,7 @@
 #define PLAYBACK_LIST_PTR	0x02		/* Pointer to the current period being played */
 						/* PTR[5:0], Default: 0x0 */
 #define PLAYBACK_UNKNOWN3	0x03		/* Not used ?? */
-#define PLAYBACK_DMA_ADDR	0x04		/* Playback DMA addresss */
+#define PLAYBACK_DMA_ADDR	0x04		/* Playback DMA address */
 						/* DMA[31:0], Default: 0x0 */
 #define PLAYBACK_PERIOD_SIZE	0x05		/* Playback period size. win2000 uses 0x04000000 */
 						/* SIZE[31:16], Default: 0x0 */
@@ -221,7 +223,7 @@
  * The jack has 4 poles. I will call 1 - Tip, 2 - Next to 1, 3 - Next to 2, 4 - Next to 3
  * For Analogue: 1 -> Center Speaker, 2 -> Sub Woofer, 3 -> Ground, 4 -> Ground
  * For Digital: 1 -> Front SPDIF, 2 -> Rear SPDIF, 3 -> Center/Subwoofer SPDIF, 4 -> Ground.
- * Standard 4 pole Video A/V cable with RCA outputs: 1 -> White, 2 -> Yellow, 3 -> Sheild on all three, 4 -> Red.
+ * Standard 4 pole Video A/V cable with RCA outputs: 1 -> White, 2 -> Yellow, 3 -> Shield on all three, 4 -> Red.
  * So, from this you can see that you cannot use a Standard 4 pole Video A/V cable with the SB Audigy LS card.
  */
 /* The Front SPDIF PCM gets mixed with samples from the AC97 codec, so can only work for Stereo PCM and not AC3/DTS
@@ -269,7 +271,6 @@
 #define SPCS_WORD_LENGTH_19	0x00000002	/* Word Length 19 bit				*/
 #define SPCS_WORD_LENGTH_20A	0x0000000a	/* Word Length 20 bit				*/
 #define SPCS_WORD_LENGTH_20	0x00000009	/* Word Length 20 bit (both 0xa and 0x9 are 20 bit) */
-#define SPCS_WORD_LENGTH_21	0x00000007	/* Word Length 21 bit				*/
 #define SPCS_WORD_LENGTH_21	0x00000007	/* Word Length 21 bit				*/
 #define SPCS_WORD_LENGTH_22	0x00000005	/* Word Length 22 bit				*/
 #define SPCS_WORD_LENGTH_23	0x00000003	/* Word Length 23 bit				*/
@@ -552,6 +553,95 @@
 #define CONTROL_CENTER_LFE_CHANNEL 1
 #define CONTROL_UNKNOWN_CHANNEL 2
 
+
+/* Based on WM8768 Datasheet Rev 4.2 page 32 */
+#define SPI_REG_MASK	0x1ff	/* 16-bit SPI writes have a 7-bit address */
+#define SPI_REG_SHIFT	9	/* followed by 9 bits of data */
+
+#define SPI_LDA1_REG		0	/* digital attenuation */
+#define SPI_RDA1_REG		1
+#define SPI_LDA2_REG		4
+#define SPI_RDA2_REG		5
+#define SPI_LDA3_REG		6
+#define SPI_RDA3_REG		7
+#define SPI_LDA4_REG		13
+#define SPI_RDA4_REG		14
+#define SPI_MASTDA_REG		8
+
+#define SPI_DA_BIT_UPDATE	(1<<8)	/* update attenuation values */
+#define SPI_DA_BIT_0dB		0xff	/* 0 dB */
+#define SPI_DA_BIT_infdB	0x00	/* inf dB attenuation (mute) */
+
+#define SPI_PL_REG		2
+#define SPI_PL_BIT_L_M		(0<<5)	/* left channel = mute */
+#define SPI_PL_BIT_L_L		(1<<5)	/* left channel = left */
+#define SPI_PL_BIT_L_R		(2<<5)	/* left channel = right */
+#define SPI_PL_BIT_L_C		(3<<5)	/* left channel = (L+R)/2 */
+#define SPI_PL_BIT_R_M		(0<<7)	/* right channel = mute */
+#define SPI_PL_BIT_R_L		(1<<7)	/* right channel = left */
+#define SPI_PL_BIT_R_R		(2<<7)	/* right channel = right */
+#define SPI_PL_BIT_R_C		(3<<7)	/* right channel = (L+R)/2 */
+#define SPI_IZD_REG		2
+#define SPI_IZD_BIT		(1<<4)	/* infinite zero detect */
+
+#define SPI_FMT_REG		3
+#define SPI_FMT_BIT_RJ		(0<<0)	/* right justified mode */
+#define SPI_FMT_BIT_LJ		(1<<0)	/* left justified mode */
+#define SPI_FMT_BIT_I2S		(2<<0)	/* I2S mode */
+#define SPI_FMT_BIT_DSP		(3<<0)	/* DSP Modes A or B */
+#define SPI_LRP_REG		3
+#define SPI_LRP_BIT		(1<<2)	/* invert LRCLK polarity */
+#define SPI_BCP_REG		3
+#define SPI_BCP_BIT		(1<<3)	/* invert BCLK polarity */
+#define SPI_IWL_REG		3
+#define SPI_IWL_BIT_16		(0<<4)	/* 16-bit world length */
+#define SPI_IWL_BIT_20		(1<<4)	/* 20-bit world length */
+#define SPI_IWL_BIT_24		(2<<4)	/* 24-bit world length */
+#define SPI_IWL_BIT_32		(3<<4)	/* 32-bit world length */
+
+#define SPI_MS_REG		10
+#define SPI_MS_BIT		(1<<5)	/* master mode */
+#define SPI_RATE_REG		10	/* only applies in master mode */
+#define SPI_RATE_BIT_128	(0<<6)	/* MCLK = LRCLK * 128 */
+#define SPI_RATE_BIT_192	(1<<6)
+#define SPI_RATE_BIT_256	(2<<6)
+#define SPI_RATE_BIT_384	(3<<6)
+#define SPI_RATE_BIT_512	(4<<6)
+#define SPI_RATE_BIT_768	(5<<6)
+
+/* They really do label the bit for the 4th channel "4" and not "3" */
+#define SPI_DMUTE0_REG		9
+#define SPI_DMUTE1_REG		9
+#define SPI_DMUTE2_REG		9
+#define SPI_DMUTE4_REG		15
+#define SPI_DMUTE0_BIT		(1<<3)
+#define SPI_DMUTE1_BIT		(1<<4)
+#define SPI_DMUTE2_BIT		(1<<5)
+#define SPI_DMUTE4_BIT		(1<<2)
+
+#define SPI_PHASE0_REG		3
+#define SPI_PHASE1_REG		3
+#define SPI_PHASE2_REG		3
+#define SPI_PHASE4_REG		15
+#define SPI_PHASE0_BIT		(1<<6)
+#define SPI_PHASE1_BIT		(1<<7)
+#define SPI_PHASE2_BIT		(1<<8)
+#define SPI_PHASE4_BIT		(1<<3)
+
+#define SPI_PDWN_REG		2	/* power down all DACs */
+#define SPI_PDWN_BIT		(1<<2)
+#define SPI_DACD0_REG		10	/* power down individual DACs */
+#define SPI_DACD1_REG		10
+#define SPI_DACD2_REG		10
+#define SPI_DACD4_REG		15
+#define SPI_DACD0_BIT		(1<<1)
+#define SPI_DACD1_BIT		(1<<2)
+#define SPI_DACD2_BIT		(1<<3)
+#define SPI_DACD4_BIT		(1<<0)	/* datasheet error says it's 1 */
+
+#define SPI_PWRDNALL_REG	10	/* power down everything */
+#define SPI_PWRDNALL_BIT	(1<<4)
+
 #include "ca_midi.h"
 
 struct snd_ca0106;
@@ -574,10 +664,15 @@ struct snd_ca0106_pcm {
 struct snd_ca0106_details {
         u32 serial;
         char * name;
-        int ac97;
-	int gpio_type;
-	int i2c_adc;
-	int spi_dac;
+	int ac97;	/* ac97 = 0 -> Select MIC, Line in, TAD in, AUX in.
+			   ac97 = 1 -> Default to AC97 in. */
+	int gpio_type;	/* gpio_type = 1 -> shared mic-in/line-in
+			   gpio_type = 2 -> shared side-out/line-in. */
+	int i2c_adc;	/* with i2c_adc=1, the driver adds some capture volume
+			   controls, phone, mic, line-in and aux. */
+	u16 spi_dac;	/* spi_dac = 0 -> no spi interface for DACs
+			   spi_dac = 0x<front><rear><center-lfe><side>
+			   -> specifies DAC id for each channel pair. */
 };
 
 // definition of the chip-specific record
@@ -590,18 +685,18 @@ struct snd_ca0106 {
 	struct resource *res_port;
 	int irq;
 
-	unsigned char revision;		/* chip revision */
 	unsigned int serial;            /* serial number */
 	unsigned short model;		/* subsystem id */
 
 	spinlock_t emu_lock;
 
 	struct snd_ac97 *ac97;
-	struct snd_pcm *pcm;
+	struct snd_pcm *pcm[4];
 
 	struct snd_ca0106_channel playback_channels[4];
 	struct snd_ca0106_channel capture_channels[4];
-	u32 spdif_bits[4];             /* s/pdif out setup */
+	u32 spdif_bits[4];             /* s/pdif out default setup */
+	u32 spdif_str_bits[4];         /* s/pdif out per-stream setup */
 	int spdif_enable;
 	int capture_source;
 	int i2c_capture_source;
@@ -612,6 +707,13 @@ struct snd_ca0106 {
 
 	struct snd_ca_midi midi;
 	struct snd_ca_midi midi2;
+
+	u16 spi_dac_reg[16];
+
+#ifdef CONFIG_PM
+#define NUM_SAVED_VOLUMES	9
+	unsigned int saved_vol[NUM_SAVED_VOLUMES];
+#endif
 };
 
 int snd_ca0106_mixer(struct snd_ca0106 *emu);
@@ -628,4 +730,13 @@ void snd_ca0106_ptr_write(struct snd_ca0106 *emu,
 
 int snd_ca0106_i2c_write(struct snd_ca0106 *emu, u32 reg, u32 value);
 
+int snd_ca0106_spi_write(struct snd_ca0106 * emu,
+				   unsigned int data);
 
+#ifdef CONFIG_PM
+void snd_ca0106_mixer_suspend(struct snd_ca0106 *chip);
+void snd_ca0106_mixer_resume(struct snd_ca0106 *chip);
+#else
+#define snd_ca0106_mixer_suspend(chip)	do { } while (0)
+#define snd_ca0106_mixer_resume(chip)	do { } while (0)
+#endif

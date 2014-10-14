@@ -2,21 +2,34 @@
 # Makefile for the linux ppc-specific parts of the memory manager.
 #
 
-ifeq ($(CONFIG_PPC64),y)
-EXTRA_CFLAGS	+= -mno-minimal-toc
-endif
+subdir-ccflags-$(CONFIG_PPC_WERROR) := -Werror
 
-obj-y				:= fault.o mem.o lmb.o
-obj-$(CONFIG_PPC32)		+= init_32.o pgtable_32.o mmu_context_32.o
-hash-$(CONFIG_PPC_NATIVE)	:= hash_native_64.o
-obj-$(CONFIG_PPC64)		+= init_64.o pgtable_64.o mmu_context_64.o \
-				   hash_utils_64.o hash_low_64.o tlb_64.o \
-				   slb_low.o slb.o stab.o mmap.o imalloc.o \
-				   $(hash-y)
-obj-$(CONFIG_PPC_STD_MMU_32)	+= ppc_mmu_32.o hash_low_32.o tlb_32.o
-obj-$(CONFIG_40x)		+= 4xx_mmu.o
+ccflags-$(CONFIG_PPC64)	:= -mno-minimal-toc
+
+obj-y				:= fault.o mem.o pgtable.o gup.o \
+				   init_$(CONFIG_WORD_SIZE).o \
+				   pgtable_$(CONFIG_WORD_SIZE).o
+obj-$(CONFIG_PPC_MMU_NOHASH)	+= mmu_context_nohash.o tlb_nohash.o \
+				   tlb_nohash_low.o
+obj-$(CONFIG_PPC_BOOK3E)	+= tlb_low_$(CONFIG_WORD_SIZE)e.o
+obj-$(CONFIG_PPC64)		+= mmap_64.o
+hash64-$(CONFIG_PPC_NATIVE)	:= hash_native_64.o
+obj-$(CONFIG_PPC_STD_MMU_64)	+= hash_utils_64.o \
+				   slb_low.o slb.o stab.o \
+				   mmap_64.o $(hash64-y)
+obj-$(CONFIG_PPC_STD_MMU_32)	+= ppc_mmu_32.o
+obj-$(CONFIG_PPC_STD_MMU)	+= hash_low_$(CONFIG_WORD_SIZE).o \
+				   tlb_hash$(CONFIG_WORD_SIZE).o \
+				   mmu_context_hash$(CONFIG_WORD_SIZE).o
+obj-$(CONFIG_40x)		+= 40x_mmu.o
 obj-$(CONFIG_44x)		+= 44x_mmu.o
-obj-$(CONFIG_FSL_BOOKE)		+= fsl_booke_mmu.o
+obj-$(CONFIG_PPC_FSL_BOOK3E)	+= fsl_booke_mmu.o
 obj-$(CONFIG_NEED_MULTIPLE_NODES) += numa.o
 obj-$(CONFIG_PPC_MM_SLICES)	+= slice.o
-obj-$(CONFIG_HUGETLB_PAGE)	+= hugetlbpage.o
+ifeq ($(CONFIG_HUGETLB_PAGE),y)
+obj-y				+= hugetlbpage.o
+obj-$(CONFIG_PPC_STD_MMU_64)	+= hugetlbpage-hash64.o
+endif
+obj-$(CONFIG_PPC_SUBPAGE_PROT)	+= subpage-prot.o
+obj-$(CONFIG_NOT_COHERENT_CACHE) += dma-noncoherent.o
+obj-$(CONFIG_HIGHMEM)		+= highmem.o

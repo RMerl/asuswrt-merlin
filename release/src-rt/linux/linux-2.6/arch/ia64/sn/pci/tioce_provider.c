@@ -8,6 +8,7 @@
 
 #include <linux/types.h>
 #include <linux/interrupt.h>
+#include <linux/slab.h>
 #include <linux/pci.h>
 #include <asm/sn/sn_sal.h>
 #include <asm/sn/addrs.h>
@@ -41,7 +42,7 @@
  *	} else
  *		do desired mmr access
  *
- * According to hw, we can use reads instead of writes to the above addres
+ * According to hw, we can use reads instead of writes to the above address
  *
  * Note this WAR can only to be used for accessing internal MMR's in the
  * TIOCE Coretalk Address Range 0x0 - 0x07ff_ffff.  This includes the
@@ -493,8 +494,8 @@ tioce_dma_unmap(struct pci_dev *pdev, dma_addr_t bus_addr, int dir)
 
 		if (&map->ce_dmamap_list == &ce_kern->ce_dmamap_list) {
 			printk(KERN_WARNING
-			       "%s:  %s - no map found for bus_addr 0x%lx\n",
-			       __FUNCTION__, pci_name(pdev), bus_addr);
+			       "%s:  %s - no map found for bus_addr 0x%llx\n",
+			       __func__, pci_name(pdev), bus_addr);
 		} else if (--map->refcnt == 0) {
 			for (i = 0; i < map->ate_count; i++) {
 				map->ate_shadow[i] = 0;
@@ -642,7 +643,7 @@ dma_map_done:
  * in the address.
  */
 static u64
-tioce_dma(struct pci_dev *pdev, u64 paddr, size_t byte_count, int dma_flags)
+tioce_dma(struct pci_dev *pdev, unsigned long  paddr, size_t byte_count, int dma_flags)
 {
 	return tioce_do_dma_map(pdev, paddr, byte_count, 0, dma_flags);
 }
@@ -655,8 +656,9 @@ tioce_dma(struct pci_dev *pdev, u64 paddr, size_t byte_count, int dma_flags)
  *
  * Simply call tioce_do_dma_map() to create a map with the barrier bit set
  * in the address.
- */ static u64
-tioce_dma_consistent(struct pci_dev *pdev, u64 paddr, size_t byte_count, int dma_flags)
+ */
+static u64
+tioce_dma_consistent(struct pci_dev *pdev, unsigned long  paddr, size_t byte_count, int dma_flags)
 {
 	return tioce_do_dma_map(pdev, paddr, byte_count, 1, dma_flags);
 }
@@ -668,7 +670,8 @@ tioce_dma_consistent(struct pci_dev *pdev, u64 paddr, size_t byte_count, int dma
  *
  * Handle a CE error interrupt.  Simply a wrapper around a SAL call which
  * defers processing to the SGI prom.
- */ static irqreturn_t
+ */
+static irqreturn_t
 tioce_error_intr_handler(int irq, void *arg)
 {
 	struct tioce_common *soft = arg;
@@ -752,13 +755,13 @@ tioce_kern_init(struct tioce_common *tioce_common)
 	 * Determine the secondary bus number of the port2 logical PPB.
 	 * This is used to decide whether a given pci device resides on
 	 * port1 or port2.  Note:  We don't have enough plumbing set up
-	 * here to use pci_read_config_xxx() so use the raw_pci_ops vector.
+	 * here to use pci_read_config_xxx() so use raw_pci_read().
 	 */
 
 	seg = tioce_common->ce_pcibus.bs_persist_segment;
 	bus = tioce_common->ce_pcibus.bs_persist_busnum;
 
-	raw_pci_ops->read(seg, bus, PCI_DEVFN(2, 0), PCI_SECONDARY_BUS, 1,&tmp);
+	raw_pci_read(seg, bus, PCI_DEVFN(2, 0), PCI_SECONDARY_BUS, 1,&tmp);
 	tioce_kern->ce_port1_secondary = (u8) tmp;
 
 	/*
@@ -799,11 +802,11 @@ tioce_kern_init(struct tioce_common *tioce_common)
 
 		/* mem base/limit */
 
-		raw_pci_ops->read(seg, bus, PCI_DEVFN(dev, 0),
+		raw_pci_read(seg, bus, PCI_DEVFN(dev, 0),
 				  PCI_MEMORY_BASE, 2, &tmp);
 		base = (u64)tmp << 16;
 
-		raw_pci_ops->read(seg, bus, PCI_DEVFN(dev, 0),
+		raw_pci_read(seg, bus, PCI_DEVFN(dev, 0),
 				  PCI_MEMORY_LIMIT, 2, &tmp);
 		limit = (u64)tmp << 16;
 		limit |= 0xfffffUL;
@@ -817,21 +820,21 @@ tioce_kern_init(struct tioce_common *tioce_common)
 		 * attributes.
 		 */
 
-		raw_pci_ops->read(seg, bus, PCI_DEVFN(dev, 0),
+		raw_pci_read(seg, bus, PCI_DEVFN(dev, 0),
 				  PCI_PREF_MEMORY_BASE, 2, &tmp);
 		base = ((u64)tmp & PCI_PREF_RANGE_MASK) << 16;
 
-		raw_pci_ops->read(seg, bus, PCI_DEVFN(dev, 0),
+		raw_pci_read(seg, bus, PCI_DEVFN(dev, 0),
 				  PCI_PREF_BASE_UPPER32, 4, &tmp);
 		base |= (u64)tmp << 32;
 
-		raw_pci_ops->read(seg, bus, PCI_DEVFN(dev, 0),
+		raw_pci_read(seg, bus, PCI_DEVFN(dev, 0),
 				  PCI_PREF_MEMORY_LIMIT, 2, &tmp);
 
 		limit = ((u64)tmp & PCI_PREF_RANGE_MASK) << 16;
 		limit |= 0xfffffUL;
 
-		raw_pci_ops->read(seg, bus, PCI_DEVFN(dev, 0),
+		raw_pci_read(seg, bus, PCI_DEVFN(dev, 0),
 				  PCI_PREF_LIMIT_UPPER32, 4, &tmp);
 		limit |= (u64)tmp << 32;
 
@@ -1030,10 +1033,11 @@ tioce_bus_fixup(struct pcibus_bussoft *prom_bussoft, struct pci_controller *cont
 		       "%s:  Unable to get irq %d.  "
 		       "Error interrupts won't be routed for "
 		       "TIOCE bus %04x:%02x\n",
-		       __FUNCTION__, SGI_PCIASIC_ERROR,
+		       __func__, SGI_PCIASIC_ERROR,
 		       tioce_common->ce_pcibus.bs_persist_segment,
 		       tioce_common->ce_pcibus.bs_persist_busnum);
 
+	sn_set_err_irq_affinity(SGI_PCIASIC_ERROR);
 	return tioce_common;
 }
 

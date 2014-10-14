@@ -1,6 +1,6 @@
 /*
  * Linux driver for SSFDC Flash Translation Layer (Read only)
- * (c) 2005 Eptar srl
+ * © 2005 Eptar srl
  * Author: Claudio Lanconelli <lanconelli.claudio@eptar.com>
  *
  * Based on NTFL and MTDBLOCK_RO drivers
@@ -294,7 +294,8 @@ static void ssfdcr_add_mtd(struct mtd_blktrans_ops *tr, struct mtd_info *mtd)
 	int cis_sector;
 
 	/* Check for small page NAND flash */
-	if (mtd->type != MTD_NANDFLASH || mtd->oobsize != OOB_SIZE)
+	if (mtd->type != MTD_NANDFLASH || mtd->oobsize != OOB_SIZE ||
+	    mtd->size > UINT_MAX)
 		return;
 
 	/* Check for SSDFC format by reading CIS/IDI sector */
@@ -316,19 +317,18 @@ static void ssfdcr_add_mtd(struct mtd_blktrans_ops *tr, struct mtd_info *mtd)
 
 	ssfdc->cis_block = cis_sector / (mtd->erasesize >> SECTOR_SHIFT);
 	ssfdc->erase_size = mtd->erasesize;
-	ssfdc->map_len = mtd->size / mtd->erasesize;
+	ssfdc->map_len = (u32)mtd->size / mtd->erasesize;
 
 	DEBUG(MTD_DEBUG_LEVEL1,
 		"SSFDC_RO: cis_block=%d,erase_size=%d,map_len=%d,n_zones=%d\n",
 		ssfdc->cis_block, ssfdc->erase_size, ssfdc->map_len,
-		(ssfdc->map_len + MAX_PHYS_BLK_PER_ZONE - 1) /
-		MAX_PHYS_BLK_PER_ZONE);
+		DIV_ROUND_UP(ssfdc->map_len, MAX_PHYS_BLK_PER_ZONE));
 
 	/* Set geometry */
 	ssfdc->heads = 16;
 	ssfdc->sectors = 32;
 	get_chs(mtd->size, NULL, &ssfdc->heads, &ssfdc->sectors);
-	ssfdc->cylinders = (unsigned short)((mtd->size >> SECTOR_SHIFT) /
+	ssfdc->cylinders = (unsigned short)(((u32)mtd->size >> SECTOR_SHIFT) /
 			((long)ssfdc->sectors * (long)ssfdc->heads));
 
 	DEBUG(MTD_DEBUG_LEVEL1, "SSFDC_RO: using C:%d H:%d S:%d == %ld sects\n",
@@ -375,7 +375,6 @@ static void ssfdcr_remove_dev(struct mtd_blktrans_dev *dev)
 
 	del_mtd_blktrans_dev(dev);
 	kfree(ssfdc->logic_block_map);
-	kfree(ssfdc);
 }
 
 static int ssfdcr_readsect(struct mtd_blktrans_dev *dev,

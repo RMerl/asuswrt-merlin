@@ -74,7 +74,7 @@ struct sta_info {
 	u32 tx_since_last_failure;
 	u32 tx_consecutive_exc;
 
-	struct ieee80211_crypt_data *crypt;
+	struct lib80211_crypt_data *crypt;
 
 	int ap; /* whether this station is an AP */
 
@@ -114,7 +114,7 @@ struct sta_info {
  * has passed since last received frame from the station, a nullfunc data
  * frame is sent to the station. If this frame is not acknowledged and no other
  * frames have been received, the station will be disassociated after
- * AP_DISASSOC_DELAY. Similarily, a the station will be deauthenticated after
+ * AP_DISASSOC_DELAY. Similarly, a the station will be deauthenticated after
  * AP_DEAUTH_DELAY. AP_TIMEOUT_RESOLUTION is the resolution that is used with
  * max inactivity timer. */
 #define AP_MAX_INACTIVITY_SEC (5 * 60)
@@ -209,7 +209,7 @@ struct ap_data {
 
 	/* WEP operations for generating challenges to be used with shared key
 	 * authentication */
-	struct ieee80211_crypto_ops *crypt;
+	struct lib80211_crypto_ops *crypt;
 	void *crypt_priv;
 #endif /* PRISM2_NO_KERNEL_IEEE80211_MGMT */
 };
@@ -229,13 +229,13 @@ typedef enum {
 struct hostap_tx_data {
 	struct sk_buff *skb;
 	int host_encrypt;
-	struct ieee80211_crypt_data *crypt;
+	struct lib80211_crypt_data *crypt;
 	void *sta_ptr;
 };
 ap_tx_ret hostap_handle_sta_tx(local_info_t *local, struct hostap_tx_data *tx);
 void hostap_handle_sta_release(void *ptr);
 void hostap_handle_sta_tx_exc(local_info_t *local, struct sk_buff *skb);
-int hostap_update_sta_ps(local_info_t *local, struct ieee80211_hdr_4addr *hdr);
+int hostap_update_sta_ps(local_info_t *local, struct ieee80211_hdr *hdr);
 typedef enum {
 	AP_RX_CONTINUE, AP_RX_DROP, AP_RX_EXIT, AP_RX_CONTINUE_NOT_AUTHORIZED
 } ap_rx_ret;
@@ -243,13 +243,13 @@ ap_rx_ret hostap_handle_sta_rx(local_info_t *local, struct net_device *dev,
 			       struct sk_buff *skb,
 			       struct hostap_80211_rx_status *rx_stats,
 			       int wds);
-int hostap_handle_sta_crypto(local_info_t *local, struct ieee80211_hdr_4addr *hdr,
-			     struct ieee80211_crypt_data **crypt,
+int hostap_handle_sta_crypto(local_info_t *local, struct ieee80211_hdr *hdr,
+			     struct lib80211_crypt_data **crypt,
 			     void **sta_ptr);
 int hostap_is_sta_assoc(struct ap_data *ap, u8 *sta_addr);
 int hostap_is_sta_authorized(struct ap_data *ap, u8 *sta_addr);
 int hostap_add_sta(struct ap_data *ap, u8 *sta_addr);
-int hostap_update_rx_stats(struct ap_data *ap, struct ieee80211_hdr_4addr *hdr,
+int hostap_update_rx_stats(struct ap_data *ap, struct ieee80211_hdr *hdr,
 			   struct hostap_80211_rx_status *rx_stats);
 void hostap_update_rates(local_info_t *local);
 void hostap_add_wds_links(local_info_t *local);

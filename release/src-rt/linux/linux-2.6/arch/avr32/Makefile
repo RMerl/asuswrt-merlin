@@ -11,43 +11,37 @@ all: uImage vmlinux.elf
 
 KBUILD_DEFCONFIG	:= atstk1002_defconfig
 
-CFLAGS		+= -pipe -fno-builtin -mno-pic
-AFLAGS		+= -mrelax -mno-pic
-CFLAGS_MODULE	+= -mno-relax
+KBUILD_CFLAGS	+= -pipe -fno-builtin -mno-pic
+KBUILD_AFLAGS	+= -mrelax -mno-pic
+KBUILD_CFLAGS_MODULE += -mno-relax
 LDFLAGS_vmlinux	+= --relax
 
-cpuflags-$(CONFIG_CPU_AT32AP7000)	+= -mcpu=ap7000
+cpuflags-$(CONFIG_PLATFORM_AT32AP)	+= -march=ap
 
-CFLAGS		+= $(cpuflags-y)
-AFLAGS		+= $(cpuflags-y)
+KBUILD_CFLAGS	+= $(cpuflags-y)
+KBUILD_AFLAGS	+= $(cpuflags-y)
 
 CHECKFLAGS	+= -D__avr32__ -D__BIG_ENDIAN
 
+machine-$(CONFIG_PLATFORM_AT32AP) := at32ap
+machdirs	:= $(patsubst %,arch/avr32/mach-%/, $(machine-y))
+
+KBUILD_CPPFLAGS	+= $(patsubst %,-I$(srctree)/%include,$(machdirs))
+
 head-$(CONFIG_LOADER_U_BOOT)		+= arch/avr32/boot/u-boot/head.o
 head-y					+= arch/avr32/kernel/head.o
-core-$(CONFIG_PLATFORM_AT32AP)		+= arch/avr32/mach-at32ap/
+core-y					+= $(machdirs)
 core-$(CONFIG_BOARD_ATSTK1000)		+= arch/avr32/boards/atstk1000/
-core-$(CONFIG_BOARD_ATNGW100)		+= arch/avr32/boards/atngw100/
+core-$(CONFIG_BOARD_ATNGW100_COMMON)	+= arch/avr32/boards/atngw100/
+core-$(CONFIG_BOARD_HAMMERHEAD)		+= arch/avr32/boards/hammerhead/
+core-$(CONFIG_BOARD_FAVR_32)		+= arch/avr32/boards/favr-32/
+core-$(CONFIG_BOARD_MERISC)		+= arch/avr32/boards/merisc/
+core-$(CONFIG_BOARD_MIMC200)		+= arch/avr32/boards/mimc200/
 core-$(CONFIG_LOADER_U_BOOT)		+= arch/avr32/boot/u-boot/
 core-y					+= arch/avr32/kernel/
 core-y					+= arch/avr32/mm/
+drivers-$(CONFIG_OPROFILE)		+= arch/avr32/oprofile/
 libs-y					+= arch/avr32/lib/
-
-archincdir-$(CONFIG_PLATFORM_AT32AP)	:= arch-at32ap
-
-include/asm-avr32/.arch: $(wildcard include/config/platform/*.h) include/config/auto.conf
-	@echo '  SYMLINK include/asm-avr32/arch -> include/asm-avr32/$(archincdir-y)'
-ifneq ($(KBUILD_SRC),)
-	$(Q)mkdir -p include/asm-avr32
-	$(Q)ln -fsn $(srctree)/include/asm-avr32/$(archincdir-y) include/asm-avr32/arch
-else
-	$(Q)ln -fsn $(archincdir-y) include/asm-avr32/arch
-endif
-	@touch $@
-
-archprepare: include/asm-avr32/.arch
-
-CLEAN_FILES += include/asm-avr32/.arch include/asm-avr32/arch
 
 BOOT_TARGETS := vmlinux.elf vmlinux.bin uImage uImage.srec
 

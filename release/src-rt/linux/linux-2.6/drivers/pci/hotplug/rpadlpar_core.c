@@ -14,9 +14,13 @@
  *      as published by the Free Software Foundation; either version
  *      2 of the License, or (at your option) any later version.
  */
+
+#undef DEBUG
+
 #include <linux/init.h>
 #include <linux/pci.h>
 #include <linux/string.h>
+#include <linux/vmalloc.h>
 
 #include <asm/pci-bridge.h>
 #include <linux/mutex.h>
@@ -100,6 +104,7 @@ static struct device_node *find_dlpar_node(char *drc_name, int *node_type)
 
 /**
  * find_php_slot - return hotplug slot structure for device node
+ * @dn: target &device_node
  *
  * This routine will return the hotplug slot structure
  * for a given device node. Note that built-in PCI slots
@@ -146,24 +151,24 @@ static void dlpar_pci_add_bus(struct device_node *dn)
 	dev = of_create_pci_dev(dn, phb->bus, pdn->devfn);
 	if (!dev) {
 		printk(KERN_ERR "%s: failed to create pci dev for %s\n",
-				__FUNCTION__, dn->full_name);
+				__func__, dn->full_name);
 		return;
 	}
 
+	/* Scan below the new bridge */
 	if (dev->hdr_type == PCI_HEADER_TYPE_BRIDGE ||
 	    dev->hdr_type == PCI_HEADER_TYPE_CARDBUS)
 		of_scan_pci_bridge(dn, dev);
 
-	pcibios_fixup_new_pci_devices(dev->subordinate,0);
+	/* Map IO space for child bus, which may or may not succeed */
+	pcibios_map_io_space(dev->subordinate);
 
-	/* Claim new bus resources */
-	pcibios_claim_one_bus(dev->bus);
-
-	/* ioremap() for child bus, which may or may not succeed */
-	remap_bus_range(dev->subordinate);
-
-	/* Add new devices to global lists.  Register in proc, sysfs. */
-	pci_bus_add_devices(phb->bus);
+	/* Finish adding it : resource allocation, adding devices, etc...
+	 * Note that we need to perform the finish pass on the -parent-
+	 * bus of the EADS bridge so the bridge device itself gets
+	 * properly added
+	 */
+	pcibios_finish_adding_to_bus(phb->bus);
 }
 
 static int dlpar_add_pci_slot(char *drc_name, struct device_node *dn)
@@ -182,44 +187,23 @@ static int dlpar_add_pci_slot(char *drc_name, struct device_node *dn)
 	dev = dlpar_find_new_dev(phb->bus, dn);
 
 	if (!dev) {
-		printk(KERN_ERR "%s: unable to add bus %s\n", __FUNCTION__,
+		printk(KERN_ERR "%s: unable to add bus %s\n", __func__,
 			drc_name);
 		return -EIO;
 	}
 
 	if (dev->hdr_type != PCI_HEADER_TYPE_BRIDGE) {
 		printk(KERN_ERR "%s: unexpected header type %d, unable to add bus %s\n",
-			__FUNCTION__, dev->hdr_type, drc_name);
+			__func__, dev->hdr_type, drc_name);
 		return -EIO;
 	}
 
 	/* Add hotplug slot */
 	if (rpaphp_add_slot(dn)) {
 		printk(KERN_ERR "%s: unable to add hotplug slot %s\n",
-			__FUNCTION__, drc_name);
+			__func__, drc_name);
 		return -EIO;
 	}
-	return 0;
-}
-
-static int dlpar_remove_root_bus(struct pci_controller *phb)
-{
-	struct pci_bus *phb_bus;
-	int rc;
-
-	phb_bus = phb->bus;
-	if (!(list_empty(&phb_bus->children) &&
-	      list_empty(&phb_bus->devices))) {
-		return -EBUSY;
-	}
-
-	rc = pcibios_remove_root_bus(phb);
-	if (rc)
-		return -EIO;
-
-	device_unregister(phb_bus->bridge);
-	pci_remove_bus(phb_bus);
-
 	return 0;
 }
 
@@ -234,18 +218,15 @@ static int dlpar_remove_phb(char *drc_name, struct device_node *dn)
 
 	/* If pci slot is hotplugable, use hotplug to remove it */
 	slot = find_php_slot(dn);
-	if (slot) {
-		if (rpaphp_deregister_slot(slot)) {
-			printk(KERN_ERR
-				"%s: unable to remove hotplug slot %s\n",
-				__FUNCTION__, drc_name);
-			return -EIO;
-		}
+	if (slot && rpaphp_deregister_slot(slot)) {
+		printk(KERN_ERR "%s: unable to remove hotplug slot %s\n",
+		       __func__, drc_name);
+		return -EIO;
 	}
 
 	pdn = dn->data;
 	BUG_ON(!pdn || !pdn->phb);
-	rc = dlpar_remove_root_bus(pdn->phb);
+	rc = remove_phb_dynamic(pdn->phb);
 	if (rc < 0)
 		return rc;
 
@@ -269,7 +250,7 @@ static int dlpar_add_phb(char *drc_name, struct device_node *dn)
 
 	if (rpaphp_add_slot(dn)) {
 		printk(KERN_ERR "%s: unable to add hotplug slot %s\n",
-			__FUNCTION__, drc_name);
+			__func__, drc_name);
 		return -EIO;
 	}
 	return 0;
@@ -283,7 +264,7 @@ static int dlpar_add_vio_slot(char *drc_name, struct device_node *dn)
 	if (!vio_register_device_node(dn)) {
 		printk(KERN_ERR
 			"%s: failed to register vio node %s\n",
-			__FUNCTION__, drc_name);
+			__func__, drc_name);
 		return -EIO;
 	}
 	return 0;
@@ -293,9 +274,8 @@ static int dlpar_add_vio_slot(char *drc_name, struct device_node *dn)
  * dlpar_add_slot - DLPAR add an I/O Slot
  * @drc_name: drc-name of newly added slot
  *
- * Make the hotplug module and the kernel aware
- * of a newly added I/O Slot.
- * Return Codes -
+ * Make the hotplug module and the kernel aware of a newly added I/O Slot.
+ * Return Codes:
  * 0			Success
  * -ENODEV		Not a valid drc_name
  * -EINVAL		Slot already added
@@ -339,9 +319,9 @@ exit:
 /**
  * dlpar_remove_vio_slot - DLPAR remove a virtual I/O Slot
  * @drc_name: drc-name of newly added slot
+ * @dn: &device_node
  *
- * Remove the kernel and hotplug representations
- * of an I/O Slot.
+ * Remove the kernel and hotplug representations of an I/O Slot.
  * Return Codes:
  * 0			Success
  * -EINVAL		Vio dev doesn't exist
@@ -359,11 +339,11 @@ static int dlpar_remove_vio_slot(char *drc_name, struct device_node *dn)
 }
 
 /**
- * dlpar_remove_slot - DLPAR remove a PCI I/O Slot
+ * dlpar_remove_pci_slot - DLPAR remove a PCI I/O Slot
  * @drc_name: drc-name of newly added slot
+ * @dn: &device_node
  *
- * Remove the kernel and hotplug representations
- * of a PCI I/O Slot.
+ * Remove the kernel and hotplug representations of a PCI I/O Slot.
  * Return Codes:
  * 0			Success
  * -ENODEV		Not a valid drc_name
@@ -378,26 +358,38 @@ int dlpar_remove_pci_slot(char *drc_name, struct device_node *dn)
 	if (!bus)
 		return -EINVAL;
 
-	/* If pci slot is hotplugable, use hotplug to remove it */
+	pr_debug("PCI: Removing PCI slot below EADS bridge %s\n",
+		 bus->self ? pci_name(bus->self) : "<!PHB!>");
+
 	slot = find_php_slot(dn);
 	if (slot) {
+		pr_debug("PCI: Removing hotplug slot for %04x:%02x...\n",
+			 pci_domain_nr(bus), bus->number);
+
 		if (rpaphp_deregister_slot(slot)) {
 			printk(KERN_ERR
 				"%s: unable to remove hotplug slot %s\n",
-				__FUNCTION__, drc_name);
+				__func__, drc_name);
 			return -EIO;
 		}
-	} else
-		pcibios_remove_pci_devices(bus);
+	}
 
-	if (unmap_bus_range(bus)) {
+	/* Remove all devices below slot */
+	pcibios_remove_pci_devices(bus);
+
+	/* Unmap PCI IO space */
+	if (pcibios_unmap_io_space(bus)) {
 		printk(KERN_ERR "%s: failed to unmap bus range\n",
-			__FUNCTION__);
+			__func__);
 		return -ERANGE;
 	}
 
+	/* Remove the EADS bridge device itself */
 	BUG_ON(!bus->self);
+	pr_debug("PCI: Now removing bridge device %s\n", pci_name(bus->self));
+	eeh_remove_bus_device(bus->self);
 	pci_remove_bus_device(bus->self);
+
 	return 0;
 }
 
@@ -405,8 +397,7 @@ int dlpar_remove_pci_slot(char *drc_name, struct device_node *dn)
  * dlpar_remove_slot - DLPAR remove an I/O Slot
  * @drc_name: drc-name of newly added slot
  *
- * Remove the kernel and hotplug representations
- * of an I/O Slot.
+ * Remove the kernel and hotplug representations of an I/O Slot.
  * Return Codes:
  * 0			Success
  * -ENODEV		Not a valid drc_name
@@ -440,6 +431,8 @@ int dlpar_remove_slot(char *drc_name)
 			rc = dlpar_remove_pci_slot(drc_name, dn);
 			break;
 	}
+	vm_unmap_aliases();
+
 	printk(KERN_INFO "%s: slot %s removed\n", DLPAR_MODULE_NAME, drc_name);
 exit:
 	mutex_unlock(&rpadlpar_mutex);
@@ -459,7 +452,7 @@ int __init rpadlpar_io_init(void)
 
 	if (!is_dlpar_capable()) {
 		printk(KERN_WARNING "%s: partition not DLPAR capable\n",
-			__FUNCTION__);
+			__func__);
 		return -EPERM;
 	}
 

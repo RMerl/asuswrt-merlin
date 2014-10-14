@@ -41,7 +41,9 @@
 #include <linux/notifier.h>
 #include <linux/interrupt.h>
 #include <linux/spinlock.h>
+#include <linux/mutex.h>
 #include <linux/platform_device.h>
+#include <linux/slab.h>
 
 #include <asm/io.h>
 #include <asm/irq.h>
@@ -71,7 +73,7 @@ extern struct au1000_pcmcia_socket au1000_pcmcia_socket[];
 u32 *pcmcia_base_vaddrs[2];
 extern const unsigned long mips_io_port_base;
 
-DECLARE_MUTEX(pcmcia_sockets_lock);
+static DEFINE_MUTEX(pcmcia_sockets_lock);
 
 static int (*au1x00_pcmcia_hw_init[])(struct device *dev) = {
 	au1x_board_init,
@@ -291,7 +293,7 @@ au1x00_pcmcia_set_io_map(struct pcmcia_socket *sock, struct pccard_io_map *map)
 		skt->spd_io[map->map] = speed;
 	}
 
-	map->start=(ioaddr_t)(u32)skt->virt_io;
+	map->start=(unsigned int)(u32)skt->virt_io;
 	map->stop=map->start+MAP_SIZE;
 	return 0;
 
@@ -404,18 +406,16 @@ int au1x00_pcmcia_socket_probe(struct device *dev, struct pcmcia_low_level *ops,
 			skt->virt_io = (void *)
 				(ioremap((phys_t)AU1X_SOCK0_IO, 0x1000) -
 				(u32)mips_io_port_base);
-			skt->phys_attr = AU1X_SOCK0_PSEUDO_PHYS_ATTR;
-			skt->phys_mem = AU1X_SOCK0_PSEUDO_PHYS_MEM;
+			skt->phys_attr = AU1X_SOCK0_PHYS_ATTR;
+			skt->phys_mem = AU1X_SOCK0_PHYS_MEM;
 		}
-#ifndef CONFIG_MIPS_XXS1500
 		else  {
 			skt->virt_io = (void *)
 				(ioremap((phys_t)AU1X_SOCK1_IO, 0x1000) -
 				(u32)mips_io_port_base);
-			skt->phys_attr = AU1X_SOCK1_PSEUDO_PHYS_ATTR;
-			skt->phys_mem = AU1X_SOCK1_PSEUDO_PHYS_MEM;
+			skt->phys_attr = AU1X_SOCK1_PHYS_ATTR;
+			skt->phys_mem = AU1X_SOCK1_PHYS_MEM;
 		}
-#endif
 		pcmcia_base_vaddrs[i] = (u32 *)skt->virt_io;
 		ret = ops->hw_init(skt);
 
@@ -441,14 +441,12 @@ int au1x00_pcmcia_socket_probe(struct device *dev, struct pcmcia_low_level *ops,
 
 
 out_err:
-	flush_scheduled_work();
 	ops->hw_shutdown(skt);
 	while (i-- > 0) {
 		skt = PCMCIA_SOCKET(i);
 
 		del_timer_sync(&skt->poll_timer);
 		pcmcia_unregister_socket(&skt->socket);
-		flush_scheduled_work();
 		if (i == 0) {
 			iounmap(skt->virt_io + (u32)mips_io_port_base);
 			skt->virt_io = NULL;
@@ -467,20 +465,19 @@ out:
 	return ret;
 }
 
-int au1x00_drv_pcmcia_remove(struct device *dev)
+int au1x00_drv_pcmcia_remove(struct platform_device *dev)
 {
-	struct skt_dev_info *sinfo = dev_get_drvdata(dev);
+	struct skt_dev_info *sinfo = platform_get_drvdata(dev);
 	int i;
 
-	down(&pcmcia_sockets_lock);
-	dev_set_drvdata(dev, NULL);
+	mutex_lock(&pcmcia_sockets_lock);
+	platform_set_drvdata(dev, NULL);
 
 	for (i = 0; i < sinfo->nskt; i++) {
 		struct au1000_pcmcia_socket *skt = PCMCIA_SOCKET(i);
 
 		del_timer_sync(&skt->poll_timer);
 		pcmcia_unregister_socket(&skt->socket);
-		flush_scheduled_work();
 		skt->ops->hw_shutdown(skt);
 		au1x00_pcmcia_config_skt(skt, &dead_socket);
 		iounmap(skt->virt_io + (u32)mips_io_port_base);
@@ -488,7 +485,7 @@ int au1x00_drv_pcmcia_remove(struct device *dev)
 	}
 
 	kfree(sinfo);
-	up(&pcmcia_sockets_lock);
+	mutex_unlock(&pcmcia_sockets_lock);
 	return 0;
 }
 
@@ -497,28 +494,27 @@ int au1x00_drv_pcmcia_remove(struct device *dev)
  * PCMCIA "Driver" API
  */
 
-static int au1x00_drv_pcmcia_probe(struct device *dev)
+static int au1x00_drv_pcmcia_probe(struct platform_device *dev)
 {
 	int i, ret = -ENODEV;
 
-	down(&pcmcia_sockets_lock);
+	mutex_lock(&pcmcia_sockets_lock);
 	for (i=0; i < ARRAY_SIZE(au1x00_pcmcia_hw_init); i++) {
-		ret = au1x00_pcmcia_hw_init[i](dev);
+		ret = au1x00_pcmcia_hw_init[i](&dev->dev);
 		if (ret == 0)
 			break;
 	}
-	up(&pcmcia_sockets_lock);
+	mutex_unlock(&pcmcia_sockets_lock);
 	return ret;
 }
 
-
-static struct device_driver au1x00_pcmcia_driver = {
+static struct platform_driver au1x00_pcmcia_driver = {
+	.driver = {
+		.name		= "au1x00-pcmcia",
+		.owner		= THIS_MODULE,
+	},
 	.probe		= au1x00_drv_pcmcia_probe,
 	.remove		= au1x00_drv_pcmcia_remove,
-	.name		= "au1x00-pcmcia",
-	.bus		= &platform_bus_type,
-	.suspend	= pcmcia_socket_dev_suspend,
-	.resume		= pcmcia_socket_dev_resume,
 };
 
 
@@ -532,8 +528,7 @@ static struct device_driver au1x00_pcmcia_driver = {
 static int __init au1x00_pcmcia_init(void)
 {
 	int error = 0;
-	if ((error = driver_register(&au1x00_pcmcia_driver)))
-		return error;
+	error = platform_driver_register(&au1x00_pcmcia_driver);
 	return error;
 }
 
@@ -543,7 +538,7 @@ static int __init au1x00_pcmcia_init(void)
  */
 static void __exit au1x00_pcmcia_exit(void)
 {
-	driver_unregister(&au1x00_pcmcia_driver);
+	platform_driver_unregister(&au1x00_pcmcia_driver);
 }
 
 module_init(au1x00_pcmcia_init);

@@ -20,6 +20,7 @@
 #include <linux/bootmem.h>
 #include <linux/mount.h>
 #include <linux/blkdev.h>
+#include <linux/module.h>
 
 #include <asm/setup.h>
 #include <asm/machdep.h>
@@ -28,7 +29,6 @@
 #include <asm/atarihw.h>
 #include <asm/atari_stram.h>
 #include <asm/io.h>
-#include <asm/semaphore.h>
 
 #undef DEBUG
 
@@ -42,6 +42,7 @@
 /* abbrev for the && above... */
 #define DO_PROC
 #include <linux/proc_fs.h>
+#include <linux/seq_file.h>
 #endif
 
 /*
@@ -153,7 +154,7 @@ void __init atari_stram_reserve_pages(void *start_mem)
 	/* always reserve first page of ST-RAM, the first 2 kB are
 	 * supervisor-only! */
 	if (!kernel_in_stram)
-		reserve_bootmem (0, PAGE_SIZE);
+		reserve_bootmem(0, PAGE_SIZE, BOOTMEM_DEFAULT);
 
 }
 
@@ -208,6 +209,7 @@ void *atari_stram_alloc(long size, const char *owner)
 	}
 	return( addr );
 }
+EXPORT_SYMBOL(atari_stram_alloc);
 
 void atari_stram_free( void *addr )
 
@@ -237,6 +239,7 @@ void atari_stram_free( void *addr )
 	printk( KERN_ERR "atari_stram_free: cannot free block at %p "
 			"(called from %p)\n", addr, __builtin_return_address(0) );
 }
+EXPORT_SYMBOL(atari_stram_free);
 
 
 /* ------------------------------------------------------------------------ */
@@ -321,19 +324,16 @@ static int remove_region( BLOCK *block )
 
 #ifdef DO_PROC
 
-#define	PRINT_PROC(fmt,args...) len += sprintf( buf+len, fmt, ##args )
+#define	PRINT_PROC(fmt,args...) seq_printf( m, fmt, ##args )
 
-int get_stram_list( char *buf )
+static int stram_proc_show(struct seq_file *m, void *v)
 {
-	int len = 0;
 	BLOCK *p;
 
 	PRINT_PROC("Total ST-RAM:      %8u kB\n",
 			   (stram_end - stram_start) >> 10);
 	PRINT_PROC( "Allocated regions:\n" );
 	for( p = alloc_list; p; p = p->next ) {
-		if (len + 50 >= PAGE_SIZE)
-			break;
 		PRINT_PROC("0x%08lx-0x%08lx: %s (",
 			   virt_to_phys(p->start),
 			   virt_to_phys(p->start+p->size-1),
@@ -344,9 +344,27 @@ int get_stram_list( char *buf )
 			PRINT_PROC( "??)\n" );
 	}
 
-	return( len );
+	return 0;
 }
 
+static int stram_proc_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, stram_proc_show, NULL);
+}
+
+static const struct file_operations stram_proc_fops = {
+	.open		= stram_proc_open,
+	.read		= seq_read,
+	.llseek		= seq_lseek,
+	.release	= single_release,
+};
+
+static int __init proc_stram_init(void)
+{
+	proc_create("stram", 0, NULL, &stram_proc_fops);
+	return 0;
+}
+module_init(proc_stram_init);
 #endif
 
 

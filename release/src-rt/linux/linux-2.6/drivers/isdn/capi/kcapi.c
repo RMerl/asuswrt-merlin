@@ -10,7 +10,7 @@
  *
  */
 
-#define CONFIG_AVMB1_COMPAT
+#define AVMB1_COMPAT
 
 #include "kcapi.h"
 #include <linux/module.h>
@@ -18,6 +18,7 @@
 #include <linux/interrupt.h>
 #include <linux/ioport.h>
 #include <linux/proc_fs.h>
+#include <linux/sched.h>
 #include <linux/seq_file.h>
 #include <linux/skbuff.h>
 #include <linux/workqueue.h>
@@ -26,19 +27,18 @@
 #include <linux/init.h>
 #include <linux/moduleparam.h>
 #include <linux/delay.h>
+#include <linux/slab.h>
 #include <asm/uaccess.h>
 #include <linux/isdn/capicmd.h>
 #include <linux/isdn/capiutil.h>
-#ifdef CONFIG_AVMB1_COMPAT
+#ifdef AVMB1_COMPAT
 #include <linux/b1lli.h>
 #endif
 #include <linux/mutex.h>
-
-static char *revision = "$Revision: 1.1.2.8 $";
-
-/* ------------------------------------------------------------- */
+#include <linux/rcupdate.h>
 
 static int showcapimsgs = 0;
+static struct workqueue_struct *kcapi_wq;
 
 MODULE_DESCRIPTION("CAPI4Linux: kernel CAPI layer");
 MODULE_AUTHOR("Carsten Paeth");
@@ -47,12 +47,10 @@ module_param(showcapimsgs, uint, 0);
 
 /* ------------------------------------------------------------- */
 
-struct capi_notifier {
+struct capictr_event {
 	struct work_struct work;
-	unsigned int cmd;
+	unsigned int type;
 	u32 controller;
-	u16 applid;
-	u32 ncci;
 };
 
 /* ------------------------------------------------------------- */
@@ -64,30 +62,31 @@ static char capi_manufakturer[64] = "AVM Berlin";
 #define NCCI2CTRL(ncci)    (((ncci) >> 24) & 0x7f)
 
 LIST_HEAD(capi_drivers);
-DEFINE_RWLOCK(capi_drivers_list_lock);
+DEFINE_MUTEX(capi_drivers_lock);
 
-static DEFINE_RWLOCK(application_lock);
-static DEFINE_MUTEX(controller_mutex);
+struct capi_ctr *capi_controller[CAPI_MAXCONTR];
+DEFINE_MUTEX(capi_controller_lock);
 
 struct capi20_appl *capi_applications[CAPI_MAXAPPL];
-struct capi_ctr *capi_cards[CAPI_MAXCONTR];
 
-static int ncards;
+static int ncontrollers;
+
+static BLOCKING_NOTIFIER_HEAD(ctr_notifier_list);
 
 /* -------- controller ref counting -------------------------------------- */
 
 static inline struct capi_ctr *
-capi_ctr_get(struct capi_ctr *card)
+capi_ctr_get(struct capi_ctr *ctr)
 {
-	if (!try_module_get(card->owner))
+	if (!try_module_get(ctr->owner))
 		return NULL;
-	return card;
+	return ctr;
 }
 
 static inline void
-capi_ctr_put(struct capi_ctr *card)
+capi_ctr_put(struct capi_ctr *ctr)
 {
-	module_put(card->owner);
+	module_put(ctr->owner);
 }
 
 /* ------------------------------------------------------------- */
@@ -97,7 +96,17 @@ static inline struct capi_ctr *get_capi_ctr_by_nr(u16 contr)
 	if (contr - 1 >= CAPI_MAXCONTR)
 		return NULL;
 
-	return capi_cards[contr - 1];
+	return capi_controller[contr - 1];
+}
+
+static inline struct capi20_appl *__get_capi_appl_by_nr(u16 applid)
+{
+	lockdep_assert_held(&capi_controller_lock);
+
+	if (applid - 1 >= CAPI_MAXAPPL)
+		return NULL;
+
+	return capi_applications[applid - 1];
 }
 
 static inline struct capi20_appl *get_capi_appl_by_nr(u16 applid)
@@ -105,7 +114,7 @@ static inline struct capi20_appl *get_capi_appl_by_nr(u16 applid)
 	if (applid - 1 >= CAPI_MAXAPPL)
 		return NULL;
 
-	return capi_applications[applid - 1];
+	return rcu_dereference(capi_applications[applid - 1]);
 }
 
 /* -------- util functions ------------------------------------ */
@@ -147,106 +156,158 @@ static inline int capi_subcmd_valid(u8 subcmd)
 
 /* ------------------------------------------------------------ */
 
-static void register_appl(struct capi_ctr *card, u16 applid, capi_register_params *rparam)
+static void
+register_appl(struct capi_ctr *ctr, u16 applid, capi_register_params *rparam)
 {
-	card = capi_ctr_get(card);
+	ctr = capi_ctr_get(ctr);
 
-	if (card)
-		card->register_appl(card, applid, rparam);
+	if (ctr)
+		ctr->register_appl(ctr, applid, rparam);
 	else
-		printk(KERN_WARNING "%s: cannot get card resources\n", __FUNCTION__);
+		printk(KERN_WARNING "%s: cannot get controller resources\n",
+		       __func__);
 }
 
 
-static void release_appl(struct capi_ctr *card, u16 applid)
+static void release_appl(struct capi_ctr *ctr, u16 applid)
 {
 	DBG("applid %#x", applid);
 	
-	card->release_appl(card, applid);
-	capi_ctr_put(card);
+	ctr->release_appl(ctr, applid);
+	capi_ctr_put(ctr);
 }
-
-/* -------- KCI_CONTRUP --------------------------------------- */
 
 static void notify_up(u32 contr)
 {
-	struct capi_ctr *card = get_capi_ctr_by_nr(contr);
+	struct capi20_appl *ap;
+	struct capi_ctr *ctr;
+	u16 applid;
+
+	mutex_lock(&capi_controller_lock);
+
+	if (showcapimsgs & 1)
+	        printk(KERN_DEBUG "kcapi: notify up contr %d\n", contr);
+
+	ctr = get_capi_ctr_by_nr(contr);
+	if (ctr) {
+		if (ctr->state == CAPI_CTR_RUNNING)
+			goto unlock_out;
+
+		ctr->state = CAPI_CTR_RUNNING;
+
+		for (applid = 1; applid <= CAPI_MAXAPPL; applid++) {
+			ap = __get_capi_appl_by_nr(applid);
+			if (ap)
+				register_appl(ctr, applid, &ap->rparam);
+		}
+
+		wake_up_interruptible_all(&ctr->state_wait_queue);
+	} else
+		printk(KERN_WARNING "%s: invalid contr %d\n", __func__, contr);
+
+unlock_out:
+	mutex_unlock(&capi_controller_lock);
+}
+
+static void ctr_down(struct capi_ctr *ctr, int new_state)
+{
 	struct capi20_appl *ap;
 	u16 applid;
 
-	if (showcapimsgs & 1) {
-	        printk(KERN_DEBUG "kcapi: notify up contr %d\n", contr);
-	}
-	if (!card) {
-		printk(KERN_WARNING "%s: invalid contr %d\n", __FUNCTION__, contr);
+	if (ctr->state == CAPI_CTR_DETECTED || ctr->state == CAPI_CTR_DETACHED)
 		return;
-	}
-	for (applid = 1; applid <= CAPI_MAXAPPL; applid++) {
-		ap = get_capi_appl_by_nr(applid);
-		if (!ap || ap->release_in_progress) continue;
-		register_appl(card, applid, &ap->rparam);
-		if (ap->callback && !ap->release_in_progress)
-			ap->callback(KCI_CONTRUP, contr, &card->profile);
-	}
-}
 
-/* -------- KCI_CONTRDOWN ------------------------------------- */
+	ctr->state = new_state;
+
+	memset(ctr->manu, 0, sizeof(ctr->manu));
+	memset(&ctr->version, 0, sizeof(ctr->version));
+	memset(&ctr->profile, 0, sizeof(ctr->profile));
+	memset(ctr->serial, 0, sizeof(ctr->serial));
+
+	for (applid = 1; applid <= CAPI_MAXAPPL; applid++) {
+		ap = __get_capi_appl_by_nr(applid);
+		if (ap)
+			capi_ctr_put(ctr);
+	}
+
+	wake_up_interruptible_all(&ctr->state_wait_queue);
+}
 
 static void notify_down(u32 contr)
 {
-	struct capi20_appl *ap;
-	u16 applid;
+	struct capi_ctr *ctr;
 
-	if (showcapimsgs & 1) {
-        	printk(KERN_DEBUG "kcapi: notify down contr %d\n", contr);
-	}
+	mutex_lock(&capi_controller_lock);
 
-	for (applid = 1; applid <= CAPI_MAXAPPL; applid++) {
-		ap = get_capi_appl_by_nr(applid);
-		if (ap && ap->callback && !ap->release_in_progress)
-			ap->callback(KCI_CONTRDOWN, contr, NULL);
-	}
+	if (showcapimsgs & 1)
+		printk(KERN_DEBUG "kcapi: notify down contr %d\n", contr);
+
+	ctr = get_capi_ctr_by_nr(contr);
+	if (ctr)
+		ctr_down(ctr, CAPI_CTR_DETECTED);
+	else
+		printk(KERN_WARNING "%s: invalid contr %d\n", __func__, contr);
+
+	mutex_unlock(&capi_controller_lock);
 }
 
-static void notify_handler(struct work_struct *work)
+static int
+notify_handler(struct notifier_block *nb, unsigned long val, void *v)
 {
-	struct capi_notifier *np =
-		container_of(work, struct capi_notifier, work);
+	u32 contr = (long)v;
 
-	switch (np->cmd) {
-	case KCI_CONTRUP:
-		notify_up(np->controller);
+	switch (val) {
+	case CAPICTR_UP:
+		notify_up(contr);
 		break;
-	case KCI_CONTRDOWN:
-		notify_down(np->controller);
+	case CAPICTR_DOWN:
+		notify_down(contr);
 		break;
 	}
+	return NOTIFY_OK;
+}
 
-	kfree(np);
+static void do_notify_work(struct work_struct *work)
+{
+	struct capictr_event *event =
+		container_of(work, struct capictr_event, work);
+
+	blocking_notifier_call_chain(&ctr_notifier_list, event->type,
+				     (void *)(long)event->controller);
+	kfree(event);
 }
 
 /*
  * The notifier will result in adding/deleteing of devices. Devices can
  * only removed in user process, not in bh.
  */
-static int notify_push(unsigned int cmd, u32 controller, u16 applid, u32 ncci)
+static int notify_push(unsigned int event_type, u32 controller)
 {
-	struct capi_notifier *np = kmalloc(sizeof(*np), GFP_ATOMIC);
+	struct capictr_event *event = kmalloc(sizeof(*event), GFP_ATOMIC);
 
-	if (!np)
+	if (!event)
 		return -ENOMEM;
 
-	INIT_WORK(&np->work, notify_handler);
-	np->cmd = cmd;
-	np->controller = controller;
-	np->applid = applid;
-	np->ncci = ncci;
+	INIT_WORK(&event->work, do_notify_work);
+	event->type = event_type;
+	event->controller = controller;
 
-	schedule_work(&np->work);
+	queue_work(kcapi_wq, &event->work);
 	return 0;
 }
 
-	
+int register_capictr_notifier(struct notifier_block *nb)
+{
+	return blocking_notifier_chain_register(&ctr_notifier_list, nb);
+}
+EXPORT_SYMBOL_GPL(register_capictr_notifier);
+
+int unregister_capictr_notifier(struct notifier_block *nb)
+{
+	return blocking_notifier_chain_unregister(&ctr_notifier_list, nb);
+}
+EXPORT_SYMBOL_GPL(unregister_capictr_notifier);
+
 /* -------- Receiver ------------------------------------------ */
 
 static void recv_handler(struct work_struct *work)
@@ -258,7 +319,7 @@ static void recv_handler(struct work_struct *work)
 	if ((!ap) || (ap->release_in_progress))
 		return;
 
-	down(&ap->recv_sem);
+	mutex_lock(&ap->recv_mtx);
 	while ((skb = skb_dequeue(&ap->recv_queue))) {
 		if (CAPIMSG_CMD(skb->data) == CAPI_DATA_B3_IND)
 			ap->nrecvdatapkt++;
@@ -267,64 +328,75 @@ static void recv_handler(struct work_struct *work)
 
 		ap->recv_message(ap, skb);
 	}
-	up(&ap->recv_sem);
+	mutex_unlock(&ap->recv_mtx);
 }
 
-void capi_ctr_handle_message(struct capi_ctr * card, u16 appl, struct sk_buff *skb)
+/**
+ * capi_ctr_handle_message() - handle incoming CAPI message
+ * @ctr:	controller descriptor structure.
+ * @appl:	application ID.
+ * @skb:	message.
+ *
+ * Called by hardware driver to pass a CAPI message to the application.
+ */
+
+void capi_ctr_handle_message(struct capi_ctr *ctr, u16 appl,
+			     struct sk_buff *skb)
 {
 	struct capi20_appl *ap;
 	int showctl = 0;
 	u8 cmd, subcmd;
-	unsigned long flags;
 	_cdebbuf *cdb;
 
-	if (card->cardstate != CARD_RUNNING) {
+	if (ctr->state != CAPI_CTR_RUNNING) {
 		cdb = capi_message2str(skb->data);
 		if (cdb) {
 			printk(KERN_INFO "kcapi: controller [%03d] not active, got: %s",
-				card->cnr, cdb->buf);
+				ctr->cnr, cdb->buf);
 			cdebbuf_free(cdb);
 		} else
 			printk(KERN_INFO "kcapi: controller [%03d] not active, cannot trace\n",
-				card->cnr);
+				ctr->cnr);
 		goto error;
 	}
 
 	cmd = CAPIMSG_COMMAND(skb->data);
         subcmd = CAPIMSG_SUBCOMMAND(skb->data);
 	if (cmd == CAPI_DATA_B3 && subcmd == CAPI_IND) {
-		card->nrecvdatapkt++;
-	        if (card->traceflag > 2) showctl |= 2;
+		ctr->nrecvdatapkt++;
+		if (ctr->traceflag > 2)
+			showctl |= 2;
 	} else {
-		card->nrecvctlpkt++;
-	        if (card->traceflag) showctl |= 2;
+		ctr->nrecvctlpkt++;
+		if (ctr->traceflag)
+			showctl |= 2;
 	}
-	showctl |= (card->traceflag & 1);
+	showctl |= (ctr->traceflag & 1);
 	if (showctl & 2) {
 		if (showctl & 1) {
 			printk(KERN_DEBUG "kcapi: got [%03d] id#%d %s len=%u\n",
-			       card->cnr, CAPIMSG_APPID(skb->data),
+			       ctr->cnr, CAPIMSG_APPID(skb->data),
 			       capi_cmd2str(cmd, subcmd),
 			       CAPIMSG_LEN(skb->data));
 		} else {
 			cdb = capi_message2str(skb->data);
 			if (cdb) {
 				printk(KERN_DEBUG "kcapi: got [%03d] %s\n",
-					card->cnr, cdb->buf);
+					ctr->cnr, cdb->buf);
 				cdebbuf_free(cdb);
 			} else
 				printk(KERN_DEBUG "kcapi: got [%03d] id#%d %s len=%u, cannot trace\n",
-					card->cnr, CAPIMSG_APPID(skb->data),
+					ctr->cnr, CAPIMSG_APPID(skb->data),
 					capi_cmd2str(cmd, subcmd),
 					CAPIMSG_LEN(skb->data));
 		}
 
 	}
 
-	read_lock_irqsave(&application_lock, flags);
+	rcu_read_lock();
 	ap = get_capi_appl_by_nr(CAPIMSG_APPID(skb->data));
-	if ((!ap) || (ap->release_in_progress)) {
-		read_unlock_irqrestore(&application_lock, flags);
+	if (!ap) {
+		rcu_read_unlock();
 		cdb = capi_message2str(skb->data);
 		if (cdb) {
 			printk(KERN_ERR "kcapi: handle_message: applid %d state released (%s)\n",
@@ -337,8 +409,8 @@ void capi_ctr_handle_message(struct capi_ctr * card, u16 appl, struct sk_buff *s
 		goto error;
 	}
 	skb_queue_tail(&ap->recv_queue, skb);
-	schedule_work(&ap->recv_work);
-	read_unlock_irqrestore(&application_lock, flags);
+	queue_work(kcapi_wq, &ap->recv_work);
+	rcu_read_unlock();
 
 	return;
 
@@ -348,64 +420,77 @@ error:
 
 EXPORT_SYMBOL(capi_ctr_handle_message);
 
-void capi_ctr_ready(struct capi_ctr * card)
+/**
+ * capi_ctr_ready() - signal CAPI controller ready
+ * @ctr:	controller descriptor structure.
+ *
+ * Called by hardware driver to signal that the controller is up and running.
+ */
+
+void capi_ctr_ready(struct capi_ctr *ctr)
 {
-	card->cardstate = CARD_RUNNING;
+	printk(KERN_NOTICE "kcapi: controller [%03d] \"%s\" ready.\n",
+	       ctr->cnr, ctr->name);
 
-        printk(KERN_NOTICE "kcapi: card [%03d] \"%s\" ready.\n",
-	       card->cnr, card->name);
-
-	notify_push(KCI_CONTRUP, card->cnr, 0, 0);
+	notify_push(CAPICTR_UP, ctr->cnr);
 }
 
 EXPORT_SYMBOL(capi_ctr_ready);
 
-void capi_ctr_reseted(struct capi_ctr * card)
+/**
+ * capi_ctr_down() - signal CAPI controller not ready
+ * @ctr:	controller descriptor structure.
+ *
+ * Called by hardware driver to signal that the controller is down and
+ * unavailable for use.
+ */
+
+void capi_ctr_down(struct capi_ctr *ctr)
 {
-	u16 appl;
+	printk(KERN_NOTICE "kcapi: controller [%03d] down.\n", ctr->cnr);
 
-	DBG("");
-
-        if (card->cardstate == CARD_DETECTED)
-		return;
-
-        card->cardstate = CARD_DETECTED;
-
-	memset(card->manu, 0, sizeof(card->manu));
-	memset(&card->version, 0, sizeof(card->version));
-	memset(&card->profile, 0, sizeof(card->profile));
-	memset(card->serial, 0, sizeof(card->serial));
-
-	for (appl = 1; appl <= CAPI_MAXAPPL; appl++) {
-		struct capi20_appl *ap = get_capi_appl_by_nr(appl);
-		if (!ap || ap->release_in_progress)
-			continue;
-
-		capi_ctr_put(card);
-	}
-
-	printk(KERN_NOTICE "kcapi: card [%03d] down.\n", card->cnr);
-
-	notify_push(KCI_CONTRDOWN, card->cnr, 0, 0);
+	notify_push(CAPICTR_DOWN, ctr->cnr);
 }
 
-EXPORT_SYMBOL(capi_ctr_reseted);
+EXPORT_SYMBOL(capi_ctr_down);
 
-void capi_ctr_suspend_output(struct capi_ctr *card)
+/**
+ * capi_ctr_suspend_output() - suspend controller
+ * @ctr:	controller descriptor structure.
+ *
+ * Called by hardware driver to stop data flow.
+ *
+ * Note: The caller is responsible for synchronizing concurrent state changes
+ * as well as invocations of capi_ctr_handle_message.
+ */
+
+void capi_ctr_suspend_output(struct capi_ctr *ctr)
 {
-	if (!card->blocked) {
-		printk(KERN_DEBUG "kcapi: card [%03d] suspend\n", card->cnr);
-		card->blocked = 1;
+	if (!ctr->blocked) {
+		printk(KERN_DEBUG "kcapi: controller [%03d] suspend\n",
+		       ctr->cnr);
+		ctr->blocked = 1;
 	}
 }
 
 EXPORT_SYMBOL(capi_ctr_suspend_output);
 
-void capi_ctr_resume_output(struct capi_ctr *card)
+/**
+ * capi_ctr_resume_output() - resume controller
+ * @ctr:	controller descriptor structure.
+ *
+ * Called by hardware driver to resume data flow.
+ *
+ * Note: The caller is responsible for synchronizing concurrent state changes
+ * as well as invocations of capi_ctr_handle_message.
+ */
+
+void capi_ctr_resume_output(struct capi_ctr *ctr)
 {
-	if (card->blocked) {
-		printk(KERN_DEBUG "kcapi: card [%03d] resume\n", card->cnr);
-		card->blocked = 0;
+	if (ctr->blocked) {
+		printk(KERN_DEBUG "kcapi: controller [%03d] resumed\n",
+		       ctr->cnr);
+		ctr->blocked = 0;
 	}
 }
 
@@ -413,90 +498,121 @@ EXPORT_SYMBOL(capi_ctr_resume_output);
 
 /* ------------------------------------------------------------- */
 
-int
-attach_capi_ctr(struct capi_ctr *card)
+/**
+ * attach_capi_ctr() - register CAPI controller
+ * @ctr:	controller descriptor structure.
+ *
+ * Called by hardware driver to register a controller with the CAPI subsystem.
+ * Return value: 0 on success, error code < 0 on error
+ */
+
+int attach_capi_ctr(struct capi_ctr *ctr)
 {
 	int i;
 
-	mutex_lock(&controller_mutex);
+	mutex_lock(&capi_controller_lock);
 
 	for (i = 0; i < CAPI_MAXCONTR; i++) {
-		if (capi_cards[i] == NULL)
+		if (!capi_controller[i])
 			break;
 	}
 	if (i == CAPI_MAXCONTR) {
-		mutex_unlock(&controller_mutex);
+		mutex_unlock(&capi_controller_lock);
 		printk(KERN_ERR "kcapi: out of controller slots\n");
 	   	return -EBUSY;
 	}
-	capi_cards[i] = card;
+	capi_controller[i] = ctr;
 
-	mutex_unlock(&controller_mutex);
+	ctr->nrecvctlpkt = 0;
+	ctr->nrecvdatapkt = 0;
+	ctr->nsentctlpkt = 0;
+	ctr->nsentdatapkt = 0;
+	ctr->cnr = i + 1;
+	ctr->state = CAPI_CTR_DETECTED;
+	ctr->blocked = 0;
+	ctr->traceflag = showcapimsgs;
+	init_waitqueue_head(&ctr->state_wait_queue);
 
-	card->nrecvctlpkt = 0;
-	card->nrecvdatapkt = 0;
-	card->nsentctlpkt = 0;
-	card->nsentdatapkt = 0;
-	card->cnr = i + 1;
-	card->cardstate = CARD_DETECTED;
-	card->blocked = 0;
-	card->traceflag = showcapimsgs;
+	sprintf(ctr->procfn, "capi/controllers/%d", ctr->cnr);
+	ctr->procent = proc_create_data(ctr->procfn, 0, NULL, ctr->proc_fops, ctr);
 
-	sprintf(card->procfn, "capi/controllers/%d", card->cnr);
-	card->procent = create_proc_entry(card->procfn, 0, NULL);
-	if (card->procent) {
-	   card->procent->read_proc = 
-		(int (*)(char *,char **,off_t,int,int *,void *))
-			card->ctr_read_proc;
-	   card->procent->data = card;
-	}
+	ncontrollers++;
 
-	ncards++;
-	printk(KERN_NOTICE "kcapi: Controller [%03d]: %s attached\n",
-			card->cnr, card->name);
+	mutex_unlock(&capi_controller_lock);
+
+	printk(KERN_NOTICE "kcapi: controller [%03d]: %s attached\n",
+			ctr->cnr, ctr->name);
 	return 0;
 }
 
 EXPORT_SYMBOL(attach_capi_ctr);
 
-int detach_capi_ctr(struct capi_ctr *card)
+/**
+ * detach_capi_ctr() - unregister CAPI controller
+ * @ctr:	controller descriptor structure.
+ *
+ * Called by hardware driver to remove the registration of a controller
+ * with the CAPI subsystem.
+ * Return value: 0 on success, error code < 0 on error
+ */
+
+int detach_capi_ctr(struct capi_ctr *ctr)
 {
-        if (card->cardstate != CARD_DETECTED)
-		capi_ctr_reseted(card);
+	int err = 0;
 
-	ncards--;
+	mutex_lock(&capi_controller_lock);
 
-	if (card->procent) {
-	   remove_proc_entry(card->procfn, NULL);
-	   card->procent = NULL;
+	ctr_down(ctr, CAPI_CTR_DETACHED);
+
+	if (capi_controller[ctr->cnr - 1] != ctr) {
+		err = -EINVAL;
+		goto unlock_out;
 	}
-	capi_cards[card->cnr - 1] = NULL;
-	printk(KERN_NOTICE "kcapi: Controller [%03d]: %s unregistered\n",
-			card->cnr, card->name);
+	capi_controller[ctr->cnr - 1] = NULL;
+	ncontrollers--;
 
-	return 0;
+	if (ctr->procent)
+		remove_proc_entry(ctr->procfn, NULL);
+
+	printk(KERN_NOTICE "kcapi: controller [%03d]: %s unregistered\n",
+	       ctr->cnr, ctr->name);
+
+unlock_out:
+	mutex_unlock(&capi_controller_lock);
+
+	return err;
 }
 
 EXPORT_SYMBOL(detach_capi_ctr);
 
+/**
+ * register_capi_driver() - register CAPI driver
+ * @driver:	driver descriptor structure.
+ *
+ * Called by hardware driver to register itself with the CAPI subsystem.
+ */
+
 void register_capi_driver(struct capi_driver *driver)
 {
-	unsigned long flags;
-
-	write_lock_irqsave(&capi_drivers_list_lock, flags);
+	mutex_lock(&capi_drivers_lock);
 	list_add_tail(&driver->list, &capi_drivers);
-	write_unlock_irqrestore(&capi_drivers_list_lock, flags);
+	mutex_unlock(&capi_drivers_lock);
 }
 
 EXPORT_SYMBOL(register_capi_driver);
 
+/**
+ * unregister_capi_driver() - unregister CAPI driver
+ * @driver:	driver descriptor structure.
+ *
+ * Called by hardware driver to unregister itself from the CAPI subsystem.
+ */
+
 void unregister_capi_driver(struct capi_driver *driver)
 {
-	unsigned long flags;
-
-	write_lock_irqsave(&capi_drivers_list_lock, flags);
+	mutex_lock(&capi_drivers_lock);
 	list_del(&driver->list);
-	write_unlock_irqrestore(&capi_drivers_list_lock, flags);
+	mutex_unlock(&capi_drivers_lock);
 }
 
 EXPORT_SYMBOL(unregister_capi_driver);
@@ -505,62 +621,87 @@ EXPORT_SYMBOL(unregister_capi_driver);
 /* -------- CAPI2.0 Interface ---------------------------------- */
 /* ------------------------------------------------------------- */
 
+/**
+ * capi20_isinstalled() - CAPI 2.0 operation CAPI_INSTALLED
+ *
+ * Return value: CAPI result code (CAPI_NOERROR if at least one ISDN controller
+ *	is ready for use, CAPI_REGNOTINSTALLED otherwise)
+ */
+
 u16 capi20_isinstalled(void)
 {
+	u16 ret = CAPI_REGNOTINSTALLED;
 	int i;
-	for (i = 0; i < CAPI_MAXCONTR; i++) {
-		if (capi_cards[i] && capi_cards[i]->cardstate == CARD_RUNNING)
-			return CAPI_NOERROR;
-	}
-	return CAPI_REGNOTINSTALLED;
+
+	mutex_lock(&capi_controller_lock);
+
+	for (i = 0; i < CAPI_MAXCONTR; i++)
+		if (capi_controller[i] &&
+		    capi_controller[i]->state == CAPI_CTR_RUNNING) {
+			ret = CAPI_NOERROR;
+			break;
+		}
+
+	mutex_unlock(&capi_controller_lock);
+
+	return ret;
 }
 
 EXPORT_SYMBOL(capi20_isinstalled);
+
+/**
+ * capi20_register() - CAPI 2.0 operation CAPI_REGISTER
+ * @ap:		CAPI application descriptor structure.
+ *
+ * Register an application's presence with CAPI.
+ * A unique application ID is assigned and stored in @ap->applid.
+ * After this function returns successfully, the message receive
+ * callback function @ap->recv_message() may be called at any time
+ * until capi20_release() has been called for the same @ap.
+ * Return value: CAPI result code
+ */
 
 u16 capi20_register(struct capi20_appl *ap)
 {
 	int i;
 	u16 applid;
-	unsigned long flags;
 
 	DBG("");
 
 	if (ap->rparam.datablklen < 128)
 		return CAPI_LOGBLKSIZETOSMALL;
 
-	write_lock_irqsave(&application_lock, flags);
+	ap->nrecvctlpkt = 0;
+	ap->nrecvdatapkt = 0;
+	ap->nsentctlpkt = 0;
+	ap->nsentdatapkt = 0;
+	mutex_init(&ap->recv_mtx);
+	skb_queue_head_init(&ap->recv_queue);
+	INIT_WORK(&ap->recv_work, recv_handler);
+	ap->release_in_progress = 0;
+
+	mutex_lock(&capi_controller_lock);
 
 	for (applid = 1; applid <= CAPI_MAXAPPL; applid++) {
 		if (capi_applications[applid - 1] == NULL)
 			break;
 	}
 	if (applid > CAPI_MAXAPPL) {
-		write_unlock_irqrestore(&application_lock, flags);
+		mutex_unlock(&capi_controller_lock);
 		return CAPI_TOOMANYAPPLS;
 	}
 
 	ap->applid = applid;
 	capi_applications[applid - 1] = ap;
 
-	ap->nrecvctlpkt = 0;
-	ap->nrecvdatapkt = 0;
-	ap->nsentctlpkt = 0;
-	ap->nsentdatapkt = 0;
-	ap->callback = NULL;
-	init_MUTEX(&ap->recv_sem);
-	skb_queue_head_init(&ap->recv_queue);
-	INIT_WORK(&ap->recv_work, recv_handler);
-	ap->release_in_progress = 0;
-
-	write_unlock_irqrestore(&application_lock, flags);
-	
-	mutex_lock(&controller_mutex);
 	for (i = 0; i < CAPI_MAXCONTR; i++) {
-		if (!capi_cards[i] || capi_cards[i]->cardstate != CARD_RUNNING)
+		if (!capi_controller[i] ||
+		    capi_controller[i]->state != CAPI_CTR_RUNNING)
 			continue;
-		register_appl(capi_cards[i], applid, &ap->rparam);
+		register_appl(capi_controller[i], applid, &ap->rparam);
 	}
-	mutex_unlock(&controller_mutex);
+
+	mutex_unlock(&capi_controller_lock);
 
 	if (showcapimsgs & 1) {
 		printk(KERN_DEBUG "kcapi: appl %d up\n", applid);
@@ -571,27 +712,39 @@ u16 capi20_register(struct capi20_appl *ap)
 
 EXPORT_SYMBOL(capi20_register);
 
+/**
+ * capi20_release() - CAPI 2.0 operation CAPI_RELEASE
+ * @ap:		CAPI application descriptor structure.
+ *
+ * Terminate an application's registration with CAPI.
+ * After this function returns successfully, the message receive
+ * callback function @ap->recv_message() will no longer be called.
+ * Return value: CAPI result code
+ */
+
 u16 capi20_release(struct capi20_appl *ap)
 {
 	int i;
-	unsigned long flags;
 
 	DBG("applid %#x", ap->applid);
 
-	write_lock_irqsave(&application_lock, flags);
+	mutex_lock(&capi_controller_lock);
+
 	ap->release_in_progress = 1;
 	capi_applications[ap->applid - 1] = NULL;
-	write_unlock_irqrestore(&application_lock, flags);
 
-	mutex_lock(&controller_mutex);
+	synchronize_rcu();
+
 	for (i = 0; i < CAPI_MAXCONTR; i++) {
-		if (!capi_cards[i] || capi_cards[i]->cardstate != CARD_RUNNING)
+		if (!capi_controller[i] ||
+		    capi_controller[i]->state != CAPI_CTR_RUNNING)
 			continue;
-		release_appl(capi_cards[i], ap->applid);
+		release_appl(capi_controller[i], ap->applid);
 	}
-	mutex_unlock(&controller_mutex);
 
-	flush_scheduled_work();
+	mutex_unlock(&capi_controller_lock);
+
+	flush_workqueue(kcapi_wq);
 	skb_queue_purge(&ap->recv_queue);
 
 	if (showcapimsgs & 1) {
@@ -603,15 +756,24 @@ u16 capi20_release(struct capi20_appl *ap)
 
 EXPORT_SYMBOL(capi20_release);
 
+/**
+ * capi20_put_message() - CAPI 2.0 operation CAPI_PUT_MESSAGE
+ * @ap:		CAPI application descriptor structure.
+ * @skb:	CAPI message.
+ *
+ * Transfer a single message to CAPI.
+ * Return value: CAPI result code
+ */
+
 u16 capi20_put_message(struct capi20_appl *ap, struct sk_buff *skb)
 {
-	struct capi_ctr *card;
+	struct capi_ctr *ctr;
 	int showctl = 0;
 	u8 cmd, subcmd;
 
 	DBG("applid %#x", ap->applid);
  
-	if (ncards == 0)
+	if (ncontrollers == 0)
 		return CAPI_REGNOTINSTALLED;
 	if ((ap->applid == 0) || ap->release_in_progress)
 		return CAPI_ILLAPPNR;
@@ -619,28 +781,33 @@ u16 capi20_put_message(struct capi20_appl *ap, struct sk_buff *skb)
 	    || !capi_cmd_valid(CAPIMSG_COMMAND(skb->data))
 	    || !capi_subcmd_valid(CAPIMSG_SUBCOMMAND(skb->data)))
 		return CAPI_ILLCMDORSUBCMDORMSGTOSMALL;
-	card = get_capi_ctr_by_nr(CAPIMSG_CONTROLLER(skb->data));
-	if (!card || card->cardstate != CARD_RUNNING) {
-		card = get_capi_ctr_by_nr(1); // XXX why?
-	        if (!card || card->cardstate != CARD_RUNNING) 
-			return CAPI_REGNOTINSTALLED;
-	}
-	if (card->blocked)
+
+	/*
+	 * The controller reference is protected by the existence of the
+	 * application passed to us. We assume that the caller properly
+	 * synchronizes this service with capi20_release.
+	 */
+	ctr = get_capi_ctr_by_nr(CAPIMSG_CONTROLLER(skb->data));
+	if (!ctr || ctr->state != CAPI_CTR_RUNNING)
+		return CAPI_REGNOTINSTALLED;
+	if (ctr->blocked)
 		return CAPI_SENDQUEUEFULL;
 
 	cmd = CAPIMSG_COMMAND(skb->data);
         subcmd = CAPIMSG_SUBCOMMAND(skb->data);
 
 	if (cmd == CAPI_DATA_B3 && subcmd== CAPI_REQ) {
-		card->nsentdatapkt++;
+		ctr->nsentdatapkt++;
 		ap->nsentdatapkt++;
-	        if (card->traceflag > 2) showctl |= 2;
+		if (ctr->traceflag > 2)
+			showctl |= 2;
 	} else {
-		card->nsentctlpkt++;
+		ctr->nsentctlpkt++;
 		ap->nsentctlpkt++;
-	        if (card->traceflag) showctl |= 2;
+		if (ctr->traceflag)
+			showctl |= 2;
 	}
-	showctl |= (card->traceflag & 1);
+	showctl |= (ctr->traceflag & 1);
 	if (showctl & 2) {
 		if (showctl & 1) {
 			printk(KERN_DEBUG "kcapi: put [%03d] id#%d %s len=%u\n",
@@ -663,95 +830,198 @@ u16 capi20_put_message(struct capi20_appl *ap, struct sk_buff *skb)
 					CAPIMSG_LEN(skb->data));
 		}
 	}
-	return card->send_message(card, skb);
+	return ctr->send_message(ctr, skb);
 }
 
 EXPORT_SYMBOL(capi20_put_message);
 
+/**
+ * capi20_get_manufacturer() - CAPI 2.0 operation CAPI_GET_MANUFACTURER
+ * @contr:	controller number.
+ * @buf:	result buffer (64 bytes).
+ *
+ * Retrieve information about the manufacturer of the specified ISDN controller
+ * or (for @contr == 0) the driver itself.
+ * Return value: CAPI result code
+ */
+
 u16 capi20_get_manufacturer(u32 contr, u8 *buf)
 {
-	struct capi_ctr *card;
+	struct capi_ctr *ctr;
+	u16 ret;
 
 	if (contr == 0) {
 		strlcpy(buf, capi_manufakturer, CAPI_MANUFACTURER_LEN);
 		return CAPI_NOERROR;
 	}
-	card = get_capi_ctr_by_nr(contr);
-	if (!card || card->cardstate != CARD_RUNNING) 
-		return CAPI_REGNOTINSTALLED;
-	strlcpy(buf, card->manu, CAPI_MANUFACTURER_LEN);
-	return CAPI_NOERROR;
+
+	mutex_lock(&capi_controller_lock);
+
+	ctr = get_capi_ctr_by_nr(contr);
+	if (ctr && ctr->state == CAPI_CTR_RUNNING) {
+		strlcpy(buf, ctr->manu, CAPI_MANUFACTURER_LEN);
+		ret = CAPI_NOERROR;
+	} else
+		ret = CAPI_REGNOTINSTALLED;
+
+	mutex_unlock(&capi_controller_lock);
+	return ret;
 }
 
 EXPORT_SYMBOL(capi20_get_manufacturer);
 
+/**
+ * capi20_get_version() - CAPI 2.0 operation CAPI_GET_VERSION
+ * @contr:	controller number.
+ * @verp:	result structure.
+ *
+ * Retrieve version information for the specified ISDN controller
+ * or (for @contr == 0) the driver itself.
+ * Return value: CAPI result code
+ */
+
 u16 capi20_get_version(u32 contr, struct capi_version *verp)
 {
-	struct capi_ctr *card;
+	struct capi_ctr *ctr;
+	u16 ret;
 
 	if (contr == 0) {
 		*verp = driver_version;
 		return CAPI_NOERROR;
 	}
-	card = get_capi_ctr_by_nr(contr);
-	if (!card || card->cardstate != CARD_RUNNING) 
-		return CAPI_REGNOTINSTALLED;
 
-	memcpy((void *) verp, &card->version, sizeof(capi_version));
-	return CAPI_NOERROR;
+	mutex_lock(&capi_controller_lock);
+
+	ctr = get_capi_ctr_by_nr(contr);
+	if (ctr && ctr->state == CAPI_CTR_RUNNING) {
+		memcpy(verp, &ctr->version, sizeof(capi_version));
+		ret = CAPI_NOERROR;
+	} else
+		ret = CAPI_REGNOTINSTALLED;
+
+	mutex_unlock(&capi_controller_lock);
+	return ret;
 }
 
 EXPORT_SYMBOL(capi20_get_version);
 
+/**
+ * capi20_get_serial() - CAPI 2.0 operation CAPI_GET_SERIAL_NUMBER
+ * @contr:	controller number.
+ * @serial:	result buffer (8 bytes).
+ *
+ * Retrieve the serial number of the specified ISDN controller
+ * or (for @contr == 0) the driver itself.
+ * Return value: CAPI result code
+ */
+
 u16 capi20_get_serial(u32 contr, u8 *serial)
 {
-	struct capi_ctr *card;
+	struct capi_ctr *ctr;
+	u16 ret;
 
 	if (contr == 0) {
 		strlcpy(serial, driver_serial, CAPI_SERIAL_LEN);
 		return CAPI_NOERROR;
 	}
-	card = get_capi_ctr_by_nr(contr);
-	if (!card || card->cardstate != CARD_RUNNING) 
-		return CAPI_REGNOTINSTALLED;
 
-	strlcpy((void *) serial, card->serial, CAPI_SERIAL_LEN);
-	return CAPI_NOERROR;
+	mutex_lock(&capi_controller_lock);
+
+	ctr = get_capi_ctr_by_nr(contr);
+	if (ctr && ctr->state == CAPI_CTR_RUNNING) {
+		strlcpy(serial, ctr->serial, CAPI_SERIAL_LEN);
+		ret = CAPI_NOERROR;
+	} else
+		ret = CAPI_REGNOTINSTALLED;
+
+	mutex_unlock(&capi_controller_lock);
+	return ret;
 }
 
 EXPORT_SYMBOL(capi20_get_serial);
 
+/**
+ * capi20_get_profile() - CAPI 2.0 operation CAPI_GET_PROFILE
+ * @contr:	controller number.
+ * @profp:	result structure.
+ *
+ * Retrieve capability information for the specified ISDN controller
+ * or (for @contr == 0) the number of installed controllers.
+ * Return value: CAPI result code
+ */
+
 u16 capi20_get_profile(u32 contr, struct capi_profile *profp)
 {
-	struct capi_ctr *card;
+	struct capi_ctr *ctr;
+	u16 ret;
 
 	if (contr == 0) {
-		profp->ncontroller = ncards;
+		profp->ncontroller = ncontrollers;
 		return CAPI_NOERROR;
 	}
-	card = get_capi_ctr_by_nr(contr);
-	if (!card || card->cardstate != CARD_RUNNING) 
-		return CAPI_REGNOTINSTALLED;
 
-	memcpy((void *) profp, &card->profile,
-			sizeof(struct capi_profile));
-	return CAPI_NOERROR;
+	mutex_lock(&capi_controller_lock);
+
+	ctr = get_capi_ctr_by_nr(contr);
+	if (ctr && ctr->state == CAPI_CTR_RUNNING) {
+		memcpy(profp, &ctr->profile, sizeof(struct capi_profile));
+		ret = CAPI_NOERROR;
+	} else
+		ret = CAPI_REGNOTINSTALLED;
+
+	mutex_unlock(&capi_controller_lock);
+	return ret;
 }
 
 EXPORT_SYMBOL(capi20_get_profile);
 
-#ifdef CONFIG_AVMB1_COMPAT
+/* Must be called with capi_controller_lock held. */
+static int wait_on_ctr_state(struct capi_ctr *ctr, unsigned int state)
+{
+	DEFINE_WAIT(wait);
+	int retval = 0;
+
+	ctr = capi_ctr_get(ctr);
+	if (!ctr)
+		return -ESRCH;
+
+	for (;;) {
+		prepare_to_wait(&ctr->state_wait_queue, &wait,
+				TASK_INTERRUPTIBLE);
+
+		if (ctr->state == state)
+			break;
+		if (ctr->state == CAPI_CTR_DETACHED) {
+			retval = -ESRCH;
+			break;
+		}
+		if (signal_pending(current)) {
+			retval = -EINTR;
+			break;
+		}
+
+		mutex_unlock(&capi_controller_lock);
+		schedule();
+		mutex_lock(&capi_controller_lock);
+	}
+	finish_wait(&ctr->state_wait_queue, &wait);
+
+	capi_ctr_put(ctr);
+
+	return retval;
+}
+
+#ifdef AVMB1_COMPAT
 static int old_capi_manufacturer(unsigned int cmd, void __user *data)
 {
 	avmb1_loadandconfigdef ldef;
 	avmb1_extcarddef cdef;
 	avmb1_resetdef rdef;
 	capicardparams cparams;
-	struct capi_ctr *card;
+	struct capi_ctr *ctr;
 	struct capi_driver *driver = NULL;
 	capiloaddata ldata;
 	struct list_head *l;
-	unsigned long flags;
 	int retval;
 
 	switch (cmd) {
@@ -760,18 +1030,19 @@ static int old_capi_manufacturer(unsigned int cmd, void __user *data)
 		if (cmd == AVMB1_ADDCARD) {
 		   if ((retval = copy_from_user(&cdef, data,
 					    sizeof(avmb1_carddef))))
-			   return retval;
+			   return -EFAULT;
 		   cdef.cardtype = AVM_CARDTYPE_B1;
 		} else {
 		   if ((retval = copy_from_user(&cdef, data,
 					    sizeof(avmb1_extcarddef))))
-			   return retval;
+			   return -EFAULT;
 		}
 		cparams.port = cdef.port;
 		cparams.irq = cdef.irq;
 		cparams.cardnr = cdef.cardnr;
 
-		read_lock_irqsave(&capi_drivers_list_lock, flags);
+		mutex_lock(&capi_drivers_lock);
+
                 switch (cdef.cardtype) {
 			case AVM_CARDTYPE_B1:
 				list_for_each(l, &capi_drivers) {
@@ -792,18 +1063,15 @@ static int old_capi_manufacturer(unsigned int cmd, void __user *data)
 				break;
 		}
 		if (!driver) {
-			read_unlock_irqrestore(&capi_drivers_list_lock, flags);
 			printk(KERN_ERR "kcapi: driver not loaded.\n");
-			return -EIO;
-		}
-		if (!driver->add_card) {
-			read_unlock_irqrestore(&capi_drivers_list_lock, flags);
+			retval = -EIO;
+		} else if (!driver->add_card) {
 			printk(KERN_ERR "kcapi: driver has no add card function.\n");
-			return -EIO;
-		}
+			retval = -EIO;
+		} else
+			retval = driver->add_card(driver, &cparams);
 
-		retval = driver->add_card(driver, &cparams);
-		read_unlock_irqrestore(&capi_drivers_list_lock, flags);
+		mutex_unlock(&capi_drivers_lock);
 		return retval;
 
 	case AVMB1_LOAD:
@@ -820,22 +1088,30 @@ static int old_capi_manufacturer(unsigned int cmd, void __user *data)
 					   sizeof(avmb1_loadandconfigdef)))
 				return -EFAULT;
 		}
-		card = get_capi_ctr_by_nr(ldef.contr);
-		card = capi_ctr_get(card);
-		if (!card)
-			return -ESRCH;
-		if (card->load_firmware == 0) {
+
+		mutex_lock(&capi_controller_lock);
+
+		ctr = get_capi_ctr_by_nr(ldef.contr);
+		if (!ctr) {
+			retval = -EINVAL;
+			goto load_unlock_out;
+		}
+
+		if (ctr->load_firmware == NULL) {
 			printk(KERN_DEBUG "kcapi: load: no load function\n");
-			return -ESRCH;
+			retval = -ESRCH;
+			goto load_unlock_out;
 		}
 
 		if (ldef.t4file.len <= 0) {
 			printk(KERN_DEBUG "kcapi: load: invalid parameter: length of t4file is %d ?\n", ldef.t4file.len);
-			return -EINVAL;
+			retval = -EINVAL;
+			goto load_unlock_out;
 		}
-		if (ldef.t4file.data == 0) {
+		if (ldef.t4file.data == NULL) {
 			printk(KERN_DEBUG "kcapi: load: invalid parameter: dataptr is 0\n");
-			return -EINVAL;
+			retval = -EINVAL;
+			goto load_unlock_out;
 		}
 
 		ldata.firmware.user = 1;
@@ -845,64 +1121,76 @@ static int old_capi_manufacturer(unsigned int cmd, void __user *data)
 		ldata.configuration.data = ldef.t4config.data;
 		ldata.configuration.len = ldef.t4config.len;
 
-		if (card->cardstate != CARD_DETECTED) {
+		if (ctr->state != CAPI_CTR_DETECTED) {
 			printk(KERN_INFO "kcapi: load: contr=%d not in detect state\n", ldef.contr);
-			return -EBUSY;
+			retval = -EBUSY;
+			goto load_unlock_out;
 		}
-		card->cardstate = CARD_LOADING;
+		ctr->state = CAPI_CTR_LOADING;
 
-		retval = card->load_firmware(card, &ldata);
-
+		retval = ctr->load_firmware(ctr, &ldata);
 		if (retval) {
-			card->cardstate = CARD_DETECTED;
-			capi_ctr_put(card);
-			return retval;
+			ctr->state = CAPI_CTR_DETECTED;
+			goto load_unlock_out;
 		}
 
-		while (card->cardstate != CARD_RUNNING) {
+		retval = wait_on_ctr_state(ctr, CAPI_CTR_RUNNING);
 
-			msleep_interruptible(100);	/* 0.1 sec */
-
-			if (signal_pending(current)) {
-				capi_ctr_put(card);
-				return -EINTR;
-			}
-		}
-		capi_ctr_put(card);
-		return 0;
+load_unlock_out:
+		mutex_unlock(&capi_controller_lock);
+		return retval;
 
 	case AVMB1_RESETCARD:
 		if (copy_from_user(&rdef, data, sizeof(avmb1_resetdef)))
 			return -EFAULT;
-		card = get_capi_ctr_by_nr(rdef.contr);
-		if (!card)
-			return -ESRCH;
 
-		if (card->cardstate == CARD_DETECTED)
-			return 0;
+		retval = 0;
 
-		card->reset_ctr(card);
+		mutex_lock(&capi_controller_lock);
 
-		while (card->cardstate > CARD_DETECTED) {
-
-			msleep_interruptible(100);	/* 0.1 sec */
-
-			if (signal_pending(current))
-				return -EINTR;
+		ctr = get_capi_ctr_by_nr(rdef.contr);
+		if (!ctr) {
+			retval = -ESRCH;
+			goto reset_unlock_out;
 		}
-		return 0;
 
+		if (ctr->state == CAPI_CTR_DETECTED)
+			goto reset_unlock_out;
+
+		if (ctr->reset_ctr == NULL) {
+			printk(KERN_DEBUG "kcapi: reset: no reset function\n");
+			retval = -ESRCH;
+			goto reset_unlock_out;
+		}
+
+		ctr->reset_ctr(ctr);
+
+		retval = wait_on_ctr_state(ctr, CAPI_CTR_DETECTED);
+
+reset_unlock_out:
+		mutex_unlock(&capi_controller_lock);
+		return retval;
 	}
 	return -EINVAL;
 }
 #endif
 
+/**
+ * capi20_manufacturer() - CAPI 2.0 operation CAPI_MANUFACTURER
+ * @cmd:	command.
+ * @data:	parameter.
+ *
+ * Perform manufacturer specific command.
+ * Return value: CAPI result code
+ */
+
 int capi20_manufacturer(unsigned int cmd, void __user *data)
 {
-        struct capi_ctr *card;
+	struct capi_ctr *ctr;
+	int retval;
 
 	switch (cmd) {
-#ifdef CONFIG_AVMB1_COMPAT
+#ifdef AVMB1_COMPAT
 	case AVMB1_LOAD:
 	case AVMB1_LOAD_AND_CONFIG:
 	case AVMB1_RESETCARD:
@@ -917,14 +1205,20 @@ int capi20_manufacturer(unsigned int cmd, void __user *data)
 		if (copy_from_user(&fdef, data, sizeof(kcapi_flagdef)))
 			return -EFAULT;
 
-		card = get_capi_ctr_by_nr(fdef.contr);
-		if (!card)
-			return -ESRCH;
+		mutex_lock(&capi_controller_lock);
 
-		card->traceflag = fdef.flag;
-		printk(KERN_INFO "kcapi: contr [%03d] set trace=%d\n",
-			card->cnr, card->traceflag);
-		return 0;
+		ctr = get_capi_ctr_by_nr(fdef.contr);
+		if (ctr) {
+			ctr->traceflag = fdef.flag;
+			printk(KERN_INFO "kcapi: contr [%03d] set trace=%d\n",
+			       ctr->cnr, ctr->traceflag);
+			retval = 0;
+		} else
+			retval = -ESRCH;
+
+		mutex_unlock(&capi_controller_lock);
+
+		return retval;
 	}
 	case KCAPI_CMD_ADDCARD:
 	{
@@ -932,10 +1226,9 @@ int capi20_manufacturer(unsigned int cmd, void __user *data)
 		struct capi_driver *driver = NULL;
 		capicardparams cparams;
 		kcapi_carddef cdef;
-		int retval;
 
 		if ((retval = copy_from_user(&cdef, data, sizeof(cdef))))
-			return retval;
+			return -EFAULT;
 
 		cparams.port = cdef.port;
 		cparams.irq = cdef.irq;
@@ -944,23 +1237,25 @@ int capi20_manufacturer(unsigned int cmd, void __user *data)
 		cparams.cardtype = 0;
 		cdef.driver[sizeof(cdef.driver)-1] = 0;
 
+		mutex_lock(&capi_drivers_lock);
+
 		list_for_each(l, &capi_drivers) {
 			driver = list_entry(l, struct capi_driver, list);
 			if (strcmp(driver->name, cdef.driver) == 0)
 				break;
 		}
-		if (driver == 0) {
+		if (driver == NULL) {
 			printk(KERN_ERR "kcapi: driver \"%s\" not loaded.\n",
 					cdef.driver);
-			return -ESRCH;
-		}
-
-		if (!driver->add_card) {
+			retval = -ESRCH;
+		} else if (!driver->add_card) {
 			printk(KERN_ERR "kcapi: driver \"%s\" has no add card function.\n", cdef.driver);
-			return -EIO;
-		}
+			retval = -EIO;
+		} else
+			retval = driver->add_card(driver, &cparams);
 
-		return driver->add_card(driver, &cparams);
+		mutex_unlock(&capi_drivers_lock);
+		return retval;
 	}
 
 	default:
@@ -974,15 +1269,6 @@ int capi20_manufacturer(unsigned int cmd, void __user *data)
 
 EXPORT_SYMBOL(capi20_manufacturer);
 
-/* temporary hack */
-void capi20_set_callback(struct capi20_appl *ap,
-			 void (*callback) (unsigned int cmd, __u32 contr, void *data))
-{
-	ap->callback = callback;
-}
-
-EXPORT_SYMBOL(capi20_set_callback);
-
 /* ------------------------------------------------------------- */
 /* -------- Init & Cleanup ------------------------------------- */
 /* ------------------------------------------------------------- */
@@ -991,26 +1277,29 @@ EXPORT_SYMBOL(capi20_set_callback);
  * init / exit functions
  */
 
+static struct notifier_block capictr_nb = {
+	.notifier_call = notify_handler,
+	.priority = INT_MAX,
+};
+
 static int __init kcapi_init(void)
 {
-	char *p;
-	char rev[32];
-	int ret;
+	int err;
 
-	ret = cdebug_init();
-	if (ret)
-		return ret;
-        kcapi_proc_init();
+	kcapi_wq = alloc_workqueue("kcapi", 0, 0);
+	if (!kcapi_wq)
+		return -ENOMEM;
 
-	if ((p = strchr(revision, ':')) != 0 && p[1]) {
-		strlcpy(rev, p + 2, sizeof(rev));
-		if ((p = strchr(rev, '$')) != 0 && p > rev)
-		   *(p-1) = 0;
-	} else
-		strcpy(rev, "1.0");
+	register_capictr_notifier(&capictr_nb);
 
-        printk(KERN_NOTICE "CAPI Subsystem Rev %s\n", rev);
+	err = cdebug_init();
+	if (err) {
+		unregister_capictr_notifier(&capictr_nb);
+		destroy_workqueue(kcapi_wq);
+		return err;
+	}
 
+	kcapi_proc_init();
 	return 0;
 }
 
@@ -1018,9 +1307,9 @@ static void __exit kcapi_exit(void)
 {
         kcapi_proc_exit();
 
-	/* make sure all notifiers are finished */
-	flush_scheduled_work();
+	unregister_capictr_notifier(&capictr_nb);
 	cdebug_exit();
+	destroy_workqueue(kcapi_wq);
 }
 
 module_init(kcapi_init);

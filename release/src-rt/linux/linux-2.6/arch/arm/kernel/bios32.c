@@ -10,8 +10,8 @@
 #include <linux/pci.h>
 #include <linux/slab.h>
 #include <linux/init.h>
+#include <linux/io.h>
 
-#include <asm/io.h>
 #include <asm/mach-types.h>
 #include <asm/mach/pci.h>
 
@@ -159,31 +159,6 @@ static void __devinit pci_fixup_dec21285(struct pci_dev *dev)
 DECLARE_PCI_FIXUP_HEADER(PCI_VENDOR_ID_DEC, PCI_DEVICE_ID_DEC_21285, pci_fixup_dec21285);
 
 /*
- * Same as above. The PrPMC800 carrier board for the PrPMC1100 
- * card maps the host-bridge @ 00:01:00 for some reason and it
- * ends up getting scanned. Note that we only want to do this
- * fixup when we find the IXP4xx on a PrPMC system, which is why
- * we check the machine type. We could be running on a board
- * with an IXP4xx target device and we don't want to kill the
- * resources in that case.
- */
-static void __devinit pci_fixup_prpmc1100(struct pci_dev *dev)
-{
-	int i;
-
-	if (machine_is_prpmc1100()) {
-		dev->class &= 0xff;
-		dev->class |= PCI_CLASS_BRIDGE_HOST << 8;
-		for (i = 0; i < PCI_NUM_RESOURCES; i++) {
-			dev->resource[i].start = 0;
-			dev->resource[i].end   = 0;
-			dev->resource[i].flags = 0;
-		}
-	}
-}
-DECLARE_PCI_FIXUP_HEADER(PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_IXP4XX, pci_fixup_prpmc1100);
-
-/*
  * PCI IDE controllers use non-standard I/O port decoding, respect it.
  */
 static void __devinit pci_fixup_ide_bases(struct pci_dev *dev)
@@ -279,6 +254,25 @@ static void __devinit pci_fixup_cy82c693(struct pci_dev *dev)
 }
 DECLARE_PCI_FIXUP_HEADER(PCI_VENDOR_ID_CONTAQ, PCI_DEVICE_ID_CONTAQ_82C693, pci_fixup_cy82c693);
 
+static void __init pci_fixup_it8152(struct pci_dev *dev)
+{
+	int i;
+	/* fixup for ITE 8152 devices */
+	/* FIXME: add defines for class 0x68000 and 0x80103 */
+	if ((dev->class >> 8) == PCI_CLASS_BRIDGE_HOST ||
+	    dev->class == 0x68000 ||
+	    dev->class == 0x80103) {
+		for (i = 0; i < PCI_NUM_RESOURCES; i++) {
+			dev->resource[i].start = 0;
+			dev->resource[i].end   = 0;
+			dev->resource[i].flags = 0;
+		}
+	}
+}
+DECLARE_PCI_FIXUP_HEADER(PCI_VENDOR_ID_ITE, PCI_DEVICE_ID_ITE_8152, pci_fixup_it8152);
+
+
+
 void __devinit pcibios_update_irq(struct pci_dev *dev, int irq)
 {
 	if (debug_pci)
@@ -292,9 +286,12 @@ void __devinit pcibios_update_irq(struct pci_dev *dev, int irq)
  */
 static inline int pdev_bad_for_parity(struct pci_dev *dev)
 {
-	return (dev->vendor == PCI_VENDOR_ID_INTERG &&
-		(dev->device == PCI_DEVICE_ID_INTERG_2000 ||
-		 dev->device == PCI_DEVICE_ID_INTERG_2010));
+	return ((dev->vendor == PCI_VENDOR_ID_INTERG &&
+		 (dev->device == PCI_DEVICE_ID_INTERG_2000 ||
+		  dev->device == PCI_DEVICE_ID_INTERG_2010)) ||
+		(dev->vendor == PCI_VENDOR_ID_ITE &&
+		 dev->device == PCI_DEVICE_ID_ITE_8152));
+
 }
 
 /*
@@ -338,7 +335,7 @@ pbus_assign_bus_resources(struct pci_bus *bus, struct pci_sys_data *root)
  * pcibios_fixup_bus - Called after each bus is probed,
  * but before its children are examined.
  */
-void __devinit pcibios_fixup_bus(struct pci_bus *bus)
+void pcibios_fixup_bus(struct pci_bus *bus)
 {
 	struct pci_sys_data *root = bus->sysdata;
 	struct pci_dev *dev;
@@ -419,7 +416,7 @@ void __devinit pcibios_fixup_bus(struct pci_bus *bus)
 /*
  * Convert from Linux-centric to bus-centric addresses for bridge devices.
  */
-void __devinit
+void
 pcibios_resource_to_bus(struct pci_dev *dev, struct pci_bus_region *region,
 			 struct resource *res)
 {
@@ -456,33 +453,6 @@ EXPORT_SYMBOL(pcibios_fixup_bus);
 EXPORT_SYMBOL(pcibios_resource_to_bus);
 EXPORT_SYMBOL(pcibios_bus_to_resource);
 #endif
-
-/*
- * This is the standard PCI-PCI bridge swizzling algorithm:
- *
- *   Dev: 0  1  2  3
- *    A   A  B  C  D
- *    B   B  C  D  A
- *    C   C  D  A  B
- *    D   D  A  B  C
- *        ^^^^^^^^^^ irq pin on bridge
- */
-u8 __devinit pci_std_swizzle(struct pci_dev *dev, u8 *pinp)
-{
-	int pin = *pinp - 1;
-
-	while (dev->bus->self) {
-		pin = (pin + PCI_SLOT(dev->devfn)) & 3;
-		/*
-		 * move up the chain of bridges,
-		 * swizzling as we go.
-		 */
-		dev = dev->bus->self;
-	}
-	*pinp = pin + 1;
-
-	return PCI_SLOT(dev->devfn);
-}
 
 /*
  * Swizzle the device pin each time we cross a bridge.
@@ -532,6 +502,9 @@ static void __init pcibios_init_hw(struct hw_pci *hw)
 		if (!sys)
 			panic("PCI: unable to allocate sys data!");
 
+#ifdef CONFIG_PCI_DOMAINS
+		sys->domain  = hw->domain;
+#endif
 		sys->hw      = hw;
 		sys->busnr   = busnr;
 		sys->swizzle = hw->swizzle;
@@ -585,6 +558,11 @@ void __init pci_common_init(struct hw_pci *hw)
 			 * Assign resources.
 			 */
 			pci_bus_assign_resources(bus);
+
+			/*
+			 * Enable bridges
+			 */
+			pci_enable_bridges(bus);
 		}
 
 		/*
@@ -621,15 +599,17 @@ char * __init pcibios_setup(char *str)
  * but we want to try to avoid allocating at 0x2900-0x2bff
  * which might be mirrored at 0x0100-0x03ff..
  */
-void pcibios_align_resource(void *data, struct resource *res,
-			    resource_size_t size, resource_size_t align)
+resource_size_t pcibios_align_resource(void *data, const struct resource *res,
+				resource_size_t size, resource_size_t align)
 {
 	resource_size_t start = res->start;
 
 	if (res->flags & IORESOURCE_IO && start & 0x300)
 		start = (start + 0x3ff) & ~0x3ff;
 
-	res->start = (start + align - 1) & ~(align - 1);
+	start = (start + align - 1) & ~(align - 1);
+
+	return start;
 }
 
 /**

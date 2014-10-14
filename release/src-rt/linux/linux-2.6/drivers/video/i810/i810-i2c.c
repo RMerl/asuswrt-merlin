@@ -11,6 +11,7 @@
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/delay.h>
+#include <linux/gfp.h>
 #include <linux/pci.h>
 #include <linux/fb.h>
 #include "i810.h"
@@ -44,8 +45,10 @@ static void i810i2c_setscl(void *data, int state)
         struct i810fb_par         *par = chan->par;
 	u8                        __iomem *mmio = par->mmio_start_virtual;
 
-	i810_writel(mmio, chan->ddc_base, (state ? SCL_VAL_OUT : 0) | SCL_DIR |
-		    SCL_DIR_MASK | SCL_VAL_MASK);
+	if (state)
+		i810_writel(mmio, chan->ddc_base, SCL_DIR_MASK | SCL_VAL_MASK);
+	else
+		i810_writel(mmio, chan->ddc_base, SCL_DIR | SCL_DIR_MASK | SCL_VAL_MASK);
 	i810_readl(mmio, chan->ddc_base);	/* flush posted write */
 }
 
@@ -55,8 +58,10 @@ static void i810i2c_setsda(void *data, int state)
         struct i810fb_par         *par = chan->par;
 	u8                        __iomem *mmio = par->mmio_start_virtual;
 
- 	i810_writel(mmio, chan->ddc_base, (state ? SDA_VAL_OUT : 0) | SDA_DIR |
-		    SDA_DIR_MASK | SDA_VAL_MASK);
+	if (state)
+		i810_writel(mmio, chan->ddc_base, SDA_DIR_MASK | SDA_VAL_MASK);
+	else
+		i810_writel(mmio, chan->ddc_base, SDA_DIR | SDA_DIR_MASK | SDA_VAL_MASK);
 	i810_readl(mmio, chan->ddc_base);	/* flush posted write */
 }
 
@@ -90,7 +95,6 @@ static int i810_setup_i2c_bus(struct i810fb_i2c_chan *chan, const char *name)
         chan->adapter.owner             = THIS_MODULE;
         chan->adapter.algo_data         = &chan->algo;
         chan->adapter.dev.parent        = &chan->par->dev->dev;
-	chan->adapter.id                = I2C_HW_B_I810;
 	chan->algo.setsda               = i810i2c_setsda;
 	chan->algo.setscl               = i810i2c_setscl;
 	chan->algo.getsda               = i810i2c_getsda;

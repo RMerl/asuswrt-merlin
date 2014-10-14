@@ -45,8 +45,6 @@ extern int cpci_debug;
 #define info(format, arg...) printk(KERN_INFO "%s: " format "\n", MY_NAME , ## arg)
 #define warn(format, arg...) printk(KERN_WARNING "%s: " format "\n", MY_NAME , ## arg)
 
-#define ROUND_UP(x, a)		(((x) + (a) - 1) & ~((a) - 1))
-
 
 u8 cpci_get_attention_status(struct slot* slot)
 {
@@ -211,7 +209,7 @@ int cpci_led_on(struct slot* slot)
 					      hs_cap + 2,
 					      hs_csr)) {
 			err("Could not set LOO for slot %s",
-			    slot->hotplug_slot->name);
+			    hotplug_slot_name(slot->hotplug_slot));
 			return -ENODEV;
 		}
 	}
@@ -240,7 +238,7 @@ int cpci_led_off(struct slot* slot)
 					      hs_cap + 2,
 					      hs_csr)) {
 			err("Could not clear LOO for slot %s",
-			    slot->hotplug_slot->name);
+			    hotplug_slot_name(slot->hotplug_slot));
 			return -ENODEV;
 		}
 	}
@@ -252,12 +250,12 @@ int cpci_led_off(struct slot* slot)
  * Device configuration functions
  */
 
-int cpci_configure_slot(struct slot* slot)
+int __ref cpci_configure_slot(struct slot *slot)
 {
 	struct pci_bus *parent;
 	int fn;
 
-	dbg("%s - enter", __FUNCTION__);
+	dbg("%s - enter", __func__);
 
 	if (slot->dev == NULL) {
 		dbg("pci_dev null, finding %02x:%02x:%x",
@@ -275,7 +273,7 @@ int cpci_configure_slot(struct slot* slot)
 		 * we will only call this case when lookup fails.
 		 */
 		n = pci_scan_slot(slot->bus, slot->devfn);
-		dbg("%s: pci_scan_slot returned %d", __FUNCTION__, n);
+		dbg("%s: pci_scan_slot returned %d", __func__, n);
 		slot->dev = pci_get_slot(slot->bus, slot->devfn);
 		if (slot->dev == NULL) {
 			err("Could not find PCI device for slot %02x", slot->number);
@@ -324,7 +322,7 @@ int cpci_configure_slot(struct slot* slot)
 	pci_bus_add_devices(parent);
 	pci_enable_bridges(parent);
 
-	dbg("%s - exit", __FUNCTION__);
+	dbg("%s - exit", __func__);
 	return 0;
 }
 
@@ -333,7 +331,7 @@ int cpci_unconfigure_slot(struct slot* slot)
 	int i;
 	struct pci_dev *dev;
 
-	dbg("%s - enter", __FUNCTION__);
+	dbg("%s - enter", __func__);
 	if (!slot->dev) {
 		err("No device for slot %02x\n", slot->number);
 		return -ENODEV;
@@ -350,6 +348,6 @@ int cpci_unconfigure_slot(struct slot* slot)
 	pci_dev_put(slot->dev);
 	slot->dev = NULL;
 
-	dbg("%s - exit", __FUNCTION__);
+	dbg("%s - exit", __func__);
 	return 0;
 }

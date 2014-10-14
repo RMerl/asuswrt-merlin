@@ -47,8 +47,7 @@ pdev_fixup_irq(struct pci_dev *dev,
 	}
 	dev->irq = irq;
 
-	pr_debug("PCI: fixup irq: (%s) got %d\n",
-		dev->dev.kobj.name, dev->irq);
+	dev_dbg(&dev->dev, "fixup irq: got %d\n", dev->irq);
 
 	/* Always tell the device, so the driver knows what is
 	   the real IRQ to use; the device does not use it. */
@@ -60,7 +59,6 @@ pci_fixup_irqs(u8 (*swizzle)(struct pci_dev *, u8 *),
 	       int (*map_irq)(struct pci_dev *, u8, u8))
 {
 	struct pci_dev *dev = NULL;
-	while ((dev = pci_get_device(PCI_ANY_ID, PCI_ANY_ID, dev)) != NULL) {
+	for_each_pci_dev(dev)
 		pdev_fixup_irq(dev, swizzle, map_irq);
-	}
 }

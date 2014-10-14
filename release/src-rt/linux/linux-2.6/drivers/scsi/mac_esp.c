@@ -1,751 +1,650 @@
-/*
- * 68k mac 53c9[46] scsi driver
+/* mac_esp.c: ESP front-end for Macintosh Quadra systems.
  *
- * copyright (c) 1998, David Weis weisd3458@uni.edu
+ * Adapted from jazz_esp.c and the old mac_esp.c.
  *
- * debugging on Quadra 800 and 660AV Michael Schmitz, Dave Kilzer 7/98
+ * The pseudo DMA algorithm is based on the one used in NetBSD.
+ * See sys/arch/mac68k/obio/esp.c for some background information.
  *
- * based loosely on cyber_esp.c
+ * Copyright (C) 2007-2008 Finn Thain
  */
-
-/* these are unused for now */
-#define myreadl(addr) (*(volatile unsigned int *) (addr))
-#define mywritel(b, addr) ((*(volatile unsigned int *) (addr)) = (b))
-
 
 #include <linux/kernel.h>
-#include <linux/delay.h>
 #include <linux/types.h>
-#include <linux/ctype.h>
-#include <linux/string.h>
-#include <linux/slab.h>
-#include <linux/blkdev.h>
-#include <linux/proc_fs.h>
-#include <linux/stat.h>
+#include <linux/module.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>
+#include <linux/platform_device.h>
+#include <linux/dma-mapping.h>
+#include <linux/scatterlist.h>
+#include <linux/delay.h>
+#include <linux/io.h>
+#include <linux/nubus.h>
+#include <linux/slab.h>
 
-#include "scsi.h"
-#include <scsi/scsi_host.h>
-#include "NCR53C9x.h"
-
-#include <asm/io.h>
-
-#include <asm/setup.h>
 #include <asm/irq.h>
+#include <asm/dma.h>
 #include <asm/macints.h>
-#include <asm/machw.h>
-#include <asm/mac_via.h>
-
-#include <asm/pgtable.h>
-
 #include <asm/macintosh.h>
 
-/* #define DEBUG_MAC_ESP */
+#include <scsi/scsi_host.h>
 
-extern void esp_handle(struct NCR_ESP *esp);
-extern void mac_esp_intr(int irq, void *dev_id);
+#include "esp_scsi.h"
 
-static int  dma_bytes_sent(struct NCR_ESP * esp, int fifo_count);
-static int  dma_can_transfer(struct NCR_ESP * esp, Scsi_Cmnd *sp);
-static void dma_dump_state(struct NCR_ESP * esp);
-static void dma_init_read(struct NCR_ESP * esp, char * vaddress, int length);
-static void dma_init_write(struct NCR_ESP * esp, char * vaddress, int length);
-static void dma_ints_off(struct NCR_ESP * esp);
-static void dma_ints_on(struct NCR_ESP * esp);
-static int  dma_irq_p(struct NCR_ESP * esp);
-static int  dma_irq_p_quick(struct NCR_ESP * esp);
-static void dma_led_off(struct NCR_ESP * esp);
-static void dma_led_on(struct NCR_ESP *esp);
-static int  dma_ports_p(struct NCR_ESP *esp);
-static void dma_setup(struct NCR_ESP * esp, __u32 addr, int count, int write);
-static void dma_setup_quick(struct NCR_ESP * esp, __u32 addr, int count, int write);
+#define DRV_MODULE_NAME     "mac_esp"
+#define PFX                 DRV_MODULE_NAME ": "
+#define DRV_VERSION         "1.000"
+#define DRV_MODULE_RELDATE  "Sept 15, 2007"
 
-static int esp_dafb_dma_irq_p(struct NCR_ESP * espdev);
-static int esp_iosb_dma_irq_p(struct NCR_ESP * espdev);
+#define MAC_ESP_IO_BASE          0x50F00000
+#define MAC_ESP_REGS_QUADRA      (MAC_ESP_IO_BASE + 0x10000)
+#define MAC_ESP_REGS_QUADRA2     (MAC_ESP_IO_BASE + 0xF000)
+#define MAC_ESP_REGS_QUADRA3     (MAC_ESP_IO_BASE + 0x18000)
+#define MAC_ESP_REGS_SPACING     0x402
+#define MAC_ESP_PDMA_REG         0xF9800024
+#define MAC_ESP_PDMA_REG_SPACING 0x4
+#define MAC_ESP_PDMA_IO_OFFSET   0x100
 
-static volatile unsigned char cmd_buffer[16];
-				/* This is where all commands are put
-				 * before they are transferred to the ESP chip
-				 * via PIO.
-				 */
+#define esp_read8(REG)		mac_esp_read8(esp, REG)
+#define esp_write8(VAL, REG)	mac_esp_write8(esp, VAL, REG)
 
-static int esp_initialized = 0;
+struct mac_esp_priv {
+	struct esp *esp;
+	void __iomem *pdma_regs;
+	void __iomem *pdma_io;
+	int error;
+};
+static struct esp *esp_chips[2];
 
-static int setup_num_esps = -1;
-static int setup_disconnect = -1;
-static int setup_nosync = -1;
-static int setup_can_queue = -1;
-static int setup_cmd_per_lun = -1;
-static int setup_sg_tablesize = -1;
-#ifdef SUPPORT_TAGS
-static int setup_use_tagged_queuing = -1;
-#endif
-static int setup_hostid = -1;
+#define MAC_ESP_GET_PRIV(esp) ((struct mac_esp_priv *) \
+			       platform_get_drvdata((struct platform_device *) \
+						    (esp->dev)))
 
-/*
- * Experimental ESP inthandler; check macints.c to make sure dev_id is 
- * set up properly!
+static inline void mac_esp_write8(struct esp *esp, u8 val, unsigned long reg)
+{
+	nubus_writeb(val, esp->regs + reg * 16);
+}
+
+static inline u8 mac_esp_read8(struct esp *esp, unsigned long reg)
+{
+	return nubus_readb(esp->regs + reg * 16);
+}
+
+/* For pseudo DMA and PIO we need the virtual address
+ * so this address mapping is the identity mapping.
  */
 
-void mac_esp_intr(int irq, void *dev_id)
+static dma_addr_t mac_esp_map_single(struct esp *esp, void *buf,
+				     size_t sz, int dir)
 {
-	struct NCR_ESP *esp = (struct NCR_ESP *) dev_id;
-	int irq_p = 0;
+	return (dma_addr_t)buf;
+}
 
-	/* Handle the one ESP interrupt showing at this IRQ level. */
-	if(((esp)->irq & 0xff) == irq) {
-	/*
-	 * Debug ..
-	 */
-		irq_p = esp->dma_irq_p(esp);
-	 	printk("mac_esp: irq_p %x current %p disconnected %p\n",
-	 		irq_p, esp->current_SC, esp->disconnected_SC);
-	 		
-		/*
-		 * Mac: if we're here, it's an ESP interrupt for sure!
-		 */
-		if((esp->current_SC || esp->disconnected_SC)) {
-			esp->dma_ints_off(esp);
+static int mac_esp_map_sg(struct esp *esp, struct scatterlist *sg,
+			  int num_sg, int dir)
+{
+	int i;
 
-			ESPIRQ(("I%d(", esp->esp_id));
-			esp_handle(esp);
-			ESPIRQ((")"));
+	for (i = 0; i < num_sg; i++)
+		sg[i].dma_address = (u32)sg_virt(&sg[i]);
+	return num_sg;
+}
 
-			esp->dma_ints_on(esp);
+static void mac_esp_unmap_single(struct esp *esp, dma_addr_t addr,
+				 size_t sz, int dir)
+{
+	/* Nothing to do. */
+}
+
+static void mac_esp_unmap_sg(struct esp *esp, struct scatterlist *sg,
+			     int num_sg, int dir)
+{
+	/* Nothing to do. */
+}
+
+static void mac_esp_reset_dma(struct esp *esp)
+{
+	/* Nothing to do. */
+}
+
+static void mac_esp_dma_drain(struct esp *esp)
+{
+	/* Nothing to do. */
+}
+
+static void mac_esp_dma_invalidate(struct esp *esp)
+{
+	/* Nothing to do. */
+}
+
+static int mac_esp_dma_error(struct esp *esp)
+{
+	return MAC_ESP_GET_PRIV(esp)->error;
+}
+
+static inline int mac_esp_wait_for_empty_fifo(struct esp *esp)
+{
+	struct mac_esp_priv *mep = MAC_ESP_GET_PRIV(esp);
+	int i = 500000;
+
+	do {
+		if (!(esp_read8(ESP_FFLAGS) & ESP_FF_FBYTES))
+			return 0;
+
+		if (esp_read8(ESP_STATUS) & ESP_STAT_INTR)
+			return 1;
+
+		udelay(2);
+	} while (--i);
+
+	printk(KERN_ERR PFX "FIFO is not empty (sreg %02x)\n",
+	       esp_read8(ESP_STATUS));
+	mep->error = 1;
+	return 1;
+}
+
+static inline int mac_esp_wait_for_dreq(struct esp *esp)
+{
+	struct mac_esp_priv *mep = MAC_ESP_GET_PRIV(esp);
+	int i = 500000;
+
+	do {
+		if (mep->pdma_regs == NULL) {
+			if (mac_irq_pending(IRQ_MAC_SCSIDRQ))
+				return 0;
+		} else {
+			if (nubus_readl(mep->pdma_regs) & 0x200)
+				return 0;
+		}
+
+		if (esp_read8(ESP_STATUS) & ESP_STAT_INTR)
+			return 1;
+
+		udelay(2);
+	} while (--i);
+
+	printk(KERN_ERR PFX "PDMA timeout (sreg %02x)\n",
+	       esp_read8(ESP_STATUS));
+	mep->error = 1;
+	return 1;
+}
+
+#define MAC_ESP_PDMA_LOOP(operands) \
+	asm volatile ( \
+	     "       tstw %1                   \n" \
+	     "       jbeq 20f                  \n" \
+	     "1:     movew " operands "        \n" \
+	     "2:     movew " operands "        \n" \
+	     "3:     movew " operands "        \n" \
+	     "4:     movew " operands "        \n" \
+	     "5:     movew " operands "        \n" \
+	     "6:     movew " operands "        \n" \
+	     "7:     movew " operands "        \n" \
+	     "8:     movew " operands "        \n" \
+	     "9:     movew " operands "        \n" \
+	     "10:    movew " operands "        \n" \
+	     "11:    movew " operands "        \n" \
+	     "12:    movew " operands "        \n" \
+	     "13:    movew " operands "        \n" \
+	     "14:    movew " operands "        \n" \
+	     "15:    movew " operands "        \n" \
+	     "16:    movew " operands "        \n" \
+	     "       subqw #1,%1               \n" \
+	     "       jbne 1b                   \n" \
+	     "20:    tstw %2                   \n" \
+	     "       jbeq 30f                  \n" \
+	     "21:    movew " operands "        \n" \
+	     "       subqw #1,%2               \n" \
+	     "       jbne 21b                  \n" \
+	     "30:    tstw %3                   \n" \
+	     "       jbeq 40f                  \n" \
+	     "31:    moveb " operands "        \n" \
+	     "32:    nop                       \n" \
+	     "40:                              \n" \
+	     "                                 \n" \
+	     "       .section __ex_table,\"a\" \n" \
+	     "       .align  4                 \n" \
+	     "       .long   1b,40b            \n" \
+	     "       .long   2b,40b            \n" \
+	     "       .long   3b,40b            \n" \
+	     "       .long   4b,40b            \n" \
+	     "       .long   5b,40b            \n" \
+	     "       .long   6b,40b            \n" \
+	     "       .long   7b,40b            \n" \
+	     "       .long   8b,40b            \n" \
+	     "       .long   9b,40b            \n" \
+	     "       .long  10b,40b            \n" \
+	     "       .long  11b,40b            \n" \
+	     "       .long  12b,40b            \n" \
+	     "       .long  13b,40b            \n" \
+	     "       .long  14b,40b            \n" \
+	     "       .long  15b,40b            \n" \
+	     "       .long  16b,40b            \n" \
+	     "       .long  21b,40b            \n" \
+	     "       .long  31b,40b            \n" \
+	     "       .long  32b,40b            \n" \
+	     "       .previous                 \n" \
+	     : "+a" (addr), "+r" (count32), "+r" (count2) \
+	     : "g" (count1), "a" (mep->pdma_io))
+
+static void mac_esp_send_pdma_cmd(struct esp *esp, u32 addr, u32 esp_count,
+				  u32 dma_count, int write, u8 cmd)
+{
+	struct mac_esp_priv *mep = MAC_ESP_GET_PRIV(esp);
+	unsigned long flags;
+
+	local_irq_save(flags);
+
+	mep->error = 0;
+
+	if (!write)
+		scsi_esp_cmd(esp, ESP_CMD_FLUSH);
+
+	esp_write8((esp_count >> 0) & 0xFF, ESP_TCLOW);
+	esp_write8((esp_count >> 8) & 0xFF, ESP_TCMED);
+
+	scsi_esp_cmd(esp, cmd);
+
+	do {
+		unsigned int count32 = esp_count >> 5;
+		unsigned int count2 = (esp_count & 0x1F) >> 1;
+		unsigned int count1 = esp_count & 1;
+		unsigned int start_addr = addr;
+
+		if (mac_esp_wait_for_dreq(esp))
+			break;
+
+		if (write) {
+			MAC_ESP_PDMA_LOOP("%4@,%0@+");
+
+			esp_count -= addr - start_addr;
+		} else {
+			unsigned int n;
+
+			MAC_ESP_PDMA_LOOP("%0@+,%4@");
+
+			if (mac_esp_wait_for_empty_fifo(esp))
+				break;
+
+			n = (esp_read8(ESP_TCMED) << 8) + esp_read8(ESP_TCLOW);
+			addr = start_addr + esp_count - n;
+			esp_count = n;
+		}
+	} while (esp_count);
+
+	local_irq_restore(flags);
+}
+
+/*
+ * Programmed IO routines follow.
+ */
+
+static inline unsigned int mac_esp_wait_for_fifo(struct esp *esp)
+{
+	int i = 500000;
+
+	do {
+		unsigned int fbytes = esp_read8(ESP_FFLAGS) & ESP_FF_FBYTES;
+
+		if (fbytes)
+			return fbytes;
+
+		udelay(2);
+	} while (--i);
+
+	printk(KERN_ERR PFX "FIFO is empty (sreg %02x)\n",
+	       esp_read8(ESP_STATUS));
+	return 0;
+}
+
+static inline int mac_esp_wait_for_intr(struct esp *esp)
+{
+	struct mac_esp_priv *mep = MAC_ESP_GET_PRIV(esp);
+	int i = 500000;
+
+	do {
+		esp->sreg = esp_read8(ESP_STATUS);
+		if (esp->sreg & ESP_STAT_INTR)
+			return 0;
+
+		udelay(2);
+	} while (--i);
+
+	printk(KERN_ERR PFX "IRQ timeout (sreg %02x)\n", esp->sreg);
+	mep->error = 1;
+	return 1;
+}
+
+#define MAC_ESP_PIO_LOOP(operands, reg1) \
+	asm volatile ( \
+	     "1:     moveb " operands " \n" \
+	     "       subqw #1,%1        \n" \
+	     "       jbne 1b            \n" \
+	     : "+a" (addr), "+r" (reg1) \
+	     : "a" (fifo))
+
+#define MAC_ESP_PIO_FILL(operands, reg1) \
+	asm volatile ( \
+	     "       moveb " operands " \n" \
+	     "       moveb " operands " \n" \
+	     "       moveb " operands " \n" \
+	     "       moveb " operands " \n" \
+	     "       moveb " operands " \n" \
+	     "       moveb " operands " \n" \
+	     "       moveb " operands " \n" \
+	     "       moveb " operands " \n" \
+	     "       moveb " operands " \n" \
+	     "       moveb " operands " \n" \
+	     "       moveb " operands " \n" \
+	     "       moveb " operands " \n" \
+	     "       moveb " operands " \n" \
+	     "       moveb " operands " \n" \
+	     "       moveb " operands " \n" \
+	     "       moveb " operands " \n" \
+	     "       subqw #8,%1        \n" \
+	     "       subqw #8,%1        \n" \
+	     : "+a" (addr), "+r" (reg1) \
+	     : "a" (fifo))
+
+#define MAC_ESP_FIFO_SIZE 16
+
+static void mac_esp_send_pio_cmd(struct esp *esp, u32 addr, u32 esp_count,
+				 u32 dma_count, int write, u8 cmd)
+{
+	struct mac_esp_priv *mep = MAC_ESP_GET_PRIV(esp);
+	u8 *fifo = esp->regs + ESP_FDATA * 16;
+
+	disable_irq(esp->host->irq);
+
+	cmd &= ~ESP_CMD_DMA;
+	mep->error = 0;
+
+	if (write) {
+		scsi_esp_cmd(esp, cmd);
+
+		while (1) {
+			unsigned int n;
+
+			n = mac_esp_wait_for_fifo(esp);
+			if (!n)
+				break;
+
+			if (n > esp_count)
+				n = esp_count;
+			esp_count -= n;
+
+			MAC_ESP_PIO_LOOP("%2@,%0@+", n);
+
+			if (!esp_count)
+				break;
+
+			if (mac_esp_wait_for_intr(esp))
+				break;
+
+			if (((esp->sreg & ESP_STAT_PMASK) != ESP_DIP) &&
+			    ((esp->sreg & ESP_STAT_PMASK) != ESP_MIP))
+				break;
+
+			esp->ireg = esp_read8(ESP_INTRPT);
+			if ((esp->ireg & (ESP_INTR_DC | ESP_INTR_BSERV)) !=
+			    ESP_INTR_BSERV)
+				break;
+
+			scsi_esp_cmd(esp, ESP_CMD_TI);
+		}
+	} else {
+		scsi_esp_cmd(esp, ESP_CMD_FLUSH);
+
+		if (esp_count >= MAC_ESP_FIFO_SIZE)
+			MAC_ESP_PIO_FILL("%0@+,%2@", esp_count);
+		else
+			MAC_ESP_PIO_LOOP("%0@+,%2@", esp_count);
+
+		scsi_esp_cmd(esp, cmd);
+
+		while (esp_count) {
+			unsigned int n;
+
+			if (mac_esp_wait_for_intr(esp))
+				break;
+
+			if (((esp->sreg & ESP_STAT_PMASK) != ESP_DOP) &&
+			    ((esp->sreg & ESP_STAT_PMASK) != ESP_MOP))
+				break;
+
+			esp->ireg = esp_read8(ESP_INTRPT);
+			if ((esp->ireg & (ESP_INTR_DC | ESP_INTR_BSERV)) !=
+			    ESP_INTR_BSERV)
+				break;
+
+			n = MAC_ESP_FIFO_SIZE -
+			    (esp_read8(ESP_FFLAGS) & ESP_FF_FBYTES);
+			if (n > esp_count)
+				n = esp_count;
+
+			if (n == MAC_ESP_FIFO_SIZE) {
+				MAC_ESP_PIO_FILL("%0@+,%2@", esp_count);
+			} else {
+				esp_count -= n;
+				MAC_ESP_PIO_LOOP("%0@+,%2@", n);
+			}
+
+			scsi_esp_cmd(esp, ESP_CMD_TI);
 		}
 	}
+
+	enable_irq(esp->host->irq);
 }
 
-/*
- * Debug hooks; use for playing with the interrupt flag testing and interrupt
- * acknowledge on the various machines
- */
-
-void scsi_esp_polled(int irq, void *dev_id)
+static int mac_esp_irq_pending(struct esp *esp)
 {
-	if (esp_initialized == 0)
-		return;
-
-	mac_esp_intr(irq, dev_id);
+	if (esp_read8(ESP_STATUS) & ESP_STAT_INTR)
+		return 1;
+	return 0;
 }
 
-void fake_intr(int irq, void *dev_id)
+static u32 mac_esp_dma_length_limit(struct esp *esp, u32 dma_addr, u32 dma_len)
 {
-#ifdef DEBUG_MAC_ESP
-	printk("mac_esp: got irq\n");
-#endif
-
-	mac_esp_intr(irq, dev_id);
+	return dma_len > 0xFFFF ? 0xFFFF : dma_len;
 }
 
-irqreturn_t fake_drq(int irq, void *dev_id)
+static irqreturn_t mac_scsi_esp_intr(int irq, void *dev_id)
 {
-	printk("mac_esp: got drq\n");
+	int got_intr;
+
+	/*
+	 * This is an edge triggered IRQ, so we have to be careful to
+	 * avoid missing a transition when it is shared by two ESP devices.
+	 */
+
+	do {
+		got_intr = 0;
+		if (esp_chips[0] &&
+		    (mac_esp_read8(esp_chips[0], ESP_STATUS) & ESP_STAT_INTR)) {
+			(void)scsi_esp_intr(irq, esp_chips[0]);
+			got_intr = 1;
+		}
+		if (esp_chips[1] &&
+		    (mac_esp_read8(esp_chips[1], ESP_STATUS) & ESP_STAT_INTR)) {
+			(void)scsi_esp_intr(irq, esp_chips[1]);
+			got_intr = 1;
+		}
+	} while (got_intr);
+
 	return IRQ_HANDLED;
 }
 
-#define DRIVER_SETUP
-
-/*
- * Function : mac_esp_setup(char *str)
- *
- * Purpose : booter command line initialization of the overrides array,
- *
- * Inputs : str - parameters, separated by commas.
- *
- * Currently unused in the new driver; need to add settable parameters to the 
- * detect function.
- *
- */
-
-static int __init mac_esp_setup(char *str) {
-#ifdef DRIVER_SETUP
-	/* Format of mac53c9x parameter is:
-	 *   mac53c9x=<num_esps>,<disconnect>,<nosync>,<can_queue>,<cmd_per_lun>,<sg_tablesize>,<hostid>,<use_tags>
-	 * Negative values mean don't change.
-	 */
-	
-	char *this_opt;
-	long opt;
-
-	this_opt = strsep (&str, ",");
-	if(this_opt) {
-		opt = simple_strtol( this_opt, NULL, 0 );
-
-		if (opt >= 0 && opt <= 2)
-			setup_num_esps = opt;
-		else if (opt > 2)
-			printk( "mac_esp_setup: invalid number of hosts %ld !\n", opt );
-
-		this_opt = strsep (&str, ",");
-	}
-	if(this_opt) {
-		opt = simple_strtol( this_opt, NULL, 0 );
-	
-		if (opt > 0)
-			setup_disconnect = opt;
-
-		this_opt = strsep (&str, ",");
-	}
-	if(this_opt) {
-		opt = simple_strtol( this_opt, NULL, 0 );
-
-		if (opt >= 0)
-			setup_nosync = opt;
-
-		this_opt = strsep (&str, ",");
-	}
-	if(this_opt) {
-		opt = simple_strtol( this_opt, NULL, 0 );
-
-		if (opt > 0)
-			setup_can_queue = opt;
-
-		this_opt = strsep (&str, ",");
-	}
-	if(this_opt) {
-		opt = simple_strtol( this_opt, NULL, 0 );
-
-		if (opt > 0)
-			setup_cmd_per_lun = opt;
-
-		this_opt = strsep (&str, ",");
-	}
-	if(this_opt) {
-		opt = simple_strtol( this_opt, NULL, 0 );
-
-		if (opt >= 0) {
-			setup_sg_tablesize = opt;
-			/* Must be <= SG_ALL (255) */
-			if (setup_sg_tablesize > SG_ALL)
-				setup_sg_tablesize = SG_ALL;
-		}
-
-		this_opt = strsep (&str, ",");
-	}
-	if(this_opt) {
-		opt = simple_strtol( this_opt, NULL, 0 );
-
-		/* Must be between 0 and 7 */
-		if (opt >= 0 && opt <= 7)
-			setup_hostid = opt;
-		else if (opt > 7)
-			printk( "mac_esp_setup: invalid host ID %ld !\n", opt);
-
-		this_opt = strsep (&str, ",");
-	}
-#ifdef SUPPORT_TAGS
-	if(this_opt) {
-		opt = simple_strtol( this_opt, NULL, 0 );
-		if (opt >= 0)
-			setup_use_tagged_queuing = !!opt;
-	}
-#endif
-#endif
-	return 1; 
-}
-
-__setup("mac53c9x=", mac_esp_setup);
-
-
-/*
- * ESP address 'detection'
- */
-
-unsigned long get_base(int chip_num)
-{
-	/*
-	 * using the chip_num and mac model, figure out where the
-	 * chips are mapped
-	 */
-
-	unsigned long io_base = 0x50f00000;
-	unsigned int second_offset = 0x402;
-	unsigned long scsi_loc = 0;
-
-	switch (macintosh_config->scsi_type) {
-
-	/* 950, 900, 700 */
-	case MAC_SCSI_QUADRA2:
-		scsi_loc =  io_base + 0xf000 + ((chip_num == 0) ? 0 : second_offset);
-		break;
-
-	/* av's */
-	case MAC_SCSI_QUADRA3:
-		scsi_loc = io_base + 0x18000 + ((chip_num == 0) ? 0 : second_offset);
-		break;
-
-	/* most quadra/centris models are like this */	
-	case MAC_SCSI_QUADRA:
-		scsi_loc = io_base + 0x10000;
-		break;
-
-	default:
-		printk("mac_esp: get_base: hit default!\n");
-		scsi_loc = io_base + 0x10000;
-		break;
-
-	} /* switch */
-
-	printk("mac_esp: io base at 0x%lx\n", scsi_loc);
-
-	return scsi_loc;
-}
-
-/*
- * Model dependent ESP setup
- */
-
-int mac_esp_detect(struct scsi_host_template * tpnt)
-{
-	int quick = 0;
-	int chipnum, chipspresent = 0;
-#if 0
-	unsigned long timeout;
-#endif
-
-	if (esp_initialized > 0)
-		return -ENODEV;
-
-	/* what do we have in this machine... */
-	if (MACHW_PRESENT(MAC_SCSI_96)) {
-		chipspresent ++;
-	}
-
-	if (MACHW_PRESENT(MAC_SCSI_96_2)) {
-		chipspresent ++;
-	}
-
-	/* number of ESPs present ? */
-	if (setup_num_esps >= 0) {
-	  if (chipspresent >= setup_num_esps)
-	    chipspresent = setup_num_esps;
-	  else
-	    printk("mac_esp_detect: num_hosts detected %d setup %d \n",
-		   chipspresent, setup_num_esps);
-	}
-
-	/* TODO: add disconnect / nosync flags */
-
-	/* setup variables */
-	tpnt->can_queue =
-	  (setup_can_queue > 0) ? setup_can_queue : 7;
-	tpnt->cmd_per_lun =
-	  (setup_cmd_per_lun > 0) ? setup_cmd_per_lun : 1;
-	tpnt->sg_tablesize = 
-	  (setup_sg_tablesize >= 0) ? setup_sg_tablesize : SG_ALL;
-
-	if (setup_hostid >= 0)
-	  tpnt->this_id = setup_hostid;
-	else {
-	  /* use 7 as default */
-	  tpnt->this_id = 7;
-	}
-
-#ifdef SUPPORT_TAGS
-	if (setup_use_tagged_queuing < 0)
-		setup_use_tagged_queuing = DEFAULT_USE_TAGGED_QUEUING;
-#endif
-
-	for (chipnum = 0; chipnum < chipspresent; chipnum ++) {
-		struct NCR_ESP * esp;
-
-		esp = esp_allocate(tpnt, NULL, 0);
-		esp->eregs = (struct ESP_regs *) get_base(chipnum);
-
-		esp->dma_irq_p = &esp_dafb_dma_irq_p;
-		if (chipnum == 0) {
-
-			if (macintosh_config->scsi_type == MAC_SCSI_QUADRA) {
-				/* most machines except those below :-) */
-				quick = 1;
-				esp->dma_irq_p = &esp_iosb_dma_irq_p;
-			} else if (macintosh_config->scsi_type == MAC_SCSI_QUADRA3) {
-				/* mostly av's */
-				quick = 0;
-			} else {
-				/* q950, 900, 700 */
-				quick = 1;
-				out_be32(0xf9800024, 0x1d1);
-				esp->dregs = (void *) 0xf9800024;
-			}
-
-		} else { /* chipnum */
-
-			quick = 1;
-			out_be32(0xf9800028, 0x1d1);
-			esp->dregs = (void *) 0xf9800028;
-
-		} /* chipnum == 0 */
-
-		/* use pio for command bytes; pio for message/data: TBI */
-		esp->do_pio_cmds = 1;
-
-		/* Set the command buffer */
-		esp->esp_command = (volatile unsigned char*) cmd_buffer;
-		esp->esp_command_dvma = (__u32) cmd_buffer;
-
-		/* various functions */
-		esp->dma_bytes_sent = &dma_bytes_sent;
-		esp->dma_can_transfer = &dma_can_transfer;
-		esp->dma_dump_state = &dma_dump_state;
-		esp->dma_init_read = NULL;
-		esp->dma_init_write = NULL;
-		esp->dma_ints_off = &dma_ints_off;
-		esp->dma_ints_on = &dma_ints_on;
-
-		esp->dma_ports_p = &dma_ports_p;
-
-
-		/* Optional functions */
-		esp->dma_barrier = NULL;
-		esp->dma_drain = NULL;
-		esp->dma_invalidate = NULL;
-		esp->dma_irq_entry = NULL;
-		esp->dma_irq_exit = NULL;
-		esp->dma_led_on = NULL;
-		esp->dma_led_off = NULL;
-		esp->dma_poll = NULL;
-		esp->dma_reset = NULL;
-
-		/* SCSI chip speed */
-		/* below esp->cfreq = 40000000; */
-
-
-		if (quick) {
-			/* 'quick' means there's handshake glue logic like in the 5380 case */
-			esp->dma_setup = &dma_setup_quick;
-		} else {
-			esp->dma_setup = &dma_setup;
-		}
-
-		if (chipnum == 0) {
-
-			esp->irq = IRQ_MAC_SCSI;
-
-			request_irq(IRQ_MAC_SCSI, esp_intr, 0, "Mac ESP SCSI", esp->ehost);
-#if 0	/* conflicts with IOP ADB */
-			request_irq(IRQ_MAC_SCSIDRQ, fake_drq, 0, "Mac ESP DRQ", esp->ehost);
-#endif
-
-			if (macintosh_config->scsi_type == MAC_SCSI_QUADRA) {
-				esp->cfreq = 16500000;
-			} else {
-				esp->cfreq = 25000000;
-			}
-
-
-		} else { /* chipnum == 1 */
-
-			esp->irq = IRQ_MAC_SCSIDRQ;
-#if 0	/* conflicts with IOP ADB */
-			request_irq(IRQ_MAC_SCSIDRQ, esp_intr, 0, "Mac ESP SCSI 2", esp->ehost);
-#endif
-
-			esp->cfreq = 25000000;
-
-		}
-
-		if (quick) {
-			printk("esp: using quick version\n");
-		}
-
-		printk("esp: addr at 0x%p\n", esp->eregs);
-
-		esp->scsi_id = 7;
-		esp->diff = 0;
-
-		esp_initialize(esp);
-
-	} /* for chipnum */
-
-	if (chipspresent)
-		printk("\nmac_esp: %d esp controllers found\n", chipspresent);
-
-	esp_initialized = chipspresent;
-
-	return chipspresent;
-}
-
-static int mac_esp_release(struct Scsi_Host *shost)
-{
-	if (shost->irq)
-		free_irq(shost->irq, NULL);
-	if (shost->io_port && shost->n_io_port)
-		release_region(shost->io_port, shost->n_io_port);
-	scsi_unregister(shost);
-	return 0;
-}
-
-/*
- * I've been wondering what this is supposed to do, for some time. Talking 
- * to Allen Briggs: These machines have an extra register someplace where the
- * DRQ pin of the ESP can be monitored. That isn't useful for determining 
- * anything else (such as reselect interrupt or other magic) though. 
- * Maybe make the semantics should be changed like 
- * if (esp->current_SC)
- *	... check DRQ flag ...
- * else 
- *	... disconnected, check pending VIA interrupt ...
- *
- * There's a problem with using the dabf flag or mac_irq_pending() here: both
- * seem to return 1 even though no interrupt is currently pending, resulting
- * in esp_exec_cmd() holding off the next command, and possibly infinite loops
- * in esp_intr(). 
- * Short term fix: just use esp_status & ESP_STAT_INTR here, as long as we
- * use simple PIO. The DRQ status will be important when implementing pseudo
- * DMA mode (set up ESP transfer count, return, do a batch of bytes in PIO or 
- * 'hardware handshake' mode upon DRQ).
- * If you plan on changing this (i.e. to save the esp_status register access in 
- * favor of a VIA register access or a shadow register for the IFR), make sure
- * to try a debug version of this first to monitor what registers would be a good
- * indicator of the ESP interrupt.
- */
-
-static int esp_dafb_dma_irq_p(struct NCR_ESP * esp)
-{
-	unsigned int ret;
-	int sreg = esp_read(esp->eregs->esp_status);
-
-#ifdef DEBUG_MAC_ESP
-	printk("mac_esp: esp_dafb_dma_irq_p dafb %d irq %d\n", 
-		readl(esp->dregs), mac_irq_pending(IRQ_MAC_SCSI));
-#endif
-
-	sreg &= ESP_STAT_INTR;
-
-	/*
-	 * maybe working; this is essentially what's used for iosb_dma_irq_p
-	 */
-	if (sreg)
-		return 1;
-	else
-		return 0;
-
-	/*
-	 * didn't work ...
-	 */
-#if 0
-	if (esp->current_SC)
-		ret = readl(esp->dregs) & 0x200;
-	else if (esp->disconnected_SC)
-		ret = 1; /* sreg ?? */
-	else
-		ret = mac_irq_pending(IRQ_MAC_SCSI);
-
-	return(ret);
-#endif
-
-}
-
-/*
- * See above: testing mac_irq_pending always returned 8 (SCSI IRQ) regardless 
- * of the actual ESP status.
- */
-
-static int esp_iosb_dma_irq_p(struct NCR_ESP * esp)
-{
-	int ret  = mac_irq_pending(IRQ_MAC_SCSI) || mac_irq_pending(IRQ_MAC_SCSIDRQ);
-	int sreg = esp_read(esp->eregs->esp_status);
-
-#ifdef DEBUG_MAC_ESP
-	printk("mac_esp: dma_irq_p drq %d irq %d sreg %x curr %p disc %p\n", 
-		mac_irq_pending(IRQ_MAC_SCSIDRQ), mac_irq_pending(IRQ_MAC_SCSI), 
-		sreg, esp->current_SC, esp->disconnected_SC);
-#endif
-
-	sreg &= ESP_STAT_INTR;
-
-	if (sreg)
-		return (sreg);
-	else
-		return 0;
-}
-
-/*
- * This seems to be OK for PIO at least ... usually 0 after PIO.
- */
-
-static int dma_bytes_sent(struct NCR_ESP * esp, int fifo_count)
-{
-
-#ifdef DEBUG_MAC_ESP
-	printk("mac_esp: dma bytes sent = %x\n", fifo_count);
-#endif
-
-	return fifo_count;
-}
-
-/*
- * dma_can_transfer is used to switch between DMA and PIO, if DMA (pseudo)
- * is ever implemented. Returning 0 here will use PIO.
- */
-
-static int dma_can_transfer(struct NCR_ESP * esp, Scsi_Cmnd * sp)
-{
-	unsigned long sz = sp->SCp.this_residual;
-#if 0	/* no DMA yet; make conditional */
-	if (sz > 0x10000000) {
-		sz = 0x10000000;
-	}
-	printk("mac_esp: dma can transfer = 0lx%x\n", sz);
-#else
-
-#ifdef DEBUG_MAC_ESP
-	printk("mac_esp: pio to transfer = %ld\n", sz);
-#endif
-
-	sz = 0;
-#endif
-	return sz;
-}
-
-/*
- * Not yet ...
- */
-
-static void dma_dump_state(struct NCR_ESP * esp)
-{
-#ifdef DEBUG_MAC_ESP
-	printk("mac_esp: dma_dump_state: called\n");
-#endif
-#if 0
-	ESPLOG(("esp%d: dma -- cond_reg<%02x>\n",
-		esp->esp_id, ((struct mac_dma_registers *)
-		(esp->dregs))->cond_reg));
-#endif
-}
-
-/*
- * DMA setup: should be used to set up the ESP transfer count for pseudo
- * DMA transfers; need a DRQ transfer function to do the actual transfer
- */
-
-static void dma_init_read(struct NCR_ESP * esp, char * vaddress, int length)
-{
-	printk("mac_esp: dma_init_read\n");
-}
-
-
-static void dma_init_write(struct NCR_ESP * esp, char * vaddress, int length)
-{
-	printk("mac_esp: dma_init_write\n");
-}
-
-
-static void dma_ints_off(struct NCR_ESP * esp)
-{
-	disable_irq(esp->irq);
-}
-
-
-static void dma_ints_on(struct NCR_ESP * esp)
-{
-	enable_irq(esp->irq);
-}
-
-/*
- * generic dma_irq_p(), unused
- */
-
-static int dma_irq_p(struct NCR_ESP * esp)
-{
-	int i = esp_read(esp->eregs->esp_status);
-
-#ifdef DEBUG_MAC_ESP
-	printk("mac_esp: dma_irq_p status %d\n", i);
-#endif
-
-	return (i & ESP_STAT_INTR);
-}
-
-static int dma_irq_p_quick(struct NCR_ESP * esp)
-{
-	/*
-	 * Copied from iosb_dma_irq_p()
-	 */
-	int ret  = mac_irq_pending(IRQ_MAC_SCSI) || mac_irq_pending(IRQ_MAC_SCSIDRQ);
-	int sreg = esp_read(esp->eregs->esp_status);
-
-#ifdef DEBUG_MAC_ESP
-	printk("mac_esp: dma_irq_p drq %d irq %d sreg %x curr %p disc %p\n", 
-		mac_irq_pending(IRQ_MAC_SCSIDRQ), mac_irq_pending(IRQ_MAC_SCSI), 
-		sreg, esp->current_SC, esp->disconnected_SC);
-#endif
-
-	sreg &= ESP_STAT_INTR;
-
-	if (sreg)
-		return (sreg);
-	else
-		return 0;
-
-}
-
-static void dma_led_off(struct NCR_ESP * esp)
-{
-#ifdef DEBUG_MAC_ESP
-	printk("mac_esp: dma_led_off: called\n");
-#endif
-}
-
-
-static void dma_led_on(struct NCR_ESP * esp)
-{
-#ifdef DEBUG_MAC_ESP
-	printk("mac_esp: dma_led_on: called\n");
-#endif
-}
-
-
-static int dma_ports_p(struct NCR_ESP * esp)
-{
-	return 0;
-}
-
-
-static void dma_setup(struct NCR_ESP * esp, __u32 addr, int count, int write)
-{
-
-#ifdef DEBUG_MAC_ESP
-	printk("mac_esp: dma_setup\n");
-#endif
-
-	if (write) {
-		dma_init_read(esp, (char *) addr, count);
-	} else {
-		dma_init_write(esp, (char *) addr, count);
-	}
-}
-
-
-static void dma_setup_quick(struct NCR_ESP * esp, __u32 addr, int count, int write)
-{
-#ifdef DEBUG_MAC_ESP
-	printk("mac_esp: dma_setup_quick\n");
-#endif
-}
-
-static struct scsi_host_template driver_template = {
-	.proc_name		= "mac_esp",
-	.name			= "Mac 53C9x SCSI",
-	.detect			= mac_esp_detect,
-	.slave_alloc		= esp_slave_alloc,
-	.slave_destroy		= esp_slave_destroy,
-	.release		= mac_esp_release,
-	.info			= esp_info,
-	.queuecommand		= esp_queue,
-	.eh_abort_handler	= esp_abort,
-	.eh_bus_reset_handler	= esp_reset,
-	.can_queue		= 7,
-	.this_id		= 7,
-	.sg_tablesize		= SG_ALL,
-	.cmd_per_lun		= 1,
-	.use_clustering		= DISABLE_CLUSTERING
+static struct esp_driver_ops mac_esp_ops = {
+	.esp_write8       = mac_esp_write8,
+	.esp_read8        = mac_esp_read8,
+	.map_single       = mac_esp_map_single,
+	.map_sg           = mac_esp_map_sg,
+	.unmap_single     = mac_esp_unmap_single,
+	.unmap_sg         = mac_esp_unmap_sg,
+	.irq_pending      = mac_esp_irq_pending,
+	.dma_length_limit = mac_esp_dma_length_limit,
+	.reset_dma        = mac_esp_reset_dma,
+	.dma_drain        = mac_esp_dma_drain,
+	.dma_invalidate   = mac_esp_dma_invalidate,
+	.send_dma_cmd     = mac_esp_send_pdma_cmd,
+	.dma_error        = mac_esp_dma_error,
 };
 
+static int __devinit esp_mac_probe(struct platform_device *dev)
+{
+	struct scsi_host_template *tpnt = &scsi_esp_template;
+	struct Scsi_Host *host;
+	struct esp *esp;
+	int err;
+	struct mac_esp_priv *mep;
 
-#include "scsi_module.c"
+	if (!MACH_IS_MAC)
+		return -ENODEV;
 
-MODULE_LICENSE("GPL");
+	if (dev->id > 1)
+		return -ENODEV;
+
+	host = scsi_host_alloc(tpnt, sizeof(struct esp));
+
+	err = -ENOMEM;
+	if (!host)
+		goto fail;
+
+	host->max_id = 8;
+	host->use_clustering = DISABLE_CLUSTERING;
+	esp = shost_priv(host);
+
+	esp->host = host;
+	esp->dev = dev;
+
+	esp->command_block = kzalloc(16, GFP_KERNEL);
+	if (!esp->command_block)
+		goto fail_unlink;
+	esp->command_block_dma = (dma_addr_t)esp->command_block;
+
+	esp->scsi_id = 7;
+	host->this_id = esp->scsi_id;
+	esp->scsi_id_mask = 1 << esp->scsi_id;
+
+	mep = kzalloc(sizeof(struct mac_esp_priv), GFP_KERNEL);
+	if (!mep)
+		goto fail_free_command_block;
+	mep->esp = esp;
+	platform_set_drvdata(dev, mep);
+
+	switch (macintosh_config->scsi_type) {
+	case MAC_SCSI_QUADRA:
+		esp->cfreq     = 16500000;
+		esp->regs      = (void __iomem *)MAC_ESP_REGS_QUADRA;
+		mep->pdma_io   = esp->regs + MAC_ESP_PDMA_IO_OFFSET;
+		mep->pdma_regs = NULL;
+		break;
+	case MAC_SCSI_QUADRA2:
+		esp->cfreq     = 25000000;
+		esp->regs      = (void __iomem *)(MAC_ESP_REGS_QUADRA2 +
+				 dev->id * MAC_ESP_REGS_SPACING);
+		mep->pdma_io   = esp->regs + MAC_ESP_PDMA_IO_OFFSET;
+		mep->pdma_regs = (void __iomem *)(MAC_ESP_PDMA_REG +
+				 dev->id * MAC_ESP_PDMA_REG_SPACING);
+		nubus_writel(0x1d1, mep->pdma_regs);
+		break;
+	case MAC_SCSI_QUADRA3:
+		/* These quadras have a real DMA controller (the PSC) but we
+		 * don't know how to drive it so we must use PIO instead.
+		 */
+		esp->cfreq     = 25000000;
+		esp->regs      = (void __iomem *)MAC_ESP_REGS_QUADRA3;
+		mep->pdma_io   = NULL;
+		mep->pdma_regs = NULL;
+		break;
+	}
+
+	esp->ops = &mac_esp_ops;
+	if (mep->pdma_io == NULL) {
+		printk(KERN_INFO PFX "using PIO for controller %d\n", dev->id);
+		esp_write8(0, ESP_TCLOW);
+		esp_write8(0, ESP_TCMED);
+		esp->flags = ESP_FLAG_DISABLE_SYNC;
+		mac_esp_ops.send_dma_cmd = mac_esp_send_pio_cmd;
+	} else {
+		printk(KERN_INFO PFX "using PDMA for controller %d\n", dev->id);
+	}
+
+	host->irq = IRQ_MAC_SCSI;
+	esp_chips[dev->id] = esp;
+	mb();
+	if (esp_chips[!dev->id] == NULL) {
+		err = request_irq(host->irq, mac_scsi_esp_intr, 0,
+		                  "Mac ESP", NULL);
+		if (err < 0) {
+			esp_chips[dev->id] = NULL;
+			goto fail_free_priv;
+		}
+	}
+
+	err = scsi_esp_register(esp, &dev->dev);
+	if (err)
+		goto fail_free_irq;
+
+	return 0;
+
+fail_free_irq:
+	if (esp_chips[!dev->id] == NULL)
+		free_irq(host->irq, esp);
+fail_free_priv:
+	kfree(mep);
+fail_free_command_block:
+	kfree(esp->command_block);
+fail_unlink:
+	scsi_host_put(host);
+fail:
+	return err;
+}
+
+static int __devexit esp_mac_remove(struct platform_device *dev)
+{
+	struct mac_esp_priv *mep = platform_get_drvdata(dev);
+	struct esp *esp = mep->esp;
+	unsigned int irq = esp->host->irq;
+
+	scsi_esp_unregister(esp);
+
+	esp_chips[dev->id] = NULL;
+	if (!(esp_chips[0] || esp_chips[1]))
+		free_irq(irq, NULL);
+
+	kfree(mep);
+
+	kfree(esp->command_block);
+
+	scsi_host_put(esp->host);
+
+	return 0;
+}
+
+static struct platform_driver esp_mac_driver = {
+	.probe    = esp_mac_probe,
+	.remove   = __devexit_p(esp_mac_remove),
+	.driver   = {
+		.name	= DRV_MODULE_NAME,
+		.owner	= THIS_MODULE,
+	},
+};
+
+static int __init mac_esp_init(void)
+{
+	return platform_driver_register(&esp_mac_driver);
+}
+
+static void __exit mac_esp_exit(void)
+{
+	platform_driver_unregister(&esp_mac_driver);
+}
+
+MODULE_DESCRIPTION("Mac ESP SCSI driver");
+MODULE_AUTHOR("Finn Thain <fthain@telegraphics.com.au>");
+MODULE_LICENSE("GPL v2");
+MODULE_VERSION(DRV_VERSION);
+MODULE_ALIAS("platform:" DRV_MODULE_NAME);
+
+module_init(mac_esp_init);
+module_exit(mac_esp_exit);

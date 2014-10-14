@@ -18,7 +18,7 @@
  */
 
 /*
- *      jfs_txnmgr.c: transaction manager
+ *	jfs_txnmgr.c: transaction manager
  *
  * notes:
  * transaction starts with txBegin() and ends with txCommit()
@@ -49,6 +49,7 @@
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/kthread.h>
+#include <linux/seq_file.h>
 #include "jfs_incore.h"
 #include "jfs_inode.h"
 #include "jfs_filsys.h"
@@ -60,7 +61,7 @@
 #include "jfs_debug.h"
 
 /*
- *      transaction management structures
+ *	transaction management structures
  */
 static struct {
 	int freetid;		/* index of a free tid structure */
@@ -103,19 +104,19 @@ module_param(nTxLock, int, 0);
 MODULE_PARM_DESC(nTxLock,
 		 "Number of transaction locks (max:65536)");
 
-struct tblock *TxBlock;	        /* transaction block table */
-static int TxLockLWM;		/* Low water mark for number of txLocks used */
-static int TxLockHWM;		/* High water mark for number of txLocks used */
-static int TxLockVHWM;		/* Very High water mark */
-struct tlock *TxLock;           /* transaction lock table */
+struct tblock *TxBlock;	/* transaction block table */
+static int TxLockLWM;	/* Low water mark for number of txLocks used */
+static int TxLockHWM;	/* High water mark for number of txLocks used */
+static int TxLockVHWM;	/* Very High water mark */
+struct tlock *TxLock;	/* transaction lock table */
 
 /*
- *      transaction management lock
+ *	transaction management lock
  */
 static DEFINE_SPINLOCK(jfsTxnLock);
 
-#define TXN_LOCK()              spin_lock(&jfsTxnLock)
-#define TXN_UNLOCK()            spin_unlock(&jfsTxnLock)
+#define TXN_LOCK()		spin_lock(&jfsTxnLock)
+#define TXN_UNLOCK()		spin_unlock(&jfsTxnLock)
 
 #define LAZY_LOCK_INIT()	spin_lock_init(&TxAnchor.LazyLock);
 #define LAZY_LOCK(flags)	spin_lock_irqsave(&TxAnchor.LazyLock, flags)
@@ -148,7 +149,7 @@ static inline void TXN_SLEEP_DROP_LOCK(wait_queue_head_t * event)
 #define TXN_WAKEUP(event) wake_up_all(event)
 
 /*
- *      statistics
+ *	statistics
  */
 static struct {
 	tid_t maxtid;		/* 4: biggest tid ever used */
@@ -181,8 +182,8 @@ static void xtLog(struct jfs_log * log, struct tblock * tblk, struct lrd * lrd,
 static void LogSyncRelease(struct metapage * mp);
 
 /*
- *              transaction block/lock management
- *              ---------------------------------
+ *		transaction block/lock management
+ *		---------------------------------
  */
 
 /*
@@ -227,9 +228,9 @@ static void txLockFree(lid_t lid)
 }
 
 /*
- * NAME:        txInit()
+ * NAME:	txInit()
  *
- * FUNCTION:    initialize transaction management structures
+ * FUNCTION:	initialize transaction management structures
  *
  * RETURN:
  *
@@ -333,9 +334,9 @@ int txInit(void)
 }
 
 /*
- * NAME:        txExit()
+ * NAME:	txExit()
  *
- * FUNCTION:    clean up when module is unloaded
+ * FUNCTION:	clean up when module is unloaded
  */
 void txExit(void)
 {
@@ -346,12 +347,12 @@ void txExit(void)
 }
 
 /*
- * NAME:        txBegin()
+ * NAME:	txBegin()
  *
- * FUNCTION:    start a transaction.
+ * FUNCTION:	start a transaction.
  *
- * PARAMETER:   sb	- superblock
- *              flag	- force for nested tx;
+ * PARAMETER:	sb	- superblock
+ *		flag	- force for nested tx;
  *
  * RETURN:	tid	- transaction id
  *
@@ -447,13 +448,13 @@ tid_t txBegin(struct super_block *sb, int flag)
 }
 
 /*
- * NAME:        txBeginAnon()
+ * NAME:	txBeginAnon()
  *
- * FUNCTION:    start an anonymous transaction.
+ * FUNCTION:	start an anonymous transaction.
  *		Blocks if logsync or available tlocks are low to prevent
  *		anonymous tlocks from depleting supply.
  *
- * PARAMETER:   sb	- superblock
+ * PARAMETER:	sb	- superblock
  *
  * RETURN:	none
  */
@@ -489,11 +490,11 @@ void txBeginAnon(struct super_block *sb)
 }
 
 /*
- *      txEnd()
+ *	txEnd()
  *
  * function: free specified transaction block.
  *
- *      logsync barrier processing:
+ *	logsync barrier processing:
  *
  * serialization:
  */
@@ -577,13 +578,13 @@ wakeup:
 }
 
 /*
- *      txLock()
+ *	txLock()
  *
  * function: acquire a transaction lock on the specified <mp>
  *
  * parameter:
  *
- * return:      transaction lock id
+ * return:	transaction lock id
  *
  * serialization:
  */
@@ -635,7 +636,7 @@ struct tlock *txLock(tid_t tid, struct inode *ip, struct metapage * mp,
 	 * the inode of the page and available to all anonymous
 	 * transactions until txCommit() time at which point
 	 * they are transferred to the transaction tlock list of
-	 * the commiting transaction of the inode)
+	 * the committing transaction of the inode)
 	 */
 	if (xtid == 0) {
 		tlck->tid = tid;
@@ -829,12 +830,16 @@ struct tlock *txLock(tid_t tid, struct inode *ip, struct metapage * mp,
 	/* Only locks on ipimap or ipaimap should reach here */
 	/* assert(jfs_ip->fileset == AGGREGATE_I); */
 	if (jfs_ip->fileset != AGGREGATE_I) {
-		jfs_err("txLock: trying to lock locked page!");
-		dump_mem("ip", ip, sizeof(struct inode));
-		dump_mem("mp", mp, sizeof(struct metapage));
-		dump_mem("Locker's tblk", tid_to_tblock(tid),
-			 sizeof(struct tblock));
-		dump_mem("Tlock", tlck, sizeof(struct tlock));
+		printk(KERN_ERR "txLock: trying to lock locked page!");
+		print_hex_dump(KERN_ERR, "ip: ", DUMP_PREFIX_ADDRESS, 16, 4,
+			       ip, sizeof(*ip), 0);
+		print_hex_dump(KERN_ERR, "mp: ", DUMP_PREFIX_ADDRESS, 16, 4,
+			       mp, sizeof(*mp), 0);
+		print_hex_dump(KERN_ERR, "Locker's tblock: ",
+			       DUMP_PREFIX_ADDRESS, 16, 4, tid_to_tblock(tid),
+			       sizeof(struct tblock), 0);
+		print_hex_dump(KERN_ERR, "Tlock: ", DUMP_PREFIX_ADDRESS, 16, 4,
+			       tlck, sizeof(*tlck), 0);
 		BUG();
 	}
 	INCREMENT(stattx.waitlock);	/* statistics */
@@ -857,17 +862,17 @@ struct tlock *txLock(tid_t tid, struct inode *ip, struct metapage * mp,
 }
 
 /*
- * NAME:        txRelease()
+ * NAME:	txRelease()
  *
- * FUNCTION:    Release buffers associated with transaction locks, but don't
+ * FUNCTION:	Release buffers associated with transaction locks, but don't
  *		mark homeok yet.  The allows other transactions to modify
  *		buffers, but won't let them go to disk until commit record
  *		actually gets written.
  *
  * PARAMETER:
- *              tblk    -
+ *		tblk	-
  *
- * RETURN:      Errors from subroutines.
+ * RETURN:	Errors from subroutines.
  */
 static void txRelease(struct tblock * tblk)
 {
@@ -896,10 +901,10 @@ static void txRelease(struct tblock * tblk)
 }
 
 /*
- * NAME:        txUnlock()
+ * NAME:	txUnlock()
  *
- * FUNCTION:    Initiates pageout of pages modified by tid in journalled
- *              objects and frees their lockwords.
+ * FUNCTION:	Initiates pageout of pages modified by tid in journalled
+ *		objects and frees their lockwords.
  */
 static void txUnlock(struct tblock * tblk)
 {
@@ -983,10 +988,10 @@ static void txUnlock(struct tblock * tblk)
 }
 
 /*
- *      txMaplock()
+ *	txMaplock()
  *
  * function: allocate a transaction lock for freed page/entry;
- *      for freed page, maplock is used as xtlock/dtlock type;
+ *	for freed page, maplock is used as xtlock/dtlock type;
  */
 struct tlock *txMaplock(tid_t tid, struct inode *ip, int type)
 {
@@ -1057,7 +1062,7 @@ struct tlock *txMaplock(tid_t tid, struct inode *ip, int type)
 }
 
 /*
- *      txLinelock()
+ *	txLinelock()
  *
  * function: allocate a transaction lock for log vector list
  */
@@ -1092,39 +1097,39 @@ struct linelock *txLinelock(struct linelock * tlock)
 }
 
 /*
- *              transaction commit management
- *              -----------------------------
+ *		transaction commit management
+ *		-----------------------------
  */
 
 /*
- * NAME:        txCommit()
+ * NAME:	txCommit()
  *
- * FUNCTION:    commit the changes to the objects specified in
- *              clist.  For journalled segments only the
- *              changes of the caller are committed, ie by tid.
- *              for non-journalled segments the data are flushed to
- *              disk and then the change to the disk inode and indirect
- *              blocks committed (so blocks newly allocated to the
- *              segment will be made a part of the segment atomically).
+ * FUNCTION:	commit the changes to the objects specified in
+ *		clist.  For journalled segments only the
+ *		changes of the caller are committed, ie by tid.
+ *		for non-journalled segments the data are flushed to
+ *		disk and then the change to the disk inode and indirect
+ *		blocks committed (so blocks newly allocated to the
+ *		segment will be made a part of the segment atomically).
  *
- *              all of the segments specified in clist must be in
- *              one file system. no more than 6 segments are needed
- *              to handle all unix svcs.
+ *		all of the segments specified in clist must be in
+ *		one file system. no more than 6 segments are needed
+ *		to handle all unix svcs.
  *
- *              if the i_nlink field (i.e. disk inode link count)
- *              is zero, and the type of inode is a regular file or
- *              directory, or symbolic link , the inode is truncated
- *              to zero length. the truncation is committed but the
- *              VM resources are unaffected until it is closed (see
- *              iput and iclose).
+ *		if the i_nlink field (i.e. disk inode link count)
+ *		is zero, and the type of inode is a regular file or
+ *		directory, or symbolic link , the inode is truncated
+ *		to zero length. the truncation is committed but the
+ *		VM resources are unaffected until it is closed (see
+ *		iput and iclose).
  *
  * PARAMETER:
  *
  * RETURN:
  *
  * serialization:
- *              on entry the inode lock on each segment is assumed
- *              to be held.
+ *		on entry the inode lock on each segment is assumed
+ *		to be held.
  *
  * i/o error:
  */
@@ -1175,7 +1180,7 @@ int txCommit(tid_t tid,		/* transaction identifier */
 	if ((flag & (COMMIT_FORCE | COMMIT_SYNC)) == 0)
 		tblk->xflag |= COMMIT_LAZY;
 	/*
-	 *      prepare non-journaled objects for commit
+	 *	prepare non-journaled objects for commit
 	 *
 	 * flush data pages of non-journaled file
 	 * to prevent the file getting non-initialized disk blocks
@@ -1186,7 +1191,7 @@ int txCommit(tid_t tid,		/* transaction identifier */
 	cd.nip = nip;
 
 	/*
-	 *      acquire transaction lock on (on-disk) inodes
+	 *	acquire transaction lock on (on-disk) inodes
 	 *
 	 * update on-disk inode from in-memory inode
 	 * acquiring transaction locks for AFTER records
@@ -1262,7 +1267,7 @@ int txCommit(tid_t tid,		/* transaction identifier */
 	}
 
 	/*
-	 *      write log records from transaction locks
+	 *	write log records from transaction locks
 	 *
 	 * txUpdateMap() resets XAD_NEW in XAD.
 	 */
@@ -1274,7 +1279,7 @@ int txCommit(tid_t tid,		/* transaction identifier */
 	 * lazy commit thread finishes processing
 	 */
 	if (tblk->xflag & COMMIT_DELETE) {
-		atomic_inc(&tblk->u.ip->i_count);
+		ihold(tblk->u.ip);
 		/*
 		 * Avoid a rare deadlock
 		 *
@@ -1285,7 +1290,14 @@ int txCommit(tid_t tid,		/* transaction identifier */
 		 * commit the transaction synchronously, so the last iput
 		 * will be done by the calling thread (or later)
 		 */
-		if (tblk->u.ip->i_state & I_LOCK)
+		/*
+		 * I believe this code is no longer needed.  Splitting I_LOCK
+		 * into two bits, I_NEW and I_SYNC should prevent this
+		 * deadlock as well.  But since I don't have a JFS testload
+		 * to verify this, only a trivial s/I_LOCK/I_SYNC/ was done.
+		 * Joern
+		 */
+		if (tblk->u.ip->i_state & I_SYNC)
 			tblk->xflag &= ~COMMIT_LAZY;
 	}
 
@@ -1294,7 +1306,7 @@ int txCommit(tid_t tid,		/* transaction identifier */
 		!test_cflag(COMMIT_Nolink, tblk->u.ip)));
 
 	/*
-	 *      write COMMIT log record
+	 *	write COMMIT log record
 	 */
 	lrd->type = cpu_to_le16(LOG_COMMIT);
 	lrd->length = 0;
@@ -1303,7 +1315,7 @@ int txCommit(tid_t tid,		/* transaction identifier */
 	lmGroupCommit(log, tblk);
 
 	/*
-	 *      - transaction is now committed -
+	 *	- transaction is now committed -
 	 */
 
 	/*
@@ -1314,11 +1326,11 @@ int txCommit(tid_t tid,		/* transaction identifier */
 		txForce(tblk);
 
 	/*
-	 *      update allocation map.
+	 *	update allocation map.
 	 *
 	 * update inode allocation map and inode:
 	 * free pager lock on memory object of inode if any.
-	 * update  block allocation map.
+	 * update block allocation map.
 	 *
 	 * txUpdateMap() resets XAD_NEW in XAD.
 	 */
@@ -1326,7 +1338,7 @@ int txCommit(tid_t tid,		/* transaction identifier */
 		txUpdateMap(tblk);
 
 	/*
-	 *      free transaction locks and pageout/free pages
+	 *	free transaction locks and pageout/free pages
 	 */
 	txRelease(tblk);
 
@@ -1335,7 +1347,7 @@ int txCommit(tid_t tid,		/* transaction identifier */
 
 
 	/*
-	 *      reset in-memory object state
+	 *	reset in-memory object state
 	 */
 	for (k = 0; k < cd.nip; k++) {
 		ip = cd.iplist[k];
@@ -1358,11 +1370,11 @@ int txCommit(tid_t tid,		/* transaction identifier */
 }
 
 /*
- * NAME:        txLog()
+ * NAME:	txLog()
  *
- * FUNCTION:    Writes AFTER log records for all lines modified
- *              by tid for segments specified by inodes in comdata.
- *              Code assumes only WRITELOCKS are recorded in lockwords.
+ * FUNCTION:	Writes AFTER log records for all lines modified
+ *		by tid for segments specified by inodes in comdata.
+ *		Code assumes only WRITELOCKS are recorded in lockwords.
  *
  * PARAMETERS:
  *
@@ -1421,12 +1433,12 @@ static int txLog(struct jfs_log * log, struct tblock * tblk, struct commit * cd)
 }
 
 /*
- *      diLog()
+ *	diLog()
  *
- * function:    log inode tlock and format maplock to update bmap;
+ * function:	log inode tlock and format maplock to update bmap;
  */
 static int diLog(struct jfs_log * log, struct tblock * tblk, struct lrd * lrd,
-	  struct tlock * tlck, struct commit * cd)
+		 struct tlock * tlck, struct commit * cd)
 {
 	int rc = 0;
 	struct metapage *mp;
@@ -1442,7 +1454,7 @@ static int diLog(struct jfs_log * log, struct tblock * tblk, struct lrd * lrd,
 	pxd = &lrd->log.redopage.pxd;
 
 	/*
-	 *      inode after image
+	 *	inode after image
 	 */
 	if (tlck->type & tlckENTRY) {
 		/* log after-image for logredo(): */
@@ -1456,7 +1468,7 @@ static int diLog(struct jfs_log * log, struct tblock * tblk, struct lrd * lrd,
 		tlck->flag |= tlckWRITEPAGE;
 	} else if (tlck->type & tlckFREE) {
 		/*
-		 *      free inode extent
+		 *	free inode extent
 		 *
 		 * (pages of the freed inode extent have been invalidated and
 		 * a maplock for free of the extent has been formatted at
@@ -1498,7 +1510,7 @@ static int diLog(struct jfs_log * log, struct tblock * tblk, struct lrd * lrd,
 		jfs_err("diLog: UFO type tlck:0x%p", tlck);
 #ifdef  _JFS_WIP
 	/*
-	 *      alloc/free external EA extent
+	 *	alloc/free external EA extent
 	 *
 	 * a maplock for txUpdateMap() to update bPWMAP for alloc/free
 	 * of the extent has been formatted at txLock() time;
@@ -1534,9 +1546,9 @@ static int diLog(struct jfs_log * log, struct tblock * tblk, struct lrd * lrd,
 }
 
 /*
- *      dataLog()
+ *	dataLog()
  *
- * function:    log data tlock
+ * function:	log data tlock
  */
 static int dataLog(struct jfs_log * log, struct tblock * tblk, struct lrd * lrd,
 	    struct tlock * tlck)
@@ -1580,9 +1592,9 @@ static int dataLog(struct jfs_log * log, struct tblock * tblk, struct lrd * lrd,
 }
 
 /*
- *      dtLog()
+ *	dtLog()
  *
- * function:    log dtree tlock and format maplock to update bmap;
+ * function:	log dtree tlock and format maplock to update bmap;
  */
 static void dtLog(struct jfs_log * log, struct tblock * tblk, struct lrd * lrd,
 	   struct tlock * tlck)
@@ -1603,10 +1615,10 @@ static void dtLog(struct jfs_log * log, struct tblock * tblk, struct lrd * lrd,
 		lrd->log.redopage.type |= cpu_to_le16(LOG_BTROOT);
 
 	/*
-	 *      page extension via relocation: entry insertion;
-	 *      page extension in-place: entry insertion;
-	 *      new right page from page split, reinitialized in-line
-	 *      root from root page split: entry insertion;
+	 *	page extension via relocation: entry insertion;
+	 *	page extension in-place: entry insertion;
+	 *	new right page from page split, reinitialized in-line
+	 *	root from root page split: entry insertion;
 	 */
 	if (tlck->type & (tlckNEW | tlckEXTEND)) {
 		/* log after-image of the new page for logredo():
@@ -1641,8 +1653,8 @@ static void dtLog(struct jfs_log * log, struct tblock * tblk, struct lrd * lrd,
 	}
 
 	/*
-	 *      entry insertion/deletion,
-	 *      sibling page link update (old right page before split);
+	 *	entry insertion/deletion,
+	 *	sibling page link update (old right page before split);
 	 */
 	if (tlck->type & (tlckENTRY | tlckRELINK)) {
 		/* log after-image for logredo(): */
@@ -1658,11 +1670,11 @@ static void dtLog(struct jfs_log * log, struct tblock * tblk, struct lrd * lrd,
 	}
 
 	/*
-	 *      page deletion: page has been invalidated
-	 *      page relocation: source extent
+	 *	page deletion: page has been invalidated
+	 *	page relocation: source extent
 	 *
-	 *      a maplock for free of the page has been formatted
-	 *      at txLock() time);
+	 *	a maplock for free of the page has been formatted
+	 *	at txLock() time);
 	 */
 	if (tlck->type & (tlckFREE | tlckRELOCATE)) {
 		/* log LOG_NOREDOPAGE of the deleted page for logredo()
@@ -1683,9 +1695,9 @@ static void dtLog(struct jfs_log * log, struct tblock * tblk, struct lrd * lrd,
 }
 
 /*
- *      xtLog()
+ *	xtLog()
  *
- * function:    log xtree tlock and format maplock to update bmap;
+ * function:	log xtree tlock and format maplock to update bmap;
  */
 static void xtLog(struct jfs_log * log, struct tblock * tblk, struct lrd * lrd,
 	   struct tlock * tlck)
@@ -1725,8 +1737,8 @@ static void xtLog(struct jfs_log * log, struct tblock * tblk, struct lrd * lrd,
 	xadlock = (struct xdlistlock *) maplock;
 
 	/*
-	 *      entry insertion/extension;
-	 *      sibling page link update (old right page before split);
+	 *	entry insertion/extension;
+	 *	sibling page link update (old right page before split);
 	 */
 	if (tlck->type & (tlckNEW | tlckGROW | tlckRELINK)) {
 		/* log after-image for logredo():
@@ -1801,7 +1813,7 @@ static void xtLog(struct jfs_log * log, struct tblock * tblk, struct lrd * lrd,
 	}
 
 	/*
-	 *      page deletion: file deletion/truncation (ref. xtTruncate())
+	 *	page deletion: file deletion/truncation (ref. xtTruncate())
 	 *
 	 * (page will be invalidated after log is written and bmap
 	 * is updated from the page);
@@ -1908,13 +1920,13 @@ static void xtLog(struct jfs_log * log, struct tblock * tblk, struct lrd * lrd,
 	}
 
 	/*
-	 *      page/entry truncation: file truncation (ref. xtTruncate())
+	 *	page/entry truncation: file truncation (ref. xtTruncate())
 	 *
-	 *     |----------+------+------+---------------|
-	 *                |      |      |
-	 *                |      |     hwm - hwm before truncation
-	 *                |     next - truncation point
-	 *               lwm - lwm before truncation
+	 *	|----------+------+------+---------------|
+	 *		   |      |      |
+	 *		   |      |     hwm - hwm before truncation
+	 *		   |     next - truncation point
+	 *		  lwm - lwm before truncation
 	 * header ?
 	 */
 	if (tlck->type & tlckTRUNCATE) {
@@ -1937,7 +1949,7 @@ static void xtLog(struct jfs_log * log, struct tblock * tblk, struct lrd * lrd,
 		twm = xtlck->twm.offset;
 
 		/*
-		 *      write log records
+		 *	write log records
 		 */
 		/* log after-image for logredo():
 		 *
@@ -1997,7 +2009,7 @@ static void xtLog(struct jfs_log * log, struct tblock * tblk, struct lrd * lrd,
 		}
 
 		/*
-		 *      format maplock(s) for txUpdateMap() to update bmap
+		 *	format maplock(s) for txUpdateMap() to update bmap
 		 */
 		maplock->index = 0;
 
@@ -2069,9 +2081,9 @@ static void xtLog(struct jfs_log * log, struct tblock * tblk, struct lrd * lrd,
 }
 
 /*
- *      mapLog()
+ *	mapLog()
  *
- * function:    log from maplock of freed data extents;
+ * function:	log from maplock of freed data extents;
  */
 static void mapLog(struct jfs_log * log, struct tblock * tblk, struct lrd * lrd,
 		   struct tlock * tlck)
@@ -2081,7 +2093,7 @@ static void mapLog(struct jfs_log * log, struct tblock * tblk, struct lrd * lrd,
 	pxd_t *pxd;
 
 	/*
-	 *      page relocation: free the source page extent
+	 *	page relocation: free the source page extent
 	 *
 	 * a maplock for txUpdateMap() for free of the page
 	 * has been formatted at txLock() time saving the src
@@ -2155,10 +2167,10 @@ static void mapLog(struct jfs_log * log, struct tblock * tblk, struct lrd * lrd,
 }
 
 /*
- *      txEA()
+ *	txEA()
  *
- * function:    acquire maplock for EA/ACL extents or
- *              set COMMIT_INLINE flag;
+ * function:	acquire maplock for EA/ACL extents or
+ *		set COMMIT_INLINE flag;
  */
 void txEA(tid_t tid, struct inode *ip, dxd_t * oldea, dxd_t * newea)
 {
@@ -2207,10 +2219,10 @@ void txEA(tid_t tid, struct inode *ip, dxd_t * oldea, dxd_t * newea)
 }
 
 /*
- *      txForce()
+ *	txForce()
  *
  * function: synchronously write pages locked by transaction
- *              after txLog() but before txUpdateMap();
+ *	     after txLog() but before txUpdateMap();
  */
 static void txForce(struct tblock * tblk)
 {
@@ -2273,10 +2285,10 @@ static void txForce(struct tblock * tblk)
 }
 
 /*
- *      txUpdateMap()
+ *	txUpdateMap()
  *
- * function:    update persistent allocation map (and working map
- *              if appropriate);
+ * function:	update persistent allocation map (and working map
+ *		if appropriate);
  *
  * parameter:
  */
@@ -2298,7 +2310,7 @@ static void txUpdateMap(struct tblock * tblk)
 
 
 	/*
-	 *      update block allocation map
+	 *	update block allocation map
 	 *
 	 * update allocation state in pmap (and wmap) and
 	 * update lsn of the pmap page;
@@ -2382,7 +2394,7 @@ static void txUpdateMap(struct tblock * tblk)
 		}
 	}
 	/*
-	 *      update inode allocation map
+	 *	update inode allocation map
 	 *
 	 * update allocation state in pmap and
 	 * update lsn of the pmap page;
@@ -2407,24 +2419,24 @@ static void txUpdateMap(struct tblock * tblk)
 }
 
 /*
- *      txAllocPMap()
+ *	txAllocPMap()
  *
  * function: allocate from persistent map;
  *
  * parameter:
- *      ipbmap  -
- *      malock -
- *              xad list:
- *              pxd:
+ *	ipbmap	-
+ *	malock	-
+ *		xad list:
+ *		pxd:
  *
- *      maptype -
- *              allocate from persistent map;
- *              free from persistent map;
- *              (e.g., tmp file - free from working map at releae
- *               of last reference);
- *              free from persistent and working map;
+ *	maptype -
+ *		allocate from persistent map;
+ *		free from persistent map;
+ *		(e.g., tmp file - free from working map at releae
+ *		 of last reference);
+ *		free from persistent and working map;
  *
- *      lsn     - log sequence number;
+ *	lsn	- log sequence number;
  */
 static void txAllocPMap(struct inode *ip, struct maplock * maplock,
 			struct tblock * tblk)
@@ -2478,9 +2490,9 @@ static void txAllocPMap(struct inode *ip, struct maplock * maplock,
 }
 
 /*
- *      txFreeMap()
+ *	txFreeMap()
  *
- * function:    free from persistent and/or working map;
+ * function:	free from persistent and/or working map;
  *
  * todo: optimization
  */
@@ -2579,9 +2591,9 @@ void txFreeMap(struct inode *ip,
 }
 
 /*
- *      txFreelock()
+ *	txFreelock()
  *
- * function:    remove tlock from inode anonymous locklist
+ * function:	remove tlock from inode anonymous locklist
  */
 void txFreelock(struct inode *ip)
 {
@@ -2619,7 +2631,7 @@ void txFreelock(struct inode *ip)
 }
 
 /*
- *      txAbort()
+ *	txAbort()
  *
  * function: abort tx before commit;
  *
@@ -2679,7 +2691,7 @@ void txAbort(tid_t tid, int dirty)
 }
 
 /*
- *      txLazyCommit(void)
+ *	txLazyCommit(void)
  *
  *	All transactions except those changing ipimap (COMMIT_FORCE) are
  *	processed by this routine.  This insures that the inode and block
@@ -2728,7 +2740,7 @@ static void txLazyCommit(struct tblock * tblk)
 }
 
 /*
- *      jfs_lazycommit(void)
+ *	jfs_lazycommit(void)
  *
  *	To be run as a kernel daemon.  If lbmIODone is called in an interrupt
  *	context, or where blocking is not wanted, this routine will process
@@ -2913,7 +2925,7 @@ void txResume(struct super_block *sb)
 }
 
 /*
- *      jfs_sync(void)
+ *	jfs_sync(void)
  *
  *	To be run as a kernel daemon.  This is awakened when tlocks run low.
  *	We write any inodes that have anonymous tlocks so they will become
@@ -2998,11 +3010,8 @@ int jfs_sync(void *arg)
 }
 
 #if defined(CONFIG_PROC_FS) && defined(CONFIG_JFS_DEBUG)
-int jfs_txanchor_read(char *buffer, char **start, off_t offset, int length,
-		      int *eof, void *data)
+static int jfs_txanchor_proc_show(struct seq_file *m, void *v)
 {
-	int len = 0;
-	off_t begin;
 	char *freewait;
 	char *freelockwait;
 	char *lowlockwait;
@@ -3014,7 +3023,7 @@ int jfs_txanchor_read(char *buffer, char **start, off_t offset, int length,
 	lowlockwait =
 	    waitqueue_active(&TxAnchor.lowlockwait) ? "active" : "empty";
 
-	len += sprintf(buffer,
+	seq_printf(m,
 		       "JFS TxAnchor\n"
 		       "============\n"
 		       "freetid = %d\n"
@@ -3033,31 +3042,27 @@ int jfs_txanchor_read(char *buffer, char **start, off_t offset, int length,
 		       TxAnchor.tlocksInUse,
 		       jfs_tlocks_low,
 		       list_empty(&TxAnchor.unlock_queue) ? "" : "not ");
-
-	begin = offset;
-	*start = buffer + begin;
-	len -= begin;
-
-	if (len > length)
-		len = length;
-	else
-		*eof = 1;
-
-	if (len < 0)
-		len = 0;
-
-	return len;
+	return 0;
 }
+
+static int jfs_txanchor_proc_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, jfs_txanchor_proc_show, NULL);
+}
+
+const struct file_operations jfs_txanchor_proc_fops = {
+	.owner		= THIS_MODULE,
+	.open		= jfs_txanchor_proc_open,
+	.read		= seq_read,
+	.llseek		= seq_lseek,
+	.release	= single_release,
+};
 #endif
 
 #if defined(CONFIG_PROC_FS) && defined(CONFIG_JFS_STATISTICS)
-int jfs_txstats_read(char *buffer, char **start, off_t offset, int length,
-		     int *eof, void *data)
+static int jfs_txstats_proc_show(struct seq_file *m, void *v)
 {
-	int len = 0;
-	off_t begin;
-
-	len += sprintf(buffer,
+	seq_printf(m,
 		       "JFS TxStats\n"
 		       "===========\n"
 		       "calls to txBegin = %d\n"
@@ -3078,19 +3083,19 @@ int jfs_txstats_read(char *buffer, char **start, off_t offset, int length,
 		       TxStat.txBeginAnon_lockslow,
 		       TxStat.txLockAlloc,
 		       TxStat.txLockAlloc_freelock);
-
-	begin = offset;
-	*start = buffer + begin;
-	len -= begin;
-
-	if (len > length)
-		len = length;
-	else
-		*eof = 1;
-
-	if (len < 0)
-		len = 0;
-
-	return len;
+	return 0;
 }
+
+static int jfs_txstats_proc_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, jfs_txstats_proc_show, NULL);
+}
+
+const struct file_operations jfs_txstats_proc_fops = {
+	.owner		= THIS_MODULE,
+	.open		= jfs_txstats_proc_open,
+	.read		= seq_read,
+	.llseek		= seq_lseek,
+	.release	= single_release,
+};
 #endif

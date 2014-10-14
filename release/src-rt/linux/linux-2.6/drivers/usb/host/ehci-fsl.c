@@ -1,6 +1,6 @@
 /*
- * (C) Copyright David Brownell 2000-2002
- * Copyright (c) 2005 MontaVista Software
+ * Copyright 2005-2009 MontaVista Software, Inc.
+ * Copyright 2008      Freescale Semiconductor, Inc.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -18,17 +18,19 @@
  *
  * Ported to 834x by Randy Vinson <rvinson@mvista.com> using code provided
  * by Hunter Wu.
+ * Power Management support by Dave Liu <daveliu@freescale.com>,
+ * Jerry Huang <Chang-Ming.Huang@freescale.com> and
+ * Anton Vorontsov <avorontsov@ru.mvista.com>.
  */
 
+#include <linux/kernel.h>
+#include <linux/types.h>
+#include <linux/delay.h>
+#include <linux/pm.h>
 #include <linux/platform_device.h>
 #include <linux/fsl_devices.h>
 
 #include "ehci-fsl.h"
-
-/* FIXME: Power Managment is un-ported so temporarily disable it */
-#undef CONFIG_PM
-
-/* PCI-based HCs are common, but plenty of non-PCI HCs are used too */
 
 /* configure so an HC device and id are always provided */
 /* always called with process context; sleeping is OK */
@@ -42,15 +44,14 @@
  * Allocates basic resources for this USB host controller.
  *
  */
-int usb_hcd_fsl_probe(const struct hc_driver *driver,
-		      struct platform_device *pdev)
+static int usb_hcd_fsl_probe(const struct hc_driver *driver,
+			     struct platform_device *pdev)
 {
 	struct fsl_usb2_platform_data *pdata;
 	struct usb_hcd *hcd;
 	struct resource *res;
 	int irq;
 	int retval;
-	unsigned int temp;
 
 	pr_debug("initializing FSL-SOC USB Controller\n");
 
@@ -58,7 +59,7 @@ int usb_hcd_fsl_probe(const struct hc_driver *driver,
 	pdata = (struct fsl_usb2_platform_data *)pdev->dev.platform_data;
 	if (!pdata) {
 		dev_err(&pdev->dev,
-			"No platform data for %s.\n", pdev->dev.bus_id);
+			"No platform data for %s.\n", dev_name(&pdev->dev));
 		return -ENODEV;
 	}
 
@@ -71,7 +72,7 @@ int usb_hcd_fsl_probe(const struct hc_driver *driver,
 	      (pdata->operating_mode == FSL_USB2_DR_OTG))) {
 		dev_err(&pdev->dev,
 			"Non Host Mode configured for %s. Wrong driver linked.\n",
-			pdev->dev.bus_id);
+			dev_name(&pdev->dev));
 		return -ENODEV;
 	}
 
@@ -79,12 +80,12 @@ int usb_hcd_fsl_probe(const struct hc_driver *driver,
 	if (!res) {
 		dev_err(&pdev->dev,
 			"Found HC with no IRQ. Check %s setup!\n",
-			pdev->dev.bus_id);
+			dev_name(&pdev->dev));
 		return -ENODEV;
 	}
 	irq = res->start;
 
-	hcd = usb_create_hcd(driver, &pdev->dev, pdev->dev.bus_id);
+	hcd = usb_create_hcd(driver, &pdev->dev, dev_name(&pdev->dev));
 	if (!hcd) {
 		retval = -ENOMEM;
 		goto err1;
@@ -94,7 +95,7 @@ int usb_hcd_fsl_probe(const struct hc_driver *driver,
 	if (!res) {
 		dev_err(&pdev->dev,
 			"Found HC with no register addr. Check %s setup!\n",
-			pdev->dev.bus_id);
+			dev_name(&pdev->dev));
 		retval = -ENODEV;
 		goto err2;
 	}
@@ -114,13 +115,21 @@ int usb_hcd_fsl_probe(const struct hc_driver *driver,
 		goto err3;
 	}
 
-	/* Enable USB controller */
-	temp = in_be32(hcd->regs + 0x500);
-	out_be32(hcd->regs + 0x500, temp | 0x4);
+	pdata->regs = hcd->regs;
 
-	/* Set to Host mode */
-	temp = in_le32(hcd->regs + 0x1a8);
-	out_le32(hcd->regs + 0x1a8, temp | 0x3);
+	/*
+	 * do platform specific init: check the clock, grab/config pins, etc.
+	 */
+	if (pdata->init && pdata->init(pdev)) {
+		retval = -ENODEV;
+		goto err3;
+	}
+
+	/* Enable USB controller, 83xx or 8536 */
+	if (pdata->have_sysif_regs)
+		setbits32(hcd->regs + FSL_SOC_USB_CTRL, 0x4);
+
+	/* Don't need to set host mode here. It will be done by tdi_reset() */
 
 	retval = usb_add_hcd(hcd, irq, IRQF_DISABLED | IRQF_SHARED);
 	if (retval != 0)
@@ -134,7 +143,9 @@ int usb_hcd_fsl_probe(const struct hc_driver *driver,
       err2:
 	usb_put_hcd(hcd);
       err1:
-	dev_err(&pdev->dev, "init %s fail, %d\n", pdev->dev.bus_id, retval);
+	dev_err(&pdev->dev, "init %s fail, %d\n", dev_name(&pdev->dev), retval);
+	if (pdata->exit)
+		pdata->exit(pdev);
 	return retval;
 }
 
@@ -149,19 +160,33 @@ int usb_hcd_fsl_probe(const struct hc_driver *driver,
  * Reverses the effect of usb_hcd_fsl_probe().
  *
  */
-void usb_hcd_fsl_remove(struct usb_hcd *hcd, struct platform_device *pdev)
+static void usb_hcd_fsl_remove(struct usb_hcd *hcd,
+			       struct platform_device *pdev)
 {
+	struct fsl_usb2_platform_data *pdata = pdev->dev.platform_data;
+
 	usb_remove_hcd(hcd);
+
+	/*
+	 * do platform specific un-initialization:
+	 * release iomux pins, disable clock, etc.
+	 */
+	if (pdata->exit)
+		pdata->exit(pdev);
 	iounmap(hcd->regs);
 	release_mem_region(hcd->rsrc_start, hcd->rsrc_len);
 	usb_put_hcd(hcd);
 }
 
-static void mpc83xx_setup_phy(struct ehci_hcd *ehci,
-			      enum fsl_usb2_phy_modes phy_mode,
-			      unsigned int port_offset)
+static void ehci_fsl_setup_phy(struct ehci_hcd *ehci,
+			       enum fsl_usb2_phy_modes phy_mode,
+			       unsigned int port_offset)
 {
-	u32 portsc = 0;
+	u32 portsc;
+
+	portsc = ehci_readl(ehci, &ehci->regs->port_status[port_offset]);
+	portsc &= ~(PORT_PTS_MSK | PORT_PTS_PTW);
+
 	switch (phy_mode) {
 	case FSL_USB2_PHY_ULPI:
 		portsc |= PORT_PTS_ULPI;
@@ -181,20 +206,21 @@ static void mpc83xx_setup_phy(struct ehci_hcd *ehci,
 	ehci_writel(ehci, portsc, &ehci->regs->port_status[port_offset]);
 }
 
-static void mpc83xx_usb_setup(struct usb_hcd *hcd)
+static void ehci_fsl_usb_setup(struct ehci_hcd *ehci)
 {
-	struct ehci_hcd *ehci = hcd_to_ehci(hcd);
+	struct usb_hcd *hcd = ehci_to_hcd(ehci);
 	struct fsl_usb2_platform_data *pdata;
 	void __iomem *non_ehci = hcd->regs;
 	u32 temp;
 
-	pdata =
-	    (struct fsl_usb2_platform_data *)hcd->self.controller->
-	    platform_data;
+	pdata = hcd->self.controller->platform_data;
+
 	/* Enable PHY interface in the control reg. */
-	temp = in_be32(non_ehci + FSL_SOC_USB_CTRL);
-	out_be32(non_ehci + FSL_SOC_USB_CTRL, temp | 0x00000004);
-	out_be32(non_ehci + FSL_SOC_USB_SNOOP1, 0x0000001b);
+	if (pdata->have_sysif_regs) {
+		temp = in_be32(non_ehci + FSL_SOC_USB_CTRL);
+		out_be32(non_ehci + FSL_SOC_USB_CTRL, temp | 0x00000004);
+		out_be32(non_ehci + FSL_SOC_USB_SNOOP1, 0x0000001b);
+	}
 
 #if defined(CONFIG_PPC32) && !defined(CONFIG_NOT_COHERENT_CACHE)
 	/*
@@ -211,7 +237,7 @@ static void mpc83xx_usb_setup(struct usb_hcd *hcd)
 
 	if ((pdata->operating_mode == FSL_USB2_DR_HOST) ||
 			(pdata->operating_mode == FSL_USB2_DR_OTG))
-		mpc83xx_setup_phy(ehci, pdata->phy_mode, 0);
+		ehci_fsl_setup_phy(ehci, pdata->phy_mode, 0);
 
 	if (pdata->operating_mode == FSL_USB2_MPH_HOST) {
 		unsigned int chip, rev, svr;
@@ -225,22 +251,27 @@ static void mpc83xx_usb_setup(struct usb_hcd *hcd)
 			ehci->has_fsl_port_bug = 1;
 
 		if (pdata->port_enables & FSL_USB2_PORT0_ENABLED)
-			mpc83xx_setup_phy(ehci, pdata->phy_mode, 0);
+			ehci_fsl_setup_phy(ehci, pdata->phy_mode, 0);
 		if (pdata->port_enables & FSL_USB2_PORT1_ENABLED)
-			mpc83xx_setup_phy(ehci, pdata->phy_mode, 1);
+			ehci_fsl_setup_phy(ehci, pdata->phy_mode, 1);
 	}
 
-	/* put controller in host mode. */
-	ehci_writel(ehci, 0x00000003, non_ehci + FSL_SOC_USB_USBMODE);
-	out_be32(non_ehci + FSL_SOC_USB_PRICTRL, 0x0000000c);
-	out_be32(non_ehci + FSL_SOC_USB_AGECNTTHRSH, 0x00000040);
-	out_be32(non_ehci + FSL_SOC_USB_SICTRL, 0x00000001);
+	if (pdata->have_sysif_regs) {
+#ifdef CONFIG_PPC_85xx
+		out_be32(non_ehci + FSL_SOC_USB_PRICTRL, 0x00000008);
+		out_be32(non_ehci + FSL_SOC_USB_AGECNTTHRSH, 0x00000080);
+#else
+		out_be32(non_ehci + FSL_SOC_USB_PRICTRL, 0x0000000c);
+		out_be32(non_ehci + FSL_SOC_USB_AGECNTTHRSH, 0x00000040);
+#endif
+		out_be32(non_ehci + FSL_SOC_USB_SICTRL, 0x00000001);
+	}
 }
 
 /* called after powerup, by probe or system-pm "wakeup" */
 static int ehci_fsl_reinit(struct ehci_hcd *ehci)
 {
-	mpc83xx_usb_setup(ehci_to_hcd(ehci));
+	ehci_fsl_usb_setup(ehci);
 	ehci_port_power(ehci, 0);
 
 	return 0;
@@ -251,6 +282,11 @@ static int ehci_fsl_setup(struct usb_hcd *hcd)
 {
 	struct ehci_hcd *ehci = hcd_to_ehci(hcd);
 	int retval;
+	struct fsl_usb2_platform_data *pdata;
+
+	pdata = hcd->self.controller->platform_data;
+	ehci->big_endian_desc = pdata->big_endian_desc;
+	ehci->big_endian_mmio = pdata->big_endian_mmio;
 
 	/* EHCI registers start at offset 0x100 */
 	ehci->caps = hcd->regs + 0x100;
@@ -262,6 +298,8 @@ static int ehci_fsl_setup(struct usb_hcd *hcd)
 	/* cache this readonly data; minimize chip reads */
 	ehci->hcs_params = ehci_readl(ehci, &ehci->caps->hcs_params);
 
+	hcd->has_tt = 1;
+
 	retval = ehci_halt(ehci);
 	if (retval)
 		return retval;
@@ -271,8 +309,6 @@ static int ehci_fsl_setup(struct usb_hcd *hcd)
 	if (retval)
 		return retval;
 
-	hcd->has_tt = 1;
-
 	ehci->sbrn = 0x20;
 
 	ehci_reset(ehci);
@@ -281,16 +317,90 @@ static int ehci_fsl_setup(struct usb_hcd *hcd)
 	return retval;
 }
 
+struct ehci_fsl {
+	struct ehci_hcd	ehci;
+
+#ifdef CONFIG_PM
+	/* Saved USB PHY settings, need to restore after deep sleep. */
+	u32 usb_ctrl;
+#endif
+};
+
+#ifdef CONFIG_PM
+
+static struct ehci_fsl *hcd_to_ehci_fsl(struct usb_hcd *hcd)
+{
+	struct ehci_hcd *ehci = hcd_to_ehci(hcd);
+
+	return container_of(ehci, struct ehci_fsl, ehci);
+}
+
+static int ehci_fsl_drv_suspend(struct device *dev)
+{
+	struct usb_hcd *hcd = dev_get_drvdata(dev);
+	struct ehci_fsl *ehci_fsl = hcd_to_ehci_fsl(hcd);
+	void __iomem *non_ehci = hcd->regs;
+
+	ehci_prepare_ports_for_controller_suspend(hcd_to_ehci(hcd),
+			device_may_wakeup(dev));
+	if (!fsl_deep_sleep())
+		return 0;
+
+	ehci_fsl->usb_ctrl = in_be32(non_ehci + FSL_SOC_USB_CTRL);
+	return 0;
+}
+
+static int ehci_fsl_drv_resume(struct device *dev)
+{
+	struct usb_hcd *hcd = dev_get_drvdata(dev);
+	struct ehci_fsl *ehci_fsl = hcd_to_ehci_fsl(hcd);
+	struct ehci_hcd *ehci = hcd_to_ehci(hcd);
+	void __iomem *non_ehci = hcd->regs;
+
+	ehci_prepare_ports_for_controller_resume(ehci);
+	if (!fsl_deep_sleep())
+		return 0;
+
+	usb_root_hub_lost_power(hcd->self.root_hub);
+
+	/* Restore USB PHY settings and enable the controller. */
+	out_be32(non_ehci + FSL_SOC_USB_CTRL, ehci_fsl->usb_ctrl);
+
+	ehci_reset(ehci);
+	ehci_fsl_reinit(ehci);
+
+	return 0;
+}
+
+static int ehci_fsl_drv_restore(struct device *dev)
+{
+	struct usb_hcd *hcd = dev_get_drvdata(dev);
+
+	usb_root_hub_lost_power(hcd->self.root_hub);
+	return 0;
+}
+
+static struct dev_pm_ops ehci_fsl_pm_ops = {
+	.suspend = ehci_fsl_drv_suspend,
+	.resume = ehci_fsl_drv_resume,
+	.restore = ehci_fsl_drv_restore,
+};
+
+#define EHCI_FSL_PM_OPS		(&ehci_fsl_pm_ops)
+#else
+#define EHCI_FSL_PM_OPS		NULL
+#endif /* CONFIG_PM */
+
 static const struct hc_driver ehci_fsl_hc_driver = {
 	.description = hcd_name,
 	.product_desc = "Freescale On-Chip EHCI Host Controller",
-	.hcd_priv_size = sizeof(struct ehci_hcd),
+	.hcd_priv_size = sizeof(struct ehci_fsl),
 
 	/*
 	 * generic hardware linkage
 	 */
 	.irq = ehci_irq,
-	.flags = HCD_USB2,
+	.flags = HCD_USB2 | HCD_MEMORY,
 
 	/*
 	 * basic lifecycle operations
@@ -306,6 +416,7 @@ static const struct hc_driver ehci_fsl_hc_driver = {
 	.urb_enqueue = ehci_urb_enqueue,
 	.urb_dequeue = ehci_urb_dequeue,
 	.endpoint_disable = ehci_endpoint_disable,
+	.endpoint_reset = ehci_endpoint_reset,
 
 	/*
 	 * scheduling support
@@ -321,6 +432,8 @@ static const struct hc_driver ehci_fsl_hc_driver = {
 	.bus_resume = ehci_bus_resume,
 	.relinquish_port = ehci_relinquish_port,
 	.port_handed_over = ehci_port_handed_over,
+
+	.clear_tt_buffer_complete = ehci_clear_tt_buffer_complete,
 };
 
 static int ehci_fsl_drv_probe(struct platform_device *pdev)
@@ -328,6 +441,7 @@ static int ehci_fsl_drv_probe(struct platform_device *pdev)
 	if (usb_disabled())
 		return -ENODEV;
 
+	/* FIXME we only want one one probe() not two */
 	return usb_hcd_fsl_probe(&ehci_fsl_hc_driver, pdev);
 }
 
@@ -335,18 +449,19 @@ static int ehci_fsl_drv_remove(struct platform_device *pdev)
 {
 	struct usb_hcd *hcd = platform_get_drvdata(pdev);
 
+	/* FIXME we only want one one remove() not two */
 	usb_hcd_fsl_remove(hcd, pdev);
-
 	return 0;
 }
 
-MODULE_ALIAS("fsl-ehci");
+MODULE_ALIAS("platform:fsl-ehci");
 
 static struct platform_driver ehci_fsl_driver = {
 	.probe = ehci_fsl_drv_probe,
 	.remove = ehci_fsl_drv_remove,
 	.shutdown = usb_hcd_platform_shutdown,
 	.driver = {
-		   .name = "fsl-ehci",
-		   },
+		.name = "fsl-ehci",
+		.pm = EHCI_FSL_PM_OPS,
+	},
 };

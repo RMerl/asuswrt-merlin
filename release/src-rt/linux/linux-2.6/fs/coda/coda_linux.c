@@ -17,9 +17,8 @@
 #include <linux/string.h>
 
 #include <linux/coda.h>
-#include <linux/coda_linux.h>
 #include <linux/coda_psdev.h>
-#include <linux/coda_fs_i.h>
+#include "coda_linux.h"
 
 /* initialize the debugging variables */
 int coda_fake_statfs;
@@ -28,11 +27,9 @@ int coda_fake_statfs;
 char * coda_f2s(struct CodaFid *f)
 {
 	static char s[60];
-#ifdef CONFIG_CODA_FS_OLD_API
- 	sprintf(s, "(%08x.%08x.%08x)", f->opaque[0], f->opaque[1], f->opaque[2]);
-#else
+
  	sprintf(s, "(%08x.%08x.%08x.%08x)", f->opaque[0], f->opaque[1], f->opaque[2], f->opaque[3]);
-#endif
+
 	return s;
 }
 
@@ -134,7 +131,7 @@ void coda_iattr_to_vattr(struct iattr *iattr, struct coda_vattr *vattr)
         unsigned int valid;
 
         /* clean out */        
-        vattr->va_mode = (umode_t) -1;
+	vattr->va_mode = -1;
         vattr->va_uid = (vuid_t) -1; 
         vattr->va_gid = (vgid_t) -1;
         vattr->va_size = (off_t) -1;

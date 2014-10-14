@@ -5,6 +5,8 @@
 #define MSP3400_DRIVER_H
 
 #include <media/msp3400.h>
+#include <media/v4l2-device.h>
+#include <media/v4l2-ctrls.h>
 
 /* ---------------------------------------------------------------------- */
 
@@ -49,6 +51,8 @@ extern int msp_dolby;
 extern int msp_stereo_thresh;
 
 struct msp_state {
+	struct v4l2_subdev sd;
+	struct v4l2_ctrl_handler hdl;
 	int rev1, rev2;
 	int ident;
 	u8 has_nicam;
@@ -78,15 +82,19 @@ struct msp_state {
 	int i2s_mode;
 	int main, second;	/* sound carrier */
 	int input;
-	struct v4l2_routing routing;
+	u32 route_in;
+	u32 route_out;
 
 	/* v4l2 */
 	int audmode;
 	int rxsubchans;
 
-	int volume, muted;
-	int balance, loudness;
-	int bass, treble;
+	struct {
+		/* volume cluster */
+		struct v4l2_ctrl *volume;
+		struct v4l2_ctrl *muted;
+	};
+
 	int scan_in_progress;
 
 	/* thread */
@@ -96,6 +104,16 @@ struct msp_state {
 	unsigned int         watch_stereo:1;
 };
 
+static inline struct msp_state *to_state(struct v4l2_subdev *sd)
+{
+	return container_of(sd, struct msp_state, sd);
+}
+
+static inline struct msp_state *ctrl_to_state(struct v4l2_ctrl *ctrl)
+{
+	return container_of(ctrl->handler, struct msp_state, hdl);
+}
+
 /* msp3400-driver.c */
 int msp_write_dem(struct i2c_client *client, int addr, int val);
 int msp_write_dsp(struct i2c_client *client, int addr, int val);
@@ -103,7 +121,7 @@ int msp_read_dem(struct i2c_client *client, int addr);
 int msp_read_dsp(struct i2c_client *client, int addr);
 int msp_reset(struct i2c_client *client);
 void msp_set_scart(struct i2c_client *client, int in, int out);
-void msp_set_audio(struct i2c_client *client);
+void msp_update_volume(struct msp_state *state);
 int msp_sleep(struct msp_state *state, int timeout);
 
 /* msp3400-kthreads.c */

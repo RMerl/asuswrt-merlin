@@ -50,6 +50,7 @@
 #include <video/vga.h>
 #include <linux/delay.h>
 #include <linux/pci.h>
+#include <linux/slab.h>
 #include "nv_type.h"
 #include "nv_local.h"
 #include "nv_proto.h"
@@ -166,11 +167,13 @@ u8 NVReadDacData(struct nvidia_par *par)
 static int NVIsConnected(struct nvidia_par *par, int output)
 {
 	volatile u32 __iomem *PRAMDAC = par->PRAMDAC0;
-	u32 reg52C, reg608;
+	u32 reg52C, reg608, dac0_reg608 = 0;
 	int present;
 
-	if (output)
-		PRAMDAC += 0x800;
+	if (output) {
+	    dac0_reg608 = NV_RD32(PRAMDAC, 0x0608);
+	    PRAMDAC += 0x800;
+	}
 
 	reg52C = NV_RD32(PRAMDAC, 0x052C);
 	reg608 = NV_RD32(PRAMDAC, 0x0608);
@@ -194,8 +197,8 @@ static int NVIsConnected(struct nvidia_par *par, int output)
 	else
 		printk("nvidiafb: CRTC%i analog not found\n", output);
 
-	NV_WR32(par->PRAMDAC0, 0x0608, NV_RD32(par->PRAMDAC0, 0x0608) &
-		0x0000EFFF);
+	if (output)
+	    NV_WR32(par->PRAMDAC0, 0x0608, dac0_reg608);
 
 	NV_WR32(PRAMDAC, 0x052C, reg52C);
 	NV_WR32(PRAMDAC, 0x0608, reg608);
@@ -263,12 +266,12 @@ static void nv10GetConfig(struct nvidia_par *par)
 
 	dev = pci_get_bus_and_slot(0, 1);
 	if ((par->Chipset & 0xffff) == 0x01a0) {
-		int amt = 0;
+		u32 amt;
 
 		pci_read_config_dword(dev, 0x7c, &amt);
 		par->RamAmountKBytes = (((amt >> 6) & 31) + 1) * 1024;
 	} else if ((par->Chipset & 0xffff) == 0x01f0) {
-		int amt = 0;
+		u32 amt;
 
 		pci_read_config_dword(dev, 0x84, &amt);
 		par->RamAmountKBytes = (((amt >> 4) & 127) + 1) * 1024;
@@ -360,6 +363,7 @@ int NVCommonSetup(struct fb_info *info)
 	case 0x0186:
 	case 0x0187:
 	case 0x018D:
+	case 0x01D7:
 	case 0x0228:
 	case 0x0286:
 	case 0x028C:
@@ -540,8 +544,7 @@ int NVCommonSetup(struct fb_info *info)
 		} else if (analog_on_B) {
 			CRTCnumber = outputBfromCRTC;
 			FlatPanel = 0;
-			printk("nvidiafb: CRTC %i"
-			       "appears to have a "
+			printk("nvidiafb: CRTC %i appears to have a "
 			       "CRT attached\n", CRTCnumber);
 		} else if (slaved_on_A) {
 			CRTCnumber = 0;

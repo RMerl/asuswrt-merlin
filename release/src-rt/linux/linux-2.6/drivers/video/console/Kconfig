@@ -5,8 +5,8 @@
 menu "Console display driver support"
 
 config VGA_CONSOLE
-	bool "VGA text console" if EMBEDDED || !X86
-	depends on !ARCH_ACORN && !ARCH_EBSA110 && !4xx && !8xx && !SPARC && !M68K && !PARISC && !FRV && !ARCH_VERSATILE && !SUPERH
+	bool "VGA text console" if EXPERT || !X86
+	depends on !4xx && !8xx && !SPARC && !M68K && !PARISC && !FRV && !SUPERH && !BLACKFIN && !AVR32 && !MN10300 && (!ARM || ARCH_FOOTBRIDGE || ARCH_INTEGRATOR || ARCH_NETWINDER)
 	default y
 	help
 	  Saying Y here will allow you to use Linux in text mode through a
@@ -27,7 +27,7 @@ config VGACON_SOFT_SCROLLBACK
          The scrollback buffer of the standard VGA console is located in
 	 the VGA RAM.  The size of this RAM is fixed and is quite small.
 	 If you require a larger scrollback buffer, this can be placed in
-	 System RAM which is dynamically allocated during intialization.
+	 System RAM which is dynamically allocated during initialization.
 	 Placing the scrollback buffer in System RAM will slightly slow
 	 down the console.
 
@@ -37,27 +37,12 @@ config VGACON_SOFT_SCROLLBACK
 config VGACON_SOFT_SCROLLBACK_SIZE
        int "Scrollback Buffer Size (in KB)"
        depends on VGACON_SOFT_SCROLLBACK
+       range 1 1024
        default "64"
        help
          Enter the amount of System RAM to allocate for the scrollback
 	 buffer.  Each 64KB will give you approximately 16 80x25
 	 screenfuls of scrollback buffer
-
-config VIDEO_SELECT
-	bool "Video mode selection support"
-	depends on  X86 && VGA_CONSOLE
-	---help---
-	  This enables support for text mode selection on kernel startup. If
-	  you want to take advantage of some high-resolution text mode your
-	  card's BIOS offers, but the traditional Linux utilities like
-	  SVGATextMode don't, you can say Y here and set the mode using the
-	  "vga=" option from your boot loader (lilo or loadlin) or set
-	  "vga=ask" which brings up a video mode menu on kernel startup. (Try
-	  "man bootparam" or see the documentation of your boot loader about
-	  how to pass options to the kernel.)
-
-	  Read the file <file:Documentation/svga.txt> for more information
-	  about the Video mode selection support. If unsure, say N.
 
 config MDA_CONSOLE
 	depends on !M68K && !PARISC && ISA
@@ -83,16 +68,9 @@ config SGI_NEWPORT_CONSOLE
 
 #  bool 'IODC console' CONFIG_IODC_CONSOLE
 
-config PROM_CONSOLE
-	bool "PROM console"
-	depends on SPARC
-	help
-	  Say Y to build a console driver for Sun machines that uses the
-	  terminal emulation built into their console PROMS.
-
 config DUMMY_CONSOLE
 	bool
-	depends on PROM_CONSOLE!=y || VGA_CONSOLE!=y || SGI_NEWPORT_CONSOLE!=y 
+	depends on VGA_CONSOLE!=y || SGI_NEWPORT_CONSOLE!=y 
 	default y
 
 config DUMMY_CONSOLE_COLUMNS
@@ -118,6 +96,22 @@ config FRAMEBUFFER_CONSOLE
 	help
 	  Low-level framebuffer-based console driver.
 
+config FRAMEBUFFER_CONSOLE_DETECT_PRIMARY
+       bool "Map the console to the primary display device"
+       depends on FRAMEBUFFER_CONSOLE
+       default n
+       ---help---
+         If this option is selected, the framebuffer console will
+         automatically select the primary display device (if the architecture
+	 supports this feature).  Otherwise, the framebuffer console will
+         always select the first framebuffer driver that is loaded. The latter
+         is the default behavior.
+
+	 You can always override the automatic selection of the primary device
+	 by using the fbcon=map: boot option.
+
+	 If unsure, select n.
+
 config FRAMEBUFFER_CONSOLE_ROTATION
        bool "Framebuffer Console Rotation"
        depends on FRAMEBUFFER_CONSOLE
@@ -129,7 +123,7 @@ config FRAMEBUFFER_CONSOLE_ROTATION
          oriented.
 
 config STI_CONSOLE
-        tristate "STI text console" 
+        bool "STI text console"
         depends on PARISC
         default y
         help
@@ -166,7 +160,7 @@ config FONT_8x8
 
 config FONT_8x16
 	bool "VGA 8x16 font" if FONTS
-	depends on FRAMEBUFFER_CONSOLE || SGI_NEWPORT_CONSOLE=y || STI_CONSOLE || USB_SISUSBVGA_CON 
+	depends on FRAMEBUFFER_CONSOLE || SGI_NEWPORT_CONSOLE || STI_CONSOLE || USB_SISUSBVGA_CON
 	default y if !SPARC && !FONTS
 	help
 	  This is the "high resolution" font for the VGA frame buffer (the one

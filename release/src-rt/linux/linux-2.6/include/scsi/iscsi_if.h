@@ -22,6 +22,11 @@
 #define ISCSI_IF_H
 
 #include <scsi/iscsi_proto.h>
+#include <linux/in.h>
+#include <linux/in6.h>
+
+#define ISCSI_NL_GRP_ISCSID	1
+#define ISCSI_NL_GRP_UIP	2
 
 #define UEVENT_BASE			10
 #define KEVENT_BASE			100
@@ -48,12 +53,23 @@ enum iscsi_uevent_e {
 	ISCSI_UEVENT_TRANSPORT_EP_DISCONNECT	= UEVENT_BASE + 14,
 
 	ISCSI_UEVENT_TGT_DSCVR		= UEVENT_BASE + 15,
+	ISCSI_UEVENT_SET_HOST_PARAM	= UEVENT_BASE + 16,
+	ISCSI_UEVENT_UNBIND_SESSION	= UEVENT_BASE + 17,
+	ISCSI_UEVENT_CREATE_BOUND_SESSION		= UEVENT_BASE + 18,
+	ISCSI_UEVENT_TRANSPORT_EP_CONNECT_THROUGH_HOST	= UEVENT_BASE + 19,
+
+	ISCSI_UEVENT_PATH_UPDATE	= UEVENT_BASE + 20,
 
 	/* up events */
 	ISCSI_KEVENT_RECV_PDU		= KEVENT_BASE + 1,
 	ISCSI_KEVENT_CONN_ERROR		= KEVENT_BASE + 2,
 	ISCSI_KEVENT_IF_ERROR		= KEVENT_BASE + 3,
 	ISCSI_KEVENT_DESTROY_SESSION	= KEVENT_BASE + 4,
+	ISCSI_KEVENT_UNBIND_SESSION	= KEVENT_BASE + 5,
+	ISCSI_KEVENT_CREATE_SESSION	= KEVENT_BASE + 6,
+
+	ISCSI_KEVENT_PATH_REQ		= KEVENT_BASE + 7,
+	ISCSI_KEVENT_IF_DOWN		= KEVENT_BASE + 8,
 };
 
 enum iscsi_tgt_dscvr {
@@ -71,7 +87,15 @@ struct iscsi_uevent {
 		/* messages u -> k */
 		struct msg_create_session {
 			uint32_t	initial_cmdsn;
+			uint16_t	cmds_max;
+			uint16_t	queue_depth;
 		} c_session;
+		struct msg_create_bound_session {
+			uint64_t	ep_handle;
+			uint32_t	initial_cmdsn;
+			uint16_t	cmds_max;
+			uint16_t	queue_depth;
+		} c_bound_session;
 		struct msg_destroy_session {
 			uint32_t	sid;
 		} d_session;
@@ -118,6 +142,10 @@ struct iscsi_uevent {
 		struct msg_transport_connect {
 			uint32_t	non_blocking;
 		} ep_connect;
+		struct msg_transport_connect_through_host {
+			uint32_t	host_no;
+			uint32_t	non_blocking;
+		} ep_connect_through_host;
 		struct msg_transport_poll {
 			uint64_t	ep_handle;
 			uint32_t	timeout_ms;
@@ -136,6 +164,14 @@ struct iscsi_uevent {
 			 */
 			uint32_t	enable;
 		} tgt_dscvr;
+		struct msg_set_host_param {
+			uint32_t	host_no;
+			uint32_t	param; /* enum iscsi_host_param */
+			uint32_t	len;
+		} set_host_param;
+		struct msg_set_path {
+			uint32_t	host_no;
+		} set_path;
 	} u;
 	union {
 		/* messages k -> u */
@@ -148,6 +184,10 @@ struct iscsi_uevent {
 			uint32_t	sid;
 			uint32_t	cid;
 		} c_conn_ret;
+		struct msg_unbind_session {
+			uint32_t	sid;
+			uint32_t	host_no;
+		} unbind_session;
 		struct msg_recv_req {
 			uint32_t	sid;
 			uint32_t	cid;
@@ -165,7 +205,36 @@ struct iscsi_uevent {
 		struct msg_transport_connect_ret {
 			uint64_t	handle;
 		} ep_connect_ret;
+		struct msg_req_path {
+			uint32_t	host_no;
+		} req_path;
+		struct msg_notify_if_down {
+			uint32_t	host_no;
+		} notify_if_down;
 	} r;
+} __attribute__ ((aligned (sizeof(uint64_t))));
+
+/*
+ * To keep the struct iscsi_uevent size the same for userspace code
+ * compatibility, the main structure for ISCSI_UEVENT_PATH_UPDATE and
+ * ISCSI_KEVENT_PATH_REQ is defined separately and comes after the
+ * struct iscsi_uevent in the NETLINK_ISCSI message.
+ */
+struct iscsi_path {
+	uint64_t	handle;
+	uint8_t		mac_addr[6];
+	uint8_t		mac_addr_old[6];
+	uint32_t	ip_addr_len;	/* 4 or 16 */
+	union {
+		struct in_addr	v4_addr;
+		struct in6_addr	v6_addr;
+	} src;
+	union {
+		struct in_addr	v4_addr;
+		struct in6_addr	v6_addr;
+	} dst;
+	uint16_t	vlan_id;
+	uint16_t	pmtu;
 } __attribute__ ((aligned (sizeof(uint64_t))));
 
 /*
@@ -191,6 +260,10 @@ enum iscsi_err {
 	ISCSI_ERR_DATA_DGST		= ISCSI_ERR_BASE + 15,
 	ISCSI_ERR_PARAM_NOT_FOUND	= ISCSI_ERR_BASE + 16,
 	ISCSI_ERR_NO_SCSI_CMD		= ISCSI_ERR_BASE + 17,
+	ISCSI_ERR_INVALID_HOST		= ISCSI_ERR_BASE + 18,
+	ISCSI_ERR_XMIT_FAILED		= ISCSI_ERR_BASE + 19,
+	ISCSI_ERR_TCP_CONN_CLOSE	= ISCSI_ERR_BASE + 20,
+	ISCSI_ERR_SCSI_EH_SESSION_RST	= ISCSI_ERR_BASE + 21,
 };
 
 /*
@@ -219,46 +292,87 @@ enum iscsi_param {
 	ISCSI_PARAM_PERSISTENT_PORT,
 	ISCSI_PARAM_SESS_RECOVERY_TMO,
 
-	/* pased in through bind conn using transport_fd */
+	/* passed in through bind conn using transport_fd */
 	ISCSI_PARAM_CONN_PORT,
 	ISCSI_PARAM_CONN_ADDRESS,
 
+	ISCSI_PARAM_USERNAME,
+	ISCSI_PARAM_USERNAME_IN,
+	ISCSI_PARAM_PASSWORD,
+	ISCSI_PARAM_PASSWORD_IN,
+
+	ISCSI_PARAM_FAST_ABORT,
+	ISCSI_PARAM_ABORT_TMO,
+	ISCSI_PARAM_LU_RESET_TMO,
+	ISCSI_PARAM_HOST_RESET_TMO,
+
+	ISCSI_PARAM_PING_TMO,
+	ISCSI_PARAM_RECV_TMO,
+
+	ISCSI_PARAM_IFACE_NAME,
+	ISCSI_PARAM_ISID,
+	ISCSI_PARAM_INITIATOR_NAME,
+
+	ISCSI_PARAM_TGT_RESET_TMO,
+	ISCSI_PARAM_TARGET_ALIAS,
 	/* must always be last */
 	ISCSI_PARAM_MAX,
 };
 
-#define ISCSI_MAX_RECV_DLENGTH		(1 << ISCSI_PARAM_MAX_RECV_DLENGTH)
-#define ISCSI_MAX_XMIT_DLENGTH		(1 << ISCSI_PARAM_MAX_XMIT_DLENGTH)
-#define ISCSI_HDRDGST_EN		(1 << ISCSI_PARAM_HDRDGST_EN)
-#define ISCSI_DATADGST_EN		(1 << ISCSI_PARAM_DATADGST_EN)
-#define ISCSI_INITIAL_R2T_EN		(1 << ISCSI_PARAM_INITIAL_R2T_EN)
-#define ISCSI_MAX_R2T			(1 << ISCSI_PARAM_MAX_R2T)
-#define ISCSI_IMM_DATA_EN		(1 << ISCSI_PARAM_IMM_DATA_EN)
-#define ISCSI_FIRST_BURST		(1 << ISCSI_PARAM_FIRST_BURST)
-#define ISCSI_MAX_BURST			(1 << ISCSI_PARAM_MAX_BURST)
-#define ISCSI_PDU_INORDER_EN		(1 << ISCSI_PARAM_PDU_INORDER_EN)
-#define ISCSI_DATASEQ_INORDER_EN	(1 << ISCSI_PARAM_DATASEQ_INORDER_EN)
-#define ISCSI_ERL			(1 << ISCSI_PARAM_ERL)
-#define ISCSI_IFMARKER_EN		(1 << ISCSI_PARAM_IFMARKER_EN)
-#define ISCSI_OFMARKER_EN		(1 << ISCSI_PARAM_OFMARKER_EN)
-#define ISCSI_EXP_STATSN		(1 << ISCSI_PARAM_EXP_STATSN)
-#define ISCSI_TARGET_NAME		(1 << ISCSI_PARAM_TARGET_NAME)
-#define ISCSI_TPGT			(1 << ISCSI_PARAM_TPGT)
-#define ISCSI_PERSISTENT_ADDRESS	(1 << ISCSI_PARAM_PERSISTENT_ADDRESS)
-#define ISCSI_PERSISTENT_PORT		(1 << ISCSI_PARAM_PERSISTENT_PORT)
-#define ISCSI_SESS_RECOVERY_TMO		(1 << ISCSI_PARAM_SESS_RECOVERY_TMO)
-#define ISCSI_CONN_PORT			(1 << ISCSI_PARAM_CONN_PORT)
-#define ISCSI_CONN_ADDRESS		(1 << ISCSI_PARAM_CONN_ADDRESS)
+#define ISCSI_MAX_RECV_DLENGTH		(1ULL << ISCSI_PARAM_MAX_RECV_DLENGTH)
+#define ISCSI_MAX_XMIT_DLENGTH		(1ULL << ISCSI_PARAM_MAX_XMIT_DLENGTH)
+#define ISCSI_HDRDGST_EN		(1ULL << ISCSI_PARAM_HDRDGST_EN)
+#define ISCSI_DATADGST_EN		(1ULL << ISCSI_PARAM_DATADGST_EN)
+#define ISCSI_INITIAL_R2T_EN		(1ULL << ISCSI_PARAM_INITIAL_R2T_EN)
+#define ISCSI_MAX_R2T			(1ULL << ISCSI_PARAM_MAX_R2T)
+#define ISCSI_IMM_DATA_EN		(1ULL << ISCSI_PARAM_IMM_DATA_EN)
+#define ISCSI_FIRST_BURST		(1ULL << ISCSI_PARAM_FIRST_BURST)
+#define ISCSI_MAX_BURST			(1ULL << ISCSI_PARAM_MAX_BURST)
+#define ISCSI_PDU_INORDER_EN		(1ULL << ISCSI_PARAM_PDU_INORDER_EN)
+#define ISCSI_DATASEQ_INORDER_EN	(1ULL << ISCSI_PARAM_DATASEQ_INORDER_EN)
+#define ISCSI_ERL			(1ULL << ISCSI_PARAM_ERL)
+#define ISCSI_IFMARKER_EN		(1ULL << ISCSI_PARAM_IFMARKER_EN)
+#define ISCSI_OFMARKER_EN		(1ULL << ISCSI_PARAM_OFMARKER_EN)
+#define ISCSI_EXP_STATSN		(1ULL << ISCSI_PARAM_EXP_STATSN)
+#define ISCSI_TARGET_NAME		(1ULL << ISCSI_PARAM_TARGET_NAME)
+#define ISCSI_TPGT			(1ULL << ISCSI_PARAM_TPGT)
+#define ISCSI_PERSISTENT_ADDRESS	(1ULL << ISCSI_PARAM_PERSISTENT_ADDRESS)
+#define ISCSI_PERSISTENT_PORT		(1ULL << ISCSI_PARAM_PERSISTENT_PORT)
+#define ISCSI_SESS_RECOVERY_TMO		(1ULL << ISCSI_PARAM_SESS_RECOVERY_TMO)
+#define ISCSI_CONN_PORT			(1ULL << ISCSI_PARAM_CONN_PORT)
+#define ISCSI_CONN_ADDRESS		(1ULL << ISCSI_PARAM_CONN_ADDRESS)
+#define ISCSI_USERNAME			(1ULL << ISCSI_PARAM_USERNAME)
+#define ISCSI_USERNAME_IN		(1ULL << ISCSI_PARAM_USERNAME_IN)
+#define ISCSI_PASSWORD			(1ULL << ISCSI_PARAM_PASSWORD)
+#define ISCSI_PASSWORD_IN		(1ULL << ISCSI_PARAM_PASSWORD_IN)
+#define ISCSI_FAST_ABORT		(1ULL << ISCSI_PARAM_FAST_ABORT)
+#define ISCSI_ABORT_TMO			(1ULL << ISCSI_PARAM_ABORT_TMO)
+#define ISCSI_LU_RESET_TMO		(1ULL << ISCSI_PARAM_LU_RESET_TMO)
+#define ISCSI_HOST_RESET_TMO		(1ULL << ISCSI_PARAM_HOST_RESET_TMO)
+#define ISCSI_PING_TMO			(1ULL << ISCSI_PARAM_PING_TMO)
+#define ISCSI_RECV_TMO			(1ULL << ISCSI_PARAM_RECV_TMO)
+#define ISCSI_IFACE_NAME		(1ULL << ISCSI_PARAM_IFACE_NAME)
+#define ISCSI_ISID			(1ULL << ISCSI_PARAM_ISID)
+#define ISCSI_INITIATOR_NAME		(1ULL << ISCSI_PARAM_INITIATOR_NAME)
+#define ISCSI_TGT_RESET_TMO		(1ULL << ISCSI_PARAM_TGT_RESET_TMO)
+#define ISCSI_TARGET_ALIAS		(1ULL << ISCSI_PARAM_TARGET_ALIAS)
+
+/* iSCSI HBA params */
+enum iscsi_host_param {
+	ISCSI_HOST_PARAM_HWADDRESS,
+	ISCSI_HOST_PARAM_INITIATOR_NAME,
+	ISCSI_HOST_PARAM_NETDEV_NAME,
+	ISCSI_HOST_PARAM_IPADDRESS,
+	ISCSI_HOST_PARAM_MAX,
+};
+
+#define ISCSI_HOST_HWADDRESS		(1ULL << ISCSI_HOST_PARAM_HWADDRESS)
+#define ISCSI_HOST_INITIATOR_NAME	(1ULL << ISCSI_HOST_PARAM_INITIATOR_NAME)
+#define ISCSI_HOST_NETDEV_NAME		(1ULL << ISCSI_HOST_PARAM_NETDEV_NAME)
+#define ISCSI_HOST_IPADDRESS		(1ULL << ISCSI_HOST_PARAM_IPADDRESS)
 
 #define iscsi_ptr(_handle) ((void*)(unsigned long)_handle)
 #define iscsi_handle(_ptr) ((uint64_t)(unsigned long)_ptr)
-#define hostdata_session(_hostdata) (iscsi_ptr(*(unsigned long *)_hostdata))
-
-/**
- * iscsi_hostdata - get LLD hostdata from scsi_host
- * @_hostdata: pointer to scsi host's hostdata
- **/
-#define iscsi_hostdata(_hostdata) ((void*)_hostdata + sizeof(unsigned long))
 
 /*
  * These flags presents iSCSI Data-Path capabilities.
@@ -272,6 +386,12 @@ enum iscsi_param {
 #define CAP_MULTI_CONN		0x40
 #define CAP_TEXT_NEGO		0x80
 #define CAP_MARKERS		0x100
+#define CAP_FW_DB		0x200
+#define CAP_SENDTARGETS_OFFLOAD	0x400	/* offload discovery process */
+#define CAP_DATA_PATH_OFFLOAD	0x800	/* offload entire IO path */
+#define CAP_DIGEST_OFFLOAD	0x1000	/* offload hdr and data digests */
+#define CAP_PADDING_OFFLOAD	0x2000	/* offload padding insertion, removal,
+					 and verification */
 
 /*
  * These flags describes reason of stop_conn() call

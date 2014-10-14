@@ -8,6 +8,9 @@ struct inode;
 struct super_block;
 struct vfsmount;
 
+/* limit the handle size to NFSv4 handle size now */
+#define MAX_HANDLE_SZ 128
+
 /*
  * The fileid_type identifies how the file within the filesystem is encoded.
  * In theory this is freely set and parsed by the filesystem, but we try to
@@ -35,6 +38,27 @@ enum fid_type {
 	FILEID_INO32_GEN_PARENT = 2,
 
 	/*
+	 * 64 bit object ID, 64 bit root object ID,
+	 * 32 bit generation number.
+	 */
+	FILEID_BTRFS_WITHOUT_PARENT = 0x4d,
+
+	/*
+	 * 64 bit object ID, 64 bit root object ID,
+	 * 32 bit generation number,
+	 * 64 bit parent object ID, 32 bit parent generation.
+	 */
+	FILEID_BTRFS_WITH_PARENT = 0x4e,
+
+	/*
+	 * 64 bit object ID, 64 bit root object ID,
+	 * 32 bit generation number,
+	 * 64 bit parent object ID, 32 bit parent generation,
+	 * 64 bit parent root object ID.
+	 */
+	FILEID_BTRFS_WITH_PARENT_ROOT = 0x4f,
+
+	/*
 	 * 32 bit block number, 16 bit partition reference,
 	 * 16 bit unused, 32 bit generation number.
 	 */
@@ -46,6 +70,19 @@ enum fid_type {
 	 * 32 bit parent block number, 32 bit parent generation number
 	 */
 	FILEID_UDF_WITH_PARENT = 0x52,
+
+	/*
+	 * 64 bit checkpoint number, 64 bit inode number,
+	 * 32 bit generation number.
+	 */
+	FILEID_NILFS_WITHOUT_PARENT = 0x61,
+
+	/*
+	 * 64 bit checkpoint number, 64 bit inode number,
+	 * 32 bit generation number, 32 bit parent generation.
+	 * 64 bit parent inode number.
+	 */
+	FILEID_NILFS_WITH_PARENT = 0x62,
 };
 
 struct fid {
@@ -70,24 +107,27 @@ struct fid {
 
 /**
  * struct export_operations - for nfsd to communicate with file systems
- * @decode_fh:      decode a file handle fragment and return a &struct dentry
  * @encode_fh:      encode a file handle fragment from a dentry
+ * @fh_to_dentry:   find the implied object and get a dentry for it
+ * @fh_to_parent:   find the implied object's parent and get a dentry for it
  * @get_name:       find the name for a given inode in a given directory
  * @get_parent:     find the parent of a given directory
- * @get_dentry:     find a dentry for the inode given a file handle sub-fragment
+ * @commit_metadata: commit metadata changes to stable storage
  *
- * See Documentation/filesystems/Exporting for details on how to use
+ * See Documentation/filesystems/nfs/Exporting for details on how to use
  * this interface correctly.
  *
  * encode_fh:
  *    @encode_fh should store in the file handle fragment @fh (using at most
  *    @max_len bytes) information that can be used by @decode_fh to recover the
- *    file refered to by the &struct dentry @de.  If the @connectable flag is
+ *    file referred to by the &struct dentry @de.  If the @connectable flag is
  *    set, the encode_fh() should store sufficient information so that a good
  *    attempt can be made to find not only the file but also it's place in the
  *    filesystem.   This typically means storing a reference to de->d_parent in
- *    the filehandle fragment.  encode_fh() should return the number of bytes
- *    stored or a negative error code such as %-ENOSPC
+ *    the filehandle fragment.  encode_fh() should return the fileid_type on
+ *    success and on error returns 255 (if the space needed to encode fh is
+ *    greater than @max_len*4 bytes). On error @max_len contains the minimum
+ *    size(in 4 byte unit) needed to encode the file handle.
  *
  * fh_to_dentry:
  *    @fh_to_dentry is given a &struct super_block (@sb) and a file handle
@@ -116,6 +156,9 @@ struct fid {
  *    is also a directory.  In the event that it cannot be found, or storage
  *    space cannot be allocated, a %ERR_PTR should be returned.
  *
+ * commit_metadata:
+ *    @commit_metadata should commit metadata changes to stable storage.
+ *
  * Locking rules:
  *    get_parent is called with child->d_inode->i_mutex down
  *    get_name is not (which is possibly inconsistent)
@@ -131,6 +174,7 @@ struct export_operations {
 	int (*get_name)(struct dentry *parent, char *name,
 			struct dentry *child);
 	struct dentry * (*get_parent)(struct dentry *child);
+	int (*commit_metadata)(struct inode *inode);
 };
 
 extern int exportfs_encode_fh(struct dentry *dentry, struct fid *fid,

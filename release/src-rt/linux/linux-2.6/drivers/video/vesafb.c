@@ -13,7 +13,6 @@
 #include <linux/errno.h>
 #include <linux/string.h>
 #include <linux/mm.h>
-#include <linux/slab.h>
 #include <linux/delay.h>
 #include <linux/fb.h>
 #include <linux/ioport.h>
@@ -174,8 +173,17 @@ static int vesafb_setcolreg(unsigned regno, unsigned red, unsigned green,
 	return err;
 }
 
+static void vesafb_destroy(struct fb_info *info)
+{
+	if (info->screen_base)
+		iounmap(info->screen_base);
+	release_mem_region(info->apertures->ranges[0].base, info->apertures->ranges[0].size);
+	framebuffer_release(info);
+}
+
 static struct fb_ops vesafb_ops = {
 	.owner		= THIS_MODULE,
+	.fb_destroy     = vesafb_destroy,
 	.fb_setcolreg	= vesafb_setcolreg,
 	.fb_pan_display	= vesafb_pan_display,
 	.fb_fillrect	= cfb_fillrect,
@@ -245,7 +253,7 @@ static int __init vesafb_probe(struct platform_device *dev)
 	size_vmode = vesafb_defined.yres * vesafb_fix.line_length;
 
 	/*   size_total -- all video memory we have. Used for mtrr
-	 *                 entries, ressource allocation and bounds
+	 *                 entries, resource allocation and bounds
 	 *                 checking. */
 	size_total = screen_info.lfb_size * 65536;
 	if (vram_total)
@@ -286,19 +294,15 @@ static int __init vesafb_probe(struct platform_device *dev)
 	info->pseudo_palette = info->par;
 	info->par = NULL;
 
-	info->screen_base = ioremap(vesafb_fix.smem_start, vesafb_fix.smem_len);
-	if (!info->screen_base) {
-		printk(KERN_ERR
-		       "vesafb: abort, cannot ioremap video memory 0x%x @ 0x%lx\n",
-			vesafb_fix.smem_len, vesafb_fix.smem_start);
-		err = -EIO;
+	/* set vesafb aperture size for generic probing */
+	info->apertures = alloc_apertures(1);
+	if (!info->apertures) {
+		err = -ENOMEM;
 		goto err;
 	}
+	info->apertures->ranges[0].base = screen_info.lfb_base;
+	info->apertures->ranges[0].size = size_total;
 
-	printk(KERN_INFO "vesafb: framebuffer at 0x%lx, mapped to 0x%p, "
-	       "using %dk, total %dk\n",
-	       vesafb_fix.smem_start, info->screen_base,
-	       size_remap/1024, size_total/1024);
 	printk(KERN_INFO "vesafb: mode is %dx%dx%d, linelength=%d, pages=%d\n",
 	       vesafb_defined.xres, vesafb_defined.yres, vesafb_defined.bits_per_pixel, vesafb_fix.line_length, screen_info.pages);
 
@@ -421,8 +425,7 @@ static int __init vesafb_probe(struct platform_device *dev)
 			int rc;
 
 			/* Find the largest power-of-two */
-			while (temp_size & (temp_size - 1))
-				temp_size &= (temp_size - 1);
+			temp_size = roundup_pow_of_two(temp_size);
 
 			/* Try and find a power of two to add */
 			do {
@@ -434,11 +437,39 @@ static int __init vesafb_probe(struct platform_device *dev)
 	}
 #endif
 	
+	switch (mtrr) {
+	case 1: /* uncachable */
+		info->screen_base = ioremap_nocache(vesafb_fix.smem_start, vesafb_fix.smem_len);
+		break;
+	case 2: /* write-back */
+		info->screen_base = ioremap_cache(vesafb_fix.smem_start, vesafb_fix.smem_len);
+		break;
+	case 3: /* write-combining */
+		info->screen_base = ioremap_wc(vesafb_fix.smem_start, vesafb_fix.smem_len);
+		break;
+	case 4: /* write-through */
+	default:
+		info->screen_base = ioremap(vesafb_fix.smem_start, vesafb_fix.smem_len);
+		break;
+	}
+	if (!info->screen_base) {
+		printk(KERN_ERR
+		       "vesafb: abort, cannot ioremap video memory 0x%x @ 0x%lx\n",
+			vesafb_fix.smem_len, vesafb_fix.smem_start);
+		err = -EIO;
+		goto err;
+	}
+
+	printk(KERN_INFO "vesafb: framebuffer at 0x%lx, mapped to 0x%p, "
+	       "using %dk, total %dk\n",
+	       vesafb_fix.smem_start, info->screen_base,
+	       size_remap/1024, size_total/1024);
+
 	info->fbops = &vesafb_ops;
 	info->var = vesafb_defined;
 	info->fix = vesafb_fix;
-	info->flags = FBINFO_FLAG_DEFAULT |
-		(ypan) ? FBINFO_HWACCEL_YPAN : 0;
+	info->flags = FBINFO_FLAG_DEFAULT | FBINFO_MISC_FIRMWARE |
+		(ypan ? FBINFO_HWACCEL_YPAN : 0);
 
 	if (!ypan)
 		info->fbops->fb_pan_display = NULL;
@@ -464,7 +495,6 @@ err:
 }
 
 static struct platform_driver vesafb_driver = {
-	.probe	= vesafb_probe,
 	.driver	= {
 		.name	= "vesafb",
 	},
@@ -480,20 +510,21 @@ static int __init vesafb_init(void)
 	/* ignore error return of fb_get_options */
 	fb_get_options("vesafb", &option);
 	vesafb_setup(option);
-	ret = platform_driver_register(&vesafb_driver);
 
+	vesafb_device = platform_device_alloc("vesafb", 0);
+	if (!vesafb_device)
+		return -ENOMEM;
+
+	ret = platform_device_add(vesafb_device);
 	if (!ret) {
-		vesafb_device = platform_device_alloc("vesafb", 0);
+		ret = platform_driver_probe(&vesafb_driver, vesafb_probe);
+		if (ret)
+			platform_device_del(vesafb_device);
+	}
 
-		if (vesafb_device)
-			ret = platform_device_add(vesafb_device);
-		else
-			ret = -ENOMEM;
-
-		if (ret) {
-			platform_device_put(vesafb_device);
-			platform_driver_unregister(&vesafb_driver);
-		}
+	if (ret) {
+		platform_device_put(vesafb_device);
+		vesafb_device = NULL;
 	}
 
 	return ret;

@@ -13,6 +13,7 @@
 #include <linux/module.h>
 #include <linux/signal.h>
 #include <linux/sched.h>
+#include <linux/smp.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>
 #include <linux/string.h>
@@ -27,7 +28,9 @@
 #include <linux/proc_fs.h>
 #include <linux/pfn.h>
 #include <linux/hardirq.h>
+#include <linux/gfp.h>
 
+#include <asm/asm-offsets.h>
 #include <asm/bootinfo.h>
 #include <asm/cachectl.h>
 #include <asm/cpu.h>
@@ -62,7 +65,6 @@
 #endif /* CONFIG_MIPS_MT_SMTC */
 
 DEFINE_PER_CPU(struct mmu_gather, mmu_gathers);
-extern void cpu_early_probe_cache();
 
 /*
  * We have up to 8 empty zeroed pages so we can map one of the right colour
@@ -72,6 +74,7 @@ extern void cpu_early_probe_cache();
  * don't have to care about aliases on other CPUs.
  */
 unsigned long empty_zero_page, zero_page_mask;
+EXPORT_SYMBOL_GPL(empty_zero_page);
 
 /*
  * Not static inline because used by IP27 special magic initialization code
@@ -103,14 +106,6 @@ unsigned long setup_zero_pages(void)
 
 	return 1UL << order;
 }
-
-/*
- * These are almost like kmap_atomic / kunmap_atmic except they take an
- * additional address argument as the hint.
- */
-
-#define kmap_get_fixmap_pte(vaddr)					\
-	pte_offset_kernel(pmd_offset(pud_offset(pgd_offset_k(vaddr), (vaddr)), (vaddr)), (vaddr))
 
 #ifdef CONFIG_MIPS_MT_SMTC
 static pte_t *kmap_coherent_pte;
@@ -144,12 +139,12 @@ void *kmap_coherent(struct page *page, unsigned long addr)
 #else
 	idx += in_interrupt() ? FIX_N_COLOURS : 0;
 #endif
-	vaddr = fix_to_virt(FIX_CMAP_END - idx);
+	vaddr = __fix_to_virt(FIX_CMAP_END - idx);
 	pte = mk_pte(page, PAGE_KERNEL);
-#if defined(CONFIG_64BIT_PHYS_ADDR) && defined(CONFIG_CPU_MIPS32_R1)
+#if defined(CONFIG_64BIT_PHYS_ADDR) && defined(CONFIG_CPU_MIPS32)
 	entrylo = pte.pte_high;
 #else
-	entrylo = pte_val(pte) >> 6;
+	entrylo = pte_to_entrylo(pte_val(pte));
 #endif
 
 	ENTER_CRITICAL(flags);
@@ -209,14 +204,14 @@ void kunmap_coherent(void)
 	preempt_check_resched();
 }
 
-#ifdef REMOVE
 void copy_user_highpage(struct page *to, struct page *from,
 	unsigned long vaddr, struct vm_area_struct *vma)
 {
-	char *vfrom, *vto;
+	void *vfrom, *vto;
 
 	vto = kmap_atomic(to, KM_USER1);
-	if(cpu_has_dc_aliases) {
+	if (cpu_has_dc_aliases &&
+	    page_mapped(from) && !Page_dcache_dirty(from)) {
 		vfrom = kmap_coherent(from, vaddr);
 		copy_page(vto, vfrom);
 		kunmap_coherent();
@@ -225,16 +220,13 @@ void copy_user_highpage(struct page *to, struct page *from,
 		copy_page(vto, vfrom);
 		kunmap_atomic(vfrom, KM_USER0);
 	}
-	if (((vma->vm_flags & VM_EXEC) && !cpu_has_ic_fills_f_dc) ||
-	   pages_do_alias((unsigned long)vto, vaddr & PAGE_MASK)) 
+	if ((!cpu_has_ic_fills_f_dc) ||
+	    pages_do_alias((unsigned long)vto, vaddr & PAGE_MASK))
 		flush_data_cache_page((unsigned long)vto);
 	kunmap_atomic(vto, KM_USER1);
 	/* Make sure this page is cleared on other CPU's too before using it */
 	smp_wmb();
 }
-
-EXPORT_SYMBOL(copy_user_highpage);
-#endif
 
 void copy_to_user_page(struct vm_area_struct *vma,
 	struct page *page, unsigned long vaddr, void *dst, const void *src,
@@ -244,7 +236,6 @@ void copy_to_user_page(struct vm_area_struct *vma,
 	    page_mapped(page) && !Page_dcache_dirty(page)) {
 		void *vto = kmap_coherent(page, vaddr) + (vaddr & ~PAGE_MASK);
 		memcpy(vto, src, len);
-		flush_data_cache_page((unsigned long)vto & PAGE_MASK);
 		kunmap_coherent();
 	} else {
 		memcpy(dst, src, len);
@@ -254,8 +245,6 @@ void copy_to_user_page(struct vm_area_struct *vma,
 	if ((vma->vm_flags & VM_EXEC) && !cpu_has_ic_fills_f_dc)
 		flush_cache_page(vma, vaddr, page_to_pfn(page));
 }
-
-EXPORT_SYMBOL(copy_to_user_page);
 
 void copy_from_user_page(struct vm_area_struct *vma,
 	struct page *page, unsigned long vaddr, void *dst, const void *src,
@@ -272,27 +261,6 @@ void copy_from_user_page(struct vm_area_struct *vma,
 			SetPageDcacheDirty(page);
 	}
 }
-
-EXPORT_SYMBOL(copy_from_user_page);
-
-
-#ifdef CONFIG_HIGHMEM
-unsigned long highstart_pfn, highend_pfn;
-
-pte_t *kmap_pte;
-pgprot_t kmap_prot;
-
-static void __init kmap_init(void)
-{
-	unsigned long kmap_vstart;
-
-	/* cache the first kmap pte */
-	kmap_vstart = __fix_to_virt(VALIAS_IDX(FIX_KMAP_BEGIN));
-	kmap_pte = kmap_get_fixmap_pte(kmap_vstart);
-
-	kmap_prot = PAGE_KERNEL;
-}
-#endif /* CONFIG_HIGHMEM */
 
 void __init fixrange_init(unsigned long start, unsigned long end,
 	pgd_t *pgd_base)
@@ -319,8 +287,7 @@ void __init fixrange_init(unsigned long start, unsigned long end,
 				if (pmd_none(*pmd)) {
 					pte = (pte_t *) alloc_bootmem_low_pages(PAGE_SIZE);
 					set_pmd(pmd, __pmd((unsigned long)pte));
-					if (pte != pte_offset_kernel(pmd, 0))
-						BUG();
+					BUG_ON(pte != pte_offset_kernel(pmd, 0));
 				}
 				vaddr += PMD_SIZE;
 			}
@@ -332,7 +299,7 @@ void __init fixrange_init(unsigned long start, unsigned long end,
 }
 
 #ifndef CONFIG_NEED_MULTIPLE_NODES
-static int __init page_is_ram(unsigned long pagenr)
+int page_is_ram(unsigned long pagenr)
 {
 	int i;
 
@@ -356,15 +323,9 @@ static int __init page_is_ram(unsigned long pagenr)
 
 void __init paging_init(void)
 {
-#ifdef CONFIG_FLATMEM
-	unsigned long zones_size[MAX_NR_ZONES] = { 0, };
-#else /* SPARSEMEM */
 	unsigned long max_zone_pfns[MAX_NR_ZONES];
-	unsigned long lastpfn;
-#endif /* CONFIG_FLATMEM */
+	unsigned long lastpfn __maybe_unused;
 
-	cpu_early_probe_cache();
-	
 	pagetable_init();
 
 #ifdef CONFIG_HIGHMEM
@@ -372,60 +333,30 @@ void __init paging_init(void)
 #endif
 	kmap_coherent_init();
 
-#ifdef CONFIG_FLATMEM
-#ifdef CONFIG_ZONE_DMA
-	if (min_low_pfn < MAX_DMA_PFN && MAX_DMA_PFN <= max_low_pfn) {
-		zones_size[ZONE_DMA] = MAX_DMA_PFN - min_low_pfn;
-		zones_size[ZONE_NORMAL] = max_low_pfn - MAX_DMA_PFN;
-	} else if (max_low_pfn < MAX_DMA_PFN)
-		zones_size[ZONE_DMA] = max_low_pfn - min_low_pfn;
-	else
-#endif /* CONFIG_ZONE_DMA */
-	zones_size[ZONE_NORMAL] = max_low_pfn - min_low_pfn;
-	
-#ifdef CONFIG_HIGHMEM
-	zones_size[ZONE_HIGHMEM] = highend_pfn - highstart_pfn;
-
-
-	if (cpu_has_dc_aliases && zones_size[ZONE_HIGHMEM]) {
-		printk(KERN_WARNING "This processor doesn't support highmem."
-		       " %ldk highmem ignored\n", zones_size[ZONE_HIGHMEM]);
-		zones_size[ZONE_HIGHMEM] = 0;
-	}
-#endif /* CONFIG_HIGHMEM */
-
-	free_area_init(zones_size);
-
-#else /* SPARSEMEM */
-
 #ifdef CONFIG_ZONE_DMA
 	max_zone_pfns[ZONE_DMA] = MAX_DMA_PFN;
-#endif /* CONFIG_ZONE_DMA */
-
+#endif
 #ifdef CONFIG_ZONE_DMA32
 	max_zone_pfns[ZONE_DMA32] = MAX_DMA32_PFN;
-#endif /* CONFIG_ZONE_DMA32 */
+#endif
 	max_zone_pfns[ZONE_NORMAL] = max_low_pfn;
 	lastpfn = max_low_pfn;
-
 #ifdef CONFIG_HIGHMEM
 	max_zone_pfns[ZONE_HIGHMEM] = highend_pfn;
 	lastpfn = highend_pfn;
 
 	if (cpu_has_dc_aliases && max_low_pfn != highend_pfn) {
 		printk(KERN_WARNING "This processor doesn't support highmem."
-			" %ldk highmem ignored\n",
-			(highend_pfn - max_low_pfn) << (PAGE_SHIFT - 10));
+		       " %ldk highmem ignored\n",
+		       (highend_pfn - max_low_pfn) << (PAGE_SHIFT - 10));
 		max_zone_pfns[ZONE_HIGHMEM] = max_low_pfn;
 		lastpfn = max_low_pfn;
 	}
-#endif /* CONFIG_HIGHMEM */
+#endif
 
 	free_area_init_nodes(max_zone_pfns);
-#endif /* CONFIG_FLATMEM */
 }
 
-static struct kcore_list kcore_mem, kcore_vmalloc;
 #ifdef CONFIG_64BIT
 static struct kcore_list kcore_kseg0;
 #endif
@@ -439,7 +370,7 @@ void __init mem_init(void)
 #ifdef CONFIG_DISCONTIGMEM
 #error "CONFIG_HIGHMEM and CONFIG_DISCONTIGMEM dont work together yet"
 #endif
-	max_mapnr = max(max_low_pfn, highend_pfn);
+	max_mapnr = highend_pfn;
 #else
 	max_mapnr = max_low_pfn;
 #endif
@@ -459,12 +390,12 @@ void __init mem_init(void)
 
 #ifdef CONFIG_HIGHMEM
 	for (tmp = highstart_pfn; tmp < highend_pfn; tmp++) {
-		struct page *page;
+		struct page *page = pfn_to_page(tmp);
 
-		if (!page_is_ram(tmp))
+		if (!page_is_ram(tmp)) {
+			SetPageReserved(page);
 			continue;
-
-		page = pfn_to_page(tmp);
+		}
 		ClearPageReserved(page);
 		init_page_count(page);
 		__free_page(page);
@@ -482,21 +413,19 @@ void __init mem_init(void)
 	if ((unsigned long) &_text > (unsigned long) CKSEG0)
 		/* The -4 is a hack so that user tools don't have to handle
 		   the overflow.  */
-		kclist_add(&kcore_kseg0, (void *) CKSEG0, 0x80000000 - 4);
+		kclist_add(&kcore_kseg0, (void *) CKSEG0,
+				0x80000000 - 4, KCORE_TEXT);
 #endif
-	kclist_add(&kcore_mem, __va(0), max_low_pfn << PAGE_SHIFT);
-	kclist_add(&kcore_vmalloc, (void *)VMALLOC_START,
-		   VMALLOC_END-VMALLOC_START);
 
 	printk(KERN_INFO "Memory: %luk/%luk available (%ldk kernel code, "
 	       "%ldk reserved, %ldk data, %ldk init, %ldk highmem)\n",
-	       (unsigned long) nr_free_pages() << (PAGE_SHIFT-10),
+	       nr_free_pages() << (PAGE_SHIFT-10),
 	       ram << (PAGE_SHIFT-10),
 	       codesize >> 10,
 	       reservedpages << (PAGE_SHIFT-10),
 	       datasize >> 10,
 	       initsize >> 10,
-	       (unsigned long) (totalhigh_pages << (PAGE_SHIFT-10)));
+	       totalhigh_pages << (PAGE_SHIFT-10));
 }
 #endif /* !CONFIG_NEED_MULTIPLE_NODES */
 
@@ -526,7 +455,7 @@ void free_initrd_mem(unsigned long start, unsigned long end)
 }
 #endif
 
-void free_initmem(void)
+void __init_refok free_initmem(void)
 {
 	prom_free_prom_memory();
 	free_init_pages("unused kernel memory",
@@ -534,18 +463,22 @@ void free_initmem(void)
 			__pa_symbol(&__init_end));
 }
 
+#ifndef CONFIG_MIPS_PGD_C0_CONTEXT
 unsigned long pgd_current[NR_CPUS];
+#endif
 /*
  * On 64-bit we've got three-level pagetables with a slightly
  * different layout ...
  */
 #define __page_aligned(order) __attribute__((__aligned__(PAGE_SIZE<<order)))
-pgd_t swapper_pg_dir[PTRS_PER_PGD] __page_aligned(PGD_ORDER);
-#ifdef CONFIG_64BIT
-#ifdef MODULE_START
-pgd_t module_pg_dir[PTRS_PER_PGD] __page_aligned(PGD_ORDER);
-#endif
+
+/*
+ * gcc 3.3 and older have trouble determining that PTRS_PER_PGD and PGD_ORDER
+ * are constants.  So we use the variants from asm-offset.h until that gcc
+ * will officially be retired.
+ */
+pgd_t swapper_pg_dir[_PTRS_PER_PGD] __page_aligned(_PGD_ORDER);
+#ifndef __PAGETABLE_PMD_FOLDED
 pmd_t invalid_pmd_table[PTRS_PER_PMD] __page_aligned(PMD_ORDER);
 #endif
 pte_t invalid_pte_table[PTRS_PER_PTE] __page_aligned(PTE_ORDER);
-

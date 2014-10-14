@@ -1,15 +1,22 @@
 menu "SCSI device support"
 
+config SCSI_MOD
+       tristate
+       default y if SCSI=n || SCSI=y
+       default m if SCSI=m
+
 config RAID_ATTRS
 	tristate "RAID Transport Class"
 	default n
 	depends on BLOCK
+	depends on SCSI_MOD
 	---help---
 	  Provides RAID
 
 config SCSI
 	tristate "SCSI device support"
 	depends on BLOCK
+	select SCSI_DMA if HAS_DMA
 	---help---
 	  If you want to use a SCSI hard disk, SCSI tape drive, SCSI CD-ROM or
 	  any other SCSI device under Linux, say Y and make sure that you know
@@ -20,7 +27,7 @@ config SCSI
 	  You also need to say Y here if you have a device which speaks
 	  the SCSI protocol.  Examples of this include the parallel port
 	  version of the IOMEGA ZIP drive, USB storage devices, Fibre
-	  Channel, FireWire storage and the IDE-SCSI emulation driver.
+	  Channel, and FireWire storage.
 
 	  To compile this driver as a module, choose M here and read
 	  <file:Documentation/scsi/scsi.txt>.
@@ -28,6 +35,10 @@ config SCSI
 
 	  However, do not compile this as a module if your root file system
 	  (the one containing the directory /) is located on a SCSI device.
+
+config SCSI_DMA
+	bool
+	default n
 
 config SCSI_TGT
 	tristate "SCSI target support"
@@ -58,6 +69,7 @@ comment "SCSI support type (disk, tape, CD-ROM)"
 config BLK_DEV_SD
 	tristate "SCSI disk support"
 	depends on SCSI
+	select CRC_T10DIF if BLK_DEV_INTEGRITY
 	---help---
 	  If you want to use SCSI hard disks, Fibre Channel disks,
 	  Serial ATA (SATA) or Parallel ATA (PATA) hard disks,
@@ -95,16 +107,16 @@ config CHR_DEV_OSST
 	---help---
 	  The OnStream SC-x0 SCSI tape drives cannot be driven by the
 	  standard st driver, but instead need this special osst driver and
-	  use the  /dev/osstX char device nodes (major 206).  Via usb-storage
-	  and ide-scsi, you may be able to drive the USB-x0 and DI-x0 drives
-	  as well.  Note that there is also a second generation of OnStream
+	  use the  /dev/osstX char device nodes (major 206).  Via usb-storage,
+	  you may be able to drive the USB-x0 and DI-x0 drives as well.
+	  Note that there is also a second generation of OnStream
 	  tape drives (ADR-x0) that supports the standard SCSI-2 commands for
 	  tapes (QIC-157) and can be driven by the standard driver st.
 	  For more information, you may have a look at the SCSI-HOWTO
 	  <http://www.tldp.org/docs.html#howto>  and
 	  <file:Documentation/scsi/osst.txt>  in the kernel source.
 	  More info on the OnStream driver may be found on
-	  <http://linux1.onstream.nl/test/>
+	  <http://sourceforge.net/projects/osst/>
 	  Please also have a look at the standard st docu, as most of it
 	  applies to osst as well.
 
@@ -115,10 +127,11 @@ config BLK_DEV_SR
 	tristate "SCSI CDROM support"
 	depends on SCSI
 	---help---
-	  If you want to use a SCSI or FireWire CD-ROM under Linux,
-	  say Y and read the SCSI-HOWTO and the CDROM-HOWTO at
-	  <http://www.tldp.org/docs.html#howto>. Also make sure to say
-	  Y or M to "ISO 9660 CD-ROM file system support" later.
+	  If you want to use a CD or DVD drive attached to your computer
+	  by SCSI, FireWire, USB or ATAPI, say Y and read the SCSI-HOWTO
+	  and the CDROM-HOWTO at <http://www.tldp.org/docs.html#howto>.
+
+	  Make sure to say Y or M to "ISO 9660 CD-ROM file system support".
 
 	  To compile this driver as a module, choose M here and read
 	  <file:Documentation/scsi/scsi.txt>.
@@ -143,9 +156,9 @@ config CHR_DEV_SG
 	  directly, so you need some additional software which knows how to
 	  talk to these devices using the SCSI protocol:
 
-	  For scanners, look at SANE (<http://www.mostang.com/sane/>). For CD
+	  For scanners, look at SANE (<http://www.sane-project.org/>). For CD
 	  writer software look at Cdrtools
-	  (<http://www.fokus.gmd.de/research/cc/glone/employees/joerg.schilling/private/cdrecord.html>)
+	  (<http://cdrecord.berlios.de/private/cdrecord.html>)
 	  and for burning a "disk at once": CDRDAO
 	  (<http://cdrdao.sourceforge.net/>). Cdparanoia is a high
 	  quality digital reader of audio CDs (<http://www.xiph.org/paranoia/>).
@@ -167,29 +180,36 @@ config CHR_DEV_SCH
 	  don't need this for those tiny 6-slot cdrom changers.  Media
 	  changers are listed as "Type: Medium Changer" in /proc/scsi/scsi.
 	  If you have such hardware and want to use it with linux, say Y
-	  here.  Check <file:Documentation/scsi-changer.txt> for details.
+	  here.  Check <file:Documentation/scsi/scsi-changer.txt> for details.
 	
 	  If you want to compile this as a module ( = code which can be
 	  inserted in and removed from the running kernel whenever you want),
 	  say M here and read <file:Documentation/kbuild/modules.txt> and
-	  <file:Documentation/scsi.txt>. The module will be called ch.o.
+	  <file:Documentation/scsi/scsi.txt>. The module will be called ch.o.
 	  If unsure, say N.
-	
 
-comment "Some SCSI devices (e.g. CD jukebox) support multiple LUNs"
-	depends on SCSI
+config SCSI_ENCLOSURE
+	tristate "SCSI Enclosure Support"
+	depends on SCSI && ENCLOSURE_SERVICES
+	help
+	  Enclosures are devices sitting on or in SCSI backplanes that
+	  manage devices.  If you have a disk cage, the chances are that
+	  it has an enclosure device.  Selecting this option will just allow
+	  certain enclosure conditions to be reported and is not required.
 
 config SCSI_MULTI_LUN
 	bool "Probe all LUNs on each SCSI device"
 	depends on SCSI
 	help
-	  If you have a SCSI device that supports more than one LUN (Logical
-	  Unit Number), e.g. a CD jukebox, and only one LUN is detected, you
-	  can say Y here to force the SCSI driver to probe for multiple LUNs.
-	  A SCSI device with multiple LUNs acts logically like multiple SCSI
-	  devices. The vast majority of SCSI devices have only one LUN, and
-	  so most people can say N here. The max_luns boot/module parameter 
-	  allows to override this setting.
+	  Some devices support more than one LUN (Logical Unit Number) in order
+	  to allow access to several media, e.g. CD jukebox, USB card reader,
+	  mobile phone in mass storage mode. This option forces the kernel to
+	  probe for all LUNs by default. This setting can be overriden by
+	  max_luns boot/module parameter. Note that this option does not affect
+	  devices conforming to SCSI-3 or higher as they can explicitely report
+	  their number of LUNs. It is safe to say Y here unless you have one of
+	  those rare devices which reacts in an unexpected way when probed for
+	  multiple LUNs.
 
 config SCSI_CONSTANTS
 	bool "Verbose SCSI error reporting (kernel size +=12K)"
@@ -210,14 +230,15 @@ config SCSI_LOGGING
 	  can enable logging by saying Y to "/proc file system support" and
 	  "Sysctl support" below and executing the command
 
-	  echo "scsi log token [level]" > /proc/scsi/scsi
+	  echo <bitmask> > /proc/sys/dev/scsi/logging_level
 
-	  at boot time after the /proc file system has been mounted.
+	  where <bitmask> is a four byte value representing the logging type
+	  and logging level for each type of logging selected.
 
-	  There are a number of things that can be used for 'token' (you can
-	  find them in the source: <file:drivers/scsi/scsi.c>), and this
-	  allows you to select the types of information you want, and the
-	  level allows you to select the level of verbosity.
+	  There are a number of logging types and you can find them in the
+	  source at <file:drivers/scsi/scsi_logging.h>. The logging levels
+	  are also described in that file and they determine the verbosity of
+	  the logging for each logging type.
 
 	  If you say N here, it may be harder to track down some types of SCSI
 	  problems. If you say Y here your kernel will be somewhat larger, but
@@ -243,10 +264,21 @@ config SCSI_SCAN_ASYNC
 	  or async on the kernel's command line.
 
 config SCSI_WAIT_SCAN
-	tristate
+	tristate  # No prompt here, this is an invisible symbol.
 	default m
 	depends on SCSI
 	depends on MODULES
+# scsi_wait_scan is a loadable module which waits until all the async scans are
+# complete.  The idea is to use it in initrd/ initramfs scripts.  You modprobe
+# it after all the modprobes of the root SCSI drivers and it will wait until
+# they have all finished scanning their buses before allowing the boot to
+# proceed.  (This method is not applicable if targets boot independently in
+# parallel with the initiator, or with transports with non-deterministic target
+# discovery schemes, or if a transport driver does not support scsi_wait_scan.)
+#
+# This symbol is not exposed as a prompt because little is to be gained by
+# disabling it, whereas people who accidentally switch it off may wonder why
+# their mkinitrd gets into trouble.
 
 menu "SCSI Transports"
 	depends on SCSI
@@ -267,6 +299,13 @@ config SCSI_FC_ATTRS
 	  each attached FiberChannel device to sysfs, say Y.
 	  Otherwise, say N.
 
+config SCSI_FC_TGT_ATTRS
+	bool "SCSI target support for FiberChannel Transport Attributes"
+	depends on SCSI_FC_ATTRS
+	depends on SCSI_TGT = y || SCSI_TGT = SCSI_FC_ATTRS
+	help
+		If you want to use SCSI target mode drivers enable this option.
+
 config SCSI_ISCSI_ATTRS
 	tristate "iSCSI Transport Attributes"
 	depends on SCSI && NET
@@ -278,16 +317,35 @@ config SCSI_ISCSI_ATTRS
 config SCSI_SAS_ATTRS
 	tristate "SAS Transport Attributes"
 	depends on SCSI
+	select BLK_DEV_BSG
 	help
 	  If you wish to export transport-specific information about
 	  each attached SAS device to sysfs, say Y.
 
 source "drivers/scsi/libsas/Kconfig"
 
+config SCSI_SRP_ATTRS
+	tristate "SRP Transport Attributes"
+	depends on SCSI
+	help
+	  If you wish to export transport-specific information about
+	  each attached SRP device to sysfs, say Y.
+
+config SCSI_SRP_TGT_ATTRS
+	bool "SCSI target support for SRP Transport Attributes"
+	depends on SCSI_SRP_ATTRS
+	depends on SCSI_TGT = y || SCSI_TGT = SCSI_SRP_ATTRS
+	help
+		If you want to use SCSI target mode drivers enable this option.
+
 endmenu
 
-menu "SCSI low-level drivers"
+menuconfig SCSI_LOWLEVEL
+	bool "SCSI low-level drivers"
 	depends on SCSI!=n
+	default y
+
+if SCSI_LOWLEVEL && SCSI
 
 config ISCSI_TCP
 	tristate "iSCSI Initiator over TCP/IP"
@@ -311,25 +369,27 @@ config ISCSI_TCP
 	 The userspace component needed to initialize the driver, documentation,
 	 and sample configuration files can be found here:
 
-	 http://linux-iscsi.sf.net
+	 http://open-iscsi.org
+
+config ISCSI_BOOT_SYSFS
+	tristate "iSCSI Boot Sysfs Interface"
+	default	n
+	help
+	  This option enables support for exposing iSCSI boot information
+	  via sysfs to userspace. If you wish to export this information,
+	  say Y. Otherwise, say N.
+
+source "drivers/scsi/cxgbi/Kconfig"
+source "drivers/scsi/bnx2i/Kconfig"
+source "drivers/scsi/bnx2fc/Kconfig"
+source "drivers/scsi/be2iscsi/Kconfig"
 
 config SGIWD93_SCSI
 	tristate "SGI WD93C93 SCSI Driver"
-	depends on SGI_IP22 && SCSI
+	depends on SGI_HAS_WD93 && SCSI
   	help
 	  If you have a Western Digital WD93 SCSI controller on
 	  an SGI MIPS system, say Y.  Otherwise, say N.
-
-config SCSI_DECNCR
-	tristate "DEC NCR53C94 Scsi Driver"
-	depends on MACH_DECSTATION && SCSI && TC
-	help
-	  Say Y here to support the NCR53C94 SCSI controller chips on IOASIC
-	  based TURBOchannel DECstations and TURBOchannel PMAZ-A cards.
-
-config SCSI_DECSII
-	tristate "DEC SII Scsi Driver"
-	depends on MACH_DECSTATION && SCSI && 32BIT
 
 config BLK_DEV_3W_XXXX_RAID
 	tristate "3ware 5/6/7/8xxx ATA-RAID support"
@@ -344,6 +404,16 @@ config BLK_DEV_3W_XXXX_RAID
 	  Please read the comments at the top of
 	  <file:drivers/scsi/3w-xxxx.c>.
 
+config SCSI_HPSA
+	tristate "HP Smart Array SCSI driver"
+	depends on PCI && SCSI
+	help
+	  This driver supports HP Smart Array Controllers (circa 2009).
+	  It is a SCSI alternative to the cciss driver, which is a block
+	  driver.  Anyone wishing to use HP Smart Array controllers who
+	  would prefer the devices be presented to linux as SCSI devices,
+	  rather than as generic block devices should say Y here.
+
 config SCSI_3W_9XXX
 	tristate "3ware 9xxx SATA-RAID support"
 	depends on PCI && SCSI
@@ -355,9 +425,21 @@ config SCSI_3W_9XXX
 	  Please read the comments at the top of
 	  <file:drivers/scsi/3w-9xxx.c>.
 
+config SCSI_3W_SAS
+	tristate "3ware 97xx SAS/SATA-RAID support"
+	depends on PCI && SCSI
+	help
+	  This driver supports the LSI 3ware 9750 6Gb/s SAS/SATA-RAID cards.
+
+	  <http://www.lsi.com>
+
+	  Please read the comments at the top of
+	  <file:drivers/scsi/3w-sas.c>.
+
 config SCSI_7000FASST
 	tristate "7000FASST SCSI support"
 	depends on ISA && SCSI && ISA_DMA_API
+	select CHECK_SIGNATURE
 	help
 	  This driver supports the Western Digital 7000 SCSI host adapter
 	  family.  Some information is in the source:
@@ -379,6 +461,7 @@ config SCSI_AHA152X
 	tristate "Adaptec AHA152X/2825 support"
 	depends on ISA && SCSI && !64BIT
 	select SCSI_SPI_ATTRS
+	select CHECK_SIGNATURE
 	---help---
 	  This is a driver for the AHA-1510, AHA-1520, AHA-1522, and AHA-2825
 	  SCSI host adapters. It also works for the AVA-1505, but the IRQ etc.
@@ -474,11 +557,11 @@ config SCSI_AIC7XXX_OLD
 
 source "drivers/scsi/aic7xxx/Kconfig.aic79xx"
 source "drivers/scsi/aic94xx/Kconfig"
+source "drivers/scsi/mvsas/Kconfig"
 
-# All the I2O code and drivers do not seem to be 64bit safe.
 config SCSI_DPT_I2O
 	tristate "Adaptec I2O RAID support "
-	depends on !64BIT && SCSI && PCI
+	depends on SCSI && PCI && VIRT_TO_BUS
 	help
 	  This driver supports all of Adaptec's I2O based RAID controllers as 
 	  well as the DPT SmartRaid V cards.  This is an Adaptec maintained
@@ -489,9 +572,8 @@ config SCSI_DPT_I2O
 
 config SCSI_ADVANSYS
 	tristate "AdvanSys SCSI support"
-	depends on SCSI
+	depends on SCSI && VIRT_TO_BUS
 	depends on ISA || EISA || PCI
-	depends on BROKEN || X86_32
 	help
 	  This is a driver for all SCSI host adapters manufactured by
 	  AdvanSys. It is documented in the kernel source in
@@ -513,26 +595,40 @@ config SCSI_IN2000
 	  module will be called in2000.
 
 config SCSI_ARCMSR
-	tristate "ARECA ARC11X0[PCI-X]/ARC12X0[PCI-EXPRESS] SATA-RAID support"
+	tristate "ARECA (ARC11xx/12xx/13xx/16xx) SATA/SAS RAID Host Adapter"
 	depends on PCI && SCSI
 	help
-	  This driver supports all of ARECA's SATA RAID controller cards.
+	  This driver supports all of ARECA's SATA/SAS RAID controller cards.
 	  This is an ARECA-maintained driver by Erich Chen.
-	  If you have any problems, please mail to: < erich@areca.com.tw >
+	  If you have any problems, please mail to: <erich@areca.com.tw>.
 	  Areca supports Linux RAID config tools.
-
-	  < http://www.areca.com.tw >
+	  Please link <http://www.areca.com.tw>
 
 	  To compile this driver as a module, choose M here: the
 	  module will be called arcmsr (modprobe arcmsr).
 
+config SCSI_ARCMSR_AER
+	bool "Enable PCI Error Recovery Capability in Areca Driver(ARCMSR)"
+	depends on SCSI_ARCMSR && PCIEAER
+	default n
+	help
+	  The advanced error reporting(AER) capability is "NOT" provided by
+	  ARC1200/1201/1202 SATA RAID controllers cards.
+	  If your card is one of ARC1200/1201/1202, please use the default setting, n.
+	  If your card is other models, you could pick it
+	  on condition that the kernel version is greater than 2.6.19.
+	  This function is maintained driver by Nick Cheng. If you have any
+	  problems or suggestion, you are welcome to contact with <nick.cheng@areca.com.tw>.
+	  To enable this function, choose Y here.
+
 source "drivers/scsi/megaraid/Kconfig.megaraid"
+source "drivers/scsi/mpt2sas/Kconfig"
 
 config SCSI_HPTIOP
-	tristate "HighPoint RocketRAID 3xxx Controller support"
+	tristate "HighPoint RocketRAID 3xxx/4xxx Controller support"
 	depends on SCSI && PCI
 	help
-	  This option enables support for HighPoint RocketRAID 3xxx
+	  This option enables support for HighPoint RocketRAID 3xxx/4xxx
 	  controllers.
 
 	  To compile this driver as a module, choose M here; the module
@@ -540,25 +636,66 @@ config SCSI_HPTIOP
 
 config SCSI_BUSLOGIC
 	tristate "BusLogic SCSI support"
-	depends on (PCI || ISA || MCA) && SCSI && ISA_DMA_API
+	depends on (PCI || ISA || MCA) && SCSI && ISA_DMA_API && VIRT_TO_BUS
 	---help---
 	  This is support for BusLogic MultiMaster and FlashPoint SCSI Host
 	  Adapters. Consult the SCSI-HOWTO, available from
 	  <http://www.tldp.org/docs.html#howto>, and the files
 	  <file:Documentation/scsi/BusLogic.txt> and
 	  <file:Documentation/scsi/FlashPoint.txt> for more information.
+	  Note that support for FlashPoint is only available for 32-bit
+	  x86 configurations.
 
 	  To compile this driver as a module, choose M here: the
 	  module will be called BusLogic.
 
-config SCSI_OMIT_FLASHPOINT
-	bool "Omit FlashPoint support"
-	depends on SCSI_BUSLOGIC
+config SCSI_FLASHPOINT
+	bool "FlashPoint support"
+	depends on SCSI_BUSLOGIC && PCI && X86_32
 	help
-	  This option allows you to omit the FlashPoint support from the
+	  This option allows you to add FlashPoint support to the
 	  BusLogic SCSI driver. The FlashPoint SCCB Manager code is
-	  substantial, so users of MultiMaster Host Adapters may wish to omit
-	  it.
+	  substantial, so users of MultiMaster Host Adapters may not
+	  wish to include it.
+
+config VMWARE_PVSCSI
+	tristate "VMware PVSCSI driver support"
+	depends on PCI && SCSI && X86
+	help
+	  This driver supports VMware's para virtualized SCSI HBA.
+	  To compile this driver as a module, choose M here: the
+	  module will be called vmw_pvscsi.
+
+config LIBFC
+	tristate "LibFC module"
+	select SCSI_FC_ATTRS
+	select CRC32
+	---help---
+	  Fibre Channel library module
+
+config LIBFCOE
+	tristate "LibFCoE module"
+	select LIBFC
+	---help---
+	  Library for Fibre Channel over Ethernet module
+
+config FCOE
+	tristate "FCoE module"
+	depends on PCI
+	select LIBFCOE
+	---help---
+	  Fibre Channel over Ethernet module
+
+config FCOE_FNIC
+	tristate "Cisco FNIC Driver"
+	depends on PCI && X86
+	select LIBFCOE
+	help
+	  This is support for the Cisco PCI-Express FCoE HBA.
+
+	  To compile this driver as a module, choose M here and read
+	  <file:Documentation/scsi/scsi.txt>.
+	  The module will be called fnic.
 
 config SCSI_DMX3191D
 	tristate "DMX3191D SCSI support"
@@ -574,6 +711,7 @@ config SCSI_DTC3280
 	tristate "DTC3180/3280 SCSI support"
 	depends on ISA && SCSI
 	select SCSI_SPI_ATTRS
+	select CHECK_SIGNATURE
 	help
 	  This is support for DTC 3180/3280 SCSI Host Adapters.  Please read
 	  the SCSI-HOWTO, available from
@@ -648,6 +786,7 @@ config SCSI_EATA_PIO
 config SCSI_FUTURE_DOMAIN
 	tristate "Future Domain 16xx SCSI/AHA-2920A support"
 	depends on (ISA || PCI) && SCSI
+	select CHECK_SIGNATURE
 	---help---
 	  This is support for Future Domain's 16-bit SCSI host adapters
 	  (TMC-1660/1680, TMC-1650/1670, TMC-3260, TMC-1610M/MER/MEX) and
@@ -686,7 +825,7 @@ config SCSI_GDTH
 	  This is a driver for RAID/SCSI Disk Array Controllers (EISA/ISA/PCI) 
 	  manufactured by Intel Corporation/ICP vortex GmbH. It is documented
 	  in the kernel source in <file:drivers/scsi/gdth.c> and
-	  <file:drivers/scsi/gdth.h.>
+	  <file:drivers/scsi/gdth.h>.
 
 	  To compile this driver as a module, choose M here: the
 	  module will be called gdth.
@@ -739,7 +878,7 @@ config SCSI_GENERIC_NCR53C400
 
 config SCSI_IBMMCA
 	tristate "IBMMCA SCSI support"
-	depends on MCA_LEGACY && SCSI
+	depends on MCA && SCSI
 	---help---
 	  This is support for the IBM SCSI adapter found in many of the PS/2
 	  series computers.  These machines have an MCA bus, so you need to
@@ -813,6 +952,7 @@ config SCSI_IPS
 	---help---
 	  This is support for the IBM ServeRAID hardware RAID controllers.
 	  See <http://www.developer.ibm.com/welcome/netfinity/serveraid.html>
+	  and <http://www-947.ibm.com/support/entry/portal/docdisplay?brand=5000008&lndocid=SERV-RAID>
 	  for more information.  If this driver does not work correctly
 	  without modification please contact the author by email at
 	  <ipslinux@adaptec.com>.
@@ -823,6 +963,8 @@ config SCSI_IPS
 config SCSI_IBMVSCSI
 	tristate "IBM Virtual SCSI support"
 	depends on PPC_PSERIES || PPC_ISERIES
+	select SCSI_SRP_ATTRS
+	select VIOPATH if PPC_ISERIES
 	help
 	  This is the IBM POWER Virtual SCSI Client
 
@@ -831,7 +973,7 @@ config SCSI_IBMVSCSI
 
 config SCSI_IBMVSCSIS
 	tristate "IBM Virtual SCSI Server support"
-	depends on PPC_PSERIES && SCSI_TGT && SCSI_SRP
+	depends on PPC_PSERIES && SCSI_SRP && SCSI_SRP_TGT_ATTRS
 	help
 	  This is the SRP target driver for IBM pSeries virtual environments.
 
@@ -842,6 +984,25 @@ config SCSI_IBMVSCSIS
 
 	  To compile this driver as a module, choose M here: the
 	  module will be called ibmvstgt.
+
+config SCSI_IBMVFC
+	tristate "IBM Virtual FC support"
+	depends on PPC_PSERIES && SCSI
+	select SCSI_FC_ATTRS
+	help
+	  This is the IBM POWER Virtual FC Client
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called ibmvfc.
+
+config SCSI_IBMVFC_TRACE
+	bool "enable driver internal trace"
+	depends on SCSI_IBMVFC
+	default y
+	help
+	  If you say Y here, the driver will trace all commands issued
+	  to the adapter. Performance impact is minimal. Trace can be
+	  dumped using /sys/class/scsi_host/hostXX/trace.
 
 config SCSI_INITIO
 	tristate "Initio 9100U(W) support"
@@ -1006,6 +1167,11 @@ config SCSI_STEX
 
 	  To compile this driver as a module, choose M here: the
 	  module will be called stex.
+
+config 53C700_BE_BUS
+	bool
+	depends on SCSI_A4000T || SCSI_ZORRO7XX || MVME16x_SCSI || BVME6000_SCSI
+	default y
 
 config SCSI_SYM53C8XX_2
 	tristate "SYM53C8XX Version 2 SCSI support"
@@ -1211,17 +1377,6 @@ config SCSI_NCR53C8XX_NO_DISCONNECT
 	  not allow targets to disconnect is not reasonable if there is more
 	  than 1 device on a SCSI bus. The normal answer therefore is N.
 
-config SCSI_MCA_53C9X
-	tristate "NCR MCA 53C9x SCSI support"
-	depends on MCA_LEGACY && SCSI && BROKEN_ON_SMP
-	help
-	  Some MicroChannel machines, notably the NCR 35xx line, use a SCSI
-	  controller based on the NCR 53C94.  This driver will allow use of
-	  the controller on the 3550, and very possibly others.
-
-	  To compile this driver as a module, choose M here: the
-	  module will be called mca_53c9x.
-
 config SCSI_PAS16
 	tristate "PAS16 SCSI support"
 	depends on ISA && SCSI
@@ -1235,17 +1390,6 @@ config SCSI_PAS16
 
 	  To compile this driver as a module, choose M here: the
 	  module will be called pas16.
-
-config SCSI_PSI240I
-	tristate "PSI240i support"
-	depends on ISA && SCSI
-	help
-	  This is support for the PSI240i EIDE interface card which acts as a
-	  SCSI host adapter.  Please read the SCSI-HOWTO, available from
-	  <http://www.tldp.org/docs.html#howto>.
-
-	  To compile this driver as a module, choose M here: the
-	  module will be called psi240i.
 
 config SCSI_QLOGIC_FAS
 	tristate "Qlogic FAS SCSI support"
@@ -1266,14 +1410,6 @@ config SCSI_QLOGIC_FAS
 
 	  To compile this driver as a module, choose M here: the
 	  module will be called qlogicfas.
-
-config SCSI_QLOGIC_FC_FIRMWARE
-	bool "Include loadable firmware in driver"
-	depends on SCSI_QLOGIC_FC
-  	help
-	  Say Y to include ISP2X00 Fabric Initiator/Target Firmware, with
-	  expanded LUN addressing and FcTape (FCP-2) support, in the
-	  qlogicfc driver. This is required on some platforms.
 
 config SCSI_QLOGIC_1280
 	tristate "Qlogic QLA 1240/1x80/1x160 SCSI support"
@@ -1307,26 +1443,19 @@ config SCSI_LPFC
           This lpfc driver supports the Emulex LightPulse
           Family of Fibre Channel PCI host adapters.
 
-config SCSI_SEAGATE
-	tristate "Seagate ST-02 and Future Domain TMC-8xx SCSI support"
-	depends on X86 && ISA && SCSI
-	---help---
-	  These are 8-bit SCSI controllers; the ST-01 is also supported by
-	  this driver.  It is explained in section 3.9 of the SCSI-HOWTO,
-	  available from <http://www.tldp.org/docs.html#howto>.  If it
-	  doesn't work out of the box, you may have to change some macros at
-	  compiletime, which are described in <file:drivers/scsi/seagate.c>.
+config SCSI_LPFC_DEBUG_FS
+	bool "Emulex LightPulse Fibre Channel debugfs Support"
+	depends on SCSI_LPFC && DEBUG_FS
+	help
+	  This makes debugging information from the lpfc driver
+	  available via the debugfs filesystem.
 
-	  To compile this driver as a module, choose M here: the
-	  module will be called seagate.
-
-# definitely looks not 64bit safe:
 config SCSI_SIM710
 	tristate "Simple 53c710 SCSI support (Compaq, NCR machines)"
 	depends on (EISA || MCA) && SCSI
 	select SCSI_SPI_ATTRS
 	---help---
-	  This driver for NCR53c710 based SCSI host adapters.
+	  This driver is for NCR53c710 based SCSI host adapters.
 
 	  It currently supports Compaq EISA cards and NCR MCA cards
 
@@ -1383,6 +1512,7 @@ config SCSI_T128
 	tristate "Trantor T128/T128F/T228 SCSI support"
 	depends on ISA && SCSI
 	select SCSI_SPI_ATTRS
+	select CHECK_SIGNATURE
 	---help---
 	  This is support for a SCSI host adapter. It is explained in section
 	  3.11 of the SCSI-HOWTO, available from
@@ -1475,13 +1605,14 @@ config SCSI_NSP32
 config SCSI_DEBUG
 	tristate "SCSI debugging host simulator"
 	depends on SCSI
+	select CRC_T10DIF
 	help
 	  This is a host adapter simulator that can simulate multiple hosts
 	  each with multiple dummy SCSI devices (disks). It defaults to one
 	  host adapter with one dummy SCSI disk. Each dummy disk uses kernel
 	  RAM as storage (i.e. it is a ramdisk). To save space when multiple
 	  dummy disks are simulated, they share the same kernel RAM for 
-	  their storage. See <http://www.torque.net/sg/sdebug.html> for more
+	  their storage. See <http://sg.danny.cz/sg/sdebug26.html> for more
 	  information. This driver is primarily of use to those testing the
 	  SCSI and block subsystems. If unsure, say N.
 
@@ -1547,7 +1678,7 @@ config A3000_SCSI
 	  built-in SCSI controller, say Y. Otherwise, say N.
 
 	  To compile this driver as a module, choose M here: the
-	  module will be called wd33c93.
+	  module will be called a3000.
 
 config A2091_SCSI
 	tristate "A2091/A590 WD33C93A support"
@@ -1557,7 +1688,7 @@ config A2091_SCSI
 	  say N.
 
 	  To compile this driver as a module, choose M here: the
-	  module will be called wd33c93.
+	  module will be called a2091.
 
 config GVP11_SCSI
 	tristate "GVP Series II WD33C93A support"
@@ -1572,52 +1703,25 @@ config GVP11_SCSI
 	  To compile this driver as a module, choose M here: the
 	  module will be called gvp11.
 
-config CYBERSTORM_SCSI
-	tristate "CyberStorm SCSI support"
-	depends on ZORRO && SCSI
+config SCSI_A4000T
+	tristate "A4000T NCR53c710 SCSI support (EXPERIMENTAL)"
+	depends on AMIGA && SCSI && EXPERIMENTAL
+	select SCSI_SPI_ATTRS
 	help
-	  If you have an Amiga with an original (MkI) Phase5 Cyberstorm
-	  accelerator board and the optional Cyberstorm SCSI controller,
-	  answer Y. Otherwise, say N.
+	  If you have an Amiga 4000T and have SCSI devices connected to the
+	  built-in SCSI controller, say Y. Otherwise, say N.
 
-config CYBERSTORMII_SCSI
-	tristate "CyberStorm Mk II SCSI support"
-	depends on ZORRO && SCSI
-	help
-	  If you have an Amiga with a Phase5 Cyberstorm MkII accelerator board
-	  and the optional Cyberstorm SCSI controller, say Y. Otherwise,
-	  answer N.
+	  To compile this driver as a module, choose M here: the
+	  module will be called a4000t.
 
-config BLZ2060_SCSI
-	tristate "Blizzard 2060 SCSI support"
-	depends on ZORRO && SCSI
+config SCSI_ZORRO7XX
+	tristate "Zorro NCR53c710 SCSI support (EXPERIMENTAL)"
+	depends on ZORRO && SCSI && EXPERIMENTAL
+	select SCSI_SPI_ATTRS
 	help
-	  If you have an Amiga with a Phase5 Blizzard 2060 accelerator board
-	  and want to use the onboard SCSI controller, say Y. Otherwise,
-	  answer N.
-
-config BLZ1230_SCSI
-	tristate "Blizzard 1230IV/1260 SCSI support"
-	depends on ZORRO && SCSI
-	help
-	  If you have an Amiga 1200 with a Phase5 Blizzard 1230IV or Blizzard
-	  1260 accelerator, and the optional SCSI module, say Y. Otherwise,
-	  say N.
-
-config FASTLANE_SCSI
-	tristate "Fastlane SCSI support"
-	depends on ZORRO && SCSI
-	help
-	  If you have the Phase5 Fastlane Z3 SCSI controller, or plan to use
-	  one in the near future, say Y to this question. Otherwise, say N.
-
-config SCSI_AMIGA7XX
-	bool "Amiga NCR53c710 SCSI support (EXPERIMENTAL)"
-	depends on AMIGA && SCSI && EXPERIMENTAL && BROKEN
-	help
-	  Support for various NCR53c710-based SCSI controllers on the Amiga.
+	  Support for various NCR53c710-based SCSI controllers on Zorro
+	  expansion boards for the Amiga.
 	  This includes:
-	    - the builtin SCSI controller on the Amiga 4000T,
 	    - the Amiga 4091 Zorro III SCSI-2 controller,
 	    - the MacroSystem Development's WarpEngine Amiga SCSI-2 controller
 	      (info at
@@ -1625,24 +1729,12 @@ config SCSI_AMIGA7XX
 	    - the SCSI controller on the Phase5 Blizzard PowerUP 603e+
 	      accelerator card for the Amiga 1200,
 	    - the SCSI controller on the GVP Turbo 040/060 accelerator.
-	  Note that all of the above SCSI controllers, except for the builtin
-	  SCSI controller on the Amiga 4000T, reside on the Zorro expansion
-	  bus, so you also have to enable Zorro bus support if you want to use
-	  them.
-
-config OKTAGON_SCSI
-	tristate "BSC Oktagon SCSI support (EXPERIMENTAL)"
-	depends on ZORRO && SCSI && EXPERIMENTAL
-	help
-	  If you have the BSC Oktagon SCSI disk controller for the Amiga, say
-	  Y to this question.  If you're in doubt about whether you have one,
-	  see the picture at
-	  <http://amiga.resource.cx/exp/search.pl?product=oktagon>.
 
 config ATARI_SCSI
 	tristate "Atari native SCSI support"
 	depends on ATARI && SCSI
 	select SCSI_SPI_ATTRS
+	select NVRAM
 	---help---
 	  If you have an Atari with built-in NCR5380 SCSI controller (TT,
 	  Falcon, ...) say Y to get it supported. Of course also, if you have
@@ -1673,14 +1765,6 @@ config ATARI_SCSI_RESET_BOOT
 	  boot process fractionally longer but may assist recovery from errors
 	  that leave the devices with SCSI operations partway completed.
 
-config TT_DMA_EMUL
-	bool "Hades SCSI DMA emulator"
-	depends on ATARI_SCSI && HADES
-	help
-	  This option enables code which emulates the TT SCSI DMA chip on the
-	  Hades. This increases the SCSI transfer rates at least ten times
-	  compared to PIO transfers.
-
 config MAC_SCSI
 	bool "Macintosh NCR5380 SCSI"
 	depends on MAC && SCSI=y
@@ -1694,14 +1778,13 @@ config MAC_SCSI
 config SCSI_MAC_ESP
 	tristate "Macintosh NCR53c9[46] SCSI"
 	depends on MAC && SCSI
+	select SCSI_SPI_ATTRS
 	help
 	  This is the NCR 53c9x SCSI controller found on most of the 68040
-	  based Macintoshes.  If you have one of these say Y and read the
-	  SCSI-HOWTO, available from
-	  <http://www.tldp.org/docs.html#howto>.
+	  based Macintoshes.
 
-	  To compile this driver as a module, choose M here: the
-	  module will be called mac_esp.
+	  To compile this driver as a module, choose M here: the module
+	  will be called mac_esp.
 
 config MVME147_SCSI
 	bool "WD33C93 SCSI driver for MVME147"
@@ -1712,8 +1795,8 @@ config MVME147_SCSI
 	  single-board computer.
 
 config MVME16x_SCSI
-	bool "NCR53C710 SCSI driver for MVME16x"
-	depends on MVME16x && SCSI && BROKEN
+	tristate "NCR53C710 SCSI driver for MVME16x"
+	depends on MVME16x && SCSI
 	select SCSI_SPI_ATTRS
 	help
 	  The Motorola MVME162, 166, 167, 172 and 177 boards use the NCR53C710
@@ -1721,21 +1804,13 @@ config MVME16x_SCSI
 	  will want to say Y to this question.
 
 config BVME6000_SCSI
-	bool "NCR53C710 SCSI driver for BVME6000"
-	depends on BVME6000 && SCSI && BROKEN
+	tristate "NCR53C710 SCSI driver for BVME6000"
+	depends on BVME6000 && SCSI
 	select SCSI_SPI_ATTRS
 	help
 	  The BVME4000 and BVME6000 boards from BVM Ltd use the NCR53C710
 	  SCSI controller chip.  Almost everyone using one of these boards
 	  will want to say Y to this question.
-
-config SCSI_NCR53C7xx_FAST
-	bool "allow FAST-SCSI [10MHz]"
-	depends on SCSI_AMIGA7XX || MVME16x_SCSI || BVME6000_SCSI
-	help
-	  This will enable 10MHz FAST-SCSI transfers with your host
-	  adapter. Some systems have problems with that speed, so it's safest
-	  to say N here.
 
 config SUN3_SCSI
 	tristate "Sun3 NCR5380 SCSI"
@@ -1751,6 +1826,7 @@ config SUN3_SCSI
 config SUN3X_ESP
 	bool "Sun3x ESP SCSI"
 	depends on SUN3X && SCSI=y
+	select SCSI_SPI_ATTRS
 	help
 	  The ESP was an on-board SCSI controller used on Sun 3/80
 	  machines.  Say Y here to compile in support for it.
@@ -1761,12 +1837,12 @@ config SCSI_SUNESP
 	select SCSI_SPI_ATTRS
 	help
 	  This is the driver for the Sun ESP SCSI host adapter. The ESP
-	  chipset is present in most SPARC SBUS-based computers.
+	  chipset is present in most SPARC SBUS-based computers and
+	  supports the Emulex family of ESP SCSI chips (esp100, esp100A,
+	  esp236, fas101, fas236) as well as the Qlogic fas366 SCSI chip.
 
 	  To compile this driver as a module, choose M here: the
-	  module will be called esp.
-
-#      bool 'Cyberstorm Mk III SCSI support (EXPERIMENTAL)' CONFIG_CYBERSTORMIII_SCSI
+	  module will be called sun_esp.
 
 config ZFCP
 	tristate "FCP host bus adapter driver for IBM eServer zSeries"
@@ -1782,6 +1858,24 @@ config ZFCP
           called zfcp. If you want to compile it as a module, say M here
           and read <file:Documentation/kbuild/modules.txt>.
 
+config ZFCP_DIF
+	tristate "T10 DIF/DIX support for the zfcp driver (EXPERIMENTAL)"
+	depends on ZFCP && EXPERIMENTAL
+
+config SCSI_PMCRAID
+	tristate "PMC SIERRA Linux MaxRAID adapter support"
+	depends on PCI && SCSI && NET
+	---help---
+	  This driver supports the PMC SIERRA MaxRAID adapters.
+
+config SCSI_PM8001
+	tristate "PMC-Sierra SPC 8001 SAS/SATA Based Host Adapter driver"
+	depends on PCI && SCSI
+	select SCSI_SAS_LIBSAS
+	help
+	  This driver supports PMC-Sierra PCIE SAS/SATA 8x6G SPC 8001 chip
+	  based host adapters.
+
 config SCSI_SRP
 	tristate "SCSI RDMA Protocol helper library"
 	depends on SCSI && PCI
@@ -1792,8 +1886,22 @@ config SCSI_SRP
 	  To compile this driver as a module, choose M here: the
 	  module will be called libsrp.
 
-endmenu
+config SCSI_BFA_FC
+	tristate "Brocade BFA Fibre Channel Support"
+	depends on PCI && SCSI
+	select SCSI_FC_ATTRS
+	help
+	  This bfa driver supports all Brocade PCIe FC/FCOE host adapters.
+
+	  To compile this driver as a module, choose M here. The module will
+	  be called bfa.
+
+endif # SCSI_LOWLEVEL
 
 source "drivers/scsi/pcmcia/Kconfig"
+
+source "drivers/scsi/device_handler/Kconfig"
+
+source "drivers/scsi/osd/Kconfig"
 
 endmenu

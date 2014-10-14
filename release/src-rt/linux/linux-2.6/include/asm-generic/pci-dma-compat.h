@@ -6,9 +6,6 @@
 
 #include <linux/dma-mapping.h>
 
-/* note pci_set_dma_mask isn't here, since it's a public function
- * exported from drivers/pci, use dma_supported instead */
-
 static inline int
 pci_dma_supported(struct pci_dev *hwdev, u64 mask)
 {
@@ -99,9 +96,21 @@ pci_dma_sync_sg_for_device(struct pci_dev *hwdev, struct scatterlist *sg,
 }
 
 static inline int
-pci_dma_mapping_error(dma_addr_t dma_addr)
+pci_dma_mapping_error(struct pci_dev *pdev, dma_addr_t dma_addr)
 {
-	return dma_mapping_error(dma_addr);
+	return dma_mapping_error(&pdev->dev, dma_addr);
 }
+
+#ifdef CONFIG_PCI
+static inline int pci_set_dma_mask(struct pci_dev *dev, u64 mask)
+{
+	return dma_set_mask(&dev->dev, mask);
+}
+
+static inline int pci_set_consistent_dma_mask(struct pci_dev *dev, u64 mask)
+{
+	return dma_set_coherent_mask(&dev->dev, mask);
+}
+#endif
 
 #endif

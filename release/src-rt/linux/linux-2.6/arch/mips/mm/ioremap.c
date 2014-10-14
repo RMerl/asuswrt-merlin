@@ -10,9 +10,8 @@
 #include <asm/addrspace.h>
 #include <asm/byteorder.h>
 #include <linux/sched.h>
+#include <linux/slab.h>
 #include <linux/vmalloc.h>
-#include <linux/hardirq.h>
-#include <linux/highmem.h>
 #include <asm/cacheflush.h>
 #include <asm/io.h>
 #include <asm/tlbflush.h>
@@ -29,8 +28,7 @@ static inline void remap_area_pte(pte_t * pte, unsigned long address,
 	end = address + size;
 	if (end > PMD_SIZE)
 		end = PMD_SIZE;
-	if (address >= end)
-		BUG();
+	BUG_ON(address >= end);
 	pfn = phys_addr >> PAGE_SHIFT;
 	do {
 		if (!pte_none(*pte)) {
@@ -54,8 +52,7 @@ static inline int remap_area_pmd(pmd_t * pmd, unsigned long address,
 	if (end > PGDIR_SIZE)
 		end = PGDIR_SIZE;
 	phys_addr -= address;
-	if (address >= end)
-		BUG();
+	BUG_ON(address >= end);
 	do {
 		pte_t * pte = pte_alloc_kernel(pmd, address);
 		if (!pte)
@@ -77,8 +74,7 @@ static int remap_area_pages(unsigned long address, phys_t phys_addr,
 	phys_addr -= address;
 	dir = pgd_offset(&init_mm, address);
 	flush_cache_all();
-	if (address >= end)
-		BUG();
+	BUG_ON(address >= end);
 	do {
 		pud_t *pud;
 		pmd_t *pmd;
@@ -161,17 +157,10 @@ void __iomem * __ioremap(phys_t phys_addr, phys_t size, unsigned long flags)
 	phys_addr &= PAGE_MASK;
 	size = PAGE_ALIGN(last_addr + 1) - phys_addr;
 
-	/* If we are in interrupt/Bottom half context, try to use fixed temporary
- 	 * map, which we can get atomically. However we are limited by one page only.
- 	 */
-	if (in_interrupt() && (size <= PAGE_SIZE))
-		return (void __iomem *) (kmap_atomic_pfn_prot(phys_addr >> PAGE_SHIFT, KM_PCIE, PAGE_KERNEL_UNCACHED) + offset);
-
 	/*
 	 * Ok, go for it..
 	 */
 	area = get_vm_area(size, VM_IOREMAP);
-	
 	if (!area)
 		return NULL;
 	addr = area->addr;
@@ -191,11 +180,6 @@ void __iounmap(const volatile void __iomem *addr)
 
 	if (IS_KSEG1(addr))
 		return;
-
-	if (in_interrupt()) {
-		kunmap_atomic((void *)addr, KM_PCIE);
-		return;
-	}
 
 	p = remove_vm_area((void *) (PAGE_MASK & (unsigned long __force) addr));
 	if (!p)

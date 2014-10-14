@@ -13,7 +13,6 @@
 #include <linux/kernel.h>
 #include <linux/wait.h>
 #include <linux/string.h>
-#include <linux/slab.h>
 #include <linux/ioport.h>
 #include <linux/delay.h>
 #include <linux/miscdevice.h>
@@ -67,11 +66,15 @@ static void set_led(char state)
 
 static int briq_panel_open(struct inode *ino, struct file *filep)
 {
-	/* enforce single access */
-	if (vfd_is_open)
+	tty_lock();
+	/* enforce single access, vfd_is_open is protected by BKL */
+	if (vfd_is_open) {
+		tty_unlock();
 		return -EBUSY;
+	}
 	vfd_is_open = 1;
 
+	tty_unlock();
 	return 0;
 }
 
@@ -90,11 +93,6 @@ static ssize_t briq_panel_read(struct file *file, char __user *buf, size_t count
 {
 	unsigned short c;
 	unsigned char cp;
-
-#if 0	/*  Can't seek (pread) on this device  */
-	if (ppos != &file->f_pos)
-		return -ESPIPE;
-#endif
 
 	if (!vfd_is_open)
 		return -ENODEV;
@@ -138,11 +136,6 @@ static ssize_t briq_panel_write(struct file *file, const char __user *buf, size_
 {
 	size_t indx = len;
 	int i, esc = 0;
-
-#if 0	/*  Can't seek (pwrite) on this device  */
-	if (ppos != &file->f_pos)
-		return -ESPIPE;
-#endif
 
 	if (!vfd_is_open)
 		return -EBUSY;
@@ -192,6 +185,7 @@ static const struct file_operations briq_panel_fops = {
 	.write		= briq_panel_write,
 	.open		= briq_panel_open,
 	.release	= briq_panel_release,
+	.llseek		= noop_llseek,
 };
 
 static struct miscdevice briq_panel_miscdev = {

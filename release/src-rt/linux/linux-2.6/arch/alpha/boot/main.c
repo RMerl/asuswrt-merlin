@@ -6,8 +6,9 @@
  * This file is the bootloader for the Linux/AXP kernel
  */
 #include <linux/kernel.h>
+#include <linux/slab.h>
 #include <linux/string.h>
-#include <linux/utsrelease.h>
+#include <generated/utsrelease.h>
 #include <linux/mm.h>
 
 #include <asm/system.h>
@@ -132,7 +133,7 @@ static inline long load(long dev, unsigned long addr, unsigned long count)
 	if (result)
 		srm_printk("Boot file specification (%s) not implemented\n",
 		       bootfile);
-	return callback_read(dev, count, addr, boot_size/512 + 1);
+	return callback_read(dev, count, (void *)addr, boot_size/512 + 1);
 }
 
 /*

@@ -1,5 +1,3 @@
-/*	$Id: ppp_defs.h,v 1.2 1994/09/21 01:31:06 paulus Exp $	*/
-
 /*
  * ppp_defs.h - PPP definitions.
  *
@@ -26,6 +24,8 @@
  * OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS,
  * OR MODIFICATIONS.
  */
+
+#include <linux/types.h>
 
 /*
  *  ==FILEVERSION 20000114==
@@ -177,8 +177,8 @@ struct ppp_comp_stats {
  * the last NP packet was sent or received.
  */
 struct ppp_idle {
-    time_t xmit_idle;		/* time since last NP packet sent */
-    time_t recv_idle;		/* time since last NP packet received */
+    __kernel_time_t xmit_idle;	/* time since last NP packet sent */
+    __kernel_time_t recv_idle;	/* time since last NP packet received */
 };
 
 #endif /* _PPP_DEFS_H_ */

@@ -12,26 +12,49 @@
 
 #ifdef __KERNEL__
 #include <linux/mm.h>
+#include <linux/percpu_counter.h>
 
 #include <asm/atomic.h>
 
 extern int sysctl_overcommit_memory;
 extern int sysctl_overcommit_ratio;
-extern atomic_t vm_committed_space;
+extern struct percpu_counter vm_committed_as;
 
-#ifdef CONFIG_SMP
-extern void vm_acct_memory(long pages);
-#else
 static inline void vm_acct_memory(long pages)
 {
-	atomic_add(pages, &vm_committed_space);
+	percpu_counter_add(&vm_committed_as, pages);
 }
-#endif
 
 static inline void vm_unacct_memory(long pages)
 {
 	vm_acct_memory(-pages);
 }
+
+/*
+ * Allow architectures to handle additional protection bits
+ */
+
+#ifndef arch_calc_vm_prot_bits
+#define arch_calc_vm_prot_bits(prot) 0
+#endif
+
+#ifndef arch_vm_get_page_prot
+#define arch_vm_get_page_prot(vm_flags) __pgprot(0)
+#endif
+
+#ifndef arch_validate_prot
+/*
+ * This is called from mprotect().  PROT_GROWSDOWN and PROT_GROWSUP have
+ * already been masked out.
+ *
+ * Returns true if the prot flags are valid
+ */
+static inline int arch_validate_prot(unsigned long prot)
+{
+	return (prot & ~(PROT_READ | PROT_WRITE | PROT_EXEC | PROT_SEM)) == 0;
+}
+#define arch_validate_prot arch_validate_prot
+#endif
 
 /*
  * Optimisation macro.  It is equivalent to:
@@ -51,7 +74,8 @@ calc_vm_prot_bits(unsigned long prot)
 {
 	return _calc_vm_trans(prot, PROT_READ,  VM_READ ) |
 	       _calc_vm_trans(prot, PROT_WRITE, VM_WRITE) |
-	       _calc_vm_trans(prot, PROT_EXEC,  VM_EXEC );
+	       _calc_vm_trans(prot, PROT_EXEC,  VM_EXEC) |
+	       arch_calc_vm_prot_bits(prot);
 }
 
 /*

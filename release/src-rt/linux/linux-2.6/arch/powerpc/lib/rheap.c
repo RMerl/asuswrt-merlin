@@ -15,7 +15,9 @@
 #include <linux/types.h>
 #include <linux/errno.h>
 #include <linux/kernel.h>
+#include <linux/module.h>
 #include <linux/mm.h>
+#include <linux/err.h>
 #include <linux/slab.h>
 
 #include <asm/rheap.h>
@@ -52,7 +54,7 @@ static int grow(rh_info_t * info, int max_blocks)
 
 	new_blocks = max_blocks - info->max_blocks;
 
-	block = kmalloc(sizeof(rh_block_t) * max_blocks, GFP_KERNEL);
+	block = kmalloc(sizeof(rh_block_t) * max_blocks, GFP_ATOMIC);
 	if (block == NULL)
 		return -ENOMEM;
 
@@ -256,7 +258,7 @@ rh_info_t *rh_create(unsigned int alignment)
 	if ((alignment & (alignment - 1)) != 0)
 		return ERR_PTR(-EINVAL);
 
-	info = kmalloc(sizeof(*info), GFP_KERNEL);
+	info = kmalloc(sizeof(*info), GFP_ATOMIC);
 	if (info == NULL)
 		return ERR_PTR(-ENOMEM);
 
@@ -274,6 +276,7 @@ rh_info_t *rh_create(unsigned int alignment)
 
 	return info;
 }
+EXPORT_SYMBOL_GPL(rh_create);
 
 /*
  * Destroy a dynamically created remote heap.  Deallocate only if the areas
@@ -287,6 +290,7 @@ void rh_destroy(rh_info_t * info)
 	if ((info->flags & RHIF_STATIC_INFO) == 0)
 		kfree(info);
 }
+EXPORT_SYMBOL_GPL(rh_destroy);
 
 /*
  * Initialize in place a remote heap info block.  This is needed to support
@@ -319,6 +323,7 @@ void rh_init(rh_info_t * info, unsigned int alignment, int max_blocks,
 	for (i = 0, blk = block; i < max_blocks; i++, blk++)
 		list_add(&blk->list, &info->empty_list);
 }
+EXPORT_SYMBOL_GPL(rh_init);
 
 /* Attach a free memory region, coalesces regions if adjuscent */
 int rh_attach_region(rh_info_t * info, unsigned long start, int size)
@@ -359,6 +364,7 @@ int rh_attach_region(rh_info_t * info, unsigned long start, int size)
 
 	return 0;
 }
+EXPORT_SYMBOL_GPL(rh_attach_region);
 
 /* Detatch given address range, splits free block if needed. */
 unsigned long rh_detach_region(rh_info_t * info, unsigned long start, int size)
@@ -427,6 +433,7 @@ unsigned long rh_detach_region(rh_info_t * info, unsigned long start, int size)
 
 	return s;
 }
+EXPORT_SYMBOL_GPL(rh_detach_region);
 
 /* Allocate a block of memory at the specified alignment.  The value returned
  * is an offset into the buffer initialized by rh_init(), or a negative number
@@ -501,6 +508,7 @@ unsigned long rh_alloc_align(rh_info_t * info, int size, int alignment, const ch
 
 	return start;
 }
+EXPORT_SYMBOL_GPL(rh_alloc_align);
 
 /* Allocate a block of memory at the default alignment.  The value returned is
  * an offset into the buffer initialized by rh_init(), or a negative number if
@@ -510,6 +518,7 @@ unsigned long rh_alloc(rh_info_t * info, int size, const char *owner)
 {
 	return rh_alloc_align(info, size, info->alignment, owner);
 }
+EXPORT_SYMBOL_GPL(rh_alloc);
 
 /* Allocate a block of memory at the given offset, rounded up to the default
  * alignment.  The value returned is an offset into the buffer initialized by
@@ -547,6 +556,7 @@ unsigned long rh_alloc_fixed(rh_info_t * info, unsigned long start, int size, co
 		be = blk->start + blk->size;
 		if (s >= bs && e <= be)
 			break;
+		blk = NULL;
 	}
 
 	if (blk == NULL)
@@ -593,6 +603,7 @@ unsigned long rh_alloc_fixed(rh_info_t * info, unsigned long start, int size, co
 
 	return start;
 }
+EXPORT_SYMBOL_GPL(rh_alloc_fixed);
 
 /* Deallocate the memory previously allocated by one of the rh_alloc functions.
  * The return value is the size of the deallocated block, or a negative number
@@ -625,6 +636,7 @@ int rh_free(rh_info_t * info, unsigned long start)
 
 	return size;
 }
+EXPORT_SYMBOL_GPL(rh_free);
 
 int rh_get_stats(rh_info_t * info, int what, int max_stats, rh_stats_t * stats)
 {
@@ -662,6 +674,7 @@ int rh_get_stats(rh_info_t * info, int what, int max_stats, rh_stats_t * stats)
 
 	return nr;
 }
+EXPORT_SYMBOL_GPL(rh_get_stats);
 
 int rh_set_owner(rh_info_t * info, unsigned long start, const char *owner)
 {
@@ -686,6 +699,7 @@ int rh_set_owner(rh_info_t * info, unsigned long start, const char *owner)
 
 	return size;
 }
+EXPORT_SYMBOL_GPL(rh_set_owner);
 
 void rh_dump(rh_info_t * info)
 {
@@ -721,6 +735,7 @@ void rh_dump(rh_info_t * info)
 		       st[i].size, st[i].owner != NULL ? st[i].owner : "");
 	printk(KERN_INFO "\n");
 }
+EXPORT_SYMBOL_GPL(rh_dump);
 
 void rh_dump_blk(rh_info_t * info, rh_block_t * blk)
 {
@@ -728,3 +743,5 @@ void rh_dump_blk(rh_info_t * info, rh_block_t * blk)
 	       "blk @0x%p: 0x%lx-0x%lx (%u)\n",
 	       blk, blk->start, blk->start + blk->size, blk->size);
 }
+EXPORT_SYMBOL_GPL(rh_dump_blk);
+

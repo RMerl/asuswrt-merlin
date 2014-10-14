@@ -93,8 +93,6 @@ static int __init do_wd_probe(struct net_device *dev)
 	int mem_start = dev->mem_start;
 	int mem_end = dev->mem_end;
 
-	SET_MODULE_OWNER(dev);
-
 	if (base_addr > 0x1ff) {	/* Check a user specified location. */
 		r = request_region(base_addr, WD_IO_EXTENT, "wd-probe");
 		if ( r == NULL)
@@ -149,6 +147,21 @@ out:
 }
 #endif
 
+static const struct net_device_ops wd_netdev_ops = {
+	.ndo_open		= wd_open,
+	.ndo_stop		= wd_close,
+	.ndo_start_xmit		= ei_start_xmit,
+	.ndo_tx_timeout		= ei_tx_timeout,
+	.ndo_get_stats		= ei_get_stats,
+	.ndo_set_multicast_list = ei_set_multicast_list,
+	.ndo_validate_addr	= eth_validate_addr,
+	.ndo_set_mac_address 	= eth_mac_addr,
+	.ndo_change_mtu		= eth_change_mtu,
+#ifdef CONFIG_NET_POLL_CONTROLLER
+	.ndo_poll_controller 	= ei_poll,
+#endif
+};
+
 static int __init wd_probe1(struct net_device *dev, int ioaddr)
 {
 	int i;
@@ -176,9 +189,11 @@ static int __init wd_probe1(struct net_device *dev, int ioaddr)
 	if (ei_debug  &&  version_printed++ == 0)
 		printk(version);
 
-	printk("%s: WD80x3 at %#3x,", dev->name, ioaddr);
 	for (i = 0; i < 6; i++)
-		printk(" %2.2X", dev->dev_addr[i] = inb(ioaddr + 8 + i));
+		dev->dev_addr[i] = inb(ioaddr + 8 + i);
+
+	printk("%s: WD80x3 at %#3x, %pM",
+	       dev->name, ioaddr, dev->dev_addr);
 
 	/* The following PureData probe code was contributed by
 	   Mike Jagdis <jaggy@purplet.demon.co.uk>. Puredata does software
@@ -260,7 +275,7 @@ static int __init wd_probe1(struct net_device *dev, int ioaddr)
 	dev->base_addr = ioaddr+WD_NIC_OFFSET;
 
 	if (dev->irq < 2) {
-		int irqmap[] = {9,3,5,7,10,11,15,4};
+		static const int irqmap[] = {9, 3, 5, 7, 10, 11, 15, 4};
 		int reg1 = inb(ioaddr+1);
 		int reg4 = inb(ioaddr+4);
 		if (ancient || reg1 == 0xff) {	/* Ack!! No way to read the IRQ! */
@@ -327,15 +342,12 @@ static int __init wd_probe1(struct net_device *dev, int ioaddr)
 	printk(" %s, IRQ %d, shared memory at %#lx-%#lx.\n",
 		   model_name, dev->irq, dev->mem_start, dev->mem_end-1);
 
-	ei_status.reset_8390 = &wd_reset_8390;
-	ei_status.block_input = &wd_block_input;
-	ei_status.block_output = &wd_block_output;
-	ei_status.get_8390_hdr = &wd_get_8390_hdr;
-	dev->open = &wd_open;
-	dev->stop = &wd_close;
-#ifdef CONFIG_NET_POLL_CONTROLLER
-	dev->poll_controller = ei_poll;
-#endif
+	ei_status.reset_8390 = wd_reset_8390;
+	ei_status.block_input = wd_block_input;
+	ei_status.block_output = wd_block_output;
+	ei_status.get_8390_hdr = wd_get_8390_hdr;
+
+	dev->netdev_ops = &wd_netdev_ops;
 	NS8390_init(dev, 0);
 
 #if 1
@@ -346,8 +358,10 @@ static int __init wd_probe1(struct net_device *dev, int ioaddr)
 #endif
 
 	err = register_netdev(dev);
-	if (err)
+	if (err) {
 		free_irq(dev->irq, dev);
+		iounmap(ei_status.mem);
+	}
 	return err;
 }
 
@@ -365,8 +379,7 @@ wd_open(struct net_device *dev)
 	  outb(ei_status.reg5, ioaddr+WD_CMDREG5);
   outb(ei_status.reg0, ioaddr); /* WD_CMDREG */
 
-  ei_open(dev);
-  return 0;
+  return ei_open(dev);
 }
 
 static void
@@ -384,7 +397,6 @@ wd_reset_8390(struct net_device *dev)
 		outb(NIC16 | ((dev->mem_start>>19) & 0x1f), wd_cmd_port+WD_CMDREG5);
 
 	if (ei_debug > 1) printk("reset done\n");
-	return;
 }
 
 /* Grab the 8390 specific header. Similar to the block_input routine, but

@@ -122,8 +122,6 @@ static int __init do_hpp_probe(struct net_device *dev)
 	int base_addr = dev->base_addr;
 	int irq = dev->irq;
 
-	SET_MODULE_OWNER(dev);
-
 	if (base_addr > 0x1ff)		/* Check a single specified location. */
 		return hpp_probe1(dev, base_addr);
 	else if (base_addr != 0)	/* Don't probe at all. */
@@ -141,7 +139,7 @@ static int __init do_hpp_probe(struct net_device *dev)
 #ifndef MODULE
 struct net_device * __init hp_plus_probe(int unit)
 {
-	struct net_device *dev = alloc_ei_netdev();
+	struct net_device *dev = alloc_eip_netdev();
 	int err;
 
 	if (!dev)
@@ -160,6 +158,22 @@ out:
 }
 #endif
 
+static const struct net_device_ops hpp_netdev_ops = {
+	.ndo_open		= hpp_open,
+	.ndo_stop		= hpp_close,
+	.ndo_start_xmit		= eip_start_xmit,
+	.ndo_tx_timeout		= eip_tx_timeout,
+	.ndo_get_stats		= eip_get_stats,
+	.ndo_set_multicast_list = eip_set_multicast_list,
+	.ndo_validate_addr	= eth_validate_addr,
+	.ndo_set_mac_address 	= eth_mac_addr,
+	.ndo_change_mtu		= eth_change_mtu,
+#ifdef CONFIG_NET_POLL_CONTROLLER
+	.ndo_poll_controller	= eip_poll,
+#endif
+};
+
+
 /* Do the interesting part of the probe at a single address. */
 static int __init hpp_probe1(struct net_device *dev, int ioaddr)
 {
@@ -173,8 +187,8 @@ static int __init hpp_probe1(struct net_device *dev, int ioaddr)
 		return -EBUSY;
 
 	/* Check for the HP+ signature, 50 48 0x 53. */
-	if (inw(ioaddr + HP_ID) != 0x4850
-		|| (inw(ioaddr + HP_PAGING) & 0xfff0) != 0x5300) {
+	if (inw(ioaddr + HP_ID) != 0x4850 ||
+	    (inw(ioaddr + HP_PAGING) & 0xfff0) != 0x5300) {
 		retval = -ENODEV;
 		goto out;
 	}
@@ -182,7 +196,7 @@ static int __init hpp_probe1(struct net_device *dev, int ioaddr)
 	if (ei_debug  &&  version_printed++ == 0)
 		printk(version);
 
-	printk("%s: %s at %#3x,", dev->name, name, ioaddr);
+	printk("%s: %s at %#3x, ", dev->name, name, ioaddr);
 
 	/* Retrieve and checksum the station address. */
 	outw(MAC_Page, ioaddr + HP_PAGING);
@@ -191,9 +205,10 @@ static int __init hpp_probe1(struct net_device *dev, int ioaddr)
 		unsigned char inval = inb(ioaddr + 8 + i);
 		dev->dev_addr[i] = inval;
 		checksum += inval;
-		printk(" %2.2x", inval);
 	}
 	checksum += inb(ioaddr + 14);
+
+	printk("%pM", dev->dev_addr);
 
 	if (checksum != 0xff) {
 		printk(" bad checksum %2.2x.\n", checksum);
@@ -227,11 +242,7 @@ static int __init hpp_probe1(struct net_device *dev, int ioaddr)
 	/* Set the base address to point to the NIC, not the "real" base! */
 	dev->base_addr = ioaddr + NIC_OFFSET;
 
-	dev->open = &hpp_open;
-	dev->stop = &hpp_close;
-#ifdef CONFIG_NET_POLL_CONTROLLER
-	dev->poll_controller = ei_poll;
-#endif
+	dev->netdev_ops = &hpp_netdev_ops;
 
 	ei_status.name = name;
 	ei_status.word16 = 0;		/* Agggghhhhh! Debug time: 2 days! */
@@ -262,7 +273,7 @@ static int __init hpp_probe1(struct net_device *dev, int ioaddr)
 	}
 
 	outw(Perf_Page, ioaddr + HP_PAGING);
-	NS8390_init(dev, 0);
+	NS8390p_init(dev, 0);
 	/* Leave the 8390 and HP chip reset. */
 	outw(inw(ioaddr + HPP_OPTION) & ~EnableIRQ, ioaddr + HPP_OPTION);
 
@@ -284,7 +295,7 @@ hpp_open(struct net_device *dev)
 	int option_reg;
 	int retval;
 
-	if ((retval = request_irq(dev->irq, ei_interrupt, 0, dev->name, dev))) {
+	if ((retval = request_irq(dev->irq, eip_interrupt, 0, dev->name, dev))) {
 	    return retval;
 	}
 
@@ -302,8 +313,7 @@ hpp_open(struct net_device *dev)
 	/* Select the operational page. */
 	outw(Perf_Page, ioaddr + HP_PAGING);
 
-	ei_open(dev);
-	return 0;
+	return eip_open(dev);
 }
 
 static int
@@ -313,7 +323,7 @@ hpp_close(struct net_device *dev)
 	int option_reg = inw(ioaddr + HPP_OPTION);
 
 	free_irq(dev->irq, dev);
-	ei_close(dev);
+	eip_close(dev);
 	outw((option_reg & ~EnableIRQ) | MemDisable | NICReset | ChipReset,
 		 ioaddr + HPP_OPTION);
 
@@ -341,7 +351,6 @@ hpp_reset_8390(struct net_device *dev)
 		printk("%s: hp_reset_8390() did not complete.\n", dev->name);
 
 	if (ei_debug > 1) printk("8390 reset done (%ld).", jiffies);
-	return;
 }
 
 /* The programmed-I/O version of reading the 4 byte 8390 specific header.
@@ -412,7 +421,6 @@ hpp_io_block_output(struct net_device *dev, int count,
 	int ioaddr = dev->base_addr - NIC_OFFSET;
 	outw(start_page << 8, ioaddr + HPP_OUT_ADDR);
 	outsl(ioaddr + HP_DATAPORT, buf, (count+3)>>2);
-	return;
 }
 
 static void
@@ -426,8 +434,6 @@ hpp_mem_block_output(struct net_device *dev, int count,
 	outw(option_reg & ~(MemDisable + BootROMEnb), ioaddr + HPP_OPTION);
 	memcpy_toio(ei_status.mem, buf, (count + 3) & ~3);
 	outw(option_reg, ioaddr + HPP_OPTION);
-
-	return;
 }
 
 
@@ -457,7 +463,7 @@ init_module(void)
 			if (this_dev != 0) break; /* only autoprobe 1st one */
 			printk(KERN_NOTICE "hp-plus.c: Presently autoprobing (not recommended) for a single card.\n");
 		}
-		dev = alloc_ei_netdev();
+		dev = alloc_eip_netdev();
 		if (!dev)
 			break;
 		dev->irq = irq[this_dev];

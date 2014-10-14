@@ -54,7 +54,7 @@
 
 /*
  * _hash_page_4K(unsigned long ea, unsigned long access, unsigned long vsid,
- *		 pte_t *ptep, unsigned long trap, int local)
+ *		 pte_t *ptep, unsigned long trap, int local, int ssize)
  *
  * Adds a 4K page to the hash table in a segment of 4K pages only
  */
@@ -66,10 +66,8 @@ _GLOBAL(__hash_page_4K)
 	/* Save all params that we need after a function call */
 	std	r6,STK_PARM(r6)(r1)
 	std	r8,STK_PARM(r8)(r1)
+	std	r9,STK_PARM(r9)(r1)
 	
-	/* Add _PAGE_PRESENT to access */
-	ori	r4,r4,_PAGE_PRESENT
-
 	/* Save non-volatile registers.
 	 * r31 will hold "old PTE"
 	 * r30 is "new PTE"
@@ -117,6 +115,10 @@ _GLOBAL(__hash_page_4K)
 	 * r4 (access) is re-useable, we use it for the new HPTE flags
 	 */
 
+BEGIN_FTR_SECTION
+	cmpdi	r9,0			/* check segment size */
+	bne	3f
+END_FTR_SECTION_IFSET(CPU_FTR_1T_SEGMENT)
 	/* Calc va and put it in r29 */
 	rldicr	r29,r5,28,63-28
 	rldicl	r3,r3,0,36
@@ -126,9 +128,20 @@ _GLOBAL(__hash_page_4K)
 	rldicl	r5,r5,0,25		/* vsid & 0x0000007fffffffff */
 	rldicl	r0,r3,64-12,48		/* (ea >> 12) & 0xffff */
 	xor	r28,r5,r0
+	b	4f
+
+3:	/* Calc VA and hash in r29 and r28 for 1T segment */
+	sldi	r29,r5,40		/* vsid << 40 */
+	clrldi	r3,r3,24		/* ea & 0xffffffffff */
+	rldic	r28,r5,25,25		/* (vsid << 25) & 0x7fffffffff */
+	clrldi	r5,r5,40		/* vsid & 0xffffff */
+	rldicl	r0,r3,64-12,36		/* (ea >> 12) & 0xfffffff */
+	xor	r28,r28,r5
+	or	r29,r3,r29		/* VA */
+	xor	r28,r28,r0		/* hash */
 
 	/* Convert linux PTE bits into HW equivalents */
-	andi.	r3,r30,0x1fe		/* Get basic set of flags */
+4:	andi.	r3,r30,0x1fe		/* Get basic set of flags */
 	xori	r3,r3,HPTE_R_N		/* _PAGE_EXEC -> NOEXEC */
 	rlwinm	r0,r30,32-9+1,30,30	/* _PAGE_RW -> _PAGE_USER (r0) */
 	rlwinm	r4,r30,32-7+1,30,30	/* _PAGE_DIRTY -> _PAGE_USER (r4) */
@@ -179,10 +192,11 @@ htab_insert_pte:
 	rldicr	r3,r0,3,63-3		/* r3 = (hash & mask) << 3 */
 
 	/* Call ppc_md.hpte_insert */
-	ld	r6,STK_PARM(r4)(r1)	/* Retreive new pp bits */
-	mr	r4,r29			/* Retreive va */
+	ld	r6,STK_PARM(r4)(r1)	/* Retrieve new pp bits */
+	mr	r4,r29			/* Retrieve va */
 	li	r7,0			/* !bolted, !secondary */
 	li	r8,MMU_PAGE_4K		/* page size */
+	ld	r9,STK_PARM(r9)(r1)	/* segment size */
 _GLOBAL(htab_call_hpte_insert1)
 	bl	.			/* Patched by htab_finish_init() */
 	cmpdi	0,r3,0
@@ -201,10 +215,11 @@ _GLOBAL(htab_call_hpte_insert1)
 	rldicr	r3,r0,3,63-3	/* r0 = (~hash & mask) << 3 */
 	
 	/* Call ppc_md.hpte_insert */
-	ld	r6,STK_PARM(r4)(r1)	/* Retreive new pp bits */
-	mr	r4,r29			/* Retreive va */
+	ld	r6,STK_PARM(r4)(r1)	/* Retrieve new pp bits */
+	mr	r4,r29			/* Retrieve va */
 	li	r7,HPTE_V_SECONDARY	/* !bolted, secondary */
 	li	r8,MMU_PAGE_4K		/* page size */
+	ld	r9,STK_PARM(r9)(r1)	/* segment size */
 _GLOBAL(htab_call_hpte_insert2)
 	bl	.			/* Patched by htab_finish_init() */
 	cmpdi	0,r3,0
@@ -273,7 +288,8 @@ htab_modify_pte:
 	/* Call ppc_md.hpte_updatepp */
 	mr	r5,r29			/* va */
 	li	r6,MMU_PAGE_4K		/* page size */
-	ld	r7,STK_PARM(r8)(r1)	/* get "local" param */
+	ld	r7,STK_PARM(r9)(r1)	/* segment size */
+	ld	r8,STK_PARM(r8)(r1)	/* get "local" param */
 _GLOBAL(htab_call_hpte_updatepp)
 	bl	.			/* Patched by htab_finish_init() */
 
@@ -312,7 +328,8 @@ htab_pte_insert_failure:
  *****************************************************************************/
 
 /* _hash_page_4K(unsigned long ea, unsigned long access, unsigned long vsid,
- *		 pte_t *ptep, unsigned long trap, int local)
+ *		 pte_t *ptep, unsigned long trap, int local, int ssize,
+ *		 int subpg_prot)
  */
 
 /*
@@ -325,9 +342,7 @@ _GLOBAL(__hash_page_4K)
 	/* Save all params that we need after a function call */
 	std	r6,STK_PARM(r6)(r1)
 	std	r8,STK_PARM(r8)(r1)
-
-	/* Add _PAGE_PRESENT to access */
-	ori	r4,r4,_PAGE_PRESENT
+	std	r9,STK_PARM(r9)(r1)
 
 	/* Save non-volatile registers.
 	 * r31 will hold "old PTE"
@@ -367,7 +382,7 @@ _GLOBAL(__hash_page_4K)
 	 */
 	rlwinm	r30,r4,32-9+7,31-7,31-7	/* _PAGE_RW -> _PAGE_DIRTY */
 	or	r30,r30,r31
-	ori	r30,r30,_PAGE_BUSY | _PAGE_ACCESSED | _PAGE_HASHPTE
+	ori	r30,r30,_PAGE_BUSY | _PAGE_ACCESSED
 	oris	r30,r30,_PAGE_COMBO@h
 	/* Write the linux PTE atomically (setting busy) */
 	stdcx.	r30,0,r6
@@ -383,23 +398,45 @@ _GLOBAL(__hash_page_4K)
 	/* Load the hidx index */
 	rldicl	r25,r3,64-12,60
 
+BEGIN_FTR_SECTION
+	cmpdi	r9,0			/* check segment size */
+	bne	3f
+END_FTR_SECTION_IFSET(CPU_FTR_1T_SEGMENT)
 	/* Calc va and put it in r29 */
 	rldicr	r29,r5,28,63-28		/* r29 = (vsid << 28) */
 	rldicl	r3,r3,0,36		/* r3 = (ea & 0x0fffffff) */
-	or	r29,r3,r29		/* r29 = va
+	or	r29,r3,r29		/* r29 = va */
 
 	/* Calculate hash value for primary slot and store it in r28 */
 	rldicl	r5,r5,0,25		/* vsid & 0x0000007fffffffff */
 	rldicl	r0,r3,64-12,48		/* (ea >> 12) & 0xffff */
 	xor	r28,r5,r0
+	b	4f
+
+3:	/* Calc VA and hash in r29 and r28 for 1T segment */
+	sldi	r29,r5,40		/* vsid << 40 */
+	clrldi	r3,r3,24		/* ea & 0xffffffffff */
+	rldic	r28,r5,25,25		/* (vsid << 25) & 0x7fffffffff */
+	clrldi	r5,r5,40		/* vsid & 0xffffff */
+	rldicl	r0,r3,64-12,36		/* (ea >> 12) & 0xfffffff */
+	xor	r28,r28,r5
+	or	r29,r3,r29		/* VA */
+	xor	r28,r28,r0		/* hash */
 
 	/* Convert linux PTE bits into HW equivalents */
+4:
+#ifdef CONFIG_PPC_SUBPAGE_PROT
+	andc	r10,r30,r10
+	andi.	r3,r10,0x1fe		/* Get basic set of flags */
+	rlwinm	r0,r10,32-9+1,30,30	/* _PAGE_RW -> _PAGE_USER (r0) */
+#else
 	andi.	r3,r30,0x1fe		/* Get basic set of flags */
-	xori	r3,r3,HPTE_R_N		/* _PAGE_EXEC -> NOEXEC */
 	rlwinm	r0,r30,32-9+1,30,30	/* _PAGE_RW -> _PAGE_USER (r0) */
+#endif
+	xori	r3,r3,HPTE_R_N		/* _PAGE_EXEC -> NOEXEC */
 	rlwinm	r4,r30,32-7+1,30,30	/* _PAGE_DIRTY -> _PAGE_USER (r4) */
 	and	r0,r0,r4		/* _PAGE_RW & _PAGE_DIRTY ->r0 bit 30*/
-	andc	r0,r30,r0		/* r0 = pte & ~r0 */
+	andc	r0,r3,r0		/* r0 = pte & ~r0 */
 	rlwimi	r3,r0,32-1,31,31	/* Insert result into PP lsb */
 	ori	r3,r3,HPTE_R_C		/* Always add "C" bit for perf. */
 
@@ -425,7 +462,7 @@ END_FTR_SECTION(CPU_FTR_NOEXECUTE|CPU_FTR_COHERENT_ICACHE, CPU_FTR_NOEXECUTE)
 	 * go to out-of-line code to try to modify the HPTE. We look for
 	 * the bit at (1 >> (index + 32))
 	 */
-	andi.	r0,r31,_PAGE_HASHPTE
+	rldicl.	r0,r31,64-12,48
 	li	r26,0			/* Default hidx */
 	beq	htab_insert_pte
 
@@ -458,10 +495,11 @@ htab_special_pfn:
 	rldicr	r3,r0,3,63-3		/* r0 = (hash & mask) << 3 */
 
 	/* Call ppc_md.hpte_insert */
-	ld	r6,STK_PARM(r4)(r1)	/* Retreive new pp bits */
-	mr	r4,r29			/* Retreive va */
+	ld	r6,STK_PARM(r4)(r1)	/* Retrieve new pp bits */
+	mr	r4,r29			/* Retrieve va */
 	li	r7,0			/* !bolted, !secondary */
 	li	r8,MMU_PAGE_4K		/* page size */
+	ld	r9,STK_PARM(r9)(r1)	/* segment size */
 _GLOBAL(htab_call_hpte_insert1)
 	bl	.			/* patched by htab_finish_init() */
 	cmpdi	0,r3,0
@@ -472,20 +510,23 @@ _GLOBAL(htab_call_hpte_insert1)
 	/* Now try secondary slot */
 
 	/* real page number in r5, PTE RPN value + index */
-	rldicl	r5,r31,64-PTE_RPN_SHIFT,PTE_RPN_SHIFT
+	andis.	r0,r31,_PAGE_4K_PFN@h
+	srdi	r5,r31,PTE_RPN_SHIFT
+	bne-	3f
 	sldi	r5,r5,PAGE_SHIFT-HW_PAGE_SHIFT
 	add	r5,r5,r25
-	sldi	r5,r5,HW_PAGE_SHIFT
+3:	sldi	r5,r5,HW_PAGE_SHIFT
 
 	/* Calculate secondary group hash */
 	andc	r0,r27,r28
 	rldicr	r3,r0,3,63-3		/* r0 = (~hash & mask) << 3 */
 
 	/* Call ppc_md.hpte_insert */
-	ld	r6,STK_PARM(r4)(r1)	/* Retreive new pp bits */
-	mr	r4,r29			/* Retreive va */
+	ld	r6,STK_PARM(r4)(r1)	/* Retrieve new pp bits */
+	mr	r4,r29			/* Retrieve va */
 	li	r7,HPTE_V_SECONDARY	/* !bolted, secondary */
 	li	r8,MMU_PAGE_4K		/* page size */
+	ld	r9,STK_PARM(r9)(r1)	/* segment size */
 _GLOBAL(htab_call_hpte_insert2)
 	bl	.			/* patched by htab_finish_init() */
 	cmpdi	0,r3,0
@@ -518,8 +559,13 @@ htab_inval_old_hpte:
 	mr	r4,r31			/* PTE.pte */
 	li	r5,0			/* PTE.hidx */
 	li	r6,MMU_PAGE_64K		/* psize */
-	ld	r7,STK_PARM(r8)(r1)	/* local */
+	ld	r7,STK_PARM(r9)(r1)	/* ssize */
+	ld	r8,STK_PARM(r8)(r1)	/* local */
 	bl	.flush_hash_page
+	/* Clear out _PAGE_HPTE_SUB bits in the new linux PTE */
+	lis	r0,_PAGE_HPTE_SUB@h
+	ori	r0,r0,_PAGE_HPTE_SUB@l
+	andc	r30,r30,r0
 	b	htab_insert_pte
 	
 htab_bail_ok:
@@ -584,7 +630,8 @@ htab_modify_pte:
 	/* Call ppc_md.hpte_updatepp */
 	mr	r5,r29			/* va */
 	li	r6,MMU_PAGE_4K		/* page size */
-	ld	r7,STK_PARM(r8)(r1)	/* get "local" param */
+	ld	r7,STK_PARM(r9)(r1)	/* segment size */
+	ld	r8,STK_PARM(r8)(r1)	/* get "local" param */
 _GLOBAL(htab_call_hpte_updatepp)
 	bl	.			/* patched by htab_finish_init() */
 
@@ -632,9 +679,7 @@ _GLOBAL(__hash_page_64K)
 	/* Save all params that we need after a function call */
 	std	r6,STK_PARM(r6)(r1)
 	std	r8,STK_PARM(r8)(r1)
-
-	/* Add _PAGE_PRESENT to access */
-	ori	r4,r4,_PAGE_PRESENT
+	std	r9,STK_PARM(r9)(r1)
 
 	/* Save non-volatile registers.
 	 * r31 will hold "old PTE"
@@ -672,11 +717,11 @@ BEGIN_FTR_SECTION
 	bne-	ht64_bail_ok
 END_FTR_SECTION_IFCLR(CPU_FTR_CI_LARGE_PAGE)
 	/* Prepare new PTE value (turn access RW into DIRTY, then
-	 * add BUSY,HASHPTE and ACCESSED)
+	 * add BUSY and ACCESSED)
 	 */
 	rlwinm	r30,r4,32-9+7,31-7,31-7	/* _PAGE_RW -> _PAGE_DIRTY */
 	or	r30,r30,r31
-	ori	r30,r30,_PAGE_BUSY | _PAGE_ACCESSED | _PAGE_HASHPTE
+	ori	r30,r30,_PAGE_BUSY | _PAGE_ACCESSED
 	/* Write the linux PTE atomically (setting busy) */
 	stdcx.	r30,0,r6
 	bne-	1b
@@ -688,6 +733,10 @@ END_FTR_SECTION_IFCLR(CPU_FTR_CI_LARGE_PAGE)
 	 * r4 (access) is re-useable, we use it for the new HPTE flags
 	 */
 
+BEGIN_FTR_SECTION
+	cmpdi	r9,0			/* check segment size */
+	bne	3f
+END_FTR_SECTION_IFSET(CPU_FTR_1T_SEGMENT)
 	/* Calc va and put it in r29 */
 	rldicr	r29,r5,28,63-28
 	rldicl	r3,r3,0,36
@@ -697,9 +746,20 @@ END_FTR_SECTION_IFCLR(CPU_FTR_CI_LARGE_PAGE)
 	rldicl	r5,r5,0,25		/* vsid & 0x0000007fffffffff */
 	rldicl	r0,r3,64-16,52		/* (ea >> 16) & 0xfff */
 	xor	r28,r5,r0
+	b	4f
+
+3:	/* Calc VA and hash in r29 and r28 for 1T segment */
+	sldi	r29,r5,40		/* vsid << 40 */
+	clrldi	r3,r3,24		/* ea & 0xffffffffff */
+	rldic	r28,r5,25,25		/* (vsid << 25) & 0x7fffffffff */
+	clrldi	r5,r5,40		/* vsid & 0xffffff */
+	rldicl	r0,r3,64-16,40		/* (ea >> 16) & 0xffffff */
+	xor	r28,r28,r5
+	or	r29,r3,r29		/* VA */
+	xor	r28,r28,r0		/* hash */
 
 	/* Convert linux PTE bits into HW equivalents */
-	andi.	r3,r30,0x1fe		/* Get basic set of flags */
+4:	andi.	r3,r30,0x1fe		/* Get basic set of flags */
 	xori	r3,r3,HPTE_R_N		/* _PAGE_EXEC -> NOEXEC */
 	rlwinm	r0,r30,32-9+1,30,30	/* _PAGE_RW -> _PAGE_USER (r0) */
 	rlwinm	r4,r30,32-7+1,30,30	/* _PAGE_DIRTY -> _PAGE_USER (r4) */
@@ -729,18 +789,21 @@ END_FTR_SECTION(CPU_FTR_NOEXECUTE|CPU_FTR_COHERENT_ICACHE, CPU_FTR_NOEXECUTE)
 	/* Check if we may already be in the hashtable, in this case, we
 	 * go to out-of-line code to try to modify the HPTE
 	 */
-	andi.	r0,r31,_PAGE_HASHPTE
+	rldicl.	r0,r31,64-12,48
 	bne	ht64_modify_pte
 
 ht64_insert_pte:
 	/* Clear hpte bits in new pte (we also clear BUSY btw) and
-	 * add _PAGE_HASHPTE
+	 * add _PAGE_HPTE_SUB0
 	 */
 	lis	r0,_PAGE_HPTEFLAGS@h
 	ori	r0,r0,_PAGE_HPTEFLAGS@l
 	andc	r30,r30,r0
+#ifdef CONFIG_PPC_64K_PAGES
+	oris	r30,r30,_PAGE_HPTE_SUB0@h
+#else
 	ori	r30,r30,_PAGE_HASHPTE
-
+#endif
 	/* Phyical address in r5 */
 	rldicl	r5,r31,64-PTE_RPN_SHIFT,PTE_RPN_SHIFT
 	sldi	r5,r5,PAGE_SHIFT
@@ -750,10 +813,11 @@ ht64_insert_pte:
 	rldicr	r3,r0,3,63-3	/* r0 = (hash & mask) << 3 */
 
 	/* Call ppc_md.hpte_insert */
-	ld	r6,STK_PARM(r4)(r1)	/* Retreive new pp bits */
-	mr	r4,r29			/* Retreive va */
+	ld	r6,STK_PARM(r4)(r1)	/* Retrieve new pp bits */
+	mr	r4,r29			/* Retrieve va */
 	li	r7,0			/* !bolted, !secondary */
 	li	r8,MMU_PAGE_64K
+	ld	r9,STK_PARM(r9)(r1)	/* segment size */
 _GLOBAL(ht64_call_hpte_insert1)
 	bl	.			/* patched by htab_finish_init() */
 	cmpdi	0,r3,0
@@ -772,10 +836,11 @@ _GLOBAL(ht64_call_hpte_insert1)
 	rldicr	r3,r0,3,63-3	/* r0 = (~hash & mask) << 3 */
 
 	/* Call ppc_md.hpte_insert */
-	ld	r6,STK_PARM(r4)(r1)	/* Retreive new pp bits */
-	mr	r4,r29			/* Retreive va */
+	ld	r6,STK_PARM(r4)(r1)	/* Retrieve new pp bits */
+	mr	r4,r29			/* Retrieve va */
 	li	r7,HPTE_V_SECONDARY	/* !bolted, secondary */
 	li	r8,MMU_PAGE_64K
+	ld	r9,STK_PARM(r9)(r1)	/* segment size */
 _GLOBAL(ht64_call_hpte_insert2)
 	bl	.			/* patched by htab_finish_init() */
 	cmpdi	0,r3,0
@@ -844,7 +909,8 @@ ht64_modify_pte:
 	/* Call ppc_md.hpte_updatepp */
 	mr	r5,r29			/* va */
 	li	r6,MMU_PAGE_64K
-	ld	r7,STK_PARM(r8)(r1)	/* get "local" param */
+	ld	r7,STK_PARM(r9)(r1)	/* segment size */
+	ld	r8,STK_PARM(r8)(r1)	/* get "local" param */
 _GLOBAL(ht64_call_hpte_updatepp)
 	bl	.			/* patched by htab_finish_init() */
 

@@ -23,8 +23,6 @@
 
 #include "cx25840-core.h"
 
-#define FWFILE "v4l-cx25840.fw"
-
 /*
  * Mike Isely <isely@pobox.com> - The FWSEND parameter controls the
  * size of the firmware chunks sent down the I2C bus to the chip.
@@ -38,11 +36,11 @@
 
 #define FWDEV(x) &((x)->dev)
 
-static char *firmware = FWFILE;
+static char *firmware = "";
 
 module_param(firmware, charp, 0444);
 
-MODULE_PARM_DESC(firmware, "Firmware image [default: " FWFILE "]");
+MODULE_PARM_DESC(firmware, "Firmware image to load");
 
 static void start_fw_load(struct i2c_client *client)
 {
@@ -63,6 +61,19 @@ static void end_fw_load(struct i2c_client *client)
 	cx25840_write(client, 0x803, 0x03);
 }
 
+static const char *get_fw_name(struct i2c_client *client)
+{
+	struct cx25840_state *state = to_state(i2c_get_clientdata(client));
+
+	if (firmware[0])
+		return firmware;
+	if (is_cx2388x(state))
+		return "v4l-cx23885-avcore-01.fw";
+	if (is_cx231xx(state))
+		return "v4l-cx231xx-avcore-01.fw";
+	return "v4l-cx25840.fw";
+}
+
 static int check_fw_load(struct i2c_client *client, int size)
 {
 	/* DL_ADDR_HB DL_ADDR_LB */
@@ -70,19 +81,19 @@ static int check_fw_load(struct i2c_client *client, int size)
 	s |= cx25840_read(client, 0x800);
 
 	if (size != s) {
-		v4l_err(client, "firmware %s load failed\n", firmware);
+		v4l_err(client, "firmware %s load failed\n",
+				get_fw_name(client));
 		return -EINVAL;
 	}
 
-	v4l_info(client, "loaded %s firmware (%d bytes)\n", firmware, size);
+	v4l_info(client, "loaded %s firmware (%d bytes)\n",
+			get_fw_name(client), size);
 	return 0;
 }
 
-static int fw_write(struct i2c_client *client, u8 * data, int size)
+static int fw_write(struct i2c_client *client, const u8 *data, int size)
 {
-	int sent;
-
-	if ((sent = i2c_master_send(client, data, size)) < size) {
+	if (i2c_master_send(client, data, size) < size) {
 		v4l_err(client, "firmware load i2c failure\n");
 		return -ENOSYS;
 	}
@@ -92,12 +103,28 @@ static int fw_write(struct i2c_client *client, u8 * data, int size)
 
 int cx25840_loadfw(struct i2c_client *client)
 {
+	struct cx25840_state *state = to_state(i2c_get_clientdata(client));
 	const struct firmware *fw = NULL;
-	u8 buffer[4], *ptr;
-	int size, send, retval;
+	u8 buffer[FWSEND];
+	const u8 *ptr;
+	const char *fwname = get_fw_name(client);
+	int size, retval;
+	int MAX_BUF_SIZE = FWSEND;
+	u32 gpio_oe = 0, gpio_da = 0;
 
-	if (request_firmware(&fw, firmware, FWDEV(client)) != 0) {
-		v4l_err(client, "unable to open firmware %s\n", firmware);
+	if (is_cx2388x(state)) {
+		/* Preserve the GPIO OE and output bits */
+		gpio_oe = cx25840_read(client, 0x160);
+		gpio_da = cx25840_read(client, 0x164);
+	}
+
+	if (is_cx231xx(state) && MAX_BUF_SIZE > 16) {
+		v4l_err(client, " Firmware download size changed to 16 bytes max length\n");
+		MAX_BUF_SIZE = 16;  /* cx231xx cannot accept more than 16 bytes at a time */
+	}
+
+	if (request_firmware(&fw, fwname, FWDEV(client)) != 0) {
+		v4l_err(client, "unable to open firmware %s\n", fwname);
 		return -EINVAL;
 	}
 
@@ -105,36 +132,35 @@ int cx25840_loadfw(struct i2c_client *client)
 
 	buffer[0] = 0x08;
 	buffer[1] = 0x02;
-	buffer[2] = fw->data[0];
-	buffer[3] = fw->data[1];
-	retval = fw_write(client, buffer, 4);
 
-	if (retval < 0) {
-		release_firmware(fw);
-		return retval;
-	}
-
-	size = fw->size - 2;
+	size = fw->size;
 	ptr = fw->data;
 	while (size > 0) {
-		ptr[0] = 0x08;
-		ptr[1] = 0x02;
-		send = size > (FWSEND - 2) ? FWSEND : size + 2;
-		retval = fw_write(client, ptr, send);
+		int len = min(MAX_BUF_SIZE - 2, size);
+
+		memcpy(buffer + 2, ptr, len);
+
+		retval = fw_write(client, buffer, len + 2);
 
 		if (retval < 0) {
 			release_firmware(fw);
 			return retval;
 		}
 
-		size -= FWSEND - 2;
-		ptr += FWSEND - 2;
+		size -= len;
+		ptr += len;
 	}
 
 	end_fw_load(client);
 
 	size = fw->size;
 	release_firmware(fw);
+
+	if (is_cx2388x(state)) {
+		/* Restore GPIO configuration after f/w load */
+		cx25840_write(client, 0x160, gpio_oe);
+		cx25840_write(client, 0x164, gpio_da);
+	}
 
 	return check_fw_load(client, size);
 }

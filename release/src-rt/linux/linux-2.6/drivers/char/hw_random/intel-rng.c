@@ -11,7 +11,7 @@
  * derived from
  *
  * Hardware driver for the AMD 768 Random Number Generator (RNG)
- * (c) Copyright 2001 Red Hat Inc <alan@redhat.com>
+ * (c) Copyright 2001 Red Hat Inc
  *
  * derived from
  *
@@ -29,6 +29,8 @@
 #include <linux/module.h>
 #include <linux/pci.h>
 #include <linux/stop_machine.h>
+#include <linux/delay.h>
+#include <linux/slab.h>
 #include <asm/io.h>
 
 
@@ -162,11 +164,19 @@ static inline u8 hwstatus_set(void __iomem *mem,
 	return hwstatus_get(mem);
 }
 
-static int intel_rng_data_present(struct hwrng *rng)
+static int intel_rng_data_present(struct hwrng *rng, int wait)
 {
 	void __iomem *mem = (void __iomem *)rng->priv;
+	int data, i;
 
-	return !!(readb(mem + INTEL_RNG_STATUS) & INTEL_RNG_DATA_PRESENT);
+	for (i = 0; i < 20; i++) {
+		data = !!(readb(mem + INTEL_RNG_STATUS) &
+			  INTEL_RNG_DATA_PRESENT);
+		if (data || !wait)
+			break;
+		udelay(10);
+	}
+	return data;
 }
 
 static int intel_rng_data_read(struct hwrng *rng, u32 *data)
@@ -232,7 +242,7 @@ static int __init intel_rng_hw_init(void *_intel_rng_hw)
 	struct intel_rng_hw *intel_rng_hw = _intel_rng_hw;
 	u8 mfc, dvc;
 
-	/* interrupts disabled in stop_machine_run call */
+	/* interrupts disabled in stop_machine call */
 
 	if (!(intel_rng_hw->fwh_dec_en1_val & FWH_F8_EN_MASK))
 		pci_write_config_byte(intel_rng_hw->dev,
@@ -264,7 +274,7 @@ static int __init intel_rng_hw_init(void *_intel_rng_hw)
 	if (mfc != INTEL_FWH_MANUFACTURER_CODE ||
 	    (dvc != INTEL_FWH_DEVICE_CODE_8M &&
 	     dvc != INTEL_FWH_DEVICE_CODE_4M)) {
-		printk(KERN_ERR PFX "FWH not detected\n");
+		printk(KERN_NOTICE PFX "FWH not detected\n");
 		return -ENODEV;
 	}
 
@@ -296,12 +306,11 @@ static int __init intel_init_hw_struct(struct intel_rng_hw *intel_rng_hw,
 	     (BIOS_CNTL_LOCK_ENABLE_MASK|BIOS_CNTL_WRITE_ENABLE_MASK))
 	    == BIOS_CNTL_LOCK_ENABLE_MASK) {
 		static __initdata /*const*/ char warning[] =
-			KERN_WARNING PFX "Firmware space is locked read-only. "
-			KERN_WARNING PFX "If you can't or\n don't want to "
-			KERN_WARNING PFX "disable this in firmware setup, and "
-			KERN_WARNING PFX "if\n you are certain that your "
-			KERN_WARNING PFX "system has a functional\n RNG, try"
-			KERN_WARNING PFX "using the 'no_fwh_detect' option.\n";
+			KERN_WARNING
+PFX "Firmware space is locked read-only. If you can't or\n"
+PFX "don't want to disable this in firmware setup, and if\n"
+PFX "you are certain that your system has a functional\n"
+PFX "RNG, try using the 'no_fwh_detect' option.\n";
 
 		if (no_fwh_detect)
 			return -ENODEV;
@@ -358,10 +367,10 @@ static int __init mod_init(void)
 	 * location with the Read ID command, all activity on the system
 	 * must be stopped until the state is back to normal.
 	 *
-	 * Use stop_machine_run because IPIs can be blocked by disabling
+	 * Use stop_machine because IPIs can be blocked by disabling
 	 * interrupts.
 	 */
-	err = stop_machine_run(intel_rng_hw_init, intel_rng_hw, NR_CPUS);
+	err = stop_machine(intel_rng_hw_init, intel_rng_hw, NULL);
 	pci_dev_put(dev);
 	iounmap(intel_rng_hw->mem);
 	kfree(intel_rng_hw);

@@ -29,23 +29,34 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+#include <linux/slab.h>
 #include <asm/byteorder.h>
 
 #include <rdma/iw_cm.h>
 #include <rdma/ib_verbs.h>
 
 #include "cxio_hal.h"
+#include "cxio_resource.h"
 #include "iwch.h"
 #include "iwch_provider.h"
 
-int iwch_register_mem(struct iwch_dev *rhp, struct iwch_pd *php,
-					struct iwch_mr *mhp,
-					int shift,
-					__be64 *page_list)
+static int iwch_finish_mem_reg(struct iwch_mr *mhp, u32 stag)
 {
-	u32 stag;
 	u32 mmid;
 
+	mhp->attr.state = 1;
+	mhp->attr.stag = stag;
+	mmid = stag >> 8;
+	mhp->ibmr.rkey = mhp->ibmr.lkey = stag;
+	PDBG("%s mmid 0x%x mhp %p\n", __func__, mmid, mhp);
+	return insert_handle(mhp->rhp, &mhp->rhp->mmidr, mhp, mmid);
+}
+
+int iwch_register_mem(struct iwch_dev *rhp, struct iwch_pd *php,
+		      struct iwch_mr *mhp, int shift)
+{
+	u32 stag;
+	int ret;
 
 	if (cxio_register_phys_mem(&rhp->rdev,
 				   &stag, mhp->attr.pdid,
@@ -53,28 +64,24 @@ int iwch_register_mem(struct iwch_dev *rhp, struct iwch_pd *php,
 				   mhp->attr.zbva,
 				   mhp->attr.va_fbo,
 				   mhp->attr.len,
-				   shift-12,
-				   page_list,
-				   &mhp->attr.pbl_size, &mhp->attr.pbl_addr))
+				   shift - 12,
+				   mhp->attr.pbl_size, mhp->attr.pbl_addr))
 		return -ENOMEM;
-	mhp->attr.state = 1;
-	mhp->attr.stag = stag;
-	mmid = stag >> 8;
-	mhp->ibmr.rkey = mhp->ibmr.lkey = stag;
-	insert_handle(rhp, &rhp->mmidr, mhp, mmid);
-	PDBG("%s mmid 0x%x mhp %p\n", __FUNCTION__, mmid, mhp);
-	return 0;
+
+	ret = iwch_finish_mem_reg(mhp, stag);
+	if (ret)
+		cxio_dereg_mem(&rhp->rdev, mhp->attr.stag, mhp->attr.pbl_size,
+		       mhp->attr.pbl_addr);
+	return ret;
 }
 
 int iwch_reregister_mem(struct iwch_dev *rhp, struct iwch_pd *php,
 					struct iwch_mr *mhp,
 					int shift,
-					__be64 *page_list,
 					int npages)
 {
 	u32 stag;
-	u32 mmid;
-
+	int ret;
 
 	/* We could support this... */
 	if (npages > mhp->attr.pbl_size)
@@ -87,17 +94,41 @@ int iwch_reregister_mem(struct iwch_dev *rhp, struct iwch_pd *php,
 				   mhp->attr.zbva,
 				   mhp->attr.va_fbo,
 				   mhp->attr.len,
-				   shift-12,
-				   page_list,
-				   &mhp->attr.pbl_size, &mhp->attr.pbl_addr))
+				   shift - 12,
+				   mhp->attr.pbl_size, mhp->attr.pbl_addr))
 		return -ENOMEM;
-	mhp->attr.state = 1;
-	mhp->attr.stag = stag;
-	mmid = stag >> 8;
-	mhp->ibmr.rkey = mhp->ibmr.lkey = stag;
-	insert_handle(rhp, &rhp->mmidr, mhp, mmid);
-	PDBG("%s mmid 0x%x mhp %p\n", __FUNCTION__, mmid, mhp);
+
+	ret = iwch_finish_mem_reg(mhp, stag);
+	if (ret)
+		cxio_dereg_mem(&rhp->rdev, mhp->attr.stag, mhp->attr.pbl_size,
+		       mhp->attr.pbl_addr);
+
+	return ret;
+}
+
+int iwch_alloc_pbl(struct iwch_mr *mhp, int npages)
+{
+	mhp->attr.pbl_addr = cxio_hal_pblpool_alloc(&mhp->rhp->rdev,
+						    npages << 3);
+
+	if (!mhp->attr.pbl_addr)
+		return -ENOMEM;
+
+	mhp->attr.pbl_size = npages;
+
 	return 0;
+}
+
+void iwch_free_pbl(struct iwch_mr *mhp)
+{
+	cxio_hal_pblpool_free(&mhp->rhp->rdev, mhp->attr.pbl_addr,
+			      mhp->attr.pbl_size << 3);
+}
+
+int iwch_write_pbl(struct iwch_mr *mhp, __be64 *pages, int npages, int offset)
+{
+	return cxio_write_pbl(&mhp->rhp->rdev, pages,
+			      mhp->attr.pbl_addr + (offset << 3), npages);
 }
 
 int build_phys_page_list(struct ib_phys_buf *buffer_list,
@@ -122,6 +153,13 @@ int build_phys_page_list(struct ib_phys_buf *buffer_list,
 		*total_size += buffer_list[i].size;
 		if (i > 0)
 			mask |= buffer_list[i].addr;
+		else
+			mask |= buffer_list[i].addr & PAGE_MASK;
+		if (i != num_phys_buf - 1)
+			mask |= buffer_list[i].addr + buffer_list[i].size;
+		else
+			mask |= (buffer_list[i].addr + buffer_list[i].size +
+				PAGE_SIZE - 1) & PAGE_MASK;
 	}
 
 	if (*total_size > 0xFFFFFFFFULL)
@@ -129,14 +167,8 @@ int build_phys_page_list(struct ib_phys_buf *buffer_list,
 
 	/* Find largest page shift we can use to cover buffers */
 	for (*shift = PAGE_SHIFT; *shift < 27; ++(*shift))
-		if (num_phys_buf > 1) {
-			if ((1ULL << *shift) & mask)
-				break;
-		} else
-			if (1ULL << *shift >=
-			    buffer_list[0].size +
-			    (buffer_list[0].addr & ((1ULL << *shift) - 1)))
-				break;
+		if ((1ULL << *shift) & mask)
+			break;
 
 	buffer_list[0].size += buffer_list[0].addr & ((1ULL << *shift) - 1);
 	buffer_list[0].addr &= ~0ull << *shift;
@@ -162,7 +194,7 @@ int build_phys_page_list(struct ib_phys_buf *buffer_list,
 			    ((u64) j << *shift));
 
 	PDBG("%s va 0x%llx mask 0x%llx shift %d len %lld pbl_size %d\n",
-	     __FUNCTION__, (unsigned long long) *iova_start,
+	     __func__, (unsigned long long) *iova_start,
 	     (unsigned long long) mask, *shift, (unsigned long long) *total_size,
 	     *npages);
 

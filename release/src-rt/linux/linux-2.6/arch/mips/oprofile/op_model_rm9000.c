@@ -60,7 +60,7 @@ static void rm9000_reg_setup(struct op_counter_config *ctr)
 
 /* Program all of the registers in preparation for enabling profiling.  */
 
-static void rm9000_cpu_setup (void *args)
+static void rm9000_cpu_setup(void *args)
 {
 	uint64_t perfcount;
 
@@ -80,9 +80,10 @@ static void rm9000_cpu_stop(void *args)
 	write_c0_perfcontrol(0);
 }
 
-static irqreturn_t rm9000_perfcount_handler(int irq, void * dev_id)
+static irqreturn_t rm9000_perfcount_handler(int irq, void *dev_id)
 {
 	unsigned int control = read_c0_perfcontrol();
+	struct pt_regs *regs = get_irq_regs();
 	uint32_t counter1, counter2;
 	uint64_t counters;
 

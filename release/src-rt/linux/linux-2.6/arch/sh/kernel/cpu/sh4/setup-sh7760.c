@@ -10,39 +10,282 @@
 #include <linux/platform_device.h>
 #include <linux/init.h>
 #include <linux/serial.h>
-#include <asm/sci.h>
+#include <linux/sh_timer.h>
+#include <linux/serial_sci.h>
+#include <linux/io.h>
 
-static struct plat_sci_port sci_platform_data[] = {
-	{
-		.mapbase	= 0xfe600000,
-		.flags		= UPF_BOOT_AUTOCONF,
-		.type		= PORT_SCIF,
-		.irqs		= { 52, 53, 55, 54 },
-	}, {
-		.mapbase	= 0xfe610000,
-		.flags		= UPF_BOOT_AUTOCONF,
-		.type		= PORT_SCIF,
-		.irqs		= { 72, 73, 75, 74 },
-	}, {
-		.mapbase	= 0xfe620000,
-		.flags		= UPF_BOOT_AUTOCONF,
-		.type		= PORT_SCIF,
-		.irqs		= { 76, 77, 79, 78 },
-	}, {
-		.flags = 0,
-	}
+enum {
+	UNUSED = 0,
+
+	/* interrupt sources */
+	IRL0, IRL1, IRL2, IRL3,
+	HUDI, GPIOI, DMAC,
+	IRQ4, IRQ5, IRQ6, IRQ7,
+	HCAN20, HCAN21,
+	SSI0, SSI1,
+	HAC0, HAC1,
+	I2C0, I2C1,
+	USB, LCDC,
+	DMABRG0, DMABRG1, DMABRG2,
+	SCIF0_ERI, SCIF0_RXI, SCIF0_BRI, SCIF0_TXI,
+	SCIF1_ERI, SCIF1_RXI, SCIF1_BRI, SCIF1_TXI,
+	SCIF2_ERI, SCIF2_RXI, SCIF2_BRI, SCIF2_TXI,
+	SIM_ERI, SIM_RXI, SIM_TXI, SIM_TEI,
+	HSPI,
+	MMCIF0, MMCIF1, MMCIF2, MMCIF3,
+	MFI, ADC, CMT,
+	TMU0, TMU1, TMU2,
+	WDT, REF,
+
+	/* interrupt groups */
+	DMABRG, SCIF0, SCIF1, SCIF2, SIM, MMCIF,
 };
 
-static struct platform_device sci_device = {
+static struct intc_vect vectors[] __initdata = {
+	INTC_VECT(HUDI, 0x600), INTC_VECT(GPIOI, 0x620),
+	INTC_VECT(DMAC, 0x640), INTC_VECT(DMAC, 0x660),
+	INTC_VECT(DMAC, 0x680), INTC_VECT(DMAC, 0x6a0),
+	INTC_VECT(DMAC, 0x780), INTC_VECT(DMAC, 0x7a0),
+	INTC_VECT(DMAC, 0x7c0), INTC_VECT(DMAC, 0x7e0),
+	INTC_VECT(DMAC, 0x6c0),
+	INTC_VECT(IRQ4, 0x800), INTC_VECT(IRQ5, 0x820),
+	INTC_VECT(IRQ6, 0x840), INTC_VECT(IRQ6, 0x860),
+	INTC_VECT(HCAN20, 0x900), INTC_VECT(HCAN21, 0x920),
+	INTC_VECT(SSI0, 0x940), INTC_VECT(SSI1, 0x960),
+	INTC_VECT(HAC0, 0x980), INTC_VECT(HAC1, 0x9a0),
+	INTC_VECT(I2C0, 0x9c0), INTC_VECT(I2C1, 0x9e0),
+	INTC_VECT(USB, 0xa00), INTC_VECT(LCDC, 0xa20),
+	INTC_VECT(DMABRG0, 0xa80), INTC_VECT(DMABRG1, 0xaa0),
+	INTC_VECT(DMABRG2, 0xac0),
+	INTC_VECT(SCIF0_ERI, 0x880), INTC_VECT(SCIF0_RXI, 0x8a0),
+	INTC_VECT(SCIF0_BRI, 0x8c0), INTC_VECT(SCIF0_TXI, 0x8e0),
+	INTC_VECT(SCIF1_ERI, 0xb00), INTC_VECT(SCIF1_RXI, 0xb20),
+	INTC_VECT(SCIF1_BRI, 0xb40), INTC_VECT(SCIF1_TXI, 0xb60),
+	INTC_VECT(SCIF2_ERI, 0xb80), INTC_VECT(SCIF2_RXI, 0xba0),
+	INTC_VECT(SCIF2_BRI, 0xbc0), INTC_VECT(SCIF2_TXI, 0xbe0),
+	INTC_VECT(SIM_ERI, 0xc00), INTC_VECT(SIM_RXI, 0xc20),
+	INTC_VECT(SIM_TXI, 0xc40), INTC_VECT(SIM_TEI, 0xc60),
+	INTC_VECT(HSPI, 0xc80),
+	INTC_VECT(MMCIF0, 0xd00), INTC_VECT(MMCIF1, 0xd20),
+	INTC_VECT(MMCIF2, 0xd40), INTC_VECT(MMCIF3, 0xd60),
+	INTC_VECT(MFI, 0xe80), /* 0xf80 according to data sheet */
+	INTC_VECT(ADC, 0xf80), INTC_VECT(CMT, 0xfa0),
+	INTC_VECT(TMU0, 0x400), INTC_VECT(TMU1, 0x420),
+	INTC_VECT(TMU2, 0x440), INTC_VECT(TMU2, 0x460),
+	INTC_VECT(WDT, 0x560),
+	INTC_VECT(REF, 0x580), INTC_VECT(REF, 0x5a0),
+};
+
+static struct intc_group groups[] __initdata = {
+	INTC_GROUP(DMABRG, DMABRG0, DMABRG1, DMABRG2),
+	INTC_GROUP(SCIF0, SCIF0_ERI, SCIF0_RXI, SCIF0_BRI, SCIF0_TXI),
+	INTC_GROUP(SCIF1, SCIF1_ERI, SCIF1_RXI, SCIF1_BRI, SCIF1_TXI),
+	INTC_GROUP(SCIF2, SCIF2_ERI, SCIF2_RXI, SCIF2_BRI, SCIF2_TXI),
+	INTC_GROUP(SIM, SIM_ERI, SIM_RXI, SIM_TXI, SIM_TEI),
+	INTC_GROUP(MMCIF, MMCIF0, MMCIF1, MMCIF2, MMCIF3),
+};
+
+static struct intc_mask_reg mask_registers[] __initdata = {
+	{ 0xfe080040, 0xfe080060, 32, /* INTMSK00 / INTMSKCLR00 */
+	  { IRQ4, IRQ5, IRQ6, IRQ7, 0, 0, HCAN20, HCAN21,
+	    SSI0, SSI1, HAC0, HAC1, I2C0, I2C1, USB, LCDC,
+	    0, DMABRG0, DMABRG1, DMABRG2,
+	    SCIF0_ERI, SCIF0_RXI, SCIF0_BRI, SCIF0_TXI,
+	    SCIF1_ERI, SCIF1_RXI, SCIF1_BRI, SCIF1_TXI,
+	    SCIF2_ERI, SCIF2_RXI, SCIF2_BRI, SCIF2_TXI, } },
+	{ 0xfe080044, 0xfe080064, 32, /* INTMSK04 / INTMSKCLR04 */
+	  { 0, 0, 0, 0, 0, 0, 0, 0,
+	    SIM_ERI, SIM_RXI, SIM_TXI, SIM_TEI,
+	    HSPI, MMCIF0, MMCIF1, MMCIF2,
+	    MMCIF3, 0, 0, 0, 0, 0, 0, 0,
+	    0, MFI, 0, 0, 0, 0, ADC, CMT, } },
+};
+
+static struct intc_prio_reg prio_registers[] __initdata = {
+	{ 0xffd00004, 0, 16, 4, /* IPRA */ { TMU0, TMU1, TMU2 } },
+	{ 0xffd00008, 0, 16, 4, /* IPRB */ { WDT, REF, 0, 0 } },
+	{ 0xffd0000c, 0, 16, 4, /* IPRC */ { GPIOI, DMAC, 0, HUDI } },
+	{ 0xffd00010, 0, 16, 4, /* IPRD */ { IRL0, IRL1, IRL2, IRL3 } },
+	{ 0xfe080000, 0, 32, 4, /* INTPRI00 */ { IRQ4, IRQ5, IRQ6, IRQ7 } },
+	{ 0xfe080004, 0, 32, 4, /* INTPRI04 */ { HCAN20, HCAN21, SSI0, SSI1,
+						 HAC0, HAC1, I2C0, I2C1 } },
+	{ 0xfe080008, 0, 32, 4, /* INTPRI08 */ { USB, LCDC, DMABRG, SCIF0,
+						 SCIF1, SCIF2, SIM, HSPI } },
+	{ 0xfe08000c, 0, 32, 4, /* INTPRI0C */ { 0, 0, MMCIF, 0,
+						 MFI, 0, ADC, CMT } },
+};
+
+static DECLARE_INTC_DESC(intc_desc, "sh7760", vectors, groups,
+			 mask_registers, prio_registers, NULL);
+
+static struct intc_vect vectors_irq[] __initdata = {
+	INTC_VECT(IRL0, 0x240), INTC_VECT(IRL1, 0x2a0),
+	INTC_VECT(IRL2, 0x300), INTC_VECT(IRL3, 0x360),
+};
+
+static DECLARE_INTC_DESC(intc_desc_irq, "sh7760-irq", vectors_irq, groups,
+			 mask_registers, prio_registers, NULL);
+
+static struct plat_sci_port scif0_platform_data = {
+	.mapbase	= 0xfe600000,
+	.flags		= UPF_BOOT_AUTOCONF,
+	.scscr		= SCSCR_RE | SCSCR_TE | SCSCR_REIE,
+	.scbrr_algo_id	= SCBRR_ALGO_2,
+	.type		= PORT_SCIF,
+	.irqs		= { 52, 53, 55, 54 },
+};
+
+static struct platform_device scif0_device = {
 	.name		= "sh-sci",
-	.id		= -1,
+	.id		= 0,
 	.dev		= {
-		.platform_data	= sci_platform_data,
+		.platform_data	= &scif0_platform_data,
 	},
 };
 
+static struct plat_sci_port scif1_platform_data = {
+	.mapbase	= 0xfe610000,
+	.flags		= UPF_BOOT_AUTOCONF,
+	.type		= PORT_SCIF,
+	.scscr		= SCSCR_RE | SCSCR_TE | SCSCR_REIE,
+	.scbrr_algo_id	= SCBRR_ALGO_2,
+	.irqs		= { 72, 73, 75, 74 },
+};
+
+static struct platform_device scif1_device = {
+	.name		= "sh-sci",
+	.id		= 1,
+	.dev		= {
+		.platform_data	= &scif1_platform_data,
+	},
+};
+
+static struct plat_sci_port scif2_platform_data = {
+	.mapbase	= 0xfe620000,
+	.flags		= UPF_BOOT_AUTOCONF,
+	.scscr		= SCSCR_RE | SCSCR_TE | SCSCR_REIE,
+	.scbrr_algo_id	= SCBRR_ALGO_2,
+	.type		= PORT_SCIF,
+	.irqs		= { 76, 77, 79, 78 },
+};
+
+static struct platform_device scif2_device = {
+	.name		= "sh-sci",
+	.id		= 2,
+	.dev		= {
+		.platform_data	= &scif2_platform_data,
+	},
+};
+
+static struct plat_sci_port scif3_platform_data = {
+	.mapbase	= 0xfe480000,
+	.flags		= UPF_BOOT_AUTOCONF,
+	.scscr		= SCSCR_RE | SCSCR_TE | SCSCR_REIE,
+	.scbrr_algo_id	= SCBRR_ALGO_2,
+	.type		= PORT_SCI,
+	.irqs		= { 80, 81, 82, 0 },
+};
+
+static struct platform_device scif3_device = {
+	.name		= "sh-sci",
+	.id		= 3,
+	.dev		= {
+		.platform_data	= &scif3_platform_data,
+	},
+};
+
+static struct sh_timer_config tmu0_platform_data = {
+	.channel_offset = 0x04,
+	.timer_bit = 0,
+	.clockevent_rating = 200,
+};
+
+static struct resource tmu0_resources[] = {
+	[0] = {
+		.start	= 0xffd80008,
+		.end	= 0xffd80013,
+		.flags	= IORESOURCE_MEM,
+	},
+	[1] = {
+		.start	= 16,
+		.flags	= IORESOURCE_IRQ,
+	},
+};
+
+static struct platform_device tmu0_device = {
+	.name		= "sh_tmu",
+	.id		= 0,
+	.dev = {
+		.platform_data	= &tmu0_platform_data,
+	},
+	.resource	= tmu0_resources,
+	.num_resources	= ARRAY_SIZE(tmu0_resources),
+};
+
+static struct sh_timer_config tmu1_platform_data = {
+	.channel_offset = 0x10,
+	.timer_bit = 1,
+	.clocksource_rating = 200,
+};
+
+static struct resource tmu1_resources[] = {
+	[0] = {
+		.start	= 0xffd80014,
+		.end	= 0xffd8001f,
+		.flags	= IORESOURCE_MEM,
+	},
+	[1] = {
+		.start	= 17,
+		.flags	= IORESOURCE_IRQ,
+	},
+};
+
+static struct platform_device tmu1_device = {
+	.name		= "sh_tmu",
+	.id		= 1,
+	.dev = {
+		.platform_data	= &tmu1_platform_data,
+	},
+	.resource	= tmu1_resources,
+	.num_resources	= ARRAY_SIZE(tmu1_resources),
+};
+
+static struct sh_timer_config tmu2_platform_data = {
+	.channel_offset = 0x1c,
+	.timer_bit = 2,
+};
+
+static struct resource tmu2_resources[] = {
+	[0] = {
+		.start	= 0xffd80020,
+		.end	= 0xffd8002f,
+		.flags	= IORESOURCE_MEM,
+	},
+	[1] = {
+		.start	= 18,
+		.flags	= IORESOURCE_IRQ,
+	},
+};
+
+static struct platform_device tmu2_device = {
+	.name		= "sh_tmu",
+	.id		= 2,
+	.dev = {
+		.platform_data	= &tmu2_platform_data,
+	},
+	.resource	= tmu2_resources,
+	.num_resources	= ARRAY_SIZE(tmu2_resources),
+};
+
+
 static struct platform_device *sh7760_devices[] __initdata = {
-	&sci_device,
+	&scif0_device,
+	&scif1_device,
+	&scif2_device,
+	&scif3_device,
+	&tmu0_device,
+	&tmu1_device,
+	&tmu2_device,
 };
 
 static int __init sh7760_devices_setup(void)
@@ -50,103 +293,40 @@ static int __init sh7760_devices_setup(void)
 	return platform_add_devices(sh7760_devices,
 				    ARRAY_SIZE(sh7760_devices));
 }
-__initcall(sh7760_devices_setup);
+arch_initcall(sh7760_devices_setup);
 
-static struct intc2_data intc2_irq_table[] = {
-	{48,  0, 28, 0, 31,  3},	/* IRQ 4 */
-	{49,  0, 24, 0, 30,  3},	/* IRQ 3 */
-	{50,  0, 20, 0, 29,  3},	/* IRQ 2 */
-	{51,  0, 16, 0, 28,  3},	/* IRQ 1 */
-	{56,  4, 28, 0, 25,  3},	/* HCAN2_CHAN0 */
-	{57,  4, 24, 0, 24,  3},	/* HCAN2_CHAN1 */
-	{58,  4, 20, 0, 23,  3},	/* I2S_CHAN0   */
-	{59,  4, 16, 0, 22,  3},	/* I2S_CHAN1   */
-	{60,  4, 12, 0, 21,  3},	/* AC97_CHAN0  */
-	{61,  4,  8, 0, 20,  3},	/* AC97_CHAN1  */
-	{62,  4,  4, 0, 19,  3},	/* I2C_CHAN0   */
-	{63,  4,  0, 0, 18,  3},	/* I2C_CHAN1   */
-	{52,  8, 16, 0, 11,  3},	/* SCIF0_ERI_IRQ */
-	{53,  8, 16, 0, 10,  3},	/* SCIF0_RXI_IRQ */
-	{54,  8, 16, 0,  9,  3},	/* SCIF0_BRI_IRQ */
-	{55,  8, 16, 0,  8,  3},	/* SCIF0_TXI_IRQ */
-	{64,  8, 28, 0, 17,  3},	/* USBHI_IRQ */
-	{65,  8, 24, 0, 16,  3},	/* LCDC      */
-	{68,  8, 20, 0, 14, 13},	/* DMABRGI0_IRQ */
-	{69,  8, 20, 0, 13, 13},	/* DMABRGI1_IRQ */
-	{70,  8, 20, 0, 12, 13},	/* DMABRGI2_IRQ */
-	{72,  8, 12, 0,  7,  3},	/* SCIF1_ERI_IRQ */
-	{73,  8, 12, 0,  6,  3},	/* SCIF1_RXI_IRQ */
-	{74,  8, 12, 0,  5,  3},	/* SCIF1_BRI_IRQ */
-	{75,  8, 12, 0,  4,  3},	/* SCIF1_TXI_IRQ */
-	{76,  8,  8, 0,  3,  3},	/* SCIF2_ERI_IRQ */
-	{77,  8,  8, 0,  2,  3},	/* SCIF2_RXI_IRQ */
-	{78,  8,  8, 0,  1,  3},	/* SCIF2_BRI_IRQ */
-	{79,  8,  8, 0,  0,  3},	/* SCIF2_TXI_IRQ */
-	{80,  8,  4, 4, 23,  3},	/* SIM_ERI */
-	{81,  8,  4, 4, 22,  3},	/* SIM_RXI */
-	{82,  8,  4, 4, 21,  3},	/* SIM_TXI */
-	{83,  8,  4, 4, 20,  3},	/* SIM_TEI */
-	{84,  8,  0, 4, 19,  3},	/* HSPII */
-	{88, 12, 20, 4, 18,  3},	/* MMCI0 */
-	{89, 12, 20, 4, 17,  3},	/* MMCI1 */
-	{90, 12, 20, 4, 16,  3},	/* MMCI2 */
-	{91, 12, 20, 4, 15,  3},	/* MMCI3 */
-	{92, 12, 12, 4,  6,  3},	/* MFI */
-	{108,12,  4, 4,  1,  3},	/* ADC  */
-	{109,12,  0, 4,  0,  3},	/* CMTI */
+static struct platform_device *sh7760_early_devices[] __initdata = {
+	&scif0_device,
+	&scif1_device,
+	&scif2_device,
+	&scif3_device,
+	&tmu0_device,
+	&tmu1_device,
+	&tmu2_device,
 };
 
-static struct ipr_data sh7760_ipr_map[] = {
-	/* IRQ, IPR-idx, shift, priority */
-	{ 16, 0, 12, 2 }, /* TMU0 TUNI*/
-	{ 17, 0,  8, 2 }, /* TMU1 TUNI */
-	{ 18, 0,  4, 2 }, /* TMU2 TUNI */
-	{ 19, 0,  4, 2 }, /* TMU2 TIPCI */
-	{ 27, 1, 12, 2 }, /* WDT ITI */
-	{ 28, 1,  8, 2 }, /* REF RCMI */
-	{ 29, 1,  8, 2 }, /* REF ROVI */
-	{ 32, 2,  0, 7 }, /* HUDI */
-	{ 33, 2, 12, 7 }, /* GPIOI */
-	{ 34, 2,  8, 7 }, /* DMAC DMTE0 */
-	{ 35, 2,  8, 7 }, /* DMAC DMTE1 */
-	{ 36, 2,  8, 7 }, /* DMAC DMTE2 */
-	{ 37, 2,  8, 7 }, /* DMAC DMTE3 */
-	{ 38, 2,  8, 7 }, /* DMAC DMAE */
-	{ 44, 2,  8, 7 }, /* DMAC DMTE4 */
-	{ 45, 2,  8, 7 }, /* DMAC DMTE5 */
-	{ 46, 2,  8, 7 }, /* DMAC DMTE6 */
-	{ 47, 2,  8, 7 }, /* DMAC DMTE7 */
-/* these here are only valid if INTC_ICR bit 7 is set to 1!
- * XXX: maybe CONFIG_SH_IRLMODE symbol? SH7751 could use it too */
-#if 0
-	{  2, 3, 12, 3 }, /* IRL0 */
-	{  5, 3,  8, 3 }, /* IRL1 */
-	{  8, 3,  4, 3 }, /* IRL2 */
-	{ 11, 3,  0, 3 }, /* IRL3 */
-#endif
-};
-
-static unsigned long ipr_offsets[] = {
-	0xffd00004UL,	/* 0: IPRA */
-	0xffd00008UL,	/* 1: IPRB */
-	0xffd0000cUL,	/* 2: IPRC */
-	0xffd00010UL,	/* 3: IPRD */
-};
-
-/* given the IPR index return the address of the IPR register */
-unsigned int map_ipridx_to_addr(int idx)
+void __init plat_early_device_setup(void)
 {
-	if (idx >= ARRAY_SIZE(ipr_offsets))
-		return 0;
-	return ipr_offsets[idx];
+	early_platform_add_devices(sh7760_early_devices,
+				   ARRAY_SIZE(sh7760_early_devices));
 }
 
-void __init init_IRQ_intc2(void)
+#define INTC_ICR	0xffd00000UL
+#define INTC_ICR_IRLM	(1 << 7)
+
+void __init plat_irq_setup_pins(int mode)
 {
-	make_intc2_irq(intc2_irq_table, ARRAY_SIZE(intc2_irq_table));
+	switch (mode) {
+	case IRQ_MODE_IRQ:
+		__raw_writew(__raw_readw(INTC_ICR) | INTC_ICR_IRLM, INTC_ICR);
+		register_intc_controller(&intc_desc_irq);
+		break;
+	default:
+		BUG();
+	}
 }
 
-void __init  init_IRQ_ipr(void)
+void __init plat_irq_setup(void)
 {
-	make_ipr_irq(sh7760_ipr_map, ARRAY_SIZE(sh7760_ipr_map));
+	register_intc_controller(&intc_desc);
 }

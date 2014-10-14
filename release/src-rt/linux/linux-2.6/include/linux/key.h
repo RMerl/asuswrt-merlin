@@ -19,6 +19,8 @@
 #include <linux/list.h>
 #include <linux/rbtree.h>
 #include <linux/rcupdate.h>
+#include <linux/sysctl.h>
+#include <linux/rwsem.h>
 #include <asm/atomic.h>
 
 #ifdef __KERNEL__
@@ -67,9 +69,12 @@ struct key;
 #define KEY_OTH_SETATTR	0x00000020
 #define KEY_OTH_ALL	0x0000003f
 
+#define KEY_PERM_UNDEF	0xffffffff
+
 struct seq_file;
 struct user_struct;
 struct signal_struct;
+struct cred;
 
 struct key_type;
 struct key_owner;
@@ -124,7 +129,10 @@ struct key {
 	struct rw_semaphore	sem;		/* change vs change sem */
 	struct key_user		*user;		/* owner of this key */
 	void			*security;	/* security data for this key */
-	time_t			expiry;		/* time at which key expires (or 0) */
+	union {
+		time_t		expiry;		/* time at which key expires (or 0) */
+		time_t		revoked_at;	/* time at which key was revoked */
+	};
 	uid_t			uid;
 	gid_t			gid;
 	key_perm_t		perm;		/* access permissions */
@@ -162,6 +170,7 @@ struct key {
 		struct list_head	link;
 		unsigned long		x[2];
 		void			*p[2];
+		int			reject_error;
 	} type_data;
 
 	/* key data
@@ -170,15 +179,16 @@ struct key {
 	 */
 	union {
 		unsigned long		value;
+		void __rcu		*rcudata;
 		void			*data;
-		struct keyring_list	*subscriptions;
+		struct keyring_list __rcu *subscriptions;
 	} payload;
 };
 
 extern struct key *key_alloc(struct key_type *type,
 			     const char *desc,
 			     uid_t uid, gid_t gid,
-			     struct task_struct *ctx,
+			     const struct cred *cred,
 			     key_perm_t perm,
 			     unsigned long flags);
 
@@ -208,16 +218,19 @@ extern struct key *request_key(struct key_type *type,
 
 extern struct key *request_key_with_auxdata(struct key_type *type,
 					    const char *description,
-					    const char *callout_info,
+					    const void *callout_info,
+					    size_t callout_len,
 					    void *aux);
 
 extern struct key *request_key_async(struct key_type *type,
 				     const char *description,
-				     const char *callout_info);
+				     const void *callout_info,
+				     size_t callout_len);
 
 extern struct key *request_key_async_with_auxdata(struct key_type *type,
 						  const char *description,
-						  const char *callout_info,
+						  const void *callout_info,
+						  size_t callout_len,
 						  void *aux);
 
 extern int wait_for_key_construction(struct key *key, bool intr);
@@ -229,6 +242,7 @@ extern key_ref_t key_create_or_update(key_ref_t keyring,
 				      const char *description,
 				      const void *payload,
 				      size_t plen,
+				      key_perm_t perm,
 				      unsigned long flags);
 
 extern int key_update(key_ref_t key,
@@ -242,7 +256,7 @@ extern int key_unlink(struct key *keyring,
 		      struct key *key);
 
 extern struct key *keyring_alloc(const char *description, uid_t uid, gid_t gid,
-				 struct task_struct *ctx,
+				 const struct cred *cred,
 				 unsigned long flags,
 				 struct key *dest);
 
@@ -257,58 +271,44 @@ extern int keyring_add_key(struct key *keyring,
 
 extern struct key *key_lookup(key_serial_t id);
 
-#define key_serial(key) ((key) ? (key)->serial : 0)
+static inline key_serial_t key_serial(struct key *key)
+{
+	return key ? key->serial : 0;
+}
+
+#define rcu_dereference_key(KEY)					\
+	(rcu_dereference_protected((KEY)->payload.rcudata,		\
+				   rwsem_is_locked(&((struct key *)(KEY))->sem)))
+
+#ifdef CONFIG_SYSCTL
+extern ctl_table key_sysctls[];
+#endif
+
+extern void key_replace_session_keyring(void);
 
 /*
  * the userspace interface
  */
-extern struct key root_user_keyring, root_session_keyring;
-extern int alloc_uid_keyring(struct user_struct *user,
-			     struct task_struct *ctx);
-extern void switch_uid_keyring(struct user_struct *new_user);
-extern int copy_keys(unsigned long clone_flags, struct task_struct *tsk);
-extern int copy_thread_group_keys(struct task_struct *tsk);
-extern void exit_keys(struct task_struct *tsk);
-extern void exit_thread_group_keys(struct signal_struct *tg);
-extern int suid_keys(struct task_struct *tsk);
-extern int exec_keys(struct task_struct *tsk);
+extern int install_thread_keyring_to_cred(struct cred *cred);
 extern void key_fsuid_changed(struct task_struct *tsk);
 extern void key_fsgid_changed(struct task_struct *tsk);
 extern void key_init(void);
-
-#define __install_session_keyring(tsk, keyring)			\
-({								\
-	struct key *old_session = tsk->signal->session_keyring;	\
-	tsk->signal->session_keyring = keyring;			\
-	old_session;						\
-})
 
 #else /* CONFIG_KEYS */
 
 #define key_validate(k)			0
 #define key_serial(k)			0
 #define key_get(k) 			({ NULL; })
+#define key_revoke(k)			do { } while(0)
 #define key_put(k)			do { } while(0)
 #define key_ref_put(k)			do { } while(0)
-#define make_key_ref(k)			({ NULL; })
-#define key_ref_to_ptr(k)		({ NULL; })
+#define make_key_ref(k, p)		NULL
+#define key_ref_to_ptr(k)		NULL
 #define is_key_possessed(k)		0
-#define alloc_uid_keyring(u,c)		0
-#define switch_uid_keyring(u)		do { } while(0)
-#define __install_session_keyring(t, k)	({ NULL; })
-#define copy_keys(f,t)			0
-#define copy_thread_group_keys(t)	0
-#define exit_keys(t)			do { } while(0)
-#define exit_thread_group_keys(tg)	do { } while(0)
-#define suid_keys(t)			do { } while(0)
-#define exec_keys(t)			do { } while(0)
 #define key_fsuid_changed(t)		do { } while(0)
 #define key_fsgid_changed(t)		do { } while(0)
 #define key_init()			do { } while(0)
-
-/* Initial keyrings */
-extern struct key root_user_keyring;
-extern struct key root_session_keyring;
+#define key_replace_session_keyring()	do { } while(0)
 
 #endif /* CONFIG_KEYS */
 #endif /* __KERNEL__ */

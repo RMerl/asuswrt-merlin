@@ -15,33 +15,16 @@
 
 #undef DEBUG
 
-#include <linux/stddef.h>
-#include <linux/kernel.h>
 #include <linux/init.h>
-#include <linux/errno.h>
-#include <linux/reboot.h>
 #include <linux/pci.h>
-#include <linux/kdev_t.h>
-#include <linux/major.h>
-#include <linux/console.h>
-#include <linux/delay.h>
-#include <linux/seq_file.h>
+#include <linux/of.h>
+#include <linux/of_address.h>
 #include <linux/root_dev.h>
 #include <linux/initrd.h>
-
-#include <asm/system.h>
-#include <asm/atomic.h>
 #include <asm/time.h>
 #include <asm/io.h>
 #include <asm/machdep.h>
-#include <asm/ipic.h>
-#include <asm/bootinfo.h>
-#include <asm/irq.h>
 #include <asm/prom.h>
-#include <asm/udbg.h>
-#include <sysdev/fsl_soc.h>
-#include <asm/of_platform.h>
-
 #include <asm/mpc52xx.h>
 
 /* ************************************************************************
@@ -50,19 +33,74 @@
  *
  */
 
+/* mpc5200 device tree match tables */
+static struct of_device_id mpc5200_cdm_ids[] __initdata = {
+	{ .compatible = "fsl,mpc5200-cdm", },
+	{ .compatible = "mpc5200-cdm", },
+	{}
+};
+
+static struct of_device_id mpc5200_gpio_ids[] __initdata = {
+	{ .compatible = "fsl,mpc5200-gpio", },
+	{ .compatible = "mpc5200-gpio", },
+	{}
+};
+
+/*
+ * Fix clock configuration.
+ *
+ * Firmware is supposed to be responsible for this.  If you are creating a
+ * new board port, do *NOT* duplicate this code.  Fix your boot firmware
+ * to set it correctly in the first place
+ */
 static void __init
-lite5200_setup_cpu(void)
+lite5200_fix_clock_config(void)
 {
+	struct device_node *np;
+	struct mpc52xx_cdm  __iomem *cdm;
+	/* Map zones */
+	np = of_find_matching_node(NULL, mpc5200_cdm_ids);
+	cdm = of_iomap(np, 0);
+	of_node_put(np);
+	if (!cdm) {
+		printk(KERN_ERR "%s() failed; expect abnormal behaviour\n",
+		       __func__);
+		return;
+	}
+
+	/* Use internal 48 Mhz */
+	out_8(&cdm->ext_48mhz_en, 0x00);
+	out_8(&cdm->fd_enable, 0x01);
+	if (in_be32(&cdm->rstcfg) & 0x40)	/* Assumes 33Mhz clock */
+		out_be16(&cdm->fd_counters, 0x0001);
+	else
+		out_be16(&cdm->fd_counters, 0x5555);
+
+	/* Unmap the regs */
+	iounmap(cdm);
+}
+
+/*
+ * Fix setting of port_config register.
+ *
+ * Firmware is supposed to be responsible for this.  If you are creating a
+ * new board port, do *NOT* duplicate this code.  Fix your boot firmware
+ * to set it correctly in the first place
+ */
+static void __init
+lite5200_fix_port_config(void)
+{
+	struct device_node *np;
 	struct mpc52xx_gpio __iomem *gpio;
 	u32 port_config;
 
-	/* Map zones */
-	gpio = mpc52xx_find_and_map("mpc5200-gpio");
+	np = of_find_matching_node(NULL, mpc5200_gpio_ids);
+	gpio = of_iomap(np, 0);
+	of_node_put(np);
 	if (!gpio) {
-		printk(KERN_ERR __FILE__ ": "
-			"Error while mapping GPIO register for port config. "
-			"Expect some abnormal behavior\n");
-		goto error;
+		printk(KERN_ERR "%s() failed. expect abnormal behavior\n",
+		       __func__);
+		return;
 	}
 
 	/* Set port config */
@@ -81,12 +119,10 @@ lite5200_setup_cpu(void)
 	out_be32(&gpio->port_config, port_config);
 
 	/* Unmap zone */
-error:
 	iounmap(gpio);
 }
 
 #ifdef CONFIG_PM
-static u32 descr_a;
 static void lite5200_suspend_prepare(void __iomem *mbar)
 {
 	u8 pin = 1;	/* GPIO_WKUP_1 (GPIO_PSC2_4) */
@@ -97,93 +133,57 @@ static void lite5200_suspend_prepare(void __iomem *mbar)
 	 * power down usb port
 	 * this needs to be called before of-ohci suspend code
 	 */
-	descr_a = in_be32(mbar + 0x1048);
-	out_be32(mbar + 0x1048, (descr_a & ~0x200) | 0x100);
+
+	/* set ports to "power switched" and "powered at the same time"
+	 * USB Rh descriptor A: NPS = 0, PSM = 0 */
+	out_be32(mbar + 0x1048, in_be32(mbar + 0x1048) & ~0x300);
+	/* USB Rh status: LPS = 1 - turn off power */
+	out_be32(mbar + 0x1050, 0x00000001);
 }
 
 static void lite5200_resume_finish(void __iomem *mbar)
 {
-	out_be32(mbar + 0x1048, descr_a);
+	/* USB Rh status: LPSC = 1 - turn on power */
+	out_be32(mbar + 0x1050, 0x00010000);
 }
 #endif
 
 static void __init lite5200_setup_arch(void)
 {
-	struct device_node *np;
-
 	if (ppc_md.progress)
 		ppc_md.progress("lite5200_setup_arch()", 0);
 
-	np = of_find_node_by_type(NULL, "cpu");
-	if (np) {
-		const unsigned int *fp =
-			of_get_property(np, "clock-frequency", NULL);
-		if (fp != 0)
-			loops_per_jiffy = *fp / HZ;
-		else
-			loops_per_jiffy = 50000000 / HZ;
-		of_node_put(np);
-	}
+	/* Map important registers from the internal memory map */
+	mpc52xx_map_common_devices();
 
-	/* CPU & Port mux setup */
-	mpc52xx_setup_cpu();	/* Generic */
-	lite5200_setup_cpu();	/* Platorm specific */
+	/* Some mpc5200 & mpc5200b related configuration */
+	mpc5200_setup_xlb_arbiter();
+
+	/* Fix things that firmware should have done. */
+	lite5200_fix_clock_config();
+	lite5200_fix_port_config();
 
 #ifdef CONFIG_PM
 	mpc52xx_suspend.board_suspend_prepare = lite5200_suspend_prepare;
 	mpc52xx_suspend.board_resume_finish = lite5200_resume_finish;
-	mpc52xx_pm_init();
+	lite5200_pm_init();
 #endif
 
-#ifdef CONFIG_PCI
-	np = of_find_node_by_type(NULL, "pci");
-	if (np) {
-		mpc52xx_add_bridge(np);
-		of_node_put(np);
-	}
-#endif
-
-#ifdef CONFIG_BLK_DEV_INITRD
-	if (initrd_start)
-		ROOT_DEV = Root_RAM0;
-	else
-#endif
-#ifdef  CONFIG_ROOT_NFS
-		ROOT_DEV = Root_NFS;
-#else
-		ROOT_DEV = Root_HDA1;
-#endif
-
+	mpc52xx_setup_pci();
 }
 
-void lite5200_show_cpuinfo(struct seq_file *m)
-{
-	struct device_node* np = of_find_all_nodes(NULL);
-	const char *model = NULL;
-
-	if (np)
-		model = of_get_property(np, "model", NULL);
-
-	seq_printf(m, "vendor\t\t:	Freescale Semiconductor\n");
-	seq_printf(m, "machine\t\t:	%s\n", model ? model : "unknown");
-
-	of_node_put(np);
-}
+static const char *board[] __initdata = {
+	"fsl,lite5200",
+	"fsl,lite5200b",
+	NULL,
+};
 
 /*
  * Called very early, MMU is off, device-tree isn't unflattened
  */
 static int __init lite5200_probe(void)
 {
-	unsigned long node = of_get_flat_dt_root();
-	const char *model = of_get_flat_dt_prop(node, "model", NULL);
-
-	if (!of_flat_dt_is_compatible(node, "fsl,lite5200") &&
-	    !of_flat_dt_is_compatible(node, "fsl,lite5200b"))
-		return 0;
-	pr_debug("%s board found\n", model ? model : "unknown");
-
-	return 1;
+	return of_flat_dt_match(of_get_flat_dt_root(), board);
 }
 
 define_machine(lite5200) {
@@ -193,6 +193,6 @@ define_machine(lite5200) {
 	.init		= mpc52xx_declare_of_platform_devices,
 	.init_IRQ 	= mpc52xx_init_irq,
 	.get_irq 	= mpc52xx_get_irq,
-	.show_cpuinfo	= lite5200_show_cpuinfo,
+	.restart	= mpc52xx_restart,
 	.calibrate_decr	= generic_calibrate_decr,
 };

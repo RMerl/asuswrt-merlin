@@ -36,6 +36,8 @@
  *                                                                           *
  ****************************************************************************/
 
+#define pr_fmt(fmt) "cxgb: " fmt
+
 #ifndef _CXGB_COMMON_H_
 #define _CXGB_COMMON_H_
 
@@ -46,37 +48,16 @@
 #include <linux/pci.h>
 #include <linux/ethtool.h>
 #include <linux/if_vlan.h>
-#include <linux/mii.h>
+#include <linux/mdio.h>
 #include <linux/crc32.h>
 #include <linux/init.h>
+#include <linux/slab.h>
 #include <asm/io.h>
 #include <linux/pci_ids.h>
 
 #define DRV_DESCRIPTION "Chelsio 10Gb Ethernet Driver"
 #define DRV_NAME "cxgb"
 #define DRV_VERSION "2.2"
-#define PFX      DRV_NAME ": "
-
-#define CH_ERR(fmt, ...)   printk(KERN_ERR PFX fmt, ## __VA_ARGS__)
-#define CH_WARN(fmt, ...)  printk(KERN_WARNING PFX fmt, ## __VA_ARGS__)
-#define CH_ALERT(fmt, ...) printk(KERN_ALERT PFX fmt, ## __VA_ARGS__)
-
-/*
- * More powerful macro that selectively prints messages based on msg_enable.
- * For info and debugging messages.
- */
-#define CH_MSG(adapter, level, category, fmt, ...) do { \
-	if ((adapter)->msg_enable & NETIF_MSG_##category) \
-		printk(KERN_##level PFX "%s: " fmt, (adapter)->name, \
-		       ## __VA_ARGS__); \
-} while (0)
-
-#ifdef DEBUG
-# define CH_DBG(adapter, category, fmt, ...) \
-	CH_MSG(adapter, DEBUG, category, fmt, ## __VA_ARGS__)
-#else
-# define CH_DBG(fmt, ...)
-#endif
 
 #define CH_DEVICE(devid, ssid, idx) \
 	{ PCI_VENDOR_ID_CHELSIO, devid, PCI_ANY_ID, ssid, 0, 0, idx }
@@ -90,25 +71,13 @@
 typedef struct adapter adapter_t;
 
 struct t1_rx_mode {
-	struct net_device *dev;
-	u32 idx;
-	struct dev_mc_list *list;
+       struct net_device *dev;
 };
 
 #define t1_rx_mode_promisc(rm)	(rm->dev->flags & IFF_PROMISC)
 #define t1_rx_mode_allmulti(rm)	(rm->dev->flags & IFF_ALLMULTI)
-#define t1_rx_mode_mc_cnt(rm)	(rm->dev->mc_count)
-
-static inline u8 *t1_get_next_mcaddr(struct t1_rx_mode *rm)
-{
-	u8 *addr = NULL;
-
-	if (rm->idx++ < rm->dev->mc_count) {
-		addr = rm->list->dmi_addr;
-		rm->list = rm->list->next;
-	}
-	return addr;
-}
+#define t1_rx_mode_mc_cnt(rm)	(netdev_mc_count(rm->dev))
+#define t1_get_netdev(rm)	(rm->dev)
 
 #define	MAX_NPORTS 4
 #define PORT_MASK ((1 << MAX_NPORTS) - 1)
@@ -278,6 +247,7 @@ struct adapter {
 	struct peespi *espi;
 	struct petp   *tp;
 
+	struct napi_struct napi;
 	struct port_info port[MAX_NPORTS];
 	struct delayed_work stats_update_task;
 	struct timer_list stats_update_timer;
@@ -316,7 +286,6 @@ struct board_info {
 	unsigned int            clock_mc3;
 	unsigned int            clock_mc4;
 	unsigned int            espi_nports;
-	unsigned int            clock_cspi;
 	unsigned int            clock_elmer0;
 	unsigned char           mdio_mdien;
 	unsigned char           mdio_mdiinv;
@@ -333,7 +302,7 @@ static inline int t1_is_asic(const adapter_t *adapter)
 	return adapter->params.is_asic;
 }
 
-extern struct pci_device_id t1_pci_tbl[];
+extern const struct pci_device_id t1_pci_tbl[];
 
 static inline int adapter_matches_type(const adapter_t *adapter,
 				       int version, int revision)
@@ -371,13 +340,14 @@ extern void t1_interrupts_enable(adapter_t *adapter);
 extern void t1_interrupts_disable(adapter_t *adapter);
 extern void t1_interrupts_clear(adapter_t *adapter);
 extern int t1_elmer0_ext_intr_handler(adapter_t *adapter);
+extern void t1_elmer0_ext_intr(adapter_t *adapter);
 extern int t1_slow_intr_handler(adapter_t *adapter);
 
 extern int t1_link_start(struct cphy *phy, struct cmac *mac, struct link_config *lc);
 extern const struct board_info *t1_get_board_info(unsigned int board_id);
 extern const struct board_info *t1_get_board_info_from_ids(unsigned int devid,
 						    unsigned short ssid);
-extern int t1_seeprom_read(adapter_t *adapter, u32 addr, u32 *data);
+extern int t1_seeprom_read(adapter_t *adapter, u32 addr, __le32 *data);
 extern int t1_get_board_rev(adapter_t *adapter, const struct board_info *bi,
 		     struct adapter_params *p);
 extern int t1_init_hw_modules(adapter_t *adapter);

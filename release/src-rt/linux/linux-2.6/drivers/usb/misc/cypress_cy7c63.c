@@ -1,7 +1,7 @@
 /*
 * cypress_cy7c63.c
 *
-* Copyright (c) 2006 Oliver Bock (o.bock@fh-wolfenbuettel.de)
+* Copyright (c) 2006-2007 Oliver Bock (bock@tfh-berlin.de)
 *
 *	This driver is based on the Cypress USB Driver by Marcus Maul
 *	(cyport) and the 2.0 version of Greg Kroah-Hartman's
@@ -21,6 +21,9 @@
 *	Supported functions:	Read/Write Ports
 *
 *
+*	For up-to-date information please visit:
+*	http://www.obock.de/kernel/cypress
+*
 *	This program is free software; you can redistribute it and/or
 *	modify it under the terms of the GNU General Public License as
 *	published by the Free Software Foundation, version 2.
@@ -29,9 +32,10 @@
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
+#include <linux/slab.h>
 #include <linux/usb.h>
 
-#define DRIVER_AUTHOR		"Oliver Bock (o.bock@fh-wolfenbuettel.de)"
+#define DRIVER_AUTHOR		"Oliver Bock (bock@tfh-berlin.de)"
 #define DRIVER_DESC		"Cypress CY7C63xxx USB driver"
 
 #define CYPRESS_VENDOR_ID	0xa2c
@@ -53,7 +57,7 @@
 
 
 /* table of devices that work with this driver */
-static struct usb_device_id cypress_table [] = {
+static const struct usb_device_id cypress_table[] = {
 	{ USB_DEVICE(CYPRESS_VENDOR_ID, CYPRESS_PRODUCT_ID) },
 	{ }
 };
@@ -192,11 +196,9 @@ static ssize_t get_port1_handler(struct device *dev,
 	return read_port(dev, attr, buf, 1, CYPRESS_READ_PORT_ID1);
 }
 
-static DEVICE_ATTR(port0, S_IWUGO | S_IRUGO,
-		   get_port0_handler, set_port0_handler);
+static DEVICE_ATTR(port0, S_IRUGO | S_IWUSR, get_port0_handler, set_port0_handler);
 
-static DEVICE_ATTR(port1, S_IWUGO | S_IRUGO,
-		   get_port1_handler, set_port1_handler);
+static DEVICE_ATTR(port1, S_IRUGO | S_IWUSR, get_port1_handler, set_port1_handler);
 
 
 static int cypress_probe(struct usb_interface *interface,
@@ -275,9 +277,9 @@ static int __init cypress_init(void)
 
 	/* register this driver with the USB subsystem */
 	result = usb_register(&cypress_driver);
-	if (result) {
-		err("Function usb_register failed! Error number: %d\n", result);
-	}
+	if (result)
+		printk(KERN_ERR KBUILD_MODNAME ": usb_register failed! "
+		       "Error number: %d\n", result);
 
 	return result;
 }

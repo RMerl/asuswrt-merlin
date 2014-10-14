@@ -28,8 +28,6 @@
  * ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
- *
- * $Id: mthca_wqe.h 3047 2005-08-10 03:59:35Z roland $
  */
 
 #ifndef MTHCA_WQE_H
@@ -38,14 +36,16 @@
 #include <linux/types.h>
 
 enum {
-	MTHCA_NEXT_DBD       = 1 << 7,
-	MTHCA_NEXT_FENCE     = 1 << 6,
-	MTHCA_NEXT_CQ_UPDATE = 1 << 3,
-	MTHCA_NEXT_EVENT_GEN = 1 << 2,
-	MTHCA_NEXT_SOLICIT   = 1 << 1,
+	MTHCA_NEXT_DBD		= 1 << 7,
+	MTHCA_NEXT_FENCE	= 1 << 6,
+	MTHCA_NEXT_CQ_UPDATE	= 1 << 3,
+	MTHCA_NEXT_EVENT_GEN	= 1 << 2,
+	MTHCA_NEXT_SOLICIT	= 1 << 1,
+	MTHCA_NEXT_IP_CSUM	= 1 << 4,
+	MTHCA_NEXT_TCP_UDP_CSUM = 1 << 5,
 
-	MTHCA_MLX_VL15       = 1 << 17,
-	MTHCA_MLX_SLR        = 1 << 16
+	MTHCA_MLX_VL15		= 1 << 17,
+	MTHCA_MLX_SLR		= 1 << 16
 };
 
 enum {
@@ -112,5 +112,20 @@ struct mthca_mlx_seg {
 	__be16 rlid;
 	__be16 vcrc;
 };
+
+static __always_inline void mthca_set_data_seg(struct mthca_data_seg *dseg,
+					       struct ib_sge *sg)
+{
+	dseg->byte_count = cpu_to_be32(sg->length);
+	dseg->lkey       = cpu_to_be32(sg->lkey);
+	dseg->addr       = cpu_to_be64(sg->addr);
+}
+
+static __always_inline void mthca_set_data_seg_inval(struct mthca_data_seg *dseg)
+{
+	dseg->byte_count = 0;
+	dseg->lkey       = cpu_to_be32(MTHCA_INVAL_LKEY);
+	dseg->addr       = 0;
+}
 
 #endif /* MTHCA_WQE_H */

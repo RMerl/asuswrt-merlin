@@ -34,7 +34,7 @@
 /* Use ENTRY_SAME for 32-bit syscalls which are the same on wide and
  * narrow palinux.  Use ENTRY_DIFF for those where a 32-bit specific
  * implementation is required on wide palinux.  Use ENTRY_COMP where
- * the compatability layer has a useful 32-bit implementation.
+ * the compatibility layer has a useful 32-bit implementation.
  */
 #define ENTRY_SAME(_name_) .dword sys_##_name_
 #define ENTRY_DIFF(_name_) .dword sys32_##_name_
@@ -87,7 +87,7 @@
 	ENTRY_SAME(setuid)
 	ENTRY_SAME(getuid)
 	ENTRY_COMP(stime)		/* 25 */
-	ENTRY_SAME(ptrace)
+	ENTRY_COMP(ptrace)
 	ENTRY_SAME(alarm)
 	/* see stat comment */
 	ENTRY_COMP(newfstat)
@@ -127,10 +127,10 @@
 	ENTRY_SAME(socketpair)
 	ENTRY_SAME(setpgid)
 	ENTRY_SAME(send)
-	ENTRY_OURS(newuname)
+	ENTRY_SAME(newuname)
 	ENTRY_SAME(umask)		/* 60 */
 	ENTRY_SAME(chroot)
-	ENTRY_SAME(ustat)
+	ENTRY_COMP(ustat)
 	ENTRY_SAME(dup2)
 	ENTRY_SAME(getppid)
 	ENTRY_SAME(getpgrp)		/* 65 */
@@ -149,8 +149,8 @@
 	ENTRY_COMP(getrlimit)
 	ENTRY_COMP(getrusage)
 	/* struct timeval and timezone are maybe?? consistent wide and narrow */
-	ENTRY_DIFF(gettimeofday)
-	ENTRY_DIFF(settimeofday)
+	ENTRY_COMP(gettimeofday)
+	ENTRY_COMP(settimeofday)
 	ENTRY_SAME(getgroups)		/* 80 */
 	ENTRY_SAME(setgroups)
 	/* struct socketaddr... */
@@ -222,9 +222,7 @@
 	ENTRY_SAME(setfsgid)
 	/* I think this might work */
 	ENTRY_SAME(llseek)		/* 140 */
-	/* struct linux_dirent has longs, like 'unsigned long d_ino' which
-	 * almost definitely should be 'ino_t d_ino' but it's too late now */
-	ENTRY_DIFF(getdents)
+	ENTRY_COMP(getdents)
 	/* it is POSSIBLE that select will be OK because even though fd_set
 	 * contains longs, the macros and sizes are clever. */
 	ENTRY_COMP(select)
@@ -236,7 +234,7 @@
 	ENTRY_SAME(getsid)
 	ENTRY_SAME(fdatasync)
 	/* struct __sysctl_args is a mess */
-	ENTRY_DIFF(sysctl)
+	ENTRY_COMP(sysctl)
 	ENTRY_SAME(mlock)		/* 150 */
 	ENTRY_SAME(munlock)
 	ENTRY_SAME(mlockall)
@@ -405,6 +403,29 @@
 	ENTRY_COMP(signalfd)
 	ENTRY_SAME(ni_syscall)		/* was timerfd */
 	ENTRY_SAME(eventfd)
+	ENTRY_COMP(fallocate)		/* 305 */
+	ENTRY_SAME(timerfd_create)
+	ENTRY_COMP(timerfd_settime)
+	ENTRY_COMP(timerfd_gettime)
+	ENTRY_COMP(signalfd4)
+	ENTRY_SAME(eventfd2)		/* 310 */
+	ENTRY_SAME(epoll_create1)
+	ENTRY_SAME(dup3)
+	ENTRY_SAME(pipe2)
+	ENTRY_SAME(inotify_init1)
+	ENTRY_COMP(preadv)		/* 315 */
+	ENTRY_COMP(pwritev)
+	ENTRY_COMP(rt_tgsigqueueinfo)
+	ENTRY_SAME(perf_event_open)
+	ENTRY_COMP(recvmmsg)
+	ENTRY_SAME(accept4)		/* 320 */
+	ENTRY_SAME(prlimit64)
+	ENTRY_SAME(fanotify_init)
+	ENTRY_COMP(fanotify_mark)
+	ENTRY_COMP(clock_adjtime)
+	ENTRY_SAME(name_to_handle_at)	/* 325 */
+	ENTRY_COMP(open_by_handle_at)
+	ENTRY_SAME(syncfs)
 
 	/* Nothing yet */
 

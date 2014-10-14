@@ -1,6 +1,6 @@
 /*
  *   serial.c
- *   Copyright (c) by Jaroslav Kysela <perex@suse.cz>,
+ *   Copyright (c) by Jaroslav Kysela <perex@perex.cz>,
  *                    Isaku Yamahata <yamahata@private.email.ne.jp>,
  *		      George Hansper <ghansper@apana.org.au>,
  *		      Hannu Savolainen
@@ -30,7 +30,6 @@
  *      More documentation can be found in serial-u16550.txt.
  */
 
-#include <sound/driver.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>
 #include <linux/err.h>
@@ -43,6 +42,7 @@
 #include <sound/initval.h>
 
 #include <linux/serial_reg.h>
+#include <linux/jiffies.h>
 
 #include <asm/io.h>
 
@@ -241,7 +241,8 @@ static void snd_uart16550_io_loop(struct snd_uart16550 * uart)
 			snd_rawmidi_receive(uart->midi_input[substream], &c, 1);
 
 		if (status & UART_LSR_OE)
-			snd_printk("%s: Overrun on device at 0x%lx\n",
+			snd_printk(KERN_WARNING
+				   "%s: Overrun on device at 0x%lx\n",
 			       uart->rmidi->name, uart->base);
 	}
 
@@ -455,7 +456,7 @@ static void snd_uart16550_do_open(struct snd_uart16550 * uart)
 		    | UART_IER_THRI	/* Enable Transmitter holding register empty interrupt */
 		    ;
 	}
-	outb(byte, uart->base + UART_IER);	/* Interupt enable Register */
+	outb(byte, uart->base + UART_IER);	/* Interrupt enable Register */
 
 	inb(uart->base + UART_LSR);	/* Clear any pre-existing overrun indication */
 	inb(uart->base + UART_IIR);	/* Clear any pre-existing transmit interrupt */
@@ -473,7 +474,7 @@ static void snd_uart16550_do_close(struct snd_uart16550 * uart)
 
 	outb((0 & UART_IER_RDI)		/* Disable Receiver data interrupt */
 	     |(0 & UART_IER_THRI)	/* Disable Transmitter holding register empty interrupt */
-	     ,uart->base + UART_IER);	/* Interupt enable Register */
+	     ,uart->base + UART_IER);	/* Interrupt enable Register */
 
 	switch (uart->adaptor) {
 	default:
@@ -636,7 +637,8 @@ static int snd_uart16550_output_byte(struct snd_uart16550 *uart,
 		}
 	} else {
 		if (!snd_uart16550_write_buffer(uart, midi_byte)) {
-			snd_printk("%s: Buffer overrun on device at 0x%lx\n",
+			snd_printk(KERN_WARNING
+				   "%s: Buffer overrun on device at 0x%lx\n",
 				   uart->rmidi->name, uart->base);
 			return 0;
 		}
@@ -653,7 +655,7 @@ static void snd_uart16550_output_write(struct snd_rawmidi_substream *substream)
 	char first;
 	static unsigned long lasttime = 0;
 	
-	/* Interupts are disabled during the updating of the tx_buff,
+	/* Interrupts are disabled during the updating of the tx_buff,
 	 * since it is 'bad' to have two processes updating the same
 	 * variables (ie buff_in & buff_out)
 	 */
@@ -694,7 +696,7 @@ static void snd_uart16550_output_write(struct snd_rawmidi_substream *substream)
 			    (uart->adaptor == SNDRV_SERIAL_SOUNDCANVAS ||
 			     uart->adaptor == SNDRV_SERIAL_GENERIC) &&
 			    (uart->prev_out != substream->number ||
-			     jiffies-lasttime > 3*HZ)) {
+			     time_after(jiffies, lasttime + 3*HZ))) {
 
 				if (snd_uart16550_buffer_can_write(uart, 3)) {
 					/* Roland Soundcanvas part selection */
@@ -815,7 +817,8 @@ static int __devinit snd_uart16550_create(struct snd_card *card,
 	if (irq >= 0 && irq != SNDRV_AUTO_IRQ) {
 		if (request_irq(irq, snd_uart16550_interrupt,
 				IRQF_DISABLED, "Serial MIDI", uart)) {
-			snd_printk("irq %d busy. Using Polling.\n", irq);
+			snd_printk(KERN_WARNING
+				   "irq %d busy. Using Polling.\n", irq);
 		} else {
 			uart->irq = irq;
 		}
@@ -919,26 +922,29 @@ static int __devinit snd_serial_probe(struct platform_device *devptr)
 	case SNDRV_SERIAL_GENERIC:
 		break;
 	default:
-		snd_printk("Adaptor type is out of range 0-%d (%d)\n",
+		snd_printk(KERN_ERR
+			   "Adaptor type is out of range 0-%d (%d)\n",
 			   SNDRV_SERIAL_MAX_ADAPTOR, adaptor[dev]);
 		return -ENODEV;
 	}
 
 	if (outs[dev] < 1 || outs[dev] > SNDRV_SERIAL_MAX_OUTS) {
-		snd_printk("Count of outputs is out of range 1-%d (%d)\n",
+		snd_printk(KERN_ERR
+			   "Count of outputs is out of range 1-%d (%d)\n",
 			   SNDRV_SERIAL_MAX_OUTS, outs[dev]);
 		return -ENODEV;
 	}
 
 	if (ins[dev] < 1 || ins[dev] > SNDRV_SERIAL_MAX_INS) {
-		snd_printk("Count of inputs is out of range 1-%d (%d)\n",
+		snd_printk(KERN_ERR
+			   "Count of inputs is out of range 1-%d (%d)\n",
 			   SNDRV_SERIAL_MAX_INS, ins[dev]);
 		return -ENODEV;
 	}
 
-	card  = snd_card_new(index[dev], id[dev], THIS_MODULE, 0);
-	if (card == NULL)
-		return -ENOMEM;
+	err  = snd_card_create(index[dev], id[dev], THIS_MODULE, 0, &card);
+	if (err < 0)
+		return err;
 
 	strcpy(card->driver, "Serial");
 	strcpy(card->shortname, "Serial MIDI (UART16550A)");
@@ -957,16 +963,11 @@ static int __devinit snd_serial_probe(struct platform_device *devptr)
 	if (err < 0)
 		goto _err;
 
-	sprintf(card->longname, "%s at 0x%lx, irq %d speed %d div %d outs %d ins %d adaptor %s droponfull %d",
+	sprintf(card->longname, "%s [%s] at %#lx, irq %d",
 		card->shortname,
-		uart->base,
-		uart->irq,
-		uart->speed,
-		(int)uart->divisor,
-		outs[dev],
-		ins[dev],
 		adaptor_names[uart->adaptor],
-		uart->drop_on_full);
+		uart->base,
+		uart->irq);
 
 	snd_card_set_dev(card, &devptr->dev);
 
@@ -998,7 +999,7 @@ static struct platform_driver snd_serial_driver = {
 	},
 };
 
-static void __init_or_module snd_serial_unregister_all(void)
+static void snd_serial_unregister_all(void)
 {
 	int i;
 

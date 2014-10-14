@@ -12,17 +12,13 @@
 
 static int ipip_output(struct xfrm_state *x, struct sk_buff *skb)
 {
-	struct iphdr *iph = ip_hdr(skb);
-
-	iph->tot_len = htons(skb->len);
-	ip_send_check(iph);
-
+	skb_push(skb, -skb_network_offset(skb));
 	return 0;
 }
 
 static int ipip_xfrm_rcv(struct xfrm_state *x, struct sk_buff *skb)
 {
-	return 0;
+	return ip_hdr(skb)->protocol;
 }
 
 static int ipip_init_state(struct xfrm_state *x)
@@ -42,7 +38,7 @@ static void ipip_destroy(struct xfrm_state *x)
 {
 }
 
-static struct xfrm_type ipip_type = {
+static const struct xfrm_type ipip_type = {
 	.description	= "IPIP",
 	.owner		= THIS_MODULE,
 	.proto	     	= IPPROTO_IPIP,
@@ -52,20 +48,25 @@ static struct xfrm_type ipip_type = {
 	.output		= ipip_output
 };
 
+static int xfrm_tunnel_rcv(struct sk_buff *skb)
+{
+	return xfrm4_rcv_spi(skb, IPPROTO_IPIP, ip_hdr(skb)->saddr);
+}
+
 static int xfrm_tunnel_err(struct sk_buff *skb, u32 info)
 {
 	return -ENOENT;
 }
 
-static struct xfrm_tunnel xfrm_tunnel_handler = {
-	.handler	=	xfrm4_rcv,
+static struct xfrm_tunnel xfrm_tunnel_handler __read_mostly = {
+	.handler	=	xfrm_tunnel_rcv,
 	.err_handler	=	xfrm_tunnel_err,
 	.priority	=	2,
 };
 
 #if defined(CONFIG_IPV6) || defined(CONFIG_IPV6_MODULE)
-static struct xfrm_tunnel xfrm64_tunnel_handler = {
-	.handler	=	xfrm4_rcv,
+static struct xfrm_tunnel xfrm64_tunnel_handler __read_mostly = {
+	.handler	=	xfrm_tunnel_rcv,
 	.err_handler	=	xfrm_tunnel_err,
 	.priority	=	2,
 };
@@ -109,3 +110,4 @@ static void __exit ipip_fini(void)
 module_init(ipip_init);
 module_exit(ipip_fini);
 MODULE_LICENSE("GPL");
+MODULE_ALIAS_XFRM_TYPE(AF_INET, XFRM_PROTO_IPIP);

@@ -27,9 +27,9 @@
 #include <linux/crc32.h>
 #include <linux/bitops.h>
 #include <linux/platform_device.h>
+#include <linux/io.h>
 
-#include <asm/hardware.h>
-#include <asm/io.h>
+#include <mach/hardware.h>
 #include <asm/system.h>
 
 #define TX_BUFFERS 15
@@ -208,9 +208,9 @@ am79c961_init_for_open(struct net_device *dev)
 	/*
 	 * Stop the chip.
 	 */
-	spin_lock_irqsave(priv->chip_lock, flags);
+	spin_lock_irqsave(&priv->chip_lock, flags);
 	write_rreg (dev->base_addr, CSR0, CSR0_BABL|CSR0_CERR|CSR0_MISS|CSR0_MERR|CSR0_TINT|CSR0_RINT|CSR0_STOP);
-	spin_unlock_irqrestore(priv->chip_lock, flags);
+	spin_unlock_irqrestore(&priv->chip_lock, flags);
 
 	write_ireg (dev->base_addr, 5, 0x00a0); /* Receive address LED */
 	write_ireg (dev->base_addr, 6, 0x0081); /* Collision LED */
@@ -300,8 +300,6 @@ am79c961_open(struct net_device *dev)
 	struct dev_priv *priv = netdev_priv(dev);
 	int ret;
 
-	memset (&priv->stats, 0, sizeof (priv->stats));
-
 	ret = request_irq(dev->irq, am79c961_interrupt, 0, dev->name, dev);
 	if (ret)
 		return ret;
@@ -332,32 +330,23 @@ am79c961_close(struct net_device *dev)
 	netif_stop_queue(dev);
 	netif_carrier_off(dev);
 
-	spin_lock_irqsave(priv->chip_lock, flags);
+	spin_lock_irqsave(&priv->chip_lock, flags);
 	write_rreg (dev->base_addr, CSR0, CSR0_STOP);
 	write_rreg (dev->base_addr, CSR3, CSR3_MASKALL);
-	spin_unlock_irqrestore(priv->chip_lock, flags);
+	spin_unlock_irqrestore(&priv->chip_lock, flags);
 
 	free_irq (dev->irq, dev);
 
 	return 0;
 }
 
-/*
- * Get the current statistics.
- */
-static struct net_device_stats *am79c961_getstats (struct net_device *dev)
+static void am79c961_mc_hash(char *addr, unsigned short *hash)
 {
-	struct dev_priv *priv = netdev_priv(dev);
-	return &priv->stats;
-}
-
-static void am79c961_mc_hash(struct dev_mc_list *dmi, unsigned short *hash)
-{
-	if (dmi->dmi_addrlen == ETH_ALEN && dmi->dmi_addr[0] & 0x01) {
+	if (addr[0] & 0x01) {
 		int idx, bit;
 		u32 crc;
 
-		crc = ether_crc_le(ETH_ALEN, dmi->dmi_addr);
+		crc = ether_crc_le(ETH_ALEN, addr);
 
 		idx = crc >> 30;
 		bit = (crc >> 26) & 15;
@@ -383,15 +372,15 @@ static void am79c961_setmulticastlist (struct net_device *dev)
 	} else if (dev->flags & IFF_ALLMULTI) {
 		memset(multi_hash, 0xff, sizeof(multi_hash));
 	} else {
-		struct dev_mc_list *dmi;
+		struct netdev_hw_addr *ha;
 
 		memset(multi_hash, 0x00, sizeof(multi_hash));
 
-		for (dmi = dev->mc_list; dmi; dmi = dmi->next)
-			am79c961_mc_hash(dmi, multi_hash);
+		netdev_for_each_mc_addr(ha, dev)
+			am79c961_mc_hash(ha->addr, multi_hash);
 	}
 
-	spin_lock_irqsave(priv->chip_lock, flags);
+	spin_lock_irqsave(&priv->chip_lock, flags);
 
 	stopped = read_rreg(dev->base_addr, CSR0) & CSR0_STOP;
 
@@ -405,16 +394,16 @@ static void am79c961_setmulticastlist (struct net_device *dev)
 		 * Spin waiting for chip to report suspend mode
 		 */
 		while ((read_rreg(dev->base_addr, CTRL1) & CTRL1_SPND) == 0) {
-			spin_unlock_irqrestore(priv->chip_lock, flags);
+			spin_unlock_irqrestore(&priv->chip_lock, flags);
 			nop();
-			spin_lock_irqsave(priv->chip_lock, flags);
+			spin_lock_irqsave(&priv->chip_lock, flags);
 		}
 	}
 
 	/*
 	 * Update the multicast hash table
 	 */
-	for (i = 0; i < sizeof(multi_hash) / sizeof(multi_hash[0]); i++)
+	for (i = 0; i < ARRAY_SIZE(multi_hash); i++)
 		write_rreg(dev->base_addr, i + LADRL, multi_hash[i]);
 
 	/*
@@ -429,7 +418,7 @@ static void am79c961_setmulticastlist (struct net_device *dev)
 		write_rreg(dev->base_addr, CTRL1, 0);
 	}
 
-	spin_unlock_irqrestore(priv->chip_lock, flags);
+	spin_unlock_irqrestore(&priv->chip_lock, flags);
 }
 
 static void am79c961_timeout(struct net_device *dev)
@@ -467,10 +456,9 @@ am79c961_sendpacket(struct sk_buff *skb, struct net_device *dev)
 	am_writeword (dev, hdraddr + 2, TMD_OWN|TMD_STP|TMD_ENP);
 	priv->txhead = head;
 
-	spin_lock_irqsave(priv->chip_lock, flags);
+	spin_lock_irqsave(&priv->chip_lock, flags);
 	write_rreg (dev->base_addr, CSR0, CSR0_TDMD|CSR0_IENA);
-	dev->trans_start = jiffies;
-	spin_unlock_irqrestore(priv->chip_lock, flags);
+	spin_unlock_irqrestore(&priv->chip_lock, flags);
 
 	/*
 	 * If the next packet is owned by the ethernet device,
@@ -482,7 +470,7 @@ am79c961_sendpacket(struct sk_buff *skb, struct net_device *dev)
 
 	dev_kfree_skb(skb);
 
-	return 0;
+	return NETDEV_TX_OK;
 }
 
 /*
@@ -511,14 +499,14 @@ am79c961_rx(struct net_device *dev, struct dev_priv *priv)
 
 		if ((status & (RMD_ERR|RMD_STP|RMD_ENP)) != (RMD_STP|RMD_ENP)) {
 			am_writeword (dev, hdraddr + 2, RMD_OWN);
-			priv->stats.rx_errors ++;
+			dev->stats.rx_errors++;
 			if (status & RMD_ERR) {
 				if (status & RMD_FRAM)
-					priv->stats.rx_frame_errors ++;
+					dev->stats.rx_frame_errors++;
 				if (status & RMD_CRC)
-					priv->stats.rx_crc_errors ++;
+					dev->stats.rx_crc_errors++;
 			} else if (status & RMD_STP)
-				priv->stats.rx_length_errors ++;
+				dev->stats.rx_length_errors++;
 			continue;
 		}
 
@@ -532,13 +520,12 @@ am79c961_rx(struct net_device *dev, struct dev_priv *priv)
 			am_writeword(dev, hdraddr + 2, RMD_OWN);
 			skb->protocol = eth_type_trans(skb, dev);
 			netif_rx(skb);
-			dev->last_rx = jiffies;
-			priv->stats.rx_bytes += len;
-			priv->stats.rx_packets ++;
+			dev->stats.rx_bytes += len;
+			dev->stats.rx_packets++;
 		} else {
 			am_writeword (dev, hdraddr + 2, RMD_OWN);
 			printk (KERN_WARNING "%s: memory squeeze, dropping packet.\n", dev->name);
-			priv->stats.rx_dropped ++;
+			dev->stats.rx_dropped++;
 			break;
 		}
 	} while (1);
@@ -567,7 +554,7 @@ am79c961_tx(struct net_device *dev, struct dev_priv *priv)
 		if (status & TMD_ERR) {
 			u_int status2;
 
-			priv->stats.tx_errors ++;
+			dev->stats.tx_errors++;
 
 			status2 = am_readword (dev, hdraddr + 6);
 
@@ -577,18 +564,18 @@ am79c961_tx(struct net_device *dev, struct dev_priv *priv)
 			am_writeword (dev, hdraddr + 6, 0);
 
 			if (status2 & TST_RTRY)
-				priv->stats.collisions += 16;
+				dev->stats.collisions += 16;
 			if (status2 & TST_LCOL)
-				priv->stats.tx_window_errors ++;
+				dev->stats.tx_window_errors++;
 			if (status2 & TST_LCAR)
-				priv->stats.tx_carrier_errors ++;
+				dev->stats.tx_carrier_errors++;
 			if (status2 & TST_UFLO)
-				priv->stats.tx_fifo_errors ++;
+				dev->stats.tx_fifo_errors++;
 			continue;
 		}
-		priv->stats.tx_packets ++;
+		dev->stats.tx_packets++;
 		len = am_readword (dev, hdraddr + 4);
-		priv->stats.tx_bytes += -len;
+		dev->stats.tx_bytes += -len;
 	} while (priv->txtail != priv->txhead);
 
 	netif_wake_queue(dev);
@@ -618,7 +605,7 @@ am79c961_interrupt(int irq, void *dev_id)
 		}
 		if (status & CSR0_MISS) {
 			handled = 1;
-			priv->stats.rx_dropped ++;
+			dev->stats.rx_dropped++;
 		}
 		if (status & CSR0_CERR) {
 			handled = 1;
@@ -666,8 +653,21 @@ static void __init am79c961_banner(void)
 	if (net_debug && version_printed++ == 0)
 		printk(KERN_INFO "%s", version);
 }
+static const struct net_device_ops am79c961_netdev_ops = {
+	.ndo_open		= am79c961_open,
+	.ndo_stop		= am79c961_close,
+	.ndo_start_xmit		= am79c961_sendpacket,
+	.ndo_set_multicast_list	= am79c961_setmulticastlist,
+	.ndo_tx_timeout		= am79c961_timeout,
+	.ndo_validate_addr	= eth_validate_addr,
+	.ndo_change_mtu		= eth_change_mtu,
+	.ndo_set_mac_address	= eth_mac_addr,
+#ifdef CONFIG_NET_POLL_CONTROLLER
+	.ndo_poll_controller	= am79c961_poll_controller,
+#endif
+};
 
-static int __init am79c961_probe(struct platform_device *pdev)
+static int __devinit am79c961_probe(struct platform_device *pdev)
 {
 	struct resource *res;
 	struct net_device *dev;
@@ -693,11 +693,15 @@ static int __init am79c961_probe(struct platform_device *pdev)
 	 * done by the ether bootp loader.
 	 */
 	dev->base_addr = res->start;
-	dev->irq = platform_get_irq(pdev, 0);
+	ret = platform_get_irq(pdev, 0);
+
+	if (ret < 0) {
+		ret = -ENODEV;
+		goto nodev;
+	}
+	dev->irq = ret;
 
 	ret = -ENODEV;
-	if (dev->irq < 0)
-		goto nodev;
 	if (!request_region(dev->base_addr, 0x18, dev->name))
 		goto nodev;
 
@@ -729,24 +733,12 @@ static int __init am79c961_probe(struct platform_device *pdev)
 	if (am79c961_hw_init(dev))
 		goto release;
 
-	dev->open		= am79c961_open;
-	dev->stop		= am79c961_close;
-	dev->hard_start_xmit	= am79c961_sendpacket;
-	dev->get_stats		= am79c961_getstats;
-	dev->set_multicast_list	= am79c961_setmulticastlist;
-	dev->tx_timeout		= am79c961_timeout;
-#ifdef CONFIG_NET_POLL_CONTROLLER
-	dev->poll_controller	= am79c961_poll_controller;
-#endif
+	dev->netdev_ops = &am79c961_netdev_ops;
 
 	ret = register_netdev(dev);
 	if (ret == 0) {
-		printk(KERN_INFO "%s: ether address ", dev->name);
-
-		/* Retrive and print the ethernet address. */
-		for (i = 0; i < 6; i++)
-			printk (i == 5 ? "%02x\n" : "%02x:", dev->dev_addr[i]);
-
+		printk(KERN_INFO "%s: ether address %pM\n",
+		       dev->name, dev->dev_addr);
 		return 0;
 	}
 

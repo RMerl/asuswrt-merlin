@@ -1,6 +1,7 @@
 #ifndef __LINUX_GENERIC_NETLINK_H
 #define __LINUX_GENERIC_NETLINK_H
 
+#include <linux/types.h>
 #include <linux/netlink.h>
 
 #define GENL_NAMSIZ	16	/* length of family name */
@@ -78,5 +79,13 @@ enum {
 };
 
 #define CTRL_ATTR_MCAST_GRP_MAX (__CTRL_ATTR_MCAST_GRP_MAX - 1)
+
+#ifdef __KERNEL__
+
+/* All generic netlink requests are serialized by a global lock.  */
+extern void genl_lock(void);
+extern void genl_unlock(void);
+
+#endif /* __KERNEL__ */
 
 #endif	/* __LINUX_GENERIC_NETLINK_H */

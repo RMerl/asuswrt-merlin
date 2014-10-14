@@ -2,13 +2,15 @@
   * This file contains the handling of TX in wlan driver.
   */
 #include <linux/netdevice.h>
+#include <linux/etherdevice.h>
+#include <linux/sched.h>
+#include <net/cfg80211.h>
 
-#include "hostcmd.h"
+#include "host.h"
 #include "radiotap.h"
 #include "decl.h"
 #include "defs.h"
 #include "dev.h"
-#include "wext.h"
 
 /**
  *  @brief This function converts Tx/Rx rates from IEEE80211_RADIOTAP_RATE
@@ -49,194 +51,118 @@ static u32 convert_radiotap_rate_to_mv(u8 rate)
 }
 
 /**
- *  @brief This function processes a single packet and sends
- *  to IF layer
+ *  @brief This function checks the conditions and sends packet to IF
+ *  layer if everything is ok.
  *
- *  @param priv    A pointer to wlan_private structure
+ *  @param priv    A pointer to struct lbs_private structure
  *  @param skb     A pointer to skb which includes TX packet
  *  @return 	   0 or -1
  */
-static int SendSinglePacket(wlan_private * priv, struct sk_buff *skb)
+netdev_tx_t lbs_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 {
-	wlan_adapter *adapter = priv->adapter;
-	int ret = 0;
-	struct txpd localtxpd;
-	struct txpd *plocaltxpd = &localtxpd;
-	u8 *p802x_hdr;
-	struct tx_radiotap_hdr *pradiotap_hdr;
-	u32 new_rate;
-	u8 *ptr = priv->adapter->tmptxbuf;
+	unsigned long flags;
+	struct lbs_private *priv = dev->ml_priv;
+	struct txpd *txpd;
+	char *p802x_hdr;
+	uint16_t pkt_len;
+	netdev_tx_t ret = NETDEV_TX_OK;
 
 	lbs_deb_enter(LBS_DEB_TX);
 
-	if (priv->adapter->surpriseremoved)
-		return -1;
+	/* We need to protect against the queues being restarted before
+	   we get round to stopping them */
+	spin_lock_irqsave(&priv->driver_lock, flags);
 
-	if ((priv->adapter->debugmode & MRVDRV_DEBUG_TX_PATH) != 0)
-		lbs_dbg_hex("TX packet: ", skb->data,
-			 min_t(unsigned int, skb->len, 100));
+	if (priv->surpriseremoved)
+		goto free;
 
 	if (!skb->len || (skb->len > MRVDRV_ETH_TX_PACKET_BUFFER_SIZE)) {
 		lbs_deb_tx("tx err: skb length %d 0 or > %zd\n",
 		       skb->len, MRVDRV_ETH_TX_PACKET_BUFFER_SIZE);
-		ret = -1;
-		goto done;
+		/* We'll never manage to send this one; drop it and return 'OK' */
+
+		dev->stats.tx_dropped++;
+		dev->stats.tx_errors++;
+		goto free;
 	}
 
-	memset(plocaltxpd, 0, sizeof(struct txpd));
 
-	plocaltxpd->tx_packet_length = cpu_to_le16(skb->len);
+	netif_stop_queue(priv->dev);
+	if (priv->mesh_dev)
+		netif_stop_queue(priv->mesh_dev);
 
-	/* offset of actual data */
-	plocaltxpd->tx_packet_location = cpu_to_le32(sizeof(struct txpd));
+	if (priv->tx_pending_len) {
+		/* This can happen if packets come in on the mesh and eth
+		   device simultaneously -- there's no mutual exclusion on
+		   hard_start_xmit() calls between devices. */
+		lbs_deb_tx("Packet on %s while busy\n", dev->name);
+		ret = NETDEV_TX_BUSY;
+		goto unlock;
+	}
 
-	/* TxCtrl set by user or default */
-	plocaltxpd->tx_control = cpu_to_le32(adapter->pkttxctrl);
+	priv->tx_pending_len = -1;
+	spin_unlock_irqrestore(&priv->driver_lock, flags);
+
+	lbs_deb_hex(LBS_DEB_TX, "TX Data", skb->data, min_t(unsigned int, skb->len, 100));
+
+	txpd = (void *)priv->tx_pending_buf;
+	memset(txpd, 0, sizeof(struct txpd));
 
 	p802x_hdr = skb->data;
-	if (priv->adapter->radiomode == WLAN_RADIOMODE_RADIOTAP) {
+	pkt_len = skb->len;
 
-		/* locate radiotap header */
-		pradiotap_hdr = (struct tx_radiotap_hdr *)skb->data;
+	if (priv->wdev->iftype == NL80211_IFTYPE_MONITOR) {
+		struct tx_radiotap_hdr *rtap_hdr = (void *)skb->data;
 
 		/* set txpd fields from the radiotap header */
-		new_rate = convert_radiotap_rate_to_mv(pradiotap_hdr->rate);
-		if (new_rate != 0) {
-			/* use new tx_control[4:0] */
-			new_rate |= (adapter->pkttxctrl & ~0x1f);
-			plocaltxpd->tx_control = cpu_to_le32(new_rate);
-		}
+		txpd->tx_control = cpu_to_le32(convert_radiotap_rate_to_mv(rtap_hdr->rate));
 
 		/* skip the radiotap header */
-		p802x_hdr += sizeof(struct tx_radiotap_hdr);
-		plocaltxpd->tx_packet_length =
-			cpu_to_le16(le16_to_cpu(plocaltxpd->tx_packet_length)
-				    - sizeof(struct tx_radiotap_hdr));
+		p802x_hdr += sizeof(*rtap_hdr);
+		pkt_len -= sizeof(*rtap_hdr);
 
-	}
-	/* copy destination address from 802.3 or 802.11 header */
-	if (priv->adapter->linkmode == WLAN_LINKMODE_802_11)
-		memcpy(plocaltxpd->tx_dest_addr_high, p802x_hdr + 4, ETH_ALEN);
-	else
-		memcpy(plocaltxpd->tx_dest_addr_high, p802x_hdr, ETH_ALEN);
-
-	lbs_dbg_hex("txpd", (u8 *) plocaltxpd, sizeof(struct txpd));
-
-	if (IS_MESH_FRAME(skb)) {
-		plocaltxpd->tx_control |= cpu_to_le32(TxPD_MESH_FRAME);
-	}
-
-	memcpy(ptr, plocaltxpd, sizeof(struct txpd));
-
-	ptr += sizeof(struct txpd);
-
-	lbs_dbg_hex("Tx Data", (u8 *) p802x_hdr, le16_to_cpu(plocaltxpd->tx_packet_length));
-	memcpy(ptr, p802x_hdr, le16_to_cpu(plocaltxpd->tx_packet_length));
-	ret = priv->hw_host_to_card(priv, MVMS_DAT,
-				    priv->adapter->tmptxbuf,
-				    le16_to_cpu(plocaltxpd->tx_packet_length) +
-				    sizeof(struct txpd));
-
-	if (ret) {
-		lbs_deb_tx("tx err: hw_host_to_card returned 0x%X\n", ret);
-		goto done;
-	}
-
-	lbs_deb_tx("SendSinglePacket succeeds\n");
-
-done:
-	if (!ret) {
-		priv->stats.tx_packets++;
-		priv->stats.tx_bytes += skb->len;
+		/* copy destination address from 802.11 header */
+		memcpy(txpd->tx_dest_addr_high, p802x_hdr + 4, ETH_ALEN);
 	} else {
-		priv->stats.tx_dropped++;
-		priv->stats.tx_errors++;
+		/* copy destination address from 802.3 header */
+		memcpy(txpd->tx_dest_addr_high, p802x_hdr, ETH_ALEN);
 	}
 
-	if (!ret && priv->adapter->radiomode == WLAN_RADIOMODE_RADIOTAP) {
+	txpd->tx_packet_length = cpu_to_le16(pkt_len);
+	txpd->tx_packet_location = cpu_to_le32(sizeof(struct txpd));
+
+	lbs_mesh_set_txpd(priv, dev, txpd);
+
+	lbs_deb_hex(LBS_DEB_TX, "txpd", (u8 *) &txpd, sizeof(struct txpd));
+
+	lbs_deb_hex(LBS_DEB_TX, "Tx Data", (u8 *) p802x_hdr, le16_to_cpu(txpd->tx_packet_length));
+
+	memcpy(&txpd[1], p802x_hdr, le16_to_cpu(txpd->tx_packet_length));
+
+	spin_lock_irqsave(&priv->driver_lock, flags);
+	priv->tx_pending_len = pkt_len + sizeof(struct txpd);
+
+	lbs_deb_tx("%s lined up packet\n", __func__);
+
+	dev->stats.tx_packets++;
+	dev->stats.tx_bytes += skb->len;
+
+	if (priv->wdev->iftype == NL80211_IFTYPE_MONITOR) {
 		/* Keep the skb to echo it back once Tx feedback is
 		   received from FW */
 		skb_orphan(skb);
-		/* stop processing outgoing pkts */
-		netif_stop_queue(priv->dev);
-		netif_stop_queue(priv->mesh_dev);
-		/* freeze any packets already in our queues */
-		priv->adapter->TxLockFlag = 1;
+
+		/* Keep the skb around for when we get feedback */
+		priv->currenttxskb = skb;
 	} else {
+ free:
 		dev_kfree_skb_any(skb);
-		priv->adapter->currenttxskb = NULL;
 	}
 
-	lbs_deb_leave_args(LBS_DEB_TX, "ret %d", ret);
-	return ret;
-}
+ unlock:
+	spin_unlock_irqrestore(&priv->driver_lock, flags);
+	wake_up(&priv->waitq);
 
-
-void libertas_tx_runqueue(wlan_private *priv)
-{
-	wlan_adapter *adapter = priv->adapter;
-	int i;
-
-	spin_lock(&adapter->txqueue_lock);
-	for (i = 0; i < adapter->tx_queue_idx; i++) {
-		struct sk_buff *skb = adapter->tx_queue_ps[i];
-		spin_unlock(&adapter->txqueue_lock);
-		SendSinglePacket(priv, skb);
-		spin_lock(&adapter->txqueue_lock);
-	}
-	adapter->tx_queue_idx = 0;
-	spin_unlock(&adapter->txqueue_lock);
-}
-
-static void wlan_tx_queue(wlan_private *priv, struct sk_buff *skb)
-{
-	wlan_adapter *adapter = priv->adapter;
-
-	spin_lock(&adapter->txqueue_lock);
-
-	WARN_ON(priv->adapter->tx_queue_idx >= NR_TX_QUEUE);
-	adapter->tx_queue_ps[adapter->tx_queue_idx++] = skb;
-	if (adapter->tx_queue_idx == NR_TX_QUEUE) {
-		netif_stop_queue(priv->dev);
-		netif_stop_queue(priv->mesh_dev);
-	} else {
-		netif_start_queue(priv->dev);
-		netif_start_queue(priv->mesh_dev);
-	}
-
-	spin_unlock(&adapter->txqueue_lock);
-}
-
-/**
- *  @brief This function checks the conditions and sends packet to IF
- *  layer if everything is ok.
- *
- *  @param priv    A pointer to wlan_private structure
- *  @return 	   n/a
- */
-int libertas_process_tx(wlan_private * priv, struct sk_buff *skb)
-{
-	int ret = -1;
-
-	lbs_deb_enter(LBS_DEB_TX);
-	lbs_dbg_hex("TX Data", skb->data, min_t(unsigned int, skb->len, 100));
-
-	if (priv->dnld_sent) {
-		lbs_pr_alert( "TX error: dnld_sent = %d, not sending\n",
-		       priv->dnld_sent);
-		goto done;
-	}
-
-	if ((priv->adapter->psstate == PS_STATE_SLEEP) ||
-	    (priv->adapter->psstate == PS_STATE_PRE_SLEEP)) {
-		wlan_tx_queue(priv, skb);
-		return ret;
-	}
-
-	priv->adapter->currenttxskb = skb;
-
-	ret = SendSinglePacket(priv, skb);
-done:
 	lbs_deb_leave_args(LBS_DEB_TX, "ret %d", ret);
 	return ret;
 }
@@ -245,47 +171,34 @@ done:
  *  @brief This function sends to the host the last transmitted packet,
  *  filling the radiotap headers with transmission information.
  *
- *  @param priv     A pointer to wlan_private structure
+ *  @param priv     A pointer to struct lbs_private structure
  *  @param status   A 32 bit value containing transmission status.
  *
  *  @returns void
  */
-void libertas_send_tx_feedback(wlan_private * priv)
+void lbs_send_tx_feedback(struct lbs_private *priv, u32 try_count)
 {
-	wlan_adapter *adapter = priv->adapter;
 	struct tx_radiotap_hdr *radiotap_hdr;
-	u32 status = adapter->eventcause;
-	int txfail;
-	int try_count;
 
-	if (adapter->radiomode != WLAN_RADIOMODE_RADIOTAP ||
-	    adapter->currenttxskb == NULL)
+	if (priv->wdev->iftype != NL80211_IFTYPE_MONITOR ||
+	    priv->currenttxskb == NULL)
 		return;
 
-	radiotap_hdr = (struct tx_radiotap_hdr *)adapter->currenttxskb->data;
+	radiotap_hdr = (struct tx_radiotap_hdr *)priv->currenttxskb->data;
 
-	if ((adapter->debugmode & MRVDRV_DEBUG_TX_PATH) != 0)
-		lbs_dbg_hex("TX feedback: ", (u8 *) radiotap_hdr,
-			min_t(unsigned int, adapter->currenttxskb->len, 100));
+	radiotap_hdr->data_retries = try_count ?
+		(1 + priv->txretrycount - try_count) : 0;
 
-	txfail = (status >> 24);
+	priv->currenttxskb->protocol = eth_type_trans(priv->currenttxskb,
+						      priv->dev);
+	netif_rx(priv->currenttxskb);
 
-#if 0
-	/* The version of roofnet that we've tested does not use this yet
-	 * But it may be used in the future.
-	 */
-	if (txfail)
-		radiotap_hdr->flags &= IEEE80211_RADIOTAP_F_TX_FAIL;
-#endif
-	try_count = (status >> 16) & 0xff;
-	radiotap_hdr->data_retries = (try_count) ?
-	    (1 + adapter->txretrycount - try_count) : 0;
-	libertas_upload_rx_packet(priv, adapter->currenttxskb);
-	adapter->currenttxskb = NULL;
-	priv->adapter->TxLockFlag = 0;
-	if (priv->adapter->connect_status == libertas_connected) {
+	priv->currenttxskb = NULL;
+
+	if (priv->connect_status == LBS_CONNECTED)
 		netif_wake_queue(priv->dev);
+
+	if (priv->mesh_dev && lbs_mesh_connected(priv))
 		netif_wake_queue(priv->mesh_dev);
-	}
 }
-EXPORT_SYMBOL_GPL(libertas_send_tx_feedback);
+EXPORT_SYMBOL_GPL(lbs_send_tx_feedback);

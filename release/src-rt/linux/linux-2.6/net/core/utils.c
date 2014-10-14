@@ -22,25 +22,26 @@
 #include <linux/net.h>
 #include <linux/string.h>
 #include <linux/types.h>
-#include <linux/random.h>
 #include <linux/percpu.h>
 #include <linux/init.h>
+#include <linux/ratelimit.h>
+
+#include <net/sock.h>
 
 #include <asm/byteorder.h>
 #include <asm/system.h>
 #include <asm/uaccess.h>
 
-int net_msg_cost __read_mostly = 5*HZ;
-int net_msg_burst __read_mostly = 10;
 int net_msg_warn __read_mostly = 1;
 EXPORT_SYMBOL(net_msg_warn);
 
+DEFINE_RATELIMIT_STATE(net_ratelimit_state, 5 * HZ, 10);
 /*
  * All net warning printk()s should be guarded by this function.
  */
 int net_ratelimit(void)
 {
-	return __printk_ratelimit(net_msg_cost, net_msg_burst);
+	return __ratelimit(&net_ratelimit_state);
 }
 EXPORT_SYMBOL(net_ratelimit);
 
@@ -74,9 +75,8 @@ __be32 in_aton(const char *str)
 				str++;
 		}
 	}
-	return(htonl(l));
+	return htonl(l);
 }
-
 EXPORT_SYMBOL(in_aton);
 
 #define IN6PTON_XDIGIT		0x00010000
@@ -90,31 +90,21 @@ EXPORT_SYMBOL(in_aton);
 #define IN6PTON_NULL		0x20000000	/* first/tail */
 #define IN6PTON_UNKNOWN		0x40000000
 
-static inline int digit2bin(char c, int delim)
-{
-	if (c == delim || c == '\0')
-		return IN6PTON_DELIM;
-	if (c == '.')
-		return IN6PTON_DOT;
-	if (c >= '0' && c <= '9')
-		return (IN6PTON_DIGIT | (c - '0'));
-	return IN6PTON_UNKNOWN;
-}
-
 static inline int xdigit2bin(char c, int delim)
 {
+	int val;
+
 	if (c == delim || c == '\0')
 		return IN6PTON_DELIM;
 	if (c == ':')
 		return IN6PTON_COLON_MASK;
 	if (c == '.')
 		return IN6PTON_DOT;
-	if (c >= '0' && c <= '9')
-		return (IN6PTON_XDIGIT | IN6PTON_DIGIT| (c - '0'));
-	if (c >= 'a' && c <= 'f')
-		return (IN6PTON_XDIGIT | (c - 'a' + 10));
-	if (c >= 'A' && c <= 'F')
-		return (IN6PTON_XDIGIT | (c - 'A' + 10));
+
+	val = hex_to_bin(c);
+	if (val >= 0)
+		return val | IN6PTON_XDIGIT | (val < 10 ? IN6PTON_DIGIT : 0);
+
 	if (delim == -1)
 		return IN6PTON_DELIM;
 	return IN6PTON_UNKNOWN;
@@ -172,7 +162,6 @@ out:
 		*end = s;
 	return ret;
 }
-
 EXPORT_SYMBOL(in4_pton);
 
 int in6_pton(const char *src, int srclen,
@@ -290,5 +279,20 @@ out:
 		*end = s;
 	return ret;
 }
-
 EXPORT_SYMBOL(in6_pton);
+
+void inet_proto_csum_replace4(__sum16 *sum, struct sk_buff *skb,
+			      __be32 from, __be32 to, int pseudohdr)
+{
+	__be32 diff[] = { ~from, to };
+	if (skb->ip_summed != CHECKSUM_PARTIAL) {
+		*sum = csum_fold(csum_partial(diff, sizeof(diff),
+				~csum_unfold(*sum)));
+		if (skb->ip_summed == CHECKSUM_COMPLETE && pseudohdr)
+			skb->csum = ~csum_partial(diff, sizeof(diff),
+						~skb->csum);
+	} else if (pseudohdr)
+		*sum = ~csum_fold(csum_partial(diff, sizeof(diff),
+				csum_unfold(*sum)));
+}
+EXPORT_SYMBOL(inet_proto_csum_replace4);

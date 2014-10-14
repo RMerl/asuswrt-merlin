@@ -24,12 +24,12 @@
 #include <linux/irq.h>
 #include <linux/kernel.h>
 #include <linux/sched.h>
+#include <linux/io.h>
 
-#include <asm/io.h>
 #include <asm/mach/time.h>
 
-#include <asm/arch/regs-timer.h>
-#include <asm/arch/regs-irq.h>
+#include <mach/regs-timer.h>
+#include <mach/regs-irq.h>
 
 #include "generic.h"
 
@@ -70,10 +70,7 @@ static unsigned long ks8695_gettimeoffset (void)
  */
 static irqreturn_t ks8695_timer_interrupt(int irq, void *dev_id)
 {
-	write_seqlock(&xtime_lock);
 	timer_tick();
-	write_sequnlock(&xtime_lock);
-
 	return IRQ_HANDLED;
 }
 

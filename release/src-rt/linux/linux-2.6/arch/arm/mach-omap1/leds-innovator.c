@@ -3,7 +3,7 @@
  */
 #include <linux/init.h>
 
-#include <asm/hardware.h>
+#include <mach/hardware.h>
 #include <asm/leds.h>
 #include <asm/system.h>
 
@@ -94,9 +94,6 @@ void innovator_leds_event(led_event_t evt)
 	default:
 		break;
 	}
-
-	if (led_state & LED_STATE_ENABLED)
-		;
 
 	local_irq_restore(flags);
 }

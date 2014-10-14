@@ -23,7 +23,7 @@
 #include <linux/kernel.h>
 #include <linux/i2c.h>
 #include <linux/types.h>
-#include <linux/videodev.h>
+#include <linux/videodev2.h>
 #include <linux/init.h>
 #include <linux/errno.h>
 #include <linux/slab.h>
@@ -31,31 +31,24 @@
 #include <linux/wait.h>
 #include <asm/uaccess.h>
 
+#include <media/saa6588.h>
+#include <media/v4l2-device.h>
+#include <media/v4l2-chip-ident.h>
 
-#include <media/rds.h>
-
-/* Addresses to scan */
-static unsigned short normal_i2c[] = {
-	0x20 >> 1,
-	0x22 >> 1,
-	I2C_CLIENT_END,
-};
-
-I2C_CLIENT_INSMOD;
 
 /* insmod options */
-static unsigned int debug = 0;
-static unsigned int xtal = 0;
-static unsigned int rbds = 0;
-static unsigned int plvl = 0;
+static unsigned int debug;
+static unsigned int xtal;
+static unsigned int mmbs;
+static unsigned int plvl;
 static unsigned int bufblocks = 100;
 
 module_param(debug, int, 0644);
 MODULE_PARM_DESC(debug, "enable debug messages");
 module_param(xtal, int, 0);
 MODULE_PARM_DESC(xtal, "select oscillator frequency (0..3), default 0");
-module_param(rbds, int, 0);
-MODULE_PARM_DESC(rbds, "select mode, 0=RDS, 1=RBDS, default 0");
+module_param(mmbs, int, 0);
+MODULE_PARM_DESC(mmbs, "enable MMBS mode: 0=off (default), 1=on");
 module_param(plvl, int, 0);
 MODULE_PARM_DESC(plvl, "select pause level (0..3), default 0");
 module_param(bufblocks, int, 0);
@@ -73,9 +66,8 @@ MODULE_LICENSE("GPL");
 #define dprintk     if (debug) printk
 
 struct saa6588 {
-	struct i2c_client client;
-	struct work_struct work;
-	struct timer_list timer;
+	struct v4l2_subdev sd;
+	struct delayed_work work;
 	spinlock_t lock;
 	unsigned char *buffer;
 	unsigned int buf_size;
@@ -85,10 +77,13 @@ struct saa6588 {
 	unsigned char last_blocknum;
 	wait_queue_head_t read_queue;
 	int data_available_for_read;
+	u8 sync;
 };
 
-static struct i2c_driver driver;
-static struct i2c_client client_template;
+static inline struct saa6588 *to_saa6588(struct v4l2_subdev *sd)
+{
+	return container_of(sd, struct saa6588, sd);
+}
 
 /* ---------------------------------------------------------------------- */
 
@@ -186,7 +181,7 @@ static int block_to_user_buf(struct saa6588 *s, unsigned char __user *user_buf)
 	return 1;
 }
 
-static void read_from_buf(struct saa6588 *s, struct rds_command *a)
+static void read_from_buf(struct saa6588 *s, struct saa6588_command *a)
 {
 	unsigned long flags;
 
@@ -259,19 +254,23 @@ static void block_to_buf(struct saa6588 *s, unsigned char *blockbuf)
 
 static void saa6588_i2c_poll(struct saa6588 *s)
 {
+	struct i2c_client *client = v4l2_get_subdevdata(&s->sd);
 	unsigned long flags;
 	unsigned char tmpbuf[6];
 	unsigned char blocknum;
 	unsigned char tmp;
 
 	/* Although we only need 3 bytes, we have to read at least 6.
-	   SAA6588 returns garbage otherwise */
-	if (6 != i2c_master_recv(&s->client, &tmpbuf[0], 6)) {
+	   SAA6588 returns garbage otherwise. */
+	if (6 != i2c_master_recv(client, &tmpbuf[0], 6)) {
 		if (debug > 1)
 			dprintk(PREFIX "read error!\n");
 		return;
 	}
 
+	s->sync = tmpbuf[0] & 0x10;
+	if (!s->sync)
+		return;
 	blocknum = tmpbuf[0] >> 5;
 	if (blocknum == s->last_blocknum) {
 		if (debug > 3)
@@ -290,9 +289,8 @@ static void saa6588_i2c_poll(struct saa6588 *s)
 	   occurred during reception of this block.
 	   Bit 6: Corrected bit. Indicates that an error was
 	   corrected for this data block.
-	   Bits 5-3: Received Offset. Indicates the offset received
-	   by the sync system.
-	   Bits 2-0: Offset Name. Indicates the offset applied to this data.
+	   Bits 5-3: Same as bits 0-2.
+	   Bits 2-0: Block number.
 
 	   SAA6588 byte order is Status-MSB-LSB, so we have to swap the
 	   first and the last of the 3 bytes block.
@@ -302,12 +300,21 @@ static void saa6588_i2c_poll(struct saa6588 *s)
 	tmpbuf[2] = tmpbuf[0];
 	tmpbuf[0] = tmp;
 
+	/* Map 'Invalid block E' to 'Invalid Block' */
+	if (blocknum == 6)
+		blocknum = V4L2_RDS_BLOCK_INVALID;
+	/* And if are not in mmbs mode, then 'Block E' is also mapped
+	   to 'Invalid Block'. As far as I can tell MMBS is discontinued,
+	   and if there is ever a need to support E blocks, then please
+	   contact the linux-media mailinglist. */
+	else if (!mmbs && blocknum == 5)
+		blocknum = V4L2_RDS_BLOCK_INVALID;
 	tmp = blocknum;
 	tmp |= blocknum << 3;	/* Received offset == Offset Name (OK ?) */
 	if ((tmpbuf[2] & 0x03) == 0x03)
-		tmp |= 0x80;	/* uncorrectable error */
+		tmp |= V4L2_RDS_BLOCK_ERROR;	 /* uncorrectable error */
 	else if ((tmpbuf[2] & 0x03) != 0x00)
-		tmp |= 0x40;	/* corrected error */
+		tmp |= V4L2_RDS_BLOCK_CORRECTED; /* corrected error */
 	tmpbuf[2] = tmp;	/* Is this enough ? Should we also check other bits ? */
 
 	spin_lock_irqsave(&s->lock, flags);
@@ -317,28 +324,22 @@ static void saa6588_i2c_poll(struct saa6588 *s)
 	wake_up_interruptible(&s->read_queue);
 }
 
-static void saa6588_timer(unsigned long data)
-{
-	struct saa6588 *s = (struct saa6588 *)data;
-
-	schedule_work(&s->work);
-}
-
 static void saa6588_work(struct work_struct *work)
 {
-	struct saa6588 *s = container_of(work, struct saa6588, work);
+	struct saa6588 *s = container_of(work, struct saa6588, work.work);
 
 	saa6588_i2c_poll(s);
-	mod_timer(&s->timer, jiffies + msecs_to_jiffies(20));
+	schedule_delayed_work(&s->work, msecs_to_jiffies(20));
 }
 
-static int saa6588_configure(struct saa6588 *s)
+static void saa6588_configure(struct saa6588 *s)
 {
+	struct i2c_client *client = v4l2_get_subdevdata(&s->sd);
 	unsigned char buf[3];
 	int rc;
 
 	buf[0] = cSyncRestart;
-	if (rbds)
+	if (mmbs)
 		buf[0] |= cProcessingModeRBDS;
 
 	buf[1] = cFlywheelDefault;
@@ -381,95 +382,35 @@ static int saa6588_configure(struct saa6588 *s)
 	dprintk(PREFIX "writing: 0w=0x%02x 1w=0x%02x 2w=0x%02x\n",
 		buf[0], buf[1], buf[2]);
 
-	if (3 != (rc = i2c_master_send(&s->client, buf, 3)))
+	rc = i2c_master_send(client, buf, 3);
+	if (rc != 3)
 		printk(PREFIX "i2c i/o error: rc == %d (should be 3)\n", rc);
-
-	return 0;
 }
 
 /* ---------------------------------------------------------------------- */
 
-static int saa6588_attach(struct i2c_adapter *adap, int addr, int kind)
+static long saa6588_ioctl(struct v4l2_subdev *sd, unsigned int cmd, void *arg)
 {
-	struct saa6588 *s;
-	client_template.adapter = adap;
-	client_template.addr = addr;
-
-	printk(PREFIX "chip found @ 0x%x\n", addr << 1);
-
-	if (NULL == (s = kmalloc(sizeof(*s), GFP_KERNEL)))
-		return -ENOMEM;
-
-	s->buf_size = bufblocks * 3;
-
-	if (NULL == (s->buffer = kmalloc(s->buf_size, GFP_KERNEL))) {
-		kfree(s);
-		return -ENOMEM;
-	}
-	s->client = client_template;
-	s->block_count = 0;
-	s->wr_index = 0;
-	s->rd_index = 0;
-	s->last_blocknum = 0xff;
-	init_waitqueue_head(&s->read_queue);
-	s->data_available_for_read = 0;
-	i2c_set_clientdata(&s->client, s);
-	i2c_attach_client(&s->client);
-
-	saa6588_configure(s);
-
-	/* start polling via eventd */
-	INIT_WORK(&s->work, saa6588_work);
-	init_timer(&s->timer);
-	s->timer.function = saa6588_timer;
-	s->timer.data = (unsigned long)s;
-	schedule_work(&s->work);
-	return 0;
-}
-
-static int saa6588_probe(struct i2c_adapter *adap)
-{
-	if (adap->class & I2C_CLASS_TV_ANALOG)
-		return i2c_probe(adap, &addr_data, saa6588_attach);
-	return 0;
-}
-
-static int saa6588_detach(struct i2c_client *client)
-{
-	struct saa6588 *s = i2c_get_clientdata(client);
-
-	del_timer_sync(&s->timer);
-	flush_scheduled_work();
-
-	i2c_detach_client(client);
-	kfree(s->buffer);
-	kfree(s);
-	return 0;
-}
-
-static int saa6588_command(struct i2c_client *client, unsigned int cmd,
-							void *arg)
-{
-	struct saa6588 *s = i2c_get_clientdata(client);
-	struct rds_command *a = (struct rds_command *)arg;
+	struct saa6588 *s = to_saa6588(sd);
+	struct saa6588_command *a = arg;
 
 	switch (cmd) {
 		/* --- open() for /dev/radio --- */
-	case RDS_CMD_OPEN:
+	case SAA6588_CMD_OPEN:
 		a->result = 0;	/* return error if chip doesn't work ??? */
 		break;
 		/* --- close() for /dev/radio --- */
-	case RDS_CMD_CLOSE:
+	case SAA6588_CMD_CLOSE:
 		s->data_available_for_read = 1;
 		wake_up_interruptible(&s->read_queue);
 		a->result = 0;
 		break;
 		/* --- read() for /dev/radio --- */
-	case RDS_CMD_READ:
+	case SAA6588_CMD_READ:
 		read_from_buf(s, a);
 		break;
 		/* --- poll() for /dev/radio --- */
-	case RDS_CMD_POLL:
+	case SAA6588_CMD_POLL:
 		a->result = 0;
 		if (s->data_available_for_read) {
 			a->result |= POLLIN | POLLRDNORM;
@@ -479,45 +420,134 @@ static int saa6588_command(struct i2c_client *client, unsigned int cmd,
 
 	default:
 		/* nothing */
-		break;
+		return -ENOIOCTLCMD;
 	}
+	return 0;
+}
+
+static int saa6588_g_tuner(struct v4l2_subdev *sd, struct v4l2_tuner *vt)
+{
+	struct saa6588 *s = to_saa6588(sd);
+
+	vt->capability |= V4L2_TUNER_CAP_RDS | V4L2_TUNER_CAP_RDS_BLOCK_IO;
+	if (s->sync)
+		vt->rxsubchans |= V4L2_TUNER_SUB_RDS;
+	return 0;
+}
+
+static int saa6588_s_tuner(struct v4l2_subdev *sd, struct v4l2_tuner *vt)
+{
+	struct saa6588 *s = to_saa6588(sd);
+
+	saa6588_configure(s);
+	return 0;
+}
+
+static int saa6588_g_chip_ident(struct v4l2_subdev *sd, struct v4l2_dbg_chip_ident *chip)
+{
+	struct i2c_client *client = v4l2_get_subdevdata(sd);
+
+	return v4l2_chip_ident_i2c_client(client, chip, V4L2_IDENT_SAA6588, 0);
+}
+
+/* ----------------------------------------------------------------------- */
+
+static const struct v4l2_subdev_core_ops saa6588_core_ops = {
+	.g_chip_ident = saa6588_g_chip_ident,
+	.ioctl = saa6588_ioctl,
+};
+
+static const struct v4l2_subdev_tuner_ops saa6588_tuner_ops = {
+	.g_tuner = saa6588_g_tuner,
+	.s_tuner = saa6588_s_tuner,
+};
+
+static const struct v4l2_subdev_ops saa6588_ops = {
+	.core = &saa6588_core_ops,
+	.tuner = &saa6588_tuner_ops,
+};
+
+/* ---------------------------------------------------------------------- */
+
+static int saa6588_probe(struct i2c_client *client,
+			 const struct i2c_device_id *id)
+{
+	struct saa6588 *s;
+	struct v4l2_subdev *sd;
+
+	v4l_info(client, "saa6588 found @ 0x%x (%s)\n",
+			client->addr << 1, client->adapter->name);
+
+	s = kzalloc(sizeof(*s), GFP_KERNEL);
+	if (s == NULL)
+		return -ENOMEM;
+
+	s->buf_size = bufblocks * 3;
+
+	s->buffer = kmalloc(s->buf_size, GFP_KERNEL);
+	if (s->buffer == NULL) {
+		kfree(s);
+		return -ENOMEM;
+	}
+	sd = &s->sd;
+	v4l2_i2c_subdev_init(sd, client, &saa6588_ops);
+	spin_lock_init(&s->lock);
+	s->block_count = 0;
+	s->wr_index = 0;
+	s->rd_index = 0;
+	s->last_blocknum = 0xff;
+	init_waitqueue_head(&s->read_queue);
+	s->data_available_for_read = 0;
+
+	saa6588_configure(s);
+
+	/* start polling via eventd */
+	INIT_DELAYED_WORK(&s->work, saa6588_work);
+	schedule_delayed_work(&s->work, 0);
+	return 0;
+}
+
+static int saa6588_remove(struct i2c_client *client)
+{
+	struct v4l2_subdev *sd = i2c_get_clientdata(client);
+	struct saa6588 *s = to_saa6588(sd);
+
+	v4l2_device_unregister_subdev(sd);
+
+	cancel_delayed_work_sync(&s->work);
+
+	kfree(s->buffer);
+	kfree(s);
 	return 0;
 }
 
 /* ----------------------------------------------------------------------- */
 
-static struct i2c_driver driver = {
+static const struct i2c_device_id saa6588_id[] = {
+	{ "saa6588", 0 },
+	{ }
+};
+MODULE_DEVICE_TABLE(i2c, saa6588_id);
+
+static struct i2c_driver saa6588_driver = {
 	.driver = {
-		.name = "saa6588",
+		.owner	= THIS_MODULE,
+		.name	= "saa6588",
 	},
-	.id = -1,		/* FIXME */
-	.attach_adapter = saa6588_probe,
-	.detach_client = saa6588_detach,
-	.command = saa6588_command,
+	.probe		= saa6588_probe,
+	.remove		= saa6588_remove,
+	.id_table	= saa6588_id,
 };
 
-static struct i2c_client client_template = {
-	.name = "saa6588",
-	.driver = &driver,
-};
-
-static int __init saa6588_init_module(void)
+static __init int init_saa6588(void)
 {
-	return i2c_add_driver(&driver);
+	return i2c_add_driver(&saa6588_driver);
 }
 
-static void __exit saa6588_cleanup_module(void)
+static __exit void exit_saa6588(void)
 {
-	i2c_del_driver(&driver);
+	i2c_del_driver(&saa6588_driver);
 }
 
-module_init(saa6588_init_module);
-module_exit(saa6588_cleanup_module);
-
-/*
- * Overrides for Emacs so that we follow Linus's tabbing style.
- * ---------------------------------------------------------------------------
- * Local variables:
- * c-basic-offset: 8
- * End:
- */
+module_init(init_saa6588);
+module_exit(exit_saa6588);

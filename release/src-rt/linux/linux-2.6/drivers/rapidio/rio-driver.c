@@ -78,9 +78,7 @@ void rio_dev_put(struct rio_dev *rdev)
 }
 
 /**
- *  rio_device_probe - Tell if a RIO device structure has a matching RIO
- *                     device id structure
- *  @id: the RIO device id structure to match against
+ *  rio_device_probe - Tell if a RIO device structure has a matching RIO device id structure
  *  @dev: the RIO device structure to match against
  *
  * return 0 and set rio_dev->driver when drv claims rio_dev, else error
@@ -102,8 +100,8 @@ static int rio_device_probe(struct device *dev)
 		if (error >= 0) {
 			rdev->driver = rdrv;
 			error = 0;
+		} else
 			rio_dev_put(rdev);
-		}
 	}
 	return error;
 }
@@ -137,7 +135,7 @@ static int rio_device_remove(struct device *dev)
  *  rio_register_driver - register a new RIO driver
  *  @rdrv: the RIO driver structure to register
  *
- *  Adds a &struct rio_driver to the list of registered drivers
+ *  Adds a &struct rio_driver to the list of registered drivers.
  *  Returns a negative value on error, otherwise 0. If no error
  *  occurred, the driver remains registered even if no device
  *  was claimed during registration.
@@ -167,8 +165,7 @@ void rio_unregister_driver(struct rio_driver *rdrv)
 }
 
 /**
- *  rio_match_bus - Tell if a RIO device structure has a matching RIO
- *                  driver device id structure
+ *  rio_match_bus - Tell if a RIO device structure has a matching RIO driver device id structure
  *  @dev: the standard device structure to match against
  *  @drv: the standard driver structure containing the ids to match against
  *
@@ -195,8 +192,8 @@ static int rio_match_bus(struct device *dev, struct device_driver *drv)
       out:return 0;
 }
 
-static struct device rio_bus = {
-	.bus_id = "rapidio",
+struct device rio_bus = {
+	.init_name = "rapidio",
 };
 
 struct bus_type rio_bus_type = {

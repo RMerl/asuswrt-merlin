@@ -216,31 +216,31 @@
 /* xxxx These structures are all little endian in hardware. */
 
 struct olympic_tx_desc {
-	u32 buffer;
-	u32 status_length;
+	__le32 buffer;
+	__le32 status_length;
 };
 
 struct olympic_tx_status {
-	u32 status;
+	__le32 status;
 };
 
 struct olympic_rx_desc {
-	u32 buffer;
-	u32 res_length; 
+	__le32 buffer;
+	__le32 res_length; 
 };
 
 struct olympic_rx_status {
-	u32 fragmentcnt_framelen;
-	u32 status_buffercnt;
+	__le32 fragmentcnt_framelen;
+	__le32 status_buffercnt;
 };
 /* xxxx END These structures are all little endian in hardware. */
 /* xxxx There may be more, but I'm pretty sure about these */
 
 struct mac_receive_buffer {
-	u16 next ; 
+	__le16 next ; 
 	u8 padding ; 
 	u8 frame_status ;
-	u16 buffer_length ; 
+	__le16 buffer_length ; 
 	u8 frame_data ; 
 };
 
@@ -254,7 +254,7 @@ struct olympic_private {
 	u8 __iomem *olympic_mmio;
 	u8 __iomem *olympic_lap;
 	struct pci_dev *pdev ; 
-	char *olympic_card_name ; 
+	const char *olympic_card_name;
 
 	spinlock_t olympic_lock ; 
 
@@ -275,7 +275,6 @@ struct olympic_private {
 	struct sk_buff *tx_ring_skb[OLYMPIC_TX_RING_SIZE], *rx_ring_skb[OLYMPIC_RX_RING_SIZE];	
 	int tx_ring_free, tx_ring_last_status, rx_ring_last_received,rx_status_last_received, free_tx_ring_entries;
 
-	struct net_device_stats olympic_stats ;
 	u16 olympic_lan_status ;
 	u8 olympic_ring_speed ;
 	u16 pkt_buf_sz ; 

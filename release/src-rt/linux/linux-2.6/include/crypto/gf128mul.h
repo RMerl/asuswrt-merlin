@@ -54,8 +54,8 @@
 
 /* Comment by Rik:
  *
- * For some background on GF(2^128) see for example: http://-
- * csrc.nist.gov/CryptoToolkit/modes/proposedmodes/gcm/gcm-revised-spec.pdf
+ * For some background on GF(2^128) see for example: 
+ * http://csrc.nist.gov/groups/ST/toolkit/BCM/documents/proposedmodes/gcm/gcm-revised-spec.pdf 
  *
  * The elements of GF(2^128) := GF(2)[X]/(X^128-X^7-X^2-X^1-1) can
  * be mapped to computer memory in a variety of ways. Let's examine
@@ -161,6 +161,8 @@ void gf128mul_lle(be128 *a, const be128 *b);
 
 void gf128mul_bbe(be128 *a, const be128 *b);
 
+/* multiply by x in ble format, needed by XTS */
+void gf128mul_x_ble(be128 *a, const be128 *b);
 
 /* 4k table optimization */
 

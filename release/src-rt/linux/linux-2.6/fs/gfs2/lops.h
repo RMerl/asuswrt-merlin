@@ -1,6 +1,6 @@
 /*
  * Copyright (C) Sistina Software, Inc.  1997-2003 All rights reserved.
- * Copyright (C) 2004-2006 Red Hat, Inc.  All rights reserved.
+ * Copyright (C) 2004-2008 Red Hat, Inc.  All rights reserved.
  *
  * This copyrighted material is made available to anyone wishing to use,
  * modify, copy, or redistribute it subject to the terms and conditions
@@ -13,6 +13,13 @@
 #include <linux/list.h>
 #include "incore.h"
 
+#define BUF_OFFSET \
+	((sizeof(struct gfs2_log_descriptor) + sizeof(__be64) - 1) & \
+	 ~(sizeof(__be64) - 1))
+#define DATABUF_OFFSET \
+	((sizeof(struct gfs2_log_descriptor) + (2 * sizeof(__be64) - 1)) & \
+	 ~(2 * sizeof(__be64) - 1))
+
 extern const struct gfs2_log_operations gfs2_glock_lops;
 extern const struct gfs2_log_operations gfs2_buf_lops;
 extern const struct gfs2_log_operations gfs2_revoke_lops;
@@ -20,6 +27,22 @@ extern const struct gfs2_log_operations gfs2_rg_lops;
 extern const struct gfs2_log_operations gfs2_databuf_lops;
 
 extern const struct gfs2_log_operations *gfs2_log_ops[];
+
+static inline unsigned int buf_limit(struct gfs2_sbd *sdp)
+{
+	unsigned int limit;
+
+	limit = (sdp->sd_sb.sb_bsize - BUF_OFFSET) / sizeof(__be64);
+	return limit;
+}
+
+static inline unsigned int databuf_limit(struct gfs2_sbd *sdp)
+{
+	unsigned int limit;
+
+	limit = (sdp->sd_sb.sb_bsize - DATABUF_OFFSET) / (2 * sizeof(__be64));
+	return limit;
+}
 
 static inline void lops_init_le(struct gfs2_log_element *le,
 				const struct gfs2_log_operations *lops)
@@ -32,15 +55,6 @@ static inline void lops_add(struct gfs2_sbd *sdp, struct gfs2_log_element *le)
 {
 	if (le->le_ops->lo_add)
 		le->le_ops->lo_add(sdp, le);
-}
-
-static inline void lops_incore_commit(struct gfs2_sbd *sdp,
-				      struct gfs2_trans *tr)
-{
-	int x;
-	for (x = 0; gfs2_log_ops[x]; x++)
-		if (gfs2_log_ops[x]->lo_incore_commit)
-			gfs2_log_ops[x]->lo_incore_commit(sdp, tr);
 }
 
 static inline void lops_before_commit(struct gfs2_sbd *sdp)

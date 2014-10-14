@@ -1,3 +1,4 @@
+
 #ifndef __BUDGET_DVB__
 #define __BUDGET_DVB__
 
@@ -21,7 +22,7 @@ extern int budget_debug;
 #endif
 
 #define dprintk(level,args...) \
-	    do { if ((budget_debug & level)) { printk("%s: %s(): ", KBUILD_MODNAME, __FUNCTION__); printk(args); } } while (0)
+	    do { if ((budget_debug & level)) { printk("%s: %s(): ", KBUILD_MODNAME, __func__); printk(args); } } while (0)
 
 struct budget_info {
 	char *name;
@@ -102,13 +103,14 @@ static struct saa7146_pci_extension_data x_var = { \
 #define BUDGET_CIN1200C_MK3	   15
 #define BUDGET_KNC1C_MK3	   16
 #define BUDGET_KNC1CP_MK3	   17
+#define BUDGET_KNC1S2              18
 
 #define BUDGET_VIDEO_PORTA         0
 #define BUDGET_VIDEO_PORTB         1
 
 extern int ttpci_budget_init(struct budget *budget, struct saa7146_dev *dev,
 			     struct saa7146_pci_extension_data *info,
-			     struct module *owner);
+			     struct module *owner, short *adapter_nums);
 extern void ttpci_budget_init_hooks(struct budget *budget);
 extern int ttpci_budget_deinit(struct budget *budget);
 extern void ttpci_budget_irq10_handler(struct saa7146_dev *dev, u32 * isr);

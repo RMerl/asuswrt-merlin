@@ -21,13 +21,13 @@
  */
 
 
-#include <sound/driver.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>
 #include <linux/pci.h>
 #include <linux/dma-mapping.h>
 #include <linux/moduleparam.h>
 #include <linux/mutex.h>
+#include <linux/slab.h>
 
 #include <sound/core.h>
 #include <sound/initval.h>
@@ -61,8 +61,8 @@ MODULE_PARM_DESC(enable, "Enable Digigram " CARD_NAME " soundcard.");
 /*
  */
 
-static struct pci_device_id snd_mixart_ids[] = {
-	{ 0x1057, 0x0003, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0, }, /* MC8240 */
+static DEFINE_PCI_DEVICE_TABLE(snd_mixart_ids) = {
+	{ PCI_VDEVICE(MOTOROLA, 0x0003), 0, }, /* MC8240 */
 	{ 0, }
 };
 
@@ -608,6 +608,7 @@ static int snd_mixart_hw_params(struct snd_pcm_substream *subs,
 	/* set the format to the board */
 	err = mixart_set_format(stream, format);
 	if(err < 0) {
+		mutex_unlock(&mgr->setup_mutex);
 		return err;
 	}
 
@@ -652,7 +653,7 @@ static int snd_mixart_hw_free(struct snd_pcm_substream *subs)
 static struct snd_pcm_hardware snd_mixart_analog_caps =
 {
 	.info             = ( SNDRV_PCM_INFO_MMAP | SNDRV_PCM_INFO_INTERLEAVED |
-			      SNDRV_PCM_INFO_MMAP_VALID | SNDRV_PCM_INFO_SYNC_START |
+			      SNDRV_PCM_INFO_MMAP_VALID |
 			      SNDRV_PCM_INFO_PAUSE),
 	.formats	  = ( SNDRV_PCM_FMTBIT_U8 |
 			      SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S16_BE |
@@ -673,7 +674,7 @@ static struct snd_pcm_hardware snd_mixart_analog_caps =
 static struct snd_pcm_hardware snd_mixart_digital_caps =
 {
 	.info             = ( SNDRV_PCM_INFO_MMAP | SNDRV_PCM_INFO_INTERLEAVED |
-			      SNDRV_PCM_INFO_MMAP_VALID | SNDRV_PCM_INFO_SYNC_START |
+			      SNDRV_PCM_INFO_MMAP_VALID |
 			      SNDRV_PCM_INFO_PAUSE),
 	.formats	  = ( SNDRV_PCM_FMTBIT_U8 |
 			      SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S16_BE |
@@ -709,7 +710,7 @@ static int snd_mixart_playback_open(struct snd_pcm_substream *subs)
 		pcm_number = MIXART_PCM_ANALOG;
 		runtime->hw = snd_mixart_analog_caps;
 	} else {
-		snd_assert ( pcm == chip->pcm_dig ); 
+		snd_BUG_ON(pcm != chip->pcm_dig);
 		pcm_number = MIXART_PCM_DIGITAL;
 		runtime->hw = snd_mixart_digital_caps;
 	}
@@ -784,7 +785,7 @@ static int snd_mixart_capture_open(struct snd_pcm_substream *subs)
 		pcm_number = MIXART_PCM_ANALOG;
 		runtime->hw = snd_mixart_analog_caps;
 	} else {
-		snd_assert ( pcm == chip->pcm_dig ); 
+		snd_BUG_ON(pcm != chip->pcm_dig);
 		pcm_number = MIXART_PCM_DIGITAL;
 		runtime->hw = snd_mixart_digital_caps;
 	}
@@ -1011,7 +1012,7 @@ static int __devinit snd_mixart_create(struct mixart_mgr *mgr, struct snd_card *
 		.dev_free = snd_mixart_chip_dev_free,
 	};
 
-	mgr->chip[idx] = chip = kzalloc(sizeof(*chip), GFP_KERNEL);
+	chip = kzalloc(sizeof(*chip), GFP_KERNEL);
 	if (! chip) {
 		snd_printk(KERN_ERR "cannot allocate chip\n");
 		return -ENOMEM;
@@ -1026,6 +1027,7 @@ static int __devinit snd_mixart_create(struct mixart_mgr *mgr, struct snd_card *
 		return err;
 	}
 
+	mgr->chip[idx] = chip;
 	snd_card_set_dev(card, &mgr->pci->dev);
 
 	return 0;
@@ -1100,73 +1102,19 @@ static int snd_mixart_free(struct mixart_mgr *mgr)
 /*
  * proc interface
  */
-static long long snd_mixart_BA0_llseek(struct snd_info_entry *entry,
-				       void *private_file_data,
-				       struct file *file,
-				       long long offset,
-				       int orig)
-{
-	offset = offset & ~3; /* 4 bytes aligned */
-
-	switch(orig) {
-	case SEEK_SET:
-		file->f_pos = offset;
-		break;
-	case SEEK_CUR:
-		file->f_pos += offset;
-		break;
-	case SEEK_END: /* offset is negative */
-		file->f_pos = MIXART_BA0_SIZE + offset;
-		break;
-	default:
-		return -EINVAL;
-	}
-	if(file->f_pos > MIXART_BA0_SIZE)
-		file->f_pos = MIXART_BA0_SIZE;
-	return file->f_pos;
-}
-
-static long long snd_mixart_BA1_llseek(struct snd_info_entry *entry,
-				       void *private_file_data,
-				       struct file *file,
-				       long long offset,
-				       int orig)
-{
-	offset = offset & ~3; /* 4 bytes aligned */
-
-	switch(orig) {
-	case SEEK_SET:
-		file->f_pos = offset;
-		break;
-	case SEEK_CUR:
-		file->f_pos += offset;
-		break;
-	case SEEK_END: /* offset is negative */
-		file->f_pos = MIXART_BA1_SIZE + offset;
-		break;
-	default:
-		return -EINVAL;
-	}
-	if(file->f_pos > MIXART_BA1_SIZE)
-		file->f_pos = MIXART_BA1_SIZE;
-	return file->f_pos;
-}
 
 /*
   mixart_BA0 proc interface for BAR 0 - read callback
  */
-static long snd_mixart_BA0_read(struct snd_info_entry *entry, void *file_private_data,
-				struct file *file, char __user *buf,
-				unsigned long count, unsigned long pos)
+static ssize_t snd_mixart_BA0_read(struct snd_info_entry *entry,
+				   void *file_private_data,
+				   struct file *file, char __user *buf,
+				   size_t count, loff_t pos)
 {
 	struct mixart_mgr *mgr = entry->private_data;
 
 	count = count & ~3; /* make sure the read size is a multiple of 4 bytes */
-	if(count <= 0)
-		return 0;
-	if(pos + count > MIXART_BA0_SIZE)
-		count = (long)(MIXART_BA0_SIZE - pos);
-	if(copy_to_user_fromio(buf, MIXART_MEM( mgr, pos ), count))
+	if (copy_to_user_fromio(buf, MIXART_MEM(mgr, pos), count))
 		return -EFAULT;
 	return count;
 }
@@ -1174,30 +1122,25 @@ static long snd_mixart_BA0_read(struct snd_info_entry *entry, void *file_private
 /*
   mixart_BA1 proc interface for BAR 1 - read callback
  */
-static long snd_mixart_BA1_read(struct snd_info_entry *entry, void *file_private_data,
-				struct file *file, char __user *buf,
-				unsigned long count, unsigned long pos)
+static ssize_t snd_mixart_BA1_read(struct snd_info_entry *entry,
+				   void *file_private_data,
+				   struct file *file, char __user *buf,
+				   size_t count, loff_t pos)
 {
 	struct mixart_mgr *mgr = entry->private_data;
 
 	count = count & ~3; /* make sure the read size is a multiple of 4 bytes */
-	if(count <= 0)
-		return 0;
-	if(pos + count > MIXART_BA1_SIZE)
-		count = (long)(MIXART_BA1_SIZE - pos);
-	if(copy_to_user_fromio(buf, MIXART_REG( mgr, pos ), count))
+	if (copy_to_user_fromio(buf, MIXART_REG(mgr, pos), count))
 		return -EFAULT;
 	return count;
 }
 
 static struct snd_info_entry_ops snd_mixart_proc_ops_BA0 = {
 	.read   = snd_mixart_BA0_read,
-	.llseek = snd_mixart_BA0_llseek
 };
 
 static struct snd_info_entry_ops snd_mixart_proc_ops_BA1 = {
 	.read   = snd_mixart_BA1_read,
-	.llseek = snd_mixart_BA1_llseek
 };
 
 
@@ -1290,7 +1233,7 @@ static int __devinit snd_mixart_probe(struct pci_dev *pci,
 	pci_set_master(pci);
 
 	/* check if we can restrict PCI DMA transfers to 32 bits */
-	if (pci_set_dma_mask(pci, DMA_32BIT_MASK) < 0) {
+	if (pci_set_dma_mask(pci, DMA_BIT_MASK(32)) < 0) {
 		snd_printk(KERN_ERR "architecture does not support 32bit PCI busmaster DMA\n");
 		pci_disable_device(pci);
 		return -ENXIO;
@@ -1315,8 +1258,13 @@ static int __devinit snd_mixart_probe(struct pci_dev *pci,
 	}
 	for (i = 0; i < 2; i++) {
 		mgr->mem[i].phys = pci_resource_start(pci, i);
-		mgr->mem[i].virt = ioremap_nocache(mgr->mem[i].phys,
-						   pci_resource_len(pci, i));
+		mgr->mem[i].virt = pci_ioremap_bar(pci, i);
+		if (!mgr->mem[i].virt) {
+		        printk(KERN_ERR "unable to remap resource 0x%lx\n",
+			       mgr->mem[i].phys);
+			snd_mixart_free(mgr);
+			return -EBUSY;
+		}
 	}
 
 	if (request_irq(pci->irq, snd_mixart_interrupt, IRQF_SHARED,
@@ -1360,12 +1308,12 @@ static int __devinit snd_mixart_probe(struct pci_dev *pci,
 		else
 			idx = index[dev] + i;
 		snprintf(tmpid, sizeof(tmpid), "%s-%d", id[dev] ? id[dev] : "MIXART", i);
-		card = snd_card_new(idx, tmpid, THIS_MODULE, 0);
+		err = snd_card_create(idx, tmpid, THIS_MODULE, 0, &card);
 
-		if (! card) {
+		if (err < 0) {
 			snd_printk(KERN_ERR "cannot allocate the card %d\n", i);
 			snd_mixart_free(mgr);
-			return -ENOMEM;
+			return err;
 		}
 
 		strcpy(card->driver, CARD_NAME);
@@ -1373,6 +1321,7 @@ static int __devinit snd_mixart_probe(struct pci_dev *pci,
 		sprintf(card->longname, "%s [PCM #%d]", mgr->longname, i);
 
 		if ((err = snd_mixart_create(mgr, card, i)) < 0) {
+			snd_card_free(card);
 			snd_mixart_free(mgr);
 			return err;
 		}

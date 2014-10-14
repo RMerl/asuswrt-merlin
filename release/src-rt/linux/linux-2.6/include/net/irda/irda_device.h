@@ -135,9 +135,11 @@ struct dongle_reg {
 
 /* 
  * Per-packet information we need to hide inside sk_buff 
- * (must not exceed 48 bytes, check with struct sk_buff) 
+ * (must not exceed 48 bytes, check with struct sk_buff)
+ * The default_qdisc_pad field is a temporary hack.
  */
 struct irda_skb_cb {
+	unsigned int default_qdisc_pad;
 	magic_t magic;       /* Be sure that we can trust the information */
 	__u32   next_speed;  /* The Speed to be set *after* this frame */
 	__u16   mtt;         /* Minimum turn around time */
@@ -223,25 +225,12 @@ int  irda_device_is_receiving(struct net_device *dev);
 /* Interface for internal use */
 static inline int irda_device_txqueue_empty(const struct net_device *dev)
 {
-	return skb_queue_empty(&dev->qdisc->q);
+	return qdisc_all_tx_empty(dev);
 }
 int  irda_device_set_raw_mode(struct net_device* self, int status);
 struct net_device *alloc_irdadev(int sizeof_priv);
 
-/* Dongle interface */
-void irda_device_unregister_dongle(struct dongle_reg *dongle);
-int  irda_device_register_dongle(struct dongle_reg *dongle);
-dongle_t *irda_device_dongle_init(struct net_device *dev, int type);
-int irda_device_dongle_cleanup(dongle_t *dongle);
-
 void irda_setup_dma(int channel, dma_addr_t buffer, int count, int mode);
-
-void irda_task_delete(struct irda_task *task);
-struct irda_task *irda_task_execute(void *instance, 
-				    IRDA_TASK_CALLBACK function, 
-				    IRDA_TASK_CALLBACK finished, 
-				    struct irda_task *parent, void *param);
-void irda_task_next_state(struct irda_task *task, IRDA_TASK_STATE state);
 
 /*
  * Function irda_get_mtt (skb)

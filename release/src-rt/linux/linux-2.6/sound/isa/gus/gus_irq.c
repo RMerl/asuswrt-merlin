@@ -1,6 +1,6 @@
 /*
  *  Routine for IRQ handling from GF1/InterWave chip
- *  Copyright (c) by Jaroslav Kysela <perex@suse.cz>
+ *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  *
  *
  *   This program is free software; you can redistribute it and/or modify
@@ -19,7 +19,6 @@
  *
  */
 
-#include <sound/driver.h>
 #include <sound/core.h>
 #include <sound/info.h>
 #include <sound/gus.h>
@@ -42,14 +41,16 @@ __again:
 	if (status == 0)
 		return IRQ_RETVAL(handled);
 	handled = 1;
-	// snd_printk("IRQ: status = 0x%x\n", status);
+	/* snd_printk(KERN_DEBUG "IRQ: status = 0x%x\n", status); */
 	if (status & 0x02) {
 		STAT_ADD(gus->gf1.interrupt_stat_midi_in);
-		gus->gf1.interrupt_handler_midi_in(gus);
+		if (gus->gf1.interrupt_handler_midi_in)
+			gus->gf1.interrupt_handler_midi_in(gus);
 	}
 	if (status & 0x01) {
 		STAT_ADD(gus->gf1.interrupt_stat_midi_out);
-		gus->gf1.interrupt_handler_midi_out(gus);
+		if (gus->gf1.interrupt_handler_midi_out)
+			gus->gf1.interrupt_handler_midi_out(gus);
 	}
 	if (status & (0x20 | 0x40)) {
 		unsigned int already, _current_;
@@ -64,7 +65,9 @@ __again:
 				continue;	/* multi request */
 			already |= _current_;	/* mark request */
 #if 0
-			printk("voice = %i, voice_status = 0x%x, voice_verify = %i\n", voice, voice_status, inb(GUSP(gus, GF1PAGE)));
+			printk(KERN_DEBUG "voice = %i, voice_status = 0x%x, "
+			       "voice_verify = %i\n",
+			       voice, voice_status, inb(GUSP(gus, GF1PAGE)));
 #endif
 			pvoice = &gus->gf1.voices[voice]; 
 			if (pvoice->use) {
@@ -85,20 +88,24 @@ __again:
 	}
 	if (status & 0x04) {
 		STAT_ADD(gus->gf1.interrupt_stat_timer1);
-		gus->gf1.interrupt_handler_timer1(gus);
+		if (gus->gf1.interrupt_handler_timer1)
+			gus->gf1.interrupt_handler_timer1(gus);
 	}
 	if (status & 0x08) {
 		STAT_ADD(gus->gf1.interrupt_stat_timer2);
-		gus->gf1.interrupt_handler_timer2(gus);
+		if (gus->gf1.interrupt_handler_timer2)
+			gus->gf1.interrupt_handler_timer2(gus);
 	}
 	if (status & 0x80) {
 		if (snd_gf1_i_look8(gus, SNDRV_GF1_GB_DRAM_DMA_CONTROL) & 0x40) {
 			STAT_ADD(gus->gf1.interrupt_stat_dma_write);
-			gus->gf1.interrupt_handler_dma_write(gus);
+			if (gus->gf1.interrupt_handler_dma_write)
+				gus->gf1.interrupt_handler_dma_write(gus);
 		}
 		if (snd_gf1_i_look8(gus, SNDRV_GF1_GB_REC_DMA_CONTROL) & 0x40) {
 			STAT_ADD(gus->gf1.interrupt_stat_dma_read);
-			gus->gf1.interrupt_handler_dma_read(gus);
+			if (gus->gf1.interrupt_handler_dma_read)
+				gus->gf1.interrupt_handler_dma_read(gus);
 		}
 	}
 	if (--loop > 0)

@@ -1,10 +1,9 @@
 /*
  * BRIEF MODULE DESCRIPTION
- *	Board specific pci fixups.
+ *	Board specific PCI fixups.
  *
- * Copyright 2001-2003 MontaVista Software Inc.
- * Author: MontaVista Software, Inc.
- *         	ppopov@mvista.com or source@mvista.com
+ * Copyright 2001-2003, 2008 MontaVista Software Inc.
+ * Author: MontaVista Software, Inc. <source@mvista.com>
  *
  *  This program is free software; you can redistribute  it and/or modify it
  *  under  the terms of  the GNU General  Public License as published by the
@@ -26,16 +25,13 @@
  *  with this program; if not, write  to the Free Software Foundation, Inc.,
  *  675 Mass Ave, Cambridge, MA 02139, USA.
  */
-#include <linux/types.h>
-#include <linux/pci.h>
-#include <linux/kernel.h>
-#include <linux/init.h>
 
-#include <asm/mach-au1x00/au1000.h>
+#include <linux/pci.h>
+#include <linux/init.h>
 
 extern char irq_tab_alchemy[][5];
 
-int __init pcibios_map_irq(struct pci_dev *dev, u8 slot, u8 pin)
+int __init pcibios_map_irq(const struct pci_dev *dev, u8 slot, u8 pin)
 {
 	return irq_tab_alchemy[slot][pin];
 }

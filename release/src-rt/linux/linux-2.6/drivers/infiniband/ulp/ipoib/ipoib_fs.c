@@ -28,12 +28,11 @@
  * ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
- *
- * $Id: ipoib_fs.c 1389 2004-12-27 22:56:47Z roland $
  */
 
 #include <linux/err.h>
 #include <linux/seq_file.h>
+#include <linux/slab.h>
 
 struct file_operations;
 
@@ -124,7 +123,7 @@ static int ipoib_mcg_seq_show(struct seq_file *file, void *iter_ptr)
 	return 0;
 }
 
-static struct seq_operations ipoib_mcg_seq_ops = {
+static const struct seq_operations ipoib_mcg_seq_ops = {
 	.start = ipoib_mcg_seq_start,
 	.next  = ipoib_mcg_seq_next,
 	.stop  = ipoib_mcg_seq_stop,
@@ -230,7 +229,7 @@ static int ipoib_path_seq_show(struct seq_file *file, void *iter_ptr)
 	return 0;
 }
 
-static struct seq_operations ipoib_path_seq_ops = {
+static const struct seq_operations ipoib_path_seq_ops = {
 	.start = ipoib_path_seq_start,
 	.next  = ipoib_path_seq_next,
 	.stop  = ipoib_path_seq_stop,

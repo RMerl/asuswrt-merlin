@@ -3,7 +3,7 @@
  *    Time of day based timer functions.
  *
  *  S390 version
- *    Copyright (C) 1999 IBM Deutschland Entwicklung GmbH, IBM Corporation
+ *    Copyright IBM Corp. 1999, 2008
  *    Author(s): Hartmut Penner (hp@de.ibm.com),
  *               Martin Schwidefsky (schwidefsky@de.ibm.com),
  *               Denis Joseph Barrow (djbarrow@de.ibm.com,barrow_dj@yahoo.com)
@@ -12,6 +12,10 @@
  *    Copyright (C) 1991, 1992, 1995  Linus Torvalds
  */
 
+#define KMSG_COMPONENT "time"
+#define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
+
+#include <linux/kernel_stat.h>
 #include <linux/errno.h>
 #include <linux/module.h>
 #include <linux/sched.h>
@@ -20,6 +24,8 @@
 #include <linux/string.h>
 #include <linux/mm.h>
 #include <linux/interrupt.h>
+#include <linux/cpu.h>
+#include <linux/stop_machine.h>
 #include <linux/time.h>
 #include <linux/sysdev.h>
 #include <linux/delay.h>
@@ -30,43 +36,35 @@
 #include <linux/timex.h>
 #include <linux/notifier.h>
 #include <linux/clocksource.h>
-
+#include <linux/clockchips.h>
+#include <linux/gfp.h>
+#include <linux/kprobes.h>
 #include <asm/uaccess.h>
 #include <asm/delay.h>
 #include <asm/s390_ext.h>
 #include <asm/div64.h>
+#include <asm/vdso.h>
 #include <asm/irq.h>
 #include <asm/irq_regs.h>
 #include <asm/timer.h>
 #include <asm/etr.h>
+#include <asm/cio.h>
 
 /* change this if you have some constant time drift */
 #define USECS_PER_JIFFY     ((unsigned long) 1000000/HZ)
 #define CLK_TICKS_PER_JIFFY ((unsigned long) USECS_PER_JIFFY << 12)
 
-/* The value of the TOD clock for 1.1.1970. */
-#define TOD_UNIX_EPOCH 0x7d91048bca000000ULL
+u64 sched_clock_base_cc = -1;	/* Force to data section. */
+EXPORT_SYMBOL_GPL(sched_clock_base_cc);
 
-/*
- * Create a small time difference between the timer interrupts
- * on the different cpus to avoid lock contention.
- */
-#define CPU_DEVIATION       (smp_processor_id() << 12)
-
-#define TICK_SIZE tick
-
-static ext_int_info_t ext_int_info_cc;
-static ext_int_info_t ext_int_etr_cc;
-static u64 init_timer_cc;
-static u64 jiffies_timer_cc;
-static u64 xtime_cc;
+static DEFINE_PER_CPU(struct clock_event_device, comparators);
 
 /*
  * Scheduler clock - returns current time in nanosec units.
  */
-unsigned long long sched_clock(void)
+unsigned long long notrace __kprobes sched_clock(void)
 {
-	return ((get_clock() - jiffies_timer_cc) * 125) >> 9;
+	return (get_clock_monotonic() * 125) >> 9;
 }
 
 /*
@@ -78,185 +76,51 @@ unsigned long long monotonic_clock(void)
 }
 EXPORT_SYMBOL(monotonic_clock);
 
-void tod_to_timeval(__u64 todval, struct timespec *xtime)
+void tod_to_timeval(__u64 todval, struct timespec *xt)
 {
 	unsigned long long sec;
 
 	sec = todval >> 12;
 	do_div(sec, 1000000);
-	xtime->tv_sec = sec;
+	xt->tv_sec = sec;
 	todval -= (sec * 1000000) << 12;
-	xtime->tv_nsec = ((todval * 1000) >> 12);
+	xt->tv_nsec = ((todval * 1000) >> 12);
 }
+EXPORT_SYMBOL(tod_to_timeval);
 
-#ifdef CONFIG_PROFILING
-#define s390_do_profile()	profile_tick(CPU_PROFILING)
-#else
-#define s390_do_profile()	do { ; } while(0)
-#endif /* CONFIG_PROFILING */
-
-/*
- * Advance the per cpu tick counter up to the time given with the
- * "time" argument. The per cpu update consists of accounting
- * the virtual cpu time, calling update_process_times and calling
- * the profiling hook. If xtime is before time it is advanced as well.
- */
-void account_ticks(u64 time)
+void clock_comparator_work(void)
 {
-	__u32 ticks;
-	__u64 tmp;
+	struct clock_event_device *cd;
 
-	/* Calculate how many ticks have passed. */
-	if (time < S390_lowcore.jiffy_timer)
-		return;
-	tmp = time - S390_lowcore.jiffy_timer;
-	if (tmp >= 2*CLK_TICKS_PER_JIFFY) {  /* more than two ticks ? */
-		ticks = __div(tmp, CLK_TICKS_PER_JIFFY) + 1;
-		S390_lowcore.jiffy_timer +=
-			CLK_TICKS_PER_JIFFY * (__u64) ticks;
-	} else if (tmp >= CLK_TICKS_PER_JIFFY) {
-		ticks = 2;
-		S390_lowcore.jiffy_timer += 2*CLK_TICKS_PER_JIFFY;
-	} else {
-		ticks = 1;
-		S390_lowcore.jiffy_timer += CLK_TICKS_PER_JIFFY;
-	}
-
-#ifdef CONFIG_SMP
-	/*
-	 * Do not rely on the boot cpu to do the calls to do_timer.
-	 * Spread it over all cpus instead.
-	 */
-	write_seqlock(&xtime_lock);
-	if (S390_lowcore.jiffy_timer > xtime_cc) {
-		__u32 xticks;
-		tmp = S390_lowcore.jiffy_timer - xtime_cc;
-		if (tmp >= 2*CLK_TICKS_PER_JIFFY) {
-			xticks = __div(tmp, CLK_TICKS_PER_JIFFY);
-			xtime_cc += (__u64) xticks * CLK_TICKS_PER_JIFFY;
-		} else {
-			xticks = 1;
-			xtime_cc += CLK_TICKS_PER_JIFFY;
-		}
-		do_timer(xticks);
-	}
-	write_sequnlock(&xtime_lock);
-#else
-	do_timer(ticks);
-#endif
-
-#ifdef CONFIG_VIRT_CPU_ACCOUNTING
-	account_tick_vtime(current);
-#else
-	while (ticks--)
-		update_process_times(user_mode(get_irq_regs()));
-#endif
-
-	s390_do_profile();
-}
-
-#ifdef CONFIG_NO_IDLE_HZ
-
-#ifdef CONFIG_NO_IDLE_HZ_INIT
-int sysctl_hz_timer = 0;
-#else
-int sysctl_hz_timer = 1;
-#endif
-
-/*
- * Stop the HZ tick on the current CPU.
- * Only cpu_idle may call this function.
- */
-static void stop_hz_timer(void)
-{
-	unsigned long flags;
-	unsigned long seq, next;
-	__u64 timer, todval;
-	int cpu = smp_processor_id();
-
-	if (sysctl_hz_timer != 0)
-		return;
-
-	cpu_set(cpu, nohz_cpu_mask);
-
-	/*
-	 * Leave the clock comparator set up for the next timer
-	 * tick if either rcu or a softirq is pending.
-	 */
-	if (rcu_needs_cpu(cpu) || local_softirq_pending()) {
-		cpu_clear(cpu, nohz_cpu_mask);
-		return;
-	}
-
-	/*
-	 * This cpu is going really idle. Set up the clock comparator
-	 * for the next event.
-	 */
-	next = next_timer_interrupt();
-	do {
-		seq = read_seqbegin_irqsave(&xtime_lock, flags);
-		timer = ((__u64) next) - ((__u64) jiffies) + jiffies_64;
-	} while (read_seqretry_irqrestore(&xtime_lock, seq, flags));
-	todval = -1ULL;
-	/* Be careful about overflows. */
-	if (timer < (-1ULL / CLK_TICKS_PER_JIFFY)) {
-		timer = jiffies_timer_cc + timer * CLK_TICKS_PER_JIFFY;
-		if (timer >= jiffies_timer_cc)
-			todval = timer;
-	}
-	set_clock_comparator(todval);
+	S390_lowcore.clock_comparator = -1ULL;
+	set_clock_comparator(S390_lowcore.clock_comparator);
+	cd = &__get_cpu_var(comparators);
+	cd->event_handler(cd);
 }
 
 /*
- * Start the HZ tick on the current CPU.
- * Only cpu_idle may call this function.
+ * Fixup the clock comparator.
  */
-static void start_hz_timer(void)
+static void fixup_clock_comparator(unsigned long long delta)
 {
-	BUG_ON(!in_interrupt());
-
-	if (!cpu_isset(smp_processor_id(), nohz_cpu_mask))
+	/* If nobody is waiting there's nothing to fix. */
+	if (S390_lowcore.clock_comparator == -1ULL)
 		return;
-	account_ticks(get_clock());
-	set_clock_comparator(S390_lowcore.jiffy_timer + CPU_DEVIATION);
-	cpu_clear(smp_processor_id(), nohz_cpu_mask);
+	S390_lowcore.clock_comparator += delta;
+	set_clock_comparator(S390_lowcore.clock_comparator);
 }
 
-static int nohz_idle_notify(struct notifier_block *self,
-			    unsigned long action, void *hcpu)
+static int s390_next_event(unsigned long delta,
+			   struct clock_event_device *evt)
 {
-	switch (action) {
-	case CPU_IDLE:
-		stop_hz_timer();
-		break;
-	case CPU_NOT_IDLE:
-		start_hz_timer();
-		break;
-	}
-	return NOTIFY_OK;
+	S390_lowcore.clock_comparator = get_clock() + delta;
+	set_clock_comparator(S390_lowcore.clock_comparator);
+	return 0;
 }
 
-static struct notifier_block nohz_idle_nb = {
-	.notifier_call = nohz_idle_notify,
-};
-
-static void __init nohz_init(void)
+static void s390_set_mode(enum clock_event_mode mode,
+			  struct clock_event_device *evt)
 {
-	if (register_idle_notifier(&nohz_idle_nb))
-		panic("Couldn't register idle notifier");
-}
-
-#endif
-
-/*
- * Set up per cpu jiffy timer and set the clock comparator.
- */
-static void setup_jiffy_timer(void)
-{
-	/* Set up clock comparator to next jiffy. */
-	S390_lowcore.jiffy_timer =
-		jiffies_timer_cc + (jiffies_64 + 1) * CLK_TICKS_PER_JIFFY;
-	set_clock_comparator(S390_lowcore.jiffy_timer + CPU_DEVIATION);
 }
 
 /*
@@ -265,49 +129,77 @@ static void setup_jiffy_timer(void)
  */
 void init_cpu_timer(void)
 {
-	setup_jiffy_timer();
+	struct clock_event_device *cd;
+	int cpu;
+
+	S390_lowcore.clock_comparator = -1ULL;
+	set_clock_comparator(S390_lowcore.clock_comparator);
+
+	cpu = smp_processor_id();
+	cd = &per_cpu(comparators, cpu);
+	cd->name		= "comparator";
+	cd->features		= CLOCK_EVT_FEAT_ONESHOT;
+	cd->mult		= 16777;
+	cd->shift		= 12;
+	cd->min_delta_ns	= 1;
+	cd->max_delta_ns	= LONG_MAX;
+	cd->rating		= 400;
+	cd->cpumask		= cpumask_of(cpu);
+	cd->set_next_event	= s390_next_event;
+	cd->set_mode		= s390_set_mode;
+
+	clockevents_register_device(cd);
 
 	/* Enable clock comparator timer interrupt. */
 	__ctl_set_bit(0,11);
 
-	/* Always allow ETR external interrupts, even without an ETR. */
+	/* Always allow the timing alert external interrupt. */
 	__ctl_set_bit(0, 4);
 }
 
-static void clock_comparator_interrupt(__u16 code)
+static void clock_comparator_interrupt(unsigned int ext_int_code,
+				       unsigned int param32,
+				       unsigned long param64)
 {
-	/* set clock comparator for next tick */
-	set_clock_comparator(S390_lowcore.jiffy_timer + CPU_DEVIATION);
+	kstat_cpu(smp_processor_id()).irqs[EXTINT_CLK]++;
+	if (S390_lowcore.clock_comparator == -1ULL)
+		set_clock_comparator(S390_lowcore.clock_comparator);
+}
+
+static void etr_timing_alert(struct etr_irq_parm *);
+static void stp_timing_alert(struct stp_irq_parm *);
+
+static void timing_alert_interrupt(unsigned int ext_int_code,
+				   unsigned int param32, unsigned long param64)
+{
+	kstat_cpu(smp_processor_id()).irqs[EXTINT_TLA]++;
+	if (param32 & 0x00c40000)
+		etr_timing_alert((struct etr_irq_parm *) &param32);
+	if (param32 & 0x00038000)
+		stp_timing_alert((struct stp_irq_parm *) &param32);
 }
 
 static void etr_reset(void);
-static void etr_ext_handler(__u16);
+static void stp_reset(void);
 
-/*
- * Get the TOD clock running.
- */
-static u64 __init reset_tod_clock(void)
+void read_persistent_clock(struct timespec *ts)
 {
-	u64 time;
-
-	etr_reset();
-	if (store_clock(&time) == 0)
-		return time;
-	/* TOD clock not running. Set the clock to Unix Epoch. */
-	if (set_clock(TOD_UNIX_EPOCH) != 0 || store_clock(&time) != 0)
-		panic("TOD clock not operational.");
-
-	return TOD_UNIX_EPOCH;
+	tod_to_timeval(get_clock() - TOD_UNIX_EPOCH, ts);
 }
 
-static cycle_t read_tod_clock(void)
+void read_boot_clock(struct timespec *ts)
+{
+	tod_to_timeval(sched_clock_base_cc - TOD_UNIX_EPOCH, ts);
+}
+
+static cycle_t read_tod_clock(struct clocksource *cs)
 {
 	return get_clock();
 }
 
 static struct clocksource clocksource_tod = {
 	.name		= "tod",
-	.rating		= 100,
+	.rating		= 400,
 	.read		= read_tod_clock,
 	.mask		= -1ULL,
 	.mult		= 1000,
@@ -315,6 +207,42 @@ static struct clocksource clocksource_tod = {
 	.flags		= CLOCK_SOURCE_IS_CONTINUOUS,
 };
 
+struct clocksource * __init clocksource_default_clock(void)
+{
+	return &clocksource_tod;
+}
+
+void update_vsyscall(struct timespec *wall_time, struct timespec *wtm,
+			struct clocksource *clock, u32 mult)
+{
+	if (clock != &clocksource_tod)
+		return;
+
+	/* Make userspace gettimeofday spin until we're done. */
+	++vdso_data->tb_update_count;
+	smp_wmb();
+	vdso_data->xtime_tod_stamp = clock->cycle_last;
+	vdso_data->xtime_clock_sec = wall_time->tv_sec;
+	vdso_data->xtime_clock_nsec = wall_time->tv_nsec;
+	vdso_data->wtom_clock_sec = wtm->tv_sec;
+	vdso_data->wtom_clock_nsec = wtm->tv_nsec;
+	vdso_data->ntp_mult = mult;
+	smp_wmb();
+	++vdso_data->tb_update_count;
+}
+
+extern struct timezone sys_tz;
+
+void update_vsyscall_tz(void)
+{
+	/* Make userspace gettimeofday spin until we're done. */
+	++vdso_data->tb_update_count;
+	smp_wmb();
+	vdso_data->tz_minuteswest = sys_tz.tz_minuteswest;
+	vdso_data->tz_dsttime = sys_tz.tz_dsttime;
+	smp_wmb();
+	++vdso_data->tb_update_count;
+}
 
 /*
  * Initialize the TOD clock and the CPU timer of
@@ -322,39 +250,152 @@ static struct clocksource clocksource_tod = {
  */
 void __init time_init(void)
 {
-	init_timer_cc = reset_tod_clock();
-	xtime_cc = init_timer_cc + CLK_TICKS_PER_JIFFY;
-	jiffies_timer_cc = init_timer_cc - jiffies_64 * CLK_TICKS_PER_JIFFY;
-
-	/* set xtime */
-	tod_to_timeval(init_timer_cc - TOD_UNIX_EPOCH, &xtime);
-        set_normalized_timespec(&wall_to_monotonic,
-                                -xtime.tv_sec, -xtime.tv_nsec);
+	/* Reset time synchronization interfaces. */
+	etr_reset();
+	stp_reset();
 
 	/* request the clock comparator external interrupt */
-	if (register_early_external_interrupt(0x1004,
-					      clock_comparator_interrupt,
-					      &ext_int_info_cc) != 0)
+	if (register_external_interrupt(0x1004, clock_comparator_interrupt))
                 panic("Couldn't request external interrupt 0x1004");
+
+	/* request the timing alert external interrupt */
+	if (register_external_interrupt(0x1406, timing_alert_interrupt))
+		panic("Couldn't request external interrupt 0x1406");
 
 	if (clocksource_register(&clocksource_tod) != 0)
 		panic("Could not register TOD clock source");
 
-	/* request the etr external interrupt */
-	if (register_early_external_interrupt(0x1406, etr_ext_handler,
-					      &ext_int_etr_cc) != 0)
-		panic("Couldn't request external interrupt 0x1406");
-
 	/* Enable TOD clock interrupts on the boot cpu. */
 	init_cpu_timer();
 
-#ifdef CONFIG_NO_IDLE_HZ
-	nohz_init();
-#endif
-
-#ifdef CONFIG_VIRT_TIMER
+	/* Enable cpu timer interrupts on the boot cpu. */
 	vtime_init();
-#endif
+}
+
+/*
+ * The time is "clock". old is what we think the time is.
+ * Adjust the value by a multiple of jiffies and add the delta to ntp.
+ * "delay" is an approximation how long the synchronization took. If
+ * the time correction is positive, then "delay" is subtracted from
+ * the time difference and only the remaining part is passed to ntp.
+ */
+static unsigned long long adjust_time(unsigned long long old,
+				      unsigned long long clock,
+				      unsigned long long delay)
+{
+	unsigned long long delta, ticks;
+	struct timex adjust;
+
+	if (clock > old) {
+		/* It is later than we thought. */
+		delta = ticks = clock - old;
+		delta = ticks = (delta < delay) ? 0 : delta - delay;
+		delta -= do_div(ticks, CLK_TICKS_PER_JIFFY);
+		adjust.offset = ticks * (1000000 / HZ);
+	} else {
+		/* It is earlier than we thought. */
+		delta = ticks = old - clock;
+		delta -= do_div(ticks, CLK_TICKS_PER_JIFFY);
+		delta = -delta;
+		adjust.offset = -ticks * (1000000 / HZ);
+	}
+	sched_clock_base_cc += delta;
+	if (adjust.offset != 0) {
+		pr_notice("The ETR interface has adjusted the clock "
+			  "by %li microseconds\n", adjust.offset);
+		adjust.modes = ADJ_OFFSET_SINGLESHOT;
+		do_adjtimex(&adjust);
+	}
+	return delta;
+}
+
+static DEFINE_PER_CPU(atomic_t, clock_sync_word);
+static DEFINE_MUTEX(clock_sync_mutex);
+static unsigned long clock_sync_flags;
+
+#define CLOCK_SYNC_HAS_ETR	0
+#define CLOCK_SYNC_HAS_STP	1
+#define CLOCK_SYNC_ETR		2
+#define CLOCK_SYNC_STP		3
+
+/*
+ * The synchronous get_clock function. It will write the current clock
+ * value to the clock pointer and return 0 if the clock is in sync with
+ * the external time source. If the clock mode is local it will return
+ * -ENOSYS and -EAGAIN if the clock is not in sync with the external
+ * reference.
+ */
+int get_sync_clock(unsigned long long *clock)
+{
+	atomic_t *sw_ptr;
+	unsigned int sw0, sw1;
+
+	sw_ptr = &get_cpu_var(clock_sync_word);
+	sw0 = atomic_read(sw_ptr);
+	*clock = get_clock();
+	sw1 = atomic_read(sw_ptr);
+	put_cpu_var(clock_sync_word);
+	if (sw0 == sw1 && (sw0 & 0x80000000U))
+		/* Success: time is in sync. */
+		return 0;
+	if (!test_bit(CLOCK_SYNC_HAS_ETR, &clock_sync_flags) &&
+	    !test_bit(CLOCK_SYNC_HAS_STP, &clock_sync_flags))
+		return -ENOSYS;
+	if (!test_bit(CLOCK_SYNC_ETR, &clock_sync_flags) &&
+	    !test_bit(CLOCK_SYNC_STP, &clock_sync_flags))
+		return -EACCES;
+	return -EAGAIN;
+}
+EXPORT_SYMBOL(get_sync_clock);
+
+/*
+ * Make get_sync_clock return -EAGAIN.
+ */
+static void disable_sync_clock(void *dummy)
+{
+	atomic_t *sw_ptr = &__get_cpu_var(clock_sync_word);
+	/*
+	 * Clear the in-sync bit 2^31. All get_sync_clock calls will
+	 * fail until the sync bit is turned back on. In addition
+	 * increase the "sequence" counter to avoid the race of an
+	 * etr event and the complete recovery against get_sync_clock.
+	 */
+	atomic_clear_mask(0x80000000, sw_ptr);
+	atomic_inc(sw_ptr);
+}
+
+/*
+ * Make get_sync_clock return 0 again.
+ * Needs to be called from a context disabled for preemption.
+ */
+static void enable_sync_clock(void)
+{
+	atomic_t *sw_ptr = &__get_cpu_var(clock_sync_word);
+	atomic_set_mask(0x80000000, sw_ptr);
+}
+
+/*
+ * Function to check if the clock is in sync.
+ */
+static inline int check_sync_clock(void)
+{
+	atomic_t *sw_ptr;
+	int rc;
+
+	sw_ptr = &get_cpu_var(clock_sync_word);
+	rc = (atomic_read(sw_ptr) & 0x80000000U) != 0;
+	put_cpu_var(clock_sync_word);
+	return rc;
+}
+
+/* Single threaded workqueue used for etr and stp sync events */
+static struct workqueue_struct *time_sync_wq;
+
+static void __init time_init_wq(void)
+{
+	if (time_sync_wq)
+		return;
+	time_sync_wq = create_singlethread_workqueue("timesync");
 }
 
 /*
@@ -362,6 +403,7 @@ void __init time_init(void)
  */
 static int etr_port0_online;
 static int etr_port1_online;
+static int etr_steai_available;
 
 static int __init early_parse_etr(char *p)
 {
@@ -384,12 +426,6 @@ enum etr_event {
 	ETR_EVENT_SYNC_CHECK,
 	ETR_EVENT_SWITCH_LOCAL,
 	ETR_EVENT_UPDATE,
-};
-
-enum etr_flags {
-	ETR_FLAG_ENOSYS,
-	ETR_FLAG_EACCES,
-	ETR_FLAG_STEAI,
 };
 
 /*
@@ -418,72 +454,17 @@ enum etr_flags {
  */
 static struct etr_eacr etr_eacr;
 static u64 etr_tolec;			/* time of last eacr update */
-static unsigned long etr_flags;
 static struct etr_aib etr_port0;
 static int etr_port0_uptodate;
 static struct etr_aib etr_port1;
 static int etr_port1_uptodate;
 static unsigned long etr_events;
 static struct timer_list etr_timer;
-static DEFINE_PER_CPU(atomic_t, etr_sync_word);
 
 static void etr_timeout(unsigned long dummy);
 static void etr_work_fn(struct work_struct *work);
+static DEFINE_MUTEX(etr_work_mutex);
 static DECLARE_WORK(etr_work, etr_work_fn);
-
-/*
- * The etr get_clock function. It will write the current clock value
- * to the clock pointer and return 0 if the clock is in sync with the
- * external time source. If the clock mode is local it will return
- * -ENOSYS and -EAGAIN if the clock is not in sync with the external
- * reference. This function is what ETR is all about..
- */
-int get_sync_clock(unsigned long long *clock)
-{
-	atomic_t *sw_ptr;
-	unsigned int sw0, sw1;
-
-	sw_ptr = &get_cpu_var(etr_sync_word);
-	sw0 = atomic_read(sw_ptr);
-	*clock = get_clock();
-	sw1 = atomic_read(sw_ptr);
-	put_cpu_var(etr_sync_sync);
-	if (sw0 == sw1 && (sw0 & 0x80000000U))
-		/* Success: time is in sync. */
-		return 0;
-	if (test_bit(ETR_FLAG_ENOSYS, &etr_flags))
-		return -ENOSYS;
-	if (test_bit(ETR_FLAG_EACCES, &etr_flags))
-		return -EACCES;
-	return -EAGAIN;
-}
-EXPORT_SYMBOL(get_sync_clock);
-
-/*
- * Make get_sync_clock return -EAGAIN.
- */
-static void etr_disable_sync_clock(void *dummy)
-{
-	atomic_t *sw_ptr = &__get_cpu_var(etr_sync_word);
-	/*
-	 * Clear the in-sync bit 2^31. All get_sync_clock calls will
-	 * fail until the sync bit is turned back on. In addition
-	 * increase the "sequence" counter to avoid the race of an
-	 * etr event and the complete recovery against get_sync_clock.
-	 */
-	atomic_clear_mask(0x80000000, sw_ptr);
-	atomic_inc(sw_ptr);
-}
-
-/*
- * Make get_sync_clock return 0 again.
- * Needs to be called from a context disabled for preemption.
- */
-static void etr_enable_sync_clock(void)
-{
-	atomic_t *sw_ptr = &__get_cpu_var(etr_sync_word);
-	atomic_set_mask(0x80000000, sw_ptr);
-}
 
 /*
  * Reset ETR attachment.
@@ -494,15 +475,15 @@ static void etr_reset(void)
 		.e0 = 0, .e1 = 0, ._pad0 = 4, .dp = 0,
 		.p0 = 0, .p1 = 0, ._pad1 = 0, .ea = 0,
 		.es = 0, .sl = 0 };
-	if (etr_setr(&etr_eacr) == 0)
+	if (etr_setr(&etr_eacr) == 0) {
 		etr_tolec = get_clock();
-	else {
-		set_bit(ETR_FLAG_ENOSYS, &etr_flags);
-		if (etr_port0_online || etr_port1_online) {
-			printk(KERN_WARNING "Running on non ETR capable "
-			       "machine, only local mode available.\n");
-			etr_port0_online = etr_port1_online = 0;
-		}
+		set_bit(CLOCK_SYNC_HAS_ETR, &clock_sync_flags);
+		if (etr_port0_online && etr_port1_online)
+			set_bit(CLOCK_SYNC_ETR, &clock_sync_flags);
+	} else if (etr_port0_online || etr_port1_online) {
+		pr_warning("The real or virtual hardware system does "
+			   "not provide an ETR interface\n");
+		etr_port0_online = etr_port1_online = 0;
 	}
 }
 
@@ -510,21 +491,20 @@ static int __init etr_init(void)
 {
 	struct etr_aib aib;
 
-	if (test_bit(ETR_FLAG_ENOSYS, &etr_flags))
+	if (!test_bit(CLOCK_SYNC_HAS_ETR, &clock_sync_flags))
 		return 0;
+	time_init_wq();
 	/* Check if this machine has the steai instruction. */
 	if (etr_steai(&aib, ETR_STEAI_STEPPING_PORT) == 0)
-		set_bit(ETR_FLAG_STEAI, &etr_flags);
+		etr_steai_available = 1;
 	setup_timer(&etr_timer, etr_timeout, 0UL);
-	if (!etr_port0_online && !etr_port1_online)
-		set_bit(ETR_FLAG_EACCES, &etr_flags);
 	if (etr_port0_online) {
 		set_bit(ETR_EVENT_PORT0_CHANGE, &etr_events);
-		schedule_work(&etr_work);
+		queue_work(time_sync_wq, &etr_work);
 	}
 	if (etr_port1_online) {
 		set_bit(ETR_EVENT_PORT1_CHANGE, &etr_events);
-		schedule_work(&etr_work);
+		queue_work(time_sync_wq, &etr_work);
 	}
 	return 0;
 }
@@ -548,9 +528,12 @@ void etr_switch_to_local(void)
 {
 	if (!etr_eacr.sl)
 		return;
-	etr_disable_sync_clock(NULL);
-	set_bit(ETR_EVENT_SWITCH_LOCAL, &etr_events);
-	schedule_work(&etr_work);
+	disable_sync_clock(NULL);
+	if (!test_and_set_bit(ETR_EVENT_SWITCH_LOCAL, &etr_events)) {
+		etr_eacr.es = etr_eacr.sl = 0;
+		etr_setr(&etr_eacr);
+		queue_work(time_sync_wq, &etr_work);
+	}
 }
 
 /*
@@ -563,23 +546,23 @@ void etr_sync_check(void)
 {
 	if (!etr_eacr.es)
 		return;
-	etr_disable_sync_clock(NULL);
-	set_bit(ETR_EVENT_SYNC_CHECK, &etr_events);
-	schedule_work(&etr_work);
+	disable_sync_clock(NULL);
+	if (!test_and_set_bit(ETR_EVENT_SYNC_CHECK, &etr_events)) {
+		etr_eacr.es = 0;
+		etr_setr(&etr_eacr);
+		queue_work(time_sync_wq, &etr_work);
+	}
 }
 
 /*
- * ETR external interrupt. There are two causes:
+ * ETR timing alert. There are two causes:
  * 1) port state change, check the usability of the port
  * 2) port alert, one of the ETR-data-validity bits (v1-v2 bits of the
  *    sldr-status word) or ETR-data word 1 (edf1) or ETR-data word 3 (edf3)
  *    or ETR-data word 4 (edf4) has changed.
  */
-static void etr_ext_handler(__u16 code)
+static void etr_timing_alert(struct etr_irq_parm *intparm)
 {
-	struct etr_interruption_parameter *intparm =
-		(struct etr_interruption_parameter *) &S390_lowcore.ext_params;
-
 	if (intparm->pc0)
 		/* ETR port 0 state change. */
 		set_bit(ETR_EVENT_PORT0_CHANGE, &etr_events);
@@ -592,13 +575,13 @@ static void etr_ext_handler(__u16 code)
 		 * Both ports are not up-to-date now.
 		 */
 		set_bit(ETR_EVENT_PORT_ALERT, &etr_events);
-	schedule_work(&etr_work);
+	queue_work(time_sync_wq, &etr_work);
 }
 
 static void etr_timeout(unsigned long dummy)
 {
 	set_bit(ETR_EVENT_UPDATE, &etr_events);
-	schedule_work(&etr_work);
+	queue_work(time_sync_wq, &etr_work);
 }
 
 /*
@@ -704,63 +687,25 @@ static int etr_aib_follows(struct etr_aib *a1, struct etr_aib *a2, int p)
 	return 1;
 }
 
-/*
- * The time is "clock". xtime is what we think the time is.
- * Adjust the value by a multiple of jiffies and add the delta to ntp.
- * "delay" is an approximation how long the synchronization took. If
- * the time correction is positive, then "delay" is subtracted from
- * the time difference and only the remaining part is passed to ntp.
- */
-static void etr_adjust_time(unsigned long long clock, unsigned long long delay)
+struct clock_sync_data {
+	atomic_t cpus;
+	int in_sync;
+	unsigned long long fixup_cc;
+	int etr_port;
+	struct etr_aib *etr_aib;
+};
+
+static void clock_sync_cpu(struct clock_sync_data *sync)
 {
-	unsigned long long delta, ticks;
-	struct timex adjust;
-
-	/*
-	 * We don't have to take the xtime lock because the cpu
-	 * executing etr_adjust_time is running disabled in
-	 * tasklet context and all other cpus are looping in
-	 * etr_sync_cpu_start.
-	 */
-	if (clock > xtime_cc) {
-		/* It is later than we thought. */
-		delta = ticks = clock - xtime_cc;
-		delta = ticks = (delta < delay) ? 0 : delta - delay;
-		delta -= do_div(ticks, CLK_TICKS_PER_JIFFY);
-		init_timer_cc = init_timer_cc + delta;
-		jiffies_timer_cc = jiffies_timer_cc + delta;
-		xtime_cc = xtime_cc + delta;
-		adjust.offset = ticks * (1000000 / HZ);
-	} else {
-		/* It is earlier than we thought. */
-		delta = ticks = xtime_cc - clock;
-		delta -= do_div(ticks, CLK_TICKS_PER_JIFFY);
-		init_timer_cc = init_timer_cc - delta;
-		jiffies_timer_cc = jiffies_timer_cc - delta;
-		xtime_cc = xtime_cc - delta;
-		adjust.offset = -ticks * (1000000 / HZ);
-	}
-	if (adjust.offset != 0) {
-		printk(KERN_NOTICE "etr: time adjusted by %li micro-seconds\n",
-		       adjust.offset);
-		adjust.modes = ADJ_OFFSET_SINGLESHOT;
-		do_adjtimex(&adjust);
-	}
-}
-
-#ifdef CONFIG_SMP
-static void etr_sync_cpu_start(void *dummy)
-{
-	int *in_sync = dummy;
-
-	etr_enable_sync_clock();
+	atomic_dec(&sync->cpus);
+	enable_sync_clock();
 	/*
 	 * This looks like a busy wait loop but it isn't. etr_sync_cpus
 	 * is called on all other cpus while the TOD clocks is stopped.
 	 * __udelay will stop the cpu on an enabled wait psw until the
 	 * TOD is running again.
 	 */
-	while (*in_sync == 0) {
+	while (sync->in_sync == 0) {
 		__udelay(1);
 		/*
 		 * A different cpu changes *in_sync. Therefore use
@@ -768,55 +713,52 @@ static void etr_sync_cpu_start(void *dummy)
 		 */
 		barrier();
 	}
-	if (*in_sync != 1)
+	if (sync->in_sync != 1)
 		/* Didn't work. Clear per-cpu in sync bit again. */
-		etr_disable_sync_clock(NULL);
+		disable_sync_clock(NULL);
 	/*
 	 * This round of TOD syncing is done. Set the clock comparator
 	 * to the next tick and let the processor continue.
 	 */
-	setup_jiffy_timer();
+	fixup_clock_comparator(sync->fixup_cc);
 }
-
-static void etr_sync_cpu_end(void *dummy)
-{
-}
-#endif /* CONFIG_SMP */
 
 /*
- * Sync the TOD clock using the port refered to by aibp. This port
+ * Sync the TOD clock using the port referred to by aibp. This port
  * has to be enabled and the other port has to be disabled. The
  * last eacr update has to be more than 1.6 seconds in the past.
  */
-static int etr_sync_clock(struct etr_aib *aib, int port)
+static int etr_sync_clock(void *data)
 {
-	struct etr_aib *sync_port;
-	unsigned long long clock, delay;
-	int in_sync, follows;
+	static int first;
+	unsigned long long clock, old_clock, delay, delta;
+	struct clock_sync_data *etr_sync;
+	struct etr_aib *sync_port, *aib;
+	int port;
 	int rc;
 
-	/* Check if the current aib is adjacent to the sync port aib. */
-	sync_port = (port == 0) ? &etr_port0 : &etr_port1;
-	follows = etr_aib_follows(sync_port, aib, port);
-	memcpy(sync_port, aib, sizeof(*aib));
-	if (!follows)
-		return -EAGAIN;
+	etr_sync = data;
 
-	/*
-	 * Catch all other cpus and make them wait until we have
-	 * successfully synced the clock. smp_call_function will
-	 * return after all other cpus are in etr_sync_cpu_start.
-	 */
-	in_sync = 0;
-	preempt_disable();
-	smp_call_function(etr_sync_cpu_start,&in_sync,0,0);
-	local_irq_disable();
-	etr_enable_sync_clock();
+	if (xchg(&first, 1) == 1) {
+		/* Slave */
+		clock_sync_cpu(etr_sync);
+		return 0;
+	}
+
+	/* Wait until all other cpus entered the sync function. */
+	while (atomic_read(&etr_sync->cpus) != 0)
+		cpu_relax();
+
+	port = etr_sync->etr_port;
+	aib = etr_sync->etr_aib;
+	sync_port = (port == 0) ? &etr_port0 : &etr_port1;
+	enable_sync_clock();
 
 	/* Set clock to next OTE. */
 	__ctl_set_bit(14, 21);
 	__ctl_set_bit(0, 29);
 	clock = ((unsigned long long) (aib->edf2.etv + 1)) << 32;
+	old_clock = get_clock();
 	if (set_clock(clock) == 0) {
 		__udelay(1);	/* Wait for the clock to start. */
 		__ctl_clear_bit(0, 29);
@@ -825,29 +767,51 @@ static int etr_sync_clock(struct etr_aib *aib, int port)
 		/* Adjust Linux timing variables. */
 		delay = (unsigned long long)
 			(aib->edf2.etv - sync_port->edf2.etv) << 32;
-		etr_adjust_time(clock, delay);
-		setup_jiffy_timer();
+		delta = adjust_time(old_clock, clock, delay);
+		etr_sync->fixup_cc = delta;
+		fixup_clock_comparator(delta);
 		/* Verify that the clock is properly set. */
 		if (!etr_aib_follows(sync_port, aib, port)) {
 			/* Didn't work. */
-			etr_disable_sync_clock(NULL);
-			in_sync = -EAGAIN;
+			disable_sync_clock(NULL);
+			etr_sync->in_sync = -EAGAIN;
 			rc = -EAGAIN;
 		} else {
-			in_sync = 1;
+			etr_sync->in_sync = 1;
 			rc = 0;
 		}
 	} else {
 		/* Could not set the clock ?!? */
 		__ctl_clear_bit(0, 29);
 		__ctl_clear_bit(14, 21);
-		etr_disable_sync_clock(NULL);
-		in_sync = -EAGAIN;
+		disable_sync_clock(NULL);
+		etr_sync->in_sync = -EAGAIN;
 		rc = -EAGAIN;
 	}
-	local_irq_enable();
-	smp_call_function(etr_sync_cpu_end,NULL,0,0);
-	preempt_enable();
+	xchg(&first, 0);
+	return rc;
+}
+
+static int etr_sync_clock_stop(struct etr_aib *aib, int port)
+{
+	struct clock_sync_data etr_sync;
+	struct etr_aib *sync_port;
+	int follows;
+	int rc;
+
+	/* Check if the current aib is adjacent to the sync port aib. */
+	sync_port = (port == 0) ? &etr_port0 : &etr_port1;
+	follows = etr_aib_follows(sync_port, aib, port);
+	memcpy(sync_port, aib, sizeof(*aib));
+	if (!follows)
+		return -EAGAIN;
+	memset(&etr_sync, 0, sizeof(etr_sync));
+	etr_sync.etr_aib = aib;
+	etr_sync.etr_port = port;
+	get_online_cpus();
+	atomic_set(&etr_sync.cpus, num_online_cpus() - 1);
+	rc = stop_machine(etr_sync_clock, &etr_sync, &cpu_online_map);
+	put_online_cpus();
 	return rc;
 }
 
@@ -949,7 +913,7 @@ static struct etr_eacr etr_handle_update(struct etr_aib *aib,
 	 * Do not try to get the alternate port aib if the clock
 	 * is not in sync yet.
 	 */
-	if (!eacr.es)
+	if (!eacr.es || !check_sync_clock())
 		return eacr;
 
 	/*
@@ -957,7 +921,7 @@ static struct etr_eacr etr_handle_update(struct etr_aib *aib,
 	 * the other port immediately. If only stetr is available the
 	 * data-port bit toggle has to be used.
 	 */
-	if (test_bit(ETR_FLAG_STEAI, &etr_flags)) {
+	if (etr_steai_available) {
 		if (eacr.p0 && !etr_port0_uptodate) {
 			etr_steai_cv(&etr_port0, ETR_STEAI_PORT_0);
 			etr_port0_uptodate = 1;
@@ -1004,7 +968,7 @@ static void etr_update_eacr(struct etr_eacr eacr)
 }
 
 /*
- * ETR tasklet. In this function you'll find the main logic. In
+ * ETR work. In this function you'll find the main logic. In
  * particular this is the only function that calls etr_update_eacr(),
  * it "controls" the etr control register.
  */
@@ -1014,6 +978,9 @@ static void etr_work_fn(struct work_struct *work)
 	struct etr_eacr eacr;
 	struct etr_aib aib;
 	int sync_port;
+
+	/* prevent multiple execution. */
+	mutex_lock(&etr_work_mutex);
 
 	/* Create working copy of etr_eacr. */
 	eacr = etr_eacr;
@@ -1026,11 +993,10 @@ static void etr_work_fn(struct work_struct *work)
 	if (!eacr.ea) {
 		/* Both ports offline. Reset everything. */
 		eacr.dp = eacr.es = eacr.sl = 0;
-		on_each_cpu(etr_disable_sync_clock, NULL, 0, 1);
+		on_each_cpu(disable_sync_clock, NULL, 1);
 		del_timer_sync(&etr_timer);
 		etr_update_eacr(eacr);
-		set_bit(ETR_FLAG_EACCES, &etr_flags);
-		return;
+		goto out_unlock;
 	}
 
 	/* Store aib to get the current ETR status word. */
@@ -1046,7 +1012,7 @@ static void etr_work_fn(struct work_struct *work)
 		eacr = etr_handle_update(&aib, eacr);
 
 	/*
-	 * Select ports to enable. The prefered synchronization mode is PPS.
+	 * Select ports to enable. The preferred synchronization mode is PPS.
 	 * If a port can be enabled depends on a number of things:
 	 * 1) The port needs to be online and uptodate. A port is not
 	 *    disabled just because it is not uptodate, but it is only
@@ -1070,7 +1036,6 @@ static void etr_work_fn(struct work_struct *work)
 			eacr.e1 = 1;
 		sync_port = (etr_port0_uptodate &&
 			     etr_port_valid(&etr_port0, 0)) ? 0 : -1;
-		clear_bit(ETR_FLAG_EACCES, &etr_flags);
 	} else if (eacr.p1 && aib.esw.psc1 == etr_lpsc_pps_mode) {
 		eacr.sl = 0;
 		eacr.e0 = 0;
@@ -1079,7 +1044,6 @@ static void etr_work_fn(struct work_struct *work)
 			eacr.es = 0;
 		sync_port = (etr_port1_uptodate &&
 			     etr_port_valid(&etr_port1, 1)) ? 1 : -1;
-		clear_bit(ETR_FLAG_EACCES, &etr_flags);
 	} else if (eacr.p0 && aib.esw.psc0 == etr_lpsc_operational_step) {
 		eacr.sl = 1;
 		eacr.e0 = 1;
@@ -1093,7 +1057,6 @@ static void etr_work_fn(struct work_struct *work)
 			eacr.e1 = 1;
 		sync_port = (etr_port0_uptodate &&
 			     etr_port_valid(&etr_port0, 0)) ? 0 : -1;
-		clear_bit(ETR_FLAG_EACCES, &etr_flags);
 	} else if (eacr.p1 && aib.esw.psc1 == etr_lpsc_operational_step) {
 		eacr.sl = 1;
 		eacr.e0 = 0;
@@ -1102,22 +1065,20 @@ static void etr_work_fn(struct work_struct *work)
 			eacr.es = 0;
 		sync_port = (etr_port1_uptodate &&
 			     etr_port_valid(&etr_port1, 1)) ? 1 : -1;
-		clear_bit(ETR_FLAG_EACCES, &etr_flags);
 	} else {
 		/* Both ports not usable. */
 		eacr.es = eacr.sl = 0;
 		sync_port = -1;
-		set_bit(ETR_FLAG_EACCES, &etr_flags);
 	}
 
 	/*
 	 * If the clock is in sync just update the eacr and return.
 	 * If there is no valid sync port wait for a port update.
 	 */
-	if (eacr.es || sync_port < 0) {
+	if ((eacr.es && check_sync_clock()) || sync_port < 0) {
 		etr_update_eacr(eacr);
 		etr_set_tolec_timeout(now);
-		return;
+		goto out_unlock;
 	}
 
 	/*
@@ -1130,26 +1091,28 @@ static void etr_work_fn(struct work_struct *work)
 	/*
 	 * Update eacr and try to synchronize the clock. If the update
 	 * of eacr caused a stepping port switch (or if we have to
-	 * assume that a stepping port switch has occured) or the
+	 * assume that a stepping port switch has occurred) or the
 	 * clock syncing failed, reset the sync check control bit
 	 * and set up a timer to try again after 0.5 seconds
 	 */
 	etr_update_eacr(eacr);
 	if (now < etr_tolec + (1600000 << 12) ||
-	    etr_sync_clock(&aib, sync_port) != 0) {
+	    etr_sync_clock_stop(&aib, sync_port) != 0) {
 		/* Sync failed. Try again in 1/2 second. */
 		eacr.es = 0;
 		etr_update_eacr(eacr);
 		etr_set_sync_timeout();
 	} else
 		etr_set_tolec_timeout(now);
+out_unlock:
+	mutex_unlock(&etr_work_mutex);
 }
 
 /*
  * Sysfs interface functions
  */
 static struct sysdev_class etr_sysclass = {
-	set_kset_name("etr")
+	.name	= "etr",
 };
 
 static struct sys_device etr_port0_dev = {
@@ -1165,14 +1128,18 @@ static struct sys_device etr_port1_dev = {
 /*
  * ETR class attributes
  */
-static ssize_t etr_stepping_port_show(struct sysdev_class *class, char *buf)
+static ssize_t etr_stepping_port_show(struct sysdev_class *class,
+					struct sysdev_class_attribute *attr,
+					char *buf)
 {
 	return sprintf(buf, "%i\n", etr_port0.esw.p);
 }
 
 static SYSDEV_CLASS_ATTR(stepping_port, 0400, etr_stepping_port_show, NULL);
 
-static ssize_t etr_stepping_mode_show(struct sysdev_class *class, char *buf)
+static ssize_t etr_stepping_mode_show(struct sysdev_class *class,
+				      	struct sysdev_class_attribute *attr,
+					char *buf)
 {
 	char *mode_str;
 
@@ -1198,7 +1165,9 @@ static inline struct etr_aib *etr_aib_from_dev(struct sys_device *dev)
 		return etr_port1_online ? &etr_port1 : NULL;
 }
 
-static ssize_t etr_online_show(struct sys_device *dev, char *buf)
+static ssize_t etr_online_show(struct sys_device *dev,
+				struct sysdev_attribute *attr,
+				char *buf)
 {
 	unsigned int online;
 
@@ -1207,34 +1176,48 @@ static ssize_t etr_online_show(struct sys_device *dev, char *buf)
 }
 
 static ssize_t etr_online_store(struct sys_device *dev,
-			      const char *buf, size_t count)
+				struct sysdev_attribute *attr,
+				const char *buf, size_t count)
 {
 	unsigned int value;
 
 	value = simple_strtoul(buf, NULL, 0);
 	if (value != 0 && value != 1)
 		return -EINVAL;
-	if (test_bit(ETR_FLAG_ENOSYS, &etr_flags))
-		return -ENOSYS;
+	if (!test_bit(CLOCK_SYNC_HAS_ETR, &clock_sync_flags))
+		return -EOPNOTSUPP;
+	mutex_lock(&clock_sync_mutex);
 	if (dev == &etr_port0_dev) {
 		if (etr_port0_online == value)
-			return count;	/* Nothing to do. */
+			goto out;	/* Nothing to do. */
 		etr_port0_online = value;
+		if (etr_port0_online && etr_port1_online)
+			set_bit(CLOCK_SYNC_ETR, &clock_sync_flags);
+		else
+			clear_bit(CLOCK_SYNC_ETR, &clock_sync_flags);
 		set_bit(ETR_EVENT_PORT0_CHANGE, &etr_events);
-		schedule_work(&etr_work);
+		queue_work(time_sync_wq, &etr_work);
 	} else {
 		if (etr_port1_online == value)
-			return count;	/* Nothing to do. */
+			goto out;	/* Nothing to do. */
 		etr_port1_online = value;
+		if (etr_port0_online && etr_port1_online)
+			set_bit(CLOCK_SYNC_ETR, &clock_sync_flags);
+		else
+			clear_bit(CLOCK_SYNC_ETR, &clock_sync_flags);
 		set_bit(ETR_EVENT_PORT1_CHANGE, &etr_events);
-		schedule_work(&etr_work);
+		queue_work(time_sync_wq, &etr_work);
 	}
+out:
+	mutex_unlock(&clock_sync_mutex);
 	return count;
 }
 
 static SYSDEV_ATTR(online, 0600, etr_online_show, etr_online_store);
 
-static ssize_t etr_stepping_control_show(struct sys_device *dev, char *buf)
+static ssize_t etr_stepping_control_show(struct sys_device *dev,
+					struct sysdev_attribute *attr,
+					char *buf)
 {
 	return sprintf(buf, "%i\n", (dev == &etr_port0_dev) ?
 		       etr_eacr.e0 : etr_eacr.e1);
@@ -1242,7 +1225,8 @@ static ssize_t etr_stepping_control_show(struct sys_device *dev, char *buf)
 
 static SYSDEV_ATTR(stepping_control, 0400, etr_stepping_control_show, NULL);
 
-static ssize_t etr_mode_code_show(struct sys_device *dev, char *buf)
+static ssize_t etr_mode_code_show(struct sys_device *dev,
+				struct sysdev_attribute *attr, char *buf)
 {
 	if (!etr_port0_online && !etr_port1_online)
 		/* Status word is not uptodate if both ports are offline. */
@@ -1253,7 +1237,8 @@ static ssize_t etr_mode_code_show(struct sys_device *dev, char *buf)
 
 static SYSDEV_ATTR(state_code, 0400, etr_mode_code_show, NULL);
 
-static ssize_t etr_untuned_show(struct sys_device *dev, char *buf)
+static ssize_t etr_untuned_show(struct sys_device *dev,
+				struct sysdev_attribute *attr, char *buf)
 {
 	struct etr_aib *aib = etr_aib_from_dev(dev);
 
@@ -1264,7 +1249,8 @@ static ssize_t etr_untuned_show(struct sys_device *dev, char *buf)
 
 static SYSDEV_ATTR(untuned, 0400, etr_untuned_show, NULL);
 
-static ssize_t etr_network_id_show(struct sys_device *dev, char *buf)
+static ssize_t etr_network_id_show(struct sys_device *dev,
+				struct sysdev_attribute *attr, char *buf)
 {
 	struct etr_aib *aib = etr_aib_from_dev(dev);
 
@@ -1275,7 +1261,8 @@ static ssize_t etr_network_id_show(struct sys_device *dev, char *buf)
 
 static SYSDEV_ATTR(network, 0400, etr_network_id_show, NULL);
 
-static ssize_t etr_id_show(struct sys_device *dev, char *buf)
+static ssize_t etr_id_show(struct sys_device *dev,
+			struct sysdev_attribute *attr, char *buf)
 {
 	struct etr_aib *aib = etr_aib_from_dev(dev);
 
@@ -1286,7 +1273,8 @@ static ssize_t etr_id_show(struct sys_device *dev, char *buf)
 
 static SYSDEV_ATTR(id, 0400, etr_id_show, NULL);
 
-static ssize_t etr_port_number_show(struct sys_device *dev, char *buf)
+static ssize_t etr_port_number_show(struct sys_device *dev,
+			struct sysdev_attribute *attr, char *buf)
 {
 	struct etr_aib *aib = etr_aib_from_dev(dev);
 
@@ -1297,7 +1285,8 @@ static ssize_t etr_port_number_show(struct sys_device *dev, char *buf)
 
 static SYSDEV_ATTR(port, 0400, etr_port_number_show, NULL);
 
-static ssize_t etr_coupled_show(struct sys_device *dev, char *buf)
+static ssize_t etr_coupled_show(struct sys_device *dev,
+			struct sysdev_attribute *attr, char *buf)
 {
 	struct etr_aib *aib = etr_aib_from_dev(dev);
 
@@ -1308,7 +1297,8 @@ static ssize_t etr_coupled_show(struct sys_device *dev, char *buf)
 
 static SYSDEV_ATTR(coupled, 0400, etr_coupled_show, NULL);
 
-static ssize_t etr_local_time_show(struct sys_device *dev, char *buf)
+static ssize_t etr_local_time_show(struct sys_device *dev,
+			struct sysdev_attribute *attr, char *buf)
 {
 	struct etr_aib *aib = etr_aib_from_dev(dev);
 
@@ -1319,7 +1309,8 @@ static ssize_t etr_local_time_show(struct sys_device *dev, char *buf)
 
 static SYSDEV_ATTR(local_time, 0400, etr_local_time_show, NULL);
 
-static ssize_t etr_utc_offset_show(struct sys_device *dev, char *buf)
+static ssize_t etr_utc_offset_show(struct sys_device *dev,
+			struct sysdev_attribute *attr, char *buf)
 {
 	struct etr_aib *aib = etr_aib_from_dev(dev);
 
@@ -1409,3 +1400,380 @@ out:
 }
 
 device_initcall(etr_init_sysfs);
+
+/*
+ * Server Time Protocol (STP) code.
+ */
+static int stp_online;
+static struct stp_sstpi stp_info;
+static void *stp_page;
+
+static void stp_work_fn(struct work_struct *work);
+static DEFINE_MUTEX(stp_work_mutex);
+static DECLARE_WORK(stp_work, stp_work_fn);
+static struct timer_list stp_timer;
+
+static int __init early_parse_stp(char *p)
+{
+	if (strncmp(p, "off", 3) == 0)
+		stp_online = 0;
+	else if (strncmp(p, "on", 2) == 0)
+		stp_online = 1;
+	return 0;
+}
+early_param("stp", early_parse_stp);
+
+/*
+ * Reset STP attachment.
+ */
+static void __init stp_reset(void)
+{
+	int rc;
+
+	stp_page = (void *) get_zeroed_page(GFP_ATOMIC);
+	rc = chsc_sstpc(stp_page, STP_OP_CTRL, 0x0000);
+	if (rc == 0)
+		set_bit(CLOCK_SYNC_HAS_STP, &clock_sync_flags);
+	else if (stp_online) {
+		pr_warning("The real or virtual hardware system does "
+			   "not provide an STP interface\n");
+		free_page((unsigned long) stp_page);
+		stp_page = NULL;
+		stp_online = 0;
+	}
+}
+
+static void stp_timeout(unsigned long dummy)
+{
+	queue_work(time_sync_wq, &stp_work);
+}
+
+static int __init stp_init(void)
+{
+	if (!test_bit(CLOCK_SYNC_HAS_STP, &clock_sync_flags))
+		return 0;
+	setup_timer(&stp_timer, stp_timeout, 0UL);
+	time_init_wq();
+	if (!stp_online)
+		return 0;
+	queue_work(time_sync_wq, &stp_work);
+	return 0;
+}
+
+arch_initcall(stp_init);
+
+/*
+ * STP timing alert. There are three causes:
+ * 1) timing status change
+ * 2) link availability change
+ * 3) time control parameter change
+ * In all three cases we are only interested in the clock source state.
+ * If a STP clock source is now available use it.
+ */
+static void stp_timing_alert(struct stp_irq_parm *intparm)
+{
+	if (intparm->tsc || intparm->lac || intparm->tcpc)
+		queue_work(time_sync_wq, &stp_work);
+}
+
+/*
+ * STP sync check machine check. This is called when the timing state
+ * changes from the synchronized state to the unsynchronized state.
+ * After a STP sync check the clock is not in sync. The machine check
+ * is broadcasted to all cpus at the same time.
+ */
+void stp_sync_check(void)
+{
+	disable_sync_clock(NULL);
+	queue_work(time_sync_wq, &stp_work);
+}
+
+/*
+ * STP island condition machine check. This is called when an attached
+ * server  attempts to communicate over an STP link and the servers
+ * have matching CTN ids and have a valid stratum-1 configuration
+ * but the configurations do not match.
+ */
+void stp_island_check(void)
+{
+	disable_sync_clock(NULL);
+	queue_work(time_sync_wq, &stp_work);
+}
+
+
+static int stp_sync_clock(void *data)
+{
+	static int first;
+	unsigned long long old_clock, delta;
+	struct clock_sync_data *stp_sync;
+	int rc;
+
+	stp_sync = data;
+
+	if (xchg(&first, 1) == 1) {
+		/* Slave */
+		clock_sync_cpu(stp_sync);
+		return 0;
+	}
+
+	/* Wait until all other cpus entered the sync function. */
+	while (atomic_read(&stp_sync->cpus) != 0)
+		cpu_relax();
+
+	enable_sync_clock();
+
+	rc = 0;
+	if (stp_info.todoff[0] || stp_info.todoff[1] ||
+	    stp_info.todoff[2] || stp_info.todoff[3] ||
+	    stp_info.tmd != 2) {
+		old_clock = get_clock();
+		rc = chsc_sstpc(stp_page, STP_OP_SYNC, 0);
+		if (rc == 0) {
+			delta = adjust_time(old_clock, get_clock(), 0);
+			fixup_clock_comparator(delta);
+			rc = chsc_sstpi(stp_page, &stp_info,
+					sizeof(struct stp_sstpi));
+			if (rc == 0 && stp_info.tmd != 2)
+				rc = -EAGAIN;
+		}
+	}
+	if (rc) {
+		disable_sync_clock(NULL);
+		stp_sync->in_sync = -EAGAIN;
+	} else
+		stp_sync->in_sync = 1;
+	xchg(&first, 0);
+	return 0;
+}
+
+/*
+ * STP work. Check for the STP state and take over the clock
+ * synchronization if the STP clock source is usable.
+ */
+static void stp_work_fn(struct work_struct *work)
+{
+	struct clock_sync_data stp_sync;
+	int rc;
+
+	/* prevent multiple execution. */
+	mutex_lock(&stp_work_mutex);
+
+	if (!stp_online) {
+		chsc_sstpc(stp_page, STP_OP_CTRL, 0x0000);
+		del_timer_sync(&stp_timer);
+		goto out_unlock;
+	}
+
+	rc = chsc_sstpc(stp_page, STP_OP_CTRL, 0xb0e0);
+	if (rc)
+		goto out_unlock;
+
+	rc = chsc_sstpi(stp_page, &stp_info, sizeof(struct stp_sstpi));
+	if (rc || stp_info.c == 0)
+		goto out_unlock;
+
+	/* Skip synchronization if the clock is already in sync. */
+	if (check_sync_clock())
+		goto out_unlock;
+
+	memset(&stp_sync, 0, sizeof(stp_sync));
+	get_online_cpus();
+	atomic_set(&stp_sync.cpus, num_online_cpus() - 1);
+	stop_machine(stp_sync_clock, &stp_sync, &cpu_online_map);
+	put_online_cpus();
+
+	if (!check_sync_clock())
+		/*
+		 * There is a usable clock but the synchonization failed.
+		 * Retry after a second.
+		 */
+		mod_timer(&stp_timer, jiffies + HZ);
+
+out_unlock:
+	mutex_unlock(&stp_work_mutex);
+}
+
+/*
+ * STP class sysfs interface functions
+ */
+static struct sysdev_class stp_sysclass = {
+	.name	= "stp",
+};
+
+static ssize_t stp_ctn_id_show(struct sysdev_class *class,
+				struct sysdev_class_attribute *attr,
+				char *buf)
+{
+	if (!stp_online)
+		return -ENODATA;
+	return sprintf(buf, "%016llx\n",
+		       *(unsigned long long *) stp_info.ctnid);
+}
+
+static SYSDEV_CLASS_ATTR(ctn_id, 0400, stp_ctn_id_show, NULL);
+
+static ssize_t stp_ctn_type_show(struct sysdev_class *class,
+				struct sysdev_class_attribute *attr,
+				char *buf)
+{
+	if (!stp_online)
+		return -ENODATA;
+	return sprintf(buf, "%i\n", stp_info.ctn);
+}
+
+static SYSDEV_CLASS_ATTR(ctn_type, 0400, stp_ctn_type_show, NULL);
+
+static ssize_t stp_dst_offset_show(struct sysdev_class *class,
+				   struct sysdev_class_attribute *attr,
+				   char *buf)
+{
+	if (!stp_online || !(stp_info.vbits & 0x2000))
+		return -ENODATA;
+	return sprintf(buf, "%i\n", (int)(s16) stp_info.dsto);
+}
+
+static SYSDEV_CLASS_ATTR(dst_offset, 0400, stp_dst_offset_show, NULL);
+
+static ssize_t stp_leap_seconds_show(struct sysdev_class *class,
+					struct sysdev_class_attribute *attr,
+					char *buf)
+{
+	if (!stp_online || !(stp_info.vbits & 0x8000))
+		return -ENODATA;
+	return sprintf(buf, "%i\n", (int)(s16) stp_info.leaps);
+}
+
+static SYSDEV_CLASS_ATTR(leap_seconds, 0400, stp_leap_seconds_show, NULL);
+
+static ssize_t stp_stratum_show(struct sysdev_class *class,
+				struct sysdev_class_attribute *attr,
+				char *buf)
+{
+	if (!stp_online)
+		return -ENODATA;
+	return sprintf(buf, "%i\n", (int)(s16) stp_info.stratum);
+}
+
+static SYSDEV_CLASS_ATTR(stratum, 0400, stp_stratum_show, NULL);
+
+static ssize_t stp_time_offset_show(struct sysdev_class *class,
+				struct sysdev_class_attribute *attr,
+				char *buf)
+{
+	if (!stp_online || !(stp_info.vbits & 0x0800))
+		return -ENODATA;
+	return sprintf(buf, "%i\n", (int) stp_info.tto);
+}
+
+static SYSDEV_CLASS_ATTR(time_offset, 0400, stp_time_offset_show, NULL);
+
+static ssize_t stp_time_zone_offset_show(struct sysdev_class *class,
+				struct sysdev_class_attribute *attr,
+				char *buf)
+{
+	if (!stp_online || !(stp_info.vbits & 0x4000))
+		return -ENODATA;
+	return sprintf(buf, "%i\n", (int)(s16) stp_info.tzo);
+}
+
+static SYSDEV_CLASS_ATTR(time_zone_offset, 0400,
+			 stp_time_zone_offset_show, NULL);
+
+static ssize_t stp_timing_mode_show(struct sysdev_class *class,
+				struct sysdev_class_attribute *attr,
+				char *buf)
+{
+	if (!stp_online)
+		return -ENODATA;
+	return sprintf(buf, "%i\n", stp_info.tmd);
+}
+
+static SYSDEV_CLASS_ATTR(timing_mode, 0400, stp_timing_mode_show, NULL);
+
+static ssize_t stp_timing_state_show(struct sysdev_class *class,
+				struct sysdev_class_attribute *attr,
+				char *buf)
+{
+	if (!stp_online)
+		return -ENODATA;
+	return sprintf(buf, "%i\n", stp_info.tst);
+}
+
+static SYSDEV_CLASS_ATTR(timing_state, 0400, stp_timing_state_show, NULL);
+
+static ssize_t stp_online_show(struct sysdev_class *class,
+				struct sysdev_class_attribute *attr,
+				char *buf)
+{
+	return sprintf(buf, "%i\n", stp_online);
+}
+
+static ssize_t stp_online_store(struct sysdev_class *class,
+				struct sysdev_class_attribute *attr,
+				const char *buf, size_t count)
+{
+	unsigned int value;
+
+	value = simple_strtoul(buf, NULL, 0);
+	if (value != 0 && value != 1)
+		return -EINVAL;
+	if (!test_bit(CLOCK_SYNC_HAS_STP, &clock_sync_flags))
+		return -EOPNOTSUPP;
+	mutex_lock(&clock_sync_mutex);
+	stp_online = value;
+	if (stp_online)
+		set_bit(CLOCK_SYNC_STP, &clock_sync_flags);
+	else
+		clear_bit(CLOCK_SYNC_STP, &clock_sync_flags);
+	queue_work(time_sync_wq, &stp_work);
+	mutex_unlock(&clock_sync_mutex);
+	return count;
+}
+
+/*
+ * Can't use SYSDEV_CLASS_ATTR because the attribute should be named
+ * stp/online but attr_online already exists in this file ..
+ */
+static struct sysdev_class_attribute attr_stp_online = {
+	.attr = { .name = "online", .mode = 0600 },
+	.show	= stp_online_show,
+	.store	= stp_online_store,
+};
+
+static struct sysdev_class_attribute *stp_attributes[] = {
+	&attr_ctn_id,
+	&attr_ctn_type,
+	&attr_dst_offset,
+	&attr_leap_seconds,
+	&attr_stp_online,
+	&attr_stratum,
+	&attr_time_offset,
+	&attr_time_zone_offset,
+	&attr_timing_mode,
+	&attr_timing_state,
+	NULL
+};
+
+static int __init stp_init_sysfs(void)
+{
+	struct sysdev_class_attribute **attr;
+	int rc;
+
+	rc = sysdev_class_register(&stp_sysclass);
+	if (rc)
+		goto out;
+	for (attr = stp_attributes; *attr; attr++) {
+		rc = sysdev_class_create_file(&stp_sysclass, *attr);
+		if (rc)
+			goto out_unreg;
+	}
+	return 0;
+out_unreg:
+	for (; attr >= stp_attributes; attr--)
+		sysdev_class_remove_file(&stp_sysclass, *attr);
+	sysdev_class_unregister(&stp_sysclass);
+out:
+	return rc;
+}
+
+device_initcall(stp_init_sysfs);

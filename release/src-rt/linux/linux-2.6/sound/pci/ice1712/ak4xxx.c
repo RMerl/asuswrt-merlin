@@ -3,7 +3,7 @@
  *
  *   AK4524 / AK4528 / AK4529 / AK4355 / AK4381 interface
  *
- *	Copyright (c) 2000 Jaroslav Kysela <perex@suse.cz>
+ *	Copyright (c) 2000 Jaroslav Kysela <perex@perex.cz>
  *
  *   This program is free software; you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -21,16 +21,16 @@
  *
  */      
 
-#include <sound/driver.h>
 #include <asm/io.h>
 #include <linux/delay.h>
 #include <linux/interrupt.h>
+#include <linux/slab.h>
 #include <linux/init.h>
 #include <sound/core.h>
 #include <sound/initval.h>
 #include "ice1712.h"
 
-MODULE_AUTHOR("Jaroslav Kysela <perex@suse.cz>");
+MODULE_AUTHOR("Jaroslav Kysela <perex@perex.cz>");
 MODULE_DESCRIPTION("ICEnsemble ICE17xx <-> AK4xxx AD/DA chip interface");
 MODULE_LICENSE("GPL");
 
@@ -60,7 +60,8 @@ static void snd_ice1712_akm4xxx_write(struct snd_akm4xxx *ak, int chip,
 	struct snd_ak4xxx_private *priv = (void *)ak->private_value[0];
 	struct snd_ice1712 *ice = ak->private_data[0];
 
-	snd_assert(chip >= 0 && chip < 4, return);
+	if (snd_BUG_ON(chip < 0 || chip >= 4))
+		return;
 
 	tmp = snd_ice1712_gpio_read(ice);
 	tmp |= priv->add_flags;

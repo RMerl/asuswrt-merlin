@@ -41,14 +41,14 @@ static int usb_hcd_ppc_soc_probe(const struct hc_driver *driver,
 
 	res = platform_get_resource(pdev, IORESOURCE_IRQ, 0);
 	if (!res) {
-		pr_debug(__FILE__ ": no irq\n");
+		pr_debug("%s: no irq\n", __FILE__);
 		return -ENODEV;
 	}
 	irq = res->start;
 
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	if (!res) {
-		pr_debug(__FILE__ ": no reg addr\n");
+		pr_debug("%s: no reg addr\n", __FILE__);
 		return -ENODEV;
 	}
 
@@ -59,20 +59,25 @@ static int usb_hcd_ppc_soc_probe(const struct hc_driver *driver,
 	hcd->rsrc_len = res->end - res->start + 1;
 
 	if (!request_mem_region(hcd->rsrc_start, hcd->rsrc_len, hcd_name)) {
-		pr_debug(__FILE__ ": request_mem_region failed\n");
+		pr_debug("%s: request_mem_region failed\n", __FILE__);
 		retval = -EBUSY;
 		goto err1;
 	}
 
 	hcd->regs = ioremap(hcd->rsrc_start, hcd->rsrc_len);
 	if (!hcd->regs) {
-		pr_debug(__FILE__ ": ioremap failed\n");
+		pr_debug("%s: ioremap failed\n", __FILE__);
 		retval = -ENOMEM;
 		goto err2;
 	}
 
 	ohci = hcd_to_ohci(hcd);
 	ohci->flags |= OHCI_QUIRK_BE_MMIO | OHCI_QUIRK_BE_DESC;
+
+#ifdef CONFIG_PPC_MPC52xx
+	/* MPC52xx doesn't need frame_no shift */
+	ohci->flags |= OHCI_QUIRK_FRAME_NO;
+#endif
 	ohci_hcd_init(ohci);
 
 	retval = usb_add_hcd(hcd, irq, IRQF_DISABLED);
@@ -167,7 +172,6 @@ static const struct hc_driver ohci_ppc_soc_hc_driver = {
 	 */
 	.hub_status_data =	ohci_hub_status_data,
 	.hub_control =		ohci_hub_control,
-	.hub_irq_enable =	ohci_rhsc_enable,
 #ifdef	CONFIG_PM
 	.bus_suspend =		ohci_bus_suspend,
 	.bus_resume =		ohci_bus_resume,
@@ -208,3 +212,4 @@ static struct platform_driver ohci_hcd_ppc_soc_driver = {
 	},
 };
 
+MODULE_ALIAS("platform:ppc-soc-ohci");

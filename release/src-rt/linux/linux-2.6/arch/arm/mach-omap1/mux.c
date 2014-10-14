@@ -3,9 +3,9 @@
  *
  * OMAP1 pin multiplexing configurations
  *
- * Copyright (C) 2003 - 2005 Nokia Corporation
+ * Copyright (C) 2003 - 2008 Nokia Corporation
  *
- * Written by Tony Lindgren <tony.lindgren@nokia.com>
+ * Written by Tony Lindgren
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,35 +24,65 @@
  */
 #include <linux/module.h>
 #include <linux/init.h>
-#include <asm/system.h>
-#include <asm/io.h>
+#include <linux/io.h>
 #include <linux/spinlock.h>
 
-#include <asm/arch/mux.h>
+#include <asm/system.h>
+
+#include <plat/mux.h>
 
 #ifdef CONFIG_OMAP_MUX
 
-#ifdef CONFIG_ARCH_OMAP730
-struct pin_config __initdata_or_module omap730_pins[] = {
-MUX_CFG_730("E2_730_KBR0",        12,   21,    0,   20,   1, 0)
-MUX_CFG_730("J7_730_KBR1",        12,   25,    0,   24,   1, 0)
-MUX_CFG_730("E1_730_KBR2",        12,   29,    0,   28,   1, 0)
-MUX_CFG_730("F3_730_KBR3",        13,    1,    0,    0,   1, 0)
-MUX_CFG_730("D2_730_KBR4",        13,    5,    0,    4,   1, 0)
-MUX_CFG_730("C2_730_KBC0",        13,    9,    0,    8,   1, 0)
-MUX_CFG_730("D3_730_KBC1",        13,   13,    0,   12,   1, 0)
-MUX_CFG_730("E4_730_KBC2",        13,   17,    0,   16,   1, 0)
-MUX_CFG_730("F4_730_KBC3",        13,   21,    0,   20,   1, 0)
-MUX_CFG_730("E3_730_KBC4",        13,   25,    0,   24,   1, 0)
+static struct omap_mux_cfg arch_mux_cfg;
 
-MUX_CFG_730("AA17_730_USB_DM",     2,   21,    0,   20,   0, 0)
-MUX_CFG_730("W16_730_USB_PU_EN",   2,   25,    0,   24,   0, 0)
-MUX_CFG_730("W17_730_USB_VBUSI",   2,   29,    0,   28,   0, 0)
+#if defined(CONFIG_ARCH_OMAP730) || defined(CONFIG_ARCH_OMAP850)
+static struct pin_config __initdata_or_module omap7xx_pins[] = {
+MUX_CFG_7XX("E2_7XX_KBR0",        12,   21,    0,   20,   1, 0)
+MUX_CFG_7XX("J7_7XX_KBR1",        12,   25,    0,   24,   1, 0)
+MUX_CFG_7XX("E1_7XX_KBR2",        12,   29,    0,   28,   1, 0)
+MUX_CFG_7XX("F3_7XX_KBR3",        13,    1,    0,    0,   1, 0)
+MUX_CFG_7XX("D2_7XX_KBR4",        13,    5,    0,    4,   1, 0)
+MUX_CFG_7XX("C2_7XX_KBC0",        13,    9,    0,    8,   1, 0)
+MUX_CFG_7XX("D3_7XX_KBC1",        13,   13,    0,   12,   1, 0)
+MUX_CFG_7XX("E4_7XX_KBC2",        13,   17,    0,   16,   1, 0)
+MUX_CFG_7XX("F4_7XX_KBC3",        13,   21,    0,   20,   1, 0)
+MUX_CFG_7XX("E3_7XX_KBC4",        13,   25,    0,   24,   1, 0)
+
+MUX_CFG_7XX("AA17_7XX_USB_DM",     2,   21,    0,   20,   0, 0)
+MUX_CFG_7XX("W16_7XX_USB_PU_EN",   2,   25,    0,   24,   0, 0)
+MUX_CFG_7XX("W17_7XX_USB_VBUSI",   2,   29,    6,   28,   1, 0)
+MUX_CFG_7XX("W18_7XX_USB_DMCK_OUT",3,    3,    1,    2,   0, 0)
+MUX_CFG_7XX("W19_7XX_USB_DCRST",   3,    7,    1,    6,   0, 0)
+
+/* MMC Pins */
+MUX_CFG_7XX("MMC_7XX_CMD",         2,    9,    0,    8,   1, 0)
+MUX_CFG_7XX("MMC_7XX_CLK",         2,   13,    0,   12,   1, 0)
+MUX_CFG_7XX("MMC_7XX_DAT0",        2,   17,    0,   16,   1, 0)
+
+/* I2C interface */
+MUX_CFG_7XX("I2C_7XX_SCL",         5,    1,    0,    0,   1, 0)
+MUX_CFG_7XX("I2C_7XX_SDA",         5,    5,    0,    0,   1, 0)
+
+/* SPI pins */
+MUX_CFG_7XX("SPI_7XX_1",           6,    5,    4,    4,   1, 0)
+MUX_CFG_7XX("SPI_7XX_2",           6,    9,    4,    8,   1, 0)
+MUX_CFG_7XX("SPI_7XX_3",           6,   13,    4,   12,   1, 0)
+MUX_CFG_7XX("SPI_7XX_4",           6,   17,    4,   16,   1, 0)
+MUX_CFG_7XX("SPI_7XX_5",           8,   25,    0,   24,   0, 0)
+MUX_CFG_7XX("SPI_7XX_6",           9,    5,    0,    4,   0, 0)
+
+/* UART pins */
+MUX_CFG_7XX("UART_7XX_1",          3,   21,    0,   20,   0, 0)
+MUX_CFG_7XX("UART_7XX_2",          8,    1,    6,    0,   0, 0)
 };
-#endif
+#define OMAP7XX_PINS_SZ		ARRAY_SIZE(omap7xx_pins)
+#else
+#define omap7xx_pins		NULL
+#define OMAP7XX_PINS_SZ		0
+#endif	/* CONFIG_ARCH_OMAP730 || CONFIG_ARCH_OMAP850 */
 
 #if defined(CONFIG_ARCH_OMAP15XX) || defined(CONFIG_ARCH_OMAP16XX)
-struct pin_config __initdata_or_module omap1xxx_pins[] = {
+static struct pin_config __initdata_or_module omap1xxx_pins[] = {
 /*
  *	 description		mux  mode   mux	 pull pull  pull  pu_pd	 pu  dbg
  *				reg  offset mode reg  bit   ena	  reg
@@ -283,21 +313,159 @@ MUX_CFG("R11_1610_CF_IOIS16",	 B,    0,    3,	  2,   16,   1,	  2,	 1,  1)
 MUX_CFG("V10_1610_CF_IREQ",	 A,   24,    3,	  2,   14,   0,	  2,	 0,  1)
 MUX_CFG("W10_1610_CF_RESET",	 A,   18,    3,	  2,   12,   1,	  2,	 1,  1)
 MUX_CFG("W11_1610_CF_CD1",	10,   15,    3,	  3,    8,   1,	  3,	 1,  1)
+
+/* parallel camera */
+MUX_CFG("J15_1610_CAM_LCLK",	 4,   24,    0,   0,  18,   1,    0,     0,  0)
+MUX_CFG("J18_1610_CAM_D7",	 4,   27,    0,   0,  19,   1,    0,     0,  0)
+MUX_CFG("J19_1610_CAM_D6",	 5,    0,    0,   0,  20,   1,    0,     0,  0)
+MUX_CFG("J14_1610_CAM_D5",	 5,    3,    0,   0,  21,   1,    0,     0,  0)
+MUX_CFG("K18_1610_CAM_D4",	 5,    6,    0,   0,  22,   1,    0,     0,  0)
+MUX_CFG("K19_1610_CAM_D3",	 5,    9,    0,   0,  23,   1,    0,     0,  0)
+MUX_CFG("K15_1610_CAM_D2",	 5,   12,    0,   0,  24,   1,    0,     0,  0)
+MUX_CFG("K14_1610_CAM_D1",	 5,   15,    0,   0,  25,   1,    0,     0,  0)
+MUX_CFG("L19_1610_CAM_D0",	 5,   18,    0,   0,  26,   1,    0,     0,  0)
+MUX_CFG("L18_1610_CAM_VS",	 5,   21,    0,   0,  27,   1,    0,     0,  0)
+MUX_CFG("L15_1610_CAM_HS",	 5,   24,    0,   0,  28,   1,    0,     0,  0)
+MUX_CFG("M19_1610_CAM_RSTZ",	 5,   27,    0,   0,  29,   0,    0,     0,  0)
+MUX_CFG("Y15_1610_CAM_OUTCLK",	 A,    0,    6,   2,   6,   0,    2,     0,  0)
+
+/* serial camera */
+MUX_CFG("H19_1610_CAM_EXCLK",	 4,   21,    0,   0,  17,   0,    0,     0,  0)
+	/* REVISIT 5912 spec sez CCP_* can't pullup or pulldown ... ? */
+MUX_CFG("Y12_1610_CCP_CLKP",	 8,   18,    6,   1,  24,   1,    1,     0,  0)
+MUX_CFG("W13_1610_CCP_CLKM",	 9,    0,    6,   1,  28,   1,    1,     0,  0)
+MUX_CFG("W14_1610_CCP_DATAP",	 9,   24,    6,   2,   4,   1,    2,     0,  0)
+MUX_CFG("Y14_1610_CCP_DATAM",	 9,   21,    6,   2,   3,   1,    2,     0,  0)
 };
+#define OMAP1XXX_PINS_SZ	ARRAY_SIZE(omap1xxx_pins)
+#else
+#define omap1xxx_pins		NULL
+#define OMAP1XXX_PINS_SZ	0
 #endif	/* CONFIG_ARCH_OMAP15XX || CONFIG_ARCH_OMAP16XX */
+
+static int __init_or_module omap1_cfg_reg(const struct pin_config *cfg)
+{
+	static DEFINE_SPINLOCK(mux_spin_lock);
+	unsigned long flags;
+	unsigned int reg_orig = 0, reg = 0, pu_pd_orig = 0, pu_pd = 0,
+		pull_orig = 0, pull = 0;
+	unsigned int mask, warn = 0;
+
+	/* Check the mux register in question */
+	if (cfg->mux_reg) {
+		unsigned	tmp1, tmp2;
+
+		spin_lock_irqsave(&mux_spin_lock, flags);
+		reg_orig = omap_readl(cfg->mux_reg);
+
+		/* The mux registers always seem to be 3 bits long */
+		mask = (0x7 << cfg->mask_offset);
+		tmp1 = reg_orig & mask;
+		reg = reg_orig & ~mask;
+
+		tmp2 = (cfg->mask << cfg->mask_offset);
+		reg |= tmp2;
+
+		if (tmp1 != tmp2)
+			warn = 1;
+
+		omap_writel(reg, cfg->mux_reg);
+		spin_unlock_irqrestore(&mux_spin_lock, flags);
+	}
+
+	/* Check for pull up or pull down selection on 1610 */
+	if (!cpu_is_omap15xx()) {
+		if (cfg->pu_pd_reg && cfg->pull_val) {
+			spin_lock_irqsave(&mux_spin_lock, flags);
+			pu_pd_orig = omap_readl(cfg->pu_pd_reg);
+			mask = 1 << cfg->pull_bit;
+
+			if (cfg->pu_pd_val) {
+				if (!(pu_pd_orig & mask))
+					warn = 1;
+				/* Use pull up */
+				pu_pd = pu_pd_orig | mask;
+			} else {
+				if (pu_pd_orig & mask)
+					warn = 1;
+				/* Use pull down */
+				pu_pd = pu_pd_orig & ~mask;
+			}
+			omap_writel(pu_pd, cfg->pu_pd_reg);
+			spin_unlock_irqrestore(&mux_spin_lock, flags);
+		}
+	}
+
+	/* Check for an associated pull down register */
+	if (cfg->pull_reg) {
+		spin_lock_irqsave(&mux_spin_lock, flags);
+		pull_orig = omap_readl(cfg->pull_reg);
+		mask = 1 << cfg->pull_bit;
+
+		if (cfg->pull_val) {
+			if (pull_orig & mask)
+				warn = 1;
+			/* Low bit = pull enabled */
+			pull = pull_orig & ~mask;
+		} else {
+			if (!(pull_orig & mask))
+				warn = 1;
+			/* High bit = pull disabled */
+			pull = pull_orig | mask;
+		}
+
+		omap_writel(pull, cfg->pull_reg);
+		spin_unlock_irqrestore(&mux_spin_lock, flags);
+	}
+
+	if (warn) {
+#ifdef CONFIG_OMAP_MUX_WARNINGS
+		printk(KERN_WARNING "MUX: initialized %s\n", cfg->name);
+#endif
+	}
+
+#ifdef CONFIG_OMAP_MUX_DEBUG
+	if (cfg->debug || warn) {
+		printk("MUX: Setting register %s\n", cfg->name);
+		printk("      %s (0x%08x) = 0x%08x -> 0x%08x\n",
+		       cfg->mux_reg_name, cfg->mux_reg, reg_orig, reg);
+
+		if (!cpu_is_omap15xx()) {
+			if (cfg->pu_pd_reg && cfg->pull_val) {
+				printk("      %s (0x%08x) = 0x%08x -> 0x%08x\n",
+				       cfg->pu_pd_name, cfg->pu_pd_reg,
+				       pu_pd_orig, pu_pd);
+			}
+		}
+
+		if (cfg->pull_reg)
+			printk("      %s (0x%08x) = 0x%08x -> 0x%08x\n",
+			       cfg->pull_name, cfg->pull_reg, pull_orig, pull);
+	}
+#endif
+
+#ifdef CONFIG_OMAP_MUX_WARNINGS
+	return warn ? -ETXTBSY : 0;
+#else
+	return 0;
+#endif
+}
 
 int __init omap1_mux_init(void)
 {
+	if (cpu_is_omap7xx()) {
+		arch_mux_cfg.pins	= omap7xx_pins;
+		arch_mux_cfg.size	= OMAP7XX_PINS_SZ;
+		arch_mux_cfg.cfg_reg	= omap1_cfg_reg;
+	}
 
-#ifdef CONFIG_ARCH_OMAP730
-	omap_mux_register(omap730_pins, ARRAY_SIZE(omap730_pins));
-#endif
+	if (cpu_is_omap15xx() || cpu_is_omap16xx()) {
+		arch_mux_cfg.pins	= omap1xxx_pins;
+		arch_mux_cfg.size	= OMAP1XXX_PINS_SZ;
+		arch_mux_cfg.cfg_reg	= omap1_cfg_reg;
+	}
 
-#if defined(CONFIG_ARCH_OMAP15XX) || defined(CONFIG_ARCH_OMAP16XX)
-	omap_mux_register(omap1xxx_pins, ARRAY_SIZE(omap1xxx_pins));
-#endif
-
-	return 0;
+	return omap_mux_register(&arch_mux_cfg);
 }
 
 #endif

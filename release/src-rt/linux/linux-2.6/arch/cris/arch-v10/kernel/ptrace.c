@@ -65,6 +65,7 @@ void
 ptrace_disable(struct task_struct *child)
 {
        /* Todo - pending singlesteps? */
+       clear_tsk_thread_flag(child, TIF_SYSCALL_TRACE);
 }
 
 /* 
@@ -75,37 +76,29 @@ ptrace_disable(struct task_struct *child)
  * (in user space) where the result of the ptrace call is written (instead of
  * being returned).
  */
-long arch_ptrace(struct task_struct *child, long request, long addr, long data)
+long arch_ptrace(struct task_struct *child, long request,
+		 unsigned long addr, unsigned long data)
 {
 	int ret;
+	unsigned int regno = addr >> 2;
 	unsigned long __user *datap = (unsigned long __user *)data;
 
 	switch (request) {
 		/* Read word at location address. */ 
 		case PTRACE_PEEKTEXT:
-		case PTRACE_PEEKDATA: {
-			unsigned long tmp;
-			int copied;
-
-			copied = access_process_vm(child, addr, &tmp, sizeof(tmp), 0);
-			ret = -EIO;
-			
-			if (copied != sizeof(tmp))
-				break;
-			
-			ret = put_user(tmp,datap);
+		case PTRACE_PEEKDATA:
+			ret = generic_ptrace_peekdata(child, addr, data);
 			break;
-		}
 
 		/* Read the word at location address in the USER area. */
 		case PTRACE_PEEKUSR: {
 			unsigned long tmp;
 
 			ret = -EIO;
-			if ((addr & 3) || addr < 0 || addr > PT_MAX << 2)
+			if ((addr & 3) || regno > PT_MAX)
 				break;
 
-			tmp = get_reg(child, addr >> 2);
+			tmp = get_reg(child, regno);
 			ret = put_user(tmp, datap);
 			break;
 		}
@@ -113,87 +106,25 @@ long arch_ptrace(struct task_struct *child, long request, long addr, long data)
 		/* Write the word at location address. */
 		case PTRACE_POKETEXT:
 		case PTRACE_POKEDATA:
-			ret = 0;
-			
-			if (access_process_vm(child, addr, &data, sizeof(data), 1) == sizeof(data))
-				break;
-			
-			ret = -EIO;
+			ret = generic_ptrace_pokedata(child, addr, data);
 			break;
  
  		/* Write the word at location address in the USER area. */
 		case PTRACE_POKEUSR:
 			ret = -EIO;
-			if ((addr & 3) || addr < 0 || addr > PT_MAX << 2)
+			if ((addr & 3) || regno > PT_MAX)
 				break;
 
-			addr >>= 2;
-
-			if (addr == PT_DCCR) {
+			if (regno == PT_DCCR) {
 				/* don't allow the tracing process to change stuff like
 				 * interrupt enable, kernel/user bit, dma enables etc.
 				 */
 				data &= DCCR_MASK;
 				data |= get_reg(child, PT_DCCR) & ~DCCR_MASK;
 			}
-			if (put_reg(child, addr, data))
+			if (put_reg(child, regno, data))
 				break;
 			ret = 0;
-			break;
-
-		case PTRACE_SYSCALL:
-		case PTRACE_CONT:
-			ret = -EIO;
-			
-			if (!valid_signal(data))
-				break;
-                        
-			if (request == PTRACE_SYSCALL) {
-				set_tsk_thread_flag(child, TIF_SYSCALL_TRACE);
-			}
-			else {
-				clear_tsk_thread_flag(child, TIF_SYSCALL_TRACE);
-			}
-			
-			child->exit_code = data;
-			
-			/* TODO: make sure any pending breakpoint is killed */
-			wake_up_process(child);
-			ret = 0;
-			
-			break;
-		
- 		/* Make the child exit by sending it a sigkill. */
-		case PTRACE_KILL:
-			ret = 0;
-			
-			if (child->exit_state == EXIT_ZOMBIE)
-				break;
-			
-			child->exit_code = SIGKILL;
-			
-			/* TODO: make sure any pending breakpoint is killed */
-			wake_up_process(child);
-			break;
-
-		/* Set the trap flag. */
-		case PTRACE_SINGLESTEP:
-			ret = -EIO;
-			
-			if (!valid_signal(data))
-				break;
-			
-			clear_tsk_thread_flag(child, TIF_SYSCALL_TRACE);
-
-			/* TODO: set some clever breakpoint mechanism... */
-
-			child->exit_code = data;
-			wake_up_process(child);
-			ret = 0;
-			break;
-
-		case PTRACE_DETACH:
-			ret = ptrace_detach(child, data);
 			break;
 
 		/* Get all GP registers from the child. */
@@ -210,7 +141,7 @@ long arch_ptrace(struct task_struct *child, long request, long addr, long data)
 					break;
 				}
 				
-				data += sizeof(long);
+				datap++;
 			}
 
 			break;
@@ -234,7 +165,7 @@ long arch_ptrace(struct task_struct *child, long request, long addr, long data)
 				}
 				
 				put_reg(child, i, tmp);
-				data += sizeof(long);
+				datap++;
 			}
 			
 			break;

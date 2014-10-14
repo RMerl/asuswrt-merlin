@@ -20,61 +20,57 @@
 #include <linux/init.h>
 #include <linux/device.h>
 
-#include <asm/hardware.h>
+#include <mach/hardware.h>
 #include <asm/mach-types.h>
 #include <asm/mach/arch.h>
 #include <asm/mach/map.h>
 
-#include <asm/arch/gpio.h>
-#include <asm/arch/mux.h>
-#include <asm/arch/usb.h>
-#include <asm/arch/board.h>
-#include <asm/arch/common.h>
-
-static void __init omap_generic_init_irq(void)
-{
-	omap2_init_common_hw();
-	omap_init_irq();
-}
-
-static struct omap_uart_config generic_uart_config __initdata = {
-	.enabled_uarts = ((1 << 0) | (1 << 1) | (1 << 2)),
-};
-
-static struct omap_mmc_config generic_mmc_config __initdata = {
-	.mmc [0] = {
-		.enabled 	= 0,
-		.wire4		= 0,
-		.wp_pin		= -1,
-		.power_pin	= -1,
-		.switch_pin	= -1,
-	},
-};
+#include <mach/gpio.h>
+#include <plat/usb.h>
+#include <plat/board.h>
+#include <plat/common.h>
 
 static struct omap_board_config_kernel generic_config[] = {
-	{ OMAP_TAG_UART,	&generic_uart_config },
-	{ OMAP_TAG_MMC,		&generic_mmc_config },
 };
+
+static void __init omap_generic_init_early(void)
+{
+	omap2_init_common_infrastructure();
+	omap2_init_common_devices(NULL, NULL);
+}
 
 static void __init omap_generic_init(void)
 {
+	omap_serial_init();
 	omap_board_config = generic_config;
 	omap_board_config_size = ARRAY_SIZE(generic_config);
-	omap_serial_init();
 }
 
 static void __init omap_generic_map_io(void)
 {
-	omap2_map_common_io();
+	if (cpu_is_omap242x()) {
+		omap2_set_globals_242x();
+		omap242x_map_common_io();
+	} else if (cpu_is_omap243x()) {
+		omap2_set_globals_243x();
+		omap243x_map_common_io();
+	} else if (cpu_is_omap34xx()) {
+		omap2_set_globals_3xxx();
+		omap34xx_map_common_io();
+	} else if (cpu_is_omap44xx()) {
+		omap2_set_globals_443x();
+		omap44xx_map_common_io();
+	}
 }
 
+/* XXX This machine entry name should be updated */
 MACHINE_START(OMAP_GENERIC, "Generic OMAP24xx")
 	/* Maintainer: Paul Mundt <paul.mundt@nokia.com> */
-	.phys_io	= 0x48000000,
-	.io_pg_offst	= ((0xd8000000) >> 18) & 0xfffc,
 	.boot_params	= 0x80000100,
+	.reserve	= omap_reserve,
 	.map_io		= omap_generic_map_io,
-	.init_irq	= omap_generic_init_irq,
+	.init_early	= omap_generic_init_early,
+	.init_irq	= omap_init_irq,
 	.init_machine	= omap_generic_init,
 	.timer		= &omap_timer,
 MACHINE_END

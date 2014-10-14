@@ -1,7 +1,7 @@
 /*
  *  Copyright (c) 2004 James Courtier-Dutton <James@superbug.demon.co.uk>
  *  Driver CA0106 chips. e.g. Sound Blaster Audigy LS and Live 24bit
- *  Version: 0.0.23
+ *  Version: 0.0.25
  *
  *  FEATURES currently supported:
  *    Front, Rear and Center/LFE.
@@ -79,6 +79,10 @@
  *    Add support for MSI K8N Diamond Motherboard with onboard SB Live 24bit without AC97. From kiksen, bug #901
  *  0.0.23
  *    Implement support for Line-in capture on SB Live 24bit.
+ *  0.0.24
+ *    Add support for mute control on SB Live 24bit (cards w/ SPI DAC)
+ *  0.0.25
+ *    Powerdown SPI DAC channels when not in use
  *
  *  BUGS:
  *    Some stability problems when unloading the snd-ca0106 kernel module.
@@ -113,7 +117,7 @@
  *    DAC: Unknown
  *    Trying to handle it like the SB0410.
  *
- *  This code was initally based on code from ALSA's emu10k1x.c which is:
+ *  This code was initially based on code from ALSA's emu10k1x.c which is:
  *  Copyright (c) by Francisco Moraes <fmoraes@nc.rr.com>
  *
  *   This program is free software; you can redistribute it and/or modify
@@ -131,7 +135,6 @@
  *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
  *
  */
-#include <sound/driver.h>
 #include <linux/delay.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>
@@ -168,6 +171,34 @@ MODULE_PARM_DESC(subsystem, "Force card subsystem model.");
 #include "ca0106.h"
 
 static struct snd_ca0106_details ca0106_chip_details[] = {
+	 /* Sound Blaster X-Fi Extreme Audio. This does not have an AC97. 53SB079000000 */
+	 /* It is really just a normal SB Live 24bit. */
+	 /* Tested:
+	  * See ALSA bug#3251
+	  */
+	 { .serial = 0x10131102,
+	   .name   = "X-Fi Extreme Audio [SBxxxx]",
+	   .gpio_type = 1,
+	   .i2c_adc = 1 } ,
+	 /* Sound Blaster X-Fi Extreme Audio. This does not have an AC97. 53SB079000000 */
+	 /* It is really just a normal SB Live 24bit. */
+	 /*
+ 	  * CTRL:CA0111-WTLF
+	  * ADC: WM8775SEDS
+	  * DAC: CS4382-KQZ
+	  */
+	 /* Tested:
+	  * Playback on front, rear, center/lfe speakers
+	  * Capture from Mic in.
+	  * Not-Tested:
+	  * Capture from Line in.
+	  * Playback to digital out.
+	  */
+	 { .serial = 0x10121102,
+	   .name   = "X-Fi Extreme Audio [SB0790]",
+	   .gpio_type = 1,
+	   .i2c_adc = 1 } ,
+	 /* New Dell Sound Blaster Live! 7.1 24bit. This does not have an AC97.  */
 	 /* AudigyLS[SB0310] */
 	 { .serial = 0x10021102,
 	   .name   = "AudigyLS [SB0310]",
@@ -196,7 +227,7 @@ static struct snd_ca0106_details ca0106_chip_details[] = {
 	   .name   = "Audigy SE [SB0570]",
 	   .gpio_type = 1,
 	   .i2c_adc = 1,
-	   .spi_dac = 1 } ,
+	   .spi_dac = 0x4021 } ,
 	 /* New Audigy LS. Has a different DAC. */
 	 /* SB0570:
 	  * CTRL:CA0106-DAT
@@ -207,7 +238,17 @@ static struct snd_ca0106_details ca0106_chip_details[] = {
 	   .name   = "Audigy SE OEM [SB0570a]",
 	   .gpio_type = 1,
 	   .i2c_adc = 1,
-	   .spi_dac = 1 } ,
+	   .spi_dac = 0x4021 } ,
+	/* Sound Blaster 5.1vx
+	 * Tested: Playback on front, rear, center/lfe speakers
+	 * Not-Tested: Capture
+	 */
+	{ .serial = 0x10041102,
+	  .name   = "Sound Blaster 5.1vx [SB1070]",
+	  .gpio_type = 1,
+	  .i2c_adc = 0,
+	  .spi_dac = 0x0124
+	 } ,
 	 /* MSI K8N Diamond Motherboard with onboard SB Live 24bit without AC97 */
 	 /* SB0438
 	  * CTRL:CA0106-DAT
@@ -218,6 +259,20 @@ static struct snd_ca0106_details ca0106_chip_details[] = {
 	   .name   = "MSI K8N Diamond MB [SB0438]",
 	   .gpio_type = 2,
 	   .i2c_adc = 1 } ,
+	 /* MSI K8N Diamond PLUS MB */
+	 { .serial = 0x10091102,
+	   .name   = "MSI K8N Diamond MB",
+	   .gpio_type = 2,
+	   .i2c_adc = 1,
+	   .spi_dac = 0x4021 } ,
+	/* Giga-byte GA-G1975X mobo
+	 * Novell bnc#395807
+	 */
+	/* FIXME: the GPIO and I2C setting aren't tested well */
+	{ .serial = 0x1458a006,
+	  .name = "Giga-byte GA-G1975X",
+	  .gpio_type = 1,
+	  .i2c_adc = 1 },
 	 /* Shuttle XPC SD31P which has an onboard Creative Labs
 	  * Sound Blaster Live! 24-bit EAX
 	  * high-definition 7.1 audio processor".
@@ -242,10 +297,11 @@ static struct snd_ca0106_details ca0106_chip_details[] = {
 
 /* hardware definition */
 static struct snd_pcm_hardware snd_ca0106_playback_hw = {
-	.info =			(SNDRV_PCM_INFO_MMAP | 
-				 SNDRV_PCM_INFO_INTERLEAVED |
-				 SNDRV_PCM_INFO_BLOCK_TRANSFER |
-				 SNDRV_PCM_INFO_MMAP_VALID),
+	.info =			SNDRV_PCM_INFO_MMAP | 
+				SNDRV_PCM_INFO_INTERLEAVED |
+				SNDRV_PCM_INFO_BLOCK_TRANSFER |
+				SNDRV_PCM_INFO_MMAP_VALID |
+				SNDRV_PCM_INFO_SYNC_START,
 	.formats =		SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S32_LE,
 	.rates =		(SNDRV_PCM_RATE_48000 | SNDRV_PCM_RATE_96000 |
 				 SNDRV_PCM_RATE_192000),
@@ -267,15 +323,21 @@ static struct snd_pcm_hardware snd_ca0106_capture_hw = {
 				 SNDRV_PCM_INFO_BLOCK_TRANSFER |
 				 SNDRV_PCM_INFO_MMAP_VALID),
 	.formats =		SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S32_LE,
+#if 0 /* FIXME: looks like 44.1kHz capture causes noisy output on 48kHz */
 	.rates =		(SNDRV_PCM_RATE_44100 | SNDRV_PCM_RATE_48000 |
 				 SNDRV_PCM_RATE_96000 | SNDRV_PCM_RATE_192000),
 	.rate_min =		44100,
+#else
+	.rates =		(SNDRV_PCM_RATE_48000 |
+				 SNDRV_PCM_RATE_96000 | SNDRV_PCM_RATE_192000),
+	.rate_min =		48000,
+#endif /* FIXME */
 	.rate_max =		192000,
 	.channels_min =		2,
 	.channels_max =		2,
-	.buffer_bytes_max =	((65536 - 64) * 8),
+	.buffer_bytes_max =	65536 - 128,
 	.period_bytes_min =	64,
-	.period_bytes_max =	(65536 - 64),
+	.period_bytes_max =	32768 - 64,
 	.periods_min =		2,
 	.periods_max =		2,
 	.fifo_size =		0,
@@ -360,7 +422,9 @@ int snd_ca0106_i2c_write(struct snd_ca0106 *emu,
 	}
 
 	tmp = reg << 25 | value << 16;
-	// snd_printk("I2C-write:reg=0x%x, value=0x%x\n", reg, value);
+	/*
+	snd_printk(KERN_DEBUG "I2C-write:reg=0x%x, value=0x%x\n", reg, value);
+	*/
 	/* Not sure what this I2C channel controls. */
 	/* snd_ca0106_ptr_write(emu, I2C_D0, 0, tmp); */
 
@@ -378,7 +442,7 @@ int snd_ca0106_i2c_write(struct snd_ca0106 *emu,
 		/* Wait till the transaction ends */
 		while (1) {
 			status = snd_ca0106_ptr_read(emu, I2C_A, 0);
-                	//snd_printk("I2C:status=0x%x\n", status);
+			/*snd_printk(KERN_DEBUG "I2C:status=0x%x\n", status);*/
 			timeout++;
 			if ((status & I2C_A_ADC_START) == 0)
 				break;
@@ -403,22 +467,22 @@ int snd_ca0106_i2c_write(struct snd_ca0106 *emu,
 static void snd_ca0106_intr_enable(struct snd_ca0106 *emu, unsigned int intrenb)
 {
 	unsigned long flags;
-	unsigned int enable;
-  
+	unsigned int intr_enable;
+
 	spin_lock_irqsave(&emu->emu_lock, flags);
-	enable = inl(emu->port + INTE) | intrenb;
-	outl(enable, emu->port + INTE);
+	intr_enable = inl(emu->port + INTE) | intrenb;
+	outl(intr_enable, emu->port + INTE);
 	spin_unlock_irqrestore(&emu->emu_lock, flags);
 }
 
 static void snd_ca0106_intr_disable(struct snd_ca0106 *emu, unsigned int intrenb)
 {
 	unsigned long flags;
-	unsigned int enable;
-  
+	unsigned int intr_enable;
+
 	spin_lock_irqsave(&emu->emu_lock, flags);
-	enable = inl(emu->port + INTE) & ~intrenb;
-	outl(enable, emu->port + INTE);
+	intr_enable = inl(emu->port + INTE) & ~intrenb;
+	outl(intr_enable, emu->port + INTE);
 	spin_unlock_irqrestore(&emu->emu_lock, flags);
 }
 
@@ -426,6 +490,69 @@ static void snd_ca0106_intr_disable(struct snd_ca0106 *emu, unsigned int intrenb
 static void snd_ca0106_pcm_free_substream(struct snd_pcm_runtime *runtime)
 {
 	kfree(runtime->private_data);
+}
+
+static const int spi_dacd_reg[] = {
+	SPI_DACD0_REG,
+	SPI_DACD1_REG,
+	SPI_DACD2_REG,
+	0,
+	SPI_DACD4_REG,
+};
+static const int spi_dacd_bit[] = {
+	SPI_DACD0_BIT,
+	SPI_DACD1_BIT,
+	SPI_DACD2_BIT,
+	0,
+	SPI_DACD4_BIT,
+};
+
+static void restore_spdif_bits(struct snd_ca0106 *chip, int idx)
+{
+	if (chip->spdif_str_bits[idx] != chip->spdif_bits[idx]) {
+		chip->spdif_str_bits[idx] = chip->spdif_bits[idx];
+		snd_ca0106_ptr_write(chip, SPCS0 + idx, 0,
+				     chip->spdif_str_bits[idx]);
+	}
+}
+
+static int snd_ca0106_channel_dac(struct snd_ca0106_details *details,
+				  int channel_id)
+{
+	switch (channel_id) {
+	case PCM_FRONT_CHANNEL:
+		return (details->spi_dac & 0xf000) >> (4 * 3);
+	case PCM_REAR_CHANNEL:
+		return (details->spi_dac & 0x0f00) >> (4 * 2);
+	case PCM_CENTER_LFE_CHANNEL:
+		return (details->spi_dac & 0x00f0) >> (4 * 1);
+	case PCM_UNKNOWN_CHANNEL:
+		return (details->spi_dac & 0x000f) >> (4 * 0);
+	default:
+		snd_printk(KERN_DEBUG "ca0106: unknown channel_id %d\n",
+			   channel_id);
+	}
+	return 0;
+}
+
+static int snd_ca0106_pcm_power_dac(struct snd_ca0106 *chip, int channel_id,
+				    int power)
+{
+	if (chip->details->spi_dac) {
+		const int dac = snd_ca0106_channel_dac(chip->details,
+						       channel_id);
+		const int reg = spi_dacd_reg[dac];
+		const int bit = spi_dacd_bit[dac];
+
+		if (power)
+			/* Power up */
+			chip->spi_dac_reg[reg] &= ~bit;
+		else
+			/* Power down */
+			chip->spi_dac_reg[reg] |= bit;
+		return snd_ca0106_spi_write(chip, chip->spi_dac_reg[reg]);
+	}
+	return 0;
 }
 
 /* open_playback callback */
@@ -455,13 +582,27 @@ static int snd_ca0106_pcm_open_playback_channel(struct snd_pcm_substream *substr
         channel->number = channel_id;
 
 	channel->use = 1;
-        //printk("open:channel_id=%d, chip=%p, channel=%p\n",channel_id, chip, channel);
+	/*
+	printk(KERN_DEBUG "open:channel_id=%d, chip=%p, channel=%p\n",
+	       channel_id, chip, channel);
+	*/
         //channel->interrupt = snd_ca0106_pcm_channel_interrupt;
 	channel->epcm = epcm;
 	if ((err = snd_pcm_hw_constraint_integer(runtime, SNDRV_PCM_HW_PARAM_PERIODS)) < 0)
                 return err;
 	if ((err = snd_pcm_hw_constraint_step(runtime, 0, SNDRV_PCM_HW_PARAM_PERIOD_BYTES, 64)) < 0)
                 return err;
+	snd_pcm_set_sync(substream);
+
+	/* Front channel dac should already be on */
+	if (channel_id != PCM_FRONT_CHANNEL) {
+		err = snd_ca0106_pcm_power_dac(chip, channel_id, 1);
+		if (err < 0)
+			return err;
+	}
+
+	restore_spdif_bits(chip, channel_id);
+
 	return 0;
 }
 
@@ -472,6 +613,17 @@ static int snd_ca0106_pcm_close_playback(struct snd_pcm_substream *substream)
 	struct snd_pcm_runtime *runtime = substream->runtime;
         struct snd_ca0106_pcm *epcm = runtime->private_data;
 	chip->playback_channels[epcm->channel_id].use = 0;
+
+	restore_spdif_bits(chip, epcm->channel_id);
+
+	/* Front channel dac should stay on */
+	if (epcm->channel_id != PCM_FRONT_CHANNEL) {
+		int err;
+		err = snd_ca0106_pcm_power_dac(chip, epcm->channel_id, 0);
+		if (err < 0)
+			return err;
+	}
+
 	/* FIXME: maybe zero others */
 	return 0;
 }
@@ -524,7 +676,10 @@ static int snd_ca0106_pcm_open_capture_channel(struct snd_pcm_substream *substre
         channel->number = channel_id;
 
 	channel->use = 1;
-        //printk("open:channel_id=%d, chip=%p, channel=%p\n",channel_id, chip, channel);
+	/*
+        printk(KERN_DEBUG "open:channel_id=%d, chip=%p, channel=%p\n",
+	       channel_id, chip, channel);
+	*/
         //channel->interrupt = snd_ca0106_pcm_channel_interrupt;
         channel->epcm = epcm;
 	if ((err = snd_pcm_hw_constraint_integer(runtime, SNDRV_PCM_HW_PARAM_PERIODS)) < 0)
@@ -615,9 +770,20 @@ static int snd_ca0106_pcm_prepare_playback(struct snd_pcm_substream *substream)
 	u32 reg71;
 	int i;
 	
-        //snd_printk("prepare:channel_number=%d, rate=%d, format=0x%x, channels=%d, buffer_size=%ld, period_size=%ld, periods=%u, frames_to_bytes=%d\n",channel, runtime->rate, runtime->format, runtime->channels, runtime->buffer_size, runtime->period_size, runtime->periods, frames_to_bytes(runtime, 1));
-        //snd_printk("dma_addr=%x, dma_area=%p, table_base=%p\n",runtime->dma_addr, runtime->dma_area, table_base);
-	//snd_printk("dma_addr=%x, dma_area=%p, dma_bytes(size)=%x\n",emu->buffer.addr, emu->buffer.area, emu->buffer.bytes);
+#if 0 /* debug */
+	snd_printk(KERN_DEBUG
+		   "prepare:channel_number=%d, rate=%d, format=0x%x, "
+		   "channels=%d, buffer_size=%ld, period_size=%ld, "
+		   "periods=%u, frames_to_bytes=%d\n",
+		   channel, runtime->rate, runtime->format,
+		   runtime->channels, runtime->buffer_size,
+		   runtime->period_size, runtime->periods,
+		   frames_to_bytes(runtime, 1));
+	snd_printk(KERN_DEBUG "dma_addr=%x, dma_area=%p, table_base=%p\n",
+		   runtime->dma_addr, runtime->dma_area, table_base);
+	snd_printk(KERN_DEBUG "dma_addr=%x, dma_area=%p, dma_bytes(size)=%x\n",
+		   emu->buffer.addr, emu->buffer.area, emu->buffer.bytes);
+#endif /* debug */
 	/* Rate can be set per channel. */
 	/* reg40 control host to fifo */
 	/* reg71 controls DAC rate. */
@@ -689,7 +855,6 @@ static int snd_ca0106_pcm_prepare_playback(struct snd_pcm_substream *substream)
 			       SPCS_CHANNELNUM_LEFT | SPCS_SOURCENUM_UNSPEC |
 			       SPCS_GENERATIONSTATUS | 0x00001200 |
 			       0x00000000 | SPCS_EMPHASIS_NONE | SPCS_COPYRIGHT );
-	}
 #endif
 
 	return 0;
@@ -710,9 +875,20 @@ static int snd_ca0106_pcm_prepare_capture(struct snd_pcm_substream *substream)
 	u32 reg71_set = 0;
 	u32 reg71;
 	
-        //snd_printk("prepare:channel_number=%d, rate=%d, format=0x%x, channels=%d, buffer_size=%ld, period_size=%ld, periods=%u, frames_to_bytes=%d\n",channel, runtime->rate, runtime->format, runtime->channels, runtime->buffer_size, runtime->period_size, runtime->periods, frames_to_bytes(runtime, 1));
-        //snd_printk("dma_addr=%x, dma_area=%p, table_base=%p\n",runtime->dma_addr, runtime->dma_area, table_base);
-	//snd_printk("dma_addr=%x, dma_area=%p, dma_bytes(size)=%x\n",emu->buffer.addr, emu->buffer.area, emu->buffer.bytes);
+#if 0 /* debug */
+	snd_printk(KERN_DEBUG
+		   "prepare:channel_number=%d, rate=%d, format=0x%x, "
+		   "channels=%d, buffer_size=%ld, period_size=%ld, "
+		   "periods=%u, frames_to_bytes=%d\n",
+		   channel, runtime->rate, runtime->format,
+		   runtime->channels, runtime->buffer_size,
+		   runtime->period_size, runtime->periods,
+		   frames_to_bytes(runtime, 1));
+        snd_printk(KERN_DEBUG "dma_addr=%x, dma_area=%p, table_base=%p\n",
+		   runtime->dma_addr, runtime->dma_area, table_base);
+	snd_printk(KERN_DEBUG "dma_addr=%x, dma_area=%p, dma_bytes(size)=%x\n",
+		   emu->buffer.addr, emu->buffer.area, emu->buffer.bytes);
+#endif /* debug */
 	/* reg71 controls ADC rate. */
 	switch (runtime->rate) {
 	case 44100:
@@ -757,7 +933,14 @@ static int snd_ca0106_pcm_prepare_capture(struct snd_pcm_substream *substream)
 	}
 
 
-        //printk("prepare:channel_number=%d, rate=%d, format=0x%x, channels=%d, buffer_size=%ld, period_size=%ld, frames_to_bytes=%d\n",channel, runtime->rate, runtime->format, runtime->channels, runtime->buffer_size, runtime->period_size,  frames_to_bytes(runtime, 1));
+	/*
+	printk(KERN_DEBUG
+	       "prepare:channel_number=%d, rate=%d, format=0x%x, channels=%d, "
+	       "buffer_size=%ld, period_size=%ld, frames_to_bytes=%d\n",
+	       channel, runtime->rate, runtime->format, runtime->channels,
+	       runtime->buffer_size, runtime->period_size,
+	       frames_to_bytes(runtime, 1));
+	*/
 	snd_ca0106_ptr_write(emu, 0x13, channel, 0);
 	snd_ca0106_ptr_write(emu, CAPTURE_DMA_ADDR, channel, runtime->dma_addr);
 	snd_ca0106_ptr_write(emu, CAPTURE_BUFFER_SIZE, channel, frames_to_bytes(runtime, runtime->buffer_size)<<16); // buffer size in bytes
@@ -778,37 +961,53 @@ static int snd_ca0106_pcm_trigger_playback(struct snd_pcm_substream *substream,
         struct snd_pcm_substream *s;
 	u32 basic = 0;
 	u32 extended = 0;
-	int running=0;
+	u32 bits;
+	int running = 0;
 
 	switch (cmd) {
 	case SNDRV_PCM_TRIGGER_START:
-		running=1;
+	case SNDRV_PCM_TRIGGER_RESUME:
+		running = 1;
 		break;
 	case SNDRV_PCM_TRIGGER_STOP:
+	case SNDRV_PCM_TRIGGER_SUSPEND:
 	default:
-		running=0;
+		running = 0;
 		break;
 	}
         snd_pcm_group_for_each_entry(s, substream) {
+		if (snd_pcm_substream_chip(s) != emu ||
+		    s->stream != SNDRV_PCM_STREAM_PLAYBACK)
+			continue;
 		runtime = s->runtime;
 		epcm = runtime->private_data;
 		channel = epcm->channel_id;
-		//snd_printk("channel=%d\n",channel);
+		/* snd_printk(KERN_DEBUG "channel=%d\n", channel); */
 		epcm->running = running;
-		basic |= (0x1<<channel);
-		extended |= (0x10<<channel);
+		basic |= (0x1 << channel);
+		extended |= (0x10 << channel);
                 snd_pcm_trigger_done(s, substream);
         }
-	//snd_printk("basic=0x%x, extended=0x%x\n",basic, extended);
+	/* snd_printk(KERN_DEBUG "basic=0x%x, extended=0x%x\n",basic, extended); */
 
 	switch (cmd) {
 	case SNDRV_PCM_TRIGGER_START:
-		snd_ca0106_ptr_write(emu, EXTENDED_INT_MASK, 0, snd_ca0106_ptr_read(emu, EXTENDED_INT_MASK, 0) | (extended));
-		snd_ca0106_ptr_write(emu, BASIC_INTERRUPT, 0, snd_ca0106_ptr_read(emu, BASIC_INTERRUPT, 0)|(basic));
+	case SNDRV_PCM_TRIGGER_RESUME:
+		bits = snd_ca0106_ptr_read(emu, EXTENDED_INT_MASK, 0);
+		bits |= extended;
+		snd_ca0106_ptr_write(emu, EXTENDED_INT_MASK, 0, bits);
+		bits = snd_ca0106_ptr_read(emu, BASIC_INTERRUPT, 0);
+		bits |= basic;
+		snd_ca0106_ptr_write(emu, BASIC_INTERRUPT, 0, bits);
 		break;
 	case SNDRV_PCM_TRIGGER_STOP:
-		snd_ca0106_ptr_write(emu, BASIC_INTERRUPT, 0, snd_ca0106_ptr_read(emu, BASIC_INTERRUPT, 0) & ~(basic));
-		snd_ca0106_ptr_write(emu, EXTENDED_INT_MASK, 0, snd_ca0106_ptr_read(emu, EXTENDED_INT_MASK, 0) & ~(extended));
+	case SNDRV_PCM_TRIGGER_SUSPEND:
+		bits = snd_ca0106_ptr_read(emu, BASIC_INTERRUPT, 0);
+		bits &= ~basic;
+		snd_ca0106_ptr_write(emu, BASIC_INTERRUPT, 0, bits);
+		bits = snd_ca0106_ptr_read(emu, EXTENDED_INT_MASK, 0);
+		bits &= ~extended;
+		snd_ca0106_ptr_write(emu, EXTENDED_INT_MASK, 0, bits);
 		break;
 	default:
 		result = -EINVAL;
@@ -852,24 +1051,27 @@ snd_ca0106_pcm_pointer_playback(struct snd_pcm_substream *substream)
 	struct snd_ca0106 *emu = snd_pcm_substream_chip(substream);
 	struct snd_pcm_runtime *runtime = substream->runtime;
 	struct snd_ca0106_pcm *epcm = runtime->private_data;
-	snd_pcm_uframes_t ptr, ptr1, ptr2,ptr3,ptr4 = 0;
+	unsigned int ptr, prev_ptr;
 	int channel = epcm->channel_id;
+	int timeout = 10;
 
 	if (!epcm->running)
 		return 0;
 
-	ptr3 = snd_ca0106_ptr_read(emu, PLAYBACK_LIST_PTR, channel);
-	ptr1 = snd_ca0106_ptr_read(emu, PLAYBACK_POINTER, channel);
-	ptr4 = snd_ca0106_ptr_read(emu, PLAYBACK_LIST_PTR, channel);
-	if (ptr3 != ptr4) ptr1 = snd_ca0106_ptr_read(emu, PLAYBACK_POINTER, channel);
-	ptr2 = bytes_to_frames(runtime, ptr1);
-	ptr2+= (ptr4 >> 3) * runtime->period_size;
-	ptr=ptr2;
-        if (ptr >= runtime->buffer_size)
-		ptr -= runtime->buffer_size;
-	//printk("ptr1 = 0x%lx, ptr2=0x%lx, ptr=0x%lx, buffer_size = 0x%x, period_size = 0x%x, bits=%d, rate=%d\n", ptr1, ptr2, ptr, (int)runtime->buffer_size, (int)runtime->period_size, (int)runtime->frame_bits, (int)runtime->rate);
-
-	return ptr;
+	prev_ptr = -1;
+	do {
+		ptr = snd_ca0106_ptr_read(emu, PLAYBACK_LIST_PTR, channel);
+		ptr = (ptr >> 3) * runtime->period_size;
+		ptr += bytes_to_frames(runtime,
+			snd_ca0106_ptr_read(emu, PLAYBACK_POINTER, channel));
+		if (ptr >= runtime->buffer_size)
+			ptr -= runtime->buffer_size;
+		if (prev_ptr == ptr)
+			return ptr;
+		prev_ptr = ptr;
+	} while (--timeout);
+	snd_printk(KERN_WARNING "ca0106: unstable DMA pointer!\n");
+	return 0;
 }
 
 /* pointer_capture callback */
@@ -880,7 +1082,7 @@ snd_ca0106_pcm_pointer_capture(struct snd_pcm_substream *substream)
 	struct snd_pcm_runtime *runtime = substream->runtime;
 	struct snd_ca0106_pcm *epcm = runtime->private_data;
 	snd_pcm_uframes_t ptr, ptr1, ptr2 = 0;
-	int channel = channel=epcm->channel_id;
+	int channel = epcm->channel_id;
 
 	if (!epcm->running)
 		return 0;
@@ -890,8 +1092,13 @@ snd_ca0106_pcm_pointer_capture(struct snd_pcm_substream *substream)
 	ptr=ptr2;
         if (ptr >= runtime->buffer_size)
 		ptr -= runtime->buffer_size;
-	//printk("ptr1 = 0x%lx, ptr2=0x%lx, ptr=0x%lx, buffer_size = 0x%x, period_size = 0x%x, bits=%d, rate=%d\n", ptr1, ptr2, ptr, (int)runtime->buffer_size, (int)runtime->period_size, (int)runtime->frame_bits, (int)runtime->rate);
-
+	/*
+	printk(KERN_DEBUG "ptr1 = 0x%lx, ptr2=0x%lx, ptr=0x%lx, "
+	       "buffer_size = 0x%x, period_size = 0x%x, bits=%d, rate=%d\n",
+	       ptr1, ptr2, ptr, (int)runtime->buffer_size,
+	       (int)runtime->period_size, (int)runtime->frame_bits,
+	       (int)runtime->rate);
+	*/
 	return ptr;
 }
 
@@ -1031,22 +1238,16 @@ static int snd_ca0106_ac97(struct snd_ca0106 *chip)
 	return snd_ac97_mixer(pbus, &ac97, &chip->ac97);
 }
 
+static void ca0106_stop_chip(struct snd_ca0106 *chip);
+
 static int snd_ca0106_free(struct snd_ca0106 *chip)
 {
-	if (chip->res_port != NULL) {    /* avoid access to already used hardware */
-		// disable interrupts
-		snd_ca0106_ptr_write(chip, BASIC_INTERRUPT, 0, 0);
-		outl(0, chip->port + INTE);
-		snd_ca0106_ptr_write(chip, EXTENDED_INT_MASK, 0, 0);
-		udelay(1000);
-		// disable audio
-		//outl(HCFG_LOCKSOUNDCACHE, chip->port + HCFG);
-		outl(0, chip->port + HCFG);
-		/* FIXME: We need to stop and DMA transfers here.
-		 *        But as I am not sure how yet, we cannot from the dma pages.
-		 * So we can fix: snd-malloc: Memory leak?  pages not freed = 8
-		 */
+	if (chip->res_port != NULL) {
+		/* avoid access to already used hardware */
+		ca0106_stop_chip(chip);
 	}
+	if (chip->irq >= 0)
+		free_irq(chip->irq, chip);
 	// release the data
 #if 1
 	if (chip->buffer.area)
@@ -1056,9 +1257,6 @@ static int snd_ca0106_free(struct snd_ca0106 *chip)
 	// release the i/o port
 	release_and_free_resource(chip->res_port);
 
-	// release the irq
-	if (chip->irq >= 0)
-		free_irq(chip->irq, chip);
 	pci_disable_device(chip->pci);
 	kfree(chip);
 	return 0;
@@ -1085,8 +1283,12 @@ static irqreturn_t snd_ca0106_interrupt(int irq, void *dev_id)
 		return IRQ_NONE;
 
         stat76 = snd_ca0106_ptr_read(chip, EXTENDED_INT, 0);
-	//snd_printk("interrupt status = 0x%08x, stat76=0x%08x\n", status, stat76);
-	//snd_printk("ptr=0x%08x\n",snd_ca0106_ptr_read(chip, PLAYBACK_POINTER, 0));
+	/*
+	snd_printk(KERN_DEBUG "interrupt status = 0x%08x, stat76=0x%08x\n",
+		   status, stat76);
+	snd_printk(KERN_DEBUG "ptr=0x%08x\n",
+		   snd_ca0106_ptr_read(chip, PLAYBACK_POINTER, 0));
+	*/
         mask = 0x11; /* 0x1 for one half, 0x10 for the other half period. */
 	for(i = 0; i < 4; i++) {
 		pchannel = &(chip->playback_channels[i]);
@@ -1132,15 +1334,14 @@ static irqreturn_t snd_ca0106_interrupt(int irq, void *dev_id)
 	return IRQ_HANDLED;
 }
 
-static int __devinit snd_ca0106_pcm(struct snd_ca0106 *emu, int device, struct snd_pcm **rpcm)
+static int __devinit snd_ca0106_pcm(struct snd_ca0106 *emu, int device)
 {
 	struct snd_pcm *pcm;
 	struct snd_pcm_substream *substream;
 	int err;
   
-	if (rpcm)
-		*rpcm = NULL;
-	if ((err = snd_pcm_new(emu->card, "ca0106", device, 1, 1, &pcm)) < 0)
+	err = snd_pcm_new(emu->card, "ca0106", device, 1, 1, &pcm);
+	if (err < 0)
 		return err;
   
 	pcm->private_data = emu;
@@ -1165,9 +1366,7 @@ static int __devinit snd_ca0106_pcm(struct snd_ca0106 *emu, int device, struct s
         }
 
 	pcm->info_flags = 0;
-	pcm->dev_subclass = SNDRV_PCM_SUBCLASS_GENERIC_MIX;
 	strcpy(pcm->name, "CA0106");
-	emu->pcm = pcm;
 
 	for(substream = pcm->streams[SNDRV_PCM_STREAM_PLAYBACK].substream; 
 	    substream; 
@@ -1189,34 +1388,28 @@ static int __devinit snd_ca0106_pcm(struct snd_ca0106 *emu, int device, struct s
 			return err;
 	}
   
-	if (rpcm)
-		*rpcm = pcm;
+	emu->pcm[device] = pcm;
   
 	return 0;
 }
 
+#define SPI_REG(reg, value)	(((reg) << SPI_REG_SHIFT) | (value))
 static unsigned int spi_dac_init[] = {
-	0x00ff,
-	0x02ff,
-	0x0400,
-	0x0520,
-	0x0620, /* Set 24 bit. Was 0x0600 */
-	0x08ff,
-	0x0aff,
-	0x0cff,
-	0x0eff,
-	0x10ff,
-	0x1200,
-	0x1400,
-	0x1480,
-	0x1800,
-	0x1aff,
-	0x1cff,
-	0x1e00,
-	0x0530,
-	0x0602,
-	0x0622,
-	0x1400,
+	SPI_REG(SPI_LDA1_REG,	SPI_DA_BIT_0dB), /* 0dB dig. attenuation */
+	SPI_REG(SPI_RDA1_REG,	SPI_DA_BIT_0dB),
+	SPI_REG(SPI_PL_REG,	SPI_PL_BIT_L_L | SPI_PL_BIT_R_R | SPI_IZD_BIT),
+	SPI_REG(SPI_FMT_REG,	SPI_FMT_BIT_I2S | SPI_IWL_BIT_24),
+	SPI_REG(SPI_LDA2_REG,	SPI_DA_BIT_0dB),
+	SPI_REG(SPI_RDA2_REG,	SPI_DA_BIT_0dB),
+	SPI_REG(SPI_LDA3_REG,	SPI_DA_BIT_0dB),
+	SPI_REG(SPI_RDA3_REG,	SPI_DA_BIT_0dB),
+	SPI_REG(SPI_MASTDA_REG,	SPI_DA_BIT_0dB),
+	SPI_REG(9,		0x00),
+	SPI_REG(SPI_MS_REG,	SPI_DACD0_BIT | SPI_DACD1_BIT | SPI_DACD2_BIT),
+	SPI_REG(12,		0x00),
+	SPI_REG(SPI_LDA4_REG,	SPI_DA_BIT_0dB),
+	SPI_REG(SPI_RDA4_REG,	SPI_DA_BIT_0dB | SPI_DA_BIT_UPDATE),
+	SPI_REG(SPI_DACD4_REG,	SPI_DACD4_BIT),
 };
 
 static unsigned int i2c_adc_init[][2] = {
@@ -1235,90 +1428,10 @@ static unsigned int i2c_adc_init[][2] = {
 	{ 0x15, ADC_MUX_LINEIN },  /* ADC Mixer control */
 };
 
-static int __devinit snd_ca0106_create(int dev, struct snd_card *card,
-					 struct pci_dev *pci,
-					 struct snd_ca0106 **rchip)
+static void ca0106_init_chip(struct snd_ca0106 *chip, int resume)
 {
-	struct snd_ca0106 *chip;
-	struct snd_ca0106_details *c;
-	int err;
 	int ch;
-	static struct snd_device_ops ops = {
-		.dev_free = snd_ca0106_dev_free,
-	};
-  
-	*rchip = NULL;
-  
-	if ((err = pci_enable_device(pci)) < 0)
-		return err;
-	if (pci_set_dma_mask(pci, DMA_32BIT_MASK) < 0 ||
-	    pci_set_consistent_dma_mask(pci, DMA_32BIT_MASK) < 0) {
-		printk(KERN_ERR "error to set 32bit mask DMA\n");
-		pci_disable_device(pci);
-		return -ENXIO;
-	}
-  
-	chip = kzalloc(sizeof(*chip), GFP_KERNEL);
-	if (chip == NULL) {
-		pci_disable_device(pci);
-		return -ENOMEM;
-	}
-  
-	chip->card = card;
-	chip->pci = pci;
-	chip->irq = -1;
-
-	spin_lock_init(&chip->emu_lock);
-  
-	chip->port = pci_resource_start(pci, 0);
-	if ((chip->res_port = request_region(chip->port, 0x20,
-					     "snd_ca0106")) == NULL) { 
-		snd_ca0106_free(chip);
-		printk(KERN_ERR "cannot allocate the port\n");
-		return -EBUSY;
-	}
-
-	if (request_irq(pci->irq, snd_ca0106_interrupt,
-			IRQF_SHARED, "snd_ca0106", chip)) {
-		snd_ca0106_free(chip);
-		printk(KERN_ERR "cannot grab irq\n");
-		return -EBUSY;
-	}
-	chip->irq = pci->irq;
-  
- 	/* This stores the periods table. */ 
-	if(snd_dma_alloc_pages(SNDRV_DMA_TYPE_DEV, snd_dma_pci_data(pci), 1024, &chip->buffer) < 0) {
-		snd_ca0106_free(chip);
-		return -ENOMEM;
-	}
-
-	pci_set_master(pci);
-	/* read revision & serial */
-	pci_read_config_byte(pci, PCI_REVISION_ID, &chip->revision);
-	pci_read_config_dword(pci, PCI_SUBSYSTEM_VENDOR_ID, &chip->serial);
-	pci_read_config_word(pci, PCI_SUBSYSTEM_ID, &chip->model);
-#if 1
-	printk(KERN_INFO "snd-ca0106: Model %04x Rev %08x Serial %08x\n", chip->model,
-	       chip->revision, chip->serial);
-#endif
-	strcpy(card->driver, "CA0106");
-	strcpy(card->shortname, "CA0106");
-
-	for (c = ca0106_chip_details; c->serial; c++) {
-		if (subsystem[dev]) {
-			if (c->serial == subsystem[dev])
-				break;
-		} else if (c->serial == chip->serial)
-			break;
-	}
-	chip->details = c;
-	if (subsystem[dev]) {
-		printk(KERN_INFO "snd-ca0106: Sound card name=%s, subsystem=0x%x. Forced to subsystem=0x%x\n",
-                        c->name, chip->serial, subsystem[dev]);
-	}
-
-	sprintf(card->longname, "%s at 0x%lx irq %i",
-		c->name, chip->port, chip->irq);
+	unsigned int def_bits;
 
 	outl(0, chip->port + INTE);
 
@@ -1336,31 +1449,22 @@ static int __devinit snd_ca0106_create(int dev, struct snd_card *card,
 	 *  AN                = 0     (Audio data)
 	 *  P                 = 0     (Consumer)
 	 */
-	snd_ca0106_ptr_write(chip, SPCS0, 0,
-				chip->spdif_bits[0] =
-				SPCS_CLKACCY_1000PPM | SPCS_SAMPLERATE_48 |
-				SPCS_CHANNELNUM_LEFT | SPCS_SOURCENUM_UNSPEC |
-				SPCS_GENERATIONSTATUS | 0x00001200 |
-				0x00000000 | SPCS_EMPHASIS_NONE | SPCS_COPYRIGHT);
+	def_bits =
+		SPCS_CLKACCY_1000PPM | SPCS_SAMPLERATE_48 |
+		SPCS_CHANNELNUM_LEFT | SPCS_SOURCENUM_UNSPEC |
+		SPCS_GENERATIONSTATUS | 0x00001200 |
+		0x00000000 | SPCS_EMPHASIS_NONE | SPCS_COPYRIGHT;
+	if (!resume) {
+		chip->spdif_str_bits[0] = chip->spdif_bits[0] = def_bits;
+		chip->spdif_str_bits[1] = chip->spdif_bits[1] = def_bits;
+		chip->spdif_str_bits[2] = chip->spdif_bits[2] = def_bits;
+		chip->spdif_str_bits[3] = chip->spdif_bits[3] = def_bits;
+	}
 	/* Only SPCS1 has been tested */
-	snd_ca0106_ptr_write(chip, SPCS1, 0,
-				chip->spdif_bits[1] =
-				SPCS_CLKACCY_1000PPM | SPCS_SAMPLERATE_48 |
-				SPCS_CHANNELNUM_LEFT | SPCS_SOURCENUM_UNSPEC |
-				SPCS_GENERATIONSTATUS | 0x00001200 |
-				0x00000000 | SPCS_EMPHASIS_NONE | SPCS_COPYRIGHT);
-	snd_ca0106_ptr_write(chip, SPCS2, 0,
-				chip->spdif_bits[2] =
-				SPCS_CLKACCY_1000PPM | SPCS_SAMPLERATE_48 |
-				SPCS_CHANNELNUM_LEFT | SPCS_SOURCENUM_UNSPEC |
-				SPCS_GENERATIONSTATUS | 0x00001200 |
-				0x00000000 | SPCS_EMPHASIS_NONE | SPCS_COPYRIGHT);
-	snd_ca0106_ptr_write(chip, SPCS3, 0,
-				chip->spdif_bits[3] =
-				SPCS_CLKACCY_1000PPM | SPCS_SAMPLERATE_48 |
-				SPCS_CHANNELNUM_LEFT | SPCS_SOURCENUM_UNSPEC |
-				SPCS_GENERATIONSTATUS | 0x00001200 |
-				0x00000000 | SPCS_EMPHASIS_NONE | SPCS_COPYRIGHT);
+	snd_ca0106_ptr_write(chip, SPCS1, 0, chip->spdif_str_bits[1]);
+	snd_ca0106_ptr_write(chip, SPCS0, 0, chip->spdif_str_bits[0]);
+	snd_ca0106_ptr_write(chip, SPCS2, 0, chip->spdif_str_bits[2]);
+	snd_ca0106_ptr_write(chip, SPCS3, 0, chip->spdif_str_bits[3]);
 
         snd_ca0106_ptr_write(chip, PLAYBACK_MUTE, 0, 0x00fc0000);
         snd_ca0106_ptr_write(chip, CAPTURE_MUTE, 0, 0x00fc0000);
@@ -1368,101 +1472,244 @@ static int __devinit snd_ca0106_create(int dev, struct snd_card *card,
         /* Write 0x8000 to AC97_REC_GAIN to mute it. */
         outb(AC97_REC_GAIN, chip->port + AC97ADDRESS);
         outw(0x8000, chip->port + AC97DATA);
-#if 0
+#if 0 /* FIXME: what are these? */
 	snd_ca0106_ptr_write(chip, SPCS0, 0, 0x2108006);
 	snd_ca0106_ptr_write(chip, 0x42, 0, 0x2108006);
 	snd_ca0106_ptr_write(chip, 0x43, 0, 0x2108006);
 	snd_ca0106_ptr_write(chip, 0x44, 0, 0x2108006);
 #endif
 
-	//snd_ca0106_ptr_write(chip, SPDIF_SELECT2, 0, 0xf0f003f); /* OSS drivers set this. */
+	/* OSS drivers set this. */
+	/* snd_ca0106_ptr_write(chip, SPDIF_SELECT2, 0, 0xf0f003f); */
+
 	/* Analog or Digital output */
 	snd_ca0106_ptr_write(chip, SPDIF_SELECT1, 0, 0xf);
-	snd_ca0106_ptr_write(chip, SPDIF_SELECT2, 0, 0x000f0000); /* 0x0b000000 for digital, 0x000b0000 for analog, from win2000 drivers. Use 0x000f0000 for surround71 */
-	chip->spdif_enable = 0; /* Set digital SPDIF output off */
-	//snd_ca0106_ptr_write(chip, 0x45, 0, 0); /* Analogue out */
-	//snd_ca0106_ptr_write(chip, 0x45, 0, 0xf00); /* Digital out */
+	/* 0x0b000000 for digital, 0x000b0000 for analog, from win2000 drivers.
+	 * Use 0x000f0000 for surround71
+	 */
+	snd_ca0106_ptr_write(chip, SPDIF_SELECT2, 0, 0x000f0000);
 
-	snd_ca0106_ptr_write(chip, CAPTURE_CONTROL, 0, 0x40c81000); /* goes to 0x40c80000 when doing SPDIF IN/OUT */
-	snd_ca0106_ptr_write(chip, CAPTURE_CONTROL, 1, 0xffffffff); /* (Mute) CAPTURE feedback into PLAYBACK volume. Only lower 16 bits matter. */
-	snd_ca0106_ptr_write(chip, CAPTURE_CONTROL, 2, 0x30300000); /* SPDIF IN Volume */
-	snd_ca0106_ptr_write(chip, CAPTURE_CONTROL, 3, 0x00700000); /* SPDIF IN Volume, 0x70 = (vol & 0x3f) | 0x40 */
+	chip->spdif_enable = 0; /* Set digital SPDIF output off */
+	/*snd_ca0106_ptr_write(chip, 0x45, 0, 0);*/ /* Analogue out */
+	/*snd_ca0106_ptr_write(chip, 0x45, 0, 0xf00);*/ /* Digital out */
+
+	/* goes to 0x40c80000 when doing SPDIF IN/OUT */
+	snd_ca0106_ptr_write(chip, CAPTURE_CONTROL, 0, 0x40c81000);
+	/* (Mute) CAPTURE feedback into PLAYBACK volume.
+	 * Only lower 16 bits matter.
+	 */
+	snd_ca0106_ptr_write(chip, CAPTURE_CONTROL, 1, 0xffffffff);
+	/* SPDIF IN Volume */
+	snd_ca0106_ptr_write(chip, CAPTURE_CONTROL, 2, 0x30300000);
+	/* SPDIF IN Volume, 0x70 = (vol & 0x3f) | 0x40 */
+	snd_ca0106_ptr_write(chip, CAPTURE_CONTROL, 3, 0x00700000);
+
 	snd_ca0106_ptr_write(chip, PLAYBACK_ROUTING1, 0, 0x32765410);
 	snd_ca0106_ptr_write(chip, PLAYBACK_ROUTING2, 0, 0x76767676);
 	snd_ca0106_ptr_write(chip, CAPTURE_ROUTING1, 0, 0x32765410);
 	snd_ca0106_ptr_write(chip, CAPTURE_ROUTING2, 0, 0x76767676);
-	for(ch = 0; ch < 4; ch++) {
-		snd_ca0106_ptr_write(chip, CAPTURE_VOLUME1, ch, 0x30303030); /* Only high 16 bits matter */
+
+	for (ch = 0; ch < 4; ch++) {
+		/* Only high 16 bits matter */
+		snd_ca0106_ptr_write(chip, CAPTURE_VOLUME1, ch, 0x30303030);
 		snd_ca0106_ptr_write(chip, CAPTURE_VOLUME2, ch, 0x30303030);
-		//snd_ca0106_ptr_write(chip, PLAYBACK_VOLUME1, ch, 0x40404040); /* Mute */
-		//snd_ca0106_ptr_write(chip, PLAYBACK_VOLUME2, ch, 0x40404040); /* Mute */
-		snd_ca0106_ptr_write(chip, PLAYBACK_VOLUME1, ch, 0xffffffff); /* Mute */
-		snd_ca0106_ptr_write(chip, PLAYBACK_VOLUME2, ch, 0xffffffff); /* Mute */
+#if 0 /* Mute */
+		snd_ca0106_ptr_write(chip, PLAYBACK_VOLUME1, ch, 0x40404040);
+		snd_ca0106_ptr_write(chip, PLAYBACK_VOLUME2, ch, 0x40404040);
+		snd_ca0106_ptr_write(chip, PLAYBACK_VOLUME1, ch, 0xffffffff);
+		snd_ca0106_ptr_write(chip, PLAYBACK_VOLUME2, ch, 0xffffffff);
+#endif
 	}
 	if (chip->details->i2c_adc == 1) {
 	        /* Select MIC, Line in, TAD in, AUX in */
 	        snd_ca0106_ptr_write(chip, CAPTURE_SOURCE, 0x0, 0x333300e4);
 		/* Default to CAPTURE_SOURCE to i2s in */
-		chip->capture_source = 3;
+		if (!resume)
+			chip->capture_source = 3;
 	} else if (chip->details->ac97 == 1) {
 	        /* Default to AC97 in */
 	        snd_ca0106_ptr_write(chip, CAPTURE_SOURCE, 0x0, 0x444400e4);
 		/* Default to CAPTURE_SOURCE to AC97 in */
-		chip->capture_source = 4;
+		if (!resume)
+			chip->capture_source = 4;
 	} else {
 	        /* Select MIC, Line in, TAD in, AUX in */
 	        snd_ca0106_ptr_write(chip, CAPTURE_SOURCE, 0x0, 0x333300e4);
 		/* Default to Set CAPTURE_SOURCE to i2s in */
-		chip->capture_source = 3;
+		if (!resume)
+			chip->capture_source = 3;
 	}
 
-        if (chip->details->gpio_type == 2) { /* The SB0438 use GPIO differently. */
-		/* FIXME: Still need to find out what the other GPIO bits do. E.g. For digital spdif out. */
+	if (chip->details->gpio_type == 2) {
+		/* The SB0438 use GPIO differently. */
+		/* FIXME: Still need to find out what the other GPIO bits do.
+		 * E.g. For digital spdif out.
+		 */
 		outl(0x0, chip->port+GPIO);
-		//outl(0x00f0e000, chip->port+GPIO); /* Analog */
+		/* outl(0x00f0e000, chip->port+GPIO); */ /* Analog */
 		outl(0x005f5301, chip->port+GPIO); /* Analog */
-	} else if (chip->details->gpio_type == 1) { /* The SB0410 and SB0413 use GPIO differently. */
-		/* FIXME: Still need to find out what the other GPIO bits do. E.g. For digital spdif out. */
+	} else if (chip->details->gpio_type == 1) {
+		/* The SB0410 and SB0413 use GPIO differently. */
+		/* FIXME: Still need to find out what the other GPIO bits do.
+		 * E.g. For digital spdif out.
+		 */
 		outl(0x0, chip->port+GPIO);
-		//outl(0x00f0e000, chip->port+GPIO); /* Analog */
+		/* outl(0x00f0e000, chip->port+GPIO); */ /* Analog */
 		outl(0x005f5301, chip->port+GPIO); /* Analog */
 	} else {
 		outl(0x0, chip->port+GPIO);
 		outl(0x005f03a3, chip->port+GPIO); /* Analog */
-		//outl(0x005f02a2, chip->port+GPIO);   /* SPDIF */
+		/* outl(0x005f02a2, chip->port+GPIO); */ /* SPDIF */
 	}
 	snd_ca0106_intr_enable(chip, 0x105); /* Win2000 uses 0x1e0 */
 
-	//outl(HCFG_LOCKSOUNDCACHE|HCFG_AUDIOENABLE, chip->port+HCFG);
-	//outl(0x00001409, chip->port+HCFG); /* 0x1000 causes AC3 to fails. Maybe it effects 24 bit output. */
-	//outl(0x00000009, chip->port+HCFG);
-	outl(HCFG_AC97 | HCFG_AUDIOENABLE, chip->port+HCFG); /* AC97 2.0, Enable outputs. */
+	/* outl(HCFG_LOCKSOUNDCACHE|HCFG_AUDIOENABLE, chip->port+HCFG); */
+	/* 0x1000 causes AC3 to fails. Maybe it effects 24 bit output. */
+	/* outl(0x00001409, chip->port+HCFG); */
+	/* outl(0x00000009, chip->port+HCFG); */
+	/* AC97 2.0, Enable outputs. */
+	outl(HCFG_AC97 | HCFG_AUDIOENABLE, chip->port+HCFG);
 
-        if (chip->details->i2c_adc == 1) { /* The SB0410 and SB0413 use I2C to control ADC. */
+	if (chip->details->i2c_adc == 1) {
+		/* The SB0410 and SB0413 use I2C to control ADC. */
 		int size, n;
 
 		size = ARRAY_SIZE(i2c_adc_init);
-                //snd_printk("I2C:array size=0x%x\n", size);
-		for (n=0; n < size; n++) {
-			snd_ca0106_i2c_write(chip, i2c_adc_init[n][0], i2c_adc_init[n][1]);
+		/* snd_printk(KERN_DEBUG "I2C:array size=0x%x\n", size); */
+		for (n = 0; n < size; n++)
+			snd_ca0106_i2c_write(chip, i2c_adc_init[n][0],
+					     i2c_adc_init[n][1]);
+		for (n = 0; n < 4; n++) {
+			chip->i2c_capture_volume[n][0] = 0xcf;
+			chip->i2c_capture_volume[n][1] = 0xcf;
 		}
-		for (n=0; n < 4; n++) {
-			chip->i2c_capture_volume[n][0]= 0xcf;
-			chip->i2c_capture_volume[n][1]= 0xcf;
-		}
-		chip->i2c_capture_source=2; /* Line in */
-	        //snd_ca0106_i2c_write(chip, ADC_MUX, ADC_MUX_LINEIN); /* Enable Line-in capture. MIC in currently untested. */
+		chip->i2c_capture_source = 2; /* Line in */
+		/* Enable Line-in capture. MIC in currently untested. */
+		/* snd_ca0106_i2c_write(chip, ADC_MUX, ADC_MUX_LINEIN); */
 	}
-        if (chip->details->spi_dac == 1) { /* The SB0570 use SPI to control DAC. */
+
+	if (chip->details->spi_dac) {
+		/* The SB0570 use SPI to control DAC. */
 		int size, n;
 
 		size = ARRAY_SIZE(spi_dac_init);
-		for (n=0; n < size; n++)
+		for (n = 0; n < size; n++) {
+			int reg = spi_dac_init[n] >> SPI_REG_SHIFT;
+
 			snd_ca0106_spi_write(chip, spi_dac_init[n]);
+			if (reg < ARRAY_SIZE(chip->spi_dac_reg))
+				chip->spi_dac_reg[reg] = spi_dac_init[n];
+		}
+
+		/* Enable front dac only */
+		snd_ca0106_pcm_power_dac(chip, PCM_FRONT_CHANNEL, 1);
+	}
+}
+
+static void ca0106_stop_chip(struct snd_ca0106 *chip)
+{
+	/* disable interrupts */
+	snd_ca0106_ptr_write(chip, BASIC_INTERRUPT, 0, 0);
+	outl(0, chip->port + INTE);
+	snd_ca0106_ptr_write(chip, EXTENDED_INT_MASK, 0, 0);
+	udelay(1000);
+	/* disable audio */
+	/* outl(HCFG_LOCKSOUNDCACHE, chip->port + HCFG); */
+	outl(0, chip->port + HCFG);
+	/* FIXME: We need to stop and DMA transfers here.
+	 *        But as I am not sure how yet, we cannot from the dma pages.
+	 * So we can fix: snd-malloc: Memory leak?  pages not freed = 8
+	 */
+}
+
+static int __devinit snd_ca0106_create(int dev, struct snd_card *card,
+					 struct pci_dev *pci,
+					 struct snd_ca0106 **rchip)
+{
+	struct snd_ca0106 *chip;
+	struct snd_ca0106_details *c;
+	int err;
+	static struct snd_device_ops ops = {
+		.dev_free = snd_ca0106_dev_free,
+	};
+
+	*rchip = NULL;
+
+	err = pci_enable_device(pci);
+	if (err < 0)
+		return err;
+	if (pci_set_dma_mask(pci, DMA_BIT_MASK(32)) < 0 ||
+	    pci_set_consistent_dma_mask(pci, DMA_BIT_MASK(32)) < 0) {
+		printk(KERN_ERR "error to set 32bit mask DMA\n");
+		pci_disable_device(pci);
+		return -ENXIO;
 	}
 
-	if ((err = snd_device_new(card, SNDRV_DEV_LOWLEVEL,
-				  chip, &ops)) < 0) {
+	chip = kzalloc(sizeof(*chip), GFP_KERNEL);
+	if (chip == NULL) {
+		pci_disable_device(pci);
+		return -ENOMEM;
+	}
+
+	chip->card = card;
+	chip->pci = pci;
+	chip->irq = -1;
+
+	spin_lock_init(&chip->emu_lock);
+
+	chip->port = pci_resource_start(pci, 0);
+	chip->res_port = request_region(chip->port, 0x20, "snd_ca0106");
+	if (!chip->res_port) {
+		snd_ca0106_free(chip);
+		printk(KERN_ERR "cannot allocate the port\n");
+		return -EBUSY;
+	}
+
+	if (request_irq(pci->irq, snd_ca0106_interrupt,
+			IRQF_SHARED, "snd_ca0106", chip)) {
+		snd_ca0106_free(chip);
+		printk(KERN_ERR "cannot grab irq\n");
+		return -EBUSY;
+	}
+	chip->irq = pci->irq;
+
+	/* This stores the periods table. */
+	if (snd_dma_alloc_pages(SNDRV_DMA_TYPE_DEV, snd_dma_pci_data(pci),
+				1024, &chip->buffer) < 0) {
+		snd_ca0106_free(chip);
+		return -ENOMEM;
+	}
+
+	pci_set_master(pci);
+	/* read serial */
+	pci_read_config_dword(pci, PCI_SUBSYSTEM_VENDOR_ID, &chip->serial);
+	pci_read_config_word(pci, PCI_SUBSYSTEM_ID, &chip->model);
+	printk(KERN_INFO "snd-ca0106: Model %04x Rev %08x Serial %08x\n",
+	       chip->model, pci->revision, chip->serial);
+	strcpy(card->driver, "CA0106");
+	strcpy(card->shortname, "CA0106");
+
+	for (c = ca0106_chip_details; c->serial; c++) {
+		if (subsystem[dev]) {
+			if (c->serial == subsystem[dev])
+				break;
+		} else if (c->serial == chip->serial)
+			break;
+	}
+	chip->details = c;
+	if (subsystem[dev]) {
+		printk(KERN_INFO "snd-ca0106: Sound card name=%s, "
+		       "subsystem=0x%x. Forced to subsystem=0x%x\n",
+		       c->name, chip->serial, subsystem[dev]);
+	}
+
+	sprintf(card->longname, "%s at 0x%lx irq %i",
+		c->name, chip->port, chip->irq);
+
+	ca0106_init_chip(chip, 0);
+
+	err = snd_device_new(card, SNDRV_DEV_LOWLEVEL, chip, &ops);
+	if (err < 0) {
 		snd_ca0106_free(chip);
 		return err;
 	}
@@ -1559,7 +1806,7 @@ static int __devinit snd_ca0106_probe(struct pci_dev *pci,
 	static int dev;
 	struct snd_card *card;
 	struct snd_ca0106 *chip;
-	int err;
+	int i, err;
 
 	if (dev >= SNDRV_CARDS)
 		return -ENODEV;
@@ -1568,48 +1815,35 @@ static int __devinit snd_ca0106_probe(struct pci_dev *pci,
 		return -ENOENT;
 	}
 
-	card = snd_card_new(index[dev], id[dev], THIS_MODULE, 0);
-	if (card == NULL)
-		return -ENOMEM;
+	err = snd_card_create(index[dev], id[dev], THIS_MODULE, 0, &card);
+	if (err < 0)
+		return err;
 
-	if ((err = snd_ca0106_create(dev, card, pci, &chip)) < 0) {
-		snd_card_free(card);
-		return err;
+	err = snd_ca0106_create(dev, card, pci, &chip);
+	if (err < 0)
+		goto error;
+	card->private_data = chip;
+
+	for (i = 0; i < 4; i++) {
+		err = snd_ca0106_pcm(chip, i);
+		if (err < 0)
+			goto error;
 	}
 
-	if ((err = snd_ca0106_pcm(chip, 0, NULL)) < 0) {
-		snd_card_free(card);
-		return err;
+	if (chip->details->ac97 == 1) {
+		/* The SB0410 and SB0413 do not have an AC97 chip. */
+		err = snd_ca0106_ac97(chip);
+		if (err < 0)
+			goto error;
 	}
-	if ((err = snd_ca0106_pcm(chip, 1, NULL)) < 0) {
-		snd_card_free(card);
-		return err;
-	}
-	if ((err = snd_ca0106_pcm(chip, 2, NULL)) < 0) {
-		snd_card_free(card);
-		return err;
-	}
-	if ((err = snd_ca0106_pcm(chip, 3, NULL)) < 0) {
-		snd_card_free(card);
-		return err;
-	}
-        if (chip->details->ac97 == 1) { /* The SB0410 and SB0413 do not have an AC97 chip. */
-		if ((err = snd_ca0106_ac97(chip)) < 0) {
-			snd_card_free(card);
-			return err;
-		}
-	}
-	if ((err = snd_ca0106_mixer(chip)) < 0) {
-		snd_card_free(card);
-		return err;
-	}
+	err = snd_ca0106_mixer(chip);
+	if (err < 0)
+		goto error;
 
 	snd_printdd("ca0106: probe for MIDI channel A ...");
-	if ((err = snd_ca0106_midi(chip,CA0106_MIDI_CHAN_A)) < 0) {
-		snd_card_free(card);
-		snd_printdd(" failed, err=0x%x\n",err);
-		return err;
-	}
+	err = snd_ca0106_midi(chip, CA0106_MIDI_CHAN_A);
+	if (err < 0)
+		goto error;
 	snd_printdd(" done.\n");
 
 #ifdef CONFIG_PROC_FS
@@ -1618,14 +1852,17 @@ static int __devinit snd_ca0106_probe(struct pci_dev *pci,
 
 	snd_card_set_dev(card, &pci->dev);
 
-	if ((err = snd_card_register(card)) < 0) {
-		snd_card_free(card);
-		return err;
-	}
+	err = snd_card_register(card);
+	if (err < 0)
+		goto error;
 
 	pci_set_drvdata(pci, card);
 	dev++;
 	return 0;
+
+ error:
+	snd_card_free(card);
+	return err;
 }
 
 static void __devexit snd_ca0106_remove(struct pci_dev *pci)
@@ -1634,9 +1871,62 @@ static void __devexit snd_ca0106_remove(struct pci_dev *pci)
 	pci_set_drvdata(pci, NULL);
 }
 
+#ifdef CONFIG_PM
+static int snd_ca0106_suspend(struct pci_dev *pci, pm_message_t state)
+{
+	struct snd_card *card = pci_get_drvdata(pci);
+	struct snd_ca0106 *chip = card->private_data;
+	int i;
+
+	snd_power_change_state(card, SNDRV_CTL_POWER_D3hot);
+	for (i = 0; i < 4; i++)
+		snd_pcm_suspend_all(chip->pcm[i]);
+	if (chip->details->ac97)
+		snd_ac97_suspend(chip->ac97);
+	snd_ca0106_mixer_suspend(chip);
+
+	ca0106_stop_chip(chip);
+
+	pci_disable_device(pci);
+	pci_save_state(pci);
+	pci_set_power_state(pci, pci_choose_state(pci, state));
+	return 0;
+}
+
+static int snd_ca0106_resume(struct pci_dev *pci)
+{
+	struct snd_card *card = pci_get_drvdata(pci);
+	struct snd_ca0106 *chip = card->private_data;
+	int i;
+
+	pci_set_power_state(pci, PCI_D0);
+	pci_restore_state(pci);
+
+	if (pci_enable_device(pci) < 0) {
+		snd_card_disconnect(card);
+		return -EIO;
+	}
+
+	pci_set_master(pci);
+
+	ca0106_init_chip(chip, 1);
+
+	if (chip->details->ac97)
+		snd_ac97_resume(chip->ac97);
+	snd_ca0106_mixer_resume(chip);
+	if (chip->details->spi_dac) {
+		for (i = 0; i < ARRAY_SIZE(chip->spi_dac_reg); i++)
+			snd_ca0106_spi_write(chip, chip->spi_dac_reg[i]);
+	}
+
+	snd_power_change_state(card, SNDRV_CTL_POWER_D0);
+	return 0;
+}
+#endif
+
 // PCI IDs
-static struct pci_device_id snd_ca0106_ids[] = {
-	{ 0x1102, 0x0007, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },	/* Audigy LS or Live 24bit */
+static DEFINE_PCI_DEVICE_TABLE(snd_ca0106_ids) = {
+	{ PCI_VDEVICE(CREATIVE, 0x0007), 0 },	/* Audigy LS or Live 24bit */
 	{ 0, }
 };
 MODULE_DEVICE_TABLE(pci, snd_ca0106_ids);
@@ -1647,6 +1937,10 @@ static struct pci_driver driver = {
 	.id_table = snd_ca0106_ids,
 	.probe = snd_ca0106_probe,
 	.remove = __devexit_p(snd_ca0106_remove),
+#ifdef CONFIG_PM
+	.suspend = snd_ca0106_suspend,
+	.resume = snd_ca0106_resume,
+#endif
 };
 
 // initialization of the module

@@ -135,15 +135,6 @@ static const char *reloc_name[256] = {
 
 #undef N
 
-struct got_entry {
-	uint64_t val;
-};
-
-struct fdesc {
-	uint64_t ip;
-	uint64_t gp;
-};
-
 /* Opaque struct for insns, to protect against derefs. */
 struct insn;
 
@@ -180,7 +171,8 @@ apply_imm60 (struct module *mod, struct insn *insn, uint64_t val)
 		return 0;
 	}
 	if (val + ((uint64_t) 1 << 59) >= (1UL << 60)) {
-		printk(KERN_ERR "%s: value %ld out of IMM60 range\n", mod->name, (int64_t) val);
+		printk(KERN_ERR "%s: value %ld out of IMM60 range\n",
+			mod->name, (long) val);
 		return 0;
 	}
 	ia64_patch_imm60((u64) insn, val);
@@ -191,7 +183,8 @@ static int
 apply_imm22 (struct module *mod, struct insn *insn, uint64_t val)
 {
 	if (val + (1 << 21) >= (1 << 22)) {
-		printk(KERN_ERR "%s: value %li out of IMM22 range\n", mod->name, (int64_t)val);
+		printk(KERN_ERR "%s: value %li out of IMM22 range\n",
+			mod->name, (long)val);
 		return 0;
 	}
 	ia64_patch((u64) insn, 0x01fffcfe000UL, (  ((val & 0x200000UL) << 15) /* bit 21 -> 36 */
@@ -205,7 +198,8 @@ static int
 apply_imm21b (struct module *mod, struct insn *insn, uint64_t val)
 {
 	if (val + (1 << 20) >= (1 << 21)) {
-		printk(KERN_ERR "%s: value %li out of IMM21b range\n", mod->name, (int64_t)val);
+		printk(KERN_ERR "%s: value %li out of IMM21b range\n",
+			mod->name, (long)val);
 		return 0;
 	}
 	ia64_patch((u64) insn, 0x11ffffe000UL, (  ((val & 0x100000UL) << 16) /* bit 20 -> 36 */
@@ -321,7 +315,8 @@ module_alloc (unsigned long size)
 void
 module_free (struct module *mod, void *module_region)
 {
-	if (mod->arch.init_unw_table && module_region == mod->module_init) {
+	if (mod && mod->arch.init_unw_table &&
+	    module_region == mod->module_init) {
 		unw_remove_unwind_table(mod->arch.init_unw_table);
 		mod->arch.init_unw_table = NULL;
 	}
@@ -454,6 +449,14 @@ module_frob_arch_sections (Elf_Ehdr *ehdr, Elf_Shdr *sechdrs, char *secstrings,
 			mod->arch.opd = s;
 		else if (strcmp(".IA_64.unwind", secstrings + s->sh_name) == 0)
 			mod->arch.unwind = s;
+#ifdef CONFIG_PARAVIRT
+		else if (strcmp(".paravirt_bundles",
+				secstrings + s->sh_name) == 0)
+			mod->arch.paravirt_bundles = s;
+		else if (strcmp(".paravirt_insts",
+				secstrings + s->sh_name) == 0)
+			mod->arch.paravirt_insts = s;
+#endif
 
 	if (!mod->arch.core_plt || !mod->arch.init_plt || !mod->arch.got || !mod->arch.opd) {
 		printk(KERN_ERR "%s: sections missing\n", mod->name);
@@ -493,7 +496,7 @@ module_frob_arch_sections (Elf_Ehdr *ehdr, Elf_Shdr *sechdrs, char *secstrings,
 	mod->arch.opd->sh_addralign = 8;
 	mod->arch.opd->sh_size = fdescs * sizeof(struct fdesc);
 	DEBUGP("%s: core.plt=%lx, init.plt=%lx, got=%lx, fdesc=%lx\n",
-	       __FUNCTION__, mod->arch.core_plt->sh_size, mod->arch.init_plt->sh_size,
+	       __func__, mod->arch.core_plt->sh_size, mod->arch.init_plt->sh_size,
 	       mod->arch.got->sh_size, mod->arch.opd->sh_size);
 	return 0;
 }
@@ -533,8 +536,7 @@ get_ltoff (struct module *mod, uint64_t value, int *okp)
 			goto found;
 
 	/* Not enough GOT entries? */
-	if (e >= (struct got_entry *) (mod->arch.got->sh_addr + mod->arch.got->sh_size))
-		BUG();
+	BUG_ON(e >= (struct got_entry *) (mod->arch.got->sh_addr + mod->arch.got->sh_size));
 
 	e->val = value;
 	++mod->arch.next_got_entry;
@@ -585,7 +587,7 @@ get_plt (struct module *mod, const struct insn *insn, uint64_t value, int *okp)
 #if ARCH_MODULE_DEBUG
 	if (plt_target(plt) != target_ip) {
 		printk("%s: mistargeted PLT: wanted %lx, got %lx\n",
-		       __FUNCTION__, target_ip, plt_target(plt));
+		       __func__, target_ip, plt_target(plt));
 		*okp = 0;
 		return 0;
 	}
@@ -702,8 +704,9 @@ do_reloc (struct module *mod, uint8_t r_type, Elf64_Sym *sym, uint64_t addend,
 	      case RV_PCREL2:
 		if (r_type == R_IA64_PCREL21BI) {
 			if (!is_internal(mod, val)) {
-				printk(KERN_ERR "%s: %s reloc against non-local symbol (%lx)\n",
-				       __FUNCTION__, reloc_name[r_type], val);
+				printk(KERN_ERR "%s: %s reloc against "
+					"non-local symbol (%lx)\n", __func__,
+					reloc_name[r_type], (unsigned long)val);
 				return -ENOEXEC;
 			}
 			format = RF_INSN21B;
@@ -737,7 +740,7 @@ do_reloc (struct module *mod, uint8_t r_type, Elf64_Sym *sym, uint64_t addend,
 		      case R_IA64_LDXMOV:
 			if (gp_addressable(mod, val)) {
 				/* turn "ld8" into "mov": */
-				DEBUGP("%s: patching ld8 at %p to mov\n", __FUNCTION__, location);
+				DEBUGP("%s: patching ld8 at %p to mov\n", __func__, location);
 				ia64_patch((u64) location, 0x1fff80fe000UL, 0x10000000000UL);
 			}
 			return 0;
@@ -771,7 +774,7 @@ do_reloc (struct module *mod, uint8_t r_type, Elf64_Sym *sym, uint64_t addend,
 	if (!ok)
 		return -ENOEXEC;
 
-	DEBUGP("%s: [%p]<-%016lx = %s(%lx)\n", __FUNCTION__, location, val,
+	DEBUGP("%s: [%p]<-%016lx = %s(%lx)\n", __func__, location, val,
 	       reloc_name[r_type] ? reloc_name[r_type] : "?", sym->st_value + addend);
 
 	switch (format) {
@@ -807,7 +810,7 @@ apply_relocate_add (Elf64_Shdr *sechdrs, const char *strtab, unsigned int symind
 	Elf64_Shdr *target_sec;
 	int ret;
 
-	DEBUGP("%s: applying section %u (%u relocs) to %u\n", __FUNCTION__,
+	DEBUGP("%s: applying section %u (%u relocs) to %u\n", __func__,
 	       relsec, n, sechdrs[relsec].sh_info);
 
 	target_sec = sechdrs + sechdrs[relsec].sh_info;
@@ -835,7 +838,7 @@ apply_relocate_add (Elf64_Shdr *sechdrs, const char *strtab, unsigned int symind
 			gp = mod->core_size / 2;
 		gp = (uint64_t) mod->module_core + ((gp + 7) & -8);
 		mod->arch.gp = gp;
-		DEBUGP("%s: placing gp at 0x%lx\n", __FUNCTION__, gp);
+		DEBUGP("%s: placing gp at 0x%lx\n", __func__, gp);
 	}
 
 	for (i = 0; i < n; i++) {
@@ -903,7 +906,7 @@ register_unwind_table (struct module *mod)
 		init = start + num_core;
 	}
 
-	DEBUGP("%s: name=%s, gp=%lx, num_init=%lu, num_core=%lu\n", __FUNCTION__,
+	DEBUGP("%s: name=%s, gp=%lx, num_init=%lu, num_core=%lu\n", __func__,
 	       mod->name, mod->arch.gp, num_init, num_core);
 
 	/*
@@ -912,13 +915,13 @@ register_unwind_table (struct module *mod)
 	if (num_core > 0) {
 		mod->arch.core_unw_table = unw_add_unwind_table(mod->name, 0, mod->arch.gp,
 								core, core + num_core);
-		DEBUGP("%s:  core: handle=%p [%p-%p)\n", __FUNCTION__,
+		DEBUGP("%s:  core: handle=%p [%p-%p)\n", __func__,
 		       mod->arch.core_unw_table, core, core + num_core);
 	}
 	if (num_init > 0) {
 		mod->arch.init_unw_table = unw_add_unwind_table(mod->name, 0, mod->arch.gp,
 								init, init + num_init);
-		DEBUGP("%s:  init: handle=%p [%p-%p)\n", __FUNCTION__,
+		DEBUGP("%s:  init: handle=%p [%p-%p)\n", __func__,
 		       mod->arch.init_unw_table, init, init + num_init);
 	}
 }
@@ -926,9 +929,33 @@ register_unwind_table (struct module *mod)
 int
 module_finalize (const Elf_Ehdr *hdr, const Elf_Shdr *sechdrs, struct module *mod)
 {
-	DEBUGP("%s: init: entry=%p\n", __FUNCTION__, mod->init);
+	DEBUGP("%s: init: entry=%p\n", __func__, mod->init);
 	if (mod->arch.unwind)
 		register_unwind_table(mod);
+#ifdef CONFIG_PARAVIRT
+        if (mod->arch.paravirt_bundles) {
+                struct paravirt_patch_site_bundle *start =
+                        (struct paravirt_patch_site_bundle *)
+                        mod->arch.paravirt_bundles->sh_addr;
+                struct paravirt_patch_site_bundle *end =
+                        (struct paravirt_patch_site_bundle *)
+                        (mod->arch.paravirt_bundles->sh_addr +
+                         mod->arch.paravirt_bundles->sh_size);
+
+                paravirt_patch_apply_bundle(start, end);
+        }
+        if (mod->arch.paravirt_insts) {
+                struct paravirt_patch_site_inst *start =
+                        (struct paravirt_patch_site_inst *)
+                        mod->arch.paravirt_insts->sh_addr;
+                struct paravirt_patch_site_inst *end =
+                        (struct paravirt_patch_site_inst *)
+                        (mod->arch.paravirt_insts->sh_addr +
+                         mod->arch.paravirt_insts->sh_size);
+
+                paravirt_patch_apply_inst(start, end);
+        }
+#endif
 	return 0;
 }
 
@@ -940,14 +967,3 @@ module_arch_cleanup (struct module *mod)
 	if (mod->arch.core_unw_table)
 		unw_remove_unwind_table(mod->arch.core_unw_table);
 }
-
-#ifdef CONFIG_SMP
-void
-percpu_modcopy (void *pcpudst, const void *src, unsigned long size)
-{
-	unsigned int i;
-	for_each_possible_cpu(i) {
-		memcpy(pcpudst + __per_cpu_offset[i], src, size);
-	}
-}
-#endif /* CONFIG_SMP */

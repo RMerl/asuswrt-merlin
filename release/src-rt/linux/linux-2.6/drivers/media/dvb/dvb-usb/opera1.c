@@ -10,7 +10,9 @@
 * see Documentation/dvb/README.dvb-usb for more information
 */
 
-#include "opera1.h"
+#define DVB_USB_LOG_PREFIX "opera"
+
+#include "dvb-usb.h"
 #include "stv0299.h"
 
 #define OPERA_READ_MSG 0
@@ -33,16 +35,19 @@
 struct opera1_state {
 	u32 last_key_pressed;
 };
-struct opera_rc_keys {
+struct rc_map_opera_table {
 	u32 keycode;
 	u32 event;
 };
 
-int dvb_usb_opera1_debug;
+static int dvb_usb_opera1_debug;
 module_param_named(debug, dvb_usb_opera1_debug, int, 0644);
 MODULE_PARM_DESC(debug,
 		 "set debugging level (1=info,xfer=2,pll=4,ts=8,err=16,rc=32,fw=64 (or-able))."
 		 DVB_USB_DEBUG_STATUS);
+
+DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
+
 
 static int opera1_xilinx_rw(struct usb_device *dev, u8 request, u16 value,
 			    u8 * data, u16 len, int flags)
@@ -133,7 +138,7 @@ static int opera1_i2c_xfer(struct i2c_adapter *adap, struct i2c_msg msg[],
 					(msg[i].addr<<1)|(msg[i].flags&I2C_M_RD?0x01:0),
 					msg[i].buf,
 					msg[i].len
-					)!= msg[i].len)) {
+					)) != msg[i].len) {
 			break;
 		}
 		if (dvb_usb_opera1_debug & 0x10)
@@ -241,7 +246,7 @@ static struct stv0299_config opera1_stv0299_config = {
 	.mclk = 88000000UL,
 	.invert = 1,
 	.skip_reinit = 0,
-	.lock_output = STV0229_LOCKOUTPUT_0,
+	.lock_output = STV0299_LOCKOUTPUT_0,
 	.volt13_op0_op1 = STV0299_VOLT13_OP0,
 	.inittab = opera1_inittab,
 	.set_symbol_rate = opera1_stv0299_set_symbol_rate,
@@ -263,7 +268,7 @@ static int opera1_tuner_attach(struct dvb_usb_adapter *adap)
 {
 	dvb_attach(
 		dvb_pll_attach, adap->fe, 0xc0>>1,
-		&adap->dev->i2c_adap, &dvb_pll_opera1
+		&adap->dev->i2c_adap, DVB_PLL_OPERA1
 	);
 	return 0;
 }
@@ -326,34 +331,33 @@ static int opera1_pid_filter_control(struct dvb_usb_adapter *adap, int onoff)
 	return 0;
 }
 
-static struct dvb_usb_rc_key opera1_rc_keys[] = {
-	{0x5f, 0xa0, KEY_1},
-	{0x51, 0xaf, KEY_2},
-	{0x5d, 0xa2, KEY_3},
-	{0x41, 0xbe, KEY_4},
-	{0x0b, 0xf5, KEY_5},
-	{0x43, 0xbd, KEY_6},
-	{0x47, 0xb8, KEY_7},
-	{0x49, 0xb6, KEY_8},
-	{0x05, 0xfa, KEY_9},
-	{0x45, 0xba, KEY_0},
-	{0x09, 0xf6, KEY_UP},	/*chanup */
-	{0x1b, 0xe5, KEY_DOWN},	/*chandown */
-	{0x5d, 0xa3, KEY_LEFT},	/*voldown */
-	{0x5f, 0xa1, KEY_RIGHT},	/*volup */
-	{0x07, 0xf8, KEY_SPACE},	/*tab */
-	{0x1f, 0xe1, KEY_ENTER},	/*play ok */
-	{0x1b, 0xe4, KEY_Z},	/*zoom */
-	{0x59, 0xa6, KEY_M},	/*mute */
-	{0x5b, 0xa5, KEY_F},	/*tv/f */
-	{0x19, 0xe7, KEY_R},	/*rec */
-	{0x01, 0xfe, KEY_S},	/*Stop */
-	{0x03, 0xfd, KEY_P},	/*pause */
-	{0x03, 0xfc, KEY_W},	/*<- -> */
-	{0x07, 0xf9, KEY_C},	/*capture */
-	{0x47, 0xb9, KEY_Q},	/*exit */
-	{0x43, 0xbc, KEY_O},	/*power */
-
+static struct rc_map_table rc_map_opera1_table[] = {
+	{0x5fa0, KEY_1},
+	{0x51af, KEY_2},
+	{0x5da2, KEY_3},
+	{0x41be, KEY_4},
+	{0x0bf5, KEY_5},
+	{0x43bd, KEY_6},
+	{0x47b8, KEY_7},
+	{0x49b6, KEY_8},
+	{0x05fa, KEY_9},
+	{0x45ba, KEY_0},
+	{0x09f6, KEY_CHANNELUP},	/*chanup */
+	{0x1be5, KEY_CHANNELDOWN},	/*chandown */
+	{0x5da3, KEY_VOLUMEDOWN},	/*voldown */
+	{0x5fa1, KEY_VOLUMEUP},		/*volup */
+	{0x07f8, KEY_SPACE},		/*tab */
+	{0x1fe1, KEY_OK},		/*play ok */
+	{0x1be4, KEY_ZOOM},		/*zoom */
+	{0x59a6, KEY_MUTE},		/*mute */
+	{0x5ba5, KEY_RADIO},		/*tv/f */
+	{0x19e7, KEY_RECORD},		/*rec */
+	{0x01fe, KEY_STOP},		/*Stop */
+	{0x03fd, KEY_PAUSE},		/*pause */
+	{0x03fc, KEY_SCREEN},		/*<- -> */
+	{0x07f9, KEY_CAMERA},		/*capture */
+	{0x47b9, KEY_ESC},		/*exit */
+	{0x43bc, KEY_POWER2},		/*power */
 };
 
 static int opera1_rc_query(struct dvb_usb_device *dev, u32 * event, int *state)
@@ -399,13 +403,12 @@ static int opera1_rc_query(struct dvb_usb_device *dev, u32 * event, int *state)
 
 		send_key = (send_key & 0xffff) | 0x0100;
 
-		for (i = 0; i < ARRAY_SIZE(opera1_rc_keys); i++) {
-			if ((opera1_rc_keys[i].custom * 256 +
-					opera1_rc_keys[i].data) == (send_key & 0xffff)) {
+		for (i = 0; i < ARRAY_SIZE(rc_map_opera1_table); i++) {
+			if (rc5_scan(&rc_map_opera1_table[i]) == (send_key & 0xffff)) {
 				*state = REMOTE_KEY_PRESSED;
-				*event = opera1_rc_keys[i].event;
+				*event = rc_map_opera1_table[i].keycode;
 				opst->last_key_pressed =
-					opera1_rc_keys[i].event;
+					rc_map_opera1_table[i].keycode;
 				break;
 			}
 			opst->last_key_pressed = 0;
@@ -435,9 +438,9 @@ static int opera1_xilinx_load_firmware(struct usb_device *dev,
 {
 	const struct firmware *fw = NULL;
 	u8 *b, *p;
-	int ret = 0, i;
+	int ret = 0, i,fpgasize=40;
 	u8 testval;
-	info("start downloading fpga firmware");
+	info("start downloading fpga firmware %s",filename);
 
 	if ((ret = request_firmware(&fw, filename, &dev->dev)) != 0) {
 		err("did not find the firmware file. (%s) "
@@ -454,17 +457,20 @@ static int opera1_xilinx_load_firmware(struct usb_device *dev,
 			/* clear fpga ? */
 			opera1_xilinx_rw(dev, 0xbc, 0xaa, &fpga_command, 1,
 					 OPERA_WRITE_MSG);
-			for (i = 0; p[i] != 0 && i < fw->size;) {
+			for (i = 0; i < fw->size;) {
+				if ( (fw->size - i) <fpgasize){
+				    fpgasize=fw->size-i;
+				}
 				b = (u8 *) p + i;
 				if (opera1_xilinx_rw
-					(dev, OPERA_WRITE_FX2, 0x0, b + 1, b[0],
-						OPERA_WRITE_MSG) != b[0]
+					(dev, OPERA_WRITE_FX2, 0x0, b , fpgasize,
+						OPERA_WRITE_MSG) != fpgasize
 					) {
 					err("error while transferring firmware");
 					ret = -EINVAL;
 					break;
 				}
-				i = i + 1 + b[0];
+				i = i + fpgasize;
 			}
 			/* restart the CPU */
 			if (ret || opera1_xilinx_rw
@@ -473,12 +479,10 @@ static int opera1_xilinx_load_firmware(struct usb_device *dev,
 				err("could not restart the USB controller CPU.");
 				ret = -EINVAL;
 			}
-			kfree(p);
 		}
 	}
-	if (fw) {
-		release_firmware(fw);
-	}
+	kfree(p);
+	release_firmware(fw);
 	return ret;
 }
 
@@ -491,10 +495,12 @@ static struct dvb_usb_device_properties opera1_properties = {
 	.power_ctrl = opera1_power_ctrl,
 	.i2c_algo = &opera1_i2c_algo,
 
-	.rc_key_map = opera1_rc_keys,
-	.rc_key_map_size = ARRAY_SIZE(opera1_rc_keys),
-	.rc_interval = 200,
-	.rc_query = opera1_rc_query,
+	.rc.legacy = {
+		.rc_map_table = rc_map_opera1_table,
+		.rc_map_size = ARRAY_SIZE(rc_map_opera1_table),
+		.rc_interval = 200,
+		.rc_query = opera1_rc_query,
+	},
 	.read_mac_address = opera1_read_mac_address,
 	.generic_bulk_ctrl_endpoint = 0x00,
 	/* parameter for the MPEG2-data transfer */
@@ -534,18 +540,17 @@ static struct dvb_usb_device_properties opera1_properties = {
 static int opera1_probe(struct usb_interface *intf,
 			const struct usb_device_id *id)
 {
-	struct dvb_usb_device *d;
 	struct usb_device *udev = interface_to_usbdev(intf);
 
 	if (udev->descriptor.idProduct == USB_PID_OPERA1_WARM &&
 		udev->descriptor.idVendor == USB_VID_OPERA1 &&
-		(d == NULL
-			|| opera1_xilinx_load_firmware(udev, "dvb-usb-opera1-fpga.fw") != 0)
-		) {
+		opera1_xilinx_load_firmware(udev, "dvb-usb-opera1-fpga-01.fw") != 0
+	    ) {
 		return -EINVAL;
 	}
 
-	if (dvb_usb_device_init(intf, &opera1_properties, THIS_MODULE, &d) != 0)
+	if (0 != dvb_usb_device_init(intf, &opera1_properties,
+				     THIS_MODULE, NULL, adapter_nr))
 		return -EINVAL;
 	return 0;
 }

@@ -9,6 +9,8 @@
  *
  */
 
+#define KMSG_COMPONENT "dasd"
+
 #include <linux/ctype.h>
 #include <linux/init.h>
 
@@ -46,6 +48,8 @@ dasd_alloc_erp_request(char *magic, int cplength, int datasize,
 	if (cqr == NULL)
 		return ERR_PTR(-ENOMEM);
 	memset(cqr, 0, sizeof(struct dasd_ccw_req));
+	INIT_LIST_HEAD(&cqr->devlist);
+	INIT_LIST_HEAD(&cqr->blocklist);
 	data = (char *) cqr + ((sizeof(struct dasd_ccw_req) + 7L) & -8L);
 	cqr->cpaddr = NULL;
 	if (cplength > 0) {
@@ -66,7 +70,7 @@ dasd_alloc_erp_request(char *magic, int cplength, int datasize,
 }
 
 void
-dasd_free_erp_request(struct dasd_ccw_req * cqr, struct dasd_device * device)
+dasd_free_erp_request(struct dasd_ccw_req *cqr, struct dasd_device * device)
 {
 	unsigned long flags;
 
@@ -81,24 +85,25 @@ dasd_free_erp_request(struct dasd_ccw_req * cqr, struct dasd_device * device)
  * dasd_default_erp_action just retries the current cqr
  */
 struct dasd_ccw_req *
-dasd_default_erp_action(struct dasd_ccw_req * cqr)
+dasd_default_erp_action(struct dasd_ccw_req *cqr)
 {
 	struct dasd_device *device;
 
-	device = cqr->device;
+	device = cqr->startdev;
 
         /* just retry - there is nothing to save ... I got no sense data.... */
         if (cqr->retries > 0) {
-		DEV_MESSAGE (KERN_DEBUG, device,
+		DBF_DEV_EVENT(DBF_DEBUG, device,
                              "default ERP called (%i retries left)",
                              cqr->retries);
-		cqr->lpm    = LPM_ANYPATH;
-		cqr->status = DASD_CQR_QUEUED;
+		if (!test_bit(DASD_CQR_VERIFY_PATH, &cqr->flags))
+			cqr->lpm = device->path_data.opm;
+		cqr->status = DASD_CQR_FILLED;
         } else {
-                DEV_MESSAGE (KERN_WARNING, device, "%s",
-			     "default ERP called (NO retry left)");
+		pr_err("%s: default ERP has run out of retries and failed\n",
+		       dev_name(&device->cdev->dev));
 		cqr->status = DASD_CQR_FAILED;
-		cqr->stopclk = get_clock ();
+		cqr->stopclk = get_clock();
         }
         return cqr;
 }				/* end dasd_default_erp_action */
@@ -117,15 +122,12 @@ dasd_default_erp_action(struct dasd_ccw_req * cqr)
  * RETURN VALUES
  *   cqr		pointer to the original CQR
  */
-struct dasd_ccw_req *
-dasd_default_erp_postaction(struct dasd_ccw_req * cqr)
+struct dasd_ccw_req *dasd_default_erp_postaction(struct dasd_ccw_req *cqr)
 {
-	struct dasd_device *device;
 	int success;
 
 	BUG_ON(cqr->refers == NULL || cqr->function == NULL);
 
-	device = cqr->device;
 	success = cqr->status == DASD_CQR_DONE;
 
 	/* free all ERPs - but NOT the original cqr */
@@ -133,10 +135,10 @@ dasd_default_erp_postaction(struct dasd_ccw_req * cqr)
 		struct dasd_ccw_req *refers;
 
 		refers = cqr->refers;
-		/* remove the request from the device queue */
-		list_del(&cqr->list);
+		/* remove the request from the block queue */
+		list_del(&cqr->blocklist);
 		/* free the finished erp request */
-		dasd_free_erp_request(cqr, device);
+		dasd_free_erp_request(cqr, cqr->memdev);
 		cqr = refers;
 	}
 
@@ -157,14 +159,27 @@ dasd_log_sense(struct dasd_ccw_req *cqr, struct irb *irb)
 {
 	struct dasd_device *device;
 
-	device = cqr->device;
+	device = cqr->startdev;
 	/* dump sense data */
 	if (device->discipline && device->discipline->dump_sense)
 		device->discipline->dump_sense(device, cqr, irb);
 }
+
+void
+dasd_log_sense_dbf(struct dasd_ccw_req *cqr, struct irb *irb)
+{
+	struct dasd_device *device;
+
+	device = cqr->startdev;
+	/* dump sense data to s390 debugfeature*/
+	if (device->discipline && device->discipline->dump_sense_dbf)
+		device->discipline->dump_sense_dbf(device, irb, "log");
+}
+EXPORT_SYMBOL(dasd_log_sense_dbf);
 
 EXPORT_SYMBOL(dasd_default_erp_action);
 EXPORT_SYMBOL(dasd_default_erp_postaction);
 EXPORT_SYMBOL(dasd_alloc_erp_request);
 EXPORT_SYMBOL(dasd_free_erp_request);
 EXPORT_SYMBOL(dasd_log_sense);
+

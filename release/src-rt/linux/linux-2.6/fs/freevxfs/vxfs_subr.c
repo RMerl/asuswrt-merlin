@@ -33,7 +33,6 @@
 #include <linux/fs.h>
 #include <linux/buffer_head.h>
 #include <linux/kernel.h>
-#include <linux/slab.h>
 #include <linux/pagemap.h>
 
 #include "vxfs_extern.h"
@@ -45,7 +44,6 @@ static sector_t		vxfs_bmap(struct address_space *, sector_t);
 const struct address_space_operations vxfs_aops = {
 	.readpage =		vxfs_readpage,
 	.bmap =			vxfs_bmap,
-	.sync_page =		block_sync_page,
 };
 
 inline void

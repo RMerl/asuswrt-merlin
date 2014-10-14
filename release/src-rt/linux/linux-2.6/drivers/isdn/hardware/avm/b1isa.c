@@ -121,7 +121,7 @@ static int b1isa_probe(struct pci_dev *pdev)
 	cinfo->capi_ctrl.load_firmware = b1_load_firmware;
 	cinfo->capi_ctrl.reset_ctr     = b1_reset_ctr;
 	cinfo->capi_ctrl.procinfo      = b1isa_procinfo;
-	cinfo->capi_ctrl.ctr_read_proc = b1ctl_read_proc;
+	cinfo->capi_ctrl.proc_fops = &b1ctl_proc_fops;
 	strcpy(cinfo->capi_ctrl.name, card->name);
 
 	retval = attach_capi_ctr(&cinfo->capi_ctrl);
@@ -203,9 +203,9 @@ static int __init b1isa_init(void)
 	char rev[32];
 	int i;
 
-	if ((p = strchr(revision, ':')) != 0 && p[1]) {
+	if ((p = strchr(revision, ':')) != NULL && p[1]) {
 		strlcpy(rev, p + 2, 32);
-		if ((p = strchr(rev, '$')) != 0 && p > rev)
+		if ((p = strchr(rev, '$')) != NULL && p > rev)
 		   *(p-1) = 0;
 	} else
 		strcpy(rev, "1.0");
@@ -233,10 +233,8 @@ static void __exit b1isa_exit(void)
 	int i;
 
 	for (i = 0; i < MAX_CARDS; i++) {
-		if (!io[i])
-			break;
-
-		b1isa_remove(&isa_dev[i]);
+		if (isa_dev[i].resource[0].start)
+			b1isa_remove(&isa_dev[i]);
 	}
 	unregister_capi_driver(&capi_driver_b1isa);
 }

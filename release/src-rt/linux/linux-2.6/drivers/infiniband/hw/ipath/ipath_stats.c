@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006 QLogic, Inc. All rights reserved.
+ * Copyright (c) 2006, 2007, 2008 QLogic Corporation. All rights reserved.
  * Copyright (c) 2003, 2004, 2005, 2006 PathScale, Inc. All rights reserved.
  *
  * This software is available to you under a choice of one of two
@@ -112,6 +112,14 @@ u64 ipath_snap_cntr(struct ipath_devdata *dd, ipath_creg creg)
 			dd->ipath_lastrpkts = val;
 		}
 		val64 = dd->ipath_rpkts;
+	} else if (creg == dd->ipath_cregs->cr_ibsymbolerrcnt) {
+		if (dd->ibdeltainprog)
+			val64 -= val64 - dd->ibsymsnap;
+		val64 -= dd->ibsymdelta;
+	} else if (creg == dd->ipath_cregs->cr_iblinkerrrecovcnt) {
+		if (dd->ibdeltainprog)
+			val64 -= val64 - dd->iblnkerrsnap;
+		val64 -= dd->iblnkerrdelta;
 	} else
 		val64 = (u64) val;
 
@@ -133,15 +141,17 @@ bail:
 static void ipath_qcheck(struct ipath_devdata *dd)
 {
 	static u64 last_tot_hdrqfull;
+	struct ipath_portdata *pd = dd->ipath_pd[0];
 	size_t blen = 0;
 	char buf[128];
+	u32 hdrqtail;
 
 	*buf = 0;
-	if (dd->ipath_pd[0]->port_hdrqfull != dd->ipath_p0_hdrqfull) {
+	if (pd->port_hdrqfull != dd->ipath_p0_hdrqfull) {
 		blen = snprintf(buf, sizeof buf, "port 0 hdrqfull %u",
-				dd->ipath_pd[0]->port_hdrqfull -
+				pd->port_hdrqfull -
 				dd->ipath_p0_hdrqfull);
-		dd->ipath_p0_hdrqfull = dd->ipath_pd[0]->port_hdrqfull;
+		dd->ipath_p0_hdrqfull = pd->port_hdrqfull;
 	}
 	if (ipath_stats.sps_etidfull != dd->ipath_last_tidfull) {
 		blen += snprintf(buf + blen, sizeof buf - blen,
@@ -173,21 +183,61 @@ static void ipath_qcheck(struct ipath_devdata *dd)
 	if (blen)
 		ipath_dbg("%s\n", buf);
 
-	if (dd->ipath_port0head != (u32)
-	    le64_to_cpu(*dd->ipath_hdrqtailptr)) {
+	hdrqtail = ipath_get_hdrqtail(pd);
+	if (pd->port_head != hdrqtail) {
 		if (dd->ipath_lastport0rcv_cnt ==
 		    ipath_stats.sps_port0pkts) {
 			ipath_cdbg(PKT, "missing rcv interrupts? "
-				   "port0 hd=%llx tl=%x; port0pkts %llx\n",
-				   (unsigned long long)
-				   le64_to_cpu(*dd->ipath_hdrqtailptr),
-				   dd->ipath_port0head,
+				   "port0 hd=%x tl=%x; port0pkts %llx; write"
+				   " hd (w/intr)\n",
+				   pd->port_head, hdrqtail,
 				   (unsigned long long)
 				   ipath_stats.sps_port0pkts);
+			ipath_write_ureg(dd, ur_rcvhdrhead, hdrqtail |
+				dd->ipath_rhdrhead_intr_off, pd->port_port);
 		}
 		dd->ipath_lastport0rcv_cnt = ipath_stats.sps_port0pkts;
 	}
 }
+
+static void ipath_chk_errormask(struct ipath_devdata *dd)
+{
+	static u32 fixed;
+	u32 ctrl;
+	unsigned long errormask;
+	unsigned long hwerrs;
+
+	if (!dd->ipath_errormask || !(dd->ipath_flags & IPATH_INITTED))
+		return;
+
+	errormask = ipath_read_kreg64(dd, dd->ipath_kregs->kr_errormask);
+
+	if (errormask == dd->ipath_errormask)
+		return;
+	fixed++;
+
+	hwerrs = ipath_read_kreg64(dd, dd->ipath_kregs->kr_hwerrstatus);
+	ctrl = ipath_read_kreg32(dd, dd->ipath_kregs->kr_control);
+
+	ipath_write_kreg(dd, dd->ipath_kregs->kr_errormask,
+		dd->ipath_errormask);
+
+	if ((hwerrs & dd->ipath_hwerrmask) ||
+		(ctrl & INFINIPATH_C_FREEZEMODE)) {
+		/* force re-interrupt of pending events, just in case */
+		ipath_write_kreg(dd, dd->ipath_kregs->kr_hwerrclear, 0ULL);
+		ipath_write_kreg(dd, dd->ipath_kregs->kr_errorclear, 0ULL);
+		ipath_write_kreg(dd, dd->ipath_kregs->kr_intclear, 0ULL);
+		dev_info(&dd->pcidev->dev,
+			"errormask fixed(%u) %lx -> %lx, ctrl %x hwerr %lx\n",
+			fixed, errormask, (unsigned long)dd->ipath_errormask,
+			ctrl, hwerrs);
+	} else
+		ipath_dbg("errormask fixed(%u) %lx -> %lx, no freeze\n",
+			fixed, errormask,
+			(unsigned long)dd->ipath_errormask);
+}
+
 
 /**
  * ipath_get_faststats - get word counters from chip before they overflow
@@ -198,8 +248,10 @@ static void ipath_qcheck(struct ipath_devdata *dd)
 void ipath_get_faststats(unsigned long opaque)
 {
 	struct ipath_devdata *dd = (struct ipath_devdata *) opaque;
-	u32 val;
+	int i;
 	static unsigned cnt;
+	unsigned long flags;
+	u64 traffic_wds;
 
 	/*
 	 * don't access the chip while running diags, or memory diags can
@@ -210,9 +262,21 @@ void ipath_get_faststats(unsigned long opaque)
 		/* but re-arm the timer, for diags case; won't hurt other */
 		goto done;
 
-	if (dd->ipath_flags & IPATH_32BITCOUNTERS) {
-		ipath_snap_cntr(dd, dd->ipath_cregs->cr_wordsendcnt);
+	/*
+	 * We now try to maintain a "active timer", based on traffic
+	 * exceeding a threshold, so we need to check the word-counts
+	 * even if they are 64-bit.
+	 */
+	traffic_wds = ipath_snap_cntr(dd, dd->ipath_cregs->cr_wordsendcnt) +
 		ipath_snap_cntr(dd, dd->ipath_cregs->cr_wordrcvcnt);
+	spin_lock_irqsave(&dd->ipath_eep_st_lock, flags);
+	traffic_wds -= dd->ipath_traffic_wds;
+	dd->ipath_traffic_wds += traffic_wds;
+	if (traffic_wds  >= IPATH_TRAFFIC_ACTIVE_THRESHOLD)
+		atomic_add(5, &dd->ipath_active_time); /* S/B #define */
+	spin_unlock_irqrestore(&dd->ipath_eep_st_lock, flags);
+
+	if (dd->ipath_flags & IPATH_32BITCOUNTERS) {
 		ipath_snap_cntr(dd, dd->ipath_cregs->cr_pktsendcnt);
 		ipath_snap_cntr(dd, dd->ipath_cregs->cr_pktrcvcnt);
 	}
@@ -232,16 +296,15 @@ void ipath_get_faststats(unsigned long opaque)
 		dd->ipath_lasterror = 0;
 	if (dd->ipath_lasthwerror)
 		dd->ipath_lasthwerror = 0;
-	if ((dd->ipath_maskederrs & ~dd->ipath_ignorederrs)
+	if (dd->ipath_maskederrs
 	    && time_after(jiffies, dd->ipath_unmasktime)) {
 		char ebuf[256];
 		int iserr;
-		iserr = ipath_decode_err(ebuf, sizeof ebuf,
-				 (dd->ipath_maskederrs & ~dd->
-				  ipath_ignorederrs));
-		if ((dd->ipath_maskederrs & ~dd->ipath_ignorederrs) &
-				~(INFINIPATH_E_RRCVEGRFULL | INFINIPATH_E_RRCVHDRFULL |
-				INFINIPATH_E_PKTERRS ))
+		iserr = ipath_decode_err(dd, ebuf, sizeof ebuf,
+					 dd->ipath_maskederrs);
+		if (dd->ipath_maskederrs &
+		    ~(INFINIPATH_E_RRCVEGRFULL | INFINIPATH_E_RRCVHDRFULL |
+		      INFINIPATH_E_PKTERRS))
 			ipath_dev_err(dd, "Re-enabling masked errors "
 				      "(%s)\n", ebuf);
 		else {
@@ -253,28 +316,32 @@ void ipath_get_faststats(unsigned long opaque)
 			 * level.
 			 */
 			if (iserr)
-					ipath_dbg("Re-enabling queue full errors (%s)\n",
-							ebuf);
+				ipath_dbg(
+					"Re-enabling queue full errors (%s)\n",
+					ebuf);
 			else
 				ipath_cdbg(ERRPKT, "Re-enabling packet"
-						" problem interrupt (%s)\n", ebuf);
+					" problem interrupt (%s)\n", ebuf);
 		}
-		dd->ipath_maskederrs = dd->ipath_ignorederrs;
+
+		/* re-enable masked errors */
+		dd->ipath_errormask |= dd->ipath_maskederrs;
 		ipath_write_kreg(dd, dd->ipath_kregs->kr_errormask,
-				 ~dd->ipath_maskederrs);
+				 dd->ipath_errormask);
+		dd->ipath_maskederrs = 0;
 	}
 
 	/* limit qfull messages to ~one per minute per port */
 	if ((++cnt & 0x10)) {
-		for (val = dd->ipath_cfgports - 1; ((int)val) >= 0;
-		     val--) {
-			if (dd->ipath_lastegrheads[val] != -1)
-				dd->ipath_lastegrheads[val] = -1;
-			if (dd->ipath_lastrcvhdrqtails[val] != -1)
-				dd->ipath_lastrcvhdrqtails[val] = -1;
+		for (i = (int) dd->ipath_cfgports; --i >= 0; ) {
+			struct ipath_portdata *pd = dd->ipath_pd[i];
+
+			if (pd && pd->port_lastrcvhdrqtail != -1)
+				pd->port_lastrcvhdrqtail = -1;
 		}
 	}
 
+	ipath_chk_errormask(dd);
 done:
 	mod_timer(&dd->ipath_stats_timer, jiffies + HZ * 5);
 }

@@ -1,11 +1,6 @@
-#
-# For a description of the syntax of this configuration file,
-# see Documentation/kbuild/kconfig-language.txt.
-#
-
-mainmenu "IA-64 Linux Kernel Configuration"
-
 source "init/Kconfig"
+
+source "kernel/Kconfig.freezer"
 
 menu "Processor type and features"
 
@@ -15,6 +10,23 @@ config IA64
 	select ACPI if (!IA64_HP_SIM)
 	select PM if (!IA64_HP_SIM)
 	select ARCH_SUPPORTS_MSI
+	select HAVE_UNSTABLE_SCHED_CLOCK
+	select HAVE_IDE
+	select HAVE_OPROFILE
+	select HAVE_KPROBES
+	select HAVE_KRETPROBES
+	select HAVE_FTRACE_MCOUNT_RECORD
+	select HAVE_DYNAMIC_FTRACE if (!ITANIUM)
+	select HAVE_FUNCTION_TRACER
+	select HAVE_DMA_ATTRS
+	select HAVE_KVM
+	select HAVE_ARCH_TRACEHOOK
+	select HAVE_DMA_API_DEBUG
+	select HAVE_GENERIC_HARDIRQS
+	select GENERIC_IRQ_PROBE
+	select GENERIC_PENDING_IRQ if SMP
+	select IRQ_PER_CPU
+	select GENERIC_IRQ_SHOW
 	default y
 	help
 	  The Itanium Processor Family is Intel's 64-bit successor to
@@ -39,20 +51,32 @@ config MMU
 	bool
 	default y
 
+config ARCH_DMA_ADDR_T_64BIT
+	def_bool y
+
+config NEED_DMA_MAP_STATE
+	def_bool y
+
+config NEED_SG_DMA_LENGTH
+	def_bool y
+
 config SWIOTLB
        bool
+
+config STACKTRACE_SUPPORT
+	def_bool y
+
+config GENERIC_LOCKBREAK
+	def_bool n
 
 config RWSEM_XCHGADD_ALGORITHM
 	bool
 	default y
 
-config ARCH_HAS_ILOG2_U32
+config HUGETLB_PAGE_SIZE_VARIABLE
 	bool
-	default n
-
-config ARCH_HAS_ILOG2_U64
-	bool
-	default n
+	depends on HUGETLB_PAGE
+	default y
 
 config GENERIC_FIND_NEXT_BIT
 	bool
@@ -62,9 +86,12 @@ config GENERIC_CALIBRATE_DELAY
 	bool
 	default y
 
-config TIME_INTERPOLATION
+config GENERIC_TIME_VSYSCALL
 	bool
 	default y
+
+config HAVE_SETUP_PER_CPU_AREA
+	def_bool y
 
 config DMI
 	bool
@@ -78,7 +105,7 @@ config GENERIC_IOMAP
 	bool
 	default y
 
-config SCHED_NO_NO_OMIT_FRAME_POINTER
+config SCHED_OMIT_FRAME_POINTER
 	bool
 	default y
 
@@ -86,9 +113,40 @@ config IA64_UNCACHED_ALLOCATOR
 	bool
 	select GENERIC_ALLOCATOR
 
+config ARCH_USES_PG_UNCACHED
+	def_bool y
+	depends on IA64_UNCACHED_ALLOCATOR
+
 config AUDIT_ARCH
 	bool
 	default y
+
+menuconfig PARAVIRT_GUEST
+	bool "Paravirtualized guest support"
+	help
+	  Say Y here to get to see options related to running Linux under
+	  various hypervisors.  This option alone does not add any kernel code.
+
+	  If you say N, all options in this submenu will be skipped and disabled.
+
+if PARAVIRT_GUEST
+
+config PARAVIRT
+	bool "Enable paravirtualization code"
+	depends on PARAVIRT_GUEST
+	default y
+	bool
+	default y
+	help
+	  This changes the kernel so it can modify itself when it is run
+	  under a hypervisor, potentially improving performance significantly
+	  over full virtualization.  However, when run without a hypervisor
+	  the kernel is theoretically slower and slightly larger.
+
+
+source "arch/ia64/xen/Kconfig"
+
+endif
 
 choice
 	prompt "System type"
@@ -99,6 +157,8 @@ config IA64_GENERIC
 	select NUMA
 	select ACPI_NUMA
 	select SWIOTLB
+	select PCI_MSI
+	select DMAR
 	help
 	  This selects the system type of your hardware.  A "generic" kernel
 	  will run on any supported IA-64 system.  However, if you configure
@@ -106,16 +166,24 @@ config IA64_GENERIC
 
 	  generic		For any supported IA-64 system
 	  DIG-compliant		For DIG ("Developer's Interface Guide") compliant systems
+	  DIG+Intel+IOMMU	For DIG systems with Intel IOMMU
 	  HP-zx1/sx1000		For HP systems
 	  HP-zx1/sx1000+swiotlb	For HP systems with (broken) DMA-constrained devices.
 	  SGI-SN2		For SGI Altix systems
+	  SGI-UV		For SGI UV systems
 	  Ski-simulator		For the HP simulator <http://www.hpl.hp.com/research/linux/ski/>
+	  Xen-domU		For xen domU system
 
 	  If you don't know what to do, choose "generic".
 
 config IA64_DIG
 	bool "DIG-compliant"
 	select SWIOTLB
+
+config IA64_DIG_VTD
+	bool "DIG+Intel+IOMMU"
+	select DMAR
+	select PCI_MSI
 
 config IA64_HP_ZX1
 	bool "HP-zx1/sx1000"
@@ -135,6 +203,8 @@ config IA64_HP_ZX1_SWIOTLB
 
 config IA64_SGI_SN2
 	bool "SGI-SN2"
+	select NUMA
+	select ACPI_NUMA
 	help
 	  Selecting this option will optimize the kernel for use on sn2 based
 	  systems, but the resulting kernel binary will not run on other
@@ -142,9 +212,29 @@ config IA64_SGI_SN2
 	  to select this option.  If in doubt, select ia64 generic support
 	  instead.
 
+config IA64_SGI_UV
+	bool "SGI-UV"
+	select NUMA
+	select ACPI_NUMA
+	select SWIOTLB
+	help
+	  Selecting this option will optimize the kernel for use on UV based
+	  systems, but the resulting kernel binary will not run on other
+	  types of ia64 systems.  If you have an SGI UV system, it's safe
+	  to select this option.  If in doubt, select ia64 generic support
+	  instead.
+
 config IA64_HP_SIM
 	bool "Ski-simulator"
 	select SWIOTLB
+
+config IA64_XEN_GUEST
+	bool "Xen guest"
+	select SWIOTLB
+	depends on XEN
+	help
+	  Build a kernel that runs on Xen guest domain. At this moment only
+	  16KB page size in supported.
 
 endchoice
 
@@ -212,7 +302,14 @@ config PGTABLE_4
 
 endchoice
 
+if IA64_HP_SIM
+config HZ
+	default 32
+endif
+
+if !IA64_HP_SIM
 source kernel/Kconfig.hz
+endif
 
 config IA64_BRL_EMU
 	bool
@@ -236,25 +333,26 @@ config IOSAPIC
 	depends on !IA64_HP_SIM
 	default y
 
-config IA64_SGI_SN_XP
-	tristate "Support communication between SGI SSIs"
-	depends on IA64_GENERIC || IA64_SGI_SN2
-	select IA64_UNCACHED_ALLOCATOR
-	help
-	  An SGI machine can be divided into multiple Single System
-	  Images which act independently of each other and have
-	  hardware based memory protection from the others.  Enabling
-	  this feature will allow for direct communication between SSIs
-	  based on a network adapter and DMA messaging.
-
 config FORCE_MAX_ZONEORDER
 	int "MAX_ORDER (11 - 17)"  if !HUGETLB_PAGE
 	range 11 17  if !HUGETLB_PAGE
 	default "17" if HUGETLB_PAGE
 	default "11"
 
+config VIRT_CPU_ACCOUNTING
+	bool "Deterministic task and CPU time accounting"
+	default n
+	help
+	  Select this option to enable more accurate task and CPU time
+	  accounting.  This is done by reading a CPU counter on each
+	  kernel entry and exit and on transitions within the kernel
+	  between system, softirq and hardirq state, so there is a
+	  small performance impact.
+	  If in doubt, say N here.
+
 config SMP
 	bool "Symmetric multi-processing support"
+	select USE_GENERIC_SMP_HELPERS
 	help
 	  This enables support for systems with more than one CPU. If you have
 	  a system with only one CPU, say N.  If you have a system with more
@@ -266,16 +364,16 @@ config SMP
 	  single processor systems.  On a single processor system, the kernel
 	  will run faster if you say N here.
 
-	  See also the <file:Documentation/smp.txt> and the SMP-HOWTO
-	  available at <http://www.tldp.org/docs.html#howto>.
+	  See also the SMP-HOWTO available at
+	  <http://www.tldp.org/docs.html#howto>.
 
 	  If you don't know what to do here, say N.
 
 config NR_CPUS
-	int "Maximum number of CPUs (2-1024)"
-	range 2 1024
+	int "Maximum number of CPUs (2-4096)"
+	range 2 4096
 	depends on SMP
-	default "1024"
+	default "4096"
 	help
 	  You should set this to the number of CPUs in your system, but
 	  keep in mind that a kernel compiled for, e.g., 2 CPUs will boot but
@@ -296,6 +394,9 @@ config HOTPLUG_CPU
 config ARCH_ENABLE_MEMORY_HOTPLUG
 	def_bool y
 
+config ARCH_ENABLE_MEMORY_HOTREMOVE
+	def_bool y
+
 config SCHED_SMT
 	bool "SMT scheduler support"
 	depends on SMP
@@ -313,27 +414,17 @@ config PERMIT_BSP_REMOVE
 	support. 
 
 config FORCE_CPEI_RETARGET
-	bool "Force assumption that CPEI can be re-targetted"
+	bool "Force assumption that CPEI can be re-targeted"
 	depends on PERMIT_BSP_REMOVE
 	default n
 	---help---
-	Say Y if you need to force the assumption that CPEI can be re-targetted to
+	Say Y if you need to force the assumption that CPEI can be re-targeted to
 	any cpu in the system. This hint is available via ACPI 3.0 specifications.
 	Tiger4 systems are capable of re-directing CPEI to any CPU other than BSP.
 	This option it useful to enable this feature on older BIOS's as well.
 	You can also enable this by using boot command line option force_cpei=1.
 
-config PREEMPT
-	bool "Preemptible Kernel"
-        help
-          This option reduces the latency of the kernel when reacting to
-          real-time or interactive events by allowing a low priority process to
-          be preempted even if it is in kernel mode executing a system call.
-          This allows applications to run more reliably even when the system is
-          under load.
-
-          Say Y here if you are building a kernel for a desktop, embedded
-          or real-time system.  Say N if you are unsure.
+source "kernel/Kconfig.preempt"
 
 source "mm/Kconfig"
 
@@ -354,6 +445,7 @@ config ARCH_FLATMEM_ENABLE
 config ARCH_SPARSEMEM_ENABLE
 	def_bool y
 	depends on ARCH_DISCONTIGMEM_ENABLE
+	select SPARSEMEM_VMEMMAP_ENABLE
 
 config ARCH_DISCONTIGMEM_DEFAULT
 	def_bool y if (IA64_SGI_SN2 || IA64_GENERIC || IA64_HP_ZX1 || IA64_HP_ZX1_SWIOTLB)
@@ -400,26 +492,22 @@ config HOLES_IN_ZONE
 	default y if VIRTUAL_MEM_MAP
 
 config HAVE_ARCH_EARLY_PFN_TO_NID
-	def_bool y
-	depends on NEED_MULTIPLE_NODES
+	def_bool NUMA && SPARSEMEM
 
 config HAVE_ARCH_NODEDATA_EXTENSION
 	def_bool y
 	depends on NUMA
 
-config IA32_SUPPORT
-	bool "Support for Linux/x86 binaries"
-	help
-	  IA-64 processors can execute IA-32 (X86) instructions.  By
-	  saying Y here, the kernel will include IA-32 system call
-	  emulation support which makes it possible to transparently
-	  run IA-32 Linux binaries on an IA-64 Linux system.
-	  If in doubt, say Y.
+config USE_PERCPU_NUMA_NODE_ID
+	def_bool y
+	depends on NUMA
 
-config COMPAT
-	bool
-	depends on IA32_SUPPORT
-	default y
+config HAVE_MEMORYLESS_NODES
+	def_bool NUMA
+
+config ARCH_PROC_KCORE_TEXT
+	def_bool y
+	depends on PROC_KCORE
 
 config IA64_MCA_RECOVERY
 	tristate "MCA recovery from errors other than TLB."
@@ -446,9 +534,9 @@ config IA64_PALINFO
 config IA64_MC_ERR_INJECT
 	tristate "MC error injection support"
 	help
-	  Selets whether support for MC error injection. By enabling the
-	  support, kernel provide sysfs interface for user application to
-	  call MC error injection PAL procedure to inject various errors.
+	  Adds support for MC error injection. If enabled, the kernel 
+	  will provide a sysfs interface for user applications to
+	  call MC error injection PAL procedures to inject various errors.
 	  This is a useful tool for MCA testing.
 
 	  If you're unsure, do not select this option.
@@ -464,6 +552,16 @@ config IA64_ESI
 	  firmware extensions, such as the ability to inject memory-errors
 	  for test-purposes.  If you're unsure, say N.
 
+config IA64_HP_AML_NFW
+	bool "Support ACPI AML calls to native firmware"
+	help
+	  This driver installs a global ACPI Operation Region handler for
+	  region 0xA1.  AML methods can use this OpRegion to call arbitrary
+	  native firmware functions.  The driver installs the OpRegion
+	  handler if there is an HPQ5001 device or if the user supplies
+	  the "force" module parameter, e.g., with the "aml_nfw.force"
+	  kernel command line option.
+
 source "drivers/sn/Kconfig"
 
 config KEXEC
@@ -475,7 +573,7 @@ config KEXEC
 	  but it is independent of the system firmware.   And like a reboot
 	  you can start any kernel with it, not just Linux.
 
-	  The name comes from the similiarity to the exec system call.
+	  The name comes from the similarity to the exec system call.
 
 	  It is an ongoing process to be certain the hardware in a machine
 	  is properly shutdown, so do not be surprised if this code does not
@@ -484,8 +582,8 @@ config KEXEC
 	  strongly in flux, so no good recommendation can be made.
 
 config CRASH_DUMP
-	  bool "kernel crash dumps (EXPERIMENTAL)"
-	  depends on EXPERIMENTAL && IA64_MCA_RECOVERY && !IA64_HP_SIM && (!SMP || HOTPLUG_CPU)
+	  bool "kernel crash dumps"
+	  depends on IA64_MCA_RECOVERY && !IA64_HP_SIM && (!SMP || HOTPLUG_CPU)
 	  help
 	    Generate crash dump after being started by kexec.
 
@@ -495,7 +593,7 @@ source "fs/Kconfig.binfmt"
 
 endmenu
 
-menu "Power management and ACPI"
+menu "Power management and ACPI options"
 
 source "kernel/power/Kconfig"
 
@@ -520,8 +618,10 @@ config PCI
 	  here unless you are using a simulator without PCI support.
 
 config PCI_DOMAINS
-	bool
-	default PCI
+	def_bool PCI
+
+config PCI_SYSCALL
+	def_bool PCI
 
 source "drivers/pci/pcie/Kconfig"
 
@@ -531,6 +631,27 @@ source "drivers/pci/hotplug/Kconfig"
 
 source "drivers/pcmcia/Kconfig"
 
+config DMAR
+        bool "Support for DMA Remapping Devices (EXPERIMENTAL)"
+        depends on IA64_GENERIC && ACPI && EXPERIMENTAL
+	help
+	  DMA remapping (DMAR) devices support enables independent address
+	  translations for Direct Memory Access (DMA) from devices.
+	  These DMA remapping devices are reported via ACPI tables
+	  and include PCI device scope covered by these DMA
+	  remapping devices.
+
+config DMAR_DEFAULT_ON
+	def_bool y
+	prompt "Enable DMA Remapping Devices by default"
+	depends on DMAR
+	help
+	  Selecting this option will enable a DMAR device at boot time if
+	  one is found. If this option is not selected, DMAR support can
+	  be enabled by passing intel_iommu=on to the kernel. It is
+	  recommended you say N here while the DMAR code remains
+	  experimental.
+
 endmenu
 
 endif
@@ -538,6 +659,8 @@ endif
 source "net/Kconfig"
 
 source "drivers/Kconfig"
+
+source "arch/ia64/hp/sim/Kconfig"
 
 config MSPEC
 	tristate "Memory special operations driver"
@@ -550,48 +673,18 @@ config MSPEC
 
 source "fs/Kconfig"
 
-source "lib/Kconfig"
-
-#
-# Use the generic interrupt handling code in kernel/irq/:
-#
-config GENERIC_HARDIRQS
-	bool
-	default y
-
-config GENERIC_IRQ_PROBE
-	bool
-	default y
-
-config GENERIC_PENDING_IRQ
-	bool
-	depends on GENERIC_HARDIRQS && SMP
-	default y
-
-config IRQ_PER_CPU
-	bool
-	default y
-
-source "arch/ia64/hp/sim/Kconfig"
-
-menu "Instrumentation Support"
-        depends on EXPERIMENTAL
-
-source "arch/ia64/oprofile/Kconfig"
-
-config KPROBES
-	bool "Kprobes (EXPERIMENTAL)"
-	depends on KALLSYMS && EXPERIMENTAL && MODULES
-	help
-	  Kprobes allows you to trap at almost any kernel address and
-	  execute a callback function.  register_kprobe() establishes
-	  a probepoint and specifies the callback.  Kprobes is useful
-	  for kernel debugging, non-intrusive instrumentation and testing.
-	  If in doubt, say "N".
-endmenu
-
 source "arch/ia64/Kconfig.debug"
 
 source "security/Kconfig"
 
 source "crypto/Kconfig"
+
+source "arch/ia64/kvm/Kconfig"
+
+source "lib/Kconfig"
+
+config IOMMU_HELPER
+	def_bool (IA64_HP_ZX1 || IA64_HP_ZX1_SWIOTLB || IA64_GENERIC || SWIOTLB)
+
+config IOMMU_API
+	def_bool (DMAR)

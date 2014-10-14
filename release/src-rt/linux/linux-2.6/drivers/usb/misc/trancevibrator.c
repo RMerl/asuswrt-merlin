@@ -22,6 +22,7 @@
 #include <linux/kernel.h>
 #include <linux/errno.h>
 #include <linux/init.h>
+#include <linux/slab.h>
 #include <linux/module.h>
 #include <linux/usb.h>
 
@@ -33,7 +34,7 @@
 #define TRANCEVIBRATOR_VENDOR_ID	0x0b49	/* ASCII Corporation */
 #define TRANCEVIBRATOR_PRODUCT_ID	0x064f	/* Trance Vibrator */
 
-static struct usb_device_id id_table [] = {
+static const struct usb_device_id id_table[] = {
 	{ USB_DEVICE(TRANCEVIBRATOR_VENDOR_ID, TRANCEVIBRATOR_PRODUCT_ID) },
 	{ },
 };
@@ -59,13 +60,14 @@ static ssize_t set_speed(struct device *dev, struct device_attribute *attr,
 {
 	struct usb_interface *intf = to_usb_interface(dev);
 	struct trancevibrator *tv = usb_get_intfdata(intf);
-	int temp, retval;
+	int temp, retval, old;
 
 	temp = simple_strtoul(buf, NULL, 10);
 	if (temp > 255)
 		temp = 255;
 	else if (temp < 0)
 		temp = 0;
+	old = tv->speed;
 	tv->speed = temp;
 
 	dev_dbg(&tv->udev->dev, "speed = %d\n", tv->speed);
@@ -77,13 +79,14 @@ static ssize_t set_speed(struct device *dev, struct device_attribute *attr,
 				 tv->speed, /* speed value */
 				 0, NULL, 0, USB_CTRL_GET_TIMEOUT);
 	if (retval) {
+		tv->speed = old;
 		dev_dbg(&tv->udev->dev, "retval = %d\n", retval);
 		return retval;
 	}
 	return count;
 }
 
-static DEVICE_ATTR(speed, S_IWUGO | S_IRUGO, show_speed, set_speed);
+static DEVICE_ATTR(speed, S_IRUGO | S_IWUSR, show_speed, set_speed);
 
 static int tv_probe(struct usb_interface *interface,
 		    const struct usb_device_id *id)
@@ -142,7 +145,8 @@ static int __init tv_init(void)
 		return retval;
 	}
 
-	info(DRIVER_VERSION ":" DRIVER_DESC);
+	printk(KERN_INFO KBUILD_MODNAME ": " DRIVER_VERSION ":"
+	       DRIVER_DESC "\n");
 	return 0;
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2007, PA Semi, Inc
+ * Copyright (C) 2005-2008, PA Semi, Inc
  *
  * Maintained by: Olof Johansson <olof@lixom.net>
  *
@@ -25,7 +25,7 @@
 #include <asm/iommu.h>
 #include <asm/machdep.h>
 #include <asm/abs_addr.h>
-
+#include <asm/firmware.h>
 
 #define IOBMAP_PAGE_SHIFT	12
 #define IOBMAP_PAGE_SIZE	(1 << IOBMAP_PAGE_SHIFT)
@@ -34,13 +34,13 @@
 #define IOB_BASE		0xe0000000
 #define IOB_SIZE		0x3000
 /* Configuration registers */
-#define IOBCAP_REG		0x10
-#define IOBCOM_REG		0x40
+#define IOBCAP_REG		0x40
+#define IOBCOM_REG		0x100
 /* Enable IOB address translation */
 #define IOBCOM_ATEN		0x00000100
 
 /* Address decode configuration register */
-#define IOB_AD_REG		0x53
+#define IOB_AD_REG		0x14c
 /* IOBCOM_AD_REG fields */
 #define IOB_AD_VGPRT		0x00000e00
 #define IOB_AD_VGAEN		0x00000100
@@ -55,13 +55,13 @@
 #define IOB_AD_TRNG_2G		0x00000001
 #define IOB_AD_TRNG_128G	0x00000003
 
-#define IOB_TABLEBASE_REG	0x55
+#define IOB_TABLEBASE_REG	0x154
 
 /* Base of the 64 4-byte L1 registers */
-#define IOB_XLT_L1_REGBASE	0xac0
+#define IOB_XLT_L1_REGBASE	0x2b00
 
 /* Register to invalidate TLB entries */
-#define IOB_AT_INVAL_TLB_REG	0xb40
+#define IOB_AT_INVAL_TLB_REG	0x2d00
 
 /* The top two bits of the level 1 entry contains valid and type flags */
 #define IOBMAP_L1E_V		0x40000000
@@ -75,7 +75,7 @@
 #define IOBMAP_L2E_V		0x80000000
 #define IOBMAP_L2E_V_CACHED	0xc0000000
 
-static u32 __iomem *iob;
+static void __iomem *iob;
 static u32 iob_l1_emptyval;
 static u32 iob_l2_emptyval;
 static u32 *iob_l2_base;
@@ -83,9 +83,10 @@ static u32 *iob_l2_base;
 static struct iommu_table iommu_table_iobmap;
 static int iommu_table_iobmap_inited;
 
-static void iobmap_build(struct iommu_table *tbl, long index,
+static int iobmap_build(struct iommu_table *tbl, long index,
 			 long npages, unsigned long uaddr,
-			 enum dma_data_direction direction)
+			 enum dma_data_direction direction,
+			 struct dma_attrs *attrs)
 {
 	u32 *ip;
 	u32 rpn;
@@ -93,7 +94,7 @@ static void iobmap_build(struct iommu_table *tbl, long index,
 
 	pr_debug("iobmap: build at: %lx, %lx, addr: %lx\n", index, npages, uaddr);
 
-	bus_addr = (tbl->it_offset + index) << PAGE_SHIFT;
+	bus_addr = (tbl->it_offset + index) << IOBMAP_PAGE_SHIFT;
 
 	ip = ((u32 *)tbl->it_base) + index;
 
@@ -107,6 +108,7 @@ static void iobmap_build(struct iommu_table *tbl, long index,
 		uaddr += IOBMAP_PAGE_SIZE;
 		bus_addr += IOBMAP_PAGE_SIZE;
 	}
+	return 0;
 }
 
 
@@ -118,7 +120,7 @@ static void iobmap_free(struct iommu_table *tbl, long index,
 
 	pr_debug("iobmap: free at: %lx, %lx\n", index, npages);
 
-	bus_addr = (tbl->it_offset + index) << PAGE_SHIFT;
+	bus_addr = (tbl->it_offset + index) << IOBMAP_PAGE_SHIFT;
 
 	ip = ((u32 *)tbl->it_base) + index;
 
@@ -137,7 +139,7 @@ static void iommu_table_iobmap_setup(void)
 	iommu_table_iobmap.it_busno = 0;
 	iommu_table_iobmap.it_offset = 0;
 	/* it_size is in number of entries */
-	iommu_table_iobmap.it_size = 0x80000000 >> PAGE_SHIFT;
+	iommu_table_iobmap.it_size = 0x80000000 >> IOBMAP_PAGE_SHIFT;
 
 	/* Initialize the common IOMMU code */
 	iommu_table_iobmap.it_base = (unsigned long)iob_l2_base;
@@ -154,20 +156,12 @@ static void iommu_table_iobmap_setup(void)
 
 static void pci_dma_bus_setup_pasemi(struct pci_bus *bus)
 {
-	struct device_node *dn;
-
 	pr_debug("pci_dma_bus_setup, bus %p, bus->self %p\n", bus, bus->self);
 
 	if (!iommu_table_iobmap_inited) {
 		iommu_table_iobmap_inited = 1;
 		iommu_table_iobmap_setup();
 	}
-
-	dn = pci_bus_to_OF_node(bus);
-
-	if (dn)
-		PCI_DN(dn)->iommu_table = &iommu_table_iobmap;
-
 }
 
 
@@ -175,19 +169,22 @@ static void pci_dma_dev_setup_pasemi(struct pci_dev *dev)
 {
 	pr_debug("pci_dma_dev_setup, dev %p (%s)\n", dev, pci_name(dev));
 
-	/* DMA device is untranslated, but all other PCI-e goes through
-	 * the IOMMU
+#if !defined(CONFIG_PPC_PASEMI_IOMMU_DMA_FORCE)
+	/* For non-LPAR environment, don't translate anything for the DMA
+	 * engine. The exception to this is if the user has enabled
+	 * CONFIG_PPC_PASEMI_IOMMU_DMA_FORCE at build time.
 	 */
-	if (dev->vendor == 0x1959 && dev->device == 0xa007)
+	if (dev->vendor == 0x1959 && dev->device == 0xa007 &&
+	    !firmware_has_feature(FW_FEATURE_LPAR)) {
 		dev->dev.archdata.dma_ops = &dma_direct_ops;
-	else
-		dev->dev.archdata.dma_data = &iommu_table_iobmap;
+		return;
+	}
+#endif
+
+	set_iommu_table_base(&dev->dev, &iommu_table_iobmap);
 }
 
-static void pci_dma_bus_setup_null(struct pci_bus *b) { }
-static void pci_dma_dev_setup_null(struct pci_dev *d) { }
-
-int iob_init(struct device_node *dn)
+int __init iob_init(struct device_node *dn)
 {
 	unsigned long tmp;
 	u32 regword;
@@ -196,7 +193,7 @@ int iob_init(struct device_node *dn)
 	pr_debug(" -> %s\n", __func__);
 
 	/* Allocate a spare page to map all invalid IOTLB pages. */
-	tmp = lmb_alloc(IOBMAP_PAGE_SIZE, IOBMAP_PAGE_SIZE);
+	tmp = memblock_alloc(IOBMAP_PAGE_SIZE, IOBMAP_PAGE_SIZE);
 	if (!tmp)
 		panic("IOBMAP: Cannot allocate spare page!");
 	/* Empty l1 is marked invalid */
@@ -212,7 +209,7 @@ int iob_init(struct device_node *dn)
 	for (i = 0; i < 64; i++) {
 		/* Each L1 covers 32MB, i.e. 8K entries = 32K of ram */
 		regword = IOBMAP_L1E_V | (__pa(iob_l2_base + i*0x2000) >> 12);
-		out_le32(iob+IOB_XLT_L1_REGBASE+i, regword);
+		out_le32(iob+IOB_XLT_L1_REGBASE+i*4, regword);
 	}
 
 	/* set 2GB translation window, based at 0 */
@@ -233,7 +230,7 @@ int iob_init(struct device_node *dn)
 
 
 /* These are called very early. */
-void iommu_init_early_pasemi(void)
+void __init iommu_init_early_pasemi(void)
 {
 	int iommu_off;
 
@@ -243,14 +240,8 @@ void iommu_init_early_pasemi(void)
 	iommu_off = of_chosen &&
 			of_get_property(of_chosen, "linux,iommu-off", NULL);
 #endif
-	if (iommu_off) {
-		/* Direct I/O, IOMMU off */
-		ppc_md.pci_dma_dev_setup = pci_dma_dev_setup_null;
-		ppc_md.pci_dma_bus_setup = pci_dma_bus_setup_null;
-		set_pci_dma_ops(&dma_direct_ops);
-
+	if (iommu_off)
 		return;
-	}
 
 	iob_init(NULL);
 
@@ -267,7 +258,7 @@ void __init alloc_iobmap_l2(void)
 	return;
 #endif
 	/* For 2G space, 8x64 pages (2^21 bytes) is max total l2 size */
-	iob_l2_base = (u32 *)abs_to_virt(lmb_alloc_base(1UL<<21, 1UL<<21, 0x80000000));
+	iob_l2_base = (u32 *)abs_to_virt(memblock_alloc_base(1UL<<21, 1UL<<21, 0x80000000));
 
 	printk(KERN_INFO "IOBMAP L2 allocated at: %p\n", iob_l2_base);
 }

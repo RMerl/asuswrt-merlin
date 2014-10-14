@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006 QLogic, Inc. All rights reserved.
+ * Copyright (c) 2006, 2007 QLogic Corporation. All rights reserved.
  * Copyright (c) 2003, 2004, 2005, 2006 PathScale, Inc. All rights reserved.
  *
  * This software is available to you under a choice of one of two
@@ -33,6 +33,8 @@
 
 #include <linux/mm.h>
 #include <linux/device.h>
+#include <linux/slab.h>
+#include <linux/sched.h>
 
 #include "ipath_kernel.h"
 
@@ -51,15 +53,14 @@ static void __ipath_release_user_pages(struct page **p, size_t num_pages,
 }
 
 /* call with current->mm->mmap_sem held */
-static int __get_user_pages(unsigned long start_page, size_t num_pages,
-			struct page **p, struct vm_area_struct **vma)
+static int __ipath_get_user_pages(unsigned long start_page, size_t num_pages,
+				  struct page **p, struct vm_area_struct **vma)
 {
 	unsigned long lock_limit;
 	size_t got;
 	int ret;
 
-	lock_limit = current->signal->rlim[RLIMIT_MEMLOCK].rlim_cur >>
-		PAGE_SHIFT;
+	lock_limit = rlimit(RLIMIT_MEMLOCK) >> PAGE_SHIFT;
 
 	if (num_pages > lock_limit) {
 		ret = -ENOMEM;
@@ -164,33 +165,7 @@ int ipath_get_user_pages(unsigned long start_page, size_t num_pages,
 
 	down_write(&current->mm->mmap_sem);
 
-	ret = __get_user_pages(start_page, num_pages, p, NULL);
-
-	up_write(&current->mm->mmap_sem);
-
-	return ret;
-}
-
-/**
- * ipath_get_user_pages_nocopy - lock a single page for I/O and mark shared
- * @start_page: the page to lock
- * @p: the output page structure
- *
- * This is similar to ipath_get_user_pages, but it's always one page, and we
- * mark the page as locked for I/O, and shared.  This is used for the user
- * process page that contains the destination address for the rcvhdrq tail
- * update, so we need to have the vma. If we don't do this, the page can be
- * taken away from us on fork, even if the child never touches it, and then
- * the user process never sees the tail register updates.
- */
-int ipath_get_user_pages_nocopy(unsigned long page, struct page **p)
-{
-	struct vm_area_struct *vma;
-	int ret;
-
-	down_write(&current->mm->mmap_sem);
-
-	ret = __get_user_pages(page, 1, p, &vma);
+	ret = __ipath_get_user_pages(start_page, num_pages, p, NULL);
 
 	up_write(&current->mm->mmap_sem);
 
@@ -235,20 +210,20 @@ void ipath_release_user_pages_on_close(struct page **p, size_t num_pages)
 
 	mm = get_task_mm(current);
 	if (!mm)
-		goto bail;
+		return;
 
 	work = kmalloc(sizeof(*work), GFP_KERNEL);
 	if (!work)
 		goto bail_mm;
 
-	goto bail;
-
 	INIT_WORK(&work->work, user_pages_account);
 	work->mm = mm;
 	work->num_pages = num_pages;
 
+	queue_work(ib_wq, &work->work);
+	return;
+
 bail_mm:
 	mmput(mm);
-bail:
 	return;
 }

@@ -35,7 +35,7 @@ static int befs_get_block(struct inode *, sector_t, struct buffer_head *, int);
 static int befs_readpage(struct file *file, struct page *page);
 static sector_t befs_bmap(struct address_space *mapping, sector_t block);
 static struct dentry *befs_lookup(struct inode *, struct dentry *, struct nameidata *);
-static void befs_read_inode(struct inode *ino);
+static struct inode *befs_iget(struct super_block *, unsigned long);
 static struct inode *befs_alloc_inode(struct super_block *sb);
 static void befs_destroy_inode(struct inode *inode);
 static int befs_init_inodecache(void);
@@ -52,12 +52,12 @@ static int befs_statfs(struct dentry *, struct kstatfs *);
 static int parse_options(char *, befs_mount_options *);
 
 static const struct super_operations befs_sops = {
-	.read_inode	= befs_read_inode,	/* initialize & read inode */
 	.alloc_inode	= befs_alloc_inode,	/* allocate a new inode */
 	.destroy_inode	= befs_destroy_inode, /* deallocate an inode */
 	.put_super	= befs_put_super,	/* uninit super */
 	.statfs		= befs_statfs,	/* statfs */
 	.remount_fs	= befs_remount,
+	.show_options	= generic_show_options,
 };
 
 /* slab cache for befs_inode_info objects */
@@ -66,6 +66,7 @@ static struct kmem_cache *befs_inode_cachep;
 static const struct file_operations befs_dir_operations = {
 	.read		= generic_read_dir,
 	.readdir	= befs_readdir,
+	.llseek		= generic_file_llseek,
 };
 
 static const struct inode_operations befs_dir_inode_operations = {
@@ -74,7 +75,6 @@ static const struct inode_operations befs_dir_inode_operations = {
 
 static const struct address_space_operations befs_aops = {
 	.readpage	= befs_readpage,
-	.sync_page	= block_sync_page,
 	.bmap		= befs_bmap,
 };
 
@@ -198,9 +198,9 @@ befs_lookup(struct inode *dir, struct dentry *dentry, struct nameidata *nd)
 		return ERR_PTR(-ENODATA);
 	}
 
-	inode = iget(dir->i_sb, (ino_t) offset);
-	if (!inode)
-		return ERR_PTR(-EACCES);
+	inode = befs_iget(dir->i_sb, (ino_t) offset);
+	if (IS_ERR(inode))
+		return ERR_CAST(inode);
 
 	d_add(dentry, inode);
 
@@ -283,30 +283,42 @@ befs_alloc_inode(struct super_block *sb)
         return &bi->vfs_inode;
 }
 
-static void
-befs_destroy_inode(struct inode *inode)
+static void befs_i_callback(struct rcu_head *head)
 {
+	struct inode *inode = container_of(head, struct inode, i_rcu);
+	INIT_LIST_HEAD(&inode->i_dentry);
         kmem_cache_free(befs_inode_cachep, BEFS_I(inode));
 }
 
-static void init_once(void * foo, struct kmem_cache * cachep, unsigned long flags)
+static void befs_destroy_inode(struct inode *inode)
+{
+	call_rcu(&inode->i_rcu, befs_i_callback);
+}
+
+static void init_once(void *foo)
 {
         struct befs_inode_info *bi = (struct befs_inode_info *) foo;
 
 	inode_init_once(&bi->vfs_inode);
 }
 
-static void
-befs_read_inode(struct inode *inode)
+static struct inode *befs_iget(struct super_block *sb, unsigned long ino)
 {
 	struct buffer_head *bh = NULL;
 	befs_inode *raw_inode = NULL;
 
-	struct super_block *sb = inode->i_sb;
 	befs_sb_info *befs_sb = BEFS_SB(sb);
 	befs_inode_info *befs_ino = NULL;
+	struct inode *inode;
+	long ret = -EIO;
 
-	befs_debug(sb, "---> befs_read_inode() " "inode = %lu", inode->i_ino);
+	befs_debug(sb, "---> befs_read_inode() " "inode = %lu", ino);
+
+	inode = iget_locked(sb, ino);
+	if (IS_ERR(inode))
+		return inode;
+	if (!(inode->i_state & I_NEW))
+		return inode;
 
 	befs_ino = BEFS_I(inode);
 
@@ -371,12 +383,13 @@ befs_read_inode(struct inode *inode)
 		inode->i_size = 0;
 		inode->i_blocks = befs_sb->block_size / VFS_BLOCK_SIZE;
 		strncpy(befs_ino->i_data.symlink, raw_inode->data.symlink,
-			BEFS_SYMLINK_LEN);
+			BEFS_SYMLINK_LEN - 1);
+		befs_ino->i_data.symlink[BEFS_SYMLINK_LEN - 1] = '\0';
 	} else {
 		int num_blks;
 
 		befs_ino->i_data.ds =
-		    fsds_to_cpu(sb, raw_inode->data.datastream);
+		    fsds_to_cpu(sb, &raw_inode->data.datastream);
 
 		num_blks = befs_count_blocks(sb, &befs_ino->i_data.ds);
 		inode->i_blocks =
@@ -402,19 +415,20 @@ befs_read_inode(struct inode *inode)
 
 	brelse(bh);
 	befs_debug(sb, "<--- befs_read_inode()");
-	return;
+	unlock_new_inode(inode);
+	return inode;
 
       unacquire_bh:
 	brelse(bh);
 
       unacquire_none:
-	make_bad_inode(inode);
+	iget_failed(inode);
 	befs_debug(sb, "<--- befs_read_inode() - Bad inode");
-	return;
+	return ERR_PTR(ret);
 }
 
 /* Initialize the inode cache. Called at fs setup.
- * 
+ *
  * Taken from NFS implementation by Al Viro.
  */
 static int
@@ -424,10 +438,10 @@ befs_init_inodecache(void)
 					      sizeof (struct befs_inode_info),
 					      0, (SLAB_RECLAIM_ACCOUNT|
 						SLAB_MEM_SPREAD),
-					      init_once, NULL);
+					      init_once);
 	if (befs_inode_cachep == NULL) {
 		printk(KERN_ERR "befs_init_inodecache: "
-		       "Couldn't initalize inode slabcache\n");
+		       "Couldn't initialize inode slabcache\n");
 		return -ENOMEM;
 	}
 
@@ -469,6 +483,8 @@ befs_follow_link(struct dentry *dentry, struct nameidata *nd)
 			kfree(link);
 			befs_error(sb, "Failed to read entire long symlink");
 			link = ERR_PTR(-EIO);
+		} else {
+			link[len - 1] = '\0';
 		}
 	} else {
 		link = befs_ino->i_data.symlink;
@@ -482,9 +498,9 @@ static void befs_put_link(struct dentry *dentry, struct nameidata *nd, void *p)
 {
 	befs_inode_info *befs_ino = BEFS_I(dentry->d_inode);
 	if (befs_ino->i_flags & BEFS_LONG_SYMLINK) {
-		char *p = nd_get_link(nd);
-		if (!IS_ERR(p))
-			kfree(p);
+		char *link = nd_get_link(nd);
+		if (!IS_ERR(link))
+			kfree(link);
 	}
 }
 
@@ -502,7 +518,7 @@ befs_utf2nls(struct super_block *sb, const char *in,
 {
 	struct nls_table *nls = BEFS_SB(sb)->nls;
 	int i, o;
-	wchar_t uni;
+	unicode_t uni;
 	int unilen, utflen;
 	char *result;
 	/* The utf8->nls conversion won't make the final nls string bigger
@@ -528,16 +544,16 @@ befs_utf2nls(struct super_block *sb, const char *in,
 	for (i = o = 0; i < in_len; i += utflen, o += unilen) {
 
 		/* convert from UTF-8 to Unicode */
-		utflen = utf8_mbtowc(&uni, &in[i], in_len - i);
-		if (utflen < 0) {
+		utflen = utf8_to_utf32(&in[i], in_len - i, &uni);
+		if (utflen < 0)
 			goto conv_err;
-		}
 
 		/* convert from Unicode to nls */
-		unilen = nls->uni2char(uni, &result[o], in_len - o);
-		if (unilen < 0) {
+		if (uni > MAX_WCHAR_T)
 			goto conv_err;
-		}
+		unilen = nls->uni2char(uni, &result[o], in_len - o);
+		if (unilen < 0)
+			goto conv_err;
 	}
 	result[o] = '\0';
 	*out_len = o;
@@ -608,15 +624,13 @@ befs_nls2utf(struct super_block *sb, const char *in,
 
 		/* convert from nls to unicode */
 		unilen = nls->char2uni(&in[i], in_len - i, &uni);
-		if (unilen < 0) {
+		if (unilen < 0)
 			goto conv_err;
-		}
 
 		/* convert from unicode to UTF-8 */
-		utflen = utf8_wctomb(&result[o], uni, 3);
-		if (utflen <= 0) {
+		utflen = utf32_to_utf8(uni, &result[o], 3);
+		if (utflen <= 0)
 			goto conv_err;
-		}
 	}
 
 	result[o] = '\0';
@@ -642,7 +656,7 @@ enum {
 	Opt_uid, Opt_gid, Opt_charset, Opt_debug, Opt_err,
 };
 
-static match_table_t befs_tokens = {
+static const match_table_t befs_tokens = {
 	{Opt_uid, "uid=%d"},
 	{Opt_gid, "gid=%d"},
 	{Opt_charset, "iocharset=%s"},
@@ -720,7 +734,7 @@ parse_options(char *options, befs_mount_options * opts)
 
 /* This function has the responsibiltiy of getting the
  * filesystem ready for unmounting. 
- * Basicly, we free everything that we allocated in
+ * Basically, we free everything that we allocated in
  * befs_read_inode
  */
 static void
@@ -728,15 +742,9 @@ befs_put_super(struct super_block *sb)
 {
 	kfree(BEFS_SB(sb)->mount_opts.iocharset);
 	BEFS_SB(sb)->mount_opts.iocharset = NULL;
-
-	if (BEFS_SB(sb)->nls) {
-		unload_nls(BEFS_SB(sb)->nls);
-		BEFS_SB(sb)->nls = NULL;
-	}
-
+	unload_nls(BEFS_SB(sb)->nls);
 	kfree(sb->s_fs_info);
 	sb->s_fs_info = NULL;
-	return;
 }
 
 /* Allocate private field of the superblock, fill it.
@@ -752,9 +760,11 @@ befs_fill_super(struct super_block *sb, void *data, int silent)
 	befs_sb_info *befs_sb;
 	befs_super_block *disk_sb;
 	struct inode *root;
-
+	long ret = -EINVAL;
 	const unsigned long sb_block = 0;
 	const off_t x86_sb_off = 512;
+
+	save_mount_options(sb, data);
 
 	sb->s_fs_info = kmalloc(sizeof (*befs_sb), GFP_KERNEL);
 	if (sb->s_fs_info == NULL) {
@@ -799,8 +809,8 @@ befs_fill_super(struct super_block *sb, void *data, int silent)
 
 	/* account for offset of super block on x86 */
 	disk_sb = (befs_super_block *) bh->b_data;
-	if ((le32_to_cpu(disk_sb->magic1) == BEFS_SUPER_MAGIC1) ||
-	    (be32_to_cpu(disk_sb->magic1) == BEFS_SUPER_MAGIC1)) {
+	if ((disk_sb->magic1 == BEFS_SUPER_MAGIC1_LE) ||
+	    (disk_sb->magic1 == BEFS_SUPER_MAGIC1_BE)) {
 		befs_debug(sb, "Using PPC superblock location");
 	} else {
 		befs_debug(sb, "Using x86 superblock location");
@@ -832,8 +842,12 @@ befs_fill_super(struct super_block *sb, void *data, int silent)
 	sb->s_magic = BEFS_SUPER_MAGIC;
 	/* Set real blocksize of fs */
 	sb_set_blocksize(sb, (ulong) befs_sb->block_size);
-	sb->s_op = (struct super_operations *) &befs_sops;
-	root = iget(sb, iaddr2blockno(sb, &(befs_sb->root_dir)));
+	sb->s_op = &befs_sops;
+	root = befs_iget(sb, iaddr2blockno(sb, &(befs_sb->root_dir)));
+	if (IS_ERR(root)) {
+		ret = PTR_ERR(root);
+		goto unacquire_priv_sbp;
+	}
 	sb->s_root = d_alloc_root(root);
 	if (!sb->s_root) {
 		iput(root);
@@ -864,11 +878,12 @@ befs_fill_super(struct super_block *sb, void *data, int silent)
 	brelse(bh);
 
       unacquire_priv_sbp:
+	kfree(befs_sb->mount_opts.iocharset);
 	kfree(sb->s_fs_info);
 
       unacquire_none:
 	sb->s_fs_info = NULL;
-	return -EINVAL;
+	return ret;
 }
 
 static int
@@ -883,6 +898,7 @@ static int
 befs_statfs(struct dentry *dentry, struct kstatfs *buf)
 {
 	struct super_block *sb = dentry->d_sb;
+	u64 id = huge_encode_dev(sb->s_bdev->bd_dev);
 
 	befs_debug(sb, "---> befs_statfs()");
 
@@ -893,6 +909,8 @@ befs_statfs(struct dentry *dentry, struct kstatfs *buf)
 	buf->f_bavail = buf->f_bfree;
 	buf->f_files = 0;	/* UNKNOWN */
 	buf->f_ffree = 0;	/* UNKNOWN */
+	buf->f_fsid.val[0] = (u32)id;
+	buf->f_fsid.val[1] = (u32)(id >> 32);
 	buf->f_namelen = BEFS_NAME_LEN;
 
 	befs_debug(sb, "<--- befs_statfs()");
@@ -900,18 +918,17 @@ befs_statfs(struct dentry *dentry, struct kstatfs *buf)
 	return 0;
 }
 
-static int
-befs_get_sb(struct file_system_type *fs_type, int flags, const char *dev_name,
-	    void *data, struct vfsmount *mnt)
+static struct dentry *
+befs_mount(struct file_system_type *fs_type, int flags, const char *dev_name,
+	    void *data)
 {
-	return get_sb_bdev(fs_type, flags, dev_name, data, befs_fill_super,
-			   mnt);
+	return mount_bdev(fs_type, flags, dev_name, data, befs_fill_super);
 }
 
 static struct file_system_type befs_fs_type = {
 	.owner		= THIS_MODULE,
 	.name		= "befs",
-	.get_sb		= befs_get_sb,
+	.mount		= befs_mount,
 	.kill_sb	= kill_block_super,
 	.fs_flags	= FS_REQUIRES_DEV,	
 };

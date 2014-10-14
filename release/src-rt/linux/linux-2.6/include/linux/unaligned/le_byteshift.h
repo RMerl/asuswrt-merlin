@@ -1,6 +1,8 @@
 #ifndef _LINUX_UNALIGNED_LE_BYTESHIFT_H
 #define _LINUX_UNALIGNED_LE_BYTESHIFT_H
 
+#include <linux/types.h>
+
 static inline u16 __get_unaligned_le16(const u8 *p)
 {
 	return p[0] | p[1] << 8;

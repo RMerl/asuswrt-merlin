@@ -21,13 +21,16 @@
 #ifndef ISCSI_PROTO_H
 #define ISCSI_PROTO_H
 
+#include <linux/types.h>
+#include <scsi/scsi.h>
+
 #define ISCSI_DRAFT20_VERSION	0x00
 
 /* default iSCSI listen port for incoming connections */
 #define ISCSI_LISTEN_PORT	3260
 
 /* Padding word length */
-#define PAD_WORD_LEN		4
+#define ISCSI_PAD_LEN		4
 
 /*
  * useful common(control and data pathes) macro
@@ -43,8 +46,8 @@
 /* initiator tags; opaque for target */
 typedef uint32_t __bitwise__ itt_t;
 /* below makes sense only for initiator that created this tag */
-#define build_itt(itt, id, age) ((__force itt_t)\
-	((itt) | ((id) << ISCSI_CID_SHIFT) | ((age) << ISCSI_AGE_SHIFT)))
+#define build_itt(itt, age) ((__force itt_t)\
+	((itt) | ((age) << ISCSI_AGE_SHIFT)))
 #define get_itt(itt) ((__force uint32_t)(itt_t)(itt) & ISCSI_ITT_MASK)
 #define RESERVED_ITT ((__force itt_t)0xffffffff)
 
@@ -110,6 +113,7 @@ struct iscsi_ahs_hdr {
 
 #define ISCSI_AHSTYPE_CDB		1
 #define ISCSI_AHSTYPE_RLENGTH		2
+#define ISCSI_CDB_SIZE			16
 
 /* iSCSI PDU Header */
 struct iscsi_cmd {
@@ -123,7 +127,7 @@ struct iscsi_cmd {
 	__be32 data_length;
 	__be32 cmdsn;
 	__be32 exp_statsn;
-	uint8_t cdb[16];	/* SCSI Command Block */
+	uint8_t cdb[ISCSI_CDB_SIZE];	/* SCSI Command Block */
 	/* Additional Data (Command Dependent) */
 };
 
@@ -145,6 +149,15 @@ struct iscsi_rlength_ahdr {
 	uint8_t ahstype;
 	uint8_t reserved;
 	__be32 read_length;
+};
+
+/* Extended CDB AHS */
+struct iscsi_ecdb_ahdr {
+	__be16 ahslength;	/* CDB length - 15, including reserved byte */
+	uint8_t ahstype;
+	uint8_t reserved;
+	/* 4-byte aligned extended CDB spillover */
+	uint8_t ecdb[SCSI_MAX_VARLEN_CDB_SIZE - ISCSI_CDB_SIZE];
 };
 
 /* SCSI Response Header */
@@ -265,6 +278,8 @@ struct iscsi_tm {
 #define ISCSI_TM_FUNC_TARGET_WARM_RESET		6
 #define ISCSI_TM_FUNC_TARGET_COLD_RESET		7
 #define ISCSI_TM_FUNC_TASK_REASSIGN		8
+
+#define ISCSI_TM_FUNC_VALUE(hdr) ((hdr)->flags & ISCSI_FLAG_TM_FUNC_MASK)
 
 /* SCSI Task Management Response Header */
 struct iscsi_tm_rsp {
@@ -599,6 +614,8 @@ struct iscsi_reject {
 #define ISCSI_DEF_MAX_BURST_LEN			262144
 #define ISCSI_MIN_MAX_BURST_LEN			512
 #define ISCSI_MAX_MAX_BURST_LEN			16777215
+
+#define ISCSI_DEF_TIME2WAIT			2
 
 /************************* RFC 3720 End *****************************/
 

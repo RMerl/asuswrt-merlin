@@ -1,7 +1,7 @@
 /**
  * runlist.c - NTFS runlist handling code.  Part of the Linux-NTFS project.
  *
- * Copyright (c) 2001-2005 Anton Altaparmakov
+ * Copyright (c) 2001-2007 Anton Altaparmakov
  * Copyright (c) 2002-2005 Richard Russon
  *
  * This program/include file is free software; you can redistribute it and/or
@@ -1243,7 +1243,7 @@ err_out:
  * write.
  *
  * This is used when building the mapping pairs array of a runlist to compress
- * a given logical cluster number (lcn) or a specific run length to the minumum
+ * a given logical cluster number (lcn) or a specific run length to the minimum
  * size possible.
  *
  * Return the number of bytes written on success.  On error, i.e. the
@@ -1714,7 +1714,7 @@ extend_hole:
 					sizeof(*rl));
 		/* Adjust the beginning of the tail if necessary. */
 		if (end > rl->vcn) {
-			s64 delta = end - rl->vcn;
+			delta = end - rl->vcn;
 			rl->vcn = end;
 			rl->length -= delta;
 			/* Only adjust the lcn if it is real. */

@@ -42,6 +42,11 @@
 #ifndef _EHCA_MRMW_H_
 #define _EHCA_MRMW_H_
 
+enum ehca_reg_type {
+	EHCA_REG_MR,
+	EHCA_REG_BUSMAP_MR
+};
+
 int ehca_reg_mr(struct ehca_shca *shca,
 		struct ehca_mr *e_mr,
 		u64 *iova_start,
@@ -50,7 +55,8 @@ int ehca_reg_mr(struct ehca_shca *shca,
 		struct ehca_pd *e_pd,
 		struct ehca_mr_pginfo *pginfo,
 		u32 *lkey,
-		u32 *rkey);
+		u32 *rkey,
+		enum ehca_reg_type reg_type);
 
 int ehca_reg_mr_rpages(struct ehca_shca *shca,
 		       struct ehca_mr *e_mr,
@@ -101,14 +107,9 @@ int ehca_fmr_check_page_list(struct ehca_mr *e_fmr,
 			     u64 *page_list,
 			     int list_len);
 
-int ehca_set_pagebuf(struct ehca_mr *e_mr,
-		     struct ehca_mr_pginfo *pginfo,
+int ehca_set_pagebuf(struct ehca_mr_pginfo *pginfo,
 		     u32 number,
 		     u64 *kpage);
-
-int ehca_set_pagebuf_1(struct ehca_mr *e_mr,
-		       struct ehca_mr_pginfo *pginfo,
-		       u64 *rpage);
 
 int ehca_mr_is_maxmr(u64 size,
 		     u64 *iova_start);
@@ -116,25 +117,16 @@ int ehca_mr_is_maxmr(u64 size,
 void ehca_mrmw_map_acl(int ib_acl,
 		       u32 *hipz_acl);
 
-void ehca_mrmw_set_pgsize_hipz_acl(u32 *hipz_acl);
+void ehca_mrmw_set_pgsize_hipz_acl(u32 pgsize, u32 *hipz_acl);
 
 void ehca_mrmw_reverse_map_acl(const u32 *hipz_acl,
 			       int *ib_acl);
 
-int ehca_mrmw_map_hrc_alloc(const u64 hipz_rc);
-
-int ehca_mrmw_map_hrc_rrpg_last(const u64 hipz_rc);
-
-int ehca_mrmw_map_hrc_rrpg_notlast(const u64 hipz_rc);
-
-int ehca_mrmw_map_hrc_query_mr(const u64 hipz_rc);
-
-int ehca_mrmw_map_hrc_free_mr(const u64 hipz_rc);
-
-int ehca_mrmw_map_hrc_free_mw(const u64 hipz_rc);
-
-int ehca_mrmw_map_hrc_reg_smr(const u64 hipz_rc);
-
 void ehca_mr_deletenew(struct ehca_mr *mr);
 
+int ehca_create_busmap(void);
+
+void ehca_destroy_busmap(void);
+
+extern struct ib_dma_mapping_ops ehca_dma_mapping_ops;
 #endif  /*_EHCA_MRMW_H_*/

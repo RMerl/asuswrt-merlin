@@ -25,9 +25,8 @@
 #include <linux/mm.h>
 #include <linux/types.h>
 
-#include <asm/hardware.h>
+#include <mach/hardware.h>
 #include <asm/irq.h>
-#include <asm/mach-types.h>
 #include <asm/setup.h>
 
 #include <asm/mach/arch.h>
@@ -35,41 +34,41 @@
 #include <asm/mach/map.h>
 
 
-static void at91_aic_mask_irq(unsigned int irq)
+static void at91_aic_mask_irq(struct irq_data *d)
 {
 	/* Disable interrupt on AIC */
-	at91_sys_write(AT91_AIC_IDCR, 1 << irq);
+	at91_sys_write(AT91_AIC_IDCR, 1 << d->irq);
 }
 
-static void at91_aic_unmask_irq(unsigned int irq)
+static void at91_aic_unmask_irq(struct irq_data *d)
 {
 	/* Enable interrupt on AIC */
-	at91_sys_write(AT91_AIC_IECR, 1 << irq);
+	at91_sys_write(AT91_AIC_IECR, 1 << d->irq);
 }
 
 unsigned int at91_extern_irq;
 
 #define is_extern_irq(irq) ((1 << (irq)) & at91_extern_irq)
 
-static int at91_aic_set_type(unsigned irq, unsigned type)
+static int at91_aic_set_type(struct irq_data *d, unsigned type)
 {
 	unsigned int smr, srctype;
 
 	switch (type) {
-	case IRQT_HIGH:
+	case IRQ_TYPE_LEVEL_HIGH:
 		srctype = AT91_AIC_SRCTYPE_HIGH;
 		break;
-	case IRQT_RISING:
+	case IRQ_TYPE_EDGE_RISING:
 		srctype = AT91_AIC_SRCTYPE_RISING;
 		break;
-	case IRQT_LOW:
-		if ((irq == AT91_ID_FIQ) || is_extern_irq(irq))		/* only supported on external interrupts */
+	case IRQ_TYPE_LEVEL_LOW:
+		if ((d->irq == AT91_ID_FIQ) || is_extern_irq(d->irq))		/* only supported on external interrupts */
 			srctype = AT91_AIC_SRCTYPE_LOW;
 		else
 			return -EINVAL;
 		break;
-	case IRQT_FALLING:
-		if ((irq == AT91_ID_FIQ) || is_extern_irq(irq))		/* only supported on external interrupts */
+	case IRQ_TYPE_EDGE_FALLING:
+		if ((d->irq == AT91_ID_FIQ) || is_extern_irq(d->irq))		/* only supported on external interrupts */
 			srctype = AT91_AIC_SRCTYPE_FALLING;
 		else
 			return -EINVAL;
@@ -78,8 +77,8 @@ static int at91_aic_set_type(unsigned irq, unsigned type)
 		return -EINVAL;
 	}
 
-	smr = at91_sys_read(AT91_AIC_SMR(irq)) & ~AT91_AIC_SRCTYPE;
-	at91_sys_write(AT91_AIC_SMR(irq), smr | srctype);
+	smr = at91_sys_read(AT91_AIC_SMR(d->irq)) & ~AT91_AIC_SRCTYPE;
+	at91_sys_write(AT91_AIC_SMR(d->irq), smr | srctype);
 	return 0;
 }
 
@@ -88,15 +87,15 @@ static int at91_aic_set_type(unsigned irq, unsigned type)
 static u32 wakeups;
 static u32 backups;
 
-static int at91_aic_set_wake(unsigned irq, unsigned value)
+static int at91_aic_set_wake(struct irq_data *d, unsigned value)
 {
-	if (unlikely(irq >= 32))
+	if (unlikely(d->irq >= 32))
 		return -EINVAL;
 
 	if (value)
-		wakeups |= (1 << irq);
+		wakeups |= (1 << d->irq);
 	else
-		wakeups &= ~(1 << irq);
+		wakeups &= ~(1 << d->irq);
 
 	return 0;
 }
@@ -120,11 +119,11 @@ void at91_irq_resume(void)
 
 static struct irq_chip at91_aic_chip = {
 	.name		= "AIC",
-	.ack		= at91_aic_mask_irq,
-	.mask		= at91_aic_mask_irq,
-	.unmask		= at91_aic_unmask_irq,
-	.set_type	= at91_aic_set_type,
-	.set_wake	= at91_aic_set_wake,
+	.irq_ack	= at91_aic_mask_irq,
+	.irq_mask	= at91_aic_mask_irq,
+	.irq_unmask	= at91_aic_unmask_irq,
+	.irq_set_type	= at91_aic_set_type,
+	.irq_set_wake	= at91_aic_set_wake,
 };
 
 /*
@@ -144,8 +143,7 @@ void __init at91_aic_init(unsigned int priority[NR_AIC_IRQS])
 		/* Active Low interrupt, with the specified priority */
 		at91_sys_write(AT91_AIC_SMR(i), AT91_AIC_SRCTYPE_LOW | priority[i]);
 
-		set_irq_chip(i, &at91_aic_chip);
-		set_irq_handler(i, handle_level_irq);
+		irq_set_chip_and_handler(i, &at91_aic_chip, handle_level_irq);
 		set_irq_flags(i, IRQF_VALID | IRQF_PROBE);
 
 		/* Perform 8 End Of Interrupt Command to make sure AIC will not Lock out nIRQ */

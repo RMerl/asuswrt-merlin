@@ -64,9 +64,6 @@ static const char version[] =
 
 static int es_probe1(struct net_device *dev, int ioaddr);
 
-static int es_open(struct net_device *dev);
-static int es_close(struct net_device *dev);
-
 static void es_reset_8390(struct net_device *dev);
 
 static void es_get_8390_hdr(struct net_device *dev, struct e8390_pkt_hdr *hdr, int ring_page);
@@ -130,8 +127,6 @@ static int __init do_es_probe(struct net_device *dev)
 	int irq = dev->irq;
 	int mem_start = dev->mem_start;
 
-	SET_MODULE_OWNER(dev);
-
 	if (ioaddr > 0x1ff)		/* Check a single specified location. */
 		return es_probe1(dev, ioaddr);
 	else if (ioaddr > 0)		/* Don't probe at all. */
@@ -192,7 +187,6 @@ static int __init es_probe1(struct net_device *dev, int ioaddr)
 		inb(ioaddr + ES_CFG4), inb(ioaddr + ES_CFG5), inb(ioaddr + ES_CFG6));
 #endif
 
-
 /*	Check the EISA ID of the card. */
 	eisa_id = inl(ioaddr + ES_ID_PORT);
 	if ((eisa_id != ES_EISA_ID1) && (eisa_id != ES_EISA_ID2)) {
@@ -200,21 +194,21 @@ static int __init es_probe1(struct net_device *dev, int ioaddr)
 		goto out;
 	}
 
+	for (i = 0; i < ETHER_ADDR_LEN ; i++)
+		dev->dev_addr[i] = inb(ioaddr + ES_SA_PROM + i);
+
 /*	Check the Racal vendor ID as well. */
-	if (inb(ioaddr + ES_SA_PROM + 0) != ES_ADDR0
-		|| inb(ioaddr + ES_SA_PROM + 1) != ES_ADDR1
-		|| inb(ioaddr + ES_SA_PROM + 2) != ES_ADDR2 ) {
-		printk("es3210.c: card not found");
-		for(i = 0; i < ETHER_ADDR_LEN; i++)
-			printk(" %02x", inb(ioaddr + ES_SA_PROM + i));
-		printk(" (invalid prefix).\n");
+	if (dev->dev_addr[0] != ES_ADDR0 ||
+	    dev->dev_addr[1] != ES_ADDR1 ||
+	    dev->dev_addr[2] != ES_ADDR2) {
+		printk("es3210.c: card not found %pM (invalid_prefix).\n",
+		       dev->dev_addr);
 		retval = -ENODEV;
 		goto out;
 	}
 
-	printk("es3210.c: ES3210 rev. %ld at %#x, node", eisa_id>>24, ioaddr);
-	for(i = 0; i < ETHER_ADDR_LEN; i++)
-		printk(" %02x", (dev->dev_addr[i] = inb(ioaddr + ES_SA_PROM + i)));
+	printk("es3210.c: ES3210 rev. %ld at %#x, node %pM",
+	       eisa_id>>24, ioaddr, dev->dev_addr);
 
 	/* Snarf the interrupt now. */
 	if (dev->irq == 0) {
@@ -292,11 +286,7 @@ static int __init es_probe1(struct net_device *dev, int ioaddr)
 	ei_status.block_output = &es_block_output;
 	ei_status.get_8390_hdr = &es_get_8390_hdr;
 
-	dev->open = &es_open;
-	dev->stop = &es_close;
-#ifdef CONFIG_NET_POLL_CONTROLLER
-	dev->poll_controller = ei_poll;
-#endif
+	dev->netdev_ops = &ei_netdev_ops;
 	NS8390_init(dev, 0);
 
 	retval = register_netdev(dev);
@@ -329,8 +319,6 @@ static void es_reset_8390(struct net_device *dev)
 	ei_status.txing = 0;
 	outb(0x01, ioaddr + ES_RESET_PORT);
 	if (ei_debug > 1) printk("reset done\n");
-
-	return;
 }
 
 /*
@@ -386,22 +374,6 @@ static void es_block_output(struct net_device *dev, int count,
 
 	count = (count + 3) & ~3;     /* Round up to doubleword */
 	memcpy_toio(shmem, buf, count);
-}
-
-static int es_open(struct net_device *dev)
-{
-	ei_open(dev);
-	return 0;
-}
-
-static int es_close(struct net_device *dev)
-{
-
-	if (ei_debug > 1)
-		printk("%s: Shutting down ethercard.\n", dev->name);
-
-	ei_close(dev);
-	return 0;
 }
 
 #ifdef MODULE

@@ -1,6 +1,4 @@
 /*
- *	$Id: proc.c,v 1.13 1998/05/12 07:36:07 mj Exp $
- *
  *	Procfs interface for the PCI bus.
  *
  *	Copyright (c) 1997--1999 Martin Mares <mj@ucw.cz>
@@ -8,10 +6,11 @@
 
 #include <linux/init.h>
 #include <linux/pci.h>
+#include <linux/slab.h>
 #include <linux/module.h>
 #include <linux/proc_fs.h>
 #include <linux/seq_file.h>
-
+#include <linux/capability.h>
 #include <asm/uaccess.h>
 #include <asm/byteorder.h>
 #include "pci.h"
@@ -60,7 +59,7 @@ proc_bus_pci_read(struct file *file, char __user *buf, size_t nbytes, loff_t *pp
 	 */
 
 	if (capable(CAP_SYS_ADMIN))
-		size = dev->cfg_size;
+		size = dp->size;
 	else if (dev->hdr_type == PCI_HEADER_TYPE_CARDBUS)
 		size = 128;
 	else
@@ -89,7 +88,7 @@ proc_bus_pci_read(struct file *file, char __user *buf, size_t nbytes, loff_t *pp
 	if ((pos & 3) && cnt > 2) {
 		unsigned short val;
 		pci_user_read_config_word(dev, pos, &val);
-		__put_user(cpu_to_le16(val), (unsigned short __user *) buf);
+		__put_user(cpu_to_le16(val), (__le16 __user *) buf);
 		buf += 2;
 		pos += 2;
 		cnt -= 2;
@@ -98,7 +97,7 @@ proc_bus_pci_read(struct file *file, char __user *buf, size_t nbytes, loff_t *pp
 	while (cnt >= 4) {
 		unsigned int val;
 		pci_user_read_config_dword(dev, pos, &val);
-		__put_user(cpu_to_le32(val), (unsigned int __user *) buf);
+		__put_user(cpu_to_le32(val), (__le32 __user *) buf);
 		buf += 4;
 		pos += 4;
 		cnt -= 4;
@@ -107,7 +106,7 @@ proc_bus_pci_read(struct file *file, char __user *buf, size_t nbytes, loff_t *pp
 	if (cnt >= 2) {
 		unsigned short val;
 		pci_user_read_config_word(dev, pos, &val);
-		__put_user(cpu_to_le16(val), (unsigned short __user *) buf);
+		__put_user(cpu_to_le16(val), (__le16 __user *) buf);
 		buf += 2;
 		pos += 2;
 		cnt -= 2;
@@ -129,11 +128,11 @@ proc_bus_pci_read(struct file *file, char __user *buf, size_t nbytes, loff_t *pp
 static ssize_t
 proc_bus_pci_write(struct file *file, const char __user *buf, size_t nbytes, loff_t *ppos)
 {
-	const struct inode *ino = file->f_path.dentry->d_inode;
+	struct inode *ino = file->f_path.dentry->d_inode;
 	const struct proc_dir_entry *dp = PDE(ino);
 	struct pci_dev *dev = dp->data;
 	int pos = *ppos;
-	int size = dev->cfg_size;
+	int size = dp->size;
 	int cnt;
 
 	if (pos >= size)
@@ -157,8 +156,8 @@ proc_bus_pci_write(struct file *file, const char __user *buf, size_t nbytes, lof
 	}
 
 	if ((pos & 3) && cnt > 2) {
-		unsigned short val;
-		__get_user(val, (unsigned short __user *) buf);
+		__le16 val;
+		__get_user(val, (__le16 __user *) buf);
 		pci_user_write_config_word(dev, pos, le16_to_cpu(val));
 		buf += 2;
 		pos += 2;
@@ -166,8 +165,8 @@ proc_bus_pci_write(struct file *file, const char __user *buf, size_t nbytes, lof
 	}
 
 	while (cnt >= 4) {
-		unsigned int val;
-		__get_user(val, (unsigned int __user *) buf);
+		__le32 val;
+		__get_user(val, (__le32 __user *) buf);
 		pci_user_write_config_dword(dev, pos, le32_to_cpu(val));
 		buf += 4;
 		pos += 4;
@@ -175,8 +174,8 @@ proc_bus_pci_write(struct file *file, const char __user *buf, size_t nbytes, lof
 	}
 
 	if (cnt >= 2) {
-		unsigned short val;
-		__get_user(val, (unsigned short __user *) buf);
+		__le16 val;
+		__get_user(val, (__le16 __user *) buf);
 		pci_user_write_config_word(dev, pos, le16_to_cpu(val));
 		buf += 2;
 		pos += 2;
@@ -193,6 +192,7 @@ proc_bus_pci_write(struct file *file, const char __user *buf, size_t nbytes, lof
 	}
 
 	*ppos = pos;
+	i_size_write(ino, dp->size);
 	return nbytes;
 }
 
@@ -201,9 +201,10 @@ struct pci_filp_private {
 	int write_combine;
 };
 
-static int proc_bus_pci_ioctl(struct inode *inode, struct file *file, unsigned int cmd, unsigned long arg)
+static long proc_bus_pci_ioctl(struct file *file, unsigned int cmd,
+			       unsigned long arg)
 {
-	const struct proc_dir_entry *dp = PDE(inode);
+	const struct proc_dir_entry *dp = PDE(file->f_dentry->d_inode);
 	struct pci_dev *dev = dp->data;
 #ifdef HAVE_PCI_MMAP
 	struct pci_filp_private *fpriv = file->private_data;
@@ -248,10 +249,19 @@ static int proc_bus_pci_mmap(struct file *file, struct vm_area_struct *vma)
 	const struct proc_dir_entry *dp = PDE(inode);
 	struct pci_dev *dev = dp->data;
 	struct pci_filp_private *fpriv = file->private_data;
-	int ret;
+	int i, ret;
 
 	if (!capable(CAP_SYS_RAWIO))
 		return -EPERM;
+
+	/* Make sure the caller is mapping a real resource for this device */
+	for (i = 0; i < PCI_ROM_RESOURCE; i++) {
+		if (pci_mmap_fits(dev, i, vma,  PCI_MMAP_PROCFS))
+			break;
+	}
+
+	if (i >= PCI_ROM_RESOURCE)
+		return -ENODEV;
 
 	ret = pci_mmap_page_range(dev, vma,
 				  fpriv->mmap_state,
@@ -287,10 +297,12 @@ static int proc_bus_pci_release(struct inode *inode, struct file *file)
 #endif /* HAVE_PCI_MMAP */
 
 static const struct file_operations proc_bus_pci_operations = {
+	.owner		= THIS_MODULE,
 	.llseek		= proc_bus_pci_lseek,
 	.read		= proc_bus_pci_read,
 	.write		= proc_bus_pci_write,
-	.ioctl		= proc_bus_pci_ioctl,
+	.unlocked_ioctl	= proc_bus_pci_ioctl,
+	.compat_ioctl	= proc_bus_pci_ioctl,
 #ifdef HAVE_PCI_MMAP
 	.open		= proc_bus_pci_open,
 	.release	= proc_bus_pci_release,
@@ -347,15 +359,16 @@ static int show_device(struct seq_file *m, void *v)
 			dev->vendor,
 			dev->device,
 			dev->irq);
-	/* Here should be 7 and not PCI_NUM_RESOURCES as we need to preserve compatibility */
-	for (i=0; i<7; i++) {
+
+	/* only print standard and ROM resources to preserve compatibility */
+	for (i = 0; i <= PCI_ROM_RESOURCE; i++) {
 		resource_size_t start, end;
 		pci_resource_to_user(dev, i, &dev->resource[i], &start, &end);
 		seq_printf(m, "\t%16llx",
 			(unsigned long long)(start |
 			(dev->resource[i].flags & PCI_REGION_FLAG_MASK)));
 	}
-	for (i=0; i<7; i++) {
+	for (i = 0; i <= PCI_ROM_RESOURCE; i++) {
 		resource_size_t start, end;
 		pci_resource_to_user(dev, i, &dev->resource[i], &start, &end);
 		seq_printf(m, "\t%16llx",
@@ -369,7 +382,7 @@ static int show_device(struct seq_file *m, void *v)
 	return 0;
 }
 
-static struct seq_operations proc_bus_pci_devices_op = {
+static const struct seq_operations proc_bus_pci_devices_op = {
 	.start	= pci_seq_start,
 	.next	= pci_seq_next,
 	.stop	= pci_seq_stop,
@@ -400,11 +413,10 @@ int pci_proc_attach_device(struct pci_dev *dev)
 	}
 
 	sprintf(name, "%02x.%x", PCI_SLOT(dev->devfn), PCI_FUNC(dev->devfn));
-	e = create_proc_entry(name, S_IFREG | S_IRUGO | S_IWUSR, bus->procdir);
+	e = proc_create_data(name, S_IFREG | S_IRUGO | S_IWUSR, bus->procdir,
+			     &proc_bus_pci_operations, dev);
 	if (!e)
 		return -ENOMEM;
-	e->proc_fops = &proc_bus_pci_operations;
-	e->data = dev;
 	e->size = dev->cfg_size;
 	dev->procent = e;
 
@@ -416,8 +428,6 @@ int pci_proc_detach_device(struct pci_dev *dev)
 	struct proc_dir_entry *e;
 
 	if ((e = dev->procent)) {
-		if (atomic_read(&e->count))
-			return -EBUSY;
 		remove_proc_entry(e->name, dev->bus->procdir);
 		dev->procent = NULL;
 	}
@@ -456,6 +466,7 @@ static int proc_bus_pci_dev_open(struct inode *inode, struct file *file)
 	return seq_open(file, &proc_bus_pci_devices_op);
 }
 static const struct file_operations proc_bus_pci_dev_operations = {
+	.owner		= THIS_MODULE,
 	.open		= proc_bus_pci_dev_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
@@ -464,23 +475,16 @@ static const struct file_operations proc_bus_pci_dev_operations = {
 
 static int __init pci_proc_init(void)
 {
-	struct proc_dir_entry *entry;
 	struct pci_dev *dev = NULL;
-	proc_bus_pci_dir = proc_mkdir("pci", proc_bus);
-	entry = create_proc_entry("devices", 0, proc_bus_pci_dir);
-	if (entry)
-		entry->proc_fops = &proc_bus_pci_dev_operations;
+	proc_bus_pci_dir = proc_mkdir("bus/pci", NULL);
+	proc_create("devices", 0, proc_bus_pci_dir,
+		    &proc_bus_pci_dev_operations);
 	proc_initialized = 1;
-	while ((dev = pci_get_device(PCI_ANY_ID, PCI_ANY_ID, dev)) != NULL) {
+	for_each_pci_dev(dev)
 		pci_proc_attach_device(dev);
-	}
+
 	return 0;
 }
 
-__initcall(pci_proc_init);
-
-#ifdef CONFIG_HOTPLUG
-EXPORT_SYMBOL(pci_proc_attach_device);
-EXPORT_SYMBOL(pci_proc_detach_bus);
-#endif
+device_initcall(pci_proc_init);
 

@@ -11,12 +11,15 @@
  */
 
 #include <linux/module.h>
+#include <linux/pm.h>
 
+#include <asm/irq.h>
 #include <asm/mach/arch.h>
 #include <asm/mach/map.h>
-#include <asm/arch/at91sam9263.h>
-#include <asm/arch/at91_pmc.h>
-#include <asm/arch/at91_rstc.h>
+#include <mach/at91sam9263.h>
+#include <mach/at91_pmc.h>
+#include <mach/at91_rstc.h>
+#include <mach/at91_shdwc.h>
 
 #include "generic.h"
 #include "clock.h"
@@ -127,8 +130,8 @@ static struct clk tcb_clk = {
 	.pmc_mask	= 1 << AT91SAM9263_ID_TCB,
 	.type		= CLK_TYPE_PERIPHERAL,
 };
-static struct clk pwmc_clk = {
-	.name		= "pwmc_clk",
+static struct clk pwm_clk = {
+	.name		= "pwm_clk",
 	.pmc_mask	= 1 << AT91SAM9263_ID_PWMC,
 	.type		= CLK_TYPE_PERIPHERAL,
 };
@@ -185,7 +188,7 @@ static struct clk *periph_clocks[] __initdata = {
 	&ssc1_clk,
 	&ac97_clk,
 	&tcb_clk,
-	&pwmc_clk,
+	&pwm_clk,
 	&macb_clk,
 	&twodge_clk,
 	&udc_clk,
@@ -266,9 +269,9 @@ static struct at91_gpio_bank at91sam9263_gpio[] = {
 	}
 };
 
-static void at91sam9263_reset(void)
+static void at91sam9263_poweroff(void)
 {
-	at91_sys_write(AT91_RSTC_CR, AT91_RSTC_KEY | AT91_RSTC_PROCRST | AT91_RSTC_PERRST);
+	at91_sys_write(AT91_SHDW_CR, AT91_SHDW_KEY | AT91_SHDW_SHDW);
 }
 
 
@@ -281,7 +284,8 @@ void __init at91sam9263_initialize(unsigned long main_clock)
 	/* Map peripherals */
 	iotable_init(at91sam9263_io_desc, ARRAY_SIZE(at91sam9263_io_desc));
 
-	at91_arch_reset = at91sam9263_reset;
+	at91_arch_reset = at91sam9_alt_reset;
+	pm_power_off = at91sam9263_poweroff;
 	at91_extern_irq = (1 << AT91SAM9263_ID_IRQ0) | (1 << AT91SAM9263_ID_IRQ1);
 
 	/* Init clock subsystem */
@@ -304,34 +308,34 @@ void __init at91sam9263_initialize(unsigned long main_clock)
 static unsigned int at91sam9263_default_irq_priority[NR_AIC_IRQS] __initdata = {
 	7,	/* Advanced Interrupt Controller (FIQ) */
 	7,	/* System Peripherals */
-	0,	/* Parallel IO Controller A */
-	0,	/* Parallel IO Controller B */
-	0,	/* Parallel IO Controller C, D and E */
+	1,	/* Parallel IO Controller A */
+	1,	/* Parallel IO Controller B */
+	1,	/* Parallel IO Controller C, D and E */
 	0,
 	0,
-	6,	/* USART 0 */
-	6,	/* USART 1 */
-	6,	/* USART 2 */
+	5,	/* USART 0 */
+	5,	/* USART 1 */
+	5,	/* USART 2 */
 	0,	/* Multimedia Card Interface 0 */
 	0,	/* Multimedia Card Interface 1 */
-	4,	/* CAN */
-	0,	/* Two-Wire Interface */
-	6,	/* Serial Peripheral Interface 0 */
-	6,	/* Serial Peripheral Interface 1 */
-	5,	/* Serial Synchronous Controller 0 */
-	5,	/* Serial Synchronous Controller 1 */
-	6,	/* AC97 Controller */
+	3,	/* CAN */
+	6,	/* Two-Wire Interface */
+	5,	/* Serial Peripheral Interface 0 */
+	5,	/* Serial Peripheral Interface 1 */
+	4,	/* Serial Synchronous Controller 0 */
+	4,	/* Serial Synchronous Controller 1 */
+	5,	/* AC97 Controller */
 	0,	/* Timer Counter 0, 1 and 2 */
 	0,	/* Pulse Width Modulation Controller */
 	3,	/* Ethernet */
 	0,
 	0,	/* 2D Graphic Engine */
-	3,	/* USB Device Port */
+	2,	/* USB Device Port */
 	0,	/* Image Sensor Interface */
 	3,	/* LDC Controller */
 	0,	/* DMA Controller */
 	0,
-	3,	/* USB Host port */
+	2,	/* USB Host port */
 	0,	/* Advanced Interrupt Controller (IRQ0) */
 	0,	/* Advanced Interrupt Controller (IRQ1) */
 };

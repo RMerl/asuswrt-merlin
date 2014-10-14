@@ -15,10 +15,12 @@
 #include <linux/init.h>
 #include <linux/platform_device.h>
 #include <linux/leds.h>
+#include <linux/gpio.h>
+#include <linux/slab.h>
 
-#include <asm/hardware.h>
-#include <asm/arch/regs-gpio.h>
-#include <asm/arch/leds-gpio.h>
+#include <mach/hardware.h>
+#include <mach/regs-gpio.h>
+#include <mach/leds-gpio.h>
 
 /* our context */
 
@@ -43,7 +45,7 @@ static void s3c24xx_led_set(struct led_classdev *led_cdev,
 	struct s3c24xx_gpio_led *led = to_gpio(led_cdev);
 	struct s3c24xx_led_platdata *pd = led->pdata;
 
-	/* there will be a sort delay between setting the output and
+	/* there will be a short delay between setting the output and
 	 * going from output to input when using tristate. */
 
 	s3c2410_gpio_setpin(pd->gpio, (value ? 1 : 0) ^
@@ -51,7 +53,7 @@ static void s3c24xx_led_set(struct led_classdev *led_cdev,
 
 	if (pd->flags & S3C24XX_LEDF_TRISTATE)
 		s3c2410_gpio_cfgpin(pd->gpio,
-				    value ? S3C2410_GPIO_OUTPUT : S3C2410_GPIO_INPUT);
+			value ? S3C2410_GPIO_OUTPUT : S3C2410_GPIO_INPUT);
 
 }
 
@@ -82,6 +84,7 @@ static int s3c24xx_led_probe(struct platform_device *dev)
 	led->cdev.brightness_set = s3c24xx_led_set;
 	led->cdev.default_trigger = pdata->def_trigger;
 	led->cdev.name = pdata->name;
+	led->cdev.flags |= LED_CORE_SUSPENDRESUME;
 
 	led->pdata = pdata;
 
@@ -101,43 +104,16 @@ static int s3c24xx_led_probe(struct platform_device *dev)
 	ret = led_classdev_register(&dev->dev, &led->cdev);
 	if (ret < 0) {
 		dev_err(&dev->dev, "led_classdev_register failed\n");
-		goto exit_err1;
+		kfree(led);
+		return ret;
 	}
 
 	return 0;
-
- exit_err1:
-	kfree(led);
-	return ret;
 }
-
-
-#ifdef CONFIG_PM
-static int s3c24xx_led_suspend(struct platform_device *dev, pm_message_t state)
-{
-	struct s3c24xx_gpio_led *led = pdev_to_gpio(dev);
-
-	led_classdev_suspend(&led->cdev);
-	return 0;
-}
-
-static int s3c24xx_led_resume(struct platform_device *dev)
-{
-	struct s3c24xx_gpio_led *led = pdev_to_gpio(dev);
-
-	led_classdev_resume(&led->cdev);
-	return 0;
-}
-#else
-#define s3c24xx_led_suspend NULL
-#define s3c24xx_led_resume NULL
-#endif
 
 static struct platform_driver s3c24xx_led_driver = {
 	.probe		= s3c24xx_led_probe,
 	.remove		= s3c24xx_led_remove,
-	.suspend	= s3c24xx_led_suspend,
-	.resume		= s3c24xx_led_resume,
 	.driver		= {
 		.name		= "s3c24xx_led",
 		.owner		= THIS_MODULE,
@@ -151,7 +127,7 @@ static int __init s3c24xx_led_init(void)
 
 static void __exit s3c24xx_led_exit(void)
 {
- 	platform_driver_unregister(&s3c24xx_led_driver);
+	platform_driver_unregister(&s3c24xx_led_driver);
 }
 
 module_init(s3c24xx_led_init);
@@ -160,3 +136,4 @@ module_exit(s3c24xx_led_exit);
 MODULE_AUTHOR("Ben Dooks <ben@simtec.co.uk>");
 MODULE_DESCRIPTION("S3C24XX LED driver");
 MODULE_LICENSE("GPL");
+MODULE_ALIAS("platform:s3c24xx_led");

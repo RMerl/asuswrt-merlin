@@ -16,9 +16,11 @@
 #include <linux/ptrace.h>
 #include <linux/unistd.h>
 #include <linux/freezer.h>
+#include <linux/tracehook.h>
 
 #include <asm/uaccess.h>
 #include <asm/ucontext.h>
+#include <asm/syscalls.h>
 
 #define _BLOCKABLE (~(sigmask(SIGKILL) | sigmask(SIGSTOP)))
 
@@ -91,6 +93,9 @@ asmlinkage int sys_rt_sigreturn(struct pt_regs *regs)
 	spin_unlock_irq(&current->sighand->siglock);
 
 	if (restore_sigcontext(regs, &frame->uc.uc_mcontext))
+		goto badframe;
+
+	if (do_sigaltstack(&frame->uc.uc_stack, NULL, regs->sp) == -EFAULT)
 		goto badframe;
 
 	pr_debug("Context restored: pc = %08lx, lr = %08lx, sp = %08lx\n",
@@ -208,7 +213,7 @@ out:
 	return err;
 }
 
-static inline void restart_syscall(struct pt_regs *regs)
+static inline void setup_syscall_restart(struct pt_regs *regs)
 {
 	if (regs->r12 == -ERESTART_RESTARTBLOCK)
 		regs->r8 = __NR_restart_syscall;
@@ -270,19 +275,12 @@ int do_signal(struct pt_regs *regs, sigset_t *oldset, int syscall)
 	if (!user_mode(regs))
 		return 0;
 
-	if (try_to_freeze()) {
-		signr = 0;
-		if (!signal_pending(current))
-			goto no_signal;
-	}
-
 	if (test_thread_flag(TIF_RESTORE_SIGMASK))
 		oldset = &current->saved_sigmask;
 	else if (!oldset)
 		oldset = &current->blocked;
 
 	signr = get_signal_to_deliver(&info, &ka, regs, NULL);
-no_signal:
 	if (syscall) {
 		switch (regs->r12) {
 		case -ERESTART_RESTARTBLOCK:
@@ -299,7 +297,7 @@ no_signal:
 			}
 			/* fall through */
 		case -ERESTARTNOINTR:
-			restart_syscall(regs);
+			setup_syscall_restart(regs);
 		}
 	}
 
@@ -325,4 +323,11 @@ asmlinkage void do_notify_resume(struct pt_regs *regs, struct thread_info *ti)
 
 	if (ti->flags & (_TIF_SIGPENDING | _TIF_RESTORE_SIGMASK))
 		do_signal(regs, &current->blocked, syscall);
+
+	if (ti->flags & _TIF_NOTIFY_RESUME) {
+		clear_thread_flag(TIF_NOTIFY_RESUME);
+		tracehook_notify_resume(regs);
+		if (current->replacement_session_keyring)
+			key_replace_session_keyring();
+	}
 }

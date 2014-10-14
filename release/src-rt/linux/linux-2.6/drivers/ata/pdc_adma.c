@@ -34,6 +34,7 @@
 
 #include <linux/kernel.h>
 #include <linux/module.h>
+#include <linux/gfp.h>
 #include <linux/pci.h>
 #include <linux/init.h>
 #include <linux/blkdev.h>
@@ -44,13 +45,13 @@
 #include <linux/libata.h>
 
 #define DRV_NAME	"pdc_adma"
-#define DRV_VERSION	"0.06"
+#define DRV_VERSION	"1.0"
 
 /* macro to calculate base address for ATA regs */
-#define ADMA_ATA_REGS(base,port_no)	((base) + ((port_no) * 0x40))
+#define ADMA_ATA_REGS(base, port_no)	((base) + ((port_no) * 0x40))
 
 /* macro to calculate base address for ADMA regs */
-#define ADMA_REGS(base,port_no)		((base) + 0x80 + ((port_no) * 0x20))
+#define ADMA_REGS(base, port_no)	((base) + 0x80 + ((port_no) * 0x20))
 
 /* macro to obtain addresses from ata_port */
 #define ADMA_PORT_REGS(ap) \
@@ -92,6 +93,8 @@ enum {
 
 	/* CPB bits */
 	cDONE			= (1 << 0),
+	cATERR			= (1 << 3),
+
 	cVLD			= (1 << 0),
 	cDAT			= (1 << 2),
 	cIEN			= (1 << 3),
@@ -126,69 +129,46 @@ struct adma_port_priv {
 	adma_state_t		state;
 };
 
-static int adma_ata_init_one (struct pci_dev *pdev,
+static int adma_ata_init_one(struct pci_dev *pdev,
 				const struct pci_device_id *ent);
 static int adma_port_start(struct ata_port *ap);
-static void adma_host_stop(struct ata_host *host);
 static void adma_port_stop(struct ata_port *ap);
-static void adma_phy_reset(struct ata_port *ap);
 static void adma_qc_prep(struct ata_queued_cmd *qc);
 static unsigned int adma_qc_issue(struct ata_queued_cmd *qc);
 static int adma_check_atapi_dma(struct ata_queued_cmd *qc);
-static void adma_bmdma_stop(struct ata_queued_cmd *qc);
-static u8 adma_bmdma_status(struct ata_port *ap);
-static void adma_irq_clear(struct ata_port *ap);
-static void adma_eng_timeout(struct ata_port *ap);
+static void adma_freeze(struct ata_port *ap);
+static void adma_thaw(struct ata_port *ap);
+static int adma_prereset(struct ata_link *link, unsigned long deadline);
 
 static struct scsi_host_template adma_ata_sht = {
-	.module			= THIS_MODULE,
-	.name			= DRV_NAME,
-	.ioctl			= ata_scsi_ioctl,
-	.queuecommand		= ata_scsi_queuecmd,
-	.can_queue		= ATA_DEF_QUEUE,
-	.this_id		= ATA_SHT_THIS_ID,
+	ATA_BASE_SHT(DRV_NAME),
 	.sg_tablesize		= LIBATA_MAX_PRD,
-	.cmd_per_lun		= ATA_SHT_CMD_PER_LUN,
-	.emulated		= ATA_SHT_EMULATED,
-	.use_clustering		= ENABLE_CLUSTERING,
-	.proc_name		= DRV_NAME,
 	.dma_boundary		= ADMA_DMA_BOUNDARY,
-	.slave_configure	= ata_scsi_slave_config,
-	.slave_destroy		= ata_scsi_slave_destroy,
-	.bios_param		= ata_std_bios_param,
 };
 
-static const struct ata_port_operations adma_ata_ops = {
-	.port_disable		= ata_port_disable,
-	.tf_load		= ata_tf_load,
-	.tf_read		= ata_tf_read,
-	.check_status		= ata_check_status,
+static struct ata_port_operations adma_ata_ops = {
+	.inherits		= &ata_sff_port_ops,
+
+	.lost_interrupt		= ATA_OP_NULL,
+
 	.check_atapi_dma	= adma_check_atapi_dma,
-	.exec_command		= ata_exec_command,
-	.dev_select		= ata_std_dev_select,
-	.phy_reset		= adma_phy_reset,
 	.qc_prep		= adma_qc_prep,
 	.qc_issue		= adma_qc_issue,
-	.eng_timeout		= adma_eng_timeout,
-	.data_xfer		= ata_data_xfer,
-	.irq_clear		= adma_irq_clear,
-	.irq_on			= ata_irq_on,
-	.irq_ack		= ata_irq_ack,
+
+	.freeze			= adma_freeze,
+	.thaw			= adma_thaw,
+	.prereset		= adma_prereset,
+
 	.port_start		= adma_port_start,
 	.port_stop		= adma_port_stop,
-	.host_stop		= adma_host_stop,
-	.bmdma_stop		= adma_bmdma_stop,
-	.bmdma_status		= adma_bmdma_status,
 };
 
 static struct ata_port_info adma_port_info[] = {
 	/* board_1841_idx */
 	{
-		.flags		= ATA_FLAG_SLAVE_POSS | ATA_FLAG_SRST |
-				  ATA_FLAG_NO_LEGACY | ATA_FLAG_MMIO |
-				  ATA_FLAG_PIO_POLLING,
-		.pio_mask	= 0x10, /* pio4 */
-		.udma_mask	= 0x1f, /* udma0-4 */
+		.flags		= ATA_FLAG_SLAVE_POSS | ATA_FLAG_PIO_POLLING,
+		.pio_mask	= ATA_PIO4_ONLY,
+		.udma_mask	= ATA_UDMA4,
 		.port_ops	= &adma_ata_ops,
 	},
 };
@@ -211,21 +191,6 @@ static int adma_check_atapi_dma(struct ata_queued_cmd *qc)
 	return 1;	/* ATAPI DMA not yet supported */
 }
 
-static void adma_bmdma_stop(struct ata_queued_cmd *qc)
-{
-	/* nothing */
-}
-
-static u8 adma_bmdma_status(struct ata_port *ap)
-{
-	return 0;
-}
-
-static void adma_irq_clear(struct ata_port *ap)
-{
-	/* nothing */
-}
-
 static void adma_reset_engine(struct ata_port *ap)
 {
 	void __iomem *chan = ADMA_PORT_REGS(ap);
@@ -244,7 +209,7 @@ static void adma_reinit_engine(struct ata_port *ap)
 
 	/* mask/clear ATA interrupts */
 	writeb(ATA_NIEN, ap->ioaddr.ctl_addr);
-	ata_check_status(ap);
+	ata_sff_check_status(ap);
 
 	/* reset the ADMA engine */
 	adma_reset_engine(ap);
@@ -273,24 +238,36 @@ static inline void adma_enter_reg_mode(struct ata_port *ap)
 	readb(chan + ADMA_STATUS);	/* flush */
 }
 
-static void adma_phy_reset(struct ata_port *ap)
+static void adma_freeze(struct ata_port *ap)
 {
-	struct adma_port_priv *pp = ap->private_data;
+	void __iomem *chan = ADMA_PORT_REGS(ap);
 
-	pp->state = adma_state_idle;
-	adma_reinit_engine(ap);
-	ata_port_probe(ap);
-	ata_bus_reset(ap);
+	/* mask/clear ATA interrupts */
+	writeb(ATA_NIEN, ap->ioaddr.ctl_addr);
+	ata_sff_check_status(ap);
+
+	/* reset ADMA to idle state */
+	writew(aPIOMD4 | aNIEN | aRSTADM, chan + ADMA_CONTROL);
+	udelay(2);
+	writew(aPIOMD4 | aNIEN, chan + ADMA_CONTROL);
+	udelay(2);
 }
 
-static void adma_eng_timeout(struct ata_port *ap)
+static void adma_thaw(struct ata_port *ap)
 {
+	adma_reinit_engine(ap);
+}
+
+static int adma_prereset(struct ata_link *link, unsigned long deadline)
+{
+	struct ata_port *ap = link->ap;
 	struct adma_port_priv *pp = ap->private_data;
 
 	if (pp->state != adma_state_idle) /* healthy paranoia */
 		pp->state = adma_state_mmio;
 	adma_reinit_engine(ap);
-	ata_eng_timeout(ap);
+
+	return ata_sff_prereset(link, deadline);
 }
 
 static int adma_fill_sg(struct ata_queued_cmd *qc)
@@ -298,11 +275,12 @@ static int adma_fill_sg(struct ata_queued_cmd *qc)
 	struct scatterlist *sg;
 	struct ata_port *ap = qc->ap;
 	struct adma_port_priv *pp = ap->private_data;
-	u8  *buf = pp->pkt;
+	u8  *buf = pp->pkt, *last_buf = NULL;
 	int i = (2 + buf[3]) * 8;
 	u8 pFLAGS = pORD | ((qc->tf.flags & ATA_TFLAG_WRITE) ? pDIRO : 0);
+	unsigned int si;
 
-	ata_for_each_sg(sg, qc) {
+	for_each_sg(qc->sg, sg, qc->n_elem, si) {
 		u32 addr;
 		u32 len;
 
@@ -314,20 +292,23 @@ static int adma_fill_sg(struct ata_queued_cmd *qc)
 		*(__le32 *)(buf + i) = cpu_to_le32(len);
 		i += 4;
 
-		if (ata_sg_is_last(sg, qc))
-			pFLAGS |= pEND;
+		last_buf = &buf[i];
 		buf[i++] = pFLAGS;
 		buf[i++] = qc->dev->dma_mode & 0xf;
 		buf[i++] = 0;	/* pPKLW */
 		buf[i++] = 0;	/* reserved */
 
-		*(__le32 *)(buf + i)
-			= (pFLAGS & pEND) ? 0 : cpu_to_le32(pp->pkt_dma + i + 4);
+		*(__le32 *)(buf + i) =
+			(pFLAGS & pEND) ? 0 : cpu_to_le32(pp->pkt_dma + i + 4);
 		i += 4;
 
 		VPRINTK("PRD[%u] = (0x%lX, 0x%X)\n", i/4,
 					(unsigned long)addr, len);
 	}
+
+	if (likely(last_buf))
+		*last_buf |= pEND;
+
 	return i;
 }
 
@@ -341,10 +322,8 @@ static void adma_qc_prep(struct ata_queued_cmd *qc)
 	VPRINTK("ENTER\n");
 
 	adma_enter_reg_mode(qc->ap);
-	if (qc->tf.protocol != ATA_PROT_DMA) {
-		ata_qc_prep(qc);
+	if (qc->tf.protocol != ATA_PROT_DMA)
 		return;
-	}
 
 	buf[i++] = 0;	/* Response flags */
 	buf[i++] = 0;	/* reserved */
@@ -432,7 +411,7 @@ static unsigned int adma_qc_issue(struct ata_queued_cmd *qc)
 		adma_packet_start(qc);
 		return 0;
 
-	case ATA_PROT_ATAPI_DMA:
+	case ATAPI_PROT_DMA:
 		BUG();
 		break;
 
@@ -441,7 +420,7 @@ static unsigned int adma_qc_issue(struct ata_queued_cmd *qc)
 	}
 
 	pp->state = adma_state_mmio;
-	return ata_qc_issue_prot(qc);
+	return ata_sff_qc_issue(qc);
 }
 
 static inline unsigned int adma_intr_pkt(struct ata_host *host)
@@ -459,19 +438,36 @@ static inline unsigned int adma_intr_pkt(struct ata_host *host)
 			continue;
 		handled = 1;
 		adma_enter_reg_mode(ap);
-		if (ap->flags & ATA_FLAG_DISABLED)
-			continue;
 		pp = ap->private_data;
 		if (!pp || pp->state != adma_state_pkt)
 			continue;
-		qc = ata_qc_from_tag(ap, ap->active_tag);
+		qc = ata_qc_from_tag(ap, ap->link.active_tag);
 		if (qc && (!(qc->tf.flags & ATA_TFLAG_POLLING))) {
-			if ((status & (aPERR | aPSD | aUIRQ)))
+			if (status & aPERR)
+				qc->err_mask |= AC_ERR_HOST_BUS;
+			else if ((status & (aPSD | aUIRQ)))
 				qc->err_mask |= AC_ERR_OTHER;
+
+			if (pp->pkt[0] & cATERR)
+				qc->err_mask |= AC_ERR_DEV;
 			else if (pp->pkt[0] != cDONE)
 				qc->err_mask |= AC_ERR_OTHER;
 
-			ata_qc_complete(qc);
+			if (!qc->err_mask)
+				ata_qc_complete(qc);
+			else {
+				struct ata_eh_info *ehi = &ap->link.eh_info;
+				ata_ehi_clear_desc(ehi);
+				ata_ehi_push_desc(ehi,
+					"ADMA-status 0x%02X", status);
+				ata_ehi_push_desc(ehi,
+					"pkt[0] 0x%02X", pp->pkt[0]);
+
+				if (qc->err_mask == AC_ERR_DEV)
+					ata_port_abort(ap);
+				else
+					ata_port_freeze(ap);
+			}
 		}
 	}
 	return handled;
@@ -482,29 +478,38 @@ static inline unsigned int adma_intr_mmio(struct ata_host *host)
 	unsigned int handled = 0, port_no;
 
 	for (port_no = 0; port_no < host->n_ports; ++port_no) {
-		struct ata_port *ap;
-		ap = host->ports[port_no];
-		if (ap && (!(ap->flags & ATA_FLAG_DISABLED))) {
-			struct ata_queued_cmd *qc;
-			struct adma_port_priv *pp = ap->private_data;
-			if (!pp || pp->state != adma_state_mmio)
+		struct ata_port *ap = host->ports[port_no];
+		struct adma_port_priv *pp = ap->private_data;
+		struct ata_queued_cmd *qc;
+
+		if (!pp || pp->state != adma_state_mmio)
+			continue;
+		qc = ata_qc_from_tag(ap, ap->link.active_tag);
+		if (qc && (!(qc->tf.flags & ATA_TFLAG_POLLING))) {
+
+			/* check main status, clearing INTRQ */
+			u8 status = ata_sff_check_status(ap);
+			if ((status & ATA_BUSY))
 				continue;
-			qc = ata_qc_from_tag(ap, ap->active_tag);
-			if (qc && (!(qc->tf.flags & ATA_TFLAG_POLLING))) {
+			DPRINTK("ata%u: protocol %d (dev_stat 0x%X)\n",
+				ap->print_id, qc->tf.protocol, status);
 
-				/* check main status, clearing INTRQ */
-				u8 status = ata_check_status(ap);
-				if ((status & ATA_BUSY))
-					continue;
-				DPRINTK("ata%u: protocol %d (dev_stat 0x%X)\n",
-					ap->print_id, qc->tf.protocol, status);
-
-				/* complete taskfile transaction */
-				pp->state = adma_state_idle;
-				qc->err_mask |= ac_err_mask(status);
+			/* complete taskfile transaction */
+			pp->state = adma_state_idle;
+			qc->err_mask |= ac_err_mask(status);
+			if (!qc->err_mask)
 				ata_qc_complete(qc);
-				handled = 1;
+			else {
+				struct ata_eh_info *ehi = &ap->link.eh_info;
+				ata_ehi_clear_desc(ehi);
+				ata_ehi_push_desc(ehi, "status 0x%02X", status);
+
+				if (qc->err_mask == AC_ERR_DEV)
+					ata_port_abort(ap);
+				else
+					ata_port_freeze(ap);
 			}
+			handled = 1;
 		}
 	}
 	return handled;
@@ -547,11 +552,7 @@ static int adma_port_start(struct ata_port *ap)
 {
 	struct device *dev = ap->host->dev;
 	struct adma_port_priv *pp;
-	int rc;
 
-	rc = ata_port_start(ap);
-	if (rc)
-		return rc;
 	adma_enter_reg_mode(ap);
 	pp = devm_kzalloc(dev, sizeof(*pp), GFP_KERNEL);
 	if (!pp)
@@ -562,7 +563,7 @@ static int adma_port_start(struct ata_port *ap)
 		return -ENOMEM;
 	/* paranoia? */
 	if ((pp->pkt_dma & 7) != 0) {
-		printk("bad alignment for pp->pkt_dma: %08x\n",
+		printk(KERN_ERR "bad alignment for pp->pkt_dma: %08x\n",
 						(u32)pp->pkt_dma);
 		return -ENOMEM;
 	}
@@ -575,14 +576,6 @@ static int adma_port_start(struct ata_port *ap)
 static void adma_port_stop(struct ata_port *ap)
 {
 	adma_reset_engine(ap);
-}
-
-static void adma_host_stop(struct ata_host *host)
-{
-	unsigned int port_no;
-
-	for (port_no = 0; port_no < ADMA_PORTS; ++port_no)
-		adma_reset_engine(host->ports[port_no]);
 }
 
 static void adma_host_init(struct ata_host *host, unsigned int chip_id)
@@ -601,13 +594,13 @@ static int adma_set_dma_masks(struct pci_dev *pdev, void __iomem *mmio_base)
 {
 	int rc;
 
-	rc = pci_set_dma_mask(pdev, DMA_32BIT_MASK);
+	rc = pci_set_dma_mask(pdev, DMA_BIT_MASK(32));
 	if (rc) {
 		dev_printk(KERN_ERR, &pdev->dev,
 			"32-bit DMA enable failed\n");
 		return rc;
 	}
-	rc = pci_set_consistent_dma_mask(pdev, DMA_32BIT_MASK);
+	rc = pci_set_consistent_dma_mask(pdev, DMA_BIT_MASK(32));
 	if (rc) {
 		dev_printk(KERN_ERR, &pdev->dev,
 			"32-bit consistent DMA enable failed\n");
@@ -652,9 +645,16 @@ static int adma_ata_init_one(struct pci_dev *pdev,
 	if (rc)
 		return rc;
 
-	for (port_no = 0; port_no < ADMA_PORTS; ++port_no)
-		adma_ata_setup_port(&host->ports[port_no]->ioaddr,
-				    ADMA_ATA_REGS(mmio_base, port_no));
+	for (port_no = 0; port_no < ADMA_PORTS; ++port_no) {
+		struct ata_port *ap = host->ports[port_no];
+		void __iomem *port_base = ADMA_ATA_REGS(mmio_base, port_no);
+		unsigned int offset = port_base - mmio_base;
+
+		adma_ata_setup_port(&ap->ioaddr, port_base);
+
+		ata_port_pbar_desc(ap, ADMA_MMIO_BAR, -1, "mmio");
+		ata_port_pbar_desc(ap, ADMA_MMIO_BAR, offset, "port");
+	}
 
 	/* initialize adapter */
 	adma_host_init(host, board_idx);

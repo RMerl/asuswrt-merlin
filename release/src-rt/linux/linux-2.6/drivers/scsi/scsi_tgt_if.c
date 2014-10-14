@@ -20,6 +20,7 @@
  * 02110-1301 USA
  */
 #include <linux/miscdevice.h>
+#include <linux/gfp.h>
 #include <linux/file.h>
 #include <net/tcp.h>
 #include <scsi/scsi.h>
@@ -102,7 +103,8 @@ static int tgt_uspace_send_event(u32 type, struct tgt_event *p)
 	return 0;
 }
 
-int scsi_tgt_uspace_send_cmd(struct scsi_cmnd *cmd, struct scsi_lun *lun, u64 tag)
+int scsi_tgt_uspace_send_cmd(struct scsi_cmnd *cmd, u64 itn_id,
+			     struct scsi_lun *lun, u64 tag)
 {
 	struct Scsi_Host *shost = scsi_tgt_cmd_to_host(cmd);
 	struct tgt_event ev;
@@ -110,7 +112,8 @@ int scsi_tgt_uspace_send_cmd(struct scsi_cmnd *cmd, struct scsi_lun *lun, u64 ta
 
 	memset(&ev, 0, sizeof(ev));
 	ev.p.cmd_req.host_no = shost->host_no;
-	ev.p.cmd_req.data_len = cmd->request_bufflen;
+	ev.p.cmd_req.itn_id = itn_id;
+	ev.p.cmd_req.data_len = scsi_bufflen(cmd);
 	memcpy(ev.p.cmd_req.scb, cmd->cmnd, sizeof(ev.p.cmd_req.scb));
 	memcpy(ev.p.cmd_req.lun, lun, sizeof(ev.p.cmd_req.lun));
 	ev.p.cmd_req.attribute = cmd->tag;
@@ -127,7 +130,7 @@ int scsi_tgt_uspace_send_cmd(struct scsi_cmnd *cmd, struct scsi_lun *lun, u64 ta
 	return err;
 }
 
-int scsi_tgt_uspace_send_status(struct scsi_cmnd *cmd, u64 tag)
+int scsi_tgt_uspace_send_status(struct scsi_cmnd *cmd, u64 itn_id, u64 tag)
 {
 	struct Scsi_Host *shost = scsi_tgt_cmd_to_host(cmd);
 	struct tgt_event ev;
@@ -135,6 +138,7 @@ int scsi_tgt_uspace_send_status(struct scsi_cmnd *cmd, u64 tag)
 
 	memset(&ev, 0, sizeof(ev));
 	ev.p.cmd_done.host_no = shost->host_no;
+	ev.p.cmd_done.itn_id = itn_id;
 	ev.p.cmd_done.tag = tag;
 	ev.p.cmd_done.result = cmd->result;
 
@@ -149,14 +153,15 @@ int scsi_tgt_uspace_send_status(struct scsi_cmnd *cmd, u64 tag)
 	return err;
 }
 
-int scsi_tgt_uspace_send_tsk_mgmt(int host_no, int function, u64 tag,
-				  struct scsi_lun *scsilun, void *data)
+int scsi_tgt_uspace_send_tsk_mgmt(int host_no, u64 itn_id, int function,
+				  u64 tag, struct scsi_lun *scsilun, void *data)
 {
 	struct tgt_event ev;
 	int err;
 
 	memset(&ev, 0, sizeof(ev));
 	ev.p.tsk_mgmt_req.host_no = host_no;
+	ev.p.tsk_mgmt_req.itn_id = itn_id;
 	ev.p.tsk_mgmt_req.function = function;
 	ev.p.tsk_mgmt_req.tag = tag;
 	memcpy(ev.p.tsk_mgmt_req.lun, scsilun, sizeof(ev.p.tsk_mgmt_req.lun));
@@ -172,6 +177,29 @@ int scsi_tgt_uspace_send_tsk_mgmt(int host_no, int function, u64 tag,
 	return err;
 }
 
+int scsi_tgt_uspace_send_it_nexus_request(int host_no, u64 itn_id,
+					  int function, char *initiator_id)
+{
+	struct tgt_event ev;
+	int err;
+
+	memset(&ev, 0, sizeof(ev));
+	ev.p.it_nexus_req.host_no = host_no;
+	ev.p.it_nexus_req.function = function;
+	ev.p.it_nexus_req.itn_id = itn_id;
+	if (initiator_id)
+		strncpy(ev.p.it_nexus_req.initiator_id, initiator_id,
+			sizeof(ev.p.it_nexus_req.initiator_id));
+
+	dprintk("%d %x %llx\n", host_no, function, (unsigned long long)itn_id);
+
+	err = tgt_uspace_send_event(TGT_KEVENT_IT_NEXUS_REQ, &ev);
+	if (err)
+		eprintk("tx buf is full, could not send\n");
+
+	return err;
+}
+
 static int event_recv_msg(struct tgt_event *ev)
 {
 	int err = 0;
@@ -179,6 +207,7 @@ static int event_recv_msg(struct tgt_event *ev)
 	switch (ev->hdr.type) {
 	case TGT_UEVENT_CMD_RSP:
 		err = scsi_tgt_kspace_exec(ev->p.cmd_rsp.host_no,
+					   ev->p.cmd_rsp.itn_id,
 					   ev->p.cmd_rsp.result,
 					   ev->p.cmd_rsp.tag,
 					   ev->p.cmd_rsp.uaddr,
@@ -189,8 +218,14 @@ static int event_recv_msg(struct tgt_event *ev)
 		break;
 	case TGT_UEVENT_TSK_MGMT_RSP:
 		err = scsi_tgt_kspace_tsk_mgmt(ev->p.tsk_mgmt_rsp.host_no,
+					       ev->p.tsk_mgmt_rsp.itn_id,
 					       ev->p.tsk_mgmt_rsp.mid,
 					       ev->p.tsk_mgmt_rsp.result);
+		break;
+	case TGT_UEVENT_IT_NEXUS_RSP:
+		err = scsi_tgt_kspace_it_nexus_rsp(ev->p.it_nexus_rsp.host_no,
+						   ev->p.it_nexus_rsp.itn_id,
+						   ev->p.it_nexus_rsp.result);
 		break;
 	default:
 		eprintk("unknown type %d\n", ev->hdr.type);
@@ -296,6 +331,7 @@ static const struct file_operations tgt_fops = {
 	.poll		= tgt_poll,
 	.write		= tgt_write,
 	.mmap		= tgt_mmap,
+	.llseek		= noop_llseek,
 };
 
 static struct miscdevice tgt_miscdev = {

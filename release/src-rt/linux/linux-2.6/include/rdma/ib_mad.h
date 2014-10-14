@@ -32,12 +32,12 @@
  * ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
- *
- * $Id: ib_mad.h 5596 2006-03-03 01:00:07Z sean.hefty $
  */
 
-#if !defined( IB_MAD_H )
+#if !defined(IB_MAD_H)
 #define IB_MAD_H
+
+#include <linux/list.h>
 
 #include <rdma/ib_verbs.h>
 
@@ -107,9 +107,12 @@
 #define	IB_MGMT_RMPP_STATUS_ABORT_MAX		127
 
 #define IB_QP0		0
-#define IB_QP1		__constant_htonl(1)
+#define IB_QP1		cpu_to_be32(1)
 #define IB_QP1_QKEY	0x80010000
 #define IB_QP_SET_QKEY	0x80000000
+
+#define IB_DEFAULT_PKEY_PARTIAL 0x7FFF
+#define IB_DEFAULT_PKEY_FULL	0xFFFF
 
 enum {
 	IB_MGMT_MAD_HDR = 24,
@@ -189,8 +192,7 @@ struct ib_vendor_mad {
 	u8			data[IB_MGMT_VENDOR_DATA];
 };
 
-struct ib_class_port_info
-{
+struct ib_class_port_info {
 	u8			base_version;
 	u8			class_version;
 	__be16			capability_mask;
@@ -225,7 +227,9 @@ struct ib_class_port_info
  * @seg_count: The number of RMPP segments allocated for this send.
  * @seg_size: Size of each RMPP segment.
  * @timeout_ms: Time to wait for a response.
- * @retries: Number of times to retry a request for a response.
+ * @retries: Number of times to retry a request for a response.  For MADs
+ *   using RMPP, this applies per window.  On completion, returns the number
+ *   of retries needed to complete the transfer.
  *
  * Users are responsible for initializing the MAD buffer itself, with the
  * exception of any RMPP header.  Additional segment buffer space allocated
@@ -286,7 +290,7 @@ static inline void ib_set_rmpp_resptime(struct ib_rmpp_hdr *rmpp_hdr, u8 rtime)
  */
 static inline void ib_set_rmpp_flags(struct ib_rmpp_hdr *rmpp_hdr, u8 flags)
 {
-	rmpp_hdr->rmpp_rtime_flags = (rmpp_hdr->rmpp_rtime_flags & 0xF1) |
+	rmpp_hdr->rmpp_rtime_flags = (rmpp_hdr->rmpp_rtime_flags & 0xF8) |
 				     (flags & 0x7);
 }
 
@@ -607,11 +611,11 @@ int ib_process_mad_wc(struct ib_mad_agent *mad_agent,
  * any class specific header, and MAD data area.
  * If @rmpp_active is set, the RMPP header will be initialized for sending.
  */
-struct ib_mad_send_buf * ib_create_send_mad(struct ib_mad_agent *mad_agent,
-					    u32 remote_qpn, u16 pkey_index,
-					    int rmpp_active,
-					    int hdr_len, int data_len,
-					    gfp_t gfp_mask);
+struct ib_mad_send_buf *ib_create_send_mad(struct ib_mad_agent *mad_agent,
+					   u32 remote_qpn, u16 pkey_index,
+					   int rmpp_active,
+					   int hdr_len, int data_len,
+					   gfp_t gfp_mask);
 
 /**
  * ib_is_mad_class_rmpp - returns whether given management class

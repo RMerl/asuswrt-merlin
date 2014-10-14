@@ -45,8 +45,8 @@
  */
 
 static int hippi_header(struct sk_buff *skb, struct net_device *dev,
-			unsigned short type, void *daddr, void *saddr,
-			unsigned len)
+			unsigned short type,
+			const void *daddr, const void *saddr, unsigned len)
 {
 	struct hippi_hdr *hip = (struct hippi_hdr *)skb_push(skb, HIPPI_HLEN);
 	struct hippi_cb *hcb = (struct hippi_cb *) skb->cb;
@@ -144,7 +144,7 @@ __be16 hippi_type_trans(struct sk_buff *skb, struct net_device *dev)
 
 EXPORT_SYMBOL(hippi_type_trans);
 
-static int hippi_change_mtu(struct net_device *dev, int new_mtu)
+int hippi_change_mtu(struct net_device *dev, int new_mtu)
 {
 	/*
 	 * HIPPI's got these nice large MTUs.
@@ -152,14 +152,15 @@ static int hippi_change_mtu(struct net_device *dev, int new_mtu)
 	if ((new_mtu < 68) || (new_mtu > 65280))
 		return -EINVAL;
 	dev->mtu = new_mtu;
-	return(0);
+	return 0;
 }
+EXPORT_SYMBOL(hippi_change_mtu);
 
 /*
  * For HIPPI we will actually use the lower 4 bytes of the hardware
  * address as the I-FIELD rather than the actual hardware address.
  */
-static int hippi_mac_addr(struct net_device *dev, void *p)
+int hippi_mac_addr(struct net_device *dev, void *p)
 {
 	struct sockaddr *addr = p;
 	if (netif_running(dev))
@@ -167,8 +168,9 @@ static int hippi_mac_addr(struct net_device *dev, void *p)
 	memcpy(dev->dev_addr, addr->sa_data, dev->addr_len);
 	return 0;
 }
+EXPORT_SYMBOL(hippi_mac_addr);
 
-static int hippi_neigh_setup_dev(struct net_device *dev, struct neigh_parms *p)
+int hippi_neigh_setup_dev(struct net_device *dev, struct neigh_parms *p)
 {
 	/* Never send broadcast/multicast ARP messages */
 	p->mcast_probes = 0;
@@ -181,18 +183,17 @@ static int hippi_neigh_setup_dev(struct net_device *dev, struct neigh_parms *p)
 		p->ucast_probes = 0;
 	return 0;
 }
+EXPORT_SYMBOL(hippi_neigh_setup_dev);
+
+static const struct header_ops hippi_header_ops = {
+	.create		= hippi_header,
+	.rebuild	= hippi_rebuild_header,
+};
+
 
 static void hippi_setup(struct net_device *dev)
 {
-	dev->set_multicast_list		= NULL;
-	dev->change_mtu			= hippi_change_mtu;
-	dev->hard_header		= hippi_header;
-	dev->rebuild_header 		= hippi_rebuild_header;
-	dev->set_mac_address 		= hippi_mac_addr;
-	dev->hard_header_parse		= NULL;
-	dev->hard_header_cache		= NULL;
-	dev->header_cache_update	= NULL;
-	dev->neigh_setup 		= hippi_neigh_setup_dev;
+	dev->header_ops			= &hippi_header_ops;
 
 	/*
 	 * We don't support HIPPI `ARP' for the time being, and probably

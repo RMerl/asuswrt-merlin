@@ -53,6 +53,7 @@ static struct scsi_transport_template *ahd_linux_transport_template = NULL;
 #include <linux/blkdev.h>		/* For block_size() */
 #include <linux/delay.h>	/* For ssleep/msleep */
 #include <linux/device.h>
+#include <linux/slab.h>
 
 /*
  * Bucket size for counting good commands in between bad ones.
@@ -193,7 +194,7 @@ struct ahd_linux_iocell_opts
 #define AIC79XX_PRECOMP_INDEX	0
 #define AIC79XX_SLEWRATE_INDEX	1
 #define AIC79XX_AMPLITUDE_INDEX	2
-static struct ahd_linux_iocell_opts aic79xx_iocell_info[] =
+static const struct ahd_linux_iocell_opts aic79xx_iocell_info[] =
 {
 	AIC79XX_DEFAULT_IOOPTS,
 	AIC79XX_DEFAULT_IOOPTS,
@@ -315,8 +316,8 @@ uint32_t aic79xx_slowcrc;
  */
 static char *aic79xx = NULL;
 
-MODULE_AUTHOR("Maintainer: Justin T. Gibbs <gibbs@scsiguy.com>");
-MODULE_DESCRIPTION("Adaptec Aic790X U320 SCSI Host Bus Adapter driver");
+MODULE_AUTHOR("Maintainer: Hannes Reinecke <hare@suse.de>");
+MODULE_DESCRIPTION("Adaptec AIC790X U320 SCSI Host Bus Adapter driver");
 MODULE_LICENSE("Dual BSD/GPL");
 MODULE_VERSION(AIC79XX_DRIVER_VERSION);
 module_param(aic79xx, charp, 0444);
@@ -325,7 +326,7 @@ MODULE_PARM_DESC(aic79xx,
 "	verbose			Enable verbose/diagnostic logging\n"
 "	allow_memio		Allow device registers to be memory mapped\n"
 "	debug			Bitmask of debug values to enable\n"
-"	no_reset		Supress initial bus resets\n"
+"	no_reset		Suppress initial bus resets\n"
 "	extended		Enable extended geometry on all controllers\n"
 "	periodic_otag		Send an ordered tagged transaction\n"
 "				periodically to prevent tag starvation.\n"
@@ -369,28 +370,174 @@ static void ahd_release_simq(struct ahd_softc *ahd);
 static int ahd_linux_unit;
 
 
-/****************************** Inlines ***************************************/
-static __inline void ahd_linux_unmap_scb(struct ahd_softc*, struct scb*);
+/************************** OS Utility Wrappers *******************************/
+void ahd_delay(long);
+void
+ahd_delay(long usec)
+{
+	/*
+	 * udelay on Linux can have problems for
+	 * multi-millisecond waits.  Wait at most
+	 * 1024us per call.
+	 */
+	while (usec > 0) {
+		udelay(usec % 1024);
+		usec -= 1024;
+	}
+}
 
-static __inline void
+
+/***************************** Low Level I/O **********************************/
+uint8_t ahd_inb(struct ahd_softc * ahd, long port);
+void ahd_outb(struct ahd_softc * ahd, long port, uint8_t val);
+void ahd_outw_atomic(struct ahd_softc * ahd,
+				     long port, uint16_t val);
+void ahd_outsb(struct ahd_softc * ahd, long port,
+			       uint8_t *, int count);
+void ahd_insb(struct ahd_softc * ahd, long port,
+			       uint8_t *, int count);
+
+uint8_t
+ahd_inb(struct ahd_softc * ahd, long port)
+{
+	uint8_t x;
+
+	if (ahd->tags[0] == BUS_SPACE_MEMIO) {
+		x = readb(ahd->bshs[0].maddr + port);
+	} else {
+		x = inb(ahd->bshs[(port) >> 8].ioport + ((port) & 0xFF));
+	}
+	mb();
+	return (x);
+}
+
+#if 0 /* unused */
+static uint16_t
+ahd_inw_atomic(struct ahd_softc * ahd, long port)
+{
+	uint8_t x;
+
+	if (ahd->tags[0] == BUS_SPACE_MEMIO) {
+		x = readw(ahd->bshs[0].maddr + port);
+	} else {
+		x = inw(ahd->bshs[(port) >> 8].ioport + ((port) & 0xFF));
+	}
+	mb();
+	return (x);
+}
+#endif
+
+void
+ahd_outb(struct ahd_softc * ahd, long port, uint8_t val)
+{
+	if (ahd->tags[0] == BUS_SPACE_MEMIO) {
+		writeb(val, ahd->bshs[0].maddr + port);
+	} else {
+		outb(val, ahd->bshs[(port) >> 8].ioport + (port & 0xFF));
+	}
+	mb();
+}
+
+void
+ahd_outw_atomic(struct ahd_softc * ahd, long port, uint16_t val)
+{
+	if (ahd->tags[0] == BUS_SPACE_MEMIO) {
+		writew(val, ahd->bshs[0].maddr + port);
+	} else {
+		outw(val, ahd->bshs[(port) >> 8].ioport + (port & 0xFF));
+	}
+	mb();
+}
+
+void
+ahd_outsb(struct ahd_softc * ahd, long port, uint8_t *array, int count)
+{
+	int i;
+
+	/*
+	 * There is probably a more efficient way to do this on Linux
+	 * but we don't use this for anything speed critical and this
+	 * should work.
+	 */
+	for (i = 0; i < count; i++)
+		ahd_outb(ahd, port, *array++);
+}
+
+void
+ahd_insb(struct ahd_softc * ahd, long port, uint8_t *array, int count)
+{
+	int i;
+
+	/*
+	 * There is probably a more efficient way to do this on Linux
+	 * but we don't use this for anything speed critical and this
+	 * should work.
+	 */
+	for (i = 0; i < count; i++)
+		*array++ = ahd_inb(ahd, port);
+}
+
+/******************************* PCI Routines *********************************/
+uint32_t
+ahd_pci_read_config(ahd_dev_softc_t pci, int reg, int width)
+{
+	switch (width) {
+	case 1:
+	{
+		uint8_t retval;
+
+		pci_read_config_byte(pci, reg, &retval);
+		return (retval);
+	}
+	case 2:
+	{
+		uint16_t retval;
+		pci_read_config_word(pci, reg, &retval);
+		return (retval);
+	}
+	case 4:
+	{
+		uint32_t retval;
+		pci_read_config_dword(pci, reg, &retval);
+		return (retval);
+	}
+	default:
+		panic("ahd_pci_read_config: Read size too big");
+		/* NOTREACHED */
+		return (0);
+	}
+}
+
+void
+ahd_pci_write_config(ahd_dev_softc_t pci, int reg, uint32_t value, int width)
+{
+	switch (width) {
+	case 1:
+		pci_write_config_byte(pci, reg, value);
+		break;
+	case 2:
+		pci_write_config_word(pci, reg, value);
+		break;
+	case 4:
+		pci_write_config_dword(pci, reg, value);
+		break;
+	default:
+		panic("ahd_pci_write_config: Write size too big");
+		/* NOTREACHED */
+	}
+}
+
+/****************************** Inlines ***************************************/
+static void ahd_linux_unmap_scb(struct ahd_softc*, struct scb*);
+
+static void
 ahd_linux_unmap_scb(struct ahd_softc *ahd, struct scb *scb)
 {
 	struct scsi_cmnd *cmd;
-	int direction;
 
 	cmd = scb->io_ctx;
-	direction = cmd->sc_data_direction;
 	ahd_sync_sglist(ahd, scb, BUS_DMASYNC_POSTWRITE);
-	if (cmd->use_sg != 0) {
-		struct scatterlist *sg;
-
-		sg = (struct scatterlist *)cmd->request_buffer;
-		pci_unmap_sg(ahd->dev_softc, sg, cmd->use_sg, direction);
-	} else if (cmd->request_bufflen != 0) {
-		pci_unmap_single(ahd->dev_softc,
-				 scb->platform_data->buf_busaddr,
-				 cmd->request_bufflen, direction);
-	}
+	scsi_dma_unmap(cmd);
 }
 
 /******************************** Macros **************************************/
@@ -411,13 +558,11 @@ ahd_linux_info(struct Scsi_Host *host)
 	bp = &buffer[0];
 	ahd = *(struct ahd_softc **)host->hostdata;
 	memset(bp, 0, sizeof(buffer));
-	strcpy(bp, "Adaptec AIC79XX PCI-X SCSI HBA DRIVER, Rev ");
-	strcat(bp, AIC79XX_DRIVER_VERSION);
-	strcat(bp, "\n");
-	strcat(bp, "        <");
+	strcpy(bp, "Adaptec AIC79XX PCI-X SCSI HBA DRIVER, Rev " AIC79XX_DRIVER_VERSION "\n"
+			"        <");
 	strcat(bp, ahd->description);
-	strcat(bp, ">\n");
-	strcat(bp, "        ");
+	strcat(bp, ">\n"
+			"        ");
 	ahd_controller_info(ahd, ahd_info);
 	strcat(bp, ahd_info);
 
@@ -428,7 +573,7 @@ ahd_linux_info(struct Scsi_Host *host)
  * Queue an SCB to the controller.
  */
 static int
-ahd_linux_queue(struct scsi_cmnd * cmd, void (*scsi_done) (struct scsi_cmnd *))
+ahd_linux_queue_lck(struct scsi_cmnd * cmd, void (*scsi_done) (struct scsi_cmnd *))
 {
 	struct	 ahd_softc *ahd;
 	struct	 ahd_linux_device *dev = scsi_transport_device_data(cmd->device);
@@ -443,7 +588,9 @@ ahd_linux_queue(struct scsi_cmnd * cmd, void (*scsi_done) (struct scsi_cmnd *))
 	return rtn;
 }
 
-static inline struct scsi_target **
+static DEF_SCSI_QCMD(ahd_linux_queue)
+
+static struct scsi_target **
 ahd_linux_target_in_softc(struct scsi_target *starget)
 {
 	struct	ahd_softc *ahd =
@@ -483,19 +630,15 @@ ahd_linux_target_alloc(struct scsi_target *starget)
 					    starget->id, &tstate);
 
 		if ((flags  & CFPACKETIZED) == 0) {
-			/* Do not negotiate packetized transfers */
-			spi_rd_strm(starget) = 0;
-			spi_pcomp_en(starget) = 0;
-			spi_rti(starget) = 0;
-			spi_wr_flow(starget) = 0;
-			spi_hold_mcs(starget) = 0;
+			/* don't negotiate packetized (IU) transfers */
+			spi_max_iu(starget) = 0;
 		} else {
 			if ((ahd->features & AHD_RTI) == 0)
 				spi_rti(starget) = 0;
 		}
 
 		if ((flags & CFQAS) == 0)
-			spi_qas(starget) = 0;
+			spi_max_qas(starget) = 0;
 
 		/* Transinfo values have been set to BIOS settings */
 		spi_max_width(starget) = (flags & CFWIDEB) ? 1 : 0;
@@ -533,7 +676,7 @@ ahd_linux_slave_alloc(struct scsi_device *sdev)
 	struct ahd_linux_device *dev;
 
 	if (bootverbose)
-		printf("%s: Slave Alloc %d\n", ahd_name(ahd), sdev->id);
+		printk("%s: Slave Alloc %d\n", ahd_name(ahd), sdev->id);
 
 	dev = scsi_transport_device_data(sdev);
 	memset(dev, 0, sizeof(*dev));
@@ -657,10 +800,10 @@ ahd_linux_dev_reset(struct scsi_cmnd *cmd)
 	scmd_printk(KERN_INFO, cmd,
 		    "Attempting to queue a TARGET RESET message:");
 
-	printf("CDB:");
+	printk("CDB:");
 	for (cdb_byte = 0; cdb_byte < cmd->cmd_len; cdb_byte++)
-		printf(" 0x%x", cmd->cmnd[cdb_byte]);
-	printf("\n");
+		printk(" 0x%x", cmd->cmnd[cdb_byte]);
+	printk("\n");
 
 	/*
 	 * Determine if we currently own this command.
@@ -716,16 +859,16 @@ ahd_linux_dev_reset(struct scsi_cmnd *cmd)
 	ahd->platform_data->eh_done = &done;
 	ahd_unlock(ahd, &flags);
 
-	printf("%s: Device reset code sleeping\n", ahd_name(ahd));
+	printk("%s: Device reset code sleeping\n", ahd_name(ahd));
 	if (!wait_for_completion_timeout(&done, 5 * HZ)) {
 		ahd_lock(ahd, &flags);
 		ahd->platform_data->eh_done = NULL;
 		ahd_unlock(ahd, &flags);
-		printf("%s: Device reset timer expired (active %d)\n",
+		printk("%s: Device reset timer expired (active %d)\n",
 		       ahd_name(ahd), dev->active);
 		retval = FAILED;
 	}
-	printf("%s: Device reset returning 0x%x\n", ahd_name(ahd), retval);
+	printk("%s: Device reset returning 0x%x\n", ahd_name(ahd), retval);
 
 	return (retval);
 }
@@ -743,7 +886,7 @@ ahd_linux_bus_reset(struct scsi_cmnd *cmd)
 	ahd = *(struct ahd_softc **)cmd->device->host->hostdata;
 #ifdef AHD_DEBUG
 	if ((ahd_debug & AHD_SHOW_RECOVERY) != 0)
-		printf("%s: Bus reset called for cmd %p\n",
+		printk("%s: Bus reset called for cmd %p\n",
 		       ahd_name(ahd), cmd);
 #endif
 	ahd_lock(ahd, &flags);
@@ -753,7 +896,7 @@ ahd_linux_bus_reset(struct scsi_cmnd *cmd)
 	ahd_unlock(ahd, &flags);
 
 	if (bootverbose)
-		printf("%s: SCSI bus reset delivered. "
+		printk("%s: SCSI bus reset delivered. "
 		       "%d SCBs aborted.\n", ahd_name(ahd), found);
 
 	return (SUCCESS);
@@ -794,7 +937,7 @@ ahd_dma_tag_create(struct ahd_softc *ahd, bus_dma_tag_t parent,
 {
 	bus_dma_tag_t dmat;
 
-	dmat = malloc(sizeof(*dmat), M_DEVBUF, M_NOWAIT);
+	dmat = kmalloc(sizeof(*dmat), GFP_ATOMIC);
 	if (dmat == NULL)
 		return (ENOMEM);
 
@@ -815,7 +958,7 @@ ahd_dma_tag_create(struct ahd_softc *ahd, bus_dma_tag_t parent,
 void
 ahd_dma_tag_destroy(struct ahd_softc *ahd, bus_dma_tag_t dmat)
 {
-	free(dmat, M_DEVBUF);
+	kfree(dmat);
 }
 
 int
@@ -878,7 +1021,7 @@ ahd_linux_setup_iocell_info(u_long index, int instance, int targ, int32_t value)
 		iocell_info = (uint8_t*)&aic79xx_iocell_info[instance];
 		iocell_info[index] = value & 0xFFFF;
 		if (bootverbose)
-			printf("iocell[%d:%ld] = %d\n", instance, index, value);
+			printk("iocell[%d:%ld] = %d\n", instance, index, value);
 	}
 }
 
@@ -888,7 +1031,7 @@ ahd_linux_setup_tag_info_global(char *p)
 	int tags, i, j;
 
 	tags = simple_strtoul(p + 1, NULL, 0) & 0xff;
-	printf("Setting Global Tags= %d\n", tags);
+	printk("Setting Global Tags= %d\n", tags);
 
 	for (i = 0; i < ARRAY_SIZE(aic79xx_tag_info); i++) {
 		for (j = 0; j < AHD_NUM_TARGETS; j++) {
@@ -906,7 +1049,7 @@ ahd_linux_setup_tag_info(u_long arg, int instance, int targ, int32_t value)
 	 && (targ < AHD_NUM_TARGETS)) {
 		aic79xx_tag_info[instance].tag_commands[targ] = value & 0x1FF;
 		if (bootverbose)
-			printf("tag_info[%d:%d] = %d\n", instance, targ, value);
+			printk("tag_info[%d:%d] = %d\n", instance, targ, value);
 	}
 }
 
@@ -947,7 +1090,7 @@ ahd_parse_brace_option(char *opt_name, char *opt_arg, char *end, int depth,
 					if (targ == -1)
 						targ = 0;
 				} else {
-					printf("Malformed Option %s\n",
+					printk("Malformed Option %s\n",
 					       opt_name);
 					done = TRUE;
 				}
@@ -1002,7 +1145,7 @@ aic79xx_setup(char *s)
 	char   *p;
 	char   *end;
 
-	static struct {
+	static const struct {
 		const char *name;
 		uint32_t *flag;
 	} options[] = {
@@ -1105,7 +1248,7 @@ ahd_linux_register_host(struct ahd_softc *ahd, struct scsi_host_template *templa
 	ahd_set_unit(ahd, ahd_linux_unit++);
 	ahd_unlock(ahd, &s);
 	sprintf(buf, "scsi%d", host->host_no);
-	new_name = malloc(strlen(buf) + 1, M_DEVBUF, M_NOWAIT);
+	new_name = kmalloc(strlen(buf) + 1, GFP_ATOMIC);
 	if (new_name != NULL) {
 		strcpy(new_name, buf);
 		ahd_set_name(ahd, new_name);
@@ -1181,7 +1324,7 @@ int
 ahd_platform_alloc(struct ahd_softc *ahd, void *platform_arg)
 {
 	ahd->platform_data =
-	    malloc(sizeof(struct ahd_platform_data), M_DEVBUF, M_NOWAIT);
+	    kmalloc(sizeof(struct ahd_platform_data), GFP_ATOMIC);
 	if (ahd->platform_data == NULL)
 		return (ENOMEM);
 	memset(ahd->platform_data, 0, sizeof(struct ahd_platform_data));
@@ -1223,7 +1366,7 @@ ahd_platform_free(struct ahd_softc *ahd)
 		if (ahd->platform_data->host)
 			scsi_host_put(ahd->platform_data->host);
 
-		free(ahd->platform_data, M_DEVBUF);
+		kfree(ahd->platform_data);
 	}
 }
 
@@ -1234,7 +1377,7 @@ ahd_platform_init(struct ahd_softc *ahd)
 	 * Lookup and commit any modified IO Cell options.
 	 */
 	if (ahd->unit < ARRAY_SIZE(aic79xx_iocell_info)) {
-		struct ahd_linux_iocell_opts *iocell_opts;
+		const struct ahd_linux_iocell_opts *iocell_opts;
 
 		iocell_opts = &aic79xx_iocell_info[ahd->unit];
 		if (iocell_opts->precomp != AIC79XX_DEFAULT_PRECOMP)
@@ -1298,7 +1441,7 @@ ahd_platform_set_tags(struct ahd_softc *ahd, struct scsi_device *sdev,
 		usertags = ahd_linux_user_tagdepth(ahd, devinfo);
 		if (!was_queuing) {
 			/*
-			 * Start out agressively and allow our
+			 * Start out aggressively and allow our
 			 * dynamic queue depth algorithm to take
 			 * care of the rest.
 			 */
@@ -1361,7 +1504,7 @@ ahd_linux_user_tagdepth(struct ahd_softc *ahd, struct ahd_devinfo *devinfo)
 		if (ahd->unit >= ARRAY_SIZE(aic79xx_tag_info)) {
 
 			if (warned_user == 0) {
-				printf(KERN_WARNING
+				printk(KERN_WARNING
 "aic79xx: WARNING: Insufficient tag_info instances\n"
 "aic79xx: for installed controllers.  Using defaults\n"
 "aic79xx: Please update the aic79xx_tag_info array in\n"
@@ -1403,7 +1546,7 @@ ahd_linux_device_queue_depth(struct scsi_device *sdev)
 		ahd_send_async(ahd, devinfo.channel, devinfo.target,
 			       devinfo.lun, AC_TRANSFER_NEG);
 		ahd_print_devinfo(ahd, &devinfo);
-		printf("Tagged Queuing enabled.  Depth %d\n", tags);
+		printk("Tagged Queuing enabled.  Depth %d\n", tags);
 	} else {
 		ahd_platform_set_tags(ahd, sdev, &devinfo, AHD_QUEUE_NONE);
 		ahd_send_async(ahd, devinfo.channel, devinfo.target,
@@ -1422,6 +1565,11 @@ ahd_linux_run_command(struct ahd_softc *ahd, struct ahd_linux_device *dev,
 	u_int	 col_idx;
 	uint16_t mask;
 	unsigned long flags;
+	int nseg;
+
+	nseg = scsi_dma_map(cmd);
+	if (nseg < 0)
+		return SCSI_MLQUEUE_HOST_BUSY;
 
 	ahd_lock(ahd, &flags);
 
@@ -1440,6 +1588,7 @@ ahd_linux_run_command(struct ahd_softc *ahd, struct ahd_linux_device *dev,
 	if ((scb = ahd_get_scb(ahd, col_idx)) == NULL) {
 		ahd->flags |= AHD_RESOURCE_SHORTAGE;
 		ahd_unlock(ahd, &flags);
+		scsi_dma_unmap(cmd);
 		return SCSI_MLQUEUE_HOST_BUSY;
 	}
 
@@ -1494,18 +1643,15 @@ ahd_linux_run_command(struct ahd_softc *ahd, struct ahd_linux_device *dev,
 	ahd_set_residual(scb, 0);
 	ahd_set_sense_residual(scb, 0);
 	scb->sg_count = 0;
-	if (cmd->use_sg != 0) {
-		void	*sg;
-		struct	 scatterlist *cur_seg;
-		u_int	 nseg;
-		int	 dir;
 
-		cur_seg = (struct scatterlist *)cmd->request_buffer;
-		dir = cmd->sc_data_direction;
-		nseg = pci_map_sg(ahd->dev_softc, cur_seg,
-				  cmd->use_sg, dir);
+	if (nseg > 0) {
+		void *sg = scb->sg_list;
+		struct scatterlist *cur_seg;
+		int i;
+
 		scb->platform_data->xfer_len = 0;
-		for (sg = scb->sg_list; nseg > 0; nseg--, cur_seg++) {
+
+		scsi_for_each_sg(cmd, cur_seg, nseg, i) {
 			dma_addr_t addr;
 			bus_size_t len;
 
@@ -1513,22 +1659,8 @@ ahd_linux_run_command(struct ahd_softc *ahd, struct ahd_linux_device *dev,
 			len = sg_dma_len(cur_seg);
 			scb->platform_data->xfer_len += len;
 			sg = ahd_sg_setup(ahd, scb, sg, addr, len,
-					  /*last*/nseg == 1);
+					  i == (nseg - 1));
 		}
-	} else if (cmd->request_bufflen != 0) {
-		void *sg;
-		dma_addr_t addr;
-		int dir;
-
-		sg = scb->sg_list;
-		dir = cmd->sc_data_direction;
-		addr = pci_map_single(ahd->dev_softc,
-				      cmd->request_buffer,
-				      cmd->request_bufflen, dir);
-		scb->platform_data->xfer_len = cmd->request_bufflen;
-		scb->platform_data->buf_busaddr = addr;
-		sg = ahd_sg_setup(ahd, scb, sg, addr,
-				  cmd->request_bufflen, /*last*/TRUE);
 	}
 
 	LIST_INSERT_HEAD(&ahd->pending_scbs, scb, pending_links);
@@ -1664,7 +1796,7 @@ ahd_done(struct ahd_softc *ahd, struct scb *scb)
 	struct	  ahd_linux_device *dev;
 
 	if ((scb->flags & SCB_ACTIVE) == 0) {
-		printf("SCB %d done'd twice\n", SCB_GET_TAG(scb));
+		printk("SCB %d done'd twice\n", SCB_GET_TAG(scb));
 		ahd_dump_card_state(ahd);
 		panic("Stopping for safety");
 	}
@@ -1695,7 +1827,7 @@ ahd_done(struct ahd_softc *ahd, struct scb *scb)
 #ifdef AHD_DEBUG
 			if ((ahd_debug & AHD_SHOW_MISC) != 0) {
 				ahd_print_path(ahd, scb);
-				printf("Set CAM_UNCOR_PARITY\n");
+				printk("Set CAM_UNCOR_PARITY\n");
 			}
 #endif
 			ahd_set_transaction_status(scb, CAM_UNCOR_PARITY);
@@ -1713,12 +1845,12 @@ ahd_done(struct ahd_softc *ahd, struct scb *scb)
 			u_int i;
 
 			ahd_print_path(ahd, scb);
-			printf("CDB:");
+			printk("CDB:");
 			for (i = 0; i < scb->io_ctx->cmd_len; i++)
-				printf(" 0x%x", scb->io_ctx->cmnd[i]);
-			printf("\n");
+				printk(" 0x%x", scb->io_ctx->cmnd[i]);
+			printk("\n");
 			ahd_print_path(ahd, scb);
-			printf("Saw underflow (%ld of %ld bytes). "
+			printk("Saw underflow (%ld of %ld bytes). "
 			       "Treated as error\n",
 				ahd_get_residual(scb),
 				ahd_get_transfer_length(scb));
@@ -1751,7 +1883,7 @@ ahd_done(struct ahd_softc *ahd, struct scb *scb)
 		dev->commands_since_idle_or_otag = 0;
 
 	if ((scb->flags & SCB_RECOVERY_SCB) != 0) {
-		printf("Recovery SCB completes\n");
+		printk("Recovery SCB completes\n");
 		if (ahd_get_transaction_status(scb) == CAM_BDR_SENT
 		 || ahd_get_transaction_status(scb) == CAM_REQ_ABORTED)
 			ahd_set_transaction_status(scb, CAM_CMD_TIMEOUT);
@@ -1808,7 +1940,7 @@ ahd_linux_handle_scsi_status(struct ahd_softc *ahd,
 			if (scb->flags & SCB_SENSE) {
 				sense_size = min(sizeof(struct scsi_sense_data)
 					       - ahd_get_sense_residual(scb),
-						 (u_long)sizeof(cmd->sense_buffer));
+						 (u_long)SCSI_SENSE_BUFFERSIZE);
 				sense_offset = 0;
 			} else {
 				/*
@@ -1819,11 +1951,11 @@ ahd_linux_handle_scsi_status(struct ahd_softc *ahd,
 				    scb->sense_data;
 				sense_size = min_t(size_t,
 						scsi_4btoul(siu->sense_length),
-						sizeof(cmd->sense_buffer));
+						SCSI_SENSE_BUFFERSIZE);
 				sense_offset = SIU_SENSE_OFFSET(siu);
 			}
 
-			memset(cmd->sense_buffer, 0, sizeof(cmd->sense_buffer));
+			memset(cmd->sense_buffer, 0, SCSI_SENSE_BUFFERSIZE);
 			memcpy(cmd->sense_buffer,
 			       ahd_get_sense_buf(ahd, scb)
 			       + sense_offset, sense_size);
@@ -1833,14 +1965,14 @@ ahd_linux_handle_scsi_status(struct ahd_softc *ahd,
 			if (ahd_debug & AHD_SHOW_SENSE) {
 				int i;
 
-				printf("Copied %d bytes of sense data at %d:",
+				printk("Copied %d bytes of sense data at %d:",
 				       sense_size, sense_offset);
 				for (i = 0; i < sense_size; i++) {
 					if ((i & 0xF) == 0)
-						printf("\n");
-					printf("0x%x ", cmd->sense_buffer[i]);
+						printk("\n");
+					printk("0x%x ", cmd->sense_buffer[i]);
 				}
-				printf("\n");
+				printk("\n");
 			}
 #endif
 		}
@@ -1865,7 +1997,7 @@ ahd_linux_handle_scsi_status(struct ahd_softc *ahd,
 #ifdef AHD_DEBUG
 			if ((ahd_debug & AHD_SHOW_QFULL) != 0) {
 				ahd_print_path(ahd, scb);
-				printf("Dropping tag count to %d\n",
+				printk("Dropping tag count to %d\n",
 				       dev->active);
 			}
 #endif
@@ -1884,7 +2016,7 @@ ahd_linux_handle_scsi_status(struct ahd_softc *ahd,
 				 == AHD_LOCK_TAGS_COUNT) {
 					dev->maxtags = dev->active;
 					ahd_print_path(ahd, scb);
-					printf("Locking max tag count at %d\n",
+					printk("Locking max tag count at %d\n",
 					       dev->active);
 				}
 			} else {
@@ -1946,7 +2078,7 @@ ahd_linux_queue_cmd_complete(struct ahd_softc *ahd, struct scsi_cmnd *cmd)
 				struct scsi_sense_data *sense;
 				
 				sense = (struct scsi_sense_data *)
-					&cmd->sense_buffer;
+					cmd->sense_buffer;
 				if (sense->extra_len >= 5 &&
 				    (sense->add_sense_code == 0x47
 				     || sense->add_sense_code == 0x48))
@@ -2008,7 +2140,7 @@ ahd_linux_queue_cmd_complete(struct ahd_softc *ahd, struct scsi_cmnd *cmd)
 	}
 
 	if (do_fallback) {
-		printf("%s: device overrun (status %x) on %d:%d:%d\n",
+		printk("%s: device overrun (status %x) on %d:%d:%d\n",
 		       ahd_name(ahd), status, cmd->device->channel,
 		       cmd->device->id, cmd->device->lun);
 	}
@@ -2057,10 +2189,10 @@ ahd_linux_queue_abort_cmd(struct scsi_cmnd *cmd)
 	scmd_printk(KERN_INFO, cmd,
 		    "Attempting to queue an ABORT message:");
 
-	printf("CDB:");
+	printk("CDB:");
 	for (cdb_byte = 0; cdb_byte < cmd->cmd_len; cdb_byte++)
-		printf(" 0x%x", cmd->cmnd[cdb_byte]);
-	printf("\n");
+		printk(" 0x%x", cmd->cmnd[cdb_byte]);
+	printk("\n");
 
 	ahd_lock(ahd, &flags);
 
@@ -2119,7 +2251,7 @@ ahd_linux_queue_abort_cmd(struct scsi_cmnd *cmd)
 		goto no_cmd;
 	}
 
-	printf("%s: At time of recovery, card was %spaused\n",
+	printk("%s: At time of recovery, card was %spaused\n",
 	       ahd_name(ahd), was_paused ? "" : "not ");
 	ahd_dump_card_state(ahd);
 
@@ -2130,7 +2262,7 @@ ahd_linux_queue_abort_cmd(struct scsi_cmnd *cmd)
 			       pending_scb->hscb->tag,
 			       ROLE_INITIATOR, CAM_REQ_ABORTED,
 			       SEARCH_COMPLETE) > 0) {
-		printf("%s:%d:%d:%d: Cmd aborted from QINFIFO\n",
+		printk("%s:%d:%d:%d: Cmd aborted from QINFIFO\n",
 		       ahd_name(ahd), cmd->device->channel, 
 		       cmd->device->id, cmd->device->lun);
 		retval = SUCCESS;
@@ -2206,7 +2338,7 @@ ahd_linux_queue_abort_cmd(struct scsi_cmnd *cmd)
 			/*
 			 * The sequencer will never re-reference the
 			 * in-core SCB.  To make sure we are notified
-			 * during reslection, set the MK_MESSAGE flag in
+			 * during reselection, set the MK_MESSAGE flag in
 			 * the card's copy of the SCB.
 			 */
 			ahd_outb(ahd, SCB_CONTROL,
@@ -2225,7 +2357,7 @@ ahd_linux_queue_abort_cmd(struct scsi_cmnd *cmd)
 		ahd_qinfifo_requeue_tail(ahd, pending_scb);
 		ahd_set_scbptr(ahd, saved_scbptr);
 		ahd_print_path(ahd, pending_scb);
-		printf("Device is disconnected, re-queuing SCB\n");
+		printk("Device is disconnected, re-queuing SCB\n");
 		wait = TRUE;
 	} else {
 		scmd_printk(KERN_INFO, cmd, "Unable to deliver message\n");
@@ -2250,21 +2382,21 @@ done:
 		ahd->platform_data->eh_done = &done;
 		ahd_unlock(ahd, &flags);
 
-		printf("%s: Recovery code sleeping\n", ahd_name(ahd));
+		printk("%s: Recovery code sleeping\n", ahd_name(ahd));
 		if (!wait_for_completion_timeout(&done, 5 * HZ)) {
 			ahd_lock(ahd, &flags);
 			ahd->platform_data->eh_done = NULL;
 			ahd_unlock(ahd, &flags);
-			printf("%s: Timer Expired (active %d)\n",
+			printk("%s: Timer Expired (active %d)\n",
 			       ahd_name(ahd), dev->active);
 			retval = FAILED;
 		}
-		printf("Recovery code awake\n");
+		printk("Recovery code awake\n");
 	} else
 		ahd_unlock(ahd, &flags);
 
 	if (retval != SUCCESS)
-		printf("%s: Command abort returning 0x%x\n",
+		printk("%s: Command abort returning 0x%x\n",
 		       ahd_name(ahd), retval);
 
 	return retval;
@@ -2301,7 +2433,7 @@ static void ahd_linux_set_period(struct scsi_target *starget, int period)
 
 #ifdef AHD_DEBUG
 	if ((ahd_debug & AHD_SHOW_DV) != 0)
-		printf("%s: set period to %d\n", ahd_name(ahd), period);
+		printk("%s: set period to %d\n", ahd_name(ahd), period);
 #endif
 	if (offset == 0)
 		offset = MAX_OFFSET;
@@ -2309,9 +2441,12 @@ static void ahd_linux_set_period(struct scsi_target *starget, int period)
 	if (period < 8)
 		period = 8;
 	if (period < 10) {
-		ppr_options |= MSG_EXT_PPR_DT_REQ;
-		if (period == 8)
-			ppr_options |= MSG_EXT_PPR_IU_REQ;
+		if (spi_max_width(starget)) {
+			ppr_options |= MSG_EXT_PPR_DT_REQ;
+			if (period == 8)
+				ppr_options |= MSG_EXT_PPR_IU_REQ;
+		} else
+			period = 10;
 	}
 
 	dt = ppr_options & MSG_EXT_PPR_DT_REQ;
@@ -2351,7 +2486,7 @@ static void ahd_linux_set_offset(struct scsi_target *starget, int offset)
 
 #ifdef AHD_DEBUG
 	if ((ahd_debug & AHD_SHOW_DV) != 0)
-		printf("%s: set offset to %d\n", ahd_name(ahd), offset);
+		printk("%s: set offset to %d\n", ahd_name(ahd), offset);
 #endif
 
 	ahd_compile_devinfo(&devinfo, shost->this_id, starget->id, 0,
@@ -2387,10 +2522,10 @@ static void ahd_linux_set_dt(struct scsi_target *starget, int dt)
 
 #ifdef AHD_DEBUG
 	if ((ahd_debug & AHD_SHOW_DV) != 0)
-		printf("%s: %s DT\n", ahd_name(ahd), 
+		printk("%s: %s DT\n", ahd_name(ahd),
 		       dt ? "enabling" : "disabling");
 #endif
-	if (dt) {
+	if (dt && spi_max_width(starget)) {
 		ppr_options |= MSG_EXT_PPR_DT_REQ;
 		if (!width)
 			ahd_linux_set_width(starget, 1);
@@ -2429,7 +2564,7 @@ static void ahd_linux_set_qas(struct scsi_target *starget, int qas)
 
 #ifdef AHD_DEBUG
 	if ((ahd_debug & AHD_SHOW_DV) != 0)
-		printf("%s: %s QAS\n", ahd_name(ahd), 
+		printk("%s: %s QAS\n", ahd_name(ahd),
 		       qas ? "enabling" : "disabling");
 #endif
 
@@ -2468,11 +2603,11 @@ static void ahd_linux_set_iu(struct scsi_target *starget, int iu)
 
 #ifdef AHD_DEBUG
 	if ((ahd_debug & AHD_SHOW_DV) != 0)
-		printf("%s: %s IU\n", ahd_name(ahd),
+		printk("%s: %s IU\n", ahd_name(ahd),
 		       iu ? "enabling" : "disabling");
 #endif
 
-	if (iu) {
+	if (iu && spi_max_width(starget)) {
 		ppr_options |= MSG_EXT_PPR_IU_REQ;
 		ppr_options |= MSG_EXT_PPR_DT_REQ; /* IU requires DT */
 	}
@@ -2508,11 +2643,11 @@ static void ahd_linux_set_rd_strm(struct scsi_target *starget, int rdstrm)
 
 #ifdef AHD_DEBUG
 	if ((ahd_debug & AHD_SHOW_DV) != 0)
-		printf("%s: %s Read Streaming\n", ahd_name(ahd), 
+		printk("%s: %s Read Streaming\n", ahd_name(ahd),
 		       rdstrm  ? "enabling" : "disabling");
 #endif
 
-	if (rdstrm)
+	if (rdstrm && spi_max_width(starget))
 		ppr_options |= MSG_EXT_PPR_RD_STRM;
 
 	ahd_compile_devinfo(&devinfo, shost->this_id, starget->id, 0,
@@ -2544,11 +2679,11 @@ static void ahd_linux_set_wr_flow(struct scsi_target *starget, int wrflow)
 
 #ifdef AHD_DEBUG
 	if ((ahd_debug & AHD_SHOW_DV) != 0)
-		printf("%s: %s Write Flow Control\n", ahd_name(ahd),
+		printk("%s: %s Write Flow Control\n", ahd_name(ahd),
 		       wrflow ? "enabling" : "disabling");
 #endif
 
-	if (wrflow)
+	if (wrflow && spi_max_width(starget))
 		ppr_options |= MSG_EXT_PPR_WR_FLOW;
 
 	ahd_compile_devinfo(&devinfo, shost->this_id, starget->id, 0,
@@ -2581,18 +2716,18 @@ static void ahd_linux_set_rti(struct scsi_target *starget, int rti)
 	if ((ahd->features & AHD_RTI) == 0) {
 #ifdef AHD_DEBUG
 		if ((ahd_debug & AHD_SHOW_DV) != 0)
-			printf("%s: RTI not available\n", ahd_name(ahd));
+			printk("%s: RTI not available\n", ahd_name(ahd));
 #endif
 		return;
 	}
 
 #ifdef AHD_DEBUG
 	if ((ahd_debug & AHD_SHOW_DV) != 0)
-		printf("%s: %s RTI\n", ahd_name(ahd),
+		printk("%s: %s RTI\n", ahd_name(ahd),
 		       rti ? "enabling" : "disabling");
 #endif
 
-	if (rti)
+	if (rti && spi_max_width(starget))
 		ppr_options |= MSG_EXT_PPR_RTI;
 
 	ahd_compile_devinfo(&devinfo, shost->this_id, starget->id, 0,
@@ -2624,15 +2759,15 @@ static void ahd_linux_set_pcomp_en(struct scsi_target *starget, int pcomp)
 
 #ifdef AHD_DEBUG
 	if ((ahd_debug & AHD_SHOW_DV) != 0)
-		printf("%s: %s Precompensation\n", ahd_name(ahd), 
+		printk("%s: %s Precompensation\n", ahd_name(ahd),
 		       pcomp ? "Enable" : "Disable");
 #endif
 
-	if (pcomp) {
+	if (pcomp && spi_max_width(starget)) {
 		uint8_t precomp;
 
 		if (ahd->unit < ARRAY_SIZE(aic79xx_iocell_info)) {
-			struct ahd_linux_iocell_opts *iocell_opts;
+			const struct ahd_linux_iocell_opts *iocell_opts;
 
 			iocell_opts = &aic79xx_iocell_info[ahd->unit];
 			precomp = iocell_opts->precomp;
@@ -2672,7 +2807,7 @@ static void ahd_linux_set_hold_mcs(struct scsi_target *starget, int hold)
 	unsigned int dt = ppr_options & MSG_EXT_PPR_DT_REQ;
 	unsigned long flags;
 
-	if (hold)
+	if (hold && spi_max_width(starget))
 		ppr_options |= MSG_EXT_PPR_HOLD_MCS;
 
 	ahd_compile_devinfo(&devinfo, shost->this_id, starget->id, 0,

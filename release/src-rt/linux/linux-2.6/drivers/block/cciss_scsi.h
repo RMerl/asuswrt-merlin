@@ -1,20 +1,20 @@
 /*
- *    Disk Array driver for Compaq SA53xx Controllers, SCSI Tape module
- *    Copyright 2001 Compaq Computer Corporation
+ *    Disk Array driver for HP Smart Array controllers, SCSI Tape module.
+ *    (C) Copyright 2001, 2007 Hewlett-Packard Development Company, L.P.
  *
  *    This program is free software; you can redistribute it and/or modify
  *    it under the terms of the GNU General Public License as published by
- *    the Free Software Foundation; either version 2 of the License, or
- *    (at your option) any later version.
+ *    the Free Software Foundation; version 2 of the License.
  *
  *    This program is distributed in the hope that it will be useful,
  *    but WITHOUT ANY WARRANTY; without even the implied warranty of
- *    MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, GOOD TITLE or
- *    NON INFRINGEMENT.  See the GNU General Public License for more details.
+ *    MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ *    General Public License for more details.
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *    Foundation, Inc., 59 Temple Place, Suite 300, Boston, MA
+ *    02111-1307, USA.
  *
  *    Questions/Comments/Bugfixes to iss_storagedev@hp.com
  *
@@ -25,16 +25,16 @@
 
 #include <scsi/scsicam.h> /* possibly irrelevant, since we don't show disks */
 
-		// the scsi id of the adapter...
+		/* the scsi id of the adapter... */
 #define SELF_SCSI_ID 15
-		// 15 is somewhat arbitrary, since the scsi-2 bus
-		// that's presented by the driver to the OS is
-		// fabricated.  The "real" scsi-3 bus the 
-		// hardware presents is fabricated too.
-		// The actual, honest-to-goodness physical
-		// bus that the devices are attached to is not 
-		// addressible natively, and may in fact turn
-		// out to be not scsi at all.
+		/* 15 is somewhat arbitrary, since the scsi-2 bus
+		   that's presented by the driver to the OS is
+		   fabricated.  The "real" scsi-3 bus the
+		   hardware presents is fabricated too.
+		   The actual, honest-to-goodness physical
+		   bus that the devices are attached to is not
+		   addressible natively, and may in fact turn
+		   out to be not scsi at all. */
 
 #define SCSI_CCISS_CAN_QUEUE 2
 
@@ -66,6 +66,10 @@ struct cciss_scsi_dev_t {
 	int devtype;
 	int bus, target, lun;		/* as presented to the OS */
 	unsigned char scsi3addr[8];	/* as presented to the HW */
+	unsigned char device_id[16];	/* from inquiry pg. 0x83 */
+	unsigned char vendor[8];	/* bytes 8-15 of inquiry data */
+	unsigned char model[16];	/* bytes 16-31 of inquiry data */
+	unsigned char revision[4];	/* bytes 32-35 of inquiry data */
 };
 
 struct cciss_scsi_hba_t {

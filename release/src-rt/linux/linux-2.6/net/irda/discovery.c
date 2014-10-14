@@ -34,11 +34,14 @@
 #include <linux/socket.h>
 #include <linux/fs.h>
 #include <linux/seq_file.h>
+#include <linux/slab.h>
 
 #include <net/irda/irda.h>
 #include <net/irda/irlmp.h>
 
 #include <net/irda/discovery.h>
+
+#include <asm/unaligned.h>
 
 /*
  * Function irlmp_add_discovery (cachelog, discovery)
@@ -87,7 +90,7 @@ void irlmp_add_discovery(hashbin_t *cachelog, discovery_t *new)
 			 */
 			hashbin_remove_this(cachelog, (irda_queue_t *) node);
 			/* Check if hints bits are unchanged */
-			if(u16ho(node->data.hints) == u16ho(new->data.hints))
+			if (get_unaligned((__u16 *)node->data.hints) == get_unaligned((__u16 *)new->data.hints))
 				/* Set time of first discovery for this node */
 				new->firststamp = node->firststamp;
 			kfree(node);
@@ -110,7 +113,7 @@ void irlmp_add_discovery_log(hashbin_t *cachelog, hashbin_t *log)
 {
 	discovery_t *discovery;
 
-	IRDA_DEBUG(4, "%s()\n", __FUNCTION__);
+	IRDA_DEBUG(4, "%s()\n", __func__);
 
 	/*
 	 *  If log is missing this means that IrLAP was unable to perform the
@@ -157,7 +160,7 @@ void irlmp_expire_discoveries(hashbin_t *log, __u32 saddr, int force)
 	int			i = 0;		/* How many we expired */
 
 	IRDA_ASSERT(log != NULL, return;);
-	IRDA_DEBUG(4, "%s()\n", __FUNCTION__);
+	IRDA_DEBUG(4, "%s()\n", __func__);
 
 	spin_lock_irqsave(&log->hb_spinlock, flags);
 
@@ -202,7 +205,7 @@ void irlmp_expire_discoveries(hashbin_t *log, __u32 saddr, int force)
 	/* Drop the spinlock before calling the higher layers, as
 	 * we can't guarantee they won't call us back and create a
 	 * deadlock. We will work on our own private data, so we
-	 * don't care to be interupted. - Jean II */
+	 * don't care to be interrupted. - Jean II */
 	spin_unlock_irqrestore(&log->hb_spinlock, flags);
 
 	if(buffer == NULL)
@@ -281,9 +284,9 @@ struct irda_device_info *irlmp_copy_discoveries(hashbin_t *log, int *pn,
 		/* Mask out the ones we don't want :
 		 * We want to match the discovery mask, and to get only
 		 * the most recent one (unless we want old ones) */
-		if ((u16ho(discovery->data.hints) & mask) &&
+		if ((get_unaligned((__u16 *)discovery->data.hints) & mask) &&
 		    ((old_entries) ||
-		     ((jiffies - discovery->firststamp) < j_timeout)) ) {
+		     ((jiffies - discovery->firststamp) < j_timeout))) {
 			/* Create buffer as needed.
 			 * As this function get called a lot and most time
 			 * we don't have anything to put in the log (we are
@@ -312,7 +315,7 @@ struct irda_device_info *irlmp_copy_discoveries(hashbin_t *log, int *pn,
 
 	/* Get the actual number of device in the buffer and return */
 	*pn = i;
-	return(buffer);
+	return buffer;
 }
 
 #ifdef CONFIG_PROC_FS
@@ -395,7 +398,7 @@ static int discovery_seq_show(struct seq_file *seq, void *v)
 	return 0;
 }
 
-static struct seq_operations discovery_seq_ops = {
+static const struct seq_operations discovery_seq_ops = {
 	.start  = discovery_seq_start,
 	.next   = discovery_seq_next,
 	.stop   = discovery_seq_stop,

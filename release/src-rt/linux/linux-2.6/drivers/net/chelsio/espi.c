@@ -76,7 +76,7 @@ static int tricn_write(adapter_t *adapter, int bundle_addr, int module_addr,
 	} while (busy && --attempts);
 
 	if (busy)
-		CH_ERR("%s: TRICN write timed out\n", adapter->name);
+		pr_err("%s: TRICN write timed out\n", adapter->name);
 
 	return busy;
 }
@@ -86,7 +86,7 @@ static int tricn_init(adapter_t *adapter)
 	int i, sme = 1;
 
 	if (!(readl(adapter->regs + A_ESPI_RX_RESET)  & F_RX_CLK_STATUS)) {
-		CH_ERR("%s: ESPI clock not ready\n", adapter->name);
+		pr_err("%s: ESPI clock not ready\n", adapter->name);
 		return -1;
 	}
 
@@ -297,6 +297,7 @@ struct peespi *t1_espi_create(adapter_t *adapter)
 	return espi;
 }
 
+#if 0
 void t1_espi_set_misc_ctrl(adapter_t *adapter, u32 val)
 {
 	struct peespi *espi = adapter->espi;
@@ -309,6 +310,7 @@ void t1_espi_set_misc_ctrl(adapter_t *adapter, u32 val)
 	writel(espi->misc_ctrl, adapter->regs + A_ESPI_MISC_CONTROL);
 	spin_unlock(&espi->lock);
 }
+#endif  /*  0  */
 
 u32 t1_espi_get_mon(adapter_t *adapter, u32 addr, u8 wait)
 {

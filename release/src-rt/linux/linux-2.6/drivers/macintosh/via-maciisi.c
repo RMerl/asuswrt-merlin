@@ -24,7 +24,6 @@
 #include <linux/interrupt.h>
 #include <asm/macintosh.h>
 #include <asm/macints.h>
-#include <asm/machw.h>
 #include <asm/mac_via.h>
 
 static volatile unsigned char *via;
@@ -289,7 +288,7 @@ static void maciisi_sync(struct adb_request *req)
 	}
 	/* This could be BAD... when the ADB controller doesn't respond
 	 * for this long, it's probably not coming back :-( */
-	if(count >= 50) /* Hopefully shouldn't happen */
+	if (count > 50) /* Hopefully shouldn't happen */
 		printk(KERN_ERR "maciisi_send_request: poll timed out!\n");
 }
 

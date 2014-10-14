@@ -1,6 +1,6 @@
 /* Tom Kelly's Scalable TCP
  *
- * See htt://www-lce.eng.cam.ac.uk/~ctk21/scalable/
+ * See http://www.deneholme.net/tom/scalable/
  *
  * John Heffner <jheffner@sc.edu>
  */
@@ -15,8 +15,7 @@
 #define TCP_SCALABLE_AI_CNT	50U
 #define TCP_SCALABLE_MD_SCALE	3
 
-static void tcp_scalable_cong_avoid(struct sock *sk, u32 ack, u32 rtt,
-				    u32 in_flight, int flag)
+static void tcp_scalable_cong_avoid(struct sock *sk, u32 ack, u32 in_flight)
 {
 	struct tcp_sock *tp = tcp_sk(sk);
 
@@ -25,14 +24,8 @@ static void tcp_scalable_cong_avoid(struct sock *sk, u32 ack, u32 rtt,
 
 	if (tp->snd_cwnd <= tp->snd_ssthresh)
 		tcp_slow_start(tp);
-	else {
-		tp->snd_cwnd_cnt++;
-		if (tp->snd_cwnd_cnt > min(tp->snd_cwnd, TCP_SCALABLE_AI_CNT)){
-			if (tp->snd_cwnd < tp->snd_cwnd_clamp)
-				tp->snd_cwnd++;
-			tp->snd_cwnd_cnt = 0;
-		}
-	}
+	else
+		tcp_cong_avoid_ai(tp, min(tp->snd_cwnd, TCP_SCALABLE_AI_CNT));
 }
 
 static u32 tcp_scalable_ssthresh(struct sock *sk)
@@ -42,7 +35,7 @@ static u32 tcp_scalable_ssthresh(struct sock *sk)
 }
 
 
-static struct tcp_congestion_ops tcp_scalable = {
+static struct tcp_congestion_ops tcp_scalable __read_mostly = {
 	.ssthresh	= tcp_scalable_ssthresh,
 	.cong_avoid	= tcp_scalable_cong_avoid,
 	.min_cwnd	= tcp_reno_min_cwnd,

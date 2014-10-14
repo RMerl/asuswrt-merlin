@@ -12,13 +12,14 @@
 #include <linux/spinlock.h>
 #include <linux/skbuff.h>
 #include <linux/net.h>
+#include <linux/slab.h>
 
 #include <linux/netfilter/xt_statistic.h>
 #include <linux/netfilter/x_tables.h>
 
 struct xt_statistic_priv {
-	uint32_t count;
-};
+	atomic_t count;
+} ____cacheline_aligned_in_smp;
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Patrick McHardy <kaber@trash.net>");
@@ -26,95 +27,74 @@ MODULE_DESCRIPTION("Xtables: statistics-based matching (\"Nth\", random)");
 MODULE_ALIAS("ipt_statistic");
 MODULE_ALIAS("ip6t_statistic");
 
-static DEFINE_SPINLOCK(nth_lock);
-
-static int
-match(const struct sk_buff *skb,
-      const struct net_device *in, const struct net_device *out,
-      const struct xt_match *match, const void *matchinfo,
-      int offset, unsigned int protoff, int *hotdrop)
+static bool
+statistic_mt(const struct sk_buff *skb, struct xt_action_param *par)
 {
-	const struct xt_statistic_info *info = matchinfo;
-	int ret = info->flags & XT_STATISTIC_INVERT ? 1 : 0;
+	const struct xt_statistic_info *info = par->matchinfo;
+	bool ret = info->flags & XT_STATISTIC_INVERT;
+	int nval, oval;
 
 	switch (info->mode) {
 	case XT_STATISTIC_MODE_RANDOM:
 		if ((net_random() & 0x7FFFFFFF) < info->u.random.probability)
-			ret ^= 1;
+			ret = !ret;
 		break;
 	case XT_STATISTIC_MODE_NTH:
-		spin_lock_bh(&nth_lock);
-		if (info->master->count++ == info->u.nth.every) {
-			info->master->count = 0;
-			ret ^= 1;
-		}
-		spin_unlock_bh(&nth_lock);
+		do {
+			oval = atomic_read(&info->master->count);
+			nval = (oval == info->u.nth.every) ? 0 : oval + 1;
+		} while (atomic_cmpxchg(&info->master->count, oval, nval) != oval);
+		if (nval == 0)
+			ret = !ret;
 		break;
 	}
 
 	return ret;
 }
 
-static int
-checkentry(const char *tablename, const void *entry,
-	   const struct xt_match *match, void *matchinfo,
-	   unsigned int hook_mask)
+static int statistic_mt_check(const struct xt_mtchk_param *par)
 {
-	struct xt_statistic_info *info = (struct xt_statistic_info *)matchinfo;
+	struct xt_statistic_info *info = par->matchinfo;
 
 	if (info->mode > XT_STATISTIC_MODE_MAX ||
 	    info->flags & ~XT_STATISTIC_MASK)
-		return 0;
+		return -EINVAL;
 
 	info->master = kzalloc(sizeof(*info->master), GFP_KERNEL);
-	if (info->master == NULL) {
-		printk(KERN_ERR KBUILD_MODNAME ": Out of memory\n");
-		return 0;
-	}
-	info->master->count = info->u.nth.count;
+	if (info->master == NULL)
+		return -ENOMEM;
+	atomic_set(&info->master->count, info->u.nth.count);
 
-	return 1;
+	return 0;
 }
 
-static void statistic_mt_destroy(const struct xt_match *match, void *matchinfo)
+static void statistic_mt_destroy(const struct xt_mtdtor_param *par)
 {
-	const struct xt_statistic_info *info = matchinfo;
+	const struct xt_statistic_info *info = par->matchinfo;
 
 	kfree(info->master);
 }
 
-static struct xt_match xt_statistic_match[] = {
-	{
-		.name		= "statistic",
-		.family		= AF_INET,
-		.checkentry	= checkentry,
-		.match		= match,
-		.destroy	= statistic_mt_destroy,
-		.matchsize	= sizeof(struct xt_statistic_info),
-		.me		= THIS_MODULE,
-	},
-	{
-		.name		= "statistic",
-		.family		= AF_INET6,
-		.checkentry	= checkentry,
-		.match		= match,
-		.destroy	= statistic_mt_destroy,
-		.matchsize	= sizeof(struct xt_statistic_info),
-		.me		= THIS_MODULE,
-	},
+static struct xt_match xt_statistic_mt_reg __read_mostly = {
+	.name       = "statistic",
+	.revision   = 0,
+	.family     = NFPROTO_UNSPEC,
+	.match      = statistic_mt,
+	.checkentry = statistic_mt_check,
+	.destroy    = statistic_mt_destroy,
+	.matchsize  = sizeof(struct xt_statistic_info),
+	.me         = THIS_MODULE,
 };
 
-static int __init xt_statistic_init(void)
+static int __init statistic_mt_init(void)
 {
-	return xt_register_matches(xt_statistic_match,
-				   ARRAY_SIZE(xt_statistic_match));
+	return xt_register_match(&xt_statistic_mt_reg);
 }
 
-static void __exit xt_statistic_fini(void)
+static void __exit statistic_mt_exit(void)
 {
-	xt_unregister_matches(xt_statistic_match,
-			      ARRAY_SIZE(xt_statistic_match));
+	xt_unregister_match(&xt_statistic_mt_reg);
 }
 
-module_init(xt_statistic_init);
-module_exit(xt_statistic_fini);
+module_init(statistic_mt_init);
+module_exit(statistic_mt_exit);

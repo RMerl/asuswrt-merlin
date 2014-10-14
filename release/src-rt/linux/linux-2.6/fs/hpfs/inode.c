@@ -6,6 +6,7 @@
  *  inode VFS functions
  */
 
+#include <linux/slab.h>
 #include "hpfs_fn.h"
 
 void hpfs_init_inode(struct inode *i)
@@ -16,7 +17,6 @@ void hpfs_init_inode(struct inode *i)
 	i->i_uid = hpfs_sb(sb)->sb_uid;
 	i->i_gid = hpfs_sb(sb)->sb_gid;
 	i->i_mode = hpfs_sb(sb)->sb_mode;
-	hpfs_inode->i_conv = hpfs_sb(sb)->sb_conv;
 	i->i_size = -1;
 	i->i_blocks = -1;
 	
@@ -45,7 +45,7 @@ void hpfs_read_inode(struct inode *i)
 	struct fnode *fnode;
 	struct super_block *sb = i->i_sb;
 	struct hpfs_inode_info *hpfs_inode = hpfs_i(i);
-	unsigned char *ea;
+	void *ea;
 	int ea_size;
 
 	if (!(fnode = hpfs_map_fnode(sb, i->i_ino, &bh))) {
@@ -111,12 +111,12 @@ void hpfs_read_inode(struct inode *i)
 		}
 	}
 	if (fnode->dirflag) {
-		unsigned n_dnodes, n_subdirs;
+		int n_dnodes, n_subdirs;
 		i->i_mode |= S_IFDIR;
 		i->i_op = &hpfs_dir_iops;
 		i->i_fop = &hpfs_dir_ops;
-		hpfs_inode->i_parent_dir = fnode->up;
-		hpfs_inode->i_dno = fnode->u.external[0].disk_secno;
+		hpfs_inode->i_parent_dir = le32_to_cpu(fnode->up);
+		hpfs_inode->i_dno = le32_to_cpu(fnode->u.external[0].disk_secno);
 		if (hpfs_sb(sb)->sb_chk >= 2) {
 			struct buffer_head *bh0;
 			if (hpfs_map_fnode(sb, hpfs_inode->i_parent_dir, &bh0)) brelse(bh0);
@@ -132,7 +132,7 @@ void hpfs_read_inode(struct inode *i)
 		i->i_op = &hpfs_file_iops;
 		i->i_fop = &hpfs_file_ops;
 		i->i_nlink = 1;
-		i->i_size = fnode->file_size;
+		i->i_size = le32_to_cpu(fnode->file_size);
 		i->i_blocks = ((i->i_size + 511) >> 9) + 1;
 		i->i_data.a_ops = &hpfs_aops;
 		hpfs_i(i)->mmu_private = i->i_size;
@@ -143,7 +143,7 @@ void hpfs_read_inode(struct inode *i)
 static void hpfs_write_inode_ea(struct inode *i, struct fnode *fnode)
 {
 	struct hpfs_inode_info *hpfs_inode = hpfs_i(i);
-	/*if (fnode->acl_size_l || fnode->acl_size_s) {
+	/*if (le32_to_cpu(fnode->acl_size_l) || le16_to_cpu(fnode->acl_size_s)) {
 		   Some unknown structures like ACL may be in fnode,
 		   we'd better not overwrite them
 		hpfs_error(i->i_sb, "fnode %08x has some unknown HPFS386 stuctures", i->i_ino);
@@ -186,9 +186,7 @@ void hpfs_write_inode(struct inode *i)
 		kfree(hpfs_inode->i_rddir_off);
 		hpfs_inode->i_rddir_off = NULL;
 	}
-	mutex_lock(&hpfs_inode->i_parent_mutex);
 	if (!i->i_nlink) {
-		mutex_unlock(&hpfs_inode->i_parent_mutex);
 		return;
 	}
 	parent = iget_locked(i->i_sb, hpfs_inode->i_parent_dir);
@@ -199,14 +197,9 @@ void hpfs_write_inode(struct inode *i)
 			hpfs_read_inode(parent);
 			unlock_new_inode(parent);
 		}
-		mutex_lock(&hpfs_inode->i_mutex);
 		hpfs_write_inode_nolock(i);
-		mutex_unlock(&hpfs_inode->i_mutex);
 		iput(parent);
-	} else {
-		mark_inode_dirty(i);
 	}
-	mutex_unlock(&hpfs_inode->i_parent_mutex);
 }
 
 void hpfs_write_inode_nolock(struct inode *i)
@@ -225,30 +218,30 @@ void hpfs_write_inode_nolock(struct inode *i)
 		}
 	} else de = NULL;
 	if (S_ISREG(i->i_mode)) {
-		fnode->file_size = i->i_size;
-		if (de) de->file_size = i->i_size;
+		fnode->file_size = cpu_to_le32(i->i_size);
+		if (de) de->file_size = cpu_to_le32(i->i_size);
 	} else if (S_ISDIR(i->i_mode)) {
-		fnode->file_size = 0;
-		if (de) de->file_size = 0;
+		fnode->file_size = cpu_to_le32(0);
+		if (de) de->file_size = cpu_to_le32(0);
 	}
 	hpfs_write_inode_ea(i, fnode);
 	if (de) {
-		de->write_date = gmt_to_local(i->i_sb, i->i_mtime.tv_sec);
-		de->read_date = gmt_to_local(i->i_sb, i->i_atime.tv_sec);
-		de->creation_date = gmt_to_local(i->i_sb, i->i_ctime.tv_sec);
+		de->write_date = cpu_to_le32(gmt_to_local(i->i_sb, i->i_mtime.tv_sec));
+		de->read_date = cpu_to_le32(gmt_to_local(i->i_sb, i->i_atime.tv_sec));
+		de->creation_date = cpu_to_le32(gmt_to_local(i->i_sb, i->i_ctime.tv_sec));
 		de->read_only = !(i->i_mode & 0222);
-		de->ea_size = hpfs_inode->i_ea_size;
+		de->ea_size = cpu_to_le32(hpfs_inode->i_ea_size);
 		hpfs_mark_4buffers_dirty(&qbh);
 		hpfs_brelse4(&qbh);
 	}
 	if (S_ISDIR(i->i_mode)) {
 		if ((de = map_dirent(i, hpfs_inode->i_dno, "\001\001", 2, NULL, &qbh))) {
-			de->write_date = gmt_to_local(i->i_sb, i->i_mtime.tv_sec);
-			de->read_date = gmt_to_local(i->i_sb, i->i_atime.tv_sec);
-			de->creation_date = gmt_to_local(i->i_sb, i->i_ctime.tv_sec);
+			de->write_date = cpu_to_le32(gmt_to_local(i->i_sb, i->i_mtime.tv_sec));
+			de->read_date = cpu_to_le32(gmt_to_local(i->i_sb, i->i_atime.tv_sec));
+			de->creation_date = cpu_to_le32(gmt_to_local(i->i_sb, i->i_ctime.tv_sec));
 			de->read_only = !(i->i_mode & 0222);
-			de->ea_size = /*hpfs_inode->i_ea_size*/0;
-			de->file_size = 0;
+			de->ea_size = cpu_to_le32(/*hpfs_inode->i_ea_size*/0);
+			de->file_size = cpu_to_le32(0);
 			hpfs_mark_4buffers_dirty(&qbh);
 			hpfs_brelse4(&qbh);
 		} else
@@ -260,20 +253,38 @@ void hpfs_write_inode_nolock(struct inode *i)
 	brelse(bh);
 }
 
-int hpfs_notify_change(struct dentry *dentry, struct iattr *attr)
+int hpfs_setattr(struct dentry *dentry, struct iattr *attr)
 {
 	struct inode *inode = dentry->d_inode;
-	int error=0;
-	lock_kernel();
-	if ( ((attr->ia_valid & ATTR_SIZE) && attr->ia_size > inode->i_size) ||
-	     (hpfs_sb(inode->i_sb)->sb_root == inode->i_ino) ) {
-		error = -EINVAL;
-	} else if ((error = inode_change_ok(inode, attr))) {
-	} else if ((error = inode_setattr(inode, attr))) {
-	} else {
-		hpfs_write_inode(inode);
+	int error = -EINVAL;
+
+	hpfs_lock(inode->i_sb);
+	if (inode->i_ino == hpfs_sb(inode->i_sb)->sb_root)
+		goto out_unlock;
+	if ((attr->ia_valid & ATTR_UID) && attr->ia_uid >= 0x10000)
+		goto out_unlock;
+	if ((attr->ia_valid & ATTR_GID) && attr->ia_gid >= 0x10000)
+		goto out_unlock;
+	if ((attr->ia_valid & ATTR_SIZE) && attr->ia_size > inode->i_size)
+		goto out_unlock;
+
+	error = inode_change_ok(inode, attr);
+	if (error)
+		goto out_unlock;
+
+	if ((attr->ia_valid & ATTR_SIZE) &&
+	    attr->ia_size != i_size_read(inode)) {
+		error = vmtruncate(inode, attr->ia_size);
+		if (error)
+			goto out_unlock;
 	}
-	unlock_kernel();
+
+	setattr_copy(inode, attr);
+
+	hpfs_write_inode(inode);
+
+ out_unlock:
+	hpfs_unlock(inode->i_sb);
 	return error;
 }
 
@@ -285,11 +296,13 @@ void hpfs_write_if_changed(struct inode *inode)
 		hpfs_write_inode(inode);
 }
 
-void hpfs_delete_inode(struct inode *inode)
+void hpfs_evict_inode(struct inode *inode)
 {
 	truncate_inode_pages(&inode->i_data, 0);
-	lock_kernel();
-	hpfs_remove_fnode(inode->i_sb, inode->i_ino);
-	unlock_kernel();
-	clear_inode(inode);
+	end_writeback(inode);
+	if (!inode->i_nlink) {
+		hpfs_lock(inode->i_sb);
+		hpfs_remove_fnode(inode->i_sb, inode->i_ino);
+		hpfs_unlock(inode->i_sb);
+	}
 }

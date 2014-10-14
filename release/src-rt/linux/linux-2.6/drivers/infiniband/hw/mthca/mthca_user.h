@@ -29,7 +29,6 @@
  * ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
- *
  */
 
 #ifndef MTHCA_USER_H
@@ -58,6 +57,16 @@ struct mthca_alloc_ucontext_resp {
 
 struct mthca_alloc_pd_resp {
 	__u32 pdn;
+	__u32 reserved;
+};
+
+struct mthca_reg_mr {
+/*
+ * Mark the memory region with a DMA attribute that causes
+ * in-flight DMA to be flushed when the region is written to:
+ */
+#define MTHCA_MR_DMASYNC	0x1
+	__u32 mr_attrs;
 	__u32 reserved;
 };
 

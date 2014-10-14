@@ -49,6 +49,9 @@ int ehca_query_device(struct ib_device *ibdev, struct ib_device_attr *props);
 int ehca_query_port(struct ib_device *ibdev, u8 port,
 		    struct ib_port_attr *props);
 
+int ehca_query_sma_attr(struct ehca_shca *shca, u8 port,
+			struct ehca_sma_attr *attr);
+
 int ehca_query_pkey(struct ib_device *ibdev, u8 port, u16 index, u16 * pkey);
 
 int ehca_query_gid(struct ib_device *ibdev, u8 port, int index,
@@ -78,8 +81,9 @@ struct ib_mr *ehca_reg_phys_mr(struct ib_pd *pd,
 			       int num_phys_buf,
 			       int mr_access_flags, u64 *iova_start);
 
-struct ib_mr *ehca_reg_user_mr(struct ib_pd *pd, u64 start, u64 length, u64 virt,
-			       int mr_access_flags, struct ib_udata *udata);
+struct ib_mr *ehca_reg_user_mr(struct ib_pd *pd, u64 start, u64 length,
+			       u64 virt, int mr_access_flags,
+			       struct ib_udata *udata);
 
 int ehca_rereg_phys_mr(struct ib_mr *mr,
 		       int mr_rereg_mask,
@@ -154,6 +158,21 @@ int ehca_post_send(struct ib_qp *qp, struct ib_send_wr *send_wr,
 int ehca_post_recv(struct ib_qp *qp, struct ib_recv_wr *recv_wr,
 		   struct ib_recv_wr **bad_recv_wr);
 
+int ehca_post_srq_recv(struct ib_srq *srq,
+		       struct ib_recv_wr *recv_wr,
+		       struct ib_recv_wr **bad_recv_wr);
+
+struct ib_srq *ehca_create_srq(struct ib_pd *pd,
+			       struct ib_srq_init_attr *init_attr,
+			       struct ib_udata *udata);
+
+int ehca_modify_srq(struct ib_srq *srq, struct ib_srq_attr *attr,
+		    enum ib_srq_attr_mask attr_mask, struct ib_udata *udata);
+
+int ehca_query_srq(struct ib_srq *srq, struct ib_srq_attr *srq_attr);
+
+int ehca_destroy_srq(struct ib_srq *srq);
+
 u64 ehca_define_sqp(struct ehca_shca *shca, struct ehca_qp *ibqp,
 		    struct ib_qp_init_attr *qp_init_attr);
 
@@ -168,14 +187,26 @@ int ehca_dealloc_ucontext(struct ib_ucontext *context);
 
 int ehca_mmap(struct ib_ucontext *context, struct vm_area_struct *vma);
 
+int ehca_process_mad(struct ib_device *ibdev, int mad_flags, u8 port_num,
+		     struct ib_wc *in_wc, struct ib_grh *in_grh,
+		     struct ib_mad *in_mad,
+		     struct ib_mad *out_mad);
+
 void ehca_poll_eqs(unsigned long data);
+
+int ehca_calc_ipd(struct ehca_shca *shca, int port,
+		  enum ib_rate path_rate, u32 *ipd);
+
+void ehca_add_to_err_list(struct ehca_qp *qp, int on_sq);
 
 #ifdef CONFIG_PPC_64K_PAGES
 void *ehca_alloc_fw_ctrlblock(gfp_t flags);
 void ehca_free_fw_ctrlblock(void *ptr);
 #else
-#define ehca_alloc_fw_ctrlblock(flags) ((void *) get_zeroed_page(flags))
+#define ehca_alloc_fw_ctrlblock(flags) ((void *)get_zeroed_page(flags))
 #define ehca_free_fw_ctrlblock(ptr) free_page((unsigned long)(ptr))
 #endif
+
+void ehca_recover_sqp(struct ib_qp *sqp);
 
 #endif

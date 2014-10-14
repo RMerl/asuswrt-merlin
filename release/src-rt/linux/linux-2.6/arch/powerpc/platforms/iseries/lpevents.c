@@ -121,6 +121,7 @@ void process_hvlpevents(void)
 {
 	struct HvLpEvent * event;
 
+ restart:
 	/* If we have recursed, just return */
 	if (!spin_trylock(&hvlpevent_queue.hq_lock))
 		return;
@@ -146,8 +147,20 @@ void process_hvlpevents(void)
 			if (event->xType < HvLpEvent_Type_NumTypes &&
 					lpEventHandler[event->xType])
 				lpEventHandler[event->xType](event);
-			else
-				printk(KERN_INFO "Unexpected Lp Event type=%d\n", event->xType );
+			else {
+				u8 type = event->xType;
+
+				/*
+				 * Don't printk in the spinlock as printk
+				 * may require ack events form the HV to send
+				 * any characters there.
+				 */
+				hvlpevent_clear_valid(event);
+				spin_unlock(&hvlpevent_queue.hq_lock);
+				printk(KERN_INFO
+					"Unexpected Lp Event type=%d\n", type);
+				goto restart;
+			}
 
 			hvlpevent_clear_valid(event);
 		} else if (hvlpevent_queue.hq_overflow_pending)
@@ -182,7 +195,7 @@ static int set_spread_lpevents(char *str)
 }
 __setup("spread_lpevents=", set_spread_lpevents);
 
-void setup_hvlpevent_queue(void)
+void __init setup_hvlpevent_queue(void)
 {
 	void *eventStack;
 
@@ -226,7 +239,7 @@ int HvLpEvent_unregisterHandler(HvLpEvent_Type eventType)
 			 * other CPUs, and that the deleted handler isn't
 			 * still running on another CPU when we return.
 			 */
-			synchronize_rcu();
+			synchronize_sched();
 			return 0;
 		}
 	}
@@ -317,15 +330,11 @@ static const struct file_operations proc_lpevents_operations = {
 
 static int __init proc_lpevents_init(void)
 {
-	struct proc_dir_entry *e;
-
 	if (!firmware_has_feature(FW_FEATURE_ISERIES))
 		return 0;
 
-	e = create_proc_entry("iSeries/lpevents", S_IFREG|S_IRUGO, NULL);
-	if (e)
-		e->proc_fops = &proc_lpevents_operations;
-
+	proc_create("iSeries/lpevents", S_IFREG|S_IRUGO, NULL,
+		    &proc_lpevents_operations);
 	return 0;
 }
 __initcall(proc_lpevents_init);

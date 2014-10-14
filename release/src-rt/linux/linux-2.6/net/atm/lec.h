@@ -35,19 +35,19 @@ struct lecdatahdr_8025 {
  * Operations that LANE2 capable device can do. Two first functions
  * are used to make the device do things. See spec 3.1.3 and 3.1.4.
  *
- * The third function is intented for the MPOA component sitting on
+ * The third function is intended for the MPOA component sitting on
  * top of the LANE device. The MPOA component assigns it's own function
  * to (*associate_indicator)() and the LANE device will use that
  * function to tell about TLVs it sees floating through.
  *
  */
 struct lane2_ops {
-	int (*resolve) (struct net_device *dev, u8 *dst_mac, int force,
+	int (*resolve) (struct net_device *dev, const u8 *dst_mac, int force,
 			u8 **tlvs, u32 *sizeoftlvs);
-	int (*associate_req) (struct net_device *dev, u8 *lan_dst,
-			      u8 *tlvs, u32 sizeoftlvs);
-	void (*associate_indicator) (struct net_device *dev, u8 *mac_addr,
-				     u8 *tlvs, u32 sizeoftlvs);
+	int (*associate_req) (struct net_device *dev, const u8 *lan_dst,
+			      const u8 *tlvs, u32 sizeoftlvs);
+	void (*associate_indicator) (struct net_device *dev, const u8 *mac_addr,
+				     const u8 *tlvs, u32 sizeoftlvs);
 };
 
 /*
@@ -69,7 +69,6 @@ struct lane2_ops {
 #define LEC_ARP_TABLE_SIZE 16
 
 struct lec_priv {
-	struct net_device_stats stats;
 	unsigned short lecid;			/* Lecid of this client */
 	struct hlist_head lec_arp_empty_ones;
 						/* Used for storing VCC's that don't have a MAC address attached yet */

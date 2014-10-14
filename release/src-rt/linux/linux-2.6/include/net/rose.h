@@ -14,6 +14,12 @@
 
 #define	ROSE_MIN_LEN			3
 
+#define	ROSE_CALL_REQ_ADDR_LEN_OFF	3
+#define	ROSE_CALL_REQ_ADDR_LEN_VAL	0xAA	/* each address is 10 digits */
+#define	ROSE_CALL_REQ_DEST_ADDR_OFF	4
+#define	ROSE_CALL_REQ_SRC_ADDR_OFF	9
+#define	ROSE_CALL_REQ_FACILITIES_OFF	14
+
 #define	ROSE_GFI			0x10
 #define	ROSE_Q_BIT			0x80
 #define	ROSE_D_BIT			0x40
@@ -156,7 +162,7 @@ extern int  sysctl_rose_maximum_vcs;
 extern int  sysctl_rose_window_size;
 extern int  rosecmp(rose_address *, rose_address *);
 extern int  rosecmpm(rose_address *, rose_address *, unsigned short);
-extern const char *rose2asc(const rose_address *);
+extern char *rose2asc(char *buf, const rose_address *);
 extern struct sock *rose_find_socket(unsigned int, struct rose_neigh *);
 extern void rose_kill_by_neigh(struct rose_neigh *);
 extern unsigned int rose_new_lci(struct rose_neigh *);
@@ -201,7 +207,7 @@ extern void rose_link_device_down(struct net_device *);
 extern struct net_device *rose_dev_first(void);
 extern struct net_device *rose_dev_get(rose_address *);
 extern struct rose_route *rose_route_free_lci(unsigned int, struct rose_neigh *);
-extern struct rose_neigh *rose_get_neigh(rose_address *, unsigned char *, unsigned char *);
+extern struct rose_neigh *rose_get_neigh(rose_address *, unsigned char *, unsigned char *, int);
 extern int  rose_rt_ioctl(unsigned int, void __user *);
 extern void rose_link_failed(ax25_cb *, int);
 extern int  rose_route_frame(struct sk_buff *, ax25_cb *);
@@ -214,7 +220,7 @@ extern void rose_requeue_frames(struct sock *);
 extern int  rose_validate_nr(struct sock *, unsigned short);
 extern void rose_write_internal(struct sock *, int);
 extern int  rose_decode(struct sk_buff *, int *, int *, int *, int *, int *);
-extern int  rose_parse_facilities(unsigned char *, struct rose_facilities_struct *);
+extern int  rose_parse_facilities(unsigned char *, unsigned int, struct rose_facilities_struct *);
 extern void rose_disconnect(struct sock *, int, int, int);
 
 /* rose_timer.c */

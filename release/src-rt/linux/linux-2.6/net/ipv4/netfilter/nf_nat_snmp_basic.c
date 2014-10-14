@@ -43,6 +43,7 @@
 #include <linux/moduleparam.h>
 #include <linux/types.h>
 #include <linux/kernel.h>
+#include <linux/slab.h>
 #include <linux/in.h>
 #include <linux/ip.h>
 #include <linux/udp.h>
@@ -50,8 +51,10 @@
 #include <net/udp.h>
 
 #include <net/netfilter/nf_nat.h>
+#include <net/netfilter/nf_conntrack_expect.h>
 #include <net/netfilter/nf_conntrack_helper.h>
 #include <net/netfilter/nf_nat_helper.h>
+#include <linux/netfilter/nf_conntrack_snmp.h>
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("James Morris <jmorris@intercode.com.au>");
@@ -60,7 +63,7 @@ MODULE_ALIAS("ip_nat_snmp_basic");
 
 #define SNMP_PORT 161
 #define SNMP_TRAP_PORT 162
-#define NOCT1(n) (*(u8 *)n)
+#define NOCT1(n) (*(u8 *)(n))
 
 static int debug;
 static DEFINE_SPINLOCK(snmp_lock);
@@ -219,7 +222,7 @@ static unsigned char asn1_length_decode(struct asn1_ctx *ctx,
 		if (ch < 0x80)
 			*len = ch;
 		else {
-			cnt = (unsigned char) (ch & 0x7F);
+			cnt = ch & 0x7F;
 			*len = 0;
 
 			while (cnt > 0) {
@@ -231,6 +234,11 @@ static unsigned char asn1_length_decode(struct asn1_ctx *ctx,
 			}
 		}
 	}
+
+	/* don't trust len bigger than ctx buffer */
+	if (*len > ctx->end - ctx->pointer)
+		return 0;
+
 	return 1;
 }
 
@@ -249,6 +257,10 @@ static unsigned char asn1_header_decode(struct asn1_ctx *ctx,
 	if (!asn1_length_decode(ctx, &def, &len))
 		return 0;
 
+	/* primitive shall be definite, indefinite shall be constructed */
+	if (*con == ASN1_PRI && !def)
+		return 0;
+
 	if (def)
 		*eoc = ctx->pointer + len;
 	else
@@ -260,7 +272,7 @@ static unsigned char asn1_eoc_decode(struct asn1_ctx *ctx, unsigned char *eoc)
 {
 	unsigned char ch;
 
-	if (eoc == 0) {
+	if (eoc == NULL) {
 		if (!asn1_octet_decode(ctx, &ch))
 			return 0;
 
@@ -390,7 +402,7 @@ static unsigned char asn1_octets_decode(struct asn1_ctx *ctx,
 	*octets = kmalloc(eoc - ctx->pointer, GFP_ATOMIC);
 	if (*octets == NULL) {
 		if (net_ratelimit())
-			printk("OOM in bsalg (%d)\n", __LINE__);
+			pr_notice("OOM in bsalg (%d)\n", __LINE__);
 		return 0;
 	}
 
@@ -429,14 +441,19 @@ static unsigned char asn1_oid_decode(struct asn1_ctx *ctx,
 				     unsigned int *len)
 {
 	unsigned long subid;
-	unsigned int  size;
 	unsigned long *optr;
+	size_t size;
 
 	size = eoc - ctx->pointer + 1;
+
+	/* first subid actually encodes first two subids */
+	if (size < 2 || size > ULONG_MAX/sizeof(unsigned long))
+		return 0;
+
 	*oid = kmalloc(size * sizeof(unsigned long), GFP_ATOMIC);
 	if (*oid == NULL) {
 		if (net_ratelimit())
-			printk("OOM in bsalg (%d)\n", __LINE__);
+			pr_notice("OOM in bsalg (%d)\n", __LINE__);
 		return 0;
 	}
 
@@ -617,8 +634,7 @@ struct snmp_cnv
 	int syntax;
 };
 
-static struct snmp_cnv snmp_conv [] =
-{
+static const struct snmp_cnv snmp_conv[] = {
 	{ASN1_UNI, ASN1_NUL, SNMP_NULL},
 	{ASN1_UNI, ASN1_INT, SNMP_INTEGER},
 	{ASN1_UNI, ASN1_OTS, SNMP_OCTETSTR},
@@ -643,7 +659,7 @@ static unsigned char snmp_tag_cls2syntax(unsigned int tag,
 					 unsigned int cls,
 					 unsigned short *syntax)
 {
-	struct snmp_cnv *cnv;
+	const struct snmp_cnv *cnv;
 
 	cnv = snmp_conv;
 
@@ -714,7 +730,7 @@ static unsigned char snmp_object_decode(struct asn1_ctx *ctx,
 			if (*obj == NULL) {
 				kfree(id);
 				if (net_ratelimit())
-					printk("OOM in bsalg (%d)\n", __LINE__);
+					pr_notice("OOM in bsalg (%d)\n", __LINE__);
 				return 0;
 			}
 			(*obj)->syntax.l[0] = l;
@@ -728,9 +744,10 @@ static unsigned char snmp_object_decode(struct asn1_ctx *ctx,
 			*obj = kmalloc(sizeof(struct snmp_object) + len,
 				       GFP_ATOMIC);
 			if (*obj == NULL) {
+				kfree(p);
 				kfree(id);
 				if (net_ratelimit())
-					printk("OOM in bsalg (%d)\n", __LINE__);
+					pr_notice("OOM in bsalg (%d)\n", __LINE__);
 				return 0;
 			}
 			memcpy((*obj)->syntax.c, p, len);
@@ -745,7 +762,7 @@ static unsigned char snmp_object_decode(struct asn1_ctx *ctx,
 			if (*obj == NULL) {
 				kfree(id);
 				if (net_ratelimit())
-					printk("OOM in bsalg (%d)\n", __LINE__);
+					pr_notice("OOM in bsalg (%d)\n", __LINE__);
 				return 0;
 			}
 			if (!asn1_null_decode(ctx, end)) {
@@ -766,7 +783,7 @@ static unsigned char snmp_object_decode(struct asn1_ctx *ctx,
 				kfree(lp);
 				kfree(id);
 				if (net_ratelimit())
-					printk("OOM in bsalg (%d)\n", __LINE__);
+					pr_notice("OOM in bsalg (%d)\n", __LINE__);
 				return 0;
 			}
 			memcpy((*obj)->syntax.ul, lp, len);
@@ -787,7 +804,7 @@ static unsigned char snmp_object_decode(struct asn1_ctx *ctx,
 				kfree(p);
 				kfree(id);
 				if (net_ratelimit())
-					printk("OOM in bsalg (%d)\n", __LINE__);
+					pr_notice("OOM in bsalg (%d)\n", __LINE__);
 				return 0;
 			}
 			memcpy((*obj)->syntax.uc, p, len);
@@ -805,7 +822,7 @@ static unsigned char snmp_object_decode(struct asn1_ctx *ctx,
 			if (*obj == NULL) {
 				kfree(id);
 				if (net_ratelimit())
-					printk("OOM in bsalg (%d)\n", __LINE__);
+					pr_notice("OOM in bsalg (%d)\n", __LINE__);
 				return 0;
 			}
 			(*obj)->syntax.ul[0] = ul;
@@ -877,13 +894,15 @@ static void fast_csum(__sum16 *csum,
 	unsigned char s[4];
 
 	if (offset & 1) {
-		s[0] = s[2] = 0;
+		s[0] = ~0;
 		s[1] = ~*optr;
+		s[2] = 0;
 		s[3] = *nptr;
 	} else {
-		s[1] = s[3] = 0;
 		s[0] = ~*optr;
+		s[1] = ~0;
 		s[2] = *nptr;
+		s[3] = 0;
 	}
 
 	*csum = csum_fold(csum_partial(s, 4, ~csum_unfold(*csum)));
@@ -903,7 +922,7 @@ static inline void mangle_address(unsigned char *begin,
 		u_int32_t old;
 
 		if (debug)
-			memcpy(&old, (unsigned char *)addr, sizeof(old));
+			memcpy(&old, addr, sizeof(old));
 
 		*addr = map->to;
 
@@ -915,8 +934,8 @@ static inline void mangle_address(unsigned char *begin,
 		}
 
 		if (debug)
-			printk(KERN_DEBUG "bsalg: mapped %u.%u.%u.%u to "
-			       "%u.%u.%u.%u\n", NIPQUAD(old), NIPQUAD(*addr));
+			printk(KERN_DEBUG "bsalg: mapped %pI4 to %pI4\n",
+			       &old, addr);
 	}
 }
 
@@ -998,7 +1017,7 @@ err_id_free:
  *
  *****************************************************************************/
 
-static void hex_dump(unsigned char *buf, size_t len)
+static void hex_dump(const unsigned char *buf, size_t len)
 {
 	size_t i;
 
@@ -1023,7 +1042,7 @@ static int snmp_parse_mangle(unsigned char *msg,
 	unsigned int cls, con, tag, vers, pdutype;
 	struct asn1_ctx ctx;
 	struct asn1_octstr comm;
-	struct snmp_object **obj;
+	struct snmp_object *obj;
 
 	if (debug > 1)
 		hex_dump(msg, len);
@@ -1079,7 +1098,7 @@ static int snmp_parse_mangle(unsigned char *msg,
 	if (cls != ASN1_CTX || con != ASN1_CON)
 		return 0;
 	if (debug > 1) {
-		unsigned char *pdus[] = {
+		static const unsigned char *const pdus[] = {
 			[SNMP_PDU_GET] = "get",
 			[SNMP_PDU_NEXT] = "get-next",
 			[SNMP_PDU_RESPONSE] = "response",
@@ -1133,43 +1152,34 @@ static int snmp_parse_mangle(unsigned char *msg,
 	if (cls != ASN1_UNI || con != ASN1_CON || tag != ASN1_SEQ)
 		return 0;
 
-	obj = kmalloc(sizeof(struct snmp_object), GFP_ATOMIC);
-	if (obj == NULL) {
-		if (net_ratelimit())
-			printk(KERN_WARNING "OOM in bsalg(%d)\n", __LINE__);
-		return 0;
-	}
-
 	while (!asn1_eoc_decode(&ctx, eoc)) {
 		unsigned int i;
 
-		if (!snmp_object_decode(&ctx, obj)) {
-			if (*obj) {
-				kfree((*obj)->id);
-				kfree(*obj);
+		if (!snmp_object_decode(&ctx, &obj)) {
+			if (obj) {
+				kfree(obj->id);
+				kfree(obj);
 			}
-			kfree(obj);
 			return 0;
 		}
 
 		if (debug > 1) {
 			printk(KERN_DEBUG "bsalg: object: ");
-			for (i = 0; i < (*obj)->id_len; i++) {
+			for (i = 0; i < obj->id_len; i++) {
 				if (i > 0)
 					printk(".");
-				printk("%lu", (*obj)->id[i]);
+				printk("%lu", obj->id[i]);
 			}
-			printk(": type=%u\n", (*obj)->type);
+			printk(": type=%u\n", obj->type);
 
 		}
 
-		if ((*obj)->type == SNMP_IPADDR)
+		if (obj->type == SNMP_IPADDR)
 			mangle_address(ctx.begin, ctx.pointer - 4 , map, check);
 
-		kfree((*obj)->id);
-		kfree(*obj);
+		kfree(obj->id);
+		kfree(obj);
 	}
-	kfree(obj);
 
 	if (!asn1_eoc_decode(&ctx, eoc))
 		return 0;
@@ -1188,9 +1198,9 @@ static int snmp_parse_mangle(unsigned char *msg,
  */
 static int snmp_translate(struct nf_conn *ct,
 			  enum ip_conntrack_info ctinfo,
-			  struct sk_buff **pskb)
+			  struct sk_buff *skb)
 {
-	struct iphdr *iph = ip_hdr(*pskb);
+	struct iphdr *iph = ip_hdr(skb);
 	struct udphdr *udph = (struct udphdr *)((__be32 *)iph + iph->ihl);
 	u_int16_t udplen = ntohs(udph->len);
 	u_int16_t paylen = udplen - sizeof(struct udphdr);
@@ -1225,14 +1235,14 @@ static int snmp_translate(struct nf_conn *ct,
 
 /* We don't actually set up expectations, just adjust internal IP
  * addresses if this is being NATted */
-static int help(struct sk_buff **pskb, unsigned int protoff,
+static int help(struct sk_buff *skb, unsigned int protoff,
 		struct nf_conn *ct,
 		enum ip_conntrack_info ctinfo)
 {
 	int dir = CTINFO2DIR(ctinfo);
 	unsigned int ret;
-	struct iphdr *iph = ip_hdr(*pskb);
-	struct udphdr *udph = (struct udphdr *)((u_int32_t *)iph + iph->ihl);
+	const struct iphdr *iph = ip_hdr(skb);
+	const struct udphdr *udph = (struct udphdr *)((__be32 *)iph + iph->ihl);
 
 	/* SNMP replies and originating SNMP traps get mangled */
 	if (udph->source == htons(SNMP_PORT) && dir != IP_CT_DIR_REPLY)
@@ -1250,49 +1260,45 @@ static int help(struct sk_buff **pskb, unsigned int protoff,
 	 * enough room for a UDP header.  Just verify the UDP length field so we
 	 * can mess around with the payload.
 	 */
-	if (ntohs(udph->len) != (*pskb)->len - (iph->ihl << 2)) {
+	if (ntohs(udph->len) != skb->len - (iph->ihl << 2)) {
 		 if (net_ratelimit())
-			 printk(KERN_WARNING "SNMP: dropping malformed packet "
-				"src=%u.%u.%u.%u dst=%u.%u.%u.%u\n",
-				NIPQUAD(iph->saddr), NIPQUAD(iph->daddr));
+			 printk(KERN_WARNING "SNMP: dropping malformed packet src=%pI4 dst=%pI4\n",
+				&iph->saddr, &iph->daddr);
 		 return NF_DROP;
 	}
 
-	if (!skb_make_writable(pskb, (*pskb)->len))
+	if (!skb_make_writable(skb, skb->len))
 		return NF_DROP;
 
 	spin_lock_bh(&snmp_lock);
-	ret = snmp_translate(ct, ctinfo, pskb);
+	ret = snmp_translate(ct, ctinfo, skb);
 	spin_unlock_bh(&snmp_lock);
 	return ret;
 }
 
+static const struct nf_conntrack_expect_policy snmp_exp_policy = {
+	.max_expected	= 0,
+	.timeout	= 180,
+};
+
 static struct nf_conntrack_helper snmp_helper __read_mostly = {
-	.max_expected		= 0,
-	.timeout		= 180,
 	.me			= THIS_MODULE,
 	.help			= help,
+	.expect_policy		= &snmp_exp_policy,
 	.name			= "snmp",
 	.tuple.src.l3num	= AF_INET,
-	.tuple.src.u.udp.port	= __constant_htons(SNMP_PORT),
+	.tuple.src.u.udp.port	= cpu_to_be16(SNMP_PORT),
 	.tuple.dst.protonum	= IPPROTO_UDP,
-	.mask.src.l3num		= 0xFFFF,
-	.mask.src.u.udp.port	= __constant_htons(0xFFFF),
-	.mask.dst.protonum	= 0xFF,
 };
 
 static struct nf_conntrack_helper snmp_trap_helper __read_mostly = {
-	.max_expected		= 0,
-	.timeout		= 180,
 	.me			= THIS_MODULE,
 	.help			= help,
+	.expect_policy		= &snmp_exp_policy,
 	.name			= "snmp_trap",
 	.tuple.src.l3num	= AF_INET,
-	.tuple.src.u.udp.port	= __constant_htons(SNMP_TRAP_PORT),
+	.tuple.src.u.udp.port	= cpu_to_be16(SNMP_TRAP_PORT),
 	.tuple.dst.protonum	= IPPROTO_UDP,
-	.mask.src.l3num		= 0xFFFF,
-	.mask.src.u.udp.port	= __constant_htons(0xFFFF),
-	.mask.dst.protonum	= 0xFF,
 };
 
 /*****************************************************************************
@@ -1305,9 +1311,9 @@ static int __init nf_nat_snmp_basic_init(void)
 {
 	int ret = 0;
 
-	ret = nf_conntrack_helper_register(&snmp_helper);
-	if (ret < 0)
-		return ret;
+	BUG_ON(nf_nat_snmp_hook != NULL);
+	rcu_assign_pointer(nf_nat_snmp_hook, help);
+
 	ret = nf_conntrack_helper_register(&snmp_trap_helper);
 	if (ret < 0) {
 		nf_conntrack_helper_unregister(&snmp_helper);
@@ -1318,7 +1324,7 @@ static int __init nf_nat_snmp_basic_init(void)
 
 static void __exit nf_nat_snmp_basic_fini(void)
 {
-	nf_conntrack_helper_unregister(&snmp_helper);
+	rcu_assign_pointer(nf_nat_snmp_hook, NULL);
 	nf_conntrack_helper_unregister(&snmp_trap_helper);
 }
 

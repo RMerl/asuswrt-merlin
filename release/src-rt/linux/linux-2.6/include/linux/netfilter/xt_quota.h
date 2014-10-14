@@ -1,6 +1,8 @@
 #ifndef _XT_QUOTA_H
 #define _XT_QUOTA_H
 
+#include <linux/types.h>
+
 enum xt_quota_flags {
 	XT_QUOTA_INVERT		= 0x1,
 };
@@ -9,11 +11,11 @@ enum xt_quota_flags {
 struct xt_quota_priv;
 
 struct xt_quota_info {
-	u_int32_t		flags;
-	u_int32_t		pad;
+	__u32 flags;
+	__u32 pad;
+	__aligned_u64 quota;
 
 	/* Used internally by the kernel */
-	aligned_u64		quota;
 	struct xt_quota_priv	*master;
 };
 

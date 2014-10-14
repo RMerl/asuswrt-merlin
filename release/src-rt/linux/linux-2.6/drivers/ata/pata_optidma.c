@@ -1,7 +1,6 @@
 /*
  * pata_optidma.c 	- Opti DMA PATA for new ATA layer
  *			  (C) 2006 Red Hat Inc
- *			  Alan Cox <alan@redhat.com>
  *
  *	The Opti DMA controllers are related to the older PIO PCI controllers
  *	and indeed the VLB ones. The main differences are that the timing
@@ -47,14 +46,15 @@ static int pci_clock;	/* 0 = 33 1 = 25 */
 
 /**
  *	optidma_pre_reset		-	probe begin
- *	@ap: ATA port
+ *	@link: ATA link
  *	@deadline: deadline jiffies for the operation
  *
  *	Set up cable type and use generic probe init
  */
 
-static int optidma_pre_reset(struct ata_port *ap, unsigned long deadline)
+static int optidma_pre_reset(struct ata_link *link, unsigned long deadline)
 {
+	struct ata_port *ap = link->ap;
 	struct pci_dev *pdev = to_pci_dev(ap->host->dev);
 	static const struct pci_bits optidma_enable_bits = {
 		0x40, 1, 0x08, 0x00
@@ -63,22 +63,7 @@ static int optidma_pre_reset(struct ata_port *ap, unsigned long deadline)
 	if (ap->port_no && !pci_test_config_bits(pdev, &optidma_enable_bits))
 		return -ENOENT;
 
-	return ata_std_prereset(ap, deadline);
-}
-
-/**
- *	optidma_probe_reset		-	probe reset
- *	@ap: ATA port
- *
- *	Perform the ATA probe and bus reset sequence plus specific handling
- *	for this hardware. The Opti needs little handling - we have no UDMA66
- *	capability that needs cable detection. All we must do is check the port
- *	is enabled.
- */
-
-static void optidma_error_handler(struct ata_port *ap)
-{
-	ata_bmdma_drive_eh(ap, optidma_pre_reset, ata_std_softreset, NULL, ata_std_postreset);
+	return ata_sff_prereset(link, deadline);
 }
 
 /**
@@ -323,118 +308,48 @@ static u8 optidma_make_bits43(struct ata_device *adev)
 
 /**
  *	optidma_set_mode	-	mode setup
- *	@ap: port to set up
+ *	@link: link to set up
  *
  *	Use the standard setup to tune the chipset and then finalise the
  *	configuration by writing the nibble of extra bits of data into
  *	the chip.
  */
 
-static int optidma_set_mode(struct ata_port *ap, struct ata_device **r_failed)
+static int optidma_set_mode(struct ata_link *link, struct ata_device **r_failed)
 {
+	struct ata_port *ap = link->ap;
 	u8 r;
 	int nybble = 4 * ap->port_no;
 	struct pci_dev *pdev = to_pci_dev(ap->host->dev);
-	int rc  = ata_do_set_mode(ap, r_failed);
+	int rc  = ata_do_set_mode(link, r_failed);
 	if (rc == 0) {
 		pci_read_config_byte(pdev, 0x43, &r);
 
 		r &= (0x0F << nybble);
-		r |= (optidma_make_bits43(&ap->device[0]) +
-		     (optidma_make_bits43(&ap->device[0]) << 2)) << nybble;
+		r |= (optidma_make_bits43(&link->device[0]) +
+		     (optidma_make_bits43(&link->device[0]) << 2)) << nybble;
 		pci_write_config_byte(pdev, 0x43, r);
 	}
 	return rc;
 }
 
 static struct scsi_host_template optidma_sht = {
-	.module			= THIS_MODULE,
-	.name			= DRV_NAME,
-	.ioctl			= ata_scsi_ioctl,
-	.queuecommand		= ata_scsi_queuecmd,
-	.can_queue		= ATA_DEF_QUEUE,
-	.this_id		= ATA_SHT_THIS_ID,
-	.sg_tablesize		= LIBATA_MAX_PRD,
-	.cmd_per_lun		= ATA_SHT_CMD_PER_LUN,
-	.emulated		= ATA_SHT_EMULATED,
-	.use_clustering		= ATA_SHT_USE_CLUSTERING,
-	.proc_name		= DRV_NAME,
-	.dma_boundary		= ATA_DMA_BOUNDARY,
-	.slave_configure	= ata_scsi_slave_config,
-	.slave_destroy		= ata_scsi_slave_destroy,
-	.bios_param		= ata_std_bios_param,
+	ATA_BMDMA_SHT(DRV_NAME),
 };
 
 static struct ata_port_operations optidma_port_ops = {
-	.port_disable	= ata_port_disable,
+	.inherits	= &ata_bmdma_port_ops,
+	.cable_detect	= ata_cable_40wire,
 	.set_piomode	= optidma_set_pio_mode,
 	.set_dmamode	= optidma_set_dma_mode,
-
-	.tf_load	= ata_tf_load,
-	.tf_read	= ata_tf_read,
-	.check_status 	= ata_check_status,
-	.exec_command	= ata_exec_command,
-	.dev_select 	= ata_std_dev_select,
-
-	.freeze		= ata_bmdma_freeze,
-	.thaw		= ata_bmdma_thaw,
-	.post_internal_cmd = ata_bmdma_post_internal_cmd,
-	.error_handler	= optidma_error_handler,
 	.set_mode	= optidma_set_mode,
-	.cable_detect	= ata_cable_40wire,
-
-	.bmdma_setup 	= ata_bmdma_setup,
-	.bmdma_start 	= ata_bmdma_start,
-	.bmdma_stop	= ata_bmdma_stop,
-	.bmdma_status 	= ata_bmdma_status,
-
-	.qc_prep 	= ata_qc_prep,
-	.qc_issue	= ata_qc_issue_prot,
-
-	.data_xfer	= ata_data_xfer,
-
-	.irq_handler	= ata_interrupt,
-	.irq_clear	= ata_bmdma_irq_clear,
-	.irq_on		= ata_irq_on,
-	.irq_ack	= ata_irq_ack,
-
-	.port_start	= ata_port_start,
+	.prereset	= optidma_pre_reset,
 };
 
 static struct ata_port_operations optiplus_port_ops = {
-	.port_disable	= ata_port_disable,
+	.inherits	= &optidma_port_ops,
 	.set_piomode	= optiplus_set_pio_mode,
 	.set_dmamode	= optiplus_set_dma_mode,
-
-	.tf_load	= ata_tf_load,
-	.tf_read	= ata_tf_read,
-	.check_status 	= ata_check_status,
-	.exec_command	= ata_exec_command,
-	.dev_select 	= ata_std_dev_select,
-
-	.freeze		= ata_bmdma_freeze,
-	.thaw		= ata_bmdma_thaw,
-	.post_internal_cmd = ata_bmdma_post_internal_cmd,
-	.error_handler	= optidma_error_handler,
-	.set_mode	= optidma_set_mode,
-	.cable_detect	= ata_cable_40wire,
-
-	.bmdma_setup 	= ata_bmdma_setup,
-	.bmdma_start 	= ata_bmdma_start,
-	.bmdma_stop	= ata_bmdma_stop,
-	.bmdma_status 	= ata_bmdma_status,
-
-	.qc_prep 	= ata_qc_prep,
-	.qc_issue	= ata_qc_issue_prot,
-
-	.data_xfer	= ata_data_xfer,
-
-	.irq_handler	= ata_interrupt,
-	.irq_clear	= ata_bmdma_irq_clear,
-	.irq_on		= ata_irq_on,
-	.irq_ack	= ata_irq_ack,
-
-	.port_start	= ata_port_start,
 };
 
 /**
@@ -451,7 +366,7 @@ static int optiplus_with_udma(struct pci_dev *pdev)
 
 	/* Find function 1 */
 	dev1 = pci_get_device(0x1045, 0xC701, NULL);
-	if(dev1 == NULL)
+	if (dev1 == NULL)
 		return 0;
 
 	/* Rev must be >= 0x10 */
@@ -483,25 +398,28 @@ done_nomsg:		/* Wrong chip revision */
 static int optidma_init_one(struct pci_dev *dev, const struct pci_device_id *id)
 {
 	static const struct ata_port_info info_82c700 = {
-		.sht = &optidma_sht,
-		.flags = ATA_FLAG_SLAVE_POSS | ATA_FLAG_SRST,
-		.pio_mask = 0x1f,
-		.mwdma_mask = 0x07,
+		.flags = ATA_FLAG_SLAVE_POSS,
+		.pio_mask = ATA_PIO4,
+		.mwdma_mask = ATA_MWDMA2,
 		.port_ops = &optidma_port_ops
 	};
 	static const struct ata_port_info info_82c700_udma = {
-		.sht = &optidma_sht,
-		.flags = ATA_FLAG_SLAVE_POSS | ATA_FLAG_SRST,
-		.pio_mask = 0x1f,
-		.mwdma_mask = 0x07,
-		.udma_mask = 0x07,
+		.flags = ATA_FLAG_SLAVE_POSS,
+		.pio_mask = ATA_PIO4,
+		.mwdma_mask = ATA_MWDMA2,
+		.udma_mask = ATA_UDMA2,
 		.port_ops = &optiplus_port_ops
 	};
 	const struct ata_port_info *ppi[] = { &info_82c700, NULL };
 	static int printed_version;
+	int rc;
 
 	if (!printed_version++)
 		dev_printk(KERN_DEBUG, &dev->dev, "version " DRV_VERSION "\n");
+
+	rc = pcim_enable_device(dev);
+	if (rc)
+		return rc;
 
 	/* Fixed location chipset magic */
 	inw(0x1F1);
@@ -511,7 +429,7 @@ static int optidma_init_one(struct pci_dev *dev, const struct pci_device_id *id)
 	if (optiplus_with_udma(dev))
 		ppi[0] = &info_82c700_udma;
 
-	return ata_pci_init_one(dev, ppi);
+	return ata_pci_bmdma_init_one(dev, ppi, &optidma_sht, NULL, 0);
 }
 
 static const struct pci_device_id optidma[] = {

@@ -20,27 +20,23 @@
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Marc Boucher <marc@mbsi.ca>");
-MODULE_DESCRIPTION("iptables TCP MSS match module");
+MODULE_DESCRIPTION("Xtables: TCP MSS match");
 MODULE_ALIAS("ipt_tcpmss");
+MODULE_ALIAS("ip6t_tcpmss");
 
-static int
-match(const struct sk_buff *skb,
-      const struct net_device *in,
-      const struct net_device *out,
-      const struct xt_match *match,
-      const void *matchinfo,
-      int offset,
-      unsigned int protoff,
-      int *hotdrop)
+static bool
+tcpmss_mt(const struct sk_buff *skb, struct xt_action_param *par)
 {
-	const struct xt_tcpmss_match_info *info = matchinfo;
-	struct tcphdr _tcph, *th;
+	const struct xt_tcpmss_match_info *info = par->matchinfo;
+	const struct tcphdr *th;
+	struct tcphdr _tcph;
 	/* tcp.doff is only 4 bits, ie. max 15 * 4 bytes */
-	u8 _opt[15 * 4 - sizeof(_tcph)], *op;
+	const u_int8_t *op;
+	u8 _opt[15 * 4 - sizeof(_tcph)];
 	unsigned int i, optlen;
 
 	/* If we don't have the whole header, drop packet. */
-	th = skb_header_pointer(skb, protoff, sizeof(_tcph), &_tcph);
+	th = skb_header_pointer(skb, par->thoff, sizeof(_tcph), &_tcph);
 	if (th == NULL)
 		goto dropit;
 
@@ -53,7 +49,7 @@ match(const struct sk_buff *skb,
 		goto out;
 
 	/* Truncated options. */
-	op = skb_header_pointer(skb, protoff + sizeof(*th), optlen, _opt);
+	op = skb_header_pointer(skb, par->thoff + sizeof(*th), optlen, _opt);
 	if (op == NULL)
 		goto dropit;
 
@@ -77,39 +73,38 @@ out:
 	return info->invert;
 
 dropit:
-	*hotdrop = 1;
-	return 0;
+	par->hotdrop = true;
+	return false;
 }
 
-static struct xt_match xt_tcpmss_match[] = {
+static struct xt_match tcpmss_mt_reg[] __read_mostly = {
 	{
 		.name		= "tcpmss",
-		.family		= AF_INET,
-		.match		= match,
+		.family		= NFPROTO_IPV4,
+		.match		= tcpmss_mt,
 		.matchsize	= sizeof(struct xt_tcpmss_match_info),
 		.proto		= IPPROTO_TCP,
 		.me		= THIS_MODULE,
 	},
 	{
 		.name		= "tcpmss",
-		.family		= AF_INET6,
-		.match		= match,
+		.family		= NFPROTO_IPV6,
+		.match		= tcpmss_mt,
 		.matchsize	= sizeof(struct xt_tcpmss_match_info),
 		.proto		= IPPROTO_TCP,
 		.me		= THIS_MODULE,
 	},
 };
 
-static int __init xt_tcpmss_init(void)
+static int __init tcpmss_mt_init(void)
 {
-	return xt_register_matches(xt_tcpmss_match,
-				   ARRAY_SIZE(xt_tcpmss_match));
+	return xt_register_matches(tcpmss_mt_reg, ARRAY_SIZE(tcpmss_mt_reg));
 }
 
-static void __exit xt_tcpmss_fini(void)
+static void __exit tcpmss_mt_exit(void)
 {
-	xt_unregister_matches(xt_tcpmss_match, ARRAY_SIZE(xt_tcpmss_match));
+	xt_unregister_matches(tcpmss_mt_reg, ARRAY_SIZE(tcpmss_mt_reg));
 }
 
-module_init(xt_tcpmss_init);
-module_exit(xt_tcpmss_fini);
+module_init(tcpmss_mt_init);
+module_exit(tcpmss_mt_exit);

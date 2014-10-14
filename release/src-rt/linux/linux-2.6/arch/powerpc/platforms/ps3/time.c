@@ -19,7 +19,9 @@
  */
 
 #include <linux/kernel.h>
+#include <linux/platform_device.h>
 
+#include <asm/firmware.h>
 #include <asm/rtc.h>
 #include <asm/lv1call.h>
 #include <asm/ps3.h>
@@ -39,7 +41,7 @@ static void _dump_tm(const struct rtc_time *tm, const char* func, int line)
 }
 
 #define dump_time(_a) _dump_time(_a, __func__, __LINE__)
-static void __attribute__ ((unused)) _dump_time(int time, const char* func,
+static void __maybe_unused _dump_time(int time, const char *func,
 	int line)
 {
 	struct rtc_time tm;
@@ -49,12 +51,6 @@ static void __attribute__ ((unused)) _dump_time(int time, const char* func,
 	pr_debug("%s:%d time    %d\n", func, line, time);
 	_dump_tm(&tm, func, line);
 }
-
-/**
- * rtc_shift - Difference in seconds between 1970 and the ps3 rtc value.
- */
-
-static s64 rtc_shift;
 
 void __init ps3_calibrate_decr(void)
 {
@@ -66,8 +62,6 @@ void __init ps3_calibrate_decr(void)
 
 	ppc_tb_freq = tmp;
 	ppc_proc_freq = ppc_tb_freq * 40;
-
-	rtc_shift = ps3_os_area_rtc_diff();
 }
 
 static u64 read_rtc(void)
@@ -82,23 +76,23 @@ static u64 read_rtc(void)
 	return rtc_val;
 }
 
-int ps3_set_rtc_time(struct rtc_time *tm)
+unsigned long __init ps3_get_boot_time(void)
 {
-	u64 now = mktime(tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday,
-		tm->tm_hour, tm->tm_min, tm->tm_sec);
+	return read_rtc() + ps3_os_area_get_rtc_diff();
+}
 
-	rtc_shift = now - read_rtc();
+static int __init ps3_rtc_init(void)
+{
+	struct platform_device *pdev;
+
+	if (!firmware_has_feature(FW_FEATURE_PS3_LV1))
+		return -ENODEV;
+
+	pdev = platform_device_register_simple("rtc-ps3", -1, NULL, 0);
+	if (IS_ERR(pdev))
+		return PTR_ERR(pdev);
+
 	return 0;
 }
 
-void ps3_get_rtc_time(struct rtc_time *tm)
-{
-	to_tm(read_rtc() + rtc_shift, tm);
-	tm->tm_year -= 1900;
-	tm->tm_mon -= 1;
-}
-
-unsigned long __init ps3_get_boot_time(void)
-{
-	return read_rtc() + rtc_shift;
-}
+module_init(ps3_rtc_init);

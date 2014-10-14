@@ -12,6 +12,7 @@
 #include <linux/module.h>
 #include <linux/net.h>
 #include <linux/skbuff.h>
+#include <linux/slab.h>
 #include <net/sock.h>
 #include <net/af_rxrpc.h>
 #include "ar-internal.h"
@@ -114,7 +115,7 @@ static int rxrpc_create_local(struct rxrpc_local *local)
 	return 0;
 
 error:
-	local->socket->ops->shutdown(local->socket, 2);
+	kernel_sock_shutdown(local->socket, SHUT_RDWR);
 	local->socket->sk->sk_user_data = NULL;
 	sock_release(local->socket);
 	local->socket = NULL;
@@ -131,10 +132,10 @@ struct rxrpc_local *rxrpc_lookup_local(struct sockaddr_rxrpc *srx)
 	struct rxrpc_local *local;
 	int ret;
 
-	_enter("{%d,%u,%u.%u.%u.%u+%hu}",
+	_enter("{%d,%u,%pI4+%hu}",
 	       srx->transport_type,
 	       srx->transport.family,
-	       NIPQUAD(srx->transport.sin.sin_addr),
+	       &srx->transport.sin.sin_addr,
 	       ntohs(srx->transport.sin.sin_port));
 
 	down_write(&rxrpc_local_sem);
@@ -143,10 +144,10 @@ struct rxrpc_local *rxrpc_lookup_local(struct sockaddr_rxrpc *srx)
 	read_lock_bh(&rxrpc_local_lock);
 
 	list_for_each_entry(local, &rxrpc_locals, link) {
-		_debug("CMP {%d,%u,%u.%u.%u.%u+%hu}",
+		_debug("CMP {%d,%u,%pI4+%hu}",
 		       local->srx.transport_type,
 		       local->srx.transport.family,
-		       NIPQUAD(local->srx.transport.sin.sin_addr),
+		       &local->srx.transport.sin.sin_addr,
 		       ntohs(local->srx.transport.sin.sin_port));
 
 		if (local->srx.transport_type != srx->transport_type ||
@@ -188,11 +189,11 @@ struct rxrpc_local *rxrpc_lookup_local(struct sockaddr_rxrpc *srx)
 
 	up_write(&rxrpc_local_sem);
 
-	_net("LOCAL new %d {%d,%u,%u.%u.%u.%u+%hu}",
+	_net("LOCAL new %d {%d,%u,%pI4+%hu}",
 	     local->debug_id,
 	     local->srx.transport_type,
 	     local->srx.transport.family,
-	     NIPQUAD(local->srx.transport.sin.sin_addr),
+	     &local->srx.transport.sin.sin_addr,
 	     ntohs(local->srx.transport.sin.sin_port));
 
 	_leave(" = %p [new]", local);
@@ -203,11 +204,11 @@ found_local:
 	read_unlock_bh(&rxrpc_local_lock);
 	up_write(&rxrpc_local_sem);
 
-	_net("LOCAL old %d {%d,%u,%u.%u.%u.%u+%hu}",
+	_net("LOCAL old %d {%d,%u,%pI4+%hu}",
 	     local->debug_id,
 	     local->srx.transport_type,
 	     local->srx.transport.family,
-	     NIPQUAD(local->srx.transport.sin.sin_addr),
+	     &local->srx.transport.sin.sin_addr,
 	     ntohs(local->srx.transport.sin.sin_port));
 
 	_leave(" = %p [reuse]", local);
@@ -267,7 +268,7 @@ static void rxrpc_destroy_local(struct work_struct *work)
 	/* finish cleaning up the local descriptor */
 	rxrpc_purge_queue(&local->accept_queue);
 	rxrpc_purge_queue(&local->reject_queue);
-	local->socket->ops->shutdown(local->socket, 2);
+	kernel_sock_shutdown(local->socket, SHUT_RDWR);
 	sock_release(local->socket);
 
 	up_read(&rxrpc_local_sem);

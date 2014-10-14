@@ -1,8 +1,6 @@
 /*
  * RNDIS	Definitions for Remote NDIS
  *
- * Version:	$Id: rndis.h,v 1.15 2004/03/25 21:33:46 robert Exp $
- *
  * Authors:	Benedikt Spranger, Pengutronix
  *		Robert Schwebel, Pengutronix
  *
@@ -235,26 +233,26 @@ typedef struct rndis_params
 	const u8		*host_mac;
 	u16			*filter;
 	struct net_device	*dev;
-	struct net_device_stats *stats;
 
 	u32			vendorID;
 	const char		*vendorDescr;
-	int			(*ack) (struct net_device *);
+	void			(*resp_avail)(void *v);
+	void			*v;
 	struct list_head	resp_queue;
 } rndis_params;
 
 /* RNDIS Message parser and other useless functions */
 int  rndis_msg_parser (u8 configNr, u8 *buf);
-int  rndis_register (int (*rndis_control_ack) (struct net_device *));
+int  rndis_register(void (*resp_avail)(void *v), void *v);
 void rndis_deregister (int configNr);
 int  rndis_set_param_dev (u8 configNr, struct net_device *dev,
-			 struct net_device_stats *stats,
 			 u16 *cdc_filter);
 int  rndis_set_param_vendor (u8 configNr, u32 vendorID,
 			    const char *vendorDescr);
 int  rndis_set_param_medium (u8 configNr, u32 medium, u32 speed);
 void rndis_add_hdr (struct sk_buff *skb);
-int rndis_rm_hdr (struct sk_buff *skb);
+int rndis_rm_hdr(struct gether *port, struct sk_buff *skb,
+			struct sk_buff_head *list);
 u8   *rndis_get_next_response (int configNr, u32 *length);
 void rndis_free_response (int configNr, u8 *buf);
 
@@ -264,7 +262,7 @@ int  rndis_signal_disconnect (int configNr);
 int  rndis_state (int configNr);
 extern void rndis_set_host_mac (int configNr, const u8 *addr);
 
-int __devinit rndis_init (void);
+int rndis_init(void);
 void rndis_exit (void);
 
 #endif  /* _LINUX_RNDIS_H */

@@ -49,7 +49,7 @@ static struct dlm_direntry *get_free_de(struct dlm_ls *ls, int len)
 	spin_unlock(&ls->ls_recover_list_lock);
 
 	if (!found)
-		de = allocate_direntry(ls, len);
+		de = kzalloc(sizeof(struct dlm_direntry) + len, GFP_NOFS);
 	return de;
 }
 
@@ -62,7 +62,7 @@ void dlm_clear_free_entries(struct dlm_ls *ls)
 		de = list_entry(ls->ls_recover_list.next, struct dlm_direntry,
 				list);
 		list_del(&de->list);
-		free_direntry(de);
+		kfree(de);
 	}
 	spin_unlock(&ls->ls_recover_list_lock);
 }
@@ -156,7 +156,7 @@ void dlm_dir_remove_entry(struct dlm_ls *ls, int nodeid, char *name, int namelen
 
 	bucket = dir_hash(ls, name, namelen);
 
-	write_lock(&ls->ls_dirtbl[bucket].lock);
+	spin_lock(&ls->ls_dirtbl[bucket].lock);
 
 	de = search_bucket(ls, name, namelen, bucket);
 
@@ -171,9 +171,9 @@ void dlm_dir_remove_entry(struct dlm_ls *ls, int nodeid, char *name, int namelen
 	}
 
 	list_del(&de->list);
-	free_direntry(de);
+	kfree(de);
  out:
-	write_unlock(&ls->ls_dirtbl[bucket].lock);
+	spin_unlock(&ls->ls_dirtbl[bucket].lock);
 }
 
 void dlm_dir_clear(struct dlm_ls *ls)
@@ -185,14 +185,14 @@ void dlm_dir_clear(struct dlm_ls *ls)
 	DLM_ASSERT(list_empty(&ls->ls_recover_list), );
 
 	for (i = 0; i < ls->ls_dirtbl_size; i++) {
-		write_lock(&ls->ls_dirtbl[i].lock);
+		spin_lock(&ls->ls_dirtbl[i].lock);
 		head = &ls->ls_dirtbl[i].list;
 		while (!list_empty(head)) {
 			de = list_entry(head->next, struct dlm_direntry, list);
 			list_del(&de->list);
 			put_free_de(ls, de);
 		}
-		write_unlock(&ls->ls_dirtbl[i].lock);
+		spin_unlock(&ls->ls_dirtbl[i].lock);
 	}
 }
 
@@ -211,7 +211,7 @@ int dlm_recover_directory(struct dlm_ls *ls)
 
 	dlm_dir_clear(ls);
 
-	last_name = kmalloc(DLM_RESNAME_MAXLEN, GFP_KERNEL);
+	last_name = kmalloc(DLM_RESNAME_MAXLEN, GFP_NOFS);
 	if (!last_name)
 		goto out;
 
@@ -220,6 +220,7 @@ int dlm_recover_directory(struct dlm_ls *ls)
 		last_len = 0;
 
 		for (;;) {
+			int left;
 			error = dlm_recovery_stopped(ls);
 			if (error)
 				goto out_free;
@@ -235,12 +236,21 @@ int dlm_recover_directory(struct dlm_ls *ls)
 			 * pick namelen/name pairs out of received buffer
 			 */
 
-			b = ls->ls_recover_buf + sizeof(struct dlm_rcom);
+			b = ls->ls_recover_buf->rc_buf;
+			left = ls->ls_recover_buf->rc_header.h_length;
+			left -= sizeof(struct dlm_rcom);
 
 			for (;;) {
-				memcpy(&namelen, b, sizeof(uint16_t));
-				namelen = be16_to_cpu(namelen);
-				b += sizeof(uint16_t);
+				__be16 v;
+
+				error = -EINVAL;
+				if (left < sizeof(__be16))
+					goto out_free;
+
+				memcpy(&v, b, sizeof(__be16));
+				namelen = be16_to_cpu(v);
+				b += sizeof(__be16);
+				left -= sizeof(__be16);
 
 				/* namelen of 0xFFFFF marks end of names for
 				   this node; namelen of 0 marks end of the
@@ -250,6 +260,12 @@ int dlm_recover_directory(struct dlm_ls *ls)
 					goto done;
 				if (!namelen)
 					break;
+
+				if (namelen > left)
+					goto out_free;
+
+				if (namelen > DLM_RESNAME_MAXLEN)
+					goto out_free;
 
 				error = -ENOMEM;
 				de = get_free_de(ls, namelen);
@@ -262,6 +278,7 @@ int dlm_recover_directory(struct dlm_ls *ls)
 				memcpy(de->name, b, namelen);
 				memcpy(last_name, b, namelen);
 				b += namelen;
+				left -= namelen;
 
 				add_entry_to_hash(ls, de);
 				count++;
@@ -290,19 +307,22 @@ static int get_entry(struct dlm_ls *ls, int nodeid, char *name,
 
 	bucket = dir_hash(ls, name, namelen);
 
-	write_lock(&ls->ls_dirtbl[bucket].lock);
+	spin_lock(&ls->ls_dirtbl[bucket].lock);
 	de = search_bucket(ls, name, namelen, bucket);
 	if (de) {
 		*r_nodeid = de->master_nodeid;
-		write_unlock(&ls->ls_dirtbl[bucket].lock);
+		spin_unlock(&ls->ls_dirtbl[bucket].lock);
 		if (*r_nodeid == nodeid)
 			return -EEXIST;
 		return 0;
 	}
 
-	write_unlock(&ls->ls_dirtbl[bucket].lock);
+	spin_unlock(&ls->ls_dirtbl[bucket].lock);
 
-	de = allocate_direntry(ls, namelen);
+	if (namelen > DLM_RESNAME_MAXLEN)
+		return -EINVAL;
+
+	de = kzalloc(sizeof(struct dlm_direntry) + namelen, GFP_NOFS);
 	if (!de)
 		return -ENOMEM;
 
@@ -310,16 +330,16 @@ static int get_entry(struct dlm_ls *ls, int nodeid, char *name,
 	de->length = namelen;
 	memcpy(de->name, name, namelen);
 
-	write_lock(&ls->ls_dirtbl[bucket].lock);
+	spin_lock(&ls->ls_dirtbl[bucket].lock);
 	tmp = search_bucket(ls, name, namelen, bucket);
 	if (tmp) {
-		free_direntry(de);
+		kfree(de);
 		de = tmp;
 	} else {
 		list_add_tail(&de->list, &ls->ls_dirtbl[bucket].list);
 	}
 	*r_nodeid = de->master_nodeid;
-	write_unlock(&ls->ls_dirtbl[bucket].lock);
+	spin_unlock(&ls->ls_dirtbl[bucket].lock);
 	return 0;
 }
 
@@ -329,49 +349,47 @@ int dlm_dir_lookup(struct dlm_ls *ls, int nodeid, char *name, int namelen,
 	return get_entry(ls, nodeid, name, namelen, r_nodeid);
 }
 
-/* Copy the names of master rsb's into the buffer provided.
-   Only select names whose dir node is the given nodeid. */
+static struct dlm_rsb *find_rsb_root(struct dlm_ls *ls, char *name, int len)
+{
+	struct dlm_rsb *r;
+
+	down_read(&ls->ls_root_sem);
+	list_for_each_entry(r, &ls->ls_root_list, res_root_list) {
+		if (len == r->res_length && !memcmp(name, r->res_name, len)) {
+			up_read(&ls->ls_root_sem);
+			return r;
+		}
+	}
+	up_read(&ls->ls_root_sem);
+	return NULL;
+}
+
+/* Find the rsb where we left off (or start again), then send rsb names
+   for rsb's we're master of and whose directory node matches the requesting
+   node.  inbuf is the rsb name last sent, inlen is the name's length */
 
 void dlm_copy_master_names(struct dlm_ls *ls, char *inbuf, int inlen,
  			   char *outbuf, int outlen, int nodeid)
 {
 	struct list_head *list;
-	struct dlm_rsb *start_r = NULL, *r = NULL;
-	int offset = 0, start_namelen, error, dir_nodeid;
-	char *start_name;
-	uint16_t be_namelen;
-
-	/*
-	 * Find the rsb where we left off (or start again)
-	 */
-
-	start_namelen = inlen;
-	start_name = inbuf;
-
-	if (start_namelen > 1) {
-		/*
-		 * We could also use a find_rsb_root() function here that
-		 * searched the ls_root_list.
-		 */
-		error = dlm_find_rsb(ls, start_name, start_namelen, R_MASTER,
-				     &start_r);
-		DLM_ASSERT(!error && start_r,
-			   printk("error %d\n", error););
-		DLM_ASSERT(!list_empty(&start_r->res_root_list),
-			   dlm_print_rsb(start_r););
-		dlm_put_rsb(start_r);
-	}
-
-	/*
-	 * Send rsb names for rsb's we're master of and whose directory node
-	 * matches the requesting node.
-	 */
+	struct dlm_rsb *r;
+	int offset = 0, dir_nodeid;
+	__be16 be_namelen;
 
 	down_read(&ls->ls_root_sem);
-	if (start_r)
-		list = start_r->res_root_list.next;
-	else
+
+	if (inlen > 1) {
+		r = find_rsb_root(ls, inbuf, inlen);
+		if (!r) {
+			inbuf[inlen - 1] = '\0';
+			log_error(ls, "copy_master_names from %d start %d %s",
+				  nodeid, inlen, inbuf);
+			goto out;
+		}
+		list = r->res_root_list.next;
+	} else {
 		list = ls->ls_root_list.next;
+	}
 
 	for (offset = 0; list != &ls->ls_root_list; list = list->next) {
 		r = list_entry(list, struct dlm_rsb, res_root_list);
@@ -392,15 +410,15 @@ void dlm_copy_master_names(struct dlm_ls *ls, char *inbuf, int inlen,
 
 		if (offset + sizeof(uint16_t)*2 + r->res_length > outlen) {
 			/* Write end-of-block record */
-			be_namelen = 0;
-			memcpy(outbuf + offset, &be_namelen, sizeof(uint16_t));
-			offset += sizeof(uint16_t);
+			be_namelen = cpu_to_be16(0);
+			memcpy(outbuf + offset, &be_namelen, sizeof(__be16));
+			offset += sizeof(__be16);
 			goto out;
 		}
 
 		be_namelen = cpu_to_be16(r->res_length);
-		memcpy(outbuf + offset, &be_namelen, sizeof(uint16_t));
-		offset += sizeof(uint16_t);
+		memcpy(outbuf + offset, &be_namelen, sizeof(__be16));
+		offset += sizeof(__be16);
 		memcpy(outbuf + offset, r->res_name, r->res_length);
 		offset += r->res_length;
 	}
@@ -412,9 +430,9 @@ void dlm_copy_master_names(struct dlm_ls *ls, char *inbuf, int inlen,
 
 	if ((list == &ls->ls_root_list) &&
 	    (offset + sizeof(uint16_t) <= outlen)) {
-		be_namelen = 0xFFFF;
-		memcpy(outbuf + offset, &be_namelen, sizeof(uint16_t));
-		offset += sizeof(uint16_t);
+		be_namelen = cpu_to_be16(0xFFFF);
+		memcpy(outbuf + offset, &be_namelen, sizeof(__be16));
+		offset += sizeof(__be16);
 	}
 
  out:

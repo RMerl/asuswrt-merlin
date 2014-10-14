@@ -3,7 +3,7 @@
 
 /*
  *  Abstract layer for MIDI v1.0 stream
- *  Copyright (c) by Jaroslav Kysela <perex@suse.cz>
+ *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  *
  *
  *   This program is free software; you can redistribute it and/or modify
@@ -42,11 +42,11 @@
 #define SNDRV_RAWMIDI_LFLG_INPUT	(1<<1)
 #define SNDRV_RAWMIDI_LFLG_OPEN		(3<<0)
 #define SNDRV_RAWMIDI_LFLG_APPEND	(1<<2)
-#define	SNDRV_RAWMIDI_LFLG_NOOPENLOCK	(1<<3)
 
 struct snd_rawmidi;
 struct snd_rawmidi_substream;
 struct snd_seq_port_info;
+struct pid;
 
 struct snd_rawmidi_ops {
 	int (*open) (struct snd_rawmidi_substream * substream);
@@ -98,6 +98,7 @@ struct snd_rawmidi_substream {
 	struct snd_rawmidi_str *pstr;
 	char name[32];
 	struct snd_rawmidi_runtime *runtime;
+	struct pid *pid;
 	/* hardware layer */
 	struct snd_rawmidi_ops *ops;
 };

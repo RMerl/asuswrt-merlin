@@ -1,4 +1,7 @@
-/* zd_chip.h
+/* ZD1211 USB-WLAN driver for Linux
+ *
+ * Copyright (C) 2005-2007 Ulrich Kunitz <kune@deine-taler.de>
+ * Copyright (C) 2006-2007 Daniel Drake <dsd@gentoo.org>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -433,9 +436,10 @@ enum {
 #define CR_GROUP_HASH_P2		CTL_REG(0x0628)
 
 #define CR_RX_TIMEOUT			CTL_REG(0x062C)
+
 /* Basic rates supported by the BSS. When producing ACK or CTS messages, the
  * device will use a rate in this table that is less than or equal to the rate
- * of the incoming frame which prompted the response */
+ * of the incoming frame which prompted the response. */
 #define CR_BASIC_RATE_TBL		CTL_REG(0x0630)
 #define CR_RATE_1M	(1 <<  0)	/* 802.11b */
 #define CR_RATE_2M	(1 <<  1)	/* 802.11b */
@@ -485,6 +489,7 @@ enum {
 
 #define CR_RX_OFFSET			CTL_REG(0x065c)
 
+#define CR_BCN_LENGTH			CTL_REG(0x0664)
 #define CR_PHY_DELAY			CTL_REG(0x066C)
 #define CR_BCN_FIFO			CTL_REG(0x0670)
 #define CR_SNIFFER_ON			CTL_REG(0x0674)
@@ -509,14 +514,40 @@ enum {
 #define CR_UNDERRUN_CNT			CTL_REG(0x0688)
 
 #define CR_RX_FILTER			CTL_REG(0x068c)
+#define RX_FILTER_ASSOC_REQUEST		(1 <<  0)
 #define RX_FILTER_ASSOC_RESPONSE	(1 <<  1)
+#define RX_FILTER_REASSOC_REQUEST	(1 <<  2)
 #define RX_FILTER_REASSOC_RESPONSE	(1 <<  3)
+#define RX_FILTER_PROBE_REQUEST		(1 <<  4)
 #define RX_FILTER_PROBE_RESPONSE	(1 <<  5)
+/* bits 6 and 7 reserved */
 #define RX_FILTER_BEACON		(1 <<  8)
+#define RX_FILTER_ATIM			(1 <<  9)
 #define RX_FILTER_DISASSOC		(1 << 10)
 #define RX_FILTER_AUTH			(1 << 11)
-#define AP_RX_FILTER			0x0400feff
-#define STA_RX_FILTER			0x0000ffff
+#define RX_FILTER_DEAUTH		(1 << 12)
+#define RX_FILTER_PSPOLL		(1 << 26)
+#define RX_FILTER_RTS			(1 << 27)
+#define RX_FILTER_CTS			(1 << 28)
+#define RX_FILTER_ACK			(1 << 29)
+#define RX_FILTER_CFEND			(1 << 30)
+#define RX_FILTER_CFACK			(1 << 31)
+
+/* Enable bits for all frames you are interested in. */
+#define STA_RX_FILTER	(RX_FILTER_ASSOC_REQUEST | RX_FILTER_ASSOC_RESPONSE | \
+	RX_FILTER_REASSOC_REQUEST | RX_FILTER_REASSOC_RESPONSE | \
+	RX_FILTER_PROBE_REQUEST | RX_FILTER_PROBE_RESPONSE | \
+	(0x3 << 6) /* vendor driver sets these reserved bits */ | \
+	RX_FILTER_BEACON | RX_FILTER_ATIM | RX_FILTER_DISASSOC | \
+	RX_FILTER_AUTH | RX_FILTER_DEAUTH | \
+	(0x7 << 13) /* vendor driver sets these reserved bits */ | \
+	RX_FILTER_PSPOLL | RX_FILTER_ACK) /* 0x2400ffff */
+
+#define RX_FILTER_CTRL (RX_FILTER_RTS | RX_FILTER_CTS | \
+	RX_FILTER_CFEND | RX_FILTER_CFACK)
+
+#define BCN_MODE_AP			0x1000000
+#define BCN_MODE_IBSS			0x2000000
 
 /* Monitor mode sets filter to 0xfffff */
 
@@ -551,6 +582,11 @@ enum {
 
 /* CAM: Continuous Access Mode (power management) */
 #define CR_CAM_MODE			CTL_REG(0x0700)
+#define MODE_IBSS			0x0
+#define MODE_AP				0x1
+#define MODE_STA			0x2
+#define MODE_AP_WDS			0x3
+
 #define CR_CAM_ROLL_TB_LOW		CTL_REG(0x0704)
 #define CR_CAM_ROLL_TB_HIGH		CTL_REG(0x0708)
 #define CR_CAM_ADDRESS			CTL_REG(0x070C)
@@ -598,20 +634,38 @@ enum {
 #define CR_S_MD				CTL_REG(0x0830)
 
 #define CR_USB_DEBUG_PORT		CTL_REG(0x0888)
-
-#define CR_ZD1211B_TX_PWR_CTL1		CTL_REG(0x0b00)
-#define CR_ZD1211B_TX_PWR_CTL2		CTL_REG(0x0b04)
-#define CR_ZD1211B_TX_PWR_CTL3		CTL_REG(0x0b08)
-#define CR_ZD1211B_TX_PWR_CTL4		CTL_REG(0x0b0c)
+#define CR_ZD1211B_CWIN_MAX_MIN_AC0	CTL_REG(0x0b00)
+#define CR_ZD1211B_CWIN_MAX_MIN_AC1	CTL_REG(0x0b04)
+#define CR_ZD1211B_CWIN_MAX_MIN_AC2	CTL_REG(0x0b08)
+#define CR_ZD1211B_CWIN_MAX_MIN_AC3	CTL_REG(0x0b0c)
 #define CR_ZD1211B_AIFS_CTL1		CTL_REG(0x0b10)
 #define CR_ZD1211B_AIFS_CTL2		CTL_REG(0x0b14)
 #define CR_ZD1211B_TXOP			CTL_REG(0x0b20)
 #define CR_ZD1211B_RETRY_MAX		CTL_REG(0x0b28)
 
+/* Value for CR_ZD1211_RETRY_MAX & CR_ZD1211B_RETRY_MAX. Vendor driver uses 2,
+ * we use 0. The first rate is tried (count+2), then all next rates are tried
+ * twice, until 1 Mbits is tried. */
+#define	ZD1211_RETRY_COUNT		0
+#define	ZD1211B_RETRY_COUNT	\
+	(ZD1211_RETRY_COUNT <<  0)|	\
+	(ZD1211_RETRY_COUNT <<  8)|	\
+	(ZD1211_RETRY_COUNT << 16)|	\
+	(ZD1211_RETRY_COUNT << 24)
+
+/* Used to detect PLL lock */
+#define UW2453_INTR_REG			((zd_addr_t)0x85c1)
+
 #define CWIN_SIZE			0x007f043f
 
 
-#define HWINT_ENABLED			0x004f0000
+#define HWINT_ENABLED			\
+	(INT_TX_COMPLETE_EN|		\
+	 INT_RX_COMPLETE_EN|		\
+	 INT_RETRY_FAIL_EN|		\
+	 INT_WAKEUP_EN|			\
+	 INT_CFG_NEXT_BCN_EN)
+
 #define HWINT_DISABLED			0
 
 #define E2P_PWR_INT_GUARD		8
@@ -701,7 +755,6 @@ struct zd_chip {
 	struct mutex mutex;
 	/* Base address of FW_REG_ registers */
 	zd_addr_t fw_regs_base;
-	u8 e2p_mac[ETH_ALEN];
 	/* EepSetPoint in the vendor driver */
 	u8 pwr_cal_values[E2P_CHANNEL_COUNT];
 	/* integration values in the vendor driver */
@@ -712,7 +765,7 @@ struct zd_chip {
 	unsigned int pa_type:4,
 		patch_cck_gain:1, patch_cr157:1, patch_6m_band_edge:1,
 		new_phy_layout:1, al2230s_bit:1,
-		is_zd1211b:1, supports_tx_led:1;
+		supports_tx_led:1;
 };
 
 static inline struct zd_chip *zd_usb_to_chip(struct zd_usb *usb)
@@ -728,11 +781,17 @@ static inline struct zd_chip *zd_rf_to_chip(struct zd_rf *rf)
 #define zd_chip_dev(chip) (&(chip)->usb.intf->dev)
 
 void zd_chip_init(struct zd_chip *chip,
-	         struct net_device *netdev,
+	         struct ieee80211_hw *hw,
 	         struct usb_interface *intf);
 void zd_chip_clear(struct zd_chip *chip);
-int zd_chip_init_hw(struct zd_chip *chip, u8 device_type);
+int zd_chip_read_mac_addr_fw(struct zd_chip *chip, u8 *addr);
+int zd_chip_init_hw(struct zd_chip *chip);
 int zd_chip_reset(struct zd_chip *chip);
+
+static inline int zd_chip_is_zd1211b(struct zd_chip *chip)
+{
+	return chip->usb.is_zd1211b;
+}
 
 static inline int zd_ioread16v_locked(struct zd_chip *chip, u16 *values,
 	                              const zd_addr_t *addresses,
@@ -822,21 +881,18 @@ static inline u8 _zd_chip_get_channel(struct zd_chip *chip)
 }
 u8  zd_chip_get_channel(struct zd_chip *chip);
 int zd_read_regdomain(struct zd_chip *chip, u8 *regdomain);
-void zd_get_e2p_mac_addr(struct zd_chip *chip, u8 *mac_addr);
-int zd_read_mac_addr(struct zd_chip *chip, u8 *mac_addr);
 int zd_write_mac_addr(struct zd_chip *chip, const u8 *mac_addr);
+int zd_write_bssid(struct zd_chip *chip, const u8 *bssid);
 int zd_chip_switch_radio_on(struct zd_chip *chip);
 int zd_chip_switch_radio_off(struct zd_chip *chip);
 int zd_chip_enable_int(struct zd_chip *chip);
 void zd_chip_disable_int(struct zd_chip *chip);
-int zd_chip_enable_rx(struct zd_chip *chip);
-void zd_chip_disable_rx(struct zd_chip *chip);
+int zd_chip_enable_rxtx(struct zd_chip *chip);
+void zd_chip_disable_rxtx(struct zd_chip *chip);
 int zd_chip_enable_hwint(struct zd_chip *chip);
 int zd_chip_disable_hwint(struct zd_chip *chip);
 int zd_chip_generic_patch_6m_band(struct zd_chip *chip, int channel);
-
-int zd_chip_set_rts_cts_rate_locked(struct zd_chip *chip,
-	u8 rts_rate, int preamble);
+int zd_chip_set_rts_cts_rate_locked(struct zd_chip *chip, int preamble);
 
 static inline int zd_get_encryption_type(struct zd_chip *chip, u32 *type)
 {
@@ -853,35 +909,21 @@ static inline int zd_chip_get_basic_rates(struct zd_chip *chip, u16 *cr_rates)
 	return zd_ioread16(chip, CR_BASIC_RATE_TBL, cr_rates);
 }
 
-int zd_chip_set_basic_rates_locked(struct zd_chip *chip, u16 cr_rates);
-
-static inline int zd_chip_set_basic_rates(struct zd_chip *chip, u16 cr_rates)
-{
-	int r;
-
-	mutex_lock(&chip->mutex);
-	r = zd_chip_set_basic_rates_locked(chip, cr_rates);
-	mutex_unlock(&chip->mutex);
-	return r;
-}
-
-static inline int zd_chip_set_rx_filter(struct zd_chip *chip, u32 filter)
-{
-	return zd_iowrite32(chip, CR_RX_FILTER, filter);
-}
+int zd_chip_set_basic_rates(struct zd_chip *chip, u16 cr_rates);
 
 int zd_chip_lock_phy_regs(struct zd_chip *chip);
 int zd_chip_unlock_phy_regs(struct zd_chip *chip);
 
 enum led_status {
-	LED_OFF = 0,
-	LED_SCANNING = 1,
-	LED_ASSOCIATED = 2,
+	ZD_LED_OFF = 0,
+	ZD_LED_SCANNING = 1,
+	ZD_LED_ASSOCIATED = 2,
 };
 
 int zd_chip_control_leds(struct zd_chip *chip, enum led_status status);
 
-int zd_set_beacon_interval(struct zd_chip *chip, u32 interval);
+int zd_set_beacon_interval(struct zd_chip *chip, u16 interval, u8 dtim_period,
+			   int type);
 
 static inline int zd_get_beacon_interval(struct zd_chip *chip, u32 *interval)
 {
@@ -890,11 +932,7 @@ static inline int zd_get_beacon_interval(struct zd_chip *chip, u32 *interval)
 
 struct rx_status;
 
-u8 zd_rx_qual_percent(const void *rx_frame, unsigned int size,
-	               const struct rx_status *status);
-u8 zd_rx_strength_percent(u8 rssi);
-
-u16 zd_rx_rate(const void *rx_frame, const struct rx_status *status);
+u8 zd_rx_rate(const void *rx_frame, const struct rx_status *status);
 
 struct zd_mc_hash {
 	u32 low;
@@ -927,5 +965,7 @@ static inline void zd_mc_add_addr(struct zd_mc_hash *hash, u8 *addr)
 
 int zd_chip_set_multicast_hash(struct zd_chip *chip,
 	                       struct zd_mc_hash *hash);
+
+u64 zd_chip_get_tsf(struct zd_chip *chip);
 
 #endif /* _ZD_CHIP_H */

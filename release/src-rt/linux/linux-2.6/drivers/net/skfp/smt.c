@@ -19,6 +19,7 @@
 #include "h/smc.h"
 #include "h/smt_p.h"
 #include <linux/bitrev.h>
+#include <linux/kernel.h>
 
 #define KERNEL
 #include "h/smtstate.h"
@@ -52,16 +53,6 @@ static const char *const smt_class_name[] = {
 static const struct fddi_addr SMT_Unknown = {
 	{ 0,0,0x1f,0,0,0 }
 } ;
-
-/*
- * external variables
- */
-extern const struct fddi_addr fddi_broadcast ;
-
-/*
- * external functions
- */
-int pcm_status_twisted(struct s_smc *smc);
 
 /*
  * function prototypes
@@ -136,22 +127,22 @@ static inline int is_my_addr(const struct s_smc *smc,
 
 static inline int is_broadcast(const struct fddi_addr *addr)
 {
-	return(*(u_short *)(&addr->a[0]) == 0xffff &&
+	return *(u_short *)(&addr->a[0]) == 0xffff &&
 	       *(u_short *)(&addr->a[2]) == 0xffff &&
-	       *(u_short *)(&addr->a[4]) == 0xffff ) ;
+	       *(u_short *)(&addr->a[4]) == 0xffff;
 }
 
 static inline int is_individual(const struct fddi_addr *addr)
 {
-	return(!(addr->a[0] & GROUP_ADDR)) ;
+	return !(addr->a[0] & GROUP_ADDR);
 }
 
 static inline int is_equal(const struct fddi_addr *addr1, 
 			   const struct fddi_addr *addr2)
 {
-	return(*(u_short *)(&addr1->a[0]) == *(u_short *)(&addr2->a[0]) &&
+	return *(u_short *)(&addr1->a[0]) == *(u_short *)(&addr2->a[0]) &&
 	       *(u_short *)(&addr1->a[2]) == *(u_short *)(&addr2->a[2]) &&
-	       *(u_short *)(&addr1->a[4]) == *(u_short *)(&addr2->a[4]) ) ;
+	       *(u_short *)(&addr1->a[4]) == *(u_short *)(&addr2->a[4]);
 }
 
 /*
@@ -228,7 +219,7 @@ void smt_emulate_token_ct(struct s_smc *smc, int mac_index)
 
 	/*
 	 * Only when ring is up we will have a token count. The
-	 * flag is unfortunatly a single instance value. This
+	 * flag is unfortunately a single instance value. This
 	 * doesn't matter now, because we currently have only
 	 * one MAC instance.
 	 */
@@ -466,8 +457,8 @@ static int div_ratio(u_long upper, u_long lower)
 	else
 		upper <<= 16L ;
 	if (!lower)
-		return(0) ;
-	return((int)(upper/lower)) ;
+		return 0;
+	return (int)(upper/lower) ;
 }
 
 #ifndef	SLIM_SMT
@@ -583,7 +574,7 @@ void smt_received_pack(struct s_smc *smc, SMbuf *mb, int fs)
 		if (smt_check_para(smc,sm,plist_nif)) {
 			DB_SMT("SMT: NIF with para problem, ignoring\n",0,0) ;
 			break ;
-		} ;
+		}
 		switch (sm->smt_type) {
 		case SMT_ANNOUNCE :
 		case SMT_REQUEST :
@@ -712,7 +703,7 @@ void smt_received_pack(struct s_smc *smc, SMbuf *mb, int fs)
 			smc->mib.priv.fddiPRIVECF_Reply_Rx++ ;
 			DB_SMT("SMT: received ECF reply from %s\n",
 				addr_to_string(&sm->smt_source),0) ;
-			if (sm_to_para(smc,sm,SMT_P_ECHODATA) == 0) {
+			if (sm_to_para(smc,sm,SMT_P_ECHODATA) == NULL) {
 				DB_SMT("SMT: ECHODATA missing\n",0,0) ;
 				break ;
 			}
@@ -1120,11 +1111,11 @@ SMbuf *smt_build_frame(struct s_smc *smc, int class, int type,
 
 #if	0
 	if (!smc->r.sm_ma_avail) {
-		return(0) ;
+		return 0;
 	}
 #endif
 	if (!(mb = smt_get_mbuf(smc)))
-		return(mb) ;
+		return mb;
 
 	mb->sm_len = length ;
 	smt = smtod(mb, struct smt_header *) ;
@@ -1145,7 +1136,7 @@ SMbuf *smt_build_frame(struct s_smc *smc, int class, int type,
 	smt->smt_tid = smt_get_tid(smc) ;	/* set transaction ID */
 	smt->smt_pad = 0 ;
 	smt->smt_len = length - sizeof(struct smt_header) ;
-	return(mb) ;
+	return mb;
 }
 
 static void smt_add_frame_len(SMbuf *mb, int len)
@@ -1272,7 +1263,7 @@ void smt_set_timestamp(struct s_smc *smc, u_char *p)
 static void smt_fill_policy(struct s_smc *smc, struct smt_p_policy *policy)
 {
 	int	i ;
-	u_char	*map ;
+	const u_char *map ;
 	u_short	in ;
 	u_short	out ;
 
@@ -1280,7 +1271,7 @@ static void smt_fill_policy(struct s_smc *smc, struct smt_p_policy *policy)
 	 * MIB para 101b (fddiSMTConnectionPolicy) coding
 	 * is different from 0005 coding
 	 */
-	static u_char	ansi_weirdness[16] = {
+	static const u_char ansi_weirdness[16] = {
 		0,7,5,3,8,1,6,4,9,10,2,11,12,13,14,15
 	} ;
 	SMTSETPARA(policy,SMT_P_POLICY) ;
@@ -1384,7 +1375,7 @@ static int smt_fill_path(struct s_smc *smc, struct smt_p_path *path)
 	pd_mac = (struct smt_mac_rec *) phy ;
 	pd_mac->mac_addr = smc->mib.m[MAC0].fddiMACSMTAddress ;
 	pd_mac->mac_resource_idx = mac_con_resource_index(smc,1) ;
-	return(len) ;
+	return len;
 }
 
 /*
@@ -1572,7 +1563,7 @@ u_long smt_get_tid(struct s_smc *smc)
 	u_long	tid ;
 	while ((tid = ++(smc->sm.smt_tid) ^ SMT_TID_MAGIC) == 0)
 		;
-	return(tid & 0x3fffffffL) ;
+	return tid & 0x3fffffffL;
 }
 
 
@@ -1654,7 +1645,7 @@ static const struct smt_pdef {
 	{ SMT_P4053,	0,	SWAP_SMT_P4053			} ,
 } ;
 
-#define N_SMT_PLEN	(sizeof(smt_pdef)/sizeof(smt_pdef[0]))
+#define N_SMT_PLEN	ARRAY_SIZE(smt_pdef)
 
 int smt_check_para(struct s_smc *smc, struct smt_header	*sm,
 		   const u_short list[])
@@ -1663,11 +1654,11 @@ int smt_check_para(struct s_smc *smc, struct smt_header	*sm,
 	while (*p) {
 		if (!sm_to_para(smc,sm,(int) *p)) {
 			DB_SMT("SMT: smt_check_para - missing para %x\n",*p,0);
-			return(-1) ;
+			return -1;
 		}
 		p++ ;
 	}
-	return(0) ;
+	return 0;
 }
 
 void *sm_to_para(struct s_smc *smc, struct smt_header *sm, int para)
@@ -1696,7 +1687,7 @@ void *sm_to_para(struct s_smc *smc, struct smt_header *sm, int para)
 			return NULL;
 		}
 		if (found)
-			return(found) ;
+			return found;
 	}
 	return NULL;
 }
@@ -1730,20 +1721,18 @@ void fddi_send_antc(struct s_smc *smc, struct fddi_addr *dest)
 #endif
 
 #ifdef	DEBUG
-#define hextoasc(x)	"0123456789abcdef"[x]
-
 char *addr_to_string(struct fddi_addr *addr)
 {
 	int	i ;
 	static char	string[6*3] = "****" ;
 
 	for (i = 0 ; i < 6 ; i++) {
-		string[i*3] = hextoasc((addr->a[i]>>4)&0xf) ;
-		string[i*3+1] = hextoasc((addr->a[i])&0xf) ;
-		string[i*3+2] = ':' ;
+		string[i * 3] = hex_asc_hi(addr->a[i]);
+		string[i * 3 + 1] = hex_asc_lo(addr->a[i]);
+		string[i * 3 + 2] = ':';
 	}
-	string[5*3+2] = 0 ;
-	return(string) ;
+	string[5 * 3 + 2] = 0;
+	return string;
 }
 #endif
 
@@ -1753,9 +1742,9 @@ int smt_ifconfig(int argc, char *argv[])
 	if (argc >= 2 && !strcmp(argv[0],"opt_bypass") &&
 	    !strcmp(argv[1],"yes")) {
 		smc->mib.fddiSMTBypassPresent = 1 ;
-		return(0) ;
+		return 0;
 	}
-	return(amdfddi_config(0,argc,argv)) ;
+	return amdfddi_config(0, argc, argv);
 }
 #endif
 
@@ -1767,9 +1756,9 @@ static int mac_index(struct s_smc *smc, int mac)
 	SK_UNUSED(mac) ;
 #ifdef	CONCENTRATOR
 	SK_UNUSED(smc) ;
-	return(NUMPHYS+1) ;
+	return NUMPHYS + 1;
 #else
-	return((smc->s.sas == SMT_SAS) ? 2 : 3) ;
+	return (smc->s.sas == SMT_SAS) ? 2 : 3;
 #endif
 }
 
@@ -1779,7 +1768,7 @@ static int mac_index(struct s_smc *smc, int mac)
 static int phy_index(struct s_smc *smc, int phy)
 {
 	SK_UNUSED(smc) ;
-	return(phy+1);
+	return phy + 1;
 }
 
 /*
@@ -1790,19 +1779,19 @@ static int mac_con_resource_index(struct s_smc *smc, int mac)
 #ifdef	CONCENTRATOR
 	SK_UNUSED(smc) ;
 	SK_UNUSED(mac) ;
-	return(entity_to_index(smc,cem_get_downstream(smc,ENTITY_MAC))) ;
+	return entity_to_index(smc, cem_get_downstream(smc, ENTITY_MAC));
 #else
 	SK_UNUSED(mac) ;
 	switch (smc->mib.fddiSMTCF_State) {
 	case SC9_C_WRAP_A :
 	case SC5_THRU_B :
 	case SC11_C_WRAP_S :
-		return(1) ;
+		return 1;
 	case SC10_C_WRAP_B :
 	case SC4_THRU_A :
-		return(2) ;
+		return 2;
 	}
-	return(smc->s.sas == SMT_SAS ? 2 : 3) ;
+	return smc->s.sas == SMT_SAS ? 2 : 3;
 #endif
 }
 
@@ -1812,21 +1801,21 @@ static int mac_con_resource_index(struct s_smc *smc, int mac)
 static int phy_con_resource_index(struct s_smc *smc, int phy)
 {
 #ifdef	CONCENTRATOR
-	return(entity_to_index(smc,cem_get_downstream(smc,ENTITY_PHY(phy)))) ;
+	return entity_to_index(smc, cem_get_downstream(smc, ENTITY_PHY(phy))) ;
 #else
 	switch (smc->mib.fddiSMTCF_State) {
 	case SC9_C_WRAP_A :
-		return(phy == PA ? 3 : 2) ;
+		return phy == PA ? 3 : 2;
 	case SC10_C_WRAP_B :
-		return(phy == PA ? 1 : 3) ;
+		return phy == PA ? 1 : 3;
 	case SC4_THRU_A :
-		return(phy == PA ? 3 : 1) ;
+		return phy == PA ? 3 : 1;
 	case SC5_THRU_B :
-		return(phy == PA ? 2 : 3) ;
+		return phy == PA ? 2 : 3;
 	case SC11_C_WRAP_S :
-		return(2) ;
+		return 2;
 	}
-	return(phy) ;
+	return phy;
 #endif
 }
 
@@ -1834,16 +1823,16 @@ static int phy_con_resource_index(struct s_smc *smc, int phy)
 static int entity_to_index(struct s_smc *smc, int e)
 {
 	if (e == ENTITY_MAC)
-		return(mac_index(smc,1)) ;
+		return mac_index(smc, 1);
 	else
-		return(phy_index(smc,e - ENTITY_PHY(0))) ;
+		return phy_index(smc, e - ENTITY_PHY(0));
 }
 #endif
 
 #ifdef	LITTLE_ENDIAN
 static int smt_swap_short(u_short s)
 {
-	return(((s>>8)&0xff)|((s&0xff)<<8)) ;
+	return ((s>>8)&0xff) | ((s&0xff)<<8);
 }
 
 void smt_swap_para(struct smt_header *sm, int len, int direction)
@@ -2007,7 +1996,7 @@ int smt_action(struct s_smc *smc, int class, int code, int index)
 			}
 			break ;
 		default :
-			return(1) ;
+			return 1;
 		}
 		break ;
 	case SMT_PORT_ACTION :
@@ -2028,14 +2017,14 @@ int smt_action(struct s_smc *smc, int class, int code, int index)
 			event = PC_STOP ;
 			break ;
 		default :
-			return(1) ;
+			return 1;
 		}
 		queue_event(smc,EVENT_PCM+index,event) ;
 		break ;
 	default :
-		return(1) ;
+		return 1;
 	}
-	return(0) ;
+	return 0;
 }
 
 /*

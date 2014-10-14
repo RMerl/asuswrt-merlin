@@ -45,7 +45,7 @@ struct queue_item {
 static struct kmem_cache *tipc_queue_item_cache;
 static struct list_head signal_queue_head;
 static DEFINE_SPINLOCK(qitem_lock);
-static int handler_enabled = 0;
+static int handler_enabled;
 
 static void process_signal_queue(unsigned long dummy);
 
@@ -97,7 +97,7 @@ int tipc_handler_start(void)
 {
 	tipc_queue_item_cache =
 		kmem_cache_create("tipc_queue_items", sizeof(struct queue_item),
-				  0, SLAB_HWCACHE_ALIGN, NULL, NULL);
+				  0, SLAB_HWCACHE_ALIGN, NULL);
 	if (!tipc_queue_item_cache)
 		return -ENOMEM;
 

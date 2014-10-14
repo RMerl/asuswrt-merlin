@@ -26,41 +26,73 @@ _GLOBAL(__copy_tofrom_user)
 	andi.	r6,r6,7
 	PPC_MTOCRF	0x01,r5
 	blt	cr1,.Lshort_copy
+/* Below we want to nop out the bne if we're on a CPU that has the
+ * CPU_FTR_UNALIGNED_LD_STD bit set and the CPU_FTR_CP_USE_DCBTZ bit
+ * cleared.
+ * At the time of writing the only CPU that has this combination of bits
+ * set is Power6.
+ */
+BEGIN_FTR_SECTION
+	nop
+FTR_SECTION_ELSE
 	bne	.Ldst_unaligned
+ALT_FTR_SECTION_END(CPU_FTR_UNALIGNED_LD_STD | CPU_FTR_CP_USE_DCBTZ, \
+		    CPU_FTR_UNALIGNED_LD_STD)
 .Ldst_aligned:
-	andi.	r0,r4,7
 	addi	r3,r3,-16
+BEGIN_FTR_SECTION
+	andi.	r0,r4,7
 	bne	.Lsrc_unaligned
-	srdi	r7,r5,4
-20:	ld	r9,0(r4)
-	addi	r4,r4,-8
-	mtctr	r7
-	andi.	r5,r5,7
-	bf	cr7*4+0,22f
-	addi	r3,r3,8
-	addi	r4,r4,8
-	mr	r8,r9
-	blt	cr1,72f
-21:	ld	r9,8(r4)
-70:	std	r8,8(r3)
-22:	ldu	r8,16(r4)
-71:	stdu	r9,16(r3)
-	bdnz	21b
-72:	std	r8,8(r3)
-	beq+	3f
+END_FTR_SECTION_IFCLR(CPU_FTR_UNALIGNED_LD_STD)
+	blt	cr1,.Ldo_tail		/* if < 16 bytes to copy */
+	srdi	r0,r5,5
+	cmpdi	cr1,r0,0
+20:	ld	r7,0(r4)
+220:	ld	r6,8(r4)
+	addi	r4,r4,16
+	mtctr	r0
+	andi.	r0,r5,0x10
+	beq	22f
 	addi	r3,r3,16
-23:	ld	r9,8(r4)
+	addi	r4,r4,-16
+	mr	r9,r7
+	mr	r8,r6
+	beq	cr1,72f
+21:	ld	r7,16(r4)
+221:	ld	r6,24(r4)
+	addi	r4,r4,32
+70:	std	r9,0(r3)
+270:	std	r8,8(r3)
+22:	ld	r9,0(r4)
+222:	ld	r8,8(r4)
+71:	std	r7,16(r3)
+271:	std	r6,24(r3)
+	addi	r3,r3,32
+	bdnz	21b
+72:	std	r9,0(r3)
+272:	std	r8,8(r3)
+	andi.	r5,r5,0xf
+	beq+	3f
+	addi	r4,r4,16
 .Ldo_tail:
-	bf	cr7*4+1,1f
-	rotldi	r9,r9,32
+	addi	r3,r3,16
+	bf	cr7*4+0,246f
+244:	ld	r9,0(r4)
+	addi	r4,r4,8
+245:	std	r9,0(r3)
+	addi	r3,r3,8
+246:	bf	cr7*4+1,1f
+23:	lwz	r9,0(r4)
+	addi	r4,r4,4
 73:	stw	r9,0(r3)
 	addi	r3,r3,4
 1:	bf	cr7*4+2,2f
-	rotldi	r9,r9,16
+44:	lhz	r9,0(r4)
+	addi	r4,r4,2
 74:	sth	r9,0(r3)
 	addi	r3,r3,2
 2:	bf	cr7*4+3,3f
-	rotldi	r9,r9,8
+45:	lbz	r9,0(r4)
 75:	stb	r9,0(r3)
 3:	li	r3,0
 	blr
@@ -128,17 +160,30 @@ _GLOBAL(__copy_tofrom_user)
 6:	cmpwi	cr1,r5,8
 	addi	r3,r3,32
 	sld	r9,r9,r10
-	ble	cr1,.Ldo_tail
+	ble	cr1,7f
 34:	ld	r0,8(r4)
 	srd	r7,r0,r11
 	or	r9,r7,r9
-	b	.Ldo_tail
+7:
+	bf	cr7*4+1,1f
+	rotldi	r9,r9,32
+94:	stw	r9,0(r3)
+	addi	r3,r3,4
+1:	bf	cr7*4+2,2f
+	rotldi	r9,r9,16
+95:	sth	r9,0(r3)
+	addi	r3,r3,2
+2:	bf	cr7*4+3,3f
+	rotldi	r9,r9,8
+96:	stb	r9,0(r3)
+3:	li	r3,0
+	blr
 
 .Ldst_unaligned:
 	PPC_MTOCRF	0x01,r6		/* put #bytes to 8B bdry into cr7 */
 	subf	r5,r6,r5
 	li	r7,0
-	cmpldi	r1,r5,16
+	cmpldi	cr1,r5,16
 	bf	cr7*4+3,1f
 35:	lbz	r0,0(r4)
 81:	stb	r0,0(r3)
@@ -193,7 +238,9 @@ _GLOBAL(__copy_tofrom_user)
 131:
 	addi	r3,r3,8
 120:
+320:
 122:
+322:
 124:
 125:
 126:
@@ -202,10 +249,11 @@ _GLOBAL(__copy_tofrom_user)
 129:
 133:
 	addi	r3,r3,8
-121:
 132:
 	addi	r3,r3,8
-123:
+121:
+321:
+344:
 134:
 135:
 138:
@@ -213,6 +261,9 @@ _GLOBAL(__copy_tofrom_user)
 140:
 141:
 142:
+123:
+144:
+145:
 
 /*
  * here we have had a fault on a load and r3 points to the first
@@ -274,18 +325,22 @@ _GLOBAL(__copy_tofrom_user)
 183:
 	add	r3,r3,r7
 	b	1f
+371:
 180:
 	addi	r3,r3,8
 171:
 177:
 	addi	r3,r3,8
-170:
-172:
+370:
+372:
 176:
 178:
 	addi	r3,r3,4
 185:
 	addi	r3,r3,4
+170:
+172:
+345:
 173:
 174:
 175:
@@ -296,6 +351,9 @@ _GLOBAL(__copy_tofrom_user)
 187:
 188:
 189:	
+194:
+195:
+196:
 1:
 	ld	r6,-24(r1)
 	ld	r5,-8(r1)
@@ -309,14 +367,24 @@ _GLOBAL(__copy_tofrom_user)
 	.section __ex_table,"a"
 	.align	3
 	.llong	20b,120b
+	.llong	220b,320b
 	.llong	21b,121b
+	.llong	221b,321b
 	.llong	70b,170b
+	.llong	270b,370b
 	.llong	22b,122b
+	.llong	222b,322b
 	.llong	71b,171b
+	.llong	271b,371b
 	.llong	72b,172b
+	.llong	272b,372b
+	.llong	244b,344b
+	.llong	245b,345b
 	.llong	23b,123b
 	.llong	73b,173b
+	.llong	44b,144b
 	.llong	74b,174b
+	.llong	45b,145b
 	.llong	75b,175b
 	.llong	24b,124b
 	.llong	25b,125b
@@ -334,6 +402,9 @@ _GLOBAL(__copy_tofrom_user)
 	.llong	79b,179b
 	.llong	80b,180b
 	.llong	34b,134b
+	.llong	94b,194b
+	.llong	95b,195b
+	.llong	96b,196b
 	.llong	35b,135b
 	.llong	81b,181b
 	.llong	36b,136b

@@ -25,10 +25,9 @@
 #include <linux/types.h>
 #include <linux/init.h>
 #include <linux/module.h>
-#include <linux/moduleparam.h>
 #include <linux/proc_fs.h>
 #include <linux/kernel.h>
-#include <asm/bitops.h>
+#include <linux/bitops.h>
 
 #include "av7110.h"
 #include "av7110_hw.h"
@@ -134,7 +133,7 @@ static void av7110_emit_key(unsigned long parm)
 		break;
 
 	default:
-		printk("%s invalid protocol %x\n", __FUNCTION__, ir->protocol);
+		printk("%s invalid protocol %x\n", __func__, ir->protocol);
 		return;
 	}
 
@@ -144,7 +143,7 @@ static void av7110_emit_key(unsigned long parm)
 	keycode = ir->key_map[data];
 
 	dprintk(16, "%s: code %08x -> addr %i data 0x%02x -> keycode %i\n",
-		__FUNCTION__, ircom, addr, data, keycode);
+		__func__, ircom, addr, data, keycode);
 
 	/* check device address */
 	if (!(ir->device_mask & (1 << addr)))
@@ -152,7 +151,7 @@ static void av7110_emit_key(unsigned long parm)
 
 	if (!keycode) {
 		printk ("%s: code %08x -> addr %i data 0x%02x -> unknown key!\n",
-			__FUNCTION__, ircom, addr, data);
+			__func__, ircom, addr, data);
 		return;
 	}
 
@@ -269,8 +268,8 @@ int av7110_check_ir_config(struct av7110 *av7110, int force)
 
 
 /* /proc/av7110_ir interface */
-static int av7110_ir_write_proc(struct file *file, const char __user *buffer,
-				unsigned long count, void *data)
+static ssize_t av7110_ir_proc_write(struct file *file, const char __user *buffer,
+				    size_t count, loff_t *pos)
 {
 	char *page;
 	u32 ir_config;
@@ -280,7 +279,7 @@ static int av7110_ir_write_proc(struct file *file, const char __user *buffer,
 	if (count < size)
 		return -EINVAL;
 
-	page = (char *) vmalloc(size);
+	page = vmalloc(size);
 	if (!page)
 		return -ENOMEM;
 
@@ -310,6 +309,11 @@ static int av7110_ir_write_proc(struct file *file, const char __user *buffer,
 	return count;
 }
 
+static const struct file_operations av7110_ir_proc_fops = {
+	.owner		= THIS_MODULE,
+	.write		= av7110_ir_proc_write,
+	.llseek		= noop_llseek,
+};
 
 /* interrupt handler */
 static void ir_handler(struct av7110 *av7110, u32 ircom)
@@ -356,7 +360,7 @@ int __devinit av7110_ir_init(struct av7110 *av7110)
 		input_dev->id.vendor = av7110->dev->pci->vendor;
 		input_dev->id.product = av7110->dev->pci->device;
 	}
-	input_dev->cdev.dev = &av7110->dev->pci->dev;
+	input_dev->dev.parent = &av7110->dev->pci->dev;
 	/* initial keymap */
 	memcpy(av7110->ir.key_map, default_key_map, sizeof av7110->ir.key_map);
 	input_register_keys(&av7110->ir);
@@ -369,11 +373,9 @@ int __devinit av7110_ir_init(struct av7110 *av7110)
 	input_dev->timer.data = (unsigned long) &av7110->ir;
 
 	if (av_cnt == 1) {
-		e = create_proc_entry("av7110_ir", S_IFREG | S_IRUGO | S_IWUSR, NULL);
-		if (e) {
-			e->write_proc = av7110_ir_write_proc;
+		e = proc_create("av7110_ir", S_IWUSR, NULL, &av7110_ir_proc_fops);
+		if (e)
 			e->size = 4 + 256 * sizeof(u16);
-		}
 	}
 
 	tasklet_init(&av7110->ir.ir_tasklet, av7110_emit_key, (unsigned long) &av7110->ir);

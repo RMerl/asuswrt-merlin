@@ -17,24 +17,28 @@
  * James McMechan
  */
 
-#define MAJOR_NR UBD_MAJOR
 #define UBD_SHIFT 4
 
 #include "linux/kernel.h"
 #include "linux/module.h"
 #include "linux/blkdev.h"
+#include "linux/ata.h"
 #include "linux/hdreg.h"
 #include "linux/init.h"
 #include "linux/cdrom.h"
 #include "linux/proc_fs.h"
+#include "linux/seq_file.h"
 #include "linux/ctype.h"
 #include "linux/capability.h"
 #include "linux/mm.h"
+#include "linux/slab.h"
 #include "linux/vmalloc.h"
+#include "linux/mutex.h"
 #include "linux/blkpg.h"
 #include "linux/genhd.h"
 #include "linux/spinlock.h"
 #include "linux/platform_device.h"
+#include "linux/scatterlist.h"
 #include "asm/segment.h"
 #include "asm/uaccess.h"
 #include "asm/irq.h"
@@ -70,18 +74,6 @@ struct io_thread_req {
 	int error;
 };
 
-extern int open_ubd_file(char *file, struct openflags *openflags, int shared,
-			 char **backing_file_out, int *bitmap_offset_out,
-			 unsigned long *bitmap_len_out, int *data_offset_out,
-			 int *create_cow_out);
-extern int create_cow_file(char *cow_file, char *backing_file,
-			   struct openflags flags, int sectorsize,
-			   int alignment, int *bitmap_offset_out,
-			   unsigned long *bitmap_len_out,
-			   int *data_offset_out);
-extern int read_cow_bitmap(int fd, void *buf, int offset, int len);
-extern void do_io(struct io_thread_req *req);
-
 static inline int ubd_test_bit(__u64 bit, unsigned char *data)
 {
 	__u64 n;
@@ -108,16 +100,17 @@ static inline void ubd_set_bit(__u64 bit, unsigned char *data)
 #define DRIVER_NAME "uml-blkdev"
 
 static DEFINE_MUTEX(ubd_lock);
+static DEFINE_MUTEX(ubd_mutex); /* replaces BKL, might not be needed */
 
-static int ubd_open(struct inode * inode, struct file * filp);
-static int ubd_release(struct inode * inode, struct file * file);
-static int ubd_ioctl(struct inode * inode, struct file * file,
+static int ubd_open(struct block_device *bdev, fmode_t mode);
+static int ubd_release(struct gendisk *disk, fmode_t mode);
+static int ubd_ioctl(struct block_device *bdev, fmode_t mode,
 		     unsigned int cmd, unsigned long arg);
 static int ubd_getgeo(struct block_device *bdev, struct hd_geometry *geo);
 
 #define MAX_DEV (16)
 
-static struct block_device_operations ubd_blops = {
+static const struct block_device_operations ubd_blops = {
         .owner		= THIS_MODULE,
         .open		= ubd_open,
         .release	= ubd_release,
@@ -126,7 +119,7 @@ static struct block_device_operations ubd_blops = {
 };
 
 /* Protected by ubd_lock */
-static int fake_major = MAJOR_NR;
+static int fake_major = UBD_MAJOR;
 static struct gendisk *ubd_gendisk[MAX_DEV];
 static struct gendisk *fake_gendisk[MAX_DEV];
 
@@ -171,6 +164,7 @@ struct ubd {
 	struct scatterlist sg[MAX_SG];
 	struct request *request;
 	int start_sg, end_sg;
+	sector_t rq_pos;
 };
 
 #define DEFAULT_COW { \
@@ -191,14 +185,15 @@ struct ubd {
 	.no_cow =               0, \
 	.shared =		0, \
 	.cow =			DEFAULT_COW, \
-	.lock =			SPIN_LOCK_UNLOCKED,	\
+	.lock =			__SPIN_LOCK_UNLOCKED(ubd_devs.lock), \
 	.request =		NULL, \
 	.start_sg =		0, \
 	.end_sg =		0, \
+	.rq_pos =		0, \
 }
 
 /* Protected by ubd_lock */
-struct ubd ubd_devs[MAX_DEV] = { [ 0 ... MAX_DEV - 1 ] = DEFAULT_UBD };
+static struct ubd ubd_devs[MAX_DEV] = { [0 ... MAX_DEV - 1] = DEFAULT_UBD };
 
 /* Only changed by fake_ide_setup which is a setup */
 static int fake_ide = 0;
@@ -211,24 +206,26 @@ static void make_proc_ide(void)
 	proc_ide = proc_mkdir("ide0", proc_ide_root);
 }
 
-static int proc_ide_read_media(char *page, char **start, off_t off, int count,
-			       int *eof, void *data)
+static int fake_ide_media_proc_show(struct seq_file *m, void *v)
 {
-	int len;
-
-	strcpy(page, "disk\n");
-	len = strlen("disk\n");
-	len -= off;
-	if (len < count){
-		*eof = 1;
-		if (len <= 0) return 0;
-	}
-	else len = count;
-	*start = page + off;
-	return len;
+	seq_puts(m, "disk\n");
+	return 0;
 }
 
-static void make_ide_entries(char *dev_name)
+static int fake_ide_media_proc_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, fake_ide_media_proc_show, NULL);
+}
+
+static const struct file_operations fake_ide_media_proc_fops = {
+	.owner		= THIS_MODULE,
+	.open		= fake_ide_media_proc_open,
+	.read		= seq_read,
+	.llseek		= seq_lseek,
+	.release	= single_release,
+};
+
+static void make_ide_entries(const char *dev_name)
 {
 	struct proc_dir_entry *dir, *ent;
 	char name[64];
@@ -238,12 +235,9 @@ static void make_ide_entries(char *dev_name)
 	dir = proc_mkdir(dev_name, proc_ide);
 	if(!dir) return;
 
-	ent = create_proc_entry("media", S_IFREG|S_IRUGO, dir);
+	ent = proc_create("media", S_IRUGO, dir, &fake_ide_media_proc_fops);
 	if(!ent) return;
-	ent->data = NULL;
-	ent->read_proc = proc_ide_read_media;
-	ent->write_proc = NULL;
-	sprintf(name,"ide0/%s", dev_name);
+	snprintf(name, sizeof(name), "ide0/%s", dev_name);
 	proc_symlink(dev_name, proc_ide_root, name);
 }
 
@@ -310,7 +304,7 @@ static int ubd_setup_common(char *str, int *index_out, char **error_out)
 		}
 
 		mutex_lock(&ubd_lock);
-		if(fake_major != MAJOR_NR){
+		if (fake_major != UBD_MAJOR) {
 			*error_out = "Can't assign a fake major twice";
 			goto out1;
 		}
@@ -436,7 +430,10 @@ __uml_help(ubd_setup,
 "    machine by running 'dd' on the device. <n> must be in the range\n"
 "    0 to 7. Appending an 'r' to the number will cause that device\n"
 "    to be mounted read-only. For example ubd1r=./ext_fs. Appending\n"
-"    an 's' will cause data to be written to disk on the host immediately.\n\n"
+"    an 's' will cause data to be written to disk on the host immediately.\n"
+"    'c' will cause the device to be treated as being shared between multiple\n"
+"    UMLs and file locking will be turned off - this is appropriate for a\n"
+"    cluster filesystem and inappropriate at almost all other times.\n\n"
 );
 
 static int udb_setup(char *str)
@@ -455,49 +452,10 @@ __uml_help(udb_setup,
 "    in the boot output.\n\n"
 );
 
-static int fakehd_set = 0;
-static int fakehd(char *str)
-{
-	printk(KERN_INFO "fakehd : Changing ubd name to \"hd\".\n");
-	fakehd_set = 1;
-	return 1;
-}
-
-__setup("fakehd", fakehd);
-__uml_help(fakehd,
-"fakehd\n"
-"    Change the ubd device name to \"hd\".\n\n"
-);
-
-static void do_ubd_request(request_queue_t * q);
+static void do_ubd_request(struct request_queue * q);
 
 /* Only changed by ubd_init, which is an initcall. */
-int thread_fd = -1;
-
-static void ubd_end_request(struct request *req, int bytes, int uptodate)
-{
-	if (!end_that_request_first(req, uptodate, bytes >> 9)) {
-		struct ubd *dev = req->rq_disk->private_data;
-		unsigned long flags;
-
-		add_disk_randomness(req->rq_disk);
-		spin_lock_irqsave(&dev->lock, flags);
-		end_that_request_last(req, uptodate);
-		spin_unlock_irqrestore(&dev->lock, flags);
-	}
-}
-
-/* Callable only from interrupt context - otherwise you need to do
- * spin_lock_irq()/spin_lock_irqsave() */
-static inline void ubd_finish(struct request *req, int bytes)
-{
-	if(bytes < 0){
-		ubd_end_request(req, 0, 0);
-		return;
-	}
-	ubd_end_request(req, bytes, 1);
-}
-
+static int thread_fd = -1;
 static LIST_HEAD(restart);
 
 /* XXX - move this inside ubd_intr. */
@@ -505,7 +463,6 @@ static LIST_HEAD(restart);
 static void ubd_handler(void)
 {
 	struct io_thread_req *req;
-	struct request *rq;
 	struct ubd *ubd;
 	struct list_head *list, *next_ele;
 	unsigned long flags;
@@ -522,10 +479,7 @@ static void ubd_handler(void)
 			return;
 		}
 
-		rq = req->req;
-		rq->nr_sectors -= req->length >> 9;
-		if(rq->nr_sectors == 0)
-			ubd_finish(rq, rq->hard_nr_sectors << 9);
+		blk_end_request(req->req, 0, req->length);
 		kfree(req);
 	}
 	reactivate_fd(thread_fd, UBD_IRQ);
@@ -548,7 +502,7 @@ static irqreturn_t ubd_intr(int irq, void *dev)
 /* Only changed by ubd_init, which is an initcall. */
 static int io_pid = -1;
 
-void kill_io_thread(void)
+static void kill_io_thread(void)
 {
 	if(io_pid != -1)
 		os_kill_process(io_pid, 1);
@@ -562,6 +516,192 @@ static inline int ubd_file_size(struct ubd *ubd_dev, __u64 *size_out)
 
 	file = ubd_dev->cow.file ? ubd_dev->cow.file : ubd_dev->file;
 	return os_file_size(file, size_out);
+}
+
+static int read_cow_bitmap(int fd, void *buf, int offset, int len)
+{
+	int err;
+
+	err = os_seek_file(fd, offset);
+	if (err < 0)
+		return err;
+
+	err = os_read_file(fd, buf, len);
+	if (err < 0)
+		return err;
+
+	return 0;
+}
+
+static int backing_file_mismatch(char *file, __u64 size, time_t mtime)
+{
+	unsigned long modtime;
+	unsigned long long actual;
+	int err;
+
+	err = os_file_modtime(file, &modtime);
+	if (err < 0) {
+		printk(KERN_ERR "Failed to get modification time of backing "
+		       "file \"%s\", err = %d\n", file, -err);
+		return err;
+	}
+
+	err = os_file_size(file, &actual);
+	if (err < 0) {
+		printk(KERN_ERR "Failed to get size of backing file \"%s\", "
+		       "err = %d\n", file, -err);
+		return err;
+	}
+
+	if (actual != size) {
+		/*__u64 can be a long on AMD64 and with %lu GCC complains; so
+		 * the typecast.*/
+		printk(KERN_ERR "Size mismatch (%llu vs %llu) of COW header "
+		       "vs backing file\n", (unsigned long long) size, actual);
+		return -EINVAL;
+	}
+	if (modtime != mtime) {
+		printk(KERN_ERR "mtime mismatch (%ld vs %ld) of COW header vs "
+		       "backing file\n", mtime, modtime);
+		return -EINVAL;
+	}
+	return 0;
+}
+
+static int path_requires_switch(char *from_cmdline, char *from_cow, char *cow)
+{
+	struct uml_stat buf1, buf2;
+	int err;
+
+	if (from_cmdline == NULL)
+		return 0;
+	if (!strcmp(from_cmdline, from_cow))
+		return 0;
+
+	err = os_stat_file(from_cmdline, &buf1);
+	if (err < 0) {
+		printk(KERN_ERR "Couldn't stat '%s', err = %d\n", from_cmdline,
+		       -err);
+		return 0;
+	}
+	err = os_stat_file(from_cow, &buf2);
+	if (err < 0) {
+		printk(KERN_ERR "Couldn't stat '%s', err = %d\n", from_cow,
+		       -err);
+		return 1;
+	}
+	if ((buf1.ust_dev == buf2.ust_dev) && (buf1.ust_ino == buf2.ust_ino))
+		return 0;
+
+	printk(KERN_ERR "Backing file mismatch - \"%s\" requested, "
+	       "\"%s\" specified in COW header of \"%s\"\n",
+	       from_cmdline, from_cow, cow);
+	return 1;
+}
+
+static int open_ubd_file(char *file, struct openflags *openflags, int shared,
+		  char **backing_file_out, int *bitmap_offset_out,
+		  unsigned long *bitmap_len_out, int *data_offset_out,
+		  int *create_cow_out)
+{
+	time_t mtime;
+	unsigned long long size;
+	__u32 version, align;
+	char *backing_file;
+	int fd, err, sectorsize, asked_switch, mode = 0644;
+
+	fd = os_open_file(file, *openflags, mode);
+	if (fd < 0) {
+		if ((fd == -ENOENT) && (create_cow_out != NULL))
+			*create_cow_out = 1;
+		if (!openflags->w ||
+		    ((fd != -EROFS) && (fd != -EACCES)))
+			return fd;
+		openflags->w = 0;
+		fd = os_open_file(file, *openflags, mode);
+		if (fd < 0)
+			return fd;
+	}
+
+	if (shared)
+		printk(KERN_INFO "Not locking \"%s\" on the host\n", file);
+	else {
+		err = os_lock_file(fd, openflags->w);
+		if (err < 0) {
+			printk(KERN_ERR "Failed to lock '%s', err = %d\n",
+			       file, -err);
+			goto out_close;
+		}
+	}
+
+	/* Successful return case! */
+	if (backing_file_out == NULL)
+		return fd;
+
+	err = read_cow_header(file_reader, &fd, &version, &backing_file, &mtime,
+			      &size, &sectorsize, &align, bitmap_offset_out);
+	if (err && (*backing_file_out != NULL)) {
+		printk(KERN_ERR "Failed to read COW header from COW file "
+		       "\"%s\", errno = %d\n", file, -err);
+		goto out_close;
+	}
+	if (err)
+		return fd;
+
+	asked_switch = path_requires_switch(*backing_file_out, backing_file,
+					    file);
+
+	/* Allow switching only if no mismatch. */
+	if (asked_switch && !backing_file_mismatch(*backing_file_out, size,
+						   mtime)) {
+		printk(KERN_ERR "Switching backing file to '%s'\n",
+		       *backing_file_out);
+		err = write_cow_header(file, fd, *backing_file_out,
+				       sectorsize, align, &size);
+		if (err) {
+			printk(KERN_ERR "Switch failed, errno = %d\n", -err);
+			goto out_close;
+		}
+	} else {
+		*backing_file_out = backing_file;
+		err = backing_file_mismatch(*backing_file_out, size, mtime);
+		if (err)
+			goto out_close;
+	}
+
+	cow_sizes(version, size, sectorsize, align, *bitmap_offset_out,
+		  bitmap_len_out, data_offset_out);
+
+	return fd;
+ out_close:
+	os_close_file(fd);
+	return err;
+}
+
+static int create_cow_file(char *cow_file, char *backing_file,
+		    struct openflags flags,
+		    int sectorsize, int alignment, int *bitmap_offset_out,
+		    unsigned long *bitmap_len_out, int *data_offset_out)
+{
+	int err, fd;
+
+	flags.c = 1;
+	fd = open_ubd_file(cow_file, &flags, 0, NULL, NULL, NULL, NULL, NULL);
+	if (fd < 0) {
+		err = fd;
+		printk(KERN_ERR "Open of COW file '%s' failed, errno = %d\n",
+		       cow_file, -err);
+		goto out;
+	}
+
+	err = init_cow_file(fd, cow_file, backing_file, sectorsize, alignment,
+			    bitmap_offset_out, bitmap_len_out,
+			    data_offset_out);
+	if (!err)
+		return fd;
+	os_close_file(fd);
+ out:
+	return err;
 }
 
 static void ubd_close_dev(struct ubd *ubd_dev)
@@ -612,10 +752,10 @@ static int ubd_open_dev(struct ubd *ubd_dev)
 	ubd_dev->fd = fd;
 
 	if(ubd_dev->cow.file != NULL){
-		blk_queue_max_sectors(ubd_dev->queue, 8 * sizeof(long));
+		blk_queue_max_hw_sectors(ubd_dev->queue, 8 * sizeof(long));
 
 		err = -ENOMEM;
-		ubd_dev->cow.bitmap = (void *) vmalloc(ubd_dev->cow.bitmap_len);
+		ubd_dev->cow.bitmap = vmalloc(ubd_dev->cow.bitmap_len);
 		if(ubd_dev->cow.bitmap == NULL){
 			printk(KERN_ERR "Failed to vmalloc COW bitmap\n");
 			goto error;
@@ -643,7 +783,7 @@ static int ubd_open_dev(struct ubd *ubd_dev)
 
 static void ubd_device_release(struct device *dev)
 {
-	struct ubd *ubd_dev = dev->driver_data;
+	struct ubd *ubd_dev = dev_get_drvdata(dev);
 
 	blk_cleanup_queue(ubd_dev->queue);
 	*ubd_dev = ((struct ubd) DEFAULT_UBD);
@@ -662,17 +802,17 @@ static int ubd_disk_register(int major, u64 size, int unit,
 	disk->first_minor = unit << UBD_SHIFT;
 	disk->fops = &ubd_blops;
 	set_capacity(disk, size / 512);
-	if(major == MAJOR_NR)
+	if (major == UBD_MAJOR)
 		sprintf(disk->disk_name, "ubd%c", 'a' + unit);
 	else
 		sprintf(disk->disk_name, "ubd_fake%d", unit);
 
 	/* sysfs register (not for ide fake devices) */
-	if (major == MAJOR_NR) {
+	if (major == UBD_MAJOR) {
 		ubd_devs[unit].pdev.id   = unit;
 		ubd_devs[unit].pdev.name = DRIVER_NAME;
 		ubd_devs[unit].pdev.dev.release = ubd_device_release;
-		ubd_devs[unit].pdev.dev.driver_data = &ubd_devs[unit];
+		dev_set_drvdata(&ubd_devs[unit].pdev.dev, &ubd_devs[unit]);
 		platform_device_register(&ubd_devs[unit].pdev);
 		disk->driverfs_dev = &ubd_devs[unit].pdev.dev;
 	}
@@ -704,6 +844,7 @@ static int ubd_add(int n, char **error_out)
 	ubd_dev->size = ROUND_BLOCK(ubd_dev->size);
 
 	INIT_LIST_HEAD(&ubd_dev->restart);
+	sg_init_table(ubd_dev->sg, MAX_SG);
 
 	err = -ENOMEM;
 	ubd_dev->queue = blk_init_queue(do_ubd_request, &ubd_dev->lock);
@@ -713,19 +854,21 @@ static int ubd_add(int n, char **error_out)
 	}
 	ubd_dev->queue->queuedata = ubd_dev;
 
-	blk_queue_max_hw_segments(ubd_dev->queue, MAX_SG);
-	err = ubd_disk_register(MAJOR_NR, ubd_dev->size, n, &ubd_gendisk[n]);
+	blk_queue_max_segments(ubd_dev->queue, MAX_SG);
+	err = ubd_disk_register(UBD_MAJOR, ubd_dev->size, n, &ubd_gendisk[n]);
 	if(err){
 		*error_out = "Failed to register device";
 		goto out_cleanup;
 	}
 
-	if(fake_major != MAJOR_NR)
+	if (fake_major != UBD_MAJOR)
 		ubd_disk_register(fake_major, ubd_dev->size, n,
 				  &fake_gendisk[n]);
 
-	/* perhaps this should also be under the "if (fake_major)" above */
-	/* using the fake_disk->disk_name and also the fakehd_set name */
+	/*
+	 * Perhaps this should also be under the "if (fake_major)" above
+	 * using the fake_disk->disk_name
+	 */
 	if (fake_ide)
 		make_ide_entries(ubd_gendisk[n]->disk_name);
 
@@ -900,10 +1043,10 @@ static int __init ubd_init(void)
 	char *error;
 	int i, err;
 
-	if (register_blkdev(MAJOR_NR, "ubd"))
+	if (register_blkdev(UBD_MAJOR, "ubd"))
 		return -1;
 
-	if (fake_major != MAJOR_NR) {
+	if (fake_major != UBD_MAJOR) {
 		char name[sizeof("ubd_nnn\0")];
 
 		snprintf(name, sizeof(name), "ubd_%d", fake_major);
@@ -953,12 +1096,13 @@ static int __init ubd_driver_init(void){
 
 device_initcall(ubd_driver_init);
 
-static int ubd_open(struct inode *inode, struct file *filp)
+static int ubd_open(struct block_device *bdev, fmode_t mode)
 {
-	struct gendisk *disk = inode->i_bdev->bd_disk;
+	struct gendisk *disk = bdev->bd_disk;
 	struct ubd *ubd_dev = disk->private_data;
 	int err = 0;
 
+	mutex_lock(&ubd_mutex);
 	if(ubd_dev->count == 0){
 		err = ubd_open_dev(ubd_dev);
 		if(err){
@@ -972,21 +1116,23 @@ static int ubd_open(struct inode *inode, struct file *filp)
 
 	/* This should no more be needed. And it didn't work anyway to exclude
 	 * read-write remounting of filesystems.*/
-	/*if((filp->f_mode & FMODE_WRITE) && !ubd_dev->openflags.w){
+	/*if((mode & FMODE_WRITE) && !ubd_dev->openflags.w){
 	        if(--ubd_dev->count == 0) ubd_close_dev(ubd_dev);
 	        err = -EROFS;
 	}*/
- out:
+out:
+	mutex_unlock(&ubd_mutex);
 	return err;
 }
 
-static int ubd_release(struct inode * inode, struct file * file)
+static int ubd_release(struct gendisk *disk, fmode_t mode)
 {
-	struct gendisk *disk = inode->i_bdev->bd_disk;
 	struct ubd *ubd_dev = disk->private_data;
 
+	mutex_lock(&ubd_mutex);
 	if(--ubd_dev->count == 0)
 		ubd_close_dev(ubd_dev);
+	mutex_unlock(&ubd_mutex);
 	return 0;
 }
 
@@ -1018,8 +1164,8 @@ static void cowify_bitmap(__u64 io_offset, int length, unsigned long *cow_mask,
 	 * by one word.  Thanks to Lynn Kerby for the fix and James McMechan
 	 * for the original diagnosis.
 	 */
-	if(*cow_offset == ((bitmap_len + sizeof(unsigned long) - 1) /
-			   sizeof(unsigned long) - 1))
+	if (*cow_offset == (DIV_ROUND_UP(bitmap_len,
+					 sizeof(unsigned long)) - 1))
 		(*cow_offset)--;
 
 	bitmap_words[0] = bitmap[*cow_offset];
@@ -1081,7 +1227,7 @@ static void prepare_request(struct request *req, struct io_thread_req *io_req,
 }
 
 /* Called with dev->lock held */
-static void do_ubd_request(request_queue_t *q)
+static void do_ubd_request(struct request_queue *q)
 {
 	struct io_thread_req *io_req;
 	struct request *req;
@@ -1090,12 +1236,12 @@ static void do_ubd_request(request_queue_t *q)
 	while(1){
 		struct ubd *dev = q->queuedata;
 		if(dev->end_sg == 0){
-			struct request *req = elv_next_request(q);
+			struct request *req = blk_fetch_request(q);
 			if(req == NULL)
 				return;
 
 			dev->request = req;
-			blkdev_dequeue_request(req);
+			dev->rq_pos = blk_rq_pos(req);
 			dev->start_sg = 0;
 			dev->end_sg = blk_rq_map_sg(q, req, dev->sg);
 		}
@@ -1112,8 +1258,8 @@ static void do_ubd_request(request_queue_t *q)
 				return;
 			}
 			prepare_request(req, io_req,
-					(unsigned long long) req->sector << 9,
-					sg->offset, sg->length, sg->page);
+					(unsigned long long)dev->rq_pos << 9,
+					sg->offset, sg->length, sg_page(sg));
 
 			n = os_write_file(thread_fd, &io_req,
 					  sizeof(struct io_thread_req *));
@@ -1123,10 +1269,11 @@ static void do_ubd_request(request_queue_t *q)
 					       "errno = %d\n", -n);
 				else if(list_empty(&dev->restart))
 					list_add(&dev->restart, &restart);
+				kfree(io_req);
 				return;
 			}
 
-			req->sector += sg->length >> 9;
+			dev->rq_pos += sg->length >> 9;
 			dev->start_sg++;
 		}
 		dev->end_sg = 0;
@@ -1144,20 +1291,19 @@ static int ubd_getgeo(struct block_device *bdev, struct hd_geometry *geo)
 	return 0;
 }
 
-static int ubd_ioctl(struct inode * inode, struct file * file,
+static int ubd_ioctl(struct block_device *bdev, fmode_t mode,
 		     unsigned int cmd, unsigned long arg)
 {
-	struct ubd *ubd_dev = inode->i_bdev->bd_disk->private_data;
-	struct hd_driveid ubd_id = {
-		.cyls		= 0,
-		.heads		= 128,
-		.sectors	= 32,
-	};
+	struct ubd *ubd_dev = bdev->bd_disk->private_data;
+	u16 ubd_id[ATA_ID_WORDS];
 
 	switch (cmd) {
 		struct cdrom_volctrl volume;
 	case HDIO_GET_IDENTITY:
-		ubd_id.cyls = ubd_dev->size / (128 * 32 * 512);
+		memset(&ubd_id, 0, ATA_ID_WORDS * 2);
+		ubd_id[ATA_ID_CYLS]	= ubd_dev->size / (128 * 32 * 512);
+		ubd_id[ATA_ID_HEADS]	= 128;
+		ubd_id[ATA_ID_SECTORS]	= 32;
 		if(copy_to_user((char __user *) arg, (char *) &ubd_id,
 				 sizeof(ubd_id)))
 			return -EFAULT;
@@ -1175,185 +1321,6 @@ static int ubd_ioctl(struct inode * inode, struct file * file,
 		return 0;
 	}
 	return -EINVAL;
-}
-
-static int path_requires_switch(char *from_cmdline, char *from_cow, char *cow)
-{
-	struct uml_stat buf1, buf2;
-	int err;
-
-	if(from_cmdline == NULL)
-		return 0;
-	if(!strcmp(from_cmdline, from_cow))
-		return 0;
-
-	err = os_stat_file(from_cmdline, &buf1);
-	if(err < 0){
-		printk("Couldn't stat '%s', err = %d\n", from_cmdline, -err);
-		return 0;
-	}
-	err = os_stat_file(from_cow, &buf2);
-	if(err < 0){
-		printk("Couldn't stat '%s', err = %d\n", from_cow, -err);
-		return 1;
-	}
-	if((buf1.ust_dev == buf2.ust_dev) && (buf1.ust_ino == buf2.ust_ino))
-		return 0;
-
-	printk("Backing file mismatch - \"%s\" requested,\n"
-	       "\"%s\" specified in COW header of \"%s\"\n",
-	       from_cmdline, from_cow, cow);
-	return 1;
-}
-
-static int backing_file_mismatch(char *file, __u64 size, time_t mtime)
-{
-	unsigned long modtime;
-	unsigned long long actual;
-	int err;
-
-	err = os_file_modtime(file, &modtime);
-	if(err < 0){
-		printk("Failed to get modification time of backing file "
-		       "\"%s\", err = %d\n", file, -err);
-		return err;
-	}
-
-	err = os_file_size(file, &actual);
-	if(err < 0){
-		printk("Failed to get size of backing file \"%s\", "
-		       "err = %d\n", file, -err);
-		return err;
-	}
-
-	if(actual != size){
-		/*__u64 can be a long on AMD64 and with %lu GCC complains; so
-		 * the typecast.*/
-		printk("Size mismatch (%llu vs %llu) of COW header vs backing "
-		       "file\n", (unsigned long long) size, actual);
-		return -EINVAL;
-	}
-	if(modtime != mtime){
-		printk("mtime mismatch (%ld vs %ld) of COW header vs backing "
-		       "file\n", mtime, modtime);
-		return -EINVAL;
-	}
-	return 0;
-}
-
-int read_cow_bitmap(int fd, void *buf, int offset, int len)
-{
-	int err;
-
-	err = os_seek_file(fd, offset);
-	if(err < 0)
-		return err;
-
-	err = os_read_file(fd, buf, len);
-	if(err < 0)
-		return err;
-
-	return 0;
-}
-
-int open_ubd_file(char *file, struct openflags *openflags, int shared,
-		  char **backing_file_out, int *bitmap_offset_out,
-		  unsigned long *bitmap_len_out, int *data_offset_out,
-		  int *create_cow_out)
-{
-	time_t mtime;
-	unsigned long long size;
-	__u32 version, align;
-	char *backing_file;
-	int fd, err, sectorsize, asked_switch, mode = 0644;
-
-	fd = os_open_file(file, *openflags, mode);
-	if (fd < 0) {
-		if ((fd == -ENOENT) && (create_cow_out != NULL))
-			*create_cow_out = 1;
-		if (!openflags->w ||
-		    ((fd != -EROFS) && (fd != -EACCES)))
-			return fd;
-		openflags->w = 0;
-		fd = os_open_file(file, *openflags, mode);
-		if (fd < 0)
-			return fd;
-	}
-
-	if(shared)
-		printk("Not locking \"%s\" on the host\n", file);
-	else {
-		err = os_lock_file(fd, openflags->w);
-		if(err < 0){
-			printk("Failed to lock '%s', err = %d\n", file, -err);
-			goto out_close;
-		}
-	}
-
-	/* Successful return case! */
-	if(backing_file_out == NULL)
-		return fd;
-
-	err = read_cow_header(file_reader, &fd, &version, &backing_file, &mtime,
-			      &size, &sectorsize, &align, bitmap_offset_out);
-	if(err && (*backing_file_out != NULL)){
-		printk("Failed to read COW header from COW file \"%s\", "
-		       "errno = %d\n", file, -err);
-		goto out_close;
-	}
-	if(err)
-		return fd;
-
-	asked_switch = path_requires_switch(*backing_file_out, backing_file, file);
-
-	/* Allow switching only if no mismatch. */
-	if (asked_switch && !backing_file_mismatch(*backing_file_out, size, mtime)) {
-		printk("Switching backing file to '%s'\n", *backing_file_out);
-		err = write_cow_header(file, fd, *backing_file_out,
-				       sectorsize, align, &size);
-		if (err) {
-			printk("Switch failed, errno = %d\n", -err);
-			goto out_close;
-		}
-	} else {
-		*backing_file_out = backing_file;
-		err = backing_file_mismatch(*backing_file_out, size, mtime);
-		if (err)
-			goto out_close;
-	}
-
-	cow_sizes(version, size, sectorsize, align, *bitmap_offset_out,
-		  bitmap_len_out, data_offset_out);
-
-	return fd;
- out_close:
-	os_close_file(fd);
-	return err;
-}
-
-int create_cow_file(char *cow_file, char *backing_file, struct openflags flags,
-		    int sectorsize, int alignment, int *bitmap_offset_out,
-		    unsigned long *bitmap_len_out, int *data_offset_out)
-{
-	int err, fd;
-
-	flags.c = 1;
-	fd = open_ubd_file(cow_file, &flags, 0, NULL, NULL, NULL, NULL, NULL);
-	if(fd < 0){
-		err = fd;
-		printk("Open of COW file '%s' failed, errno = %d\n", cow_file,
-		       -err);
-		goto out;
-	}
-
-	err = init_cow_file(fd, cow_file, backing_file, sectorsize, alignment,
-			    bitmap_offset_out, bitmap_len_out,
-			    data_offset_out);
-	if(!err)
-		return fd;
-	os_close_file(fd);
- out:
-	return err;
 }
 
 static int update_bitmap(struct io_thread_req *req)
@@ -1380,7 +1347,7 @@ static int update_bitmap(struct io_thread_req *req)
 	return 0;
 }
 
-void do_io(struct io_thread_req *req)
+static void do_io(struct io_thread_req *req)
 {
 	char *buf;
 	unsigned long len;

@@ -44,7 +44,7 @@ struct pmagbafb_par {
 };
 
 
-static struct fb_var_screeninfo pmagbafb_defined __initdata = {
+static struct fb_var_screeninfo pmagbafb_defined __devinitdata = {
 	.xres		= 1024,
 	.yres		= 864,
 	.xres_virtual	= 1024,
@@ -68,7 +68,7 @@ static struct fb_var_screeninfo pmagbafb_defined __initdata = {
 	.vmode		= FB_VMODE_NONINTERLACED,
 };
 
-static struct fb_fix_screeninfo pmagbafb_fix __initdata = {
+static struct fb_fix_screeninfo pmagbafb_fix __devinitdata = {
 	.id		= "PMAG-BA",
 	.smem_len	= (1024 * 1024),
 	.type		= FB_TYPE_PACKED_PIXELS,
@@ -98,7 +98,8 @@ static int pmagbafb_setcolreg(unsigned int regno, unsigned int red,
 {
 	struct pmagbafb_par *par = info->par;
 
-	BUG_ON(regno >= info->cmap.len);
+	if (regno >= info->cmap.len)
+		return 1;
 
 	red   >>= 8;	/* The cmap fields are 16 bits    */
 	green >>= 8;	/* wide, but the hardware colormap */
@@ -141,22 +142,29 @@ static void __init pmagbafb_erase_cursor(struct fb_info *info)
 }
 
 
-static int __init pmagbafb_probe(struct device *dev)
+static int __devinit pmagbafb_probe(struct device *dev)
 {
 	struct tc_dev *tdev = to_tc_dev(dev);
 	resource_size_t start, len;
 	struct fb_info *info;
 	struct pmagbafb_par *par;
+	int err;
 
 	info = framebuffer_alloc(sizeof(struct pmagbafb_par), dev);
-	if (!info)
+	if (!info) {
+		printk(KERN_ERR "%s: Cannot allocate memory\n", dev_name(dev));
 		return -ENOMEM;
+	}
 
 	par = info->par;
 	dev_set_drvdata(dev, info);
 
-	if (fb_alloc_cmap(&info->cmap, 256, 0) < 0)
+	if (fb_alloc_cmap(&info->cmap, 256, 0) < 0) {
+		printk(KERN_ERR "%s: Cannot allocate color map\n",
+		       dev_name(dev));
+		err = -ENOMEM;
 		goto err_alloc;
+	}
 
 	info->fbops = &pmagbafb_ops;
 	info->fix = pmagbafb_fix;
@@ -166,33 +174,47 @@ static int __init pmagbafb_probe(struct device *dev)
 	/* Request the I/O MEM resource.  */
 	start = tdev->resource.start;
 	len = tdev->resource.end - start + 1;
-	if (!request_mem_region(start, len, dev->bus_id))
+	if (!request_mem_region(start, len, dev_name(dev))) {
+		printk(KERN_ERR "%s: Cannot reserve FB region\n",
+		       dev_name(dev));
+		err = -EBUSY;
 		goto err_cmap;
+	}
 
 	/* MMIO mapping setup.  */
 	info->fix.mmio_start = start;
 	par->mmio = ioremap_nocache(info->fix.mmio_start, info->fix.mmio_len);
-	if (!par->mmio)
+	if (!par->mmio) {
+		printk(KERN_ERR "%s: Cannot map MMIO\n", dev_name(dev));
+		err = -ENOMEM;
 		goto err_resource;
+	}
 	par->dac = par->mmio + PMAG_BA_BT459;
 
 	/* Frame buffer mapping setup.  */
 	info->fix.smem_start = start + PMAG_BA_FBMEM;
 	info->screen_base = ioremap_nocache(info->fix.smem_start,
 					    info->fix.smem_len);
-	if (!info->screen_base)
+	if (!info->screen_base) {
+		printk(KERN_ERR "%s: Cannot map FB\n", dev_name(dev));
+		err = -ENOMEM;
 		goto err_mmio_map;
+	}
 	info->screen_size = info->fix.smem_len;
 
 	pmagbafb_erase_cursor(info);
 
-	if (register_framebuffer(info) < 0)
+	err = register_framebuffer(info);
+	if (err < 0) {
+		printk(KERN_ERR "%s: Cannot register framebuffer\n",
+		       dev_name(dev));
 		goto err_smem_map;
+	}
 
 	get_device(dev);
 
 	pr_info("fb%d: %s frame buffer device at %s\n",
-		info->node, info->fix.id, dev->bus_id);
+		info->node, info->fix.id, dev_name(dev));
 
 	return 0;
 
@@ -211,7 +233,7 @@ err_cmap:
 
 err_alloc:
 	framebuffer_release(info);
-	return -ENXIO;
+	return err;
 }
 
 static int __exit pmagbafb_remove(struct device *dev)

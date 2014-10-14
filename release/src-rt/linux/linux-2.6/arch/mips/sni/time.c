@@ -1,35 +1,91 @@
 #include <linux/types.h>
 #include <linux/interrupt.h>
+#include <linux/irq.h>
+#include <linux/smp.h>
 #include <linux/time.h>
+#include <linux/clockchips.h>
 
+#include <asm/i8253.h>
 #include <asm/sni.h>
 #include <asm/time.h>
+#include <asm-generic/rtc.h>
 
 #define SNI_CLOCK_TICK_RATE     3686400
 #define SNI_COUNTER2_DIV        64
 #define SNI_COUNTER0_DIV        ((SNI_CLOCK_TICK_RATE / SNI_COUNTER2_DIV) / HZ)
 
-static void sni_a20r_timer_ack(void)
+static void a20r_set_mode(enum clock_event_mode mode,
+                          struct clock_event_device *evt)
 {
-        *(volatile u8 *)A20R_PT_TIM0_ACK = 0x0; wmb();
+	switch (mode) {
+	case CLOCK_EVT_MODE_PERIODIC:
+		*(volatile u8 *)(A20R_PT_CLOCK_BASE + 12) = 0x34;
+		wmb();
+		*(volatile u8 *)(A20R_PT_CLOCK_BASE +  0) = SNI_COUNTER0_DIV;
+		wmb();
+		*(volatile u8 *)(A20R_PT_CLOCK_BASE +  0) = SNI_COUNTER0_DIV >> 8;
+		wmb();
+
+		*(volatile u8 *)(A20R_PT_CLOCK_BASE + 12) = 0xb4;
+		wmb();
+		*(volatile u8 *)(A20R_PT_CLOCK_BASE +  8) = SNI_COUNTER2_DIV;
+		wmb();
+		*(volatile u8 *)(A20R_PT_CLOCK_BASE +  8) = SNI_COUNTER2_DIV >> 8;
+		wmb();
+
+                break;
+        case CLOCK_EVT_MODE_ONESHOT:
+        case CLOCK_EVT_MODE_UNUSED:
+        case CLOCK_EVT_MODE_SHUTDOWN:
+                break;
+        case CLOCK_EVT_MODE_RESUME:
+                break;
+        }
 }
+
+static struct clock_event_device a20r_clockevent_device = {
+	.name		= "a20r-timer",
+	.features	= CLOCK_EVT_FEAT_PERIODIC,
+
+	/* .mult, .shift, .max_delta_ns and .min_delta_ns left uninitialized */
+
+	.rating		= 300,
+	.irq		= SNI_A20R_IRQ_TIMER,
+	.set_mode	= a20r_set_mode,
+};
+
+static irqreturn_t a20r_interrupt(int irq, void *dev_id)
+{
+	struct clock_event_device *cd = dev_id;
+
+	*(volatile u8 *)A20R_PT_TIM0_ACK = 0;
+	wmb();
+
+	cd->event_handler(cd);
+
+	return IRQ_HANDLED;
+}
+
+static struct irqaction a20r_irqaction = {
+	.handler	= a20r_interrupt,
+	.flags		= IRQF_DISABLED | IRQF_PERCPU | IRQF_TIMER,
+	.name		= "a20r-timer",
+};
 
 /*
  * a20r platform uses 2 counters to divide the input frequency.
  * Counter 2 output is connected to Counter 0 & 1 input.
  */
-static void __init sni_a20r_timer_setup(struct irqaction *irq)
+static void __init sni_a20r_timer_setup(void)
 {
-        *(volatile u8 *)(A20R_PT_CLOCK_BASE + 12) = 0x34; wmb();
-        *(volatile u8 *)(A20R_PT_CLOCK_BASE +  0) = (SNI_COUNTER0_DIV) & 0xff; wmb();
-        *(volatile u8 *)(A20R_PT_CLOCK_BASE +  0) = (SNI_COUNTER0_DIV >> 8) & 0xff; wmb();
+	struct clock_event_device *cd = &a20r_clockevent_device;
+	struct irqaction *action = &a20r_irqaction;
+	unsigned int cpu = smp_processor_id();
 
-        *(volatile u8 *)(A20R_PT_CLOCK_BASE + 12) = 0xb4; wmb();
-        *(volatile u8 *)(A20R_PT_CLOCK_BASE +  8) = (SNI_COUNTER2_DIV) & 0xff; wmb();
-        *(volatile u8 *)(A20R_PT_CLOCK_BASE +  8) = (SNI_COUNTER2_DIV >> 8) & 0xff; wmb();
-
-        setup_irq(SNI_A20R_IRQ_TIMER, irq);
-        mips_timer_ack = sni_a20r_timer_ack;
+	cd->cpumask             = cpumask_of(cpu);
+	clockevents_register_device(cd);
+	action->dev_id = cd;
+	setup_irq(SNI_A20R_IRQ_TIMER, &a20r_irqaction);
 }
 
 #define SNI_8254_TICK_RATE        1193182UL
@@ -39,26 +95,26 @@ static void __init sni_a20r_timer_setup(struct irqaction *irq)
 static __init unsigned long dosample(void)
 {
 	u32 ct0, ct1;
-	volatile u8 msb, lsb;
+	volatile u8 msb;
 
 	/* Start the counter. */
-	outb_p (0x34, 0x43);
+	outb_p(0x34, 0x43);
 	outb_p(SNI_8254_TCSAMP_COUNTER & 0xff, 0x40);
-	outb (SNI_8254_TCSAMP_COUNTER >> 8, 0x40);
+	outb(SNI_8254_TCSAMP_COUNTER >> 8, 0x40);
 
 	/* Get initial counter invariant */
 	ct0 = read_c0_count();
 
 	/* Latch and spin until top byte of counter0 is zero */
 	do {
-		outb (0x00, 0x43);
-		lsb = inb (0x40);
-		msb = inb (0x40);
+		outb(0x00, 0x43);
+		(void) inb(0x40);
+		msb = inb(0x40);
 		ct1 = read_c0_count();
 	} while (msb);
 
 	/* Stop the counter. */
-	outb (0x38, 0x43);
+	outb(0x38, 0x43);
 	/*
 	 * Return the difference, this is how far the r4k counter increments
 	 * for every 1/HZ seconds. We round off the nearest 1 MHz of master
@@ -71,7 +127,7 @@ static __init unsigned long dosample(void)
 /*
  * Here we need to calibrate the cycle counter to at least be close.
  */
-__init void sni_cpu_time_init(void)
+void __init plat_time_init(void)
 {
 	unsigned long r4k_ticks[3];
 	unsigned long r4k_tick;
@@ -115,34 +171,20 @@ __init void sni_cpu_time_init(void)
 		(int) (r4k_tick % (500000 / HZ)));
 
 	mips_hpt_frequency = r4k_tick * HZ;
-}
 
-/*
- * R4k counter based timer interrupt. Works on RM200-225 and possibly
- * others but not on RM400
- */
-static void __init sni_cpu_timer_setup(struct irqaction *irq)
-{
-        setup_irq(SNI_MIPS_IRQ_CPU_TIMER, irq);
-}
-
-void __init plat_timer_setup(struct irqaction *irq)
-{
 	switch (sni_brd_type) {
 	case SNI_BRD_10:
 	case SNI_BRD_10NEW:
 	case SNI_BRD_TOWER_OASIC:
 	case SNI_BRD_MINITOWER:
-	        sni_a20r_timer_setup (irq);
-	        break;
-
-	case SNI_BRD_PCI_TOWER:
-	case SNI_BRD_RM200:
-	case SNI_BRD_PCI_MTOWER:
-	case SNI_BRD_PCI_DESKTOP:
-	case SNI_BRD_PCI_TOWER_CPLUS:
-	case SNI_BRD_PCI_MTOWER_CPLUS:
-	        sni_cpu_timer_setup (irq);
-	        break;
+		sni_a20r_timer_setup();
+		break;
 	}
+	setup_pit_timer();
+}
+
+void read_persistent_clock(struct timespec *ts)
+{
+	ts->tv_sec = -1;
+	ts->tv_nsec = 0;
 }

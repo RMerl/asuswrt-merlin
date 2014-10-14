@@ -27,14 +27,15 @@
 #include <linux/ethtool.h>
 #include <linux/platform_device.h>
 #include <linux/clk.h>
+#include <linux/gfp.h>
 
 #include <asm/io.h>
 #include <asm/uaccess.h>
 #include <asm/mach-types.h>
 
-#include <asm/arch/at91rm9200_emac.h>
-#include <asm/arch/gpio.h>
-#include <asm/arch/board.h>
+#include <mach/at91rm9200_emac.h>
+#include <mach/gpio.h>
+#include <mach/board.h>
 
 #include "at91_ether.h"
 
@@ -384,7 +385,7 @@ static void reset_phy(struct net_device *dev)
 	/* Wait until PHY reset is complete */
 	do {
 		read_phy(lp->phy_address, MII_BMCR, &bmcr);
-	} while (!(bmcr && BMCR_RESET));
+	} while (!(bmcr & BMCR_RESET));
 
 	disable_mdi();
 	spin_unlock_irq(&lp->lock);
@@ -492,9 +493,8 @@ static int set_mac_address(struct net_device *dev, void* addr)
 	memcpy(dev->dev_addr, address->sa_data, dev->addr_len);
 	update_mac_address(dev);
 
-	printk("%s: Setting MAC address to %02x:%02x:%02x:%02x:%02x:%02x\n", dev->name,
-		dev->dev_addr[0], dev->dev_addr[1], dev->dev_addr[2],
-		dev->dev_addr[3], dev->dev_addr[4], dev->dev_addr[5]);
+	printk("%s: Setting MAC address to %pM\n", dev->name,
+	       dev->dev_addr);
 
 	return 0;
 }
@@ -557,17 +557,14 @@ static int hash_get_index(__u8 *addr)
  */
 static void at91ether_sethashtable(struct net_device *dev)
 {
-	struct dev_mc_list *curr;
+	struct netdev_hw_addr *ha;
 	unsigned long mc_filter[2];
-	unsigned int i, bitnr;
+	unsigned int bitnr;
 
 	mc_filter[0] = mc_filter[1] = 0;
 
-	curr = dev->mc_list;
-	for (i = 0; i < dev->mc_count; i++, curr = curr->next) {
-		if (!curr) break;	/* unexpected end of list */
-
-		bitnr = hash_get_index(curr->dmi_addr);
+	netdev_for_each_mc_addr(ha, dev) {
+		bitnr = hash_get_index(ha->addr);
 		mc_filter[bitnr >> 5] |= 1 << (bitnr & 31);
 	}
 
@@ -578,7 +575,7 @@ static void at91ether_sethashtable(struct net_device *dev)
 /*
  * Enable/Disable promiscuous and multicast modes.
  */
-static void at91ether_set_rx_mode(struct net_device *dev)
+static void at91ether_set_multicast_list(struct net_device *dev)
 {
 	unsigned long cfg;
 
@@ -593,7 +590,7 @@ static void at91ether_set_rx_mode(struct net_device *dev)
 		at91_emac_write(AT91_EMAC_HSH, -1);
 		at91_emac_write(AT91_EMAC_HSL, -1);
 		cfg |= AT91_EMAC_MTI;
-	} else if (dev->mc_count > 0) {			/* Enable specific multicasts */
+	} else if (!netdev_mc_empty(dev)) { /* Enable specific multicasts */
 		at91ether_sethashtable(dev);
 		cfg |= AT91_EMAC_MTI;
 	} else if (dev->flags & (~IFF_ALLMULTI)) {	/* Disable all multicast mode */
@@ -677,7 +674,7 @@ static void at91ether_get_drvinfo(struct net_device *dev, struct ethtool_drvinfo
 {
 	strlcpy(info->driver, DRV_NAME, sizeof(info->driver));
 	strlcpy(info->version, DRV_VERSION, sizeof(info->version));
-	strlcpy(info->bus_info, dev->dev.parent->bus_id, sizeof(info->bus_info));
+	strlcpy(info->bus_info, dev_name(dev->dev.parent), sizeof(info->bus_info));
 }
 
 static const struct ethtool_ops at91ether_ethtool_ops = {
@@ -809,7 +806,7 @@ static int at91ether_close(struct net_device *dev)
 /*
  * Transmit packet.
  */
-static int at91ether_tx(struct sk_buff *skb, struct net_device *dev)
+static int at91ether_start_xmit(struct sk_buff *skb, struct net_device *dev)
 {
 	struct at91_private *lp = netdev_priv(dev);
 
@@ -820,22 +817,21 @@ static int at91ether_tx(struct sk_buff *skb, struct net_device *dev)
 		lp->skb = skb;
 		lp->skb_length = skb->len;
 		lp->skb_physaddr = dma_map_single(NULL, skb->data, skb->len, DMA_TO_DEVICE);
-		lp->stats.tx_bytes += skb->len;
+		dev->stats.tx_bytes += skb->len;
 
 		/* Set address of the data in the Transmit Address register */
 		at91_emac_write(AT91_EMAC_TAR, lp->skb_physaddr);
 		/* Set length of the packet in the Transmit Control register */
 		at91_emac_write(AT91_EMAC_TCR, skb->len);
 
-		dev->trans_start = jiffies;
 	} else {
-		printk(KERN_ERR "at91_ether.c: at91ether_tx() called, but device is busy!\n");
-		return 1;	/* if we return anything but zero, dev.c:1055 calls kfree_skb(skb)
+		printk(KERN_ERR "at91_ether.c: at91ether_start_xmit() called, but device is busy!\n");
+		return NETDEV_TX_BUSY;	/* if we return anything but zero, dev.c:1055 calls kfree_skb(skb)
 				on this skb, he also reports -ENETDOWN and printk's, so either
 				we free and return(0) or don't free and return 1 */
 	}
 
-	return 0;
+	return NETDEV_TX_OK;
 }
 
 /*
@@ -843,34 +839,33 @@ static int at91ether_tx(struct sk_buff *skb, struct net_device *dev)
  */
 static struct net_device_stats *at91ether_stats(struct net_device *dev)
 {
-	struct at91_private *lp = netdev_priv(dev);
 	int ale, lenerr, seqe, lcol, ecol;
 
 	if (netif_running(dev)) {
-		lp->stats.rx_packets += at91_emac_read(AT91_EMAC_OK);		/* Good frames received */
+		dev->stats.rx_packets += at91_emac_read(AT91_EMAC_OK);		/* Good frames received */
 		ale = at91_emac_read(AT91_EMAC_ALE);
-		lp->stats.rx_frame_errors += ale;				/* Alignment errors */
+		dev->stats.rx_frame_errors += ale;				/* Alignment errors */
 		lenerr = at91_emac_read(AT91_EMAC_ELR) + at91_emac_read(AT91_EMAC_USF);
-		lp->stats.rx_length_errors += lenerr;				/* Excessive Length or Undersize Frame error */
+		dev->stats.rx_length_errors += lenerr;				/* Excessive Length or Undersize Frame error */
 		seqe = at91_emac_read(AT91_EMAC_SEQE);
-		lp->stats.rx_crc_errors += seqe;				/* CRC error */
-		lp->stats.rx_fifo_errors += at91_emac_read(AT91_EMAC_DRFC);	/* Receive buffer not available */
-		lp->stats.rx_errors += (ale + lenerr + seqe
+		dev->stats.rx_crc_errors += seqe;				/* CRC error */
+		dev->stats.rx_fifo_errors += at91_emac_read(AT91_EMAC_DRFC);	/* Receive buffer not available */
+		dev->stats.rx_errors += (ale + lenerr + seqe
 			+ at91_emac_read(AT91_EMAC_CDE) + at91_emac_read(AT91_EMAC_RJB));
 
-		lp->stats.tx_packets += at91_emac_read(AT91_EMAC_FRA);		/* Frames successfully transmitted */
-		lp->stats.tx_fifo_errors += at91_emac_read(AT91_EMAC_TUE);	/* Transmit FIFO underruns */
-		lp->stats.tx_carrier_errors += at91_emac_read(AT91_EMAC_CSE);	/* Carrier Sense errors */
-		lp->stats.tx_heartbeat_errors += at91_emac_read(AT91_EMAC_SQEE);/* Heartbeat error */
+		dev->stats.tx_packets += at91_emac_read(AT91_EMAC_FRA);		/* Frames successfully transmitted */
+		dev->stats.tx_fifo_errors += at91_emac_read(AT91_EMAC_TUE);	/* Transmit FIFO underruns */
+		dev->stats.tx_carrier_errors += at91_emac_read(AT91_EMAC_CSE);	/* Carrier Sense errors */
+		dev->stats.tx_heartbeat_errors += at91_emac_read(AT91_EMAC_SQEE);/* Heartbeat error */
 
 		lcol = at91_emac_read(AT91_EMAC_LCOL);
 		ecol = at91_emac_read(AT91_EMAC_ECOL);
-		lp->stats.tx_window_errors += lcol;			/* Late collisions */
-		lp->stats.tx_aborted_errors += ecol;			/* 16 collisions */
+		dev->stats.tx_window_errors += lcol;			/* Late collisions */
+		dev->stats.tx_aborted_errors += ecol;			/* 16 collisions */
 
-		lp->stats.collisions += (at91_emac_read(AT91_EMAC_SCOL) + at91_emac_read(AT91_EMAC_MCOL) + lcol + ecol);
+		dev->stats.collisions += (at91_emac_read(AT91_EMAC_SCOL) + at91_emac_read(AT91_EMAC_MCOL) + lcol + ecol);
 	}
-	return &lp->stats;
+	return &dev->stats;
 }
 
 /*
@@ -895,17 +890,16 @@ static void at91ether_rx(struct net_device *dev)
 			memcpy(skb_put(skb, pktlen), p_recv, pktlen);
 
 			skb->protocol = eth_type_trans(skb, dev);
-			dev->last_rx = jiffies;
-			lp->stats.rx_bytes += pktlen;
+			dev->stats.rx_bytes += pktlen;
 			netif_rx(skb);
 		}
 		else {
-			lp->stats.rx_dropped += 1;
+			dev->stats.rx_dropped += 1;
 			printk(KERN_NOTICE "%s: Memory squeeze, dropping packet.\n", dev->name);
 		}
 
 		if (dlist->descriptors[lp->rxBuffIndex].size & EMAC_MULTICAST)
-			lp->stats.multicast++;
+			dev->stats.multicast++;
 
 		dlist->descriptors[lp->rxBuffIndex].addr &= ~EMAC_DESC_DONE;	/* reset ownership bit */
 		if (lp->rxBuffIndex == MAX_RX_DESCR-1)				/* wrap after last buffer */
@@ -934,7 +928,7 @@ static irqreturn_t at91ether_interrupt(int irq, void *dev_id)
 	if (intstatus & AT91_EMAC_TCOM) {	/* Transmit complete */
 		/* The TCOM bit is set even if the transmission failed. */
 		if (intstatus & (AT91_EMAC_TUND | AT91_EMAC_RTRY))
-			lp->stats.tx_errors += 1;
+			dev->stats.tx_errors += 1;
 
 		if (lp->skb) {
 			dev_kfree_skb_irq(lp->skb);
@@ -968,6 +962,21 @@ static void at91ether_poll_controller(struct net_device *dev)
 }
 #endif
 
+static const struct net_device_ops at91ether_netdev_ops = {
+	.ndo_open		= at91ether_open,
+	.ndo_stop		= at91ether_close,
+	.ndo_start_xmit		= at91ether_start_xmit,
+	.ndo_get_stats		= at91ether_stats,
+	.ndo_set_multicast_list	= at91ether_set_multicast_list,
+	.ndo_set_mac_address	= set_mac_address,
+	.ndo_do_ioctl		= at91ether_ioctl,
+	.ndo_validate_addr	= eth_validate_addr,
+	.ndo_change_mtu		= eth_change_mtu,
+#ifdef CONFIG_NET_POLL_CONTROLLER
+	.ndo_poll_controller	= at91ether_poll_controller,
+#endif
+};
+
 /*
  * Initialize the ethernet interface
  */
@@ -986,7 +995,6 @@ static int __init at91ether_setup(unsigned long phy_type, unsigned short phy_add
 
 	dev->base_addr = AT91_VA_BASE_EMAC;
 	dev->irq = AT91RM9200_ID_EMAC;
-	SET_MODULE_OWNER(dev);
 
 	/* Install the interrupt handler */
 	if (request_irq(dev->irq, at91ether_interrupt, 0, dev->name, dev)) {
@@ -1009,17 +1017,8 @@ static int __init at91ether_setup(unsigned long phy_type, unsigned short phy_add
 	spin_lock_init(&lp->lock);
 
 	ether_setup(dev);
-	dev->open = at91ether_open;
-	dev->stop = at91ether_close;
-	dev->hard_start_xmit = at91ether_tx;
-	dev->get_stats = at91ether_stats;
-	dev->set_multicast_list = at91ether_set_rx_mode;
-	dev->set_mac_address = set_mac_address;
+	dev->netdev_ops = &at91ether_netdev_ops;
 	dev->ethtool_ops = &at91ether_ethtool_ops;
-	dev->do_ioctl = at91ether_ioctl;
-#ifdef CONFIG_NET_POLL_CONTROLLER
-	dev->poll_controller = at91ether_poll_controller;
-#endif
 
 	SET_NETDEV_DEV(dev, &pdev->dev);
 
@@ -1043,7 +1042,9 @@ static int __init at91ether_setup(unsigned long phy_type, unsigned short phy_add
 	} else if (machine_is_csb337()) {
 		/* mix link activity status into LED2 link state */
 		write_phy(phy_address, MII_LEDCTRL_REG, 0x0d22);
-	}
+	} else if (machine_is_ecbat91())
+		write_phy(phy_address, MII_LEDCTRL_REG, 0x156A);
+
 	disable_mdi();
 	spin_unlock_irq(&lp->lock);
 
@@ -1079,15 +1080,15 @@ static int __init at91ether_setup(unsigned long phy_type, unsigned short phy_add
 		init_timer(&lp->check_timer);
 		lp->check_timer.data = (unsigned long)dev;
 		lp->check_timer.function = at91ether_check_link;
-	}
+	} else if (lp->board_data.phy_irq_pin >= 32)
+		gpio_request(lp->board_data.phy_irq_pin, "ethernet_phy");
 
 	/* Display ethernet banner */
-	printk(KERN_INFO "%s: AT91 ethernet at 0x%08x int=%d %s%s (%02x:%02x:%02x:%02x:%02x:%02x)\n",
-		dev->name, (uint) dev->base_addr, dev->irq,
-		at91_emac_read(AT91_EMAC_CFG) & AT91_EMAC_SPD ? "100-" : "10-",
-		at91_emac_read(AT91_EMAC_CFG) & AT91_EMAC_FD ? "FullDuplex" : "HalfDuplex",
-		dev->dev_addr[0], dev->dev_addr[1], dev->dev_addr[2],
-		dev->dev_addr[3], dev->dev_addr[4], dev->dev_addr[5]);
+	printk(KERN_INFO "%s: AT91 ethernet at 0x%08x int=%d %s%s (%pM)\n",
+	       dev->name, (uint) dev->base_addr, dev->irq,
+	       at91_emac_read(AT91_EMAC_CFG) & AT91_EMAC_SPD ? "100-" : "10-",
+	       at91_emac_read(AT91_EMAC_CFG) & AT91_EMAC_FD ? "FullDuplex" : "HalfDuplex",
+	       dev->dev_addr);
 	if ((phy_type == MII_DM9161_ID) || (lp->phy_type == MII_DM9161A_ID))
 		printk(KERN_INFO "%s: Davicom 9161 PHY %s\n", dev->name, (lp->phy_media == PORT_FIBRE) ? "(Fiber)" : "(Copper)");
 	else if (phy_type == MII_LXT971A_ID)
@@ -1167,6 +1168,9 @@ static int __devexit at91ether_remove(struct platform_device *pdev)
 	struct net_device *dev = platform_get_drvdata(pdev);
 	struct at91_private *lp = netdev_priv(dev);
 
+	if (lp->board_data.phy_irq_pin >= 32)
+		gpio_free(lp->board_data.phy_irq_pin);
+
 	unregister_netdev(dev);
 	free_irq(dev->irq, dev);
 	dma_free_coherent(NULL, sizeof(struct recv_desc_bufs), lp->dlist, (dma_addr_t)lp->dlist_phys);
@@ -1221,7 +1225,6 @@ static int at91ether_resume(struct platform_device *pdev)
 #endif
 
 static struct platform_driver at91ether_driver = {
-	.probe		= at91ether_probe,
 	.remove		= __devexit_p(at91ether_remove),
 	.suspend	= at91ether_suspend,
 	.resume		= at91ether_resume,
@@ -1233,7 +1236,7 @@ static struct platform_driver at91ether_driver = {
 
 static int __init at91ether_init(void)
 {
-	return platform_driver_register(&at91ether_driver);
+	return platform_driver_probe(&at91ether_driver, at91ether_probe);
 }
 
 static void __exit at91ether_exit(void)
@@ -1247,3 +1250,4 @@ module_exit(at91ether_exit)
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("AT91RM9200 EMAC Ethernet driver");
 MODULE_AUTHOR("Andrew Victor");
+MODULE_ALIAS("platform:" DRV_NAME);

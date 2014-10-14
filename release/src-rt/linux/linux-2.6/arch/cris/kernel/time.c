@@ -1,5 +1,4 @@
-/* $Id: time.c,v 1.18 2005/03/04 08:16:17 starvik Exp $
- *
+/*
  *  linux/arch/cris/kernel/time.c
  *
  *  Copyright (C) 1991, 1992, 1995  Linus Torvalds
@@ -18,7 +17,7 @@
  * Linux/CRIS specific code:
  *
  * Authors:    Bjorn Wesen
- *             Johan Adolfsson  
+ *             Johan Adolfsson
  *
  */
 
@@ -40,77 +39,16 @@ int have_rtc;  /* used to remember if we have an RTC or not */;
 extern unsigned long loops_per_jiffy; /* init/main.c */
 unsigned long loops_per_usec;
 
+
+#ifdef CONFIG_ARCH_USES_GETTIMEOFFSET
 extern unsigned long do_slow_gettimeoffset(void);
 static unsigned long (*do_gettimeoffset)(void) = do_slow_gettimeoffset;
 
-/*
- * This version of gettimeofday has near microsecond resolution.
- *
- * Note: Division is quite slow on CRIS and do_gettimeofday is called
- *       rather often. Maybe we should do some kind of approximation here
- *       (a naive approximation would be to divide by 1024).
- */
-void do_gettimeofday(struct timeval *tv)
+u32 arch_gettimeoffset(void)
 {
-	unsigned long flags;
-	signed long usec, sec;
-	local_irq_save(flags);
-	usec = do_gettimeoffset();
-
-        /*
-	 * If time_adjust is negative then NTP is slowing the clock
-	 * so make sure not to go into next possible interval.
-	 * Better to lose some accuracy than have time go backwards..
-	 */
-	if (unlikely(time_adjust < 0) && usec > tickadj)
-		usec = tickadj;
-
-	sec = xtime.tv_sec;
-	usec += xtime.tv_nsec / 1000;
-	local_irq_restore(flags);
-
-	while (usec >= 1000000) {
-		usec -= 1000000;
-		sec++;
-	}
-
-	tv->tv_sec = sec;
-	tv->tv_usec = usec;
+       return do_gettimeoffset() * 1000;
 }
-
-EXPORT_SYMBOL(do_gettimeofday);
-
-int do_settimeofday(struct timespec *tv)
-{
-	time_t wtm_sec, sec = tv->tv_sec;
-	long wtm_nsec, nsec = tv->tv_nsec;
-
-	if ((unsigned long)tv->tv_nsec >= NSEC_PER_SEC)
-		return -EINVAL;
-
-	write_seqlock_irq(&xtime_lock);
-	/*
-	 * This is revolting. We need to set "xtime" correctly. However, the
-	 * value in this location is the value at the most recent update of
-	 * wall time.  Discover what correction gettimeofday() would have
-	 * made, and then undo it!
-	 */
-	nsec -= do_gettimeoffset() * NSEC_PER_USEC;
-
-	wtm_sec  = wall_to_monotonic.tv_sec + (xtime.tv_sec - sec);
-	wtm_nsec = wall_to_monotonic.tv_nsec + (xtime.tv_nsec - nsec);
-
-	set_normalized_timespec(&xtime, sec, nsec);
-	set_normalized_timespec(&wall_to_monotonic, wtm_sec, wtm_nsec);
-
-	ntp_clear();
-	write_sequnlock_irq(&xtime_lock);
-	clock_was_set();
-	return 0;
-}
-
-EXPORT_SYMBOL(do_settimeofday);
-
+#endif
 
 /*
  * BUG: This routine does not handle hour overflow properly; it just
@@ -128,7 +66,7 @@ int set_rtc_mmss(unsigned long nowtime)
 		return 0;
 
 	cmos_minutes = CMOS_READ(RTC_MINUTES);
-	BCD_TO_BIN(cmos_minutes);
+	cmos_minutes = bcd2bin(cmos_minutes);
 
 	/*
 	 * since we're only adjusting minutes and seconds,
@@ -143,12 +81,12 @@ int set_rtc_mmss(unsigned long nowtime)
 	real_minutes %= 60;
 
 	if (abs(real_minutes - cmos_minutes) < 30) {
-		BIN_TO_BCD(real_seconds);
-		BIN_TO_BCD(real_minutes);
+		real_seconds = bin2bcd(real_seconds);
+		real_minutes = bin2bcd(real_minutes);
 		CMOS_WRITE(real_seconds,RTC_SECONDS);
 		CMOS_WRITE(real_minutes,RTC_MINUTES);
 	} else {
-		printk(KERN_WARNING
+		printk_once(KERN_NOTICE
 		       "set_rtc_mmss: can't update from %d to %d\n",
 		       cmos_minutes, real_minutes);
 		retval = -1;
@@ -163,6 +101,8 @@ unsigned long
 get_cmos_time(void)
 {
 	unsigned int year, mon, day, hour, min, sec;
+	if(!have_rtc)
+		return 0;
 
 	sec = CMOS_READ(RTC_SECONDS);
 	min = CMOS_READ(RTC_MINUTES);
@@ -171,16 +111,12 @@ get_cmos_time(void)
 	mon = CMOS_READ(RTC_MONTH);
 	year = CMOS_READ(RTC_YEAR);
 
-	printk(KERN_DEBUG
-	       "rtc: sec 0x%x min 0x%x hour 0x%x day 0x%x mon 0x%x year 0x%x\n",
-	       sec, min, hour, day, mon, year);
-
-	BCD_TO_BIN(sec);
-	BCD_TO_BIN(min);
-	BCD_TO_BIN(hour);
-	BCD_TO_BIN(day);
-	BCD_TO_BIN(mon);
-	BCD_TO_BIN(year);
+	sec = bcd2bin(sec);
+	min = bcd2bin(min);
+	hour = bcd2bin(hour);
+	day = bcd2bin(day);
+	mon = bcd2bin(mon);
+	year = bcd2bin(year);
 
 	if ((year += 1900) < 1970)
 		year += 100;
@@ -188,18 +124,18 @@ get_cmos_time(void)
 	return mktime(year, mon, day, hour, min, sec);
 }
 
-/* update xtime from the CMOS settings. used when /dev/rtc gets a SET_TIME.
- * TODO: this doesn't reset the fancy NTP phase stuff as do_settimeofday does.
- */
 
-void
-update_xtime_from_cmos(void)
+int update_persistent_clock(struct timespec now)
 {
-	if(have_rtc) {
-		xtime.tv_sec = get_cmos_time();
-		xtime.tv_nsec = 0;
-	}
+	return set_rtc_mmss(now.tv_sec);
 }
+
+void read_persistent_clock(struct timespec *ts)
+{
+	ts->tv_sec = get_cmos_time();
+	ts->tv_nsec = 0;
+}
+
 
 extern void cris_profile_sample(struct pt_regs* regs);
 
@@ -207,13 +143,19 @@ void
 cris_do_profile(struct pt_regs* regs)
 {
 
-#if CONFIG_SYSTEM_PROFILER
+#ifdef CONFIG_SYSTEM_PROFILER
         cris_profile_sample(regs);
 #endif
 
-#if CONFIG_PROFILING
-        profile_tick(CPU_PROFILING, regs);
+#ifdef CONFIG_PROFILING
+	profile_tick(CPU_PROFILING);
 #endif
+}
+
+unsigned long long sched_clock(void)
+{
+	return (unsigned long long)jiffies * (NSEC_PER_SEC / HZ) +
+		get_ns_in_jiffie();
 }
 
 static int

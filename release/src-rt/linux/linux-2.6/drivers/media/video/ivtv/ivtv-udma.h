@@ -18,6 +18,9 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#ifndef IVTV_UDMA_H
+#define IVTV_UDMA_H
+
 /* User DMA functions */
 void ivtv_udma_get_page_info(struct ivtv_dma_page_info *dma_page, unsigned long first, unsigned long size);
 int ivtv_udma_fill_sg_list(struct ivtv_user_dma *dma, struct ivtv_dma_page_info *dma_page, int map_offset);
@@ -32,12 +35,14 @@ void ivtv_udma_start(struct ivtv *itv);
 
 static inline void ivtv_udma_sync_for_device(struct ivtv *itv)
 {
-	pci_dma_sync_single_for_device((struct pci_dev *)itv->dev, itv->udma.SG_handle,
+	pci_dma_sync_single_for_device(itv->pdev, itv->udma.SG_handle,
 		sizeof(itv->udma.SGarray), PCI_DMA_TODEVICE);
 }
 
 static inline void ivtv_udma_sync_for_cpu(struct ivtv *itv)
 {
-	pci_dma_sync_single_for_cpu((struct pci_dev *)itv->dev, itv->udma.SG_handle,
+	pci_dma_sync_single_for_cpu(itv->pdev, itv->udma.SG_handle,
 		sizeof(itv->udma.SGarray), PCI_DMA_TODEVICE);
 }
+
+#endif

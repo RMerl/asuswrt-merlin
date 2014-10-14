@@ -1,4 +1,4 @@
-/* Copyright (c) 2006 Coraid, Inc.  See COPYING for GPL terms. */
+/* Copyright (c) 2007 Coraid, Inc.  See COPYING for GPL terms. */
 /*
  * aoechr.c
  * AoE character device driver
@@ -6,6 +6,11 @@
 
 #include <linux/hdreg.h>
 #include <linux/blkdev.h>
+#include <linux/completion.h>
+#include <linux/delay.h>
+#include <linux/slab.h>
+#include <linux/mutex.h>
+#include <linux/skbuff.h>
 #include "aoe.h"
 
 enum {
@@ -14,6 +19,7 @@ enum {
 	MINOR_DISCOVER,
 	MINOR_INTERFACES,
 	MINOR_REVALIDATE,
+	MINOR_FLUSH,
 	MSGSZ = 2048,
 	NMSG = 100,		/* message backlog to retain */
 };
@@ -31,9 +37,10 @@ struct ErrMsg {
 	char *msg;
 };
 
+static DEFINE_MUTEX(aoechr_mutex);
 static struct ErrMsg emsgs[NMSG];
 static int emsgs_head_idx, emsgs_tail_idx;
-static struct semaphore emsgs_sema;
+static struct completion emsgs_comp;
 static spinlock_t emsgs_lock;
 static int nblocked_emsgs_readers;
 static struct class *aoe_class;
@@ -42,6 +49,7 @@ static struct aoe_chardev chardevs[] = {
 	{ MINOR_DISCOVER, "discover" },
 	{ MINOR_INTERFACES, "interfaces" },
 	{ MINOR_REVALIDATE, "revalidate" },
+	{ MINOR_FLUSH, "flush" },
 };
 
 static int
@@ -68,6 +76,7 @@ revalidate(const char __user *str, size_t size)
 	int major, minor, n;
 	ulong flags;
 	struct aoedev *d;
+	struct sk_buff *skb;
 	char buf[16];
 
 	if (size >= sizeof buf)
@@ -85,13 +94,25 @@ revalidate(const char __user *str, size_t size)
 	d = aoedev_by_aoeaddr(major, minor);
 	if (!d)
 		return -EINVAL;
-
 	spin_lock_irqsave(&d->lock, flags);
-	d->flags &= ~DEVFL_MAXBCNT;
-	d->flags |= DEVFL_PAUSE;
+	aoecmd_cleanslate(d);
+loop:
+	skb = aoecmd_ata_id(d);
 	spin_unlock_irqrestore(&d->lock, flags);
+	/* try again if we are able to sleep a bit,
+	 * otherwise give up this revalidation
+	 */
+	if (!skb && !msleep_interruptible(200)) {
+		spin_lock_irqsave(&d->lock, flags);
+		goto loop;
+	}
+	if (skb) {
+		struct sk_buff_head queue;
+		__skb_queue_head_init(&queue);
+		__skb_queue_tail(&queue, skb);
+		aoenet_xmit(&queue);
+	}
 	aoecmd_cfg(major, minor);
-
 	return 0;
 }
 
@@ -129,7 +150,7 @@ bail:		spin_unlock_irqrestore(&emsgs_lock, flags);
 	spin_unlock_irqrestore(&emsgs_lock, flags);
 
 	if (nblocked_emsgs_readers)
-		up(&emsgs_sema);
+		complete(&emsgs_comp);
 }
 
 static ssize_t
@@ -149,6 +170,9 @@ aoechr_write(struct file *filp, const char __user *buf, size_t cnt, loff_t *offp
 		break;
 	case MINOR_REVALIDATE:
 		ret = revalidate(buf, cnt);
+		break;
+	case MINOR_FLUSH:
+		ret = aoedev_flush(buf, cnt);
 	}
 	if (ret == 0)
 		ret = cnt;
@@ -160,12 +184,16 @@ aoechr_open(struct inode *inode, struct file *filp)
 {
 	int n, i;
 
+	mutex_lock(&aoechr_mutex);
 	n = iminor(inode);
 	filp->private_data = (void *) (unsigned long) n;
 
 	for (i = 0; i < ARRAY_SIZE(chardevs); ++i)
-		if (chardevs[i].minor == n)
+		if (chardevs[i].minor == n) {
+			mutex_unlock(&aoechr_mutex);
 			return 0;
+		}
+	mutex_unlock(&aoechr_mutex);
 	return -EINVAL;
 }
 
@@ -185,52 +213,51 @@ aoechr_read(struct file *filp, char __user *buf, size_t cnt, loff_t *off)
 	ulong flags;
 
 	n = (unsigned long) filp->private_data;
-	switch (n) {
-	case MINOR_ERR:
-		spin_lock_irqsave(&emsgs_lock, flags);
-loop:
+	if (n != MINOR_ERR)
+		return -EFAULT;
+
+	spin_lock_irqsave(&emsgs_lock, flags);
+
+	for (;;) {
 		em = emsgs + emsgs_head_idx;
-		if ((em->flags & EMFL_VALID) == 0) {
-			if (filp->f_flags & O_NDELAY) {
-				spin_unlock_irqrestore(&emsgs_lock, flags);
-				return -EAGAIN;
-			}
-			nblocked_emsgs_readers++;
-
-			spin_unlock_irqrestore(&emsgs_lock, flags);
-
-			n = down_interruptible(&emsgs_sema);
-
-			spin_lock_irqsave(&emsgs_lock, flags);
-
-			nblocked_emsgs_readers--;
-
-			if (n) {
-				spin_unlock_irqrestore(&emsgs_lock, flags);
-				return -ERESTARTSYS;
-			}
-			goto loop;
-		}
-		if (em->len > cnt) {
+		if ((em->flags & EMFL_VALID) != 0)
+			break;
+		if (filp->f_flags & O_NDELAY) {
 			spin_unlock_irqrestore(&emsgs_lock, flags);
 			return -EAGAIN;
 		}
-		mp = em->msg;
-		len = em->len;
-		em->msg = NULL;
-		em->flags &= ~EMFL_VALID;
-
-		emsgs_head_idx++;
-		emsgs_head_idx %= ARRAY_SIZE(emsgs);
+		nblocked_emsgs_readers++;
 
 		spin_unlock_irqrestore(&emsgs_lock, flags);
 
-		n = copy_to_user(buf, mp, len);
-		kfree(mp);
-		return n == 0 ? len : -EFAULT;
-	default:
-		return -EFAULT;
+		n = wait_for_completion_interruptible(&emsgs_comp);
+
+		spin_lock_irqsave(&emsgs_lock, flags);
+
+		nblocked_emsgs_readers--;
+
+		if (n) {
+			spin_unlock_irqrestore(&emsgs_lock, flags);
+			return -ERESTARTSYS;
+		}
 	}
+	if (em->len > cnt) {
+		spin_unlock_irqrestore(&emsgs_lock, flags);
+		return -EAGAIN;
+	}
+	mp = em->msg;
+	len = em->len;
+	em->msg = NULL;
+	em->flags &= ~EMFL_VALID;
+
+	emsgs_head_idx++;
+	emsgs_head_idx %= ARRAY_SIZE(emsgs);
+
+	spin_unlock_irqrestore(&emsgs_lock, flags);
+
+	n = copy_to_user(buf, mp, len);
+	kfree(mp);
+	return n == 0 ? len : -EFAULT;
 }
 
 static const struct file_operations aoe_fops = {
@@ -239,7 +266,13 @@ static const struct file_operations aoe_fops = {
 	.open = aoechr_open,
 	.release = aoechr_rel,
 	.owner = THIS_MODULE,
+	.llseek = noop_llseek,
 };
+
+static char *aoe_devnode(struct device *dev, mode_t *mode)
+{
+	return kasprintf(GFP_KERNEL, "etherd/%s", dev_name(dev));
+}
 
 int __init
 aoechr_init(void)
@@ -251,17 +284,19 @@ aoechr_init(void)
 		printk(KERN_ERR "aoe: can't register char device\n");
 		return n;
 	}
-	sema_init(&emsgs_sema, 0);
+	init_completion(&emsgs_comp);
 	spin_lock_init(&emsgs_lock);
 	aoe_class = class_create(THIS_MODULE, "aoe");
 	if (IS_ERR(aoe_class)) {
 		unregister_chrdev(AOE_MAJOR, "aoechr");
 		return PTR_ERR(aoe_class);
 	}
+	aoe_class->devnode = aoe_devnode;
+
 	for (i = 0; i < ARRAY_SIZE(chardevs); ++i)
-		class_device_create(aoe_class, NULL,
-					MKDEV(AOE_MAJOR, chardevs[i].minor),
-					NULL, chardevs[i].name);
+		device_create(aoe_class, NULL,
+			      MKDEV(AOE_MAJOR, chardevs[i].minor), NULL,
+			      chardevs[i].name);
 
 	return 0;
 }
@@ -272,7 +307,7 @@ aoechr_exit(void)
 	int i;
 
 	for (i = 0; i < ARRAY_SIZE(chardevs); ++i)
-		class_device_destroy(aoe_class, MKDEV(AOE_MAJOR, chardevs[i].minor));
+		device_destroy(aoe_class, MKDEV(AOE_MAJOR, chardevs[i].minor));
 	class_destroy(aoe_class);
 	unregister_chrdev(AOE_MAJOR, "aoechr");
 }

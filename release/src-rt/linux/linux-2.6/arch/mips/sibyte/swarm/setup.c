@@ -69,31 +69,6 @@ const char *get_system_type(void)
 	return "SiByte " SIBYTE_BOARD_NAME;
 }
 
-void __init swarm_time_init(void)
-{
-#if defined(CONFIG_SIBYTE_SB1250) || defined(CONFIG_SIBYTE_BCM112X)
-	/* Setup HPT */
-	sb1250_hpt_setup();
-#endif
-}
-
-void __init plat_timer_setup(struct irqaction *irq)
-{
-        /*
-         * we don't set up irqaction, because we will deliver timer
-         * interrupts through low-level (direct) meachanism.
-         */
-
-        /* We only need to setup the generic timer */
-#if defined(CONFIG_SIBYTE_BCM1x55) || defined(CONFIG_SIBYTE_BCM1x80)
-	bcm1480_time_init();
-#elif defined(CONFIG_SIBYTE_SB1250) || defined(CONFIG_SIBYTE_BCM112X)
-	sb1250_time_init();
-#else
-#error invalid SiByte board configuration
-#endif
-}
-
 int swarm_be_handler(struct pt_regs *regs, int is_fixup)
 {
 	if (!is_fixup && (regs->cp0_cause & 4)) {
@@ -102,6 +77,51 @@ int swarm_be_handler(struct pt_regs *regs, int is_fixup)
 		       __read_64bit_c0_register($26, 1));
 	}
 	return (is_fixup ? MIPS_BE_FIXUP : MIPS_BE_FATAL);
+}
+
+enum swarm_rtc_type {
+	RTC_NONE,
+	RTC_XICOR,
+	RTC_M41T81,
+};
+
+enum swarm_rtc_type swarm_rtc_type;
+
+void read_persistent_clock(struct timespec *ts)
+{
+	unsigned long sec;
+
+	switch (swarm_rtc_type) {
+	case RTC_XICOR:
+		sec = xicor_get_time();
+		break;
+
+	case RTC_M41T81:
+		sec = m41t81_get_time();
+		break;
+
+	case RTC_NONE:
+	default:
+		sec = mktime(2000, 1, 1, 0, 0, 0);
+		break;
+	}
+	ts->tv_sec = sec;
+	ts->tv_nsec = 0;
+}
+
+int rtc_mips_set_time(unsigned long sec)
+{
+	switch (swarm_rtc_type) {
+	case RTC_XICOR:
+		return xicor_set_time(sec);
+
+	case RTC_M41T81:
+		return m41t81_set_time(sec);
+
+	case RTC_NONE:
+	default:
+		return -1;
+	}
 }
 
 void __init plat_mem_setup(void)
@@ -116,34 +136,12 @@ void __init plat_mem_setup(void)
 
 	panic_timeout = 5;  /* For debug.  */
 
-	board_time_init = swarm_time_init;
 	board_be_handler = swarm_be_handler;
 
-	if (xicor_probe()) {
-		printk("swarm setup: Xicor 1241 RTC detected.\n");
-		rtc_mips_get_time = xicor_get_time;
-		rtc_mips_set_time = xicor_set_time;
-	}
-
-	if (m41t81_probe()) {
-		printk("swarm setup: M41T81 RTC detected.\n");
-		rtc_mips_get_time = m41t81_get_time;
-		rtc_mips_set_time = m41t81_set_time;
-	}
-
-	printk("This kernel optimized for "
-#ifdef CONFIG_SIMULATION
-	       "simulation"
-#else
-	       "board"
-#endif
-	       " runs "
-#ifdef CONFIG_SIBYTE_CFE
-	       "with"
-#else
-	       "without"
-#endif
-	       " CFE\n");
+	if (xicor_probe())
+		swarm_rtc_type = RTC_XICOR;
+	if (m41t81_probe())
+		swarm_rtc_type = RTC_M41T81;
 
 #ifdef CONFIG_VT
 	screen_info = (struct screen_info) {

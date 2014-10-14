@@ -138,6 +138,7 @@
 #include <linux/spinlock.h>
 #include <linux/stat.h>
 #include <linux/bitops.h>
+#include <linux/delay.h>
 
 #include <asm/io.h>
 #include <asm/system.h>
@@ -298,9 +299,16 @@ static inline int find_and_clear_bit_16(unsigned long *field)
 {
   int rv;
 
-  if (*field == 0) panic("No free mscp");
-  asm("xorl %0,%0\n0:\tbsfw %1,%w0\n\tbtr %0,%1\n\tjnc 0b"
-      : "=&r" (rv), "=m" (*field) : "1" (*field));
+  if (*field == 0)
+    panic("No free mscp");
+
+  asm volatile (
+	"xorl %0,%0\n\t"
+	"0: bsfw %1,%w0\n\t"
+	"btr %0,%1\n\t"
+	"jnc 0b"
+	: "=&r" (rv), "+m" (*field) :);
+
   return rv;
 }
 
@@ -675,16 +683,15 @@ static const char *ultrastor_info(struct Scsi_Host * shpnt)
 
 static inline void build_sg_list(struct mscp *mscp, struct scsi_cmnd *SCpnt)
 {
-	struct scatterlist *sl;
+	struct scatterlist *sg;
 	long transfer_length = 0;
 	int i, max;
 
-	sl = (struct scatterlist *) SCpnt->request_buffer;
-	max = SCpnt->use_sg;
-	for (i = 0; i < max; i++) {
-		mscp->sglist[i].address = isa_page_to_bus(sl[i].page) + sl[i].offset;
-		mscp->sglist[i].num_bytes = sl[i].length;
-		transfer_length += sl[i].length;
+	max = scsi_sg_count(SCpnt);
+	scsi_for_each_sg(SCpnt, sg, max, i) {
+		mscp->sglist[i].address = isa_page_to_bus(sg_page(sg)) + sg->offset;
+		mscp->sglist[i].num_bytes = sg->length;
+		transfer_length += sg->length;
 	}
 	mscp->number_of_sg_list = max;
 	mscp->transfer_data = isa_virt_to_bus(mscp->sglist);
@@ -694,7 +701,7 @@ static inline void build_sg_list(struct mscp *mscp, struct scsi_cmnd *SCpnt)
 	mscp->transfer_data_length = transfer_length;
 }
 
-static int ultrastor_queuecommand(struct scsi_cmnd *SCpnt,
+static int ultrastor_queuecommand_lck(struct scsi_cmnd *SCpnt,
 				void (*done) (struct scsi_cmnd *))
 {
     struct mscp *my_mscp;
@@ -730,19 +737,19 @@ static int ultrastor_queuecommand(struct scsi_cmnd *SCpnt,
     my_mscp->target_id = SCpnt->device->id;
     my_mscp->ch_no = 0;
     my_mscp->lun = SCpnt->device->lun;
-    if (SCpnt->use_sg) {
+    if (scsi_sg_count(SCpnt)) {
 	/* Set scatter/gather flag in SCSI command packet */
 	my_mscp->sg = TRUE;
 	build_sg_list(my_mscp, SCpnt);
     } else {
 	/* Unset scatter/gather flag in SCSI command packet */
 	my_mscp->sg = FALSE;
-	my_mscp->transfer_data = isa_virt_to_bus(SCpnt->request_buffer);
-	my_mscp->transfer_data_length = SCpnt->request_bufflen;
+	my_mscp->transfer_data = isa_virt_to_bus(scsi_sglist(SCpnt));
+	my_mscp->transfer_data_length = scsi_bufflen(SCpnt);
     }
     my_mscp->command_link = 0;		/*???*/
     my_mscp->scsi_command_link_id = 0;	/*???*/
-    my_mscp->length_of_sense_byte = sizeof SCpnt->sense_buffer;
+    my_mscp->length_of_sense_byte = SCSI_SENSE_BUFFERSIZE;
     my_mscp->length_of_scsi_cdbs = SCpnt->cmd_len;
     memcpy(my_mscp->scsi_cdbs, SCpnt->cmnd, my_mscp->length_of_scsi_cdbs);
     my_mscp->adapter_status = 0;
@@ -818,6 +825,8 @@ retry:
 
     return 0;
 }
+
+static DEF_SCSI_QCMD(ultrastor_queuecommand)
 
 /* This code must deal with 2 cases:
 
@@ -945,7 +954,7 @@ static int ultrastor_abort(struct scsi_cmnd *SCpnt)
 	printk("abort: command mismatch, %p != %p\n",
 	       config.mscp[mscp_index].SCint, SCpnt);
 #endif
-    if (config.mscp[mscp_index].SCint == 0)
+    if (config.mscp[mscp_index].SCint == NULL)
 	return FAILED;
 
     if (config.mscp[mscp_index].SCint != SCpnt) panic("Bad abort");
@@ -1095,7 +1104,7 @@ static void ultrastor_interrupt(void *dev_id)
     SCtmp = mscp->SCint;
     mscp->SCint = NULL;
 
-    if (SCtmp == 0)
+    if (!SCtmp)
       {
 #if ULTRASTOR_DEBUG & (UD_ABORT|UD_INTERRUPT)
 	printk("MSCP %d (%x): no command\n", mscp_index, (unsigned int) mscp);

@@ -24,8 +24,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: msnd.h,v 1.36 1999/03/21 17:05:42 andrewtv Exp $
- *
  ********************************************************************/
 #ifndef __MSND_H
 #define __MSND_H
@@ -213,7 +211,7 @@ typedef struct multisound_dev {
 
 	/* State variables */
 	enum { msndClassic, msndPinnacle } type;
-	mode_t mode;
+	fmode_t mode;
 	unsigned long flags;
 #define F_RESETTING			0
 #define F_HAVEDIGITAL			1
@@ -233,8 +231,8 @@ typedef struct multisound_dev {
 	spinlock_t lock;
 	int nresets;
 	unsigned long recsrc;
-	int left_levels[16];
-	int right_levels[16];
+	int left_levels[32];
+	int right_levels[32];
 	int mixer_mod_count;
 	int calibrate_signal;
 	int play_sample_size, play_sample_rate, play_channels;

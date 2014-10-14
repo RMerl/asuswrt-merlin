@@ -8,27 +8,19 @@
  * published by the Free Software Foundation.
  */
 #include <linux/module.h>
-#include <linux/errno.h>
-#include <linux/fs.h>
-#include <linux/adfs_fs.h>
-#include <linux/slab.h>
-#include <linux/time.h>
-#include <linux/stat.h>
-#include <linux/string.h>
 #include <linux/init.h>
 #include <linux/buffer_head.h>
-#include <linux/vfs.h>
 #include <linux/parser.h>
-#include <linux/bitops.h>
-
-#include <asm/uaccess.h>
-#include <asm/system.h>
-
-#include <stdarg.h>
-
+#include <linux/mount.h>
+#include <linux/seq_file.h>
+#include <linux/slab.h>
+#include <linux/statfs.h>
 #include "adfs.h"
 #include "dir_f.h"
 #include "dir_fplus.h"
+
+#define ADFS_DEFAULT_OWNER_MASK S_IRWXU
+#define ADFS_DEFAULT_OTHER_MASK (S_IRWXG | S_IRWXO)
 
 void __adfs_error(struct super_block *sb, const char *function, const char *fmt, ...)
 {
@@ -134,13 +126,32 @@ static void adfs_put_super(struct super_block *sb)
 	sb->s_fs_info = NULL;
 }
 
-enum {Opt_uid, Opt_gid, Opt_ownmask, Opt_othmask, Opt_err};
+static int adfs_show_options(struct seq_file *seq, struct vfsmount *mnt)
+{
+	struct adfs_sb_info *asb = ADFS_SB(mnt->mnt_sb);
 
-static match_table_t tokens = {
+	if (asb->s_uid != 0)
+		seq_printf(seq, ",uid=%u", asb->s_uid);
+	if (asb->s_gid != 0)
+		seq_printf(seq, ",gid=%u", asb->s_gid);
+	if (asb->s_owner_mask != ADFS_DEFAULT_OWNER_MASK)
+		seq_printf(seq, ",ownmask=%o", asb->s_owner_mask);
+	if (asb->s_other_mask != ADFS_DEFAULT_OTHER_MASK)
+		seq_printf(seq, ",othmask=%o", asb->s_other_mask);
+	if (asb->s_ftsuffix != 0)
+		seq_printf(seq, ",ftsuffix=%u", asb->s_ftsuffix);
+
+	return 0;
+}
+
+enum {Opt_uid, Opt_gid, Opt_ownmask, Opt_othmask, Opt_ftsuffix, Opt_err};
+
+static const match_table_t tokens = {
 	{Opt_uid, "uid=%u"},
 	{Opt_gid, "gid=%u"},
 	{Opt_ownmask, "ownmask=%o"},
 	{Opt_othmask, "othmask=%o"},
+	{Opt_ftsuffix, "ftsuffix=%u"},
 	{Opt_err, NULL}
 };
 
@@ -181,6 +192,11 @@ static int parse_options(struct super_block *sb, char *options)
 				return -EINVAL;
 			asb->s_other_mask = option;
 			break;
+		case Opt_ftsuffix:
+			if (match_int(args, &option))
+				return -EINVAL;
+			asb->s_ftsuffix = option;
+			break;
 		default:
 			printk("ADFS-fs: unrecognised mount option \"%s\" "
 					"or missing value\n", p);
@@ -198,16 +214,20 @@ static int adfs_remount(struct super_block *sb, int *flags, char *data)
 
 static int adfs_statfs(struct dentry *dentry, struct kstatfs *buf)
 {
-	struct adfs_sb_info *asb = ADFS_SB(dentry->d_sb);
+	struct super_block *sb = dentry->d_sb;
+	struct adfs_sb_info *sbi = ADFS_SB(sb);
+	u64 id = huge_encode_dev(sb->s_bdev->bd_dev);
 
 	buf->f_type    = ADFS_SUPER_MAGIC;
-	buf->f_namelen = asb->s_namelen;
-	buf->f_bsize   = dentry->d_sb->s_blocksize;
-	buf->f_blocks  = asb->s_size;
-	buf->f_files   = asb->s_ids_per_zone * asb->s_map_size;
+	buf->f_namelen = sbi->s_namelen;
+	buf->f_bsize   = sb->s_blocksize;
+	buf->f_blocks  = sbi->s_size;
+	buf->f_files   = sbi->s_ids_per_zone * sbi->s_map_size;
 	buf->f_bavail  =
-	buf->f_bfree   = adfs_map_free(dentry->d_sb);
+	buf->f_bfree   = adfs_map_free(sb);
 	buf->f_ffree   = (long)(buf->f_bfree * buf->f_files) / (long)buf->f_blocks;
+	buf->f_fsid.val[0] = (u32)id;
+	buf->f_fsid.val[1] = (u32)(id >> 32);
 
 	return 0;
 }
@@ -223,25 +243,32 @@ static struct inode *adfs_alloc_inode(struct super_block *sb)
 	return &ei->vfs_inode;
 }
 
-static void adfs_destroy_inode(struct inode *inode)
+static void adfs_i_callback(struct rcu_head *head)
 {
+	struct inode *inode = container_of(head, struct inode, i_rcu);
+	INIT_LIST_HEAD(&inode->i_dentry);
 	kmem_cache_free(adfs_inode_cachep, ADFS_I(inode));
 }
 
-static void init_once(void * foo, struct kmem_cache * cachep, unsigned long flags)
+static void adfs_destroy_inode(struct inode *inode)
+{
+	call_rcu(&inode->i_rcu, adfs_i_callback);
+}
+
+static void init_once(void *foo)
 {
 	struct adfs_inode_info *ei = (struct adfs_inode_info *) foo;
 
 	inode_init_once(&ei->vfs_inode);
 }
- 
+
 static int init_inodecache(void)
 {
 	adfs_inode_cachep = kmem_cache_create("adfs_inode_cache",
 					     sizeof(struct adfs_inode_info),
 					     0, (SLAB_RECLAIM_ACCOUNT|
 						SLAB_MEM_SPREAD),
-					     init_once, NULL);
+					     init_once);
 	if (adfs_inode_cachep == NULL)
 		return -ENOMEM;
 	return 0;
@@ -259,6 +286,7 @@ static const struct super_operations adfs_sops = {
 	.put_super	= adfs_put_super,
 	.statfs		= adfs_statfs,
 	.remount_fs	= adfs_remount,
+	.show_options	= adfs_show_options,
 };
 
 static struct adfs_discmap *adfs_read_map(struct super_block *sb, struct adfs_discrecord *dr)
@@ -344,8 +372,9 @@ static int adfs_fill_super(struct super_block *sb, void *data, int silent)
 	/* set default options */
 	asb->s_uid = 0;
 	asb->s_gid = 0;
-	asb->s_owner_mask = S_IRWXU;
-	asb->s_other_mask = S_IRWXG | S_IRWXO;
+	asb->s_owner_mask = ADFS_DEFAULT_OWNER_MASK;
+	asb->s_other_mask = ADFS_DEFAULT_OTHER_MASK;
+	asb->s_ftsuffix = 0;
 
 	if (parse_options(sb, data))
 		goto error;
@@ -425,11 +454,13 @@ static int adfs_fill_super(struct super_block *sb, void *data, int silent)
 
 	root_obj.parent_id = root_obj.file_id = le32_to_cpu(dr->root);
 	root_obj.name_len  = 0;
-	root_obj.loadaddr  = 0;
-	root_obj.execaddr  = 0;
+	/* Set root object date as 01 Jan 1987 00:00:00 */
+	root_obj.loadaddr  = 0xfff0003f;
+	root_obj.execaddr  = 0xec22c000;
 	root_obj.size	   = ADFS_NEWDIR_SIZE;
 	root_obj.attr	   = ADFS_NDA_DIRECTORY   | ADFS_NDA_OWNER_READ |
 			     ADFS_NDA_OWNER_WRITE | ADFS_NDA_PUBLIC_READ;
+	root_obj.filetype  = -1;
 
 	/*
 	 * If this is a F+ disk with variable length directories,
@@ -443,7 +474,14 @@ static int adfs_fill_super(struct super_block *sb, void *data, int silent)
 		asb->s_dir     = &adfs_f_dir_ops;
 		asb->s_namelen = ADFS_F_NAME_LEN;
 	}
+	/*
+	 * ,xyz hex filetype suffix may be added by driver
+	 * to files that have valid RISC OS filetype
+	 */
+	if (asb->s_ftsuffix)
+		asb->s_namelen += 4;
 
+	sb->s_d_op = &adfs_dentry_operations;
 	root = adfs_iget(sb, &root_obj);
 	sb->s_root = d_alloc_root(root);
 	if (!sb->s_root) {
@@ -454,8 +492,7 @@ static int adfs_fill_super(struct super_block *sb, void *data, int silent)
 		kfree(asb->s_map);
 		adfs_error(sb, "get root inode failed\n");
 		goto error;
-	} else
-		sb->s_root->d_op = &adfs_dentry_operations;
+	}
 	return 0;
 
 error_free_bh:
@@ -466,17 +503,16 @@ error:
 	return -EINVAL;
 }
 
-static int adfs_get_sb(struct file_system_type *fs_type,
-	int flags, const char *dev_name, void *data, struct vfsmount *mnt)
+static struct dentry *adfs_mount(struct file_system_type *fs_type,
+	int flags, const char *dev_name, void *data)
 {
-	return get_sb_bdev(fs_type, flags, dev_name, data, adfs_fill_super,
-			   mnt);
+	return mount_bdev(fs_type, flags, dev_name, data, adfs_fill_super);
 }
 
 static struct file_system_type adfs_fs_type = {
 	.owner		= THIS_MODULE,
 	.name		= "adfs",
-	.get_sb		= adfs_get_sb,
+	.mount		= adfs_mount,
 	.kill_sb	= kill_block_super,
 	.fs_flags	= FS_REQUIRES_DEV,
 };
@@ -504,3 +540,4 @@ static void __exit exit_adfs_fs(void)
 
 module_init(init_adfs_fs)
 module_exit(exit_adfs_fs)
+MODULE_LICENSE("GPL");

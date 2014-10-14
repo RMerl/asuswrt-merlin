@@ -26,8 +26,7 @@
 #include <linux/workqueue.h>
 #include <linux/mii.h>
 #include <linux/usb.h>
-
-#include "usbnet.h"
+#include <linux/usb/usbnet.h>
 
 
 /*
@@ -90,6 +89,7 @@ static int always_connected (struct usbnet *dev)
 
 static const struct driver_info	ali_m5632_info = {
 	.description =	"ALi M5632",
+	.flags       = FLAG_POINTTOPOINT,
 };
 
 #endif
@@ -111,6 +111,7 @@ static const struct driver_info	ali_m5632_info = {
 
 static const struct driver_info	an2720_info = {
 	.description =	"AnchorChips/Cypress 2720",
+	.flags       = FLAG_POINTTOPOINT,
 	// no reset available!
 	// no check_connect available!
 
@@ -133,6 +134,7 @@ static const struct driver_info	an2720_info = {
 
 static const struct driver_info	belkin_info = {
 	.description =	"Belkin, eTEK, or compatible",
+	.flags       = FLAG_POINTTOPOINT,
 };
 
 #endif	/* CONFIG_USB_BELKIN */
@@ -158,6 +160,7 @@ static const struct driver_info	belkin_info = {
 static const struct driver_info	epson2888_info = {
 	.description =	"Epson USB Device",
 	.check_connect = always_connected,
+	.flags = FLAG_POINTTOPOINT,
 
 	.in = 4, .out = 3,
 };
@@ -174,6 +177,7 @@ static const struct driver_info	epson2888_info = {
 #define HAVE_HARDWARE
 static const struct driver_info kc2190_info = {
 	.description =  "KC Technology KC-190",
+	.flags = FLAG_POINTTOPOINT,
 };
 #endif /* CONFIG_USB_KC2190 */
 
@@ -201,16 +205,19 @@ static const struct driver_info kc2190_info = {
 static const struct driver_info	linuxdev_info = {
 	.description =	"Linux Device",
 	.check_connect = always_connected,
+	.flags = FLAG_POINTTOPOINT,
 };
 
 static const struct driver_info	yopy_info = {
 	.description =	"Yopy",
 	.check_connect = always_connected,
+	.flags = FLAG_POINTTOPOINT,
 };
 
 static const struct driver_info	blob_info = {
 	.description =	"Boot Loader OBject",
 	.check_connect = always_connected,
+	.flags = FLAG_POINTTOPOINT,
 };
 
 #endif	/* CONFIG_USB_ARMLINUX */
@@ -219,7 +226,7 @@ static const struct driver_info	blob_info = {
 /*-------------------------------------------------------------------------*/
 
 #ifndef	HAVE_HARDWARE
-#error You need to configure some hardware for this driver
+#warning You need to configure some hardware for this driver
 #endif
 
 /*
@@ -305,9 +312,13 @@ static const struct usb_device_id	products [] = {
 	USB_DEVICE (0x8086, 0x07d3),	// "blob" bootloader
 	.driver_info =	(unsigned long) &blob_info,
 }, {
-	// Linux Ethernet/RNDIS gadget on pxa210/25x/26x, second config
-	// e.g. Gumstix, current OpenZaurus, ...
-	USB_DEVICE_VER (0x0525, 0xa4a2, 0x0203, 0x0203),
+	USB_DEVICE (0x1286, 0x8001),    // "blob" bootloader
+	.driver_info =  (unsigned long) &blob_info,
+}, {
+	// Linux Ethernet/RNDIS gadget, mostly on PXA, second config
+	// e.g. Gumstix, current OpenZaurus, ... or anything else
+	// that just enables this gadget option.
+	USB_DEVICE (0x0525, 0xa4a2),
 	.driver_info =	(unsigned long) &linuxdev_info,
 },
 #endif

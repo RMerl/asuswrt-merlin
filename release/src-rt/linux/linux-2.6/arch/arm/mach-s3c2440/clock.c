@@ -33,16 +33,16 @@
 #include <linux/ioport.h>
 #include <linux/mutex.h>
 #include <linux/clk.h>
+#include <linux/io.h>
 
-#include <asm/hardware.h>
+#include <mach/hardware.h>
 #include <asm/atomic.h>
 #include <asm/irq.h>
-#include <asm/io.h>
 
-#include <asm/arch/regs-clock.h>
+#include <mach/regs-clock.h>
 
-#include <asm/plat-s3c24xx/clock.h>
-#include <asm/plat-s3c24xx/cpu.h>
+#include <plat/clock.h>
+#include <plat/cpu.h>
 
 /* S3C2440 extended clock support */
 
@@ -98,8 +98,10 @@ static struct clk s3c2440_clk_cam = {
 static struct clk s3c2440_clk_cam_upll = {
 	.name		= "camif-upll",
 	.id		= -1,
-	.set_rate	= s3c2440_camif_upll_setrate,
-	.round_rate	= s3c2440_camif_upll_round,
+	.ops		= &(struct clk_ops) {
+		.set_rate	= s3c2440_camif_upll_setrate,
+		.round_rate	= s3c2440_camif_upll_round,
+	},
 };
 
 static struct clk s3c2440_clk_ac97 = {
@@ -111,14 +113,9 @@ static struct clk s3c2440_clk_ac97 = {
 
 static int s3c2440_clk_add(struct sys_device *sysdev)
 {
-	unsigned long camdivn = __raw_readl(S3C2440_CAMDIVN);
-	unsigned long clkdivn;
+	struct clk *clock_upll;
 	struct clk *clock_h;
 	struct clk *clock_p;
-	struct clk *clock_upll;
-
-	printk("S3C2440: Clock Support, DVS %s\n",
-	       (camdivn & S3C2440_CAMDIVN_DVSEN) ? "on" : "off");
 
 	clock_p = clk_get(NULL, "pclk");
 	clock_h = clk_get(NULL, "hclk");
@@ -127,21 +124,6 @@ static int s3c2440_clk_add(struct sys_device *sysdev)
 	if (IS_ERR(clock_p) || IS_ERR(clock_h) || IS_ERR(clock_upll)) {
 		printk(KERN_ERR "S3C2440: Failed to get parent clocks\n");
 		return -EINVAL;
-	}
-
-	/* check rate of UPLL, and if it is near 96MHz, then change
-	 * to using half the UPLL rate for the system */
-
-	if (clk_get_rate(clock_upll) > (94 * MHZ)) {
-		clk_usb_bus.rate = clk_get_rate(clock_upll) / 2;
-
-		mutex_lock(&clocks_mutex);
-
-		clkdivn = __raw_readl(S3C2410_CLKDIVN);
-		clkdivn |= S3C2440_CLKDIVN_UCLK;
-		__raw_writel(clkdivn, S3C2410_CLKDIVN);
-
-		mutex_unlock(&clocks_mutex);
 	}
 
 	s3c2440_clk_cam.parent = clock_h;

@@ -22,6 +22,7 @@
 #include <linux/device.h>
 #include <linux/bootmem.h>
 #include <linux/spinlock.h>
+#include <linux/fsl_devices.h>
 #include <asm/irq.h>
 #include <asm/io.h>
 #include <asm/prom.h>
@@ -30,11 +31,67 @@
 #include "ipic.h"
 
 static struct ipic * primary_ipic;
-static DEFINE_SPINLOCK(ipic_lock);
+static struct irq_chip ipic_level_irq_chip, ipic_edge_irq_chip;
+static DEFINE_RAW_SPINLOCK(ipic_lock);
 
 static struct ipic_info ipic_info[] = {
+	[1] = {
+		.mask	= IPIC_SIMSR_H,
+		.prio	= IPIC_SIPRR_C,
+		.force	= IPIC_SIFCR_H,
+		.bit	= 16,
+		.prio_mask = 0,
+	},
+	[2] = {
+		.mask	= IPIC_SIMSR_H,
+		.prio	= IPIC_SIPRR_C,
+		.force	= IPIC_SIFCR_H,
+		.bit	= 17,
+		.prio_mask = 1,
+	},
+	[3] = {
+		.mask	= IPIC_SIMSR_H,
+		.prio	= IPIC_SIPRR_C,
+		.force	= IPIC_SIFCR_H,
+		.bit	= 18,
+		.prio_mask = 2,
+	},
+	[4] = {
+		.mask	= IPIC_SIMSR_H,
+		.prio	= IPIC_SIPRR_C,
+		.force	= IPIC_SIFCR_H,
+		.bit	= 19,
+		.prio_mask = 3,
+	},
+	[5] = {
+		.mask	= IPIC_SIMSR_H,
+		.prio	= IPIC_SIPRR_C,
+		.force	= IPIC_SIFCR_H,
+		.bit	= 20,
+		.prio_mask = 4,
+	},
+	[6] = {
+		.mask	= IPIC_SIMSR_H,
+		.prio	= IPIC_SIPRR_C,
+		.force	= IPIC_SIFCR_H,
+		.bit	= 21,
+		.prio_mask = 5,
+	},
+	[7] = {
+		.mask	= IPIC_SIMSR_H,
+		.prio	= IPIC_SIPRR_C,
+		.force	= IPIC_SIFCR_H,
+		.bit	= 22,
+		.prio_mask = 6,
+	},
+	[8] = {
+		.mask	= IPIC_SIMSR_H,
+		.prio	= IPIC_SIPRR_C,
+		.force	= IPIC_SIFCR_H,
+		.bit	= 23,
+		.prio_mask = 7,
+	},
 	[9] = {
-		.pend	= IPIC_SIPNR_H,
 		.mask	= IPIC_SIMSR_H,
 		.prio	= IPIC_SIPRR_D,
 		.force	= IPIC_SIFCR_H,
@@ -42,7 +99,6 @@ static struct ipic_info ipic_info[] = {
 		.prio_mask = 0,
 	},
 	[10] = {
-		.pend	= IPIC_SIPNR_H,
 		.mask	= IPIC_SIMSR_H,
 		.prio	= IPIC_SIPRR_D,
 		.force	= IPIC_SIFCR_H,
@@ -50,15 +106,27 @@ static struct ipic_info ipic_info[] = {
 		.prio_mask = 1,
 	},
 	[11] = {
-		.pend	= IPIC_SIPNR_H,
 		.mask	= IPIC_SIMSR_H,
 		.prio	= IPIC_SIPRR_D,
 		.force	= IPIC_SIFCR_H,
 		.bit	= 26,
 		.prio_mask = 2,
 	},
+	[12] = {
+		.mask	= IPIC_SIMSR_H,
+		.prio	= IPIC_SIPRR_D,
+		.force	= IPIC_SIFCR_H,
+		.bit	= 27,
+		.prio_mask = 3,
+	},
+	[13] = {
+		.mask	= IPIC_SIMSR_H,
+		.prio	= IPIC_SIPRR_D,
+		.force	= IPIC_SIFCR_H,
+		.bit	= 28,
+		.prio_mask = 4,
+	},
 	[14] = {
-		.pend	= IPIC_SIPNR_H,
 		.mask	= IPIC_SIMSR_H,
 		.prio	= IPIC_SIPRR_D,
 		.force	= IPIC_SIFCR_H,
@@ -66,7 +134,6 @@ static struct ipic_info ipic_info[] = {
 		.prio_mask = 5,
 	},
 	[15] = {
-		.pend	= IPIC_SIPNR_H,
 		.mask	= IPIC_SIMSR_H,
 		.prio	= IPIC_SIPRR_D,
 		.force	= IPIC_SIFCR_H,
@@ -74,7 +141,6 @@ static struct ipic_info ipic_info[] = {
 		.prio_mask = 6,
 	},
 	[16] = {
-		.pend	= IPIC_SIPNR_H,
 		.mask	= IPIC_SIMSR_H,
 		.prio	= IPIC_SIPRR_D,
 		.force	= IPIC_SIFCR_H,
@@ -82,7 +148,7 @@ static struct ipic_info ipic_info[] = {
 		.prio_mask = 7,
 	},
 	[17] = {
-		.pend	= IPIC_SEPNR,
+		.ack	= IPIC_SEPNR,
 		.mask	= IPIC_SEMSR,
 		.prio	= IPIC_SMPRR_A,
 		.force	= IPIC_SEFCR,
@@ -90,7 +156,7 @@ static struct ipic_info ipic_info[] = {
 		.prio_mask = 5,
 	},
 	[18] = {
-		.pend	= IPIC_SEPNR,
+		.ack	= IPIC_SEPNR,
 		.mask	= IPIC_SEMSR,
 		.prio	= IPIC_SMPRR_A,
 		.force	= IPIC_SEFCR,
@@ -98,7 +164,7 @@ static struct ipic_info ipic_info[] = {
 		.prio_mask = 6,
 	},
 	[19] = {
-		.pend	= IPIC_SEPNR,
+		.ack	= IPIC_SEPNR,
 		.mask	= IPIC_SEMSR,
 		.prio	= IPIC_SMPRR_A,
 		.force	= IPIC_SEFCR,
@@ -106,7 +172,7 @@ static struct ipic_info ipic_info[] = {
 		.prio_mask = 7,
 	},
 	[20] = {
-		.pend	= IPIC_SEPNR,
+		.ack	= IPIC_SEPNR,
 		.mask	= IPIC_SEMSR,
 		.prio	= IPIC_SMPRR_B,
 		.force	= IPIC_SEFCR,
@@ -114,7 +180,7 @@ static struct ipic_info ipic_info[] = {
 		.prio_mask = 4,
 	},
 	[21] = {
-		.pend	= IPIC_SEPNR,
+		.ack	= IPIC_SEPNR,
 		.mask	= IPIC_SEMSR,
 		.prio	= IPIC_SMPRR_B,
 		.force	= IPIC_SEFCR,
@@ -122,7 +188,7 @@ static struct ipic_info ipic_info[] = {
 		.prio_mask = 5,
 	},
 	[22] = {
-		.pend	= IPIC_SEPNR,
+		.ack	= IPIC_SEPNR,
 		.mask	= IPIC_SEMSR,
 		.prio	= IPIC_SMPRR_B,
 		.force	= IPIC_SEFCR,
@@ -130,7 +196,7 @@ static struct ipic_info ipic_info[] = {
 		.prio_mask = 6,
 	},
 	[23] = {
-		.pend	= IPIC_SEPNR,
+		.ack	= IPIC_SEPNR,
 		.mask	= IPIC_SEMSR,
 		.prio	= IPIC_SMPRR_B,
 		.force	= IPIC_SEFCR,
@@ -138,7 +204,6 @@ static struct ipic_info ipic_info[] = {
 		.prio_mask = 7,
 	},
 	[32] = {
-		.pend	= IPIC_SIPNR_H,
 		.mask	= IPIC_SIMSR_H,
 		.prio	= IPIC_SIPRR_A,
 		.force	= IPIC_SIFCR_H,
@@ -146,7 +211,6 @@ static struct ipic_info ipic_info[] = {
 		.prio_mask = 0,
 	},
 	[33] = {
-		.pend	= IPIC_SIPNR_H,
 		.mask	= IPIC_SIMSR_H,
 		.prio	= IPIC_SIPRR_A,
 		.force	= IPIC_SIFCR_H,
@@ -154,7 +218,6 @@ static struct ipic_info ipic_info[] = {
 		.prio_mask = 1,
 	},
 	[34] = {
-		.pend	= IPIC_SIPNR_H,
 		.mask	= IPIC_SIMSR_H,
 		.prio	= IPIC_SIPRR_A,
 		.force	= IPIC_SIFCR_H,
@@ -162,7 +225,6 @@ static struct ipic_info ipic_info[] = {
 		.prio_mask = 2,
 	},
 	[35] = {
-		.pend	= IPIC_SIPNR_H,
 		.mask	= IPIC_SIMSR_H,
 		.prio	= IPIC_SIPRR_A,
 		.force	= IPIC_SIFCR_H,
@@ -170,7 +232,6 @@ static struct ipic_info ipic_info[] = {
 		.prio_mask = 3,
 	},
 	[36] = {
-		.pend	= IPIC_SIPNR_H,
 		.mask	= IPIC_SIMSR_H,
 		.prio	= IPIC_SIPRR_A,
 		.force	= IPIC_SIFCR_H,
@@ -178,7 +239,6 @@ static struct ipic_info ipic_info[] = {
 		.prio_mask = 4,
 	},
 	[37] = {
-		.pend	= IPIC_SIPNR_H,
 		.mask	= IPIC_SIMSR_H,
 		.prio	= IPIC_SIPRR_A,
 		.force	= IPIC_SIFCR_H,
@@ -186,7 +246,6 @@ static struct ipic_info ipic_info[] = {
 		.prio_mask = 5,
 	},
 	[38] = {
-		.pend	= IPIC_SIPNR_H,
 		.mask	= IPIC_SIMSR_H,
 		.prio	= IPIC_SIPRR_A,
 		.force	= IPIC_SIFCR_H,
@@ -194,15 +253,69 @@ static struct ipic_info ipic_info[] = {
 		.prio_mask = 6,
 	},
 	[39] = {
-		.pend	= IPIC_SIPNR_H,
 		.mask	= IPIC_SIMSR_H,
 		.prio	= IPIC_SIPRR_A,
 		.force	= IPIC_SIFCR_H,
 		.bit	= 7,
 		.prio_mask = 7,
 	},
+	[40] = {
+		.mask	= IPIC_SIMSR_H,
+		.prio	= IPIC_SIPRR_B,
+		.force	= IPIC_SIFCR_H,
+		.bit	= 8,
+		.prio_mask = 0,
+	},
+	[41] = {
+		.mask	= IPIC_SIMSR_H,
+		.prio	= IPIC_SIPRR_B,
+		.force	= IPIC_SIFCR_H,
+		.bit	= 9,
+		.prio_mask = 1,
+	},
+	[42] = {
+		.mask	= IPIC_SIMSR_H,
+		.prio	= IPIC_SIPRR_B,
+		.force	= IPIC_SIFCR_H,
+		.bit	= 10,
+		.prio_mask = 2,
+	},
+	[43] = {
+		.mask	= IPIC_SIMSR_H,
+		.prio	= IPIC_SIPRR_B,
+		.force	= IPIC_SIFCR_H,
+		.bit	= 11,
+		.prio_mask = 3,
+	},
+	[44] = {
+		.mask	= IPIC_SIMSR_H,
+		.prio	= IPIC_SIPRR_B,
+		.force	= IPIC_SIFCR_H,
+		.bit	= 12,
+		.prio_mask = 4,
+	},
+	[45] = {
+		.mask	= IPIC_SIMSR_H,
+		.prio	= IPIC_SIPRR_B,
+		.force	= IPIC_SIFCR_H,
+		.bit	= 13,
+		.prio_mask = 5,
+	},
+	[46] = {
+		.mask	= IPIC_SIMSR_H,
+		.prio	= IPIC_SIPRR_B,
+		.force	= IPIC_SIFCR_H,
+		.bit	= 14,
+		.prio_mask = 6,
+	},
+	[47] = {
+		.mask	= IPIC_SIMSR_H,
+		.prio	= IPIC_SIPRR_B,
+		.force	= IPIC_SIFCR_H,
+		.bit	= 15,
+		.prio_mask = 7,
+	},
 	[48] = {
-		.pend	= IPIC_SEPNR,
 		.mask	= IPIC_SEMSR,
 		.prio	= IPIC_SMPRR_A,
 		.force	= IPIC_SEFCR,
@@ -210,7 +323,6 @@ static struct ipic_info ipic_info[] = {
 		.prio_mask = 4,
 	},
 	[64] = {
-		.pend	= IPIC_SIPNR_L,
 		.mask	= IPIC_SIMSR_L,
 		.prio	= IPIC_SMPRR_A,
 		.force	= IPIC_SIFCR_L,
@@ -218,7 +330,6 @@ static struct ipic_info ipic_info[] = {
 		.prio_mask = 0,
 	},
 	[65] = {
-		.pend	= IPIC_SIPNR_L,
 		.mask	= IPIC_SIMSR_L,
 		.prio	= IPIC_SMPRR_A,
 		.force	= IPIC_SIFCR_L,
@@ -226,7 +337,6 @@ static struct ipic_info ipic_info[] = {
 		.prio_mask = 1,
 	},
 	[66] = {
-		.pend	= IPIC_SIPNR_L,
 		.mask	= IPIC_SIMSR_L,
 		.prio	= IPIC_SMPRR_A,
 		.force	= IPIC_SIFCR_L,
@@ -234,7 +344,6 @@ static struct ipic_info ipic_info[] = {
 		.prio_mask = 2,
 	},
 	[67] = {
-		.pend	= IPIC_SIPNR_L,
 		.mask	= IPIC_SIMSR_L,
 		.prio	= IPIC_SMPRR_A,
 		.force	= IPIC_SIFCR_L,
@@ -242,7 +351,6 @@ static struct ipic_info ipic_info[] = {
 		.prio_mask = 3,
 	},
 	[68] = {
-		.pend	= IPIC_SIPNR_L,
 		.mask	= IPIC_SIMSR_L,
 		.prio	= IPIC_SMPRR_B,
 		.force	= IPIC_SIFCR_L,
@@ -250,7 +358,6 @@ static struct ipic_info ipic_info[] = {
 		.prio_mask = 0,
 	},
 	[69] = {
-		.pend	= IPIC_SIPNR_L,
 		.mask	= IPIC_SIMSR_L,
 		.prio	= IPIC_SMPRR_B,
 		.force	= IPIC_SIFCR_L,
@@ -258,7 +365,6 @@ static struct ipic_info ipic_info[] = {
 		.prio_mask = 1,
 	},
 	[70] = {
-		.pend	= IPIC_SIPNR_L,
 		.mask	= IPIC_SIMSR_L,
 		.prio	= IPIC_SMPRR_B,
 		.force	= IPIC_SIFCR_L,
@@ -266,7 +372,6 @@ static struct ipic_info ipic_info[] = {
 		.prio_mask = 2,
 	},
 	[71] = {
-		.pend	= IPIC_SIPNR_L,
 		.mask	= IPIC_SIMSR_L,
 		.prio	= IPIC_SMPRR_B,
 		.force	= IPIC_SIFCR_L,
@@ -274,95 +379,130 @@ static struct ipic_info ipic_info[] = {
 		.prio_mask = 3,
 	},
 	[72] = {
-		.pend	= IPIC_SIPNR_L,
 		.mask	= IPIC_SIMSR_L,
 		.prio	= 0,
 		.force	= IPIC_SIFCR_L,
 		.bit	= 8,
 	},
 	[73] = {
-		.pend	= IPIC_SIPNR_L,
 		.mask	= IPIC_SIMSR_L,
 		.prio	= 0,
 		.force	= IPIC_SIFCR_L,
 		.bit	= 9,
 	},
 	[74] = {
-		.pend	= IPIC_SIPNR_L,
 		.mask	= IPIC_SIMSR_L,
 		.prio	= 0,
 		.force	= IPIC_SIFCR_L,
 		.bit	= 10,
 	},
 	[75] = {
-		.pend	= IPIC_SIPNR_L,
 		.mask	= IPIC_SIMSR_L,
 		.prio	= 0,
 		.force	= IPIC_SIFCR_L,
 		.bit	= 11,
 	},
 	[76] = {
-		.pend	= IPIC_SIPNR_L,
 		.mask	= IPIC_SIMSR_L,
 		.prio	= 0,
 		.force	= IPIC_SIFCR_L,
 		.bit	= 12,
 	},
 	[77] = {
-		.pend	= IPIC_SIPNR_L,
 		.mask	= IPIC_SIMSR_L,
 		.prio	= 0,
 		.force	= IPIC_SIFCR_L,
 		.bit	= 13,
 	},
 	[78] = {
-		.pend	= IPIC_SIPNR_L,
 		.mask	= IPIC_SIMSR_L,
 		.prio	= 0,
 		.force	= IPIC_SIFCR_L,
 		.bit	= 14,
 	},
 	[79] = {
-		.pend	= IPIC_SIPNR_L,
 		.mask	= IPIC_SIMSR_L,
 		.prio	= 0,
 		.force	= IPIC_SIFCR_L,
 		.bit	= 15,
 	},
 	[80] = {
-		.pend	= IPIC_SIPNR_L,
 		.mask	= IPIC_SIMSR_L,
 		.prio	= 0,
 		.force	= IPIC_SIFCR_L,
 		.bit	= 16,
 	},
+	[81] = {
+		.mask	= IPIC_SIMSR_L,
+		.prio	= 0,
+		.force	= IPIC_SIFCR_L,
+		.bit	= 17,
+	},
+	[82] = {
+		.mask	= IPIC_SIMSR_L,
+		.prio	= 0,
+		.force	= IPIC_SIFCR_L,
+		.bit	= 18,
+	},
+	[83] = {
+		.mask	= IPIC_SIMSR_L,
+		.prio	= 0,
+		.force	= IPIC_SIFCR_L,
+		.bit	= 19,
+	},
 	[84] = {
-		.pend	= IPIC_SIPNR_L,
 		.mask	= IPIC_SIMSR_L,
 		.prio	= 0,
 		.force	= IPIC_SIFCR_L,
 		.bit	= 20,
 	},
 	[85] = {
-		.pend	= IPIC_SIPNR_L,
 		.mask	= IPIC_SIMSR_L,
 		.prio	= 0,
 		.force	= IPIC_SIFCR_L,
 		.bit	= 21,
 	},
+	[86] = {
+		.mask	= IPIC_SIMSR_L,
+		.prio	= 0,
+		.force	= IPIC_SIFCR_L,
+		.bit	= 22,
+	},
+	[87] = {
+		.mask	= IPIC_SIMSR_L,
+		.prio	= 0,
+		.force	= IPIC_SIFCR_L,
+		.bit	= 23,
+	},
+	[88] = {
+		.mask	= IPIC_SIMSR_L,
+		.prio	= 0,
+		.force	= IPIC_SIFCR_L,
+		.bit	= 24,
+	},
+	[89] = {
+		.mask	= IPIC_SIMSR_L,
+		.prio	= 0,
+		.force	= IPIC_SIFCR_L,
+		.bit	= 25,
+	},
 	[90] = {
-		.pend	= IPIC_SIPNR_L,
 		.mask	= IPIC_SIMSR_L,
 		.prio	= 0,
 		.force	= IPIC_SIFCR_L,
 		.bit	= 26,
 	},
 	[91] = {
-		.pend	= IPIC_SIPNR_L,
 		.mask	= IPIC_SIMSR_L,
 		.prio	= 0,
 		.force	= IPIC_SIFCR_L,
 		.bit	= 27,
+	},
+	[94] = {
+		.mask	= IPIC_SIMSR_L,
+		.prio	= 0,
+		.force	= IPIC_SIFCR_L,
+		.bit	= 30,
 	},
 };
 
@@ -383,79 +523,88 @@ static inline struct ipic * ipic_from_irq(unsigned int virq)
 
 #define ipic_irq_to_hw(virq)	((unsigned int)irq_map[virq].hwirq)
 
-static void ipic_unmask_irq(unsigned int virq)
+static void ipic_unmask_irq(struct irq_data *d)
 {
-	struct ipic *ipic = ipic_from_irq(virq);
-	unsigned int src = ipic_irq_to_hw(virq);
+	struct ipic *ipic = ipic_from_irq(d->irq);
+	unsigned int src = ipic_irq_to_hw(d->irq);
 	unsigned long flags;
 	u32 temp;
 
-	spin_lock_irqsave(&ipic_lock, flags);
+	raw_spin_lock_irqsave(&ipic_lock, flags);
 
 	temp = ipic_read(ipic->regs, ipic_info[src].mask);
 	temp |= (1 << (31 - ipic_info[src].bit));
 	ipic_write(ipic->regs, ipic_info[src].mask, temp);
 
-	spin_unlock_irqrestore(&ipic_lock, flags);
+	raw_spin_unlock_irqrestore(&ipic_lock, flags);
 }
 
-static void ipic_mask_irq(unsigned int virq)
+static void ipic_mask_irq(struct irq_data *d)
 {
-	struct ipic *ipic = ipic_from_irq(virq);
-	unsigned int src = ipic_irq_to_hw(virq);
+	struct ipic *ipic = ipic_from_irq(d->irq);
+	unsigned int src = ipic_irq_to_hw(d->irq);
 	unsigned long flags;
 	u32 temp;
 
-	spin_lock_irqsave(&ipic_lock, flags);
-
-	temp = ipic_read(ipic->regs, ipic_info[src].mask);
-	temp &= ~(1 << (31 - ipic_info[src].bit));
-	ipic_write(ipic->regs, ipic_info[src].mask, temp);
-
-	spin_unlock_irqrestore(&ipic_lock, flags);
-}
-
-static void ipic_ack_irq(unsigned int virq)
-{
-	struct ipic *ipic = ipic_from_irq(virq);
-	unsigned int src = ipic_irq_to_hw(virq);
-	unsigned long flags;
-	u32 temp;
-
-	spin_lock_irqsave(&ipic_lock, flags);
-
-	temp = ipic_read(ipic->regs, ipic_info[src].pend);
-	temp |= (1 << (31 - ipic_info[src].bit));
-	ipic_write(ipic->regs, ipic_info[src].pend, temp);
-
-	spin_unlock_irqrestore(&ipic_lock, flags);
-}
-
-static void ipic_mask_irq_and_ack(unsigned int virq)
-{
-	struct ipic *ipic = ipic_from_irq(virq);
-	unsigned int src = ipic_irq_to_hw(virq);
-	unsigned long flags;
-	u32 temp;
-
-	spin_lock_irqsave(&ipic_lock, flags);
+	raw_spin_lock_irqsave(&ipic_lock, flags);
 
 	temp = ipic_read(ipic->regs, ipic_info[src].mask);
 	temp &= ~(1 << (31 - ipic_info[src].bit));
 	ipic_write(ipic->regs, ipic_info[src].mask, temp);
 
-	temp = ipic_read(ipic->regs, ipic_info[src].pend);
-	temp |= (1 << (31 - ipic_info[src].bit));
-	ipic_write(ipic->regs, ipic_info[src].pend, temp);
+	/* mb() can't guarantee that masking is finished.  But it does finish
+	 * for nearly all cases. */
+	mb();
 
-	spin_unlock_irqrestore(&ipic_lock, flags);
+	raw_spin_unlock_irqrestore(&ipic_lock, flags);
 }
 
-static int ipic_set_irq_type(unsigned int virq, unsigned int flow_type)
+static void ipic_ack_irq(struct irq_data *d)
 {
-	struct ipic *ipic = ipic_from_irq(virq);
-	unsigned int src = ipic_irq_to_hw(virq);
-	struct irq_desc *desc = get_irq_desc(virq);
+	struct ipic *ipic = ipic_from_irq(d->irq);
+	unsigned int src = ipic_irq_to_hw(d->irq);
+	unsigned long flags;
+	u32 temp;
+
+	raw_spin_lock_irqsave(&ipic_lock, flags);
+
+	temp = 1 << (31 - ipic_info[src].bit);
+	ipic_write(ipic->regs, ipic_info[src].ack, temp);
+
+	/* mb() can't guarantee that ack is finished.  But it does finish
+	 * for nearly all cases. */
+	mb();
+
+	raw_spin_unlock_irqrestore(&ipic_lock, flags);
+}
+
+static void ipic_mask_irq_and_ack(struct irq_data *d)
+{
+	struct ipic *ipic = ipic_from_irq(d->irq);
+	unsigned int src = ipic_irq_to_hw(d->irq);
+	unsigned long flags;
+	u32 temp;
+
+	raw_spin_lock_irqsave(&ipic_lock, flags);
+
+	temp = ipic_read(ipic->regs, ipic_info[src].mask);
+	temp &= ~(1 << (31 - ipic_info[src].bit));
+	ipic_write(ipic->regs, ipic_info[src].mask, temp);
+
+	temp = 1 << (31 - ipic_info[src].bit);
+	ipic_write(ipic->regs, ipic_info[src].ack, temp);
+
+	/* mb() can't guarantee that ack is finished.  But it does finish
+	 * for nearly all cases. */
+	mb();
+
+	raw_spin_unlock_irqrestore(&ipic_lock, flags);
+}
+
+static int ipic_set_irq_type(struct irq_data *d, unsigned int flow_type)
+{
+	struct ipic *ipic = ipic_from_irq(d->irq);
+	unsigned int src = ipic_irq_to_hw(d->irq);
 	unsigned int vold, vnew, edibit;
 
 	if (flow_type == IRQ_TYPE_NONE)
@@ -468,14 +617,21 @@ static int ipic_set_irq_type(unsigned int virq, unsigned int flow_type)
 			flow_type);
 		return -EINVAL;
 	}
+	/* ipic supports only edge mode on external interrupts */
+	if ((flow_type & IRQ_TYPE_EDGE_FALLING) && !ipic_info[src].ack) {
+		printk(KERN_ERR "ipic: edge sense not supported on internal "
+				"interrupts\n");
+		return -EINVAL;
 
-	desc->status &= ~(IRQ_TYPE_SENSE_MASK | IRQ_LEVEL);
-	desc->status |= flow_type & IRQ_TYPE_SENSE_MASK;
+	}
+
+	irqd_set_trigger_type(d, flow_type);
 	if (flow_type & IRQ_TYPE_LEVEL_LOW)  {
-		desc->status |= IRQ_LEVEL;
-		desc->handle_irq = handle_level_irq;
+		__irq_set_handler_locked(d->irq, handle_level_irq);
+		d->chip = &ipic_level_irq_chip;
 	} else {
-		desc->handle_irq = handle_edge_irq;
+		__irq_set_handler_locked(d->irq, handle_edge_irq);
+		d->chip = &ipic_edge_irq_chip;
 	}
 
 	/* only EXT IRQ senses are programmable on ipic
@@ -497,46 +653,49 @@ static int ipic_set_irq_type(unsigned int virq, unsigned int flow_type)
 	}
 	if (vold != vnew)
 		ipic_write(ipic->regs, IPIC_SECNR, vnew);
-	return 0;
+	return IRQ_SET_MASK_OK_NOCOPY;
 }
 
-static struct irq_chip ipic_irq_chip = {
-	.typename	= " IPIC  ",
-	.unmask		= ipic_unmask_irq,
-	.mask		= ipic_mask_irq,
-	.mask_ack	= ipic_mask_irq_and_ack,
-	.ack		= ipic_ack_irq,
-	.set_type	= ipic_set_irq_type,
+/* level interrupts and edge interrupts have different ack operations */
+static struct irq_chip ipic_level_irq_chip = {
+	.name		= "IPIC",
+	.irq_unmask	= ipic_unmask_irq,
+	.irq_mask	= ipic_mask_irq,
+	.irq_mask_ack	= ipic_mask_irq,
+	.irq_set_type	= ipic_set_irq_type,
+};
+
+static struct irq_chip ipic_edge_irq_chip = {
+	.name		= "IPIC",
+	.irq_unmask	= ipic_unmask_irq,
+	.irq_mask	= ipic_mask_irq,
+	.irq_mask_ack	= ipic_mask_irq_and_ack,
+	.irq_ack	= ipic_ack_irq,
+	.irq_set_type	= ipic_set_irq_type,
 };
 
 static int ipic_host_match(struct irq_host *h, struct device_node *node)
 {
-	struct ipic *ipic = h->host_data;
-
 	/* Exact match, unless ipic node is NULL */
-	return ipic->of_node == NULL || ipic->of_node == node;
+	return h->of_node == NULL || h->of_node == node;
 }
 
 static int ipic_host_map(struct irq_host *h, unsigned int virq,
 			 irq_hw_number_t hw)
 {
 	struct ipic *ipic = h->host_data;
-	struct irq_chip *chip;
 
-	/* Default chip */
-	chip = &ipic->hc_irq;
-
-	set_irq_chip_data(virq, ipic);
-	set_irq_chip_and_handler(virq, chip, handle_level_irq);
+	irq_set_chip_data(virq, ipic);
+	irq_set_chip_and_handler(virq, &ipic_level_irq_chip, handle_level_irq);
 
 	/* Set default irq type */
-	set_irq_type(virq, IRQ_TYPE_NONE);
+	irq_set_irq_type(virq, IRQ_TYPE_NONE);
 
 	return 0;
 }
 
 static int ipic_host_xlate(struct irq_host *h, struct device_node *ct,
-			   u32 *intspec, unsigned int intsize,
+			   const u32 *intspec, unsigned int intsize,
 			   irq_hw_number_t *out_hwirq, unsigned int *out_flags)
 
 {
@@ -563,31 +722,25 @@ struct ipic * __init ipic_init(struct device_node *node, unsigned int flags)
 	struct resource res;
 	u32 temp = 0, ret;
 
-	ipic = alloc_bootmem(sizeof(struct ipic));
+	ret = of_address_to_resource(node, 0, &res);
+	if (ret)
+		return NULL;
+
+	ipic = kzalloc(sizeof(*ipic), GFP_KERNEL);
 	if (ipic == NULL)
 		return NULL;
 
-	memset(ipic, 0, sizeof(struct ipic));
-	ipic->of_node = of_node_get(node);
-
-	ipic->irqhost = irq_alloc_host(IRQ_HOST_MAP_LINEAR,
+	ipic->irqhost = irq_alloc_host(node, IRQ_HOST_MAP_LINEAR,
 				       NR_IPIC_INTS,
 				       &ipic_host_ops, 0);
 	if (ipic->irqhost == NULL) {
-		of_node_put(node);
-		return NULL;
-	}
-
-	ret = of_address_to_resource(node, 0, &res);
-	if (ret) {
-		of_node_put(node);
+		kfree(ipic);
 		return NULL;
 	}
 
 	ipic->regs = ioremap(res.start, res.end - res.start + 1);
 
 	ipic->irqhost->host_data = ipic;
-	ipic->hc_irq = ipic_irq_chip;
 
 	/* init hw */
 	ipic_write(ipic->regs, IPIC_SICNR, 0x0);
@@ -596,6 +749,10 @@ struct ipic * __init ipic_init(struct device_node *node, unsigned int flags)
 	 * configure SICFR accordingly */
 	if (flags & IPIC_SPREADMODE_GRP_A)
 		temp |= SICFR_IPSA;
+	if (flags & IPIC_SPREADMODE_GRP_B)
+		temp |= SICFR_IPSB;
+	if (flags & IPIC_SPREADMODE_GRP_C)
+		temp |= SICFR_IPSC;
 	if (flags & IPIC_SPREADMODE_GRP_D)
 		temp |= SICFR_IPSD;
 	if (flags & IPIC_SPREADMODE_MIX_A)
@@ -603,7 +760,7 @@ struct ipic * __init ipic_init(struct device_node *node, unsigned int flags)
 	if (flags & IPIC_SPREADMODE_MIX_B)
 		temp |= SICFR_MPSB;
 
-	ipic_write(ipic->regs, IPIC_SICNR, temp);
+	ipic_write(ipic->regs, IPIC_SICFR, temp);
 
 	/* handle MCP route */
 	temp = 0;
@@ -623,6 +780,9 @@ struct ipic * __init ipic_init(struct device_node *node, unsigned int flags)
 
 	primary_ipic = ipic;
 	irq_set_default_host(primary_ipic->irqhost);
+
+	ipic_write(ipic->regs, IPIC_SIMSR_H, 0);
+	ipic_write(ipic->regs, IPIC_SIMSR_L, 0);
 
 	printk ("IPIC (%d IRQ sources) at %p\n", NR_IPIC_INTS,
 			primary_ipic->regs);
@@ -675,10 +835,12 @@ void ipic_set_highest_priority(unsigned int virq)
 
 void ipic_set_default_priority(void)
 {
-	ipic_write(primary_ipic->regs, IPIC_SIPRR_A, IPIC_SIPRR_A_DEFAULT);
-	ipic_write(primary_ipic->regs, IPIC_SIPRR_D, IPIC_SIPRR_D_DEFAULT);
-	ipic_write(primary_ipic->regs, IPIC_SMPRR_A, IPIC_SMPRR_A_DEFAULT);
-	ipic_write(primary_ipic->regs, IPIC_SMPRR_B, IPIC_SMPRR_B_DEFAULT);
+	ipic_write(primary_ipic->regs, IPIC_SIPRR_A, IPIC_PRIORITY_DEFAULT);
+	ipic_write(primary_ipic->regs, IPIC_SIPRR_B, IPIC_PRIORITY_DEFAULT);
+	ipic_write(primary_ipic->regs, IPIC_SIPRR_C, IPIC_PRIORITY_DEFAULT);
+	ipic_write(primary_ipic->regs, IPIC_SIPRR_D, IPIC_PRIORITY_DEFAULT);
+	ipic_write(primary_ipic->regs, IPIC_SMPRR_A, IPIC_PRIORITY_DEFAULT);
+	ipic_write(primary_ipic->regs, IPIC_SMPRR_B, IPIC_PRIORITY_DEFAULT);
 }
 
 void ipic_enable_mcp(enum ipic_mcp_irq mcp_irq)
@@ -727,8 +889,78 @@ unsigned int ipic_get_irq(void)
 	return irq_linear_revmap(primary_ipic->irqhost, irq);
 }
 
+#ifdef CONFIG_SUSPEND
+static struct {
+	u32 sicfr;
+	u32 siprr[2];
+	u32 simsr[2];
+	u32 sicnr;
+	u32 smprr[2];
+	u32 semsr;
+	u32 secnr;
+	u32 sermr;
+	u32 sercr;
+} ipic_saved_state;
+
+static int ipic_suspend(struct sys_device *sdev, pm_message_t state)
+{
+	struct ipic *ipic = primary_ipic;
+
+	ipic_saved_state.sicfr = ipic_read(ipic->regs, IPIC_SICFR);
+	ipic_saved_state.siprr[0] = ipic_read(ipic->regs, IPIC_SIPRR_A);
+	ipic_saved_state.siprr[1] = ipic_read(ipic->regs, IPIC_SIPRR_D);
+	ipic_saved_state.simsr[0] = ipic_read(ipic->regs, IPIC_SIMSR_H);
+	ipic_saved_state.simsr[1] = ipic_read(ipic->regs, IPIC_SIMSR_L);
+	ipic_saved_state.sicnr = ipic_read(ipic->regs, IPIC_SICNR);
+	ipic_saved_state.smprr[0] = ipic_read(ipic->regs, IPIC_SMPRR_A);
+	ipic_saved_state.smprr[1] = ipic_read(ipic->regs, IPIC_SMPRR_B);
+	ipic_saved_state.semsr = ipic_read(ipic->regs, IPIC_SEMSR);
+	ipic_saved_state.secnr = ipic_read(ipic->regs, IPIC_SECNR);
+	ipic_saved_state.sermr = ipic_read(ipic->regs, IPIC_SERMR);
+	ipic_saved_state.sercr = ipic_read(ipic->regs, IPIC_SERCR);
+
+	if (fsl_deep_sleep()) {
+		/* In deep sleep, make sure there can be no
+		 * pending interrupts, as this can cause
+		 * problems on 831x.
+		 */
+		ipic_write(ipic->regs, IPIC_SIMSR_H, 0);
+		ipic_write(ipic->regs, IPIC_SIMSR_L, 0);
+		ipic_write(ipic->regs, IPIC_SEMSR, 0);
+		ipic_write(ipic->regs, IPIC_SERMR, 0);
+	}
+
+	return 0;
+}
+
+static int ipic_resume(struct sys_device *sdev)
+{
+	struct ipic *ipic = primary_ipic;
+
+	ipic_write(ipic->regs, IPIC_SICFR, ipic_saved_state.sicfr);
+	ipic_write(ipic->regs, IPIC_SIPRR_A, ipic_saved_state.siprr[0]);
+	ipic_write(ipic->regs, IPIC_SIPRR_D, ipic_saved_state.siprr[1]);
+	ipic_write(ipic->regs, IPIC_SIMSR_H, ipic_saved_state.simsr[0]);
+	ipic_write(ipic->regs, IPIC_SIMSR_L, ipic_saved_state.simsr[1]);
+	ipic_write(ipic->regs, IPIC_SICNR, ipic_saved_state.sicnr);
+	ipic_write(ipic->regs, IPIC_SMPRR_A, ipic_saved_state.smprr[0]);
+	ipic_write(ipic->regs, IPIC_SMPRR_B, ipic_saved_state.smprr[1]);
+	ipic_write(ipic->regs, IPIC_SEMSR, ipic_saved_state.semsr);
+	ipic_write(ipic->regs, IPIC_SECNR, ipic_saved_state.secnr);
+	ipic_write(ipic->regs, IPIC_SERMR, ipic_saved_state.sermr);
+	ipic_write(ipic->regs, IPIC_SERCR, ipic_saved_state.sercr);
+
+	return 0;
+}
+#else
+#define ipic_suspend NULL
+#define ipic_resume NULL
+#endif
+
 static struct sysdev_class ipic_sysclass = {
-	set_kset_name("ipic"),
+	.name = "ipic",
+	.suspend = ipic_suspend,
+	.resume = ipic_resume,
 };
 
 static struct sys_device device_ipic = {
@@ -740,7 +972,7 @@ static int __init init_ipic_sysfs(void)
 {
 	int rc;
 
-	if (!primary_ipic->regs)
+	if (!primary_ipic || !primary_ipic->regs)
 		return -ENODEV;
 	printk(KERN_DEBUG "Registering ipic with sysfs...\n");
 

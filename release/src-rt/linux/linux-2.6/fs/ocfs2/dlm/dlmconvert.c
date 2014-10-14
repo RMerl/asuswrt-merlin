@@ -28,9 +28,7 @@
 #include <linux/module.h>
 #include <linux/fs.h>
 #include <linux/types.h>
-#include <linux/slab.h>
 #include <linux/highmem.h>
-#include <linux/utsname.h>
 #include <linux/init.h>
 #include <linux/sysctl.h>
 #include <linux/random.h>
@@ -130,8 +128,8 @@ static enum dlm_status __dlmconvert_master(struct dlm_ctxt *dlm,
 
 	assert_spin_locked(&res->spinlock);
 
-	mlog_entry("type=%d, convert_type=%d, new convert_type=%d\n",
-		   lock->ml.type, lock->ml.convert_type, type);
+	mlog(0, "type=%d, convert_type=%d, new convert_type=%d\n",
+	     lock->ml.type, lock->ml.convert_type, type);
 
 	spin_lock(&lock->spinlock);
 
@@ -355,7 +353,7 @@ static enum dlm_status dlm_send_remote_convert_request(struct dlm_ctxt *dlm,
 	struct kvec vec[2];
 	size_t veclen = 1;
 
-	mlog_entry("%.*s\n", res->lockname.len, res->lockname.name);
+	mlog(0, "%.*s\n", res->lockname.len, res->lockname.name);
 
 	memset(&convert, 0, sizeof(struct dlm_convert_lock));
 	convert.node_idx = dlm->node_num;
@@ -392,12 +390,14 @@ static enum dlm_status dlm_send_remote_convert_request(struct dlm_ctxt *dlm,
 		} else if (ret != DLM_NORMAL && ret != DLM_NOTQUEUED)
 			dlm_error(ret);
 	} else {
-		mlog_errno(tmpret);
+		mlog(ML_ERROR, "Error %d when sending message %u (key 0x%x) to "
+		     "node %u\n", tmpret, DLM_CONVERT_LOCK_MSG, dlm->key,
+		     res->owner);
 		if (dlm_is_host_down(tmpret)) {
 			/* instead of logging the same network error over
 			 * and over, sleep here and wait for the heartbeat
 			 * to notice the node is dead.  times out after 5s. */
-			dlm_wait_for_node_death(dlm, res->owner, 
+			dlm_wait_for_node_death(dlm, res->owner,
 						DLM_NODE_DEATH_WAIT_MAX);
 			ret = DLM_RECOVERING;
 			mlog(0, "node %u died so returning DLM_RECOVERING "
@@ -487,7 +487,7 @@ int dlm_convert_lock_handler(struct o2net_msg *msg, u32 len, void *data,
 			       "cookie=%u:%llu\n",
 		     dlm_get_lock_cookie_node(be64_to_cpu(cnv->cookie)),
 		     dlm_get_lock_cookie_seq(be64_to_cpu(cnv->cookie)));
-		__dlm_print_one_lock_resource(res);
+		dlm_print_one_lock_resource(res);
 		goto leave;
 	}
 

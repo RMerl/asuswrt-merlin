@@ -8,249 +8,131 @@
  *
  */
 
-#include <linux/module.h>
-#include <linux/suspend.h>
 #include <linux/kobject.h>
 #include <linux/string.h>
-#include <linux/delay.h>
-#include <linux/errno.h>
-#include <linux/init.h>
-#include <linux/console.h>
-#include <linux/cpu.h>
 #include <linux/resume-trace.h>
-#include <linux/freezer.h>
-#include <linux/vmstat.h>
+#include <linux/workqueue.h>
 
 #include "power.h"
 
-/*This is just an arbitrary number */
-#define FREE_PAGE_NUMBER (100)
-
 DEFINE_MUTEX(pm_mutex);
 
-struct pm_ops *pm_ops;
+#ifdef CONFIG_PM_SLEEP
 
-/**
- *	pm_set_ops - Set the global power method table. 
- *	@ops:	Pointer to ops structure.
- */
+/* Routines for PM-transition notifications */
 
-void pm_set_ops(struct pm_ops * ops)
+static BLOCKING_NOTIFIER_HEAD(pm_chain_head);
+
+int register_pm_notifier(struct notifier_block *nb)
 {
-	mutex_lock(&pm_mutex);
-	pm_ops = ops;
-	mutex_unlock(&pm_mutex);
+	return blocking_notifier_chain_register(&pm_chain_head, nb);
+}
+EXPORT_SYMBOL_GPL(register_pm_notifier);
+
+int unregister_pm_notifier(struct notifier_block *nb)
+{
+	return blocking_notifier_chain_unregister(&pm_chain_head, nb);
+}
+EXPORT_SYMBOL_GPL(unregister_pm_notifier);
+
+int pm_notifier_call_chain(unsigned long val)
+{
+	return (blocking_notifier_call_chain(&pm_chain_head, val, NULL)
+			== NOTIFY_BAD) ? -EINVAL : 0;
 }
 
-/**
- * pm_valid_only_mem - generic memory-only valid callback
- *
- * pm_ops drivers that implement mem suspend only and only need
- * to check for that in their .valid callback can use this instead
- * of rolling their own .valid callback.
- */
-int pm_valid_only_mem(suspend_state_t state)
+/* If set, devices may be suspended and resumed asynchronously. */
+int pm_async_enabled = 1;
+
+static ssize_t pm_async_show(struct kobject *kobj, struct kobj_attribute *attr,
+			     char *buf)
 {
-	return state == PM_SUSPEND_MEM;
+	return sprintf(buf, "%d\n", pm_async_enabled);
 }
 
-
-static inline void pm_finish(suspend_state_t state)
+static ssize_t pm_async_store(struct kobject *kobj, struct kobj_attribute *attr,
+			      const char *buf, size_t n)
 {
-	if (pm_ops->finish)
-		pm_ops->finish(state);
+	unsigned long val;
+
+	if (strict_strtoul(buf, 10, &val))
+		return -EINVAL;
+
+	if (val > 1)
+		return -EINVAL;
+
+	pm_async_enabled = val;
+	return n;
 }
 
-/**
- *	suspend_prepare - Do prep work before entering low-power state.
- *	@state:		State we're entering.
- *
- *	This is common code that is called for each state that we're 
- *	entering. Allocate a console, stop all processes, then make sure
- *	the platform can enter the requested state.
- */
+power_attr(pm_async);
 
-static int suspend_prepare(suspend_state_t state)
-{
-	int error;
-	unsigned int free_pages;
+#ifdef CONFIG_PM_DEBUG
+int pm_test_level = TEST_NONE;
 
-	if (!pm_ops || !pm_ops->enter)
-		return -EPERM;
-
-	pm_prepare_console();
-
-	if (freeze_processes()) {
-		error = -EAGAIN;
-		goto Thaw;
-	}
-
-	if ((free_pages = global_page_state(NR_FREE_PAGES))
-			< FREE_PAGE_NUMBER) {
-		pr_debug("PM: free some memory\n");
-		shrink_all_memory(FREE_PAGE_NUMBER - free_pages);
-		if (nr_free_pages() < FREE_PAGE_NUMBER) {
-			error = -ENOMEM;
-			printk(KERN_ERR "PM: No enough memory\n");
-			goto Thaw;
-		}
-	}
-
-	if (pm_ops->set_target) {
-		error = pm_ops->set_target(state);
-		if (error)
-			goto Thaw;
-	}
-	suspend_console();
-	error = device_suspend(PMSG_SUSPEND);
-	if (error) {
-		printk(KERN_ERR "Some devices failed to suspend\n");
-		goto Resume_console;
-	}
-	if (pm_ops->prepare) {
-		if ((error = pm_ops->prepare(state)))
-			goto Resume_devices;
-	}
-
-	error = disable_nonboot_cpus();
-	if (!error)
-		return 0;
-
-	enable_nonboot_cpus();
-	pm_finish(state);
- Resume_devices:
-	device_resume();
- Resume_console:
-	resume_console();
- Thaw:
-	thaw_processes();
-	pm_restore_console();
-	return error;
-}
-
-/* default implementation */
-void __attribute__ ((weak)) arch_suspend_disable_irqs(void)
-{
-	local_irq_disable();
-}
-
-/* default implementation */
-void __attribute__ ((weak)) arch_suspend_enable_irqs(void)
-{
-	local_irq_enable();
-}
-
-int suspend_enter(suspend_state_t state)
-{
-	int error = 0;
-
-	arch_suspend_disable_irqs();
-	BUG_ON(!irqs_disabled());
-
-	if ((error = device_power_down(PMSG_SUSPEND))) {
-		printk(KERN_ERR "Some devices failed to power down\n");
-		goto Done;
-	}
-	error = pm_ops->enter(state);
-	device_power_up();
- Done:
-	arch_suspend_enable_irqs();
-	BUG_ON(irqs_disabled());
-	return error;
-}
-
-
-/**
- *	suspend_finish - Do final work before exiting suspend sequence.
- *	@state:		State we're coming out of.
- *
- *	Call platform code to clean up, restart processes, and free the 
- *	console that we've allocated. This is not called for suspend-to-disk.
- */
-
-static void suspend_finish(suspend_state_t state)
-{
-	enable_nonboot_cpus();
-	pm_finish(state);
-	device_resume();
-	resume_console();
-	thaw_processes();
-	pm_restore_console();
-}
-
-
-
-
-static const char * const pm_states[PM_SUSPEND_MAX] = {
-	[PM_SUSPEND_STANDBY]	= "standby",
-	[PM_SUSPEND_MEM]	= "mem",
+static const char * const pm_tests[__TEST_AFTER_LAST] = {
+	[TEST_NONE] = "none",
+	[TEST_CORE] = "core",
+	[TEST_CPUS] = "processors",
+	[TEST_PLATFORM] = "platform",
+	[TEST_DEVICES] = "devices",
+	[TEST_FREEZER] = "freezer",
 };
 
-static inline int valid_state(suspend_state_t state)
+static ssize_t pm_test_show(struct kobject *kobj, struct kobj_attribute *attr,
+				char *buf)
 {
-	/* All states need lowlevel support and need to be valid
-	 * to the lowlevel implementation, no valid callback
-	 * implies that none are valid. */
-	if (!pm_ops || !pm_ops->valid || !pm_ops->valid(state))
-		return 0;
-	return 1;
+	char *s = buf;
+	int level;
+
+	for (level = TEST_FIRST; level <= TEST_MAX; level++)
+		if (pm_tests[level]) {
+			if (level == pm_test_level)
+				s += sprintf(s, "[%s] ", pm_tests[level]);
+			else
+				s += sprintf(s, "%s ", pm_tests[level]);
+		}
+
+	if (s != buf)
+		/* convert the last space to a newline */
+		*(s-1) = '\n';
+
+	return (s - buf);
 }
 
-
-/**
- *	enter_state - Do common work of entering low-power state.
- *	@state:		pm_state structure for state we're entering.
- *
- *	Make sure we're the only ones trying to enter a sleep state. Fail
- *	if someone has beat us to it, since we don't want anything weird to
- *	happen when we wake up.
- *	Then, do the setup for suspend, enter the state, and cleaup (after
- *	we've woken up).
- */
-
-static int enter_state(suspend_state_t state)
+static ssize_t pm_test_store(struct kobject *kobj, struct kobj_attribute *attr,
+				const char *buf, size_t n)
 {
-	int error;
+	const char * const *s;
+	int level;
+	char *p;
+	int len;
+	int error = -EINVAL;
 
-	if (!valid_state(state))
-		return -ENODEV;
-	if (!mutex_trylock(&pm_mutex))
-		return -EBUSY;
+	p = memchr(buf, '\n', n);
+	len = p ? p - buf : n;
 
-	pr_debug("PM: Preparing system for %s sleep\n", pm_states[state]);
-	if ((error = suspend_prepare(state)))
-		goto Unlock;
+	mutex_lock(&pm_mutex);
 
-	pr_debug("PM: Entering %s sleep\n", pm_states[state]);
-	error = suspend_enter(state);
+	level = TEST_FIRST;
+	for (s = &pm_tests[level]; level <= TEST_MAX; s++, level++)
+		if (*s && len == strlen(*s) && !strncmp(buf, *s, len)) {
+			pm_test_level = level;
+			error = 0;
+			break;
+		}
 
-	pr_debug("PM: Finishing wakeup.\n");
-	suspend_finish(state);
- Unlock:
 	mutex_unlock(&pm_mutex);
-	return error;
+
+	return error ? error : n;
 }
 
+power_attr(pm_test);
+#endif /* CONFIG_PM_DEBUG */
 
-/**
- *	pm_suspend - Externally visible function for suspending system.
- *	@state:		Enumerated value of state to enter.
- *
- *	Determine whether or not value is within range, get state 
- *	structure, and enter (above).
- */
+#endif /* CONFIG_PM_SLEEP */
 
-int pm_suspend(suspend_state_t state)
-{
-	if (state > PM_SUSPEND_ON && state <= PM_SUSPEND_MAX)
-		return enter_state(state);
-	return -EINVAL;
-}
-
-EXPORT_SYMBOL(pm_suspend);
-
-decl_subsys(power,NULL,NULL);
-
+struct kobject *power_kobj;
 
 /**
  *	state - control system power state.
@@ -262,17 +144,19 @@ decl_subsys(power,NULL,NULL);
  *	store() accepts one of those strings, translates it into the 
  *	proper enumerated value, and initiates a suspend transition.
  */
-
-static ssize_t state_show(struct kset *kset, char *buf)
+static ssize_t state_show(struct kobject *kobj, struct kobj_attribute *attr,
+			  char *buf)
 {
+	char *s = buf;
+#ifdef CONFIG_SUSPEND
 	int i;
-	char * s = buf;
 
 	for (i = 0; i < PM_SUSPEND_MAX; i++) {
 		if (pm_states[i] && valid_state(i))
 			s += sprintf(s,"%s ", pm_states[i]);
 	}
-#ifdef CONFIG_SOFTWARE_SUSPEND
+#endif
+#ifdef CONFIG_HIBERNATION
 	s += sprintf(s, "%s\n", "disk");
 #else
 	if (s != buf)
@@ -282,13 +166,16 @@ static ssize_t state_show(struct kset *kset, char *buf)
 	return (s - buf);
 }
 
-static ssize_t state_store(struct kset *kset, const char *buf, size_t n)
+static ssize_t state_store(struct kobject *kobj, struct kobj_attribute *attr,
+			   const char *buf, size_t n)
 {
+#ifdef CONFIG_SUSPEND
 	suspend_state_t state = PM_SUSPEND_STANDBY;
 	const char * const *s;
+#endif
 	char *p;
-	int error;
 	int len;
+	int error = -EINVAL;
 
 	p = memchr(buf, '\n', n);
 	len = p ? p - buf : n;
@@ -296,32 +183,90 @@ static ssize_t state_store(struct kset *kset, const char *buf, size_t n)
 	/* First, check if we are requested to hibernate */
 	if (len == 4 && !strncmp(buf, "disk", len)) {
 		error = hibernate();
-		return error ? error : n;
+  goto Exit;
 	}
 
+#ifdef CONFIG_SUSPEND
 	for (s = &pm_states[state]; state < PM_SUSPEND_MAX; s++, state++) {
 		if (*s && len == strlen(*s) && !strncmp(buf, *s, len))
 			break;
 	}
 	if (state < PM_SUSPEND_MAX && *s)
 		error = enter_state(state);
-	else
-		error = -EINVAL;
+#endif
+
+ Exit:
 	return error ? error : n;
 }
 
 power_attr(state);
 
+#ifdef CONFIG_PM_SLEEP
+/*
+ * The 'wakeup_count' attribute, along with the functions defined in
+ * drivers/base/power/wakeup.c, provides a means by which wakeup events can be
+ * handled in a non-racy way.
+ *
+ * If a wakeup event occurs when the system is in a sleep state, it simply is
+ * woken up.  In turn, if an event that would wake the system up from a sleep
+ * state occurs when it is undergoing a transition to that sleep state, the
+ * transition should be aborted.  Moreover, if such an event occurs when the
+ * system is in the working state, an attempt to start a transition to the
+ * given sleep state should fail during certain period after the detection of
+ * the event.  Using the 'state' attribute alone is not sufficient to satisfy
+ * these requirements, because a wakeup event may occur exactly when 'state'
+ * is being written to and may be delivered to user space right before it is
+ * frozen, so the event will remain only partially processed until the system is
+ * woken up by another event.  In particular, it won't cause the transition to
+ * a sleep state to be aborted.
+ *
+ * This difficulty may be overcome if user space uses 'wakeup_count' before
+ * writing to 'state'.  It first should read from 'wakeup_count' and store
+ * the read value.  Then, after carrying out its own preparations for the system
+ * transition to a sleep state, it should write the stored value to
+ * 'wakeup_count'.  If that fails, at least one wakeup event has occurred since
+ * 'wakeup_count' was read and 'state' should not be written to.  Otherwise, it
+ * is allowed to write to 'state', but the transition will be aborted if there
+ * are any wakeup events detected after 'wakeup_count' was written to.
+ */
+
+static ssize_t wakeup_count_show(struct kobject *kobj,
+				struct kobj_attribute *attr,
+				char *buf)
+{
+	unsigned int val;
+
+	return pm_get_wakeup_count(&val) ? sprintf(buf, "%u\n", val) : -EINTR;
+}
+
+static ssize_t wakeup_count_store(struct kobject *kobj,
+				struct kobj_attribute *attr,
+				const char *buf, size_t n)
+{
+	unsigned int val;
+
+	if (sscanf(buf, "%u", &val) == 1) {
+		if (pm_save_wakeup_count(val))
+			return n;
+	}
+	return -EINVAL;
+}
+
+power_attr(wakeup_count);
+#endif /* CONFIG_PM_SLEEP */
+
 #ifdef CONFIG_PM_TRACE
 int pm_trace_enabled;
 
-static ssize_t pm_trace_show(struct kset *kset, char *buf)
+static ssize_t pm_trace_show(struct kobject *kobj, struct kobj_attribute *attr,
+			     char *buf)
 {
 	return sprintf(buf, "%d\n", pm_trace_enabled);
 }
 
 static ssize_t
-pm_trace_store(struct kset *kset, const char *buf, size_t n)
+pm_trace_store(struct kobject *kobj, struct kobj_attribute *attr,
+	       const char *buf, size_t n)
 {
 	int val;
 
@@ -334,29 +279,68 @@ pm_trace_store(struct kset *kset, const char *buf, size_t n)
 
 power_attr(pm_trace);
 
-static struct attribute * g[] = {
-	&state_attr.attr,
-	&pm_trace_attr.attr,
-	NULL,
-};
-#else
-static struct attribute * g[] = {
-	&state_attr.attr,
-	NULL,
-};
+static ssize_t pm_trace_dev_match_show(struct kobject *kobj,
+				       struct kobj_attribute *attr,
+				       char *buf)
+{
+	return show_trace_dev_match(buf, PAGE_SIZE);
+}
+
+static ssize_t
+pm_trace_dev_match_store(struct kobject *kobj, struct kobj_attribute *attr,
+			 const char *buf, size_t n)
+{
+	return -EINVAL;
+}
+
+power_attr(pm_trace_dev_match);
+
 #endif /* CONFIG_PM_TRACE */
+
+static struct attribute * g[] = {
+	&state_attr.attr,
+#ifdef CONFIG_PM_TRACE
+	&pm_trace_attr.attr,
+	&pm_trace_dev_match_attr.attr,
+#endif
+#ifdef CONFIG_PM_SLEEP
+	&pm_async_attr.attr,
+	&wakeup_count_attr.attr,
+#ifdef CONFIG_PM_DEBUG
+	&pm_test_attr.attr,
+#endif
+#endif
+	NULL,
+};
 
 static struct attribute_group attr_group = {
 	.attrs = g,
 };
 
+#ifdef CONFIG_PM_RUNTIME
+struct workqueue_struct *pm_wq;
+EXPORT_SYMBOL_GPL(pm_wq);
+
+static int __init pm_start_workqueue(void)
+{
+	pm_wq = alloc_workqueue("pm", WQ_FREEZABLE, 0);
+
+	return pm_wq ? 0 : -ENOMEM;
+}
+#else
+static inline int pm_start_workqueue(void) { return 0; }
+#endif
 
 static int __init pm_init(void)
 {
-	int error = subsystem_register(&power_subsys);
-	if (!error)
-		error = sysfs_create_group(&power_subsys.kobj,&attr_group);
-	return error;
+	int error = pm_start_workqueue();
+	if (error)
+		return error;
+	hibernate_image_size_init();
+	power_kobj = kobject_create_and_add("power", NULL);
+	if (!power_kobj)
+		return -ENOMEM;
+	return sysfs_create_group(power_kobj, &attr_group);
 }
 
 core_initcall(pm_init);

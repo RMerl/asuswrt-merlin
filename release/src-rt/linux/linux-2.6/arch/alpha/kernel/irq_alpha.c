@@ -10,6 +10,7 @@
 
 #include <asm/machvec.h>
 #include <asm/dma.h>
+#include <asm/perf_event.h>
 
 #include "proto.h"
 #include "irq_impl.h"
@@ -64,7 +65,7 @@ do_entInt(unsigned long type, unsigned long vector,
 		smp_percpu_timer_interrupt(regs);
 		cpu = smp_processor_id();
 		if (cpu != boot_cpuid) {
-		        kstat_cpu(cpu).irqs[RTC_IRQ]++;
+		        kstat_incr_irqs_this_cpu(RTC_IRQ, irq_to_desc(RTC_IRQ));
 		} else {
 			handle_irq(RTC_IRQ);
 		}
@@ -218,30 +219,17 @@ process_mcheck_info(unsigned long vector, unsigned long la_ptr,
  * processed by PALcode, and comes in via entInt vector 1.
  */
 
-static void rtc_enable_disable(unsigned int irq) { }
-static unsigned int rtc_startup(unsigned int irq) { return 0; }
-
 struct irqaction timer_irqaction = {
 	.handler	= timer_interrupt,
 	.flags		= IRQF_DISABLED,
 	.name		= "timer",
 };
 
-static struct hw_interrupt_type rtc_irq_type = {
-	.typename	= "RTC",
-	.startup	= rtc_startup,
-	.shutdown	= rtc_enable_disable,
-	.enable		= rtc_enable_disable,
-	.disable	= rtc_enable_disable,
-	.ack		= rtc_enable_disable,
-	.end		= rtc_enable_disable,
-};
-
 void __init
 init_rtc_irq(void)
 {
-	irq_desc[RTC_IRQ].status = IRQ_DISABLED;
-	irq_desc[RTC_IRQ].chip = &rtc_irq_type;
+	irq_set_chip_and_handler_name(RTC_IRQ, &dummy_irq_chip,
+				      handle_simple_irq, "RTC");
 	setup_irq(RTC_IRQ, &timer_irqaction);
 }
 

@@ -8,39 +8,6 @@
 
 #include "hpfs_fn.h"
 
-static char *text_postfix[]={
-".ASM", ".BAS", ".BAT", ".C", ".CC", ".CFG", ".CMD", ".CON", ".CPP", ".DEF",
-".DOC", ".DPR", ".ERX", ".H", ".HPP", ".HTM", ".HTML", ".JAVA", ".LOG", ".PAS",
-".RC", ".TEX", ".TXT", ".Y", ""};
-
-static char *text_prefix[]={
-"AUTOEXEC.", "CHANGES", "COPYING", "CONFIG.", "CREDITS", "FAQ", "FILE_ID.DIZ",
-"MAKEFILE", "READ.ME", "README", "TERMCAP", ""};
-
-void hpfs_decide_conv(struct inode *inode, unsigned char *name, unsigned len)
-{
-	struct hpfs_inode_info *hpfs_inode = hpfs_i(inode);
-	int i;
-	if (hpfs_inode->i_conv != CONV_AUTO) return;
-	for (i = 0; *text_postfix[i]; i++) {
-		int l = strlen(text_postfix[i]);
-		if (l <= len)
-			if (!hpfs_compare_names(inode->i_sb, text_postfix[i], l, name + len - l, l, 0))
-				goto text;
-	}
-	for (i = 0; *text_prefix[i]; i++) {
-		int l = strlen(text_prefix[i]);
-		if (l <= len)
-			if (!hpfs_compare_names(inode->i_sb, text_prefix[i], l, name, l, 0))
-				goto text;
-	}
-	hpfs_inode->i_conv = CONV_BINARY;
-	return;
-	text:
-	hpfs_inode->i_conv = CONV_TEXT;
-	return;
-}
-
 static inline int not_allowed_char(unsigned char c)
 {
 	return c<' ' || c=='"' || c=='*' || c=='/' || c==':' || c=='<' ||
@@ -71,7 +38,7 @@ static inline unsigned char locase(unsigned char *dir, unsigned char a)
 	return dir[a];
 }
 
-int hpfs_chk_name(unsigned char *name, unsigned *len)
+int hpfs_chk_name(const unsigned char *name, unsigned *len)
 {
 	int i;
 	if (*len > 254) return -ENAMETOOLONG;
@@ -83,10 +50,10 @@ int hpfs_chk_name(unsigned char *name, unsigned *len)
 	return 0;
 }
 
-char *hpfs_translate_name(struct super_block *s, unsigned char *from,
+unsigned char *hpfs_translate_name(struct super_block *s, unsigned char *from,
 			  unsigned len, int lc, int lng)
 {
-	char *to;
+	unsigned char *to;
 	int i;
 	if (hpfs_sb(s)->sb_chk >= 2) if (hpfs_is_name_long(from, len) != lng) {
 		printk("HPFS: Long name flag mismatch - name ");
@@ -103,8 +70,9 @@ char *hpfs_translate_name(struct super_block *s, unsigned char *from,
 	return to;
 }
 
-int hpfs_compare_names(struct super_block *s, unsigned char *n1, unsigned l1,
-		       unsigned char *n2, unsigned l2, int last)
+int hpfs_compare_names(struct super_block *s,
+		       const unsigned char *n1, unsigned l1,
+		       const unsigned char *n2, unsigned l2, int last)
 {
 	unsigned l = l1 < l2 ? l1 : l2;
 	unsigned i;
@@ -120,7 +88,7 @@ int hpfs_compare_names(struct super_block *s, unsigned char *n1, unsigned l1,
 	return 0;
 }
 
-int hpfs_is_name_long(unsigned char *name, unsigned len)
+int hpfs_is_name_long(const unsigned char *name, unsigned len)
 {
 	int i,j;
 	for (i = 0; i < len && name[i] != '.'; i++)
@@ -134,7 +102,7 @@ int hpfs_is_name_long(unsigned char *name, unsigned len)
 
 /* OS/2 clears dots and spaces at the end of file name, so we have to */
 
-void hpfs_adjust_length(unsigned char *name, unsigned *len)
+void hpfs_adjust_length(const unsigned char *name, unsigned *len)
 {
 	if (!*len) return;
 	if (*len == 1 && name[0] == '.') return;

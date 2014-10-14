@@ -1,0 +1,126 @@
+/*
+ * Digsy MTC board Device Tree Source
+ *
+ * Copyright (C) 2009 Semihalf
+ *
+ * Based on the CM5200 by M. Balakowicz
+ *
+ * This program is free software; you can redistribute  it and/or modify it
+ * under  the terms of  the GNU General  Public License as published by the
+ * Free Software Foundation;  either version 2 of the  License, or (at your
+ * option) any later version.
+ */
+
+/include/ "mpc5200b.dtsi"
+
+/ {
+	model = "intercontrol,digsy-mtc";
+	compatible = "intercontrol,digsy-mtc";
+
+	memory {
+		reg = <0x00000000 0x02000000>;	// 32MB
+	};
+
+	soc5200@f0000000 {
+		timer@600 {	// General Purpose Timer
+			fsl,has-wdt;
+		};
+
+		rtc@800 {
+			status = "disabled";
+		};
+
+		can@900 {
+			status = "disabled";
+		};
+
+		can@980 {
+			status = "disabled";
+		};
+
+		psc@2000 {		// PSC1
+			status = "disabled";
+		};
+
+		psc@2200 {		// PSC2
+			status = "disabled";
+		};
+
+		psc@2400 {		// PSC3
+			status = "disabled";
+		};
+
+		psc@2600 {		// PSC4
+			compatible = "fsl,mpc5200b-psc-uart","fsl,mpc5200-psc-uart";
+		};
+
+		psc@2800 {		// PSC5
+			compatible = "fsl,mpc5200b-psc-uart","fsl,mpc5200-psc-uart";
+		};
+
+		psc@2c00 {		// PSC6
+			status = "disabled";
+		};
+
+		ethernet@3000 {
+			phy-handle = <&phy0>;
+		};
+
+		mdio@3000 {
+			phy0: ethernet-phy@0 {
+				reg = <0>;
+			};
+		};
+
+		i2c@3d00 {
+			rtc@50 {
+				compatible = "at,24c08";
+				reg = <0x50>;
+			};
+
+			rtc@68 {
+				compatible = "dallas,ds1339";
+				reg = <0x68>;
+			};
+		};
+
+		i2c@3d40 {
+			status = "disabled";
+		};
+	};
+
+	pci@f0000d00 {
+		status = "disabled";
+	};
+
+	localbus {
+		ranges = <0 0 0xff000000 0x1000000>;
+
+		// 16-bit flash device at LocalPlus Bus CS0
+		flash@0,0 {
+			compatible = "cfi-flash";
+			reg = <0 0 0x1000000>;
+			bank-width = <2>;
+			device-width = <2>;
+			#size-cells = <1>;
+			#address-cells = <1>;
+
+			partition@0 {
+				label = "kernel";
+				reg = <0x0 0x00200000>;
+			};
+			partition@200000 {
+				label = "root";
+				reg = <0x00200000 0x00300000>;
+			};
+			partition@500000 {
+				label = "user";
+				reg = <0x00500000 0x00a00000>;
+			};
+			partition@f00000 {
+				label = "u-boot";
+				reg = <0x00f00000 0x100000>;
+			};
+		};
+	};
+};

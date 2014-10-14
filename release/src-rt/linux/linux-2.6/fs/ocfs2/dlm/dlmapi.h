@@ -95,7 +95,7 @@ const char *dlm_errname(enum dlm_status err);
 		mlog(ML_ERROR, "dlm status = %s\n", dlm_errname((st)));	\
 } while (0)
 
-#define DLM_LKSB_UNUSED1           0x01  
+#define DLM_LKSB_UNUSED1           0x01
 #define DLM_LKSB_PUT_LVB           0x02
 #define DLM_LKSB_GET_LVB           0x04
 #define DLM_LKSB_UNUSED2           0x08
@@ -193,7 +193,12 @@ enum dlm_status dlmunlock(struct dlm_ctxt *dlm,
 			  dlm_astunlockfunc_t *unlockast,
 			  void *data);
 
-struct dlm_ctxt * dlm_register_domain(const char *domain, u32 key);
+struct dlm_protocol_version {
+	u8 pv_major;
+	u8 pv_minor;
+};
+struct dlm_ctxt * dlm_register_domain(const char *domain, u32 key,
+				      struct dlm_protocol_version *fs_proto);
 
 void dlm_unregister_domain(struct dlm_ctxt *dlm);
 

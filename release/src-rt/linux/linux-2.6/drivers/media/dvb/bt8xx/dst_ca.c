@@ -20,7 +20,9 @@
 
 #include <linux/kernel.h>
 #include <linux/module.h>
+#include <linux/slab.h>
 #include <linux/init.h>
+#include <linux/mutex.h>
 #include <linux/string.h>
 #include <linux/dvb/ca.h>
 #include "dvbdev.h"
@@ -36,13 +38,13 @@
 #define dprintk(x, y, z, format, arg...) do {						\
 	if (z) {									\
 		if	((x > DST_CA_ERROR) && (x > y))					\
-			printk(KERN_ERR "%s: " format "\n", __FUNCTION__ , ##arg);	\
+			printk(KERN_ERR "%s: " format "\n", __func__ , ##arg);	\
 		else if	((x > DST_CA_NOTICE) && (x > y))				\
-			printk(KERN_NOTICE "%s: " format "\n", __FUNCTION__ , ##arg);	\
+			printk(KERN_NOTICE "%s: " format "\n", __func__ , ##arg);	\
 		else if ((x > DST_CA_INFO) && (x > y))					\
-			printk(KERN_INFO "%s: " format "\n", __FUNCTION__ , ##arg);	\
+			printk(KERN_INFO "%s: " format "\n", __func__ , ##arg);	\
 		else if ((x > DST_CA_DEBUG) && (x > y))					\
-			printk(KERN_DEBUG "%s: " format "\n", __FUNCTION__ , ##arg);	\
+			printk(KERN_DEBUG "%s: " format "\n", __func__ , ##arg);	\
 	} else {									\
 		if (x > y)								\
 			printk(format, ## arg);						\
@@ -50,6 +52,7 @@
 } while(0)
 
 
+static DEFINE_MUTEX(dst_ca_mutex);
 static unsigned int verbose = 5;
 module_param(verbose, int, 0644);
 MODULE_PARM_DESC(verbose, "verbose startup messages, default is 1 (yes)");
@@ -162,7 +165,7 @@ static int ca_get_app_info(struct dst_state *state)
 	dprintk(verbose, DST_CA_INFO, 1, " ================================ CI Module Application Info ======================================");
 	dprintk(verbose, DST_CA_INFO, 1, " Application Type=[%d], Application Vendor=[%d], Vendor Code=[%d]\n%s: Application info=[%s]",
 		state->messages[7], (state->messages[8] << 8) | state->messages[9],
-		(state->messages[10] << 8) | state->messages[11], __FUNCTION__, (char *)(&state->messages[12]));
+		(state->messages[10] << 8) | state->messages[11], __func__, (char *)(&state->messages[12]));
 	dprintk(verbose, DST_CA_INFO, 1, " ==================================================================================================");
 
 	// Transform dst message to correct application_info message
@@ -552,16 +555,19 @@ free_mem_and_exit:
 	return result;
 }
 
-static int dst_ca_ioctl(struct inode *inode, struct file *file, unsigned int cmd, unsigned long ioctl_arg)
+static long dst_ca_ioctl(struct file *file, unsigned int cmd, unsigned long ioctl_arg)
 {
-	struct dvb_device* dvbdev = (struct dvb_device*) file->private_data;
-	struct dst_state* state = (struct dst_state*) dvbdev->priv;
+	struct dvb_device *dvbdev;
+	struct dst_state *state;
 	struct ca_slot_info *p_ca_slot_info;
 	struct ca_caps *p_ca_caps;
 	struct ca_msg *p_ca_message;
 	void __user *arg = (void __user *)ioctl_arg;
 	int result = 0;
 
+	mutex_lock(&dst_ca_mutex);
+	dvbdev = file->private_data;
+	state = (struct dst_state *)dvbdev->priv;
 	p_ca_message = kmalloc(sizeof (struct ca_msg), GFP_KERNEL);
 	p_ca_slot_info = kmalloc(sizeof (struct ca_slot_info), GFP_KERNEL);
 	p_ca_caps = kmalloc(sizeof (struct ca_caps), GFP_KERNEL);
@@ -647,6 +653,7 @@ static int dst_ca_ioctl(struct inode *inode, struct file *file, unsigned int cmd
 	kfree (p_ca_slot_info);
 	kfree (p_ca_caps);
 
+	mutex_unlock(&dst_ca_mutex);
 	return result;
 }
 
@@ -682,13 +689,14 @@ static ssize_t dst_ca_write(struct file *file, const char __user *buffer, size_t
 	return 0;
 }
 
-static struct file_operations dst_ca_fops = {
+static const struct file_operations dst_ca_fops = {
 	.owner = THIS_MODULE,
-	.ioctl = dst_ca_ioctl,
+	.unlocked_ioctl = dst_ca_ioctl,
 	.open = dst_ca_open,
 	.release = dst_ca_release,
 	.read = dst_ca_read,
-	.write = dst_ca_write
+	.write = dst_ca_write,
+	.llseek = noop_llseek,
 };
 
 static struct dvb_device dvbdev_ca = {

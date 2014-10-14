@@ -15,13 +15,14 @@
 #include <linux/etherdevice.h>
 #include <linux/init.h>
 #include <linux/moduleparam.h>
+#include <linux/gfp.h>
 #include <asm/hardware/uengine.h>
-#include <asm/mach-types.h>
 #include <asm/io.h>
 #include "ixp2400_rx.ucode"
 #include "ixp2400_tx.ucode"
 #include "ixpdev_priv.h"
 #include "ixpdev.h"
+#include "pm3386.h"
 
 #define DRV_MODULE_VERSION	"0.2"
 
@@ -42,11 +43,12 @@ static int ixpdev_xmit(struct sk_buff *skb, struct net_device *dev)
 	struct ixpdev_priv *ip = netdev_priv(dev);
 	struct ixpdev_tx_desc *desc;
 	int entry;
+	unsigned long flags;
 
 	if (unlikely(skb->len > PAGE_SIZE)) {
 		/* @@@ Count drops.  */
 		dev_kfree_skb(skb);
-		return 0;
+		return NETDEV_TX_OK;
 	}
 
 	entry = tx_pointer;
@@ -62,21 +64,19 @@ static int ixpdev_xmit(struct sk_buff *skb, struct net_device *dev)
 	ixp2000_reg_write(RING_TX_PENDING,
 		TX_BUF_DESC_BASE + (entry * sizeof(struct ixpdev_tx_desc)));
 
-	dev->trans_start = jiffies;
-
-	local_irq_disable();
+	local_irq_save(flags);
 	ip->tx_queue_entries++;
 	if (ip->tx_queue_entries == TX_BUF_COUNT_PER_CHAN)
 		netif_stop_queue(dev);
-	local_irq_enable();
+	local_irq_restore(flags);
 
-	return 0;
+	return NETDEV_TX_OK;
 }
 
 
-static int ixpdev_rx(struct net_device *dev, int *budget)
+static int ixpdev_rx(struct net_device *dev, int processed, int budget)
 {
-	while (*budget > 0) {
+	while (processed < budget) {
 		struct ixpdev_rx_desc *desc;
 		struct sk_buff *skb;
 		void *buf;
@@ -108,43 +108,43 @@ static int ixpdev_rx(struct net_device *dev, int *budget)
 		if (unlikely(!netif_running(nds[desc->channel])))
 			goto err;
 
-		skb = dev_alloc_skb(desc->pkt_length + 2);
+		skb = netdev_alloc_skb_ip_align(dev, desc->pkt_length);
 		if (likely(skb != NULL)) {
-			skb_reserve(skb, 2);
-			eth_copy_and_sum(skb, buf, desc->pkt_length, 0);
+			skb_copy_to_linear_data(skb, buf, desc->pkt_length);
 			skb_put(skb, desc->pkt_length);
 			skb->protocol = eth_type_trans(skb, nds[desc->channel]);
-
-			skb->dev->last_rx = jiffies;
 
 			netif_receive_skb(skb);
 		}
 
 err:
 		ixp2000_reg_write(RING_RX_PENDING, _desc);
-		dev->quota--;
-		(*budget)--;
+		processed++;
 	}
 
-	return 1;
+	return processed;
 }
 
 /* dev always points to nds[0].  */
-static int ixpdev_poll(struct net_device *dev, int *budget)
+static int ixpdev_poll(struct napi_struct *napi, int budget)
 {
-	/* @@@ Have to stop polling when nds[0] is administratively
-	 * downed while we are polling.  */
+	struct ixpdev_priv *ip = container_of(napi, struct ixpdev_priv, napi);
+	struct net_device *dev = ip->dev;
+	int rx;
+
+	rx = 0;
 	do {
 		ixp2000_reg_write(IXP2000_IRQ_THD_RAW_STATUS_A_0, 0x00ff);
 
-		if (ixpdev_rx(dev, budget))
-			return 1;
+		rx = ixpdev_rx(dev, rx, budget);
+		if (rx >= budget)
+			break;
 	} while (ixp2000_reg_read(IXP2000_IRQ_THD_RAW_STATUS_A_0) & 0x00ff);
 
-	netif_rx_complete(dev);
+	napi_complete(napi);
 	ixp2000_reg_write(IXP2000_IRQ_THD_ENABLE_SET_A_0, 0x00ff);
 
-	return 0;
+	return rx;
 }
 
 static void ixpdev_tx_complete(void)
@@ -199,9 +199,12 @@ static irqreturn_t ixpdev_interrupt(int irq, void *dev_id)
 	 * Any of the eight receive units signaled RX?
 	 */
 	if (status & 0x00ff) {
+		struct net_device *dev = nds[0];
+		struct ixpdev_priv *ip = netdev_priv(dev);
+
 		ixp2000_reg_wrb(IXP2000_IRQ_THD_ENABLE_CLEAR_A_0, 0x00ff);
-		if (likely(__netif_rx_schedule_prep(nds[0]))) {
-			__netif_rx_schedule(nds[0]);
+		if (likely(napi_schedule_prep(&ip->napi))) {
+			__napi_schedule(&ip->napi);
 		} else {
 			printk(KERN_CRIT "ixp2000: irq while polling!!\n");
 		}
@@ -232,11 +235,13 @@ static int ixpdev_open(struct net_device *dev)
 	struct ixpdev_priv *ip = netdev_priv(dev);
 	int err;
 
+	napi_enable(&ip->napi);
 	if (!nds_open++) {
 		err = request_irq(IRQ_IXP2000_THDA0, ixpdev_interrupt,
 					IRQF_SHARED, "ixp2000_eth", nds);
 		if (err) {
 			nds_open--;
+			napi_disable(&ip->napi);
 			return err;
 		}
 
@@ -254,6 +259,7 @@ static int ixpdev_close(struct net_device *dev)
 	struct ixpdev_priv *ip = netdev_priv(dev);
 
 	netif_stop_queue(dev);
+	napi_disable(&ip->napi);
 	set_port_admin_status(ip->channel, 0);
 
 	if (!--nds_open) {
@@ -264,6 +270,28 @@ static int ixpdev_close(struct net_device *dev)
 	return 0;
 }
 
+static struct net_device_stats *ixpdev_get_stats(struct net_device *dev)
+{
+	struct ixpdev_priv *ip = netdev_priv(dev);
+
+	pm3386_get_stats(ip->channel, &(dev->stats));
+
+	return &(dev->stats);
+}
+
+static const struct net_device_ops ixpdev_netdev_ops = {
+	.ndo_open		= ixpdev_open,
+	.ndo_stop		= ixpdev_close,
+	.ndo_start_xmit		= ixpdev_xmit,
+	.ndo_change_mtu		= eth_change_mtu,
+	.ndo_validate_addr	= eth_validate_addr,
+	.ndo_set_mac_address	= eth_mac_addr,
+	.ndo_get_stats		= ixpdev_get_stats,
+#ifdef CONFIG_NET_POLL_CONTROLLER
+	.ndo_poll_controller	= ixpdev_poll_controller,
+#endif
+};
+
 struct net_device *ixpdev_alloc(int channel, int sizeof_priv)
 {
 	struct net_device *dev;
@@ -273,18 +301,13 @@ struct net_device *ixpdev_alloc(int channel, int sizeof_priv)
 	if (dev == NULL)
 		return NULL;
 
-	dev->hard_start_xmit = ixpdev_xmit;
-	dev->poll = ixpdev_poll;
-	dev->open = ixpdev_open;
-	dev->stop = ixpdev_close;
-#ifdef CONFIG_NET_POLL_CONTROLLER
-	dev->poll_controller = ixpdev_poll_controller;
-#endif
+	dev->netdev_ops = &ixpdev_netdev_ops;
 
 	dev->features |= NETIF_F_SG | NETIF_F_HW_CSUM;
-	dev->weight = 64;
 
 	ip = netdev_priv(dev);
+	ip->dev = dev;
+	netif_napi_add(dev, &ip->napi, ixpdev_poll, 64);
 	ip->channel = channel;
 	ip->tx_queue_entries = 0;
 

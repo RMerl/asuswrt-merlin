@@ -1,5 +1,4 @@
 /* This version ported to the Linux-MTD system by dwmw2@infradead.org
- * $Id: ftl.c,v 1.59 2005/11/29 14:48:31 gleixner Exp $
  *
  * Fixes: Arnaldo Carvalho de Melo <acme@conectiva.com.br>
  * - fixes some leaks on failure in build_maps and ftl_notify_add, cleanups
@@ -27,7 +26,7 @@
 
     The initial developer of the original code is David A. Hinds
     <dahinds@users.sourceforge.net>.  Portions created by David A. Hinds
-    are Copyright (C) 1999 David A. Hinds.  All Rights Reserved.
+    are Copyright © 1999 David A. Hinds.  All Rights Reserved.
 
     Alternatively, the contents of this file may be used under the
     terms of the GNU General Public License version 2 (the "GPL"), in
@@ -52,7 +51,7 @@
 
     Use of the FTL format for non-PCMCIA applications may be an
     infringement of these patents.  For additional information,
-    contact M-Systems (http://www.m-sys.com) directly.
+    contact M-Systems directly. M-Systems since acquired by Sandisk. 
 
 ======================================================================*/
 #include <linux/mtd/blktrans.h>
@@ -110,33 +109,27 @@ module_param(shuffle_freq, int, 0);
 /* Each memory region corresponds to a minor device */
 typedef struct partition_t {
     struct mtd_blktrans_dev mbd;
-    u_int32_t		state;
-    u_int32_t		*VirtualBlockMap;
-    u_int32_t		*VirtualPageMap;
-    u_int32_t		FreeTotal;
+    uint32_t		state;
+    uint32_t		*VirtualBlockMap;
+    uint32_t		*VirtualPageMap;
+    uint32_t		FreeTotal;
     struct eun_info_t {
-	u_int32_t		Offset;
-	u_int32_t		EraseCount;
-	u_int32_t		Free;
-	u_int32_t		Deleted;
+	uint32_t		Offset;
+	uint32_t		EraseCount;
+	uint32_t		Free;
+	uint32_t		Deleted;
     } *EUNInfo;
     struct xfer_info_t {
-	u_int32_t		Offset;
-	u_int32_t		EraseCount;
-	u_int16_t		state;
+	uint32_t		Offset;
+	uint32_t		EraseCount;
+	uint16_t		state;
     } *XferInfo;
-    u_int16_t		bam_index;
-    u_int32_t		*bam_cache;
-    u_int16_t		DataUnits;
-    u_int32_t		BlocksPerUnit;
+    uint16_t		bam_index;
+    uint32_t		*bam_cache;
+    uint16_t		DataUnits;
+    uint32_t		BlocksPerUnit;
     erase_unit_header_t	header;
-#if 0
-    region_info_t	region;
-    memory_handle_t	handle;
-#endif
 } partition_t;
-
-void ftl_freepart(partition_t *part);
 
 /* Partition state flags */
 #define FTL_FORMATTED	0x01
@@ -206,8 +199,8 @@ static int scan_header(partition_t *part)
 static int build_maps(partition_t *part)
 {
     erase_unit_header_t header;
-    u_int16_t xvalid, xtrans, i;
-    u_int blocks, j;
+    uint16_t xvalid, xtrans, i;
+    unsigned blocks, j;
     int hdr_ok, ret = -1;
     ssize_t retval;
     loff_t offset;
@@ -276,14 +269,14 @@ static int build_maps(partition_t *part)
 
     /* Set up virtual page map */
     blocks = le32_to_cpu(header.FormattedSize) >> header.BlockSize;
-    part->VirtualBlockMap = vmalloc(blocks * sizeof(u_int32_t));
+    part->VirtualBlockMap = vmalloc(blocks * sizeof(uint32_t));
     if (!part->VirtualBlockMap)
 	    goto out_XferInfo;
 
-    memset(part->VirtualBlockMap, 0xff, blocks * sizeof(u_int32_t));
+    memset(part->VirtualBlockMap, 0xff, blocks * sizeof(uint32_t));
     part->BlocksPerUnit = (1 << header.EraseUnitSize) >> header.BlockSize;
 
-    part->bam_cache = kmalloc(part->BlocksPerUnit * sizeof(u_int32_t),
+    part->bam_cache = kmalloc(part->BlocksPerUnit * sizeof(uint32_t),
 			      GFP_KERNEL);
     if (!part->bam_cache)
 	    goto out_VirtualBlockMap;
@@ -297,7 +290,7 @@ static int build_maps(partition_t *part)
 	offset = part->EUNInfo[i].Offset + le32_to_cpu(header.BAMOffset);
 
 	ret = part->mbd.mtd->read(part->mbd.mtd, offset,
-			      part->BlocksPerUnit * sizeof(u_int32_t), &retval,
+			      part->BlocksPerUnit * sizeof(uint32_t), &retval,
 			      (unsigned char *)part->bam_cache);
 
 	if (ret)
@@ -339,7 +332,7 @@ out:
 ======================================================================*/
 
 static int erase_xfer(partition_t *part,
-		      u_int16_t xfernum)
+		      uint16_t xfernum)
 {
     int ret;
     struct xfer_info_t *xfer;
@@ -415,7 +408,7 @@ static int prepare_xfer(partition_t *part, int i)
     erase_unit_header_t header;
     struct xfer_info_t *xfer;
     int nbam, ret;
-    u_int32_t ctl;
+    uint32_t ctl;
     ssize_t retlen;
     loff_t offset;
 
@@ -437,15 +430,15 @@ static int prepare_xfer(partition_t *part, int i)
     }
 
     /* Write the BAM stub */
-    nbam = (part->BlocksPerUnit * sizeof(u_int32_t) +
+    nbam = (part->BlocksPerUnit * sizeof(uint32_t) +
 	    le32_to_cpu(part->header.BAMOffset) + SECTOR_SIZE - 1) / SECTOR_SIZE;
 
     offset = xfer->Offset + le32_to_cpu(part->header.BAMOffset);
     ctl = cpu_to_le32(BLOCK_CONTROL);
 
-    for (i = 0; i < nbam; i++, offset += sizeof(u_int32_t)) {
+    for (i = 0; i < nbam; i++, offset += sizeof(uint32_t)) {
 
-	ret = part->mbd.mtd->write(part->mbd.mtd, offset, sizeof(u_int32_t),
+	ret = part->mbd.mtd->write(part->mbd.mtd, offset, sizeof(uint32_t),
 			       &retlen, (u_char *)&ctl);
 
 	if (ret)
@@ -468,18 +461,18 @@ static int prepare_xfer(partition_t *part, int i)
 
 ======================================================================*/
 
-static int copy_erase_unit(partition_t *part, u_int16_t srcunit,
-			   u_int16_t xferunit)
+static int copy_erase_unit(partition_t *part, uint16_t srcunit,
+			   uint16_t xferunit)
 {
     u_char buf[SECTOR_SIZE];
     struct eun_info_t *eun;
     struct xfer_info_t *xfer;
-    u_int32_t src, dest, free, i;
-    u_int16_t unit;
+    uint32_t src, dest, free, i;
+    uint16_t unit;
     int ret;
     ssize_t retlen;
     loff_t offset;
-    u_int16_t srcunitswap = cpu_to_le16(srcunit);
+    uint16_t srcunitswap = cpu_to_le16(srcunit);
 
     eun = &part->EUNInfo[srcunit];
     xfer = &part->XferInfo[xferunit];
@@ -493,7 +486,7 @@ static int copy_erase_unit(partition_t *part, u_int16_t srcunit,
 	offset = eun->Offset + le32_to_cpu(part->header.BAMOffset);
 
 	ret = part->mbd.mtd->read(part->mbd.mtd, offset,
-			      part->BlocksPerUnit * sizeof(u_int32_t),
+			      part->BlocksPerUnit * sizeof(uint32_t),
 			      &retlen, (u_char *) (part->bam_cache));
 
 	/* mark the cache bad, in case we get an error later */
@@ -510,7 +503,7 @@ static int copy_erase_unit(partition_t *part, u_int16_t srcunit,
     offset = xfer->Offset + 20; /* Bad! */
     unit = cpu_to_le16(0x7fff);
 
-    ret = part->mbd.mtd->write(part->mbd.mtd, offset, sizeof(u_int16_t),
+    ret = part->mbd.mtd->write(part->mbd.mtd, offset, sizeof(uint16_t),
 			   &retlen, (u_char *) &unit);
 
     if (ret) {
@@ -567,7 +560,7 @@ static int copy_erase_unit(partition_t *part, u_int16_t srcunit,
 
 
     /* All clear? Then update the LogicalEUN again */
-    ret = part->mbd.mtd->write(part->mbd.mtd, xfer->Offset + 20, sizeof(u_int16_t),
+    ret = part->mbd.mtd->write(part->mbd.mtd, xfer->Offset + 20, sizeof(uint16_t),
 			   &retlen, (u_char *)&srcunitswap);
 
     if (ret) {
@@ -612,8 +605,8 @@ static int copy_erase_unit(partition_t *part, u_int16_t srcunit,
 
 static int reclaim_block(partition_t *part)
 {
-    u_int16_t i, eun, xfer;
-    u_int32_t best;
+    uint16_t i, eun, xfer;
+    uint32_t best;
     int queued, ret;
 
     DEBUG(0, "ftl_cs: reclaiming space...\n");
@@ -730,10 +723,10 @@ static void dump_lists(partition_t *part)
 }
 #endif
 
-static u_int32_t find_free(partition_t *part)
+static uint32_t find_free(partition_t *part)
 {
-    u_int16_t stop, eun;
-    u_int32_t blk;
+    uint16_t stop, eun;
+    uint32_t blk;
     size_t retlen;
     int ret;
 
@@ -756,7 +749,7 @@ static u_int32_t find_free(partition_t *part)
 
 	ret = part->mbd.mtd->read(part->mbd.mtd,
 		       part->EUNInfo[eun].Offset + le32_to_cpu(part->header.BAMOffset),
-		       part->BlocksPerUnit * sizeof(u_int32_t),
+		       part->BlocksPerUnit * sizeof(uint32_t),
 		       &retlen, (u_char *) (part->bam_cache));
 
 	if (ret) {
@@ -793,7 +786,7 @@ static u_int32_t find_free(partition_t *part)
 static int ftl_read(partition_t *part, caddr_t buffer,
 		    u_long sector, u_long nblocks)
 {
-    u_int32_t log_addr, bsize;
+    uint32_t log_addr, bsize;
     u_long i;
     int ret;
     size_t offset, retlen;
@@ -836,14 +829,14 @@ static int ftl_read(partition_t *part, caddr_t buffer,
 
 ======================================================================*/
 
-static int set_bam_entry(partition_t *part, u_int32_t log_addr,
-			 u_int32_t virt_addr)
+static int set_bam_entry(partition_t *part, uint32_t log_addr,
+			 uint32_t virt_addr)
 {
-    u_int32_t bsize, blk, le_virt_addr;
+    uint32_t bsize, blk, le_virt_addr;
 #ifdef PSYCHO_DEBUG
-    u_int32_t old_addr;
+    uint32_t old_addr;
 #endif
-    u_int16_t eun;
+    uint16_t eun;
     int ret;
     size_t retlen, offset;
 
@@ -852,11 +845,11 @@ static int set_bam_entry(partition_t *part, u_int32_t log_addr,
     bsize = 1 << part->header.EraseUnitSize;
     eun = log_addr / bsize;
     blk = (log_addr % bsize) / SECTOR_SIZE;
-    offset = (part->EUNInfo[eun].Offset + blk * sizeof(u_int32_t) +
+    offset = (part->EUNInfo[eun].Offset + blk * sizeof(uint32_t) +
 		  le32_to_cpu(part->header.BAMOffset));
 
 #ifdef PSYCHO_DEBUG
-    ret = part->mbd.mtd->read(part->mbd.mtd, offset, sizeof(u_int32_t),
+    ret = part->mbd.mtd->read(part->mbd.mtd, offset, sizeof(uint32_t),
                         &retlen, (u_char *)&old_addr);
     if (ret) {
 	printk(KERN_WARNING"ftl: Error reading old_addr in set_bam_entry: %d\n",ret);
@@ -893,7 +886,7 @@ static int set_bam_entry(partition_t *part, u_int32_t log_addr,
 #endif
 	part->bam_cache[blk] = le_virt_addr;
     }
-    ret = part->mbd.mtd->write(part->mbd.mtd, offset, sizeof(u_int32_t),
+    ret = part->mbd.mtd->write(part->mbd.mtd, offset, sizeof(uint32_t),
                             &retlen, (u_char *)&le_virt_addr);
 
     if (ret) {
@@ -907,7 +900,7 @@ static int set_bam_entry(partition_t *part, u_int32_t log_addr,
 static int ftl_write(partition_t *part, caddr_t buffer,
 		     u_long sector, u_long nblocks)
 {
-    u_int32_t bsize, log_addr, virt_addr, old_addr, blk;
+    uint32_t bsize, log_addr, virt_addr, old_addr, blk;
     u_long i;
     int ret;
     size_t retlen, offset;
@@ -1012,9 +1005,32 @@ static int ftl_writesect(struct mtd_blktrans_dev *dev,
 	return ftl_write((void *)dev, buf, block, 1);
 }
 
+static int ftl_discardsect(struct mtd_blktrans_dev *dev,
+			   unsigned long sector, unsigned nr_sects)
+{
+	partition_t *part = (void *)dev;
+	uint32_t bsize = 1 << part->header.EraseUnitSize;
+
+	DEBUG(1, "FTL erase sector %ld for %d sectors\n",
+	      sector, nr_sects);
+
+	while (nr_sects) {
+		uint32_t old_addr = part->VirtualBlockMap[sector];
+		if (old_addr != 0xffffffff) {
+			part->VirtualBlockMap[sector] = 0xffffffff;
+			part->EUNInfo[old_addr/bsize].Deleted++;
+			if (set_bam_entry(part, old_addr, 0))
+				return -EIO;
+		}
+		nr_sects--;
+		sector++;
+	}
+
+	return 0;
+}
 /*====================================================================*/
 
-void ftl_freepart(partition_t *part)
+static void ftl_freepart(partition_t *part)
 {
 	vfree(part->VirtualBlockMap);
 	part->VirtualBlockMap = NULL;
@@ -1066,26 +1082,24 @@ static void ftl_remove_dev(struct mtd_blktrans_dev *dev)
 {
 	del_mtd_blktrans_dev(dev);
 	ftl_freepart((partition_t *)dev);
-	kfree(dev);
 }
 
-struct mtd_blktrans_ops ftl_tr = {
+static struct mtd_blktrans_ops ftl_tr = {
 	.name		= "ftl",
 	.major		= FTL_MAJOR,
 	.part_bits	= PART_BITS,
 	.blksize 	= SECTOR_SIZE,
 	.readsect	= ftl_readsect,
 	.writesect	= ftl_writesect,
+	.discard	= ftl_discardsect,
 	.getgeo		= ftl_getgeo,
 	.add_mtd	= ftl_add_mtd,
 	.remove_dev	= ftl_remove_dev,
 	.owner		= THIS_MODULE,
 };
 
-static int init_ftl(void)
+static int __init init_ftl(void)
 {
-	DEBUG(0, "$Id: ftl.c,v 1.59 2005/11/29 14:48:31 gleixner Exp $\n");
-
 	return register_mtd_blktrans(&ftl_tr);
 }
 

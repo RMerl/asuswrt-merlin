@@ -88,11 +88,12 @@
 
 /* Maximum outstanding commands in ISP queues */
 #define MAX_OUTSTANDING_COMMANDS	512
-#define INVALID_HANDLE			(MAX_OUTSTANDING_COMMANDS + 2)
+#define COMPLETED_HANDLE		((unsigned char *) \
+					(MAX_OUTSTANDING_COMMANDS + 2))
 
 /* ISP request and response entry counts (37-65535) */
-#define REQUEST_ENTRY_CNT		256 /* Number of request entries. */
-#define RESPONSE_ENTRY_CNT		16  /* Number of response entries. */
+#define REQUEST_ENTRY_CNT		255 /* Number of request entries. */
+#define RESPONSE_ENTRY_CNT		63  /* Number of response entries. */
 
 /*
  * SCSI Request Block structure  (sp)  that is placed
@@ -1069,6 +1070,12 @@ struct scsi_qla_host {
 
 	struct nvram nvram;
 	int nvram_valid;
+
+	/* Firmware Info */
+	unsigned short fwstart; /* start address for F/W   */
+	unsigned char fwver1;   /* F/W version first char  */
+	unsigned char fwver2;   /* F/W version second char */
+	unsigned char fwver3;   /* F/W version third char  */
 };
 
 #endif /* _QLA1280_H */

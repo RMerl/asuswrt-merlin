@@ -64,7 +64,6 @@ struct powermate_device {
 	dma_addr_t data_dma;
 	struct urb *irq, *config;
 	struct usb_ctrlrequest *configcr;
-	dma_addr_t configcr_dma;
 	struct usb_device *udev;
 	struct input_dev *input;
 	spinlock_t lock;
@@ -96,10 +95,10 @@ static void powermate_irq(struct urb *urb)
 	case -ENOENT:
 	case -ESHUTDOWN:
 		/* this urb is terminated, clean up */
-		dbg("%s - urb shutting down with status: %d", __FUNCTION__, urb->status);
+		dbg("%s - urb shutting down with status: %d", __func__, urb->status);
 		return;
 	default:
-		dbg("%s - nonzero urb status received: %d", __FUNCTION__, urb->status);
+		dbg("%s - nonzero urb status received: %d", __func__, urb->status);
 		goto exit;
 	}
 
@@ -112,7 +111,7 @@ exit:
 	retval = usb_submit_urb (urb, GFP_ATOMIC);
 	if (retval)
 		err ("%s - usb_submit_urb failed with result %d",
-		     __FUNCTION__, retval);
+		     __func__, retval);
 }
 
 /* Decide if we need to issue a control message and do so. Must be called with pm->lock taken */
@@ -182,8 +181,6 @@ static void powermate_sync_state(struct powermate_device *pm)
 	usb_fill_control_urb(pm->config, pm->udev, usb_sndctrlpipe(pm->udev, 0),
 			     (void *) pm->configcr, NULL, 0,
 			     powermate_config_complete, pm);
-	pm->config->setup_dma = pm->configcr_dma;
-	pm->config->transfer_flags |= URB_NO_SETUP_DMA_MAP;
 
 	if (usb_submit_urb(pm->config, GFP_ATOMIC))
 		printk(KERN_ERR "powermate: usb_submit_urb(config) failed");
@@ -276,25 +273,23 @@ static int powermate_input_event(struct input_dev *dev, unsigned int type, unsig
 
 static int powermate_alloc_buffers(struct usb_device *udev, struct powermate_device *pm)
 {
-	pm->data = usb_buffer_alloc(udev, POWERMATE_PAYLOAD_SIZE_MAX,
-				    GFP_ATOMIC, &pm->data_dma);
+	pm->data = usb_alloc_coherent(udev, POWERMATE_PAYLOAD_SIZE_MAX,
+				      GFP_ATOMIC, &pm->data_dma);
 	if (!pm->data)
 		return -1;
 
-	pm->configcr = usb_buffer_alloc(udev, sizeof(*(pm->configcr)),
-					GFP_ATOMIC, &pm->configcr_dma);
+	pm->configcr = kmalloc(sizeof(*(pm->configcr)), GFP_KERNEL);
 	if (!pm->configcr)
-		return -1;
+		return -ENOMEM;
 
 	return 0;
 }
 
 static void powermate_free_buffers(struct usb_device *udev, struct powermate_device *pm)
 {
-	usb_buffer_free(udev, POWERMATE_PAYLOAD_SIZE_MAX,
-			pm->data, pm->data_dma);
-	usb_buffer_free(udev, sizeof(*(pm->configcr)),
-			pm->configcr, pm->configcr_dma);
+	usb_free_coherent(udev, POWERMATE_PAYLOAD_SIZE_MAX,
+			  pm->data, pm->data_dma);
+	kfree(pm->configcr);
 }
 
 /* Called whenever a USB device matching one in our supported devices table is connected */
@@ -338,7 +333,7 @@ static int powermate_probe(struct usb_interface *intf, const struct usb_device_i
 	pm->input = input_dev;
 
 	usb_make_path(udev, pm->phys, sizeof(pm->phys));
-	strlcpy(pm->phys, "/input0", sizeof(pm->phys));
+	strlcat(pm->phys, "/input0", sizeof(pm->phys));
 
 	spin_lock_init(&pm->lock);
 
@@ -363,10 +358,11 @@ static int powermate_probe(struct usb_interface *intf, const struct usb_device_i
 
 	input_dev->event = powermate_input_event;
 
-	input_dev->evbit[0] = BIT(EV_KEY) | BIT(EV_REL) | BIT(EV_MSC);
-	input_dev->keybit[LONG(BTN_0)] = BIT(BTN_0);
-	input_dev->relbit[LONG(REL_DIAL)] = BIT(REL_DIAL);
-	input_dev->mscbit[LONG(MSC_PULSELED)] = BIT(MSC_PULSELED);
+	input_dev->evbit[0] = BIT_MASK(EV_KEY) | BIT_MASK(EV_REL) |
+		BIT_MASK(EV_MSC);
+	input_dev->keybit[BIT_WORD(BTN_0)] = BIT_MASK(BTN_0);
+	input_dev->relbit[BIT_WORD(REL_DIAL)] = BIT_MASK(REL_DIAL);
+	input_dev->mscbit[BIT_WORD(MSC_PULSELED)] = BIT_MASK(MSC_PULSELED);
 
 	/* get a handle to the interrupt data pipe */
 	pipe = usb_rcvintpipe(udev, endpoint->bEndpointAddress);

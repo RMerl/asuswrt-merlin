@@ -16,7 +16,6 @@
 #include <linux/init.h>
 #include <linux/slab.h>
 #include <linux/module.h>
-#include <linux/moduleparam.h>
 #include <linux/usb/input.h>
 
 #define DRIVER_VERSION	"v0.1"
@@ -46,53 +45,12 @@ MODULE_PARM_DESC(debug, "Enable extra debug messages and information");
 
 #define RECV_SIZE	8	/* The UIA-11 type have a 8 byte limit. */
 
-/* table of devices that work with this driver */
-static struct usb_device_id keyspan_table[] = {
-	{ USB_DEVICE(USB_KEYSPAN_VENDOR_ID, USB_KEYSPAN_PRODUCT_UIA11) },
-	{ }					/* Terminating entry */
-};
-
-/* Structure to store all the real stuff that a remote sends to us. */
-struct keyspan_message {
-	u16	system;
-	u8	button;
-	u8	toggle;
-};
-
-/* Structure used for all the bit testing magic needed to be done. */
-struct bit_tester {
-	u32	tester;
-	int	len;
-	int	pos;
-	int	bits_left;
-	u8	buffer[32];
-};
-
-/* Structure to hold all of our driver specific stuff */
-struct usb_keyspan {
-	char				name[128];
-	char				phys[64];
-	struct usb_device*		udev;
-	struct input_dev		*input;
-	struct usb_interface*		interface;
-	struct usb_endpoint_descriptor* in_endpoint;
-	struct urb*			irq_urb;
-	int				open;
-	dma_addr_t			in_dma;
-	unsigned char*			in_buffer;
-
-	/* variables used to parse messages from remote. */
-	struct bit_tester		data;
-	int				stage;
-	int				toggle;
-};
-
 /*
  * Table that maps the 31 possible keycodes to input keys.
  * Currently there are 15 and 17 button models so RESERVED codes
  * are blank areas in the mapping.
  */
-static const int keyspan_key_table[] = {
+static const unsigned short keyspan_key_table[] = {
 	KEY_RESERVED,		/* 0 is just a place holder. */
 	KEY_RESERVED,
 	KEY_STOP,
@@ -127,6 +85,48 @@ static const int keyspan_key_table[] = {
 	KEY_MENU
 };
 
+/* table of devices that work with this driver */
+static struct usb_device_id keyspan_table[] = {
+	{ USB_DEVICE(USB_KEYSPAN_VENDOR_ID, USB_KEYSPAN_PRODUCT_UIA11) },
+	{ }					/* Terminating entry */
+};
+
+/* Structure to store all the real stuff that a remote sends to us. */
+struct keyspan_message {
+	u16	system;
+	u8	button;
+	u8	toggle;
+};
+
+/* Structure used for all the bit testing magic needed to be done. */
+struct bit_tester {
+	u32	tester;
+	int	len;
+	int	pos;
+	int	bits_left;
+	u8	buffer[32];
+};
+
+/* Structure to hold all of our driver specific stuff */
+struct usb_keyspan {
+	char				name[128];
+	char				phys[64];
+	unsigned short			keymap[ARRAY_SIZE(keyspan_key_table)];
+	struct usb_device		*udev;
+	struct input_dev		*input;
+	struct usb_interface		*interface;
+	struct usb_endpoint_descriptor	*in_endpoint;
+	struct urb*			irq_urb;
+	int				open;
+	dma_addr_t			in_dma;
+	unsigned char			*in_buffer;
+
+	/* variables used to parse messages from remote. */
+	struct bit_tester		data;
+	int				stage;
+	int				toggle;
+};
+
 static struct usb_driver keyspan_driver;
 
 /*
@@ -159,7 +159,7 @@ static int keyspan_load_tester(struct usb_keyspan* dev, int bits_needed)
 	if (dev->data.pos >= dev->data.len) {
 		dev_dbg(&dev->udev->dev,
 			"%s - Error ran out of data. pos: %d, len: %d\n",
-			__FUNCTION__, dev->data.pos, dev->data.len);
+			__func__, dev->data.pos, dev->data.len);
 		return -1;
 	}
 
@@ -171,6 +171,15 @@ static int keyspan_load_tester(struct usb_keyspan* dev, int bits_needed)
 	}
 
 	return 0;
+}
+
+static void keyspan_report_button(struct usb_keyspan *remote, int button, int press)
+{
+	struct input_dev *input = remote->input;
+
+	input_event(input, EV_MSC, MSC_SCAN, button);
+	input_report_key(input, remote->keymap[button], press);
+	input_sync(input);
 }
 
 /*
@@ -258,7 +267,7 @@ static void keyspan_check_data(struct usb_keyspan *remote)
 				remote->data.tester = remote->data.tester >> 6;
 				remote->data.bits_left -= 6;
 			} else {
-				err("%s - Unknown sequence found in system data.\n", __FUNCTION__);
+				err("%s - Unknown sequence found in system data.\n", __func__);
 				remote->stage = 0;
 				return;
 			}
@@ -277,7 +286,7 @@ static void keyspan_check_data(struct usb_keyspan *remote)
 				remote->data.tester = remote->data.tester >> 6;
 				remote->data.bits_left -= 6;
 			} else {
-				err("%s - Unknown sequence found in button data.\n", __FUNCTION__);
+				err("%s - Unknown sequence found in button data.\n", __func__);
 				remote->stage = 0;
 				return;
 			}
@@ -293,7 +302,7 @@ static void keyspan_check_data(struct usb_keyspan *remote)
 			remote->data.tester = remote->data.tester >> 6;
 			remote->data.bits_left -= 6;
 		} else {
-			err("%s - Error in message, invalid toggle.\n", __FUNCTION__);
+			err("%s - Error in message, invalid toggle.\n", __func__);
 			remote->stage = 0;
 			return;
 		}
@@ -303,17 +312,16 @@ static void keyspan_check_data(struct usb_keyspan *remote)
 			remote->data.tester = remote->data.tester >> 5;
 			remote->data.bits_left -= 5;
 		} else {
-			err("Bad message recieved, no stop bit found.\n");
+			err("Bad message received, no stop bit found.\n");
 		}
 
 		dev_dbg(&remote->udev->dev,
 			"%s found valid message: system: %d, button: %d, toggle: %d\n",
-			__FUNCTION__, message.system, message.button, message.toggle);
+			__func__, message.system, message.button, message.toggle);
 
 		if (message.toggle != remote->toggle) {
-			input_report_key(remote->input, keyspan_key_table[message.button], 1);
-			input_report_key(remote->input, keyspan_key_table[message.button], 0);
-			input_sync(remote->input);
+			keyspan_report_button(remote, message.button, 1);
+			keyspan_report_button(remote, message.button, 0);
 			remote->toggle = message.toggle;
 		}
 
@@ -333,7 +341,7 @@ static int keyspan_setup(struct usb_device* dev)
 				 0x11, 0x40, 0x5601, 0x0, NULL, 0, 0);
 	if (retval) {
 		dev_dbg(&dev->dev, "%s - failed to set bit rate due to error: %d\n",
-			__FUNCTION__, retval);
+			__func__, retval);
 		return(retval);
 	}
 
@@ -341,7 +349,7 @@ static int keyspan_setup(struct usb_device* dev)
 				 0x44, 0x40, 0x0, 0x0, NULL, 0, 0);
 	if (retval) {
 		dev_dbg(&dev->dev, "%s - failed to set resume sensitivity due to error: %d\n",
-			__FUNCTION__, retval);
+			__func__, retval);
 		return(retval);
 	}
 
@@ -349,11 +357,11 @@ static int keyspan_setup(struct usb_device* dev)
 				 0x22, 0x40, 0x0, 0x0, NULL, 0, 0);
 	if (retval) {
 		dev_dbg(&dev->dev, "%s - failed to turn receive on due to error: %d\n",
-			__FUNCTION__, retval);
+			__func__, retval);
 		return(retval);
 	}
 
-	dev_dbg(&dev->dev, "%s - Setup complete.\n", __FUNCTION__);
+	dev_dbg(&dev->dev, "%s - Setup complete.\n", __func__);
 	return(retval);
 }
 
@@ -389,7 +397,7 @@ static void keyspan_irq_recv(struct urb *urb)
 resubmit:
 	retval = usb_submit_urb(urb, GFP_ATOMIC);
 	if (retval)
-		err ("%s - usb_submit_urb failed with result: %d", __FUNCTION__, retval);
+		err ("%s - usb_submit_urb failed with result: %d", __func__, retval);
 }
 
 static int keyspan_open(struct input_dev *dev)
@@ -456,7 +464,7 @@ static int keyspan_probe(struct usb_interface *interface, const struct usb_devic
 	remote->in_endpoint = endpoint;
 	remote->toggle = -1;	/* Set to -1 so we will always not match the toggle from the first remote message. */
 
-	remote->in_buffer = usb_buffer_alloc(udev, RECV_SIZE, GFP_ATOMIC, &remote->in_dma);
+	remote->in_buffer = usb_alloc_coherent(udev, RECV_SIZE, GFP_ATOMIC, &remote->in_dma);
 	if (!remote->in_buffer) {
 		error = -ENOMEM;
 		goto fail1;
@@ -491,16 +499,21 @@ static int keyspan_probe(struct usb_interface *interface, const struct usb_devic
 
 	usb_make_path(udev, remote->phys, sizeof(remote->phys));
 	strlcat(remote->phys, "/input0", sizeof(remote->phys));
+	memcpy(remote->keymap, keyspan_key_table, sizeof(remote->keymap));
 
 	input_dev->name = remote->name;
 	input_dev->phys = remote->phys;
 	usb_to_input_id(udev, &input_dev->id);
 	input_dev->dev.parent = &interface->dev;
+	input_dev->keycode = remote->keymap;
+	input_dev->keycodesize = sizeof(unsigned short);
+	input_dev->keycodemax = ARRAY_SIZE(remote->keymap);
 
-	input_dev->evbit[0] = BIT(EV_KEY);		/* We will only report KEY events. */
+	input_set_capability(input_dev, EV_MSC, MSC_SCAN);
+	__set_bit(EV_KEY, input_dev->evbit);
 	for (i = 0; i < ARRAY_SIZE(keyspan_key_table); i++)
-		if (keyspan_key_table[i] != KEY_RESERVED)
-			set_bit(keyspan_key_table[i], input_dev->keybit);
+		__set_bit(keyspan_key_table[i], input_dev->keybit);
+	__clear_bit(KEY_RESERVED, input_dev->keybit);
 
 	input_set_drvdata(input_dev, remote);
 
@@ -508,12 +521,14 @@ static int keyspan_probe(struct usb_interface *interface, const struct usb_devic
 	input_dev->close = keyspan_close;
 
 	/*
-	 * Initialize the URB to access the device. The urb gets sent to the device in keyspan_open()
+	 * Initialize the URB to access the device.
+	 * The urb gets sent to the device in keyspan_open()
 	 */
 	usb_fill_int_urb(remote->irq_urb,
-			 remote->udev, usb_rcvintpipe(remote->udev, remote->in_endpoint->bEndpointAddress),
+			 remote->udev,
+			 usb_rcvintpipe(remote->udev, endpoint->bEndpointAddress),
 			 remote->in_buffer, RECV_SIZE, keyspan_irq_recv, remote,
-			 remote->in_endpoint->bInterval);
+			 endpoint->bInterval);
 	remote->irq_urb->transfer_dma = remote->in_dma;
 	remote->irq_urb->transfer_flags |= URB_NO_TRANSFER_DMA_MAP;
 
@@ -528,7 +543,7 @@ static int keyspan_probe(struct usb_interface *interface, const struct usb_devic
 	return 0;
 
  fail3:	usb_free_urb(remote->irq_urb);
- fail2:	usb_buffer_free(udev, RECV_SIZE, remote->in_buffer, remote->in_dma);
+ fail2:	usb_free_coherent(udev, RECV_SIZE, remote->in_buffer, remote->in_dma);
  fail1:	kfree(remote);
 	input_free_device(input_dev);
 
@@ -549,7 +564,7 @@ static void keyspan_disconnect(struct usb_interface *interface)
 		input_unregister_device(remote->input);
 		usb_kill_urb(remote->irq_urb);
 		usb_free_urb(remote->irq_urb);
-		usb_buffer_free(remote->udev, RECV_SIZE, remote->in_buffer, remote->in_dma);
+		usb_free_coherent(remote->udev, RECV_SIZE, remote->in_buffer, remote->in_dma);
 		kfree(remote);
 	}
 }

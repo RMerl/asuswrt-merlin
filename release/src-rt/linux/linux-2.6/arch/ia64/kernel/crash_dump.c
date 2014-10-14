@@ -8,6 +8,7 @@
 
 #include <linux/errno.h>
 #include <linux/types.h>
+#include <linux/crash_dump.h>
 
 #include <asm/page.h>
 #include <asm/uaccess.h>

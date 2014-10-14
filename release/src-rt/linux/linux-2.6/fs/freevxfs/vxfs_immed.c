@@ -35,6 +35,7 @@
 #include <linux/namei.h>
 
 #include "vxfs.h"
+#include "vxfs_extern.h"
 #include "vxfs_inode.h"
 
 
@@ -54,7 +55,7 @@ const struct inode_operations vxfs_immed_symlink_iops = {
 };
 
 /*
- * Adress space operations for immed files and directories.
+ * Address space operations for immed files and directories.
  */
 const struct address_space_operations vxfs_immed_aops = {
 	.readpage =		vxfs_immed_readpage,

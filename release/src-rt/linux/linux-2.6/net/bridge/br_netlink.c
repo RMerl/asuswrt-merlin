@@ -11,7 +11,10 @@
  */
 
 #include <linux/kernel.h>
+#include <linux/slab.h>
 #include <net/rtnetlink.h>
+#include <net/net_namespace.h>
+#include <net/sock.h>
 #include "br_private.h"
 
 static inline size_t br_nlmsg_size(void)
@@ -39,8 +42,8 @@ static int br_fill_ifinfo(struct sk_buff *skb, const struct net_bridge_port *por
 	struct nlmsghdr *nlh;
 	u8 operstate = netif_running(dev) ? dev->operstate : IF_OPER_DOWN;
 
-	pr_debug("br_fill_info event %d port %s master %s\n",
-		 event, dev->name, br->dev->name);
+	br_debug(br, "br_fill_info event %d port %s master %s\n",
+		     event, dev->name, br->dev->name);
 
 	nlh = nlmsg_put(skb, pid, seq, event, sizeof(*hdr), flags);
 	if (nlh == NULL)
@@ -80,10 +83,13 @@ nla_put_failure:
  */
 void br_ifinfo_notify(int event, struct net_bridge_port *port)
 {
+	struct net *net = dev_net(port->dev);
 	struct sk_buff *skb;
 	int err = -ENOBUFS;
 
-	pr_debug("bridge notify event=%d\n", event);
+	br_debug(port->br, "port %u(%s) event %d\n",
+		 (unsigned)port->port_no, port->dev->name, event);
+
 	skb = nlmsg_new(br_nlmsg_size(), GFP_ATOMIC);
 	if (skb == NULL)
 		goto errout;
@@ -95,10 +101,11 @@ void br_ifinfo_notify(int event, struct net_bridge_port *port)
 		kfree_skb(skb);
 		goto errout;
 	}
-	err = rtnl_notify(skb, 0, RTNLGRP_LINK, NULL, GFP_ATOMIC);
+	rtnl_notify(skb, net, 0, RTNLGRP_LINK, NULL, GFP_ATOMIC);
+	return;
 errout:
 	if (err < 0)
-		rtnl_set_sk_err(RTNLGRP_LINK, err);
+		rtnl_set_sk_err(net, RTNLGRP_LINK, err);
 }
 
 /*
@@ -106,16 +113,20 @@ errout:
  */
 static int br_dump_ifinfo(struct sk_buff *skb, struct netlink_callback *cb)
 {
+	struct net *net = sock_net(skb->sk);
 	struct net_device *dev;
 	int idx;
 
 	idx = 0;
-	for_each_netdev(dev) {
+	for_each_netdev(net, dev) {
+		struct net_bridge_port *port = br_port_get_rtnl(dev);
+
 		/* not a bridge port */
-		if (dev->br_port == NULL || idx < cb->args[0])
+		if (!port || idx < cb->args[0])
 			goto skip;
 
-		if (br_fill_ifinfo(skb, dev->br_port, NETLINK_CB(cb->skb).pid,
+		if (br_fill_ifinfo(skb, port,
+				   NETLINK_CB(cb->skb).pid,
 				   cb->nlh->nlmsg_seq, RTM_NEWLINK,
 				   NLM_F_MULTI) < 0)
 			break;
@@ -134,6 +145,7 @@ skip:
  */
 static int br_rtm_setlink(struct sk_buff *skb,  struct nlmsghdr *nlh, void *arg)
 {
+	struct net *net = sock_net(skb->sk);
 	struct ifinfomsg *ifm;
 	struct nlattr *protinfo;
 	struct net_device *dev;
@@ -155,11 +167,11 @@ static int br_rtm_setlink(struct sk_buff *skb,  struct nlmsghdr *nlh, void *arg)
 	if (new_state > BR_STATE_BLOCKING)
 		return -EINVAL;
 
-	dev = __dev_get_by_index(ifm->ifi_index);
+	dev = __dev_get_by_index(net, ifm->ifi_index);
 	if (!dev)
 		return -ENODEV;
 
-	p = dev->br_port;
+	p = br_port_get_rtnl(dev);
 	if (!p)
 		return -EINVAL;
 
@@ -192,3 +204,4 @@ void __exit br_netlink_fini(void)
 {
 	rtnl_unregister_all(PF_BRIDGE);
 }
+

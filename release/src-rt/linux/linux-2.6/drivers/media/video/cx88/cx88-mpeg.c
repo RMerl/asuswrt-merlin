@@ -3,7 +3,7 @@
  *  Support for the mpeg transport stream transfers
  *  PCI function #2 of the cx2388x.
  *
- *    (c) 2004 Jelle Foks <jelle@foks.8m.com>
+ *    (c) 2004 Jelle Foks <jelle@foks.us>
  *    (c) 2004 Chris Pascoe <c.pascoe@itee.uq.edu.au>
  *    (c) 2004 Gerd Knorr <kraxel@bytesex.org>
  *
@@ -23,12 +23,11 @@
  */
 
 #include <linux/module.h>
-#include <linux/moduleparam.h>
+#include <linux/slab.h>
 #include <linux/init.h>
 #include <linux/device.h>
 #include <linux/dma-mapping.h>
 #include <linux/interrupt.h>
-#include <linux/dma-mapping.h>
 #include <asm/delay.h>
 
 #include "cx88.h"
@@ -36,12 +35,12 @@
 /* ------------------------------------------------------------------ */
 
 MODULE_DESCRIPTION("mpeg driver for cx2388x based TV cards");
-MODULE_AUTHOR("Jelle Foks <jelle@foks.8m.com>");
+MODULE_AUTHOR("Jelle Foks <jelle@foks.us>");
 MODULE_AUTHOR("Chris Pascoe <c.pascoe@itee.uq.edu.au>");
 MODULE_AUTHOR("Gerd Knorr <kraxel@bytesex.org> [SuSE Labs]");
 MODULE_LICENSE("GPL");
 
-static unsigned int debug = 0;
+static unsigned int debug;
 module_param(debug,int,0644);
 MODULE_PARM_DESC(debug,"enable debug messages [mpeg]");
 
@@ -56,9 +55,9 @@ static void request_module_async(struct work_struct *work)
 {
 	struct cx8802_dev *dev=container_of(work, struct cx8802_dev, request_module_wk);
 
-	if (cx88_boards[dev->core->board].mpeg & CX88_MPEG_DVB)
+	if (dev->core->board.mpeg & CX88_MPEG_DVB)
 		request_module("cx88-dvb");
-	if (cx88_boards[dev->core->board].mpeg & CX88_MPEG_BLACKBIRD)
+	if (dev->core->board.mpeg & CX88_MPEG_BLACKBIRD)
 		request_module("cx88-blackbird");
 }
 
@@ -67,8 +66,14 @@ static void request_modules(struct cx8802_dev *dev)
 	INIT_WORK(&dev->request_module_wk, request_module_async);
 	schedule_work(&dev->request_module_wk);
 }
+
+static void flush_request_modules(struct cx8802_dev *dev)
+{
+	flush_work_sync(&dev->request_module_wk);
+}
 #else
 #define request_modules(dev)
+#define flush_request_modules(dev)
 #endif /* CONFIG_MODULES */
 
 
@@ -81,7 +86,8 @@ static int cx8802_start_dma(struct cx8802_dev    *dev,
 {
 	struct cx88_core *core = dev->core;
 
-	dprintk(1, "cx8802_start_dma w: %d, h: %d, f: %d\n", dev->width, dev->height, buf->vb.field);
+	dprintk(1, "cx8802_start_dma w: %d, h: %d, f: %d\n",
+		buf->vb.width, buf->vb.height, buf->vb.field);
 
 	/* setup fifo + format */
 	cx88_sram_channel_setup(core, &cx88_sram_channels[SRAM_CH28],
@@ -96,20 +102,23 @@ static int cx8802_start_dma(struct cx8802_dev    *dev,
 	dprintk( 1, "core->active_type_id = 0x%08x\n", core->active_type_id);
 
 	if ( (core->active_type_id == CX88_MPEG_DVB) &&
-		(cx88_boards[core->board].mpeg & CX88_MPEG_DVB) ) {
+		(core->board.mpeg & CX88_MPEG_DVB) ) {
 
 		dprintk( 1, "cx8802_start_dma doing .dvb\n");
 		/* negedge driven & software reset */
 		cx_write(TS_GEN_CNTRL, 0x0040 | dev->ts_gen_cntrl);
 		udelay(100);
 		cx_write(MO_PINMUX_IO, 0x00);
-		cx_write(TS_HW_SOP_CNTRL,0x47<<16|188<<4|0x01);
-		switch (core->board) {
+		cx_write(TS_HW_SOP_CNTRL, 0x47<<16|188<<4|0x01);
+		switch (core->boardnr) {
 		case CX88_BOARD_DVICO_FUSIONHDTV_3_GOLD_Q:
 		case CX88_BOARD_DVICO_FUSIONHDTV_3_GOLD_T:
 		case CX88_BOARD_DVICO_FUSIONHDTV_5_GOLD:
 		case CX88_BOARD_PCHDTV_HD5500:
 			cx_write(TS_SOP_STAT, 1<<13);
+			break;
+		case CX88_BOARD_SAMSUNG_SMT_7020:
+			cx_write(TS_SOP_STAT, 0x00);
 			break;
 		case CX88_BOARD_HAUPPAUGE_NOVASPLUS_S1:
 		case CX88_BOARD_HAUPPAUGE_NOVASE2_S1:
@@ -117,6 +126,19 @@ static int cx8802_start_dma(struct cx8802_dev    *dev,
 			udelay(100);
 			break;
 		case CX88_BOARD_HAUPPAUGE_HVR1300:
+			/* Enable MPEG parallel IO and video signal pins */
+			cx_write(MO_PINMUX_IO, 0x88);
+			cx_write(TS_SOP_STAT, 0);
+			cx_write(TS_VALERR_CNTRL, 0);
+			break;
+		case CX88_BOARD_PINNACLE_PCTV_HD_800i:
+			/* Enable MPEG parallel IO and video signal pins */
+			cx_write(MO_PINMUX_IO, 0x88);
+			cx_write(TS_HW_SOP_CNTRL, (0x47 << 16) | (188 << 4));
+			dev->ts_gen_cntrl = 5;
+			cx_write(TS_SOP_STAT, 0);
+			cx_write(TS_VALERR_CNTRL, 0);
+			udelay(100);
 			break;
 		default:
 			cx_write(TS_SOP_STAT, 0x00);
@@ -125,7 +147,7 @@ static int cx8802_start_dma(struct cx8802_dev    *dev,
 		cx_write(TS_GEN_CNTRL, dev->ts_gen_cntrl);
 		udelay(100);
 	} else if ( (core->active_type_id == CX88_MPEG_BLACKBIRD) &&
-		(cx88_boards[core->board].mpeg & CX88_MPEG_BLACKBIRD) ) {
+		(core->board.mpeg & CX88_MPEG_BLACKBIRD) ) {
 		dprintk( 1, "cx8802_start_dma doing .blackbird\n");
 		cx_write(MO_PINMUX_IO, 0x88); /* enable MPEG parallel IO */
 
@@ -138,8 +160,8 @@ static int cx8802_start_dma(struct cx8802_dev    *dev,
 		cx_write(TS_GEN_CNTRL, 0x06); /* punctured clock TS & posedge driven */
 		udelay(100);
 	} else {
-		printk( "%s() Failed. Unsupported value in .mpeg (0x%08x)\n", __FUNCTION__,
-			cx88_boards[core->board].mpeg );
+		printk( "%s() Failed. Unsupported value in .mpeg (0x%08x)\n", __func__,
+			core->board.mpeg );
 		return -EINVAL;
 	}
 
@@ -149,7 +171,7 @@ static int cx8802_start_dma(struct cx8802_dev    *dev,
 
 	/* enable irqs */
 	dprintk( 1, "setting the interrupt mask\n" );
-	cx_set(MO_PCI_INTMSK, core->pci_irqmask | 0x04);
+	cx_set(MO_PCI_INTMSK, core->pci_irqmask | PCI_INT_TSINT);
 	cx_set(MO_TS_INTMSK,  0x1f0011);
 
 	/* start dma */
@@ -167,7 +189,7 @@ static int cx8802_stop_dma(struct cx8802_dev *dev)
 	cx_clear(MO_TS_DMACNTRL, 0x11);
 
 	/* disable irqs */
-	cx_clear(MO_PCI_INTMSK, 0x000004);
+	cx_clear(MO_PCI_INTMSK, PCI_INT_TSINT);
 	cx_clear(MO_TS_INTMSK, 0x1f0011);
 
 	/* Reset the controller */
@@ -179,45 +201,44 @@ static int cx8802_restart_queue(struct cx8802_dev    *dev,
 				struct cx88_dmaqueue *q)
 {
 	struct cx88_buffer *buf;
-	struct list_head *item;
 
-       dprintk( 1, "cx8802_restart_queue\n" );
+	dprintk( 1, "cx8802_restart_queue\n" );
 	if (list_empty(&q->active))
 	{
-	       struct cx88_buffer *prev;
-	       prev = NULL;
+		struct cx88_buffer *prev;
+		prev = NULL;
 
-	       dprintk(1, "cx8802_restart_queue: queue is empty\n" );
+		dprintk(1, "cx8802_restart_queue: queue is empty\n" );
 
-	       for (;;) {
-		       if (list_empty(&q->queued))
-			       return 0;
-		       buf = list_entry(q->queued.next, struct cx88_buffer, vb.queue);
-		       if (NULL == prev) {
-			       list_del(&buf->vb.queue);
-			       list_add_tail(&buf->vb.queue,&q->active);
-			       cx8802_start_dma(dev, q, buf);
-			       buf->vb.state = STATE_ACTIVE;
-			       buf->count    = q->count++;
-			       mod_timer(&q->timeout, jiffies+BUFFER_TIMEOUT);
-			       dprintk(1,"[%p/%d] restart_queue - first active\n",
-				       buf,buf->vb.i);
+		for (;;) {
+			if (list_empty(&q->queued))
+				return 0;
+			buf = list_entry(q->queued.next, struct cx88_buffer, vb.queue);
+			if (NULL == prev) {
+				list_del(&buf->vb.queue);
+				list_add_tail(&buf->vb.queue,&q->active);
+				cx8802_start_dma(dev, q, buf);
+				buf->vb.state = VIDEOBUF_ACTIVE;
+				buf->count    = q->count++;
+				mod_timer(&q->timeout, jiffies+BUFFER_TIMEOUT);
+				dprintk(1,"[%p/%d] restart_queue - first active\n",
+					buf,buf->vb.i);
 
-		       } else if (prev->vb.width  == buf->vb.width  &&
-				  prev->vb.height == buf->vb.height &&
-				  prev->fmt       == buf->fmt) {
-			       list_del(&buf->vb.queue);
-			       list_add_tail(&buf->vb.queue,&q->active);
-			       buf->vb.state = STATE_ACTIVE;
-			       buf->count    = q->count++;
-			       prev->risc.jmp[1] = cpu_to_le32(buf->risc.dma);
-			       dprintk(1,"[%p/%d] restart_queue - move to active\n",
-				       buf,buf->vb.i);
-		       } else {
-			       return 0;
-		       }
-		       prev = buf;
-	       }
+			} else if (prev->vb.width  == buf->vb.width  &&
+				   prev->vb.height == buf->vb.height &&
+				   prev->fmt       == buf->fmt) {
+				list_del(&buf->vb.queue);
+				list_add_tail(&buf->vb.queue,&q->active);
+				buf->vb.state = VIDEOBUF_ACTIVE;
+				buf->count    = q->count++;
+				prev->risc.jmp[1] = cpu_to_le32(buf->risc.dma);
+				dprintk(1,"[%p/%d] restart_queue - move to active\n",
+					buf,buf->vb.i);
+			} else {
+				return 0;
+			}
+			prev = buf;
+		}
 		return 0;
 	}
 
@@ -225,10 +246,8 @@ static int cx8802_restart_queue(struct cx8802_dev    *dev,
 	dprintk(2,"restart_queue [%p/%d]: restart dma\n",
 		buf, buf->vb.i);
 	cx8802_start_dma(dev, q, buf);
-	list_for_each(item,&q->active) {
-		buf = list_entry(item, struct cx88_buffer, vb.queue);
+	list_for_each_entry(buf, &q->active, vb.queue)
 		buf->count = q->count++;
-	}
 	mod_timer(&q->timeout, jiffies+BUFFER_TIMEOUT);
 	return 0;
 }
@@ -239,13 +258,14 @@ int cx8802_buf_prepare(struct videobuf_queue *q, struct cx8802_dev *dev,
 			struct cx88_buffer *buf, enum v4l2_field field)
 {
 	int size = dev->ts_packet_size * dev->ts_packet_count;
+	struct videobuf_dmabuf *dma=videobuf_to_dma(&buf->vb);
 	int rc;
 
-	dprintk(1, "%s: %p\n", __FUNCTION__, buf);
+	dprintk(1, "%s: %p\n", __func__, buf);
 	if (0 != buf->vb.baddr  &&  buf->vb.bsize < size)
 		return -EINVAL;
 
-	if (STATE_NEEDS_INIT == buf->vb.state) {
+	if (VIDEOBUF_NEEDS_INIT == buf->vb.state) {
 		buf->vb.width  = dev->ts_packet_size;
 		buf->vb.height = dev->ts_packet_count;
 		buf->vb.size   = size;
@@ -254,10 +274,10 @@ int cx8802_buf_prepare(struct videobuf_queue *q, struct cx8802_dev *dev,
 		if (0 != (rc = videobuf_iolock(q,&buf->vb,NULL)))
 			goto fail;
 		cx88_risc_databuffer(dev->pci, &buf->risc,
-				     buf->vb.dma.sglist,
-				     buf->vb.width, buf->vb.height);
+				     dma->sglist,
+				     buf->vb.width, buf->vb.height, 0);
 	}
-	buf->vb.state = STATE_PREPARED;
+	buf->vb.state = VIDEOBUF_PREPARED;
 	return 0;
 
  fail:
@@ -279,27 +299,27 @@ void cx8802_buf_queue(struct cx8802_dev *dev, struct cx88_buffer *buf)
 		dprintk( 1, "queue is empty - first active\n" );
 		list_add_tail(&buf->vb.queue,&cx88q->active);
 		cx8802_start_dma(dev, cx88q, buf);
-		buf->vb.state = STATE_ACTIVE;
+		buf->vb.state = VIDEOBUF_ACTIVE;
 		buf->count    = cx88q->count++;
 		mod_timer(&cx88q->timeout, jiffies+BUFFER_TIMEOUT);
 		dprintk(1,"[%p/%d] %s - first active\n",
-			buf, buf->vb.i, __FUNCTION__);
+			buf, buf->vb.i, __func__);
 
 	} else {
 		dprintk( 1, "queue is not empty - append to active\n" );
 		prev = list_entry(cx88q->active.prev, struct cx88_buffer, vb.queue);
 		list_add_tail(&buf->vb.queue,&cx88q->active);
-		buf->vb.state = STATE_ACTIVE;
+		buf->vb.state = VIDEOBUF_ACTIVE;
 		buf->count    = cx88q->count++;
 		prev->risc.jmp[1] = cpu_to_le32(buf->risc.dma);
 		dprintk( 1, "[%p/%d] %s - append to active\n",
-			buf, buf->vb.i, __FUNCTION__);
+			buf, buf->vb.i, __func__);
 	}
 }
 
 /* ----------------------------------------------------------- */
 
-static void do_cancel_buffers(struct cx8802_dev *dev, char *reason, int restart)
+static void do_cancel_buffers(struct cx8802_dev *dev, const char *reason, int restart)
 {
 	struct cx88_dmaqueue *q = &dev->mpegq;
 	struct cx88_buffer *buf;
@@ -309,7 +329,7 @@ static void do_cancel_buffers(struct cx8802_dev *dev, char *reason, int restart)
 	while (!list_empty(&q->active)) {
 		buf = list_entry(q->active.next, struct cx88_buffer, vb.queue);
 		list_del(&buf->vb.queue);
-		buf->vb.state = STATE_ERROR;
+		buf->vb.state = VIDEOBUF_ERROR;
 		wake_up(&buf->vb.done);
 		dprintk(1,"[%p/%d] %s - dma=0x%08lx\n",
 			buf, buf->vb.i, reason, (unsigned long)buf->risc.dma);
@@ -336,7 +356,7 @@ static void cx8802_timeout(unsigned long data)
 {
 	struct cx8802_dev *dev = (struct cx8802_dev*)data;
 
-	dprintk(0, "%s\n",__FUNCTION__);
+	dprintk(1, "%s\n",__func__);
 
 	if (debug)
 		cx88_sram_channel_dump(dev->core, &cx88_sram_channels[SRAM_CH28]);
@@ -344,7 +364,7 @@ static void cx8802_timeout(unsigned long data)
 	do_cancel_buffers(dev,"timeout",1);
 }
 
-static char *cx88_mpeg_irqs[32] = {
+static const char * cx88_mpeg_irqs[32] = {
 	"ts_risci1", NULL, NULL, NULL,
 	"ts_risci2", NULL, NULL, NULL,
 	"ts_oflow",  NULL, NULL, NULL,
@@ -414,7 +434,8 @@ static irqreturn_t cx8802_irq(int irq, void *dev_id)
 	int loop, handled = 0;
 
 	for (loop = 0; loop < MAX_IRQ_LOOP; loop++) {
-		status = cx_read(MO_PCI_INTSTAT) & (core->pci_irqmask | 0x04);
+		status = cx_read(MO_PCI_INTSTAT) &
+			(core->pci_irqmask | PCI_INT_TSINT);
 		if (0 == status)
 			goto out;
 		dprintk( 1, "cx8802_irq\n" );
@@ -425,7 +446,7 @@ static irqreturn_t cx8802_irq(int irq, void *dev_id)
 
 		if (status & core->pci_irqmask)
 			cx88_core_irq(core,status);
-		if (status & 0x04)
+		if (status & PCI_INT_TSINT)
 			cx8802_mpeg_irq(dev);
 	};
 	if (MAX_IRQ_LOOP == loop) {
@@ -439,10 +460,7 @@ static irqreturn_t cx8802_irq(int irq, void *dev_id)
 	return IRQ_RETVAL(handled);
 }
 
-/* ----------------------------------------------------------- */
-/* exported stuff                                              */
-
-int cx8802_init_common(struct cx8802_dev *dev)
+static int cx8802_init_common(struct cx8802_dev *dev)
 {
 	struct cx88_core *core = dev->core;
 	int err;
@@ -451,7 +469,7 @@ int cx8802_init_common(struct cx8802_dev *dev)
 	if (pci_enable_device(dev->pci))
 		return -EIO;
 	pci_set_master(dev->pci);
-	if (!pci_dma_supported(dev->pci,DMA_32BIT_MASK)) {
+	if (!pci_dma_supported(dev->pci,DMA_BIT_MASK(32))) {
 		printk("%s/2: Oops: no 32bit PCI DMA ???\n",dev->core->name);
 		return -EIO;
 	}
@@ -490,7 +508,7 @@ int cx8802_init_common(struct cx8802_dev *dev)
 	return 0;
 }
 
-void cx8802_fini_common(struct cx8802_dev *dev)
+static void cx8802_fini_common(struct cx8802_dev *dev)
 {
 	dprintk( 2, "cx8802_fini_common\n" );
 	cx8802_stop_dma(dev);
@@ -506,7 +524,7 @@ void cx8802_fini_common(struct cx8802_dev *dev)
 
 /* ----------------------------------------------------------- */
 
-int cx8802_suspend_common(struct pci_dev *pci_dev, pm_message_t state)
+static int cx8802_suspend_common(struct pci_dev *pci_dev, pm_message_t state)
 {
 	struct cx8802_dev *dev = pci_get_drvdata(pci_dev);
 	struct cx88_core *core = dev->core;
@@ -532,7 +550,7 @@ int cx8802_suspend_common(struct pci_dev *pci_dev, pm_message_t state)
 	return 0;
 }
 
-int cx8802_resume_common(struct pci_dev *pci_dev)
+static int cx8802_resume_common(struct pci_dev *pci_dev)
 {
 	struct cx8802_dev *dev = pci_get_drvdata(pci_dev);
 	struct cx88_core *core = dev->core;
@@ -572,42 +590,13 @@ int cx8802_resume_common(struct pci_dev *pci_dev)
 	return 0;
 }
 
-struct cx8802_dev * cx8802_get_device(struct inode *inode)
-{
-	int minor = iminor(inode);
-	struct cx8802_dev *h = NULL;
-	struct list_head *list;
-
-	list_for_each(list,&cx8802_devlist) {
-		h = list_entry(list, struct cx8802_dev, devlist);
-		if (h->mpeg_dev && h->mpeg_dev->minor == minor)
-			return h;
-	}
-
-	return NULL;
-}
-
 struct cx8802_driver * cx8802_get_driver(struct cx8802_dev *dev, enum cx88_board_type btype)
 {
-	struct cx8802_dev *h = NULL;
-	struct cx8802_driver *d = NULL;
-	struct list_head *list;
-	struct list_head *list2;
+	struct cx8802_driver *d;
 
-	list_for_each(list,&cx8802_devlist) {
-		h = list_entry(list, struct cx8802_dev, devlist);
-		if (h != dev)
-			continue;
-
-		list_for_each(list2, &h->drvlist.devlist) {
-			d = list_entry(list2, struct cx8802_driver, devlist);
-
-			/* only unregister the correct driver type */
-			if (d->type_id == btype) {
-				return d;
-			}
-		}
-	}
+	list_for_each_entry(d, &dev->drvlist, drvlist)
+		if (d->type_id == btype)
+			return d;
 
 	return NULL;
 }
@@ -616,17 +605,32 @@ struct cx8802_driver * cx8802_get_driver(struct cx8802_dev *dev, enum cx88_board
 static int cx8802_request_acquire(struct cx8802_driver *drv)
 {
 	struct cx88_core *core = drv->core;
+	unsigned int	i;
 
 	/* Fail a request for hardware if the device is busy. */
-	if (core->active_type_id != CX88_BOARD_NONE)
+	if (core->active_type_id != CX88_BOARD_NONE &&
+	    core->active_type_id != drv->type_id)
 		return -EBUSY;
+
+	core->input = 0;
+	for (i = 0;
+	     i < (sizeof(core->board.input) / sizeof(struct cx88_input));
+	     i++) {
+		if (core->board.input[i].type == CX88_VMUX_DVB) {
+			core->input = i;
+			break;
+		}
+	}
 
 	if (drv->advise_acquire)
 	{
-		core->active_type_id = drv->type_id;
-		drv->advise_acquire(drv);
+		core->active_ref++;
+		if (core->active_type_id == CX88_BOARD_NONE) {
+			core->active_type_id = drv->type_id;
+			drv->advise_acquire(drv);
+		}
 
-		mpeg_dbg(1,"%s() Post acquire GPIO=%x\n", __FUNCTION__, cx_read(MO_GP0_IO));
+		mpeg_dbg(1,"%s() Post acquire GPIO=%x\n", __func__, cx_read(MO_GP0_IO));
 	}
 
 	return 0;
@@ -637,11 +641,11 @@ static int cx8802_request_release(struct cx8802_driver *drv)
 {
 	struct cx88_core *core = drv->core;
 
-	if (drv->advise_release)
+	if (drv->advise_release && --core->active_ref == 0)
 	{
 		drv->advise_release(drv);
 		core->active_type_id = CX88_BOARD_NONE;
-		mpeg_dbg(1,"%s() Post release GPIO=%x\n", __FUNCTION__, cx_read(MO_GP0_IO));
+		mpeg_dbg(1,"%s() Post release GPIO=%x\n", __func__, cx_read(MO_GP0_IO));
 	}
 
 	return 0;
@@ -671,27 +675,26 @@ static int cx8802_check_driver(struct cx8802_driver *drv)
 
 int cx8802_register_driver(struct cx8802_driver *drv)
 {
-	struct cx8802_dev *h;
+	struct cx8802_dev *dev;
 	struct cx8802_driver *driver;
-	struct list_head *list;
-	int err = 0, i = 0;
+	int err, i = 0;
 
-	printk(KERN_INFO "%s() ->registering driver type=%s access=%s\n", __FUNCTION__ ,
-		drv->type_id == CX88_MPEG_DVB ? "dvb" : "blackbird",
-		drv->hw_access == CX8802_DRVCTL_SHARED ? "shared" : "exclusive");
+	printk(KERN_INFO
+	       "cx88/2: registering cx8802 driver, type: %s access: %s\n",
+	       drv->type_id == CX88_MPEG_DVB ? "dvb" : "blackbird",
+	       drv->hw_access == CX8802_DRVCTL_SHARED ? "shared" : "exclusive");
 
 	if ((err = cx8802_check_driver(drv)) != 0) {
-		printk(KERN_INFO "%s() cx8802_driver is invalid\n", __FUNCTION__ );
+		printk(KERN_ERR "cx88/2: cx8802_driver is invalid\n");
 		return err;
 	}
 
-	list_for_each(list,&cx8802_devlist) {
-		h = list_entry(list, struct cx8802_dev, devlist);
-
-		printk(KERN_INFO "CORE %s: subsystem: %04x:%04x, board: %s [card=%d]\n",
-			h->core->name,h->pci->subsystem_vendor,
-			h->pci->subsystem_device,cx88_boards[h->core->board].name,
-			h->core->board);
+	list_for_each_entry(dev, &cx8802_devlist, devlist) {
+		printk(KERN_INFO
+		       "%s/2: subsystem: %04x:%04x, board: %s [card=%d]\n",
+		       dev->core->name, dev->pci->subsystem_vendor,
+		       dev->pci->subsystem_device, dev->core->board.name,
+		       dev->core->boardnr);
 
 		/* Bring up a new struct for each driver instance */
 		driver = kzalloc(sizeof(*drv),GFP_KERNEL);
@@ -699,69 +702,64 @@ int cx8802_register_driver(struct cx8802_driver *drv)
 			return -ENOMEM;
 
 		/* Snapshot of the driver registration data */
-		drv->core = h->core;
+		drv->core = dev->core;
 		drv->suspend = cx8802_suspend_common;
 		drv->resume = cx8802_resume_common;
 		drv->request_acquire = cx8802_request_acquire;
 		drv->request_release = cx8802_request_release;
 		memcpy(driver, drv, sizeof(*driver));
 
+		mutex_lock(&drv->core->lock);
 		err = drv->probe(driver);
 		if (err == 0) {
 			i++;
-			mutex_lock(&drv->core->lock);
-			list_add_tail(&driver->devlist,&h->drvlist.devlist);
-			mutex_unlock(&drv->core->lock);
+			list_add_tail(&driver->drvlist, &dev->drvlist);
 		} else {
-			printk(KERN_ERR "%s() ->probe failed err = %d\n", __FUNCTION__, err);
+			printk(KERN_ERR
+			       "%s/2: cx8802 probe failed, err = %d\n",
+			       dev->core->name, err);
 		}
-
+		mutex_unlock(&drv->core->lock);
 	}
-	if (i == 0)
-		err = -ENODEV;
-	else
-		err = 0;
 
-	return err;
+	return i ? 0 : -ENODEV;
 }
 
 int cx8802_unregister_driver(struct cx8802_driver *drv)
 {
-	struct cx8802_dev *h;
-	struct cx8802_driver *d;
-	struct list_head *list;
-	struct list_head *list2, *q;
-	int err = 0, i = 0;
+	struct cx8802_dev *dev;
+	struct cx8802_driver *d, *dtmp;
+	int err = 0;
 
-	printk(KERN_INFO "%s() ->unregistering driver type=%s\n", __FUNCTION__ ,
-		drv->type_id == CX88_MPEG_DVB ? "dvb" : "blackbird");
+	printk(KERN_INFO
+	       "cx88/2: unregistering cx8802 driver, type: %s access: %s\n",
+	       drv->type_id == CX88_MPEG_DVB ? "dvb" : "blackbird",
+	       drv->hw_access == CX8802_DRVCTL_SHARED ? "shared" : "exclusive");
 
-	list_for_each(list,&cx8802_devlist) {
-		i++;
-		h = list_entry(list, struct cx8802_dev, devlist);
+	list_for_each_entry(dev, &cx8802_devlist, devlist) {
+		printk(KERN_INFO
+		       "%s/2: subsystem: %04x:%04x, board: %s [card=%d]\n",
+		       dev->core->name, dev->pci->subsystem_vendor,
+		       dev->pci->subsystem_device, dev->core->board.name,
+		       dev->core->boardnr);
 
-		printk(KERN_INFO "CORE %s: subsystem: %04x:%04x, board: %s [card=%d]\n",
-			h->core->name,h->pci->subsystem_vendor,
-			h->pci->subsystem_device,cx88_boards[h->core->board].name,
-			h->core->board);
+		mutex_lock(&dev->core->lock);
 
-		list_for_each_safe(list2, q, &h->drvlist.devlist) {
-			d = list_entry(list2, struct cx8802_driver, devlist);
-
+		list_for_each_entry_safe(d, dtmp, &dev->drvlist, drvlist) {
 			/* only unregister the correct driver type */
 			if (d->type_id != drv->type_id)
 				continue;
 
 			err = d->remove(d);
 			if (err == 0) {
-				mutex_lock(&drv->core->lock);
-				list_del(list2);
-				mutex_unlock(&drv->core->lock);
+				list_del(&d->drvlist);
+				kfree(d);
 			} else
-				printk(KERN_ERR "%s() ->remove failed err = %d\n", __FUNCTION__, err);
-
+				printk(KERN_ERR "%s/2: cx8802 driver remove "
+				       "failed (%d)\n", dev->core->name, err);
 		}
 
+		mutex_unlock(&dev->core->lock);
 	}
 
 	return err;
@@ -783,7 +781,7 @@ static int __devinit cx8802_probe(struct pci_dev *pci_dev,
 	printk("%s/2: cx2388x 8802 Driver Manager\n", core->name);
 
 	err = -ENODEV;
-	if (!cx88_boards[core->board].mpeg)
+	if (!core->board.mpeg)
 		goto fail_core;
 
 	err = -ENOMEM;
@@ -793,15 +791,15 @@ static int __devinit cx8802_probe(struct pci_dev *pci_dev,
 	dev->pci = pci_dev;
 	dev->core = core;
 
+	/* Maintain a reference so cx88-video can query the 8802 device. */
+	core->dvbdev = dev;
+
 	err = cx8802_init_common(dev);
 	if (err != 0)
 		goto fail_free;
 
-	INIT_LIST_HEAD(&dev->drvlist.devlist);
+	INIT_LIST_HEAD(&dev->drvlist);
 	list_add_tail(&dev->devlist,&cx8802_devlist);
-
-	/* Maintain a reference so cx88-video can query the 8802 device. */
-	core->dvbdev = dev;
 
 	/* now autoload cx88-dvb or cx88-blackbird */
 	request_modules(dev);
@@ -810,6 +808,7 @@ static int __devinit cx8802_probe(struct pci_dev *pci_dev,
  fail_free:
 	kfree(dev);
  fail_core:
+	core->dvbdev = NULL;
 	cx88_core_put(core,pci_dev);
 	return err;
 }
@@ -817,24 +816,35 @@ static int __devinit cx8802_probe(struct pci_dev *pci_dev,
 static void __devexit cx8802_remove(struct pci_dev *pci_dev)
 {
 	struct cx8802_dev *dev;
-	struct cx8802_driver *h;
-	struct list_head *list;
 
 	dev = pci_get_drvdata(pci_dev);
 
-	dprintk( 1, "%s\n", __FUNCTION__);
+	dprintk( 1, "%s\n", __func__);
 
-	list_for_each(list,&dev->drvlist.devlist) {
-		h = list_entry(list, struct cx8802_driver, devlist);
-		dprintk( 1, " ->driver\n");
-		if (h->remove == NULL) {
-			printk(KERN_ERR "%s .. skipping driver, no probe function\n", __FUNCTION__);
-			continue;
+	flush_request_modules(dev);
+
+	mutex_lock(&dev->core->lock);
+
+	if (!list_empty(&dev->drvlist)) {
+		struct cx8802_driver *drv, *tmp;
+		int err;
+
+		printk(KERN_WARNING "%s/2: Trying to remove cx8802 driver "
+		       "while cx8802 sub-drivers still loaded?!\n",
+		       dev->core->name);
+
+		list_for_each_entry_safe(drv, tmp, &dev->drvlist, drvlist) {
+			err = drv->remove(drv);
+			if (err == 0) {
+				list_del(&drv->drvlist);
+			} else
+				printk(KERN_ERR "%s/2: cx8802 driver remove "
+				       "failed (%d)\n", dev->core->name, err);
+			kfree(drv);
 		}
-		printk(KERN_INFO "%s .. Removing driver type %d\n", __FUNCTION__, h->type_id);
-		cx8802_unregister_driver(h);
-		list_del(&dev->drvlist.devlist);
 	}
+
+	mutex_unlock(&dev->core->lock);
 
 	/* Destroy any 8802 reference. */
 	dev->core->dvbdev = NULL;
@@ -845,7 +855,7 @@ static void __devexit cx8802_remove(struct pci_dev *pci_dev)
 	kfree(dev);
 }
 
-static struct pci_device_id cx8802_pci_tbl[] = {
+static const struct pci_device_id cx8802_pci_tbl[] = {
 	{
 		.vendor       = 0x14f1,
 		.device       = 0x8802,
@@ -864,9 +874,9 @@ static struct pci_driver cx8802_pci_driver = {
 	.remove   = __devexit_p(cx8802_remove),
 };
 
-static int cx8802_init(void)
+static int __init cx8802_init(void)
 {
-	printk(KERN_INFO "cx2388x cx88-mpeg Driver Manager version %d.%d.%d loaded\n",
+	printk(KERN_INFO "cx88/2: cx2388x MPEG-TS Driver Manager version %d.%d.%d loaded\n",
 	       (CX88_VERSION_CODE >> 16) & 0xff,
 	       (CX88_VERSION_CODE >>  8) & 0xff,
 	       CX88_VERSION_CODE & 0xff);
@@ -877,7 +887,7 @@ static int cx8802_init(void)
 	return pci_register_driver(&cx8802_pci_driver);
 }
 
-static void cx8802_fini(void)
+static void __exit cx8802_fini(void)
 {
 	pci_unregister_driver(&cx8802_pci_driver);
 }
@@ -888,12 +898,8 @@ EXPORT_SYMBOL(cx8802_buf_prepare);
 EXPORT_SYMBOL(cx8802_buf_queue);
 EXPORT_SYMBOL(cx8802_cancel_buffers);
 
-EXPORT_SYMBOL(cx8802_init_common);
-EXPORT_SYMBOL(cx8802_fini_common);
-
 EXPORT_SYMBOL(cx8802_register_driver);
 EXPORT_SYMBOL(cx8802_unregister_driver);
-EXPORT_SYMBOL(cx8802_get_device);
 EXPORT_SYMBOL(cx8802_get_driver);
 /* ----------------------------------------------------------- */
 /*

@@ -38,6 +38,7 @@
 #include <linux/miscdevice.h>
 #include <linux/spinlock.h>
 #include <linux/mm.h>
+#include <linux/fs.h>
 #include <linux/vmalloc.h>
 #include <linux/string.h>
 #include <linux/slab.h>
@@ -66,7 +67,7 @@
 /*
  * Page types allocated by the device.
  */
-enum {
+enum mspec_page_type {
 	MSPEC_FETCHOP = 1,
 	MSPEC_CACHED,
 	MSPEC_UNCACHED
@@ -82,14 +83,24 @@ static int is_sn2;
  * One of these structures is allocated when an mspec region is mmaped. The
  * structure is pointed to by the vma->vm_private_data field in the vma struct.
  * This structure is used to record the addresses of the mspec pages.
+ * This structure is shared by all vma's that are split off from the
+ * original vma when split_vma()'s are done.
+ *
+ * The refcnt is incremented atomically because mm->mmap_sem does not
+ * protect in fork case where multiple tasks share the vma_data.
  */
 struct vma_data {
 	atomic_t refcnt;	/* Number of vmas sharing the data. */
-	spinlock_t lock;	/* Serialize access to the vma. */
+	spinlock_t lock;	/* Serialize access to this structure. */
 	int count;		/* Number of pages allocated. */
-	int type;		/* Type of pages allocated. */
+	enum mspec_page_type type; /* Type of pages allocated. */
+	int flags;		/* See VMD_xxx below. */
+	unsigned long vm_start;	/* Original (unsplit) base. */
+	unsigned long vm_end;	/* Original (unsplit) end. */
 	unsigned long maddr[0];	/* Array of MSPEC addresses. */
 };
+
+#define VMD_VMALLOCED 0x1	/* vmalloc'd rather than kmalloc'd */
 
 /* used on shub2 to clear FOP cache in the HUB */
 static unsigned long scratch_page[MAX_NUMNODES];
@@ -128,8 +139,8 @@ mspec_zero_block(unsigned long addr, int len)
  * mspec_open
  *
  * Called when a device mapping is created by a means other than mmap
- * (via fork, etc.).  Increments the reference count on the underlying
- * mspec data so it is not freed prematurely.
+ * (via fork, munmap, etc.).  Increments the reference count on the
+ * underlying mspec data so it is not freed prematurely.
  */
 static void
 mspec_open(struct vm_area_struct *vma)
@@ -144,69 +155,68 @@ mspec_open(struct vm_area_struct *vma)
  * mspec_close
  *
  * Called when unmapping a device mapping. Frees all mspec pages
- * belonging to the vma.
+ * belonging to all the vma's sharing this vma_data structure.
  */
 static void
 mspec_close(struct vm_area_struct *vma)
 {
 	struct vma_data *vdata;
-	int i, pages, result, vdata_size;
+	int index, last_index;
+	unsigned long my_page;
 
 	vdata = vma->vm_private_data;
+
 	if (!atomic_dec_and_test(&vdata->refcnt))
 		return;
 
-	pages = (vma->vm_end - vma->vm_start) >> PAGE_SHIFT;
-	vdata_size = sizeof(struct vma_data) + pages * sizeof(long);
-	for (i = 0; i < pages; i++) {
-		if (vdata->maddr[i] == 0)
+	last_index = (vdata->vm_end - vdata->vm_start) >> PAGE_SHIFT;
+	for (index = 0; index < last_index; index++) {
+		if (vdata->maddr[index] == 0)
 			continue;
 		/*
 		 * Clear the page before sticking it back
 		 * into the pool.
 		 */
-		result = mspec_zero_block(vdata->maddr[i], PAGE_SIZE);
-		if (!result)
-			uncached_free_page(vdata->maddr[i]);
+		my_page = vdata->maddr[index];
+		vdata->maddr[index] = 0;
+		if (!mspec_zero_block(my_page, PAGE_SIZE))
+			uncached_free_page(my_page, 1);
 		else
 			printk(KERN_WARNING "mspec_close(): "
-			       "failed to zero page %i\n",
-			       result);
+			       "failed to zero page %ld\n", my_page);
 	}
 
-	if (vdata_size <= PAGE_SIZE)
-		kfree(vdata);
-	else
+	if (vdata->flags & VMD_VMALLOCED)
 		vfree(vdata);
+	else
+		kfree(vdata);
 }
 
-
 /*
- * mspec_nopfn
+ * mspec_fault
  *
  * Creates a mspec page and maps it to user space.
  */
-static unsigned long
-mspec_nopfn(struct vm_area_struct *vma, unsigned long address)
+static int
+mspec_fault(struct vm_area_struct *vma, struct vm_fault *vmf)
 {
 	unsigned long paddr, maddr;
 	unsigned long pfn;
-	int index;
+	pgoff_t index = vmf->pgoff;
 	struct vma_data *vdata = vma->vm_private_data;
 
-	index = (address - vma->vm_start) >> PAGE_SHIFT;
 	maddr = (volatile unsigned long) vdata->maddr[index];
 	if (maddr == 0) {
-		maddr = uncached_alloc_page(numa_node_id());
+		maddr = uncached_alloc_page(numa_node_id(), 1);
 		if (maddr == 0)
-			return NOPFN_OOM;
+			return VM_FAULT_OOM;
 
 		spin_lock(&vdata->lock);
 		if (vdata->maddr[index] == 0) {
 			vdata->count++;
 			vdata->maddr[index] = maddr;
 		} else {
-			uncached_free_page(maddr);
+			uncached_free_page(maddr, 1);
 			maddr = vdata->maddr[index];
 		}
 		spin_unlock(&vdata->lock);
@@ -219,27 +229,35 @@ mspec_nopfn(struct vm_area_struct *vma, unsigned long address)
 
 	pfn = paddr >> PAGE_SHIFT;
 
-	return pfn;
+	/*
+	 * vm_insert_pfn can fail with -EBUSY, but in that case it will
+	 * be because another thread has installed the pte first, so it
+	 * is no problem.
+	 */
+	vm_insert_pfn(vma, (unsigned long)vmf->virtual_address, pfn);
+
+	return VM_FAULT_NOPAGE;
 }
 
-static struct vm_operations_struct mspec_vm_ops = {
+static const struct vm_operations_struct mspec_vm_ops = {
 	.open = mspec_open,
 	.close = mspec_close,
-	.nopfn = mspec_nopfn
+	.fault = mspec_fault,
 };
 
 /*
  * mspec_mmap
  *
- * Called when mmaping the device.  Initializes the vma with a fault handler
+ * Called when mmapping the device.  Initializes the vma with a fault handler
  * and private data structure necessary to allocate, track, and free the
  * underlying pages.
  */
 static int
-mspec_mmap(struct file *file, struct vm_area_struct *vma, int type)
+mspec_mmap(struct file *file, struct vm_area_struct *vma,
+					enum mspec_page_type type)
 {
 	struct vma_data *vdata;
-	int pages, vdata_size;
+	int pages, vdata_size, flags = 0;
 
 	if (vma->vm_pgoff != 0)
 		return -EINVAL;
@@ -254,19 +272,23 @@ mspec_mmap(struct file *file, struct vm_area_struct *vma, int type)
 	vdata_size = sizeof(struct vma_data) + pages * sizeof(long);
 	if (vdata_size <= PAGE_SIZE)
 		vdata = kmalloc(vdata_size, GFP_KERNEL);
-	else
+	else {
 		vdata = vmalloc(vdata_size);
+		flags = VMD_VMALLOCED;
+	}
 	if (!vdata)
 		return -ENOMEM;
 	memset(vdata, 0, vdata_size);
 
+	vdata->vm_start = vma->vm_start;
+	vdata->vm_end = vma->vm_end;
+	vdata->flags = flags;
 	vdata->type = type;
 	spin_lock_init(&vdata->lock);
 	vdata->refcnt = ATOMIC_INIT(1);
 	vma->vm_private_data = vdata;
 
-	vma->vm_flags |= (VM_IO | VM_LOCKED | VM_RESERVED | VM_PFNMAP |
-			  VM_DONTEXPAND);
+	vma->vm_flags |= (VM_IO | VM_RESERVED | VM_PFNMAP | VM_DONTEXPAND);
 	if (vdata->type == MSPEC_FETCHOP || vdata->type == MSPEC_UNCACHED)
 		vma->vm_page_prot = pgprot_noncached(vma->vm_page_prot);
 	vma->vm_ops = &mspec_vm_ops;
@@ -294,7 +316,8 @@ uncached_mmap(struct file *file, struct vm_area_struct *vma)
 
 static const struct file_operations fetchop_fops = {
 	.owner = THIS_MODULE,
-	.mmap = fetchop_mmap
+	.mmap = fetchop_mmap,
+	.llseek = noop_llseek,
 };
 
 static struct miscdevice fetchop_miscdev = {
@@ -305,7 +328,8 @@ static struct miscdevice fetchop_miscdev = {
 
 static const struct file_operations cached_fops = {
 	.owner = THIS_MODULE,
-	.mmap = cached_mmap
+	.mmap = cached_mmap,
+	.llseek = noop_llseek,
 };
 
 static struct miscdevice cached_miscdev = {
@@ -316,7 +340,8 @@ static struct miscdevice cached_miscdev = {
 
 static const struct file_operations uncached_fops = {
 	.owner = THIS_MODULE,
-	.mmap = uncached_mmap
+	.mmap = uncached_mmap,
+	.llseek = noop_llseek,
 };
 
 static struct miscdevice uncached_miscdev = {
@@ -345,12 +370,12 @@ mspec_init(void)
 		is_sn2 = 1;
 		if (is_shub2()) {
 			ret = -ENOMEM;
-			for_each_online_node(nid) {
+			for_each_node_state(nid, N_ONLINE) {
 				int actual_nid;
 				int nasid;
 				unsigned long phys;
 
-				scratch_page[nid] = uncached_alloc_page(nid);
+				scratch_page[nid] = uncached_alloc_page(nid, 1);
 				if (scratch_page[nid] == 0)
 					goto free_scratch_pages;
 				phys = __pa(scratch_page[nid]);
@@ -397,7 +422,7 @@ mspec_init(void)
  free_scratch_pages:
 	for_each_node(nid) {
 		if (scratch_page[nid] != 0)
-			uncached_free_page(scratch_page[nid]);
+			uncached_free_page(scratch_page[nid], 1);
 	}
 	return ret;
 }
@@ -414,7 +439,7 @@ mspec_exit(void)
 
 		for_each_node(nid) {
 			if (scratch_page[nid] != 0)
-				uncached_free_page(scratch_page[nid]);
+				uncached_free_page(scratch_page[nid], 1);
 		}
 	}
 }

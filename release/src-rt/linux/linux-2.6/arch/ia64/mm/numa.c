@@ -27,7 +27,9 @@
  */
 int num_node_memblks;
 struct node_memblk_s node_memblk[NR_NODE_MEMBLKS];
-struct node_cpuid_s node_cpuid[NR_CPUS];
+struct node_cpuid_s node_cpuid[NR_CPUS] =
+	{ [0 ... NR_CPUS-1] = { .phys_id = 0, .nid = NUMA_NO_NODE } };
+
 /*
  * This is a matrix with "distances" between nodes, they should be
  * proportional to the memory access latency ratios.
@@ -56,7 +58,7 @@ paddr_to_nid(unsigned long paddr)
  * SPARSEMEM to allocate the SPARSEMEM sectionmap on the NUMA node where
  * the section resides.
  */
-int early_pfn_to_nid(unsigned long pfn)
+int __meminit __early_pfn_to_nid(unsigned long pfn)
 {
 	int i, section = pfn >> PFN_SECTION_SHIFT, ssec, esec;
 
@@ -68,7 +70,7 @@ int early_pfn_to_nid(unsigned long pfn)
 			return node_memblk[i].nid;
 	}
 
-	return 0;
+	return -1;
 }
 
 #ifdef CONFIG_MEMORY_HOTPLUG

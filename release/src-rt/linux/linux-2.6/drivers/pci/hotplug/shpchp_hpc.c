@@ -113,7 +113,7 @@
 #define CON_PFAULT_INTR_MASK	(1 << 28)
 #define MRL_CHANGE_SERR_MASK	(1 << 29)
 #define CON_PFAULT_SERR_MASK	(1 << 30)
-#define SLOT_REG_RSVDZ_MASK	(1 << 15) | (7 << 21)
+#define SLOT_REG_RSVDZ_MASK	((1 << 15) | (7 << 21))
 
 /*
  * SHPC Command Code definitnions
@@ -178,8 +178,6 @@
 /* Field Offset in Logical Slot Register - byte boundary */
 #define SLOT_EVENT_LATCH	0x2
 #define SLOT_SERR_INT_MASK	0x3
-
-static atomic_t shpchp_num_controllers = ATOMIC_INIT(0);
 
 static irqreturn_t shpc_isr(int irq, void *dev_id);
 static void start_int_poll_timer(struct controller *ctrl, int sec);
@@ -300,10 +298,10 @@ static inline int shpc_wait_cmd(struct controller *ctrl)
 						!is_ctrl_busy(ctrl), timeout);
 	if (!rc && is_ctrl_busy(ctrl)) {
 		retval = -EIO;
-		err("Command not completed in 1000 msec\n");
+		ctrl_err(ctrl, "Command not completed in 1000 msec\n");
 	} else if (rc < 0) {
 		retval = -EINTR;
-		info("Command was interrupted by a signal\n");
+		ctrl_info(ctrl, "Command was interrupted by a signal\n");
 	}
 
 	return retval;
@@ -320,15 +318,14 @@ static int shpc_write_cmd(struct slot *slot, u8 t_slot, u8 cmd)
 
 	if (!shpc_poll_ctrl_busy(ctrl)) {
 		/* After 1 sec and and the controller is still busy */
-		err("%s : Controller is still busy after 1 sec.\n",
-		    __FUNCTION__);
+		ctrl_err(ctrl, "Controller is still busy after 1 sec\n");
 		retval = -EBUSY;
 		goto out;
 	}
 
 	++t_slot;
 	temp_word =  (t_slot << 8) | (cmd & 0xFF);
-	dbg("%s: t_slot %x cmd %x\n", __FUNCTION__, t_slot, cmd);
+	ctrl_dbg(ctrl, "%s: t_slot %x cmd %x\n", __func__, t_slot, cmd);
 
 	/* To make sure the Controller Busy bit is 0 before we send out the
 	 * command.
@@ -344,8 +341,9 @@ static int shpc_write_cmd(struct slot *slot, u8 t_slot, u8 cmd)
 
 	cmd_status = hpc_check_cmd_status(slot->ctrl);
 	if (cmd_status) {
-		err("%s: Failed to issued command 0x%x (error code = %d)\n",
-		    __FUNCTION__, cmd, cmd_status);
+		ctrl_err(ctrl,
+			 "Failed to issued command 0x%x (error code = %d)\n",
+			 cmd, cmd_status);
 		retval = -EIO;
 	}
  out:
@@ -364,15 +362,15 @@ static int hpc_check_cmd_status(struct controller *ctrl)
 		break;
 	case 1:
 		retval = SWITCH_OPEN;
-		err("%s: Switch opened!\n", __FUNCTION__);
+		ctrl_err(ctrl, "Switch opened!\n");
 		break;
 	case 2:
 		retval = INVALID_CMD;
-		err("%s: Invalid HPC command!\n", __FUNCTION__);
+		ctrl_err(ctrl, "Invalid HPC command!\n");
 		break;
 	case 4:
 		retval = INVALID_SPEED_MODE;
-		err("%s: Invalid bus speed/mode!\n", __FUNCTION__);
+		ctrl_err(ctrl, "Invalid bus speed/mode!\n");
 		break;
 	default:
 		retval = cmd_status;
@@ -483,8 +481,8 @@ static int hpc_get_adapter_speed(struct slot *slot, enum pci_bus_speed *value)
 		return -ENODEV;
 	}
 
-	dbg("%s: slot_reg = %x, pcix_cap = %x, m66_cap = %x\n",
-	    __FUNCTION__, slot_reg, pcix_cap, m66_cap);
+	ctrl_dbg(ctrl, "%s: slot_reg = %x, pcix_cap = %x, m66_cap = %x\n",
+		 __func__, slot_reg, pcix_cap, m66_cap);
 
 	switch (pcix_cap) {
 	case 0x0:
@@ -509,7 +507,7 @@ static int hpc_get_adapter_speed(struct slot *slot, enum pci_bus_speed *value)
 		break;
 	}
 
-	dbg("Adapter speed = %d\n", *value);
+	ctrl_dbg(ctrl, "Adapter speed = %d\n", *value);
 	return retval;
 }
 
@@ -526,7 +524,7 @@ static int hpc_get_mode1_ECC_cap(struct slot *slot, u8 *mode)
 		retval = -1;
 	}
 
-	dbg("Mode 1 ECC cap = %d\n", *mode);
+	ctrl_dbg(ctrl, "Mode 1 ECC cap = %d\n", *mode);
 	return retval;
 }
 
@@ -597,7 +595,7 @@ static void hpc_release_ctlr(struct controller *ctrl)
 	cleanup_slots(ctrl);
 
 	/*
-	 * Mask SERR and System Interrut generation
+	 * Mask SERR and System Interrupt generation
 	 */
 	serr_int = shpc_readl(ctrl, SERR_INTR_ENABLE);
 	serr_int |= (GLOBAL_INTR_MASK  | GLOBAL_SERR_MASK |
@@ -614,13 +612,6 @@ static void hpc_release_ctlr(struct controller *ctrl)
 
 	iounmap(ctrl->creg);
 	release_mem_region(ctrl->mmio_base, ctrl->mmio_size);
-
-	/*
-	 * If this is the last controller to be released, destroy the
-	 * shpchpd work queue
-	 */
-	if (atomic_dec_and_test(&shpchp_num_controllers))
-		destroy_workqueue(shpchp_wq);
 }
 
 static int hpc_power_on_slot(struct slot * slot)
@@ -629,7 +620,7 @@ static int hpc_power_on_slot(struct slot * slot)
 
 	retval = shpc_write_cmd(slot, slot->hp_slot, SET_SLOT_PWR);
 	if (retval)
-		err("%s: Write command failed!\n", __FUNCTION__);
+		ctrl_err(slot->ctrl, "%s: Write command failed!\n", __func__);
 
 	return retval;
 }
@@ -642,7 +633,7 @@ static int hpc_slot_enable(struct slot * slot)
 	retval = shpc_write_cmd(slot, slot->hp_slot,
 			SET_SLOT_ENABLE | SET_PWR_BLINK | SET_ATTN_OFF);
 	if (retval)
-		err("%s: Write command failed!\n", __FUNCTION__);
+		ctrl_err(slot->ctrl, "%s: Write command failed!\n", __func__);
 
 	return retval;
 }
@@ -655,10 +646,79 @@ static int hpc_slot_disable(struct slot * slot)
 	retval = shpc_write_cmd(slot, slot->hp_slot,
 			SET_SLOT_DISABLE | SET_PWR_OFF | SET_ATTN_ON);
 	if (retval)
-		err("%s: Write command failed!\n", __FUNCTION__);
+		ctrl_err(slot->ctrl, "%s: Write command failed!\n", __func__);
 
 	return retval;
 }
+
+static int shpc_get_cur_bus_speed(struct controller *ctrl)
+{
+	int retval = 0;
+	struct pci_bus *bus = ctrl->pci_dev->subordinate;
+	enum pci_bus_speed bus_speed = PCI_SPEED_UNKNOWN;
+	u16 sec_bus_reg = shpc_readw(ctrl, SEC_BUS_CONFIG);
+	u8 pi = shpc_readb(ctrl, PROG_INTERFACE);
+	u8 speed_mode = (pi == 2) ? (sec_bus_reg & 0xF) : (sec_bus_reg & 0x7);
+
+	if ((pi == 1) && (speed_mode > 4)) {
+		retval = -ENODEV;
+		goto out;
+	}
+
+	switch (speed_mode) {
+	case 0x0:
+		bus_speed = PCI_SPEED_33MHz;
+		break;
+	case 0x1:
+		bus_speed = PCI_SPEED_66MHz;
+		break;
+	case 0x2:
+		bus_speed = PCI_SPEED_66MHz_PCIX;
+		break;
+	case 0x3:
+		bus_speed = PCI_SPEED_100MHz_PCIX;
+		break;
+	case 0x4:
+		bus_speed = PCI_SPEED_133MHz_PCIX;
+		break;
+	case 0x5:
+		bus_speed = PCI_SPEED_66MHz_PCIX_ECC;
+		break;
+	case 0x6:
+		bus_speed = PCI_SPEED_100MHz_PCIX_ECC;
+		break;
+	case 0x7:
+		bus_speed = PCI_SPEED_133MHz_PCIX_ECC;
+		break;
+	case 0x8:
+		bus_speed = PCI_SPEED_66MHz_PCIX_266;
+		break;
+	case 0x9:
+		bus_speed = PCI_SPEED_100MHz_PCIX_266;
+		break;
+	case 0xa:
+		bus_speed = PCI_SPEED_133MHz_PCIX_266;
+		break;
+	case 0xb:
+		bus_speed = PCI_SPEED_66MHz_PCIX_533;
+		break;
+	case 0xc:
+		bus_speed = PCI_SPEED_100MHz_PCIX_533;
+		break;
+	case 0xd:
+		bus_speed = PCI_SPEED_133MHz_PCIX_533;
+		break;
+	default:
+		retval = -ENODEV;
+		break;
+	}
+
+ out:
+	bus->cur_bus_speed = bus_speed;
+	dbg("Current bus speed = %d\n", bus_speed);
+	return retval;
+}
+
 
 static int hpc_set_bus_speed_mode(struct slot * slot, enum pci_bus_speed value)
 {
@@ -719,7 +779,9 @@ static int hpc_set_bus_speed_mode(struct slot * slot, enum pci_bus_speed value)
 
 	retval = shpc_write_cmd(slot, 0, cmd);
 	if (retval)
-		err("%s: Write command failed!\n", __FUNCTION__);
+		ctrl_err(ctrl, "%s: Write command failed!\n", __func__);
+	else
+		shpc_get_cur_bus_speed(ctrl);
 
 	return retval;
 }
@@ -735,7 +797,7 @@ static irqreturn_t shpc_isr(int irq, void *dev_id)
 	if (!intr_loc)
 		return IRQ_NONE;
 
-	dbg("%s: intr_loc = %x\n",__FUNCTION__, intr_loc);
+	ctrl_dbg(ctrl, "%s: intr_loc = %x\n", __func__, intr_loc);
 
 	if(!shpchp_poll_mode) {
 		/*
@@ -748,7 +810,7 @@ static irqreturn_t shpc_isr(int irq, void *dev_id)
 		shpc_writel(ctrl, SERR_INTR_ENABLE, serr_int);
 
 		intr_loc2 = shpc_readl(ctrl, INTR_LOC);
-		dbg("%s: intr_loc2 = %x\n",__FUNCTION__, intr_loc2);
+		ctrl_dbg(ctrl, "%s: intr_loc2 = %x\n", __func__, intr_loc2);
 	}
 
 	if (intr_loc & CMD_INTR_PENDING) {
@@ -773,8 +835,8 @@ static irqreturn_t shpc_isr(int irq, void *dev_id)
 			continue;
 
 		slot_reg = shpc_readl(ctrl, SLOT_REG(hp_slot));
-		dbg("%s: Slot %x with intr, slot register = %x\n",
-		    __FUNCTION__, hp_slot, slot_reg);
+		ctrl_dbg(ctrl, "Slot %x with intr, slot register = %x\n",
+			 hp_slot, slot_reg);
 
 		if (slot_reg & MRL_CHANGE_DETECTED)
 			shpchp_handle_switch_change(hp_slot, ctrl);
@@ -803,10 +865,10 @@ static irqreturn_t shpc_isr(int irq, void *dev_id)
 	return IRQ_HANDLED;
 }
 
-static int hpc_get_max_bus_speed (struct slot *slot, enum pci_bus_speed *value)
+static int shpc_get_max_bus_speed(struct controller *ctrl)
 {
 	int retval = 0;
-	struct controller *ctrl = slot->ctrl;
+	struct pci_bus *bus = ctrl->pci_dev->subordinate;
 	enum pci_bus_speed bus_speed = PCI_SPEED_UNKNOWN;
 	u8 pi = shpc_readb(ctrl, PROG_INTERFACE);
 	u32 slot_avail1 = shpc_readl(ctrl, SLOT_AVAIL1);
@@ -842,76 +904,9 @@ static int hpc_get_max_bus_speed (struct slot *slot, enum pci_bus_speed *value)
 			retval = -ENODEV;
 	}
 
-	*value = bus_speed;
-	dbg("Max bus speed = %d\n", bus_speed);
+	bus->max_bus_speed = bus_speed;
+	ctrl_dbg(ctrl, "Max bus speed = %d\n", bus_speed);
 
-	return retval;
-}
-
-static int hpc_get_cur_bus_speed (struct slot *slot, enum pci_bus_speed *value)
-{
-	int retval = 0;
-	struct controller *ctrl = slot->ctrl;
-	enum pci_bus_speed bus_speed = PCI_SPEED_UNKNOWN;
-	u16 sec_bus_reg = shpc_readw(ctrl, SEC_BUS_CONFIG);
-	u8 pi = shpc_readb(ctrl, PROG_INTERFACE);
-	u8 speed_mode = (pi == 2) ? (sec_bus_reg & 0xF) : (sec_bus_reg & 0x7);
-
-	if ((pi == 1) && (speed_mode > 4)) {
-		*value = PCI_SPEED_UNKNOWN;
-		return -ENODEV;
-	}
-
-	switch (speed_mode) {
-	case 0x0:
-		*value = PCI_SPEED_33MHz;
-		break;
-	case 0x1:
-		*value = PCI_SPEED_66MHz;
-		break;
-	case 0x2:
-		*value = PCI_SPEED_66MHz_PCIX;
-		break;
-	case 0x3:
-		*value = PCI_SPEED_100MHz_PCIX;
-		break;
-	case 0x4:
-		*value = PCI_SPEED_133MHz_PCIX;
-		break;
-	case 0x5:
-		*value = PCI_SPEED_66MHz_PCIX_ECC;
-		break;
-	case 0x6:
-		*value = PCI_SPEED_100MHz_PCIX_ECC;
-		break;
-	case 0x7:
-		*value = PCI_SPEED_133MHz_PCIX_ECC;
-		break;
-	case 0x8:
-		*value = PCI_SPEED_66MHz_PCIX_266;
-		break;
-	case 0x9:
-		*value = PCI_SPEED_100MHz_PCIX_266;
-		break;
-	case 0xa:
-		*value = PCI_SPEED_133MHz_PCIX_266;
-		break;
-	case 0xb:
-		*value = PCI_SPEED_66MHz_PCIX_533;
-		break;
-	case 0xc:
-		*value = PCI_SPEED_100MHz_PCIX_533;
-		break;
-	case 0xd:
-		*value = PCI_SPEED_133MHz_PCIX_533;
-		break;
-	default:
-		*value = PCI_SPEED_UNKNOWN;
-		retval = -ENODEV;
-		break;
-	}
-
-	dbg("Current bus speed = %d\n", bus_speed);
 	return retval;
 }
 
@@ -926,8 +921,6 @@ static struct hpc_ops shpchp_hpc_ops = {
 	.get_latch_status		= hpc_get_latch_status,
 	.get_adapter_status		= hpc_get_adapter_status,
 
-	.get_max_bus_speed		= hpc_get_max_bus_speed,
-	.get_cur_bus_speed		= hpc_get_cur_bus_speed,
 	.get_adapter_speed		= hpc_get_adapter_speed,
 	.get_mode1_ECC_cap		= hpc_get_mode1_ECC_cap,
 	.get_prog_int			= hpc_get_prog_int,
@@ -949,6 +942,7 @@ int shpc_init(struct controller *ctrl, struct pci_dev *pdev)
 	u8 i;
 
 	ctrl->pci_dev = pdev;  /* pci_dev of the P2P bridge */
+	ctrl_dbg(ctrl, "Hotplug Controller:\n");
 
 	if ((pdev->vendor == PCI_VENDOR_ID_AMD) || (pdev->device ==
 				PCI_DEVICE_ID_AMD_GOLAM_7450)) {
@@ -958,34 +952,33 @@ int shpc_init(struct controller *ctrl, struct pci_dev *pdev)
 	} else {
 		ctrl->cap_offset = pci_find_capability(pdev, PCI_CAP_ID_SHPC);
 		if (!ctrl->cap_offset) {
-			err("%s : cap_offset == 0\n", __FUNCTION__);
+			ctrl_err(ctrl, "Cannot find PCI capability\n");
 			goto abort;
 		}
-		dbg("%s: cap_offset = %x\n", __FUNCTION__, ctrl->cap_offset);
+		ctrl_dbg(ctrl, " cap_offset = %x\n", ctrl->cap_offset);
 
 		rc = shpc_indirect_read(ctrl, 0, &shpc_base_offset);
 		if (rc) {
-			err("%s: cannot read base_offset\n", __FUNCTION__);
+			ctrl_err(ctrl, "Cannot read base_offset\n");
 			goto abort;
 		}
 
 		rc = shpc_indirect_read(ctrl, 3, &tempdword);
 		if (rc) {
-			err("%s: cannot read slot config\n", __FUNCTION__);
+			ctrl_err(ctrl, "Cannot read slot config\n");
 			goto abort;
 		}
 		num_slots = tempdword & SLOT_NUM;
-		dbg("%s: num_slots (indirect) %x\n", __FUNCTION__, num_slots);
+		ctrl_dbg(ctrl, " num_slots (indirect) %x\n", num_slots);
 
 		for (i = 0; i < 9 + num_slots; i++) {
 			rc = shpc_indirect_read(ctrl, i, &tempdword);
 			if (rc) {
-				err("%s: cannot read creg (index = %d)\n",
-				    __FUNCTION__, i);
+				ctrl_err(ctrl,
+					 "Cannot read creg (index = %d)\n", i);
 				goto abort;
 			}
-			dbg("%s: offset %d: value %x\n", __FUNCTION__,i,
-					tempdword);
+			ctrl_dbg(ctrl, " offset %d: value %x\n", i, tempdword);
 		}
 
 		ctrl->mmio_base =
@@ -993,30 +986,31 @@ int shpc_init(struct controller *ctrl, struct pci_dev *pdev)
 		ctrl->mmio_size = 0x24 + 0x4 * num_slots;
 	}
 
-	info("HPC vendor_id %x device_id %x ss_vid %x ss_did %x\n", pdev->vendor, pdev->device, pdev->subsystem_vendor,
-		pdev->subsystem_device);
+	ctrl_info(ctrl, "HPC vendor_id %x device_id %x ss_vid %x ss_did %x\n",
+		  pdev->vendor, pdev->device, pdev->subsystem_vendor,
+		  pdev->subsystem_device);
 
 	rc = pci_enable_device(pdev);
 	if (rc) {
-		err("%s: pci_enable_device failed\n", __FUNCTION__);
+		ctrl_err(ctrl, "pci_enable_device failed\n");
 		goto abort;
 	}
 
 	if (!request_mem_region(ctrl->mmio_base, ctrl->mmio_size, MY_NAME)) {
-		err("%s: cannot reserve MMIO region\n", __FUNCTION__);
+		ctrl_err(ctrl, "Cannot reserve MMIO region\n");
 		rc = -1;
 		goto abort;
 	}
 
 	ctrl->creg = ioremap(ctrl->mmio_base, ctrl->mmio_size);
 	if (!ctrl->creg) {
-		err("%s: cannot remap MMIO region %lx @ %lx\n", __FUNCTION__,
-		    ctrl->mmio_size, ctrl->mmio_base);
+		ctrl_err(ctrl, "Cannot remap MMIO region %lx @ %lx\n",
+			 ctrl->mmio_size, ctrl->mmio_base);
 		release_mem_region(ctrl->mmio_base, ctrl->mmio_size);
 		rc = -1;
 		goto abort;
 	}
-	dbg("%s: ctrl->creg %p\n", __FUNCTION__, ctrl->creg);
+	ctrl_dbg(ctrl, "ctrl->creg %p\n", ctrl->creg);
 
 	mutex_init(&ctrl->crit_sect);
 	mutex_init(&ctrl->cmd_lock);
@@ -1035,21 +1029,21 @@ int shpc_init(struct controller *ctrl, struct pci_dev *pdev)
 
 	/* Mask Global Interrupt Mask & Command Complete Interrupt Mask */
 	tempdword = shpc_readl(ctrl, SERR_INTR_ENABLE);
-	dbg("%s: SERR_INTR_ENABLE = %x\n", __FUNCTION__, tempdword);
+	ctrl_dbg(ctrl, "SERR_INTR_ENABLE = %x\n", tempdword);
 	tempdword |= (GLOBAL_INTR_MASK  | GLOBAL_SERR_MASK |
 		      COMMAND_INTR_MASK | ARBITER_SERR_MASK);
 	tempdword &= ~SERR_INTR_RSVDZ_MASK;
 	shpc_writel(ctrl, SERR_INTR_ENABLE, tempdword);
 	tempdword = shpc_readl(ctrl, SERR_INTR_ENABLE);
-	dbg("%s: SERR_INTR_ENABLE = %x\n", __FUNCTION__, tempdword);
+	ctrl_dbg(ctrl, "SERR_INTR_ENABLE = %x\n", tempdword);
 
 	/* Mask the MRL sensor SERR Mask of individual slot in
 	 * Slot SERR-INT Mask & clear all the existing event if any
 	 */
 	for (hp_slot = 0; hp_slot < ctrl->num_slots; hp_slot++) {
 		slot_reg = shpc_readl(ctrl, SLOT_REG(hp_slot));
-		dbg("%s: Default Logical Slot Register %d value %x\n", __FUNCTION__,
-			hp_slot, slot_reg);
+		ctrl_dbg(ctrl, "Default Logical Slot Register %d value %x\n",
+			 hp_slot, slot_reg);
 		slot_reg |= (PRSNT_CHANGE_INTR_MASK | ISO_PFAULT_INTR_MASK |
 			     BUTTON_PRESS_INTR_MASK | MRL_CHANGE_INTR_MASK |
 			     CON_PFAULT_INTR_MASK   | MRL_CHANGE_SERR_MASK |
@@ -1066,45 +1060,34 @@ int shpc_init(struct controller *ctrl, struct pci_dev *pdev)
 		/* Installs the interrupt handler */
 		rc = pci_enable_msi(pdev);
 		if (rc) {
-			info("Can't get msi for the hotplug controller\n");
-			info("Use INTx for the hotplug controller\n");
+			ctrl_info(ctrl,
+				  "Can't get msi for the hotplug controller\n");
+			ctrl_info(ctrl,
+				  "Use INTx for the hotplug controller\n");
 		}
 
 		rc = request_irq(ctrl->pci_dev->irq, shpc_isr, IRQF_SHARED,
 				 MY_NAME, (void *)ctrl);
-		dbg("%s: request_irq %d for hpc%d (returns %d)\n",
-		    __FUNCTION__, ctrl->pci_dev->irq,
-		    atomic_read(&shpchp_num_controllers), rc);
+		ctrl_dbg(ctrl, "request_irq %d (returns %d)\n",
+			 ctrl->pci_dev->irq, rc);
 		if (rc) {
-			err("Can't get irq %d for the hotplug controller\n",
-			    ctrl->pci_dev->irq);
+			ctrl_err(ctrl, "Can't get irq %d for the hotplug "
+				 "controller\n", ctrl->pci_dev->irq);
 			goto abort_iounmap;
 		}
 	}
-	dbg("%s: HPC at b:d:f:irq=0x%x:%x:%x:%x\n", __FUNCTION__,
-			pdev->bus->number, PCI_SLOT(pdev->devfn),
-			PCI_FUNC(pdev->devfn), pdev->irq);
-	get_hp_hw_control_from_firmware(pdev);
+	ctrl_dbg(ctrl, "HPC at %s irq=%x\n", pci_name(pdev), pdev->irq);
 
-	/*
-	 * If this is the first controller to be initialized,
-	 * initialize the shpchpd work queue
-	 */
-	if (atomic_add_return(1, &shpchp_num_controllers) == 1) {
-		shpchp_wq = create_singlethread_workqueue("shpchpd");
-		if (!shpchp_wq) {
-			rc = -ENOMEM;
-			goto abort_iounmap;
-		}
-	}
+	shpc_get_max_bus_speed(ctrl);
+	shpc_get_cur_bus_speed(ctrl);
 
 	/*
 	 * Unmask all event interrupts of all slots
 	 */
 	for (hp_slot = 0; hp_slot < ctrl->num_slots; hp_slot++) {
 		slot_reg = shpc_readl(ctrl, SLOT_REG(hp_slot));
-		dbg("%s: Default Logical Slot Register %d value %x\n", __FUNCTION__,
-			hp_slot, slot_reg);
+		ctrl_dbg(ctrl, "Default Logical Slot Register %d value %x\n",
+			 hp_slot, slot_reg);
 		slot_reg &= ~(PRSNT_CHANGE_INTR_MASK | ISO_PFAULT_INTR_MASK |
 			      BUTTON_PRESS_INTR_MASK | MRL_CHANGE_INTR_MASK |
 			      CON_PFAULT_INTR_MASK | SLOT_REG_RSVDZ_MASK);
@@ -1117,7 +1100,7 @@ int shpc_init(struct controller *ctrl, struct pci_dev *pdev)
 			       SERR_INTR_RSVDZ_MASK);
 		shpc_writel(ctrl, SERR_INTR_ENABLE, tempdword);
 		tempdword = shpc_readl(ctrl, SERR_INTR_ENABLE);
-		dbg("%s: SERR_INTR_ENABLE = %x\n", __FUNCTION__, tempdword);
+		ctrl_dbg(ctrl, "SERR_INTR_ENABLE = %x\n", tempdword);
 	}
 
 	return 0;

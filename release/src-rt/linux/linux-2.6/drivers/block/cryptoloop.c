@@ -26,7 +26,7 @@
 #include <linux/crypto.h>
 #include <linux/blkdev.h>
 #include <linux/loop.h>
-#include <asm/semaphore.h>
+#include <linux/scatterlist.h>
 #include <asm/uaccess.h>
 
 MODULE_LICENSE("GPL");
@@ -119,13 +119,16 @@ cryptoloop_transfer(struct loop_device *lo, int cmd,
 		.tfm = tfm,
 		.flags = CRYPTO_TFM_REQ_MAY_SLEEP,
 	};
-	struct scatterlist sg_out = { NULL, };
-	struct scatterlist sg_in = { NULL, };
+	struct scatterlist sg_out;
+	struct scatterlist sg_in;
 
 	encdec_cbc_t encdecfunc;
 	struct page *in_page, *out_page;
 	unsigned in_offs, out_offs;
 	int err;
+
+	sg_init_table(&sg_out, 1);
+	sg_init_table(&sg_in, 1);
 
 	if (cmd == READ) {
 		in_page = raw_page;
@@ -146,13 +149,8 @@ cryptoloop_transfer(struct loop_device *lo, int cmd,
 		u32 iv[4] = { 0, };
 		iv[0] = cpu_to_le32(IV & 0xffffffff);
 
-		sg_in.page = in_page;
-		sg_in.offset = in_offs;
-		sg_in.length = sz;
-
-		sg_out.page = out_page;
-		sg_out.offset = out_offs;
-		sg_out.length = sz;
+		sg_set_page(&sg_in, in_page, sz, in_offs);
+		sg_set_page(&sg_out, out_page, sz, out_offs);
 
 		desc.info = iv;
 		err = encdecfunc(&desc, &sg_out, &sg_in, sz);

@@ -21,6 +21,7 @@
 /* This file included from seq.c */
 
 #include <linux/compat.h>
+#include <linux/slab.h>
 
 struct snd_seq_port_info32 {
 	struct snd_seq_addr addr;	/* client/port numbers */
@@ -48,12 +49,11 @@ static int snd_seq_call_port_info_ioctl(struct snd_seq_client *client, unsigned 
 	struct snd_seq_port_info *data;
 	mm_segment_t fs;
 
-	data = kmalloc(sizeof(*data), GFP_KERNEL);
-	if (! data)
-		return -ENOMEM;
+	data = memdup_user(data32, sizeof(*data32));
+	if (IS_ERR(data))
+		return PTR_ERR(data);
 
-	if (copy_from_user(data, data32, sizeof(*data32)) ||
-	    get_user(data->flags, &data32->flags) ||
+	if (get_user(data->flags, &data32->flags) ||
 	    get_user(data->time_queue, &data32->time_queue))
 		goto error;
 	data->kernel = NULL;
@@ -92,7 +92,8 @@ static long snd_seq_ioctl_compat(struct file *file, unsigned int cmd, unsigned l
 	struct snd_seq_client *client = file->private_data;
 	void __user *argp = compat_ptr(arg);
 
-	snd_assert(client != NULL, return -ENXIO);
+	if (snd_BUG_ON(!client))
+		return -ENXIO;
 
 	switch (cmd) {
 	case SNDRV_SEQ_IOCTL_PVERSION:

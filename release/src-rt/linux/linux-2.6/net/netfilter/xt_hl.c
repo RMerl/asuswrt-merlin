@@ -25,12 +25,9 @@ MODULE_LICENSE("GPL");
 MODULE_ALIAS("ipt_ttl");
 MODULE_ALIAS("ip6t_hl");
 
-static int ttl_mt(const struct sk_buff *skb,
-		  const struct net_device *in, const struct net_device *out,
-		  const struct xt_match *match, const void *matchinfo,
-		  int offset, unsigned int protoff, int *hotdrop)
+static bool ttl_mt(const struct sk_buff *skb, struct xt_action_param *par)
 {
-	const struct ipt_ttl_info *info = matchinfo;
+	const struct ipt_ttl_info *info = par->matchinfo;
 	const u8 ttl = ip_hdr(skb)->ttl;
 
 	switch (info->mode) {
@@ -42,50 +39,35 @@ static int ttl_mt(const struct sk_buff *skb,
 			return ttl < info->ttl;
 		case IPT_TTL_GT:
 			return ttl > info->ttl;
-		default:
-			printk(KERN_WARNING "ipt_ttl: unknown mode %d\n",
-				info->mode);
-			return 0;
 	}
 
-	return 0;
+	return false;
 }
 
-static int hl_mt6(const struct sk_buff *skb,
-		  const struct net_device *in, const struct net_device *out,
-		  const struct xt_match *match, const void *matchinfo,
-		  int offset, unsigned int protoff, int *hotdrop)
+static bool hl_mt6(const struct sk_buff *skb, struct xt_action_param *par)
 {
-	const struct ip6t_hl_info *info = matchinfo;
+	const struct ip6t_hl_info *info = par->matchinfo;
 	const struct ipv6hdr *ip6h = ipv6_hdr(skb);
 
 	switch (info->mode) {
 		case IP6T_HL_EQ:
 			return ip6h->hop_limit == info->hop_limit;
-			break;
 		case IP6T_HL_NE:
 			return ip6h->hop_limit != info->hop_limit;
-			break;
 		case IP6T_HL_LT:
 			return ip6h->hop_limit < info->hop_limit;
-			break;
 		case IP6T_HL_GT:
 			return ip6h->hop_limit > info->hop_limit;
-			break;
-		default:
-			printk(KERN_WARNING "ip6t_hl: unknown mode %d\n",
-				info->mode);
-			return 0;
 	}
 
-	return 0;
+	return false;
 }
 
 static struct xt_match hl_mt_reg[] __read_mostly = {
 	{
 		.name       = "ttl",
 		.revision   = 0,
-		.family     = AF_INET,
+		.family     = NFPROTO_IPV4,
 		.match      = ttl_mt,
 		.matchsize  = sizeof(struct ipt_ttl_info),
 		.me         = THIS_MODULE,
@@ -93,7 +75,7 @@ static struct xt_match hl_mt_reg[] __read_mostly = {
 	{
 		.name       = "hl",
 		.revision   = 0,
-		.family     = AF_INET6,
+		.family     = NFPROTO_IPV6,
 		.match      = hl_mt6,
 		.matchsize  = sizeof(struct ip6t_hl_info),
 		.me         = THIS_MODULE,

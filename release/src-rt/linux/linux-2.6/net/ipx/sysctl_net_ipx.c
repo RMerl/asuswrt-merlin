@@ -18,41 +18,26 @@ extern int sysctl_ipx_pprop_broadcasting;
 
 static struct ctl_table ipx_table[] = {
 	{
-		.ctl_name	= NET_IPX_PPROP_BROADCASTING,
 		.procname	= "ipx_pprop_broadcasting",
 		.data		= &sysctl_ipx_pprop_broadcasting,
 		.maxlen		= sizeof(int),
 		.mode		= 0644,
-		.proc_handler	= &proc_dointvec,
+		.proc_handler	= proc_dointvec,
 	},
-	{ 0 },
+	{ },
 };
 
-static struct ctl_table ipx_dir_table[] = {
-	{
-		.ctl_name	= NET_IPX,
-		.procname	= "ipx",
-		.mode		= 0555,
-		.child		= ipx_table,
-	},
-	{ 0 },
-};
-
-static struct ctl_table ipx_root_table[] = {
-	{
-		.ctl_name	= CTL_NET,
-		.procname	= "net",
-		.mode		= 0555,
-		.child		= ipx_dir_table,
-	},
-	{ 0 },
+static struct ctl_path ipx_path[] = {
+	{ .procname = "net", },
+	{ .procname = "ipx", },
+	{ }
 };
 
 static struct ctl_table_header *ipx_table_header;
 
 void ipx_register_sysctl(void)
 {
-	ipx_table_header = register_sysctl_table(ipx_root_table);
+	ipx_table_header = register_sysctl_paths(ipx_path, ipx_table);
 }
 
 void ipx_unregister_sysctl(void)

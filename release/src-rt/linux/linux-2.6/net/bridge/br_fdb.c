@@ -5,8 +5,6 @@
  *	Authors:
  *	Lennert Buytenhek		<buytenh@gnu.org>
  *
- *	$Id: br_fdb.c,v 1.5 2010-06-15 01:09:50 $
- *
  *	This program is free software; you can redistribute it and/or
  *	modify it under the terms of the GNU General Public License
  *	as published by the Free Software Foundation; either version
@@ -15,109 +13,17 @@
 
 #include <linux/kernel.h>
 #include <linux/init.h>
+#include <linux/rculist.h>
 #include <linux/spinlock.h>
 #include <linux/times.h>
 #include <linux/netdevice.h>
 #include <linux/etherdevice.h>
 #include <linux/jhash.h>
 #include <linux/random.h>
+#include <linux/slab.h>
 #include <asm/atomic.h>
 #include <asm/unaligned.h>
 #include "br_private.h"
-#ifdef HNDCTF
-#include <linux/if.h>
-#include <linux/if_vlan.h>
-#include <typedefs.h>
-#include <osl.h>
-#include <ctf/hndctf.h>
-
-static void
-br_brc_init(ctf_brc_t *brc, unsigned char *ea, struct net_device *rxdev)
-{
-	memset(brc, 0, sizeof(ctf_brc_t));
-
-	memcpy(brc->dhost.octet, ea, ETH_ALEN);
-
-        if (rxdev->priv_flags & IFF_802_1Q_VLAN) {
-		brc->txifp = (void *)(VLAN_DEV_INFO(rxdev)->real_dev);
-		brc->vid = VLAN_DEV_INFO(rxdev)->vlan_id;
-		brc->action = ((VLAN_DEV_INFO(rxdev)->flags & 1) ?
-		                     CTF_ACTION_TAG : CTF_ACTION_UNTAG);
-	} else {
-		brc->txifp = (void *)rxdev;
-		brc->action = CTF_ACTION_UNTAG;
-	}
-
-#ifdef DEBUG
-	printk("mac %02x:%02x:%02x:%02x:%02x:%02x\n",
-	       brc->dhost.octet[0], brc->dhost.octet[1],
-	       brc->dhost.octet[2], brc->dhost.octet[3],
-	       brc->dhost.octet[4], brc->dhost.octet[5]);
-	printk("vid: %d action %x\n", brc->vid, brc->action);
-	printk("txif: %s\n", ((struct net_device *)brc->txifp)->name);
-#endif
-
-	return;
-}
-
-/*
- * Add bridge cache entry.
- */
-void
-br_brc_add(unsigned char *ea, struct net_device *rxdev)
-{
-	ctf_brc_t brc_entry;
-
-	/* Add brc entry only if packet is received on ctf 
-	 * enabled interface
-	 */
-	if (!ctf_isenabled(kcih, ((rxdev->priv_flags & IFF_802_1Q_VLAN) ?
-	                   VLAN_DEV_INFO(rxdev)->real_dev : rxdev)))
-		return;
-
-	br_brc_init(&brc_entry, ea, rxdev);
-
-#ifdef DEBUG
-	printk("%s: Adding brc entry\n", __FUNCTION__);
-#endif
-
-	/* Add the bridge cache entry */
-	if (ctf_brc_lkup(kcih, ea) == NULL)
-		ctf_brc_add(kcih, &brc_entry);
-	else
-		ctf_brc_update(kcih, &brc_entry);
-
-	return;
-}
-
-/*
- * Update bridge cache entry.
- */
-void
-br_brc_update(unsigned char *ea, struct net_device *rxdev)
-{
-	ctf_brc_t brc_entry;
-
-	/* Update brc entry only if packet is received on ctf 
-	 * enabled interface
-	 */
-	if (!ctf_isenabled(kcih, ((rxdev->priv_flags & IFF_802_1Q_VLAN) ?
-	                   VLAN_DEV_INFO(rxdev)->real_dev : rxdev)))
-		return;
-
-	/* Initialize the new device and/or vlan info */
-	br_brc_init(&brc_entry, ea, rxdev);
-
-#ifdef DEBUG
-	printk("%s: Updating brc entry\n", __FUNCTION__);
-#endif
-
-	/* Update the bridge cache entry */
-	ctf_brc_update(kcih, &brc_entry);
-
-	return;
-}
-#endif /* HNDCTF */
 
 static struct kmem_cache *br_fdb_cache __read_mostly;
 static int fdb_insert(struct net_bridge *br, struct net_bridge_port *source,
@@ -130,7 +36,7 @@ int __init br_fdb_init(void)
 	br_fdb_cache = kmem_cache_create("bridge_fdb_cache",
 					 sizeof(struct net_bridge_fdb_entry),
 					 0,
-					 SLAB_HWCACHE_ALIGN, NULL, NULL);
+					 SLAB_HWCACHE_ALIGN, NULL);
 	if (!br_fdb_cache)
 		return -ENOMEM;
 
@@ -138,7 +44,7 @@ int __init br_fdb_init(void)
 	return 0;
 }
 
-void __exit br_fdb_fini(void)
+void br_fdb_fini(void)
 {
 	kmem_cache_destroy(br_fdb_cache);
 }
@@ -155,8 +61,8 @@ static inline unsigned long hold_time(const struct net_bridge *br)
 static inline int has_expired(const struct net_bridge *br,
 				  const struct net_bridge_fdb_entry *fdb)
 {
-	return !fdb->is_static
-		&& time_before_eq(fdb->ageing_timer + hold_time(br), jiffies);
+	return !fdb->is_static &&
+		time_before_eq(fdb->ageing_timer + hold_time(br), jiffies);
 }
 
 static inline int br_mac_hash(const unsigned char *mac)
@@ -166,10 +72,17 @@ static inline int br_mac_hash(const unsigned char *mac)
 	return jhash_1word(key, fdb_salt) & (BR_HASH_SIZE - 1);
 }
 
+static void fdb_rcu_free(struct rcu_head *head)
+{
+	struct net_bridge_fdb_entry *ent
+		= container_of(head, struct net_bridge_fdb_entry, rcu);
+	kmem_cache_free(br_fdb_cache, ent);
+}
+
 static inline void fdb_delete(struct net_bridge_fdb_entry *f)
 {
 	hlist_del_rcu(&f->hlist);
-	br_fdb_put(f);
+	call_rcu(&f->rcu, fdb_rcu_free);
 }
 
 void br_fdb_changeaddr(struct net_bridge_port *p, const unsigned char *newaddr)
@@ -215,7 +128,7 @@ void br_fdb_cleanup(unsigned long _data)
 {
 	struct net_bridge *br = (struct net_bridge *)_data;
 	unsigned long delay = hold_time(br);
-	unsigned long next_timer = jiffies + br->forward_delay;
+	unsigned long next_timer = jiffies + br->ageing_time;
 	int i;
 
 	spin_lock_bh(&br->hash_lock);
@@ -228,31 +141,15 @@ void br_fdb_cleanup(unsigned long _data)
 			if (f->is_static)
 				continue;
 			this_timer = f->ageing_timer + delay;
-			if (time_before_eq(this_timer, jiffies)) {
-#ifdef HNDCTF
-				ctf_brc_t *brcp;
-
-				/* Before expiring the fdb entry check the brc
-				 * live counter to make sure there are no frames
-				 * on this connection for timeout period.
-				 */
-				brcp = ctf_brc_lkup(kcih, f->addr.addr);
-				if ((brcp != NULL) && (brcp->live > 0)) {
-					brcp->live = 0;
-					f->ageing_timer = jiffies;
-					continue;
-				}
-#endif /* HNDCTF */
+			if (time_before_eq(this_timer, jiffies))
 				fdb_delete(f);
-			} else if (this_timer < next_timer)
+			else if (time_before(this_timer, next_timer))
 				next_timer = this_timer;
 		}
 	}
 	spin_unlock_bh(&br->hash_lock);
 
-	/* Add HZ/4 to ensure we round the jiffies upwards to be after the next
-	 * timer, otherwise we might round down and will have no-op run. */
-	mod_timer(&br->gc_timer, round_jiffies(next_timer + HZ/4));
+	mod_timer(&br->gc_timer, round_jiffies_up(next_timer));
 }
 
 /* Completely flush all dynamic entries in forwarding database.*/
@@ -272,7 +169,7 @@ void br_fdb_flush(struct net_bridge *br)
 	spin_unlock_bh(&br->hash_lock);
 }
 
-/* Flush all entries refering to a specific port.
+/* Flush all entries referring to a specific port.
  * if do_all is set also flush static entries
  */
 void br_fdb_delete_by_port(struct net_bridge *br,
@@ -317,7 +214,7 @@ void br_fdb_delete_by_port(struct net_bridge *br,
 	spin_unlock_bh(&br->hash_lock);
 }
 
-/* No locking or refcounting, assumes caller has no preempt (rcu_read_lock) */
+/* No locking or refcounting, assumes caller has rcu_read_lock */
 struct net_bridge_fdb_entry *__br_fdb_get(struct net_bridge *br,
 					  const unsigned char *addr)
 {
@@ -335,40 +232,29 @@ struct net_bridge_fdb_entry *__br_fdb_get(struct net_bridge *br,
 	return NULL;
 }
 
-/* Interface used by ATM hook that keeps a ref count */
-struct net_bridge_fdb_entry *br_fdb_get(struct net_bridge *br,
-					unsigned char *addr)
+#if defined(CONFIG_ATM_LANE) || defined(CONFIG_ATM_LANE_MODULE)
+/* Interface used by ATM LANE hook to test
+ * if an addr is on some other bridge port */
+int br_fdb_test_addr(struct net_device *dev, unsigned char *addr)
 {
 	struct net_bridge_fdb_entry *fdb;
+	struct net_bridge_port *port;
+	int ret;
 
 	rcu_read_lock();
-	fdb = __br_fdb_get(br, addr);
-	if (fdb && !atomic_inc_not_zero(&fdb->use_count))
-		fdb = NULL;
-	rcu_read_unlock();
-	return fdb;
-}
-
-static void fdb_rcu_free(struct rcu_head *head)
-{
-	struct net_bridge_fdb_entry *ent
-		= container_of(head, struct net_bridge_fdb_entry, rcu);
-	kmem_cache_free(br_fdb_cache, ent);
-}
-
-/* Set entry up for deletion with RCU  */
-void br_fdb_put(struct net_bridge_fdb_entry *ent)
-{
-	if (atomic_dec_and_test(&ent->use_count)) {
-#ifdef HNDCTF
-		/* Delete the corresponding brc entry when it expires
-		 * or deleted by user.
-		 */
-		ctf_brc_delete(kcih, ent->addr.addr);
-#endif /* HNDCTF */
-		call_rcu(&ent->rcu, fdb_rcu_free);
+	port = br_port_get_rcu(dev);
+	if (!port)
+		ret = 0;
+	else {
+		fdb = __br_fdb_get(port->br, addr);
+		ret = fdb && fdb->dst->dev != dev &&
+			fdb->dst->state == BR_STATE_FORWARDING;
 	}
+	rcu_read_unlock();
+
+	return ret;
 }
+#endif /* CONFIG_ATM_LANE */
 
 /*
  * Fill buffer with forwarding table records in
@@ -400,7 +286,11 @@ int br_fdb_fillbuf(struct net_bridge *br, void *buf,
 
 			/* convert from internal format to API */
 			memcpy(fe->mac_addr, f->addr.addr, ETH_ALEN);
+
+			/* due to ABI compat need to split into hi/lo */
 			fe->port_no = f->dst->port_no;
+			fe->port_hi = f->dst->port_no >> 8;
+
 			fe->is_local = f->is_local;
 			if (!f->is_static)
 				fe->ageing_timer_value = jiffies_to_clock_t(jiffies - f->ageing_timer);
@@ -438,21 +328,13 @@ static struct net_bridge_fdb_entry *fdb_create(struct hlist_head *head,
 	fdb = kmem_cache_alloc(br_fdb_cache, GFP_ATOMIC);
 	if (fdb) {
 		memcpy(fdb->addr.addr, addr, ETH_ALEN);
-		atomic_set(&fdb->use_count, 1);
-		hlist_add_head_rcu(&fdb->hlist, head);
-
 		fdb->dst = source;
 		fdb->is_local = is_local;
 		fdb->is_static = is_local;
 		fdb->ageing_timer = jiffies;
 
-		/* Add bridge cache entry for non local hosts */
-#ifdef HNDCTF
-		if (!is_local && (source->state == BR_STATE_FORWARDING))
-			br_brc_add((unsigned char *)addr, source->dev);
-#endif /* HNDCTF */
+		hlist_add_head_rcu(&fdb->hlist, head);
 	}
-
 	return fdb;
 }
 
@@ -472,8 +354,7 @@ static int fdb_insert(struct net_bridge *br, struct net_bridge_port *source,
 		 */
 		if (fdb->is_local)
 			return 0;
-
-		printk(KERN_WARNING "%s adding interface with same address "
+		br_warn(br, "adding interface %s with same address "
 		       "as a received packet\n",
 		       source->dev->name);
 		fdb_delete(fdb);
@@ -506,25 +387,21 @@ void br_fdb_update(struct net_bridge *br, struct net_bridge_port *source,
 	if (hold_time(br) == 0)
 		return;
 
+	/* ignore packets unless we are using this port */
+	if (!(source->state == BR_STATE_LEARNING ||
+	      source->state == BR_STATE_FORWARDING))
+		return;
+
 	fdb = fdb_find(head, addr);
 	if (likely(fdb)) {
 		/* attempt to update an entry for a local interface */
 		if (unlikely(fdb->is_local)) {
 			if (net_ratelimit())
-				printk(KERN_WARNING "%s: received packet with "
-				       " own address as source address\n",
-				       source->dev->name);
+				br_warn(br, "received packet on %s with "
+					"own address as source address\n",
+					source->dev->name);
 		} else {
 			/* fastpath: update of existing entry */
-#ifdef HNDCTF
-			/* Update the brc entry incase the host moved from
-			 * one bridge to another or to a different port under
-			 * the same bridge.
-			 */
-			if ((fdb->dst != source) && (source->state == BR_STATE_FORWARDING))
-				br_brc_update((unsigned char *)addr, source->dev);
-#endif /* HNDCTF */
-
 			fdb->dst = source;
 			fdb->ageing_timer = jiffies;
 		}

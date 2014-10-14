@@ -51,7 +51,6 @@
 #include <linux/types.h>
 #include <linux/fcntl.h>
 #include <linux/interrupt.h>
-#include <linux/ptrace.h>
 #include <linux/ioport.h>
 #include <linux/in.h>
 #include <linux/slab.h>
@@ -69,7 +68,7 @@
 #include <asm/ecard.h>
 #include <asm/io.h>
 
-static char version[] __initdata = "ether3 ethernet driver (c) 1995-2000 R.M.King v1.17\n";
+static char version[] __devinitdata = "ether3 ethernet driver (c) 1995-2000 R.M.King v1.17\n";
 
 #include "ether3.h"
 
@@ -82,7 +81,6 @@ static int	ether3_open (struct net_device *dev);
 static int	ether3_sendpacket (struct sk_buff *skb, struct net_device *dev);
 static irqreturn_t ether3_interrupt (int irq, void *dev_id);
 static int	ether3_close (struct net_device *dev);
-static struct net_device_stats *ether3_getstats (struct net_device *dev);
 static void	ether3_setmulticastlist (struct net_device *dev);
 static void	ether3_timeout(struct net_device *dev);
 
@@ -324,8 +322,6 @@ ether3_init_for_open(struct net_device *dev)
 {
 	int i;
 
-	memset(&priv(dev)->stats, 0, sizeof(struct net_device_stats));
-
 	/* Reset the chip */
 	ether3_outw(CFG2_RESET, REG_CONFIG2);
 	udelay(4);
@@ -443,15 +439,6 @@ ether3_close(struct net_device *dev)
 }
 
 /*
- * Get the current statistics.	This may be called with the card open or
- * closed.
- */
-static struct net_device_stats *ether3_getstats(struct net_device *dev)
-{
-	return &priv(dev)->stats;
-}
-
-/*
  * Set or clear promiscuous/multicast mode filter for this adaptor.
  *
  * We don't attempt any packet filtering.  The card may have a SEEQ 8004
@@ -464,7 +451,7 @@ static void ether3_setmulticastlist(struct net_device *dev)
 	if (dev->flags & IFF_PROMISC) {
 		/* promiscuous mode */
 		priv(dev)->regs.config1 |= CFG1_RECVPROMISC;
-	} else if (dev->flags & IFF_ALLMULTI) {
+	} else if (dev->flags & IFF_ALLMULTI || !netdev_mc_empty(dev)) {
 		priv(dev)->regs.config1 |= CFG1_RECVSPECBRMULTI;
 	} else
 		priv(dev)->regs.config1 |= CFG1_RECVSPECBROAD;
@@ -491,7 +478,7 @@ static void ether3_timeout(struct net_device *dev)
 	local_irq_restore(flags);
 
 	priv(dev)->regs.config2 |= CFG2_CTRLO;
-	priv(dev)->stats.tx_errors += 1;
+	dev->stats.tx_errors += 1;
 	ether3_outw(priv(dev)->regs.config2, REG_CONFIG2);
 	priv(dev)->tx_head = priv(dev)->tx_tail = 0;
 
@@ -510,9 +497,9 @@ ether3_sendpacket(struct sk_buff *skb, struct net_device *dev)
 
 	if (priv(dev)->broken) {
 		dev_kfree_skb(skb);
-		priv(dev)->stats.tx_dropped ++;
+		dev->stats.tx_dropped++;
 		netif_start_queue(dev);
-		return 0;
+		return NETDEV_TX_OK;
 	}
 
 	length = (length + 1) & ~1;
@@ -527,10 +514,9 @@ ether3_sendpacket(struct sk_buff *skb, struct net_device *dev)
 
 	if (priv(dev)->tx_tail == next_ptr) {
 		local_irq_restore(flags);
-		return 1;	/* unable to queue */
+		return NETDEV_TX_BUSY;	/* unable to queue */
 	}
 
-	dev->trans_start = jiffies;
 	ptr		 = 0x600 * priv(dev)->tx_head;
 	priv(dev)->tx_head = next_ptr;
 	next_ptr	*= 0x600;
@@ -563,7 +549,7 @@ ether3_sendpacket(struct sk_buff *skb, struct net_device *dev)
 		netif_stop_queue(dev);
 
  out:
-	return 0;
+	return NETDEV_TX_OK;
 }
 
 static irqreturn_t
@@ -675,7 +661,7 @@ if (next_ptr < RX_START || next_ptr >= RX_END) {
 			} else
 				goto dropping;
 		} else {
-			struct net_device_stats *stats = &priv(dev)->stats;
+			struct net_device_stats *stats = &dev->stats;
 			ether3_outw(next_ptr >> 8, REG_RECVEND);
 			if (status & RXSTAT_OVERSIZE)	  stats->rx_over_errors ++;
 			if (status & RXSTAT_CRCERROR)	  stats->rx_crc_errors ++;
@@ -687,14 +673,14 @@ if (next_ptr < RX_START || next_ptr >= RX_END) {
 	while (-- maxcnt);
 
 done:
-	priv(dev)->stats.rx_packets += received;
+	dev->stats.rx_packets += received;
 	priv(dev)->rx_head = next_ptr;
 	/*
 	 * If rx went off line, then that means that the buffer may be full.  We
 	 * have dropped at least one packet.
 	 */
 	if (!(ether3_inw(REG_STATUS) & STAT_RXON)) {
-		priv(dev)->stats.rx_dropped ++;
+		dev->stats.rx_dropped++;
     		ether3_outw(next_ptr, REG_RECVPTR);
 		ether3_outw(priv(dev)->regs.command | CMD_RXON, REG_COMMAND);
 	}
@@ -712,7 +698,7 @@ dropping:{
 		last_warned = jiffies;
 		printk("%s: memory squeeze, dropping packet.\n", dev->name);
 	}
-	priv(dev)->stats.rx_dropped ++;
+	dev->stats.rx_dropped++;
 	goto done;
 	}
 }
@@ -745,13 +731,13 @@ static void ether3_tx(struct net_device *dev)
 		 * Update errors
 		 */
 		if (!(status & (TXSTAT_BABBLED | TXSTAT_16COLLISIONS)))
-			priv(dev)->stats.tx_packets++;
+			dev->stats.tx_packets++;
 		else {
-			priv(dev)->stats.tx_errors ++;
+			dev->stats.tx_errors++;
 			if (status & TXSTAT_16COLLISIONS)
-				priv(dev)->stats.collisions += 16;
+				dev->stats.collisions += 16;
 			if (status & TXSTAT_BABBLED)
-				priv(dev)->stats.tx_fifo_errors ++;
+				dev->stats.tx_fifo_errors++;
 		}
 
 		tx_tail = (tx_tail + 1) & 15;
@@ -771,12 +757,23 @@ static void __devinit ether3_banner(void)
 		printk(KERN_INFO "%s", version);
 }
 
+static const struct net_device_ops ether3_netdev_ops = {
+	.ndo_open		= ether3_open,
+	.ndo_stop		= ether3_close,
+	.ndo_start_xmit		= ether3_sendpacket,
+	.ndo_set_multicast_list	= ether3_setmulticastlist,
+	.ndo_tx_timeout		= ether3_timeout,
+	.ndo_validate_addr	= eth_validate_addr,
+	.ndo_change_mtu		= eth_change_mtu,
+	.ndo_set_mac_address	= eth_mac_addr,
+};
+
 static int __devinit
 ether3_probe(struct expansion_card *ec, const struct ecard_id *id)
 {
 	const struct ether3_data *data = id->data;
 	struct net_device *dev;
-	int i, bus_type, ret;
+	int bus_type, ret;
 
 	ether3_banner();
 
@@ -790,7 +787,6 @@ ether3_probe(struct expansion_card *ec, const struct ecard_id *id)
 		goto release;
 	}
 
-	SET_MODULE_OWNER(dev);
 	SET_NETDEV_DEV(dev, &ec->dev);
 
 	priv(dev)->base = ecardm_iomap(ec, ECARD_RES_MEMC, 0, 0);
@@ -848,21 +844,15 @@ ether3_probe(struct expansion_card *ec, const struct ecard_id *id)
 		goto free;
 	}
 
-	dev->open		= ether3_open;
-	dev->stop		= ether3_close;
-	dev->hard_start_xmit	= ether3_sendpacket;
-	dev->get_stats		= ether3_getstats;
-	dev->set_multicast_list	= ether3_setmulticastlist;
-	dev->tx_timeout		= ether3_timeout;
+	dev->netdev_ops		= &ether3_netdev_ops;
 	dev->watchdog_timeo	= 5 * HZ / 100;
 
 	ret = register_netdev(dev);
 	if (ret)
 		goto free;
 
-	printk("%s: %s in slot %d, ", dev->name, data->name, ec->slot_no);
-	for (i = 0; i < 6; i++)
-		printk("%2.2x%c", dev->dev_addr[i], i == 5 ? '\n' : ':');
+	printk("%s: %s in slot %d, %pM\n",
+	       dev->name, data->name, ec->slot_no, dev->dev_addr);
 
 	ecard_set_drvdata(ec, dev);
 	return 0;

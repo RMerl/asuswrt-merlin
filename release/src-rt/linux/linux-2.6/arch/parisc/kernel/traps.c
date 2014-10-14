@@ -24,7 +24,6 @@
 #include <linux/init.h>
 #include <linux/interrupt.h>
 #include <linux/console.h>
-#include <linux/kallsyms.h>
 #include <linux/bug.h>
 
 #include <asm/assembly.h>
@@ -50,6 +49,9 @@
 #if defined(CONFIG_SMP) || defined(CONFIG_DEBUG_SPINLOCK)
 DEFINE_SPINLOCK(pa_dbit_lock);
 #endif
+
+static void parisc_show_stack(struct task_struct *task, unsigned long *sp,
+	struct pt_regs *regs);
 
 static int printbinary(char *buf, unsigned long x, int nbits)
 {
@@ -118,18 +120,19 @@ static void print_fr(char *level, struct pt_regs *regs)
 
 void show_regs(struct pt_regs *regs)
 {
-	int i;
+	int i, user;
 	char *level;
 	unsigned long cr30, cr31;
 
-	level = user_mode(regs) ? KERN_DEBUG : KERN_CRIT;
+	user = user_mode(regs);
+	level = user ? KERN_DEBUG : KERN_CRIT;
 
 	print_gr(level, regs);
 
 	for (i = 0; i < 8; i += 4)
 		PRINTREGS(level, regs->sr, "sr", RFMT, i);
 
-	if (user_mode(regs))
+	if (user)
 		print_fr(level, regs);
 
 	cr30 = mfctl(30);
@@ -142,12 +145,18 @@ void show_regs(struct pt_regs *regs)
 	printk("%s CPU: %8d   CR30: " RFMT " CR31: " RFMT "\n",
 	       level, current_thread_info()->cpu, cr30, cr31);
 	printk("%s ORIG_R28: " RFMT "\n", level, regs->orig_r28);
-	printk(level);
-	print_symbol(" IAOQ[0]: %s\n", regs->iaoq[0]);
-	printk(level);
-	print_symbol(" IAOQ[1]: %s\n", regs->iaoq[1]);
-	printk(level);
-	print_symbol(" RP(r2): %s\n", regs->gr[2]);
+
+	if (user) {
+		printk("%s IAOQ[0]: " RFMT "\n", level, regs->iaoq[0]);
+		printk("%s IAOQ[1]: " RFMT "\n", level, regs->iaoq[1]);
+		printk("%s RP(r2): " RFMT "\n", level, regs->gr[2]);
+	} else {
+		printk("%s IAOQ[0]: %pS\n", level, (void *) regs->iaoq[0]);
+		printk("%s IAOQ[1]: %pS\n", level, (void *) regs->iaoq[1]);
+		printk("%s RP(r2): %pS\n", level, (void *) regs->gr[2]);
+
+		parisc_show_stack(current, NULL, regs);
+	}
 }
 
 
@@ -168,24 +177,27 @@ static void do_show_stack(struct unwind_frame_info *info)
 			break;
 
 		if (__kernel_text_address(info->ip)) {
-			printk("%s [<" RFMT ">] ", (i&0x3)==1 ? KERN_CRIT : "", info->ip);
-#ifdef CONFIG_KALLSYMS
-			print_symbol("%s\n", info->ip);
-#else
-			if ((i & 0x03) == 0)
-				printk("\n");
-#endif
+			printk(KERN_CRIT " [<" RFMT ">] %pS\n",
+				info->ip, (void *) info->ip);
 			i++;
 		}
 	}
-	printk("\n");
+	printk(KERN_CRIT "\n");
 }
 
-void show_stack(struct task_struct *task, unsigned long *s)
+static void parisc_show_stack(struct task_struct *task, unsigned long *sp,
+	struct pt_regs *regs)
 {
 	struct unwind_frame_info info;
+	struct task_struct *t;
 
-	if (!task) {
+	t = task ? task : current;
+	if (regs) {
+		unwind_frame_init(&info, t, regs);
+		goto show_stack;
+	}
+
+	if (t == current) {
 		unsigned long sp;
 
 HERE:
@@ -201,10 +213,16 @@ HERE:
 			unwind_frame_init(&info, current, &r);
 		}
 	} else {
-		unwind_frame_init_from_blocked_task(&info, task);
+		unwind_frame_init_from_blocked_task(&info, t);
 	}
 
+show_stack:
 	do_show_stack(&info);
+}
+
+void show_stack(struct task_struct *t, unsigned long *sp)
+{
+	return parisc_show_stack(t, sp, NULL);
 }
 
 int is_valid_bugaddr(unsigned long iaoq)
@@ -219,7 +237,7 @@ void die_if_kernel(char *str, struct pt_regs *regs, long err)
 			return; /* STFU */
 
 		printk(KERN_CRIT "%s (pid %d): %s (code %ld) at " RFMT "\n",
-			current->comm, current->pid, str, err, regs->iaoq[0]);
+			current->comm, task_pid_nr(current), str, err, regs->iaoq[0]);
 #ifdef PRINT_USER_FAULTS
 		/* XXX for debugging only */
 		show_regs(regs);
@@ -229,16 +247,17 @@ void die_if_kernel(char *str, struct pt_regs *regs, long err)
 
 	oops_in_progress = 1;
 
+	oops_enter();
+
 	/* Amuse the user in a SPARC fashion */
-	if (err) printk(
-KERN_CRIT "      _______________________________ \n"
-KERN_CRIT "     < Your System ate a SPARC! Gah! >\n"
-KERN_CRIT "      ------------------------------- \n"
-KERN_CRIT "             \\   ^__^\n"
-KERN_CRIT "              \\  (xx)\\_______\n"
-KERN_CRIT "                 (__)\\       )\\/\\\n"
-KERN_CRIT "                  U  ||----w |\n"
-KERN_CRIT "                     ||     ||\n");
+	if (err) printk(KERN_CRIT
+			"      _______________________________ \n"
+			"     < Your System ate a SPARC! Gah! >\n"
+			"      ------------------------------- \n"
+			"             \\   ^__^\n"
+			"                 (__)\\       )\\/\\\n"
+			"                  U  ||----w |\n"
+			"                     ||     ||\n");
 	
 	/* unlock the pdc lock if necessary */
 	pdc_emergency_unlock();
@@ -252,11 +271,11 @@ KERN_CRIT "                     ||     ||\n");
 	
 	if (err)
 		printk(KERN_CRIT "%s (pid %d): %s (code %ld)\n",
-			current->comm, current->pid, str, err);
+			current->comm, task_pid_nr(current), str, err);
 
 	/* Wot's wrong wif bein' racy? */
 	if (current->thread.flags & PARISC_KERNEL_DEATH) {
-		printk(KERN_CRIT "%s() recursion detected.\n", __FUNCTION__);
+		printk(KERN_CRIT "%s() recursion detected.\n", __func__);
 		local_irq_enable();
 		while (1);
 	}
@@ -264,6 +283,7 @@ KERN_CRIT "                     ||     ||\n");
 
 	show_regs(regs);
 	dump_stack();
+	add_taint(TAINT_DIE);
 
 	if (in_interrupt())
 		panic("Fatal exception in interrupt");
@@ -274,6 +294,7 @@ KERN_CRIT "                     ||     ||\n");
 		panic("Fatal exception");
 	}
 
+	oops_exit();
 	do_exit(SIGSEGV);
 }
 
@@ -302,7 +323,7 @@ static void handle_break(struct pt_regs *regs)
 	if (unlikely(iir == PARISC_BUG_BREAK_INSN && !user_mode(regs))) {
 		/* check if a BUG() or WARN() trapped here.  */
 		enum bug_trap_type tt;
-		tt = report_bug(regs->iaoq[0] & ~3);
+		tt = report_bug(regs->iaoq[0] & ~3, regs);
 		if (tt == BUG_TRAP_TYPE_WARN) {
 			regs->iaoq[0] += 4;
 			regs->iaoq[1] += 4;
@@ -316,7 +337,7 @@ static void handle_break(struct pt_regs *regs)
 	if (unlikely(iir != GDB_BREAK_INSN)) {
 		printk(KERN_DEBUG "break %d,%d: pid=%d command='%s'\n",
 			iir & 31, (iir>>13) & ((1<<13)-1),
-			current->pid, current->comm);
+			task_pid_nr(current), current->comm);
 		show_regs(regs);
 	}
 #endif
@@ -475,7 +496,7 @@ void parisc_terminate(char *msg, struct pt_regs *regs, int code, unsigned long o
 	panic(msg);
 }
 
-void handle_interruption(int code, struct pt_regs *regs)
+void notrace handle_interruption(int code, struct pt_regs *regs)
 {
 	unsigned long fault_address = 0;
 	unsigned long fault_space = 0;
@@ -511,7 +532,7 @@ void handle_interruption(int code, struct pt_regs *regs)
 	  	/* Kill the user process later */
 	  	regs->iaoq[0] = 0 | 3;
 		regs->iaoq[1] = regs->iaoq[0] + 4;
-	 	regs->iasq[0] = regs->iasq[0] = regs->sr[7];
+	 	regs->iasq[0] = regs->iasq[1] = regs->sr[7];
 		regs->gr[0] &= ~PSW_B;
 		return;
 	}
@@ -726,6 +747,10 @@ void handle_interruption(int code, struct pt_regs *regs)
 		/* Fall Through */
 	case 27: 
 		/* Data memory protection ID trap */
+		if (code == 27 && !user_mode(regs) &&
+			fixup_exception(regs))
+			return;
+
 		die_if_kernel("Protection id trap", regs, code);
 		si.si_code = SEGV_MAPERR;
 		si.si_signo = SIGSEGV;
@@ -746,7 +771,7 @@ void handle_interruption(int code, struct pt_regs *regs)
 		if (user_mode(regs)) {
 #ifdef PRINT_USER_FAULTS
 			printk(KERN_DEBUG "\nhandle_interruption() pid=%d command='%s'\n",
-			    current->pid, current->comm);
+			    task_pid_nr(current), current->comm);
 			show_regs(regs);
 #endif
 			/* SIGBUS, for lack of a better one. */
@@ -771,7 +796,8 @@ void handle_interruption(int code, struct pt_regs *regs)
 		else
 			printk(KERN_DEBUG "User Fault (long pointer) (fault %d) ",
 			       code);
-		printk("pid=%d command='%s'\n", current->pid, current->comm);
+		printk(KERN_CONT "pid=%d command='%s'\n",
+		       task_pid_nr(current), current->comm);
 		show_regs(regs);
 #endif
 		si.si_signo = SIGSEGV;
@@ -802,8 +828,8 @@ void handle_interruption(int code, struct pt_regs *regs)
 
 int __init check_ivt(void *iva)
 {
+	extern u32 os_hpmc_size;
 	extern const u32 os_hpmc[];
-	extern const u32 os_hpmc_end[];
 
 	int i;
 	u32 check = 0;
@@ -820,8 +846,7 @@ int __init check_ivt(void *iva)
 	    *ivap++ = 0;
 
 	/* Compute Checksum for HPMC handler */
-
-	length = os_hpmc_end - os_hpmc;
+	length = os_hpmc_size;
 	ivap[7] = length;
 
 	hpmcp = (u32 *)os_hpmc;

@@ -1,9 +1,12 @@
 /*
  * QLogic Fibre Channel HBA Driver
- * Copyright (c)  2003-2005 QLogic Corporation
+ * Copyright (c)  2003-2010 QLogic Corporation
  *
  * See LICENSE.qla2xxx for copyright and licensing details.
  */
+
+#include "qla_def.h"
+
 /*
  * Driver debug definitions.
  */
@@ -21,18 +24,10 @@
 /* #define QL_DEBUG_LEVEL_12 */ /* Output IP trace msgs */
 /* #define QL_DEBUG_LEVEL_13 */ /* Output fdmi function trace msgs */
 /* #define QL_DEBUG_LEVEL_14 */ /* Output RSCN trace msgs */
-/*
- *  Local Macro Definitions.
- */
-#if defined(QL_DEBUG_LEVEL_1)  || defined(QL_DEBUG_LEVEL_2) || \
-    defined(QL_DEBUG_LEVEL_3)  || defined(QL_DEBUG_LEVEL_4) || \
-    defined(QL_DEBUG_LEVEL_5)  || defined(QL_DEBUG_LEVEL_6) || \
-    defined(QL_DEBUG_LEVEL_7)  || defined(QL_DEBUG_LEVEL_8) || \
-    defined(QL_DEBUG_LEVEL_9)  || defined(QL_DEBUG_LEVEL_10) || \
-    defined(QL_DEBUG_LEVEL_11) || defined(QL_DEBUG_LEVEL_12) || \
-    defined(QL_DEBUG_LEVEL_13) || defined(QL_DEBUG_LEVEL_14)
-    #define QL_DEBUG_ROUTINES
-#endif
+/* #define QL_DEBUG_LEVEL_15 */ /* Output NPIV trace msgs */
+/* #define QL_DEBUG_LEVEL_16 */ /* Output ISP84XX trace msgs */
+/* #define QL_DEBUG_LEVEL_17 */ /* Output EEH trace messages */
+/* #define QL_DEBUG_LEVEL_18 */ /* Output T10 CRC trace messages */
 
 /*
 * Macros use for debugging the driver.
@@ -52,6 +47,8 @@
 #define DEBUG2_9_10(x)	do { if (ql2xextended_error_logging) { x; } } while (0)
 #define DEBUG2_11(x)	do { if (ql2xextended_error_logging) { x; } } while (0)
 #define DEBUG2_13(x)	do { if (ql2xextended_error_logging) { x; } } while (0)
+#define DEBUG2_16(x)	do { if (ql2xextended_error_logging) { x; } } while (0)
+#define DEBUG2_17(x) 	do { if (ql2xextended_error_logging) { x; } } while (0)
 
 #if defined(QL_DEBUG_LEVEL_3)
 #define DEBUG3(x)	do {x;} while (0)
@@ -124,6 +121,31 @@
 #else
 #define DEBUG14(x)	do {} while (0)
 #endif
+
+#if defined(QL_DEBUG_LEVEL_15)
+#define DEBUG15(x)      do {x;} while (0)
+#else
+#define DEBUG15(x)	do {} while (0)
+#endif
+
+#if defined(QL_DEBUG_LEVEL_16)
+#define DEBUG16(x)	do {x;} while (0)
+#else
+#define DEBUG16(x)	do {} while (0)
+#endif
+
+#if defined(QL_DEBUG_LEVEL_17)
+#define DEBUG17(x)	do {x;} while (0)
+#else
+#define DEBUG17(x)	do {} while (0)
+#endif
+
+#if defined(QL_DEBUG_LEVEL_18)
+#define DEBUG18(x)	do {if (ql2xextended_error_logging) x; } while (0)
+#else
+#define DEBUG18(x)	do {} while (0)
+#endif
+
 
 /*
  * Firmware Dump structure definition
@@ -205,9 +227,115 @@ struct qla24xx_fw_dump {
 	uint32_t ext_mem[1];
 };
 
+struct qla25xx_fw_dump {
+	uint32_t host_status;
+	uint32_t host_risc_reg[32];
+	uint32_t pcie_regs[4];
+	uint32_t host_reg[32];
+	uint32_t shadow_reg[11];
+	uint32_t risc_io_reg;
+	uint16_t mailbox_reg[32];
+	uint32_t xseq_gp_reg[128];
+	uint32_t xseq_0_reg[48];
+	uint32_t xseq_1_reg[16];
+	uint32_t rseq_gp_reg[128];
+	uint32_t rseq_0_reg[32];
+	uint32_t rseq_1_reg[16];
+	uint32_t rseq_2_reg[16];
+	uint32_t aseq_gp_reg[128];
+	uint32_t aseq_0_reg[32];
+	uint32_t aseq_1_reg[16];
+	uint32_t aseq_2_reg[16];
+	uint32_t cmd_dma_reg[16];
+	uint32_t req0_dma_reg[15];
+	uint32_t resp0_dma_reg[15];
+	uint32_t req1_dma_reg[15];
+	uint32_t xmt0_dma_reg[32];
+	uint32_t xmt1_dma_reg[32];
+	uint32_t xmt2_dma_reg[32];
+	uint32_t xmt3_dma_reg[32];
+	uint32_t xmt4_dma_reg[32];
+	uint32_t xmt_data_dma_reg[16];
+	uint32_t rcvt0_data_dma_reg[32];
+	uint32_t rcvt1_data_dma_reg[32];
+	uint32_t risc_gp_reg[128];
+	uint32_t lmc_reg[128];
+	uint32_t fpm_hdw_reg[192];
+	uint32_t fb_hdw_reg[192];
+	uint32_t code_ram[0x2000];
+	uint32_t ext_mem[1];
+};
+
+struct qla81xx_fw_dump {
+	uint32_t host_status;
+	uint32_t host_risc_reg[32];
+	uint32_t pcie_regs[4];
+	uint32_t host_reg[32];
+	uint32_t shadow_reg[11];
+	uint32_t risc_io_reg;
+	uint16_t mailbox_reg[32];
+	uint32_t xseq_gp_reg[128];
+	uint32_t xseq_0_reg[48];
+	uint32_t xseq_1_reg[16];
+	uint32_t rseq_gp_reg[128];
+	uint32_t rseq_0_reg[32];
+	uint32_t rseq_1_reg[16];
+	uint32_t rseq_2_reg[16];
+	uint32_t aseq_gp_reg[128];
+	uint32_t aseq_0_reg[32];
+	uint32_t aseq_1_reg[16];
+	uint32_t aseq_2_reg[16];
+	uint32_t cmd_dma_reg[16];
+	uint32_t req0_dma_reg[15];
+	uint32_t resp0_dma_reg[15];
+	uint32_t req1_dma_reg[15];
+	uint32_t xmt0_dma_reg[32];
+	uint32_t xmt1_dma_reg[32];
+	uint32_t xmt2_dma_reg[32];
+	uint32_t xmt3_dma_reg[32];
+	uint32_t xmt4_dma_reg[32];
+	uint32_t xmt_data_dma_reg[16];
+	uint32_t rcvt0_data_dma_reg[32];
+	uint32_t rcvt1_data_dma_reg[32];
+	uint32_t risc_gp_reg[128];
+	uint32_t lmc_reg[128];
+	uint32_t fpm_hdw_reg[224];
+	uint32_t fb_hdw_reg[208];
+	uint32_t code_ram[0x2000];
+	uint32_t ext_mem[1];
+};
+
 #define EFT_NUM_BUFFERS		4
 #define EFT_BYTES_PER_BUFFER	0x4000
 #define EFT_SIZE		((EFT_BYTES_PER_BUFFER) * (EFT_NUM_BUFFERS))
+
+#define FCE_NUM_BUFFERS		64
+#define FCE_BYTES_PER_BUFFER	0x400
+#define FCE_SIZE		((FCE_BYTES_PER_BUFFER) * (FCE_NUM_BUFFERS))
+#define fce_calc_size(b)	((FCE_BYTES_PER_BUFFER) * (b))
+
+struct qla2xxx_fce_chain {
+	uint32_t type;
+	uint32_t chain_size;
+
+	uint32_t size;
+	uint32_t addr_l;
+	uint32_t addr_h;
+	uint32_t eregs[8];
+};
+
+struct qla2xxx_mq_chain {
+	uint32_t type;
+	uint32_t chain_size;
+
+	uint32_t count;
+	uint32_t qregs[4 * QLA_MQ_SIZE];
+};
+
+#define DUMP_CHAIN_VARIANT	0x80000000
+#define DUMP_CHAIN_FCE		0x7FFFFAF0
+#define DUMP_CHAIN_MQ		0x7FFFFAF1
+#define DUMP_CHAIN_LAST		0x80000000
 
 struct qla2xxx_fw_dump {
 	uint8_t signature[4];
@@ -238,5 +366,7 @@ struct qla2xxx_fw_dump {
 		struct qla2100_fw_dump isp21;
 		struct qla2300_fw_dump isp23;
 		struct qla24xx_fw_dump isp24;
+		struct qla25xx_fw_dump isp25;
+		struct qla81xx_fw_dump isp81;
 	} isp;
 };

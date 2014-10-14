@@ -728,15 +728,7 @@ static void vortex_Eqlzr_shutdown(vortex_t * vortex)
 /* ALSA interface */
 
 /* Control interface */
-static int
-snd_vortex_eqtoggle_info(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_info *uinfo)
-{
-	uinfo->type = SNDRV_CTL_ELEM_TYPE_BOOLEAN;
-	uinfo->count = 1;
-	uinfo->value.integer.min = 0;
-	uinfo->value.integer.max = 1;
-	return 0;
-}
+#define snd_vortex_eqtoggle_info	snd_ctl_boolean_mono_info
 
 static int
 snd_vortex_eqtoggle_get(struct snd_kcontrol *kcontrol,
@@ -904,7 +896,8 @@ static int __devinit vortex_eq_init(vortex_t * vortex)
 		if ((kcontrol =
 		     snd_ctl_new1(&vortex_eq_kcontrol, vortex)) == NULL)
 			return -ENOMEM;
-		strcpy(kcontrol->id.name, EqBandLabels[i]);
+		snprintf(kcontrol->id.name, sizeof(kcontrol->id.name),
+			"%s Playback Volume", EqBandLabels[i]);
 		kcontrol->private_value = i;
 		if ((err = snd_ctl_add(vortex->card, kcontrol)) < 0)
 			return err;

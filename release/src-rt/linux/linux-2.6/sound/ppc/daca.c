@@ -19,7 +19,6 @@
  */
 
 
-#include <sound/driver.h>
 #include <linux/init.h>
 #include <linux/i2c.h>
 #include <linux/kmod.h>
@@ -83,7 +82,7 @@ static int daca_set_volume(struct pmac_daca *mix)
 	data[1] |= mix->deemphasis ? 0x40 : 0;
 	if (i2c_smbus_write_block_data(mix->i2c.client, DACA_REG_AVOL,
 				       2, data) < 0) {
-		snd_printk("failed to set volume \n");
+		snd_printk(KERN_ERR "failed to set volume \n");
 		return -EINVAL;
 	}
 	return 0;
@@ -91,15 +90,7 @@ static int daca_set_volume(struct pmac_daca *mix)
 
 
 /* deemphasis switch */
-static int daca_info_deemphasis(struct snd_kcontrol *kcontrol,
-				struct snd_ctl_elem_info *uinfo)
-{
-	uinfo->type = SNDRV_CTL_ELEM_TYPE_BOOLEAN;
-	uinfo->count = 1;
-	uinfo->value.integer.min = 0;
-	uinfo->value.integer.max = 1;
-	return 0;
-}
+#define daca_info_deemphasis		snd_ctl_boolean_mono_info
 
 static int daca_get_deemphasis(struct snd_kcontrol *kcontrol,
 			       struct snd_ctl_elem_value *ucontrol)
@@ -123,7 +114,7 @@ static int daca_put_deemphasis(struct snd_kcontrol *kcontrol,
 		return -ENODEV;
 	change = mix->deemphasis != ucontrol->value.integer.value[0];
 	if (change) {
-		mix->deemphasis = ucontrol->value.integer.value[0];
+		mix->deemphasis = !!ucontrol->value.integer.value[0];
 		daca_set_volume(mix);
 	}
 	return change;
@@ -157,15 +148,20 @@ static int daca_put_volume(struct snd_kcontrol *kcontrol,
 {
 	struct snd_pmac *chip = snd_kcontrol_chip(kcontrol);
 	struct pmac_daca *mix;
+	unsigned int vol[2];
 	int change;
 
 	if (! (mix = chip->mixer_data))
 		return -ENODEV;
-	change = mix->left_vol != ucontrol->value.integer.value[0] ||
-		mix->right_vol != ucontrol->value.integer.value[1];
+	vol[0] = ucontrol->value.integer.value[0];
+	vol[1] = ucontrol->value.integer.value[1];
+	if (vol[0] > DACA_VOL_MAX || vol[1] > DACA_VOL_MAX)
+		return -EINVAL;
+	change = mix->left_vol != vol[0] ||
+		mix->right_vol != vol[1];
 	if (change) {
-		mix->left_vol = ucontrol->value.integer.value[0];
-		mix->right_vol = ucontrol->value.integer.value[1];
+		mix->left_vol = vol[0];
+		mix->right_vol = vol[1];
 		daca_set_volume(mix);
 	}
 	return change;
@@ -196,7 +192,7 @@ static int daca_put_amp(struct snd_kcontrol *kcontrol,
 		return -ENODEV;
 	change = mix->amp_on != ucontrol->value.integer.value[0];
 	if (change) {
-		mix->amp_on = ucontrol->value.integer.value[0];
+		mix->amp_on = !!ucontrol->value.integer.value[0];
 		i2c_smbus_write_byte_data(mix->i2c.client, DACA_REG_GCFG,
 					  mix->amp_on ? 0x05 : 0x04);
 	}
@@ -248,15 +244,12 @@ static void daca_cleanup(struct snd_pmac *chip)
 }
 
 /* exported */
-int __init snd_pmac_daca_init(struct snd_pmac *chip)
+int __devinit snd_pmac_daca_init(struct snd_pmac *chip)
 {
 	int i, err;
 	struct pmac_daca *mix;
 
-#ifdef CONFIG_KMOD
-	if (current->fs->root)
-		request_module("i2c-powermac");
-#endif /* CONFIG_KMOD */	
+	request_module("i2c-powermac");
 
 	mix = kzalloc(sizeof(*mix), GFP_KERNEL);
 	if (! mix)

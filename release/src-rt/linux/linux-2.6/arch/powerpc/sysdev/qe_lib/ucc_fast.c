@@ -19,6 +19,7 @@
 #include <linux/stddef.h>
 #include <linux/interrupt.h>
 #include <linux/err.h>
+#include <linux/module.h>
 
 #include <asm/io.h>
 #include <asm/immap_qe.h>
@@ -29,47 +30,47 @@
 
 void ucc_fast_dump_regs(struct ucc_fast_private * uccf)
 {
-	printk(KERN_INFO "UCC%d Fast registers:", uccf->uf_info->ucc_num);
-	printk(KERN_INFO "Base address: 0x%08x", (u32) uccf->uf_regs);
+	printk(KERN_INFO "UCC%u Fast registers:\n", uccf->uf_info->ucc_num);
+	printk(KERN_INFO "Base address: 0x%p\n", uccf->uf_regs);
 
-	printk(KERN_INFO "gumr  : addr - 0x%08x, val - 0x%08x",
-		  (u32) & uccf->uf_regs->gumr, in_be32(&uccf->uf_regs->gumr));
-	printk(KERN_INFO "upsmr : addr - 0x%08x, val - 0x%08x",
-		  (u32) & uccf->uf_regs->upsmr, in_be32(&uccf->uf_regs->upsmr));
-	printk(KERN_INFO "utodr : addr - 0x%08x, val - 0x%04x",
-		  (u32) & uccf->uf_regs->utodr, in_be16(&uccf->uf_regs->utodr));
-	printk(KERN_INFO "udsr  : addr - 0x%08x, val - 0x%04x",
-		  (u32) & uccf->uf_regs->udsr, in_be16(&uccf->uf_regs->udsr));
-	printk(KERN_INFO "ucce  : addr - 0x%08x, val - 0x%08x",
-		  (u32) & uccf->uf_regs->ucce, in_be32(&uccf->uf_regs->ucce));
-	printk(KERN_INFO "uccm  : addr - 0x%08x, val - 0x%08x",
-		  (u32) & uccf->uf_regs->uccm, in_be32(&uccf->uf_regs->uccm));
-	printk(KERN_INFO "uccs  : addr - 0x%08x, val - 0x%02x",
-		  (u32) & uccf->uf_regs->uccs, uccf->uf_regs->uccs);
-	printk(KERN_INFO "urfb  : addr - 0x%08x, val - 0x%08x",
-		  (u32) & uccf->uf_regs->urfb, in_be32(&uccf->uf_regs->urfb));
-	printk(KERN_INFO "urfs  : addr - 0x%08x, val - 0x%04x",
-		  (u32) & uccf->uf_regs->urfs, in_be16(&uccf->uf_regs->urfs));
-	printk(KERN_INFO "urfet : addr - 0x%08x, val - 0x%04x",
-		  (u32) & uccf->uf_regs->urfet, in_be16(&uccf->uf_regs->urfet));
-	printk(KERN_INFO "urfset: addr - 0x%08x, val - 0x%04x",
-		  (u32) & uccf->uf_regs->urfset,
-		  in_be16(&uccf->uf_regs->urfset));
-	printk(KERN_INFO "utfb  : addr - 0x%08x, val - 0x%08x",
-		  (u32) & uccf->uf_regs->utfb, in_be32(&uccf->uf_regs->utfb));
-	printk(KERN_INFO "utfs  : addr - 0x%08x, val - 0x%04x",
-		  (u32) & uccf->uf_regs->utfs, in_be16(&uccf->uf_regs->utfs));
-	printk(KERN_INFO "utfet : addr - 0x%08x, val - 0x%04x",
-		  (u32) & uccf->uf_regs->utfet, in_be16(&uccf->uf_regs->utfet));
-	printk(KERN_INFO "utftt : addr - 0x%08x, val - 0x%04x",
-		  (u32) & uccf->uf_regs->utftt, in_be16(&uccf->uf_regs->utftt));
-	printk(KERN_INFO "utpt  : addr - 0x%08x, val - 0x%04x",
-		  (u32) & uccf->uf_regs->utpt, in_be16(&uccf->uf_regs->utpt));
-	printk(KERN_INFO "urtry : addr - 0x%08x, val - 0x%08x",
-		  (u32) & uccf->uf_regs->urtry, in_be32(&uccf->uf_regs->urtry));
-	printk(KERN_INFO "guemr : addr - 0x%08x, val - 0x%02x",
-		  (u32) & uccf->uf_regs->guemr, uccf->uf_regs->guemr);
+	printk(KERN_INFO "gumr  : addr=0x%p, val=0x%08x\n",
+		  &uccf->uf_regs->gumr, in_be32(&uccf->uf_regs->gumr));
+	printk(KERN_INFO "upsmr : addr=0x%p, val=0x%08x\n",
+		  &uccf->uf_regs->upsmr, in_be32(&uccf->uf_regs->upsmr));
+	printk(KERN_INFO "utodr : addr=0x%p, val=0x%04x\n",
+		  &uccf->uf_regs->utodr, in_be16(&uccf->uf_regs->utodr));
+	printk(KERN_INFO "udsr  : addr=0x%p, val=0x%04x\n",
+		  &uccf->uf_regs->udsr, in_be16(&uccf->uf_regs->udsr));
+	printk(KERN_INFO "ucce  : addr=0x%p, val=0x%08x\n",
+		  &uccf->uf_regs->ucce, in_be32(&uccf->uf_regs->ucce));
+	printk(KERN_INFO "uccm  : addr=0x%p, val=0x%08x\n",
+		  &uccf->uf_regs->uccm, in_be32(&uccf->uf_regs->uccm));
+	printk(KERN_INFO "uccs  : addr=0x%p, val=0x%02x\n",
+		  &uccf->uf_regs->uccs, in_8(&uccf->uf_regs->uccs));
+	printk(KERN_INFO "urfb  : addr=0x%p, val=0x%08x\n",
+		  &uccf->uf_regs->urfb, in_be32(&uccf->uf_regs->urfb));
+	printk(KERN_INFO "urfs  : addr=0x%p, val=0x%04x\n",
+		  &uccf->uf_regs->urfs, in_be16(&uccf->uf_regs->urfs));
+	printk(KERN_INFO "urfet : addr=0x%p, val=0x%04x\n",
+		  &uccf->uf_regs->urfet, in_be16(&uccf->uf_regs->urfet));
+	printk(KERN_INFO "urfset: addr=0x%p, val=0x%04x\n",
+		  &uccf->uf_regs->urfset, in_be16(&uccf->uf_regs->urfset));
+	printk(KERN_INFO "utfb  : addr=0x%p, val=0x%08x\n",
+		  &uccf->uf_regs->utfb, in_be32(&uccf->uf_regs->utfb));
+	printk(KERN_INFO "utfs  : addr=0x%p, val=0x%04x\n",
+		  &uccf->uf_regs->utfs, in_be16(&uccf->uf_regs->utfs));
+	printk(KERN_INFO "utfet : addr=0x%p, val=0x%04x\n",
+		  &uccf->uf_regs->utfet, in_be16(&uccf->uf_regs->utfet));
+	printk(KERN_INFO "utftt : addr=0x%p, val=0x%04x\n",
+		  &uccf->uf_regs->utftt, in_be16(&uccf->uf_regs->utftt));
+	printk(KERN_INFO "utpt  : addr=0x%p, val=0x%04x\n",
+		  &uccf->uf_regs->utpt, in_be16(&uccf->uf_regs->utpt));
+	printk(KERN_INFO "urtry : addr=0x%p, val=0x%08x\n",
+		  &uccf->uf_regs->urtry, in_be32(&uccf->uf_regs->urtry));
+	printk(KERN_INFO "guemr : addr=0x%p, val=0x%02x\n",
+		  &uccf->uf_regs->guemr, in_8(&uccf->uf_regs->guemr));
 }
+EXPORT_SYMBOL(ucc_fast_dump_regs);
 
 u32 ucc_fast_get_qe_cr_subblock(int uccf_num)
 {
@@ -85,15 +86,17 @@ u32 ucc_fast_get_qe_cr_subblock(int uccf_num)
 	default: return QE_CR_SUBBLOCK_INVALID;
 	}
 }
+EXPORT_SYMBOL(ucc_fast_get_qe_cr_subblock);
 
 void ucc_fast_transmit_on_demand(struct ucc_fast_private * uccf)
 {
 	out_be16(&uccf->uf_regs->utodr, UCC_FAST_TOD);
 }
+EXPORT_SYMBOL(ucc_fast_transmit_on_demand);
 
 void ucc_fast_enable(struct ucc_fast_private * uccf, enum comm_dir mode)
 {
-	struct ucc_fast *uf_regs;
+	struct ucc_fast __iomem *uf_regs;
 	u32 gumr;
 
 	uf_regs = uccf->uf_regs;
@@ -110,10 +113,11 @@ void ucc_fast_enable(struct ucc_fast_private * uccf, enum comm_dir mode)
 	}
 	out_be32(&uf_regs->gumr, gumr);
 }
+EXPORT_SYMBOL(ucc_fast_enable);
 
 void ucc_fast_disable(struct ucc_fast_private * uccf, enum comm_dir mode)
 {
-	struct ucc_fast *uf_regs;
+	struct ucc_fast __iomem *uf_regs;
 	u32 gumr;
 
 	uf_regs = uccf->uf_regs;
@@ -130,11 +134,12 @@ void ucc_fast_disable(struct ucc_fast_private * uccf, enum comm_dir mode)
 	}
 	out_be32(&uf_regs->gumr, gumr);
 }
+EXPORT_SYMBOL(ucc_fast_disable);
 
 int ucc_fast_init(struct ucc_fast_info * uf_info, struct ucc_fast_private ** uccf_ret)
 {
 	struct ucc_fast_private *uccf;
-	struct ucc_fast *uf_regs;
+	struct ucc_fast __iomem *uf_regs;
 	u32 gumr;
 	int ret;
 
@@ -143,55 +148,57 @@ int ucc_fast_init(struct ucc_fast_info * uf_info, struct ucc_fast_private ** ucc
 
 	/* check if the UCC port number is in range. */
 	if ((uf_info->ucc_num < 0) || (uf_info->ucc_num > UCC_MAX_NUM - 1)) {
-		printk(KERN_ERR "%s: illegal UCC number", __FUNCTION__);
+		printk(KERN_ERR "%s: illegal UCC number\n", __func__);
 		return -EINVAL;
 	}
 
 	/* Check that 'max_rx_buf_length' is properly aligned (4). */
 	if (uf_info->max_rx_buf_length & (UCC_FAST_MRBLR_ALIGNMENT - 1)) {
-		printk(KERN_ERR "%s: max_rx_buf_length not aligned", __FUNCTION__);
+		printk(KERN_ERR "%s: max_rx_buf_length not aligned\n",
+			__func__);
 		return -EINVAL;
 	}
 
 	/* Validate Virtual Fifo register values */
 	if (uf_info->urfs < UCC_FAST_URFS_MIN_VAL) {
-		printk(KERN_ERR "%s: urfs is too small", __FUNCTION__);
+		printk(KERN_ERR "%s: urfs is too small\n", __func__);
 		return -EINVAL;
 	}
 
 	if (uf_info->urfs & (UCC_FAST_VIRT_FIFO_REGS_ALIGNMENT - 1)) {
-		printk(KERN_ERR "%s: urfs is not aligned", __FUNCTION__);
+		printk(KERN_ERR "%s: urfs is not aligned\n", __func__);
 		return -EINVAL;
 	}
 
 	if (uf_info->urfet & (UCC_FAST_VIRT_FIFO_REGS_ALIGNMENT - 1)) {
-		printk(KERN_ERR "%s: urfet is not aligned.", __FUNCTION__);
+		printk(KERN_ERR "%s: urfet is not aligned.\n", __func__);
 		return -EINVAL;
 	}
 
 	if (uf_info->urfset & (UCC_FAST_VIRT_FIFO_REGS_ALIGNMENT - 1)) {
-		printk(KERN_ERR "%s: urfset is not aligned", __FUNCTION__);
+		printk(KERN_ERR "%s: urfset is not aligned\n", __func__);
 		return -EINVAL;
 	}
 
 	if (uf_info->utfs & (UCC_FAST_VIRT_FIFO_REGS_ALIGNMENT - 1)) {
-		printk(KERN_ERR "%s: utfs is not aligned", __FUNCTION__);
+		printk(KERN_ERR "%s: utfs is not aligned\n", __func__);
 		return -EINVAL;
 	}
 
 	if (uf_info->utfet & (UCC_FAST_VIRT_FIFO_REGS_ALIGNMENT - 1)) {
-		printk(KERN_ERR "%s: utfet is not aligned", __FUNCTION__);
+		printk(KERN_ERR "%s: utfet is not aligned\n", __func__);
 		return -EINVAL;
 	}
 
 	if (uf_info->utftt & (UCC_FAST_VIRT_FIFO_REGS_ALIGNMENT - 1)) {
-		printk(KERN_ERR "%s: utftt is not aligned", __FUNCTION__);
+		printk(KERN_ERR "%s: utftt is not aligned\n", __func__);
 		return -EINVAL;
 	}
 
 	uccf = kzalloc(sizeof(struct ucc_fast_private), GFP_KERNEL);
 	if (!uccf) {
-		printk(KERN_ERR "%s: Cannot allocate private data", __FUNCTION__);
+		printk(KERN_ERR "%s: Cannot allocate private data\n",
+			__func__);
 		return -ENOMEM;
 	}
 
@@ -200,7 +207,8 @@ int ucc_fast_init(struct ucc_fast_info * uf_info, struct ucc_fast_private ** ucc
 	/* Set the PHY base address */
 	uccf->uf_regs = ioremap(uf_info->regs, sizeof(struct ucc_fast));
 	if (uccf->uf_regs == NULL) {
-		printk(KERN_ERR "%s: Cannot map UCC registers", __FUNCTION__);
+		printk(KERN_ERR "%s: Cannot map UCC registers\n", __func__);
+		kfree(uccf);
 		return -ENOMEM;
 	}
 
@@ -209,10 +217,10 @@ int ucc_fast_init(struct ucc_fast_info * uf_info, struct ucc_fast_private ** ucc
 	uccf->stopped_tx = 0;
 	uccf->stopped_rx = 0;
 	uf_regs = uccf->uf_regs;
-	uccf->p_ucce = (u32 *) & (uf_regs->ucce);
-	uccf->p_uccm = (u32 *) & (uf_regs->uccm);
+	uccf->p_ucce = &uf_regs->ucce;
+	uccf->p_uccm = &uf_regs->uccm;
 #ifdef CONFIG_UGETH_TX_ON_DEMAND
-	uccf->p_utodr = (u16 *) & (uf_regs->utodr);
+	uccf->p_utodr = &uf_regs->utodr;
 #endif
 #ifdef STATISTICS
 	uccf->tx_frames = 0;
@@ -220,18 +228,10 @@ int ucc_fast_init(struct ucc_fast_info * uf_info, struct ucc_fast_private ** ucc
 	uccf->rx_discarded = 0;
 #endif				/* STATISTICS */
 
-	/* Init Guemr register */
-	if ((ret = ucc_init_guemr((struct ucc_common *) (uf_regs)))) {
-		printk(KERN_ERR "%s: cannot init GUEMR", __FUNCTION__);
-		ucc_fast_free(uccf);
-		return ret;
-	}
-
 	/* Set UCC to fast type */
-	if ((ret = ucc_set_type(uf_info->ucc_num,
-				(struct ucc_common *) (uf_regs),
-				UCC_SPEED_TYPE_FAST))) {
-		printk(KERN_ERR "%s: cannot set UCC type", __FUNCTION__);
+	ret = ucc_set_type(uf_info->ucc_num, UCC_SPEED_TYPE_FAST);
+	if (ret) {
+		printk(KERN_ERR "%s: cannot set UCC type\n", __func__);
 		ucc_fast_free(uccf);
 		return ret;
 	}
@@ -270,7 +270,8 @@ int ucc_fast_init(struct ucc_fast_info * uf_info, struct ucc_fast_private ** ucc
 	uccf->ucc_fast_tx_virtual_fifo_base_offset =
 	    qe_muram_alloc(uf_info->utfs, UCC_FAST_VIRT_FIFO_REGS_ALIGNMENT);
 	if (IS_ERR_VALUE(uccf->ucc_fast_tx_virtual_fifo_base_offset)) {
-		printk(KERN_ERR "%s: cannot allocate MURAM for TX FIFO", __FUNCTION__);
+		printk(KERN_ERR "%s: cannot allocate MURAM for TX FIFO\n",
+			__func__);
 		uccf->ucc_fast_tx_virtual_fifo_base_offset = 0;
 		ucc_fast_free(uccf);
 		return -ENOMEM;
@@ -282,7 +283,8 @@ int ucc_fast_init(struct ucc_fast_info * uf_info, struct ucc_fast_private ** ucc
 			   UCC_FAST_RECEIVE_VIRTUAL_FIFO_SIZE_FUDGE_FACTOR,
 			   UCC_FAST_VIRT_FIFO_REGS_ALIGNMENT);
 	if (IS_ERR_VALUE(uccf->ucc_fast_rx_virtual_fifo_base_offset)) {
-		printk(KERN_ERR "%s: cannot allocate MURAM for RX FIFO", __FUNCTION__);
+		printk(KERN_ERR "%s: cannot allocate MURAM for RX FIFO\n",
+			__func__);
 		uccf->ucc_fast_rx_virtual_fifo_base_offset = 0;
 		ucc_fast_free(uccf);
 		return -ENOMEM;
@@ -312,8 +314,8 @@ int ucc_fast_init(struct ucc_fast_info * uf_info, struct ucc_fast_private ** ucc
 		if ((uf_info->rx_clock != QE_CLK_NONE) &&
 		    ucc_set_qe_mux_rxtx(uf_info->ucc_num, uf_info->rx_clock,
 					COMM_DIR_RX)) {
-			printk(KERN_ERR "%s: illegal value for RX clock",
-			       __FUNCTION__);
+			printk(KERN_ERR "%s: illegal value for RX clock\n",
+			       __func__);
 			ucc_fast_free(uccf);
 			return -EINVAL;
 		}
@@ -321,8 +323,8 @@ int ucc_fast_init(struct ucc_fast_info * uf_info, struct ucc_fast_private ** ucc
 		if ((uf_info->tx_clock != QE_CLK_NONE) &&
 		    ucc_set_qe_mux_rxtx(uf_info->ucc_num, uf_info->tx_clock,
 					COMM_DIR_TX)) {
-			printk(KERN_ERR "%s: illegal value for TX clock",
-			       __FUNCTION__);
+			printk(KERN_ERR "%s: illegal value for TX clock\n",
+			       __func__);
 			ucc_fast_free(uccf);
 			return -EINVAL;
 		}
@@ -341,6 +343,7 @@ int ucc_fast_init(struct ucc_fast_info * uf_info, struct ucc_fast_private ** ucc
 	*uccf_ret = uccf;
 	return 0;
 }
+EXPORT_SYMBOL(ucc_fast_init);
 
 void ucc_fast_free(struct ucc_fast_private * uccf)
 {
@@ -353,5 +356,9 @@ void ucc_fast_free(struct ucc_fast_private * uccf)
 	if (uccf->ucc_fast_rx_virtual_fifo_base_offset)
 		qe_muram_free(uccf->ucc_fast_rx_virtual_fifo_base_offset);
 
+	if (uccf->uf_regs)
+		iounmap(uccf->uf_regs);
+
 	kfree(uccf);
 }
+EXPORT_SYMBOL(ucc_fast_free);

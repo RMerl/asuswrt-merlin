@@ -32,28 +32,31 @@
 #include <linux/list.h>
 #include <linux/timer.h>
 #include <linux/init.h>
+#include <linux/gpio.h>
 #include <linux/device.h>
 #include <linux/platform_device.h>
 #include <linux/proc_fs.h>
 #include <linux/serial_core.h>
+#include <linux/io.h>
 
 #include <asm/mach/arch.h>
 #include <asm/mach/map.h>
 #include <asm/mach/irq.h>
 #include <asm/mach/flash.h>
 
-#include <asm/hardware.h>
-#include <asm/io.h>
+#include <mach/hardware.h>
 #include <asm/irq.h>
 #include <asm/mach-types.h>
-#include <asm/arch/fb.h>
+#include <mach/fb.h>
 
-#include <asm/arch/regs-serial.h>
-#include <asm/arch/regs-lcd.h>
-#include <asm/arch/regs-gpio.h>
+#include <plat/regs-serial.h>
+#include <mach/regs-lcd.h>
+#include <mach/regs-gpio.h>
 
-#include <asm/plat-s3c24xx/devs.h>
-#include <asm/plat-s3c24xx/cpu.h>
+#include <plat/iic.h>
+#include <plat/devs.h>
+#include <plat/cpu.h>
+#include <plat/gpio-cfg.h>
 
 #ifdef CONFIG_MTD_PARTITIONS
 
@@ -150,8 +153,8 @@ static struct platform_device *amlm5900_devices[] __initdata = {
 #endif
 	&s3c_device_adc,
 	&s3c_device_wdt,
-	&s3c_device_i2c,
-	&s3c_device_usb,
+	&s3c_device_i2c0,
+	&s3c_device_ohci,
  	&s3c_device_rtc,
 	&s3c_device_usbgadget,
         &s3c_device_sdi,
@@ -168,13 +171,31 @@ static void __init amlm5900_map_io(void)
 }
 
 #ifdef CONFIG_FB_S3C2410
-static struct s3c2410fb_mach_info __initdata amlm5900_lcd_info = {
+static struct s3c2410fb_display __initdata amlm5900_lcd_info = {
 	.width		= 160,
 	.height		= 160,
 
-/* commented out until stn patch is submitted
-*	.type		= S3C2410_LCDCON1_STN4,
-*/
+	.type		= S3C2410_LCDCON1_STN4,
+
+	.pixclock	= 680000, /* HCLK = 100MHz */
+	.xres		= 160,
+	.yres		= 160,
+	.bpp		= 4,
+	.left_margin	= 1 << (4 + 3),
+	.right_margin	= 8 << 3,
+	.hsync_len	= 48,
+	.upper_margin	= 0,
+	.lower_margin	= 0,
+
+	.lcdcon5	= 0x00000001,
+};
+
+static struct s3c2410fb_mach_info __initdata amlm5900_fb_info = {
+
+	.displays = &amlm5900_lcd_info,
+	.num_displays = 1,
+	.default_display = 0,
+
 	.gpccon =	0xaaaaaaaa,
 	.gpccon_mask =	0xffffffff,
 	.gpcup =	0x0000ffff,
@@ -184,32 +205,6 @@ static struct s3c2410fb_mach_info __initdata amlm5900_lcd_info = {
 	.gpdcon_mask =	0xffffffff,
 	.gpdup =	0x0000ffff,
 	.gpdup_mask =	0xffffffff,
-
-	.xres		= {
-		.min		= 160,
-		.max		= 160,
-		.defval		= 160,
-	},
-
-	.yres		= {
-		.min		= 160,
-		.max	        = 160,
-		.defval		= 160,
-	},
-
-	.bpp		= {
-		.min		= 4,
-		.max		= 4,
-		.defval		= 4,
-	},
-
-	.regs		= {
-		.lcdcon1	= 0x00008225,
-		.lcdcon2	= 0x0027c000,
-		.lcdcon3	= 0x00182708,
-		.lcdcon4	= 0x00000002,
-		.lcdcon5	= 0x00000001,
-	}
 };
 #endif
 
@@ -231,22 +226,21 @@ static void amlm5900_init_pm(void)
 	} else {
 		enable_irq_wake(IRQ_EINT9);
 		/* configure the suspend/resume status pin */
-		s3c2410_gpio_cfgpin(S3C2410_GPF2, S3C2410_GPF2_OUTP);
-		s3c2410_gpio_pullup(S3C2410_GPF2, 0);
+		s3c_gpio_cfgpin(S3C2410_GPF(2), S3C2410_GPIO_OUTPUT);
+		s3c_gpio_setpull(S3C2410_GPF(2), S3C_GPIO_PULL_UP);
 	}
 }
 static void __init amlm5900_init(void)
 {
 	amlm5900_init_pm();
 #ifdef CONFIG_FB_S3C2410
-	s3c24xx_fb_set_platdata(&amlm5900_lcd_info);
+	s3c24xx_fb_set_platdata(&amlm5900_fb_info);
 #endif
+	s3c_i2c0_set_platdata(NULL);
 	platform_add_devices(amlm5900_devices, ARRAY_SIZE(amlm5900_devices));
 }
 
 MACHINE_START(AML_M5900, "AML_M5900")
-	.phys_io	= S3C2410_PA_UART,
-	.io_pg_offst	= (((u32)S3C24XX_VA_UART) >> 18) & 0xfffc,
 	.boot_params	= S3C2410_SDRAM_PA + 0x100,
 	.map_io		= amlm5900_map_io,
 	.init_irq	= s3c24xx_init_irq,

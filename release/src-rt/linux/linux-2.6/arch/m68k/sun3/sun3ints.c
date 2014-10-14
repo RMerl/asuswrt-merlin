@@ -30,7 +30,7 @@ void sun3_enable_interrupts(void)
 	sun3_enable_irq(0);
 }
 
-int led_pattern[8] = {
+static int led_pattern[8] = {
        ~(0x80), ~(0x01),
        ~(0x40), ~(0x02),
        ~(0x20), ~(0x04),
@@ -66,10 +66,8 @@ static irqreturn_t sun3_int5(int irq, void *dev_id)
 #ifdef CONFIG_SUN3
 	intersil_clear();
 #endif
-        do_timer(1);
-#ifndef CONFIG_SMP
+	xtime_update(1);
 	update_process_times(user_mode(get_irq_regs()));
-#endif
         if (!(kstat_cpu(0).irqs[irq] % 20))
                 sun3_leds(led_pattern[(kstat_cpu(0).irqs[irq] % 160) / 20]);
 	return IRQ_HANDLED;
@@ -97,7 +95,7 @@ static struct irq_controller sun3_irq_controller = {
 	.disable	= sun3_disable_irq,
 };
 
-void sun3_init_IRQ(void)
+void __init sun3_init_IRQ(void)
 {
 	*sun3_intreg = 1;
 
@@ -105,7 +103,10 @@ void sun3_init_IRQ(void)
 	m68k_setup_irq_controller(&sun3_irq_controller, IRQ_AUTO_1, 7);
 	m68k_setup_user_interrupt(VEC_USER, 128, NULL);
 
-	request_irq(IRQ_AUTO_5, sun3_int5, 0, "int5", NULL);
-	request_irq(IRQ_AUTO_7, sun3_int7, 0, "int7", NULL);
-	request_irq(IRQ_USER+127, sun3_vec255, 0, "vec255", NULL);
+	if (request_irq(IRQ_AUTO_5, sun3_int5, 0, "int5", NULL))
+		pr_err("Couldn't register %s interrupt\n", "int5");
+	if (request_irq(IRQ_AUTO_7, sun3_int7, 0, "int7", NULL))
+		pr_err("Couldn't register %s interrupt\n", "int7");
+	if (request_irq(IRQ_USER+127, sun3_vec255, 0, "vec255", NULL))
+		pr_err("Couldn't register %s interrupt\n", "vec255");
 }

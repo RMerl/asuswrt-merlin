@@ -51,7 +51,7 @@ void __init pagetable_init(void)
 	/*
 	 * Fixed mappings:
 	 */
-	vaddr = __fix_to_virt(VALIAS_IDX(__end_of_fixed_addresses - 1)) & PMD_MASK;
+	vaddr = __fix_to_virt(__end_of_fixed_addresses - 1) & PMD_MASK;
 	fixrange_init(vaddr, 0, pgd_base);
 
 #ifdef CONFIG_HIGHMEM

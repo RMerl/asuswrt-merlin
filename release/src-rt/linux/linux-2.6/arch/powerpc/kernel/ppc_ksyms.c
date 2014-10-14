@@ -8,16 +8,14 @@
 #include <linux/screen_info.h>
 #include <linux/vt_kern.h>
 #include <linux/nvram.h>
-#include <linux/console.h>
 #include <linux/irq.h>
 #include <linux/pci.h>
 #include <linux/delay.h>
-#include <linux/ide.h>
 #include <linux/bitops.h>
 
 #include <asm/page.h>
-#include <asm/semaphore.h>
 #include <asm/processor.h>
+#include <asm/cacheflush.h>
 #include <asm/uaccess.h>
 #include <asm/io.h>
 #include <asm/atomic.h>
@@ -44,14 +42,7 @@
 #include <asm/div64.h>
 #include <asm/signal.h>
 #include <asm/dcr.h>
-
-#ifdef  CONFIG_8xx
-#include <asm/commproc.h>
-#endif
-
-#ifdef CONFIG_PPC64
-EXPORT_SYMBOL(local_irq_restore);
-#endif
+#include <asm/ftrace.h>
 
 #ifdef CONFIG_PPC32
 extern void transfer_to_handler(void);
@@ -63,11 +54,11 @@ extern void single_step_exception(struct pt_regs *regs);
 extern int sys_sigreturn(struct pt_regs *regs);
 
 EXPORT_SYMBOL(clear_pages);
+EXPORT_SYMBOL(copy_page);
 EXPORT_SYMBOL(ISA_DMA_THRESHOLD);
 EXPORT_SYMBOL(DMA_MODE_READ);
 EXPORT_SYMBOL(DMA_MODE_WRITE);
 
-EXPORT_SYMBOL(do_signal);
 EXPORT_SYMBOL(transfer_to_handler);
 EXPORT_SYMBOL(do_IRQ);
 EXPORT_SYMBOL(machine_check_exception);
@@ -77,11 +68,16 @@ EXPORT_SYMBOL(single_step_exception);
 EXPORT_SYMBOL(sys_sigreturn);
 #endif
 
+#ifdef CONFIG_FUNCTION_TRACER
+EXPORT_SYMBOL(_mcount);
+#endif
+
 EXPORT_SYMBOL(strcpy);
 EXPORT_SYMBOL(strncpy);
 EXPORT_SYMBOL(strcat);
 EXPORT_SYMBOL(strlen);
 EXPORT_SYMBOL(strcmp);
+EXPORT_SYMBOL(strncmp);
 
 EXPORT_SYMBOL(csum_partial);
 EXPORT_SYMBOL(csum_partial_copy_generic);
@@ -96,20 +92,10 @@ EXPORT_SYMBOL(__strnlen_user);
 EXPORT_SYMBOL(copy_4K_page);
 #endif
 
-#if defined(CONFIG_PPC32) && (defined(CONFIG_BLK_DEV_IDE) || defined(CONFIG_BLK_DEV_IDE_MODULE))
-EXPORT_SYMBOL(ppc_ide_md);
-#endif
-
 #if defined(CONFIG_PCI) && defined(CONFIG_PPC32)
 EXPORT_SYMBOL(isa_io_base);
 EXPORT_SYMBOL(isa_mem_base);
 EXPORT_SYMBOL(pci_dram_offset);
-EXPORT_SYMBOL(pci_alloc_consistent);
-EXPORT_SYMBOL(pci_free_consistent);
-EXPORT_SYMBOL(pci_bus_io_base);
-EXPORT_SYMBOL(pci_bus_io_base_phys);
-EXPORT_SYMBOL(pci_bus_mem_base_phys);
-EXPORT_SYMBOL(pci_bus_to_hose);
 #endif /* CONFIG_PCI */
 
 EXPORT_SYMBOL(start_thread);
@@ -119,15 +105,16 @@ EXPORT_SYMBOL(giveup_fpu);
 #ifdef CONFIG_ALTIVEC
 EXPORT_SYMBOL(giveup_altivec);
 #endif /* CONFIG_ALTIVEC */
+#ifdef CONFIG_VSX
+EXPORT_SYMBOL(giveup_vsx);
+EXPORT_SYMBOL_GPL(__giveup_vsx);
+#endif /* CONFIG_VSX */
 #ifdef CONFIG_SPE
 EXPORT_SYMBOL(giveup_spe);
 #endif /* CONFIG_SPE */
 
 #ifndef CONFIG_PPC64
 EXPORT_SYMBOL(flush_instruction_cache);
-EXPORT_SYMBOL(flush_tlb_kernel_range);
-EXPORT_SYMBOL(flush_tlb_page);
-EXPORT_SYMBOL(_tlbie);
 #endif
 EXPORT_SYMBOL(__flush_icache_range);
 EXPORT_SYMBOL(flush_dcache_range);
@@ -149,9 +136,6 @@ EXPORT_SYMBOL(adb_try_handler_change);
 EXPORT_SYMBOL(cuda_request);
 EXPORT_SYMBOL(cuda_poll);
 #endif /* CONFIG_ADB_CUDA */
-#ifdef CONFIG_VT
-EXPORT_SYMBOL(kd_mksound);
-#endif
 EXPORT_SYMBOL(to_tm);
 
 #ifdef CONFIG_PPC32
@@ -161,6 +145,8 @@ long long __lshrdi3(long long, int);
 EXPORT_SYMBOL(__ashrdi3);
 EXPORT_SYMBOL(__ashldi3);
 EXPORT_SYMBOL(__lshrdi3);
+int __ucmpdi2(unsigned long long, unsigned long long);
+EXPORT_SYMBOL(__ucmpdi2);
 #endif
 
 EXPORT_SYMBOL(memcpy);
@@ -175,23 +161,13 @@ EXPORT_SYMBOL(screen_info);
 
 #ifdef CONFIG_PPC32
 EXPORT_SYMBOL(timer_interrupt);
-EXPORT_SYMBOL(irq_desc);
 EXPORT_SYMBOL(tb_ticks_per_jiffy);
-EXPORT_SYMBOL(console_drivers);
 EXPORT_SYMBOL(cacheable_memcpy);
-#endif
-
-#ifdef  CONFIG_8xx
-EXPORT_SYMBOL(cpm_install_handler);
-EXPORT_SYMBOL(cpm_free_handler);
-#endif /* CONFIG_8xx */
-#if defined(CONFIG_8xx) || defined(CONFIG_40x)
-EXPORT_SYMBOL(__res);
+EXPORT_SYMBOL(cacheable_memzero);
 #endif
 
 #ifdef CONFIG_PPC32
-EXPORT_SYMBOL(next_mmu_context);
-EXPORT_SYMBOL(set_context);
+EXPORT_SYMBOL(switch_mmu_context);
 #endif
 
 #ifdef CONFIG_PPC_STD_MMU_32
@@ -208,4 +184,12 @@ EXPORT_SYMBOL(intercept_table);
 #ifdef CONFIG_PPC_DCR_NATIVE
 EXPORT_SYMBOL(__mtdcr);
 EXPORT_SYMBOL(__mfdcr);
+#endif
+EXPORT_SYMBOL(empty_zero_page);
+
+#ifdef CONFIG_PPC64
+EXPORT_SYMBOL(__arch_hweight8);
+EXPORT_SYMBOL(__arch_hweight16);
+EXPORT_SYMBOL(__arch_hweight32);
+EXPORT_SYMBOL(__arch_hweight64);
 #endif

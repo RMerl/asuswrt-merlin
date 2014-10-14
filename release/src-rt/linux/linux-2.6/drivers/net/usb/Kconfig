@@ -71,7 +71,7 @@ config USB_PEGASUS
 	select MII
 	---help---
 	  Say Y here if you know you have Pegasus or Pegasus-II based adapter.
-	  If in doubt then look at <file:drivers/usb/net/pegasus.h> for the
+	  If in doubt then look at <file:drivers/net/usb/pegasus.h> for the
 	  complete list of supported devices.
 
 	  If your particular adapter is not in the list and you are _sure_ it
@@ -93,13 +93,9 @@ config USB_RTL8150
 	  To compile this driver as a module, choose M here: the
 	  module will be called rtl8150.
 
-config USB_USBNET_MII
-	tristate
-	default n
-
 config USB_USBNET
 	tristate "Multi-purpose USB Networking Framework"
-	select MII if USB_USBNET_MII != n
+	select MII
 	---help---
 	  This driver supports several kinds of network links over USB,
 	  with "minidrivers" built around a common network driver core
@@ -133,9 +129,8 @@ config USB_USBNET
 
 config USB_NET_AX8817X
 	tristate "ASIX AX88xxx Based USB 2.0 Ethernet Adapters"
-	depends on USB_USBNET && NET_ETHERNET
+	depends on USB_USBNET
 	select CRC32
-	select USB_USBNET_MII
 	default y
 	help
 	  This option adds support for ASIX AX88xxx based USB 2.0
@@ -159,7 +154,6 @@ config USB_NET_AX8817X
 	  This driver creates an interface named "ethX", where X depends on
 	  what other networking devices you have in use.
 
-
 config USB_NET_CDCETHER
 	tristate "CDC Ethernet support (smart devices such as cable modems)"
 	depends on USB_USBNET
@@ -175,11 +169,27 @@ config USB_NET_CDCETHER
 	  The Linux-USB CDC Ethernet Gadget driver is an open implementation.
  	  This driver should work with at least the following devices:
 
+	    * Dell Wireless 5530 HSPA
  	    * Ericsson PipeRider (all variants)
+	    * Ericsson Mobile Broadband Module (all variants)
  	    * Motorola (DM100 and SB4100)
  	    * Broadcom Cable Modem (reference design)
- 	    * Toshiba PCX1100U
+	    * Toshiba (PCX1100U and F3507g/F3607gw)
 	    * ...
+
+	  This driver creates an interface named "ethX", where X depends on
+	  what other networking devices you have in use.  However, if the
+	  IEEE 802 "local assignment" bit is set in the address, a "usbX"
+	  name is used instead.
+
+config USB_NET_CDC_EEM
+	tristate "CDC EEM support"
+	depends on USB_USBNET && EXPERIMENTAL
+	help
+	  This option supports devices conforming to the Communication Device
+	  Class (CDC) Ethernet Emulation Model, a specification that's easy to
+	  implement in device firmware.  The CDC EEM specifications are available
+	  from <http://www.usb.org/>.
 
 	  This driver creates an interface named "ethX", where X depends on
 	  what other networking devices you have in use.  However, if the
@@ -189,6 +199,7 @@ config USB_NET_CDCETHER
 config USB_NET_CDC_NCM
 	tristate "CDC NCM support"
 	depends on USB_USBNET
+	default y
 	help
 	  This driver provides support for CDC NCM (Network Control Model
 	  Device USB Class Specification). The CDC NCM specification is
@@ -204,31 +215,28 @@ config USB_NET_CDC_NCM
 	    * ST-Ericsson M343 HSPA Mobile Broadband Modem (reference design)
 	    * Ericsson F5521gw Mobile Broadband Module
 
-config USB_NET_CDC_MBIM
-	tristate "CDC MBIM support"
-	depends on USB_USBNET
-	select USB_WDM
-	select USB_NET_CDC_NCM
-	help
-	  This driver provides support for CDC MBIM (Mobile Broadband
-	  Interface Model) devices. The CDC MBIM specification is
-	  available from <http://www.usb.org/>.
-
-	  MBIM devices require configuration using the management
-	  protocol defined by the MBIM specification.  This driver
-	  provides unfiltered access to the MBIM control channel
-	  through the associated /dev/cdc-wdmx character device.
-
-	  To compile this driver as a module, choose M here: the
-	  module will be called cdc_mbim.
-
 config USB_NET_DM9601
 	tristate "Davicom DM9601 based USB 1.1 10/100 ethernet devices"
 	depends on USB_USBNET
 	select CRC32
-	select USB_USBNET_MII
 	help
 	  This option adds support for Davicom DM9601 based USB 1.1
+	  10/100 Ethernet adapters.
+
+config USB_NET_SMSC75XX
+	tristate "SMSC LAN75XX based USB 2.0 gigabit ethernet devices"
+	depends on USB_USBNET
+	select CRC32
+	help
+	  This option adds support for SMSC LAN95XX based USB 2.0
+	  Gigabit Ethernet adapters.
+
+config USB_NET_SMSC95XX
+	tristate "SMSC LAN95XX based USB 2.0 10/100 ethernet devices"
+	depends on USB_USBNET
+	select CRC32
+	help
+	  This option adds support for SMSC LAN95XX based USB 2.0
 	  10/100 Ethernet adapters.
 
 config USB_NET_GL620A
@@ -261,7 +269,6 @@ config USB_NET_PLUSB
 config USB_NET_MCS7830
 	tristate "MosChip MCS7830 based Ethernet adapters"
 	depends on USB_USBNET
-	select USB_USBNET_MII
 	help
 	  Choose this option if you're using a 10/100 Ethernet USB2
 	  adapter based on the MosChip 7830 controller. This includes
@@ -370,34 +377,40 @@ config USB_NET_ZAURUS
 	  really need this non-conformant variant of CDC Ethernet (or in
 	  some cases CDC MDLM) protocol, not "g_ether".
 
-config HSO
-	tristate "HSO support for Dovado's UMR"
+config USB_NET_CX82310_ETH
+	tristate "Conexant CX82310 USB ethernet port"
 	depends on USB_USBNET
+	help
+	  Choose this option if you're using a Conexant CX82310-based ADSL
+	  router with USB ethernet port. This driver is for routers only,
+	  it will not work with ADSL modems (use cxacru driver instead).
+
+config USB_HSO
+	tristate "Option USB High Speed Mobile Devices"
+	depends on USB && RFKILL
 	default n
 	help
-		Choose this to configure HSO device (v 1.9)
-
-config USB_NET_QMI_WWAN
-	tristate "QMI WWAN driver for Qualcomm MSM based 3G and LTE modems"
-	depends on USB_USBNET
-	select USB_WDM
-	help
-	  Support WWAN LTE/3G devices based on Qualcomm Mobile Data Modem
-	  (MDM) chipsets.  Examples of such devices are
-	    * Huawei E392/E398
-
-	  This driver will only drive the ethernet part of the chips.
-	  The devices require additional configuration to be usable.
-	  Multiple management interfaces with linux drivers are
-	  available:
-
-	    * option: AT commands on /dev/ttyUSBx
-	    * cdc-wdm: Qualcomm MSM Interface (QMI) protocol on /dev/cdc-wdmx
-
-	  A modem manager with support for QMI is recommended.
+	  Choose this option if you have an Option HSDPA/HSUPA card.
+	  These cards support downlink speeds of 7.2Mbps or greater.
 
 	  To compile this driver as a module, choose M here: the
-	  module will be called qmi_wwan.
+	  module will be called hso.
+
+config USB_NET_INT51X1
+	tristate "Intellon PLC based usb adapter"
+	depends on USB_USBNET
+	help
+	  Choose this option if you're using a 14Mb USB-based PLC
+	  (Powerline Communications) solution with an Intellon
+	  INT51x1/INT5200 chip, like the "devolo dLan duo".
+
+config USB_CDC_PHONET
+	tristate "CDC Phonet support"
+	depends on PHONET
+	help
+	  Choose this option to support the Phonet interface to a Nokia
+	  cellular modem, as found on most Nokia handsets with the
+	  "PC suite" USB profile.
 
 config USB_IPHETH
 	tristate "Apple iPhone USB Ethernet driver"
@@ -410,5 +423,29 @@ config USB_IPHETH
 	  protocol.
 
 	  For more information: http://giagio.com/wiki/moin.cgi/iPhoneEthernetDriver
+
+config USB_SIERRA_NET
+	tristate "USB-to-WWAN Driver for Sierra Wireless modems"
+	depends on USB_USBNET
+	help
+	  Choose this option if you have a Sierra Wireless USB-to-WWAN device.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called sierra_net.
+
+config USB_VL600
+	tristate "LG VL600 modem dongle"
+	depends on USB_NET_CDCETHER
+	select USB_ACM
+	help
+	  Select this if you want to use an LG Electronics 4G/LTE usb modem
+	  called VL600.  This driver only handles the ethernet
+	  interface exposed by the modem firmware.  To establish a connection
+	  you will first need a userspace program that sends the right
+	  command to the modem through its CDC ACM port, and most
+	  likely also a DHCP client.  See this thread about using the
+	  4G modem from Verizon:
+
+	  http://ubuntuforums.org/showpost.php?p=10589647&postcount=17
 
 endmenu

@@ -23,14 +23,13 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * Authors:
- *   Thomas Hellström <thomas-at-tungstengraphics-dot-com>
+ *   Thomas HellstrÃ¶m <thomas-at-tungstengraphics-dot-com>
  */
 
 #ifndef _VERMILION_H_
 #define _VERMILION_H_
 
 #include <linux/kernel.h>
-#include <linux/version.h>
 #include <linux/pci.h>
 #include <asm/atomic.h>
 #include <linux/mutex.h>

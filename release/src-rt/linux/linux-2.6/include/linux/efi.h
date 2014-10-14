@@ -18,6 +18,7 @@
 #include <linux/proc_fs.h>
 #include <linux/rtc.h>
 #include <linux/ioport.h>
+#include <linux/pfn.h>
 
 #include <asm/page.h>
 #include <asm/system.h>
@@ -100,7 +101,7 @@ typedef struct {
 	u64 attribute;
 } efi_memory_desc_t;
 
-typedef int (*efi_freemem_callback_t) (unsigned long start, unsigned long end, void *arg);
+typedef int (*efi_freemem_callback_t) (u64 start, u64 end, void *arg);
 
 /*
  * Types and defines for Time Services
@@ -207,6 +208,9 @@ typedef efi_status_t efi_set_virtual_address_map_t (unsigned long memory_map_siz
 #define EFI_GLOBAL_VARIABLE_GUID \
     EFI_GUID(  0x8be4df61, 0x93ca, 0x11d2, 0xaa, 0x0d, 0x00, 0xe0, 0x98, 0x03, 0x2b, 0x8c )
 
+#define UV_SYSTEM_TABLE_GUID \
+    EFI_GUID(  0x3b13a7d4, 0x633e, 0x11dd, 0x93, 0xec, 0xda, 0x25, 0x56, 0xd8, 0x95, 0x93 )
+
 typedef struct {
 	efi_guid_t guid;
 	unsigned long table;
@@ -254,6 +258,7 @@ extern struct efi {
 	unsigned long boot_info;	/* boot info table */
 	unsigned long hcdp;		/* HCDP table */
 	unsigned long uga;		/* UGA table */
+	unsigned long uv_systab;	/* UV system table */
 	efi_get_time_t *get_time;
 	efi_set_time_t *set_time;
 	efi_get_wakeup_time_t *get_wakeup_time;
@@ -275,18 +280,13 @@ efi_guidcmp (efi_guid_t left, efi_guid_t right)
 static inline char *
 efi_guid_unparse(efi_guid_t *guid, char *out)
 {
-	sprintf(out, "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
-		guid->b[3], guid->b[2], guid->b[1], guid->b[0],
-		guid->b[5], guid->b[4], guid->b[7], guid->b[6],
-		guid->b[8], guid->b[9], guid->b[10], guid->b[11],
-		guid->b[12], guid->b[13], guid->b[14], guid->b[15]);
+	sprintf(out, "%pUl", guid->b);
         return out;
 }
 
 extern void efi_init (void);
 extern void *efi_get_pal_addr (void);
 extern void efi_map_pal_code (void);
-extern void efi_map_memmap(void);
 extern void efi_memmap_walk (efi_freemem_callback_t callback, void *arg);
 extern void efi_gettimeofday (struct timespec *ts);
 extern void efi_enter_virtual_mode (void);	/* switch EFI to virtual mode, if possible */
@@ -294,14 +294,11 @@ extern u64 efi_get_iobase (void);
 extern u32 efi_mem_type (unsigned long phys_addr);
 extern u64 efi_mem_attributes (unsigned long phys_addr);
 extern u64 efi_mem_attribute (unsigned long phys_addr, unsigned long size);
-extern int efi_mem_attribute_range (unsigned long phys_addr, unsigned long size,
-				    u64 attr);
 extern int __init efi_uart_console_only (void);
 extern void efi_initialize_iomem_resources(struct resource *code_resource,
-					struct resource *data_resource);
+		struct resource *data_resource, struct resource *bss_resource);
 extern unsigned long efi_get_time(void);
 extern int efi_set_rtc_mmss(unsigned long nowtime);
-extern int is_available_memory(efi_memory_desc_t * md);
 extern struct efi_memory_map memmap;
 
 /**
@@ -393,5 +390,48 @@ struct efi_generic_dev_path {
 	u8 sub_type;
 	u16 length;
 } __attribute ((packed));
+
+static inline void memrange_efi_to_native(u64 *addr, u64 *npages)
+{
+	*npages = PFN_UP(*addr + (*npages<<EFI_PAGE_SHIFT)) - PFN_DOWN(*addr);
+	*addr &= PAGE_MASK;
+}
+
+#if defined(CONFIG_EFI_VARS) || defined(CONFIG_EFI_VARS_MODULE)
+/*
+ * EFI Variable support.
+ *
+ * Different firmware drivers can expose their EFI-like variables using
+ * the following.
+ */
+
+struct efivar_operations {
+	efi_get_variable_t *get_variable;
+	efi_get_next_variable_t *get_next_variable;
+	efi_set_variable_t *set_variable;
+};
+
+struct efivars {
+	/*
+	 * ->lock protects two things:
+	 * 1) ->list - adds, removals, reads, writes
+	 * 2) ops.[gs]et_variable() calls.
+	 * It must not be held when creating sysfs entries or calling kmalloc.
+	 * ops.get_next_variable() is only called from register_efivars(),
+	 * which is protected by the BKL, so that path is safe.
+	 */
+	spinlock_t lock;
+	struct list_head list;
+	struct kset *kset;
+	struct bin_attribute *new_var, *del_var;
+	const struct efivar_operations *ops;
+};
+
+int register_efivars(struct efivars *efivars,
+		     const struct efivar_operations *ops,
+		     struct kobject *parent_kobj);
+void unregister_efivars(struct efivars *efivars);
+
+#endif /* CONFIG_EFI_VARS */
 
 #endif /* _LINUX_EFI_H */

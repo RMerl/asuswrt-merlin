@@ -20,6 +20,7 @@
 #include <linux/sched.h>
 #include <linux/unistd.h>
 #include <linux/file.h>
+#include <linux/fdtable.h>
 #include <linux/fs.h>
 #include <linux/syscalls.h>
 #include <linux/workqueue.h>
@@ -30,7 +31,7 @@
 #include <asm/rtlx.h>
 #include <asm/kspd.h>
 
-static struct workqueue_struct *workqueue = NULL;
+static struct workqueue_struct *workqueue;
 static struct work_struct work;
 
 extern unsigned long cpu_khz;
@@ -57,7 +58,7 @@ struct mtsp_syscall_generic {
 };
 
 static struct list_head kspd_notifylist;
-static int sp_stopping = 0;
+static int sp_stopping;
 
 /* these should match with those in the SDE kit */
 #define MTSP_SYSCALL_BASE	0
@@ -81,6 +82,7 @@ static int sp_stopping = 0;
 #define MTSP_O_SHLOCK		0x0010
 #define MTSP_O_EXLOCK		0x0020
 #define MTSP_O_ASYNC		0x0040
+/* XXX: check which of these is actually O_SYNC vs O_DSYNC */
 #define MTSP_O_FSYNC		O_SYNC
 #define MTSP_O_NOFOLLOW		0x0100
 #define MTSP_O_SYNC		0x0080
@@ -89,7 +91,7 @@ static int sp_stopping = 0;
 #define MTSP_O_EXCL		0x0800
 #define MTSP_O_BINARY		0x8000
 
-#define SP_VPE 1
+extern int tclimit;
 
 struct apsp_table  {
 	int sp;
@@ -118,11 +120,11 @@ struct apsp_table syscall_command_table[] = {
 
 static int sp_syscall(int num, int arg0, int arg1, int arg2, int arg3)
 {
-	register long int _num  __asm__ ("$2") = num;
-	register long int _arg0  __asm__ ("$4") = arg0;
-	register long int _arg1  __asm__ ("$5") = arg1;
-	register long int _arg2  __asm__ ("$6") = arg2;
-	register long int _arg3  __asm__ ("$7") = arg3;
+	register long int _num  __asm__("$2") = num;
+	register long int _arg0  __asm__("$4") = arg0;
+	register long int _arg1  __asm__("$5") = arg1;
+	register long int _arg2  __asm__("$6") = arg2;
+	register long int _arg3  __asm__("$7") = arg3;
 
 	mm_segment_t old_fs;
 
@@ -161,8 +163,7 @@ static unsigned int translate_open_flags(int flags)
 	int i;
 	unsigned int ret = 0;
 
-	for (i = 0; i < (sizeof(open_flags_table) / sizeof(struct apsp_table));
-	     i++) {
+	for (i = 0; i < ARRAY_SIZE(open_flags_table); i++) {
 		if( (flags & open_flags_table[i].sp) ) {
 			ret |= open_flags_table[i].ap;
 		}
@@ -172,13 +173,20 @@ static unsigned int translate_open_flags(int flags)
 }
 
 
-static void sp_setfsuidgid( uid_t uid, gid_t gid)
+static int sp_setfsuidgid(uid_t uid, gid_t gid)
 {
-	current->fsuid = uid;
-	current->fsgid = gid;
+	struct cred *new;
 
-	key_fsuid_changed(current);
-	key_fsgid_changed(current);
+	new = prepare_creds();
+	if (!new)
+		return -ENOMEM;
+
+	new->fsuid = uid;
+	new->fsgid = gid;
+
+	commit_creds(new);
+
+	return 0;
 }
 
 /*
@@ -196,7 +204,7 @@ void sp_work_handle_request(void)
 	mm_segment_t old_fs;
 	struct timeval tv;
 	struct timezone tz;
-	int cmd;
+	int err, cmd;
 
 	char *vcwd;
 	int size;
@@ -222,11 +230,14 @@ void sp_work_handle_request(void)
 		}
 	}
 
-	/* Run the syscall at the priviledge of the user who loaded the
+	/* Run the syscall at the privilege of the user who loaded the
 	   SP program */
 
-	if (vpe_getuid(SP_VPE))
-		sp_setfsuidgid( vpe_getuid(SP_VPE), vpe_getgid(SP_VPE));
+	if (vpe_getuid(tclimit)) {
+		err = sp_setfsuidgid(vpe_getuid(tclimit), vpe_getgid(tclimit));
+		if (!err)
+			pr_err("Change of creds failed\n");
+	}
 
 	switch (sc.cmd) {
 	/* needs the flags argument translating from SDE kit to
@@ -239,13 +250,13 @@ void sp_work_handle_request(void)
  	case MTSP_SYSCALL_GETTOD:
  		memset(&tz, 0, sizeof(tz));
  		if ((ret.retval = sp_syscall(__NR_gettimeofday, (int)&tv,
- 		                             (int)&tz, 0,0)) == 0)
-		ret.retval = tv.tv_sec;
+					     (int)&tz, 0, 0)) == 0)
+			ret.retval = tv.tv_sec;
 		break;
 
  	case MTSP_SYSCALL_EXIT:
 		list_for_each_entry(n, &kspd_notifylist, list)
- 			n->kspd_sp_exit(SP_VPE);
+			n->kspd_sp_exit(tclimit);
 		sp_stopping = 1;
 
 		printk(KERN_DEBUG "KSPD got exit syscall from SP exitcode %d\n",
@@ -255,7 +266,7 @@ void sp_work_handle_request(void)
  	case MTSP_SYSCALL_OPEN:
  		generic.arg1 = translate_open_flags(generic.arg1);
 
- 		vcwd = vpe_getcwd(SP_VPE);
+		vcwd = vpe_getcwd(tclimit);
 
 		/* change to cwd of the process that loaded the SP program */
 		old_fs = get_fs();
@@ -283,8 +294,11 @@ void sp_work_handle_request(void)
 		break;
  	} /* switch */
 
-	if (vpe_getuid(SP_VPE))
-		sp_setfsuidgid( 0, 0);
+	if (vpe_getuid(tclimit)) {
+		err = sp_setfsuidgid(0, 0);
+		if (!err)
+			pr_err("restoring old creds failed\n");
+	}
 
 	old_fs = get_fs();
 	set_fs(KERNEL_DS);
@@ -328,7 +342,7 @@ static void sp_cleanup(void)
 	sys_chdir("/");
 }
 
-static int channel_open = 0;
+static int channel_open;
 
 /* the work handler */
 static void sp_work(struct work_struct *unused)
@@ -367,10 +381,9 @@ static void startwork(int vpe)
 		}
 
 		INIT_WORK(&work, sp_work);
-		queue_work(workqueue, &work);
-	} else
-		queue_work(workqueue, &work);
+	}
 
+	queue_work(workqueue, &work);
 }
 
 static void stopwork(int vpe)
@@ -392,7 +405,7 @@ static int kspd_module_init(void)
 
 	notify.start = startwork;
 	notify.stop = stopwork;
-	vpe_notify(SP_VPE, &notify);
+	vpe_notify(tclimit, &notify);
 
 	return 0;
 }

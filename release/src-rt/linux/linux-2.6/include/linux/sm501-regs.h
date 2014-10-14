@@ -15,6 +15,26 @@
 
 /* config 1 */
 #define SM501_SYSTEM_CONTROL 		(0x000000)
+
+#define SM501_SYSCTRL_PANEL_TRISTATE	(1<<0)
+#define SM501_SYSCTRL_MEM_TRISTATE	(1<<1)
+#define SM501_SYSCTRL_CRT_TRISTATE	(1<<2)
+
+#define SM501_SYSCTRL_PCI_SLAVE_BURST_MASK (3<<4)
+#define SM501_SYSCTRL_PCI_SLAVE_BURST_1	(0<<4)
+#define SM501_SYSCTRL_PCI_SLAVE_BURST_2	(1<<4)
+#define SM501_SYSCTRL_PCI_SLAVE_BURST_4	(2<<4)
+#define SM501_SYSCTRL_PCI_SLAVE_BURST_8	(3<<4)
+
+#define SM501_SYSCTRL_PCI_CLOCK_RUN_EN	(1<<6)
+#define SM501_SYSCTRL_PCI_RETRY_DISABLE	(1<<7)
+#define SM501_SYSCTRL_PCI_SUBSYS_LOCK	(1<<11)
+#define SM501_SYSCTRL_PCI_BURST_READ_EN	(1<<15)
+
+#define SM501_SYSCTRL_2D_ENGINE_STATUS	(1<<19)
+
+/* miscellaneous control */
+
 #define SM501_MISC_CONTROL		(0x000004)
 
 #define SM501_MISC_BUS_SH		(0x0)
@@ -111,10 +131,13 @@
 
 #define SM501_DEVICEID_SM501		(0x05010000)
 #define SM501_DEVICEID_IDMASK		(0xffff0000)
+#define SM501_DEVICEID_REVMASK		(0x000000ff)
 
 #define SM501_PLLCLOCK_COUNT		(0x000064)
 #define SM501_MISC_TIMING		(0x000068)
 #define SM501_CURRENT_SDRAM_CLOCK	(0x00006C)
+
+#define SM501_PROGRAMMABLE_PLL_CONTROL	(0x000074)
 
 /* GPIO base */
 #define SM501_GPIO			(0x010000)
@@ -153,7 +176,7 @@
 /* USB slave/gadget data port base */
 #define SM501_USB_GADGET_DATA		(0x070000)
 
-/* Display contoller/video engine base */
+/* Display controller/video engine base */
 #define SM501_DC			(0x080000)
 
 /* common defines for the SM501 address registers */

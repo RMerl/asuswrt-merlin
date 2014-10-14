@@ -2,8 +2,6 @@
 #define _LINUX_JOYSTICK_H
 
 /*
- * $Id: joystick.h,v 1.3 2000/11/30 11:07:05 vojtech Exp $
- *
  *  Copyright (C) 1996-2000 Vojtech Pavlik
  *
  *  Sponsored by SuSE
@@ -29,7 +27,7 @@
  * Vojtech Pavlik, Ucitelska 1576, Prague 8, 182 00 Czech Republic
  */
 
-#include <asm/types.h>
+#include <linux/types.h>
 #include <linux/input.h>
 
 /*
@@ -66,8 +64,8 @@ struct js_event {
 #define JSIOCSCORR		_IOW('j', 0x21, struct js_corr)			/* set correction values */
 #define JSIOCGCORR		_IOR('j', 0x22, struct js_corr)			/* get correction values */
 
-#define JSIOCSAXMAP		_IOW('j', 0x31, __u8[ABS_MAX + 1])		/* set axis mapping */
-#define JSIOCGAXMAP		_IOR('j', 0x32, __u8[ABS_MAX + 1])		/* get axis mapping */
+#define JSIOCSAXMAP		_IOW('j', 0x31, __u8[ABS_CNT])			/* set axis mapping */
+#define JSIOCGAXMAP		_IOR('j', 0x32, __u8[ABS_CNT])			/* get axis mapping */
 #define JSIOCSBTNMAP		_IOW('j', 0x33, __u16[KEY_MAX - BTN_MISC + 1])	/* set button mapping */
 #define JSIOCGBTNMAP		_IOR('j', 0x34, __u16[KEY_MAX - BTN_MISC + 1])	/* get button mapping */
 

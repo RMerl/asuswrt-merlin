@@ -15,6 +15,8 @@
 #ifndef _MD_P_H
 #define _MD_P_H
 
+#include <linux/types.h>
+
 /*
  * RAID superblock.
  *
@@ -43,14 +45,11 @@
  */
 #define MD_RESERVED_BYTES		(64 * 1024)
 #define MD_RESERVED_SECTORS		(MD_RESERVED_BYTES / 512)
-#define MD_RESERVED_BLOCKS		(MD_RESERVED_BYTES / BLOCK_SIZE)
 
 #define MD_NEW_SIZE_SECTORS(x)		((x & ~(MD_RESERVED_SECTORS - 1)) - MD_RESERVED_SECTORS)
-#define MD_NEW_SIZE_BLOCKS(x)		((x & ~(MD_RESERVED_BLOCKS - 1)) - MD_RESERVED_BLOCKS)
 
 #define MD_SB_BYTES			4096
 #define MD_SB_WORDS			(MD_SB_BYTES / 4)
-#define MD_SB_BLOCKS			(MD_SB_BYTES / BLOCK_SIZE)
 #define MD_SB_SECTORS			(MD_SB_BYTES / 512)
 
 /*
@@ -197,6 +196,8 @@ static inline __u64 md_event(mdp_super_t *sb) {
 	return (ev<<32)| sb->events_lo;
 }
 
+#define MD_SUPERBLOCK_1_TIME_SEC_MASK ((1ULL<<40) - 1)
+
 /*
  * The version-1 superblock :
  * All numeric fields are little-endian.
@@ -231,7 +232,7 @@ struct mdp_superblock_1 {
 	__le64	reshape_position;	/* next address in array-space for reshape */
 	__le32	delta_disks;	/* change in number of raid_disks		*/
 	__le32	new_layout;	/* new layout					*/
-	__le32	new_chunk;	/* new chunk size (bytes)			*/
+	__le32	new_chunk;	/* new chunk size (512byte sectors)		*/
 	__u8	pad1[128-124];	/* set to 0 when written */
 
 	/* constant this-device information - 64 bytes */
@@ -250,7 +251,7 @@ struct mdp_superblock_1 {
 	__le64	utime;		/* 40 bits second, 24 btes microseconds */
 	__le64	events;		/* incremented when superblock updated */
 	__le64	resync_offset;	/* data before this offset (from data_offset) known to be in sync */
-	__le32	sb_csum;	/* checksum upto devs[max_dev] */
+	__le32	sb_csum;	/* checksum up to devs[max_dev] */
 	__le32	max_dev;	/* size of devs[] array to consider */
 	__u8	pad3[64-32];	/* set to 0 when writing */
 

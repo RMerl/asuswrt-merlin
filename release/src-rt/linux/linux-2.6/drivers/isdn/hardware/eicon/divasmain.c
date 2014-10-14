@@ -15,7 +15,6 @@
 #include <asm/uaccess.h>
 #include <asm/io.h>
 #include <linux/ioport.h>
-#include <linux/workqueue.h>
 #include <linux/pci.h>
 #include <linux/interrupt.h>
 #include <linux/list.h>
@@ -112,41 +111,40 @@ typedef struct _diva_os_thread_dpc {
   This table should be sorted by PCI device ID
   */
 static struct pci_device_id divas_pci_tbl[] = {
-/* Diva Server BRI-2M PCI 0xE010 */
-	{PCI_VENDOR_ID_EICON, PCI_DEVICE_ID_EICON_MAESTRA,
-	 PCI_ANY_ID, PCI_ANY_ID, 0, 0, CARDTYPE_MAESTRA_PCI},
-/* Diva Server 4BRI-8M PCI 0xE012 */
-	{PCI_VENDOR_ID_EICON, PCI_DEVICE_ID_EICON_MAESTRAQ,
-	 PCI_ANY_ID, PCI_ANY_ID, 0, 0, CARDTYPE_DIVASRV_Q_8M_PCI},
-/* Diva Server 4BRI-8M 2.0 PCI 0xE013 */
-	{PCI_VENDOR_ID_EICON, PCI_DEVICE_ID_EICON_MAESTRAQ_U,
-	 PCI_ANY_ID, PCI_ANY_ID, 0, 0, CARDTYPE_DIVASRV_Q_8M_V2_PCI},
-/* Diva Server PRI-30M PCI 0xE014 */
-	{PCI_VENDOR_ID_EICON, PCI_DEVICE_ID_EICON_MAESTRAP,
-	 PCI_ANY_ID, PCI_ANY_ID, 0, 0, CARDTYPE_DIVASRV_P_30M_PCI},
-/* Diva Server PRI 2.0 adapter 0xE015 */
-	{PCI_VENDOR_ID_EICON, PCI_DEVICE_ID_EICON_MAESTRAP_2,
-	 PCI_ANY_ID, PCI_ANY_ID, 0, 0, CARDTYPE_DIVASRV_P_30M_V2_PCI},
-/* Diva Server Voice 4BRI-8M PCI 0xE016 */
-	{PCI_VENDOR_ID_EICON, PCI_DEVICE_ID_EICON_4BRI_VOIP,
-	 PCI_ANY_ID, PCI_ANY_ID, 0, 0, CARDTYPE_DIVASRV_VOICE_Q_8M_PCI},
-/* Diva Server Voice 4BRI-8M 2.0 PCI 0xE017 */
-	{PCI_VENDOR_ID_EICON, PCI_DEVICE_ID_EICON_4BRI_2_VOIP,
-	 PCI_ANY_ID, PCI_ANY_ID, 0, 0, CARDTYPE_DIVASRV_VOICE_Q_8M_V2_PCI},
-/* Diva Server BRI-2M 2.0 PCI 0xE018 */
-	{PCI_VENDOR_ID_EICON, PCI_DEVICE_ID_EICON_BRI2M_2,
-	 PCI_ANY_ID, PCI_ANY_ID, 0, 0, CARDTYPE_DIVASRV_B_2M_V2_PCI},
-/* Diva Server Voice PRI 2.0 PCI 0xE019 */
-	{PCI_VENDOR_ID_EICON, PCI_DEVICE_ID_EICON_MAESTRAP_2_VOIP,
-	 PCI_ANY_ID, PCI_ANY_ID, 0, 0,
-	 CARDTYPE_DIVASRV_VOICE_P_30M_V2_PCI},
-/* Diva Server 2FX 0xE01A */
-	{PCI_VENDOR_ID_EICON, PCI_DEVICE_ID_EICON_2F,
-	 PCI_ANY_ID, PCI_ANY_ID, 0, 0, CARDTYPE_DIVASRV_B_2F_PCI},
-/* Diva Server Voice BRI-2M 2.0 PCI 0xE01B */
-	{PCI_VENDOR_ID_EICON, PCI_DEVICE_ID_EICON_BRI2M_2_VOIP,
-	 PCI_ANY_ID, PCI_ANY_ID, 0, 0, CARDTYPE_DIVASRV_VOICE_B_2M_V2_PCI},
-	{0,}			/* 0 terminated list. */
+	/* Diva Server BRI-2M PCI 0xE010 */
+	{ PCI_VDEVICE(EICON, PCI_DEVICE_ID_EICON_MAESTRA),
+		CARDTYPE_MAESTRA_PCI },
+	/* Diva Server 4BRI-8M PCI 0xE012 */
+	{ PCI_VDEVICE(EICON, PCI_DEVICE_ID_EICON_MAESTRAQ),
+		CARDTYPE_DIVASRV_Q_8M_PCI },
+	/* Diva Server 4BRI-8M 2.0 PCI 0xE013 */
+	{ PCI_VDEVICE(EICON, PCI_DEVICE_ID_EICON_MAESTRAQ_U),
+		CARDTYPE_DIVASRV_Q_8M_V2_PCI },
+	/* Diva Server PRI-30M PCI 0xE014 */
+	{ PCI_VDEVICE(EICON, PCI_DEVICE_ID_EICON_MAESTRAP),
+		CARDTYPE_DIVASRV_P_30M_PCI },
+	/* Diva Server PRI 2.0 adapter 0xE015 */
+	{ PCI_VDEVICE(EICON, PCI_DEVICE_ID_EICON_MAESTRAP_2),
+		CARDTYPE_DIVASRV_P_30M_V2_PCI },
+	/* Diva Server Voice 4BRI-8M PCI 0xE016 */
+	{ PCI_VDEVICE(EICON, PCI_DEVICE_ID_EICON_4BRI_VOIP),
+		CARDTYPE_DIVASRV_VOICE_Q_8M_PCI },
+	/* Diva Server Voice 4BRI-8M 2.0 PCI 0xE017 */
+	{ PCI_VDEVICE(EICON, PCI_DEVICE_ID_EICON_4BRI_2_VOIP),
+		CARDTYPE_DIVASRV_VOICE_Q_8M_V2_PCI },
+	/* Diva Server BRI-2M 2.0 PCI 0xE018 */
+	{ PCI_VDEVICE(EICON, PCI_DEVICE_ID_EICON_BRI2M_2),
+		CARDTYPE_DIVASRV_B_2M_V2_PCI },
+	/* Diva Server Voice PRI 2.0 PCI 0xE019 */
+	{ PCI_VDEVICE(EICON, PCI_DEVICE_ID_EICON_MAESTRAP_2_VOIP),
+		CARDTYPE_DIVASRV_VOICE_P_30M_V2_PCI },
+	/* Diva Server 2FX 0xE01A */
+	{ PCI_VDEVICE(EICON, PCI_DEVICE_ID_EICON_2F),
+		CARDTYPE_DIVASRV_B_2F_PCI },
+	/* Diva Server Voice BRI-2M 2.0 PCI 0xE01B */
+	{ PCI_VDEVICE(EICON, PCI_DEVICE_ID_EICON_BRI2M_2_VOIP),
+		CARDTYPE_DIVASRV_VOICE_B_2M_V2_PCI },
+	{ 0, }			/* 0 terminated list. */
 };
 MODULE_DEVICE_TABLE(pci, divas_pci_tbl);
 
@@ -393,7 +391,7 @@ void diva_free_dma_map(void *hdev, struct _diva_dma_map_entry *pmap)
 	dma_addr_t dma_handle;
 	void *addr_handle;
 
-	for (i = 0; (pmap != 0); i++) {
+	for (i = 0; (pmap != NULL); i++) {
 		diva_get_dma_map_entry(pmap, i, &cpu_addr, &phys_addr);
 		if (!cpu_addr) {
 			break;
@@ -547,7 +545,6 @@ void diva_os_remove_soft_isr(diva_os_soft_isr_t * psoft_isr)
 		void *mem;
 
 		tasklet_kill(&pdpc->divas_task);
-		flush_scheduled_work();
 		mem = psoft_isr->object;
 		psoft_isr->object = NULL;
 		diva_os_free(0, mem);
@@ -806,7 +803,6 @@ static int DIVA_INIT_FUNCTION divas_init(void)
 
 	if (!create_divas_proc()) {
 #ifdef MODULE
-		remove_divas_proc();
 		divas_unregister_chrdev();
 		divasfunc_exit();
 #endif

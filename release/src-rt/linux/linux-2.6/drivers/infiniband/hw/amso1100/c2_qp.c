@@ -36,6 +36,7 @@
  */
 
 #include <linux/delay.h>
+#include <linux/gfp.h>
 
 #include "c2.h"
 #include "c2_vq.h"
@@ -121,7 +122,7 @@ void c2_set_qp_state(struct c2_qp *qp, int c2_state)
 	int new_state = to_ib_state(c2_state);
 
 	pr_debug("%s: qp[%p] state modify %s --> %s\n",
-	       __FUNCTION__,
+	       __func__,
 		qp,
 		to_ib_state_str(qp->state),
 		to_ib_state_str(new_state));
@@ -141,7 +142,7 @@ int c2_qp_modify(struct c2_dev *c2dev, struct c2_qp *qp,
 	int err;
 
 	pr_debug("%s:%d qp=%p, %s --> %s\n",
-		__FUNCTION__, __LINE__,
+		__func__, __LINE__,
 		qp,
 		to_ib_state_str(qp->state),
 		to_ib_state_str(attr->qp_state));
@@ -224,7 +225,7 @@ int c2_qp_modify(struct c2_dev *c2dev, struct c2_qp *qp,
 		qp->state = next_state;
 #ifdef DEBUG
 	else
-		pr_debug("%s: c2_errno=%d\n", __FUNCTION__, err);
+		pr_debug("%s: c2_errno=%d\n", __func__, err);
 #endif
 	/*
 	 * If we're going to error and generating the event here, then
@@ -243,7 +244,7 @@ int c2_qp_modify(struct c2_dev *c2dev, struct c2_qp *qp,
 	vq_req_free(c2dev, vq_req);
 
 	pr_debug("%s:%d qp=%p, cur_state=%s\n",
-		__FUNCTION__, __LINE__,
+		__func__, __LINE__,
 		qp,
 		to_ib_state_str(qp->state));
 	return err;
@@ -506,6 +507,7 @@ int c2_alloc_qp(struct c2_dev *c2dev,
 	qp->send_sgl_depth = qp_attrs->cap.max_send_sge;
 	qp->rdma_write_sgl_depth = qp_attrs->cap.max_send_sge;
 	qp->recv_sgl_depth = qp_attrs->cap.max_recv_sge;
+	init_waitqueue_head(&qp->wait);
 
 	/* Initialize the SQ MQ */
 	q_size = be32_to_cpu(reply->sq_depth);
@@ -610,7 +612,7 @@ void c2_free_qp(struct c2_dev *c2dev, struct c2_qp *qp)
 	c2_unlock_cqs(send_cq, recv_cq);
 
 	/*
-	 * Destory qp in the rnic...
+	 * Destroy qp in the rnic...
 	 */
 	destroy_qp(c2dev, qp);
 
@@ -797,8 +799,10 @@ int c2_post_send(struct ib_qp *ibqp, struct ib_send_wr *ib_wr,
 	u8 actual_sge_count;
 	u32 msg_size;
 
-	if (qp->state > IB_QPS_RTS)
-		return -EINVAL;
+	if (qp->state > IB_QPS_RTS) {
+		err = -EINVAL;
+		goto out;
+	}
 
 	while (ib_wr) {
 
@@ -810,16 +814,24 @@ int c2_post_send(struct ib_qp *ibqp, struct ib_send_wr *ib_wr,
 
 		switch (ib_wr->opcode) {
 		case IB_WR_SEND:
-			if (ib_wr->send_flags & IB_SEND_SOLICITED) {
-				c2_wr_set_id(&wr, C2_WR_TYPE_SEND_SE);
-				msg_size = sizeof(struct c2wr_send_req);
+		case IB_WR_SEND_WITH_INV:
+			if (ib_wr->opcode == IB_WR_SEND) {
+				if (ib_wr->send_flags & IB_SEND_SOLICITED)
+					c2_wr_set_id(&wr, C2_WR_TYPE_SEND_SE);
+				else
+					c2_wr_set_id(&wr, C2_WR_TYPE_SEND);
+				wr.sqwr.send.remote_stag = 0;
 			} else {
-				c2_wr_set_id(&wr, C2_WR_TYPE_SEND);
-				msg_size = sizeof(struct c2wr_send_req);
+				if (ib_wr->send_flags & IB_SEND_SOLICITED)
+					c2_wr_set_id(&wr, C2_WR_TYPE_SEND_SE_INV);
+				else
+					c2_wr_set_id(&wr, C2_WR_TYPE_SEND_INV);
+				wr.sqwr.send.remote_stag =
+					cpu_to_be32(ib_wr->ex.invalidate_rkey);
 			}
 
-			wr.sqwr.send.remote_stag = 0;
-			msg_size += sizeof(struct c2_data_addr) * ib_wr->num_sge;
+			msg_size = sizeof(struct c2wr_send_req) +
+				sizeof(struct c2_data_addr) * ib_wr->num_sge;
 			if (ib_wr->num_sge > qp->send_sgl_depth) {
 				err = -EINVAL;
 				break;
@@ -921,6 +933,7 @@ int c2_post_send(struct ib_qp *ibqp, struct ib_send_wr *ib_wr,
 		ib_wr = ib_wr->next;
 	}
 
+out:
 	if (err)
 		*bad_wr = ib_wr;
 	return err;
@@ -935,8 +948,10 @@ int c2_post_receive(struct ib_qp *ibqp, struct ib_recv_wr *ib_wr,
 	unsigned long lock_flags;
 	int err = 0;
 
-	if (qp->state > IB_QPS_RTS)
-		return -EINVAL;
+	if (qp->state > IB_QPS_RTS) {
+		err = -EINVAL;
+		goto out;
+	}
 
 	/*
 	 * Try and post each work request
@@ -989,6 +1004,7 @@ int c2_post_receive(struct ib_qp *ibqp, struct ib_recv_wr *ib_wr,
 		ib_wr = ib_wr->next;
 	}
 
+out:
 	if (err)
 		*bad_wr = ib_wr;
 	return err;

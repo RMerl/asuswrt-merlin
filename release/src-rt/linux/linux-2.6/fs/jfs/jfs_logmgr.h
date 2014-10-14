@@ -144,7 +144,7 @@ struct logpage {
  *
  * (this comment should be rewritten !)
  * jfs uses only "after" log records (only a single writer is allowed
- * in a  page, pages are written to temporary paging space if
+ * in a page, pages are written to temporary paging space if
  * if they must be written to disk before commit, and i/o is
  * scheduled for modified pages to their home location after
  * the log records containing the after values and the commit
@@ -153,7 +153,7 @@ struct logpage {
  *
  * a log record consists of a data area of variable length followed by
  * a descriptor of fixed size LOGRDSIZE bytes.
- * the  data area is rounded up to an integral number of 4-bytes and
+ * the data area is rounded up to an integral number of 4-bytes and
  * must be no longer than LOGPSIZE.
  * the descriptor is of size of multiple of 4-bytes and aligned on a
  * 4-byte boundary.
@@ -215,13 +215,13 @@ struct lrd {
 	union {
 
 		/*
-		 *      COMMIT: commit
+		 *	COMMIT: commit
 		 *
 		 * transaction commit: no type-dependent information;
 		 */
 
 		/*
-		 *      REDOPAGE: after-image
+		 *	REDOPAGE: after-image
 		 *
 		 * apply after-image;
 		 *
@@ -236,7 +236,7 @@ struct lrd {
 		} redopage;	/* (20) */
 
 		/*
-		 *      NOREDOPAGE: the page is freed
+		 *	NOREDOPAGE: the page is freed
 		 *
 		 * do not apply after-image records which precede this record
 		 * in the log with the same page block number to this page.
@@ -252,7 +252,7 @@ struct lrd {
 		} noredopage;	/* (20) */
 
 		/*
-		 *      UPDATEMAP: update block allocation map
+		 *	UPDATEMAP: update block allocation map
 		 *
 		 * either in-line PXD,
 		 * or     out-of-line  XADLIST;
@@ -268,7 +268,7 @@ struct lrd {
 		} updatemap;	/* (20) */
 
 		/*
-		 *      NOREDOINOEXT: the inode extent is freed
+		 *	NOREDOINOEXT: the inode extent is freed
 		 *
 		 * do not apply after-image records which precede this
 		 * record in the log with the any of the 4 page block
@@ -286,22 +286,22 @@ struct lrd {
 		} noredoinoext;	/* (20) */
 
 		/*
-		 *      SYNCPT: log sync point
+		 *	SYNCPT: log sync point
 		 *
-		 * replay log upto syncpt address specified;
+		 * replay log up to syncpt address specified;
 		 */
 		struct {
 			__le32 sync;	/* 4: syncpt address (0 = here) */
 		} syncpt;
 
 		/*
-		 *      MOUNT: file system mount
+		 *	MOUNT: file system mount
 		 *
 		 * file system mount: no type-dependent information;
 		 */
 
 		/*
-		 *      ? FREEXTENT: free specified extent(s)
+		 *	? FREEXTENT: free specified extent(s)
 		 *
 		 * free specified extent(s) from block allocation map
 		 * N.B.: nextents should be length of data/sizeof(xad_t)
@@ -314,7 +314,7 @@ struct lrd {
 		} freextent;
 
 		/*
-		 *      ? NOREDOFILE: this file is freed
+		 *	? NOREDOFILE: this file is freed
 		 *
 		 * do not apply records which precede this record in the log
 		 * with the same inode number.
@@ -330,7 +330,7 @@ struct lrd {
 		} noredofile;
 
 		/*
-		 *      ? NEWPAGE:
+		 *	? NEWPAGE:
 		 *
 		 * metadata type dependent
 		 */
@@ -342,7 +342,7 @@ struct lrd {
 		} newpage;
 
 		/*
-		 *      ? DUMMY: filler
+		 *	? DUMMY: filler
 		 *
 		 * no type-dependent information
 		 */
@@ -376,7 +376,7 @@ struct jfs_log {
 	int size;		/* 4: log size in log page (in page) */
 	int l2bsize;		/* 4: log2 of bsize */
 
-	long flag;		/* 4: flag */
+	unsigned long flag;	/* 4: flag */
 
 	struct lbuf *lbuf_free;	/* 4: free lbufs */
 	wait_queue_head_t free_wait;	/* 4: */

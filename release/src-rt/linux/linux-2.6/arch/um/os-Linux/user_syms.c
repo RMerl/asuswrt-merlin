@@ -14,20 +14,20 @@
 #undef memset
 
 extern size_t strlen(const char *);
-extern void *memcpy(void *, const void *, size_t);
 extern void *memmove(void *, const void *, size_t);
 extern void *memset(void *, int, size_t);
 extern int printf(const char *, ...);
 
-/* If they're not defined, the export is included in lib/string.c.*/
-#ifdef __HAVE_ARCH_STRLEN
-EXPORT_SYMBOL(strlen);
-#endif
+/* If it's not defined, the export is included in lib/string.c.*/
 #ifdef __HAVE_ARCH_STRSTR
 EXPORT_SYMBOL(strstr);
 #endif
 
+#ifndef __x86_64__
+extern void *memcpy(void *, const void *, size_t);
 EXPORT_SYMBOL(memcpy);
+#endif
+
 EXPORT_SYMBOL(memmove);
 EXPORT_SYMBOL(memset);
 EXPORT_SYMBOL(printf);
@@ -37,8 +37,8 @@ EXPORT_SYMBOL(printf);
  * good; so the versions of these symbols will always match
  */
 #define EXPORT_SYMBOL_PROTO(sym)       \
-       int sym(void);                  \
-       EXPORT_SYMBOL(sym);
+	int sym(void);                  \
+	EXPORT_SYMBOL(sym);
 
 extern void readdir64(void) __attribute__((weak));
 EXPORT_SYMBOL(readdir64);
@@ -102,6 +102,10 @@ EXPORT_SYMBOL_PROTO(getuid);
 
 EXPORT_SYMBOL_PROTO(fsync);
 EXPORT_SYMBOL_PROTO(fdatasync);
+
+EXPORT_SYMBOL_PROTO(lstat64);
+EXPORT_SYMBOL_PROTO(fstat64);
+EXPORT_SYMBOL_PROTO(mknod);
 
 /* Export symbols used by GCC for the stack protector. */
 extern void __stack_smash_handler(void *) __attribute__((weak));

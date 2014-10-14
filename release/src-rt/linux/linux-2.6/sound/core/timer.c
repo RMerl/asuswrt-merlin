@@ -1,6 +1,6 @@
 /*
  *  Timers abstract layer
- *  Copyright (c) by Jaroslav Kysela <perex@suse.cz>
+ *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  *
  *
  *   This program is free software; you can redistribute it and/or modify
@@ -19,7 +19,6 @@
  *
  */
 
-#include <sound/driver.h>
 #include <linux/delay.h>
 #include <linux/init.h>
 #include <linux/slab.h>
@@ -35,8 +34,8 @@
 #include <sound/initval.h>
 #include <linux/kmod.h>
 
-#if defined(CONFIG_SND_HPET) || defined(CONFIG_SND_HPET_MODULE)
-#define DEFAULT_TIMER_LIMIT 3
+#if defined(CONFIG_SND_HRTIMER) || defined(CONFIG_SND_HRTIMER_MODULE)
+#define DEFAULT_TIMER_LIMIT 4
 #elif defined(CONFIG_SND_RTCTIMER) || defined(CONFIG_SND_RTCTIMER_MODULE)
 #define DEFAULT_TIMER_LIMIT 2
 #else
@@ -44,11 +43,17 @@
 #endif
 
 static int timer_limit = DEFAULT_TIMER_LIMIT;
-MODULE_AUTHOR("Jaroslav Kysela <perex@suse.cz>, Takashi Iwai <tiwai@suse.de>");
+static int timer_tstamp_monotonic = 1;
+MODULE_AUTHOR("Jaroslav Kysela <perex@perex.cz>, Takashi Iwai <tiwai@suse.de>");
 MODULE_DESCRIPTION("ALSA timer interface");
 MODULE_LICENSE("GPL");
 module_param(timer_limit, int, 0444);
 MODULE_PARM_DESC(timer_limit, "Maximum global timers in system.");
+module_param(timer_tstamp_monotonic, int, 0444);
+MODULE_PARM_DESC(timer_tstamp_monotonic, "Use posix monotonic clock source for timestamps (default).");
+
+MODULE_ALIAS_CHARDEV(CONFIG_SND_MAJOR, SNDRV_MINOR_TIMER);
+MODULE_ALIAS("devname:snd/timer");
 
 struct snd_timer_user {
 	struct snd_timer_instance *timeri;
@@ -144,12 +149,10 @@ static struct snd_timer *snd_timer_find(struct snd_timer_id *tid)
 	return NULL;
 }
 
-#ifdef CONFIG_KMOD
+#ifdef CONFIG_MODULES
 
 static void snd_timer_request(struct snd_timer_id *tid)
 {
-	if (! current->fs->root)
-		return;
 	switch (tid->dev_class) {
 	case SNDRV_TIMER_CLASS_GLOBAL:
 		if (tid->device < timer_limit)
@@ -183,9 +186,8 @@ static void snd_timer_check_slave(struct snd_timer_instance *slave)
 		list_for_each_entry(master, &timer->open_list_head, open_list) {
 			if (slave->slave_class == master->slave_class &&
 			    slave->slave_id == master->slave_id) {
-				list_del(&slave->open_list);
-				list_add_tail(&slave->open_list,
-					      &master->slave_list_head);
+				list_move_tail(&slave->open_list,
+					       &master->slave_list_head);
 				spin_lock_irq(&slave_active_lock);
 				slave->master = master;
 				slave->timer = master->timer;
@@ -259,8 +261,8 @@ int snd_timer_open(struct snd_timer_instance **ti,
 	/* open a master instance */
 	mutex_lock(&register_mutex);
 	timer = snd_timer_find(tid);
-#ifdef CONFIG_KMOD
-	if (timer == NULL) {
+#ifdef CONFIG_MODULES
+	if (!timer) {
 		mutex_unlock(&register_mutex);
 		snd_timer_request(tid);
 		mutex_lock(&register_mutex);
@@ -306,7 +308,8 @@ int snd_timer_close(struct snd_timer_instance *timeri)
 	struct snd_timer *timer = NULL;
 	struct snd_timer_instance *slave, *tmp;
 
-	snd_assert(timeri != NULL, return -ENXIO);
+	if (snd_BUG_ON(!timeri))
+		return -ENXIO;
 
 	/* force to stop the timer */
 	snd_timer_stop(timeri);
@@ -381,14 +384,18 @@ static void snd_timer_notify1(struct snd_timer_instance *ti, int event)
 	struct snd_timer_instance *ts;
 	struct timespec tstamp;
 
-	getnstimeofday(&tstamp);
-	snd_assert(event >= SNDRV_TIMER_EVENT_START &&
-		   event <= SNDRV_TIMER_EVENT_PAUSE, return);
+	if (timer_tstamp_monotonic)
+		do_posix_clock_monotonic_gettime(&tstamp);
+	else
+		getnstimeofday(&tstamp);
+	if (snd_BUG_ON(event < SNDRV_TIMER_EVENT_START ||
+		       event > SNDRV_TIMER_EVENT_PAUSE))
+		return;
 	if (event == SNDRV_TIMER_EVENT_START ||
 	    event == SNDRV_TIMER_EVENT_CONTINUE)
 		resolution = snd_timer_resolution(ti);
 	if (ti->ccallback)
-		ti->ccallback(ti, SNDRV_TIMER_EVENT_START, &tstamp, resolution);
+		ti->ccallback(ti, event, &tstamp, resolution);
 	if (ti->flags & SNDRV_TIMER_IFLG_SLAVE)
 		return;
 	timer = ti->timer;
@@ -406,8 +413,7 @@ static void snd_timer_notify1(struct snd_timer_instance *ti, int event)
 static int snd_timer_start1(struct snd_timer *timer, struct snd_timer_instance *timeri,
 			    unsigned long sticks)
 {
-	list_del(&timeri->active_list);
-	list_add_tail(&timeri->active_list, &timer->active_list_head);
+	list_move_tail(&timeri->active_list, &timer->active_list_head);
 	if (timer->running) {
 		if (timer->hw.flags & SNDRV_TIMER_HW_SLAVE)
 			goto __start_now;
@@ -471,7 +477,8 @@ static int _snd_timer_stop(struct snd_timer_instance * timeri,
 	struct snd_timer *timer;
 	unsigned long flags;
 
-	snd_assert(timeri != NULL, return -ENXIO);
+	if (snd_BUG_ON(!timeri))
+		return -ENXIO;
 
 	if (timeri->flags & SNDRV_TIMER_IFLG_SLAVE) {
 		if (!keep_flag) {
@@ -737,7 +744,7 @@ void snd_timer_interrupt(struct snd_timer * timer, unsigned long ticks_left)
 	spin_unlock_irqrestore(&timer->lock, flags);
 
 	if (use_tasklet)
-		tasklet_hi_schedule(&timer->task_queue);
+		tasklet_schedule(&timer->task_queue);
 }
 
 /*
@@ -755,9 +762,10 @@ int snd_timer_new(struct snd_card *card, char *id, struct snd_timer_id *tid,
 		.dev_disconnect = snd_timer_dev_disconnect,
 	};
 
-	snd_assert(tid != NULL, return -EINVAL);
-	snd_assert(rtimer != NULL, return -EINVAL);
-	*rtimer = NULL;
+	if (snd_BUG_ON(!tid))
+		return -EINVAL;
+	if (rtimer)
+		*rtimer = NULL;
 	timer = kzalloc(sizeof(*timer), GFP_KERNEL);
 	if (timer == NULL) {
 		snd_printk(KERN_ERR "timer: cannot allocate\n");
@@ -785,13 +793,15 @@ int snd_timer_new(struct snd_card *card, char *id, struct snd_timer_id *tid,
 			return err;
 		}
 	}
-	*rtimer = timer;
+	if (rtimer)
+		*rtimer = timer;
 	return 0;
 }
 
 static int snd_timer_free(struct snd_timer *timer)
 {
-	snd_assert(timer != NULL, return -ENXIO);
+	if (!timer)
+		return 0;
 
 	mutex_lock(&register_mutex);
 	if (! list_empty(&timer->open_list_head)) {
@@ -824,8 +834,8 @@ static int snd_timer_dev_register(struct snd_device *dev)
 	struct snd_timer *timer = dev->device_data;
 	struct snd_timer *timer1;
 
-	snd_assert(timer != NULL && timer->hw.start != NULL &&
-		   timer->hw.stop != NULL, return -ENXIO);
+	if (snd_BUG_ON(!timer || !timer->hw.start || !timer->hw.stop))
+		return -ENXIO;
 	if (!(timer->hw.flags & SNDRV_TIMER_HW_SLAVE) &&
 	    !timer->hw.resolution && timer->hw.c_resolution == NULL)
 	    	return -EINVAL;
@@ -876,8 +886,9 @@ void snd_timer_notify(struct snd_timer *timer, int event, struct timespec *tstam
 
 	if (! (timer->hw.flags & SNDRV_TIMER_HW_SLAVE))
 		return;
-	snd_assert(event >= SNDRV_TIMER_EVENT_MSTART &&
-		   event <= SNDRV_TIMER_EVENT_MRESUME, return);
+	if (snd_BUG_ON(event < SNDRV_TIMER_EVENT_MSTART ||
+		       event > SNDRV_TIMER_EVENT_MRESUME))
+		return;
 	spin_lock_irqsave(&timer->lock, flags);
 	if (event == SNDRV_TIMER_EVENT_MSTART ||
 	    event == SNDRV_TIMER_EVENT_MCONTINUE ||
@@ -1150,6 +1161,7 @@ static void snd_timer_user_ccallback(struct snd_timer_instance *timeri,
 {
 	struct snd_timer_user *tu = timeri->callback_data;
 	struct snd_timer_tread r1;
+	unsigned long flags;
 
 	if (event >= SNDRV_TIMER_EVENT_START &&
 	    event <= SNDRV_TIMER_EVENT_PAUSE)
@@ -1159,9 +1171,9 @@ static void snd_timer_user_ccallback(struct snd_timer_instance *timeri,
 	r1.event = event;
 	r1.tstamp = *tstamp;
 	r1.val = resolution;
-	spin_lock(&tu->qlock);
+	spin_lock_irqsave(&tu->qlock, flags);
 	snd_timer_user_append_to_tqueue(tu, &r1);
-	spin_unlock(&tu->qlock);
+	spin_unlock_irqrestore(&tu->qlock, flags);
 	kill_fasync(&tu->fasync, SIGIO, POLL_IN);
 	wake_up(&tu->qchange_sleep);
 }
@@ -1182,8 +1194,12 @@ static void snd_timer_user_tinterrupt(struct snd_timer_instance *timeri,
 		spin_unlock(&tu->qlock);
 		return;
 	}
-	if (tu->last_resolution != resolution || ticks > 0)
-		getnstimeofday(&tstamp);
+	if (tu->last_resolution != resolution || ticks > 0) {
+		if (timer_tstamp_monotonic)
+			do_posix_clock_monotonic_gettime(&tstamp);
+		else
+			getnstimeofday(&tstamp);
+	}
 	if ((tu->filter & (1 << SNDRV_TIMER_EVENT_RESOLUTION)) &&
 	    tu->last_resolution != resolution) {
 		r1.event = SNDRV_TIMER_EVENT_RESOLUTION;
@@ -1223,6 +1239,11 @@ static void snd_timer_user_tinterrupt(struct snd_timer_instance *timeri,
 static int snd_timer_user_open(struct inode *inode, struct file *file)
 {
 	struct snd_timer_user *tu;
+	int err;
+
+	err = nonseekable_open(inode, file);
+	if (err < 0)
+		return err;
 
 	tu = kzalloc(sizeof(*tu), GFP_KERNEL);
 	if (tu == NULL)
@@ -1249,7 +1270,6 @@ static int snd_timer_user_release(struct inode *inode, struct file *file)
 	if (file->private_data) {
 		tu = file->private_data;
 		file->private_data = NULL;
-		fasync_helper(-1, file, 0, &tu->fasync);
 		if (tu->timeri)
 			snd_timer_close(tu->timeri);
 		kfree(tu->queue);
@@ -1382,13 +1402,10 @@ static int snd_timer_user_ginfo(struct file *file,
 	struct list_head *p;
 	int err = 0;
 
-	ginfo = kmalloc(sizeof(*ginfo), GFP_KERNEL);
-	if (! ginfo)
-		return -ENOMEM;
-	if (copy_from_user(ginfo, _ginfo, sizeof(*ginfo))) {
-		kfree(ginfo);
-		return -EFAULT;
-	}
+	ginfo = memdup_user(_ginfo, sizeof(*ginfo));
+	if (IS_ERR(ginfo))
+		return PTR_ERR(ginfo);
+
 	tid = ginfo->tid;
 	memset(ginfo, 0, sizeof(*ginfo));
 	ginfo->tid = tid;
@@ -1549,9 +1566,11 @@ static int snd_timer_user_info(struct file *file,
 	int err = 0;
 
 	tu = file->private_data;
-	snd_assert(tu->timeri != NULL, return -ENXIO);
+	if (!tu->timeri)
+		return -EBADFD;
 	t = tu->timeri->timer;
-	snd_assert(t != NULL, return -ENXIO);
+	if (!t)
+		return -EBADFD;
 
 	info = kzalloc(sizeof(*info), GFP_KERNEL);
 	if (! info)
@@ -1579,9 +1598,11 @@ static int snd_timer_user_params(struct file *file,
 	int err;
 
 	tu = file->private_data;
-	snd_assert(tu->timeri != NULL, return -ENXIO);
+	if (!tu->timeri)
+		return -EBADFD;
 	t = tu->timeri->timer;
-	snd_assert(t != NULL, return -ENXIO);
+	if (!t)
+		return -EBADFD;
 	if (copy_from_user(&params, _params, sizeof(params)))
 		return -EFAULT;
 	if (!(t->hw.flags & SNDRV_TIMER_HW_SLAVE) && params.ticks < 1) {
@@ -1675,7 +1696,8 @@ static int snd_timer_user_status(struct file *file,
 	struct snd_timer_status status;
 
 	tu = file->private_data;
-	snd_assert(tu->timeri != NULL, return -ENXIO);
+	if (!tu->timeri)
+		return -EBADFD;
 	memset(&status, 0, sizeof(status));
 	status.tstamp = tu->tstamp;
 	status.resolution = snd_timer_resolution(tu->timeri);
@@ -1695,7 +1717,8 @@ static int snd_timer_user_start(struct file *file)
 	struct snd_timer_user *tu;
 
 	tu = file->private_data;
-	snd_assert(tu->timeri != NULL, return -ENXIO);
+	if (!tu->timeri)
+		return -EBADFD;
 	snd_timer_stop(tu->timeri);
 	tu->timeri->lost = 0;
 	tu->last_resolution = 0;
@@ -1708,7 +1731,8 @@ static int snd_timer_user_stop(struct file *file)
 	struct snd_timer_user *tu;
 
 	tu = file->private_data;
-	snd_assert(tu->timeri != NULL, return -ENXIO);
+	if (!tu->timeri)
+		return -EBADFD;
 	return (err = snd_timer_stop(tu->timeri)) < 0 ? err : 0;
 }
 
@@ -1718,7 +1742,8 @@ static int snd_timer_user_continue(struct file *file)
 	struct snd_timer_user *tu;
 
 	tu = file->private_data;
-	snd_assert(tu->timeri != NULL, return -ENXIO);
+	if (!tu->timeri)
+		return -EBADFD;
 	tu->timeri->lost = 0;
 	return (err = snd_timer_continue(tu->timeri)) < 0 ? err : 0;
 }
@@ -1729,7 +1754,8 @@ static int snd_timer_user_pause(struct file *file)
 	struct snd_timer_user *tu;
 
 	tu = file->private_data;
-	snd_assert(tu->timeri != NULL, return -ENXIO);
+	if (!tu->timeri)
+		return -EBADFD;
 	return (err = snd_timer_pause(tu->timeri)) < 0 ? err : 0;
 }
 
@@ -1803,13 +1829,9 @@ static long snd_timer_user_ioctl(struct file *file, unsigned int cmd,
 static int snd_timer_user_fasync(int fd, struct file * file, int on)
 {
 	struct snd_timer_user *tu;
-	int err;
 
 	tu = file->private_data;
-	err = fasync_helper(fd, file, on, &tu->fasync);
-        if (err < 0)
-		return err;
-	return 0;
+	return fasync_helper(fd, file, on, &tu->fasync);
 }
 
 static ssize_t snd_timer_user_read(struct file *file, char __user *buffer,
@@ -1906,6 +1928,7 @@ static const struct file_operations snd_timer_f_ops =
 	.read =		snd_timer_user_read,
 	.open =		snd_timer_user_open,
 	.release =	snd_timer_user_release,
+	.llseek =	no_llseek,
 	.poll =		snd_timer_user_poll,
 	.unlocked_ioctl =	snd_timer_user_ioctl,
 	.compat_ioctl =	snd_timer_user_ioctl_compat,

@@ -1,4 +1,7 @@
-/* zd_def.h
+/* ZD1211 USB-WLAN driver for Linux
+ *
+ * Copyright (C) 2005-2007 Ulrich Kunitz <kune@deine-taler.de>
+ * Copyright (C) 2006-2007 Daniel Drake <dsd@gentoo.org>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,7 +24,6 @@
 #include <linux/kernel.h>
 #include <linux/stringify.h>
 #include <linux/device.h>
-#include <linux/kernel.h>
 
 typedef u16 __nocast zd_addr_t;
 
@@ -31,14 +33,19 @@ typedef u16 __nocast zd_addr_t;
 #ifdef DEBUG
 #  define dev_dbg_f(dev, fmt, args...) \
 	  dev_printk_f(KERN_DEBUG, dev, fmt, ## args)
+#  define dev_dbg_f_limit(dev, fmt, args...) do { \
+	if (net_ratelimit()) \
+		dev_printk_f(KERN_DEBUG, dev, fmt, ## args); \
+} while (0)
 #else
 #  define dev_dbg_f(dev, fmt, args...) do { (void)(dev); } while (0)
+#  define dev_dbg_f_limit(dev, fmt, args...) do { (void)(dev); } while (0)
 #endif /* DEBUG */
 
 #ifdef DEBUG
 #  define ZD_ASSERT(x) \
 do { \
-	if (!(x)) { \
+	if (unlikely(!(x))) { \
 		pr_debug("%s:%d ASSERT %s VIOLATED!\n", \
 			__FILE__, __LINE__, __stringify(x)); \
 		dump_stack(); \

@@ -1,7 +1,5 @@
 /* Driver for Freecom USB/IDE adaptor
  *
- * $Id: freecom.c,v 1.22 2002/04/22 03:39:43 mdharm Exp $
- *
  * Freecom v0.1:
  *
  * First release
@@ -28,8 +26,7 @@
  * (http://www.freecom.de/)
  */
 
-#include <linux/hdreg.h>
-
+#include <linux/module.h>
 #include <scsi/scsi.h>
 #include <scsi/scsi_cmnd.h>
 
@@ -37,7 +34,10 @@
 #include "transport.h"
 #include "protocol.h"
 #include "debug.h"
-#include "freecom.h"
+
+MODULE_DESCRIPTION("Driver for Freecom USB/IDE adaptor");
+MODULE_AUTHOR("David Brown <usb-storage@davidb.org>");
+MODULE_LICENSE("GPL");
 
 #ifdef CONFIG_USB_STORAGE_DEBUG
 static void pdump (void *, int);
@@ -107,6 +107,47 @@ struct freecom_status {
 #define FCM_PACKET_LENGTH		64
 #define FCM_STATUS_PACKET_LENGTH	4
 
+static int init_freecom(struct us_data *us);
+
+
+/*
+ * The table of devices
+ */
+#define UNUSUAL_DEV(id_vendor, id_product, bcdDeviceMin, bcdDeviceMax, \
+		    vendorName, productName, useProtocol, useTransport, \
+		    initFunction, flags) \
+{ USB_DEVICE_VER(id_vendor, id_product, bcdDeviceMin, bcdDeviceMax), \
+  .driver_info = (flags)|(USB_US_TYPE_STOR<<24) }
+
+struct usb_device_id freecom_usb_ids[] = {
+#	include "unusual_freecom.h"
+	{ }		/* Terminating entry */
+};
+MODULE_DEVICE_TABLE(usb, freecom_usb_ids);
+
+#undef UNUSUAL_DEV
+
+/*
+ * The flags table
+ */
+#define UNUSUAL_DEV(idVendor, idProduct, bcdDeviceMin, bcdDeviceMax, \
+		    vendor_name, product_name, use_protocol, use_transport, \
+		    init_function, Flags) \
+{ \
+	.vendorName = vendor_name,	\
+	.productName = product_name,	\
+	.useProtocol = use_protocol,	\
+	.useTransport = use_transport,	\
+	.initFunction = init_function,	\
+}
+
+static struct us_unusual_dev freecom_unusual_dev_list[] = {
+#	include "unusual_freecom.h"
+	{ }		/* Terminating entry */
+};
+
+#undef UNUSUAL_DEV
+
 static int
 freecom_readdata (struct scsi_cmnd *srb, struct us_data *us,
 		unsigned int ipipe, unsigned int opipe, int count)
@@ -132,8 +173,7 @@ freecom_readdata (struct scsi_cmnd *srb, struct us_data *us,
 
 	/* Now transfer all of our blocks. */
 	US_DEBUGP("Start of read\n");
-	result = usb_stor_bulk_transfer_sg(us, ipipe, srb->request_buffer,
-			count, srb->use_sg, &srb->resid);
+	result = usb_stor_bulk_srb(us, ipipe, srb);
 	US_DEBUGP("freecom_readdata done!\n");
 
 	if (result > USB_STOR_XFER_SHORT)
@@ -166,8 +206,7 @@ freecom_writedata (struct scsi_cmnd *srb, struct us_data *us,
 
 	/* Now transfer all of our blocks. */
 	US_DEBUGP("Start of write\n");
-	result = usb_stor_bulk_transfer_sg(us, opipe, srb->request_buffer,
-			count, srb->use_sg, &srb->resid);
+	result = usb_stor_bulk_srb(us, opipe, srb);
 
 	US_DEBUGP("freecom_writedata done!\n");
 	if (result > USB_STOR_XFER_SHORT)
@@ -179,7 +218,7 @@ freecom_writedata (struct scsi_cmnd *srb, struct us_data *us,
  * Transport for the Freecom USB/IDE adaptor.
  *
  */
-int freecom_transport(struct scsi_cmnd *srb, struct us_data *us)
+static int freecom_transport(struct scsi_cmnd *srb, struct us_data *us)
 {
 	struct freecom_cb_wrap *fcb;
 	struct freecom_status  *fst;
@@ -230,7 +269,7 @@ int freecom_transport(struct scsi_cmnd *srb, struct us_data *us)
 	/* The firmware will time-out commands after 20 seconds. Some commands
 	 * can legitimately take longer than this, so we use a different
 	 * command that only waits for the interrupt and then sends status,
-	 * without having to send a new ATAPI command to the device. 
+	 * without having to send a new ATAPI command to the device.
 	 *
 	 * NOTE: There is some indication that a data transfer after a timeout
 	 * may not work, but that is a condition that should never happen.
@@ -281,23 +320,23 @@ int freecom_transport(struct scsi_cmnd *srb, struct us_data *us)
 	 * and such will hang. */
 	US_DEBUGP("Device indicates that it has %d bytes available\n",
 			le16_to_cpu (fst->Count));
-	US_DEBUGP("SCSI requested %d\n", srb->request_bufflen);
+	US_DEBUGP("SCSI requested %d\n", scsi_bufflen(srb));
 
 	/* Find the length we desire to read. */
 	switch (srb->cmnd[0]) {
-		case INQUIRY:
-		case REQUEST_SENSE:		/* 16 or 18 bytes? spec says 18, lots of devices only have 16 */
-		case MODE_SENSE:
-		case MODE_SENSE_10:
-			length = le16_to_cpu(fst->Count);
-			break;
-		default:
- 			length = srb->request_bufflen;
+	case INQUIRY:
+	case REQUEST_SENSE:	/* 16 or 18 bytes? spec says 18, lots of devices only have 16 */
+	case MODE_SENSE:
+	case MODE_SENSE_10:
+		length = le16_to_cpu(fst->Count);
+		break;
+	default:
+		length = scsi_bufflen(srb);
 	}
 
 	/* verify that this amount is legal */
-	if (length > srb->request_bufflen) {
-		length = srb->request_bufflen;
+	if (length > scsi_bufflen(srb)) {
+		length = scsi_bufflen(srb);
 		US_DEBUGP("Truncating request to match buffer length: %d\n", length);
 	}
 
@@ -375,7 +414,7 @@ int freecom_transport(struct scsi_cmnd *srb, struct us_data *us)
 		/* should never hit here -- filtered in usb.c */
 		US_DEBUGP ("freecom unimplemented direction: %d\n",
 				us->srb->sc_data_direction);
-		// Return fail, SCSI seems to handle this better.
+		/* Return fail, SCSI seems to handle this better. */
 		return USB_STOR_TRANSPORT_FAILED;
 		break;
 	}
@@ -383,8 +422,7 @@ int freecom_transport(struct scsi_cmnd *srb, struct us_data *us)
 	return USB_STOR_TRANSPORT_GOOD;
 }
 
-int
-freecom_init (struct us_data *us)
+static int init_freecom(struct us_data *us)
 {
 	int result;
 	char *buffer = us->iobuf;
@@ -423,7 +461,7 @@ freecom_init (struct us_data *us)
 	return USB_STOR_TRANSPORT_GOOD;
 }
 
-int usb_stor_freecom_reset(struct us_data *us)
+static int usb_stor_freecom_reset(struct us_data *us)
 {
 	printk (KERN_CRIT "freecom reset called\n");
 
@@ -456,8 +494,7 @@ static void pdump (void *ibuffer, int length)
 				offset = 0;
 			}
 			offset += sprintf (line+offset, "%08x:", i);
-		}
-		else if ((i & 7) == 0) {
+		} else if ((i & 7) == 0) {
 			offset += sprintf (line+offset, " -");
 		}
 		offset += sprintf (line+offset, " %02x", buffer[i] & 0xff);
@@ -485,3 +522,48 @@ static void pdump (void *ibuffer, int length)
 }
 #endif
 
+static int freecom_probe(struct usb_interface *intf,
+			 const struct usb_device_id *id)
+{
+	struct us_data *us;
+	int result;
+
+	result = usb_stor_probe1(&us, intf, id,
+			(id - freecom_usb_ids) + freecom_unusual_dev_list);
+	if (result)
+		return result;
+
+	us->transport_name = "Freecom";
+	us->transport = freecom_transport;
+	us->transport_reset = usb_stor_freecom_reset;
+	us->max_lun = 0;
+
+	result = usb_stor_probe2(us);
+	return result;
+}
+
+static struct usb_driver freecom_driver = {
+	.name =		"ums-freecom",
+	.probe =	freecom_probe,
+	.disconnect =	usb_stor_disconnect,
+	.suspend =	usb_stor_suspend,
+	.resume =	usb_stor_resume,
+	.reset_resume =	usb_stor_reset_resume,
+	.pre_reset =	usb_stor_pre_reset,
+	.post_reset =	usb_stor_post_reset,
+	.id_table =	freecom_usb_ids,
+	.soft_unbind =	1,
+};
+
+static int __init freecom_init(void)
+{
+	return usb_register(&freecom_driver);
+}
+
+static void __exit freecom_exit(void)
+{
+	usb_deregister(&freecom_driver);
+}
+
+module_init(freecom_init);
+module_exit(freecom_exit);

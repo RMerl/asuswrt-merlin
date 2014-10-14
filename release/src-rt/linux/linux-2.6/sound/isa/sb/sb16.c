@@ -1,6 +1,6 @@
 /*
  *  Driver for SoundBlaster 16/AWE32/AWE64 soundcards
- *  Copyright (c) by Jaroslav Kysela <perex@suse.cz>
+ *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  *
  *
  *   This program is free software; you can redistribute it and/or modify
@@ -19,10 +19,8 @@
  *
  */
 
-#include <sound/driver.h>
 #include <asm/dma.h>
 #include <linux/init.h>
-#include <linux/slab.h>
 #include <linux/pnp.h>
 #include <linux/err.h>
 #include <linux/isa.h>
@@ -44,7 +42,7 @@
 #define PFX "sb16: "
 #endif
 
-MODULE_AUTHOR("Jaroslav Kysela <perex@suse.cz>");
+MODULE_AUTHOR("Jaroslav Kysela <perex@perex.cz>");
 MODULE_LICENSE("GPL");
 #ifndef SNDRV_SBAWE
 MODULE_DESCRIPTION("Sound Blaster 16");
@@ -257,44 +255,21 @@ static int __devinit snd_card_sb16_pnp(int dev, struct snd_card_sb16 *acard,
 				       const struct pnp_card_device_id *id)
 {
 	struct pnp_dev *pdev;
-	struct pnp_resource_table * cfg = kmalloc(sizeof(struct pnp_resource_table), GFP_KERNEL);
 	int err;
 
-	if (!cfg) 
-		return -ENOMEM; 
 	acard->dev = pnp_request_card_device(card, id->devs[0].id, NULL);
-	if (acard->dev == NULL) { 
-		kfree(cfg); 
+	if (acard->dev == NULL)
 		return -ENODEV; 
-	} 
+
 #ifdef SNDRV_SBAWE_EMU8000
 	acard->devwt = pnp_request_card_device(card, id->devs[1].id, acard->dev);
 #endif
 	/* Audio initialization */
 	pdev = acard->dev;
 
-	pnp_init_resource_table(cfg); 
-	 
-	/* override resources */ 
-
-	if (port[dev] != SNDRV_AUTO_PORT)
-		pnp_resource_change(&cfg->port_resource[0], port[dev], 16);
-	if (mpu_port[dev] != SNDRV_AUTO_PORT)
-		pnp_resource_change(&cfg->port_resource[1], mpu_port[dev], 2);
-	if (fm_port[dev] != SNDRV_AUTO_PORT)
-		pnp_resource_change(&cfg->port_resource[2], fm_port[dev], 4);
-	if (dma8[dev] != SNDRV_AUTO_DMA)
-		pnp_resource_change(&cfg->dma_resource[0], dma8[dev], 1);
-	if (dma16[dev] != SNDRV_AUTO_DMA)
-		pnp_resource_change(&cfg->dma_resource[1], dma16[dev], 1);
-	if (irq[dev] != SNDRV_AUTO_IRQ)
-		pnp_resource_change(&cfg->irq_resource[0], irq[dev], 1);
-	if (pnp_manual_config_dev(pdev, cfg, 0) < 0) 
-		snd_printk(KERN_ERR PFX "AUDIO the requested resources are invalid, using auto config\n"); 
 	err = pnp_activate_dev(pdev); 
 	if (err < 0) { 
 		snd_printk(KERN_ERR PFX "AUDIO pnp configure failure\n"); 
-		kfree(cfg);
 		return err; 
 	} 
 	port[dev] = pnp_port_start(pdev, 0);
@@ -311,17 +286,6 @@ static int __devinit snd_card_sb16_pnp(int dev, struct snd_card_sb16 *acard,
 	/* WaveTable initialization */
 	pdev = acard->devwt;
 	if (pdev != NULL) {
-		pnp_init_resource_table(cfg); 
-	 
-		/* override resources */ 
-
-		if (awe_port[dev] != SNDRV_AUTO_PORT) {
-			pnp_resource_change(&cfg->port_resource[0], awe_port[dev], 4);
-			pnp_resource_change(&cfg->port_resource[1], awe_port[dev] + 0x400, 4);
-			pnp_resource_change(&cfg->port_resource[2], awe_port[dev] + 0x800, 4);
-		}
-		if ((pnp_manual_config_dev(pdev, cfg, 0)) < 0) 
-			snd_printk(KERN_ERR PFX "WaveTable the requested resources are invalid, using auto config\n"); 
 		err = pnp_activate_dev(pdev); 
 		if (err < 0) { 
 			goto __wt_error; 
@@ -339,7 +303,6 @@ __wt_error:
 		awe_port[dev] = -1;
 	}
 #endif
-	kfree(cfg);
 	return 0;
 }
 
@@ -360,14 +323,18 @@ static void snd_sb16_free(struct snd_card *card)
 #define is_isapnp_selected(dev)		0
 #endif
 
-static struct snd_card *snd_sb16_card_new(int dev)
+static int snd_sb16_card_new(int dev, struct snd_card **cardp)
 {
-	struct snd_card *card = snd_card_new(index[dev], id[dev], THIS_MODULE,
-					sizeof(struct snd_card_sb16));
-	if (card == NULL)
-		return NULL;
+	struct snd_card *card;
+	int err;
+
+	err = snd_card_create(index[dev], id[dev], THIS_MODULE,
+			      sizeof(struct snd_card_sb16), &card);
+	if (err < 0)
+		return err;
 	card->private_free = snd_sb16_free;
-	return card;
+	*cardp = card;
+	return 0;
 }
 
 static int __devinit snd_sb16_probe(struct snd_card *card, int dev)
@@ -525,9 +492,9 @@ static int __devinit snd_sb16_isa_probe1(int dev, struct device *pdev)
 	struct snd_card *card;
 	int err;
 
-	card = snd_sb16_card_new(dev);
-	if (! card)
-		return -ENOMEM;
+	err = snd_sb16_card_new(dev, &card);
+	if (err < 0)
+		return err;
 
 	acard = card->private_data;
 	/* non-PnP FM port address is hardwired with base port address */
@@ -646,9 +613,9 @@ static int __devinit snd_sb16_pnp_detect(struct pnp_card_link *pcard,
 	for ( ; dev < SNDRV_CARDS; dev++) {
 		if (!enable[dev] || !isapnp[dev])
 			continue;
-		card = snd_sb16_card_new(dev);
-		if (! card)
-			return -ENOMEM;
+		res = snd_sb16_card_new(dev, &card);
+		if (res < 0)
+			return res;
 		snd_card_set_dev(card, &pcard->card->dev);
 		if ((res = snd_card_sb16_pnp(dev, card->private_data, pcard, pid)) < 0 ||
 		    (res = snd_sb16_probe(card, dev)) < 0) {

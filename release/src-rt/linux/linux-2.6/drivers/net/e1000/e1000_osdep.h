@@ -34,41 +34,30 @@
 #ifndef _E1000_OSDEP_H_
 #define _E1000_OSDEP_H_
 
-#include <linux/types.h>
-#include <linux/pci.h>
-#include <linux/delay.h>
 #include <asm/io.h>
-#include <linux/interrupt.h>
-#include <linux/sched.h>
 
-typedef enum {
-#undef FALSE
-    FALSE = 0,
-#undef TRUE
-    TRUE = 1
-} boolean_t;
+#define CONFIG_RAM_BASE         0x60000
+#define GBE_CONFIG_OFFSET       0x0
 
-#ifdef DBG
-#define DEBUGOUT(S)		printk(KERN_DEBUG S "\n")
-#define DEBUGOUT1(S, A...)	printk(KERN_DEBUG S "\n", A)
-#else
-#define DEBUGOUT(S)
-#define DEBUGOUT1(S, A...)
-#endif
+#define GBE_CONFIG_RAM_BASE \
+	((unsigned int)(CONFIG_RAM_BASE + GBE_CONFIG_OFFSET))
 
-#define DEBUGFUNC(F) DEBUGOUT(F "\n")
-#define DEBUGOUT2 DEBUGOUT1
-#define DEBUGOUT3 DEBUGOUT2
-#define DEBUGOUT7 DEBUGOUT3
+#define GBE_CONFIG_BASE_VIRT \
+	((void __iomem *)phys_to_virt(GBE_CONFIG_RAM_BASE))
 
+#define GBE_CONFIG_FLASH_WRITE(base, offset, count, data) \
+	(iowrite16_rep(base + offset, data, count))
 
-#define E1000_WRITE_REG(a, reg, value) ( \
-    writel((value), ((a)->hw_addr + \
-        (((a)->mac_type >= e1000_82543) ? E1000_##reg : E1000_82542_##reg))))
+#define GBE_CONFIG_FLASH_READ(base, offset, count, data) \
+	(ioread16_rep(base + (offset << 1), data, count))
 
-#define E1000_READ_REG(a, reg) ( \
-    readl((a)->hw_addr + \
-        (((a)->mac_type >= e1000_82543) ? E1000_##reg : E1000_82542_##reg)))
+#define er32(reg)							\
+	(readl(hw->hw_addr + ((hw->mac_type >= e1000_82543)		\
+			       ? E1000_##reg : E1000_82542_##reg)))
+
+#define ew32(reg, value)						\
+	(writel((value), (hw->hw_addr + ((hw->mac_type >= e1000_82543)	\
+					 ? E1000_##reg : E1000_82542_##reg))))
 
 #define E1000_WRITE_REG_ARRAY(a, reg, offset, value) ( \
     writel((value), ((a)->hw_addr + \
@@ -103,7 +92,7 @@ typedef enum {
         (((a)->mac_type >= e1000_82543) ? E1000_##reg : E1000_82542_##reg) + \
         (offset)))
 
-#define E1000_WRITE_FLUSH(a) E1000_READ_REG(a, STATUS)
+#define E1000_WRITE_FLUSH() er32(STATUS)
 
 #define E1000_WRITE_ICH_FLASH_REG(a, reg, value) ( \
     writel((value), ((a)->flash_address + reg)))

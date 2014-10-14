@@ -25,7 +25,6 @@
 #include <linux/platform_device.h>
 #include <linux/mtd/physmap.h>
 
-#include <asm/hardware.h>
 #include <asm/setup.h>
 #include <asm/mach-types.h>
 #include <asm/irq.h>
@@ -34,33 +33,23 @@
 #include <asm/mach/map.h>
 #include <asm/mach/irq.h>
 
-#include <asm/arch/board.h>
-#include <asm/arch/gpio.h>
+#include <mach/hardware.h>
+#include <mach/board.h>
+#include <mach/gpio.h>
 
 #include "generic.h"
 
-
-/*
- * Serial port configuration.
- *    0 .. 3 = USART0 .. USART3
- *    4      = DBGU
- */
-static struct at91_uart_config __initdata csb637_uart_config = {
-	.console_tty	= 0,				/* ttyS0 */
-	.nr_tty		= 2,
-	.tty_map	= { 4, 1, -1, -1, -1 }		/* ttyS0, ..., ttyS4 */
-};
 
 static void __init csb637_map_io(void)
 {
 	/* Initialize processor: 3.6864 MHz crystal */
 	at91rm9200_initialize(3686400, AT91RM9200_BGA);
 
-	/* Setup the LEDs */
-	at91_init_leds(AT91_PIN_PB2, AT91_PIN_PB2);
+	/* DBGU on ttyS0. (Rx & Tx only) */
+	at91_register_uart(0, 0, 0);
 
-	/* Setup the serial ports and console */
-	at91_init_serial(&csb637_uart_config);
+	/* make console=ttyS0 (ie, DBGU) the default */
+	at91_set_serial_console(0);
 }
 
 static void __init csb637_init_irq(void)
@@ -83,7 +72,7 @@ static struct at91_udc_data __initdata csb637_udc_data = {
 };
 
 #define CSB_FLASH_BASE	AT91_CHIPSELECT_0
-#define CSB_FLASH_SIZE	0x1000000
+#define CSB_FLASH_SIZE	SZ_16M
 
 static struct mtd_partition csb_flash_partitions[] = {
 	{
@@ -118,8 +107,19 @@ static struct platform_device csb_flash = {
 	.num_resources	= ARRAY_SIZE(csb_flash_resources),
 };
 
+static struct gpio_led csb_leds[] = {
+	{	/* "d1", red */
+		.name			= "d1",
+		.gpio			= AT91_PIN_PB2,
+		.active_low		= 1,
+		.default_trigger	= "heartbeat",
+	},
+};
+
 static void __init csb637_board_init(void)
 {
+	/* LED(s) */
+	at91_gpio_leds(csb_leds, ARRAY_SIZE(csb_leds));
 	/* Serial */
 	at91_add_device_serial();
 	/* Ethernet */
@@ -129,7 +129,7 @@ static void __init csb637_board_init(void)
 	/* USB Device */
 	at91_add_device_udc(&csb637_udc_data);
 	/* I2C */
-	at91_add_device_i2c();
+	at91_add_device_i2c(NULL, 0);
 	/* SPI */
 	at91_add_device_spi(NULL, 0);
 	/* NOR flash */
@@ -138,8 +138,6 @@ static void __init csb637_board_init(void)
 
 MACHINE_START(CSB637, "Cogent CSB637")
 	/* Maintainer: Bill Gatliff */
-	.phys_io	= AT91_BASE_SYS,
-	.io_pg_offst	= (AT91_VA_BASE_SYS >> 18) & 0xfffc,
 	.boot_params	= AT91_SDRAM_BASE + 0x100,
 	.timer		= &at91rm9200_timer,
 	.map_io		= csb637_map_io,

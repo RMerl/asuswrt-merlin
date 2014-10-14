@@ -2,6 +2,7 @@
  * printf.c:  Internal prom library printf facility.
  *
  * Copyright (C) 1995 David S. Miller (davem@caip.rutgers.edu)
+ * Copyright (C) 1997 Jakub Jelinek (jj@sunsite.mff.cuni.cz)
  * Copyright (c) 2002 Pete Zaitcev (zaitcev@yahoo.com)
  *
  * We used to warn all over the code: DO NOT USE prom_printf(),
@@ -13,27 +14,49 @@
  */
 
 #include <linux/kernel.h>
+#include <linux/compiler.h>
+#include <linux/spinlock.h>
 
 #include <asm/openprom.h>
 #include <asm/oplib.h>
 
+#define CONSOLE_WRITE_BUF_SIZE	1024
+
 static char ppbuf[1024];
+static char console_write_buf[CONSOLE_WRITE_BUF_SIZE];
+static DEFINE_RAW_SPINLOCK(console_write_lock);
 
-void
-prom_write(const char *buf, unsigned int n)
+void notrace prom_write(const char *buf, unsigned int n)
 {
-	char ch;
+	unsigned int dest_len;
+	unsigned long flags;
+	char *dest;
 
-	while (n != 0) {
-		--n;
-		if ((ch = *buf++) == '\n')
-			prom_putchar('\r');
-		prom_putchar(ch);
+	dest = console_write_buf;
+	raw_spin_lock_irqsave(&console_write_lock, flags);
+
+	dest_len = 0;
+	while (n-- != 0) {
+		char ch = *buf++;
+		if (ch == '\n') {
+			*dest++ = '\r';
+			dest_len++;
+		}
+		*dest++ = ch;
+		dest_len++;
+		if (dest_len >= CONSOLE_WRITE_BUF_SIZE - 1) {
+			prom_console_write_buf(console_write_buf, dest_len);
+			dest = console_write_buf;
+			dest_len = 0;
+		}
 	}
+	if (dest_len)
+		prom_console_write_buf(console_write_buf, dest_len);
+
+	raw_spin_unlock_irqrestore(&console_write_lock, flags);
 }
 
-void
-prom_printf(char *fmt, ...)
+void notrace prom_printf(const char *fmt, ...)
 {
 	va_list args;
 	int i;

@@ -29,12 +29,11 @@
 #include <linux/mii.h>
 
 #include <asm/io.h>
-#include <asm/hardware.h>
-#include <asm/arch/hardware.h>
-#include <asm/arch/netx-regs.h>
-#include <asm/arch/pfifo.h>
-#include <asm/arch/xc.h>
-#include <asm/arch/eth.h>
+#include <mach/hardware.h>
+#include <mach/netx-regs.h>
+#include <mach/pfifo.h>
+#include <mach/xc.h>
+#include <mach/eth.h>
 
 /* XC Fifo Offsets */
 #define EMPTY_PTR_FIFO(xcno)    (0 + ((xcno) << 3))	/* Index of the empty pointer FIFO */
@@ -97,7 +96,6 @@
 struct netx_eth_priv {
 	void                    __iomem *sram_base, *xpec_base, *xmac_base;
 	int                     id;
-	struct net_device_stats stats;
 	struct mii_if_info      mii;
 	u32                     msg_enable;
 	struct xc               *xc;
@@ -128,15 +126,14 @@ netx_eth_hard_start_xmit(struct sk_buff *skb, struct net_device *ndev)
 	           FIFO_PTR_FRAMENO(1) |
 	           FIFO_PTR_FRAMELEN(len));
 
-	ndev->trans_start = jiffies;
-	priv->stats.tx_packets++;
-	priv->stats.tx_bytes += skb->len;
+	ndev->stats.tx_packets++;
+	ndev->stats.tx_bytes += skb->len;
 
 	netif_stop_queue(ndev);
 	spin_unlock_irq(&priv->lock);
 	dev_kfree_skb(skb);
 
-	return 0;
+	return NETDEV_TX_OK;
 }
 
 static void netx_eth_receive(struct net_device *ndev)
@@ -156,7 +153,7 @@ static void netx_eth_receive(struct net_device *ndev)
 	if (unlikely(skb == NULL)) {
 		printk(KERN_NOTICE "%s: Low memory, packet dropped.\n",
 			ndev->name);
-		priv->stats.rx_dropped++;
+		ndev->stats.rx_dropped++;
 		return;
 	}
 
@@ -167,11 +164,10 @@ static void netx_eth_receive(struct net_device *ndev)
 	pfifo_push(EMPTY_PTR_FIFO(priv->id),
 		FIFO_PTR_SEGMENT(seg) | FIFO_PTR_FRAMENO(frameno));
 
-	ndev->last_rx = jiffies;
 	skb->protocol = eth_type_trans(skb, ndev);
 	netif_rx(skb);
-	priv->stats.rx_packets++;
-	priv->stats.rx_bytes += len;
+	ndev->stats.rx_packets++;
+	ndev->stats.rx_bytes += len;
 }
 
 static irqreturn_t
@@ -191,7 +187,7 @@ netx_eth_interrupt(int irq, void *dev_id)
 
 		if ((status & ISR_CON_HI) || (status & ISR_IND_HI))
 			printk("%s: unexpected status: 0x%08x\n",
-			    __FUNCTION__, status);
+			    __func__, status);
 
 		fill_level =
 		    readl(NETX_PFIFO_FILL_LEVEL(IND_FIFO_PORT_LO(priv->id)));
@@ -210,18 +206,12 @@ netx_eth_interrupt(int irq, void *dev_id)
 	return IRQ_HANDLED;
 }
 
-static struct net_device_stats *netx_eth_query_statistics(struct net_device *ndev)
-{
-	struct netx_eth_priv *priv = netdev_priv(ndev);
-	return &priv->stats;
-}
-
 static int netx_eth_open(struct net_device *ndev)
 {
 	struct netx_eth_priv *priv = netdev_priv(ndev);
 
 	if (request_irq
-	    (ndev->irq, &netx_eth_interrupt, IRQF_SHARED, ndev->name, ndev))
+	    (ndev->irq, netx_eth_interrupt, IRQF_SHARED, ndev->name, ndev))
 		return -EAGAIN;
 
 	writel(ndev->dev_addr[0] |
@@ -310,6 +300,17 @@ netx_eth_phy_write(struct net_device *ndev, int phy_id, int reg, int value)
 	while (readl(NETX_MIIMU) & MIIMU_SNRDY);
 }
 
+static const struct net_device_ops netx_eth_netdev_ops = {
+	.ndo_open		= netx_eth_open,
+	.ndo_stop		= netx_eth_close,
+	.ndo_start_xmit		= netx_eth_hard_start_xmit,
+	.ndo_tx_timeout		= netx_eth_timeout,
+	.ndo_set_multicast_list	= netx_eth_set_multicast_list,
+	.ndo_change_mtu		= eth_change_mtu,
+	.ndo_validate_addr	= eth_validate_addr,
+	.ndo_set_mac_address	= eth_mac_addr,
+};
+
 static int netx_eth_enable(struct net_device *ndev)
 {
 	struct netx_eth_priv *priv = netdev_priv(ndev);
@@ -318,13 +319,8 @@ static int netx_eth_enable(struct net_device *ndev)
 
 	ether_setup(ndev);
 
-	ndev->open = netx_eth_open;
-	ndev->stop = netx_eth_close;
-	ndev->hard_start_xmit = netx_eth_hard_start_xmit;
-	ndev->tx_timeout = netx_eth_timeout;
+	ndev->netdev_ops = &netx_eth_netdev_ops;
 	ndev->watchdog_timeo = msecs_to_jiffies(5000);
-	ndev->get_stats = netx_eth_query_statistics;
-	ndev->set_multicast_list = netx_eth_set_multicast_list;
 
 	priv->msg_enable       = NETIF_MSG_LINK;
 	priv->mii.phy_id_mask  = 0x1f;
@@ -390,7 +386,6 @@ static int netx_eth_drv_probe(struct platform_device *pdev)
 		ret = -ENOMEM;
 		goto exit;
 	}
-	SET_MODULE_OWNER(ndev);
 	SET_NETDEV_DEV(ndev, &pdev->dev);
 
 	platform_set_drvdata(pdev, ndev);
@@ -410,6 +405,8 @@ static int netx_eth_drv_probe(struct platform_device *pdev)
 	priv->xpec_base = priv->xc->xpec_base;
 	priv->xmac_base = priv->xc->xmac_base;
 	priv->sram_base = priv->xc->sram_base;
+
+	spin_lock_init(&priv->lock);
 
 	ret = pfifo_request(PFIFO_MASK(priv->id));
 	if (ret) {
@@ -511,4 +508,7 @@ module_exit(netx_eth_cleanup);
 
 MODULE_AUTHOR("Sascha Hauer, Pengutronix");
 MODULE_LICENSE("GPL");
-
+MODULE_ALIAS("platform:" CARDNAME);
+MODULE_FIRMWARE("xc0.bin");
+MODULE_FIRMWARE("xc1.bin");
+MODULE_FIRMWARE("xc2.bin");

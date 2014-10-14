@@ -11,6 +11,8 @@
  */
 
 #include <linux/init.h>
+#include <linux/sched.h>
+#include <linux/slab.h>
 #include "hisax.h"
 #include "hfc_2bds0.h"
 #include "isdnl1.h"
@@ -290,7 +292,7 @@ hfc_fill_fifo(struct BCState *bcs)
 	}
 	count = GetFreeFifoBytes_B(bcs);
 	if (cs->debug & L1_DEB_HSCX)
-		debugl1(cs, "hfc_fill_fifo %d count(%ld/%d),%lx",
+		debugl1(cs, "hfc_fill_fifo %d count(%u/%d),%lx",
 			bcs->channel, bcs->tx_skb->len,
 			count, current->state);
 	if (count < bcs->tx_skb->len) {
@@ -717,7 +719,7 @@ hfc_fill_dfifo(struct IsdnCardState *cs)
 	}
 	count = GetFreeFifoBytes_D(cs);
 	if (cs->debug & L1_DEB_ISAC)
-		debugl1(cs, "hfc_fill_Dfifo count(%ld/%d)",
+		debugl1(cs, "hfc_fill_Dfifo count(%u/%d)",
 			cs->tx_skb->len, count);
 	if (count < cs->tx_skb->len) {
 		if (cs->debug & L1_DEB_ISAC)
@@ -1019,7 +1021,8 @@ hfc_dbusy_timer(struct IsdnCardState *cs)
 static unsigned int
 *init_send_hfcd(int cnt)
 {
-	int i, *send;
+	int i;
+	unsigned *send;
 
 	if (!(send = kmalloc(cnt * sizeof(unsigned int), GFP_ATOMIC))) {
 		printk(KERN_WARNING

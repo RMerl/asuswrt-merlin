@@ -7,10 +7,12 @@
  */
 
 #include <linux/kernel.h>
+#include <linux/gfp.h>
 #include <linux/mm.h>
 #include <linux/swap.h>
 #include <linux/init.h>
 #include <linux/mmzone.h>
+#include <linux/module.h>
 #include <linux/bootmem.h>
 #include <linux/pagemap.h>
 #include <linux/nodemask.h>
@@ -25,56 +27,15 @@
 
 DEFINE_PER_CPU(struct mmu_gather, mmu_gathers);
 
-pgd_t swapper_pg_dir[PTRS_PER_PGD];
+pgd_t swapper_pg_dir[PTRS_PER_PGD] __page_aligned_data;
 
 struct page *empty_zero_page;
+EXPORT_SYMBOL(empty_zero_page);
 
 /*
  * Cache of MMU context last used.
  */
 unsigned long mmu_context_cache = NO_CONTEXT;
-
-#define START_PFN	(NODE_DATA(0)->bdata->node_boot_start >> PAGE_SHIFT)
-#define MAX_LOW_PFN	(NODE_DATA(0)->bdata->node_low_pfn)
-
-void show_mem(void)
-{
-	int total = 0, reserved = 0, cached = 0;
-	int slab = 0, free = 0, shared = 0;
-	pg_data_t *pgdat;
-
-	printk("Mem-info:\n");
-	show_free_areas();
-
-	for_each_online_pgdat(pgdat) {
-		struct page *page, *end;
-
-		page = pgdat->node_mem_map;
-		end = page + pgdat->node_spanned_pages;
-
-		do {
-			total++;
-			if (PageReserved(page))
-				reserved++;
-			else if (PageSwapCache(page))
-				cached++;
-			else if (PageSlab(page))
-				slab++;
-			else if (!page_count(page))
-				free++;
-			else
-				shared += page_count(page) - 1;
-			page++;
-		} while (page < end);
-	}
-
-	printk ("%d pages of RAM\n", total);
-	printk ("%d free pages\n", free);
-	printk ("%d reserved pages\n", reserved);
-	printk ("%d slab pages\n", slab);
-	printk ("%d pages shared\n", shared);
-	printk ("%d pages swap cached\n", cached);
-}
 
 /*
  * paging_init() sets up the page tables
@@ -109,27 +70,16 @@ void __init paging_init(void)
 	zero_page = alloc_bootmem_low_pages_node(NODE_DATA(0),
 						 PAGE_SIZE);
 
-	{
-		pgd_t *pg_dir;
-		int i;
-
-		pg_dir = swapper_pg_dir;
-		sysreg_write(PTBR, (unsigned long)pg_dir);
-
-		for (i = 0; i < PTRS_PER_PGD; i++)
-			pgd_val(pg_dir[i]) = 0;
-
-		enable_mmu();
-		printk ("CPU: Paging enabled\n");
-	}
+	sysreg_write(PTBR, (unsigned long)swapper_pg_dir);
+	enable_mmu();
+	printk ("CPU: Paging enabled\n");
 
 	for_each_online_node(nid) {
 		pg_data_t *pgdat = NODE_DATA(nid);
 		unsigned long zones_size[MAX_NR_ZONES];
 		unsigned long low, start_pfn;
 
-		start_pfn = pgdat->bdata->node_boot_start;
-		start_pfn >>= PAGE_SHIFT;
+		start_pfn = pgdat->bdata->node_min_pfn;
 		low = pgdat->bdata->node_low_pfn;
 
 		memset(zones_size, 0, sizeof(zones_size));
@@ -138,7 +88,7 @@ void __init paging_init(void)
 		printk("Node %u: start_pfn = 0x%lx, low = 0x%lx\n",
 		       nid, start_pfn, low);
 
-		free_area_init_node(nid, pgdat, zones_size, start_pfn, NULL);
+		free_area_init_node(nid, zones_size, start_pfn, NULL);
 
 		printk("Node %u: mem_map starts at %p\n",
 		       pgdat->node_id, pgdat->node_mem_map);
@@ -146,7 +96,6 @@ void __init paging_init(void)
 
 	mem_map = NODE_DATA(0)->node_mem_map;
 
-	memset(zero_page, 0, PAGE_SIZE);
 	empty_zero_page = virt_to_page(zero_page);
 	flush_dcache_page(empty_zero_page);
 }
@@ -191,7 +140,7 @@ void __init mem_init(void)
 
 	printk ("Memory: %luk/%luk available (%dk kernel code, "
 		"%dk reserved, %dk data, %dk init)\n",
-		(unsigned long)nr_free_pages() << (PAGE_SHIFT - 10),
+		nr_free_pages() << (PAGE_SHIFT - 10),
 		totalram_pages << (PAGE_SHIFT - 10),
 		codesize >> 10,
 		reservedpages << (PAGE_SHIFT - 10),
@@ -224,19 +173,9 @@ void free_initmem(void)
 
 #ifdef CONFIG_BLK_DEV_INITRD
 
-static int keep_initrd;
-
 void free_initrd_mem(unsigned long start, unsigned long end)
 {
-	if (!keep_initrd)
-		free_area(start, end, "initrd");
+	free_area(start, end, "initrd");
 }
 
-static int __init keepinitrd_setup(char *__unused)
-{
-	keep_initrd = 1;
-	return 1;
-}
-
-__setup("keepinitrd", keepinitrd_setup);
 #endif

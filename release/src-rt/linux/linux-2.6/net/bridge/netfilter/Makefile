@@ -14,6 +14,7 @@ obj-$(CONFIG_BRIDGE_EBT_802_3) += ebt_802_3.o
 obj-$(CONFIG_BRIDGE_EBT_AMONG) += ebt_among.o
 obj-$(CONFIG_BRIDGE_EBT_ARP) += ebt_arp.o
 obj-$(CONFIG_BRIDGE_EBT_IP) += ebt_ip.o
+obj-$(CONFIG_BRIDGE_EBT_IP6) += ebt_ip6.o
 obj-$(CONFIG_BRIDGE_EBT_LIMIT) += ebt_limit.o
 obj-$(CONFIG_BRIDGE_EBT_MARK) += ebt_mark_m.o
 obj-$(CONFIG_BRIDGE_EBT_PKTTYPE) += ebt_pkttype.o
@@ -30,3 +31,4 @@ obj-$(CONFIG_BRIDGE_EBT_SNAT) += ebt_snat.o
 # watchers
 obj-$(CONFIG_BRIDGE_EBT_LOG) += ebt_log.o
 obj-$(CONFIG_BRIDGE_EBT_ULOG) += ebt_ulog.o
+obj-$(CONFIG_BRIDGE_EBT_NFLOG) += ebt_nflog.o

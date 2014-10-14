@@ -1,18 +1,31 @@
-#define DEBUG
+/*
+ * Copyright 2006-2008, IBM Corporation.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version
+ * 2 of the License, or (at your option) any later version.
+ */
+
+#undef DEBUG
 
 #include <linux/types.h>
 #include <linux/kernel.h>
+#include <linux/slab.h>
 #include <linux/smp.h>
 #include <linux/reboot.h>
+#include <linux/kexec.h>
+#include <linux/crash_dump.h>
 
+#include <asm/kexec.h>
 #include <asm/reg.h>
 #include <asm/io.h>
 #include <asm/prom.h>
 #include <asm/machdep.h>
 #include <asm/rtas.h>
+#include <asm/cell-regs.h>
 
 #include "ras.h"
-#include "cbe_regs.h"
 
 
 static void dump_fir(int cpu)
@@ -26,16 +39,16 @@ static void dump_fir(int cpu)
 	/* Todo: do some nicer parsing of bits and based on them go down
 	 * to other sub-units FIRs and not only IIC
 	 */
-	printk(KERN_ERR "Global Checkstop FIR    : 0x%016lx\n",
+	printk(KERN_ERR "Global Checkstop FIR    : 0x%016llx\n",
 	       in_be64(&pregs->checkstop_fir));
-	printk(KERN_ERR "Global Recoverable FIR  : 0x%016lx\n",
+	printk(KERN_ERR "Global Recoverable FIR  : 0x%016llx\n",
 	       in_be64(&pregs->checkstop_fir));
-	printk(KERN_ERR "Global MachineCheck FIR : 0x%016lx\n",
+	printk(KERN_ERR "Global MachineCheck FIR : 0x%016llx\n",
 	       in_be64(&pregs->spec_att_mchk_fir));
 
 	if (iregs == NULL)
 		return;
-	printk(KERN_ERR "IOC FIR                 : 0x%016lx\n",
+	printk(KERN_ERR "IOC FIR                 : 0x%016llx\n",
 	       in_be64(&iregs->ioc_fir));
 
 }
@@ -101,9 +114,8 @@ static int __init cbe_ptcal_enable_on_node(int nid, int order)
 	int ret = -ENOMEM;
 	unsigned long addr;
 
-#ifdef CONFIG_CRASH_DUMP
-	rtas_call(ptcal_stop_tok, 1, 1, NULL, nid);
-#endif
+	if (is_kdump_kernel())
+		rtas_call(ptcal_stop_tok, 1, 1, NULL, nid);
 
 	area = kmalloc(sizeof(*area), GFP_KERNEL);
 	if (!area)
@@ -111,19 +123,30 @@ static int __init cbe_ptcal_enable_on_node(int nid, int order)
 
 	area->nid = nid;
 	area->order = order;
-	area->pages = alloc_pages_node(area->nid, GFP_KERNEL, area->order);
+	area->pages = alloc_pages_exact_node(area->nid, GFP_KERNEL|GFP_THISNODE,
+						area->order);
 
-	if (!area->pages)
+	if (!area->pages) {
+		printk(KERN_WARNING "%s: no page on node %d\n",
+			__func__, area->nid);
 		goto out_free_area;
+	}
 
-	addr = __pa(page_address(area->pages));
+	/*
+	 * We move the ptcal area to the middle of the allocated
+	 * page, in order to avoid prefetches in memcpy and similar
+	 * functions stepping on it.
+	 */
+	addr = __pa(page_address(area->pages)) + (PAGE_SIZE >> 1);
+	printk(KERN_DEBUG "%s: enabling PTCAL on node %d address=0x%016lx\n",
+			__func__, area->nid, addr);
 
 	ret = -EIO;
 	if (rtas_call(ptcal_start_tok, 3, 1, NULL, area->nid,
 				(unsigned int)(addr >> 32),
 				(unsigned int)(addr & 0xffffffff))) {
 		printk(KERN_ERR "%s: error enabling PTCAL on node %d!\n",
-				__FUNCTION__, nid);
+				__func__, nid);
 		goto out_free_pages;
 	}
 
@@ -150,10 +173,12 @@ static int __init cbe_ptcal_enable(void)
 		return -ENODEV;
 
 	size = of_get_property(np, "ibm,cbe-ptcal-size", NULL);
-	if (!size)
+	if (!size) {
+		of_node_put(np);
 		return -ENODEV;
+	}
 
-	pr_debug("%s: enabling PTCAL, size = 0x%x\n", __FUNCTION__, *size);
+	pr_debug("%s: enabling PTCAL, size = 0x%x\n", __func__, *size);
 	order = get_order(*size);
 	of_node_put(np);
 
@@ -171,7 +196,7 @@ static int __init cbe_ptcal_enable(void)
 		const u32 *nid = of_get_property(np, "node-id", NULL);
 		if (!nid) {
 			printk(KERN_ERR "%s: node %s is missing node-id?\n",
-					__FUNCTION__, np->full_name);
+					__func__, np->full_name);
 			continue;
 		}
 		cbe_ptcal_enable_on_node(*nid, order);
@@ -186,13 +211,13 @@ static int cbe_ptcal_disable(void)
 	struct ptcal_area *area, *tmp;
 	int ret = 0;
 
-	pr_debug("%s: disabling PTCAL\n", __FUNCTION__);
+	pr_debug("%s: disabling PTCAL\n", __func__);
 
 	list_for_each_entry_safe(area, tmp, &ptcal_list, list) {
 		/* disable ptcal on this node */
 		if (rtas_call(ptcal_stop_tok, 1, 1, NULL, area->nid)) {
 			printk(KERN_ERR "%s: error disabling PTCAL "
-					"on node %d!\n", __FUNCTION__,
+					"on node %d!\n", __func__,
 					area->nid);
 			ret = -EIO;
 			continue;
@@ -217,9 +242,60 @@ static int cbe_ptcal_notify_reboot(struct notifier_block *nb,
 	return cbe_ptcal_disable();
 }
 
+static void cbe_ptcal_crash_shutdown(void)
+{
+	cbe_ptcal_disable();
+}
+
 static struct notifier_block cbe_ptcal_reboot_notifier = {
 	.notifier_call = cbe_ptcal_notify_reboot
 };
+
+#ifdef CONFIG_PPC_IBM_CELL_RESETBUTTON
+static int sysreset_hack;
+
+static int __init cbe_sysreset_init(void)
+{
+	struct cbe_pmd_regs __iomem *regs;
+
+	sysreset_hack = of_machine_is_compatible("IBM,CBPLUS-1.0");
+	if (!sysreset_hack)
+		return 0;
+
+	regs = cbe_get_cpu_pmd_regs(0);
+	if (!regs)
+		return 0;
+
+	/* Enable JTAG system-reset hack */
+	out_be32(&regs->fir_mode_reg,
+		in_be32(&regs->fir_mode_reg) |
+		CBE_PMD_FIR_MODE_M8);
+
+	return 0;
+}
+device_initcall(cbe_sysreset_init);
+
+int cbe_sysreset_hack(void)
+{
+	struct cbe_pmd_regs __iomem *regs;
+
+	/*
+	 * The BMC can inject user triggered system reset exceptions,
+	 * but cannot set the system reset reason in srr1,
+	 * so check an extra register here.
+	 */
+	if (sysreset_hack && (smp_processor_id() == 0)) {
+		regs = cbe_get_cpu_pmd_regs(0);
+		if (!regs)
+			return 0;
+		if (in_be64(&regs->ras_esc_0) & 0x0000ffff) {
+			out_be64(&regs->ras_esc_0, 0);
+			return 0;
+		}
+	}
+	return 1;
+}
+#endif /* CONFIG_PPC_IBM_CELL_RESETBUTTON */
 
 int __init cbe_ptcal_init(void)
 {
@@ -232,12 +308,20 @@ int __init cbe_ptcal_init(void)
 		return -ENODEV;
 
 	ret = register_reboot_notifier(&cbe_ptcal_reboot_notifier);
-	if (ret) {
-		printk(KERN_ERR "Can't disable PTCAL, so not enabling\n");
-		return ret;
-	}
+	if (ret)
+		goto out1;
+
+	ret = crash_shutdown_register(&cbe_ptcal_crash_shutdown);
+	if (ret)
+		goto out2;
 
 	return cbe_ptcal_enable();
+
+out2:
+	unregister_reboot_notifier(&cbe_ptcal_reboot_notifier);
+out1:
+	printk(KERN_ERR "Can't disable PTCAL, so not enabling\n");
+	return ret;
 }
 
 arch_initcall(cbe_ptcal_init);

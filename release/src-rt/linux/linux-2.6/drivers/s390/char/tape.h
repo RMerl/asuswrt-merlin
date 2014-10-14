@@ -3,7 +3,7 @@
  *    tape device driver for 3480/3490E/3590 tapes.
  *
  *  S390 and zSeries version
- *    Copyright IBM Corp. 2001,2006
+ *    Copyright IBM Corp. 2001, 2009
  *    Author(s): Carsten Otte <cotte@de.ibm.com>
  *		 Tuan Ngo-Anh <ngoanh@de.ibm.com>
  *		 Martin Schwidefsky <schwidefsky@de.ibm.com>
@@ -188,7 +188,7 @@ struct tape_blk_data
 {
 	struct tape_device *	device;
 	/* Block device request queue. */
-	request_queue_t *	request_queue;
+	struct request_queue *	request_queue;
 	spinlock_t		request_queue_lock;
 
 	/* Task to move entries from block request to CCS request queue. */
@@ -212,6 +212,9 @@ struct tape_device {
 	struct tape_class_device *	nt;
 	struct tape_class_device *	rt;
 
+	/* Device mutex to serialize tape commands. */
+	struct mutex			mutex;
+
 	/* Device discipline information. */
 	struct tape_discipline *	discipline;
 	void *				discdata;
@@ -230,6 +233,9 @@ struct tape_device {
 
 	/* Request queue. */
 	struct list_head		req_queue;
+
+	/* Request wait queue. */
+	wait_queue_head_t		wait_queue;
 
 	/* Each tape device has (currently) two minor numbers. */
 	int				first_minor;
@@ -274,6 +280,14 @@ tape_do_io_free(struct tape_device *device, struct tape_request *request)
 	return rc;
 }
 
+static inline void
+tape_do_io_async_free(struct tape_device *device, struct tape_request *request)
+{
+	request->callback = (void *) tape_free_request;
+	request->callback_data = NULL;
+	tape_do_io_async(device, request);
+}
+
 extern int tape_oper_handler(int irq, int status);
 extern void tape_noper_handler(int irq, int status);
 extern int tape_open(struct tape_device *);
@@ -282,15 +296,16 @@ extern int tape_mtop(struct tape_device *, int, int);
 extern void tape_state_set(struct tape_device *, enum tape_state);
 
 extern int tape_generic_online(struct tape_device *, struct tape_discipline *);
-extern int tape_generic_offline(struct tape_device *device);
+extern int tape_generic_offline(struct ccw_device *);
+extern int tape_generic_pm_suspend(struct ccw_device *);
 
 /* Externals from tape_devmap.c */
 extern int tape_generic_probe(struct ccw_device *);
 extern void tape_generic_remove(struct ccw_device *);
 
-extern struct tape_device *tape_get_device(int devindex);
-extern struct tape_device *tape_get_device_reference(struct tape_device *);
-extern struct tape_device *tape_put_device(struct tape_device *);
+extern struct tape_device *tape_find_device(int devindex);
+extern struct tape_device *tape_get_device(struct tape_device *);
+extern void tape_put_device(struct tape_device *);
 
 /* Externals from tape_char.c */
 extern int tapechar_init(void);
@@ -321,8 +336,6 @@ static inline void tape_proc_cleanup (void) {;}
 #endif
 
 /* a function for dumping device sense info */
-extern void tape_dump_sense(struct tape_device *, struct tape_request *,
-			    struct irb *);
 extern void tape_dump_sense_dbf(struct tape_device *, struct tape_request *,
 				struct irb *);
 

@@ -90,19 +90,16 @@
 #define RED_STAB_SIZE	256
 #define RED_STAB_MASK	(RED_STAB_SIZE - 1)
 
-struct red_stats
-{
+struct red_stats {
 	u32		prob_drop;	/* Early probability drops */
 	u32		prob_mark;	/* Early probability marks */
 	u32		forced_drop;	/* Forced drops, qavg > max_thresh */
 	u32		forced_mark;	/* Forced marks, qavg > max_thresh */
 	u32		pdrop;          /* Drops due to queue limits */
 	u32		other;          /* Drops due to drop() calls */
-	u32		backlog;
 };
 
-struct red_parms
-{
+struct red_parms {
 	/* Parameters */
 	u32		qth_min;	/* Min avg length threshold: A scaled */
 	u32		qth_max;	/* Max avg length threshold: A scaled */

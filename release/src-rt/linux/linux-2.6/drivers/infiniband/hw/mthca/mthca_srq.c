@@ -28,8 +28,6 @@
  * ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
- *
- * $Id: mthca_srq.c 3047 2005-08-10 03:59:35Z roland $
  */
 
 #include <linux/slab.h>
@@ -175,9 +173,17 @@ static int mthca_alloc_srq_buf(struct mthca_dev *dev, struct mthca_pd *pd,
 	 * scatter list L_Keys to the sentry value of 0x100.
 	 */
 	for (i = 0; i < srq->max; ++i) {
-		wqe = get_wqe(srq, i);
+		struct mthca_next_seg *next;
 
-		*wqe_to_link(wqe) = i < srq->max - 1 ? i + 1 : -1;
+		next = wqe = get_wqe(srq, i);
+
+		if (i < srq->max - 1) {
+			*wqe_to_link(wqe) = i + 1;
+			next->nda_op = htonl(((i + 1) << srq->wqe_shift) | 1);
+		} else {
+			*wqe_to_link(wqe) = -1;
+			next->nda_op = 0;
+		}
 
 		for (scatter = wqe + sizeof (struct mthca_next_seg);
 		     (void *) scatter < wqe + (1 << srq->wqe_shift);
@@ -470,16 +476,15 @@ out:
 void mthca_free_srq_wqe(struct mthca_srq *srq, u32 wqe_addr)
 {
 	int ind;
+	struct mthca_next_seg *last_free;
 
 	ind = wqe_addr >> srq->wqe_shift;
 
 	spin_lock(&srq->lock);
 
-	if (likely(srq->first_free >= 0))
-		*wqe_to_link(get_wqe(srq, srq->last_free)) = ind;
-	else
-		srq->first_free = ind;
-
+	last_free = get_wqe(srq, srq->last_free);
+	*wqe_to_link(last_free) = ind;
+	last_free->nda_op = htonl((ind << srq->wqe_shift) | 1);
 	*wqe_to_link(get_wqe(srq, ind)) = -1;
 	srq->last_free = ind;
 
@@ -491,7 +496,6 @@ int mthca_tavor_post_srq_recv(struct ib_srq *ibsrq, struct ib_recv_wr *wr,
 {
 	struct mthca_dev *dev = to_mdev(ibsrq->device);
 	struct mthca_srq *srq = to_msrq(ibsrq);
-	__be32 doorbell[2];
 	unsigned long flags;
 	int err = 0;
 	int first_ind;
@@ -507,19 +511,11 @@ int mthca_tavor_post_srq_recv(struct ib_srq *ibsrq, struct ib_recv_wr *wr,
 	first_ind = srq->first_free;
 
 	for (nreq = 0; wr; wr = wr->next) {
-		ind = srq->first_free;
-
-		if (ind < 0) {
-			mthca_err(dev, "SRQ %06x full\n", srq->srqn);
-			err = -ENOMEM;
-			*bad_wr = wr;
-			break;
-		}
-
+		ind       = srq->first_free;
 		wqe       = get_wqe(srq, ind);
 		next_ind  = *wqe_to_link(wqe);
 
-		if (next_ind < 0) {
+		if (unlikely(next_ind < 0)) {
 			mthca_err(dev, "SRQ %06x full\n", srq->srqn);
 			err = -ENOMEM;
 			*bad_wr = wr;
@@ -529,7 +525,6 @@ int mthca_tavor_post_srq_recv(struct ib_srq *ibsrq, struct ib_recv_wr *wr,
 		prev_wqe  = srq->last;
 		srq->last = wqe;
 
-		((struct mthca_next_seg *) wqe)->nda_op = 0;
 		((struct mthca_next_seg *) wqe)->ee_nds = 0;
 		/* flags field will always remain 0 */
 
@@ -543,24 +538,13 @@ int mthca_tavor_post_srq_recv(struct ib_srq *ibsrq, struct ib_recv_wr *wr,
 		}
 
 		for (i = 0; i < wr->num_sge; ++i) {
-			((struct mthca_data_seg *) wqe)->byte_count =
-				cpu_to_be32(wr->sg_list[i].length);
-			((struct mthca_data_seg *) wqe)->lkey =
-				cpu_to_be32(wr->sg_list[i].lkey);
-			((struct mthca_data_seg *) wqe)->addr =
-				cpu_to_be64(wr->sg_list[i].addr);
+			mthca_set_data_seg(wqe, wr->sg_list + i);
 			wqe += sizeof (struct mthca_data_seg);
 		}
 
-		if (i < srq->max_gs) {
-			((struct mthca_data_seg *) wqe)->byte_count = 0;
-			((struct mthca_data_seg *) wqe)->lkey = cpu_to_be32(MTHCA_INVAL_LKEY);
-			((struct mthca_data_seg *) wqe)->addr = 0;
-		}
+		if (i < srq->max_gs)
+			mthca_set_data_seg_inval(wqe);
 
-		((struct mthca_next_seg *) prev_wqe)->nda_op =
-			cpu_to_be32((ind << srq->wqe_shift) | 1);
-		wmb();
 		((struct mthca_next_seg *) prev_wqe)->ee_nds =
 			cpu_to_be32(MTHCA_NEXT_DBD);
 
@@ -571,16 +555,13 @@ int mthca_tavor_post_srq_recv(struct ib_srq *ibsrq, struct ib_recv_wr *wr,
 		if (unlikely(nreq == MTHCA_TAVOR_MAX_WQES_PER_RECV_DB)) {
 			nreq = 0;
 
-			doorbell[0] = cpu_to_be32(first_ind << srq->wqe_shift);
-			doorbell[1] = cpu_to_be32(srq->srqn << 8);
-
 			/*
 			 * Make sure that descriptors are written
 			 * before doorbell is rung.
 			 */
 			wmb();
 
-			mthca_write64(doorbell,
+			mthca_write64(first_ind << srq->wqe_shift, srq->srqn << 8,
 				      dev->kar + MTHCA_RECEIVE_DOORBELL,
 				      MTHCA_GET_DOORBELL_LOCK(&dev->doorbell_lock));
 
@@ -589,16 +570,13 @@ int mthca_tavor_post_srq_recv(struct ib_srq *ibsrq, struct ib_recv_wr *wr,
 	}
 
 	if (likely(nreq)) {
-		doorbell[0] = cpu_to_be32(first_ind << srq->wqe_shift);
-		doorbell[1] = cpu_to_be32((srq->srqn << 8) | nreq);
-
 		/*
 		 * Make sure that descriptors are written before
 		 * doorbell is rung.
 		 */
 		wmb();
 
-		mthca_write64(doorbell,
+		mthca_write64(first_ind << srq->wqe_shift, (srq->srqn << 8) | nreq,
 			      dev->kar + MTHCA_RECEIVE_DOORBELL,
 			      MTHCA_GET_DOORBELL_LOCK(&dev->doorbell_lock));
 	}
@@ -629,27 +607,17 @@ int mthca_arbel_post_srq_recv(struct ib_srq *ibsrq, struct ib_recv_wr *wr,
 	spin_lock_irqsave(&srq->lock, flags);
 
 	for (nreq = 0; wr; ++nreq, wr = wr->next) {
-		ind = srq->first_free;
-
-		if (ind < 0) {
-			mthca_err(dev, "SRQ %06x full\n", srq->srqn);
-			err = -ENOMEM;
-			*bad_wr = wr;
-			break;
-		}
-
+		ind       = srq->first_free;
 		wqe       = get_wqe(srq, ind);
 		next_ind  = *wqe_to_link(wqe);
 
-		if (next_ind < 0) {
+		if (unlikely(next_ind < 0)) {
 			mthca_err(dev, "SRQ %06x full\n", srq->srqn);
 			err = -ENOMEM;
 			*bad_wr = wr;
 			break;
 		}
 
-		((struct mthca_next_seg *) wqe)->nda_op =
-			cpu_to_be32((next_ind << srq->wqe_shift) | 1);
 		((struct mthca_next_seg *) wqe)->ee_nds = 0;
 		/* flags field will always remain 0 */
 
@@ -662,20 +630,12 @@ int mthca_arbel_post_srq_recv(struct ib_srq *ibsrq, struct ib_recv_wr *wr,
 		}
 
 		for (i = 0; i < wr->num_sge; ++i) {
-			((struct mthca_data_seg *) wqe)->byte_count =
-				cpu_to_be32(wr->sg_list[i].length);
-			((struct mthca_data_seg *) wqe)->lkey =
-				cpu_to_be32(wr->sg_list[i].lkey);
-			((struct mthca_data_seg *) wqe)->addr =
-				cpu_to_be64(wr->sg_list[i].addr);
+			mthca_set_data_seg(wqe, wr->sg_list + i);
 			wqe += sizeof (struct mthca_data_seg);
 		}
 
-		if (i < srq->max_gs) {
-			((struct mthca_data_seg *) wqe)->byte_count = 0;
-			((struct mthca_data_seg *) wqe)->lkey = cpu_to_be32(MTHCA_INVAL_LKEY);
-			((struct mthca_data_seg *) wqe)->addr = 0;
-		}
+		if (i < srq->max_gs)
+			mthca_set_data_seg_inval(wqe);
 
 		srq->wrid[ind]  = wr->wr_id;
 		srq->first_free = next_ind;

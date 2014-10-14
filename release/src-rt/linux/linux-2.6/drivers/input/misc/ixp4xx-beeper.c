@@ -20,11 +20,12 @@
 #include <linux/delay.h>
 #include <linux/platform_device.h>
 #include <linux/interrupt.h>
-#include <asm/hardware.h>
+#include <mach/hardware.h>
 
 MODULE_AUTHOR("Alessandro Zummo <a.zummo@towertech.it>");
 MODULE_DESCRIPTION("ixp4xx beeper driver");
 MODULE_LICENSE("GPL");
+MODULE_ALIAS("platform:ixp4xx-beeper");
 
 static DEFINE_SPINLOCK(beep_lock);
 
@@ -68,11 +69,7 @@ static int ixp4xx_spkr_event(struct input_dev *dev, unsigned int type, unsigned 
 	}
 
 	if (value > 20 && value < 32767)
-#ifndef FREQ
-		count = (ixp4xx_get_board_tick_rate() / (value * 4)) - 1;
-#else
-		count = (FREQ / (value * 4)) - 1;
-#endif
+		count = (IXP4XX_TIMER_FREQ / (value * 4)) - 1;
 
 	ixp4xx_spkr_control(pin, count);
 
@@ -109,12 +106,13 @@ static int __devinit ixp4xx_spkr_probe(struct platform_device *dev)
 	input_dev->id.version = 0x0100;
 	input_dev->dev.parent = &dev->dev;
 
-	input_dev->evbit[0] = BIT(EV_SND);
-	input_dev->sndbit[0] = BIT(SND_BELL) | BIT(SND_TONE);
+	input_dev->evbit[0] = BIT_MASK(EV_SND);
+	input_dev->sndbit[0] = BIT_MASK(SND_BELL) | BIT_MASK(SND_TONE);
 	input_dev->event = ixp4xx_spkr_event;
 
 	err = request_irq(IRQ_IXP4XX_TIMER2, &ixp4xx_spkr_interrupt,
-			  IRQF_DISABLED | IRQF_TIMER, "ixp4xx-beeper", (void *) dev->id);
+			  IRQF_DISABLED | IRQF_NO_SUSPEND, "ixp4xx-beeper",
+			  (void *) dev->id);
 	if (err)
 		goto err_free_device;
 

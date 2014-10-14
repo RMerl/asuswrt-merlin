@@ -1,5 +1,8 @@
 /* Host AP driver Info Frame processing (part of hostap.o module) */
 
+#include <linux/if_arp.h>
+#include <linux/sched.h>
+#include <linux/slab.h>
 #include "hostap_wlan.h"
 #include "hostap.h"
 #include "hostap_ap.h"
@@ -198,8 +201,8 @@ static void prism2_host_roaming(local_info_t *local)
 	    local->preferred_ap[2] || local->preferred_ap[3] ||
 	    local->preferred_ap[4] || local->preferred_ap[5]) {
 		/* Try to find preferred AP */
-		PDEBUG(DEBUG_EXTRA, "%s: Preferred AP BSSID " MACSTR "\n",
-		       dev->name, MAC2STR(local->preferred_ap));
+		PDEBUG(DEBUG_EXTRA, "%s: Preferred AP BSSID %pM\n",
+		       dev->name, local->preferred_ap);
 		for (i = 0; i < local->last_scan_results_count; i++) {
 			entry = &local->last_scan_results[i];
 			if (memcmp(local->preferred_ap, entry->bssid, 6) == 0)
@@ -216,8 +219,9 @@ static void prism2_host_roaming(local_info_t *local)
 	req.channel = selected->chid;
 	spin_unlock_irqrestore(&local->lock, flags);
 
-	PDEBUG(DEBUG_EXTRA, "%s: JoinRequest: BSSID=" MACSTR " channel=%d\n",
-	       dev->name, MAC2STR(req.bssid), le16_to_cpu(req.channel));
+	PDEBUG(DEBUG_EXTRA, "%s: JoinRequest: BSSID=%pM"
+	       " channel=%d\n",
+	       dev->name, req.bssid, le16_to_cpu(req.channel));
 	if (local->func->set_rid(dev, HFA384X_RID_JOINREQUEST, &req,
 				 sizeof(req))) {
 		printk(KERN_DEBUG "%s: JoinRequest failed\n", dev->name);
@@ -300,7 +304,7 @@ static void prism2_info_hostscanresults(local_info_t *local,
 	int i, result_size, copy_len, new_count;
 	struct hfa384x_hostscan_result *results, *prev;
 	unsigned long flags;
-	u16 *pos;
+	__le16 *pos;
 	u8 *ptr;
 
 	wake_up_interruptible(&local->hostscan_wq);
@@ -311,7 +315,7 @@ static void prism2_info_hostscanresults(local_info_t *local,
 		return;
 	}
 
-	pos = (u16 *) buf;
+	pos = (__le16 *) buf;
 	copy_len = result_size = le16_to_cpu(*pos);
 	if (result_size == 0) {
 		printk(KERN_DEBUG "%s: invalid result_size (0) in "
@@ -370,7 +374,7 @@ void hostap_info_process(local_info_t *local, struct sk_buff *skb)
 	buf = skb->data + sizeof(*info);
 	left = skb->len - sizeof(*info);
 
-	switch (info->type) {
+	switch (le16_to_cpu(info->type)) {
 	case HFA384X_INFO_COMMTALLIES:
 		prism2_info_commtallies(local, buf, left);
 		break;
@@ -392,7 +396,8 @@ void hostap_info_process(local_info_t *local, struct sk_buff *skb)
 #ifndef PRISM2_NO_DEBUG
 	default:
 		PDEBUG(DEBUG_EXTRA, "%s: INFO - len=%d type=0x%04x\n",
-		       local->dev->name, info->len, info->type);
+		       local->dev->name, le16_to_cpu(info->len),
+		       le16_to_cpu(info->type));
 		PDEBUG(DEBUG_EXTRA, "Unknown info frame:");
 		for (i = 0; i < (left < 100 ? left : 100); i++)
 			PDEBUG2(DEBUG_EXTRA, " %02x", buf[i]);
@@ -420,9 +425,9 @@ static void handle_info_queue_linkstatus(local_info_t *local)
 		printk(KERN_DEBUG "%s: could not read CURRENTBSSID after "
 		       "LinkStatus event\n", local->dev->name);
 	} else {
-		PDEBUG(DEBUG_EXTRA, "%s: LinkStatus: BSSID=" MACSTR "\n",
+		PDEBUG(DEBUG_EXTRA, "%s: LinkStatus: BSSID=%pM\n",
 		       local->dev->name,
-		       MAC2STR((unsigned char *) local->bssid));
+		       (unsigned char *) local->bssid);
 		if (local->wds_type & HOSTAP_WDS_AP_CLIENT)
 			hostap_add_sta(local->ap, local->bssid);
 	}

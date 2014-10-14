@@ -15,13 +15,13 @@
  * binaries.
  */
 #include <linux/compiler.h>
+#include <linux/compat.h>
 #include <linux/kernel.h>
 #include <linux/sched.h>
 #include <linux/mm.h>
 #include <linux/errno.h>
 #include <linux/ptrace.h>
 #include <linux/smp.h>
-#include <linux/smp_lock.h>
 #include <linux/user.h>
 #include <linux/security.h>
 
@@ -36,61 +36,18 @@
 #include <asm/uaccess.h>
 #include <asm/bootinfo.h>
 
-int ptrace_getregs (struct task_struct *child, __s64 __user *data);
-int ptrace_setregs (struct task_struct *child, __s64 __user *data);
-
-int ptrace_getfpregs (struct task_struct *child, __u32 __user *data);
-int ptrace_setfpregs (struct task_struct *child, __u32 __user *data);
-
 /*
  * Tracing a 32-bit process with a 64-bit strace and vice versa will not
  * work.  I don't know how to fix this.
  */
-asmlinkage int sys32_ptrace(int request, int pid, int addr, int data)
+long compat_arch_ptrace(struct task_struct *child, compat_long_t request,
+			compat_ulong_t caddr, compat_ulong_t cdata)
 {
-	struct task_struct *child;
+	int addr = caddr;
+	int data = cdata;
 	int ret;
 
-#if 0
-	printk("ptrace(r=%d,pid=%d,addr=%08lx,data=%08lx)\n",
-	       (int) request, (int) pid, (unsigned long) addr,
-	       (unsigned long) data);
-#endif
-	lock_kernel();
-	if (request == PTRACE_TRACEME) {
-		ret = ptrace_traceme();
-		goto out;
-	}
-
-	child = ptrace_get_task_struct(pid);
-	if (IS_ERR(child)) {
-		ret = PTR_ERR(child);
-		goto out;
-	}
-
-	if (request == PTRACE_ATTACH) {
-		ret = ptrace_attach(child);
-		goto out_tsk;
-	}
-
-	ret = ptrace_check_attach(child, request == PTRACE_KILL);
-	if (ret < 0)
-		goto out_tsk;
-
 	switch (request) {
-	/* when I and D space are separate, these will need to be fixed. */
-	case PTRACE_PEEKTEXT: /* read word at location addr. */
-	case PTRACE_PEEKDATA: {
-		unsigned int tmp;
-		int copied;
-
-		copied = access_process_vm(child, addr, &tmp, sizeof(tmp), 0);
-		ret = -EIO;
-		if (copied != sizeof(tmp))
-			break;
-		ret = put_user(tmp, (unsigned int __user *) (unsigned long) data);
-		break;
-	}
 
 	/*
 	 * Read 4 bytes of the other process' storage
@@ -214,7 +171,7 @@ asmlinkage int sys32_ptrace(int request, int pid, int addr, int data)
 			if (!cpu_has_dsp) {
 				tmp = 0;
 				ret = -EIO;
-				goto out_tsk;
+				goto out;
 			}
 			dregs = __get_dsp_regs(child);
 			tmp = (unsigned long) (dregs[addr - DSP_BASE]);
@@ -224,28 +181,18 @@ asmlinkage int sys32_ptrace(int request, int pid, int addr, int data)
 			if (!cpu_has_dsp) {
 				tmp = 0;
 				ret = -EIO;
-				goto out_tsk;
+				goto out;
 			}
 			tmp = child->thread.dsp.dspcontrol;
 			break;
 		default:
 			tmp = 0;
 			ret = -EIO;
-			goto out_tsk;
+			goto out;
 		}
 		ret = put_user(tmp, (unsigned __user *) (unsigned long) data);
 		break;
 	}
-
-	/* when I and D space are separate, this will have to be fixed. */
-	case PTRACE_POKETEXT: /* write the word at location addr. */
-	case PTRACE_POKEDATA:
-		ret = 0;
-		if (access_process_vm(child, addr, &data, sizeof(data), 1)
-		    == sizeof(data))
-			break;
-		ret = -EIO;
-		break;
 
 	/*
 	 * Write 4 bytes into the other process' storage
@@ -346,49 +293,19 @@ asmlinkage int sys32_ptrace(int request, int pid, int addr, int data)
 		}
 
 	case PTRACE_GETREGS:
-		ret = ptrace_getregs (child, (__u64 __user *) (__u64) data);
+		ret = ptrace_getregs(child, (__s64 __user *) (__u64) data);
 		break;
 
 	case PTRACE_SETREGS:
-		ret = ptrace_setregs (child, (__u64 __user *) (__u64) data);
+		ret = ptrace_setregs(child, (__s64 __user *) (__u64) data);
 		break;
 
 	case PTRACE_GETFPREGS:
-		ret = ptrace_getfpregs (child, (__u32 __user *) (__u64) data);
+		ret = ptrace_getfpregs(child, (__u32 __user *) (__u64) data);
 		break;
 
 	case PTRACE_SETFPREGS:
-		ret = ptrace_setfpregs (child, (__u32 __user *) (__u64) data);
-		break;
-
-	case PTRACE_SYSCALL: /* continue and stop at next (return from) syscall */
-	case PTRACE_CONT: { /* restart after signal. */
-		ret = -EIO;
-		if (!valid_signal(data))
-			break;
-		if (request == PTRACE_SYSCALL) {
-			set_tsk_thread_flag(child, TIF_SYSCALL_TRACE);
-		}
-		else {
-			clear_tsk_thread_flag(child, TIF_SYSCALL_TRACE);
-		}
-		child->exit_code = data;
-		wake_up_process(child);
-		ret = 0;
-		break;
-	}
-
-	/*
-	 * make the child exit.  Best I can do is send it a sigkill.
-	 * perhaps it should be put in the status that it wants to
-	 * exit.
-	 */
-	case PTRACE_KILL:
-		ret = 0;
-		if (child->exit_state == EXIT_ZOMBIE)	/* already dead */
-			break;
-		child->exit_code = SIGKILL;
-		wake_up_process(child);
+		ret = ptrace_setfpregs(child, (__u32 __user *) (__u64) data);
 		break;
 
 	case PTRACE_GET_THREAD_AREA:
@@ -396,28 +313,25 @@ asmlinkage int sys32_ptrace(int request, int pid, int addr, int data)
 				(unsigned int __user *) (unsigned long) data);
 		break;
 
-	case PTRACE_DETACH: /* detach a process that was attached. */
-		ret = ptrace_detach(child, data);
-		break;
-
-	case PTRACE_GETEVENTMSG:
-		ret = put_user(child->ptrace_message,
-			       (unsigned int __user *) (unsigned long) data);
-		break;
-
 	case PTRACE_GET_THREAD_AREA_3264:
 		ret = put_user(task_thread_info(child)->tp_value,
 				(unsigned long __user *) (unsigned long) data);
 		break;
 
+	case PTRACE_GET_WATCH_REGS:
+		ret = ptrace_get_watch_regs(child,
+			(struct pt_watch_regs __user *) (unsigned long) addr);
+		break;
+
+	case PTRACE_SET_WATCH_REGS:
+		ret = ptrace_set_watch_regs(child,
+			(struct pt_watch_regs __user *) (unsigned long) addr);
+		break;
+
 	default:
-		ret = ptrace_request(child, request, addr, data);
+		ret = compat_ptrace_request(child, request, addr, data);
 		break;
 	}
-
-out_tsk:
-	put_task_struct(child);
 out:
-	unlock_kernel();
 	return ret;
 }

@@ -893,15 +893,6 @@
 #define PHYS_ADDR_ONLY       1     /* Update the physical address only */
 
 /*
-** Booleans
-*/
-#define NO                   0
-#define FALSE                0
-
-#define YES                  ~0
-#define TRUE                 ~0
-
-/*
 ** Adapter state
 */
 #define INITIALISED          0     /* After h/w initialised and mem alloc'd */
@@ -1013,8 +1004,7 @@ struct de4x5_ioctl {
 */
 #define DE4X5_GET_HWADDR	0x01 /* Get the hardware address */
 #define DE4X5_SET_HWADDR	0x02 /* Set the hardware address */
-#define DE4X5_SET_PROM  	0x03 /* Set Promiscuous Mode */
-#define DE4X5_CLR_PROM  	0x04 /* Clear Promiscuous Mode */
+/* 0x03 and 0x04 were used before and are obsoleted now. Don't use them. */
 #define DE4X5_SAY_BOO	        0x05 /* Say "Boo!" to the kernel log file */
 #define DE4X5_GET_MCA   	0x06 /* Get a multicast address */
 #define DE4X5_SET_MCA   	0x07 /* Set a multicast address */
@@ -1026,4 +1016,4 @@ struct de4x5_ioctl {
 #define DE4X5_SET_OMR           0x0d /* Set the OMR Register contents */
 #define DE4X5_GET_REG           0x0e /* Get the DE4X5 Registers */
 
-#define MOTO_SROM_BUG    ((lp->active == 8) && (((le32_to_cpu(get_unaligned(((s32 *)dev->dev_addr))))&0x00ffffff)==0x3e0008))
+#define MOTO_SROM_BUG    (lp->active == 8 && (get_unaligned_le32(dev->dev_addr) & 0x00ffffff) == 0x3e0008)

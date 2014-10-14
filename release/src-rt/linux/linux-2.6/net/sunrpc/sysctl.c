@@ -18,14 +18,22 @@
 #include <linux/sunrpc/types.h>
 #include <linux/sunrpc/sched.h>
 #include <linux/sunrpc/stats.h>
+#include <linux/sunrpc/svc_xprt.h>
 
 /*
  * Declare the debug flags here
  */
 unsigned int	rpc_debug;
+EXPORT_SYMBOL_GPL(rpc_debug);
+
 unsigned int	nfs_debug;
+EXPORT_SYMBOL_GPL(nfs_debug);
+
 unsigned int	nfsd_debug;
+EXPORT_SYMBOL_GPL(nfsd_debug);
+
 unsigned int	nlm_debug;
+EXPORT_SYMBOL_GPL(nlm_debug);
 
 #ifdef RPC_DEBUG
 
@@ -48,8 +56,22 @@ rpc_unregister_sysctl(void)
 	}
 }
 
+static int proc_do_xprt(ctl_table *table, int write,
+			void __user *buffer, size_t *lenp, loff_t *ppos)
+{
+	char tmpbuf[256];
+	size_t len;
+
+	if ((*ppos && !write) || !*lenp) {
+		*lenp = 0;
+		return 0;
+	}
+	len = svc_print_xprts(tmpbuf, sizeof(tmpbuf));
+	return simple_read_from_buffer(buffer, *lenp, ppos, tmpbuf, len);
+}
+
 static int
-proc_dodebug(ctl_table *table, int write, struct file *file,
+proc_dodebug(ctl_table *table, int write,
 				void __user *buffer, size_t *lenp, loff_t *ppos)
 {
 	char		tmpbuf[20], c, *s;
@@ -87,9 +109,8 @@ proc_dodebug(ctl_table *table, int write, struct file *file,
 			left--, s++;
 		*(unsigned int *) table->data = value;
 		/* Display the RPC tasks on writing to rpc_debug */
-		if (table->ctl_name == CTL_RPCDEBUG) {
+		if (strcmp(table->procname, "rpc_debug") == 0)
 			rpc_show_tasks();
-		}
 	} else {
 		if (!access_ok(VERIFY_WRITE, buffer, left))
 			return -EFAULT;
@@ -114,48 +135,49 @@ done:
 
 static ctl_table debug_table[] = {
 	{
-		.ctl_name	= CTL_RPCDEBUG,
 		.procname	= "rpc_debug",
 		.data		= &rpc_debug,
 		.maxlen		= sizeof(int),
 		.mode		= 0644,
-		.proc_handler	= &proc_dodebug
+		.proc_handler	= proc_dodebug
 	},
 	{
-		.ctl_name	= CTL_NFSDEBUG,
 		.procname	= "nfs_debug",
 		.data		= &nfs_debug,
 		.maxlen		= sizeof(int),
 		.mode		= 0644,
-		.proc_handler	= &proc_dodebug
+		.proc_handler	= proc_dodebug
 	},
 	{
-		.ctl_name	= CTL_NFSDDEBUG,
 		.procname	= "nfsd_debug",
 		.data		= &nfsd_debug,
 		.maxlen		= sizeof(int),
 		.mode		= 0644,
-		.proc_handler	= &proc_dodebug
+		.proc_handler	= proc_dodebug
 	},
 	{
-		.ctl_name	= CTL_NLMDEBUG,
 		.procname	= "nlm_debug",
 		.data		= &nlm_debug,
 		.maxlen		= sizeof(int),
 		.mode		= 0644,
-		.proc_handler	= &proc_dodebug
+		.proc_handler	= proc_dodebug
 	},
-	{ .ctl_name = 0 }
+	{
+		.procname	= "transports",
+		.maxlen		= 256,
+		.mode		= 0444,
+		.proc_handler	= proc_do_xprt,
+	},
+	{ }
 };
 
 static ctl_table sunrpc_table[] = {
 	{
-		.ctl_name	= CTL_SUNRPC,
 		.procname	= "sunrpc",
 		.mode		= 0555,
 		.child		= debug_table
 	},
-	{ .ctl_name = 0 }
+	{ }
 };
 
 #endif

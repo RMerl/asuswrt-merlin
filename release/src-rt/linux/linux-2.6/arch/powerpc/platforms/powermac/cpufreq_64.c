@@ -18,7 +18,6 @@
 #include <linux/kernel.h>
 #include <linux/delay.h>
 #include <linux/sched.h>
-#include <linux/slab.h>
 #include <linux/cpufreq.h>
 #include <linux/init.h>
 #include <linux/completion.h>
@@ -86,6 +85,7 @@ static int (*g5_query_freq)(void);
 
 static DEFINE_MUTEX(g5_switch_mutex);
 
+static unsigned long transition_latency;
 
 #ifdef CONFIG_PMAC_SMU
 
@@ -250,7 +250,7 @@ static void g5_pfunc_switch_volt(int speed_mode)
 static struct pmf_function *pfunc_cpu_setfreq_high;
 static struct pmf_function *pfunc_cpu_setfreq_low;
 static struct pmf_function *pfunc_cpu_getfreq;
-static struct pmf_function *pfunc_slewing_done;;
+static struct pmf_function *pfunc_slewing_done;
 
 static int g5_pfunc_switch_freq(int speed_mode)
 {
@@ -357,13 +357,12 @@ static unsigned int g5_cpufreq_get_speed(unsigned int cpu)
 
 static int g5_cpufreq_cpu_init(struct cpufreq_policy *policy)
 {
-	policy->governor = CPUFREQ_DEFAULT_GOVERNOR;
-	policy->cpuinfo.transition_latency = CPUFREQ_ETERNAL;
+	policy->cpuinfo.transition_latency = transition_latency;
 	policy->cur = g5_cpu_freqs[g5_query_freq()].frequency;
 	/* secondary CPUs are tied to the primary one by the
 	 * cpufreq core if in the secondary policy we tell it that
 	 * it actually must be one policy together with all others. */
-	policy->cpus = cpu_online_map;
+	cpumask_copy(policy->cpus, cpu_online_mask);
 	cpufreq_frequency_table_get_attr(g5_cpu_freqs, policy->cpu);
 
 	return cpufreq_frequency_table_cpuinfo(policy,
@@ -398,11 +397,11 @@ static int __init g5_neo2_cpufreq_init(struct device_node *cpus)
 	int rc = -ENODEV;
 
 	/* Check supported platforms */
-	if (machine_is_compatible("PowerMac8,1") ||
-	    machine_is_compatible("PowerMac8,2") ||
-	    machine_is_compatible("PowerMac9,1"))
+	if (of_machine_is_compatible("PowerMac8,1") ||
+	    of_machine_is_compatible("PowerMac8,2") ||
+	    of_machine_is_compatible("PowerMac9,1"))
 		use_volts_smu = 1;
-	else if (machine_is_compatible("PowerMac11,2"))
+	else if (of_machine_is_compatible("PowerMac11,2"))
 		use_volts_vdnap = 1;
 	else
 		return -ENODEV;
@@ -501,6 +500,7 @@ static int __init g5_neo2_cpufreq_init(struct device_node *cpus)
 	g5_cpu_freqs[1].frequency = max_freq/2;
 
 	/* Set callbacks */
+	transition_latency = 12000;
 	g5_switch_freq = g5_scom_switch_freq;
 	g5_query_freq = g5_scom_query_freq;
 	freq_method = "SCOM";
@@ -676,6 +676,7 @@ static int __init g5_pm72_cpufreq_init(struct device_node *cpus)
 	g5_cpu_freqs[1].frequency = min_freq;
 
 	/* Set callbacks */
+	transition_latency = CPUFREQ_ETERNAL;
 	g5_switch_volt = g5_pfunc_switch_volt;
 	g5_switch_freq = g5_pfunc_switch_freq;
 	g5_query_freq = g5_pfunc_query_freq;
@@ -727,9 +728,9 @@ static int __init g5_cpufreq_init(void)
 		return -ENODEV;
 	}
 
-	if (machine_is_compatible("PowerMac7,2") ||
-	    machine_is_compatible("PowerMac7,3") ||
-	    machine_is_compatible("RackMac3,1"))
+	if (of_machine_is_compatible("PowerMac7,2") ||
+	    of_machine_is_compatible("PowerMac7,3") ||
+	    of_machine_is_compatible("RackMac3,1"))
 		rc = g5_pm72_cpufreq_init(cpus);
 #ifdef CONFIG_PMAC_SMU
 	else

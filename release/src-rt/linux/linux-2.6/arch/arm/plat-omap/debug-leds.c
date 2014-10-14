@@ -11,15 +11,15 @@
 #include <linux/init.h>
 #include <linux/platform_device.h>
 #include <linux/leds.h>
+#include <linux/io.h>
 
-#include <asm/io.h>
-#include <asm/hardware.h>
+#include <mach/hardware.h>
 #include <asm/leds.h>
 #include <asm/system.h>
 #include <asm/mach-types.h>
 
-#include <asm/arch/fpga.h>
-#include <asm/arch/gpio.h>
+#include <plat/fpga.h>
+#include <mach/gpio.h>
 
 
 /* Many OMAP development platforms reuse the same "debug board"; these
@@ -39,7 +39,7 @@ static struct h2p2_dbg_fpga __iomem	*fpga;
 static u16				led_state, hw_led_state;
 
 
-#ifdef	CONFIG_LEDS_OMAP_DEBUG
+#ifdef	CONFIG_OMAP_DEBUG_LEDS
 #define new_led_api()	1
 #else
 #define new_led_api()	0
@@ -83,8 +83,8 @@ static void h2p2_dbg_leds_event(led_event_t evt)
 		/* all leds off during suspend or shutdown */
 
 		if (!(machine_is_omap_perseus2() || machine_is_omap_h4())) {
-			omap_set_gpio_dataout(GPIO_TIMER, 0);
-			omap_set_gpio_dataout(GPIO_IDLE, 0);
+			gpio_set_value(GPIO_TIMER, 0);
+			gpio_set_value(GPIO_IDLE, 0);
 		}
 
 		__raw_writew(~0, &fpga->leds);
@@ -107,7 +107,7 @@ static void h2p2_dbg_leds_event(led_event_t evt)
 		if (machine_is_omap_perseus2() || machine_is_omap_h4())
 			hw_led_state ^= H2P2_DBG_FPGA_P2_LED_TIMER;
 		else {
-			omap_set_gpio_dataout(GPIO_TIMER,
+			gpio_set_value(GPIO_TIMER,
 					led_state & LED_TIMER_ON);
 			goto done;
 		}
@@ -121,7 +121,7 @@ static void h2p2_dbg_leds_event(led_event_t evt)
 		if (machine_is_omap_perseus2() || machine_is_omap_h4())
 			hw_led_state &= ~H2P2_DBG_FPGA_P2_LED_IDLE;
 		else {
-			omap_set_gpio_dataout(GPIO_IDLE, 1);
+			gpio_set_value(GPIO_IDLE, 1);
 			goto done;
 		}
 
@@ -131,7 +131,7 @@ static void h2p2_dbg_leds_event(led_event_t evt)
 		if (machine_is_omap_perseus2() || machine_is_omap_h4())
 			hw_led_state |= H2P2_DBG_FPGA_P2_LED_IDLE;
 		else {
-			omap_set_gpio_dataout(GPIO_IDLE, 0);
+			gpio_set_value(GPIO_IDLE, 0);
 			goto done;
 		}
 
@@ -281,24 +281,27 @@ static int /* __init */ fpga_probe(struct platform_device *pdev)
 	return 0;
 }
 
-static int fpga_suspend_late(struct platform_device *pdev, pm_message_t mesg)
+static int fpga_suspend_noirq(struct device *dev)
 {
 	__raw_writew(~0, &fpga->leds);
 	return 0;
 }
 
-static int fpga_resume_early(struct platform_device *pdev)
+static int fpga_resume_noirq(struct device *dev)
 {
 	__raw_writew(~hw_led_state, &fpga->leds);
 	return 0;
 }
 
+static const struct dev_pm_ops fpga_dev_pm_ops = {
+	.suspend_noirq = fpga_suspend_noirq,
+	.resume_noirq = fpga_resume_noirq,
+};
 
 static struct platform_driver led_driver = {
 	.driver.name	= "omap_dbg_led",
+	.driver.pm	= &fpga_dev_pm_ops,
 	.probe		= fpga_probe,
-	.suspend_late	= fpga_suspend_late,
-	.resume_early	= fpga_resume_early,
 };
 
 static int __init fpga_init(void)

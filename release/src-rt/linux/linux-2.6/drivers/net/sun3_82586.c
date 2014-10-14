@@ -33,7 +33,6 @@ static int fifo=0x8;	/* don't change */
 #include <linux/string.h>
 #include <linux/errno.h>
 #include <linux/ioport.h>
-#include <linux/slab.h>
 #include <linux/interrupt.h>
 #include <linux/delay.h>
 #include <linux/init.h>
@@ -143,7 +142,6 @@ static void    sun3_82586_rnr_int(struct net_device *dev);
 
 struct priv
 {
-	struct net_device_stats stats;
 	unsigned long base;
 	char *memtop;
 	long int lock;
@@ -191,7 +189,7 @@ static int sun3_82586_open(struct net_device *dev)
 	startrecv586(dev);
 	sun3_enaint();
 
-	ret = request_irq(dev->irq, &sun3_82586_interrupt,0,dev->name,dev);
+	ret = request_irq(dev->irq, sun3_82586_interrupt,0,dev->name,dev);
 	if (ret)
 	{
 		sun3_reset586();
@@ -209,7 +207,7 @@ static int sun3_82586_open(struct net_device *dev)
 static int check586(struct net_device *dev,char *where,unsigned size)
 {
 	struct priv pb;
-	struct priv *p = /* (struct priv *) dev->priv*/ &pb;
+	struct priv *p = &pb;
 	char *iscp_addr;
 	int i;
 
@@ -247,7 +245,7 @@ static int check586(struct net_device *dev,char *where,unsigned size)
  */
 static void alloc586(struct net_device *dev)
 {
-	struct priv *p =	(struct priv *) dev->priv;
+	struct priv *p = netdev_priv(dev);
 
 	sun3_reset586();
 	DELAY(1);
@@ -311,7 +309,6 @@ struct net_device * __init sun3_82586_probe(int unit)
 		sprintf(dev->name, "eth%d", unit);
 		netdev_boot_setup_check(dev);
 	}
-	SET_MODULE_OWNER(dev);
 
 	dev->irq = IE_IRQ;
 	dev->base_addr = ioaddr;
@@ -331,6 +328,18 @@ out:
 	iounmap((void __iomem *)ioaddr);
 	return ERR_PTR(err);
 }
+
+static const struct net_device_ops sun3_82586_netdev_ops = {
+	.ndo_open		= sun3_82586_open,
+	.ndo_stop		= sun3_82586_close,
+	.ndo_start_xmit		= sun3_82586_send_packet,
+	.ndo_set_multicast_list	= set_multicast_list,
+	.ndo_tx_timeout		= sun3_82586_timeout,
+	.ndo_get_stats		= sun3_82586_get_stats,
+	.ndo_validate_addr	= eth_validate_addr,
+	.ndo_set_mac_address	= eth_mac_addr,
+	.ndo_change_mtu		= eth_change_mtu,
+};
 
 static int __init sun3_82586_probe1(struct net_device *dev,int ioaddr)
 {
@@ -364,27 +373,26 @@ static int __init sun3_82586_probe1(struct net_device *dev,int ioaddr)
 		goto out;
 	}
 
-	((struct priv *) (dev->priv))->memtop = (char *)dvma_btov(dev->mem_start);
-	((struct priv *) (dev->priv))->base = (unsigned long) dvma_btov(0);
+	((struct priv *)netdev_priv(dev))->memtop =
+					(char *)dvma_btov(dev->mem_start);
+	((struct priv *)netdev_priv(dev))->base = (unsigned long) dvma_btov(0);
 	alloc586(dev);
 
 	/* set number of receive-buffs according to memsize */
 	if(size == 0x2000)
-		((struct priv *) dev->priv)->num_recv_buffs = NUM_RECV_BUFFS_8;
+		((struct priv *)netdev_priv(dev))->num_recv_buffs =
+							NUM_RECV_BUFFS_8;
 	else if(size == 0x4000)
-		((struct priv *) dev->priv)->num_recv_buffs = NUM_RECV_BUFFS_16;
+		((struct priv *)netdev_priv(dev))->num_recv_buffs =
+							NUM_RECV_BUFFS_16;
 	else
-		((struct priv *) dev->priv)->num_recv_buffs = NUM_RECV_BUFFS_32;
+		((struct priv *)netdev_priv(dev))->num_recv_buffs =
+							NUM_RECV_BUFFS_32;
 
 	printk("Memaddr: 0x%lx, Memsize: %d, IRQ %d\n",dev->mem_start,size, dev->irq);
 
-	dev->open		= sun3_82586_open;
-	dev->stop		= sun3_82586_close;
-	dev->get_stats		= sun3_82586_get_stats;
-	dev->tx_timeout 	= sun3_82586_timeout;
+	dev->netdev_ops		= &sun3_82586_netdev_ops;
 	dev->watchdog_timeo	= HZ/20;
-	dev->hard_start_xmit 	= sun3_82586_send_packet;
-	dev->set_multicast_list = set_multicast_list;
 
 	dev->if_port 		= 0;
 	return 0;
@@ -398,13 +406,13 @@ static int init586(struct net_device *dev)
 {
 	void *ptr;
 	int i,result=0;
-	struct priv *p = (struct priv *) dev->priv;
+	struct priv *p = netdev_priv(dev);
 	volatile struct configure_cmd_struct	*cfg_cmd;
 	volatile struct iasetup_cmd_struct *ias_cmd;
 	volatile struct tdr_cmd_struct *tdr_cmd;
 	volatile struct mcsetup_cmd_struct *mc_cmd;
-	struct dev_mc_list *dmi=dev->mc_list;
-	int num_addrs=dev->mc_count;
+	struct netdev_hw_addr *ha;
+	int num_addrs=netdev_mc_count(dev);
 
 	ptr = (void *) ((char *)p->scb + sizeof(struct scb_struct));
 
@@ -426,14 +434,11 @@ static int init586(struct net_device *dev)
 		int len = ((char *) p->iscp - (char *) ptr - 8) / 6;
 		if(num_addrs > len)	{
 			printk("%s: switching to promisc. mode\n",dev->name);
-			dev->flags|=IFF_PROMISC;
+			cfg_cmd->promisc = 1;
 		}
 	}
 	if(dev->flags&IFF_PROMISC)
-	{
-			 cfg_cmd->promisc=1;
-			 dev->flags|=IFF_PROMISC;
-	}
+		cfg_cmd->promisc = 1;
 	cfg_cmd->carr_coll	= 0x00;
 
 	p->scb->cbl_offset	= make16(cfg_cmd);
@@ -529,8 +534,10 @@ static int init586(struct net_device *dev)
 		mc_cmd->cmd_link = 0xffff;
 		mc_cmd->mc_cnt = swab16(num_addrs * 6);
 
-		for(i=0;i<num_addrs;i++,dmi=dmi->next)
-			memcpy((char *) mc_cmd->mc_list[i], dmi->dmi_addr,6);
+		i = 0;
+		netdev_for_each_mc_addr(ha, dev)
+			memcpy((char *) mc_cmd->mc_list[i++],
+			       ha->addr, ETH_ALEN);
 
 		p->scb->cbl_offset = make16(mc_cmd);
 		p->scb->cmd_cuc = CUC_START;
@@ -635,7 +642,7 @@ static void *alloc_rfa(struct net_device *dev,void *ptr)
 	volatile struct rfd_struct *rfd = (struct rfd_struct *)ptr;
 	volatile struct rbd_struct *rbd;
 	int i;
-	struct priv *p = (struct priv *) dev->priv;
+	struct priv *p = netdev_priv(dev);
 
 	memset((char *) rfd,0,sizeof(struct rfd_struct)*(p->num_recv_buffs+rfdadd));
 	p->rfd_first = rfd;
@@ -687,7 +694,7 @@ static irqreturn_t sun3_82586_interrupt(int irq,void *dev_id)
 		printk ("sun3_82586-interrupt: irq %d for unknown device.\n",irq);
 		return IRQ_NONE;
 	}
-	p = (struct priv *) dev->priv;
+	p = netdev_priv(dev);
 
 	if(debuglevel > 1)
 		printk("I");
@@ -757,7 +764,7 @@ static void sun3_82586_rcv_int(struct net_device *dev)
 	unsigned short totlen;
 	struct sk_buff *skb;
 	struct rbd_struct *rbd;
-	struct priv *p = (struct priv *) dev->priv;
+	struct priv *p = netdev_priv(dev);
 
 	if(debuglevel > 0)
 		printk("R");
@@ -777,13 +784,13 @@ static void sun3_82586_rcv_int(struct net_device *dev)
 					{
 						skb_reserve(skb,2);
 						skb_put(skb,totlen);
-						eth_copy_and_sum(skb,(char *) p->base+swab32((unsigned long) rbd->buffer),totlen,0);
+						skb_copy_to_linear_data(skb,(char *) p->base+swab32((unsigned long) rbd->buffer),totlen);
 						skb->protocol=eth_type_trans(skb,dev);
 						netif_rx(skb);
-						p->stats.rx_packets++;
+						dev->stats.rx_packets++;
 					}
 					else
-						p->stats.rx_dropped++;
+						dev->stats.rx_dropped++;
 				}
 				else
 				{
@@ -804,13 +811,13 @@ static void sun3_82586_rcv_int(struct net_device *dev)
 					totlen += rstat & RBD_MASK;
 					rbd->status = 0;
 					printk("%s: received oversized frame! length: %d\n",dev->name,totlen);
-					p->stats.rx_dropped++;
+					dev->stats.rx_dropped++;
 			 }
 		}
 		else /* frame !(ok), only with 'save-bad-frames' */
 		{
 			printk("%s: oops! rfd-error-status: %04x\n",dev->name,status);
-			p->stats.rx_errors++;
+			dev->stats.rx_errors++;
 		}
 		p->rfd_top->stat_high = 0;
 		p->rfd_top->last = RFD_SUSP; /* maybe exchange by RFD_LAST */
@@ -875,9 +882,9 @@ static void sun3_82586_rcv_int(struct net_device *dev)
 
 static void sun3_82586_rnr_int(struct net_device *dev)
 {
-	struct priv *p = (struct priv *) dev->priv;
+	struct priv *p = netdev_priv(dev);
 
-	p->stats.rx_errors++;
+	dev->stats.rx_errors++;
 
 	WAIT_4_SCB_CMD();		/* wait for the last cmd, WAIT_4_FULLSTAT?? */
 	p->scb->cmd_ruc = RUC_ABORT; /* usually the RU is in the 'no resource'-state .. abort it now. */
@@ -899,7 +906,7 @@ static void sun3_82586_rnr_int(struct net_device *dev)
 static void sun3_82586_xmt_int(struct net_device *dev)
 {
 	int status;
-	struct priv *p = (struct priv *) dev->priv;
+	struct priv *p = netdev_priv(dev);
 
 	if(debuglevel > 0)
 		printk("X");
@@ -910,29 +917,29 @@ static void sun3_82586_xmt_int(struct net_device *dev)
 
 	if(status & STAT_OK)
 	{
-		p->stats.tx_packets++;
-		p->stats.collisions += (status & TCMD_MAXCOLLMASK);
+		dev->stats.tx_packets++;
+		dev->stats.collisions += (status & TCMD_MAXCOLLMASK);
 	}
 	else
 	{
-		p->stats.tx_errors++;
+		dev->stats.tx_errors++;
 		if(status & TCMD_LATECOLL) {
 			printk("%s: late collision detected.\n",dev->name);
-			p->stats.collisions++;
+			dev->stats.collisions++;
 		}
 		else if(status & TCMD_NOCARRIER) {
-			p->stats.tx_carrier_errors++;
+			dev->stats.tx_carrier_errors++;
 			printk("%s: no carrier detected.\n",dev->name);
 		}
 		else if(status & TCMD_LOSTCTS)
 			printk("%s: loss of CTS detected.\n",dev->name);
 		else if(status & TCMD_UNDERRUN) {
-			p->stats.tx_fifo_errors++;
+			dev->stats.tx_fifo_errors++;
 			printk("%s: DMA underrun detected.\n",dev->name);
 		}
 		else if(status & TCMD_MAXCOLL) {
 			printk("%s: Max. collisions exceeded.\n",dev->name);
-			p->stats.collisions += 16;
+			dev->stats.collisions += 16;
 		}
 	}
 
@@ -949,7 +956,7 @@ static void sun3_82586_xmt_int(struct net_device *dev)
 
 static void startrecv586(struct net_device *dev)
 {
-	struct priv *p = (struct priv *) dev->priv;
+	struct priv *p = netdev_priv(dev);
 
 	WAIT_4_SCB_CMD();
 	WAIT_4_SCB_CMD_RUC();
@@ -961,7 +968,7 @@ static void startrecv586(struct net_device *dev)
 
 static void sun3_82586_timeout(struct net_device *dev)
 {
-	struct priv *p = (struct priv *) dev->priv;
+	struct priv *p = netdev_priv(dev);
 #ifndef NO_NOPCOMMANDS
 	if(p->scb->cus & CU_ACTIVE) /* COMMAND-UNIT active? */
 	{
@@ -977,7 +984,7 @@ static void sun3_82586_timeout(struct net_device *dev)
 		p->scb->cmd_cuc = CUC_START;
 		sun3_attn586();
 		WAIT_4_SCB_CMD();
-		dev->trans_start = jiffies;
+		dev->trans_start = jiffies; /* prevent tx timeout */
 		return 0;
 	}
 #endif
@@ -990,7 +997,7 @@ static void sun3_82586_timeout(struct net_device *dev)
 		sun3_82586_close(dev);
 		sun3_82586_open(dev);
 	}
-	dev->trans_start = jiffies;
+	dev->trans_start = jiffies; /* prevent tx timeout */
 }
 
 /******************************************************
@@ -1003,12 +1010,12 @@ static int sun3_82586_send_packet(struct sk_buff *skb, struct net_device *dev)
 #ifndef NO_NOPCOMMANDS
 	int next_nop;
 #endif
-	struct priv *p = (struct priv *) dev->priv;
+	struct priv *p = netdev_priv(dev);
 
 	if(skb->len > XMIT_BUFF_SIZE)
 	{
 		printk("%s: Sorry, max. framelength is %d bytes. The length of your frame is %d bytes.\n",dev->name,XMIT_BUFF_SIZE,skb->len);
-		return 0;
+		return NETDEV_TX_OK;
 	}
 
 	netif_stop_queue(dev);
@@ -1016,7 +1023,7 @@ static int sun3_82586_send_packet(struct sk_buff *skb, struct net_device *dev)
 #if(NUM_XMIT_BUFFS > 1)
 	if(test_and_set_bit(0,(void *) &p->lock)) {
 		printk("%s: Queue was locked\n",dev->name);
-		return 1;
+		return NETDEV_TX_BUSY;
 	}
 	else
 #endif
@@ -1054,7 +1061,6 @@ static int sun3_82586_send_packet(struct sk_buff *skb, struct net_device *dev)
 			}
 
 			sun3_attn586();
-			dev->trans_start = jiffies;
 			if(!i)
 				dev_kfree_skb(skb);
 			WAIT_4_SCB_CMD();
@@ -1074,7 +1080,6 @@ static int sun3_82586_send_packet(struct sk_buff *skb, struct net_device *dev)
 		p->xmit_cmds[0]->cmd_status = p->nop_cmds[next_nop]->cmd_status = 0;
 
 		p->nop_cmds[p->nop_point]->cmd_link = make16((p->xmit_cmds[0]));
-		dev->trans_start = jiffies;
 		p->nop_point = next_nop;
 		dev_kfree_skb(skb);
 #	endif
@@ -1089,7 +1094,6 @@ static int sun3_82586_send_packet(struct sk_buff *skb, struct net_device *dev)
 		p->nop_cmds[next_nop]->cmd_status = 0;
 
 		p->nop_cmds[p->xmit_count]->cmd_link = make16((p->xmit_cmds[p->xmit_count]));
-		dev->trans_start = jiffies;
 		p->xmit_count = next_nop;
 
 		{
@@ -1103,7 +1107,7 @@ static int sun3_82586_send_packet(struct sk_buff *skb, struct net_device *dev)
 		dev_kfree_skb(skb);
 #endif
 	}
-	return 0;
+	return NETDEV_TX_OK;
 }
 
 /*******************************************
@@ -1112,7 +1116,7 @@ static int sun3_82586_send_packet(struct sk_buff *skb, struct net_device *dev)
 
 static struct net_device_stats *sun3_82586_get_stats(struct net_device *dev)
 {
-	struct priv *p = (struct priv *) dev->priv;
+	struct priv *p = netdev_priv(dev);
 	unsigned short crc,aln,rsc,ovrn;
 
 	crc = swab16(p->scb->crc_errs); /* get error-statistic from the ni82586 */
@@ -1124,12 +1128,12 @@ static struct net_device_stats *sun3_82586_get_stats(struct net_device *dev)
 	ovrn = swab16(p->scb->ovrn_errs);
 	p->scb->ovrn_errs = 0;
 
-	p->stats.rx_crc_errors += crc;
-	p->stats.rx_fifo_errors += ovrn;
-	p->stats.rx_frame_errors += aln;
-	p->stats.rx_dropped += rsc;
+	dev->stats.rx_crc_errors += crc;
+	dev->stats.rx_fifo_errors += ovrn;
+	dev->stats.rx_frame_errors += aln;
+	dev->stats.rx_dropped += rsc;
 
-	return &p->stats;
+	return &dev->stats;
 }
 
 /********************************************************
@@ -1175,7 +1179,7 @@ void cleanup_module(void)
  */
 void sun3_82586_dump(struct net_device *dev,void *ptr)
 {
-	struct priv *p = (struct priv *) dev->priv;
+	struct priv *p = netdev_priv(dev);
 	struct dump_cmd_struct *dump_cmd = (struct dump_cmd_struct *) ptr;
 	int i;
 

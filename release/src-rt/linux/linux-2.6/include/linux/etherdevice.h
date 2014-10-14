@@ -27,25 +27,31 @@
 #include <linux/if_ether.h>
 #include <linux/netdevice.h>
 #include <linux/random.h>
+#include <asm/unaligned.h>
 
 #ifdef __KERNEL__
-extern int		eth_header(struct sk_buff *skb, struct net_device *dev,
-				   unsigned short type, void *daddr,
-				   void *saddr, unsigned len);
-extern int		eth_rebuild_header(struct sk_buff *skb);
 extern __be16		eth_type_trans(struct sk_buff *skb, struct net_device *dev);
-extern void		eth_header_cache_update(struct hh_cache *hh, struct net_device *dev,
-						unsigned char * haddr);
-extern int		eth_header_cache(struct neighbour *neigh,
-					 struct hh_cache *hh);
+extern const struct header_ops eth_header_ops;
 
-extern struct net_device *alloc_etherdev(int sizeof_priv);
-static inline void eth_copy_and_sum (struct sk_buff *dest, 
-				     const unsigned char *src, 
-				     int len, int base)
-{
-	memcpy (dest->data, src, len);
-}
+extern int eth_header(struct sk_buff *skb, struct net_device *dev,
+		      unsigned short type,
+		      const void *daddr, const void *saddr, unsigned len);
+extern int eth_rebuild_header(struct sk_buff *skb);
+extern int eth_header_parse(const struct sk_buff *skb, unsigned char *haddr);
+extern int eth_header_cache(const struct neighbour *neigh, struct hh_cache *hh);
+extern void eth_header_cache_update(struct hh_cache *hh,
+				    const struct net_device *dev,
+				    const unsigned char *haddr);
+extern int eth_mac_addr(struct net_device *dev, void *p);
+extern int eth_change_mtu(struct net_device *dev, int new_mtu);
+extern int eth_validate_addr(struct net_device *dev);
+
+
+
+extern struct net_device *alloc_etherdev_mqs(int sizeof_priv, unsigned int txqs,
+					    unsigned int rxqs);
+#define alloc_etherdev(sizeof_priv) alloc_etherdev_mq(sizeof_priv, 1)
+#define alloc_etherdev_mq(sizeof_priv, count) alloc_etherdev_mqs(sizeof_priv, count, count)
 
 /**
  * is_zero_ether_addr - Determine if give Ethernet address is all zeros.
@@ -67,19 +73,18 @@ static inline int is_zero_ether_addr(const u8 *addr)
  */
 static inline int is_multicast_ether_addr(const u8 *addr)
 {
-	return (0x01 & addr[0]);
+	return 0x01 & addr[0];
 }
 
 /**
- * is_local_ether_addr - Determine if the Ethernet address is locally-assigned
- * one (IEEE 802).
+ * is_local_ether_addr - Determine if the Ethernet address is locally-assigned one (IEEE 802).
  * @addr: Pointer to a six-byte array containing the Ethernet address
  *
  * Return true if the address is a local address.
  */
 static inline int is_local_ether_addr(const u8 *addr)
 {
-	return (0x02 & addr[0]);
+	return 0x02 & addr[0];
 }
 
 /**
@@ -91,6 +96,17 @@ static inline int is_local_ether_addr(const u8 *addr)
 static inline int is_broadcast_ether_addr(const u8 *addr)
 {
 	return (addr[0] & addr[1] & addr[2] & addr[3] & addr[4] & addr[5]) == 0xff;
+}
+
+/**
+ * is_unicast_ether_addr - Determine if the Ethernet address is unicast
+ * @addr: Pointer to a six-byte array containing the Ethernet address
+ *
+ * Return true if the address is a unicast address.
+ */
+static inline int is_unicast_ether_addr(const u8 *addr)
+{
+	return !is_multicast_ether_addr(addr);
 }
 
 /**
@@ -124,6 +140,20 @@ static inline void random_ether_addr(u8 *addr)
 }
 
 /**
+ * dev_hw_addr_random - Create random MAC and set device flag
+ * @dev: pointer to net_device structure
+ * @hwaddr: Pointer to a six-byte array containing the Ethernet address
+ *
+ * Generate random MAC to be used by a device and set addr_assign_type
+ * so the state can be read by sysfs and be used by udev.
+ */
+static inline void dev_hw_addr_random(struct net_device *dev, u8 *hwaddr)
+{
+	dev->addr_assign_type |= NET_ADDR_RANDOM;
+	random_ether_addr(hwaddr);
+}
+
+/**
  * compare_ether_addr - Compare two Ethernet addresses
  * @addr1: Pointer to a six-byte array containing the Ethernet address
  * @addr2: Pointer other six-byte array containing the Ethernet address
@@ -138,9 +168,76 @@ static inline unsigned compare_ether_addr(const u8 *addr1, const u8 *addr2)
 	BUILD_BUG_ON(ETH_ALEN != 6);
 	return ((a[0] ^ b[0]) | (a[1] ^ b[1]) | (a[2] ^ b[2])) != 0;
 }
+
+static inline unsigned long zap_last_2bytes(unsigned long value)
+{
+#ifdef __BIG_ENDIAN
+	return value >> 16;
+#else
+	return value << 16;
+#endif
+}
+
+/**
+ * compare_ether_addr_64bits - Compare two Ethernet addresses
+ * @addr1: Pointer to an array of 8 bytes
+ * @addr2: Pointer to an other array of 8 bytes
+ *
+ * Compare two ethernet addresses, returns 0 if equal.
+ * Same result than "memcmp(addr1, addr2, ETH_ALEN)" but without conditional
+ * branches, and possibly long word memory accesses on CPU allowing cheap
+ * unaligned memory reads.
+ * arrays = { byte1, byte2, byte3, byte4, byte6, byte7, pad1, pad2}
+ *
+ * Please note that alignment of addr1 & addr2 is only guaranted to be 16 bits.
+ */
+
+static inline unsigned compare_ether_addr_64bits(const u8 addr1[6+2],
+						 const u8 addr2[6+2])
+{
+#ifdef CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS
+	unsigned long fold = ((*(unsigned long *)addr1) ^
+			      (*(unsigned long *)addr2));
+
+	if (sizeof(fold) == 8)
+		return zap_last_2bytes(fold) != 0;
+
+	fold |= zap_last_2bytes((*(unsigned long *)(addr1 + 4)) ^
+				(*(unsigned long *)(addr2 + 4)));
+	return fold != 0;
+#else
+	return compare_ether_addr(addr1, addr2);
+#endif
+}
+
+/**
+ * is_etherdev_addr - Tell if given Ethernet address belongs to the device.
+ * @dev: Pointer to a device structure
+ * @addr: Pointer to a six-byte array containing the Ethernet address
+ *
+ * Compare passed address with all addresses of the device. Return true if the
+ * address if one of the device addresses.
+ *
+ * Note that this function calls compare_ether_addr_64bits() so take care of
+ * the right padding.
+ */
+static inline bool is_etherdev_addr(const struct net_device *dev,
+				    const u8 addr[6 + 2])
+{
+	struct netdev_hw_addr *ha;
+	int res = 1;
+
+	rcu_read_lock();
+	for_each_dev_addr(dev, ha) {
+		res = compare_ether_addr_64bits(addr, ha->addr);
+		if (!res)
+			break;
+	}
+	rcu_read_unlock();
+	return !res;
+}
 #endif	/* __KERNEL__ */
 
-#ifdef CONFIG_INET_GRO
 /**
  * compare_ether_header - Compare two Ethernet headers
  * @a: Pointer to Ethernet header
@@ -153,14 +250,29 @@ static inline unsigned compare_ether_addr(const u8 *addr1, const u8 *addr2)
  * entry points.
  */
 
-static inline int compare_ether_header(const void *a, const void *b)
+static inline unsigned long compare_ether_header(const void *a, const void *b)
 {
+#if defined(CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS) && BITS_PER_LONG == 64
+	unsigned long fold;
+
+	/*
+	 * We want to compare 14 bytes:
+	 *  [a0 ... a13] ^ [b0 ... b13]
+	 * Use two long XOR, ORed together, with an overlap of two bytes.
+	 *  [a0  a1  a2  a3  a4  a5  a6  a7 ] ^ [b0  b1  b2  b3  b4  b5  b6  b7 ] |
+	 *  [a6  a7  a8  a9  a10 a11 a12 a13] ^ [b6  b7  b8  b9  b10 b11 b12 b13]
+	 * This means the [a6 a7] ^ [b6 b7] part is done two times.
+	*/
+	fold = *(unsigned long *)a ^ *(unsigned long *)b;
+	fold |= *(unsigned long *)(a + 6) ^ *(unsigned long *)(b + 6);
+	return fold;
+#else
 	u32 *a32 = (u32 *)((u8 *)a + 2);
 	u32 *b32 = (u32 *)((u8 *)b + 2);
 
 	return (*(u16 *)a ^ *(u16 *)b) | (a32[0] ^ b32[0]) |
 	       (a32[1] ^ b32[1]) | (a32[2] ^ b32[2]);
+#endif
 }
-#endif /* CONFIG_INET_GRO */
-#endif	/* _LINUX_ETHERDEVICE_H */
 
+#endif	/* _LINUX_ETHERDEVICE_H */

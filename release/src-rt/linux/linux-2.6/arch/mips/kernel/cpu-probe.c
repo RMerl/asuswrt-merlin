@@ -14,13 +14,18 @@
 #include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/ptrace.h>
+#include <linux/smp.h>
 #include <linux/stddef.h>
+#include <linux/module.h>
 
 #include <asm/bugs.h>
 #include <asm/cpu.h>
 #include <asm/fpu.h>
 #include <asm/mipsregs.h>
 #include <asm/system.h>
+#include <asm/watch.h>
+#include <asm/spram.h>
+#include <asm/uaccess.h>
 
 /*
  * Not all of the MIPS CPUs have the "wait" instruction available. Moreover,
@@ -29,8 +34,8 @@
  * The wait instruction stops the pipeline and reduces the power consumption of
  * the CPU very much.
  */
-void (*cpu_wait)(void) = NULL;
-int cpu_wait_enable = 0;
+void (*cpu_wait)(void);
+EXPORT_SYMBOL(cpu_wait);
 
 static void r3081_wait(void)
 {
@@ -55,14 +60,18 @@ extern void r4k_wait(void);
  * interrupt is requested" restriction in the MIPS32/MIPS64 architecture makes
  * using this version a gamble.
  */
-static void r4k_wait_irqoff(void)
+void r4k_wait_irqoff(void)
 {
 	local_irq_disable();
 	if (!need_resched())
-		__asm__("	.set	mips3		\n"
+		__asm__("	.set	push		\n"
+			"	.set	mips3		\n"
 			"	wait			\n"
-			"	.set	mips0		\n");
+			"	.set	pop		\n");
 	local_irq_enable();
+	__asm__(" 	.globl __pastwait	\n"
+		"__pastwait:			\n");
+	return;
 }
 
 /*
@@ -86,13 +95,13 @@ static void rm7k_wait_irqoff(void)
 	local_irq_enable();
 }
 
-/* The Au1xxx wait is available only if using 32khz counter or
- * external timer source, but specifically not CP0 Counter. */
-int allow_au1k_wait;
-
+/*
+ * The Au1xxx wait is available only if using 32khz counter or
+ * external timer source, but specifically not CP0 Counter.
+ * alchemy/common/time.c may override cpu_wait!
+ */
 static void au1k_wait(void)
 {
-	/* using the wait instruction makes CP0 counter unusable */
 	__asm__("	.set	mips3			\n"
 		"	cache	0x14, 0(%0)		\n"
 		"	cache	0x14, 32(%0)		\n"
@@ -107,7 +116,7 @@ static void au1k_wait(void)
 		: : "r" (au1k_wait));
 }
 
-static int __initdata nowait = 0;
+static int __initdata nowait;
 
 static int __init wait_disable(char *s)
 {
@@ -117,6 +126,30 @@ static int __init wait_disable(char *s)
 }
 
 __setup("nowait", wait_disable);
+
+static int __cpuinitdata mips_fpu_disabled;
+
+static int __init fpu_disable(char *s)
+{
+	cpu_data[0].options &= ~MIPS_CPU_FPU;
+	mips_fpu_disabled = 1;
+
+	return 1;
+}
+
+__setup("nofpu", fpu_disable);
+
+int __cpuinitdata mips_dsp_disabled;
+
+static int __init dsp_disable(char *s)
+{
+	cpu_data[0].ases &= ~MIPS_ASE_DSP;
+	mips_dsp_disabled = 1;
+
+	return 1;
+}
+
+__setup("nodsp", dsp_disable);
 
 void __init check_wait(void)
 {
@@ -142,13 +175,22 @@ void __init check_wait(void)
 	case CPU_R4650:
 	case CPU_R4700:
 	case CPU_R5000:
+	case CPU_R5500:
 	case CPU_NEVADA:
 	case CPU_4KC:
 	case CPU_4KEC:
 	case CPU_4KSC:
 	case CPU_5KC:
 	case CPU_25KF:
- 	case CPU_PR4450:
+	case CPU_PR4450:
+	case CPU_BMIPS3300:
+	case CPU_BMIPS4350:
+	case CPU_BMIPS4380:
+	case CPU_BMIPS5000:
+	case CPU_CAVIUM_OCTEON:
+	case CPU_CAVIUM_OCTEON_PLUS:
+	case CPU_CAVIUM_OCTEON2:
+	case CPU_JZRISC:
 		cpu_wait = r4k_wait;
 		break;
 
@@ -158,29 +200,23 @@ void __init check_wait(void)
 
 	case CPU_24K:
 	case CPU_34K:
+	case CPU_1004K:
 		cpu_wait = r4k_wait;
 		if (read_c0_config7() & MIPS_CONF7_WII)
 			cpu_wait = r4k_wait_irqoff;
 		break;
 
 	case CPU_74K:
-		if (cpu_wait_enable) {
-			cpu_wait = r4k_wait;
-			if ((c->processor_id & 0xff) >= PRID_REV_ENCODE_332(2, 1, 0))
-				cpu_wait = r4k_wait_irqoff;
-		}
+		cpu_wait = r4k_wait;
+		if ((c->processor_id & 0xff) >= PRID_REV_ENCODE_332(2, 1, 0))
+			cpu_wait = r4k_wait_irqoff;
 		break;
 
 	case CPU_TX49XX:
 		cpu_wait = r4k_wait_irqoff;
 		break;
-	case CPU_AU1000:
-	case CPU_AU1100:
-	case CPU_AU1500:
-	case CPU_AU1550:
-	case CPU_AU1200:
-		if (allow_au1k_wait)
-			cpu_wait = au1k_wait;
+	case CPU_ALCHEMY:
+		cpu_wait = au1k_wait;
 		break;
 	case CPU_20KC:
 		/*
@@ -191,7 +227,14 @@ void __init check_wait(void)
 		if ((c->processor_id & 0xff) <= 0x64)
 			break;
 
-		cpu_wait = r4k_wait;
+		/*
+		 * Another rev is incremeting c0_count at a reduced clock
+		 * rate while in WAIT mode.  So we basically have the choice
+		 * between using the cp0 timer as clocksource or avoiding
+		 * the WAIT instruction.  Until more details are known,
+		 * disable the use of WAIT for 20Kc entirely.
+		   cpu_wait = r4k_wait;
+		 */
 		break;
 	case CPU_RM9000:
 		if ((c->processor_id & 0x00ff) >= 0x40)
@@ -202,8 +245,28 @@ void __init check_wait(void)
 	}
 }
 
+static inline void check_errata(void)
+{
+	struct cpuinfo_mips *c = &current_cpu_data;
+
+	switch (c->cputype) {
+	case CPU_34K:
+		/*
+		 * Erratum "RPS May Cause Incorrect Instruction Execution"
+		 * This code only handles VPE0, any SMP/SMTC/RTOS code
+		 * making use of VPE1 will be responsable for that VPE.
+		 */
+		if ((c->processor_id & PRID_REV_MASK) <= PRID_REV_34K_V1_0_2)
+			write_c0_config7(read_c0_config7() | MIPS_CONF7_RPS);
+		break;
+	default:
+		break;
+	}
+}
+
 void __init check_bugs32(void)
 {
+	check_errata();
 }
 
 /*
@@ -250,14 +313,24 @@ static inline int __cpu_has_fpu(void)
 	return ((cpu_get_fpu_id() & 0xff00) != FPIR_IMP_NONE);
 }
 
+static inline void cpu_probe_vmbits(struct cpuinfo_mips *c)
+{
+#ifdef __NEED_VMBITS_PROBE
+	write_c0_entryhi(0x3fffffffffffe000ULL);
+	back_to_back_c0_hazard();
+	c->vmbits = fls64(read_c0_entryhi() & 0x3fffffffffffe000ULL);
+#endif
+}
+
 #define R4K_OPTS (MIPS_CPU_TLB | MIPS_CPU_4KEX | MIPS_CPU_4K_CACHE \
 		| MIPS_CPU_COUNTER)
 
-static inline void cpu_probe_legacy(struct cpuinfo_mips *c)
+static inline void cpu_probe_legacy(struct cpuinfo_mips *c, unsigned int cpu)
 {
 	switch (c->processor_id & 0xff00) {
 	case PRID_IMP_R2000:
 		c->cputype = CPU_R2000;
+		__cpu_name[cpu] = "R2000";
 		c->isa_level = MIPS_CPU_ISA_I;
 		c->options = MIPS_CPU_TLB | MIPS_CPU_3K_CACHE |
 		             MIPS_CPU_NOFPUEX;
@@ -266,13 +339,18 @@ static inline void cpu_probe_legacy(struct cpuinfo_mips *c)
 		c->tlbsize = 64;
 		break;
 	case PRID_IMP_R3000:
-		if ((c->processor_id & 0xff) == PRID_REV_R3000A)
-			if (cpu_has_confreg())
+		if ((c->processor_id & 0xff) == PRID_REV_R3000A) {
+			if (cpu_has_confreg()) {
 				c->cputype = CPU_R3081E;
-			else
+				__cpu_name[cpu] = "R3081";
+			} else {
 				c->cputype = CPU_R3000A;
-		else
+				__cpu_name[cpu] = "R3000A";
+			}
+		} else {
 			c->cputype = CPU_R3000;
+			__cpu_name[cpu] = "R3000";
+		}
 		c->isa_level = MIPS_CPU_ISA_I;
 		c->options = MIPS_CPU_TLB | MIPS_CPU_3K_CACHE |
 		             MIPS_CPU_NOFPUEX;
@@ -282,15 +360,21 @@ static inline void cpu_probe_legacy(struct cpuinfo_mips *c)
 		break;
 	case PRID_IMP_R4000:
 		if (read_c0_config() & CONF_SC) {
-			if ((c->processor_id & 0xff) >= PRID_REV_R4400)
+			if ((c->processor_id & 0xff) >= PRID_REV_R4400) {
 				c->cputype = CPU_R4400PC;
-			else
+				__cpu_name[cpu] = "R4400PC";
+			} else {
 				c->cputype = CPU_R4000PC;
+				__cpu_name[cpu] = "R4000PC";
+			}
 		} else {
-			if ((c->processor_id & 0xff) >= PRID_REV_R4400)
+			if ((c->processor_id & 0xff) >= PRID_REV_R4400) {
 				c->cputype = CPU_R4400SC;
-			else
+				__cpu_name[cpu] = "R4400SC";
+			} else {
 				c->cputype = CPU_R4000SC;
+				__cpu_name[cpu] = "R4000SC";
+			}
 		}
 
 		c->isa_level = MIPS_CPU_ISA_III;
@@ -300,36 +384,47 @@ static inline void cpu_probe_legacy(struct cpuinfo_mips *c)
 		c->tlbsize = 48;
 		break;
 	case PRID_IMP_VR41XX:
+		c->isa_level = MIPS_CPU_ISA_III;
+		c->options = R4K_OPTS;
+		c->tlbsize = 32;
 		switch (c->processor_id & 0xf0) {
 		case PRID_REV_VR4111:
 			c->cputype = CPU_VR4111;
+			__cpu_name[cpu] = "NEC VR4111";
 			break;
 		case PRID_REV_VR4121:
 			c->cputype = CPU_VR4121;
+			__cpu_name[cpu] = "NEC VR4121";
 			break;
 		case PRID_REV_VR4122:
-			if ((c->processor_id & 0xf) < 0x3)
+			if ((c->processor_id & 0xf) < 0x3) {
 				c->cputype = CPU_VR4122;
-			else
+				__cpu_name[cpu] = "NEC VR4122";
+			} else {
 				c->cputype = CPU_VR4181A;
+				__cpu_name[cpu] = "NEC VR4181A";
+			}
 			break;
 		case PRID_REV_VR4130:
-			if ((c->processor_id & 0xf) < 0x4)
+			if ((c->processor_id & 0xf) < 0x4) {
 				c->cputype = CPU_VR4131;
-			else
+				__cpu_name[cpu] = "NEC VR4131";
+			} else {
 				c->cputype = CPU_VR4133;
+				c->options |= MIPS_CPU_LLSC;
+				__cpu_name[cpu] = "NEC VR4133";
+			}
 			break;
 		default:
 			printk(KERN_INFO "Unexpected CPU of NEC VR4100 series\n");
 			c->cputype = CPU_VR41XX;
+			__cpu_name[cpu] = "NEC Vr41xx";
 			break;
 		}
-		c->isa_level = MIPS_CPU_ISA_III;
-		c->options = R4K_OPTS;
-		c->tlbsize = 32;
 		break;
 	case PRID_IMP_R4300:
 		c->cputype = CPU_R4300;
+		__cpu_name[cpu] = "R4300";
 		c->isa_level = MIPS_CPU_ISA_III;
 		c->options = R4K_OPTS | MIPS_CPU_FPU | MIPS_CPU_32FPR |
 		             MIPS_CPU_LLSC;
@@ -337,6 +432,7 @@ static inline void cpu_probe_legacy(struct cpuinfo_mips *c)
 		break;
 	case PRID_IMP_R4600:
 		c->cputype = CPU_R4600;
+		__cpu_name[cpu] = "R4600";
 		c->isa_level = MIPS_CPU_ISA_III;
 		c->options = R4K_OPTS | MIPS_CPU_FPU | MIPS_CPU_32FPR |
 			     MIPS_CPU_LLSC;
@@ -351,6 +447,7 @@ static inline void cpu_probe_legacy(struct cpuinfo_mips *c)
 		 * it's c0_prid id number with the TX3900.
 		 */
 		c->cputype = CPU_R4650;
+		__cpu_name[cpu] = "R4650";
 	 	c->isa_level = MIPS_CPU_ISA_III;
 		c->options = R4K_OPTS | MIPS_CPU_FPU | MIPS_CPU_LLSC;
 	        c->tlbsize = 48;
@@ -362,25 +459,26 @@ static inline void cpu_probe_legacy(struct cpuinfo_mips *c)
 
 		if ((c->processor_id & 0xf0) == (PRID_REV_TX3927 & 0xf0)) {
 			c->cputype = CPU_TX3927;
+			__cpu_name[cpu] = "TX3927";
 			c->tlbsize = 64;
 		} else {
 			switch (c->processor_id & 0xff) {
 			case PRID_REV_TX3912:
 				c->cputype = CPU_TX3912;
+				__cpu_name[cpu] = "TX3912";
 				c->tlbsize = 32;
 				break;
 			case PRID_REV_TX3922:
 				c->cputype = CPU_TX3922;
+				__cpu_name[cpu] = "TX3922";
 				c->tlbsize = 64;
-				break;
-			default:
-				c->cputype = CPU_UNKNOWN;
 				break;
 			}
 		}
 		break;
 	case PRID_IMP_R4700:
 		c->cputype = CPU_R4700;
+		__cpu_name[cpu] = "R4700";
 		c->isa_level = MIPS_CPU_ISA_III;
 		c->options = R4K_OPTS | MIPS_CPU_FPU | MIPS_CPU_32FPR |
 		             MIPS_CPU_LLSC;
@@ -388,6 +486,7 @@ static inline void cpu_probe_legacy(struct cpuinfo_mips *c)
 		break;
 	case PRID_IMP_TX49:
 		c->cputype = CPU_TX49XX;
+		__cpu_name[cpu] = "R49XX";
 		c->isa_level = MIPS_CPU_ISA_III;
 		c->options = R4K_OPTS | MIPS_CPU_LLSC;
 		if (!(c->processor_id & 0x08))
@@ -396,6 +495,7 @@ static inline void cpu_probe_legacy(struct cpuinfo_mips *c)
 		break;
 	case PRID_IMP_R5000:
 		c->cputype = CPU_R5000;
+		__cpu_name[cpu] = "R5000";
 		c->isa_level = MIPS_CPU_ISA_IV;
 		c->options = R4K_OPTS | MIPS_CPU_FPU | MIPS_CPU_32FPR |
 		             MIPS_CPU_LLSC;
@@ -403,6 +503,7 @@ static inline void cpu_probe_legacy(struct cpuinfo_mips *c)
 		break;
 	case PRID_IMP_R5432:
 		c->cputype = CPU_R5432;
+		__cpu_name[cpu] = "R5432";
 		c->isa_level = MIPS_CPU_ISA_IV;
 		c->options = R4K_OPTS | MIPS_CPU_FPU | MIPS_CPU_32FPR |
 		             MIPS_CPU_WATCH | MIPS_CPU_LLSC;
@@ -410,6 +511,7 @@ static inline void cpu_probe_legacy(struct cpuinfo_mips *c)
 		break;
 	case PRID_IMP_R5500:
 		c->cputype = CPU_R5500;
+		__cpu_name[cpu] = "R5500";
 		c->isa_level = MIPS_CPU_ISA_IV;
 		c->options = R4K_OPTS | MIPS_CPU_FPU | MIPS_CPU_32FPR |
 		             MIPS_CPU_WATCH | MIPS_CPU_LLSC;
@@ -417,6 +519,7 @@ static inline void cpu_probe_legacy(struct cpuinfo_mips *c)
 		break;
 	case PRID_IMP_NEVADA:
 		c->cputype = CPU_NEVADA;
+		__cpu_name[cpu] = "Nevada";
 		c->isa_level = MIPS_CPU_ISA_IV;
 		c->options = R4K_OPTS | MIPS_CPU_FPU | MIPS_CPU_32FPR |
 		             MIPS_CPU_DIVEC | MIPS_CPU_LLSC;
@@ -424,6 +527,7 @@ static inline void cpu_probe_legacy(struct cpuinfo_mips *c)
 		break;
 	case PRID_IMP_R6000:
 		c->cputype = CPU_R6000;
+		__cpu_name[cpu] = "R6000";
 		c->isa_level = MIPS_CPU_ISA_II;
 		c->options = MIPS_CPU_TLB | MIPS_CPU_FPU |
 		             MIPS_CPU_LLSC;
@@ -431,6 +535,7 @@ static inline void cpu_probe_legacy(struct cpuinfo_mips *c)
 		break;
 	case PRID_IMP_R6000A:
 		c->cputype = CPU_R6000A;
+		__cpu_name[cpu] = "R6000A";
 		c->isa_level = MIPS_CPU_ISA_II;
 		c->options = MIPS_CPU_TLB | MIPS_CPU_FPU |
 		             MIPS_CPU_LLSC;
@@ -438,6 +543,7 @@ static inline void cpu_probe_legacy(struct cpuinfo_mips *c)
 		break;
 	case PRID_IMP_RM7000:
 		c->cputype = CPU_RM7000;
+		__cpu_name[cpu] = "RM7000";
 		c->isa_level = MIPS_CPU_ISA_IV;
 		c->options = R4K_OPTS | MIPS_CPU_FPU | MIPS_CPU_32FPR |
 		             MIPS_CPU_LLSC;
@@ -453,6 +559,7 @@ static inline void cpu_probe_legacy(struct cpuinfo_mips *c)
 		break;
 	case PRID_IMP_RM9000:
 		c->cputype = CPU_RM9000;
+		__cpu_name[cpu] = "RM9000";
 		c->isa_level = MIPS_CPU_ISA_IV;
 		c->options = R4K_OPTS | MIPS_CPU_FPU | MIPS_CPU_32FPR |
 		             MIPS_CPU_LLSC;
@@ -467,6 +574,7 @@ static inline void cpu_probe_legacy(struct cpuinfo_mips *c)
 		break;
 	case PRID_IMP_R8000:
 		c->cputype = CPU_R8000;
+		__cpu_name[cpu] = "RM8000";
 		c->isa_level = MIPS_CPU_ISA_IV;
 		c->options = MIPS_CPU_TLB | MIPS_CPU_4KEX |
 		             MIPS_CPU_FPU | MIPS_CPU_32FPR |
@@ -475,6 +583,7 @@ static inline void cpu_probe_legacy(struct cpuinfo_mips *c)
 		break;
 	case PRID_IMP_R10000:
 		c->cputype = CPU_R10000;
+		__cpu_name[cpu] = "R10000";
 		c->isa_level = MIPS_CPU_ISA_IV;
 		c->options = MIPS_CPU_TLB | MIPS_CPU_4K_CACHE | MIPS_CPU_4KEX |
 		             MIPS_CPU_FPU | MIPS_CPU_32FPR |
@@ -484,6 +593,7 @@ static inline void cpu_probe_legacy(struct cpuinfo_mips *c)
 		break;
 	case PRID_IMP_R12000:
 		c->cputype = CPU_R12000;
+		__cpu_name[cpu] = "R12000";
 		c->isa_level = MIPS_CPU_ISA_IV;
 		c->options = MIPS_CPU_TLB | MIPS_CPU_4K_CACHE | MIPS_CPU_4KEX |
 		             MIPS_CPU_FPU | MIPS_CPU_32FPR |
@@ -493,11 +603,21 @@ static inline void cpu_probe_legacy(struct cpuinfo_mips *c)
 		break;
 	case PRID_IMP_R14000:
 		c->cputype = CPU_R14000;
+		__cpu_name[cpu] = "R14000";
 		c->isa_level = MIPS_CPU_ISA_IV;
 		c->options = MIPS_CPU_TLB | MIPS_CPU_4K_CACHE | MIPS_CPU_4KEX |
 		             MIPS_CPU_FPU | MIPS_CPU_32FPR |
 			     MIPS_CPU_COUNTER | MIPS_CPU_WATCH |
 		             MIPS_CPU_LLSC;
+		c->tlbsize = 64;
+		break;
+	case PRID_IMP_LOONGSON2:
+		c->cputype = CPU_LOONGSON2;
+		__cpu_name[cpu] = "ICT Loongson-2";
+		c->isa_level = MIPS_CPU_ISA_III;
+		c->options = R4K_OPTS |
+			     MIPS_CPU_FPU | MIPS_CPU_LLSC |
+			     MIPS_CPU_32FPR;
 		c->tlbsize = 64;
 		break;
 	}
@@ -609,202 +729,281 @@ static inline unsigned int decode_config3(struct cpuinfo_mips *c)
 	return config3 & MIPS_CONF_M;
 }
 
+static inline unsigned int decode_config4(struct cpuinfo_mips *c)
+{
+	unsigned int config4;
+
+	config4 = read_c0_config4();
+
+	if ((config4 & MIPS_CONF4_MMUEXTDEF) == MIPS_CONF4_MMUEXTDEF_MMUSIZEEXT
+	    && cpu_has_tlb)
+		c->tlbsize += (config4 & MIPS_CONF4_MMUSIZEEXT) * 0x40;
+
+	c->kscratch_mask = (config4 >> 16) & 0xff;
+
+	return config4 & MIPS_CONF_M;
+}
+
 static void __cpuinit decode_configs(struct cpuinfo_mips *c)
 {
+	int ok;
+
 	/* MIPS32 or MIPS64 compliant CPU.  */
 	c->options = MIPS_CPU_4KEX | MIPS_CPU_4K_CACHE | MIPS_CPU_COUNTER |
 	             MIPS_CPU_DIVEC | MIPS_CPU_LLSC | MIPS_CPU_MCHECK;
 
 	c->scache.flags = MIPS_CACHE_NOT_PRESENT;
 
-	/* Read Config registers.  */
-	if (!decode_config0(c))
-		return;			/* actually worth a panic() */
-	if (!decode_config1(c))
-		return;
-	if (!decode_config2(c))
-		return;
-	if (!decode_config3(c))
-		return;
+	ok = decode_config0(c);			/* Read Config registers.  */
+	BUG_ON(!ok);				/* Arch spec violation!  */
+	if (ok)
+		ok = decode_config1(c);
+	if (ok)
+		ok = decode_config2(c);
+	if (ok)
+		ok = decode_config3(c);
+	if (ok)
+		ok = decode_config4(c);
+
+	mips_probe_watch_registers(c);
+
+	if (cpu_has_mips_r2)
+		c->core = read_c0_ebase() & 0x3ff;
 }
 
-static inline void cpu_probe_mips(struct cpuinfo_mips *c)
+static inline void cpu_probe_mips(struct cpuinfo_mips *c, unsigned int cpu)
 {
 	decode_configs(c);
 	switch (c->processor_id & 0xff00) {
 	case PRID_IMP_4KC:
 		c->cputype = CPU_4KC;
+		__cpu_name[cpu] = "MIPS 4Kc";
 		break;
 	case PRID_IMP_4KEC:
-		c->cputype = CPU_4KEC;
-		break;
 	case PRID_IMP_4KECR2:
 		c->cputype = CPU_4KEC;
+		__cpu_name[cpu] = "MIPS 4KEc";
 		break;
 	case PRID_IMP_4KSC:
 	case PRID_IMP_4KSD:
 		c->cputype = CPU_4KSC;
+		__cpu_name[cpu] = "MIPS 4KSc";
 		break;
 	case PRID_IMP_5KC:
 		c->cputype = CPU_5KC;
+		__cpu_name[cpu] = "MIPS 5Kc";
 		break;
 	case PRID_IMP_20KC:
 		c->cputype = CPU_20KC;
+		__cpu_name[cpu] = "MIPS 20Kc";
 		break;
 	case PRID_IMP_24K:
+		c->cputype = CPU_24K;
+		__cpu_name[cpu] = "MIPS 24Kc";
+		break;
 	case PRID_IMP_24KE:
 		c->cputype = CPU_24K;
+		__cpu_name[cpu] = "MIPS 24KEc";
 		break;
 	case PRID_IMP_25KF:
 		c->cputype = CPU_25KF;
+		__cpu_name[cpu] = "MIPS 25Kc";
 		break;
 	case PRID_IMP_34K:
 		c->cputype = CPU_34K;
+		__cpu_name[cpu] = "MIPS 34Kc";
 		break;
 	case PRID_IMP_74K:
 		c->cputype = CPU_74K;
-		c->options &= ~MIPS_CPU_DIVEC;
-
-		/* Kernel already has hazard barrier instructions in
-		 * place so we clear the IHB bit. CFE sets the IHB bit
-		 * of config7 to enable automatic prevention of hazards.
-		 */
-		if (read_c0_config7() & (1 << 29))
-			clear_c0_config7(1 << 29);
+		__cpu_name[cpu] = "MIPS 74Kc";
+		break;
+	case PRID_IMP_1004K:
+		c->cputype = CPU_1004K;
+		__cpu_name[cpu] = "MIPS 1004Kc";
 		break;
 	}
+
+	spram_config();
 }
 
-static inline void cpu_probe_alchemy(struct cpuinfo_mips *c)
+static inline void cpu_probe_alchemy(struct cpuinfo_mips *c, unsigned int cpu)
 {
 	decode_configs(c);
 	switch (c->processor_id & 0xff00) {
 	case PRID_IMP_AU1_REV1:
 	case PRID_IMP_AU1_REV2:
+		c->cputype = CPU_ALCHEMY;
 		switch ((c->processor_id >> 24) & 0xff) {
 		case 0:
-			c->cputype = CPU_AU1000;
+			__cpu_name[cpu] = "Au1000";
 			break;
 		case 1:
-			c->cputype = CPU_AU1500;
+			__cpu_name[cpu] = "Au1500";
 			break;
 		case 2:
-			c->cputype = CPU_AU1100;
+			__cpu_name[cpu] = "Au1100";
 			break;
 		case 3:
-			c->cputype = CPU_AU1550;
+			__cpu_name[cpu] = "Au1550";
 			break;
 		case 4:
-			c->cputype = CPU_AU1200;
+			__cpu_name[cpu] = "Au1200";
+			if ((c->processor_id & 0xff) == 2)
+				__cpu_name[cpu] = "Au1250";
+			break;
+		case 5:
+			__cpu_name[cpu] = "Au1210";
 			break;
 		default:
-			panic("Unknown Au Core!");
+			__cpu_name[cpu] = "Au1xxx";
 			break;
 		}
 		break;
 	}
 }
 
-static inline void cpu_probe_sibyte(struct cpuinfo_mips *c)
+static inline void cpu_probe_sibyte(struct cpuinfo_mips *c, unsigned int cpu)
 {
 	decode_configs(c);
-
-	/*
-	 * For historical reasons the SB1 comes with it's own variant of
-	 * cache code which eventually will be folded into c-r4k.c.  Until
-	 * then we pretend it's got it's own cache architecture.
-	 */
-	c->options &= ~MIPS_CPU_4K_CACHE;
-	c->options |= MIPS_CPU_SB1_CACHE;
 
 	switch (c->processor_id & 0xff00) {
 	case PRID_IMP_SB1:
 		c->cputype = CPU_SB1;
+		__cpu_name[cpu] = "SiByte SB1";
 		/* FPU in pass1 is known to have issues. */
 		if ((c->processor_id & 0xff) < 0x02)
 			c->options &= ~(MIPS_CPU_FPU | MIPS_CPU_32FPR);
 		break;
 	case PRID_IMP_SB1A:
 		c->cputype = CPU_SB1A;
+		__cpu_name[cpu] = "SiByte SB1A";
 		break;
 	}
 }
 
-static inline void cpu_probe_sandcraft(struct cpuinfo_mips *c)
+static inline void cpu_probe_sandcraft(struct cpuinfo_mips *c, unsigned int cpu)
 {
 	decode_configs(c);
 	switch (c->processor_id & 0xff00) {
 	case PRID_IMP_SR71000:
 		c->cputype = CPU_SR71000;
+		__cpu_name[cpu] = "Sandcraft SR71000";
 		c->scache.ways = 8;
 		c->tlbsize = 64;
 		break;
 	}
 }
 
-static inline void cpu_probe_philips(struct cpuinfo_mips *c)
+static inline void cpu_probe_nxp(struct cpuinfo_mips *c, unsigned int cpu)
 {
 	decode_configs(c);
 	switch (c->processor_id & 0xff00) {
 	case PRID_IMP_PR4450:
 		c->cputype = CPU_PR4450;
+		__cpu_name[cpu] = "Philips PR4450";
 		c->isa_level = MIPS_CPU_ISA_M32R1;
-		break;
-	default:
-		panic("Unknown Philips Core!"); /* REVISIT: die? */
 		break;
 	}
 }
 
-static inline void cpu_probe_broadcom(struct cpuinfo_mips *c)
+static inline void cpu_probe_broadcom(struct cpuinfo_mips *c, unsigned int cpu)
 {
-	unsigned long config0 = read_c0_config(), config1;
-
-	if ((config0 & CONF_BE) != 
-#ifdef CONFIG_CPU_LITTLE_ENDIAN
-	    0
-#else
-	    CONF_BE
-#endif
-	) {
-		panic("Kernel compiled little-endian, but running on a big-endian cpu");
-	}
-
 	decode_configs(c);
 	switch (c->processor_id & 0xff00) {
-	case PRID_IMP_BCM4710:
-		c->cputype = CPU_BCM4710;
-		c->isa_level = MIPS_CPU_ISA_M32R1;
+	case PRID_IMP_BMIPS32_REV4:
+	case PRID_IMP_BMIPS32_REV8:
+		c->cputype = CPU_BMIPS32;
+		__cpu_name[cpu] = "Broadcom BMIPS32";
 		break;
-	case PRID_IMP_4KC:
-	case PRID_IMP_BCM3302:
-		c->cputype = CPU_BCM3302;
-		c->isa_level = MIPS_CPU_ISA_M32R1;
+	case PRID_IMP_BMIPS3300:
+	case PRID_IMP_BMIPS3300_ALT:
+	case PRID_IMP_BMIPS3300_BUG:
+		c->cputype = CPU_BMIPS3300;
+		__cpu_name[cpu] = "Broadcom BMIPS3300";
 		break;
-	default:
-		panic("Unknown Broadcom Core!");
-		c->cputype = CPU_UNKNOWN;
-		return;
-	}
-	
-	c->options = MIPS_CPU_TLB | MIPS_CPU_4KEX | MIPS_CPU_4K_CACHE |
-	             MIPS_CPU_COUNTER;
-	config1 = read_c0_config1();
-	if (config1 & (1 << 3))
-		c->options |= MIPS_CPU_WATCH;
-	if (config1 & (1 << 2))
-		c->options |= MIPS_ASE_MIPS16;
-	if (config1 & 1)
-		c->options |= MIPS_CPU_FPU;
-	c->scache.flags = MIPS_CACHE_NOT_PRESENT;
+	case PRID_IMP_BMIPS43XX: {
+		int rev = c->processor_id & 0xff;
 
-	return;
+		if (rev >= PRID_REV_BMIPS4380_LO &&
+				rev <= PRID_REV_BMIPS4380_HI) {
+			c->cputype = CPU_BMIPS4380;
+			__cpu_name[cpu] = "Broadcom BMIPS4380";
+		} else {
+			c->cputype = CPU_BMIPS4350;
+			__cpu_name[cpu] = "Broadcom BMIPS4350";
+		}
+		break;
+	}
+	case PRID_IMP_BMIPS5000:
+		c->cputype = CPU_BMIPS5000;
+		__cpu_name[cpu] = "Broadcom BMIPS5000";
+		c->options |= MIPS_CPU_ULRI;
+		break;
+	}
 }
 
+static inline void cpu_probe_cavium(struct cpuinfo_mips *c, unsigned int cpu)
+{
+	decode_configs(c);
+	switch (c->processor_id & 0xff00) {
+	case PRID_IMP_CAVIUM_CN38XX:
+	case PRID_IMP_CAVIUM_CN31XX:
+	case PRID_IMP_CAVIUM_CN30XX:
+		c->cputype = CPU_CAVIUM_OCTEON;
+		__cpu_name[cpu] = "Cavium Octeon";
+		goto platform;
+	case PRID_IMP_CAVIUM_CN58XX:
+	case PRID_IMP_CAVIUM_CN56XX:
+	case PRID_IMP_CAVIUM_CN50XX:
+	case PRID_IMP_CAVIUM_CN52XX:
+		c->cputype = CPU_CAVIUM_OCTEON_PLUS;
+		__cpu_name[cpu] = "Cavium Octeon+";
+platform:
+		if (cpu == 0)
+			__elf_platform = "octeon";
+		break;
+	case PRID_IMP_CAVIUM_CN63XX:
+		c->cputype = CPU_CAVIUM_OCTEON2;
+		__cpu_name[cpu] = "Cavium Octeon II";
+		if (cpu == 0)
+			__elf_platform = "octeon2";
+		break;
+	default:
+		printk(KERN_INFO "Unknown Octeon chip!\n");
+		c->cputype = CPU_UNKNOWN;
+		break;
+	}
+}
+
+static inline void cpu_probe_ingenic(struct cpuinfo_mips *c, unsigned int cpu)
+{
+	decode_configs(c);
+	/* JZRISC does not implement the CP0 counter. */
+	c->options &= ~MIPS_CPU_COUNTER;
+	switch (c->processor_id & 0xff00) {
+	case PRID_IMP_JZRISC:
+		c->cputype = CPU_JZRISC;
+		__cpu_name[cpu] = "Ingenic JZRISC";
+		break;
+	default:
+		panic("Unknown Ingenic Processor ID!");
+		break;
+	}
+}
+
+#ifdef CONFIG_64BIT
+/* For use by uaccess.h */
+u64 __ua_limit;
+EXPORT_SYMBOL(__ua_limit);
+#endif
+
+const char *__cpu_name[NR_CPUS];
+const char *__elf_platform;
 
 __cpuinit void cpu_probe(void)
 {
 	struct cpuinfo_mips *c = &current_cpu_data;
+	unsigned int cpu = smp_processor_id();
 
 	c->processor_id	= PRID_IMP_UNKNOWN;
 	c->fpu_id	= FPIR_IMP_NONE;
@@ -813,29 +1012,50 @@ __cpuinit void cpu_probe(void)
 	c->processor_id = read_c0_prid();
 	switch (c->processor_id & 0xff0000) {
 	case PRID_COMP_LEGACY:
-		cpu_probe_legacy(c);
+		cpu_probe_legacy(c, cpu);
 		break;
 	case PRID_COMP_MIPS:
-		cpu_probe_mips(c);
+		cpu_probe_mips(c, cpu);
 		break;
 	case PRID_COMP_ALCHEMY:
-		cpu_probe_alchemy(c);
+		cpu_probe_alchemy(c, cpu);
 		break;
 	case PRID_COMP_SIBYTE:
-		cpu_probe_sibyte(c);
+		cpu_probe_sibyte(c, cpu);
+		break;
+	case PRID_COMP_BROADCOM:
+		cpu_probe_broadcom(c, cpu);
 		break;
 	case PRID_COMP_SANDCRAFT:
-		cpu_probe_sandcraft(c);
+		cpu_probe_sandcraft(c, cpu);
 		break;
- 	case PRID_COMP_PHILIPS:
-		cpu_probe_philips(c);
+	case PRID_COMP_NXP:
+		cpu_probe_nxp(c, cpu);
 		break;
- 	case PRID_COMP_BROADCOM:
-		cpu_probe_broadcom(c);
+	case PRID_COMP_CAVIUM:
+		cpu_probe_cavium(c, cpu);
 		break;
-	default:
-		c->cputype = CPU_UNKNOWN;
+	case PRID_COMP_INGENIC:
+		cpu_probe_ingenic(c, cpu);
+		break;
 	}
+
+	BUG_ON(!__cpu_name[cpu]);
+	BUG_ON(c->cputype == CPU_UNKNOWN);
+
+	/*
+	 * Platform code can force the cpu type to optimize code
+	 * generation. In that case be sure the cpu type is correctly
+	 * manually setup otherwise it could trigger some nasty bugs.
+	 */
+	BUG_ON(current_cpu_type() != c->cputype);
+
+	if (mips_fpu_disabled)
+		c->options &= ~MIPS_CPU_FPU;
+
+	if (mips_dsp_disabled)
+		c->ases &= ~MIPS_ASE_DSP;
+
 	if (c->options & MIPS_CPU_FPU) {
 		c->fpu_id = cpu_get_fpu_id();
 
@@ -852,13 +1072,21 @@ __cpuinit void cpu_probe(void)
 		c->srsets = ((read_c0_srsctl() >> 26) & 0x0f) + 1;
 	else
 		c->srsets = 1;
+
+	cpu_probe_vmbits(c);
+
+#ifdef CONFIG_64BIT
+	if (cpu == 0)
+		__ua_limit = ~((1ull << cpu_vmbits) - 1);
+#endif
 }
 
 __cpuinit void cpu_report(void)
 {
 	struct cpuinfo_mips *c = &current_cpu_data;
 
-	printk("CPU revision is: %08x\n", c->processor_id);
+	printk(KERN_INFO "CPU revision is: %08x (%s)\n",
+	       c->processor_id, cpu_name_string());
 	if (c->options & MIPS_CPU_FPU)
-		printk("FPU revision is: %08x\n", c->fpu_id);
+		printk(KERN_INFO "FPU revision is: %08x\n", c->fpu_id);
 }

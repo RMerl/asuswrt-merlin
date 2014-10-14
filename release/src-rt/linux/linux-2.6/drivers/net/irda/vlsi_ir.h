@@ -209,7 +209,7 @@ enum vlsi_pio_irintr {
 	IRINTR_ACTEN	= 0x80,	/* activity interrupt enable */
 	IRINTR_ACTIVITY	= 0x40,	/* activity monitor (traffic detected) */
 	IRINTR_RPKTEN	= 0x20,	/* receive packet interrupt enable*/
-	IRINTR_RPKTINT	= 0x10,	/* rx-packet transfered from fifo to memory finished */
+	IRINTR_RPKTINT	= 0x10,	/* rx-packet transferred from fifo to memory finished */
 	IRINTR_TPKTEN	= 0x08,	/* transmit packet interrupt enable */
 	IRINTR_TPKTINT	= 0x04,	/* last bit of tx-packet+crc shifted to ir-pulser */
 	IRINTR_OE_EN	= 0x02,	/* UART rx fifo overrun error interrupt enable */
@@ -537,16 +537,16 @@ calc_width_bits(unsigned baudrate, unsigned widthselect, unsigned clockselect)
  */
 
 struct ring_descr_hw {
-	volatile u16	rd_count;	/* tx/rx count [11:0] */
-	u16		reserved;
+	volatile __le16	rd_count;	/* tx/rx count [11:0] */
+	__le16		reserved;
 	union {
-		u32	addr;		/* [23:0] of the buffer's busaddress */
+		__le32	addr;		/* [23:0] of the buffer's busaddress */
 		struct {
 			u8		addr_res[3];
 			volatile u8	status;		/* descriptor status */
-		} __attribute__((packed)) rd_s;
-	} __attribute((packed)) rd_u;
-} __attribute__ ((packed));
+		} __packed rd_s;
+	} __packed rd_u;
+} __packed;
 
 #define rd_addr		rd_u.addr
 #define rd_status	rd_u.rd_s.status
@@ -595,7 +595,7 @@ struct ring_descr {
 
 static inline int rd_is_active(struct ring_descr *rd)
 {
-	return ((rd->hw->rd_status & RD_ACTIVE) != 0);
+	return (rd->hw->rd_status & RD_ACTIVE) != 0;
 }
 
 static inline void rd_activate(struct ring_descr *rd)
@@ -617,7 +617,7 @@ static inline void rd_set_addr_status(struct ring_descr *rd, dma_addr_t a, u8 s)
 	 */
 
 	if ((a & ~DMA_MASK_MSTRPAGE)>>24 != MSTRPAGE_VALUE) {
-		IRDA_ERROR("%s: pci busaddr inconsistency!\n", __FUNCTION__);
+		IRDA_ERROR("%s: pci busaddr inconsistency!\n", __func__);
 		dump_stack();
 		return;
 	}
@@ -712,7 +712,6 @@ static inline struct ring_descr *ring_get(struct vlsi_ring *r)
 
 typedef struct vlsi_irda_dev {
 	struct pci_dev		*pdev;
-	struct net_device_stats	stats;
 
 	struct irlap_cb		*irlap;
 
@@ -728,7 +727,7 @@ typedef struct vlsi_irda_dev {
 	struct timeval		last_rx;
 
 	spinlock_t		lock;
-	struct semaphore	sem;
+	struct mutex		mtx;
 
 	u8			resume_ok;	
 	struct proc_dir_entry	*proc_entry;
@@ -740,7 +739,7 @@ typedef struct vlsi_irda_dev {
 /* the remapped error flags we use for returning from frame
  * post-processing in vlsi_process_tx/rx() after it was completed
  * by the hardware. These functions either return the >=0 number
- * of transfered bytes in case of success or the negative (-)
+ * of transferred bytes in case of success or the negative (-)
  * of the or'ed error flags.
  */
 

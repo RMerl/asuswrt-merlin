@@ -156,19 +156,19 @@
 #define HOSTERRINT (1<<1)
 
 /* Receive descriptor bits */
-#define RXOVERRUN (1<<19)
-#define RXFC (1<<21)
-#define RXAR (1<<22)
-#define RXUPDCOMPLETE (1<<23)
-#define RXUPDFULL (1<<24)
-#define RXUPLASTFRAG (1<<31)
+#define RXOVERRUN cpu_to_le32(1<<19)
+#define RXFC cpu_to_le32(1<<21)
+#define RXAR cpu_to_le32(1<<22)
+#define RXUPDCOMPLETE cpu_to_le32(1<<23)
+#define RXUPDFULL cpu_to_le32(1<<24)
+#define RXUPLASTFRAG cpu_to_le32(1<<31)
 
 /* Transmit descriptor bits */
-#define TXDNCOMPLETE (1<<16)
-#define TXTXINDICATE (1<<27)
-#define TXDPDEMPTY (1<<29)
-#define TXDNINDICATE (1<<31)
-#define TXDNFRAGLAST (1<<31)
+#define TXDNCOMPLETE cpu_to_le32(1<<16)
+#define TXTXINDICATE cpu_to_le32(1<<27)
+#define TXDPDEMPTY cpu_to_le32(1<<29)
+#define TXDNINDICATE cpu_to_le32(1<<31)
+#define TXDNFRAGLAST cpu_to_le32(1<<31)
 
 /* Interrupts to Acknowledge */
 #define LATCH_ACK 1 
@@ -232,17 +232,17 @@
 /* 3c359 data structures */
 
 struct xl_tx_desc {
-	u32 dnnextptr ; 
-	u32 framestartheader ; 
-	u32 buffer ;
-	u32 buffer_length ;
+	__le32 dnnextptr;
+	__le32 framestartheader;
+	__le32 buffer;
+	__le32 buffer_length;
 };
 
 struct xl_rx_desc {
-	u32 upnextptr ; 
-	u32 framestatus ; 
-	u32 upfragaddr ; 
-	u32 upfraglen ; 
+	__le32 upnextptr;
+	__le32 framestatus;
+	__le32 upfragaddr;
+	__le32 upfraglen;
 };
 
 struct xl_private {
@@ -264,7 +264,7 @@ struct xl_private {
 	u16 asb;
 
 	u8 __iomem *xl_mmio;
-	char *xl_card_name;
+	const char *xl_card_name;
 	struct pci_dev *pdev ; 
 	
 	spinlock_t xl_lock ; 
@@ -272,8 +272,6 @@ struct xl_private {
 	volatile int srb_queued;    
 	struct wait_queue *srb_wait;
 	volatile int asb_queued;   
-
-	struct net_device_stats xl_stats ;
 
 	u16 mac_buffer ; 	
 	u16 xl_lan_status ;
@@ -286,5 +284,8 @@ struct xl_private {
 	u8 xl_laa[6] ; 
 	u32 rx_ring_dma_addr ; 
 	u32 tx_ring_dma_addr ; 
+
+	/* firmware section */
+	const struct firmware *fw;
 };
 

@@ -21,6 +21,8 @@ int dvb_usb_vp702x_debug;
 module_param_named(debug,dvb_usb_vp702x_debug, int, 0644);
 MODULE_PARM_DESC(debug, "set debugging level (1=info,xfer=2,rc=4 (or-able))." DVB_USB_DEBUG_STATUS);
 
+DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
+
 struct vp702x_state {
 	int pid_filter_count;
 	int pid_filter_can_bypass;
@@ -56,7 +58,7 @@ int vp702x_usb_in_op(struct dvb_usb_device *d, u8 req, u16 value, u16 index, u8 
 	return ret;
 }
 
-int vp702x_usb_out_op(struct dvb_usb_device *d, u8 req, u16 value,
+static int vp702x_usb_out_op(struct dvb_usb_device *d, u8 req, u16 value,
 			     u16 index, u8 *b, int blen)
 {
 	int ret;
@@ -172,9 +174,9 @@ static int vp702x_streaming_ctrl(struct dvb_usb_adapter *adap, int onoff)
 }
 
 /* keys for the enclosed remote control */
-static struct dvb_usb_rc_key vp702x_rc_keys[] = {
-	{ 0x00, 0x01, KEY_1 },
-	{ 0x00, 0x02, KEY_2 },
+static struct rc_map_table rc_map_vp702x_table[] = {
+	{ 0x0001, KEY_1 },
+	{ 0x0002, KEY_2 },
 };
 
 /* remote control stuff (does not work with my box) */
@@ -195,28 +197,15 @@ static int vp702x_rc_query(struct dvb_usb_device *d, u32 *event, int *state)
 		return 0;
 	}
 
-	for (i = 0; i < ARRAY_SIZE(vp702x_rc_keys); i++)
-		if (vp702x_rc_keys[i].custom == key[1]) {
+	for (i = 0; i < ARRAY_SIZE(rc_map_vp702x_table); i++)
+		if (rc5_custom(&rc_map_vp702x_table[i]) == key[1]) {
 			*state = REMOTE_KEY_PRESSED;
-			*event = vp702x_rc_keys[i].event;
+			*event = rc_map_vp702x_table[i].keycode;
 			break;
 		}
 	return 0;
 }
 
-int vp702x_power_ctrl(struct dvb_usb_device *d, int onoff)
-{
-	struct vp702x_device_state *st = d->priv;
-
-	if (st->power_state == 0 && onoff)
-		vp702x_usb_out_op(d, SET_TUNER_POWER_REQ, 1, 7, NULL, 0);
-	else if (st->power_state == 1 && onoff == 0)
-		vp702x_usb_out_op(d, SET_TUNER_POWER_REQ, 0, 7, NULL, 0);
-
-	st->power_state = onoff;
-
-	return 0;
-}
 
 static int vp702x_read_mac_addr(struct dvb_usb_device *d,u8 mac[6])
 {
@@ -251,7 +240,8 @@ static struct dvb_usb_device_properties vp702x_properties;
 static int vp702x_usb_probe(struct usb_interface *intf,
 		const struct usb_device_id *id)
 {
-	return dvb_usb_device_init(intf,&vp702x_properties,THIS_MODULE,NULL);
+	return dvb_usb_device_init(intf, &vp702x_properties,
+				   THIS_MODULE, NULL, adapter_nr);
 }
 
 static struct usb_device_id vp702x_usb_table [] = {
@@ -293,10 +283,12 @@ static struct dvb_usb_device_properties vp702x_properties = {
 	},
 	.read_mac_address = vp702x_read_mac_addr,
 
-	.rc_key_map       = vp702x_rc_keys,
-	.rc_key_map_size  = ARRAY_SIZE(vp702x_rc_keys),
-	.rc_interval      = 400,
-	.rc_query         = vp702x_rc_query,
+	.rc.legacy = {
+		.rc_map_table       = rc_map_vp702x_table,
+		.rc_map_size  = ARRAY_SIZE(rc_map_vp702x_table),
+		.rc_interval      = 400,
+		.rc_query         = vp702x_rc_query,
+	},
 
 	.num_device_descs = 1,
 	.devices = {

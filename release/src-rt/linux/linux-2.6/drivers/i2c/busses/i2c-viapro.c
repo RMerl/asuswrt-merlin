@@ -1,10 +1,8 @@
 /*
-    i2c-viapro.c - Part of lm_sensors, Linux kernel modules for hardware
-              monitoring
     Copyright (c) 1998 - 2002  Frodo Looijaard <frodol@dds.nl>,
-    Philip Edelbrock <phil@netroedge.com>, Kyösti Mälkki <kmalkki@cc.hut.fi>,
+    Philip Edelbrock <phil@netroedge.com>, KyÃ¶sti MÃ¤lkki <kmalkki@cc.hut.fi>,
     Mark D. Studebaker <mdsxyz123@yahoo.com>
-    Copyright (C) 2005 - 2007  Jean Delvare <khali@linux-fr.org>
+    Copyright (C) 2005 - 2008  Jean Delvare <khali@linux-fr.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -35,8 +33,11 @@
    VT8235             0x3177             yes
    VT8237R            0x3227             yes
    VT8237A            0x3337             yes
+   VT8237S            0x3372             yes
    VT8251             0x3287             yes
    CX700              0x8324             yes
+   VX800/VX820        0x8353             yes
+   VX855/VX875        0x8409             yes
 
    Note: we assume there can only be one device, with one SMBus interface.
 */
@@ -49,7 +50,8 @@
 #include <linux/ioport.h>
 #include <linux/i2c.h>
 #include <linux/init.h>
-#include <asm/io.h>
+#include <linux/acpi.h>
+#include <linux/io.h>
 
 static struct pci_dev *vt596_pdev;
 
@@ -82,6 +84,7 @@ static unsigned short SMBHSTCFG = 0xD2;
 #define VT596_BYTE		0x04
 #define VT596_BYTE_DATA		0x08
 #define VT596_WORD_DATA		0x0C
+#define VT596_PROC_CALL		0x10
 #define VT596_BLOCK_DATA	0x14
 #define VT596_I2C_BLOCK_DATA	0x34
 
@@ -151,7 +154,7 @@ static int vt596_transaction(u8 size)
 		if ((temp = inb_p(SMBHSTSTS)) & 0x1F) {
 			dev_err(&vt596_adapter.dev, "SMBus reset failed! "
 				"(0x%02x)\n", temp);
-			return -1;
+			return -EBUSY;
 		}
 	}
 
@@ -162,34 +165,28 @@ static int vt596_transaction(u8 size)
 	do {
 		msleep(1);
 		temp = inb_p(SMBHSTSTS);
-	} while ((temp & 0x01) && (timeout++ < MAX_TIMEOUT));
+	} while ((temp & 0x01) && (++timeout < MAX_TIMEOUT));
 
 	/* If the SMBus is still busy, we give up */
-	if (timeout >= MAX_TIMEOUT) {
-		result = -1;
+	if (timeout == MAX_TIMEOUT) {
+		result = -ETIMEDOUT;
 		dev_err(&vt596_adapter.dev, "SMBus timeout!\n");
 	}
 
 	if (temp & 0x10) {
-		result = -1;
+		result = -EIO;
 		dev_err(&vt596_adapter.dev, "Transaction failed (0x%02x)\n",
 			size);
 	}
 
 	if (temp & 0x08) {
-		result = -1;
+		result = -EIO;
 		dev_err(&vt596_adapter.dev, "SMBus collision!\n");
 	}
 
 	if (temp & 0x04) {
-		int read = inb_p(SMBHSTADD) & 0x01;
-		result = -1;
-		/* The quick and receive byte commands are used to probe
-		   for chips, so errors are expected, and we don't want
-		   to frighten the user. */
-		if (!((size == VT596_QUICK && !read) ||
-		      (size == VT596_BYTE && read)))
-			dev_err(&vt596_adapter.dev, "Transaction error!\n");
+		result = -ENXIO;
+		dev_dbg(&vt596_adapter.dev, "No response\n");
 	}
 
 	/* Resetting status register */
@@ -201,12 +198,13 @@ static int vt596_transaction(u8 size)
 	return result;
 }
 
-/* Return -1 on error, 0 on success */
+/* Return negative errno on error, 0 on success */
 static s32 vt596_access(struct i2c_adapter *adap, u16 addr,
 		unsigned short flags, char read_write, u8 command,
 		int size, union i2c_smbus_data *data)
 {
 	int i;
+	int status;
 
 	switch (size) {
 	case I2C_SMBUS_QUICK:
@@ -231,11 +229,17 @@ static s32 vt596_access(struct i2c_adapter *adap, u16 addr,
 		}
 		size = VT596_WORD_DATA;
 		break;
+	case I2C_SMBUS_PROC_CALL:
+		outb_p(command, SMBHSTCMD);
+		outb_p(data->word & 0xff, SMBHSTDAT0);
+		outb_p((data->word & 0xff00) >> 8, SMBHSTDAT1);
+		size = VT596_PROC_CALL;
+		break;
 	case I2C_SMBUS_I2C_BLOCK_DATA:
 		if (!(vt596_features & FEATURE_I2CBLOCK))
 			goto exit_unsupported;
 		if (read_write == I2C_SMBUS_READ)
-			outb_p(I2C_SMBUS_BLOCK_MAX, SMBHSTDAT0);
+			outb_p(data->block[0], SMBHSTDAT0);
 		/* Fall through */
 	case I2C_SMBUS_BLOCK_DATA:
 		outb_p(command, SMBHSTCMD);
@@ -257,8 +261,12 @@ static s32 vt596_access(struct i2c_adapter *adap, u16 addr,
 
 	outb_p(((addr & 0x7f) << 1) | read_write, SMBHSTADD);
 
-	if (vt596_transaction(size)) /* Error in transaction */
-		return -1;
+	status = vt596_transaction(size);
+	if (status)
+		return status;
+
+	if (size == VT596_PROC_CALL)
+		read_write = I2C_SMBUS_READ;
 
 	if ((read_write == I2C_SMBUS_WRITE) || (size == VT596_QUICK))
 		return 0;
@@ -269,6 +277,7 @@ static s32 vt596_access(struct i2c_adapter *adap, u16 addr,
 		data->byte = inb_p(SMBHSTDAT0);
 		break;
 	case VT596_WORD_DATA:
+	case VT596_PROC_CALL:
 		data->word = inb_p(SMBHSTDAT0) + (inb_p(SMBHSTDAT1) << 8);
 		break;
 	case VT596_I2C_BLOCK_DATA:
@@ -284,16 +293,16 @@ static s32 vt596_access(struct i2c_adapter *adap, u16 addr,
 	return 0;
 
 exit_unsupported:
-	dev_warn(&vt596_adapter.dev, "Unsupported command invoked! (0x%02x)\n",
+	dev_warn(&vt596_adapter.dev, "Unsupported transaction %d\n",
 		 size);
-	return -1;
+	return -EOPNOTSUPP;
 }
 
 static u32 vt596_func(struct i2c_adapter *adapter)
 {
 	u32 func = I2C_FUNC_SMBUS_QUICK | I2C_FUNC_SMBUS_BYTE |
 	    I2C_FUNC_SMBUS_BYTE_DATA | I2C_FUNC_SMBUS_WORD_DATA |
-	    I2C_FUNC_SMBUS_BLOCK_DATA;
+	    I2C_SMBUS_PROC_CALL | I2C_FUNC_SMBUS_BLOCK_DATA;
 
 	if (vt596_features & FEATURE_I2CBLOCK)
 		func |= I2C_FUNC_SMBUS_I2C_BLOCK;
@@ -307,8 +316,7 @@ static const struct i2c_algorithm smbus_algorithm = {
 
 static struct i2c_adapter vt596_adapter = {
 	.owner		= THIS_MODULE,
-	.id		= I2C_HW_SMBUS_VIA2,
-	.class		= I2C_CLASS_HWMON,
+	.class		= I2C_CLASS_HWMON | I2C_CLASS_SPD,
 	.algo		= &smbus_algorithm,
 };
 
@@ -349,6 +357,10 @@ static int __devinit vt596_probe(struct pci_dev *pdev,
 	}
 
 found:
+	error = acpi_check_region(vt596_smba, 8, vt596_driver.name);
+	if (error)
+		return -ENODEV;
+
 	if (!request_region(vt596_smba, 8, vt596_driver.name)) {
 		dev_err(&pdev->dev, "SMBus region 0x%x already in use!\n",
 			vt596_smba);
@@ -386,9 +398,12 @@ found:
 
 	switch (pdev->device) {
 	case PCI_DEVICE_ID_VIA_CX700:
+	case PCI_DEVICE_ID_VIA_VX800:
+	case PCI_DEVICE_ID_VIA_VX855:
 	case PCI_DEVICE_ID_VIA_8251:
 	case PCI_DEVICE_ID_VIA_8237:
 	case PCI_DEVICE_ID_VIA_8237A:
+	case PCI_DEVICE_ID_VIA_8237S:
 	case PCI_DEVICE_ID_VIA_8235:
 	case PCI_DEVICE_ID_VIA_8233A:
 	case PCI_DEVICE_ID_VIA_8233_0:
@@ -397,8 +412,7 @@ found:
 	case PCI_DEVICE_ID_VIA_82C686_4:
 		/* The VT82C686B (rev 0x40) does support I2C block
 		   transactions, but the VT82C686A (rev 0x30) doesn't */
-		if (!pci_read_config_byte(pdev, PCI_REVISION_ID, &temp)
-		 && temp >= 0x40)
+		if (pdev->revision >= 0x40)
 			vt596_features |= FEATURE_I2CBLOCK;
 		break;
 	}
@@ -424,7 +438,7 @@ release_region:
 	return error;
 }
 
-static struct pci_device_id vt596_ids[] = {
+static const struct pci_device_id vt596_ids[] = {
 	{ PCI_DEVICE(PCI_VENDOR_ID_VIA, PCI_DEVICE_ID_VIA_82C596_3),
 	  .driver_data = SMBBA1 },
 	{ PCI_DEVICE(PCI_VENDOR_ID_VIA, PCI_DEVICE_ID_VIA_82C596B_3),
@@ -441,11 +455,17 @@ static struct pci_device_id vt596_ids[] = {
 	  .driver_data = SMBBA3 },
 	{ PCI_DEVICE(PCI_VENDOR_ID_VIA, PCI_DEVICE_ID_VIA_8237A),
 	  .driver_data = SMBBA3 },
+	{ PCI_DEVICE(PCI_VENDOR_ID_VIA, PCI_DEVICE_ID_VIA_8237S),
+	  .driver_data = SMBBA3 },
 	{ PCI_DEVICE(PCI_VENDOR_ID_VIA, PCI_DEVICE_ID_VIA_8231_4),
 	  .driver_data = SMBBA1 },
 	{ PCI_DEVICE(PCI_VENDOR_ID_VIA, PCI_DEVICE_ID_VIA_8251),
 	  .driver_data = SMBBA3 },
 	{ PCI_DEVICE(PCI_VENDOR_ID_VIA, PCI_DEVICE_ID_VIA_CX700),
+	  .driver_data = SMBBA3 },
+	{ PCI_DEVICE(PCI_VENDOR_ID_VIA, PCI_DEVICE_ID_VIA_VX800),
+	  .driver_data = SMBBA3 },
+	{ PCI_DEVICE(PCI_VENDOR_ID_VIA, PCI_DEVICE_ID_VIA_VX855),
 	  .driver_data = SMBBA3 },
 	{ 0, }
 };

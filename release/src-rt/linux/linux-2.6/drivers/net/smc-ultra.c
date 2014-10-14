@@ -142,11 +142,6 @@ static int __init do_ultra_probe(struct net_device *dev)
 	int base_addr = dev->base_addr;
 	int irq = dev->irq;
 
-	SET_MODULE_OWNER(dev);
-
-#ifdef CONFIG_NET_POLL_CONTROLLER
-	dev->poll_controller = &ultra_poll;
-#endif
 	if (base_addr > 0x1ff)		/* Check a single specified location. */
 		return ultra_probe1(dev, base_addr);
 	else if (base_addr != 0)	/* Don't probe at all. */
@@ -189,6 +184,22 @@ out:
 }
 #endif
 
+static const struct net_device_ops ultra_netdev_ops = {
+	.ndo_open		= ultra_open,
+	.ndo_stop		= ultra_close_card,
+
+	.ndo_start_xmit		= ei_start_xmit,
+	.ndo_tx_timeout		= ei_tx_timeout,
+	.ndo_get_stats		= ei_get_stats,
+	.ndo_set_multicast_list = ei_set_multicast_list,
+	.ndo_validate_addr	= eth_validate_addr,
+	.ndo_set_mac_address 	= eth_mac_addr,
+	.ndo_change_mtu		= eth_change_mtu,
+#ifdef CONFIG_NET_POLL_CONTROLLER
+	.ndo_poll_controller 	= ultra_poll,
+#endif
+};
+
 static int __init ultra_probe1(struct net_device *dev, int ioaddr)
 {
 	int i, retval;
@@ -226,10 +237,11 @@ static int __init ultra_probe1(struct net_device *dev, int ioaddr)
 
 	model_name = (idreg & 0xF0) == 0x20 ? "SMC Ultra" : "SMC EtherEZ";
 
-	printk("%s: %s at %#3x,", dev->name, model_name, ioaddr);
-
 	for (i = 0; i < 6; i++)
-		printk(" %2.2X", dev->dev_addr[i] = inb(ioaddr + 8 + i));
+		dev->dev_addr[i] = inb(ioaddr + 8 + i);
+
+	printk("%s: %s at %#3x, %pM", dev->name, model_name,
+	       ioaddr, dev->dev_addr);
 
 	/* Switch from the station address to the alternate register set and
 	   read the useful registers there. */
@@ -265,8 +277,12 @@ static int __init ultra_probe1(struct net_device *dev, int ioaddr)
 	dev->base_addr = ioaddr+ULTRA_NIC_OFFSET;
 
 	{
-		int addr_tbl[4] = {0x0C0000, 0x0E0000, 0xFC0000, 0xFE0000};
-		short num_pages_tbl[4] = {0x20, 0x40, 0x80, 0xff};
+		static const int addr_tbl[4] = {
+			0x0C0000, 0x0E0000, 0xFC0000, 0xFE0000
+		};
+		static const short num_pages_tbl[4] = {
+			0x20, 0x40, 0x80, 0xff
+		};
 
 		dev->mem_start = ((addr & 0x0f) << 13) + addr_tbl[(addr >> 6) & 3] ;
 		num_pages = num_pages_tbl[(addr >> 4) & 3];
@@ -301,11 +317,8 @@ static int __init ultra_probe1(struct net_device *dev, int ioaddr)
 		ei_status.get_8390_hdr = &ultra_get_8390_hdr;
 	}
 	ei_status.reset_8390 = &ultra_reset_8390;
-	dev->open = &ultra_open;
-	dev->stop = &ultra_close_card;
-#ifdef CONFIG_NET_POLL_CONTROLLER
-	dev->poll_controller = ei_poll;
-#endif
+
+	dev->netdev_ops = &ultra_netdev_ops;
 	NS8390_init(dev, 0);
 
 	retval = register_netdev(dev);
@@ -412,7 +425,6 @@ ultra_reset_8390(struct net_device *dev)
 		outb(0x01, cmd_port + 6);		/* Enable interrupts and memory. */
 
 	if (ei_debug > 1) printk("reset done\n");
-	return;
 }
 
 /* Grab the 8390 specific header. Similar to the block_input routine, but

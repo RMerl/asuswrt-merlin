@@ -10,6 +10,12 @@ relocate_new_kernel:
 	ldr	r0,kexec_indirection_page
 	ldr	r1,kexec_start_address
 
+	/*
+	 * If there is no indirection page (we are doing crashdumps)
+	 * skip any relocation.
+	 */
+	cmp	r0, #0
+	beq	2f
 
 0:	/* top, read another word for the indirection page */
 	ldr	r3, [r0],#4
@@ -50,8 +56,10 @@ relocate_new_kernel:
 	mov lr,r1
 	mov r0,#0
 	ldr r1,kexec_mach_type
-	mov r2,#0
+	ldr r2,kexec_boot_atags
 	mov pc,lr
+
+	.align
 
 	.globl kexec_start_address
 kexec_start_address:
@@ -63,6 +71,11 @@ kexec_indirection_page:
 
 	.globl kexec_mach_type
 kexec_mach_type:
+	.long	0x0
+
+	/* phy addr of the atags for the new kernel */
+	.globl kexec_boot_atags
+kexec_boot_atags:
 	.long	0x0
 
 relocate_new_kernel_end:

@@ -1,6 +1,6 @@
 config USB_PWC
 	tristate "USB Philips Cameras"
-	depends on VIDEO_V4L1
+	depends on VIDEO_V4L2
 	---help---
 	  Say Y or M here if you want to use one of these Philips & OEM
 	  webcams:
@@ -35,3 +35,13 @@ config USB_PWC_DEBUG
 	  Say Y here in order to have the pwc driver generate verbose debugging
 	  messages.
 	  A special module options 'trace' is used to control the verbosity.
+
+config USB_PWC_INPUT_EVDEV
+	bool "USB Philips Cameras input events device support"
+	default y
+	depends on USB_PWC && (USB_PWC=INPUT || INPUT=y)
+	---help---
+	  This option makes USB Philips cameras register the snapshot button as
+	  an input device to report button events.
+
+	  If you are in doubt, say Y.

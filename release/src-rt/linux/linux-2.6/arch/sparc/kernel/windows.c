@@ -9,7 +9,6 @@
 #include <linux/string.h>
 #include <linux/mm.h>
 #include <linux/smp.h>
-#include <linux/smp_lock.h>
 
 #include <asm/uaccess.h>
 
@@ -42,7 +41,7 @@ static inline void shift_window_buffer(int first_win, int last_win, struct threa
 
 	for(i = first_win; i < last_win; i++) {
 		tp->rwbuf_stkptrs[i] = tp->rwbuf_stkptrs[i+1];
-		memcpy(&tp->reg_window[i], &tp->reg_window[i+1], sizeof(struct reg_window));
+		memcpy(&tp->reg_window[i], &tp->reg_window[i+1], sizeof(struct reg_window32));
 	}
 }
 
@@ -70,7 +69,7 @@ void synchronize_user_stack(void)
 
 		/* Ok, let it rip. */
 		if (copy_to_user((char __user *) sp, &tp->reg_window[window],
-				 sizeof(struct reg_window)))
+				 sizeof(struct reg_window32)))
 			continue;
 
 		shift_window_buffer(window, tp->w_saved - 1, tp);
@@ -112,16 +111,14 @@ void try_to_clear_window_buffer(struct pt_regs *regs, int who)
 	struct thread_info *tp = current_thread_info();
 	int window;
 
-	lock_kernel();
 	flush_user_windows();
 	for(window = 0; window < tp->w_saved; window++) {
 		unsigned long sp = tp->rwbuf_stkptrs[window];
 
 		if ((sp & 7) ||
 		    copy_to_user((char __user *) sp, &tp->reg_window[window],
-				 sizeof(struct reg_window)))
+				 sizeof(struct reg_window32)))
 			do_exit(SIGILL);
 	}
 	tp->w_saved = 0;
-	unlock_kernel();
 }

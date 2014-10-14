@@ -42,6 +42,10 @@
 
 #define DVB_DEMUX_MASK_MAX 18
 
+#define MAX_PID 0x1fff
+
+#define SPEED_PKTS_INTERVAL 50000
+
 struct dvb_demux_filter {
 	struct dmx_section_filter filter;
 	u8 maskandmode[DMX_MAX_FILTER_SIZE];
@@ -127,6 +131,11 @@ struct dvb_demux {
 
 	struct mutex mutex;
 	spinlock_t lock;
+
+	uint8_t *cnt_storage; /* for TS continuity check */
+
+	struct timespec speed_last_time; /* for TS speed check */
+	uint32_t speed_pkts_cnt; /* for TS speed check */
 };
 
 int dvb_dmx_init(struct dvb_demux *dvbdemux);

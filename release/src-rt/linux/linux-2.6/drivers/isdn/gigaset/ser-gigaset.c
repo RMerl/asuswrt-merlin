@@ -11,12 +11,10 @@
  */
 
 #include "gigaset.h"
-
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/platform_device.h>
-#include <linux/tty.h>
-#include <linux/poll.h>
+#include <linux/completion.h>
 
 /* Version Information */
 #define DRIVER_AUTHOR "Tilman Schmidt"
@@ -48,7 +46,7 @@ struct ser_cardstate {
 	struct platform_device	dev;
 	struct tty_struct	*tty;
 	atomic_t		refcnt;
-	struct mutex		dead_mutex;
+	struct completion	dead_cmp;
 };
 
 static struct platform_driver device_driver = {
@@ -67,10 +65,10 @@ static int write_modem(struct cardstate *cs)
 	struct tty_struct *tty = cs->hw.ser->tty;
 	struct bc_state *bcs = &cs->bcs[0];	/* only one channel */
 	struct sk_buff *skb = bcs->tx_skb;
-	int sent;
+	int sent = -EOPNOTSUPP;
 
 	if (!tty || !tty->driver || !skb)
-		return -EFAULT;
+		return -EINVAL;
 
 	if (!skb->len) {
 		dev_kfree_skb_any(skb);
@@ -79,7 +77,8 @@ static int write_modem(struct cardstate *cs)
 	}
 
 	set_bit(TTY_DO_WRITE_WAKEUP, &tty->flags);
-	sent = tty->driver->write(tty, skb->data, skb->len);
+	if (tty->ops->write)
+		sent = tty->ops->write(tty, skb->data, skb->len);
 	gig_dbg(DEBUG_OUTPUT, "write_modem: sent %d", sent);
 	if (sent < 0) {
 		/* error */
@@ -119,7 +118,7 @@ static int send_cb(struct cardstate *cs)
 
 	if (cb->len) {
 		set_bit(TTY_DO_WRITE_WAKEUP, &tty->flags);
-		sent = tty->driver->write(tty, cb->buf + cb->offset, cb->len);
+		sent = tty->ops->write(tty, cb->buf + cb->offset, cb->len);
 		if (sent < 0) {
 			/* error */
 			gig_dbg(DEBUG_OUTPUT, "send_cb: write error %d", sent);
@@ -163,9 +162,15 @@ static void gigaset_modem_fill(unsigned long data)
 {
 	struct cardstate *cs = (struct cardstate *) data;
 	struct bc_state *bcs;
+	struct sk_buff *nextskb;
 	int sent = 0;
 
-	if (!cs || !(bcs = cs->bcs)) {
+	if (!cs) {
+		gig_dbg(DEBUG_OUTPUT, "%s: no cardstate", __func__);
+		return;
+	}
+	bcs = cs->bcs;
+	if (!bcs) {
 		gig_dbg(DEBUG_OUTPUT, "%s: no cardstate", __func__);
 		return;
 	}
@@ -178,9 +183,11 @@ static void gigaset_modem_fill(unsigned long data)
 			return;
 
 		/* no command to send; get skb */
-		if (!(bcs->tx_skb = skb_dequeue(&bcs->squeue)))
+		nextskb = skb_dequeue(&bcs->squeue);
+		if (!nextskb)
 			/* no skb either, nothing to do */
 			return;
+		bcs->tx_skb = nextskb;
 
 		gig_dbg(DEBUG_INTR, "Dequeued skb (Adr: %lx)",
 			(unsigned long) bcs->tx_skb);
@@ -234,29 +241,13 @@ static void flush_send_queue(struct cardstate *cs)
  * return value:
  *	number of bytes queued, or error code < 0
  */
-static int gigaset_write_cmd(struct cardstate *cs, const unsigned char *buf,
-                             int len, struct tasklet_struct *wake_tasklet)
+static int gigaset_write_cmd(struct cardstate *cs, struct cmdbuf_t *cb)
 {
-	struct cmdbuf_t *cb;
 	unsigned long flags;
 
-	gigaset_dbg_buffer(atomic_read(&cs->mstate) != MS_LOCKED ?
-	                     DEBUG_TRANSCMD : DEBUG_LOCKCMD,
-	                   "CMD Transmit", len, buf);
-
-	if (len <= 0)
-		return 0;
-
-	if (!(cb = kmalloc(sizeof(struct cmdbuf_t) + len, GFP_ATOMIC))) {
-		dev_err(cs->dev, "%s: out of memory!\n", __func__);
-		return -ENOMEM;
-	}
-
-	memcpy(cb->buf, buf, len);
-	cb->len = len;
-	cb->offset = 0;
-	cb->next = NULL;
-	cb->wake_tasklet = wake_tasklet;
+	gigaset_dbg_buffer(cs->mstate != MS_LOCKED ?
+				DEBUG_TRANSCMD : DEBUG_LOCKCMD,
+			   "CMD Transmit", cb->len, cb->buf);
 
 	spin_lock_irqsave(&cs->cmdlock, flags);
 	cb->prev = cs->lastcmdbuf;
@@ -264,9 +255,9 @@ static int gigaset_write_cmd(struct cardstate *cs, const unsigned char *buf,
 		cs->lastcmdbuf->next = cb;
 	else {
 		cs->cmdbuf = cb;
-		cs->curlen = len;
+		cs->curlen = cb->len;
 	}
-	cs->cmdbytes += len;
+	cs->cmdbytes += cb->len;
 	cs->lastcmdbuf = cb;
 	spin_unlock_irqrestore(&cs->cmdlock, flags);
 
@@ -274,7 +265,7 @@ static int gigaset_write_cmd(struct cardstate *cs, const unsigned char *buf,
 	if (cs->connected)
 		tasklet_schedule(&cs->write_tasklet);
 	spin_unlock_irqrestore(&cs->lock, flags);
-	return len;
+	return cb->len;
 }
 
 /*
@@ -388,11 +379,9 @@ static void gigaset_freecshw(struct cardstate *cs)
 
 static void gigaset_device_release(struct device *dev)
 {
-	struct platform_device *pdev =
-		container_of(dev, struct platform_device, dev);
+	struct platform_device *pdev = to_platform_device(dev);
 
 	/* adapted from platform_device_release() in drivers/base/platform.c */
-	//FIXME is this actually necessary?
 	kfree(dev->platform_data);
 	kfree(pdev->resource);
 }
@@ -404,17 +393,21 @@ static void gigaset_device_release(struct device *dev)
 static int gigaset_initcshw(struct cardstate *cs)
 {
 	int rc;
+	struct ser_cardstate *scs;
 
-	if (!(cs->hw.ser = kzalloc(sizeof(struct ser_cardstate), GFP_KERNEL))) {
-		err("%s: out of memory!", __func__);
+	scs = kzalloc(sizeof(struct ser_cardstate), GFP_KERNEL);
+	if (!scs) {
+		pr_err("out of memory\n");
 		return 0;
 	}
+	cs->hw.ser = scs;
 
 	cs->hw.ser->dev.name = GIGASET_MODULENAME;
 	cs->hw.ser->dev.id = cs->minor_index;
 	cs->hw.ser->dev.dev.release = gigaset_device_release;
-	if ((rc = platform_device_register(&cs->hw.ser->dev)) != 0) {
-		err("error %d registering platform device", rc);
+	rc = platform_device_register(&cs->hw.ser->dev);
+	if (rc != 0) {
+		pr_err("error %d registering platform device\n", rc);
 		kfree(cs->hw.ser);
 		cs->hw.ser = NULL;
 		return 0;
@@ -422,7 +415,7 @@ static int gigaset_initcshw(struct cardstate *cs)
 	dev_set_drvdata(&cs->hw.ser->dev.dev, cs);
 
 	tasklet_init(&cs->write_tasklet,
-	             &gigaset_modem_fill, (unsigned long) cs);
+		     gigaset_modem_fill, (unsigned long) cs);
 	return 1;
 }
 
@@ -434,19 +427,20 @@ static int gigaset_initcshw(struct cardstate *cs)
  * Called by "gigaset_start" and "gigaset_enterconfigmode" in common.c
  * and by "if_lock" and "if_termios" in interface.c
  */
-static int gigaset_set_modem_ctrl(struct cardstate *cs, unsigned old_state, unsigned new_state)
+static int gigaset_set_modem_ctrl(struct cardstate *cs, unsigned old_state,
+				  unsigned new_state)
 {
 	struct tty_struct *tty = cs->hw.ser->tty;
 	unsigned int set, clear;
 
-	if (!tty || !tty->driver || !tty->driver->tiocmset)
-		return -EFAULT;
+	if (!tty || !tty->driver || !tty->ops->tiocmset)
+		return -EINVAL;
 	set = new_state & ~old_state;
 	clear = old_state & ~new_state;
 	if (!set && !clear)
 		return 0;
 	gig_dbg(DEBUG_IF, "tiocmset set %x clear %x", set, clear);
-	return tty->driver->tiocmset(tty, NULL, set, clear);
+	return tty->ops->tiocmset(tty, set, clear);
 }
 
 static int gigaset_baud_rate(struct cardstate *cs, unsigned cflag)
@@ -498,7 +492,7 @@ static struct cardstate *cs_get(struct tty_struct *tty)
 static void cs_put(struct cardstate *cs)
 {
 	if (atomic_dec_and_test(&cs->hw.ser->refcnt))
-		mutex_unlock(&cs->hw.ser->dead_mutex);
+		complete(&cs->hw.ser->dead_cmp);
 }
 
 /*
@@ -512,23 +506,22 @@ gigaset_tty_open(struct tty_struct *tty)
 
 	gig_dbg(DEBUG_INIT, "Starting HLL for Gigaset M101");
 
-	info(DRIVER_AUTHOR);
-	info(DRIVER_DESC);
+	pr_info(DRIVER_DESC "\n");
 
 	if (!driver) {
-		err("%s: no driver structure", __func__);
+		pr_err("%s: no driver structure\n", __func__);
 		return -ENODEV;
 	}
 
-	/* allocate memory for our device state and intialize it */
-	if (!(cs = gigaset_initcs(driver, 1, 1, 0, cidmode,
-				  GIGASET_MODULENAME)))
+	/* allocate memory for our device state and initialize it */
+	cs = gigaset_initcs(driver, 1, 1, 0, cidmode, GIGASET_MODULENAME);
+	if (!cs)
 		goto error;
 
 	cs->dev = &cs->hw.ser->dev.dev;
 	cs->hw.ser->tty = tty;
-	mutex_init(&cs->hw.ser->dead_mutex);
 	atomic_set(&cs->hw.ser->refcnt, 1);
+	init_completion(&cs->hw.ser->dead_cmp);
 
 	tty->disc_data = cs;
 
@@ -536,14 +529,13 @@ gigaset_tty_open(struct tty_struct *tty)
 	 * startup system and notify the LL that we are ready to run
 	 */
 	if (startmode == SM_LOCKED)
-		atomic_set(&cs->mstate, MS_LOCKED);
+		cs->mstate = MS_LOCKED;
 	if (!gigaset_start(cs)) {
 		tasklet_kill(&cs->write_tasklet);
 		goto error;
 	}
 
 	gig_dbg(DEBUG_INIT, "Startup of HLL done");
-	mutex_lock(&cs->hw.ser->dead_mutex);
 	return 0;
 
 error:
@@ -573,11 +565,11 @@ gigaset_tty_close(struct tty_struct *tty)
 	tty->disc_data = NULL;
 
 	if (!cs->hw.ser)
-		err("%s: no hw cardstate", __func__);
+		pr_err("%s: no hw cardstate\n", __func__);
 	else {
 		/* wait for running methods to finish */
 		if (!atomic_dec_and_test(&cs->hw.ser->refcnt))
-			mutex_lock(&cs->hw.ser->dead_mutex);
+			wait_for_completion(&cs->hw.ser->dead_cmp);
 	}
 
 	/* stop operations */
@@ -641,10 +633,11 @@ gigaset_tty_ioctl(struct tty_struct *tty, struct file *file,
 		return -ENXIO;
 
 	switch (cmd) {
-	case TCGETS:
-	case TCGETA:
-		/* pass through to underlying serial device */
-		rc = n_tty_ioctl(tty, file, cmd, arg);
+
+	case FIONREAD:
+		/* unused, always return zero */
+		val = 0;
+		rc = put_user(val, p);
 		break;
 
 	case TCFLSH:
@@ -658,32 +651,15 @@ gigaset_tty_ioctl(struct tty_struct *tty, struct file *file,
 			flush_send_queue(cs);
 			break;
 		}
-		/* flush the serial port's buffer */
-		rc = n_tty_ioctl(tty, file, cmd, arg);
-		break;
-
-	case FIONREAD:
-		/* unused, always return zero */
-		val = 0;
-		rc = put_user(val, p);
-		break;
+		/* Pass through */
 
 	default:
-		rc = -ENOIOCTLCMD;
+		/* pass through to underlying serial device */
+		rc = n_tty_ioctl_helper(tty, file, cmd, arg);
+		break;
 	}
-
 	cs_put(cs);
 	return rc;
-}
-
-/*
- * Poll on the tty.
- * Unused, always return zero.
- */
-static unsigned int
-gigaset_tty_poll(struct tty_struct *tty, struct file *file, poll_table *wait)
-{
-	return 0;
 }
 
 /*
@@ -708,14 +684,15 @@ gigaset_tty_receive(struct tty_struct *tty, const unsigned char *buf,
 
 	if (!cs)
 		return;
-	if (!(inbuf = cs->inbuf)) {
+	inbuf = cs->inbuf;
+	if (!inbuf) {
 		dev_err(cs->dev, "%s: no inbuf\n", __func__);
 		cs_put(cs);
 		return;
 	}
 
-	tail = atomic_read(&inbuf->tail);
-	head = atomic_read(&inbuf->head);
+	tail = inbuf->tail;
+	head = inbuf->head;
 	gig_dbg(DEBUG_INTR, "buffer state: %u -> %u, receive %u bytes",
 		head, tail, count);
 
@@ -742,7 +719,7 @@ gigaset_tty_receive(struct tty_struct *tty, const unsigned char *buf,
 	}
 
 	gig_dbg(DEBUG_INTR, "setting tail to %u", tail);
-	atomic_set(&inbuf->tail, tail);
+	inbuf->tail = tail;
 
 	/* Everything was received .. Push data into handler */
 	gig_dbg(DEBUG_INTR, "%s-->BH", __func__);
@@ -765,7 +742,7 @@ gigaset_tty_wakeup(struct tty_struct *tty)
 	cs_put(cs);
 }
 
-static struct tty_ldisc gigaset_ldisc = {
+static struct tty_ldisc_ops gigaset_ldisc = {
 	.owner		= THIS_MODULE,
 	.magic		= TTY_LDISC_MAGIC,
 	.name		= "ser_gigaset",
@@ -775,7 +752,6 @@ static struct tty_ldisc gigaset_ldisc = {
 	.read		= gigaset_tty_read,
 	.write		= gigaset_tty_write,
 	.ioctl		= gigaset_tty_ioctl,
-	.poll		= gigaset_tty_poll,
 	.receive_buf	= gigaset_tty_receive,
 	.write_wakeup	= gigaset_tty_wakeup,
 };
@@ -789,19 +765,22 @@ static int __init ser_gigaset_init(void)
 	int rc;
 
 	gig_dbg(DEBUG_INIT, "%s", __func__);
-	if ((rc = platform_driver_register(&device_driver)) != 0) {
-		err("error %d registering platform driver", rc);
+	rc = platform_driver_register(&device_driver);
+	if (rc != 0) {
+		pr_err("error %d registering platform driver\n", rc);
 		return rc;
 	}
 
-	/* allocate memory for our driver state and intialize it */
-	if (!(driver = gigaset_initdriver(GIGASET_MINOR, GIGASET_MINORS,
+	/* allocate memory for our driver state and initialize it */
+	driver = gigaset_initdriver(GIGASET_MINOR, GIGASET_MINORS,
 					  GIGASET_MODULENAME, GIGASET_DEVNAME,
-					  &ops, THIS_MODULE)))
+					  &ops, THIS_MODULE);
+	if (!driver)
 		goto error;
 
-	if ((rc = tty_register_ldisc(N_GIGASET_M101, &gigaset_ldisc)) != 0) {
-		err("error %d registering line discipline", rc);
+	rc = tty_register_ldisc(N_GIGASET_M101, &gigaset_ldisc);
+	if (rc != 0) {
+		pr_err("error %d registering line discipline\n", rc);
 		goto error;
 	}
 
@@ -827,8 +806,9 @@ static void __exit ser_gigaset_exit(void)
 		driver = NULL;
 	}
 
-	if ((rc = tty_unregister_ldisc(N_GIGASET_M101)) != 0)
-		err("error %d unregistering line discipline", rc);
+	rc = tty_unregister_ldisc(N_GIGASET_M101);
+	if (rc != 0)
+		pr_err("error %d unregistering line discipline\n", rc);
 
 	platform_driver_unregister(&device_driver);
 }

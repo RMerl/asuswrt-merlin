@@ -23,6 +23,30 @@
 #include <asm/thread_info.h>
 #include <asm/ppc_asm.h>
 #include <asm/asm-offsets.h>
+#include <asm/ptrace.h>
+
+#ifdef CONFIG_VSX
+#define REST_32FPVSRS(n,c,base)						\
+BEGIN_FTR_SECTION							\
+	b	2f;							\
+END_FTR_SECTION_IFSET(CPU_FTR_VSX);					\
+	REST_32FPRS(n,base);						\
+	b	3f;							\
+2:	REST_32VSRS(n,c,base);						\
+3:
+
+#define SAVE_32FPVSRS(n,c,base)						\
+BEGIN_FTR_SECTION							\
+	b	2f;							\
+END_FTR_SECTION_IFSET(CPU_FTR_VSX);					\
+	SAVE_32FPRS(n,base);						\
+	b	3f;							\
+2:	SAVE_32VSRS(n,c,base);						\
+3:
+#else
+#define REST_32FPVSRS(n,b,base)	REST_32FPRS(n, base)
+#define SAVE_32FPVSRS(n,b,base)	SAVE_32FPRS(n, base)
+#endif
 
 /*
  * This task wants to use the FPU now.
@@ -34,6 +58,11 @@
 _GLOBAL(load_up_fpu)
 	mfmsr	r5
 	ori	r5,r5,MSR_FP
+#ifdef CONFIG_VSX
+BEGIN_FTR_SECTION
+	oris	r5,r5,MSR_VSX@h
+END_FTR_SECTION_IFSET(CPU_FTR_VSX)
+#endif
 	SYNC
 	MTMSRD(r5)			/* enable use of fpu now */
 	isync
@@ -50,7 +79,7 @@ _GLOBAL(load_up_fpu)
 	beq	1f
 	toreal(r4)
 	addi	r4,r4,THREAD		/* want last_task_used_math->thread */
-	SAVE_32FPRS(0, r4)
+	SAVE_32FPVSRS(0, r5, r4)
 	mffs	fr0
 	stfd	fr0,THREAD_FPSCR(r4)
 	PPC_LL	r5,PT_REGS(r4)
@@ -63,7 +92,7 @@ _GLOBAL(load_up_fpu)
 #endif /* CONFIG_SMP */
 	/* enable use of FP after return */
 #ifdef CONFIG_PPC32
-	mfspr	r5,SPRN_SPRG3		/* current task's THREAD (phys) */
+	mfspr	r5,SPRN_SPRG_THREAD		/* current task's THREAD (phys) */
 	lwz	r4,THREAD_FPEXC_MODE(r5)
 	ori	r9,r9,MSR_FP		/* enable FP for current */
 	or	r9,r9,r4
@@ -77,7 +106,7 @@ _GLOBAL(load_up_fpu)
 #endif
 	lfd	fr0,THREAD_FPSCR(r5)
 	MTFSF_L(fr0)
-	REST_32FPRS(0, r5)
+	REST_32FPVSRS(0, r4, r5)
 #ifndef CONFIG_SMP
 	subi	r4,r5,THREAD
 	fromreal(r4)
@@ -85,7 +114,7 @@ _GLOBAL(load_up_fpu)
 #endif /* CONFIG_SMP */
 	/* restore registers and return */
 	/* we haven't used ctr or xer or lr */
-	b	fast_exception_return
+	blr
 
 /*
  * giveup_fpu(tsk)
@@ -96,6 +125,11 @@ _GLOBAL(load_up_fpu)
 _GLOBAL(giveup_fpu)
 	mfmsr	r5
 	ori	r5,r5,MSR_FP
+#ifdef CONFIG_VSX
+BEGIN_FTR_SECTION
+	oris	r5,r5,MSR_VSX@h
+END_FTR_SECTION_IFSET(CPU_FTR_VSX)
+#endif
 	SYNC_601
 	ISYNC_601
 	MTMSRD(r5)			/* enable use of fpu now */
@@ -106,12 +140,17 @@ _GLOBAL(giveup_fpu)
 	addi	r3,r3,THREAD	        /* want THREAD of task */
 	PPC_LL	r5,PT_REGS(r3)
 	PPC_LCMPI	0,r5,0
-	SAVE_32FPRS(0, r3)
+	SAVE_32FPVSRS(0, r4 ,r3)
 	mffs	fr0
 	stfd	fr0,THREAD_FPSCR(r3)
 	beq	1f
 	PPC_LL	r4,_MSR-STACK_FRAME_OVERHEAD(r5)
 	li	r3,MSR_FP|MSR_FE0|MSR_FE1
+#ifdef CONFIG_VSX
+BEGIN_FTR_SECTION
+	oris	r3,r3,MSR_VSX@h
+END_FTR_SECTION_IFSET(CPU_FTR_VSX)
+#endif
 	andc	r4,r4,r3		/* disable FP for previous task */
 	PPC_STL	r4,_MSR-STACK_FRAME_OVERHEAD(r5)
 1:
@@ -125,24 +164,14 @@ _GLOBAL(giveup_fpu)
 /*
  * These are used in the alignment trap handler when emulating
  * single-precision loads and stores.
- * We restore and save the fpscr so the task gets the same result
- * and exceptions as if the cpu had performed the load or store.
  */
 
 _GLOBAL(cvt_fd)
-	lfd	0,THREAD_FPSCR(r5)	/* load up fpscr value */
-	MTFSF_L(0)
 	lfs	0,0(r3)
 	stfd	0,0(r4)
-	mffs	0
-	stfd	0,THREAD_FPSCR(r5)	/* save new fpscr value */
 	blr
 
 _GLOBAL(cvt_df)
-	lfd	0,THREAD_FPSCR(r5)	/* load up fpscr value */
-	MTFSF_L(0)
 	lfd	0,0(r3)
 	stfs	0,0(r4)
-	mffs	0
-	stfd	0,THREAD_FPSCR(r5)	/* save new fpscr value */
 	blr

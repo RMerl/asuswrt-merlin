@@ -1,6 +1,9 @@
 /*
  * Driver for One Laptop Per Child ‘CAFÉ’ controller, aka Marvell 88ALP01
  *
+ * The data sheet for this device can be found at:
+ *    http://wiki.laptop.org/go/Datasheets 
+ *
  * Copyright © 2006 Red Hat, Inc.
  * Copyright © 2006 David Woodhouse <dwmw2@infradead.org>
  */
@@ -11,11 +14,13 @@
 #undef DEBUG
 #include <linux/mtd/mtd.h>
 #include <linux/mtd/nand.h>
+#include <linux/mtd/partitions.h>
 #include <linux/rslib.h>
 #include <linux/pci.h>
 #include <linux/delay.h>
 #include <linux/interrupt.h>
 #include <linux/dma-mapping.h>
+#include <linux/slab.h>
 #include <asm/io.h>
 
 #define CAFE_NAND_CTRL1		0x00
@@ -52,6 +57,7 @@
 
 struct cafe_priv {
 	struct nand_chip nand;
+	struct mtd_partition *parts;
 	struct pci_dev *pdev;
 	void __iomem *mmio;
 	struct rs_control *rs;
@@ -80,9 +86,13 @@ module_param(regdebug, int, 0644);
 static int checkecc = 1;
 module_param(checkecc, int, 0644);
 
-static int numtimings;
+static unsigned int numtimings;
 static int timing[3];
 module_param_array(timing, int, &numtimings, 0644);
+
+#ifdef CONFIG_MTD_PARTITIONS
+static const char *part_probes[] = { "cmdlinepart", "RedBoot", NULL };
+#endif
 
 /* Hrm. Why isn't this already conditional on something in the struct device? */
 #define cafe_dev_dbg(dev, args...) do { if (debug) dev_dbg(dev, ##args); } while(0)
@@ -323,7 +333,7 @@ static void cafe_select_chip(struct mtd_info *mtd, int chipnr)
 		cafe->ctl1 &= ~CTRL1_CHIPSELECT;
 }
 
-static int cafe_nand_interrupt(int irq, void *id)
+static irqreturn_t cafe_nand_interrupt(int irq, void *id)
 {
 	struct mtd_info *mtd = id;
 	struct cafe_priv *cafe = mtd->priv;
@@ -372,7 +382,7 @@ static int cafe_nand_read_oob(struct mtd_info *mtd, struct nand_chip *chip,
  * we need a special oob layout and handling.
  */
 static int cafe_nand_read_page(struct mtd_info *mtd, struct nand_chip *chip,
-			       uint8_t *buf)
+			       uint8_t *buf, int page)
 {
 	struct cafe_priv *cafe = mtd->priv;
 
@@ -622,6 +632,15 @@ static int __devinit cafe_nand_probe(struct pci_dev *pdev,
 	struct cafe_priv *cafe;
 	uint32_t ctrl;
 	int err = 0;
+#ifdef CONFIG_MTD_PARTITIONS
+	struct mtd_partition *parts;
+	int nr_parts;
+#endif
+
+	/* Very old versions shared the same PCI ident for all three
+	   functions on the chip. Verify the class too... */
+	if ((pdev->class >> 8) != PCI_CLASS_MEMORY_FLASH)
+		return -ENODEV;
 
 	err = pci_enable_device(pdev);
 	if (err)
@@ -636,6 +655,7 @@ static int __devinit cafe_nand_probe(struct pci_dev *pdev,
 	}
 	cafe = (void *)(&mtd[1]);
 
+	mtd->dev.parent = &pdev->dev;
 	mtd->priv = cafe;
 	mtd->owner = THIS_MODULE;
 
@@ -742,7 +762,7 @@ static int __devinit cafe_nand_probe(struct pci_dev *pdev,
 		cafe_readl(cafe, GLOBAL_CTRL), cafe_readl(cafe, GLOBAL_IRQ_MASK));
 
 	/* Scan to find existence of the device */
-	if (nand_scan_ident(mtd, 2)) {
+	if (nand_scan_ident(mtd, 2, NULL)) {
 		err = -ENXIO;
 		goto out_irq;
 	}
@@ -782,7 +802,21 @@ static int __devinit cafe_nand_probe(struct pci_dev *pdev,
 		goto out_irq;
 
 	pci_set_drvdata(pdev, mtd);
+
+	/* We register the whole device first, separate from the partitions */
 	add_mtd_device(mtd);
+
+#ifdef CONFIG_MTD_PARTITIONS
+#ifdef CONFIG_MTD_CMDLINE_PARTS
+	mtd->name = "cafe_nand";
+#endif
+	nr_parts = parse_mtd_partitions(mtd, part_probes, &parts, 0);
+	if (nr_parts > 0) {
+		cafe->parts = parts;
+		dev_info(&cafe->pdev->dev, "%d partitions found\n", nr_parts);
+		add_mtd_partitions(mtd, parts, nr_parts);
+	}
+#endif
 	goto out;
 
  out_irq:
@@ -815,30 +849,67 @@ static void __devexit cafe_nand_remove(struct pci_dev *pdev)
 	kfree(mtd);
 }
 
-static struct pci_device_id cafe_nand_tbl[] = {
-	{ 0x11ab, 0x4100, PCI_ANY_ID, PCI_ANY_ID, PCI_CLASS_MEMORY_FLASH << 8, 0xFFFF0 },
-	{ 0, }
+static const struct pci_device_id cafe_nand_tbl[] = {
+	{ PCI_VENDOR_ID_MARVELL, PCI_DEVICE_ID_MARVELL_88ALP01_NAND,
+	  PCI_ANY_ID, PCI_ANY_ID },
+	{ }
 };
 
 MODULE_DEVICE_TABLE(pci, cafe_nand_tbl);
+
+static int cafe_nand_resume(struct pci_dev *pdev)
+{
+	uint32_t ctrl;
+	struct mtd_info *mtd = pci_get_drvdata(pdev);
+	struct cafe_priv *cafe = mtd->priv;
+
+       /* Start off by resetting the NAND controller completely */
+	cafe_writel(cafe, 1, NAND_RESET);
+	cafe_writel(cafe, 0, NAND_RESET);
+	cafe_writel(cafe, 0xffffffff, NAND_IRQ_MASK);
+
+	/* Restore timing configuration */
+	cafe_writel(cafe, timing[0], NAND_TIMING1);
+	cafe_writel(cafe, timing[1], NAND_TIMING2);
+	cafe_writel(cafe, timing[2], NAND_TIMING3);
+
+        /* Disable master reset, enable NAND clock */
+	ctrl = cafe_readl(cafe, GLOBAL_CTRL);
+	ctrl &= 0xffffeff0;
+	ctrl |= 0x00007000;
+	cafe_writel(cafe, ctrl | 0x05, GLOBAL_CTRL);
+	cafe_writel(cafe, ctrl | 0x0a, GLOBAL_CTRL);
+	cafe_writel(cafe, 0, NAND_DMA_CTRL);
+	cafe_writel(cafe, 0x7006, GLOBAL_CTRL);
+	cafe_writel(cafe, 0x700a, GLOBAL_CTRL);
+
+	/* Set up DMA address */
+	cafe_writel(cafe, cafe->dmaaddr & 0xffffffff, NAND_DMA_ADDR0);
+	if (sizeof(cafe->dmaaddr) > 4)
+	/* Shift in two parts to shut the compiler up */
+		cafe_writel(cafe, (cafe->dmaaddr >> 16) >> 16, NAND_DMA_ADDR1);
+	else
+		cafe_writel(cafe, 0, NAND_DMA_ADDR1);
+
+	/* Enable NAND IRQ in global IRQ mask register */
+	cafe_writel(cafe, 0x80000007, GLOBAL_IRQ_MASK);
+	return 0;
+}
 
 static struct pci_driver cafe_nand_pci_driver = {
 	.name = "CAFÉ NAND",
 	.id_table = cafe_nand_tbl,
 	.probe = cafe_nand_probe,
 	.remove = __devexit_p(cafe_nand_remove),
-#ifdef CONFIG_PMx
-	.suspend = cafe_nand_suspend,
 	.resume = cafe_nand_resume,
-#endif
 };
 
-static int cafe_nand_init(void)
+static int __init cafe_nand_init(void)
 {
 	return pci_register_driver(&cafe_nand_pci_driver);
 }
 
-static void cafe_nand_exit(void)
+static void __exit cafe_nand_exit(void)
 {
 	pci_unregister_driver(&cafe_nand_pci_driver);
 }

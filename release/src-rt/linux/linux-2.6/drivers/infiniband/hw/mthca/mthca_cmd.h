@@ -30,8 +30,6 @@
  * ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
- *
- * $Id: mthca_cmd.h 1349 2004-12-16 21:09:43Z roland $
  */
 
 #ifndef MTHCA_CMD_H
@@ -103,6 +101,7 @@ enum {
 	DEV_LIM_FLAG_RAW_IPV6           = 1 << 4,
 	DEV_LIM_FLAG_RAW_ETHER          = 1 << 5,
 	DEV_LIM_FLAG_SRQ                = 1 << 6,
+	DEV_LIM_FLAG_IPOIB_CSUM		= 1 << 7,
 	DEV_LIM_FLAG_BAD_PKEY_CNTR      = 1 << 8,
 	DEV_LIM_FLAG_BAD_QKEY_CNTR      = 1 << 9,
 	DEV_LIM_FLAG_MW                 = 1 << 16,

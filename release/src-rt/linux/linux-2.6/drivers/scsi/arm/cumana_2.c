@@ -318,7 +318,7 @@ cumanascsi_2_set_proc_info(struct Scsi_Host *host, char *buffer, int length)
 {
 	int ret = length;
 
-	if (length >= 11 && strcmp(buffer, "CUMANASCSI2") == 0) {
+	if (length >= 11 && strncmp(buffer, "CUMANASCSI2", 11) == 0) {
 		buffer += 11;
 		length -= 11;
 
@@ -344,7 +344,7 @@ cumanascsi_2_set_proc_info(struct Scsi_Host *host, char *buffer, int length)
  * Params   : buffer - a buffer to write information to
  *	      start  - a pointer into this buffer set by this routine to the start
  *		       of the required information.
- *	      offset - offset into information that we have read upto.
+ *	      offset - offset into information that we have read up to.
  *	      length - length of buffer
  *	      host_no - host number to return information for
  *	      inout  - 0 for reading, 1 for writing.
@@ -390,7 +390,8 @@ static struct scsi_host_template cumanascsi2_template = {
 	.eh_abort_handler		= fas216_eh_abort,
 	.can_queue			= 1,
 	.this_id			= 7,
-	.sg_tablesize			= SG_ALL,
+	.sg_tablesize			= SCSI_MAX_SG_CHAIN_SEGMENTS,
+	.dma_boundary			= IOMD_DMA_BOUNDARY,
 	.cmd_per_lun			= 1,
 	.use_clustering			= DISABLE_CLUSTERING,
 	.proc_name			= "cumanascsi2",

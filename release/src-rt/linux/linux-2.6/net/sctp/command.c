@@ -1,18 +1,18 @@
-/* SCTP kernel reference Implementation Copyright (C) 1999-2001
+/* SCTP kernel implementation Copyright (C) 1999-2001
  * Cisco, Motorola, and IBM
  * Copyright 2001 La Monte H.P. Yarroll
  *
- * This file is part of the SCTP kernel reference Implementation
+ * This file is part of the SCTP kernel implementation
  *
  * These functions manipulate sctp command sequences.
  *
- * The SCTP reference implementation is free software;
+ * This SCTP implementation is free software;
  * you can redistribute it and/or modify it under the terms of
  * the GNU General Public License as published by
  * the Free Software Foundation; either version 2, or (at your option)
  * any later version.
  *
- * The SCTP reference implementation is distributed in the hope that it
+ * This SCTP implementation is distributed in the hope that it
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied
  *                 ************************
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -52,18 +52,12 @@ int sctp_init_cmd_seq(sctp_cmd_seq_t *seq)
 /* Add a command to a sctp_cmd_seq_t.
  * Return 0 if the command sequence is full.
  */
-int sctp_add_cmd(sctp_cmd_seq_t *seq, sctp_verb_t verb, sctp_arg_t obj)
+void sctp_add_cmd_sf(sctp_cmd_seq_t *seq, sctp_verb_t verb, sctp_arg_t obj)
 {
-	if (seq->next_free_slot >= SCTP_MAX_NUM_COMMANDS)
-		goto fail;
+	BUG_ON(seq->next_free_slot >= SCTP_MAX_NUM_COMMANDS);
 
 	seq->cmds[seq->next_free_slot].verb = verb;
 	seq->cmds[seq->next_free_slot++].obj = obj;
-
-	return 1;
-
-fail:
-	return 0;
 }
 
 /* Return the next command structure in a sctp_cmd_seq.

@@ -1,5 +1,5 @@
 /*
- * MPC52xx SPC in SPI mode driver.
+ * MPC52xx PSC in SPI mode driver.
  *
  * Maintainer: Dragos Carp
  *
@@ -13,21 +13,18 @@
 
 #include <linux/module.h>
 #include <linux/init.h>
+#include <linux/types.h>
 #include <linux/errno.h>
 #include <linux/interrupt.h>
-
-#if defined(CONFIG_PPC_MERGE)
-#include <asm/of_platform.h>
-#else
-#include <linux/platform_device.h>
-#endif
-
+#include <linux/of_address.h>
+#include <linux/of_platform.h>
 #include <linux/workqueue.h>
 #include <linux/completion.h>
 #include <linux/io.h>
 #include <linux/delay.h>
 #include <linux/spi/spi.h>
 #include <linux/fsl_devices.h>
+#include <linux/slab.h>
 
 #include <asm/mpc52xx.h>
 #include <asm/mpc52xx_psc.h>
@@ -36,12 +33,12 @@
 
 struct mpc52xx_psc_spi {
 	/* fsl_spi_platform data */
-	void (*activate_cs)(u8, u8);
-	void (*deactivate_cs)(u8, u8);
+	void (*cs_control)(struct spi_device *spi, bool on);
 	u32 sysclk;
 
 	/* driver internal data */
 	struct mpc52xx_psc __iomem *psc;
+	struct mpc52xx_psc_fifo __iomem *fifo;
 	unsigned int irq;
 	u8 bits_per_word;
 	u8 busy;
@@ -107,27 +104,25 @@ static void mpc52xx_psc_spi_activate_cs(struct spi_device *spi)
 	 * Because psc->ccr is defined as 16bit register instead of 32bit
 	 * just set the lower byte of BitClkDiv
 	 */
-	ccr = in_be16(&psc->ccr);
+	ccr = in_be16((u16 __iomem *)&psc->ccr);
 	ccr &= 0xFF00;
 	if (cs->speed_hz)
 		ccr |= (MCLK / cs->speed_hz - 1) & 0xFF;
 	else /* by default SPI Clk 1MHz */
 		ccr |= (MCLK / 1000000 - 1) & 0xFF;
-	out_be16(&psc->ccr, ccr);
+	out_be16((u16 __iomem *)&psc->ccr, ccr);
 	mps->bits_per_word = cs->bits_per_word;
 
-	if (mps->activate_cs)
-		mps->activate_cs(spi->chip_select,
-				(spi->mode & SPI_CS_HIGH) ? 1 : 0);
+	if (mps->cs_control)
+		mps->cs_control(spi, (spi->mode & SPI_CS_HIGH) ? 1 : 0);
 }
 
 static void mpc52xx_psc_spi_deactivate_cs(struct spi_device *spi)
 {
 	struct mpc52xx_psc_spi *mps = spi_master_get_devdata(spi->master);
 
-	if (mps->deactivate_cs)
-		mps->deactivate_cs(spi->chip_select,
-				(spi->mode & SPI_CS_HIGH) ? 1 : 0);
+	if (mps->cs_control)
+		mps->cs_control(spi, (spi->mode & SPI_CS_HIGH) ? 0 : 1);
 }
 
 #define MPC52xx_PSC_BUFSIZE (MPC52xx_PSC_RFNUM_MASK + 1)
@@ -139,6 +134,7 @@ static int mpc52xx_psc_spi_transfer_rxtx(struct spi_device *spi,
 {
 	struct mpc52xx_psc_spi *mps = spi_master_get_devdata(spi->master);
 	struct mpc52xx_psc __iomem *psc = mps->psc;
+	struct mpc52xx_psc_fifo __iomem *fifo = mps->fifo;
 	unsigned rb = 0;	/* number of bytes receieved */
 	unsigned sb = 0;	/* number of bytes sent */
 	unsigned char *rx_buf = (unsigned char *)t->rx_buf;
@@ -146,7 +142,7 @@ static int mpc52xx_psc_spi_transfer_rxtx(struct spi_device *spi,
 	unsigned rfalarm;
 	unsigned send_at_once = MPC52xx_PSC_BUFSIZE;
 	unsigned recv_at_once;
-	unsigned bpw = mps->bits_per_word / 8;
+	int last_block = 0;
 
 	if (!t->tx_buf && !t->rx_buf && t->len)
 		return -EINVAL;
@@ -156,32 +152,27 @@ static int mpc52xx_psc_spi_transfer_rxtx(struct spi_device *spi,
 	while (rb < t->len) {
 		if (t->len - rb > MPC52xx_PSC_BUFSIZE) {
 			rfalarm = MPC52xx_PSC_RFALARM;
+			last_block = 0;
 		} else {
 			send_at_once = t->len - sb;
 			rfalarm = MPC52xx_PSC_BUFSIZE - (t->len - rb);
+			last_block = 1;
 		}
 
 		dev_dbg(&spi->dev, "send %d bytes...\n", send_at_once);
-		if (tx_buf) {
-			for (; send_at_once; sb++, send_at_once--) {
-				/* set EOF flag */
-				if (mps->bits_per_word
-						&& (sb + 1) % bpw == 0)
-					out_8(&psc->ircr2, 0x01);
+		for (; send_at_once; sb++, send_at_once--) {
+			/* set EOF flag before the last word is sent */
+			if (send_at_once == 1 && last_block)
+				out_8(&psc->ircr2, 0x01);
+
+			if (tx_buf)
 				out_8(&psc->mpc52xx_psc_buffer_8, tx_buf[sb]);
-			}
-		} else {
-			for (; send_at_once; sb++, send_at_once--) {
-				/* set EOF flag */
-				if (mps->bits_per_word
-						&& ((sb + 1) % bpw) == 0)
-					out_8(&psc->ircr2, 0x01);
+			else
 				out_8(&psc->mpc52xx_psc_buffer_8, 0);
-			}
 		}
 
 
-		/* enable interupts and wait for wake up
+		/* enable interrupts and wait for wake up
 		 * if just one byte is expected the Rx FIFO genererates no
 		 * FFULL interrupt, so activate the RxRDY interrupt
 		 */
@@ -190,11 +181,11 @@ static int mpc52xx_psc_spi_transfer_rxtx(struct spi_device *spi,
 			out_8(&psc->mode, 0);
 		} else {
 			out_8(&psc->mode, MPC52xx_PSC_MODE_FFULL);
-			out_be16(&psc->rfalarm, rfalarm);
+			out_be16(&fifo->rfalarm, rfalarm);
 		}
 		out_be16(&psc->mpc52xx_psc_imr, MPC52xx_PSC_IMR_RXRDY);
 		wait_for_completion(&mps->done);
-		recv_at_once = in_be16(&psc->rfnum);
+		recv_at_once = in_be16(&fifo->rfnum);
 		dev_dbg(&spi->dev, "%d bytes received\n", recv_at_once);
 
 		send_at_once = recv_at_once;
@@ -321,75 +312,16 @@ static void mpc52xx_psc_spi_cleanup(struct spi_device *spi)
 
 static int mpc52xx_psc_spi_port_config(int psc_id, struct mpc52xx_psc_spi *mps)
 {
-	struct mpc52xx_cdm __iomem *cdm;
-	struct mpc52xx_gpio __iomem *gpio;
 	struct mpc52xx_psc __iomem *psc = mps->psc;
-	u32 ul;
+	struct mpc52xx_psc_fifo __iomem *fifo = mps->fifo;
 	u32 mclken_div;
-	int ret = 0;
-
-#if defined(CONFIG_PPC_MERGE)
-	cdm = mpc52xx_find_and_map("mpc5200-cdm");
-	gpio = mpc52xx_find_and_map("mpc5200-gpio");
-#else
-	cdm = ioremap(MPC52xx_PA(MPC52xx_CDM_OFFSET), MPC52xx_CDM_SIZE);
-	gpio = ioremap(MPC52xx_PA(MPC52xx_GPIO_OFFSET), MPC52xx_GPIO_SIZE);
-#endif
-	if (!cdm || !gpio) {
-		printk(KERN_ERR "Error mapping CDM/GPIO\n");
-		ret = -EFAULT;
-		goto unmap_regs;
-	}
+	int ret;
 
 	/* default sysclk is 512MHz */
-	mclken_div = 0x8000 |
-		(((mps->sysclk ? mps->sysclk : 512000000) / MCLK) & 0x1FF);
-
-	switch (psc_id) {
-	case 1:
-		ul = in_be32(&gpio->port_config);
-		ul &= 0xFFFFFFF8;
-		ul |= 0x00000006;
-		out_be32(&gpio->port_config, ul);
-		out_be16(&cdm->mclken_div_psc1, mclken_div);
-		ul = in_be32(&cdm->clk_enables);
-		ul |= 0x00000020;
-		out_be32(&cdm->clk_enables, ul);
-		break;
-	case 2:
-		ul = in_be32(&gpio->port_config);
-		ul &= 0xFFFFFF8F;
-		ul |= 0x00000060;
-		out_be32(&gpio->port_config, ul);
-		out_be16(&cdm->mclken_div_psc2, mclken_div);
-		ul = in_be32(&cdm->clk_enables);
-		ul |= 0x00000040;
-		out_be32(&cdm->clk_enables, ul);
-		break;
-	case 3:
-		ul = in_be32(&gpio->port_config);
-		ul &= 0xFFFFF0FF;
-		ul |= 0x00000600;
-		out_be32(&gpio->port_config, ul);
-		out_be16(&cdm->mclken_div_psc3, mclken_div);
-		ul = in_be32(&cdm->clk_enables);
-		ul |= 0x00000080;
-		out_be32(&cdm->clk_enables, ul);
-		break;
-	case 6:
-		ul = in_be32(&gpio->port_config);
-		ul &= 0xFF8FFFFF;
-		ul |= 0x00700000;
-		out_be32(&gpio->port_config, ul);
-		out_be16(&cdm->mclken_div_psc6, mclken_div);
-		ul = in_be32(&cdm->clk_enables);
-		ul |= 0x00000010;
-		out_be32(&cdm->clk_enables, ul);
-		break;
-	default:
-		ret = -EINVAL;
-		goto unmap_regs;
-	}
+	mclken_div = (mps->sysclk ? mps->sysclk : 512000000) / MCLK;
+	ret = mpc52xx_set_psc_clkdiv(psc_id, mclken_div);
+	if (ret)
+		return ret;
 
 	/* Reset the PSC into a known state */
 	out_8(&psc->command, MPC52xx_PSC_RST_RX);
@@ -399,13 +331,13 @@ static int mpc52xx_psc_spi_port_config(int psc_id, struct mpc52xx_psc_spi *mps)
 	/* Disable interrupts, interrupts are based on alarm level */
 	out_be16(&psc->mpc52xx_psc_imr, 0);
 	out_8(&psc->command, MPC52xx_PSC_SEL_MODE_REG_1);
-	out_8(&psc->rfcntl, 0);
+	out_8(&fifo->rfcntl, 0);
 	out_8(&psc->mode, MPC52xx_PSC_MODE_FFULL);
 
 	/* Configure 8bit codec mode as a SPI master and use EOF flags */
 	/* SICR_SIM_CODEC8|SICR_GENCLK|SICR_SPI|SICR_MSTR|SICR_USEEOF */
 	out_be32(&psc->sicr, 0x0180C800);
-	out_be16(&psc->ccr, 0x070F); /* by default SPI Clk 1MHz */
+	out_be16((u16 __iomem *)&psc->ccr, 0x070F); /* default SPI Clk 1MHz */
 
 	/* Set 2ms DTL delay */
 	out_8(&psc->ctur, 0x00);
@@ -413,13 +345,7 @@ static int mpc52xx_psc_spi_port_config(int psc_id, struct mpc52xx_psc_spi *mps)
 
 	mps->bits_per_word = 8;
 
-unmap_regs:
-	if (cdm)
-		iounmap(cdm);
-	if (gpio)
-		iounmap(gpio);
-
-	return ret;
+	return 0;
 }
 
 static irqreturn_t mpc52xx_psc_spi_isr(int irq, void *dev_id)
@@ -437,7 +363,7 @@ static irqreturn_t mpc52xx_psc_spi_isr(int irq, void *dev_id)
 }
 
 /* bus_num is used only for the case dev->platform_data == NULL */
-static int __init mpc52xx_psc_spi_do_probe(struct device *dev, u32 regaddr,
+static int __devinit mpc52xx_psc_spi_do_probe(struct device *dev, u32 regaddr,
 				u32 size, unsigned int irq, s16 bus_num)
 {
 	struct fsl_spi_platform_data *pdata = dev->platform_data;
@@ -452,18 +378,19 @@ static int __init mpc52xx_psc_spi_do_probe(struct device *dev, u32 regaddr,
 	dev_set_drvdata(dev, master);
 	mps = spi_master_get_devdata(master);
 
+	/* the spi->mode bits understood by this driver: */
+	master->mode_bits = SPI_CPOL | SPI_CPHA | SPI_CS_HIGH | SPI_LSB_FIRST;
+
 	mps->irq = irq;
 	if (pdata == NULL) {
 		dev_warn(dev, "probe called without platform data, no "
-				"(de)activate_cs function will be called\n");
-		mps->activate_cs = NULL;
-		mps->deactivate_cs = NULL;
+				"cs_control function will be called\n");
+		mps->cs_control = NULL;
 		mps->sysclk = 0;
 		master->bus_num = bus_num;
 		master->num_chipselect = 255;
 	} else {
-		mps->activate_cs = pdata->activate_cs;
-		mps->deactivate_cs = pdata->deactivate_cs;
+		mps->cs_control = pdata->cs_control;
 		mps->sysclk = pdata->sysclk;
 		master->bus_num = pdata->bus_num;
 		master->num_chipselect = pdata->max_chipselect;
@@ -471,6 +398,7 @@ static int __init mpc52xx_psc_spi_do_probe(struct device *dev, u32 regaddr,
 	master->setup = mpc52xx_psc_spi_setup;
 	master->transfer = mpc52xx_psc_spi_transfer;
 	master->cleanup = mpc52xx_psc_spi_cleanup;
+	master->dev.of_node = dev->of_node;
 
 	mps->psc = ioremap(regaddr, size);
 	if (!mps->psc) {
@@ -478,6 +406,8 @@ static int __init mpc52xx_psc_spi_do_probe(struct device *dev, u32 regaddr,
 		ret = -EFAULT;
 		goto free_master;
 	}
+	/* On the 5200, fifo regs are immediately ajacent to the psc regs */
+	mps->fifo = ((void __iomem *)mps->psc) + sizeof(struct mpc52xx_psc);
 
 	ret = request_irq(mps->irq, mpc52xx_psc_spi_isr, 0, "mpc52xx-psc-spi",
 				mps);
@@ -485,8 +415,10 @@ static int __init mpc52xx_psc_spi_do_probe(struct device *dev, u32 regaddr,
 		goto free_master;
 
 	ret = mpc52xx_psc_spi_port_config(master->bus_num, mps);
-	if (ret < 0)
+	if (ret < 0) {
+		dev_err(dev, "can't configure PSC! Is it capable of SPI?\n");
 		goto free_irq;
+	}
 
 	spin_lock_init(&mps->lock);
 	init_completion(&mps->done);
@@ -494,7 +426,7 @@ static int __init mpc52xx_psc_spi_do_probe(struct device *dev, u32 regaddr,
 	INIT_LIST_HEAD(&mps->queue);
 
 	mps->workqueue = create_singlethread_workqueue(
-		master->cdev.dev->bus_id);
+		dev_name(master->dev.parent));
 	if (mps->workqueue == NULL) {
 		ret = -EBUSY;
 		goto free_irq;
@@ -518,9 +450,38 @@ free_master:
 	return ret;
 }
 
-static int __exit mpc52xx_psc_spi_do_remove(struct device *dev)
+static int __devinit mpc52xx_psc_spi_of_probe(struct platform_device *op)
 {
-	struct spi_master *master = dev_get_drvdata(dev);
+	const u32 *regaddr_p;
+	u64 regaddr64, size64;
+	s16 id = -1;
+
+	regaddr_p = of_get_address(op->dev.of_node, 0, &size64, NULL);
+	if (!regaddr_p) {
+		dev_err(&op->dev, "Invalid PSC address\n");
+		return -EINVAL;
+	}
+	regaddr64 = of_translate_address(op->dev.of_node, regaddr_p);
+
+	/* get PSC id (1..6, used by port_config) */
+	if (op->dev.platform_data == NULL) {
+		const u32 *psc_nump;
+
+		psc_nump = of_get_property(op->dev.of_node, "cell-index", NULL);
+		if (!psc_nump || *psc_nump > 5) {
+			dev_err(&op->dev, "Invalid cell-index property\n");
+			return -EINVAL;
+		}
+		id = *psc_nump + 1;
+	}
+
+	return mpc52xx_psc_spi_do_probe(&op->dev, (u32)regaddr64, (u32)size64,
+				irq_of_parse_and_map(op->dev.of_node, 0), id);
+}
+
+static int __devexit mpc52xx_psc_spi_of_remove(struct platform_device *op)
+{
+	struct spi_master *master = dev_get_drvdata(&op->dev);
 	struct mpc52xx_psc_spi *mps = spi_master_get_devdata(master);
 
 	flush_workqueue(mps->workqueue);
@@ -533,118 +494,35 @@ static int __exit mpc52xx_psc_spi_do_remove(struct device *dev)
 	return 0;
 }
 
-#if !defined(CONFIG_PPC_MERGE)
-static int __init mpc52xx_psc_spi_probe(struct platform_device *dev)
-{
-	switch(dev->id) {
-	case 1:
-	case 2:
-	case 3:
-	case 6:
-		return mpc52xx_psc_spi_do_probe(&dev->dev,
-			MPC52xx_PA(MPC52xx_PSCx_OFFSET(dev->id)),
-			MPC52xx_PSC_SIZE, platform_get_irq(dev, 0), dev->id);
-	default:
-		return -EINVAL;
-	}
-}
-
-static int __exit mpc52xx_psc_spi_remove(struct platform_device *dev)
-{
-	return mpc52xx_psc_spi_do_remove(&dev->dev);
-}
-
-static struct platform_driver mpc52xx_psc_spi_platform_driver = {
-	.remove = __exit_p(mpc52xx_psc_spi_remove),
-	.driver = {
-		.name = "mpc52xx-psc-spi",
-		.owner = THIS_MODULE,
-	},
-};
-
-static int __init mpc52xx_psc_spi_init(void)
-{
-	return platform_driver_probe(&mpc52xx_psc_spi_platform_driver,
-			mpc52xx_psc_spi_probe);
-}
-module_init(mpc52xx_psc_spi_init);
-
-static void __exit mpc52xx_psc_spi_exit(void)
-{
-	platform_driver_unregister(&mpc52xx_psc_spi_platform_driver);
-}
-module_exit(mpc52xx_psc_spi_exit);
-
-#else	/* defined(CONFIG_PPC_MERGE) */
-
-static int __init mpc52xx_psc_spi_of_probe(struct of_device *op,
-	const struct of_device_id *match)
-{
-	const u32 *regaddr_p;
-	u64 regaddr64, size64;
-	s16 id = -1;
-
-	regaddr_p = of_get_address(op->node, 0, &size64, NULL);
-	if (!regaddr_p) {
-		printk(KERN_ERR "Invalid PSC address\n");
-		return -EINVAL;
-	}
-	regaddr64 = of_translate_address(op->node, regaddr_p);
-
-	/* get PSC id (1..6, used by port_config) */
-	if (op->dev.platform_data == NULL) {
-		const u32 *psc_nump;
-
-		psc_nump = of_get_property(op->node, "cell-index", NULL);
-		if (!psc_nump || *psc_nump > 5) {
-			printk(KERN_ERR "mpc52xx_psc_spi: Device node %s has invalid "
-					"cell-index property\n", op->node->full_name);
-			return -EINVAL;
-		}
-		id = *psc_nump + 1;
-	}
-
-	return mpc52xx_psc_spi_do_probe(&op->dev, (u32)regaddr64, (u32)size64,
-					irq_of_parse_and_map(op->node, 0), id);
-}
-
-static int __exit mpc52xx_psc_spi_of_remove(struct of_device *op)
-{
-	return mpc52xx_psc_spi_do_remove(&op->dev);
-}
-
-static struct of_device_id mpc52xx_psc_spi_of_match[] = {
-	{ .type = "spi", .compatible = "mpc5200-psc-spi", },
-	{},
+static const struct of_device_id mpc52xx_psc_spi_of_match[] = {
+	{ .compatible = "fsl,mpc5200-psc-spi", },
+	{ .compatible = "mpc5200-psc-spi", }, /* old */
+	{}
 };
 
 MODULE_DEVICE_TABLE(of, mpc52xx_psc_spi_of_match);
 
-static struct of_platform_driver mpc52xx_psc_spi_of_driver = {
-	.owner = THIS_MODULE,
-	.name = "mpc52xx-psc-spi",
-	.match_table = mpc52xx_psc_spi_of_match,
+static struct platform_driver mpc52xx_psc_spi_of_driver = {
 	.probe = mpc52xx_psc_spi_of_probe,
-	.remove = __exit_p(mpc52xx_psc_spi_of_remove),
+	.remove = __devexit_p(mpc52xx_psc_spi_of_remove),
 	.driver = {
 		.name = "mpc52xx-psc-spi",
 		.owner = THIS_MODULE,
+		.of_match_table = mpc52xx_psc_spi_of_match,
 	},
 };
 
 static int __init mpc52xx_psc_spi_init(void)
 {
-	return of_register_platform_driver(&mpc52xx_psc_spi_of_driver);
+	return platform_driver_register(&mpc52xx_psc_spi_of_driver);
 }
 module_init(mpc52xx_psc_spi_init);
 
 static void __exit mpc52xx_psc_spi_exit(void)
 {
-	of_unregister_platform_driver(&mpc52xx_psc_spi_of_driver);
+	platform_driver_unregister(&mpc52xx_psc_spi_of_driver);
 }
 module_exit(mpc52xx_psc_spi_exit);
-
-#endif	/* defined(CONFIG_PPC_MERGE) */
 
 MODULE_AUTHOR("Dragos Carp");
 MODULE_DESCRIPTION("MPC52xx PSC SPI Driver");

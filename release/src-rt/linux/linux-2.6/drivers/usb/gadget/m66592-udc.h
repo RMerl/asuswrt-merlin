@@ -23,6 +23,12 @@
 #ifndef __M66592_UDC_H__
 #define __M66592_UDC_H__
 
+#ifdef CONFIG_HAVE_CLK
+#include <linux/clk.h>
+#endif
+
+#include <linux/usb/m66592.h>
+
 #define M66592_SYSCFG		0x00
 #define M66592_XTAL		0xC000	/* b15-14: Crystal selection */
 #define   M66592_XTAL48		 0x8000		/* 48MHz */
@@ -72,6 +78,11 @@
 #define   M66592_P_TST_J	 0x0001		/* PERI TEST J */
 #define   M66592_P_TST_NORMAL	 0x0000		/* PERI Normal Mode */
 
+/* built-in registers */
+#define M66592_CFBCFG		0x0A
+#define M66592_D0FBCFG		0x0C
+#define M66592_LITTLE		0x0100	/* b8: Little endian mode */
+/* external chip case */
 #define M66592_PINCFG		0x0A
 #define M66592_LDRV		0x8000	/* b15: Drive Current Adjust */
 #define M66592_BIGEND		0x0100	/* b8: Big endian mode */
@@ -92,6 +103,7 @@
 #define M66592_DENDE		0x0010	/* b4: Dend enable */
 #define M66592_OBUS		0x0004	/* b2: OUTbus mode */
 
+/* common case */
 #define M66592_CFIFO		0x10
 #define M66592_D0FIFO		0x14
 #define M66592_D1FIFO		0x18
@@ -103,9 +115,9 @@
 #define M66592_REW		0x4000	/* b14: Buffer rewind */
 #define M66592_DCLRM		0x2000	/* b13: DMA buffer clear mode */
 #define M66592_DREQE		0x1000	/* b12: DREQ output enable */
-#define M66592_MBW		0x0400	/* b10: Maximum bit width for FIFO */
-#define   M66592_MBW_8		 0x0000   /*  8bit */
-#define   M66592_MBW_16		 0x0400   /* 16bit */
+#define M66592_MBW_8		0x0000   /*  8bit */
+#define M66592_MBW_16		0x0400   /* 16bit */
+#define M66592_MBW_32		0x0800   /* 32bit */
 #define M66592_TRENB		0x0200	/* b9: Transaction counter enable */
 #define M66592_TRCLR		0x0100	/* b8: Transaction counter clear */
 #define M66592_DEZPM		0x0080	/* b7: Zero-length packet mode */
@@ -466,6 +478,11 @@ struct m66592_ep {
 struct m66592 {
 	spinlock_t		lock;
 	void __iomem		*reg;
+#ifdef CONFIG_HAVE_CLK
+	struct clk *clk;
+#endif
+	struct m66592_platdata	*pdata;
+	unsigned long		irq_trigger;
 
 	struct usb_gadget		gadget;
 	struct usb_gadget_driver	*driver;
@@ -476,10 +493,10 @@ struct m66592 {
 
 	struct usb_request	*ep0_req;	/* for internal request */
 	__le16			ep0_data;	/* for internal request */
+	u16			old_vbus;
 
 	struct timer_list	timer;
 
-	u16			old_vbus;
 	int			scount;
 
 	int			old_dvsq;
@@ -489,7 +506,6 @@ struct m66592 {
 	int interrupt;
 	int isochronous;
 	int num_dma;
-	int bi_bufnum;	/* bulk and isochronous's bufnum */
 };
 
 #define gadget_to_m66592(_gadget) container_of(_gadget, struct m66592, gadget)
@@ -521,37 +537,62 @@ struct m66592 {
 /*-------------------------------------------------------------------------*/
 static inline u16 m66592_read(struct m66592 *m66592, unsigned long offset)
 {
-	return inw((unsigned long)m66592->reg + offset);
+	return ioread16(m66592->reg + offset);
 }
 
 static inline void m66592_read_fifo(struct m66592 *m66592,
 		unsigned long offset,
 		void *buf, unsigned long len)
 {
-	unsigned long fifoaddr = (unsigned long)m66592->reg + offset;
+	void __iomem *fifoaddr = m66592->reg + offset;
 
-	len = (len + 1) / 2;
-	insw(fifoaddr, buf, len);
+	if (m66592->pdata->on_chip) {
+		len = (len + 3) / 4;
+		ioread32_rep(fifoaddr, buf, len);
+	} else {
+		len = (len + 1) / 2;
+		ioread16_rep(fifoaddr, buf, len);
+	}
 }
 
 static inline void m66592_write(struct m66592 *m66592, u16 val,
 				unsigned long offset)
 {
-	outw(val, (unsigned long)m66592->reg + offset);
+	iowrite16(val, m66592->reg + offset);
 }
 
 static inline void m66592_write_fifo(struct m66592 *m66592,
 		unsigned long offset,
 		void *buf, unsigned long len)
 {
-	unsigned long fifoaddr = (unsigned long)m66592->reg + offset;
-	unsigned long odd = len & 0x0001;
+	void __iomem *fifoaddr = m66592->reg + offset;
 
-	len = len / 2;
-	outsw(fifoaddr, buf, len);
-	if (odd) {
-		unsigned char *p = buf + len*2;
-		outb(*p, fifoaddr);
+	if (m66592->pdata->on_chip) {
+		unsigned long count;
+		unsigned char *pb;
+		int i;
+
+		count = len / 4;
+		iowrite32_rep(fifoaddr, buf, count);
+
+		if (len & 0x00000003) {
+			pb = buf + count * 4;
+			for (i = 0; i < (len & 0x00000003); i++) {
+				if (m66592_read(m66592, M66592_CFBCFG))	/* le */
+					iowrite8(pb[i], fifoaddr + (3 - i));
+				else
+					iowrite8(pb[i], fifoaddr + i);
+			}
+		}
+	} else {
+		unsigned long odd = len & 0x0001;
+
+		len = len / 2;
+		iowrite16_rep(fifoaddr, buf, len);
+		if (odd) {
+			unsigned char *p = buf + len*2;
+			iowrite8(*p, fifoaddr);
+		}
 	}
 }
 

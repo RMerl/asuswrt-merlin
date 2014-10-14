@@ -23,16 +23,14 @@
 #include <linux/mm.h>
 #include <linux/init.h>
 #include <linux/ioport.h>
-#include <linux/slab.h>
 #include <linux/delay.h>
+#include <linux/io.h>
 
-#include <asm/io.h>
 #include <asm/irq.h>
 #include <asm/sizes.h>
 #include <asm/system.h>
 #include <asm/mach/pci.h>
-#include <asm/mach-types.h>
-#include <asm/hardware.h>
+#include <mach/hardware.h>
 
 extern int (*external_fault) (unsigned long, struct pt_regs *);
 
@@ -231,7 +229,7 @@ void __init ixp23xx_pci_preinit(void)
 {
 	ixp23xx_pci_common_init();
 
-	hook_fault_code(16+6, ixp23xx_pci_abort_handler, SIGBUS,
+	hook_fault_code(16+6, ixp23xx_pci_abort_handler, SIGBUS, 0,
 			"PCI config cycle to non-existent device");
 
 	*IXP23XX_PCI_ADDR_EXT = 0x0000e000;

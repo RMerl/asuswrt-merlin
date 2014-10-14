@@ -49,8 +49,9 @@
 static inline void netlbl_netlink_auditinfo(struct sk_buff *skb,
 					    struct netlbl_audit *audit_info)
 {
-	audit_info->secid = NETLINK_CB(skb).sid;
-	audit_info->loginuid = NETLINK_CB(skb).loginuid;
+	security_task_getsecid(current, &audit_info->secid);
+	audit_info->loginuid = audit_get_loginuid(current);
+	audit_info->sessionid = audit_get_sessionid(current);
 }
 
 /* NetLabel NETLINK I/O functions */

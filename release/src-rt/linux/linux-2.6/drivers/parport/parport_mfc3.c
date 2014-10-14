@@ -219,7 +219,7 @@ static irqreturn_t mfc3_interrupt(int irq, void *dev_id)
 		if (this_port[i] != NULL)
 			if (pia(this_port[i])->crb & 128) { /* Board caused interrupt */
 				dummy = pia(this_port[i])->pprb; /* clear irq bit */
-				parport_generic_irq(irq, this_port[i]);
+				parport_generic_irq(this_port[i]);
 			}
 	return IRQ_HANDLED;
 }
@@ -386,7 +386,7 @@ static void __exit parport_mfc3_exit(void)
 		if (!this_port[i])
 			continue;
 		parport_remove_port(this_port[i]);
-		if (!this_port[i]->irq != PARPORT_IRQ_NONE) {
+		if (this_port[i]->irq != PARPORT_IRQ_NONE) {
 			if (--use_cnt == 0) 
 				free_irq(IRQ_AMIGA_PORTS, &pp_mfc3_ops);
 		}

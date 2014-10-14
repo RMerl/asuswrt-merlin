@@ -1,6 +1,5 @@
 /*
  * mtdram - a test mtd device
- * $Id: mtdram.c,v 1.37 2005/04/21 03:42:11 joern Exp $
  * Author: Alexander Larsson <alex@cendio.se>
  *
  * Copyright (c) 1999 Alexander Larsson <alex@cendio.se>
@@ -15,8 +14,8 @@
 #include <linux/ioport.h>
 #include <linux/vmalloc.h>
 #include <linux/init.h>
-#include <linux/mtd/compatmac.h>
 #include <linux/mtd/mtd.h>
+#include <linux/mtd/mtdram.h>
 
 static unsigned long total_size = CONFIG_MTDRAM_TOTAL_SIZE;
 static unsigned long erase_size = CONFIG_MTDRAM_ERASE_SIZE;
@@ -47,19 +46,35 @@ static int ram_erase(struct mtd_info *mtd, struct erase_info *instr)
 }
 
 static int ram_point(struct mtd_info *mtd, loff_t from, size_t len,
-		size_t *retlen, u_char **mtdbuf)
+		size_t *retlen, void **virt, resource_size_t *phys)
 {
 	if (from + len > mtd->size)
 		return -EINVAL;
 
-	*mtdbuf = mtd->priv + from;
+	/* can we return a physical address with this driver? */
+	if (phys)
+		return -EINVAL;
+
+	*virt = mtd->priv + from;
 	*retlen = len;
 	return 0;
 }
 
-static void ram_unpoint(struct mtd_info *mtd, u_char * addr, loff_t from,
-		size_t len)
+static void ram_unpoint(struct mtd_info *mtd, loff_t from, size_t len)
 {
+}
+
+/*
+ * Allow NOMMU mmap() to directly map the device (if not NULL)
+ * - return the address to which the offset maps
+ * - return -ENOSYS to indicate refusal to do the mapping
+ */
+static unsigned long ram_get_unmapped_area(struct mtd_info *mtd,
+					   unsigned long len,
+					   unsigned long offset,
+					   unsigned long flags)
+{
+	return (unsigned long) mtd->priv + offset;
 }
 
 static int ram_read(struct mtd_info *mtd, loff_t from, size_t len,
@@ -106,6 +121,7 @@ int mtdram_init_device(struct mtd_info *mtd, void *mapped_address,
 	mtd->flags = MTD_CAP_RAM;
 	mtd->size = size;
 	mtd->writesize = 1;
+	mtd->writebufsize = 64; /* Mimic CFI NOR flashes */
 	mtd->erasesize = MTDRAM_ERASE_SIZE;
 	mtd->priv = mapped_address;
 
@@ -113,6 +129,7 @@ int mtdram_init_device(struct mtd_info *mtd, void *mapped_address,
 	mtd->erase = ram_erase;
 	mtd->point = ram_point;
 	mtd->unpoint = ram_unpoint;
+	mtd->get_unmapped_area = ram_get_unmapped_area;
 	mtd->read = ram_read;
 	mtd->write = ram_write;
 

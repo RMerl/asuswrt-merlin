@@ -80,7 +80,7 @@ static void tcp_westwood_init(struct sock *sk)
  */
 static inline u32 westwood_do_filter(u32 a, u32 b)
 {
-	return (((7 * a) + b) >> 3);
+	return ((7 * a) + b) >> 3;
 }
 
 static void westwood_filter(struct westwood *w, u32 delta)
@@ -100,11 +100,12 @@ static void westwood_filter(struct westwood *w, u32 delta)
  * Called after processing group of packets.
  * but all westwood needs is the last sample of srtt.
  */
-static void tcp_westwood_pkts_acked(struct sock *sk, u32 cnt, ktime_t last)
+static void tcp_westwood_pkts_acked(struct sock *sk, u32 cnt, s32 rtt)
 {
 	struct westwood *w = inet_csk_ca(sk);
-	if (cnt > 0)
-		w->rtt = tcp_sk(sk)->srtt >> 3;
+
+	if (rtt > 0)
+		w->rtt = usecs_to_jiffies(rtt);
 }
 
 /*
@@ -271,7 +272,7 @@ static void tcp_westwood_info(struct sock *sk, u32 ext,
 }
 
 
-static struct tcp_congestion_ops tcp_westwood = {
+static struct tcp_congestion_ops tcp_westwood __read_mostly = {
 	.init		= tcp_westwood_init,
 	.ssthresh	= tcp_reno_ssthresh,
 	.cong_avoid	= tcp_reno_cong_avoid,

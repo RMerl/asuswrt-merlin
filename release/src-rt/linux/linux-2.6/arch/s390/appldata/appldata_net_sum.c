@@ -12,15 +12,12 @@
 
 #include <linux/module.h>
 #include <linux/init.h>
-#include <linux/slab.h>
 #include <linux/errno.h>
 #include <linux/kernel_stat.h>
 #include <linux/netdevice.h>
+#include <net/net_namespace.h>
 
 #include "appldata.h"
-
-
-#define MY_PRINT_NAME	"appldata_net_sum"	/* for debug messages, etc. */
 
 
 /*
@@ -59,26 +56,6 @@ static struct appldata_net_sum_data {
 } __attribute__((packed)) appldata_net_sum_data;
 
 
-static inline void appldata_print_debug(struct appldata_net_sum_data *net_data)
-{
-	P_DEBUG("--- NET - RECORD ---\n");
-
-	P_DEBUG("nr_interfaces = %u\n", net_data->nr_interfaces);
-	P_DEBUG("rx_packets    = %8lu\n", net_data->rx_packets);
-	P_DEBUG("tx_packets    = %8lu\n", net_data->tx_packets);
-	P_DEBUG("rx_bytes      = %8lu\n", net_data->rx_bytes);
-	P_DEBUG("tx_bytes      = %8lu\n", net_data->tx_bytes);
-	P_DEBUG("rx_errors     = %8lu\n", net_data->rx_errors);
-	P_DEBUG("tx_errors     = %8lu\n", net_data->tx_errors);
-	P_DEBUG("rx_dropped    = %8lu\n", net_data->rx_dropped);
-	P_DEBUG("tx_dropped    = %8lu\n", net_data->tx_dropped);
-	P_DEBUG("collisions    = %8lu\n", net_data->collisions);
-
-	P_DEBUG("sync_count_1 = %u\n", net_data->sync_count_1);
-	P_DEBUG("sync_count_2 = %u\n", net_data->sync_count_2);
-	P_DEBUG("timestamp    = %lX\n", net_data->timestamp);
-}
-
 /*
  * appldata_get_net_sum_data()
  *
@@ -89,7 +66,6 @@ static void appldata_get_net_sum_data(void *data)
 	int i;
 	struct appldata_net_sum_data *net_data;
 	struct net_device *dev;
-	struct net_device_stats *stats;
 	unsigned long rx_packets, tx_packets, rx_bytes, tx_bytes, rx_errors,
 			tx_errors, rx_dropped, tx_dropped, collisions;
 
@@ -106,9 +82,13 @@ static void appldata_get_net_sum_data(void *data)
 	rx_dropped = 0;
 	tx_dropped = 0;
 	collisions = 0;
-	read_lock(&dev_base_lock);
-	for_each_netdev(dev) {
-		stats = dev->get_stats(dev);
+
+	rcu_read_lock();
+	for_each_netdev_rcu(&init_net, dev) {
+		const struct rtnl_link_stats64 *stats;
+		struct rtnl_link_stats64 temp;
+
+		stats = dev_get_stats(dev, &temp);
 		rx_packets += stats->rx_packets;
 		tx_packets += stats->tx_packets;
 		rx_bytes   += stats->rx_bytes;
@@ -120,7 +100,8 @@ static void appldata_get_net_sum_data(void *data)
 		collisions += stats->collisions;
 		i++;
 	}
-	read_unlock(&dev_base_lock);
+	rcu_read_unlock();
+
 	net_data->nr_interfaces = i;
 	net_data->rx_packets = rx_packets;
 	net_data->tx_packets = tx_packets;
@@ -134,14 +115,10 @@ static void appldata_get_net_sum_data(void *data)
 
 	net_data->timestamp = get_clock();
 	net_data->sync_count_2++;
-#ifdef APPLDATA_DEBUG
-	appldata_print_debug(net_data);
-#endif
 }
 
 
 static struct appldata_ops ops = {
-	.ctl_nr    = CTL_APPLDATA_NET_SUM,
 	.name	   = "net_sum",
 	.record_nr = APPLDATA_RECORD_NET_SUM_ID,
 	.size	   = sizeof(struct appldata_net_sum_data),
@@ -159,17 +136,7 @@ static struct appldata_ops ops = {
  */
 static int __init appldata_net_init(void)
 {
-	int rc;
-
-	P_DEBUG("sizeof(net) = %lu\n", sizeof(struct appldata_net_sum_data));
-
-	rc = appldata_register_ops(&ops);
-	if (rc != 0) {
-		P_ERROR("Error registering ops, rc = %i\n", rc);
-	} else {
-		P_DEBUG("%s-ops registered!\n", ops.name);
-	}
-	return rc;
+	return appldata_register_ops(&ops);
 }
 
 /*
@@ -180,7 +147,6 @@ static int __init appldata_net_init(void)
 static void __exit appldata_net_exit(void)
 {
 	appldata_unregister_ops(&ops);
-	P_DEBUG("%s-ops unregistered!\n", ops.name);
 }
 
 

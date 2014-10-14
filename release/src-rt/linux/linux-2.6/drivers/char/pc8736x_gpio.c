@@ -40,7 +40,8 @@ static u8 pc8736x_gpio_shadow[4];
 #define SIO_BASE2       0x4E	/* alt command-reg to check */
 
 #define SIO_SID		0x20	/* SuperI/O ID Register */
-#define SIO_SID_VALUE	0xe9	/* Expected value in SuperI/O ID Register */
+#define SIO_SID_PC87365	0xe5	/* Expected value in ID Register for PC87365 */
+#define SIO_SID_PC87366	0xe9	/* Expected value in ID Register for PC87366 */
 
 #define SIO_CF1		0x21	/* chip config, bit0 is chip enable */
 
@@ -90,13 +91,17 @@ static inline int superio_inb(int addr)
 
 static int pc8736x_superio_present(void)
 {
+	int id;
+
 	/* try the 2 possible values, read a hardware reg to verify */
 	superio_cmd = SIO_BASE1;
-	if (superio_inb(SIO_SID) == SIO_SID_VALUE)
+	id = superio_inb(SIO_SID);
+	if (id == SIO_SID_PC87365 || id == SIO_SID_PC87366)
 		return superio_cmd;
 
 	superio_cmd = SIO_BASE2;
-	if (superio_inb(SIO_SID) == SIO_SID_VALUE)
+	id = superio_inb(SIO_SID);
+	if (id == SIO_SID_PC87365 || id == SIO_SID_PC87366)
 		return superio_cmd;
 
 	return 0;
@@ -229,6 +234,7 @@ static const struct file_operations pc8736x_gpio_fileops = {
 	.open	= pc8736x_gpio_open,
 	.write	= nsc_gpio_write,
 	.read	= nsc_gpio_read,
+	.llseek = no_llseek,
 };
 
 static void __init pc8736x_init_shadow(void)

@@ -17,13 +17,14 @@
 #include <linux/spinlock.h>
 #include <linux/workqueue.h>
 #include <linux/platform_device.h>
+#include <linux/gpio.h>
 
 #include <linux/spi/spi.h>
 #include <linux/spi/spi_bitbang.h>
 
-#include <asm/arch/regs-gpio.h>
-#include <asm/arch/spi-gpio.h>
-#include <asm/hardware.h>
+#include <mach/regs-gpio.h>
+#include <mach/spi-gpio.h>
+#include <mach/hardware.h>
 
 struct s3c2410_spigpio {
 	struct spi_bitbang		 bitbang;
@@ -34,7 +35,7 @@ struct s3c2410_spigpio {
 
 static inline struct s3c2410_spigpio *spidev_to_sg(struct spi_device *spi)
 {
-	return spi->controller_data;
+	return spi_master_get_devdata(spi->master);
 }
 
 static inline void setsck(struct spi_device *dev, int on)
@@ -57,32 +58,31 @@ static inline u32 getmiso(struct spi_device *dev)
 
 #define spidelay(x) ndelay(x)
 
-#define	EXPAND_BITBANG_TXRX
-#include <linux/spi/spi_bitbang.h>
+#include "spi_bitbang_txrx.h"
 
 
 static u32 s3c2410_spigpio_txrx_mode0(struct spi_device *spi,
 				      unsigned nsecs, u32 word, u8 bits)
 {
-	return bitbang_txrx_be_cpha0(spi, nsecs, 0, word, bits);
+	return bitbang_txrx_be_cpha0(spi, nsecs, 0, 0, word, bits);
 }
 
 static u32 s3c2410_spigpio_txrx_mode1(struct spi_device *spi,
 				      unsigned nsecs, u32 word, u8 bits)
 {
-	return bitbang_txrx_be_cpha1(spi, nsecs, 0, word, bits);
+	return bitbang_txrx_be_cpha1(spi, nsecs, 0, 0, word, bits);
 }
 
 static u32 s3c2410_spigpio_txrx_mode2(struct spi_device *spi,
 				      unsigned nsecs, u32 word, u8 bits)
 {
-	return bitbang_txrx_be_cpha0(spi, nsecs, 1, word, bits);
+	return bitbang_txrx_be_cpha0(spi, nsecs, 1, 0, word, bits);
 }
 
 static u32 s3c2410_spigpio_txrx_mode3(struct spi_device *spi,
 				      unsigned nsecs, u32 word, u8 bits)
 {
-	return bitbang_txrx_be_cpha1(spi, nsecs, 1, word, bits);
+	return bitbang_txrx_be_cpha1(spi, nsecs, 1, 0, word, bits);
 }
 
 
@@ -96,10 +96,10 @@ static void s3c2410_spigpio_chipselect(struct spi_device *dev, int value)
 
 static int s3c2410_spigpio_probe(struct platform_device *dev)
 {
+	struct s3c2410_spigpio_info *info;
 	struct spi_master	*master;
 	struct s3c2410_spigpio  *sp;
 	int ret;
-	int i;
 
 	master = spi_alloc_master(&dev->dev, sizeof(struct s3c2410_spigpio));
 	if (master == NULL) {
@@ -113,10 +113,12 @@ static int s3c2410_spigpio_probe(struct platform_device *dev)
 	platform_set_drvdata(dev, sp);
 
 	/* copy in the plkatform data */
-	sp->info = dev->dev.platform_data;
+	info = sp->info = dev->dev.platform_data;
 
 	/* setup spi bitbang adaptor */
 	sp->bitbang.master = spi_master_get(master);
+	sp->bitbang.master->bus_num = info->bus_num;
+	sp->bitbang.master->num_chipselect = info->num_chipselect;
 	sp->bitbang.chipselect = s3c2410_spigpio_chipselect;
 
 	sp->bitbang.txrx_word[SPI_MODE_0] = s3c2410_spigpio_txrx_mode0;
@@ -124,28 +126,22 @@ static int s3c2410_spigpio_probe(struct platform_device *dev)
 	sp->bitbang.txrx_word[SPI_MODE_2] = s3c2410_spigpio_txrx_mode2;
 	sp->bitbang.txrx_word[SPI_MODE_3] = s3c2410_spigpio_txrx_mode3;
 
-	/* set state of spi pins */
-	s3c2410_gpio_setpin(sp->info->pin_clk, 0);
-	s3c2410_gpio_setpin(sp->info->pin_mosi, 0);
+	/* set state of spi pins, always assume that the clock is
+	 * available, but do check the MOSI and MISO. */
+	s3c2410_gpio_setpin(info->pin_clk, 0);
+	s3c2410_gpio_cfgpin(info->pin_clk, S3C2410_GPIO_OUTPUT);
 
-	s3c2410_gpio_cfgpin(sp->info->pin_clk, S3C2410_GPIO_OUTPUT);
-	s3c2410_gpio_cfgpin(sp->info->pin_mosi, S3C2410_GPIO_OUTPUT);
-	s3c2410_gpio_cfgpin(sp->info->pin_miso, S3C2410_GPIO_INPUT);
+	if (info->pin_mosi < S3C2410_GPH10) {
+		s3c2410_gpio_setpin(info->pin_mosi, 0);
+		s3c2410_gpio_cfgpin(info->pin_mosi, S3C2410_GPIO_OUTPUT);
+	}
+
+	if (info->pin_miso != S3C2410_GPA0 && info->pin_miso < S3C2410_GPH10)
+		s3c2410_gpio_cfgpin(info->pin_miso, S3C2410_GPIO_INPUT);
 
 	ret = spi_bitbang_start(&sp->bitbang);
 	if (ret)
 		goto err_no_bitbang;
-
-	/* register the chips to go with the board */
-
-	for (i = 0; i < sp->info->board_size; i++) {
-		dev_info(&dev->dev, "registering %p: %s\n",
-			 &sp->info->board_info[i],
-			 sp->info->board_info[i].modalias);
-
-		sp->info->board_info[i].controller_data = sp;
-		spi_new_device(master, sp->info->board_info + i);
-	}
 
 	return 0;
 
@@ -173,6 +169,8 @@ static int s3c2410_spigpio_remove(struct platform_device *dev)
 #define s3c2410_spigpio_suspend NULL
 #define s3c2410_spigpio_resume NULL
 
+/* work with hotplug and coldplug */
+MODULE_ALIAS("platform:spi_s3c24xx_gpio");
 
 static struct platform_driver s3c2410_spigpio_drv = {
 	.probe		= s3c2410_spigpio_probe,
@@ -180,7 +178,7 @@ static struct platform_driver s3c2410_spigpio_drv = {
         .suspend	= s3c2410_spigpio_suspend,
         .resume		= s3c2410_spigpio_resume,
         .driver		= {
-		.name	= "s3c24xx-spi-gpio",
+		.name	= "spi_s3c24xx_gpio",
 		.owner	= THIS_MODULE,
         },
 };

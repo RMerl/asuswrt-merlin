@@ -121,6 +121,15 @@
 
 #ifdef __KERNEL__
 
+extern const char *CardType[];
+extern int nrcards;
+
+extern const char *l1_revision;
+extern const char *l2_revision;
+extern const char *l3_revision;
+extern const char *lli_revision;
+extern const char *tei_revision;
+
 /* include l3dss1 & ni1 specific process structures, but no other defines */
 #ifdef CONFIG_HISAX_EURO
   #define l3dss1_process
@@ -202,7 +211,7 @@ struct Layer1 {
 	void *hardware;
 	struct BCState *bcs;
 	struct PStack **stlistp;
-	long Flags;
+	unsigned long Flags;
 	struct FsmInst l1m;
 	struct FsmTimer	timer;
 	void (*l1l2) (struct PStack *, int, void *);
@@ -694,7 +703,7 @@ struct hfcPCI_hw {
         int nt_timer;
         struct pci_dev *dev;
         unsigned char *pci_io; /* start of PCI IO memory */
-        void *share_start; /* shared memory for Fifos start */
+	dma_addr_t dma; /* dma handle for Fifos */
         void *fifos; /* FIFO memory */ 
         int last_bfifo_cnt[2]; /* marker saving last b-fifo frame count */
 	struct timer_list timer;
@@ -925,7 +934,7 @@ struct IsdnCardState {
 	int		(*cardmsg) (struct IsdnCardState *, int, void *);
 	void		(*setstack_d) (struct PStack *, struct IsdnCardState *);
 	void		(*DC_Close) (struct IsdnCardState *);
-	int		(*irq_func) (int, void *);
+	irq_handler_t	irq_func;
 	int		(*auxcmd) (struct IsdnCardState *, isdn_ctrl *);
 	struct Channel	channel[2+MAX_WAITING_CALLS];
 	struct BCState	bcs[2+MAX_WAITING_CALLS];
@@ -950,6 +959,7 @@ struct IsdnCardState {
 	u_long		event;
 	struct work_struct tqueue;
 	struct timer_list dbusytimer;
+	unsigned int	irq_cnt;
 #ifdef ERROR_STATISTIC
 	int		err_crc;
 	int		err_tx;
@@ -1276,7 +1286,9 @@ int jiftime(char *s, long mark);
 
 int HiSax_command(isdn_ctrl * ic);
 int HiSax_writebuf_skb(int id, int chan, int ack, struct sk_buff *skb);
+__attribute__((format(printf, 3, 4)))
 void HiSax_putstatus(struct IsdnCardState *cs, char *head, char *fmt, ...);
+__attribute__((format(printf, 3, 0)))
 void VHiSax_putstatus(struct IsdnCardState *cs, char *head, char *fmt, va_list args);
 void HiSax_reportcard(int cardnr, int sel);
 int QuickHex(char *txt, u_char * p, int cnt);
@@ -1314,3 +1326,26 @@ void release_tei(struct IsdnCardState *cs);
 char *HiSax_getrev(const char *revision);
 int TeiNew(void);
 void TeiFree(void);
+
+#ifdef CONFIG_PCI
+
+#include <linux/pci.h>
+
+/* adaptation wrapper for old usage
+ * WARNING! This is unfit for use in a PCI hotplug environment,
+ * as the returned PCI device can disappear at any moment in time.
+ * Callers should be converted to use pci_get_device() instead.
+ */
+static inline struct pci_dev *hisax_find_pci_device(unsigned int vendor,
+						    unsigned int device,
+						    struct pci_dev *from)
+{
+	struct pci_dev *pdev;
+
+	pci_dev_get(from);
+	pdev = pci_get_subsys(vendor, device, PCI_ANY_ID, PCI_ANY_ID, from);
+	pci_dev_put(pdev);
+	return pdev;
+}
+
+#endif

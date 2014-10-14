@@ -16,22 +16,22 @@
 #include <linux/init.h>
 #include <linux/sysdev.h>
 #include <linux/serial_core.h>
+#include <linux/io.h>
 
-#include <asm/dma.h>
-#include <asm/arch/dma.h>
-#include <asm/io.h>
+#include <mach/dma.h>
 
-#include <asm/plat-s3c24xx/dma.h>
-#include <asm/plat-s3c24xx/cpu.h>
+#include <plat/dma-s3c24xx.h>
+#include <plat/cpu.h>
 
-#include <asm/arch/regs-serial.h>
-#include <asm/arch/regs-gpio.h>
-#include <asm/arch/regs-ac97.h>
-#include <asm/arch/regs-mem.h>
-#include <asm/arch/regs-lcd.h>
-#include <asm/arch/regs-sdi.h>
-#include <asm/arch/regs-iis.h>
-#include <asm/arch/regs-spi.h>
+#include <plat/regs-serial.h>
+#include <mach/regs-gpio.h>
+#include <plat/regs-ac97.h>
+#include <plat/regs-dma.h>
+#include <mach/regs-mem.h>
+#include <mach/regs-lcd.h>
+#include <mach/regs-sdi.h>
+#include <plat/regs-iis.h>
+#include <plat/regs-spi.h>
 
 #define MAP(x) { \
 		[0]	= (x) | DMA_CH_VALID,	\
@@ -162,7 +162,7 @@ static struct s3c24xx_dma_selection __initdata s3c2443_dma_sel = {
 	.map_size	= ARRAY_SIZE(s3c2443_dma_mappings),
 };
 
-static int s3c2443_dma_add(struct sys_device *sysdev)
+static int __init s3c2443_dma_add(struct sys_device *sysdev)
 {
 	s3c24xx_dma_init(6, IRQ_S3C2443_DMA0, 0x100);
 	return s3c24xx_dma_init_map(&s3c2443_dma_sel);

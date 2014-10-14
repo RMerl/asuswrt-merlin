@@ -1,6 +1,6 @@
 /*
  *    pata_qdi.c - QDI VLB ATA controllers
- *	(C) 2006 Red Hat <alan@redhat.com>
+ *	(C) 2006 Red Hat
  *
  * This driver mostly exists as a proof of concept for non PCI devices under
  * libata. While the QDI6580 was 'neat' in 1993 it is no longer terribly
@@ -12,7 +12,7 @@
  *
  * Probe code based on drivers/ide/legacy/qd65xx.c
  * Rewritten from the work of Colten Edwards <pje120@cs.usask.ca> by
- * Samuel Thibault <samuel.thibault@fnac.net>
+ * Samuel Thibault <samuel.thibault@ens-lyon.org>
  */
 
 #include <linux/kernel.h>
@@ -60,11 +60,11 @@ static void qdi6500_set_piomode(struct ata_port *ap, struct ata_device *adev)
 	ata_timing_compute(adev, adev->pio_mode, &t, 30303, 1000);
 
 	if (qdi->fast) {
-		active = 8 - FIT(t.active, 1, 8);
-		recovery = 18 - FIT(t.recover, 3, 18);
+		active = 8 - clamp_val(t.active, 1, 8);
+		recovery = 18 - clamp_val(t.recover, 3, 18);
 	} else {
-		active = 9 - FIT(t.active, 2, 9);
-		recovery = 15 - FIT(t.recover, 0, 15);
+		active = 9 - clamp_val(t.active, 2, 9);
+		recovery = 15 - clamp_val(t.recover, 0, 15);
 	}
 	timing = (recovery << 4) | active | 0x08;
 
@@ -84,11 +84,11 @@ static void qdi6580_set_piomode(struct ata_port *ap, struct ata_device *adev)
 	ata_timing_compute(adev, adev->pio_mode, &t, 30303, 1000);
 
 	if (qdi->fast) {
-		active = 8 - FIT(t.active, 1, 8);
-		recovery = 18 - FIT(t.recover, 3, 18);
+		active = 8 - clamp_val(t.active, 1, 8);
+		recovery = 18 - clamp_val(t.recover, 3, 18);
 	} else {
-		active = 9 - FIT(t.active, 2, 9);
-		recovery = 15 - FIT(t.recover, 0, 15);
+		active = 9 - clamp_val(t.active, 2, 9);
+		recovery = 15 - clamp_val(t.recover, 0, 15);
 	}
 	timing = (recovery << 4) | active | 0x08;
 
@@ -102,14 +102,14 @@ static void qdi6580_set_piomode(struct ata_port *ap, struct ata_device *adev)
 }
 
 /**
- *	qdi_qc_issue_prot	-	command issue
+ *	qdi_qc_issue		-	command issue
  *	@qc: command pending
  *
  *	Called when the libata layer is about to issue a command. We wrap
  *	this interface so that we can load the correct ATA timings.
  */
 
-static unsigned int qdi_qc_issue_prot(struct ata_queued_cmd *qc)
+static unsigned int qdi_qc_issue(struct ata_queued_cmd *qc)
 {
 	struct ata_port *ap = qc->ap;
 	struct ata_device *adev = qc->dev;
@@ -121,108 +121,53 @@ static unsigned int qdi_qc_issue_prot(struct ata_queued_cmd *qc)
 			outb(qdi->clock[adev->devno], qdi->timing);
 		}
 	}
-	return ata_qc_issue_prot(qc);
+	return ata_sff_qc_issue(qc);
 }
 
-static void qdi_data_xfer(struct ata_device *adev, unsigned char *buf, unsigned int buflen, int write_data)
+static unsigned int qdi_data_xfer(struct ata_device *dev, unsigned char *buf,
+				  unsigned int buflen, int rw)
 {
-	struct ata_port *ap = adev->ap;
-	int slop = buflen & 3;
+	if (ata_id_has_dword_io(dev->id)) {
+		struct ata_port *ap = dev->link->ap;
+		int slop = buflen & 3;
 
-	if (ata_id_has_dword_io(adev->id)) {
-		if (write_data)
-			iowrite32_rep(ap->ioaddr.data_addr, buf, buflen >> 2);
-		else
+		if (rw == READ)
 			ioread32_rep(ap->ioaddr.data_addr, buf, buflen >> 2);
+		else
+			iowrite32_rep(ap->ioaddr.data_addr, buf, buflen >> 2);
 
 		if (unlikely(slop)) {
-			u32 pad;
-			if (write_data) {
-				memcpy(&pad, buf + buflen - slop, slop);
-				pad = le32_to_cpu(pad);
-				iowrite32(pad, ap->ioaddr.data_addr);
-			} else {
-				pad = ioread32(ap->ioaddr.data_addr);
-				pad = cpu_to_le32(pad);
+			__le32 pad;
+			if (rw == READ) {
+				pad = cpu_to_le32(ioread32(ap->ioaddr.data_addr));
 				memcpy(buf + buflen - slop, &pad, slop);
+			} else {
+				memcpy(&pad, buf + buflen - slop, slop);
+				iowrite32(le32_to_cpu(pad), ap->ioaddr.data_addr);
 			}
+			buflen += 4 - slop;
 		}
 	} else
-		ata_data_xfer(adev, buf, buflen, write_data);
+		buflen = ata_sff_data_xfer(dev, buf, buflen, rw);
+
+	return buflen;
 }
 
 static struct scsi_host_template qdi_sht = {
-	.module			= THIS_MODULE,
-	.name			= DRV_NAME,
-	.ioctl			= ata_scsi_ioctl,
-	.queuecommand		= ata_scsi_queuecmd,
-	.can_queue		= ATA_DEF_QUEUE,
-	.this_id		= ATA_SHT_THIS_ID,
-	.sg_tablesize		= LIBATA_MAX_PRD,
-	.cmd_per_lun		= ATA_SHT_CMD_PER_LUN,
-	.emulated		= ATA_SHT_EMULATED,
-	.use_clustering		= ATA_SHT_USE_CLUSTERING,
-	.proc_name		= DRV_NAME,
-	.dma_boundary		= ATA_DMA_BOUNDARY,
-	.slave_configure	= ata_scsi_slave_config,
-	.slave_destroy		= ata_scsi_slave_destroy,
-	.bios_param		= ata_std_bios_param,
+	ATA_PIO_SHT(DRV_NAME),
 };
 
 static struct ata_port_operations qdi6500_port_ops = {
-	.port_disable	= ata_port_disable,
-	.set_piomode	= qdi6500_set_piomode,
-
-	.tf_load	= ata_tf_load,
-	.tf_read	= ata_tf_read,
-	.check_status 	= ata_check_status,
-	.exec_command	= ata_exec_command,
-	.dev_select 	= ata_std_dev_select,
-
-	.freeze		= ata_bmdma_freeze,
-	.thaw		= ata_bmdma_thaw,
-	.error_handler	= ata_bmdma_error_handler,
-	.post_internal_cmd = ata_bmdma_post_internal_cmd,
+	.inherits	= &ata_sff_port_ops,
+	.qc_issue	= qdi_qc_issue,
+	.sff_data_xfer	= qdi_data_xfer,
 	.cable_detect	= ata_cable_40wire,
-
-	.qc_prep 	= ata_qc_prep,
-	.qc_issue	= qdi_qc_issue_prot,
-
-	.data_xfer	= qdi_data_xfer,
-
-	.irq_clear	= ata_bmdma_irq_clear,
-	.irq_on		= ata_irq_on,
-	.irq_ack	= ata_irq_ack,
-
-	.port_start	= ata_port_start,
+	.set_piomode	= qdi6500_set_piomode,
 };
 
 static struct ata_port_operations qdi6580_port_ops = {
-	.port_disable	= ata_port_disable,
+	.inherits	= &qdi6500_port_ops,
 	.set_piomode	= qdi6580_set_piomode,
-
-	.tf_load	= ata_tf_load,
-	.tf_read	= ata_tf_read,
-	.check_status 	= ata_check_status,
-	.exec_command	= ata_exec_command,
-	.dev_select 	= ata_std_dev_select,
-
-	.freeze		= ata_bmdma_freeze,
-	.thaw		= ata_bmdma_thaw,
-	.error_handler	= ata_bmdma_error_handler,
-	.post_internal_cmd = ata_bmdma_post_internal_cmd,
-	.cable_detect	= ata_cable_40wire,
-
-	.qc_prep 	= ata_qc_prep,
-	.qc_issue	= qdi_qc_issue_prot,
-
-	.data_xfer	= qdi_data_xfer,
-
-	.irq_clear	= ata_bmdma_irq_clear,
-	.irq_on		= ata_irq_on,
-	.irq_ack	= ata_irq_ack,
-
-	.port_start	= ata_port_start,
 };
 
 /**
@@ -238,6 +183,7 @@ static struct ata_port_operations qdi6580_port_ops = {
 
 static __init int qdi_init_one(unsigned long port, int type, unsigned long io, int irq, int fast)
 {
+	unsigned long ctl = io + 0x206;
 	struct platform_device *pdev;
 	struct ata_host *host;
 	struct ata_port *ap;
@@ -254,7 +200,7 @@ static __init int qdi_init_one(unsigned long port, int type, unsigned long io, i
 
 	ret = -ENOMEM;
 	io_addr = devm_ioport_map(&pdev->dev, io, 8);
-	ctl_addr = devm_ioport_map(&pdev->dev, io + 0x206, 1);
+	ctl_addr = devm_ioport_map(&pdev->dev, ctl, 1);
 	if (!io_addr || !ctl_addr)
 		goto fail;
 
@@ -266,18 +212,20 @@ static __init int qdi_init_one(unsigned long port, int type, unsigned long io, i
 
 	if (type == 6580) {
 		ap->ops = &qdi6580_port_ops;
-		ap->pio_mask = 0x1F;
+		ap->pio_mask = ATA_PIO4;
 		ap->flags |= ATA_FLAG_SLAVE_POSS;
 	} else {
 		ap->ops = &qdi6500_port_ops;
-		ap->pio_mask = 0x07;	/* Actually PIO3 !IORDY is possible */
+		ap->pio_mask = ATA_PIO2; /* Actually PIO3 !IORDY is possible */
 		ap->flags = ATA_FLAG_SLAVE_POSS | ATA_FLAG_NO_IORDY;
 	}
 
 	ap->ioaddr.cmd_addr = io_addr;
 	ap->ioaddr.altstatus_addr = ctl_addr;
 	ap->ioaddr.ctl_addr = ctl_addr;
-	ata_std_ports(&ap->ioaddr);
+	ata_sff_std_ports(&ap->ioaddr);
+
+	ata_port_desc(ap, "cmd %lx ctl %lx", io, ctl);
 
 	/*
 	 *	Hook in a private data structure per channel
@@ -291,7 +239,7 @@ static __init int qdi_init_one(unsigned long port, int type, unsigned long io, i
 	printk(KERN_INFO DRV_NAME": qd%d at 0x%lx.\n", type, io);
 
 	/* activate */
-	ret = ata_host_activate(host, irq, ata_interrupt, 0, &qdi_sht);
+	ret = ata_host_activate(host, irq, ata_sff_interrupt, 0, &qdi_sht);
 	if (ret)
 		goto fail;
 

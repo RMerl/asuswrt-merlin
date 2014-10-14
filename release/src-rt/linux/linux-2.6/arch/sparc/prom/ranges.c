@@ -1,4 +1,4 @@
-/* $Id: ranges.c,v 1.15 2001/12/19 00:29:51 davem Exp $
+/*
  * ranges.c: Handle ranges in newer proms for obio/sbus.
  *
  * Copyright (C) 1995 David S. Miller (davem@caip.rutgers.edu)
@@ -6,14 +6,15 @@
  */
 
 #include <linux/init.h>
+#include <linux/module.h>
+
 #include <asm/openprom.h>
 #include <asm/oplib.h>
 #include <asm/types.h>
-#include <asm/sbus.h>
 #include <asm/system.h>
 
-struct linux_prom_ranges promlib_obio_ranges[PROMREG_MAX];
-int num_obio_ranges;
+static struct linux_prom_ranges promlib_obio_ranges[PROMREG_MAX];
+static int num_obio_ranges;
 
 /* Adjust register values based upon the ranges parameters. */
 static void
@@ -34,7 +35,7 @@ prom_adjust_regs(struct linux_prom_registers *regp, int nregs,
 	}
 }
 
-void
+static void
 prom_adjust_ranges(struct linux_prom_ranges *ranges1, int nranges1,
 		   struct linux_prom_ranges *ranges2, int nranges2)
 {
@@ -63,10 +64,11 @@ prom_apply_obio_ranges(struct linux_prom_registers *regs, int nregs)
 	if(num_obio_ranges)
 		prom_adjust_regs(regs, nregs, promlib_obio_ranges, num_obio_ranges);
 }
+EXPORT_SYMBOL(prom_apply_obio_ranges);
 
 void __init prom_ranges_init(void)
 {
-	int node, obio_node;
+	phandle node, obio_node;
 	int success;
 
 	num_obio_ranges = 0;
@@ -85,12 +87,10 @@ void __init prom_ranges_init(void)
 
 	if(num_obio_ranges)
 		prom_printf("PROMLIB: obio_ranges %d\n", num_obio_ranges);
-
-	return;
 }
 
-void
-prom_apply_generic_ranges (int node, int parent, struct linux_prom_registers *regs, int nregs)
+void prom_apply_generic_ranges(phandle node, phandle parent,
+		struct linux_prom_registers *regs, int nregs)
 {
 	int success;
 	int num_ranges;

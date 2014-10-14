@@ -10,6 +10,7 @@
 #include <linux/string.h>
 #include <linux/time.h>
 #include <linux/in.h>
+#include <linux/slab.h>
 #include <linux/mutex.h>
 #include <linux/sunrpc/svc.h>
 #include <linux/sunrpc/clnt.h>
@@ -17,7 +18,8 @@
 #include <linux/nfsd/export.h>
 #include <linux/lockd/lockd.h>
 #include <linux/lockd/share.h>
-#include <linux/lockd/sm_inter.h>
+#include <linux/module.h>
+#include <linux/mount.h>
 
 #define NLMDBG_FACILITY		NLMDBG_SVCSUBS
 
@@ -87,7 +89,7 @@ nlm_lookup_file(struct svc_rqst *rqstp, struct nlm_file **result,
 	unsigned int	hash;
 	__be32		nfserr;
 
-	nlm_debug_print_fh("nlm_file_lookup", f);
+	nlm_debug_print_fh("nlm_lookup_file", f);
 
 	hash = file_hash(f);
 
@@ -168,6 +170,7 @@ nlm_traverse_locks(struct nlm_host *host, struct nlm_file *file,
 
 again:
 	file->f_locks = 0;
+	lock_flocks(); /* protects i_flock list */
 	for (fl = inode->i_flock; fl; fl = fl->fl_next) {
 		if (fl->fl_lmops != &nlmsvc_lock_operations)
 			continue;
@@ -179,6 +182,7 @@ again:
 		if (match(lockhost, host)) {
 			struct file_lock lock = *fl;
 
+			unlock_flocks();
 			lock.fl_type  = F_UNLCK;
 			lock.fl_start = 0;
 			lock.fl_end   = OFFSET_MAX;
@@ -190,8 +194,15 @@ again:
 			goto again;
 		}
 	}
+	unlock_flocks();
 
 	return 0;
+}
+
+static int
+nlmsvc_always_match(void *dummy1, struct nlm_host *dummy2)
+{
+	return 1;
 }
 
 /*
@@ -218,10 +229,14 @@ nlm_file_inuse(struct nlm_file *file)
 	if (file->f_count || !list_empty(&file->f_blocks) || file->f_shares)
 		return 1;
 
+	lock_flocks();
 	for (fl = inode->i_flock; fl; fl = fl->fl_next) {
-		if (fl->fl_lmops == &nlmsvc_lock_operations)
+		if (fl->fl_lmops == &nlmsvc_lock_operations) {
+			unlock_flocks();
 			return 1;
+		}
 	}
+	unlock_flocks();
 	file->f_locks = 0;
 	return 0;
 }
@@ -230,7 +245,8 @@ nlm_file_inuse(struct nlm_file *file)
  * Loop over all files in the file table.
  */
 static int
-nlm_traverse_files(struct nlm_host *host, nlm_host_match_fn_t match)
+nlm_traverse_files(void *data, nlm_host_match_fn_t match,
+		int (*is_failover_file)(void *data, struct nlm_file *file))
 {
 	struct hlist_node *pos, *next;
 	struct nlm_file	*file;
@@ -239,12 +255,14 @@ nlm_traverse_files(struct nlm_host *host, nlm_host_match_fn_t match)
 	mutex_lock(&nlm_file_mutex);
 	for (i = 0; i < FILE_NRHASH; i++) {
 		hlist_for_each_entry_safe(file, pos, next, &nlm_files[i], f_list) {
+			if (is_failover_file && !is_failover_file(data, file))
+				continue;
 			file->f_count++;
 			mutex_unlock(&nlm_file_mutex);
 
 			/* Traverse locks, blocks and shares of this file
 			 * and update file->f_locks count */
-			if (nlm_inspect_file(host, file, match))
+			if (nlm_inspect_file(data, file, match))
 				ret = 1;
 
 			mutex_lock(&nlm_file_mutex);
@@ -303,21 +321,27 @@ nlm_release_file(struct nlm_file *file)
  *	Used by nlmsvc_invalidate_all
  */
 static int
-nlmsvc_mark_host(struct nlm_host *host, struct nlm_host *dummy)
+nlmsvc_mark_host(void *data, struct nlm_host *dummy)
 {
+	struct nlm_host *host = data;
+
 	host->h_inuse = 1;
 	return 0;
 }
 
 static int
-nlmsvc_same_host(struct nlm_host *host, struct nlm_host *other)
+nlmsvc_same_host(void *data, struct nlm_host *other)
 {
+	struct nlm_host *host = data;
+
 	return host == other;
 }
 
 static int
-nlmsvc_is_client(struct nlm_host *host, struct nlm_host *dummy)
+nlmsvc_is_client(void *data, struct nlm_host *dummy)
 {
+	struct nlm_host *host = data;
+
 	if (host->h_server) {
 		/* we are destroying locks even though the client
 		 * hasn't asked us too, so don't unmonitor the
@@ -337,7 +361,7 @@ void
 nlmsvc_mark_resources(void)
 {
 	dprintk("lockd: nlmsvc_mark_resources\n");
-	nlm_traverse_files(NULL, nlmsvc_mark_host);
+	nlm_traverse_files(NULL, nlmsvc_mark_host, NULL);
 }
 
 /*
@@ -348,7 +372,7 @@ nlmsvc_free_host_resources(struct nlm_host *host)
 {
 	dprintk("lockd: nlmsvc_free_host_resources\n");
 
-	if (nlm_traverse_files(host, nlmsvc_same_host)) {
+	if (nlm_traverse_files(host, nlmsvc_same_host, NULL)) {
 		printk(KERN_WARNING
 			"lockd: couldn't remove all locks held by %s\n",
 			host->h_name);
@@ -356,17 +380,67 @@ nlmsvc_free_host_resources(struct nlm_host *host)
 	}
 }
 
-/*
- * Remove all locks held for clients
+/**
+ * nlmsvc_invalidate_all - remove all locks held for clients
+ *
+ * Release all locks held by NFS clients.
+ *
  */
 void
 nlmsvc_invalidate_all(void)
 {
-	/* Release all locks held by NFS clients.
+	/*
 	 * Previously, the code would call
 	 * nlmsvc_free_host_resources for each client in
 	 * turn, which is about as inefficient as it gets.
 	 * Now we just do it once in nlm_traverse_files.
 	 */
-	nlm_traverse_files(NULL, nlmsvc_is_client);
+	nlm_traverse_files(NULL, nlmsvc_is_client, NULL);
 }
+
+static int
+nlmsvc_match_sb(void *datap, struct nlm_file *file)
+{
+	struct super_block *sb = datap;
+
+	return sb == file->f_file->f_path.mnt->mnt_sb;
+}
+
+/**
+ * nlmsvc_unlock_all_by_sb - release locks held on this file system
+ * @sb: super block
+ *
+ * Release all locks held by clients accessing this file system.
+ */
+int
+nlmsvc_unlock_all_by_sb(struct super_block *sb)
+{
+	int ret;
+
+	ret = nlm_traverse_files(sb, nlmsvc_always_match, nlmsvc_match_sb);
+	return ret ? -EIO : 0;
+}
+EXPORT_SYMBOL_GPL(nlmsvc_unlock_all_by_sb);
+
+static int
+nlmsvc_match_ip(void *datap, struct nlm_host *host)
+{
+	return rpc_cmp_addr(nlm_srcaddr(host), datap);
+}
+
+/**
+ * nlmsvc_unlock_all_by_ip - release local locks by IP address
+ * @server_addr: server's IP address as seen by clients
+ *
+ * Release all locks held by clients accessing this host
+ * via the passed in IP address.
+ */
+int
+nlmsvc_unlock_all_by_ip(struct sockaddr *server_addr)
+{
+	int ret;
+
+	ret = nlm_traverse_files(server_addr, nlmsvc_match_ip, NULL);
+	return ret ? -EIO : 0;
+}
+EXPORT_SYMBOL_GPL(nlmsvc_unlock_all_by_ip);

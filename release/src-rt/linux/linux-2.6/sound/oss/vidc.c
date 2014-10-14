@@ -17,12 +17,13 @@
  * We currently support a mixer device, but it is currently non-functional.
  */
 
+#include <linux/gfp.h>
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/interrupt.h>
 
-#include <asm/hardware.h>
+#include <mach/hardware.h>
 #include <asm/dma.h>
 #include <asm/io.h>
 #include <asm/hardware/iomd.h>
@@ -226,7 +227,7 @@ static int vidc_audio_set_speed(int dev, int rate)
 		} else {
 			/*printk("VIDC: internal %d %d %d\n", rate, rate_int, hwrate);*/
 			hwctrl=0x00000003;
-			/* Allow rougly 0.4% tolerance */
+			/* Allow roughly 0.4% tolerance */
 			if (diff_int > (rate/256))
 				rate=rate_int;
 		}
@@ -363,13 +364,13 @@ static void vidc_audio_trigger(int dev, int enable_bits)
 	struct audio_operations *adev = audio_devs[dev];
 
 	if (enable_bits & PCM_ENABLE_OUTPUT) {
-		if (!(adev->flags & DMA_ACTIVE)) {
+		if (!(adev->dmap_out->flags & DMA_ACTIVE)) {
 			unsigned long flags;
 
 			local_irq_save(flags);
 
 			/* prevent recusion */
-			adev->flags |= DMA_ACTIVE;
+			adev->dmap_out->flags |= DMA_ACTIVE;
 
 			dma_interrupt = vidc_audio_dma_interrupt;
 			vidc_sound_dma_irq(0, NULL);
@@ -490,9 +491,6 @@ static void __init attach_vidc(struct address_info *hw_config)
 	vidc_adev = adev;
 	vidc_mixer_set(SOUND_MIXER_VOLUME, (85 | 85 << 8));
 
-#if defined(CONFIG_SOUND_SOFTOSS) || defined(CONFIG_SOUND_SOFTOSS_MODULE)
-	softoss_dev = adev;
-#endif
 	return;
 
 irq_failed:

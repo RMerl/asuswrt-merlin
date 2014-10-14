@@ -22,6 +22,8 @@ DEFINE_PER_CPU(struct kprobe *, current_kprobe);
 static unsigned long kprobe_status;
 static struct pt_regs jprobe_saved_regs;
 
+struct kretprobe_blackpoint kretprobe_blacklist[] = {{NULL, NULL}};
+
 int __kprobes arch_prepare_kprobe(struct kprobe *p)
 {
 	int ret = 0;
@@ -46,6 +48,7 @@ int __kprobes arch_prepare_kprobe(struct kprobe *p)
 void __kprobes arch_arm_kprobe(struct kprobe *p)
 {
 	pr_debug("arming kprobe at %p\n", p->addr);
+	ocd_enable(NULL);
 	*p->addr = BREAKPOINT_INSTRUCTION;
 	flush_icache_range((unsigned long)p->addr,
 			   (unsigned long)p->addr + sizeof(kprobe_opcode_t));
@@ -54,6 +57,7 @@ void __kprobes arch_arm_kprobe(struct kprobe *p)
 void __kprobes arch_disarm_kprobe(struct kprobe *p)
 {
 	pr_debug("disarming kprobe at %p\n", p->addr);
+	ocd_disable(NULL);
 	*p->addr = p->opcode;
 	flush_icache_range((unsigned long)p->addr,
 			   (unsigned long)p->addr + sizeof(kprobe_opcode_t));
@@ -68,9 +72,9 @@ static void __kprobes prepare_singlestep(struct kprobe *p, struct pt_regs *regs)
 
 	BUG_ON(!(sysreg_read(SR) & SYSREG_BIT(SR_D)));
 
-	dc = __mfdr(DBGREG_DC);
-	dc |= DC_SS;
-	__mtdr(DBGREG_DC, dc);
+	dc = ocd_read(DC);
+	dc |= 1 << OCD_DC_SS_BIT;
+	ocd_write(DC, dc);
 
 	/*
 	 * We must run the instruction from its original location
@@ -89,9 +93,9 @@ static void __kprobes resume_execution(struct kprobe *p, struct pt_regs *regs)
 
 	pr_debug("resuming execution at PC=%08lx\n", regs->pc);
 
-	dc = __mfdr(DBGREG_DC);
-	dc &= ~DC_SS;
-	__mtdr(DBGREG_DC, dc);
+	dc = ocd_read(DC);
+	dc &= ~(1 << OCD_DC_SS_BIT);
+	ocd_write(DC, dc);
 
 	*p->addr = BREAKPOINT_INSTRUCTION;
 	flush_icache_range((unsigned long)p->addr,
@@ -258,9 +262,6 @@ int __kprobes longjmp_break_handler(struct kprobe *p, struct pt_regs *regs)
 
 int __init arch_init_kprobes(void)
 {
-	printk("KPROBES: Enabling monitor mode (MM|DBE)...\n");
-	__mtdr(DBGREG_DC, DC_MM | DC_DBE);
-
 	/* TODO: Register kretprobe trampoline */
 	return 0;
 }

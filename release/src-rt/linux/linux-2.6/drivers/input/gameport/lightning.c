@@ -1,6 +1,4 @@
 /*
- * $Id: lightning.c,v 1.20 2002/01/22 20:41:31 vojtech Exp $
- *
  *  Copyright (c) 1998-2001 Vojtech Pavlik
  */
 
@@ -36,7 +34,6 @@
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/gameport.h>
-#include <linux/slab.h>
 
 #define L4_PORT			0x201
 #define L4_SELECT_ANALOG	0xa4

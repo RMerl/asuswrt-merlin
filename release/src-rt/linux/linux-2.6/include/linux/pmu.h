@@ -147,8 +147,15 @@ extern void pmu_wait_complete(struct adb_request *req);
 /* For use before switching interrupts off for a long time;
  * warning: not stackable
  */
+#if defined(CONFIG_ADB_PMU)
 extern void pmu_suspend(void);
 extern void pmu_resume(void);
+#else
+static inline void pmu_suspend(void)
+{}
+static inline void pmu_resume(void)
+{}
+#endif
 
 extern void pmu_enable_irled(int on);
 
@@ -159,41 +166,7 @@ extern void pmu_unlock(void);
 extern int pmu_present(void);
 extern int pmu_get_model(void);
 
-#ifdef CONFIG_PM
-/*
- * Stuff for putting the powerbook to sleep and waking it again.
- *
- */
-#include <linux/list.h>
-
-struct pmu_sleep_notifier
-{
-	void (*notifier_call)(struct pmu_sleep_notifier *self, int when);
-	int priority;
-	struct list_head list;
-};
-
-/* Code values for calling sleep/wakeup handlers
- */
-#define PBOOK_SLEEP_REQUEST	1
-#define PBOOK_SLEEP_NOW		2
-#define PBOOK_WAKE		3
-
-/* priority levels in notifiers */
-#define SLEEP_LEVEL_VIDEO	100	/* Video driver (first wake) */
-#define SLEEP_LEVEL_MEDIABAY	90	/* Media bay driver */
-#define SLEEP_LEVEL_BLOCK	80	/* IDE, SCSI */
-#define SLEEP_LEVEL_NET		70	/* bmac, gmac */
-#define SLEEP_LEVEL_MISC	60	/* Anything else */
-#define SLEEP_LEVEL_USERLAND	55	/* Reserved for apm_emu */
-#define SLEEP_LEVEL_ADB		50	/* ADB (async) */
-#define SLEEP_LEVEL_SOUND	40	/* Sound driver (blocking) */
-
-/* special register notifier functions */
-int pmu_register_sleep_notifier(struct pmu_sleep_notifier* notifier);
-int pmu_unregister_sleep_notifier(struct pmu_sleep_notifier* notifier);
-
-#endif /* CONFIG_PM */
+extern void pmu_backlight_set_sleep(int sleep);
 
 #define PMU_MAX_BATTERIES	2
 
@@ -226,7 +199,7 @@ extern unsigned int pmu_power_flags;
 extern void pmu_backlight_init(void);
 
 /* some code needs to know if the PMU was suspended for hibernation */
-#if defined(CONFIG_PM) && defined(CONFIG_PPC32)
+#if defined(CONFIG_SUSPEND) && defined(CONFIG_PPC32)
 extern int pmu_sys_suspended;
 #else
 /* if power management is not configured it can't be suspended */

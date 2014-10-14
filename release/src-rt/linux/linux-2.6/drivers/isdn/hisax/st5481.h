@@ -218,15 +218,15 @@ enum {
 #define L1_EVENT_COUNT (EV_TIMER3 + 1)
 
 #define ERR(format, arg...) \
-printk(KERN_ERR "%s:%s: " format "\n" , __FILE__,  __FUNCTION__ , ## arg)
+printk(KERN_ERR "%s:%s: " format "\n" , __FILE__,  __func__ , ## arg)
 
-#define WARN(format, arg...) \
-printk(KERN_WARNING "%s:%s: " format "\n" , __FILE__,  __FUNCTION__ , ## arg)
+#define WARNING(format, arg...) \
+printk(KERN_WARNING "%s:%s: " format "\n" , __FILE__,  __func__ , ## arg)
 
 #define INFO(format, arg...) \
-printk(KERN_INFO "%s:%s: " format "\n" , __FILE__,  __FUNCTION__ , ## arg)
+printk(KERN_INFO "%s:%s: " format "\n" , __FILE__,  __func__ , ## arg)
 
-#include "isdnhdlc.h"
+#include <linux/isdn/hdlc.h>
 #include "fsm.h"
 #include "hisax_if.h"
 #include <linux/skbuff.h>
@@ -406,13 +406,13 @@ struct st5481_adapter {
 
 /*
  * Submit an URB with error reporting. This is a macro so
- * the __FUNCTION__ returns the caller function name.
+ * the __func__ returns the caller function name.
  */
 #define SUBMIT_URB(urb, mem_flags) \
 ({ \
 	int status; \
 	if ((status = usb_submit_urb(urb, mem_flags)) < 0) { \
-		WARN("usb_submit_urb failed,status=%d", status); \
+		WARNING("usb_submit_urb failed,status=%d", status); \
 	} \
         status; \
 })
@@ -470,7 +470,7 @@ extern int st5481_debug;
 #ifdef CONFIG_HISAX_DEBUG
 
 #define DBG_ISO_PACKET(level,urb) \
-  if (level & __debug_variable) dump_iso_packet(__FUNCTION__,urb)
+  if (level & __debug_variable) dump_iso_packet(__func__,urb)
 
 static void __attribute__((unused))
 dump_iso_packet(const char *name, struct urb *urb)

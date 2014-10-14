@@ -59,8 +59,6 @@ static unsigned int hppclan_portlist[] __initdata =
 
 static int hp_probe1(struct net_device *dev, int ioaddr);
 
-static int hp_open(struct net_device *dev);
-static int hp_close(struct net_device *dev);
 static void hp_reset_8390(struct net_device *dev);
 static void hp_get_8390_hdr(struct net_device *dev, struct e8390_pkt_hdr *hdr,
 					int ring_page);
@@ -86,8 +84,6 @@ static int __init do_hp_probe(struct net_device *dev)
 	int base_addr = dev->base_addr;
 	int irq = dev->irq;
 
-	SET_MODULE_OWNER(dev);
-
 	if (base_addr > 0x1ff)		/* Check a single specified location. */
 		return hp_probe1(dev, base_addr);
 	else if (base_addr != 0)	/* Don't probe at all. */
@@ -105,7 +101,7 @@ static int __init do_hp_probe(struct net_device *dev)
 #ifndef MODULE
 struct net_device * __init hp_probe(int unit)
 {
-	struct net_device *dev = alloc_ei_netdev();
+	struct net_device *dev = alloc_eip_netdev();
 	int err;
 
 	if (!dev)
@@ -160,13 +156,15 @@ static int __init hp_probe1(struct net_device *dev, int ioaddr)
 	printk("%s: %s (ID %02x) at %#3x,", dev->name, name, board_id, ioaddr);
 
 	for(i = 0; i < ETHER_ADDR_LEN; i++)
-		printk(" %2.2x", dev->dev_addr[i] = inb(ioaddr + i));
+		dev->dev_addr[i] = inb(ioaddr + i);
+
+	printk(" %pM", dev->dev_addr);
 
 	/* Snarf the interrupt now.  Someday this could be moved to open(). */
 	if (dev->irq < 2) {
-		int irq_16list[] = { 11, 10, 5, 3, 4, 7, 9, 0};
-		int irq_8list[] = { 7, 5, 3, 4, 9, 0};
-		int *irqp = wordmode ? irq_16list : irq_8list;
+		static const int irq_16list[] = { 11, 10, 5, 3, 4, 7, 9, 0};
+		static const int irq_8list[] = { 7, 5, 3, 4, 9, 0};
+		const int *irqp = wordmode ? irq_16list : irq_8list;
 		do {
 			int irq = *irqp;
 			if (request_irq (irq, NULL, 0, "bogus", NULL) != -EBUSY) {
@@ -175,7 +173,7 @@ static int __init hp_probe1(struct net_device *dev, int ioaddr)
 				outb_p(irqmap[irq] | HP_RUN, ioaddr + HP_CONFIGURE);
 				outb_p( 0x00 | HP_RUN, ioaddr + HP_CONFIGURE);
 				if (irq == probe_irq_off(cookie)		 /* It's a good IRQ line! */
-					&& request_irq (irq, ei_interrupt, 0, DRV_NAME, dev) == 0) {
+					&& request_irq (irq, eip_interrupt, 0, DRV_NAME, dev) == 0) {
 					printk(" selecting IRQ %d.\n", irq);
 					dev->irq = *irqp;
 					break;
@@ -190,7 +188,7 @@ static int __init hp_probe1(struct net_device *dev, int ioaddr)
 	} else {
 		if (dev->irq == 2)
 			dev->irq = 9;
-		if ((retval = request_irq(dev->irq, ei_interrupt, 0, DRV_NAME, dev))) {
+		if ((retval = request_irq(dev->irq, eip_interrupt, 0, DRV_NAME, dev))) {
 			printk (" unable to get IRQ %d.\n", dev->irq);
 			goto out;
 		}
@@ -198,11 +196,7 @@ static int __init hp_probe1(struct net_device *dev, int ioaddr)
 
 	/* Set the base address to point to the NIC, not the "real" base! */
 	dev->base_addr = ioaddr + NIC_OFFSET;
-	dev->open = &hp_open;
-	dev->stop = &hp_close;
-#ifdef CONFIG_NET_POLL_CONTROLLER
-	dev->poll_controller = ei_poll;
-#endif
+	dev->netdev_ops = &eip_netdev_ops;
 
 	ei_status.name = name;
 	ei_status.word16 = wordmode;
@@ -210,10 +204,10 @@ static int __init hp_probe1(struct net_device *dev, int ioaddr)
 	ei_status.rx_start_page = HP_START_PG + TX_PAGES;
 	ei_status.stop_page = wordmode ? HP_16BSTOP_PG : HP_8BSTOP_PG;
 
-	ei_status.reset_8390 = &hp_reset_8390;
-	ei_status.get_8390_hdr = &hp_get_8390_hdr;
-	ei_status.block_input = &hp_block_input;
-	ei_status.block_output = &hp_block_output;
+	ei_status.reset_8390 = hp_reset_8390;
+	ei_status.get_8390_hdr = hp_get_8390_hdr;
+	ei_status.block_input = hp_block_input;
+	ei_status.block_output = hp_block_output;
 	hp_init_card(dev);
 
 	retval = register_netdev(dev);
@@ -225,20 +219,6 @@ out1:
 out:
 	release_region(ioaddr, HP_IO_EXTENT);
 	return retval;
-}
-
-static int
-hp_open(struct net_device *dev)
-{
-	ei_open(dev);
-	return 0;
-}
-
-static int
-hp_close(struct net_device *dev)
-{
-	ei_close(dev);
-	return 0;
 }
 
 static void
@@ -260,7 +240,6 @@ hp_reset_8390(struct net_device *dev)
 		printk("%s: hp_reset_8390() did not complete.\n", dev->name);
 
 	if (ei_debug > 1) printk("8390 reset done (%ld).", jiffies);
-	return;
 }
 
 static void
@@ -380,7 +359,6 @@ hp_block_output(struct net_device *dev, int count,
 			   dev->name, (start_page << 8) + count, addr);
 	}
 	outb_p(saved_config & (~HP_DATAON), nic_base - NIC_OFFSET + HP_CONFIGURE);
-	return;
 }
 
 /* This function resets the ethercard if something screws up. */
@@ -388,10 +366,9 @@ static void __init
 hp_init_card(struct net_device *dev)
 {
 	int irq = dev->irq;
-	NS8390_init(dev, 0);
+	NS8390p_init(dev, 0);
 	outb_p(irqmap[irq&0x0f] | HP_RUN,
 		   dev->base_addr - NIC_OFFSET + HP_CONFIGURE);
-	return;
 }
 
 #ifdef MODULE
@@ -420,7 +397,7 @@ init_module(void)
 			if (this_dev != 0) break; /* only autoprobe 1st one */
 			printk(KERN_NOTICE "hp.c: Presently autoprobing (not recommended) for a single card.\n");
 		}
-		dev = alloc_ei_netdev();
+		dev = alloc_eip_netdev();
 		if (!dev)
 			break;
 		dev->irq = irq[this_dev];

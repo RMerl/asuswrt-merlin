@@ -9,9 +9,9 @@
 #include <linux/errno.h>
 #include <linux/init.h>
 
-#include <asm/hardware.h>
+#include <mach/hardware.h>
 #include <asm/mach-types.h>
-#include <asm/arch/neponset.h>
+#include <mach/neponset.h>
 #include <asm/hardware/sa1111.h>
 
 #include "sa1111_generic.h"
@@ -43,6 +43,7 @@
 static int
 neponset_pcmcia_configure_socket(struct soc_pcmcia_socket *skt, const socket_state_t *state)
 {
+	struct sa1111_pcmcia_socket *s = to_skt(skt);
 	unsigned int ncr_mask, ncr_set, pa_dwr_mask, pa_dwr_set;
 	int ret;
 
@@ -59,7 +60,7 @@ neponset_pcmcia_configure_socket(struct soc_pcmcia_socket *skt, const socket_sta
 			ncr_set = NCR_A0VPP;
 		else {
 			printk(KERN_ERR "%s(): unrecognized VPP %u\n",
-			       __FUNCTION__, state->Vpp);
+			       __func__, state->Vpp);
 			return -1;
 		}
 		break;
@@ -71,7 +72,7 @@ neponset_pcmcia_configure_socket(struct soc_pcmcia_socket *skt, const socket_sta
 
 		if (state->Vpp != state->Vcc && state->Vpp != 0) {
 			printk(KERN_ERR "%s(): CF slot cannot support VPP %u\n",
-			       __FUNCTION__, state->Vpp);
+			       __func__, state->Vpp);
 			return -1;
 		}
 		break;
@@ -99,7 +100,7 @@ neponset_pcmcia_configure_socket(struct soc_pcmcia_socket *skt, const socket_sta
 		NCR_0 = (NCR_0 & ~ncr_mask) | ncr_set;
 
 		local_irq_restore(flags);
-		sa1111_set_io(SA1111_DEV(skt->dev), pa_dwr_mask, pa_dwr_set);
+		sa1111_set_io(s->dev, pa_dwr_mask, pa_dwr_set);
 	}
 
 	return 0;
@@ -115,15 +116,13 @@ static void neponset_pcmcia_socket_init(struct soc_pcmcia_socket *skt)
 
 static struct pcmcia_low_level neponset_pcmcia_ops = {
 	.owner			= THIS_MODULE,
-	.hw_init		= sa1111_pcmcia_hw_init,
-	.hw_shutdown		= sa1111_pcmcia_hw_shutdown,
-	.socket_state		= sa1111_pcmcia_socket_state,
 	.configure_socket	= neponset_pcmcia_configure_socket,
 	.socket_init		= neponset_pcmcia_socket_init,
-	.socket_suspend 	= sa1111_pcmcia_socket_suspend,
+	.first			= 0,
+	.nr			= 2,
 };
 
-int __init pcmcia_neponset_init(struct sa1111_dev *sadev)
+int pcmcia_neponset_init(struct sa1111_dev *sadev)
 {
 	int ret = -ENODEV;
 
@@ -135,7 +134,9 @@ int __init pcmcia_neponset_init(struct sa1111_dev *sadev)
 		sa1111_set_io_dir(sadev, GPIO_A0|GPIO_A1|GPIO_A2|GPIO_A3, 0, 0);
 		sa1111_set_io(sadev, GPIO_A0|GPIO_A1|GPIO_A2|GPIO_A3, 0);
 		sa1111_set_sleep_io(sadev, GPIO_A0|GPIO_A1|GPIO_A2|GPIO_A3, 0);
-		ret = sa11xx_drv_pcmcia_probe(&sadev->dev, &neponset_pcmcia_ops, 0, 2);
+		sa11xx_drv_pcmcia_ops(&neponset_pcmcia_ops);
+		ret = sa1111_pcmcia_add(sadev, &neponset_pcmcia_ops,
+				sa11xx_drv_pcmcia_add_one);
 	}
 
 	return ret;

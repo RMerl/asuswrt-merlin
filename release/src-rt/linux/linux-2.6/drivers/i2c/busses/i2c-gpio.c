@@ -12,6 +12,7 @@
 #include <linux/i2c-gpio.h>
 #include <linux/init.h>
 #include <linux/module.h>
+#include <linux/slab.h>
 #include <linux/platform_device.h>
 
 #include <asm/gpio.h>
@@ -140,8 +141,7 @@ static int __devinit i2c_gpio_probe(struct platform_device *pdev)
 	adap->owner = THIS_MODULE;
 	snprintf(adap->name, sizeof(adap->name), "i2c-gpio%d", pdev->id);
 	adap->algo_data = bit_data;
-	//adap->class = I2C_CLASS_HWMON | I2C_CLASS_SPD;
-	adap->class = I2C_CLASS_HWMON;
+	adap->class = I2C_CLASS_HWMON | I2C_CLASS_SPD;
 	adap->dev.parent = &pdev->dev;
 
 	/*
@@ -211,7 +211,7 @@ static int __init i2c_gpio_init(void)
 
 	return ret;
 }
-module_init(i2c_gpio_init);
+subsys_initcall(i2c_gpio_init);
 
 static void __exit i2c_gpio_exit(void)
 {

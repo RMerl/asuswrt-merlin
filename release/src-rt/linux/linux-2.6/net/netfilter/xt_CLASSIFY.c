@@ -19,62 +19,55 @@
 #include <linux/netfilter_ipv6.h>
 #include <linux/netfilter/x_tables.h>
 #include <linux/netfilter/xt_CLASSIFY.h>
+#include <linux/netfilter_arp.h>
 
 MODULE_AUTHOR("Patrick McHardy <kaber@trash.net>");
 MODULE_LICENSE("GPL");
-MODULE_DESCRIPTION("iptables qdisc classification target module");
+MODULE_DESCRIPTION("Xtables: Qdisc classification");
 MODULE_ALIAS("ipt_CLASSIFY");
+MODULE_ALIAS("ip6t_CLASSIFY");
+MODULE_ALIAS("arpt_CLASSIFY");
 
 static unsigned int
-target(struct sk_buff **pskb,
-       const struct net_device *in,
-       const struct net_device *out,
-       unsigned int hooknum,
-       const struct xt_target *target,
-       const void *targinfo)
+classify_tg(struct sk_buff *skb, const struct xt_action_param *par)
 {
-	const struct xt_classify_target_info *clinfo = targinfo;
+	const struct xt_classify_target_info *clinfo = par->targinfo;
 
-	(*pskb)->priority = clinfo->priority;
+	skb->priority = clinfo->priority;
 	return XT_CONTINUE;
 }
 
-static struct xt_target xt_classify_target[] = {
+static struct xt_target classify_tg_reg[] __read_mostly = {
 	{
-		.family		= AF_INET,
-		.name 		= "CLASSIFY",
-		.target 	= target,
-		.targetsize	= sizeof(struct xt_classify_target_info),
-		.table		= "mangle",
-		.hooks		= (1 << NF_IP_LOCAL_OUT) |
-				  (1 << NF_IP_FORWARD) |
-				  (1 << NF_IP_POST_ROUTING),
-		.me 		= THIS_MODULE,
+		.name       = "CLASSIFY",
+		.revision   = 0,
+		.family     = NFPROTO_UNSPEC,
+		.hooks      = (1 << NF_INET_LOCAL_OUT) | (1 << NF_INET_FORWARD) |
+		              (1 << NF_INET_POST_ROUTING),
+		.target     = classify_tg,
+		.targetsize = sizeof(struct xt_classify_target_info),
+		.me         = THIS_MODULE,
 	},
 	{
-		.name 		= "CLASSIFY",
-		.family		= AF_INET6,
-		.target 	= target,
-		.targetsize	= sizeof(struct xt_classify_target_info),
-		.table		= "mangle",
-		.hooks		= (1 << NF_IP6_LOCAL_OUT) |
-				  (1 << NF_IP6_FORWARD) |
-				  (1 << NF_IP6_POST_ROUTING),
-		.me 		= THIS_MODULE,
+		.name       = "CLASSIFY",
+		.revision   = 0,
+		.family     = NFPROTO_ARP,
+		.hooks      = (1 << NF_ARP_OUT) | (1 << NF_ARP_FORWARD),
+		.target     = classify_tg,
+		.targetsize = sizeof(struct xt_classify_target_info),
+		.me         = THIS_MODULE,
 	},
 };
 
-static int __init xt_classify_init(void)
+static int __init classify_tg_init(void)
 {
-	return xt_register_targets(xt_classify_target,
-				   ARRAY_SIZE(xt_classify_target));
+	return xt_register_targets(classify_tg_reg, ARRAY_SIZE(classify_tg_reg));
 }
 
-static void __exit xt_classify_fini(void)
+static void __exit classify_tg_exit(void)
 {
-	xt_unregister_targets(xt_classify_target,
-			      ARRAY_SIZE(xt_classify_target));
+	xt_unregister_targets(classify_tg_reg, ARRAY_SIZE(classify_tg_reg));
 }
 
-module_init(xt_classify_init);
-module_exit(xt_classify_fini);
+module_init(classify_tg_init);
+module_exit(classify_tg_exit);

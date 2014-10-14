@@ -13,7 +13,7 @@
  * TODO: Erase/program both banks of a 8MB SIMM.
  *
  * It is anticipated that programming an OS Flash will be a routine
- * procedure. In the same time it is exeedingly dangerous because
+ * procedure. In the same time it is exceedingly dangerous because
  * a user can program its OBP flash with OS image and effectively
  * kill the machine.
  *
@@ -27,20 +27,16 @@
  */
 
 #include <linux/module.h>
+#include <linux/mutex.h>
 #include <linux/types.h>
 #include <linux/errno.h>
 #include <linux/miscdevice.h>
-#include <linux/slab.h>
 #include <linux/fcntl.h>
 #include <linux/poll.h>
 #include <linux/init.h>
 #include <linux/string.h>
-#include <linux/smp_lock.h>
 #include <linux/genhd.h>
 #include <linux/blkdev.h>
-
-#define MAJOR_NR	JSFD_MAJOR
-
 #include <asm/uaccess.h>
 #include <asm/pgtable.h>
 #include <asm/io.h>
@@ -71,6 +67,8 @@
 #define JSF_NPART	 3	/* 3 minors per flash device */
 #define JSF_PART_BITS	 2	/* 2 bits of minors to cover JSF_NPART */
 #define JSF_PART_MASK	 0x3	/* 2 bits mask */
+
+static DEFINE_MUTEX(jsf_mutex);
 
 /*
  * Access functions.
@@ -185,35 +183,35 @@ static void jsfd_read(char *buf, unsigned long p, size_t togo) {
 	}
 }
 
-static void jsfd_do_request(request_queue_t *q)
+static void jsfd_do_request(struct request_queue *q)
 {
 	struct request *req;
 
-	while ((req = elv_next_request(q)) != NULL) {
+	req = blk_fetch_request(q);
+	while (req) {
 		struct jsfd_part *jdp = req->rq_disk->private_data;
-		unsigned long offset = req->sector << 9;
-		size_t len = req->current_nr_sectors << 9;
+		unsigned long offset = blk_rq_pos(req) << 9;
+		size_t len = blk_rq_cur_bytes(req);
+		int err = -EIO;
 
-		if ((offset + len) > jdp->dsize) {
-               		end_request(req, 0);
-			continue;
-		}
+		if ((offset + len) > jdp->dsize)
+			goto end;
 
 		if (rq_data_dir(req) != READ) {
 			printk(KERN_ERR "jsfd: write\n");
-			end_request(req, 0);
-			continue;
+			goto end;
 		}
 
 		if ((jdp->dbase & 0xff000000) != 0x20000000) {
 			printk(KERN_ERR "jsfd: bad base %x\n", (int)jdp->dbase);
-			end_request(req, 0);
-			continue;
+			goto end;
 		}
 
 		jsfd_read(req->buffer, jdp->dbase + offset, len);
-
-		end_request(req, 1);
+		err = 0;
+	end:
+		if (!__blk_end_request_cur(req, err))
+			req = blk_fetch_request(q);
 	}
 }
 
@@ -229,7 +227,7 @@ static loff_t jsf_lseek(struct file * file, loff_t offset, int orig)
 {
 	loff_t ret;
 
-	lock_kernel();
+	mutex_lock(&jsf_mutex);
 	switch (orig) {
 		case 0:
 			file->f_pos = offset;
@@ -242,7 +240,7 @@ static loff_t jsf_lseek(struct file * file, loff_t offset, int orig)
 		default:
 			ret = -EINVAL;
 	}
-	unlock_kernel();
+	mutex_unlock(&jsf_mutex);
 	return ret;
 }
 
@@ -386,18 +384,22 @@ static int jsf_ioctl_program(void __user *arg)
 	return 0;
 }
 
-static int jsf_ioctl(struct inode *inode, struct file *f, unsigned int cmd,
-    unsigned long arg)
+static long jsf_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
 {
+	mutex_lock(&jsf_mutex);
 	int error = -ENOTTY;
 	void __user *argp = (void __user *)arg;
 
-	if (!capable(CAP_SYS_ADMIN))
+	if (!capable(CAP_SYS_ADMIN)) {
+		mutex_unlock(&jsf_mutex);
 		return -EPERM;
+	}
 	switch (cmd) {
 	case JSFLASH_IDENT:
-		if (copy_to_user(argp, &jsf0.id, JSFIDSZ))
+		if (copy_to_user(argp, &jsf0.id, JSFIDSZ)) {
+			mutex_unlock(&jsf_mutex);
 			return -EFAULT;
+		}
 		break;
 	case JSFLASH_ERASE:
 		error = jsf_ioctl_erase(arg);
@@ -407,6 +409,7 @@ static int jsf_ioctl(struct inode *inode, struct file *f, unsigned int cmd,
 		break;
 	}
 
+	mutex_unlock(&jsf_mutex);
 	return error;
 }
 
@@ -417,11 +420,17 @@ static int jsf_mmap(struct file * file, struct vm_area_struct * vma)
 
 static int jsf_open(struct inode * inode, struct file * filp)
 {
-
-	if (jsf0.base == 0) return -ENXIO;
-	if (test_and_set_bit(0, (void *)&jsf0.busy) != 0)
+	mutex_lock(&jsf_mutex);
+	if (jsf0.base == 0) {
+		mutex_unlock(&jsf_mutex);
+		return -ENXIO;
+	}
+	if (test_and_set_bit(0, (void *)&jsf0.busy) != 0) {
+		mutex_unlock(&jsf_mutex);
 		return -EBUSY;
+	}
 
+	mutex_unlock(&jsf_mutex);
 	return 0;	/* XXX What security? */
 }
 
@@ -436,7 +445,7 @@ static const struct file_operations jsf_fops = {
 	.llseek =	jsf_lseek,
 	.read =		jsf_read,
 	.write =	jsf_write,
-	.ioctl =	jsf_ioctl,
+	.unlocked_ioctl =	jsf_ioctl,
 	.mmap =		jsf_mmap,
 	.open =		jsf_open,
 	.release =	jsf_release,
@@ -444,7 +453,7 @@ static const struct file_operations jsf_fops = {
 
 static struct miscdevice jsf_dev = { JSF_MINOR, "jsflash", &jsf_fops };
 
-static struct block_device_operations jsfd_fops = {
+static const struct block_device_operations jsfd_fops = {
 	.owner =	THIS_MODULE,
 };
 
@@ -452,13 +461,13 @@ static int jsflash_init(void)
 {
 	int rc;
 	struct jsflash *jsf;
-	int node;
+	phandle node;
 	char banner[128];
 	struct linux_prom_registers reg0;
 
 	node = prom_getchild(prom_root_node);
 	node = prom_searchsiblings(node, "flash-memory");
-	if (node != 0 && node != -1) {
+	if (node != 0 && (s32)node != -1) {
 		if (prom_getproperty(node, "reg",
 		    (char *)&reg0, sizeof(reg0)) == -1) {
 			printk("jsflash: no \"reg\" property\n");
@@ -619,8 +628,7 @@ static void __exit jsflash_cleanup_module(void)
 	jsf0.busy = 0;
 
 	misc_deregister(&jsf_dev);
-	if (unregister_blkdev(JSFD_MAJOR, "jsfd") != 0)
-		printk("jsfd: cleanup_module failed\n");
+	unregister_blkdev(JSFD_MAJOR, "jsfd");
 	blk_cleanup_queue(jsf_queue);
 }
 

@@ -33,7 +33,6 @@
 #include <linux/console.h>
 #include <linux/string.h>
 #include <linux/kd.h>
-#include <linux/slab.h>
 #include <linux/vt_kern.h>
 #include <linux/vt_buffer.h>
 #include <linux/selection.h>
@@ -71,13 +70,15 @@ static char *mda_type_name;
 
 /* console information */
 
-static int	mda_first_vc = 1;
+static int	mda_first_vc = 13;
 static int	mda_last_vc  = 16;
 
 static struct vc_data	*mda_display_fg = NULL;
 
 module_param(mda_first_vc, int, 0);
+MODULE_PARM_DESC(mda_first_vc, "First virtual console. Default: 13");
 module_param(mda_last_vc, int, 0);
+MODULE_PARM_DESC(mda_last_vc, "Last virtual console. Default: 16");
 
 /* MDA register values
  */

@@ -23,6 +23,7 @@
  *					  i-frames.
  */
 
+#include <linux/slab.h>
 #include <linux/errno.h>
 #include <linux/kernel.h>
 #include <linux/string.h>
@@ -89,10 +90,11 @@ static int x25_queue_rx_frame(struct sock *sk, struct sk_buff *skb, int more)
 static int x25_state1_machine(struct sock *sk, struct sk_buff *skb, int frametype)
 {
 	struct x25_address source_addr, dest_addr;
+	int len;
+	struct x25_sock *x25 = x25_sk(sk);
 
 	switch (frametype) {
 		case X25_CALL_ACCEPTED: {
-			struct x25_sock *x25 = x25_sk(sk);
 
 			x25_stop_timer(sk);
 			x25->condition = 0x00;
@@ -106,15 +108,25 @@ static int x25_state1_machine(struct sock *sk, struct sk_buff *skb, int frametyp
 			 *	Parse the data in the frame.
 			 */
 			skb_pull(skb, X25_STD_MIN_LEN);
-			skb_pull(skb, x25_addr_ntoa(skb->data, &source_addr, &dest_addr));
-			skb_pull(skb,
-				 x25_parse_facilities(skb, &x25->facilities,
+
+			len = x25_parse_address_block(skb, &source_addr,
+						&dest_addr);
+			if (len > 0)
+				skb_pull(skb, len);
+			else if (len < 0)
+				goto out_clear;
+
+			len = x25_parse_facilities(skb, &x25->facilities,
 						&x25->dte_facilities,
-						&x25->vc_facil_mask));
+						&x25->vc_facil_mask);
+			if (len > 0)
+				skb_pull(skb, len);
+			else if (len < 0)
+				goto out_clear;
 			/*
 			 *	Copy any Call User Data.
 			 */
-			if (skb->len >= 0) {
+			if (skb->len > 0) {
 				skb_copy_from_linear_data(skb,
 					      x25->calluserdata.cuddata,
 					      skb->len);
@@ -133,6 +145,12 @@ static int x25_state1_machine(struct sock *sk, struct sk_buff *skb, int frametyp
 			break;
 	}
 
+	return 0;
+
+out_clear:
+	x25_write_internal(sk, X25_CLEAR_REQUEST);
+	x25->state = X25_STATE_2;
+	x25_start_t23timer(sk);
 	return 0;
 }
 
@@ -247,7 +265,7 @@ static int x25_state3_machine(struct sock *sk, struct sk_buff *skb, int frametyp
 					break;
 				}
 				if (atomic_read(&sk->sk_rmem_alloc) >
-				    (sk->sk_rcvbuf / 2))
+				    (sk->sk_rcvbuf >> 1))
 					x25->condition |= X25_COND_OWN_RX_BUSY;
 			}
 			/*
@@ -265,7 +283,7 @@ static int x25_state3_machine(struct sock *sk, struct sk_buff *skb, int frametyp
 			break;
 
 		case X25_INTERRUPT_CONFIRMATION:
-			x25->intflag = 0;
+			clear_bit(X25_INTERRUPT_FLAG, &x25->flags);
 			break;
 
 		case X25_INTERRUPT:

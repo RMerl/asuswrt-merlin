@@ -23,7 +23,6 @@
 #include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
-#include <linux/moduleparam.h>
 #include <linux/string.h>
 #include <linux/slab.h>
 #include "dvb_frontend.h"
@@ -58,7 +57,7 @@ static int l64781_writereg (struct l64781_state* state, u8 reg, u8 data)
 
 	if ((ret = i2c_transfer(state->i2c, &msg, 1)) != 1)
 		dprintk ("%s: write_reg error (reg == %02x) = %02x!\n",
-			 __FUNCTION__, reg, ret);
+			 __func__, reg, ret);
 
 	return (ret != 1) ? -1 : 0;
 }
@@ -193,8 +192,8 @@ static int apply_frontend_param (struct dvb_frontend* fe, struct dvb_frontend_pa
 	spi_bias *= qam_tab[p->constellation];
 	spi_bias /= p->code_rate_HP + 1;
 	spi_bias /= (guard_tab[p->guard_interval] + 32);
-	spi_bias *= 1000ULL;
-	spi_bias /= 1000ULL + ppm/1000;
+	spi_bias *= 1000;
+	spi_bias /= 1000 + ppm/1000;
 	spi_bias *= p->code_rate_HP;
 
 	val0x04 = (p->transmission_mode << 2) | p->guard_interval;
@@ -502,7 +501,7 @@ struct dvb_frontend* l64781_attach(const struct l64781_config* config,
 			   { .addr = config->demod_address, .flags = I2C_M_RD, .buf = b1, .len = 1 } };
 
 	/* allocate memory for the internal state */
-	state = kmalloc(sizeof(struct l64781_state), GFP_KERNEL);
+	state = kzalloc(sizeof(struct l64781_state), GFP_KERNEL);
 	if (state == NULL) goto error;
 
 	/* setup the state */

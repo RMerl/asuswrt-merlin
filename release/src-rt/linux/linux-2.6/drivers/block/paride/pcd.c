@@ -138,8 +138,10 @@ enum {D_PRT, D_PRO, D_UNI, D_MOD, D_SLV, D_DLY};
 #include <linux/cdrom.h>
 #include <linux/spinlock.h>
 #include <linux/blkdev.h>
+#include <linux/mutex.h>
 #include <asm/uaccess.h>
 
+static DEFINE_MUTEX(pcd_mutex);
 static DEFINE_SPINLOCK(pcd_lock);
 
 module_param(verbose, bool, 0644);
@@ -170,7 +172,8 @@ module_param_array(drive3, int, NULL, 0);
 static int pcd_open(struct cdrom_device_info *cdi, int purpose);
 static void pcd_release(struct cdrom_device_info *cdi);
 static int pcd_drive_status(struct cdrom_device_info *cdi, int slot_nr);
-static int pcd_media_changed(struct cdrom_device_info *cdi, int slot_nr);
+static unsigned int pcd_check_events(struct cdrom_device_info *cdi,
+				     unsigned int clearing, int slot_nr);
 static int pcd_tray_move(struct cdrom_device_info *cdi, int position);
 static int pcd_lock_door(struct cdrom_device_info *cdi, int lock);
 static int pcd_drive_reset(struct cdrom_device_info *cdi);
@@ -183,7 +186,7 @@ static int pcd_packet(struct cdrom_device_info *cdi,
 static int pcd_detect(void);
 static void pcd_probe_capabilities(void);
 static void do_pcd_read_drq(void);
-static void do_pcd_request(request_queue_t * q);
+static void do_pcd_request(struct request_queue * q);
 static void do_pcd_read(void);
 
 struct pcd_unit {
@@ -219,48 +222,62 @@ static int pcd_sector;		/* address of next requested sector */
 static int pcd_count;		/* number of blocks still to do */
 static char *pcd_buf;		/* buffer for request in progress */
 
-static int pcd_warned;		/* Have we logged a phase warning ? */
-
 /* kernel glue structures */
 
-static int pcd_block_open(struct inode *inode, struct file *file)
+static int pcd_block_open(struct block_device *bdev, fmode_t mode)
 {
-	struct pcd_unit *cd = inode->i_bdev->bd_disk->private_data;
-	return cdrom_open(&cd->info, inode, file);
+	struct pcd_unit *cd = bdev->bd_disk->private_data;
+	int ret;
+
+	mutex_lock(&pcd_mutex);
+	ret = cdrom_open(&cd->info, bdev, mode);
+	mutex_unlock(&pcd_mutex);
+
+	return ret;
 }
 
-static int pcd_block_release(struct inode *inode, struct file *file)
-{
-	struct pcd_unit *cd = inode->i_bdev->bd_disk->private_data;
-	return cdrom_release(&cd->info, file);
-}
-
-static int pcd_block_ioctl(struct inode *inode, struct file *file,
-				unsigned cmd, unsigned long arg)
-{
-	struct pcd_unit *cd = inode->i_bdev->bd_disk->private_data;
-	return cdrom_ioctl(file, &cd->info, inode, cmd, arg);
-}
-
-static int pcd_block_media_changed(struct gendisk *disk)
+static int pcd_block_release(struct gendisk *disk, fmode_t mode)
 {
 	struct pcd_unit *cd = disk->private_data;
-	return cdrom_media_changed(&cd->info);
+	mutex_lock(&pcd_mutex);
+	cdrom_release(&cd->info, mode);
+	mutex_unlock(&pcd_mutex);
+	return 0;
 }
 
-static struct block_device_operations pcd_bdops = {
+static int pcd_block_ioctl(struct block_device *bdev, fmode_t mode,
+				unsigned cmd, unsigned long arg)
+{
+	struct pcd_unit *cd = bdev->bd_disk->private_data;
+	int ret;
+
+	mutex_lock(&pcd_mutex);
+	ret = cdrom_ioctl(&cd->info, bdev, mode, cmd, arg);
+	mutex_unlock(&pcd_mutex);
+
+	return ret;
+}
+
+static unsigned int pcd_block_check_events(struct gendisk *disk,
+					   unsigned int clearing)
+{
+	struct pcd_unit *cd = disk->private_data;
+	return cdrom_check_events(&cd->info, clearing);
+}
+
+static const struct block_device_operations pcd_bdops = {
 	.owner		= THIS_MODULE,
 	.open		= pcd_block_open,
 	.release	= pcd_block_release,
 	.ioctl		= pcd_block_ioctl,
-	.media_changed	= pcd_block_media_changed,
+	.check_events	= pcd_block_check_events,
 };
 
 static struct cdrom_device_ops pcd_dops = {
 	.open		= pcd_open,
 	.release	= pcd_release,
 	.drive_status	= pcd_drive_status,
-	.media_changed	= pcd_media_changed,
+	.check_events	= pcd_check_events,
 	.tray_move	= pcd_tray_move,
 	.lock_door	= pcd_lock_door,
 	.get_mcn	= pcd_get_mcn,
@@ -303,6 +320,7 @@ static void pcd_init_units(void)
 		disk->first_minor = unit;
 		strcpy(disk->disk_name, cd->name);	/* umm... */
 		disk->fops = &pcd_bdops;
+		disk->flags = GENHD_FL_BLOCK_EVENTS_ON_EXCL_WRITE;
 	}
 }
 
@@ -342,11 +360,11 @@ static int pcd_wait(struct pcd_unit *cd, int go, int stop, char *fun, char *msg)
 	       && (j++ < PCD_SPIN))
 		udelay(PCD_DELAY);
 
-	if ((r & (IDE_ERR & stop)) || (j >= PCD_SPIN)) {
+	if ((r & (IDE_ERR & stop)) || (j > PCD_SPIN)) {
 		s = read_reg(cd, 7);
 		e = read_reg(cd, 1);
 		p = read_reg(cd, 2);
-		if (j >= PCD_SPIN)
+		if (j > PCD_SPIN)
 			e |= 0x100;
 		if (fun)
 			printk("%s: %s %s: alt=0x%x stat=0x%x err=0x%x"
@@ -416,12 +434,10 @@ static int pcd_completion(struct pcd_unit *cd, char *buf, char *fun)
 					printk
 					    ("%s: %s: Unexpected phase %d, d=%d, k=%d\n",
 					     cd->name, fun, p, d, k);
-				if ((verbose < 2) && !pcd_warned) {
-					pcd_warned = 1;
-					printk
-					    ("%s: WARNING: ATAPI phase errors\n",
-					     cd->name);
-				}
+				if (verbose < 2)
+					printk_once(
+					    "%s: WARNING: ATAPI phase errors\n",
+					    cd->name);
 				mdelay(1);
 			}
 			if (k++ > PCD_TMO) {
@@ -489,13 +505,14 @@ static int pcd_packet(struct cdrom_device_info *cdi, struct packet_command *cgc)
 
 #define DBMSG(msg)	((verbose>1)?(msg):NULL)
 
-static int pcd_media_changed(struct cdrom_device_info *cdi, int slot_nr)
+static unsigned int pcd_check_events(struct cdrom_device_info *cdi,
+				     unsigned int clearing, int slot_nr)
 {
 	struct pcd_unit *cd = cdi->handle;
 	int res = cd->changed;
 	if (res)
 		cd->changed = 0;
-	return res;
+	return res ? DISK_EVENT_MEDIA_CHANGE : 0;
 }
 
 static int pcd_lock_door(struct cdrom_device_info *cdi, int lock)
@@ -713,37 +730,42 @@ static int pcd_detect(void)
 /* I/O request processing */
 static struct request_queue *pcd_queue;
 
-static void do_pcd_request(request_queue_t * q)
+static void do_pcd_request(struct request_queue * q)
 {
 	if (pcd_busy)
 		return;
 	while (1) {
-		pcd_req = elv_next_request(q);
-		if (!pcd_req)
-			return;
+		if (!pcd_req) {
+			pcd_req = blk_fetch_request(q);
+			if (!pcd_req)
+				return;
+		}
 
 		if (rq_data_dir(pcd_req) == READ) {
 			struct pcd_unit *cd = pcd_req->rq_disk->private_data;
 			if (cd != pcd_current)
 				pcd_bufblk = -1;
 			pcd_current = cd;
-			pcd_sector = pcd_req->sector;
-			pcd_count = pcd_req->current_nr_sectors;
+			pcd_sector = blk_rq_pos(pcd_req);
+			pcd_count = blk_rq_cur_sectors(pcd_req);
 			pcd_buf = pcd_req->buffer;
 			pcd_busy = 1;
 			ps_set_intr(do_pcd_read, NULL, 0, nice);
 			return;
-		} else
-			end_request(pcd_req, 0);
+		} else {
+			__blk_end_request_all(pcd_req, -EIO);
+			pcd_req = NULL;
+		}
 	}
 }
 
-static inline void next_request(int success)
+static inline void next_request(int err)
 {
 	unsigned long saved_flags;
 
 	spin_lock_irqsave(&pcd_lock, saved_flags);
-	end_request(pcd_req, success);
+	if (!__blk_end_request_cur(pcd_req, err))
+		pcd_req = NULL;
 	pcd_busy = 0;
 	do_pcd_request(pcd_queue);
 	spin_unlock_irqrestore(&pcd_lock, saved_flags);
@@ -780,7 +802,7 @@ static void pcd_start(void)
 
 	if (pcd_command(pcd_current, rd_cmd, 2048, "read block")) {
 		pcd_bufblk = -1;
-		next_request(0);
+		next_request(-EIO);
 		return;
 	}
 
@@ -795,7 +817,7 @@ static void do_pcd_read(void)
 	pcd_retries = 0;
 	pcd_transfer();
 	if (!pcd_count) {
-		next_request(1);
+		next_request(0);
 		return;
 	}
 
@@ -814,7 +836,7 @@ static void do_pcd_read_drq(void)
 			return;
 		}
 		pcd_bufblk = -1;
-		next_request(0);
+		next_request(-EIO);
 		return;
 	}
 

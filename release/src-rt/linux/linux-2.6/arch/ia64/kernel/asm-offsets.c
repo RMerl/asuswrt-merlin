@@ -7,19 +7,20 @@
 #define ASM_OFFSETS_C 1
 
 #include <linux/sched.h>
+#include <linux/pid.h>
+#include <linux/clocksource.h>
+#include <linux/kbuild.h>
+#include <asm/processor.h>
+#include <asm/ptrace.h>
+#include <asm/siginfo.h>
+#include <asm/sigcontext.h>
+#include <asm/mca.h>
 
-#include <asm-ia64/processor.h>
-#include <asm-ia64/ptrace.h>
-#include <asm-ia64/siginfo.h>
-#include <asm-ia64/sigcontext.h>
-#include <asm-ia64/mca.h>
+#include <asm/xen/interface.h>
+#include <asm/xen/hypervisor.h>
 
 #include "../kernel/sigframe.h"
-
-#define DEFINE(sym, val) \
-        asm volatile("\n->" #sym " %0 " #val : : "i" (val))
-
-#define BLANK() asm volatile("\n->" : : )
+#include "../kernel/fsyscall_gtod_data.h"
 
 void foo(void)
 {
@@ -32,17 +33,29 @@ void foo(void)
 	DEFINE(SIGFRAME_SIZE, sizeof (struct sigframe));
 	DEFINE(UNW_FRAME_INFO_SIZE, sizeof (struct unw_frame_info));
 
+	BUILD_BUG_ON(sizeof(struct upid) != 32);
+	DEFINE(IA64_UPID_SHIFT, 5);
+
 	BLANK();
 
 	DEFINE(TI_FLAGS, offsetof(struct thread_info, flags));
 	DEFINE(TI_CPU, offsetof(struct thread_info, cpu));
 	DEFINE(TI_PRE_COUNT, offsetof(struct thread_info, preempt_count));
+#ifdef CONFIG_VIRT_CPU_ACCOUNTING
+	DEFINE(TI_AC_STAMP, offsetof(struct thread_info, ac_stamp));
+	DEFINE(TI_AC_LEAVE, offsetof(struct thread_info, ac_leave));
+	DEFINE(TI_AC_STIME, offsetof(struct thread_info, ac_stime));
+	DEFINE(TI_AC_UTIME, offsetof(struct thread_info, ac_utime));
+#endif
 
 	BLANK();
 
 	DEFINE(IA64_TASK_BLOCKED_OFFSET,offsetof (struct task_struct, blocked));
 	DEFINE(IA64_TASK_CLEAR_CHILD_TID_OFFSET,offsetof (struct task_struct, clear_child_tid));
 	DEFINE(IA64_TASK_GROUP_LEADER_OFFSET, offsetof (struct task_struct, group_leader));
+	DEFINE(IA64_TASK_TGIDLINK_OFFSET, offsetof (struct task_struct, pids[PIDTYPE_PID].pid));
+	DEFINE(IA64_PID_LEVEL_OFFSET, offsetof (struct pid, level));
+	DEFINE(IA64_PID_UPID_OFFSET, offsetof (struct pid, numbers[0]));
 	DEFINE(IA64_TASK_PENDING_OFFSET,offsetof (struct task_struct, pending));
 	DEFINE(IA64_TASK_PID_OFFSET, offsetof (struct task_struct, pid));
 	DEFINE(IA64_TASK_REAL_PARENT_OFFSET, offsetof (struct task_struct, real_parent));
@@ -256,17 +269,54 @@ void foo(void)
 	BLANK();
 
 	/* used by fsys_gettimeofday in arch/ia64/kernel/fsys.S */
-	DEFINE(IA64_TIME_INTERPOLATOR_ADDRESS_OFFSET, offsetof (struct time_interpolator, addr));
-	DEFINE(IA64_TIME_INTERPOLATOR_SOURCE_OFFSET, offsetof (struct time_interpolator, source));
-	DEFINE(IA64_TIME_INTERPOLATOR_SHIFT_OFFSET, offsetof (struct time_interpolator, shift));
-	DEFINE(IA64_TIME_INTERPOLATOR_NSEC_OFFSET, offsetof (struct time_interpolator, nsec_per_cyc));
-	DEFINE(IA64_TIME_INTERPOLATOR_OFFSET_OFFSET, offsetof (struct time_interpolator, offset));
-	DEFINE(IA64_TIME_INTERPOLATOR_LAST_CYCLE_OFFSET, offsetof (struct time_interpolator, last_cycle));
-	DEFINE(IA64_TIME_INTERPOLATOR_LAST_COUNTER_OFFSET, offsetof (struct time_interpolator, last_counter));
-	DEFINE(IA64_TIME_INTERPOLATOR_JITTER_OFFSET, offsetof (struct time_interpolator, jitter));
-	DEFINE(IA64_TIME_INTERPOLATOR_MASK_OFFSET, offsetof (struct time_interpolator, mask));
-	DEFINE(IA64_TIME_SOURCE_CPU, TIME_SOURCE_CPU);
-	DEFINE(IA64_TIME_SOURCE_MMIO64, TIME_SOURCE_MMIO64);
-	DEFINE(IA64_TIME_SOURCE_MMIO32, TIME_SOURCE_MMIO32);
-	DEFINE(IA64_TIMESPEC_TV_NSEC_OFFSET, offsetof (struct timespec, tv_nsec));
+	DEFINE(IA64_GTOD_LOCK_OFFSET,
+		offsetof (struct fsyscall_gtod_data_t, lock));
+	DEFINE(IA64_GTOD_WALL_TIME_OFFSET,
+		offsetof (struct fsyscall_gtod_data_t, wall_time));
+	DEFINE(IA64_GTOD_MONO_TIME_OFFSET,
+		offsetof (struct fsyscall_gtod_data_t, monotonic_time));
+	DEFINE(IA64_CLKSRC_MASK_OFFSET,
+		offsetof (struct fsyscall_gtod_data_t, clk_mask));
+	DEFINE(IA64_CLKSRC_MULT_OFFSET,
+		offsetof (struct fsyscall_gtod_data_t, clk_mult));
+	DEFINE(IA64_CLKSRC_SHIFT_OFFSET,
+		offsetof (struct fsyscall_gtod_data_t, clk_shift));
+	DEFINE(IA64_CLKSRC_MMIO_OFFSET,
+		offsetof (struct fsyscall_gtod_data_t, clk_fsys_mmio));
+	DEFINE(IA64_CLKSRC_CYCLE_LAST_OFFSET,
+		offsetof (struct fsyscall_gtod_data_t, clk_cycle_last));
+	DEFINE(IA64_ITC_JITTER_OFFSET,
+		offsetof (struct itc_jitter_data_t, itc_jitter));
+	DEFINE(IA64_ITC_LASTCYCLE_OFFSET,
+		offsetof (struct itc_jitter_data_t, itc_lastcycle));
+
+#ifdef CONFIG_XEN
+	BLANK();
+
+	DEFINE(XEN_NATIVE_ASM, XEN_NATIVE);
+	DEFINE(XEN_PV_DOMAIN_ASM, XEN_PV_DOMAIN);
+
+#define DEFINE_MAPPED_REG_OFS(sym, field) \
+	DEFINE(sym, (XMAPPEDREGS_OFS + offsetof(struct mapped_regs, field)))
+
+	DEFINE_MAPPED_REG_OFS(XSI_PSR_I_ADDR_OFS, interrupt_mask_addr);
+	DEFINE_MAPPED_REG_OFS(XSI_IPSR_OFS, ipsr);
+	DEFINE_MAPPED_REG_OFS(XSI_IIP_OFS, iip);
+	DEFINE_MAPPED_REG_OFS(XSI_IFS_OFS, ifs);
+	DEFINE_MAPPED_REG_OFS(XSI_PRECOVER_IFS_OFS, precover_ifs);
+	DEFINE_MAPPED_REG_OFS(XSI_ISR_OFS, isr);
+	DEFINE_MAPPED_REG_OFS(XSI_IFA_OFS, ifa);
+	DEFINE_MAPPED_REG_OFS(XSI_IIPA_OFS, iipa);
+	DEFINE_MAPPED_REG_OFS(XSI_IIM_OFS, iim);
+	DEFINE_MAPPED_REG_OFS(XSI_IHA_OFS, iha);
+	DEFINE_MAPPED_REG_OFS(XSI_ITIR_OFS, itir);
+	DEFINE_MAPPED_REG_OFS(XSI_PSR_IC_OFS, interrupt_collection_enabled);
+	DEFINE_MAPPED_REG_OFS(XSI_BANKNUM_OFS, banknum);
+	DEFINE_MAPPED_REG_OFS(XSI_BANK0_R16_OFS, bank0_regs[0]);
+	DEFINE_MAPPED_REG_OFS(XSI_BANK1_R16_OFS, bank1_regs[0]);
+	DEFINE_MAPPED_REG_OFS(XSI_B0NATS_OFS, vbnat);
+	DEFINE_MAPPED_REG_OFS(XSI_B1NATS_OFS, vnat);
+	DEFINE_MAPPED_REG_OFS(XSI_ITC_OFFSET_OFS, itc_offset);
+	DEFINE_MAPPED_REG_OFS(XSI_ITC_LAST_OFS, itc_last);
+#endif /* CONFIG_XEN */
 }

@@ -19,10 +19,12 @@
  */
 
 #include <linux/module.h>
+#include <linux/slab.h>
 
 #include <linux/netdevice.h>
 #include <linux/ethtool.h>
 #include <linux/pci.h>
+#include <linux/sched.h>
 #include <linux/etherdevice.h>
 #include <linux/delay.h>
 #include <linux/if_arp.h>
@@ -40,10 +42,12 @@
 #define ISL3877_IMAGE_FILE	"isl3877"
 #define ISL3886_IMAGE_FILE	"isl3886"
 #define ISL3890_IMAGE_FILE	"isl3890"
+MODULE_FIRMWARE(ISL3877_IMAGE_FILE);
+MODULE_FIRMWARE(ISL3886_IMAGE_FILE);
+MODULE_FIRMWARE(ISL3890_IMAGE_FILE);
 
 static int prism54_bring_down(islpci_private *);
 static int islpci_alloc_memory(islpci_private *);
-static struct net_device_stats *islpci_statistics(struct net_device *);
 
 /* Temporary dummy MAC address to use until firmware is loaded.
  * The idea there is that some tools (such as nameif) may query
@@ -224,14 +228,14 @@ islpci_interrupt(int irq, void *config)
 
 #if VERBOSE > SHOW_ERROR_MESSAGES
 		DEBUG(SHOW_FUNCTION_CALLS,
-		      "IRQ: Identification register 0x%p 0x%x \n", device, reg);
+		      "IRQ: Identification register 0x%p 0x%x\n", device, reg);
 #endif
 
 		/* check for each bit in the register separately */
 		if (reg & ISL38XX_INT_IDENT_UPDATE) {
 #if VERBOSE > SHOW_ERROR_MESSAGES
 			/* Queue has been updated */
-			DEBUG(SHOW_TRACING, "IRQ: Update flag \n");
+			DEBUG(SHOW_TRACING, "IRQ: Update flag\n");
 
 			DEBUG(SHOW_QUEUE_INDEXES,
 			      "CB drv Qs: [%i][%i][%i][%i][%i][%i]\n",
@@ -297,7 +301,7 @@ islpci_interrupt(int irq, void *config)
 						ISL38XX_CB_RX_DATA_LQ) != 0) {
 #if VERBOSE > SHOW_ERROR_MESSAGES
 				DEBUG(SHOW_TRACING,
-				      "Received frame in Data Low Queue \n");
+				      "Received frame in Data Low Queue\n");
 #endif
 				islpci_eth_receive(priv);
 			}
@@ -322,7 +326,7 @@ islpci_interrupt(int irq, void *config)
 			/* Device has been initialized */
 #if VERBOSE > SHOW_ERROR_MESSAGES
 			DEBUG(SHOW_TRACING,
-			      "IRQ: Init flag, device initialized \n");
+			      "IRQ: Init flag, device initialized\n");
 #endif
 			wake_up(&priv->reset_done);
 		}
@@ -330,7 +334,7 @@ islpci_interrupt(int irq, void *config)
 		if (reg & ISL38XX_INT_IDENT_SLEEP) {
 			/* Device intends to move to powersave state */
 #if VERBOSE > SHOW_ERROR_MESSAGES
-			DEBUG(SHOW_TRACING, "IRQ: Sleep flag \n");
+			DEBUG(SHOW_TRACING, "IRQ: Sleep flag\n");
 #endif
 			isl38xx_handle_sleep_request(priv->control_block,
 						     &powerstate,
@@ -340,7 +344,7 @@ islpci_interrupt(int irq, void *config)
 		if (reg & ISL38XX_INT_IDENT_WAKEUP) {
 			/* Device has been woken up to active state */
 #if VERBOSE > SHOW_ERROR_MESSAGES
-			DEBUG(SHOW_TRACING, "IRQ: Wakeup flag \n");
+			DEBUG(SHOW_TRACING, "IRQ: Wakeup flag\n");
 #endif
 
 			isl38xx_handle_wakeup(priv->control_block,
@@ -387,7 +391,16 @@ islpci_open(struct net_device *ndev)
 	}
 
 	netif_start_queue(ndev);
-/*      netif_mark_up( ndev ); */
+
+	/* Turn off carrier if in STA or Ad-hoc mode. It will be turned on
+	 * once the firmware receives a trap of being associated
+	 * (GEN_OID_LINKSTATE). In other modes (AP or WDS or monitor) we
+	 * should just leave the carrier on as its expected the firmware
+	 * won't send us a trigger. */
+	if (priv->iw_mode == IW_MODE_INFRA || priv->iw_mode == IW_MODE_ADHOC)
+		netif_carrier_off(ndev);
+	else
+		netif_carrier_on(ndev);
 
 	return 0;
 }
@@ -605,18 +618,6 @@ islpci_reset(islpci_private *priv, int reload_firmware)
 	return rc;
 }
 
-static struct net_device_stats *
-islpci_statistics(struct net_device *ndev)
-{
-	islpci_private *priv = netdev_priv(ndev);
-
-#if VERBOSE > SHOW_ERROR_MESSAGES
-	DEBUG(SHOW_FUNCTION_CALLS, "islpci_statistics\n");
-#endif
-
-	return &priv->statistics;
-}
-
 /******************************************************************************
     Network device configuration functions
 ******************************************************************************/
@@ -629,12 +630,12 @@ islpci_alloc_memory(islpci_private *priv)
 	printk(KERN_DEBUG "islpci_alloc_memory\n");
 #endif
 
-	/* remap the PCI device base address to accessable */
+	/* remap the PCI device base address to accessible */
 	if (!(priv->device_base =
 	      ioremap(pci_resource_start(priv->pdev, 0),
 		      ISL38XX_PCI_MEM_SIZE))) {
 		/* error in remapping the PCI device memory address range */
-		printk(KERN_ERR "PCI memory remapping failed \n");
+		printk(KERN_ERR "PCI memory remapping failed\n");
 		return -1;
 	}
 
@@ -708,7 +709,7 @@ islpci_alloc_memory(islpci_private *priv)
 				   PCI_DMA_FROMDEVICE);
 		if (!priv->pci_map_rx_address[counter]) {
 			/* error mapping the buffer to device
-			   accessable memory address */
+			   accessible memory address */
 			printk(KERN_ERR "failed to map skb DMA'able\n");
 			goto out_free;
 		}
@@ -772,7 +773,7 @@ islpci_free_memory(islpci_private *priv)
 		priv->data_low_rx[counter] = NULL;
 	}
 
-	/* Free the acces control list and the WPA list */
+	/* Free the access control list and the WPA list */
 	prism54_acl_clean(&priv->acl);
 	prism54_wpa_bss_ie_clean(priv);
 	mgt_clean(priv);
@@ -795,8 +796,19 @@ static void islpci_ethtool_get_drvinfo(struct net_device *dev,
 	strcpy(info->version, DRV_VERSION);
 }
 
-static struct ethtool_ops islpci_ethtool_ops = {
+static const struct ethtool_ops islpci_ethtool_ops = {
 	.get_drvinfo = islpci_ethtool_get_drvinfo,
+};
+
+static const struct net_device_ops islpci_netdev_ops = {
+	.ndo_open 		= islpci_open,
+	.ndo_stop		= islpci_close,
+	.ndo_do_ioctl		= prism54_ioctl,
+	.ndo_start_xmit		= islpci_eth_transmit,
+	.ndo_tx_timeout		= islpci_eth_tx_timeout,
+	.ndo_set_mac_address 	= prism54_set_mac_address,
+	.ndo_change_mtu		= eth_change_mtu,
+	.ndo_validate_addr	= eth_validate_addr,
 };
 
 struct net_device *
@@ -808,7 +820,6 @@ islpci_setup(struct pci_dev *pdev)
 	if (!ndev)
 		return ndev;
 
-	SET_MODULE_OWNER(ndev);
 	pci_set_drvdata(pdev, ndev);
 #if defined(SET_NETDEV_DEV)
 	SET_NETDEV_DEV(ndev, &pdev->dev);
@@ -819,25 +830,16 @@ islpci_setup(struct pci_dev *pdev)
 	ndev->irq = pdev->irq;
 
 	/* initialize the function pointers */
-	ndev->open = &islpci_open;
-	ndev->stop = &islpci_close;
-	ndev->get_stats = &islpci_statistics;
-	ndev->do_ioctl = &prism54_ioctl;
-	ndev->wireless_handlers =
-	    (struct iw_handler_def *) &prism54_handler_def;
+	ndev->netdev_ops = &islpci_netdev_ops;
+	ndev->wireless_handlers = &prism54_handler_def;
 	ndev->ethtool_ops = &islpci_ethtool_ops;
 
-	ndev->hard_start_xmit = &islpci_eth_transmit;
 	/* ndev->set_multicast_list = &islpci_set_multicast_list; */
 	ndev->addr_len = ETH_ALEN;
-	ndev->set_mac_address = &prism54_set_mac_address;
 	/* Get a non-zero dummy MAC address for nameif. Jean II */
 	memcpy(ndev->dev_addr, dummy_mac, 6);
 
-#ifdef HAVE_TX_TIMEOUT
 	ndev->watchdog_timeo = ISLPCI_TX_TIMEOUT;
-	ndev->tx_timeout = &islpci_eth_tx_timeout;
-#endif
 
 	/* allocate a private device structure to the network device  */
 	priv = netdev_priv(ndev);
@@ -862,10 +864,10 @@ islpci_setup(struct pci_dev *pdev)
 	init_waitqueue_head(&priv->reset_done);
 
 	/* init the queue read locks, process wait counter */
-	sema_init(&priv->mgmt_sem, 1);
+	mutex_init(&priv->mgmt_lock);
 	priv->mgmt_received = NULL;
 	init_waitqueue_head(&priv->mgmt_wqueue);
-	sema_init(&priv->stats_sem, 1);
+	mutex_init(&priv->stats_lock);
 	spin_lock_init(&priv->slock);
 
 	/* init state machine with off#1 state */
@@ -900,7 +902,7 @@ islpci_setup(struct pci_dev *pdev)
 
 	if (register_netdev(ndev)) {
 		DEBUG(SHOW_ERROR_MESSAGES,
-		      "ERROR: register_netdev() failed \n");
+		      "ERROR: register_netdev() failed\n");
 		goto do_islpci_free_memory;
 	}
 
@@ -944,7 +946,7 @@ islpci_set_state(islpci_private *priv, islpci_state_t new_state)
 		if (!priv->state_off)
 			priv->state = new_state;
 		break;
-	};
+	}
 #if 0
 	printk(KERN_DEBUG "%s: state transition %d -> %d (off#%d)\n",
 	       priv->ndev->name, old_state, new_state, priv->state_off);

@@ -28,8 +28,6 @@
  * ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
- *
- * $Id: mthca_allocator.c 1349 2004-12-16 21:09:43Z roland $
  */
 
 #include <linux/errno.h>
@@ -213,7 +211,7 @@ int mthca_buf_alloc(struct mthca_dev *dev, int size, int max_direct,
 		if (!buf->direct.buf)
 			return -ENOMEM;
 
-		pci_unmap_addr_set(&buf->direct, mapping, t);
+		dma_unmap_addr_set(&buf->direct, mapping, t);
 
 		memset(buf->direct.buf, 0, size);
 
@@ -253,9 +251,9 @@ int mthca_buf_alloc(struct mthca_dev *dev, int size, int max_direct,
 				goto err_free;
 
 			dma_list[i] = t;
-			pci_unmap_addr_set(&buf->page_list[i], mapping, t);
+			dma_unmap_addr_set(&buf->page_list[i], mapping, t);
 
-			memset(buf->page_list[i].buf, 0, PAGE_SIZE);
+			clear_page(buf->page_list[i].buf);
 		}
 	}
 
@@ -291,12 +289,12 @@ void mthca_buf_free(struct mthca_dev *dev, int size, union mthca_buf *buf,
 
 	if (is_direct)
 		dma_free_coherent(&dev->pdev->dev, size, buf->direct.buf,
-				  pci_unmap_addr(&buf->direct, mapping));
+				  dma_unmap_addr(&buf->direct, mapping));
 	else {
 		for (i = 0; i < (size + PAGE_SIZE - 1) / PAGE_SIZE; ++i)
 			dma_free_coherent(&dev->pdev->dev, PAGE_SIZE,
 					  buf->page_list[i].buf,
-					  pci_unmap_addr(&buf->page_list[i],
+					  dma_unmap_addr(&buf->page_list[i],
 							 mapping));
 		kfree(buf->page_list);
 	}

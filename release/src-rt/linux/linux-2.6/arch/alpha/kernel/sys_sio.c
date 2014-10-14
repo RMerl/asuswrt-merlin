@@ -34,6 +34,7 @@
 #include "irq_impl.h"
 #include "pci_impl.h"
 #include "machvec_impl.h"
+#include "pc873xx.h"
 
 #if defined(ALPHA_RESTORE_SRM_SETUP)
 /* Save LCA configuration data as the console had it set up.  */
@@ -78,7 +79,7 @@ alphabook1_init_arch(void)
  * example, sound boards seem to like using IRQ 9.
  *
  * This is NOT how we should do it. PIRQ0-X should have
- * their own IRQ's, the way intel uses the IO-APIC irq's.
+ * their own IRQs, the way intel uses the IO-APIC IRQs.
  */
 
 static void __init
@@ -89,7 +90,7 @@ sio_pci_route(void)
 	/* First, ALWAYS read and print the original setting. */
 	pci_bus_read_config_dword(pci_isa_hose->bus, PCI_DEVFN(7, 0), 0x60,
 				  &orig_route_tab);
-	printk("%s: PIRQ original 0x%x new 0x%x\n", __FUNCTION__,
+	printk("%s: PIRQ original 0x%x new 0x%x\n", __func__,
 	       orig_route_tab, alpha_mv.sys.sio.route_tab);
 
 #if defined(ALPHA_RESTORE_SRM_SETUP)
@@ -208,7 +209,27 @@ noname_init_pci(void)
 	common_init_pci();
 	sio_pci_route();
 	sio_fixup_irq_levels(sio_collect_irq_levels());
-	ns87312_enable_ide(0x26e);
+
+	if (pc873xx_probe() == -1) {
+		printk(KERN_ERR "Probing for PC873xx Super IO chip failed.\n");
+	} else {
+		printk(KERN_INFO "Found %s Super IO chip at 0x%x\n",
+			pc873xx_get_model(), pc873xx_get_base());
+
+		/* Enabling things in the Super IO chip doesn't actually
+		 * configure and enable things, the legacy drivers still
+		 * need to do the actual configuration and enabling.
+		 * This only unblocks them.
+		 */
+
+#if !defined(CONFIG_ALPHA_AVANTI)
+		/* Don't bother on the Avanti family.
+		 * None of them had on-board IDE.
+		 */
+		pc873xx_enable_ide();
+#endif
+		pc873xx_enable_epp19();
+	}
 }
 
 static inline void __init

@@ -18,6 +18,7 @@
 #include "arcofi.h"
 #include "isdnl1.h"
 #include <linux/interrupt.h>
+#include <linux/slab.h>
 #include <linux/init.h>
 
 #define DBUSY_TIMER_VALUE 80
@@ -27,8 +28,7 @@ static char *ISACVer[] __devinitdata =
 {"2086/2186 V1.1", "2085 B1", "2085 B2",
  "2085 V2.3"};
 
-void
-ISACVersion(struct IsdnCardState *cs, char *s)
+void __devinit ISACVersion(struct IsdnCardState *cs, char *s)
 {
 	int val;
 
@@ -87,8 +87,6 @@ isac_bh(struct work_struct *work)
 		container_of(work, struct IsdnCardState, tqueue);
 	struct PStack *stptr;
 	
-	if (!cs)
-		return;
 	if (test_and_clear_bit(D_CLEARBUSY, &cs->event)) {
 		if (cs->debug)
 			debugl1(cs, "D-Channel Busy cleared");
@@ -616,8 +614,7 @@ dbusy_timer_handler(struct IsdnCardState *cs)
 	}
 }
 
-void __devinit
-initisac(struct IsdnCardState *cs)
+void initisac(struct IsdnCardState *cs)
 {
 	cs->setstack_d = setstack_isac;
 	cs->DC_Close = DC_Close_isac;
@@ -648,8 +645,7 @@ initisac(struct IsdnCardState *cs)
 	cs->writeisac(cs, ISAC_MASK, 0x0);
 }
 
-void __devinit
-clear_pending_isac_ints(struct IsdnCardState *cs)
+void clear_pending_isac_ints(struct IsdnCardState *cs)
 {
 	int val, eval;
 

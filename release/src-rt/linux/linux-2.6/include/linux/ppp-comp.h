@@ -23,12 +23,10 @@
  * ON AN "AS IS" BASIS, AND THE AUSTRALIAN NATIONAL UNIVERSITY HAS NO
  * OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS,
  * OR MODIFICATIONS.
- *
- * $Id: ppp-comp.h,v 1.6 1997/11/27 06:04:44 paulus Exp $
  */
 
 /*
- *  ==FILEVERSION 20040509==
+ *  ==FILEVERSION 980319==
  *
  *  NOTE TO MAINTAINERS:
  *     If you modify this file at all, please set the above date.
@@ -80,7 +78,7 @@ struct compressor {
 
 	/* Compress a packet */
 	int     (*compress) (void *state, unsigned char *rptr,
-			     unsigned char *obuf, int isize, int osize);
+			      unsigned char *obuf, int isize, int osize);
 
 	/* Return compression statistics */
 	void	(*comp_stat) (void *state, struct compstat *stats);
@@ -101,7 +99,7 @@ struct compressor {
 
 	/* Decompress a packet. */
 	int	(*decompress) (void *state, unsigned char *ibuf, int isize,
-			       unsigned char *obuf, int osize);
+				unsigned char *obuf, int osize);
 
 	/* Update state for an incompressible packet received */
 	void	(*incomp) (void *state, unsigned char *ibuf, int icnt);
@@ -111,6 +109,8 @@ struct compressor {
 
 	/* Used in locking compressor modules */
 	struct module *owner;
+	/* Extra skb space needed by the compressor algorithm */
+	unsigned int comp_extra;
 };
 
 /*
@@ -191,40 +191,11 @@ struct compressor {
 #define DEFLATE_CHK_SEQUENCE	0
 
 /*
- * Definitions for MPPE/MPPC.
+ * Definitions for MPPE.
  */
 
-#define CI_MPPE			18	/* config option for MPPE */
-#define CILEN_MPPE		6	/* length of config option */
-
-#define MPPE_OVHD		4	/* MPPE overhead */
-#define MPPE_MAX_KEY_LEN	16	/* largest key length (128-bit) */
-
-#define MPPE_STATELESS          0x01	/* configuration bit H */
-#define MPPE_40BIT              0x20	/* configuration bit L */
-#define MPPE_56BIT              0x80	/* configuration bit M */
-#define MPPE_128BIT             0x40	/* configuration bit S */
-#define MPPE_MPPC               0x01	/* configuration bit C */
-
-/*
- * Definitions for Stac LZS.
- */
-
-#define CI_LZS			17	/* config option for Stac LZS */
-#define CILEN_LZS		5	/* length of config option */
-
-#define LZS_OVHD		4	/* max. LZS overhead */
-#define LZS_HIST_LEN		2048	/* LZS history size */
-#define LZS_MAX_CCOUNT		0x0FFF	/* max. coherency counter value */
-
-#define LZS_MODE_NONE		0
-#define LZS_MODE_LCB		1
-#define LZS_MODE_CRC		2
-#define LZS_MODE_SEQ		3
-#define LZS_MODE_EXT		4
-
-#define LZS_EXT_BIT_FLUSHED	0x80	/* bit A */
-#define LZS_EXT_BIT_COMP	0x20	/* bit C */
+#define CI_MPPE                18      /* config option for MPPE */
+#define CILEN_MPPE              6      /* length of config option */
 
 /*
  * Definitions for other, as yet unsupported, compression methods.

@@ -120,14 +120,13 @@ struct ircomm_tty_cb {
 void ircomm_tty_start(struct tty_struct *tty);
 void ircomm_tty_check_modem_status(struct ircomm_tty_cb *self);
 
-extern int ircomm_tty_tiocmget(struct tty_struct *tty, struct file *file);
-extern int ircomm_tty_tiocmset(struct tty_struct *tty, struct file *file,
+extern int ircomm_tty_tiocmget(struct tty_struct *tty);
+extern int ircomm_tty_tiocmset(struct tty_struct *tty,
 			       unsigned int set, unsigned int clear);
-extern int ircomm_tty_ioctl(struct tty_struct *tty, struct file *file, 
+extern int ircomm_tty_ioctl(struct tty_struct *tty, 
 			    unsigned int cmd, unsigned long arg);
 extern void ircomm_tty_set_termios(struct tty_struct *tty, 
 				   struct ktermios *old_termios);
-extern hashbin_t *ircomm_tty;
 
 #endif
 

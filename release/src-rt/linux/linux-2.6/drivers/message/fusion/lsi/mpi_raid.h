@@ -1,12 +1,12 @@
 /*
- *  Copyright (c) 2001-2005 LSI Logic Corporation.
+ *  Copyright (c) 2001-2008 LSI Corporation.
  *
  *
  *           Name:  mpi_raid.h
  *          Title:  MPI RAID message and structures
  *  Creation Date:  February 27, 2001
  *
- *    mpi_raid.h Version:  01.05.02
+ *    mpi_raid.h Version:  01.05.05
  *
  *  Version History
  *  ---------------
@@ -32,6 +32,11 @@
  *  08-19-04  01.05.01  Original release for MPI v1.5.
  *  01-15-05  01.05.02  Added defines for the two new RAID Actions for
  *                      _SET_RESYNC_RATE and _SET_DATA_SCRUB_RATE.
+ *  02-28-07  01.05.03  Added new RAID Action, Device FW Update Mode, and
+ *                      associated defines.
+ *  08-07-07  01.05.04  Added Disable Full Rebuild bit to the ActionDataWord
+ *                      for the RAID Action MPI_RAID_ACTION_DISABLE_VOLUME.
+ *  01-15-08  01.05.05  Added define for MPI_RAID_ACTION_SET_VOLUME_NAME.
  *  --------------------------------------------------------------------------
  */
 
@@ -90,6 +95,8 @@ typedef struct _MSG_RAID_ACTION
 #define MPI_RAID_ACTION_INACTIVATE_VOLUME           (0x12)
 #define MPI_RAID_ACTION_SET_RESYNC_RATE             (0x13)
 #define MPI_RAID_ACTION_SET_DATA_SCRUB_RATE         (0x14)
+#define MPI_RAID_ACTION_DEVICE_FW_UPDATE_MODE       (0x15)
+#define MPI_RAID_ACTION_SET_VOLUME_NAME             (0x16)
 
 /* ActionDataWord defines for use with MPI_RAID_ACTION_CREATE_VOLUME action */
 #define MPI_RAID_ACTION_ADATA_DO_NOT_SYNC           (0x00000001)
@@ -102,6 +109,9 @@ typedef struct _MSG_RAID_ACTION
 #define MPI_RAID_ACTION_ADATA_KEEP_LBA0             (0x00000000)
 #define MPI_RAID_ACTION_ADATA_ZERO_LBA0             (0x00000002)
 
+/* ActionDataWord defines for use with MPI_RAID_ACTION_DISABLE_VOLUME action */
+#define MPI_RAID_ACTION_ADATA_DISABLE_FULL_REBUILD  (0x00000001)
+
 /* ActionDataWord defines for use with MPI_RAID_ACTION_ACTIVATE_VOLUME action */
 #define MPI_RAID_ACTION_ADATA_INACTIVATE_ALL        (0x00000001)
 
@@ -111,6 +121,10 @@ typedef struct _MSG_RAID_ACTION
 /* ActionDataWord defines for use with MPI_RAID_ACTION_SET_DATA_SCRUB_RATE action */
 #define MPI_RAID_ACTION_ADATA_DATA_SCRUB_RATE_MASK  (0x000000FF)
 
+/* ActionDataWord defines for use with MPI_RAID_ACTION_DEVICE_FW_UPDATE_MODE action */
+#define MPI_RAID_ACTION_ADATA_ENABLE_FW_UPDATE          (0x00000001)
+#define MPI_RAID_ACTION_ADATA_MASK_FW_UPDATE_TIMEOUT    (0x0000FF00)
+#define MPI_RAID_ACTION_ADATA_SHIFT_FW_UPDATE_TIMEOUT   (8)
 
 
 /* RAID Action reply message */

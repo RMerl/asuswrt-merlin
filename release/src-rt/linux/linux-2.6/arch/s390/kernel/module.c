@@ -55,9 +55,11 @@ void *module_alloc(unsigned long size)
 /* Free memory returned from module_alloc */
 void module_free(struct module *mod, void *module_region)
 {
+	if (mod) {
+		vfree(mod->arch.syminfo);
+		mod->arch.syminfo = NULL;
+	}
 	vfree(module_region);
-	/* FIXME: If module_region == mod->init_region, trim exception
-           table entries. */
 }
 
 static void
@@ -310,15 +312,20 @@ apply_rela(Elf_Rela *rela, Elf_Addr base, Elf_Sym *symtab,
 			info->plt_initialized = 1;
 		}
 		if (r_type == R_390_PLTOFF16 ||
-		    r_type == R_390_PLTOFF32
-		    || r_type == R_390_PLTOFF64
-			)
+		    r_type == R_390_PLTOFF32 ||
+		    r_type == R_390_PLTOFF64)
 			val = me->arch.plt_offset - me->arch.got_offset +
 				info->plt_offset + rela->r_addend;
-		else
-			val =  (Elf_Addr) me->module_core +
-				me->arch.plt_offset + info->plt_offset + 
-				rela->r_addend - loc;
+		else {
+			if (!((r_type == R_390_PLT16DBL &&
+			       val - loc + 0xffffUL < 0x1ffffeUL) ||
+			      (r_type == R_390_PLT32DBL &&
+			       val - loc + 0xffffffffULL < 0x1fffffffeULL)))
+				val = (Elf_Addr) me->module_core +
+					me->arch.plt_offset +
+					info->plt_offset;
+			val += rela->r_addend - loc;
+		}
 		if (r_type == R_390_PLT16DBL)
 			*(unsigned short *) loc = val >> 1;
 		else if (r_type == R_390_PLTOFF16)
@@ -399,10 +406,10 @@ int module_finalize(const Elf_Ehdr *hdr,
 		    struct module *me)
 {
 	vfree(me->arch.syminfo);
-	return module_bug_finalize(hdr, sechdrs, me);
+	me->arch.syminfo = NULL;
+	return 0;
 }
 
 void module_arch_cleanup(struct module *mod)
 {
-	module_bug_cleanup(mod);
 }

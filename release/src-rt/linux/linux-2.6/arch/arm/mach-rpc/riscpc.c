@@ -17,12 +17,13 @@
 #include <linux/sched.h>
 #include <linux/device.h>
 #include <linux/serial_8250.h>
-#include <linux/pata_platform.h>
+#include <linux/ata_platform.h>
+#include <linux/io.h>
+#include <linux/i2c.h>
 
 #include <asm/elf.h>
-#include <asm/io.h>
 #include <asm/mach-types.h>
-#include <asm/hardware.h>
+#include <mach/hardware.h>
 #include <asm/page.h>
 #include <asm/domain.h>
 #include <asm/setup.h>
@@ -87,7 +88,7 @@ static void __init rpc_map_io(void)
 	/*
 	 * Turn off floppy.
 	 */
-	outb(0xc, 0x3f2);
+	writeb(0xc, PCIO_BASE + (0x3f2 << 2));
 
 	/*
 	 * RiscPC can't handle half-word loads and stores
@@ -201,8 +202,13 @@ static struct platform_device *devs[] __initdata = {
 	&pata_device,
 };
 
+static struct i2c_board_info i2c_rtc = {
+	I2C_BOARD_INFO("pcf8583", 0x50)
+};
+
 static int __init rpc_init(void)
 {
+	i2c_register_board_info(0, &i2c_rtc, 1);
 	return platform_add_devices(devs, ARRAY_SIZE(devs));
 }
 
@@ -212,8 +218,6 @@ extern struct sys_timer ioc_timer;
 
 MACHINE_START(RISCPC, "Acorn-RiscPC")
 	/* Maintainer: Russell King */
-	.phys_io	= 0x03000000,
-	.io_pg_offst	= ((0xe0000000) >> 18) & 0xfffc,
 	.boot_params	= 0x10000100,
 	.reserve_lp0	= 1,
 	.reserve_lp1	= 1,

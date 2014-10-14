@@ -1,7 +1,6 @@
 /*
  * Common code to handle absent "placeholder" devices
  * Copyright 2001 Resilience Corporation <ebrower@resilience.com>
- * $Id: map_absent.c,v 1.6 2005/11/07 11:14:23 gleixner Exp $
  *
  * This map driver is used to allocate "placeholder" MTD
  * devices on systems that have socketed/removable media.
@@ -26,7 +25,6 @@
 #include <linux/init.h>
 #include <linux/mtd/mtd.h>
 #include <linux/mtd/map.h>
-#include <linux/mtd/compatmac.h>
 
 static int map_absent_read (struct mtd_info *, loff_t, size_t, size_t *, u_char *);
 static int map_absent_write (struct mtd_info *, loff_t, size_t, size_t *, const u_char *);

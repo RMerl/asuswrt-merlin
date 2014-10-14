@@ -18,8 +18,6 @@
 #ifndef _I2O_H
 #define _I2O_H
 
-#ifdef __KERNEL__		/* This file to be included by kernel only */
-
 #include <linux/i2o-dev.h>
 
 /* How many different OSM's are we allowing */
@@ -31,9 +29,11 @@
 #include <linux/slab.h>
 #include <linux/workqueue.h>	/* work_struct */
 #include <linux/mempool.h>
+#include <linux/mutex.h>
+#include <linux/scatterlist.h>
+#include <linux/semaphore.h>	/* Needed for MUTEX init macros */
 
 #include <asm/io.h>
-#include <asm/semaphore.h>	/* Needed for MUTEX init macros */
 
 /* message queue empty */
 #define I2O_QUEUE_EMPTY		0xffffffff
@@ -385,7 +385,7 @@
 /* defines for max_sectors and max_phys_segments */
 #define I2O_MAX_SECTORS			1024
 #define I2O_MAX_SECTORS_LIMITED		128
-#define I2O_MAX_PHYS_SEGMENTS		MAX_PHYS_SEGMENTS
+#define I2O_MAX_PHYS_SEGMENTS		BLK_MAX_SEGMENTS
 
 /*
  *	Message structures
@@ -425,7 +425,7 @@ struct i2o_device {
 
 	struct device device;
 
-	struct semaphore lock;	/* device lock */
+	struct mutex lock;	/* device lock */
 };
 
 /*
@@ -544,7 +544,7 @@ struct i2o_controller {
 	struct i2o_dma hrt;	/* HW Resource Table */
 	i2o_lct *lct;		/* Logical Config Table */
 	struct i2o_dma dlct;	/* Temp LCT */
-	struct semaphore lct_lock;	/* Lock for LCT updates */
+	struct mutex lct_lock;	/* Lock for LCT updates */
 	struct i2o_dma status_block;	/* IOP status block */
 
 	struct i2o_io base;	/* controller messaging unit */
@@ -570,7 +570,6 @@ struct i2o_controller {
 #endif
 	spinlock_t lock;	/* lock for controller
 				   configuration */
-
 	void *driver_data[I2O_MAX_DRIVERS];	/* storage for drivers */
 };
 
@@ -611,14 +610,9 @@ struct i2o_sys_tbl {
 extern struct list_head i2o_controllers;
 
 /* Message functions */
-static inline struct i2o_message *i2o_msg_get(struct i2o_controller *);
 extern struct i2o_message *i2o_msg_get_wait(struct i2o_controller *, int);
-static inline void i2o_msg_post(struct i2o_controller *, struct i2o_message *);
-static inline int i2o_msg_post_wait(struct i2o_controller *,
-				    struct i2o_message *, unsigned long);
 extern int i2o_msg_post_wait_mem(struct i2o_controller *, struct i2o_message *,
 				 unsigned long, struct i2o_dma *);
-static inline void i2o_flush_reply(struct i2o_controller *, u32);
 
 /* IOP functions */
 extern int i2o_status_get(struct i2o_controller *);
@@ -696,290 +690,22 @@ static inline u32 i2o_dma_high(dma_addr_t dma_addr)
 };
 #endif
 
-/**
- *	i2o_sg_tablesize - Calculate the maximum number of elements in a SGL
- *	@c: I2O controller for which the calculation should be done
- *	@body_size: maximum body size used for message in 32-bit words.
- *
- *	Return the maximum number of SG elements in a SG list.
- */
-static inline u16 i2o_sg_tablesize(struct i2o_controller *c, u16 body_size)
-{
-	i2o_status_block *sb = c->status_block.virt;
-	u16 sg_count =
-	    (sb->inbound_frame_size - sizeof(struct i2o_message) / 4) -
-	    body_size;
-
-	if (c->pae_support) {
-		/*
-		 * for 64-bit a SG attribute element must be added and each
-		 * SG element needs 12 bytes instead of 8.
-		 */
-		sg_count -= 2;
-		sg_count /= 3;
-	} else
-		sg_count /= 2;
-
-	if (c->short_req && (sg_count > 8))
-		sg_count = 8;
-
-	return sg_count;
-};
-
-/**
- *	i2o_dma_map_single - Map pointer to controller and fill in I2O message.
- *	@c: I2O controller
- *	@ptr: pointer to the data which should be mapped
- *	@size: size of data in bytes
- *	@direction: DMA_TO_DEVICE / DMA_FROM_DEVICE
- *	@sg_ptr: pointer to the SG list inside the I2O message
- *
- *	This function does all necessary DMA handling and also writes the I2O
- *	SGL elements into the I2O message. For details on DMA handling see also
- *	dma_map_single(). The pointer sg_ptr will only be set to the end of the
- *	SG list if the allocation was successful.
- *
- *	Returns DMA address which must be checked for failures using
- *	dma_mapping_error().
- */
-static inline dma_addr_t i2o_dma_map_single(struct i2o_controller *c, void *ptr,
+extern u16 i2o_sg_tablesize(struct i2o_controller *c, u16 body_size);
+extern dma_addr_t i2o_dma_map_single(struct i2o_controller *c, void *ptr,
 					    size_t size,
 					    enum dma_data_direction direction,
-					    u32 ** sg_ptr)
-{
-	u32 sg_flags;
-	u32 *mptr = *sg_ptr;
-	dma_addr_t dma_addr;
-
-	switch (direction) {
-	case DMA_TO_DEVICE:
-		sg_flags = 0xd4000000;
-		break;
-	case DMA_FROM_DEVICE:
-		sg_flags = 0xd0000000;
-		break;
-	default:
-		return 0;
-	}
-
-	dma_addr = dma_map_single(&c->pdev->dev, ptr, size, direction);
-	if (!dma_mapping_error(dma_addr)) {
-#ifdef CONFIG_I2O_EXT_ADAPTEC_DMA64
-		if ((sizeof(dma_addr_t) > 4) && c->pae_support) {
-			*mptr++ = cpu_to_le32(0x7C020002);
-			*mptr++ = cpu_to_le32(PAGE_SIZE);
-		}
-#endif
-
-		*mptr++ = cpu_to_le32(sg_flags | size);
-		*mptr++ = cpu_to_le32(i2o_dma_low(dma_addr));
-#ifdef CONFIG_I2O_EXT_ADAPTEC_DMA64
-		if ((sizeof(dma_addr_t) > 4) && c->pae_support)
-			*mptr++ = cpu_to_le32(i2o_dma_high(dma_addr));
-#endif
-		*sg_ptr = mptr;
-	}
-	return dma_addr;
-};
-
-/**
- *	i2o_dma_map_sg - Map a SG List to controller and fill in I2O message.
- *	@c: I2O controller
- *	@sg: SG list to be mapped
- *	@sg_count: number of elements in the SG list
- *	@direction: DMA_TO_DEVICE / DMA_FROM_DEVICE
- *	@sg_ptr: pointer to the SG list inside the I2O message
- *
- *	This function does all necessary DMA handling and also writes the I2O
- *	SGL elements into the I2O message. For details on DMA handling see also
- *	dma_map_sg(). The pointer sg_ptr will only be set to the end of the SG
- *	list if the allocation was successful.
- *
- *	Returns 0 on failure or 1 on success.
- */
-static inline int i2o_dma_map_sg(struct i2o_controller *c,
+					    u32 ** sg_ptr);
+extern int i2o_dma_map_sg(struct i2o_controller *c,
 				 struct scatterlist *sg, int sg_count,
 				 enum dma_data_direction direction,
-				 u32 ** sg_ptr)
-{
-	u32 sg_flags;
-	u32 *mptr = *sg_ptr;
-
-	switch (direction) {
-	case DMA_TO_DEVICE:
-		sg_flags = 0x14000000;
-		break;
-	case DMA_FROM_DEVICE:
-		sg_flags = 0x10000000;
-		break;
-	default:
-		return 0;
-	}
-
-	sg_count = dma_map_sg(&c->pdev->dev, sg, sg_count, direction);
-	if (!sg_count)
-		return 0;
-
-#ifdef CONFIG_I2O_EXT_ADAPTEC_DMA64
-	if ((sizeof(dma_addr_t) > 4) && c->pae_support) {
-		*mptr++ = cpu_to_le32(0x7C020002);
-		*mptr++ = cpu_to_le32(PAGE_SIZE);
-	}
-#endif
-
-	while (sg_count-- > 0) {
-		if (!sg_count)
-			sg_flags |= 0xC0000000;
-		*mptr++ = cpu_to_le32(sg_flags | sg_dma_len(sg));
-		*mptr++ = cpu_to_le32(i2o_dma_low(sg_dma_address(sg)));
-#ifdef CONFIG_I2O_EXT_ADAPTEC_DMA64
-		if ((sizeof(dma_addr_t) > 4) && c->pae_support)
-			*mptr++ = cpu_to_le32(i2o_dma_high(sg_dma_address(sg)));
-#endif
-		sg++;
-	}
-	*sg_ptr = mptr;
-
-	return 1;
-};
-
-/**
- *	i2o_dma_alloc - Allocate DMA memory
- *	@dev: struct device pointer to the PCI device of the I2O controller
- *	@addr: i2o_dma struct which should get the DMA buffer
- *	@len: length of the new DMA memory
- *	@gfp_mask: GFP mask
- *
- *	Allocate a coherent DMA memory and write the pointers into addr.
- *
- *	Returns 0 on success or -ENOMEM on failure.
- */
-static inline int i2o_dma_alloc(struct device *dev, struct i2o_dma *addr,
-				size_t len, gfp_t gfp_mask)
-{
-	struct pci_dev *pdev = to_pci_dev(dev);
-	int dma_64 = 0;
-
-	if ((sizeof(dma_addr_t) > 4) && (pdev->dma_mask == DMA_64BIT_MASK)) {
-		dma_64 = 1;
-		if (pci_set_dma_mask(pdev, DMA_32BIT_MASK))
-			return -ENOMEM;
-	}
-
-	addr->virt = dma_alloc_coherent(dev, len, &addr->phys, gfp_mask);
-
-	if ((sizeof(dma_addr_t) > 4) && dma_64)
-		if (pci_set_dma_mask(pdev, DMA_64BIT_MASK))
-			printk(KERN_WARNING "i2o: unable to set 64-bit DMA");
-
-	if (!addr->virt)
-		return -ENOMEM;
-
-	memset(addr->virt, 0, len);
-	addr->len = len;
-
-	return 0;
-};
-
-/**
- *	i2o_dma_free - Free DMA memory
- *	@dev: struct device pointer to the PCI device of the I2O controller
- *	@addr: i2o_dma struct which contains the DMA buffer
- *
- *	Free a coherent DMA memory and set virtual address of addr to NULL.
- */
-static inline void i2o_dma_free(struct device *dev, struct i2o_dma *addr)
-{
-	if (addr->virt) {
-		if (addr->phys)
-			dma_free_coherent(dev, addr->len, addr->virt,
-					  addr->phys);
-		else
-			kfree(addr->virt);
-		addr->virt = NULL;
-	}
-};
-
-/**
- *	i2o_dma_realloc - Realloc DMA memory
- *	@dev: struct device pointer to the PCI device of the I2O controller
- *	@addr: pointer to a i2o_dma struct DMA buffer
- *	@len: new length of memory
- *	@gfp_mask: GFP mask
- *
- *	If there was something allocated in the addr, free it first. If len > 0
- *	than try to allocate it and write the addresses back to the addr
- *	structure. If len == 0 set the virtual address to NULL.
- *
- *	Returns the 0 on success or negative error code on failure.
- */
-static inline int i2o_dma_realloc(struct device *dev, struct i2o_dma *addr,
-				  size_t len, gfp_t gfp_mask)
-{
-	i2o_dma_free(dev, addr);
-
-	if (len)
-		return i2o_dma_alloc(dev, addr, len, gfp_mask);
-
-	return 0;
-};
-
-/*
- *	i2o_pool_alloc - Allocate an slab cache and mempool
- *	@mempool: pointer to struct i2o_pool to write data into.
- *	@name: name which is used to identify cache
- *	@size: size of each object
- *	@min_nr: minimum number of objects
- *
- *	First allocates a slab cache with name and size. Then allocates a
- *	mempool which uses the slab cache for allocation and freeing.
- *
- *	Returns 0 on success or negative error code on failure.
- */
-static inline int i2o_pool_alloc(struct i2o_pool *pool, const char *name,
-				 size_t size, int min_nr)
-{
-	pool->name = kmalloc(strlen(name) + 1, GFP_KERNEL);
-	if (!pool->name)
-		goto exit;
-	strcpy(pool->name, name);
-
-	pool->slab =
-	    kmem_cache_create(pool->name, size, 0, SLAB_HWCACHE_ALIGN, NULL,
-			      NULL);
-	if (!pool->slab)
-		goto free_name;
-
-	pool->mempool = mempool_create_slab_pool(min_nr, pool->slab);
-	if (!pool->mempool)
-		goto free_slab;
-
-	return 0;
-
-      free_slab:
-	kmem_cache_destroy(pool->slab);
-
-      free_name:
-	kfree(pool->name);
-
-      exit:
-	return -ENOMEM;
-};
-
-/*
- *	i2o_pool_free - Free slab cache and mempool again
- *	@mempool: pointer to struct i2o_pool which should be freed
- *
- *	Note that you have to return all objects to the mempool again before
- *	calling i2o_pool_free().
- */
-static inline void i2o_pool_free(struct i2o_pool *pool)
-{
-	mempool_destroy(pool->mempool);
-	kmem_cache_destroy(pool->slab);
-	kfree(pool->name);
-};
-
+				 u32 ** sg_ptr);
+extern int i2o_dma_alloc(struct device *dev, struct i2o_dma *addr, size_t len);
+extern void i2o_dma_free(struct device *dev, struct i2o_dma *addr);
+extern int i2o_dma_realloc(struct device *dev, struct i2o_dma *addr,
+								size_t len);
+extern int i2o_pool_alloc(struct i2o_pool *pool, const char *name,
+				 size_t size, int min_nr);
+extern void i2o_pool_free(struct i2o_pool *pool);
 /* I2O driver (OSM) functions */
 extern int i2o_driver_register(struct i2o_driver *);
 extern void i2o_driver_unregister(struct i2o_driver *);
@@ -1056,7 +782,6 @@ extern int i2o_exec_lct_get(struct i2o_controller *);
 #define to_i2o_driver(drv) container_of(drv,struct i2o_driver, driver)
 #define to_i2o_device(dev) container_of(dev, struct i2o_device, device)
 #define to_i2o_controller(dev) container_of(dev, struct i2o_controller, device)
-#define kobj_to_i2o_device(kobj) to_i2o_device(container_of(kobj, struct device, kobj))
 
 /**
  *	i2o_out_to_virt - Turn an I2O message to a virtual address
@@ -1101,7 +826,7 @@ static inline struct i2o_message __iomem *i2o_msg_in_to_virt(struct
  *	@c: I2O controller
  *
  *	This function tries to get a message frame. If no message frame is
- *	available do not wait until one is availabe (see also i2o_msg_get_wait).
+ *	available do not wait until one is available (see also i2o_msg_get_wait).
  *	The returned pointer to the message frame is not in I/O memory, it is
  *	allocated from a mempool. But because a MFA is allocated from the
  *	controller too it is guaranteed that i2o_msg_post() will never fail.
@@ -1259,5 +984,4 @@ extern void i2o_dump_message(struct i2o_message *);
 extern void i2o_dump_hrt(struct i2o_controller *c);
 extern void i2o_debug_state(struct i2o_controller *c);
 
-#endif				/* __KERNEL__ */
 #endif				/* _I2O_H */

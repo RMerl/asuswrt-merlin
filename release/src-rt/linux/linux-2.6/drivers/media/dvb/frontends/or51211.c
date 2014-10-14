@@ -32,7 +32,6 @@
 
 #include <linux/kernel.h>
 #include <linux/module.h>
-#include <linux/moduleparam.h>
 #include <linux/device.h>
 #include <linux/firmware.h>
 #include <linux/string.h>
@@ -70,7 +69,7 @@ struct or51211_state {
 	u32 current_frequency;
 };
 
-static int i2c_writebytes (struct or51211_state* state, u8 reg, u8 *buf,
+static int i2c_writebytes (struct or51211_state* state, u8 reg, const u8 *buf,
 			   int len)
 {
 	int err;
@@ -78,7 +77,7 @@ static int i2c_writebytes (struct or51211_state* state, u8 reg, u8 *buf,
 	msg.addr	= reg;
 	msg.flags	= 0;
 	msg.len		= len;
-	msg.buf		= buf;
+	msg.buf		= (u8 *)buf;
 
 	if ((err = i2c_transfer (state->i2c, &msg, 1)) != 1) {
 		printk(KERN_WARNING "or51211: i2c_writebytes error "
@@ -89,7 +88,7 @@ static int i2c_writebytes (struct or51211_state* state, u8 reg, u8 *buf,
 	return 0;
 }
 
-static u8 i2c_readbytes (struct or51211_state* state, u8 reg, u8* buf, int len)
+static int i2c_readbytes(struct or51211_state *state, u8 reg, u8 *buf, int len)
 {
 	int err;
 	struct i2c_msg msg;
@@ -223,38 +222,13 @@ static int or51211_set_parameters(struct dvb_frontend* fe,
 				  struct dvb_frontend_parameters *param)
 {
 	struct or51211_state* state = fe->demodulator_priv;
-	u32 freq = 0;
-	u16 tunerfreq = 0;
-	u8 buf[4];
 
 	/* Change only if we are actually changing the channel */
 	if (state->current_frequency != param->frequency) {
-		freq = 44000 + (param->frequency/1000);
-		tunerfreq = freq * 16/1000;
-
-		dprintk("set_parameters frequency = %d (tunerfreq = %d)\n",
-			param->frequency,tunerfreq);
-
-		buf[0] = (tunerfreq >> 8) & 0x7F;
-		buf[1] = (tunerfreq & 0xFF);
-		buf[2] = 0x8E;
-
-		if (param->frequency < 157250000) {
-			buf[3] = 0xA0;
-			dprintk("set_parameters VHF low range\n");
-		} else if (param->frequency < 454000000) {
-			buf[3] = 0x90;
-			dprintk("set_parameters VHF high range\n");
-		} else {
-			buf[3] = 0x30;
-			dprintk("set_parameters UHF range\n");
+		if (fe->ops.tuner_ops.set_params) {
+			fe->ops.tuner_ops.set_params(fe, param);
+			if (fe->ops.i2c_gate_ctrl) fe->ops.i2c_gate_ctrl(fe, 0);
 		}
-		dprintk("set_parameters tuner bytes: 0x%02x 0x%02x "
-			"0x%02x 0x%02x\n",buf[0],buf[1],buf[2],buf[3]);
-
-		if (i2c_writebytes(state,0xC2>>1,buf,4))
-			printk(KERN_WARNING "or51211:set_parameters error "
-			       "writing to tuner\n");
 
 		/* Set to ATSC mode */
 		or51211_setmode(fe,0);
@@ -333,19 +307,19 @@ static int or51211_read_snr(struct dvb_frontend* fe, u16* snr)
 
 	if (i2c_writebytes(state,state->config->demod_address,snd_buf,3)) {
 		printk(KERN_WARNING "%s: error writing snr reg\n",
-		       __FUNCTION__);
+		       __func__);
 		return -1;
 	}
 	if (i2c_readbytes(state,state->config->demod_address,rec_buf,2)) {
 		printk(KERN_WARNING "%s: read_status read error\n",
-		       __FUNCTION__);
+		       __func__);
 		return -1;
 	}
 
 	state->snr = calculate_snr(rec_buf[0], 89599047);
 	*snr = (state->snr) >> 16;
 
-	dprintk("%s: noise = 0x%02x, snr = %d.%02d dB\n", __FUNCTION__, rec_buf[0],
+	dprintk("%s: noise = 0x%02x, snr = %d.%02d dB\n", __func__, rec_buf[0],
 		state->snr >> 24, (((state->snr>>8) & 0xffff) * 100) >> 16);
 
 	return 0;
@@ -553,9 +527,9 @@ struct dvb_frontend* or51211_attach(const struct or51211_config* config,
 	struct or51211_state* state = NULL;
 
 	/* Allocate memory for the internal state */
-	state = kmalloc(sizeof(struct or51211_state), GFP_KERNEL);
+	state = kzalloc(sizeof(struct or51211_state), GFP_KERNEL);
 	if (state == NULL)
-		goto error;
+		return NULL;
 
 	/* Setup the state */
 	state->config = config;
@@ -567,10 +541,6 @@ struct dvb_frontend* or51211_attach(const struct or51211_config* config,
 	memcpy(&state->frontend.ops, &or51211_ops, sizeof(struct dvb_frontend_ops));
 	state->frontend.demodulator_priv = state;
 	return &state->frontend;
-
-error:
-	kfree(state);
-	return NULL;
 }
 
 static struct dvb_frontend_ops or51211_ops = {

@@ -11,10 +11,10 @@
 
 #include <linux/init.h>
 #include <linux/interrupt.h>
+#include <linux/irq.h>
 #include <linux/pci.h>
 #include <linux/serial_8250.h>
 
-#include <asm/mc146818-time.h>
 #include <asm/sni.h>
 #include <asm/time.h>
 #include <asm/i8259.h>
@@ -89,6 +89,26 @@ static struct platform_device pcimt_serial8250_device = {
 		.platform_data	= pcimt_data,
 	},
 };
+
+static struct resource pcimt_cmos_rsrc[] = {
+        {
+                .start = 0x70,
+                .end   = 0x71,
+                .flags = IORESOURCE_IO
+        },
+        {
+                .start = 8,
+                .end   = 8,
+                .flags = IORESOURCE_IRQ
+        }
+};
+
+static struct platform_device pcimt_cmos_device = {
+        .name           = "rtc_cmos",
+        .num_resources  = ARRAY_SIZE(pcimt_cmos_rsrc),
+        .resource       = pcimt_cmos_rsrc
+};
+
 
 static struct resource sni_io_resource = {
 	.start	= 0x00000000UL,
@@ -174,33 +194,24 @@ static struct pci_controller sni_controller = {
 	.io_map_base    = SNI_PORT_BASE
 };
 
-static void enable_pcimt_irq(unsigned int irq)
+static void enable_pcimt_irq(struct irq_data *d)
 {
-	unsigned int mask = 1 << (irq - PCIMT_IRQ_INT2);
+	unsigned int mask = 1 << (d->irq - PCIMT_IRQ_INT2);
 
 	*(volatile u8 *) PCIMT_IRQSEL |= mask;
 }
 
-void disable_pcimt_irq(unsigned int irq)
+void disable_pcimt_irq(struct irq_data *d)
 {
-	unsigned int mask = ~(1 << (irq - PCIMT_IRQ_INT2));
+	unsigned int mask = ~(1 << (d->irq - PCIMT_IRQ_INT2));
 
 	*(volatile u8 *) PCIMT_IRQSEL &= mask;
 }
 
-static void end_pcimt_irq(unsigned int irq)
-{
-	if (!(irq_desc[irq].status & (IRQ_DISABLED|IRQ_INPROGRESS)))
-		enable_pcimt_irq(irq);
-}
-
 static struct irq_chip pcimt_irq_type = {
-	.typename = "PCIMT",
-	.ack = disable_pcimt_irq,
-	.mask = disable_pcimt_irq,
-	.mask_ack = disable_pcimt_irq,
-	.unmask = enable_pcimt_irq,
-	.end = end_pcimt_irq,
+	.name = "PCIMT",
+	.irq_mask = disable_pcimt_irq,
+	.irq_unmask = enable_pcimt_irq,
 };
 
 /*
@@ -225,9 +236,9 @@ static void pcimt_hwint1(void)
 	if (pend & IT_EISA) {
 		int irq;
 		/*
-		 * Note: ASIC PCI's builtin interrupt achknowledge feature is
+		 * Note: ASIC PCI's builtin interrupt acknowledge feature is
 		 * broken.  Using it may result in loss of some or all i8259
-		 * interupts, so don't use PCIMT_INT_ACKNOWLEDGE ...
+		 * interrupts, so don't use PCIMT_INT_ACKNOWLEDGE ...
 		 */
 		irq = i8259_irq();
 		if (unlikely(irq < 0))
@@ -265,9 +276,9 @@ static void sni_pcimt_hwint(void)
 	u32 pending = read_c0_cause() & read_c0_status();
 
 	if (pending & C_IRQ5)
-		do_IRQ (MIPS_CPU_IRQ_BASE + 7);
+		do_IRQ(MIPS_CPU_IRQ_BASE + 7);
 	else if (pending & C_IRQ4)
-		do_IRQ (MIPS_CPU_IRQ_BASE + 6);
+		do_IRQ(MIPS_CPU_IRQ_BASE + 6);
 	else if (pending & C_IRQ3)
 		pcimt_hwint3();
 	else if (pending & C_IRQ1)
@@ -285,18 +296,15 @@ void __init sni_pcimt_irq_init(void)
 	mips_cpu_irq_init();
 	/* Actually we've got more interrupts to handle ...  */
 	for (i = PCIMT_IRQ_INT2; i <= PCIMT_IRQ_SCSI; i++)
-		set_irq_chip(i, &pcimt_irq_type);
+		irq_set_chip_and_handler(i, &pcimt_irq_type, handle_level_irq);
 	sni_hwint = sni_pcimt_hwint;
 	change_c0_status(ST0_IM, IE_IRQ1|IE_IRQ3);
 }
 
-void sni_pcimt_init(void)
+void __init sni_pcimt_init(void)
 {
 	sni_pcimt_detect();
 	sni_pcimt_sc_init();
-	rtc_mips_get_time = mc146818_get_cmos_time;
-	rtc_mips_set_time = mc146818_set_rtc_mmss;
-	board_time_init = sni_cpu_time_init;
 	ioport_resource.end = sni_io_resource.end;
 #ifdef CONFIG_PCI
 	PCIBIOS_MIN_IO = 0x9000;
@@ -312,6 +320,7 @@ static int __init snirm_pcimt_setup_devinit(void)
 	case SNI_BRD_PCI_DESKTOP:
 	case SNI_BRD_PCI_MTOWER_CPLUS:
 	        platform_device_register(&pcimt_serial8250_device);
+	        platform_device_register(&pcimt_cmos_device);
 	        break;
 	}
 

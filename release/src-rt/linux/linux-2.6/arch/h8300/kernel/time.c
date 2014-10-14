@@ -27,42 +27,39 @@
 #include <linux/profile.h>
 
 #include <asm/io.h>
-#include <asm/target_time.h>
+#include <asm/timer.h>
 
 #define	TICK_SIZE (tick_nsec / 1000)
 
-/*
- * timer_interrupt() needs to keep up the real-time clock,
- * as well as call the "do_timer()" routine every clocktick
- */
-static void timer_interrupt(int irq, void *dummy, struct pt_regs * regs)
+void h8300_timer_tick(void)
 {
-	/* may need to kick the hardware timer */
-	platform_timer_eoi();
-
-	do_timer(1);
-#ifndef CONFIG_SMP
-	update_process_times(user_mode(regs));
-#endif
-	profile_tick(CPU_PROFILING);
+	if (current->pid)
+		profile_tick(CPU_PROFILING);
+	xtime_update(1);
+	update_process_times(user_mode(get_irq_regs()));
 }
 
-void time_init(void)
+void read_persistent_clock(struct timespec *ts)
 {
 	unsigned int year, mon, day, hour, min, sec;
 
 	/* FIX by dqg : Set to zero for platforms that don't have tod */
 	/* without this time is undefined and can overflow time_t, causing  */
-	/* very stange errors */
+	/* very strange errors */
 	year = 1980;
 	mon = day = 1;
 	hour = min = sec = 0;
-	platform_gettod (&year, &mon, &day, &hour, &min, &sec);
-
+#ifdef CONFIG_H8300_GETTOD
+	h8300_gettod (&year, &mon, &day, &hour, &min, &sec);
+#endif
 	if ((year += 1900) < 1970)
 		year += 100;
-	xtime.tv_sec = mktime(year, mon, day, hour, min, sec);
-	xtime.tv_nsec = 0;
+	ts->tv_sec = mktime(year, mon, day, hour, min, sec);
+	ts->tv_nsec = 0;
+}
 
-	platform_timer_setup(timer_interrupt);
+void __init time_init(void)
+{
+
+	h8300_timer_setup();
 }

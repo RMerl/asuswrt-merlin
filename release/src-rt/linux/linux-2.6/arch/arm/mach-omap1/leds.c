@@ -9,14 +9,17 @@
 #include <asm/leds.h>
 #include <asm/mach-types.h>
 
-#include <asm/arch/gpio.h>
-#include <asm/arch/mux.h>
+#include <mach/gpio.h>
+#include <plat/mux.h>
 
 #include "leds.h"
 
 static int __init
 omap_leds_init(void)
 {
+	if (!cpu_class_is_omap1())
+		return -ENODEV;
+
 	if (machine_is_omap_innovator())
 		leds_event = innovator_leds_event;
 
@@ -47,14 +50,14 @@ omap_leds_init(void)
 		 * that's a different kind of LED (just one color at a time).
 		 */
 		omap_cfg_reg(P18_1610_GPIO3);
-		if (omap_request_gpio(3) == 0)
-			omap_set_gpio_direction(3, 0);
+		if (gpio_request(3, "LED red") == 0)
+			gpio_direction_output(3, 1);
 		else
 			printk(KERN_WARNING "LED: can't get GPIO3/red?\n");
 
 		omap_cfg_reg(MPUIO4);
-		if (omap_request_gpio(OMAP_MPUIO(4)) == 0)
-			omap_set_gpio_direction(OMAP_MPUIO(4), 0);
+		if (gpio_request(OMAP_MPUIO(4), "LED green") == 0)
+			gpio_direction_output(OMAP_MPUIO(4), 1);
 		else
 			printk(KERN_WARNING "LED: can't get MPUIO4/green?\n");
 	}

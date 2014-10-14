@@ -18,14 +18,15 @@
  */
 
 #include <linux/pci.h>
+#include <linux/slab.h>
 #include <linux/delay.h>
 #include <linux/jiffies.h>
 #include <asm/irq.h>
-#include <asm/hardware.h>
+#include <mach/hardware.h>
 #include <asm/sizes.h>
 #include <asm/signal.h>
 #include <asm/mach/pci.h>
-#include <asm/arch/pci.h>
+#include <mach/pci.h>
 
 #define IOP13XX_PCI_DEBUG 0
 #define PRINTK(x...) ((void)(IOP13XX_PCI_DEBUG && printk(x)))
@@ -94,13 +95,13 @@ void iop13xx_map_pci_memory(void)
 					, 0, iop13xx_atux_mem_size, MT_DEVICE);
 					if (!iop13xx_atux_mem_base) {
 						printk("%s: atux allocation "
-						       "failed\n", __FUNCTION__);
+						       "failed\n", __func__);
 						BUG();
 					}
 				} else
 					iop13xx_atux_mem_size = 0;
 				PRINTK("%s: atu: %d bus_size: %d mem_base: %x\n",
-				__FUNCTION__, atu, iop13xx_atux_mem_size,
+				__func__, atu, iop13xx_atux_mem_size,
 				iop13xx_atux_mem_base);
 				break;
 			case 1:
@@ -120,13 +121,13 @@ void iop13xx_map_pci_memory(void)
 					, 0, iop13xx_atue_mem_size, MT_DEVICE);
 					if (!iop13xx_atue_mem_base) {
 						printk("%s: atue allocation "
-						       "failed\n", __FUNCTION__);
+						       "failed\n", __func__);
 						BUG();
 					}
 				} else
 					iop13xx_atue_mem_size = 0;
 				PRINTK("%s: atu: %d bus_size: %d mem_base: %x\n",
-				__FUNCTION__, atu, iop13xx_atue_mem_size,
+				__func__, atu, iop13xx_atue_mem_size,
 				iop13xx_atue_mem_base);
 				break;
 			}
@@ -224,7 +225,7 @@ static u32 iop13xx_atue_cfg_address(struct pci_bus *bus, int devfn, int where)
 /* This routine checks the status of the last configuration cycle.  If an error
  * was detected it returns >0, else it returns a 0.  The errors being checked
  * are parity, master abort, target abort (master and target).  These types of
- * errors occure during a config cycle where there is no device, like during
+ * errors occur during a config cycle where there is no device, like during
  * the discovery stage.
  */
 static int iop13xx_atux_pci_status(int clear)
@@ -331,7 +332,7 @@ static struct pci_ops iop13xx_atux_ops = {
 /* This routine checks the status of the last configuration cycle.  If an error
  * was detected it returns >0, else it returns a 0.  The errors being checked
  * are parity, master abort, target abort (master and target).  These types of
- * errors occure during a config cycle where there is no device, like during
+ * errors occur during a config cycle where there is no device, like during
  * the discovery stage.
  */
 static int iop13xx_atue_pci_status(int clear)
@@ -986,7 +987,7 @@ void __init iop13xx_pci_init(void)
 		iop13xx_atux_setup();
 	}
 
-	hook_fault_code(16+6, iop13xx_pci_abort, SIGBUS,
+	hook_fault_code(16+6, iop13xx_pci_abort, SIGBUS, 0,
 			"imprecise external abort");
 }
 
@@ -1002,11 +1003,10 @@ int iop13xx_pci_setup(int nr, struct pci_sys_data *sys)
 	if (nr > 1)
 		return 0;
 
-	res = kmalloc(sizeof(struct resource) * 2, GFP_KERNEL);
+	res = kcalloc(2, sizeof(struct resource), GFP_KERNEL);
 	if (!res)
 		panic("PCI: unable to alloc resources");
 
-	memset(res, 0, sizeof(struct resource) * 2);
 
 	/* 'nr' assumptions:
 	 * ATUX is always 0
@@ -1027,8 +1027,10 @@ int iop13xx_pci_setup(int nr, struct pci_sys_data *sys)
 		which_atu = 0;
 	}
 
-	if (!which_atu)
+	if (!which_atu) {
+		kfree(res);
 		return 0;
+	}
 
 	switch(which_atu) {
 	case IOP13XX_INIT_ATU_ATUX:
@@ -1075,6 +1077,7 @@ int iop13xx_pci_setup(int nr, struct pci_sys_data *sys)
 		sys->map_irq = iop13xx_pcie_map_irq;
 		break;
 	default:
+		kfree(res);
 		return 0;
 	}
 

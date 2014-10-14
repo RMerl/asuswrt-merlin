@@ -4,8 +4,7 @@
 /* WARNING: The ordering of these elements must match ordering
  *          of RTA_* rtnetlink attribute numbers.
  */
-struct dn_kern_rta
-{
+struct dn_kern_rta {
         void            *rta_dst;
         void            *rta_src;
         int             *rta_iif;
@@ -51,10 +50,6 @@ struct dn_fib_info {
 	__le16			fib_prefsrc;
 	__u32			fib_priority;
 	__u32			fib_metrics[RTAX_MAX];
-#define dn_fib_mtu  fib_metrics[RTAX_MTU-1]
-#define dn_fib_window fib_metrics[RTAX_WINDOW-1]
-#define dn_fib_rtt fib_metrics[RTAX_RTT-1]
-#define dn_fib_advmss fib_metrics[RTAX_ADVMSS-1]
 	int			fib_nhs;
 	int			fib_power;
 	struct dn_fib_nh	fib_nh[0];
@@ -103,7 +98,7 @@ struct dn_fib_table {
 	int (*delete)(struct dn_fib_table *t, struct rtmsg *r,
 			struct dn_kern_rta *rta, struct nlmsghdr *n,
 			struct netlink_skb_parms *req);
-	int (*lookup)(struct dn_fib_table *t, const struct flowi *fl,
+	int (*lookup)(struct dn_fib_table *t, const struct flowidn *fld,
 			struct dn_fib_res *res);
 	int (*flush)(struct dn_fib_table *t);
 	int (*dump)(struct dn_fib_table *t, struct sk_buff *skb, struct netlink_callback *cb);
@@ -124,12 +119,12 @@ extern struct dn_fib_info *dn_fib_create_info(const struct rtmsg *r,
 				struct dn_kern_rta *rta, 
 				const struct nlmsghdr *nlh, int *errp);
 extern int dn_fib_semantic_match(int type, struct dn_fib_info *fi, 
-			const struct flowi *fl,
+			const struct flowidn *fld,
 			struct dn_fib_res *res);
 extern void dn_fib_release_info(struct dn_fib_info *fi);
 extern __le16 dn_fib_get_attr16(struct rtattr *attr, int attrlen, int type);
 extern void dn_fib_flush(void);
-extern void dn_fib_select_multipath(const struct flowi *fl,
+extern void dn_fib_select_multipath(const struct flowidn *fld,
 					struct dn_fib_res *res);
 
 /*
@@ -146,7 +141,7 @@ extern void dn_fib_table_cleanup(void);
 extern void dn_fib_rules_init(void);
 extern void dn_fib_rules_cleanup(void);
 extern unsigned dnet_addr_type(__le16 addr);
-extern int dn_fib_lookup(struct flowi *fl, struct dn_fib_res *res);
+extern int dn_fib_lookup(struct flowidn *fld, struct dn_fib_res *res);
 
 extern int dn_fib_dump(struct sk_buff *skb, struct netlink_callback *cb);
 
@@ -181,9 +176,9 @@ static inline void dn_fib_res_put(struct dn_fib_res *res)
 
 static inline __le16 dnet_make_mask(int n)
 {
-        if (n)
-                return dn_htons(~((1<<(16-n))-1));
-        return 0;
+	if (n)
+		return cpu_to_le16(~((1 << (16 - n)) - 1));
+	return cpu_to_le16(0);
 }
 
 #endif /* _NET_DN_FIB_H */

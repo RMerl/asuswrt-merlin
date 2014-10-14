@@ -9,6 +9,7 @@
 
 #include <linux/netrom.h>
 #include <linux/list.h>
+#include <linux/slab.h>
 #include <net/sock.h>
 
 #define	NR_NETWORK_LEN			15
@@ -58,10 +59,6 @@ enum {
 #define NR_MODULUS 			256
 #define NR_MAX_WINDOW_SIZE		127			/* Maximum Window Allowable - 127 */
 #define	NR_MAX_PACKET_SIZE		236			/* Maximum Packet Length - 236 */
-
-struct nr_private {
-	struct net_device_stats	stats;
-};
 
 struct nr_sock {
 	struct sock		sock;
@@ -136,6 +133,8 @@ static __inline__ void nr_node_put(struct nr_node *nr_node)
 static __inline__ void nr_neigh_put(struct nr_neigh *nr_neigh)
 {
 	if (atomic_dec_and_test(&nr_neigh->refcount)) {
+		if (nr_neigh->ax25)
+			ax25_cb_put(nr_neigh->ax25);
 		kfree(nr_neigh->digipeat);
 		kfree(nr_neigh);
 	}

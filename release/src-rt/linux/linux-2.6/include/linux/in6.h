@@ -27,10 +27,8 @@
  *	IPv6 address structure
  */
 
-struct in6_addr
-{
-	union 
-	{
+struct in6_addr {
+	union {
 		__u8		u6_addr8[16];
 		__be16		u6_addr16[8];
 		__be32		u6_addr32[4];
@@ -44,10 +42,18 @@ struct in6_addr
  * NOTE: Be aware the IN6ADDR_* constants and in6addr_* externals are defined
  * in network byte order, not in host byte order as are the IPv4 equivalents
  */
+#ifdef __KERNEL__
 extern const struct in6_addr in6addr_any;
 #define IN6ADDR_ANY_INIT { { { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 } } }
 extern const struct in6_addr in6addr_loopback;
 #define IN6ADDR_LOOPBACK_INIT { { { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1 } } }
+extern const struct in6_addr in6addr_linklocal_allnodes;
+#define IN6ADDR_LINKLOCAL_ALLNODES_INIT	\
+		{ { { 0xff,2,0,0,0,0,0,0,0,0,0,0,0,0,0,1 } } }
+extern const struct in6_addr in6addr_linklocal_allrouters;
+#define IN6ADDR_LINKLOCAL_ALLROUTERS_INIT \
+		{ { { 0xff,2,0,0,0,0,0,0,0,0,0,0,0,0,0,2 } } }
+#endif
 
 struct sockaddr_in6 {
 	unsigned short int	sin6_family;    /* AF_INET6 */
@@ -67,8 +73,7 @@ struct ipv6_mreq {
 
 #define ipv6mr_acaddr	ipv6mr_multiaddr
 
-struct in6_flowlabel_req
-{
+struct in6_flowlabel_req {
 	struct in6_addr	flr_dst;
 	__be32	flr_label;
 	__u8	flr_action;
@@ -105,7 +110,7 @@ struct in6_flowlabel_req
 #define IPV6_FLOWINFO_FLOWLABEL		0x000fffff
 #define IPV6_FLOWINFO_PRIORITY		0x0ff00000
 
-/* These defintions are obsolete */
+/* These definitions are obsolete */
 #define IPV6_PRIORITY_UNCHARACTERIZED	0x0000
 #define IPV6_PRIORITY_FILLER		0x0100
 #define IPV6_PRIORITY_UNATTENDED	0x0200
@@ -216,10 +221,10 @@ struct in6_flowlabel_req
 #define IPV6_RTHDR		57
 #define IPV6_RECVDSTOPTS	58
 #define IPV6_DSTOPTS		59
-#if 0	/* not yet */
 #define IPV6_RECVPATHMTU	60
 #define IPV6_PATHMTU		61
 #define IPV6_DONTFRAG		62
+#if 0	/* not yet */
 #define IPV6_USE_MIN_MTU	63
 #endif
 
@@ -249,4 +254,37 @@ struct in6_flowlabel_req
  * IP6T_SO_GET_REVISION_TARGET	69
  */
 
+/* RFC5014: Source address selection */
+#define IPV6_ADDR_PREFERENCES	72
+
+#define IPV6_PREFER_SRC_TMP		0x0001
+#define IPV6_PREFER_SRC_PUBLIC		0x0002
+#define IPV6_PREFER_SRC_PUBTMP_DEFAULT	0x0100
+#define IPV6_PREFER_SRC_COA		0x0004
+#define IPV6_PREFER_SRC_HOME		0x0400
+#define IPV6_PREFER_SRC_CGA		0x0008
+#define IPV6_PREFER_SRC_NONCGA		0x0800
+
+/* RFC5082: Generalized Ttl Security Mechanism */
+#define IPV6_MINHOPCOUNT		73
+
+#define IPV6_ORIGDSTADDR        74
+#define IPV6_RECVORIGDSTADDR    IPV6_ORIGDSTADDR
+#define IPV6_TRANSPARENT        75
+
+/*
+ * Multicast Routing:
+ * see include/linux/mroute6.h.
+ *
+ * MRT6_INIT			200
+ * MRT6_DONE			201
+ * MRT6_ADD_MIF			202
+ * MRT6_DEL_MIF			203
+ * MRT6_ADD_MFC			204
+ * MRT6_DEL_MFC			205
+ * MRT6_VERSION			206
+ * MRT6_ASSERT			207
+ * MRT6_PIM			208
+ * (reserved)			209
+ */
 #endif

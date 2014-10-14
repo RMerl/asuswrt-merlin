@@ -19,8 +19,7 @@
 
 #include "call_hpt.h"
 
-static spinlock_t iSeries_hlocks[64] __cacheline_aligned_in_smp =
-	{ [0 ... 63] = SPIN_LOCK_UNLOCKED};
+static spinlock_t iSeries_hlocks[64] __cacheline_aligned_in_smp;
 
 /*
  * Very primitive algorithm for picking up a lock
@@ -39,12 +38,12 @@ static inline void iSeries_hunlock(unsigned long slot)
 	spin_unlock(&iSeries_hlocks[(slot >> 4) & 0x3f]);
 }
 
-long iSeries_hpte_insert(unsigned long hpte_group, unsigned long va,
+static long iSeries_hpte_insert(unsigned long hpte_group, unsigned long va,
 			 unsigned long pa, unsigned long rflags,
-			 unsigned long vflags, int psize)
+			 unsigned long vflags, int psize, int ssize)
 {
 	long slot;
-	hpte_t lhpte;
+	struct hash_pte lhpte;
 	int secondary = 0;
 
 	BUG_ON(psize != MMU_PAGE_4K);
@@ -86,7 +85,8 @@ long iSeries_hpte_insert(unsigned long hpte_group, unsigned long va,
 	}
 
 
- 	lhpte.v = hpte_encode_v(va, MMU_PAGE_4K) | vflags | HPTE_V_VALID;
+	lhpte.v = hpte_encode_v(va, MMU_PAGE_4K, MMU_SEGSIZE_256M) |
+		vflags | HPTE_V_VALID;
 	lhpte.r = hpte_encode_r(phys_to_abs(pa), MMU_PAGE_4K) | rflags;
 
 	/* Now fill in the actual HPTE */
@@ -99,7 +99,7 @@ long iSeries_hpte_insert(unsigned long hpte_group, unsigned long va,
 
 static unsigned long iSeries_hpte_getword0(unsigned long slot)
 {
-	hpte_t hpte;
+	struct hash_pte hpte;
 
 	HvCallHpt_get(&hpte, slot);
 	return hpte.v;
@@ -142,15 +142,15 @@ static long iSeries_hpte_remove(unsigned long hpte_group)
  *	bits 61..63 : PP2,PP1,PP0
  */
 static long iSeries_hpte_updatepp(unsigned long slot, unsigned long newpp,
-				  unsigned long va, int psize, int local)
+			unsigned long va, int psize, int ssize, int local)
 {
-	hpte_t hpte;
+	struct hash_pte hpte;
 	unsigned long want_v;
 
 	iSeries_hlock(slot);
 
 	HvCallHpt_get(&hpte, slot);
-	want_v = hpte_encode_v(va, MMU_PAGE_4K);
+	want_v = hpte_encode_v(va, MMU_PAGE_4K, MMU_SEGSIZE_256M);
 
 	if (HPTE_V_COMPARE(hpte.v, want_v) && (hpte.v & HPTE_V_VALID)) {
 		/*
@@ -176,7 +176,7 @@ static long iSeries_hpte_updatepp(unsigned long slot, unsigned long newpp,
  */
 static long iSeries_hpte_find(unsigned long vpn)
 {
-	hpte_t hpte;
+	struct hash_pte hpte;
 	long slot;
 
 	/*
@@ -205,14 +205,14 @@ static long iSeries_hpte_find(unsigned long vpn)
  * No need to lock here because we should be the only user.
  */
 static void iSeries_hpte_updateboltedpp(unsigned long newpp, unsigned long ea,
-					int psize)
+					int psize, int ssize)
 {
 	unsigned long vsid,va,vpn;
 	long slot;
 
 	BUG_ON(psize != MMU_PAGE_4K);
 
-	vsid = get_kernel_vsid(ea);
+	vsid = get_kernel_vsid(ea, MMU_SEGSIZE_256M);
 	va = (vsid << 28) | (ea & 0x0fffffff);
 	vpn = va >> HW_PAGE_SHIFT;
 	slot = iSeries_hpte_find(vpn);
@@ -222,7 +222,7 @@ static void iSeries_hpte_updateboltedpp(unsigned long newpp, unsigned long ea,
 }
 
 static void iSeries_hpte_invalidate(unsigned long slot, unsigned long va,
-				    int psize, int local)
+				    int psize, int ssize, int local)
 {
 	unsigned long hpte_v;
 	unsigned long avpn = va >> 23;
@@ -244,6 +244,11 @@ static void iSeries_hpte_invalidate(unsigned long slot, unsigned long va,
 
 void __init hpte_init_iSeries(void)
 {
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(iSeries_hlocks); i++)
+		spin_lock_init(&iSeries_hlocks[i]);
+
 	ppc_md.hpte_invalidate	= iSeries_hpte_invalidate;
 	ppc_md.hpte_updatepp	= iSeries_hpte_updatepp;
 	ppc_md.hpte_updateboltedpp = iSeries_hpte_updateboltedpp;

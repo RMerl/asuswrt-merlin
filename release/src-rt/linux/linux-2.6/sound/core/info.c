@@ -1,6 +1,6 @@
 /*
  *  Information interface for ALSA driver
- *  Copyright (c) by Jaroslav Kysela <perex@suse.cz>
+ *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  *
  *
  *   This program is free software; you can redistribute it and/or modify
@@ -19,10 +19,10 @@
  *
  */
 
-#include <sound/driver.h>
 #include <linux/init.h>
 #include <linux/time.h>
-#include <linux/smp_lock.h>
+#include <linux/mm.h>
+#include <linux/slab.h>
 #include <linux/string.h>
 #include <sound/core.h>
 #include <sound/minors.h>
@@ -88,12 +88,10 @@ static int resize_info_buffer(struct snd_info_buffer *buffer,
 	char *nbuf;
 
 	nsize = PAGE_ALIGN(nsize);
-	nbuf = kmalloc(nsize, GFP_KERNEL);
+	nbuf = krealloc(buffer->buffer, nsize, GFP_KERNEL);
 	if (! nbuf)
 		return -ENOMEM;
 
-	memcpy(nbuf, buffer->buffer, buffer->len);
-	kfree(buffer->buffer);
 	buffer->buffer = nbuf;
 	buffer->len = nsize;
 	return 0;
@@ -108,7 +106,7 @@ static int resize_info_buffer(struct snd_info_buffer *buffer,
  *
  * Returns the size of output string.
  */
-int snd_iprintf(struct snd_info_buffer *buffer, char *fmt,...)
+int snd_iprintf(struct snd_info_buffer *buffer, const char *fmt, ...)
 {
 	va_list args;
 	int len, res;
@@ -154,11 +152,6 @@ EXPORT_SYMBOL(snd_seq_root);
 struct snd_info_entry *snd_oss_root;
 #endif
 
-static inline void snd_info_entry_prepare(struct proc_dir_entry *de)
-{
-	de->owner = THIS_MODULE;
-}
-
 static void snd_remove_proc_entry(struct proc_dir_entry *parent,
 				  struct proc_dir_entry *de)
 {
@@ -170,40 +163,44 @@ static loff_t snd_info_entry_llseek(struct file *file, loff_t offset, int orig)
 {
 	struct snd_info_private_data *data;
 	struct snd_info_entry *entry;
-	loff_t ret;
+	loff_t ret = -EINVAL, size;
 
 	data = file->private_data;
 	entry = data->entry;
-	lock_kernel();
-	switch (entry->content) {
-	case SNDRV_INFO_CONTENT_TEXT:
-		switch (orig) {
-		case SEEK_SET:
-			file->f_pos = offset;
-			ret = file->f_pos;
-			goto out;
-		case SEEK_CUR:
-			file->f_pos += offset;
-			ret = file->f_pos;
-			goto out;
-		case SEEK_END:
-		default:
-			ret = -EINVAL;
-			goto out;
-		}
-		break;
-	case SNDRV_INFO_CONTENT_DATA:
-		if (entry->c.ops->llseek) {
-			ret = entry->c.ops->llseek(entry,
-						    data->file_private_data,
-						    file, offset, orig);
-			goto out;
-		}
-		break;
+	mutex_lock(&entry->access);
+	if (entry->content == SNDRV_INFO_CONTENT_DATA &&
+	    entry->c.ops->llseek) {
+		offset = entry->c.ops->llseek(entry,
+					      data->file_private_data,
+					      file, offset, orig);
+		goto out;
 	}
-	ret = -ENXIO;
-out:
-	unlock_kernel();
+	if (entry->content == SNDRV_INFO_CONTENT_DATA)
+		size = entry->size;
+	else
+		size = 0;
+	switch (orig) {
+	case SEEK_SET:
+		break;
+	case SEEK_CUR:
+		offset += file->f_pos;
+		break;
+	case SEEK_END:
+		if (!size)
+			goto out;
+		offset += size;
+		break;
+	default:
+		goto out;
+	}
+	if (offset < 0)
+		goto out;
+	if (size && offset > size)
+		offset = size;
+	file->f_pos = offset;
+	ret = offset;
+ out:
+	mutex_unlock(&entry->access);
 	return ret;
 }
 
@@ -217,7 +214,8 @@ static ssize_t snd_info_entry_read(struct file *file, char __user *buffer,
 	loff_t pos;
 
 	data = file->private_data;
-	snd_assert(data != NULL, return -ENXIO);
+	if (snd_BUG_ON(!data))
+		return -ENXIO;
 	pos = *offset;
 	if (pos < 0 || (long) pos != pos || (ssize_t) count < 0)
 		return -EIO;
@@ -237,10 +235,15 @@ static ssize_t snd_info_entry_read(struct file *file, char __user *buffer,
 			return -EFAULT;
 		break;
 	case SNDRV_INFO_CONTENT_DATA:
-		if (entry->c.ops->read)
+		if (pos >= entry->size)
+			return 0;
+		if (entry->c.ops->read) {
+			size = entry->size - pos;
+			size = min(count, size);
 			size = entry->c.ops->read(entry,
 						  data->file_private_data,
-						  file, buffer, count, pos);
+						  file, buffer, size, pos);
+		}
 		break;
 	}
 	if ((ssize_t) size > 0)
@@ -258,7 +261,8 @@ static ssize_t snd_info_entry_write(struct file *file, const char __user *buffer
 	loff_t pos;
 
 	data = file->private_data;
-	snd_assert(data != NULL, return -ENXIO);
+	if (snd_BUG_ON(!data))
+		return -ENXIO;
 	entry = data->entry;
 	pos = *offset;
 	if (pos < 0 || (long) pos != pos || (ssize_t) count < 0)
@@ -286,10 +290,13 @@ static ssize_t snd_info_entry_write(struct file *file, const char __user *buffer
 		size = count;
 		break;
 	case SNDRV_INFO_CONTENT_DATA:
-		if (entry->c.ops->write)
+		if (entry->c.ops->write && count > 0) {
+			size_t maxsize = entry->size - pos;
+			count = min(count, maxsize);
 			size = entry->c.ops->write(entry,
 						   data->file_private_data,
 						   file, buffer, count, pos);
+		}
 		break;
 	}
 	if ((ssize_t) size > 0)
@@ -520,32 +527,11 @@ static const struct file_operations snd_info_entry_operations =
 	.release =		snd_info_entry_release,
 };
 
-/**
- * snd_create_proc_entry - create a procfs entry
- * @name: the name of the proc file
- * @mode: the file permission bits, S_Ixxx
- * @parent: the parent proc-directory entry
- *
- * Creates a new proc file entry with the given name and permission
- * on the given directory.
- *
- * Returns the pointer of new instance or NULL on failure.
- */
-static struct proc_dir_entry *snd_create_proc_entry(const char *name, mode_t mode,
-						    struct proc_dir_entry *parent)
-{
-	struct proc_dir_entry *p;
-	p = create_proc_entry(name, mode, parent);
-	if (p)
-		snd_info_entry_prepare(p);
-	return p;
-}
-
 int __init snd_info_init(void)
 {
 	struct proc_dir_entry *p;
 
-	p = snd_create_proc_entry("asound", S_IFDIR | S_IRUGO | S_IXUGO, &proc_root);
+	p = create_proc_entry("asound", S_IFDIR | S_IRUGO | S_IXUGO, NULL);
 	if (p == NULL)
 		return -ENOMEM;
 	snd_proc_root = p;
@@ -595,7 +581,7 @@ int __exit snd_info_done(void)
 #ifdef CONFIG_SND_OSSEMUL
 		snd_info_free_entry(snd_oss_root);
 #endif
-		snd_remove_proc_entry(&proc_root, snd_proc_root);
+		snd_remove_proc_entry(NULL, snd_proc_root);
 	}
 	return 0;
 }
@@ -614,7 +600,8 @@ int snd_info_card_create(struct snd_card *card)
 	char str[8];
 	struct snd_info_entry *entry;
 
-	snd_assert(card != NULL, return -ENXIO);
+	if (snd_BUG_ON(!card))
+		return -ENXIO;
 
 	sprintf(str, "card%i", card->number);
 	if ((entry = snd_info_create_module_entry(card->module, str, NULL)) == NULL)
@@ -636,7 +623,8 @@ int snd_info_card_register(struct snd_card *card)
 {
 	struct proc_dir_entry *p;
 
-	snd_assert(card != NULL, return -ENXIO);
+	if (snd_BUG_ON(!card))
+		return -ENXIO;
 
 	if (!strcmp(card->id, card->proc_root->name))
 		return 0;
@@ -649,12 +637,30 @@ int snd_info_card_register(struct snd_card *card)
 }
 
 /*
+ * called on card->id change
+ */
+void snd_info_card_id_change(struct snd_card *card)
+{
+	mutex_lock(&info_mutex);
+	if (card->proc_root_link) {
+		snd_remove_proc_entry(snd_proc_root, card->proc_root_link);
+		card->proc_root_link = NULL;
+	}
+	if (strcmp(card->id, card->proc_root->name))
+		card->proc_root_link = proc_symlink(card->id,
+						    snd_proc_root,
+						    card->proc_root->name);
+	mutex_unlock(&info_mutex);
+}
+
+/*
  * de-register the card proc file
  * called from init.c
  */
 void snd_info_card_disconnect(struct snd_card *card)
 {
-	snd_assert(card != NULL, return);
+	if (!card)
+		return;
 	mutex_lock(&info_mutex);
 	if (card->proc_root_link) {
 		snd_remove_proc_entry(snd_proc_root, card->proc_root_link);
@@ -671,7 +677,8 @@ void snd_info_card_disconnect(struct snd_card *card)
  */
 int snd_info_card_free(struct snd_card *card)
 {
-	snd_assert(card != NULL, return -ENXIO);
+	if (!card)
+		return 0;
 	snd_info_free_entry(card->proc_root);
 	card->proc_root = NULL;
 	return 0;
@@ -730,7 +737,7 @@ EXPORT_SYMBOL(snd_info_get_line);
  * Returns the updated pointer of the original string so that
  * it can be used for the next call.
  */
-char *snd_info_get_str(char *dest, char *src, int len)
+const char *snd_info_get_str(char *dest, const char *src, int len)
 {
 	int c;
 
@@ -849,7 +856,7 @@ static void snd_info_disconnect(struct snd_info_entry *entry)
 		return;
 	list_del_init(&entry->list);
 	root = entry->parent == NULL ? snd_proc_root : entry->parent->p;
-	snd_assert(root, return);
+	snd_BUG_ON(!root);
 	snd_remove_proc_entry(root, entry->p);
 	entry->p = NULL;
 }
@@ -947,15 +954,15 @@ int snd_info_register(struct snd_info_entry * entry)
 {
 	struct proc_dir_entry *root, *p = NULL;
 
-	snd_assert(entry != NULL, return -ENXIO);
+	if (snd_BUG_ON(!entry))
+		return -ENXIO;
 	root = entry->parent == NULL ? snd_proc_root : entry->parent->p;
 	mutex_lock(&info_mutex);
-	p = snd_create_proc_entry(entry->name, entry->mode, root);
+	p = create_proc_entry(entry->name, entry->mode, root);
 	if (!p) {
 		mutex_unlock(&info_mutex);
 		return -ENOMEM;
 	}
-	p->owner = entry->module;
 	if (!S_ISDIR(entry->mode))
 		p->proc_fops = &snd_info_entry_operations;
 	p->size = entry->size;

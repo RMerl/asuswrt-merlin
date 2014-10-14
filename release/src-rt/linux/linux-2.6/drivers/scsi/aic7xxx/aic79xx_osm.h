@@ -222,22 +222,6 @@ typedef struct timer_list ahd_timer_t;
 /***************************** Timer Facilities *******************************/
 #define ahd_timer_init init_timer
 #define ahd_timer_stop del_timer_sync
-typedef void ahd_linux_callback_t (u_long);  
-static __inline void ahd_timer_reset(ahd_timer_t *timer, int usec,
-				     ahd_callback_t *func, void *arg);
-
-static __inline void
-ahd_timer_reset(ahd_timer_t *timer, int usec, ahd_callback_t *func, void *arg)
-{
-	struct ahd_softc *ahd;
-
-	ahd = (struct ahd_softc *)arg;
-	del_timer(timer);
-	timer->data = (u_long)arg;
-	timer->expires = jiffies + (usec * HZ)/1000000;
-	timer->function = (ahd_linux_callback_t*)func;
-	add_timer(timer);
-}
 
 /***************************** SMP support ************************************/
 #include <linux/spinlock.h>
@@ -376,120 +360,20 @@ struct ahd_platform_data {
 #define AHD_LINUX_NOIRQ	((uint32_t)~0)
 	uint32_t		 irq;		/* IRQ for this adapter */
 	uint32_t		 bios_address;
-	uint32_t		 mem_busaddr;	/* Mem Base Addr */
+	resource_size_t		 mem_busaddr;	/* Mem Base Addr */
 };
 
-/************************** OS Utility Wrappers *******************************/
-#define printf printk
-#define M_NOWAIT GFP_ATOMIC
-#define M_WAITOK 0
-#define malloc(size, type, flags) kmalloc(size, flags)
-#define free(ptr, type) kfree(ptr)
-
-static __inline void ahd_delay(long);
-static __inline void
-ahd_delay(long usec)
-{
-	/*
-	 * udelay on Linux can have problems for
-	 * multi-millisecond waits.  Wait at most
-	 * 1024us per call.
-	 */
-	while (usec > 0) {
-		udelay(usec % 1024);
-		usec -= 1024;
-	}
-}
-
+void ahd_delay(long);
 
 /***************************** Low Level I/O **********************************/
-static __inline uint8_t ahd_inb(struct ahd_softc * ahd, long port);
-static __inline uint16_t ahd_inw_atomic(struct ahd_softc * ahd, long port);
-static __inline void ahd_outb(struct ahd_softc * ahd, long port, uint8_t val);
-static __inline void ahd_outw_atomic(struct ahd_softc * ahd,
+uint8_t ahd_inb(struct ahd_softc * ahd, long port);
+void ahd_outb(struct ahd_softc * ahd, long port, uint8_t val);
+void ahd_outw_atomic(struct ahd_softc * ahd,
 				     long port, uint16_t val);
-static __inline void ahd_outsb(struct ahd_softc * ahd, long port,
+void ahd_outsb(struct ahd_softc * ahd, long port,
 			       uint8_t *, int count);
-static __inline void ahd_insb(struct ahd_softc * ahd, long port,
+void ahd_insb(struct ahd_softc * ahd, long port,
 			       uint8_t *, int count);
-
-static __inline uint8_t
-ahd_inb(struct ahd_softc * ahd, long port)
-{
-	uint8_t x;
-
-	if (ahd->tags[0] == BUS_SPACE_MEMIO) {
-		x = readb(ahd->bshs[0].maddr + port);
-	} else {
-		x = inb(ahd->bshs[(port) >> 8].ioport + ((port) & 0xFF));
-	}
-	mb();
-	return (x);
-}
-
-static __inline uint16_t
-ahd_inw_atomic(struct ahd_softc * ahd, long port)
-{
-	uint8_t x;
-
-	if (ahd->tags[0] == BUS_SPACE_MEMIO) {
-		x = readw(ahd->bshs[0].maddr + port);
-	} else {
-		x = inw(ahd->bshs[(port) >> 8].ioport + ((port) & 0xFF));
-	}
-	mb();
-	return (x);
-}
-
-static __inline void
-ahd_outb(struct ahd_softc * ahd, long port, uint8_t val)
-{
-	if (ahd->tags[0] == BUS_SPACE_MEMIO) {
-		writeb(val, ahd->bshs[0].maddr + port);
-	} else {
-		outb(val, ahd->bshs[(port) >> 8].ioport + (port & 0xFF));
-	}
-	mb();
-}
-
-static __inline void
-ahd_outw_atomic(struct ahd_softc * ahd, long port, uint16_t val)
-{
-	if (ahd->tags[0] == BUS_SPACE_MEMIO) {
-		writew(val, ahd->bshs[0].maddr + port);
-	} else {
-		outw(val, ahd->bshs[(port) >> 8].ioport + (port & 0xFF));
-	}
-	mb();
-}
-
-static __inline void
-ahd_outsb(struct ahd_softc * ahd, long port, uint8_t *array, int count)
-{
-	int i;
-
-	/*
-	 * There is probably a more efficient way to do this on Linux
-	 * but we don't use this for anything speed critical and this
-	 * should work.
-	 */
-	for (i = 0; i < count; i++)
-		ahd_outb(ahd, port, *array++);
-}
-
-static __inline void
-ahd_insb(struct ahd_softc * ahd, long port, uint8_t *array, int count)
-{
-	int i;
-
-	/*
-	 * There is probably a more efficient way to do this on Linux
-	 * but we don't use this for anything speed critical and this
-	 * should work.
-	 */
-	for (i = 0; i < count; i++)
-		*array++ = ahd_inb(ahd, port);
-}
 
 /**************************** Initialization **********************************/
 int		ahd_linux_register_host(struct ahd_softc *,
@@ -504,19 +388,19 @@ struct info_str {
 };
 
 /******************************** Locking *************************************/
-static __inline void
+static inline void
 ahd_lockinit(struct ahd_softc *ahd)
 {
 	spin_lock_init(&ahd->platform_data->spin_lock);
 }
 
-static __inline void
+static inline void
 ahd_lock(struct ahd_softc *ahd, unsigned long *flags)
 {
 	spin_lock_irqsave(&ahd->platform_data->spin_lock, *flags);
 }
 
-static __inline void
+static inline void
 ahd_unlock(struct ahd_softc *ahd, unsigned long *flags)
 {
 	spin_unlock_irqrestore(&ahd->platform_data->spin_lock, *flags);
@@ -593,85 +477,35 @@ void			 ahd_linux_pci_exit(void);
 int			 ahd_pci_map_registers(struct ahd_softc *ahd);
 int			 ahd_pci_map_int(struct ahd_softc *ahd);
 
-static __inline uint32_t ahd_pci_read_config(ahd_dev_softc_t pci,
+uint32_t		 ahd_pci_read_config(ahd_dev_softc_t pci,
 					     int reg, int width);
-
-static __inline uint32_t
-ahd_pci_read_config(ahd_dev_softc_t pci, int reg, int width)
-{
-	switch (width) {
-	case 1:
-	{
-		uint8_t retval;
-
-		pci_read_config_byte(pci, reg, &retval);
-		return (retval);
-	}
-	case 2:
-	{
-		uint16_t retval;
-		pci_read_config_word(pci, reg, &retval);
-		return (retval);
-	}
-	case 4:
-	{
-		uint32_t retval;
-		pci_read_config_dword(pci, reg, &retval);
-		return (retval);
-	}
-	default:
-		panic("ahd_pci_read_config: Read size too big");
-		/* NOTREACHED */
-		return (0);
-	}
-}
-
-static __inline void ahd_pci_write_config(ahd_dev_softc_t pci,
+void			 ahd_pci_write_config(ahd_dev_softc_t pci,
 					  int reg, uint32_t value,
 					  int width);
 
-static __inline void
-ahd_pci_write_config(ahd_dev_softc_t pci, int reg, uint32_t value, int width)
-{
-	switch (width) {
-	case 1:
-		pci_write_config_byte(pci, reg, value);
-		break;
-	case 2:
-		pci_write_config_word(pci, reg, value);
-		break;
-	case 4:
-		pci_write_config_dword(pci, reg, value);
-		break;
-	default:
-		panic("ahd_pci_write_config: Write size too big");
-		/* NOTREACHED */
-	}
-}
-
-static __inline int ahd_get_pci_function(ahd_dev_softc_t);
-static __inline int
+static inline int ahd_get_pci_function(ahd_dev_softc_t);
+static inline int
 ahd_get_pci_function(ahd_dev_softc_t pci)
 {
 	return (PCI_FUNC(pci->devfn));
 }
 
-static __inline int ahd_get_pci_slot(ahd_dev_softc_t);
-static __inline int
+static inline int ahd_get_pci_slot(ahd_dev_softc_t);
+static inline int
 ahd_get_pci_slot(ahd_dev_softc_t pci)
 {
 	return (PCI_SLOT(pci->devfn));
 }
 
-static __inline int ahd_get_pci_bus(ahd_dev_softc_t);
-static __inline int
+static inline int ahd_get_pci_bus(ahd_dev_softc_t);
+static inline int
 ahd_get_pci_bus(ahd_dev_softc_t pci)
 {
 	return (pci->bus->number);
 }
 
-static __inline void ahd_flush_device_writes(struct ahd_softc *);
-static __inline void
+static inline void ahd_flush_device_writes(struct ahd_softc *);
+static inline void
 ahd_flush_device_writes(struct ahd_softc *ahd)
 {
 	/* XXX Is this sufficient for all architectures??? */
@@ -683,81 +517,81 @@ int	ahd_linux_proc_info(struct Scsi_Host *, char *, char **,
 			    off_t, int, int);
 
 /*********************** Transaction Access Wrappers **************************/
-static __inline void ahd_cmd_set_transaction_status(struct scsi_cmnd *, uint32_t);
-static __inline void ahd_set_transaction_status(struct scb *, uint32_t);
-static __inline void ahd_cmd_set_scsi_status(struct scsi_cmnd *, uint32_t);
-static __inline void ahd_set_scsi_status(struct scb *, uint32_t);
-static __inline uint32_t ahd_cmd_get_transaction_status(struct scsi_cmnd *cmd);
-static __inline uint32_t ahd_get_transaction_status(struct scb *);
-static __inline uint32_t ahd_cmd_get_scsi_status(struct scsi_cmnd *cmd);
-static __inline uint32_t ahd_get_scsi_status(struct scb *);
-static __inline void ahd_set_transaction_tag(struct scb *, int, u_int);
-static __inline u_long ahd_get_transfer_length(struct scb *);
-static __inline int ahd_get_transfer_dir(struct scb *);
-static __inline void ahd_set_residual(struct scb *, u_long);
-static __inline void ahd_set_sense_residual(struct scb *scb, u_long resid);
-static __inline u_long ahd_get_residual(struct scb *);
-static __inline u_long ahd_get_sense_residual(struct scb *);
-static __inline int ahd_perform_autosense(struct scb *);
-static __inline uint32_t ahd_get_sense_bufsize(struct ahd_softc *,
+static inline void ahd_cmd_set_transaction_status(struct scsi_cmnd *, uint32_t);
+static inline void ahd_set_transaction_status(struct scb *, uint32_t);
+static inline void ahd_cmd_set_scsi_status(struct scsi_cmnd *, uint32_t);
+static inline void ahd_set_scsi_status(struct scb *, uint32_t);
+static inline uint32_t ahd_cmd_get_transaction_status(struct scsi_cmnd *cmd);
+static inline uint32_t ahd_get_transaction_status(struct scb *);
+static inline uint32_t ahd_cmd_get_scsi_status(struct scsi_cmnd *cmd);
+static inline uint32_t ahd_get_scsi_status(struct scb *);
+static inline void ahd_set_transaction_tag(struct scb *, int, u_int);
+static inline u_long ahd_get_transfer_length(struct scb *);
+static inline int ahd_get_transfer_dir(struct scb *);
+static inline void ahd_set_residual(struct scb *, u_long);
+static inline void ahd_set_sense_residual(struct scb *scb, u_long resid);
+static inline u_long ahd_get_residual(struct scb *);
+static inline u_long ahd_get_sense_residual(struct scb *);
+static inline int ahd_perform_autosense(struct scb *);
+static inline uint32_t ahd_get_sense_bufsize(struct ahd_softc *,
 					       struct scb *);
-static __inline void ahd_notify_xfer_settings_change(struct ahd_softc *,
+static inline void ahd_notify_xfer_settings_change(struct ahd_softc *,
 						     struct ahd_devinfo *);
-static __inline void ahd_platform_scb_free(struct ahd_softc *ahd,
+static inline void ahd_platform_scb_free(struct ahd_softc *ahd,
 					   struct scb *scb);
-static __inline void ahd_freeze_scb(struct scb *scb);
+static inline void ahd_freeze_scb(struct scb *scb);
 
-static __inline
+static inline
 void ahd_cmd_set_transaction_status(struct scsi_cmnd *cmd, uint32_t status)
 {
 	cmd->result &= ~(CAM_STATUS_MASK << 16);
 	cmd->result |= status << 16;
 }
 
-static __inline
+static inline
 void ahd_set_transaction_status(struct scb *scb, uint32_t status)
 {
 	ahd_cmd_set_transaction_status(scb->io_ctx,status);
 }
 
-static __inline
+static inline
 void ahd_cmd_set_scsi_status(struct scsi_cmnd *cmd, uint32_t status)
 {
 	cmd->result &= ~0xFFFF;
 	cmd->result |= status;
 }
 
-static __inline
+static inline
 void ahd_set_scsi_status(struct scb *scb, uint32_t status)
 {
 	ahd_cmd_set_scsi_status(scb->io_ctx, status);
 }
 
-static __inline
+static inline
 uint32_t ahd_cmd_get_transaction_status(struct scsi_cmnd *cmd)
 {
 	return ((cmd->result >> 16) & CAM_STATUS_MASK);
 }
 
-static __inline
+static inline
 uint32_t ahd_get_transaction_status(struct scb *scb)
 {
 	return (ahd_cmd_get_transaction_status(scb->io_ctx));
 }
 
-static __inline
+static inline
 uint32_t ahd_cmd_get_scsi_status(struct scsi_cmnd *cmd)
 {
 	return (cmd->result & 0xFFFF);
 }
 
-static __inline
+static inline
 uint32_t ahd_get_scsi_status(struct scb *scb)
 {
 	return (ahd_cmd_get_scsi_status(scb->io_ctx));
 }
 
-static __inline
+static inline
 void ahd_set_transaction_tag(struct scb *scb, int enabled, u_int type)
 {
 	/*
@@ -766,43 +600,43 @@ void ahd_set_transaction_tag(struct scb *scb, int enabled, u_int type)
 	 */
 }
 
-static __inline
+static inline
 u_long ahd_get_transfer_length(struct scb *scb)
 {
 	return (scb->platform_data->xfer_len);
 }
 
-static __inline
+static inline
 int ahd_get_transfer_dir(struct scb *scb)
 {
 	return (scb->io_ctx->sc_data_direction);
 }
 
-static __inline
+static inline
 void ahd_set_residual(struct scb *scb, u_long resid)
 {
-	scb->io_ctx->resid = resid;
+	scsi_set_resid(scb->io_ctx, resid);
 }
 
-static __inline
+static inline
 void ahd_set_sense_residual(struct scb *scb, u_long resid)
 {
 	scb->platform_data->sense_resid = resid;
 }
 
-static __inline
+static inline
 u_long ahd_get_residual(struct scb *scb)
 {
-	return (scb->io_ctx->resid);
+	return scsi_get_resid(scb->io_ctx);
 }
 
-static __inline
+static inline
 u_long ahd_get_sense_residual(struct scb *scb)
 {
 	return (scb->platform_data->sense_resid);
 }
 
-static __inline
+static inline
 int ahd_perform_autosense(struct scb *scb)
 {
 	/*
@@ -813,20 +647,20 @@ int ahd_perform_autosense(struct scb *scb)
 	return (1);
 }
 
-static __inline uint32_t
+static inline uint32_t
 ahd_get_sense_bufsize(struct ahd_softc *ahd, struct scb *scb)
 {
 	return (sizeof(struct scsi_sense_data));
 }
 
-static __inline void
+static inline void
 ahd_notify_xfer_settings_change(struct ahd_softc *ahd,
 				struct ahd_devinfo *devinfo)
 {
 	/* Nothing to do here for linux */
 }
 
-static __inline void
+static inline void
 ahd_platform_scb_free(struct ahd_softc *ahd, struct scb *scb)
 {
 	ahd->flags &= ~AHD_RESOURCE_SHORTAGE;
@@ -837,7 +671,7 @@ void	ahd_platform_free(struct ahd_softc *ahd);
 void	ahd_platform_init(struct ahd_softc *ahd);
 void	ahd_platform_freeze_devq(struct ahd_softc *ahd, struct scb *scb);
 
-static __inline void
+static inline void
 ahd_freeze_scb(struct scb *scb)
 {
 	if ((scb->io_ctx->result & (CAM_DEV_QFRZN << 16)) == 0) {

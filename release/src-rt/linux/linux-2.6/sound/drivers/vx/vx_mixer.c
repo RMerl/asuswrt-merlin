@@ -20,7 +20,6 @@
  *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
  */
 
-#include <sound/driver.h>
 #include <sound/core.h>
 #include <sound/control.h>
 #include <sound/tlv.h>
@@ -35,7 +34,8 @@ static void vx_write_codec_reg(struct vx_core *chip, int codec, unsigned int dat
 {
 	unsigned long flags;
 
-	snd_assert(chip->ops->write_codec, return);
+	if (snd_BUG_ON(!chip->ops->write_codec))
+		return;
 
 	if (chip->chip_status & VX_STAT_IS_STALE)
 		return;
@@ -439,14 +439,19 @@ static int vx_output_level_put(struct snd_kcontrol *kcontrol, struct snd_ctl_ele
 {
 	struct vx_core *chip = snd_kcontrol_chip(kcontrol);
 	int codec = kcontrol->id.index;
+	unsigned int val[2], vmax;
+
+	vmax = chip->hw->output_level_max;
+	val[0] = ucontrol->value.integer.value[0];
+	val[1] = ucontrol->value.integer.value[1];
+	if (val[0] > vmax || val[1] > vmax)
+		return -EINVAL;
 	mutex_lock(&chip->mixer_mutex);
-	if (ucontrol->value.integer.value[0] != chip->output_level[codec][0] ||
-	    ucontrol->value.integer.value[1] != chip->output_level[codec][1]) {
-		vx_set_analog_output_level(chip, codec,
-					   ucontrol->value.integer.value[0],
-					   ucontrol->value.integer.value[1]);
-		chip->output_level[codec][0] = ucontrol->value.integer.value[0];
-		chip->output_level[codec][1] = ucontrol->value.integer.value[1];
+	if (val[0] != chip->output_level[codec][0] ||
+	    val[1] != chip->output_level[codec][1]) {
+		vx_set_analog_output_level(chip, codec, val[0], val[1]);
+		chip->output_level[codec][0] = val[0];
+		chip->output_level[codec][1] = val[1];
 		mutex_unlock(&chip->mixer_mutex);
 		return 1;
 	}
@@ -506,6 +511,14 @@ static int vx_audio_src_get(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_v
 static int vx_audio_src_put(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
 {
 	struct vx_core *chip = snd_kcontrol_chip(kcontrol);
+
+	if (chip->type >= VX_TYPE_VXPOCKET) {
+		if (ucontrol->value.enumerated.item[0] > 2)
+			return -EINVAL;
+	} else {
+		if (ucontrol->value.enumerated.item[0] > 1)
+			return -EINVAL;
+	}
 	mutex_lock(&chip->mixer_mutex);
 	if (chip->audio_source_target != ucontrol->value.enumerated.item[0]) {
 		chip->audio_source_target = ucontrol->value.enumerated.item[0];
@@ -554,6 +567,9 @@ static int vx_clock_mode_get(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_
 static int vx_clock_mode_put(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
 {
 	struct vx_core *chip = snd_kcontrol_chip(kcontrol);
+
+	if (ucontrol->value.enumerated.item[0] > 2)
+		return -EINVAL;
 	mutex_lock(&chip->mixer_mutex);
 	if (chip->clock_mode != ucontrol->value.enumerated.item[0]) {
 		chip->clock_mode = ucontrol->value.enumerated.item[0];
@@ -603,12 +619,17 @@ static int vx_audio_gain_put(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_
 	struct vx_core *chip = snd_kcontrol_chip(kcontrol);
 	int audio = kcontrol->private_value & 0xff;
 	int capture = (kcontrol->private_value >> 8) & 1;
+	unsigned int val[2];
 
+	val[0] = ucontrol->value.integer.value[0];
+	val[1] = ucontrol->value.integer.value[1];
+	if (val[0] > CVAL_MAX || val[1] > CVAL_MAX)
+		return -EINVAL;
 	mutex_lock(&chip->mixer_mutex);
-	if (ucontrol->value.integer.value[0] != chip->audio_gain[capture][audio] ||
-	    ucontrol->value.integer.value[1] != chip->audio_gain[capture][audio+1]) {
-		vx_set_audio_gain(chip, audio, capture, ucontrol->value.integer.value[0]);
-		vx_set_audio_gain(chip, audio+1, capture, ucontrol->value.integer.value[1]);
+	if (val[0] != chip->audio_gain[capture][audio] ||
+	    val[1] != chip->audio_gain[capture][audio+1]) {
+		vx_set_audio_gain(chip, audio, capture, val[0]);
+		vx_set_audio_gain(chip, audio+1, capture, val[1]);
 		mutex_unlock(&chip->mixer_mutex);
 		return 1;
 	}
@@ -632,13 +653,19 @@ static int vx_audio_monitor_put(struct snd_kcontrol *kcontrol, struct snd_ctl_el
 {
 	struct vx_core *chip = snd_kcontrol_chip(kcontrol);
 	int audio = kcontrol->private_value & 0xff;
+	unsigned int val[2];
+
+	val[0] = ucontrol->value.integer.value[0];
+	val[1] = ucontrol->value.integer.value[1];
+	if (val[0] > CVAL_MAX || val[1] > CVAL_MAX)
+		return -EINVAL;
 
 	mutex_lock(&chip->mixer_mutex);
-	if (ucontrol->value.integer.value[0] != chip->audio_monitor[audio] ||
-	    ucontrol->value.integer.value[1] != chip->audio_monitor[audio+1]) {
-		vx_set_monitor_level(chip, audio, ucontrol->value.integer.value[0],
+	if (val[0] != chip->audio_monitor[audio] ||
+	    val[1] != chip->audio_monitor[audio+1]) {
+		vx_set_monitor_level(chip, audio, val[0],
 				     chip->audio_monitor_active[audio]);
-		vx_set_monitor_level(chip, audio+1, ucontrol->value.integer.value[1],
+		vx_set_monitor_level(chip, audio+1, val[1],
 				     chip->audio_monitor_active[audio+1]);
 		mutex_unlock(&chip->mixer_mutex);
 		return 1;
@@ -647,14 +674,7 @@ static int vx_audio_monitor_put(struct snd_kcontrol *kcontrol, struct snd_ctl_el
 	return 0;
 }
 
-static int vx_audio_sw_info(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_info *uinfo)
-{
-	uinfo->type = SNDRV_CTL_ELEM_TYPE_BOOLEAN;
-	uinfo->count = 2;
-	uinfo->value.integer.min = 0;
-	uinfo->value.integer.max = 1;
-	return 0;
-}
+#define vx_audio_sw_info	snd_ctl_boolean_stereo_info
 
 static int vx_audio_sw_get(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
 {
@@ -676,8 +696,10 @@ static int vx_audio_sw_put(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_va
 	mutex_lock(&chip->mixer_mutex);
 	if (ucontrol->value.integer.value[0] != chip->audio_active[audio] ||
 	    ucontrol->value.integer.value[1] != chip->audio_active[audio+1]) {
-		vx_set_audio_switch(chip, audio, ucontrol->value.integer.value[0]);
-		vx_set_audio_switch(chip, audio+1, ucontrol->value.integer.value[1]);
+		vx_set_audio_switch(chip, audio,
+				    !!ucontrol->value.integer.value[0]);
+		vx_set_audio_switch(chip, audio+1,
+				    !!ucontrol->value.integer.value[1]);
 		mutex_unlock(&chip->mixer_mutex);
 		return 1;
 	}
@@ -706,9 +728,9 @@ static int vx_monitor_sw_put(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_
 	if (ucontrol->value.integer.value[0] != chip->audio_monitor_active[audio] ||
 	    ucontrol->value.integer.value[1] != chip->audio_monitor_active[audio+1]) {
 		vx_set_monitor_level(chip, audio, chip->audio_monitor[audio],
-				     ucontrol->value.integer.value[0]);
+				     !!ucontrol->value.integer.value[0]);
 		vx_set_monitor_level(chip, audio+1, chip->audio_monitor[audio+1],
-				     ucontrol->value.integer.value[1]);
+				     !!ucontrol->value.integer.value[1]);
 		mutex_unlock(&chip->mixer_mutex);
 		return 1;
 	}
@@ -865,14 +887,7 @@ static int vx_peak_meter_get(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_
 	return 0;
 }
 
-static int vx_saturation_info(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_info *uinfo)
-{
-	uinfo->type = SNDRV_CTL_ELEM_TYPE_BOOLEAN;
-	uinfo->count = 2;
-	uinfo->value.integer.min = 0;
-	uinfo->value.integer.max = 1;
-	return 0;
-}
+#define vx_saturation_info	snd_ctl_boolean_stereo_info
 
 static int vx_saturation_get(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
 {

@@ -8,7 +8,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2007, R. Byron Moore
+ * Copyright (C) 2000 - 2011, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -98,8 +98,6 @@ acpi_os_table_override(struct acpi_table_header *existing_table,
 /*
  * Spinlock primitives
  */
-acpi_status acpi_os_create_lock(acpi_spinlock * out_handle);
-
 void acpi_os_delete_lock(acpi_spinlock handle);
 
 acpi_cpu_flags acpi_os_acquire_lock(acpi_spinlock handle);
@@ -121,8 +119,11 @@ acpi_os_wait_semaphore(acpi_semaphore handle, u32 units, u16 timeout);
 acpi_status acpi_os_signal_semaphore(acpi_semaphore handle, u32 units);
 
 /*
- * Mutex primitives
+ * Mutex primitives. May be configured to use semaphores instead via
+ * ACPI_MUTEX_TYPE (see platform/acenv.h)
  */
+#if (ACPI_MUTEX_TYPE != ACPI_BINARY_SEMAPHORE)
+
 acpi_status acpi_os_create_mutex(acpi_mutex * out_handle);
 
 void acpi_os_delete_mutex(acpi_mutex handle);
@@ -130,13 +131,7 @@ void acpi_os_delete_mutex(acpi_mutex handle);
 acpi_status acpi_os_acquire_mutex(acpi_mutex handle, u16 timeout);
 
 void acpi_os_release_mutex(acpi_mutex handle);
-
-/* Temporary macros for Mutex* interfaces, map to existing semaphore xfaces */
-
-#define acpi_os_create_mutex(out_handle)    acpi_os_create_semaphore (1, 1, out_handle)
-#define acpi_os_delete_mutex(handle)        (void) acpi_os_delete_semaphore (handle)
-#define acpi_os_acquire_mutex(handle,time)  acpi_os_wait_semaphore (handle, 1, time)
-#define acpi_os_release_mutex(handle)       (void) acpi_os_signal_semaphore (handle, 1)
+#endif
 
 /*
  * Memory allocation and mapping
@@ -144,9 +139,10 @@ void acpi_os_release_mutex(acpi_mutex handle);
 void *acpi_os_allocate(acpi_size size);
 
 void __iomem *acpi_os_map_memory(acpi_physical_address where,
-				 acpi_native_uint length);
+				acpi_size length);
 
 void acpi_os_unmap_memory(void __iomem * logical_address, acpi_size size);
+void early_acpi_os_unmap_memory(void __iomem * virt, acpi_size size);
 
 #ifdef ACPI_FUTURE_USAGE
 acpi_status
@@ -181,6 +177,9 @@ acpi_os_install_interrupt_handler(u32 gsi,
 acpi_status
 acpi_os_remove_interrupt_handler(u32 gsi, acpi_osd_handler service_routine);
 
+void acpi_os_gpe_count(u32 gpe_number);
+void acpi_os_fixed_event_count(u32 fixed_event_number);
+
 /*
  * Threads and Scheduling
  */
@@ -190,9 +189,12 @@ acpi_status
 acpi_os_execute(acpi_execute_type type,
 		acpi_osd_exec_callback function, void *context);
 
+acpi_status
+acpi_os_hotplug_execute(acpi_osd_exec_callback function, void *context);
+
 void acpi_os_wait_events_complete(void *context);
 
-void acpi_os_sleep(acpi_integer milliseconds);
+void acpi_os_sleep(u64 milliseconds);
 
 void acpi_os_stall(u32 microseconds);
 
@@ -219,28 +221,21 @@ acpi_os_write_memory(acpi_physical_address address, u32 value, u32 width);
  */
 acpi_status
 acpi_os_read_pci_configuration(struct acpi_pci_id *pci_id,
-			       u32 reg, void *value, u32 width);
+			       u32 reg, u64 *value, u32 width);
 
 acpi_status
 acpi_os_write_pci_configuration(struct acpi_pci_id *pci_id,
-				u32 reg, acpi_integer value, u32 width);
-
-/*
- * Interim function needed for PCI IRQ routing
- */
-void
-acpi_os_derive_pci_id(acpi_handle rhandle,
-		      acpi_handle chandle, struct acpi_pci_id **pci_id);
+				u32 reg, u64 value, u32 width);
 
 /*
  * Miscellaneous
  */
-acpi_status acpi_os_validate_interface(char *interface);
-acpi_status acpi_osi_invalidate(char* interface);
-
 acpi_status
-acpi_os_validate_address(u8 space_id,
-			 acpi_physical_address address, acpi_size length);
+acpi_os_validate_address(u8 space_id, acpi_physical_address address,
+			 acpi_size length, char *name);
+acpi_status
+acpi_os_invalidate_address(u8 space_id, acpi_physical_address address,
+			 acpi_size length);
 
 u64 acpi_os_get_timer(void);
 

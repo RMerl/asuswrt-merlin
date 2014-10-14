@@ -30,7 +30,7 @@
  *   0.1 F1OAT 07.06.98  Add timer polling routine for channel arbitration
  *   0.2 F6FBB 08.06.98  Added delay after FPGA programming
  *   0.3 F6FBB 29.07.98  Delayed PTT implementation for dupmode=2
- *   0.4 F6FBB 30.07.98  Added TxTail, Slottime and Persistance
+ *   0.4 F6FBB 30.07.98  Added TxTail, Slottime and Persistence
  *   0.5 F6FBB 01.08.98  Shared IRQs, /proc/net and network statistics
  *   0.6 F6FBB 25.08.98  Added 1200Bds format
  *   0.7 F6FBB 12.09.98  Added to the kernel configuration
@@ -55,6 +55,8 @@
 #include <asm/system.h>
 #include <linux/interrupt.h>
 #include <linux/ioport.h>
+#include <linux/firmware.h>
+#include <linux/platform_device.h>
 
 #include <linux/netdevice.h>
 #include <linux/if_arp.h>
@@ -65,20 +67,23 @@
 #include <linux/kernel.h>
 #include <linux/proc_fs.h>
 #include <linux/seq_file.h>
+#include <net/net_namespace.h>
 
 #include <asm/uaccess.h>
 #include <linux/init.h>
 
 #include <linux/yam.h>
-#include "yam9600.h"
-#include "yam1200.h"
 
 /* --------------------------------------------------------------------- */
 
 static const char yam_drvname[] = "yam";
-static char yam_drvinfo[] __initdata = KERN_INFO "YAM driver version 0.8 by F1OAT/F6FBB\n";
+static const char yam_drvinfo[] __initdata = KERN_INFO \
+	"YAM driver version 0.8 by F1OAT/F6FBB\n";
 
 /* --------------------------------------------------------------------- */
+
+#define FIRMWARE_9600	"yam/9600.bin"
+#define FIRMWARE_1200	"yam/1200.bin"
 
 #define YAM_9600	1
 #define YAM_1200	2
@@ -113,10 +118,6 @@ struct yam_port {
 	int dupmode;
 
 	struct net_device *dev;
-
-	/* Stats section */
-
-	struct net_device_stats stats;
 
 	int nb_rxint;
 	int nb_mdint;
@@ -344,16 +345,58 @@ static int fpga_write(int iobase, unsigned char wrd)
 	return 0;
 }
 
-static unsigned char *add_mcs(unsigned char *bits, int bitrate)
+/*
+ * predef should be 0 for loading user defined mcs
+ * predef should be YAM_1200 for loading predef 1200 mcs
+ * predef should be YAM_9600 for loading predef 9600 mcs
+ */
+static unsigned char *add_mcs(unsigned char *bits, int bitrate,
+			      unsigned int predef)
 {
+	const char *fw_name[2] = {FIRMWARE_9600, FIRMWARE_1200};
+	const struct firmware *fw;
+	struct platform_device *pdev;
 	struct yam_mcs *p;
+	int err;
+
+	switch (predef) {
+	case 0:
+		fw = NULL;
+		break;
+	case YAM_1200:
+	case YAM_9600:
+		predef--;
+		pdev = platform_device_register_simple("yam", 0, NULL, 0);
+		if (IS_ERR(pdev)) {
+			printk(KERN_ERR "yam: Failed to register firmware\n");
+			return NULL;
+		}
+		err = request_firmware(&fw, fw_name[predef], &pdev->dev);
+		platform_device_unregister(pdev);
+		if (err) {
+			printk(KERN_ERR "Failed to load firmware \"%s\"\n",
+			       fw_name[predef]);
+			return NULL;
+		}
+		if (fw->size != YAM_FPGA_SIZE) {
+			printk(KERN_ERR "Bogus length %zu in firmware \"%s\"\n",
+			       fw->size, fw_name[predef]);
+			release_firmware(fw);
+			return NULL;
+		}
+		bits = (unsigned char *)fw->data;
+		break;
+	default:
+		printk(KERN_ERR "yam: Invalid predef number %u\n", predef);
+		return NULL;
+	}
 
 	/* If it already exists, replace the bit data */
 	p = yam_data;
 	while (p) {
 		if (p->bitrate == bitrate) {
 			memcpy(p->bits, bits, YAM_FPGA_SIZE);
-			return p->bits;
+			goto out;
 		}
 		p = p->next;
 	}
@@ -361,13 +404,15 @@ static unsigned char *add_mcs(unsigned char *bits, int bitrate)
 	/* Allocate a new mcs */
 	if ((p = kmalloc(sizeof(struct yam_mcs), GFP_KERNEL)) == NULL) {
 		printk(KERN_WARNING "YAM: no memory to allocate mcs\n");
+		release_firmware(fw);
 		return NULL;
 	}
 	memcpy(p->bits, bits, YAM_FPGA_SIZE);
 	p->bitrate = bitrate;
 	p->next = yam_data;
 	yam_data = p;
-
+ out:
+	release_firmware(fw);
 	return p->bits;
 }
 
@@ -385,9 +430,11 @@ static unsigned char *get_mcs(int bitrate)
 	/* Load predefined mcs data */
 	switch (bitrate) {
 	case 1200:
-		return add_mcs(bits_1200, bitrate);
+		/* setting predef as YAM_1200 for loading predef 1200 mcs */
+		return add_mcs(NULL, bitrate, YAM_1200);
 	default:
-		return add_mcs(bits_9600, bitrate);
+		/* setting predef as YAM_9600 for loading predef 9600 mcs */
+		return add_mcs(NULL, bitrate, YAM_9600);
 	}
 }
 
@@ -506,7 +553,7 @@ static inline void yam_rx_flag(struct net_device *dev, struct yam_port *yp)
 		} else {
 			if (!(skb = dev_alloc_skb(pkt_len))) {
 				printk(KERN_WARNING "%s: memory squeeze, dropping packet\n", dev->name);
-				++yp->stats.rx_dropped;
+				++dev->stats.rx_dropped;
 			} else {
 				unsigned char *cp;
 				cp = skb_put(skb, pkt_len);
@@ -514,8 +561,7 @@ static inline void yam_rx_flag(struct net_device *dev, struct yam_port *yp)
 				memcpy(cp, yp->rx_buf, pkt_len - 1);
 				skb->protocol = ax25_type_trans(skb, dev);
 				netif_rx(skb);
-				dev->last_rx = jiffies;
-				++yp->stats.rx_packets;
+				++dev->stats.rx_packets;
 			}
 		}
 	}
@@ -548,13 +594,14 @@ static void ptt_off(struct net_device *dev)
 	outb(PTT_OFF, MCR(dev->base_addr));
 }
 
-static int yam_send_packet(struct sk_buff *skb, struct net_device *dev)
+static netdev_tx_t yam_send_packet(struct sk_buff *skb,
+					 struct net_device *dev)
 {
 	struct yam_port *yp = netdev_priv(dev);
 
 	skb_queue_tail(&yp->send_queue, skb);
 	dev->trans_start = jiffies;
-	return 0;
+	return NETDEV_TX_OK;
 }
 
 static void yam_start_tx(struct net_device *dev, struct yam_port *yp)
@@ -677,7 +724,7 @@ static void yam_tx_byte(struct net_device *dev, struct yam_port *yp)
 			yp->tx_count = 1;
 			yp->tx_state = TX_HEAD;
 		}
-		++yp->stats.tx_packets;
+		++dev->stats.tx_packets;
 		break;
 	case TX_TAIL:
 		if (--yp->tx_count <= 0) {
@@ -716,7 +763,7 @@ static irqreturn_t yam_interrupt(int irq, void *dev_id)
 			handled = 1;
 
 			if (lsr & LSR_OE)
-				++yp->stats.rx_fifo_errors;
+				++dev->stats.rx_fifo_errors;
 
 			yp->dcd = (msr & RX_DCD) ? 1 : 0;
 
@@ -778,16 +825,16 @@ static int yam_seq_show(struct seq_file *seq, void *v)
 	seq_printf(seq, "  TxTail   %u\n", yp->txtail);
 	seq_printf(seq, "  SlotTime %u\n", yp->slot);
 	seq_printf(seq, "  Persist  %u\n", yp->pers);
-	seq_printf(seq, "  TxFrames %lu\n", yp->stats.tx_packets);
-	seq_printf(seq, "  RxFrames %lu\n", yp->stats.rx_packets);
+	seq_printf(seq, "  TxFrames %lu\n", dev->stats.tx_packets);
+	seq_printf(seq, "  RxFrames %lu\n", dev->stats.rx_packets);
 	seq_printf(seq, "  TxInt    %u\n", yp->nb_mdint);
 	seq_printf(seq, "  RxInt    %u\n", yp->nb_rxint);
-	seq_printf(seq, "  RxOver   %lu\n", yp->stats.rx_fifo_errors);
+	seq_printf(seq, "  RxOver   %lu\n", dev->stats.rx_fifo_errors);
 	seq_printf(seq, "\n");
 	return 0;
 }
 
-static struct seq_operations yam_seqops = {
+static const struct seq_operations yam_seqops = {
 	.start = yam_seq_start,
 	.next = yam_seq_next,
 	.stop = yam_seq_stop,
@@ -809,26 +856,6 @@ static const struct file_operations yam_info_fops = {
 
 #endif
 
-
-/* --------------------------------------------------------------------- */
-
-static struct net_device_stats *yam_get_stats(struct net_device *dev)
-{
-	struct yam_port *yp;
-
-	if (!dev)
-		return NULL;
-
-	yp = netdev_priv(dev);
-	if (yp->magic != YAM_MAGIC)
-		return NULL;
-
-	/* 
-	 * Get the current statistics.  This may be called with the
-	 * card open or closed. 
-	 */
-	return &yp->stats;
-}
 
 /* --------------------------------------------------------------------- */
 
@@ -877,10 +904,10 @@ static int yam_open(struct net_device *dev)
 
 	/* Reset overruns for all ports - FPGA programming makes overruns */
 	for (i = 0; i < NR_PORTS; i++) {
-		struct net_device *dev = yam_devs[i];
-		struct yam_port *yp = netdev_priv(dev);
-		inb(LSR(dev->base_addr));
-		yp->stats.rx_fifo_errors = 0;
+		struct net_device *yam_dev = yam_devs[i];
+
+		inb(LSR(yam_dev->base_addr));
+		yam_dev->stats.rx_fifo_errors = 0;
 	}
 
 	printk(KERN_INFO "%s at iobase 0x%lx irq %u uart %s\n", dev->name, dev->base_addr, dev->irq,
@@ -959,7 +986,8 @@ static int yam_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
 			kfree(ym);
 			return -EINVAL;
 		}
-		add_mcs(ym->bits, ym->bitrate);
+		/* setting predef as 0 for loading userdefined mcs data */
+		add_mcs(ym->bits, ym->bitrate, 0);
 		kfree(ym);
 		break;
 
@@ -1068,6 +1096,14 @@ static int yam_set_mac_address(struct net_device *dev, void *addr)
 
 /* --------------------------------------------------------------------- */
 
+static const struct net_device_ops yam_netdev_ops = {
+	.ndo_open	     = yam_open,
+	.ndo_stop	     = yam_close,
+	.ndo_start_xmit      = yam_send_packet,
+	.ndo_do_ioctl 	     = yam_ioctl,
+	.ndo_set_mac_address = yam_set_mac_address,
+};
+
 static void yam_setup(struct net_device *dev)
 {
 	struct yam_port *yp = netdev_priv(dev);
@@ -1088,18 +1124,10 @@ static void yam_setup(struct net_device *dev)
 	dev->base_addr = yp->iobase;
 	dev->irq = yp->irq;
 
-	dev->open = yam_open;
-	dev->stop = yam_close;
-	dev->do_ioctl = yam_ioctl;
-	dev->hard_start_xmit = yam_send_packet;
-	dev->get_stats = yam_get_stats;
-
 	skb_queue_head_init(&yp->send_queue);
 
-	dev->hard_header = ax25_hard_header;
-	dev->rebuild_header = ax25_rebuild_header;
-
-	dev->set_mac_address = yam_set_mac_address;
+	dev->netdev_ops = &yam_netdev_ops;
+	dev->header_ops = &ax25_header_ops;
 
 	dev->type = ARPHRD_AX25;
 	dev->hard_header_len = AX25_MAX_HEADER_LEN;
@@ -1123,8 +1151,7 @@ static int __init yam_init_driver(void)
 		dev = alloc_netdev(sizeof(struct yam_port), name,
 				   yam_setup);
 		if (!dev) {
-			printk(KERN_ERR "yam: cannot allocate net device %s\n",
-			       dev->name);
+			pr_err("yam: cannot allocate net device\n");
 			err = -ENOMEM;
 			goto error;
 		}
@@ -1142,7 +1169,7 @@ static int __init yam_init_driver(void)
 	yam_timer.expires = jiffies + HZ / 100;
 	add_timer(&yam_timer);
 
-	proc_net_fops_create("yam", S_IRUGO, &yam_info_fops);
+	proc_net_fops_create(&init_net, "yam", S_IRUGO, &yam_info_fops);
 	return 0;
  error:
 	while (--i >= 0) {
@@ -1174,7 +1201,7 @@ static void __exit yam_cleanup_driver(void)
 		kfree(p);
 	}
 
-	proc_net_remove("yam");
+	proc_net_remove(&init_net, "yam");
 }
 
 /* --------------------------------------------------------------------- */
@@ -1182,6 +1209,8 @@ static void __exit yam_cleanup_driver(void)
 MODULE_AUTHOR("Frederic Rible F1OAT frible@teaser.fr");
 MODULE_DESCRIPTION("Yam amateur radio modem driver");
 MODULE_LICENSE("GPL");
+MODULE_FIRMWARE(FIRMWARE_1200);
+MODULE_FIRMWARE(FIRMWARE_9600);
 
 module_init(yam_init_driver);
 module_exit(yam_cleanup_driver);

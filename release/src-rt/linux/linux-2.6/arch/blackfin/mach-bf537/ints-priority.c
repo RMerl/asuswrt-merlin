@@ -1,37 +1,16 @@
 /*
- * File:         arch/blackfin/mach-bf537/ints-priority.c
- * Based on:     arch/blackfin/mach-bf533/ints-priority.c
- * Author:       Michael Hennerich
+ * Copyright 2005-2009 Analog Devices Inc.
  *
- * Created:
- * Description:  Set up the interrupt priorities
+ * Licensed under the GPL-2 or later.
  *
- * Modified:
- *               Copyright 2004-2006 Analog Devices Inc.
- *
- * Bugs:         Enter bugs at http://blackfin.uclinux.org/
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, see the file COPYING, or write
- * to the Free Software Foundation, Inc.,
- * 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ * Set up the interrupt priorities
  */
 
 #include <linux/module.h>
+#include <linux/irq.h>
 #include <asm/blackfin.h>
-#include <asm/irq.h>
 
-void program_IAR(void)
+void __init program_IAR(void)
 {
 	/* Program the IAR0 Register with the configured priority */
 	bfin_write_SIC_IAR0(((CONFIG_IRQ_PLL_WAKEUP - 7) << IRQ_PLL_WAKEUP_POS) |
@@ -55,15 +34,15 @@ void program_IAR(void)
 	bfin_write_SIC_IAR2(((CONFIG_IRQ_CAN_TX - 7) << IRQ_CAN_TX_POS) |
 			    ((CONFIG_IRQ_MAC_RX - 7) << IRQ_MAC_RX_POS) |
 			    ((CONFIG_IRQ_MAC_TX - 7) << IRQ_MAC_TX_POS) |
-			    ((CONFIG_IRQ_TMR0 - 7) << IRQ_TMR0_POS) |
-			    ((CONFIG_IRQ_TMR1 - 7) << IRQ_TMR1_POS) |
-			    ((CONFIG_IRQ_TMR2 - 7) << IRQ_TMR2_POS) |
-			    ((CONFIG_IRQ_TMR3 - 7) << IRQ_TMR3_POS) |
-			    ((CONFIG_IRQ_TMR4 - 7) << IRQ_TMR4_POS));
+			    ((CONFIG_IRQ_TIMER0 - 7) << IRQ_TIMER0_POS) |
+			    ((CONFIG_IRQ_TIMER1 - 7) << IRQ_TIMER1_POS) |
+			    ((CONFIG_IRQ_TIMER2 - 7) << IRQ_TIMER2_POS) |
+			    ((CONFIG_IRQ_TIMER3 - 7) << IRQ_TIMER3_POS) |
+			    ((CONFIG_IRQ_TIMER4 - 7) << IRQ_TIMER4_POS));
 
-	bfin_write_SIC_IAR3(((CONFIG_IRQ_TMR5 - 7) << IRQ_TMR5_POS) |
-			    ((CONFIG_IRQ_TMR6 - 7) << IRQ_TMR6_POS) |
-			    ((CONFIG_IRQ_TMR7 - 7) << IRQ_TMR7_POS) |
+	bfin_write_SIC_IAR3(((CONFIG_IRQ_TIMER5 - 7) << IRQ_TIMER5_POS) |
+			    ((CONFIG_IRQ_TIMER6 - 7) << IRQ_TIMER6_POS) |
+			    ((CONFIG_IRQ_TIMER7 - 7) << IRQ_TIMER7_POS) |
 			    ((CONFIG_IRQ_PROG_INTA - 7) << IRQ_PROG_INTA_POS) |
 			    ((CONFIG_IRQ_PORTG_INTB - 7) << IRQ_PORTG_INTB_POS) |
 			    ((CONFIG_IRQ_MEM_DMA0 - 7) << IRQ_MEM_DMA0_POS) |

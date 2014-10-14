@@ -5,7 +5,7 @@
  *     License: GPLv2
  *     Depends: cfag12864b
  *
- *      Author: Copyright (C) Miguel Ojeda Sandonis <maxextreme@gmail.com>
+ *      Author: Copyright (C) Miguel Ojeda Sandonis
  *        Date: 2006-10-31
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -31,14 +31,13 @@
 #include <linux/fb.h>
 #include <linux/mm.h>
 #include <linux/platform_device.h>
-#include <linux/slab.h>
 #include <linux/string.h>
 #include <linux/uaccess.h>
 #include <linux/cfag12864b.h>
 
 #define CFAG12864BFB_NAME "cfag12864bfb"
 
-static struct fb_fix_screeninfo cfag12864bfb_fix __initdata = {
+static struct fb_fix_screeninfo cfag12864bfb_fix __devinitdata = {
 	.id = "cfag12864b",
 	.type = FB_TYPE_PACKED_PIXELS,
 	.visual = FB_VISUAL_MONO10,
@@ -49,7 +48,7 @@ static struct fb_fix_screeninfo cfag12864bfb_fix __initdata = {
 	.accel = FB_ACCEL_NONE,
 };
 
-static struct fb_var_screeninfo cfag12864bfb_var __initdata = {
+static struct fb_var_screeninfo cfag12864bfb_var __devinitdata = {
 	.xres = CFAG12864B_WIDTH,
 	.yres = CFAG12864B_HEIGHT,
 	.xres_virtual = CFAG12864B_WIDTH,
@@ -81,7 +80,7 @@ static struct fb_ops cfag12864bfb_ops = {
 	.fb_mmap = cfag12864bfb_mmap,
 };
 
-static int __init cfag12864bfb_probe(struct platform_device *device)
+static int __devinit cfag12864bfb_probe(struct platform_device *device)
 {
 	int ret = -EINVAL;
  	struct fb_info *info = framebuffer_alloc(0, &device->dev);
@@ -115,7 +114,7 @@ none:
 	return ret;
 }
 
-static int cfag12864bfb_remove(struct platform_device *device)
+static int __devexit cfag12864bfb_remove(struct platform_device *device)
 {
 	struct fb_info *info = platform_get_drvdata(device);
 
@@ -129,7 +128,7 @@ static int cfag12864bfb_remove(struct platform_device *device)
 
 static struct platform_driver cfag12864bfb_driver = {
 	.probe	= cfag12864bfb_probe,
-	.remove = cfag12864bfb_remove,
+	.remove = __devexit_p(cfag12864bfb_remove),
 	.driver = {
 		.name	= CFAG12864BFB_NAME,
 	},
@@ -186,5 +185,5 @@ module_init(cfag12864bfb_init);
 module_exit(cfag12864bfb_exit);
 
 MODULE_LICENSE("GPL v2");
-MODULE_AUTHOR("Miguel Ojeda Sandonis <maxextreme@gmail.com>");
+MODULE_AUTHOR("Miguel Ojeda Sandonis <miguel.ojeda.sandonis@gmail.com>");
 MODULE_DESCRIPTION("cfag12864b LCD framebuffer driver");

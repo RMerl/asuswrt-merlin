@@ -14,15 +14,54 @@
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
-#include <linux/pm.h>
+#include <linux/suspend.h>
 #include <linux/platform_device.h>
+#include <linux/sysdev.h>
+#include <linux/io.h>
+#include <linux/irq.h>
+#include <linux/i2c/pxa-i2c.h>
 
-#include <asm/hardware.h>
+#include <asm/mach/map.h>
+#include <mach/hardware.h>
 #include <asm/irq.h>
-#include <asm/arch/pxa-regs.h>
-#include <asm/arch/ohci.h>
+#include <mach/irqs.h>
+#include <mach/gpio.h>
+#include <mach/pxa27x.h>
+#include <mach/reset.h>
+#include <mach/ohci.h>
+#include <mach/pm.h>
+#include <mach/dma.h>
+#include <mach/smemc.h>
 
 #include "generic.h"
+#include "devices.h"
+#include "clock.h"
+
+void pxa27x_clear_otgph(void)
+{
+	if (cpu_is_pxa27x() && (PSSR & PSSR_OTGPH))
+		PSSR |= PSSR_OTGPH;
+}
+EXPORT_SYMBOL(pxa27x_clear_otgph);
+
+static unsigned long ac97_reset_config[] = {
+	GPIO113_GPIO,
+	GPIO113_AC97_nRESET,
+	GPIO95_GPIO,
+	GPIO95_AC97_nRESET,
+};
+
+void pxa27x_assert_ac97reset(int reset_gpio, int on)
+{
+	if (reset_gpio == 113)
+		pxa2xx_mfp_config(on ? &ac97_reset_config[0] :
+				       &ac97_reset_config[1], 1);
+
+	if (reset_gpio == 95)
+		pxa2xx_mfp_config(on ? &ac97_reset_config[2] :
+				       &ac97_reset_config[3], 1);
+}
+EXPORT_SYMBOL_GPL(pxa27x_assert_ac97reset);
 
 /* Crystal clock: 13MHz */
 #define BASE_CLK	13000000
@@ -32,7 +71,7 @@
  * We assume these values have been applied via a fcs.
  * If info is not 0 we also display the current settings.
  */
-unsigned int get_clk_frequency_khz( int info)
+unsigned int pxa27x_get_clk_frequency_khz(int info)
 {
 	unsigned long ccsr, clkcfg;
 	unsigned int l, L, m, M, n2, N, S;
@@ -72,10 +111,9 @@ unsigned int get_clk_frequency_khz( int info)
 }
 
 /*
- * Return the current mem clock frequency in units of 10kHz as
- * reflected by CCCR[A], B, and L
+ * Return the current mem clock frequency as reflected by CCCR[A], B, and L
  */
-unsigned int get_memclk_frequency_10khz(void)
+static unsigned long clk_pxa27x_mem_getrate(struct clk *clk)
 {
 	unsigned long ccsr, clkcfg;
 	unsigned int l, L, m, M;
@@ -94,13 +132,19 @@ unsigned int get_memclk_frequency_10khz(void)
 	L = l * BASE_CLK;
 	M = (!cccr_a) ? (L/m) : ((b) ? L : (L/2));
 
-	return (M / 10000);
+	return M;
 }
+
+static const struct clkops clk_pxa27x_mem_ops = {
+	.enable		= clk_dummy_enable,
+	.disable	= clk_dummy_disable,
+	.getrate	= clk_pxa27x_mem_getrate,
+};
 
 /*
  * Return the current LCD clock frequency in units of 10kHz as
  */
-unsigned int get_lcdclk_frequency_10khz(void)
+static unsigned int pxa27x_get_lcdclk_frequency_10khz(void)
 {
 	unsigned long ccsr;
 	unsigned int l, L, k, K;
@@ -116,33 +160,130 @@ unsigned int get_lcdclk_frequency_10khz(void)
 	return (K / 10000);
 }
 
-EXPORT_SYMBOL(get_clk_frequency_khz);
-EXPORT_SYMBOL(get_memclk_frequency_10khz);
-EXPORT_SYMBOL(get_lcdclk_frequency_10khz);
+static unsigned long clk_pxa27x_lcd_getrate(struct clk *clk)
+{
+	return pxa27x_get_lcdclk_frequency_10khz() * 10000;
+}
+
+static const struct clkops clk_pxa27x_lcd_ops = {
+	.enable		= clk_pxa2xx_cken_enable,
+	.disable	= clk_pxa2xx_cken_disable,
+	.getrate	= clk_pxa27x_lcd_getrate,
+};
+
+static DEFINE_PXA2_CKEN(pxa27x_ffuart, FFUART, 14857000, 1);
+static DEFINE_PXA2_CKEN(pxa27x_btuart, BTUART, 14857000, 1);
+static DEFINE_PXA2_CKEN(pxa27x_stuart, STUART, 14857000, 1);
+static DEFINE_PXA2_CKEN(pxa27x_i2s, I2S, 14682000, 0);
+static DEFINE_PXA2_CKEN(pxa27x_i2c, I2C, 32842000, 0);
+static DEFINE_PXA2_CKEN(pxa27x_usb, USB, 48000000, 5);
+static DEFINE_PXA2_CKEN(pxa27x_mmc, MMC, 19500000, 0);
+static DEFINE_PXA2_CKEN(pxa27x_ficp, FICP, 48000000, 0);
+static DEFINE_PXA2_CKEN(pxa27x_usbhost, USBHOST, 48000000, 0);
+static DEFINE_PXA2_CKEN(pxa27x_pwri2c, PWRI2C, 13000000, 0);
+static DEFINE_PXA2_CKEN(pxa27x_keypad, KEYPAD, 32768, 0);
+static DEFINE_PXA2_CKEN(pxa27x_ssp1, SSP1, 13000000, 0);
+static DEFINE_PXA2_CKEN(pxa27x_ssp2, SSP2, 13000000, 0);
+static DEFINE_PXA2_CKEN(pxa27x_ssp3, SSP3, 13000000, 0);
+static DEFINE_PXA2_CKEN(pxa27x_pwm0, PWM0, 13000000, 0);
+static DEFINE_PXA2_CKEN(pxa27x_pwm1, PWM1, 13000000, 0);
+static DEFINE_PXA2_CKEN(pxa27x_ac97, AC97, 24576000, 0);
+static DEFINE_PXA2_CKEN(pxa27x_ac97conf, AC97CONF, 24576000, 0);
+static DEFINE_PXA2_CKEN(pxa27x_msl, MSL, 48000000, 0);
+static DEFINE_PXA2_CKEN(pxa27x_usim, USIM, 48000000, 0);
+static DEFINE_PXA2_CKEN(pxa27x_memstk, MEMSTK, 19500000, 0);
+static DEFINE_PXA2_CKEN(pxa27x_im, IM, 0, 0);
+static DEFINE_PXA2_CKEN(pxa27x_memc, MEMC, 0, 0);
+
+static DEFINE_CK(pxa27x_lcd, LCD, &clk_pxa27x_lcd_ops);
+static DEFINE_CK(pxa27x_camera, CAMERA, &clk_pxa27x_lcd_ops);
+static DEFINE_CLK(pxa27x_mem, &clk_pxa27x_mem_ops, 0, 0);
+
+static struct clk_lookup pxa27x_clkregs[] = {
+	INIT_CLKREG(&clk_pxa27x_lcd, "pxa2xx-fb", NULL),
+	INIT_CLKREG(&clk_pxa27x_camera, "pxa27x-camera.0", NULL),
+	INIT_CLKREG(&clk_pxa27x_ffuart, "pxa2xx-uart.0", NULL),
+	INIT_CLKREG(&clk_pxa27x_btuart, "pxa2xx-uart.1", NULL),
+	INIT_CLKREG(&clk_pxa27x_stuart, "pxa2xx-uart.2", NULL),
+	INIT_CLKREG(&clk_pxa27x_i2s, "pxa2xx-i2s", NULL),
+	INIT_CLKREG(&clk_pxa27x_i2c, "pxa2xx-i2c.0", NULL),
+	INIT_CLKREG(&clk_pxa27x_usb, "pxa27x-udc", NULL),
+	INIT_CLKREG(&clk_pxa27x_mmc, "pxa2xx-mci.0", NULL),
+	INIT_CLKREG(&clk_pxa27x_stuart, "pxa2xx-ir", "UARTCLK"),
+	INIT_CLKREG(&clk_pxa27x_ficp, "pxa2xx-ir", "FICPCLK"),
+	INIT_CLKREG(&clk_pxa27x_usbhost, "pxa27x-ohci", NULL),
+	INIT_CLKREG(&clk_pxa27x_pwri2c, "pxa2xx-i2c.1", NULL),
+	INIT_CLKREG(&clk_pxa27x_keypad, "pxa27x-keypad", NULL),
+	INIT_CLKREG(&clk_pxa27x_ssp1, "pxa27x-ssp.0", NULL),
+	INIT_CLKREG(&clk_pxa27x_ssp2, "pxa27x-ssp.1", NULL),
+	INIT_CLKREG(&clk_pxa27x_ssp3, "pxa27x-ssp.2", NULL),
+	INIT_CLKREG(&clk_pxa27x_pwm0, "pxa27x-pwm.0", NULL),
+	INIT_CLKREG(&clk_pxa27x_pwm1, "pxa27x-pwm.1", NULL),
+	INIT_CLKREG(&clk_pxa27x_ac97, NULL, "AC97CLK"),
+	INIT_CLKREG(&clk_pxa27x_ac97conf, NULL, "AC97CONFCLK"),
+	INIT_CLKREG(&clk_pxa27x_msl, NULL, "MSLCLK"),
+	INIT_CLKREG(&clk_pxa27x_usim, NULL, "USIMCLK"),
+	INIT_CLKREG(&clk_pxa27x_memstk, NULL, "MSTKCLK"),
+	INIT_CLKREG(&clk_pxa27x_im, NULL, "IMCLK"),
+	INIT_CLKREG(&clk_pxa27x_memc, NULL, "MEMCLK"),
+	INIT_CLKREG(&clk_pxa27x_mem, "pxa2xx-pcmcia", NULL),
+};
 
 #ifdef CONFIG_PM
 
-int pxa_cpu_pm_prepare(suspend_state_t state)
+#define SAVE(x)		sleep_save[SLEEP_SAVE_##x] = x
+#define RESTORE(x)	x = sleep_save[SLEEP_SAVE_##x]
+
+/*
+ * allow platforms to override default PWRMODE setting used for PM_SUSPEND_MEM
+ */
+static unsigned int pwrmode = PWRMODE_SLEEP;
+
+int __init pxa27x_set_pwrmode(unsigned int mode)
 {
-	switch (state) {
-	case PM_SUSPEND_MEM:
-	case PM_SUSPEND_STANDBY:
+	switch (mode) {
+	case PWRMODE_SLEEP:
+	case PWRMODE_DEEPSLEEP:
+		pwrmode = mode;
 		return 0;
-	default:
-		return -EINVAL;
 	}
+
+	return -EINVAL;
 }
 
-void pxa_cpu_pm_enter(suspend_state_t state)
+/*
+ * List of global PXA peripheral registers to preserve.
+ * More ones like CP and general purpose register values are preserved
+ * with the stack pointer in sleep.S.
+ */
+enum {
+	SLEEP_SAVE_PSTR,
+	SLEEP_SAVE_MDREFR,
+	SLEEP_SAVE_PCFR,
+	SLEEP_SAVE_COUNT
+};
+
+void pxa27x_cpu_pm_save(unsigned long *sleep_save)
+{
+	sleep_save[SLEEP_SAVE_MDREFR] = __raw_readl(MDREFR);
+	SAVE(PCFR);
+
+	SAVE(PSTR);
+}
+
+void pxa27x_cpu_pm_restore(unsigned long *sleep_save)
+{
+	__raw_writel(sleep_save[SLEEP_SAVE_MDREFR], MDREFR);
+	RESTORE(PCFR);
+
+	PSSR = PSSR_RDH | PSSR_PH;
+
+	RESTORE(PSTR);
+}
+
+void pxa27x_cpu_pm_enter(suspend_state_t state)
 {
 	extern void pxa_cpu_standby(void);
-	extern void pxa_cpu_suspend(unsigned int);
-	extern void pxa_cpu_resume(void);
-
-	if (state == PM_SUSPEND_STANDBY)
-		CKEN = (1 << CKEN_MEMC) | (1 << CKEN_OSTIMER) | (1 << CKEN_LCD) | (1 << CKEN_PWM0);
-	else
-		CKEN = (1 << CKEN_MEMC) | (1 << CKEN_OSTIMER);
 
 	/* ensure voltage-change sequencer not initiated, which hangs */
 	PCFR &= ~PCFR_FVC;
@@ -150,62 +291,180 @@ void pxa_cpu_pm_enter(suspend_state_t state)
 	/* Clear edge-detect status register. */
 	PEDR = 0xDF12FE1B;
 
+	/* Clear reset status */
+	RCSR = RCSR_HWR | RCSR_WDR | RCSR_SMR | RCSR_GPR;
+
 	switch (state) {
 	case PM_SUSPEND_STANDBY:
 		pxa_cpu_standby();
 		break;
 	case PM_SUSPEND_MEM:
-		/* set resume return address */
-		PSPR = virt_to_phys(pxa_cpu_resume);
-		pxa_cpu_suspend(PWRMODE_SLEEP);
+		pxa27x_cpu_suspend(pwrmode, PLAT_PHYS_OFFSET - PAGE_OFFSET);
 		break;
 	}
 }
 
+static int pxa27x_cpu_pm_valid(suspend_state_t state)
+{
+	return state == PM_SUSPEND_MEM || state == PM_SUSPEND_STANDBY;
+}
+
+static int pxa27x_cpu_pm_prepare(void)
+{
+	/* set resume return address */
+	PSPR = virt_to_phys(cpu_resume);
+	return 0;
+}
+
+static void pxa27x_cpu_pm_finish(void)
+{
+	/* ensure not to come back here if it wasn't intended */
+	PSPR = 0;
+}
+
+static struct pxa_cpu_pm_fns pxa27x_cpu_pm_fns = {
+	.save_count	= SLEEP_SAVE_COUNT,
+	.save		= pxa27x_cpu_pm_save,
+	.restore	= pxa27x_cpu_pm_restore,
+	.valid		= pxa27x_cpu_pm_valid,
+	.enter		= pxa27x_cpu_pm_enter,
+	.prepare	= pxa27x_cpu_pm_prepare,
+	.finish		= pxa27x_cpu_pm_finish,
+};
+
+static void __init pxa27x_init_pm(void)
+{
+	pxa_cpu_pm_fns = &pxa27x_cpu_pm_fns;
+}
+#else
+static inline void pxa27x_init_pm(void) {}
 #endif
+
+/* PXA27x:  Various gpios can issue wakeup events.  This logic only
+ * handles the simple cases, not the WEMUX2 and WEMUX3 options
+ */
+static int pxa27x_set_wake(struct irq_data *d, unsigned int on)
+{
+	int gpio = irq_to_gpio(d->irq);
+	uint32_t mask;
+
+	if (gpio >= 0 && gpio < 128)
+		return gpio_set_wake(gpio, on);
+
+	if (d->irq == IRQ_KEYPAD)
+		return keypad_set_wake(on);
+
+	switch (d->irq) {
+	case IRQ_RTCAlrm:
+		mask = PWER_RTC;
+		break;
+	case IRQ_USB:
+		mask = 1u << 26;
+		break;
+	default:
+		return -EINVAL;
+	}
+
+	if (on)
+		PWER |= mask;
+	else
+		PWER &=~mask;
+
+	return 0;
+}
+
+void __init pxa27x_init_irq(void)
+{
+	pxa_init_irq(34, pxa27x_set_wake);
+	pxa_init_gpio(IRQ_GPIO_2_x, 2, 120, pxa27x_set_wake);
+}
+
+static struct map_desc pxa27x_io_desc[] __initdata = {
+	{	/* Mem Ctl */
+		.virtual	= SMEMC_VIRT,
+		.pfn		= __phys_to_pfn(PXA2XX_SMEMC_BASE),
+		.length		= 0x00200000,
+		.type		= MT_DEVICE
+	}, {	/* IMem ctl */
+		.virtual	=  0xfe000000,
+		.pfn		= __phys_to_pfn(0x58000000),
+		.length		= 0x00100000,
+		.type		= MT_DEVICE
+	},
+};
+
+void __init pxa27x_map_io(void)
+{
+	pxa_map_io();
+	iotable_init(ARRAY_AND_SIZE(pxa27x_io_desc));
+	pxa27x_get_clk_frequency_khz(1);
+}
 
 /*
  * device registration specific to PXA27x.
  */
-
-static u64 pxa27x_dmamask = 0xffffffffUL;
-
-static struct resource pxa27x_ohci_resources[] = {
-	[0] = {
-		.start  = 0x4C000000,
-		.end    = 0x4C00ff6f,
-		.flags  = IORESOURCE_MEM,
-	},
-	[1] = {
-		.start  = IRQ_USBH1,
-		.end    = IRQ_USBH1,
-		.flags  = IORESOURCE_IRQ,
-	},
-};
-
-static struct platform_device ohci_device = {
-	.name		= "pxa27x-ohci",
-	.id		= -1,
-	.dev		= {
-		.dma_mask = &pxa27x_dmamask,
-		.coherent_dma_mask = 0xffffffff,
-	},
-	.num_resources  = ARRAY_SIZE(pxa27x_ohci_resources),
-	.resource       = pxa27x_ohci_resources,
-};
-
-void __init pxa_set_ohci_info(struct pxaohci_platform_data *info)
+void __init pxa27x_set_i2c_power_info(struct i2c_pxa_platform_data *info)
 {
-	ohci_device.dev.platform_data = info;
+	local_irq_disable();
+	PCFR |= PCFR_PI2CEN;
+	local_irq_enable();
+	pxa_register_device(&pxa27x_device_i2c_power, info);
 }
 
 static struct platform_device *devices[] __initdata = {
-	&ohci_device,
+	&pxa27x_device_udc,
+	&pxa_device_pmu,
+	&pxa_device_i2s,
+	&pxa_device_asoc_ssp1,
+	&pxa_device_asoc_ssp2,
+	&pxa_device_asoc_ssp3,
+	&pxa_device_asoc_platform,
+	&sa1100_device_rtc,
+	&pxa_device_rtc,
+	&pxa27x_device_ssp1,
+	&pxa27x_device_ssp2,
+	&pxa27x_device_ssp3,
+	&pxa27x_device_pwm0,
+	&pxa27x_device_pwm1,
+};
+
+static struct sys_device pxa27x_sysdev[] = {
+	{
+		.cls	= &pxa_irq_sysclass,
+	}, {
+		.cls	= &pxa2xx_mfp_sysclass,
+	}, {
+		.cls	= &pxa_gpio_sysclass,
+	}, {
+		.cls	= &pxa2xx_clock_sysclass,
+	}
 };
 
 static int __init pxa27x_init(void)
 {
-	return platform_add_devices(devices, ARRAY_SIZE(devices));
+	int i, ret = 0;
+
+	if (cpu_is_pxa27x()) {
+
+		reset_status = RCSR;
+
+		clkdev_add_table(pxa27x_clkregs, ARRAY_SIZE(pxa27x_clkregs));
+
+		if ((ret = pxa_init_dma(IRQ_DMA, 32)))
+			return ret;
+
+		pxa27x_init_pm();
+
+		for (i = 0; i < ARRAY_SIZE(pxa27x_sysdev); i++) {
+			ret = sysdev_register(&pxa27x_sysdev[i]);
+			if (ret)
+				pr_err("failed to register sysdev[%d]\n", i);
+		}
+
+		ret = platform_add_devices(devices, ARRAY_SIZE(devices));
+	}
+
+	return ret;
 }
 
-subsys_initcall(pxa27x_init);
+postcore_initcall(pxa27x_init);

@@ -11,42 +11,140 @@
 #define __GLOCK_DOT_H__
 
 #include <linux/sched.h>
+#include <linux/parser.h>
 #include "incore.h"
 
-/* Flags for lock requests; used in gfs2_holder gh_flag field.
-   From lm_interface.h:
+/* Options for hostdata parser */
+
+enum {
+	Opt_jid,
+	Opt_id,
+	Opt_first,
+	Opt_nodir,
+	Opt_err,
+};
+
+/*
+ * lm_lockname types
+ */
+
+#define LM_TYPE_RESERVED	0x00
+#define LM_TYPE_NONDISK		0x01
+#define LM_TYPE_INODE		0x02
+#define LM_TYPE_RGRP		0x03
+#define LM_TYPE_META		0x04
+#define LM_TYPE_IOPEN		0x05
+#define LM_TYPE_FLOCK		0x06
+#define LM_TYPE_PLOCK		0x07
+#define LM_TYPE_QUOTA		0x08
+#define LM_TYPE_JOURNAL		0x09
+
+/*
+ * lm_lock() states
+ *
+ * SHARED is compatible with SHARED, not with DEFERRED or EX.
+ * DEFERRED is compatible with DEFERRED, not with SHARED or EX.
+ */
+
+#define LM_ST_UNLOCKED		0
+#define LM_ST_EXCLUSIVE		1
+#define LM_ST_DEFERRED		2
+#define LM_ST_SHARED		3
+
+/*
+ * lm_lock() flags
+ *
+ * LM_FLAG_TRY
+ * Don't wait to acquire the lock if it can't be granted immediately.
+ *
+ * LM_FLAG_TRY_1CB
+ * Send one blocking callback if TRY is set and the lock is not granted.
+ *
+ * LM_FLAG_NOEXP
+ * GFS sets this flag on lock requests it makes while doing journal recovery.
+ * These special requests should not be blocked due to the recovery like
+ * ordinary locks would be.
+ *
+ * LM_FLAG_ANY
+ * A SHARED request may also be granted in DEFERRED, or a DEFERRED request may
+ * also be granted in SHARED.  The preferred state is whichever is compatible
+ * with other granted locks, or the specified state if no other locks exist.
+ *
+ * LM_FLAG_PRIORITY
+ * Override fairness considerations.  Suppose a lock is held in a shared state
+ * and there is a pending request for the deferred state.  A shared lock
+ * request with the priority flag would be allowed to bypass the deferred
+ * request and directly join the other shared lock.  A shared lock request
+ * without the priority flag might be forced to wait until the deferred
+ * requested had acquired and released the lock.
+ */
+
 #define LM_FLAG_TRY		0x00000001
 #define LM_FLAG_TRY_1CB		0x00000002
 #define LM_FLAG_NOEXP		0x00000004
 #define LM_FLAG_ANY		0x00000008
-#define LM_FLAG_PRIORITY	0x00000010 */
-
+#define LM_FLAG_PRIORITY	0x00000010
 #define GL_ASYNC		0x00000040
 #define GL_EXACT		0x00000080
 #define GL_SKIP			0x00000100
-#define GL_ATIME		0x00000200
 #define GL_NOCACHE		0x00000400
-#define GL_NOCANCEL		0x00001000
+  
+/*
+ * lm_async_cb return flags
+ *
+ * LM_OUT_ST_MASK
+ * Masks the lower two bits of lock state in the returned value.
+ *
+ * LM_OUT_CANCELED
+ * The lock request was canceled.
+ *
+ */
+
+#define LM_OUT_ST_MASK		0x00000003
+#define LM_OUT_CANCELED		0x00000008
+#define LM_OUT_ERROR		0x00000004
+
+/*
+ * lm_recovery_done() messages
+ */
+
+#define LM_RD_GAVEUP		308
+#define LM_RD_SUCCESS		309
 
 #define GLR_TRYFAILED		13
-#define GLR_CANCELED		14
 
-static inline int gfs2_glock_is_locked_by_me(struct gfs2_glock *gl)
+struct lm_lockops {
+	const char *lm_proto_name;
+	int (*lm_mount) (struct gfs2_sbd *sdp, const char *fsname);
+ 	void (*lm_unmount) (struct gfs2_sbd *sdp);
+	void (*lm_withdraw) (struct gfs2_sbd *sdp);
+	void (*lm_put_lock) (struct gfs2_glock *gl);
+	int (*lm_lock) (struct gfs2_glock *gl, unsigned int req_state,
+			unsigned int flags);
+	void (*lm_cancel) (struct gfs2_glock *gl);
+	const match_table_t *lm_tokens;
+};
+
+extern struct workqueue_struct *gfs2_delete_workqueue;
+static inline struct gfs2_holder *gfs2_glock_is_locked_by_me(struct gfs2_glock *gl)
 {
 	struct gfs2_holder *gh;
-	int locked = 0;
+	struct pid *pid;
 
 	/* Look in glock's list of holders for one with current task as owner */
 	spin_lock(&gl->gl_spin);
+	pid = task_pid(current);
 	list_for_each_entry(gh, &gl->gl_holders, gh_list) {
-		if (gh->gh_owner_pid == current->pid) {
-			locked = 1;
+		if (!test_bit(HIF_HOLDER, &gh->gh_iflags))
 			break;
-		}
+		if (gh->gh_owner_pid == pid)
+			goto out;
 	}
+	gh = NULL;
+out:
 	spin_unlock(&gl->gl_spin);
 
-	return locked;
+	return gh;
 }
 
 static inline int gfs2_glock_is_held_excl(struct gfs2_glock *gl)
@@ -64,20 +162,19 @@ static inline int gfs2_glock_is_held_shrd(struct gfs2_glock *gl)
 	return gl->gl_state == LM_ST_SHARED;
 }
 
-static inline int gfs2_glock_is_blocking(struct gfs2_glock *gl)
+static inline struct address_space *gfs2_glock2aspace(struct gfs2_glock *gl)
 {
-	int ret;
-	spin_lock(&gl->gl_spin);
-	ret = test_bit(GLF_DEMOTE, &gl->gl_flags) || !list_empty(&gl->gl_waiters3);
-	spin_unlock(&gl->gl_spin);
-	return ret;
+	if (gl->gl_ops->go_flags & GLOF_ASPACE)
+		return (struct address_space *)(gl + 1);
+	return NULL;
 }
 
 int gfs2_glock_get(struct gfs2_sbd *sdp,
 		   u64 number, const struct gfs2_glock_operations *glops,
 		   int create, struct gfs2_glock **glp);
 void gfs2_glock_hold(struct gfs2_glock *gl);
-int gfs2_glock_put(struct gfs2_glock *gl);
+void gfs2_glock_put_nolock(struct gfs2_glock *gl);
+void gfs2_glock_put(struct gfs2_glock *gl);
 void gfs2_holder_init(struct gfs2_glock *gl, unsigned int state, unsigned flags,
 		      struct gfs2_holder *gh);
 void gfs2_holder_reinit(unsigned int state, unsigned flags,
@@ -87,6 +184,7 @@ int gfs2_glock_nq(struct gfs2_holder *gh);
 int gfs2_glock_poll(struct gfs2_holder *gh);
 int gfs2_glock_wait(struct gfs2_holder *gh);
 void gfs2_glock_dq(struct gfs2_holder *gh);
+void gfs2_glock_dq_wait(struct gfs2_holder *gh);
 
 void gfs2_glock_dq_uninit(struct gfs2_holder *gh);
 int gfs2_glock_nq_num(struct gfs2_sbd *sdp,
@@ -97,8 +195,11 @@ int gfs2_glock_nq_m(unsigned int num_gh, struct gfs2_holder *ghs);
 void gfs2_glock_dq_m(unsigned int num_gh, struct gfs2_holder *ghs);
 void gfs2_glock_dq_uninit_m(unsigned int num_gh, struct gfs2_holder *ghs);
 
+__attribute__ ((format(printf, 2, 3)))
+void gfs2_print_dbg(struct seq_file *seq, const char *fmt, ...);
+
 /**
- * gfs2_glock_nq_init - intialize a holder and enqueue it on a glock
+ * gfs2_glock_nq_init - initialize a holder and enqueue it on a glock
  * @gl: the glock
  * @state: the state we're requesting
  * @flags: the modifier flags
@@ -122,23 +223,23 @@ static inline int gfs2_glock_nq_init(struct gfs2_glock *gl,
 	return error;
 }
 
-/*  Lock Value Block functions  */
+extern void gfs2_glock_cb(struct gfs2_glock *gl, unsigned int state);
+extern void gfs2_glock_complete(struct gfs2_glock *gl, int ret);
+extern void gfs2_reclaim_glock(struct gfs2_sbd *sdp);
+extern void gfs2_gl_hash_clear(struct gfs2_sbd *sdp);
+extern void gfs2_glock_finish_truncate(struct gfs2_inode *ip);
+extern void gfs2_glock_thaw(struct gfs2_sbd *sdp);
+extern void gfs2_glock_schedule_for_reclaim(struct gfs2_glock *gl);
+extern void gfs2_glock_free(struct gfs2_glock *gl);
 
-int gfs2_lvb_hold(struct gfs2_glock *gl);
-void gfs2_lvb_unhold(struct gfs2_glock *gl);
+extern int __init gfs2_glock_init(void);
+extern void gfs2_glock_exit(void);
 
-void gfs2_glock_cb(void *cb_data, unsigned int type, void *data);
+extern int gfs2_create_debugfs_file(struct gfs2_sbd *sdp);
+extern void gfs2_delete_debugfs_file(struct gfs2_sbd *sdp);
+extern int gfs2_register_debugfs(void);
+extern void gfs2_unregister_debugfs(void);
 
-void gfs2_glock_schedule_for_reclaim(struct gfs2_glock *gl);
-void gfs2_reclaim_glock(struct gfs2_sbd *sdp);
-
-void gfs2_scand_internal(struct gfs2_sbd *sdp);
-void gfs2_gl_hash_clear(struct gfs2_sbd *sdp, int wait);
-
-int __init gfs2_glock_init(void);
-int gfs2_create_debugfs_file(struct gfs2_sbd *sdp);
-void gfs2_delete_debugfs_file(struct gfs2_sbd *sdp);
-int gfs2_register_debugfs(void);
-void gfs2_unregister_debugfs(void);
+extern const struct lm_lockops gfs2_dlm_ops;
 
 #endif /* __GLOCK_DOT_H__ */

@@ -1,12 +1,11 @@
 /*
- * arch/mips/kernel/stacktrace.c
- *
  * Stack trace management functions
  *
  *  Copyright (C) 2006 Atsushi Nemoto <anemo@mba.ocn.ne.jp>
  */
 #include <linux/sched.h>
 #include <linux/stacktrace.h>
+#include <linux/module.h>
 #include <asm/stacktrace.h>
 
 /*
@@ -31,7 +30,8 @@ static void save_raw_context_stack(struct stack_trace *trace,
 	}
 }
 
-static void save_context_stack(struct stack_trace *trace, struct pt_regs *regs)
+static void save_context_stack(struct stack_trace *trace,
+	struct task_struct *tsk, struct pt_regs *regs)
 {
 	unsigned long sp = regs->regs[29];
 #ifdef CONFIG_KALLSYMS
@@ -40,7 +40,7 @@ static void save_context_stack(struct stack_trace *trace, struct pt_regs *regs)
 
 	if (raw_show_trace || !__kernel_text_address(pc)) {
 		unsigned long stack_page =
-			(unsigned long)task_stack_page(current);
+			(unsigned long)task_stack_page(tsk);
 		if (stack_page && sp >= stack_page &&
 		    sp <= stack_page + THREAD_SIZE - 32)
 			save_raw_context_stack(trace, sp);
@@ -53,7 +53,7 @@ static void save_context_stack(struct stack_trace *trace, struct pt_regs *regs)
 			trace->entries[trace->nr_entries++] = pc;
 		if (trace->nr_entries >= trace->max_entries)
 			break;
-		pc = unwind_stack(current, &sp, pc, &ra);
+		pc = unwind_stack(tsk, &sp, pc, &ra);
 	} while (pc);
 #else
 	save_raw_context_stack(trace, sp);
@@ -65,11 +65,23 @@ static void save_context_stack(struct stack_trace *trace, struct pt_regs *regs)
  */
 void save_stack_trace(struct stack_trace *trace)
 {
+	save_stack_trace_tsk(current, trace);
+}
+EXPORT_SYMBOL_GPL(save_stack_trace);
+
+void save_stack_trace_tsk(struct task_struct *tsk, struct stack_trace *trace)
+{
 	struct pt_regs dummyregs;
 	struct pt_regs *regs = &dummyregs;
 
 	WARN_ON(trace->nr_entries || !trace->max_entries);
 
-	prepare_frametrace(regs);
-	save_context_stack(trace, regs);
+	if (tsk != current) {
+		regs->regs[29] = tsk->thread.reg29;
+		regs->regs[31] = 0;
+		regs->cp0_epc = tsk->thread.reg31;
+	} else
+		prepare_frametrace(regs);
+	save_context_stack(trace, tsk, regs);
 }
+EXPORT_SYMBOL_GPL(save_stack_trace_tsk);

@@ -25,16 +25,13 @@ struct beacon_rx {
 typedef struct ray_dev_t {
     int card_status;
     int authentication_state;
-    dev_node_t  node;
-    window_handle_t amem_handle;   /* handle to window for attribute memory  */
-    window_handle_t rmem_handle;   /* handle to window for rx buffer on card */
     void __iomem *sram;            /* pointer to beginning of shared RAM     */
     void __iomem *amem;            /* pointer to attribute mem window        */
     void __iomem *rmem;            /* pointer to receive buffer window       */
     struct pcmcia_device *finder;            /* pointer back to struct pcmcia_device for card    */
     struct timer_list timer;
-    long tx_ccs_lock;
-    long ccs_lock;
+    unsigned long tx_ccs_lock;
+    unsigned long ccs_lock;
     int   dl_param_ccs;
     union {
         struct b4_startup_params b4;

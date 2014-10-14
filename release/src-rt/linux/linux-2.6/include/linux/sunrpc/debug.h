@@ -20,16 +20,13 @@
 #define RPCDBG_BIND		0x0020
 #define RPCDBG_SCHED		0x0040
 #define RPCDBG_TRANS		0x0080
-#define RPCDBG_SVCSOCK		0x0100
+#define RPCDBG_SVCXPRT		0x0100
 #define RPCDBG_SVCDSP		0x0200
 #define RPCDBG_MISC		0x0400
 #define RPCDBG_CACHE		0x0800
 #define RPCDBG_ALL		0x7fff
 
 #ifdef __KERNEL__
-
-#include <linux/timer.h>
-#include <linux/workqueue.h>
 
 /*
  * Enable RPC debugging/profiling.

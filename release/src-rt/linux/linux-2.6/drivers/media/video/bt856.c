@@ -29,395 +29,256 @@
  */
 
 #include <linux/module.h>
-#include <linux/init.h>
-#include <linux/delay.h>
-#include <linux/errno.h>
-#include <linux/fs.h>
-#include <linux/kernel.h>
-#include <linux/major.h>
-#include <linux/slab.h>
-#include <linux/mm.h>
-#include <linux/signal.h>
-#include <asm/io.h>
-#include <asm/pgtable.h>
-#include <asm/page.h>
 #include <linux/types.h>
-
-#include <linux/videodev.h>
+#include <linux/slab.h>
+#include <linux/ioctl.h>
 #include <asm/uaccess.h>
+#include <linux/i2c.h>
+#include <linux/videodev2.h>
+#include <media/v4l2-device.h>
+#include <media/v4l2-chip-ident.h>
 
 MODULE_DESCRIPTION("Brooktree-856A video encoder driver");
 MODULE_AUTHOR("Mike Bernson & Dave Perks");
 MODULE_LICENSE("GPL");
 
-#include <linux/i2c.h>
-
-#define I2C_NAME(s) (s)->name
-
-#include <linux/video_encoder.h>
-
-static int debug = 0;
+static int debug;
 module_param(debug, int, 0);
 MODULE_PARM_DESC(debug, "Debug level (0-1)");
 
-#define dprintk(num, format, args...) \
-	do { \
-		if (debug >= num) \
-			printk(format, ##args); \
-	} while (0)
 
 /* ----------------------------------------------------------------------- */
 
-#define REG_OFFSET	0xDA
-#define BT856_NR_REG	6
+#define BT856_REG_OFFSET	0xDA
+#define BT856_NR_REG		6
 
 struct bt856 {
+	struct v4l2_subdev sd;
 	unsigned char reg[BT856_NR_REG];
 
-	int norm;
-	int enable;
+	v4l2_std_id norm;
 };
 
-#define   I2C_BT856        0x88
+static inline struct bt856 *to_bt856(struct v4l2_subdev *sd)
+{
+	return container_of(sd, struct bt856, sd);
+}
 
 /* ----------------------------------------------------------------------- */
 
-static inline int
-bt856_write (struct i2c_client *client,
-	     u8                 reg,
-	     u8                 value)
+static inline int bt856_write(struct bt856 *encoder, u8 reg, u8 value)
 {
-	struct bt856 *encoder = i2c_get_clientdata(client);
+	struct i2c_client *client = v4l2_get_subdevdata(&encoder->sd);
 
-	encoder->reg[reg - REG_OFFSET] = value;
+	encoder->reg[reg - BT856_REG_OFFSET] = value;
 	return i2c_smbus_write_byte_data(client, reg, value);
 }
 
-static inline int
-bt856_setbit (struct i2c_client *client,
-	      u8                 reg,
-	      u8                 bit,
-	      u8                 value)
+static inline int bt856_setbit(struct bt856 *encoder, u8 reg, u8 bit, u8 value)
 {
-	struct bt856 *encoder = i2c_get_clientdata(client);
-
-	return bt856_write(client, reg,
-			   (encoder->
-			    reg[reg - REG_OFFSET] & ~(1 << bit)) |
-			    (value ? (1 << bit) : 0));
+	return bt856_write(encoder, reg,
+		(encoder->reg[reg - BT856_REG_OFFSET] & ~(1 << bit)) |
+				(value ? (1 << bit) : 0));
 }
 
-static void
-bt856_dump (struct i2c_client *client)
+static void bt856_dump(struct bt856 *encoder)
 {
 	int i;
-	struct bt856 *encoder = i2c_get_clientdata(client);
 
-	printk(KERN_INFO "%s: register dump:", I2C_NAME(client));
+	v4l2_info(&encoder->sd, "register dump:\n");
 	for (i = 0; i < BT856_NR_REG; i += 2)
-		printk(" %02x", encoder->reg[i]);
-	printk("\n");
+		printk(KERN_CONT " %02x", encoder->reg[i]);
+	printk(KERN_CONT "\n");
 }
 
 /* ----------------------------------------------------------------------- */
 
-static int
-bt856_command (struct i2c_client *client,
-	       unsigned int       cmd,
-	       void              *arg)
+static int bt856_init(struct v4l2_subdev *sd, u32 arg)
 {
-	struct bt856 *encoder = i2c_get_clientdata(client);
+	struct bt856 *encoder = to_bt856(sd);
 
-	switch (cmd) {
+	/* This is just for testing!!! */
+	v4l2_dbg(1, debug, sd, "init\n");
+	bt856_write(encoder, 0xdc, 0x18);
+	bt856_write(encoder, 0xda, 0);
+	bt856_write(encoder, 0xde, 0);
 
+	bt856_setbit(encoder, 0xdc, 3, 1);
+	/*bt856_setbit(encoder, 0xdc, 6, 0);*/
+	bt856_setbit(encoder, 0xdc, 4, 1);
+
+	if (encoder->norm & V4L2_STD_NTSC)
+		bt856_setbit(encoder, 0xdc, 2, 0);
+	else
+		bt856_setbit(encoder, 0xdc, 2, 1);
+
+	bt856_setbit(encoder, 0xdc, 1, 1);
+	bt856_setbit(encoder, 0xde, 4, 0);
+	bt856_setbit(encoder, 0xde, 3, 1);
+	if (debug != 0)
+		bt856_dump(encoder);
+	return 0;
+}
+
+static int bt856_s_std_output(struct v4l2_subdev *sd, v4l2_std_id std)
+{
+	struct bt856 *encoder = to_bt856(sd);
+
+	v4l2_dbg(1, debug, sd, "set norm %llx\n", (unsigned long long)std);
+
+	if (std & V4L2_STD_NTSC) {
+		bt856_setbit(encoder, 0xdc, 2, 0);
+	} else if (std & V4L2_STD_PAL) {
+		bt856_setbit(encoder, 0xdc, 2, 1);
+		bt856_setbit(encoder, 0xda, 0, 0);
+		/*bt856_setbit(encoder, 0xda, 0, 1);*/
+	} else {
+		return -EINVAL;
+	}
+	encoder->norm = std;
+	if (debug != 0)
+		bt856_dump(encoder);
+	return 0;
+}
+
+static int bt856_s_routing(struct v4l2_subdev *sd,
+			   u32 input, u32 output, u32 config)
+{
+	struct bt856 *encoder = to_bt856(sd);
+
+	v4l2_dbg(1, debug, sd, "set input %d\n", input);
+
+	/* We only have video bus.
+	 * input= 0: input is from bt819
+	 * input= 1: input is from ZR36060 */
+	switch (input) {
 	case 0:
-		/* This is just for testing!!! */
-		dprintk(1, KERN_INFO "bt856: init\n");
-		bt856_write(client, 0xdc, 0x18);
-		bt856_write(client, 0xda, 0);
-		bt856_write(client, 0xde, 0);
-
-		bt856_setbit(client, 0xdc, 3, 1);
-		//bt856_setbit(client, 0xdc, 6, 0);
-		bt856_setbit(client, 0xdc, 4, 1);
-
-		switch (encoder->norm) {
-
-		case VIDEO_MODE_NTSC:
-			bt856_setbit(client, 0xdc, 2, 0);
-			break;
-
-		case VIDEO_MODE_PAL:
-			bt856_setbit(client, 0xdc, 2, 1);
-			break;
-		}
-
-		bt856_setbit(client, 0xdc, 1, 1);
-		bt856_setbit(client, 0xde, 4, 0);
-		bt856_setbit(client, 0xde, 3, 1);
-		if (debug != 0)
-			bt856_dump(client);
+		bt856_setbit(encoder, 0xde, 4, 0);
+		bt856_setbit(encoder, 0xde, 3, 1);
+		bt856_setbit(encoder, 0xdc, 3, 1);
+		bt856_setbit(encoder, 0xdc, 6, 0);
 		break;
-
-	case ENCODER_GET_CAPABILITIES:
-	{
-		struct video_encoder_capability *cap = arg;
-
-		dprintk(1, KERN_INFO "%s: get capabilities\n",
-			I2C_NAME(client));
-
-		cap->flags = VIDEO_ENCODER_PAL |
-			     VIDEO_ENCODER_NTSC |
-			     VIDEO_ENCODER_CCIR;
-		cap->inputs = 2;
-		cap->outputs = 1;
-	}
+	case 1:
+		bt856_setbit(encoder, 0xde, 4, 0);
+		bt856_setbit(encoder, 0xde, 3, 1);
+		bt856_setbit(encoder, 0xdc, 3, 1);
+		bt856_setbit(encoder, 0xdc, 6, 1);
 		break;
-
-	case ENCODER_SET_NORM:
-	{
-		int *iarg = arg;
-
-		dprintk(1, KERN_INFO "%s: set norm %d\n", I2C_NAME(client),
-			*iarg);
-
-		switch (*iarg) {
-
-		case VIDEO_MODE_NTSC:
-			bt856_setbit(client, 0xdc, 2, 0);
-			break;
-
-		case VIDEO_MODE_PAL:
-			bt856_setbit(client, 0xdc, 2, 1);
-			bt856_setbit(client, 0xda, 0, 0);
-			//bt856_setbit(client, 0xda, 0, 1);
-			break;
-
-		default:
-			return -EINVAL;
-
-		}
-		encoder->norm = *iarg;
-		if (debug != 0)
-			bt856_dump(client);
-	}
+	case 2:	/* Color bar */
+		bt856_setbit(encoder, 0xdc, 3, 0);
+		bt856_setbit(encoder, 0xde, 4, 1);
 		break;
-
-	case ENCODER_SET_INPUT:
-	{
-		int *iarg = arg;
-
-		dprintk(1, KERN_INFO "%s: set input %d\n", I2C_NAME(client),
-			*iarg);
-
-		/* We only have video bus.
-		 * iarg = 0: input is from bt819
-		 * iarg = 1: input is from ZR36060 */
-
-		switch (*iarg) {
-
-		case 0:
-			bt856_setbit(client, 0xde, 4, 0);
-			bt856_setbit(client, 0xde, 3, 1);
-			bt856_setbit(client, 0xdc, 3, 1);
-			bt856_setbit(client, 0xdc, 6, 0);
-			break;
-		case 1:
-			bt856_setbit(client, 0xde, 4, 0);
-			bt856_setbit(client, 0xde, 3, 1);
-			bt856_setbit(client, 0xdc, 3, 1);
-			bt856_setbit(client, 0xdc, 6, 1);
-			break;
-		case 2:	// Color bar
-			bt856_setbit(client, 0xdc, 3, 0);
-			bt856_setbit(client, 0xde, 4, 1);
-			break;
-		default:
-			return -EINVAL;
-
-		}
-
-		if (debug != 0)
-			bt856_dump(client);
-	}
-		break;
-
-	case ENCODER_SET_OUTPUT:
-	{
-		int *iarg = arg;
-
-		dprintk(1, KERN_INFO "%s: set output %d\n", I2C_NAME(client),
-			*iarg);
-
-		/* not much choice of outputs */
-		if (*iarg != 0) {
-			return -EINVAL;
-		}
-	}
-		break;
-
-	case ENCODER_ENABLE_OUTPUT:
-	{
-		int *iarg = arg;
-
-		encoder->enable = !!*iarg;
-
-		dprintk(1, KERN_INFO "%s: enable output %d\n",
-			I2C_NAME(client), encoder->enable);
-	}
-		break;
-
 	default:
 		return -EINVAL;
 	}
 
+	if (debug != 0)
+		bt856_dump(encoder);
 	return 0;
+}
+
+static int bt856_g_chip_ident(struct v4l2_subdev *sd, struct v4l2_dbg_chip_ident *chip)
+{
+	struct i2c_client *client = v4l2_get_subdevdata(sd);
+
+	return v4l2_chip_ident_i2c_client(client, chip, V4L2_IDENT_BT856, 0);
 }
 
 /* ----------------------------------------------------------------------- */
 
-/*
- * Generic i2c probe
- * concerning the addresses: i2c wants 7 bit (without the r/w bit), so '>>1'
- */
-static unsigned short normal_i2c[] = { I2C_BT856 >> 1, I2C_CLIENT_END };
-
-static unsigned short ignore = I2C_CLIENT_END;
-
-static struct i2c_client_address_data addr_data = {
-	.normal_i2c		= normal_i2c,
-	.probe			= &ignore,
-	.ignore			= &ignore,
+static const struct v4l2_subdev_core_ops bt856_core_ops = {
+	.g_chip_ident = bt856_g_chip_ident,
+	.init = bt856_init,
 };
 
-static struct i2c_driver i2c_driver_bt856;
+static const struct v4l2_subdev_video_ops bt856_video_ops = {
+	.s_std_output = bt856_s_std_output,
+	.s_routing = bt856_s_routing,
+};
 
-static int
-bt856_detect_client (struct i2c_adapter *adapter,
-		     int                 address,
-		     int                 kind)
+static const struct v4l2_subdev_ops bt856_ops = {
+	.core = &bt856_core_ops,
+	.video = &bt856_video_ops,
+};
+
+/* ----------------------------------------------------------------------- */
+
+static int bt856_probe(struct i2c_client *client,
+			const struct i2c_device_id *id)
 {
-	int i;
-	struct i2c_client *client;
 	struct bt856 *encoder;
-
-	dprintk(1,
-		KERN_INFO
-		"bt856.c: detecting bt856 client on address 0x%x\n",
-		address << 1);
+	struct v4l2_subdev *sd;
 
 	/* Check if the adapter supports the needed features */
-	if (!i2c_check_functionality(adapter, I2C_FUNC_SMBUS_BYTE_DATA))
-		return 0;
+	if (!i2c_check_functionality(client->adapter, I2C_FUNC_SMBUS_BYTE_DATA))
+		return -ENODEV;
 
-	client = kzalloc(sizeof(struct i2c_client), GFP_KERNEL);
-	if (client == 0)
-		return -ENOMEM;
-	client->addr = address;
-	client->adapter = adapter;
-	client->driver = &i2c_driver_bt856;
-	strlcpy(I2C_NAME(client), "bt856", sizeof(I2C_NAME(client)));
+	v4l_info(client, "chip found @ 0x%x (%s)\n",
+			client->addr << 1, client->adapter->name);
 
 	encoder = kzalloc(sizeof(struct bt856), GFP_KERNEL);
-	if (encoder == NULL) {
-		kfree(client);
+	if (encoder == NULL)
 		return -ENOMEM;
-	}
-	encoder->norm = VIDEO_MODE_NTSC;
-	encoder->enable = 1;
-	i2c_set_clientdata(client, encoder);
+	sd = &encoder->sd;
+	v4l2_i2c_subdev_init(sd, client, &bt856_ops);
+	encoder->norm = V4L2_STD_NTSC;
 
-	i = i2c_attach_client(client);
-	if (i) {
-		kfree(client);
-		kfree(encoder);
-		return i;
-	}
+	bt856_write(encoder, 0xdc, 0x18);
+	bt856_write(encoder, 0xda, 0);
+	bt856_write(encoder, 0xde, 0);
 
-	bt856_write(client, 0xdc, 0x18);
-	bt856_write(client, 0xda, 0);
-	bt856_write(client, 0xde, 0);
+	bt856_setbit(encoder, 0xdc, 3, 1);
+	/*bt856_setbit(encoder, 0xdc, 6, 0);*/
+	bt856_setbit(encoder, 0xdc, 4, 1);
 
-	bt856_setbit(client, 0xdc, 3, 1);
-	//bt856_setbit(client, 0xdc, 6, 0);
-	bt856_setbit(client, 0xdc, 4, 1);
+	if (encoder->norm & V4L2_STD_NTSC)
+		bt856_setbit(encoder, 0xdc, 2, 0);
+	else
+		bt856_setbit(encoder, 0xdc, 2, 1);
 
-	switch (encoder->norm) {
-
-	case VIDEO_MODE_NTSC:
-		bt856_setbit(client, 0xdc, 2, 0);
-		break;
-
-	case VIDEO_MODE_PAL:
-		bt856_setbit(client, 0xdc, 2, 1);
-		break;
-	}
-
-	bt856_setbit(client, 0xdc, 1, 1);
-	bt856_setbit(client, 0xde, 4, 0);
-	bt856_setbit(client, 0xde, 3, 1);
+	bt856_setbit(encoder, 0xdc, 1, 1);
+	bt856_setbit(encoder, 0xde, 4, 0);
+	bt856_setbit(encoder, 0xde, 3, 1);
 
 	if (debug != 0)
-		bt856_dump(client);
-
-	dprintk(1, KERN_INFO "%s_attach: at address 0x%x\n", I2C_NAME(client),
-		client->addr << 1);
-
+		bt856_dump(encoder);
 	return 0;
 }
 
-static int
-bt856_attach_adapter (struct i2c_adapter *adapter)
+static int bt856_remove(struct i2c_client *client)
 {
-	dprintk(1,
-		KERN_INFO
-		"bt856.c: starting probe for adapter %s (0x%x)\n",
-		I2C_NAME(adapter), adapter->id);
-	return i2c_probe(adapter, &addr_data, &bt856_detect_client);
-}
+	struct v4l2_subdev *sd = i2c_get_clientdata(client);
 
-static int
-bt856_detach_client (struct i2c_client *client)
-{
-	struct bt856 *encoder = i2c_get_clientdata(client);
-	int err;
-
-	err = i2c_detach_client(client);
-	if (err) {
-		return err;
-	}
-
-	kfree(encoder);
-	kfree(client);
-
+	v4l2_device_unregister_subdev(sd);
+	kfree(to_bt856(sd));
 	return 0;
 }
 
-/* ----------------------------------------------------------------------- */
+static const struct i2c_device_id bt856_id[] = {
+	{ "bt856", 0 },
+	{ }
+};
+MODULE_DEVICE_TABLE(i2c, bt856_id);
 
-static struct i2c_driver i2c_driver_bt856 = {
+static struct i2c_driver bt856_driver = {
 	.driver = {
-		.name = "bt856",
+		.owner	= THIS_MODULE,
+		.name	= "bt856",
 	},
-
-	.id = I2C_DRIVERID_BT856,
-
-	.attach_adapter = bt856_attach_adapter,
-	.detach_client = bt856_detach_client,
-	.command = bt856_command,
+	.probe		= bt856_probe,
+	.remove		= bt856_remove,
+	.id_table	= bt856_id,
 };
 
-static int __init
-bt856_init (void)
+static __init int init_bt856(void)
 {
-	return i2c_add_driver(&i2c_driver_bt856);
+	return i2c_add_driver(&bt856_driver);
 }
 
-static void __exit
-bt856_exit (void)
+static __exit void exit_bt856(void)
 {
-	i2c_del_driver(&i2c_driver_bt856);
+	i2c_del_driver(&bt856_driver);
 }
 
-module_init(bt856_init);
-module_exit(bt856_exit);
+module_init(init_bt856);
+module_exit(exit_bt856);

@@ -35,27 +35,30 @@ struct isofs_sb_info {
 	unsigned long s_log_zone_size;
 	unsigned long s_max_size;
 	
-	unsigned char s_high_sierra; /* A simple flag */
-	unsigned char s_mapping;
 	int           s_rock_offset; /* offset of SUSP fields within SU area */
-	unsigned char s_rock;
 	unsigned char s_joliet_level;
-	unsigned char s_utf8;
-	unsigned char s_cruft; /* Broken disks with high
-				  byte of length containing
-				  junk */
-	unsigned char s_unhide;
-	unsigned char s_nosuid;
-	unsigned char s_nodev;
-	unsigned char s_nocompress;
-	unsigned char s_hide;
-	unsigned char s_showassoc;
+	unsigned char s_mapping;
+	unsigned int  s_high_sierra:1;
+	unsigned int  s_rock:2;
+	unsigned int  s_utf8:1;
+	unsigned int  s_cruft:1; /* Broken disks with high byte of length
+				  * containing junk */
+	unsigned int  s_nocompress:1;
+	unsigned int  s_hide:1;
+	unsigned int  s_showassoc:1;
+	unsigned int  s_overriderockperm:1;
+	unsigned int  s_uid_set:1;
+	unsigned int  s_gid_set:1;
 
-	mode_t s_mode;
+	mode_t s_fmode;
+	mode_t s_dmode;
 	gid_t s_gid;
 	uid_t s_uid;
 	struct nls_table *s_nls_iocharset; /* Native language support table */
+	struct mutex s_mutex; /* replaces BKL, please remove if possible */
 };
+
+#define ISOFS_INVALID_MODE ((mode_t) -1)
 
 static inline struct isofs_sb_info *ISOFS_SB(struct super_block *sb)
 {
@@ -77,29 +80,29 @@ static inline int isonum_712(char *p)
 }
 static inline unsigned int isonum_721(char *p)
 {
-	return le16_to_cpu(get_unaligned((__le16 *)p));
+	return get_unaligned_le16(p);
 }
 static inline unsigned int isonum_722(char *p)
 {
-	return be16_to_cpu(get_unaligned((__le16 *)p));
+	return get_unaligned_be16(p);
 }
 static inline unsigned int isonum_723(char *p)
 {
 	/* Ignore bigendian datum due to broken mastering programs */
-	return le16_to_cpu(get_unaligned((__le16 *)p));
+	return get_unaligned_le16(p);
 }
 static inline unsigned int isonum_731(char *p)
 {
-	return le32_to_cpu(get_unaligned((__le32 *)p));
+	return get_unaligned_le32(p);
 }
 static inline unsigned int isonum_732(char *p)
 {
-	return be32_to_cpu(get_unaligned((__le32 *)p));
+	return get_unaligned_be32(p);
 }
 static inline unsigned int isonum_733(char *p)
 {
 	/* Ignore bigendian datum due to broken mastering programs */
-	return le32_to_cpu(get_unaligned((__le32 *)p));
+	return get_unaligned_le32(p);
 }
 extern int iso_date(char *, int);
 

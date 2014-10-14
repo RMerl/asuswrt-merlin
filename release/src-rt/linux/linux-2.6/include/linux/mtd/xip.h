@@ -11,8 +11,6 @@
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
- *
- * $Id: xip.h,v 1.5 2005/11/07 11:14:55 gleixner Exp $
  */
 
 #ifndef __LINUX_MTD_XIP_H__
@@ -53,7 +51,7 @@
  * 	return in usecs the elapsed timebetween now and the reference x as
  * 	returned by xip_currtime().
  *
- * 	note 1: convertion to usec can be approximated, as long as the
+ * 	note 1: conversion to usec can be approximated, as long as the
  * 		returned value is <= the real elapsed time.
  * 	note 2: this should be able to cope with a few seconds without
  * 		overflowing.

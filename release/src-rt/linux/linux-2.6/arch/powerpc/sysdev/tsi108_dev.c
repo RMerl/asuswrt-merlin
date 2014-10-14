@@ -19,6 +19,7 @@
 #include <linux/module.h>
 #include <linux/device.h>
 #include <linux/platform_device.h>
+#include <linux/of_net.h>
 #include <asm/tsi108.h>
 
 #include <asm/system.h>
@@ -66,18 +67,15 @@ EXPORT_SYMBOL(get_vir_csrbase);
 static int __init tsi108_eth_of_init(void)
 {
 	struct device_node *np;
-	unsigned int i;
+	unsigned int i = 0;
 	struct platform_device *tsi_eth_dev;
 	struct resource res;
 	int ret;
 
-	for (np = NULL, i = 0;
-	     (np = of_find_compatible_node(np, "network", "tsi-ethernet")) != NULL;
-	     i++) {
+	for_each_compatible_node(np, "network", "tsi108-ethernet") {
 		struct resource r[2];
-		struct device_node *phy;
+		struct device_node *phy, *mdio;
 		hw_info tsi_eth_data;
-		const unsigned int *id;
 		const unsigned int *phy_id;
 		const void *mac_addr;
 		const phandle *ph;
@@ -86,8 +84,8 @@ static int __init tsi108_eth_of_init(void)
 		memset(&tsi_eth_data, 0, sizeof(tsi_eth_data));
 
 		ret = of_address_to_resource(np, 0, &r[0]);
-		DBG("%s: name:start->end = %s:0x%lx-> 0x%lx\n",
-			__FUNCTION__,r[0].name, r[0].start, r[0].end);
+		DBG("%s: name:start->end = %s:%pR\n",
+		    __func__, r[0].name, &r[0]);
 		if (ret)
 			goto err;
 
@@ -95,11 +93,11 @@ static int __init tsi108_eth_of_init(void)
 		r[1].start = irq_of_parse_and_map(np, 0);
 		r[1].end = irq_of_parse_and_map(np, 0);
 		r[1].flags = IORESOURCE_IRQ;
-		DBG("%s: name:start->end = %s:0x%lx-> 0x%lx\n",
-			__FUNCTION__,r[1].name, r[1].start, r[1].end);
+		DBG("%s: name:start->end = %s:%pR\n",
+			__func__, r[1].name, &r[1]);
 
 		tsi_eth_dev =
-		    platform_device_register_simple("tsi-ethernet", i, &r[0],
+		    platform_device_register_simple("tsi-ethernet", i++, &r[0],
 						    1);
 
 		if (IS_ERR(tsi_eth_dev)) {
@@ -111,6 +109,13 @@ static int __init tsi108_eth_of_init(void)
 		if (mac_addr)
 			memcpy(tsi_eth_data.mac_addr, mac_addr, 6);
 
+		ph = of_get_property(np, "mdio-handle", NULL);
+		mdio = of_find_node_by_phandle(*ph);
+		ret = of_address_to_resource(mdio, 0, &res);
+		of_node_put(mdio);
+		if (ret)
+			goto unreg;
+
 		ph = of_get_property(np, "phy-handle", NULL);
 		phy = of_find_node_by_phandle(*ph);
 
@@ -119,20 +124,25 @@ static int __init tsi108_eth_of_init(void)
 			goto unreg;
 		}
 
-		id = of_get_property(phy, "reg", NULL);
-		phy_id = of_get_property(phy, "phy-id", NULL);
-		ret = of_address_to_resource(phy, 0, &res);
-		if (ret) {
-			of_node_put(phy);
-			goto unreg;
-		}
+		phy_id = of_get_property(phy, "reg", NULL);
+
 		tsi_eth_data.regs = r[0].start;
 		tsi_eth_data.phyregs = res.start;
 		tsi_eth_data.phy = *phy_id;
 		tsi_eth_data.irq_num = irq_of_parse_and_map(np, 0);
-		if (of_device_is_compatible(phy, "bcm54xx"))
+
+		/* Some boards with the TSI108 bridge (e.g. Holly)
+		 * have a miswiring of the ethernet PHYs which
+		 * requires a workaround.  The special
+		 * "txc-rxc-delay-disable" property enables this
+		 * workaround.  FIXME: Need to port the tsi108_eth
+		 * driver itself to phylib and use a non-misleading
+		 * name for the workaround flag - it's not actually to
+		 * do with the model of PHY in use */
+		if (of_get_property(phy, "txc-rxc-delay-disable", NULL))
 			tsi_eth_data.phy_type = TSI108_PHY_BCM54XX;
 		of_node_put(phy);
+
 		ret =
 		    platform_device_add_data(tsi_eth_dev, &tsi_eth_data,
 					     sizeof(hw_info));
@@ -143,6 +153,7 @@ static int __init tsi108_eth_of_init(void)
 unreg:
 	platform_device_unregister(tsi_eth_dev);
 err:
+	of_node_put(np);
 	return ret;
 }
 

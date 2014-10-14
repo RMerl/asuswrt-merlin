@@ -17,6 +17,7 @@
 #include <linux/string.h>
 #include <linux/sockios.h>
 #include <linux/net.h>
+#include <linux/slab.h>
 #include <net/ax25.h>
 #include <linux/inet.h>
 #include <linux/netdevice.h>
@@ -61,29 +62,24 @@ void ax25_protocol_release(unsigned int pid)
 
 	write_lock_bh(&protocol_list_lock);
 	protocol = protocol_list;
-	if (protocol == NULL) {
-		write_unlock_bh(&protocol_list_lock);
-		return;
-	}
+	if (protocol == NULL)
+		goto out;
 
 	if (protocol->pid == pid) {
 		protocol_list = protocol->next;
-		write_unlock_bh(&protocol_list_lock);
-		kfree(protocol);
-		return;
+		goto out;
 	}
 
 	while (protocol != NULL && protocol->next != NULL) {
 		if (protocol->next->pid == pid) {
 			s = protocol->next;
 			protocol->next = protocol->next->next;
-			write_unlock_bh(&protocol_list_lock);
-			kfree(s);
-			return;
+			goto out;
 		}
 
 		protocol = protocol->next;
 	}
+out:
 	write_unlock_bh(&protocol_list_lock);
 }
 

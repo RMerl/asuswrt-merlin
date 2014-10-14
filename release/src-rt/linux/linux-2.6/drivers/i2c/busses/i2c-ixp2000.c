@@ -32,9 +32,10 @@
 #include <linux/module.h>
 #include <linux/i2c.h>
 #include <linux/i2c-algo-bit.h>
+#include <linux/slab.h>
 
-#include <asm/hardware.h>	/* Pick up IXP2000-specific bits */
-#include <asm/arch/gpio.h>
+#include <mach/hardware.h>	/* Pick up IXP2000-specific bits */
+#include <mach/gpio.h>
 
 static inline int ixp2000_scl_pin(void *data)
 {
@@ -114,9 +115,8 @@ static int ixp2000_i2c_probe(struct platform_device *plat_dev)
 	drv_data->algo_data.getsda = ixp2000_bit_getsda;
 	drv_data->algo_data.getscl = ixp2000_bit_getscl;
 	drv_data->algo_data.udelay = 6;
-	drv_data->algo_data.timeout = 100;
+	drv_data->algo_data.timeout = HZ;
 
-	drv_data->adapter.id = I2C_HW_B_IXP2000,
 	strlcpy(drv_data->adapter.name, plat_dev->dev.driver->name,
 		sizeof(drv_data->adapter.name));
 	drv_data->adapter.algo_data = &drv_data->algo_data,
@@ -164,4 +164,5 @@ module_exit(ixp2000_i2c_exit);
 MODULE_AUTHOR ("Deepak Saxena <dsaxena@plexity.net>");
 MODULE_DESCRIPTION("IXP2000 GPIO-based I2C bus driver");
 MODULE_LICENSE("GPL");
+MODULE_ALIAS("platform:IXP2000-I2C");
 

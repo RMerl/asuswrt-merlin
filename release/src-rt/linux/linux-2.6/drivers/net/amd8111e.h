@@ -655,32 +655,32 @@ typedef enum {
 
 struct amd8111e_tx_dr{
 
-	u16 buff_count; /* Size of the buffer pointed by this descriptor */
+	__le16 buff_count; /* Size of the buffer pointed by this descriptor */
 
-	u16 tx_flags;
+	__le16 tx_flags;
 
-	u16 tag_ctrl_info;
+	__le16 tag_ctrl_info;
 
-	u16 tag_ctrl_cmd;
+	__le16 tag_ctrl_cmd;
 
-	u32 buff_phy_addr;
+	__le32 buff_phy_addr;
 
-	u32 reserved;
+	__le32 reserved;
 };
 
 struct amd8111e_rx_dr{
 
-	u32 reserved;
+	__le32 reserved;
 
-	u16 msg_count; /* Received message len */
+	__le16 msg_count; /* Received message len */
 
-	u16 tag_ctrl_info;
+	__le16 tag_ctrl_info;
 
-	u16 buff_count;  /* Len of the buffer pointed by descriptor. */
+	__le16 buff_count;  /* Len of the buffer pointed by descriptor. */
 
-	u16 rx_flags;
+	__le16 rx_flags;
 
-	u32 buff_phy_addr;
+	__le32 buff_phy_addr;
 
 };
 struct amd8111e_link_config{
@@ -763,6 +763,8 @@ struct amd8111e_priv{
 	/* Reg memory mapped address */
 	void __iomem *mmio;
 
+	struct napi_struct napi;
+
 	spinlock_t lock;	/* Guard lock */
 	unsigned long rx_idx, tx_idx;	/* The next free ring entry */
 	unsigned long tx_complete_idx;
@@ -785,9 +787,7 @@ struct amd8111e_priv{
 	struct vlan_group		*vlgrp;
 #endif
 	char opened;
-	struct net_device_stats stats;
 	unsigned int drv_rx_errors;
-	struct dev_mc_list* mc_list;
 	struct amd8111e_coalesce_conf coal_conf;
 
 	struct ipg_info  ipg_data;

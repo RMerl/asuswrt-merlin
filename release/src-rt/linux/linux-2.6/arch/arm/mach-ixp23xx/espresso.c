@@ -19,7 +19,6 @@
 #include <linux/tty.h>
 #include <linux/bitops.h>
 #include <linux/ioport.h>
-#include <linux/serial.h>
 #include <linux/serial_8250.h>
 #include <linux/serial_core.h>
 #include <linux/device.h>
@@ -30,7 +29,7 @@
 #include <asm/types.h>
 #include <asm/setup.h>
 #include <asm/memory.h>
-#include <asm/hardware.h>
+#include <mach/hardware.h>
 #include <asm/mach-types.h>
 #include <asm/irq.h>
 #include <asm/system.h>
@@ -40,7 +39,6 @@
 #include <asm/mach/map.h>
 #include <asm/mach/irq.h>
 #include <asm/mach/arch.h>
-#include <asm/mach/irq.h>
 #include <asm/mach/pci.h>
 
 static int __init espresso_pci_init(void)
@@ -87,8 +85,6 @@ static void __init espresso_init(void)
 
 MACHINE_START(ESPRESSO, "IP Fabrics Double Espresso")
 	/* Maintainer: Lennert Buytenhek */
-	.phys_io	= IXP23XX_PERIPHERAL_PHYS,
-	.io_pg_offst	= ((IXP23XX_PERIPHERAL_VIRT >> 18)) & 0xfffc,
 	.map_io		= ixp23xx_map_io,
 	.init_irq	= ixp23xx_init_irq,
 	.timer		= &ixp23xx_timer,

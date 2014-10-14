@@ -17,6 +17,7 @@
 #include <linux/sockios.h>
 #include <linux/spinlock.h>
 #include <linux/net.h>
+#include <linux/gfp.h>
 #include <net/ax25.h>
 #include <linux/inet.h>
 #include <linux/netdevice.h>
@@ -41,7 +42,7 @@ void ax25_ds_enquiry_response(ax25_cb *ax25)
 	ax25_cb *ax25o;
 	struct hlist_node *node;
 
-	/* Please note that neither DK4EG´s nor DG2FEF´s
+	/* Please note that neither DK4EG's nor DG2FEF's
 	 * DAMA spec mention the following behaviour as seen
 	 * with TheFirmware:
 	 *

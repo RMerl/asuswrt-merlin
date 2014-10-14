@@ -28,117 +28,76 @@
 
 #include "spufs.h"
 
-/*
- * This ought to be kept in sync with the powerpc specific do_page_fault
- * function. Currently, there are a few corner cases that we haven't had
- * to handle fortunately.
+/**
+ * Handle an SPE event, depending on context SPU_CREATE_EVENTS_ENABLED flag.
+ *
+ * If the context was created with events, we just set the return event.
+ * Otherwise, send an appropriate signal to the process.
  */
-static int spu_handle_mm_fault(struct mm_struct *mm, unsigned long ea, unsigned long dsisr)
-{
-	struct vm_area_struct *vma;
-	unsigned long is_write;
-	int ret;
-	int fault;
-
-#if 0
-	if (!IS_VALID_EA(ea)) {
-		return -EFAULT;
-	}
-#endif /* XXX */
-	if (mm == NULL) {
-		return -EFAULT;
-	}
-	if (mm->pgd == NULL) {
-		return -EFAULT;
-	}
-
-	down_read(&mm->mmap_sem);
-	vma = find_vma(mm, ea);
-	if (!vma)
-		goto bad_area;
-	if (vma->vm_start <= ea)
-		goto good_area;
-	if (!(vma->vm_flags & VM_GROWSDOWN))
-		goto bad_area;
-	if (expand_stack(vma, ea))
-		goto bad_area;
-good_area:
-	is_write = dsisr & MFC_DSISR_ACCESS_PUT;
-	if (is_write) {
-		if (!(vma->vm_flags & VM_WRITE))
-			goto bad_area;
-	} else {
-		if (dsisr & MFC_DSISR_ACCESS_DENIED)
-			goto bad_area;
-		if (!(vma->vm_flags & (VM_READ | VM_EXEC)))
-			goto bad_area;
-	}
-	ret = 0;
-	fault = handle_mm_fault(mm, vma, ea, is_write);
-	if (unlikely(fault & VM_FAULT_ERROR)) {
-		if (fault & VM_FAULT_OOM) {
-			ret = -ENOMEM;
-			goto bad_area;
-		} else if (fault & VM_FAULT_SIGBUS) {
-			ret = -EFAULT;
-			goto bad_area;
-		}
-		BUG();
-	}
-	if (fault & VM_FAULT_MAJOR)
-		current->maj_flt++;
-	else
-		current->min_flt++;
-	up_read(&mm->mmap_sem);
-	return ret;
-
-bad_area:
-	up_read(&mm->mmap_sem);
-	return -EFAULT;
-}
-
-static void spufs_handle_dma_error(struct spu_context *ctx,
+static void spufs_handle_event(struct spu_context *ctx,
 				unsigned long ea, int type)
 {
+	siginfo_t info;
+
 	if (ctx->flags & SPU_CREATE_EVENTS_ENABLED) {
 		ctx->event_return |= type;
 		wake_up_all(&ctx->stop_wq);
-	} else {
-		siginfo_t info;
-		memset(&info, 0, sizeof(info));
-
-		switch (type) {
-		case SPE_EVENT_INVALID_DMA:
-			info.si_signo = SIGBUS;
-			info.si_code = BUS_OBJERR;
-			break;
-		case SPE_EVENT_SPE_DATA_STORAGE:
-			info.si_signo = SIGBUS;
-			info.si_addr = (void __user *)ea;
-			info.si_code = BUS_ADRERR;
-			break;
-		case SPE_EVENT_DMA_ALIGNMENT:
-			info.si_signo = SIGBUS;
-			/* DAR isn't set for an alignment fault :( */
-			info.si_code = BUS_ADRALN;
-			break;
-		case SPE_EVENT_SPE_ERROR:
-			info.si_signo = SIGILL;
-			info.si_addr = (void __user *)(unsigned long)
-				ctx->ops->npc_read(ctx) - 4;
-			info.si_code = ILL_ILLOPC;
-			break;
-		}
-		if (info.si_signo)
-			force_sig_info(info.si_signo, &info, current);
+		return;
 	}
+
+	memset(&info, 0, sizeof(info));
+
+	switch (type) {
+	case SPE_EVENT_INVALID_DMA:
+		info.si_signo = SIGBUS;
+		info.si_code = BUS_OBJERR;
+		break;
+	case SPE_EVENT_SPE_DATA_STORAGE:
+		info.si_signo = SIGSEGV;
+		info.si_addr = (void __user *)ea;
+		info.si_code = SEGV_ACCERR;
+		ctx->ops->restart_dma(ctx);
+		break;
+	case SPE_EVENT_DMA_ALIGNMENT:
+		info.si_signo = SIGBUS;
+		/* DAR isn't set for an alignment fault :( */
+		info.si_code = BUS_ADRALN;
+		break;
+	case SPE_EVENT_SPE_ERROR:
+		info.si_signo = SIGILL;
+		info.si_addr = (void __user *)(unsigned long)
+			ctx->ops->npc_read(ctx) - 4;
+		info.si_code = ILL_ILLOPC;
+		break;
+	}
+
+	if (info.si_signo)
+		force_sig_info(info.si_signo, &info, current);
 }
 
-void spufs_dma_callback(struct spu *spu, int type)
+int spufs_handle_class0(struct spu_context *ctx)
 {
-	spufs_handle_dma_error(spu->ctx, spu->dar, type);
+	unsigned long stat = ctx->csa.class_0_pending & CLASS0_INTR_MASK;
+
+	if (likely(!stat))
+		return 0;
+
+	if (stat & CLASS0_DMA_ALIGNMENT_INTR)
+		spufs_handle_event(ctx, ctx->csa.class_0_dar,
+			SPE_EVENT_DMA_ALIGNMENT);
+
+	if (stat & CLASS0_INVALID_DMA_COMMAND_INTR)
+		spufs_handle_event(ctx, ctx->csa.class_0_dar,
+			SPE_EVENT_INVALID_DMA);
+
+	if (stat & CLASS0_SPU_ERROR_INTR)
+		spufs_handle_event(ctx, ctx->csa.class_0_dar,
+			SPE_EVENT_SPE_ERROR);
+
+	ctx->csa.class_0_pending = 0;
+
+	return -EIO;
 }
-EXPORT_SYMBOL_GPL(spufs_dma_callback);
 
 /*
  * bottom half handler for page faults, we can't do this from
@@ -153,6 +112,7 @@ int spufs_handle_class1(struct spu_context *ctx)
 {
 	u64 ea, dsisr, access;
 	unsigned long flags;
+	unsigned flt = 0;
 	int ret;
 
 	/*
@@ -164,22 +124,20 @@ int spufs_handle_class1(struct spu_context *ctx)
 	 * in time, we can still expect to get the same fault
 	 * the immediately after the context restore.
 	 */
-	if (ctx->state == SPU_STATE_RUNNABLE) {
-		ea = ctx->spu->dar;
-		dsisr = ctx->spu->dsisr;
-		ctx->spu->dar= ctx->spu->dsisr = 0;
-	} else {
-		ea = ctx->csa.priv1.mfc_dar_RW;
-		dsisr = ctx->csa.priv1.mfc_dsisr_RW;
-		ctx->csa.priv1.mfc_dar_RW = 0;
-		ctx->csa.priv1.mfc_dsisr_RW = 0;
-	}
+	ea = ctx->csa.class_1_dar;
+	dsisr = ctx->csa.class_1_dsisr;
 
 	if (!(dsisr & (MFC_DSISR_PTE_NOT_FOUND | MFC_DSISR_ACCESS_DENIED)))
 		return 0;
 
-	pr_debug("ctx %p: ea %016lx, dsisr %016lx state %d\n", ctx, ea,
+	spuctx_switch_state(ctx, SPU_UTIL_IOWAIT);
+
+	pr_debug("ctx %p: ea %016llx, dsisr %016llx state %d\n", ctx, ea,
 		dsisr, ctx->state);
+
+	ctx->stats.hash_flt++;
+	if (ctx->state == SPU_STATE_RUNNABLE)
+		ctx->spu->stats.hash_flt++;
 
 	/* we must not hold the lock when entering spu_handle_mm_fault */
 	spu_release(ctx);
@@ -192,20 +150,43 @@ int spufs_handle_class1(struct spu_context *ctx)
 
 	/* hashing failed, so try the actual fault handler */
 	if (ret)
-		ret = spu_handle_mm_fault(current->mm, ea, dsisr);
+		ret = spu_handle_mm_fault(current->mm, ea, dsisr, &flt);
 
-	spu_acquire(ctx);
+	/*
+	 * This is nasty: we need the state_mutex for all the bookkeeping even
+	 * if the syscall was interrupted by a signal. ewww.
+	 */
+	mutex_lock(&ctx->state_mutex);
+
+	/*
+	 * Clear dsisr under ctxt lock after handling the fault, so that
+	 * time slicing will not preempt the context while the page fault
+	 * handler is running. Context switch code removes mappings.
+	 */
+	ctx->csa.class_1_dar = ctx->csa.class_1_dsisr = 0;
+
 	/*
 	 * If we handled the fault successfully and are in runnable
 	 * state, restart the DMA.
 	 * In case of unhandled error report the problem to user space.
 	 */
 	if (!ret) {
+		if (flt & VM_FAULT_MAJOR)
+			ctx->stats.maj_flt++;
+		else
+			ctx->stats.min_flt++;
+		if (ctx->state == SPU_STATE_RUNNABLE) {
+			if (flt & VM_FAULT_MAJOR)
+				ctx->spu->stats.maj_flt++;
+			else
+				ctx->spu->stats.min_flt++;
+		}
+
 		if (ctx->spu)
 			ctx->ops->restart_dma(ctx);
 	} else
-		spufs_handle_dma_error(ctx, ea, SPE_EVENT_SPE_DATA_STORAGE);
+		spufs_handle_event(ctx, ea, SPE_EVENT_SPE_DATA_STORAGE);
 
+	spuctx_switch_state(ctx, SPU_UTIL_SYSTEM);
 	return ret;
 }
-EXPORT_SYMBOL_GPL(spufs_handle_class1);

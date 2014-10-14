@@ -8,7 +8,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * Authors: David Woodhouse <dwmw2@cambridge.redhat.com>
+ * Authors: David Woodhouse <dwmw2@infradead.org>
  *          David Howells <dhowells@redhat.com>
  *
  */
@@ -16,10 +16,11 @@
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/init.h>
-#include <linux/slab.h>
 #include <linux/fs.h>
 #include <linux/pagemap.h>
 #include <linux/sched.h>
+#include <linux/mount.h>
+#include <linux/namei.h>
 #include "internal.h"
 
 struct afs_iget_data {
@@ -61,6 +62,11 @@ static int afs_inode_map_status(struct afs_vnode *vnode, struct key *key)
 		return -EBADMSG;
 	}
 
+#ifdef CONFIG_AFS_FSCACHE
+	if (vnode->status.size != inode->i_size)
+		fscache_attr_changed(vnode->cache);
+#endif
+
 	inode->i_nlink		= vnode->status.nlink;
 	inode->i_uid		= vnode->status.owner;
 	inode->i_gid		= 0;
@@ -98,6 +104,16 @@ static int afs_iget5_test(struct inode *inode, void *opaque)
 }
 
 /*
+ * iget5() comparator for inode created by autocell operations
+ *
+ * These pseudo inodes don't match anything.
+ */
+static int afs_iget5_autocell_test(struct inode *inode, void *opaque)
+{
+	return 0;
+}
+
+/*
  * iget5() inode initialiser
  */
 static int afs_iget5_set(struct inode *inode, void *opaque)
@@ -111,6 +127,68 @@ static int afs_iget5_set(struct inode *inode, void *opaque)
 	vnode->volume = data->volume;
 
 	return 0;
+}
+
+/*
+ * inode retrieval for autocell
+ */
+struct inode *afs_iget_autocell(struct inode *dir, const char *dev_name,
+				int namesz, struct key *key)
+{
+	struct afs_iget_data data;
+	struct afs_super_info *as;
+	struct afs_vnode *vnode;
+	struct super_block *sb;
+	struct inode *inode;
+	static atomic_t afs_autocell_ino;
+
+	_enter("{%x:%u},%*.*s,",
+	       AFS_FS_I(dir)->fid.vid, AFS_FS_I(dir)->fid.vnode,
+	       namesz, namesz, dev_name ?: "");
+
+	sb = dir->i_sb;
+	as = sb->s_fs_info;
+	data.volume = as->volume;
+	data.fid.vid = as->volume->vid;
+	data.fid.unique = 0;
+	data.fid.vnode = 0;
+
+	inode = iget5_locked(sb, atomic_inc_return(&afs_autocell_ino),
+			     afs_iget5_autocell_test, afs_iget5_set,
+			     &data);
+	if (!inode) {
+		_leave(" = -ENOMEM");
+		return ERR_PTR(-ENOMEM);
+	}
+
+	_debug("GOT INODE %p { ino=%lu, vl=%x, vn=%x, u=%x }",
+	       inode, inode->i_ino, data.fid.vid, data.fid.vnode,
+	       data.fid.unique);
+
+	vnode = AFS_FS_I(inode);
+
+	/* there shouldn't be an existing inode */
+	BUG_ON(!(inode->i_state & I_NEW));
+
+	inode->i_size		= 0;
+	inode->i_mode		= S_IFDIR | S_IRUGO | S_IXUGO;
+	inode->i_op		= &afs_autocell_inode_operations;
+	inode->i_nlink		= 2;
+	inode->i_uid		= 0;
+	inode->i_gid		= 0;
+	inode->i_ctime.tv_sec	= get_seconds();
+	inode->i_ctime.tv_nsec	= 0;
+	inode->i_atime		= inode->i_mtime = inode->i_ctime;
+	inode->i_blocks		= 0;
+	inode->i_version	= 0;
+	inode->i_generation	= 0;
+
+	set_bit(AFS_VNODE_PSEUDODIR, &vnode->flags);
+	set_bit(AFS_VNODE_MOUNTPOINT, &vnode->flags);
+	inode->i_flags |= S_AUTOMOUNT | S_NOATIME;
+	unlock_new_inode(inode);
+	_leave(" = %p", inode);
+	return inode;
 }
 
 /*
@@ -149,15 +227,6 @@ struct inode *afs_iget(struct super_block *sb, struct key *key,
 		return inode;
 	}
 
-#ifdef AFS_CACHING_SUPPORT
-	/* set up caching before reading the status, as fetch-status reads the
-	 * first page of symlinks to see if they're really mntpts */
-	cachefs_acquire_cookie(vnode->volume->cache,
-			       NULL,
-			       vnode,
-			       &vnode->cache);
-#endif
-
 	if (!status) {
 		/* it's a remotely extant inode */
 		set_bit(AFS_VNODE_CB_BROKEN, &vnode->flags);
@@ -183,6 +252,15 @@ struct inode *afs_iget(struct super_block *sb, struct key *key,
 		}
 	}
 
+	/* set up caching before mapping the status, as map-status reads the
+	 * first page of symlinks to see if they're really mountpoints */
+	inode->i_size = vnode->status.size;
+#ifdef CONFIG_AFS_FSCACHE
+	vnode->cache = fscache_acquire_cookie(vnode->volume->cache,
+					      &afs_vnode_cache_index_def,
+					      vnode);
+#endif
+
 	ret = afs_inode_map_status(vnode, key);
 	if (ret < 0)
 		goto bad_inode;
@@ -196,10 +274,11 @@ struct inode *afs_iget(struct super_block *sb, struct key *key,
 
 	/* failure */
 bad_inode:
-	make_bad_inode(inode);
-	unlock_new_inode(inode);
-	iput(inode);
-
+#ifdef CONFIG_AFS_FSCACHE
+	fscache_relinquish_cookie(vnode->cache, 0);
+	vnode->cache = NULL;
+#endif
+	iget_failed(inode);
 	_leave(" = %d [bad]", ret);
 	return ERR_PTR(ret);
 }
@@ -301,16 +380,30 @@ int afs_getattr(struct vfsmount *mnt, struct dentry *dentry,
 
 	inode = dentry->d_inode;
 
-	_enter("{ ino=%lu v=%lu }", inode->i_ino, inode->i_version);
+	_enter("{ ino=%lu v=%llu }", inode->i_ino,
+		(unsigned long long)inode->i_version);
 
 	generic_fillattr(inode, stat);
 	return 0;
 }
 
 /*
+ * discard an AFS inode
+ */
+int afs_drop_inode(struct inode *inode)
+{
+	_enter("");
+
+	if (test_bit(AFS_VNODE_PSEUDODIR, &AFS_FS_I(inode)->flags))
+		return generic_delete_inode(inode);
+	else
+		return generic_drop_inode(inode);
+}
+
+/*
  * clear an AFS inode
  */
-void afs_clear_inode(struct inode *inode)
+void afs_evict_inode(struct inode *inode)
 {
 	struct afs_permits *permits;
 	struct afs_vnode *vnode;
@@ -329,6 +422,9 @@ void afs_clear_inode(struct inode *inode)
 
 	ASSERTCMP(inode->i_ino, ==, vnode->fid.vnode);
 
+	truncate_inode_pages(&inode->i_data, 0);
+	end_writeback(inode);
+
 	afs_give_up_callback(vnode);
 
 	if (vnode->server) {
@@ -342,8 +438,8 @@ void afs_clear_inode(struct inode *inode)
 	ASSERT(list_empty(&vnode->writebacks));
 	ASSERT(!vnode->cb_promised);
 
-#ifdef AFS_CACHING_SUPPORT
-	cachefs_relinquish_cookie(vnode->cache, 0);
+#ifdef CONFIG_AFS_FSCACHE
+	fscache_relinquish_cookie(vnode->cache, 0);
 	vnode->cache = NULL;
 #endif
 

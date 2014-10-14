@@ -6,14 +6,15 @@
 #include <linux/kernel.h>
 #include <linux/tty.h>
 
-#include <asm/hardware.h>
+#include <mach/hardware.h>
 #include <asm/setup.h>
 #include <asm/mach-types.h>
+#include <asm/page.h>
 
 #include <asm/mach/arch.h>
 #include <asm/mach/map.h>
 #include <asm/mach/serial_sa1100.h>
-#include <asm/arch/mcp.h>
+#include <mach/mcp.h>
 
 #include "generic.h"
 
@@ -27,7 +28,7 @@ static struct mcp_plat_data lart_mcp_data = {
 
 static void __init lart_init(void)
 {
-	sa11x0_set_mcp_data(&lart_mcp_data);
+	sa11x0_register_mcp(&lart_mcp_data);
 }
 
 static struct map_desc lart_io_desc[] __initdata = {
@@ -60,8 +61,6 @@ static void __init lart_map_io(void)
 }
 
 MACHINE_START(LART, "LART")
-	.phys_io	= 0x80000000,
-	.io_pg_offst	= ((0xf8000000) >> 18) & 0xfffc,
 	.boot_params	= 0xc0000100,
 	.map_io		= lart_map_io,
 	.init_irq	= sa1100_init_irq,

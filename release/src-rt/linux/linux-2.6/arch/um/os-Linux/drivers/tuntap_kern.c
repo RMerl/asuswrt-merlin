@@ -1,16 +1,13 @@
-/* 
- * Copyright (C) 2001 Jeff Dike (jdike@karaya.com)
+/*
+ * Copyright (C) 2001 - 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
  * Licensed under the GPL
  */
 
-#include "linux/stddef.h"
-#include "linux/netdevice.h"
-#include "linux/etherdevice.h"
-#include "linux/skbuff.h"
-#include "linux/init.h"
-#include "asm/errno.h"
+#include <linux/netdevice.h>
+#include <linux/init.h>
+#include <linux/skbuff.h>
+#include <asm/errno.h>
 #include "net_kern.h"
-#include "net_user.h"
 #include "tuntap.h"
 
 struct tuntap_init {
@@ -24,7 +21,7 @@ static void tuntap_init(struct net_device *dev, void *data)
 	struct tuntap_data *tpri;
 	struct tuntap_init *init = data;
 
-	pri = dev->priv;
+	pri = netdev_priv(dev);
 	tpri = (struct tuntap_data *) pri->user;
 	tpri->dev_name = init->dev_name;
 	tpri->fixed_config = (init->dev_name != NULL);
@@ -32,25 +29,21 @@ static void tuntap_init(struct net_device *dev, void *data)
 	tpri->fd = -1;
 	tpri->dev = dev;
 
-	printk("TUN/TAP backend - ");
+	printk(KERN_INFO "TUN/TAP backend - ");
 	if (tpri->gate_addr != NULL)
-		printk("IP = %s", tpri->gate_addr);
-	printk("\n");
+		printk(KERN_CONT "IP = %s", tpri->gate_addr);
+	printk(KERN_CONT "\n");
 }
 
-static int tuntap_read(int fd, struct sk_buff **skb, 
-		       struct uml_net_private *lp)
+static int tuntap_read(int fd, struct sk_buff *skb, struct uml_net_private *lp)
 {
-	*skb = ether_adjust_skb(*skb, ETH_HEADER_OTHER);
-	if(*skb == NULL) return(-ENOMEM);
-	return(net_read(fd, skb_mac_header(*skb),
-			(*skb)->dev->mtu + ETH_HEADER_OTHER));
+	return net_read(fd, skb_mac_header(skb),
+			skb->dev->mtu + ETH_HEADER_OTHER);
 }
 
-static int tuntap_write(int fd, struct sk_buff **skb, 
-			struct uml_net_private *lp)
+static int tuntap_write(int fd, struct sk_buff *skb, struct uml_net_private *lp)
 {
-	return(net_write(fd, (*skb)->data, (*skb)->len));
+	return net_write(fd, skb->data, skb->len);
 }
 
 const struct net_kern_info tuntap_kern_info = {
@@ -67,11 +60,11 @@ int tuntap_setup(char *str, char **mac_out, void *data)
 	*init = ((struct tuntap_init)
 		{ .dev_name 	= NULL,
 		  .gate_addr 	= NULL });
-	if(tap_setup_common(str, "tuntap", &init->dev_name, mac_out,
+	if (tap_setup_common(str, "tuntap", &init->dev_name, mac_out,
 			    &init->gate_addr))
-		return(0);
+		return 0;
 
-	return(1);
+	return 1;
 }
 
 static struct transport tuntap_transport = {

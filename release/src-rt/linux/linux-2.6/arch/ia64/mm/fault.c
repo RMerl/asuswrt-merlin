@@ -16,7 +16,7 @@
 #include <asm/system.h>
 #include <asm/uaccess.h>
 
-extern void die (char *, struct pt_regs *, long);
+extern int die(char *, struct pt_regs *, long);
 
 #ifdef CONFIG_KPROBES
 static inline int notify_page_fault(struct pt_regs *regs, int trap)
@@ -26,7 +26,7 @@ static inline int notify_page_fault(struct pt_regs *regs, int trap)
 	if (!user_mode(regs)) {
 		/* kprobe_running() needs smp_processor_id() */
 		preempt_disable();
-		if (kprobe_running() && kprobes_fault_handler(regs, trap))
+		if (kprobe_running() && kprobe_fault_handler(regs, trap))
 			ret = 1;
 		preempt_enable();
 	}
@@ -112,11 +112,17 @@ ia64_do_page_fault (unsigned long address, unsigned long isr, struct pt_regs *re
 	down_read(&mm->mmap_sem);
 
 	vma = find_vma_prev(mm, address, &prev_vma);
-	if (!vma)
+	if (!vma && !prev_vma )
 		goto bad_area;
 
-	/* find_vma_prev() returns vma such that address < vma->vm_end or NULL */
-	if (address < vma->vm_start)
+        /*
+         * find_vma_prev() returns vma such that address < vma->vm_end or NULL
+         *
+         * May find no vma, but could be that the last vm area is the
+         * register backing store that needs to expand upwards, in
+         * this case vma will be null, but prev_vma will ne non-null
+         */
+        if (( !vma && prev_vma ) || (address < vma->vm_start) )
 		goto check_expansion;
 
   good_area:
@@ -142,13 +148,12 @@ ia64_do_page_fault (unsigned long address, unsigned long isr, struct pt_regs *re
 	if ((vma->vm_flags & mask) != mask)
 		goto bad_area;
 
-  survive:
 	/*
 	 * If for any reason at all we couldn't handle the fault, make
 	 * sure we exit gracefully rather than endlessly redo the
 	 * fault.
 	 */
-	fault = handle_mm_fault(mm, vma, address, (mask & VM_WRITE) != 0);
+	fault = handle_mm_fault(mm, vma, address, (mask & VM_WRITE) ? FAULT_FLAG_WRITE : 0);
 	if (unlikely(fault & VM_FAULT_ERROR)) {
 		/*
 		 * We ran out of memory, or some other thing happened
@@ -172,6 +177,8 @@ ia64_do_page_fault (unsigned long address, unsigned long isr, struct pt_regs *re
 
   check_expansion:
 	if (!(prev_vma && (prev_vma->vm_flags & VM_GROWSUP) && (address == prev_vma->vm_end))) {
+		if (!vma)
+			goto bad_area;
 		if (!(vma->vm_flags & VM_GROWSDOWN))
 			goto bad_area;
 		if (REGION_NUMBER(address) != REGION_NUMBER(vma->vm_start)
@@ -259,20 +266,16 @@ ia64_do_page_fault (unsigned long address, unsigned long isr, struct pt_regs *re
 	else
 		printk(KERN_ALERT "Unable to handle kernel paging request at "
 		       "virtual address %016lx\n", address);
-	die("Oops", regs, isr);
+	if (die("Oops", regs, isr))
+		regs = NULL;
 	bust_spinlocks(0);
-	do_exit(SIGKILL);
+	if (regs)
+		do_exit(SIGKILL);
 	return;
 
   out_of_memory:
 	up_read(&mm->mmap_sem);
-	if (is_init(current)) {
-		yield();
-		down_read(&mm->mmap_sem);
-		goto survive;
-	}
-	printk(KERN_CRIT "VM: killing process %s\n", current->comm);
-	if (user_mode(regs))
-		do_exit(SIGKILL);
-	goto no_context;
+	if (!user_mode(regs))
+		goto no_context;
+	pagefault_out_of_memory();
 }

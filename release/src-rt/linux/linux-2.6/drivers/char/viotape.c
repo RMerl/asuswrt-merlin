@@ -6,7 +6,7 @@
  *  Authors: Dave Boutcher <boutcher@us.ibm.com>
  *           Ryan Arnold <ryanarn@us.ibm.com>
  *           Colin Devilbiss <devilbis@us.ibm.com>
- *           Stephen Rothwell <sfr@au1.ibm.com>
+ *           Stephen Rothwell
  *
  * (C) Copyright 2000-2004 IBM Corporation
  *
@@ -46,6 +46,8 @@
 #include <linux/completion.h>
 #include <linux/proc_fs.h>
 #include <linux/seq_file.h>
+#include <linux/mutex.h>
+#include <linux/slab.h>
 
 #include <asm/uaccess.h>
 #include <asm/ioctls.h>
@@ -62,6 +64,7 @@
 #define VIOTAPE_KERN_WARN	KERN_WARNING "viotape: "
 #define VIOTAPE_KERN_INFO	KERN_INFO "viotape: "
 
+static DEFINE_MUTEX(proc_viotape_mutex);
 static int viotape_numdev;
 
 /*
@@ -91,47 +94,6 @@ struct viot_devinfo_struct {
 #define VIOTAPOP_GETPOS	       13
 #define VIOTAPOP_SETPART       14
 #define VIOTAPOP_UNLOAD        15
-
-struct viotapelpevent {
-	struct HvLpEvent event;
-	u32 reserved;
-	u16 version;
-	u16 sub_type_result;
-	u16 tape;
-	u16 flags;
-	u32 token;
-	u64 len;
-	union {
-		struct {
-			u32 tape_op;
-			u32 count;
-		} op;
-		struct {
-			u32 type;
-			u32 resid;
-			u32 dsreg;
-			u32 gstat;
-			u32 erreg;
-			u32 file_no;
-			u32 block_no;
-		} get_status;
-		struct {
-			u32 block_no;
-		} get_pos;
-	} u;
-};
-
-enum viotapesubtype {
-	viotapeopen = 0x0001,
-	viotapeclose = 0x0002,
-	viotaperead = 0x0003,
-	viotapewrite = 0x0004,
-	viotapegetinfo = 0x0005,
-	viotapeop = 0x0006,
-	viotapegetpos = 0x0007,
-	viotapesetpos = 0x0008,
-	viotapegetstatus = 0x0009
-};
 
 enum viotaperc {
 	viotape_InvalidRange = 0x0601,
@@ -223,14 +185,11 @@ static const struct vio_error_entry viotape_err_table[] = {
 #define VIOT_WRITING		2
 
 /* Our info on the tapes */
-struct tape_descr {
-	char rsrcname[10];
-	char type[4];
-	char model[3];
-};
-
-static struct tape_descr *viotape_unitinfo;
-static dma_addr_t viotape_unitinfo_token;
+static struct {
+	const char *rsrcname;
+	const char *type;
+	const char *model;
+} viotape_unitinfo[VIOTAPE_MAX_TAPE];
 
 static struct mtget viomtget[VIOTAPE_MAX_TAPE];
 
@@ -293,6 +252,7 @@ static int proc_viotape_open(struct inode *inode, struct file *file)
 }
 
 static const struct file_operations proc_viotape_operations = {
+	.owner		= THIS_MODULE,
 	.open		= proc_viotape_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
@@ -380,53 +340,6 @@ int tape_rc_to_errno(int tape_rc, char *operation, int tapeno)
 			viotape_unitinfo[tapeno].rsrcname, err->msg);
 	return -err->errno;
 }
-
-/* Get info on all tapes from OS/400 */
-static int get_viotape_info(void)
-{
-	HvLpEvent_Rc hvrc;
-	int i;
-	size_t len = sizeof(*viotape_unitinfo) * VIOTAPE_MAX_TAPE;
-	struct op_struct *op = get_op_struct();
-
-	if (op == NULL)
-		return -ENOMEM;
-
-	viotape_unitinfo = dma_alloc_coherent(iSeries_vio_dev, len,
-		&viotape_unitinfo_token, GFP_ATOMIC);
-	if (viotape_unitinfo == NULL) {
-		free_op_struct(op);
-		return -ENOMEM;
-	}
-
-	memset(viotape_unitinfo, 0, len);
-
-	hvrc = HvCallEvent_signalLpEventFast(viopath_hostLp,
-			HvLpEvent_Type_VirtualIo,
-			viomajorsubtype_tape | viotapegetinfo,
-			HvLpEvent_AckInd_DoAck, HvLpEvent_AckType_ImmediateAck,
-			viopath_sourceinst(viopath_hostLp),
-			viopath_targetinst(viopath_hostLp),
-			(u64) (unsigned long) op, VIOVERSION << 16,
-			viotape_unitinfo_token, len, 0, 0);
-	if (hvrc != HvLpEvent_Rc_Good) {
-		printk(VIOTAPE_KERN_WARN "hv error on op %d\n",
-				(int)hvrc);
-		free_op_struct(op);
-		return -EIO;
-	}
-
-	wait_for_completion(&op->com);
-
-	free_op_struct(op);
-
-	for (i = 0;
-	     ((i < VIOTAPE_MAX_TAPE) && (viotape_unitinfo[i].rsrcname[0]));
-	     i++)
-		viotape_numdev++;
-	return 0;
-}
-
 
 /* Write */
 static ssize_t viotap_write(struct file *file, const char *buf,
@@ -767,6 +680,17 @@ free_op:
 	return ret;
 }
 
+static long viotap_unlocked_ioctl(struct file *file,
+		unsigned int cmd, unsigned long arg)
+{
+	long rc;
+
+	mutex_lock(&proc_viotape_mutex);
+	rc = viotap_ioctl(file->f_path.dentry->d_inode, file, cmd, arg);
+	mutex_unlock(&proc_viotape_mutex);
+	return rc;
+}
+
 static int viotap_open(struct inode *inode, struct file *file)
 {
 	HvLpEvent_Rc hvrc;
@@ -777,6 +701,7 @@ static int viotap_open(struct inode *inode, struct file *file)
 	if (op == NULL)
 		return -ENOMEM;
 
+	mutex_lock(&proc_viotape_mutex);
 	get_dev_info(file->f_path.dentry->d_inode, &devi);
 
 	/* Note: We currently only support one mode! */
@@ -807,6 +732,7 @@ static int viotap_open(struct inode *inode, struct file *file)
 
 free_op:
 	free_op_struct(op);
+	mutex_unlock(&proc_viotape_mutex);
 	return ret;
 }
 
@@ -873,12 +799,13 @@ free_op:
 }
 
 const struct file_operations viotap_fops = {
-	owner: THIS_MODULE,
-	read: viotap_read,
-	write: viotap_write,
-	ioctl: viotap_ioctl,
-	open: viotap_open,
-	release: viotap_release,
+	.owner =		THIS_MODULE,
+	.read =			viotap_read,
+	.write =		viotap_write,
+	.unlocked_ioctl =	viotap_unlocked_ioctl,
+	.open =			viotap_open,
+	.release =		viotap_release,
+	.llseek = 		noop_llseek,
 };
 
 /* Handle interrupt events for tape */
@@ -899,7 +826,6 @@ static void vioHandleTapeEvent(struct HvLpEvent *event)
 	tapeminor = event->xSubtype & VIOMINOR_SUBTYPE_MASK;
 	op = (struct op_struct *)event->xCorrelationToken;
 	switch (tapeminor) {
-	case viotapegetinfo:
 	case viotapeopen:
 	case viotapeclose:
 		op->rc = tevent->sub_type_result;
@@ -942,19 +868,31 @@ static int viotape_probe(struct vio_dev *vdev, const struct vio_device_id *id)
 {
 	int i = vdev->unit_address;
 	int j;
+	struct device_node *node = vdev->dev.of_node;
 
-	if (i >= viotape_numdev)
+	if (i >= VIOTAPE_MAX_TAPE)
+		return -ENODEV;
+	if (!node)
 		return -ENODEV;
 
+	if (i >= viotape_numdev)
+		viotape_numdev = i + 1;
+
 	tape_device[i] = &vdev->dev;
+	viotape_unitinfo[i].rsrcname = of_get_property(node,
+					"linux,vio_rsrcname", NULL);
+	viotape_unitinfo[i].type = of_get_property(node, "linux,vio_type",
+					NULL);
+	viotape_unitinfo[i].model = of_get_property(node, "linux,vio_model",
+					NULL);
 
 	state[i].cur_part = 0;
 	for (j = 0; j < MAX_PARTITIONS; ++j)
 		state[i].part_stat_rwi[j] = VIOT_IDLE;
-	class_device_create(tape_class, NULL, MKDEV(VIOTAPE_MAJOR, i), NULL,
-			"iseries!vt%d", i);
-	class_device_create(tape_class, NULL, MKDEV(VIOTAPE_MAJOR, i | 0x80),
-			NULL, "iseries!nvt%d", i);
+	device_create(tape_class, NULL, MKDEV(VIOTAPE_MAJOR, i), NULL,
+		      "iseries!vt%d", i);
+	device_create(tape_class, NULL, MKDEV(VIOTAPE_MAJOR, i | 0x80), NULL,
+		      "iseries!nvt%d", i);
 	printk(VIOTAPE_KERN_INFO "tape iseries/vt%d is iSeries "
 			"resource %10.10s type %4.4s, model %3.3s\n",
 			i, viotape_unitinfo[i].rsrcname,
@@ -966,8 +904,8 @@ static int viotape_remove(struct vio_dev *vdev)
 {
 	int i = vdev->unit_address;
 
-	class_device_destroy(tape_class, MKDEV(VIOTAPE_MAJOR, i | 0x80));
-	class_device_destroy(tape_class, MKDEV(VIOTAPE_MAJOR, i));
+	device_destroy(tape_class, MKDEV(VIOTAPE_MAJOR, i | 0x80));
+	device_destroy(tape_class, MKDEV(VIOTAPE_MAJOR, i));
 	return 0;
 }
 
@@ -995,7 +933,6 @@ static struct vio_driver viotape_driver = {
 int __init viotap_init(void)
 {
 	int ret;
-	struct proc_dir_entry *e;
 
 	if (!firmware_has_feature(FW_FEATURE_ISERIES))
 		return -ENODEV;
@@ -1044,20 +981,12 @@ int __init viotap_init(void)
 		goto unreg_chrdev;
 	}
 
-	if ((ret = get_viotape_info()) < 0) {
-		printk(VIOTAPE_KERN_WARN "Unable to obtain virtual device information");
-		goto unreg_class;
-	}
-
 	ret = vio_register_driver(&viotape_driver);
 	if (ret)
 		goto unreg_class;
 
-	e = create_proc_entry("iSeries/viotape", S_IFREG|S_IRUGO, NULL);
-	if (e) {
-		e->owner = THIS_MODULE;
-		e->proc_fops = &proc_viotape_operations;
-	}
+	proc_create("iSeries/viotape", S_IFREG|S_IRUGO, NULL,
+		    &proc_viotape_operations);
 
 	return 0;
 
@@ -1098,19 +1027,10 @@ static int chg_state(int index, unsigned char new_state, struct file *file)
 /* Cleanup */
 static void __exit viotap_exit(void)
 {
-	int ret;
-
 	remove_proc_entry("iSeries/viotape", NULL);
 	vio_unregister_driver(&viotape_driver);
 	class_destroy(tape_class);
-	ret = unregister_chrdev(VIOTAPE_MAJOR, "viotape");
-	if (ret < 0)
-		printk(VIOTAPE_KERN_WARN "Error unregistering device: %d\n",
-				ret);
-	if (viotape_unitinfo)
-		dma_free_coherent(iSeries_vio_dev,
-				sizeof(viotape_unitinfo[0]) * VIOTAPE_MAX_TAPE,
-				viotape_unitinfo, viotape_unitinfo_token);
+	unregister_chrdev(VIOTAPE_MAJOR, "viotape");
 	viopath_close(viopath_hostLp, viomajorsubtype_tape, VIOTAPE_MAXREQ + 2);
 	vio_clearHandler(viomajorsubtype_tape);
 	clear_op_struct_pool();

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006 QLogic, Inc. All rights reserved.
+ * Copyright (c) 2006, 2007 QLogic Corporation. All rights reserved.
  * Copyright (c) 2005, 2006 PathScale, Inc. All rights reserved.
  *
  * This software is available to you under a choice of one of two
@@ -32,6 +32,7 @@
  */
 
 #include <linux/err.h>
+#include <linux/slab.h>
 #include <linux/vmalloc.h>
 
 #include "ipath_verbs.h"
@@ -76,20 +77,25 @@ void ipath_cq_enter(struct ipath_cq *cq, struct ib_wc *entry, int solicited)
 		}
 		return;
 	}
-	wc->queue[head].wr_id = entry->wr_id;
-	wc->queue[head].status = entry->status;
-	wc->queue[head].opcode = entry->opcode;
-	wc->queue[head].vendor_err = entry->vendor_err;
-	wc->queue[head].byte_len = entry->byte_len;
-	wc->queue[head].imm_data = (__u32 __force)entry->imm_data;
-	wc->queue[head].qp_num = entry->qp->qp_num;
-	wc->queue[head].src_qp = entry->src_qp;
-	wc->queue[head].wc_flags = entry->wc_flags;
-	wc->queue[head].pkey_index = entry->pkey_index;
-	wc->queue[head].slid = entry->slid;
-	wc->queue[head].sl = entry->sl;
-	wc->queue[head].dlid_path_bits = entry->dlid_path_bits;
-	wc->queue[head].port_num = entry->port_num;
+	if (cq->ip) {
+		wc->uqueue[head].wr_id = entry->wr_id;
+		wc->uqueue[head].status = entry->status;
+		wc->uqueue[head].opcode = entry->opcode;
+		wc->uqueue[head].vendor_err = entry->vendor_err;
+		wc->uqueue[head].byte_len = entry->byte_len;
+		wc->uqueue[head].ex.imm_data = (__u32 __force) entry->ex.imm_data;
+		wc->uqueue[head].qp_num = entry->qp->qp_num;
+		wc->uqueue[head].src_qp = entry->src_qp;
+		wc->uqueue[head].wc_flags = entry->wc_flags;
+		wc->uqueue[head].pkey_index = entry->pkey_index;
+		wc->uqueue[head].slid = entry->slid;
+		wc->uqueue[head].sl = entry->sl;
+		wc->uqueue[head].dlid_path_bits = entry->dlid_path_bits;
+		wc->uqueue[head].port_num = entry->port_num;
+		/* Make sure entry is written before the head index. */
+		smp_wmb();
+	} else
+		wc->kqueue[head] = *entry;
 	wc->head = next;
 
 	if (cq->notify == IB_CQ_NEXT_COMP ||
@@ -128,6 +134,12 @@ int ipath_poll_cq(struct ib_cq *ibcq, int num_entries, struct ib_wc *entry)
 	int npolled;
 	u32 tail;
 
+	/* The kernel can only poll a kernel completion queue */
+	if (cq->ip) {
+		npolled = -EINVAL;
+		goto bail;
+	}
+
 	spin_lock_irqsave(&cq->lock, flags);
 
 	wc = cq->queue;
@@ -135,30 +147,10 @@ int ipath_poll_cq(struct ib_cq *ibcq, int num_entries, struct ib_wc *entry)
 	if (tail > (u32) cq->ibcq.cqe)
 		tail = (u32) cq->ibcq.cqe;
 	for (npolled = 0; npolled < num_entries; ++npolled, ++entry) {
-		struct ipath_qp *qp;
-
 		if (tail == wc->head)
 			break;
-
-		qp = ipath_lookup_qpn(&to_idev(cq->ibcq.device)->qp_table,
-				      wc->queue[tail].qp_num);
-		entry->qp = &qp->ibqp;
-		if (atomic_dec_and_test(&qp->refcount))
-			wake_up(&qp->wait);
-
-		entry->wr_id = wc->queue[tail].wr_id;
-		entry->status = wc->queue[tail].status;
-		entry->opcode = wc->queue[tail].opcode;
-		entry->vendor_err = wc->queue[tail].vendor_err;
-		entry->byte_len = wc->queue[tail].byte_len;
-		entry->imm_data = wc->queue[tail].imm_data;
-		entry->src_qp = wc->queue[tail].src_qp;
-		entry->wc_flags = wc->queue[tail].wc_flags;
-		entry->pkey_index = wc->queue[tail].pkey_index;
-		entry->slid = wc->queue[tail].slid;
-		entry->sl = wc->queue[tail].sl;
-		entry->dlid_path_bits = wc->queue[tail].dlid_path_bits;
-		entry->port_num = wc->queue[tail].port_num;
+		/* The kernel doesn't need a RMB since it has the lock. */
+		*entry = wc->kqueue[tail];
 		if (tail >= cq->ibcq.cqe)
 			tail = 0;
 		else
@@ -168,6 +160,7 @@ int ipath_poll_cq(struct ib_cq *ibcq, int num_entries, struct ib_wc *entry)
 
 	spin_unlock_irqrestore(&cq->lock, flags);
 
+bail:
 	return npolled;
 }
 
@@ -212,6 +205,7 @@ struct ib_cq *ipath_create_cq(struct ib_device *ibdev, int entries, int comp_vec
 	struct ipath_cq *cq;
 	struct ipath_cq_wc *wc;
 	struct ib_cq *ret;
+	u32 sz;
 
 	if (entries < 1 || entries > ib_ipath_max_cqes) {
 		ret = ERR_PTR(-EINVAL);
@@ -232,7 +226,12 @@ struct ib_cq *ipath_create_cq(struct ib_device *ibdev, int entries, int comp_vec
 	 * We need to use vmalloc() in order to support mmap and large
 	 * numbers of entries.
 	 */
-	wc = vmalloc_user(sizeof(*wc) + sizeof(struct ib_wc) * entries);
+	sz = sizeof(*wc);
+	if (udata && udata->outlen >= sizeof(__u64))
+		sz += sizeof(struct ib_uverbs_wc) * (entries + 1);
+	else
+		sz += sizeof(struct ib_wc) * (entries + 1);
+	wc = vmalloc_user(sz);
 	if (!wc) {
 		ret = ERR_PTR(-ENOMEM);
 		goto bail_cq;
@@ -244,9 +243,8 @@ struct ib_cq *ipath_create_cq(struct ib_device *ibdev, int entries, int comp_vec
 	 */
 	if (udata && udata->outlen >= sizeof(__u64)) {
 		int err;
-		u32 s = sizeof *wc + sizeof(struct ib_wc) * entries;
 
-		cq->ip = ipath_create_mmap_info(dev, s, context, wc);
+		cq->ip = ipath_create_mmap_info(dev, sz, context, wc);
 		if (!cq->ip) {
 			ret = ERR_PTR(-ENOMEM);
 			goto bail_wc;
@@ -377,6 +375,7 @@ int ipath_resize_cq(struct ib_cq *ibcq, int cqe, struct ib_udata *udata)
 	struct ipath_cq_wc *wc;
 	u32 head, tail, n;
 	int ret;
+	u32 sz;
 
 	if (cqe < 1 || cqe > ib_ipath_max_cqes) {
 		ret = -EINVAL;
@@ -386,22 +385,24 @@ int ipath_resize_cq(struct ib_cq *ibcq, int cqe, struct ib_udata *udata)
 	/*
 	 * Need to use vmalloc() if we want to support large #s of entries.
 	 */
-	wc = vmalloc_user(sizeof(*wc) + sizeof(struct ib_wc) * cqe);
+	sz = sizeof(*wc);
+	if (udata && udata->outlen >= sizeof(__u64))
+		sz += sizeof(struct ib_uverbs_wc) * (cqe + 1);
+	else
+		sz += sizeof(struct ib_wc) * (cqe + 1);
+	wc = vmalloc_user(sz);
 	if (!wc) {
 		ret = -ENOMEM;
 		goto bail;
 	}
 
-	/*
-	 * Return the address of the WC as the offset to mmap.
-	 * See ipath_mmap() for details.
-	 */
+	/* Check that we can write the offset to mmap. */
 	if (udata && udata->outlen >= sizeof(__u64)) {
-		__u64 offset = (__u64) wc;
+		__u64 offset = 0;
 
 		ret = ib_copy_to_udata(udata, &offset, sizeof(offset));
 		if (ret)
-			goto bail;
+			goto bail_free;
 	}
 
 	spin_lock_irq(&cq->lock);
@@ -421,13 +422,14 @@ int ipath_resize_cq(struct ib_cq *ibcq, int cqe, struct ib_udata *udata)
 	else
 		n = head - tail;
 	if (unlikely((u32)cqe < n)) {
-		spin_unlock_irq(&cq->lock);
-		vfree(wc);
-		ret = -EOVERFLOW;
-		goto bail;
+		ret = -EINVAL;
+		goto bail_unlock;
 	}
 	for (n = 0; tail != head; n++) {
-		wc->queue[n] = old_wc->queue[tail];
+		if (cq->ip)
+			wc->uqueue[n] = old_wc->uqueue[tail];
+		else
+			wc->kqueue[n] = old_wc->kqueue[tail];
 		if (tail == (u32) cq->ibcq.cqe)
 			tail = 0;
 		else
@@ -444,9 +446,20 @@ int ipath_resize_cq(struct ib_cq *ibcq, int cqe, struct ib_udata *udata)
 	if (cq->ip) {
 		struct ipath_ibdev *dev = to_idev(ibcq->device);
 		struct ipath_mmap_info *ip = cq->ip;
-		u32 s = sizeof *wc + sizeof(struct ib_wc) * cqe;
 
-		ipath_update_mmap_info(dev, ip, s, wc);
+		ipath_update_mmap_info(dev, ip, sz, wc);
+
+		/*
+		 * Return the offset to mmap.
+		 * See ipath_mmap() for details.
+		 */
+		if (udata && udata->outlen >= sizeof(__u64)) {
+			ret = ib_copy_to_udata(udata, &ip->offset,
+					       sizeof(ip->offset));
+			if (ret)
+				goto bail;
+		}
+
 		spin_lock_irq(&dev->pending_lock);
 		if (list_empty(&ip->pending_mmaps))
 			list_add(&ip->pending_mmaps, &dev->pending_mmaps);
@@ -454,7 +467,12 @@ int ipath_resize_cq(struct ib_cq *ibcq, int cqe, struct ib_udata *udata)
 	}
 
 	ret = 0;
+	goto bail;
 
+bail_unlock:
+	spin_unlock_irq(&cq->lock);
+bail_free:
+	vfree(wc);
 bail:
 	return ret;
 }

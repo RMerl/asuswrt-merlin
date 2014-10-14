@@ -54,7 +54,7 @@
  *
  *    SYM_OPT_LIMIT_COMMAND_REORDERING
  *        When this option is set, the driver tries to limit tagged 
- *        command reordering to some reasonnable value.
+ *        command reordering to some reasonable value.
  *        (set for Linux)
  */
 #if 0
@@ -354,6 +354,7 @@ struct sym_trans {
 	unsigned int dt:1;
 	unsigned int qas:1;
 	unsigned int check_nego:1;
+	unsigned int renego:2;
 };
 
 /*
@@ -400,6 +401,7 @@ struct sym_tcb {
 	 *  An array of bus addresses is used on reselection.
 	 */
 	u32	*luntbl;	/* LCBs bus address table	*/
+	int	nlcb;		/* Number of valid LCBs (including LUN #0) */
 
 	/*
 	 *  LUN table used by the C code.
@@ -418,6 +420,9 @@ struct sym_tcb {
 
 	/* Transfer goal */
 	struct sym_trans tgoal;
+
+	/* Last printed transfer speed */
+	struct sym_trans tprint;
 
 	/*
 	 * Keep track of the CCB used for the negotiation in order
@@ -883,10 +888,7 @@ struct sym_hcb {
 	 *  Physical bus addresses of the chip.
 	 */
 	u32		mmio_ba;	/* MMIO 32 bit BUS address	*/
-	int		mmio_ws;	/* MMIO Window size		*/
-
 	u32		ram_ba;		/* RAM 32 bit BUS address	*/
-	int		ram_ws;		/* RAM window size		*/
 
 	/*
 	 *  SCRIPTS virtual and physical bus addresses.
@@ -912,14 +914,12 @@ struct sym_hcb {
 	struct sym_fwb_ba fwb_bas;	/* Useful SCRIPTB bus addresses	*/
 	struct sym_fwz_ba fwz_bas;	/* Useful SCRIPTZ bus addresses	*/
 	void		(*fw_setup)(struct sym_hcb *np, struct sym_fw *fw);
-	void		(*fw_patch)(struct sym_hcb *np);
+	void		(*fw_patch)(struct Scsi_Host *);
 	char		*fw_name;
 
 	/*
 	 *  General controller parameters and configuration.
 	 */
-	u_short	device_id;	/* PCI device id		*/
-	u_char	revision_id;	/* PCI device revision id	*/
 	u_int	features;	/* Chip features map		*/
 	u_char	myaddr;		/* SCSI id of the adapter	*/
 	u_char	maxburst;	/* log base 2 of dwords burst	*/
@@ -1031,6 +1031,14 @@ struct sym_hcb {
 #endif
 };
 
+#if SYM_CONF_DMA_ADDRESSING_MODE == 0
+#define use_dac(np)	0
+#define set_dac(np)	do { } while (0)
+#else
+#define use_dac(np)	(np)->use_dac
+#define set_dac(np)	(np)->use_dac = 1
+#endif
+
 #define HCB_BA(np, lbl)	(np->hcb_ba + offsetof(struct sym_hcb, lbl))
 
 
@@ -1052,12 +1060,13 @@ void sym_start_next_ccbs(struct sym_hcb *np, struct sym_lcb *lp, int maxn);
 #else
 void sym_put_start_queue(struct sym_hcb *np, struct sym_ccb *cp);
 #endif
-void sym_start_up(struct sym_hcb *np, int reason);
-void sym_interrupt(struct sym_hcb *np);
+void sym_start_up(struct Scsi_Host *, int reason);
+irqreturn_t sym_interrupt(struct Scsi_Host *);
 int sym_clear_tasks(struct sym_hcb *np, int cam_status, int target, int lun, int task);
 struct sym_ccb *sym_get_ccb(struct sym_hcb *np, struct scsi_cmnd *cmd, u_char tag_order);
 void sym_free_ccb(struct sym_hcb *np, struct sym_ccb *cp);
 struct sym_lcb *sym_alloc_lcb(struct sym_hcb *np, u_char tn, u_char ln);
+int sym_free_lcb(struct sym_hcb *np, u_char tn, u_char ln);
 int sym_queue_scsiio(struct sym_hcb *np, struct scsi_cmnd *csio, struct sym_ccb *cp);
 int sym_abort_scsiio(struct sym_hcb *np, struct scsi_cmnd *ccb, int timed_out);
 int sym_reset_scsi_target(struct sym_hcb *np, int target);
@@ -1073,20 +1082,23 @@ int sym_hcb_attach(struct Scsi_Host *shost, struct sym_fw *fw, struct sym_nvram 
  */
 
 #if   SYM_CONF_DMA_ADDRESSING_MODE == 0
+#define DMA_DAC_MASK	DMA_BIT_MASK(32)
 #define sym_build_sge(np, data, badd, len)	\
 do {						\
 	(data)->addr = cpu_to_scr(badd);	\
 	(data)->size = cpu_to_scr(len);		\
 } while (0)
 #elif SYM_CONF_DMA_ADDRESSING_MODE == 1
+#define DMA_DAC_MASK	DMA_BIT_MASK(40)
 #define sym_build_sge(np, data, badd, len)				\
 do {									\
 	(data)->addr = cpu_to_scr(badd);				\
 	(data)->size = cpu_to_scr((((badd) >> 8) & 0xff000000) + len);	\
 } while (0)
 #elif SYM_CONF_DMA_ADDRESSING_MODE == 2
+#define DMA_DAC_MASK	DMA_BIT_MASK(64)
 int sym_lookup_dmap(struct sym_hcb *np, u32 h, int s);
-static __inline void 
+static inline void
 sym_build_sge(struct sym_hcb *np, struct sym_tblmove *data, u64 badd, int len)
 {
 	u32 h = (badd>>32);
@@ -1191,7 +1203,7 @@ dma_addr_t __vtobus(m_pool_ident_t dev_dmat, void *m);
 
 #define sym_m_pool_match(mp_id1, mp_id2)	(mp_id1 == mp_id2)
 
-static __inline void *sym_m_get_dma_mem_cluster(m_pool_p mp, m_vtob_p vbp)
+static inline void *sym_m_get_dma_mem_cluster(m_pool_p mp, m_vtob_p vbp)
 {
 	void *vaddr = NULL;
 	dma_addr_t baddr = 0;
@@ -1205,7 +1217,7 @@ static __inline void *sym_m_get_dma_mem_cluster(m_pool_p mp, m_vtob_p vbp)
 	return vaddr;
 }
 
-static __inline void sym_m_free_dma_mem_cluster(m_pool_p mp, m_vtob_p vbp)
+static inline void sym_m_free_dma_mem_cluster(m_pool_p mp, m_vtob_p vbp)
 {
 	dma_free_coherent(mp->dev_dmat, SYM_MEM_CLUSTER_SIZE, vbp->vaddr,
 			vbp->baddr);

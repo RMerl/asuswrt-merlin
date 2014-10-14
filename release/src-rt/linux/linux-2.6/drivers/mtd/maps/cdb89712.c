@@ -1,7 +1,6 @@
 /*
  * Flash on Cirrus CDB89712
  *
- * $Id: cdb89712.c,v 1.11 2005/11/07 11:14:26 gleixner Exp $
  */
 
 #include <linux/module.h>
@@ -10,12 +9,23 @@
 #include <linux/ioport.h>
 #include <linux/init.h>
 #include <asm/io.h>
-#include <asm/arch/hardware.h>
+#include <mach/hardware.h>
 #include <linux/mtd/mtd.h>
 #include <linux/mtd/map.h>
 #include <linux/mtd/partitions.h>
 
+/* dynamic ioremap() areas */
+#define FLASH_START      0x00000000
+#define FLASH_SIZE       0x800000
+#define FLASH_WIDTH      4
 
+#define SRAM_START       0x60000000
+#define SRAM_SIZE        0xc000
+#define SRAM_WIDTH       4
+
+#define BOOTROM_START    0x70000000
+#define BOOTROM_SIZE     0x80
+#define BOOTROM_WIDTH    4
 
 
 static struct mtd_info *flash_mtd;

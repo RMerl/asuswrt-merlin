@@ -29,6 +29,9 @@ else
 endif
 endif
 
+# using lib_ here won't override already available weak symbols
+obj-$(CONFIG_UACCESS_WITH_MEMCPY) += uaccess_with_memcpy.o
+
 lib-$(CONFIG_MMU) += $(mmu-y)
 
 ifeq ($(CONFIG_CPU_32v3),y)
@@ -38,8 +41,6 @@ else
 endif
 
 lib-$(CONFIG_ARCH_RPC)		+= ecard.o io-acorn.o floppydma.o
-lib-$(CONFIG_ARCH_CLPS7500)	+= io-acorn.o
-lib-$(CONFIG_ARCH_L7200)	+= io-acorn.o
 lib-$(CONFIG_ARCH_SHARK)	+= io-shark.o
 
 $(obj)/csumpartialcopy.o:	$(obj)/csumpartialcopygeneric.S

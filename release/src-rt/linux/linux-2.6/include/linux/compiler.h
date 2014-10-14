@@ -5,7 +5,7 @@
 
 #ifdef __CHECKER__
 # define __user		__attribute__((noderef, address_space(1)))
-# define __kernel	/* default address space */
+# define __kernel	__attribute__((address_space(0)))
 # define __safe		__attribute__((safe))
 # define __force	__attribute__((force))
 # define __nocast	__attribute__((nocast))
@@ -15,8 +15,14 @@
 # define __acquire(x)	__context__(x,1)
 # define __release(x)	__context__(x,-1)
 # define __cond_lock(x,c)	((c) ? ({ __acquire(x); 1; }) : 0)
-extern void __chk_user_ptr(const void __user *);
-extern void __chk_io_ptr(const void __iomem *);
+# define __percpu	__attribute__((noderef, address_space(3)))
+#ifdef CONFIG_SPARSE_RCU_POINTER
+# define __rcu		__attribute__((noderef, address_space(4)))
+#else
+# define __rcu
+#endif
+extern void __chk_user_ptr(const volatile void __user *);
+extern void __chk_io_ptr(const volatile void __iomem *);
 #else
 # define __user
 # define __kernel
@@ -32,17 +38,17 @@ extern void __chk_io_ptr(const void __iomem *);
 # define __acquire(x) (void)0
 # define __release(x) (void)0
 # define __cond_lock(x,c) (c)
+# define __percpu
+# define __rcu
 #endif
 
 #ifdef __KERNEL__
 
-#if __GNUC__ >= 4
-# include <linux/compiler-gcc4.h>
-#elif __GNUC__ == 3 && __GNUC_MINOR__ >= 2
-# include <linux/compiler-gcc3.h>
-#else
-# error Sorry, your compiler is too old/not recognized.
+#ifdef __GNUC__
+#include <linux/compiler-gcc.h>
 #endif
+
+#define notrace __attribute__((no_instrument_function))
 
 /* Intel compiler defines __GNUC__. So we will overwrite implementations
  * coming from above header files here
@@ -57,12 +63,98 @@ extern void __chk_io_ptr(const void __iomem *);
  * specific implementations come from the above header files
  */
 
-#define likely(x)	__builtin_expect(!!(x), 1)
-#define unlikely(x)	__builtin_expect(!!(x), 0)
+struct ftrace_branch_data {
+	const char *func;
+	const char *file;
+	unsigned line;
+	union {
+		struct {
+			unsigned long correct;
+			unsigned long incorrect;
+		};
+		struct {
+			unsigned long miss;
+			unsigned long hit;
+		};
+		unsigned long miss_hit[2];
+	};
+};
+
+/*
+ * Note: DISABLE_BRANCH_PROFILING can be used by special lowlevel code
+ * to disable branch tracing on a per file basis.
+ */
+#if defined(CONFIG_TRACE_BRANCH_PROFILING) \
+    && !defined(DISABLE_BRANCH_PROFILING) && !defined(__CHECKER__)
+void ftrace_likely_update(struct ftrace_branch_data *f, int val, int expect);
+
+#define likely_notrace(x)	__builtin_expect(!!(x), 1)
+#define unlikely_notrace(x)	__builtin_expect(!!(x), 0)
+
+#define __branch_check__(x, expect) ({					\
+			int ______r;					\
+			static struct ftrace_branch_data		\
+				__attribute__((__aligned__(4)))		\
+				__attribute__((section("_ftrace_annotated_branch"))) \
+				______f = {				\
+				.func = __func__,			\
+				.file = __FILE__,			\
+				.line = __LINE__,			\
+			};						\
+			______r = likely_notrace(x);			\
+			ftrace_likely_update(&______f, ______r, expect); \
+			______r;					\
+		})
+
+/*
+ * Using __builtin_constant_p(x) to ignore cases where the return
+ * value is always the same.  This idea is taken from a similar patch
+ * written by Daniel Walker.
+ */
+# ifndef likely
+#  define likely(x)	(__builtin_constant_p(x) ? !!(x) : __branch_check__(x, 1))
+# endif
+# ifndef unlikely
+#  define unlikely(x)	(__builtin_constant_p(x) ? !!(x) : __branch_check__(x, 0))
+# endif
+
+#ifdef CONFIG_PROFILE_ALL_BRANCHES
+/*
+ * "Define 'is'", Bill Clinton
+ * "Define 'if'", Steven Rostedt
+ */
+#define if(cond, ...) __trace_if( (cond , ## __VA_ARGS__) )
+#define __trace_if(cond) \
+	if (__builtin_constant_p((cond)) ? !!(cond) :			\
+	({								\
+		int ______r;						\
+		static struct ftrace_branch_data			\
+			__attribute__((__aligned__(4)))			\
+			__attribute__((section("_ftrace_branch")))	\
+			______f = {					\
+				.func = __func__,			\
+				.file = __FILE__,			\
+				.line = __LINE__,			\
+			};						\
+		______r = !!(cond);					\
+		______f.miss_hit[______r]++;					\
+		______r;						\
+	}))
+#endif /* CONFIG_PROFILE_ALL_BRANCHES */
+
+#else
+# define likely(x)	__builtin_expect(!!(x), 1)
+# define unlikely(x)	__builtin_expect(!!(x), 0)
+#endif
 
 /* Optimization barrier */
 #ifndef barrier
 # define barrier() __memory_barrier()
+#endif
+
+/* Unreachable code */
+#ifndef unreachable
+# define unreachable() do { } while (1)
 #endif
 
 #ifndef RELOC_HIDE
@@ -101,6 +193,12 @@ extern void __chk_io_ptr(const void __iomem *);
 #undef __must_check
 #define __must_check
 #endif
+#ifndef CONFIG_ENABLE_WARN_DEPRECATED
+#undef __deprecated
+#undef __deprecated_for_modules
+#define __deprecated
+#define __deprecated_for_modules
+#endif
 
 /*
  * Allow us to avoid 'defined but not used' warnings on functions and data,
@@ -120,10 +218,6 @@ extern void __chk_io_ptr(const void __iomem *);
  * Mark functions that are referenced only in inline assembly as __used so
  * the code is emitted even though it appears to be unreferenced.
  */
-#ifndef __attribute_used__
-# define __attribute_used__	/* deprecated */
-#endif
-
 #ifndef __used
 # define __used			/* unimplemented */
 #endif
@@ -132,23 +226,19 @@ extern void __chk_io_ptr(const void __iomem *);
 # define __maybe_unused		/* unimplemented */
 #endif
 
-/*
- * From the GCC manual:
- *
- * Many functions have no effects except the return value and their
- * return value depends only on the parameters and/or global
- * variables.  Such a function can be subject to common subexpression
- * elimination and loop optimization just as an arithmetic operator
- * would be.
- * [...]
- */
-#ifndef __attribute_pure__
-# define __attribute_pure__	/* unimplemented */
+#ifndef __always_unused
+# define __always_unused	/* unimplemented */
 #endif
 
 #ifndef noinline
 #define noinline
 #endif
+
+/*
+ * Rather then using noinline to prevent stack consumption, use
+ * noinline_for_stack instead.  For documentaiton reasons.
+ */
+#define noinline_for_stack noinline
 
 #ifndef __always_inline
 #define __always_inline inline
@@ -172,6 +262,36 @@ extern void __chk_io_ptr(const void __iomem *);
  */
 #ifndef __attribute_const__
 # define __attribute_const__	/* unimplemented */
+#endif
+
+/*
+ * Tell gcc if a function is cold. The compiler will assume any path
+ * directly leading to the call is unlikely.
+ */
+
+#ifndef __cold
+#define __cold
+#endif
+
+/* Simple shorthand for a section definition */
+#ifndef __section
+# define __section(S) __attribute__ ((__section__(#S)))
+#endif
+
+/* Are two types/vars the same type (ignoring qualifiers)? */
+#ifndef __same_type
+# define __same_type(a, b) __builtin_types_compatible_p(typeof(a), typeof(b))
+#endif
+
+/* Compile time object size, -1 for unknown */
+#ifndef __compiletime_object_size
+# define __compiletime_object_size(obj) -1
+#endif
+#ifndef __compiletime_warning
+# define __compiletime_warning(message)
+#endif
+#ifndef __compiletime_error
+# define __compiletime_error(message)
 #endif
 
 /*

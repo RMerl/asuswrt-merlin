@@ -1,9 +1,7 @@
 /*
  * rfd_ftl.c -- resident flash disk (flash translation layer)
  *
- * Copyright (C) 2005  Sean Young <sean@mess.org>
- *
- * $Id: rfd_ftl.c,v 1.8 2006/01/15 12:51:44 sean Exp $
+ * Copyright © 2005  Sean Young <sean@mess.org>
  *
  * This type of flash translation layer (FTL) is used by the Embedded BIOS
  * by General Software. It is known as the Resident Flash Disk (RFD), see:
@@ -22,8 +20,6 @@
 #include <linux/jiffies.h>
 
 #include <asm/types.h>
-
-#define const_cpu_to_le16	__constant_cpu_to_le16
 
 static int block_size = 0;
 module_param(block_size, int, 0);
@@ -158,7 +154,7 @@ static int scan_header(struct partition *part)
 	size_t retlen;
 
 	sectors_per_block = part->block_size / SECTOR_SIZE;
-	part->total_blocks = part->mbd.mtd->size / part->block_size;
+	part->total_blocks = (u32)part->mbd.mtd->size / part->block_size;
 
 	if (part->total_blocks < 2)
 		return -ENOENT;
@@ -278,16 +274,17 @@ static void erase_callback(struct erase_info *erase)
 
 	part = (struct partition*)erase->priv;
 
-	i = erase->addr / part->block_size;
-	if (i >= part->total_blocks || part->blocks[i].offset != erase->addr) {
-		printk(KERN_ERR PREFIX "erase callback for unknown offset %x "
-				"on '%s'\n", erase->addr, part->mbd.mtd->name);
+	i = (u32)erase->addr / part->block_size;
+	if (i >= part->total_blocks || part->blocks[i].offset != erase->addr ||
+	    erase->addr > UINT_MAX) {
+		printk(KERN_ERR PREFIX "erase callback for unknown offset %llx "
+				"on '%s'\n", (unsigned long long)erase->addr, part->mbd.mtd->name);
 		return;
 	}
 
 	if (erase->state != MTD_ERASE_DONE) {
-		printk(KERN_WARNING PREFIX "erase failed at 0x%x on '%s', "
-				"state %d\n", erase->addr,
+		printk(KERN_WARNING PREFIX "erase failed at 0x%llx on '%s', "
+				"state %d\n", (unsigned long long)erase->addr,
 				part->mbd.mtd->name, erase->state);
 
 		part->blocks[i].state = BLOCK_FAILED;
@@ -299,7 +296,7 @@ static void erase_callback(struct erase_info *erase)
 		return;
 	}
 
-	magic = const_cpu_to_le16(RFD_MAGIC);
+	magic = cpu_to_le16(RFD_MAGIC);
 
 	part->blocks[i].state = BLOCK_ERASED;
 	part->blocks[i].free_sectors = part->data_sectors_per_block;
@@ -347,9 +344,9 @@ static int erase_block(struct partition *part, int block)
 	rc = part->mbd.mtd->erase(part->mbd.mtd, erase);
 
 	if (rc) {
-		printk(KERN_ERR PREFIX "erase of region %x,%x on '%s' "
-				"failed\n", erase->addr, erase->len,
-				part->mbd.mtd->name);
+		printk(KERN_ERR PREFIX "erase of region %llx,%llx on '%s' "
+				"failed\n", (unsigned long long)erase->addr,
+				(unsigned long long)erase->len, part->mbd.mtd->name);
 		kfree(erase);
 	}
 
@@ -589,7 +586,7 @@ static int mark_sector_deleted(struct partition *part, u_long old_addr)
 	int block, offset, rc;
 	u_long addr;
 	size_t retlen;
-	u16 del = const_cpu_to_le16(SECTOR_DELETED);
+	u16 del = cpu_to_le16(SECTOR_DELETED);
 
 	block = old_addr / part->block_size;
 	offset = (old_addr % part->block_size) / SECTOR_SIZE -
@@ -765,7 +762,7 @@ static void rfd_ftl_add_mtd(struct mtd_blktrans_ops *tr, struct mtd_info *mtd)
 {
 	struct partition *part;
 
-	if (mtd->type != MTD_NORFLASH)
+	if (mtd->type != MTD_NORFLASH || mtd->size > UINT_MAX)
 		return;
 
 	part = kzalloc(sizeof(struct partition), GFP_KERNEL);
@@ -779,9 +776,8 @@ static void rfd_ftl_add_mtd(struct mtd_blktrans_ops *tr, struct mtd_info *mtd)
 	else {
 		if (!mtd->erasesize) {
 			printk(KERN_WARNING PREFIX "please provide block_size");
-			return;
-		}
-		else
+			goto out;
+		} else
 			part->block_size = mtd->erasesize;
 	}
 
@@ -803,7 +799,7 @@ static void rfd_ftl_add_mtd(struct mtd_blktrans_ops *tr, struct mtd_info *mtd)
 		if (!add_mtd_blktrans_dev((void*)part))
 			return;
 	}
-
+out:
 	kfree(part);
 }
 
@@ -821,10 +817,9 @@ static void rfd_ftl_remove_dev(struct mtd_blktrans_dev *dev)
 	vfree(part->sector_map);
 	kfree(part->header_cache);
 	kfree(part->blocks);
-	kfree(part);
 }
 
-struct mtd_blktrans_ops rfd_ftl_tr = {
+static struct mtd_blktrans_ops rfd_ftl_tr = {
 	.name		= "rfd",
 	.major		= RFD_FTL_MAJOR,
 	.part_bits	= PART_BITS,

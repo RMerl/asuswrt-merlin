@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2007 Chelsio, Inc. All rights reserved.
+ * Copyright (c) 2003-2008 Chelsio, Inc. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
@@ -318,7 +318,7 @@ static void mc5_dbgi_mode_disable(const struct mc5 *mc5)
 
 /*
  * Initialization that requires the OS and protocol layers to already
- * be intialized goes here.
+ * be initialized goes here.
  */
 int t3_mc5_init(struct mc5 *mc5, unsigned int nservers, unsigned int nfilters,
 		unsigned int nroutes)
@@ -374,44 +374,6 @@ int t3_mc5_init(struct mc5 *mc5, unsigned int nservers, unsigned int nfilters,
 	return err;
 }
 
-/*
- *	read_mc5_range - dump a part of the memory managed by MC5
- *	@mc5: the MC5 handle
- *	@start: the start address for the dump
- *	@n: number of 72-bit words to read
- *	@buf: result buffer
- *
- *	Read n 72-bit words from MC5 memory from the given start location.
- */
-int t3_read_mc5_range(const struct mc5 *mc5, unsigned int start,
-		      unsigned int n, u32 *buf)
-{
-	u32 read_cmd;
-	int err = 0;
-	struct adapter *adap = mc5->adapter;
-
-	if (mc5->part_type == IDT75P52100)
-		read_cmd = IDT_CMD_READ;
-	else if (mc5->part_type == IDT75N43102)
-		read_cmd = IDT4_CMD_READ;
-	else
-		return -EINVAL;
-
-	mc5_dbgi_mode_enable(mc5);
-
-	while (n--) {
-		t3_write_reg(adap, A_MC5_DB_DBGI_REQ_ADDR0, start++);
-		if (mc5_cmd_write(adap, read_cmd)) {
-			err = -EIO;
-			break;
-		}
-		dbgi_rd_rsp3(adap, buf + 2, buf + 1, buf);
-		buf += 3;
-	}
-
-	mc5_dbgi_mode_disable(mc5);
-	return 0;
-}
 
 #define MC5_INT_FATAL (F_PARITYERR | F_REQQPARERR | F_DISPQPARERR)
 
@@ -452,7 +414,7 @@ void t3_mc5_intr_handler(struct mc5 *mc5)
 	t3_write_reg(adap, A_MC5_DB_INT_CAUSE, cause);
 }
 
-void __devinit t3_mc5_prep(struct adapter *adapter, struct mc5 *mc5, int mode)
+void t3_mc5_prep(struct adapter *adapter, struct mc5 *mc5, int mode)
 {
 #define K * 1024
 

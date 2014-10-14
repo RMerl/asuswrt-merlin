@@ -3,7 +3,7 @@
 #
 
 obj-y	 			+= reset.o setup.o prom.o lasat_board.o \
-				   at93c.o interrupt.o
+				   at93c.o interrupt.o serial.o
 
 obj-$(CONFIG_LASAT_SYSCTL)	+= sysctl.o
 obj-$(CONFIG_DS1603)		+= ds1603.o

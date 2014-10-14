@@ -1,6 +1,4 @@
 /*
- * $Id: rpckbd.c,v 1.7 2001/09/25 10:12:07 vojtech Exp $
- *
  *  Copyright (c) 2000-2001 Vojtech Pavlik
  *  Copyright (c) 2002 Russell King
  */
@@ -35,16 +33,18 @@
 #include <linux/serio.h>
 #include <linux/err.h>
 #include <linux/platform_device.h>
+#include <linux/io.h>
+#include <linux/slab.h>
 
 #include <asm/irq.h>
-#include <asm/hardware.h>
-#include <asm/io.h>
+#include <mach/hardware.h>
 #include <asm/hardware/iomd.h>
 #include <asm/system.h>
 
 MODULE_AUTHOR("Vojtech Pavlik, Russell King");
 MODULE_DESCRIPTION("Acorn RiscPC PS/2 keyboard controller driver");
 MODULE_LICENSE("GPL");
+MODULE_ALIAS("platform:kart");
 
 static int rpckbd_write(struct serio *port, unsigned char val)
 {
@@ -90,7 +90,7 @@ static int rpckbd_open(struct serio *port)
 
 	if (request_irq(IRQ_KEYBOARDTX, rpckbd_tx, 0, "rpckbd", port) != 0) {
 		printk(KERN_ERR "rpckbd.c: Could not allocate keyboard transmit IRQ\n");
-		free_irq(IRQ_KEYBOARDRX, NULL);
+		free_irq(IRQ_KEYBOARDRX, port);
 		return -EBUSY;
 	}
 
@@ -140,6 +140,7 @@ static struct platform_driver rpckbd_driver = {
 	.remove		= __devexit_p(rpckbd_remove),
 	.driver		= {
 		.name	= "kart",
+		.owner	= THIS_MODULE,
 	},
 };
 

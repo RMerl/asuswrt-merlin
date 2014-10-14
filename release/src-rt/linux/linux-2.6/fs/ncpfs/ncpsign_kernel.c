@@ -11,25 +11,26 @@
 #include <linux/string.h>
 #include <linux/ncp.h>
 #include <linux/bitops.h>
+#include "ncp_fs.h"
 #include "ncpsign_kernel.h"
 
 /* i386: 32-bit, little endian, handles mis-alignment */
 #ifdef __i386__
-#define GET_LE32(p) (*(int *)(p))
+#define GET_LE32(p) (*(const int *)(p))
 #define PUT_LE32(p,v) { *(int *)(p)=v; }
 #else
 /* from include/ncplib.h */
-#define BVAL(buf,pos) (((__u8 *)(buf))[pos])
+#define BVAL(buf,pos) (((const __u8 *)(buf))[pos])
 #define PVAL(buf,pos) ((unsigned)BVAL(buf,pos))
-#define BSET(buf,pos,val) (BVAL(buf,pos) = (val))
+#define BSET(buf,pos,val) (((__u8 *)(buf))[pos] = (val))
 
 static inline __u16
-WVAL_LH(__u8 * buf, int pos)
+WVAL_LH(const __u8 * buf, int pos)
 {
 	return PVAL(buf, pos) | PVAL(buf, pos + 1) << 8;
 }
 static inline __u32
-DVAL_LH(__u8 * buf, int pos)
+DVAL_LH(const __u8 * buf, int pos)
 {
 	return WVAL_LH(buf, pos) | WVAL_LH(buf, pos + 2) << 16;
 }
@@ -55,7 +56,7 @@ static void nwsign(char *r_data1, char *r_data2, char *outdata) {
  unsigned int w0,w1,w2,w3;
  static int rbit[4]={0, 2, 1, 3};
 #ifdef __i386__
- unsigned int *data2=(int *)r_data2;
+ unsigned int *data2=(unsigned int *)r_data2;
 #else
  unsigned int data2[16];
  for (i=0;i<16;i++)

@@ -28,12 +28,11 @@
 #include <linux/workqueue.h>
 #include <linux/mii.h>
 #include <linux/usb.h>
-
-#include "usbnet.h"
+#include <linux/usb/usbnet.h>
 
 
 /*
- * Prolific PL-2301/PL-2302 driver ... http://www.prolifictech.com
+ * Prolific PL-2301/PL-2302 driver ... http://www.prolific.com.tw/ 
  *
  * The protocol and handshaking used here should be bug-compatible
  * with the Linux 2.2 "plusb" driver, by Deti Fliegl.
@@ -97,7 +96,7 @@ static int pl_reset(struct usbnet *dev)
 
 static const struct driver_info	prolific_info = {
 	.description =	"Prolific PL-2301/PL-2302",
-	.flags =	FLAG_NO_SETINT,
+	.flags =	FLAG_POINTTOPOINT | FLAG_NO_SETINT,
 		/* some PL-2302 versions seem to fail usb_set_interface() */
 	.reset =	pl_reset,
 };

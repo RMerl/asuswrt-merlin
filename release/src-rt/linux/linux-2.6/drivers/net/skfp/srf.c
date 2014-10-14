@@ -43,7 +43,7 @@ static void clear_reported(struct s_smc *smc);
 static void smt_send_srf(struct s_smc *smc);
 static struct s_srf_evc *smt_get_evc(struct s_smc *smc, int code, int index);
 
-#define MAX_EVCS	(sizeof(smc->evcs)/sizeof(smc->evcs[0]))
+#define MAX_EVCS	ARRAY_SIZE(smc->evcs)
 
 struct evc_init {
 	u_char code ;
@@ -67,7 +67,7 @@ static const struct evc_init evc_inits[] = {
 	{ SMT_EVENT_PORT_PATH_CHANGE,		INDEX_PORT,NUMPHYS,SMT_P4053 } ,
 } ;
 
-#define MAX_INIT_EVC	(sizeof(evc_inits)/sizeof(evc_inits[0]))
+#define MAX_INIT_EVC	ARRAY_SIZE(evc_inits)
 
 void smt_init_evc(struct s_smc *smc)
 {
@@ -165,7 +165,7 @@ static struct s_srf_evc *smt_get_evc(struct s_smc *smc, int code, int index)
 
 	for (i = 0, evc = smc->evcs ; (unsigned) i < MAX_EVCS ; i++, evc++) {
 		if (evc->evc_code == code && evc->evc_index == index)
-			return(evc) ;
+			return evc;
 	}
 	return NULL;
 }
@@ -414,7 +414,7 @@ static void smt_send_srf(struct s_smc *smc)
 	smt->smt_len = SMT_MAX_INFO_LEN - pcon.pc_len ;
 	mb->sm_len = smt->smt_len + sizeof(struct smt_header) ;
 
-	DB_SMT("SRF: sending SRF at %x, len %d \n",smt,mb->sm_len) ;
+	DB_SMT("SRF: sending SRF at %x, len %d\n",smt,mb->sm_len) ;
 	DB_SMT("SRF: state SR%d Threshold %d\n",
 		smc->srf.sr_state,smc->srf.SRThreshold/TICKS_PER_SECOND) ;
 #ifdef	DEBUG

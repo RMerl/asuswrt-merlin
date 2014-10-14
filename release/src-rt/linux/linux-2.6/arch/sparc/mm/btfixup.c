@@ -1,5 +1,4 @@
-/* $Id: btfixup.c,v 1.10 2000/05/09 17:40:13 davem Exp $
- * btfixup.c: Boot time code fixup and relocator, so that
+/* btfixup.c: Boot time code fixup and relocator, so that
  * we can get rid of most indirect calls to achieve single
  * image sun4c and srmmu kernel.
  *
@@ -21,11 +20,7 @@
 
 extern char *srmmu_name;
 static char version[] __initdata = "Boot time fixup v1.6. 4/Mar/98 Jakub Jelinek (jj@ultra.linux.cz). Patching kernel for ";
-#ifdef CONFIG_SUN4
-static char str_sun4c[] __initdata = "sun4\n";
-#else
 static char str_sun4c[] __initdata = "sun4c\n";
-#endif
 static char str_srmmu[] __initdata = "srmmu[%s]/";
 static char str_iommu[] __initdata = "iommu\n";
 static char str_iounit[] __initdata = "io-unit\n";
@@ -69,7 +64,7 @@ static void __init set_addr(unsigned int *addr, unsigned int q1, int fmangled, u
 	}
 }
 #else
-static __inline__ void set_addr(unsigned int *addr, unsigned int q1, int fmangled, unsigned int value)
+static inline void set_addr(unsigned int *addr, unsigned int q1, int fmangled, unsigned int value)
 {
 	*addr = value;
 }
@@ -87,7 +82,7 @@ void __init btfixup(void)
 	if (!visited) {
 		visited++;
 		printk(version);
-		if (ARCH_SUN4C_SUN4)
+		if (ARCH_SUN4C)
 			printk(str_sun4c);
 		else {
 			printk(str_srmmu, srmmu_name);

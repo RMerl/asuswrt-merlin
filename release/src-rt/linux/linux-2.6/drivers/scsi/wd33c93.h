@@ -155,7 +155,7 @@
 #define WD33C93_FS_12_15 OWNID_FS_12
 #define WD33C93_FS_16_20 OWNID_FS_16
 
-   /* pass input-clock explicitely. accepted mhz values are 8-10,12-20 */
+   /* pass input-clock explicitly. accepted mhz values are 8-10,12-20 */
 #define WD33C93_FS_MHZ(mhz) (mhz)
 
    /* Control register */
@@ -343,11 +343,9 @@ struct WD33C93_hostdata {
 void wd33c93_init (struct Scsi_Host *instance, const wd33c93_regs regs,
          dma_setup_t setup, dma_stop_t stop, int clock_freq);
 int wd33c93_abort (struct scsi_cmnd *cmd);
-int wd33c93_queuecommand (struct scsi_cmnd *cmd,
-		void (*done)(struct scsi_cmnd *));
+int wd33c93_queuecommand (struct Scsi_Host *h, struct scsi_cmnd *cmd);
 void wd33c93_intr (struct Scsi_Host *instance);
 int wd33c93_proc_info(struct Scsi_Host *, char *, char **, off_t, int, int);
 int wd33c93_host_reset (struct scsi_cmnd *);
-void wd33c93_release(void);
 
 #endif /* WD33C93_H */

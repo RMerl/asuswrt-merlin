@@ -12,6 +12,8 @@ obj-$(CONFIG_ARCH_IOP32X) += setup.o
 obj-$(CONFIG_ARCH_IOP32X) += time.o
 obj-$(CONFIG_ARCH_IOP32X) += io.o
 obj-$(CONFIG_ARCH_IOP32X) += cp6.o
+obj-$(CONFIG_ARCH_IOP32X) += adma.o
+obj-$(CONFIG_ARCH_IOP32X) += pmu.o
 
 # IOP33X
 obj-$(CONFIG_ARCH_IOP33X) += gpio.o
@@ -21,6 +23,8 @@ obj-$(CONFIG_ARCH_IOP33X) += setup.o
 obj-$(CONFIG_ARCH_IOP33X) += time.o
 obj-$(CONFIG_ARCH_IOP33X) += io.o
 obj-$(CONFIG_ARCH_IOP33X) += cp6.o
+obj-$(CONFIG_ARCH_IOP33X) += adma.o
+obj-$(CONFIG_ARCH_IOP33X) += pmu.o
 
 # IOP13XX
 obj-$(CONFIG_ARCH_IOP13XX) += cp6.o

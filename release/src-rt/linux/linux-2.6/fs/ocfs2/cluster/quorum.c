@@ -44,7 +44,6 @@
  * and if they're the last, they fire off the decision.
  */
 #include <linux/kernel.h>
-#include <linux/slab.h>
 #include <linux/workqueue.h>
 #include <linux/reboot.h>
 
@@ -74,11 +73,23 @@ static void o2quo_fence_self(void)
 	 * threads can still schedule, etc, etc */
 	o2hb_stop_all_regions();
 
-	printk("ocfs2 is very sorry to be fencing this system by restarting\n");
-	emergency_restart();
+	switch (o2nm_single_cluster->cl_fence_method) {
+	case O2NM_FENCE_PANIC:
+		panic("*** ocfs2 is very sorry to be fencing this system by "
+		      "panicing ***\n");
+		break;
+	default:
+		WARN_ON(o2nm_single_cluster->cl_fence_method >=
+			O2NM_FENCE_METHODS);
+	case O2NM_FENCE_RESET:
+		printk(KERN_ERR "*** ocfs2 is very sorry to be fencing this "
+		       "system by restarting ***\n");
+		emergency_restart();
+		break;
+	};
 }
 
-/* Indicate that a timeout occured on a hearbeat region write. The
+/* Indicate that a timeout occurred on a hearbeat region write. The
  * other nodes in the cluster may consider us dead at that time so we
  * want to "fence" ourselves so that we don't scribble on the disk
  * after they think they've recovered us. This can't solve all
@@ -250,7 +261,7 @@ void o2quo_hb_still_up(u8 node)
 	spin_unlock(&qs->qs_lock);
 }
 
-/* This is analagous to hb_up.  as a node's connection comes up we delay the
+/* This is analogous to hb_up.  as a node's connection comes up we delay the
  * quorum decision until we see it heartbeating.  the hold will be droped in
  * hb_up or hb_down.  it might be perpetuated by con_err until hb_down.  if
  * it's already heartbeating we we might be dropping a hold that conn_up got.
@@ -314,5 +325,7 @@ void o2quo_init(void)
 
 void o2quo_exit(void)
 {
-	flush_scheduled_work();
+	struct o2quo_state *qs = &o2quo_state;
+
+	flush_work_sync(&qs->qs_work);
 }

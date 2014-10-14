@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2007, R. Byron Moore
+ * Copyright (C) 2000 - 2011, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -44,9 +44,23 @@
 #ifndef __ACTBL_H__
 #define __ACTBL_H__
 
+/*******************************************************************************
+ *
+ * Fundamental ACPI tables
+ *
+ * This file contains definitions for the ACPI tables that are directly consumed
+ * by ACPICA. All other tables are consumed by the OS-dependent ACPI-related
+ * device drivers and other OS support code.
+ *
+ * The RSDP and FACS do not use the common ACPI table header. All other ACPI
+ * tables use the header.
+ *
+ ******************************************************************************/
+
 /*
- * Values for description table header signatures. Useful because they make
- * it more difficult to inadvertently type in the wrong signature.
+ * Values for description table header signatures for tables defined in this
+ * file. Useful because they make it more difficult to inadvertently type in
+ * the wrong signature.
  */
 #define ACPI_SIG_DSDT           "DSDT"	/* Differentiated System Description Table */
 #define ACPI_SIG_FADT           "FACP"	/* Fixed ACPI Description Table */
@@ -65,11 +79,6 @@
 #pragma pack(1)
 
 /*
- * These are the ACPI tables that are directly consumed by the subsystem.
- *
- * The RSDP and FACS do not use the common ACPI table header. All other ACPI
- * tables use the header.
- *
  * Note about bitfields: The u8 type is used for bitfields in ACPI tables.
  * This is the only type that is even remotely portable. Anything else is not
  * portable, so do not use any other bitfield types.
@@ -77,9 +86,8 @@
 
 /*******************************************************************************
  *
- * ACPI Table Header. This common header is used by all tables except the
- * RSDP and FACS. The define is used for direct inclusion of header into
- * other ACPI tables
+ * Master ACPI Table Header. This common header is used by all ACPI tables
+ * except the RSDP and FACS.
  *
  ******************************************************************************/
 
@@ -95,13 +103,16 @@ struct acpi_table_header {
 	u32 asl_compiler_revision;	/* ASL compiler version */
 };
 
-/*
+/*******************************************************************************
+ *
  * GAS - Generic Address Structure (ACPI 2.0+)
  *
  * Note: Since this structure is used in the ACPI tables, it is byte aligned.
- * If misalignment is not supported, access to the Address field must be
- * performed with care.
- */
+ * If misaliged access is not supported by the hardware, accesses to the
+ * 64-bit Address field must be performed with care.
+ *
+ ******************************************************************************/
+
 struct acpi_generic_address {
 	u8 space_id;		/* Address space where struct or register exists */
 	u8 bit_width;		/* Size in bits of given register */
@@ -113,6 +124,7 @@ struct acpi_generic_address {
 /*******************************************************************************
  *
  * RSDP - Root System Description Pointer (Signature is "RSD PTR ")
+ *        Version 2
  *
  ******************************************************************************/
 
@@ -133,6 +145,7 @@ struct acpi_table_rsdp {
 /*******************************************************************************
  *
  * RSDT/XSDT - Root System Description Tables
+ *             Version 1 (both)
  *
  ******************************************************************************/
 
@@ -161,21 +174,29 @@ struct acpi_table_facs {
 	u32 flags;
 	u64 xfirmware_waking_vector;	/* 64-bit version of the Firmware Waking Vector (ACPI 2.0+) */
 	u8 version;		/* Version of this table (ACPI 2.0+) */
-	u8 reserved[31];	/* Reserved, must be zero */
+	u8 reserved[3];		/* Reserved, must be zero */
+	u32 ospm_flags;		/* Flags to be set by OSPM (ACPI 4.0) */
+	u8 reserved1[24];	/* Reserved, must be zero */
 };
 
-/* Flag macros */
+/* Masks for global_lock flag field above */
 
-#define ACPI_FACS_S4_BIOS_PRESENT (1)	/* 00: S4BIOS support is present */
+#define ACPI_GLOCK_PENDING          (1)	/* 00: Pending global lock ownership */
+#define ACPI_GLOCK_OWNED            (1<<1)	/* 01: Global lock is owned */
 
-/* Global lock flags */
+/* Masks for Flags field above  */
 
-#define ACPI_GLOCK_PENDING      0x01	/* 00: Pending global lock ownership */
-#define ACPI_GLOCK_OWNED        0x02	/* 01: Global lock is owned */
+#define ACPI_FACS_S4_BIOS_PRESENT   (1)	/* 00: S4BIOS support is present */
+#define ACPI_FACS_64BIT_WAKE        (1<<1)	/* 01: 64-bit wake vector supported (ACPI 4.0) */
+
+/* Masks for ospm_flags field above */
+
+#define ACPI_FACS_64BIT_ENVIRONMENT (1)	/* 00: 64-bit wake environment is required (ACPI 4.0) */
 
 /*******************************************************************************
  *
  * FADT - Fixed ACPI Description Table (Signature "FACP")
+ *        Version 4
  *
  ******************************************************************************/
 
@@ -214,11 +235,11 @@ struct acpi_table_fadt {
 	u16 flush_size;		/* Processor's memory cache line width, in bytes */
 	u16 flush_stride;	/* Number of flush strides that need to be read */
 	u8 duty_offset;		/* Processor duty cycle index in processor's P_CNT reg */
-	u8 duty_width;		/* Processor duty cycle value bit width in P_CNT register. */
+	u8 duty_width;		/* Processor duty cycle value bit width in P_CNT register */
 	u8 day_alarm;		/* Index to day-of-month alarm in RTC CMOS RAM */
 	u8 month_alarm;		/* Index to month-of-year alarm in RTC CMOS RAM */
 	u8 century;		/* Index to century in RTC CMOS RAM */
-	u16 boot_flags;		/* IA-PC Boot Architecture Flags. See Table 5-10 for description */
+	u16 boot_flags;		/* IA-PC Boot Architecture Flags (see below for individual flags) */
 	u8 reserved;		/* Reserved, must be zero */
 	u32 flags;		/* Miscellaneous flag bits (see below for individual flags) */
 	struct acpi_generic_address reset_register;	/* 64-bit address of the Reset register */
@@ -236,32 +257,41 @@ struct acpi_table_fadt {
 	struct acpi_generic_address xgpe1_block;	/* 64-bit Extended General Purpose Event 1 Reg Blk address */
 };
 
-/* FADT flags */
+/* Masks for FADT Boot Architecture Flags (boot_flags) */
 
-#define ACPI_FADT_WBINVD            (1)	/* 00: The wbinvd instruction works properly */
-#define ACPI_FADT_WBINVD_FLUSH      (1<<1)	/* 01: The wbinvd flushes but does not invalidate */
-#define ACPI_FADT_C1_SUPPORTED      (1<<2)	/* 02: All processors support C1 state */
-#define ACPI_FADT_C2_MP_SUPPORTED   (1<<3)	/* 03: C2 state works on MP system */
-#define ACPI_FADT_POWER_BUTTON      (1<<4)	/* 04: Power button is handled as a generic feature */
-#define ACPI_FADT_SLEEP_BUTTON      (1<<5)	/* 05: Sleep button is handled as a generic feature, or  not present */
-#define ACPI_FADT_FIXED_RTC         (1<<6)	/* 06: RTC wakeup stat not in fixed register space */
-#define ACPI_FADT_S4_RTC_WAKE       (1<<7)	/* 07: RTC wakeup stat not possible from S4 */
-#define ACPI_FADT_32BIT_TIMER       (1<<8)	/* 08: tmr_val is 32 bits 0=24-bits */
-#define ACPI_FADT_DOCKING_SUPPORTED (1<<9)	/* 09: Docking supported */
-#define ACPI_FADT_RESET_REGISTER    (1<<10)	/* 10: System reset via the FADT RESET_REG supported */
-#define ACPI_FADT_SEALED_CASE       (1<<11)	/* 11: No internal expansion capabilities and case is sealed */
-#define ACPI_FADT_HEADLESS          (1<<12)	/* 12: No local video capabilities or local input devices */
-#define ACPI_FADT_SLEEP_TYPE        (1<<13)	/* 13: Must execute native instruction after writing  SLP_TYPx register */
-#define ACPI_FADT_PCI_EXPRESS_WAKE  (1<<14)	/* 14: System supports PCIEXP_WAKE (STS/EN) bits (ACPI 3.0) */
-#define ACPI_FADT_PLATFORM_CLOCK    (1<<15)	/* 15: OSPM should use platform-provided timer (ACPI 3.0) */
-#define ACPI_FADT_S4_RTC_VALID      (1<<16)	/* 16: Contents of RTC_STS valid after S4 wake (ACPI 3.0) */
-#define ACPI_FADT_REMOTE_POWER_ON   (1<<17)	/* 17: System is compatible with remote power on (ACPI 3.0) */
-#define ACPI_FADT_APIC_CLUSTER      (1<<18)	/* 18: All local APICs must use cluster model (ACPI 3.0) */
-#define ACPI_FADT_APIC_PHYSICAL     (1<<19)	/* 19: All local x_aPICs must use physical dest mode (ACPI 3.0) */
+#define ACPI_FADT_LEGACY_DEVICES    (1)  	/* 00: [V2] System has LPC or ISA bus devices */
+#define ACPI_FADT_8042              (1<<1)	/* 01: [V3] System has an 8042 controller on port 60/64 */
+#define ACPI_FADT_NO_VGA            (1<<2)	/* 02: [V4] It is not safe to probe for VGA hardware */
+#define ACPI_FADT_NO_MSI            (1<<3)	/* 03: [V4] Message Signaled Interrupts (MSI) must not be enabled */
+#define ACPI_FADT_NO_ASPM           (1<<4)	/* 04: [V4] PCIe ASPM control must not be enabled */
 
-/*
- * FADT Prefered Power Management Profiles
- */
+#define FADT2_REVISION_ID               3
+
+/* Masks for FADT flags */
+
+#define ACPI_FADT_WBINVD            (1)	/* 00: [V1] The wbinvd instruction works properly */
+#define ACPI_FADT_WBINVD_FLUSH      (1<<1)	/* 01: [V1] wbinvd flushes but does not invalidate caches */
+#define ACPI_FADT_C1_SUPPORTED      (1<<2)	/* 02: [V1] All processors support C1 state */
+#define ACPI_FADT_C2_MP_SUPPORTED   (1<<3)	/* 03: [V1] C2 state works on MP system */
+#define ACPI_FADT_POWER_BUTTON      (1<<4)	/* 04: [V1] Power button is handled as a control method device */
+#define ACPI_FADT_SLEEP_BUTTON      (1<<5)	/* 05: [V1] Sleep button is handled as a control method device */
+#define ACPI_FADT_FIXED_RTC         (1<<6)	/* 06: [V1] RTC wakeup status not in fixed register space */
+#define ACPI_FADT_S4_RTC_WAKE       (1<<7)	/* 07: [V1] RTC alarm can wake system from S4 */
+#define ACPI_FADT_32BIT_TIMER       (1<<8)	/* 08: [V1] ACPI timer width is 32-bit (0=24-bit) */
+#define ACPI_FADT_DOCKING_SUPPORTED (1<<9)	/* 09: [V1] Docking supported */
+#define ACPI_FADT_RESET_REGISTER    (1<<10)	/* 10: [V2] System reset via the FADT RESET_REG supported */
+#define ACPI_FADT_SEALED_CASE       (1<<11)	/* 11: [V3] No internal expansion capabilities and case is sealed */
+#define ACPI_FADT_HEADLESS          (1<<12)	/* 12: [V3] No local video capabilities or local input devices */
+#define ACPI_FADT_SLEEP_TYPE        (1<<13)	/* 13: [V3] Must execute native instruction after writing  SLP_TYPx register */
+#define ACPI_FADT_PCI_EXPRESS_WAKE  (1<<14)	/* 14: [V4] System supports PCIEXP_WAKE (STS/EN) bits (ACPI 3.0) */
+#define ACPI_FADT_PLATFORM_CLOCK    (1<<15)	/* 15: [V4] OSPM should use platform-provided timer (ACPI 3.0) */
+#define ACPI_FADT_S4_RTC_VALID      (1<<16)	/* 16: [V4] Contents of RTC_STS valid after S4 wake (ACPI 3.0) */
+#define ACPI_FADT_REMOTE_POWER_ON   (1<<17)	/* 17: [V4] System is compatible with remote power on (ACPI 3.0) */
+#define ACPI_FADT_APIC_CLUSTER      (1<<18)	/* 18: [V4] All local APICs must use cluster model (ACPI 3.0) */
+#define ACPI_FADT_APIC_PHYSICAL     (1<<19)	/* 19: [V4] All local x_aPICs must use physical dest mode (ACPI 3.0) */
+
+/* Values for preferred_profile (Preferred Power Management Profiles) */
+
 enum acpi_prefered_pm_profiles {
 	PM_UNSPECIFIED = 0,
 	PM_DESKTOP = 1,
@@ -272,15 +302,6 @@ enum acpi_prefered_pm_profiles {
 	PM_APPLIANCE_PC = 6
 };
 
-/* FADT Boot Arch Flags */
-
-#define BAF_LEGACY_DEVICES              0x0001
-#define BAF_8042_KEYBOARD_CONTROLLER    0x0002
-#define BAF_MSI_NOT_SUPPORTED           0x0008
-
-#define FADT2_REVISION_ID               3
-#define FADT2_MINUS_REVISION_ID         2
-
 /* Reset to default packing */
 
 #pragma pack()
@@ -288,9 +309,54 @@ enum acpi_prefered_pm_profiles {
 #define ACPI_FADT_OFFSET(f)             (u8) ACPI_OFFSET (struct acpi_table_fadt, f)
 
 /*
+ * Internal table-related structures
+ */
+union acpi_name_union {
+	u32 integer;
+	char ascii[4];
+};
+
+/* Internal ACPI Table Descriptor. One per ACPI table. */
+
+struct acpi_table_desc {
+	acpi_physical_address address;
+	struct acpi_table_header *pointer;
+	u32 length;		/* Length fixed at 32 bits */
+	union acpi_name_union signature;
+	acpi_owner_id owner_id;
+	u8 flags;
+};
+
+/* Masks for Flags field above */
+
+#define ACPI_TABLE_ORIGIN_UNKNOWN       (0)
+#define ACPI_TABLE_ORIGIN_MAPPED        (1)
+#define ACPI_TABLE_ORIGIN_ALLOCATED     (2)
+#define ACPI_TABLE_ORIGIN_OVERRIDE      (4)
+#define ACPI_TABLE_ORIGIN_MASK          (7)
+#define ACPI_TABLE_IS_LOADED            (8)
+
+/*
  * Get the remaining ACPI tables
  */
 
 #include <acpi/actbl1.h>
+#include <acpi/actbl2.h>
+
+/*
+ * Sizes of the various flavors of FADT. We need to look closely
+ * at the FADT length because the version number essentially tells
+ * us nothing because of many BIOS bugs where the version does not
+ * match the expected length. In other words, the length of the
+ * FADT is the bottom line as to what the version really is.
+ *
+ * For reference, the values below are as follows:
+ *     FADT V1  size: 0x74
+ *     FADT V2  size: 0x84
+ *     FADT V3+ size: 0xF4
+ */
+#define ACPI_FADT_V1_SIZE       (u32) (ACPI_FADT_OFFSET (flags) + 4)
+#define ACPI_FADT_V2_SIZE       (u32) (ACPI_FADT_OFFSET (reserved4[0]) + 3)
+#define ACPI_FADT_V3_SIZE       (u32) (sizeof (struct acpi_table_fadt))
 
 #endif				/* __ACTBL_H__ */

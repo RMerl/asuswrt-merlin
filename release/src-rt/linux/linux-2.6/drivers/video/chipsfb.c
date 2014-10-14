@@ -19,11 +19,11 @@
 #include <linux/errno.h>
 #include <linux/string.h>
 #include <linux/mm.h>
-#include <linux/slab.h>
 #include <linux/vmalloc.h>
 #include <linux/delay.h>
 #include <linux/interrupt.h>
 #include <linux/fb.h>
+#include <linux/pm.h>
 #include <linux/init.h>
 #include <linux/pci.h>
 #include <linux/console.h>
@@ -413,7 +413,6 @@ chipsfb_pci_init(struct pci_dev *dp, const struct pci_device_id *ent)
 	}
 
 	pci_set_drvdata(dp, p);
-	p->device = &dp->dev;
 
 	init_chips(p, addr);
 
@@ -458,13 +457,13 @@ static int chipsfb_pci_suspend(struct pci_dev *pdev, pm_message_t state)
 
 	if (state.event == pdev->dev.power.power_state.event)
 		return 0;
-	if (state.event != PM_SUSPEND_MEM)
+	if (!(state.event & PM_EVENT_SLEEP))
 		goto done;
 
-	acquire_console_sem();
+	console_lock();
 	chipsfb_blank(1, p);
 	fb_set_suspend(p, 1);
-	release_console_sem();
+	console_unlock();
  done:
 	pdev->dev.power.power_state = state;
 	return 0;
@@ -474,10 +473,10 @@ static int chipsfb_pci_resume(struct pci_dev *pdev)
 {
         struct fb_info *p = pci_get_drvdata(pdev);
 
-	acquire_console_sem();
+	console_lock();
 	fb_set_suspend(p, 0);
 	chipsfb_blank(0, p);
-	release_console_sem();
+	console_unlock();
 
 	pdev->dev.power.power_state = PMSG_ON;
 	return 0;

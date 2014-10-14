@@ -15,11 +15,11 @@
  *
  *	Fixes/additions:
  *		Philipp Rumpf
- *		Juha Siev‰nen <Juha.Sievanen@cs.Helsinki.FI>
- *		Auvo H‰kkinen <Auvo.Hakkinen@cs.Helsinki.FI>
+ *		Juha Siev√§nen <Juha.Sievanen@cs.Helsinki.FI>
+ *		Auvo H√§kkinen <Auvo.Hakkinen@cs.Helsinki.FI>
  *		Deepak Saxena <deepak@plexity.net>
  *		Boji T Kannanthanam <boji.t.kannanthanam@intel.com>
- *		Alan Cox <alan@redhat.com>:
+ *		Alan Cox <alan@lxorguk.ukuu.org.uk>:
  *			Ported to Linux 2.5.
  *		Markus Lidel <Markus.Lidel@shadowconnect.com>:
  *			Minor fixes for 2.6.
@@ -40,8 +40,6 @@
 #define OSM_NAME "exec-osm"
 
 struct i2o_driver i2o_exec_driver;
-
-static int i2o_exec_lct_notify(struct i2o_controller *c, u32 change_ind);
 
 /* global wait list for POST WAIT */
 static LIST_HEAD(i2o_exec_wait_list);
@@ -131,8 +129,10 @@ int i2o_msg_post_wait_mem(struct i2o_controller *c, struct i2o_message *msg,
 	int rc = 0;
 
 	wait = i2o_exec_wait_alloc();
-	if (!wait)
+	if (!wait) {
+		i2o_msg_nop(c, msg);
 		return -ENOMEM;
+	}
 
 	if (tcntxt == 0xffffffff)
 		tcntxt = 0x80000000;
@@ -337,6 +337,8 @@ static int i2o_exec_probe(struct device *dev)
 	rc = device_create_file(dev, &dev_attr_product_id);
 	if (rc) goto err_vid;
 
+	i2o_dev->iop->exec = i2o_dev;
+
 	return 0;
 
 err_vid:
@@ -364,6 +366,57 @@ static int i2o_exec_remove(struct device *dev)
 
 	return 0;
 };
+
+#ifdef CONFIG_I2O_LCT_NOTIFY_ON_CHANGES
+/**
+ *	i2o_exec_lct_notify - Send a asynchronus LCT NOTIFY request
+ *	@c: I2O controller to which the request should be send
+ *	@change_ind: change indicator
+ *
+ *	This function sends a LCT NOTIFY request to the I2O controller with
+ *	the change indicator change_ind. If the change_ind == 0 the controller
+ *	replies immediately after the request. If change_ind > 0 the reply is
+ *	send after change indicator of the LCT is > change_ind.
+ */
+static int i2o_exec_lct_notify(struct i2o_controller *c, u32 change_ind)
+{
+	i2o_status_block *sb = c->status_block.virt;
+	struct device *dev;
+	struct i2o_message *msg;
+
+	mutex_lock(&c->lct_lock);
+
+	dev = &c->pdev->dev;
+
+	if (i2o_dma_realloc(dev, &c->dlct,
+					le32_to_cpu(sb->expected_lct_size))) {
+		mutex_unlock(&c->lct_lock);
+		return -ENOMEM;
+	}
+
+	msg = i2o_msg_get_wait(c, I2O_TIMEOUT_MESSAGE_GET);
+	if (IS_ERR(msg)) {
+		mutex_unlock(&c->lct_lock);
+		return PTR_ERR(msg);
+	}
+
+	msg->u.head[0] = cpu_to_le32(EIGHT_WORD_MSG_SIZE | SGL_OFFSET_6);
+	msg->u.head[1] = cpu_to_le32(I2O_CMD_LCT_NOTIFY << 24 | HOST_TID << 12 |
+				     ADAPTER_TID);
+	msg->u.s.icntxt = cpu_to_le32(i2o_exec_driver.context);
+	msg->u.s.tcntxt = cpu_to_le32(0x00000000);
+	msg->body[0] = cpu_to_le32(0xffffffff);
+	msg->body[1] = cpu_to_le32(change_ind);
+	msg->body[2] = cpu_to_le32(0xd0000000 | c->dlct.len);
+	msg->body[3] = cpu_to_le32(c->dlct.phys);
+
+	i2o_msg_post(c, msg);
+
+	mutex_unlock(&c->lct_lock);
+
+	return 0;
+}
+#endif
 
 /**
  *	i2o_exec_lct_modified - Called on LCT NOTIFY reply
@@ -520,51 +573,6 @@ int i2o_exec_lct_get(struct i2o_controller *c)
 
 	return rc;
 }
-
-/**
- *	i2o_exec_lct_notify - Send a asynchronus LCT NOTIFY request
- *	@c: I2O controller to which the request should be send
- *	@change_ind: change indicator
- *
- *	This function sends a LCT NOTIFY request to the I2O controller with
- *	the change indicator change_ind. If the change_ind == 0 the controller
- *	replies immediately after the request. If change_ind > 0 the reply is
- *	send after change indicator of the LCT is > change_ind.
- */
-static int i2o_exec_lct_notify(struct i2o_controller *c, u32 change_ind)
-{
-	i2o_status_block *sb = c->status_block.virt;
-	struct device *dev;
-	struct i2o_message *msg;
-
-	down(&c->lct_lock);
-
-	dev = &c->pdev->dev;
-
-	if (i2o_dma_realloc
-	    (dev, &c->dlct, le32_to_cpu(sb->expected_lct_size), GFP_KERNEL))
-		return -ENOMEM;
-
-	msg = i2o_msg_get_wait(c, I2O_TIMEOUT_MESSAGE_GET);
-	if (IS_ERR(msg))
-		return PTR_ERR(msg);
-
-	msg->u.head[0] = cpu_to_le32(EIGHT_WORD_MSG_SIZE | SGL_OFFSET_6);
-	msg->u.head[1] = cpu_to_le32(I2O_CMD_LCT_NOTIFY << 24 | HOST_TID << 12 |
-				     ADAPTER_TID);
-	msg->u.s.icntxt = cpu_to_le32(i2o_exec_driver.context);
-	msg->u.s.tcntxt = cpu_to_le32(0x00000000);
-	msg->body[0] = cpu_to_le32(0xffffffff);
-	msg->body[1] = cpu_to_le32(change_ind);
-	msg->body[2] = cpu_to_le32(0xd0000000 | c->dlct.len);
-	msg->body[3] = cpu_to_le32(c->dlct.phys);
-
-	i2o_msg_post(c, msg);
-
-	up(&c->lct_lock);
-
-	return 0;
-};
 
 /* Exec OSM driver struct */
 struct i2o_driver i2o_exec_driver = {

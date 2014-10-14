@@ -27,8 +27,9 @@
  *   flushed even if it is not full yet.
  *
  */
-
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 #include <linux/module.h>
+#include <linux/slab.h>
 #include <linux/spinlock.h>
 #include <linux/socket.h>
 #include <linux/skbuff.h>
@@ -36,15 +37,12 @@
 #include <linux/timer.h>
 #include <linux/netlink.h>
 #include <linux/netdevice.h>
-#include <linux/module.h>
-#include <net/sock.h>
-#include "../br_private.h"
 #include <linux/netfilter/x_tables.h>
 #include <linux/netfilter_bridge/ebtables.h>
 #include <linux/netfilter_bridge/ebt_ulog.h>
-
-#define PRINTR(format, args...) do { if (net_ratelimit()) \
-				printk(format , ## args); } while (0)
+#include <net/netfilter/nf_log.h>
+#include <net/sock.h>
+#include "../br_private.h"
 
 static unsigned int nlbufsiz = NLMSG_GOODSIZE;
 module_param(nlbufsiz, uint, 0600);
@@ -106,15 +104,14 @@ static struct sk_buff *ulog_alloc_skb(unsigned int size)
 	n = max(size, nlbufsiz);
 	skb = alloc_skb(n, GFP_ATOMIC);
 	if (!skb) {
-		PRINTR(KERN_ERR "ebt_ulog: can't alloc whole buffer "
-		       "of size %ub!\n", n);
+		pr_debug("cannot alloc whole buffer of size %ub!\n", n);
 		if (n > size) {
 			/* try to allocate only as much as we need for
 			 * current packet */
 			skb = alloc_skb(size, GFP_ATOMIC);
 			if (!skb)
-				PRINTR(KERN_ERR "ebt_ulog: can't even allocate "
-				       "buffer of size %ub\n", size);
+				pr_debug("cannot even allocate "
+					 "buffer of size %ub\n", size);
 		}
 	}
 
@@ -141,8 +138,7 @@ static void ebt_ulog_packet(unsigned int hooknr, const struct sk_buff *skb,
 
 	size = NLMSG_SPACE(sizeof(*pm) + copy_len);
 	if (size > nlbufsiz) {
-		PRINTR("ebt_ulog: Size %Zd needed, but nlbufsiz=%d\n",
-		       size, nlbufsiz);
+		pr_debug("Size %Zd needed, but nlbufsiz=%d\n", size, nlbufsiz);
 		return;
 	}
 
@@ -181,8 +177,9 @@ static void ebt_ulog_packet(unsigned int hooknr, const struct sk_buff *skb,
 	if (in) {
 		strcpy(pm->physindev, in->name);
 		/* If in isn't a bridge, then physindev==indev */
-		if (in->br_port)
-			strcpy(pm->indev, in->br_port->br->dev->name);
+		if (br_port_exists(in))
+			/* rcu_read_lock()ed by nf_hook_slow */
+			strcpy(pm->indev, br_port_get_rcu(in)->br->dev->name);
 		else
 			strcpy(pm->indev, in->name);
 	} else
@@ -191,7 +188,8 @@ static void ebt_ulog_packet(unsigned int hooknr, const struct sk_buff *skb,
 	if (out) {
 		/* If out exists, then out is a bridge port */
 		strcpy(pm->physoutdev, out->name);
-		strcpy(pm->outdev, out->br_port->br->dev->name);
+		/* rcu_read_lock()ed by nf_hook_slow */
+		strcpy(pm->outdev, br_port_get_rcu(out)->br->dev->name);
 	} else
 		pm->outdev[0] = pm->physoutdev[0] = '\0';
 
@@ -216,15 +214,15 @@ unlock:
 	return;
 
 nlmsg_failure:
-	printk(KERN_CRIT "ebt_ulog: error during NLMSG_PUT. This should "
-	       "not happen, please report to author.\n");
+	pr_debug("error during NLMSG_PUT. This should "
+		 "not happen, please report to author.\n");
 	goto unlock;
 alloc_failure:
 	goto unlock;
 }
 
 /* this function is registered with the netfilter core */
-static void ebt_log_packet(unsigned int pf, unsigned int hooknum,
+static void ebt_log_packet(u_int8_t pf, unsigned int hooknum,
    const struct sk_buff *skb, const struct net_device *in,
    const struct net_device *out, const struct nf_loginfo *li,
    const char *prefix)
@@ -246,23 +244,19 @@ static void ebt_log_packet(unsigned int pf, unsigned int hooknum,
 	ebt_ulog_packet(hooknum, skb, in, out, &loginfo, prefix);
 }
 
-static void ebt_ulog(const struct sk_buff *skb, unsigned int hooknr,
-   const struct net_device *in, const struct net_device *out,
-   const void *data, unsigned int datalen)
+static unsigned int
+ebt_ulog_tg(struct sk_buff *skb, const struct xt_action_param *par)
 {
-	struct ebt_ulog_info *uloginfo = (struct ebt_ulog_info *)data;
-
-	ebt_ulog_packet(hooknr, skb, in, out, uloginfo, NULL);
+	ebt_ulog_packet(par->hooknum, skb, par->in, par->out,
+	                par->targinfo, NULL);
+	return EBT_CONTINUE;
 }
 
-
-static int ebt_ulog_check(const char *tablename, unsigned int hookmask,
-   const struct ebt_entry *e, void *data, unsigned int datalen)
+static int ebt_ulog_tg_check(const struct xt_tgchk_param *par)
 {
-	struct ebt_ulog_info *uloginfo = (struct ebt_ulog_info *)data;
+	struct ebt_ulog_info *uloginfo = par->targinfo;
 
-	if (datalen != XT_ALIGN(sizeof(struct ebt_ulog_info)) ||
-	    uloginfo->nlgroup > 31)
+	if (uloginfo->nlgroup > 31)
 		return -EINVAL;
 
 	uloginfo->prefix[EBT_ULOG_PREFIX_LEN - 1] = '\0';
@@ -273,26 +267,30 @@ static int ebt_ulog_check(const char *tablename, unsigned int hookmask,
 	return 0;
 }
 
-static struct ebt_watcher ulog = {
-	.name		= EBT_ULOG_WATCHER,
-	.watcher	= ebt_ulog,
-	.check		= ebt_ulog_check,
+static struct xt_target ebt_ulog_tg_reg __read_mostly = {
+	.name		= "ulog",
+	.revision	= 0,
+	.family		= NFPROTO_BRIDGE,
+	.target		= ebt_ulog_tg,
+	.checkentry	= ebt_ulog_tg_check,
+	.targetsize	= sizeof(struct ebt_ulog_info),
 	.me		= THIS_MODULE,
 };
 
-static struct nf_logger ebt_ulog_logger = {
-	.name		= EBT_ULOG_WATCHER,
+static struct nf_logger ebt_ulog_logger __read_mostly = {
+	.name		= "ebt_ulog",
 	.logfn		= &ebt_log_packet,
 	.me		= THIS_MODULE,
 };
 
 static int __init ebt_ulog_init(void)
 {
-	int i, ret = 0;
+	int ret;
+	int i;
 
 	if (nlbufsiz >= 128*1024) {
-		printk(KERN_NOTICE "ebt_ulog: Netlink buffer has to be <= 128kB,"
-		       " please try a smaller nlbufsiz parameter.\n");
+		pr_warning("Netlink buffer has to be <= 128kB,"
+			   " please try a smaller nlbufsiz parameter.\n");
 		return -EINVAL;
 	}
 
@@ -302,19 +300,16 @@ static int __init ebt_ulog_init(void)
 		spin_lock_init(&ulog_buffers[i].lock);
 	}
 
-	ebtulognl = netlink_kernel_create(NETLINK_NFLOG, EBT_ULOG_MAXNLGROUPS,
-					  NULL, NULL, THIS_MODULE);
+	ebtulognl = netlink_kernel_create(&init_net, NETLINK_NFLOG,
+					  EBT_ULOG_MAXNLGROUPS, NULL, NULL,
+					  THIS_MODULE);
 	if (!ebtulognl)
 		ret = -ENOMEM;
-	else if ((ret = ebt_register_watcher(&ulog)))
-		sock_release(ebtulognl->sk_socket);
+	else if ((ret = xt_register_target(&ebt_ulog_tg_reg)) != 0)
+		netlink_kernel_release(ebtulognl);
 
-	if (nf_log_register(PF_BRIDGE, &ebt_ulog_logger) < 0) {
-		printk(KERN_WARNING "ebt_ulog: not logging via ulog "
-		       "since somebody else already registered for PF_BRIDGE\n");
-		/* we cannot make module load fail here, since otherwise
-		 * ebtables userspace would abort */
-	}
+	if (ret == 0)
+		nf_log_register(NFPROTO_BRIDGE, &ebt_ulog_logger);
 
 	return ret;
 }
@@ -325,7 +320,7 @@ static void __exit ebt_ulog_fini(void)
 	int i;
 
 	nf_log_unregister(&ebt_ulog_logger);
-	ebt_unregister_watcher(&ulog);
+	xt_unregister_target(&ebt_ulog_tg_reg);
 	for (i = 0; i < EBT_ULOG_MAXNLGROUPS; i++) {
 		ub = &ulog_buffers[i];
 		if (timer_pending(&ub->timer))
@@ -337,12 +332,11 @@ static void __exit ebt_ulog_fini(void)
 		}
 		spin_unlock_bh(&ub->lock);
 	}
-	sock_release(ebtulognl->sk_socket);
+	netlink_kernel_release(ebtulognl);
 }
 
 module_init(ebt_ulog_init);
 module_exit(ebt_ulog_fini);
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Bart De Schuymer <bdschuym@pandora.be>");
-MODULE_DESCRIPTION("ebtables userspace logging module for bridged Ethernet"
-		   " frames");
+MODULE_DESCRIPTION("Ebtables: Packet logging to netlink using ULOG");

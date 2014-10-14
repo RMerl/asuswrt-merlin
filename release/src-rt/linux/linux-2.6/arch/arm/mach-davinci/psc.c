@@ -19,95 +19,82 @@
  *
  */
 #include <linux/kernel.h>
-#include <linux/module.h>
 #include <linux/init.h>
+#include <linux/io.h>
 
-#include <asm/io.h>
-#include <asm/hardware.h>
-#include <asm/arch/psc.h>
+#include <mach/cputype.h>
+#include <mach/psc.h>
 
-#define PTCMD	     __REG(0x01C41120)
-#define PDSTAT	     __REG(0x01C41200)
-#define PDCTL1	     __REG(0x01C41304)
-#define EPCPR	     __REG(0x01C41070)
-#define PTSTAT	     __REG(0x01C41128)
-
-#define MDSTAT	     IO_ADDRESS(0x01C41800)
-#define MDCTL	     IO_ADDRESS(0x01C41A00)
-
-#define PINMUX0	     __REG(0x01c40000)
-#define PINMUX1	     __REG(0x01c40004)
-#define VDD3P3V_PWDN __REG(0x01C40048)
-
-static void davinci_psc_mux(unsigned int id)
+/* Return nonzero iff the domain's clock is active */
+int __init davinci_psc_is_clk_active(unsigned int ctlr, unsigned int id)
 {
-	switch (id) {
-	case DAVINCI_LPSC_ATA:
-		PINMUX0 |= (1 << 17) | (1 << 16);
-		break;
-	case DAVINCI_LPSC_MMC_SD:
-		/* VDD power manupulations are done in U-Boot for CPMAC
-		 * so applies to MMC as well
-		 */
-		/*Set up the pull regiter for MMC */
-		VDD3P3V_PWDN = 0x0;
-		PINMUX1 &= (~(1 << 9));
-		break;
-	case DAVINCI_LPSC_I2C:
-		PINMUX1 |= (1 << 7);
-		break;
-	case DAVINCI_LPSC_McBSP:
-		PINMUX1 |= (1 << 10);
-		break;
-	default:
-		break;
+	void __iomem *psc_base;
+	u32 mdstat;
+	struct davinci_soc_info *soc_info = &davinci_soc_info;
+
+	if (!soc_info->psc_bases || (ctlr >= soc_info->psc_bases_num)) {
+		pr_warning("PSC: Bad psc data: 0x%x[%d]\n",
+				(int)soc_info->psc_bases, ctlr);
+		return 0;
 	}
+
+	psc_base = ioremap(soc_info->psc_bases[ctlr], SZ_4K);
+	mdstat = __raw_readl(psc_base + MDSTAT + 4 * id);
+	iounmap(psc_base);
+
+	/* if clocked, state can be "Enable" or "SyncReset" */
+	return mdstat & BIT(12);
 }
 
 /* Enable or disable a PSC domain */
-void davinci_psc_config(unsigned int domain, unsigned int id, char enable)
+void davinci_psc_config(unsigned int domain, unsigned int ctlr,
+		unsigned int id, u32 next_state)
 {
-	volatile unsigned int *mdstat = (unsigned int *)((int)MDSTAT + 4 * id);
-	volatile unsigned int *mdctl = (unsigned int *)((int)MDCTL + 4 * id);
+	u32 epcpr, ptcmd, ptstat, pdstat, pdctl1, mdstat, mdctl;
+	void __iomem *psc_base;
+	struct davinci_soc_info *soc_info = &davinci_soc_info;
 
-	if (id < 0)
+	if (!soc_info->psc_bases || (ctlr >= soc_info->psc_bases_num)) {
+		pr_warning("PSC: Bad psc data: 0x%x[%d]\n",
+				(int)soc_info->psc_bases, ctlr);
 		return;
-
-	if (enable)
-		*mdctl |= 0x00000003;	/* Enable Module */
-	else
-		*mdctl &= 0xFFFFFFF2;	/* Disable Module */
-
-	if ((PDSTAT & 0x00000001) == 0) {
-		PDCTL1 |= 0x1;
-		PTCMD = (1 << domain);
-		while ((((EPCPR >> domain) & 1) == 0));
-
-		PDCTL1 |= 0x100;
-		while (!(((PTSTAT >> domain) & 1) == 0));
-	} else {
-		PTCMD = (1 << domain);
-		while (!(((PTSTAT >> domain) & 1) == 0));
 	}
 
-	if (enable)
-		while (!((*mdstat & 0x0000001F) == 0x3));
-	else
-		while (!((*mdstat & 0x0000001F) == 0x2));
+	psc_base = ioremap(soc_info->psc_bases[ctlr], SZ_4K);
 
-	if (enable)
-		davinci_psc_mux(id);
-}
+	mdctl = __raw_readl(psc_base + MDCTL + 4 * id);
+	mdctl &= ~MDSTAT_STATE_MASK;
+	mdctl |= next_state;
+	__raw_writel(mdctl, psc_base + MDCTL + 4 * id);
 
-void __init davinci_psc_init(void)
-{
-	davinci_psc_config(DAVINCI_GPSC_ARMDOMAIN, DAVINCI_LPSC_VPSSMSTR, 1);
-	davinci_psc_config(DAVINCI_GPSC_ARMDOMAIN, DAVINCI_LPSC_VPSSSLV, 1);
-	davinci_psc_config(DAVINCI_GPSC_ARMDOMAIN, DAVINCI_LPSC_TPCC, 1);
-	davinci_psc_config(DAVINCI_GPSC_ARMDOMAIN, DAVINCI_LPSC_TPTC0, 1);
-	davinci_psc_config(DAVINCI_GPSC_ARMDOMAIN, DAVINCI_LPSC_TPTC1, 1);
-	davinci_psc_config(DAVINCI_GPSC_ARMDOMAIN, DAVINCI_LPSC_GPIO, 1);
+	pdstat = __raw_readl(psc_base + PDSTAT);
+	if ((pdstat & 0x00000001) == 0) {
+		pdctl1 = __raw_readl(psc_base + PDCTL1);
+		pdctl1 |= 0x1;
+		__raw_writel(pdctl1, psc_base + PDCTL1);
 
-	/* Turn on WatchDog timer LPSC.	 Needed for RESET to work */
-	davinci_psc_config(DAVINCI_GPSC_ARMDOMAIN, DAVINCI_LPSC_TIMER2, 1);
+		ptcmd = 1 << domain;
+		__raw_writel(ptcmd, psc_base + PTCMD);
+
+		do {
+			epcpr = __raw_readl(psc_base + EPCPR);
+		} while ((((epcpr >> domain) & 1) == 0));
+
+		pdctl1 = __raw_readl(psc_base + PDCTL1);
+		pdctl1 |= 0x100;
+		__raw_writel(pdctl1, psc_base + PDCTL1);
+	} else {
+		ptcmd = 1 << domain;
+		__raw_writel(ptcmd, psc_base + PTCMD);
+	}
+
+	do {
+		ptstat = __raw_readl(psc_base + PTSTAT);
+	} while (!(((ptstat >> domain) & 1) == 0));
+
+	do {
+		mdstat = __raw_readl(psc_base + MDSTAT + 4 * id);
+	} while (!((mdstat & MDSTAT_STATE_MASK) == next_state));
+
+	iounmap(psc_base);
 }

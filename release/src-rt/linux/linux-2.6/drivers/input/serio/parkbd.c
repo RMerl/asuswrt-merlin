@@ -46,6 +46,7 @@
 
 #include <linux/module.h>
 #include <linux/parport.h>
+#include <linux/slab.h>
 #include <linux/init.h>
 #include <linux/serio.h>
 
@@ -102,7 +103,7 @@ static int parkbd_write(struct serio *port, unsigned char c)
 	return 0;
 }
 
-static void parkbd_interrupt(int irq, void *dev_id)
+static void parkbd_interrupt(void *dev_id)
 {
 
 	if (parkbd_writing) {

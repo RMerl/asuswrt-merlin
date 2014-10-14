@@ -8,23 +8,57 @@
  * Copyright 2003,2004 Andi Kleen SuSE Labs
  */
 
+/*
+ * Both the MPOL_* mempolicy mode and the MPOL_F_* optional mode flags are
+ * passed by the user to either set_mempolicy() or mbind() in an 'int' actual.
+ * The MPOL_MODE_FLAGS macro determines the legal set of optional mode flags.
+ */
+
 /* Policies */
-#define MPOL_DEFAULT	0
-#define MPOL_PREFERRED	1
-#define MPOL_BIND	2
-#define MPOL_INTERLEAVE	3
+enum {
+	MPOL_DEFAULT,
+	MPOL_PREFERRED,
+	MPOL_BIND,
+	MPOL_INTERLEAVE,
+	MPOL_MAX,	/* always last member of enum */
+};
 
-#define MPOL_MAX MPOL_INTERLEAVE
+enum mpol_rebind_step {
+	MPOL_REBIND_ONCE,	/* do rebind work at once(not by two step) */
+	MPOL_REBIND_STEP1,	/* first step(set all the newly nodes) */
+	MPOL_REBIND_STEP2,	/* second step(clean all the disallowed nodes)*/
+	MPOL_REBIND_NSTEP,
+};
 
-/* Flags for get_mem_policy */
+/* Flags for set_mempolicy */
+#define MPOL_F_STATIC_NODES	(1 << 15)
+#define MPOL_F_RELATIVE_NODES	(1 << 14)
+
+/*
+ * MPOL_MODE_FLAGS is the union of all possible optional mode flags passed to
+ * either set_mempolicy() or mbind().
+ */
+#define MPOL_MODE_FLAGS	(MPOL_F_STATIC_NODES | MPOL_F_RELATIVE_NODES)
+
+/* Flags for get_mempolicy */
 #define MPOL_F_NODE	(1<<0)	/* return next IL mode instead of node mask */
 #define MPOL_F_ADDR	(1<<1)	/* look up vma using address */
+#define MPOL_F_MEMS_ALLOWED (1<<2) /* return allowed memories */
 
 /* Flags for mbind */
 #define MPOL_MF_STRICT	(1<<0)	/* Verify existing pages in the mapping */
 #define MPOL_MF_MOVE	(1<<1)	/* Move pages owned by this process to conform to mapping */
 #define MPOL_MF_MOVE_ALL (1<<2)	/* Move every page to conform to mapping */
 #define MPOL_MF_INTERNAL (1<<3)	/* Internal flags start here */
+
+/*
+ * Internal flags that share the struct mempolicy flags word with
+ * "mode flags".  These flags are allocated from bit 0 up, as they
+ * are never OR'ed into the mode in mempolicy API arguments.
+ */
+#define MPOL_F_SHARED  (1 << 0)	/* identify shared policies */
+#define MPOL_F_LOCAL   (1 << 1)	/* preferred local allocation */
+#define MPOL_F_REBINDING (1 << 2)	/* identify policies in rebinding */
 
 #ifdef __KERNEL__
 
@@ -33,8 +67,8 @@
 #include <linux/rbtree.h>
 #include <linux/spinlock.h>
 #include <linux/nodemask.h>
+#include <linux/pagemap.h>
 
-struct vm_area_struct;
 struct mm_struct;
 
 #ifdef CONFIG_NUMA
@@ -53,22 +87,27 @@ struct mm_struct;
  * mmap_sem.
  *
  * Freeing policy:
- * When policy is MPOL_BIND v.zonelist is kmalloc'ed and must be kfree'd.
- * All other policies don't have any external state. mpol_free() handles this.
+ * Mempolicy objects are reference counted.  A mempolicy will be freed when
+ * mpol_put() decrements the reference count to zero.
  *
- * Copying policy objects:
- * For MPOL_BIND the zonelist must be always duplicated. mpol_clone() does this.
+ * Duplicating policy objects:
+ * mpol_dup() allocates a new mempolicy and copies the specified mempolicy
+ * to the new storage.  The reference count of the new object is initialized
+ * to 1, representing the caller of mpol_dup().
  */
 struct mempolicy {
 	atomic_t refcnt;
-	short policy; 	/* See MPOL_* above */
+	unsigned short mode; 	/* See MPOL_* above */
+	unsigned short flags;	/* See set_mempolicy() MPOL_F_* above */
 	union {
-		struct zonelist  *zonelist;	/* bind */
 		short 		 preferred_node; /* preferred */
-		nodemask_t	 nodes;		/* interleave */
+		nodemask_t	 nodes;		/* interleave/bind */
 		/* undefined for default */
 	} v;
-	nodemask_t cpuset_mems_allowed;	/* mempolicy relative to these nodes */
+	union {
+		nodemask_t cpuset_mems_allowed;	/* relative to these nodes */
+		nodemask_t user_nodemask;	/* nodemask passed by user */
+	} w;
 };
 
 /*
@@ -76,18 +115,43 @@ struct mempolicy {
  * The default fast path of a NULL MPOL_DEFAULT policy is always inlined.
  */
 
-extern void __mpol_free(struct mempolicy *pol);
-static inline void mpol_free(struct mempolicy *pol)
+extern void __mpol_put(struct mempolicy *pol);
+static inline void mpol_put(struct mempolicy *pol)
 {
 	if (pol)
-		__mpol_free(pol);
+		__mpol_put(pol);
 }
 
-extern struct mempolicy *__mpol_copy(struct mempolicy *pol);
-static inline struct mempolicy *mpol_copy(struct mempolicy *pol)
+/*
+ * Does mempolicy pol need explicit unref after use?
+ * Currently only needed for shared policies.
+ */
+static inline int mpol_needs_cond_ref(struct mempolicy *pol)
+{
+	return (pol && (pol->flags & MPOL_F_SHARED));
+}
+
+static inline void mpol_cond_put(struct mempolicy *pol)
+{
+	if (mpol_needs_cond_ref(pol))
+		__mpol_put(pol);
+}
+
+extern struct mempolicy *__mpol_cond_copy(struct mempolicy *tompol,
+					  struct mempolicy *frompol);
+static inline struct mempolicy *mpol_cond_copy(struct mempolicy *tompol,
+						struct mempolicy *frompol)
+{
+	if (!frompol)
+		return frompol;
+	return __mpol_cond_copy(tompol, frompol);
+}
+
+extern struct mempolicy *__mpol_dup(struct mempolicy *pol);
+static inline struct mempolicy *mpol_dup(struct mempolicy *pol)
 {
 	if (pol)
-		pol = __mpol_copy(pol);
+		pol = __mpol_dup(pol);
 	return pol;
 }
 
@@ -107,11 +171,6 @@ static inline int mpol_equal(struct mempolicy *a, struct mempolicy *b)
 		return 1;
 	return __mpol_equal(a, b);
 }
-#define vma_mpol_equal(a,b) mpol_equal(vma_policy(a), vma_policy(b))
-
-/* Could later add inheritance of the process policy here. */
-
-#define mpol_set_vma_default(vma) ((vma)->vm_policy = NULL)
 
 /*
  * Tree of shared policies for a shared memory region.
@@ -132,8 +191,7 @@ struct shared_policy {
 	spinlock_t lock;
 };
 
-void mpol_shared_policy_init(struct shared_policy *info, int policy,
-				nodemask_t *nodes);
+void mpol_shared_policy_init(struct shared_policy *sp, struct mempolicy *mpol);
 int mpol_set_shared_policy(struct shared_policy *info,
 				struct vm_area_struct *vma,
 				struct mempolicy *new);
@@ -143,37 +201,54 @@ struct mempolicy *mpol_shared_policy_lookup(struct shared_policy *sp,
 
 extern void numa_default_policy(void);
 extern void numa_policy_init(void);
-extern void mpol_rebind_policy(struct mempolicy *pol, const nodemask_t *new);
-extern void mpol_rebind_task(struct task_struct *tsk,
-					const nodemask_t *new);
+extern void mpol_rebind_task(struct task_struct *tsk, const nodemask_t *new,
+				enum mpol_rebind_step step);
 extern void mpol_rebind_mm(struct mm_struct *mm, nodemask_t *new);
 extern void mpol_fix_fork_child_flag(struct task_struct *p);
-#define set_cpuset_being_rebound(x) (cpuset_being_rebound = (x))
 
-#ifdef CONFIG_CPUSETS
-#define current_cpuset_is_being_rebound() \
-				(cpuset_being_rebound == current->cpuset)
-#else
-#define current_cpuset_is_being_rebound() 0
-#endif
-
-extern struct mempolicy default_policy;
 extern struct zonelist *huge_zonelist(struct vm_area_struct *vma,
-		unsigned long addr);
+				unsigned long addr, gfp_t gfp_flags,
+				struct mempolicy **mpol, nodemask_t **nodemask);
+extern bool init_nodemask_of_mempolicy(nodemask_t *mask);
+extern bool mempolicy_nodemask_intersects(struct task_struct *tsk,
+				const nodemask_t *mask);
 extern unsigned slab_node(struct mempolicy *policy);
 
 extern enum zone_type policy_zone;
 
 static inline void check_highest_zone(enum zone_type k)
 {
-	if (k > policy_zone)
+	if (k > policy_zone && k != ZONE_MOVABLE)
 		policy_zone = k;
 }
 
 int do_migrate_pages(struct mm_struct *mm,
 	const nodemask_t *from_nodes, const nodemask_t *to_nodes, int flags);
 
-extern void *cpuset_being_rebound;	/* Trigger mpol_copy vma rebind */
+
+#ifdef CONFIG_TMPFS
+extern int mpol_parse_str(char *str, struct mempolicy **mpol, int no_context);
+
+extern int mpol_to_str(char *buffer, int maxlen, struct mempolicy *pol,
+			int no_context);
+#endif
+
+/* Check if a vma is migratable */
+static inline int vma_migratable(struct vm_area_struct *vma)
+{
+	if (vma->vm_flags & (VM_IO|VM_HUGETLB|VM_PFNMAP|VM_RESERVED))
+		return 0;
+	/*
+	 * Migration allocates pages in the highest zone. If we cannot
+	 * do so then migration (at least from node to node) is not
+	 * possible.
+	 */
+	if (vma->vm_file &&
+		gfp_zone(mapping_gfp_mask(vma->vm_file->f_mapping))
+								< policy_zone)
+			return 0;
+	return 1;
+}
 
 #else
 
@@ -183,19 +258,26 @@ static inline int mpol_equal(struct mempolicy *a, struct mempolicy *b)
 {
 	return 1;
 }
-#define vma_mpol_equal(a,b) 1
 
-#define mpol_set_vma_default(vma) do {} while(0)
-
-static inline void mpol_free(struct mempolicy *p)
+static inline void mpol_put(struct mempolicy *p)
 {
+}
+
+static inline void mpol_cond_put(struct mempolicy *pol)
+{
+}
+
+static inline struct mempolicy *mpol_cond_copy(struct mempolicy *to,
+						struct mempolicy *from)
+{
+	return from;
 }
 
 static inline void mpol_get(struct mempolicy *pol)
 {
 }
 
-static inline struct mempolicy *mpol_copy(struct mempolicy *old)
+static inline struct mempolicy *mpol_dup(struct mempolicy *old)
 {
 	return NULL;
 }
@@ -209,8 +291,8 @@ static inline int mpol_set_shared_policy(struct shared_policy *info,
 	return -EINVAL;
 }
 
-static inline void mpol_shared_policy_init(struct shared_policy *info,
-					int policy, nodemask_t *nodes)
+static inline void mpol_shared_policy_init(struct shared_policy *sp,
+						struct mempolicy *mpol)
 {
 }
 
@@ -235,13 +317,9 @@ static inline void numa_default_policy(void)
 {
 }
 
-static inline void mpol_rebind_policy(struct mempolicy *pol,
-					const nodemask_t *new)
-{
-}
-
 static inline void mpol_rebind_task(struct task_struct *tsk,
-					const nodemask_t *new)
+				const nodemask_t *new,
+				enum mpol_rebind_step step)
 {
 }
 
@@ -253,12 +331,24 @@ static inline void mpol_fix_fork_child_flag(struct task_struct *p)
 {
 }
 
-#define set_cpuset_being_rebound(x) do {} while (0)
-
 static inline struct zonelist *huge_zonelist(struct vm_area_struct *vma,
-		unsigned long addr)
+				unsigned long addr, gfp_t gfp_flags,
+				struct mempolicy **mpol, nodemask_t **nodemask)
 {
-	return NODE_DATA(0)->node_zonelists + gfp_zone(GFP_HIGHUSER);
+	*mpol = NULL;
+	*nodemask = NULL;
+	return node_zonelist(0, gfp_flags);
+}
+
+static inline bool init_nodemask_of_mempolicy(nodemask_t *m)
+{
+	return false;
+}
+
+static inline bool mempolicy_nodemask_intersects(struct task_struct *tsk,
+			const nodemask_t *mask)
+{
+	return false;
 }
 
 static inline int do_migrate_pages(struct mm_struct *mm,
@@ -271,6 +361,21 @@ static inline int do_migrate_pages(struct mm_struct *mm,
 static inline void check_highest_zone(int k)
 {
 }
+
+#ifdef CONFIG_TMPFS
+static inline int mpol_parse_str(char *str, struct mempolicy **mpol,
+				int no_context)
+{
+	return 1;	/* error */
+}
+
+static inline int mpol_to_str(char *buffer, int maxlen, struct mempolicy *pol,
+				int no_context)
+{
+	return 0;
+}
+#endif
+
 #endif /* CONFIG_NUMA */
 #endif /* __KERNEL__ */
 

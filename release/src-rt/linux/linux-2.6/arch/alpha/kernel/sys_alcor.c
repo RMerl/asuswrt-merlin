@@ -44,59 +44,42 @@ alcor_update_irq_hw(unsigned long mask)
 }
 
 static inline void
-alcor_enable_irq(unsigned int irq)
+alcor_enable_irq(struct irq_data *d)
 {
-	alcor_update_irq_hw(cached_irq_mask |= 1UL << (irq - 16));
+	alcor_update_irq_hw(cached_irq_mask |= 1UL << (d->irq - 16));
 }
 
 static void
-alcor_disable_irq(unsigned int irq)
+alcor_disable_irq(struct irq_data *d)
 {
-	alcor_update_irq_hw(cached_irq_mask &= ~(1UL << (irq - 16)));
+	alcor_update_irq_hw(cached_irq_mask &= ~(1UL << (d->irq - 16)));
 }
 
 static void
-alcor_mask_and_ack_irq(unsigned int irq)
+alcor_mask_and_ack_irq(struct irq_data *d)
 {
-	alcor_disable_irq(irq);
+	alcor_disable_irq(d);
 
 	/* On ALCOR/XLT, need to dismiss interrupt via GRU. */
-	*(vuip)GRU_INT_CLEAR = 1 << (irq - 16); mb();
+	*(vuip)GRU_INT_CLEAR = 1 << (d->irq - 16); mb();
 	*(vuip)GRU_INT_CLEAR = 0; mb();
 }
 
-static unsigned int
-alcor_startup_irq(unsigned int irq)
-{
-	alcor_enable_irq(irq);
-	return 0;
-}
-
 static void
-alcor_isa_mask_and_ack_irq(unsigned int irq)
+alcor_isa_mask_and_ack_irq(struct irq_data *d)
 {
-	i8259a_mask_and_ack_irq(irq);
+	i8259a_mask_and_ack_irq(d);
 
 	/* On ALCOR/XLT, need to dismiss interrupt via GRU. */
 	*(vuip)GRU_INT_CLEAR = 0x80000000; mb();
 	*(vuip)GRU_INT_CLEAR = 0; mb();
 }
 
-static void
-alcor_end_irq(unsigned int irq)
-{
-	if (!(irq_desc[irq].status & (IRQ_DISABLED|IRQ_INPROGRESS)))
-		alcor_enable_irq(irq);
-}
-
-static struct hw_interrupt_type alcor_irq_type = {
-	.typename	= "ALCOR",
-	.startup	= alcor_startup_irq,
-	.shutdown	= alcor_disable_irq,
-	.enable		= alcor_enable_irq,
-	.disable	= alcor_disable_irq,
-	.ack		= alcor_mask_and_ack_irq,
-	.end		= alcor_end_irq,
+static struct irq_chip alcor_irq_type = {
+	.name		= "ALCOR",
+	.irq_unmask	= alcor_enable_irq,
+	.irq_mask	= alcor_disable_irq,
+	.irq_mask_ack	= alcor_mask_and_ack_irq,
 };
 
 static void
@@ -138,14 +121,14 @@ alcor_init_irq(void)
 
 	for (i = 16; i < 48; ++i) {
 		/* On Alcor, at least, lines 20..30 are not connected
-		   and can generate spurrious interrupts if we turn them
+		   and can generate spurious interrupts if we turn them
 		   on while IRQ probing.  */
 		if (i >= 16+20 && i <= 16+30)
 			continue;
-		irq_desc[i].status = IRQ_DISABLED | IRQ_LEVEL;
-		irq_desc[i].chip = &alcor_irq_type;
+		irq_set_chip_and_handler(i, &alcor_irq_type, handle_level_irq);
+		irq_set_status_flags(i, IRQ_LEVEL);
 	}
-	i8259a_irq_type.ack = alcor_isa_mask_and_ack_irq;
+	i8259a_irq_type.irq_ack = alcor_isa_mask_and_ack_irq;
 
 	init_i8259a_irqs();
 	common_init_isa_dma();
@@ -259,7 +242,7 @@ alcor_init_pci(void)
 	if (dev && dev->devfn == PCI_DEVFN(6,0)) {
 		alpha_mv.sys.cia.gru_int_req_bits = XLT_GRU_INT_REQ_BITS; 
 		printk(KERN_INFO "%s: Detected AS500 or XLT motherboard.\n",
-		       __FUNCTION__);
+		       __func__);
 	}
 	pci_dev_put(dev);
 }

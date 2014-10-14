@@ -45,12 +45,13 @@
  *     NLBL_CIPSOV4_A_MTYPE
  *     NLBL_CIPSOV4_A_TAGLST
  *
- *   If using CIPSO_V4_MAP_STD the following attributes are required:
+ *   If using CIPSO_V4_MAP_TRANS the following attributes are required:
  *
  *     NLBL_CIPSOV4_A_MLSLVLLST
  *     NLBL_CIPSOV4_A_MLSCATLST
  *
- *   If using CIPSO_V4_MAP_PASS no additional attributes are required.
+ *   If using CIPSO_V4_MAP_PASS or CIPSO_V4_MAP_LOCAL no additional attributes
+ *   are required.
  *
  * o REMOVE:
  *   Sent by an application to remove a specific DOI mapping table from the
@@ -76,12 +77,13 @@
  *     NLBL_CIPSOV4_A_MTYPE
  *     NLBL_CIPSOV4_A_TAGLST
  *
- *   If using CIPSO_V4_MAP_STD the following attributes are required:
+ *   If using CIPSO_V4_MAP_TRANS the following attributes are required:
  *
  *     NLBL_CIPSOV4_A_MLSLVLLST
  *     NLBL_CIPSOV4_A_MLSCATLST
  *
- *   If using CIPSO_V4_MAP_PASS no additional attributes are required.
+ *   If using CIPSO_V4_MAP_PASS or CIPSO_V4_MAP_LOCAL no additional attributes
+ *   are required.
  *
  * o LISTALL:
  *   This message is sent by an application to list the valid DOIs on the
@@ -105,7 +107,6 @@ enum {
 	NLBL_CIPSOV4_C_LISTALL,
 	__NLBL_CIPSOV4_C_MAX,
 };
-#define NLBL_CIPSOV4_C_MAX (__NLBL_CIPSOV4_C_MAX - 1)
 
 /* NetLabel CIPSOv4 attributes */
 enum {
@@ -162,5 +163,8 @@ enum {
 
 /* NetLabel protocol functions */
 int netlbl_cipsov4_genl_init(void);
+
+/* Free the memory associated with a CIPSOv4 DOI definition */
+void netlbl_cipsov4_doi_free(struct rcu_head *entry);
 
 #endif

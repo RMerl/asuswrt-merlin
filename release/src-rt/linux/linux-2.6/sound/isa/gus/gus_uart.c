@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) by Jaroslav Kysela <perex@suse.cz>
+ *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  *  Routines for the GF1 MIDI interface - like UART 6850
  *
  *
@@ -19,7 +19,6 @@
  *
  */
 
-#include <sound/driver.h>
 #include <linux/delay.h>
 #include <linux/interrupt.h>
 #include <linux/time.h>
@@ -130,8 +129,14 @@ static int snd_gf1_uart_input_open(struct snd_rawmidi_substream *substream)
 	}
 	spin_unlock_irqrestore(&gus->uart_cmd_lock, flags);
 #if 0
-	snd_printk("read init - enable = %i, cmd = 0x%x, stat = 0x%x\n", gus->uart_enable, gus->gf1.uart_cmd, snd_gf1_uart_stat(gus));
-	snd_printk("[0x%x] reg (ctrl/status) = 0x%x, reg (data) = 0x%x (page = 0x%x)\n", gus->gf1.port + 0x100, inb(gus->gf1.port + 0x100), inb(gus->gf1.port + 0x101), inb(gus->gf1.port + 0x102));
+	snd_printk(KERN_DEBUG
+		   "read init - enable = %i, cmd = 0x%x, stat = 0x%x\n",
+		   gus->uart_enable, gus->gf1.uart_cmd, snd_gf1_uart_stat(gus));
+	snd_printk(KERN_DEBUG
+		   "[0x%x] reg (ctrl/status) = 0x%x, reg (data) = 0x%x "
+		   "(page = 0x%x)\n",
+		   gus->gf1.port + 0x100, inb(gus->gf1.port + 0x100),
+		   inb(gus->gf1.port + 0x101), inb(gus->gf1.port + 0x102));
 #endif
 	return 0;
 }

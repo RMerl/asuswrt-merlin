@@ -163,17 +163,14 @@ static void __rb_erase_color(struct rb_node *node, struct rb_node *parent,
 			{
 				if (!other->rb_right || rb_is_black(other->rb_right))
 				{
-					struct rb_node *o_left;
-					if ((o_left = other->rb_left))
-						rb_set_black(o_left);
+					rb_set_black(other->rb_left);
 					rb_set_red(other);
 					__rb_rotate_right(other, root);
 					other = parent->rb_right;
 				}
 				rb_set_color(other, rb_color(parent));
 				rb_set_black(parent);
-				if (other->rb_right)
-					rb_set_black(other->rb_right);
+				rb_set_black(other->rb_right);
 				__rb_rotate_left(parent, root);
 				node = root->rb_node;
 				break;
@@ -200,17 +197,14 @@ static void __rb_erase_color(struct rb_node *node, struct rb_node *parent,
 			{
 				if (!other->rb_left || rb_is_black(other->rb_left))
 				{
-					register struct rb_node *o_right;
-					if ((o_right = other->rb_right))
-						rb_set_black(o_right);
+					rb_set_black(other->rb_right);
 					rb_set_red(other);
 					__rb_rotate_left(other, root);
 					other = parent->rb_left;
 				}
 				rb_set_color(other, rb_color(parent));
 				rb_set_black(parent);
-				if (other->rb_left)
-					rb_set_black(other->rb_left);
+				rb_set_black(other->rb_left);
 				__rb_rotate_right(parent, root);
 				node = root->rb_node;
 				break;
@@ -237,24 +231,8 @@ void rb_erase(struct rb_node *node, struct rb_root *root)
 		node = node->rb_right;
 		while ((left = node->rb_left) != NULL)
 			node = left;
-		child = node->rb_right;
-		parent = rb_parent(node);
-		color = rb_color(node);
 
-		if (child)
-			rb_set_parent(child, parent);
-		if (parent == old) {
-			parent->rb_right = child;
-			parent = node;
-		} else
-			parent->rb_left = child;
-
-		node->rb_parent_color = old->rb_parent_color;
-		node->rb_right = old->rb_right;
-		node->rb_left = old->rb_left;
-
-		if (rb_parent(old))
-		{
+		if (rb_parent(old)) {
 			if (rb_parent(old)->rb_left == old)
 				rb_parent(old)->rb_left = node;
 			else
@@ -262,9 +240,25 @@ void rb_erase(struct rb_node *node, struct rb_root *root)
 		} else
 			root->rb_node = node;
 
-		rb_set_parent(old->rb_left, node);
-		if (old->rb_right)
+		child = node->rb_right;
+		parent = rb_parent(node);
+		color = rb_color(node);
+
+		if (parent == old) {
+			parent = node;
+		} else {
+			if (child)
+				rb_set_parent(child, parent);
+			parent->rb_left = child;
+
+			node->rb_right = old->rb_right;
 			rb_set_parent(old->rb_right, node);
+		}
+
+		node->rb_parent_color = old->rb_parent_color;
+		node->rb_left = old->rb_left;
+		rb_set_parent(old->rb_left, node);
+
 		goto color;
 	}
 
@@ -289,10 +283,81 @@ void rb_erase(struct rb_node *node, struct rb_root *root)
 }
 EXPORT_SYMBOL(rb_erase);
 
+static void rb_augment_path(struct rb_node *node, rb_augment_f func, void *data)
+{
+	struct rb_node *parent;
+
+up:
+	func(node, data);
+	parent = rb_parent(node);
+	if (!parent)
+		return;
+
+	if (node == parent->rb_left && parent->rb_right)
+		func(parent->rb_right, data);
+	else if (parent->rb_left)
+		func(parent->rb_left, data);
+
+	node = parent;
+	goto up;
+}
+
+/*
+ * after inserting @node into the tree, update the tree to account for
+ * both the new entry and any damage done by rebalance
+ */
+void rb_augment_insert(struct rb_node *node, rb_augment_f func, void *data)
+{
+	if (node->rb_left)
+		node = node->rb_left;
+	else if (node->rb_right)
+		node = node->rb_right;
+
+	rb_augment_path(node, func, data);
+}
+EXPORT_SYMBOL(rb_augment_insert);
+
+/*
+ * before removing the node, find the deepest node on the rebalance path
+ * that will still be there after @node gets removed
+ */
+struct rb_node *rb_augment_erase_begin(struct rb_node *node)
+{
+	struct rb_node *deepest;
+
+	if (!node->rb_right && !node->rb_left)
+		deepest = rb_parent(node);
+	else if (!node->rb_right)
+		deepest = node->rb_left;
+	else if (!node->rb_left)
+		deepest = node->rb_right;
+	else {
+		deepest = rb_next(node);
+		if (deepest->rb_right)
+			deepest = deepest->rb_right;
+		else if (rb_parent(deepest) != node)
+			deepest = rb_parent(deepest);
+	}
+
+	return deepest;
+}
+EXPORT_SYMBOL(rb_augment_erase_begin);
+
+/*
+ * after removal, update the tree to account for the removed entry
+ * and any rebalance damage.
+ */
+void rb_augment_erase_end(struct rb_node *node, rb_augment_f func, void *data)
+{
+	if (node)
+		rb_augment_path(node, func, data);
+}
+EXPORT_SYMBOL(rb_augment_erase_end);
+
 /*
  * This function returns the first node (in sort order) of the tree.
  */
-struct rb_node *rb_first(struct rb_root *root)
+struct rb_node *rb_first(const struct rb_root *root)
 {
 	struct rb_node	*n;
 
@@ -305,7 +370,7 @@ struct rb_node *rb_first(struct rb_root *root)
 }
 EXPORT_SYMBOL(rb_first);
 
-struct rb_node *rb_last(struct rb_root *root)
+struct rb_node *rb_last(const struct rb_root *root)
 {
 	struct rb_node	*n;
 
@@ -318,7 +383,7 @@ struct rb_node *rb_last(struct rb_root *root)
 }
 EXPORT_SYMBOL(rb_last);
 
-struct rb_node *rb_next(struct rb_node *node)
+struct rb_node *rb_next(const struct rb_node *node)
 {
 	struct rb_node *parent;
 
@@ -331,7 +396,7 @@ struct rb_node *rb_next(struct rb_node *node)
 		node = node->rb_right; 
 		while (node->rb_left)
 			node=node->rb_left;
-		return node;
+		return (struct rb_node *)node;
 	}
 
 	/* No right-hand children.  Everything down and left is
@@ -347,7 +412,7 @@ struct rb_node *rb_next(struct rb_node *node)
 }
 EXPORT_SYMBOL(rb_next);
 
-struct rb_node *rb_prev(struct rb_node *node)
+struct rb_node *rb_prev(const struct rb_node *node)
 {
 	struct rb_node *parent;
 
@@ -360,7 +425,7 @@ struct rb_node *rb_prev(struct rb_node *node)
 		node = node->rb_left; 
 		while (node->rb_right)
 			node=node->rb_right;
-		return node;
+		return (struct rb_node *)node;
 	}
 
 	/* No left-hand children. Go up till we find an ancestor which

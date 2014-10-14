@@ -20,7 +20,8 @@
 #define EM_PARISC	15	/* HPPA */
 #define EM_SPARC32PLUS	18	/* Sun's "v8plus" */
 #define EM_PPC		20	/* PowerPC */
-#define EM_PPC64	21       /* PowerPC64 */
+#define EM_PPC64	21	 /* PowerPC64 */
+#define EM_SPU		23	/* Cell BE SPU */
 #define EM_SH		42	/* SuperH */
 #define EM_SPARCV9	43	/* SPARC v9 64-bit */
 #define EM_IA_64	50	/* HP/Intel IA-64 */
@@ -30,6 +31,7 @@
 #define EM_V850		87	/* NEC v850 */
 #define EM_M32R		88	/* Renesas M32R */
 #define EM_H8_300	46	/* Renesas H8/300,300H,H8S */
+#define EM_MN10300	89	/* Panasonic/MEI MN10300, AM33 */
 #define EM_BLACKFIN     106     /* ADI Blackfin Processor */
 #define EM_FRV		0x5441	/* Fujitsu FR-V */
 #define EM_AVR32	0x18ad	/* Atmel AVR32 */
@@ -46,6 +48,8 @@
 #define EM_CYGNUS_M32R	0x9041
 /* This is the old interim value for S/390 architecture */
 #define EM_S390_OLD	0xA390
+/* Also Panasonic/MEI MN10300, AM33 */
+#define EM_CYGNUS_MN10300 0xbeef
 
 
 #endif /* _LINUX_ELF_EM_H */

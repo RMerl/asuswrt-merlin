@@ -37,26 +37,19 @@
 #include <linux/mount.h>
 #include <linux/idr.h>
 #include <linux/sched.h>
+#include <linux/slab.h>
+#include <linux/statfs.h>
+#include <linux/magic.h>
+#include <net/9p/9p.h>
+#include <net/9p/client.h>
 
-#include "debug.h"
 #include "v9fs.h"
-#include "9p.h"
 #include "v9fs_vfs.h"
 #include "fid.h"
+#include "xattr.h"
+#include "acl.h"
 
-static void v9fs_clear_inode(struct inode *);
-static const struct super_operations v9fs_super_ops;
-
-/**
- * v9fs_clear_inode - release an inode
- * @inode: inode to release
- *
- */
-
-static void v9fs_clear_inode(struct inode *inode)
-{
-	filemap_fdatawrite(inode->i_mapping);
-}
+static const struct super_operations v9fs_super_ops, v9fs_super_ops_dotl;
 
 /**
  * v9fs_set_super - set the superblock
@@ -75,130 +68,149 @@ static int v9fs_set_super(struct super_block *s, void *data)
  * v9fs_fill_super - populate superblock with info
  * @sb: superblock
  * @v9ses: session information
+ * @flags: flags propagated from v9fs_mount()
  *
  */
 
 static void
 v9fs_fill_super(struct super_block *sb, struct v9fs_session_info *v9ses,
-		int flags)
+		int flags, void *data)
 {
 	sb->s_maxbytes = MAX_LFS_FILESIZE;
 	sb->s_blocksize_bits = fls(v9ses->maxdata - 1);
 	sb->s_blocksize = 1 << sb->s_blocksize_bits;
 	sb->s_magic = V9FS_MAGIC;
-	sb->s_op = &v9fs_super_ops;
+	if (v9fs_proto_dotl(v9ses)) {
+		sb->s_op = &v9fs_super_ops_dotl;
+		sb->s_xattr = v9fs_xattr_handlers;
+	} else
+		sb->s_op = &v9fs_super_ops;
+	sb->s_bdi = &v9ses->bdi;
+	if (v9ses->cache)
+		sb->s_bdi->ra_pages = (VM_MAX_READAHEAD * 1024)/PAGE_CACHE_SIZE;
 
-	sb->s_flags = flags | MS_ACTIVE | MS_SYNCHRONOUS | MS_DIRSYNC |
-	    MS_NOATIME;
+	sb->s_flags = flags | MS_ACTIVE | MS_DIRSYNC | MS_NOATIME;
+	if (!v9ses->cache)
+		sb->s_flags |= MS_SYNCHRONOUS;
+
+#ifdef CONFIG_9P_FS_POSIX_ACL
+	if ((v9ses->flags & V9FS_ACL_MASK) == V9FS_POSIX_ACL)
+		sb->s_flags |= MS_POSIXACL;
+#endif
+
+	save_mount_options(sb, data);
 }
 
 /**
- * v9fs_get_sb - mount a superblock
+ * v9fs_mount - mount a superblock
  * @fs_type: file system type
  * @flags: mount flags
  * @dev_name: device name that was mounted
  * @data: mount options
- * @mnt: mountpoint record to be instantiated
  *
  */
 
-static int v9fs_get_sb(struct file_system_type *fs_type, int flags,
-		       const char *dev_name, void *data,
-		       struct vfsmount *mnt)
+static struct dentry *v9fs_mount(struct file_system_type *fs_type, int flags,
+		       const char *dev_name, void *data)
 {
 	struct super_block *sb = NULL;
-	struct v9fs_fcall *fcall = NULL;
 	struct inode *inode = NULL;
 	struct dentry *root = NULL;
 	struct v9fs_session_info *v9ses = NULL;
-	struct v9fs_fid *root_fid = NULL;
 	int mode = S_IRWXUGO | S_ISVTX;
-	uid_t uid = current->fsuid;
-	gid_t gid = current->fsgid;
-	int stat_result = 0;
-	int newfid = 0;
+	struct p9_fid *fid;
 	int retval = 0;
 
-	dprintk(DEBUG_VFS, " \n");
+	P9_DPRINTK(P9_DEBUG_VFS, " \n");
 
 	v9ses = kzalloc(sizeof(struct v9fs_session_info), GFP_KERNEL);
 	if (!v9ses)
-		return -ENOMEM;
+		return ERR_PTR(-ENOMEM);
 
-	if ((newfid = v9fs_session_init(v9ses, dev_name, data)) < 0) {
-		dprintk(DEBUG_ERROR, "problem initiating session\n");
-		retval = newfid;
-		goto out_free_session;
+	fid = v9fs_session_init(v9ses, dev_name, data);
+	if (IS_ERR(fid)) {
+		retval = PTR_ERR(fid);
+		/*
+		 * we need to call session_close to tear down some
+		 * of the data structure setup by session_init
+		 */
+		goto close_session;
 	}
 
 	sb = sget(fs_type, NULL, v9fs_set_super, v9ses);
 	if (IS_ERR(sb)) {
 		retval = PTR_ERR(sb);
-		goto out_close_session;
+		goto clunk_fid;
 	}
-	v9fs_fill_super(sb, v9ses, flags);
+	v9fs_fill_super(sb, v9ses, flags, data);
+
+	if (v9ses->cache)
+		sb->s_d_op = &v9fs_cached_dentry_operations;
+	else
+		sb->s_d_op = &v9fs_dentry_operations;
 
 	inode = v9fs_get_inode(sb, S_IFDIR | mode);
 	if (IS_ERR(inode)) {
 		retval = PTR_ERR(inode);
-		goto put_back_sb;
+		goto release_sb;
 	}
-
-	inode->i_uid = uid;
-	inode->i_gid = gid;
 
 	root = d_alloc_root(inode);
 	if (!root) {
+		iput(inode);
 		retval = -ENOMEM;
-		goto put_back_sb;
+		goto release_sb;
 	}
-
 	sb->s_root = root;
-
-	stat_result = v9fs_t_stat(v9ses, newfid, &fcall);
-	if (stat_result < 0) {
-		dprintk(DEBUG_ERROR, "stat error\n");
-		v9fs_t_clunk(v9ses, newfid);
+	if (v9fs_proto_dotl(v9ses)) {
+		struct p9_stat_dotl *st = NULL;
+		st = p9_client_getattr_dotl(fid, P9_STATS_BASIC);
+		if (IS_ERR(st)) {
+			retval = PTR_ERR(st);
+			goto release_sb;
+		}
+		root->d_inode->i_ino = v9fs_qid2ino(&st->qid);
+		v9fs_stat2inode_dotl(st, root->d_inode);
+		kfree(st);
 	} else {
-		/* Setup the Root Inode */
-		root_fid = v9fs_fid_create(v9ses, newfid);
-		if (root_fid == NULL) {
-			retval = -ENOMEM;
-			goto put_back_sb;
+		struct p9_wstat *st = NULL;
+		st = p9_client_stat(fid);
+		if (IS_ERR(st)) {
+			retval = PTR_ERR(st);
+			goto release_sb;
 		}
 
-		retval = v9fs_fid_insert(root_fid, root);
-		if (retval < 0) {
-			kfree(fcall);
-			goto put_back_sb;
-		}
+		root->d_inode->i_ino = v9fs_qid2ino(&st->qid);
+		v9fs_stat2inode(st, root->d_inode, sb);
 
-		root_fid->qid = fcall->params.rstat.stat.qid;
-		root->d_inode->i_ino =
-		    v9fs_qid2ino(&fcall->params.rstat.stat.qid);
-		v9fs_stat2inode(&fcall->params.rstat.stat, root->d_inode, sb);
+		p9stat_free(st);
+		kfree(st);
 	}
+	retval = v9fs_get_acl(inode, fid);
+	if (retval)
+		goto release_sb;
+	v9fs_fid_add(root, fid);
 
-	kfree(fcall);
+	P9_DPRINTK(P9_DEBUG_VFS, " simple set mount, return 0\n");
+	return dget(sb->s_root);
 
-	if (stat_result < 0) {
-		retval = stat_result;
-		goto put_back_sb;
-	}
-
-	return simple_set_mnt(mnt, sb);
-
-out_close_session:
+clunk_fid:
+	p9_client_clunk(fid);
+close_session:
 	v9fs_session_close(v9ses);
-out_free_session:
 	kfree(v9ses);
-	return retval;
+	return ERR_PTR(retval);
 
-put_back_sb:
-	/* deactivate_super calls v9fs_kill_super which will frees the rest */
-	up_write(&sb->s_umount);
-	deactivate_super(sb);
-	return retval;
+release_sb:
+	/*
+	 * we will do the session_close and root dentry release
+	 * in the below call. But we need to clunk fid, because we haven't
+	 * attached the fid to dentry so it won't get clunked
+	 * automatically.
+	 */
+	p9_client_clunk(fid);
+	deactivate_locked_super(sb);
+	return ERR_PTR(retval);
 }
 
 /**
@@ -211,68 +223,146 @@ static void v9fs_kill_super(struct super_block *s)
 {
 	struct v9fs_session_info *v9ses = s->s_fs_info;
 
-	dprintk(DEBUG_VFS, " %p\n", s);
-
-	v9fs_dentry_release(s->s_root);	/* clunk root */
+	P9_DPRINTK(P9_DEBUG_VFS, " %p\n", s);
 
 	kill_anon_super(s);
 
+	v9fs_session_cancel(v9ses);
 	v9fs_session_close(v9ses);
 	kfree(v9ses);
-	dprintk(DEBUG_VFS, "exiting kill_super\n");
-}
-
-/**
- * v9fs_show_options - Show mount options in /proc/mounts
- * @m: seq_file to write to
- * @mnt: mount descriptor
- *
- */
-
-static int v9fs_show_options(struct seq_file *m, struct vfsmount *mnt)
-{
-	struct v9fs_session_info *v9ses = mnt->mnt_sb->s_fs_info;
-
-	if (v9ses->debug != 0)
-		seq_printf(m, ",debug=%u", v9ses->debug);
-	if (v9ses->port != V9FS_PORT)
-		seq_printf(m, ",port=%u", v9ses->port);
-	if (v9ses->maxdata != 9000)
-		seq_printf(m, ",msize=%u", v9ses->maxdata);
-	if (v9ses->afid != ~0)
-		seq_printf(m, ",afid=%u", v9ses->afid);
-	if (v9ses->proto == PROTO_UNIX)
-		seq_puts(m, ",proto=unix");
-	if (v9ses->extended == 0)
-		seq_puts(m, ",noextend");
-	if (v9ses->nodev == 1)
-		seq_puts(m, ",nodevmap");
-	seq_printf(m, ",name=%s", v9ses->name);
-	seq_printf(m, ",aname=%s", v9ses->remotename);
-	seq_printf(m, ",uid=%u", v9ses->uid);
-	seq_printf(m, ",gid=%u", v9ses->gid);
-	return 0;
+	s->s_fs_info = NULL;
+	P9_DPRINTK(P9_DEBUG_VFS, "exiting kill_super\n");
 }
 
 static void
-v9fs_umount_begin(struct vfsmount *vfsmnt, int flags)
+v9fs_umount_begin(struct super_block *sb)
 {
-	struct v9fs_session_info *v9ses = vfsmnt->mnt_sb->s_fs_info;
+	struct v9fs_session_info *v9ses;
 
-	if (flags & MNT_FORCE)
-		v9fs_session_cancel(v9ses);
+	v9ses = sb->s_fs_info;
+	v9fs_session_begin_cancel(v9ses);
+}
+
+static int v9fs_statfs(struct dentry *dentry, struct kstatfs *buf)
+{
+	struct v9fs_session_info *v9ses;
+	struct p9_fid *fid;
+	struct p9_rstatfs rs;
+	int res;
+
+	fid = v9fs_fid_lookup(dentry);
+	if (IS_ERR(fid)) {
+		res = PTR_ERR(fid);
+		goto done;
+	}
+
+	v9ses = v9fs_dentry2v9ses(dentry);
+	if (v9fs_proto_dotl(v9ses)) {
+		res = p9_client_statfs(fid, &rs);
+		if (res == 0) {
+			buf->f_type = V9FS_MAGIC;
+			buf->f_bsize = rs.bsize;
+			buf->f_blocks = rs.blocks;
+			buf->f_bfree = rs.bfree;
+			buf->f_bavail = rs.bavail;
+			buf->f_files = rs.files;
+			buf->f_ffree = rs.ffree;
+			buf->f_fsid.val[0] = rs.fsid & 0xFFFFFFFFUL;
+			buf->f_fsid.val[1] = (rs.fsid >> 32) & 0xFFFFFFFFUL;
+			buf->f_namelen = rs.namelen;
+		}
+		if (res != -ENOSYS)
+			goto done;
+	}
+	res = simple_statfs(dentry, buf);
+done:
+	return res;
+}
+
+static int v9fs_drop_inode(struct inode *inode)
+{
+	struct v9fs_session_info *v9ses;
+	v9ses = v9fs_inode2v9ses(inode);
+	if (v9ses->cache)
+		return generic_drop_inode(inode);
+	/*
+	 * in case of non cached mode always drop the
+	 * the inode because we want the inode attribute
+	 * to always match that on the server.
+	 */
+	return 1;
+}
+
+static int v9fs_write_inode(struct inode *inode,
+			    struct writeback_control *wbc)
+{
+	int ret;
+	struct p9_wstat wstat;
+	struct v9fs_inode *v9inode;
+	/*
+	 * send an fsync request to server irrespective of
+	 * wbc->sync_mode.
+	 */
+	P9_DPRINTK(P9_DEBUG_VFS, "%s: inode %p\n", __func__, inode);
+	v9inode = V9FS_I(inode);
+	if (!v9inode->writeback_fid)
+		return 0;
+	v9fs_blank_wstat(&wstat);
+
+	ret = p9_client_wstat(v9inode->writeback_fid, &wstat);
+	if (ret < 0) {
+		__mark_inode_dirty(inode, I_DIRTY_DATASYNC);
+		return ret;
+	}
+	return 0;
+}
+
+static int v9fs_write_inode_dotl(struct inode *inode,
+				 struct writeback_control *wbc)
+{
+	int ret;
+	struct v9fs_inode *v9inode;
+	/*
+	 * send an fsync request to server irrespective of
+	 * wbc->sync_mode.
+	 */
+	P9_DPRINTK(P9_DEBUG_VFS, "%s: inode %p\n", __func__, inode);
+	v9inode = V9FS_I(inode);
+	if (!v9inode->writeback_fid)
+		return 0;
+	ret = p9_client_fsync(v9inode->writeback_fid, 0);
+	if (ret < 0) {
+		__mark_inode_dirty(inode, I_DIRTY_DATASYNC);
+		return ret;
+	}
+	return 0;
 }
 
 static const struct super_operations v9fs_super_ops = {
+	.alloc_inode = v9fs_alloc_inode,
+	.destroy_inode = v9fs_destroy_inode,
 	.statfs = simple_statfs,
-	.clear_inode = v9fs_clear_inode,
-	.show_options = v9fs_show_options,
+	.evict_inode = v9fs_evict_inode,
+	.show_options = generic_show_options,
 	.umount_begin = v9fs_umount_begin,
+	.write_inode = v9fs_write_inode,
+};
+
+static const struct super_operations v9fs_super_ops_dotl = {
+	.alloc_inode = v9fs_alloc_inode,
+	.destroy_inode = v9fs_destroy_inode,
+	.statfs = v9fs_statfs,
+	.drop_inode = v9fs_drop_inode,
+	.evict_inode = v9fs_evict_inode,
+	.show_options = generic_show_options,
+	.umount_begin = v9fs_umount_begin,
+	.write_inode = v9fs_write_inode_dotl,
 };
 
 struct file_system_type v9fs_fs_type = {
 	.name = "9p",
-	.get_sb = v9fs_get_sb,
+	.mount = v9fs_mount,
 	.kill_sb = v9fs_kill_super,
 	.owner = THIS_MODULE,
+	.fs_flags = FS_RENAME_DOES_D_MOVE|FS_REVAL_DOT,
 };

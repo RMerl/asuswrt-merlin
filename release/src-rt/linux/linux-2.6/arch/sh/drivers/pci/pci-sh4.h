@@ -1,7 +1,9 @@
 #ifndef __PCI_SH4_H
 #define __PCI_SH4_H
 
-#if defined(CONFIG_CPU_SUBTYPE_SH7780) || defined(CONFIG_CPU_SUBTYPE_SH7785)
+#if defined(CONFIG_CPU_SUBTYPE_SH7780) || \
+    defined(CONFIG_CPU_SUBTYPE_SH7785) || \
+    defined(CONFIG_CPU_SUBTYPE_SH7763)
 #include "pci-sh7780.h"
 #else
 #include "pci-sh7751.h"
@@ -13,8 +15,6 @@
 #define PCI_PROBE_BIOS		1
 #define PCI_PROBE_CONF1		2
 #define PCI_PROBE_CONF2		4
-#define PCI_NO_SORT		0x100
-#define PCI_BIOS_SORT		0x200
 #define PCI_NO_CHECKS		0x400
 #define PCI_ASSIGN_ROMS		0x1000
 #define PCI_BIOS_IRQ_SCAN	0x2000
@@ -49,6 +49,17 @@
   #define SH4_PCIINT_MWPD	  0x00000002	/* Master Write PERR Detect */
   #define SH4_PCIINT_MRPD	  0x00000001	/* Master Read PERR Detect */
 #define SH4_PCIINTM		0x118		/* PCI Interrupt Mask */
+  #define SH4_PCIINTM_TTADIM	  BIT(14)	/* Target-target abort interrupt */
+  #define SH4_PCIINTM_TMTOIM	  BIT(9)	/* Target retry timeout */
+  #define SH4_PCIINTM_MDEIM	  BIT(8)	/* Master function disable error */
+  #define SH4_PCIINTM_APEDIM	  BIT(7)	/* Address parity error detection */
+  #define SH4_PCIINTM_SDIM	  BIT(6)	/* SERR detection */
+  #define SH4_PCIINTM_DPEITWM	  BIT(5)	/* Data parity error for target write */
+  #define SH4_PCIINTM_PEDITRM	  BIT(4)	/* PERR detection for target read */
+  #define SH4_PCIINTM_TADIMM	  BIT(3)	/* Target abort for master */
+  #define SH4_PCIINTM_MADIMM	  BIT(2)	/* Master abort for master */
+  #define SH4_PCIINTM_MWPDIM	  BIT(1)	/* Master write data parity error */
+  #define SH4_PCIINTM_MRDPEIM	  BIT(0)	/* Master read data parity error */
 #define SH4_PCIALR		0x11C		/* Error Address Register */
 #define SH4_PCICLR		0x120		/* Error Command/Data */
   #define SH4_PCICLR_MPIO	  0x80000000
@@ -61,7 +72,7 @@
 #define SH4_PCIAINT		0x130		/* Arbiter Interrupt Register */
   #define SH4_PCIAINT_MBKN	  0x00002000	/* Master Broken Interrupt */
   #define SH4_PCIAINT_TBTO	  0x00001000	/* Target Bus Time Out */
-  #define SH4_PCIAINT_MBTO	  0x00001000	/* Master Bus Time Out */
+  #define SH4_PCIAINT_MBTO	  0x00000800	/* Master Bus Time Out */
   #define SH4_PCIAINT_TABT	  0x00000008	/* Target Abort */
   #define SH4_PCIAINT_MABT	  0x00000004	/* Master Abort */
   #define SH4_PCIAINT_RDPE	  0x00000002	/* Read Data Parity Error */
@@ -149,13 +160,9 @@
   #define SH4_PCIPDTR_PB0	  0x000000001	/* Port 0 Enable */
 #define SH4_PCIPDR		0x220		/* Port IO Data Register */
 
-/* Flags */
-#define SH4_PCIC_NO_RESET	0x0001
-
 /* arch/sh/kernel/drivers/pci/ops-sh4.c */
 extern struct pci_ops sh4_pci_ops;
-int sh4_pci_check_direct(void);
-int pci_fixup_pcic(void);
+int pci_fixup_pcic(struct pci_channel *chan);
 
 struct sh4_pci_address_space {
 	unsigned long base;
@@ -165,16 +172,18 @@ struct sh4_pci_address_space {
 struct sh4_pci_address_map {
 	struct sh4_pci_address_space window0;
 	struct sh4_pci_address_space window1;
-	unsigned long flags;
 };
 
-static inline void pci_write_reg(unsigned long val, unsigned long reg)
+static inline void pci_write_reg(struct pci_channel *chan,
+				 unsigned long val, unsigned long reg)
 {
-	outl(val, PCI_REG(reg));
+	__raw_writel(val, chan->reg_base + reg);
 }
 
-static inline unsigned long pci_read_reg(unsigned long reg)
+static inline unsigned long pci_read_reg(struct pci_channel *chan,
+					 unsigned long reg)
 {
-	return inl(PCI_REG(reg));
+	return __raw_readl(chan->reg_base + reg);
 }
+
 #endif /* __PCI_SH4_H */

@@ -145,12 +145,12 @@
 #include <linux/init.h>
 
 #include <linux/spinlock.h>
-#include <linux/smp_lock.h>
 #include <linux/wait.h>
 #include <linux/interrupt.h>
 #include <linux/mutex.h>
+#include <linux/slab.h>
 
-#include <asm/mach-visws/cobalt.h>
+#include <asm/visws/cobalt.h>
 
 #include "sound_config.h"
 
@@ -159,6 +159,7 @@
 
 #ifdef VWSND_DEBUG
 
+static DEFINE_MUTEX(vwsnd_mutex);
 static int shut_up = 1;
 
 /*
@@ -194,11 +195,11 @@ static void dbgassert(const char *fcn, int line, const char *expr)
  *	DBGRV	- debug print function return when verbose
  */
 
-#define ASSERT(e)      ((e) ? (void) 0 : dbgassert(__FUNCTION__, __LINE__, #e))
+#define ASSERT(e)      ((e) ? (void) 0 : dbgassert(__func__, __LINE__, #e))
 #define DBGDO(x)            x
 #define DBGX(fmt, args...)  (in_interrupt() ? 0 : printk(KERN_ERR fmt, ##args))
-#define DBGP(fmt, args...)  (DBGX("%s: " fmt, __FUNCTION__ , ##args))
-#define DBGE(fmt, args...)  (DBGX("%s" fmt, __FUNCTION__ , ##args))
+#define DBGP(fmt, args...)  (DBGX("%s: " fmt, __func__ , ##args))
+#define DBGE(fmt, args...)  (DBGX("%s" fmt, __func__ , ##args))
 #define DBGC(rtn)           (DBGP("calling %s\n", rtn))
 #define DBGR()              (DBGP("returning\n"))
 #define DBGXV(fmt, args...) (shut_up ? 0 : DBGX(fmt, ##args))
@@ -628,7 +629,7 @@ static void li_setup_dma(dma_chan_t *chan,
 	ASSERT(!(buffer_paddr & 0xFF));
 	chan->baseval = (buffer_paddr >> 8) | 1 << (37 - 8);
 
-	chan->cfgval = (!LI_CCFG_LOCK |
+	chan->cfgval = ((chan->cfgval & ~LI_CCFG_LOCK) |
 			SHIFT_FIELD(desc->ad1843_slot, LI_CCFG_SLOT) |
 			desc->direction |
 			mode |
@@ -638,9 +639,9 @@ static void li_setup_dma(dma_chan_t *chan,
 	tmask = 13 - fragshift;		/* See Lithium DMA Notes above. */
 	ASSERT(size >= 2 && size <= 7);
 	ASSERT(tmask >= 1 && tmask <= 7);
-	chan->ctlval = (!LI_CCTL_RESET |
+	chan->ctlval = ((chan->ctlval & ~LI_CCTL_RESET) |
 			SHIFT_FIELD(size, LI_CCTL_SIZE) |
-			!LI_CCTL_DMA_ENABLE |
+			(chan->ctlval & ~LI_CCTL_DMA_ENABLE) |
 			SHIFT_FIELD(tmask, LI_CCTL_TMASK) |
 			SHIFT_FIELD(0, LI_CCTL_TPTR));
 
@@ -1509,7 +1510,7 @@ typedef struct vwsnd_dev {
 	struct mutex open_mutex;
 	struct mutex io_mutex;
 	struct mutex mix_mutex;
-	mode_t		open_mode;
+	fmode_t		open_mode;
 	wait_queue_head_t open_wait;
 
 	lithium_t	lith;
@@ -2428,8 +2429,7 @@ static unsigned int vwsnd_audio_poll(struct file *file,
 	return mask;
 }
 
-static int vwsnd_audio_do_ioctl(struct inode *inode,
-				struct file *file,
+static int vwsnd_audio_do_ioctl(struct file *file,
 				unsigned int cmd,
 				unsigned long arg)
 {
@@ -2445,8 +2445,8 @@ static int vwsnd_audio_do_ioctl(struct inode *inode,
 	int ival;
 
 	
-	DBGEV("(inode=0x%p, file=0x%p, cmd=0x%x, arg=0x%lx)\n",
-	      inode, file, cmd, arg);
+	DBGEV("(file=0x%p, cmd=0x%x, arg=0x%lx)\n",
+	      file, cmd, arg);
 	switch (cmd) {
 	case OSS_GETVERSION:		/* _SIOR ('M', 118, int) */
 		DBGX("OSS_GETVERSION\n");
@@ -2673,7 +2673,9 @@ static int vwsnd_audio_do_ioctl(struct inode *inode,
 
 	case SNDCTL_DSP_NONBLOCK:	/* _SIO  ('P',14) */
 		DBGX("SNDCTL_DSP_NONBLOCK\n");
+		spin_lock(&file->f_lock);
 		file->f_flags |= O_NONBLOCK;
+		spin_unlock(&file->f_lock);
 		return 0;
 
 	case SNDCTL_DSP_RESET:		/* _SIO  ('P', 0) */
@@ -2882,17 +2884,19 @@ static int vwsnd_audio_do_ioctl(struct inode *inode,
 	return -EINVAL;
 }
 
-static int vwsnd_audio_ioctl(struct inode *inode,
-				struct file *file,
+static long vwsnd_audio_ioctl(struct file *file,
 				unsigned int cmd,
 				unsigned long arg)
 {
 	vwsnd_dev_t *devc = (vwsnd_dev_t *) file->private_data;
 	int ret;
 
+	mutex_lock(&vwsnd_mutex);
 	mutex_lock(&devc->io_mutex);
-	ret = vwsnd_audio_do_ioctl(inode, file, cmd, arg);
+	ret = vwsnd_audio_do_ioctl(file, cmd, arg);
 	mutex_unlock(&devc->io_mutex);
+	mutex_unlock(&vwsnd_mutex);
+
 	return ret;
 }
 
@@ -2918,6 +2922,7 @@ static int vwsnd_audio_open(struct inode *inode, struct file *file)
 
 	DBGE("(inode=0x%p, file=0x%p)\n", inode, file);
 
+	mutex_lock(&vwsnd_mutex);
 	INC_USE_COUNT;
 	for (devc = vwsnd_dev_list; devc; devc = devc->next_dev)
 		if ((devc->audio_minor & ~0x0F) == (minor & ~0x0F))
@@ -2925,6 +2930,7 @@ static int vwsnd_audio_open(struct inode *inode, struct file *file)
 
 	if (devc == NULL) {
 		DEC_USE_COUNT;
+		mutex_unlock(&vwsnd_mutex);
 		return -ENODEV;
 	}
 
@@ -2933,11 +2939,13 @@ static int vwsnd_audio_open(struct inode *inode, struct file *file)
 		mutex_unlock(&devc->open_mutex);
 		if (file->f_flags & O_NONBLOCK) {
 			DEC_USE_COUNT;
+			mutex_unlock(&vwsnd_mutex);
 			return -EBUSY;
 		}
 		interruptible_sleep_on(&devc->open_wait);
 		if (signal_pending(current)) {
 			DEC_USE_COUNT;
+			mutex_unlock(&vwsnd_mutex);
 			return -ERESTARTSYS;
 		}
 		mutex_lock(&devc->open_mutex);
@@ -2990,6 +2998,7 @@ static int vwsnd_audio_open(struct inode *inode, struct file *file)
 
 	file->private_data = devc;
 	DBGRV();
+	mutex_unlock(&vwsnd_mutex);
 	return 0;
 }
 
@@ -3003,7 +3012,7 @@ static int vwsnd_audio_release(struct inode *inode, struct file *file)
 	vwsnd_port_t *wport = NULL, *rport = NULL;
 	int err = 0;
 
-	lock_kernel();
+	mutex_lock(&vwsnd_mutex);
 	mutex_lock(&devc->io_mutex);
 	{
 		DBGEV("(inode=0x%p, file=0x%p)\n", inode, file);
@@ -3031,7 +3040,7 @@ static int vwsnd_audio_release(struct inode *inode, struct file *file)
 	wake_up(&devc->open_wait);
 	DEC_USE_COUNT;
 	DBGR();
-	unlock_kernel();
+	mutex_unlock(&vwsnd_mutex);
 	return err;
 }
 
@@ -3041,7 +3050,7 @@ static const struct file_operations vwsnd_audio_fops = {
 	.read =		vwsnd_audio_read,
 	.write =	vwsnd_audio_write,
 	.poll =		vwsnd_audio_poll,
-	.ioctl =	vwsnd_audio_ioctl,
+	.unlocked_ioctl = vwsnd_audio_ioctl,
 	.mmap =		vwsnd_audio_mmap,
 	.open =		vwsnd_audio_open,
 	.release =	vwsnd_audio_release,
@@ -3059,15 +3068,18 @@ static int vwsnd_mixer_open(struct inode *inode, struct file *file)
 	DBGEV("(inode=0x%p, file=0x%p)\n", inode, file);
 
 	INC_USE_COUNT;
+	mutex_lock(&vwsnd_mutex);
 	for (devc = vwsnd_dev_list; devc; devc = devc->next_dev)
 		if (devc->mixer_minor == iminor(inode))
 			break;
 
 	if (devc == NULL) {
 		DEC_USE_COUNT;
+		mutex_unlock(&vwsnd_mutex);
 		return -ENODEV;
 	}
 	file->private_data = devc;
+	mutex_unlock(&vwsnd_mutex);
 	return 0;
 }
 
@@ -3200,8 +3212,7 @@ static int mixer_write_ioctl(vwsnd_dev_t *devc, unsigned int nr, void __user *ar
 
 /* This is the ioctl entry to the mixer driver. */
 
-static int vwsnd_mixer_ioctl(struct inode *ioctl,
-			      struct file *file,
+static long vwsnd_mixer_ioctl(struct file *file,
 			      unsigned int cmd,
 			      unsigned long arg)
 {
@@ -3212,6 +3223,7 @@ static int vwsnd_mixer_ioctl(struct inode *ioctl,
 
 	DBGEV("(devc=0x%p, cmd=0x%x, arg=0x%lx)\n", devc, cmd, arg);
 
+	mutex_lock(&vwsnd_mutex);
 	mutex_lock(&devc->mix_mutex);
 	{
 		if ((cmd & ~nrmask) == MIXER_READ(0))
@@ -3222,13 +3234,14 @@ static int vwsnd_mixer_ioctl(struct inode *ioctl,
 			retval = -EINVAL;
 	}
 	mutex_unlock(&devc->mix_mutex);
+	mutex_unlock(&vwsnd_mutex);
 	return retval;
 }
 
 static const struct file_operations vwsnd_mixer_fops = {
 	.owner =	THIS_MODULE,
 	.llseek =	no_llseek,
-	.ioctl =	vwsnd_mixer_ioctl,
+	.unlocked_ioctl = vwsnd_mixer_ioctl,
 	.open =		vwsnd_mixer_open,
 	.release =	vwsnd_mixer_release,
 };

@@ -30,6 +30,7 @@
 #include <linux/module.h>
 #include <linux/pci.h>
 #include <linux/dma-mapping.h>
+#include <linux/slab.h>
 
 #include "demux.h"
 #include "dmxdev.h"
@@ -38,6 +39,8 @@
 #include "dvb_net.h"
 #include "dvbdev.h"
 #include "tda1004x.h"
+
+DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 
 #define DRIVER_NAME		"pluto2"
 
@@ -114,6 +117,7 @@ struct pluto {
 
 	/* irq */
 	unsigned int overflow;
+	unsigned int dead;
 
 	/* dma */
 	dma_addr_t dma_addr;
@@ -232,7 +236,7 @@ static void pluto_reset_ts(struct pluto *pluto, int reenable)
 
 static void pluto_set_dma_addr(struct pluto *pluto)
 {
-	pluto_writereg(pluto, REG_PCAR, cpu_to_le32(pluto->dma_addr));
+	pluto_writereg(pluto, REG_PCAR, pluto->dma_addr);
 }
 
 static int __devinit pluto_dma_map(struct pluto *pluto)
@@ -240,7 +244,7 @@ static int __devinit pluto_dma_map(struct pluto *pluto)
 	pluto->dma_addr = pci_map_single(pluto->pdev, pluto->dma_buf,
 			TS_DMA_BYTES, PCI_DMA_FROMDEVICE);
 
-	return pci_dma_mapping_error(pluto->dma_addr);
+	return pci_dma_mapping_error(pluto->pdev, pluto->dma_addr);
 }
 
 static void pluto_dma_unmap(struct pluto *pluto)
@@ -290,13 +294,13 @@ static void pluto_dma_end(struct pluto *pluto, unsigned int nbpackets)
 
 	/* Workaround for broken hardware:
 	 * [1] On startup NBPACKETS seems to contain an uninitialized value,
-	 *     but no packets have been transfered.
+	 *     but no packets have been transferred.
 	 * [2] Sometimes (actually very often) NBPACKETS stays at zero
-	 *     although one packet has been transfered.
+	 *     although one packet has been transferred.
 	 * [3] Sometimes (actually rarely), the card gets into an erroneous
 	 *     mode where it continuously generates interrupts, claiming it
-	 *     has recieved nbpackets>TS_DMA_PACKETS packets, but no packet
-	 *     has been transfered. Only a reset seems to solve this
+	 *     has received nbpackets>TS_DMA_PACKETS packets, but no packet
+	 *     has been transferred. Only a reset seems to solve this
 	 */
 	if ((nbpackets == 0) || (nbpackets > TS_DMA_PACKETS)) {
 		unsigned int i = 0;
@@ -328,14 +332,16 @@ static irqreturn_t pluto_irq(int irq, void *dev_id)
 	struct pluto *pluto = dev_id;
 	u32 tscr;
 
-	/* check whether an interrupt occured on this device */
+	/* check whether an interrupt occurred on this device */
 	tscr = pluto_readreg(pluto, REG_TSCR);
 	if (!(tscr & (TSCR_DE | TSCR_OVR)))
 		return IRQ_NONE;
 
 	if (tscr == 0xffffffff) {
-		// FIXME: maybe recover somehow
-		dev_err(&pluto->pdev->dev, "card hung up :(\n");
+		if (pluto->dead == 0)
+			dev_err(&pluto->pdev->dev, "card has hung or been ejected.\n");
+		/* It's dead Jim */
+		pluto->dead = 1;
 		return IRQ_HANDLED;
 	}
 
@@ -434,7 +440,7 @@ static inline u32 divide(u32 numerator, u32 denominator)
 	if (denominator == 0)
 		return ~0;
 
-	return (numerator + denominator / 2) / denominator;
+	return DIV_ROUND_CLOSEST(numerator, denominator);
 }
 
 /* LG Innotek TDTE-E001P (Infineon TUA6034) */
@@ -558,8 +564,7 @@ static void __devinit pluto_read_mac(struct pluto *pluto, u8 *mac)
 	mac[4] = (val >> 8) & 0xff;
 	mac[5] = (val >> 0) & 0xff;
 
-	dev_info(&pluto->pdev->dev, "MAC %02x:%02x:%02x:%02x:%02x:%02x\n",
-			mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+	dev_info(&pluto->pdev->dev, "MAC %pM\n", mac);
 }
 
 static int __devinit pluto_read_serial(struct pluto *pluto)
@@ -612,7 +617,7 @@ static int __devinit pluto2_probe(struct pci_dev *pdev,
 	/* enable interrupts */
 	pci_write_config_dword(pdev, 0x6c, 0x8000);
 
-	ret = pci_set_dma_mask(pdev, DMA_32BIT_MASK);
+	ret = pci_set_dma_mask(pdev, DMA_BIT_MASK(32));
 	if (ret < 0)
 		goto err_pci_disable_device;
 
@@ -642,7 +647,6 @@ static int __devinit pluto2_probe(struct pci_dev *pdev,
 	i2c_set_adapdata(&pluto->i2c_adap, pluto);
 	strcpy(pluto->i2c_adap.name, DRIVER_NAME);
 	pluto->i2c_adap.owner = THIS_MODULE;
-	pluto->i2c_adap.class = I2C_CLASS_TV_DIGITAL;
 	pluto->i2c_adap.dev.parent = &pdev->dev;
 	pluto->i2c_adap.algo_data = &pluto->i2c_bit;
 	pluto->i2c_bit.data = pluto;
@@ -662,7 +666,8 @@ static int __devinit pluto2_probe(struct pci_dev *pdev,
 		goto err_pluto_hw_exit;
 
 	/* dvb */
-	ret = dvb_register_adapter(&pluto->dvb_adapter, DRIVER_NAME, THIS_MODULE, &pdev->dev);
+	ret = dvb_register_adapter(&pluto->dvb_adapter, DRIVER_NAME,
+				   THIS_MODULE, &pdev->dev, adapter_nr);
 	if (ret < 0)
 		goto err_i2c_del_adapter;
 

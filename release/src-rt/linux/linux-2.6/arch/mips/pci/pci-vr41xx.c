@@ -2,8 +2,8 @@
  *  pci-vr41xx.c, PCI Control Unit routines for the NEC VR4100 series.
  *
  *  Copyright (C) 2001-2003 MontaVista Software Inc.
- *    Author: Yoichi Yuasa <yyuasa@mvista.com or source@mvista.com>
- *  Copyright (C) 2004-2005  Yoichi Yuasa <yoichi_yuasa@tripeaks.co.jp>
+ *    Author: Yoichi Yuasa <source@mvista.com>
+ *  Copyright (C) 2004-2008  Yoichi Yuasa <yuasa@linux-mips.org>
  *  Copyright (C) 2004 by Ralf Baechle (ralf@linux-mips.org)
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -22,7 +22,7 @@
  */
 /*
  * Changes:
- *  MontaVista Software Inc. <yyuasa@mvista.com> or <source@mvista.com>
+ *  MontaVista Software Inc. <source@mvista.com>
  *  - New creation, NEC VR4122 and VR4131 are supported.
  */
 #include <linux/init.h>
@@ -154,6 +154,7 @@ static int __init vr41xx_pciu_init(void)
 		pciu_write(PCICLKSELREG, QUARTER_VTCLOCK);
 	else {
 		printk(KERN_ERR "PCI Clock is over 33MHz.\n");
+		iounmap(pciu_base);
 		return -EINVAL;
 	}
 
@@ -228,7 +229,7 @@ static int __init vr41xx_pciu_init(void)
 	else
 		pciu_write(PCIEXACCREG, 0);
 
-	if (current_cpu_data.cputype == CPU_VR4122)
+	if (current_cpu_type() == CPU_VR4122)
 		pciu_write(PCITRDYVREG, TRDYV(setup->wait_time_limit_from_irdy_to_trdy));
 
 	pciu_write(LATTIMEREG, MLTIM(setup->master_latency_timer));
@@ -297,6 +298,18 @@ static int __init vr41xx_pciu_init(void)
 		set_io_port_base(IO_PORT_BASE);
 		ioport_resource.start = IO_PORT_RESOURCE_START;
 		ioport_resource.end = IO_PORT_RESOURCE_END;
+	}
+
+	if (setup->master_io) {
+		void __iomem *io_map_base;
+		struct resource *res = vr41xx_pci_controller.io_resource;
+		master = setup->master_io;
+		io_map_base = ioremap(master->bus_base_address,
+				      res->end - res->start + 1);
+		if (!io_map_base)
+			return -EBUSY;
+
+		vr41xx_pci_controller.io_map_base = (unsigned long)io_map_base;
 	}
 
 	register_pci_controller(&vr41xx_pci_controller);

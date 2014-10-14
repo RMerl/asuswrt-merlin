@@ -31,10 +31,8 @@
 #include <linux/types.h>
 #include <linux/fcntl.h>
 #include <linux/interrupt.h>
-#include <linux/ptrace.h>
 #include <linux/ioport.h>
 #include <linux/in.h>
-#include <linux/slab.h>
 #include <linux/string.h>
 #include <linux/errno.h>
 #include <linux/netdevice.h>
@@ -529,14 +527,14 @@ static void __init etherh_banner(void)
  * Read the ethernet address string from the on board rom.
  * This is an ascii string...
  */
-static int __init etherh_addr(char *addr, struct expansion_card *ec)
+static int __devinit etherh_addr(char *addr, struct expansion_card *ec)
 {
 	struct in_chunk_dir cd;
 	char *s;
 	
 	if (!ecard_readchunk(&cd, ec, 0xf5, 0)) {
 		printk(KERN_ERR "%s: unable to read podule description string\n",
-		       ec->dev.bus_id);
+		       dev_name(&ec->dev));
 		goto no_addr;
 	}
 
@@ -555,7 +553,7 @@ static int __init etherh_addr(char *addr, struct expansion_card *ec)
 	}
 
 	printk(KERN_ERR "%s: unable to parse MAC address: %s\n",
-	       ec->dev.bus_id, cd.d.string);
+	       dev_name(&ec->dev), cd.d.string);
 
  no_addr:
 	return -ENODEV;
@@ -586,7 +584,7 @@ static void etherh_get_drvinfo(struct net_device *dev, struct ethtool_drvinfo *i
 {
 	strlcpy(info->driver, DRV_NAME, sizeof(info->driver));
 	strlcpy(info->version, DRV_VERSION, sizeof(info->version));
-	strlcpy(info->bus_info, dev->dev.parent->bus_id,
+	strlcpy(info->bus_info, dev_name(dev->dev.parent),
 		sizeof(info->bus_info));
 }
 
@@ -638,17 +636,33 @@ static const struct ethtool_ops etherh_ethtool_ops = {
 	.get_drvinfo	= etherh_get_drvinfo,
 };
 
+static const struct net_device_ops etherh_netdev_ops = {
+	.ndo_open		= etherh_open,
+	.ndo_stop		= etherh_close,
+	.ndo_set_config		= etherh_set_config,
+	.ndo_start_xmit		= __ei_start_xmit,
+	.ndo_tx_timeout		= __ei_tx_timeout,
+	.ndo_get_stats		= __ei_get_stats,
+	.ndo_set_multicast_list = __ei_set_multicast_list,
+	.ndo_validate_addr	= eth_validate_addr,
+	.ndo_set_mac_address	= eth_mac_addr,
+	.ndo_change_mtu		= eth_change_mtu,
+#ifdef CONFIG_NET_POLL_CONTROLLER
+	.ndo_poll_controller	= __ei_poll,
+#endif
+};
+
 static u32 etherh_regoffsets[16];
 static u32 etherm_regoffsets[16];
 
-static int __init
+static int __devinit
 etherh_probe(struct expansion_card *ec, const struct ecard_id *id)
 {
 	const struct etherh_data *data = id->data;
 	struct ei_device *ei_local;
 	struct net_device *dev;
 	struct etherh_priv *eh;
-	int i, ret;
+	int ret;
 
 	etherh_banner();
 
@@ -662,12 +676,9 @@ etherh_probe(struct expansion_card *ec, const struct ecard_id *id)
 		goto release;
 	}
 
-	SET_MODULE_OWNER(dev);
 	SET_NETDEV_DEV(dev, &ec->dev);
 
-	dev->open		= etherh_open;
-	dev->stop		= etherh_close;
-	dev->set_config		= etherh_set_config;
+	dev->netdev_ops		= &etherh_netdev_ops;
 	dev->irq		= ec->irq;
 	dev->ethtool_ops	= &etherh_ethtool_ops;
 
@@ -747,11 +758,8 @@ etherh_probe(struct expansion_card *ec, const struct ecard_id *id)
 	if (ret)
 		goto free;
 
-	printk(KERN_INFO "%s: %s in slot %d, ",
-		dev->name, data->name, ec->slot_no);
-
-	for (i = 0; i < 6; i++)
-		printk("%2.2x%c", dev->dev_addr[i], i == 5 ? '\n' : ':');
+	printk(KERN_INFO "%s: %s in slot %d, %pM\n",
+		dev->name, data->name, ec->slot_no, dev->dev_addr);
 
 	ecard_set_drvdata(ec, dev);
 

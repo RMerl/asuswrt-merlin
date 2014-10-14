@@ -6,8 +6,6 @@
  *  Derived from drivers/mtd/spia.c
  *	 Copyright (C) 2000 Steven J. Hill (sjhill@realitydiluted.com)
  *
- * $Id: autcpu12.c,v 1.23 2005/11/07 11:14:30 gleixner Exp $
- *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
@@ -20,7 +18,7 @@
  *
  *	02-12-2002 TG	Cleanup of module params
  *
- *	02-20-2002 TG	adjusted for different rd/wr adress support
+ *	02-20-2002 TG	adjusted for different rd/wr address support
  *			added support for read device ready/busy line
  *			added page_cache
  *
@@ -34,9 +32,9 @@
 #include <linux/mtd/nand.h>
 #include <linux/mtd/partitions.h>
 #include <asm/io.h>
-#include <asm/arch/hardware.h>
+#include <mach/hardware.h>
 #include <asm/sizes.h>
-#include <asm/arch/autcpu12.h>
+#include <mach/autcpu12.h>
 
 /*
  * MTD structure for AUTCPU12 board
@@ -144,7 +142,7 @@ static int __init autcpu12_init(void)
 		goto out;
 	}
 
-	/* map physical adress */
+	/* map physical address */
 	autcpu12_fio_base = ioremap(AUTCPU12_PHYS_SMC, SZ_1K);
 	if (!autcpu12_fio_base) {
 		printk("Ioremap autcpu12 SmartMedia Card failed\n");
@@ -178,7 +176,7 @@ static int __init autcpu12_init(void)
 	 */
 	this->options = NAND_USE_FLASH_BBT;
 
-	/* Scan to find existance of the device */
+	/* Scan to find existence of the device */
 	if (nand_scan(autcpu12_mtd, 1)) {
 		err = -ENXIO;
 		goto out_ior;
@@ -227,7 +225,7 @@ static void __exit autcpu12_cleanup(void)
 	/* Release resources, unregister device */
 	nand_release(autcpu12_mtd);
 
-	/* unmap physical adress */
+	/* unmap physical address */
 	iounmap(autcpu12_fio_base);
 
 	/* Free the MTD device structure */

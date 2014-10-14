@@ -218,10 +218,10 @@ static int
 cache_info(char *page)
 {
 	char *p = page;
-	u64 i, levels, unique_caches;
+	unsigned long i, levels, unique_caches;
 	pal_cache_config_info_t cci;
 	int j, k;
-	s64 status;
+	long status;
 
 	if ((status = ia64_pal_cache_summary(&levels, &unique_caches)) != 0) {
 		printk(KERN_ERR "ia64_pal_cache_summary=%ld\n", status);
@@ -303,7 +303,7 @@ vm_info(char *page)
 	ia64_ptce_info_t ptce;
 	const char *sep;
 	int i, j;
-	s64 status;
+	long status;
 
 	if ((status = ia64_pal_vm_summary(&vm_info_1, &vm_info_2)) !=0) {
 		printk(KERN_ERR "ia64_pal_vm_summary=%ld\n", status);
@@ -431,10 +431,10 @@ register_info(char *page)
 	char *p = page;
 	u64 reg_info[2];
 	u64 info;
-	u64 phys_stacked;
+	unsigned long phys_stacked;
 	pal_hints_u_t hints;
-	u64 iregs, dregs;
-	char *info_type[]={
+	unsigned long iregs, dregs;
+	static const char * const info_type[] = {
 		"Implemented AR(s)",
 		"AR(s) with read side-effects",
 		"Implemented CR(s)",
@@ -470,7 +470,7 @@ register_info(char *page)
 	return p - page;
 }
 
-static const char *proc_features[]={
+static char *proc_features_0[]={		/* Feature set 0 */
 	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
 	NULL,NULL,NULL,NULL,NULL,NULL,NULL, NULL,NULL,
 	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
@@ -502,25 +502,92 @@ static const char *proc_features[]={
 	"Enable BERR promotion"
 };
 
+static char *proc_features_16[]={		/* Feature set 16 */
+	"Disable ETM",
+	"Enable ETM",
+	"Enable MCA on half-way timer",
+	"Enable snoop WC",
+	NULL,
+	"Enable Fast Deferral",
+	"Disable MCA on memory aliasing",
+	"Enable RSB",
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	"DP system processor",
+	"Low Voltage",
+	"HT supported",
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL
+};
+
+static char **proc_features[]={
+	proc_features_0,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL,
+	proc_features_16,
+	NULL, NULL, NULL, NULL,
+};
+
+static char * feature_set_info(char *page, u64 avail, u64 status, u64 control,
+							unsigned long set)
+{
+	char *p = page;
+	char **vf, **v;
+	int i;
+
+	vf = v = proc_features[set];
+	for(i=0; i < 64; i++, avail >>=1, status >>=1, control >>=1) {
+
+		if (!(control))		/* No remaining bits set */
+			break;
+		if (!(avail & 0x1))	/* Print only bits that are available */
+			continue;
+		if (vf)
+			v = vf + i;
+		if ( v && *v ) {
+			p += sprintf(p, "%-40s : %s %s\n", *v,
+				avail & 0x1 ? (status & 0x1 ?
+						"On " : "Off"): "",
+				avail & 0x1 ? (control & 0x1 ?
+						"Ctrl" : "NoCtrl"): "");
+		} else {
+			p += sprintf(p, "Feature set %2ld bit %2d\t\t\t"
+					" : %s %s\n",
+				set, i,
+				avail & 0x1 ? (status & 0x1 ?
+						"On " : "Off"): "",
+				avail & 0x1 ? (control & 0x1 ?
+						"Ctrl" : "NoCtrl"): "");
+		}
+	}
+	return p;
+}
 
 static int
 processor_info(char *page)
 {
 	char *p = page;
-	const char **v = proc_features;
-	u64 avail=1, status=1, control=1;
-	int i;
+	u64 avail=1, status=1, control=1, feature_set=0;
 	s64 ret;
 
-	if ((ret=ia64_pal_proc_get_features(&avail, &status, &control)) != 0) return 0;
+	do {
+		ret = ia64_pal_proc_get_features(&avail, &status, &control,
+						feature_set);
+		if (ret < 0) {
+			return p - page;
+		}
+		if (ret == 1) {
+			feature_set++;
+			continue;
+		}
 
-	for(i=0; i < 64; i++, v++,avail >>=1, status >>=1, control >>=1) {
-		if ( ! *v ) continue;
-		p += sprintf(p, "%-40s : %s%s %s\n", *v,
-				avail & 0x1 ? "" : "NotImpl",
-				avail & 0x1 ? (status & 0x1 ? "On" : "Off"): "",
-				avail & 0x1 ? (control & 0x1 ? "Ctrl" : "NoCtrl"): "");
-	}
+		p = feature_set_info(p, avail, status, control, feature_set);
+
+		feature_set++;
+	} while(1);
+
 	return p - page;
 }
 
@@ -647,7 +714,7 @@ frequency_info(char *page)
 {
 	char *p = page;
 	struct pal_freq_ratio proc, itc, bus;
-	u64 base;
+	unsigned long base;
 
 	if (ia64_pal_freq_base(&base) == -1)
 		p += sprintf(p, "Output clock            : not implemented\n");
@@ -669,43 +736,43 @@ static int
 tr_info(char *page)
 {
 	char *p = page;
-	s64 status;
+	long status;
 	pal_tr_valid_u_t tr_valid;
 	u64 tr_buffer[4];
 	pal_vm_info_1_u_t vm_info_1;
 	pal_vm_info_2_u_t vm_info_2;
-	u64 i, j;
-	u64 max[3], pgm;
+	unsigned long i, j;
+	unsigned long max[3], pgm;
 	struct ifa_reg {
-		u64 valid:1;
-		u64 ig:11;
-		u64 vpn:52;
+		unsigned long valid:1;
+		unsigned long ig:11;
+		unsigned long vpn:52;
 	} *ifa_reg;
 	struct itir_reg {
-		u64 rv1:2;
-		u64 ps:6;
-		u64 key:24;
-		u64 rv2:32;
+		unsigned long rv1:2;
+		unsigned long ps:6;
+		unsigned long key:24;
+		unsigned long rv2:32;
 	} *itir_reg;
 	struct gr_reg {
-		u64 p:1;
-		u64 rv1:1;
-		u64 ma:3;
-		u64 a:1;
-		u64 d:1;
-		u64 pl:2;
-		u64 ar:3;
-		u64 ppn:38;
-		u64 rv2:2;
-		u64 ed:1;
-		u64 ig:11;
+		unsigned long p:1;
+		unsigned long rv1:1;
+		unsigned long ma:3;
+		unsigned long a:1;
+		unsigned long d:1;
+		unsigned long pl:2;
+		unsigned long ar:3;
+		unsigned long ppn:38;
+		unsigned long rv2:2;
+		unsigned long ed:1;
+		unsigned long ig:11;
 	} *gr_reg;
 	struct rid_reg {
-		u64 ig1:1;
-		u64 rv1:1;
-		u64 ig2:6;
-		u64 rid:24;
-		u64 rv2:32;
+		unsigned long ig1:1;
+		unsigned long rv1:1;
+		unsigned long ig2:6;
+		unsigned long rid:24;
+		unsigned long rv2:32;
 	} *rid_reg;
 
 	if ((status = ia64_pal_vm_summary(&vm_info_1, &vm_info_2)) !=0) {
@@ -833,12 +900,6 @@ static void
 palinfo_smp_call(void *info)
 {
 	palinfo_smp_data_t *data = (palinfo_smp_data_t *)info;
-	if (data == NULL) {
-		printk(KERN_ERR "palinfo: data pointer is NULL\n");
-		data->ret = 0; /* no output */
-		return;
-	}
-	/* does this actual call */
 	data->ret = (*data->func)(data->page);
 }
 
@@ -860,7 +921,7 @@ int palinfo_handle_smp(pal_func_cpu_u_t *f, char *page)
 
 
 	/* will send IPI to other CPU and wait for completion of remote call */
-	if ((ret=smp_call_function_single(f->req_cpu, palinfo_smp_call, &ptr, 0, 1))) {
+	if ((ret=smp_call_function_single(f->req_cpu, palinfo_smp_call, &ptr, 1))) {
 		printk(KERN_ERR "palinfo: remote CPU call from %d to %d on function %d: "
 		       "error %d\n", smp_processor_id(), f->req_cpu, f->func_id, ret);
 		return 0;
@@ -907,7 +968,7 @@ palinfo_read_entry(char *page, char **start, off_t off, int count, int *eof, voi
 	return len;
 }
 
-static void
+static void __cpuinit
 create_palinfo_proc_entries(unsigned int cpu)
 {
 #	define CPUSTR	"cpu%d"
@@ -941,8 +1002,6 @@ create_palinfo_proc_entries(unsigned int cpu)
 		*pdir = create_proc_read_entry(
 				palinfo_entries[j].name, 0, cpu_dir,
 				palinfo_read_entry, (void *)f.value);
-		if (*pdir)
-			(*pdir)->owner = THIS_MODULE;
 		pdir++;
 	}
 }
@@ -968,7 +1027,7 @@ remove_palinfo_proc_entries(unsigned int hcpu)
 	}
 }
 
-static int palinfo_cpu_callback(struct notifier_block *nfb,
+static int __cpuinit palinfo_cpu_callback(struct notifier_block *nfb,
 					unsigned long action, void *hcpu)
 {
 	unsigned int hotcpu = (unsigned long)hcpu;
@@ -986,7 +1045,7 @@ static int palinfo_cpu_callback(struct notifier_block *nfb,
 	return NOTIFY_OK;
 }
 
-static struct notifier_block palinfo_cpu_notifier =
+static struct notifier_block __refdata palinfo_cpu_notifier =
 {
 	.notifier_call = palinfo_cpu_callback,
 	.priority = 0,

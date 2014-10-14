@@ -1,5 +1,4 @@
-/*    $Id: setup.c,v 1.8 2000/02/02 04:42:38 prumpf Exp $
- *
+/*
  *    Initial setup-routines for HP 9000 based hardware.
  *
  *    Copyright (C) 1991, 1992, 1995  Linus Torvalds
@@ -44,6 +43,7 @@
 #include <asm/pdc_chassis.h>
 #include <asm/io.h>
 #include <asm/setup.h>
+#include <asm/unwind.h>
 
 static char __initdata command_line[COMMAND_LINE_SIZE];
 
@@ -56,11 +56,6 @@ struct proc_dir_entry * proc_mckinley_root __read_mostly = NULL;
 int parisc_bus_is_phys __read_mostly = 1;	/* Assume no IOMMU is present */
 EXPORT_SYMBOL(parisc_bus_is_phys);
 #endif
-
-/* This sets the vmerge boundary and size, it's here because it has to
- * be available on all platforms (zero means no-virtual merging) */
-unsigned long parisc_vmerge_boundary = 0;
-unsigned long parisc_vmerge_max_size = 0;
 
 void __init setup_cmdline(char **cmdline_p)
 {
@@ -123,6 +118,7 @@ void __init setup_arch(char **cmdline_p)
 #ifdef CONFIG_64BIT
 	extern int parisc_narrow_firmware;
 #endif
+	unwind_init();
 
 	init_per_cpu(smp_processor_id());	/* Set Modes & Enable FP */
 
@@ -190,7 +186,7 @@ c_stop (struct seq_file *m, void *v)
 {
 }
 
-struct seq_operations cpuinfo_op = {
+const struct seq_operations cpuinfo_op = {
 	.start	= c_start,
 	.next	= c_next,
 	.stop	= c_stop,
@@ -319,7 +315,7 @@ static int __init parisc_init(void)
 	
 	processor_init();
 	printk(KERN_INFO "CPU(s): %d x %s at %d.%06d MHz\n",
-			boot_cpu_data.cpu_count,
+			num_present_cpus(),
 			boot_cpu_data.cpu_name,
 			boot_cpu_data.cpu_hz / 1000000,
 			boot_cpu_data.cpu_hz % 1000000	);
@@ -368,6 +364,31 @@ static int __init parisc_init(void)
 
 	return 0;
 }
-
 arch_initcall(parisc_init);
 
+void start_parisc(void)
+{
+	extern void start_kernel(void);
+
+	int ret, cpunum;
+	struct pdc_coproc_cfg coproc_cfg;
+
+	cpunum = smp_processor_id();
+
+	set_firmware_width_unlocked();
+
+	ret = pdc_coproc_cfg_unlocked(&coproc_cfg);
+	if (ret >= 0 && coproc_cfg.ccr_functional) {
+		mtctl(coproc_cfg.ccr_functional, 10);
+
+		per_cpu(cpu_data, cpunum).fp_rev = coproc_cfg.revision;
+		per_cpu(cpu_data, cpunum).fp_model = coproc_cfg.model;
+
+		asm volatile ("fstd	%fr0,8(%sp)");
+	} else {
+		panic("must have an fpu to boot linux");
+	}
+
+	start_kernel();
+	// not reached
+}

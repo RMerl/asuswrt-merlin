@@ -16,25 +16,31 @@
 #include <linux/list.h>
 #include <linux/timer.h>
 #include <linux/init.h>
+#include <linux/gpio.h>
 #include <linux/platform_device.h>
 #include <linux/serial_core.h>
 #include <linux/sysdev.h>
 #include <linux/clk.h>
+#include <linux/io.h>
 
 #include <asm/mach/arch.h>
 #include <asm/mach/map.h>
 #include <asm/mach/irq.h>
 
-#include <asm/hardware.h>
-#include <asm/io.h>
+#include <mach/hardware.h>
 #include <asm/irq.h>
 
-#include <asm/arch/regs-s3c2443-clock.h>
-#include <asm/arch/reset.h>
+#include <mach/regs-s3c2443-clock.h>
+#include <mach/reset.h>
 
-#include <asm/plat-s3c24xx/s3c2443.h>
-#include <asm/plat-s3c24xx/devs.h>
-#include <asm/plat-s3c24xx/cpu.h>
+#include <plat/gpio-core.h>
+#include <plat/gpio-cfg.h>
+#include <plat/gpio-cfg-helpers.h>
+#include <plat/s3c2443.h>
+#include <plat/devs.h>
+#include <plat/cpu.h>
+#include <plat/fb-core.h>
+#include <plat/nand-core.h>
 
 static struct map_desc s3c2443_iodesc[] __initdata = {
 	IODESC_ENT(WATCHDOG),
@@ -43,7 +49,7 @@ static struct map_desc s3c2443_iodesc[] __initdata = {
 };
 
 struct sysdev_class s3c2443_sysclass = {
-	set_kset_name("s3c2443-core"),
+	.name = "s3c2443-core",
 };
 
 static struct sys_device s3c2443_sysdev = {
@@ -61,7 +67,8 @@ int __init s3c2443_init(void)
 
 	s3c24xx_reset_hook = s3c2443_hard_reset;
 
-	s3c_device_nand.name = "s3c2412-nand";
+	s3c_nand_setname("s3c2412-nand");
+	s3c_fb_setname("s3c2443-fb");
 
 	/* change WDT IRQ number */
 	s3c_device_wdt.resource[1].start = IRQ_S3C2443_WDT;
@@ -81,10 +88,12 @@ void __init s3c2443_init_uarts(struct s3c2410_uartcfg *cfg, int no)
  * machine specific initialisation.
  */
 
-void __init s3c2443_map_io(struct map_desc *mach_desc, int mach_size)
+void __init s3c2443_map_io(void)
 {
+	s3c24xx_gpiocfg_default.set_pull = s3c_gpio_setpull_s3c2443;
+	s3c24xx_gpiocfg_default.get_pull = s3c_gpio_getpull_s3c2443;
+
 	iotable_init(s3c2443_iodesc, ARRAY_SIZE(s3c2443_iodesc));
-	iotable_init(mach_desc, mach_size);
 }
 
 /* need to register class before we actually register the device, and

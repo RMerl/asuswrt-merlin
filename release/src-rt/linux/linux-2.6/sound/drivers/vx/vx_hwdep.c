@@ -20,9 +20,9 @@
  *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
  */
 
-#include <sound/driver.h>
 #include <linux/device.h>
 #include <linux/firmware.h>
+#include <linux/slab.h>
 #include <linux/vmalloc.h>
 #include <sound/core.h>
 #include <sound/hwdep.h>
@@ -120,16 +120,6 @@ void snd_vx_free_firmware(struct vx_core *chip)
 
 #else /* old style firmware loading */
 
-static int vx_hwdep_open(struct snd_hwdep *hw, struct file *file)
-{
-	return 0;
-}
-
-static int vx_hwdep_release(struct snd_hwdep *hw, struct file *file)
-{
-	return 0;
-}
-
 static int vx_hwdep_dsp_status(struct snd_hwdep *hw,
 			       struct snd_hwdep_dsp_status *info)
 {
@@ -142,7 +132,8 @@ static int vx_hwdep_dsp_status(struct snd_hwdep *hw,
 	};
 	struct vx_core *vx = hw->private_data;
 
-	snd_assert(type_ids[vx->type], return -EINVAL);
+	if (snd_BUG_ON(!type_ids[vx->type]))
+		return -EINVAL;
 	strcpy(info->id, type_ids[vx->type]);
 	if (vx_is_pcmcia(vx))
 		info->num_dsps = 4;
@@ -169,7 +160,8 @@ static int vx_hwdep_dsp_load(struct snd_hwdep *hw,
 	int index, err;
 	struct firmware *fw;
 
-	snd_assert(vx->ops->load_dsp, return -ENXIO);
+	if (snd_BUG_ON(!vx->ops->load_dsp))
+		return -ENXIO;
 
 	fw = kmalloc(sizeof(*fw), GFP_KERNEL);
 	if (! fw) {
@@ -184,7 +176,7 @@ static int vx_hwdep_dsp_load(struct snd_hwdep *hw,
 		kfree(fw);
 		return -ENOMEM;
 	}
-	if (copy_from_user(fw->data, dsp->image, dsp->length)) {
+	if (copy_from_user((void *)fw->data, dsp->image, dsp->length)) {
 		free_fw(fw);
 		return -EFAULT;
 	}
@@ -242,8 +234,6 @@ int snd_vx_setup_firmware(struct vx_core *chip)
 
 	hw->iface = SNDRV_HWDEP_IFACE_VX;
 	hw->private_data = chip;
-	hw->ops.open = vx_hwdep_open;
-	hw->ops.release = vx_hwdep_release;
 	hw->ops.dsp_status = vx_hwdep_dsp_status;
 	hw->ops.dsp_load = vx_hwdep_dsp_load;
 	hw->exclusive = 1;

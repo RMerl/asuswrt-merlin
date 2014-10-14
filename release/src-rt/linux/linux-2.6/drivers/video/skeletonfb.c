@@ -308,9 +308,11 @@ static int xxxfb_setcolreg(unsigned regno, unsigned red, unsigned green,
      *   color depth = SUM(var->{color}.length)
      *
      * Pseudocolor:
-     *    var->{color}.offset is 0
-     *    var->{color}.length contains width of DAC or the number of unique
-     *                        colors available (color depth)
+     *    var->{color}.offset is 0 unless the palette index takes less than
+     *                        bits_per_pixel bits and is stored in the upper
+     *                        bits of the pixel value
+     *    var->{color}.length is set so that 1 << length is the number of
+     *                        available palette entries
      *    pseudo_palette is not used
      *    RAMDAC[X] is programmed to (red, green, blue)
      *    color depth = var->{color}.length
@@ -675,13 +677,13 @@ static struct fb_ops xxxfb_ops = {
      *  Initialization
      */
 
-/* static int __init xxfb_probe (struct device *device) -- for platform devs */
+/* static int __init xxfb_probe (struct platform_device *pdev) -- for platform devs */
 static int __devinit xxxfb_probe(struct pci_dev *dev,
 			      const struct pci_device_id *ent)
 {
     struct fb_info *info;
     struct xxx_par *par;
-    struct device* device = &dev->dev; /* for pci drivers */
+    struct device *device = &dev->dev; /* or &pdev->dev */
     int cmap_len, retval;	
    
     /*
@@ -780,7 +782,7 @@ static int __devinit xxxfb_probe(struct pci_dev *dev,
      *
      * NOTE: This field is currently unused.
      */
-    info->pixmap.scan_align = 32;
+    info->pixmap.access_align = 32;
 /***************************** End optional stage ***************************/
 
     /*
@@ -795,8 +797,9 @@ static int __devinit xxxfb_probe(struct pci_dev *dev,
     if (!retval || retval == 4)
 	return -EINVAL;			
 
-    /* This has to been done !!! */	
-    fb_alloc_cmap(&info->cmap, cmap_len, 0);
+    /* This has to be done! */
+    if (fb_alloc_cmap(&info->cmap, cmap_len, 0))
+	return -ENOMEM;
 	
     /* 
      * The following is done in the case of having hardware with a static 
@@ -820,22 +823,24 @@ static int __devinit xxxfb_probe(struct pci_dev *dev,
      */
     /* xxxfb_set_par(info); */
 
-    if (register_framebuffer(info) < 0)
+    if (register_framebuffer(info) < 0) {
+	fb_dealloc_cmap(&info->cmap);
 	return -EINVAL;
+    }
     printk(KERN_INFO "fb%d: %s frame buffer device\n", info->node,
 	   info->fix.id);
-    pci_set_drvdata(dev, info); /* or dev_set_drvdata(device, info) */
+    pci_set_drvdata(dev, info); /* or platform_set_drvdata(pdev, info) */
     return 0;
 }
 
     /*
      *  Cleanup
      */
-/* static void __devexit xxxfb_remove(struct device *device) */
+/* static void __devexit xxxfb_remove(struct platform_device *pdev) */
 static void __devexit xxxfb_remove(struct pci_dev *dev)
 {
 	struct fb_info *info = pci_get_drvdata(dev);
-	/* or dev_get_drvdata(device); */
+	/* or platform_get_drvdata(pdev); */
 
 	if (info) {
 		unregister_framebuffer(info);
@@ -961,18 +966,17 @@ static int xxxfb_resume(struct platform_dev *dev)
 #define xxxfb_resume NULL
 #endif /* CONFIG_PM */
 
-static struct device_driver xxxfb_driver = {
-	.name = "xxxfb",
-	.bus  = &platform_bus_type,
+static struct platform_device_driver xxxfb_driver = {
 	.probe = xxxfb_probe,
 	.remove = xxxfb_remove,
 	.suspend = xxxfb_suspend, /* optional but recommended */
 	.resume = xxxfb_resume,   /* optional but recommended */
+	.driver = {
+		.name = "xxxfb",
+	},
 };
 
-static struct platform_device xxxfb_device = {
-	.name = "xxxfb",
-};
+static struct platform_device *xxxfb_device;
 
 #ifndef MODULE
     /*
@@ -1002,12 +1006,16 @@ static int __init xxxfb_init(void)
 		return -ENODEV;
 	xxxfb_setup(option);
 #endif
-	ret = driver_register(&xxxfb_driver);
+	ret = platform_driver_register(&xxxfb_driver);
 
 	if (!ret) {
-		ret = platform_device_register(&xxxfb_device);
-		if (ret)
-			driver_unregister(&xxxfb_driver);
+		xxxfb_device = platform_device_register_simple("xxxfb", 0,
+								NULL, 0);
+
+		if (IS_ERR(xxxfb_device)) {
+			platform_driver_unregister(&xxxfb_driver);
+			ret = PTR_ERR(xxxfb_device);
+		}
 	}
 
 	return ret;
@@ -1015,8 +1023,8 @@ static int __init xxxfb_init(void)
 
 static void __exit xxxfb_exit(void)
 {
-	platform_device_unregister(&xxxfb_device);
-	driver_unregister(&xxxfb_driver);
+	platform_device_unregister(xxxfb_device);
+	platform_driver_unregister(&xxxfb_driver);
 }
 #endif /* CONFIG_PCI */
 

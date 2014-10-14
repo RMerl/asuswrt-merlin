@@ -305,7 +305,6 @@ enum av7110_command_type {
 #define IRQ_STATE	(DPRAM_BASE + 0x0F4)
 #define IRQ_STATE_EXT	(DPRAM_BASE + 0x0F6)
 #define MSGSTATE	(DPRAM_BASE + 0x0F8)
-#define FILT_STATE	(DPRAM_BASE + 0x0FA)
 #define COMMAND		(DPRAM_BASE + 0x0FC)
 #define COM_BUFF	(DPRAM_BASE + 0x100)
 #define COM_BUFF_SIZE	0x20
@@ -332,8 +331,6 @@ enum av7110_command_type {
 
 /* firmware status area */
 #define STATUS_BASE	(DPRAM_BASE + 0x1FC0)
-#define STATUS_SCR	(STATUS_BASE + 0x00)
-#define STATUS_MODES	(STATUS_BASE + 0x04)
 #define STATUS_LOOPS	(STATUS_BASE + 0x08)
 
 #define STATUS_MPEG_WIDTH     (STATUS_BASE + 0x0C)
@@ -393,7 +390,8 @@ static inline void iwdebi(struct av7110 *av7110, u32 config, int addr, u32 val, 
 }
 
 /* buffer writes */
-static inline void mwdebi(struct av7110 *av7110, u32 config, int addr, char *val, int count)
+static inline void mwdebi(struct av7110 *av7110, u32 config, int addr,
+			  const u8 *val, int count)
 {
 	memcpy(av7110->debi_virt, val, count);
 	av7110_debiwrite(av7110, config, addr, 0, count);

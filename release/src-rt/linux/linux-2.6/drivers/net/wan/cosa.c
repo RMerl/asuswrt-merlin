@@ -2,6 +2,7 @@
 
 /*
  *  Copyright (C) 1995-1997  Jan "Yenya" Kasprzak <kas@fi.muni.cz>
+ *  Generic HDLC port Copyright (C) 2008 Krzysztof Halasa <khc@pm.waw.pl>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -54,7 +55,7 @@
  *
  * The Linux driver (unlike the present *BSD drivers :-) can work even
  * for the COSA and SRP in one computer and allows each channel to work
- * in one of the three modes (character device, Cisco HDLC, Sync PPP).
+ * in one of the two modes (character or network device).
  *
  * AUTHOR
  *
@@ -72,33 +73,28 @@
  * The Comtrol Hostess SV11 driver by Alan Cox
  * The Sync PPP/Cisco HDLC layer (syncppp.c) ported to Linux by Alan Cox
  */
-/*
- *     5/25/1999 : Marcelo Tosatti <marcelo@conectiva.com.br>
- *             fixed a deadlock in cosa_sppp_open
- */
-
-/* ---------- Headers, macros, data structures ---------- */
 
 #include <linux/module.h>
 #include <linux/kernel.h>
+#include <linux/sched.h>
 #include <linux/slab.h>
 #include <linux/poll.h>
 #include <linux/fs.h>
 #include <linux/interrupt.h>
 #include <linux/delay.h>
+#include <linux/hdlc.h>
 #include <linux/errno.h>
 #include <linux/ioport.h>
 #include <linux/netdevice.h>
 #include <linux/spinlock.h>
+#include <linux/mutex.h>
 #include <linux/device.h>
-
-#undef COSA_SLOW_IO	/* for testing purposes only */
-
 #include <asm/io.h>
 #include <asm/dma.h>
 #include <asm/byteorder.h>
 
-#include <net/syncppp.h>
+#undef COSA_SLOW_IO	/* for testing purposes only */
+
 #include "cosa.h"
 
 /* Maximum length of the identification string. */
@@ -110,7 +106,6 @@
 /* Per-channel data structure */
 
 struct channel_data {
-	void *if_ptr;	/* General purpose pointer (used by SPPP) */
 	int usage;	/* Usage count; >0 for chrdev, -1 for netdev */
 	int num;	/* Number of the channel */
 	struct cosa_data *cosa;	/* Pointer to the per-card structure */
@@ -127,16 +122,16 @@ struct channel_data {
 	int (*tx_done)(struct channel_data *channel, int size);
 
 	/* Character device parts */
-	struct semaphore rsem, wsem;
+	struct mutex rlock;
+	struct semaphore wsem;
 	char *rxdata;
 	int rxsize;
 	wait_queue_head_t txwaitq, rxwaitq;
 	int tx_status, rx_status;
 
-	/* SPPP/HDLC device parts */
-	struct ppp_device pppdev;
+	/* generic HDLC device parts */
+	struct net_device *netdev;
 	struct sk_buff *rx_skb, *tx_skb;
-	struct net_device_stats stats;
 };
 
 /* cosa->firmware_status bits */
@@ -154,8 +149,8 @@ struct cosa_data {
 	int nchannels;			/* # of channels on this card */
 	int driver_status;		/* For communicating with firmware */
 	int firmware_status;		/* Downloaded, reseted, etc. */
-	long int rxbitmap, txbitmap;	/* Bitmap of channels who are willing to send/receive data */
-	long int rxtx;			/* RX or TX in progress? */
+	unsigned long rxbitmap, txbitmap;/* Bitmap of channels who are willing to send/receive data */
+	unsigned long rxtx;		/* RX or TX in progress? */
 	int enabled;
 	int usage;				/* usage count */
 	int txchan, txsize, rxsize;
@@ -178,6 +173,7 @@ struct cosa_data {
  * Character device major number. 117 was allocated for us.
  * The value of 0 means to allocate a first free one.
  */
+static DEFINE_MUTEX(cosa_chardev_mutex);
 static int cosa_major = 117;
 
 /*
@@ -278,21 +274,19 @@ static int cosa_start_tx(struct channel_data *channel, char *buf, int size);
 static void cosa_kick(struct cosa_data *cosa);
 static int cosa_dma_able(struct channel_data *chan, char *buf, int data);
 
-/* SPPP/HDLC stuff */
-static void sppp_channel_init(struct channel_data *chan);
-static void sppp_channel_delete(struct channel_data *chan);
-static int cosa_sppp_open(struct net_device *d);
-static int cosa_sppp_close(struct net_device *d);
-static void cosa_sppp_timeout(struct net_device *d);
-static int cosa_sppp_tx(struct sk_buff *skb, struct net_device *d);
-static char *sppp_setup_rx(struct channel_data *channel, int size);
-static int sppp_rx_done(struct channel_data *channel);
-static int sppp_tx_done(struct channel_data *channel, int size);
-static int cosa_sppp_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd);
-static struct net_device_stats *cosa_net_stats(struct net_device *dev);
+/* Network device stuff */
+static int cosa_net_attach(struct net_device *dev, unsigned short encoding,
+			   unsigned short parity);
+static int cosa_net_open(struct net_device *d);
+static int cosa_net_close(struct net_device *d);
+static void cosa_net_timeout(struct net_device *d);
+static netdev_tx_t cosa_net_tx(struct sk_buff *skb, struct net_device *d);
+static char *cosa_net_setup_rx(struct channel_data *channel, int size);
+static int cosa_net_rx_done(struct channel_data *channel);
+static int cosa_net_tx_done(struct channel_data *channel, int size);
+static int cosa_net_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd);
 
 /* Character device */
-static void chardev_channel_init(struct channel_data *chan);
 static char *chrdev_setup_rx(struct channel_data *channel, int size);
 static int chrdev_rx_done(struct channel_data *channel);
 static int chrdev_tx_done(struct channel_data *channel, int size);
@@ -303,8 +297,8 @@ static ssize_t cosa_write(struct file *file,
 static unsigned int cosa_poll(struct file *file, poll_table *poll);
 static int cosa_open(struct inode *inode, struct file *file);
 static int cosa_release(struct inode *inode, struct file *file);
-static int cosa_chardev_ioctl(struct inode *inode, struct file *file,
-	unsigned int cmd, unsigned long arg);
+static long cosa_chardev_ioctl(struct file *file, unsigned int cmd,
+				unsigned long arg);
 #ifdef COSA_FASYNC_WORKING
 static int cosa_fasync(struct inode *inode, struct file *file, int on);
 #endif
@@ -315,7 +309,7 @@ static const struct file_operations cosa_fops = {
 	.read		= cosa_read,
 	.write		= cosa_write,
 	.poll		= cosa_poll,
-	.ioctl		= cosa_chardev_ioctl,
+	.unlocked_ioctl	= cosa_chardev_ioctl,
 	.open		= cosa_open,
 	.release	= cosa_release,
 #ifdef COSA_FASYNC_WORKING
@@ -335,7 +329,7 @@ static int startmicrocode(struct cosa_data *cosa, int address);
 static int readmem(struct cosa_data *cosa, char __user *data, int addr, int len);
 static int cosa_reset_and_read_id(struct cosa_data *cosa, char *id);
 
-/* Auxilliary functions */
+/* Auxiliary functions */
 static int get_wait_data(struct cosa_data *cosa);
 static int put_wait_data(struct cosa_data *cosa, int data);
 static int puthexnumber(struct cosa_data *cosa, int number);
@@ -354,17 +348,17 @@ static void debug_status_in(struct cosa_data *cosa, int status);
 static void debug_status_out(struct cosa_data *cosa, int status);
 #endif
 
-
+static inline struct channel_data* dev_to_chan(struct net_device *dev)
+{
+	return (struct channel_data *)dev_to_hdlc(dev)->priv;
+}
+
 /* ---------- Initialization stuff ---------- */
 
 static int __init cosa_init(void)
 {
 	int i, err = 0;
 
-	printk(KERN_INFO "cosa v1.08 (c) 1997-2000 Jan Kasprzak <kas@fi.muni.cz>\n");
-#ifdef CONFIG_SMP
-	printk(KERN_INFO "cosa: SMP found. Please mail any success/failure reports to the author.\n");
-#endif
 	if (cosa_major > 0) {
 		if (register_chrdev(cosa_major, "cosa", &cosa_fops)) {
 			printk(KERN_WARNING "cosa: unable to get major %d\n",
@@ -394,13 +388,12 @@ static int __init cosa_init(void)
 		err = PTR_ERR(cosa_class);
 		goto out_chrdev;
 	}
-	for (i=0; i<nr_cards; i++) {
-		class_device_create(cosa_class, NULL, MKDEV(cosa_major, i),
-				NULL, "cosa%d", i);
-	}
+	for (i = 0; i < nr_cards; i++)
+		device_create(cosa_class, NULL, MKDEV(cosa_major, i), NULL,
+			      "cosa%d", i);
 	err = 0;
 	goto out;
-	
+
 out_chrdev:
 	unregister_chrdev(cosa_major, "cosa");
 out:
@@ -412,43 +405,38 @@ static void __exit cosa_exit(void)
 {
 	struct cosa_data *cosa;
 	int i;
-	printk(KERN_INFO "Unloading the cosa module\n");
 
-	for (i=0; i<nr_cards; i++)
-		class_device_destroy(cosa_class, MKDEV(cosa_major, i));
+	for (i = 0; i < nr_cards; i++)
+		device_destroy(cosa_class, MKDEV(cosa_major, i));
 	class_destroy(cosa_class);
-	for (cosa=cosa_cards; nr_cards--; cosa++) {
+
+	for (cosa = cosa_cards; nr_cards--; cosa++) {
 		/* Clean up the per-channel data */
-		for (i=0; i<cosa->nchannels; i++) {
+		for (i = 0; i < cosa->nchannels; i++) {
 			/* Chardev driver has no alloc'd per-channel data */
-			sppp_channel_delete(cosa->chan+i);
+			unregister_hdlc_device(cosa->chan[i].netdev);
+			free_netdev(cosa->chan[i].netdev);
 		}
 		/* Clean up the per-card data */
 		kfree(cosa->chan);
 		kfree(cosa->bouncebuf);
 		free_irq(cosa->irq, cosa);
 		free_dma(cosa->dma);
-		release_region(cosa->datareg,is_8bit(cosa)?2:4);
+		release_region(cosa->datareg, is_8bit(cosa) ? 2 : 4);
 	}
 	unregister_chrdev(cosa_major, "cosa");
 }
 module_exit(cosa_exit);
 
-/*
- * This function should register all the net devices needed for the
- * single channel.
- */
-static __inline__ void channel_init(struct channel_data *chan)
-{
-	sprintf(chan->name, "cosa%dc%d", chan->cosa->num, chan->num);
+static const struct net_device_ops cosa_ops = {
+	.ndo_open       = cosa_net_open,
+	.ndo_stop       = cosa_net_close,
+	.ndo_change_mtu = hdlc_change_mtu,
+	.ndo_start_xmit = hdlc_start_xmit,
+	.ndo_do_ioctl   = cosa_net_ioctl,
+	.ndo_tx_timeout = cosa_net_timeout,
+};
 
-	/* Initialize the chardev data structures */
-	chardev_channel_init(chan);
-
-	/* Register the sppp interface */
-	sppp_channel_init(chan);
-}
-	
 static int cosa_probe(int base, int irq, int dma)
 {
 	struct cosa_data *cosa = cosa_cards+nr_cards;
@@ -572,17 +560,42 @@ static int cosa_probe(int base, int irq, int dma)
 	sprintf(cosa->name, "cosa%d", cosa->num);
 
 	/* Initialize the per-channel data */
-	cosa->chan = kmalloc(sizeof(struct channel_data)*cosa->nchannels,
-			     GFP_KERNEL);
+	cosa->chan = kcalloc(cosa->nchannels, sizeof(struct channel_data), GFP_KERNEL);
 	if (!cosa->chan) {
-	        err = -ENOMEM;
+		err = -ENOMEM;
 		goto err_out3;
 	}
-	memset(cosa->chan, 0, sizeof(struct channel_data)*cosa->nchannels);
-	for (i=0; i<cosa->nchannels; i++) {
-		cosa->chan[i].cosa = cosa;
-		cosa->chan[i].num = i;
-		channel_init(cosa->chan+i);
+
+	for (i = 0; i < cosa->nchannels; i++) {
+		struct channel_data *chan = &cosa->chan[i];
+
+		chan->cosa = cosa;
+		chan->num = i;
+		sprintf(chan->name, "cosa%dc%d", chan->cosa->num, i);
+
+		/* Initialize the chardev data structures */
+		mutex_init(&chan->rlock);
+		sema_init(&chan->wsem, 1);
+
+		/* Register the network interface */
+		if (!(chan->netdev = alloc_hdlcdev(chan))) {
+			printk(KERN_WARNING "%s: alloc_hdlcdev failed.\n",
+			       chan->name);
+			goto err_hdlcdev;
+		}
+		dev_to_hdlc(chan->netdev)->attach = cosa_net_attach;
+		dev_to_hdlc(chan->netdev)->xmit = cosa_net_tx;
+		chan->netdev->netdev_ops = &cosa_ops;
+		chan->netdev->watchdog_timeo = TX_TIMEOUT;
+		chan->netdev->base_addr = chan->cosa->datareg;
+		chan->netdev->irq = chan->cosa->irq;
+		chan->netdev->dma = chan->cosa->dma;
+		if (register_hdlc_device(chan->netdev)) {
+			printk(KERN_WARNING "%s: register_hdlc_device()"
+			       " failed.\n", chan->netdev->name);
+			free_netdev(chan->netdev);
+			goto err_hdlcdev;
+		}
 	}
 
 	printk (KERN_INFO "cosa%d: %s (%s at 0x%x irq %d dma %d), %d channels\n",
@@ -590,13 +603,20 @@ static int cosa_probe(int base, int irq, int dma)
 		cosa->datareg, cosa->irq, cosa->dma, cosa->nchannels);
 
 	return nr_cards++;
+
+err_hdlcdev:
+	while (i-- > 0) {
+		unregister_hdlc_device(cosa->chan[i].netdev);
+		free_netdev(cosa->chan[i].netdev);
+	}
+	kfree(cosa->chan);
 err_out3:
 	kfree(cosa->bouncebuf);
 err_out2:
 	free_dma(cosa->dma);
 err_out1:
 	free_irq(cosa->irq, cosa);
-err_out:	
+err_out:
 	release_region(cosa->datareg,is_8bit(cosa)?2:4);
 	printk(KERN_NOTICE "cosa%d: allocating resources failed\n",
 	       cosa->num);
@@ -604,54 +624,19 @@ err_out:
 }
 
 
-/*---------- SPPP/HDLC netdevice ---------- */
+/*---------- network device ---------- */
 
-static void cosa_setup(struct net_device *d)
+static int cosa_net_attach(struct net_device *dev, unsigned short encoding,
+			   unsigned short parity)
 {
-	d->open = cosa_sppp_open;
-	d->stop = cosa_sppp_close;
-	d->hard_start_xmit = cosa_sppp_tx;
-	d->do_ioctl = cosa_sppp_ioctl;
-	d->get_stats = cosa_net_stats;
-	d->tx_timeout = cosa_sppp_timeout;
-	d->watchdog_timeo = TX_TIMEOUT;
+	if (encoding == ENCODING_NRZ && parity == PARITY_CRC16_PR1_CCITT)
+		return 0;
+	return -EINVAL;
 }
 
-static void sppp_channel_init(struct channel_data *chan)
+static int cosa_net_open(struct net_device *dev)
 {
-	struct net_device *d;
-	chan->if_ptr = &chan->pppdev;
-	d = alloc_netdev(0, chan->name, cosa_setup);
-	if (!d) {
-		printk(KERN_WARNING "%s: alloc_netdev failed.\n", chan->name);
-		return;
-	}
-	chan->pppdev.dev = d;
-	d->base_addr = chan->cosa->datareg;
-	d->irq = chan->cosa->irq;
-	d->dma = chan->cosa->dma;
-	d->priv = chan;
-	sppp_attach(&chan->pppdev);
-	if (register_netdev(d)) {
-		printk(KERN_WARNING "%s: register_netdev failed.\n", d->name);
-		sppp_detach(d);
-		free_netdev(d);
-		chan->pppdev.dev = NULL;
-		return;
-	}
-}
-
-static void sppp_channel_delete(struct channel_data *chan)
-{
-	unregister_netdev(chan->pppdev.dev);
-	sppp_detach(chan->pppdev.dev);
-	free_netdev(chan->pppdev.dev);
-	chan->pppdev.dev = NULL;
-}
-
-static int cosa_sppp_open(struct net_device *d)
-{
-	struct channel_data *chan = d->priv;
+	struct channel_data *chan = dev_to_chan(dev);
 	int err;
 	unsigned long flags;
 
@@ -662,54 +647,54 @@ static int cosa_sppp_open(struct net_device *d)
 	}
 	spin_lock_irqsave(&chan->cosa->lock, flags);
 	if (chan->usage != 0) {
-		printk(KERN_WARNING "%s: sppp_open called with usage count %d\n",
-			chan->name, chan->usage);
+		printk(KERN_WARNING "%s: cosa_net_open called with usage count"
+		       " %d\n", chan->name, chan->usage);
 		spin_unlock_irqrestore(&chan->cosa->lock, flags);
 		return -EBUSY;
 	}
-	chan->setup_rx = sppp_setup_rx;
-	chan->tx_done = sppp_tx_done;
-	chan->rx_done = sppp_rx_done;
-	chan->usage=-1;
+	chan->setup_rx = cosa_net_setup_rx;
+	chan->tx_done = cosa_net_tx_done;
+	chan->rx_done = cosa_net_rx_done;
+	chan->usage = -1;
 	chan->cosa->usage++;
 	spin_unlock_irqrestore(&chan->cosa->lock, flags);
 
-	err = sppp_open(d);
+	err = hdlc_open(dev);
 	if (err) {
 		spin_lock_irqsave(&chan->cosa->lock, flags);
-		chan->usage=0;
+		chan->usage = 0;
 		chan->cosa->usage--;
-		
 		spin_unlock_irqrestore(&chan->cosa->lock, flags);
 		return err;
 	}
 
-	netif_start_queue(d);
+	netif_start_queue(dev);
 	cosa_enable_rx(chan);
 	return 0;
 }
 
-static int cosa_sppp_tx(struct sk_buff *skb, struct net_device *dev)
+static netdev_tx_t cosa_net_tx(struct sk_buff *skb,
+				     struct net_device *dev)
 {
-	struct channel_data *chan = dev->priv;
+	struct channel_data *chan = dev_to_chan(dev);
 
 	netif_stop_queue(dev);
 
 	chan->tx_skb = skb;
 	cosa_start_tx(chan, skb->data, skb->len);
-	return 0;
+	return NETDEV_TX_OK;
 }
 
-static void cosa_sppp_timeout(struct net_device *dev)
+static void cosa_net_timeout(struct net_device *dev)
 {
-	struct channel_data *chan = dev->priv;
+	struct channel_data *chan = dev_to_chan(dev);
 
 	if (test_bit(RXBIT, &chan->cosa->rxtx)) {
-		chan->stats.rx_errors++;
-		chan->stats.rx_missed_errors++;
+		chan->netdev->stats.rx_errors++;
+		chan->netdev->stats.rx_missed_errors++;
 	} else {
-		chan->stats.tx_errors++;
-		chan->stats.tx_aborted_errors++;
+		chan->netdev->stats.tx_errors++;
+		chan->netdev->stats.tx_aborted_errors++;
 	}
 	cosa_kick(chan->cosa);
 	if (chan->tx_skb) {
@@ -719,13 +704,13 @@ static void cosa_sppp_timeout(struct net_device *dev)
 	netif_wake_queue(dev);
 }
 
-static int cosa_sppp_close(struct net_device *d)
+static int cosa_net_close(struct net_device *dev)
 {
-	struct channel_data *chan = d->priv;
+	struct channel_data *chan = dev_to_chan(dev);
 	unsigned long flags;
 
-	netif_stop_queue(d);
-	sppp_close(d);
+	netif_stop_queue(dev);
+	hdlc_close(dev);
 	cosa_disable_rx(chan);
 	spin_lock_irqsave(&chan->cosa->lock, flags);
 	if (chan->rx_skb) {
@@ -736,83 +721,68 @@ static int cosa_sppp_close(struct net_device *d)
 		kfree_skb(chan->tx_skb);
 		chan->tx_skb = NULL;
 	}
-	chan->usage=0;
+	chan->usage = 0;
 	chan->cosa->usage--;
 	spin_unlock_irqrestore(&chan->cosa->lock, flags);
 	return 0;
 }
 
-static char *sppp_setup_rx(struct channel_data *chan, int size)
+static char *cosa_net_setup_rx(struct channel_data *chan, int size)
 {
 	/*
 	 * We can safely fall back to non-dma-able memory, because we have
 	 * the cosa->bouncebuf pre-allocated.
 	 */
-	if (chan->rx_skb)
-		kfree_skb(chan->rx_skb);
+	kfree_skb(chan->rx_skb);
 	chan->rx_skb = dev_alloc_skb(size);
 	if (chan->rx_skb == NULL) {
 		printk(KERN_NOTICE "%s: Memory squeeze, dropping packet\n",
 			chan->name);
-		chan->stats.rx_dropped++;
+		chan->netdev->stats.rx_dropped++;
 		return NULL;
 	}
-	chan->pppdev.dev->trans_start = jiffies;
+	chan->netdev->trans_start = jiffies;
 	return skb_put(chan->rx_skb, size);
 }
 
-static int sppp_rx_done(struct channel_data *chan)
+static int cosa_net_rx_done(struct channel_data *chan)
 {
 	if (!chan->rx_skb) {
 		printk(KERN_WARNING "%s: rx_done with empty skb!\n",
 			chan->name);
-		chan->stats.rx_errors++;
-		chan->stats.rx_frame_errors++;
+		chan->netdev->stats.rx_errors++;
+		chan->netdev->stats.rx_frame_errors++;
 		return 0;
 	}
-	chan->rx_skb->protocol = htons(ETH_P_WAN_PPP);
-	chan->rx_skb->dev = chan->pppdev.dev;
+	chan->rx_skb->protocol = hdlc_type_trans(chan->rx_skb, chan->netdev);
+	chan->rx_skb->dev = chan->netdev;
 	skb_reset_mac_header(chan->rx_skb);
-	chan->stats.rx_packets++;
-	chan->stats.rx_bytes += chan->cosa->rxsize;
+	chan->netdev->stats.rx_packets++;
+	chan->netdev->stats.rx_bytes += chan->cosa->rxsize;
 	netif_rx(chan->rx_skb);
 	chan->rx_skb = NULL;
-	chan->pppdev.dev->last_rx = jiffies;
 	return 0;
 }
 
 /* ARGSUSED */
-static int sppp_tx_done(struct channel_data *chan, int size)
+static int cosa_net_tx_done(struct channel_data *chan, int size)
 {
 	if (!chan->tx_skb) {
 		printk(KERN_WARNING "%s: tx_done with empty skb!\n",
 			chan->name);
-		chan->stats.tx_errors++;
-		chan->stats.tx_aborted_errors++;
+		chan->netdev->stats.tx_errors++;
+		chan->netdev->stats.tx_aborted_errors++;
 		return 1;
 	}
 	dev_kfree_skb_irq(chan->tx_skb);
 	chan->tx_skb = NULL;
-	chan->stats.tx_packets++;
-	chan->stats.tx_bytes += size;
-	netif_wake_queue(chan->pppdev.dev);
+	chan->netdev->stats.tx_packets++;
+	chan->netdev->stats.tx_bytes += size;
+	netif_wake_queue(chan->netdev);
 	return 1;
 }
 
-static struct net_device_stats *cosa_net_stats(struct net_device *dev)
-{
-	struct channel_data *chan = dev->priv;
-	return &chan->stats;
-}
-
-
 /*---------- Character device ---------- */
-
-static void chardev_channel_init(struct channel_data *chan)
-{
-	init_MUTEX(&chan->rsem);
-	init_MUTEX(&chan->wsem);
-}
 
 static ssize_t cosa_read(struct file *file,
 	char __user *buf, size_t count, loff_t *ppos)
@@ -828,12 +798,12 @@ static ssize_t cosa_read(struct file *file,
 			cosa->name, cosa->firmware_status);
 		return -EPERM;
 	}
-	if (down_interruptible(&chan->rsem))
+	if (mutex_lock_interruptible(&chan->rlock))
 		return -ERESTARTSYS;
 	
 	if ((chan->rxdata = kmalloc(COSA_MTU, GFP_DMA|GFP_KERNEL)) == NULL) {
 		printk(KERN_INFO "%s: cosa_read() - OOM\n", cosa->name);
-		up(&chan->rsem);
+		mutex_unlock(&chan->rlock);
 		return -ENOMEM;
 	}
 
@@ -841,7 +811,7 @@ static ssize_t cosa_read(struct file *file,
 	cosa_enable_rx(chan);
 	spin_lock_irqsave(&cosa->lock, flags);
 	add_wait_queue(&chan->rxwaitq, &wait);
-	while(!chan->rx_status) {
+	while (!chan->rx_status) {
 		current->state = TASK_INTERRUPTIBLE;
 		spin_unlock_irqrestore(&cosa->lock, flags);
 		schedule();
@@ -851,7 +821,7 @@ static ssize_t cosa_read(struct file *file,
 			remove_wait_queue(&chan->rxwaitq, &wait);
 			current->state = TASK_RUNNING;
 			spin_unlock_irqrestore(&cosa->lock, flags);
-			up(&chan->rsem);
+			mutex_unlock(&chan->rlock);
 			return -ERESTARTSYS;
 		}
 	}
@@ -860,7 +830,7 @@ static ssize_t cosa_read(struct file *file,
 	kbuf = chan->rxdata;
 	count = chan->rxsize;
 	spin_unlock_irqrestore(&cosa->lock, flags);
-	up(&chan->rsem);
+	mutex_unlock(&chan->rlock);
 
 	if (copy_to_user(buf, kbuf, count)) {
 		kfree(kbuf);
@@ -926,7 +896,7 @@ static ssize_t cosa_write(struct file *file,
 
 	spin_lock_irqsave(&cosa->lock, flags);
 	add_wait_queue(&chan->txwaitq, &wait);
-	while(!chan->tx_status) {
+	while (!chan->tx_status) {
 		current->state = TASK_INTERRUPTIBLE;
 		spin_unlock_irqrestore(&cosa->lock, flags);
 		schedule();
@@ -937,6 +907,7 @@ static ssize_t cosa_write(struct file *file,
 			current->state = TASK_RUNNING;
 			chan->tx_status = 1;
 			spin_unlock_irqrestore(&cosa->lock, flags);
+			up(&chan->wsem);
 			return -ERESTARTSYS;
 		}
 	}
@@ -971,15 +942,21 @@ static int cosa_open(struct inode *inode, struct file *file)
 	struct channel_data *chan;
 	unsigned long flags;
 	int n;
+	int ret = 0;
 
+	mutex_lock(&cosa_chardev_mutex);
 	if ((n=iminor(file->f_path.dentry->d_inode)>>CARD_MINOR_BITS)
-		>= nr_cards)
-		return -ENODEV;
+		>= nr_cards) {
+		ret = -ENODEV;
+		goto out;
+	}
 	cosa = cosa_cards+n;
 
 	if ((n=iminor(file->f_path.dentry->d_inode)
-		& ((1<<CARD_MINOR_BITS)-1)) >= cosa->nchannels)
-		return -ENODEV;
+		& ((1<<CARD_MINOR_BITS)-1)) >= cosa->nchannels) {
+		ret = -ENODEV;
+		goto out;
+	}
 	chan = cosa->chan + n;
 	
 	file->private_data = chan;
@@ -988,7 +965,8 @@ static int cosa_open(struct inode *inode, struct file *file)
 
 	if (chan->usage < 0) { /* in netdev mode */
 		spin_unlock_irqrestore(&cosa->lock, flags);
-		return -EBUSY;
+		ret = -EBUSY;
+		goto out;
 	}
 	cosa->usage++;
 	chan->usage++;
@@ -997,7 +975,9 @@ static int cosa_open(struct inode *inode, struct file *file)
 	chan->setup_rx = chrdev_setup_rx;
 	chan->rx_done = chrdev_rx_done;
 	spin_unlock_irqrestore(&cosa->lock, flags);
-	return 0;
+out:
+	mutex_unlock(&cosa_chardev_mutex);
+	return ret;
 }
 
 static int cosa_release(struct inode *inode, struct file *file)
@@ -1021,8 +1001,8 @@ static struct fasync_struct *fasync[256] = { NULL, };
 static int cosa_fasync(struct inode *inode, struct file *file, int on)
 {
         int port = iminor(inode);
-        int rv = fasync_helper(inode, file, on, &fasync[port]);
-        return rv < 0 ? rv : 0;
+
+	return fasync_helper(inode, file, on, &fasync[port]);
 }
 #endif
 
@@ -1173,7 +1153,7 @@ static int cosa_ioctl_common(struct cosa_data *cosa,
 	struct channel_data *channel, unsigned int cmd, unsigned long arg)
 {
 	void __user *argp = (void __user *)arg;
-	switch(cmd) {
+	switch (cmd) {
 	case COSAIORSET:	/* Reset the device */
 		if (!capable(CAP_NET_ADMIN))
 			return -EACCES;
@@ -1214,24 +1194,29 @@ static int cosa_ioctl_common(struct cosa_data *cosa,
 	return -ENOIOCTLCMD;
 }
 
-static int cosa_sppp_ioctl(struct net_device *dev, struct ifreq *ifr,
-	int cmd)
+static int cosa_net_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
 {
 	int rv;
-	struct channel_data *chan = dev->priv;
-	rv = cosa_ioctl_common(chan->cosa, chan, cmd, (unsigned long)ifr->ifr_data);
-	if (rv == -ENOIOCTLCMD) {
-		return sppp_do_ioctl(dev, ifr, cmd);
-	}
-	return rv;
+	struct channel_data *chan = dev_to_chan(dev);
+	rv = cosa_ioctl_common(chan->cosa, chan, cmd,
+			       (unsigned long)ifr->ifr_data);
+	if (rv != -ENOIOCTLCMD)
+		return rv;
+	return hdlc_ioctl(dev, ifr, cmd);
 }
 
-static int cosa_chardev_ioctl(struct inode *inode, struct file *file,
-	unsigned int cmd, unsigned long arg)
+static long cosa_chardev_ioctl(struct file *file, unsigned int cmd,
+							unsigned long arg)
 {
 	struct channel_data *channel = file->private_data;
-	struct cosa_data *cosa = channel->cosa;
-	return cosa_ioctl_common(cosa, channel, cmd, arg);
+	struct cosa_data *cosa;
+	long ret;
+
+	mutex_lock(&cosa_chardev_mutex);
+	cosa = channel->cosa;
+	ret = cosa_ioctl_common(cosa, channel, cmd, arg);
+	mutex_unlock(&cosa_chardev_mutex);
+	return ret;
 }
 
 
@@ -1719,7 +1704,7 @@ static inline void tx_interrupt(struct cosa_data *cosa, int status)
 			spin_unlock_irqrestore(&cosa->lock, flags);
 			return;
 		}
-		while(1) {
+		while (1) {
 			cosa->txchan++;
 			i++;
 			if (cosa->txchan >= cosa->nchannels)
@@ -2025,7 +2010,7 @@ again:
 static void debug_status_in(struct cosa_data *cosa, int status)
 {
 	char *s;
-	switch(status & SR_CMD_FROM_SRP_MASK) {
+	switch (status & SR_CMD_FROM_SRP_MASK) {
 	case SR_UP_REQUEST:
 		s = "RX_REQ";
 		break;

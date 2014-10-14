@@ -5,7 +5,7 @@
  * in an architecture-specific manner due to speed..
  * Comments in other versions indicate that the algorithms are from RFC1071
  *
- * accellerated versions (and 21264 assembly versions ) contributed by
+ * accelerated versions (and 21264 assembly versions ) contributed by
  *	Rick Gorton	<rick.gorton@alpha-processor.com>
  */
  
@@ -69,6 +69,7 @@ __wsum csum_tcpudp_nofold(__be32 saddr, __be32 daddr,
 	result = (result & 0xffffffff) + (result >> 32);
 	return (__force __wsum)result;
 }
+EXPORT_SYMBOL(csum_tcpudp_nofold);
 
 /*
  * Do a 64-bit checksum on an arbitrary memory area..

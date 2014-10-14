@@ -80,21 +80,21 @@
 /* SCSPTR1 data */
 unsigned char scsptr1_data;
 
-#define RS5C313_CEENABLE    ctrl_outb(RS5C313_CE_RTCCE, RS5C313_CE);
-#define RS5C313_CEDISABLE   ctrl_outb(0x00, RS5C313_CE)
-#define RS5C313_MISCOP      ctrl_outb(0x02, 0xB0000008)
+#define RS5C313_CEENABLE    __raw_writeb(RS5C313_CE_RTCCE, RS5C313_CE);
+#define RS5C313_CEDISABLE   __raw_writeb(0x00, RS5C313_CE)
+#define RS5C313_MISCOP      __raw_writeb(0x02, 0xB0000008)
 
 static void rs5c313_init_port(void)
 {
 	/* Set SCK as I/O port and Initialize SCSPTR1 data & I/O port. */
-	ctrl_outb(ctrl_inb(SCSMR1) & ~SCSMR1_CA, SCSMR1);
-	ctrl_outb(ctrl_inb(SCSCR1) & ~SCSCR1_CKE, SCSCR1);
+	__raw_writeb(__raw_readb(SCSMR1) & ~SCSMR1_CA, SCSMR1);
+	__raw_writeb(__raw_readb(SCSCR1) & ~SCSCR1_CKE, SCSCR1);
 
 	/* And Initialize SCL for RS5C313 clock */
-	scsptr1_data = ctrl_inb(SCSPTR1) | SCL;	/* SCL:H */
-	ctrl_outb(scsptr1_data, SCSPTR1);
-	scsptr1_data = ctrl_inb(SCSPTR1) | SCL_OEN;	/* SCL output enable */
-	ctrl_outb(scsptr1_data, SCSPTR1);
+	scsptr1_data = __raw_readb(SCSPTR1) | SCL;	/* SCL:H */
+	__raw_writeb(scsptr1_data, SCSPTR1);
+	scsptr1_data = __raw_readb(SCSPTR1) | SCL_OEN;	/* SCL output enable */
+	__raw_writeb(scsptr1_data, SCSPTR1);
 	RS5C313_CEDISABLE;	/* CE:L */
 }
 
@@ -106,21 +106,21 @@ static void rs5c313_write_data(unsigned char data)
 		/* SDA:Write Data */
 		scsptr1_data = (scsptr1_data & ~SDA) |
 				((((0x80 >> i) & data) >> (7 - i)) << 2);
-		ctrl_outb(scsptr1_data, SCSPTR1);
+		__raw_writeb(scsptr1_data, SCSPTR1);
 		if (i == 0) {
 			scsptr1_data |= SDA_OEN;	/* SDA:output enable */
-			ctrl_outb(scsptr1_data, SCSPTR1);
+			__raw_writeb(scsptr1_data, SCSPTR1);
 		}
 		ndelay(700);
 		scsptr1_data &= ~SCL;	/* SCL:L */
-		ctrl_outb(scsptr1_data, SCSPTR1);
+		__raw_writeb(scsptr1_data, SCSPTR1);
 		ndelay(700);
 		scsptr1_data |= SCL;	/* SCL:H */
-		ctrl_outb(scsptr1_data, SCSPTR1);
+		__raw_writeb(scsptr1_data, SCSPTR1);
 	}
 
 	scsptr1_data &= ~SDA_OEN;	/* SDA:output disable */
-	ctrl_outb(scsptr1_data, SCSPTR1);
+	__raw_writeb(scsptr1_data, SCSPTR1);
 }
 
 static unsigned char rs5c313_read_data(void)
@@ -131,12 +131,12 @@ static unsigned char rs5c313_read_data(void)
 	for (i = 0; i < 8; i++) {
 		ndelay(700);
 		/* SDA:Read Data */
-		data |= ((ctrl_inb(SCSPTR1) & SDA) >> 2) << (7 - i);
+		data |= ((__raw_readb(SCSPTR1) & SDA) >> 2) << (7 - i);
 		scsptr1_data &= ~SCL;	/* SCL:L */
-		ctrl_outb(scsptr1_data, SCSPTR1);
+		__raw_writeb(scsptr1_data, SCSPTR1);
 		ndelay(700);
 		scsptr1_data |= SCL;	/* SCL:H */
-		ctrl_outb(scsptr1_data, SCSPTR1);
+		__raw_writeb(scsptr1_data, SCSPTR1);
 	}
 	return data & 0x0F;
 }
@@ -228,40 +228,40 @@ static int rs5c313_rtc_read_time(struct device *dev, struct rtc_time *tm)
 		ndelay(700);	/* CE:L */
 
 		if (cnt++ > 100) {
-			dev_err(dev, "%s: timeout error\n", __FUNCTION__);
+			dev_err(dev, "%s: timeout error\n", __func__);
 			return -EIO;
 		}
 	}
 
 	data = rs5c313_read_reg(RS5C313_ADDR_SEC);
 	data |= (rs5c313_read_reg(RS5C313_ADDR_SEC10) << 4);
-	tm->tm_sec = BCD2BIN(data);
+	tm->tm_sec = bcd2bin(data);
 
 	data = rs5c313_read_reg(RS5C313_ADDR_MIN);
 	data |= (rs5c313_read_reg(RS5C313_ADDR_MIN10) << 4);
-	tm->tm_min = BCD2BIN(data);
+	tm->tm_min = bcd2bin(data);
 
 	data = rs5c313_read_reg(RS5C313_ADDR_HOUR);
 	data |= (rs5c313_read_reg(RS5C313_ADDR_HOUR10) << 4);
-	tm->tm_hour = BCD2BIN(data);
+	tm->tm_hour = bcd2bin(data);
 
 	data = rs5c313_read_reg(RS5C313_ADDR_DAY);
 	data |= (rs5c313_read_reg(RS5C313_ADDR_DAY10) << 4);
-	tm->tm_mday = BCD2BIN(data);
+	tm->tm_mday = bcd2bin(data);
 
 	data = rs5c313_read_reg(RS5C313_ADDR_MON);
 	data |= (rs5c313_read_reg(RS5C313_ADDR_MON10) << 4);
-	tm->tm_mon = BCD2BIN(data) - 1;
+	tm->tm_mon = bcd2bin(data) - 1;
 
 	data = rs5c313_read_reg(RS5C313_ADDR_YEAR);
 	data |= (rs5c313_read_reg(RS5C313_ADDR_YEAR10) << 4);
-	tm->tm_year = BCD2BIN(data);
+	tm->tm_year = bcd2bin(data);
 
 	if (tm->tm_year < 70)
 		tm->tm_year += 100;
 
 	data = rs5c313_read_reg(RS5C313_ADDR_WEEK);
-	tm->tm_wday = BCD2BIN(data);
+	tm->tm_wday = bcd2bin(data);
 
 	RS5C313_CEDISABLE;
 	ndelay(700);		/* CE:L */
@@ -289,36 +289,36 @@ static int rs5c313_rtc_set_time(struct device *dev, struct rtc_time *tm)
 		ndelay(700);	/* CE:L */
 
 		if (cnt++ > 100) {
-			dev_err(dev, "%s: timeout error\n", __FUNCTION__);
+			dev_err(dev, "%s: timeout error\n", __func__);
 			return -EIO;
 		}
 	}
 
-	data = BIN2BCD(tm->tm_sec);
+	data = bin2bcd(tm->tm_sec);
 	rs5c313_write_reg(RS5C313_ADDR_SEC, data);
 	rs5c313_write_reg(RS5C313_ADDR_SEC10, (data >> 4));
 
-	data = BIN2BCD(tm->tm_min);
+	data = bin2bcd(tm->tm_min);
 	rs5c313_write_reg(RS5C313_ADDR_MIN, data );
 	rs5c313_write_reg(RS5C313_ADDR_MIN10, (data >> 4));
 
-	data = BIN2BCD(tm->tm_hour);
+	data = bin2bcd(tm->tm_hour);
 	rs5c313_write_reg(RS5C313_ADDR_HOUR, data);
 	rs5c313_write_reg(RS5C313_ADDR_HOUR10, (data >> 4));
 
-	data = BIN2BCD(tm->tm_mday);
+	data = bin2bcd(tm->tm_mday);
 	rs5c313_write_reg(RS5C313_ADDR_DAY, data);
 	rs5c313_write_reg(RS5C313_ADDR_DAY10, (data>> 4));
 
-	data = BIN2BCD(tm->tm_mon + 1);
+	data = bin2bcd(tm->tm_mon + 1);
 	rs5c313_write_reg(RS5C313_ADDR_MON, data);
 	rs5c313_write_reg(RS5C313_ADDR_MON10, (data >> 4));
 
-	data = BIN2BCD(tm->tm_year % 100);
+	data = bin2bcd(tm->tm_year % 100);
 	rs5c313_write_reg(RS5C313_ADDR_YEAR, data);
 	rs5c313_write_reg(RS5C313_ADDR_YEAR10, (data >> 4));
 
-	data = BIN2BCD(tm->tm_wday);
+	data = bin2bcd(tm->tm_wday);
 	rs5c313_write_reg(RS5C313_ADDR_WEEK, data);
 
 	RS5C313_CEDISABLE;	/* CE:H */
@@ -421,3 +421,4 @@ MODULE_VERSION(DRV_VERSION);
 MODULE_AUTHOR("kogiidena , Nobuhiro Iwamatsu <iwamatsu@nigauri.org>");
 MODULE_DESCRIPTION("Ricoh RS5C313 RTC device driver");
 MODULE_LICENSE("GPL");
+MODULE_ALIAS("platform:" DRV_NAME);

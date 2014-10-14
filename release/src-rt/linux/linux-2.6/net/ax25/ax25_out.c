@@ -19,6 +19,7 @@
 #include <linux/sockios.h>
 #include <linux/spinlock.h>
 #include <linux/net.h>
+#include <linux/slab.h>
 #include <net/ax25.h>
 #include <linux/inet.h>
 #include <linux/netdevice.h>
@@ -92,6 +93,12 @@ ax25_cb *ax25_send_frame(struct sk_buff *skb, int paclen, ax25_address *src, ax2
 #endif
 	}
 
+	/*
+	 * There is one ref for the state machine; a caller needs
+	 * one more to put it back, just like with the existing one.
+	 */
+	ax25_cb_hold(ax25);
+
 	ax25_cb_add(ax25);
 
 	ax25->state = AX25_STATE_1;
@@ -116,6 +123,12 @@ void ax25_output(ax25_cb *ax25, int paclen, struct sk_buff *skb)
 	struct sk_buff *skbn;
 	unsigned char *p;
 	int frontlen, len, fragno, ka9qfrag, first = 1;
+
+	if (paclen < 16) {
+		WARN_ON_ONCE(1);
+		kfree_skb(skb);
+		return;
+	}
 
 	if ((skb->len - 1) > paclen) {
 		if (*skb->data == AX25_P_TEXT) {
@@ -251,8 +264,6 @@ void ax25_kick(ax25_cb *ax25)
 	if (start == end)
 		return;
 
-	ax25->vs = start;
-
 	/*
 	 * Transmit data until either we're out of data to send or
 	 * the window is full. Send a poll on the final I frame if
@@ -261,8 +272,13 @@ void ax25_kick(ax25_cb *ax25)
 
 	/*
 	 * Dequeue the frame and copy it.
+	 * Check for race with ax25_clear_queues().
 	 */
 	skb  = skb_dequeue(&ax25->write_queue);
+	if (!skb)
+		return;
+
+	ax25->vs = start;
 
 	do {
 		if ((skbn = skb_clone(skb, GFP_ATOMIC)) == NULL) {

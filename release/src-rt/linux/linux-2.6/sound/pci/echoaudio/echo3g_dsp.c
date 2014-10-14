@@ -47,7 +47,8 @@ static int init_hw(struct echoaudio *chip, u16 device_id, u16 subdevice_id)
 
 	local_irq_enable();
 	DE_INIT(("init_hw() - Echo3G\n"));
-	snd_assert((subdevice_id & 0xfff0) == ECHO3G, return -ENODEV);
+	if (snd_BUG_ON((subdevice_id & 0xfff0) != ECHO3G))
+		return -ENODEV;
 
 	if ((err = init_dsp_comm_page(chip))) {
 		DE_INIT(("init_hw - could not initialize DSP comm page\n"));
@@ -55,12 +56,12 @@ static int init_hw(struct echoaudio *chip, u16 device_id, u16 subdevice_id)
 	}
 
 	chip->comm_page->e3g_frq_register =
-		__constant_cpu_to_le32((E3G_MAGIC_NUMBER / 48000) - 2);
+		cpu_to_le32((E3G_MAGIC_NUMBER / 48000) - 2);
 	chip->device_id = device_id;
 	chip->subdevice_id = subdevice_id;
 	chip->bad_board = TRUE;
 	chip->has_midi = TRUE;
-	chip->dsp_code_to_load = &card_fw[FW_ECHO3G_DSP];
+	chip->dsp_code_to_load = FW_ECHO3G_DSP;
 
 	/* Load the DSP code and the ASIC on the PCI card and get
 	what type of external box is attached */
@@ -96,21 +97,21 @@ static int init_hw(struct echoaudio *chip, u16 device_id, u16 subdevice_id)
 	chip->digital_modes =	ECHOCAPS_HAS_DIGITAL_MODE_SPDIF_RCA |
 				ECHOCAPS_HAS_DIGITAL_MODE_SPDIF_OPTICAL |
 				ECHOCAPS_HAS_DIGITAL_MODE_ADAT;
-	chip->digital_mode =	DIGITAL_MODE_SPDIF_RCA;
-	chip->professional_spdif = FALSE;
-	chip->non_audio_spdif = FALSE;
-	chip->bad_board = FALSE;
-
-	if ((err = init_line_levels(chip)) < 0)
-		return err;
-	err = set_digital_mode(chip, DIGITAL_MODE_SPDIF_RCA);
-	snd_assert(err >= 0, return err);
-	err = set_phantom_power(chip, 0);
-	snd_assert(err >= 0, return err);
-	err = set_professional_spdif(chip, TRUE);
 
 	DE_INIT(("init_hw done\n"));
 	return err;
+}
+
+
+
+static int set_mixer_defaults(struct echoaudio *chip)
+{
+	chip->digital_mode = DIGITAL_MODE_SPDIF_RCA;
+	chip->professional_spdif = FALSE;
+	chip->non_audio_spdif = FALSE;
+	chip->bad_board = FALSE;
+	chip->phantom_power = FALSE;
+	return init_line_levels(chip);
 }
 
 

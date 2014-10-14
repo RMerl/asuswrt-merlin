@@ -17,20 +17,21 @@
 #include <linux/sysdev.h>
 #include <linux/serial_core.h>
 
-#include <asm/dma.h>
-#include <asm/arch/dma.h>
+#include <mach/map.h>
+#include <mach/dma.h>
 
-#include <asm/plat-s3c24xx/cpu.h>
-#include <asm/plat-s3c24xx/dma.h>
+#include <plat/cpu.h>
+#include <plat/dma-s3c24xx.h>
 
-#include <asm/arch/regs-serial.h>
-#include <asm/arch/regs-gpio.h>
-#include <asm/arch/regs-ac97.h>
-#include <asm/arch/regs-mem.h>
-#include <asm/arch/regs-lcd.h>
-#include <asm/arch/regs-sdi.h>
-#include <asm/arch/regs-iis.h>
-#include <asm/arch/regs-spi.h>
+#include <plat/regs-serial.h>
+#include <mach/regs-gpio.h>
+#include <plat/regs-ac97.h>
+#include <plat/regs-dma.h>
+#include <mach/regs-mem.h>
+#include <mach/regs-lcd.h>
+#include <mach/regs-sdi.h>
+#include <plat/regs-iis.h>
+#include <plat/regs-spi.h>
 
 static struct s3c24xx_dma_map __initdata s3c2410_dma_mappings[] = {
 	[DMACH_XD0] = {
@@ -145,7 +146,7 @@ static struct s3c24xx_dma_order __initdata s3c2410_dma_order = {
 	},
 };
 
-static int s3c2410_dma_add(struct sys_device *sysdev)
+static int __init s3c2410_dma_add(struct sys_device *sysdev)
 {
 	s3c2410_dma_init();
 	s3c24xx_dma_order_set(&s3c2410_dma_order);
@@ -163,6 +164,17 @@ static int __init s3c2410_dma_drvinit(void)
 }
 
 arch_initcall(s3c2410_dma_drvinit);
+
+static struct sysdev_driver s3c2410a_dma_driver = {
+	.add	= s3c2410_dma_add,
+};
+
+static int __init s3c2410a_dma_drvinit(void)
+{
+	return sysdev_driver_register(&s3c2410a_sysclass, &s3c2410a_dma_driver);
+}
+
+arch_initcall(s3c2410a_dma_drvinit);
 #endif
 
 #if defined(CONFIG_CPU_S3C2442)

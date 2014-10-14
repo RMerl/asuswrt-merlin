@@ -30,14 +30,13 @@
  * ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
- *
- * $Id: mthca_cmd.c 1349 2004-12-16 21:09:43Z roland $
  */
 
 #include <linux/completion.h>
 #include <linux/pci.h>
 #include <linux/errno.h>
 #include <linux/sched.h>
+#include <linux/slab.h>
 #include <asm/io.h>
 #include <rdma/ib_mad.h>
 
@@ -159,13 +158,15 @@ enum {
 enum {
 	CMD_TIME_CLASS_A = (HZ + 999) / 1000 + 1,
 	CMD_TIME_CLASS_B = (HZ +  99) /  100 + 1,
-	CMD_TIME_CLASS_C = (HZ +   9) /   10 + 1
+	CMD_TIME_CLASS_C = (HZ +   9) /   10 + 1,
+	CMD_TIME_CLASS_D = 60 * HZ
 };
 #else
 enum {
 	CMD_TIME_CLASS_A = 60 * HZ,
 	CMD_TIME_CLASS_B = 60 * HZ,
-	CMD_TIME_CLASS_C = 60 * HZ
+	CMD_TIME_CLASS_C = 60 * HZ,
+	CMD_TIME_CLASS_D = 60 * HZ
 };
 #endif
 
@@ -219,7 +220,7 @@ static void mthca_cmd_post_dbell(struct mthca_dev *dev,
 	__raw_writel((__force u32) cpu_to_be32((1 << HCR_GO_BIT)                |
 					       (1 << HCA_E_BIT)                 |
 					       (op_modifier << HCR_OPMOD_SHIFT) |
-					        op),                      ptr + offs[6]);
+						op),			  ptr + offs[6]);
 	wmb();
 	__raw_writel((__force u32) 0,                                     ptr + offs[7]);
 	wmb();
@@ -290,6 +291,12 @@ static int mthca_cmd_post(struct mthca_dev *dev,
 		err = mthca_cmd_post_hcr(dev, in_param, out_param, in_modifier,
 					 op_modifier, op, token, event);
 
+	/*
+	 * Make sure that our HCR writes don't get mixed in with
+	 * writes from another CPU starting a FW command.
+	 */
+	mmiowb();
+
 	mutex_unlock(&dev->cmd.hcr_mutex);
 	return err;
 }
@@ -357,8 +364,6 @@ void mthca_cmd_event(struct mthca_dev *dev,
 	context->status    = status;
 	context->out_param = out_param;
 
-	context->token += dev->cmd.token_mask + 1;
-
 	complete(&context->done);
 }
 
@@ -380,6 +385,7 @@ static int mthca_cmd_wait(struct mthca_dev *dev,
 	spin_lock(&dev->cmd.context_lock);
 	BUG_ON(dev->cmd.free_head < 0);
 	context = &dev->cmd.context[dev->cmd.free_head];
+	context->token += dev->cmd.token_mask + 1;
 	dev->cmd.free_head = context->next;
 	spin_unlock(&dev->cmd.context_lock);
 
@@ -595,7 +601,7 @@ int mthca_SYS_EN(struct mthca_dev *dev, u8 *status)
 	u64 out;
 	int ret;
 
-	ret = mthca_cmd_imm(dev, 0, &out, 0, 0, CMD_SYS_EN, HZ, status);
+	ret = mthca_cmd_imm(dev, 0, &out, 0, 0, CMD_SYS_EN, CMD_TIME_CLASS_D, status);
 
 	if (*status == MTHCA_CMD_STAT_DDR_MEM_ERR)
 		mthca_warn(dev, "SYS_EN DDR error: syn=%x, sock=%d, "
@@ -608,7 +614,7 @@ int mthca_SYS_EN(struct mthca_dev *dev, u8 *status)
 
 int mthca_SYS_DIS(struct mthca_dev *dev, u8 *status)
 {
-	return mthca_cmd(dev, 0, 0, 0, CMD_SYS_DIS, HZ, status);
+	return mthca_cmd(dev, 0, 0, 0, CMD_SYS_DIS, CMD_TIME_CLASS_C, status);
 }
 
 static int mthca_map_cmd(struct mthca_dev *dev, u16 op, struct mthca_icm *icm,
@@ -707,7 +713,7 @@ int mthca_RUN_FW(struct mthca_dev *dev, u8 *status)
 
 static void mthca_setup_cmd_doorbells(struct mthca_dev *dev, u64 base)
 {
-	unsigned long addr;
+	phys_addr_t addr;
 	u16 max_off = 0;
 	int i;
 
@@ -1054,7 +1060,7 @@ int mthca_QUERY_DEV_LIM(struct mthca_dev *dev,
 	MTHCA_GET(field, outbox, QUERY_DEV_LIM_RSVD_MTT_OFFSET);
 	if (mthca_is_memfree(dev))
 		dev_lim->reserved_mtts = ALIGN((1 << (field >> 4)) * sizeof(u64),
-					       MTHCA_MTT_SEG_SIZE) / MTHCA_MTT_SEG_SIZE;
+					       dev->limits.mtt_seg_size) / dev->limits.mtt_seg_size;
 	else
 		dev_lim->reserved_mtts = 1 << (field >> 4);
 	MTHCA_GET(field, outbox, QUERY_DEV_LIM_MAX_MRW_SZ_OFFSET);
@@ -1250,9 +1256,14 @@ int mthca_QUERY_ADAPTER(struct mthca_dev *dev,
 	if (err)
 		goto out;
 
-	MTHCA_GET(adapter->vendor_id, outbox,   QUERY_ADAPTER_VENDOR_ID_OFFSET);
-	MTHCA_GET(adapter->device_id, outbox,   QUERY_ADAPTER_DEVICE_ID_OFFSET);
-	MTHCA_GET(adapter->revision_id, outbox, QUERY_ADAPTER_REVISION_ID_OFFSET);
+	if (!mthca_is_memfree(dev)) {
+		MTHCA_GET(adapter->vendor_id, outbox,
+			  QUERY_ADAPTER_VENDOR_ID_OFFSET);
+		MTHCA_GET(adapter->device_id, outbox,
+			  QUERY_ADAPTER_DEVICE_ID_OFFSET);
+		MTHCA_GET(adapter->revision_id, outbox,
+			  QUERY_ADAPTER_REVISION_ID_OFFSET);
+	}
 	MTHCA_GET(adapter->inta_pin, outbox,    QUERY_ADAPTER_INTA_PIN_OFFSET);
 
 	get_board_id(outbox + QUERY_ADAPTER_VSD_OFFSET / 4,
@@ -1329,6 +1340,10 @@ int mthca_INIT_HCA(struct mthca_dev *dev,
 	/* Check port for UD address vector: */
 	*(inbox + INIT_HCA_FLAGS2_OFFSET / 4) |= cpu_to_be32(1);
 
+	/* Enable IPoIB checksumming if we can: */
+	if (dev->device_cap_flags & IB_DEVICE_UD_IP_CSUM)
+		*(inbox + INIT_HCA_FLAGS2_OFFSET / 4) |= cpu_to_be32(7 << 3);
+
 	/* We leave wqe_quota, responder_exu, etc as 0 (default) */
 
 	/* QPC/EEC/CQC/EQC/RDB attributes */
@@ -1378,7 +1393,7 @@ int mthca_INIT_HCA(struct mthca_dev *dev,
 		MTHCA_PUT(inbox, param->uarc_base,   INIT_HCA_UAR_CTX_BASE_OFFSET);
 	}
 
-	err = mthca_cmd(dev, mailbox->dma, 0, 0, CMD_INIT_HCA, HZ, status);
+	err = mthca_cmd(dev, mailbox->dma, 0, 0, CMD_INIT_HCA, CMD_TIME_CLASS_D, status);
 
 	mthca_free_mailbox(dev, mailbox);
 	return err;
@@ -1438,12 +1453,12 @@ int mthca_INIT_IB(struct mthca_dev *dev,
 
 int mthca_CLOSE_IB(struct mthca_dev *dev, int port, u8 *status)
 {
-	return mthca_cmd(dev, 0, port, 0, CMD_CLOSE_IB, HZ, status);
+	return mthca_cmd(dev, 0, port, 0, CMD_CLOSE_IB, CMD_TIME_CLASS_A, status);
 }
 
 int mthca_CLOSE_HCA(struct mthca_dev *dev, int panic, u8 *status)
 {
-	return mthca_cmd(dev, 0, 0, panic, CMD_CLOSE_HCA, HZ, status);
+	return mthca_cmd(dev, 0, 0, panic, CMD_CLOSE_HCA, CMD_TIME_CLASS_C, status);
 }
 
 int mthca_SET_IB(struct mthca_dev *dev, struct mthca_set_ib_param *param,
@@ -1802,7 +1817,7 @@ int mthca_CONF_SPECIAL_QP(struct mthca_dev *dev, int type, u32 qpn,
 	case IB_QPT_RAW_IPV6:
 		op_mod = 2;
 		break;
-	case IB_QPT_RAW_ETY:
+	case IB_QPT_RAW_ETHERTYPE:
 		op_mod = 3;
 		break;
 	default:

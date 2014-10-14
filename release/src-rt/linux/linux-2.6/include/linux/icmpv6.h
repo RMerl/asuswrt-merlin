@@ -1,6 +1,7 @@
 #ifndef _LINUX_ICMPV6_H
 #define _LINUX_ICMPV6_H
 
+#include <linux/types.h>
 #include <asm/byteorder.h>
 
 struct icmp6hdr {
@@ -40,16 +41,18 @@ struct icmp6hdr {
                 struct icmpv6_nd_ra {
 			__u8		hop_limit;
 #if defined(__LITTLE_ENDIAN_BITFIELD)
-			__u8		reserved:4,
+			__u8		reserved:3,
 					router_pref:2,
+					home_agent:1,
 					other:1,
 					managed:1;
 
 #elif defined(__BIG_ENDIAN_BITFIELD)
 			__u8		managed:1,
 					other:1,
+					home_agent:1,
 					router_pref:2,
-					reserved:4;
+					reserved:3;
 #else
 #error	"Please fix <asm/byteorder.h>"
 #endif
@@ -120,7 +123,6 @@ static inline struct icmp6hdr *icmp6_hdr(const struct sk_buff *skb)
 #define ICMPV6_NOT_NEIGHBOUR		2
 #define ICMPV6_ADDR_UNREACH		3
 #define ICMPV6_PORT_UNREACH		4
-#define ICMPV6_SRC_ADDR_FAIL_POLICY	5
 
 /*
  *	Codes for Time Exceeded
@@ -169,20 +171,26 @@ struct icmp6_filter {
 #ifdef __KERNEL__
 
 #include <linux/netdevice.h>
-#include <linux/skbuff.h>
-
 
 extern void				icmpv6_send(struct sk_buff *skb,
-						    int type, int code,
-						    __u32 info, 
-						    struct net_device *dev);
+						    u8 type, u8 code,
+						    __u32 info);
 
-extern int				icmpv6_init(struct net_proto_family *ops);
-extern int				icmpv6_err_convert(int type, int code,
+extern int				icmpv6_init(void);
+extern int				icmpv6_err_convert(u8 type, u8 code,
 							   int *err);
 extern void				icmpv6_cleanup(void);
 extern void				icmpv6_param_prob(struct sk_buff *skb,
-							  int code, int pos);
+							  u8 code, int pos);
+
+struct flowi6;
+struct in6_addr;
+extern void				icmpv6_flow_init(struct sock *sk,
+							 struct flowi6 *fl6,
+							 u8 type,
+							 const struct in6_addr *saddr,
+							 const struct in6_addr *daddr,
+							 int oif);
 #endif
 
 #endif

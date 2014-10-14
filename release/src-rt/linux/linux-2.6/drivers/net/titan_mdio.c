@@ -214,3 +214,4 @@ int titan_ge_mdio_write(int dev_addr, int reg_addr, unsigned int data)
 
 	return TITAN_GE_MDIO_GOOD;
 }
+

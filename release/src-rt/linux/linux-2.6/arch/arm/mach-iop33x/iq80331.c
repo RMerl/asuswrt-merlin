@@ -17,13 +17,12 @@
 #include <linux/kernel.h>
 #include <linux/pci.h>
 #include <linux/string.h>
-#include <linux/slab.h>
 #include <linux/serial_core.h>
 #include <linux/serial_8250.h>
 #include <linux/mtd/physmap.h>
 #include <linux/platform_device.h>
-#include <asm/hardware.h>
-#include <asm/io.h>
+#include <linux/io.h>
+#include <mach/hardware.h>
 #include <asm/irq.h>
 #include <asm/mach/arch.h>
 #include <asm/mach/map.h>
@@ -32,7 +31,7 @@
 #include <asm/mach-types.h>
 #include <asm/page.h>
 #include <asm/pgtable.h>
-#include <asm/arch/time.h>
+#include <mach/time.h>
 
 /*
  * IQ80331 timer tick configuration.
@@ -48,7 +47,6 @@ static void __init iq80331_timer_init(void)
 
 static struct sys_timer iq80331_timer = {
 	.init		= iq80331_timer_init,
-	.offset		= iop_gettimeoffset,
 };
 
 
@@ -89,7 +87,7 @@ static struct hw_pci iq80331_pci __initdata = {
 	.swizzle	= pci_std_swizzle,
 	.nr_controllers = 1,
 	.setup		= iop3xx_pci_setup,
-	.preinit	= iop3xx_pci_preinit,
+	.preinit	= iop3xx_pci_preinit_cond,
 	.scan		= iop3xx_pci_scan_bus,
 	.map_irq	= iq80331_pci_map_irq,
 };
@@ -136,12 +134,13 @@ static void __init iq80331_init_machine(void)
 	platform_device_register(&iop33x_uart0_device);
 	platform_device_register(&iop33x_uart1_device);
 	platform_device_register(&iq80331_flash_device);
+	platform_device_register(&iop3xx_dma_0_channel);
+	platform_device_register(&iop3xx_dma_1_channel);
+	platform_device_register(&iop3xx_aau_channel);
 }
 
 MACHINE_START(IQ80331, "Intel IQ80331")
 	/* Maintainer: Intel Corp. */
-	.phys_io	= 0xfefff000,
-	.io_pg_offst	= ((0xfffff000) >> 18) & 0xfffc,
 	.boot_params	= 0x00000100,
 	.map_io		= iop3xx_map_io,
 	.init_irq	= iop33x_init_irq,

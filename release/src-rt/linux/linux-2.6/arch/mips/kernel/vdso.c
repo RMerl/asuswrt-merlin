@@ -31,8 +31,8 @@ static struct page *vdso_page;
 
 static void __init install_trampoline(u32 *tramp, unsigned int sigreturn)
 {
-	i_addiu(&tramp, 2, 0, sigreturn);	/* li v0, sigreturn */
-	i_syscall(&tramp, 0);
+	uasm_i_addiu(&tramp, 2, 0, sigreturn);	/* li v0, sigreturn */
+	uasm_i_syscall(&tramp, 0);
 }
 
 static int __init init_vdso(void)

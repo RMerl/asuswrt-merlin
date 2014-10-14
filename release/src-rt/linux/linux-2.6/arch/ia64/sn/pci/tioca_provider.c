@@ -9,6 +9,8 @@
 #include <linux/types.h>
 #include <linux/interrupt.h>
 #include <linux/pci.h>
+#include <linux/bitmap.h>
+#include <linux/slab.h>
 #include <asm/sn/sn_sal.h>
 #include <asm/sn/addrs.h>
 #include <asm/sn/io.h>
@@ -88,7 +90,7 @@ tioca_gart_init(struct tioca_kernel *tioca_kern)
 		break;
 	default:
 		printk(KERN_ERR "%s:  Invalid CA_APERATURE_SIZE "
-		       "0x%lx\n", __FUNCTION__, (ulong) CA_APERATURE_SIZE);
+		       "0x%lx\n", __func__, (ulong) CA_APERATURE_SIZE);
 		return -1;
 	}
 
@@ -123,8 +125,8 @@ tioca_gart_init(struct tioca_kernel *tioca_kern)
 
 	if (!tmp) {
 		printk(KERN_ERR "%s:  Could not allocate "
-		       "%lu bytes (order %d) for GART\n",
-		       __FUNCTION__,
+		       "%llu bytes (order %d) for GART\n",
+		       __func__,
 		       tioca_kern->ca_gart_size,
 		       get_order(tioca_kern->ca_gart_size));
 		return -ENOMEM;
@@ -341,15 +343,15 @@ tioca_dma_d48(struct pci_dev *pdev, u64 paddr)
 
 	if (node_upper > 64) {
 		printk(KERN_ERR "%s:  coretalk addr 0x%p node id out "
-		       "of range\n", __FUNCTION__, (void *)ct_addr);
+		       "of range\n", __func__, (void *)ct_addr);
 		return 0;
 	}
 
 	agp_dma_extn = __sn_readq_relaxed(&ca_base->ca_agp_dma_addr_extn);
 	if (node_upper != (agp_dma_extn >> CA_AGP_DMA_NODE_ID_SHFT)) {
 		printk(KERN_ERR "%s:  coretalk upper node (%u) "
-		       "mismatch with ca_agp_dma_addr_extn (%lu)\n",
-		       __FUNCTION__,
+		       "mismatch with ca_agp_dma_addr_extn (%llu)\n",
+		       __func__,
 		       node_upper, (agp_dma_extn >> CA_AGP_DMA_NODE_ID_SHFT));
 		return 0;
 	}
@@ -367,9 +369,9 @@ tioca_dma_d48(struct pci_dev *pdev, u64 paddr)
  * dma_addr_t is guaranteed to be contiguous in CA bus space.
  */
 static dma_addr_t
-tioca_dma_mapped(struct pci_dev *pdev, u64 paddr, size_t req_size)
+tioca_dma_mapped(struct pci_dev *pdev, unsigned long paddr, size_t req_size)
 {
-	int i, ps, ps_shift, entry, entries, mapsize, last_entry;
+	int ps, ps_shift, entry, entries, mapsize;
 	u64 xio_addr, end_xio_addr;
 	struct tioca_common *tioca_common;
 	struct tioca_kernel *tioca_kern;
@@ -410,21 +412,13 @@ tioca_dma_mapped(struct pci_dev *pdev, u64 paddr, size_t req_size)
 	map = tioca_kern->ca_pcigart_pagemap;
 	mapsize = tioca_kern->ca_pcigart_entries;
 
-	entry = find_first_zero_bit(map, mapsize);
-	while (entry < mapsize) {
-		last_entry = find_next_bit(map, mapsize, entry);
-
-		if (last_entry - entry >= entries)
-			break;
-
-		entry = find_next_zero_bit(map, mapsize, last_entry);
+	entry = bitmap_find_next_zero_area(map, mapsize, 0, entries, 0);
+	if (entry >= mapsize) {
+		kfree(ca_dmamap);
+		goto map_return;
 	}
 
-	if (entry > mapsize)
-		goto map_return;
-
-	for (i = 0; i < entries; i++)
-		set_bit(entry + i, map);
+	bitmap_set(map, entry, entries);
 
 	bus_addr = tioca_kern->ca_pciap_base + (entry * ps);
 
@@ -515,7 +509,7 @@ tioca_dma_unmap(struct pci_dev *pdev, dma_addr_t bus_addr, int dir)
  * use the GART mapped mode.
  */
 static u64
-tioca_dma_map(struct pci_dev *pdev, u64 paddr, size_t byte_count, int dma_flags)
+tioca_dma_map(struct pci_dev *pdev, unsigned long paddr, size_t byte_count, int dma_flags)
 {
 	u64 mapaddr;
 
@@ -597,7 +591,7 @@ tioca_bus_fixup(struct pcibus_bussoft *prom_bussoft, struct pci_controller *cont
 	if (is_shub1() && sn_sal_rev() < 0x0406) {
 		printk
 		    (KERN_ERR "%s:  SGI prom rev 4.06 or greater required "
-		     "for tioca support\n", __FUNCTION__);
+		     "for tioca support\n", __func__);
 		return NULL;
 	}
 
@@ -651,8 +645,10 @@ tioca_bus_fixup(struct pcibus_bussoft *prom_bussoft, struct pci_controller *cont
 		printk(KERN_WARNING
 		       "%s:  Unable to get irq %d.  "
 		       "Error interrupts won't be routed for TIOCA bus %d\n",
-		       __FUNCTION__, SGI_TIOCA_ERROR,
+		       __func__, SGI_TIOCA_ERROR,
 		       (int)tioca_common->ca_common.bs_persist_busnum);
+
+	sn_set_err_irq_affinity(SGI_TIOCA_ERROR);
 
 	/* Setup locality information */
 	controller->node = tioca_kern->ca_closest_node;

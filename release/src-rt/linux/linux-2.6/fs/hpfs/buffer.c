@@ -6,23 +6,8 @@
  *  general buffer i/o
  */
 #include <linux/sched.h>
+#include <linux/slab.h>
 #include "hpfs_fn.h"
-
-void hpfs_lock_creation(struct super_block *s)
-{
-#ifdef DEBUG_LOCKS
-	printk("lock creation\n");
-#endif
-	down(&hpfs_sb(s)->hpfs_creation_de);
-}
-
-void hpfs_unlock_creation(struct super_block *s)
-{
-#ifdef DEBUG_LOCKS
-	printk("unlock creation\n");
-#endif
-	up(&hpfs_sb(s)->hpfs_creation_de);
-}
 
 /* Map a sector into a buffer and return pointers to it and to the buffer. */
 
@@ -30,6 +15,8 @@ void *hpfs_map_sector(struct super_block *s, unsigned secno, struct buffer_head 
 		 int ahead)
 {
 	struct buffer_head *bh;
+
+	hpfs_lock_assert(s);
 
 	cond_resched();
 
@@ -48,6 +35,8 @@ void *hpfs_get_sector(struct super_block *s, unsigned secno, struct buffer_head 
 {
 	struct buffer_head *bh;
 	/*return hpfs_map_sector(s, secno, bhp, 0);*/
+
+	hpfs_lock_assert(s);
 
 	cond_resched();
 
@@ -68,6 +57,8 @@ void *hpfs_map_4sectors(struct super_block *s, unsigned secno, struct quad_buffe
 {
 	struct buffer_head *bh;
 	char *data;
+
+	hpfs_lock_assert(s);
 
 	cond_resched();
 
@@ -123,6 +114,8 @@ void *hpfs_get_4sectors(struct super_block *s, unsigned secno,
                           struct quad_buffer_head *qbh)
 {
 	cond_resched();
+
+	hpfs_lock_assert(s);
 
 	if (secno & 3) {
 		printk("HPFS: hpfs_get_4sectors: unaligned read\n");

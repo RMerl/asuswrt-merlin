@@ -12,6 +12,7 @@
 #include <linux/module.h>
 #include <linux/net.h>
 #include <linux/skbuff.h>
+#include <linux/slab.h>
 #include <net/sock.h>
 #include <net/af_rxrpc.h>
 #include "ar-internal.h"
@@ -78,10 +79,10 @@ struct rxrpc_transport *rxrpc_get_transport(struct rxrpc_local *local,
 	const char *new = "old";
 	int usage;
 
-	_enter("{%u.%u.%u.%u+%hu},{%u.%u.%u.%u+%hu},",
-	       NIPQUAD(local->srx.transport.sin.sin_addr),
+	_enter("{%pI4+%hu},{%pI4+%hu},",
+	       &local->srx.transport.sin.sin_addr,
 	       ntohs(local->srx.transport.sin.sin_port),
-	       NIPQUAD(peer->srx.transport.sin.sin_addr),
+	       &peer->srx.transport.sin.sin_addr,
 	       ntohs(peer->srx.transport.sin.sin_port));
 
 	/* search the transport list first */
@@ -149,10 +150,10 @@ struct rxrpc_transport *rxrpc_find_transport(struct rxrpc_local *local,
 {
 	struct rxrpc_transport *trans;
 
-	_enter("{%u.%u.%u.%u+%hu},{%u.%u.%u.%u+%hu},",
-	       NIPQUAD(local->srx.transport.sin.sin_addr),
+	_enter("{%pI4+%hu},{%pI4+%hu},",
+	       &local->srx.transport.sin.sin_addr,
 	       ntohs(local->srx.transport.sin.sin_port),
-	       NIPQUAD(peer->srx.transport.sin.sin_addr),
+	       &peer->srx.transport.sin.sin_addr,
 	       ntohs(peer->srx.transport.sin.sin_port));
 
 	/* search the transport list */
@@ -183,13 +184,14 @@ void rxrpc_put_transport(struct rxrpc_transport *trans)
 
 	ASSERTCMP(atomic_read(&trans->usage), >, 0);
 
-	trans->put_time = xtime.tv_sec;
-	if (unlikely(atomic_dec_and_test(&trans->usage)))
+	trans->put_time = get_seconds();
+	if (unlikely(atomic_dec_and_test(&trans->usage))) {
 		_debug("zombie");
 		/* let the reaper determine the timeout to avoid a race with
 		 * overextending the timeout if the reaper is running at the
 		 * same time */
 		rxrpc_queue_delayed_work(&rxrpc_transport_reap, 0);
+	}
 	_leave("");
 }
 
@@ -219,7 +221,7 @@ static void rxrpc_transport_reaper(struct work_struct *work)
 
 	_enter("");
 
-	now = xtime.tv_sec;
+	now = get_seconds();
 	earliest = ULONG_MAX;
 
 	/* extract all the transports that have been dead too long */

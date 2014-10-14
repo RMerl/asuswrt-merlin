@@ -20,9 +20,7 @@
 #define PVC_DISPMEM		80
 #define PVC_LINELEN		PVC_DISPMEM / PVC_NLINES
 
-struct pvc_defs *picvue = NULL;
-
-DECLARE_MUTEX(pvc_sem);
+struct pvc_defs *picvue;
 
 static void pvc_reg_write(u32 val)
 {
@@ -159,7 +157,7 @@ int pvc_program_cg(int charnum, u8 bitmap[BM_SIZE])
 	addr = charnum * 8;
 	pvc_write(0x40 | addr, MODE_INST);
 
-	for (i=0; i<BM_SIZE; i++)
+	for (i = 0; i < BM_SIZE; i++)
 		pvc_write(bitmap[i], MODE_DATA);
 	return 0;
 }
@@ -171,18 +169,22 @@ int pvc_program_cg(int charnum, u8 bitmap[BM_SIZE])
 #define  ONE_LINE	0
 #define  LARGE_FONT	(1 << 2)
 #define  SMALL_FONT	0
+
 static void pvc_funcset(u8 cmd)
 {
-	pvc_write(FUNC_SET_CMD | (cmd & (EIGHT_BYTE|TWO_LINES|LARGE_FONT)), MODE_INST);
+	pvc_write(FUNC_SET_CMD | (cmd & (EIGHT_BYTE|TWO_LINES|LARGE_FONT)),
+		  MODE_INST);
 }
 
 #define ENTRYMODE_CMD		0x4
 #define  AUTO_INC		(1 << 1)
 #define  AUTO_DEC		0
 #define  CURSOR_FOLLOWS_DISP	(1 << 0)
+
 static void pvc_entrymode(u8 cmd)
 {
-	pvc_write(ENTRYMODE_CMD | (cmd & (AUTO_INC|CURSOR_FOLLOWS_DISP)), MODE_INST);
+	pvc_write(ENTRYMODE_CMD | (cmd & (AUTO_INC|CURSOR_FOLLOWS_DISP)),
+		  MODE_INST);
 }
 
 #define DISP_CNT_CMD	0x08

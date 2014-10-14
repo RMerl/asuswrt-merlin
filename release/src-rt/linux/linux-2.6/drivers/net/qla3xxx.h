@@ -14,24 +14,14 @@
 
 #define OPCODE_OB_MAC_IOCB_FN0          0x01
 #define OPCODE_OB_MAC_IOCB_FN2          0x21
-#define OPCODE_OB_TCP_IOCB_FN0          0x03
-#define OPCODE_OB_TCP_IOCB_FN2          0x23
-#define OPCODE_UPDATE_NCB_IOCB_FN0      0x00
-#define OPCODE_UPDATE_NCB_IOCB_FN2      0x20
 
-#define OPCODE_UPDATE_NCB_IOCB      0xF0
 #define OPCODE_IB_MAC_IOCB          0xF9
 #define OPCODE_IB_3032_MAC_IOCB     0x09
 #define OPCODE_IB_IP_IOCB           0xFA
 #define OPCODE_IB_3032_IP_IOCB      0x0A
-#define OPCODE_IB_TCP_IOCB          0xFB
-#define OPCODE_DUMP_PROTO_IOCB      0xFE
-#define OPCODE_BUFFER_ALERT_IOCB    0xFB
 
 #define OPCODE_FUNC_ID_MASK                 0x30
 #define OUTBOUND_MAC_IOCB                   0x01	/* plus function bits */
-#define OUTBOUND_TCP_IOCB                   0x03	/* plus function bits */
-#define UPDATE_NCB_IOCB                     0x00	/* plus function bits */
 
 #define FN0_MA_BITS_MASK    0x00
 #define FN1_MA_BITS_MASK    0x80
@@ -50,7 +40,7 @@ struct ob_mac_iocb_req {
 #define OB_3032MAC_IOCB_REQ_UC	0x01
 	u8 reserved0;
 
-	__le32 transaction_id;
+	u32 transaction_id;	/* opaque for hardware */
 	__le16 data_len;
 	u8 ip_hdr_off;
 	u8 ip_hdr_len;
@@ -86,7 +76,7 @@ struct ob_mac_iocb_rsp {
 #define OB_MAC_IOCB_RSP_I   0x01
 
 	__le16 reserved0;
-	__le32 transaction_id;
+	u32 transaction_id;	/* opaque for hardware */
 	__le32 reserved1;
 	__le32 reserved2;
 };
@@ -159,75 +149,6 @@ struct ob_ip_iocb_rsp {
 	__le32 reserved2;
 };
 
-struct ob_tcp_iocb_req {
-	u8 opcode;
-
-	u8 flags0;
-#define OB_TCP_IOCB_REQ_P       0x80
-#define OB_TCP_IOCB_REQ_CI      0x20
-#define OB_TCP_IOCB_REQ_H       0x10
-#define OB_TCP_IOCB_REQ_LN      0x08
-#define OB_TCP_IOCB_REQ_K       0x04
-#define OB_TCP_IOCB_REQ_D       0x02
-#define OB_TCP_IOCB_REQ_I       0x01
-
-	u8 flags1;
-#define OB_TCP_IOCB_REQ_OSM     0x40
-#define OB_TCP_IOCB_REQ_URG     0x20
-#define OB_TCP_IOCB_REQ_ACK     0x10
-#define OB_TCP_IOCB_REQ_PSH     0x08
-#define OB_TCP_IOCB_REQ_RST     0x04
-#define OB_TCP_IOCB_REQ_SYN     0x02
-#define OB_TCP_IOCB_REQ_FIN     0x01
-
-	u8 options_len;
-#define OB_TCP_IOCB_REQ_OMASK   0xF0
-#define OB_TCP_IOCB_REQ_SHIFT   4
-
-	__le32 transaction_id;
-	__le32 data_len;
-	__le32 hncb_ptr_low;
-	__le32 hncb_ptr_high;
-	__le32 buf_addr0_low;
-	__le32 buf_addr0_high;
-	__le32 buf_0_len;
-	__le32 buf_addr1_low;
-	__le32 buf_addr1_high;
-	__le32 buf_1_len;
-	__le32 buf_addr2_low;
-	__le32 buf_addr2_high;
-	__le32 buf_2_len;
-	__le32 time_stamp;
-	__le32 reserved1;
-};
-
-struct ob_tcp_iocb_rsp {
-	u8 opcode;
-
-	u8 flags0;
-#define OB_TCP_IOCB_RSP_C       0x20
-#define OB_TCP_IOCB_RSP_H       0x10
-#define OB_TCP_IOCB_RSP_LN      0x08
-#define OB_TCP_IOCB_RSP_K       0x04
-#define OB_TCP_IOCB_RSP_D       0x02
-#define OB_TCP_IOCB_RSP_I       0x01
-
-	u8 flags1;
-#define OB_TCP_IOCB_RSP_E       0x10
-#define OB_TCP_IOCB_RSP_W       0x08
-#define OB_TCP_IOCB_RSP_P       0x04
-#define OB_TCP_IOCB_RSP_T       0x02
-#define OB_TCP_IOCB_RSP_F       0x01
-
-	u8 state;
-#define OB_TCP_IOCB_RSP_SMASK   0xF0
-#define OB_TCP_IOCB_RSP_SHIFT   4
-
-	__le32 transaction_id;
-	__le32 local_ncb_ptr;
-	__le32 reserved0;
-};
-
 struct ib_ip_iocb_rsp {
 	u8 opcode;
 #define IB_IP_IOCB_RSP_3032_V   0x80
@@ -252,25 +173,6 @@ struct ib_ip_iocb_rsp {
 #define IB_IP_IOCB_RSP_3032_IPE		0x20
 	__le16 reserved;
 #define IB_IP_IOCB_RSP_R        0x01
-	__le32 ial_low;
-	__le32 ial_high;
-};
-
-struct ib_tcp_iocb_rsp {
-	u8 opcode;
-	u8 flags;
-#define IB_TCP_IOCB_RSP_P       0x80
-#define IB_TCP_IOCB_RSP_T       0x40
-#define IB_TCP_IOCB_RSP_D       0x20
-#define IB_TCP_IOCB_RSP_N       0x10
-#define IB_TCP_IOCB_RSP_IP      0x03
-#define IB_TCP_FLAG_MASK        0xf0
-#define IB_TCP_FLAG_IOCB_SYN    0x00
-
-#define TCP_IB_RSP_FLAGS(x) (x->flags & ~IB_TCP_FLAG_MASK)
-
-	__le16 length;
-	__le32 hncb_ref_num;
 	__le32 ial_low;
 	__le32 ial_high;
 };
@@ -556,7 +458,7 @@ enum {
 	IP_ADDR_INDEX_REG_FUNC_3_SEC = 0x0007,
 	IP_ADDR_INDEX_REG_6 = 0x0008,
 	IP_ADDR_INDEX_REG_OFFSET_MASK = 0x0030,
-	IP_ADDR_INDEX_REG_E = 0x0040, 
+	IP_ADDR_INDEX_REG_E = 0x0040,
 };
 enum {
 	QL3032_PORT_CONTROL_DS = 0x0001,
@@ -868,7 +770,7 @@ enum {
 	FM93C56A_WDS = 0x0,
 	FM93C56A_ERASE = 0x3,
 	FM93C56A_ERASE_ALL = 0x0,
-/* Command Extentions */
+/* Command Extensions */
 	FM93C56A_WEN_EXT = 0x3,
 	FM93C56A_WRITE_ALL_EXT = 0x1,
 	FM93C56A_WDS_EXT = 0x0,
@@ -953,8 +855,8 @@ struct eeprom_bios_cfg {
  */
 struct eeprom_function_cfg {
 	u8 reserved[30];
-	u8 macAddress[6];
-	u8 macAddressSecondary[6];
+	u16 macAddress[3];
+	u16 macAddressSecondary[3];
 
 	u16 subsysVendorId;
 	u16 subsysDeviceId;
@@ -965,8 +867,7 @@ struct eeprom_function_cfg {
  */
 struct eeprom_data {
 	u8 asicId[4];
-	u8 version;
-	u8 numPorts;
+	u16 version_and_numPorts; /* together to avoid endianness crap */
 	u16 boardId;
 
 #define EEPROM_BOARDID_STR_SIZE   16
@@ -1056,31 +957,31 @@ struct eeprom_data {
  */
 struct lrg_buf_q_entry {
 
-	u32 addr0_lower;
+	__le32 addr0_lower;
 #define IAL_LAST_ENTRY 0x00000001
 #define IAL_CONT_ENTRY 0x00000002
 #define IAL_FLAG_MASK  0x00000003
-	u32 addr0_upper;
-	u32 addr1_lower;
-	u32 addr1_upper;
-	u32 addr2_lower;
-	u32 addr2_upper;
-	u32 addr3_lower;
-	u32 addr3_upper;
-	u32 addr4_lower;
-	u32 addr4_upper;
-	u32 addr5_lower;
-	u32 addr5_upper;
-	u32 addr6_lower;
-	u32 addr6_upper;
-	u32 addr7_lower;
-	u32 addr7_upper;
+	__le32 addr0_upper;
+	__le32 addr1_lower;
+	__le32 addr1_upper;
+	__le32 addr2_lower;
+	__le32 addr2_upper;
+	__le32 addr3_lower;
+	__le32 addr3_upper;
+	__le32 addr4_lower;
+	__le32 addr4_upper;
+	__le32 addr5_lower;
+	__le32 addr5_upper;
+	__le32 addr6_lower;
+	__le32 addr6_upper;
+	__le32 addr7_lower;
+	__le32 addr7_upper;
 
 };
 
 struct bufq_addr_element {
-	u32 addr_low;
-	u32 addr_high;
+	__le32 addr_low;
+	__le32 addr_high;
 };
 
 #define QL_NO_RESET			0
@@ -1097,8 +998,8 @@ enum link_state_t {
 struct ql_rcv_buf_cb {
 	struct ql_rcv_buf_cb *next;
 	struct sk_buff *skb;
-	 DECLARE_PCI_UNMAP_ADDR(mapaddr);
-	 DECLARE_PCI_UNMAP_LEN(maplen);
+	DEFINE_DMA_UNMAP_ADDR(mapaddr);
+	DEFINE_DMA_UNMAP_LEN(maplen);
 	__le32 buf_phy_addr_low;
 	__le32 buf_phy_addr_high;
 	int index;
@@ -1112,13 +1013,13 @@ struct ql_rcv_buf_cb {
  * OAL has 5 entries:
  * 1 thru 4 point to frags
  * fifth points to next oal.
- */ 
+ */
 #define MAX_OAL_CNT ((MAX_SKB_FRAGS-1)/4 + 1)
 
 struct oal_entry {
-	u32 dma_lo;
-	u32 dma_hi;
-	u32 len;
+	__le32 dma_lo;
+	__le32 dma_hi;
+	__le32 len;
 #define OAL_LAST_ENTRY   0x80000000	/* Last valid buffer in list. */
 #define OAL_CONT_ENTRY   0x40000000	/* points to an OAL. (continuation) */
 };
@@ -1128,8 +1029,8 @@ struct oal {
 };
 
 struct map_list {
-	 DECLARE_PCI_UNMAP_ADDR(mapaddr);
-	 DECLARE_PCI_UNMAP_LEN(maplen);
+	DEFINE_DMA_UNMAP_ADDR(mapaddr);
+	DEFINE_DMA_UNMAP_LEN(maplen);
 };
 
 struct ql_tx_buf_cb {
@@ -1137,7 +1038,7 @@ struct ql_tx_buf_cb {
 	struct ob_mac_iocb_req *queue_entry ;
 	int seg_count;
 	struct oal *oal;
-	struct map_list map[MAX_SKB_FRAGS+1]; 
+	struct map_list map[MAX_SKB_FRAGS+1];
 };
 
 /* definitions for type field */
@@ -1174,6 +1075,8 @@ struct ql3_adapter {
 	/* PCI Configuration information for this device */
 	struct pci_dev *pdev;
 	struct net_device *ndev;	/* Parent NET device */
+
+	struct napi_struct napi;
 
 	/* Hardware information */
 	u8 chip_rev_id;
@@ -1221,7 +1124,7 @@ struct ql3_adapter {
 	struct net_rsp_iocb *rsp_current;
 	u16 rsp_consumer_index;
 	u16 reserved_06;
-	volatile u32 *prsp_producer_index;
+	volatile __le32 *prsp_producer_index;
 	u32 rsp_producer_index_phy_addr_high;
 	u32 rsp_producer_index_phy_addr_low;
 
@@ -1265,26 +1168,19 @@ struct ql3_adapter {
 	u32 small_buf_release_cnt;
 	u32 small_buf_total_size;
 
-	/* ISR related, saves status for DPC. */
-	u32 control_status;
-
 	struct eeprom_data nvram_data;
-	struct timer_list ioctl_timer;
 	u32 port_link_state;
-	u32 last_rsp_offset;
 
 	/* 4022 specific */
 	u32 mac_index;		/* Driver's MAC number can be 0 or 1 for first and second networking functions respectively */
 	u32 PHYAddr;		/* Address of PHY 0x1e00 Port 0 and 0x1f00 Port 1 */
 	u32 mac_ob_opcode;	/* Opcode to use on mac transmission */
-	u32 tcp_ob_opcode;	/* Opcode to use on tcp transmission */
-	u32 update_ob_opcode;	/* Opcode to use for updating NCB */
 	u32 mb_bit_mask;	/* MA Bits mask to use on transmission */
 	u32 numPorts;
-	struct net_device_stats stats;
 	struct workqueue_struct *workqueue;
 	struct delayed_work reset_work;
 	struct delayed_work tx_timeout_work;
+	struct delayed_work link_state_work;
 	u32 max_frame_size;
 	u32 device_id;
 	u16 phyType;

@@ -19,7 +19,6 @@
 #include <asm/prom.h>
 #include <asm/system.h>
 #include <asm/time.h>
-#include <asm/kexec.h>
 
 #include <mm/mmu_decl.h>
 
@@ -44,29 +43,22 @@ static void __init prpmc2800_setup_arch(void)
 	struct device_node *np;
 	phys_addr_t paddr;
 	const unsigned int *reg;
-	const unsigned int *prop;
 
 	/*
 	 * ioremap mpp and gpp registers in case they are later
 	 * needed by prpmc2800_reset_board().
 	 */
-	np = of_find_compatible_node(NULL, NULL, "marvell,mv64x60-mpp");
+	np = of_find_compatible_node(NULL, NULL, "marvell,mv64360-mpp");
 	reg = of_get_property(np, "reg", NULL);
 	paddr = of_translate_address(np, reg);
 	of_node_put(np);
 	mv64x60_mpp_reg_base = ioremap(paddr, reg[1]);
 
-	np = of_find_compatible_node(NULL, NULL, "marvell,mv64x60-gpp");
+	np = of_find_compatible_node(NULL, NULL, "marvell,mv64360-gpp");
 	reg = of_get_property(np, "reg", NULL);
 	paddr = of_translate_address(np, reg);
 	of_node_put(np);
 	mv64x60_gpp_reg_base = ioremap(paddr, reg[1]);
-
-	np = of_find_node_by_type(NULL, "cpu");
-	prop = of_get_property(np, "clock-frequency", NULL);
-	if (prop)
-		loops_per_jiffy = *prop / HZ;
-	of_node_put(np);
 
 #ifdef CONFIG_PCI
 	mv64x60_pci_init();
@@ -126,10 +118,7 @@ static void prpmc2800_restart(char *cmd)
 
 void prpmc2800_show_cpuinfo(struct seq_file *m)
 {
-	uint memsize = total_memory;
-
 	seq_printf(m, "Vendor\t\t: Motorola\n");
-	seq_printf(m, "Memory\t\t: %d MB\n", memsize / (1024 * 1024));
 	seq_printf(m, "coherency\t: %s\n", PPRPM2800_COHERENCY_SETTING);
 }
 
@@ -151,6 +140,7 @@ static int __init prpmc2800_probe(void)
 		strncpy(prpmc2800_platform_name, m,
 			min((int)len, PLATFORM_NAME_MAX - 1));
 
+	_set_L2CR(_get_L2CR() | L2CR_L2E);
 	return 1;
 }
 
@@ -158,14 +148,10 @@ define_machine(prpmc2800){
 	.name			= prpmc2800_platform_name,
 	.probe			= prpmc2800_probe,
 	.setup_arch		= prpmc2800_setup_arch,
+	.init_early		= mv64x60_init_early,
 	.show_cpuinfo		= prpmc2800_show_cpuinfo,
 	.init_IRQ		= mv64x60_init_irq,
 	.get_irq		= mv64x60_get_irq,
 	.restart		= prpmc2800_restart,
 	.calibrate_decr		= generic_calibrate_decr,
-#ifdef CONFIG_KEXEC
-	.machine_kexec		= default_machine_kexec,
-	.machine_kexec_prepare	= default_machine_kexec_prepare,
-	.machine_crash_shutdown	= default_machine_crash_shutdown,
-#endif
 };

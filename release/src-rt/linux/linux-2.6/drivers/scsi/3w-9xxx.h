@@ -1,10 +1,11 @@
 /*
    3w-9xxx.h -- 3ware 9000 Storage Controller device driver for Linux.
 
-   Written By: Adam Radford <linuxraid@amcc.com>
-   Modifications By: Tom Couch <linuxraid@amcc.com>
+   Written By: Adam Radford <linuxraid@lsi.com>
+   Modifications By: Tom Couch <linuxraid@lsi.com>
 
-   Copyright (C) 2004-2006 Applied Micro Circuits Corporation.
+   Copyright (C) 2004-2009 Applied Micro Circuits Corporation.
+   Copyright (C) 2010 LSI Corporation.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -40,10 +41,10 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
    Bugs/Comments/Suggestions should be mailed to:
-   linuxraid@amcc.com
+   linuxraid@lsi.com
 
    For more information, goto:
-   http://www.amcc.com
+   http://www.lsi.com
 */
 
 #ifndef _3W_9XXX_H
@@ -60,7 +61,7 @@ static twa_message_type twa_aen_table[] = {
 	{0x0000, "AEN queue empty"},
 	{0x0001, "Controller reset occurred"},
 	{0x0002, "Degraded unit detected"},
-	{0x0003, "Controller error occured"},
+	{0x0003, "Controller error occurred"},
 	{0x0004, "Background rebuild failed"},
 	{0x0005, "Background rebuild done"},
 	{0x0006, "Incomplete unit detected"},
@@ -319,8 +320,8 @@ static twa_message_type twa_error_table[] = {
 
 /* Compatibility defines */
 #define TW_9000_ARCH_ID 0x5
-#define TW_CURRENT_DRIVER_SRL 30
-#define TW_CURRENT_DRIVER_BUILD 80
+#define TW_CURRENT_DRIVER_SRL 35
+#define TW_CURRENT_DRIVER_BUILD 0
 #define TW_CURRENT_DRIVER_BRANCH 0
 
 /* Phase defines */
@@ -352,8 +353,9 @@ static twa_message_type twa_error_table[] = {
 #define TW_MAX_RESET_TRIES		      2
 #define TW_MAX_CMDS_PER_LUN		      254
 #define TW_MAX_RESPONSE_DRAIN		      256
-#define TW_MAX_AEN_DRAIN		      40
+#define TW_MAX_AEN_DRAIN		      255
 #define TW_IN_RESET                           2
+#define TW_USING_MSI			      3
 #define TW_IN_ATTENTION_LOOP		      4
 #define TW_MAX_SECTORS                        256
 #define TW_AEN_WAIT_TIME                      1000
@@ -418,6 +420,9 @@ static twa_message_type twa_error_table[] = {
 #endif
 #ifndef PCI_DEVICE_ID_3WARE_9650SE
 #define PCI_DEVICE_ID_3WARE_9650SE 0x1004
+#endif
+#ifndef PCI_DEVICE_ID_3WARE_9690SA
+#define PCI_DEVICE_ID_3WARE_9690SA 0x1005
 #endif
 
 /* Bitmask macros to eliminate bitfields */

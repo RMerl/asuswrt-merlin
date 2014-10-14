@@ -15,6 +15,7 @@
 #include <linux/interrupt.h>
 #include <linux/errno.h>
 #include <linux/platform_device.h>
+#include <linux/slab.h>
 
 #include <asm/io.h>
 #include <asm/irq.h>
@@ -232,14 +233,6 @@ parport_ax88796_restore_state(struct parport *p, struct parport_state *s)
 	writeb(s->u.ax88796.cpr, dd->spp_cpr);
 }
 
-static irqreturn_t
-parport_ax88796_interrupt(int irq, void *dev_id)
-{
-        parport_generic_irq(irq, dev_id);
-        return IRQ_HANDLED;
-}
-
-
 static struct parport_operations parport_ax88796_ops = {
 	.write_data	= parport_ax88796_write_data,
 	.read_data	= parport_ax88796_read_data,
@@ -344,7 +337,7 @@ static int parport_ax88796_probe(struct platform_device *pdev)
 
 	if (irq >= 0) {
 		/* request irq */
-		ret = request_irq(irq, parport_ax88796_interrupt,
+		ret = request_irq(irq, parport_irq_handler,
 				  IRQF_TRIGGER_FALLING, pdev->name, pp);
 
 		if (ret < 0)
@@ -413,6 +406,8 @@ static int parport_ax88796_resume(struct platform_device *dev)
 #define parport_ax88796_suspend NULL
 #define parport_ax88796_resume  NULL
 #endif
+
+MODULE_ALIAS("platform:ax88796-pp");
 
 static struct platform_driver axdrv = {
 	.driver		= {

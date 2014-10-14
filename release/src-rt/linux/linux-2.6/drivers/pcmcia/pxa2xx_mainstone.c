@@ -21,11 +21,11 @@
 
 #include <pcmcia/ss.h>
 
-#include <asm/hardware.h>
+#include <asm/mach-types.h>
 #include <asm/irq.h>
 
-#include <asm/arch/pxa-regs.h>
-#include <asm/arch/mainstone.h>
+#include <mach/pxa2xx-regs.h>
+#include <mach/mainstone.h>
 
 #include "soc_common.h"
 
@@ -43,26 +43,8 @@ static int mst_pcmcia_hw_init(struct soc_pcmcia_socket *skt)
 	 * Setup default state of GPIO outputs
 	 * before we enable them as outputs.
 	 */
-	GPSR(GPIO48_nPOE) =
-		GPIO_bit(GPIO48_nPOE) |
-		GPIO_bit(GPIO49_nPWE) |
-		GPIO_bit(GPIO50_nPIOR) |
-		GPIO_bit(GPIO51_nPIOW) |
-		GPIO_bit(GPIO85_nPCE_1) |
-		GPIO_bit(GPIO54_nPCE_2);
 
-	pxa_gpio_mode(GPIO48_nPOE_MD);
-	pxa_gpio_mode(GPIO49_nPWE_MD);
-	pxa_gpio_mode(GPIO50_nPIOR_MD);
-	pxa_gpio_mode(GPIO51_nPIOW_MD);
-	pxa_gpio_mode(GPIO85_nPCE_1_MD);
-	pxa_gpio_mode(GPIO54_nPCE_2_MD);
-	pxa_gpio_mode(GPIO79_pSKTSEL_MD);
-	pxa_gpio_mode(GPIO55_nPREG_MD);
-	pxa_gpio_mode(GPIO56_nPWAIT_MD);
-	pxa_gpio_mode(GPIO57_nIOIS16_MD);
-
-	skt->irq = (skt->nr == 0) ? MAINSTONE_S0_IRQ : MAINSTONE_S1_IRQ;
+	skt->socket.pci_irq = (skt->nr == 0) ? MAINSTONE_S0_IRQ : MAINSTONE_S1_IRQ;
 	return soc_pcmcia_request_irqs(skt, irqs, ARRAY_SIZE(irqs));
 }
 
@@ -117,7 +99,7 @@ static int mst_pcmcia_configure_socket(struct soc_pcmcia_socket *skt,
 	case 50: power |= MST_PCMCIA_PWR_VCC_50; break;
 	default:
 		 printk(KERN_ERR "%s(): bad Vcc %u\n",
-				 __FUNCTION__, state->Vcc);
+				 __func__, state->Vcc);
 		 ret = -1;
 	}
 
@@ -129,7 +111,7 @@ static int mst_pcmcia_configure_socket(struct soc_pcmcia_socket *skt,
 			  power |= MST_PCMCIA_PWR_VPP_VCC;
 		  } else {
 			  printk(KERN_ERR "%s(): bad Vpp %u\n",
-					  __FUNCTION__, state->Vpp);
+					  __func__, state->Vpp);
 			  ret = -1;
 		  }
 	}
@@ -154,7 +136,7 @@ static void mst_pcmcia_socket_suspend(struct soc_pcmcia_socket *skt)
 {
 }
 
-static struct pcmcia_low_level mst_pcmcia_ops = {
+static struct pcmcia_low_level mst_pcmcia_ops __initdata = {
 	.owner			= THIS_MODULE,
 	.hw_init		= mst_pcmcia_hw_init,
 	.hw_shutdown		= mst_pcmcia_hw_shutdown,
@@ -171,14 +153,17 @@ static int __init mst_pcmcia_init(void)
 {
 	int ret;
 
+	if (!machine_is_mainstone())
+		return -ENODEV;
+
 	mst_pcmcia_device = platform_device_alloc("pxa2xx-pcmcia", -1);
 	if (!mst_pcmcia_device)
 		return -ENOMEM;
 
-	mst_pcmcia_device->dev.uevent_suppress = 0;
-	mst_pcmcia_device->dev.platform_data = &mst_pcmcia_ops;
-
-	ret = platform_device_add(mst_pcmcia_device);
+	ret = platform_device_add_data(mst_pcmcia_device, &mst_pcmcia_ops,
+				       sizeof(mst_pcmcia_ops));
+	if (ret == 0)
+		ret = platform_device_add(mst_pcmcia_device);
 
 	if (ret)
 		platform_device_put(mst_pcmcia_device);
@@ -195,3 +180,4 @@ fs_initcall(mst_pcmcia_init);
 module_exit(mst_pcmcia_exit);
 
 MODULE_LICENSE("GPL");
+MODULE_ALIAS("platform:pxa2xx-pcmcia");

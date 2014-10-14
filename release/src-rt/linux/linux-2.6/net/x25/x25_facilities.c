@@ -27,15 +27,25 @@
 #include <net/sock.h>
 #include <net/x25.h>
 
-/*
- * Parse a set of facilities into the facilities structures. Unrecognised
- *	facilities are written to the debug log file.
+/**
+ * x25_parse_facilities - Parse facilities from skb into the facilities structs
+ *
+ * @skb: sk_buff to parse
+ * @facilities: Regular facilities, updated as facilities are found
+ * @dte_facs: ITU DTE facilities, updated as DTE facilities are found
+ * @vc_fac_mask: mask is updated with all facilities found
+ *
+ * Return codes:
+ *  -1 - Parsing error, caller should drop call and clean up
+ *   0 - Parse OK, this skb has no facilities
+ *  >0 - Parse OK, returns the length of the facilities header
+ *
  */
 int x25_parse_facilities(struct sk_buff *skb, struct x25_facilities *facilities,
 		struct x25_dte_facilities *dte_facs, unsigned long *vc_fac_mask)
 {
 	unsigned char *p = skb->data;
-	unsigned int len = *p++;
+	unsigned int len;
 
 	*vc_fac_mask = 0;
 
@@ -50,9 +60,19 @@ int x25_parse_facilities(struct sk_buff *skb, struct x25_facilities *facilities,
 	memset(dte_facs->called_ae, '\0', sizeof(dte_facs->called_ae));
 	memset(dte_facs->calling_ae, '\0', sizeof(dte_facs->calling_ae));
 
+	if (skb->len < 1)
+		return 0;
+
+	len = *p++;
+
+	if (len >= skb->len)
+		return -1;
+
 	while (len > 0) {
 		switch (*p & X25_FAC_CLASS_MASK) {
 		case X25_FAC_CLASS_A:
+			if (len < 2)
+				return -1;
 			switch (*p) {
 			case X25_FAC_REVERSE:
 				if((p[1] & 0x81) == 0x81) {
@@ -96,6 +116,8 @@ int x25_parse_facilities(struct sk_buff *skb, struct x25_facilities *facilities,
 			len -= 2;
 			break;
 		case X25_FAC_CLASS_B:
+			if (len < 3)
+				return -1;
 			switch (*p) {
 			case X25_FAC_PACKET_SIZE:
 				facilities->pacsize_in  = p[1];
@@ -117,6 +139,8 @@ int x25_parse_facilities(struct sk_buff *skb, struct x25_facilities *facilities,
 			len -= 3;
 			break;
 		case X25_FAC_CLASS_C:
+			if (len < 4)
+				return -1;
 			printk(KERN_DEBUG "X.25: unknown facility %02X, "
 			       "values %02X, %02X, %02X\n",
 			       p[0], p[1], p[2], p[3]);
@@ -124,26 +148,26 @@ int x25_parse_facilities(struct sk_buff *skb, struct x25_facilities *facilities,
 			len -= 4;
 			break;
 		case X25_FAC_CLASS_D:
+			if (len < p[1] + 2)
+				return -1;
 			switch (*p) {
 			case X25_FAC_CALLING_AE:
-				if (p[1] > X25_MAX_DTE_FACIL_LEN)
-					break;
+				if (p[1] > X25_MAX_DTE_FACIL_LEN || p[1] <= 1)
+					return -1;
 				dte_facs->calling_len = p[2];
 				memcpy(dte_facs->calling_ae, &p[3], p[1] - 1);
 				*vc_fac_mask |= X25_MASK_CALLING_AE;
 				break;
 			case X25_FAC_CALLED_AE:
-				if (p[1] > X25_MAX_DTE_FACIL_LEN)
-					break;
+				if (p[1] > X25_MAX_DTE_FACIL_LEN || p[1] <= 1)
+					return -1;
 				dte_facs->called_len = p[2];
 				memcpy(dte_facs->called_ae, &p[3], p[1] - 1);
 				*vc_fac_mask |= X25_MASK_CALLED_AE;
 				break;
 			default:
 				printk(KERN_DEBUG "X.25: unknown facility %02X,"
-					"length %d, values %02X, %02X, "
-					"%02X, %02X\n",
-					p[0], p[1], p[2], p[3], p[4], p[5]);
+					"length %d\n", p[0], p[1]);
 				break;
 			}
 			len -= p[1] + 2;
@@ -205,9 +229,7 @@ int x25_create_facilities(unsigned char *buffer,
 	}
 
 	if (dte_facs->calling_len && (facil_mask & X25_MASK_CALLING_AE)) {
-		unsigned bytecount = (dte_facs->calling_len % 2) ?
-					dte_facs->calling_len / 2 + 1 :
-					dte_facs->calling_len / 2;
+		unsigned bytecount = (dte_facs->calling_len + 1) >> 1;
 		*p++ = X25_FAC_CALLING_AE;
 		*p++ = 1 + bytecount;
 		*p++ = dte_facs->calling_len;
@@ -249,6 +271,8 @@ int x25_negotiate_facilities(struct sk_buff *skb, struct sock *sk,
 	memcpy(new, ours, sizeof(*new));
 
 	len = x25_parse_facilities(skb, &theirs, dte, &x25->vc_facil_mask);
+	if (len < 0)
+		return len;
 
 	/*
 	 *	They want reverse charging, we won't accept it.
@@ -261,9 +285,18 @@ int x25_negotiate_facilities(struct sk_buff *skb, struct sock *sk,
 	new->reverse = theirs.reverse;
 
 	if (theirs.throughput) {
-		if (theirs.throughput < ours->throughput) {
-			SOCK_DEBUG(sk, "X.25: throughput negotiated down\n");
-			new->throughput = theirs.throughput;
+		int theirs_in =  theirs.throughput & 0x0f;
+		int theirs_out = theirs.throughput & 0xf0;
+		int ours_in  = ours->throughput & 0x0f;
+		int ours_out = ours->throughput & 0xf0;
+		if (!ours_in || theirs_in < ours_in) {
+			SOCK_DEBUG(sk, "X.25: inbound throughput negotiated\n");
+			new->throughput = (new->throughput & 0xf0) | theirs_in;
+		}
+		if (!ours_out || theirs_out < ours_out) {
+			SOCK_DEBUG(sk,
+				"X.25: outbound throughput negotiated\n");
+			new->throughput = (new->throughput & 0x0f) | theirs_out;
 		}
 	}
 

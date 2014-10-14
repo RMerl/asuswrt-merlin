@@ -17,7 +17,62 @@ config IRTTY_SIR
 
 	  If unsure, say Y.
 
+config BFIN_SIR
+	tristate "Blackfin SIR on UART"
+	depends on BLACKFIN && IRDA
+	default n
+	help
+	  Say Y here if your want to enable SIR function on Blackfin UART
+	  devices.
+
+	  To activate this driver you can start irattach like:
+	  "irattach irda0 -s"
+
+	  Saying M, it will be built as a module named bfin_sir.
+
+	  Note that you need to turn off one of the serial drivers for SIR
+	  to use that UART.
+
+config BFIN_SIR0
+	bool "Blackfin SIR on UART0"
+	depends on BFIN_SIR && !SERIAL_BFIN_UART0
+
+config BFIN_SIR1
+	bool "Blackfin SIR on UART1"
+	depends on BFIN_SIR && !SERIAL_BFIN_UART1 && (!BF531 && !BF532 && !BF533 && !BF561)
+
+config BFIN_SIR2
+	bool "Blackfin SIR on UART2"
+	depends on BFIN_SIR && !SERIAL_BFIN_UART2 && (BF54x || BF538 || BF539)
+
+config BFIN_SIR3
+	bool "Blackfin SIR on UART3"
+	depends on BFIN_SIR && !SERIAL_BFIN_UART3 && (BF54x)
+
+choice
+	prompt "SIR Mode"
+	depends on BFIN_SIR
+	default SIR_BFIN_DMA
+
+config SIR_BFIN_DMA
+	bool "DMA mode"
+	depends on !DMA_UNCACHED_NONE
+
+config SIR_BFIN_PIO
+	bool "PIO mode"
+endchoice
+
 comment "Dongle support"
+
+config SH_SIR
+	tristate "SuperH SIR on UART"
+	depends on IRDA && SUPERH && \
+		(CPU_SUBTYPE_SH7722 || CPU_SUBTYPE_SH7723 || \
+		 CPU_SUBTYPE_SH7724)
+	default n
+	help
+	  Say Y here if your want to enable SIR function on SuperH UART
+	  devices.
 
 config DONGLE
 	bool "Serial dongle support"
@@ -155,146 +210,40 @@ config KINGSUN_DONGLE
 	  To compile it as a module, choose M here: the module will be called
 	  kingsun-sir.
 
-comment "Old SIR device drivers"
-
-config IRPORT_SIR
-	tristate "IrPORT (IrDA serial driver)"
-	depends on IRDA && BROKEN_ON_SMP
-	---help---
-	  Say Y here if you want to build support for the IrPORT IrDA device
-	  driver.  To compile it as a module, choose M here: the module will be
-	  called irport. IrPORT can be used instead of IrTTY and sometimes
-	  this can be better.  One example is if your IrDA port does not
-	  have echo-canceling, which will work OK with IrPORT since this
-	  driver is working in half-duplex mode only.  You don't need to use
-	  irattach with IrPORT, but you just insert it the same way as FIR
-	  drivers (insmod irport io=0x3e8 irq=11).  Notice that IrPORT is a
-	  SIR device driver which means that speed is limited to 115200 bps.
-
-	  If unsure, say Y.
-
-comment "Old Serial dongle support"
-
-config DONGLE_OLD
-	bool "Old Serial dongle support"
-	depends on IRPORT_SIR && BROKEN_ON_SMP
-	help
-	  Say Y here if you have an infrared device that connects to your
-	  computer's serial port. These devices are called dongles. Then say Y
-	  or M to the driver for your particular dongle below.
-
-	  Note that the answer to this question won't directly affect the
-	  kernel: saying N will just cause the configurator to skip all
-	  the questions about serial dongles.
-
-config ESI_DONGLE_OLD
-	tristate "ESI JetEye PC dongle"
-	depends on DONGLE_OLD && IRDA
-	help
-	  Say Y here if you want to build support for the Extended Systems
-	  JetEye PC dongle.  To compile it as a module, choose M here.  The ESI
-	  dongle attaches to the normal 9-pin serial port connector, and can
-	  currently only be used by IrTTY.  To activate support for ESI
-	  dongles you will have to start irattach like this:
-	  "irattach -d esi".
-
-config ACTISYS_DONGLE_OLD
-	tristate "ACTiSYS IR-220L and IR220L+ dongle"
-	depends on DONGLE_OLD && IRDA
-	help
-	  Say Y here if you want to build support for the ACTiSYS IR-220L and
-	  IR220L+ dongles.  To compile it as a module, choose M here.  The
-	  ACTiSYS dongles attaches to the normal 9-pin serial port connector,
-	  and can currently only be used by IrTTY.  To activate support for
-	  ACTiSYS dongles you will have to start irattach like this:
-	  "irattach -d actisys" or "irattach -d actisys+".
-
-config TEKRAM_DONGLE_OLD
-	tristate "Tekram IrMate 210B dongle"
-	depends on DONGLE_OLD && IRDA
-	help
-	  Say Y here if you want to build support for the Tekram IrMate 210B
-	  dongle.  To compile it as a module, choose M here.  The Tekram dongle
-	  attaches to the normal 9-pin serial port connector, and can
-	  currently only be used by IrTTY.  To activate support for Tekram
-	  dongles you will have to start irattach like this:
-	  "irattach -d tekram".
-
-config GIRBIL_DONGLE_OLD
-	tristate "Greenwich GIrBIL dongle"
-	depends on DONGLE_OLD && IRDA
-	help
-	  Say Y here if you want to build support for the Greenwich GIrBIL
-	  dongle.  To compile it as a module, choose M here.  The Greenwich
-	  dongle attaches to the normal 9-pin serial port connector, and can
-	  currently only be used by IrTTY.  To activate support for Greenwich
-	  dongles you will have to insert "irattach -d girbil" in the
-	  /etc/irda/drivers script.
-
-config LITELINK_DONGLE_OLD
-	tristate "Parallax LiteLink dongle"
-	depends on DONGLE_OLD && IRDA
-	help
-	  Say Y here if you want to build support for the Parallax Litelink
-	  dongle.  To compile it as a module, choose M here.  The Parallax
-	  dongle attaches to the normal 9-pin serial port connector, and can
-	  currently only be used by IrTTY.  To activate support for Parallax
-	  dongles you will have to start irattach like this:
-	  "irattach -d litelink".
-
-config MCP2120_DONGLE_OLD
-	tristate "Microchip MCP2120"
-	depends on DONGLE_OLD && IRDA
-	help
-	  Say Y here if you want to build support for the Microchip MCP2120
-	  dongle.  To compile it as a module, choose M here.  The MCP2120 dongle
-	  attaches to the normal 9-pin serial port connector, and can
-	  currently only be used by IrTTY.  To activate support for MCP2120
-	  dongles you will have to insert "irattach -d mcp2120" in the
-	  /etc/irda/drivers script.
-
-	  You must build this dongle yourself.  For more information see:
-	  <http://www.eyetap.org/~tangf/irda_sir_linux.html>
-
-config OLD_BELKIN_DONGLE_OLD
-	tristate "Old Belkin dongle"
-	depends on DONGLE_OLD && IRDA
-	help
-	  Say Y here if you want to build support for the Adaptec Airport 1000
-	  and 2000 dongles.  To compile it as a module, choose M here: the module
-	  will be called old_belkin.  Some information is contained in the
-	  comments at the top of <file:drivers/net/irda/old_belkin.c>.
-
-config ACT200L_DONGLE_OLD
-	tristate "ACTiSYS IR-200L dongle (EXPERIMENTAL)"
-	depends on DONGLE_OLD && EXPERIMENTAL && IRDA
-	help
-	  Say Y here if you want to build support for the ACTiSYS IR-200L
-	  dongle.  To compile it as a module, choose M here.  The ACTiSYS
-	  IR-200L dongle attaches to the normal 9-pin serial port connector,
-	  and can currently only be used by IrTTY. To activate support for
-	  ACTiSYS IR-200L dongles you will have to start irattach like this:
-	  "irattach -d act200l".
-
-config MA600_DONGLE_OLD
-	tristate "Mobile Action MA600 dongle (EXPERIMENTAL)"
-	depends on DONGLE_OLD && EXPERIMENTAL && IRDA
-	---help---
-	  Say Y here if you want to build support for the Mobile Action MA600
-	  dongle.  To compile it as a module, choose M here. The MA600 dongle
-	  attaches to the normal 9-pin serial port connector, and can
-	  currently only be tested on IrCOMM.  To activate support for MA600
-	  dongles you will have to insert "irattach -d ma600" in the
-	  /etc/irda/drivers script.  Note: irutils 0.9.15 requires no
-	  modification. irutils 0.9.9 needs modification. For more
-	  information, download the following tar gzip file.
-
-	  There is a pre-compiled module on
-	  <http://engsvr.ust.hk/~eetwl95/ma600.html>
-
-config EP7211_IR
+config EP7211_DONGLE
 	tristate "EP7211 I/R support"
-	depends on DONGLE_OLD && ARCH_EP7211 && IRDA
+	depends on IRTTY_SIR && ARCH_EP7211 && IRDA && EXPERIMENTAL
+	help
+	  Say Y here if you want to build support for the Cirrus logic
+	  EP7211 chipset's infrared module.
+
+config KSDAZZLE_DONGLE
+	tristate "KingSun Dazzle IrDA-USB dongle (EXPERIMENTAL)"
+	depends on IRDA && USB && EXPERIMENTAL
+	help
+	  Say Y or M here if you want to build support for the KingSun Dazzle
+	  IrDA-USB bridge device driver.
+
+	  This USB bridge does not conform to the IrDA-USB device class
+	  specification, and therefore needs its own specific driver. This
+	  dongle supports SIR speeds only (9600 through 115200 bps).
+
+	  To compile it as a module, choose M here: the module will be called
+	  ksdazzle-sir.
+
+config KS959_DONGLE
+	tristate "KingSun KS-959 IrDA-USB dongle (EXPERIMENTAL)"
+	depends on IRDA && USB && EXPERIMENTAL
+	help
+	  Say Y or M here if you want to build support for the KingSun KS-959
+	  IrDA-USB bridge device driver.
+
+	  This USB bridge does not conform to the IrDA-USB device class
+	  specification, and therefore needs its own specific driver. This
+	  dongle supports SIR speeds only (9600 through 57600 bps).
+
+	  To compile it as a module, choose M here: the module will be called
+	  ks959-sir.
 
 comment "FIR device drivers"
 
@@ -355,7 +304,7 @@ config WINBOND_FIR
 
 config TOSHIBA_FIR
 	tristate "Toshiba Type-O IR Port"
-	depends on IRDA && PCI && !64BIT
+	depends on IRDA && PCI && !64BIT && VIRT_TO_BUS
 	help
 	  Say Y here if you want to build support for the Toshiba Type-O IR
 	  and Donau oboe chipsets. These chipsets are used by the Toshiba
@@ -435,6 +384,7 @@ config PXA_FICP
 config MCS_FIR
 	tristate "MosChip MCS7780 IrDA-USB dongle"
 	depends on IRDA && USB && EXPERIMENTAL
+	select CRC32
 	help
 	  Say Y or M here if you want to build support for the MosChip
 	  MCS7780 IrDA-USB bridge device driver.
@@ -446,6 +396,12 @@ config MCS_FIR
 
 	  To compile it as a module, choose M here: the module will be called
 	  mcs7780.
+
+config SH_IRDA
+	tristate "SuperH IrDA driver"
+	depends on IRDA && ARCH_SHMOBILE
+	help
+	  Say Y here if your want to enable SuperH IrDA devices.
 
 endmenu
 

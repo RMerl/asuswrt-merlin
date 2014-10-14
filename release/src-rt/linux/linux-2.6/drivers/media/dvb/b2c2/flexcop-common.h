@@ -1,9 +1,7 @@
 /*
- * This file is part of linux driver the digital TV devices equipped with B2C2 FlexcopII(b)/III
- *
- * flexcop-common.h - common header file for device-specific source files also.
- *
- * see flexcop.c for copyright information.
+ * Linux driver for digital TV devices equipped with B2C2 FlexcopII(b)/III
+ * flexcop-common.h - common header file for device-specific source files
+ * see flexcop.c for copyright information
  */
 #ifndef __FLEXCOP_COMMON_H__
 #define __FLEXCOP_COMMON_H__
@@ -28,11 +26,14 @@
 
 /* Steal from usb.h */
 #undef err
-#define err(format,  arg...) printk(KERN_ERR     FC_LOG_PREFIX ": " format "\n" , ## arg)
+#define err(format, arg...) \
+	printk(KERN_ERR FC_LOG_PREFIX ": " format "\n" , ## arg)
 #undef info
-#define info(format, arg...) printk(KERN_INFO    FC_LOG_PREFIX ": " format "\n" , ## arg)
+#define info(format, arg...) \
+	printk(KERN_INFO FC_LOG_PREFIX ": " format "\n" , ## arg)
 #undef warn
-#define warn(format, arg...) printk(KERN_WARNING FC_LOG_PREFIX ": " format "\n" , ## arg)
+#define warn(format, arg...) \
+	printk(KERN_WARNING FC_LOG_PREFIX ": " format "\n" , ## arg)
 
 struct flexcop_dma {
 	struct pci_dev *pdev;
@@ -42,6 +43,14 @@ struct flexcop_dma {
 	u8 *cpu_addr1;
 	dma_addr_t dma_addr1;
 	u32 size; /* size of each address in bytes */
+};
+
+struct flexcop_i2c_adapter {
+	struct flexcop_device *fc;
+	struct i2c_adapter i2c_adap;
+
+	u8 no_base_addr;
+	flexcop_i2c_port_t port;
 };
 
 /* Control structure for data definitions that are common to
@@ -72,7 +81,7 @@ struct flexcop_device {
 	struct dmx_frontend mem_frontend;
 	int (*fe_sleep) (struct dvb_frontend *);
 
-	struct i2c_adapter i2c_adap;
+	struct flexcop_i2c_adapter fc_i2c_adap[3];
 	struct mutex i2c_mutex;
 	struct module *owner;
 
@@ -83,15 +92,14 @@ struct flexcop_device {
 	int fullts_streaming_state;
 
 	/* bus specific callbacks */
-	flexcop_ibi_value (*read_ibi_reg)  (struct flexcop_device *, flexcop_ibi_register);
-	int               (*write_ibi_reg) (struct flexcop_device *, flexcop_ibi_register, flexcop_ibi_value);
-
-
-	int (*i2c_request) (struct flexcop_device*, flexcop_access_op_t, flexcop_i2c_port_t, u8 chipaddr, u8 addr, u8 *buf, u16 len);
-	int (*stream_control) (struct flexcop_device*, int);
-
+	flexcop_ibi_value(*read_ibi_reg) (struct flexcop_device *,
+			flexcop_ibi_register);
+	int (*write_ibi_reg) (struct flexcop_device *,
+			flexcop_ibi_register, flexcop_ibi_value);
+	int (*i2c_request) (struct flexcop_i2c_adapter *,
+		flexcop_access_op_t, u8 chipaddr, u8 addr, u8 *buf, u16 len);
+	int (*stream_control) (struct flexcop_device *, int);
 	int (*get_mac_addr) (struct flexcop_device *fc, int extended);
-
 	void *bus_specific;
 };
 
@@ -102,22 +110,28 @@ void flexcop_pass_dmx_data(struct flexcop_device *fc, u8 *buf, u32 len);
 void flexcop_pass_dmx_packets(struct flexcop_device *fc, u8 *buf, u32 no);
 
 struct flexcop_device *flexcop_device_kmalloc(size_t bus_specific_len);
-void flexcop_device_kfree(struct flexcop_device*);
+void flexcop_device_kfree(struct flexcop_device *);
 
-int  flexcop_device_initialize(struct flexcop_device*);
+int flexcop_device_initialize(struct flexcop_device *);
 void flexcop_device_exit(struct flexcop_device *fc);
-
 void flexcop_reset_block_300(struct flexcop_device *fc);
 
 /* from flexcop-dma.c */
-int flexcop_dma_allocate(struct pci_dev *pdev, struct flexcop_dma *dma, u32 size);
+int flexcop_dma_allocate(struct pci_dev *pdev,
+		struct flexcop_dma *dma, u32 size);
 void flexcop_dma_free(struct flexcop_dma *dma);
 
-int flexcop_dma_control_timer_irq(struct flexcop_device *fc, flexcop_dma_index_t no, int onoff);
-int flexcop_dma_control_size_irq(struct flexcop_device *fc, flexcop_dma_index_t no, int onoff);
-int flexcop_dma_config(struct flexcop_device *fc, struct flexcop_dma *dma, flexcop_dma_index_t dma_idx);
-int flexcop_dma_xfer_control(struct flexcop_device *fc, flexcop_dma_index_t dma_idx, flexcop_dma_addr_index_t index, int onoff);
-int flexcop_dma_config_timer(struct flexcop_device *fc, flexcop_dma_index_t dma_idx, u8 cycles);
+int flexcop_dma_control_timer_irq(struct flexcop_device *fc,
+		flexcop_dma_index_t no, int onoff);
+int flexcop_dma_control_size_irq(struct flexcop_device *fc,
+		flexcop_dma_index_t no, int onoff);
+int flexcop_dma_config(struct flexcop_device *fc, struct flexcop_dma *dma,
+		flexcop_dma_index_t dma_idx);
+int flexcop_dma_xfer_control(struct flexcop_device *fc,
+		flexcop_dma_index_t dma_idx, flexcop_dma_addr_index_t index,
+		int onoff);
+int flexcop_dma_config_timer(struct flexcop_device *fc,
+		flexcop_dma_index_t dma_idx, u8 cycles);
 
 /* from flexcop-eeprom.c */
 /* the PCI part uses this call to get the MAC address, the USB part has its own */
@@ -128,17 +142,19 @@ int flexcop_eeprom_check_mac_addr(struct flexcop_device *fc, int extended);
  * one. We have it in flexcop-i2c.c, because it is going via the actual
  * I2C-channel of the flexcop.
  */
-int flexcop_i2c_request(struct flexcop_device*, flexcop_access_op_t,
-			flexcop_i2c_port_t, u8 chipaddr, u8 addr, u8 *buf, u16 len);
+int flexcop_i2c_request(struct flexcop_i2c_adapter*, flexcop_access_op_t,
+	u8 chipaddr, u8 addr, u8 *buf, u16 len);
 
 /* from flexcop-sram.c */
-int flexcop_sram_set_dest(struct flexcop_device *fc, flexcop_sram_dest_t dest, flexcop_sram_dest_target_t target);
+int flexcop_sram_set_dest(struct flexcop_device *fc, flexcop_sram_dest_t dest,
+	flexcop_sram_dest_target_t target);
 void flexcop_wan_set_speed(struct flexcop_device *fc, flexcop_wan_speed_t s);
-void flexcop_sram_ctrl(struct flexcop_device *fc, int usb_wan, int sramdma, int maximumfill);
+void flexcop_sram_ctrl(struct flexcop_device *fc,
+		int usb_wan, int sramdma, int maximumfill);
 
 /* global prototypes for the flexcop-chip */
 /* from flexcop-fe-tuner.c */
-int flexcop_frontend_init(struct flexcop_device *card);
+int flexcop_frontend_init(struct flexcop_device *fc);
 void flexcop_frontend_exit(struct flexcop_device *fc);
 
 /* from flexcop-i2c.c */
@@ -150,11 +166,14 @@ int flexcop_sram_init(struct flexcop_device *fc);
 
 /* from flexcop-misc.c */
 void flexcop_determine_revision(struct flexcop_device *fc);
-void flexcop_device_name(struct flexcop_device *fc,const char *prefix,const char *suffix);
-void flexcop_dump_reg(struct flexcop_device *fc, flexcop_ibi_register reg, int num);
+void flexcop_device_name(struct flexcop_device *fc,
+		const char *prefix, const char *suffix);
+void flexcop_dump_reg(struct flexcop_device *fc,
+		flexcop_ibi_register reg, int num);
 
 /* from flexcop-hw-filter.c */
-int flexcop_pid_feed_control(struct flexcop_device *fc, struct dvb_demux_feed *dvbdmxfeed, int onoff);
+int flexcop_pid_feed_control(struct flexcop_device *fc,
+		struct dvb_demux_feed *dvbdmxfeed, int onoff);
 void flexcop_hw_filter_init(struct flexcop_device *fc);
 
 void flexcop_smc_ctrl(struct flexcop_device *fc, int onoff);

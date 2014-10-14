@@ -1326,7 +1326,7 @@ static struct SYM_FWB_SCR SYM_FWB_SCR = {
 		PADDR_B (msg_weird_seen),
 	/*
 	 *  We donnot handle extended messages from SCRIPTS.
-	 *  Read the amount of data correponding to the 
+	 *  Read the amount of data corresponding to the 
 	 *  message length and call the C code.
 	 */
 	SCR_STORE_REL (scratcha, 1),
@@ -1781,7 +1781,7 @@ static struct SYM_FWB_SCR SYM_FWB_SCR = {
 	 *  While testing with bogus QUANTUM drives, the C1010 
 	 *  sometimes raised a spurious phase mismatch with 
 	 *  WSR and the CHMOV(1) triggered another PM.
-	 *  Waiting explicitely for the PHASE seemed to avoid 
+	 *  Waiting explicitly for the PHASE seemed to avoid
 	 *  the nested phase mismatch. Btw, this didn't happen 
 	 *  using my IBM drives.
 	 */

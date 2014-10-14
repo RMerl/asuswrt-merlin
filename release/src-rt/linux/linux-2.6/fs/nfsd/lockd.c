@@ -1,6 +1,4 @@
 /*
- * linux/fs/nfsd/lockd.c
- *
  * This file contains all the stubs needed when communicating with lockd.
  * This level of indirection is necessary so we can run nfsd+lockd without
  * requiring the nfs client to be compiled in/loaded, and vice versa.
@@ -8,17 +6,20 @@
  * Copyright (C) 1996, Olaf Kirch <okir@monad.swb.de>
  */
 
-#include <linux/types.h>
-#include <linux/fs.h>
 #include <linux/file.h>
-#include <linux/mount.h>
-#include <linux/sunrpc/clnt.h>
-#include <linux/sunrpc/svc.h>
-#include <linux/nfsd/nfsd.h>
 #include <linux/lockd/bind.h>
+#include "nfsd.h"
+#include "vfs.h"
 
 #define NFSDDBG_FACILITY		NFSDDBG_LOCKD
 
+#ifdef CONFIG_LOCKD_V4
+#define nlm_stale_fh	nlm4_stale_fh
+#define nlm_failed	nlm4_failed
+#else
+#define nlm_stale_fh	nlm_lck_denied_nolocks
+#define nlm_failed	nlm_lck_denied_nolocks
+#endif
 /*
  * Note: we hold the dentry use count while the file is open.
  */
@@ -35,9 +36,8 @@ nlm_fopen(struct svc_rqst *rqstp, struct nfs_fh *f, struct file **filp)
 	fh.fh_export = NULL;
 
 	exp_readlock();
-	nfserr = nfsd_open(rqstp, &fh, S_IFREG, MAY_LOCK, filp);
+	nfserr = nfsd_open(rqstp, &fh, S_IFREG, NFSD_MAY_LOCK, filp);
 	fh_put(&fh);
-	rqstp->rq_client = NULL;
 	exp_readunlock();
  	/* We return nlm error codes as nlm doesn't know
 	 * about nfsd, but nfsd does know about nlm..
@@ -47,12 +47,10 @@ nlm_fopen(struct svc_rqst *rqstp, struct nfs_fh *f, struct file **filp)
 		return 0;
 	case nfserr_dropit:
 		return nlm_drop_reply;
-#ifdef CONFIG_LOCKD_V4
 	case nfserr_stale:
-		return nlm4_stale_fh;
-#endif
+		return nlm_stale_fh;
 	default:
-		return nlm_lck_denied;
+		return nlm_failed;
 	}
 }
 

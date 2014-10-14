@@ -6,7 +6,7 @@
  *      as published by the Free Software Foundation; either version
  *      2 of the License, or (at your option) any later version.
  *
- * /proc/ppc64/rtas/firmware_flash interface
+ * /proc/powerpc/rtas/firmware_flash interface
  *
  * This file implements a firmware_flash interface to pump a firmware
  * image into the kernel.  At reboot time rtas_restart() will see the
@@ -15,6 +15,7 @@
 
 #include <linux/module.h>
 #include <linux/init.h>
+#include <linux/slab.h>
 #include <linux/proc_fs.h>
 #include <asm/delay.h>
 #include <asm/uaccess.h>
@@ -93,12 +94,8 @@ struct flash_block_list {
 	struct flash_block_list *next;
 	struct flash_block blocks[FLASH_BLOCKS_PER_NODE];
 };
-struct flash_block_list_header { /* just the header of flash_block_list */
-	unsigned long num_blocks;
-	struct flash_block_list *next;
-};
 
-static struct flash_block_list_header rtas_firmware_flash_list = {0, NULL};
+static struct flash_block_list *rtas_firmware_flash_list;
 
 /* Use slab cache to guarantee 4k alignment */
 static struct kmem_cache *flash_block_cache = NULL;
@@ -107,13 +104,14 @@ static struct kmem_cache *flash_block_cache = NULL;
 
 /* Local copy of the flash block list.
  * We only allow one open of the flash proc file and create this
- * list as we go.  This list will be put in the
- * rtas_firmware_flash_list var once it is fully read.
+ * list as we go.  The rtas_firmware_flash_list varable will be
+ * set once the data is fully read.
  *
  * For convenience as we build the list we use virtual addrs,
  * we do not fill in the version number, and the length field
  * is treated as the number of entries currently in the block
- * (i.e. not a byte count).  This is all fixed on release.
+ * (i.e. not a byte count).  This is all fixed when calling 
+ * the flash routine.
  */
 
 /* Status int must be first member of struct */
@@ -200,16 +198,16 @@ static int rtas_flash_release(struct inode *inode, struct file *file)
 	if (uf->flist) {    
 		/* File was opened in write mode for a new flash attempt */
 		/* Clear saved list */
-		if (rtas_firmware_flash_list.next) {
-			free_flash_list(rtas_firmware_flash_list.next);
-			rtas_firmware_flash_list.next = NULL;
+		if (rtas_firmware_flash_list) {
+			free_flash_list(rtas_firmware_flash_list);
+			rtas_firmware_flash_list = NULL;
 		}
 
 		if (uf->status != FLASH_AUTH)  
 			uf->status = flash_list_valid(uf->flist);
 
 		if (uf->status == FLASH_IMG_READY) 
-			rtas_firmware_flash_list.next = uf->flist;
+			rtas_firmware_flash_list = uf->flist;
 		else
 			free_flash_list(uf->flist);
 
@@ -258,35 +256,20 @@ static ssize_t rtas_flash_read(struct file *file, char __user *buf,
 	struct proc_dir_entry *dp = PDE(file->f_path.dentry->d_inode);
 	struct rtas_update_flash_t *uf;
 	char msg[RTAS_MSG_MAXLEN];
-	int msglen;
 
-	uf = (struct rtas_update_flash_t *) dp->data;
+	uf = dp->data;
 
 	if (!strcmp(dp->name, FIRMWARE_FLASH_NAME)) {
 		get_flash_status_msg(uf->status, msg);
 	} else {	   /* FIRMWARE_UPDATE_NAME */
 		sprintf(msg, "%d\n", uf->status);
 	}
-	msglen = strlen(msg);
-	if (msglen > count)
-		msglen = count;
 
-	if (ppos && *ppos != 0)
-		return 0;	/* be cheap */
-
-	if (!access_ok(VERIFY_WRITE, buf, msglen))
-		return -EINVAL;
-
-	if (copy_to_user(buf, msg, msglen))
-		return -EFAULT;
-
-	if (ppos)
-		*ppos = msglen;
-	return msglen;
+	return simple_read_from_buffer(buf, count, ppos, msg, strlen(msg));
 }
 
 /* constructor for flash_block_cache */
-void rtas_block_ctor(void *ptr, struct kmem_cache *cache, unsigned long flags)
+void rtas_block_ctor(void *ptr)
 {
 	memset(ptr, 0, RTAS_BLK_SIZE);
 }
@@ -356,7 +339,7 @@ static int rtas_excl_open(struct inode *inode, struct file *file)
 
 	/* Enforce exclusive open with use count of PDE */
 	spin_lock(&flash_file_open_lock);
-	if (atomic_read(&dp->count) > 1) {
+	if (atomic_read(&dp->count) > 2) {
 		spin_unlock(&flash_file_open_lock);
 		return -EBUSY;
 	}
@@ -396,26 +379,13 @@ static ssize_t manage_flash_read(struct file *file, char __user *buf,
 	char msg[RTAS_MSG_MAXLEN];
 	int msglen;
 
-	args_buf = (struct rtas_manage_flash_t *) dp->data;
+	args_buf = dp->data;
 	if (args_buf == NULL)
 		return 0;
 
 	msglen = sprintf(msg, "%d\n", args_buf->status);
-	if (msglen > count)
-		msglen = count;
 
-	if (ppos && *ppos != 0)
-		return 0;	/* be cheap */
-
-	if (!access_ok(VERIFY_WRITE, buf, msglen))
-		return -EINVAL;
-
-	if (copy_to_user(buf, msg, msglen))
-		return -EFAULT;
-
-	if (ppos)
-		*ppos = msglen;
-	return msglen;
+	return simple_read_from_buffer(buf, count, ppos, msg, msglen);
 }
 
 static ssize_t manage_flash_write(struct file *file, const char __user *buf,
@@ -497,24 +467,11 @@ static ssize_t validate_flash_read(struct file *file, char __user *buf,
 	char msg[RTAS_MSG_MAXLEN];
 	int msglen;
 
-	args_buf = (struct rtas_validate_flash_t *) dp->data;
+	args_buf = dp->data;
 
-	if (ppos && *ppos != 0)
-		return 0;	/* be cheap */
-	
 	msglen = get_validate_flash_msg(args_buf, msg);
-	if (msglen > count)
-		msglen = count;
 
-	if (!access_ok(VERIFY_WRITE, buf, msglen))
-		return -EINVAL;
-
-	if (copy_to_user(buf, msg, msglen))
-		return -EFAULT;
-
-	if (ppos)
-		*ppos = msglen;
-	return msglen;
+	return simple_read_from_buffer(buf, count, ppos, msg, msglen);
 }
 
 static ssize_t validate_flash_write(struct file *file, const char __user *buf,
@@ -592,7 +549,7 @@ static void rtas_flash_firmware(int reboot_type)
 	unsigned long rtas_block_list;
 	int i, status, update_token;
 
-	if (rtas_firmware_flash_list.next == NULL)
+	if (rtas_firmware_flash_list == NULL)
 		return;		/* nothing to do */
 
 	if (reboot_type != SYS_RESTART) {
@@ -609,20 +566,25 @@ static void rtas_flash_firmware(int reboot_type)
 		return;
 	}
 
-	/* NOTE: the "first" block list is a global var with no data
-	 * blocks in the kernel data segment.  We do this because
-	 * we want to ensure this block_list addr is under 4GB.
+	/*
+	 * NOTE: the "first" block must be under 4GB, so we create
+	 * an entry with no data blocks in the reserved buffer in
+	 * the kernel data segment.
 	 */
-	rtas_firmware_flash_list.num_blocks = 0;
-	flist = (struct flash_block_list *)&rtas_firmware_flash_list;
+	spin_lock(&rtas_data_buf_lock);
+	flist = (struct flash_block_list *)&rtas_data_buf[0];
+	flist->num_blocks = 0;
+	flist->next = rtas_firmware_flash_list;
 	rtas_block_list = virt_to_abs(flist);
 	if (rtas_block_list >= 4UL*1024*1024*1024) {
 		printk(KERN_ALERT "FLASH: kernel bug...flash list header addr above 4GB\n");
+		spin_unlock(&rtas_data_buf_lock);
 		return;
 	}
 
 	printk(KERN_ALERT "FLASH: preparing saved firmware image for flash\n");
 	/* Update the block_list in place. */
+	rtas_firmware_flash_list = NULL; /* too hard to backout on error */
 	image_size = 0;
 	for (f = flist; f; f = next) {
 		/* Translate data addrs to absolute */
@@ -663,13 +625,13 @@ static void rtas_flash_firmware(int reboot_type)
 		printk(KERN_ALERT "FLASH: unknown flash return code %d\n", status);
 		break;
 	}
+	spin_unlock(&rtas_data_buf_lock);
 }
 
 static void remove_flash_pde(struct proc_dir_entry *dp)
 {
 	if (dp) {
 		kfree(dp->data);
-		dp->owner = NULL;
 		remove_proc_entry(dp->name, dp->parent);
 	}
 }
@@ -704,39 +666,37 @@ static int initialize_flash_pde_data(const char *rtas_call_name,
 static struct proc_dir_entry *create_flash_pde(const char *filename,
 					       const struct file_operations *fops)
 {
-	struct proc_dir_entry *ent = NULL;
-
-	ent = create_proc_entry(filename, S_IRUSR | S_IWUSR, NULL);
-	if (ent != NULL) {
-		ent->proc_fops = fops;
-		ent->owner = THIS_MODULE;
-	}
-
-	return ent;
+	return proc_create(filename, S_IRUSR | S_IWUSR, NULL, fops);
 }
 
 static const struct file_operations rtas_flash_operations = {
+	.owner		= THIS_MODULE,
 	.read		= rtas_flash_read,
 	.write		= rtas_flash_write,
 	.open		= rtas_excl_open,
 	.release	= rtas_flash_release,
+	.llseek		= default_llseek,
 };
 
 static const struct file_operations manage_flash_operations = {
+	.owner		= THIS_MODULE,
 	.read		= manage_flash_read,
 	.write		= manage_flash_write,
 	.open		= rtas_excl_open,
 	.release	= rtas_excl_release,
+	.llseek		= default_llseek,
 };
 
 static const struct file_operations validate_flash_operations = {
+	.owner		= THIS_MODULE,
 	.read		= validate_flash_read,
 	.write		= validate_flash_write,
 	.open		= rtas_excl_open,
 	.release	= validate_flash_release,
+	.llseek		= default_llseek,
 };
 
-int __init rtas_flash_init(void)
+static int __init rtas_flash_init(void)
 {
 	int rc;
 
@@ -746,7 +706,7 @@ int __init rtas_flash_init(void)
 		return 1;
 	}
 
-	firmware_flash_pde = create_flash_pde("ppc64/rtas/"
+	firmware_flash_pde = create_flash_pde("powerpc/rtas/"
 					      FIRMWARE_FLASH_NAME,
 					      &rtas_flash_operations);
 	if (firmware_flash_pde == NULL) {
@@ -760,7 +720,7 @@ int __init rtas_flash_init(void)
 	if (rc != 0)
 		goto cleanup;
 
-	firmware_update_pde = create_flash_pde("ppc64/rtas/"
+	firmware_update_pde = create_flash_pde("powerpc/rtas/"
 					       FIRMWARE_UPDATE_NAME,
 					       &rtas_flash_operations);
 	if (firmware_update_pde == NULL) {
@@ -774,7 +734,7 @@ int __init rtas_flash_init(void)
 	if (rc != 0)
 		goto cleanup;
 
-	validate_pde = create_flash_pde("ppc64/rtas/" VALIDATE_FLASH_NAME,
+	validate_pde = create_flash_pde("powerpc/rtas/" VALIDATE_FLASH_NAME,
 			      		&validate_flash_operations);
 	if (validate_pde == NULL) {
 		rc = -ENOMEM;
@@ -787,7 +747,7 @@ int __init rtas_flash_init(void)
 	if (rc != 0)
 		goto cleanup;
 
-	manage_pde = create_flash_pde("ppc64/rtas/" MANAGE_FLASH_NAME,
+	manage_pde = create_flash_pde("powerpc/rtas/" MANAGE_FLASH_NAME,
 				      &manage_flash_operations);
 	if (manage_pde == NULL) {
 		rc = -ENOMEM;
@@ -804,10 +764,10 @@ int __init rtas_flash_init(void)
 
 	flash_block_cache = kmem_cache_create("rtas_flash_cache",
 				RTAS_BLK_SIZE, RTAS_BLK_SIZE, 0,
-				rtas_block_ctor, NULL);
+				rtas_block_ctor);
 	if (!flash_block_cache) {
 		printk(KERN_ERR "%s: failed to create block cache\n",
-				__FUNCTION__);
+				__func__);
 		rc = -ENOMEM;
 		goto cleanup;
 	}
@@ -822,7 +782,7 @@ cleanup:
 	return rc;
 }
 
-void __exit rtas_flash_cleanup(void)
+static void __exit rtas_flash_cleanup(void)
 {
 	rtas_flash_term_hook = NULL;
 

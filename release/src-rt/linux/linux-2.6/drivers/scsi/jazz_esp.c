@@ -1,9 +1,10 @@
 /* jazz_esp.c: ESP front-end for MIPS JAZZ systems.
  *
- * Copyright (C) 2007 Thomas BogendÃ¶rfer (tsbogend@alpha.frankende)
+ * Copyright (C) 2007 Thomas Bogendörfer (tsbogend@alpha.frankende)
  */
 
 #include <linux/kernel.h>
+#include <linux/gfp.h>
 #include <linux/types.h>
 #include <linux/module.h>
 #include <linux/init.h>
@@ -143,7 +144,7 @@ static int __devinit esp_jazz_probe(struct platform_device *dev)
 		goto fail;
 
 	host->max_id = 8;
-	esp = host_to_esp(host);
+	esp = shost_priv(host);
 
 	esp->host = host;
 	esp->dev = dev;
@@ -217,11 +218,15 @@ static int __devexit esp_jazz_remove(struct platform_device *dev)
 	return 0;
 }
 
+/* work with hotplug and coldplug */
+MODULE_ALIAS("platform:jazz_esp");
+
 static struct platform_driver esp_jazz_driver = {
 	.probe		= esp_jazz_probe,
 	.remove		= __devexit_p(esp_jazz_remove),
 	.driver	= {
 		.name	= "jazz_esp",
+		.owner	= THIS_MODULE,
 	},
 };
 

@@ -1,9 +1,8 @@
-/*    $Id: processor.c,v 1.1 2002/07/20 16:27:06 rhirst Exp $
- *
+/*
  *    Initial setup-routines for HP 9000 based hardware.
  *
  *    Copyright (C) 1991, 1992, 1995  Linus Torvalds
- *    Modifications for PA-RISC (C) 1999 Helge Deller <deller@gmx.de>
+ *    Modifications for PA-RISC (C) 1999-2008 Helge Deller <deller@gmx.de>
  *    Modifications copyright 1999 SuSE GmbH (Philipp Rumpf)
  *    Modifications copyright 2000 Martin K. Petersen <mkp@mkp.net>
  *    Modifications copyright 2000 Philipp Rumpf <prumpf@tux.org>
@@ -46,7 +45,7 @@
 struct system_cpuinfo_parisc boot_cpu_data __read_mostly;
 EXPORT_SYMBOL(boot_cpu_data);
 
-struct cpuinfo_parisc cpu_data[NR_CPUS] __read_mostly;
+DEFINE_PER_CPU(struct cpuinfo_parisc, cpu_data);
 
 extern int update_cr16_clocksource(void);	/* from time.c */
 
@@ -69,6 +68,23 @@ extern int update_cr16_clocksource(void);	/* from time.c */
 */
 
 /**
+ * init_cpu_profiler - enable/setup per cpu profiling hooks.
+ * @cpunum: The processor instance.
+ *
+ * FIXME: doesn't do much yet...
+ */
+static void __cpuinit
+init_percpu_prof(unsigned long cpunum)
+{
+	struct cpuinfo_parisc *p;
+
+	p = &per_cpu(cpu_data, cpunum);
+	p->prof_counter = 1;
+	p->prof_multiplier = 1;
+}
+
+
+/**
  * processor_probe - Determine if processor driver should claim this device.
  * @dev: The device which has been found.
  *
@@ -82,7 +98,12 @@ static int __cpuinit processor_probe(struct parisc_device *dev)
 	unsigned long cpuid;
 	struct cpuinfo_parisc *p;
 
-#ifndef CONFIG_SMP
+#ifdef CONFIG_SMP
+	if (num_online_cpus() >= nr_cpu_ids) {
+		printk(KERN_INFO "num_online_cpus() >= nr_cpu_ids\n");
+		return 1;
+	}
+#else
 	if (boot_cpu_data.cpu_count > 0) {
 		printk(KERN_INFO "CONFIG_SMP=n  ignoring additional CPUs\n");
 		return 1;
@@ -99,22 +120,28 @@ static int __cpuinit processor_probe(struct parisc_device *dev)
 	if (is_pdc_pat()) {
 		ulong status;
 		unsigned long bytecnt;
-	        pdc_pat_cell_mod_maddr_block_t pa_pdc_cell;
+	        pdc_pat_cell_mod_maddr_block_t *pa_pdc_cell;
 #undef USE_PAT_CPUID
 #ifdef USE_PAT_CPUID
 		struct pdc_pat_cpu_num cpu_info;
 #endif
 
+		pa_pdc_cell = kmalloc(sizeof (*pa_pdc_cell), GFP_KERNEL);
+		if (!pa_pdc_cell)
+			panic("couldn't allocate memory for PDC_PAT_CELL!");
+
 		status = pdc_pat_cell_module(&bytecnt, dev->pcell_loc,
-			dev->mod_index, PA_VIEW, &pa_pdc_cell);
+			dev->mod_index, PA_VIEW, pa_pdc_cell);
 
 		BUG_ON(PDC_OK != status);
 
 		/* verify it's the same as what do_pat_inventory() found */
-		BUG_ON(dev->mod_info != pa_pdc_cell.mod_info);
-		BUG_ON(dev->pmod_loc != pa_pdc_cell.mod_location);
+		BUG_ON(dev->mod_info != pa_pdc_cell->mod_info);
+		BUG_ON(dev->pmod_loc != pa_pdc_cell->mod_location);
 
-		txn_addr = pa_pdc_cell.mod[0];   /* id_eid for IO sapic */
+		txn_addr = pa_pdc_cell->mod[0];   /* id_eid for IO sapic */
+
+		kfree(pa_pdc_cell);
 
 #ifdef USE_PAT_CPUID
 /* We need contiguous numbers for cpuid. Firmware's notion
@@ -142,7 +169,7 @@ static int __cpuinit processor_probe(struct parisc_device *dev)
 	}
 #endif
 
-	p = &cpu_data[cpuid];
+	p = &per_cpu(cpu_data, cpuid);
 	boot_cpu_data.cpu_count++;
 
 	/* initialize counters - CPU 0 gets it_value set in time_init() */
@@ -157,12 +184,9 @@ static int __cpuinit processor_probe(struct parisc_device *dev)
 #ifdef CONFIG_SMP
 	/*
 	** FIXME: review if any other initialization is clobbered
-	**	for boot_cpu by the above memset().
+	**	  for boot_cpu by the above memset().
 	*/
-
-	/* stolen from init_percpu_prof() */
-	cpu_data[cpuid].prof_counter = 1;
-	cpu_data[cpuid].prof_multiplier = 1;
+	init_percpu_prof(cpuid);
 #endif
 
 	/*
@@ -195,7 +219,7 @@ static int __cpuinit processor_probe(struct parisc_device *dev)
 	 */
 #ifdef CONFIG_SMP
 	if (cpuid) {
-		cpu_set(cpuid, cpu_present_map);
+		set_cpu_present(cpuid, true);
 		cpu_up(cpuid);
 	}
 #endif
@@ -256,19 +280,6 @@ void __init collect_boot_cpu_data(void)
 }
 
 
-/**
- * init_cpu_profiler - enable/setup per cpu profiling hooks.
- * @cpunum: The processor instance.
- *
- * FIXME: doesn't do much yet...
- */
-static inline void __init
-init_percpu_prof(int cpunum)
-{
-	cpu_data[cpunum].prof_counter = 1;
-	cpu_data[cpunum].prof_multiplier = 1;
-}
-
 
 /**
  * init_per_cpu - Handle individual processor initializations.
@@ -288,7 +299,7 @@ init_percpu_prof(int cpunum)
  *
  * o Enable CPU profiling hooks.
  */
-int __init init_per_cpu(int cpunum)
+int __cpuinit init_per_cpu(int cpunum)
 {
 	int ret;
 	struct pdc_coproc_cfg coproc_cfg;
@@ -302,8 +313,8 @@ int __init init_per_cpu(int cpunum)
 		/* FWIW, FP rev/model is a more accurate way to determine
 		** CPU type. CPU rev/model has some ambiguous cases.
 		*/
-		cpu_data[cpunum].fp_rev = coproc_cfg.revision;
-		cpu_data[cpunum].fp_model = coproc_cfg.model;
+		per_cpu(cpu_data, cpunum).fp_rev = coproc_cfg.revision;
+		per_cpu(cpu_data, cpunum).fp_model = coproc_cfg.model;
 
 		printk(KERN_INFO  "FP[%d] enabled: Rev %ld Model %ld\n",
 			cpunum, coproc_cfg.revision, coproc_cfg.model);
@@ -339,16 +350,17 @@ int __init init_per_cpu(int cpunum)
 int
 show_cpuinfo (struct seq_file *m, void *v)
 {
-	int	n;
+	unsigned long cpu;
 
-	for(n=0; n<boot_cpu_data.cpu_count; n++) {
+	for_each_online_cpu(cpu) {
+		const struct cpuinfo_parisc *cpuinfo = &per_cpu(cpu_data, cpu);
 #ifdef CONFIG_SMP
-		if (0 == cpu_data[n].hpa)
+		if (0 == cpuinfo->hpa)
 			continue;
 #endif
-		seq_printf(m, "processor\t: %d\n"
+		seq_printf(m, "processor\t: %lu\n"
 				"cpu family\t: PA-RISC %s\n",
-				 n, boot_cpu_data.family_name);
+				 cpu, boot_cpu_data.family_name);
 
 		seq_printf(m, "cpu\t\t: %s\n",  boot_cpu_data.cpu_name );
 
@@ -357,11 +369,18 @@ show_cpuinfo (struct seq_file *m, void *v)
 				 boot_cpu_data.cpu_hz / 1000000,
 				 boot_cpu_data.cpu_hz % 1000000  );
 
+		seq_printf(m, "capabilities\t:");
+		if (boot_cpu_data.pdc.capabilities & PDC_MODEL_OS32)
+			seq_printf(m, " os32");
+		if (boot_cpu_data.pdc.capabilities & PDC_MODEL_OS64)
+			seq_printf(m, " os64");
+		seq_printf(m, "\n");
+
 		seq_printf(m, "model\t\t: %s\n"
 				"model name\t: %s\n",
 				 boot_cpu_data.pdc.sys_model_name,
-				 cpu_data[n].dev ? 
-				 cpu_data[n].dev->name : "Unknown" );
+				 cpuinfo->dev ?
+				 cpuinfo->dev->name : "Unknown");
 
 		seq_printf(m, "hversion\t: 0x%08x\n"
 			        "sversion\t: 0x%08x\n",
@@ -372,8 +391,8 @@ show_cpuinfo (struct seq_file *m, void *v)
 		show_cache_info(m);
 
 		seq_printf(m, "bogomips\t: %lu.%02lu\n",
-			     cpu_data[n].loops_per_jiffy / (500000 / HZ),
-			     (cpu_data[n].loops_per_jiffy / (5000 / HZ)) % 100);
+			     cpuinfo->loops_per_jiffy / (500000 / HZ),
+			     (cpuinfo->loops_per_jiffy / (5000 / HZ)) % 100);
 
 		seq_printf(m, "software id\t: %ld\n\n",
 				boot_cpu_data.pdc.model.sw_id);

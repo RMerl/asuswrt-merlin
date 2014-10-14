@@ -1,8 +1,12 @@
 #ifndef BLKTRACE_H
 #define BLKTRACE_H
 
+#include <linux/types.h>
+#ifdef __KERNEL__
 #include <linux/blkdev.h>
 #include <linux/relay.h>
+#include <linux/compat.h>
+#endif
 
 /*
  * Trace categories
@@ -12,6 +16,7 @@ enum blktrace_cat {
 	BLK_TC_WRITE	= 1 << 1,	/* writes */
 	BLK_TC_BARRIER	= 1 << 2,	/* barrier */
 	BLK_TC_SYNC	= 1 << 3,	/* sync IO */
+	BLK_TC_SYNCIO	= BLK_TC_SYNC,
 	BLK_TC_QUEUE	= 1 << 4,	/* queueing/merging */
 	BLK_TC_REQUEUE	= 1 << 5,	/* requeueing */
 	BLK_TC_ISSUE	= 1 << 6,	/* issue */
@@ -21,6 +26,8 @@ enum blktrace_cat {
 	BLK_TC_NOTIFY	= 1 << 10,	/* special message */
 	BLK_TC_AHEAD	= 1 << 11,	/* readahead */
 	BLK_TC_META	= 1 << 12,	/* metadata */
+	BLK_TC_DISCARD	= 1 << 13,	/* discard requests */
+	BLK_TC_DRV_DATA	= 1 << 14,	/* binary per-driver data */
 
 	BLK_TC_END	= 1 << 15,	/* only 16-bits, reminder */
 };
@@ -47,6 +54,8 @@ enum blktrace_act {
 	__BLK_TA_SPLIT,			/* bio was split */
 	__BLK_TA_BOUNCE,		/* bio was bounced */
 	__BLK_TA_REMAP,			/* bio was remapped */
+	__BLK_TA_ABORT,			/* request aborted */
+	__BLK_TA_DRV_DATA,		/* driver-specific binary data */
 };
 
 /*
@@ -55,6 +64,7 @@ enum blktrace_act {
 enum blktrace_notify {
 	__BLK_TN_PROCESS = 0,		/* establish pid/name mapping */
 	__BLK_TN_TIMESTAMP,		/* include system clock */
+	__BLK_TN_MESSAGE,		/* Character string message */
 };
 
 
@@ -76,9 +86,12 @@ enum blktrace_notify {
 #define BLK_TA_SPLIT		(__BLK_TA_SPLIT)
 #define BLK_TA_BOUNCE		(__BLK_TA_BOUNCE)
 #define BLK_TA_REMAP		(__BLK_TA_REMAP | BLK_TC_ACT(BLK_TC_QUEUE))
+#define BLK_TA_ABORT		(__BLK_TA_ABORT | BLK_TC_ACT(BLK_TC_QUEUE))
+#define BLK_TA_DRV_DATA	(__BLK_TA_DRV_DATA | BLK_TC_ACT(BLK_TC_DRV_DATA))
 
 #define BLK_TN_PROCESS		(__BLK_TN_PROCESS | BLK_TC_ACT(BLK_TC_NOTIFY))
 #define BLK_TN_TIMESTAMP	(__BLK_TN_TIMESTAMP | BLK_TC_ACT(BLK_TC_NOTIFY))
+#define BLK_TN_MESSAGE		(__BLK_TN_MESSAGE | BLK_TC_ACT(BLK_TC_NOTIFY))
 
 #define BLK_IO_TRACE_MAGIC	0x65617400
 #define BLK_IO_TRACE_VERSION	0x07
@@ -87,26 +100,26 @@ enum blktrace_notify {
  * The trace itself
  */
 struct blk_io_trace {
-	u32 magic;		/* MAGIC << 8 | version */
-	u32 sequence;		/* event number */
-	u64 time;		/* in microseconds */
-	u64 sector;		/* disk offset */
-	u32 bytes;		/* transfer length */
-	u32 action;		/* what happened */
-	u32 pid;		/* who did it */
-	u32 device;		/* device number */
-	u32 cpu;		/* on what cpu did it happen */
-	u16 error;		/* completion error */
-	u16 pdu_len;		/* length of data after this trace */
+	__u32 magic;		/* MAGIC << 8 | version */
+	__u32 sequence;		/* event number */
+	__u64 time;		/* in microseconds */
+	__u64 sector;		/* disk offset */
+	__u32 bytes;		/* transfer length */
+	__u32 action;		/* what happened */
+	__u32 pid;		/* who did it */
+	__u32 device;		/* device number */
+	__u32 cpu;		/* on what cpu did it happen */
+	__u16 error;		/* completion error */
+	__u16 pdu_len;		/* length of data after this trace */
 };
 
 /*
  * The remap event
  */
 struct blk_io_trace_remap {
-	__be32 device;
-	u32 __pad;
-	__be64 sector;
+	__be32 device_from;
+	__be32 device_to;
+	__be64 sector_from;
 };
 
 enum {
@@ -115,10 +128,31 @@ enum {
 	Blktrace_stopped,
 };
 
+#define BLKTRACE_BDEV_SIZE	32
+
+/*
+ * User setup structure passed with BLKTRACESTART
+ */
+struct blk_user_trace_setup {
+	char name[BLKTRACE_BDEV_SIZE];	/* output */
+	__u16 act_mask;			/* input */
+	__u32 buf_size;			/* input */
+	__u32 buf_nr;			/* input */
+	__u64 start_lba;
+	__u64 end_lba;
+	__u32 pid;
+};
+
+#ifdef __KERNEL__
+#if defined(CONFIG_BLK_DEV_IO_TRACE)
+
+#include <linux/sysfs.h>
+
 struct blk_trace {
 	int trace_state;
 	struct rchan *rchan;
-	unsigned long *sequence;
+	unsigned long __percpu *sequence;
+	unsigned char __percpu *msg_data;
 	u16 act_mask;
 	u64 start_lba;
 	u64 end_lba;
@@ -126,165 +160,93 @@ struct blk_trace {
 	u32 dev;
 	struct dentry *dir;
 	struct dentry *dropped_file;
+	struct dentry *msg_file;
 	atomic_t dropped;
 };
 
-/*
- * User setup structure passed with BLKTRACESTART
- */
-struct blk_user_trace_setup {
-	char name[BDEVNAME_SIZE];	/* output */
-	u16 act_mask;			/* input */
-	u32 buf_size;			/* input */
-	u32 buf_nr;			/* input */
-	u64 start_lba;
-	u64 end_lba;
-	u32 pid;
-};
-
-#if defined(CONFIG_BLK_DEV_IO_TRACE)
 extern int blk_trace_ioctl(struct block_device *, unsigned, char __user *);
-extern void blk_trace_shutdown(request_queue_t *);
-extern void __blk_add_trace(struct blk_trace *, sector_t, int, int, u32, int, int, void *);
+extern void blk_trace_shutdown(struct request_queue *);
+extern int do_blk_trace_setup(struct request_queue *q, char *name,
+			      dev_t dev, struct block_device *bdev,
+			      struct blk_user_trace_setup *buts);
+extern void __trace_note_message(struct blk_trace *, const char *fmt, ...);
 
 /**
- * blk_add_trace_rq - Add a trace for a request oriented action
+ * blk_add_trace_msg - Add a (simple) message to the blktrace stream
  * @q:		queue the io is for
- * @rq:		the source request
- * @what:	the action
+ * @fmt:	format to print message in
+ * args...	Variable argument list for format
  *
  * Description:
- *     Records an action against a request. Will log the bio offset + size.
+ *     Records a (simple) message onto the blktrace stream.
+ *
+ *     NOTE: BLK_TN_MAX_MSG characters are output at most.
+ *     NOTE: Can not use 'static inline' due to presence of var args...
  *
  **/
-static inline void blk_add_trace_rq(struct request_queue *q, struct request *rq,
-				    u32 what)
-{
-	struct blk_trace *bt = q->blk_trace;
-	int rw = rq->cmd_flags & 0x03;
+#define blk_add_trace_msg(q, fmt, ...)					\
+	do {								\
+		struct blk_trace *bt = (q)->blk_trace;			\
+		if (unlikely(bt))					\
+			__trace_note_message(bt, fmt, ##__VA_ARGS__);	\
+	} while (0)
+#define BLK_TN_MAX_MSG		128
 
-	if (likely(!bt))
-		return;
+extern void blk_add_driver_data(struct request_queue *q, struct request *rq,
+				void *data, size_t len);
+extern int blk_trace_setup(struct request_queue *q, char *name, dev_t dev,
+			   struct block_device *bdev,
+			   char __user *arg);
+extern int blk_trace_startstop(struct request_queue *q, int start);
+extern int blk_trace_remove(struct request_queue *q);
+extern void blk_trace_remove_sysfs(struct device *dev);
+extern int blk_trace_init_sysfs(struct device *dev);
 
-	if (blk_pc_request(rq)) {
-		what |= BLK_TC_ACT(BLK_TC_PC);
-		__blk_add_trace(bt, 0, rq->data_len, rw, what, rq->errors, sizeof(rq->cmd), rq->cmd);
-	} else  {
-		what |= BLK_TC_ACT(BLK_TC_FS);
-		__blk_add_trace(bt, rq->hard_sector, rq->hard_nr_sectors << 9, rw, what, rq->errors, 0, NULL);
-	}
-}
-
-/**
- * blk_add_trace_bio - Add a trace for a bio oriented action
- * @q:		queue the io is for
- * @bio:	the source bio
- * @what:	the action
- *
- * Description:
- *     Records an action against a bio. Will log the bio offset + size.
- *
- **/
-static inline void blk_add_trace_bio(struct request_queue *q, struct bio *bio,
-				     u32 what)
-{
-	struct blk_trace *bt = q->blk_trace;
-
-	if (likely(!bt))
-		return;
-
-	__blk_add_trace(bt, bio->bi_sector, bio->bi_size, bio->bi_rw, what, !bio_flagged(bio, BIO_UPTODATE), 0, NULL);
-}
-
-/**
- * blk_add_trace_generic - Add a trace for a generic action
- * @q:		queue the io is for
- * @bio:	the source bio
- * @rw:		the data direction
- * @what:	the action
- *
- * Description:
- *     Records a simple trace
- *
- **/
-static inline void blk_add_trace_generic(struct request_queue *q,
-					 struct bio *bio, int rw, u32 what)
-{
-	struct blk_trace *bt = q->blk_trace;
-
-	if (likely(!bt))
-		return;
-
-	if (bio)
-		blk_add_trace_bio(q, bio, what);
-	else
-		__blk_add_trace(bt, 0, 0, rw, what, 0, 0, NULL);
-}
-
-/**
- * blk_add_trace_pdu_int - Add a trace for a bio with an integer payload
- * @q:		queue the io is for
- * @what:	the action
- * @bio:	the source bio
- * @pdu:	the integer payload
- *
- * Description:
- *     Adds a trace with some integer payload. This might be an unplug
- *     option given as the action, with the depth at unplug time given
- *     as the payload
- *
- **/
-static inline void blk_add_trace_pdu_int(struct request_queue *q, u32 what,
-					 struct bio *bio, unsigned int pdu)
-{
-	struct blk_trace *bt = q->blk_trace;
-	__be64 rpdu = cpu_to_be64(pdu);
-
-	if (likely(!bt))
-		return;
-
-	if (bio)
-		__blk_add_trace(bt, bio->bi_sector, bio->bi_size, bio->bi_rw, what, !bio_flagged(bio, BIO_UPTODATE), sizeof(rpdu), &rpdu);
-	else
-		__blk_add_trace(bt, 0, 0, 0, what, 0, sizeof(rpdu), &rpdu);
-}
-
-/**
- * blk_add_trace_remap - Add a trace for a remap operation
- * @q:		queue the io is for
- * @bio:	the source bio
- * @dev:	target device
- * @from:	source sector
- * @to:		target sector
- *
- * Description:
- *     Device mapper or raid target sometimes need to split a bio because
- *     it spans a stripe (or similar). Add a trace for that action.
- *
- **/
-static inline void blk_add_trace_remap(struct request_queue *q, struct bio *bio,
-				       dev_t dev, sector_t from, sector_t to)
-{
-	struct blk_trace *bt = q->blk_trace;
-	struct blk_io_trace_remap r;
-
-	if (likely(!bt))
-		return;
-
-	r.device = cpu_to_be32(dev);
-	r.sector = cpu_to_be64(to);
-
-	__blk_add_trace(bt, from, bio->bi_size, bio->bi_rw, BLK_TA_REMAP, !bio_flagged(bio, BIO_UPTODATE), sizeof(r), &r);
-}
+extern struct attribute_group blk_trace_attr_group;
 
 #else /* !CONFIG_BLK_DEV_IO_TRACE */
-#define blk_trace_ioctl(bdev, cmd, arg)		(-ENOTTY)
-#define blk_trace_shutdown(q)			do { } while (0)
-#define blk_add_trace_rq(q, rq, what)		do { } while (0)
-#define blk_add_trace_bio(q, rq, what)		do { } while (0)
-#define blk_add_trace_generic(q, rq, rw, what)	do { } while (0)
-#define blk_add_trace_pdu_int(q, what, bio, pdu)	do { } while (0)
-#define blk_add_trace_remap(q, bio, dev, f, t)	do {} while (0)
+# define blk_trace_ioctl(bdev, cmd, arg)		(-ENOTTY)
+# define blk_trace_shutdown(q)				do { } while (0)
+# define do_blk_trace_setup(q, name, dev, bdev, buts)	(-ENOTTY)
+# define blk_add_driver_data(q, rq, data, len)		do {} while (0)
+# define blk_trace_setup(q, name, dev, bdev, arg)	(-ENOTTY)
+# define blk_trace_startstop(q, start)			(-ENOTTY)
+# define blk_trace_remove(q)				(-ENOTTY)
+# define blk_add_trace_msg(q, fmt, ...)			do { } while (0)
+# define blk_trace_remove_sysfs(dev)			do { } while (0)
+static inline int blk_trace_init_sysfs(struct device *dev)
+{
+	return 0;
+}
+
 #endif /* CONFIG_BLK_DEV_IO_TRACE */
 
+#ifdef CONFIG_COMPAT
+
+struct compat_blk_user_trace_setup {
+	char name[32];
+	u16 act_mask;
+	u32 buf_size;
+	u32 buf_nr;
+	compat_u64 start_lba;
+	compat_u64 end_lba;
+	u32 pid;
+};
+#define BLKTRACESETUP32 _IOWR(0x12, 115, struct compat_blk_user_trace_setup)
+
+#endif
+
+#if defined(CONFIG_EVENT_TRACING) && defined(CONFIG_BLOCK)
+
+static inline int blk_cmd_buf_len(struct request *rq)
+{
+	return (rq->cmd_type == REQ_TYPE_BLOCK_PC) ? rq->cmd_len * 3 : 1;
+}
+
+extern void blk_dump_cmd(char *buf, struct request *rq);
+extern void blk_fill_rwbs(char *rwbs, u32 rw, int bytes);
+
+#endif /* CONFIG_EVENT_TRACING && CONFIG_BLOCK */
+
+#endif /* __KERNEL__ */
 #endif

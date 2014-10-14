@@ -56,10 +56,6 @@ static inline void jffs2_init_inode_info(struct jffs2_inode_info *f)
 	f->target = NULL;
 	f->flags = 0;
 	f->usercompr = 0;
-#ifdef CONFIG_JFFS2_FS_POSIX_ACL
-	f->i_acl_access = JFFS2_ACL_NOT_CACHED;
-	f->i_acl_default = JFFS2_ACL_NOT_CACHED;
-#endif
 }
 
 
@@ -144,8 +140,7 @@ void jffs2_nor_wbuf_flash_cleanup(struct jffs2_sb_info *c);
 
 #endif /* WRITEBUFFER */
 
-/* erase.c */
-static inline void jffs2_erase_pending_trigger(struct jffs2_sb_info *c)
+static inline void jffs2_dirty_trigger(struct jffs2_sb_info *c)
 {
 	OFNI_BS_2SFFJ(c)->s_dirt = 1;
 }
@@ -163,30 +158,30 @@ extern const struct inode_operations jffs2_dir_inode_operations;
 extern const struct file_operations jffs2_file_operations;
 extern const struct inode_operations jffs2_file_inode_operations;
 extern const struct address_space_operations jffs2_file_address_operations;
-int jffs2_fsync(struct file *, struct dentry *, int);
+int jffs2_fsync(struct file *, int);
 int jffs2_do_readpage_unlock (struct inode *inode, struct page *pg);
 
 /* ioctl.c */
-int jffs2_ioctl(struct inode *, struct file *, unsigned int, unsigned long);
+long jffs2_ioctl(struct file *, unsigned int, unsigned long);
 
 /* symlink.c */
 extern const struct inode_operations jffs2_symlink_inode_operations;
 
 /* fs.c */
 int jffs2_setattr (struct dentry *, struct iattr *);
-void jffs2_read_inode (struct inode *);
-void jffs2_clear_inode (struct inode *);
+int jffs2_do_setattr (struct inode *, struct iattr *);
+struct inode *jffs2_iget(struct super_block *, unsigned long);
+void jffs2_evict_inode (struct inode *);
 void jffs2_dirty_inode(struct inode *inode);
 struct inode *jffs2_new_inode (struct inode *dir_i, int mode,
 			       struct jffs2_raw_inode *ri);
 int jffs2_statfs (struct dentry *, struct kstatfs *);
-void jffs2_write_super (struct super_block *);
 int jffs2_remount_fs (struct super_block *, int *, char *);
 int jffs2_do_fill_super(struct super_block *sb, void *data, int silent);
 void jffs2_gc_release_inode(struct jffs2_sb_info *c,
 			    struct jffs2_inode_info *f);
 struct jffs2_inode_info *jffs2_gc_fetch_inode(struct jffs2_sb_info *c,
-					      int inum, int nlink);
+					      int inum, int unlinked);
 
 unsigned char *jffs2_gc_fetch_page(struct jffs2_sb_info *c,
 				   struct jffs2_inode_info *f,

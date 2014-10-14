@@ -21,14 +21,14 @@
 #include <linux/err.h>
 #include <linux/dma-mapping.h>
 #include <linux/clk.h>
+#include <linux/io.h>
+#include <linux/gfp.h>
 
 #include <asm/system.h>
-#include <asm/hardware.h>
-#include <asm/dma.h>
+#include <mach/hardware.h>
+#include <mach/dma.h>
 #include <asm/dma-mapping.h>
-#include <asm/io.h>
-#include <asm/mach/dma.h>
-#include <asm/arch/clock.h>
+#include <mach/clock.h>
 
 static struct dma_channel {
 	char *name;
@@ -192,7 +192,7 @@ void pnx4008_free_channel(int ch)
 	if (!dma_channels[ch].name) {
 		printk(KERN_CRIT
 		       "%s: trying to free channel %d which is already freed\n",
-		       __FUNCTION__, ch);
+		       __func__, ch);
 		return;
 	}
 

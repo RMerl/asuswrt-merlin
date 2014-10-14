@@ -1,6 +1,4 @@
 /*
- * $Id: spaceorb.c,v 1.15 2002/01/22 20:29:19 vojtech Exp $
- *
  *  Copyright (c) 1999-2001 Vojtech Pavlik
  *
  *  Based on the work of:
@@ -185,7 +183,7 @@ static int spaceorb_connect(struct serio *serio, struct serio_driver *drv)
 	input_dev->id.version = 0x0100;
 	input_dev->dev.parent = &serio->dev;
 
-	input_dev->evbit[0] = BIT(EV_KEY) | BIT(EV_ABS);
+	input_dev->evbit[0] = BIT_MASK(EV_KEY) | BIT_MASK(EV_ABS);
 
 	for (i = 0; i < 6; i++)
 		set_bit(spaceorb_buttons[i], input_dev->keybit);

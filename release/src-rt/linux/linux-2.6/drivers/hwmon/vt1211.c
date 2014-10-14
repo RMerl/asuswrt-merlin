@@ -21,6 +21,8 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/slab.h>
@@ -32,7 +34,8 @@
 #include <linux/err.h>
 #include <linux/mutex.h>
 #include <linux/ioport.h>
-#include <asm/io.h>
+#include <linux/acpi.h>
+#include <linux/io.h>
 
 static int uch_config = -1;
 module_param(uch_config, int, 0);
@@ -41,6 +44,10 @@ MODULE_PARM_DESC(uch_config, "Initialize the universal channel configuration");
 static int int_mode = -1;
 module_param(int_mode, int, 0);
 MODULE_PARM_DESC(int_mode, "Force the temperature interrupt mode");
+
+static unsigned short force_id;
+module_param(force_id, ushort, 0);
+MODULE_PARM_DESC(force_id, "Override the detected device ID");
 
 static struct platform_device *pdev;
 
@@ -108,7 +115,7 @@ static const u8 bitalarmfan[]	= {6, 7};
 struct vt1211_data {
 	unsigned short addr;
 	const char *name;
-	struct class_device *class_dev;
+	struct device *hwmon_dev;
 
 	struct mutex update_lock;
 	char valid;			/* !=0 if following fields are valid */
@@ -795,7 +802,7 @@ static ssize_t set_pwm_auto_point_pwm(struct device *dev,
 
 	if ((val < 0) || (val > 255)) {
 		dev_err(dev, "pwm value %ld is out of range. "
-			"Choose a value between 0 and 255." , val);
+			"Choose a value between 0 and 255.\n" , val);
 		return -EINVAL;
 	}
 
@@ -1131,7 +1138,7 @@ static int __devinit vt1211_probe(struct platform_device *pdev)
 	}
 
 	res = platform_get_resource(pdev, IORESOURCE_IO, 0);
-	if (!request_region(res->start, res->end - res->start + 1, DRVNAME)) {
+	if (!request_region(res->start, resource_size(res), DRVNAME)) {
 		err = -EBUSY;
 		dev_err(dev, "Failed to request region 0x%lx-0x%lx\n",
 			(unsigned long)res->start, (unsigned long)res->end);
@@ -1191,9 +1198,9 @@ static int __devinit vt1211_probe(struct platform_device *pdev)
 	}
 
 	/* Register device */
-	data->class_dev = hwmon_device_register(dev);
-	if (IS_ERR(data->class_dev)) {
-		err = PTR_ERR(data->class_dev);
+	data->hwmon_dev = hwmon_device_register(dev);
+	if (IS_ERR(data->hwmon_dev)) {
+		err = PTR_ERR(data->hwmon_dev);
 		dev_err(dev, "Class registration failed (%d)\n", err);
 		goto EXIT_DEV_REMOVE_SILENT;
 	}
@@ -1204,7 +1211,7 @@ EXIT_DEV_REMOVE:
 	dev_err(dev, "Sysfs interface creation failed (%d)\n", err);
 EXIT_DEV_REMOVE_SILENT:
 	vt1211_remove_sysfs(pdev);
-	release_region(res->start, res->end - res->start + 1);
+	release_region(res->start, resource_size(res));
 EXIT_KFREE:
 	platform_set_drvdata(pdev, NULL);
 	kfree(data);
@@ -1217,13 +1224,13 @@ static int __devexit vt1211_remove(struct platform_device *pdev)
 	struct vt1211_data *data = platform_get_drvdata(pdev);
 	struct resource *res;
 
-	hwmon_device_unregister(data->class_dev);
+	hwmon_device_unregister(data->hwmon_dev);
 	vt1211_remove_sysfs(pdev);
 	platform_set_drvdata(pdev, NULL);
 	kfree(data);
 
 	res = platform_get_resource(pdev, IORESOURCE_IO, 0);
-	release_region(res->start, res->end - res->start + 1);
+	release_region(res->start, resource_size(res));
 
 	return 0;
 }
@@ -1249,23 +1256,24 @@ static int __init vt1211_device_add(unsigned short address)
 	pdev = platform_device_alloc(DRVNAME, address);
 	if (!pdev) {
 		err = -ENOMEM;
-		printk(KERN_ERR DRVNAME ": Device allocation failed (%d)\n",
-		       err);
+		pr_err("Device allocation failed (%d)\n", err);
 		goto EXIT;
 	}
 
 	res.name = pdev->name;
+	err = acpi_check_resource_conflict(&res);
+	if (err)
+		goto EXIT_DEV_PUT;
+
 	err = platform_device_add_resources(pdev, &res, 1);
 	if (err) {
-		printk(KERN_ERR DRVNAME ": Device resource addition failed "
-		       "(%d)\n", err);
+		pr_err("Device resource addition failed (%d)\n", err);
 		goto EXIT_DEV_PUT;
 	}
 
 	err = platform_device_add(pdev);
 	if (err) {
-		printk(KERN_ERR DRVNAME ": Device addition failed (%d)\n",
-		       err);
+		pr_err("Device addition failed (%d)\n", err);
 		goto EXIT_DEV_PUT;
 	}
 
@@ -1280,33 +1288,32 @@ EXIT:
 static int __init vt1211_find(int sio_cip, unsigned short *address)
 {
 	int err = -ENODEV;
+	int devid;
 
 	superio_enter(sio_cip);
 
-	if (superio_inb(sio_cip, SIO_VT1211_DEVID) != SIO_VT1211_ID) {
+	devid = force_id ? force_id : superio_inb(sio_cip, SIO_VT1211_DEVID);
+	if (devid != SIO_VT1211_ID) {
 		goto EXIT;
 	}
 
 	superio_select(sio_cip, SIO_VT1211_LDN_HWMON);
 
 	if ((superio_inb(sio_cip, SIO_VT1211_ACTIVE) & 1) == 0) {
-		printk(KERN_WARNING DRVNAME ": HW monitor is disabled, "
-		       "skipping\n");
+		pr_warn("HW monitor is disabled, skipping\n");
 		goto EXIT;
 	}
 
 	*address = ((superio_inb(sio_cip, SIO_VT1211_BADDR) << 8) |
 		    (superio_inb(sio_cip, SIO_VT1211_BADDR + 1))) & 0xff00;
 	if (*address == 0) {
-		printk(KERN_WARNING DRVNAME ": Base address is not set, "
-		       "skipping\n");
+		pr_warn("Base address is not set, skipping\n");
 		goto EXIT;
 	}
 
 	err = 0;
-	printk(KERN_INFO DRVNAME ": Found VT1211 chip at 0x%04x, "
-	       "revision %u\n", *address,
-	       superio_inb(sio_cip, SIO_VT1211_DEVREV));
+	pr_info("Found VT1211 chip at 0x%04x, revision %u\n",
+		*address, superio_inb(sio_cip, SIO_VT1211_DEVREV));
 
 EXIT:
 	superio_exit(sio_cip);
@@ -1325,15 +1332,15 @@ static int __init vt1211_init(void)
 
 	if ((uch_config < -1) || (uch_config > 31)) {
 		err = -EINVAL;
-		printk(KERN_WARNING DRVNAME ": Invalid UCH configuration %d. "
-		       "Choose a value between 0 and 31.\n", uch_config);
+		pr_warn("Invalid UCH configuration %d. "
+			"Choose a value between 0 and 31.\n", uch_config);
 	  goto EXIT;
 	}
 
 	if ((int_mode < -1) || (int_mode > 0)) {
 		err = -EINVAL;
-		printk(KERN_WARNING DRVNAME ": Invalid interrupt mode %d. "
-		       "Only mode 0 is supported.\n", int_mode);
+		pr_warn("Invalid interrupt mode %d. "
+			"Only mode 0 is supported.\n", int_mode);
 	  goto EXIT;
 	}
 

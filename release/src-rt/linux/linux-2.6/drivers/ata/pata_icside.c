@@ -2,6 +2,7 @@
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/blkdev.h>
+#include <linux/gfp.h>
 #include <scsi/scsi_host.h>
 #include <linux/ata.h>
 #include <linux/libata.h>
@@ -45,8 +46,6 @@ static const struct portinfo pata_icside_portinfo_v6_2 = {
 	.stepping	= 6,
 };
 
-#define PATA_ICSIDE_MAX_SG	128
-
 struct pata_icside_state {
 	void __iomem *irq_port;
 	void __iomem *ioc_base;
@@ -57,7 +56,6 @@ struct pata_icside_state {
 		u8 disabled;
 		unsigned int speed[ATA_MAX_DEVICES];
 	} port[2];
-	struct scatterlist sg[PATA_ICSIDE_MAX_SG];
 };
 
 struct pata_icside_info {
@@ -70,6 +68,8 @@ struct pata_icside_info {
 	unsigned int		mwdma_mask;
 	unsigned int		nr_ports;
 	const struct portinfo	*port[2];
+	unsigned long		raw_base;
+	unsigned long		raw_ioc_base;
 };
 
 #define ICS_TYPE_A3IN	0
@@ -220,7 +220,6 @@ static void pata_icside_bmdma_setup(struct ata_queued_cmd *qc)
 {
 	struct ata_port *ap = qc->ap;
 	struct pata_icside_state *state = ap->host->private_data;
-	struct scatterlist *sg, *rsg = state->sg;
 	unsigned int write = qc->tf.flags & ATA_TFLAG_WRITE;
 
 	/*
@@ -230,24 +229,16 @@ static void pata_icside_bmdma_setup(struct ata_queued_cmd *qc)
 	BUG_ON(dma_channel_active(state->dma));
 
 	/*
-	 * Copy ATAs scattered sg list into a contiguous array of sg
-	 */
-	ata_for_each_sg(sg, qc) {
-		memcpy(rsg, sg, sizeof(*sg));
-		rsg++;
-	}
-
-	/*
 	 * Route the DMA signals to the correct interface
 	 */
 	writeb(state->port[ap->port_no].port_sel, state->ioc_base);
 
 	set_dma_speed(state->dma, state->port[ap->port_no].speed[qc->dev->devno]);
-	set_dma_sg(state->dma, state->sg, rsg - state->sg);
+	set_dma_sg(state->dma, qc->sg, qc->n_elem);
 	set_dma_mode(state->dma, write ? DMA_MODE_WRITE : DMA_MODE_READ);
 
 	/* issue r/w command */
-	ap->ops->exec_command(ap, &qc->tf);
+	ap->ops->sff_exec_command(ap, &qc->tf);
 }
 
 static void pata_icside_bmdma_start(struct ata_queued_cmd *qc)
@@ -267,7 +258,7 @@ static void pata_icside_bmdma_stop(struct ata_queued_cmd *qc)
 	disable_dma(state->dma);
 
 	/* see ata_bmdma_stop */
-	ata_altstatus(ap);
+	ata_sff_dma_pause(ap);
 }
 
 static u8 pata_icside_bmdma_status(struct ata_port *ap)
@@ -294,53 +285,26 @@ static int icside_dma_init(struct pata_icside_info *info)
 
 	if (ec->dma != NO_DMA && !request_dma(ec->dma, DRV_NAME)) {
 		state->dma = ec->dma;
-		info->mwdma_mask = 0x07;	/* MW0..2 */
+		info->mwdma_mask = ATA_MWDMA2;
 	}
 
 	return 0;
 }
 
 
-static int pata_icside_port_start(struct ata_port *ap)
-{
-	/* No PRD to alloc */
-	return ata_pad_alloc(ap, ap->dev);
-}
-
 static struct scsi_host_template pata_icside_sht = {
-	.module			= THIS_MODULE,
-	.name			= DRV_NAME,
-	.ioctl			= ata_scsi_ioctl,
-	.queuecommand		= ata_scsi_queuecmd,
-	.can_queue		= ATA_DEF_QUEUE,
-	.this_id		= ATA_SHT_THIS_ID,
-	.sg_tablesize		= PATA_ICSIDE_MAX_SG,
-	.cmd_per_lun		= ATA_SHT_CMD_PER_LUN,
-	.emulated		= ATA_SHT_EMULATED,
-	.use_clustering		= ATA_SHT_USE_CLUSTERING,
-	.proc_name		= DRV_NAME,
-	.dma_boundary		= ~0, /* no dma boundaries */
-	.slave_configure	= ata_scsi_slave_config,
-	.slave_destroy		= ata_scsi_slave_destroy,
-	.bios_param		= ata_std_bios_param,
+	ATA_BASE_SHT(DRV_NAME),
+	.sg_tablesize		= SCSI_MAX_SG_CHAIN_SEGMENTS,
+	.dma_boundary		= IOMD_DMA_BOUNDARY,
 };
 
-/* wish this was exported from libata-core */
-static void ata_dummy_noret(struct ata_port *port)
+static void pata_icside_postreset(struct ata_link *link, unsigned int *classes)
 {
-}
-
-/*
- * We need to shut down unused ports to prevent spurious interrupts.
- * FIXME: the libata core doesn't call this function for PATA interfaces.
- */
-static void pata_icside_port_disable(struct ata_port *ap)
-{
+	struct ata_port *ap = link->ap;
 	struct pata_icside_state *state = ap->host->private_data;
 
-	ata_port_printk(ap, KERN_ERR, "disabling icside port\n");
-
-	ata_port_disable(ap);
+	if (classes[0] != ATA_DEV_NONE || classes[1] != ATA_DEV_NONE)
+		return ata_sff_postreset(link, classes);
 
 	state->port[ap->port_no].disabled = 1;
 
@@ -356,80 +320,52 @@ static void pata_icside_port_disable(struct ata_port *ap)
 	}
 }
 
-static u8 pata_icside_irq_ack(struct ata_port *ap, unsigned int chk_drq)
-{
-	unsigned int bits = chk_drq ? ATA_BUSY | ATA_DRQ : ATA_BUSY;
-	u8 status;
-
-	status = ata_busy_wait(ap, bits, 1000);
-	if (status & bits)
-		if (ata_msg_err(ap))
-			printk(KERN_ERR "abnormal status 0x%X\n", status);
-
-	if (ata_msg_intr(ap))
-		printk(KERN_INFO "%s: irq ack: drv_stat 0x%X\n",
-			__FUNCTION__, status);
-
-	return status;
-}
-
 static struct ata_port_operations pata_icside_port_ops = {
-	.port_disable		= pata_icside_port_disable,
-
-	.set_dmamode		= pata_icside_set_dmamode,
-
-	.tf_load		= ata_tf_load,
-	.tf_read		= ata_tf_read,
-	.exec_command		= ata_exec_command,
-	.check_status		= ata_check_status,
-	.dev_select		= ata_std_dev_select,
-
-	.cable_detect		= ata_cable_40wire,
-
-	.bmdma_setup		= pata_icside_bmdma_setup,
-	.bmdma_start		= pata_icside_bmdma_start,
-
-	.data_xfer		= ata_data_xfer_noirq,
-
+	.inherits		= &ata_bmdma_port_ops,
 	/* no need to build any PRD tables for DMA */
 	.qc_prep		= ata_noop_qc_prep,
-	.qc_issue		= ata_qc_issue_prot,
-
-	.freeze			= ata_bmdma_freeze,
-	.thaw			= ata_bmdma_thaw,
-	.error_handler		= ata_bmdma_error_handler,
-	.post_internal_cmd	= pata_icside_bmdma_stop,
-
-	.irq_clear		= ata_dummy_noret,
-	.irq_on			= ata_irq_on,
-	.irq_ack		= pata_icside_irq_ack,
-
-	.port_start		= pata_icside_port_start,
-
+	.sff_data_xfer		= ata_sff_data_xfer_noirq,
+	.bmdma_setup		= pata_icside_bmdma_setup,
+	.bmdma_start		= pata_icside_bmdma_start,
 	.bmdma_stop		= pata_icside_bmdma_stop,
 	.bmdma_status		= pata_icside_bmdma_status,
+
+	.cable_detect		= ata_cable_40wire,
+	.set_dmamode		= pata_icside_set_dmamode,
+	.postreset		= pata_icside_postreset,
+
+	.port_start		= ATA_OP_NULL,	/* don't need PRD table */
 };
 
 static void __devinit
-pata_icside_setup_ioaddr(struct ata_ioports *ioaddr, void __iomem *base,
-			 const struct portinfo *info)
+pata_icside_setup_ioaddr(struct ata_port *ap, void __iomem *base,
+			 struct pata_icside_info *info,
+			 const struct portinfo *port)
 {
-	void __iomem *cmd = base + info->dataoffset;
+	struct ata_ioports *ioaddr = &ap->ioaddr;
+	void __iomem *cmd = base + port->dataoffset;
 
 	ioaddr->cmd_addr	= cmd;
-	ioaddr->data_addr	= cmd + (ATA_REG_DATA    << info->stepping);
-	ioaddr->error_addr	= cmd + (ATA_REG_ERR     << info->stepping);
-	ioaddr->feature_addr	= cmd + (ATA_REG_FEATURE << info->stepping);
-	ioaddr->nsect_addr	= cmd + (ATA_REG_NSECT   << info->stepping);
-	ioaddr->lbal_addr	= cmd + (ATA_REG_LBAL    << info->stepping);
-	ioaddr->lbam_addr	= cmd + (ATA_REG_LBAM    << info->stepping);
-	ioaddr->lbah_addr	= cmd + (ATA_REG_LBAH    << info->stepping);
-	ioaddr->device_addr	= cmd + (ATA_REG_DEVICE  << info->stepping);
-	ioaddr->status_addr	= cmd + (ATA_REG_STATUS  << info->stepping);
-	ioaddr->command_addr	= cmd + (ATA_REG_CMD     << info->stepping);
+	ioaddr->data_addr	= cmd + (ATA_REG_DATA    << port->stepping);
+	ioaddr->error_addr	= cmd + (ATA_REG_ERR     << port->stepping);
+	ioaddr->feature_addr	= cmd + (ATA_REG_FEATURE << port->stepping);
+	ioaddr->nsect_addr	= cmd + (ATA_REG_NSECT   << port->stepping);
+	ioaddr->lbal_addr	= cmd + (ATA_REG_LBAL    << port->stepping);
+	ioaddr->lbam_addr	= cmd + (ATA_REG_LBAM    << port->stepping);
+	ioaddr->lbah_addr	= cmd + (ATA_REG_LBAH    << port->stepping);
+	ioaddr->device_addr	= cmd + (ATA_REG_DEVICE  << port->stepping);
+	ioaddr->status_addr	= cmd + (ATA_REG_STATUS  << port->stepping);
+	ioaddr->command_addr	= cmd + (ATA_REG_CMD     << port->stepping);
 
-	ioaddr->ctl_addr	= base + info->ctrloffset;
+	ioaddr->ctl_addr	= base + port->ctrloffset;
 	ioaddr->altstatus_addr	= ioaddr->ctl_addr;
+
+	ata_port_desc(ap, "cmd 0x%lx ctl 0x%lx",
+		      info->raw_base + port->dataoffset,
+		      info->raw_base + port->ctrloffset);
+
+	if (info->raw_ioc_base)
+		ata_port_desc(ap, "iocbase 0x%lx", info->raw_ioc_base);
 }
 
 static int __devinit pata_icside_register_v5(struct pata_icside_info *info)
@@ -449,6 +385,8 @@ static int __devinit pata_icside_register_v5(struct pata_icside_info *info)
 	info->irqops = &pata_icside_ops_arcin_v5;
 	info->nr_ports = 1;
 	info->port[0] = &pata_icside_portinfo_v5;
+
+	info->raw_base = ecard_resource_start(info->ec, ECARD_RES_MEMC);
 
 	return 0;
 }
@@ -484,18 +422,14 @@ static int __devinit pata_icside_register_v6(struct pata_icside_info *info)
 	state->port[0].port_sel = sel;
 	state->port[1].port_sel = sel | 1;
 
-	/*
-	 * FIXME: work around libata's aversion to calling port_disable.
-	 * This permanently disables interrupts on port 0 - bad luck if
-	 * you have a drive on that port.
-	 */
-	state->port[0].disabled = 1;
-
 	info->base = easi_base;
 	info->irqops = &pata_icside_ops_arcin_v6;
 	info->nr_ports = 2;
 	info->port[0] = &pata_icside_portinfo_v6_1;
 	info->port[1] = &pata_icside_portinfo_v6_2;
+
+	info->raw_base = ecard_resource_start(ec, ECARD_RES_EASI);
+	info->raw_ioc_base = ecard_resource_start(ec, ECARD_RES_IOCFAST);
 
 	return icside_dma_init(info);
 }
@@ -528,15 +462,15 @@ static int __devinit pata_icside_add_ports(struct pata_icside_info *info)
 	for (i = 0; i < info->nr_ports; i++) {
 		struct ata_port *ap = host->ports[i];
 
-		ap->pio_mask = 0x1f;
+		ap->pio_mask = ATA_PIO4;
 		ap->mwdma_mask = info->mwdma_mask;
-		ap->flags |= ATA_FLAG_SLAVE_POSS | ATA_FLAG_SRST;
+		ap->flags |= ATA_FLAG_SLAVE_POSS;
 		ap->ops = &pata_icside_port_ops;
 
-		pata_icside_setup_ioaddr(&ap->ioaddr, info->base, info->port[i]);
+		pata_icside_setup_ioaddr(ap, info->base, info, info->port[i]);
 	}
 
-	return ata_host_activate(host, ec->irq, ata_interrupt, 0,
+	return ata_host_activate(host, ec->irq, ata_bmdma_interrupt, 0,
 				 &pata_icside_sht);
 }
 

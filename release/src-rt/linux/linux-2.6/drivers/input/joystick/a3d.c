@@ -1,11 +1,9 @@
 /*
- * $Id: a3d.c,v 1.21 2002/01/22 20:11:50 vojtech Exp $
- *
  *  Copyright (c) 1998-2001 Vojtech Pavlik
  */
 
 /*
- * FP-Gaming Assasin 3D joystick driver for Linux
+ * FP-Gaming Assassin 3D joystick driver for Linux
  */
 
 /*
@@ -36,7 +34,7 @@
 #include <linux/input.h>
 #include <linux/jiffies.h>
 
-#define DRIVER_DESC	"FP-Gaming Assasin 3D joystick driver"
+#define DRIVER_DESC	"FP-Gaming Assassin 3D joystick driver"
 
 MODULE_AUTHOR("Vojtech Pavlik <vojtech@ucw.cz>");
 MODULE_DESCRIPTION(DRIVER_DESC);
@@ -326,20 +324,26 @@ static int a3d_connect(struct gameport *gameport, struct gameport_driver *drv)
 
 		a3d->length = 33;
 
-		input_dev->evbit[0] |= BIT(EV_ABS) | BIT(EV_KEY) | BIT(EV_REL);
-		input_dev->relbit[0] |= BIT(REL_X) | BIT(REL_Y);
-		input_dev->absbit[0] |= BIT(ABS_X) | BIT(ABS_Y) | BIT(ABS_THROTTLE) | BIT(ABS_RUDDER)
-					| BIT(ABS_HAT0X) | BIT(ABS_HAT0Y) | BIT(ABS_HAT1X) | BIT(ABS_HAT1Y);
-		input_dev->keybit[LONG(BTN_MOUSE)] |= BIT(BTN_RIGHT) | BIT(BTN_LEFT) | BIT(BTN_MIDDLE)
-							| BIT(BTN_SIDE) | BIT(BTN_EXTRA);
-		input_dev->keybit[LONG(BTN_JOYSTICK)] |= BIT(BTN_TRIGGER) | BIT(BTN_THUMB) | BIT(BTN_TOP)
-							| BIT(BTN_PINKIE);
+		input_dev->evbit[0] |= BIT_MASK(EV_ABS) | BIT_MASK(EV_KEY) |
+			BIT_MASK(EV_REL);
+		input_dev->relbit[0] |= BIT_MASK(REL_X) | BIT_MASK(REL_Y);
+		input_dev->absbit[0] |= BIT_MASK(ABS_X) | BIT_MASK(ABS_Y) |
+			BIT_MASK(ABS_THROTTLE) | BIT_MASK(ABS_RUDDER) |
+			BIT_MASK(ABS_HAT0X) | BIT_MASK(ABS_HAT0Y) |
+			BIT_MASK(ABS_HAT1X) | BIT_MASK(ABS_HAT1Y);
+		input_dev->keybit[BIT_WORD(BTN_MOUSE)] |= BIT_MASK(BTN_RIGHT) |
+			BIT_MASK(BTN_LEFT) | BIT_MASK(BTN_MIDDLE) |
+			BIT_MASK(BTN_SIDE) | BIT_MASK(BTN_EXTRA);
+		input_dev->keybit[BIT_WORD(BTN_JOYSTICK)] |=
+			BIT_MASK(BTN_TRIGGER) | BIT_MASK(BTN_THUMB) |
+			BIT_MASK(BTN_TOP) | BIT_MASK(BTN_PINKIE);
 
 		a3d_read(a3d, data);
 
 		for (i = 0; i < 4; i++) {
 			if (i < 2)
-				input_set_abs_params(input_dev, axes[i], 48, input_dev->abs[axes[i]] * 2 - 48, 0, 8);
+				input_set_abs_params(input_dev, axes[i],
+					48, input_abs_get_val(input_dev, axes[i]) * 2 - 48, 0, 8);
 			else
 				input_set_abs_params(input_dev, axes[i], 2, 253, 0, 0);
 			input_set_abs_params(input_dev, ABS_HAT0X + i, -1, 1, 0, 0);
@@ -348,9 +352,10 @@ static int a3d_connect(struct gameport *gameport, struct gameport_driver *drv)
 	} else {
 		a3d->length = 29;
 
-		input_dev->evbit[0] |= BIT(EV_KEY) | BIT(EV_REL);
-		input_dev->relbit[0] |= BIT(REL_X) | BIT(REL_Y);
-		input_dev->keybit[LONG(BTN_MOUSE)] |= BIT(BTN_RIGHT) | BIT(BTN_LEFT) | BIT(BTN_MIDDLE);
+		input_dev->evbit[0] |= BIT_MASK(EV_KEY) | BIT_MASK(EV_REL);
+		input_dev->relbit[0] |= BIT_MASK(REL_X) | BIT_MASK(REL_Y);
+		input_dev->keybit[BIT_WORD(BTN_MOUSE)] |= BIT_MASK(BTN_RIGHT) |
+			BIT_MASK(BTN_LEFT) | BIT_MASK(BTN_MIDDLE);
 
 		a3d_read(a3d, data);
 
@@ -410,8 +415,7 @@ static struct gameport_driver a3d_drv = {
 
 static int __init a3d_init(void)
 {
-	gameport_register_driver(&a3d_drv);
-	return 0;
+	return gameport_register_driver(&a3d_drv);
 }
 
 static void __exit a3d_exit(void)

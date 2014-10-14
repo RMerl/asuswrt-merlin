@@ -39,16 +39,13 @@
 #include <linux/signal.h>
 #include <linux/ioctl.h>
 #include <linux/skbuff.h>
+#include <linux/bitrev.h>
+#include <asm/unaligned.h>
 
 #include <net/bluetooth/bluetooth.h>
 #include <net/bluetooth/hci_core.h>
 
 #include "hci_uart.h"
-
-#ifndef CONFIG_BT_HCIUART_DEBUG
-#undef  BT_DBG
-#define BT_DBG( A... )
-#endif
 
 #define VERSION "0.3"
 
@@ -122,27 +119,6 @@ static void bcsp_crc_update(u16 *crc, u8 d)
 	reg = (reg >> 4) ^ crc_table[(reg ^ (d >> 4)) & 0x000f];
 
 	*crc = reg;
-}
-
-/*
-   Get reverse of generated crc
-
-   Implementation note
-        The crc generator (bcsp_crc_init() and bcsp_crc_update())
-        creates a reversed crc, so it needs to be swapped back before
-        being passed on.
-*/
-static u16 bcsp_crc_reverse(u16 crc)
-{
-	u16 b, rev;
-
-	for (b = 0, rev = 0; b < 16; b++) {
-		rev = rev << 1;
-		rev |= (crc & 1);
-		crc = crc >> 1;
-	}
-
-	return (rev);
 }
 
 /* ---- BCSP core ---- */
@@ -235,9 +211,10 @@ static struct sk_buff *bcsp_prepare_pkt(struct bcsp_struct *bcsp, u8 *data,
 	}
 
 	if (hciextn && chan == 5) {
-		struct hci_command_hdr *hdr = (struct hci_command_hdr *) data;
+		__le16 opcode = ((struct hci_command_hdr *)data)->opcode;
 
-		if (hci_opcode_ogf(__le16_to_cpu(hdr->opcode)) == OGF_VENDOR_CMD) {
+		/* Vendor specific commands */
+		if (hci_opcode_ogf(__le16_to_cpu(opcode)) == 0x3f) {
 			u8 desc = *(data + HCI_COMMAND_HDR_SIZE);
 			if ((desc & 0xf0) == 0xc0) {
 				data += HCI_COMMAND_HDR_SIZE + 1;
@@ -267,7 +244,7 @@ static struct sk_buff *bcsp_prepare_pkt(struct bcsp_struct *bcsp, u8 *data,
 	if (rel) {
 		hdr[0] |= 0x80 + bcsp->msgq_txseq;
 		BT_DBG("Sending packet with seqno %u", bcsp->msgq_txseq);
-		bcsp->msgq_txseq = ++(bcsp->msgq_txseq) & 0x07;
+		bcsp->msgq_txseq = (bcsp->msgq_txseq + 1) & 0x07;
 	}
 
 	if (bcsp->use_crc)
@@ -295,7 +272,7 @@ static struct sk_buff *bcsp_prepare_pkt(struct bcsp_struct *bcsp, u8 *data,
 
 	/* Put CRC */
 	if (bcsp->use_crc) {
-		bcsp_txmsg_crc = bcsp_crc_reverse(bcsp_txmsg_crc);
+		bcsp_txmsg_crc = bitrev16(bcsp_txmsg_crc);
 		bcsp_slip_one_byte(nskb, (u8) ((bcsp_txmsg_crc >> 8) & 0x00ff));
 		bcsp_slip_one_byte(nskb, (u8) (bcsp_txmsg_crc & 0x00ff));
 	}
@@ -370,14 +347,14 @@ static int bcsp_flush(struct hci_uart *hu)
 /* Remove ack'ed packets */
 static void bcsp_pkt_cull(struct bcsp_struct *bcsp)
 {
+	struct sk_buff *skb, *tmp;
 	unsigned long flags;
-	struct sk_buff *skb;
 	int i, pkts_to_be_removed;
 	u8 seqno;
 
 	spin_lock_irqsave(&bcsp->unack.lock, flags);
 
-	pkts_to_be_removed = bcsp->unack.qlen;
+	pkts_to_be_removed = skb_queue_len(&bcsp->unack);
 	seqno = bcsp->msgq_txseq;
 
 	while (pkts_to_be_removed) {
@@ -391,19 +368,20 @@ static void bcsp_pkt_cull(struct bcsp_struct *bcsp)
 		BT_ERR("Peer acked invalid packet");
 
 	BT_DBG("Removing %u pkts out of %u, up to seqno %u",
-		pkts_to_be_removed, bcsp->unack.qlen, (seqno - 1) & 0x07);
+	       pkts_to_be_removed, skb_queue_len(&bcsp->unack),
+	       (seqno - 1) & 0x07);
 
-	for (i = 0, skb = ((struct sk_buff *) &bcsp->unack)->next; i < pkts_to_be_removed
-			&& skb != (struct sk_buff *) &bcsp->unack; i++) {
-		struct sk_buff *nskb;
+	i = 0;
+	skb_queue_walk_safe(&bcsp->unack, skb, tmp) {
+		if (i >= pkts_to_be_removed)
+			break;
+		i++;
 
-		nskb = skb->next;
 		__skb_unlink(skb, &bcsp->unack);
 		kfree_skb(skb);
-		skb = nskb;
 	}
 
-	if (bcsp->unack.qlen == 0)
+	if (skb_queue_empty(&bcsp->unack))
 		del_timer(&bcsp->tbcsp);
 
 	spin_unlock_irqrestore(&bcsp->unack.lock, flags);
@@ -565,6 +543,11 @@ static void bcsp_complete_rx_pkt(struct hci_uart *hu)
 	bcsp->rx_skb = NULL;
 }
 
+static u16 bscp_get_crc(struct bcsp_struct *bcsp)
+{
+	return get_unaligned_be16(&bcsp->rx_skb->data[bcsp->rx_skb->len - 2]);
+}
+
 /* Recv data */
 static int bcsp_recv(struct hci_uart *hu, void *data, int count)
 {
@@ -623,14 +606,10 @@ static int bcsp_recv(struct hci_uart *hu, void *data, int count)
 			continue;
 
 		case BCSP_W4_CRC:
-			if (bcsp_crc_reverse(bcsp->message_crc) !=
-					(bcsp->rx_skb->data[bcsp->rx_skb->len - 2] << 8) +
-					bcsp->rx_skb->data[bcsp->rx_skb->len - 1]) {
-
+			if (bitrev16(bcsp->message_crc) != bscp_get_crc(bcsp)) {
 				BT_ERR ("Checksum failed: computed %04x received %04x",
-					bcsp_crc_reverse(bcsp->message_crc),
-					(bcsp->rx_skb-> data[bcsp->rx_skb->len - 2] << 8) +
-					bcsp->rx_skb->data[bcsp->rx_skb->len - 1]);
+					bitrev16(bcsp->message_crc),
+					bscp_get_crc(bcsp));
 
 				kfree_skb(bcsp->rx_skb);
 				bcsp->rx_state = BCSP_W4_PKT_DELIMITER;
@@ -760,7 +739,7 @@ static struct hci_uart_proto bcsp = {
 	.flush		= bcsp_flush
 };
 
-int bcsp_init(void)
+int __init bcsp_init(void)
 {
 	int err = hci_uart_register_proto(&bcsp);
 
@@ -772,7 +751,7 @@ int bcsp_init(void)
 	return err;
 }
 
-int bcsp_deinit(void)
+int __exit bcsp_deinit(void)
 {
 	return hci_uart_unregister_proto(&bcsp);
 }

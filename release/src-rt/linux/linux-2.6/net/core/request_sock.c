@@ -33,6 +33,7 @@
  * Note : Dont forget somaxconn that may limit backlog too.
  */
 int sysctl_max_syn_backlog = 256;
+EXPORT_SYMBOL(sysctl_max_syn_backlog);
 
 int reqsk_queue_alloc(struct request_sock_queue *queue,
 		      unsigned int nr_table_entries)
@@ -45,9 +46,7 @@ int reqsk_queue_alloc(struct request_sock_queue *queue,
 	nr_table_entries = roundup_pow_of_two(nr_table_entries + 1);
 	lopt_size += nr_table_entries * sizeof(struct request_sock *);
 	if (lopt_size > PAGE_SIZE)
-		lopt = __vmalloc(lopt_size,
-			GFP_KERNEL | __GFP_HIGHMEM | __GFP_ZERO,
-			PAGE_KERNEL);
+		lopt = vzalloc(lopt_size);
 	else
 		lopt = kzalloc(lopt_size, GFP_KERNEL);
 	if (lopt == NULL)
@@ -69,7 +68,38 @@ int reqsk_queue_alloc(struct request_sock_queue *queue,
 	return 0;
 }
 
-EXPORT_SYMBOL(reqsk_queue_alloc);
+void __reqsk_queue_destroy(struct request_sock_queue *queue)
+{
+	struct listen_sock *lopt;
+	size_t lopt_size;
+
+	/*
+	 * this is an error recovery path only
+	 * no locking needed and the lopt is not NULL
+	 */
+
+	lopt = queue->listen_opt;
+	lopt_size = sizeof(struct listen_sock) +
+		lopt->nr_table_entries * sizeof(struct request_sock *);
+
+	if (lopt_size > PAGE_SIZE)
+		vfree(lopt);
+	else
+		kfree(lopt);
+}
+
+static inline struct listen_sock *reqsk_queue_yank_listen_sk(
+		struct request_sock_queue *queue)
+{
+	struct listen_sock *lopt;
+
+	write_lock_bh(&queue->syn_wait_lock);
+	lopt = queue->listen_opt;
+	queue->listen_opt = NULL;
+	write_unlock_bh(&queue->syn_wait_lock);
+
+	return lopt;
+}
 
 void reqsk_queue_destroy(struct request_sock_queue *queue)
 {
@@ -92,11 +122,10 @@ void reqsk_queue_destroy(struct request_sock_queue *queue)
 		}
 	}
 
-	BUG_TRAP(lopt->qlen == 0);
+	WARN_ON(lopt->qlen != 0);
 	if (lopt_size > PAGE_SIZE)
 		vfree(lopt);
 	else
 		kfree(lopt);
 }
 
-EXPORT_SYMBOL(reqsk_queue_destroy);

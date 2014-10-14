@@ -94,7 +94,7 @@ static int ioctl_internal_command(struct scsi_device *sdev, char *cmd,
 	SCSI_LOG_IOCTL(1, printk("Trying ioctl with scsi command %d\n", *cmd));
 
 	result = scsi_execute_req(sdev, cmd, DMA_NONE, NULL, 0,
-				  &sshdr, timeout, retries);
+				  &sshdr, timeout, retries, NULL);
 
 	SCSI_LOG_IOCTL(2, printk("Ioctl returned  0x%x\n", result));
 
@@ -167,17 +167,29 @@ EXPORT_SYMBOL(scsi_set_medium_removal);
 static int scsi_ioctl_get_pci(struct scsi_device *sdev, void __user *arg)
 {
 	struct device *dev = scsi_get_device(sdev->host);
+	const char *name;
 
         if (!dev)
 		return -ENXIO;
-        return copy_to_user(arg, dev->bus_id, sizeof(dev->bus_id))? -EFAULT: 0;
+
+	name = dev_name(dev);
+
+	/* compatibility with old ioctl which only returned
+	 * 20 characters */
+        return copy_to_user(arg, name, min(strlen(name), (size_t)20))
+		? -EFAULT: 0;
 }
 
 
-/*
- * the scsi_ioctl() function differs from most ioctls in that it does
- * not take a major/minor number as the dev field.  Rather, it takes
- * a pointer to a scsi_devices[] element, a structure. 
+/**
+ * scsi_ioctl - Dispatch ioctl to scsi device
+ * @sdev: scsi device receiving ioctl
+ * @cmd: which ioctl is it
+ * @arg: data associated with ioctl
+ *
+ * Description: The scsi_ioctl() function differs from most ioctls in that it
+ * does not take a major/minor number as the dev field.  Rather, it takes
+ * a pointer to a &struct scsi_device.
  */
 int scsi_ioctl(struct scsi_device *sdev, int cmd, void __user *arg)
 {
@@ -232,14 +244,14 @@ int scsi_ioctl(struct scsi_device *sdev, int cmd, void __user *arg)
 	case SCSI_IOCTL_SEND_COMMAND:
 		if (!capable(CAP_SYS_ADMIN) || !capable(CAP_SYS_RAWIO))
 			return -EACCES;
-		return sg_scsi_ioctl(NULL, sdev->request_queue, NULL, arg);
+		return sg_scsi_ioctl(sdev->request_queue, NULL, 0, arg);
 	case SCSI_IOCTL_DOORLOCK:
 		return scsi_set_medium_removal(sdev, SCSI_REMOVAL_PREVENT);
 	case SCSI_IOCTL_DOORUNLOCK:
 		return scsi_set_medium_removal(sdev, SCSI_REMOVAL_ALLOW);
 	case SCSI_IOCTL_TEST_UNIT_READY:
 		return scsi_test_unit_ready(sdev, IOCTL_NORMAL_TIMEOUT,
-					    NORMAL_RETRIES);
+					    NORMAL_RETRIES, NULL);
 	case SCSI_IOCTL_START_UNIT:
 		scsi_cmd[0] = START_STOP;
 		scsi_cmd[1] = 0;
@@ -264,19 +276,22 @@ int scsi_ioctl(struct scsi_device *sdev, int cmd, void __user *arg)
 }
 EXPORT_SYMBOL(scsi_ioctl);
 
-/*
- * the scsi_nonblock_ioctl() function is designed for ioctls which may
- * be executed even if the device is in recovery.
+/**
+ * scsi_nonblockable_ioctl() - Handle SG_SCSI_RESET
+ * @sdev: scsi device receiving ioctl
+ * @cmd: Must be SC_SCSI_RESET
+ * @arg: pointer to int containing SG_SCSI_RESET_{DEVICE,BUS,HOST}
+ * @ndelay: file mode O_NDELAY flag
  */
 int scsi_nonblockable_ioctl(struct scsi_device *sdev, int cmd,
-			    void __user *arg, struct file *filp)
+			    void __user *arg, int ndelay)
 {
 	int val, result;
 
 	/* The first set of iocts may be executed even if we're doing
 	 * error processing, as long as the device was opened
 	 * non-blocking */
-	if (filp && filp->f_flags & O_NONBLOCK) {
+	if (ndelay) {
 		if (scsi_host_in_recovery(sdev->host))
 			return -ENODEV;
 	} else if (!scsi_block_when_processing_errors(sdev))
@@ -292,6 +307,9 @@ int scsi_nonblockable_ioctl(struct scsi_device *sdev, int cmd,
 		switch (val) {
 		case SG_SCSI_RESET_DEVICE:
 			val = SCSI_TRY_RESET_DEVICE;
+			break;
+		case SG_SCSI_RESET_TARGET:
+			val = SCSI_TRY_RESET_TARGET;
 			break;
 		case SG_SCSI_RESET_BUS:
 			val = SCSI_TRY_RESET_BUS;

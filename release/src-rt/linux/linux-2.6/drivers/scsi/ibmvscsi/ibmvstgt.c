@@ -23,8 +23,10 @@
  */
 #include <linux/interrupt.h>
 #include <linux/module.h>
+#include <linux/slab.h>
 #include <scsi/scsi.h>
 #include <scsi/scsi_host.h>
+#include <scsi/scsi_transport_srp.h>
 #include <scsi/scsi_tgt.h>
 #include <scsi/libsrp.h>
 #include <asm/hvcall.h>
@@ -54,7 +56,7 @@
 /* tmp - will replace with SCSI logging stuff */
 #define eprintk(fmt, args...)					\
 do {								\
-	printk("%s(%d) " fmt, __FUNCTION__, __LINE__, ##args);	\
+	printk("%s(%d) " fmt, __func__, __LINE__, ##args);	\
 } while (0)
 /* #define dprintk eprintk */
 #define dprintk(fmt, args...)
@@ -68,9 +70,12 @@ struct vio_port {
 	unsigned long liobn;
 	unsigned long riobn;
 	struct srp_target *target;
+
+	struct srp_rport *rport;
 };
 
 static struct workqueue_struct *vtgtd;
+static struct scsi_transport_template *ibmvstgt_transport_template;
 
 /*
  * These are fixed for the system and come from the Open Firmware device tree.
@@ -188,6 +193,7 @@ static int send_rsp(struct iu_entry *iue, struct scsi_cmnd *sc,
 static void handle_cmd_queue(struct srp_target *target)
 {
 	struct Scsi_Host *shost = target->shost;
+	struct srp_rport *rport = target_to_port(target)->rport;
 	struct iu_entry *iue;
 	struct srp_cmd *cmd;
 	unsigned long flags;
@@ -200,7 +206,8 @@ retry:
 		if (!test_and_set_bit(V_FLYING, &iue->flags)) {
 			spin_unlock_irqrestore(&target->lock, flags);
 			cmd = iue->sbuf->buf;
-			err = srp_cmd_queue(shost, cmd, iue, 0);
+			err = srp_cmd_queue(shost, cmd, iue,
+					    (unsigned long)rport, 0);
 			if (err) {
 				eprintk("cannot queue cmd %p %d\n", cmd, err);
 				srp_iu_put(iue);
@@ -284,9 +291,9 @@ static int ibmvstgt_cmd_done(struct scsi_cmnd *sc,
 	int err = 0;
 
 	dprintk("%p %p %x %u\n", iue, target, vio_iu(iue)->srp.cmd.cdb[0],
-		cmd->usg_sg);
+		scsi_sg_count(sc));
 
-	if (sc->use_sg)
+	if (scsi_sg_count(sc))
 		err = srp_transfer_data(sc, &vio_iu(iue)->srp.cmd, ibmvstgt_rdma, 1, 1);
 
 	spin_lock_irqsave(&target->lock, flags);
@@ -359,6 +366,16 @@ static void process_login(struct iu_entry *iue)
 	union viosrp_iu *iu = vio_iu(iue);
 	struct srp_login_rsp *rsp = &iu->srp.login_rsp;
 	uint64_t tag = iu->srp.rsp.tag;
+	struct Scsi_Host *shost = iue->target->shost;
+	struct srp_target *target = host_to_srp_target(shost);
+	struct vio_port *vport = target_to_port(target);
+	struct srp_rport_identifiers ids;
+
+	memset(&ids, 0, sizeof(ids));
+	sprintf(ids.port_id, "%x", vport->dma_dev->unit_address);
+	ids.roles = SRP_RPORT_ROLE_INITIATOR;
+	if (!vport->rport)
+		vport->rport = srp_rport_add(shost, &ids);
 
 	/* TODO handle case that requested size is wrong and
 	 * buffer format is wrong
@@ -412,7 +429,9 @@ static int process_tsk_mgmt(struct iu_entry *iue)
 		fn = 0;
 	}
 	if (fn)
-		scsi_tgt_tsk_mgmt_request(iue->target->shost, fn,
+		scsi_tgt_tsk_mgmt_request(iue->target->shost,
+					  (unsigned long)iue->target->shost,
+					  fn,
 					  iu->srp.tsk_mgmt.task_tag,
 					  (struct scsi_lun *) &iu->srp.tsk_mgmt.lun,
 					  iue);
@@ -521,9 +540,9 @@ out:
 		srp_iu_put(iue);
 }
 
-static irqreturn_t ibmvstgt_interrupt(int irq, void *data)
+static irqreturn_t ibmvstgt_interrupt(int dummy, void *data)
 {
-	struct srp_target *target = (struct srp_target *) data;
+	struct srp_target *target = data;
 	struct vio_port *vport = target_to_port(target);
 
 	vio_disable_interrupts(vport->dma_dev);
@@ -546,7 +565,7 @@ static int crq_queue_create(struct crq_queue *queue, struct srp_target *target)
 					  queue->size * sizeof(*queue->msgs),
 					  DMA_BIDIRECTIONAL);
 
-	if (dma_mapping_error(queue->msg_token))
+	if (dma_mapping_error(target->dev, queue->msg_token))
 		goto map_failed;
 
 	err = h_reg_crq(vport->dma_dev->unit_address, queue->msg_token,
@@ -721,7 +740,8 @@ static int ibmvstgt_eh_abort_handler(struct scsi_cmnd *sc)
 	return 0;
 }
 
-static int ibmvstgt_tsk_mgmt_response(u64 mid, int result)
+static int ibmvstgt_tsk_mgmt_response(struct Scsi_Host *shost,
+				      u64 itn_id, u64 mid, int result)
 {
 	struct iu_entry *iue = (struct iu_entry *) ((void *) mid);
 	union viosrp_iu *iu = vio_iu(iue);
@@ -747,32 +767,49 @@ static int ibmvstgt_tsk_mgmt_response(u64 mid, int result)
 	return 0;
 }
 
-static ssize_t system_id_show(struct class_device *cdev, char *buf)
+static int ibmvstgt_it_nexus_response(struct Scsi_Host *shost, u64 itn_id,
+				      int result)
+{
+	struct srp_target *target = host_to_srp_target(shost);
+	struct vio_port *vport = target_to_port(target);
+
+	if (result) {
+		eprintk("%p %d\n", shost, result);
+		srp_rport_del(vport->rport);
+		vport->rport = NULL;
+	}
+	return 0;
+}
+
+static ssize_t system_id_show(struct device *dev,
+			      struct device_attribute *attr, char *buf)
 {
 	return snprintf(buf, PAGE_SIZE, "%s\n", system_id);
 }
 
-static ssize_t partition_number_show(struct class_device *cdev, char *buf)
+static ssize_t partition_number_show(struct device *dev,
+				     struct device_attribute *attr, char *buf)
 {
 	return snprintf(buf, PAGE_SIZE, "%x\n", partition_number);
 }
 
-static ssize_t unit_address_show(struct class_device *cdev, char *buf)
+static ssize_t unit_address_show(struct device *dev,
+				  struct device_attribute *attr, char *buf)
 {
-	struct Scsi_Host *shost = class_to_shost(cdev);
+	struct Scsi_Host *shost = class_to_shost(dev);
 	struct srp_target *target = host_to_srp_target(shost);
 	struct vio_port *vport = target_to_port(target);
 	return snprintf(buf, PAGE_SIZE, "%x\n", vport->dma_dev->unit_address);
 }
 
-static CLASS_DEVICE_ATTR(system_id, S_IRUGO, system_id_show, NULL);
-static CLASS_DEVICE_ATTR(partition_number, S_IRUGO, partition_number_show, NULL);
-static CLASS_DEVICE_ATTR(unit_address, S_IRUGO, unit_address_show, NULL);
+static DEVICE_ATTR(system_id, S_IRUGO, system_id_show, NULL);
+static DEVICE_ATTR(partition_number, S_IRUGO, partition_number_show, NULL);
+static DEVICE_ATTR(unit_address, S_IRUGO, unit_address_show, NULL);
 
-static struct class_device_attribute *ibmvstgt_attrs[] = {
-	&class_device_attr_system_id,
-	&class_device_attr_partition_number,
-	&class_device_attr_unit_address,
+static struct device_attribute *ibmvstgt_attrs[] = {
+	&dev_attr_system_id,
+	&dev_attr_partition_number,
+	&dev_attr_unit_address,
 	NULL,
 };
 
@@ -785,9 +822,9 @@ static struct scsi_host_template ibmvstgt_sht = {
 	.max_sectors		= DEFAULT_MAX_SECTORS,
 	.transfer_response	= ibmvstgt_cmd_done,
 	.eh_abort_handler	= ibmvstgt_eh_abort_handler,
-	.tsk_mgmt_response	= ibmvstgt_tsk_mgmt_response,
 	.shost_attrs		= ibmvstgt_attrs,
 	.proc_name		= TGT_NAME,
+	.supported_mode		= MODE_TARGET,
 };
 
 static int ibmvstgt_probe(struct vio_dev *dev, const struct vio_device_id *id)
@@ -804,9 +841,7 @@ static int ibmvstgt_probe(struct vio_dev *dev, const struct vio_device_id *id)
 	shost = scsi_host_alloc(&ibmvstgt_sht, sizeof(struct srp_target));
 	if (!shost)
 		goto free_vport;
-	err = scsi_tgt_alloc_queue(shost);
-	if (err)
-		goto put_host;
+	shost->transportt = ibmvstgt_transport_template;
 
 	target = host_to_srp_target(shost);
 	target->shost = shost;
@@ -830,17 +865,23 @@ static int ibmvstgt_probe(struct vio_dev *dev, const struct vio_device_id *id)
 
 	INIT_WORK(&vport->crq_work, handle_crq);
 
-	err = crq_queue_create(&vport->crq_queue, target);
+	err = scsi_add_host(shost, target->dev);
 	if (err)
 		goto free_srp_target;
 
-	err = scsi_add_host(shost, target->dev);
+	err = scsi_tgt_alloc_queue(shost);
 	if (err)
-		goto destroy_queue;
-	return 0;
+		goto remove_host;
 
-destroy_queue:
-	crq_queue_destroy(target);
+	err = crq_queue_create(&vport->crq_queue, target);
+	if (err)
+		goto free_queue;
+
+	return 0;
+free_queue:
+	scsi_tgt_free_queue(shost);
+remove_host:
+	scsi_remove_host(shost);
 free_srp_target:
 	srp_target_free(target);
 put_host:
@@ -852,11 +893,12 @@ free_vport:
 
 static int ibmvstgt_remove(struct vio_dev *dev)
 {
-	struct srp_target *target = (struct srp_target *) dev->dev.driver_data;
+	struct srp_target *target = dev_get_drvdata(&dev->dev);
 	struct Scsi_Host *shost = target->shost;
 	struct vio_port *vport = target->ldata;
 
 	crq_queue_destroy(target);
+	srp_remove_host(shost);
 	scsi_remove_host(shost);
 	scsi_tgt_free_queue(shost);
 	srp_target_free(target);
@@ -909,15 +951,25 @@ static int get_system_info(void)
 	return 0;
 }
 
-static int ibmvstgt_init(void)
+static struct srp_function_template ibmvstgt_transport_functions = {
+	.tsk_mgmt_response = ibmvstgt_tsk_mgmt_response,
+	.it_nexus_response = ibmvstgt_it_nexus_response,
+};
+
+static int __init ibmvstgt_init(void)
 {
 	int err = -ENOMEM;
 
 	printk("IBM eServer i/pSeries Virtual SCSI Target Driver\n");
 
+	ibmvstgt_transport_template =
+		srp_attach_transport(&ibmvstgt_transport_functions);
+	if (!ibmvstgt_transport_template)
+		return err;
+
 	vtgtd = create_workqueue("ibmvtgtd");
 	if (!vtgtd)
-		return err;
+		goto release_transport;
 
 	err = get_system_info();
 	if (err)
@@ -928,18 +980,20 @@ static int ibmvstgt_init(void)
 		goto destroy_wq;
 
 	return 0;
-
 destroy_wq:
 	destroy_workqueue(vtgtd);
+release_transport:
+	srp_release_transport(ibmvstgt_transport_template);
 	return err;
 }
 
-static void ibmvstgt_exit(void)
+static void __exit ibmvstgt_exit(void)
 {
 	printk("Unregister IBM virtual SCSI driver\n");
 
 	destroy_workqueue(vtgtd);
 	vio_unregister_driver(&ibmvstgt_driver);
+	srp_release_transport(ibmvstgt_transport_template);
 }
 
 MODULE_DESCRIPTION("IBM Virtual SCSI Target");

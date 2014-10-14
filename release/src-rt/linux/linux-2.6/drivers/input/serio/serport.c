@@ -15,6 +15,7 @@
 
 #include <asm/uaccess.h>
 #include <linux/kernel.h>
+#include <linux/sched.h>
 #include <linux/slab.h>
 #include <linux/module.h>
 #include <linux/init.h>
@@ -46,7 +47,7 @@ struct serport {
 static int serport_serio_write(struct serio *serio, unsigned char data)
 {
 	struct serport *serport = serio->port_data;
-	return -(serport->tty->driver->write(serport->tty, &data, 1) != 1);
+	return -(serport->tty->ops->write(serport->tty, &data, 1) != 1);
 }
 
 static int serport_serio_open(struct serio *serio)
@@ -115,14 +116,15 @@ static void serport_ldisc_close(struct tty_struct *tty)
 
 /*
  * serport_ldisc_receive() is called by the low level tty driver when characters
- * are ready for us. We forward the characters, one by one to the 'interrupt'
- * routine.
+ * are ready for us. We forward the characters and flags, one by one to the
+ * 'interrupt' routine.
  */
 
 static void serport_ldisc_receive(struct tty_struct *tty, const unsigned char *cp, char *fp, int count)
 {
 	struct serport *serport = (struct serport*) tty->disc_data;
 	unsigned long flags;
+	unsigned int ch_flags;
 	int i;
 
 	spin_lock_irqsave(&serport->lock, flags);
@@ -130,8 +132,23 @@ static void serport_ldisc_receive(struct tty_struct *tty, const unsigned char *c
 	if (!test_bit(SERPORT_ACTIVE, &serport->flags))
 		goto out;
 
-	for (i = 0; i < count; i++)
-		serio_interrupt(serport->serio, cp[i], 0);
+	for (i = 0; i < count; i++) {
+		switch (fp[i]) {
+		case TTY_FRAME:
+			ch_flags = SERIO_FRAME;
+			break;
+
+		case TTY_PARITY:
+			ch_flags = SERIO_PARITY;
+			break;
+
+		default:
+			ch_flags = 0;
+			break;
+		}
+
+		serio_interrupt(serport->serio, cp[i], ch_flags);
+	}
 
 out:
 	spin_unlock_irqrestore(&serport->lock, flags);
@@ -164,6 +181,7 @@ static ssize_t serport_ldisc_read(struct tty_struct * tty, struct file * file, u
 	serio->open = serport_serio_open;
 	serio->close = serport_serio_close;
 	serio->port_data = serport;
+	serio->dev.parent = tty->dev;
 
 	serio_register_port(serport->serio);
 	printk(KERN_INFO "serio: Serial port %s\n", tty_name(tty, name));
@@ -216,7 +234,7 @@ static void serport_ldisc_write_wakeup(struct tty_struct * tty)
  * The line discipline structure.
  */
 
-static struct tty_ldisc serport_ldisc = {
+static struct tty_ldisc_ops serport_ldisc = {
 	.owner =	THIS_MODULE,
 	.name =		"input",
 	.open =		serport_ldisc_open,

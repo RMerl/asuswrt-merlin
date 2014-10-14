@@ -2,7 +2,10 @@
 #define __LINUX_MROUTE_H
 
 #include <linux/sockios.h>
+#include <linux/types.h>
+#ifdef __KERNEL__
 #include <linux/in.h>
+#endif
 
 /*
  *	Based on the MROUTING 3.5 defines primarily to keep
@@ -24,7 +27,8 @@
 #define MRT_DEL_MFC	(MRT_BASE+5)	/* Delete a multicast forwarding entry	*/
 #define MRT_VERSION	(MRT_BASE+6)	/* Get the kernel multicast version	*/
 #define MRT_ASSERT	(MRT_BASE+7)	/* Activate PIM assert mode		*/
-#define MRT_PIM		(MRT_BASE+8)	/* enable PIM code	*/
+#define MRT_PIM		(MRT_BASE+8)	/* enable PIM code			*/
+#define MRT_TABLE	(MRT_BASE+9)	/* Specify mroute table ID		*/
 
 #define SIOCGETVIFCNT	SIOCPROTOPRIVATE	/* IP protocol privates */
 #define SIOCGETSGCNT	(SIOCPROTOPRIVATE+1)
@@ -56,20 +60,24 @@ struct vifctl {
 	unsigned char vifc_flags;	/* VIFF_ flags */
 	unsigned char vifc_threshold;	/* ttl limit */
 	unsigned int vifc_rate_limit;	/* Rate limiter values (NI) */
-	struct in_addr vifc_lcl_addr;	/* Our address */
+	union {
+		struct in_addr vifc_lcl_addr;     /* Local interface address */
+		int            vifc_lcl_ifindex;  /* Local interface index   */
+	};
 	struct in_addr vifc_rmt_addr;	/* IPIP tunnel addr */
 };
 
-#define VIFF_TUNNEL	0x1	/* IPIP tunnel */
-#define VIFF_SRCRT	0x2	/* NI */
-#define VIFF_REGISTER	0x4	/* register vif	*/
+#define VIFF_TUNNEL		0x1	/* IPIP tunnel */
+#define VIFF_SRCRT		0x2	/* NI */
+#define VIFF_REGISTER		0x4	/* register vif	*/
+#define VIFF_USE_IFINDEX	0x8	/* use vifc_lcl_ifindex instead of
+					   vifc_lcl_addr to find an interface */
 
 /*
  *	Cache manipulation structures for mrouted and PIMd
  */
  
-struct mfcctl
-{
+struct mfcctl {
 	struct in_addr mfcc_origin;		/* Origin of mcast	*/
 	struct in_addr mfcc_mcastgrp;		/* Group in question	*/
 	vifi_t	mfcc_parent;			/* Where it arrived	*/
@@ -84,8 +92,7 @@ struct mfcctl
  *	Group count retrieval for mrouted
  */
  
-struct sioc_sg_req
-{
+struct sioc_sg_req {
 	struct in_addr src;
 	struct in_addr grp;
 	unsigned long pktcnt;
@@ -97,8 +104,7 @@ struct sioc_sg_req
  *	To get vif packet counts
  */
 
-struct sioc_vif_req
-{
+struct sioc_vif_req {
 	vifi_t	vifi;		/* Which iface */
 	unsigned long icount;	/* In packets */
 	unsigned long ocount;	/* Out packets */
@@ -111,8 +117,7 @@ struct sioc_vif_req
  *	data. Magically happens to be like an IP packet as per the original
  */
  
-struct igmpmsg
-{
+struct igmpmsg {
 	__u32 unused1,unused2;
 	unsigned char im_msgtype;		/* What is this */
 	unsigned char im_mbz;			/* Must be zero */
@@ -126,16 +131,55 @@ struct igmpmsg
  */
 
 #ifdef __KERNEL__
+#include <linux/pim.h>
 #include <net/sock.h>
 
-extern int ip_mroute_setsockopt(struct sock *, int, char __user *, int);
+#ifdef CONFIG_IP_MROUTE
+static inline int ip_mroute_opt(int opt)
+{
+	return (opt >= MRT_BASE) && (opt <= MRT_BASE + 10);
+}
+#else
+static inline int ip_mroute_opt(int opt)
+{
+	return 0;
+}
+#endif
+
+#ifdef CONFIG_IP_MROUTE
+extern int ip_mroute_setsockopt(struct sock *, int, char __user *, unsigned int);
 extern int ip_mroute_getsockopt(struct sock *, int, char __user *, int __user *);
 extern int ipmr_ioctl(struct sock *sk, int cmd, void __user *arg);
-extern void ip_mr_init(void);
-
-
-struct vif_device
+extern int ipmr_compat_ioctl(struct sock *sk, unsigned int cmd, void __user *arg);
+extern int ip_mr_init(void);
+#else
+static inline
+int ip_mroute_setsockopt(struct sock *sock,
+			 int optname, char __user *optval, unsigned int optlen)
 {
+	return -ENOPROTOOPT;
+}
+
+static inline
+int ip_mroute_getsockopt(struct sock *sock,
+			 int optname, char __user *optval, int __user *optlen)
+{
+	return -ENOPROTOOPT;
+}
+
+static inline
+int ipmr_ioctl(struct sock *sk, int cmd, void __user *arg)
+{
+	return -ENOIOCTLCMD;
+}
+
+static inline int ip_mr_init(void)
+{
+	return 0;
+}
+#endif
+
+struct vif_device {
 	struct net_device 	*dev;			/* Device we are using */
 	unsigned long	bytes_in,bytes_out;
 	unsigned long	pkt_in,pkt_out;		/* Statistics 			*/
@@ -148,9 +192,8 @@ struct vif_device
 
 #define VIFF_STATIC 0x8000
 
-struct mfc_cache 
-{
-	struct mfc_cache *next;			/* Next entry on cache line 	*/
+struct mfc_cache {
+	struct list_head list;
 	__be32 mfc_mcastgrp;			/* Group the entry belongs to 	*/
 	__be32 mfc_origin;			/* Source of packet 		*/
 	vifi_t mfc_parent;			/* Source interface		*/
@@ -171,6 +214,7 @@ struct mfc_cache
 			unsigned char ttls[MAXVIFS];	/* TTL thresholds		*/
 		} res;
 	} mfc_un;
+	struct rcu_head	rcu;
 };
 
 #define MFC_STATIC		1
@@ -198,29 +242,9 @@ struct mfc_cache
 #define IGMPMSG_WHOLEPKT	3		/* For PIM Register processing */
 
 #ifdef __KERNEL__
-
-#define PIM_V1_VERSION		__constant_htonl(0x10000000)
-#define PIM_V1_REGISTER		1
-
-#define PIM_VERSION		2
-#define PIM_REGISTER		1
-
-#define PIM_NULL_REGISTER	__constant_htonl(0x40000000)
-
-/* PIMv2 register message header layout (ietf-draft-idmr-pimvsm-v2-00.ps */
-
-struct pimreghdr
-{
-	__u8	type;
-	__u8	reserved;
-	__be16	csum;
-	__be32	flags;
-};
-
-extern int pim_rcv_v1(struct sk_buff *);
-
 struct rtmsg;
-extern int ipmr_get_route(struct sk_buff *skb, struct rtmsg *rtm, int nowait);
+extern int ipmr_get_route(struct net *net, struct sk_buff *skb,
+			  struct rtmsg *rtm, int nowait);
 #endif
 
 #endif

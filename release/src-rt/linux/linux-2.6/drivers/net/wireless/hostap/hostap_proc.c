@@ -2,7 +2,7 @@
 
 #include <linux/types.h>
 #include <linux/proc_fs.h>
-#include <net/ieee80211_crypt.h>
+#include <net/lib80211.h>
 
 #include "hostap_wlan.h"
 #include "hostap.h"
@@ -36,9 +36,10 @@ static int prism2_debug_proc_read(char *page, char **start, off_t off,
 	p += sprintf(p, "dev_enabled=%d\n", local->dev_enabled);
 	p += sprintf(p, "sw_tick_stuck=%d\n", local->sw_tick_stuck);
 	for (i = 0; i < WEP_KEYS; i++) {
-		if (local->crypt[i] && local->crypt[i]->ops) {
-			p += sprintf(p, "crypt[%d]=%s\n",
-				     i, local->crypt[i]->ops->name);
+		if (local->crypt_info.crypt[i] &&
+		    local->crypt_info.crypt[i]->ops) {
+			p += sprintf(p, "crypt[%d]=%s\n", i,
+				     local->crypt_info.crypt[i]->ops->name);
 		}
 	}
 	p += sprintf(p, "pri_only=%d\n", local->pri_only);
@@ -117,9 +118,9 @@ static int prism2_wds_proc_read(char *page, char **start, off_t off,
 		iface = list_entry(ptr, struct hostap_interface, list);
 		if (iface->type != HOSTAP_INTERFACE_WDS)
 			continue;
-		p += sprintf(p, "%s\t" MACSTR "\n",
+		p += sprintf(p, "%s\t%pM\n",
 			     iface->dev->name,
-			     MAC2STR(iface->u.wds.remote_addr));
+			     iface->u.wds.remote_addr);
 		if ((p - page) > PROC_LIMIT) {
 			printk(KERN_DEBUG "%s: wds proc did not fit\n",
 			       local->dev->name);
@@ -158,8 +159,8 @@ static int prism2_bss_list_proc_read(char *page, char **start, off_t off,
 	spin_lock_bh(&local->lock);
 	list_for_each(ptr, &local->bss_list) {
 		bss = list_entry(ptr, struct hostap_bss_info, list);
-		p += sprintf(p, MACSTR "\t%lu\t%u\t0x%x\t",
-			     MAC2STR(bss->bssid), bss->last_update,
+		p += sprintf(p, "%pM\t%lu\t%u\t0x%x\t",
+			     bss->bssid, bss->last_update,
 			     bss->count, bss->capab_info);
 		for (i = 0; i < bss->ssid_len; i++) {
 			p += sprintf(p, "%c",
@@ -206,12 +207,13 @@ static int prism2_crypt_proc_read(char *page, char **start, off_t off,
 		return 0;
 	}
 
-	p += sprintf(p, "tx_keyidx=%d\n", local->tx_keyidx);
+	p += sprintf(p, "tx_keyidx=%d\n", local->crypt_info.tx_keyidx);
 	for (i = 0; i < WEP_KEYS; i++) {
-		if (local->crypt[i] && local->crypt[i]->ops &&
-		    local->crypt[i]->ops->print_stats) {
-			p = local->crypt[i]->ops->print_stats(
-				p, local->crypt[i]->priv);
+		if (local->crypt_info.crypt[i] &&
+		    local->crypt_info.crypt[i]->ops &&
+		    local->crypt_info.crypt[i]->ops->print_stats) {
+			p = local->crypt_info.crypt[i]->ops->print_stats(
+				p, local->crypt_info.crypt[i]->priv);
 		}
 	}
 
@@ -329,14 +331,14 @@ static int prism2_scan_results_proc_read(char *page, char **start, off_t off,
 		if ((p - page) > (PAGE_SIZE - 200))
 			break;
 
-		p += sprintf(p, "%d %d %d %d 0x%02x %d " MACSTR " %d ",
+		p += sprintf(p, "%d %d %d %d 0x%02x %d %pM %d ",
 			     le16_to_cpu(scanres->chid),
 			     (s16) le16_to_cpu(scanres->anl),
 			     (s16) le16_to_cpu(scanres->sl),
 			     le16_to_cpu(scanres->beacon_interval),
 			     le16_to_cpu(scanres->capability),
 			     le16_to_cpu(scanres->rate),
-			     MAC2STR(scanres->bssid),
+			     scanres->bssid,
 			     le16_to_cpu(scanres->atim));
 
 		pos = scanres->sup_rates;

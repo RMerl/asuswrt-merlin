@@ -25,7 +25,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  *  Stripped of 2.4 stuff ready for main kernel submit by
- *		Alan Cox <alan@redhat.com>
+ *		Alan Cox <alan@lxorguk.ukuu.org.uk>
  ****************************************************************************/
 
 #include <linux/kernel.h>
@@ -84,7 +84,7 @@ static struct usb_driver cpia2_driver = {
  *****************************************************************************/
 static void process_frame(struct camera_data *cam)
 {
-	static int frame_count = 0;
+	static int frame_count;
 
 	unsigned char *inbuff = cam->workbuff->data;
 
@@ -478,7 +478,7 @@ int cpia2_usb_change_streaming_alternate(struct camera_data *cam,
  * set_alternate
  *
  *****************************************************************************/
-int set_alternate(struct camera_data *cam, unsigned int alt)
+static int set_alternate(struct camera_data *cam, unsigned int alt)
 {
 	int ret = 0;
 
@@ -632,7 +632,7 @@ int cpia2_usb_transfer_cmd(struct camera_data *cam,
 static int submit_urbs(struct camera_data *cam)
 {
 	struct urb *urb;
-	int fx, err, i;
+	int fx, err, i, j;
 
 	for(i=0; i<NUM_SBUF; ++i) {
 		if (cam->sbuf[i].data)
@@ -657,6 +657,9 @@ static int submit_urbs(struct camera_data *cam)
 		}
 		urb = usb_alloc_urb(FRAMES_PER_DESC, GFP_KERNEL);
 		if (!urb) {
+			ERR("%s: usb_alloc_urb error!\n", __func__);
+			for (j = 0; j < i; j++)
+				usb_free_urb(cam->sbuf[j].urb);
 			return -ENOMEM;
 		}
 

@@ -23,6 +23,7 @@
 #include <net/sock.h>
 #include <net/tcp_states.h>
 #include <linux/llc.h>
+#include <linux/slab.h>
 
 static int llc_mac_header_len(unsigned short devtype)
 {
@@ -30,7 +31,7 @@ static int llc_mac_header_len(unsigned short devtype)
 	case ARPHRD_ETHER:
 	case ARPHRD_LOOPBACK:
 		return sizeof(struct ethhdr);
-#ifdef CONFIG_TR
+#if defined(CONFIG_TR) || defined(CONFIG_TR_MODULE)
 	case ARPHRD_IEEE802_TR:
 		return sizeof(struct trh_hdr);
 #endif
@@ -297,6 +298,17 @@ static void llc_sap_rcv(struct llc_sap *sap, struct sk_buff *skb,
 	llc_sap_state_process(sap, skb);
 }
 
+static inline bool llc_dgram_match(const struct llc_sap *sap,
+				   const struct llc_addr *laddr,
+				   const struct sock *sk)
+{
+     struct llc_sock *llc = llc_sk(sk);
+
+     return sk->sk_type == SOCK_DGRAM &&
+	  llc->laddr.lsap == laddr->lsap &&
+	  llc_mac_match(llc->laddr.mac, laddr->mac);
+}
+
 /**
  *	llc_lookup_dgram - Finds dgram socket for the local sap/mac
  *	@sap: SAP
@@ -309,23 +321,48 @@ static struct sock *llc_lookup_dgram(struct llc_sap *sap,
 				     const struct llc_addr *laddr)
 {
 	struct sock *rc;
-	struct hlist_node *node;
+	struct hlist_nulls_node *node;
+	int slot = llc_sk_laddr_hashfn(sap, laddr);
+	struct hlist_nulls_head *laddr_hb = &sap->sk_laddr_hash[slot];
 
-	read_lock_bh(&sap->sk_list.lock);
-	sk_for_each(rc, node, &sap->sk_list.list) {
-		struct llc_sock *llc = llc_sk(rc);
-
-		if (rc->sk_type == SOCK_DGRAM &&
-		    llc->laddr.lsap == laddr->lsap &&
-		    llc_mac_match(llc->laddr.mac, laddr->mac)) {
-			sock_hold(rc);
+	rcu_read_lock_bh();
+again:
+	sk_nulls_for_each_rcu(rc, node, laddr_hb) {
+		if (llc_dgram_match(sap, laddr, rc)) {
+			/* Extra checks required by SLAB_DESTROY_BY_RCU */
+			if (unlikely(!atomic_inc_not_zero(&rc->sk_refcnt)))
+				goto again;
+			if (unlikely(llc_sk(rc)->sap != sap ||
+				     !llc_dgram_match(sap, laddr, rc))) {
+				sock_put(rc);
+				continue;
+			}
 			goto found;
 		}
 	}
 	rc = NULL;
+	/*
+	 * if the nulls value we got at the end of this lookup is
+	 * not the expected one, we must restart lookup.
+	 * We probably met an item that was moved to another chain.
+	 */
+	if (unlikely(get_nulls_value(node) != slot))
+		goto again;
 found:
-	read_unlock_bh(&sap->sk_list.lock);
+	rcu_read_unlock_bh();
 	return rc;
+}
+
+static inline bool llc_mcast_match(const struct llc_sap *sap,
+				   const struct llc_addr *laddr,
+				   const struct sk_buff *skb,
+				   const struct sock *sk)
+{
+     struct llc_sock *llc = llc_sk(sk);
+
+     return sk->sk_type == SOCK_DGRAM &&
+	  llc->laddr.lsap == laddr->lsap &&
+	  llc->dev == skb->dev;
 }
 
 static void llc_do_mcast(struct llc_sap *sap, struct sk_buff *skb,
@@ -361,18 +398,15 @@ static void llc_sap_mcast(struct llc_sap *sap,
 	int i = 0, count = 256 / sizeof(struct sock *);
 	struct sock *sk, *stack[count];
 	struct hlist_node *node;
+	struct llc_sock *llc;
+	struct hlist_head *dev_hb = llc_sk_dev_hash(sap, skb->dev->ifindex);
 
-	read_lock_bh(&sap->sk_list.lock);
-	sk_for_each(sk, node, &sap->sk_list.list) {
-		struct llc_sock *llc = llc_sk(sk);
+	spin_lock_bh(&sap->sk_lock);
+	hlist_for_each_entry(llc, node, dev_hb, dev_hash_node) {
 
-		if (sk->sk_type != SOCK_DGRAM)
-			continue;
+		sk = &llc->sk;
 
-		if (llc->laddr.lsap != laddr->lsap)
-			continue;
-
-		if (llc->dev != skb->dev)
+		if (!llc_mcast_match(sap, laddr, skb, sk))
 			continue;
 
 		sock_hold(sk);
@@ -382,9 +416,8 @@ static void llc_sap_mcast(struct llc_sap *sap,
 			llc_do_mcast(sap, skb, stack, i);
 			i = 0;
 		}
-
 	}
-	read_unlock_bh(&sap->sk_list.lock);
+	spin_unlock_bh(&sap->sk_lock);
 
 	llc_do_mcast(sap, skb, stack, i);
 }

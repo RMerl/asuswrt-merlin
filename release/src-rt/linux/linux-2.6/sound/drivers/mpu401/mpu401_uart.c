@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) by Jaroslav Kysela <perex@suse.cz>
+ *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  *  Routines for control of MPU-401 in UART mode
  *
  *  MPU-401 supports UART mode which is not capable generate transmit
@@ -28,7 +28,6 @@
  *
  */
 
-#include <sound/driver.h>
 #include <asm/io.h>
 #include <linux/delay.h>
 #include <linux/init.h>
@@ -39,7 +38,7 @@
 #include <sound/core.h>
 #include <sound/mpu401.h>
 
-MODULE_AUTHOR("Jaroslav Kysela <perex@suse.cz>");
+MODULE_AUTHOR("Jaroslav Kysela <perex@perex.cz>");
 MODULE_DESCRIPTION("Routines for control of MPU-401 in UART mode");
 MODULE_LICENSE("GPL");
 
@@ -50,12 +49,10 @@ static void snd_mpu401_uart_output_write(struct snd_mpu401 * mpu);
 
  */
 
-#define snd_mpu401_input_avail(mpu)	(!(mpu->read(mpu, MPU401C(mpu)) & 0x80))
-#define snd_mpu401_output_ready(mpu)	(!(mpu->read(mpu, MPU401C(mpu)) & 0x40))
-
-#define MPU401_RESET		0xff
-#define MPU401_ENTER_UART	0x3f
-#define MPU401_ACK		0xfe
+#define snd_mpu401_input_avail(mpu) \
+	(!(mpu->read(mpu, MPU401C(mpu)) & MPU401_RX_EMPTY))
+#define snd_mpu401_output_ready(mpu) \
+	(!(mpu->read(mpu, MPU401C(mpu)) & MPU401_TX_FULL))
 
 /* Build in lowlevel io */
 static void mpu401_write_port(struct snd_mpu401 *mpu, unsigned char data,
@@ -97,23 +94,27 @@ static void snd_mpu401_uart_clear_rx(struct snd_mpu401 *mpu)
 
 static void uart_interrupt_tx(struct snd_mpu401 *mpu)
 {
+	unsigned long flags;
+
 	if (test_bit(MPU401_MODE_BIT_OUTPUT, &mpu->mode) &&
 	    test_bit(MPU401_MODE_BIT_OUTPUT_TRIGGER, &mpu->mode)) {
-		spin_lock(&mpu->output_lock);
+		spin_lock_irqsave(&mpu->output_lock, flags);
 		snd_mpu401_uart_output_write(mpu);
-		spin_unlock(&mpu->output_lock);
+		spin_unlock_irqrestore(&mpu->output_lock, flags);
 	}
 }
 
 static void _snd_mpu401_uart_interrupt(struct snd_mpu401 *mpu)
 {
+	unsigned long flags;
+
 	if (mpu->info_flags & MPU401_INFO_INPUT) {
-		spin_lock(&mpu->input_lock);
+		spin_lock_irqsave(&mpu->input_lock, flags);
 		if (test_bit(MPU401_MODE_BIT_INPUT, &mpu->mode))
 			snd_mpu401_uart_input_read(mpu);
 		else
 			snd_mpu401_uart_clear_rx(mpu);
-		spin_unlock(&mpu->input_lock);
+		spin_unlock_irqrestore(&mpu->input_lock, flags);
 	}
 	if (! (mpu->info_flags & MPU401_INFO_TX_IRQ))
 		/* ok. for better Tx performance try do some output
@@ -242,7 +243,7 @@ static int snd_mpu401_uart_cmd(struct snd_mpu401 * mpu, unsigned char cmd,
 #endif
 	}
 	mpu->write(mpu, cmd, MPU401C(mpu));
-	if (ack) {
+	if (ack && !(mpu->info_flags & MPU401_INFO_NO_ACK)) {
 		ok = 0;
 		timeout = 10000;
 		while (!ok && timeout-- > 0) {
@@ -270,8 +271,7 @@ static int snd_mpu401_do_reset(struct snd_mpu401 *mpu)
 {
 	if (snd_mpu401_uart_cmd(mpu, MPU401_RESET, 1))
 		return -EIO;
-	if (!(mpu->info_flags & MPU401_INFO_UART_ONLY) &&
-	    snd_mpu401_uart_cmd(mpu, MPU401_ENTER_UART, 1))
+	if (snd_mpu401_uart_cmd(mpu, MPU401_ENTER_UART, 0))
 		return -EIO;
 	return 0;
 }
@@ -423,16 +423,17 @@ static void snd_mpu401_uart_input_read(struct snd_mpu401 * mpu)
 static void snd_mpu401_uart_output_write(struct snd_mpu401 * mpu)
 {
 	unsigned char byte;
-	int max = 256, timeout;
+	int max = 256;
 
 	do {
 		if (snd_rawmidi_transmit_peek(mpu->substream_output,
 					      &byte, 1) == 1) {
-			for (timeout = 100; timeout > 0; timeout--) {
-				if (snd_mpu401_output_ready(mpu))
-					break;
-			}
-			if (timeout == 0)
+			/*
+			 * Try twice because there is hardware that insists on
+			 * setting the output busy bit after each write.
+			 */
+			if (!snd_mpu401_output_ready(mpu) &&
+			    !snd_mpu401_output_ready(mpu))
 				break;	/* Tx FIFO full - try again later */
 			mpu->write(mpu, byte, MPU401D(mpu));
 			snd_rawmidi_transmit_ack(mpu->substream_output, 1);

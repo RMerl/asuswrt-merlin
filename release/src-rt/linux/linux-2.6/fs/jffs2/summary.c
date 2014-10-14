@@ -2,10 +2,10 @@
  * JFFS2 -- Journalling Flash File System, Version 2.
  *
  * Copyright © 2004  Ferenc Havasi <havasi@inf.u-szeged.hu>,
- *                   Zoltan Sogor <weth@inf.u-szeged.hu>,
- *                   Patrik Kluba <pajko@halom.u-szeged.hu>,
- *                   University of Szeged, Hungary
- *             2006  KaiGai Kohei <kaigai@ak.jp.nec.com>
+ *		     Zoltan Sogor <weth@inf.u-szeged.hu>,
+ *		     Patrik Kluba <pajko@halom.u-szeged.hu>,
+ *		     University of Szeged, Hungary
+ *	       2006  KaiGai Kohei <kaigai@ak.jp.nec.com>
  *
  * For licensing information, see the file 'LICENCE' in this directory.
  *
@@ -23,6 +23,8 @@
 
 int jffs2_sum_init(struct jffs2_sb_info *c)
 {
+	uint32_t sum_size = min_t(uint32_t, c->sector_size, MAX_SUMMARY_SIZE);
+
 	c->summary = kzalloc(sizeof(struct jffs2_summary), GFP_KERNEL);
 
 	if (!c->summary) {
@@ -30,7 +32,7 @@ int jffs2_sum_init(struct jffs2_sb_info *c)
 		return -ENOMEM;
 	}
 
-	c->summary->sum_buf = vmalloc(c->sector_size);
+	c->summary->sum_buf = kmalloc(sum_size, GFP_KERNEL);
 
 	if (!c->summary->sum_buf) {
 		JFFS2_WARNING("Can't allocate buffer for writing out summary information!\n");
@@ -49,7 +51,7 @@ void jffs2_sum_exit(struct jffs2_sb_info *c)
 
 	jffs2_sum_disable_collecting(c->summary);
 
-	vfree(c->summary->sum_buf);
+	kfree(c->summary->sum_buf);
 	c->summary->sum_buf = NULL;
 
 	kfree(c->summary);
@@ -119,7 +121,7 @@ int jffs2_sum_add_inode_mem(struct jffs2_summary *s, struct jffs2_raw_inode *ri,
 	temp->nodetype = ri->nodetype;
 	temp->inode = ri->ino;
 	temp->version = ri->version;
-	temp->offset = cpu_to_je32(ofs); /* relative offset from the begining of the jeb */
+	temp->offset = cpu_to_je32(ofs); /* relative offset from the beginning of the jeb */
 	temp->totlen = ri->totlen;
 	temp->next = NULL;
 
@@ -137,7 +139,7 @@ int jffs2_sum_add_dirent_mem(struct jffs2_summary *s, struct jffs2_raw_dirent *r
 
 	temp->nodetype = rd->nodetype;
 	temp->totlen = rd->totlen;
-	temp->offset = cpu_to_je32(ofs);	/* relative from the begining of the jeb */
+	temp->offset = cpu_to_je32(ofs);	/* relative from the beginning of the jeb */
 	temp->pino = rd->pino;
 	temp->version = rd->version;
 	temp->ino = rd->ino;
@@ -429,6 +431,7 @@ static int jffs2_sum_process_sum_data(struct jffs2_sb_info *c, struct jffs2_eras
 
 			case JFFS2_NODETYPE_DIRENT: {
 				struct jffs2_sum_dirent_flash *spd;
+				int checkedlen;
 				spd = sp;
 
 				dbg_summary("Dirent at 0x%08x-0x%08x\n",
@@ -436,12 +439,25 @@ static int jffs2_sum_process_sum_data(struct jffs2_sb_info *c, struct jffs2_eras
 					    jeb->offset + je32_to_cpu(spd->offset) + je32_to_cpu(spd->totlen));
 
 
-				fd = jffs2_alloc_full_dirent(spd->nsize+1);
+				/* This should never happen, but https://dev.laptop.org/ticket/4184 */
+				checkedlen = strnlen(spd->name, spd->nsize);
+				if (!checkedlen) {
+					printk(KERN_ERR "Dirent at %08x has zero at start of name. Aborting mount.\n",
+					       jeb->offset + je32_to_cpu(spd->offset));
+					return -EIO;
+				}
+				if (checkedlen < spd->nsize) {
+					printk(KERN_ERR "Dirent at %08x has zeroes in name. Truncating to %d chars\n",
+					       jeb->offset + je32_to_cpu(spd->offset), checkedlen);
+				}
+
+
+				fd = jffs2_alloc_full_dirent(checkedlen+1);
 				if (!fd)
 					return -ENOMEM;
 
-				memcpy(&fd->name, spd->name, spd->nsize);
-				fd->name[spd->nsize] = 0;
+				memcpy(&fd->name, spd->name, checkedlen);
+				fd->name[checkedlen] = 0;
 
 				ic = jffs2_scan_make_ino_cache(c, je32_to_cpu(spd->pino));
 				if (!ic) {
@@ -455,7 +471,7 @@ static int jffs2_sum_process_sum_data(struct jffs2_sb_info *c, struct jffs2_eras
 				fd->next = NULL;
 				fd->version = je32_to_cpu(spd->version);
 				fd->ino = je32_to_cpu(spd->ino);
-				fd->nhash = full_name_hash(fd->name, spd->nsize);
+				fd->nhash = full_name_hash(fd->name, checkedlen);
 				fd->type = spd->type;
 
 				jffs2_add_fd_to_list(c, fd, &ic->scan_dents);
@@ -651,7 +667,7 @@ crc_err:
 /* Write summary data to flash - helper function for jffs2_sum_write_sumnode() */
 
 static int jffs2_sum_write_data(struct jffs2_sb_info *c, struct jffs2_eraseblock *jeb,
-					uint32_t infosize, uint32_t datasize, int padsize)
+				uint32_t infosize, uint32_t datasize, int padsize)
 {
 	struct jffs2_raw_summary isum;
 	union jffs2_sum_mem *temp;
@@ -661,6 +677,26 @@ static int jffs2_sum_write_data(struct jffs2_sb_info *c, struct jffs2_eraseblock
 	void *wpage;
 	int ret;
 	size_t retlen;
+
+	if (padsize + datasize > MAX_SUMMARY_SIZE) {
+		/* It won't fit in the buffer. Abort summary for this jeb */
+		jffs2_sum_disable_collecting(c->summary);
+
+		JFFS2_WARNING("Summary too big (%d data, %d pad) in eraseblock at %08x\n",
+			      datasize, padsize, jeb->offset);
+		/* Non-fatal */
+		return 0;
+	}
+	/* Is there enough space for summary? */
+	if (padsize < 0) {
+		/* don't try to write out summary for this jeb */
+		jffs2_sum_disable_collecting(c->summary);
+
+		JFFS2_WARNING("Not enough space for summary, padsize = %d\n",
+			      padsize);
+		/* Non-fatal */
+		return 0;
+	}
 
 	memset(c->summary->sum_buf, 0xff, datasize);
 	memset(&isum, 0, sizeof(isum));
@@ -807,7 +843,7 @@ int jffs2_sum_write_sumnode(struct jffs2_sb_info *c)
 {
 	int datasize, infosize, padsize;
 	struct jffs2_eraseblock *jeb;
-	int ret;
+	int ret = 0;
 
 	dbg_summary("called\n");
 
@@ -826,16 +862,6 @@ int jffs2_sum_write_sumnode(struct jffs2_sb_info *c)
 	padsize = jeb->free_size - infosize;
 	infosize += padsize;
 	datasize += padsize;
-
-	/* Is there enough space for summary? */
-	if (padsize < 0) {
-		/* don't try to write out summary for this jeb */
-		jffs2_sum_disable_collecting(c->summary);
-
-		JFFS2_WARNING("Not enough space for summary, padsize = %d\n", padsize);
-		spin_lock(&c->erase_completion_lock);
-		return 0;
-	}
 
 	ret = jffs2_sum_write_data(c, jeb, infosize, datasize, padsize);
 	spin_lock(&c->erase_completion_lock);

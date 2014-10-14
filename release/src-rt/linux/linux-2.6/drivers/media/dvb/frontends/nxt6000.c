@@ -38,7 +38,7 @@ struct nxt6000_state {
 	struct dvb_frontend frontend;
 };
 
-static int debug = 0;
+static int debug;
 #define dprintk if (debug) printk
 
 static int nxt6000_writereg(struct nxt6000_state* state, u8 reg, u8 data)
@@ -545,7 +545,7 @@ struct dvb_frontend* nxt6000_attach(const struct nxt6000_config* config,
 	struct nxt6000_state* state = NULL;
 
 	/* allocate memory for the internal state */
-	state = kmalloc(sizeof(struct nxt6000_state), GFP_KERNEL);
+	state = kzalloc(sizeof(struct nxt6000_state), GFP_KERNEL);
 	if (state == NULL) goto error;
 
 	/* setup the state */

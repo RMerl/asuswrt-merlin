@@ -43,29 +43,17 @@
 
 /*
  * task_struct *resume(task_struct *prev, task_struct *next,
- *                     struct thread_info *next_ti) )
+ *                     struct thread_info *next_ti, int usedfpu)
  */
 LEAF(resume)
-#ifndef CONFIG_CPU_HAS_LLSC
-	sw      zero, ll_bit
-#endif
 	mfc0	t1, CP0_STATUS
 	sw	t1, THREAD_STATUS(a0)
 	cpu_save_nonscratch a0
 	sw	ra, THREAD_REG31(a0)
 
-	/*
-	 * check if we need to save FPU registers
-	 */
-	lw	t3, TASK_THREAD_INFO(a0)
-	lw	t0, TI_FLAGS(t3)
-	li	t1, _TIF_USEDFPU
-	and	t2, t0, t1
-	beqz	t2, 1f
-	nor	t1, zero, t1
+	beqz	a3, 1f
 
-	and	t0, t0, t1
-	sw	t0, TI_FLAGS(t3)
+	PTR_L	t3, TASK_THREAD_INFO(a0)
 
 	/*
 	 * clear saved user stack CU1 bit

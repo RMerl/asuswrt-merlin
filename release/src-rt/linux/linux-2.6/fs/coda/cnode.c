@@ -7,9 +7,8 @@
 #include <linux/time.h>
 
 #include <linux/coda.h>
-#include <linux/coda_linux.h>
-#include <linux/coda_fs_i.h>
 #include <linux/coda_psdev.h>
+#include "coda_linux.h"
 
 static inline int coda_fideq(struct CodaFid *fid1, struct CodaFid *fid2)
 {
@@ -45,19 +44,16 @@ static void coda_fill_inode(struct inode *inode, struct coda_vattr *attr)
 static int coda_test_inode(struct inode *inode, void *data)
 {
 	struct CodaFid *fid = (struct CodaFid *)data;
-	return coda_fideq(&(ITOC(inode)->c_fid), fid);
+	struct coda_inode_info *cii = ITOC(inode);
+	return coda_fideq(&cii->c_fid, fid);
 }
 
 static int coda_set_inode(struct inode *inode, void *data)
 {
 	struct CodaFid *fid = (struct CodaFid *)data;
-	ITOC(inode)->c_fid = *fid;
+	struct coda_inode_info *cii = ITOC(inode);
+	cii->c_fid = *fid;
 	return 0;
-}
-
-static int coda_fail_inode(struct inode *inode, void *data)
-{
-	return -1;
 }
 
 struct inode * coda_iget(struct super_block * sb, struct CodaFid * fid,
@@ -76,6 +72,7 @@ struct inode * coda_iget(struct super_block * sb, struct CodaFid * fid,
 		cii = ITOC(inode);
 		/* we still need to set i_ino for things like stat(2) */
 		inode->i_ino = hash;
+		/* inode is locked and unique, no need to grab cii->c_lock */
 		cii->c_mapcount = 0;
 		unlock_new_inode(inode);
 	}
@@ -112,14 +109,20 @@ int coda_cnode_make(struct inode **inode, struct CodaFid *fid, struct super_bloc
 }
 
 
+/* Although we treat Coda file identifiers as immutable, there is one
+ * special case for files created during a disconnection where they may
+ * not be globally unique. When an identifier collision is detected we
+ * first try to flush the cached inode from the kernel and finally
+ * resort to renaming/rehashing in-place. Userspace remembers both old
+ * and new values of the identifier to handle any in-flight upcalls.
+ * The real solution is to use globally unique UUIDs as identifiers, but
+ * retrofitting the existing userspace code for this is non-trivial. */
 void coda_replace_fid(struct inode *inode, struct CodaFid *oldfid, 
 		      struct CodaFid *newfid)
 {
-	struct coda_inode_info *cii;
+	struct coda_inode_info *cii = ITOC(inode);
 	unsigned long hash = coda_f2i(newfid);
 	
-	cii = ITOC(inode);
-
 	BUG_ON(!coda_fideq(&cii->c_fid, oldfid));
 
 	/* replace fid and rehash inode */
@@ -141,7 +144,7 @@ struct inode *coda_fid_to_inode(struct CodaFid *fid, struct super_block *sb)
 		return NULL;
 	}
 
-	inode = iget5_locked(sb, hash, coda_test_inode, coda_fail_inode, fid);
+	inode = ilookup5(sb, hash, coda_test_inode, fid);
 	if ( !inode )
 		return NULL;
 

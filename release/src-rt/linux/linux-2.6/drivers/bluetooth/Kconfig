@@ -2,7 +2,7 @@
 menu "Bluetooth device drivers"
 	depends on BT
 
-config BT_HCIUSB
+config BT_HCIBTUSB
 	tristate "HCI USB driver"
 	depends on USB
 	help
@@ -11,16 +11,18 @@ config BT_HCIUSB
 	  USB interface.
 
 	  Say Y here to compile support for Bluetooth USB devices into the
-	  kernel or say M to compile it as module (hci_usb).
+	  kernel or say M to compile it as module (btusb).
 
-config BT_HCIUSB_SCO
-	bool "SCO (voice) support"
-	depends on BT_HCIUSB
+config BT_HCIBTSDIO
+	tristate "HCI SDIO driver"
+	depends on MMC
 	help
-	  This option enables the SCO support in the HCI USB driver. You need this
-	  to transmit voice data with your Bluetooth USB device.
+	  Bluetooth HCI SDIO driver.
+	  This driver is required if you want to use Bluetooth device with
+	  SDIO interface.
 
-	  Say Y here to compile support for SCO over HCI USB.
+	  Say Y here to compile support for Bluetooth SDIO devices into the
+	  kernel or say M to compile it as module (btsdio).
 
 config BT_HCIUART
 	tristate "HCI UART driver"
@@ -47,6 +49,7 @@ config BT_HCIUART_H4
 config BT_HCIUART_BCSP
 	bool "BCSP protocol support"
 	depends on BT_HCIUART
+	select BITREVERSE
 	help
 	  BCSP (BlueCore Serial Protocol) is serial protocol for communication 
 	  between Bluetooth device and host. This protocol is required for non
@@ -54,6 +57,29 @@ config BT_HCIUART_BCSP
 	  CF cards.
 
 	  Say Y here to compile support for HCI BCSP protocol.
+
+config BT_HCIUART_ATH3K
+	bool "Atheros AR300x serial support"
+	depends on BT_HCIUART
+	help
+	  HCIATH3K (HCI Atheros AR300x) is a serial protocol for
+	  communication between host and Atheros AR300x Bluetooth devices.
+	  This protocol enables AR300x chips to be enabled with
+	  power management support.
+	  Enable this if you have Atheros AR300x serial Bluetooth device.
+
+	  Say Y here to compile support for HCI UART ATH3K protocol.
+
+config BT_HCIUART_LL
+	bool "HCILL protocol support"
+	depends on BT_HCIUART
+	help
+	  HCILL (HCI Low Level) is a serial protocol for communication
+	  between Bluetooth device and host. This protocol is required for
+	  serial Bluetooth devices that are based on Texas Instruments'
+	  BRF chips.
+
+	  Say Y here to compile support for HCILL protocol.
 
 config BT_HCIBCM203X
 	tristate "HCI BCM203x USB driver"
@@ -156,5 +182,51 @@ config BT_HCIVHCI
 	  Say Y here to compile support for virtual HCI devices into the
 	  kernel or say M to compile it as module (hci_vhci).
 
-endmenu
+config BT_MRVL
+	tristate "Marvell Bluetooth driver support"
+	help
+	  The core driver to support Marvell Bluetooth devices.
 
+	  This driver is required if you want to support
+	  Marvell Bluetooth devices, such as 8688.
+
+	  Say Y here to compile Marvell Bluetooth driver
+	  into the kernel or say M to compile it as module.
+
+config BT_MRVL_SDIO
+	tristate "Marvell BT-over-SDIO driver"
+	depends on BT_MRVL && MMC
+	select FW_LOADER
+	help
+	  The driver for Marvell Bluetooth chipsets with SDIO interface.
+
+	  This driver is required if you want to use Marvell Bluetooth
+	  devices with SDIO interface. Currently only SD8688 chipset is
+	  supported.
+
+	  Say Y here to compile support for Marvell BT-over-SDIO driver
+	  into the kernel or say M to compile it as module.
+
+config BT_ATH3K
+	tristate "Atheros firmware download driver"
+	depends on BT_HCIBTUSB
+	select FW_LOADER
+	help
+	  Bluetooth firmware download driver.
+	  This driver loads the firmware into the Atheros Bluetooth
+	  chipset.
+
+	  Say Y here to compile support for "Atheros firmware download driver"
+	  into the kernel or say M to compile it as module (ath3k).
+
+config BT_WILINK
+	tristate "Texas Instruments WiLink7 driver"
+	depends on TI_ST
+	help
+	  This enables the Bluetooth driver for Texas Instrument's BT/FM/GPS
+	  combo devices. This makes use of shared transport line discipline
+	  core driver to communicate with the BT core of the combo chip.
+
+	  Say Y here to compile support for Texas Instrument's WiLink7 driver
+	  into the kernel or say M to compile it as module.
+endmenu

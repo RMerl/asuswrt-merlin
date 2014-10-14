@@ -76,6 +76,7 @@
 #define ERRnofiles		18	/* A File Search command can find no
 					   more files matching the specified
 					   criteria. */
+#define ERRwriteprot		19	/* media is write protected */
 #define ERRgeneral		31
 #define ERRbadshare		32	/* The sharing mode specified for an
 					   Open conflicts with existing FIDs on
@@ -110,6 +111,7 @@
 
 /* Below errors are used internally (do not come over the wire) for passthrough
    from STATUS codes to POSIX only  */
+#define ERRsymlink              0xFFFD
 #define ErrTooManyLinks         0xFFFE
 
 /* Following error codes may be generated with the ERRSRV error class.*/

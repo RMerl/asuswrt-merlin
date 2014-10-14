@@ -80,7 +80,7 @@ static int logMOUNT(struct super_block *sb);
  */
 int jfs_mount(struct super_block *sb)
 {
-	int rc = 0;		/* Return code          */
+	int rc = 0;		/* Return code */
 	struct jfs_sb_info *sbi = JFS_SBI(sb);
 	struct inode *ipaimap = NULL;
 	struct inode *ipaimap2 = NULL;
@@ -97,7 +97,7 @@ int jfs_mount(struct super_block *sb)
 
 	ipaimap = diReadSpecial(sb, AGGREGATE_I, 0);
 	if (ipaimap == NULL) {
-		jfs_err("jfs_mount: Faild to read AGGREGATE_I");
+		jfs_err("jfs_mount: Failed to read AGGREGATE_I");
 		rc = -EIO;
 		goto errout20;
 	}
@@ -147,8 +147,8 @@ int jfs_mount(struct super_block *sb)
 	 */
 	if ((sbi->mntflag & JFS_BAD_SAIT) == 0) {
 		ipaimap2 = diReadSpecial(sb, AGGREGATE_I, 1);
-		if (ipaimap2 == 0) {
-			jfs_err("jfs_mount: Faild to read AGGREGATE_I");
+		if (!ipaimap2) {
+			jfs_err("jfs_mount: Failed to read AGGREGATE_I");
 			rc = -EIO;
 			goto errout35;
 		}
@@ -169,7 +169,7 @@ int jfs_mount(struct super_block *sb)
 		sbi->ipaimap2 = NULL;
 
 	/*
-	 *      mount (the only/single) fileset
+	 *	mount (the only/single) fileset
 	 */
 	/*
 	 * open fileset inode allocation map (aka fileset inode)
@@ -195,7 +195,7 @@ int jfs_mount(struct super_block *sb)
 	goto out;
 
 	/*
-	 *      unwind on error
+	 *	unwind on error
 	 */
       errout41:		/* close fileset inode allocation map inode */
 	diFreeSpecial(ipimap);

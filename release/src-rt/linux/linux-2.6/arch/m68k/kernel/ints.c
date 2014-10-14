@@ -133,7 +133,7 @@ void __init m68k_setup_user_interrupt(unsigned int vec, unsigned int cnt,
 {
 	int i;
 
-	BUG_ON(IRQ_USER + cnt >= NR_IRQS);
+	BUG_ON(IRQ_USER + cnt > NR_IRQS);
 	m68k_first_user_vec = vec;
 	for (i = 0; i < cnt; i++)
 		irq_controller[IRQ_USER + i] = &user_irq_controller;
@@ -186,7 +186,7 @@ int setup_irq(unsigned int irq, struct irq_node *node)
 
 	if (irq >= NR_IRQS || !(contr = irq_controller[irq])) {
 		printk("%s: Incorrect IRQ %d from %s\n",
-		       __FUNCTION__, irq, node->devname);
+		       __func__, irq, node->devname);
 		return -ENXIO;
 	}
 
@@ -249,7 +249,7 @@ void free_irq(unsigned int irq, void *dev_id)
 	unsigned long flags;
 
 	if (irq >= NR_IRQS || !(contr = irq_controller[irq])) {
-		printk("%s: Incorrect IRQ %d\n", __FUNCTION__, irq);
+		printk("%s: Incorrect IRQ %d\n", __func__, irq);
 		return;
 	}
 
@@ -267,7 +267,7 @@ void free_irq(unsigned int irq, void *dev_id)
 		node->handler = NULL;
 	} else
 		printk("%s: Removing probably wrong IRQ %d\n",
-		       __FUNCTION__, irq);
+		       __func__, irq);
 
 	if (!irq_list[irq]) {
 		if (contr->shutdown)
@@ -288,7 +288,7 @@ void enable_irq(unsigned int irq)
 
 	if (irq >= NR_IRQS || !(contr = irq_controller[irq])) {
 		printk("%s: Incorrect IRQ %d\n",
-		       __FUNCTION__, irq);
+		       __func__, irq);
 		return;
 	}
 
@@ -312,7 +312,7 @@ void disable_irq(unsigned int irq)
 
 	if (irq >= NR_IRQS || !(contr = irq_controller[irq])) {
 		printk("%s: Incorrect IRQ %d\n",
-		       __FUNCTION__, irq);
+		       __func__, irq);
 		return;
 	}
 
@@ -325,6 +325,10 @@ void disable_irq(unsigned int irq)
 }
 
 EXPORT_SYMBOL(disable_irq);
+
+void disable_irq_nosync(unsigned int irq) __attribute__((alias("disable_irq")));
+
+EXPORT_SYMBOL(disable_irq_nosync);
 
 int m68k_irq_startup(unsigned int irq)
 {
@@ -425,8 +429,9 @@ int show_interrupts(struct seq_file *p, void *v)
 	return 0;
 }
 
+#ifdef CONFIG_PROC_FS
 void init_irq_proc(void)
 {
 	/* Insert /proc/irq driver here */
 }
-
+#endif

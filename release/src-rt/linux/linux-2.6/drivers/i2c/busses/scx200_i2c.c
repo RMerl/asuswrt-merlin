@@ -27,7 +27,7 @@
 #include <linux/init.h>
 #include <linux/i2c.h>
 #include <linux/i2c-algo-bit.h>
-#include <asm/io.h>
+#include <linux/io.h>
 
 #include <linux/scx200_gpio.h>
 
@@ -76,12 +76,12 @@ static struct i2c_algo_bit_data scx200_i2c_data = {
 	.getsda		= scx200_i2c_getsda,
 	.getscl		= scx200_i2c_getscl,
 	.udelay		= 10,
-	.timeout	= 100,
+	.timeout	= HZ,
 };
 
 static struct i2c_adapter scx200_i2c_ops = {
 	.owner		   = THIS_MODULE,
-	.id		   = I2C_HW_B_SCX200,
+	.class             = I2C_CLASS_HWMON | I2C_CLASS_SPD,
 	.algo_data	   = &scx200_i2c_data,
 	.name	= "NatSemi SCx200 I2C",
 };

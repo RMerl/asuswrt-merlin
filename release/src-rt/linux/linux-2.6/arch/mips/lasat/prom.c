@@ -36,16 +36,16 @@ static void null_prom_putc(char c)
 }
 
 /* these are functions provided by the bootloader */
-static void (* __prom_putc)(char c) = null_prom_putc;
+static void (*__prom_putc)(char c) = null_prom_putc;
 
 void prom_putchar(char c)
 {
 	__prom_putc(c);
 }
 
-void (* prom_display)(const char *string, int pos, int clear) =
+void (*prom_display)(const char *string, int pos, int clear) =
 		null_prom_display;
-void (* prom_monitor)(void) = null_prom_monitor;
+void (*prom_monitor)(void) = null_prom_monitor;
 
 unsigned int lasat_ndelay_divider;
 
@@ -58,14 +58,25 @@ static void setup_prom_vectors(void)
 		__prom_putc = (void *)PROM_PUTC_ADDR;
 		prom_monitor = (void *)PROM_MONITOR_ADDR;
 	}
-	printk("prom vectors set up\n");
+	printk(KERN_DEBUG "prom vectors set up\n");
 }
 
 static struct at93c_defs at93c_defs[N_MACHTYPES] = {
-	{(void *)AT93C_REG_100, (void *)AT93C_RDATA_REG_100, AT93C_RDATA_SHIFT_100,
-	AT93C_WDATA_SHIFT_100, AT93C_CS_M_100, AT93C_CLK_M_100},
-	{(void *)AT93C_REG_200, (void *)AT93C_RDATA_REG_200, AT93C_RDATA_SHIFT_200,
-	AT93C_WDATA_SHIFT_200, AT93C_CS_M_200, AT93C_CLK_M_200},
+	{
+		.reg		= (void *)AT93C_REG_100,
+		.rdata_reg	= (void *)AT93C_RDATA_REG_100,
+		.rdata_shift	= AT93C_RDATA_SHIFT_100,
+		.wdata_shift	= AT93C_WDATA_SHIFT_100,
+		.cs		= AT93C_CS_M_100,
+		.clk		= AT93C_CLK_M_100
+	}, {
+		.reg		= (void *)AT93C_REG_200,
+		.rdata_reg	= (void *)AT93C_RDATA_REG_200,
+		.rdata_shift	= AT93C_RDATA_SHIFT_200,
+		.wdata_shift	= AT93C_WDATA_SHIFT_200,
+		.cs		= AT93C_CS_M_200,
+		.clk		= AT93C_CLK_M_200
+	},
 };
 
 void __init prom_init(void)
@@ -75,26 +86,22 @@ void __init prom_init(void)
 
 	setup_prom_vectors();
 
-	if (current_cpu_data.cputype == CPU_R5000) {
-	        printk("LASAT 200 board\n");
-		mips_machtype = MACH_LASAT_200;
-                lasat_ndelay_divider = LASAT_200_DIVIDER;
-        } else {
-	        printk("LASAT 100 board\n");
-		mips_machtype = MACH_LASAT_100;
-                lasat_ndelay_divider = LASAT_100_DIVIDER;
-        }
-
-	at93c = &at93c_defs[mips_machtype];
+	if (IS_LASAT_200()) {
+		printk(KERN_INFO "LASAT 200 board\n");
+		lasat_ndelay_divider = LASAT_200_DIVIDER;
+		at93c = &at93c_defs[1];
+	} else {
+		printk(KERN_INFO "LASAT 100 board\n");
+		lasat_ndelay_divider = LASAT_100_DIVIDER;
+		at93c = &at93c_defs[0];
+	}
 
 	lasat_init_board_info();		/* Read info from EEPROM */
 
-	mips_machgroup = MACH_GROUP_LASAT;
-
 	/* Get the command line */
 	if (argc > 0) {
-		strncpy(arcs_cmdline, argv[0], CL_SIZE-1);
-		arcs_cmdline[CL_SIZE-1] = '\0';
+		strncpy(arcs_cmdline, argv[0], COMMAND_LINE_SIZE-1);
+		arcs_cmdline[COMMAND_LINE_SIZE-1] = '\0';
 	}
 
 	/* Set the I/O base address */

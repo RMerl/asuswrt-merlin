@@ -32,52 +32,119 @@ static struct kmem_cache *jffs2_inode_cachep;
 
 static struct inode *jffs2_alloc_inode(struct super_block *sb)
 {
-	struct jffs2_inode_info *ei;
-	ei = (struct jffs2_inode_info *)kmem_cache_alloc(jffs2_inode_cachep, GFP_KERNEL);
-	if (!ei)
+	struct jffs2_inode_info *f;
+
+	f = kmem_cache_alloc(jffs2_inode_cachep, GFP_KERNEL);
+	if (!f)
 		return NULL;
-	return &ei->vfs_inode;
+	return &f->vfs_inode;
+}
+
+static void jffs2_i_callback(struct rcu_head *head)
+{
+	struct inode *inode = container_of(head, struct inode, i_rcu);
+	INIT_LIST_HEAD(&inode->i_dentry);
+	kmem_cache_free(jffs2_inode_cachep, JFFS2_INODE_INFO(inode));
 }
 
 static void jffs2_destroy_inode(struct inode *inode)
 {
-	kmem_cache_free(jffs2_inode_cachep, JFFS2_INODE_INFO(inode));
+	call_rcu(&inode->i_rcu, jffs2_i_callback);
 }
 
-static void jffs2_i_init_once(void * foo, struct kmem_cache * cachep, unsigned long flags)
+static void jffs2_i_init_once(void *foo)
 {
-	struct jffs2_inode_info *ei = (struct jffs2_inode_info *) foo;
+	struct jffs2_inode_info *f = foo;
 
-	init_MUTEX(&ei->sem);
-	inode_init_once(&ei->vfs_inode);
+	mutex_init(&f->sem);
+	inode_init_once(&f->vfs_inode);
+}
+
+static void jffs2_write_super(struct super_block *sb)
+{
+	struct jffs2_sb_info *c = JFFS2_SB_INFO(sb);
+
+	lock_super(sb);
+	sb->s_dirt = 0;
+
+	if (!(sb->s_flags & MS_RDONLY)) {
+		D1(printk(KERN_DEBUG "jffs2_write_super()\n"));
+		jffs2_flush_wbuf_gc(c, 0);
+	}
+
+	unlock_super(sb);
 }
 
 static int jffs2_sync_fs(struct super_block *sb, int wait)
 {
 	struct jffs2_sb_info *c = JFFS2_SB_INFO(sb);
 
-	down(&c->alloc_sem);
+	jffs2_write_super(sb);
+
+	mutex_lock(&c->alloc_sem);
 	jffs2_flush_wbuf_pad(c);
-	up(&c->alloc_sem);
+	mutex_unlock(&c->alloc_sem);
 	return 0;
 }
+
+static struct inode *jffs2_nfs_get_inode(struct super_block *sb, uint64_t ino,
+					 uint32_t generation)
+{
+	/* We don't care about i_generation. We'll destroy the flash
+	   before we start re-using inode numbers anyway. And even
+	   if that wasn't true, we'd have other problems...*/
+	return jffs2_iget(sb, ino);
+}
+
+static struct dentry *jffs2_fh_to_dentry(struct super_block *sb, struct fid *fid,
+					 int fh_len, int fh_type)
+{
+        return generic_fh_to_dentry(sb, fid, fh_len, fh_type,
+                                    jffs2_nfs_get_inode);
+}
+
+static struct dentry *jffs2_fh_to_parent(struct super_block *sb, struct fid *fid,
+					 int fh_len, int fh_type)
+{
+        return generic_fh_to_parent(sb, fid, fh_len, fh_type,
+                                    jffs2_nfs_get_inode);
+}
+
+static struct dentry *jffs2_get_parent(struct dentry *child)
+{
+	struct jffs2_inode_info *f;
+	uint32_t pino;
+
+	BUG_ON(!S_ISDIR(child->d_inode->i_mode));
+
+	f = JFFS2_INODE_INFO(child->d_inode);
+
+	pino = f->inocache->pino_nlink;
+
+	JFFS2_DEBUG("Parent of directory ino #%u is #%u\n",
+		    f->inocache->ino, pino);
+
+	return d_obtain_alias(jffs2_iget(child->d_inode->i_sb, pino));
+}
+
+static const struct export_operations jffs2_export_ops = {
+	.get_parent = jffs2_get_parent,
+	.fh_to_dentry = jffs2_fh_to_dentry,
+	.fh_to_parent = jffs2_fh_to_parent,
+};
 
 static const struct super_operations jffs2_super_operations =
 {
 	.alloc_inode =	jffs2_alloc_inode,
 	.destroy_inode =jffs2_destroy_inode,
-	.read_inode =	jffs2_read_inode,
 	.put_super =	jffs2_put_super,
 	.write_super =	jffs2_write_super,
 	.statfs =	jffs2_statfs,
 	.remount_fs =	jffs2_remount_fs,
-	.clear_inode =	jffs2_clear_inode,
+	.evict_inode =	jffs2_evict_inode,
 	.dirty_inode =	jffs2_dirty_inode,
 	.sync_fs =	jffs2_sync_fs,
 };
-
-/* Just declare a void structure as a NULL value implies the default */
-static const struct export_operations jffs2_export_ops;
 
 /*
  * fill in the superblock
@@ -85,6 +152,7 @@ static const struct export_operations jffs2_export_ops;
 static int jffs2_fill_super(struct super_block *sb, void *data, int silent)
 {
 	struct jffs2_sb_info *c;
+	int ret;
 
 	D1(printk(KERN_DEBUG "jffs2_get_sb_mtd():"
 		  " New superblock for device %d (\"%s\")\n",
@@ -100,8 +168,8 @@ static int jffs2_fill_super(struct super_block *sb, void *data, int silent)
 
 	/* Initialize JFFS2 superblock locks, the further initialization will
 	 * be done later */
-	init_MUTEX(&c->alloc_sem);
-	init_MUTEX(&c->erase_free_sem);
+	mutex_init(&c->alloc_sem);
+	mutex_init(&c->erase_free_sem);
 	init_waitqueue_head(&c->erase_wait);
 	init_waitqueue_head(&c->inocache_wq);
 	spin_lock_init(&c->erase_completion_lock);
@@ -114,15 +182,15 @@ static int jffs2_fill_super(struct super_block *sb, void *data, int silent)
 #ifdef CONFIG_JFFS2_FS_POSIX_ACL
 	sb->s_flags |= MS_POSIXACL;
 #endif
-	return jffs2_do_fill_super(sb, data, silent);
+	ret = jffs2_do_fill_super(sb, data, silent);
+	return ret;
 }
 
-static int jffs2_get_sb(struct file_system_type *fs_type,
+static struct dentry *jffs2_mount(struct file_system_type *fs_type,
 			int flags, const char *dev_name,
-			void *data, struct vfsmount *mnt)
+			void *data)
 {
-	return get_sb_mtd(fs_type, flags, dev_name, data, jffs2_fill_super,
-			  mnt);
+	return mount_mtd(fs_type, flags, dev_name, data, jffs2_fill_super);
 }
 
 static void jffs2_put_super (struct super_block *sb)
@@ -131,9 +199,12 @@ static void jffs2_put_super (struct super_block *sb)
 
 	D2(printk(KERN_DEBUG "jffs2: jffs2_put_super()\n"));
 
-	down(&c->alloc_sem);
+	if (sb->s_dirt)
+		jffs2_write_super(sb);
+
+	mutex_lock(&c->alloc_sem);
 	jffs2_flush_wbuf_pad(c);
-	up(&c->alloc_sem);
+	mutex_unlock(&c->alloc_sem);
 
 	jffs2_sum_exit(c);
 
@@ -164,9 +235,8 @@ static void jffs2_kill_sb(struct super_block *sb)
 static struct file_system_type jffs2_fs_type = {
 	.owner =	THIS_MODULE,
 	.name =		"jffs2",
-	.get_sb =	jffs2_get_sb,
+	.mount =	jffs2_mount,
 	.kill_sb =	jffs2_kill_sb,
-	.fs_flags =	FS_REQUIRES_DEV,
 };
 
 static int __init init_jffs2_fs(void)
@@ -198,7 +268,7 @@ static int __init init_jffs2_fs(void)
 					     sizeof(struct jffs2_inode_info),
 					     0, (SLAB_RECLAIM_ACCOUNT|
 						SLAB_MEM_SPREAD),
-					     jffs2_i_init_once, NULL);
+					     jffs2_i_init_once);
 	if (!jffs2_inode_cachep) {
 		printk(KERN_ERR "JFFS2 error: Failed to initialise inode cache\n");
 		return -ENOMEM;

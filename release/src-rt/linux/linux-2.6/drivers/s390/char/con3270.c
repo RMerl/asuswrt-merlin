@@ -1,20 +1,20 @@
 /*
- *  drivers/s390/char/con3270.c
- *    IBM/3270 Driver - console view.
+ * IBM/3270 Driver - console view.
  *
- *  Author(s):
- *    Original 3270 Code for 2.4 written by Richard Hitt (UTS Global)
- *    Rewritten for 2.5 by Martin Schwidefsky <schwidefsky@de.ibm.com>
- *	-- Copyright (C) 2003 IBM Deutschland Entwicklung GmbH, IBM Corporation
+ * Author(s):
+ *   Original 3270 Code for 2.4 written by Richard Hitt (UTS Global)
+ *   Rewritten for 2.5 by Martin Schwidefsky <schwidefsky@de.ibm.com>
+ *     Copyright IBM Corp. 2003, 2009
  */
 
-#include <linux/bootmem.h>
 #include <linux/console.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>
 #include <linux/list.h>
 #include <linux/types.h>
+#include <linux/slab.h>
 #include <linux/err.h>
+#include <linux/reboot.h>
 
 #include <asm/ccwdev.h>
 #include <asm/cio.h>
@@ -22,6 +22,7 @@
 #include <asm/ebcdic.h>
 
 #include "raw3270.h"
+#include "tty3270.h"
 #include "ctrlchar.h"
 
 #define CON3270_OUTPUT_BUFFER_SIZE 1024
@@ -62,7 +63,7 @@ static struct con3270 *condev;
 #define CON_UPDATE_ERASE	1	/* Use EWRITEA instead of WRITE. */
 #define CON_UPDATE_LIST		2	/* Update lines in tty3270->update. */
 #define CON_UPDATE_STATUS	4	/* Update status line. */
-#define CON_UPDATE_ALL		7
+#define CON_UPDATE_ALL		8	/* Recreate screen. */
 
 static void con3270_update(struct con3270 *);
 
@@ -71,18 +72,10 @@ static void con3270_update(struct con3270 *);
  */
 static void con3270_set_timer(struct con3270 *cp, int expires)
 {
-	if (expires == 0) {
-		if (timer_pending(&cp->timer))
-			del_timer(&cp->timer);
-		return;
-	}
-	if (timer_pending(&cp->timer) &&
-	    mod_timer(&cp->timer, jiffies + expires))
-		return;
-	cp->timer.function = (void (*)(unsigned long)) con3270_update;
-	cp->timer.data = (unsigned long) cp;
-	cp->timer.expires = jiffies + expires;
-	add_timer(&cp->timer);
+	if (expires == 0)
+		del_timer(&cp->timer);
+	else
+		mod_timer(&cp->timer, jiffies + expires);
 }
 
 /*
@@ -223,6 +216,12 @@ con3270_update(struct con3270 *cp)
 
 	spin_lock_irqsave(&cp->view.lock, flags);
 	updated = 0;
+	if (cp->update_flags & CON_UPDATE_ALL) {
+		con3270_rebuild_update(cp);
+		con3270_update_status(cp);
+		cp->update_flags = CON_UPDATE_ERASE | CON_UPDATE_LIST |
+			CON_UPDATE_STATUS;
+	}
 	if (cp->update_flags & CON_UPDATE_ERASE) {
 		/* Use erase write alternate to initialize display. */
 		raw3270_request_set_cmd(wrq, TC_EWRITEA);
@@ -300,7 +299,6 @@ con3270_read_tasklet(struct raw3270_request *rrq)
 		deactivate = 1;
 		break;
 	case 0x6d:	/* clear: start from scratch. */
-		con3270_rebuild_update(cp);
 		cp->update_flags = CON_UPDATE_ALL;
 		con3270_set_timer(cp, 1);
 		break;
@@ -380,45 +378,36 @@ con3270_issue_read(struct con3270 *cp)
 static int
 con3270_activate(struct raw3270_view *view)
 {
-	unsigned long flags;
 	struct con3270 *cp;
 
 	cp = (struct con3270 *) view;
-	spin_lock_irqsave(&cp->view.lock, flags);
-	cp->nr_up = 0;
-	con3270_rebuild_update(cp);
-	con3270_update_status(cp);
 	cp->update_flags = CON_UPDATE_ALL;
 	con3270_set_timer(cp, 1);
-	spin_unlock_irqrestore(&cp->view.lock, flags);
 	return 0;
 }
 
 static void
 con3270_deactivate(struct raw3270_view *view)
 {
-	unsigned long flags;
 	struct con3270 *cp;
 
 	cp = (struct con3270 *) view;
-	spin_lock_irqsave(&cp->view.lock, flags);
 	del_timer(&cp->timer);
-	spin_unlock_irqrestore(&cp->view.lock, flags);
 }
 
 static int
 con3270_irq(struct con3270 *cp, struct raw3270_request *rq, struct irb *irb)
 {
 	/* Handle ATTN. Schedule tasklet to read aid. */
-	if (irb->scsw.dstat & DEV_STAT_ATTENTION)
+	if (irb->scsw.cmd.dstat & DEV_STAT_ATTENTION)
 		con3270_issue_read(cp);
 
 	if (rq) {
-		if (irb->scsw.dstat & DEV_STAT_UNIT_CHECK)
+		if (irb->scsw.cmd.dstat & DEV_STAT_UNIT_CHECK)
 			rq->rc = -EIO;
 		else
 			/* Normal end. Copy residual count. */
-			rq->rescnt = irb->scsw.count;
+			rq->rescnt = irb->scsw.cmd.count;
 	}
 	return RAW3270_IO_DONE;
 }
@@ -502,12 +491,11 @@ con3270_write(struct console *co, const char *str, unsigned int count)
 			con3270_cline_end(cp);
 	}
 	/* Setup timer to output current console buffer after 1/10 second */
+	cp->nr_up = 0;
 	if (cp->view.dev && !timer_pending(&cp->timer))
 		con3270_set_timer(cp, HZ/10);
 	spin_unlock_irqrestore(&cp->view.lock,flags);
 }
-
-extern struct tty_driver *tty3270_driver;
 
 static struct tty_driver *
 con3270_device(struct console *c, int *index)
@@ -529,11 +517,11 @@ con3270_wait_write(struct con3270 *cp)
 }
 
 /*
- * panic() calls console_unblank before the system enters a
- * disabled, endless loop.
+ * panic() calls con3270_flush through a panic_notifier
+ * before the system enters a disabled, endless loop.
  */
 static void
-con3270_unblank(void)
+con3270_flush(void)
 {
 	struct con3270 *cp;
 	unsigned long flags;
@@ -541,6 +529,7 @@ con3270_unblank(void)
 	cp = condev;
 	if (!cp->view.dev)
 		return;
+	raw3270_pm_unfreeze(&cp->view);
 	spin_lock_irqsave(&cp->view.lock, flags);
 	con3270_wait_write(cp);
 	cp->nr_up = 0;
@@ -555,6 +544,23 @@ con3270_unblank(void)
 	spin_unlock_irqrestore(&cp->view.lock, flags);
 }
 
+static int con3270_notify(struct notifier_block *self,
+			  unsigned long event, void *data)
+{
+	con3270_flush();
+	return NOTIFY_OK;
+}
+
+static struct notifier_block on_panic_nb = {
+	.notifier_call = con3270_notify,
+	.priority = 0,
+};
+
+static struct notifier_block on_reboot_nb = {
+	.notifier_call = con3270_notify,
+	.priority = 0,
+};
+
 /*
  *  The console structure for the 3270 console
  */
@@ -562,13 +568,11 @@ static struct console con3270 = {
 	.name	 = "tty3270",
 	.write	 = con3270_write,
 	.device	 = con3270_device,
-	.unblank = con3270_unblank,
 	.flags	 = CON_PRINTBUFFER,
 };
 
 /*
  * 3270 console initialization code called from console_init().
- * NOTE: This is called before kmalloc is available.
  */
 static int __init
 con3270_init(void)
@@ -595,20 +599,19 @@ con3270_init(void)
 	if (IS_ERR(rp))
 		return PTR_ERR(rp);
 
-	condev = (struct con3270 *) alloc_bootmem_low(sizeof(struct con3270));
-	memset(condev, 0, sizeof(struct con3270));
+	condev = kzalloc(sizeof(struct con3270), GFP_KERNEL | GFP_DMA);
 	condev->view.dev = rp;
 
-	condev->read = raw3270_request_alloc_bootmem(0);
+	condev->read = raw3270_request_alloc(0);
 	condev->read->callback = con3270_read_callback;
 	condev->read->callback_data = condev;
-	condev->write = 
-		raw3270_request_alloc_bootmem(CON3270_OUTPUT_BUFFER_SIZE);
-	condev->kreset = raw3270_request_alloc_bootmem(1);
+	condev->write = raw3270_request_alloc(CON3270_OUTPUT_BUFFER_SIZE);
+	condev->kreset = raw3270_request_alloc(1);
 
 	INIT_LIST_HEAD(&condev->lines);
 	INIT_LIST_HEAD(&condev->update);
-	init_timer(&condev->timer);
+	setup_timer(&condev->timer, (void (*)(unsigned long)) con3270_update,
+		    (unsigned long) condev);
 	tasklet_init(&condev->readlet, 
 		     (void (*)(unsigned long)) con3270_read_tasklet,
 		     (unsigned long) condev->read);
@@ -617,13 +620,15 @@ con3270_init(void)
 
 	INIT_LIST_HEAD(&condev->freemem);
 	for (i = 0; i < CON3270_STRING_PAGES; i++) {
-		cbuf = (void *) alloc_bootmem_low_pages(PAGE_SIZE);
+		cbuf = (void *) get_zeroed_page(GFP_KERNEL | GFP_DMA);
 		add_string_memory(&condev->freemem, cbuf, PAGE_SIZE);
 	}
 	condev->cline = alloc_string(&condev->freemem, condev->view.cols);
 	condev->cline->len = 0;
 	con3270_create_status(condev);
 	condev->input = alloc_string(&condev->freemem, 80);
+	atomic_notifier_chain_register(&panic_notifier_list, &on_panic_nb);
+	register_reboot_notifier(&on_reboot_nb);
 	register_console(&con3270);
 	return 0;
 }

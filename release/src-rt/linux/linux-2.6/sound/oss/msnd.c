@@ -20,13 +20,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: msnd.c,v 1.17 1999/03/21 16:50:09 andrewtv Exp $
- *
  ********************************************************************/
 
 #include <linux/module.h>
 #include <linux/kernel.h>
-#include <linux/slab.h>
 #include <linux/vmalloc.h>
 #include <linux/types.h>
 #include <linux/delay.h>
@@ -102,7 +99,7 @@ void msnd_fifo_free(msnd_fifo *f)
 int msnd_fifo_alloc(msnd_fifo *f, size_t n)
 {
 	msnd_fifo_free(f);
-	f->data = (char *)vmalloc(n);
+	f->data = vmalloc(n);
 	f->n = n;
 	f->tail = 0;
 	f->head = 0;

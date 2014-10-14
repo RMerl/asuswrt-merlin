@@ -21,9 +21,7 @@
 #include <linux/bitops.h>
 #include <linux/kexec.h>
 
-#include <asm/a.out.h>
 #include <asm/dma.h>
-#include <asm/ia32.h>
 #include <asm/io.h>
 #include <asm/machvec.h>
 #include <asm/numa.h>
@@ -36,6 +34,7 @@
 #include <asm/uaccess.h>
 #include <asm/unistd.h>
 #include <asm/mca.h>
+#include <asm/paravirt.h>
 
 DEFINE_PER_CPU(struct mmu_gather, mmu_gathers);
 
@@ -44,8 +43,8 @@ extern void ia64_tlb_init (void);
 unsigned long MAX_DMA_ADDRESS = PAGE_OFFSET + 0x100000000UL;
 
 #ifdef CONFIG_VIRTUAL_MEM_MAP
-unsigned long vmalloc_end = VMALLOC_END_INIT;
-EXPORT_SYMBOL(vmalloc_end);
+unsigned long VMALLOC_END = VMALLOC_END_INIT;
+EXPORT_SYMBOL(VMALLOC_END);
 struct page *vmem_map;
 EXPORT_SYMBOL(vmem_map);
 #endif
@@ -54,14 +53,10 @@ struct page *zero_page_memmap_ptr;	/* map entry for zero page */
 EXPORT_SYMBOL(zero_page_memmap_ptr);
 
 void
-lazy_mmu_prot_update (pte_t pte)
+__ia64_sync_icache_dcache (pte_t pte)
 {
 	unsigned long addr;
 	struct page *page;
-	unsigned long order;
-
-	if (!pte_exec(pte))
-		return;				/* not an executable page... */
 
 	page = pte_page(pte);
 	addr = (unsigned long) page_address(page);
@@ -69,12 +64,7 @@ lazy_mmu_prot_update (pte_t pte)
 	if (test_bit(PG_arch_1, &page->flags))
 		return;				/* i-cache is already coherent with d-cache */
 
-	if (PageCompound(page)) {
-		order = compound_order(page);
-		flush_icache_range(addr, addr + (1UL << order << PAGE_SHIFT));
-	}
-	else
-		flush_icache_range(addr, addr + PAGE_SIZE);
+	flush_icache_range(addr, addr + (PAGE_SIZE << compound_order(page)));
 	set_bit(PG_arch_1, &page->flags);	/* mark page as clean */
 }
 
@@ -100,7 +90,7 @@ dma_mark_clean(void *addr, size_t size)
 inline void
 ia64_set_rbs_bot (void)
 {
-	unsigned long stack_size = current->signal->rlim[RLIMIT_STACK].rlim_max & -16;
+	unsigned long stack_size = rlimit_max(RLIMIT_STACK) & -16;
 
 	if (stack_size > MAX_USER_STACK_SIZE)
 		stack_size = MAX_USER_STACK_SIZE;
@@ -127,11 +117,12 @@ ia64_init_addr_space (void)
 	 */
 	vma = kmem_cache_zalloc(vm_area_cachep, GFP_KERNEL);
 	if (vma) {
+		INIT_LIST_HEAD(&vma->anon_vma_chain);
 		vma->vm_mm = current->mm;
 		vma->vm_start = current->thread.rbs_bot & PAGE_MASK;
 		vma->vm_end = vma->vm_start + PAGE_SIZE;
-		vma->vm_page_prot = protection_map[VM_DATA_DEFAULT_FLAGS & 0x7];
 		vma->vm_flags = VM_DATA_DEFAULT_FLAGS|VM_GROWSUP|VM_ACCOUNT;
+		vma->vm_page_prot = vm_get_page_prot(vma->vm_flags);
 		down_write(&current->mm->mmap_sem);
 		if (insert_vm_struct(current->mm, vma)) {
 			up_write(&current->mm->mmap_sem);
@@ -145,6 +136,7 @@ ia64_init_addr_space (void)
 	if (!(current->personality & MMAP_PAGE_ZERO)) {
 		vma = kmem_cache_zalloc(vm_area_cachep, GFP_KERNEL);
 		if (vma) {
+			INIT_LIST_HEAD(&vma->anon_vma_chain);
 			vma->vm_mm = current->mm;
 			vma->vm_end = PAGE_SIZE;
 			vma->vm_page_prot = __pgprot(pgprot_val(PAGE_READONLY) | _PAGE_MA_NAT);
@@ -269,6 +261,7 @@ put_kernel_page (struct page *page, unsigned long address, pgprot_t pgprot)
 static void __init
 setup_gate (void)
 {
+	void *gate_section;
 	struct page *page;
 
 	/*
@@ -276,10 +269,11 @@ setup_gate (void)
 	 * headers etc. and once execute-only page to enable
 	 * privilege-promotion via "epc":
 	 */
-	page = virt_to_page(ia64_imva(__start_gate_section));
+	gate_section = paravirt_get_gate_section();
+	page = virt_to_page(ia64_imva(gate_section));
 	put_kernel_page(page, GATE_ADDR, PAGE_READONLY);
 #ifdef HAVE_BUGGY_SEGREL
-	page = virt_to_page(ia64_imva(__start_gate_section + PAGE_SIZE));
+	page = virt_to_page(ia64_imva(gate_section + PAGE_SIZE));
 	put_kernel_page(page, GATE_ADDR + PAGE_SIZE, PAGE_GATE);
 #else
 	put_kernel_page(page, GATE_ADDR + PERCPU_PAGE_SIZE, PAGE_GATE);
@@ -429,8 +423,7 @@ retry_pte:
 	return hole_next_pfn - pgdat->node_start_pfn;
 }
 
-int __init
-create_mem_map_page_table (u64 start, u64 end, void *arg)
+int __init create_mem_map_page_table(u64 start, u64 end, void *arg)
 {
 	unsigned long address, start_page, end_page;
 	struct page *map_start, *map_end;
@@ -475,8 +468,8 @@ struct memmap_init_callback_data {
 	unsigned long zone;
 };
 
-static int
-virtual_memmap_init (u64 start, u64 end, void *arg)
+static int __meminit
+virtual_memmap_init(u64 start, u64 end, void *arg)
 {
 	struct memmap_init_callback_data *args;
 	struct page *map_start, *map_end;
@@ -506,7 +499,7 @@ virtual_memmap_init (u64 start, u64 end, void *arg)
 	return 0;
 }
 
-void
+void __meminit
 memmap_init (unsigned long size, int nid, unsigned long zone,
 	     unsigned long start_pfn)
 {
@@ -538,8 +531,7 @@ ia64_pfn_valid (unsigned long pfn)
 }
 EXPORT_SYMBOL(ia64_pfn_valid);
 
-int __init
-find_largest_hole (u64 start, u64 end, void *arg)
+int __init find_largest_hole(u64 start, u64 end, void *arg)
 {
 	u64 *max_gap = arg;
 
@@ -555,13 +547,10 @@ find_largest_hole (u64 start, u64 end, void *arg)
 
 #endif /* CONFIG_VIRTUAL_MEM_MAP */
 
-int __init
-register_active_ranges(u64 start, u64 end, void *arg)
+int __init register_active_ranges(u64 start, u64 len, int nid)
 {
-	int nid = paddr_to_nid(__pa(start));
+	u64 end = start + len;
 
-	if (nid < 0)
-		nid = 0;
 #ifdef CONFIG_KEXEC
 	if (start > crashk_res.start && start < crashk_res.end)
 		start = crashk_res.end;
@@ -576,7 +565,7 @@ register_active_ranges(u64 start, u64 end, void *arg)
 }
 
 static int __init
-count_reserved_pages (u64 start, u64 end, void *arg)
+count_reserved_pages(u64 start, u64 end, void *arg)
 {
 	unsigned long num_reserved = 0;
 	unsigned long *count = arg;
@@ -589,7 +578,7 @@ count_reserved_pages (u64 start, u64 end, void *arg)
 }
 
 int
-find_max_min_low_pfn (unsigned long start, unsigned long end, void *arg)
+find_max_min_low_pfn (u64 start, u64 end, void *arg)
 {
 	unsigned long pfn_start, pfn_end;
 #ifdef CONFIG_FLATMEM
@@ -629,7 +618,6 @@ mem_init (void)
 	long reserved_pages, codesize, datasize, initsize;
 	pg_data_t *pgdat;
 	int i;
-	static struct kcore_list kcore_mem, kcore_vmem, kcore_kernel;
 
 	BUG_ON(PTRS_PER_PGD * sizeof(pgd_t) != PAGE_SIZE);
 	BUG_ON(PTRS_PER_PMD * sizeof(pmd_t) != PAGE_SIZE);
@@ -645,16 +633,11 @@ mem_init (void)
 #endif
 
 #ifdef CONFIG_FLATMEM
-	if (!mem_map)
-		BUG();
+	BUG_ON(!mem_map);
 	max_mapnr = max_low_pfn;
 #endif
 
 	high_memory = __va(max_low_pfn * PAGE_SIZE);
-
-	kclist_add(&kcore_mem, __va(0), max_low_pfn * PAGE_SIZE);
-	kclist_add(&kcore_vmem, (void *)VMALLOC_START, VMALLOC_END-VMALLOC_START);
-	kclist_add(&kcore_kernel, _stext, _end - _stext);
 
 	for_each_online_pgdat(pgdat)
 		if (pgdat->bdata->node_bootmem_map)
@@ -668,7 +651,7 @@ mem_init (void)
 	initsize =  (unsigned long) __init_end - (unsigned long) __init_begin;
 
 	printk(KERN_INFO "Memory: %luk/%luk available (%luk code, %luk reserved, "
-	       "%luk data, %luk init)\n", (unsigned long) nr_free_pages() << (PAGE_SHIFT - 10),
+	       "%luk data, %luk init)\n", nr_free_pages() << (PAGE_SHIFT - 10),
 	       num_physpages << (PAGE_SHIFT - 10), codesize >> 10,
 	       reserved_pages << (PAGE_SHIFT - 10), datasize >> 10, initsize >> 10);
 
@@ -679,29 +662,16 @@ mem_init (void)
 	 * code can tell them apart.
 	 */
 	for (i = 0; i < NR_syscalls; ++i) {
-		extern unsigned long fsyscall_table[NR_syscalls];
 		extern unsigned long sys_call_table[NR_syscalls];
+		unsigned long *fsyscall_table = paravirt_get_fsyscall_table();
 
 		if (!fsyscall_table[i] || nolwsys)
 			fsyscall_table[i] = sys_call_table[i] | 1;
 	}
 	setup_gate();
-
-#ifdef CONFIG_IA32_SUPPORT
-	ia32_mem_init();
-#endif
 }
 
 #ifdef CONFIG_MEMORY_HOTPLUG
-void online_page(struct page *page)
-{
-	ClearPageReserved(page);
-	init_page_count(page);
-	__free_page(page);
-	totalram_pages++;
-	num_physpages++;
-}
-
 int arch_add_memory(int nid, u64 start, u64 size)
 {
 	pg_data_t *pgdat;
@@ -713,18 +683,37 @@ int arch_add_memory(int nid, u64 start, u64 size)
 	pgdat = NODE_DATA(nid);
 
 	zone = pgdat->node_zones + ZONE_NORMAL;
-	ret = __add_pages(zone, start_pfn, nr_pages);
+	ret = __add_pages(nid, zone, start_pfn, nr_pages);
 
 	if (ret)
 		printk("%s: Problem encountered in __add_pages() as ret=%d\n",
-		       __FUNCTION__,  ret);
+		       __func__,  ret);
 
 	return ret;
 }
-
-int remove_memory(u64 start, u64 size)
-{
-	return -EINVAL;
-}
-EXPORT_SYMBOL_GPL(remove_memory);
 #endif
+
+/*
+ * Even when CONFIG_IA32_SUPPORT is not enabled it is
+ * useful to have the Linux/x86 domain registered to
+ * avoid an attempted module load when emulators call
+ * personality(PER_LINUX32). This saves several milliseconds
+ * on each such call.
+ */
+static struct exec_domain ia32_exec_domain;
+
+static int __init
+per_linux32_init(void)
+{
+	ia32_exec_domain.name = "Linux/x86";
+	ia32_exec_domain.handler = NULL;
+	ia32_exec_domain.pers_low = PER_LINUX32;
+	ia32_exec_domain.pers_high = PER_LINUX32;
+	ia32_exec_domain.signal_map = default_exec_domain.signal_map;
+	ia32_exec_domain.signal_invmap = default_exec_domain.signal_invmap;
+	register_exec_domain(&ia32_exec_domain);
+
+	return 0;
+}
+
+__initcall(per_linux32_init);

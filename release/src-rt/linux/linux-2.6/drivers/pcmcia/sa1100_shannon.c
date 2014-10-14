@@ -9,9 +9,9 @@
 #include <linux/device.h>
 #include <linux/init.h>
 
-#include <asm/hardware.h>
+#include <mach/hardware.h>
 #include <asm/mach-types.h>
-#include <asm/arch/shannon.h>
+#include <mach/shannon.h>
 #include <asm/irq.h>
 #include "sa1100_generic.h"
 
@@ -28,7 +28,7 @@ static int shannon_pcmcia_hw_init(struct soc_pcmcia_socket *skt)
 	GAFR &= ~(SHANNON_GPIO_EJECT_0 | SHANNON_GPIO_EJECT_1 | 
 		  SHANNON_GPIO_RDY_0 | SHANNON_GPIO_RDY_1);
 
-	skt->irq = skt->nr ? SHANNON_IRQ_GPIO_RDY_1 : SHANNON_IRQ_GPIO_RDY_0;
+	skt->socket.pci_irq = skt->nr ? SHANNON_IRQ_GPIO_RDY_1 : SHANNON_IRQ_GPIO_RDY_0;
 
 	return soc_pcmcia_request_irqs(skt, irqs, ARRAY_SIZE(irqs));
 }
@@ -73,19 +73,19 @@ shannon_pcmcia_configure_socket(struct soc_pcmcia_socket *skt,
 {
 	switch (state->Vcc) {
 	case 0:	/* power off */
-		printk(KERN_WARNING "%s(): CS asked for 0V, still applying 3.3V..\n", __FUNCTION__);
+		printk(KERN_WARNING "%s(): CS asked for 0V, still applying 3.3V..\n", __func__);
 		break;
 	case 50:
-		printk(KERN_WARNING "%s(): CS asked for 5V, applying 3.3V..\n", __FUNCTION__);
+		printk(KERN_WARNING "%s(): CS asked for 5V, applying 3.3V..\n", __func__);
 	case 33:
 		break;
 	default:
 		printk(KERN_ERR "%s(): unrecognized Vcc %u\n",
-		       __FUNCTION__, state->Vcc);
+		       __func__, state->Vcc);
 		return -1;
 	}
 
-	printk(KERN_WARNING "%s(): Warning, Can't perform reset\n", __FUNCTION__);
+	printk(KERN_WARNING "%s(): Warning, Can't perform reset\n", __func__);
 	
 	/* Silently ignore Vpp, output enable, speaker enable. */
 
@@ -113,7 +113,7 @@ static struct pcmcia_low_level shannon_pcmcia_ops = {
 	.socket_suspend		= shannon_pcmcia_socket_suspend,
 };
 
-int __init pcmcia_shannon_init(struct device *dev)
+int __devinit pcmcia_shannon_init(struct device *dev)
 {
 	int ret = -ENODEV;
 

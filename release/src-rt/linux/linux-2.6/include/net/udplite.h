@@ -11,10 +11,7 @@
 #define UDPLITE_RECV_CSCOV   11 /* receiver partial coverage (threshold ) */
 
 extern struct proto 		udplite_prot;
-extern struct hlist_head 	udplite_hash[UDP_HTABLE_SIZE];
-
-/* UDP-Lite does not have a standardized MIB yet, so we inherit from UDP */
-DECLARE_SNMP_STAT(struct udp_mib, udplite_statistics);
+extern struct udp_table		udplite_table;
 
 /*
  *	Checksum computation is all in software, hence simpler getfrag.
@@ -116,6 +113,18 @@ static inline __wsum udplite_csum_outgoing(struct sock *sk, struct sk_buff *skb)
 			break;
 	}
 	return csum;
+}
+
+static inline __wsum udplite_csum(struct sk_buff *skb)
+{
+	struct sock *sk = skb->sk;
+	int cscov = udplite_sender_cscov(udp_sk(sk), udp_hdr(skb));
+	const int off = skb_transport_offset(skb);
+	const int len = skb->len - off;
+
+	skb->ip_summed = CHECKSUM_NONE;     /* no HW support for checksumming */
+
+	return skb_checksum(skb, off, min(cscov, len), 0);
 }
 
 extern void	udplite4_register(void);

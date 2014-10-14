@@ -18,6 +18,7 @@
 #include <linux/string.h>
 #include <linux/sockios.h>
 #include <linux/net.h>
+#include <linux/slab.h>
 #include <net/ax25.h>
 #include <linux/inet.h>
 #include <linux/netdevice.h>
@@ -200,19 +201,15 @@ static int ax25_rcv(struct sk_buff *skb, struct net_device *dev,
 
 	skb_reset_transport_header(skb);
 
-	if ((ax25_dev = ax25_dev_ax25dev(dev)) == NULL) {
-		kfree_skb(skb);
-		return 0;
-	}
+	if ((ax25_dev = ax25_dev_ax25dev(dev)) == NULL)
+		goto free;
 
 	/*
 	 *	Parse the address header.
 	 */
 
-	if (ax25_addr_parse(skb->data, skb->len, &src, &dest, &dp, &type, &dama) == NULL) {
-		kfree_skb(skb);
-		return 0;
-	}
+	if (ax25_addr_parse(skb->data, skb->len, &src, &dest, &dp, &type, &dama) == NULL)
+		goto free;
 
 	/*
 	 *	Ours perhaps ?
@@ -239,10 +236,8 @@ static int ax25_rcv(struct sk_buff *skb, struct net_device *dev,
 
 		ax25_send_to_raw(&dest, skb, skb->data[1]);
 
-		if (!mine && ax25cmp(&dest, (ax25_address *)dev->broadcast) != 0) {
-			kfree_skb(skb);
-			return 0;
-		}
+		if (!mine && ax25cmp(&dest, (ax25_address *)dev->broadcast) != 0)
+			goto free;
 
 		/* Now we are pointing at the pid byte */
 		switch (skb->data[1]) {
@@ -301,10 +296,8 @@ static int ax25_rcv(struct sk_buff *skb, struct net_device *dev,
 	 *	If not, should we DM the incoming frame (except DMs) or
 	 *	silently ignore them. For now we stay quiet.
 	 */
-	if (ax25_dev->values[AX25_VALUES_CONMODE] == 0) {
-		kfree_skb(skb);
-		return 0;
-	}
+	if (ax25_dev->values[AX25_VALUES_CONMODE] == 0)
+		goto free;
 
 	/* LAPB */
 
@@ -339,8 +332,7 @@ static int ax25_rcv(struct sk_buff *skb, struct net_device *dev,
 		if ((*skb->data & ~AX25_PF) != AX25_DM && mine)
 			ax25_return_dm(dev, &src, &dest, &dp);
 
-		kfree_skb(skb);
-		return 0;
+		goto free;
 	}
 
 	/* b) received SABM(E) */
@@ -372,15 +364,12 @@ static int ax25_rcv(struct sk_buff *skb, struct net_device *dev,
 		sk->sk_ack_backlog++;
 		bh_unlock_sock(sk);
 	} else {
-		if (!mine) {
-			kfree_skb(skb);
-			return 0;
-		}
+		if (!mine)
+			goto free;
 
 		if ((ax25 = ax25_create_cb()) == NULL) {
 			ax25_return_dm(dev, &src, &dest, &dp);
-			kfree_skb(skb);
-			return 0;
+			goto free;
 		}
 
 		ax25_fillin_cb(ax25, ax25_dev);
@@ -436,9 +425,10 @@ static int ax25_rcv(struct sk_buff *skb, struct net_device *dev,
 		if (!sock_flag(sk, SOCK_DEAD))
 			sk->sk_data_ready(sk, skb->len);
 		sock_put(sk);
-	} else
+	} else {
+free:
 		kfree_skb(skb);
-
+	}
 	return 0;
 }
 
@@ -448,8 +438,12 @@ static int ax25_rcv(struct sk_buff *skb, struct net_device *dev,
 int ax25_kiss_rcv(struct sk_buff *skb, struct net_device *dev,
 		  struct packet_type *ptype, struct net_device *orig_dev)
 {
-	skb->sk = NULL;		/* Initially we don't know who it's for */
-	skb->destructor = NULL;	/* Who initializes this, dammit?! */
+	skb_orphan(skb);
+
+	if (!net_eq(dev_net(dev), &init_net)) {
+		kfree_skb(skb);
+		return 0;
+	}
 
 	if ((*skb->data & 0x0F) != 0) {
 		kfree_skb(skb);	/* Not a KISS data frame */

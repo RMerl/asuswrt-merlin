@@ -20,7 +20,6 @@
  *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
  */
 
-#include <sound/driver.h>
 #include <sound/core.h>
 #include <sound/control.h>
 #include <sound/tlv.h>
@@ -53,6 +52,10 @@ static int vx_mic_level_put(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_v
 {
 	struct vx_core *_chip = snd_kcontrol_chip(kcontrol);
 	struct snd_vxpocket *chip = (struct snd_vxpocket *)_chip;
+	unsigned int val = ucontrol->value.integer.value[0];
+
+	if (val > MIC_LEVEL_MAX)
+		return -EINVAL;
 	mutex_lock(&_chip->mixer_mutex);
 	if (chip->mic_level != ucontrol->value.integer.value[0]) {
 		vx_set_mic_level(_chip, ucontrol->value.integer.value[0]);
@@ -80,14 +83,7 @@ static struct snd_kcontrol_new vx_control_mic_level = {
 /*
  * mic boost level control (for VXP440)
  */
-static int vx_mic_boost_info(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_info *uinfo)
-{
-	uinfo->type = SNDRV_CTL_ELEM_TYPE_BOOLEAN;
-	uinfo->count = 1;
-	uinfo->value.integer.min = 0;
-	uinfo->value.integer.max = 1;
-	return 0;
-}
+#define vx_mic_boost_info		snd_ctl_boolean_mono_info
 
 static int vx_mic_boost_get(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
 {
@@ -101,10 +97,11 @@ static int vx_mic_boost_put(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_v
 {
 	struct vx_core *_chip = snd_kcontrol_chip(kcontrol);
 	struct snd_vxpocket *chip = (struct snd_vxpocket *)_chip;
+	int val = !!ucontrol->value.integer.value[0];
 	mutex_lock(&_chip->mixer_mutex);
-	if (chip->mic_level != ucontrol->value.integer.value[0]) {
-		vx_set_mic_boost(_chip, ucontrol->value.integer.value[0]);
-		chip->mic_level = ucontrol->value.integer.value[0];
+	if (chip->mic_level != val) {
+		vx_set_mic_boost(_chip, val);
+		chip->mic_level = val;
 		mutex_unlock(&_chip->mixer_mutex);
 		return 1;
 	}

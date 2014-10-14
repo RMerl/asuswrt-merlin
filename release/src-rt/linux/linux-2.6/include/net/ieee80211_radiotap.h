@@ -1,7 +1,4 @@
-/* $FreeBSD: src/sys/net80211/ieee80211_radiotap.h,v 1.5 2005/01/22 20:12:05 sam Exp $ */
-/* $NetBSD: ieee80211_radiotap.h,v 1.11 2005/06/22 06:16:02 dyoung Exp $ */
-
-/*-
+/*
  * Copyright (c) 2003, 2004 David Young.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -40,9 +37,8 @@
 
 #include <linux/if_ether.h>
 #include <linux/kernel.h>
+#include <asm/unaligned.h>
 
-/* Radiotap header version (from official NetBSD feed) */
-#define IEEE80211RADIOTAP_VERSION	"1.5"
 /* Base version of the radiotap packet header data */
 #define PKTHDR_RADIOTAP_VERSION		0
 
@@ -61,12 +57,8 @@
  * readers.
  */
 
-/* XXX tcpdump/libpcap do not tolerate variable-length headers,
- * yet, so we pad every radiotap header to 64 bytes. Ugh.
- */
-#define IEEE80211_RADIOTAP_HDRLEN	64
-
-/* The radio capture header precedes the 802.11 header.
+/*
+ * The radio capture header precedes the 802.11 header.
  * All data in the header is little endian on all platforms.
  */
 struct ieee80211_radiotap_header {
@@ -88,7 +80,7 @@ struct ieee80211_radiotap_header {
 				 * Additional extensions are made
 				 * by setting bit 31.
 				 */
-};
+} __packed;
 
 /* Name                                 Data type    Units
  * ----                                 ---------    -----
@@ -186,6 +178,11 @@ struct ieee80211_radiotap_header {
  *
  *     Number of unicast retries a transmitted frame used.
  *
+ * IEEE80211_RADIOTAP_MCS	u8, u8, u8		unitless
+ *
+ *     Contains a bitmap of known fields/flags, the flags, and
+ *     the MCS index.
+ *
  */
 enum ieee80211_radiotap_type {
 	IEEE80211_RADIOTAP_TSFT = 0,
@@ -206,6 +203,12 @@ enum ieee80211_radiotap_type {
 	IEEE80211_RADIOTAP_TX_FLAGS = 15,
 	IEEE80211_RADIOTAP_RTS_RETRIES = 16,
 	IEEE80211_RADIOTAP_DATA_RETRIES = 17,
+
+	IEEE80211_RADIOTAP_MCS = 19,
+
+	/* valid in every it_present bitmap, even vendor namespaces */
+	IEEE80211_RADIOTAP_RADIOTAP_NAMESPACE = 29,
+	IEEE80211_RADIOTAP_VENDOR_NAMESPACE = 30,
 	IEEE80211_RADIOTAP_EXT = 31
 };
 
@@ -238,14 +241,34 @@ enum ieee80211_radiotap_type {
 						 * 802.11 header and payload
 						 * (to 32-bit boundary)
 						 */
+#define IEEE80211_RADIOTAP_F_BADFCS	0x40	/* bad FCS */
+
 /* For IEEE80211_RADIOTAP_RX_FLAGS */
-#define IEEE80211_RADIOTAP_F_RX_BADFCS	0x0001	/* frame failed crc check */
+#define IEEE80211_RADIOTAP_F_RX_BADPLCP	0x0002	/* frame has bad PLCP */
 
 /* For IEEE80211_RADIOTAP_TX_FLAGS */
 #define IEEE80211_RADIOTAP_F_TX_FAIL	0x0001	/* failed due to excessive
 						 * retries */
 #define IEEE80211_RADIOTAP_F_TX_CTS	0x0002	/* used cts 'protection' */
 #define IEEE80211_RADIOTAP_F_TX_RTS	0x0004	/* used rts/cts handshake */
+
+
+/* For IEEE80211_RADIOTAP_MCS */
+#define IEEE80211_RADIOTAP_MCS_HAVE_BW		0x01
+#define IEEE80211_RADIOTAP_MCS_HAVE_MCS		0x02
+#define IEEE80211_RADIOTAP_MCS_HAVE_GI		0x04
+#define IEEE80211_RADIOTAP_MCS_HAVE_FMT		0x08
+#define IEEE80211_RADIOTAP_MCS_HAVE_FEC		0x10
+
+#define IEEE80211_RADIOTAP_MCS_BW_MASK		0x03
+#define		IEEE80211_RADIOTAP_MCS_BW_20	0
+#define		IEEE80211_RADIOTAP_MCS_BW_40	1
+#define		IEEE80211_RADIOTAP_MCS_BW_20L	2
+#define		IEEE80211_RADIOTAP_MCS_BW_20U	3
+#define IEEE80211_RADIOTAP_MCS_SGI		0x04
+#define IEEE80211_RADIOTAP_MCS_FMT_GF		0x08
+#define IEEE80211_RADIOTAP_MCS_FEC_LDPC		0x10
+
 
 /* Ugly macro to convert literal channel numbers into their mhz equivalents
  * There are certianly some conditions that will break this (like feeding it '30')
@@ -254,5 +277,14 @@ enum ieee80211_radiotap_type {
 	(((x) <= 14) ? \
 	(((x) == 14) ? 2484 : ((x) * 5) + 2407) : \
 	((x) + 1000) * 5)
+
+/* helpers */
+static inline int ieee80211_get_radiotap_len(unsigned char *data)
+{
+	struct ieee80211_radiotap_header *hdr =
+		(struct ieee80211_radiotap_header *)data;
+
+	return get_unaligned_le16(&hdr->it_len);
+}
 
 #endif				/* IEEE80211_RADIOTAP_H */

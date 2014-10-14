@@ -1,236 +1,269 @@
 /*
-  This is a module which is used for time matching
-  It is using some modified code from dietlibc (localtime() function)
-  that you can find at http://www.fefe.de/dietlibc/
-  This file is distributed under the terms of the GNU General Public
-  License (GPL). Copies of the GPL can be obtained from: ftp://prep.ai.mit.edu/pub/gnu/GPL
-  2001-05-04 Fabrice MARIE <fabrice@netfilter.org> : initial development.
-  2001-21-05 Fabrice MARIE <fabrice@netfilter.org> : bug fix in the match code,
-     thanks to "Zeng Yu" <zengy@capitel.com.cn> for bug report.
-  2001-26-09 Fabrice MARIE <fabrice@netfilter.org> : force the match to be in LOCAL_IN or PRE_ROUTING only.
-  2001-30-11 Fabrice : added the possibility to use the match in FORWARD/OUTPUT with a little hack,
-     added Nguyen Dang Phuoc Dong <dongnd@tlnet.com.vn> patch to support timezones.
-*/
-
+ *	xt_time
+ *	Copyright © CC Computer Consultants GmbH, 2007
+ *
+ *	based on ipt_time by Fabrice MARIE <fabrice@netfilter.org>
+ *	This is a module which is used for time matching
+ *	It is using some modified code from dietlibc (localtime() function)
+ *	that you can find at http://www.fefe.de/dietlibc/
+ *	This file is distributed under the terms of the GNU General Public
+ *	License (GPL). Copies of the GPL can be obtained from gnu.org/gpl.
+ */
+#include <linux/ktime.h>
 #include <linux/module.h>
 #include <linux/skbuff.h>
-#include <linux/netfilter_ipv4/ip_tables.h>
-#include <linux/netfilter_ipv4/ipt_time.h>
-#include <linux/time.h>
+#include <linux/types.h>
+#include <linux/netfilter/x_tables.h>
+#include <linux/netfilter/xt_time.h>
 
-MODULE_AUTHOR("Fabrice MARIE <fabrice@netfilter.org>");
-MODULE_DESCRIPTION("Match arrival timestamp");
-MODULE_LICENSE("GPL");
-
-struct tm
-{
-	int tm_sec;                   /* Seconds.     [0-60] (1 leap second) */
-	int tm_min;                   /* Minutes.     [0-59] */
-	int tm_hour;                  /* Hours.       [0-23] */
-	int tm_mday;                  /* Day.         [1-31] */
-	int tm_mon;                   /* Month.       [0-11] */
-	int tm_year;                  /* Year - 1900.  */
-	int tm_wday;                  /* Day of week. [0-6] */
-	int tm_yday;                  /* Days in year.[0-365] */
-	int tm_isdst;                 /* DST.         [-1/0/1]*/
-
-	long int tm_gmtoff;           /* we don't care, we count from GMT */
-	const char *tm_zone;          /* we don't care, we count from GMT */
+struct xtm {
+	u_int8_t month;    /* (1-12) */
+	u_int8_t monthday; /* (1-31) */
+	u_int8_t weekday;  /* (1-7) */
+	u_int8_t hour;     /* (0-23) */
+	u_int8_t minute;   /* (0-59) */
+	u_int8_t second;   /* (0-59) */
+	unsigned int dse;
 };
 
-void
-localtime(const time_t *timepr, struct tm *r);
+extern struct timezone sys_tz; /* ouch */
 
-static int
+static const u_int16_t days_since_year[] = {
+	0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334,
+};
+
+static const u_int16_t days_since_leapyear[] = {
+	0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335,
+};
+
 /*
-match(const struct sk_buff *skb,
-      const struct net_device *in,
-      const struct net_device *out,
-      const void *matchinfo,
-      int offset,
-      const void *hdr,
-      u_int16_t datalen,
-      int *hotdrop)
-*/
-ipt_time_match(const struct sk_buff *skb,
-                 const struct net_device *in, const struct net_device *out,
-                 const struct xt_match *match, const void *matchinfo,
-                 int offset, unsigned int protoff, int *hotdrop)
+ * Since time progresses forward, it is best to organize this array in reverse,
+ * to minimize lookup time.
+ */
+enum {
+	DSE_FIRST = 2039,
+};
+static const u_int16_t days_since_epoch[] = {
+	/* 2039 - 2030 */
+	25202, 24837, 24472, 24106, 23741, 23376, 23011, 22645, 22280, 21915,
+	/* 2029 - 2020 */
+	21550, 21184, 20819, 20454, 20089, 19723, 19358, 18993, 18628, 18262,
+	/* 2019 - 2010 */
+	17897, 17532, 17167, 16801, 16436, 16071, 15706, 15340, 14975, 14610,
+	/* 2009 - 2000 */
+	14245, 13879, 13514, 13149, 12784, 12418, 12053, 11688, 11323, 10957,
+	/* 1999 - 1990 */
+	10592, 10227, 9862, 9496, 9131, 8766, 8401, 8035, 7670, 7305,
+	/* 1989 - 1980 */
+	6940, 6574, 6209, 5844, 5479, 5113, 4748, 4383, 4018, 3652,
+	/* 1979 - 1970 */
+	3287, 2922, 2557, 2191, 1826, 1461, 1096, 730, 365, 0,
+};
+
+static inline bool is_leap(unsigned int y)
 {
-	const struct ipt_time_info *info = matchinfo;   /* match info for rule */
-	struct tm currenttime;                          /* time human readable */
-	unsigned int packet_time;
-	struct timeval kerneltimeval;
-	time_t packet_local_time;
+	return y % 4 == 0 && (y % 100 != 0 || y % 400 == 0);
+}
 
+/*
+ * Each network packet has a (nano)seconds-since-the-epoch (SSTE) timestamp.
+ * Since we match against days and daytime, the SSTE value needs to be
+ * computed back into human-readable dates.
+ *
+ * This is done in three separate functions so that the most expensive
+ * calculations are done last, in case a "simple match" can be found earlier.
+ */
+static inline unsigned int localtime_1(struct xtm *r, time_t time)
+{
+	unsigned int v, w;
 
-	/* if kerneltime=1, we don't read the skb->timestamp but kernel time instead */
-	if (info->kerneltime)
-	{
-		do_gettimeofday(&kerneltimeval);
-		packet_local_time = kerneltimeval.tv_sec;
-	}
-	else {
-		packet_local_time = skb->tstamp.tv64;
-		//packet_local_time = skb->tstamp.off_sec;
-	}
+	/* Each day has 86400s, so finding the hour/minute is actually easy. */
+	v         = time % 86400;
+	r->second = v % 60;
+	w         = v / 60;
+	r->minute = w % 60;
+	r->hour   = w / 60;
+	return v;
+}
 
-	/* Transform the timestamp of the packet, in a human readable form */
-	localtime(&packet_local_time, &currenttime);
+static inline void localtime_2(struct xtm *r, time_t time)
+{
+	/*
+	 * Here comes the rest (weekday, monthday). First, divide the SSTE
+	 * by seconds-per-day to get the number of _days_ since the epoch.
+	 */
+	r->dse = time / 86400;
 
-	//printk("dbg: Date = yy/mm/dd = %d/%d/%d, week=%d, Time = %d/%d Days Match = %d\n", currenttime.tm_year, currenttime.tm_mon, currenttime.tm_mday, currenttime.tm_wday, currenttime.tm_hour, currenttime.tm_min, info->days_match);
-	/* check if we match this timestamp, we start by the days... */
-	if (!((1 << (6-currenttime.tm_wday)) & info->days_match)) {
-		//printk("dbg: the day doesn't match: currect.tm_wday = 0x%x, info->days_match = 0x%x\n", currenttime.tm_wday, info->days_match);
-		return 0; /* the day doesn't match */
-	}
+	/*
+	 * 1970-01-01 (w=0) was a Thursday (4).
+	 * -1 and +1 map Sunday properly onto 7.
+	 */
+	r->weekday = (4 + r->dse - 1) % 7 + 1;
+}
 
-	/* ... check the time now */
-//	packet_time = (currenttime.tm_hour * 60 * 60) + (currenttime.tm_min * 60) + currenttime.tm_sec;
-	packet_time = (currenttime.tm_hour * 60) + currenttime.tm_min;
+static void localtime_3(struct xtm *r, time_t time)
+{
+	unsigned int year, i, w = r->dse;
 
-	if (info->time_start < info->time_stop) {
-		if ((packet_time < info->time_start) || (packet_time > info->time_stop)) {
-			//printk("dbg: the time doesn't match: %d %d %d\n", packet_time, info->time_start, info->time_stop);
-			return 0;
-		}
+	/*
+	 * In each year, a certain number of days-since-the-epoch have passed.
+	 * Find the year that is closest to said days.
+	 *
+	 * Consider, for example, w=21612 (2029-03-04). Loop will abort on
+	 * dse[i] <= w, which happens when dse[i] == 21550. This implies
+	 * year == 2009. w will then be 62.
+	 */
+	for (i = 0, year = DSE_FIRST; days_since_epoch[i] > w;
+	    ++i, --year)
+		/* just loop */;
+
+	w -= days_since_epoch[i];
+
+	/*
+	 * By now we have the current year, and the day of the year.
+	 * r->yearday = w;
+	 *
+	 * On to finding the month (like above). In each month, a certain
+	 * number of days-since-New Year have passed, and find the closest
+	 * one.
+	 *
+	 * Consider w=62 (in a non-leap year). Loop will abort on
+	 * dsy[i] < w, which happens when dsy[i] == 31+28 (i == 2).
+	 * Concludes i == 2, i.e. 3rd month => March.
+	 *
+	 * (A different approach to use would be to subtract a monthlength
+	 * from w repeatedly while counting.)
+	 */
+	if (is_leap(year)) {
+		/* use days_since_leapyear[] in a leap year */
+		for (i = ARRAY_SIZE(days_since_leapyear) - 1;
+		    i > 0 && days_since_leapyear[i] > w; --i)
+			/* just loop */;
+		r->monthday = w - days_since_leapyear[i] + 1;
 	} else {
-		if ((packet_time < info->time_start) && (packet_time > info->time_stop)) {
-			//printk("dbg: the time doesn't match: %d %d %d\n", packet_time, info->time_start, info->time_stop);
-			return 0;
-		}
+		for (i = ARRAY_SIZE(days_since_year) - 1;
+		    i > 0 && days_since_year[i] > w; --i)
+			/* just loop */;
+		r->monthday = w - days_since_year[i] + 1;
 	}
 
-	//printk("dbg: the time match %d %d %d\n", packet_time, info->time_start, info->time_stop);
-	/* here we match ! */
-	return 1;
+	r->month    = i + 1;
 }
 
-static int
-/*
-checkentry(const char *tablename,
-           const struct ipt_ip *ip,
-           void *matchinfo,
-           unsigned int matchsize,
-           unsigned int hook_mask)
-*/
-ipt_time_checkentry(const char *tablename, const void *ip,
-                      const struct xt_match *match, void *matchinfo,
-                      unsigned int hook_mask)
+static bool
+time_mt(const struct sk_buff *skb, struct xt_action_param *par)
 {
-	struct ipt_time_info *info = matchinfo;   /* match info for rule */
+	const struct xt_time_info *info = par->matchinfo;
+	unsigned int packet_time;
+	struct xtm current_time;
+	s64 stamp;
 
-	/* First, check that we are in the correct hook */
-	/* PRE_ROUTING, LOCAL_IN or FROWARD */
-	if (hook_mask
-            & ~((1 << NF_IP_PRE_ROUTING) | (1 << NF_IP_LOCAL_IN) | (1 << NF_IP_FORWARD) | (1 << NF_IP_LOCAL_OUT)))
-	{
-		printk("ipt_time: error, only valid for PRE_ROUTING, LOCAL_IN, FORWARD and OUTPUT)\n");
-		return 0;
+	/*
+	 * We cannot use get_seconds() instead of __net_timestamp() here.
+	 * Suppose you have two rules:
+	 * 	1. match before 13:00
+	 * 	2. match after 13:00
+	 * If you match against processing time (get_seconds) it
+	 * may happen that the same packet matches both rules if
+	 * it arrived at the right moment before 13:00.
+	 */
+	if (skb->tstamp.tv64 == 0)
+		__net_timestamp((struct sk_buff *)skb);
+
+	stamp = ktime_to_ns(skb->tstamp);
+	stamp = div_s64(stamp, NSEC_PER_SEC);
+
+	if (info->flags & XT_TIME_LOCAL_TZ)
+		/* Adjust for local timezone */
+		stamp -= 60 * sys_tz.tz_minuteswest;
+
+	/*
+	 * xt_time will match when _all_ of the following hold:
+	 *   - 'now' is in the global time range date_start..date_end
+	 *   - 'now' is in the monthday mask
+	 *   - 'now' is in the weekday mask
+	 *   - 'now' is in the daytime range time_start..time_end
+	 * (and by default, libxt_time will set these so as to match)
+	 */
+
+	if (stamp < info->date_start || stamp > info->date_stop)
+		return false;
+
+	packet_time = localtime_1(&current_time, stamp);
+
+	if (info->daytime_start < info->daytime_stop) {
+		if (packet_time < info->daytime_start ||
+		    packet_time > info->daytime_stop)
+			return false;
+	} else {
+		if (packet_time < info->daytime_start &&
+		    packet_time > info->daytime_stop)
+			return false;
 	}
 
-	/* always use kerneltime */
-	info->kerneltime = 1;
+	localtime_2(&current_time, stamp);
 
-	/* Check the size */
-	//if (matchsize < IPT_ALIGN(sizeof(struct ipt_time_info)))
-	//	return 0;
+	if (!(info->weekdays_match & (1 << current_time.weekday)))
+		return false;
 
-	/* Now check the coherence of the data ... */
-	if ((info->time_start > 86399) ||        /* 24*60*60-1 = 86399*/
-	    (info->time_stop  > 86399))
-	{
-		printk(KERN_WARNING "ipt_time: invalid argument\n");
-		return 0;
+	/* Do not spend time computing monthday if all days match anyway */
+	if (info->monthdays_match != XT_TIME_ALL_MONTHDAYS) {
+		localtime_3(&current_time, stamp);
+		if (!(info->monthdays_match & (1 << current_time.monthday)))
+			return false;
 	}
 
-	return 1;
+	return true;
 }
 
-/*
-static struct ipt_match time_match
-= { { NULL, NULL }, "time", &match, &checkentry, NULL, THIS_MODULE };
-*/
+static int time_mt_check(const struct xt_mtchk_param *par)
+{
+	const struct xt_time_info *info = par->matchinfo;
 
-static struct xt_match time_match[] = {
-        {
-        .name           = "time",
-        .family         = AF_INET,
-        .match          = ipt_time_match,
-        .matchsize      = sizeof(struct ipt_time_info),
-        .checkentry     = ipt_time_checkentry,
-        .me             = THIS_MODULE
-        },
-        {
-        .name           = "time",
-        .family         = AF_INET6,
-        .match          = ipt_time_match,
-        .matchsize      = sizeof(struct ipt_time_info),
-        .checkentry     = ipt_time_checkentry,
-        .me             = THIS_MODULE
-        },
+	if (info->daytime_start > XT_TIME_MAX_DAYTIME ||
+	    info->daytime_stop > XT_TIME_MAX_DAYTIME) {
+		pr_info("invalid argument - start or "
+			"stop time greater than 23:59:59\n");
+		return -EDOM;
+	}
+
+	return 0;
+}
+
+static struct xt_match xt_time_mt_reg __read_mostly = {
+	.name       = "time",
+	.family     = NFPROTO_UNSPEC,
+	.match      = time_mt,
+	.checkentry = time_mt_check,
+	.matchsize  = sizeof(struct xt_time_info),
+	.me         = THIS_MODULE,
 };
 
-static int __init init(void)
+static int __init time_mt_init(void)
 {
-	printk("ipt_time loading\n");
-	//return ipt_register_match(&time_match);
-	return xt_register_match(&time_match);
+	int minutes = sys_tz.tz_minuteswest;
+
+	if (minutes < 0) /* east of Greenwich */
+		printk(KERN_INFO KBUILD_MODNAME
+		       ": kernel timezone is +%02d%02d\n",
+		       -minutes / 60, -minutes % 60);
+	else /* west of Greenwich */
+		printk(KERN_INFO KBUILD_MODNAME
+		       ": kernel timezone is -%02d%02d\n",
+		       minutes / 60, minutes % 60);
+
+	return xt_register_match(&xt_time_mt_reg);
 }
 
-static void __exit fini(void)
+static void __exit time_mt_exit(void)
 {
-	//ipt_unregister_match(&time_match);
-	xt_unregister_match(&time_match);
-	printk("ipt_time unloaded\n");
+	xt_unregister_match(&xt_time_mt_reg);
 }
 
-module_init(init);
-module_exit(fini);
-
-
-/* The part below is borowed and modified from dietlibc */
-
-/* seconds per day */
-#define SPD 24*60*60
-
-void
-localtime(const time_t *timepr, struct tm *r) {
-	time_t i;
-	time_t timep;
-	extern struct timezone sys_tz;
-	const unsigned int __spm[12] =
-		{ 0,
-		  (31),
-		  (31+28),
-		  (31+28+31),
-		  (31+28+31+30),
-		  (31+28+31+30+31),
-		  (31+28+31+30+31+30),
-		  (31+28+31+30+31+30+31),
-		  (31+28+31+30+31+30+31+31),
-		  (31+28+31+30+31+30+31+31+30),
-		  (31+28+31+30+31+30+31+31+30+31),
-		  (31+28+31+30+31+30+31+31+30+31+30),
-		};
-	register time_t work;
-
-	timep = (*timepr) - (sys_tz.tz_minuteswest * 60);
-
-	work=timep%(SPD);
-	r->tm_sec=work%60; work/=60;
-	r->tm_min=work%60; r->tm_hour=work/60;
-	work=timep/(SPD);
-	r->tm_wday=(4+work)%7;
-	for (i=1970; ; ++i) {
-		register time_t k= (!(i%4) && ((i%100) || !(i%400)))?366:365;
-		if (work>k)
-			work-=k;
-		else
-			break;
-	}
-	r->tm_year=i-1900;
-	for (i=11; i && __spm[i]>work; --i) ;
-	r->tm_mon=i;
-	r->tm_mday=work-__spm[i]+1;
-}
+module_init(time_mt_init);
+module_exit(time_mt_exit);
+MODULE_AUTHOR("Jan Engelhardt <jengelh@medozas.de>");
+MODULE_DESCRIPTION("Xtables: time-based matching");
+MODULE_LICENSE("GPL");
+MODULE_ALIAS("ipt_time");
+MODULE_ALIAS("ip6t_time");

@@ -8,7 +8,9 @@
  */
 
 #include <linux/kernel.h>
+#include <linux/slab.h>
 #include <linux/usb.h>
+#include <linux/fs.h>
 #include <asm/uaccess.h>
 
 #include "usb_mon.h"
@@ -42,23 +44,15 @@ static ssize_t mon_stat_read(struct file *file, char __user *buf,
 				size_t nbytes, loff_t *ppos)
 {
 	struct snap *sp = file->private_data;
-	loff_t pos = *ppos;
-	int cnt;
 
-	if (pos < 0 || pos >= sp->slen)
-		return 0;
-	if (nbytes == 0)
-		return 0;
-	if ((cnt = sp->slen - pos) > nbytes)
-		cnt = nbytes;
-	if (copy_to_user(buf, sp->str + pos, cnt))
-		return -EFAULT;
-	*ppos = pos + cnt;
-	return cnt;
+	return simple_read_from_buffer(buf, nbytes, ppos, sp->str, sp->slen);
 }
 
 static int mon_stat_release(struct inode *inode, struct file *file)
 {
+	struct snap *sp = file->private_data;
+	file->private_data = NULL;
+	kfree(sp);
 	return 0;
 }
 
@@ -69,6 +63,6 @@ const struct file_operations mon_fops_stat = {
 	.read =		mon_stat_read,
 	/* .write =	mon_stat_write, */
 	/* .poll =		mon_stat_poll, */
-	/* .ioctl =	mon_stat_ioctl, */
+	/* .unlocked_ioctl =	mon_stat_ioctl, */
 	.release =	mon_stat_release,
 };

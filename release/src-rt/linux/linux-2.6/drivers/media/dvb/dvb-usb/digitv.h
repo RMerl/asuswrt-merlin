@@ -4,8 +4,9 @@
 #define DVB_USB_LOG_PREFIX "digitv"
 #include "dvb-usb.h"
 
-extern int dvb_usb_digitv_debug;
-#define deb_rc(args...)   dprintk(dvb_usb_digitv_debug,0x01,args)
+struct digitv_state {
+    int is_nxt6000;
+};
 
 /* protocol (from usblogging and the SDK:
  *

@@ -5,7 +5,6 @@
 /*
  * MIPS floating point support
  * Copyright (C) 1994-2000 Algorithmics Ltd.
- * http://www.algor.co.uk
  *
  * ########################################################################
  *
@@ -43,10 +42,10 @@
 /* convert denormal to normalized with extended exponent */
 #define DPDNORMx(m,e) \
   while( (m >> DP_MBITS) == 0) { m <<= 1; e--; }
-#define DPDNORMX	DPDNORMx(xm,xe)
-#define DPDNORMY	DPDNORMx(ym,ye)
+#define DPDNORMX	DPDNORMx(xm, xe)
+#define DPDNORMY	DPDNORMx(ym, ye)
 
-static __inline ieee754dp builddp(int s, int bx, u64 m)
+static inline ieee754dp builddp(int s, int bx, u64 m)
 {
 	ieee754dp r;
 
@@ -71,13 +70,13 @@ extern ieee754dp ieee754dp_bestnan(ieee754dp, ieee754dp);
 extern ieee754dp ieee754dp_format(int, int, u64);
 
 
-#define DPNORMRET2(s,e,m,name,a0,a1) \
+#define DPNORMRET2(s, e, m, name, a0, a1) \
 { \
-    ieee754dp V = ieee754dp_format(s,e,m); \
+    ieee754dp V = ieee754dp_format(s, e, m); \
     if(TSTX()) \
-      return ieee754dp_xcpt(V,name,a0,a1); \
+      return ieee754dp_xcpt(V, name, a0, a1); \
     else \
       return V; \
 }
 
-#define DPNORMRET1(s,e,m,name,a0)  DPNORMRET2(s,e,m,name,a0,a0)
+#define DPNORMRET1(s, e, m, name, a0)  DPNORMRET2(s, e, m, name, a0, a0)

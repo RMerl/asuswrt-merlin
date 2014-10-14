@@ -6,9 +6,9 @@ menu "Input device support"
 	depends on !S390
 
 config INPUT
-	tristate "Generic input layer (needed for keyboard, mouse, ...)" if EMBEDDED
+	tristate "Generic input layer (needed for keyboard, mouse, ...)" if EXPERT
 	default y
-	---help---
+	help
 	  Say Y here if you have any input device (mouse, keyboard, tablet,
 	  joystick, steering wheel ...) connected to your system and want
 	  it to be available to applications. This includes standard PS/2
@@ -27,8 +27,7 @@ if INPUT
 
 config INPUT_FF_MEMLESS
 	tristate "Support for memoryless force-feedback devices"
-	default n
-	---help---
+	help
 	  Say Y here if you have memoryless force-feedback input device
 	  such as Logitech WingMan Force 3D, ThrustMaster FireStorm Dual
 	  Power 2, or similar. You will also need to enable hardware-specific
@@ -52,12 +51,25 @@ config INPUT_POLLDEV
 	  To compile this driver as a module, choose M here: the
 	  module will be called input-polldev.
 
+config INPUT_SPARSEKMAP
+	tristate "Sparse keymap support library"
+	help
+	  Say Y here if you are using a driver for an input
+	  device that uses sparse keymap. This option is only
+	  useful for out-of-tree drivers since in-tree drivers
+	  select it automatically.
+
+	  If unsure, say N.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called sparse-keymap.
+
 comment "Userland interfaces"
 
 config INPUT_MOUSEDEV
-	tristate "Mouse interface" if EMBEDDED
+	tristate "Mouse interface" if EXPERT
 	default y
-	---help---
+	help
 	  Say Y here if you want your mouse to be accessible as char devices
 	  13:32+ - /dev/input/mouseX and 13:63 - /dev/input/mice as an
 	  emulated IntelliMouse Explorer PS/2 mouse. That way, all user space
@@ -73,7 +85,7 @@ config INPUT_MOUSEDEV_PSAUX
 	bool "Provide legacy /dev/psaux device"
 	default y
 	depends on INPUT_MOUSEDEV
-	---help---
+	help
 	  Say Y here if you want your mouse also be accessible as char device
 	  10:1 - /dev/psaux. The data available through /dev/psaux is exactly
 	  the same as the data from /dev/input/mice.
@@ -103,7 +115,7 @@ config INPUT_MOUSEDEV_SCREEN_Y
 
 config INPUT_JOYDEV
 	tristate "Joystick interface"
-	---help---
+	help
 	  Say Y here if you want your joystick or gamepad to be
 	  accessible as char device 13:0+ - /dev/input/jsX device.
 
@@ -113,28 +125,6 @@ config INPUT_JOYDEV
 
 	  To compile this driver as a module, choose M here: the
 	  module will be called joydev.
-
-config INPUT_TSDEV
-	tristate "Touchscreen interface"
-	---help---
-	  Say Y here if you have an application that only can understand the
-	  Compaq touchscreen protocol for absolute pointer data. This is
-	  useful namely for embedded configurations.
-
-	  If unsure, say N.
-
-	  To compile this driver as a module, choose M here: the
-	  module will be called tsdev.
-
-config INPUT_TSDEV_SCREEN_X
-	int "Horizontal screen resolution"
-	depends on INPUT_TSDEV
-	default "240"
-
-config INPUT_TSDEV_SCREEN_Y
-	int "Vertical screen resolution"
-	depends on INPUT_TSDEV
-	default "320"
 
 config INPUT_EVDEV
 	tristate "Event interface"
@@ -147,7 +137,7 @@ config INPUT_EVDEV
 
 config INPUT_EVBUG
 	tristate "Event debugging"
-	---help---
+	help
 	  Say Y here if you have a problem with the input subsystem and
 	  want all events (keypresses, mouse movements), to be output to
 	  the system log. While this is useful for debugging, it's also
@@ -158,6 +148,18 @@ config INPUT_EVBUG
 
 	  To compile this driver as a module, choose M here: the
 	  module will be called evbug.
+
+config INPUT_APMPOWER
+	tristate "Input Power Event -> APM Bridge" if EXPERT
+	depends on INPUT && APM_EMULATION
+	help
+	  Say Y here if you want suspend key events to trigger a user
+	  requested suspend through APM. This is useful on embedded
+	  systems where such behaviour is desired without userspace
+	  interaction. If unsure, say N.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called apm-power.
 
 comment "Input Device Drivers"
 

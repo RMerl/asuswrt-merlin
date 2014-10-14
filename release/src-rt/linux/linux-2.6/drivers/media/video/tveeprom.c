@@ -30,28 +30,28 @@
 
 
 #include <linux/module.h>
-#include <linux/moduleparam.h>
 #include <linux/errno.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/types.h>
-#include <linux/videodev.h>
+#include <linux/videodev2.h>
 #include <linux/i2c.h>
 
 #include <media/tuner.h>
 #include <media/tveeprom.h>
 #include <media/v4l2-common.h>
-#include <media/audiochip.h>
+#include <media/v4l2-chip-ident.h>
 
 MODULE_DESCRIPTION("i2c Hauppauge eeprom decoder driver");
 MODULE_AUTHOR("John Klar");
 MODULE_LICENSE("GPL");
 
-static int debug = 0;
+static int debug;
 module_param(debug, int, 0644);
 MODULE_PARM_DESC(debug, "Debug level (0-1)");
 
-#define STRM(array,i) (i < sizeof(array)/sizeof(char*) ? array[i] : "unknown")
+#define STRM(array, i) \
+	(i < sizeof(array) / sizeof(char *) ? array[i] : "unknown")
 
 #define tveeprom_info(fmt, arg...) \
 	v4l_printk(KERN_INFO, "tveeprom", c->adapter, c->addr, fmt , ## arg)
@@ -59,7 +59,8 @@ MODULE_PARM_DESC(debug, "Debug level (0-1)");
 	v4l_printk(KERN_WARNING, "tveeprom", c->adapter, c->addr, fmt , ## arg)
 #define tveeprom_dbg(fmt, arg...) do { \
 	if (debug) \
-		v4l_printk(KERN_DEBUG, "tveeprom", c->adapter, c->addr, fmt , ## arg); \
+		v4l_printk(KERN_DEBUG, "tveeprom", \
+				c->adapter, c->addr, fmt , ## arg); \
 	} while (0)
 
 /*
@@ -95,231 +96,257 @@ static struct HAUPPAUGE_TUNER
 hauppauge_tuner[] =
 {
 	/* 0-9 */
-	{ TUNER_ABSENT,        "None" },
-	{ TUNER_ABSENT,        "External" },
-	{ TUNER_ABSENT,        "Unspecified" },
-	{ TUNER_PHILIPS_PAL,   "Philips FI1216" },
-	{ TUNER_PHILIPS_SECAM, "Philips FI1216MF" },
-	{ TUNER_PHILIPS_NTSC,  "Philips FI1236" },
-	{ TUNER_PHILIPS_PAL_I, "Philips FI1246" },
-	{ TUNER_PHILIPS_PAL_DK,"Philips FI1256" },
-	{ TUNER_PHILIPS_PAL,   "Philips FI1216 MK2" },
-	{ TUNER_PHILIPS_SECAM, "Philips FI1216MF MK2" },
+	{ TUNER_ABSENT,        		"None" },
+	{ TUNER_ABSENT,        		"External" },
+	{ TUNER_ABSENT,        		"Unspecified" },
+	{ TUNER_PHILIPS_PAL,   		"Philips FI1216" },
+	{ TUNER_PHILIPS_SECAM, 		"Philips FI1216MF" },
+	{ TUNER_PHILIPS_NTSC,  		"Philips FI1236" },
+	{ TUNER_PHILIPS_PAL_I, 		"Philips FI1246" },
+	{ TUNER_PHILIPS_PAL_DK,		"Philips FI1256" },
+	{ TUNER_PHILIPS_PAL,   		"Philips FI1216 MK2" },
+	{ TUNER_PHILIPS_SECAM, 		"Philips FI1216MF MK2" },
 	/* 10-19 */
-	{ TUNER_PHILIPS_NTSC,  "Philips FI1236 MK2" },
-	{ TUNER_PHILIPS_PAL_I, "Philips FI1246 MK2" },
-	{ TUNER_PHILIPS_PAL_DK,"Philips FI1256 MK2" },
-	{ TUNER_TEMIC_NTSC,    "Temic 4032FY5" },
-	{ TUNER_TEMIC_PAL,     "Temic 4002FH5" },
-	{ TUNER_TEMIC_PAL_I,   "Temic 4062FY5" },
-	{ TUNER_PHILIPS_PAL,   "Philips FR1216 MK2" },
-	{ TUNER_PHILIPS_SECAM, "Philips FR1216MF MK2" },
-	{ TUNER_PHILIPS_NTSC,  "Philips FR1236 MK2" },
-	{ TUNER_PHILIPS_PAL_I, "Philips FR1246 MK2" },
+	{ TUNER_PHILIPS_NTSC,  		"Philips FI1236 MK2" },
+	{ TUNER_PHILIPS_PAL_I, 		"Philips FI1246 MK2" },
+	{ TUNER_PHILIPS_PAL_DK,		"Philips FI1256 MK2" },
+	{ TUNER_TEMIC_NTSC,    		"Temic 4032FY5" },
+	{ TUNER_TEMIC_PAL,     		"Temic 4002FH5" },
+	{ TUNER_TEMIC_PAL_I,   		"Temic 4062FY5" },
+	{ TUNER_PHILIPS_PAL,   		"Philips FR1216 MK2" },
+	{ TUNER_PHILIPS_SECAM, 		"Philips FR1216MF MK2" },
+	{ TUNER_PHILIPS_NTSC,  		"Philips FR1236 MK2" },
+	{ TUNER_PHILIPS_PAL_I, 		"Philips FR1246 MK2" },
 	/* 20-29 */
-	{ TUNER_PHILIPS_PAL_DK,"Philips FR1256 MK2" },
-	{ TUNER_PHILIPS_PAL,   "Philips FM1216" },
-	{ TUNER_PHILIPS_SECAM, "Philips FM1216MF" },
-	{ TUNER_PHILIPS_NTSC,  "Philips FM1236" },
-	{ TUNER_PHILIPS_PAL_I, "Philips FM1246" },
-	{ TUNER_PHILIPS_PAL_DK,"Philips FM1256" },
-	{ TUNER_TEMIC_4036FY5_NTSC, "Temic 4036FY5" },
-	{ TUNER_ABSENT,        "Samsung TCPN9082D" },
-	{ TUNER_ABSENT,        "Samsung TCPM9092P" },
-	{ TUNER_TEMIC_4006FH5_PAL, "Temic 4006FH5" },
+	{ TUNER_PHILIPS_PAL_DK,		"Philips FR1256 MK2" },
+	{ TUNER_PHILIPS_PAL,   		"Philips FM1216" },
+	{ TUNER_PHILIPS_SECAM, 		"Philips FM1216MF" },
+	{ TUNER_PHILIPS_NTSC,  		"Philips FM1236" },
+	{ TUNER_PHILIPS_PAL_I, 		"Philips FM1246" },
+	{ TUNER_PHILIPS_PAL_DK,		"Philips FM1256" },
+	{ TUNER_TEMIC_4036FY5_NTSC, 	"Temic 4036FY5" },
+	{ TUNER_ABSENT,        		"Samsung TCPN9082D" },
+	{ TUNER_ABSENT,        		"Samsung TCPM9092P" },
+	{ TUNER_TEMIC_4006FH5_PAL, 	"Temic 4006FH5" },
 	/* 30-39 */
-	{ TUNER_ABSENT,        "Samsung TCPN9085D" },
-	{ TUNER_ABSENT,        "Samsung TCPB9085P" },
-	{ TUNER_ABSENT,        "Samsung TCPL9091P" },
-	{ TUNER_TEMIC_4039FR5_NTSC, "Temic 4039FR5" },
-	{ TUNER_PHILIPS_FQ1216ME,   "Philips FQ1216 ME" },
-	{ TUNER_TEMIC_4066FY5_PAL_I, "Temic 4066FY5" },
-	{ TUNER_PHILIPS_NTSC,        "Philips TD1536" },
-	{ TUNER_PHILIPS_NTSC,        "Philips TD1536D" },
-	{ TUNER_PHILIPS_NTSC,  "Philips FMR1236" }, /* mono radio */
-	{ TUNER_ABSENT,        "Philips FI1256MP" },
+	{ TUNER_ABSENT,        		"Samsung TCPN9085D" },
+	{ TUNER_ABSENT,        		"Samsung TCPB9085P" },
+	{ TUNER_ABSENT,        		"Samsung TCPL9091P" },
+	{ TUNER_TEMIC_4039FR5_NTSC, 	"Temic 4039FR5" },
+	{ TUNER_PHILIPS_FQ1216ME,   	"Philips FQ1216 ME" },
+	{ TUNER_TEMIC_4066FY5_PAL_I, 	"Temic 4066FY5" },
+	{ TUNER_PHILIPS_NTSC,        	"Philips TD1536" },
+	{ TUNER_PHILIPS_NTSC,        	"Philips TD1536D" },
+	{ TUNER_PHILIPS_NTSC,  		"Philips FMR1236" }, /* mono radio */
+	{ TUNER_ABSENT,        		"Philips FI1256MP" },
 	/* 40-49 */
-	{ TUNER_ABSENT,        "Samsung TCPQ9091P" },
+	{ TUNER_ABSENT,        		"Samsung TCPQ9091P" },
 	{ TUNER_TEMIC_4006FN5_MULTI_PAL, "Temic 4006FN5" },
-	{ TUNER_TEMIC_4009FR5_PAL, "Temic 4009FR5" },
-	{ TUNER_TEMIC_4046FM5,     "Temic 4046FM5" },
+	{ TUNER_TEMIC_4009FR5_PAL, 	"Temic 4009FR5" },
+	{ TUNER_TEMIC_4046FM5,     	"Temic 4046FM5" },
 	{ TUNER_TEMIC_4009FN5_MULTI_PAL_FM, "Temic 4009FN5" },
-	{ TUNER_ABSENT,        "Philips TD1536D FH 44"},
-	{ TUNER_LG_NTSC_FM,    "LG TP18NSR01F"},
-	{ TUNER_LG_PAL_FM,     "LG TP18PSB01D"},
-	{ TUNER_LG_PAL,        "LG TP18PSB11D"},
-	{ TUNER_LG_PAL_I_FM,   "LG TAPC-I001D"},
+	{ TUNER_ABSENT,        		"Philips TD1536D FH 44"},
+	{ TUNER_LG_NTSC_FM,    		"LG TP18NSR01F"},
+	{ TUNER_LG_PAL_FM,     		"LG TP18PSB01D"},
+	{ TUNER_LG_PAL,        		"LG TP18PSB11D"},
+	{ TUNER_LG_PAL_I_FM,   		"LG TAPC-I001D"},
 	/* 50-59 */
-	{ TUNER_LG_PAL_I,      "LG TAPC-I701D"},
-	{ TUNER_ABSENT,        "Temic 4042FI5"},
-	{ TUNER_MICROTUNE_4049FM5, "Microtune 4049 FM5"},
-	{ TUNER_ABSENT,        "LG TPI8NSR11F"},
-	{ TUNER_ABSENT,        "Microtune 4049 FM5 Alt I2C"},
-	{ TUNER_PHILIPS_FM1216ME_MK3, "Philips FQ1216ME MK3"},
-	{ TUNER_ABSENT,        "Philips FI1236 MK3"},
-	{ TUNER_PHILIPS_FM1216ME_MK3, "Philips FM1216 ME MK3"},
-	{ TUNER_PHILIPS_FM1236_MK3, "Philips FM1236 MK3"},
-	{ TUNER_ABSENT,        "Philips FM1216MP MK3"},
+	{ TUNER_LG_PAL_I,      		"LG TAPC-I701D"},
+	{ TUNER_ABSENT,       		"Temic 4042FI5"},
+	{ TUNER_MICROTUNE_4049FM5, 	"Microtune 4049 FM5"},
+	{ TUNER_ABSENT,        		"LG TPI8NSR11F"},
+	{ TUNER_ABSENT,        		"Microtune 4049 FM5 Alt I2C"},
+	{ TUNER_PHILIPS_FM1216ME_MK3, 	"Philips FQ1216ME MK3"},
+	{ TUNER_ABSENT,        		"Philips FI1236 MK3"},
+	{ TUNER_PHILIPS_FM1216ME_MK3, 	"Philips FM1216 ME MK3"},
+	{ TUNER_PHILIPS_FM1236_MK3, 	"Philips FM1236 MK3"},
+	{ TUNER_ABSENT,        		"Philips FM1216MP MK3"},
 	/* 60-69 */
-	{ TUNER_PHILIPS_FM1216ME_MK3, "LG S001D MK3"},
-	{ TUNER_ABSENT,        "LG M001D MK3"},
-	{ TUNER_PHILIPS_FM1216ME_MK3, "LG S701D MK3"},
-	{ TUNER_ABSENT,        "LG M701D MK3"},
-	{ TUNER_ABSENT,        "Temic 4146FM5"},
-	{ TUNER_ABSENT,        "Temic 4136FY5"},
-	{ TUNER_ABSENT,        "Temic 4106FH5"},
-	{ TUNER_ABSENT,        "Philips FQ1216LMP MK3"},
-	{ TUNER_LG_NTSC_TAPE,  "LG TAPE H001F MK3"},
-	{ TUNER_LG_NTSC_TAPE,  "LG TAPE H701F MK3"},
+	{ TUNER_PHILIPS_FM1216ME_MK3, 	"LG S001D MK3"},
+	{ TUNER_ABSENT,        		"LG M001D MK3"},
+	{ TUNER_PHILIPS_FM1216ME_MK3, 	"LG S701D MK3"},
+	{ TUNER_ABSENT,        		"LG M701D MK3"},
+	{ TUNER_ABSENT,        		"Temic 4146FM5"},
+	{ TUNER_ABSENT,        		"Temic 4136FY5"},
+	{ TUNER_ABSENT,        		"Temic 4106FH5"},
+	{ TUNER_ABSENT,        		"Philips FQ1216LMP MK3"},
+	{ TUNER_LG_NTSC_TAPE,  		"LG TAPE H001F MK3"},
+	{ TUNER_LG_NTSC_TAPE,  		"LG TAPE H701F MK3"},
 	/* 70-79 */
-	{ TUNER_ABSENT,        "LG TALN H200T"},
-	{ TUNER_ABSENT,        "LG TALN H250T"},
-	{ TUNER_ABSENT,        "LG TALN M200T"},
-	{ TUNER_ABSENT,        "LG TALN Z200T"},
-	{ TUNER_ABSENT,        "LG TALN S200T"},
-	{ TUNER_ABSENT,        "Thompson DTT7595"},
-	{ TUNER_ABSENT,        "Thompson DTT7592"},
-	{ TUNER_ABSENT,        "Silicon TDA8275C1 8290"},
-	{ TUNER_ABSENT,        "Silicon TDA8275C1 8290 FM"},
-	{ TUNER_ABSENT,        "Thompson DTT757"},
+	{ TUNER_ABSENT,        		"LG TALN H200T"},
+	{ TUNER_ABSENT,        		"LG TALN H250T"},
+	{ TUNER_ABSENT,        		"LG TALN M200T"},
+	{ TUNER_ABSENT,        		"LG TALN Z200T"},
+	{ TUNER_ABSENT,        		"LG TALN S200T"},
+	{ TUNER_ABSENT,        		"Thompson DTT7595"},
+	{ TUNER_ABSENT,        		"Thompson DTT7592"},
+	{ TUNER_ABSENT,        		"Silicon TDA8275C1 8290"},
+	{ TUNER_ABSENT,        		"Silicon TDA8275C1 8290 FM"},
+	{ TUNER_ABSENT,        		"Thompson DTT757"},
 	/* 80-89 */
-	{ TUNER_ABSENT,        "Philips FQ1216LME MK3"},
-	{ TUNER_LG_PAL_NEW_TAPC, "LG TAPC G701D"},
-	{ TUNER_LG_NTSC_NEW_TAPC, "LG TAPC H791F"},
-	{ TUNER_LG_PAL_NEW_TAPC, "TCL 2002MB 3"},
-	{ TUNER_LG_PAL_NEW_TAPC, "TCL 2002MI 3"},
-	{ TUNER_TCL_2002N,     "TCL 2002N 6A"},
-	{ TUNER_PHILIPS_FM1236_MK3, "Philips FQ1236 MK3"},
-	{ TUNER_SAMSUNG_TCPN_2121P30A, "Samsung TCPN 2121P30A"},
-	{ TUNER_ABSENT,        "Samsung TCPE 4121P30A"},
-	{ TUNER_PHILIPS_FM1216ME_MK3, "TCL MFPE05 2"},
+	{ TUNER_PHILIPS_FQ1216LME_MK3, 	"Philips FQ1216LME MK3"},
+	{ TUNER_LG_PAL_NEW_TAPC, 	"LG TAPC G701D"},
+	{ TUNER_LG_NTSC_NEW_TAPC, 	"LG TAPC H791F"},
+	{ TUNER_LG_PAL_NEW_TAPC, 	"TCL 2002MB 3"},
+	{ TUNER_LG_PAL_NEW_TAPC, 	"TCL 2002MI 3"},
+	{ TUNER_TCL_2002N,     		"TCL 2002N 6A"},
+	{ TUNER_PHILIPS_FM1236_MK3, 	"Philips FQ1236 MK3"},
+	{ TUNER_SAMSUNG_TCPN_2121P30A, 	"Samsung TCPN 2121P30A"},
+	{ TUNER_ABSENT,        		"Samsung TCPE 4121P30A"},
+	{ TUNER_PHILIPS_FM1216ME_MK3, 	"TCL MFPE05 2"},
 	/* 90-99 */
-	{ TUNER_ABSENT,        "LG TALN H202T"},
-	{ TUNER_PHILIPS_FQ1216AME_MK4, "Philips FQ1216AME MK4"},
-	{ TUNER_PHILIPS_FQ1236A_MK4, "Philips FQ1236A MK4"},
-	{ TUNER_ABSENT,        "Philips FQ1286A MK4"},
-	{ TUNER_ABSENT,        "Philips FQ1216ME MK5"},
-	{ TUNER_ABSENT,        "Philips FQ1236 MK5"},
-	{ TUNER_SAMSUNG_TCPG_6121P30A, "Samsung TCPG 6121P30A"},
-	{ TUNER_TCL_2002MB,    "TCL 2002MB_3H"},
-	{ TUNER_ABSENT,        "TCL 2002MI_3H"},
-	{ TUNER_TCL_2002N,     "TCL 2002N 5H"},
+	{ TUNER_ABSENT,        		"LG TALN H202T"},
+	{ TUNER_PHILIPS_FQ1216AME_MK4, 	"Philips FQ1216AME MK4"},
+	{ TUNER_PHILIPS_FQ1236A_MK4, 	"Philips FQ1236A MK4"},
+	{ TUNER_ABSENT,       		"Philips FQ1286A MK4"},
+	{ TUNER_ABSENT,        		"Philips FQ1216ME MK5"},
+	{ TUNER_ABSENT,        		"Philips FQ1236 MK5"},
+	{ TUNER_SAMSUNG_TCPG_6121P30A, 	"Samsung TCPG 6121P30A"},
+	{ TUNER_TCL_2002MB,    		"TCL 2002MB_3H"},
+	{ TUNER_ABSENT,        		"TCL 2002MI_3H"},
+	{ TUNER_TCL_2002N,     		"TCL 2002N 5H"},
 	/* 100-109 */
-	{ TUNER_PHILIPS_FMD1216ME_MK3, "Philips FMD1216ME"},
-	{ TUNER_TEA5767,       "Philips TEA5768HL FM Radio"},
-	{ TUNER_ABSENT,        "Panasonic ENV57H12D5"},
-	{ TUNER_PHILIPS_FM1236_MK3, "TCL MFNM05-4"},
-	{ TUNER_ABSENT,        "TCL MNM05-4"},
-	{ TUNER_PHILIPS_FM1216ME_MK3, "TCL MPE05-2"},
-	{ TUNER_ABSENT,        "TCL MQNM05-4"},
-	{ TUNER_ABSENT,        "LG TAPC-W701D"},
-	{ TUNER_ABSENT,        "TCL 9886P-WM"},
-	{ TUNER_ABSENT,        "TCL 1676NM-WM"},
+	{ TUNER_PHILIPS_FMD1216ME_MK3, 	"Philips FMD1216ME"},
+	{ TUNER_TEA5767,       		"Philips TEA5768HL FM Radio"},
+	{ TUNER_ABSENT,        		"Panasonic ENV57H12D5"},
+	{ TUNER_PHILIPS_FM1236_MK3, 	"TCL MFNM05-4"},
+	{ TUNER_PHILIPS_FM1236_MK3,	"TCL MNM05-4"},
+	{ TUNER_PHILIPS_FM1216ME_MK3, 	"TCL MPE05-2"},
+	{ TUNER_ABSENT,        		"TCL MQNM05-4"},
+	{ TUNER_ABSENT,        		"LG TAPC-W701D"},
+	{ TUNER_ABSENT,        		"TCL 9886P-WM"},
+	{ TUNER_ABSENT,        		"TCL 1676NM-WM"},
 	/* 110-119 */
-	{ TUNER_ABSENT,        "Thompson DTT75105"},
-	{ TUNER_ABSENT,        "Conexant_CX24109"},
-	{ TUNER_TCL_2002N,     "TCL M2523_5N_E"},
-	{ TUNER_TCL_2002MB,    "TCL M2523_3DB_E"},
-	{ TUNER_ABSENT,        "Philips 8275A"},
-	{ TUNER_ABSENT,        "Microtune MT2060"},
-	{ TUNER_PHILIPS_FM1236_MK3, "Philips FM1236 MK5"},
-	{ TUNER_PHILIPS_FM1216ME_MK3, "Philips FM1216ME MK5"},
-	{ TUNER_ABSENT,        "TCL M2523_3DI_E"},
-	{ TUNER_ABSENT,        "Samsung THPD5222FG30A"},
+	{ TUNER_ABSENT,        		"Thompson DTT75105"},
+	{ TUNER_ABSENT,        		"Conexant_CX24109"},
+	{ TUNER_TCL_2002N,     		"TCL M2523_5N_E"},
+	{ TUNER_TCL_2002MB,    		"TCL M2523_3DB_E"},
+	{ TUNER_ABSENT,        		"Philips 8275A"},
+	{ TUNER_ABSENT,        		"Microtune MT2060"},
+	{ TUNER_PHILIPS_FM1236_MK3, 	"Philips FM1236 MK5"},
+	{ TUNER_PHILIPS_FM1216ME_MK3, 	"Philips FM1216ME MK5"},
+	{ TUNER_ABSENT,        		"TCL M2523_3DI_E"},
+	{ TUNER_ABSENT,        		"Samsung THPD5222FG30A"},
 	/* 120-129 */
-	{ TUNER_ABSENT,        "Xceive XC3028"},
-	{ TUNER_ABSENT,        "Philips FQ1216LME MK5"},
-	{ TUNER_ABSENT,        "Philips FQD1216LME"},
-	{ TUNER_ABSENT,        "Conexant CX24118A"},
-	{ TUNER_ABSENT,        "TCL DMF11WIP"},
-	{ TUNER_ABSENT,        "TCL MFNM05_4H_E"},
-	{ TUNER_ABSENT,        "TCL MNM05_4H_E"},
-	{ TUNER_ABSENT,        "TCL MPE05_2H_E"},
-	{ TUNER_ABSENT,        "TCL MQNM05_4_U"},
-	{ TUNER_ABSENT,        "TCL M2523_5NH_E"},
+	{ TUNER_XC2028,        		"Xceive XC3028"},
+	{ TUNER_PHILIPS_FQ1216LME_MK3,	"Philips FQ1216LME MK5"},
+	{ TUNER_ABSENT,        		"Philips FQD1216LME"},
+	{ TUNER_ABSENT,        		"Conexant CX24118A"},
+	{ TUNER_ABSENT,        		"TCL DMF11WIP"},
+	{ TUNER_ABSENT,        		"TCL MFNM05_4H_E"},
+	{ TUNER_ABSENT,        		"TCL MNM05_4H_E"},
+	{ TUNER_ABSENT,        		"TCL MPE05_2H_E"},
+	{ TUNER_ABSENT,        		"TCL MQNM05_4_U"},
+	{ TUNER_ABSENT,        		"TCL M2523_5NH_E"},
 	/* 130-139 */
-	{ TUNER_ABSENT,        "TCL M2523_3DBH_E"},
-	{ TUNER_ABSENT,        "TCL M2523_3DIH_E"},
-	{ TUNER_ABSENT,        "TCL MFPE05_2_U"},
-	{ TUNER_ABSENT,        "Philips FMD1216MEX"},
-	{ TUNER_ABSENT,        "Philips FRH2036B"},
-	{ TUNER_ABSENT,        "Panasonic ENGF75_01GF"},
-	{ TUNER_ABSENT,        "MaxLinear MXL5005"},
-	{ TUNER_ABSENT,        "MaxLinear MXL5003"},
-	{ TUNER_ABSENT,        "Xceive XC2028"},
-	{ TUNER_ABSENT,        "Microtune MT2131"},
+	{ TUNER_ABSENT,        		"TCL M2523_3DBH_E"},
+	{ TUNER_ABSENT,        		"TCL M2523_3DIH_E"},
+	{ TUNER_ABSENT,        		"TCL MFPE05_2_U"},
+	{ TUNER_PHILIPS_FMD1216MEX_MK3,	"Philips FMD1216MEX"},
+	{ TUNER_ABSENT,        		"Philips FRH2036B"},
+	{ TUNER_ABSENT,        		"Panasonic ENGF75_01GF"},
+	{ TUNER_ABSENT,        		"MaxLinear MXL5005"},
+	{ TUNER_ABSENT,        		"MaxLinear MXL5003"},
+	{ TUNER_ABSENT,        		"Xceive XC2028"},
+	{ TUNER_ABSENT,        		"Microtune MT2131"},
 	/* 140-149 */
-	{ TUNER_ABSENT,        "Philips 8275A_8295"},
-	{ TUNER_ABSENT,        "TCL MF02GIP_5N_E"},
-	{ TUNER_ABSENT,        "TCL MF02GIP_3DB_E"},
-	{ TUNER_ABSENT,        "TCL MF02GIP_3DI_E"},
-	{ TUNER_ABSENT,        "Microtune MT2266"},
-	{ TUNER_ABSENT,        "TCL MF10WPP_4N_E"},
-	{ TUNER_ABSENT,        "LG TAPQ_H702F"},
-	{ TUNER_ABSENT,        "TCL M09WPP_4N_E"},
-	{ TUNER_ABSENT,        "MaxLinear MXL5005_v2"},
-	{ TUNER_ABSENT,        "Philips 18271_8295"},
+	{ TUNER_ABSENT,        		"Philips 8275A_8295"},
+	{ TUNER_ABSENT,        		"TCL MF02GIP_5N_E"},
+	{ TUNER_ABSENT,        		"TCL MF02GIP_3DB_E"},
+	{ TUNER_ABSENT,        		"TCL MF02GIP_3DI_E"},
+	{ TUNER_ABSENT,        		"Microtune MT2266"},
+	{ TUNER_ABSENT,        		"TCL MF10WPP_4N_E"},
+	{ TUNER_ABSENT,        		"LG TAPQ_H702F"},
+	{ TUNER_ABSENT,        		"TCL M09WPP_4N_E"},
+	{ TUNER_ABSENT,        		"MaxLinear MXL5005_v2"},
+	{ TUNER_PHILIPS_TDA8290, 	"Philips 18271_8295"},
+	/* 150-159 */
+	{ TUNER_XC5000,                 "Xceive XC5000"},
+	{ TUNER_ABSENT,                 "Xceive XC3028L"},
+	{ TUNER_ABSENT,                 "NXP 18271C2_716x"},
+	{ TUNER_ABSENT,                 "Xceive XC4000"},
+	{ TUNER_ABSENT,                 "Dibcom 7070"},
+	{ TUNER_PHILIPS_TDA8290,        "NXP 18271C2"},
+	{ TUNER_ABSENT,			"unknown"},
+	{ TUNER_ABSENT,			"unknown"},
+	{ TUNER_ABSENT,			"unknown"},
+	{ TUNER_ABSENT,			"unknown"},
+	/* 160-169 */
+	{ TUNER_ABSENT,			"unknown"},
+	{ TUNER_ABSENT,			"unknown"},
+	{ TUNER_ABSENT,			"unknown"},
+	{ TUNER_ABSENT,			"unknown"},
+	{ TUNER_ABSENT,			"unknown"},
+	{ TUNER_ABSENT,			"unknown"},
+	{ TUNER_ABSENT,			"unknown"},
+	{ TUNER_ABSENT,			"unknown"},
+	{ TUNER_PHILIPS_FQ1236_MK5,	"TCL M30WTP-4N-E"},
+	{ TUNER_ABSENT,			"unknown"},
 };
 
+/* Use V4L2_IDENT_AMBIGUOUS for those audio 'chips' that are
+ * internal to a video chip, i.e. not a separate audio chip. */
 static struct HAUPPAUGE_AUDIOIC
 {
-	enum audiochip  id;
+	u32   id;
 	char *name;
 }
 audioIC[] =
 {
 	/* 0-4 */
-	{AUDIO_CHIP_NONE,     "None"},
-	{AUDIO_CHIP_TEA6300,  "TEA6300"},
-	{AUDIO_CHIP_TEA6300,  "TEA6320"},
-	{AUDIO_CHIP_TDA985X,  "TDA9850"},
-	{AUDIO_CHIP_MSP34XX,  "MSP3400C"},
+	{ V4L2_IDENT_NONE,      "None"      },
+	{ V4L2_IDENT_UNKNOWN,   "TEA6300"   },
+	{ V4L2_IDENT_UNKNOWN,   "TEA6320"   },
+	{ V4L2_IDENT_UNKNOWN,   "TDA9850"   },
+	{ V4L2_IDENT_MSPX4XX,   "MSP3400C"  },
 	/* 5-9 */
-	{AUDIO_CHIP_MSP34XX,  "MSP3410D"},
-	{AUDIO_CHIP_MSP34XX,  "MSP3415"},
-	{AUDIO_CHIP_MSP34XX,  "MSP3430"},
-	{AUDIO_CHIP_MSP34XX,  "MSP3438"},
-	{AUDIO_CHIP_UNKNOWN,  "CS5331"},
+	{ V4L2_IDENT_MSPX4XX,   "MSP3410D"  },
+	{ V4L2_IDENT_MSPX4XX,   "MSP3415"   },
+	{ V4L2_IDENT_MSPX4XX,   "MSP3430"   },
+	{ V4L2_IDENT_MSPX4XX,   "MSP3438"   },
+	{ V4L2_IDENT_UNKNOWN,   "CS5331"    },
 	/* 10-14 */
-	{AUDIO_CHIP_MSP34XX,  "MSP3435"},
-	{AUDIO_CHIP_MSP34XX,  "MSP3440"},
-	{AUDIO_CHIP_MSP34XX,  "MSP3445"},
-	{AUDIO_CHIP_MSP34XX,  "MSP3411"},
-	{AUDIO_CHIP_MSP34XX,  "MSP3416"},
+	{ V4L2_IDENT_MSPX4XX,   "MSP3435"   },
+	{ V4L2_IDENT_MSPX4XX,   "MSP3440"   },
+	{ V4L2_IDENT_MSPX4XX,   "MSP3445"   },
+	{ V4L2_IDENT_MSPX4XX,   "MSP3411"   },
+	{ V4L2_IDENT_MSPX4XX,   "MSP3416"   },
 	/* 15-19 */
-	{AUDIO_CHIP_MSP34XX,  "MSP3425"},
-	{AUDIO_CHIP_MSP34XX,  "MSP3451"},
-	{AUDIO_CHIP_MSP34XX,  "MSP3418"},
-	{AUDIO_CHIP_UNKNOWN,  "Type 0x12"},
-	{AUDIO_CHIP_UNKNOWN,  "OKI7716"},
+	{ V4L2_IDENT_MSPX4XX,   "MSP3425"   },
+	{ V4L2_IDENT_MSPX4XX,   "MSP3451"   },
+	{ V4L2_IDENT_MSPX4XX,   "MSP3418"   },
+	{ V4L2_IDENT_UNKNOWN,   "Type 0x12" },
+	{ V4L2_IDENT_UNKNOWN,   "OKI7716"   },
 	/* 20-24 */
-	{AUDIO_CHIP_MSP34XX,  "MSP4410"},
-	{AUDIO_CHIP_MSP34XX,  "MSP4420"},
-	{AUDIO_CHIP_MSP34XX,  "MSP4440"},
-	{AUDIO_CHIP_MSP34XX,  "MSP4450"},
-	{AUDIO_CHIP_MSP34XX,  "MSP4408"},
+	{ V4L2_IDENT_MSPX4XX,   "MSP4410"   },
+	{ V4L2_IDENT_MSPX4XX,   "MSP4420"   },
+	{ V4L2_IDENT_MSPX4XX,   "MSP4440"   },
+	{ V4L2_IDENT_MSPX4XX,   "MSP4450"   },
+	{ V4L2_IDENT_MSPX4XX,   "MSP4408"   },
 	/* 25-29 */
-	{AUDIO_CHIP_MSP34XX,  "MSP4418"},
-	{AUDIO_CHIP_MSP34XX,  "MSP4428"},
-	{AUDIO_CHIP_MSP34XX,  "MSP4448"},
-	{AUDIO_CHIP_MSP34XX,  "MSP4458"},
-	{AUDIO_CHIP_MSP34XX,  "Type 0x1d"},
+	{ V4L2_IDENT_MSPX4XX,   "MSP4418"   },
+	{ V4L2_IDENT_MSPX4XX,   "MSP4428"   },
+	{ V4L2_IDENT_MSPX4XX,   "MSP4448"   },
+	{ V4L2_IDENT_MSPX4XX,   "MSP4458"   },
+	{ V4L2_IDENT_MSPX4XX,   "Type 0x1d" },
 	/* 30-34 */
-	{AUDIO_CHIP_INTERNAL, "CX880"},
-	{AUDIO_CHIP_INTERNAL, "CX881"},
-	{AUDIO_CHIP_INTERNAL, "CX883"},
-	{AUDIO_CHIP_INTERNAL, "CX882"},
-	{AUDIO_CHIP_INTERNAL, "CX25840"},
+	{ V4L2_IDENT_AMBIGUOUS, "CX880"     },
+	{ V4L2_IDENT_AMBIGUOUS, "CX881"     },
+	{ V4L2_IDENT_AMBIGUOUS, "CX883"     },
+	{ V4L2_IDENT_AMBIGUOUS, "CX882"     },
+	{ V4L2_IDENT_AMBIGUOUS, "CX25840"   },
 	/* 35-39 */
-	{AUDIO_CHIP_INTERNAL, "CX25841"},
-	{AUDIO_CHIP_INTERNAL, "CX25842"},
-	{AUDIO_CHIP_INTERNAL, "CX25843"},
-	{AUDIO_CHIP_INTERNAL, "CX23418"},
-	{AUDIO_CHIP_INTERNAL, "CX23885"},
-	/* 40-42 */
-	{AUDIO_CHIP_INTERNAL, "CX23888"},
-	{AUDIO_CHIP_INTERNAL, "SAA7131"},
-	{AUDIO_CHIP_INTERNAL, "CX23887"},
+	{ V4L2_IDENT_AMBIGUOUS, "CX25841"   },
+	{ V4L2_IDENT_AMBIGUOUS, "CX25842"   },
+	{ V4L2_IDENT_AMBIGUOUS, "CX25843"   },
+	{ V4L2_IDENT_AMBIGUOUS, "CX23418"   },
+	{ V4L2_IDENT_AMBIGUOUS, "CX23885"   },
+	/* 40-44 */
+	{ V4L2_IDENT_AMBIGUOUS, "CX23888"   },
+	{ V4L2_IDENT_AMBIGUOUS, "SAA7131"   },
+	{ V4L2_IDENT_AMBIGUOUS, "CX23887"   },
+	{ V4L2_IDENT_AMBIGUOUS, "SAA7164"   },
+	{ V4L2_IDENT_AMBIGUOUS, "AU8522"    },
 };
 
 /* This list is supplied by Hauppauge. Thanks! */
@@ -338,44 +365,46 @@ static const char *decoderIC[] = {
 	"CX882", "TVP5150A", "CX25840", "CX25841", "CX25842",
 	/* 30-34 */
 	"CX25843", "CX23418", "NEC61153", "CX23885", "CX23888",
-	/* 35-37 */
-	"SAA7131", "CX25837", "CX23887"
+	/* 35-39 */
+	"SAA7131", "CX25837", "CX23887", "CX23885A", "CX23887A",
+	/* 40-42 */
+	"SAA7164", "CX23885B", "AU8522"
 };
 
 static int hasRadioTuner(int tunerType)
 {
 	switch (tunerType) {
-		case 18: //PNPEnv_TUNER_FR1236_MK2:
-		case 23: //PNPEnv_TUNER_FM1236:
-		case 38: //PNPEnv_TUNER_FMR1236:
-		case 16: //PNPEnv_TUNER_FR1216_MK2:
-		case 19: //PNPEnv_TUNER_FR1246_MK2:
-		case 21: //PNPEnv_TUNER_FM1216:
-		case 24: //PNPEnv_TUNER_FM1246:
-		case 17: //PNPEnv_TUNER_FR1216MF_MK2:
-		case 22: //PNPEnv_TUNER_FM1216MF:
-		case 20: //PNPEnv_TUNER_FR1256_MK2:
-		case 25: //PNPEnv_TUNER_FM1256:
-		case 33: //PNPEnv_TUNER_4039FR5:
-		case 42: //PNPEnv_TUNER_4009FR5:
-		case 52: //PNPEnv_TUNER_4049FM5:
-		case 54: //PNPEnv_TUNER_4049FM5_AltI2C:
-		case 44: //PNPEnv_TUNER_4009FN5:
-		case 31: //PNPEnv_TUNER_TCPB9085P:
-		case 30: //PNPEnv_TUNER_TCPN9085D:
-		case 46: //PNPEnv_TUNER_TP18NSR01F:
-		case 47: //PNPEnv_TUNER_TP18PSB01D:
-		case 49: //PNPEnv_TUNER_TAPC_I001D:
-		case 60: //PNPEnv_TUNER_TAPE_S001D_MK3:
-		case 57: //PNPEnv_TUNER_FM1216ME_MK3:
-		case 59: //PNPEnv_TUNER_FM1216MP_MK3:
-		case 58: //PNPEnv_TUNER_FM1236_MK3:
-		case 68: //PNPEnv_TUNER_TAPE_H001F_MK3:
-		case 61: //PNPEnv_TUNER_TAPE_M001D_MK3:
-		case 78: //PNPEnv_TUNER_TDA8275C1_8290_FM:
-		case 89: //PNPEnv_TUNER_TCL_MFPE05_2:
-		case 92: //PNPEnv_TUNER_PHILIPS_FQ1236A_MK4:
-		case 105:
+	case 18: /* PNPEnv_TUNER_FR1236_MK2 */
+	case 23: /* PNPEnv_TUNER_FM1236 */
+	case 38: /* PNPEnv_TUNER_FMR1236 */
+	case 16: /* PNPEnv_TUNER_FR1216_MK2 */
+	case 19: /* PNPEnv_TUNER_FR1246_MK2 */
+	case 21: /* PNPEnv_TUNER_FM1216 */
+	case 24: /* PNPEnv_TUNER_FM1246 */
+	case 17: /* PNPEnv_TUNER_FR1216MF_MK2 */
+	case 22: /* PNPEnv_TUNER_FM1216MF */
+	case 20: /* PNPEnv_TUNER_FR1256_MK2 */
+	case 25: /* PNPEnv_TUNER_FM1256 */
+	case 33: /* PNPEnv_TUNER_4039FR5 */
+	case 42: /* PNPEnv_TUNER_4009FR5 */
+	case 52: /* PNPEnv_TUNER_4049FM5 */
+	case 54: /* PNPEnv_TUNER_4049FM5_AltI2C */
+	case 44: /* PNPEnv_TUNER_4009FN5 */
+	case 31: /* PNPEnv_TUNER_TCPB9085P */
+	case 30: /* PNPEnv_TUNER_TCPN9085D */
+	case 46: /* PNPEnv_TUNER_TP18NSR01F */
+	case 47: /* PNPEnv_TUNER_TP18PSB01D */
+	case 49: /* PNPEnv_TUNER_TAPC_I001D */
+	case 60: /* PNPEnv_TUNER_TAPE_S001D_MK3 */
+	case 57: /* PNPEnv_TUNER_FM1216ME_MK3 */
+	case 59: /* PNPEnv_TUNER_FM1216MP_MK3 */
+	case 58: /* PNPEnv_TUNER_FM1236_MK3 */
+	case 68: /* PNPEnv_TUNER_TAPE_H001F_MK3 */
+	case 61: /* PNPEnv_TUNER_TAPE_M001D_MK3 */
+	case 78: /* PNPEnv_TUNER_TDA8275C1_8290_FM */
+	case 89: /* PNPEnv_TUNER_TCL_MFPE05_2 */
+	case 92: /* PNPEnv_TUNER_PHILIPS_FQ1236A_MK4 */
+	case 105:
 		return 1;
 	}
 	return 0;
@@ -393,7 +422,8 @@ void tveeprom_hauppauge_analog(struct i2c_client *c, struct tveeprom *tvee,
 	**
 	** In our (ivtv) case we're interested in the following:
 	** tuner type:   tag [00].05 or [0a].01 (index into hauppauge_tuner)
-	** tuner fmts:   tag [00].04 or [0a].00 (bitmask index into hauppauge_tuner_fmt)
+	** tuner fmts:   tag [00].04 or [0a].00 (bitmask index into
+	**		 hauppauge_tuner_fmt)
 	** radio:        tag [00].{last} or [0e].00  (bitmask.  bit2=FM)
 	** audio proc:   tag [02].01 or [05].00 (mask with 0x7f)
 	** decoder proc: tag [09].01)
@@ -406,9 +436,9 @@ void tveeprom_hauppauge_analog(struct i2c_client *c, struct tveeprom *tvee,
 	** # of inputs/outputs ???
 	*/
 
-	int i, j, len, done, beenhere, tag,start;
+	int i, j, len, done, beenhere, tag, start;
 
-	int tuner1 = 0, t_format1 = 0, audioic=-1;
+	int tuner1 = 0, t_format1 = 0, audioic = -1;
 	char *t_name1 = NULL;
 	const char *t_fmt_name1[8] = { " none", "", "", "", "", "", "", "" };
 
@@ -417,19 +447,29 @@ void tveeprom_hauppauge_analog(struct i2c_client *c, struct tveeprom *tvee,
 	const char *t_fmt_name2[8] = { " none", "", "", "", "", "", "", "" };
 
 	memset(tvee, 0, sizeof(*tvee));
+	tvee->tuner_type = TUNER_ABSENT;
+	tvee->tuner2_type = TUNER_ABSENT;
+
 	done = len = beenhere = 0;
 
-	/* Hack for processing eeprom for em28xx and cx 2388x*/
-	if ((eeprom_data[0] == 0x1a) && (eeprom_data[1] == 0xeb) &&
-			(eeprom_data[2] == 0x67) && (eeprom_data[3] == 0x95))
-		start=0xa0; /* Generic em28xx offset */
-	else if (((eeprom_data[0] & 0xe1) == 0x01) &&
-					(eeprom_data[1] == 0x00) &&
-					(eeprom_data[2] == 0x00) &&
-					(eeprom_data[8] == 0x84))
-		start=8; /* Generic cx2388x offset */
+	/* Different eeprom start offsets for em28xx, cx2388x and cx23418 */
+	if (eeprom_data[0] == 0x1a &&
+	    eeprom_data[1] == 0xeb &&
+	    eeprom_data[2] == 0x67 &&
+	    eeprom_data[3] == 0x95)
+		start = 0xa0; /* Generic em28xx offset */
+	else if ((eeprom_data[0] & 0xe1) == 0x01 &&
+		 eeprom_data[1] == 0x00 &&
+		 eeprom_data[2] == 0x00 &&
+		 eeprom_data[8] == 0x84)
+		start = 8; /* Generic cx2388x offset */
+	else if (eeprom_data[1] == 0x70 &&
+		 eeprom_data[2] == 0x00 &&
+		 eeprom_data[4] == 0x74 &&
+		 eeprom_data[8] == 0x84)
+		start = 8; /* Generic cx23418 offset (models 74xxx) */
 	else
-		start=0;
+		start = 0;
 
 	for (i = start; !done && i < 256; i += len) {
 		if (eeprom_data[i] == 0x84) {
@@ -445,16 +485,17 @@ void tveeprom_hauppauge_analog(struct i2c_client *c, struct tveeprom *tvee,
 			++i;
 		} else {
 			tveeprom_warn("Encountered bad packet header [%02x]. "
-				"Corrupt or not a Hauppauge eeprom.\n", eeprom_data[i]);
+				"Corrupt or not a Hauppauge eeprom.\n",
+				eeprom_data[i]);
 			return;
 		}
 
 		if (debug) {
-			tveeprom_info("Tag [%02x] + %d bytes:", eeprom_data[i], len - 1);
-			for(j = 1; j < len; j++) {
-				printk(" %02x", eeprom_data[i + j]);
-			}
-			printk("\n");
+			tveeprom_info("Tag [%02x] + %d bytes:",
+					eeprom_data[i], len - 1);
+			for (j = 1; j < len; j++)
+				printk(KERN_CONT " %02x", eeprom_data[i + j]);
+			printk(KERN_CONT "\n");
 		}
 
 		/* process by tag */
@@ -467,7 +508,7 @@ void tveeprom_hauppauge_analog(struct i2c_client *c, struct tveeprom *tvee,
 			tvee->has_radio = eeprom_data[i+len-1];
 			/* old style tag, don't know how to detect
 			IR presence, mark as unknown. */
-			tvee->has_ir = -1;
+			tvee->has_ir = 0;
 			tvee->model =
 				eeprom_data[i+8] +
 				(eeprom_data[i+9] << 8);
@@ -490,10 +531,10 @@ void tveeprom_hauppauge_analog(struct i2c_client *c, struct tveeprom *tvee,
 			to indicate 4052 mux was removed in favor of using MSP
 			inputs directly. */
 			audioic = eeprom_data[i+2] & 0x7f;
-			if (audioic < sizeof(audioIC)/sizeof(*audioIC))
+			if (audioic < ARRAY_SIZE(audioIC))
 				tvee->audio_processor = audioIC[audioic].id;
 			else
-				tvee->audio_processor = AUDIO_CHIP_UNKNOWN;
+				tvee->audio_processor = V4L2_IDENT_UNKNOWN;
 			break;
 
 		/* case 0x03: tag 'EEInfo' */
@@ -505,16 +546,16 @@ void tveeprom_hauppauge_analog(struct i2c_client *c, struct tveeprom *tvee,
 				(eeprom_data[i+6] << 8) +
 				(eeprom_data[i+7] << 16);
 
-				if ( (eeprom_data[i + 8] & 0xf0) &&
-					(tvee->serial_number < 0xffffff) ) {
-					tvee->MAC_address[0] = 0x00;
-					tvee->MAC_address[1] = 0x0D;
-					tvee->MAC_address[2] = 0xFE;
-					tvee->MAC_address[3] = eeprom_data[i + 7];
-					tvee->MAC_address[4] = eeprom_data[i + 6];
-					tvee->MAC_address[5] = eeprom_data[i + 5];
-					tvee->has_MAC_address = 1;
-				}
+			if ((eeprom_data[i + 8] & 0xf0) &&
+					(tvee->serial_number < 0xffffff)) {
+				tvee->MAC_address[0] = 0x00;
+				tvee->MAC_address[1] = 0x0D;
+				tvee->MAC_address[2] = 0xFE;
+				tvee->MAC_address[3] = eeprom_data[i + 7];
+				tvee->MAC_address[4] = eeprom_data[i + 6];
+				tvee->MAC_address[5] = eeprom_data[i + 5];
+				tvee->has_MAC_address = 1;
+			}
 			break;
 
 		case 0x05:
@@ -523,10 +564,10 @@ void tveeprom_hauppauge_analog(struct i2c_client *c, struct tveeprom *tvee,
 			to indicate 4052 mux was removed in favor of using MSP
 			inputs directly. */
 			audioic = eeprom_data[i+1] & 0x7f;
-			if (audioic < sizeof(audioIC)/sizeof(*audioIC))
+			if (audioic < ARRAY_SIZE(audioIC))
 				tvee->audio_processor = audioIC[audioic].id;
 			else
-				tvee->audio_processor = AUDIO_CHIP_UNKNOWN;
+				tvee->audio_processor = V4L2_IDENT_UNKNOWN;
 
 			break;
 
@@ -538,7 +579,7 @@ void tveeprom_hauppauge_analog(struct i2c_client *c, struct tveeprom *tvee,
 				(eeprom_data[i + 3] << 16) +
 				(eeprom_data[i + 4] << 24);
 			tvee->revision =
-				eeprom_data[i +5 ] +
+				eeprom_data[i + 5] +
 				(eeprom_data[i + 6] << 8) +
 				(eeprom_data[i + 7] << 16);
 			break;
@@ -558,16 +599,16 @@ void tveeprom_hauppauge_analog(struct i2c_client *c, struct tveeprom *tvee,
 		case 0x0a:
 			/* tag 'Tuner' */
 			if (beenhere == 0) {
-				tuner1 = eeprom_data[i+2];
-				t_format1 = eeprom_data[i+1];
+				tuner1 = eeprom_data[i + 2];
+				t_format1 = eeprom_data[i + 1];
 				beenhere = 1;
 			} else {
 				/* a second (radio) tuner may be present */
-				tuner2 = eeprom_data[i+2];
-				t_format2 = eeprom_data[i+1];
-				if (t_format2 == 0) {  /* not a TV tuner? */
+				tuner2 = eeprom_data[i + 2];
+				t_format2 = eeprom_data[i + 1];
+				/* not a TV tuner? */
+				if (t_format2 == 0)
 					tvee->has_radio = 1; /* must be radio */
-				}
 			}
 			break;
 
@@ -587,7 +628,7 @@ void tveeprom_hauppauge_analog(struct i2c_client *c, struct tveeprom *tvee,
 
 		case 0x0f:
 			/* tag 'IRInfo' */
-			tvee->has_ir = eeprom_data[i+1];
+			tvee->has_ir = 1 | (eeprom_data[i+1] << 1);
 			break;
 
 		/* case 0x10: tag 'VBIInfo' */
@@ -595,7 +636,8 @@ void tveeprom_hauppauge_analog(struct i2c_client *c, struct tveeprom *tvee,
 		/* case 0x12: tag 'InfoBits' */
 
 		default:
-			tveeprom_dbg("Not sure what to do with tag [%02x]\n", tag);
+			tveeprom_dbg("Not sure what to do with tag [%02x]\n",
+					tag);
 			/* dump the rest of the packet? */
 		}
 	}
@@ -609,7 +651,7 @@ void tveeprom_hauppauge_analog(struct i2c_client *c, struct tveeprom *tvee,
 		tvee->rev_str[0] = 32 + ((tvee->revision >> 18) & 0x3f);
 		tvee->rev_str[1] = 32 + ((tvee->revision >> 12) & 0x3f);
 		tvee->rev_str[2] = 32 + ((tvee->revision >>  6) & 0x3f);
-		tvee->rev_str[3] = 32 + ( tvee->revision        & 0x3f);
+		tvee->rev_str[3] = 32 + (tvee->revision & 0x3f);
 		tvee->rev_str[4] = 0;
 	}
 
@@ -619,14 +661,14 @@ void tveeprom_hauppauge_analog(struct i2c_client *c, struct tveeprom *tvee,
 		tvee->has_radio = 1;
 	}
 
-	if (tuner1 < sizeof(hauppauge_tuner)/sizeof(struct HAUPPAUGE_TUNER)) {
+	if (tuner1 < ARRAY_SIZE(hauppauge_tuner)) {
 		tvee->tuner_type = hauppauge_tuner[tuner1].id;
 		t_name1 = hauppauge_tuner[tuner1].name;
 	} else {
 		t_name1 = "unknown";
 	}
 
-	if (tuner2 < sizeof(hauppauge_tuner)/sizeof(struct HAUPPAUGE_TUNER)) {
+	if (tuner2 < ARRAY_SIZE(hauppauge_tuner)) {
 		tvee->tuner2_type = hauppauge_tuner[tuner2].id;
 		t_name2 = hauppauge_tuner[tuner2].name;
 	} else {
@@ -652,52 +694,45 @@ void tveeprom_hauppauge_analog(struct i2c_client *c, struct tveeprom *tvee,
 
 	tveeprom_info("Hauppauge model %d, rev %s, serial# %d\n",
 		tvee->model, tvee->rev_str, tvee->serial_number);
-	if (tvee->has_MAC_address == 1) {
-		tveeprom_info("MAC address is %02X-%02X-%02X-%02X-%02X-%02X\n",
-			tvee->MAC_address[0], tvee->MAC_address[1],
-			tvee->MAC_address[2], tvee->MAC_address[3],
-			tvee->MAC_address[4], tvee->MAC_address[5]);
-	}
+	if (tvee->has_MAC_address == 1)
+		tveeprom_info("MAC address is %pM\n", tvee->MAC_address);
 	tveeprom_info("tuner model is %s (idx %d, type %d)\n",
 		t_name1, tuner1, tvee->tuner_type);
 	tveeprom_info("TV standards%s%s%s%s%s%s%s%s (eeprom 0x%02x)\n",
-		t_fmt_name1[0], t_fmt_name1[1], t_fmt_name1[2], t_fmt_name1[3],
-		t_fmt_name1[4], t_fmt_name1[5], t_fmt_name1[6], t_fmt_name1[7],
-		t_format1);
-	if (tuner2) {
+		t_fmt_name1[0], t_fmt_name1[1], t_fmt_name1[2],
+		t_fmt_name1[3],	t_fmt_name1[4], t_fmt_name1[5],
+		t_fmt_name1[6], t_fmt_name1[7],	t_format1);
+	if (tuner2)
 		tveeprom_info("second tuner model is %s (idx %d, type %d)\n",
 					t_name2, tuner2, tvee->tuner2_type);
-	}
-	if (t_format2) {
+	if (t_format2)
 		tveeprom_info("TV standards%s%s%s%s%s%s%s%s (eeprom 0x%02x)\n",
-			t_fmt_name2[0], t_fmt_name2[1], t_fmt_name2[2], t_fmt_name2[3],
-			t_fmt_name2[4], t_fmt_name2[5], t_fmt_name2[6], t_fmt_name2[7],
-			t_format2);
-	}
-	if (audioic<0) {
+			t_fmt_name2[0], t_fmt_name2[1], t_fmt_name2[2],
+			t_fmt_name2[3],	t_fmt_name2[4], t_fmt_name2[5],
+			t_fmt_name2[6], t_fmt_name2[7], t_format2);
+	if (audioic < 0) {
 		tveeprom_info("audio processor is unknown (no idx)\n");
-		tvee->audio_processor=AUDIO_CHIP_UNKNOWN;
+		tvee->audio_processor = V4L2_IDENT_UNKNOWN;
 	} else {
-		if (audioic < sizeof(audioIC)/sizeof(*audioIC))
+		if (audioic < ARRAY_SIZE(audioIC))
 			tveeprom_info("audio processor is %s (idx %d)\n",
-					audioIC[audioic].name,audioic);
+					audioIC[audioic].name, audioic);
 		else
 			tveeprom_info("audio processor is unknown (idx %d)\n",
 								audioic);
 	}
-	if (tvee->decoder_processor) {
+	if (tvee->decoder_processor)
 		tveeprom_info("decoder processor is %s (idx %d)\n",
 			STRM(decoderIC, tvee->decoder_processor),
 			tvee->decoder_processor);
-	}
-	if (tvee->has_ir == -1)
-		tveeprom_info("has %sradio\n",
-				tvee->has_radio ? "" : "no ");
-	else
+	if (tvee->has_ir)
 		tveeprom_info("has %sradio, has %sIR receiver, has %sIR transmitter\n",
 				tvee->has_radio ? "" : "no ",
-				(tvee->has_ir & 1) ? "" : "no ",
-				(tvee->has_ir & 2) ? "" : "no ");
+				(tvee->has_ir & 2) ? "" : "no ",
+				(tvee->has_ir & 4) ? "" : "no ");
+	else
+		tveeprom_info("has %sradio\n",
+				tvee->has_radio ? "" : "no ");
 }
 EXPORT_SYMBOL(tveeprom_hauppauge_analog);
 
@@ -710,11 +745,13 @@ int tveeprom_read(struct i2c_client *c, unsigned char *eedata, int len)
 	int err;
 
 	buf = 0;
-	if (1 != (err = i2c_master_send(c, &buf, 1))) {
+	err = i2c_master_send(c, &buf, 1);
+	if (err != 1) {
 		tveeprom_info("Huh, no eeprom present (err=%d)?\n", err);
 		return -1;
 	}
-	if (len != (err = i2c_master_recv(c, eedata, len))) {
+	err = i2c_master_recv(c, eedata, len);
+	if (err != len) {
 		tveeprom_warn("i2c eeprom read error (err=%d)\n", err);
 		return -1;
 	}
@@ -725,117 +762,14 @@ int tveeprom_read(struct i2c_client *c, unsigned char *eedata, int len)
 		for (i = 0; i < len; i++) {
 			if (0 == (i % 16))
 				tveeprom_info("%02x:", i);
-			printk(" %02x", eedata[i]);
+			printk(KERN_CONT " %02x", eedata[i]);
 			if (15 == (i % 16))
-				printk("\n");
+				printk(KERN_CONT "\n");
 		}
 	}
 	return 0;
 }
 EXPORT_SYMBOL(tveeprom_read);
-
-/* ----------------------------------------------------------------------- */
-/* needed for ivtv.sf.net at the moment.  Should go away in the long       */
-/* run, just call the exported tveeprom_* directly, there is no point in   */
-/* using the indirect way via i2c_driver->command()                        */
-
-static unsigned short normal_i2c[] = {
-	0xa0 >> 1,
-	I2C_CLIENT_END,
-};
-
-I2C_CLIENT_INSMOD;
-
-static struct i2c_driver i2c_driver_tveeprom;
-
-static int
-tveeprom_command(struct i2c_client *client,
-		 unsigned int       cmd,
-		 void              *arg)
-{
-	struct tveeprom eeprom;
-	u32 *eeprom_props = arg;
-	u8 *buf;
-
-	switch (cmd) {
-	case 0:
-		buf = kzalloc(256,GFP_KERNEL);
-		tveeprom_read(client,buf,256);
-		tveeprom_hauppauge_analog(client, &eeprom,buf);
-		kfree(buf);
-		eeprom_props[0] = eeprom.tuner_type;
-		eeprom_props[1] = eeprom.tuner_formats;
-		eeprom_props[2] = eeprom.model;
-		eeprom_props[3] = eeprom.revision;
-		eeprom_props[4] = eeprom.has_radio;
-		break;
-	default:
-		return -EINVAL;
-	}
-	return 0;
-}
-
-static int
-tveeprom_detect_client(struct i2c_adapter *adapter,
-		       int                 address,
-		       int                 kind)
-{
-	struct i2c_client *client;
-
-	client = kzalloc(sizeof(struct i2c_client), GFP_KERNEL);
-	if (NULL == client)
-		return -ENOMEM;
-	client->addr = address;
-	client->adapter = adapter;
-	client->driver = &i2c_driver_tveeprom;
-	snprintf(client->name, sizeof(client->name), "tveeprom");
-	i2c_attach_client(client);
-
-	return 0;
-}
-
-static int
-tveeprom_attach_adapter (struct i2c_adapter *adapter)
-{
-	if (adapter->class & I2C_CLASS_TV_ANALOG)
-		return i2c_probe(adapter, &addr_data, tveeprom_detect_client);
-	return 0;
-}
-
-static int
-tveeprom_detach_client (struct i2c_client *client)
-{
-	int err;
-
-	err = i2c_detach_client(client);
-	if (err < 0)
-		return err;
-	kfree(client);
-	return 0;
-}
-
-static struct i2c_driver i2c_driver_tveeprom = {
-	.driver = {
-		.name   = "tveeprom",
-	},
-	.id             = I2C_DRIVERID_TVEEPROM,
-	.attach_adapter = tveeprom_attach_adapter,
-	.detach_client  = tveeprom_detach_client,
-	.command        = tveeprom_command,
-};
-
-static int __init tveeprom_init(void)
-{
-	return i2c_add_driver(&i2c_driver_tveeprom);
-}
-
-static void __exit tveeprom_exit(void)
-{
-	i2c_del_driver(&i2c_driver_tveeprom);
-}
-
-module_init(tveeprom_init);
-module_exit(tveeprom_exit);
 
 /*
  * Local variables:

@@ -28,6 +28,7 @@
 #include <linux/page-flags.h>
 #include <linux/mm.h>
 #include "agp.h"
+#include "intel-agp.h"
 
 /*
  * The real differences to the generic AGP code is
@@ -65,8 +66,9 @@ static const struct gatt_mask efficeon_generic_masks[] =
 };
 
 /* This function does the same thing as mask_memory() for this chipset... */
-static inline unsigned long efficeon_mask_memory(unsigned long addr)
+static inline unsigned long efficeon_mask_memory(struct page *page)
 {
+	unsigned long addr = page_to_phys(page);
 	return addr | 0x00000001;
 }
 
@@ -221,11 +223,11 @@ static int efficeon_create_gatt_table(struct agp_bridge_data *bridge)
 		SetPageReserved(virt_to_page((char *)page));
 
 		for (offset = 0; offset < PAGE_SIZE; offset += clflush_chunk)
-			asm volatile("clflush %0" : : "m" (*(char *)(page+offset)));
+			clflush((char *)page+offset);
 
 		efficeon_private.l1_table[index] = page;
 
-		value = virt_to_gart((unsigned long *)page) | pati | present | index;
+		value = virt_to_phys((unsigned long *)page) | pati | present | index;
 
 		pci_write_config_dword(agp_bridge->dev,
 			EFFICEON_ATTPAGE, value);
@@ -249,15 +251,15 @@ static int efficeon_insert_memory(struct agp_memory * mem, off_t pg_start, int t
 	if (type != 0 || mem->type != 0)
 		return -EINVAL;
 
-	if (mem->is_flushed == FALSE) {
+	if (!mem->is_flushed) {
 		global_cache_flush();
-		mem->is_flushed = TRUE;
+		mem->is_flushed = true;
 	}
 
 	last_page = NULL;
 	for (i = 0; i < count; i++) {
 		int index = pg_start + i;
-		unsigned long insert = efficeon_mask_memory(mem->memory[i]);
+		unsigned long insert = efficeon_mask_memory(mem->pages[i]);
 
 		page = (unsigned int *) efficeon_private.l1_table[index >> 10];
 
@@ -268,15 +270,16 @@ static int efficeon_insert_memory(struct agp_memory * mem, off_t pg_start, int t
 		*page = insert;
 
 		/* clflush is slow, so don't clflush until we have to */
-		if ( last_page &&
-		     ((unsigned long)page^(unsigned long)last_page) & clflush_mask )
-		    asm volatile("clflush %0" : : "m" (*last_page));
+		if (last_page &&
+		    (((unsigned long)page^(unsigned long)last_page) &
+		     clflush_mask))
+			clflush(last_page);
 
 		last_page = page;
 	}
 
 	if ( last_page )
-		asm volatile("clflush %0" : : "m" (*last_page));
+		clflush(last_page);
 
 	agp_bridge->driver->tlb_flush(mem);
 	return 0;
@@ -328,13 +331,15 @@ static const struct agp_bridge_driver efficeon_driver = {
 	.free_gatt_table	= efficeon_free_gatt_table,
 	.insert_memory		= efficeon_insert_memory,
 	.remove_memory		= efficeon_remove_memory,
-	.cant_use_aperture	= 0,	// 1 might be faster?
+	.cant_use_aperture	= false,	// true might be faster?
 
 	// Generic
 	.alloc_by_type		= agp_generic_alloc_by_type,
 	.free_by_type		= agp_generic_free_by_type,
 	.agp_alloc_page		= agp_generic_alloc_page,
+	.agp_alloc_pages	= agp_generic_alloc_pages,
 	.agp_destroy_page	= agp_generic_destroy_page,
+	.agp_destroy_pages	= agp_generic_destroy_pages,
 	.agp_type_to_mask_type  = agp_generic_type_to_mask_type,
 };
 
@@ -367,6 +372,17 @@ static int __devinit agp_efficeon_probe(struct pci_dev *pdev,
 	bridge->capndx = cap_ptr;
 
 	/*
+	* If the device has not been properly setup, the following will catch
+	* the problem and should stop the system from crashing.
+	* 20030610 - hamish@zot.org
+	*/
+	if (pci_enable_device(pdev)) {
+		printk(KERN_ERR PFX "Unable to Enable PCI device\n");
+		agp_put_bridge(bridge);
+		return -ENODEV;
+	}
+
+	/*
 	* The following fixes the case where the BIOS has "forgotten" to
 	* provide an address range for the GART.
 	* 20030610 - hamish@zot.org
@@ -375,18 +391,9 @@ static int __devinit agp_efficeon_probe(struct pci_dev *pdev,
 	if (!r->start && r->end) {
 		if (pci_assign_resource(pdev, 0)) {
 			printk(KERN_ERR PFX "could not assign resource 0\n");
+			agp_put_bridge(bridge);
 			return -ENODEV;
 		}
-	}
-
-	/*
-	* If the device has not been properly setup, the following will catch
-	* the problem and should stop the system from crashing.
-	* 20030610 - hamish@zot.org
-	*/
-	if (pci_enable_device(pdev)) {
-		printk(KERN_ERR PFX "Unable to Enable PCI device\n");
-		return -ENODEV;
 	}
 
 	/* Fill in the mode register */

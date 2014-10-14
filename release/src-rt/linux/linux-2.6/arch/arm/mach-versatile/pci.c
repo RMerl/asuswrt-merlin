@@ -16,14 +16,13 @@
  */
 #include <linux/kernel.h>
 #include <linux/pci.h>
-#include <linux/slab.h>
 #include <linux/ioport.h>
 #include <linux/interrupt.h>
 #include <linux/spinlock.h>
 #include <linux/init.h>
+#include <linux/io.h>
 
-#include <asm/hardware.h>
-#include <asm/io.h>
+#include <mach/hardware.h>
 #include <asm/irq.h>
 #include <asm/system.h>
 #include <asm/mach/pci.h>
@@ -305,7 +304,7 @@ int __init pci_versatile_setup(int nr, struct pci_sys_data *sys)
 }
 
 
-struct pci_bus *pci_versatile_scan_bus(int nr, struct pci_sys_data *sys)
+struct pci_bus * __init pci_versatile_scan_bus(int nr, struct pci_sys_data *sys)
 {
 	return pci_scan_bus(sys->busnr, &pci_versatile_ops, sys);
 }

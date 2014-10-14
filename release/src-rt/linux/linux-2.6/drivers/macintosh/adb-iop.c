@@ -19,7 +19,6 @@
 #include <linux/init.h>
 #include <linux/proc_fs.h>
 
-#include <asm/bootinfo.h> 
 #include <asm/macintosh.h> 
 #include <asm/macints.h> 
 #include <asm/mac_iop.h>
@@ -81,7 +80,7 @@ static void adb_iop_end_req(struct adb_request *req, int state)
 static void adb_iop_complete(struct iop_msg *msg)
 {
 	struct adb_request *req;
-	uint flags;
+	unsigned long flags;
 
 	local_irq_save(flags);
 
@@ -104,7 +103,7 @@ static void adb_iop_listen(struct iop_msg *msg)
 {
 	struct adb_iopmsg *amsg = (struct adb_iopmsg *) msg->message;
 	struct adb_request *req;
-	uint flags;
+	unsigned long flags;
 #ifdef DEBUG_ADB_IOP
 	int i;
 #endif

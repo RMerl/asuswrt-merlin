@@ -24,7 +24,7 @@ ON WHAT HARDWARE DOES IT RUN?
   today Linux also runs on (at least) the Compaq Alpha AXP, Sun SPARC and
   UltraSPARC, Motorola 68000, PowerPC, PowerPC64, ARM, Hitachi SuperH, Cell,
   IBM S/390, MIPS, HP PA-RISC, Intel IA-64, DEC VAX, AMD x86-64, AXIS CRIS,
-  Xtensa, AVR32 and Renesas M32R architectures.
+  Xtensa, Tilera TILE, AVR32 and Renesas M32R architectures.
 
   Linux is easily portable to most general-purpose 32- or 64-bit architectures
   as long as they have a paged memory management unit (PMMU) and a port of the
@@ -52,11 +52,11 @@ DOCUMENTATION:
 
  - The Documentation/DocBook/ subdirectory contains several guides for
    kernel developers and users.  These guides can be rendered in a
-   number of formats:  PostScript (.ps), PDF, and HTML, among others.
-   After installation, "make psdocs", "make pdfdocs", or "make htmldocs"
-   will render the documentation in the requested format.
+   number of formats:  PostScript (.ps), PDF, HTML, & man-pages, among others.
+   After installation, "make psdocs", "make pdfdocs", "make htmldocs",
+   or "make mandocs" will render the documentation in the requested format.
 
-INSTALLING the kernel:
+INSTALLING the kernel source:
 
  - If you install the full sources, put the kernel tarball in a
    directory where you have permissions (eg. your home directory) and
@@ -166,6 +166,7 @@ CONFIGURING the kernel:
  - Alternate configuration commands are:
 	"make config"      Plain text interface.
 	"make menuconfig"  Text based color menus, radiolists & dialogs.
+	"make nconfig"     Enhanced text based color menus.
 	"make xconfig"     X windows (Qt) based configuration tool.
 	"make gconfig"     X windows (Gtk) based configuration tool.
 	"make oldconfig"   Default all questions based on the contents of
@@ -174,8 +175,17 @@ CONFIGURING the kernel:
 	"make silentoldconfig"
 			   Like above, but avoids cluttering the screen
 			   with questions already answered.
+			   Additionally updates the dependencies.
 	"make defconfig"   Create a ./.config file by using the default
-			   symbol values from arch/$ARCH/defconfig.
+			   symbol values from either arch/$ARCH/defconfig
+			   or arch/$ARCH/configs/${PLATFORM}_defconfig,
+			   depending on the architecture.
+	"make ${PLATFORM}_defconfig"
+			  Create a ./.config file by using the default
+			  symbol values from
+			  arch/$ARCH/configs/${PLATFORM}_defconfig.
+			  Use "make help" to get a list of all available
+			  platforms of your architecture.
 	"make allyesconfig"
 			   Create a ./.config file by setting symbol
 			   values to 'y' as much as possible.
@@ -187,14 +197,9 @@ CONFIGURING the kernel:
 	"make randconfig"  Create a ./.config file by setting symbol
 			   values to random values.
 
-   The allyesconfig/allmodconfig/allnoconfig/randconfig variants can
-   also use the environment variable KCONFIG_ALLCONFIG to specify a
-   filename that contains config options that the user requires to be
-   set to a specific value.  If KCONFIG_ALLCONFIG=filename is not used,
-   "make *config" checks for a file named "all{yes/mod/no/random}.config"
-   for symbol values that are to be forced.  If this file is not found,
-   it checks for a file named "all.config" to contain forced values.
-   
+   You can find more information on using the Linux kernel config tools
+   in Documentation/kbuild/kconfig.txt.
+
 	NOTES on "make config":
 	- having unnecessary drivers will make the kernel bigger, and can
 	  under some circumstances lead to problems: probing for a
@@ -230,6 +235,19 @@ COMPILING the kernel:
 
  - If you configured any of the parts of the kernel as `modules', you
    will also have to do "make modules_install".
+
+ - Verbose kernel compile/build output:
+
+   Normally the kernel build system runs in a fairly quiet mode (but not
+   totally silent).  However, sometimes you or other kernel developers need
+   to see compile, link, or other commands exactly as they are executed.
+   For this, use "verbose" build mode.  This is done by inserting
+   "V=1" in the "make" command.  E.g.:
+
+	make V=1 all
+
+   To have the build system also tell the reason for the rebuild of each
+   target, use "V=2".  The default is "V=0".
 
  - Keep a backup kernel handy in case something goes wrong.  This is 
    especially true for the development releases, since each new release

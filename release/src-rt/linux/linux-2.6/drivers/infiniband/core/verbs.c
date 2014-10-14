@@ -34,8 +34,6 @@
  * ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
- *
- * $Id: verbs.c 1349 2004-12-16 21:09:43Z roland $
  */
 
 #include <linux/errno.h>
@@ -95,6 +93,22 @@ rdma_node_get_transport(enum rdma_node_type node_type)
 	}
 }
 EXPORT_SYMBOL(rdma_node_get_transport);
+
+enum rdma_link_layer rdma_port_get_link_layer(struct ib_device *device, u8 port_num)
+{
+	if (device->get_link_layer)
+		return device->get_link_layer(device, port_num);
+
+	switch (rdma_node_get_transport(device->node_type)) {
+	case RDMA_TRANSPORT_IB:
+		return IB_LINK_LAYER_INFINIBAND;
+	case RDMA_TRANSPORT_IWARP:
+		return IB_LINK_LAYER_ETHERNET;
+	default:
+		return IB_LINK_LAYER_UNSPECIFIED;
+	}
+}
+EXPORT_SYMBOL(rdma_port_get_link_layer);
 
 /* Protection domains */
 
@@ -248,7 +262,9 @@ int ib_modify_srq(struct ib_srq *srq,
 		  struct ib_srq_attr *srq_attr,
 		  enum ib_srq_attr_mask srq_attr_mask)
 {
-	return srq->device->modify_srq(srq, srq_attr, srq_attr_mask, NULL);
+	return srq->device->modify_srq ?
+		srq->device->modify_srq(srq, srq_attr, srq_attr_mask, NULL) :
+		-ENOSYS;
 }
 EXPORT_SYMBOL(ib_modify_srq);
 
@@ -310,12 +326,11 @@ EXPORT_SYMBOL(ib_create_qp);
 
 static const struct {
 	int			valid;
-	enum ib_qp_attr_mask	req_param[IB_QPT_RAW_ETY + 1];
-	enum ib_qp_attr_mask	opt_param[IB_QPT_RAW_ETY + 1];
+	enum ib_qp_attr_mask	req_param[IB_QPT_RAW_ETHERTYPE + 1];
+	enum ib_qp_attr_mask	opt_param[IB_QPT_RAW_ETHERTYPE + 1];
 } qp_state_table[IB_QPS_ERR + 1][IB_QPS_ERR + 1] = {
 	[IB_QPS_RESET] = {
 		[IB_QPS_RESET] = { .valid = 1 },
-		[IB_QPS_ERR]   = { .valid = 1 },
 		[IB_QPS_INIT]  = {
 			.valid = 1,
 			.req_param = {
@@ -628,6 +643,13 @@ struct ib_cq *ib_create_cq(struct ib_device *device,
 }
 EXPORT_SYMBOL(ib_create_cq);
 
+int ib_modify_cq(struct ib_cq *cq, u16 cq_count, u16 cq_period)
+{
+	return cq->device->modify_cq ?
+		cq->device->modify_cq(cq, cq_count, cq_period) : -ENOSYS;
+}
+EXPORT_SYMBOL(ib_modify_cq);
+
 int ib_destroy_cq(struct ib_cq *cq)
 {
 	if (atomic_read(&cq->usecnt))
@@ -671,6 +693,9 @@ struct ib_mr *ib_reg_phys_mr(struct ib_pd *pd,
 			     u64 *iova_start)
 {
 	struct ib_mr *mr;
+
+	if (!pd->device->reg_phys_mr)
+		return ERR_PTR(-ENOSYS);
 
 	mr = pd->device->reg_phys_mr(pd, phys_buf_array, num_phys_buf,
 				     mr_access_flags, iova_start);
@@ -742,6 +767,52 @@ int ib_dereg_mr(struct ib_mr *mr)
 	return ret;
 }
 EXPORT_SYMBOL(ib_dereg_mr);
+
+struct ib_mr *ib_alloc_fast_reg_mr(struct ib_pd *pd, int max_page_list_len)
+{
+	struct ib_mr *mr;
+
+	if (!pd->device->alloc_fast_reg_mr)
+		return ERR_PTR(-ENOSYS);
+
+	mr = pd->device->alloc_fast_reg_mr(pd, max_page_list_len);
+
+	if (!IS_ERR(mr)) {
+		mr->device  = pd->device;
+		mr->pd      = pd;
+		mr->uobject = NULL;
+		atomic_inc(&pd->usecnt);
+		atomic_set(&mr->usecnt, 0);
+	}
+
+	return mr;
+}
+EXPORT_SYMBOL(ib_alloc_fast_reg_mr);
+
+struct ib_fast_reg_page_list *ib_alloc_fast_reg_page_list(struct ib_device *device,
+							  int max_page_list_len)
+{
+	struct ib_fast_reg_page_list *page_list;
+
+	if (!device->alloc_fast_reg_page_list)
+		return ERR_PTR(-ENOSYS);
+
+	page_list = device->alloc_fast_reg_page_list(device, max_page_list_len);
+
+	if (!IS_ERR(page_list)) {
+		page_list->device = device;
+		page_list->max_page_list_len = max_page_list_len;
+	}
+
+	return page_list;
+}
+EXPORT_SYMBOL(ib_alloc_fast_reg_page_list);
+
+void ib_free_fast_reg_page_list(struct ib_fast_reg_page_list *page_list)
+{
+	page_list->device->free_fast_reg_page_list(page_list);
+}
+EXPORT_SYMBOL(ib_free_fast_reg_page_list);
 
 /* Memory windows */
 

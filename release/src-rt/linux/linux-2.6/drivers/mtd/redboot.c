@@ -1,8 +1,24 @@
 /*
- * $Id: redboot.c,v 1.21 2006/03/30 18:34:37 bjd Exp $
- *
  * Parse RedBoot-style Flash Image System (FIS) tables and
  * produce a Linux partition array to match.
+ *
+ * Copyright © 2001      Red Hat UK Limited
+ * Copyright © 2001-2010 David Woodhouse <dwmw2@infradead.org>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ *
  */
 
 #include <linux/kernel.h>
@@ -59,15 +75,30 @@ static int parse_redboot_partitions(struct mtd_info *master,
 	static char nullstring[] = "unallocated";
 #endif
 
+	if ( directory < 0 ) {
+		offset = master->size + directory * master->erasesize;
+		while (master->block_isbad && 
+		       master->block_isbad(master, offset)) {
+			if (!offset) {
+			nogood:
+				printk(KERN_NOTICE "Failed to find a non-bad block to check for RedBoot partition table\n");
+				return -EIO;
+			}
+			offset -= master->erasesize;
+		}
+	} else {
+		offset = directory * master->erasesize;
+		while (master->block_isbad && 
+		       master->block_isbad(master, offset)) {
+			offset += master->erasesize;
+			if (offset == master->size)
+				goto nogood;
+		}
+	}
 	buf = vmalloc(master->erasesize);
 
 	if (!buf)
 		return -ENOMEM;
-
-	if ( directory < 0 )
-		offset = master->size + directory*master->erasesize;
-	else
-		offset = directory*master->erasesize;
 
 	printk(KERN_NOTICE "Searching for RedBoot partition table in %s at offset 0x%lx\n",
 	       master->name, offset);
@@ -280,5 +311,5 @@ module_init(redboot_parser_init);
 module_exit(redboot_parser_exit);
 
 MODULE_LICENSE("GPL");
-MODULE_AUTHOR("Red Hat, Inc. - David Woodhouse <dwmw2@cambridge.redhat.com>");
+MODULE_AUTHOR("David Woodhouse <dwmw2@infradead.org>");
 MODULE_DESCRIPTION("Parsing code for RedBoot Flash Image System (FIS) tables");

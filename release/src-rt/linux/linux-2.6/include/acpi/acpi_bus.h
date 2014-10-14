@@ -30,8 +30,6 @@
 
 #include <acpi/acpi.h>
 
-#define PREFIX			"ACPI: "
-
 /* TBD: Make dynamic */
 #define ACPI_MAX_HANDLES	10
 struct acpi_handle_list {
@@ -46,7 +44,7 @@ acpi_extract_package(union acpi_object *package,
 acpi_status
 acpi_evaluate_integer(acpi_handle handle,
 		      acpi_string pathname,
-		      struct acpi_object_list *arguments, unsigned long *data);
+		      struct acpi_object_list *arguments, unsigned long long *data);
 acpi_status
 acpi_evaluate_reference(acpi_handle handle,
 			acpi_string pathname,
@@ -72,7 +70,6 @@ enum acpi_bus_device_type {
 	ACPI_BUS_TYPE_POWER,
 	ACPI_BUS_TYPE_PROCESSOR,
 	ACPI_BUS_TYPE_THERMAL,
-	ACPI_BUS_TYPE_SYSTEM,
 	ACPI_BUS_TYPE_POWER_BUTTON,
 	ACPI_BUS_TYPE_SLEEP_BUTTON,
 	ACPI_BUS_DEVICE_TYPE_COUNT
@@ -88,50 +85,37 @@ struct acpi_device;
 
 typedef int (*acpi_op_add) (struct acpi_device * device);
 typedef int (*acpi_op_remove) (struct acpi_device * device, int type);
-typedef int (*acpi_op_lock) (struct acpi_device * device, int type);
 typedef int (*acpi_op_start) (struct acpi_device * device);
-typedef int (*acpi_op_stop) (struct acpi_device * device, int type);
 typedef int (*acpi_op_suspend) (struct acpi_device * device,
 				pm_message_t state);
 typedef int (*acpi_op_resume) (struct acpi_device * device);
-typedef int (*acpi_op_scan) (struct acpi_device * device);
 typedef int (*acpi_op_bind) (struct acpi_device * device);
 typedef int (*acpi_op_unbind) (struct acpi_device * device);
-typedef int (*acpi_op_shutdown) (struct acpi_device * device);
+typedef void (*acpi_op_notify) (struct acpi_device * device, u32 event);
 
 struct acpi_bus_ops {
 	u32 acpi_op_add:1;
-	u32 acpi_op_remove:1;
-	u32 acpi_op_lock:1;
 	u32 acpi_op_start:1;
-	u32 acpi_op_stop:1;
-	u32 acpi_op_suspend:1;
-	u32 acpi_op_resume:1;
-	u32 acpi_op_scan:1;
-	u32 acpi_op_bind:1;
-	u32 acpi_op_unbind:1;
-	u32 acpi_op_shutdown:1;
-	u32 reserved:21;
 };
 
 struct acpi_device_ops {
 	acpi_op_add add;
 	acpi_op_remove remove;
-	acpi_op_lock lock;
 	acpi_op_start start;
-	acpi_op_stop stop;
 	acpi_op_suspend suspend;
 	acpi_op_resume resume;
-	acpi_op_scan scan;
 	acpi_op_bind bind;
 	acpi_op_unbind unbind;
-	acpi_op_shutdown shutdown;
+	acpi_op_notify notify;
 };
+
+#define ACPI_DRIVER_ALL_NOTIFY_EVENTS	0x1	/* system AND device events */
 
 struct acpi_driver {
 	char name[80];
 	char class[80];
-	char *ids;		/* Supported Hardware IDs */
+	const struct acpi_device_id *ids; /* Supported Hardware IDs */
+	unsigned int flags;
 	struct acpi_device_ops ops;
 	struct device_driver drv;
 	struct module *owner;
@@ -157,19 +141,14 @@ struct acpi_device_status {
 
 struct acpi_device_flags {
 	u32 dynamic_status:1;
-	u32 hardware_id:1;
-	u32 compatible_ids:1;
 	u32 bus_address:1;
-	u32 unique_id:1;
 	u32 removable:1;
 	u32 ejectable:1;
 	u32 lockable:1;
 	u32 suprise_removal_ok:1;
 	u32 power_manageable:1;
 	u32 performance_manageable:1;
-	u32 wake_capable:1;	/* Wakeup(_PRW) supported? */
-	u32 force_power_state:1;
-	u32 reserved:19;
+	u32 reserved:24;
 };
 
 /* File System */
@@ -182,27 +161,28 @@ struct acpi_device_dir {
 
 /* Plug and Play */
 
-typedef char acpi_bus_id[5];
+typedef char acpi_bus_id[8];
 typedef unsigned long acpi_bus_address;
-typedef char acpi_hardware_id[15];
-typedef char acpi_unique_id[9];
 typedef char acpi_device_name[40];
 typedef char acpi_device_class[20];
+
+struct acpi_hardware_id {
+	struct list_head list;
+	char *id;
+};
 
 struct acpi_device_pnp {
 	acpi_bus_id bus_id;	/* Object name */
 	acpi_bus_address bus_address;	/* _ADR */
-	acpi_hardware_id hardware_id;	/* _HID */
-	struct acpi_compatible_id_list *cid_list;	/* _CIDs */
-	acpi_unique_id unique_id;	/* _UID */
+	char *unique_id;	/* _UID */
+	struct list_head ids;		/* _HID and _CIDs */
 	acpi_device_name device_name;	/* Driver-determined */
 	acpi_device_class device_class;	/*        "          */
 };
 
 #define acpi_device_bid(d)	((d)->pnp.bus_id)
 #define acpi_device_adr(d)	((d)->pnp.bus_address)
-#define acpi_device_hid(d)	((d)->pnp.hardware_id)
-#define acpi_device_uid(d)	((d)->pnp.unique_id)
+const char *acpi_device_hid(struct acpi_device *device);
 #define acpi_device_name(d)	((d)->pnp.device_name)
 #define acpi_device_class(d)	((d)->pnp.device_class)
 
@@ -260,31 +240,27 @@ struct acpi_device_perf {
 struct acpi_device_wakeup_flags {
 	u8 valid:1;		/* Can successfully enable wakeup? */
 	u8 run_wake:1;		/* Run-Wake GPE devices */
-};
-
-struct acpi_device_wakeup_state {
-	u8 enabled:1;
-	u8 active:1;
+	u8 notifier_present:1;  /* Wake-up notify handler has been installed */
 };
 
 struct acpi_device_wakeup {
 	acpi_handle gpe_device;
-	acpi_integer gpe_number;
-	acpi_integer sleep_state;
+	u64 gpe_number;
+	u64 sleep_state;
 	struct acpi_handle_list resources;
-	struct acpi_device_wakeup_state state;
 	struct acpi_device_wakeup_flags flags;
+	int prepare_count;
 };
 
 /* Device */
 
 struct acpi_device {
-	acpi_handle handle;
+	int device_type;
+	acpi_handle handle;		/* no handle for fixed hardware */
 	struct acpi_device *parent;
 	struct list_head children;
 	struct list_head node;
 	struct list_head wakeup_list;
-	struct list_head g_list;
 	struct acpi_device_status status;
 	struct acpi_device_flags flags;
 	struct acpi_device_pnp pnp;
@@ -300,7 +276,11 @@ struct acpi_device {
 	enum acpi_bus_removal_type removal_type;	/* indicate for different removal type */
 };
 
-#define acpi_driver_data(d)	((d)->driver_data)
+static inline void *acpi_driver_data(struct acpi_device *d)
+{
+	return d->driver_data;
+}
+
 #define to_acpi_device(d)	container_of(d, struct acpi_device, dev)
 #define to_acpi_driver(d)	container_of(d, struct acpi_driver, drv)
 
@@ -320,19 +300,37 @@ struct acpi_bus_event {
 	u32 data;
 };
 
-extern struct kset acpi_subsys;
+extern struct kobject *acpi_kobj;
+extern int acpi_bus_generate_netlink_event(const char*, const char*, u8, int);
+void acpi_bus_private_data_handler(acpi_handle, void *);
+int acpi_bus_get_private_data(acpi_handle, void **);
+extern int acpi_notifier_call_chain(struct acpi_device *, u32, u32);
+extern int register_acpi_notifier(struct notifier_block *);
+extern int unregister_acpi_notifier(struct notifier_block *);
 
+extern int register_acpi_bus_notifier(struct notifier_block *nb);
+extern void unregister_acpi_bus_notifier(struct notifier_block *nb);
 /*
  * External Functions
  */
 
 int acpi_bus_get_device(acpi_handle handle, struct acpi_device **device);
-void acpi_bus_data_handler(acpi_handle handle, u32 function, void *context);
+void acpi_bus_data_handler(acpi_handle handle, void *context);
+acpi_status acpi_bus_get_status_handle(acpi_handle handle,
+				       unsigned long long *sta);
 int acpi_bus_get_status(struct acpi_device *device);
-int acpi_bus_get_power(acpi_handle handle, int *state);
 int acpi_bus_set_power(acpi_handle handle, int state);
-int acpi_bus_generate_event(struct acpi_device *device, u8 type, int data);
+int acpi_bus_update_power(acpi_handle handle, int *state_p);
+bool acpi_bus_power_manageable(acpi_handle handle);
+bool acpi_bus_can_wakeup(acpi_handle handle);
+#ifdef CONFIG_ACPI_PROC_EVENT
+int acpi_bus_generate_proc_event(struct acpi_device *device, u8 type, int data);
+int acpi_bus_generate_proc_event4(const char *class, const char *bid, u8 type, int data);
 int acpi_bus_receive_event(struct acpi_bus_event *event);
+#else
+static inline int acpi_bus_generate_proc_event(struct acpi_device *device, u8 type, int data)
+	{ return 0; }
+#endif
 int acpi_bus_register_driver(struct acpi_driver *driver);
 void acpi_bus_unregister_driver(struct acpi_driver *driver);
 int acpi_bus_add(struct acpi_device **child, struct acpi_device *parent,
@@ -340,14 +338,14 @@ int acpi_bus_add(struct acpi_device **child, struct acpi_device *parent,
 int acpi_bus_trim(struct acpi_device *start, int rmdevice);
 int acpi_bus_start(struct acpi_device *device);
 acpi_status acpi_bus_get_ejd(acpi_handle handle, acpi_handle * ejd);
-int acpi_match_ids(struct acpi_device *device, char *ids);
+int acpi_match_device_ids(struct acpi_device *device,
+			  const struct acpi_device_id *ids);
 int acpi_create_dir(struct acpi_device *);
 void acpi_remove_dir(struct acpi_device *);
 
 /*
  * Bind physical devices with ACPI devices
  */
-#include <linux/device.h>
 struct acpi_bus_type {
 	struct list_head list;
 	struct bus_type *bus;
@@ -359,10 +357,48 @@ struct acpi_bus_type {
 int register_acpi_bus_type(struct acpi_bus_type *);
 int unregister_acpi_bus_type(struct acpi_bus_type *);
 struct device *acpi_get_physical_device(acpi_handle);
+
+struct acpi_pci_root {
+	struct list_head node;
+	struct acpi_device * device;
+	struct acpi_pci_id id;
+	struct pci_bus *bus;
+	u16 segment;
+	struct resource secondary;	/* downstream bus range */
+
+	u32 osc_support_set;	/* _OSC state of support bits */
+	u32 osc_control_set;	/* _OSC state of control bits */
+};
+
 /* helper */
-acpi_handle acpi_get_child(acpi_handle, acpi_integer);
+acpi_handle acpi_get_child(acpi_handle, u64);
+int acpi_is_root_bridge(acpi_handle);
 acpi_handle acpi_get_pci_rootbridge_handle(unsigned int, unsigned int);
+struct acpi_pci_root *acpi_pci_find_root(acpi_handle handle);
 #define DEVICE_ACPI_HANDLE(dev) ((acpi_handle)((dev)->archdata.acpi_handle))
+
+int acpi_enable_wakeup_device_power(struct acpi_device *dev, int state);
+int acpi_disable_wakeup_device_power(struct acpi_device *dev);
+
+#ifdef CONFIG_PM
+int acpi_pm_device_sleep_state(struct device *, int *);
+#else
+static inline int acpi_pm_device_sleep_state(struct device *d, int *p)
+{
+	if (p)
+		*p = ACPI_STATE_D0;
+	return ACPI_STATE_D3;
+}
+#endif
+
+#ifdef CONFIG_PM_SLEEP
+int acpi_pm_device_sleep_wake(struct device *, bool);
+#else
+static inline int acpi_pm_device_sleep_wake(struct device *dev, bool enable)
+{
+	return -ENODEV;
+}
+#endif
 
 #endif				/* CONFIG_ACPI */
 

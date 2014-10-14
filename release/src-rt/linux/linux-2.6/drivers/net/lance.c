@@ -207,7 +207,7 @@ tx_full and tbusy flags.
 #define LANCE_BUS_IF 0x16
 #define LANCE_TOTAL_SIZE 0x18
 
-#define TX_TIMEOUT	20
+#define TX_TIMEOUT	(HZ/5)
 
 /* The LANCE Rx and Tx ring descriptors. */
 struct lance_rx_head {
@@ -248,7 +248,6 @@ struct lance_private {
 	int cur_rx, cur_tx;			/* The next free ring entry */
 	int dirty_rx, dirty_tx;		/* The ring entries to be free()ed. */
 	int dma;
-	struct net_device_stats stats;
 	unsigned char chip_version;	/* See lance_chip_type. */
 	spinlock_t devlock;
 };
@@ -300,7 +299,8 @@ static unsigned char lance_need_isa_bounce_buffers = 1;
 
 static int lance_open(struct net_device *dev);
 static void lance_init_ring(struct net_device *dev, gfp_t mode);
-static int lance_start_xmit(struct sk_buff *skb, struct net_device *dev);
+static netdev_tx_t lance_start_xmit(struct sk_buff *skb,
+				    struct net_device *dev);
 static int lance_rx(struct net_device *dev);
 static irqreturn_t lance_interrupt(int irq, void *dev_id);
 static int lance_close(struct net_device *dev);
@@ -359,7 +359,7 @@ int __init init_module(void)
 
 static void cleanup_card(struct net_device *dev)
 {
-	struct lance_private *lp = dev->priv;
+	struct lance_private *lp = dev->ml_priv;
 	if (dev->dma != 4)
 		free_dma(dev->dma);
 	release_region(dev->base_addr, LANCE_TOTAL_SIZE);
@@ -391,7 +391,8 @@ MODULE_LICENSE("GPL");
    */
 static int __init do_lance_probe(struct net_device *dev)
 {
-	int *port, result;
+	unsigned int *port;
+	int result;
 
 	if (high_memory <= phys_to_virt(16*1024*1024))
 		lance_need_isa_bounce_buffers = 0;
@@ -418,7 +419,7 @@ static int __init do_lance_probe(struct net_device *dev)
 			if (card < NUM_CARDS) { /*Signature OK*/
 				result = lance_probe1(dev, ioaddr, 0, 0);
 				if (!result) {
-					struct lance_private *lp = dev->priv;
+					struct lance_private *lp = dev->ml_priv;
 					int ver = lp->chip_version;
 
 					r->name = chip_table[ver].name;
@@ -453,16 +454,28 @@ out:
 }
 #endif
 
+static const struct net_device_ops lance_netdev_ops = {
+	.ndo_open 		= lance_open,
+	.ndo_start_xmit		= lance_start_xmit,
+	.ndo_stop		= lance_close,
+	.ndo_get_stats		= lance_get_stats,
+	.ndo_set_multicast_list = set_multicast_list,
+	.ndo_tx_timeout		= lance_tx_timeout,
+	.ndo_change_mtu		= eth_change_mtu,
+	.ndo_set_mac_address 	= eth_mac_addr,
+	.ndo_validate_addr	= eth_validate_addr,
+};
+
 static int __init lance_probe1(struct net_device *dev, int ioaddr, int irq, int options)
 {
 	struct lance_private *lp;
-	long dma_channels;			/* Mark spuriously-busy DMA channels */
+	unsigned long dma_channels;	/* Mark spuriously-busy DMA channels */
 	int i, reset_val, lance_version;
 	const char *chipname;
 	/* Flags for specific chips or boards. */
-	unsigned char hpJ2405A = 0;		/* HP ISA adaptor */
-	int hp_builtin = 0;			/* HP on-board ethernet. */
-	static int did_version;			/* Already printed version info. */
+	unsigned char hpJ2405A = 0;	/* HP ISA adaptor */
+	int hp_builtin = 0;		/* HP on-board ethernet. */
+	static int did_version;		/* Already printed version info. */
 	unsigned long flags;
 	int err = -ENOMEM;
 	void __iomem *bios;
@@ -479,14 +492,14 @@ static int __init lance_probe1(struct net_device *dev, int ioaddr, int irq, int 
 		static const short ioaddr_table[] = { 0x300, 0x320, 0x340, 0x360};
 		int hp_port = (readl(bios + 1) & 1)  ? 0x499 : 0x99;
 		/* We can have boards other than the built-in!  Verify this is on-board. */
-		if ((inb(hp_port) & 0xc0) == 0x80
-			&& ioaddr_table[inb(hp_port) & 3] == ioaddr)
+		if ((inb(hp_port) & 0xc0) == 0x80 &&
+		    ioaddr_table[inb(hp_port) & 3] == ioaddr)
 			hp_builtin = hp_port;
 	}
 	iounmap(bios);
 	/* We also recognize the HP Vectra on-board here, but check below. */
-	hpJ2405A = (inb(ioaddr) == 0x08 && inb(ioaddr+1) == 0x00
-				&& inb(ioaddr+2) == 0x09);
+	hpJ2405A = (inb(ioaddr) == 0x08 && inb(ioaddr+1) == 0x00 &&
+		    inb(ioaddr+2) == 0x09);
 
 	/* Reset the LANCE.	 */
 	reset_val = inw(ioaddr+LANCE_RESET); /* Reset the LANCE */
@@ -519,26 +532,25 @@ static int __init lance_probe1(struct net_device *dev, int ioaddr, int irq, int 
 		}
 	}
 
-	/* We can't allocate dev->priv from alloc_etherdev() because it must
+	/* We can't allocate private data from alloc_etherdev() because it must
 	   a ISA DMA-able region. */
-	SET_MODULE_OWNER(dev);
 	chipname = chip_table[lance_version].name;
-	printk("%s: %s at %#3x,", dev->name, chipname, ioaddr);
+	printk("%s: %s at %#3x, ", dev->name, chipname, ioaddr);
 
 	/* There is a 16 byte station address PROM at the base address.
 	   The first six bytes are the station address. */
 	for (i = 0; i < 6; i++)
-		printk(" %2.2x", dev->dev_addr[i] = inb(ioaddr + i));
+		dev->dev_addr[i] = inb(ioaddr + i);
+	printk("%pM", dev->dev_addr);
 
 	dev->base_addr = ioaddr;
 	/* Make certain the data structures used by the LANCE are aligned and DMAble. */
 
-	lp = kmalloc(sizeof(*lp), GFP_DMA | GFP_KERNEL);
+	lp = kzalloc(sizeof(*lp), GFP_DMA | GFP_KERNEL);
 	if(lp==NULL)
 		return -ENODEV;
 	if (lance_debug > 6) printk(" (#0x%05lx)", (unsigned long)lp);
-	memset(lp, 0, sizeof(*lp));
-	dev->priv = lp;
+	dev->ml_priv = lp;
 	lp->name = chipname;
 	lp->rx_buffs = (unsigned long)kmalloc(PKT_BUF_SZ*RX_RING_SIZE,
 						  GFP_DMA | GFP_KERNEL);
@@ -714,12 +726,7 @@ static int __init lance_probe1(struct net_device *dev, int ioaddr, int irq, int 
 		printk(version);
 
 	/* The LANCE-specific entries in the device structure. */
-	dev->open = lance_open;
-	dev->hard_start_xmit = lance_start_xmit;
-	dev->stop = lance_close;
-	dev->get_stats = lance_get_stats;
-	dev->set_multicast_list = set_multicast_list;
-	dev->tx_timeout = lance_tx_timeout;
+	dev->netdev_ops = &lance_netdev_ops;
 	dev->watchdog_timeo = TX_TIMEOUT;
 
 	err = register_netdev(dev);
@@ -742,12 +749,12 @@ out_lp:
 static int
 lance_open(struct net_device *dev)
 {
-	struct lance_private *lp = dev->priv;
+	struct lance_private *lp = dev->ml_priv;
 	int ioaddr = dev->base_addr;
 	int i;
 
 	if (dev->irq == 0 ||
-		request_irq(dev->irq, &lance_interrupt, 0, lp->name, dev)) {
+		request_irq(dev->irq, lance_interrupt, 0, lp->name, dev)) {
 		return -EAGAIN;
 	}
 
@@ -830,7 +837,7 @@ lance_open(struct net_device *dev)
 static void
 lance_purge_ring(struct net_device *dev)
 {
-	struct lance_private *lp = dev->priv;
+	struct lance_private *lp = dev->ml_priv;
 	int i;
 
 	/* Free all the skbuffs in the Rx and Tx queues. */
@@ -854,7 +861,7 @@ lance_purge_ring(struct net_device *dev)
 static void
 lance_init_ring(struct net_device *dev, gfp_t gfp)
 {
-	struct lance_private *lp = dev->priv;
+	struct lance_private *lp = dev->ml_priv;
 	int i;
 
 	lp->cur_rx = lp->cur_tx = 0;
@@ -896,7 +903,7 @@ lance_init_ring(struct net_device *dev, gfp_t gfp)
 static void
 lance_restart(struct net_device *dev, unsigned int csr0_bits, int must_reinit)
 {
-	struct lance_private *lp = dev->priv;
+	struct lance_private *lp = dev->ml_priv;
 
 	if (must_reinit ||
 		(chip_table[lp->chip_version].flags & LANCE_MUST_REINIT_RING)) {
@@ -910,14 +917,14 @@ lance_restart(struct net_device *dev, unsigned int csr0_bits, int must_reinit)
 
 static void lance_tx_timeout (struct net_device *dev)
 {
-	struct lance_private *lp = (struct lance_private *) dev->priv;
+	struct lance_private *lp = (struct lance_private *) dev->ml_priv;
 	int ioaddr = dev->base_addr;
 
 	outw (0, ioaddr + LANCE_ADDR);
 	printk ("%s: transmit timed out, status %4.4x, resetting.\n",
 		dev->name, inw (ioaddr + LANCE_DATA));
 	outw (0x0004, ioaddr + LANCE_DATA);
-	lp->stats.tx_errors++;
+	dev->stats.tx_errors++;
 #ifndef final_version
 	if (lance_debug > 3) {
 		int i;
@@ -937,14 +944,15 @@ static void lance_tx_timeout (struct net_device *dev)
 #endif
 	lance_restart (dev, 0x0043, 1);
 
-	dev->trans_start = jiffies;
+	dev->trans_start = jiffies; /* prevent tx timeout */
 	netif_wake_queue (dev);
 }
 
 
-static int lance_start_xmit(struct sk_buff *skb, struct net_device *dev)
+static netdev_tx_t lance_start_xmit(struct sk_buff *skb,
+				    struct net_device *dev)
 {
-	struct lance_private *lp = dev->priv;
+	struct lance_private *lp = dev->ml_priv;
 	int ioaddr = dev->base_addr;
 	int entry;
 	unsigned long flags;
@@ -980,7 +988,7 @@ static int lance_start_xmit(struct sk_buff *skb, struct net_device *dev)
 
 	lp->tx_ring[entry].misc = 0x0000;
 
-	lp->stats.tx_bytes += skb->len;
+	dev->stats.tx_bytes += skb->len;
 
 	/* If any part of this buffer is >16M we must copy it to a low-memory
 	   buffer. */
@@ -1002,14 +1010,12 @@ static int lance_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	outw(0x0000, ioaddr+LANCE_ADDR);
 	outw(0x0048, ioaddr+LANCE_DATA);
 
-	dev->trans_start = jiffies;
-
 	if ((lp->cur_tx - lp->dirty_tx) >= TX_RING_SIZE)
 		netif_stop_queue(dev);
 
 out:
 	spin_unlock_irqrestore(&lp->devlock, flags);
-	return 0;
+	return NETDEV_TX_OK;
 }
 
 /* The LANCE interrupt handler. */
@@ -1021,13 +1027,13 @@ static irqreturn_t lance_interrupt(int irq, void *dev_id)
 	int must_restart;
 
 	ioaddr = dev->base_addr;
-	lp = dev->priv;
+	lp = dev->ml_priv;
 
 	spin_lock (&lp->devlock);
 
 	outw(0x00, dev->base_addr + LANCE_ADDR);
-	while ((csr0 = inw(dev->base_addr + LANCE_DATA)) & 0x8600
-		   && --boguscnt >= 0) {
+	while ((csr0 = inw(dev->base_addr + LANCE_DATA)) & 0x8600 &&
+	       --boguscnt >= 0) {
 		/* Acknowledge all of the current interrupt sources ASAP. */
 		outw(csr0 & ~0x004f, dev->base_addr + LANCE_DATA);
 
@@ -1055,13 +1061,16 @@ static irqreturn_t lance_interrupt(int irq, void *dev_id)
 				if (status & 0x40000000) {
 					/* There was an major error, log it. */
 					int err_status = lp->tx_ring[entry].misc;
-					lp->stats.tx_errors++;
-					if (err_status & 0x0400) lp->stats.tx_aborted_errors++;
-					if (err_status & 0x0800) lp->stats.tx_carrier_errors++;
-					if (err_status & 0x1000) lp->stats.tx_window_errors++;
+					dev->stats.tx_errors++;
+					if (err_status & 0x0400)
+						dev->stats.tx_aborted_errors++;
+					if (err_status & 0x0800)
+						dev->stats.tx_carrier_errors++;
+					if (err_status & 0x1000)
+						dev->stats.tx_window_errors++;
 					if (err_status & 0x4000) {
 						/* Ackk!  On FIFO errors the Tx unit is turned off! */
-						lp->stats.tx_fifo_errors++;
+						dev->stats.tx_fifo_errors++;
 						/* Remove this verbosity later! */
 						printk("%s: Tx FIFO error! Status %4.4x.\n",
 							   dev->name, csr0);
@@ -1070,8 +1079,8 @@ static irqreturn_t lance_interrupt(int irq, void *dev_id)
 					}
 				} else {
 					if (status & 0x18000000)
-						lp->stats.collisions++;
-					lp->stats.tx_packets++;
+						dev->stats.collisions++;
+					dev->stats.tx_packets++;
 				}
 
 				/* We must free the original skb if it's not a data-only copy
@@ -1101,8 +1110,10 @@ static irqreturn_t lance_interrupt(int irq, void *dev_id)
 		}
 
 		/* Log misc errors. */
-		if (csr0 & 0x4000) lp->stats.tx_errors++; /* Tx babble. */
-		if (csr0 & 0x1000) lp->stats.rx_errors++; /* Missed a Rx frame. */
+		if (csr0 & 0x4000)
+			dev->stats.tx_errors++; /* Tx babble. */
+		if (csr0 & 0x1000)
+			dev->stats.rx_errors++; /* Missed a Rx frame. */
 		if (csr0 & 0x0800) {
 			printk("%s: Bus master arbitration failure, status %4.4x.\n",
 				   dev->name, csr0);
@@ -1134,7 +1145,7 @@ static irqreturn_t lance_interrupt(int irq, void *dev_id)
 static int
 lance_rx(struct net_device *dev)
 {
-	struct lance_private *lp = dev->priv;
+	struct lance_private *lp = dev->ml_priv;
 	int entry = lp->cur_rx & RX_RING_MOD_MASK;
 	int i;
 
@@ -1148,11 +1159,15 @@ lance_rx(struct net_device *dev)
 			   buffers it's possible for a jabber packet to use two
 			   buffers, with only the last correctly noting the error. */
 			if (status & 0x01)	/* Only count a general error at the */
-				lp->stats.rx_errors++; /* end of a packet.*/
-			if (status & 0x20) lp->stats.rx_frame_errors++;
-			if (status & 0x10) lp->stats.rx_over_errors++;
-			if (status & 0x08) lp->stats.rx_crc_errors++;
-			if (status & 0x04) lp->stats.rx_fifo_errors++;
+				dev->stats.rx_errors++; /* end of a packet.*/
+			if (status & 0x20)
+				dev->stats.rx_frame_errors++;
+			if (status & 0x10)
+				dev->stats.rx_over_errors++;
+			if (status & 0x08)
+				dev->stats.rx_crc_errors++;
+			if (status & 0x04)
+				dev->stats.rx_fifo_errors++;
 			lp->rx_ring[entry].base &= 0x03ffffff;
 		}
 		else
@@ -1164,7 +1179,7 @@ lance_rx(struct net_device *dev)
 			if(pkt_len<60)
 			{
 				printk("%s: Runt packet!\n",dev->name);
-				lp->stats.rx_errors++;
+				dev->stats.rx_errors++;
 			}
 			else
 			{
@@ -1178,7 +1193,7 @@ lance_rx(struct net_device *dev)
 
 					if (i > RX_RING_SIZE -2)
 					{
-						lp->stats.rx_dropped++;
+						dev->stats.rx_dropped++;
 						lp->rx_ring[entry].base |= 0x80000000;
 						lp->cur_rx++;
 					}
@@ -1186,14 +1201,13 @@ lance_rx(struct net_device *dev)
 				}
 				skb_reserve(skb,2);	/* 16 byte align */
 				skb_put(skb,pkt_len);	/* Make room */
-				eth_copy_and_sum(skb,
+				skb_copy_to_linear_data(skb,
 					(unsigned char *)isa_bus_to_virt((lp->rx_ring[entry].base & 0x00ffffff)),
-					pkt_len,0);
+					pkt_len);
 				skb->protocol=eth_type_trans(skb,dev);
 				netif_rx(skb);
-				dev->last_rx = jiffies;
-				lp->stats.rx_packets++;
-				lp->stats.rx_bytes+=pkt_len;
+				dev->stats.rx_packets++;
+				dev->stats.rx_bytes += pkt_len;
 			}
 		}
 		/* The docs say that the buffer length isn't touched, but Andrew Boyd
@@ -1213,13 +1227,13 @@ static int
 lance_close(struct net_device *dev)
 {
 	int ioaddr = dev->base_addr;
-	struct lance_private *lp = dev->priv;
+	struct lance_private *lp = dev->ml_priv;
 
 	netif_stop_queue (dev);
 
 	if (chip_table[lp->chip_version].flags & LANCE_HAS_MISSED_FRAME) {
 		outw(112, ioaddr+LANCE_ADDR);
-		lp->stats.rx_missed_errors = inw(ioaddr+LANCE_DATA);
+		dev->stats.rx_missed_errors = inw(ioaddr+LANCE_DATA);
 	}
 	outw(0, ioaddr+LANCE_ADDR);
 
@@ -1246,7 +1260,7 @@ lance_close(struct net_device *dev)
 
 static struct net_device_stats *lance_get_stats(struct net_device *dev)
 {
-	struct lance_private *lp = dev->priv;
+	struct lance_private *lp = dev->ml_priv;
 
 	if (chip_table[lp->chip_version].flags & LANCE_HAS_MISSED_FRAME) {
 		short ioaddr = dev->base_addr;
@@ -1256,12 +1270,12 @@ static struct net_device_stats *lance_get_stats(struct net_device *dev)
 		spin_lock_irqsave(&lp->devlock, flags);
 		saved_addr = inw(ioaddr+LANCE_ADDR);
 		outw(112, ioaddr+LANCE_ADDR);
-		lp->stats.rx_missed_errors = inw(ioaddr+LANCE_DATA);
+		dev->stats.rx_missed_errors = inw(ioaddr+LANCE_DATA);
 		outw(saved_addr, ioaddr+LANCE_ADDR);
 		spin_unlock_irqrestore(&lp->devlock, flags);
 	}
 
-	return &lp->stats;
+	return &dev->stats;
 }
 
 /* Set or clear the multicast filter for this adaptor.
@@ -1280,7 +1294,7 @@ static void set_multicast_list(struct net_device *dev)
 	} else {
 		short multicast_table[4];
 		int i;
-		int num_addrs=dev->mc_count;
+		int num_addrs=netdev_mc_count(dev);
 		if(dev->flags&IFF_ALLMULTI)
 			num_addrs=1;
 		/* FIXIT: We don't use the multicast table, but rely on upper-layer filtering. */

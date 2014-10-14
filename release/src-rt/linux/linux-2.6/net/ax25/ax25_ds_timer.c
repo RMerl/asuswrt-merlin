@@ -40,13 +40,10 @@ static void ax25_ds_timeout(unsigned long);
  *	1/10th of a second.
  */
 
-static void ax25_ds_add_timer(ax25_dev *ax25_dev)
+void ax25_ds_setup_timer(ax25_dev *ax25_dev)
 {
-	struct timer_list *t = &ax25_dev->dama.slave_timer;
-	t->data		= (unsigned long) ax25_dev;
-	t->function	= &ax25_ds_timeout;
-	t->expires	= jiffies + HZ;
-	add_timer(t);
+	setup_timer(&ax25_dev->dama.slave_timer, ax25_ds_timeout,
+		    (unsigned long)ax25_dev);
 }
 
 void ax25_ds_del_timer(ax25_dev *ax25_dev)
@@ -60,10 +57,9 @@ void ax25_ds_set_timer(ax25_dev *ax25_dev)
 	if (ax25_dev == NULL)		/* paranoia */
 		return;
 
-	del_timer(&ax25_dev->dama.slave_timer);
 	ax25_dev->dama.slave_timeout =
 		msecs_to_jiffies(ax25_dev->values[AX25_VALUES_DS_TIMEOUT]) / 10;
-	ax25_ds_add_timer(ax25_dev);
+	mod_timer(&ax25_dev->dama.slave_timer, jiffies + HZ);
 }
 
 /*
@@ -116,8 +112,8 @@ void ax25_ds_heartbeat_expiry(ax25_cb *ax25)
 			if (sk) {
 				sock_hold(sk);
 				ax25_destroy_socket(ax25);
-				sock_put(sk);
 				bh_unlock_sock(sk);
+				sock_put(sk);
 			} else
 				ax25_destroy_socket(ax25);
 			return;
@@ -130,7 +126,7 @@ void ax25_ds_heartbeat_expiry(ax25_cb *ax25)
 		 */
 		if (sk != NULL) {
 			if (atomic_read(&sk->sk_rmem_alloc) <
-			    (sk->sk_rcvbuf / 2) &&
+			    (sk->sk_rcvbuf >> 1) &&
 			    (ax25->condition & AX25_COND_OWN_RX_BUSY)) {
 				ax25->condition &= ~AX25_COND_OWN_RX_BUSY;
 				ax25->condition &= ~AX25_COND_ACK_PENDING;

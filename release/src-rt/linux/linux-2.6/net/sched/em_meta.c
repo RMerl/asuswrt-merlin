@@ -47,7 +47,7 @@
  * 	on the meta type. Obviously, the length of the data must also
  * 	be provided for non-numeric types.
  *
- * 	Additionaly, type dependant modifiers such as shift operators
+ * 	Additionally, type dependent modifiers such as shift operators
  * 	or mask may be applied to extend the functionaliy. As of now,
  * 	the variable length type supports shifting the byte string to
  * 	the right, eating up any number of octets and thus supporting
@@ -55,9 +55,10 @@
  * 	ppp0..9.
  *
  * 	NOTE: Certain meta values depend on other subsystems and are
- * 	      only available if that subsytem is enabled in the kernel.
+ * 	      only available if that subsystem is enabled in the kernel.
  */
 
+#include <linux/slab.h>
 #include <linux/module.h>
 #include <linux/types.h>
 #include <linux/kernel.h>
@@ -65,27 +66,25 @@
 #include <linux/string.h>
 #include <linux/skbuff.h>
 #include <linux/random.h>
+#include <linux/if_vlan.h>
 #include <linux/tc_ematch/tc_em_meta.h>
 #include <net/dst.h>
 #include <net/route.h>
 #include <net/pkt_cls.h>
 #include <net/sock.h>
 
-struct meta_obj
-{
+struct meta_obj {
 	unsigned long		value;
 	unsigned int		len;
 };
 
-struct meta_value
-{
+struct meta_value {
 	struct tcf_meta_val	hdr;
 	unsigned long		val;
 	unsigned int		len;
 };
 
-struct meta_match
-{
+struct meta_match {
 	struct meta_value	lvalue;
 	struct meta_value	rvalue;
 };
@@ -170,6 +169,23 @@ META_COLLECTOR(var_dev)
 }
 
 /**************************************************************************
+ * vlan tag
+ **************************************************************************/
+
+META_COLLECTOR(int_vlan_tag)
+{
+	unsigned short tag;
+
+	tag = vlan_tx_tag_get(skb);
+	if (!tag && __vlan_get_tag(skb, &tag))
+		*err = -1;
+	else
+		dst->value = tag;
+}
+
+
+
+/**************************************************************************
  * skb attributes
  **************************************************************************/
 
@@ -204,6 +220,11 @@ META_COLLECTOR(int_maclen)
 	dst->value = skb->mac_len;
 }
 
+META_COLLECTOR(int_rxhash)
+{
+	dst->value = skb_get_rxhash(skb);
+}
+
 /**************************************************************************
  * Netfilter
  **************************************************************************/
@@ -228,11 +249,11 @@ META_COLLECTOR(int_tcindex)
 
 META_COLLECTOR(int_rtclassid)
 {
-	if (unlikely(skb->dst == NULL))
+	if (unlikely(skb_dst(skb) == NULL))
 		*err = -1;
 	else
-#ifdef CONFIG_NET_CLS_ROUTE
-		dst->value = skb->dst->tclassid;
+#ifdef CONFIG_IP_ROUTE_CLASSID
+		dst->value = skb_dst(skb)->tclassid;
 #else
 		dst->value = 0;
 #endif
@@ -240,10 +261,10 @@ META_COLLECTOR(int_rtclassid)
 
 META_COLLECTOR(int_rtiif)
 {
-	if (unlikely(skb->dst == NULL))
+	if (unlikely(skb_rtable(skb) == NULL))
 		*err = -1;
 	else
-		dst->value = ((struct rtable*) skb->dst)->fl.iif;
+		dst->value = skb_rtable(skb)->rt_iif;
 }
 
 /**************************************************************************
@@ -285,17 +306,18 @@ META_COLLECTOR(var_sk_bound_if)
 {
 	SKIP_NONLOCAL(skb);
 
-	 if (skb->sk->sk_bound_dev_if == 0) {
+	if (skb->sk->sk_bound_dev_if == 0) {
 		dst->value = (unsigned long) "any";
 		dst->len = 3;
-	 } else  {
+	} else {
 		struct net_device *dev;
 
-		dev = dev_get_by_index(skb->sk->sk_bound_dev_if);
+		rcu_read_lock();
+		dev = dev_get_by_index_rcu(sock_net(skb->sk),
+					   skb->sk->sk_bound_dev_if);
 		*err = var_dev(dev, dst);
-		if (dev)
-			dev_put(dev);
-	 }
+		rcu_read_unlock();
+	}
 }
 
 META_COLLECTOR(int_sk_refcnt)
@@ -331,13 +353,13 @@ META_COLLECTOR(int_sk_type)
 META_COLLECTOR(int_sk_rmem_alloc)
 {
 	SKIP_NONLOCAL(skb);
-	dst->value = atomic_read(&skb->sk->sk_rmem_alloc);
+	dst->value = sk_rmem_alloc_get(skb->sk);
 }
 
 META_COLLECTOR(int_sk_wmem_alloc)
 {
 	SKIP_NONLOCAL(skb);
-	dst->value = atomic_read(&skb->sk->sk_wmem_alloc);
+	dst->value = sk_wmem_alloc_get(skb->sk);
 }
 
 META_COLLECTOR(int_sk_omem_alloc)
@@ -379,7 +401,7 @@ META_COLLECTOR(int_sk_sndbuf)
 META_COLLECTOR(int_sk_alloc)
 {
 	SKIP_NONLOCAL(skb);
-	dst->value = skb->sk->sk_allocation;
+	dst->value = (__force int) skb->sk->sk_allocation;
 }
 
 META_COLLECTOR(int_sk_route_caps)
@@ -458,8 +480,7 @@ META_COLLECTOR(int_sk_write_pend)
  * Meta value collectors assignment table
  **************************************************************************/
 
-struct meta_ops
-{
+struct meta_ops {
 	void		(*get)(struct sk_buff *, struct tcf_pkt_info *,
 			       struct meta_value *, struct meta_obj *, int *);
 };
@@ -469,7 +490,7 @@ struct meta_ops
 
 /* Meta value operations table listing all meta value collectors and
  * assigns them to a type and meta id. */
-static struct meta_ops __meta_ops[TCF_META_TYPE_MAX+1][TCF_META_ID_MAX+1] = {
+static struct meta_ops __meta_ops[TCF_META_TYPE_MAX + 1][TCF_META_ID_MAX + 1] = {
 	[TCF_META_TYPE_VAR] = {
 		[META_ID(DEV)]			= META_FUNC(var_dev),
 		[META_ID(SK_BOUND_IF)] 		= META_FUNC(var_sk_bound_if),
@@ -520,10 +541,12 @@ static struct meta_ops __meta_ops[TCF_META_TYPE_MAX+1][TCF_META_ID_MAX+1] = {
 		[META_ID(SK_SNDTIMEO)]		= META_FUNC(int_sk_sndtimeo),
 		[META_ID(SK_SENDMSG_OFF)]	= META_FUNC(int_sk_sendmsg_off),
 		[META_ID(SK_WRITE_PENDING)]	= META_FUNC(int_sk_write_pend),
+		[META_ID(VLAN_TAG)]		= META_FUNC(int_vlan_tag),
+		[META_ID(RXHASH)]		= META_FUNC(int_rxhash),
 	}
 };
 
-static inline struct meta_ops * meta_ops(struct meta_value *val)
+static inline struct meta_ops *meta_ops(struct meta_value *val)
 {
 	return &__meta_ops[meta_type(val)][meta_id(val)];
 }
@@ -542,11 +565,11 @@ static int meta_var_compare(struct meta_obj *a, struct meta_obj *b)
 	return r;
 }
 
-static int meta_var_change(struct meta_value *dst, struct rtattr *rta)
+static int meta_var_change(struct meta_value *dst, struct nlattr *nla)
 {
-	int len = RTA_PAYLOAD(rta);
+	int len = nla_len(nla);
 
-	dst->val = (unsigned long)kmemdup(RTA_DATA(rta), len, GFP_KERNEL);
+	dst->val = (unsigned long)kmemdup(nla_data(nla), len, GFP_KERNEL);
 	if (dst->val == 0UL)
 		return -ENOMEM;
 	dst->len = len;
@@ -570,10 +593,10 @@ static void meta_var_apply_extras(struct meta_value *v,
 static int meta_var_dump(struct sk_buff *skb, struct meta_value *v, int tlv)
 {
 	if (v->val && v->len)
-		RTA_PUT(skb, tlv, v->len, (void *) v->val);
+		NLA_PUT(skb, tlv, v->len, (void *) v->val);
 	return 0;
 
-rtattr_failure:
+nla_put_failure:
 	return -1;
 }
 
@@ -594,13 +617,13 @@ static int meta_int_compare(struct meta_obj *a, struct meta_obj *b)
 		return 1;
 }
 
-static int meta_int_change(struct meta_value *dst, struct rtattr *rta)
+static int meta_int_change(struct meta_value *dst, struct nlattr *nla)
 {
-	if (RTA_PAYLOAD(rta) >= sizeof(unsigned long)) {
-		dst->val = *(unsigned long *) RTA_DATA(rta);
+	if (nla_len(nla) >= sizeof(unsigned long)) {
+		dst->val = *(unsigned long *) nla_data(nla);
 		dst->len = sizeof(unsigned long);
-	} else if (RTA_PAYLOAD(rta) == sizeof(u32)) {
-		dst->val = *(u32 *) RTA_DATA(rta);
+	} else if (nla_len(nla) == sizeof(u32)) {
+		dst->val = nla_get_u32(nla);
 		dst->len = sizeof(u32);
 	} else
 		return -EINVAL;
@@ -621,15 +644,13 @@ static void meta_int_apply_extras(struct meta_value *v,
 static int meta_int_dump(struct sk_buff *skb, struct meta_value *v, int tlv)
 {
 	if (v->len == sizeof(unsigned long))
-		RTA_PUT(skb, tlv, sizeof(unsigned long), &v->val);
-	else if (v->len == sizeof(u32)) {
-		u32 d = v->val;
-		RTA_PUT(skb, tlv, sizeof(d), &d);
-	}
+		NLA_PUT(skb, tlv, sizeof(unsigned long), &v->val);
+	else if (v->len == sizeof(u32))
+		NLA_PUT_U32(skb, tlv, v->val);
 
 	return 0;
 
-rtattr_failure:
+nla_put_failure:
 	return -1;
 }
 
@@ -637,16 +658,15 @@ rtattr_failure:
  * Type specific operations table
  **************************************************************************/
 
-struct meta_type_ops
-{
+struct meta_type_ops {
 	void	(*destroy)(struct meta_value *);
 	int	(*compare)(struct meta_obj *, struct meta_obj *);
-	int	(*change)(struct meta_value *, struct rtattr *);
+	int	(*change)(struct meta_value *, struct nlattr *);
 	void	(*apply_extras)(struct meta_value *, struct meta_obj *);
 	int	(*dump)(struct sk_buff *, struct meta_value *, int);
 };
 
-static struct meta_type_ops __meta_type_ops[TCF_META_TYPE_MAX+1] = {
+static struct meta_type_ops __meta_type_ops[TCF_META_TYPE_MAX + 1] = {
 	[TCF_META_TYPE_VAR] = {
 		.destroy = meta_var_destroy,
 		.compare = meta_var_compare,
@@ -662,7 +682,7 @@ static struct meta_type_ops __meta_type_ops[TCF_META_TYPE_MAX+1] = {
 	}
 };
 
-static inline struct meta_type_ops * meta_type_ops(struct meta_value *v)
+static inline struct meta_type_ops *meta_type_ops(struct meta_value *v)
 {
 	return &__meta_type_ops[meta_type(v)];
 }
@@ -671,8 +691,8 @@ static inline struct meta_type_ops * meta_type_ops(struct meta_value *v)
  * Core
  **************************************************************************/
 
-static inline int meta_get(struct sk_buff *skb, struct tcf_pkt_info *info,
-			   struct meta_value *v, struct meta_obj *dst)
+static int meta_get(struct sk_buff *skb, struct tcf_pkt_info *info,
+		    struct meta_value *v, struct meta_obj *dst)
 {
 	int err = 0;
 
@@ -687,7 +707,7 @@ static inline int meta_get(struct sk_buff *skb, struct tcf_pkt_info *info,
 		return err;
 
 	if (meta_type_ops(v)->apply_extras)
-	    meta_type_ops(v)->apply_extras(v, dst);
+		meta_type_ops(v)->apply_extras(v, dst);
 
 	return 0;
 }
@@ -706,18 +726,18 @@ static int em_meta_match(struct sk_buff *skb, struct tcf_ematch *m,
 	r = meta_type_ops(&meta->lvalue)->compare(&l_value, &r_value);
 
 	switch (meta->lvalue.hdr.op) {
-		case TCF_EM_OPND_EQ:
-			return !r;
-		case TCF_EM_OPND_LT:
-			return r < 0;
-		case TCF_EM_OPND_GT:
-			return r > 0;
+	case TCF_EM_OPND_EQ:
+		return !r;
+	case TCF_EM_OPND_LT:
+		return r < 0;
+	case TCF_EM_OPND_GT:
+		return r > 0;
 	}
 
 	return 0;
 }
 
-static inline void meta_delete(struct meta_match *meta)
+static void meta_delete(struct meta_match *meta)
 {
 	if (meta) {
 		struct meta_type_ops *ops = meta_type_ops(&meta->lvalue);
@@ -731,13 +751,13 @@ static inline void meta_delete(struct meta_match *meta)
 	kfree(meta);
 }
 
-static inline int meta_change_data(struct meta_value *dst, struct rtattr *rta)
+static inline int meta_change_data(struct meta_value *dst, struct nlattr *nla)
 {
-	if (rta) {
-		if (RTA_PAYLOAD(rta) == 0)
+	if (nla) {
+		if (nla_len(nla) == 0)
 			return -EINVAL;
 
-		return meta_type_ops(dst)->change(dst, rta);
+		return meta_type_ops(dst)->change(dst, nla);
 	}
 
 	return 0;
@@ -745,24 +765,29 @@ static inline int meta_change_data(struct meta_value *dst, struct rtattr *rta)
 
 static inline int meta_is_supported(struct meta_value *val)
 {
-	return (!meta_id(val) || meta_ops(val)->get);
+	return !meta_id(val) || meta_ops(val)->get;
 }
+
+static const struct nla_policy meta_policy[TCA_EM_META_MAX + 1] = {
+	[TCA_EM_META_HDR]	= { .len = sizeof(struct tcf_meta_hdr) },
+};
 
 static int em_meta_change(struct tcf_proto *tp, void *data, int len,
 			  struct tcf_ematch *m)
 {
-	int err = -EINVAL;
-	struct rtattr *tb[TCA_EM_META_MAX];
+	int err;
+	struct nlattr *tb[TCA_EM_META_MAX + 1];
 	struct tcf_meta_hdr *hdr;
 	struct meta_match *meta = NULL;
 
-	if (rtattr_parse(tb, TCA_EM_META_MAX, data, len) < 0)
+	err = nla_parse(tb, TCA_EM_META_MAX, data, len, meta_policy);
+	if (err < 0)
 		goto errout;
 
-	if (tb[TCA_EM_META_HDR-1] == NULL ||
-	    RTA_PAYLOAD(tb[TCA_EM_META_HDR-1]) < sizeof(*hdr))
+	err = -EINVAL;
+	if (tb[TCA_EM_META_HDR] == NULL)
 		goto errout;
-	hdr = RTA_DATA(tb[TCA_EM_META_HDR-1]);
+	hdr = nla_data(tb[TCA_EM_META_HDR]);
 
 	if (TCF_META_TYPE(hdr->left.kind) != TCF_META_TYPE(hdr->right.kind) ||
 	    TCF_META_TYPE(hdr->left.kind) > TCF_META_TYPE_MAX ||
@@ -783,8 +808,8 @@ static int em_meta_change(struct tcf_proto *tp, void *data, int len,
 		goto errout;
 	}
 
-	if (meta_change_data(&meta->lvalue, tb[TCA_EM_META_LVALUE-1]) < 0 ||
-	    meta_change_data(&meta->rvalue, tb[TCA_EM_META_RVALUE-1]) < 0)
+	if (meta_change_data(&meta->lvalue, tb[TCA_EM_META_LVALUE]) < 0 ||
+	    meta_change_data(&meta->rvalue, tb[TCA_EM_META_RVALUE]) < 0)
 		goto errout;
 
 	m->datalen = sizeof(*meta);
@@ -813,16 +838,16 @@ static int em_meta_dump(struct sk_buff *skb, struct tcf_ematch *em)
 	memcpy(&hdr.left, &meta->lvalue.hdr, sizeof(hdr.left));
 	memcpy(&hdr.right, &meta->rvalue.hdr, sizeof(hdr.right));
 
-	RTA_PUT(skb, TCA_EM_META_HDR, sizeof(hdr), &hdr);
+	NLA_PUT(skb, TCA_EM_META_HDR, sizeof(hdr), &hdr);
 
 	ops = meta_type_ops(&meta->lvalue);
 	if (ops->dump(skb, &meta->lvalue, TCA_EM_META_LVALUE) < 0 ||
 	    ops->dump(skb, &meta->rvalue, TCA_EM_META_RVALUE) < 0)
-		goto rtattr_failure;
+		goto nla_put_failure;
 
 	return 0;
 
-rtattr_failure:
+nla_put_failure:
 	return -1;
 }
 
@@ -850,3 +875,5 @@ MODULE_LICENSE("GPL");
 
 module_init(init_em_meta);
 module_exit(exit_em_meta);
+
+MODULE_ALIAS_TCF_EMATCH(TCF_EM_META);

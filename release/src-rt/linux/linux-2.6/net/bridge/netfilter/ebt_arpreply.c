@@ -8,7 +8,6 @@
  *  August, 2003
  *
  */
-
 #include <linux/if_arp.h>
 #include <net/arp.h>
 #include <linux/module.h>
@@ -16,15 +15,16 @@
 #include <linux/netfilter_bridge/ebtables.h>
 #include <linux/netfilter_bridge/ebt_arpreply.h>
 
-static int ebt_target_reply(struct sk_buff **pskb, unsigned int hooknr,
-   const struct net_device *in, const struct net_device *out,
-   const void *data, unsigned int datalen)
+static unsigned int
+ebt_arpreply_tg(struct sk_buff *skb, const struct xt_action_param *par)
 {
-	struct ebt_arpreply_info *info = (struct ebt_arpreply_info *)data;
-	__be32 _sip, *siptr, _dip, *diptr;
-	struct arphdr _ah, *ap;
-	unsigned char _sha[ETH_ALEN], *shp;
-	struct sk_buff *skb = *pskb;
+	const struct ebt_arpreply_info *info = par->targinfo;
+	const __be32 *siptr, *diptr;
+	__be32 _sip, _dip;
+	const struct arphdr *ap;
+	struct arphdr _ah;
+	const unsigned char *shp;
+	unsigned char _sha[ETH_ALEN];
 
 	ap = skb_header_pointer(skb, 0, sizeof(_ah), &_ah);
 	if (ap == NULL)
@@ -51,48 +51,48 @@ static int ebt_target_reply(struct sk_buff **pskb, unsigned int hooknr,
 	if (diptr == NULL)
 		return EBT_DROP;
 
-	arp_send(ARPOP_REPLY, ETH_P_ARP, *siptr, (struct net_device *)in,
+	arp_send(ARPOP_REPLY, ETH_P_ARP, *siptr, (struct net_device *)par->in,
 		 *diptr, shp, info->mac, shp);
 
 	return info->target;
 }
 
-static int ebt_target_reply_check(const char *tablename, unsigned int hookmask,
-   const struct ebt_entry *e, void *data, unsigned int datalen)
+static int ebt_arpreply_tg_check(const struct xt_tgchk_param *par)
 {
-	struct ebt_arpreply_info *info = (struct ebt_arpreply_info *)data;
+	const struct ebt_arpreply_info *info = par->targinfo;
+	const struct ebt_entry *e = par->entryinfo;
 
-	if (datalen != XT_ALIGN(sizeof(struct ebt_arpreply_info)))
-		return -EINVAL;
 	if (BASE_CHAIN && info->target == EBT_RETURN)
 		return -EINVAL;
 	if (e->ethproto != htons(ETH_P_ARP) ||
 	    e->invflags & EBT_IPROTO)
 		return -EINVAL;
-	CLEAR_BASE_CHAIN_BIT;
-	if (strcmp(tablename, "nat") || hookmask & ~(1 << NF_BR_PRE_ROUTING))
-		return -EINVAL;
 	return 0;
 }
 
-static struct ebt_target reply_target =
-{
-	.name		= EBT_ARPREPLY_TARGET,
-	.target		= ebt_target_reply,
-	.check		= ebt_target_reply_check,
+static struct xt_target ebt_arpreply_tg_reg __read_mostly = {
+	.name		= "arpreply",
+	.revision	= 0,
+	.family		= NFPROTO_BRIDGE,
+	.table		= "nat",
+	.hooks		= (1 << NF_BR_NUMHOOKS) | (1 << NF_BR_PRE_ROUTING),
+	.target		= ebt_arpreply_tg,
+	.checkentry	= ebt_arpreply_tg_check,
+	.targetsize	= sizeof(struct ebt_arpreply_info),
 	.me		= THIS_MODULE,
 };
 
 static int __init ebt_arpreply_init(void)
 {
-	return ebt_register_target(&reply_target);
+	return xt_register_target(&ebt_arpreply_tg_reg);
 }
 
 static void __exit ebt_arpreply_fini(void)
 {
-	ebt_unregister_target(&reply_target);
+	xt_unregister_target(&ebt_arpreply_tg_reg);
 }
 
 module_init(ebt_arpreply_init);
 module_exit(ebt_arpreply_fini);
+MODULE_DESCRIPTION("Ebtables: ARP reply target");
 MODULE_LICENSE("GPL");

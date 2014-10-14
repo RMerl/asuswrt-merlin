@@ -73,7 +73,7 @@
  * Infinite thanks to those brave souls for providing the infrastructure
  * upon which IrNET is built.
  *
- * Thanks to all my collegues in HP for helping me. In particular,
+ * Thanks to all my colleagues in HP for helping me. In particular,
  * thanks to Salil Pradhan and Bill Serra for W2k testing...
  * Thanks to Luiz Magalhaes for irnetd and much testing...
  *
@@ -249,6 +249,7 @@
 #include <linux/poll.h>
 #include <linux/capability.h>
 #include <linux/ctype.h>	/* isspace() */
+#include <linux/string.h>	/* skip_spaces() */
 #include <asm/uaccess.h>
 #include <linux/init.h>
 
@@ -337,27 +338,27 @@
 /* All error messages (will show up in the normal logs) */
 #define DERROR(dbg, format, args...) \
 	{if(DEBUG_##dbg) \
-		printk(KERN_INFO "irnet: %s(): " format, __FUNCTION__ , ##args);}
+		printk(KERN_INFO "irnet: %s(): " format, __func__ , ##args);}
 
 /* Normal debug message (will show up in /var/log/debug) */
 #define DEBUG(dbg, format, args...) \
 	{if(DEBUG_##dbg) \
-		printk(KERN_DEBUG "irnet: %s(): " format, __FUNCTION__ , ##args);}
+		printk(KERN_DEBUG "irnet: %s(): " format, __func__ , ##args);}
 
 /* Entering a function (trace) */
 #define DENTER(dbg, format, args...) \
 	{if(DEBUG_##dbg) \
-		printk(KERN_DEBUG "irnet: -> %s" format, __FUNCTION__ , ##args);}
+		printk(KERN_DEBUG "irnet: -> %s" format, __func__ , ##args);}
 
 /* Entering and exiting a function in one go (trace) */
 #define DPASS(dbg, format, args...) \
 	{if(DEBUG_##dbg) \
-		printk(KERN_DEBUG "irnet: <>%s" format, __FUNCTION__ , ##args);}
+		printk(KERN_DEBUG "irnet: <>%s" format, __func__ , ##args);}
 
 /* Exiting a function (trace) */
 #define DEXIT(dbg, format, args...) \
 	{if(DEBUG_##dbg) \
-		printk(KERN_DEBUG "irnet: <-%s()" format, __FUNCTION__ , ##args);}
+		printk(KERN_DEBUG "irnet: <-%s()" format, __func__ , ##args);}
 
 /* Exit a function with debug */
 #define DRETURN(ret, dbg, args...) \
@@ -405,7 +406,7 @@ typedef struct irnet_socket
   /* "pppd" interact directly with us on a /dev/ file */
   struct file *		file;		/* File descriptor of this instance */
   /* TTY stuff - to keep "pppd" happy */
-  struct termios	termios;	/* Various tty flags */
+  struct ktermios	termios;	/* Various tty flags */
   /* Stuff for the control channel */
   int			event_index;	/* Last read in the event log */
 
@@ -456,6 +457,8 @@ typedef struct irnet_socket
   struct irda_device_info *discoveries;	/* Copy of the discovery log */
   int			disco_index;	/* Last read in the discovery log */
   int			disco_number;	/* Size of the discovery log */
+
+  struct mutex		lock;
 
 } irnet_socket;
 

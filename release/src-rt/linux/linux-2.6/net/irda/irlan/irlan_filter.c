@@ -16,7 +16,7 @@
  *     published by the Free Software Foundation; either version 2 of
  *     the License, or (at your option) any later version.
  *
- *     Neither Dag Brattli nor University of Tromsø admit liability nor
+ *     Neither Dag Brattli nor University of TromsÃ¸ admit liability nor
  *     provide warranty for any of this software. This material is
  *     provided "AS-IS" and at no charge.
  *
@@ -145,7 +145,7 @@ void irlan_check_command_param(struct irlan_cb *self, char *param, char *value)
 {
 	__u8 *bytes;
 
-	IRDA_DEBUG(4, "%s()\n", __FUNCTION__ );
+	IRDA_DEBUG(4, "%s()\n", __func__ );
 
 	bytes = value;
 
@@ -158,7 +158,7 @@ void irlan_check_command_param(struct irlan_cb *self, char *param, char *value)
 	 *  This is experimental!! DB.
 	 */
 	 if (strcmp(param, "MODE") == 0) {
-		IRDA_DEBUG(0, "%s()\n", __FUNCTION__ );
+		IRDA_DEBUG(0, "%s()\n", __func__ );
 		self->use_udata = TRUE;
 		return;
 	}

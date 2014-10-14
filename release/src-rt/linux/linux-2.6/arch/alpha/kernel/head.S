@@ -7,9 +7,11 @@
  * the kernel global pointer and jump to the kernel entry-point.
  */
 
+#include <linux/init.h>
 #include <asm/system.h>
 #include <asm/asm-offsets.h>
 
+__HEAD
 .globl swapper_pg_dir
 .globl _stext
 swapper_pg_dir=SWAPPER_PGD

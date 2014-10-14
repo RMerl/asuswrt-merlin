@@ -1,7 +1,5 @@
 /*
- *  arch/s390/kernel/irq.c
- *
- *    Copyright IBM Corp. 2004,2007
+ *    Copyright IBM Corp. 2004,2010
  *    Author(s): Martin Schwidefsky (schwidefsky@de.ibm.com),
  *		 Thomas Spatzier (tspat@de.ibm.com)
  *
@@ -17,14 +15,45 @@
 #include <linux/proc_fs.h>
 #include <linux/profile.h>
 
+struct irq_class {
+	char *name;
+	char *desc;
+};
+
+static const struct irq_class intrclass_names[] = {
+	{.name = "EXT" },
+	{.name = "I/O" },
+	{.name = "CLK", .desc = "[EXT] Clock Comparator" },
+	{.name = "IPI", .desc = "[EXT] Signal Processor" },
+	{.name = "TMR", .desc = "[EXT] CPU Timer" },
+	{.name = "TAL", .desc = "[EXT] Timing Alert" },
+	{.name = "PFL", .desc = "[EXT] Pseudo Page Fault" },
+	{.name = "DSD", .desc = "[EXT] DASD Diag" },
+	{.name = "VRT", .desc = "[EXT] Virtio" },
+	{.name = "SCP", .desc = "[EXT] Service Call" },
+	{.name = "IUC", .desc = "[EXT] IUCV" },
+	{.name = "QAI", .desc = "[I/O] QDIO Adapter Interrupt" },
+	{.name = "QDI", .desc = "[I/O] QDIO Interrupt" },
+	{.name = "DAS", .desc = "[I/O] DASD" },
+	{.name = "C15", .desc = "[I/O] 3215" },
+	{.name = "C70", .desc = "[I/O] 3270" },
+	{.name = "TAP", .desc = "[I/O] Tape" },
+	{.name = "VMR", .desc = "[I/O] Unit Record Devices" },
+	{.name = "LCS", .desc = "[I/O] LCS" },
+	{.name = "CLW", .desc = "[I/O] CLAW" },
+	{.name = "CTC", .desc = "[I/O] CTC" },
+	{.name = "APB", .desc = "[I/O] AP Bus" },
+	{.name = "NMI", .desc = "[NMI] Machine Check" },
+};
+
 /*
  * show_interrupts is needed by /proc/interrupts.
  */
 int show_interrupts(struct seq_file *p, void *v)
 {
-	static const char *intrclass_names[] = { "EXT", "I/O", };
 	int i = *(loff_t *) v, j;
 
+	get_online_cpus();
 	if (i == 0) {
 		seq_puts(p, "           ");
 		for_each_online_cpu(j)
@@ -33,17 +62,18 @@ int show_interrupts(struct seq_file *p, void *v)
 	}
 
 	if (i < NR_IRQS) {
-		seq_printf(p, "%s: ", intrclass_names[i]);
+		seq_printf(p, "%s: ", intrclass_names[i].name);
 #ifndef CONFIG_SMP
 		seq_printf(p, "%10u ", kstat_irqs(i));
 #else
 		for_each_online_cpu(j)
 			seq_printf(p, "%10u ", kstat_cpu(j).irqs[i]);
 #endif
+		if (intrclass_names[i].desc)
+			seq_printf(p, "  %s", intrclass_names[i].desc);
                 seq_putc(p, '\n');
-
         }
-
+	put_online_cpus();
         return 0;
 }
 
@@ -60,8 +90,6 @@ init_IRQ(void)
 /*
  * Switch to the asynchronous interrupt stack for softirq execution.
  */
-extern void __do_softirq(void);
-
 asmlinkage void do_softirq(void)
 {
 	unsigned long flags, old, new;
@@ -95,8 +123,8 @@ asmlinkage void do_softirq(void)
 
 	local_irq_restore(flags);
 }
-EXPORT_SYMBOL(do_softirq);
 
+#ifdef CONFIG_PROC_FS
 void init_irq_proc(void)
 {
 	struct proc_dir_entry *root_irq_dir;
@@ -104,3 +132,4 @@ void init_irq_proc(void)
 	root_irq_dir = proc_mkdir("irq", NULL);
 	create_prof_cpu_mask(root_irq_dir);
 }
+#endif

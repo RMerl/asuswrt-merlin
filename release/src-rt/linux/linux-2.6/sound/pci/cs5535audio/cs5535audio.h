@@ -16,57 +16,28 @@
 #define ACC_IRQ_STATUS			0x12
 #define ACC_BM0_CMD			0x20
 #define ACC_BM1_CMD			0x28
-#define ACC_BM2_CMD			0x30
-#define ACC_BM3_CMD			0x38
-#define ACC_BM4_CMD			0x40
-#define ACC_BM5_CMD			0x48
-#define ACC_BM6_CMD			0x50
-#define ACC_BM7_CMD			0x58
 #define ACC_BM0_PRD			0x24
 #define ACC_BM1_PRD			0x2C
-#define ACC_BM2_PRD			0x34
-#define ACC_BM3_PRD			0x3C
-#define ACC_BM4_PRD			0x44
-#define ACC_BM5_PRD			0x4C
-#define ACC_BM6_PRD			0x54
-#define ACC_BM7_PRD			0x5C
 #define ACC_BM0_STATUS			0x21
 #define ACC_BM1_STATUS			0x29
-#define ACC_BM2_STATUS			0x31
-#define ACC_BM3_STATUS			0x39
-#define ACC_BM4_STATUS			0x41
-#define ACC_BM5_STATUS			0x49
-#define ACC_BM6_STATUS			0x51
-#define ACC_BM7_STATUS			0x59
 #define ACC_BM0_PNTR			0x60
 #define ACC_BM1_PNTR			0x64
-#define ACC_BM2_PNTR			0x68
-#define ACC_BM3_PNTR			0x6C
-#define ACC_BM4_PNTR			0x70
-#define ACC_BM5_PNTR			0x74
-#define ACC_BM6_PNTR			0x78
-#define ACC_BM7_PNTR			0x7C
+
 /* acc_codec bar0 reg bits */
 /* ACC_IRQ_STATUS */
 #define IRQ_STS 			0
 #define WU_IRQ_STS 			1
 #define BM0_IRQ_STS 			2
 #define BM1_IRQ_STS 			3
-#define BM2_IRQ_STS 			4
-#define BM3_IRQ_STS 			5
-#define BM4_IRQ_STS 			6
-#define BM5_IRQ_STS		 	7
-#define BM6_IRQ_STS 			8
-#define BM7_IRQ_STS 			9
 /* ACC_BMX_STATUS */
 #define EOP				(1<<0)
 #define BM_EOP_ERR			(1<<1)
 /* ACC_BMX_CTL */
-#define BM_CTL_EN			0x00000001
-#define BM_CTL_PAUSE			0x00000011
-#define BM_CTL_DIS			0x00000000
-#define BM_CTL_BYTE_ORD_LE		0x00000000
-#define BM_CTL_BYTE_ORD_BE		0x00000100
+#define BM_CTL_EN			0x01
+#define BM_CTL_PAUSE			0x03
+#define BM_CTL_DIS			0x00
+#define BM_CTL_BYTE_ORD_LE		0x00
+#define BM_CTL_BYTE_ORD_BE		0x04
 /* cs5535 specific ac97 codec register defines */
 #define CMD_MASK			0xFF00FFFF
 #define CMD_NEW				0x00010000
@@ -106,8 +77,8 @@ struct cs5535audio_dma {
 	struct snd_pcm_substream *substream;
 	unsigned int buf_addr, buf_bytes;
 	unsigned int period_bytes, periods;
-	int suspended;
 	u32 saved_prd;
+	int pcm_open_flag;
 };
 
 struct cs5535audio {
@@ -123,8 +94,48 @@ struct cs5535audio {
 	struct cs5535audio_dma dmas[NUM_CS5535AUDIO_DMAS];
 };
 
+#ifdef CONFIG_PM
 int snd_cs5535audio_suspend(struct pci_dev *pci, pm_message_t state);
 int snd_cs5535audio_resume(struct pci_dev *pci);
+#endif
+
+#ifdef CONFIG_OLPC
+void __devinit olpc_prequirks(struct snd_card *card,
+		struct snd_ac97_template *ac97);
+int __devinit olpc_quirks(struct snd_card *card, struct snd_ac97 *ac97);
+void __devexit olpc_quirks_cleanup(void);
+void olpc_analog_input(struct snd_ac97 *ac97, int on);
+void olpc_mic_bias(struct snd_ac97 *ac97, int on);
+
+static inline void olpc_capture_open(struct snd_ac97 *ac97)
+{
+	/* default to Analog Input off */
+	olpc_analog_input(ac97, 0);
+	/* enable MIC Bias for recording */
+	olpc_mic_bias(ac97, 1);
+}
+
+static inline void olpc_capture_close(struct snd_ac97 *ac97)
+{
+	/* disable Analog Input */
+	olpc_analog_input(ac97, 0);
+	/* disable the MIC Bias (so the recording LED turns off) */
+	olpc_mic_bias(ac97, 0);
+}
+#else
+static inline void olpc_prequirks(struct snd_card *card,
+		struct snd_ac97_template *ac97) { }
+static inline int olpc_quirks(struct snd_card *card, struct snd_ac97 *ac97)
+{
+	return 0;
+}
+static inline void olpc_quirks_cleanup(void) { }
+static inline void olpc_analog_input(struct snd_ac97 *ac97, int on) { }
+static inline void olpc_mic_bias(struct snd_ac97 *ac97, int on) { }
+static inline void olpc_capture_open(struct snd_ac97 *ac97) { }
+static inline void olpc_capture_close(struct snd_ac97 *ac97) { }
+#endif
+
 int __devinit snd_cs5535audio_pcm(struct cs5535audio *cs5535audio);
 
 #endif /* __SOUND_CS5535AUDIO_H */

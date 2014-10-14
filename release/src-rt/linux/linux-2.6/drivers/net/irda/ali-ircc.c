@@ -22,6 +22,7 @@
  ********************************************************************/
 
 #include <linux/module.h>
+#include <linux/gfp.h>
 
 #include <linux/kernel.h>
 #include <linux/types.h>
@@ -29,7 +30,6 @@
 #include <linux/netdevice.h>
 #include <linux/ioport.h>
 #include <linux/delay.h>
-#include <linux/slab.h>
 #include <linux/init.h>
 #include <linux/rtnetlink.h>
 #include <linux/serial_reg.h>
@@ -60,6 +60,7 @@ static struct platform_driver ali_ircc_driver = {
 	.resume		= ali_ircc_resume,
 	.driver		= {
 		.name	= ALI_IRCC_DRIVER_NAME,
+		.owner	= THIS_MODULE,
 	},
 };
 
@@ -75,7 +76,7 @@ static int  ali_ircc_probe_53(ali_chip_t *chip, chipio_t *info);
 static int  ali_ircc_init_43(ali_chip_t *chip, chipio_t *info);
 static int  ali_ircc_init_53(ali_chip_t *chip, chipio_t *info);
 
-/* These are the currently known ALi sourth-bridge chipsets, the only one difference
+/* These are the currently known ALi south-bridge chipsets, the only one difference
  * is that M1543C doesn't support HP HDSL-3600
  */
 static ali_chip_t chips[] =
@@ -108,10 +109,10 @@ static int  ali_ircc_net_open(struct net_device *dev);
 static int  ali_ircc_net_close(struct net_device *dev);
 static int  ali_ircc_net_ioctl(struct net_device *dev, struct ifreq *rq, int cmd);
 static void ali_ircc_change_speed(struct ali_ircc_cb *self, __u32 baud);
-static struct net_device_stats *ali_ircc_net_get_stats(struct net_device *dev);
 
 /* SIR function */
-static int  ali_ircc_sir_hard_xmit(struct sk_buff *skb, struct net_device *dev);
+static netdev_tx_t ali_ircc_sir_hard_xmit(struct sk_buff *skb,
+						struct net_device *dev);
 static irqreturn_t ali_ircc_sir_interrupt(struct ali_ircc_cb *self);
 static void ali_ircc_sir_receive(struct ali_ircc_cb *self);
 static void ali_ircc_sir_write_wakeup(struct ali_ircc_cb *self);
@@ -119,7 +120,8 @@ static int  ali_ircc_sir_write(int iobase, int fifo_size, __u8 *buf, int len);
 static void ali_ircc_sir_change_speed(struct ali_ircc_cb *priv, __u32 speed);
 
 /* FIR function */
-static int  ali_ircc_fir_hard_xmit(struct sk_buff *skb, struct net_device *dev);
+static netdev_tx_t  ali_ircc_fir_hard_xmit(struct sk_buff *skb,
+						 struct net_device *dev);
 static void ali_ircc_fir_change_speed(struct ali_ircc_cb *priv, __u32 speed);
 static irqreturn_t ali_ircc_fir_interrupt(struct ali_ircc_cb *self);
 static int  ali_ircc_dma_receive(struct ali_ircc_cb *self); 
@@ -140,7 +142,7 @@ static void SetCOMInterrupts(struct ali_ircc_cb *self , unsigned char enable);
  * Function ali_ircc_init ()
  *
  *    Initialize chip. Find out whay kinds of chips we are dealing with
- *    and their configuation registers address
+ *    and their configuration registers address
  */
 static int __init ali_ircc_init(void)
 {
@@ -151,7 +153,7 @@ static int __init ali_ircc_init(void)
 	int reg, revision;
 	int i = 0;
 	
-	IRDA_DEBUG(2, "%s(), ---------------- Start ----------------\n", __FUNCTION__);
+	IRDA_DEBUG(2, "%s(), ---------------- Start ----------------\n", __func__);
 
 	ret = platform_driver_register(&ali_ircc_driver);
         if (ret) {
@@ -165,7 +167,7 @@ static int __init ali_ircc_init(void)
 	/* Probe for all the ALi chipsets we know about */
 	for (chip= chips; chip->name; chip++, i++) 
 	{
-		IRDA_DEBUG(2, "%s(), Probing for %s ...\n", __FUNCTION__, chip->name);
+		IRDA_DEBUG(2, "%s(), Probing for %s ...\n", __func__, chip->name);
 				
 		/* Try all config registers for this chip */
 		for (cfg=0; cfg<2; cfg++)
@@ -195,11 +197,11 @@ static int __init ali_ircc_init(void)
 				
 			if (reg == chip->cid_value)
 			{
-				IRDA_DEBUG(2, "%s(), Chip found at 0x%03x\n", __FUNCTION__, cfg_base);
+				IRDA_DEBUG(2, "%s(), Chip found at 0x%03x\n", __func__, cfg_base);
 					   
 				outb(0x1F, cfg_base);
 				revision = inb(cfg_base+1);
-				IRDA_DEBUG(2, "%s(), Found %s chip, revision=%d\n", __FUNCTION__,
+				IRDA_DEBUG(2, "%s(), Found %s chip, revision=%d\n", __func__,
 					   chip->name, revision);					
 				
 				/* 
@@ -222,14 +224,14 @@ static int __init ali_ircc_init(void)
 			}
 			else
 			{
-				IRDA_DEBUG(2, "%s(), No %s chip at 0x%03x\n", __FUNCTION__, chip->name, cfg_base);
+				IRDA_DEBUG(2, "%s(), No %s chip at 0x%03x\n", __func__, chip->name, cfg_base);
 			}
 			/* Exit configuration */
 			outb(0xbb, cfg_base);
 		}
 	}		
 		
-	IRDA_DEBUG(2, "%s(), ----------------- End -----------------\n", __FUNCTION__);					   		
+	IRDA_DEBUG(2, "%s(), ----------------- End -----------------\n", __func__);
 
 	if (ret)
 		platform_driver_unregister(&ali_ircc_driver);
@@ -247,7 +249,7 @@ static void __exit ali_ircc_cleanup(void)
 {
 	int i;
 
-	IRDA_DEBUG(2, "%s(), ---------------- Start ----------------\n", __FUNCTION__);	
+	IRDA_DEBUG(2, "%s(), ---------------- Start ----------------\n", __func__);
 
 	for (i=0; i < ARRAY_SIZE(dev_self); i++) {
 		if (dev_self[i])
@@ -256,8 +258,22 @@ static void __exit ali_ircc_cleanup(void)
 	
 	platform_driver_unregister(&ali_ircc_driver);
 
-	IRDA_DEBUG(2, "%s(), ----------------- End -----------------\n", __FUNCTION__);
+	IRDA_DEBUG(2, "%s(), ----------------- End -----------------\n", __func__);
 }
+
+static const struct net_device_ops ali_ircc_sir_ops = {
+	.ndo_open       = ali_ircc_net_open,
+	.ndo_stop       = ali_ircc_net_close,
+	.ndo_start_xmit = ali_ircc_sir_hard_xmit,
+	.ndo_do_ioctl   = ali_ircc_net_ioctl,
+};
+
+static const struct net_device_ops ali_ircc_fir_ops = {
+	.ndo_open       = ali_ircc_net_open,
+	.ndo_stop       = ali_ircc_net_close,
+	.ndo_start_xmit = ali_ircc_fir_hard_xmit,
+	.ndo_do_ioctl   = ali_ircc_net_ioctl,
+};
 
 /*
  * Function ali_ircc_open (int i, chipio_t *inf)
@@ -272,11 +288,11 @@ static int ali_ircc_open(int i, chipio_t *info)
 	int dongle_id;
 	int err;
 			
-	IRDA_DEBUG(2, "%s(), ---------------- Start ----------------\n", __FUNCTION__);	
+	IRDA_DEBUG(2, "%s(), ---------------- Start ----------------\n", __func__);
 
 	if (i >= ARRAY_SIZE(dev_self)) {
 		IRDA_ERROR("%s(), maximum number of supported chips reached!\n",
-			   __FUNCTION__);
+			   __func__);
 		return -ENOMEM;
 	}
 	
@@ -287,11 +303,11 @@ static int ali_ircc_open(int i, chipio_t *info)
 	dev = alloc_irdadev(sizeof(*self));
 	if (dev == NULL) {
 		IRDA_ERROR("%s(), can't allocate memory for control block!\n",
-			   __FUNCTION__);
+			   __func__);
 		return -ENOMEM;
 	}
 
-	self = dev->priv;
+	self = netdev_priv(dev);
 	self->netdev = dev;
 	spin_lock_init(&self->lock);
    
@@ -311,7 +327,7 @@ static int ali_ircc_open(int i, chipio_t *info)
 	/* Reserve the ioports that we need */
 	if (!request_region(self->io.fir_base, self->io.fir_ext,
 			    ALI_IRCC_DRIVER_NAME)) {
-		IRDA_WARNING("%s(), can't get iobase of 0x%03x\n", __FUNCTION__,
+		IRDA_WARNING("%s(), can't get iobase of 0x%03x\n", __func__,
 			self->io.fir_base);
 		err = -ENODEV;
 		goto err_out1;
@@ -360,32 +376,24 @@ static int ali_ircc_open(int i, chipio_t *info)
 	self->tx_fifo.len = self->tx_fifo.ptr = self->tx_fifo.free = 0;
 	self->tx_fifo.tail = self->tx_buff.head;
 
-	
-	/* Keep track of module usage */
-	SET_MODULE_OWNER(dev);
-
 	/* Override the network functions we need to use */
-	dev->hard_start_xmit = ali_ircc_sir_hard_xmit;
-	dev->open            = ali_ircc_net_open;
-	dev->stop            = ali_ircc_net_close;
-	dev->do_ioctl        = ali_ircc_net_ioctl;
-	dev->get_stats	     = ali_ircc_net_get_stats;
+	dev->netdev_ops = &ali_ircc_sir_ops;
 
 	err = register_netdev(dev);
 	if (err) {
-		IRDA_ERROR("%s(), register_netdev() failed!\n", __FUNCTION__);
+		IRDA_ERROR("%s(), register_netdev() failed!\n", __func__);
 		goto err_out4;
 	}
 	IRDA_MESSAGE("IrDA: Registered device %s\n", dev->name);
 
 	/* Check dongle id */
 	dongle_id = ali_ircc_read_dongle_id(i, info);
-	IRDA_MESSAGE("%s(), %s, Found dongle: %s\n", __FUNCTION__,
+	IRDA_MESSAGE("%s(), %s, Found dongle: %s\n", __func__,
 		     ALI_IRCC_DRIVER_NAME, dongle_types[dongle_id]);
 		
 	self->io.dongle_id = dongle_id;
 
-	IRDA_DEBUG(2, "%s(), ----------------- End -----------------\n", __FUNCTION__);
+	IRDA_DEBUG(2, "%s(), ----------------- End -----------------\n", __func__);
 	
 	return 0;
 
@@ -414,7 +422,7 @@ static int __exit ali_ircc_close(struct ali_ircc_cb *self)
 {
 	int iobase;
 
-	IRDA_DEBUG(4, "%s(), ---------------- Start ----------------\n", __FUNCTION__);
+	IRDA_DEBUG(4, "%s(), ---------------- Start ----------------\n", __func__);
 
 	IRDA_ASSERT(self != NULL, return -1;);
 
@@ -424,7 +432,7 @@ static int __exit ali_ircc_close(struct ali_ircc_cb *self)
 	unregister_netdev(self->netdev);
 
 	/* Release the PORT that this driver is using */
-	IRDA_DEBUG(4, "%s(), Releasing Region %03x\n", __FUNCTION__, self->io.fir_base);
+	IRDA_DEBUG(4, "%s(), Releasing Region %03x\n", __func__, self->io.fir_base);
 	release_region(self->io.fir_base, self->io.fir_ext);
 
 	if (self->tx_buff.head)
@@ -438,7 +446,7 @@ static int __exit ali_ircc_close(struct ali_ircc_cb *self)
 	dev_self[self->index] = NULL;
 	free_netdev(self->netdev);
 	
-	IRDA_DEBUG(2, "%s(), ----------------- End -----------------\n", __FUNCTION__);
+	IRDA_DEBUG(2, "%s(), ----------------- End -----------------\n", __func__);
 	
 	return 0;
 }
@@ -481,7 +489,7 @@ static int ali_ircc_probe_53(ali_chip_t *chip, chipio_t *info)
 	int cfg_base = info->cfg_base;
 	int hi, low, reg;
 	
-	IRDA_DEBUG(2, "%s(), ---------------- Start ----------------\n", __FUNCTION__);
+	IRDA_DEBUG(2, "%s(), ---------------- Start ----------------\n", __func__);
 	
 	/* Enter Configuration */
 	outb(chip->entr1, cfg_base);
@@ -500,13 +508,13 @@ static int ali_ircc_probe_53(ali_chip_t *chip, chipio_t *info)
 	
 	info->sir_base = info->fir_base;
 	
-	IRDA_DEBUG(2, "%s(), probing fir_base=0x%03x\n", __FUNCTION__, info->fir_base);
+	IRDA_DEBUG(2, "%s(), probing fir_base=0x%03x\n", __func__, info->fir_base);
 		
 	/* Read IRQ control register */
 	outb(0x70, cfg_base);
 	reg = inb(cfg_base+1);
 	info->irq = reg & 0x0f;
-	IRDA_DEBUG(2, "%s(), probing irq=%d\n", __FUNCTION__, info->irq);
+	IRDA_DEBUG(2, "%s(), probing irq=%d\n", __func__, info->irq);
 	
 	/* Read DMA channel */
 	outb(0x74, cfg_base);
@@ -514,26 +522,26 @@ static int ali_ircc_probe_53(ali_chip_t *chip, chipio_t *info)
 	info->dma = reg & 0x07;
 	
 	if(info->dma == 0x04)
-		IRDA_WARNING("%s(), No DMA channel assigned !\n", __FUNCTION__);
+		IRDA_WARNING("%s(), No DMA channel assigned !\n", __func__);
 	else
-		IRDA_DEBUG(2, "%s(), probing dma=%d\n", __FUNCTION__, info->dma);
+		IRDA_DEBUG(2, "%s(), probing dma=%d\n", __func__, info->dma);
 	
 	/* Read Enabled Status */
 	outb(0x30, cfg_base);
 	reg = inb(cfg_base+1);
 	info->enabled = (reg & 0x80) && (reg & 0x01);
-	IRDA_DEBUG(2, "%s(), probing enabled=%d\n", __FUNCTION__, info->enabled);
+	IRDA_DEBUG(2, "%s(), probing enabled=%d\n", __func__, info->enabled);
 	
 	/* Read Power Status */
 	outb(0x22, cfg_base);
 	reg = inb(cfg_base+1);
 	info->suspended = (reg & 0x20);
-	IRDA_DEBUG(2, "%s(), probing suspended=%d\n", __FUNCTION__, info->suspended);
+	IRDA_DEBUG(2, "%s(), probing suspended=%d\n", __func__, info->suspended);
 	
 	/* Exit configuration */
 	outb(0xbb, cfg_base);
 		
-	IRDA_DEBUG(2, "%s(), ----------------- End -----------------\n", __FUNCTION__);	
+	IRDA_DEBUG(2, "%s(), ----------------- End -----------------\n", __func__);
 	
 	return 0;	
 }
@@ -551,7 +559,7 @@ static int ali_ircc_setup(chipio_t *info)
 	int version;
 	int iobase = info->fir_base;
 	
-	IRDA_DEBUG(2, "%s(), ---------------- Start ----------------\n", __FUNCTION__);
+	IRDA_DEBUG(2, "%s(), ---------------- Start ----------------\n", __func__);
 	
 	/* Locking comments :
 	 * Most operations here need to be protected. We are called before
@@ -612,7 +620,7 @@ static int ali_ircc_setup(chipio_t *info)
 	// outb(UART_IER_RDI, iobase+UART_IER); //benjamin 2000/11/23 01:25PM
 	// Turn on the interrupts in ali_ircc_net_open
 	
-	IRDA_DEBUG(2, "%s(), ----------------- End ------------------\n", __FUNCTION__);	
+	IRDA_DEBUG(2, "%s(), ----------------- End ------------------\n", __func__);
 	
 	return 0;
 }
@@ -629,7 +637,7 @@ static int ali_ircc_read_dongle_id (int i, chipio_t *info)
 	int dongle_id, reg;
 	int cfg_base = info->cfg_base;
 	
-	IRDA_DEBUG(2, "%s(), ---------------- Start ----------------\n", __FUNCTION__);
+	IRDA_DEBUG(2, "%s(), ---------------- Start ----------------\n", __func__);
 		
 	/* Enter Configuration */
 	outb(chips[i].entr1, cfg_base);
@@ -643,13 +651,13 @@ static int ali_ircc_read_dongle_id (int i, chipio_t *info)
 	outb(0xf0, cfg_base);
 	reg = inb(cfg_base+1);	
 	dongle_id = ((reg>>6)&0x02) | ((reg>>5)&0x01);
-	IRDA_DEBUG(2, "%s(), probing dongle_id=%d, dongle_types=%s\n", __FUNCTION__, 
+	IRDA_DEBUG(2, "%s(), probing dongle_id=%d, dongle_types=%s\n", __func__,
 		dongle_id, dongle_types[dongle_id]);
 	
 	/* Exit configuration */
 	outb(0xbb, cfg_base);
 			
-	IRDA_DEBUG(2, "%s(), ----------------- End ------------------\n", __FUNCTION__);	
+	IRDA_DEBUG(2, "%s(), ----------------- End ------------------\n", __func__);
 	
 	return dongle_id;
 }
@@ -666,9 +674,9 @@ static irqreturn_t ali_ircc_interrupt(int irq, void *dev_id)
 	struct ali_ircc_cb *self;
 	int ret;
 		
-	IRDA_DEBUG(2, "%s(), ---------------- Start ----------------\n", __FUNCTION__);
+	IRDA_DEBUG(2, "%s(), ---------------- Start ----------------\n", __func__);
 		
-	self = dev->priv;
+	self = netdev_priv(dev);
 	
 	spin_lock(&self->lock);
 	
@@ -680,7 +688,7 @@ static irqreturn_t ali_ircc_interrupt(int irq, void *dev_id)
 		
 	spin_unlock(&self->lock);
 	
-	IRDA_DEBUG(2, "%s(), ----------------- End ------------------\n", __FUNCTION__);
+	IRDA_DEBUG(2, "%s(), ----------------- End ------------------\n", __func__);
 	return ret;
 }
 /*
@@ -694,7 +702,7 @@ static irqreturn_t ali_ircc_fir_interrupt(struct ali_ircc_cb *self)
 	__u8 eir, OldMessageCount;
 	int iobase, tmp;
 	
-	IRDA_DEBUG(1, "%s(), ---------------- Start ----------------\n", __FUNCTION__);
+	IRDA_DEBUG(1, "%s(), ---------------- Start ----------------\n", __func__);
 	
 	iobase = self->io.fir_base;
 	
@@ -707,10 +715,10 @@ static irqreturn_t ali_ircc_fir_interrupt(struct ali_ircc_cb *self)
 	//self->ier = inb(iobase+FIR_IER); 		2000/12/1 04:32PM
 	eir = self->InterruptID & self->ier; /* Mask out the interesting ones */ 
 	
-	IRDA_DEBUG(1, "%s(), self->InterruptID = %x\n", __FUNCTION__,self->InterruptID);
-	IRDA_DEBUG(1, "%s(), self->LineStatus = %x\n", __FUNCTION__,self->LineStatus);
-	IRDA_DEBUG(1, "%s(), self->ier = %x\n", __FUNCTION__,self->ier);
-	IRDA_DEBUG(1, "%s(), eir = %x\n", __FUNCTION__,eir);
+	IRDA_DEBUG(1, "%s(), self->InterruptID = %x\n", __func__,self->InterruptID);
+	IRDA_DEBUG(1, "%s(), self->LineStatus = %x\n", __func__,self->LineStatus);
+	IRDA_DEBUG(1, "%s(), self->ier = %x\n", __func__,self->ier);
+	IRDA_DEBUG(1, "%s(), eir = %x\n", __func__,eir);
 	
 	/* Disable interrupts */
 	 SetCOMInterrupts(self, FALSE);
@@ -721,7 +729,7 @@ static irqreturn_t ali_ircc_fir_interrupt(struct ali_ircc_cb *self)
 	{		
 		if (self->io.direction == IO_XMIT) /* TX */
 		{
-			IRDA_DEBUG(1, "%s(), ******* IIR_EOM (Tx) *******\n", __FUNCTION__);
+			IRDA_DEBUG(1, "%s(), ******* IIR_EOM (Tx) *******\n", __func__);
 			
 			if(ali_ircc_dma_xmit_complete(self))
 			{
@@ -740,23 +748,23 @@ static irqreturn_t ali_ircc_fir_interrupt(struct ali_ircc_cb *self)
 		}	
 		else /* RX */
 		{
-			IRDA_DEBUG(1, "%s(), ******* IIR_EOM (Rx) *******\n", __FUNCTION__);
+			IRDA_DEBUG(1, "%s(), ******* IIR_EOM (Rx) *******\n", __func__);
 			
 			if(OldMessageCount > ((self->LineStatus+1) & 0x07))
 			{
 				self->rcvFramesOverflow = TRUE;	
-				IRDA_DEBUG(1, "%s(), ******* self->rcvFramesOverflow = TRUE ******** \n", __FUNCTION__);
+				IRDA_DEBUG(1, "%s(), ******* self->rcvFramesOverflow = TRUE ********\n", __func__);
 			}
 						
 			if (ali_ircc_dma_receive_complete(self))
 			{
-				IRDA_DEBUG(1, "%s(), ******* receive complete ******** \n", __FUNCTION__);
+				IRDA_DEBUG(1, "%s(), ******* receive complete ********\n", __func__);
 				
 				self->ier = IER_EOM;				
 			}
 			else
 			{
-				IRDA_DEBUG(1, "%s(), ******* Not receive complete ******** \n", __FUNCTION__);
+				IRDA_DEBUG(1, "%s(), ******* Not receive complete ********\n", __func__);
 				
 				self->ier = IER_EOM | IER_TIMER;								
 			}	
@@ -769,7 +777,7 @@ static irqreturn_t ali_ircc_fir_interrupt(struct ali_ircc_cb *self)
 		if(OldMessageCount > ((self->LineStatus+1) & 0x07))
 		{
 			self->rcvFramesOverflow = TRUE;	
-			IRDA_DEBUG(1, "%s(), ******* self->rcvFramesOverflow = TRUE ******* \n", __FUNCTION__);
+			IRDA_DEBUG(1, "%s(), ******* self->rcvFramesOverflow = TRUE *******\n", __func__);
 		}
 		/* Disable Timer */
 		switch_bank(iobase, BANK1);
@@ -801,7 +809,7 @@ static irqreturn_t ali_ircc_fir_interrupt(struct ali_ircc_cb *self)
 	/* Restore Interrupt */	
 	SetCOMInterrupts(self, TRUE);	
 		
-	IRDA_DEBUG(1, "%s(), ----------------- End ---------------\n", __FUNCTION__);
+	IRDA_DEBUG(1, "%s(), ----------------- End ---------------\n", __func__);
 	return IRQ_RETVAL(eir);
 }
 
@@ -816,7 +824,7 @@ static irqreturn_t ali_ircc_sir_interrupt(struct ali_ircc_cb *self)
 	int iobase;
 	int iir, lsr;
 	
-	IRDA_DEBUG(2, "%s(), ---------------- Start ----------------\n", __FUNCTION__);
+	IRDA_DEBUG(2, "%s(), ---------------- Start ----------------\n", __func__);
 	
 	iobase = self->io.sir_base;
 
@@ -825,13 +833,13 @@ static irqreturn_t ali_ircc_sir_interrupt(struct ali_ircc_cb *self)
 		/* Clear interrupt */
 		lsr = inb(iobase+UART_LSR);
 
-		IRDA_DEBUG(4, "%s(), iir=%02x, lsr=%02x, iobase=%#x\n", __FUNCTION__, 
+		IRDA_DEBUG(4, "%s(), iir=%02x, lsr=%02x, iobase=%#x\n", __func__,
 			   iir, lsr, iobase);
 
 		switch (iir) 
 		{
 			case UART_IIR_RLSI:
-				IRDA_DEBUG(2, "%s(), RLSI\n", __FUNCTION__);
+				IRDA_DEBUG(2, "%s(), RLSI\n", __func__);
 				break;
 			case UART_IIR_RDI:
 				/* Receive interrupt */
@@ -845,14 +853,14 @@ static irqreturn_t ali_ircc_sir_interrupt(struct ali_ircc_cb *self)
 				}				
 				break;
 			default:
-				IRDA_DEBUG(0, "%s(), unhandled IIR=%#x\n", __FUNCTION__, iir);
+				IRDA_DEBUG(0, "%s(), unhandled IIR=%#x\n", __func__, iir);
 				break;
 		} 
 		
 	}
 	
 	
-	IRDA_DEBUG(2, "%s(), ----------------- End ------------------\n", __FUNCTION__);	
+	IRDA_DEBUG(2, "%s(), ----------------- End ------------------\n", __func__);
 
 	return IRQ_RETVAL(iir);
 }
@@ -869,7 +877,7 @@ static void ali_ircc_sir_receive(struct ali_ircc_cb *self)
 	int boguscount = 0;
 	int iobase;
 	
-	IRDA_DEBUG(2, "%s(), ---------------- Start ----------------\n", __FUNCTION__);
+	IRDA_DEBUG(2, "%s(), ---------------- Start ----------------\n", __func__);
 	IRDA_ASSERT(self != NULL, return;);
 
 	iobase = self->io.sir_base;
@@ -879,17 +887,17 @@ static void ali_ircc_sir_receive(struct ali_ircc_cb *self)
          * async_unwrap_char will deliver all found frames  
 	 */
 	do {
-		async_unwrap_char(self->netdev, &self->stats, &self->rx_buff, 
+		async_unwrap_char(self->netdev, &self->netdev->stats, &self->rx_buff,
 				  inb(iobase+UART_RX));
 
 		/* Make sure we don't stay here too long */
 		if (boguscount++ > 32) {
-			IRDA_DEBUG(2,"%s(), breaking!\n", __FUNCTION__);
+			IRDA_DEBUG(2,"%s(), breaking!\n", __func__);
 			break;
 		}
 	} while (inb(iobase+UART_LSR) & UART_LSR_DR);	
 	
-	IRDA_DEBUG(2, "%s(), ----------------- End ------------------\n", __FUNCTION__ );	
+	IRDA_DEBUG(2, "%s(), ----------------- End ------------------\n", __func__ );
 }
 
 /*
@@ -906,7 +914,7 @@ static void ali_ircc_sir_write_wakeup(struct ali_ircc_cb *self)
 
 	IRDA_ASSERT(self != NULL, return;);
 
-	IRDA_DEBUG(2, "%s(), ---------------- Start ----------------\n", __FUNCTION__ );
+	IRDA_DEBUG(2, "%s(), ---------------- Start ----------------\n", __func__ );
 	
 	iobase = self->io.sir_base;
 
@@ -925,16 +933,16 @@ static void ali_ircc_sir_write_wakeup(struct ali_ircc_cb *self)
 		{
 			/* We must wait until all data are gone */
 			while(!(inb(iobase+UART_LSR) & UART_LSR_TEMT))
-				IRDA_DEBUG(1, "%s(), UART_LSR_THRE\n", __FUNCTION__ );
+				IRDA_DEBUG(1, "%s(), UART_LSR_THRE\n", __func__ );
 			
-			IRDA_DEBUG(1, "%s(), Changing speed! self->new_speed = %d\n", __FUNCTION__ , self->new_speed);
+			IRDA_DEBUG(1, "%s(), Changing speed! self->new_speed = %d\n", __func__ , self->new_speed);
 			ali_ircc_change_speed(self, self->new_speed);
 			self->new_speed = 0;			
 			
 			// benjamin 2000/11/10 06:32PM
 			if (self->io.speed > 115200)
 			{
-				IRDA_DEBUG(2, "%s(), ali_ircc_change_speed from UART_LSR_TEMT \n", __FUNCTION__ );				
+				IRDA_DEBUG(2, "%s(), ali_ircc_change_speed from UART_LSR_TEMT\n", __func__ );
 					
 				self->ier = IER_EOM;
 				// SetCOMInterrupts(self, TRUE);							
@@ -946,13 +954,13 @@ static void ali_ircc_sir_write_wakeup(struct ali_ircc_cb *self)
 			netif_wake_queue(self->netdev);	
 		}
 			
-		self->stats.tx_packets++;
+		self->netdev->stats.tx_packets++;
 		
 		/* Turn on receive interrupts */
 		outb(UART_IER_RDI, iobase+UART_IER);
 	}
 		
-	IRDA_DEBUG(2, "%s(), ----------------- End ------------------\n", __FUNCTION__ );	
+	IRDA_DEBUG(2, "%s(), ----------------- End ------------------\n", __func__ );
 }
 
 static void ali_ircc_change_speed(struct ali_ircc_cb *self, __u32 baud)
@@ -960,9 +968,9 @@ static void ali_ircc_change_speed(struct ali_ircc_cb *self, __u32 baud)
 	struct net_device *dev = self->netdev;
 	int iobase;
 	
-	IRDA_DEBUG(1, "%s(), ---------------- Start ----------------\n", __FUNCTION__ );
+	IRDA_DEBUG(1, "%s(), ---------------- Start ----------------\n", __func__ );
 	
-	IRDA_DEBUG(2, "%s(), setting speed = %d \n", __FUNCTION__ , baud);
+	IRDA_DEBUG(2, "%s(), setting speed = %d\n", __func__ , baud);
 	
 	/* This function *must* be called with irq off and spin-lock.
 	 * - Jean II */
@@ -979,7 +987,7 @@ static void ali_ircc_change_speed(struct ali_ircc_cb *self, __u32 baud)
 		ali_ircc_fir_change_speed(self, baud);			
 		
 		/* Install FIR xmit handler*/
-		dev->hard_start_xmit = ali_ircc_fir_hard_xmit;		
+		dev->netdev_ops = &ali_ircc_fir_ops;
 				
 		/* Enable Interuupt */
 		self->ier = IER_EOM; // benjamin 2000/11/20 07:24PM					
@@ -993,7 +1001,7 @@ static void ali_ircc_change_speed(struct ali_ircc_cb *self, __u32 baud)
 		ali_ircc_sir_change_speed(self, baud);
 				
 		/* Install SIR xmit handler*/
-		dev->hard_start_xmit = ali_ircc_sir_hard_xmit;
+		dev->netdev_ops = &ali_ircc_sir_ops;
 	}
 	
 		
@@ -1001,7 +1009,7 @@ static void ali_ircc_change_speed(struct ali_ircc_cb *self, __u32 baud)
 		
 	netif_wake_queue(self->netdev);	
 	
-	IRDA_DEBUG(2, "%s(), ----------------- End ------------------\n", __FUNCTION__ );	
+	IRDA_DEBUG(2, "%s(), ----------------- End ------------------\n", __func__ );
 }
 
 static void ali_ircc_fir_change_speed(struct ali_ircc_cb *priv, __u32 baud)
@@ -1011,14 +1019,14 @@ static void ali_ircc_fir_change_speed(struct ali_ircc_cb *priv, __u32 baud)
 	struct ali_ircc_cb *self = (struct ali_ircc_cb *) priv;
 	struct net_device *dev;
 
-	IRDA_DEBUG(1, "%s(), ---------------- Start ----------------\n", __FUNCTION__ );
+	IRDA_DEBUG(1, "%s(), ---------------- Start ----------------\n", __func__ );
 		
 	IRDA_ASSERT(self != NULL, return;);
 
 	dev = self->netdev;
 	iobase = self->io.fir_base;
 	
-	IRDA_DEBUG(1, "%s(), self->io.speed = %d, change to speed = %d\n", __FUNCTION__ ,self->io.speed,baud);
+	IRDA_DEBUG(1, "%s(), self->io.speed = %d, change to speed = %d\n", __func__ ,self->io.speed,baud);
 	
 	/* Come from SIR speed */
 	if(self->io.speed <=115200)
@@ -1032,7 +1040,7 @@ static void ali_ircc_fir_change_speed(struct ali_ircc_cb *priv, __u32 baud)
 	// Set Dongle Speed mode
 	ali_ircc_change_dongle_speed(self, baud);
 		
-	IRDA_DEBUG(1, "%s(), ----------------- End ------------------\n", __FUNCTION__ );	
+	IRDA_DEBUG(1, "%s(), ----------------- End ------------------\n", __func__ );
 }
 
 /*
@@ -1050,9 +1058,9 @@ static void ali_ircc_sir_change_speed(struct ali_ircc_cb *priv, __u32 speed)
 	int lcr;    /* Line control reg */
 	int divisor;
 
-	IRDA_DEBUG(1, "%s(), ---------------- Start ----------------\n", __FUNCTION__ );
+	IRDA_DEBUG(1, "%s(), ---------------- Start ----------------\n", __func__ );
 	
-	IRDA_DEBUG(1, "%s(), Setting speed to: %d\n", __FUNCTION__ , speed);
+	IRDA_DEBUG(1, "%s(), Setting speed to: %d\n", __func__ , speed);
 
 	IRDA_ASSERT(self != NULL, return;);
 
@@ -1100,13 +1108,13 @@ static void ali_ircc_sir_change_speed(struct ali_ircc_cb *priv, __u32 speed)
 	outb(lcr,		  iobase+UART_LCR); /* Set 8N1	*/
 	outb(fcr,		  iobase+UART_FCR); /* Enable FIFO's */
 
-	/* without this, the conection will be broken after come back from FIR speed,
+	/* without this, the connection will be broken after come back from FIR speed,
 	   but with this, the SIR connection is harder to established */
 	outb((UART_MCR_DTR | UART_MCR_RTS | UART_MCR_OUT2), iobase+UART_MCR);
 	
 	spin_unlock_irqrestore(&self->lock, flags);
 	
-	IRDA_DEBUG(1, "%s(), ----------------- End ------------------\n", __FUNCTION__ );	
+	IRDA_DEBUG(1, "%s(), ----------------- End ------------------\n", __func__ );
 }
 
 static void ali_ircc_change_dongle_speed(struct ali_ircc_cb *priv, int speed)
@@ -1116,14 +1124,14 @@ static void ali_ircc_change_dongle_speed(struct ali_ircc_cb *priv, int speed)
 	int iobase,dongle_id;
 	int tmp = 0;
 			
-	IRDA_DEBUG(1, "%s(), ---------------- Start ----------------\n", __FUNCTION__ );	
+	IRDA_DEBUG(1, "%s(), ---------------- Start ----------------\n", __func__ );
 	
 	iobase = self->io.fir_base; 	/* or iobase = self->io.sir_base; */
 	dongle_id = self->io.dongle_id;
 	
 	/* We are already locked, no need to do it again */
 		
-	IRDA_DEBUG(1, "%s(), Set Speed for %s , Speed = %d\n", __FUNCTION__ , dongle_types[dongle_id], speed);		
+	IRDA_DEBUG(1, "%s(), Set Speed for %s , Speed = %d\n", __func__ , dongle_types[dongle_id], speed);
 	
 	switch_bank(iobase, BANK2);
 	tmp = inb(iobase+FIR_IRDA_CR);
@@ -1287,7 +1295,7 @@ static void ali_ircc_change_dongle_speed(struct ali_ircc_cb *priv, int speed)
 			
 	switch_bank(iobase, BANK0);
 	
-	IRDA_DEBUG(1, "%s(), ----------------- End ------------------\n", __FUNCTION__ );		
+	IRDA_DEBUG(1, "%s(), ----------------- End ------------------\n", __func__ );
 }
 
 /*
@@ -1300,11 +1308,11 @@ static int ali_ircc_sir_write(int iobase, int fifo_size, __u8 *buf, int len)
 {
 	int actual = 0;
 	
-	IRDA_DEBUG(2, "%s(), ---------------- Start ----------------\n", __FUNCTION__ );
+	IRDA_DEBUG(2, "%s(), ---------------- Start ----------------\n", __func__ );
 		
 	/* Tx FIFO should be empty! */
 	if (!(inb(iobase+UART_LSR) & UART_LSR_THRE)) {
-		IRDA_DEBUG(0, "%s(), failed, fifo not empty!\n", __FUNCTION__ );
+		IRDA_DEBUG(0, "%s(), failed, fifo not empty!\n", __func__ );
 		return 0;
 	}
         
@@ -1316,7 +1324,7 @@ static int ali_ircc_sir_write(int iobase, int fifo_size, __u8 *buf, int len)
 		actual++;
 	}
 	
-        IRDA_DEBUG(2, "%s(), ----------------- End ------------------\n", __FUNCTION__ );	
+        IRDA_DEBUG(2, "%s(), ----------------- End ------------------\n", __func__ );
 	return actual;
 }
 
@@ -1332,11 +1340,11 @@ static int ali_ircc_net_open(struct net_device *dev)
 	int iobase;
 	char hwname[32];
 		
-	IRDA_DEBUG(2, "%s(), ---------------- Start ----------------\n", __FUNCTION__ );
+	IRDA_DEBUG(2, "%s(), ---------------- Start ----------------\n", __func__ );
 	
 	IRDA_ASSERT(dev != NULL, return -1;);
 	
-	self = (struct ali_ircc_cb *) dev->priv;
+	self = netdev_priv(dev);
 	
 	IRDA_ASSERT(self != NULL, return 0;);
 	
@@ -1378,7 +1386,7 @@ static int ali_ircc_net_open(struct net_device *dev)
 	 */
 	self->irlap = irlap_open(dev, &self->qos, hwname);
 		
-	IRDA_DEBUG(2, "%s(), ----------------- End ------------------\n", __FUNCTION__ );	
+	IRDA_DEBUG(2, "%s(), ----------------- End ------------------\n", __func__ );
 	
 	return 0;
 }
@@ -1395,11 +1403,11 @@ static int ali_ircc_net_close(struct net_device *dev)
 	struct ali_ircc_cb *self;
 	//int iobase;
 			
-	IRDA_DEBUG(4, "%s(), ---------------- Start ----------------\n", __FUNCTION__ );
+	IRDA_DEBUG(4, "%s(), ---------------- Start ----------------\n", __func__ );
 		
 	IRDA_ASSERT(dev != NULL, return -1;);
 
-	self = (struct ali_ircc_cb *) dev->priv;
+	self = netdev_priv(dev);
 	IRDA_ASSERT(self != NULL, return 0;);
 
 	/* Stop device */
@@ -1418,7 +1426,7 @@ static int ali_ircc_net_close(struct net_device *dev)
 	free_irq(self->io.irq, dev);
 	free_dma(self->io.dma);
 
-	IRDA_DEBUG(2, "%s(), ----------------- End ------------------\n", __FUNCTION__ );	
+	IRDA_DEBUG(2, "%s(), ----------------- End ------------------\n", __func__ );
 	
 	return 0;
 }
@@ -1429,7 +1437,8 @@ static int ali_ircc_net_close(struct net_device *dev)
  *    Transmit the frame
  *
  */
-static int ali_ircc_fir_hard_xmit(struct sk_buff *skb, struct net_device *dev)
+static netdev_tx_t ali_ircc_fir_hard_xmit(struct sk_buff *skb,
+						struct net_device *dev)
 {
 	struct ali_ircc_cb *self;
 	unsigned long flags;
@@ -1437,9 +1446,9 @@ static int ali_ircc_fir_hard_xmit(struct sk_buff *skb, struct net_device *dev)
 	__u32 speed;
 	int mtt, diff;
 	
-	IRDA_DEBUG(1, "%s(), ---------------- Start -----------------\n", __FUNCTION__ );	
+	IRDA_DEBUG(1, "%s(), ---------------- Start -----------------\n", __func__ );
 	
-	self = (struct ali_ircc_cb *) dev->priv;
+	self = netdev_priv(dev);
 	iobase = self->io.fir_base;
 
 	netif_stop_queue(dev);
@@ -1460,7 +1469,7 @@ static int ali_ircc_fir_hard_xmit(struct sk_buff *skb, struct net_device *dev)
 			dev->trans_start = jiffies;
 			spin_unlock_irqrestore(&self->lock, flags);
 			dev_kfree_skb(skb);
-			return 0;
+			return NETDEV_TX_OK;
 		} else
 			self->new_speed = speed;
 	}
@@ -1470,7 +1479,7 @@ static int ali_ircc_fir_hard_xmit(struct sk_buff *skb, struct net_device *dev)
 	self->tx_fifo.queue[self->tx_fifo.free].len = skb->len;
 	self->tx_fifo.tail += skb->len;
 
-	self->stats.tx_bytes += skb->len;
+	dev->stats.tx_bytes += skb->len;
 
 	skb_copy_from_linear_data(skb, self->tx_fifo.queue[self->tx_fifo.free].start,
 		      skb->len);
@@ -1491,7 +1500,7 @@ static int ali_ircc_fir_hard_xmit(struct sk_buff *skb, struct net_device *dev)
 			diff = self->now.tv_usec - self->stamp.tv_usec;
 			/* self->stamp is set from ali_ircc_dma_receive_complete() */
 							
-			IRDA_DEBUG(1, "%s(), ******* diff = %d ******* \n", __FUNCTION__ , diff);	
+			IRDA_DEBUG(1, "%s(), ******* diff = %d *******\n", __func__ , diff);
 			
 			if (diff < 0) 
 				diff += 1000000;
@@ -1513,7 +1522,7 @@ static int ali_ircc_fir_hard_xmit(struct sk_buff *skb, struct net_device *dev)
 					/* Adjust for timer resolution */
 					mtt = (mtt+250) / 500; 	/* 4 discard, 5 get advanced, Let's round off */
 					
-					IRDA_DEBUG(1, "%s(), ************** mtt = %d ***********\n", __FUNCTION__ , mtt);	
+					IRDA_DEBUG(1, "%s(), ************** mtt = %d ***********\n", __func__ , mtt);
 					
 					/* Setup timer */
 					if (mtt == 1) /* 500 us */
@@ -1570,8 +1579,8 @@ static int ali_ircc_fir_hard_xmit(struct sk_buff *skb, struct net_device *dev)
 	spin_unlock_irqrestore(&self->lock, flags);
 	dev_kfree_skb(skb);
 
-	IRDA_DEBUG(1, "%s(), ----------------- End ------------------\n", __FUNCTION__ );	
-	return 0;	
+	IRDA_DEBUG(1, "%s(), ----------------- End ------------------\n", __func__ );
+	return NETDEV_TX_OK;	
 }
 
 
@@ -1581,7 +1590,7 @@ static void ali_ircc_dma_xmit(struct ali_ircc_cb *self)
 	unsigned char FIFO_OPTI, Hi, Lo;
 	
 	
-	IRDA_DEBUG(1, "%s(), ---------------- Start -----------------\n", __FUNCTION__ );	
+	IRDA_DEBUG(1, "%s(), ---------------- Start -----------------\n", __func__ );
 	
 	iobase = self->io.fir_base;
 	
@@ -1632,7 +1641,7 @@ static void ali_ircc_dma_xmit(struct ali_ircc_cb *self)
 	tmp = inb(iobase+FIR_LCR_B);
 	tmp &= ~0x20; // Disable SIP
 	outb(((unsigned char)(tmp & 0x3f) | LCR_B_TX_MODE) & ~LCR_B_BW, iobase+FIR_LCR_B);
-	IRDA_DEBUG(1, "%s(), ******* Change to TX mode: FIR_LCR_B = 0x%x ******* \n", __FUNCTION__ , inb(iobase+FIR_LCR_B));
+	IRDA_DEBUG(1, "%s(), *** Change to TX mode: FIR_LCR_B = 0x%x ***\n", __func__ , inb(iobase+FIR_LCR_B));
 	
 	outb(0, iobase+FIR_LSR);
 			
@@ -1642,7 +1651,7 @@ static void ali_ircc_dma_xmit(struct ali_ircc_cb *self)
 	
 	switch_bank(iobase, BANK0); 
 	
-	IRDA_DEBUG(1, "%s(), ----------------- End ------------------\n", __FUNCTION__ );
+	IRDA_DEBUG(1, "%s(), ----------------- End ------------------\n", __func__ );
 }
 
 static int  ali_ircc_dma_xmit_complete(struct ali_ircc_cb *self)
@@ -1650,7 +1659,7 @@ static int  ali_ircc_dma_xmit_complete(struct ali_ircc_cb *self)
 	int iobase;
 	int ret = TRUE;
 	
-	IRDA_DEBUG(1, "%s(), ---------------- Start -----------------\n", __FUNCTION__ );	
+	IRDA_DEBUG(1, "%s(), ---------------- Start -----------------\n", __func__ );
 	
 	iobase = self->io.fir_base;
 	
@@ -1663,13 +1672,13 @@ static int  ali_ircc_dma_xmit_complete(struct ali_ircc_cb *self)
 	if((inb(iobase+FIR_LSR) & LSR_FRAME_ABORT) == LSR_FRAME_ABORT)
 	
 	{
-		IRDA_ERROR("%s(), ********* LSR_FRAME_ABORT *********\n", __FUNCTION__);	
-		self->stats.tx_errors++;
-		self->stats.tx_fifo_errors++;		
+		IRDA_ERROR("%s(), ********* LSR_FRAME_ABORT *********\n", __func__);
+		self->netdev->stats.tx_errors++;
+		self->netdev->stats.tx_fifo_errors++;
 	}
 	else 
 	{
-		self->stats.tx_packets++;
+		self->netdev->stats.tx_packets++;
 	}
 
 	/* Check if we need to change the speed */
@@ -1706,7 +1715,7 @@ static int  ali_ircc_dma_xmit_complete(struct ali_ircc_cb *self)
 		
 	switch_bank(iobase, BANK0); 
 	
-	IRDA_DEBUG(1, "%s(), ----------------- End ------------------\n", __FUNCTION__ );	
+	IRDA_DEBUG(1, "%s(), ----------------- End ------------------\n", __func__ );
 	return ret;
 }
 
@@ -1721,7 +1730,7 @@ static int ali_ircc_dma_receive(struct ali_ircc_cb *self)
 {
 	int iobase, tmp;
 	
-	IRDA_DEBUG(1, "%s(), ---------------- Start -----------------\n", __FUNCTION__ );	
+	IRDA_DEBUG(1, "%s(), ---------------- Start -----------------\n", __func__ );
 	
 	iobase = self->io.fir_base;
 	
@@ -1759,7 +1768,7 @@ static int ali_ircc_dma_receive(struct ali_ircc_cb *self)
 	//switch_bank(iobase, BANK0);
 	tmp = inb(iobase+FIR_LCR_B);
 	outb((unsigned char)(tmp &0x3f) | LCR_B_RX_MODE | LCR_B_BW , iobase + FIR_LCR_B); // 2000/12/1 05:16PM
-	IRDA_DEBUG(1, "%s(), *** Change To RX mode: FIR_LCR_B = 0x%x *** \n", __FUNCTION__ , inb(iobase+FIR_LCR_B));
+	IRDA_DEBUG(1, "%s(), *** Change To RX mode: FIR_LCR_B = 0x%x ***\n", __func__ , inb(iobase+FIR_LCR_B));
 			
 	/* Set Rx Threshold */
 	switch_bank(iobase, BANK1);
@@ -1771,7 +1780,7 @@ static int ali_ircc_dma_receive(struct ali_ircc_cb *self)
 	outb(CR_DMA_EN | CR_DMA_BURST, iobase+FIR_CR);
 				
 	switch_bank(iobase, BANK0); 
-	IRDA_DEBUG(1, "%s(), ----------------- End ------------------\n", __FUNCTION__ );	
+	IRDA_DEBUG(1, "%s(), ----------------- End ------------------\n", __func__ );
 	return 0;
 }
 
@@ -1782,7 +1791,7 @@ static int  ali_ircc_dma_receive_complete(struct ali_ircc_cb *self)
 	__u8 status, MessageCount;
 	int len, i, iobase, val;	
 
-	IRDA_DEBUG(1, "%s(), ---------------- Start -----------------\n", __FUNCTION__ );	
+	IRDA_DEBUG(1, "%s(), ---------------- Start -----------------\n", __func__ );
 
 	st_fifo = &self->st_fifo;		
 	iobase = self->io.fir_base;	
@@ -1791,7 +1800,7 @@ static int  ali_ircc_dma_receive_complete(struct ali_ircc_cb *self)
 	MessageCount = inb(iobase+ FIR_LSR)&0x07;
 	
 	if (MessageCount > 0)	
-		IRDA_DEBUG(0, "%s(), Messsage count = %d,\n", __FUNCTION__ , MessageCount);	
+		IRDA_DEBUG(0, "%s(), Messsage count = %d,\n", __func__ , MessageCount);
 		
 	for (i=0; i<=MessageCount; i++)
 	{
@@ -1804,11 +1813,11 @@ static int  ali_ircc_dma_receive_complete(struct ali_ircc_cb *self)
 		len = len << 8; 
 		len |= inb(iobase+FIR_RX_DSR_LO);
 		
-		IRDA_DEBUG(1, "%s(), RX Length = 0x%.2x,\n", __FUNCTION__ , len);	
-		IRDA_DEBUG(1, "%s(), RX Status = 0x%.2x,\n", __FUNCTION__ , status);
+		IRDA_DEBUG(1, "%s(), RX Length = 0x%.2x,\n", __func__ , len);
+		IRDA_DEBUG(1, "%s(), RX Status = 0x%.2x,\n", __func__ , status);
 		
 		if (st_fifo->tail >= MAX_RX_WINDOW) {
-			IRDA_DEBUG(0, "%s(), window is full!\n", __FUNCTION__ );
+			IRDA_DEBUG(0, "%s(), window is full!\n", __func__ );
 			continue;
 		}
 			
@@ -1831,39 +1840,39 @@ static int  ali_ircc_dma_receive_complete(struct ali_ircc_cb *self)
 		/* Check for errors */
 		if ((status & 0xd8) || self->rcvFramesOverflow || (len==0)) 		
 		{
-			IRDA_DEBUG(0,"%s(), ************* RX Errors ************ \n", __FUNCTION__ );	
+			IRDA_DEBUG(0,"%s(), ************* RX Errors ************\n", __func__ );
 			
 			/* Skip frame */
-			self->stats.rx_errors++;
+			self->netdev->stats.rx_errors++;
 			
 			self->rx_buff.data += len;
 			
 			if (status & LSR_FIFO_UR) 
 			{
-				self->stats.rx_frame_errors++;
-				IRDA_DEBUG(0,"%s(), ************* FIFO Errors ************ \n", __FUNCTION__ );
+				self->netdev->stats.rx_frame_errors++;
+				IRDA_DEBUG(0,"%s(), ************* FIFO Errors ************\n", __func__ );
 			}	
 			if (status & LSR_FRAME_ERROR)
 			{
-				self->stats.rx_frame_errors++;
-				IRDA_DEBUG(0,"%s(), ************* FRAME Errors ************ \n", __FUNCTION__ );
+				self->netdev->stats.rx_frame_errors++;
+				IRDA_DEBUG(0,"%s(), ************* FRAME Errors ************\n", __func__ );
 			}
 							
 			if (status & LSR_CRC_ERROR) 
 			{
-				self->stats.rx_crc_errors++;
-				IRDA_DEBUG(0,"%s(), ************* CRC Errors ************ \n", __FUNCTION__ );
+				self->netdev->stats.rx_crc_errors++;
+				IRDA_DEBUG(0,"%s(), ************* CRC Errors ************\n", __func__ );
 			}
 			
 			if(self->rcvFramesOverflow)
 			{
-				self->stats.rx_frame_errors++;
-				IRDA_DEBUG(0,"%s(), ************* Overran DMA buffer ************ \n", __FUNCTION__ );								
+				self->netdev->stats.rx_frame_errors++;
+				IRDA_DEBUG(0,"%s(), ************* Overran DMA buffer ************\n", __func__ );
 			}
 			if(len == 0)
 			{
-				self->stats.rx_frame_errors++;
-				IRDA_DEBUG(0,"%s(), ********** Receive Frame Size = 0 ********* \n", __FUNCTION__ );
+				self->netdev->stats.rx_frame_errors++;
+				IRDA_DEBUG(0,"%s(), ********** Receive Frame Size = 0 *********\n", __func__ );
 			}
 		}	 
 		else 
@@ -1875,7 +1884,7 @@ static int  ali_ircc_dma_receive_complete(struct ali_ircc_cb *self)
 				val = inb(iobase+FIR_BSR);	
 				if ((val& BSR_FIFO_NOT_EMPTY)== 0x80) 
 				{
-					IRDA_DEBUG(0, "%s(), ************* BSR_FIFO_NOT_EMPTY ************ \n", __FUNCTION__ );
+					IRDA_DEBUG(0, "%s(), ************* BSR_FIFO_NOT_EMPTY ************\n", __func__ );
 					
 					/* Put this entry back in fifo */
 					st_fifo->head--;
@@ -1912,8 +1921,8 @@ static int  ali_ircc_dma_receive_complete(struct ali_ircc_cb *self)
 			{
 				IRDA_WARNING("%s(), memory squeeze, "
 					     "dropping frame.\n",
-					     __FUNCTION__);
-				self->stats.rx_dropped++;
+					     __func__);
+				self->netdev->stats.rx_dropped++;
 
 				return FALSE;
 			}
@@ -1927,20 +1936,19 @@ static int  ali_ircc_dma_receive_complete(struct ali_ircc_cb *self)
 
 			/* Move to next frame */
 			self->rx_buff.data += len;
-			self->stats.rx_bytes += len;
-			self->stats.rx_packets++;
+			self->netdev->stats.rx_bytes += len;
+			self->netdev->stats.rx_packets++;
 
 			skb->dev = self->netdev;
 			skb_reset_mac_header(skb);
 			skb->protocol = htons(ETH_P_IRDA);
 			netif_rx(skb);
-			self->netdev->last_rx = jiffies;
 		}
 	}
 	
 	switch_bank(iobase, BANK0);	
 		
-	IRDA_DEBUG(1, "%s(), ----------------- End ------------------\n", __FUNCTION__ );	
+	IRDA_DEBUG(1, "%s(), ----------------- End ------------------\n", __func__ );
 	return TRUE;
 }
 
@@ -1952,19 +1960,20 @@ static int  ali_ircc_dma_receive_complete(struct ali_ircc_cb *self)
  *    Transmit the frame!
  *
  */
-static int ali_ircc_sir_hard_xmit(struct sk_buff *skb, struct net_device *dev)
+static netdev_tx_t ali_ircc_sir_hard_xmit(struct sk_buff *skb,
+						struct net_device *dev)
 {
 	struct ali_ircc_cb *self;
 	unsigned long flags;
 	int iobase;
 	__u32 speed;
 	
-	IRDA_DEBUG(2, "%s(), ---------------- Start ----------------\n", __FUNCTION__ );
+	IRDA_DEBUG(2, "%s(), ---------------- Start ----------------\n", __func__ );
 	
-	IRDA_ASSERT(dev != NULL, return 0;);
+	IRDA_ASSERT(dev != NULL, return NETDEV_TX_OK;);
 	
-	self = (struct ali_ircc_cb *) dev->priv;
-	IRDA_ASSERT(self != NULL, return 0;);
+	self = netdev_priv(dev);
+	IRDA_ASSERT(self != NULL, return NETDEV_TX_OK;);
 
 	iobase = self->io.sir_base;
 
@@ -1986,7 +1995,7 @@ static int ali_ircc_sir_hard_xmit(struct sk_buff *skb, struct net_device *dev)
 			dev->trans_start = jiffies;
 			spin_unlock_irqrestore(&self->lock, flags);
 			dev_kfree_skb(skb);
-			return 0;
+			return NETDEV_TX_OK;
 		} else
 			self->new_speed = speed;
 	}
@@ -1998,7 +2007,7 @@ static int ali_ircc_sir_hard_xmit(struct sk_buff *skb, struct net_device *dev)
 	self->tx_buff.len = async_wrap_skb(skb, self->tx_buff.data, 
 					   self->tx_buff.truesize);
 	
-	self->stats.tx_bytes += self->tx_buff.len;
+	self->netdev->stats.tx_bytes += self->tx_buff.len;
 
 	/* Turn on transmit finished interrupt. Will fire immediately!  */
 	outb(UART_IER_THRI, iobase+UART_IER); 
@@ -2008,9 +2017,9 @@ static int ali_ircc_sir_hard_xmit(struct sk_buff *skb, struct net_device *dev)
 
 	dev_kfree_skb(skb);
 	
-	IRDA_DEBUG(2, "%s(), ----------------- End ------------------\n", __FUNCTION__ );	
+	IRDA_DEBUG(2, "%s(), ----------------- End ------------------\n", __func__ );
 	
-	return 0;	
+	return NETDEV_TX_OK;	
 }
 
 
@@ -2027,19 +2036,19 @@ static int ali_ircc_net_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
 	unsigned long flags;
 	int ret = 0;
 	
-	IRDA_DEBUG(2, "%s(), ---------------- Start ----------------\n", __FUNCTION__ );
+	IRDA_DEBUG(2, "%s(), ---------------- Start ----------------\n", __func__ );
 	
 	IRDA_ASSERT(dev != NULL, return -1;);
 
-	self = dev->priv;
+	self = netdev_priv(dev);
 
 	IRDA_ASSERT(self != NULL, return -1;);
 
-	IRDA_DEBUG(2, "%s(), %s, (cmd=0x%X)\n", __FUNCTION__ , dev->name, cmd);
+	IRDA_DEBUG(2, "%s(), %s, (cmd=0x%X)\n", __func__ , dev->name, cmd);
 	
 	switch (cmd) {
 	case SIOCSBANDWIDTH: /* Set bandwidth */
-		IRDA_DEBUG(1, "%s(), SIOCSBANDWIDTH\n", __FUNCTION__ );
+		IRDA_DEBUG(1, "%s(), SIOCSBANDWIDTH\n", __func__ );
 		/*
 		 * This function will also be used by IrLAP to change the
 		 * speed, so we still must allow for speed change within
@@ -2053,13 +2062,13 @@ static int ali_ircc_net_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
 		spin_unlock_irqrestore(&self->lock, flags);
 		break;
 	case SIOCSMEDIABUSY: /* Set media busy */
-		IRDA_DEBUG(1, "%s(), SIOCSMEDIABUSY\n", __FUNCTION__ );
+		IRDA_DEBUG(1, "%s(), SIOCSMEDIABUSY\n", __func__ );
 		if (!capable(CAP_NET_ADMIN))
 			return -EPERM;
 		irda_device_set_media_busy(self->netdev, TRUE);
 		break;
 	case SIOCGRECEIVING: /* Check if we are receiving right now */
-		IRDA_DEBUG(2, "%s(), SIOCGRECEIVING\n", __FUNCTION__ );
+		IRDA_DEBUG(2, "%s(), SIOCGRECEIVING\n", __func__ );
 		/* This is protected */
 		irq->ifr_receiving = ali_ircc_is_receiving(self);
 		break;
@@ -2067,7 +2076,7 @@ static int ali_ircc_net_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
 		ret = -EOPNOTSUPP;
 	}
 	
-	IRDA_DEBUG(2, "%s(), ----------------- End ------------------\n", __FUNCTION__ );	
+	IRDA_DEBUG(2, "%s(), ----------------- End ------------------\n", __func__ );
 	
 	return ret;
 }
@@ -2084,7 +2093,7 @@ static int ali_ircc_is_receiving(struct ali_ircc_cb *self)
 	int status = FALSE;
 	int iobase;		
 	
-	IRDA_DEBUG(2, "%s(), ---------------- Start -----------------\n", __FUNCTION__ );
+	IRDA_DEBUG(2, "%s(), ---------------- Start -----------------\n", __func__ );
 	
 	IRDA_ASSERT(self != NULL, return FALSE;);
 
@@ -2098,7 +2107,7 @@ static int ali_ircc_is_receiving(struct ali_ircc_cb *self)
 		if((inb(iobase+FIR_FIFO_FR) & 0x3f) != 0) 		
 		{
 			/* We are receiving something */
-			IRDA_DEBUG(1, "%s(), We are receiving something\n", __FUNCTION__ );
+			IRDA_DEBUG(1, "%s(), We are receiving something\n", __func__ );
 			status = TRUE;
 		}
 		switch_bank(iobase, BANK0);		
@@ -2110,20 +2119,9 @@ static int ali_ircc_is_receiving(struct ali_ircc_cb *self)
 	
 	spin_unlock_irqrestore(&self->lock, flags);
 	
-	IRDA_DEBUG(2, "%s(), ----------------- End ------------------\n", __FUNCTION__ );
+	IRDA_DEBUG(2, "%s(), ----------------- End ------------------\n", __func__ );
 	
 	return status;
-}
-
-static struct net_device_stats *ali_ircc_net_get_stats(struct net_device *dev)
-{
-	struct ali_ircc_cb *self = (struct ali_ircc_cb *) dev->priv;
-	
-	IRDA_DEBUG(2, "%s(), ---------------- Start ----------------\n", __FUNCTION__ );
-		
-	IRDA_DEBUG(2, "%s(), ----------------- End ------------------\n", __FUNCTION__ );	
-	
-	return &self->stats;
 }
 
 static int ali_ircc_suspend(struct platform_device *dev, pm_message_t state)
@@ -2167,7 +2165,7 @@ static void SetCOMInterrupts(struct ali_ircc_cb *self , unsigned char enable)
 	
 	int iobase = self->io.fir_base; /* or sir_base */
 
-	IRDA_DEBUG(2, "%s(), -------- Start -------- ( Enable = %d )\n", __FUNCTION__ , enable);	
+	IRDA_DEBUG(2, "%s(), -------- Start -------- ( Enable = %d )\n", __func__ , enable);
 	
 	/* Enable the interrupt which we wish to */
 	if (enable){
@@ -2208,14 +2206,14 @@ static void SetCOMInterrupts(struct ali_ircc_cb *self , unsigned char enable)
 	else
 		outb(newMask, iobase+UART_IER);
 		
-	IRDA_DEBUG(2, "%s(), ----------------- End ------------------\n", __FUNCTION__ );	
+	IRDA_DEBUG(2, "%s(), ----------------- End ------------------\n", __func__ );
 }
 
 static void SIR2FIR(int iobase)
 {
 	//unsigned char tmp;
 		
-	IRDA_DEBUG(1, "%s(), ---------------- Start ----------------\n", __FUNCTION__ );
+	IRDA_DEBUG(1, "%s(), ---------------- Start ----------------\n", __func__ );
 	
 	/* Already protected (change_speed() or setup()), no need to lock.
 	 * Jean II */
@@ -2231,14 +2229,14 @@ static void SIR2FIR(int iobase)
 	//tmp |= 0x20;
 	//outb(tmp, iobase+FIR_LCR_B);	
 	
-	IRDA_DEBUG(1, "%s(), ----------------- End ------------------\n", __FUNCTION__ );	
+	IRDA_DEBUG(1, "%s(), ----------------- End ------------------\n", __func__ );
 }
 
 static void FIR2SIR(int iobase)
 {
 	unsigned char val;
 	
-	IRDA_DEBUG(1, "%s(), ---------------- Start ----------------\n", __FUNCTION__ );
+	IRDA_DEBUG(1, "%s(), ---------------- Start ----------------\n", __func__ );
 	
 	/* Already protected (change_speed() or setup()), no need to lock.
 	 * Jean II */
@@ -2254,12 +2252,13 @@ static void FIR2SIR(int iobase)
 	val = inb(iobase+UART_LSR);
 	val = inb(iobase+UART_MSR);
 	
-	IRDA_DEBUG(1, "%s(), ----------------- End ------------------\n", __FUNCTION__ );
+	IRDA_DEBUG(1, "%s(), ----------------- End ------------------\n", __func__ );
 }
 
 MODULE_AUTHOR("Benjamin Kong <benjamin_kong@ali.com.tw>");
 MODULE_DESCRIPTION("ALi FIR Controller Driver");
 MODULE_LICENSE("GPL");
+MODULE_ALIAS("platform:" ALI_IRCC_DRIVER_NAME);
 
 
 module_param_array(io, int, NULL, 0);

@@ -21,23 +21,20 @@
 #include <asm/bootinfo.h>
 #endif
 
-extern const struct linux_logo logo_linux_mono;
-extern const struct linux_logo logo_linux_vga16;
-extern const struct linux_logo logo_linux_clut224;
-extern const struct linux_logo logo_dec_clut224;
-extern const struct linux_logo logo_mac_clut224;
-extern const struct linux_logo logo_parisc_clut224;
-extern const struct linux_logo logo_sgi_clut224;
-extern const struct linux_logo logo_sun_clut224;
-extern const struct linux_logo logo_superh_mono;
-extern const struct linux_logo logo_superh_vga16;
-extern const struct linux_logo logo_superh_clut224;
-extern const struct linux_logo logo_m32r_clut224;
+static int nologo;
+module_param(nologo, bool, 0);
+MODULE_PARM_DESC(nologo, "Disables startup logo");
 
-
-const struct linux_logo *fb_find_logo(int depth)
+/* logo's are marked __initdata. Use __init_refok to tell
+ * modpost that it is intended that this function uses data
+ * marked __initdata.
+ */
+const struct linux_logo * __init_refok fb_find_logo(int depth)
 {
 	const struct linux_logo *logo = NULL;
+
+	if (nologo)
+		return NULL;
 
 	if (depth >= 1) {
 #ifdef CONFIG_LOGO_LINUX_MONO
@@ -55,6 +52,10 @@ const struct linux_logo *fb_find_logo(int depth)
 		/* Generic Linux logo */
 		logo = &logo_linux_vga16;
 #endif
+#ifdef CONFIG_LOGO_BLACKFIN_VGA16
+		/* Blackfin processor logo */
+		logo = &logo_blackfin_vga16;
+#endif
 #ifdef CONFIG_LOGO_SUPERH_VGA16
 		/* SuperH Linux logo */
 		logo = &logo_superh_vga16;
@@ -66,12 +67,13 @@ const struct linux_logo *fb_find_logo(int depth)
 		/* Generic Linux logo */
 		logo = &logo_linux_clut224;
 #endif
+#ifdef CONFIG_LOGO_BLACKFIN_CLUT224
+		/* Blackfin Linux logo */
+		logo = &logo_blackfin_clut224;
+#endif
 #ifdef CONFIG_LOGO_DEC_CLUT224
 		/* DEC Linux logo on MIPS/MIPS64 or ALPHA */
-#ifndef CONFIG_ALPHA
-		if (mips_machgroup == MACH_GROUP_DEC)
-#endif
-			logo = &logo_dec_clut224;
+		logo = &logo_dec_clut224;
 #endif
 #ifdef CONFIG_LOGO_MAC_CLUT224
 		/* Macintosh Linux logo on m68k */
@@ -84,10 +86,7 @@ const struct linux_logo *fb_find_logo(int depth)
 #endif
 #ifdef CONFIG_LOGO_SGI_CLUT224
 		/* SGI Linux logo on MIPS/MIPS64 and VISWS */
-#ifndef CONFIG_X86_VISWS
-		if (mips_machgroup == MACH_GROUP_SGI)
-#endif
-			logo = &logo_sgi_clut224;
+		logo = &logo_sgi_clut224;
 #endif
 #ifdef CONFIG_LOGO_SUN_CLUT224
 		/* Sun Linux logo */

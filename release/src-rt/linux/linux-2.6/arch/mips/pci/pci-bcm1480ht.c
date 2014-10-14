@@ -48,15 +48,15 @@
  * Macros for calculating offsets into config space given a device
  * structure or dev/fun/reg
  */
-#define CFGOFFSET(bus,devfn,where) (((bus)<<16)+((devfn)<<8)+(where))
-#define CFGADDR(bus,devfn,where)   CFGOFFSET((bus)->number,(devfn),where)
+#define CFGOFFSET(bus, devfn, where) (((bus)<<16)+((devfn)<<8)+(where))
+#define CFGADDR(bus, devfn, where)   CFGOFFSET((bus)->number, (devfn), where)
 
 static void *ht_cfg_space;
 
 #define PCI_BUS_ENABLED	1
 #define PCI_DEVICE_MODE	2
 
-static int bcm1480ht_bus_status = 0;
+static int bcm1480ht_bus_status;
 
 #define PCI_BRIDGE_DEVICE  0
 #define HT_BRIDGE_DEVICE   1
@@ -173,8 +173,8 @@ struct pci_ops bcm1480ht_pci_ops = {
 
 static struct resource bcm1480ht_mem_resource = {
 	.name	= "BCM1480 HT MEM",
-	.start	= 0x40000000UL,
-	.end	= 0x5fffffffUL,
+	.start	= A_BCM1480_PHYS_HT_MEM_MATCH_BYTES,
+	.end	= A_BCM1480_PHYS_HT_MEM_MATCH_BYTES + 0x1fffffffUL,
 	.flags	= IORESOURCE_MEM,
 };
 

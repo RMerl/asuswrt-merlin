@@ -9,7 +9,8 @@
  *	the Free Software Foundation; either version 2 of the License, or
  *	(at your option) any later version.
  *
- * See Documentation/usb/usb-serial.txt for more information on using this driver
+ * See Documentation/usb/usb-serial.txt for more information on using this
+ * driver
  */
 
 #include <linux/kernel.h>
@@ -28,7 +29,7 @@
 #define HP_VENDOR_ID 0x03f0
 #define HP49GP_PRODUCT_ID 0x0121
 
-static struct usb_device_id id_table [] = {
+static const struct usb_device_id id_table[] = {
 	{ USB_DEVICE(HP_VENDOR_ID, HP49GP_PRODUCT_ID) },
 	{ }					/* Terminating entry */
 };
@@ -50,9 +51,6 @@ static struct usb_serial_driver hp49gp_device = {
 	},
 	.id_table =		id_table,
 	.usb_driver = 		&hp49gp_driver,
-	.num_interrupt_in =	NUM_DONT_CARE,
-	.num_bulk_in =		NUM_DONT_CARE,
-	.num_bulk_out =		NUM_DONT_CARE,
 	.num_ports =		1,
 };
 
@@ -65,7 +63,8 @@ static int __init hp49gp_init(void)
 	retval = usb_register(&hp49gp_driver);
 	if (retval)
 		goto failed_usb_register;
-	info(DRIVER_DESC " " DRIVER_VERSION);
+	printk(KERN_INFO KBUILD_MODNAME ": " DRIVER_VERSION ":"
+	       DRIVER_DESC "\n");
 	return 0;
 failed_usb_register:
 	usb_serial_deregister(&hp49gp_device);

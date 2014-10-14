@@ -15,15 +15,17 @@
 #include <linux/rtc.h>
 #include <linux/sched.h>
 #include <linux/proc_fs.h>
-#include <linux/pm.h>
+#include <linux/suspend.h>
 #include <linux/delay.h>
 #include <linux/clk.h>
+#include <linux/io.h>
+#include <linux/slab.h>
 
-#include <asm/io.h>
-#include <asm/mach-types.h>
 #include <asm/cacheflush.h>
-#include <asm/arch/pm.h>
-#include <asm/arch/clock.h>
+
+#include <mach/hardware.h>
+#include <mach/pm.h>
+#include <mach/clock.h>
 
 #define SRAM_VA IO_ADDRESS(PNX4008_IRAM_BASE)
 
@@ -117,7 +119,7 @@ static int pnx4008_pm_valid(suspend_state_t state)
 	       (state == PM_SUSPEND_MEM);
 }
 
-static struct pm_ops pnx4008_pm_ops = {
+static const struct platform_suspend_ops pnx4008_pm_ops = {
 	.enter = pnx4008_pm_enter,
 	.valid = pnx4008_pm_valid,
 };
@@ -146,7 +148,7 @@ static int __init pnx4008_pm_init(void)
 		return -ENOMEM;
 	}
 
-	pm_set_ops(&pnx4008_pm_ops);
+	suspend_set_ops(&pnx4008_pm_ops);
 	return 0;
 }
 

@@ -28,7 +28,7 @@
 #include <linux/linkage.h>
 #include <linux/init.h>
 #include <asm/assembler.h>
-#include <asm/elf.h>
+#include <asm/hwcap.h>
 #include <asm/pgtable-hwdef.h>
 #include <asm/pgtable.h>
 #include <asm/page.h>
@@ -61,15 +61,11 @@ ENTRY(cpu_arm926_proc_init)
  * cpu_arm926_proc_fin()
  */
 ENTRY(cpu_arm926_proc_fin)
-	stmfd	sp!, {lr}
-	mov	ip, #PSR_F_BIT | PSR_I_BIT | SVC_MODE
-	msr	cpsr_c, ip
-	bl	arm926_flush_kern_cache_all
 	mrc	p15, 0, r0, c1, c0, 0		@ ctrl register
 	bic	r0, r0, #0x1000			@ ...i............
 	bic	r0, r0, #0x000e			@ ............wca.
 	mcr	p15, 0, r0, c1, c0, 0		@ disable caches
-	ldmfd	sp!, {pc}
+	mov	pc, lr
 
 /*
  * cpu_arm926_reset(loc)
@@ -105,10 +101,25 @@ ENTRY(cpu_arm926_do_idle)
 	mrc	p15, 0, r1, c1, c0, 0		@ Read control register
 	mcr	p15, 0, r0, c7, c10, 4		@ Drain write buffer
 	bic	r2, r1, #1 << 12
+	mrs	r3, cpsr			@ Disable FIQs while Icache
+	orr	ip, r3, #PSR_F_BIT		@ is disabled
+	msr	cpsr_c, ip
 	mcr	p15, 0, r2, c1, c0, 0		@ Disable I cache
 	mcr	p15, 0, r0, c7, c0, 4		@ Wait for interrupt
 	mcr	p15, 0, r1, c1, c0, 0		@ Restore ICache enable
+	msr	cpsr_c, r3			@ Restore FIQ state
 	mov	pc, lr
+
+/*
+ *	flush_icache_all()
+ *
+ *	Unconditionally clean and invalidate the entire icache.
+ */
+ENTRY(arm926_flush_icache_all)
+	mov	r0, #0
+	mcr	p15, 0, r0, c7, c5, 0		@ invalidate I cache
+	mov	pc, lr
+ENDPROC(arm926_flush_icache_all)
 
 /*
  *	flush_user_cache_all()
@@ -210,15 +221,16 @@ ENTRY(arm926_coherent_user_range)
 	mov	pc, lr
 
 /*
- *	flush_kern_dcache_page(void *page)
+ *	flush_kern_dcache_area(void *addr, size_t size)
  *
  *	Ensure no D cache aliasing occurs, either with itself or
  *	the I cache
  *
- *	- addr	- page aligned address
+ *	- addr	- kernel address
+ *	- size	- region size
  */
-ENTRY(arm926_flush_kern_dcache_page)
-	add	r1, r0, #PAGE_SZ
+ENTRY(arm926_flush_kern_dcache_area)
+	add	r1, r0, r1
 1:	mcr	p15, 0, r0, c7, c14, 1		@ clean+invalidate D entry
 	add	r0, r0, #CACHE_DLINESIZE
 	cmp	r0, r1
@@ -241,7 +253,7 @@ ENTRY(arm926_flush_kern_dcache_page)
  *
  * (same as v4wb)
  */
-ENTRY(arm926_dma_inv_range)
+arm926_dma_inv_range:
 #ifndef CONFIG_CPU_DCACHE_WRITETHROUGH
 	tst	r0, #CACHE_DLINESIZE - 1
 	mcrne	p15, 0, r0, c7, c10, 1		@ clean D entry
@@ -266,7 +278,7 @@ ENTRY(arm926_dma_inv_range)
  *
  * (same as v4wb)
  */
-ENTRY(arm926_dma_clean_range)
+arm926_dma_clean_range:
 #ifndef CONFIG_CPU_DCACHE_WRITETHROUGH
 	bic	r0, r0, #CACHE_DLINESIZE - 1
 1:	mcr	p15, 0, r0, c7, c10, 1		@ clean D entry
@@ -291,7 +303,7 @@ ENTRY(arm926_dma_flush_range)
 #ifndef CONFIG_CPU_DCACHE_WRITETHROUGH
 	mcr	p15, 0, r0, c7, c14, 1		@ clean+invalidate D entry
 #else
-	mcr	p15, 0, r0, c7, c10, 1		@ clean D entry
+	mcr	p15, 0, r0, c7, c6, 1		@ invalidate D entry
 #endif
 	add	r0, r0, #CACHE_DLINESIZE
 	cmp	r0, r1
@@ -299,15 +311,40 @@ ENTRY(arm926_dma_flush_range)
 	mcr	p15, 0, r0, c7, c10, 4		@ drain WB
 	mov	pc, lr
 
+/*
+ *	dma_map_area(start, size, dir)
+ *	- start	- kernel virtual start address
+ *	- size	- size of region
+ *	- dir	- DMA direction
+ */
+ENTRY(arm926_dma_map_area)
+	add	r1, r1, r0
+	cmp	r2, #DMA_TO_DEVICE
+	beq	arm926_dma_clean_range
+	bcs	arm926_dma_inv_range
+	b	arm926_dma_flush_range
+ENDPROC(arm926_dma_map_area)
+
+/*
+ *	dma_unmap_area(start, size, dir)
+ *	- start	- kernel virtual start address
+ *	- size	- size of region
+ *	- dir	- DMA direction
+ */
+ENTRY(arm926_dma_unmap_area)
+	mov	pc, lr
+ENDPROC(arm926_dma_unmap_area)
+
 ENTRY(arm926_cache_fns)
+	.long	arm926_flush_icache_all
 	.long	arm926_flush_kern_cache_all
 	.long	arm926_flush_user_cache_all
 	.long	arm926_flush_user_cache_range
 	.long	arm926_coherent_kern_range
 	.long	arm926_coherent_user_range
-	.long	arm926_flush_kern_dcache_page
-	.long	arm926_dma_inv_range
-	.long	arm926_dma_clean_range
+	.long	arm926_flush_kern_dcache_area
+	.long	arm926_dma_map_area
+	.long	arm926_dma_unmap_area
 	.long	arm926_dma_flush_range
 
 ENTRY(cpu_arm926_dcache_clean_area)
@@ -355,29 +392,7 @@ ENTRY(cpu_arm926_switch_mm)
 	.align	5
 ENTRY(cpu_arm926_set_pte_ext)
 #ifdef CONFIG_MMU
-	str	r1, [r0], #-2048		@ linux version
-
-	eor	r1, r1, #L_PTE_PRESENT | L_PTE_YOUNG | L_PTE_WRITE | L_PTE_DIRTY
-
-	bic	r2, r1, #PTE_SMALL_AP_MASK
-	bic	r2, r2, #PTE_TYPE_MASK
-	orr	r2, r2, #PTE_TYPE_SMALL
-
-	tst	r1, #L_PTE_USER			@ User?
-	orrne	r2, r2, #PTE_SMALL_AP_URO_SRW
-
-	tst	r1, #L_PTE_WRITE | L_PTE_DIRTY	@ Write and Dirty?
-	orreq	r2, r2, #PTE_SMALL_AP_UNO_SRW
-
-	tst	r1, #L_PTE_PRESENT | L_PTE_YOUNG	@ Present and Young?
-	movne	r2, #0
-
-#ifdef CONFIG_CPU_DCACHE_WRITETHROUGH
-	eor	r3, r2, #0x0a			@ C & small page?
-	tst	r3, #0x0b
-	biceq	r2, r2, #4
-#endif
-	str	r2, [r0]			@ hardware version
+	armv3_set_pte_ext
 	mov	r0, r0
 #ifndef CONFIG_CPU_DCACHE_WRITETHROUGH
 	mcr	p15, 0, r0, c7, c10, 1		@ clean D entry
@@ -386,7 +401,41 @@ ENTRY(cpu_arm926_set_pte_ext)
 #endif
 	mov	pc, lr
 
-	__INIT
+/* Suspend/resume support: taken from arch/arm/plat-s3c24xx/sleep.S */
+.globl	cpu_arm926_suspend_size
+.equ	cpu_arm926_suspend_size, 4 * 3
+#ifdef CONFIG_PM_SLEEP
+ENTRY(cpu_arm926_do_suspend)
+	stmfd	sp!, {r4 - r7, lr}
+	mrc	p15, 0, r4, c13, c0, 0	@ PID
+	mrc	p15, 0, r5, c3, c0, 0	@ Domain ID
+	mrc	p15, 0, r6, c2, c0, 0	@ TTB address
+	mrc	p15, 0, r7, c1, c0, 0	@ Control register
+	stmia	r0, {r4 - r7}
+	ldmfd	sp!, {r4 - r7, pc}
+ENDPROC(cpu_arm926_do_suspend)
+
+ENTRY(cpu_arm926_do_resume)
+	mov	ip, #0
+	mcr	p15, 0, ip, c8, c7, 0	@ invalidate I+D TLBs
+	mcr	p15, 0, ip, c7, c7, 0	@ invalidate I+D caches
+	ldmia	r0, {r4 - r7}
+	mcr	p15, 0, r4, c13, c0, 0	@ PID
+	mcr	p15, 0, r5, c3, c0, 0	@ Domain ID
+	mcr	p15, 0, r6, c2, c0, 0	@ TTB address
+	mov	r0, r7			@ control register
+	mov	r2, r6, lsr #14		@ get TTB0 base
+	mov	r2, r2, lsl #14
+	ldr	r3, =PMD_TYPE_SECT | PMD_SECT_BUFFERABLE | \
+		     PMD_SECT_CACHEABLE | PMD_BIT4 | PMD_SECT_AP_WRITE
+	b	cpu_resume_mmu
+ENDPROC(cpu_arm926_do_resume)
+#else
+#define cpu_arm926_do_suspend	0
+#define cpu_arm926_do_resume	0
+#endif
+
+	__CPUINIT
 
 	.type	__arm926_setup, #function
 __arm926_setup:
@@ -433,6 +482,7 @@ arm926_crval:
 	.type	arm926_processor_functions, #object
 arm926_processor_functions:
 	.word	v5tj_early_abort
+	.word	legacy_pabort
 	.word	cpu_arm926_proc_init
 	.word	cpu_arm926_proc_fin
 	.word	cpu_arm926_reset
@@ -440,6 +490,9 @@ arm926_processor_functions:
 	.word	cpu_arm926_dcache_clean_area
 	.word	cpu_arm926_switch_mm
 	.word	cpu_arm926_set_pte_ext
+	.word	cpu_arm926_suspend_size
+	.word	cpu_arm926_do_suspend
+	.word	cpu_arm926_do_resume
 	.size	arm926_processor_functions, . - arm926_processor_functions
 
 	.section ".rodata"

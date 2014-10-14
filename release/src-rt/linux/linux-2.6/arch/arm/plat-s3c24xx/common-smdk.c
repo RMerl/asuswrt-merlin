@@ -18,6 +18,7 @@
 #include <linux/list.h>
 #include <linux/timer.h>
 #include <linux/init.h>
+#include <linux/gpio.h>
 #include <linux/sysdev.h>
 #include <linux/platform_device.h>
 
@@ -25,49 +26,50 @@
 #include <linux/mtd/nand.h>
 #include <linux/mtd/nand_ecc.h>
 #include <linux/mtd/partitions.h>
+#include <linux/io.h>
 
 #include <asm/mach/arch.h>
 #include <asm/mach/map.h>
 #include <asm/mach/irq.h>
 
 #include <asm/mach-types.h>
-#include <asm/hardware.h>
-#include <asm/io.h>
+#include <mach/hardware.h>
 #include <asm/irq.h>
 
-#include <asm/arch/regs-gpio.h>
-#include <asm/arch/leds-gpio.h>
+#include <mach/regs-gpio.h>
+#include <mach/leds-gpio.h>
 
-#include <asm/arch/nand.h>
+#include <plat/nand.h>
 
-#include <asm/plat-s3c24xx/common-smdk.h>
-#include <asm/plat-s3c24xx/devs.h>
-#include <asm/plat-s3c24xx/pm.h>
+#include <plat/common-smdk.h>
+#include <plat/gpio-cfg.h>
+#include <plat/devs.h>
+#include <plat/pm.h>
 
 /* LED devices */
 
 static struct s3c24xx_led_platdata smdk_pdata_led4 = {
-	.gpio		= S3C2410_GPF4,
+	.gpio		= S3C2410_GPF(4),
 	.flags		= S3C24XX_LEDF_ACTLOW | S3C24XX_LEDF_TRISTATE,
 	.name		= "led4",
 	.def_trigger	= "timer",
 };
 
 static struct s3c24xx_led_platdata smdk_pdata_led5 = {
-	.gpio		= S3C2410_GPF5,
+	.gpio		= S3C2410_GPF(5),
 	.flags		= S3C24XX_LEDF_ACTLOW | S3C24XX_LEDF_TRISTATE,
 	.name		= "led5",
 	.def_trigger	= "nand-disk",
 };
 
 static struct s3c24xx_led_platdata smdk_pdata_led6 = {
-	.gpio		= S3C2410_GPF6,
+	.gpio		= S3C2410_GPF(6),
 	.flags		= S3C24XX_LEDF_ACTLOW | S3C24XX_LEDF_TRISTATE,
 	.name		= "led6",
 };
 
 static struct s3c24xx_led_platdata smdk_pdata_led7 = {
-	.gpio		= S3C2410_GPF7,
+	.gpio		= S3C2410_GPF(7),
 	.flags		= S3C24XX_LEDF_ACTLOW | S3C24XX_LEDF_TRISTATE,
 	.name		= "led7",
 };
@@ -145,7 +147,7 @@ static struct mtd_partition smdk_default_nand_part[] = {
 	[7] = {
 		.name	= "S3C2410 flash partition 7",
 		.offset = SZ_1M * 48,
-		.size	= SZ_16M,
+		.size	= MTDPART_SIZ_FULL,
 	}
 };
 
@@ -184,22 +186,22 @@ void __init smdk_machine_init(void)
 {
 	/* Configure the LEDs (even if we have no LED support)*/
 
-	s3c2410_gpio_cfgpin(S3C2410_GPF4, S3C2410_GPF4_OUTP);
-	s3c2410_gpio_cfgpin(S3C2410_GPF5, S3C2410_GPF5_OUTP);
-	s3c2410_gpio_cfgpin(S3C2410_GPF6, S3C2410_GPF6_OUTP);
-	s3c2410_gpio_cfgpin(S3C2410_GPF7, S3C2410_GPF7_OUTP);
+	s3c_gpio_cfgpin(S3C2410_GPF(4), S3C2410_GPIO_OUTPUT);
+	s3c_gpio_cfgpin(S3C2410_GPF(5), S3C2410_GPIO_OUTPUT);
+	s3c_gpio_cfgpin(S3C2410_GPF(6), S3C2410_GPIO_OUTPUT);
+	s3c_gpio_cfgpin(S3C2410_GPF(7), S3C2410_GPIO_OUTPUT);
 
-	s3c2410_gpio_setpin(S3C2410_GPF4, 1);
-	s3c2410_gpio_setpin(S3C2410_GPF5, 1);
-	s3c2410_gpio_setpin(S3C2410_GPF6, 1);
-	s3c2410_gpio_setpin(S3C2410_GPF7, 1);
+	s3c2410_gpio_setpin(S3C2410_GPF(4), 1);
+	s3c2410_gpio_setpin(S3C2410_GPF(5), 1);
+	s3c2410_gpio_setpin(S3C2410_GPF(6), 1);
+	s3c2410_gpio_setpin(S3C2410_GPF(7), 1);
 
 	if (machine_is_smdk2443())
 		smdk_nand_info.twrph0 = 50;
 
-	s3c_device_nand.dev.platform_data = &smdk_nand_info;
+	s3c_nand_set_platdata(&smdk_nand_info);
 
 	platform_add_devices(smdk_devs, ARRAY_SIZE(smdk_devs));
 
-	s3c2410_pm_init();
+	s3c_pm_init();
 }

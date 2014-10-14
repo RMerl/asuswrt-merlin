@@ -1,32 +1,32 @@
 /*
- * Copyright (C) 2006 Sony Computer Entertainment Inc.
- * Copyright 2006, 2007 Sony Corporation
+ *  PS3 AV backend support.
  *
- * AV backend support for PS3
+ *  Copyright (C) 2007 Sony Computer Entertainment Inc.
+ *  Copyright 2007 Sony Corp.
  *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published
- * by the Free Software Foundation; version 2 of the License.
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; version 2 of the License.
  *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License for more details.
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/delay.h>
 #include <linux/notifier.h>
-#include <linux/reboot.h>
-#include <linux/kernel.h>
 #include <linux/ioctl.h>
+#include <linux/fb.h>
+#include <linux/slab.h>
 
 #include <asm/firmware.h>
-#include <asm/lv1call.h>
 #include <asm/ps3av.h>
 #include <asm/ps3.h>
 
@@ -35,17 +35,18 @@
 #define BUFSIZE          4096	/* vuart buf size */
 #define PS3AV_BUF_SIZE   512	/* max packet size */
 
+static int safe_mode;
+
 static int timeout = 5000;	/* in msec ( 5 sec ) */
 module_param(timeout, int, 0644);
 
 static struct ps3av {
-	int available;
 	struct mutex mutex;
 	struct work_struct work;
 	struct completion done;
 	struct workqueue_struct *wq;
 	int open_count;
-	struct ps3_vuart_port_device *dev;
+	struct ps3_system_bus_device *dev;
 
 	int region;
 	struct ps3av_pkt_av_get_hw_conf av_hw_conf;
@@ -55,11 +56,11 @@ static struct ps3av {
 	u32 audio_port;
 	int ps3av_mode;
 	int ps3av_mode_old;
-} ps3av;
-
-static struct ps3_vuart_port_device ps3av_dev = {
-	.match_id = PS3_MATCH_ID_AV_SETTINGS
-};
+	union {
+		struct ps3av_reply_hdr reply_hdr;
+		u8 raw[PS3AV_BUF_SIZE];
+	} recv_buf;
+} *ps3av;
 
 /* color space */
 #define YUV444 PS3AV_CMD_VIDEO_CS_YUV444_8
@@ -76,23 +77,21 @@ static const struct avset_video_mode {
 	u32 aspect;
 	u32 x;
 	u32 y;
-	u32 interlace;
-	u32 freq;
 } video_mode_table[] = {
 	{     0, }, /* auto */
-	{YUV444, XRGB, PS3AV_CMD_VIDEO_VID_480I,       A_N,  720,  480, 1, 60},
-	{YUV444, XRGB, PS3AV_CMD_VIDEO_VID_480P,       A_N,  720,  480, 0, 60},
-	{YUV444, XRGB, PS3AV_CMD_VIDEO_VID_720P_60HZ,  A_N, 1280,  720, 0, 60},
-	{YUV444, XRGB, PS3AV_CMD_VIDEO_VID_1080I_60HZ, A_W, 1920, 1080, 1, 60},
-	{YUV444, XRGB, PS3AV_CMD_VIDEO_VID_1080P_60HZ, A_W, 1920, 1080, 0, 60},
-	{YUV444, XRGB, PS3AV_CMD_VIDEO_VID_576I,       A_N,  720,  576, 1, 50},
-	{YUV444, XRGB, PS3AV_CMD_VIDEO_VID_576P,       A_N,  720,  576, 0, 50},
-	{YUV444, XRGB, PS3AV_CMD_VIDEO_VID_720P_50HZ,  A_N, 1280,  720, 0, 50},
-	{YUV444, XRGB, PS3AV_CMD_VIDEO_VID_1080I_50HZ, A_W, 1920, 1080, 1, 50},
-	{YUV444, XRGB, PS3AV_CMD_VIDEO_VID_1080P_50HZ, A_W, 1920, 1080, 0, 50},
-	{  RGB8, XRGB, PS3AV_CMD_VIDEO_VID_WXGA,       A_W, 1280,  768, 0, 60},
-	{  RGB8, XRGB, PS3AV_CMD_VIDEO_VID_SXGA,       A_N, 1280, 1024, 0, 60},
-	{  RGB8, XRGB, PS3AV_CMD_VIDEO_VID_WUXGA,      A_W, 1920, 1200, 0, 60},
+	{YUV444, XRGB, PS3AV_CMD_VIDEO_VID_480I,       A_N,  720,  480},
+	{YUV444, XRGB, PS3AV_CMD_VIDEO_VID_480P,       A_N,  720,  480},
+	{YUV444, XRGB, PS3AV_CMD_VIDEO_VID_720P_60HZ,  A_W, 1280,  720},
+	{YUV444, XRGB, PS3AV_CMD_VIDEO_VID_1080I_60HZ, A_W, 1920, 1080},
+	{YUV444, XRGB, PS3AV_CMD_VIDEO_VID_1080P_60HZ, A_W, 1920, 1080},
+	{YUV444, XRGB, PS3AV_CMD_VIDEO_VID_576I,       A_N,  720,  576},
+	{YUV444, XRGB, PS3AV_CMD_VIDEO_VID_576P,       A_N,  720,  576},
+	{YUV444, XRGB, PS3AV_CMD_VIDEO_VID_720P_50HZ,  A_W, 1280,  720},
+	{YUV444, XRGB, PS3AV_CMD_VIDEO_VID_1080I_50HZ, A_W, 1920, 1080},
+	{YUV444, XRGB, PS3AV_CMD_VIDEO_VID_1080P_50HZ, A_W, 1920, 1080},
+	{  RGB8, XRGB, PS3AV_CMD_VIDEO_VID_WXGA,       A_W, 1280,  768},
+	{  RGB8, XRGB, PS3AV_CMD_VIDEO_VID_SXGA,       A_N, 1280, 1024},
+	{  RGB8, XRGB, PS3AV_CMD_VIDEO_VID_WUXGA,      A_W, 1920, 1200},
 };
 
 /* supported CIDs */
@@ -169,7 +168,7 @@ static int ps3av_parse_event_packet(const struct ps3av_reply_hdr *hdr)
 	if (hdr->cid & PS3AV_EVENT_CMD_MASK) {
 		table = ps3av_search_cmd_table(hdr->cid, PS3AV_EVENT_CMD_MASK);
 		if (table)
-			dev_dbg(&ps3av_dev.core,
+			dev_dbg(&ps3av->dev->core,
 				"recv event packet cid:%08x port:0x%x size:%d\n",
 				hdr->cid, ps3av_event_get_port_id(hdr->cid),
 				hdr->size);
@@ -182,6 +181,41 @@ static int ps3av_parse_event_packet(const struct ps3av_reply_hdr *hdr)
 	return 0;
 }
 
+
+#define POLLING_INTERVAL  25	/* in msec */
+
+static int ps3av_vuart_write(struct ps3_system_bus_device *dev,
+			     const void *buf, unsigned long size)
+{
+	int error;
+	dev_dbg(&dev->core, " -> %s:%d\n", __func__, __LINE__);
+	error = ps3_vuart_write(dev, buf, size);
+	dev_dbg(&dev->core, " <- %s:%d\n", __func__, __LINE__);
+	return error ? error : size;
+}
+
+static int ps3av_vuart_read(struct ps3_system_bus_device *dev, void *buf,
+			    unsigned long size, int timeout)
+{
+	int error;
+	int loopcnt = 0;
+
+	dev_dbg(&dev->core, " -> %s:%d\n", __func__, __LINE__);
+	timeout = (timeout + POLLING_INTERVAL - 1) / POLLING_INTERVAL;
+	while (loopcnt++ <= timeout) {
+		error = ps3_vuart_read(dev, buf, size);
+		if (!error)
+			return size;
+		if (error != -EAGAIN) {
+			printk(KERN_ERR "%s: ps3_vuart_read failed %d\n",
+			       __func__, error);
+			return error;
+		}
+		msleep(POLLING_INTERVAL);
+	}
+	return -EWOULDBLOCK;
+}
+
 static int ps3av_send_cmd_pkt(const struct ps3av_send_hdr *send_buf,
 			      struct ps3av_reply_hdr *recv_buf, int write_len,
 			      int read_len)
@@ -190,13 +224,13 @@ static int ps3av_send_cmd_pkt(const struct ps3av_send_hdr *send_buf,
 	u32 cmd;
 	int event;
 
-	if (!ps3av.available)
+	if (!ps3av)
 		return -ENODEV;
 
 	/* send pkt */
-	res = ps3av_vuart_write(ps3av.dev, send_buf, write_len);
+	res = ps3av_vuart_write(ps3av->dev, send_buf, write_len);
 	if (res < 0) {
-		dev_dbg(&ps3av_dev.core,
+		dev_dbg(&ps3av->dev->core,
 			"%s: ps3av_vuart_write() failed (result=%d)\n",
 			__func__, res);
 		return res;
@@ -206,20 +240,20 @@ static int ps3av_send_cmd_pkt(const struct ps3av_send_hdr *send_buf,
 	cmd = send_buf->cid;
 	do {
 		/* read header */
-		res = ps3av_vuart_read(ps3av.dev, recv_buf, PS3AV_HDR_SIZE,
+		res = ps3av_vuart_read(ps3av->dev, recv_buf, PS3AV_HDR_SIZE,
 				       timeout);
 		if (res != PS3AV_HDR_SIZE) {
-			dev_dbg(&ps3av_dev.core,
+			dev_dbg(&ps3av->dev->core,
 				"%s: ps3av_vuart_read() failed (result=%d)\n",
 				__func__, res);
 			return res;
 		}
 
 		/* read body */
-		res = ps3av_vuart_read(ps3av.dev, &recv_buf->cid,
+		res = ps3av_vuart_read(ps3av->dev, &recv_buf->cid,
 				       recv_buf->size, timeout);
 		if (res < 0) {
-			dev_dbg(&ps3av_dev.core,
+			dev_dbg(&ps3av->dev->core,
 				"%s: ps3av_vuart_read() failed (result=%d)\n",
 				__func__, res);
 			return res;
@@ -230,7 +264,7 @@ static int ps3av_send_cmd_pkt(const struct ps3av_send_hdr *send_buf,
 	} while (event);
 
 	if ((cmd | PS3AV_REPLY_BIT) != recv_buf->cid) {
-		dev_dbg(&ps3av_dev.core, "%s: reply err (result=%x)\n",
+		dev_dbg(&ps3av->dev->core, "%s: reply err (result=%x)\n",
 			__func__, recv_buf->cid);
 		return -EINVAL;
 	}
@@ -245,7 +279,7 @@ static int ps3av_process_reply_packet(struct ps3av_send_hdr *cmd_buf,
 	int return_len;
 
 	if (recv_buf->version != PS3AV_VERSION) {
-		dev_dbg(&ps3av_dev.core, "reply_packet invalid version:%x\n",
+		dev_dbg(&ps3av->dev->core, "reply_packet invalid version:%x\n",
 			recv_buf->version);
 		return -EFAULT;
 	}
@@ -267,16 +301,11 @@ int ps3av_do_pkt(u32 cid, u16 send_len, size_t usr_buf_size,
 		 struct ps3av_send_hdr *buf)
 {
 	int res = 0;
-	static union {
-		struct ps3av_reply_hdr reply_hdr;
-		u8 raw[PS3AV_BUF_SIZE];
-	} recv_buf;
-
 	u32 *table;
 
-	BUG_ON(!ps3av.available);
+	BUG_ON(!ps3av);
 
-	mutex_lock(&ps3av.mutex);
+	mutex_lock(&ps3av->mutex);
 
 	table = ps3av_search_cmd_table(cid, PS3AV_CID_MASK);
 	BUG_ON(!table);
@@ -288,7 +317,7 @@ int ps3av_do_pkt(u32 cid, u16 send_len, size_t usr_buf_size,
 	ps3av_set_hdr(cid, send_len, buf);
 
 	/* send packet via vuart */
-	res = ps3av_send_cmd_pkt(buf, &recv_buf.reply_hdr, send_len,
+	res = ps3av_send_cmd_pkt(buf, &ps3av->recv_buf.reply_hdr, send_len,
 				 usr_buf_size);
 	if (res < 0) {
 		printk(KERN_ERR
@@ -298,7 +327,7 @@ int ps3av_do_pkt(u32 cid, u16 send_len, size_t usr_buf_size,
 	}
 
 	/* process reply packet */
-	res = ps3av_process_reply_packet(buf, &recv_buf.reply_hdr,
+	res = ps3av_process_reply_packet(buf, &ps3av->recv_buf.reply_hdr,
 					 usr_buf_size);
 	if (res < 0) {
 		printk(KERN_ERR "%s: put_return_status() failed (result=%d)\n",
@@ -306,11 +335,11 @@ int ps3av_do_pkt(u32 cid, u16 send_len, size_t usr_buf_size,
 		goto err;
 	}
 
-	mutex_unlock(&ps3av.mutex);
+	mutex_unlock(&ps3av->mutex);
 	return 0;
 
       err:
-	mutex_unlock(&ps3av.mutex);
+	mutex_unlock(&ps3av->mutex);
 	printk(KERN_ERR "%s: failed cid:%x res:%d\n", __func__, cid, res);
 	return res;
 }
@@ -319,11 +348,11 @@ static int ps3av_set_av_video_mute(u32 mute)
 {
 	int i, num_of_av_port, res;
 
-	num_of_av_port = ps3av.av_hw_conf.num_of_hdmi +
-			 ps3av.av_hw_conf.num_of_avmulti;
+	num_of_av_port = ps3av->av_hw_conf.num_of_hdmi +
+			 ps3av->av_hw_conf.num_of_avmulti;
 	/* video mute on */
 	for (i = 0; i < num_of_av_port; i++) {
-		res = ps3av_cmd_av_video_mute(1, &ps3av.av_port[i], mute);
+		res = ps3av_cmd_av_video_mute(1, &ps3av->av_port[i], mute);
 		if (res < 0)
 			return -1;
 	}
@@ -335,13 +364,13 @@ static int ps3av_set_video_disable_sig(void)
 {
 	int i, num_of_hdmi_port, num_of_av_port, res;
 
-	num_of_hdmi_port = ps3av.av_hw_conf.num_of_hdmi;
-	num_of_av_port = ps3av.av_hw_conf.num_of_hdmi +
-			 ps3av.av_hw_conf.num_of_avmulti;
+	num_of_hdmi_port = ps3av->av_hw_conf.num_of_hdmi;
+	num_of_av_port = ps3av->av_hw_conf.num_of_hdmi +
+			 ps3av->av_hw_conf.num_of_avmulti;
 
 	/* tv mute */
 	for (i = 0; i < num_of_hdmi_port; i++) {
-		res = ps3av_cmd_av_tv_mute(ps3av.av_port[i],
+		res = ps3av_cmd_av_tv_mute(ps3av->av_port[i],
 					   PS3AV_CMD_MUTE_ON);
 		if (res < 0)
 			return -1;
@@ -350,11 +379,11 @@ static int ps3av_set_video_disable_sig(void)
 
 	/* video mute on */
 	for (i = 0; i < num_of_av_port; i++) {
-		res = ps3av_cmd_av_video_disable_sig(ps3av.av_port[i]);
+		res = ps3av_cmd_av_video_disable_sig(ps3av->av_port[i]);
 		if (res < 0)
 			return -1;
 		if (i < num_of_hdmi_port) {
-			res = ps3av_cmd_av_tv_mute(ps3av.av_port[i],
+			res = ps3av_cmd_av_tv_mute(ps3av->av_port[i],
 						   PS3AV_CMD_MUTE_OFF);
 			if (res < 0)
 				return -1;
@@ -369,17 +398,17 @@ static int ps3av_set_audio_mute(u32 mute)
 {
 	int i, num_of_av_port, num_of_opt_port, res;
 
-	num_of_av_port = ps3av.av_hw_conf.num_of_hdmi +
-			 ps3av.av_hw_conf.num_of_avmulti;
-	num_of_opt_port = ps3av.av_hw_conf.num_of_spdif;
+	num_of_av_port = ps3av->av_hw_conf.num_of_hdmi +
+			 ps3av->av_hw_conf.num_of_avmulti;
+	num_of_opt_port = ps3av->av_hw_conf.num_of_spdif;
 
 	for (i = 0; i < num_of_av_port; i++) {
-		res = ps3av_cmd_av_audio_mute(1, &ps3av.av_port[i], mute);
+		res = ps3av_cmd_av_audio_mute(1, &ps3av->av_port[i], mute);
 		if (res < 0)
 			return -1;
 	}
 	for (i = 0; i < num_of_opt_port; i++) {
-		res = ps3av_cmd_audio_mute(1, &ps3av.opt_port[i], mute);
+		res = ps3av_cmd_audio_mute(1, &ps3av->opt_port[i], mute);
 		if (res < 0)
 			return -1;
 	}
@@ -394,40 +423,40 @@ int ps3av_set_audio_mode(u32 ch, u32 fs, u32 word_bits, u32 format, u32 source)
 	struct ps3av_pkt_audio_mode audio_mode;
 	u32 len = 0;
 
-	num_of_audio = ps3av.av_hw_conf.num_of_hdmi +
-		       ps3av.av_hw_conf.num_of_avmulti +
-		       ps3av.av_hw_conf.num_of_spdif;
+	num_of_audio = ps3av->av_hw_conf.num_of_hdmi +
+		       ps3av->av_hw_conf.num_of_avmulti +
+		       ps3av->av_hw_conf.num_of_spdif;
 
 	avb_param.num_of_video_pkt = 0;
 	avb_param.num_of_audio_pkt = PS3AV_AVB_NUM_AUDIO;	/* always 0 */
 	avb_param.num_of_av_video_pkt = 0;
-	avb_param.num_of_av_audio_pkt = ps3av.av_hw_conf.num_of_hdmi;
+	avb_param.num_of_av_audio_pkt = ps3av->av_hw_conf.num_of_hdmi;
 
-	vid = video_mode_table[ps3av.ps3av_mode].vid;
+	vid = video_mode_table[ps3av->ps3av_mode].vid;
 
 	/* audio mute */
 	ps3av_set_audio_mute(PS3AV_CMD_MUTE_ON);
 
 	/* audio inactive */
-	res = ps3av_cmd_audio_active(0, ps3av.audio_port);
+	res = ps3av_cmd_audio_active(0, ps3av->audio_port);
 	if (res < 0)
-		dev_dbg(&ps3av_dev.core,
+		dev_dbg(&ps3av->dev->core,
 			"ps3av_cmd_audio_active OFF failed\n");
 
 	/* audio_pkt */
 	for (i = 0; i < num_of_audio; i++) {
-		ps3av_cmd_set_audio_mode(&audio_mode, ps3av.av_port[i], ch, fs,
-					 word_bits, format, source);
-		if (i < ps3av.av_hw_conf.num_of_hdmi) {
+		ps3av_cmd_set_audio_mode(&audio_mode, ps3av->av_port[i], ch,
+					 fs, word_bits, format, source);
+		if (i < ps3av->av_hw_conf.num_of_hdmi) {
 			/* hdmi only */
 			len += ps3av_cmd_set_av_audio_param(&avb_param.buf[len],
-							    ps3av.av_port[i],
+							    ps3av->av_port[i],
 							    &audio_mode, vid);
 		}
 		/* audio_mode pkt should be sent separately */
 		res = ps3av_cmd_audio_mode(&audio_mode);
 		if (res < 0)
-			dev_dbg(&ps3av_dev.core,
+			dev_dbg(&ps3av->dev->core,
 				"ps3av_cmd_audio_mode failed, port:%x\n", i);
 	}
 
@@ -435,15 +464,16 @@ int ps3av_set_audio_mode(u32 ch, u32 fs, u32 word_bits, u32 format, u32 source)
 	len += offsetof(struct ps3av_pkt_avb_param, buf);
 	res = ps3av_cmd_avb_param(&avb_param, len);
 	if (res < 0)
-		dev_dbg(&ps3av_dev.core, "ps3av_cmd_avb_param failed\n");
+		dev_dbg(&ps3av->dev->core, "ps3av_cmd_avb_param failed\n");
 
 	/* audio mute */
 	ps3av_set_audio_mute(PS3AV_CMD_MUTE_OFF);
 
 	/* audio active */
-	res = ps3av_cmd_audio_active(1, ps3av.audio_port);
+	res = ps3av_cmd_audio_active(1, ps3av->audio_port);
 	if (res < 0)
-		dev_dbg(&ps3av_dev.core, "ps3av_cmd_audio_active ON failed\n");
+		dev_dbg(&ps3av->dev->core,
+			"ps3av_cmd_audio_active ON failed\n");
 
 	return 0;
 }
@@ -456,15 +486,15 @@ static int ps3av_set_videomode(void)
 	ps3av_set_av_video_mute(PS3AV_CMD_MUTE_ON);
 
 	/* wake up ps3avd to do the actual video mode setting */
-	queue_work(ps3av.wq, &ps3av.work);
+	queue_work(ps3av->wq, &ps3av->work);
 
 	return 0;
 }
 
-static void ps3av_set_videomode_cont(u32 id, u32 old_id)
+static void ps3av_set_videomode_packet(u32 id)
 {
 	struct ps3av_pkt_avb_param avb_param;
-	int i;
+	unsigned int i;
 	u32 len = 0, av_video_cs;
 	const struct avset_video_mode *video_mode;
 	int res;
@@ -473,32 +503,14 @@ static void ps3av_set_videomode_cont(u32 id, u32 old_id)
 
 	avb_param.num_of_video_pkt = PS3AV_AVB_NUM_VIDEO;	/* num of head */
 	avb_param.num_of_audio_pkt = 0;
-	avb_param.num_of_av_video_pkt = ps3av.av_hw_conf.num_of_hdmi +
-					ps3av.av_hw_conf.num_of_avmulti;
+	avb_param.num_of_av_video_pkt = ps3av->av_hw_conf.num_of_hdmi +
+					ps3av->av_hw_conf.num_of_avmulti;
 	avb_param.num_of_av_audio_pkt = 0;
-
-	/* video signal off */
-	ps3av_set_video_disable_sig();
-
-	/* Retail PS3 product doesn't support this */
-	if (id & PS3AV_MODE_HDCP_OFF) {
-		res = ps3av_cmd_av_hdmi_mode(PS3AV_CMD_AV_HDMI_HDCP_OFF);
-		if (res == PS3AV_STATUS_UNSUPPORTED_HDMI_MODE)
-			dev_dbg(&ps3av_dev.core, "Not supported\n");
-		else if (res)
-			dev_dbg(&ps3av_dev.core,
-				"ps3av_cmd_av_hdmi_mode failed\n");
-	} else if (old_id & PS3AV_MODE_HDCP_OFF) {
-		res = ps3av_cmd_av_hdmi_mode(PS3AV_CMD_AV_HDMI_MODE_NORMAL);
-		if (res < 0 && res != PS3AV_STATUS_UNSUPPORTED_HDMI_MODE)
-			dev_dbg(&ps3av_dev.core,
-				"ps3av_cmd_av_hdmi_mode failed\n");
-	}
 
 	/* video_pkt */
 	for (i = 0; i < avb_param.num_of_video_pkt; i++)
 		len += ps3av_cmd_set_video_mode(&avb_param.buf[len],
-						ps3av.head[i], video_mode->vid,
+						ps3av->head[i], video_mode->vid,
 						video_mode->fmt, id);
 	/* av_video_pkt */
 	for (i = 0; i < avb_param.num_of_av_video_pkt; i++) {
@@ -507,12 +519,12 @@ static void ps3av_set_videomode_cont(u32 id, u32 old_id)
 		else
 			av_video_cs = video_mode->cs;
 #ifndef PS3AV_HDMI_YUV
-		if (ps3av.av_port[i] == PS3AV_CMD_AVPORT_HDMI_0 ||
-		    ps3av.av_port[i] == PS3AV_CMD_AVPORT_HDMI_1)
+		if (ps3av->av_port[i] == PS3AV_CMD_AVPORT_HDMI_0 ||
+		    ps3av->av_port[i] == PS3AV_CMD_AVPORT_HDMI_1)
 			av_video_cs = RGB8;	/* use RGB for HDMI */
 #endif
 		len += ps3av_cmd_set_av_video_cs(&avb_param.buf[len],
-						 ps3av.av_port[i],
+						 ps3av->av_port[i],
 						 video_mode->vid, av_video_cs,
 						 video_mode->aspect, id);
 	}
@@ -521,10 +533,46 @@ static void ps3av_set_videomode_cont(u32 id, u32 old_id)
 	res = ps3av_cmd_avb_param(&avb_param, len);
 	if (res == PS3AV_STATUS_NO_SYNC_HEAD)
 		printk(KERN_WARNING
-		       "%s: Command failed. Please try your request again. \n",
+		       "%s: Command failed. Please try your request again.\n",
 		       __func__);
 	else if (res)
-		dev_dbg(&ps3av_dev.core, "ps3av_cmd_avb_param failed\n");
+		dev_dbg(&ps3av->dev->core, "ps3av_cmd_avb_param failed\n");
+}
+
+static void ps3av_set_videomode_cont(u32 id, u32 old_id)
+{
+	static int vesa;
+	int res;
+
+	/* video signal off */
+	ps3av_set_video_disable_sig();
+
+	/*
+	 * AV backend needs non-VESA mode setting at least one time
+	 * when VESA mode is used.
+	 */
+	if (vesa == 0 && (id & PS3AV_MODE_MASK) >= PS3AV_MODE_WXGA) {
+		/* vesa mode */
+		ps3av_set_videomode_packet(PS3AV_MODE_480P);
+	}
+	vesa = 1;
+
+	/* Retail PS3 product doesn't support this */
+	if (id & PS3AV_MODE_HDCP_OFF) {
+		res = ps3av_cmd_av_hdmi_mode(PS3AV_CMD_AV_HDMI_HDCP_OFF);
+		if (res == PS3AV_STATUS_UNSUPPORTED_HDMI_MODE)
+			dev_dbg(&ps3av->dev->core, "Not supported\n");
+		else if (res)
+			dev_dbg(&ps3av->dev->core,
+				"ps3av_cmd_av_hdmi_mode failed\n");
+	} else if (old_id & PS3AV_MODE_HDCP_OFF) {
+		res = ps3av_cmd_av_hdmi_mode(PS3AV_CMD_AV_HDMI_MODE_NORMAL);
+		if (res < 0 && res != PS3AV_STATUS_UNSUPPORTED_HDMI_MODE)
+			dev_dbg(&ps3av->dev->core,
+				"ps3av_cmd_av_hdmi_mode failed\n");
+	}
+
+	ps3av_set_videomode_packet(id);
 
 	msleep(1500);
 	/* av video mute */
@@ -533,169 +581,252 @@ static void ps3av_set_videomode_cont(u32 id, u32 old_id)
 
 static void ps3avd(struct work_struct *work)
 {
-	ps3av_set_videomode_cont(ps3av.ps3av_mode, ps3av.ps3av_mode_old);
-	complete(&ps3av.done);
+	ps3av_set_videomode_cont(ps3av->ps3av_mode, ps3av->ps3av_mode_old);
+	complete(&ps3av->done);
 }
 
-static int ps3av_vid2table_id(int vid)
-{
-	int i;
+#define SHIFT_50	0
+#define SHIFT_60	4
+#define SHIFT_VESA	8
 
-	for (i = 1; i < ARRAY_SIZE(video_mode_table); i++)
-		if (video_mode_table[i].vid == vid)
-			return i;
-	return -1;
+static const struct {
+	unsigned mask : 19;
+	unsigned id :  4;
+} ps3av_preferred_modes[] = {
+	{ PS3AV_RESBIT_WUXGA      << SHIFT_VESA, PS3AV_MODE_WUXGA   },
+	{ PS3AV_RESBIT_1920x1080P << SHIFT_60,   PS3AV_MODE_1080P60 },
+	{ PS3AV_RESBIT_1920x1080P << SHIFT_50,   PS3AV_MODE_1080P50 },
+	{ PS3AV_RESBIT_1920x1080I << SHIFT_60,   PS3AV_MODE_1080I60 },
+	{ PS3AV_RESBIT_1920x1080I << SHIFT_50,   PS3AV_MODE_1080I50 },
+	{ PS3AV_RESBIT_SXGA       << SHIFT_VESA, PS3AV_MODE_SXGA    },
+	{ PS3AV_RESBIT_WXGA       << SHIFT_VESA, PS3AV_MODE_WXGA    },
+	{ PS3AV_RESBIT_1280x720P  << SHIFT_60,   PS3AV_MODE_720P60  },
+	{ PS3AV_RESBIT_1280x720P  << SHIFT_50,   PS3AV_MODE_720P50  },
+	{ PS3AV_RESBIT_720x480P   << SHIFT_60,   PS3AV_MODE_480P    },
+	{ PS3AV_RESBIT_720x576P   << SHIFT_50,   PS3AV_MODE_576P    },
+};
+
+static enum ps3av_mode_num ps3av_resbit2id(u32 res_50, u32 res_60,
+					   u32 res_vesa)
+{
+	unsigned int i;
+	u32 res_all;
+
+	/*
+	 * We mask off the resolution bits we care about and combine the
+	 * results in one bitfield, so make sure there's no overlap
+	 */
+	BUILD_BUG_ON(PS3AV_RES_MASK_50 << SHIFT_50 &
+		     PS3AV_RES_MASK_60 << SHIFT_60);
+	BUILD_BUG_ON(PS3AV_RES_MASK_50 << SHIFT_50 &
+		     PS3AV_RES_MASK_VESA << SHIFT_VESA);
+	BUILD_BUG_ON(PS3AV_RES_MASK_60 << SHIFT_60 &
+		     PS3AV_RES_MASK_VESA << SHIFT_VESA);
+	res_all = (res_50 & PS3AV_RES_MASK_50) << SHIFT_50 |
+		  (res_60 & PS3AV_RES_MASK_60) << SHIFT_60 |
+		  (res_vesa & PS3AV_RES_MASK_VESA) << SHIFT_VESA;
+
+	if (!res_all)
+		return 0;
+
+	for (i = 0; i < ARRAY_SIZE(ps3av_preferred_modes); i++)
+		if (res_all & ps3av_preferred_modes[i].mask)
+			return ps3av_preferred_modes[i].id;
+
+	return 0;
 }
 
-static int ps3av_resbit2vid(u32 res_50, u32 res_60)
+static enum ps3av_mode_num ps3av_hdmi_get_id(struct ps3av_info_monitor *info)
 {
-	int vid = -1;
+	enum ps3av_mode_num id;
 
-	if (res_50 > res_60) {	/* if res_50 == res_60, res_60 will be used */
-		if (res_50 & PS3AV_RESBIT_1920x1080P)
-			vid = PS3AV_CMD_VIDEO_VID_1080P_50HZ;
-		else if (res_50 & PS3AV_RESBIT_1920x1080I)
-			vid = PS3AV_CMD_VIDEO_VID_1080I_50HZ;
-		else if (res_50 & PS3AV_RESBIT_1280x720P)
-			vid = PS3AV_CMD_VIDEO_VID_720P_50HZ;
-		else if (res_50 & PS3AV_RESBIT_720x576P)
-			vid = PS3AV_CMD_VIDEO_VID_576P;
-		else
-			vid = -1;
-	} else {
-		if (res_60 & PS3AV_RESBIT_1920x1080P)
-			vid = PS3AV_CMD_VIDEO_VID_1080P_60HZ;
-		else if (res_60 & PS3AV_RESBIT_1920x1080I)
-			vid = PS3AV_CMD_VIDEO_VID_1080I_60HZ;
-		else if (res_60 & PS3AV_RESBIT_1280x720P)
-			vid = PS3AV_CMD_VIDEO_VID_720P_60HZ;
-		else if (res_60 & PS3AV_RESBIT_720x480P)
-			vid = PS3AV_CMD_VIDEO_VID_480P;
-		else
-			vid = -1;
-	}
-	return vid;
-}
-
-static int ps3av_hdmi_get_vid(struct ps3av_info_monitor *info)
-{
-	u32 res_50, res_60;
-	int vid = -1;
-
-	if (info->monitor_type != PS3AV_MONITOR_TYPE_HDMI)
-		return -1;
+	if (safe_mode)
+		return PS3AV_DEFAULT_HDMI_MODE_ID_REG_60;
 
 	/* check native resolution */
-	res_50 = info->res_50.native & PS3AV_RES_MASK_50;
-	res_60 = info->res_60.native & PS3AV_RES_MASK_60;
-	if (res_50 || res_60) {
-		vid = ps3av_resbit2vid(res_50, res_60);
-		return vid;
+	id = ps3av_resbit2id(info->res_50.native, info->res_60.native,
+			     info->res_vesa.native);
+	if (id) {
+		pr_debug("%s: Using native mode %d\n", __func__, id);
+		return id;
 	}
 
-	/* check resolution */
-	res_50 = info->res_50.res_bits & PS3AV_RES_MASK_50;
-	res_60 = info->res_60.res_bits & PS3AV_RES_MASK_60;
-	if (res_50 || res_60) {
-		vid = ps3av_resbit2vid(res_50, res_60);
-		return vid;
+	/* check supported resolutions */
+	id = ps3av_resbit2id(info->res_50.res_bits, info->res_60.res_bits,
+			     info->res_vesa.res_bits);
+	if (id) {
+		pr_debug("%s: Using supported mode %d\n", __func__, id);
+		return id;
 	}
 
-	if (ps3av.region & PS3AV_REGION_60)
-		vid = PS3AV_DEFAULT_HDMI_VID_REG_60;
+	if (ps3av->region & PS3AV_REGION_60)
+		id = PS3AV_DEFAULT_HDMI_MODE_ID_REG_60;
 	else
-		vid = PS3AV_DEFAULT_HDMI_VID_REG_50;
-	return vid;
+		id = PS3AV_DEFAULT_HDMI_MODE_ID_REG_50;
+	pr_debug("%s: Using default mode %d\n", __func__, id);
+	return id;
 }
 
-static int ps3av_auto_videomode(struct ps3av_pkt_av_get_hw_conf *av_hw_conf,
-				int boot)
+static void ps3av_monitor_info_dump(const struct ps3av_pkt_av_get_monitor_info *monitor_info)
 {
-	int i, res, vid = -1, dvi = 0, rgb = 0;
+	const struct ps3av_info_monitor *info = &monitor_info->info;
+	const struct ps3av_info_audio *audio = info->audio;
+	char id[sizeof(info->monitor_id)*3+1];
+	int i;
+
+	pr_debug("Monitor Info: size %u\n", monitor_info->send_hdr.size);
+
+	pr_debug("avport: %02x\n", info->avport);
+	for (i = 0; i < sizeof(info->monitor_id); i++)
+		sprintf(&id[i*3], " %02x", info->monitor_id[i]);
+	pr_debug("monitor_id: %s\n", id);
+	pr_debug("monitor_type: %02x\n", info->monitor_type);
+	pr_debug("monitor_name: %.*s\n", (int)sizeof(info->monitor_name),
+		 info->monitor_name);
+
+	/* resolution */
+	pr_debug("resolution_60: bits: %08x native: %08x\n",
+		 info->res_60.res_bits, info->res_60.native);
+	pr_debug("resolution_50: bits: %08x native: %08x\n",
+		 info->res_50.res_bits, info->res_50.native);
+	pr_debug("resolution_other: bits: %08x native: %08x\n",
+		 info->res_other.res_bits, info->res_other.native);
+	pr_debug("resolution_vesa: bits: %08x native: %08x\n",
+		 info->res_vesa.res_bits, info->res_vesa.native);
+
+	/* color space */
+	pr_debug("color space    rgb: %02x\n", info->cs.rgb);
+	pr_debug("color space yuv444: %02x\n", info->cs.yuv444);
+	pr_debug("color space yuv422: %02x\n", info->cs.yuv422);
+
+	/* color info */
+	pr_debug("color info   red: X %04x Y %04x\n", info->color.red_x,
+		 info->color.red_y);
+	pr_debug("color info green: X %04x Y %04x\n", info->color.green_x,
+		 info->color.green_y);
+	pr_debug("color info  blue: X %04x Y %04x\n", info->color.blue_x,
+		 info->color.blue_y);
+	pr_debug("color info white: X %04x Y %04x\n", info->color.white_x,
+		 info->color.white_y);
+	pr_debug("color info gamma:  %08x\n", info->color.gamma);
+
+	/* other info */
+	pr_debug("supported_AI: %02x\n", info->supported_ai);
+	pr_debug("speaker_info: %02x\n", info->speaker_info);
+	pr_debug("num of audio: %02x\n", info->num_of_audio_block);
+
+	/* audio block */
+	for (i = 0; i < info->num_of_audio_block; i++) {
+		pr_debug("audio[%d] type: %02x max_ch: %02x fs: %02x sbit: "
+			 "%02x\n",
+			 i, audio->type, audio->max_num_of_ch, audio->fs,
+			 audio->sbit);
+		audio++;
+	}
+}
+
+static const struct ps3av_monitor_quirk {
+	const char *monitor_name;
+	u32 clear_60;
+} ps3av_monitor_quirks[] = {
+	{
+		.monitor_name	= "DELL 2007WFP",
+		.clear_60	= PS3AV_RESBIT_1920x1080I
+	}, {
+		.monitor_name	= "L226WTQ",
+		.clear_60	= PS3AV_RESBIT_1920x1080I |
+				  PS3AV_RESBIT_1920x1080P
+	}, {
+		.monitor_name	= "SyncMaster",
+		.clear_60	= PS3AV_RESBIT_1920x1080I
+	}
+};
+
+static void ps3av_fixup_monitor_info(struct ps3av_info_monitor *info)
+{
+	unsigned int i;
+	const struct ps3av_monitor_quirk *quirk;
+
+	for (i = 0; i < ARRAY_SIZE(ps3av_monitor_quirks); i++) {
+		quirk = &ps3av_monitor_quirks[i];
+		if (!strncmp(info->monitor_name, quirk->monitor_name,
+			     sizeof(info->monitor_name))) {
+			pr_info("%s: Applying quirk for %s\n", __func__,
+				quirk->monitor_name);
+			info->res_60.res_bits &= ~quirk->clear_60;
+			info->res_60.native &= ~quirk->clear_60;
+			break;
+		}
+	}
+}
+
+static int ps3av_auto_videomode(struct ps3av_pkt_av_get_hw_conf *av_hw_conf)
+{
+	int i, res, id = 0, dvi = 0, rgb = 0;
 	struct ps3av_pkt_av_get_monitor_info monitor_info;
 	struct ps3av_info_monitor *info;
 
-	/* get vid for hdmi */
-	for (i = 0; i < av_hw_conf->num_of_hdmi; i++) {
+	/* get mode id for hdmi */
+	for (i = 0; i < av_hw_conf->num_of_hdmi && !id; i++) {
 		res = ps3av_cmd_video_get_monitor_info(&monitor_info,
 						       PS3AV_CMD_AVPORT_HDMI_0 +
 						       i);
 		if (res < 0)
 			return -1;
 
-		ps3av_cmd_av_monitor_info_dump(&monitor_info);
+		ps3av_monitor_info_dump(&monitor_info);
+
 		info = &monitor_info.info;
-		/* check DVI */
-		if (info->monitor_type == PS3AV_MONITOR_TYPE_DVI) {
+		ps3av_fixup_monitor_info(info);
+
+		switch (info->monitor_type) {
+		case PS3AV_MONITOR_TYPE_DVI:
 			dvi = PS3AV_MODE_DVI;
-			break;
-		}
-		/* check HDMI */
-		vid = ps3av_hdmi_get_vid(info);
-		if (vid != -1) {
-			/* got valid vid */
+			/* fall through */
+		case PS3AV_MONITOR_TYPE_HDMI:
+			id = ps3av_hdmi_get_id(info);
 			break;
 		}
 	}
 
-	if (dvi) {
-		/* DVI mode */
-		vid = PS3AV_DEFAULT_DVI_VID;
-	} else if (vid == -1) {
+	if (!id) {
 		/* no HDMI interface or HDMI is off */
-		if (ps3av.region & PS3AV_REGION_60)
-			vid = PS3AV_DEFAULT_AVMULTI_VID_REG_60;
+		if (ps3av->region & PS3AV_REGION_60)
+			id = PS3AV_DEFAULT_AVMULTI_MODE_ID_REG_60;
 		else
-			vid = PS3AV_DEFAULT_AVMULTI_VID_REG_50;
-		if (ps3av.region & PS3AV_REGION_RGB)
+			id = PS3AV_DEFAULT_AVMULTI_MODE_ID_REG_50;
+		if (ps3av->region & PS3AV_REGION_RGB)
 			rgb = PS3AV_MODE_RGB;
-	} else if (boot) {
-		/* HDMI: using DEFAULT HDMI_VID while booting up */
-		info = &monitor_info.info;
-		if (ps3av.region & PS3AV_REGION_60) {
-			if (info->res_60.res_bits & PS3AV_RESBIT_720x480P)
-				vid = PS3AV_DEFAULT_HDMI_VID_REG_60;
-			else if (info->res_50.res_bits & PS3AV_RESBIT_720x576P)
-				vid = PS3AV_DEFAULT_HDMI_VID_REG_50;
-			else {
-				/* default */
-				vid = PS3AV_DEFAULT_HDMI_VID_REG_60;
-			}
-		} else {
-			if (info->res_50.res_bits & PS3AV_RESBIT_720x576P)
-				vid = PS3AV_DEFAULT_HDMI_VID_REG_50;
-			else if (info->res_60.res_bits & PS3AV_RESBIT_720x480P)
-				vid = PS3AV_DEFAULT_HDMI_VID_REG_60;
-			else {
-				/* default */
-				vid = PS3AV_DEFAULT_HDMI_VID_REG_50;
-			}
-		}
+		pr_debug("%s: Using avmulti mode %d\n", __func__, id);
 	}
 
-	return (ps3av_vid2table_id(vid) | dvi | rgb);
+	return id | dvi | rgb;
 }
 
 static int ps3av_get_hw_conf(struct ps3av *ps3av)
 {
 	int i, j, k, res;
+	const struct ps3av_pkt_av_get_hw_conf *hw_conf;
 
 	/* get av_hw_conf */
 	res = ps3av_cmd_av_get_hw_conf(&ps3av->av_hw_conf);
 	if (res < 0)
 		return -1;
 
-	ps3av_cmd_av_hw_conf_dump(&ps3av->av_hw_conf);
+	hw_conf = &ps3av->av_hw_conf;
+	pr_debug("av_h_conf: num of hdmi: %u\n", hw_conf->num_of_hdmi);
+	pr_debug("av_h_conf: num of avmulti: %u\n", hw_conf->num_of_avmulti);
+	pr_debug("av_h_conf: num of spdif: %u\n", hw_conf->num_of_spdif);
 
 	for (i = 0; i < PS3AV_HEAD_MAX; i++)
 		ps3av->head[i] = PS3AV_CMD_VIDEO_HEAD_A + i;
 	for (i = 0; i < PS3AV_OPT_PORT_MAX; i++)
 		ps3av->opt_port[i] = PS3AV_CMD_AVPORT_SPDIF_0 + i;
-	for (i = 0; i < ps3av->av_hw_conf.num_of_hdmi; i++)
+	for (i = 0; i < hw_conf->num_of_hdmi; i++)
 		ps3av->av_port[i] = PS3AV_CMD_AVPORT_HDMI_0 + i;
-	for (j = 0; j < ps3av->av_hw_conf.num_of_avmulti; j++)
+	for (j = 0; j < hw_conf->num_of_avmulti; j++)
 		ps3av->av_port[i + j] = PS3AV_CMD_AVPORT_AVMULTI_0 + j;
-	for (k = 0; k < ps3av->av_hw_conf.num_of_spdif; k++)
+	for (k = 0; k < hw_conf->num_of_spdif; k++)
 		ps3av->av_port[i + j + k] = PS3AV_CMD_AVPORT_SPDIF_0 + k;
 
 	/* set all audio port */
@@ -708,21 +839,21 @@ static int ps3av_get_hw_conf(struct ps3av *ps3av)
 }
 
 /* set mode using id */
-int ps3av_set_video_mode(u32 id, int boot)
+int ps3av_set_video_mode(int id)
 {
 	int size;
 	u32 option;
 
 	size = ARRAY_SIZE(video_mode_table);
 	if ((id & PS3AV_MODE_MASK) > size - 1 || id < 0) {
-		dev_dbg(&ps3av_dev.core, "%s: error id :%d\n", __func__, id);
+		dev_dbg(&ps3av->dev->core, "%s: error id :%d\n", __func__, id);
 		return -EINVAL;
 	}
 
 	/* auto mode */
 	option = id & ~PS3AV_MODE_MASK;
-	if ((id & PS3AV_MODE_MASK) == 0) {
-		id = ps3av_auto_videomode(&ps3av.av_hw_conf, boot);
+	if ((id & PS3AV_MODE_MASK) == PS3AV_MODE_AUTO) {
+		id = ps3av_auto_videomode(&ps3av->av_hw_conf);
 		if (id < 1) {
 			printk(KERN_ERR "%s: invalid id :%d\n", __func__, id);
 			return -EINVAL;
@@ -731,81 +862,30 @@ int ps3av_set_video_mode(u32 id, int boot)
 	}
 
 	/* set videomode */
-	wait_for_completion(&ps3av.done);
-	ps3av.ps3av_mode_old = ps3av.ps3av_mode;
-	ps3av.ps3av_mode = id;
+	wait_for_completion(&ps3av->done);
+	ps3av->ps3av_mode_old = ps3av->ps3av_mode;
+	ps3av->ps3av_mode = id;
 	if (ps3av_set_videomode())
-		ps3av.ps3av_mode = ps3av.ps3av_mode_old;
+		ps3av->ps3av_mode = ps3av->ps3av_mode_old;
 
 	return 0;
 }
 
 EXPORT_SYMBOL_GPL(ps3av_set_video_mode);
 
-int ps3av_get_auto_mode(int boot)
+int ps3av_get_auto_mode(void)
 {
-	return ps3av_auto_videomode(&ps3av.av_hw_conf, boot);
+	return ps3av_auto_videomode(&ps3av->av_hw_conf);
 }
 
 EXPORT_SYMBOL_GPL(ps3av_get_auto_mode);
 
-int ps3av_set_mode(u32 id, int boot)
-{
-	int res;
-
-	res = ps3av_set_video_mode(id, boot);
-	if (res)
-		return res;
-
-	res = ps3av_set_audio_mode(PS3AV_CMD_AUDIO_NUM_OF_CH_2,
-				   PS3AV_CMD_AUDIO_FS_48K,
-				   PS3AV_CMD_AUDIO_WORD_BITS_16,
-				   PS3AV_CMD_AUDIO_FORMAT_PCM,
-				   PS3AV_CMD_AUDIO_SOURCE_SERIAL);
-	if (res)
-		return res;
-
-	return 0;
-}
-
-EXPORT_SYMBOL_GPL(ps3av_set_mode);
-
 int ps3av_get_mode(void)
 {
-	return ps3av.ps3av_mode;
+	return ps3av ? ps3av->ps3av_mode : 0;
 }
 
 EXPORT_SYMBOL_GPL(ps3av_get_mode);
-
-int ps3av_get_scanmode(int id)
-{
-	int size;
-
-	id = id & PS3AV_MODE_MASK;
-	size = ARRAY_SIZE(video_mode_table);
-	if (id > size - 1 || id < 0) {
-		printk(KERN_ERR "%s: invalid mode %d\n", __func__, id);
-		return -EINVAL;
-	}
-	return video_mode_table[id].interlace;
-}
-
-EXPORT_SYMBOL_GPL(ps3av_get_scanmode);
-
-int ps3av_get_refresh_rate(int id)
-{
-	int size;
-
-	id = id & PS3AV_MODE_MASK;
-	size = ARRAY_SIZE(video_mode_table);
-	if (id > size - 1 || id < 0) {
-		printk(KERN_ERR "%s: invalid mode %d\n", __func__, id);
-		return -EINVAL;
-	}
-	return video_mode_table[id].freq;
-}
-
-EXPORT_SYMBOL_GPL(ps3av_get_refresh_rate);
 
 /* get resolution by video_mode */
 int ps3av_video_mode2res(u32 id, u32 *xres, u32 *yres)
@@ -834,6 +914,22 @@ int ps3av_video_mute(int mute)
 
 EXPORT_SYMBOL_GPL(ps3av_video_mute);
 
+/* mute analog output only */
+int ps3av_audio_mute_analog(int mute)
+{
+	int i, res;
+
+	for (i = 0; i < ps3av->av_hw_conf.num_of_avmulti; i++) {
+		res = ps3av_cmd_av_audio_mute(1,
+			&ps3av->av_port[i + ps3av->av_hw_conf.num_of_hdmi],
+			mute);
+		if (res < 0)
+			return -1;
+	}
+	return 0;
+}
+EXPORT_SYMBOL_GPL(ps3av_audio_mute_analog);
+
 int ps3av_audio_mute(int mute)
 {
 	return ps3av_set_audio_mute(mute ? PS3AV_CMD_MUTE_ON
@@ -842,82 +938,49 @@ int ps3av_audio_mute(int mute)
 
 EXPORT_SYMBOL_GPL(ps3av_audio_mute);
 
-int ps3av_dev_open(void)
-{
-	int status = 0;
-
-	mutex_lock(&ps3av.mutex);
-	if (!ps3av.open_count++) {
-		status = lv1_gpu_open(0);
-		if (status) {
-			printk(KERN_ERR "%s: lv1_gpu_open failed %d\n",
-			       __func__, status);
-			ps3av.open_count--;
-		}
-	}
-	mutex_unlock(&ps3av.mutex);
-
-	return status;
-}
-
-EXPORT_SYMBOL_GPL(ps3av_dev_open);
-
-int ps3av_dev_close(void)
-{
-	int status = 0;
-
-	mutex_lock(&ps3av.mutex);
-	if (ps3av.open_count <= 0) {
-		printk(KERN_ERR "%s: GPU already closed\n", __func__);
-		status = -1;
-	} else if (!--ps3av.open_count) {
-		status = lv1_gpu_close();
-		if (status)
-			printk(KERN_WARNING "%s: lv1_gpu_close failed %d\n",
-			       __func__, status);
-	}
-	mutex_unlock(&ps3av.mutex);
-
-	return status;
-}
-
-EXPORT_SYMBOL_GPL(ps3av_dev_close);
-
-static int ps3av_probe(struct ps3_vuart_port_device *dev)
+static int __devinit ps3av_probe(struct ps3_system_bus_device *dev)
 {
 	int res;
-	u32 id;
+	int id;
 
-	dev_dbg(&ps3av_dev.core, "init ...\n");
-	dev_dbg(&ps3av_dev.core, "  timeout=%d\n", timeout);
+	dev_dbg(&dev->core, " -> %s:%d\n", __func__, __LINE__);
+	dev_dbg(&dev->core, "  timeout=%d\n", timeout);
 
-	memset(&ps3av, 0, sizeof(ps3av));
+	if (ps3av) {
+		dev_err(&dev->core, "Only one ps3av device is supported\n");
+		return -EBUSY;
+	}
 
-	mutex_init(&ps3av.mutex);
-	ps3av.ps3av_mode = 0;
-	ps3av.dev = dev;
-
-	INIT_WORK(&ps3av.work, ps3avd);
-	init_completion(&ps3av.done);
-	complete(&ps3av.done);
-	ps3av.wq = create_singlethread_workqueue("ps3avd");
-	if (!ps3av.wq)
+	ps3av = kzalloc(sizeof(*ps3av), GFP_KERNEL);
+	if (!ps3av)
 		return -ENOMEM;
 
-	ps3av.available = 1;
+	mutex_init(&ps3av->mutex);
+	ps3av->ps3av_mode = PS3AV_MODE_AUTO;
+	ps3av->dev = dev;
+
+	INIT_WORK(&ps3av->work, ps3avd);
+	init_completion(&ps3av->done);
+	complete(&ps3av->done);
+	ps3av->wq = create_singlethread_workqueue("ps3avd");
+	if (!ps3av->wq) {
+		res = -ENOMEM;
+		goto fail;
+	}
+
 	switch (ps3_os_area_get_av_multi_out()) {
 	case PS3_PARAM_AV_MULTI_OUT_NTSC:
-		ps3av.region = PS3AV_REGION_60;
+		ps3av->region = PS3AV_REGION_60;
 		break;
 	case PS3_PARAM_AV_MULTI_OUT_PAL_YCBCR:
 	case PS3_PARAM_AV_MULTI_OUT_SECAM:
-		ps3av.region = PS3AV_REGION_50;
+		ps3av->region = PS3AV_REGION_50;
 		break;
 	case PS3_PARAM_AV_MULTI_OUT_PAL_RGB:
-		ps3av.region = PS3AV_REGION_50 | PS3AV_REGION_RGB;
+		ps3av->region = PS3AV_REGION_50 | PS3AV_REGION_RGB;
 		break;
 	default:
-		ps3av.region = PS3AV_REGION_60;
+		ps3av->region = PS3AV_REGION_60;
 		break;
 	}
 
@@ -927,50 +990,73 @@ static int ps3av_probe(struct ps3_vuart_port_device *dev)
 		printk(KERN_ERR "%s: ps3av_cmd_init failed %d\n", __func__,
 		       res);
 
-	ps3av_get_hw_conf(&ps3av);
-	id = ps3av_auto_videomode(&ps3av.av_hw_conf, 1);
-	mutex_lock(&ps3av.mutex);
-	ps3av.ps3av_mode = id;
-	mutex_unlock(&ps3av.mutex);
+	ps3av_get_hw_conf(ps3av);
 
-	dev_dbg(&ps3av_dev.core, "init...done\n");
-
-	return 0;
-}
-
-static int ps3av_remove(struct ps3_vuart_port_device *dev)
-{
-	if (ps3av.available) {
-		ps3av_cmd_fin();
-		if (ps3av.wq)
-			destroy_workqueue(ps3av.wq);
-		ps3av.available = 0;
+#ifdef CONFIG_FB
+	if (fb_mode_option && !strcmp(fb_mode_option, "safe"))
+		safe_mode = 1;
+#endif /* CONFIG_FB */
+	id = ps3av_auto_videomode(&ps3av->av_hw_conf);
+	if (id < 0) {
+		printk(KERN_ERR "%s: invalid id :%d\n", __func__, id);
+		res = -EINVAL;
+		goto fail;
 	}
 
+	safe_mode = 0;
+
+	mutex_lock(&ps3av->mutex);
+	ps3av->ps3av_mode = id;
+	mutex_unlock(&ps3av->mutex);
+
+	dev_dbg(&dev->core, " <- %s:%d\n", __func__, __LINE__);
+
+	return 0;
+
+fail:
+	kfree(ps3av);
+	ps3av = NULL;
+	return res;
+}
+
+static int ps3av_remove(struct ps3_system_bus_device *dev)
+{
+	dev_dbg(&dev->core, " -> %s:%d\n", __func__, __LINE__);
+	if (ps3av) {
+		ps3av_cmd_fin();
+		if (ps3av->wq)
+			destroy_workqueue(ps3av->wq);
+		kfree(ps3av);
+		ps3av = NULL;
+	}
+
+	dev_dbg(&dev->core, " <- %s:%d\n", __func__, __LINE__);
 	return 0;
 }
 
-static void ps3av_shutdown(struct ps3_vuart_port_device *dev)
+static void ps3av_shutdown(struct ps3_system_bus_device *dev)
 {
+	dev_dbg(&dev->core, " -> %s:%d\n", __func__, __LINE__);
 	ps3av_remove(dev);
+	dev_dbg(&dev->core, " <- %s:%d\n", __func__, __LINE__);
 }
 
 static struct ps3_vuart_port_driver ps3av_driver = {
-	.match_id = PS3_MATCH_ID_AV_SETTINGS,
-	.core = {
-		.name = "ps3_av",
-	},
+	.core.match_id = PS3_MATCH_ID_AV_SETTINGS,
+	.core.core.name = "ps3_av",
 	.probe = ps3av_probe,
 	.remove = ps3av_remove,
 	.shutdown = ps3av_shutdown,
 };
 
-static int ps3av_module_init(void)
+static int __init ps3av_module_init(void)
 {
 	int error;
 
 	if (!firmware_has_feature(FW_FEATURE_PS3_LV1))
 		return -ENODEV;
+
+	pr_debug(" -> %s:%d\n", __func__, __LINE__);
 
 	error = ps3_vuart_port_driver_register(&ps3av_driver);
 	if (error) {
@@ -980,20 +1066,21 @@ static int ps3av_module_init(void)
 		return error;
 	}
 
-	error = ps3_vuart_port_device_register(&ps3av_dev);
-	if (error)
-		printk(KERN_ERR
-		       "%s: ps3_vuart_port_device_register failed %d\n",
-		       __func__, error);
-
+	pr_debug(" <- %s:%d\n", __func__, __LINE__);
 	return error;
 }
 
 static void __exit ps3av_module_exit(void)
 {
-	device_unregister(&ps3av_dev.core);
+	pr_debug(" -> %s:%d\n", __func__, __LINE__);
 	ps3_vuart_port_driver_unregister(&ps3av_driver);
+	pr_debug(" <- %s:%d\n", __func__, __LINE__);
 }
 
 subsys_initcall(ps3av_module_init);
 module_exit(ps3av_module_exit);
+
+MODULE_LICENSE("GPL v2");
+MODULE_DESCRIPTION("PS3 AV Settings Driver");
+MODULE_AUTHOR("Sony Computer Entertainment Inc.");
+MODULE_ALIAS(PS3_MODULE_ALIAS_AV_SETTINGS);

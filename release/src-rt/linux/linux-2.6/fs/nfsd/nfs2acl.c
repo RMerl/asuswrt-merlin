@@ -1,19 +1,16 @@
 /*
- * linux/fs/nfsd/nfs2acl.c
- *
  * Process version 2 NFSACL requests.
  *
  * Copyright (C) 2002-2003 Andreas Gruenbacher <agruen@suse.de>
  */
 
-#include <linux/sunrpc/svc.h>
-#include <linux/nfs.h>
-#include <linux/nfsd/nfsd.h>
-#include <linux/nfsd/cache.h>
-#include <linux/nfsd/xdr.h>
-#include <linux/nfsd/xdr3.h>
-#include <linux/posix_acl.h>
+#include "nfsd.h"
+/* FIXME: nfsacl.h is a broken header */
 #include <linux/nfsacl.h>
+#include <linux/gfp.h>
+#include "cache.h"
+#include "xdr3.h"
+#include "vfs.h"
 
 #define NFSDDBG_FACILITY		NFSDDBG_PROC
 #define RETURN_STATUS(st)	{ resp->status = (st); return (st); }
@@ -40,7 +37,8 @@ static __be32 nfsacld_proc_getacl(struct svc_rqst * rqstp,
 	dprintk("nfsd: GETACL(2acl)   %s\n", SVCFH_fmt(&argp->fh));
 
 	fh = fh_copy(&resp->fh, &argp->fh);
-	if ((nfserr = fh_verify(rqstp, &resp->fh, 0, MAY_NOP)))
+	nfserr = fh_verify(rqstp, &resp->fh, 0, NFSD_MAY_NOP);
+	if (nfserr)
 		RETURN_STATUS(nfserr);
 
 	if (argp->mask & ~(NFS_ACL|NFS_ACLCNT|NFS_DFACL|NFS_DFACLCNT))
@@ -107,7 +105,7 @@ static __be32 nfsacld_proc_setacl(struct svc_rqst * rqstp,
 	dprintk("nfsd: SETACL(2acl)   %s\n", SVCFH_fmt(&argp->fh));
 
 	fh = fh_copy(&resp->fh, &argp->fh);
-	nfserr = fh_verify(rqstp, &resp->fh, 0, MAY_SATTR);
+	nfserr = fh_verify(rqstp, &resp->fh, 0, NFSD_MAY_SATTR);
 
 	if (!nfserr) {
 		nfserr = nfserrno( nfsd_set_posix_acl(
@@ -134,7 +132,7 @@ static __be32 nfsacld_proc_getattr(struct svc_rqst * rqstp,
 	dprintk("nfsd: GETATTR  %s\n", SVCFH_fmt(&argp->fh));
 
 	fh_copy(&resp->fh, &argp->fh);
-	return fh_verify(rqstp, &resp->fh, 0, MAY_NOP);
+	return fh_verify(rqstp, &resp->fh, 0, NFSD_MAY_NOP);
 }
 
 /*
@@ -216,17 +214,32 @@ static int nfsaclsvc_decode_accessargs(struct svc_rqst *rqstp, __be32 *p,
  * XDR encode functions
  */
 
+/*
+ * There must be an encoding function for void results so svc_process
+ * will work properly.
+ */
+int
+nfsaclsvc_encode_voidres(struct svc_rqst *rqstp, __be32 *p, void *dummy)
+{
+	return xdr_ressize_check(rqstp, p);
+}
+
 /* GETACL */
 static int nfsaclsvc_encode_getaclres(struct svc_rqst *rqstp, __be32 *p,
 		struct nfsd3_getaclres *resp)
 {
 	struct dentry *dentry = resp->fh.fh_dentry;
-	struct inode *inode = dentry->d_inode;
+	struct inode *inode;
 	struct kvec *head = rqstp->rq_res.head;
 	unsigned int base;
 	int n;
 	int w;
 
+	/*
+	 * Since this is version 2, the check for nfserr in
+	 * nfsd_dispatch actually ensures the following cannot happen.
+	 * However, it seems fragile to depend on that.
+	 */
 	if (dentry == NULL || dentry->d_inode == NULL)
 		return 0;
 	inode = dentry->d_inode;
@@ -302,7 +315,6 @@ static int nfsaclsvc_release_access(struct svc_rqst *rqstp, __be32 *p,
 }
 
 #define nfsaclsvc_decode_voidargs	NULL
-#define nfsaclsvc_encode_voidres	NULL
 #define nfsaclsvc_release_void		NULL
 #define nfsd3_fhandleargs	nfsd_fhandle
 #define nfsd3_attrstatres	nfsd_attrstat
@@ -340,5 +352,5 @@ struct svc_version	nfsd_acl_version2 = {
 		.vs_proc	= nfsd_acl_procedures2,
 		.vs_dispatch	= nfsd_dispatch,
 		.vs_xdrsize	= NFS3_SVC_XDRSIZE,
-		.vs_hidden	= 1,
+		.vs_hidden	= 0,
 };

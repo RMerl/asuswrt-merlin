@@ -3,7 +3,7 @@
  * Purpose:	Generic MCA handling layer
  *
  * Copyright (C) 2004 FUJITSU LIMITED
- * Copyright (C) Hidetoshi Seto (seto.hidetoshi@jp.fujitsu.com)
+ * Copyright (C) 2004 Hidetoshi Seto <seto.hidetoshi@jp.fujitsu.com>
  * Copyright (C) 2005 Silicon Graphics, Inc
  * Copyright (C) 2005 Keith Owens <kaos@sgi.com>
  * Copyright (C) 2006 Russ Anderson <rja@sgi.com>
@@ -22,6 +22,7 @@
 #include <linux/smp.h>
 #include <linux/workqueue.h>
 #include <linux/mm.h>
+#include <linux/slab.h>
 
 #include <asm/delay.h>
 #include <asm/machvec.h>
@@ -158,7 +159,7 @@ mca_handler_bh(unsigned long paddr, void *iip, unsigned long ipsr)
 	ia64_mlogbuf_dump();
 	printk(KERN_ERR "OS_MCA: process [cpu %d, pid: %d, uid: %d, "
 		"iip: %p, psr: 0x%lx,paddr: 0x%lx](%s) encounters MCA.\n",
-		raw_smp_processor_id(), current->pid, current->uid,
+	       raw_smp_processor_id(), current->pid, current_uid(),
 		iip, ipsr, paddr, current->comm);
 
 	spin_lock(&mca_bh_lock);

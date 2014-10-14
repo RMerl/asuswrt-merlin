@@ -16,9 +16,11 @@
 #include <linux/irq.h>
 #include <linux/pm.h>
 #include <linux/platform_device.h>
-#include <linux/clk.h>
+#include <linux/err.h>
 #include <linux/delay.h>
-#include <linux/ds1wm.h>
+#include <linux/mfd/core.h>
+#include <linux/mfd/ds1wm.h>
+#include <linux/slab.h>
 
 #include <asm/io.h>
 
@@ -85,13 +87,12 @@ static struct {
 };
 
 struct ds1wm_data {
-	void		*map;
+	void		__iomem *map;
 	int		bus_shift; /* # of shifts to calc register offsets */
 	struct platform_device *pdev;
-	struct ds1wm_platform_data *pdata;
+	const struct mfd_cell *cell;
 	int		irq;
 	int		active_high;
-	struct clk	*clk;
 	int		slave_present;
 	void		*reset_complete;
 	void		*read_complete;
@@ -102,12 +103,12 @@ struct ds1wm_data {
 static inline void ds1wm_write_register(struct ds1wm_data *ds1wm_data, u32 reg,
 					u8 val)
 {
-        __raw_writeb(val, ds1wm_data->map + (reg << ds1wm_data->bus_shift));
+	__raw_writeb(val, ds1wm_data->map + (reg << ds1wm_data->bus_shift));
 }
 
 static inline u8 ds1wm_read_register(struct ds1wm_data *ds1wm_data, u32 reg)
 {
-        return __raw_readb(ds1wm_data->map + (reg << ds1wm_data->bus_shift));
+	return __raw_readb(ds1wm_data->map + (reg << ds1wm_data->bus_shift));
 }
 
 
@@ -149,8 +150,8 @@ static int ds1wm_reset(struct ds1wm_data *ds1wm_data)
 	timeleft = wait_for_completion_timeout(&reset_done, DS1WM_TIMEOUT);
 	ds1wm_data->reset_complete = NULL;
 	if (!timeleft) {
-                dev_dbg(&ds1wm_data->pdev->dev, "reset failed\n");
-                return 1;
+		dev_err(&ds1wm_data->pdev->dev, "reset failed\n");
+		return 1;
 	}
 
 	/* Wait for the end of the reset. According to the specs, the time
@@ -159,19 +160,21 @@ static int ds1wm_reset(struct ds1wm_data *ds1wm_data)
 	 *     625 us - 60 us - 240 us - 100 ns = 324.9 us
 	 *
 	 * We'll wait a bit longer just to be sure.
+	 * Was udelay(500), but if it is going to busywait the cpu that long,
+	 * might as well come back later.
 	 */
-	udelay(500);
+	msleep(1);
 
 	ds1wm_write_register(ds1wm_data, DS1WM_INT_EN,
 		DS1WM_INTEN_ERBF | DS1WM_INTEN_ETMT | DS1WM_INTEN_EPD |
 		(ds1wm_data->active_high ? DS1WM_INTEN_IAS : 0));
 
 	if (!ds1wm_data->slave_present) {
-                dev_dbg(&ds1wm_data->pdev->dev, "reset: no devices found\n");
-                return 1;
-        }
+		dev_dbg(&ds1wm_data->pdev->dev, "reset: no devices found\n");
+		return 1;
+	}
 
-        return 0;
+	return 0;
 }
 
 static int ds1wm_write(struct ds1wm_data *ds1wm_data, u8 data)
@@ -212,17 +215,17 @@ static int ds1wm_find_divisor(int gclk)
 
 static void ds1wm_up(struct ds1wm_data *ds1wm_data)
 {
-	int gclk, divisor;
+	int divisor;
+	struct ds1wm_driver_data *plat = mfd_get_data(ds1wm_data->pdev);
 
-	if (ds1wm_data->pdata->enable)
-		ds1wm_data->pdata->enable(ds1wm_data->pdev);
+	if (ds1wm_data->cell->enable)
+		ds1wm_data->cell->enable(ds1wm_data->pdev);
 
-	gclk = clk_get_rate(ds1wm_data->clk);
-	clk_enable(ds1wm_data->clk);
-	divisor = ds1wm_find_divisor(gclk);
+	divisor = ds1wm_find_divisor(plat->clock_rate);
 	if (divisor == 0) {
 		dev_err(&ds1wm_data->pdev->dev,
-			"no suitable divisor for %dHz clock\n", gclk);
+			"no suitable divisor for %dHz clock\n",
+			plat->clock_rate);
 		return;
 	}
 	ds1wm_write_register(ds1wm_data, DS1WM_CLKDIV, divisor);
@@ -241,10 +244,8 @@ static void ds1wm_down(struct ds1wm_data *ds1wm_data)
 	ds1wm_write_register(ds1wm_data, DS1WM_INT_EN,
 			     ds1wm_data->active_high ? DS1WM_INTEN_IAS : 0);
 
-	if (ds1wm_data->pdata->disable)
-		ds1wm_data->pdata->disable(ds1wm_data->pdev);
-
-	clk_disable(ds1wm_data->clk);
+	if (ds1wm_data->cell->disable)
+		ds1wm_data->cell->disable(ds1wm_data->pdev);
 }
 
 /* --------------------------------------------------------------------- */
@@ -273,8 +274,8 @@ static u8 ds1wm_reset_bus(void *data)
 	return 0;
 }
 
-static void ds1wm_search(void *data, u8 search_type,
-			 w1_slave_found_callback slave_found)
+static void ds1wm_search(void *data, struct w1_master *master_dev,
+			u8 search_type, w1_slave_found_callback slave_found)
 {
 	struct ds1wm_data *ds1wm_data = data;
 	int i;
@@ -307,12 +308,12 @@ static void ds1wm_search(void *data, u8 search_type,
 		rom_id |= (unsigned long long) r << (i * 4);
 
 	}
-	dev_dbg(&ds1wm_data->pdev->dev, "found 0x%08llX", rom_id);
+	dev_dbg(&ds1wm_data->pdev->dev, "found 0x%08llX\n", rom_id);
 
 	ds1wm_write_register(ds1wm_data, DS1WM_CMD, ~DS1WM_CMD_SRA);
 	ds1wm_reset(ds1wm_data);
 
-	slave_found(ds1wm_data, rom_id);
+	slave_found(master_dev, rom_id);
 }
 
 /* --------------------------------------------------------------------- */
@@ -327,14 +328,14 @@ static struct w1_bus_master ds1wm_master = {
 static int ds1wm_probe(struct platform_device *pdev)
 {
 	struct ds1wm_data *ds1wm_data;
-	struct ds1wm_platform_data *plat;
+	struct ds1wm_driver_data *plat;
 	struct resource *res;
 	int ret;
 
 	if (!pdev)
 		return -ENODEV;
 
-	ds1wm_data = kzalloc(sizeof (*ds1wm_data), GFP_KERNEL);
+	ds1wm_data = kzalloc(sizeof(*ds1wm_data), GFP_KERNEL);
 	if (!ds1wm_data)
 		return -ENOMEM;
 
@@ -345,15 +346,18 @@ static int ds1wm_probe(struct platform_device *pdev)
 		ret = -ENXIO;
 		goto err0;
 	}
-	ds1wm_data->map = ioremap(res->start, res->end - res->start + 1);
+	ds1wm_data->map = ioremap(res->start, resource_size(res));
 	if (!ds1wm_data->map) {
 		ret = -ENOMEM;
 		goto err0;
 	}
-	plat = pdev->dev.platform_data;
-	ds1wm_data->bus_shift = plat->bus_shift;
+	plat = mfd_get_data(pdev);
+
+	/* calculate bus shift from mem resource */
+	ds1wm_data->bus_shift = resource_size(res) >> 3;
+
 	ds1wm_data->pdev = pdev;
-	ds1wm_data->pdata = plat;
+	ds1wm_data->cell = mfd_get_cell(pdev);
 
 	res = platform_get_resource(pdev, IORESOURCE_IRQ, 0);
 	if (!res) {
@@ -361,22 +365,17 @@ static int ds1wm_probe(struct platform_device *pdev)
 		goto err1;
 	}
 	ds1wm_data->irq = res->start;
-	ds1wm_data->active_high = (res->flags & IORESOURCE_IRQ_HIGHEDGE) ?
-		1 : 0;
+	ds1wm_data->active_high = plat->active_high;
 
-	set_irq_type(ds1wm_data->irq, ds1wm_data->active_high ?
-			IRQ_TYPE_EDGE_RISING : IRQ_TYPE_EDGE_FALLING);
+	if (res->flags & IORESOURCE_IRQ_HIGHEDGE)
+		irq_set_irq_type(ds1wm_data->irq, IRQ_TYPE_EDGE_RISING);
+	if (res->flags & IORESOURCE_IRQ_LOWEDGE)
+		irq_set_irq_type(ds1wm_data->irq, IRQ_TYPE_EDGE_FALLING);
 
 	ret = request_irq(ds1wm_data->irq, ds1wm_isr, IRQF_DISABLED,
 			  "ds1wm", ds1wm_data);
 	if (ret)
 		goto err1;
-
-	ds1wm_data->clk = clk_get(&pdev->dev, "ds1wm");
-	if (!ds1wm_data->clk) {
-		ret = -ENOENT;
-		goto err2;
-	}
 
 	ds1wm_up(ds1wm_data);
 
@@ -384,14 +383,12 @@ static int ds1wm_probe(struct platform_device *pdev)
 
 	ret = w1_add_master_device(&ds1wm_master);
 	if (ret)
-		goto err3;
+		goto err2;
 
 	return 0;
 
-err3:
-	ds1wm_down(ds1wm_data);
-	clk_put(ds1wm_data->clk);
 err2:
+	ds1wm_down(ds1wm_data);
 	free_irq(ds1wm_data->irq, ds1wm_data);
 err1:
 	iounmap(ds1wm_data->map);
@@ -430,7 +427,6 @@ static int ds1wm_remove(struct platform_device *pdev)
 
 	w1_remove_master_device(&ds1wm_master);
 	ds1wm_down(ds1wm_data);
-	clk_put(ds1wm_data->clk);
 	free_irq(ds1wm_data->irq, ds1wm_data);
 	iounmap(ds1wm_data->map);
 	kfree(ds1wm_data);

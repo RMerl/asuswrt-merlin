@@ -3,7 +3,7 @@
 
 /*
  *  Header file for SoundBlaster cards
- *  Copyright (c) by Jaroslav Kysela <perex@suse.cz>
+ *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  *
  *
  *   This program is free software; you can redistribute it and/or modify
@@ -33,11 +33,13 @@ enum sb_hw_type {
 	SB_HW_20,
 	SB_HW_201,
 	SB_HW_PRO,
+	SB_HW_JAZZ16,		/* Media Vision Jazz16 */
 	SB_HW_16,
 	SB_HW_16CSP,		/* SB16 with CSP chip */
 	SB_HW_ALS100,		/* Avance Logic ALS100 chip */
 	SB_HW_ALS4000,		/* Avance Logic ALS4000 chip */
 	SB_HW_DT019X,		/* Diamond Tech. DT-019X / Avance Logic ALS-007 */
+	SB_HW_CS5530,		/* Cyrix/NatSemi 5530 VSA1 */
 };
 
 #define SB_OPEN_PCM			0x01
@@ -239,11 +241,16 @@ struct snd_sb {
 #define SB_DT019X_CAP_MAIN	0x07
 
 #define SB_ALS4000_MONO_IO_CTRL	0x4b
+#define SB_ALS4000_OUT_MIXER_CTRL_2	0x4c
 #define SB_ALS4000_MIC_IN_GAIN	0x4d
+#define SB_ALS4000_ANALOG_REFRNC_VOLT_CTRL 0x4e
 #define SB_ALS4000_FMDAC	0x4f
 #define SB_ALS4000_3D_SND_FX	0x50
 #define SB_ALS4000_3D_TIME_DELAY	0x51
 #define SB_ALS4000_3D_AUTO_MUTE	0x52
+#define SB_ALS4000_ANALOG_BLOCK_CTRL 0x53
+#define SB_ALS4000_3D_DELAYLINE_PATTERN 0x54
+#define SB_ALS4000_CR3_CONFIGURATION	0xc3 /* bit 7 is Digital Loop Enable */
 #define SB_ALS4000_QSOUND	0xdb
 
 /* IRQ setting bitmap */
@@ -256,6 +263,7 @@ struct snd_sb {
 #define SB_IRQTYPE_8BIT		0x01
 #define SB_IRQTYPE_16BIT	0x02
 #define SB_IRQTYPE_MPUIN	0x04
+#define ALS4K_IRQTYPE_CR1E_DMA	0x20
 
 /* DMA setting bitmap */
 #define SB_DMASETUP_DMA0	0x01
@@ -324,7 +332,8 @@ enum {
 	SB_MIX_DOUBLE,
 	SB_MIX_INPUT_SW,
 	SB_MIX_CAPTURE_PRO,
-	SB_MIX_CAPTURE_DT019X
+	SB_MIX_CAPTURE_DT019X,
+	SB_MIX_MONO_CAPTURE_ALS4K
 };
 
 #define SB_MIXVAL_DOUBLE(left_reg, right_reg, left_shift, right_shift, mask) \

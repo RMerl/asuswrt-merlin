@@ -1,6 +1,5 @@
 /*
  *
- *  $Id$
  *
  *  Copyright (C) 2005 Mike Isely <isely@pobox.com>
  *
@@ -80,6 +79,10 @@ struct pvr2_stream {
 	/* Tracking state for tolerating errors */
 	unsigned int fail_count;
 	unsigned int fail_tolerance;
+
+	unsigned int buffers_processed;
+	unsigned int buffers_failed;
+	unsigned int bytes_processed;
 };
 
 struct pvr2_buffer {
@@ -446,6 +449,8 @@ static void buffer_complete(struct urb *urb)
 	    (urb->status == -ENOENT) ||
 	    (urb->status == -ECONNRESET) ||
 	    (urb->status == -ESHUTDOWN)) {
+		(sp->buffers_processed)++;
+		sp->bytes_processed += urb->actual_length;
 		bp->used_count = urb->actual_length;
 		if (sp->fail_count) {
 			pvr2_trace(PVR2_TRACE_TOLERANCE,
@@ -457,11 +462,13 @@ static void buffer_complete(struct urb *urb)
 		// We can tolerate this error, because we're below the
 		// threshold...
 		(sp->fail_count)++;
+		(sp->buffers_failed)++;
 		pvr2_trace(PVR2_TRACE_TOLERANCE,
 			   "stream %p ignoring error %d"
 			   " - fail count increased to %u",
 			   sp,urb->status,sp->fail_count);
 	} else {
+		(sp->buffers_failed)++;
 		bp->status = urb->status;
 	}
 	spin_unlock_irqrestore(&sp->list_lock,irq_flags);
@@ -515,6 +522,28 @@ void pvr2_stream_set_callback(struct pvr2_stream *sp,
 	} while(0); mutex_unlock(&sp->mutex);
 }
 
+void pvr2_stream_get_stats(struct pvr2_stream *sp,
+			   struct pvr2_stream_stats *stats,
+			   int zero_counts)
+{
+	unsigned long irq_flags;
+	spin_lock_irqsave(&sp->list_lock,irq_flags);
+	if (stats) {
+		stats->buffers_in_queue = sp->q_count;
+		stats->buffers_in_idle = sp->i_count;
+		stats->buffers_in_ready = sp->r_count;
+		stats->buffers_processed = sp->buffers_processed;
+		stats->buffers_failed = sp->buffers_failed;
+		stats->bytes_processed = sp->bytes_processed;
+	}
+	if (zero_counts) {
+		sp->buffers_processed = 0;
+		sp->buffers_failed = 0;
+		sp->bytes_processed = 0;
+	}
+	spin_unlock_irqrestore(&sp->list_lock,irq_flags);
+}
+
 /* Query / set the nominal buffer count */
 int pvr2_stream_get_buffer_count(struct pvr2_stream *sp)
 {
@@ -563,7 +592,7 @@ void pvr2_stream_kill(struct pvr2_stream *sp)
 	struct pvr2_buffer *bp;
 	mutex_lock(&sp->mutex); do {
 		pvr2_stream_internal_flush(sp);
-		while ((bp = pvr2_stream_get_ready_buffer(sp)) != 0) {
+		while ((bp = pvr2_stream_get_ready_buffer(sp)) != NULL) {
 			pvr2_buffer_set_idle(bp);
 		}
 		if (sp->buffer_total_count != sp->buffer_target_count) {

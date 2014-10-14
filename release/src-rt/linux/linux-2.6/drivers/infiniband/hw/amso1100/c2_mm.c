@@ -30,6 +30,8 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+#include <linux/slab.h>
+
 #include "c2.h"
 #include "c2_vq.h"
 
@@ -45,7 +47,7 @@
  *	  Reply buffer _is_ freed by this function.
  */
 static int
-send_pbl_messages(struct c2_dev *c2dev, u32 stag_index,
+send_pbl_messages(struct c2_dev *c2dev, __be32 stag_index,
 		  unsigned long va, u32 pbl_depth,
 		  struct c2_vq_req *vq_req, int pbl_type)
 {

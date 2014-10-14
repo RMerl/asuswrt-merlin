@@ -2,6 +2,7 @@
  * JFFS2 -- Journalling Flash File System, Version 2.
  *
  * Copyright © 2001-2007 Red Hat, Inc.
+ * Copyright © 2004-2010 David Woodhouse <dwmw2@infradead.org>
  *
  * Created by David Woodhouse <dwmw2@infradead.org>
  *
@@ -38,6 +39,7 @@
 
 #if CONFIG_JFFS2_FS_DEBUG > 1
 #define JFFS2_DBG_FRAGTREE2_MESSAGES
+#define JFFS2_DBG_READINODE2_MESSAGES
 #define JFFS2_DBG_MEMALLOC_MESSAGES
 #endif
 
@@ -80,29 +82,29 @@
 #define JFFS2_ERROR(fmt, ...)						\
 	do {								\
 		printk(JFFS2_ERR_MSG_PREFIX				\
-			" (%d) %s: " fmt, current->pid,			\
-			__FUNCTION__ , ##__VA_ARGS__);			\
+			" (%d) %s: " fmt, task_pid_nr(current),		\
+			__func__ , ##__VA_ARGS__);			\
 	} while(0)
 
 #define JFFS2_WARNING(fmt, ...)						\
 	do {								\
 		printk(JFFS2_WARN_MSG_PREFIX				\
-			" (%d) %s: " fmt, current->pid,			\
-			__FUNCTION__ , ##__VA_ARGS__);			\
+			" (%d) %s: " fmt, task_pid_nr(current),		\
+			__func__ , ##__VA_ARGS__);			\
 	} while(0)
 
 #define JFFS2_NOTICE(fmt, ...)						\
 	do {								\
 		printk(JFFS2_NOTICE_MSG_PREFIX				\
-			" (%d) %s: " fmt, current->pid,			\
-			__FUNCTION__ , ##__VA_ARGS__);			\
+			" (%d) %s: " fmt, task_pid_nr(current),		\
+			__func__ , ##__VA_ARGS__);			\
 	} while(0)
 
 #define JFFS2_DEBUG(fmt, ...)						\
 	do {								\
 		printk(JFFS2_DBG_MSG_PREFIX				\
-			" (%d) %s: " fmt, current->pid,			\
-			__FUNCTION__ , ##__VA_ARGS__);			\
+			" (%d) %s: " fmt, task_pid_nr(current),		\
+			__func__ , ##__VA_ARGS__);			\
 	} while(0)
 
 /*
@@ -114,6 +116,11 @@
 #define dbg_readinode(fmt, ...)	JFFS2_DEBUG(fmt, ##__VA_ARGS__)
 #else
 #define dbg_readinode(fmt, ...)
+#endif
+#ifdef JFFS2_DBG_READINODE2_MESSAGES
+#define dbg_readinode2(fmt, ...)	JFFS2_DEBUG(fmt, ##__VA_ARGS__)
+#else
+#define dbg_readinode2(fmt, ...)
 #endif
 
 /* Fragtree build debugging messages */

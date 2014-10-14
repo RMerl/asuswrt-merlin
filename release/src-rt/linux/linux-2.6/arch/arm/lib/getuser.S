@@ -20,24 +20,30 @@
  *		r2, r3 contains the zero-extended value
  *		lr corrupted
  *
- * No other registers must be altered.  (see include/asm-arm/uaccess.h
+ * No other registers must be altered.  (see <asm/uaccess.h>
  * for specific ASM register usage).
  *
  * Note that ADDR_LIMIT is either 0 or 0xc0000000.
  * Note also that it is intended that __get_user_bad is not global.
  */
+#include <linux/linkage.h>
 #include <asm/errno.h>
+#include <asm/domain.h>
 
-	.global	__get_user_1
-__get_user_1:
-1:	ldrbt	r2, [r0]
+ENTRY(__get_user_1)
+1:	T(ldrb)	r2, [r0]
 	mov	r0, #0
 	mov	pc, lr
+ENDPROC(__get_user_1)
 
-	.global	__get_user_2
-__get_user_2:
-2:	ldrbt	r2, [r0], #1
-3:	ldrbt	r3, [r0]
+ENTRY(__get_user_2)
+#ifdef CONFIG_THUMB2_KERNEL
+2:	T(ldrb)	r2, [r0]
+3:	T(ldrb)	r3, [r0, #1]
+#else
+2:	T(ldrb)	r2, [r0], #1
+3:	T(ldrb)	r3, [r0]
+#endif
 #ifndef __ARMEB__
 	orr	r2, r2, r3, lsl #8
 #else
@@ -45,21 +51,23 @@ __get_user_2:
 #endif
 	mov	r0, #0
 	mov	pc, lr
+ENDPROC(__get_user_2)
 
-	.global	__get_user_4
-__get_user_4:
-4:	ldrt	r2, [r0]
+ENTRY(__get_user_4)
+4:	T(ldr)	r2, [r0]
 	mov	r0, #0
 	mov	pc, lr
+ENDPROC(__get_user_4)
 
 __get_user_bad:
 	mov	r2, #0
 	mov	r0, #-EFAULT
 	mov	pc, lr
+ENDPROC(__get_user_bad)
 
-.section __ex_table, "a"
+.pushsection __ex_table, "a"
 	.long	1b, __get_user_bad
 	.long	2b, __get_user_bad
 	.long	3b, __get_user_bad
 	.long	4b, __get_user_bad
-.previous
+.popsection

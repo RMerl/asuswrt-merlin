@@ -1,8 +1,4 @@
 /*
- * $Id: twidjoy.c,v 1.5 2002/01/22 20:31:53 vojtech Exp $
- *
- *  derived from CVS-ID "stinger.c,v 1.5 2001/05/29 12:57:18 vojtech Exp"
- *
  *  Copyright (c) 2001 Arndt Schoenewald
  *  Copyright (c) 2000-2001 Vojtech Pavlik
  *  Copyright (c) 2000 Mark Fletcher
@@ -207,7 +203,7 @@ static int twidjoy_connect(struct serio *serio, struct serio_driver *drv)
 	input_dev->id.version = 0x0100;
 	input_dev->dev.parent = &serio->dev;
 
-	input_dev->evbit[0] = BIT(EV_KEY) | BIT(EV_ABS);
+	input_dev->evbit[0] = BIT_MASK(EV_KEY) | BIT_MASK(EV_ABS);
 	input_set_abs_params(input_dev, ABS_X, -50, 50, 4, 4);
 	input_set_abs_params(input_dev, ABS_Y, -50, 50, 4, 4);
 

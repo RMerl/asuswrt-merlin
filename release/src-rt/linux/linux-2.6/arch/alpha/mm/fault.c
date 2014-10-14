@@ -142,11 +142,10 @@ do_page_fault(unsigned long address, unsigned long mmcsr,
 			goto bad_area;
 	}
 
- survive:
 	/* If for any reason at all we couldn't handle the fault,
 	   make sure we exit gracefully rather than endlessly redo
 	   the fault.  */
-	fault = handle_mm_fault(mm, vma, address, cause > 0);
+	fault = handle_mm_fault(mm, vma, address, cause > 0 ? FAULT_FLAG_WRITE : 0);
 	up_read(&mm->mmap_sem);
 	if (unlikely(fault & VM_FAULT_ERROR)) {
 		if (fault & VM_FAULT_OOM)
@@ -188,16 +187,10 @@ do_page_fault(unsigned long address, unsigned long mmcsr,
 	/* We ran out of memory, or some other thing happened to us that
 	   made us unable to handle the page fault gracefully.  */
  out_of_memory:
-	if (is_init(current)) {
-		yield();
-		down_read(&mm->mmap_sem);
-		goto survive;
-	}
-	printk(KERN_ALERT "VM: killing process %s(%d)\n",
-	       current->comm, current->pid);
 	if (!user_mode(regs))
 		goto no_context;
-	do_exit(SIGKILL);
+	pagefault_out_of_memory();
+	return;
 
  do_sigbus:
 	/* Send a sigbus, regardless of whether we were in kernel

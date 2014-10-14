@@ -82,7 +82,7 @@
 struct internal_state;
 
 typedef struct z_stream_s {
-    Byte    *next_in;   /* next input byte */
+    const Byte *next_in;   /* next input byte */
     uInt     avail_in;  /* number of bytes available at next_in */
     uLong    total_in;  /* total nb of input bytes read so far */
 
@@ -179,11 +179,16 @@ typedef z_stream *z_streamp;
 
                         /* basic functions */
 
-extern int zlib_deflate_workspacesize (void);
+extern int zlib_deflate_workspacesize (int windowBits, int memLevel);
 /*
    Returns the number of bytes that needs to be allocated for a per-
-   stream workspace.  A pointer to this number of bytes should be
-   returned in stream->workspace before calling zlib_deflateInit().
+   stream workspace with the specified parameters.  A pointer to this
+   number of bytes should be returned in stream->workspace before
+   you call zlib_deflateInit() or zlib_deflateInit2().  If you call
+   zlib_deflateInit(), specify windowBits = MAX_WBITS and memLevel =
+   MAX_MEM_LEVEL here.  If you call zlib_deflateInit2(), the windowBits
+   and memLevel parameters passed to zlib_deflateInit2() must not
+   exceed those passed here.
 */
 
 /* 
@@ -698,5 +703,9 @@ extern int zlib_inflateInit2(z_streamp strm, int  windowBits);
 #if !defined(_Z_UTIL_H) && !defined(NO_DUMMY_DECL)
     struct internal_state {int dummy;}; /* hack for buggy compilers */
 #endif
+
+/* Utility function: initialize zlib, unpack binary blob, clean up zlib,
+ * return len or negative error code. */
+extern int zlib_inflate_blob(void *dst, unsigned dst_sz, const void *src, unsigned src_sz);
 
 #endif /* _ZLIB_H */

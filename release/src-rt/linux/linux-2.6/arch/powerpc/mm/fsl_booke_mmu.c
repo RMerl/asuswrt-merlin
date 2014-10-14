@@ -2,7 +2,7 @@
  * Modifications by Kumar Gala (galak@kernel.crashing.org) to support
  * E500 Book E processors.
  *
- * Copyright 2004 Freescale Semiconductor, Inc
+ * Copyright 2004,2010 Freescale Semiconductor, Inc.
  *
  * This file contains the routines for initializing the MMU
  * on the 4xx series of chips.
@@ -14,7 +14,6 @@
  *  Modifications by Paul Mackerras (PowerMac) (paulus@cs.anu.edu.au)
  *  and Cort Dougan (PReP) (cort@cs.nmt.edu)
  *    Copyright (C) 1996 Paul Mackerras
- *  Amiga/APUS changes by Jesper Skov (jskov@cygnus.co.uk).
  *
  *  Derived from "arch/i386/mm/init.c"
  *    Copyright (C) 1991, 1992, 1993, 1994  Linus Torvalds
@@ -41,6 +40,7 @@
 #include <linux/init.h>
 #include <linux/delay.h>
 #include <linux/highmem.h>
+#include <linux/memblock.h>
 
 #include <asm/pgalloc.h>
 #include <asm/prom.h>
@@ -50,40 +50,33 @@
 #include <asm/mmu.h>
 #include <asm/uaccess.h>
 #include <asm/smp.h>
-#include <asm/bootx.h>
 #include <asm/machdep.h>
 #include <asm/setup.h>
 
-extern void loadcam_entry(unsigned int index);
+#include "mmu_decl.h"
+
 unsigned int tlbcam_index;
-unsigned int num_tlbcam_entries;
-static unsigned long __cam0, __cam1, __cam2;
-extern unsigned long total_lowmem;
-extern unsigned long __max_low_memory;
-#define MAX_LOW_MEM	CONFIG_LOWMEM_SIZE
 
-#define NUM_TLBCAMS	(16)
-
-struct tlbcam {
-   	u32	MAS0;
-	u32	MAS1;
-	u32	MAS2;
-	u32	MAS3;
-	u32	MAS7;
-} TLBCAM[NUM_TLBCAMS];
+#define NUM_TLBCAMS	(64)
+struct tlbcam TLBCAM[NUM_TLBCAMS];
 
 struct tlbcamrange {
-   	unsigned long start;
+	unsigned long start;
 	unsigned long limit;
 	phys_addr_t phys;
 } tlbcam_addrs[NUM_TLBCAMS];
 
 extern unsigned int tlbcam_index;
 
+unsigned long tlbcam_sz(int idx)
+{
+	return tlbcam_addrs[idx].limit - tlbcam_addrs[idx].start + 1;
+}
+
 /*
  * Return PA for this VA if it is mapped by a CAM, or 0
  */
-unsigned long v_mapped_by_tlbcam(unsigned long va)
+phys_addr_t v_mapped_by_tlbcam(unsigned long va)
 {
 	int b;
 	for (b = 0; b < tlbcam_index; ++b)
@@ -95,29 +88,30 @@ unsigned long v_mapped_by_tlbcam(unsigned long va)
 /*
  * Return VA for a given PA or 0 if not mapped
  */
-unsigned long p_mapped_by_tlbcam(unsigned long pa)
+unsigned long p_mapped_by_tlbcam(phys_addr_t pa)
 {
 	int b;
 	for (b = 0; b < tlbcam_index; ++b)
 		if (pa >= tlbcam_addrs[b].phys
-	    	    && pa < (tlbcam_addrs[b].limit-tlbcam_addrs[b].start)
+			&& pa < (tlbcam_addrs[b].limit-tlbcam_addrs[b].start)
 		              +tlbcam_addrs[b].phys)
 			return tlbcam_addrs[b].start+(pa-tlbcam_addrs[b].phys);
 	return 0;
 }
 
 /*
- * Set up one of the I/D BAT (block address translation) register pairs.
- * The parameters are not checked; in particular size must be a power
- * of 4 between 4k and 256M.
+ * Set up a variable-size TLB entry (tlbcam). The parameters are not checked;
+ * in particular size must be a power of 4 between 4k and 256M (or 1G, for cpus
+ * that support extended page sizes).  Note that while some cpus support a
+ * page size of 4G, we don't allow its use here.
  */
-void settlbcam(int index, unsigned long virt, phys_addr_t phys,
-		unsigned int size, int flags, unsigned int pid)
+static void settlbcam(int index, unsigned long virt, phys_addr_t phys,
+		unsigned long size, unsigned long flags, unsigned int pid)
 {
 	unsigned int tsize, lz;
 
-	asm ("cntlzw %0,%1" : "=r" (lz) : "r" (size));
-	tsize = (21 - lz) / 2;
+	asm (PPC_CNTLZL "%0,%1" : "=r" (lz) : "r" (size));
+	tsize = 21 - lz;
 
 #ifdef CONFIG_SMP
 	if ((flags & _PAGE_NO_CACHE) == 0)
@@ -134,18 +128,16 @@ void settlbcam(int index, unsigned long virt, phys_addr_t phys,
 	TLBCAM[index].MAS2 |= (flags & _PAGE_GUARDED) ? MAS2_G : 0;
 	TLBCAM[index].MAS2 |= (flags & _PAGE_ENDIAN) ? MAS2_E : 0;
 
-	TLBCAM[index].MAS3 = (phys & PAGE_MASK) | MAS3_SX | MAS3_SR;
+	TLBCAM[index].MAS3 = (phys & MAS3_RPN) | MAS3_SX | MAS3_SR;
 	TLBCAM[index].MAS3 |= ((flags & _PAGE_RW) ? MAS3_SW : 0);
+	if (mmu_has_feature(MMU_FTR_BIG_PHYS))
+		TLBCAM[index].MAS7 = (u64)phys >> 32;
 
-#ifndef CONFIG_KGDB /* want user access for breakpoints */
-	if (flags & _PAGE_USER) {
+	/* Below is unlikely -- only for large user pages or similar */
+	if (pte_user(flags)) {
 	   TLBCAM[index].MAS3 |= MAS3_UX | MAS3_UR;
 	   TLBCAM[index].MAS3 |= ((flags & _PAGE_RW) ? MAS3_UW : 0);
 	}
-#else
-	TLBCAM[index].MAS3 |= MAS3_UX | MAS3_UR;
-	TLBCAM[index].MAS3 |= ((flags & _PAGE_RW) ? MAS3_UW : 0);
-#endif
 
 	tlbcam_addrs[index].start = virt;
 	tlbcam_addrs[index].limit = virt + size - 1;
@@ -154,27 +146,50 @@ void settlbcam(int index, unsigned long virt, phys_addr_t phys,
 	loadcam_entry(index);
 }
 
-void invalidate_tlbcam_entry(int index)
+unsigned long map_mem_in_cams(unsigned long ram, int max_cam_idx)
 {
-	TLBCAM[index].MAS0 = MAS0_TLBSEL(1) | MAS0_ESEL(index);
-	TLBCAM[index].MAS1 = ~MAS1_VALID;
+	int i;
+	unsigned long virt = PAGE_OFFSET;
+	phys_addr_t phys = memstart_addr;
+	unsigned long amount_mapped = 0;
+	unsigned long max_cam = (mfspr(SPRN_TLB1CFG) >> 16) & 0xf;
 
-	loadcam_entry(index);
+	/* Convert (4^max) kB to (2^max) bytes */
+	max_cam = max_cam * 2 + 10;
+
+	/* Calculate CAM values */
+	for (i = 0; ram && i < max_cam_idx; i++) {
+		unsigned int camsize = __ilog2(ram) & ~1U;
+		unsigned int align = __ffs(virt | phys) & ~1U;
+		unsigned long cam_sz;
+
+		if (camsize > align)
+			camsize = align;
+		if (camsize > max_cam)
+			camsize = max_cam;
+
+		cam_sz = 1UL << camsize;
+		settlbcam(i, virt, phys, cam_sz, PAGE_KERNEL_X, 0);
+
+		ram -= cam_sz;
+		amount_mapped += cam_sz;
+		virt += cam_sz;
+		phys += cam_sz;
+	}
+	tlbcam_index = i;
+
+	return amount_mapped;
 }
 
-void __init cam_mapin_ram(unsigned long cam0, unsigned long cam1,
-		unsigned long cam2)
+#ifdef CONFIG_PPC32
+
+#if defined(CONFIG_LOWMEM_CAM_NUM_BOOL) && (CONFIG_LOWMEM_CAM_NUM >= NUM_TLBCAMS)
+#error "LOWMEM_CAM_NUM must be less than NUM_TLBCAMS"
+#endif
+
+unsigned long __init mmu_mapin_ram(unsigned long top)
 {
-	settlbcam(0, KERNELBASE, PPC_MEMSTART, cam0, _PAGE_KERNEL, 0);
-	tlbcam_index++;
-	if (cam1) {
-		tlbcam_index++;
-		settlbcam(1, KERNELBASE+cam0, PPC_MEMSTART+cam0, cam1, _PAGE_KERNEL, 0);
-	}
-	if (cam2) {
-		tlbcam_index++;
-		settlbcam(2, KERNELBASE+cam0+cam1, PPC_MEMSTART+cam0+cam1, cam2, _PAGE_KERNEL, 0);
-	}
+	return tlbcam_addrs[tlbcam_index - 1].limit - PAGE_OFFSET + 1;
 }
 
 /*
@@ -185,52 +200,31 @@ void __init MMU_init_hw(void)
 	flush_instruction_cache();
 }
 
-unsigned long __init mmu_mapin_ram(void)
+void __init adjust_total_lowmem(void)
 {
-	cam_mapin_ram(__cam0, __cam1, __cam2);
-
-	return __cam0 + __cam1 + __cam2;
-}
-
-
-void __init
-adjust_total_lowmem(void)
-{
-	unsigned long max_low_mem = MAX_LOW_MEM;
-	unsigned long cam_max = 0x10000000;
 	unsigned long ram;
+	int i;
 
-	/* adjust CAM size to max_low_mem */
-	if (max_low_mem < cam_max)
-		cam_max = max_low_mem;
+	/* adjust lowmem size to __max_low_memory */
+	ram = min((phys_addr_t)__max_low_memory, (phys_addr_t)total_lowmem);
 
-	/* adjust lowmem size to max_low_mem */
-	if (max_low_mem < total_lowmem)
-		ram = max_low_mem;
-	else
-		ram = total_lowmem;
+	__max_low_memory = map_mem_in_cams(ram, CONFIG_LOWMEM_CAM_NUM);
 
-	/* Calculate CAM values */
-	__cam0 = 1UL << 2 * (__ilog2(ram) / 2);
-	if (__cam0 > cam_max)
-		__cam0 = cam_max;
-	ram -= __cam0;
-	if (ram) {
-		__cam1 = 1UL << 2 * (__ilog2(ram) / 2);
-		if (__cam1 > cam_max)
-			__cam1 = cam_max;
-		ram -= __cam1;
-	}
-	if (ram) {
-		__cam2 = 1UL << 2 * (__ilog2(ram) / 2);
-		if (__cam2 > cam_max)
-			__cam2 = cam_max;
-		ram -= __cam2;
-	}
+	pr_info("Memory CAM mapping: ");
+	for (i = 0; i < tlbcam_index - 1; i++)
+		pr_cont("%lu/", tlbcam_sz(i) >> 20);
+	pr_cont("%lu Mb, residual: %dMb\n", tlbcam_sz(tlbcam_index - 1) >> 20,
+	        (unsigned int)((total_lowmem - __max_low_memory) >> 20));
 
-	printk(KERN_INFO "Memory CAM mapping: CAM0=%ldMb, CAM1=%ldMb,"
-			" CAM2=%ldMb residual: %ldMb\n",
-			__cam0 >> 20, __cam1 >> 20, __cam2 >> 20,
-			(total_lowmem - __cam0 - __cam1 - __cam2) >> 20);
-	__max_low_memory = max_low_mem = __cam0 + __cam1 + __cam2;
+	memblock_set_current_limit(memstart_addr + __max_low_memory);
 }
+
+void setup_initial_memory_limit(phys_addr_t first_memblock_base,
+				phys_addr_t first_memblock_size)
+{
+	phys_addr_t limit = first_memblock_base + first_memblock_size;
+
+	/* 64M mapped initially according to head_fsl_booke.S */
+	memblock_set_current_limit(min_t(u64, limit, 0x04000000));
+}
+#endif

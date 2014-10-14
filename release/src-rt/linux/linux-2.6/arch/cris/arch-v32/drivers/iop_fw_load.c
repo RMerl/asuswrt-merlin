@@ -1,5 +1,4 @@
-/* $Id: iop_fw_load.c,v 1.4 2005/04/07 09:27:46 larsv Exp $
- *
+/*
  * Firmware loader for ETRAX FS IO-Processor
  *
  * Copyright (C) 2004  Axis Communications AB
@@ -11,22 +10,26 @@
 #include <linux/device.h>
 #include <linux/firmware.h>
 
-#include <asm/arch/hwregs/reg_map.h>
-#include <asm/arch/hwregs/iop/iop_reg_space.h>
-#include <asm/arch/hwregs/iop/iop_mpu_macros.h>
-#include <asm/arch/hwregs/iop/iop_mpu_defs.h>
-#include <asm/arch/hwregs/iop/iop_spu_defs.h>
-#include <asm/arch/hwregs/iop/iop_sw_cpu_defs.h>
+#include <hwregs/reg_rdwr.h>
+#include <hwregs/reg_map.h>
+#include <hwregs/iop/iop_reg_space.h>
+#include <hwregs/iop/iop_mpu_macros.h>
+#include <hwregs/iop/iop_mpu_defs.h>
+#include <hwregs/iop/iop_spu_defs.h>
+#include <hwregs/iop/iop_sw_cpu_defs.h>
 
 #define IOP_TIMEOUT 100
 
+#error "This driver is broken with regard to its driver core usage."
+#error "Please contact <greg@kroah.com> for details on how to fix it properly."
+
 static struct device iop_spu_device[2] = {
-	{ .bus_id =     "iop-spu0", },
-	{ .bus_id =     "iop-spu1", },
+	{ .init_name =     "iop-spu0", },
+	{ .init_name =     "iop-spu1", },
 };
 
 static struct device iop_mpu_device = {
-	.bus_id =       "iop-mpu",
+	.init_name =       "iop-mpu",
 };
 
 static int wait_mpu_idle(void)
@@ -192,6 +195,13 @@ int iop_start_mpu(unsigned int start_addr)
 
 static int __init iop_fw_load_init(void)
 {
+#if 0
+	/*
+	 * static struct devices can not be added directly to sysfs by ignoring
+	 * the driver model infrastructure.  To fix this properly, please use
+	 * the platform_bus to register these devices to be able to properly
+	 * use the firmware infrastructure.
+	 */
 	device_initialize(&iop_spu_device[0]);
 	kobject_set_name(&iop_spu_device[0].kobj, "iop-spu0");
 	kobject_add(&iop_spu_device[0].kobj);
@@ -201,6 +211,7 @@ static int __init iop_fw_load_init(void)
 	device_initialize(&iop_mpu_device);
 	kobject_set_name(&iop_mpu_device.kobj, "iop-mpu");
 	kobject_add(&iop_mpu_device.kobj);
+#endif
 	return 0;
 }
 

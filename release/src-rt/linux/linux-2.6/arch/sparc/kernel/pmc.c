@@ -8,11 +8,11 @@
 #include <linux/fs.h>
 #include <linux/errno.h>
 #include <linux/init.h>
-#include <linux/miscdevice.h>
 #include <linux/pm.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
 
 #include <asm/io.h>
-#include <asm/sbus.h>
 #include <asm/oplib.h>
 #include <asm/uaccess.h>
 #include <asm/auxio.h>
@@ -23,61 +23,38 @@
  * #define PMC_NO_IDLE
  */
 
-#define PMC_MINOR	MISC_DYNAMIC_MINOR
 #define PMC_OBPNAME	"SUNW,pmc"
-#define PMC_DEVNAME "pmc"
+#define PMC_DEVNAME	"pmc"
 
 #define PMC_IDLE_REG	0x00
-#define PMC_IDLE_ON		0x01
+#define PMC_IDLE_ON	0x01
 
-volatile static u8 __iomem *regs; 
-static int pmc_regsize;
+static u8 __iomem *regs;
 
-#define pmc_readb(offs)			(sbus_readb(regs+offs))
-#define pmc_writeb(val, offs) 	(sbus_writeb(val, regs+offs))
+#define pmc_readb(offs)		(sbus_readb(regs+offs))
+#define pmc_writeb(val, offs)	(sbus_writeb(val, regs+offs))
 
-/* 
+/*
  * CPU idle callback function
  * See .../arch/sparc/kernel/process.c
  */
-void pmc_swift_idle(void)
+static void pmc_swift_idle(void)
 {
 #ifdef PMC_DEBUG_LED
-	set_auxio(0x00, AUXIO_LED); 
+	set_auxio(0x00, AUXIO_LED);
 #endif
 
 	pmc_writeb(pmc_readb(PMC_IDLE_REG) | PMC_IDLE_ON, PMC_IDLE_REG);
 
 #ifdef PMC_DEBUG_LED
-	set_auxio(AUXIO_LED, 0x00); 
+	set_auxio(AUXIO_LED, 0x00);
 #endif
-} 
-
-static inline void pmc_free(void)
-{
-	sbus_iounmap(regs, pmc_regsize);
 }
 
-static int __init pmc_probe(void)
+static int __devinit pmc_probe(struct platform_device *op)
 {
-	struct sbus_bus *sbus = NULL;
-	struct sbus_dev *sdev = NULL;
-	for_each_sbus(sbus) {
-		for_each_sbusdev(sdev, sbus) {
-			if (!strcmp(sdev->prom_name, PMC_OBPNAME)) {
-				goto sbus_done;
-			}
-		}
-	}
-
-sbus_done:
-	if (!sdev) {
-		return -ENODEV;
-	}
-
-	pmc_regsize = sdev->reg_addrs[0].reg_size;
-	regs = sbus_ioremap(&sdev->resource[0], 0, 
-				   pmc_regsize, PMC_OBPNAME);
+	regs = of_ioremap(&op->resource[0], 0,
+			  resource_size(&op->resource[0]), PMC_OBPNAME);
 	if (!regs) {
 		printk(KERN_ERR "%s: unable to map registers\n", PMC_DEVNAME);
 		return -ENODEV;
@@ -85,15 +62,37 @@ sbus_done:
 
 #ifndef PMC_NO_IDLE
 	/* Assign power management IDLE handler */
-	pm_idle = pmc_swift_idle;	
+	pm_idle = pmc_swift_idle;
 #endif
 
 	printk(KERN_INFO "%s: power management initialized\n", PMC_DEVNAME);
 	return 0;
 }
 
+static struct of_device_id pmc_match[] = {
+	{
+		.name = PMC_OBPNAME,
+	},
+	{},
+};
+MODULE_DEVICE_TABLE(of, pmc_match);
+
+static struct platform_driver pmc_driver = {
+	.driver = {
+		.name = "pmc",
+		.owner = THIS_MODULE,
+		.of_match_table = pmc_match,
+	},
+	.probe		= pmc_probe,
+};
+
+static int __init pmc_init(void)
+{
+	return platform_driver_register(&pmc_driver);
+}
+
 /* This driver is not critical to the boot process
  * and is easiest to ioremap when SBus is already
  * initialized, so we install ourselves thusly:
  */
-__initcall(pmc_probe);
+__initcall(pmc_init);

@@ -25,6 +25,8 @@
 #ifndef KERNEL_IRDA_H
 #define KERNEL_IRDA_H
 
+#include <linux/types.h>
+
 /* Please do *not* add any #include in this file, this file is
  * included as-is in user space.
  * Please fix the calling file to properly included needed files before
@@ -77,6 +79,7 @@ typedef enum {
 	IRDA_ACT200L_DONGLE      = 10,
 	IRDA_MA600_DONGLE        = 11,
 	IRDA_TOIM3232_DONGLE     = 12,
+	IRDA_EP7211_DONGLE       = 13,
 } IRDA_DONGLE;
 
 /* Protocol types to be used for SOCK_DGRAM */
@@ -215,6 +218,34 @@ struct if_irda_req {
 #define ifr_mode      ifr_ifru.ifru_mode
 #define ifr_dtr       ifr_ifru.ifru_line.dtr
 #define ifr_rts       ifr_ifru.ifru_line.rts
+
+
+/* IrDA netlink definitions */
+#define IRDA_NL_NAME "irda"
+#define IRDA_NL_VERSION 1
+
+enum irda_nl_commands {
+	IRDA_NL_CMD_UNSPEC,
+	IRDA_NL_CMD_SET_MODE,
+	IRDA_NL_CMD_GET_MODE,
+
+	__IRDA_NL_CMD_AFTER_LAST
+};
+#define IRDA_NL_CMD_MAX (__IRDA_NL_CMD_AFTER_LAST - 1)
+
+enum nl80211_attrs {
+	IRDA_NL_ATTR_UNSPEC,
+	IRDA_NL_ATTR_IFNAME,
+	IRDA_NL_ATTR_MODE,
+
+	__IRDA_NL_ATTR_AFTER_LAST
+};
+#define IRDA_NL_ATTR_MAX (__IRDA_NL_ATTR_AFTER_LAST - 1)
+
+/* IrDA modes */
+#define IRDA_MODE_PRIMARY   0x1
+#define IRDA_MODE_SECONDARY 0x2
+#define IRDA_MODE_MONITOR   0x4
 
 #endif /* KERNEL_IRDA_H */
 

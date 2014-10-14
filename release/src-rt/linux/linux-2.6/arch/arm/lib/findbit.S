@@ -25,7 +25,10 @@ ENTRY(_find_first_zero_bit_le)
 		teq	r1, #0	
 		beq	3f
 		mov	r2, #0
-1:		ldrb	r3, [r0, r2, lsr #3]
+1:
+ ARM(		ldrb	r3, [r0, r2, lsr #3]	)
+ THUMB(		lsr	r3, r2, #3		)
+ THUMB(		ldrb	r3, [r0, r3]		)
 		eors	r3, r3, #0xff		@ invert bits
 		bne	.L_found		@ any now set - found zero bit
 		add	r2, r2, #8		@ next bit pointer
@@ -33,6 +36,7 @@ ENTRY(_find_first_zero_bit_le)
 		blo	1b
 3:		mov	r0, r1			@ no free bits
 		mov	pc, lr
+ENDPROC(_find_first_zero_bit_le)
 
 /*
  * Purpose  : Find next 'zero' bit
@@ -43,13 +47,16 @@ ENTRY(_find_next_zero_bit_le)
 		beq	3b
 		ands	ip, r2, #7
 		beq	1b			@ If new byte, goto old routine
-		ldrb	r3, [r0, r2, lsr #3]
+ ARM(		ldrb	r3, [r0, r2, lsr #3]	)
+ THUMB(		lsr	r3, r2, #3		)
+ THUMB(		ldrb	r3, [r0, r3]		)
 		eor	r3, r3, #0xff		@ now looking for a 1 bit
 		movs	r3, r3, lsr ip		@ shift off unused bits
 		bne	.L_found
 		orr	r2, r2, #7		@ if zero, then no bits here
 		add	r2, r2, #1		@ align bit pointer
 		b	2b			@ loop for next bit
+ENDPROC(_find_next_zero_bit_le)
 
 /*
  * Purpose  : Find a 'one' bit
@@ -59,7 +66,10 @@ ENTRY(_find_first_bit_le)
 		teq	r1, #0	
 		beq	3f
 		mov	r2, #0
-1:		ldrb	r3, [r0, r2, lsr #3]
+1:
+ ARM(		ldrb	r3, [r0, r2, lsr #3]	)
+ THUMB(		lsr	r3, r2, #3		)
+ THUMB(		ldrb	r3, [r0, r3]		)
 		movs	r3, r3
 		bne	.L_found		@ any now set - found zero bit
 		add	r2, r2, #8		@ next bit pointer
@@ -67,6 +77,7 @@ ENTRY(_find_first_bit_le)
 		blo	1b
 3:		mov	r0, r1			@ no free bits
 		mov	pc, lr
+ENDPROC(_find_first_bit_le)
 
 /*
  * Purpose  : Find next 'one' bit
@@ -77,12 +88,15 @@ ENTRY(_find_next_bit_le)
 		beq	3b
 		ands	ip, r2, #7
 		beq	1b			@ If new byte, goto old routine
-		ldrb	r3, [r0, r2, lsr #3]
+ ARM(		ldrb	r3, [r0, r2, lsr #3]	)
+ THUMB(		lsr	r3, r2, #3		)
+ THUMB(		ldrb	r3, [r0, r3]		)
 		movs	r3, r3, lsr ip		@ shift off unused bits
 		bne	.L_found
 		orr	r2, r2, #7		@ if zero, then no bits here
 		add	r2, r2, #1		@ align bit pointer
 		b	2b			@ loop for next bit
+ENDPROC(_find_next_bit_le)
 
 #ifdef __ARMEB__
 
@@ -91,7 +105,9 @@ ENTRY(_find_first_zero_bit_be)
 		beq	3f
 		mov	r2, #0
 1:		eor	r3, r2, #0x18		@ big endian byte ordering
-		ldrb	r3, [r0, r3, lsr #3]
+ ARM(		ldrb	r3, [r0, r3, lsr #3]	)
+ THUMB(		lsr	r3, #3			)
+ THUMB(		ldrb	r3, [r0, r3]		)
 		eors	r3, r3, #0xff		@ invert bits
 		bne	.L_found		@ any now set - found zero bit
 		add	r2, r2, #8		@ next bit pointer
@@ -99,6 +115,7 @@ ENTRY(_find_first_zero_bit_be)
 		blo	1b
 3:		mov	r0, r1			@ no free bits
 		mov	pc, lr
+ENDPROC(_find_first_zero_bit_be)
 
 ENTRY(_find_next_zero_bit_be)
 		teq	r1, #0
@@ -106,20 +123,25 @@ ENTRY(_find_next_zero_bit_be)
 		ands	ip, r2, #7
 		beq	1b			@ If new byte, goto old routine
 		eor	r3, r2, #0x18		@ big endian byte ordering
-		ldrb	r3, [r0, r3, lsr #3]
+ ARM(		ldrb	r3, [r0, r3, lsr #3]	)
+ THUMB(		lsr	r3, #3			)
+ THUMB(		ldrb	r3, [r0, r3]		)
 		eor	r3, r3, #0xff		@ now looking for a 1 bit
 		movs	r3, r3, lsr ip		@ shift off unused bits
 		bne	.L_found
 		orr	r2, r2, #7		@ if zero, then no bits here
 		add	r2, r2, #1		@ align bit pointer
 		b	2b			@ loop for next bit
+ENDPROC(_find_next_zero_bit_be)
 
 ENTRY(_find_first_bit_be)
 		teq	r1, #0
 		beq	3f
 		mov	r2, #0
 1:		eor	r3, r2, #0x18		@ big endian byte ordering
-		ldrb	r3, [r0, r3, lsr #3]
+ ARM(		ldrb	r3, [r0, r3, lsr #3]	)
+ THUMB(		lsr	r3, #3			)
+ THUMB(		ldrb	r3, [r0, r3]		)
 		movs	r3, r3
 		bne	.L_found		@ any now set - found zero bit
 		add	r2, r2, #8		@ next bit pointer
@@ -127,6 +149,7 @@ ENTRY(_find_first_bit_be)
 		blo	1b
 3:		mov	r0, r1			@ no free bits
 		mov	pc, lr
+ENDPROC(_find_first_bit_be)
 
 ENTRY(_find_next_bit_be)
 		teq	r1, #0
@@ -134,12 +157,15 @@ ENTRY(_find_next_bit_be)
 		ands	ip, r2, #7
 		beq	1b			@ If new byte, goto old routine
 		eor	r3, r2, #0x18		@ big endian byte ordering
-		ldrb	r3, [r0, r3, lsr #3]
+ ARM(		ldrb	r3, [r0, r3, lsr #3]	)
+ THUMB(		lsr	r3, #3			)
+ THUMB(		ldrb	r3, [r0, r3]		)
 		movs	r3, r3, lsr ip		@ shift off unused bits
 		bne	.L_found
 		orr	r2, r2, #7		@ if zero, then no bits here
 		add	r2, r2, #1		@ align bit pointer
 		b	2b			@ loop for next bit
+ENDPROC(_find_next_bit_be)
 
 #endif
 
@@ -148,8 +174,8 @@ ENTRY(_find_next_bit_be)
  */
 .L_found:
 #if __LINUX_ARM_ARCH__ >= 5
-		rsb	r1, r3, #0
-		and	r3, r3, r1
+		rsb	r0, r3, #0
+		and	r3, r3, r0
 		clz	r3, r3
 		rsb	r3, r3, #31
 		add	r0, r2, r3
@@ -164,5 +190,7 @@ ENTRY(_find_next_bit_be)
 		addeq	r2, r2, #1
 		mov	r0, r2
 #endif
+		cmp	r1, r0			@ Clamp to maxbit
+		movlo	r0, r1
 		mov	pc, lr
 

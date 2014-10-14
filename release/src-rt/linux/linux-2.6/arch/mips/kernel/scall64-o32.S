@@ -81,7 +81,7 @@ NESTED(handle_sys, PT_SIZE, sp)
 	PTR	4b, bad_stack
 	.previous
 
-	li	t1, _TIF_SYSCALL_TRACE | _TIF_SYSCALL_AUDIT
+	li	t1, _TIF_WORK_SYSCALL_ENTRY
 	LONG_L	t0, TI_FLAGS($28)	# syscall tracing enabled?
 	and	t0, t1, t0
 	bnez	t0, trace_a_syscall
@@ -230,7 +230,7 @@ sys_call_table:
 	PTR	sys_setuid
 	PTR	sys_getuid
 	PTR	compat_sys_stime		/* 4025 */
-	PTR	sys32_ptrace
+	PTR	compat_sys_ptrace
 	PTR	sys_alarm
 	PTR	sys_ni_syscall			/* was sys_fstat */
 	PTR	sys_pause
@@ -246,7 +246,7 @@ sys_call_table:
 	PTR	sys_mkdir
 	PTR	sys_rmdir			/* 4040 */
 	PTR	sys_dup
-	PTR	sys_pipe
+	PTR	sysm_pipe
 	PTR	compat_sys_times
 	PTR	sys_ni_syscall
 	PTR	sys_brk				/* 4045 */
@@ -266,12 +266,12 @@ sys_call_table:
 	PTR	sys_olduname
 	PTR	sys_umask			/* 4060 */
 	PTR	sys_chroot
-	PTR	sys32_ustat
+	PTR	compat_sys_ustat
 	PTR	sys_dup2
 	PTR	sys_getppid
 	PTR	sys_getpgrp			/* 4065 */
 	PTR	sys_setsid
-	PTR	sys32_sigaction
+	PTR	sys_32_sigaction
 	PTR	sys_sgetmask
 	PTR	sys_ssetmask
 	PTR	sys_setreuid			/* 4070 */
@@ -282,8 +282,8 @@ sys_call_table:
 	PTR	compat_sys_setrlimit		/* 4075 */
 	PTR	compat_sys_getrlimit
 	PTR	compat_sys_getrusage
-	PTR	sys32_gettimeofday
-	PTR	sys32_settimeofday
+	PTR	compat_sys_gettimeofday
+	PTR	compat_sys_settimeofday
 	PTR	sys_getgroups			/* 4080 */
 	PTR	sys_setgroups
 	PTR	sys_ni_syscall			/* old_select */
@@ -294,7 +294,7 @@ sys_call_table:
 	PTR	sys_swapon
 	PTR	sys_reboot
 	PTR	compat_sys_old_readdir
-	PTR	old_mmap			/* 4090 */
+	PTR	sys_mips_mmap			/* 4090 */
 	PTR	sys_munmap
 	PTR	sys_truncate
 	PTR	sys_ftruncate
@@ -321,12 +321,12 @@ sys_call_table:
 	PTR	compat_sys_wait4
 	PTR	sys_swapoff			/* 4115 */
 	PTR	compat_sys_sysinfo
-	PTR	sys32_ipc
+	PTR	sys_32_ipc
 	PTR	sys_fsync
 	PTR	sys32_sigreturn
 	PTR	sys32_clone			/* 4120 */
 	PTR	sys_setdomainname
-	PTR	sys32_newuname
+	PTR	sys_newuname
 	PTR	sys_ni_syscall			/* sys_modify_ldt */
 	PTR	compat_sys_adjtimex
 	PTR	sys_mprotect			/* 4125 */
@@ -340,11 +340,11 @@ sys_call_table:
 	PTR	sys_fchdir
 	PTR	sys_bdflush
 	PTR	sys_sysfs			/* 4135 */
-	PTR	sys32_personality
+	PTR	sys_32_personality
 	PTR	sys_ni_syscall	 		/* for afs_syscall */
 	PTR	sys_setfsuid
 	PTR	sys_setfsgid
-	PTR	sys32_llseek			/* 4140 */
+	PTR	sys_32_llseek			/* 4140 */
 	PTR	compat_sys_getdents
 	PTR	compat_sys_select
 	PTR	sys_flock
@@ -357,7 +357,7 @@ sys_call_table:
 	PTR	sys_ni_syscall			/* 4150 */
 	PTR	sys_getsid
 	PTR	sys_fdatasync
-	PTR	sys32_sysctl
+	PTR	compat_sys_sysctl
 	PTR	sys_mlock
 	PTR	sys_munlock			/* 4155 */
 	PTR	sys_mlockall
@@ -369,7 +369,7 @@ sys_call_table:
 	PTR	sys_sched_yield
 	PTR	sys_sched_get_priority_max
 	PTR	sys_sched_get_priority_min
-	PTR	sys32_sched_rr_get_interval 	/* 4165 */
+	PTR	sys_32_sched_rr_get_interval 	/* 4165 */
 	PTR	compat_sys_nanosleep
 	PTR	sys_mremap
 	PTR	sys_accept
@@ -379,8 +379,8 @@ sys_call_table:
 	PTR	sys_getsockname
 	PTR	sys_getsockopt
 	PTR	sys_listen
-	PTR	sys_recv			/* 4175 */
-	PTR	sys_recvfrom
+	PTR	compat_sys_recv			/* 4175 */
+	PTR	compat_sys_recvfrom
 	PTR	compat_sys_recvmsg
 	PTR	sys_send
 	PTR	compat_sys_sendmsg
@@ -398,25 +398,25 @@ sys_call_table:
 	PTR	sys_getresgid
 	PTR	sys_prctl
 	PTR	sys32_rt_sigreturn
-	PTR	sys32_rt_sigaction
-	PTR	sys32_rt_sigprocmask 		/* 4195 */
-	PTR	sys32_rt_sigpending
+	PTR	sys_32_rt_sigaction
+	PTR	sys_32_rt_sigprocmask 		/* 4195 */
+	PTR	sys_32_rt_sigpending
 	PTR	compat_sys_rt_sigtimedwait
-	PTR	sys32_rt_sigqueueinfo
+	PTR	sys_32_rt_sigqueueinfo
 	PTR	sys32_rt_sigsuspend
-	PTR	sys32_pread			/* 4200 */
-	PTR	sys32_pwrite
+	PTR	sys_32_pread			/* 4200 */
+	PTR	sys_32_pwrite
 	PTR	sys_chown
 	PTR	sys_getcwd
 	PTR	sys_capget
 	PTR	sys_capset			/* 4205 */
 	PTR	sys32_sigaltstack
-	PTR	sys32_sendfile
+	PTR	sys_32_sendfile
 	PTR	sys_ni_syscall
 	PTR	sys_ni_syscall
-	PTR	sys32_mmap2			/* 4210 */
-	PTR	sys32_truncate64
-	PTR	sys32_ftruncate64
+	PTR	sys_mips_mmap2			/* 4210 */
+	PTR	sys_32_truncate64
+	PTR	sys_32_ftruncate64
 	PTR	sys_newstat
 	PTR	sys_newlstat
 	PTR	sys_newfstat			/* 4215 */
@@ -442,7 +442,7 @@ sys_call_table:
 	PTR	sys_fremovexattr		/* 4235 */
 	PTR	sys_tkill
 	PTR	sys_sendfile64
-	PTR	compat_sys_futex
+	PTR	sys_32_futex
 	PTR	compat_sys_sched_setaffinity
 	PTR	compat_sys_sched_getaffinity	/* 4240 */
 	PTR	compat_sys_io_setup
@@ -482,7 +482,7 @@ sys_call_table:
 	PTR	compat_sys_mq_notify		/* 4275 */
 	PTR	compat_sys_mq_getsetattr
 	PTR	sys_ni_syscall			/* sys_vserver */
-	PTR	sys32_waitid
+	PTR	sys_32_waitid
 	PTR	sys_ni_syscall			/* available, was setaltroot */
 	PTR	sys_add_key			/* 4280 */
 	PTR	sys_request_key
@@ -522,10 +522,29 @@ sys_call_table:
 	PTR	sys_ioprio_get			/* 4315 */
 	PTR	compat_sys_utimensat
 	PTR	compat_sys_signalfd
-	PTR	sys_ni_syscall
+	PTR	sys_ni_syscall			/* was timerfd */
 	PTR	sys_eventfd
-	PTR	sys_ni_syscall			/* 4320 */
+	PTR	sys32_fallocate			/* 4320 */
 	PTR	sys_timerfd_create
 	PTR	compat_sys_timerfd_gettime
 	PTR	compat_sys_timerfd_settime
+	PTR	compat_sys_signalfd4
+	PTR	sys_eventfd2			/* 4325 */
+	PTR	sys_epoll_create1
+	PTR	sys_dup3
+	PTR	sys_pipe2
+	PTR	sys_inotify_init1
+	PTR	compat_sys_preadv		/* 4330 */
+	PTR	compat_sys_pwritev
+	PTR	compat_sys_rt_tgsigqueueinfo
+	PTR	sys_perf_event_open
+	PTR	sys_accept4
+	PTR	compat_sys_recvmmsg		/* 4335 */
+	PTR	sys_fanotify_init
+	PTR	sys_32_fanotify_mark
+	PTR	sys_prlimit64
+	PTR	sys_name_to_handle_at
+	PTR	compat_sys_open_by_handle_at	/* 4340 */
+	PTR	compat_sys_clock_adjtime
+	PTR	sys_syncfs
 	.size	sys_call_table,.-sys_call_table

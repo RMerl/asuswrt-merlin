@@ -27,6 +27,7 @@
  */
 
 #include <linux/module.h>
+#include <linux/slab.h>
 
 #include <linux/blkdev.h>
 #include <linux/device.h>
@@ -100,9 +101,9 @@ sim710_probe_common(struct device *dev, unsigned long base_addr,
 {
 	struct Scsi_Host * host = NULL;
 	struct NCR_700_Host_Parameters *hostdata =
-		kmalloc(sizeof(struct NCR_700_Host_Parameters),	GFP_KERNEL);
+		kzalloc(sizeof(struct NCR_700_Host_Parameters),	GFP_KERNEL);
 
-	printk(KERN_NOTICE "sim710: %s\n", dev->bus_id);
+	printk(KERN_NOTICE "sim710: %s\n", dev_name(dev));
 	printk(KERN_NOTICE "sim710: irq = %d, clock = %d, base = 0x%lx, scsi_id = %d\n",
 	       irq, clock, base_addr, scsi_id);
 
@@ -110,7 +111,6 @@ sim710_probe_common(struct device *dev, unsigned long base_addr,
 		printk(KERN_ERR "sim710: Failed to allocate host data\n");
 		goto out;
 	}
-	memset(hostdata, 0, sizeof(struct NCR_700_Host_Parameters));
 
 	if(request_region(base_addr, 64, "sim710") == NULL) {
 		printk(KERN_ERR "sim710: Failed to reserve IO region 0x%lx\n",
@@ -139,6 +139,7 @@ sim710_probe_common(struct device *dev, unsigned long base_addr,
 		goto out_put_host;
 	}
 
+	dev_set_drvdata(dev, host);
 	scsi_scan_host(host);
 
 	return 0;
@@ -156,7 +157,7 @@ sim710_probe_common(struct device *dev, unsigned long base_addr,
 static __devexit int
 sim710_device_remove(struct device *dev)
 {
-	struct Scsi_Host *host = dev_to_shost(dev);
+	struct Scsi_Host *host = dev_get_drvdata(dev);
 	struct NCR_700_Host_Parameters *hostdata =
 		(struct NCR_700_Host_Parameters *)host->hostdata[0];
 
@@ -305,7 +306,7 @@ sim710_eisa_probe(struct device *dev)
 		scsi_id = ffs(val) - 1;
 
 		if(scsi_id > 7 || (val & ~(1<<scsi_id)) != 0) {
-			printk(KERN_ERR "sim710.c, EISA card %s has incorrect scsi_id, setting to 7\n", dev->bus_id);
+			printk(KERN_ERR "sim710.c, EISA card %s has incorrect scsi_id, setting to 7\n", dev_name(dev));
 			scsi_id = 7;
 		}
 	} else {

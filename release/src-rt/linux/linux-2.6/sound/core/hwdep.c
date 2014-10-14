@@ -1,6 +1,6 @@
 /*
  *  Hardware dependent layer
- *  Copyright (c) by Jaroslav Kysela <perex@suse.cz>
+ *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  *
  *
  *   This program is free software; you can redistribute it and/or modify
@@ -19,7 +19,6 @@
  *
  */
 
-#include <sound/driver.h>
 #include <linux/major.h>
 #include <linux/init.h>
 #include <linux/slab.h>
@@ -31,7 +30,7 @@
 #include <sound/hwdep.h>
 #include <sound/info.h>
 
-MODULE_AUTHOR("Jaroslav Kysela <perex@suse.cz>");
+MODULE_AUTHOR("Jaroslav Kysela <perex@perex.cz>");
 MODULE_DESCRIPTION("Hardware dependent layer");
 MODULE_LICENSE("GPL");
 
@@ -100,9 +99,6 @@ static int snd_hwdep_open(struct inode *inode, struct file * file)
 	if (hw == NULL)
 		return -ENODEV;
 
-	if (!hw->ops.open)
-		return -ENXIO;
-
 	if (!try_module_get(hw->card->module))
 		return -EFAULT;
 
@@ -112,6 +108,10 @@ static int snd_hwdep_open(struct inode *inode, struct file * file)
 	while (1) {
 		if (hw->exclusive && hw->used > 0) {
 			err = -EBUSY;
+			break;
+		}
+		if (!hw->ops.open) {
+			err = 0;
 			break;
 		}
 		err = hw->ops.open(hw, file);
@@ -152,7 +152,7 @@ static int snd_hwdep_open(struct inode *inode, struct file * file)
 
 static int snd_hwdep_release(struct inode *inode, struct file * file)
 {
-	int err = -ENXIO;
+	int err = 0;
 	struct snd_hwdep *hw = file->private_data;
 	struct module *mod = hw->card->module;
 
@@ -354,9 +354,10 @@ int snd_hwdep_new(struct snd_card *card, char *id, int device,
 		.dev_disconnect = snd_hwdep_dev_disconnect,
 	};
 
-	snd_assert(rhwdep != NULL, return -EINVAL);
-	*rhwdep = NULL;
-	snd_assert(card != NULL, return -ENXIO);
+	if (snd_BUG_ON(!card))
+		return -ENXIO;
+	if (rhwdep)
+		*rhwdep = NULL;
 	hwdep = kzalloc(sizeof(*hwdep), GFP_KERNEL);
 	if (hwdep == NULL) {
 		snd_printk(KERN_ERR "hwdep: cannot allocate\n");
@@ -375,13 +376,15 @@ int snd_hwdep_new(struct snd_card *card, char *id, int device,
 	}
 	init_waitqueue_head(&hwdep->open_wait);
 	mutex_init(&hwdep->open_mutex);
-	*rhwdep = hwdep;
+	if (rhwdep)
+		*rhwdep = hwdep;
 	return 0;
 }
 
 static int snd_hwdep_free(struct snd_hwdep *hwdep)
 {
-	snd_assert(hwdep != NULL, return -ENXIO);
+	if (!hwdep)
+		return 0;
 	if (hwdep->private_free)
 		hwdep->private_free(hwdep);
 	kfree(hwdep);
@@ -441,7 +444,8 @@ static int snd_hwdep_dev_disconnect(struct snd_device *device)
 {
 	struct snd_hwdep *hwdep = device->device_data;
 
-	snd_assert(hwdep != NULL, return -ENXIO);
+	if (snd_BUG_ON(!hwdep))
+		return -ENXIO;
 	mutex_lock(&register_mutex);
 	if (snd_hwdep_search(hwdep->card, hwdep->device) != hwdep) {
 		mutex_unlock(&register_mutex);

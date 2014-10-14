@@ -1,7 +1,4 @@
 /*
- *  arch/mips/pci/ops-emma2rh.c
- *      This file defines the PCI operation for EMMA2RH.
- *
  *  Copyright (C) NEC Electronics Corporation 2004-2006
  *
  *  This file is based on the arch/mips/pci/ops-vr41xx.c
@@ -30,7 +27,7 @@
 #include <asm/addrspace.h>
 #include <asm/debug.h>
 
-#include <asm/emma2rh/emma2rh.h>
+#include <asm/emma/emma2rh.h>
 
 #define RTABORT (0x1<<9)
 #define RMABORT (0x1<<10)
@@ -45,7 +42,7 @@ static int check_args(struct pci_bus *bus, u32 devfn, u32 * bus_num)
 	/* check if the bus is top-level */
 	if (bus->parent != NULL) {
 		*bus_num = bus->number;
-		db_assert(bus_num != 0);
+		db_assert(bus_num != NULL);
 	} else
 		*bus_num = 0;
 

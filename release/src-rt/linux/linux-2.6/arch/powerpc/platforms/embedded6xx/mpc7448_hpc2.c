@@ -40,7 +40,6 @@
 #include <asm/pci-bridge.h>
 #include <asm/reg.h>
 #include <mm/mmu_decl.h>
-#include "mpc7448_hpc2.h"
 #include <asm/tsi108_pci.h>
 #include <asm/tsi108_irq.h>
 #include <asm/mpic.h>
@@ -54,15 +53,8 @@
 
 #define MPC7448HPC2_PCI_CFG_PHYS 0xfb000000
 
-#ifndef CONFIG_PCI
-isa_io_base = MPC7448_HPC2_ISA_IO_BASE;
-isa_mem_base = MPC7448_HPC2_ISA_MEM_BASE;
-pci_dram_offset = MPC7448_HPC2_PCI_MEM_OFFSET;
-#endif
-
-extern void _nmask_and_or_msr(unsigned long nmask, unsigned long or_val);
-
-int mpc7448_hpc2_exclude_device(u_char bus, u_char devfn)
+int mpc7448_hpc2_exclude_device(struct pci_controller *hose,
+				u_char bus, u_char devfn)
 {
 	if (bus == 0 && PCI_SLOT(devfn) == 0)
 		return PCIBIOS_DEVICE_NOT_FOUND;
@@ -80,7 +72,7 @@ static void __init mpc7448_hpc2_setup_arch(void)
 
 	/* setup PCI host bridge */
 #ifdef CONFIG_PCI
-	for (np = NULL; (np = of_find_node_by_type(np, "pci")) != NULL;)
+	for_each_compatible_node(np, "pci", "tsi108-pci")
 		tsi108_setup_pci(np, MPC7448HPC2_PCI_CFG_PHYS, 0);
 
 	ppc_md.pci_exclude_device = mpc7448_hpc2_exclude_device;
@@ -96,7 +88,7 @@ static void __init mpc7448_hpc2_setup_arch(void)
 }
 
 /*
- * Interrupt setup and service.  Interrrupts on the mpc7448_hpc2 come
+ * Interrupt setup and service.  Interrupts on the mpc7448_hpc2 come
  * from the four external INT pins, PCI interrupts are routed via
  * PCI interrupt control registers, it generates internal IRQ23
  *
@@ -125,11 +117,11 @@ static void __init mpc7448_hpc2_init_IRQ(void)
 	}
 
 	if (mpic_paddr == 0) {
-		printk("%s: No tsi108 PIC found !\n", __FUNCTION__);
+		printk("%s: No tsi108 PIC found !\n", __func__);
 		return;
 	}
 
-	DBG("%s: tsi108 pic phys_addr = 0x%x\n", __FUNCTION__,
+	DBG("%s: tsi108 pic phys_addr = 0x%x\n", __func__,
 	    (u32) mpic_paddr);
 
 	mpic = mpic_alloc(tsi_pic, mpic_paddr,
@@ -148,21 +140,21 @@ static void __init mpc7448_hpc2_init_IRQ(void)
 #ifdef CONFIG_PCI
 	tsi_pci = of_find_node_by_type(NULL, "pci");
 	if (tsi_pci == NULL) {
-		printk("%s: No tsi108 pci node found !\n", __FUNCTION__);
+		printk("%s: No tsi108 pci node found !\n", __func__);
 		return;
 	}
 	cascade_node = of_find_node_by_type(NULL, "pic-router");
 	if (cascade_node == NULL) {
-		printk("%s: No tsi108 pci cascade node found !\n", __FUNCTION__);
+		printk("%s: No tsi108 pci cascade node found !\n", __func__);
 		return;
 	}
 
 	cascade_pci_irq = irq_of_parse_and_map(tsi_pci, 0);
-	DBG("%s: tsi108 cascade_pci_irq = 0x%x\n", __FUNCTION__,
+	DBG("%s: tsi108 cascade_pci_irq = 0x%x\n", __func__,
 	    (u32) cascade_pci_irq);
 	tsi108_pci_int_init(cascade_node);
-	set_irq_data(cascade_pci_irq, mpic);
-	set_irq_chained_handler(cascade_pci_irq, tsi108_irq_cascade);
+	irq_set_handler_data(cascade_pci_irq, mpic);
+	irq_set_chained_handler(cascade_pci_irq, tsi108_irq_cascade);
 #endif
 	/* Configure MPIC outputs to CPU0 */
 	tsi108_write_reg(TSI108_MPIC_OFFSET + 0x30c, 0);
@@ -172,7 +164,6 @@ static void __init mpc7448_hpc2_init_IRQ(void)
 void mpc7448_hpc2_show_cpuinfo(struct seq_file *m)
 {
 	seq_printf(m, "vendor\t\t: Freescale Semiconductor\n");
-	seq_printf(m, "machine\t\t: MPC7448hpc2\n");
 }
 
 void mpc7448_hpc2_restart(char *cmd)

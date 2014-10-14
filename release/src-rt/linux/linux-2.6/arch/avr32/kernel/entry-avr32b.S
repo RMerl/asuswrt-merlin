@@ -74,50 +74,41 @@ exception_vectors:
 	.align	2
 	bral	do_dtlb_modified
 
-	/*
-	 * r0 :	PGD/PT/PTE
-	 * r1 : Offending address
-	 * r2 : Scratch register
-	 * r3 : Cause (5, 12 or 13)
-	 */
 #define	tlbmiss_save	pushm	r0-r3
 #define tlbmiss_restore	popm	r0-r3
 
-	.section .tlbx.ex.text,"ax",@progbits
+	.org	0x50
 	.global	itlb_miss
 itlb_miss:
 	tlbmiss_save
 	rjmp	tlb_miss_common
 
-	.section .tlbr.ex.text,"ax",@progbits
+	.org	0x60
 dtlb_miss_read:
 	tlbmiss_save
 	rjmp	tlb_miss_common
 
-	.section .tlbw.ex.text,"ax",@progbits
+	.org	0x70
 dtlb_miss_write:
 	tlbmiss_save
 
 	.global	tlb_miss_common
+	.align	2
 tlb_miss_common:
 	mfsr	r0, SYSREG_TLBEAR
 	mfsr	r1, SYSREG_PTBR
 
-	/* Is it the vmalloc space? */
-	bld	r0, 31
-	brcs	handle_vmalloc_miss
-
-	/* First level lookup */
+	/*
+	 * First level lookup: The PGD contains virtual pointers to
+	 * the second-level page tables, but they may be NULL if not
+	 * present.
+	 */
 pgtbl_lookup:
 	lsr	r2, r0, PGDIR_SHIFT
 	ld.w	r3, r1[r2 << 2]
 	bfextu	r1, r0, PAGE_SHIFT, PGDIR_SHIFT - PAGE_SHIFT
-	bld	r3, _PAGE_BIT_PRESENT
-	brcc	page_table_not_present
-
-	/* Translate to virtual address in P1. */
-	andl	r3, 0xf000
-	sbr	r3, 31
+	cp.w	r3, 0
+	breq	page_table_not_present
 
 	/* Second level lookup */
 	ld.w	r2, r3[r1 << 2]
@@ -148,22 +139,68 @@ pgtbl_lookup:
 	tlbmiss_restore
 	rete
 
-handle_vmalloc_miss:
-	/* Simply do the lookup in init's page table */
+	/* The slow path of the TLB miss handler */
+	.align	2
+page_table_not_present:
+	/* Do we need to synchronize with swapper_pg_dir? */
+	bld	r0, 31
+	brcs	sync_with_swapper_pg_dir
+
+page_not_present:
+	tlbmiss_restore
+	sub	sp, 4
+	stmts	--sp, r0-lr
+	call	save_full_context_ex
+	mfsr	r12, SYSREG_ECR
+	mov	r11, sp
+	call	do_page_fault
+	rjmp	ret_from_exception
+
+	.align	2
+sync_with_swapper_pg_dir:
+	/*
+	 * If swapper_pg_dir contains a non-NULL second-level page
+	 * table pointer, copy it into the current PGD. If not, we
+	 * must handle it as a full-blown page fault.
+	 *
+	 * Jumping back to pgtbl_lookup causes an unnecessary lookup,
+	 * but it is guaranteed to be a cache hit, it won't happen
+	 * very often, and we absolutely do not want to sacrifice any
+	 * performance in the fast path in order to improve this.
+	 */
 	mov	r1, lo(swapper_pg_dir)
 	orh	r1, hi(swapper_pg_dir)
+	ld.w	r3, r1[r2 << 2]
+	cp.w	r3, 0
+	breq	page_not_present
+	mfsr	r1, SYSREG_PTBR
+	st.w	r1[r2 << 2], r3
 	rjmp	pgtbl_lookup
+
+	/*
+	 * We currently have two bytes left at this point until we
+	 * crash into the system call handler...
+	 *
+	 * Don't worry, the assembler will let us know.
+	 */
 
 
 	/* ---                    System Call                    --- */
 
-	.section .scall.text,"ax",@progbits
+	.org	0x100
 system_call:
+#ifdef CONFIG_PREEMPT
+	mask_interrupts
+#endif
 	pushm	r12		/* r12_orig */
 	stmts	--sp, r0-lr
-	zero_fp
+
 	mfsr	r0, SYSREG_RAR_SUP
 	mfsr	r1, SYSREG_RSR_SUP
+#ifdef CONFIG_PREEMPT
+	unmask_interrupts
+#endif
+	zero_fp
 	stm	--sp, r0-r1
 
 	/* check for syscall tracing */
@@ -213,7 +250,7 @@ syscall_badsys:
 
 	.global ret_from_fork
 ret_from_fork:
-	rcall   schedule_tail
+	call   schedule_tail
 
 	/* check for syscall tracing */
 	get_thread_info r0
@@ -224,7 +261,7 @@ ret_from_fork:
 
 syscall_trace_enter:
 	pushm	r8-r12
-	rcall	syscall_trace
+	call	syscall_trace
 	popm	r8-r12
 	rjmp	syscall_trace_cont
 
@@ -232,60 +269,44 @@ syscall_exit_work:
 	bld	r1, TIF_SYSCALL_TRACE
 	brcc	1f
 	unmask_interrupts
-	rcall	syscall_trace
+	call	syscall_trace
 	mask_interrupts
 	ld.w	r1, r0[TI_flags]
 
 1:	bld	r1, TIF_NEED_RESCHED
 	brcc	2f
 	unmask_interrupts
-	rcall	schedule
+	call	schedule
 	mask_interrupts
 	ld.w	r1, r0[TI_flags]
 	rjmp	1b
 
-2:	mov	r2, _TIF_SIGPENDING | _TIF_RESTORE_SIGMASK
+2:	mov	r2, _TIF_SIGPENDING | _TIF_RESTORE_SIGMASK | _TIF_NOTIFY_RESUME
 	tst	r1, r2
 	breq	3f
 	unmask_interrupts
 	mov	r12, sp
 	mov	r11, r0
-	rcall	do_notify_resume
+	call	do_notify_resume
 	mask_interrupts
 	ld.w	r1, r0[TI_flags]
 	rjmp	1b
 
 3:	bld	r1, TIF_BREAKPOINT
 	brcc	syscall_exit_cont
-	mfsr	r3, SYSREG_TLBEHI
-	lddsp	r2, sp[REG_PC]
-	andl	r3, 0xff, COH
-	lsl	r3, 1
-	sbr	r3, 30
-	sbr	r3, 0
-	mtdr	DBGREG_BWA2A, r2
-	mtdr	DBGREG_BWC2A, r3
-	rjmp	syscall_exit_cont
-
-
-	/* The slow path of the TLB miss handler */
-page_table_not_present:
-page_not_present:
-	tlbmiss_restore
-	sub	sp, 4
-	stmts	--sp, r0-lr
-	rcall	save_full_context_ex
-	mfsr	r12, SYSREG_ECR
-	mov	r11, sp
-	rcall	do_page_fault
-	rjmp	ret_from_exception
+	rjmp	enter_monitor_mode
 
 	/* This function expects to find offending PC in SYSREG_RAR_EX */
+	.type	save_full_context_ex, @function
+	.align	2
 save_full_context_ex:
+	mfsr	r11, SYSREG_RAR_EX
+	sub	r9, pc, . - debug_trampoline
 	mfsr	r8, SYSREG_RSR_EX
+	cp.w	r9, r11
+	breq	3f
 	mov	r12, r8
 	andh	r8, (MODE_MASK >> 16), COH
-	mfsr	r11, SYSREG_RAR_EX
 	brne	2f
 
 1:	pushm	r11, r12	/* PC and SR */
@@ -296,14 +317,84 @@ save_full_context_ex:
 	stdsp	sp[4], r10	/* replace saved SP */
 	rjmp	1b
 
+	/*
+	 * The debug handler set up a trampoline to make us
+	 * automatically enter monitor mode upon return, but since
+	 * we're saving the full context, we must assume that the
+	 * exception handler might want to alter the return address
+	 * and/or status register. So we need to restore the original
+	 * context and enter monitor mode manually after the exception
+	 * has been handled.
+	 */
+3:	get_thread_info r8
+	ld.w	r11, r8[TI_rar_saved]
+	ld.w	r12, r8[TI_rsr_saved]
+	rjmp	1b
+	.size	save_full_context_ex, . - save_full_context_ex
+
 	/* Low-level exception handlers */
 handle_critical:
-	pushm	r12
+	/*
+	 * AT32AP700x errata:
+	 *
+	 * After a Java stack overflow or underflow trap, any CPU
+	 * memory access may cause erratic behavior. This will happen
+	 * when the four least significant bits of the JOSP system
+	 * register contains any value between 9 and 15 (inclusive).
+	 *
+	 * Possible workarounds:
+	 *   - Don't use the Java Extension Module
+	 *   - Ensure that the stack overflow and underflow trap
+	 *     handlers do not do any memory access or trigger any
+	 *     exceptions before the overflow/underflow condition is
+	 *     cleared (by incrementing or decrementing the JOSP)
+	 *   - Make sure that JOSP does not contain any problematic
+	 *     value before doing any exception or interrupt
+	 *     processing.
+	 *   - Set up a critical exception handler which writes a
+	 *     known-to-be-safe value, e.g. 4, to JOSP before doing
+	 *     any further processing.
+	 *
+	 * We'll use the last workaround for now since we cannot
+	 * guarantee that user space processes don't use Java mode.
+	 * Non-well-behaving userland will be terminated with extreme
+	 * prejudice.
+	 */
+#ifdef CONFIG_CPU_AT32AP700X
+	/*
+	 * There's a chance we can't touch memory, so temporarily
+	 * borrow PTBR to save the stack pointer while we fix things
+	 * up...
+	 */
+	mtsr	SYSREG_PTBR, sp
+	mov	sp, 4
+	mtsr	SYSREG_JOSP, sp
+	mfsr	sp, SYSREG_PTBR
+	sub	pc, -2
+
+	/* Push most of pt_regs on stack. We'll do the rest later */
+	sub	sp, 4
 	pushm	r0-r12
-	rcall	save_full_context_ex
+
+	/* PTBR mirrors current_thread_info()->task->active_mm->pgd */
+	get_thread_info r0
+	ld.w	r1, r0[TI_task]
+	ld.w	r2, r1[TSK_active_mm]
+	ld.w	r3, r2[MM_pgd]
+	mtsr	SYSREG_PTBR, r3
+#else
+	sub	sp, 4
+	pushm	r0-r12
+#endif
+	sub	r0, sp, -(14 * 4)
+	mov	r1, lr
+	mfsr	r2, SYSREG_RAR_EX
+	mfsr	r3, SYSREG_RSR_EX
+	pushm	r0-r3
+
 	mfsr	r12, SYSREG_ECR
 	mov	r11, sp
-	rcall	do_critical_exception
+	call	do_critical_exception
 
 	/* We should never get here... */
 bad_return:
@@ -316,18 +407,18 @@ bad_return:
 do_bus_error_write:
 	sub	sp, 4
 	stmts	--sp, r0-lr
-	rcall	save_full_context_ex
+	call	save_full_context_ex
 	mov	r11, 1
 	rjmp	1f
 
 do_bus_error_read:
 	sub	sp, 4
 	stmts	--sp, r0-lr
-	rcall	save_full_context_ex
+	call	save_full_context_ex
 	mov	r11, 0
 1:	mfsr	r12, SYSREG_BEAR
 	mov	r10, sp
-	rcall	do_bus_error
+	call	do_bus_error
 	rjmp	ret_from_exception
 
 	.align	1
@@ -342,7 +433,7 @@ do_nmi_ll:
 1:	pushm	r8, r9	/* PC and SR */
 	mfsr	r12, SYSREG_ECR
 	mov	r11, sp
-	rcall	do_nmi
+	call	do_nmi
 	popm	r8-r9
 	mtsr	SYSREG_RAR_NMI, r8
 	tst	r0, r0
@@ -366,29 +457,29 @@ do_nmi_ll:
 handle_address_fault:
 	sub	sp, 4
 	stmts	--sp, r0-lr
-	rcall	save_full_context_ex
+	call	save_full_context_ex
 	mfsr	r12, SYSREG_ECR
 	mov	r11, sp
-	rcall	do_address_exception
+	call	do_address_exception
 	rjmp	ret_from_exception
 
 handle_protection_fault:
 	sub	sp, 4
 	stmts	--sp, r0-lr
-	rcall	save_full_context_ex
+	call	save_full_context_ex
 	mfsr	r12, SYSREG_ECR
 	mov	r11, sp
-	rcall	do_page_fault
+	call	do_page_fault
 	rjmp	ret_from_exception
 
 	.align	1
 do_illegal_opcode_ll:
 	sub	sp, 4
 	stmts	--sp, r0-lr
-	rcall	save_full_context_ex
+	call	save_full_context_ex
 	mfsr	r12, SYSREG_ECR
 	mov	r11, sp
-	rcall	do_illegal_opcode
+	call	do_illegal_opcode
 	rjmp	ret_from_exception
 
 do_dtlb_modified:
@@ -422,16 +513,17 @@ do_dtlb_modified:
 do_fpe_ll:
 	sub	sp, 4
 	stmts	--sp, r0-lr
-	rcall	save_full_context_ex
+	call	save_full_context_ex
 	unmask_interrupts
 	mov	r12, 26
 	mov	r11, sp
-	rcall	do_fpe
+	call	do_fpe
 	rjmp	ret_from_exception
 
 ret_from_exception:
 	mask_interrupts
 	lddsp	r4, sp[REG_SR]
+
 	andh	r4, (MODE_MASK >> 16), COH
 	brne	fault_resume_kernel
 
@@ -461,7 +553,7 @@ fault_resume_kernel:
 	lddsp	r4, sp[REG_SR]
 	bld	r4, SYSREG_GM_OFFSET
 	brcs	1f
-	rcall	preempt_schedule_irq
+	call	preempt_schedule_irq
 1:
 #endif
 
@@ -490,7 +582,7 @@ fault_exit_work:
 	bld	r1, TIF_NEED_RESCHED
 	brcc	1f
 	unmask_interrupts
-	rcall	schedule
+	call	schedule
 	mask_interrupts
 	ld.w	r1, r0[TI_flags]
 	rjmp	fault_exit_work
@@ -501,126 +593,131 @@ fault_exit_work:
 	unmask_interrupts
 	mov	r12, sp
 	mov	r11, r0
-	rcall	do_notify_resume
+	call	do_notify_resume
 	mask_interrupts
 	ld.w	r1, r0[TI_flags]
 	rjmp	fault_exit_work
 
 2:	bld	r1, TIF_BREAKPOINT
 	brcc	fault_resume_user
-	mfsr	r3, SYSREG_TLBEHI
-	lddsp	r2, sp[REG_PC]
-	andl	r3, 0xff, COH
-	lsl	r3, 1
-	sbr	r3, 30
-	sbr	r3, 0
-	mtdr	DBGREG_BWA2A, r2
-	mtdr	DBGREG_BWC2A, r3
-	rjmp	fault_resume_user
+	rjmp	enter_monitor_mode
 
-	/* If we get a debug trap from privileged context we end up here */
-handle_debug_priv:
-	/* Fix up LR and SP in regs. r11 contains the mode we came from */
+	.section .kprobes.text, "ax", @progbits
+	.type	handle_debug, @function
+handle_debug:
+	sub	sp, 4		/* r12_orig */
+	stmts	--sp, r0-lr
+	mfsr	r8, SYSREG_RAR_DBG
+	mfsr	r9, SYSREG_RSR_DBG
+	unmask_exceptions
+	pushm	r8-r9
+	bfextu	r9, r9, SYSREG_MODE_OFFSET, SYSREG_MODE_SIZE
+	brne	debug_fixup_regs
+
+.Ldebug_fixup_cont:
+#ifdef CONFIG_TRACE_IRQFLAGS
+	call	trace_hardirqs_off
+#endif
+	mov	r12, sp
+	call	do_debug
+	mov	sp, r12
+
+	lddsp	r2, sp[REG_SR]
+	bfextu	r3, r2, SYSREG_MODE_OFFSET, SYSREG_MODE_SIZE
+	brne	debug_resume_kernel
+
+	get_thread_info r0
+	ld.w	r1, r0[TI_flags]
+	mov	r2, _TIF_DBGWORK_MASK
+	tst	r1, r2
+	brne	debug_exit_work
+
+	bld	r1, TIF_SINGLE_STEP
+	brcc	1f
+	mfdr	r4, OCD_DC
+	sbr	r4, OCD_DC_SS_BIT
+	mtdr	OCD_DC, r4
+
+1:	popm	r10,r11
+	mask_exceptions
+	mtsr	SYSREG_RSR_DBG, r11
+	mtsr	SYSREG_RAR_DBG, r10
+#ifdef CONFIG_TRACE_IRQFLAGS
+	call	trace_hardirqs_on
+1:
+#endif
+	ldmts	sp++, r0-lr
+	sub	sp, -4
+	retd
+	.size	handle_debug, . - handle_debug
+
+	/* Mode of the trapped context is in r9 */
+	.type	debug_fixup_regs, @function
+debug_fixup_regs:
 	mfsr	r8, SYSREG_SR
-	mov	r9, r8
-	andh	r8, hi(~MODE_MASK)
-	or	r8, r11
+	mov	r10, r8
+	bfins	r8, r9, SYSREG_MODE_OFFSET, SYSREG_MODE_SIZE
 	mtsr	SYSREG_SR, r8
 	sub	pc, -2
 	stdsp	sp[REG_LR], lr
-	mtsr	SYSREG_SR, r9
+	mtsr	SYSREG_SR, r10
 	sub	pc, -2
-	sub	r10, sp, -FRAME_SIZE_FULL
-	stdsp	sp[REG_SP], r10
-	mov	r12, sp
-	rcall	do_debug_priv
+	sub	r8, sp, -FRAME_SIZE_FULL
+	stdsp	sp[REG_SP], r8
+	rjmp	.Ldebug_fixup_cont
+	.size	debug_fixup_regs, . - debug_fixup_regs
 
-	/* Now, put everything back */
-	ssrf	SR_EM_BIT
+	.type	debug_resume_kernel, @function
+debug_resume_kernel:
+	mask_exceptions
 	popm	r10, r11
 	mtsr	SYSREG_RAR_DBG, r10
 	mtsr	SYSREG_RSR_DBG, r11
-	mfsr	r8, SYSREG_SR
-	mov	r9, r8
-	andh	r8, hi(~MODE_MASK)
-	andh	r11, hi(MODE_MASK)
-	or	r8, r11
-	mtsr	SYSREG_SR, r8
+#ifdef CONFIG_TRACE_IRQFLAGS
+	bld	r11, SYSREG_GM_OFFSET
+	brcc	1f
+	call	trace_hardirqs_on
+1:
+#endif
+	mfsr	r2, SYSREG_SR
+	mov	r1, r2
+	bfins	r2, r3, SYSREG_MODE_OFFSET, SYSREG_MODE_SIZE
+	mtsr	SYSREG_SR, r2
 	sub	pc, -2
 	popm	lr
-	mtsr	SYSREG_SR, r9
+	mtsr	SYSREG_SR, r1
 	sub	pc, -2
 	sub	sp, -4		/* skip SP */
 	popm	r0-r12
 	sub	sp, -4
 	retd
+	.size	debug_resume_kernel, . - debug_resume_kernel
 
+	.type	debug_exit_work, @function
+debug_exit_work:
 	/*
-	 * At this point, everything is masked, that is, interrupts,
-	 * exceptions and debugging traps. We might get called from
-	 * interrupt or exception context in some rare cases, but this
-	 * will be taken care of by do_debug(), so we're not going to
-	 * do a 100% correct context save here.
+	 * We must return from Monitor Mode using a retd, and we must
+	 * not schedule since that involves the D bit in SR getting
+	 * cleared by something other than the debug hardware. This
+	 * may cause undefined behaviour according to the Architecture
+	 * manual.
+	 *
+	 * So we fix up the return address and status and return to a
+	 * stub below in Exception mode. From there, we can follow the
+	 * normal exception return path.
+	 *
+	 * The real return address and status registers are stored on
+	 * the stack in the way the exception return path understands,
+	 * so no need to fix anything up there.
 	 */
-handle_debug:
-	sub	sp, 4		/* r12_orig */
-	stmts	--sp, r0-lr
-	mfsr	r10, SYSREG_RAR_DBG
-	mfsr	r11, SYSREG_RSR_DBG
-	unmask_exceptions
-	pushm	r10,r11
-	andh	r11, (MODE_MASK >> 16), COH
-	brne	handle_debug_priv
-
-	mov	r12, sp
-	rcall	do_debug
-
-	lddsp	r10, sp[REG_SR]
-	andh	r10, (MODE_MASK >> 16), COH
-	breq	debug_resume_user
-
-debug_restore_all:
-	popm	r10,r11
-	mask_exceptions
-	mtsr	SYSREG_RSR_DBG, r11
-	mtsr	SYSREG_RAR_DBG, r10
-	ldmts	sp++, r0-lr
-	sub	sp, -4
+	sub	r8, pc, . - fault_exit_work
+	mtsr	SYSREG_RAR_DBG, r8
+	mov	r9, 0
+	orh	r9, hi(SR_EM | SR_GM | MODE_EXCEPTION)
+	mtsr	SYSREG_RSR_DBG, r9
+	sub	pc, -2
 	retd
-
-debug_resume_user:
-	get_thread_info r0
-	mask_interrupts
-
-	ld.w	r1, r0[TI_flags]
-	andl	r1, _TIF_DBGWORK_MASK, COH
-	breq	debug_restore_all
-
-1:	bld	r1, TIF_NEED_RESCHED
-	brcc	2f
-	unmask_interrupts
-	rcall	schedule
-	mask_interrupts
-	ld.w	r1, r0[TI_flags]
-	rjmp	1b
-
-2:	mov	r2, _TIF_SIGPENDING | _TIF_RESTORE_SIGMASK
-	tst	r1, r2
-	breq	3f
-	unmask_interrupts
-	mov	r12, sp
-	mov	r11, r0
-	rcall	do_notify_resume
-	mask_interrupts
-	ld.w	r1, r0[TI_flags]
-	rjmp	1b
-
-3:	bld	r1, TIF_SINGLE_STEP
-	brcc	debug_restore_all
-	mfdr	r2, DBGREG_DC
-	sbr	r2, DC_SS_BIT
-	mtdr	DBGREG_DC, r2
-	rjmp	debug_restore_all
+	.size	debug_exit_work, . - debug_exit_work
 
 	.set	rsr_int0,	SYSREG_RSR_INT0
 	.set	rsr_int1,	SYSREG_RSR_INT1
@@ -638,12 +735,19 @@ irq_level\level:
 	stmts	--sp,r0-lr
 	mfsr	r8, rar_int\level
 	mfsr	r9, rsr_int\level
+
+#ifdef CONFIG_PREEMPT
+	sub	r11, pc, (. - system_call)
+	cp.w	r11, r8
+	breq	4f
+#endif
+
 	pushm	r8-r9
 
 	mov	r11, sp
 	mov	r12, \level
 
-	rcall	do_IRQ
+	call	do_IRQ
 
 	lddsp	r4, sp[REG_SR]
 	bfextu	r4, r4, SYSREG_M0_OFFSET, 3
@@ -661,12 +765,26 @@ irq_level\level:
 	andl	r1, _TIF_WORK_MASK, COH
 	brne	irq_exit_work
 
-1:	popm	r8-r9
+1:
+#ifdef CONFIG_TRACE_IRQFLAGS
+	call	trace_hardirqs_on
+#endif
+	popm	r8-r9
 	mtsr	rar_int\level, r8
 	mtsr	rsr_int\level, r9
 	ldmts	sp++,r0-lr
 	sub	sp, -4		/* ignore r12_orig */
 	rete
+
+#ifdef CONFIG_PREEMPT
+4:	mask_interrupts
+	mfsr	r8, rsr_int\level
+	sbr	r8, 16
+	mtsr	rsr_int\level, r8
+	ldmts	sp++, r0-lr
+	sub	sp, -4		/* ignore r12_orig */
+	rete
+#endif
 
 2:	get_thread_info	r0
 	ld.w	r1, r0[TI_flags]
@@ -689,32 +807,12 @@ irq_level\level:
 	lddsp	r4, sp[REG_SR]
 	bld	r4, SYSREG_GM_OFFSET
 	brcs	1b
-	rcall	preempt_schedule_irq
+	call	preempt_schedule_irq
 #endif
 	rjmp	1b
 	.endm
 
 	.section .irq.text,"ax",@progbits
-
-.global cpu_idle_sleep
-cpu_idle_sleep:
-	mask_interrupts
-	get_thread_info r8
-	ld.w	r9, r8[TI_flags]
-	bld	r9, TIF_NEED_RESCHED
-	brcs	cpu_idle_enable_int_and_exit
-	sbr	r9, TIF_CPU_GOING_TO_SLEEP
-	st.w	r8[TI_flags], r9
-	unmask_interrupts
-	sleep 0
-cpu_idle_skip_sleep:
-	mask_interrupts
-	ld.w	r9, r8[TI_flags]
-	cbr	r9, TIF_CPU_GOING_TO_SLEEP
-	st.w	r8[TI_flags], r9
-cpu_idle_enable_int_and_exit:
-	unmask_interrupts
-	retal	r12
 
 	.global	irq_level0
 	.global	irq_level1
@@ -724,3 +822,53 @@ cpu_idle_enable_int_and_exit:
 	IRQ_LEVEL 1
 	IRQ_LEVEL 2
 	IRQ_LEVEL 3
+
+	.section .kprobes.text, "ax", @progbits
+	.type	enter_monitor_mode, @function
+enter_monitor_mode:
+	/*
+	 * We need to enter monitor mode to do a single step. The
+	 * monitor code will alter the return address so that we
+	 * return directly to the user instead of returning here.
+	 */
+	breakpoint
+	rjmp	breakpoint_failed
+
+	.size	enter_monitor_mode, . - enter_monitor_mode
+
+	.type	debug_trampoline, @function
+	.global	debug_trampoline
+debug_trampoline:
+	/*
+	 * Save the registers on the stack so that the monitor code
+	 * can find them easily.
+	 */
+	sub	sp, 4		/* r12_orig */
+	stmts	--sp, r0-lr
+	get_thread_info	r0
+	ld.w	r8, r0[TI_rar_saved]
+	ld.w	r9, r0[TI_rsr_saved]
+	pushm	r8-r9
+
+	/*
+	 * The monitor code will alter the return address so we don't
+	 * return here.
+	 */
+	breakpoint
+	rjmp	breakpoint_failed
+	.size	debug_trampoline, . - debug_trampoline
+
+	.type breakpoint_failed, @function
+breakpoint_failed:
+	/*
+	 * Something went wrong. Perhaps the debug hardware isn't
+	 * enabled?
+	 */
+	lda.w	r12, msg_breakpoint_failed
+	mov	r11, sp
+	mov	r10, 9		/* SIGKILL */
+	call	die
+1:	rjmp	1b
+
+msg_breakpoint_failed:
+	.asciz	"Failed to enter Debug Mode"

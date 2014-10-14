@@ -18,6 +18,7 @@
 #include <linux/types.h>
 #include <linux/init.h>
 #include <linux/bootmem.h>
+#include <linux/gfp.h>
 
 #include <asm/setup.h>
 #include <asm/uaccess.h>
@@ -30,6 +31,7 @@
 #ifdef CONFIG_ATARI
 #include <asm/atari_stram.h>
 #endif
+#include <asm/sections.h>
 
 #undef DEBUG
 
@@ -210,11 +212,7 @@ void __init paging_init(void)
 	int i;
 
 #ifdef DEBUG
-	{
-		extern unsigned long availmem;
-		printk ("start of paging_init (%p, %lx)\n",
-			kernel_pg_dir, availmem);
-	}
+	printk ("start of paging_init (%p, %lx)\n", kernel_pg_dir, availmem);
 #endif
 
 	/* Fix the cache mode in the page descriptors for the 680[46]0.  */
@@ -289,7 +287,6 @@ void __init paging_init(void)
 	 * to a couple of allocated pages
 	 */
 	empty_zero_page = alloc_bootmem_pages(PAGE_SIZE);
-	memset(empty_zero_page, 0, PAGE_SIZE);
 
 	/*
 	 * Set up SFC/DFC registers
@@ -301,19 +298,19 @@ void __init paging_init(void)
 #endif
 	for (i = 0; i < m68k_num_memory; i++) {
 		zones_size[ZONE_DMA] = m68k_memory[i].size >> PAGE_SHIFT;
-		free_area_init_node(i, pg_data_map + i, zones_size,
+		free_area_init_node(i, zones_size,
 				    m68k_memory[i].addr >> PAGE_SHIFT, NULL);
+		if (node_present_pages(i))
+			node_set_state(i, N_NORMAL_MEMORY);
 	}
 }
-
-extern char __init_begin, __init_end;
 
 void free_initmem(void)
 {
 	unsigned long addr;
 
-	addr = (unsigned long)&__init_begin;
-	for (; addr < (unsigned long)&__init_end; addr += PAGE_SIZE) {
+	addr = (unsigned long)__init_begin;
+	for (; addr < (unsigned long)__init_end; addr += PAGE_SIZE) {
 		virt_to_page(addr)->flags &= ~(1 << PG_reserved);
 		init_page_count(virt_to_page(addr));
 		free_page(addr);

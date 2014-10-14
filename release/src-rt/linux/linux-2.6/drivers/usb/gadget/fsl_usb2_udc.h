@@ -15,7 +15,7 @@ struct usb_dr_device {
 	u8 res1[256];
 	u16 caplength;		/* Capability Register Length */
 	u16 hciversion;		/* Host Controller Interface Version */
-	u32 hcsparams;		/* Host Controller Structual Parameters */
+	u32 hcsparams;		/* Host Controller Structural Parameters */
 	u32 hccparams;		/* Host Controller Capability Parameters */
 	u8 res2[20];
 	u32 dciversion;		/* Device Controller Interface Version */
@@ -52,7 +52,7 @@ struct usb_dr_host {
 	u8 res1[256];
 	u16 caplength;		/* Capability Register Length */
 	u16 hciversion;		/* Host Controller Interface Version */
-	u32 hcsparams;		/* Host Controller Structual Parameters */
+	u32 hcsparams;		/* Host Controller Structural Parameters */
 	u32 hccparams;		/* Host Controller Capability Parameters */
 	u8 res2[20];
 	u32 dciversion;		/* Device Controller Interface Version */
@@ -424,16 +424,6 @@ struct ep_td_struct {
 /* Controller dma boundary */
 #define UDC_DMA_BOUNDARY			0x1000
 
-/* -----------------------------------------------------------------------*/
-/* ##### enum data
-*/
-typedef enum {
-	e_ULPI,
-	e_UTMI_8BIT,
-	e_UTMI_16BIT,
-	e_SERIAL
-} e_PhyInterface;
-
 /*-------------------------------------------------------------------------*/
 
 /* ### driver private data
@@ -469,9 +459,9 @@ struct fsl_ep {
 #define EP_DIR_OUT	0
 
 struct fsl_udc {
-
 	struct usb_gadget gadget;
 	struct usb_gadget_driver *driver;
+	struct completion *done;	/* to make sure release() is done */
 	struct fsl_ep *eps;
 	unsigned int max_ep;
 	unsigned int irq;
@@ -492,27 +482,20 @@ struct fsl_udc {
 	size_t ep_qh_size;		/* size after alignment adjustment*/
 	dma_addr_t ep_qh_dma;		/* dma address of QH */
 
-	u32 max_pipes;		/* Device max pipes */
-	u32 max_use_endpts;	/* Max endpointes to be used */
-	u32 bus_reset;		/* Device is bus reseting */
+	u32 max_pipes;          /* Device max pipes */
 	u32 resume_state;	/* USB state to resume */
 	u32 usb_state;		/* USB current state */
-	u32 usb_next_state;	/* USB next state */
 	u32 ep0_state;		/* Endpoint zero state */
 	u32 ep0_dir;		/* Endpoint zero direction: can be
 				   USB_DIR_IN or USB_DIR_OUT */
-	u32 usb_sof_count;	/* SOF count */
-	u32 errors;		/* USB ERRORs count */
 	u8 device_address;	/* Device USB address */
-
-	struct completion *done;	/* to make sure release() is done */
 };
 
 /*-------------------------------------------------------------------------*/
 
 #ifdef DEBUG
 #define DBG(fmt, args...) 	printk(KERN_DEBUG "[%s]  " fmt "\n", \
-				__FUNCTION__, ## args)
+				__func__, ## args)
 #else
 #define DBG(fmt, args...)	do{}while(0)
 #endif
@@ -551,9 +534,9 @@ static void dump_msg(const char *label, const u8 * buf, unsigned int length)
 #define VDBG(stuff...)	do{}while(0)
 #endif
 
-#define ERR(stuff...)		printk(KERN_ERR "udc: " stuff)
-#define WARN(stuff...)		printk(KERN_WARNING "udc: " stuff)
-#define INFO(stuff...)		printk(KERN_INFO "udc: " stuff)
+#define ERR(stuff...)		pr_err("udc: " stuff)
+#define WARNING(stuff...)		pr_warning("udc: " stuff)
+#define INFO(stuff...)		pr_info("udc: " stuff)
 
 /*-------------------------------------------------------------------------*/
 
@@ -579,5 +562,23 @@ static void dump_msg(const char *label, const u8 * buf, unsigned int length)
 #define get_pipe_by_windex(windex)	((windex & USB_ENDPOINT_NUMBER_MASK) \
 					* 2 + ((windex & USB_DIR_IN) ? 1 : 0))
 #define get_pipe_by_ep(EP)	(ep_index(EP) * 2 + ep_is_in(EP))
+
+struct platform_device;
+#ifdef CONFIG_ARCH_MXC
+int fsl_udc_clk_init(struct platform_device *pdev);
+void fsl_udc_clk_finalize(struct platform_device *pdev);
+void fsl_udc_clk_release(void);
+#else
+static inline int fsl_udc_clk_init(struct platform_device *pdev)
+{
+	return 0;
+}
+static inline void fsl_udc_clk_finalize(struct platform_device *pdev)
+{
+}
+static inline void fsl_udc_clk_release(void)
+{
+}
+#endif
 
 #endif

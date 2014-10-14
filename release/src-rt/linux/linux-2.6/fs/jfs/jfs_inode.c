@@ -79,7 +79,8 @@ struct inode *ialloc(struct inode *parent, umode_t mode)
 	inode = new_inode(sb);
 	if (!inode) {
 		jfs_warn("ialloc: new_inode returned NULL!");
-		return ERR_PTR(-ENOMEM);
+		rc = -ENOMEM;
+		goto fail;
 	}
 
 	jfs_inode = JFS_IP(inode);
@@ -89,18 +90,15 @@ struct inode *ialloc(struct inode *parent, umode_t mode)
 		jfs_warn("ialloc: diAlloc returned %d!", rc);
 		if (rc == -EIO)
 			make_bad_inode(inode);
-		iput(inode);
-		return ERR_PTR(rc);
+		goto fail_put;
 	}
 
-	inode->i_uid = current->fsuid;
-	if (parent->i_mode & S_ISGID) {
-		inode->i_gid = parent->i_gid;
-		if (S_ISDIR(mode))
-			mode |= S_ISGID;
-	} else
-		inode->i_gid = current->fsgid;
+	if (insert_inode_locked(inode) < 0) {
+		rc = -EINVAL;
+		goto fail_unlock;
+	}
 
+	inode_init_owner(inode, parent, mode);
 	/*
 	 * New inodes need to save sane values on disk when
 	 * uid & gid mount options are used
@@ -111,15 +109,11 @@ struct inode *ialloc(struct inode *parent, umode_t mode)
 	/*
 	 * Allocate inode to quota.
 	 */
-	if (DQUOT_ALLOC_INODE(inode)) {
-		DQUOT_DROP(inode);
-		inode->i_flags |= S_NOQUOTA;
-		inode->i_nlink = 0;
-		iput(inode);
-		return ERR_PTR(-EDQUOT);
-	}
+	dquot_initialize(inode);
+	rc = dquot_alloc_inode(inode);
+	if (rc)
+		goto fail_drop;
 
-	inode->i_mode = mode;
 	/* inherit flags from parent */
 	jfs_inode->mode2 = JFS_IP(parent)->mode2 & JFS_FL_INHERIT;
 
@@ -132,7 +126,7 @@ struct inode *ialloc(struct inode *parent, umode_t mode)
 		if (S_ISLNK(mode))
 			jfs_inode->mode2 &= ~(JFS_IMMUTABLE_FL|JFS_APPEND_FL);
 	}
-	jfs_inode->mode2 |= mode;
+	jfs_inode->mode2 |= inode->i_mode;
 
 	inode->i_blocks = 0;
 	inode->i_mtime = inode->i_atime = inode->i_ctime = CURRENT_TIME;
@@ -158,4 +152,15 @@ struct inode *ialloc(struct inode *parent, umode_t mode)
 	jfs_info("ialloc returns inode = 0x%p\n", inode);
 
 	return inode;
+
+fail_drop:
+	dquot_drop(inode);
+	inode->i_flags |= S_NOQUOTA;
+fail_unlock:
+	inode->i_nlink = 0;
+	unlock_new_inode(inode);
+fail_put:
+	iput(inode);
+fail:
+	return ERR_PTR(rc);
 }

@@ -56,14 +56,13 @@ struct loop_device {
 	gfp_t		old_gfp_mask;
 
 	spinlock_t		lo_lock;
-	struct bio 		*lo_bio;
-	struct bio		*lo_biotail;
+	struct bio_list		lo_bio_list;
 	int			lo_state;
 	struct mutex		lo_ctl_mutex;
 	struct task_struct	*lo_thread;
 	wait_queue_head_t	lo_event;
 
-	request_queue_t		*lo_queue;
+	struct request_queue	*lo_queue;
 	struct gendisk		*lo_disk;
 	struct list_head	lo_list;
 };
@@ -76,10 +75,11 @@ struct loop_device {
 enum {
 	LO_FLAGS_READ_ONLY	= 1,
 	LO_FLAGS_USE_AOPS	= 2,
+	LO_FLAGS_AUTOCLEAR	= 4,
 };
 
 #include <asm/posix_types.h>	/* for __kernel_old_dev_t */
-#include <asm/types.h>		/* for __u64 */
+#include <linux/types.h>	/* for __u64 */
 
 /* Backwards compatibility version */
 struct loop_info {
@@ -159,5 +159,6 @@ int loop_unregister_transfer(int number);
 #define LOOP_SET_STATUS64	0x4C04
 #define LOOP_GET_STATUS64	0x4C05
 #define LOOP_CHANGE_FD		0x4C06
+#define LOOP_SET_CAPACITY	0x4C07
 
 #endif

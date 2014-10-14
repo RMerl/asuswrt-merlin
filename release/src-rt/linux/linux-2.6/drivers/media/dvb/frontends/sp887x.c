@@ -12,7 +12,6 @@
 
 #include <linux/init.h>
 #include <linux/module.h>
-#include <linux/moduleparam.h>
 #include <linux/device.h>
 #include <linux/firmware.h>
 #include <linux/string.h>
@@ -44,7 +43,7 @@ static int i2c_writebytes (struct sp887x_state* state, u8 *buf, u8 len)
 
 	if ((err = i2c_transfer (state->i2c, &msg, 1)) != 1) {
 		printk ("%s: i2c write error (addr %02x, err == %i)\n",
-			__FUNCTION__, state->config->demod_address, err);
+			__func__, state->config->demod_address, err);
 		return -EREMOTEIO;
 	}
 
@@ -66,7 +65,7 @@ static int sp887x_writereg (struct sp887x_state* state, u16 reg, u16 data)
 		{
 			printk("%s: writereg error "
 			       "(reg %03x, data %03x, ret == %i)\n",
-			       __FUNCTION__, reg & 0xffff, data & 0xffff, ret);
+			       __func__, reg & 0xffff, data & 0xffff, ret);
 			return ret;
 		}
 	}
@@ -83,7 +82,7 @@ static int sp887x_readreg (struct sp887x_state* state, u16 reg)
 			 { .addr = state->config->demod_address, .flags = I2C_M_RD, .buf = b1, .len = 2 }};
 
 	if ((ret = i2c_transfer(state->i2c, msg, 2)) != 2) {
-		printk("%s: readreg error (ret == %i)\n", __FUNCTION__, ret);
+		printk("%s: readreg error (ret == %i)\n", __func__, ret);
 		return -1;
 	}
 
@@ -92,7 +91,7 @@ static int sp887x_readreg (struct sp887x_state* state, u16 reg)
 
 static void sp887x_microcontroller_stop (struct sp887x_state* state)
 {
-	dprintk("%s\n", __FUNCTION__);
+	dprintk("%s\n", __func__);
 	sp887x_writereg(state, 0xf08, 0x000);
 	sp887x_writereg(state, 0xf09, 0x000);
 
@@ -102,7 +101,7 @@ static void sp887x_microcontroller_stop (struct sp887x_state* state)
 
 static void sp887x_microcontroller_start (struct sp887x_state* state)
 {
-	dprintk("%s\n", __FUNCTION__);
+	dprintk("%s\n", __func__);
 	sp887x_writereg(state, 0xf08, 0x000);
 	sp887x_writereg(state, 0xf09, 0x000);
 
@@ -113,7 +112,7 @@ static void sp887x_microcontroller_start (struct sp887x_state* state)
 static void sp887x_setup_agc (struct sp887x_state* state)
 {
 	/* setup AGC parameters */
-	dprintk("%s\n", __FUNCTION__);
+	dprintk("%s\n", __func__);
 	sp887x_writereg(state, 0x33c, 0x054);
 	sp887x_writereg(state, 0x33b, 0x04c);
 	sp887x_writereg(state, 0x328, 0x000);
@@ -141,9 +140,9 @@ static int sp887x_initial_setup (struct dvb_frontend* fe, const struct firmware 
 	u8 buf [BLOCKSIZE+2];
 	int i;
 	int fw_size = fw->size;
-	unsigned char *mem = fw->data;
+	const unsigned char *mem = fw->data;
 
-	dprintk("%s\n", __FUNCTION__);
+	dprintk("%s\n", __func__);
 
 	/* ignore the first 10 bytes, then we expect 0x4000 bytes of firmware */
 	if (fw_size < FW_SIZE+10)
@@ -156,7 +155,7 @@ static int sp887x_initial_setup (struct dvb_frontend* fe, const struct firmware 
 
 	sp887x_microcontroller_stop (state);
 
-	printk ("%s: firmware upload... ", __FUNCTION__);
+	printk ("%s: firmware upload... ", __func__);
 
 	/* setup write pointer to -1 (end of memory) */
 	/* bit 0x8000 in address is set to enable 13bit mode */
@@ -182,7 +181,7 @@ static int sp887x_initial_setup (struct dvb_frontend* fe, const struct firmware 
 
 		if ((err = i2c_writebytes (state, buf, c+2)) < 0) {
 			printk ("failed.\n");
-			printk ("%s: i2c error (err == %i)\n", __FUNCTION__, err);
+			printk ("%s: i2c error (err == %i)\n", __func__, err);
 			return err;
 		}
 	}
@@ -338,7 +337,8 @@ static int sp887x_setup_frontend_parameters (struct dvb_frontend* fe,
 					     struct dvb_frontend_parameters *p)
 {
 	struct sp887x_state* state = fe->demodulator_priv;
-	int actual_freq, err;
+	unsigned actual_freq;
+	int err;
 	u16 val, reg0xc05;
 
 	if (p->u.ofdm.bandwidth != BANDWIDTH_8_MHZ &&
@@ -557,7 +557,7 @@ struct dvb_frontend* sp887x_attach(const struct sp887x_config* config,
 	struct sp887x_state* state = NULL;
 
 	/* allocate memory for the internal state */
-	state = kmalloc(sizeof(struct sp887x_state), GFP_KERNEL);
+	state = kzalloc(sizeof(struct sp887x_state), GFP_KERNEL);
 	if (state == NULL) goto error;
 
 	/* setup the state */

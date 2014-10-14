@@ -32,11 +32,26 @@
  * on their number */
 #define O2NET_QUORUM_DELAY_MS	((o2hb_dead_threshold + 2) * O2HB_REGION_TIMEOUT_MS)
 
-/* 
+/*
  * This version number represents quite a lot, unfortunately.  It not
  * only represents the raw network message protocol on the wire but also
- * locking semantics of the file system using the protocol.  It should 
+ * locking semantics of the file system using the protocol.  It should
  * be somewhere else, I'm sure, but right now it isn't.
+ *
+ * With version 11, we separate out the filesystem locking portion.  The
+ * filesystem now has a major.minor version it negotiates.  Version 11
+ * introduces this negotiation to the o2dlm protocol, and as such the
+ * version here in tcp_internal.h should not need to be bumped for
+ * filesystem locking changes.
+ *
+ * New in version 11
+ * 	- Negotiation of filesystem locking in the dlm join.
+ *
+ * New in version 10:
+ * 	- Meta/data locks combined
+ *
+ * New in version 9:
+ * 	- All votes removed
  *
  * New in version 8:
  * 	- Replace delete inode votes with a cluster lock
@@ -60,7 +75,7 @@
  * 	- full 64 bit i_size in the metadata lock lvbs
  * 	- introduction of "rw" lock and pushing meta/data locking down
  */
-#define O2NET_PROTOCOL_VERSION 8ULL
+#define O2NET_PROTOCOL_VERSION 11ULL
 struct o2net_handshake {
 	__be64	protocol_version;
 	__be64	connector_id;
@@ -80,6 +95,8 @@ struct o2net_node {
 	unsigned			nn_sc_valid:1;
 	/* if this is set tx just returns it */
 	int				nn_persistent_error;
+	/* It is only set to 1 after the idle time out. */
+	atomic_t			nn_timeout;
 
 	/* threads waiting for an sc to arrive wait on the wq for generation
 	 * to increase.  it is increased when a connecting socket succeeds
@@ -112,7 +129,7 @@ struct o2net_node {
 
 struct o2net_sock_container {
 	struct kref		sc_kref;
-	/* the next two are vaild for the life time of the sc */
+	/* the next two are valid for the life time of the sc */
 	struct socket		*sc_sock;
 	struct o2nm_node	*sc_node;
 
@@ -150,15 +167,26 @@ struct o2net_sock_container {
 	void			(*sc_state_change)(struct sock *sk);
 	void			(*sc_data_ready)(struct sock *sk, int bytes);
 
-	struct timeval 		sc_tv_timer;
-	struct timeval 		sc_tv_data_ready;
-	struct timeval 		sc_tv_advance_start;
-	struct timeval 		sc_tv_advance_stop;
-	struct timeval 		sc_tv_func_start;
-	struct timeval 		sc_tv_func_stop;
 	u32			sc_msg_key;
 	u16			sc_msg_type;
 
+#ifdef CONFIG_DEBUG_FS
+	struct list_head        sc_net_debug_item;
+	ktime_t			sc_tv_timer;
+	ktime_t			sc_tv_data_ready;
+	ktime_t			sc_tv_advance_start;
+	ktime_t			sc_tv_advance_stop;
+	ktime_t			sc_tv_func_start;
+	ktime_t			sc_tv_func_stop;
+#endif
+#ifdef CONFIG_OCFS2_FS_STATS
+	ktime_t			sc_tv_acquiry_total;
+	ktime_t			sc_tv_send_total;
+	ktime_t			sc_tv_status_total;
+	u32			sc_send_count;
+	u32			sc_recv_count;
+	ktime_t			sc_tv_process_total;
+#endif
 	struct mutex		sc_send_lock;
 };
 
@@ -190,5 +218,25 @@ struct o2net_status_wait {
 	wait_queue_head_t	ns_wq;
 	struct list_head	ns_node_item;
 };
+
+#ifdef CONFIG_DEBUG_FS
+/* just for state dumps */
+struct o2net_send_tracking {
+	struct list_head		st_net_debug_item;
+	struct task_struct		*st_task;
+	struct o2net_sock_container	*st_sc;
+	u32				st_id;
+	u32				st_msg_type;
+	u32				st_msg_key;
+	u8				st_node;
+	ktime_t				st_sock_time;
+	ktime_t				st_send_time;
+	ktime_t				st_status_time;
+};
+#else
+struct o2net_send_tracking {
+	u32	dummy;
+};
+#endif	/* CONFIG_DEBUG_FS */
 
 #endif /* O2CLUSTER_TCP_INTERNAL_H */

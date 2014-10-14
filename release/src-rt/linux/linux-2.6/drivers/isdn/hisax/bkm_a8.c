@@ -20,11 +20,7 @@
 #include <linux/pci.h>
 #include "bkm_ax.h"
 
-#ifdef CONFIG_PCI
-
 #define	ATTEMPT_PCI_REMAPPING	/* Required for PLX rev 1 */
-
-extern const char *CardType[];
 
 static const char sct_quadro_revision[] = "$Revision: 1.22.2.4 $";
 
@@ -183,8 +179,7 @@ bkm_interrupt_ipac(int intno, void *dev_id)
 		goto Start_IPAC;
 	}
 	if (!icnt)
-		printk(KERN_WARNING "HiSax: %s (%s) IRQ LOOP\n",
-		       CardType[cs->typ],
+		printk(KERN_WARNING "HiSax: Scitel Quadro (%s) IRQ LOOP\n",
 		       sct_quadro_subtypes[cs->subtyp]);
 	writereg(cs->hw.ax.base, cs->hw.ax.data_adr, IPAC_MASK, 0xFF);
 	writereg(cs->hw.ax.base, cs->hw.ax.data_adr, IPAC_MASK, 0xC0);
@@ -279,15 +274,11 @@ static u_char pci_bus __devinitdata = 0;
 static u_char pci_device_fn __devinitdata = 0;
 static u_char pci_irq __devinitdata = 0;
 
-#endif /* CONFIG_PCI */
-
 int __devinit
 setup_sct_quadro(struct IsdnCard *card)
 {
-#ifdef CONFIG_PCI
 	struct IsdnCardState *cs = card->cs;
 	char tmp[64];
-	u_char pci_rev_id;
 	u_int found = 0;
 	u_int pci_ioaddr1, pci_ioaddr2, pci_ioaddr3, pci_ioaddr4, pci_ioaddr5;
 
@@ -302,15 +293,15 @@ setup_sct_quadro(struct IsdnCard *card)
 	if (card->para[0] >= SCT_1 && card->para[0] <= SCT_4)
 		cs->subtyp = card->para[0];
 	else {
-		printk(KERN_WARNING "HiSax: %s: Invalid subcontroller in configuration, default to 1\n",
-			CardType[card->typ]);
+		printk(KERN_WARNING "HiSax: Scitel Quadro: Invalid "
+		       "subcontroller in configuration, default to 1\n");
 		return (0);
 	}
 	if ((cs->subtyp != SCT_1) && ((sub_sys_id != PCI_DEVICE_ID_BERKOM_SCITEL_QUADRO) ||
 		(sub_vendor_id != PCI_VENDOR_ID_BERKOM)))
 		return (0);
 	if (cs->subtyp == SCT_1) {
-		while ((dev_a8 = pci_find_device(PCI_VENDOR_ID_PLX,
+		while ((dev_a8 = hisax_find_pci_device(PCI_VENDOR_ID_PLX,
 			PCI_DEVICE_ID_PLX_9050, dev_a8))) {
 			
 			sub_vendor_id = dev_a8->subsystem_vendor;
@@ -328,17 +319,16 @@ setup_sct_quadro(struct IsdnCard *card)
 			}
 		}
 		if (!found) {
-			printk(KERN_WARNING "HiSax: %s (%s): Card not found\n",
-				CardType[card->typ],
+			printk(KERN_WARNING "HiSax: Scitel Quadro (%s): "
+				"Card not found\n",
 				sct_quadro_subtypes[cs->subtyp]);
 			return (0);
 		}
 #ifdef ATTEMPT_PCI_REMAPPING
 /* HACK: PLX revision 1 bug: PLX address bit 7 must not be set */
-		pci_read_config_byte(dev_a8, PCI_REVISION_ID, &pci_rev_id);
-		if ((pci_ioaddr1 & 0x80) && (pci_rev_id == 1)) {
-			printk(KERN_WARNING "HiSax: %s (%s): PLX rev 1, remapping required!\n",
-				CardType[card->typ],
+		if ((pci_ioaddr1 & 0x80) && (dev_a8->revision == 1)) {
+			printk(KERN_WARNING "HiSax: Scitel Quadro (%s): "
+				"PLX rev 1, remapping required!\n",
 				sct_quadro_subtypes[cs->subtyp]);
 			/* Restart PCI negotiation */
 			pci_write_config_dword(dev_a8, PCI_BASE_ADDRESS_1, (u_int) - 1);
@@ -351,8 +341,7 @@ setup_sct_quadro(struct IsdnCard *card)
 #endif /* End HACK */
 	}
 	if (!pci_irq) {		/* IRQ range check ?? */
-		printk(KERN_WARNING "HiSax: %s (%s): No IRQ\n",
-		       CardType[card->typ],
+		printk(KERN_WARNING "HiSax: Scitel Quadro (%s): No IRQ\n",
 		       sct_quadro_subtypes[cs->subtyp]);
 		return (0);
 	}
@@ -362,8 +351,8 @@ setup_sct_quadro(struct IsdnCard *card)
 	pci_read_config_dword(dev_a8, PCI_BASE_ADDRESS_4, &pci_ioaddr4);
 	pci_read_config_dword(dev_a8, PCI_BASE_ADDRESS_5, &pci_ioaddr5);
 	if (!pci_ioaddr1 || !pci_ioaddr2 || !pci_ioaddr3 || !pci_ioaddr4 || !pci_ioaddr5) {
-		printk(KERN_WARNING "HiSax: %s (%s): No IO base address(es)\n",
-		       CardType[card->typ],
+		printk(KERN_WARNING "HiSax: Scitel Quadro (%s): "
+		       "No IO base address(es)\n",
 		       sct_quadro_subtypes[cs->subtyp]);
 		return (0);
 	}
@@ -418,8 +407,8 @@ setup_sct_quadro(struct IsdnCard *card)
 	/* For isac and hscx data path */
 	cs->hw.ax.data_adr = cs->hw.ax.base + 4;
 
-	printk(KERN_INFO "HiSax: %s (%s) configured at 0x%.4lX, 0x%.4lX, 0x%.4lX and IRQ %d\n",
-	       CardType[card->typ],
+	printk(KERN_INFO "HiSax: Scitel Quadro (%s) configured at "
+	       "0x%.4lX, 0x%.4lX, 0x%.4lX and IRQ %d\n",
 	       sct_quadro_subtypes[cs->subtyp],
 	       cs->hw.ax.plx_adr,
 	       cs->hw.ax.base,
@@ -439,12 +428,8 @@ setup_sct_quadro(struct IsdnCard *card)
 	cs->cardmsg = &BKM_card_msg;
 	cs->irq_func = &bkm_interrupt_ipac;
 
-	printk(KERN_INFO "HiSax: %s (%s): IPAC Version %d\n",
-		CardType[card->typ],
+	printk(KERN_INFO "HiSax: Scitel Quadro (%s): IPAC Version %d\n",
 		sct_quadro_subtypes[cs->subtyp],
 		readreg(cs->hw.ax.base, cs->hw.ax.data_adr, IPAC_ID));
 	return (1);
-#else
-	printk(KERN_ERR "HiSax: bkm_a8 only supported on PCI Systems\n");
-#endif /* CONFIG_PCI */
 }

@@ -19,7 +19,7 @@
 
 extern void crime_init(void);
 
-void __init prom_meminit (void)
+void __init prom_meminit(void)
 {
 	u64 base, size;
 	int bank;
@@ -36,9 +36,9 @@ void __init prom_meminit (void)
 		if (base + size > (256 << 20))
 			base += CRIME_HI_MEM_BASE;
 
-		printk("CRIME MC: bank %u base 0x%016lx size %luMiB\n",
+		printk("CRIME MC: bank %u base 0x%016Lx size %LuMiB\n",
 			bank, base, size >> 20);
-		add_memory_region (base, size, BOOT_MEM_RAM);
+		add_memory_region(base, size, BOOT_MEM_RAM);
 	}
 }
 

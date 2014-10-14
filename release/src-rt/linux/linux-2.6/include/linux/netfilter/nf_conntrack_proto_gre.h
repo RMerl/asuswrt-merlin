@@ -60,7 +60,7 @@ struct gre_hdr_pptp {
 	__be16 payload_len;	/* size of ppp payload, not inc. gre header */
 	__be16 call_id;		/* peer's call_id for this session */
 	__be32 seq;		/* sequence number.  Present if S==1 */
-	__be32 ack;		/* seq number of highest packet recieved by */
+	__be32 ack;		/* seq number of highest packet received by */
 				/*  sender in this session */
 };
 
@@ -87,7 +87,7 @@ int nf_ct_gre_keymap_add(struct nf_conn *ct, enum ip_conntrack_dir dir,
 /* delete keymap entries */
 void nf_ct_gre_keymap_destroy(struct nf_conn *ct);
 
-extern void nf_ct_gre_keymap_flush(void);
+extern void nf_ct_gre_keymap_flush(struct net *net);
 extern void nf_nat_need_gre(void);
 
 #endif /* __KERNEL__ */

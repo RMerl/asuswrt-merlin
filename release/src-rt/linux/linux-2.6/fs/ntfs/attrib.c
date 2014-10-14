@@ -1,7 +1,7 @@
 /**
  * attrib.c - NTFS attribute operations.  Part of the Linux-NTFS project.
  *
- * Copyright (c) 2001-2006 Anton Altaparmakov
+ * Copyright (c) 2001-2007 Anton Altaparmakov
  * Copyright (c) 2002 Richard Russon
  *
  * This program/include file is free software; you can redistribute it and/or
@@ -22,6 +22,7 @@
 
 #include <linux/buffer_head.h>
 #include <linux/sched.h>
+#include <linux/slab.h>
 #include <linux/swap.h>
 #include <linux/writeback.h>
 
@@ -179,10 +180,7 @@ int ntfs_map_runlist_nolock(ntfs_inode *ni, VCN vcn, ntfs_attr_search_ctx *ctx)
 	 * ntfs_mapping_pairs_decompress() fails.
 	 */
 	end_vcn = sle64_to_cpu(a->data.non_resident.highest_vcn) + 1;
-	if (!a->data.non_resident.lowest_vcn && end_vcn == 1)
-		end_vcn = sle64_to_cpu(a->data.non_resident.allocated_size) >>
-				ni->vol->cluster_size_bits;
-	if (unlikely(vcn >= end_vcn)) {
+	if (unlikely(vcn && vcn >= end_vcn)) {
 		err = -ENOENT;
 		goto err_out;
 	}
@@ -199,7 +197,7 @@ err_out:
 	} else if (ctx_needs_reset) {
 		/*
 		 * If there is no attribute list, restoring the search context
-		 * is acomplished simply by copying the saved context back over
+		 * is accomplished simply by copying the saved context back over
 		 * the caller supplied context.  If there is an attribute list,
 		 * things are more complicated as we need to deal with mapping
 		 * of mft records and resulting potential changes in pointers.
@@ -1183,7 +1181,7 @@ not_found:
  * for, i.e. if one wants to add the attribute to the mft record this is the
  * correct place to insert its attribute list entry into.
  *
- * When -errno != -ENOENT, an error occured during the lookup.  @ctx->attr is
+ * When -errno != -ENOENT, an error occurred during the lookup.  @ctx->attr is
  * then undefined and in particular you should not rely on it not changing.
  */
 int ntfs_attr_lookup(const ATTR_TYPE type, const ntfschar *name,
@@ -2500,7 +2498,7 @@ int ntfs_attr_set(ntfs_inode *ni, const s64 ofs, const s64 cnt, const u8 val)
 	struct page *page;
 	u8 *kaddr;
 	pgoff_t idx, end;
-	unsigned int start_ofs, end_ofs, size;
+	unsigned start_ofs, end_ofs, size;
 
 	ntfs_debug("Entering for ofs 0x%llx, cnt 0x%llx, val 0x%hx.",
 			(long long)ofs, (long long)cnt, val);
@@ -2548,6 +2546,8 @@ int ntfs_attr_set(ntfs_inode *ni, const s64 ofs, const s64 cnt, const u8 val)
 		kunmap_atomic(kaddr, KM_USER0);
 		set_page_dirty(page);
 		page_cache_release(page);
+		balance_dirty_pages_ratelimited(mapping);
+		cond_resched();
 		if (idx == end)
 			goto done;
 		idx++;
@@ -2604,6 +2604,8 @@ int ntfs_attr_set(ntfs_inode *ni, const s64 ofs, const s64 cnt, const u8 val)
 		kunmap_atomic(kaddr, KM_USER0);
 		set_page_dirty(page);
 		page_cache_release(page);
+		balance_dirty_pages_ratelimited(mapping);
+		cond_resched();
 	}
 done:
 	ntfs_debug("Done.");

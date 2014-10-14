@@ -50,6 +50,7 @@
 #include <linux/dma-mapping.h>
 #include <linux/if_arp.h>
 #include <linux/vmalloc.h>
+#include <linux/slab.h>
 
 #include <asm/io.h>
 #include <asm/irq.h>
@@ -67,7 +68,7 @@ static int c2_query_device(struct ib_device *ibdev,
 {
 	struct c2_dev *c2dev = to_c2dev(ibdev);
 
-	pr_debug("%s:%u\n", __FUNCTION__, __LINE__);
+	pr_debug("%s:%u\n", __func__, __LINE__);
 
 	*props = c2dev->props;
 	return 0;
@@ -76,7 +77,7 @@ static int c2_query_device(struct ib_device *ibdev,
 static int c2_query_port(struct ib_device *ibdev,
 			 u8 port, struct ib_port_attr *props)
 {
-	pr_debug("%s:%u\n", __FUNCTION__, __LINE__);
+	pr_debug("%s:%u\n", __func__, __LINE__);
 
 	props->max_mtu = IB_MTU_4096;
 	props->lid = 0;
@@ -102,14 +103,14 @@ static int c2_modify_port(struct ib_device *ibdev,
 			  u8 port, int port_modify_mask,
 			  struct ib_port_modify *props)
 {
-	pr_debug("%s:%u\n", __FUNCTION__, __LINE__);
+	pr_debug("%s:%u\n", __func__, __LINE__);
 	return 0;
 }
 
 static int c2_query_pkey(struct ib_device *ibdev,
 			 u8 port, u16 index, u16 * pkey)
 {
-	pr_debug("%s:%u\n", __FUNCTION__, __LINE__);
+	pr_debug("%s:%u\n", __func__, __LINE__);
 	*pkey = 0;
 	return 0;
 }
@@ -119,7 +120,7 @@ static int c2_query_gid(struct ib_device *ibdev, u8 port,
 {
 	struct c2_dev *c2dev = to_c2dev(ibdev);
 
-	pr_debug("%s:%u\n", __FUNCTION__, __LINE__);
+	pr_debug("%s:%u\n", __func__, __LINE__);
 	memset(&(gid->raw[0]), 0, sizeof(gid->raw));
 	memcpy(&(gid->raw[0]), c2dev->pseudo_netdev->dev_addr, 6);
 
@@ -134,7 +135,7 @@ static struct ib_ucontext *c2_alloc_ucontext(struct ib_device *ibdev,
 {
 	struct c2_ucontext *context;
 
-	pr_debug("%s:%u\n", __FUNCTION__, __LINE__);
+	pr_debug("%s:%u\n", __func__, __LINE__);
 	context = kmalloc(sizeof(*context), GFP_KERNEL);
 	if (!context)
 		return ERR_PTR(-ENOMEM);
@@ -144,14 +145,14 @@ static struct ib_ucontext *c2_alloc_ucontext(struct ib_device *ibdev,
 
 static int c2_dealloc_ucontext(struct ib_ucontext *context)
 {
-	pr_debug("%s:%u\n", __FUNCTION__, __LINE__);
+	pr_debug("%s:%u\n", __func__, __LINE__);
 	kfree(context);
 	return 0;
 }
 
 static int c2_mmap_uar(struct ib_ucontext *context, struct vm_area_struct *vma)
 {
-	pr_debug("%s:%u\n", __FUNCTION__, __LINE__);
+	pr_debug("%s:%u\n", __func__, __LINE__);
 	return -ENOSYS;
 }
 
@@ -162,7 +163,7 @@ static struct ib_pd *c2_alloc_pd(struct ib_device *ibdev,
 	struct c2_pd *pd;
 	int err;
 
-	pr_debug("%s:%u\n", __FUNCTION__, __LINE__);
+	pr_debug("%s:%u\n", __func__, __LINE__);
 
 	pd = kmalloc(sizeof(*pd), GFP_KERNEL);
 	if (!pd)
@@ -187,7 +188,7 @@ static struct ib_pd *c2_alloc_pd(struct ib_device *ibdev,
 
 static int c2_dealloc_pd(struct ib_pd *pd)
 {
-	pr_debug("%s:%u\n", __FUNCTION__, __LINE__);
+	pr_debug("%s:%u\n", __func__, __LINE__);
 	c2_pd_free(to_c2dev(pd->device), to_c2pd(pd));
 	kfree(pd);
 
@@ -196,13 +197,13 @@ static int c2_dealloc_pd(struct ib_pd *pd)
 
 static struct ib_ah *c2_ah_create(struct ib_pd *pd, struct ib_ah_attr *ah_attr)
 {
-	pr_debug("%s:%u\n", __FUNCTION__, __LINE__);
+	pr_debug("%s:%u\n", __func__, __LINE__);
 	return ERR_PTR(-ENOSYS);
 }
 
 static int c2_ah_destroy(struct ib_ah *ah)
 {
-	pr_debug("%s:%u\n", __FUNCTION__, __LINE__);
+	pr_debug("%s:%u\n", __func__, __LINE__);
 	return -ENOSYS;
 }
 
@@ -230,7 +231,7 @@ struct ib_qp *c2_get_qp(struct ib_device *device, int qpn)
 
 	qp = c2_find_qpn(c2dev, qpn);
 	pr_debug("%s Returning QP=%p for QPN=%d, device=%p, refcount=%d\n",
-		__FUNCTION__, qp, qpn, device,
+		__func__, qp, qpn, device,
 		(qp?atomic_read(&qp->refcount):0));
 
 	return (qp?&qp->ibqp:NULL);
@@ -243,13 +244,16 @@ static struct ib_qp *c2_create_qp(struct ib_pd *pd,
 	struct c2_qp *qp;
 	int err;
 
-	pr_debug("%s:%u\n", __FUNCTION__, __LINE__);
+	pr_debug("%s:%u\n", __func__, __LINE__);
+
+	if (init_attr->create_flags)
+		return ERR_PTR(-EINVAL);
 
 	switch (init_attr->qp_type) {
 	case IB_QPT_RC:
 		qp = kzalloc(sizeof(*qp), GFP_KERNEL);
 		if (!qp) {
-			pr_debug("%s: Unable to allocate QP\n", __FUNCTION__);
+			pr_debug("%s: Unable to allocate QP\n", __func__);
 			return ERR_PTR(-ENOMEM);
 		}
 		spin_lock_init(&qp->lock);
@@ -266,10 +270,9 @@ static struct ib_qp *c2_create_qp(struct ib_pd *pd,
 
 		break;
 	default:
-		pr_debug("%s: Invalid QP type: %d\n", __FUNCTION__,
+		pr_debug("%s: Invalid QP type: %d\n", __func__,
 			init_attr->qp_type);
 		return ERR_PTR(-EINVAL);
-		break;
 	}
 
 	if (err) {
@@ -285,7 +288,7 @@ static int c2_destroy_qp(struct ib_qp *ib_qp)
 	struct c2_qp *qp = to_c2qp(ib_qp);
 
 	pr_debug("%s:%u qp=%p,qp->state=%d\n",
-		__FUNCTION__, __LINE__,ib_qp,qp->state);
+		__func__, __LINE__, ib_qp, qp->state);
 	c2_free_qp(to_c2dev(ib_qp->device), qp);
 	kfree(qp);
 	return 0;
@@ -300,13 +303,13 @@ static struct ib_cq *c2_create_cq(struct ib_device *ibdev, int entries, int vect
 
 	cq = kmalloc(sizeof(*cq), GFP_KERNEL);
 	if (!cq) {
-		pr_debug("%s: Unable to allocate CQ\n", __FUNCTION__);
+		pr_debug("%s: Unable to allocate CQ\n", __func__);
 		return ERR_PTR(-ENOMEM);
 	}
 
 	err = c2_init_cq(to_c2dev(ibdev), entries, NULL, cq);
 	if (err) {
-		pr_debug("%s: error initializing CQ\n", __FUNCTION__);
+		pr_debug("%s: error initializing CQ\n", __func__);
 		kfree(cq);
 		return ERR_PTR(err);
 	}
@@ -318,7 +321,7 @@ static int c2_destroy_cq(struct ib_cq *ib_cq)
 {
 	struct c2_cq *cq = to_c2cq(ib_cq);
 
-	pr_debug("%s:%u\n", __FUNCTION__, __LINE__);
+	pr_debug("%s:%u\n", __func__, __LINE__);
 
 	c2_free_cq(to_c2dev(ib_cq->device), cq);
 	kfree(cq);
@@ -400,7 +403,7 @@ static struct ib_mr *c2_reg_phys_mr(struct ib_pd *ib_pd,
 	mr->umem = NULL;
 	pr_debug("%s - page shift %d, pbl_depth %d, total_len %u, "
 		"*iova_start %llx, first pa %llx, last pa %llx\n",
-		__FUNCTION__, page_shift, pbl_depth, total_len,
+		__func__, page_shift, pbl_depth, total_len,
 		(unsigned long long) *iova_start,
 	       	(unsigned long long) page_list[0],
 	       	(unsigned long long) page_list[pbl_depth-1]);
@@ -422,7 +425,7 @@ static struct ib_mr *c2_get_dma_mr(struct ib_pd *pd, int acc)
 	struct ib_phys_buf bl;
 	u64 kva = 0;
 
-	pr_debug("%s:%u\n", __FUNCTION__, __LINE__);
+	pr_debug("%s:%u\n", __func__, __LINE__);
 
 	/* AMSO1100 limit */
 	bl.size = 0xffffffff;
@@ -442,14 +445,14 @@ static struct ib_mr *c2_reg_user_mr(struct ib_pd *pd, u64 start, u64 length,
 	struct c2_pd *c2pd = to_c2pd(pd);
 	struct c2_mr *c2mr;
 
-	pr_debug("%s:%u\n", __FUNCTION__, __LINE__);
+	pr_debug("%s:%u\n", __func__, __LINE__);
 
 	c2mr = kmalloc(sizeof(*c2mr), GFP_KERNEL);
 	if (!c2mr)
 		return ERR_PTR(-ENOMEM);
 	c2mr->pd = c2pd;
 
-	c2mr->umem = ib_umem_get(pd->uobject->context, start, length, acc);
+	c2mr->umem = ib_umem_get(pd->uobject->context, start, length, acc, 0);
 	if (IS_ERR(c2mr->umem)) {
 		err = PTR_ERR(c2mr->umem);
 		kfree(c2mr);
@@ -506,7 +509,7 @@ static int c2_dereg_mr(struct ib_mr *ib_mr)
 	struct c2_mr *mr = to_c2mr(ib_mr);
 	int err;
 
-	pr_debug("%s:%u\n", __FUNCTION__, __LINE__);
+	pr_debug("%s:%u\n", __func__, __LINE__);
 
 	err = c2_stag_dealloc(to_c2dev(ib_mr->device), ib_mr->lkey);
 	if (err)
@@ -520,45 +523,49 @@ static int c2_dereg_mr(struct ib_mr *ib_mr)
 	return err;
 }
 
-static ssize_t show_rev(struct class_device *cdev, char *buf)
+static ssize_t show_rev(struct device *dev, struct device_attribute *attr,
+			char *buf)
 {
-	struct c2_dev *dev = container_of(cdev, struct c2_dev, ibdev.class_dev);
-	pr_debug("%s:%u\n", __FUNCTION__, __LINE__);
-	return sprintf(buf, "%x\n", dev->props.hw_ver);
+	struct c2_dev *c2dev = container_of(dev, struct c2_dev, ibdev.dev);
+	pr_debug("%s:%u\n", __func__, __LINE__);
+	return sprintf(buf, "%x\n", c2dev->props.hw_ver);
 }
 
-static ssize_t show_fw_ver(struct class_device *cdev, char *buf)
+static ssize_t show_fw_ver(struct device *dev, struct device_attribute *attr,
+			   char *buf)
 {
-	struct c2_dev *dev = container_of(cdev, struct c2_dev, ibdev.class_dev);
-	pr_debug("%s:%u\n", __FUNCTION__, __LINE__);
+	struct c2_dev *c2dev = container_of(dev, struct c2_dev, ibdev.dev);
+	pr_debug("%s:%u\n", __func__, __LINE__);
 	return sprintf(buf, "%x.%x.%x\n",
-		       (int) (dev->props.fw_ver >> 32),
-		       (int) (dev->props.fw_ver >> 16) & 0xffff,
-		       (int) (dev->props.fw_ver & 0xffff));
+		       (int) (c2dev->props.fw_ver >> 32),
+		       (int) (c2dev->props.fw_ver >> 16) & 0xffff,
+		       (int) (c2dev->props.fw_ver & 0xffff));
 }
 
-static ssize_t show_hca(struct class_device *cdev, char *buf)
+static ssize_t show_hca(struct device *dev, struct device_attribute *attr,
+			char *buf)
 {
-	pr_debug("%s:%u\n", __FUNCTION__, __LINE__);
+	pr_debug("%s:%u\n", __func__, __LINE__);
 	return sprintf(buf, "AMSO1100\n");
 }
 
-static ssize_t show_board(struct class_device *cdev, char *buf)
+static ssize_t show_board(struct device *dev, struct device_attribute *attr,
+			  char *buf)
 {
-	pr_debug("%s:%u\n", __FUNCTION__, __LINE__);
+	pr_debug("%s:%u\n", __func__, __LINE__);
 	return sprintf(buf, "%.*s\n", 32, "AMSO1100 Board ID");
 }
 
-static CLASS_DEVICE_ATTR(hw_rev, S_IRUGO, show_rev, NULL);
-static CLASS_DEVICE_ATTR(fw_ver, S_IRUGO, show_fw_ver, NULL);
-static CLASS_DEVICE_ATTR(hca_type, S_IRUGO, show_hca, NULL);
-static CLASS_DEVICE_ATTR(board_id, S_IRUGO, show_board, NULL);
+static DEVICE_ATTR(hw_rev, S_IRUGO, show_rev, NULL);
+static DEVICE_ATTR(fw_ver, S_IRUGO, show_fw_ver, NULL);
+static DEVICE_ATTR(hca_type, S_IRUGO, show_hca, NULL);
+static DEVICE_ATTR(board_id, S_IRUGO, show_board, NULL);
 
-static struct class_device_attribute *c2_class_attributes[] = {
-	&class_device_attr_hw_rev,
-	&class_device_attr_fw_ver,
-	&class_device_attr_hca_type,
-	&class_device_attr_board_id
+static struct device_attribute *c2_dev_attributes[] = {
+	&dev_attr_hw_rev,
+	&dev_attr_fw_ver,
+	&dev_attr_hca_type,
+	&dev_attr_board_id
 };
 
 static int c2_modify_qp(struct ib_qp *ibqp, struct ib_qp_attr *attr,
@@ -575,13 +582,13 @@ static int c2_modify_qp(struct ib_qp *ibqp, struct ib_qp_attr *attr,
 
 static int c2_multicast_attach(struct ib_qp *ibqp, union ib_gid *gid, u16 lid)
 {
-	pr_debug("%s:%u\n", __FUNCTION__, __LINE__);
+	pr_debug("%s:%u\n", __func__, __LINE__);
 	return -ENOSYS;
 }
 
 static int c2_multicast_detach(struct ib_qp *ibqp, union ib_gid *gid, u16 lid)
 {
-	pr_debug("%s:%u\n", __FUNCTION__, __LINE__);
+	pr_debug("%s:%u\n", __func__, __LINE__);
 	return -ENOSYS;
 }
 
@@ -592,13 +599,13 @@ static int c2_process_mad(struct ib_device *ibdev,
 			  struct ib_grh *in_grh,
 			  struct ib_mad *in_mad, struct ib_mad *out_mad)
 {
-	pr_debug("%s:%u\n", __FUNCTION__, __LINE__);
+	pr_debug("%s:%u\n", __func__, __LINE__);
 	return -ENOSYS;
 }
 
 static int c2_connect(struct iw_cm_id *cm_id, struct iw_cm_conn_param *iw_param)
 {
-	pr_debug("%s:%u\n", __FUNCTION__, __LINE__);
+	pr_debug("%s:%u\n", __func__, __LINE__);
 
 	/* Request a connection */
 	return c2_llp_connect(cm_id, iw_param);
@@ -606,7 +613,7 @@ static int c2_connect(struct iw_cm_id *cm_id, struct iw_cm_conn_param *iw_param)
 
 static int c2_accept(struct iw_cm_id *cm_id, struct iw_cm_conn_param *iw_param)
 {
-	pr_debug("%s:%u\n", __FUNCTION__, __LINE__);
+	pr_debug("%s:%u\n", __func__, __LINE__);
 
 	/* Accept the new connection */
 	return c2_llp_accept(cm_id, iw_param);
@@ -616,7 +623,7 @@ static int c2_reject(struct iw_cm_id *cm_id, const void *pdata, u8 pdata_len)
 {
 	int err;
 
-	pr_debug("%s:%u\n", __FUNCTION__, __LINE__);
+	pr_debug("%s:%u\n", __func__, __LINE__);
 
 	err = c2_llp_reject(cm_id, pdata, pdata_len);
 	return err;
@@ -626,10 +633,10 @@ static int c2_service_create(struct iw_cm_id *cm_id, int backlog)
 {
 	int err;
 
-	pr_debug("%s:%u\n", __FUNCTION__, __LINE__);
+	pr_debug("%s:%u\n", __func__, __LINE__);
 	err = c2_llp_service_create(cm_id, backlog);
 	pr_debug("%s:%u err=%d\n",
-		__FUNCTION__, __LINE__,
+		__func__, __LINE__,
 		err);
 	return err;
 }
@@ -637,7 +644,7 @@ static int c2_service_create(struct iw_cm_id *cm_id, int backlog)
 static int c2_service_destroy(struct iw_cm_id *cm_id)
 {
 	int err;
-	pr_debug("%s:%u\n", __FUNCTION__, __LINE__);
+	pr_debug("%s:%u\n", __func__, __LINE__);
 
 	err = c2_llp_service_destroy(cm_id);
 
@@ -647,7 +654,7 @@ static int c2_service_destroy(struct iw_cm_id *cm_id)
 static int c2_pseudo_up(struct net_device *netdev)
 {
 	struct in_device *ind;
-	struct c2_dev *c2dev = netdev->priv;
+	struct c2_dev *c2dev = netdev->ml_priv;
 
 	ind = in_dev_get(netdev);
 	if (!ind)
@@ -672,7 +679,7 @@ static int c2_pseudo_up(struct net_device *netdev)
 static int c2_pseudo_down(struct net_device *netdev)
 {
 	struct in_device *ind;
-	struct c2_dev *c2dev = netdev->priv;
+	struct c2_dev *c2dev = netdev->ml_priv;
 
 	ind = in_dev_get(netdev);
 	if (!ind)
@@ -702,27 +709,27 @@ static int c2_pseudo_xmit_frame(struct sk_buff *skb, struct net_device *netdev)
 
 static int c2_pseudo_change_mtu(struct net_device *netdev, int new_mtu)
 {
-	int ret = 0;
-
 	if (new_mtu < ETH_ZLEN || new_mtu > ETH_JUMBO_MTU)
 		return -EINVAL;
 
 	netdev->mtu = new_mtu;
 
 	/* TODO: Tell rnic about new rmda interface mtu */
-	return ret;
+	return 0;
 }
+
+static const struct net_device_ops c2_pseudo_netdev_ops = {
+	.ndo_open 		= c2_pseudo_up,
+	.ndo_stop 		= c2_pseudo_down,
+	.ndo_start_xmit 	= c2_pseudo_xmit_frame,
+	.ndo_change_mtu 	= c2_pseudo_change_mtu,
+	.ndo_validate_addr	= eth_validate_addr,
+};
 
 static void setup(struct net_device *netdev)
 {
-	SET_MODULE_OWNER(netdev);
-	netdev->open = c2_pseudo_up;
-	netdev->stop = c2_pseudo_down;
-	netdev->hard_start_xmit = c2_pseudo_xmit_frame;
-	netdev->get_stats = NULL;
-	netdev->tx_timeout = NULL;
-	netdev->set_mac_address = NULL;
-	netdev->change_mtu = c2_pseudo_change_mtu;
+	netdev->netdev_ops = &c2_pseudo_netdev_ops;
+
 	netdev->watchdog_timeo = 0;
 	netdev->type = ARPHRD_ETHER;
 	netdev->mtu = 1500;
@@ -730,7 +737,6 @@ static void setup(struct net_device *netdev)
 	netdev->addr_len = ETH_ALEN;
 	netdev->tx_queue_len = 0;
 	netdev->flags |= IFF_NOARP;
-	return;
 }
 
 static struct net_device *c2_pseudo_netdev_init(struct c2_dev *c2dev)
@@ -741,14 +747,14 @@ static struct net_device *c2_pseudo_netdev_init(struct c2_dev *c2dev)
 	/* change ethxxx to iwxxx */
 	strcpy(name, "iw");
 	strcat(name, &c2dev->netdev->name[3]);
-	netdev = alloc_netdev(sizeof(*netdev), name, setup);
+	netdev = alloc_netdev(0, name, setup);
 	if (!netdev) {
 		printk(KERN_ERR PFX "%s -  etherdev alloc failed",
-			__FUNCTION__);
+			__func__);
 		return NULL;
 	}
 
-	netdev->priv = c2dev;
+	netdev->ml_priv = c2dev;
 
 	SET_NETDEV_DEV(netdev, &c2dev->pcidev->dev);
 
@@ -775,13 +781,13 @@ int c2_register_device(struct c2_dev *dev)
 	/* Register pseudo network device */
 	dev->pseudo_netdev = c2_pseudo_netdev_init(dev);
 	if (!dev->pseudo_netdev)
-		goto out3;
+		goto out;
 
 	ret = register_netdev(dev->pseudo_netdev);
 	if (ret)
-		goto out2;
+		goto out_free_netdev;
 
-	pr_debug("%s:%u\n", __FUNCTION__, __LINE__);
+	pr_debug("%s:%u\n", __func__, __LINE__);
 	strlcpy(dev->ibdev.name, "amso%d", IB_DEVICE_NAME_MAX);
 	dev->ibdev.owner = THIS_MODULE;
 	dev->ibdev.uverbs_cmd_mask =
@@ -846,6 +852,10 @@ int c2_register_device(struct c2_dev *dev)
 	dev->ibdev.post_recv = c2_post_receive;
 
 	dev->ibdev.iwcm = kmalloc(sizeof(*dev->ibdev.iwcm), GFP_KERNEL);
+	if (dev->ibdev.iwcm == NULL) {
+		ret = -ENOMEM;
+		goto out_unregister_netdev;
+	}
 	dev->ibdev.iwcm->add_ref = c2_add_ref;
 	dev->ibdev.iwcm->rem_ref = c2_rem_ref;
 	dev->ibdev.iwcm->get_qp = c2_get_qp;
@@ -855,32 +865,34 @@ int c2_register_device(struct c2_dev *dev)
 	dev->ibdev.iwcm->create_listen = c2_service_create;
 	dev->ibdev.iwcm->destroy_listen = c2_service_destroy;
 
-	ret = ib_register_device(&dev->ibdev);
+	ret = ib_register_device(&dev->ibdev, NULL);
 	if (ret)
-		goto out1;
+		goto out_free_iwcm;
 
-	for (i = 0; i < ARRAY_SIZE(c2_class_attributes); ++i) {
-		ret = class_device_create_file(&dev->ibdev.class_dev,
-					       c2_class_attributes[i]);
+	for (i = 0; i < ARRAY_SIZE(c2_dev_attributes); ++i) {
+		ret = device_create_file(&dev->ibdev.dev,
+					       c2_dev_attributes[i]);
 		if (ret)
-			goto out0;
+			goto out_unregister_ibdev;
 	}
-	goto out3;
+	goto out;
 
-out0:
+out_unregister_ibdev:
 	ib_unregister_device(&dev->ibdev);
-out1:
+out_free_iwcm:
+	kfree(dev->ibdev.iwcm);
+out_unregister_netdev:
 	unregister_netdev(dev->pseudo_netdev);
-out2:
+out_free_netdev:
 	free_netdev(dev->pseudo_netdev);
-out3:
-	pr_debug("%s:%u ret=%d\n", __FUNCTION__, __LINE__, ret);
+out:
+	pr_debug("%s:%u ret=%d\n", __func__, __LINE__, ret);
 	return ret;
 }
 
 void c2_unregister_device(struct c2_dev *dev)
 {
-	pr_debug("%s:%u\n", __FUNCTION__, __LINE__);
+	pr_debug("%s:%u\n", __func__, __LINE__);
 	unregister_netdev(dev->pseudo_netdev);
 	free_netdev(dev->pseudo_netdev);
 	ib_unregister_device(&dev->ibdev);

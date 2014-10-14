@@ -29,7 +29,7 @@
  * Note: the saa7126 is identical to the saa7127, and the saa7128 is
  * identical to the saa7129, except that the saa7126 and saa7128 have
  * macrovision anti-taping support. This driver will almost certainly
- * work find for those chips, except of course for the missing anti-taping
+ * work fine for those chips, except of course for the missing anti-taping
  * support.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -53,12 +53,12 @@
 #include <linux/slab.h>
 #include <linux/i2c.h>
 #include <linux/videodev2.h>
-#include <media/v4l2-common.h>
+#include <media/v4l2-device.h>
 #include <media/v4l2-chip-ident.h>
 #include <media/saa7127.h>
 
-static int debug = 0;
-static int test_image = 0;
+static int debug;
+static int test_image;
 
 MODULE_DESCRIPTION("Philips SAA7127/9 video encoder driver");
 MODULE_AUTHOR("Kevin Thayer, Chris Kennedy, Hans Verkuil");
@@ -68,10 +68,6 @@ module_param(test_image, int, 0644);
 MODULE_PARM_DESC(debug, "debug level (0-2)");
 MODULE_PARM_DESC(test_image, "test_image (0-1)");
 
-static unsigned short normal_i2c[] = { 0x88 >> 1, I2C_CLIENT_END };
-
-
-I2C_CLIENT_INSMOD;
 
 /*
  * SAA7127 registers
@@ -152,7 +148,7 @@ static const struct i2c_reg_value saa7127_init_config_common[] = {
 	{ SAA7127_REG_COPYGEN_0, 			0x77 },
 	{ SAA7127_REG_COPYGEN_1, 			0x41 },
 	{ SAA7127_REG_COPYGEN_2, 			0x00 },	/* Macrovision enable/disable */
-	{ SAA7127_REG_OUTPUT_PORT_CONTROL, 		0x9e },
+	{ SAA7127_REG_OUTPUT_PORT_CONTROL, 		0xbf },
 	{ SAA7127_REG_GAIN_LUMINANCE_RGB, 		0x00 },
 	{ SAA7127_REG_GAIN_COLORDIFF_RGB, 		0x00 },
 	{ SAA7127_REG_INPUT_PORT_CONTROL_1, 		0x80 },	/* for color bars */
@@ -184,7 +180,7 @@ static const struct i2c_reg_value saa7127_init_config_common[] = {
 #define SAA7127_60HZ_DAC_CONTROL 0x15
 static const struct i2c_reg_value saa7127_init_config_60hz[] = {
 	{ SAA7127_REG_BURST_START, 			0x19 },
-	/* BURST_END is also used as a chip ID in saa7127_detect_client */
+	/* BURST_END is also used as a chip ID in saa7127_probe */
 	{ SAA7127_REG_BURST_END, 			0x1d },
 	{ SAA7127_REG_CHROMA_PHASE, 			0xa3 },
 	{ SAA7127_REG_GAINU, 				0x98 },
@@ -203,10 +199,10 @@ static const struct i2c_reg_value saa7127_init_config_60hz[] = {
 	{ 0, 0 }
 };
 
-#define SAA7127_50HZ_DAC_CONTROL 0x02
-static struct i2c_reg_value saa7127_init_config_50hz[] = {
+#define SAA7127_50HZ_PAL_DAC_CONTROL 0x02
+static struct i2c_reg_value saa7127_init_config_50hz_pal[] = {
 	{ SAA7127_REG_BURST_START, 			0x21 },
-	/* BURST_END is also used as a chip ID in saa7127_detect_client */
+	/* BURST_END is also used as a chip ID in saa7127_probe */
 	{ SAA7127_REG_BURST_END, 			0x1d },
 	{ SAA7127_REG_CHROMA_PHASE, 			0x3f },
 	{ SAA7127_REG_GAINU, 				0x7d },
@@ -225,6 +221,28 @@ static struct i2c_reg_value saa7127_init_config_50hz[] = {
 	{ 0, 0 }
 };
 
+#define SAA7127_50HZ_SECAM_DAC_CONTROL 0x08
+static struct i2c_reg_value saa7127_init_config_50hz_secam[] = {
+	{ SAA7127_REG_BURST_START, 			0x21 },
+	/* BURST_END is also used as a chip ID in saa7127_probe */
+	{ SAA7127_REG_BURST_END, 			0x1d },
+	{ SAA7127_REG_CHROMA_PHASE, 			0x3f },
+	{ SAA7127_REG_GAINU, 				0x6a },
+	{ SAA7127_REG_GAINV, 				0x81 },
+	{ SAA7127_REG_BLACK_LEVEL, 			0x33 },
+	{ SAA7127_REG_BLANKING_LEVEL, 			0x35 },
+	{ SAA7127_REG_VBI_BLANKING, 			0x35 },
+	{ SAA7127_REG_DAC_CONTROL, 			0x08 },
+	{ SAA7127_REG_BURST_AMP, 			0x2f },
+	{ SAA7127_REG_SUBC3, 				0xb2 },
+	{ SAA7127_REG_SUBC2, 				0x3b },
+	{ SAA7127_REG_SUBC1, 				0xa3 },
+	{ SAA7127_REG_SUBC0, 				0x28 },
+	{ SAA7127_REG_MULTI, 				0x90 },
+	{ SAA7127_REG_CLOSED_CAPTION, 			0x00 },
+	{ 0, 0 }
+};
+
 /*
  **********************************************************************
  *
@@ -234,6 +252,7 @@ static struct i2c_reg_value saa7127_init_config_50hz[] = {
  */
 
 struct saa7127_state {
+	struct v4l2_subdev sd;
 	v4l2_std_id std;
 	u32 ident;
 	enum saa7127_input_type input_type;
@@ -252,6 +271,11 @@ struct saa7127_state {
 	u8 reg_3a_cb;   /* colorbar bit */
 	u8 reg_61;
 };
+
+static inline struct saa7127_state *to_state(struct v4l2_subdev *sd)
+{
+	return container_of(sd, struct saa7127_state, sd);
+}
 
 static const char * const output_strs[] =
 {
@@ -284,32 +308,35 @@ static const char * const wss_strs[] = {
 
 /* ----------------------------------------------------------------------- */
 
-static int saa7127_read(struct i2c_client *client, u8 reg)
+static int saa7127_read(struct v4l2_subdev *sd, u8 reg)
 {
+	struct i2c_client *client = v4l2_get_subdevdata(sd);
+
 	return i2c_smbus_read_byte_data(client, reg);
 }
 
 /* ----------------------------------------------------------------------- */
 
-static int saa7127_write(struct i2c_client *client, u8 reg, u8 val)
+static int saa7127_write(struct v4l2_subdev *sd, u8 reg, u8 val)
 {
+	struct i2c_client *client = v4l2_get_subdevdata(sd);
 	int i;
 
 	for (i = 0; i < 3; i++) {
 		if (i2c_smbus_write_byte_data(client, reg, val) == 0)
 			return 0;
 	}
-	v4l_err(client, "I2C Write Problem\n");
+	v4l2_err(sd, "I2C Write Problem\n");
 	return -1;
 }
 
 /* ----------------------------------------------------------------------- */
 
-static int saa7127_write_inittab(struct i2c_client *client,
+static int saa7127_write_inittab(struct v4l2_subdev *sd,
 				 const struct i2c_reg_value *regs)
 {
 	while (regs->reg != 0) {
-		saa7127_write(client, regs->reg, regs->value);
+		saa7127_write(sd, regs->reg, regs->value);
 		regs++;
 	}
 	return 0;
@@ -317,128 +344,130 @@ static int saa7127_write_inittab(struct i2c_client *client,
 
 /* ----------------------------------------------------------------------- */
 
-static int saa7127_set_vps(struct i2c_client *client, struct v4l2_sliced_vbi_data *data)
+static int saa7127_set_vps(struct v4l2_subdev *sd, const struct v4l2_sliced_vbi_data *data)
 {
-	struct saa7127_state *state = i2c_get_clientdata(client);
+	struct saa7127_state *state = to_state(sd);
 	int enable = (data->line != 0);
 
 	if (enable && (data->field != 0 || data->line != 16))
 		return -EINVAL;
 	if (state->vps_enable != enable) {
-		v4l_dbg(1, debug, client, "Turn VPS Signal %s\n", enable ? "on" : "off");
-		saa7127_write(client, 0x54, enable << 7);
+		v4l2_dbg(1, debug, sd, "Turn VPS Signal %s\n", enable ? "on" : "off");
+		saa7127_write(sd, 0x54, enable << 7);
 		state->vps_enable = enable;
 	}
 	if (!enable)
 		return 0;
 
-	state->vps_data[0] = data->data[4];
-	state->vps_data[1] = data->data[10];
-	state->vps_data[2] = data->data[11];
-	state->vps_data[3] = data->data[12];
-	state->vps_data[4] = data->data[13];
-	v4l_dbg(1, debug, client, "Set VPS data %02x %02x %02x %02x %02x\n",
+	state->vps_data[0] = data->data[2];
+	state->vps_data[1] = data->data[8];
+	state->vps_data[2] = data->data[9];
+	state->vps_data[3] = data->data[10];
+	state->vps_data[4] = data->data[11];
+	v4l2_dbg(1, debug, sd, "Set VPS data %02x %02x %02x %02x %02x\n",
 		state->vps_data[0], state->vps_data[1],
 		state->vps_data[2], state->vps_data[3],
 		state->vps_data[4]);
-	saa7127_write(client, 0x55, state->vps_data[0]);
-	saa7127_write(client, 0x56, state->vps_data[1]);
-	saa7127_write(client, 0x57, state->vps_data[2]);
-	saa7127_write(client, 0x58, state->vps_data[3]);
-	saa7127_write(client, 0x59, state->vps_data[4]);
+	saa7127_write(sd, 0x55, state->vps_data[0]);
+	saa7127_write(sd, 0x56, state->vps_data[1]);
+	saa7127_write(sd, 0x57, state->vps_data[2]);
+	saa7127_write(sd, 0x58, state->vps_data[3]);
+	saa7127_write(sd, 0x59, state->vps_data[4]);
 	return 0;
 }
 
 /* ----------------------------------------------------------------------- */
 
-static int saa7127_set_cc(struct i2c_client *client, struct v4l2_sliced_vbi_data *data)
+static int saa7127_set_cc(struct v4l2_subdev *sd, const struct v4l2_sliced_vbi_data *data)
 {
-	struct saa7127_state *state = i2c_get_clientdata(client);
+	struct saa7127_state *state = to_state(sd);
 	u16 cc = data->data[1] << 8 | data->data[0];
 	int enable = (data->line != 0);
 
 	if (enable && (data->field != 0 || data->line != 21))
 		return -EINVAL;
 	if (state->cc_enable != enable) {
-		v4l_dbg(1, debug, client, "Turn CC %s\n", enable ? "on" : "off");
-		saa7127_write(client, SAA7127_REG_CLOSED_CAPTION,
-				(state->xds_enable << 7) | (enable << 6) | 0x11);
+		v4l2_dbg(1, debug, sd,
+			"Turn CC %s\n", enable ? "on" : "off");
+		saa7127_write(sd, SAA7127_REG_CLOSED_CAPTION,
+			(state->xds_enable << 7) | (enable << 6) | 0x11);
 		state->cc_enable = enable;
 	}
 	if (!enable)
 		return 0;
 
-	v4l_dbg(2, debug, client, "CC data: %04x\n", cc);
-	saa7127_write(client, SAA7127_REG_LINE_21_ODD_0, cc & 0xff);
-	saa7127_write(client, SAA7127_REG_LINE_21_ODD_1, cc >> 8);
+	v4l2_dbg(2, debug, sd, "CC data: %04x\n", cc);
+	saa7127_write(sd, SAA7127_REG_LINE_21_ODD_0, cc & 0xff);
+	saa7127_write(sd, SAA7127_REG_LINE_21_ODD_1, cc >> 8);
 	state->cc_data = cc;
 	return 0;
 }
 
 /* ----------------------------------------------------------------------- */
 
-static int saa7127_set_xds(struct i2c_client *client, struct v4l2_sliced_vbi_data *data)
+static int saa7127_set_xds(struct v4l2_subdev *sd, const struct v4l2_sliced_vbi_data *data)
 {
-	struct saa7127_state *state = i2c_get_clientdata(client);
+	struct saa7127_state *state = to_state(sd);
 	u16 xds = data->data[1] << 8 | data->data[0];
 	int enable = (data->line != 0);
 
 	if (enable && (data->field != 1 || data->line != 21))
 		return -EINVAL;
 	if (state->xds_enable != enable) {
-		v4l_dbg(1, debug, client, "Turn XDS %s\n", enable ? "on" : "off");
-		saa7127_write(client, SAA7127_REG_CLOSED_CAPTION,
+		v4l2_dbg(1, debug, sd, "Turn XDS %s\n", enable ? "on" : "off");
+		saa7127_write(sd, SAA7127_REG_CLOSED_CAPTION,
 				(enable << 7) | (state->cc_enable << 6) | 0x11);
 		state->xds_enable = enable;
 	}
 	if (!enable)
 		return 0;
 
-	v4l_dbg(2, debug, client, "XDS data: %04x\n", xds);
-	saa7127_write(client, SAA7127_REG_LINE_21_EVEN_0, xds & 0xff);
-	saa7127_write(client, SAA7127_REG_LINE_21_EVEN_1, xds >> 8);
+	v4l2_dbg(2, debug, sd, "XDS data: %04x\n", xds);
+	saa7127_write(sd, SAA7127_REG_LINE_21_EVEN_0, xds & 0xff);
+	saa7127_write(sd, SAA7127_REG_LINE_21_EVEN_1, xds >> 8);
 	state->xds_data = xds;
 	return 0;
 }
 
 /* ----------------------------------------------------------------------- */
 
-static int saa7127_set_wss(struct i2c_client *client, struct v4l2_sliced_vbi_data *data)
+static int saa7127_set_wss(struct v4l2_subdev *sd, const struct v4l2_sliced_vbi_data *data)
 {
-	struct saa7127_state *state = i2c_get_clientdata(client);
+	struct saa7127_state *state = to_state(sd);
 	int enable = (data->line != 0);
 
 	if (enable && (data->field != 0 || data->line != 23))
 		return -EINVAL;
 	if (state->wss_enable != enable) {
-		v4l_dbg(1, debug, client, "Turn WSS %s\n", enable ? "on" : "off");
-		saa7127_write(client, 0x27, enable << 7);
+		v4l2_dbg(1, debug, sd, "Turn WSS %s\n", enable ? "on" : "off");
+		saa7127_write(sd, 0x27, enable << 7);
 		state->wss_enable = enable;
 	}
 	if (!enable)
 		return 0;
 
-	saa7127_write(client, 0x26, data->data[0]);
-	saa7127_write(client, 0x27, 0x80 | (data->data[1] & 0x3f));
-	v4l_dbg(1, debug, client, "WSS mode: %s\n", wss_strs[data->data[0] & 0xf]);
+	saa7127_write(sd, 0x26, data->data[0]);
+	saa7127_write(sd, 0x27, 0x80 | (data->data[1] & 0x3f));
+	v4l2_dbg(1, debug, sd,
+		"WSS mode: %s\n", wss_strs[data->data[0] & 0xf]);
 	state->wss_mode = (data->data[1] & 0x3f) << 8 | data->data[0];
 	return 0;
 }
 
 /* ----------------------------------------------------------------------- */
 
-static int saa7127_set_video_enable(struct i2c_client *client, int enable)
+static int saa7127_set_video_enable(struct v4l2_subdev *sd, int enable)
 {
-	struct saa7127_state *state = i2c_get_clientdata(client);
+	struct saa7127_state *state = to_state(sd);
 
 	if (enable) {
-		v4l_dbg(1, debug, client, "Enable Video Output\n");
-		saa7127_write(client, 0x2d, state->reg_2d);
-		saa7127_write(client, 0x61, state->reg_61);
+		v4l2_dbg(1, debug, sd, "Enable Video Output\n");
+		saa7127_write(sd, 0x2d, state->reg_2d);
+		saa7127_write(sd, 0x61, state->reg_61);
 	} else {
-		v4l_dbg(1, debug, client, "Disable Video Output\n");
-		saa7127_write(client, 0x2d, (state->reg_2d & 0xf0));
-		saa7127_write(client, 0x61, (state->reg_61 | 0xc0));
+		v4l2_dbg(1, debug, sd, "Disable Video Output\n");
+		saa7127_write(sd, 0x2d, (state->reg_2d & 0xf0));
+		saa7127_write(sd, 0x61, (state->reg_61 | 0xc0));
 	}
 	state->video_enable = enable;
 	return 0;
@@ -446,32 +475,43 @@ static int saa7127_set_video_enable(struct i2c_client *client, int enable)
 
 /* ----------------------------------------------------------------------- */
 
-static int saa7127_set_std(struct i2c_client *client, v4l2_std_id std)
+static int saa7127_set_std(struct v4l2_subdev *sd, v4l2_std_id std)
 {
-	struct saa7127_state *state = i2c_get_clientdata(client);
+	struct saa7127_state *state = to_state(sd);
 	const struct i2c_reg_value *inittab;
 
 	if (std & V4L2_STD_525_60) {
-		v4l_dbg(1, debug, client, "Selecting 60 Hz video Standard\n");
+		v4l2_dbg(1, debug, sd, "Selecting 60 Hz video Standard\n");
 		inittab = saa7127_init_config_60hz;
 		state->reg_61 = SAA7127_60HZ_DAC_CONTROL;
+
+	} else if (state->ident == V4L2_IDENT_SAA7129 &&
+		   (std & V4L2_STD_SECAM) &&
+		   !(std & (V4L2_STD_625_50 & ~V4L2_STD_SECAM))) {
+
+		/* If and only if SECAM, with a SAA712[89] */
+		v4l2_dbg(1, debug, sd,
+			 "Selecting 50 Hz SECAM video Standard\n");
+		inittab = saa7127_init_config_50hz_secam;
+		state->reg_61 = SAA7127_50HZ_SECAM_DAC_CONTROL;
+
 	} else {
-		v4l_dbg(1, debug, client, "Selecting 50 Hz video Standard\n");
-		inittab = saa7127_init_config_50hz;
-		state->reg_61 = SAA7127_50HZ_DAC_CONTROL;
+		v4l2_dbg(1, debug, sd, "Selecting 50 Hz PAL video Standard\n");
+		inittab = saa7127_init_config_50hz_pal;
+		state->reg_61 = SAA7127_50HZ_PAL_DAC_CONTROL;
 	}
 
 	/* Write Table */
-	saa7127_write_inittab(client, inittab);
+	saa7127_write_inittab(sd, inittab);
 	state->std = std;
 	return 0;
 }
 
 /* ----------------------------------------------------------------------- */
 
-static int saa7127_set_output_type(struct i2c_client *client, int output)
+static int saa7127_set_output_type(struct v4l2_subdev *sd, int output)
 {
-	struct saa7127_state *state = i2c_get_clientdata(client);
+	struct saa7127_state *state = to_state(sd);
 
 	switch (output) {
 	case SAA7127_OUTPUT_TYPE_RGB:
@@ -480,12 +520,18 @@ static int saa7127_set_output_type(struct i2c_client *client, int output)
 		break;
 
 	case SAA7127_OUTPUT_TYPE_COMPOSITE:
-		state->reg_2d = 0x08;	/* 00001000 CVBS only, RGB DAC's off (high impedance mode) */
+		if (state->ident == V4L2_IDENT_SAA7129)
+			state->reg_2d = 0x20;	/* CVBS only */
+		else
+			state->reg_2d = 0x08;	/* 00001000 CVBS only, RGB DAC's off (high impedance mode) */
 		state->reg_3a = 0x13;	/* by default switch YUV to RGB-matrix on */
 		break;
 
 	case SAA7127_OUTPUT_TYPE_SVIDEO:
-		state->reg_2d = 0xff;	/* 11111111  croma -> R, luma -> CVBS + G + B */
+		if (state->ident == V4L2_IDENT_SAA7129)
+			state->reg_2d = 0x18;	/* Y + C */
+		else
+			state->reg_2d = 0xff;   /*11111111  croma -> R, luma -> CVBS + G + B */
 		state->reg_3a = 0x13;	/* by default switch YUV to RGB-matrix on */
 		break;
 
@@ -500,309 +546,321 @@ static int saa7127_set_output_type(struct i2c_client *client, int output)
 		break;
 
 	case SAA7127_OUTPUT_TYPE_BOTH:
-		state->reg_2d = 0xbf;
+		if (state->ident == V4L2_IDENT_SAA7129)
+			state->reg_2d = 0x38;
+		else
+			state->reg_2d = 0xbf;
 		state->reg_3a = 0x13;	/* by default switch YUV to RGB-matrix on */
 		break;
 
 	default:
 		return -EINVAL;
 	}
-	v4l_dbg(1, debug, client, "Selecting %s output type\n", output_strs[output]);
+	v4l2_dbg(1, debug, sd,
+		"Selecting %s output type\n", output_strs[output]);
 
 	/* Configure Encoder */
-	saa7127_write(client, 0x2d, state->reg_2d);
-	saa7127_write(client, 0x3a, state->reg_3a | state->reg_3a_cb);
+	saa7127_write(sd, 0x2d, state->reg_2d);
+	saa7127_write(sd, 0x3a, state->reg_3a | state->reg_3a_cb);
 	state->output_type = output;
 	return 0;
 }
 
 /* ----------------------------------------------------------------------- */
 
-static int saa7127_set_input_type(struct i2c_client *client, int input)
+static int saa7127_set_input_type(struct v4l2_subdev *sd, int input)
 {
-	struct saa7127_state *state = i2c_get_clientdata(client);
+	struct saa7127_state *state = to_state(sd);
 
 	switch (input) {
 	case SAA7127_INPUT_TYPE_NORMAL:	/* avia */
-		v4l_dbg(1, debug, client, "Selecting Normal Encoder Input\n");
+		v4l2_dbg(1, debug, sd, "Selecting Normal Encoder Input\n");
 		state->reg_3a_cb = 0;
 		break;
 
 	case SAA7127_INPUT_TYPE_TEST_IMAGE:	/* color bar */
-		v4l_dbg(1, debug, client, "Selecting Color Bar generator\n");
+		v4l2_dbg(1, debug, sd, "Selecting Color Bar generator\n");
 		state->reg_3a_cb = 0x80;
 		break;
 
 	default:
 		return -EINVAL;
 	}
-	saa7127_write(client, 0x3a, state->reg_3a | state->reg_3a_cb);
+	saa7127_write(sd, 0x3a, state->reg_3a | state->reg_3a_cb);
 	state->input_type = input;
 	return 0;
 }
 
 /* ----------------------------------------------------------------------- */
 
-static int saa7127_command(struct i2c_client *client,
-			   unsigned int cmd, void *arg)
+static int saa7127_s_std_output(struct v4l2_subdev *sd, v4l2_std_id std)
 {
-	struct saa7127_state *state = i2c_get_clientdata(client);
-	struct v4l2_format *fmt = arg;
-	struct v4l2_routing *route = arg;
+	struct saa7127_state *state = to_state(sd);
 
-	switch (cmd) {
-	case VIDIOC_INT_S_STD_OUTPUT:
-		if (state->std == *(v4l2_std_id *)arg)
-			break;
-		return saa7127_set_std(client, *(v4l2_std_id *)arg);
+	if (state->std == std)
+		return 0;
+	return saa7127_set_std(sd, std);
+}
 
-	case VIDIOC_INT_G_STD_OUTPUT:
-		*(v4l2_std_id *)arg = state->std;
-		break;
+static int saa7127_s_routing(struct v4l2_subdev *sd,
+			     u32 input, u32 output, u32 config)
+{
+	struct saa7127_state *state = to_state(sd);
+	int rc = 0;
 
-	case VIDIOC_INT_G_VIDEO_ROUTING:
-		route->input = state->input_type;
-		route->output = state->output_type;
-		break;
+	if (state->input_type != input)
+		rc = saa7127_set_input_type(sd, input);
+	if (rc == 0 && state->output_type != output)
+		rc = saa7127_set_output_type(sd, output);
+	return rc;
+}
 
-	case VIDIOC_INT_S_VIDEO_ROUTING:
-	{
-		int rc = 0;
+static int saa7127_s_stream(struct v4l2_subdev *sd, int enable)
+{
+	struct saa7127_state *state = to_state(sd);
 
-		if (state->input_type != route->input) {
-			rc = saa7127_set_input_type(client, route->input);
-		}
-		if (rc == 0 && state->output_type != route->output) {
-			rc = saa7127_set_output_type(client, route->output);
-		}
-		return rc;
+	if (state->video_enable == enable)
+		return 0;
+	return saa7127_set_video_enable(sd, enable);
+}
+
+static int saa7127_g_sliced_fmt(struct v4l2_subdev *sd, struct v4l2_sliced_vbi_format *fmt)
+{
+	struct saa7127_state *state = to_state(sd);
+
+	memset(fmt, 0, sizeof(*fmt));
+	if (state->vps_enable)
+		fmt->service_lines[0][16] = V4L2_SLICED_VPS;
+	if (state->wss_enable)
+		fmt->service_lines[0][23] = V4L2_SLICED_WSS_625;
+	if (state->cc_enable) {
+		fmt->service_lines[0][21] = V4L2_SLICED_CAPTION_525;
+		fmt->service_lines[1][21] = V4L2_SLICED_CAPTION_525;
 	}
+	fmt->service_set =
+		(state->vps_enable ? V4L2_SLICED_VPS : 0) |
+		(state->wss_enable ? V4L2_SLICED_WSS_625 : 0) |
+		(state->cc_enable ? V4L2_SLICED_CAPTION_525 : 0);
+	return 0;
+}
 
-	case VIDIOC_STREAMON:
-	case VIDIOC_STREAMOFF:
-		if (state->video_enable == (cmd == VIDIOC_STREAMON))
-			break;
-		return saa7127_set_video_enable(client, cmd == VIDIOC_STREAMON);
-
-	case VIDIOC_G_FMT:
-		if (fmt->type != V4L2_BUF_TYPE_SLICED_VBI_CAPTURE)
-			return -EINVAL;
-
-		memset(&fmt->fmt.sliced, 0, sizeof(fmt->fmt.sliced));
-		if (state->vps_enable)
-			fmt->fmt.sliced.service_lines[0][16] = V4L2_SLICED_VPS;
-		if (state->wss_enable)
-			fmt->fmt.sliced.service_lines[0][23] = V4L2_SLICED_WSS_625;
-		if (state->cc_enable) {
-			fmt->fmt.sliced.service_lines[0][21] = V4L2_SLICED_CAPTION_525;
-			fmt->fmt.sliced.service_lines[1][21] = V4L2_SLICED_CAPTION_525;
-		}
-		fmt->fmt.sliced.service_set =
-			(state->vps_enable ? V4L2_SLICED_VPS : 0) |
-			(state->wss_enable ? V4L2_SLICED_WSS_625 : 0) |
-			(state->cc_enable ? V4L2_SLICED_CAPTION_525 : 0);
-		break;
-
-	case VIDIOC_LOG_STATUS:
-		v4l_info(client, "Standard: %s\n", (state->std & V4L2_STD_525_60) ? "60 Hz" : "50 Hz");
-		v4l_info(client, "Input:    %s\n", state->input_type ?  "color bars" : "normal");
-		v4l_info(client, "Output:   %s\n", state->video_enable ?
-			output_strs[state->output_type] : "disabled");
-		v4l_info(client, "WSS:      %s\n", state->wss_enable ?
-			wss_strs[state->wss_mode] : "disabled");
-		v4l_info(client, "VPS:      %s\n", state->vps_enable ? "enabled" : "disabled");
-		v4l_info(client, "CC:       %s\n", state->cc_enable ? "enabled" : "disabled");
-		break;
-
-#ifdef CONFIG_VIDEO_ADV_DEBUG
-	case VIDIOC_DBG_G_REGISTER:
-	case VIDIOC_DBG_S_REGISTER:
-	{
-		struct v4l2_register *reg = arg;
-
-		if (!v4l2_chip_match_i2c_client(client, reg->match_type, reg->match_chip))
-			return -EINVAL;
-		if (!capable(CAP_SYS_ADMIN))
-			return -EPERM;
-		if (cmd == VIDIOC_DBG_G_REGISTER)
-			reg->val = saa7127_read(client, reg->reg & 0xff);
-		else
-			saa7127_write(client, reg->reg & 0xff, reg->val & 0xff);
-		break;
-	}
-#endif
-
-	case VIDIOC_INT_S_VBI_DATA:
-	{
-		struct v4l2_sliced_vbi_data *data = arg;
-
-		switch (data->id) {
-			case V4L2_SLICED_WSS_625:
-				return saa7127_set_wss(client, data);
-			case V4L2_SLICED_VPS:
-				return saa7127_set_vps(client, data);
-			case V4L2_SLICED_CAPTION_525:
-				if (data->field == 0)
-					return saa7127_set_cc(client, data);
-				return saa7127_set_xds(client, data);
-			default:
-				return -EINVAL;
-		}
-		break;
-	}
-
-	case VIDIOC_G_CHIP_IDENT:
-		return v4l2_chip_ident_i2c_client(client, arg, state->ident, 0);
-
+static int saa7127_s_vbi_data(struct v4l2_subdev *sd, const struct v4l2_sliced_vbi_data *data)
+{
+	switch (data->id) {
+	case V4L2_SLICED_WSS_625:
+		return saa7127_set_wss(sd, data);
+	case V4L2_SLICED_VPS:
+		return saa7127_set_vps(sd, data);
+	case V4L2_SLICED_CAPTION_525:
+		if (data->field == 0)
+			return saa7127_set_cc(sd, data);
+		return saa7127_set_xds(sd, data);
 	default:
 		return -EINVAL;
 	}
 	return 0;
 }
 
-/* ----------------------------------------------------------------------- */
-
-static struct i2c_driver i2c_driver_saa7127;
-
-/* ----------------------------------------------------------------------- */
-
-static int saa7127_attach(struct i2c_adapter *adapter, int address, int kind)
+#ifdef CONFIG_VIDEO_ADV_DEBUG
+static int saa7127_g_register(struct v4l2_subdev *sd, struct v4l2_dbg_register *reg)
 {
-	struct i2c_client *client;
+	struct i2c_client *client = v4l2_get_subdevdata(sd);
+
+	if (!v4l2_chip_match_i2c_client(client, &reg->match))
+		return -EINVAL;
+	if (!capable(CAP_SYS_ADMIN))
+		return -EPERM;
+	reg->val = saa7127_read(sd, reg->reg & 0xff);
+	reg->size = 1;
+	return 0;
+}
+
+static int saa7127_s_register(struct v4l2_subdev *sd, struct v4l2_dbg_register *reg)
+{
+	struct i2c_client *client = v4l2_get_subdevdata(sd);
+
+	if (!v4l2_chip_match_i2c_client(client, &reg->match))
+		return -EINVAL;
+	if (!capable(CAP_SYS_ADMIN))
+		return -EPERM;
+	saa7127_write(sd, reg->reg & 0xff, reg->val & 0xff);
+	return 0;
+}
+#endif
+
+static int saa7127_g_chip_ident(struct v4l2_subdev *sd, struct v4l2_dbg_chip_ident *chip)
+{
+	struct saa7127_state *state = to_state(sd);
+	struct i2c_client *client = v4l2_get_subdevdata(sd);
+
+	return v4l2_chip_ident_i2c_client(client, chip, state->ident, 0);
+}
+
+static int saa7127_log_status(struct v4l2_subdev *sd)
+{
+	struct saa7127_state *state = to_state(sd);
+
+	v4l2_info(sd, "Standard: %s\n", (state->std & V4L2_STD_525_60) ? "60 Hz" : "50 Hz");
+	v4l2_info(sd, "Input:    %s\n", state->input_type ?  "color bars" : "normal");
+	v4l2_info(sd, "Output:   %s\n", state->video_enable ?
+			output_strs[state->output_type] : "disabled");
+	v4l2_info(sd, "WSS:      %s\n", state->wss_enable ?
+			wss_strs[state->wss_mode] : "disabled");
+	v4l2_info(sd, "VPS:      %s\n", state->vps_enable ? "enabled" : "disabled");
+	v4l2_info(sd, "CC:       %s\n", state->cc_enable ? "enabled" : "disabled");
+	return 0;
+}
+
+/* ----------------------------------------------------------------------- */
+
+static const struct v4l2_subdev_core_ops saa7127_core_ops = {
+	.log_status = saa7127_log_status,
+	.g_chip_ident = saa7127_g_chip_ident,
+#ifdef CONFIG_VIDEO_ADV_DEBUG
+	.g_register = saa7127_g_register,
+	.s_register = saa7127_s_register,
+#endif
+};
+
+static const struct v4l2_subdev_video_ops saa7127_video_ops = {
+	.s_std_output = saa7127_s_std_output,
+	.s_routing = saa7127_s_routing,
+	.s_stream = saa7127_s_stream,
+};
+
+static const struct v4l2_subdev_vbi_ops saa7127_vbi_ops = {
+	.s_vbi_data = saa7127_s_vbi_data,
+	.g_sliced_fmt = saa7127_g_sliced_fmt,
+};
+
+static const struct v4l2_subdev_ops saa7127_ops = {
+	.core = &saa7127_core_ops,
+	.video = &saa7127_video_ops,
+	.vbi = &saa7127_vbi_ops,
+};
+
+/* ----------------------------------------------------------------------- */
+
+static int saa7127_probe(struct i2c_client *client,
+			 const struct i2c_device_id *id)
+{
 	struct saa7127_state *state;
+	struct v4l2_subdev *sd;
 	struct v4l2_sliced_vbi_data vbi = { 0, 0, 0, 0 };  /* set to disabled */
-	int read_result = 0;
 
 	/* Check if the adapter supports the needed features */
-	if (!i2c_check_functionality(adapter, I2C_FUNC_SMBUS_BYTE_DATA))
-		return 0;
+	if (!i2c_check_functionality(client->adapter, I2C_FUNC_SMBUS_BYTE_DATA))
+		return -EIO;
 
-	client = kzalloc(sizeof(struct i2c_client), GFP_KERNEL);
-	if (client == 0)
+	v4l_dbg(1, debug, client, "detecting saa7127 client on address 0x%x\n",
+			client->addr << 1);
+
+	state = kzalloc(sizeof(struct saa7127_state), GFP_KERNEL);
+	if (state == NULL)
 		return -ENOMEM;
 
-	client->addr = address;
-	client->adapter = adapter;
-	client->driver = &i2c_driver_saa7127;
-	snprintf(client->name, sizeof(client->name) - 1, "saa7127");
-
-	v4l_dbg(1, debug, client, "detecting saa7127 client on address 0x%x\n", address << 1);
+	sd = &state->sd;
+	v4l2_i2c_subdev_init(sd, client, &saa7127_ops);
 
 	/* First test register 0: Bits 5-7 are a version ID (should be 0),
 	   and bit 2 should also be 0.
 	   This is rather general, so the second test is more specific and
 	   looks at the 'ending point of burst in clock cycles' which is
 	   0x1d after a reset and not expected to ever change. */
-	if ((saa7127_read(client, 0) & 0xe4) != 0 ||
-			(saa7127_read(client, 0x29) & 0x3f) != 0x1d) {
-		v4l_dbg(1, debug, client, "saa7127 not found\n");
-		kfree(client);
-		return 0;
-	}
-	state = kzalloc(sizeof(struct saa7127_state), GFP_KERNEL);
-
-	if (state == NULL) {
-		kfree(client);
-		return (-ENOMEM);
+	if ((saa7127_read(sd, 0) & 0xe4) != 0 ||
+			(saa7127_read(sd, 0x29) & 0x3f) != 0x1d) {
+		v4l2_dbg(1, debug, sd, "saa7127 not found\n");
+		kfree(state);
+		return -ENODEV;
 	}
 
-	i2c_set_clientdata(client, state);
+	if (id->driver_data) {	/* Chip type is already known */
+		state->ident = id->driver_data;
+	} else {		/* Needs detection */
+		int read_result;
 
-	/* Configure Encoder */
+		/* Detect if it's an saa7129 */
+		read_result = saa7127_read(sd, SAA7129_REG_FADE_KEY_COL2);
+		saa7127_write(sd, SAA7129_REG_FADE_KEY_COL2, 0xaa);
+		if (saa7127_read(sd, SAA7129_REG_FADE_KEY_COL2) == 0xaa) {
+			saa7127_write(sd, SAA7129_REG_FADE_KEY_COL2,
+					read_result);
+			state->ident = V4L2_IDENT_SAA7129;
+			strlcpy(client->name, "saa7129", I2C_NAME_SIZE);
+		} else {
+			state->ident = V4L2_IDENT_SAA7127;
+			strlcpy(client->name, "saa7127", I2C_NAME_SIZE);
+		}
+	}
 
-	v4l_dbg(1, debug, client, "Configuring encoder\n");
-	saa7127_write_inittab(client, saa7127_init_config_common);
-	saa7127_set_std(client, V4L2_STD_NTSC);
-	saa7127_set_output_type(client, SAA7127_OUTPUT_TYPE_BOTH);
-	saa7127_set_vps(client, &vbi);
-	saa7127_set_wss(client, &vbi);
-	saa7127_set_cc(client, &vbi);
-	saa7127_set_xds(client, &vbi);
-	if (test_image == 1) {
+	v4l2_info(sd, "%s found @ 0x%x (%s)\n", client->name,
+			client->addr << 1, client->adapter->name);
+
+	v4l2_dbg(1, debug, sd, "Configuring encoder\n");
+	saa7127_write_inittab(sd, saa7127_init_config_common);
+	saa7127_set_std(sd, V4L2_STD_NTSC);
+	saa7127_set_output_type(sd, SAA7127_OUTPUT_TYPE_BOTH);
+	saa7127_set_vps(sd, &vbi);
+	saa7127_set_wss(sd, &vbi);
+	saa7127_set_cc(sd, &vbi);
+	saa7127_set_xds(sd, &vbi);
+	if (test_image == 1)
 		/* The Encoder has an internal Colorbar generator */
 		/* This can be used for debugging */
-		saa7127_set_input_type(client, SAA7127_INPUT_TYPE_TEST_IMAGE);
-	} else {
-		saa7127_set_input_type(client, SAA7127_INPUT_TYPE_NORMAL);
-	}
-	saa7127_set_video_enable(client, 1);
+		saa7127_set_input_type(sd, SAA7127_INPUT_TYPE_TEST_IMAGE);
+	else
+		saa7127_set_input_type(sd, SAA7127_INPUT_TYPE_NORMAL);
+	saa7127_set_video_enable(sd, 1);
 
-	/* Detect if it's an saa7129 */
-	read_result = saa7127_read(client, SAA7129_REG_FADE_KEY_COL2);
-	saa7127_write(client, SAA7129_REG_FADE_KEY_COL2, 0xaa);
-	if (saa7127_read(client, SAA7129_REG_FADE_KEY_COL2) == 0xaa) {
-		v4l_info(client, "saa7129 found @ 0x%x (%s)\n", address << 1, adapter->name);
-		saa7127_write(client, SAA7129_REG_FADE_KEY_COL2, read_result);
-		saa7127_write_inittab(client, saa7129_init_config_extra);
-		state->ident = V4L2_IDENT_SAA7129;
-	} else {
-		v4l_info(client, "saa7127 found @ 0x%x (%s)\n", address << 1, adapter->name);
-		state->ident = V4L2_IDENT_SAA7127;
-	}
-
-	i2c_attach_client(client);
-
+	if (state->ident == V4L2_IDENT_SAA7129)
+		saa7127_write_inittab(sd, saa7129_init_config_extra);
 	return 0;
 }
 
 /* ----------------------------------------------------------------------- */
 
-static int saa7127_probe(struct i2c_adapter *adapter)
+static int saa7127_remove(struct i2c_client *client)
 {
-	if (adapter->class & I2C_CLASS_TV_ANALOG)
-		return i2c_probe(adapter, &addr_data, saa7127_attach);
-	return 0;
-}
+	struct v4l2_subdev *sd = i2c_get_clientdata(client);
 
-/* ----------------------------------------------------------------------- */
-
-static int saa7127_detach(struct i2c_client *client)
-{
-	struct saa7127_state *state = i2c_get_clientdata(client);
-	int err;
-
+	v4l2_device_unregister_subdev(sd);
 	/* Turn off TV output */
-	saa7127_set_video_enable(client, 0);
-
-	err = i2c_detach_client(client);
-
-	if (err) {
-		return err;
-	}
-
-	kfree(state);
-	kfree(client);
+	saa7127_set_video_enable(sd, 0);
+	kfree(to_state(sd));
 	return 0;
 }
 
 /* ----------------------------------------------------------------------- */
 
-static struct i2c_driver i2c_driver_saa7127 = {
+static struct i2c_device_id saa7127_id[] = {
+	{ "saa7127_auto", 0 },	/* auto-detection */
+	{ "saa7126", V4L2_IDENT_SAA7127 },
+	{ "saa7127", V4L2_IDENT_SAA7127 },
+	{ "saa7128", V4L2_IDENT_SAA7129 },
+	{ "saa7129", V4L2_IDENT_SAA7129 },
+	{ }
+};
+MODULE_DEVICE_TABLE(i2c, saa7127_id);
+
+static struct i2c_driver saa7127_driver = {
 	.driver = {
-		.name = "saa7127",
+		.owner	= THIS_MODULE,
+		.name	= "saa7127",
 	},
-	.id = I2C_DRIVERID_SAA7127,
-	.attach_adapter = saa7127_probe,
-	.detach_client = saa7127_detach,
-	.command = saa7127_command,
+	.probe		= saa7127_probe,
+	.remove		= saa7127_remove,
+	.id_table	= saa7127_id,
 };
 
-
-/* ----------------------------------------------------------------------- */
-
-static int __init saa7127_init_module(void)
+static __init int init_saa7127(void)
 {
-	return i2c_add_driver(&i2c_driver_saa7127);
+	return i2c_add_driver(&saa7127_driver);
 }
 
-/* ----------------------------------------------------------------------- */
-
-static void __exit saa7127_cleanup_module(void)
+static __exit void exit_saa7127(void)
 {
-	i2c_del_driver(&i2c_driver_saa7127);
+	i2c_del_driver(&saa7127_driver);
 }
 
-/* ----------------------------------------------------------------------- */
-
-module_init(saa7127_init_module);
-module_exit(saa7127_cleanup_module);
+module_init(init_saa7127);
+module_exit(exit_saa7127);

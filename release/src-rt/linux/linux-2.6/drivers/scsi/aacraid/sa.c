@@ -1,11 +1,12 @@
 /*
  *	Adaptec AAC series RAID controller driver
- *	(c) Copyright 2001 Red Hat Inc.	<alan@redhat.com>
+ *	(c) Copyright 2001 Red Hat Inc.
  *
  * based on the old aacraid driver that is..
  * Adaptec aacraid device driver for Linux.
  *
- * Copyright (c) 2000-2007 Adaptec, Inc. (aacraid@adaptec.com)
+ * Copyright (c) 2000-2010 Adaptec, Inc.
+ *               2010 PMC-Sierra, Inc. (aacraid@pmc-sierra.com)
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,14 +32,13 @@
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/types.h>
+#include <linux/pci.h>
 #include <linux/spinlock.h>
-#include <linux/slab.h>
 #include <linux/blkdev.h>
 #include <linux/delay.h>
 #include <linux/completion.h>
 #include <linux/time.h>
 #include <linux/interrupt.h>
-#include <asm/semaphore.h>
 
 #include <scsi/scsi_host.h>
 
@@ -385,13 +385,17 @@ int aac_sa_init(struct aac_dev *dev)
 
 	if(aac_init_adapter(dev) == NULL)
 		goto error_irq;
-	if (request_irq(dev->scsi_host_ptr->irq, dev->a_ops.adapter_intr,
+	if (request_irq(dev->pdev->irq, dev->a_ops.adapter_intr,
 			IRQF_SHARED|IRQF_DISABLED,
 			"aacraid", (void *)dev ) < 0) {
 		printk(KERN_WARNING "%s%d: Interrupt unavailable.\n",
 			name, instance);
 		goto error_iounmap;
 	}
+	dev->dbg_base = dev->scsi_host_ptr->base;
+	dev->dbg_base_mapped = dev->base;
+	dev->dbg_size = dev->base_size;
+
 	aac_adapter_enable_int(dev);
 
 	/*
@@ -403,7 +407,7 @@ int aac_sa_init(struct aac_dev *dev)
 
 error_irq:
 	aac_sa_disable_interrupt(dev);
-	free_irq(dev->scsi_host_ptr->irq, (void *)dev);
+	free_irq(dev->pdev->irq, (void *)dev);
 
 error_iounmap:
 

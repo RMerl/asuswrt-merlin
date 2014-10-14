@@ -20,12 +20,10 @@
  *
  */
 
-#include <sound/driver.h>
 #include <linux/delay.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>
 #include <linux/pci.h>
-#include <linux/slab.h>
 #include <linux/moduleparam.h>
 
 #include <sound/core.h>
@@ -148,7 +146,7 @@ MODULE_SUPPORTED_DEVICE("{{RME,Hammerfall},"
 #define RME9652_start_bit	   (1<<0)	/* start record/play */
                                                 /* bits 1-3 encode buffersize/latency */
 #define RME9652_Master		   (1<<4)	/* Clock Mode Master=1,Slave/Auto=0 */
-#define RME9652_IE		   (1<<5)	/* Interupt Enable */
+#define RME9652_IE		   (1<<5)	/* Interrupt Enable */
 #define RME9652_freq		   (1<<6)       /* samplerate 0=44.1/88.2, 1=48/96 kHz */
 #define RME9652_freq1		   (1<<7)       /* if 0, 32kHz, else always 1 */
 #define RME9652_DS                 (1<<8)	/* Doule Speed 0=44.1/48, 1=88.2/96 Khz */
@@ -315,7 +313,7 @@ static void snd_hammerfall_free_buffer(struct snd_dma_buffer *dmab, struct pci_d
 }
 
 
-static struct pci_device_id snd_rme9652_ids[] = {
+static DEFINE_PCI_DEVICE_TABLE(snd_rme9652_ids) = {
 	{
 		.vendor	   = 0x10ee,
 		.device	   = 0x3fc4,
@@ -406,7 +404,7 @@ static snd_pcm_uframes_t rme9652_hw_pointer(struct snd_rme9652 *rme9652)
 		} else if (!frag)
 			return 0;
 		offset -= rme9652->max_jitter;
-		if (offset < 0)
+		if ((int)offset < 0)
 			offset += period_size * 2;
 	} else {
 		if (offset > period_size + rme9652->max_jitter) {
@@ -595,8 +593,6 @@ static void rme9652_set_thru(struct snd_rme9652 *rme9652, int channel, int enabl
 
 	} else {
 		int mapped_channel;
-
-		snd_assert(channel == RME9652_NCHANNELS, return);
 
 		mapped_channel = rme9652->channel_map[channel];
 
@@ -1067,14 +1063,7 @@ static int rme9652_set_spdif_output(struct snd_rme9652 *rme9652, int out)
 	return 0;
 }
 
-static int snd_rme9652_info_spdif_out(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_info *uinfo)
-{
-	uinfo->type = SNDRV_CTL_ELEM_TYPE_BOOLEAN;
-	uinfo->count = 1;
-	uinfo->value.integer.min = 0;
-	uinfo->value.integer.max = 1;
-	return 0;
-}
+#define snd_rme9652_info_spdif_out	snd_ctl_boolean_mono_info
 
 static int snd_rme9652_get_spdif_out(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
 {
@@ -1338,14 +1327,7 @@ static int snd_rme9652_put_thru(struct snd_kcontrol *kcontrol, struct snd_ctl_el
   .put = snd_rme9652_put_passthru, \
   .get = snd_rme9652_get_passthru }
 
-static int snd_rme9652_info_passthru(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_info *uinfo)
-{
-	uinfo->type = SNDRV_CTL_ELEM_TYPE_BOOLEAN;
-	uinfo->count = 1;
-	uinfo->value.integer.min = 0;
-	uinfo->value.integer.max = 1;
-	return 0;
-}
+#define snd_rme9652_info_passthru	snd_ctl_boolean_mono_info
 
 static int snd_rme9652_get_passthru(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
 {
@@ -1445,14 +1427,7 @@ static int snd_rme9652_get_adat_sync(struct snd_kcontrol *kcontrol, struct snd_c
   .info = snd_rme9652_info_tc_valid, \
   .get = snd_rme9652_get_tc_valid }
 
-static int snd_rme9652_info_tc_valid(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_info *uinfo)
-{
-	uinfo->type = SNDRV_CTL_ELEM_TYPE_BOOLEAN;
-	uinfo->count = 1;
-	uinfo->value.integer.min = 0;
-	uinfo->value.integer.max = 1;
-	return 0;
-}
+#define snd_rme9652_info_tc_valid	snd_ctl_boolean_mono_info
 
 static int snd_rme9652_get_tc_valid(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
 {
@@ -1847,7 +1822,7 @@ static void snd_rme9652_set_defaults(struct snd_rme9652 *rme9652)
 
 	/* ASSUMPTION: rme9652->lock is either held, or
 	   there is no need to hold it (e.g. during module
-	   initalization).
+	   initialization).
 	 */
 
 	/* set defaults:
@@ -1915,7 +1890,8 @@ static char *rme9652_channel_buffer_location(struct snd_rme9652 *rme9652,
 {
 	int mapped_channel;
 
-        snd_assert(channel >= 0 || channel < RME9652_NCHANNELS, return NULL);
+	if (snd_BUG_ON(channel < 0 || channel >= RME9652_NCHANNELS))
+		return NULL;
         
 	if ((mapped_channel = rme9652->channel_map[channel]) < 0) {
 		return NULL;
@@ -1936,12 +1912,14 @@ static int snd_rme9652_playback_copy(struct snd_pcm_substream *substream, int ch
 	struct snd_rme9652 *rme9652 = snd_pcm_substream_chip(substream);
 	char *channel_buf;
 
-	snd_assert(pos + count <= RME9652_CHANNEL_BUFFER_BYTES / 4, return -EINVAL);
+	if (snd_BUG_ON(pos + count > RME9652_CHANNEL_BUFFER_BYTES / 4))
+		return -EINVAL;
 
 	channel_buf = rme9652_channel_buffer_location (rme9652,
 						       substream->pstr->stream,
 						       channel);
-	snd_assert(channel_buf != NULL, return -EIO);
+	if (snd_BUG_ON(!channel_buf))
+		return -EIO;
 	if (copy_from_user(channel_buf + pos * 4, src, count * 4))
 		return -EFAULT;
 	return count;
@@ -1953,12 +1931,14 @@ static int snd_rme9652_capture_copy(struct snd_pcm_substream *substream, int cha
 	struct snd_rme9652 *rme9652 = snd_pcm_substream_chip(substream);
 	char *channel_buf;
 
-	snd_assert(pos + count <= RME9652_CHANNEL_BUFFER_BYTES / 4, return -EINVAL);
+	if (snd_BUG_ON(pos + count > RME9652_CHANNEL_BUFFER_BYTES / 4))
+		return -EINVAL;
 
 	channel_buf = rme9652_channel_buffer_location (rme9652,
 						       substream->pstr->stream,
 						       channel);
-	snd_assert(channel_buf != NULL, return -EIO);
+	if (snd_BUG_ON(!channel_buf))
+		return -EIO;
 	if (copy_to_user(dst, channel_buf + pos * 4, count * 4))
 		return -EFAULT;
 	return count;
@@ -1973,7 +1953,8 @@ static int snd_rme9652_hw_silence(struct snd_pcm_substream *substream, int chann
 	channel_buf = rme9652_channel_buffer_location (rme9652,
 						       substream->pstr->stream,
 						       channel);
-	snd_assert(channel_buf != NULL, return -EIO);
+	if (snd_BUG_ON(!channel_buf))
+		return -EIO;
 	memset(channel_buf + pos * 4, 0, count * 4);
 	return count;
 }
@@ -2075,7 +2056,8 @@ static int snd_rme9652_channel_info(struct snd_pcm_substream *substream,
 	struct snd_rme9652 *rme9652 = snd_pcm_substream_chip(substream);
 	int chn;
 
-	snd_assert(info->channel < RME9652_NCHANNELS, return -EINVAL);
+	if (snd_BUG_ON(info->channel >= RME9652_NCHANNELS))
+		return -EINVAL;
 
 	if ((chn = rme9652->channel_map[info->channel]) < 0) {
 		return -EINVAL;
@@ -2611,11 +2593,11 @@ static int __devinit snd_rme9652_probe(struct pci_dev *pci,
 		return -ENOENT;
 	}
 
-	card = snd_card_new(index[dev], id[dev], THIS_MODULE,
-			    sizeof(struct snd_rme9652));
+	err = snd_card_create(index[dev], id[dev], THIS_MODULE,
+			      sizeof(struct snd_rme9652), &card);
 
-	if (!card)
-		return -ENOMEM;
+	if (err < 0)
+		return err;
 
 	rme9652 = (struct snd_rme9652 *) card->private_data;
 	card->private_free = snd_rme9652_card_free;

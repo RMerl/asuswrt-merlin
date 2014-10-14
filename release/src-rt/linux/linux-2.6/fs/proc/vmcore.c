@@ -10,9 +10,9 @@
 #include <linux/mm.h>
 #include <linux/proc_fs.h>
 #include <linux/user.h>
-#include <linux/a.out.h>
 #include <linux/elf.h>
 #include <linux/elfcore.h>
+#include <linux/slab.h>
 #include <linux/highmem.h>
 #include <linux/bootmem.h>
 #include <linux/init.h>
@@ -33,10 +33,7 @@ static size_t elfcorebuf_sz;
 /* Total size of vmcore file. */
 static u64 vmcore_size;
 
-/* Stores the physical address of elf header of crash image. */
-unsigned long long elfcorehdr_addr = ELFCORE_ADDR_MAX;
-
-struct proc_dir_entry *proc_vmcore = NULL;
+static struct proc_dir_entry *proc_vmcore = NULL;
 
 /* Reads a page from the oldmem device from given offset. */
 static ssize_t read_from_oldmem(char *buf, size_t count,
@@ -51,8 +48,6 @@ static ssize_t read_from_oldmem(char *buf, size_t count,
 
 	offset = (unsigned long)(*ppos % PAGE_SIZE);
 	pfn = (unsigned long)(*ppos / PAGE_SIZE);
-	if (pfn > saved_max_pfn)
-		return -EINVAL;
 
 	do {
 		if (count > (PAGE_SIZE - offset))
@@ -166,24 +161,14 @@ static ssize_t read_vmcore(struct file *file, char __user *buffer,
 	return acc;
 }
 
-static int open_vmcore(struct inode *inode, struct file *filp)
-{
-	return 0;
-}
-
-const struct file_operations proc_vmcore_operations = {
+static const struct file_operations proc_vmcore_operations = {
 	.read		= read_vmcore,
-	.open		= open_vmcore,
+	.llseek		= default_llseek,
 };
 
 static struct vmcore* __init get_new_element(void)
 {
-	struct vmcore *p;
-
-	p = kmalloc(sizeof(*p), GFP_KERNEL);
-	if (p)
-		memset(p, 0, sizeof(*p));
-	return p;
+	return kzalloc(sizeof(struct vmcore), GFP_KERNEL);
 }
 
 static u64 __init get_vmcore_size_elf64(char *elfptr)
@@ -514,7 +499,7 @@ static int __init parse_crash_elf64_headers(void)
 	/* Do some basic Verification. */
 	if (memcmp(ehdr.e_ident, ELFMAG, SELFMAG) != 0 ||
 		(ehdr.e_type != ET_CORE) ||
-		!vmcore_elf_check_arch(&ehdr) ||
+		!vmcore_elf64_check_arch(&ehdr) ||
 		ehdr.e_ident[EI_CLASS] != ELFCLASS64 ||
 		ehdr.e_ident[EI_VERSION] != EV_CURRENT ||
 		ehdr.e_version != EV_CURRENT ||
@@ -654,7 +639,7 @@ static int __init vmcore_init(void)
 	int rc = 0;
 
 	/* If elfcorehdr= has been passed in cmdline, then capture the dump.*/
-	if (!(elfcorehdr_addr < ELFCORE_ADDR_MAX))
+	if (!(is_vmcore_usable()))
 		return rc;
 	rc = parse_crash_elf_headers();
 	if (rc) {
@@ -662,7 +647,7 @@ static int __init vmcore_init(void)
 		return rc;
 	}
 
-	/* Initialize /proc/vmcore size if proc is already up. */
+	proc_vmcore = proc_create("vmcore", S_IRUSR, NULL, &proc_vmcore_operations);
 	if (proc_vmcore)
 		proc_vmcore->size = vmcore_size;
 	return 0;

@@ -38,6 +38,7 @@
 #define AGPIOC_DEALLOCATE _IOW (AGPIOC_BASE, 7, int)
 #define AGPIOC_BIND       _IOW (AGPIOC_BASE, 8, struct agp_bind*)
 #define AGPIOC_UNBIND     _IOW (AGPIOC_BASE, 9, struct agp_unbind*)
+#define AGPIOC_CHIPSET_FLUSH _IO (AGPIOC_BASE, 10)
 
 #define AGP_DEVICE      "/dev/agpgart"
 
@@ -51,7 +52,6 @@
 
 #ifndef __KERNEL__
 #include <linux/types.h>
-#include <asm/types.h>
 
 struct agp_version {
 	__u16 major;
@@ -77,20 +77,20 @@ typedef struct _agp_setup {
  * The "prot" down below needs still a "sleep" flag somehow ...
  */
 typedef struct _agp_segment {
-	off_t pg_start;		/* starting page to populate    */
-	size_t pg_count;	/* number of pages              */
-	int prot;		/* prot flags for mmap          */
+	__kernel_off_t pg_start;	/* starting page to populate    */
+	__kernel_size_t pg_count;	/* number of pages              */
+	int prot;			/* prot flags for mmap          */
 } agp_segment;
 
 typedef struct _agp_region {
-	pid_t pid;		/* pid of process               */
-	size_t seg_count;	/* number of segments           */
+	__kernel_pid_t pid;		/* pid of process       */
+	__kernel_size_t seg_count;	/* number of segments   */
 	struct _agp_segment *seg_list;
 } agp_region;
 
 typedef struct _agp_allocate {
 	int key;		/* tag of allocation            */
-	size_t pg_count;	/* number of pages              */
+	__kernel_size_t pg_count;/* number of pages             */
 	__u32 type;		/* 0 == normal, other devspec   */
    	__u32 physical;         /* device specific (some devices  
 				 * need a phys address of the     
@@ -100,7 +100,7 @@ typedef struct _agp_allocate {
 
 typedef struct _agp_bind {
 	int key;		/* tag of allocation            */
-	off_t pg_start;		/* starting page to populate    */
+	__kernel_off_t pg_start;/* starting page to populate    */
 } agp_bind;
 
 typedef struct _agp_unbind {
@@ -197,7 +197,7 @@ struct agp_file_private {
 	struct agp_file_private *next;
 	struct agp_file_private *prev;
 	pid_t my_pid;
-	long access_flags;	/* long req'd for set_bit --RR */
+	unsigned long access_flags;	/* long req'd for set_bit --RR */
 };
 
 struct agp_front_data {
@@ -205,8 +205,8 @@ struct agp_front_data {
 	struct agp_controller *current_controller;
 	struct agp_controller *controllers;
 	struct agp_file_private *file_priv_list;
-	u8 used_by_controller;
-	u8 backend_acquired;
+	bool used_by_controller;
+	bool backend_acquired;
 };
 
 #endif				/* __KERNEL__ */

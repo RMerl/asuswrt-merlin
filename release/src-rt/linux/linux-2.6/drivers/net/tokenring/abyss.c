@@ -10,7 +10,7 @@
  *      - Madge Smart 16/4 PCI Mk2
  *
  *  Maintainer(s):
- *    AF	Adam Fritzler		mid@auk.cx
+ *    AF	Adam Fritzler
  *
  *  Modification History:
  *	30-Dec-99	AF	Split off from the tms380tr driver.
@@ -45,7 +45,7 @@ static char version[] __devinitdata =
 
 #define ABYSS_IO_EXTENT 64
 
-static struct pci_device_id abyss_pci_tbl[] = {
+static DEFINE_PCI_DEVICE_TABLE(abyss_pci_tbl) = {
 	{ PCI_VENDOR_ID_MADGE, PCI_DEVICE_ID_MADGE_MK2,
 	  PCI_ANY_ID, PCI_ANY_ID, PCI_CLASS_NETWORK_TOKEN_RING << 8, 0x00ffffff, },
 	{ }			/* Terminating entry */
@@ -92,12 +92,14 @@ static void abyss_sifwritew(struct net_device *dev, unsigned short val, unsigned
 	outw(val, dev->base_addr + reg);
 }
 
+static struct net_device_ops abyss_netdev_ops;
+
 static int __devinit abyss_attach(struct pci_dev *pdev, const struct pci_device_id *ent)
 {	
 	static int versionprinted;
 	struct net_device *dev;
 	struct net_local *tp;
-	int i, ret, pci_irq_line;
+	int ret, pci_irq_line;
 	unsigned long pci_ioaddr;
 	
 	if (versionprinted++ == 0)
@@ -115,8 +117,6 @@ static int __devinit abyss_attach(struct pci_dev *pdev, const struct pci_device_
 	dev = alloc_trdev(sizeof(struct net_local));
 	if (!dev)
 		return -ENOMEM;
-
-	SET_MODULE_OWNER(dev);
 
 	if (!request_region(pci_ioaddr, ABYSS_IO_EXTENT, dev->name)) {
 		ret = -EBUSY;
@@ -147,12 +147,8 @@ static int __devinit abyss_attach(struct pci_dev *pdev, const struct pci_device_
 	}
 
 	abyss_read_eeprom(dev);
-		
-	printk("%s:    Ring Station Address: ", dev->name);
-	printk("%2.2x", dev->dev_addr[0]);
-	for (i = 1; i < 6; i++)
-		printk(":%2.2x", dev->dev_addr[i]);
-	printk("\n");
+
+	printk("%s:    Ring Station Address: %pM\n", dev->name, dev->dev_addr);
 
 	tp = netdev_priv(dev);
 	tp->setnselout = abyss_setnselout_pins;
@@ -163,8 +159,7 @@ static int __devinit abyss_attach(struct pci_dev *pdev, const struct pci_device_
 
 	memcpy(tp->ProductID, "Madge PCI 16/4 Mk2", PROD_ID_SIZE + 1);
 		
-	dev->open = abyss_open;
-	dev->stop = abyss_close;
+	dev->netdev_ops = &abyss_netdev_ops;
 
 	pci_set_drvdata(pdev, dev);
 	SET_NETDEV_DEV(dev, &pdev->dev);
@@ -456,6 +451,11 @@ static struct pci_driver abyss_driver = {
 
 static int __init abyss_init (void)
 {
+	abyss_netdev_ops = tms380tr_netdev_ops;
+
+	abyss_netdev_ops.ndo_open = abyss_open;
+	abyss_netdev_ops.ndo_stop = abyss_close;
+
 	return pci_register_driver(&abyss_driver);
 }
 

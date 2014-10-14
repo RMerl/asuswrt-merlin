@@ -51,7 +51,6 @@
 #include <linux/string.h>
 #include <linux/errno.h>
 #include <linux/ioport.h>
-#include <linux/slab.h>
 #include <linux/interrupt.h>
 #include <linux/delay.h>
 #include <linux/init.h>
@@ -89,7 +88,6 @@ static unsigned int ports[] __initdata =
 
 /* Information that needs to be kept for each board. */
 struct ni5010_local {
-	struct net_device_stats stats;
 	int o_pkt_size;
 	spinlock_t lock;
 };
@@ -103,7 +101,6 @@ static irqreturn_t ni5010_interrupt(int irq, void *dev_id);
 static void	ni5010_rx(struct net_device *dev);
 static void	ni5010_timeout(struct net_device *dev);
 static int	ni5010_close(struct net_device *dev);
-static struct net_device_stats *ni5010_get_stats(struct net_device *dev);
 static void 	ni5010_set_multicast_list(struct net_device *dev);
 static void	reset_receiver(struct net_device *dev);
 
@@ -134,8 +131,6 @@ struct net_device * __init ni5010_probe(int unit)
 	}
 
 	PRINTK2((KERN_DEBUG "%s: Entering ni5010_probe\n", dev->name));
-
-	SET_MODULE_OWNER(dev);
 
 	if (io > 0x1ff)	{	/* Check a single specified location. */
 		err = ni5010_probe1(dev, io);
@@ -192,6 +187,17 @@ static void __init trigger_irq(int ioaddr)
 		udelay(50);			/* FIXME: Necessary? */
 		outb(MM_EN_XMT|MM_MUX, IE_MMODE); /* Start transmission */
 }
+
+static const struct net_device_ops ni5010_netdev_ops = {
+	.ndo_open		= ni5010_open,
+	.ndo_stop		= ni5010_close,
+	.ndo_start_xmit		= ni5010_send_packet,
+	.ndo_set_multicast_list	= ni5010_set_multicast_list,
+	.ndo_tx_timeout		= ni5010_timeout,
+	.ndo_validate_addr	= eth_validate_addr,
+	.ndo_set_mac_address	= eth_mac_addr,
+	.ndo_change_mtu		= eth_change_mtu,
+};
 
 /*
  *      This is the real probe routine.  Linux has a history of friendly device
@@ -272,8 +278,9 @@ static int __init ni5010_probe1(struct net_device *dev, int ioaddr)
 
 	for (i=0; i<6; i++) {
 		outw(i, IE_GP);
-		printk("%2.2x ", dev->dev_addr[i] = inb(IE_SAPROM));
+		dev->dev_addr[i] = inb(IE_SAPROM);
 	}
+	printk("%pM ", dev->dev_addr);
 
 	PRINTK2((KERN_DEBUG "%s: I/O #4 passed!\n", dev->name));
 
@@ -331,14 +338,8 @@ static int __init ni5010_probe1(struct net_device *dev, int ioaddr)
         	outb(0, IE_RBUF);	/* set buffer byte 0 to 0 again */
 	}
         printk("-> bufsize rcv/xmt=%d/%d\n", bufsize_rcv, NI5010_BUFSIZE);
-	memset(dev->priv, 0, sizeof(struct ni5010_local));
 
-	dev->open		= ni5010_open;
-	dev->stop		= ni5010_close;
-	dev->hard_start_xmit	= ni5010_send_packet;
-	dev->get_stats		= ni5010_get_stats;
-	dev->set_multicast_list = ni5010_set_multicast_list;
-	dev->tx_timeout		= ni5010_timeout;
+	dev->netdev_ops		= &ni5010_netdev_ops;
 	dev->watchdog_timeo	= HZ/20;
 
 	dev->flags &= ~IFF_MULTICAST;	/* Multicast doesn't work */
@@ -375,7 +376,7 @@ static int ni5010_open(struct net_device *dev)
 
 	PRINTK2((KERN_DEBUG "%s: entering ni5010_open()\n", dev->name));
 
-	if (request_irq(dev->irq, &ni5010_interrupt, 0, boardname, dev)) {
+	if (request_irq(dev->irq, ni5010_interrupt, 0, boardname, dev)) {
 		printk(KERN_WARNING "%s: Cannot get irq %#2x\n", dev->name, dev->irq);
 		return -EAGAIN;
 	}
@@ -443,7 +444,7 @@ static void ni5010_timeout(struct net_device *dev)
 	/* Try to restart the adaptor. */
 	/* FIXME: Give it a real kick here */
 	chipset_init(dev, 1);
-	dev->trans_start = jiffies;
+	dev->trans_start = jiffies; /* prevent tx timeout */
 	netif_wake_queue(dev);
 }
 
@@ -459,9 +460,8 @@ static int ni5010_send_packet(struct sk_buff *skb, struct net_device *dev)
 
 	netif_stop_queue(dev);
 	hardware_send_packet(dev, (unsigned char *)skb->data, skb->len, length-skb->len);
-	dev->trans_start = jiffies;
 	dev_kfree_skb (skb);
-	return 0;
+	return NETDEV_TX_OK;
 }
 
 /*
@@ -514,14 +514,11 @@ static void dump_packet(void *buf, int len)
 		if (i % 16 == 15) printk("\n");
 	}
 	printk("\n");
-
-	return;
 }
 
 /* We have a good packet, get it out of the buffer. */
 static void ni5010_rx(struct net_device *dev)
 {
-	struct ni5010_local *lp = netdev_priv(dev);
 	int ioaddr = dev->base_addr;
 	unsigned char rcv_stat;
 	struct sk_buff *skb;
@@ -534,11 +531,11 @@ static void ni5010_rx(struct net_device *dev)
 
 	if ( (rcv_stat & RS_VALID_BITS) != RS_PKT_OK) {
 		PRINTK((KERN_INFO "%s: receive error.\n", dev->name));
-		lp->stats.rx_errors++;
-		if (rcv_stat & RS_RUNT) lp->stats.rx_length_errors++;
-		if (rcv_stat & RS_ALIGN) lp->stats.rx_frame_errors++;
-		if (rcv_stat & RS_CRC_ERR) lp->stats.rx_crc_errors++;
-		if (rcv_stat & RS_OFLW) lp->stats.rx_fifo_errors++;
+		dev->stats.rx_errors++;
+		if (rcv_stat & RS_RUNT) dev->stats.rx_length_errors++;
+		if (rcv_stat & RS_ALIGN) dev->stats.rx_frame_errors++;
+		if (rcv_stat & RS_CRC_ERR) dev->stats.rx_crc_errors++;
+		if (rcv_stat & RS_OFLW) dev->stats.rx_fifo_errors++;
         	outb(0xff, EDLC_RCLR); /* Clear the interrupt */
 		return;
 	}
@@ -549,8 +546,8 @@ static void ni5010_rx(struct net_device *dev)
 	if (i_pkt_size > ETH_FRAME_LEN || i_pkt_size < 10 ) {
 		PRINTK((KERN_DEBUG "%s: Packet size error, packet size = %#4.4x\n",
 			dev->name, i_pkt_size));
-		lp->stats.rx_errors++;
-		lp->stats.rx_length_errors++;
+		dev->stats.rx_errors++;
+		dev->stats.rx_length_errors++;
 		return;
 	}
 
@@ -558,7 +555,7 @@ static void ni5010_rx(struct net_device *dev)
 	skb = dev_alloc_skb(i_pkt_size + 3);
 	if (skb == NULL) {
 		printk(KERN_WARNING "%s: Memory squeeze, dropping packet.\n", dev->name);
-		lp->stats.rx_dropped++;
+		dev->stats.rx_dropped++;
 		return;
 	}
 
@@ -574,13 +571,11 @@ static void ni5010_rx(struct net_device *dev)
 
 	skb->protocol = eth_type_trans(skb,dev);
 	netif_rx(skb);
-	dev->last_rx = jiffies;
-	lp->stats.rx_packets++;
-	lp->stats.rx_bytes += i_pkt_size;
+	dev->stats.rx_packets++;
+	dev->stats.rx_bytes += i_pkt_size;
 
 	PRINTK2((KERN_DEBUG "%s: Received packet, size=%#4.4x\n",
 		dev->name, i_pkt_size));
-
 }
 
 static int process_xmt_interrupt(struct net_device *dev)
@@ -604,14 +599,14 @@ static int process_xmt_interrupt(struct net_device *dev)
 		/* outb(0, IE_MMODE); */ /* xmt buf on sysbus FIXME: needed ? */
 		outb(MM_EN_XMT | MM_MUX, IE_MMODE);
 		outb(XM_ALL, EDLC_XMASK); /* Enable xmt IRQ's */
-		lp->stats.collisions++;
+		dev->stats.collisions++;
 		return 1;
 	}
 
 	/* FIXME: handle other xmt error conditions */
 
-	lp->stats.tx_packets++;
-	lp->stats.tx_bytes += lp->o_pkt_size;
+	dev->stats.tx_packets++;
+	dev->stats.tx_bytes += lp->o_pkt_size;
 	netif_wake_queue(dev);
 
 	PRINTK2((KERN_DEBUG "%s: sent packet, size=%#4.4x\n",
@@ -640,24 +635,6 @@ static int ni5010_close(struct net_device *dev)
 
 }
 
-/* Get the current statistics.	This may be called with the card open or
-   closed. */
-static struct net_device_stats *ni5010_get_stats(struct net_device *dev)
-{
-	struct ni5010_local *lp = netdev_priv(dev);
-
-	PRINTK2((KERN_DEBUG "%s: entering ni5010_get_stats\n", dev->name));
-
-	if (NI5010_DEBUG) ni5010_show_registers(dev);
-
-	/* cli(); */
-	/* Update the statistics from the device registers. */
-	/* We do this in the interrupt handler */
-	/* sti(); */
-
-	return &lp->stats;
-}
-
 /* Set or clear the multicast filter for this adaptor.
    num_addrs == -1      Promiscuous mode, receive all packets
    num_addrs == 0       Normal mode, clear multicast list
@@ -670,14 +647,10 @@ static void ni5010_set_multicast_list(struct net_device *dev)
 
 	PRINTK2((KERN_DEBUG "%s: entering set_multicast_list\n", dev->name));
 
-	if (dev->flags&IFF_PROMISC || dev->flags&IFF_ALLMULTI) {
-		dev->flags |= IFF_PROMISC;
+	if (dev->flags & IFF_PROMISC || dev->flags & IFF_ALLMULTI ||
+	    !netdev_mc_empty(dev)) {
 		outb(RMD_PROMISC, EDLC_RMODE); /* Enable promiscuous mode */
 		PRINTK((KERN_DEBUG "%s: Entering promiscuous mode\n", dev->name));
-	} else if (dev->mc_list) {
-		/* Sorry, multicast not supported */
-		PRINTK((KERN_DEBUG "%s: No multicast, entering broadcast mode\n", dev->name));
-		outb(RMD_BROADCAST, EDLC_RMODE);
 	} else {
 		PRINTK((KERN_DEBUG "%s: Entering broadcast mode\n", dev->name));
 		outb(RMD_BROADCAST, EDLC_RMODE);  /* Disable promiscuous mode, use normal mode */
@@ -796,12 +769,3 @@ module_init(ni5010_init_module);
 module_exit(ni5010_cleanup_module);
 #endif /* MODULE */
 MODULE_LICENSE("GPL");
-
-/*
- * Local variables:
- *  compile-command: "gcc -D__KERNEL__ -I/usr/src/linux/net/inet -Wall -Wstrict-prototypes -O6 -m486 -c ni5010.c"
- *  version-control: t
- *  kept-new-versions: 5
- *  tab-width: 4
- * End:
- */

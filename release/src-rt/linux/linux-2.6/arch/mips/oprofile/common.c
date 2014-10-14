@@ -6,6 +6,7 @@
  * Copyright (C) 2004, 2005 Ralf Baechle
  * Copyright (C) 2005 MIPS Technologies, Inc.
  */
+#include <linux/compiler.h>
 #include <linux/errno.h>
 #include <linux/init.h>
 #include <linux/oprofile.h>
@@ -14,8 +15,9 @@
 
 #include "op_impl.h"
 
-extern struct op_mips_model op_model_mipsxx_ops __attribute__((weak));
-extern struct op_mips_model op_model_rm9000_ops __attribute__((weak));
+extern struct op_mips_model op_model_mipsxx_ops __weak;
+extern struct op_mips_model op_model_rm9000_ops __weak;
+extern struct op_mips_model op_model_loongson2_ops __weak;
 
 static struct op_mips_model *model;
 
@@ -27,12 +29,12 @@ static int op_mips_setup(void)
 	model->reg_setup(ctr);
 
 	/* Configure the registers on all cpus.  */
-	on_each_cpu(model->cpu_setup, NULL, 0, 1);
+	on_each_cpu(model->cpu_setup, NULL, 1);
 
         return 0;
 }
 
-static int op_mips_create_files(struct super_block * sb, struct dentry * root)
+static int op_mips_create_files(struct super_block *sb, struct dentry *root)
 {
 	int i;
 
@@ -58,7 +60,7 @@ static int op_mips_create_files(struct super_block * sb, struct dentry * root)
 
 static int op_mips_start(void)
 {
-	on_each_cpu(model->cpu_start, NULL, 0, 1);
+	on_each_cpu(model->cpu_start, NULL, 1);
 
 	return 0;
 }
@@ -66,7 +68,7 @@ static int op_mips_start(void)
 static void op_mips_stop(void)
 {
 	/* Disable performance monitoring for all counters.  */
-	on_each_cpu(model->cpu_stop, NULL, 0, 1);
+	on_each_cpu(model->cpu_stop, NULL, 1);
 }
 
 int __init oprofile_arch_init(struct oprofile_operations *ops)
@@ -74,12 +76,13 @@ int __init oprofile_arch_init(struct oprofile_operations *ops)
 	struct op_mips_model *lmodel = NULL;
 	int res;
 
-	switch (current_cpu_data.cputype) {
+	switch (current_cpu_type()) {
 	case CPU_5KC:
 	case CPU_20KC:
 	case CPU_24K:
 	case CPU_25KF:
 	case CPU_34K:
+	case CPU_1004K:
 	case CPU_74K:
 	case CPU_SB1:
 	case CPU_SB1A:
@@ -91,6 +94,9 @@ int __init oprofile_arch_init(struct oprofile_operations *ops)
 
 	case CPU_RM9000:
 		lmodel = &op_model_rm9000_ops;
+		break;
+	case CPU_LOONGSON2:
+		lmodel = &op_model_loongson2_ops;
 		break;
 	};
 

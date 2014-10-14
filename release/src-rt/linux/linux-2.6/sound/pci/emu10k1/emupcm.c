@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) by Jaroslav Kysela <perex@suse.cz>
+ *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  *                   Creative Labs, Inc.
  *  Routines for control of EMU10K1 chips / PCM routines
  *  Multichannel PCM support Copyright (c) Lee Revell <rlrevell@joe-job.com>
@@ -26,7 +26,6 @@
  *
  */
 
-#include <sound/driver.h>
 #include <linux/pci.h>
 #include <linux/delay.h>
 #include <linux/slab.h>
@@ -45,7 +44,7 @@ static void snd_emu10k1_pcm_interrupt(struct snd_emu10k1 *emu,
 	if (epcm->substream == NULL)
 		return;
 #if 0
-	printk("IRQ: position = 0x%x, period = 0x%x, size = 0x%x\n",
+	printk(KERN_DEBUG "IRQ: position = 0x%x, period = 0x%x, size = 0x%x\n",
 			epcm->substream->runtime->hw->pointer(emu, epcm->substream),
 			snd_pcm_lib_period_bytes(epcm->substream),
 			snd_pcm_lib_buffer_bytes(epcm->substream));
@@ -147,7 +146,11 @@ static int snd_emu10k1_pcm_channel_alloc(struct snd_emu10k1_pcm * epcm, int voic
 					      1,
 					      &epcm->extra);
 		if (err < 0) {
-			/* printk("pcm_channel_alloc: failed extra: voices=%d, frame=%d\n", voices, frame); */
+			/*
+			printk(KERN_DEBUG "pcm_channel_alloc: "
+			       "failed extra: voices=%d, frame=%d\n",
+			       voices, frame);
+			*/
 			for (i = 0; i < voices; i++) {
 				snd_emu10k1_voice_free(epcm->emu, epcm->voices[i]);
 				epcm->voices[i] = NULL;
@@ -329,7 +332,7 @@ static void snd_emu10k1_pcm_init_voice(struct snd_emu10k1 *emu,
 		evoice->epcm->ccca_start_addr = start_addr + ccis;
 		if (extra) {
 			start_addr += ccis;
-			end_addr += ccis;
+			end_addr += ccis + emu->delay_pcm_irq;
 		}
 		if (stereo && !extra) {
 			snd_emu10k1_ptr_write(emu, CPF, voice, CPF_STEREO_MASK);
@@ -357,8 +360,10 @@ static void snd_emu10k1_pcm_init_voice(struct snd_emu10k1 *emu,
 	/* Assumption that PT is already 0 so no harm overwriting */
 	snd_emu10k1_ptr_write(emu, PTRX, voice, (send_amount[0] << 8) | send_amount[1]);
 	snd_emu10k1_ptr_write(emu, DSL, voice, end_addr | (send_amount[3] << 24));
-	snd_emu10k1_ptr_write(emu, PSST, voice, start_addr | (send_amount[2] << 24));
-	if (emu->card_capabilities->emu1010)
+	snd_emu10k1_ptr_write(emu, PSST, voice,
+			(start_addr + (extra ? emu->delay_pcm_irq : 0)) |
+			(send_amount[2] << 24));
+	if (emu->card_capabilities->emu_model)
 		pitch_target = PITCH_48000; /* Disable interpolators on emu1010 card */
 	else 
 		pitch_target = emu10k1_calc_pitch_target(runtime->rate);
@@ -701,7 +706,7 @@ static void snd_emu10k1_playback_trigger_voice(struct snd_emu10k1 *emu, struct s
 	voice = evoice->number;
 
 	pitch = snd_emu10k1_rate_to_pitch(runtime->rate) >> 8;
-	if (emu->card_capabilities->emu1010)
+	if (emu->card_capabilities->emu_model)
 		pitch_target = PITCH_48000; /* Disable interpolators on emu1010 card */
 	else 
 		pitch_target = emu10k1_calc_pitch_target(runtime->rate);
@@ -729,6 +734,23 @@ static void snd_emu10k1_playback_stop_voice(struct snd_emu10k1 *emu, struct snd_
 	snd_emu10k1_ptr_write(emu, IP, voice, 0);
 }
 
+static inline void snd_emu10k1_playback_mangle_extra(struct snd_emu10k1 *emu,
+		struct snd_emu10k1_pcm *epcm,
+		struct snd_pcm_substream *substream,
+		struct snd_pcm_runtime *runtime)
+{
+	unsigned int ptr, period_pos;
+
+	/* try to sychronize the current position for the interrupt
+	   source voice */
+	period_pos = runtime->status->hw_ptr - runtime->hw_ptr_interrupt;
+	period_pos %= runtime->period_size;
+	ptr = snd_emu10k1_ptr_read(emu, CCCA, epcm->extra->number);
+	ptr &= ~0x00ffffff;
+	ptr |= epcm->ccca_start_addr + period_pos;
+	snd_emu10k1_ptr_write(emu, CCCA, epcm->extra->number, ptr);
+}
+
 static int snd_emu10k1_playback_trigger(struct snd_pcm_substream *substream,
 				        int cmd)
 {
@@ -738,7 +760,10 @@ static int snd_emu10k1_playback_trigger(struct snd_pcm_substream *substream,
 	struct snd_emu10k1_pcm_mixer *mix;
 	int result = 0;
 
-	/* printk("trigger - emu10k1 = 0x%x, cmd = %i, pointer = %i\n", (int)emu, cmd, substream->ops->pointer(substream)); */
+	/*
+	printk(KERN_DEBUG "trigger - emu10k1 = 0x%x, cmd = %i, pointer = %i\n",
+	       (int)emu, cmd, substream->ops->pointer(substream))
+	*/
 	spin_lock(&emu->reg_lock);
 	switch (cmd) {
 	case SNDRV_PCM_TRIGGER_START:
@@ -747,6 +772,8 @@ static int snd_emu10k1_playback_trigger(struct snd_pcm_substream *substream,
 		/* follow thru */
 	case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
 	case SNDRV_PCM_TRIGGER_RESUME:
+		if (cmd == SNDRV_PCM_TRIGGER_PAUSE_RELEASE)
+			snd_emu10k1_playback_mangle_extra(emu, epcm, substream, runtime);
 		mix = &emu->pcm_mixer[substream->number];
 		snd_emu10k1_playback_prepare_voice(emu, epcm->voices[0], 1, 0, mix);
 		snd_emu10k1_playback_prepare_voice(emu, epcm->voices[1], 0, 0, mix);
@@ -787,7 +814,10 @@ static int snd_emu10k1_capture_trigger(struct snd_pcm_substream *substream,
 		/* hmm this should cause full and half full interrupt to be raised? */
 		outl(epcm->capture_ipr, emu->port + IPR);
 		snd_emu10k1_intr_enable(emu, epcm->capture_inte);
-		/* printk("adccr = 0x%x, adcbs = 0x%x\n", epcm->adccr, epcm->adcbs); */
+		/*
+		printk(KERN_DEBUG "adccr = 0x%x, adcbs = 0x%x\n",
+		       epcm->adccr, epcm->adcbs);
+		*/
 		switch (epcm->type) {
 		case CAPTURE_AC97ADC:
 			snd_emu10k1_ptr_write(emu, ADCCR, 0, epcm->capture_cr_val);
@@ -858,7 +888,12 @@ static snd_pcm_uframes_t snd_emu10k1_playback_pointer(struct snd_pcm_substream *
 			ptr -= runtime->buffer_size;
 	}
 #endif
-	/* printk("ptr = 0x%x, buffer_size = 0x%x, period_size = 0x%x\n", ptr, runtime->buffer_size, runtime->period_size); */
+	/*
+	printk(KERN_DEBUG
+	       "ptr = 0x%lx, buffer_size = 0x%lx, period_size = 0x%lx\n",
+	       (long)ptr, (long)runtime->buffer_size,
+	       (long)runtime->period_size);
+	*/
 	return ptr;
 }
 
@@ -1232,25 +1267,27 @@ static int snd_emu10k1_capture_efx_open(struct snd_pcm_substream *substream)
 	runtime->hw.rates = SNDRV_PCM_RATE_48000;
 	runtime->hw.rate_min = runtime->hw.rate_max = 48000;
 	spin_lock_irq(&emu->reg_lock);
-	if (emu->card_capabilities->emu1010) {
-		/* TODO 
+	if (emu->card_capabilities->emu_model) {
+		/*  Nb. of channels has been increased to 16 */
+		/* TODO
 		 * SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S32_LE
 		 * SNDRV_PCM_RATE_44100 | SNDRV_PCM_RATE_48000 |
 		 * SNDRV_PCM_RATE_88200 | SNDRV_PCM_RATE_96000 |
 		 * SNDRV_PCM_RATE_176400 | SNDRV_PCM_RATE_192000
 		 * rate_min = 44100,
 		 * rate_max = 192000,
-		 * channels_min = 8,
-		 * channels_max = 8,
+		 * channels_min = 16,
+		 * channels_max = 16,
 		 * Need to add mixer control to fix sample rate
 		 *                 
-		 * There are 16 mono channels of 16bits each.
+		 * There are 32 mono channels of 16bits each.
 		 * 24bit Audio uses 2x channels over 16bit
 		 * 96kHz uses 2x channels over 48kHz
 		 * 192kHz uses 4x channels over 48kHz
-		 * So, for 48kHz 24bit, one has 8 channels
-		 * for 96kHz 24bit, one has 4 channels
-		 * for 192kHz 24bit, one has 2 channels
+		 * So, for 48kHz 24bit, one has 16 channels
+		 * for 96kHz 24bit, one has 8 channels
+		 * for 192kHz 24bit, one has 4 channels
+		 *
 		 */
 #if 1
 		switch (emu->emu1010.internal_clock) {
@@ -1258,13 +1295,15 @@ static int snd_emu10k1_capture_efx_open(struct snd_pcm_substream *substream)
 			/* For 44.1kHz */
 			runtime->hw.rates = SNDRV_PCM_RATE_44100;
 			runtime->hw.rate_min = runtime->hw.rate_max = 44100;
-			runtime->hw.channels_min = runtime->hw.channels_max = 8;
+			runtime->hw.channels_min =
+				runtime->hw.channels_max = 16;
 			break;
 		case 1:
 			/* For 48kHz */
 			runtime->hw.rates = SNDRV_PCM_RATE_48000;
 			runtime->hw.rate_min = runtime->hw.rate_max = 48000;
-			runtime->hw.channels_min = runtime->hw.channels_max = 8;
+			runtime->hw.channels_min =
+				runtime->hw.channels_max = 16;
 			break;
 		};
 #endif
@@ -1282,7 +1321,7 @@ static int snd_emu10k1_capture_efx_open(struct snd_pcm_substream *substream)
 #endif
 		runtime->hw.formats = SNDRV_PCM_FMTBIT_S32_LE;
 		/* efx_voices_mask[0] is expected to be zero
- 		 * efx_voices_mask[1] is expected to have 16bits set
+ 		 * efx_voices_mask[1] is expected to have 32bits set
 		 */
 	} else {
 		runtime->hw.channels_min = runtime->hw.channels_max = 0;
@@ -1543,7 +1582,11 @@ static void snd_emu10k1_fx8010_playback_tram_poke1(unsigned short *dst_left,
 						   unsigned int count,
 						   unsigned int tram_shift)
 {
-	/* printk("tram_poke1: dst_left = 0x%p, dst_right = 0x%p, src = 0x%p, count = 0x%x\n", dst_left, dst_right, src, count); */
+	/*
+	printk(KERN_DEBUG "tram_poke1: dst_left = 0x%p, dst_right = 0x%p, "
+	       "src = 0x%p, count = 0x%x\n",
+	       dst_left, dst_right, src, count);
+	*/
 	if ((tram_shift & 1) == 0) {
 		while (count--) {
 			*dst_left-- = *src++;
@@ -1620,7 +1663,12 @@ static int snd_emu10k1_fx8010_playback_prepare(struct snd_pcm_substream *substre
 	struct snd_emu10k1_fx8010_pcm *pcm = &emu->fx8010.pcm[substream->number];
 	unsigned int i;
 	
-	/* printk("prepare: etram_pages = 0x%p, dma_area = 0x%x, buffer_size = 0x%x (0x%x)\n", emu->fx8010.etram_pages, runtime->dma_area, runtime->buffer_size, runtime->buffer_size << 2); */
+	/*
+	printk(KERN_DEBUG "prepare: etram_pages = 0x%p, dma_area = 0x%x, "
+	       "buffer_size = 0x%x (0x%x)\n",
+	       emu->fx8010.etram_pages, runtime->dma_area,
+	       runtime->buffer_size, runtime->buffer_size << 2);
+	*/
 	memset(&pcm->pcm_rec, 0, sizeof(pcm->pcm_rec));
 	pcm->pcm_rec.hw_buffer_size = pcm->buffer_size * 2; /* byte size */
 	pcm->pcm_rec.sw_buffer_size = snd_pcm_lib_buffer_bytes(substream);
@@ -1710,7 +1758,7 @@ static struct snd_pcm_hardware snd_emu10k1_fx8010_playback =
 	.buffer_bytes_max =	(128*1024),
 	.period_bytes_min =	1024,
 	.period_bytes_max =	(128*1024),
-	.periods_min =		1,
+	.periods_min =		2,
 	.periods_max =		1024,
 	.fifo_size =		0,
 };
@@ -1787,11 +1835,24 @@ int __devinit snd_emu10k1_pcm_efx(struct snd_emu10k1 * emu, int device, struct s
 	/* emu->efx_voices_mask[0] = FXWC_DEFAULTROUTE_C | FXWC_DEFAULTROUTE_A; */
 	if (emu->audigy) {
 		emu->efx_voices_mask[0] = 0;
-		emu->efx_voices_mask[1] = 0xffff;
+		if (emu->card_capabilities->emu_model)
+			/* Pavel Hofman - 32 voices will be used for
+			 * capture (write mode) -
+			 * each bit = corresponding voice
+			 */
+			emu->efx_voices_mask[1] = 0xffffffff;
+		else
+			emu->efx_voices_mask[1] = 0xffff;
 	} else {
 		emu->efx_voices_mask[0] = 0xffff0000;
 		emu->efx_voices_mask[1] = 0;
 	}
+	/* For emu1010, the control has to set 32 upper bits (voices)
+	 * out of the 64 bits (voices) to true for the 16-channels capture
+	 * to work correctly. Correct A_FXWC2 initial value (0xffffffff)
+	 * is already defined but the snd_emu10k1_pcm_efx_voices_mask
+	 * control can override this register's value.
+	 */
 	kctl = snd_ctl_new1(&snd_emu10k1_pcm_efx_voices_mask, emu);
 	if (!kctl)
 		return -ENOMEM;

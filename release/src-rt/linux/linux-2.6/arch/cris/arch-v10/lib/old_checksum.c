@@ -1,5 +1,4 @@
-/* $Id: old_checksum.c,v 1.3 2003/10/27 08:04:32 starvik Exp $
- *
+/*
  * INET		An implementation of the TCP/IP protocol suite for the LINUX
  *		operating system.  INET is implemented using the  BSD Socket
  *		interface as the means of communication with the user level.
@@ -78,7 +77,7 @@ __wsum csum_partial(const void *p, int len, __wsum __sum)
 		sum += *buff++;
 
 	if (endMarker > buff)
-		sum += *(const u8 *)buff;	/* add extra byte seperately */
+		sum += *(const u8 *)buff;	/* add extra byte separately */
 
 	BITOFF;
 	return (__force __wsum)sum;

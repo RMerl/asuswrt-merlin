@@ -3,7 +3,7 @@
  *
  *  Copyright (C) 1991, 1992  Linus Torvalds
  *
- *  Copyright (C) 1996  Gertjan van Wingerde    (gertjan@cs.vu.nl)
+ *  Copyright (C) 1996  Gertjan van Wingerde
  *	Minix V2 fs support.
  *
  *  Modified for 680x0 by Andreas Schwab
@@ -17,18 +17,24 @@
 #include <linux/init.h>
 #include <linux/highuid.h>
 #include <linux/vfs.h>
+#include <linux/writeback.h>
 
-static void minix_read_inode(struct inode * inode);
-static int minix_write_inode(struct inode * inode, int wait);
+static int minix_write_inode(struct inode *inode,
+		struct writeback_control *wbc);
 static int minix_statfs(struct dentry *dentry, struct kstatfs *buf);
 static int minix_remount (struct super_block * sb, int * flags, char * data);
 
-static void minix_delete_inode(struct inode *inode)
+static void minix_evict_inode(struct inode *inode)
 {
 	truncate_inode_pages(&inode->i_data, 0);
-	inode->i_size = 0;
-	minix_truncate(inode);
-	minix_free_inode(inode);
+	if (!inode->i_nlink) {
+		inode->i_size = 0;
+		minix_truncate(inode);
+	}
+	invalidate_inode_buffers(inode);
+	end_writeback(inode);
+	if (!inode->i_nlink)
+		minix_free_inode(inode);
 }
 
 static void minix_put_super(struct super_block *sb)
@@ -49,8 +55,6 @@ static void minix_put_super(struct super_block *sb)
 	kfree(sbi->s_imap);
 	sb->s_fs_info = NULL;
 	kfree(sbi);
-
-	return;
 }
 
 static struct kmem_cache * minix_inode_cachep;
@@ -64,25 +68,32 @@ static struct inode *minix_alloc_inode(struct super_block *sb)
 	return &ei->vfs_inode;
 }
 
-static void minix_destroy_inode(struct inode *inode)
+static void minix_i_callback(struct rcu_head *head)
 {
+	struct inode *inode = container_of(head, struct inode, i_rcu);
+	INIT_LIST_HEAD(&inode->i_dentry);
 	kmem_cache_free(minix_inode_cachep, minix_i(inode));
 }
 
-static void init_once(void * foo, struct kmem_cache * cachep, unsigned long flags)
+static void minix_destroy_inode(struct inode *inode)
+{
+	call_rcu(&inode->i_rcu, minix_i_callback);
+}
+
+static void init_once(void *foo)
 {
 	struct minix_inode_info *ei = (struct minix_inode_info *) foo;
 
 	inode_init_once(&ei->vfs_inode);
 }
- 
+
 static int init_inodecache(void)
 {
 	minix_inode_cachep = kmem_cache_create("minix_inode_cache",
 					     sizeof(struct minix_inode_info),
 					     0, (SLAB_RECLAIM_ACCOUNT|
 						SLAB_MEM_SPREAD),
-					     init_once, NULL);
+					     init_once);
 	if (minix_inode_cachep == NULL)
 		return -ENOMEM;
 	return 0;
@@ -96,9 +107,8 @@ static void destroy_inodecache(void)
 static const struct super_operations minix_sops = {
 	.alloc_inode	= minix_alloc_inode,
 	.destroy_inode	= minix_destroy_inode,
-	.read_inode	= minix_read_inode,
 	.write_inode	= minix_write_inode,
-	.delete_inode	= minix_delete_inode,
+	.evict_inode	= minix_evict_inode,
 	.put_super	= minix_put_super,
 	.statfs		= minix_statfs,
 	.remount_fs	= minix_remount,
@@ -149,6 +159,7 @@ static int minix_fill_super(struct super_block *s, void *data, int silent)
 	unsigned long i, block;
 	struct inode *root_inode;
 	struct minix_sb_info *sbi;
+	int ret = -EINVAL;
 
 	sbi = kzalloc(sizeof(struct minix_sb_info), GFP_KERNEL);
 	if (!sbi)
@@ -246,16 +257,16 @@ static int minix_fill_super(struct super_block *s, void *data, int silent)
 
 	/* set up enough so that it can read an inode */
 	s->s_op = &minix_sops;
-	root_inode = iget(s, MINIX_ROOT_INO);
-	if (!root_inode || is_bad_inode(root_inode))
+	root_inode = minix_iget(s, MINIX_ROOT_INO);
+	if (IS_ERR(root_inode)) {
+		ret = PTR_ERR(root_inode);
 		goto out_no_root;
+	}
 
+	ret = -ENOMEM;
 	s->s_root = d_alloc_root(root_inode);
 	if (!s->s_root)
 		goto out_iput;
-
-	if (!NO_TRUNCATE)
-		s->s_root->d_op = &minix_dentry_operations;
 
 	if (!(s->s_flags & MS_RDONLY)) {
 		if (sbi->s_version != MINIX_V3) /* s_state is now out from V3 sb */
@@ -290,6 +301,7 @@ out_freemap:
 	goto out_release;
 
 out_no_map:
+	ret = -ENOMEM;
 	if (!silent)
 		printk("MINIX-fs: can't allocate map\n");
 	goto out_release;
@@ -316,20 +328,25 @@ out_bad_sb:
 out:
 	s->s_fs_info = NULL;
 	kfree(sbi);
-	return -EINVAL;
+	return ret;
 }
 
 static int minix_statfs(struct dentry *dentry, struct kstatfs *buf)
 {
-	struct minix_sb_info *sbi = minix_sb(dentry->d_sb);
-	buf->f_type = dentry->d_sb->s_magic;
-	buf->f_bsize = dentry->d_sb->s_blocksize;
+	struct super_block *sb = dentry->d_sb;
+	struct minix_sb_info *sbi = minix_sb(sb);
+	u64 id = huge_encode_dev(sb->s_bdev->bd_dev);
+	buf->f_type = sb->s_magic;
+	buf->f_bsize = sb->s_blocksize;
 	buf->f_blocks = (sbi->s_nzones - sbi->s_firstdatazone) << sbi->s_log_zone_size;
 	buf->f_bfree = minix_count_free_blocks(sbi);
 	buf->f_bavail = buf->f_bfree;
 	buf->f_files = sbi->s_ninodes;
 	buf->f_ffree = minix_count_free_inodes(sbi);
 	buf->f_namelen = sbi->s_namelen;
+	buf->f_fsid.val[0] = (u32)id;
+	buf->f_fsid.val[1] = (u32)(id >> 32);
+
 	return 0;
 }
 
@@ -346,24 +363,44 @@ static int minix_writepage(struct page *page, struct writeback_control *wbc)
 {
 	return block_write_full_page(page, minix_get_block, wbc);
 }
+
 static int minix_readpage(struct file *file, struct page *page)
 {
 	return block_read_full_page(page,minix_get_block);
 }
-static int minix_prepare_write(struct file *file, struct page *page, unsigned from, unsigned to)
+
+int minix_prepare_chunk(struct page *page, loff_t pos, unsigned len)
 {
-	return block_prepare_write(page,from,to,minix_get_block);
+	return __block_write_begin(page, pos, len, minix_get_block);
 }
+
+static int minix_write_begin(struct file *file, struct address_space *mapping,
+			loff_t pos, unsigned len, unsigned flags,
+			struct page **pagep, void **fsdata)
+{
+	int ret;
+
+	ret = block_write_begin(mapping, pos, len, flags, pagep,
+				minix_get_block);
+	if (unlikely(ret)) {
+		loff_t isize = mapping->host->i_size;
+		if (pos + len > isize)
+			vmtruncate(mapping->host, isize);
+	}
+
+	return ret;
+}
+
 static sector_t minix_bmap(struct address_space *mapping, sector_t block)
 {
 	return generic_block_bmap(mapping,block,minix_get_block);
 }
+
 static const struct address_space_operations minix_aops = {
 	.readpage = minix_readpage,
 	.writepage = minix_writepage,
-	.sync_page = block_sync_page,
-	.prepare_write = minix_prepare_write,
-	.commit_write = generic_commit_write,
+	.write_begin = minix_write_begin,
+	.write_end = generic_write_end,
 	.bmap = minix_bmap
 };
 
@@ -394,7 +431,7 @@ void minix_set_inode(struct inode *inode, dev_t rdev)
 /*
  * The minix V1 function to read an inode.
  */
-static void V1_minix_read_inode(struct inode * inode)
+static struct inode *V1_minix_iget(struct inode *inode)
 {
 	struct buffer_head * bh;
 	struct minix_inode * raw_inode;
@@ -403,8 +440,8 @@ static void V1_minix_read_inode(struct inode * inode)
 
 	raw_inode = minix_V1_raw_inode(inode->i_sb, inode->i_ino, &bh);
 	if (!raw_inode) {
-		make_bad_inode(inode);
-		return;
+		iget_failed(inode);
+		return ERR_PTR(-EIO);
 	}
 	inode->i_mode = raw_inode->i_mode;
 	inode->i_uid = (uid_t)raw_inode->i_uid;
@@ -420,12 +457,14 @@ static void V1_minix_read_inode(struct inode * inode)
 		minix_inode->u.i1_data[i] = raw_inode->i_zone[i];
 	minix_set_inode(inode, old_decode_dev(raw_inode->i_zone[0]));
 	brelse(bh);
+	unlock_new_inode(inode);
+	return inode;
 }
 
 /*
  * The minix V2 function to read an inode.
  */
-static void V2_minix_read_inode(struct inode * inode)
+static struct inode *V2_minix_iget(struct inode *inode)
 {
 	struct buffer_head * bh;
 	struct minix2_inode * raw_inode;
@@ -434,8 +473,8 @@ static void V2_minix_read_inode(struct inode * inode)
 
 	raw_inode = minix_V2_raw_inode(inode->i_sb, inode->i_ino, &bh);
 	if (!raw_inode) {
-		make_bad_inode(inode);
-		return;
+		iget_failed(inode);
+		return ERR_PTR(-EIO);
 	}
 	inode->i_mode = raw_inode->i_mode;
 	inode->i_uid = (uid_t)raw_inode->i_uid;
@@ -453,17 +492,27 @@ static void V2_minix_read_inode(struct inode * inode)
 		minix_inode->u.i2_data[i] = raw_inode->i_zone[i];
 	minix_set_inode(inode, old_decode_dev(raw_inode->i_zone[0]));
 	brelse(bh);
+	unlock_new_inode(inode);
+	return inode;
 }
 
 /*
  * The global function to read an inode.
  */
-static void minix_read_inode(struct inode * inode)
+struct inode *minix_iget(struct super_block *sb, unsigned long ino)
 {
+	struct inode *inode;
+
+	inode = iget_locked(sb, ino);
+	if (!inode)
+		return ERR_PTR(-ENOMEM);
+	if (!(inode->i_state & I_NEW))
+		return inode;
+
 	if (INODE_VERSION(inode) == MINIX_V1)
-		V1_minix_read_inode(inode);
+		return V1_minix_iget(inode);
 	else
-		V2_minix_read_inode(inode);
+		return V2_minix_iget(inode);
 }
 
 /*
@@ -522,38 +571,25 @@ static struct buffer_head * V2_minix_update_inode(struct inode * inode)
 	return bh;
 }
 
-static struct buffer_head *minix_update_inode(struct inode *inode)
-{
-	if (INODE_VERSION(inode) == MINIX_V1)
-		return V1_minix_update_inode(inode);
-	else
-		return V2_minix_update_inode(inode);
-}
-
-static int minix_write_inode(struct inode * inode, int wait)
-{
-	brelse(minix_update_inode(inode));
-	return 0;
-}
-
-int minix_sync_inode(struct inode * inode)
+static int minix_write_inode(struct inode *inode, struct writeback_control *wbc)
 {
 	int err = 0;
 	struct buffer_head *bh;
 
-	bh = minix_update_inode(inode);
-	if (bh && buffer_dirty(bh))
-	{
+	if (INODE_VERSION(inode) == MINIX_V1)
+		bh = V1_minix_update_inode(inode);
+	else
+		bh = V2_minix_update_inode(inode);
+	if (!bh)
+		return -EIO;
+	if (wbc->sync_mode == WB_SYNC_ALL && buffer_dirty(bh)) {
 		sync_dirty_buffer(bh);
-		if (buffer_req(bh) && !buffer_uptodate(bh))
-		{
+		if (buffer_req(bh) && !buffer_uptodate(bh)) {
 			printk("IO error syncing minix inode [%s:%08lx]\n",
 				inode->i_sb->s_id, inode->i_ino);
-			err = -1;
+			err = -EIO;
 		}
 	}
-	else if (!bh)
-		err = -1;
 	brelse (bh);
 	return err;
 }
@@ -584,17 +620,16 @@ void minix_truncate(struct inode * inode)
 		V2_minix_truncate(inode);
 }
 
-static int minix_get_sb(struct file_system_type *fs_type,
-	int flags, const char *dev_name, void *data, struct vfsmount *mnt)
+static struct dentry *minix_mount(struct file_system_type *fs_type,
+	int flags, const char *dev_name, void *data)
 {
-	return get_sb_bdev(fs_type, flags, dev_name, data, minix_fill_super,
-			   mnt);
+	return mount_bdev(fs_type, flags, dev_name, data, minix_fill_super);
 }
 
 static struct file_system_type minix_fs_type = {
 	.owner		= THIS_MODULE,
 	.name		= "minix",
-	.get_sb		= minix_get_sb,
+	.mount		= minix_mount,
 	.kill_sb	= kill_block_super,
 	.fs_flags	= FS_REQUIRES_DEV,
 };

@@ -30,9 +30,58 @@
  *
  */
 
+/*
+	Theory of operation
+	-------------------
+
+	The SX4 (PDC20621) chip features a single Host DMA (HDMA) copy
+	engine, DIMM memory, and four ATA engines (one per SATA port).
+	Data is copied to/from DIMM memory by the HDMA engine, before
+	handing off to one (or more) of the ATA engines.  The ATA
+	engines operate solely on DIMM memory.
+
+	The SX4 behaves like a PATA chip, with no SATA controls or
+	knowledge whatsoever, leading to the presumption that
+	PATA<->SATA bridges exist on SX4 boards, external to the
+	PDC20621 chip itself.
+
+	The chip is quite capable, supporting an XOR engine and linked
+	hardware commands (permits a string to transactions to be
+	submitted and waited-on as a single unit), and an optional
+	microprocessor.
+
+	The limiting factor is largely software.  This Linux driver was
+	written to multiplex the single HDMA engine to copy disk
+	transactions into a fixed DIMM memory space, from where an ATA
+	engine takes over.  As a result, each WRITE looks like this:
+
+		submit HDMA packet to hardware
+		hardware copies data from system memory to DIMM
+		hardware raises interrupt
+
+		submit ATA packet to hardware
+		hardware executes ATA WRITE command, w/ data in DIMM
+		hardware raises interrupt
+
+	and each READ looks like this:
+
+		submit ATA packet to hardware
+		hardware executes ATA READ command, w/ data in DIMM
+		hardware raises interrupt
+
+		submit HDMA packet to hardware
+		hardware copies data from DIMM to system memory
+		hardware raises interrupt
+
+	This is a very slow, lock-step way of doing things that can
+	certainly be improved by motivated kernel hackers.
+
+ */
+
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/pci.h>
+#include <linux/slab.h>
 #include <linux/init.h>
 #include <linux/blkdev.h>
 #include <linux/delay.h>
@@ -44,7 +93,7 @@
 #include "sata_promise.h"
 
 #define DRV_NAME	"sata_sx4"
-#define DRV_VERSION	"0.11"
+#define DRV_VERSION	"0.12"
 
 
 enum {
@@ -57,6 +106,8 @@ enum {
 	PDC_HDMA_PKT_SUBMIT	= 0x100, /* Host DMA packet pointer addr */
 	PDC_INT_SEQMASK		= 0x40,	/* Mask of asserted SEQ INTs */
 	PDC_HDMA_CTLSTAT	= 0x12C, /* Host DMA control / status */
+
+	PDC_CTLSTAT		= 0x60,	/* IDEn control / status */
 
 	PDC_20621_SEQCTL	= 0x400,
 	PDC_20621_SEQMASK	= 0x480,
@@ -87,50 +138,63 @@ enum {
 
 	board_20621		= 0,	/* FastTrak S150 SX4 */
 
-	PDC_RESET		= (1 << 11), /* HDMA reset */
+	PDC_MASK_INT		= (1 << 10), /* HDMA/ATA mask int */
+	PDC_RESET		= (1 << 11), /* HDMA/ATA reset */
+	PDC_DMA_ENABLE		= (1 << 7),  /* DMA start/stop */
 
 	PDC_MAX_HDMA		= 32,
 	PDC_HDMA_Q_MASK		= (PDC_MAX_HDMA - 1),
 
-	PDC_DIMM0_SPD_DEV_ADDRESS     = 0x50,
-	PDC_DIMM1_SPD_DEV_ADDRESS     = 0x51,
-	PDC_MAX_DIMM_MODULE           = 0x02,
-	PDC_I2C_CONTROL_OFFSET        = 0x48,
-	PDC_I2C_ADDR_DATA_OFFSET      = 0x4C,
-	PDC_DIMM0_CONTROL_OFFSET      = 0x80,
-	PDC_DIMM1_CONTROL_OFFSET      = 0x84,
-	PDC_SDRAM_CONTROL_OFFSET      = 0x88,
-	PDC_I2C_WRITE                 = 0x00000000,
-	PDC_I2C_READ                  = 0x00000040,
-	PDC_I2C_START                 = 0x00000080,
-	PDC_I2C_MASK_INT              = 0x00000020,
-	PDC_I2C_COMPLETE              = 0x00010000,
-	PDC_I2C_NO_ACK                = 0x00100000,
-	PDC_DIMM_SPD_SUBADDRESS_START = 0x00,
-	PDC_DIMM_SPD_SUBADDRESS_END   = 0x7F,
-	PDC_DIMM_SPD_ROW_NUM          = 3,
-	PDC_DIMM_SPD_COLUMN_NUM       = 4,
-	PDC_DIMM_SPD_MODULE_ROW       = 5,
-	PDC_DIMM_SPD_TYPE             = 11,
-	PDC_DIMM_SPD_FRESH_RATE       = 12,
-	PDC_DIMM_SPD_BANK_NUM         = 17,
-	PDC_DIMM_SPD_CAS_LATENCY      = 18,
-	PDC_DIMM_SPD_ATTRIBUTE        = 21,
-	PDC_DIMM_SPD_ROW_PRE_CHARGE   = 27,
-	PDC_DIMM_SPD_ROW_ACTIVE_DELAY = 28,
-	PDC_DIMM_SPD_RAS_CAS_DELAY    = 29,
-	PDC_DIMM_SPD_ACTIVE_PRECHARGE = 30,
-	PDC_DIMM_SPD_SYSTEM_FREQ      = 126,
-	PDC_CTL_STATUS		      = 0x08,
-	PDC_DIMM_WINDOW_CTLR	      = 0x0C,
-	PDC_TIME_CONTROL              = 0x3C,
-	PDC_TIME_PERIOD               = 0x40,
-	PDC_TIME_COUNTER              = 0x44,
-	PDC_GENERAL_CTLR	      = 0x484,
-	PCI_PLL_INIT                  = 0x8A531824,
-	PCI_X_TCOUNT                  = 0xEE1E5CFF
+	PDC_DIMM0_SPD_DEV_ADDRESS	= 0x50,
+	PDC_DIMM1_SPD_DEV_ADDRESS	= 0x51,
+	PDC_I2C_CONTROL			= 0x48,
+	PDC_I2C_ADDR_DATA		= 0x4C,
+	PDC_DIMM0_CONTROL		= 0x80,
+	PDC_DIMM1_CONTROL		= 0x84,
+	PDC_SDRAM_CONTROL		= 0x88,
+	PDC_I2C_WRITE			= 0,		/* master -> slave */
+	PDC_I2C_READ			= (1 << 6),	/* master <- slave */
+	PDC_I2C_START			= (1 << 7),	/* start I2C proto */
+	PDC_I2C_MASK_INT		= (1 << 5),	/* mask I2C interrupt */
+	PDC_I2C_COMPLETE		= (1 << 16),	/* I2C normal compl. */
+	PDC_I2C_NO_ACK			= (1 << 20),	/* slave no-ack addr */
+	PDC_DIMM_SPD_SUBADDRESS_START	= 0x00,
+	PDC_DIMM_SPD_SUBADDRESS_END	= 0x7F,
+	PDC_DIMM_SPD_ROW_NUM		= 3,
+	PDC_DIMM_SPD_COLUMN_NUM		= 4,
+	PDC_DIMM_SPD_MODULE_ROW		= 5,
+	PDC_DIMM_SPD_TYPE		= 11,
+	PDC_DIMM_SPD_FRESH_RATE		= 12,
+	PDC_DIMM_SPD_BANK_NUM		= 17,
+	PDC_DIMM_SPD_CAS_LATENCY	= 18,
+	PDC_DIMM_SPD_ATTRIBUTE		= 21,
+	PDC_DIMM_SPD_ROW_PRE_CHARGE	= 27,
+	PDC_DIMM_SPD_ROW_ACTIVE_DELAY	= 28,
+	PDC_DIMM_SPD_RAS_CAS_DELAY	= 29,
+	PDC_DIMM_SPD_ACTIVE_PRECHARGE	= 30,
+	PDC_DIMM_SPD_SYSTEM_FREQ	= 126,
+	PDC_CTL_STATUS			= 0x08,
+	PDC_DIMM_WINDOW_CTLR		= 0x0C,
+	PDC_TIME_CONTROL		= 0x3C,
+	PDC_TIME_PERIOD			= 0x40,
+	PDC_TIME_COUNTER		= 0x44,
+	PDC_GENERAL_CTLR		= 0x484,
+	PCI_PLL_INIT			= 0x8A531824,
+	PCI_X_TCOUNT			= 0xEE1E5CFF,
+
+	/* PDC_TIME_CONTROL bits */
+	PDC_TIMER_BUZZER		= (1 << 10),
+	PDC_TIMER_MODE_PERIODIC		= 0,		/* bits 9:8 == 00 */
+	PDC_TIMER_MODE_ONCE		= (1 << 8),	/* bits 9:8 == 01 */
+	PDC_TIMER_ENABLE		= (1 << 7),
+	PDC_TIMER_MASK_INT		= (1 << 5),
+	PDC_TIMER_SEQ_MASK		= 0x1f,		/* SEQ ID for timer */
+	PDC_TIMER_DEFAULT		= PDC_TIMER_MODE_ONCE |
+					  PDC_TIMER_ENABLE |
+					  PDC_TIMER_MASK_INT,
 };
 
+#define ECC_ERASE_BUF_SZ (128 * 1024)
 
 struct pdc_port_priv {
 	u8			dimm_buf[(ATA_PRD_SZ * ATA_MAX_PRD) + 512];
@@ -150,9 +214,10 @@ struct pdc_host_priv {
 };
 
 
-static int pdc_sata_init_one (struct pci_dev *pdev, const struct pci_device_id *ent);
-static void pdc_eng_timeout(struct ata_port *ap);
-static void pdc_20621_phy_reset (struct ata_port *ap);
+static int pdc_sata_init_one(struct pci_dev *pdev, const struct pci_device_id *ent);
+static void pdc_error_handler(struct ata_port *ap);
+static void pdc_freeze(struct ata_port *ap);
+static void pdc_thaw(struct ata_port *ap);
 static int pdc_port_start(struct ata_port *ap);
 static void pdc20621_qc_prep(struct ata_queued_cmd *qc);
 static void pdc_tf_load_mmio(struct ata_port *ap, const struct ata_taskfile *tf);
@@ -170,54 +235,49 @@ static void pdc20621_get_from_dimm(struct ata_host *host,
 static void pdc20621_put_to_dimm(struct ata_host *host,
 				 void *psource, u32 offset, u32 size);
 static void pdc20621_irq_clear(struct ata_port *ap);
-static unsigned int pdc20621_qc_issue_prot(struct ata_queued_cmd *qc);
+static unsigned int pdc20621_qc_issue(struct ata_queued_cmd *qc);
+static int pdc_softreset(struct ata_link *link, unsigned int *class,
+			 unsigned long deadline);
+static void pdc_post_internal_cmd(struct ata_queued_cmd *qc);
+static int pdc_check_atapi_dma(struct ata_queued_cmd *qc);
 
 
 static struct scsi_host_template pdc_sata_sht = {
-	.module			= THIS_MODULE,
-	.name			= DRV_NAME,
-	.ioctl			= ata_scsi_ioctl,
-	.queuecommand		= ata_scsi_queuecmd,
-	.can_queue		= ATA_DEF_QUEUE,
-	.this_id		= ATA_SHT_THIS_ID,
+	ATA_BASE_SHT(DRV_NAME),
 	.sg_tablesize		= LIBATA_MAX_PRD,
-	.cmd_per_lun		= ATA_SHT_CMD_PER_LUN,
-	.emulated		= ATA_SHT_EMULATED,
-	.use_clustering		= ATA_SHT_USE_CLUSTERING,
-	.proc_name		= DRV_NAME,
 	.dma_boundary		= ATA_DMA_BOUNDARY,
-	.slave_configure	= ata_scsi_slave_config,
-	.slave_destroy		= ata_scsi_slave_destroy,
-	.bios_param		= ata_std_bios_param,
 };
 
-static const struct ata_port_operations pdc_20621_ops = {
-	.port_disable		= ata_port_disable,
-	.tf_load		= pdc_tf_load_mmio,
-	.tf_read		= ata_tf_read,
-	.check_status		= ata_check_status,
-	.exec_command		= pdc_exec_command_mmio,
-	.dev_select		= ata_std_dev_select,
-	.phy_reset		= pdc_20621_phy_reset,
+/* TODO: inherit from base port_ops after converting to new EH */
+static struct ata_port_operations pdc_20621_ops = {
+	.inherits		= &ata_sff_port_ops,
+
+	.check_atapi_dma	= pdc_check_atapi_dma,
 	.qc_prep		= pdc20621_qc_prep,
-	.qc_issue		= pdc20621_qc_issue_prot,
-	.data_xfer		= ata_data_xfer,
-	.eng_timeout		= pdc_eng_timeout,
-	.irq_clear		= pdc20621_irq_clear,
-	.irq_on			= ata_irq_on,
-	.irq_ack		= ata_irq_ack,
+	.qc_issue		= pdc20621_qc_issue,
+
+	.freeze			= pdc_freeze,
+	.thaw			= pdc_thaw,
+	.softreset		= pdc_softreset,
+	.error_handler		= pdc_error_handler,
+	.lost_interrupt		= ATA_OP_NULL,
+	.post_internal_cmd	= pdc_post_internal_cmd,
+
 	.port_start		= pdc_port_start,
+
+	.sff_tf_load		= pdc_tf_load_mmio,
+	.sff_exec_command	= pdc_exec_command_mmio,
+	.sff_irq_clear		= pdc20621_irq_clear,
 };
 
 static const struct ata_port_info pdc_port_info[] = {
 	/* board_20621 */
 	{
-		.flags		= ATA_FLAG_SATA | ATA_FLAG_NO_LEGACY |
-				  ATA_FLAG_SRST | ATA_FLAG_MMIO |
-				  ATA_FLAG_NO_ATAPI | ATA_FLAG_PIO_POLLING,
-		.pio_mask	= 0x1f, /* pio0-4 */
-		.mwdma_mask	= 0x07, /* mwdma0-2 */
-		.udma_mask	= 0x7f, /* udma0-6 ; FIXME */
+		.flags		= ATA_FLAG_SATA | ATA_FLAG_NO_ATAPI |
+				  ATA_FLAG_PIO_POLLING,
+		.pio_mask	= ATA_PIO4,
+		.mwdma_mask	= ATA_MWDMA2,
+		.udma_mask	= ATA_UDMA6,
 		.port_ops	= &pdc_20621_ops,
 	},
 
@@ -241,11 +301,6 @@ static int pdc_port_start(struct ata_port *ap)
 {
 	struct device *dev = ap->host->dev;
 	struct pdc_port_priv *pp;
-	int rc;
-
-	rc = ata_port_start(ap);
-	if (rc)
-		return rc;
 
 	pp = devm_kzalloc(dev, sizeof(*pp), GFP_KERNEL);
 	if (!pp)
@@ -260,21 +315,13 @@ static int pdc_port_start(struct ata_port *ap)
 	return 0;
 }
 
-static void pdc_20621_phy_reset (struct ata_port *ap)
-{
-	VPRINTK("ENTER\n");
-        ap->cbl = ATA_CBL_SATA;
-        ata_port_probe(ap);
-        ata_bus_reset(ap);
-}
-
 static inline void pdc20621_ata_sg(struct ata_taskfile *tf, u8 *buf,
-				    	   unsigned int portno,
+				   unsigned int portno,
 					   unsigned int total_len)
 {
 	u32 addr;
 	unsigned int dw = PDC_DIMM_APKT_PRD >> 2;
-	u32 *buf32 = (u32 *) buf;
+	__le32 *buf32 = (__le32 *) buf;
 
 	/* output ATA packet S/G table */
 	addr = PDC_20621_DIMM_BASE + PDC_20621_DIMM_DATA +
@@ -291,12 +338,12 @@ static inline void pdc20621_ata_sg(struct ata_taskfile *tf, u8 *buf,
 }
 
 static inline void pdc20621_host_sg(struct ata_taskfile *tf, u8 *buf,
-				    	    unsigned int portno,
+				    unsigned int portno,
 					    unsigned int total_len)
 {
 	u32 addr;
 	unsigned int dw = PDC_DIMM_HPKT_PRD >> 2;
-	u32 *buf32 = (u32 *) buf;
+	__le32 *buf32 = (__le32 *) buf;
 
 	/* output Host DMA packet S/G table */
 	addr = PDC_20621_DIMM_BASE + PDC_20621_DIMM_DATA +
@@ -317,7 +364,7 @@ static inline unsigned int pdc20621_ata_pkt(struct ata_taskfile *tf,
 					    unsigned int portno)
 {
 	unsigned int i, dw;
-	u32 *buf32 = (u32 *) buf;
+	__le32 *buf32 = (__le32 *) buf;
 	u8 dev_reg;
 
 	unsigned int dimm_sg = PDC_20621_DIMM_BASE +
@@ -369,7 +416,8 @@ static inline void pdc20621_host_pkt(struct ata_taskfile *tf, u8 *buf,
 				     unsigned int portno)
 {
 	unsigned int dw;
-	u32 tmp, *buf32 = (u32 *) buf;
+	u32 tmp;
+	__le32 *buf32 = (__le32 *) buf;
 
 	unsigned int host_sg = PDC_20621_DIMM_BASE +
 			       (PDC_DIMM_WINDOW_STEP * portno) +
@@ -413,8 +461,8 @@ static void pdc20621_dma_prep(struct ata_queued_cmd *qc)
 	void __iomem *mmio = ap->host->iomap[PDC_MMIO_BAR];
 	void __iomem *dimm_mmio = ap->host->iomap[PDC_DIMM_BAR];
 	unsigned int portno = ap->port_no;
-	unsigned int i, idx, total_len = 0, sgt_len;
-	u32 *buf = (u32 *) &pp->dimm_buf[PDC_DIMM_HEADER_SZ];
+	unsigned int i, si, idx, total_len = 0, sgt_len;
+	__le32 *buf = (__le32 *) &pp->dimm_buf[PDC_DIMM_HEADER_SZ];
 
 	WARN_ON(!(qc->flags & ATA_QCFLAG_DMAMAP));
 
@@ -427,7 +475,7 @@ static void pdc20621_dma_prep(struct ata_queued_cmd *qc)
 	 * Build S/G table
 	 */
 	idx = 0;
-	ata_for_each_sg(sg, qc) {
+	for_each_sg(qc->sg, sg, qc->n_elem, si) {
 		buf[idx++] = cpu_to_le32(sg_dma_address(sg));
 		buf[idx++] = cpu_to_le32(sg_dma_len(sg));
 		total_len += sg_dma_len(sg);
@@ -632,15 +680,18 @@ static void pdc20621_packet_start(struct ata_queued_cmd *qc)
 	}
 }
 
-static unsigned int pdc20621_qc_issue_prot(struct ata_queued_cmd *qc)
+static unsigned int pdc20621_qc_issue(struct ata_queued_cmd *qc)
 {
 	switch (qc->tf.protocol) {
-	case ATA_PROT_DMA:
 	case ATA_PROT_NODATA:
+		if (qc->tf.flags & ATA_TFLAG_POLLING)
+			break;
+		/*FALLTHROUGH*/
+	case ATA_PROT_DMA:
 		pdc20621_packet_start(qc);
 		return 0;
 
-	case ATA_PROT_ATAPI_DMA:
+	case ATAPI_PROT_DMA:
 		BUG();
 		break;
 
@@ -648,11 +699,11 @@ static unsigned int pdc20621_qc_issue_prot(struct ata_queued_cmd *qc)
 		break;
 	}
 
-	return ata_qc_issue_prot(qc);
+	return ata_sff_qc_issue(qc);
 }
 
-static inline unsigned int pdc20621_host_intr( struct ata_port *ap,
-                                          struct ata_queued_cmd *qc,
+static inline unsigned int pdc20621_host_intr(struct ata_port *ap,
+					  struct ata_queued_cmd *qc,
 					  unsigned int doing_hdma,
 					  void __iomem *mmio)
 {
@@ -720,7 +771,7 @@ static inline unsigned int pdc20621_host_intr( struct ata_port *ap,
 	/* command completion, but no data xfer */
 	} else if (qc->tf.protocol == ATA_PROT_NODATA) {
 
-		status = ata_busy_wait(ap, ATA_BUSY | ATA_DRQ, 1000);
+		status = ata_sff_busy_wait(ap, ATA_BUSY | ATA_DRQ, 1000);
 		DPRINTK("BUS_NODATA (drv_stat 0x%X)\n", status);
 		qc->err_mask |= ac_err_mask(status);
 		ata_qc_complete(qc);
@@ -735,15 +786,10 @@ static inline unsigned int pdc20621_host_intr( struct ata_port *ap,
 
 static void pdc20621_irq_clear(struct ata_port *ap)
 {
-	struct ata_host *host = ap->host;
-	void __iomem *mmio = host->iomap[PDC_MMIO_BAR];
-
-	mmio += PDC_CHIP0_OFS;
-
-	readl(mmio + PDC_20621_SEQMASK);
+	ioread8(ap->ioaddr.status_addr);
 }
 
-static irqreturn_t pdc20621_interrupt (int irq, void *dev_instance)
+static irqreturn_t pdc20621_interrupt(int irq, void *dev_instance)
 {
 	struct ata_host *host = dev_instance;
 	struct ata_port *ap;
@@ -776,9 +822,9 @@ static irqreturn_t pdc20621_interrupt (int irq, void *dev_instance)
 		return IRQ_NONE;
 	}
 
-        spin_lock(&host->lock);
+	spin_lock(&host->lock);
 
-        for (i = 1; i < 9; i++) {
+	for (i = 1; i < 9; i++) {
 		port_no = i - 1;
 		if (port_no > 3)
 			port_no -= 4;
@@ -788,18 +834,17 @@ static irqreturn_t pdc20621_interrupt (int irq, void *dev_instance)
 			ap = host->ports[port_no];
 		tmp = mask & (1 << i);
 		VPRINTK("seq %u, port_no %u, ap %p, tmp %x\n", i, port_no, ap, tmp);
-		if (tmp && ap &&
-		    !(ap->flags & ATA_FLAG_DISABLED)) {
+		if (tmp && ap) {
 			struct ata_queued_cmd *qc;
 
-			qc = ata_qc_from_tag(ap, ap->active_tag);
+			qc = ata_qc_from_tag(ap, ap->link.active_tag);
 			if (qc && (!(qc->tf.flags & ATA_TFLAG_POLLING)))
 				handled += pdc20621_host_intr(ap, qc, (i > 4),
 							      mmio_base);
 		}
 	}
 
-        spin_unlock(&host->lock);
+	spin_unlock(&host->lock);
 
 	VPRINTK("mask == 0x%x\n", mask);
 
@@ -808,55 +853,128 @@ static irqreturn_t pdc20621_interrupt (int irq, void *dev_instance)
 	return IRQ_RETVAL(handled);
 }
 
-static void pdc_eng_timeout(struct ata_port *ap)
+static void pdc_freeze(struct ata_port *ap)
 {
-	u8 drv_stat;
-	struct ata_host *host = ap->host;
-	struct ata_queued_cmd *qc;
-	unsigned long flags;
+	void __iomem *mmio = ap->ioaddr.cmd_addr;
+	u32 tmp;
 
-	DPRINTK("ENTER\n");
+	/* FIXME: if all 4 ATA engines are stopped, also stop HDMA engine */
 
-	spin_lock_irqsave(&host->lock, flags);
+	tmp = readl(mmio + PDC_CTLSTAT);
+	tmp |= PDC_MASK_INT;
+	tmp &= ~PDC_DMA_ENABLE;
+	writel(tmp, mmio + PDC_CTLSTAT);
+	readl(mmio + PDC_CTLSTAT); /* flush */
+}
 
-	qc = ata_qc_from_tag(ap, ap->active_tag);
+static void pdc_thaw(struct ata_port *ap)
+{
+	void __iomem *mmio = ap->ioaddr.cmd_addr;
+	u32 tmp;
 
-	switch (qc->tf.protocol) {
-	case ATA_PROT_DMA:
-	case ATA_PROT_NODATA:
-		ata_port_printk(ap, KERN_ERR, "command timeout\n");
-		qc->err_mask |= __ac_err_mask(ata_wait_idle(ap));
-		break;
+	/* FIXME: start HDMA engine, if zero ATA engines running */
 
-	default:
-		drv_stat = ata_busy_wait(ap, ATA_BUSY | ATA_DRQ, 1000);
+	/* clear IRQ */
+	ioread8(ap->ioaddr.status_addr);
 
-		ata_port_printk(ap, KERN_ERR,
-				"unknown timeout, cmd 0x%x stat 0x%x\n",
-				qc->tf.command, drv_stat);
+	/* turn IRQ back on */
+	tmp = readl(mmio + PDC_CTLSTAT);
+	tmp &= ~PDC_MASK_INT;
+	writel(tmp, mmio + PDC_CTLSTAT);
+	readl(mmio + PDC_CTLSTAT); /* flush */
+}
 
-		qc->err_mask |= ac_err_mask(drv_stat);
-		break;
+static void pdc_reset_port(struct ata_port *ap)
+{
+	void __iomem *mmio = ap->ioaddr.cmd_addr + PDC_CTLSTAT;
+	unsigned int i;
+	u32 tmp;
+
+	/* FIXME: handle HDMA copy engine */
+
+	for (i = 11; i > 0; i--) {
+		tmp = readl(mmio);
+		if (tmp & PDC_RESET)
+			break;
+
+		udelay(100);
+
+		tmp |= PDC_RESET;
+		writel(tmp, mmio);
 	}
 
-	spin_unlock_irqrestore(&host->lock, flags);
-	ata_eh_qc_complete(qc);
-	DPRINTK("EXIT\n");
+	tmp &= ~PDC_RESET;
+	writel(tmp, mmio);
+	readl(mmio);	/* flush */
+}
+
+static int pdc_softreset(struct ata_link *link, unsigned int *class,
+			 unsigned long deadline)
+{
+	pdc_reset_port(link->ap);
+	return ata_sff_softreset(link, class, deadline);
+}
+
+static void pdc_error_handler(struct ata_port *ap)
+{
+	if (!(ap->pflags & ATA_PFLAG_FROZEN))
+		pdc_reset_port(ap);
+
+	ata_sff_error_handler(ap);
+}
+
+static void pdc_post_internal_cmd(struct ata_queued_cmd *qc)
+{
+	struct ata_port *ap = qc->ap;
+
+	/* make DMA engine forget about the failed command */
+	if (qc->flags & ATA_QCFLAG_FAILED)
+		pdc_reset_port(ap);
+}
+
+static int pdc_check_atapi_dma(struct ata_queued_cmd *qc)
+{
+	u8 *scsicmd = qc->scsicmd->cmnd;
+	int pio = 1; /* atapi dma off by default */
+
+	/* Whitelist commands that may use DMA. */
+	switch (scsicmd[0]) {
+	case WRITE_12:
+	case WRITE_10:
+	case WRITE_6:
+	case READ_12:
+	case READ_10:
+	case READ_6:
+	case 0xad: /* READ_DVD_STRUCTURE */
+	case 0xbe: /* READ_CD */
+		pio = 0;
+	}
+	/* -45150 (FFFF4FA2) to -1 (FFFFFFFF) shall use PIO mode */
+	if (scsicmd[0] == WRITE_10) {
+		unsigned int lba =
+			(scsicmd[2] << 24) |
+			(scsicmd[3] << 16) |
+			(scsicmd[4] << 8) |
+			scsicmd[5];
+		if (lba >= 0xFFFF4FA2)
+			pio = 1;
+	}
+	return pio;
 }
 
 static void pdc_tf_load_mmio(struct ata_port *ap, const struct ata_taskfile *tf)
 {
-	WARN_ON (tf->protocol == ATA_PROT_DMA ||
-		 tf->protocol == ATA_PROT_NODATA);
-	ata_tf_load(ap, tf);
+	WARN_ON(tf->protocol == ATA_PROT_DMA ||
+		tf->protocol == ATAPI_PROT_DMA);
+	ata_sff_tf_load(ap, tf);
 }
 
 
 static void pdc_exec_command_mmio(struct ata_port *ap, const struct ata_taskfile *tf)
 {
-	WARN_ON (tf->protocol == ATA_PROT_DMA ||
-		 tf->protocol == ATA_PROT_NODATA);
-	ata_exec_command(ap, tf);
+	WARN_ON(tf->protocol == ATA_PROT_DMA ||
+		tf->protocol == ATAPI_PROT_DMA);
+	ata_sff_exec_command(ap, tf);
 }
 
 
@@ -893,7 +1011,7 @@ static void pdc20621_get_from_dimm(struct ata_host *host, void *psource,
 	mmio += PDC_CHIP0_OFS;
 
 	page_mask = 0x00;
-   	window_size = 0x2000 * 4; /* 32K byte uchar size */
+	window_size = 0x2000 * 4; /* 32K byte uchar size */
 	idx = (u16) (offset / window_size);
 
 	writel(0x01, mmio + PDC_GENERAL_CTLR);
@@ -919,7 +1037,7 @@ static void pdc20621_get_from_dimm(struct ata_host *host, void *psource,
 			      window_size / 4);
 		psource += window_size;
 		size -= window_size;
-		idx ++;
+		idx++;
 	}
 
 	if (size) {
@@ -948,7 +1066,7 @@ static void pdc20621_put_to_dimm(struct ata_host *host, void *psource,
 	mmio += PDC_CHIP0_OFS;
 
 	page_mask = 0x00;
-   	window_size = 0x2000 * 4;       /* 32K byte uchar size */
+	window_size = 0x2000 * 4;       /* 32K byte uchar size */
 	idx = (u16) (offset / window_size);
 
 	writel(((idx) << page_mask), mmio + PDC_DIMM_WINDOW_CTLR);
@@ -971,7 +1089,7 @@ static void pdc20621_put_to_dimm(struct ata_host *host, void *psource,
 		readl(mmio + PDC_GENERAL_CTLR);
 		psource += window_size;
 		size -= window_size;
-		idx ++;
+		idx++;
 	}
 
 	if (size) {
@@ -990,7 +1108,7 @@ static unsigned int pdc20621_i2c_read(struct ata_host *host, u32 device,
 	void __iomem *mmio = host->iomap[PDC_MMIO_BAR];
 	u32 i2creg  = 0;
 	u32 status;
-	u32 count =0;
+	u32 count = 0;
 
 	/* hard-code chip #0 */
 	mmio += PDC_CHIP0_OFS;
@@ -999,17 +1117,17 @@ static unsigned int pdc20621_i2c_read(struct ata_host *host, u32 device,
 	i2creg |= subaddr << 16;
 
 	/* Set the device and subaddress */
-	writel(i2creg, mmio + PDC_I2C_ADDR_DATA_OFFSET);
-	readl(mmio + PDC_I2C_ADDR_DATA_OFFSET);
+	writel(i2creg, mmio + PDC_I2C_ADDR_DATA);
+	readl(mmio + PDC_I2C_ADDR_DATA);
 
 	/* Write Control to perform read operation, mask int */
 	writel(PDC_I2C_READ | PDC_I2C_START | PDC_I2C_MASK_INT,
-	       mmio + PDC_I2C_CONTROL_OFFSET);
+	       mmio + PDC_I2C_CONTROL);
 
 	for (count = 0; count <= 1000; count ++) {
-		status = readl(mmio + PDC_I2C_CONTROL_OFFSET);
+		status = readl(mmio + PDC_I2C_CONTROL);
 		if (status & PDC_I2C_COMPLETE) {
-			status = readl(mmio + PDC_I2C_ADDR_DATA_OFFSET);
+			status = readl(mmio + PDC_I2C_ADDR_DATA);
 			break;
 		} else if (count == 1000)
 			return 0;
@@ -1022,21 +1140,21 @@ static unsigned int pdc20621_i2c_read(struct ata_host *host, u32 device,
 
 static int pdc20621_detect_dimm(struct ata_host *host)
 {
-	u32 data=0 ;
+	u32 data = 0;
 	if (pdc20621_i2c_read(host, PDC_DIMM0_SPD_DEV_ADDRESS,
 			     PDC_DIMM_SPD_SYSTEM_FREQ, &data)) {
-   		if (data == 100)
+		if (data == 100)
 			return 100;
-  	} else
+	} else
 		return 0;
 
 	if (pdc20621_i2c_read(host, PDC_DIMM0_SPD_DEV_ADDRESS, 9, &data)) {
-		if(data <= 0x75)
+		if (data <= 0x75)
 			return 133;
-   	} else
+	} else
 		return 0;
 
-   	return 0;
+	return 0;
 }
 
 
@@ -1044,8 +1162,8 @@ static int pdc20621_prog_dimm0(struct ata_host *host)
 {
 	u32 spd0[50];
 	u32 data = 0;
-   	int size, i;
-   	u8 bdimmsize;
+	int size, i;
+	u8 bdimmsize;
 	void __iomem *mmio = host->iomap[PDC_MMIO_BAR];
 	static const struct {
 		unsigned int reg;
@@ -1068,40 +1186,40 @@ static int pdc20621_prog_dimm0(struct ata_host *host)
 	/* hard-code chip #0 */
 	mmio += PDC_CHIP0_OFS;
 
-	for(i=0; i<ARRAY_SIZE(pdc_i2c_read_data); i++)
+	for (i = 0; i < ARRAY_SIZE(pdc_i2c_read_data); i++)
 		pdc20621_i2c_read(host, PDC_DIMM0_SPD_DEV_ADDRESS,
 				  pdc_i2c_read_data[i].reg,
 				  &spd0[pdc_i2c_read_data[i].ofs]);
 
-   	data |= (spd0[4] - 8) | ((spd0[21] != 0) << 3) | ((spd0[3]-11) << 4);
-   	data |= ((spd0[17] / 4) << 6) | ((spd0[5] / 2) << 7) |
+	data |= (spd0[4] - 8) | ((spd0[21] != 0) << 3) | ((spd0[3]-11) << 4);
+	data |= ((spd0[17] / 4) << 6) | ((spd0[5] / 2) << 7) |
 		((((spd0[27] + 9) / 10) - 1) << 8) ;
-   	data |= (((((spd0[29] > spd0[28])
+	data |= (((((spd0[29] > spd0[28])
 		    ? spd0[29] : spd0[28]) + 9) / 10) - 1) << 10;
-   	data |= ((spd0[30] - spd0[29] + 9) / 10 - 2) << 12;
+	data |= ((spd0[30] - spd0[29] + 9) / 10 - 2) << 12;
 
-   	if (spd0[18] & 0x08)
+	if (spd0[18] & 0x08)
 		data |= ((0x03) << 14);
-   	else if (spd0[18] & 0x04)
+	else if (spd0[18] & 0x04)
 		data |= ((0x02) << 14);
-   	else if (spd0[18] & 0x01)
+	else if (spd0[18] & 0x01)
 		data |= ((0x01) << 14);
-   	else
+	else
 		data |= (0 << 14);
 
-  	/*
+	/*
 	   Calculate the size of bDIMMSize (power of 2) and
 	   merge the DIMM size by program start/end address.
 	*/
 
-   	bdimmsize = spd0[4] + (spd0[5] / 2) + spd0[3] + (spd0[17] / 2) + 3;
-   	size = (1 << bdimmsize) >> 20;	/* size = xxx(MB) */
-   	data |= (((size / 16) - 1) << 16);
-   	data |= (0 << 23);
+	bdimmsize = spd0[4] + (spd0[5] / 2) + spd0[3] + (spd0[17] / 2) + 3;
+	size = (1 << bdimmsize) >> 20;	/* size = xxx(MB) */
+	data |= (((size / 16) - 1) << 16);
+	data |= (0 << 23);
 	data |= 8;
-   	writel(data, mmio + PDC_DIMM0_CONTROL_OFFSET);
-	readl(mmio + PDC_DIMM0_CONTROL_OFFSET);
-   	return size;
+	writel(data, mmio + PDC_DIMM0_CONTROL);
+	readl(mmio + PDC_DIMM0_CONTROL);
+	return size;
 }
 
 
@@ -1112,9 +1230,9 @@ static unsigned int pdc20621_prog_dimm_global(struct ata_host *host)
 	void __iomem *mmio = host->iomap[PDC_MMIO_BAR];
 
 	/* hard-code chip #0 */
-   	mmio += PDC_CHIP0_OFS;
+	mmio += PDC_CHIP0_OFS;
 
-   	/*
+	/*
 	  Set To Default : DIMM Module Global Control Register (0x022259F1)
 	  DIMM Arbitration Disable (bit 20)
 	  DIMM Data/Control Output Driving Selection (bit12 - bit15)
@@ -1122,51 +1240,50 @@ static unsigned int pdc20621_prog_dimm_global(struct ata_host *host)
 	*/
 
 	data = 0x022259F1;
-	writel(data, mmio + PDC_SDRAM_CONTROL_OFFSET);
-	readl(mmio + PDC_SDRAM_CONTROL_OFFSET);
+	writel(data, mmio + PDC_SDRAM_CONTROL);
+	readl(mmio + PDC_SDRAM_CONTROL);
 
 	/* Turn on for ECC */
 	pdc20621_i2c_read(host, PDC_DIMM0_SPD_DEV_ADDRESS,
 			  PDC_DIMM_SPD_TYPE, &spd0);
 	if (spd0 == 0x02) {
 		data |= (0x01 << 16);
-		writel(data, mmio + PDC_SDRAM_CONTROL_OFFSET);
-		readl(mmio + PDC_SDRAM_CONTROL_OFFSET);
+		writel(data, mmio + PDC_SDRAM_CONTROL);
+		readl(mmio + PDC_SDRAM_CONTROL);
 		printk(KERN_ERR "Local DIMM ECC Enabled\n");
-   	}
+	}
 
-   	/* DIMM Initialization Select/Enable (bit 18/19) */
-   	data &= (~(1<<18));
-   	data |= (1<<19);
-   	writel(data, mmio + PDC_SDRAM_CONTROL_OFFSET);
+	/* DIMM Initialization Select/Enable (bit 18/19) */
+	data &= (~(1<<18));
+	data |= (1<<19);
+	writel(data, mmio + PDC_SDRAM_CONTROL);
 
-   	error = 1;
-   	for (i = 1; i <= 10; i++) {   /* polling ~5 secs */
-		data = readl(mmio + PDC_SDRAM_CONTROL_OFFSET);
+	error = 1;
+	for (i = 1; i <= 10; i++) {   /* polling ~5 secs */
+		data = readl(mmio + PDC_SDRAM_CONTROL);
 		if (!(data & (1<<19))) {
-	   		error = 0;
-	   		break;
+			error = 0;
+			break;
 		}
 		msleep(i*100);
-   	}
-   	return error;
+	}
+	return error;
 }
 
 
 static unsigned int pdc20621_dimm_init(struct ata_host *host)
 {
 	int speed, size, length;
-	u32 addr,spd0,pci_status;
-	u32 tmp=0;
-	u32 time_period=0;
-	u32 tcount=0;
-	u32 ticks=0;
-	u32 clock=0;
-	u32 fparam=0;
+	u32 addr, spd0, pci_status;
+	u32 time_period = 0;
+	u32 tcount = 0;
+	u32 ticks = 0;
+	u32 clock = 0;
+	u32 fparam = 0;
 	void __iomem *mmio = host->iomap[PDC_MMIO_BAR];
 
 	/* hard-code chip #0 */
-   	mmio += PDC_CHIP0_OFS;
+	mmio += PDC_CHIP0_OFS;
 
 	/* Initialize PLL based upon PCI Bus Frequency */
 
@@ -1176,7 +1293,7 @@ static unsigned int pdc20621_dimm_init(struct ata_host *host)
 	VPRINTK("Time Period Register (0x40): 0x%x\n", time_period);
 
 	/* Enable timer */
-	writel(0x00001a0, mmio + PDC_TIME_CONTROL);
+	writel(PDC_TIMER_DEFAULT, mmio + PDC_TIME_CONTROL);
 	readl(mmio + PDC_TIME_CONTROL);
 
 	/* Wait 3 seconds */
@@ -1194,7 +1311,7 @@ static unsigned int pdc20621_dimm_init(struct ata_host *host)
 	   If SX4 is on PCI-X bus, after 3 seconds, the timer counter
 	   register should be >= (0xffffffff - 3x10^8).
 	*/
-	if(tcount >= PCI_X_TCOUNT) {
+	if (tcount >= PCI_X_TCOUNT) {
 		ticks = (time_period - tcount);
 		VPRINTK("Num counters 0x%x (%d)\n", ticks, ticks);
 
@@ -1225,41 +1342,43 @@ static unsigned int pdc20621_dimm_init(struct ata_host *host)
 	if (!(speed = pdc20621_detect_dimm(host))) {
 		printk(KERN_ERR "Detect Local DIMM Fail\n");
 		return 1;	/* DIMM error */
-   	}
-   	VPRINTK("Local DIMM Speed = %d\n", speed);
+	}
+	VPRINTK("Local DIMM Speed = %d\n", speed);
 
-   	/* Programming DIMM0 Module Control Register (index_CID0:80h) */
+	/* Programming DIMM0 Module Control Register (index_CID0:80h) */
 	size = pdc20621_prog_dimm0(host);
-   	VPRINTK("Local DIMM Size = %dMB\n",size);
+	VPRINTK("Local DIMM Size = %dMB\n", size);
 
-   	/* Programming DIMM Module Global Control Register (index_CID0:88h) */
+	/* Programming DIMM Module Global Control Register (index_CID0:88h) */
 	if (pdc20621_prog_dimm_global(host)) {
 		printk(KERN_ERR "Programming DIMM Module Global Control Register Fail\n");
 		return 1;
-   	}
+	}
 
 #ifdef ATA_VERBOSE_DEBUG
 	{
-		u8 test_parttern1[40] = {0x55,0xAA,'P','r','o','m','i','s','e',' ',
-  				'N','o','t',' ','Y','e','t',' ','D','e','f','i','n','e','d',' ',
- 				 '1','.','1','0',
-  				'9','8','0','3','1','6','1','2',0,0};
+		u8 test_parttern1[40] =
+			{0x55,0xAA,'P','r','o','m','i','s','e',' ',
+			'N','o','t',' ','Y','e','t',' ',
+			'D','e','f','i','n','e','d',' ',
+			'1','.','1','0',
+			'9','8','0','3','1','6','1','2',0,0};
 		u8 test_parttern2[40] = {0};
 
-		pdc20621_put_to_dimm(host, (void *) test_parttern2, 0x10040, 40);
-		pdc20621_put_to_dimm(host, (void *) test_parttern2, 0x40, 40);
+		pdc20621_put_to_dimm(host, test_parttern2, 0x10040, 40);
+		pdc20621_put_to_dimm(host, test_parttern2, 0x40, 40);
 
-		pdc20621_put_to_dimm(host, (void *) test_parttern1, 0x10040, 40);
-		pdc20621_get_from_dimm(host, (void *) test_parttern2, 0x40, 40);
+		pdc20621_put_to_dimm(host, test_parttern1, 0x10040, 40);
+		pdc20621_get_from_dimm(host, test_parttern2, 0x40, 40);
 		printk(KERN_ERR "%x, %x, %s\n", test_parttern2[0],
 		       test_parttern2[1], &(test_parttern2[2]));
-		pdc20621_get_from_dimm(host, (void *) test_parttern2, 0x10040,
+		pdc20621_get_from_dimm(host, test_parttern2, 0x10040,
 				       40);
 		printk(KERN_ERR "%x, %x, %s\n", test_parttern2[0],
 		       test_parttern2[1], &(test_parttern2[2]));
 
-		pdc20621_put_to_dimm(host, (void *) test_parttern1, 0x40, 40);
-		pdc20621_get_from_dimm(host, (void *) test_parttern2, 0x40, 40);
+		pdc20621_put_to_dimm(host, test_parttern1, 0x40, 40);
+		pdc20621_get_from_dimm(host, test_parttern2, 0x40, 40);
 		printk(KERN_ERR "%x, %x, %s\n", test_parttern2[0],
 		       test_parttern2[1], &(test_parttern2[2]));
 	}
@@ -1270,14 +1389,17 @@ static unsigned int pdc20621_dimm_init(struct ata_host *host)
 	pdc20621_i2c_read(host, PDC_DIMM0_SPD_DEV_ADDRESS,
 			  PDC_DIMM_SPD_TYPE, &spd0);
 	if (spd0 == 0x02) {
+		void *buf;
 		VPRINTK("Start ECC initialization\n");
 		addr = 0;
 		length = size * 1024 * 1024;
+		buf = kzalloc(ECC_ERASE_BUF_SZ, GFP_KERNEL);
 		while (addr < length) {
-			pdc20621_put_to_dimm(host, (void *) &tmp, addr,
-					     sizeof(u32));
-			addr += sizeof(u32);
+			pdc20621_put_to_dimm(host, buf, addr,
+					     ECC_ERASE_BUF_SZ);
+			addr += ECC_ERASE_BUF_SZ;
 		}
+		kfree(buf);
 		VPRINTK("Finish ECC initialization\n");
 	}
 	return 0;
@@ -1315,15 +1437,15 @@ static void pdc_20621_init(struct ata_host *host)
 	readl(mmio + PDC_HDMA_CTLSTAT);		/* flush */
 }
 
-static int pdc_sata_init_one (struct pci_dev *pdev, const struct pci_device_id *ent)
+static int pdc_sata_init_one(struct pci_dev *pdev,
+			     const struct pci_device_id *ent)
 {
 	static int printed_version;
 	const struct ata_port_info *ppi[] =
 		{ &pdc_port_info[ent->driver_data], NULL };
 	struct ata_host *host;
-	void __iomem *base;
 	struct pdc_host_priv *hpriv;
-	int rc;
+	int i, rc;
 
 	if (!printed_version++)
 		dev_printk(KERN_DEBUG, &pdev->dev, "version " DRV_VERSION "\n");
@@ -1349,11 +1471,17 @@ static int pdc_sata_init_one (struct pci_dev *pdev, const struct pci_device_id *
 		return rc;
 	host->iomap = pcim_iomap_table(pdev);
 
-	base = host->iomap[PDC_MMIO_BAR] + PDC_CHIP0_OFS;
-	pdc_sata_setup_port(&host->ports[0]->ioaddr, base + 0x200);
-	pdc_sata_setup_port(&host->ports[1]->ioaddr, base + 0x280);
-	pdc_sata_setup_port(&host->ports[2]->ioaddr, base + 0x300);
-	pdc_sata_setup_port(&host->ports[3]->ioaddr, base + 0x380);
+	for (i = 0; i < 4; i++) {
+		struct ata_port *ap = host->ports[i];
+		void __iomem *base = host->iomap[PDC_MMIO_BAR] + PDC_CHIP0_OFS;
+		unsigned int offset = 0x200 + i * 0x80;
+
+		pdc_sata_setup_port(&ap->ioaddr, base + offset);
+
+		ata_port_pbar_desc(ap, PDC_MMIO_BAR, -1, "mmio");
+		ata_port_pbar_desc(ap, PDC_DIMM_BAR, -1, "dimm");
+		ata_port_pbar_desc(ap, PDC_MMIO_BAR, offset, "port");
+	}
 
 	/* configure and activate */
 	rc = pci_set_dma_mask(pdev, ATA_DMA_MASK);

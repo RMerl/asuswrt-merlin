@@ -2,12 +2,16 @@
 # Makefile for Red Hat Linux AFS client.
 #
 
+afs-cache-$(CONFIG_AFS_FSCACHE) := cache.o
+
 kafs-objs := \
+	$(afs-cache-y) \
 	callback.o \
 	cell.o \
 	cmservice.o \
 	dir.o \
 	file.o \
+	flock.o \
 	fsclient.o \
 	inode.o \
 	main.o \

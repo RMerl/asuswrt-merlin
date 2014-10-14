@@ -11,6 +11,7 @@
 
 #include <linux/kernel.h>
 #include <linux/spinlock.h>
+#include <linux/slab.h>
 #include <linux/idr.h>
 #include <linux/usb.h>
 #include "usb.h"
@@ -65,7 +66,7 @@ static ssize_t show_ep_type(struct device *dev, struct device_attribute *attr,
 	struct ep_device *ep = to_ep_device(dev);
 	char *type = "unknown";
 
-	switch (ep->desc->bmAttributes & USB_ENDPOINT_XFERTYPE_MASK) {
+	switch (usb_endpoint_type(ep->desc)) {
 	case USB_ENDPOINT_XFER_CONTROL:
 		type = "Control";
 		break;
@@ -93,7 +94,7 @@ static ssize_t show_ep_interval(struct device *dev,
 
 	in = (ep->desc->bEndpointAddress & USB_DIR_IN);
 
-	switch (ep->desc->bmAttributes & USB_ENDPOINT_XFERTYPE_MASK) {
+	switch (usb_endpoint_type(ep->desc)) {
 	case USB_ENDPOINT_XFER_CONTROL:
 		if (ep->udev->speed == USB_SPEED_HIGH)
 			/* uframes per NAK */
@@ -135,10 +136,9 @@ static ssize_t show_ep_direction(struct device *dev,
 	struct ep_device *ep = to_ep_device(dev);
 	char *direction;
 
-	if ((ep->desc->bmAttributes & USB_ENDPOINT_XFERTYPE_MASK) ==
-			USB_ENDPOINT_XFER_CONTROL)
+	if (usb_endpoint_xfer_control(ep->desc))
 		direction = "both";
-	else if (ep->desc->bEndpointAddress & USB_DIR_IN)
+	else if (usb_endpoint_dir_in(ep->desc))
 		direction = "in";
 	else
 		direction = "out";
@@ -160,7 +160,7 @@ static struct attribute *ep_dev_attrs[] = {
 static struct attribute_group ep_dev_attr_grp = {
 	.attrs = ep_dev_attrs,
 };
-static struct attribute_group *ep_dev_groups[] = {
+static const struct attribute_group *ep_dev_groups[] = {
 	&ep_dev_attr_grp,
 	NULL
 };
@@ -169,11 +169,10 @@ static void ep_device_release(struct device *dev)
 {
 	struct ep_device *ep_dev = to_ep_device(dev);
 
-	dev_dbg(dev, "%s called for %s\n", __FUNCTION__, dev->bus_id);
 	kfree(ep_dev);
 }
 
-int usb_create_ep_files(struct device *parent,
+int usb_create_ep_devs(struct device *parent,
 			struct usb_host_endpoint *endpoint,
 			struct usb_device *udev)
 {
@@ -192,13 +191,13 @@ int usb_create_ep_files(struct device *parent,
 	ep_dev->dev.type = &usb_ep_device_type;
 	ep_dev->dev.parent = parent;
 	ep_dev->dev.release = ep_device_release;
-	snprintf(ep_dev->dev.bus_id, BUS_ID_SIZE, "ep_%02x",
-		 endpoint->desc.bEndpointAddress);
+	dev_set_name(&ep_dev->dev, "ep_%02x", endpoint->desc.bEndpointAddress);
 
 	retval = device_register(&ep_dev->dev);
 	if (retval)
 		goto error_register;
 
+	device_enable_async_suspend(&ep_dev->dev);
 	endpoint->ep_dev = ep_dev;
 	return retval;
 
@@ -208,7 +207,7 @@ exit:
 	return retval;
 }
 
-void usb_remove_ep_files(struct usb_host_endpoint *endpoint)
+void usb_remove_ep_devs(struct usb_host_endpoint *endpoint)
 {
 	struct ep_device *ep_dev = endpoint->ep_dev;
 

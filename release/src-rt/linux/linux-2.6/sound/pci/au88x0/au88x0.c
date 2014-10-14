@@ -126,7 +126,6 @@ static int snd_vortex_dev_free(struct snd_device *device)
 	vortex_gameport_unregister(vortex);
 	vortex_core_shutdown(vortex);
 	// Take down PCI interface.
-	synchronize_irq(vortex->irq);
 	free_irq(vortex->irq, vortex);
 	iounmap(vortex->mmio);
 	pci_release_regions(vortex->pci_dev);
@@ -152,8 +151,8 @@ snd_vortex_create(struct snd_card *card, struct pci_dev *pci, vortex_t ** rchip)
 	// check PCI availability (DMA).
 	if ((err = pci_enable_device(pci)) < 0)
 		return err;
-	if (pci_set_dma_mask(pci, DMA_32BIT_MASK) < 0 ||
-	    pci_set_consistent_dma_mask(pci, DMA_32BIT_MASK) < 0) {
+	if (pci_set_dma_mask(pci, DMA_BIT_MASK(32)) < 0 ||
+	    pci_set_consistent_dma_mask(pci, DMA_BIT_MASK(32)) < 0) {
 		printk(KERN_ERR "error to set DMA mask\n");
 		pci_disable_device(pci);
 		return -ENXIO;
@@ -181,8 +180,7 @@ snd_vortex_create(struct snd_card *card, struct pci_dev *pci, vortex_t ** rchip)
 	if ((err = pci_request_regions(pci, CARD_NAME_SHORT)) != 0)
 		goto regions_out;
 
-	chip->mmio = ioremap_nocache(pci_resource_start(pci, 0),
-	                             pci_resource_len(pci, 0));
+	chip->mmio = pci_ioremap_bar(pci, 0);
 	if (!chip->mmio) {
 		printk(KERN_ERR "MMIO area remap failed.\n");
 		err = -ENOMEM;
@@ -191,7 +189,7 @@ snd_vortex_create(struct snd_card *card, struct pci_dev *pci, vortex_t ** rchip)
 
 	/* Init audio core.
 	 * This must be done before we do request_irq otherwise we can get spurious
-	 * interupts that we do not handle properly and make a mess of things */
+	 * interrupts that we do not handle properly and make a mess of things */
 	if ((err = vortex_core_init(chip)) != 0) {
 		printk(KERN_ERR "hw core init failed\n");
 		goto core_out;
@@ -220,7 +218,6 @@ snd_vortex_create(struct snd_card *card, struct pci_dev *pci, vortex_t ** rchip)
 	return 0;
 
       alloc_out:
-	synchronize_irq(chip->irq);
 	free_irq(chip->irq, chip);
       irq_out:
 	vortex_core_shutdown(chip);
@@ -232,6 +229,7 @@ snd_vortex_create(struct snd_card *card, struct pci_dev *pci, vortex_t ** rchip)
 	pci_disable_device(chip->pci_dev);
 	//FIXME: this not the right place to unregister the gameport
 	vortex_gameport_unregister(chip);
+	kfree(chip);
 	return err;
 }
 
@@ -252,9 +250,9 @@ snd_vortex_probe(struct pci_dev *pci, const struct pci_device_id *pci_id)
 		return -ENOENT;
 	}
 	// (2)
-	card = snd_card_new(index[dev], id[dev], THIS_MODULE, 0);
-	if (card == NULL)
-		return -ENOMEM;
+	err = snd_card_create(index[dev], id[dev], THIS_MODULE, 0, &card);
+	if (err < 0)
+		return err;
 
 	// (3)
 	if ((err = snd_vortex_create(card, pci, &chip)) < 0) {
@@ -341,11 +339,7 @@ snd_vortex_probe(struct pci_dev *pci, const struct pci_device_id *pci_id)
 		snd_card_free(card);
 		return err;
 	}
-	if ((err = pci_read_config_byte(pci, PCI_REVISION_ID,
-				  &(chip->rev))) < 0) {
-		snd_card_free(card);
-		return err;
-	}
+	chip->rev = pci->revision;
 #ifdef CHIP_AU8830
 	if ((chip->rev) != 0xfe && (chip->rev) != 0xfa) {
 		printk(KERN_ALERT

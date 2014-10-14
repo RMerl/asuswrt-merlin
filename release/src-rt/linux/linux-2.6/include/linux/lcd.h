@@ -11,6 +11,7 @@
 #include <linux/device.h>
 #include <linux/mutex.h>
 #include <linux/notifier.h>
+#include <linux/fb.h>
 
 /* Notes on locking:
  *
@@ -45,9 +46,11 @@ struct lcd_ops {
 	int (*get_contrast)(struct lcd_device *);
 	/* Set LCD panel contrast */
         int (*set_contrast)(struct lcd_device *, int contrast);
+	/* Set LCD panel mode (resolutions ...) */
+	int (*set_mode)(struct lcd_device *, struct fb_videomode *);
 	/* Check if given framebuffer device is the one LCD is bound to;
 	   return 0 if not, !=0 if it is. If NULL, lcd always matches the fb. */
-	int (*check_fb)(struct fb_info *);
+	int (*check_fb)(struct lcd_device *, struct fb_info *);
 };
 
 struct lcd_device {
@@ -62,8 +65,31 @@ struct lcd_device {
 	struct mutex update_lock;
 	/* The framebuffer notifier block */
 	struct notifier_block fb_notif;
-	/* The class device structure */
-	struct class_device class_dev;
+
+	struct device dev;
+};
+
+struct lcd_platform_data {
+	/* reset lcd panel device. */
+	int (*reset)(struct lcd_device *ld);
+	/* on or off to lcd panel. if 'enable' is 0 then
+	   lcd power off and 1, lcd power on. */
+	int (*power_on)(struct lcd_device *ld, int enable);
+
+	/* it indicates whether lcd panel was enabled
+	   from bootloader or not. */
+	int lcd_enabled;
+	/* it means delay for stable time when it becomes low to high
+	   or high to low that is dependent on whether reset gpio is
+	   low active or high active. */
+	unsigned int reset_delay;
+	/* stable time needing to become lcd power on. */
+	unsigned int power_on_delay;
+	/* stable time needing to become lcd power off. */
+	unsigned int power_off_delay;
+
+	/* it could be used for any purpose. */
+	void *pdata;
 };
 
 static inline void lcd_set_power(struct lcd_device *ld, int power)
@@ -75,9 +101,15 @@ static inline void lcd_set_power(struct lcd_device *ld, int power)
 }
 
 extern struct lcd_device *lcd_device_register(const char *name,
-	void *devdata, struct lcd_ops *ops);
+	struct device *parent, void *devdata, struct lcd_ops *ops);
 extern void lcd_device_unregister(struct lcd_device *ld);
 
-#define to_lcd_device(obj) container_of(obj, struct lcd_device, class_dev)
+#define to_lcd_device(obj) container_of(obj, struct lcd_device, dev)
+
+static inline void * lcd_get_data(struct lcd_device *ld_dev)
+{
+	return dev_get_drvdata(&ld_dev->dev);
+}
+
 
 #endif

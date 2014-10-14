@@ -36,7 +36,7 @@ static char irq_tab[][5] __initdata = {
 	{0,	PCID,	PCIA,	PCIB,	PCIC }	/* 21: PCI Slot 4 */
 };
 
-int __init pcibios_map_irq(struct pci_dev *dev, u8 slot, u8 pin)
+int __init pcibios_map_irq(const struct pci_dev *dev, u8 slot, u8 pin)
 {
 	int virq;
 	virq = irq_tab[slot][pin];
@@ -49,7 +49,7 @@ int pcibios_plat_dev_init(struct pci_dev *dev)
 	return 0;
 }
 
-static void __init malta_piix_func0_fixup(struct pci_dev *pdev)
+static void __devinit malta_piix_func0_fixup(struct pci_dev *pdev)
 {
 	unsigned char reg_val;
 	static int piixirqmap[16] __initdata = {  /* PIIX PIRQC[A:D] irq mappings */
@@ -83,7 +83,7 @@ static void __init malta_piix_func0_fixup(struct pci_dev *pdev)
 DECLARE_PCI_FIXUP_HEADER(PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82371AB_0,
 	 malta_piix_func0_fixup);
 
-static void __init malta_piix_func1_fixup(struct pci_dev *pdev)
+static void __devinit malta_piix_func1_fixup(struct pci_dev *pdev)
 {
 	unsigned char reg_val;
 

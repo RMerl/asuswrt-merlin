@@ -1,8 +1,6 @@
 #ifndef HOSTAP_CONFIG_H
 #define HOSTAP_CONFIG_H
 
-#define PRISM2_VERSION "0.4.4-kernel"
-
 /* In the previous versions of Host AP driver, support for user space version
  * of IEEE 802.11 management (hostapd) used to be disabled in the default
  * configuration. From now on, support for hostapd is always included and it is
@@ -32,9 +30,9 @@
 
 /* Following defines can be used to remove unneeded parts of the driver, e.g.,
  * to limit the size of the kernel module. Definitions can be added here in
- * hostap_config.h or they can be added to make command with EXTRA_CFLAGS,
+ * hostap_config.h or they can be added to make command with ccflags-y,
  * e.g.,
- * 'make pccard EXTRA_CFLAGS="-DPRISM2_NO_DEBUG -DPRISM2_NO_PROCFS_DEBUG"'
+ * 'make pccard ccflags-y="-DPRISM2_NO_DEBUG -DPRISM2_NO_PROCFS_DEBUG"'
  */
 
 /* Do not include debug messages into the driver */

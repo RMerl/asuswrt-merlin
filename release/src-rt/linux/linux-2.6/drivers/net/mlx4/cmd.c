@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2004, 2005 Topspin Communications.  All rights reserved.
- * Copyright (c) 2005 Mellanox Technologies. All rights reserved.
+ * Copyright (c) 2005, 2006, 2007, 2008 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2005, 2006, 2007 Cisco Systems, Inc.  All rights reserved.
  *
  * This software is available to you under a choice of one of two
@@ -33,6 +33,7 @@
  */
 
 #include <linux/sched.h>
+#include <linux/slab.h>
 #include <linux/pci.h>
 #include <linux/errno.h>
 
@@ -67,6 +68,8 @@ enum {
 	CMD_STAT_BAD_INDEX	= 0x0a,
 	/* FW image corrupted: */
 	CMD_STAT_BAD_NVMEM	= 0x0b,
+	/* Error in ICM mapping (e.g. not enough auxiliary ICM pages to execute command): */
+	CMD_STAT_ICM_ERROR	= 0x0c,
 	/* Attempt to modify a QP/EE which is not in the presumed state: */
 	CMD_STAT_BAD_QP_STATE   = 0x10,
 	/* Bad segment parameters (Address/Size): */
@@ -78,7 +81,9 @@ enum {
 	/* Bad management packet (silently discarded): */
 	CMD_STAT_BAD_PKT	= 0x30,
 	/* More outstanding CQEs in CQ than new CQ size: */
-	CMD_STAT_BAD_SIZE	= 0x40
+	CMD_STAT_BAD_SIZE	= 0x40,
+	/* Multi Function device support required: */
+	CMD_STAT_MULTI_FUNC_REQ	= 0x50,
 };
 
 enum {
@@ -95,7 +100,7 @@ enum {
 };
 
 enum {
-	GO_BIT_TIMEOUT		= 10000
+	GO_BIT_TIMEOUT_MSECS	= 10000
 };
 
 struct mlx4_cmd_context {
@@ -106,7 +111,8 @@ struct mlx4_cmd_context {
 	u16			token;
 };
 
-static int mlx4_status_to_errno(u8 status) {
+static int mlx4_status_to_errno(u8 status)
+{
 	static const int trans_table[] = {
 		[CMD_STAT_INTERNAL_ERR]	  = -EIO,
 		[CMD_STAT_BAD_OP]	  = -EPERM,
@@ -118,12 +124,14 @@ static int mlx4_status_to_errno(u8 status) {
 		[CMD_STAT_BAD_RES_STATE]  = -EBADF,
 		[CMD_STAT_BAD_INDEX]	  = -EBADF,
 		[CMD_STAT_BAD_NVMEM]	  = -EFAULT,
+		[CMD_STAT_ICM_ERROR]	  = -ENFILE,
 		[CMD_STAT_BAD_QP_STATE]   = -EINVAL,
 		[CMD_STAT_BAD_SEG_PARAM]  = -EFAULT,
 		[CMD_STAT_REG_BOUND]	  = -EBUSY,
 		[CMD_STAT_LAM_NOT_PRE]	  = -EAGAIN,
 		[CMD_STAT_BAD_PKT]	  = -EINVAL,
 		[CMD_STAT_BAD_SIZE]	  = -ENOMEM,
+		[CMD_STAT_MULTI_FUNC_REQ] = -EACCES,
 	};
 
 	if (status >= ARRAY_SIZE(trans_table) ||
@@ -155,7 +163,7 @@ static int mlx4_cmd_post(struct mlx4_dev *dev, u64 in_param, u64 out_param,
 
 	end = jiffies;
 	if (event)
-		end += HZ * 10;
+		end += msecs_to_jiffies(GO_BIT_TIMEOUT_MSECS);
 
 	while (cmd_pending(dev)) {
 		if (time_after_eq(jiffies, end))
@@ -184,6 +192,13 @@ static int mlx4_cmd_post(struct mlx4_dev *dev, u64 in_param, u64 out_param,
 					       (event ? (1 << HCR_E_BIT) : 0)	|
 					       (op_modifier << HCR_OPMOD_SHIFT) |
 					       op),			  hcr + 6);
+
+	/*
+	 * Make sure that our HCR writes don't get mixed in with
+	 * writes from another CPU starting a FW command.
+	 */
+	mmiowb();
+
 	cmd->toggle = cmd->toggle ^ 1;
 
 	ret = 0;
@@ -246,8 +261,6 @@ void mlx4_cmd_event(struct mlx4_dev *dev, u16 token, u8 status, u64 out_param)
 	context->result    = mlx4_status_to_errno(status);
 	context->out_param = out_param;
 
-	context->token += priv->cmd.token_mask + 1;
-
 	complete(&context->done);
 }
 
@@ -264,6 +277,7 @@ static int mlx4_cmd_wait(struct mlx4_dev *dev, u64 in_param, u64 *out_param,
 	spin_lock(&cmd->context_lock);
 	BUG_ON(cmd->free_head < 0);
 	context = &cmd->context[cmd->free_head];
+	context->token += cmd->token_mask + 1;
 	cmd->free_head = context->next;
 	spin_unlock(&cmd->context_lock);
 

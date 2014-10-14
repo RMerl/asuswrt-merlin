@@ -16,6 +16,7 @@
 #include <linux/delay.h>
 #include <linux/module.h>
 #include <linux/poison.h>
+#include <linux/sched.h>
 #include <linux/spinlock.h>
 #include <linux/kallsyms.h>
 #include <linux/interrupt.h>
@@ -26,11 +27,6 @@
 /*
  * Must be called with lock->wait_lock held.
  */
-void debug_mutex_set_owner(struct mutex *lock, struct thread_info *new_owner)
-{
-	lock->owner = new_owner;
-}
-
 void debug_mutex_lock_common(struct mutex *lock, struct mutex_waiter *waiter)
 {
 	memset(waiter, MUTEX_DEBUG_INIT, sizeof(*waiter));
@@ -59,7 +55,6 @@ void debug_mutex_add_waiter(struct mutex *lock, struct mutex_waiter *waiter,
 
 	/* Mark the current thread as blocked on the lock: */
 	ti->task->blocked_on = waiter;
-	waiter->lock = lock;
 }
 
 void mutex_remove_waiter(struct mutex *lock, struct mutex_waiter *waiter,
@@ -79,10 +74,10 @@ void debug_mutex_unlock(struct mutex *lock)
 	if (unlikely(!debug_locks))
 		return;
 
-	DEBUG_LOCKS_WARN_ON(lock->owner != current_thread_info());
 	DEBUG_LOCKS_WARN_ON(lock->magic != lock);
-	DEBUG_LOCKS_WARN_ON(!lock->wait_list.prev && !lock->wait_list.next);
 	DEBUG_LOCKS_WARN_ON(lock->owner != current_thread_info());
+	DEBUG_LOCKS_WARN_ON(!lock->wait_list.prev && !lock->wait_list.next);
+	mutex_clear_owner(lock);
 }
 
 void debug_mutex_init(struct mutex *lock, const char *name,
@@ -95,7 +90,6 @@ void debug_mutex_init(struct mutex *lock, const char *name,
 	debug_check_no_locks_freed((void *)lock, sizeof(*lock));
 	lockdep_init_map(&lock->dep_map, name, key, 0);
 #endif
-	lock->owner = NULL;
 	lock->magic = lock;
 }
 
@@ -107,7 +101,7 @@ void debug_mutex_init(struct mutex *lock, const char *name,
  * use of the mutex is forbidden. The mutex must not be locked when
  * this function is called.
  */
-void fastcall mutex_destroy(struct mutex *lock)
+void mutex_destroy(struct mutex *lock)
 {
 	DEBUG_LOCKS_WARN_ON(mutex_is_locked(lock));
 	lock->magic = NULL;

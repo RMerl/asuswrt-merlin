@@ -1,17 +1,16 @@
 config VIDEO_BT848
 	tristate "BT848 Video For Linux"
-	depends on VIDEO_DEV && PCI && I2C && VIDEO_V4L1
+	depends on VIDEO_DEV && PCI && I2C && VIDEO_V4L2
 	select I2C_ALGOBIT
-	select FW_LOADER
 	select VIDEO_BTCX
-	select VIDEO_BUF
-	select VIDEO_IR
+	select VIDEOBUF_DMA_SG
+	depends on RC_CORE
 	select VIDEO_TUNER
 	select VIDEO_TVEEPROM
 	select VIDEO_MSP3400 if VIDEO_HELPER_CHIPS_AUTO
 	select VIDEO_TVAUDIO if VIDEO_HELPER_CHIPS_AUTO
 	select VIDEO_TDA7432 if VIDEO_HELPER_CHIPS_AUTO
-	select VIDEO_TDA9875 if VIDEO_HELPER_CHIPS_AUTO
+	select VIDEO_SAA6588 if VIDEO_HELPER_CHIPS_AUTO
 	---help---
 	  Support for BT848 based frame grabber/overlay boards. This includes
 	  the Miro, Hauppauge and STB boards. Please read the material in

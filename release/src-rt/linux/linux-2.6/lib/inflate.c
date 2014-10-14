@@ -7,7 +7,7 @@
  * Adapted for booting Linux by Hannu Savolainen 1993
  * based on gzip-1.0.3 
  *
- * Nicolas Pitre <nico@cam.org>, 1999/04/14 :
+ * Nicolas Pitre <nico@fluxnic.net>, 1999/04/14 :
  *   Little mods for all variable to reside either into rodata or bss segments
  *   by marking constant variables with 'const' and initializing all the others
  *   at run-time only.  This allows for the kernel uncompressor to run
@@ -103,6 +103,9 @@
       the two sets of lengths.
  */
 #include <linux/compiler.h>
+#ifdef NO_INFLATE_MALLOC
+#include <linux/slab.h>
+#endif
 
 #ifdef RCSID
 static char rcsid[] = "#Id: inflate.c,v 0.14 1993/06/10 13:27:04 jloup Exp #";
@@ -230,6 +233,45 @@ STATIC const ush mask_bits[] = {
 #define NEEDBITS(n) {while(k<(n)){b|=((ulg)NEXTBYTE())<<k;k+=8;}}
 #define DUMPBITS(n) {b>>=(n);k-=(n);}
 
+#ifndef NO_INFLATE_MALLOC
+/* A trivial malloc implementation, adapted from
+ *  malloc by Hannu Savolainen 1993 and Matthias Urlichs 1994
+ */
+
+static unsigned long malloc_ptr;
+static int malloc_count;
+
+static void *malloc(int size)
+{
+       void *p;
+
+       if (size < 0)
+		error("Malloc error");
+       if (!malloc_ptr)
+		malloc_ptr = free_mem_ptr;
+
+       malloc_ptr = (malloc_ptr + 3) & ~3;     /* Align */
+
+       p = (void *)malloc_ptr;
+       malloc_ptr += size;
+
+       if (free_mem_end_ptr && malloc_ptr >= free_mem_end_ptr)
+		error("Out of memory");
+
+       malloc_count++;
+       return p;
+}
+
+static void free(void *where)
+{
+       malloc_count--;
+       if (!malloc_count)
+		malloc_ptr = free_mem_ptr;
+}
+#else
+#define malloc(a) kmalloc(a, GFP_KERNEL)
+#define free(a) kfree(a)
+#endif
 
 /*
    Huffman code decoding is performed using a multi-level table lookup.
@@ -811,6 +853,9 @@ DEBG("<dyn");
   ll = malloc(sizeof(*ll) * (286+30));  /* literal/length and distance code lengths */
 #endif
 
+  if (ll == NULL)
+    return 1;
+
   /* make local bit buffer */
   b = bb;
   k = bk;
@@ -1042,7 +1087,6 @@ STATIC int INIT inflate(void)
   int e;                /* last block flag */
   int r;                /* result code */
   unsigned h;           /* maximum struct huft's malloc'ed */
-  void *ptr;
 
   /* initialize window, bit buffer */
   wp = 0;
@@ -1054,12 +1098,12 @@ STATIC int INIT inflate(void)
   h = 0;
   do {
     hufts = 0;
-    gzip_mark(&ptr);
-    if ((r = inflate_block(&e)) != 0) {
-      gzip_release(&ptr);	    
-      return r;
-    }
-    gzip_release(&ptr);
+#ifdef ARCH_HAS_DECOMP_WDOG
+    arch_decomp_wdog();
+#endif
+    r = inflate_block(&e);
+    if (r)
+	    return r;
     if (hufts > h)
       h = hufts;
   } while (!e);

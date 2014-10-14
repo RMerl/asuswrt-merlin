@@ -13,7 +13,7 @@
 #include <linux/slab.h>
 #include "internal.h"
 
-unsigned afs_server_timeout = 10;	/* server timeout in seconds */
+static unsigned afs_server_timeout = 10;	/* server timeout in seconds */
 
 static void afs_reap_server(struct work_struct *);
 
@@ -91,9 +91,10 @@ static struct afs_server *afs_alloc_server(struct afs_cell *cell,
 
 		memcpy(&server->addr, addr, sizeof(struct in_addr));
 		server->addr.s_addr = addr->s_addr;
+		_leave(" = %p{%d}", server, atomic_read(&server->usage));
+	} else {
+		_leave(" = NULL [nomem]");
 	}
-
-	_leave(" = %p{%d}", server, atomic_read(&server->usage));
 	return server;
 }
 
@@ -105,7 +106,7 @@ struct afs_server *afs_lookup_server(struct afs_cell *cell,
 {
 	struct afs_server *server, *candidate;
 
-	_enter("%p,"NIPQUAD_FMT, cell, NIPQUAD(addr->s_addr));
+	_enter("%p,%pI4", cell, &addr->s_addr);
 
 	/* quick scan of the list to see if we already have the server */
 	read_lock(&cell->servers_lock);
@@ -168,9 +169,8 @@ found_server:
 server_in_two_cells:
 	write_unlock(&cell->servers_lock);
 	kfree(candidate);
-	printk(KERN_NOTICE "kAFS:"
-	       " Server "NIPQUAD_FMT" appears to be in two cells\n",
-	       NIPQUAD(*addr));
+	printk(KERN_NOTICE "kAFS: Server %pI4 appears to be in two cells\n",
+	       addr);
 	_leave(" = -EEXIST");
 	return ERR_PTR(-EEXIST);
 }
@@ -184,7 +184,7 @@ struct afs_server *afs_find_server(const struct in_addr *_addr)
 	struct rb_node *p;
 	struct in_addr addr = *_addr;
 
-	_enter(NIPQUAD_FMT, NIPQUAD(addr.s_addr));
+	_enter("%pI4", &addr.s_addr);
 
 	read_lock(&afs_servers_lock);
 
@@ -238,8 +238,8 @@ void afs_put_server(struct afs_server *server)
 	if (atomic_read(&server->usage) == 0) {
 		list_move_tail(&server->grave, &afs_server_graveyard);
 		server->time_of_death = get_seconds();
-		schedule_delayed_work(&afs_server_reaper,
-				      afs_server_timeout * HZ);
+		queue_delayed_work(afs_wq, &afs_server_reaper,
+				   afs_server_timeout * HZ);
 	}
 	spin_unlock(&afs_server_graveyard_lock);
 	_leave(" [dead]");
@@ -285,10 +285,11 @@ static void afs_reap_server(struct work_struct *work)
 		expiry = server->time_of_death + afs_server_timeout;
 		if (expiry > now) {
 			delay = (expiry - now) * HZ;
-			if (!schedule_delayed_work(&afs_server_reaper, delay)) {
+			if (!queue_delayed_work(afs_wq, &afs_server_reaper,
+						delay)) {
 				cancel_delayed_work(&afs_server_reaper);
-				schedule_delayed_work(&afs_server_reaper,
-						      delay);
+				queue_delayed_work(afs_wq, &afs_server_reaper,
+						   delay);
 			}
 			break;
 		}
@@ -323,5 +324,5 @@ void __exit afs_purge_servers(void)
 {
 	afs_server_timeout = 0;
 	cancel_delayed_work(&afs_server_reaper);
-	schedule_delayed_work(&afs_server_reaper, 0);
+	queue_delayed_work(afs_wq, &afs_server_reaper, 0);
 }

@@ -19,7 +19,6 @@
  *
  */
 
-#include <sound/driver.h>
 #include <linux/init.h>
 #include <linux/moduleparam.h>
 #include <sound/core.h>
@@ -33,6 +32,7 @@
 #include "seq_timer.h"
 #include "seq_system.h"
 #include "seq_info.h"
+#include <sound/minors.h>
 #include <sound/seq_device.h>
 
 #if defined(CONFIG_SND_SEQ_DUMMY_MODULE)
@@ -44,7 +44,9 @@ int seq_default_timer_class = SNDRV_TIMER_CLASS_GLOBAL;
 int seq_default_timer_sclass = SNDRV_TIMER_SCLASS_NONE;
 int seq_default_timer_card = -1;
 int seq_default_timer_device =
-#ifdef CONFIG_SND_SEQ_RTCTIMER_DEFAULT
+#ifdef CONFIG_SND_SEQ_HRTIMER_DEFAULT
+	SNDRV_TIMER_GLOBAL_HRTIMER
+#elif defined(CONFIG_SND_SEQ_RTCTIMER_DEFAULT)
 	SNDRV_TIMER_GLOBAL_RTC
 #else
 	SNDRV_TIMER_GLOBAL_SYSTEM
@@ -53,7 +55,7 @@ int seq_default_timer_device =
 int seq_default_timer_subdevice = 0;
 int seq_default_timer_resolution = 0;	/* Hz */
 
-MODULE_AUTHOR("Frank van de Pol <fvdpol@coil.demon.nl>, Jaroslav Kysela <perex@suse.cz>");
+MODULE_AUTHOR("Frank van de Pol <fvdpol@coil.demon.nl>, Jaroslav Kysela <perex@perex.cz>");
 MODULE_DESCRIPTION("Advanced Linux Sound Architecture sequencer.");
 MODULE_LICENSE("GPL");
 
@@ -71,6 +73,9 @@ module_param(seq_default_timer_subdevice, int, 0644);
 MODULE_PARM_DESC(seq_default_timer_subdevice, "The default timer subdevice number.");
 module_param(seq_default_timer_resolution, int, 0644);
 MODULE_PARM_DESC(seq_default_timer_resolution, "The default timer resolution in Hz.");
+
+MODULE_ALIAS_CHARDEV(CONFIG_SND_MAJOR, SNDRV_MINOR_SEQUENCER);
+MODULE_ALIAS("devname:snd/seq");
 
 /*
  *  INIT PART

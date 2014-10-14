@@ -3,8 +3,6 @@
  *
  *  Copyright (C) 2001-2002 Deep Blue Solutions Ltd.
  *
- *  $Id: cpu.c,v 1.6 2002/07/18 13:58:51 rmk Exp $
- *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
@@ -15,39 +13,45 @@
 #include <linux/types.h>
 #include <linux/kernel.h>
 #include <linux/cpufreq.h>
-#include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/smp.h>
 #include <linux/init.h>
+#include <linux/io.h>
 
-#include <asm/hardware.h>
-#include <asm/io.h>
+#include <mach/hardware.h>
+#include <mach/platform.h>
 #include <asm/mach-types.h>
-#include <asm/hardware/icst525.h>
+#include <asm/hardware/icst.h>
 
 static struct cpufreq_driver integrator_driver;
 
-#define CM_ID  	(IO_ADDRESS(INTEGRATOR_HDR_BASE)+INTEGRATOR_HDR_ID_OFFSET)
-#define CM_OSC	(IO_ADDRESS(INTEGRATOR_HDR_BASE)+INTEGRATOR_HDR_OSC_OFFSET)
-#define CM_STAT (IO_ADDRESS(INTEGRATOR_HDR_BASE)+INTEGRATOR_HDR_STAT_OFFSET)
-#define CM_LOCK (IO_ADDRESS(INTEGRATOR_HDR_BASE)+INTEGRATOR_HDR_LOCK_OFFSET)
+#define CM_ID  	IO_ADDRESS(INTEGRATOR_HDR_ID)
+#define CM_OSC	IO_ADDRESS(INTEGRATOR_HDR_OSC)
+#define CM_STAT IO_ADDRESS(INTEGRATOR_HDR_STAT)
+#define CM_LOCK IO_ADDRESS(INTEGRATOR_HDR_LOCK)
 
-static const struct icst525_params lclk_params = {
-	.ref		= 24000,
-	.vco_max	= 320000,
+static const struct icst_params lclk_params = {
+	.ref		= 24000000,
+	.vco_max	= ICST525_VCO_MAX_5V,
+	.vco_min	= ICST525_VCO_MIN,
 	.vd_min		= 8,
 	.vd_max		= 132,
 	.rd_min		= 24,
 	.rd_max		= 24,
+	.s2div		= icst525_s2div,
+	.idx2s		= icst525_idx2s,
 };
 
-static const struct icst525_params cclk_params = {
-	.ref		= 24000,
-	.vco_max	= 320000,
+static const struct icst_params cclk_params = {
+	.ref		= 24000000,
+	.vco_max	= ICST525_VCO_MAX_5V,
+	.vco_min	= ICST525_VCO_MIN,
 	.vd_min		= 12,
 	.vd_max		= 160,
 	.rd_min		= 24,
 	.rd_max		= 24,
+	.s2div		= icst525_s2div,
+	.idx2s		= icst525_idx2s,
 };
 
 /*
@@ -55,17 +59,17 @@ static const struct icst525_params cclk_params = {
  */
 static int integrator_verify_policy(struct cpufreq_policy *policy)
 {
-	struct icst525_vco vco;
+	struct icst_vco vco;
 
 	cpufreq_verify_within_limits(policy, 
 				     policy->cpuinfo.min_freq, 
 				     policy->cpuinfo.max_freq);
 
-	vco = icst525_khz_to_vco(&cclk_params, policy->max);
-	policy->max = icst525_khz(&cclk_params, vco);
+	vco = icst_hz_to_vco(&cclk_params, policy->max * 1000);
+	policy->max = icst_hz(&cclk_params, vco) / 1000;
 
-	vco = icst525_khz_to_vco(&cclk_params, policy->min);
-	policy->min = icst525_khz(&cclk_params, vco);
+	vco = icst_hz_to_vco(&cclk_params, policy->min * 1000);
+	policy->min = icst_hz(&cclk_params, vco) / 1000;
 
 	cpufreq_verify_within_limits(policy, 
 				     policy->cpuinfo.min_freq, 
@@ -81,7 +85,7 @@ static int integrator_set_target(struct cpufreq_policy *policy,
 {
 	cpumask_t cpus_allowed;
 	int cpu = policy->cpu;
-	struct icst525_vco vco;
+	struct icst_vco vco;
 	struct cpufreq_freqs freqs;
 	u_int cm_osc;
 
@@ -107,17 +111,17 @@ static int integrator_set_target(struct cpufreq_policy *policy,
 	}
 	vco.v = cm_osc & 255;
 	vco.r = 22;
-	freqs.old = icst525_khz(&cclk_params, vco);
+	freqs.old = icst_hz(&cclk_params, vco) / 1000;
 
-	/* icst525_khz_to_vco rounds down -- so we need the next
+	/* icst_hz_to_vco rounds down -- so we need the next
 	 * larger freq in case of CPUFREQ_RELATION_L.
 	 */
 	if (relation == CPUFREQ_RELATION_L)
 		target_freq += 999;
 	if (target_freq > policy->max)
 		target_freq = policy->max;
-	vco = icst525_khz_to_vco(&cclk_params, target_freq);
-	freqs.new = icst525_khz(&cclk_params, vco);
+	vco = icst_hz_to_vco(&cclk_params, target_freq * 1000);
+	freqs.new = icst_hz(&cclk_params, vco) / 1000;
 
 	freqs.cpu = policy->cpu;
 
@@ -157,7 +161,7 @@ static unsigned int integrator_get(unsigned int cpu)
 	cpumask_t cpus_allowed;
 	unsigned int current_freq;
 	u_int cm_osc;
-	struct icst525_vco vco;
+	struct icst_vco vco;
 
 	cpus_allowed = current->cpus_allowed;
 
@@ -169,13 +173,13 @@ static unsigned int integrator_get(unsigned int cpu)
 
 	if (machine_is_integrator()) {
 		vco.s = (cm_osc >> 8) & 7;
-	} else if (machine_is_cintegrator()) {
+	} else {
 		vco.s = 1;
 	}
 	vco.v = cm_osc & 255;
 	vco.r = 22;
 
-	current_freq = icst525_khz(&cclk_params, vco); /* current freq */
+	current_freq = icst_hz(&cclk_params, vco) / 1000; /* current freq */
 
 	set_cpus_allowed(current, cpus_allowed);
 
@@ -186,7 +190,6 @@ static int integrator_cpufreq_init(struct cpufreq_policy *policy)
 {
 
 	/* set default policy and cpuinfo */
-	policy->governor = CPUFREQ_DEFAULT_GOVERNOR;
 	policy->cpuinfo.max_freq = 160000;
 	policy->cpuinfo.min_freq = 12000;
 	policy->cpuinfo.transition_latency = 1000000; /* 1 ms, assumed */

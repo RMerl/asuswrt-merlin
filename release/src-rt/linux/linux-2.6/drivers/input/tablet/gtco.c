@@ -2,7 +2,7 @@
 
 GTCO digitizer USB driver
 
-Use the err(), dbg() and info() macros from usb.h for system logging
+Use the err() and dbg() macros from usb.h for system logging
 
 TO CHECK:  Is pressure done right on report 5?
 
@@ -64,7 +64,6 @@ Scott Hill shill@gtcocalcomp.com
 #include <asm/byteorder.h>
 
 
-#include <linux/version.h>
 #include <linux/usb/input.h>
 
 /* Version with a Major number of 2 is for kernel inclusion only. */
@@ -93,7 +92,7 @@ Scott Hill shill@gtcocalcomp.com
 /* DATA STRUCTURES */
 
 /* Device table */
-static struct usb_device_id gtco_usbid_table [] = {
+static const struct usb_device_id gtco_usbid_table[] = {
 	{ USB_DEVICE(VENDOR_ID_GTCO, PID_400) },
 	{ USB_DEVICE(VENDOR_ID_GTCO, PID_401) },
 	{ USB_DEVICE(VENDOR_ID_GTCO, PID_1000) },
@@ -245,11 +244,11 @@ static void parse_hid_report_descriptor(struct gtco *device, char * report,
 			data = report[i];
 			break;
 		case 2:
-			data16 = le16_to_cpu(get_unaligned((__le16 *)&report[i]));
+			data16 = get_unaligned_le16(&report[i]);
 			break;
 		case 3:
 			size = 4;
-			data32 = le32_to_cpu(get_unaligned((__le32 *)&report[i]));
+			data32 = get_unaligned_le32(&report[i]);
 			break;
 		}
 
@@ -573,10 +572,12 @@ static void gtco_setup_caps(struct input_dev *inputdev)
 	struct gtco *device = input_get_drvdata(inputdev);
 
 	/* Which events */
-	inputdev->evbit[0] = BIT(EV_KEY) | BIT(EV_ABS) | BIT(EV_MSC);
+	inputdev->evbit[0] = BIT_MASK(EV_KEY) | BIT_MASK(EV_ABS) |
+		BIT_MASK(EV_MSC);
 
 	/* Misc event menu block */
-	inputdev->mscbit[0] = BIT(MSC_SCAN)|BIT(MSC_SERIAL)|BIT(MSC_RAW) ;
+	inputdev->mscbit[0] = BIT_MASK(MSC_SCAN) | BIT_MASK(MSC_SERIAL) |
+		BIT_MASK(MSC_RAW);
 
 	/* Absolute values based on HID report info */
 	input_set_abs_params(inputdev, ABS_X, device->min_X, device->max_X,
@@ -693,10 +694,10 @@ static void gtco_urb_callback(struct urb *urbinfo)
 			/*  Fall thru */
 		case 1:
 			/* All reports have X and Y coords in the same place */
-			val = le16_to_cpu(get_unaligned((__le16 *)&device->buffer[1]));
+			val = get_unaligned_le16(&device->buffer[1]);
 			input_report_abs(inputdev, ABS_X, val);
 
-			val = le16_to_cpu(get_unaligned((__le16 *)&device->buffer[3]));
+			val = get_unaligned_le16(&device->buffer[3]);
 			input_report_abs(inputdev, ABS_Y, val);
 
 			/* Ditto for proximity bit */
@@ -760,7 +761,7 @@ static void gtco_urb_callback(struct urb *urbinfo)
 				le_buffer[1]  = (u8)(device->buffer[4] >> 1);
 				le_buffer[1] |= (u8)((device->buffer[5] & 0x1) << 7);
 
-				val = le16_to_cpu(get_unaligned((__le16 *)le_buffer));
+				val = get_unaligned_le16(le_buffer);
 				input_report_abs(inputdev, ABS_Y, val);
 
 				/*
@@ -770,10 +771,10 @@ static void gtco_urb_callback(struct urb *urbinfo)
 				buttonbyte = device->buffer[5] >> 1;
 			} else {
 
-				val = le16_to_cpu(get_unaligned((__le16 *)&device->buffer[1]));
+				val = get_unaligned_le16(&device->buffer[1]);
 				input_report_abs(inputdev, ABS_X, val);
 
-				val = le16_to_cpu(get_unaligned((__le16 *)&device->buffer[3]));
+				val = get_unaligned_le16(&device->buffer[3]);
 				input_report_abs(inputdev, ABS_Y, val);
 
 				buttonbyte = device->buffer[5];
@@ -828,7 +829,7 @@ static int gtco_probe(struct usb_interface *usbinterface,
 	struct gtco             *gtco;
 	struct input_dev        *input_dev;
 	struct hid_descriptor   *hid_desc;
-	char                    *report = NULL;
+	char                    *report;
 	int                     result = 0, retry;
 	int			error;
 	struct usb_endpoint_descriptor *endpoint;
@@ -849,8 +850,8 @@ static int gtco_probe(struct usb_interface *usbinterface,
 	gtco->usbdev = usb_get_dev(interface_to_usbdev(usbinterface));
 
 	/* Allocate some data for incoming reports */
-	gtco->buffer = usb_buffer_alloc(gtco->usbdev, REPORT_MAX_SIZE,
-					GFP_KERNEL, &gtco->buf_dma);
+	gtco->buffer = usb_alloc_coherent(gtco->usbdev, REPORT_MAX_SIZE,
+					  GFP_KERNEL, &gtco->buf_dma);
 	if (!gtco->buffer) {
 		err("No more memory for us buffers");
 		error = -ENOMEM;
@@ -861,7 +862,7 @@ static int gtco_probe(struct usb_interface *usbinterface,
 	gtco->urbinfo = usb_alloc_urb(0, GFP_KERNEL);
 	if (!gtco->urbinfo) {
 		err("Failed to allocate URB");
-		return -ENOMEM;
+		error = -ENOMEM;
 		goto err_free_buf;
 	}
 
@@ -876,7 +877,7 @@ static int gtco_probe(struct usb_interface *usbinterface,
 	dbg("num endpoints:     %d", usbinterface->cur_altsetting->desc.bNumEndpoints);
 	dbg("interface class:   %d", usbinterface->cur_altsetting->desc.bInterfaceClass);
 	dbg("endpoint: attribute:0x%x type:0x%x", endpoint->bmAttributes, endpoint->bDescriptorType);
-	if ((endpoint->bmAttributes & USB_ENDPOINT_XFERTYPE_MASK) == USB_ENDPOINT_XFER_INT)
+	if (usb_endpoint_xfer_int(endpoint))
 		dbg("endpoint: we have interrupt endpoint\n");
 
 	dbg("endpoint extra len:%d ", usbinterface->altsetting[0].extralen);
@@ -895,7 +896,7 @@ static int gtco_probe(struct usb_interface *usbinterface,
 	dbg("Extra descriptor success: type:%d  len:%d",
 	    hid_desc->bDescriptorType,  hid_desc->wDescriptorLength);
 
-	report = kzalloc(hid_desc->wDescriptorLength, GFP_KERNEL);
+	report = kzalloc(le16_to_cpu(hid_desc->wDescriptorLength), GFP_KERNEL);
 	if (!report) {
 		err("No more memory for report");
 		error = -ENOMEM;
@@ -911,27 +912,25 @@ static int gtco_probe(struct usb_interface *usbinterface,
 					 REPORT_DEVICE_TYPE << 8,
 					 0, /* interface */
 					 report,
-					 hid_desc->wDescriptorLength,
+					 le16_to_cpu(hid_desc->wDescriptorLength),
 					 5000); /* 5 secs */
 
-		if (result == hid_desc->wDescriptorLength)
+		dbg("usb_control_msg result: %d", result);
+		if (result == le16_to_cpu(hid_desc->wDescriptorLength)) {
+			parse_hid_report_descriptor(gtco, report, result);
 			break;
+		}
 	}
 
+	kfree(report);
+
 	/* If we didn't get the report, fail */
-	dbg("usb_control_msg result: :%d", result);
-	if (result != hid_desc->wDescriptorLength) {
+	if (result != le16_to_cpu(hid_desc->wDescriptorLength)) {
 		err("Failed to get HID Report Descriptor of size: %d",
 		    hid_desc->wDescriptorLength);
 		error = -EIO;
 		goto err_free_urb;
 	}
-
-	/* Now we parse the report */
-	parse_hid_report_descriptor(gtco, report, result);
-
-	/* Now we delete it */
-	kfree(report);
 
 	/* Create a device file node */
 	usb_make_path(gtco->usbdev, gtco->usbpath, sizeof(gtco->usbpath));
@@ -983,10 +982,9 @@ static int gtco_probe(struct usb_interface *usbinterface,
  err_free_urb:
 	usb_free_urb(gtco->urbinfo);
  err_free_buf:
-	usb_buffer_free(gtco->usbdev, REPORT_MAX_SIZE,
-			gtco->buffer, gtco->buf_dma);
+	usb_free_coherent(gtco->usbdev, REPORT_MAX_SIZE,
+			  gtco->buffer, gtco->buf_dma);
  err_free_devs:
-	kfree(report);
 	input_free_device(input_dev);
 	kfree(gtco);
 	return error;
@@ -1007,12 +1005,12 @@ static void gtco_disconnect(struct usb_interface *interface)
 		input_unregister_device(gtco->inputdevice);
 		usb_kill_urb(gtco->urbinfo);
 		usb_free_urb(gtco->urbinfo);
-		usb_buffer_free(gtco->usbdev, REPORT_MAX_SIZE,
-				gtco->buffer, gtco->buf_dma);
+		usb_free_coherent(gtco->usbdev, REPORT_MAX_SIZE,
+				  gtco->buffer, gtco->buf_dma);
 		kfree(gtco);
 	}
 
-	info("gtco driver disconnected");
+	dev_info(&interface->dev, "gtco driver disconnected\n");
 }
 
 /*   STANDARD MODULE LOAD ROUTINES  */
@@ -1052,4 +1050,5 @@ static void __exit gtco_exit(void)
 module_init(gtco_init);
 module_exit(gtco_exit);
 
+MODULE_DESCRIPTION("GTCO digitizer USB driver");
 MODULE_LICENSE("GPL");

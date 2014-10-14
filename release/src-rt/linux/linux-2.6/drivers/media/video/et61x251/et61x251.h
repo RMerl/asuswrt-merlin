@@ -36,6 +36,7 @@
 #include <linux/mutex.h>
 #include <linux/stddef.h>
 #include <linux/string.h>
+#include <linux/kref.h>
 
 #include "et61x251_sensor.h"
 
@@ -58,31 +59,7 @@
 /*****************************************************************************/
 
 static const struct usb_device_id et61x251_id_table[] = {
-	{ USB_DEVICE(0x102c, 0x6151), },
 	{ USB_DEVICE(0x102c, 0x6251), },
-	{ USB_DEVICE(0x102c, 0x6253), },
-	{ USB_DEVICE(0x102c, 0x6254), },
-	{ USB_DEVICE(0x102c, 0x6255), },
-	{ USB_DEVICE(0x102c, 0x6256), },
-	{ USB_DEVICE(0x102c, 0x6257), },
-	{ USB_DEVICE(0x102c, 0x6258), },
-	{ USB_DEVICE(0x102c, 0x6259), },
-	{ USB_DEVICE(0x102c, 0x625a), },
-	{ USB_DEVICE(0x102c, 0x625b), },
-	{ USB_DEVICE(0x102c, 0x625c), },
-	{ USB_DEVICE(0x102c, 0x625d), },
-	{ USB_DEVICE(0x102c, 0x625e), },
-	{ USB_DEVICE(0x102c, 0x625f), },
-	{ USB_DEVICE(0x102c, 0x6260), },
-	{ USB_DEVICE(0x102c, 0x6261), },
-	{ USB_DEVICE(0x102c, 0x6262), },
-	{ USB_DEVICE(0x102c, 0x6263), },
-	{ USB_DEVICE(0x102c, 0x6264), },
-	{ USB_DEVICE(0x102c, 0x6265), },
-	{ USB_DEVICE(0x102c, 0x6266), },
-	{ USB_DEVICE(0x102c, 0x6267), },
-	{ USB_DEVICE(0x102c, 0x6268), },
-	{ USB_DEVICE(0x102c, 0x6269), },
 	{ }
 };
 
@@ -134,7 +111,7 @@ struct et61x251_module_param {
 };
 
 static DEFINE_MUTEX(et61x251_sysfs_lock);
-static DECLARE_RWSEM(et61x251_disconnect);
+static DECLARE_RWSEM(et61x251_dev_lock);
 
 struct et61x251_device {
 	struct video_device* v4ldev;
@@ -158,12 +135,14 @@ struct et61x251_device {
 	struct et61x251_sysfs_attr sysfs;
 	struct et61x251_module_param module_param;
 
+	struct kref kref;
 	enum et61x251_dev_state state;
 	u8 users;
 
-	struct mutex dev_mutex, fileop_mutex;
+	struct completion probe;
+	struct mutex open_mutex, fileop_mutex;
 	spinlock_t queue_lock;
-	wait_queue_head_t open, wait_frame, wait_stream;
+	wait_queue_head_t wait_open, wait_frame, wait_stream;
 };
 
 /*****************************************************************************/
@@ -177,7 +156,7 @@ et61x251_match_id(struct et61x251_device* cam, const struct usb_device_id *id)
 
 void
 et61x251_attach_sensor(struct et61x251_device* cam,
-		       struct et61x251_sensor* sensor)
+		       const struct et61x251_sensor* sensor)
 {
 	memcpy(&cam->sensor, sensor, sizeof(struct et61x251_sensor));
 }
@@ -195,8 +174,8 @@ do {                                                                          \
 		else if ((level) == 2)                                        \
 			dev_info(&cam->usbdev->dev, fmt "\n", ## args);       \
 		else if ((level) >= 3)                                        \
-			dev_info(&cam->usbdev->dev, "[%s:%d] " fmt "\n",      \
-				 __FUNCTION__, __LINE__ , ## args);           \
+			dev_info(&cam->usbdev->dev, "[%s:%s:%d] " fmt "\n",   \
+				 __FILE__, __func__, __LINE__ , ## args); \
 	}                                                                     \
 } while (0)
 #	define KDBG(level, fmt, args...)                                      \
@@ -205,8 +184,8 @@ do {                                                                          \
 		if ((level) == 1 || (level) == 2)                             \
 			pr_info("et61x251: " fmt "\n", ## args);              \
 		else if ((level) == 3)                                        \
-			pr_debug("et61x251: [%s:%d] " fmt "\n", __FUNCTION__, \
-				 __LINE__ , ## args);                         \
+			pr_debug("sn9c102: [%s:%s:%d] " fmt "\n", __FILE__,   \
+				 __func__, __LINE__ , ## args);           \
 	}                                                                     \
 } while (0)
 #	define V4LDBG(level, name, cmd)                                       \
@@ -222,8 +201,8 @@ do {                                                                          \
 
 #undef PDBG
 #define PDBG(fmt, args...)                                                    \
-dev_info(&cam->usbdev->dev, "[%s:%d] " fmt "\n",                              \
-	 __FUNCTION__, __LINE__ , ## args)
+dev_info(&cam->usbdev->dev, "[%s:%s:%d] " fmt "\n", __FILE__, __func__,   \
+	 __LINE__ , ## args)
 
 #undef PDBGG
 #define PDBGG(fmt, args...) do {;} while(0) /* placeholder */

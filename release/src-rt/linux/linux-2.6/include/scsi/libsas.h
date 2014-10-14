@@ -30,12 +30,13 @@
 #include <linux/timer.h>
 #include <linux/pci.h>
 #include <scsi/sas.h>
+#include <linux/libata.h>
 #include <linux/list.h>
-#include <asm/semaphore.h>
 #include <scsi/scsi_device.h>
 #include <scsi/scsi_cmnd.h>
 #include <scsi/scsi_transport_sas.h>
-#include <asm/scatterlist.h>
+#include <linux/scatterlist.h>
+#include <linux/slab.h>
 
 struct block_device;
 
@@ -90,8 +91,6 @@ enum discover_event {
 
 /* ---------- Expander Devices ---------- */
 
-#define ETASK 0xFA
-
 #define to_dom_device(_obj) container_of(_obj, struct domain_device, dev_obj)
 #define to_dev_attr(_attr)  container_of(_attr, struct domain_dev_attribute,\
                                          attr)
@@ -121,8 +120,8 @@ struct ex_phy {
 	u8   attached_sata_dev:1;
 	u8   attached_sata_ps:1;
 
-	enum sas_proto attached_tproto;
-	enum sas_proto attached_iproto;
+	enum sas_protocol attached_tproto;
+	enum sas_protocol attached_iproto;
 
 	u8   attached_sas_addr[SAS_ADDR_SIZE];
 	u8   attached_phy_id;
@@ -165,6 +164,13 @@ struct sata_device {
 
         u8     port_no;        /* port number, if this is a PM (Port) */
         struct list_head children; /* PM Ports if this is a PM */
+
+	struct ata_port *ap;
+	struct ata_host ata_host;
+	struct ata_taskfile tf;
+	u32 sstatus;
+	u32 serror;
+	u32 scontrol;
 };
 
 /* ---------- Domain device ---------- */
@@ -183,8 +189,8 @@ struct domain_device {
 
         struct list_head dev_list_node;
 
-        enum sas_proto    iproto;
-        enum sas_proto    tproto;
+        enum sas_protocol    iproto;
+        enum sas_protocol    tproto;
 
         struct sas_rphy *rphy;
 
@@ -199,6 +205,7 @@ struct domain_device {
         };
 
         void *lldd_dev;
+	int gone;
 };
 
 struct sas_discovery_event {
@@ -237,8 +244,8 @@ struct asd_sas_port {
 	enum sas_class   class;
 	u8               sas_addr[SAS_ADDR_SIZE];
 	u8               attached_sas_addr[SAS_ADDR_SIZE];
-	enum sas_proto   iproto;
-	enum sas_proto   tproto;
+	enum sas_protocol   iproto;
+	enum sas_protocol   tproto;
 
 	enum sas_oob_mode oob_mode;
 
@@ -281,8 +288,8 @@ struct asd_sas_phy {
 
 	int            id;	  /* must be set */
 	enum sas_class class;
-	enum sas_proto iproto;
-	enum sas_proto tproto;
+	enum sas_protocol iproto;
+	enum sas_protocol tproto;
 
 	enum sas_phy_type  type;
 	enum sas_phy_role  role;
@@ -340,7 +347,7 @@ struct sas_ha_struct {
 
 /* public: */
 	char *sas_ha_name;
-	struct pci_dev *pcidev;	  /* should be set */
+	struct device *dev;	  /* should be set */
 	struct module *lldd_module; /* should be set */
 
 	u8 *sas_addr;		  /* must be set */
@@ -354,6 +361,8 @@ struct sas_ha_struct {
 	/* The class calls this to send a task for execution. */
 	int lldd_max_execute_num;
 	int lldd_queue_size;
+	int strict_wide_ports; /* both sas_addr and attached_sas_addr must match
+				* their siblings when forming wide ports */
 
 	/* LLDD calls these to notify the class of an event. */
 	void (*notify_ha_event)(struct sas_ha_struct *, enum ha_event);
@@ -416,16 +425,7 @@ enum service_response {
 };
 
 enum exec_status {
-	SAM_GOOD         = 0,
-	SAM_CHECK_COND   = 2,
-	SAM_COND_MET     = 4,
-	SAM_BUSY         = 8,
-	SAM_INTERMEDIATE = 0x10,
-	SAM_IM_COND_MET  = 0x12,
-	SAM_RESV_CONFLICT= 0x14,
-	SAM_TASK_SET_FULL= 0x28,
-	SAM_ACA_ACTIVE   = 0x30,
-	SAM_TASK_ABORTED = 0x40,
+	/* The SAM_STAT_.. codes fit in the lower 6 bits */
 
 	SAS_DEV_NO_RESPONSE = 0x80,
 	SAS_DATA_UNDERRUN,
@@ -529,7 +529,7 @@ struct sas_task {
 	spinlock_t   task_state_lock;
 	unsigned     task_state_flags;
 
-	enum   sas_proto      task_proto;
+	enum   sas_protocol      task_proto;
 
 	/* Used by the discovery code. */
 	struct timer_list     timer;
@@ -555,7 +555,7 @@ struct sas_task {
 	struct work_struct abort_work;
 };
 
-
+extern struct kmem_cache *sas_task_cache;
 
 #define SAS_TASK_STATE_PENDING      1
 #define SAS_TASK_STATE_DONE         2
@@ -565,7 +565,6 @@ struct sas_task {
 
 static inline struct sas_task *sas_alloc_task(gfp_t flags)
 {
-	extern struct kmem_cache *sas_task_cache;
 	struct sas_task *task = kmem_cache_zalloc(sas_task_cache, flags);
 
 	if (task) {
@@ -582,7 +581,6 @@ static inline struct sas_task *sas_alloc_task(gfp_t flags)
 static inline void sas_free_task(struct sas_task *task)
 {
 	if (task) {
-		extern struct kmem_cache *sas_task_cache;
 		BUG_ON(!list_empty(&task->list));
 		kmem_cache_free(sas_task_cache, task);
 	}
@@ -624,13 +622,14 @@ int sas_set_phy_speed(struct sas_phy *phy,
 		      struct sas_phy_linkrates *rates);
 int sas_phy_enable(struct sas_phy *phy, int enabled);
 int sas_phy_reset(struct sas_phy *phy, int hard_reset);
-extern int sas_queuecommand(struct scsi_cmnd *,
-		     void (*scsi_done)(struct scsi_cmnd *));
+int sas_queue_up(struct sas_task *task);
+extern int sas_queuecommand(struct Scsi_Host * ,struct scsi_cmnd *);
 extern int sas_target_alloc(struct scsi_target *);
 extern int sas_slave_alloc(struct scsi_device *);
 extern int sas_slave_configure(struct scsi_device *);
 extern void sas_slave_destroy(struct scsi_device *);
-extern int sas_change_queue_depth(struct scsi_device *, int new_depth);
+extern int sas_change_queue_depth(struct scsi_device *, int new_depth,
+				  int reason);
 extern int sas_change_queue_type(struct scsi_device *, int qt);
 extern int sas_bios_param(struct scsi_device *,
 			  struct block_device *,
@@ -660,5 +659,18 @@ void sas_task_abort(struct sas_task *);
 int __sas_task_abort(struct sas_task *);
 int sas_eh_device_reset_handler(struct scsi_cmnd *cmd);
 int sas_eh_bus_reset_handler(struct scsi_cmnd *cmd);
+
+extern void sas_target_destroy(struct scsi_target *);
+extern int sas_slave_alloc(struct scsi_device *);
+extern int sas_ioctl(struct scsi_device *sdev, int cmd, void __user *arg);
+
+extern int sas_smp_handler(struct Scsi_Host *shost, struct sas_rphy *rphy,
+			   struct request *req);
+
+extern void sas_ssp_task_response(struct device *dev, struct sas_task *task,
+				  struct ssp_response_iu *iu);
+struct sas_phy *sas_find_local_phy(struct domain_device *dev);
+
+int sas_request_addr(struct Scsi_Host *shost, u8 *addr);
 
 #endif /* _SASLIB_H_ */

@@ -280,7 +280,6 @@ struct myri_eth {
 	void __iomem			*lregs;		/* Quick ptr to LANAI regs.   */
 	struct sk_buff	       *rx_skbs[RX_RING_SIZE+1];/* RX skb's                   */
 	struct sk_buff	       *tx_skbs[TX_RING_SIZE];  /* TX skb's                   */
-	struct net_device_stats		enet_stats;	/* Interface stats.           */
 
 	/* These are less frequently accessed. */
 	void __iomem			*regs;          /* MyriCOM register space.    */
@@ -289,7 +288,7 @@ struct myri_eth {
 	struct myri_eeprom		eeprom;		/* Local copy of EEPROM.      */
 	unsigned int			reg_size;	/* Size of register space.    */
 	unsigned int			shmem_base;	/* Offset to shared ram.      */
-	struct sbus_dev			*myri_sdev;	/* Our SBUS device struct.    */
+	struct platform_device		*myri_op;	/* Our OF device struct.    */
 };
 
 /* We use this to acquire receive skb's that we can DMA directly into. */

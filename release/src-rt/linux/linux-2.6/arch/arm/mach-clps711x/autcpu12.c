@@ -22,10 +22,10 @@
 #include <linux/types.h>
 #include <linux/string.h>
 #include <linux/mm.h>
+#include <linux/io.h>
 
-#include <asm/hardware.h>
+#include <mach/hardware.h>
 #include <asm/sizes.h>
-#include <asm/io.h>
 #include <asm/setup.h>
 #include <asm/mach-types.h>
 #include <asm/mach/arch.h>
@@ -33,7 +33,7 @@
 #include <asm/page.h>
 
 #include <asm/mach/map.h>
-#include <asm/arch/autcpu12.h>
+#include <mach/autcpu12.h>
 
 #include "common.h"
 
@@ -64,8 +64,6 @@ void __init autcpu12_map_io(void)
 
 MACHINE_START(AUTCPU12, "autronix autcpu12")
 	/* Maintainer: Thomas Gleixner */
-	.phys_io	= 0x80000000,
-	.io_pg_offst	= ((0xff000000) >> 18) & 0xfffc,
 	.boot_params	= 0xc0020000,
 	.map_io		= autcpu12_map_io,
 	.init_irq	= clps711x_init_irq,

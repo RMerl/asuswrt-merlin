@@ -13,6 +13,8 @@
 
 #include "mt352.h"
 
+DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
+
 static int umt_mt352_demod_init(struct dvb_frontend *fe)
 {
 	static u8 mt352_clock_config[] = { 0x89, 0xb8, 0x2d };
@@ -65,9 +67,7 @@ static int umt_mt352_frontend_attach(struct dvb_usb_adapter *adap)
 
 static int umt_tuner_attach (struct dvb_usb_adapter *adap)
 {
-	adap->pll_addr = 0x61;
-	adap->pll_desc = &dvb_pll_tua6034;
-	adap->fe->ops.tuner_ops.calc_regs = dvb_usb_tuner_calc_regs;
+	dvb_attach(dvb_pll_attach, adap->fe, 0x61, NULL, DVB_PLL_TUA6034);
 	return 0;
 }
 
@@ -77,15 +77,16 @@ static struct dvb_usb_device_properties umt_properties;
 static int umt_probe(struct usb_interface *intf,
 		const struct usb_device_id *id)
 {
-	if (dvb_usb_device_init(intf,&umt_properties,THIS_MODULE,NULL) == 0)
+	if (0 == dvb_usb_device_init(intf, &umt_properties,
+				     THIS_MODULE, NULL, adapter_nr))
 		return 0;
 	return -EINVAL;
 }
 
 /* do not change the order of the ID table */
 static struct usb_device_id umt_table [] = {
-/* 00 */	{ USB_DEVICE(USB_VID_HANFTEK,		USB_PID_HANFTEK_UMT_010_COLD) },
-/* 01 */	{ USB_DEVICE(USB_VID_HANFTEK,		USB_PID_HANFTEK_UMT_010_WARM) },
+/* 00 */	{ USB_DEVICE(USB_VID_HANFTEK, USB_PID_HANFTEK_UMT_010_COLD) },
+/* 01 */	{ USB_DEVICE(USB_VID_HANFTEK, USB_PID_HANFTEK_UMT_010_WARM) },
 			{ }		/* Terminating entry */
 };
 MODULE_DEVICE_TABLE (usb, umt_table);
@@ -106,7 +107,7 @@ static struct dvb_usb_device_properties umt_properties = {
 			/* parameter for the MPEG2-data transfer */
 			.stream = {
 				.type = USB_BULK,
-				.count = 20,
+				.count = MAX_NO_URBS_FOR_DATA_STREAM,
 				.endpoint = 0x06,
 				.u = {
 					.bulk = {

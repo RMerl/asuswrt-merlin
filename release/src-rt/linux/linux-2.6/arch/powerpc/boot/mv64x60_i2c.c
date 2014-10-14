@@ -21,8 +21,6 @@
 #include "ops.h"
 #include "mv64x60.h"
 
-extern void udelay(long);
-
 /* Register defines */
 #define MV64x60_I2C_REG_SLAVE_ADDR			0x00
 #define MV64x60_I2C_REG_DATA				0x04
@@ -187,7 +185,7 @@ int mv64x60_i2c_open(void)
 	u32 v;
 	void *devp;
 
-	devp = finddevice("/mv64x60/i2c");
+	devp = find_node_by_compatible(NULL, "marvell,mv64360-i2c");
 	if (devp == NULL)
 		goto err_out;
 	if (getprop(devp, "virtual-reg", &v, sizeof(v)) != sizeof(v))

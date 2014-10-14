@@ -1,19 +1,20 @@
 /*
- * Copyright (C) 2004 Jeff Dike (jdike@addtoit.com)
+ * Copyright (C) 2004 - 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
  * Licensed under the GPL
  */
 
-#include <stdlib.h>
 #include <unistd.h>
+#include <sched.h>
 #include <signal.h>
 #include <errno.h>
-#include <sched.h>
-#include <sys/syscall.h>
-#include "os.h"
+#include <sys/time.h>
+#include <asm/unistd.h>
 #include "aio.h"
 #include "init.h"
+#include "kern_constants.h"
+#include "kern_util.h"
+#include "os.h"
 #include "user.h"
-#include "mode.h"
 
 struct aio_thread_req {
 	enum aio_type type;
@@ -27,7 +28,8 @@ struct aio_thread_req {
 #if defined(HAVE_AIO_ABI)
 #include <linux/aio_abi.h>
 
-/* If we have the headers, we are going to build with AIO enabled.
+/*
+ * If we have the headers, we are going to build with AIO enabled.
  * If we don't have aio in libc, we define the necessary stubs here.
  */
 
@@ -51,7 +53,8 @@ static long io_getevents(aio_context_t ctx_id, long min_nr, long nr,
 
 #endif
 
-/* The AIO_MMAP cases force the mmapped page into memory here
+/*
+ * The AIO_MMAP cases force the mmapped page into memory here
  * rather than in whatever place first touches the data.  I used
  * to do this by touching the page, but that's delicate because
  * gcc is prone to optimizing that away.  So, what's done here
@@ -65,47 +68,33 @@ static long io_getevents(aio_context_t ctx_id, long min_nr, long nr,
 static int do_aio(aio_context_t ctx, enum aio_type type, int fd, char *buf,
 		  int len, unsigned long long offset, struct aio_context *aio)
 {
-	struct iocb iocb, *iocbp = &iocb;
+	struct iocb *iocbp = & ((struct iocb) {
+				    .aio_data       = (unsigned long) aio,
+				    .aio_fildes     = fd,
+				    .aio_buf        = (unsigned long) buf,
+				    .aio_nbytes     = len,
+				    .aio_offset     = offset
+			     });
 	char c;
-	int err;
 
-	iocb = ((struct iocb) { .aio_data 	= (unsigned long) aio,
-				.aio_reqprio	= 0,
-				.aio_fildes	= fd,
-				.aio_buf	= (unsigned long) buf,
-				.aio_nbytes	= len,
-				.aio_offset	= offset,
-				.aio_reserved1	= 0,
-				.aio_reserved2	= 0,
-				.aio_reserved3	= 0 });
-
-	switch(type){
+	switch (type) {
 	case AIO_READ:
-		iocb.aio_lio_opcode = IOCB_CMD_PREAD;
-		err = io_submit(ctx, 1, &iocbp);
+		iocbp->aio_lio_opcode = IOCB_CMD_PREAD;
 		break;
 	case AIO_WRITE:
-		iocb.aio_lio_opcode = IOCB_CMD_PWRITE;
-		err = io_submit(ctx, 1, &iocbp);
+		iocbp->aio_lio_opcode = IOCB_CMD_PWRITE;
 		break;
 	case AIO_MMAP:
-		iocb.aio_lio_opcode = IOCB_CMD_PREAD;
-		iocb.aio_buf = (unsigned long) &c;
-		iocb.aio_nbytes = sizeof(c);
-		err = io_submit(ctx, 1, &iocbp);
+		iocbp->aio_lio_opcode = IOCB_CMD_PREAD;
+		iocbp->aio_buf = (unsigned long) &c;
+		iocbp->aio_nbytes = sizeof(c);
 		break;
 	default:
-		printk("Bogus op in do_aio - %d\n", type);
-		err = -EINVAL;
-		break;
+		printk(UM_KERN_ERR "Bogus op in do_aio - %d\n", type);
+		return -EINVAL;
 	}
 
-	if(err > 0)
-		err = 0;
-	else
-		err = -errno;
-
-	return err;
+	return (io_submit(ctx, 1, &iocbp) > 0) ? 0 : -errno;
 }
 
 /* Initialized in an initcall and unchanged thereafter */
@@ -119,12 +108,12 @@ static int aio_thread(void *arg)
 
 	signal(SIGWINCH, SIG_IGN);
 
-	while(1){
+	while (1) {
 		n = io_getevents(ctx, 1, 1, &event, NULL);
-		if(n < 0){
-			if(errno == EINTR)
+		if (n < 0) {
+			if (errno == EINTR)
 				continue;
-			printk("aio_thread - io_getevents failed, "
+			printk(UM_KERN_ERR "aio_thread - io_getevents failed, "
 			       "errno = %d\n", errno);
 		}
 		else {
@@ -133,9 +122,9 @@ static int aio_thread(void *arg)
 						.err	= event.res });
 			reply_fd = ((struct aio_context *) reply.data)->reply_fd;
 			err = write(reply_fd, &reply, sizeof(reply));
-			if(err != sizeof(reply))
-				printk("aio_thread - write failed, fd = %d, "
-				       "err = %d\n", reply_fd, errno);
+			if (err != sizeof(reply))
+				printk(UM_KERN_ERR "aio_thread - write failed, "
+				       "fd = %d, err = %d\n", reply_fd, errno);
 		}
 	}
 	return 0;
@@ -150,10 +139,10 @@ static int do_not_aio(struct aio_thread_req *req)
 	int n;
 
 	actual = lseek64(req->io_fd, req->offset, SEEK_SET);
-	if(actual != req->offset)
+	if (actual != req->offset)
 		return -errno;
 
-	switch(req->type){
+	switch (req->type) {
 	case AIO_READ:
 		n = read(req->io_fd, req->buf, req->len);
 		break;
@@ -164,11 +153,12 @@ static int do_not_aio(struct aio_thread_req *req)
 		n = read(req->io_fd, &c, sizeof(c));
 		break;
 	default:
-		printk("do_not_aio - bad request type : %d\n", req->type);
+		printk(UM_KERN_ERR "do_not_aio - bad request type : %d\n",
+		       req->type);
 		return -EINVAL;
 	}
 
-	if(n < 0)
+	if (n < 0)
 		return -errno;
 	return 0;
 }
@@ -177,6 +167,7 @@ static int do_not_aio(struct aio_thread_req *req)
 static int aio_req_fd_r = -1;
 static int aio_req_fd_w = -1;
 static int aio_pid = -1;
+static unsigned long aio_stack;
 
 static int not_aio_thread(void *arg)
 {
@@ -185,16 +176,18 @@ static int not_aio_thread(void *arg)
 	int err;
 
 	signal(SIGWINCH, SIG_IGN);
-	while(1){
+	while (1) {
 		err = read(aio_req_fd_r, &req, sizeof(req));
-		if(err != sizeof(req)){
-			if(err < 0)
-				printk("not_aio_thread - read failed, "
-				       "fd = %d, err = %d\n", aio_req_fd_r,
+		if (err != sizeof(req)) {
+			if (err < 0)
+				printk(UM_KERN_ERR "not_aio_thread - "
+				       "read failed, fd = %d, err = %d\n",
+				       aio_req_fd_r,
 				       errno);
 			else {
-				printk("not_aio_thread - short read, fd = %d, "
-				       "length = %d\n", aio_req_fd_r, err);
+				printk(UM_KERN_ERR "not_aio_thread - short "
+				       "read, fd = %d, length = %d\n",
+				       aio_req_fd_r, err);
 			}
 			continue;
 		}
@@ -202,9 +195,9 @@ static int not_aio_thread(void *arg)
 		reply = ((struct aio_thread_reply) { .data 	= req.aio,
 						     .err	= err });
 		err = write(req.aio->reply_fd, &reply, sizeof(reply));
-		if(err != sizeof(reply))
-			printk("not_aio_thread - write failed, fd = %d, "
-			       "err = %d\n", req.aio->reply_fd, errno);
+		if (err != sizeof(reply))
+			printk(UM_KERN_ERR "not_aio_thread - write failed, "
+			       "fd = %d, err = %d\n", req.aio->reply_fd, errno);
 	}
 
 	return 0;
@@ -212,39 +205,39 @@ static int not_aio_thread(void *arg)
 
 static int init_aio_24(void)
 {
-	unsigned long stack;
 	int fds[2], err;
 
 	err = os_pipe(fds, 1, 1);
-	if(err)
+	if (err)
 		goto out;
 
 	aio_req_fd_w = fds[0];
 	aio_req_fd_r = fds[1];
 
 	err = os_set_fd_block(aio_req_fd_w, 0);
-	if(err)
+	if (err)
 		goto out_close_pipe;
 
 	err = run_helper_thread(not_aio_thread, NULL,
-				CLONE_FILES | CLONE_VM | SIGCHLD, &stack, 0);
-	if(err < 0)
+				CLONE_FILES | CLONE_VM, &aio_stack);
+	if (err < 0)
 		goto out_close_pipe;
 
 	aio_pid = err;
 	goto out;
 
 out_close_pipe:
-	os_close_file(fds[0]);
-	os_close_file(fds[1]);
+	close(fds[0]);
+	close(fds[1]);
 	aio_req_fd_w = -1;
 	aio_req_fd_r = -1;
 out:
 #ifndef HAVE_AIO_ABI
-	printk("/usr/include/linux/aio_abi.h not present during build\n");
+	printk(UM_KERN_INFO "/usr/include/linux/aio_abi.h not present during "
+	       "build\n");
 #endif
-	printk("2.6 host AIO support not used - falling back to I/O "
-	       "thread\n");
+	printk(UM_KERN_INFO "2.6 host AIO support not used - falling back to "
+	       "I/O thread\n");
 	return 0;
 }
 
@@ -252,24 +245,23 @@ out:
 #define DEFAULT_24_AIO 0
 static int init_aio_26(void)
 {
-	unsigned long stack;
 	int err;
 
-	if(io_setup(256, &ctx)){
+	if (io_setup(256, &ctx)) {
 		err = -errno;
-		printk("aio_thread failed to initialize context, err = %d\n",
-		       errno);
+		printk(UM_KERN_ERR "aio_thread failed to initialize context, "
+		       "err = %d\n", errno);
 		return err;
 	}
 
 	err = run_helper_thread(aio_thread, NULL,
-				CLONE_FILES | CLONE_VM | SIGCHLD, &stack, 0);
-	if(err < 0)
+				CLONE_FILES | CLONE_VM, &aio_stack);
+	if (err < 0)
 		return err;
 
 	aio_pid = err;
 
-	printk("Using 2.6 host AIO\n");
+	printk(UM_KERN_INFO "Using 2.6 host AIO\n");
 	return 0;
 }
 
@@ -280,13 +272,13 @@ static int submit_aio_26(enum aio_type type, int io_fd, char *buf, int len,
 	int err;
 
 	err = do_aio(ctx, type, io_fd, buf, len, offset, aio);
-	if(err){
+	if (err) {
 		reply = ((struct aio_thread_reply) { .data = aio,
 					 .err  = err });
 		err = write(aio->reply_fd, &reply, sizeof(reply));
-		if(err != sizeof(reply)){
+		if (err != sizeof(reply)) {
 			err = -errno;
-			printk("submit_aio_26 - write failed, "
+			printk(UM_KERN_ERR "submit_aio_26 - write failed, "
 			       "fd = %d, err = %d\n", aio->reply_fd, -err);
 		}
 		else err = 0;
@@ -334,28 +326,24 @@ static int init_aio(void)
 {
 	int err;
 
-	CHOOSE_MODE(({ if(!aio_24){
-			    printk("Disabling 2.6 AIO in tt mode\n");
-			    aio_24 = 1;
-		    } }), (void) 0);
-
-	if(!aio_24){
+	if (!aio_24) {
 		err = init_aio_26();
-		if(err && (errno == ENOSYS)){
-			printk("2.6 AIO not supported on the host - "
-			       "reverting to 2.4 AIO\n");
+		if (err && (errno == ENOSYS)) {
+			printk(UM_KERN_INFO "2.6 AIO not supported on the "
+			       "host - reverting to 2.4 AIO\n");
 			aio_24 = 1;
 		}
 		else return err;
 	}
 
-	if(aio_24)
+	if (aio_24)
 		return init_aio_24();
 
 	return 0;
 }
 
-/* The reason for the __initcall/__uml_exitcall asymmetry is that init_aio
+/*
+ * The reason for the __initcall/__uml_exitcall asymmetry is that init_aio
  * needs to be called when the kernel is running because it calls run_helper,
  * which needs get_free_page.  exit_aio is a __uml_exitcall because the generic
  * kernel does not run __exitcalls on shutdown, and can't because many of them
@@ -365,8 +353,10 @@ __initcall(init_aio);
 
 static void exit_aio(void)
 {
-	if(aio_pid != -1)
+	if (aio_pid != -1) {
 		os_kill_process(aio_pid, 1);
+		free_stack(aio_stack, 0);
+	}
 }
 
 __uml_exitcall(exit_aio);
@@ -384,7 +374,7 @@ static int submit_aio_24(enum aio_type type, int io_fd, char *buf, int len,
 	int err;
 
 	err = write(aio_req_fd_w, &req, sizeof(req));
-	if(err == sizeof(req))
+	if (err == sizeof(req))
 		err = 0;
 	else err = -errno;
 
@@ -396,9 +386,8 @@ int submit_aio(enum aio_type type, int io_fd, char *buf, int len,
 	       struct aio_context *aio)
 {
 	aio->reply_fd = reply_fd;
-	if(aio_24)
+	if (aio_24)
 		return submit_aio_24(type, io_fd, buf, len, offset, aio);
-	else {
+	else
 		return submit_aio_26(type, io_fd, buf, len, offset, aio);
-	}
 }

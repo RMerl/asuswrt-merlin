@@ -14,6 +14,7 @@
 #include <linux/random.h>
 #include <linux/bootmem.h>
 #include <linux/irq.h>
+#include <linux/interrupt.h>
 
 #include <asm/system.h>
 #include <asm/traps.h>
@@ -25,7 +26,7 @@
 
 extern unsigned long *interrupt_redirect_table;
 extern const int h8300_saved_vectors[];
-extern const unsigned long h8300_trap_table[];
+extern const h8300_vector h8300_trap_table[];
 int h8300_enable_irq_pin(unsigned int irq);
 void h8300_disable_irq_pin(unsigned int irq);
 
@@ -37,53 +38,42 @@ static inline int is_ext_irq(unsigned int irq)
 	return (irq >= EXT_IRQ0 && irq <= (EXT_IRQ0 + EXT_IRQS));
 }
 
-static void h8300_enable_irq(unsigned int irq)
+static void h8300_enable_irq(struct irq_data *data)
 {
-	if (is_ext_irq(irq))
-		IER_REGS |= 1 << (irq - EXT_IRQ0);
+	if (is_ext_irq(data->irq))
+		IER_REGS |= 1 << (data->irq - EXT_IRQ0);
 }
 
-static void h8300_disable_irq(unsigned int irq)
+static void h8300_disable_irq(struct irq_data *data)
 {
-	if (is_ext_irq(irq))
-		IER_REGS &= ~(1 << (irq - EXT_IRQ0));
+	if (is_ext_irq(data->irq))
+		IER_REGS &= ~(1 << (data->irq - EXT_IRQ0));
 }
 
-static void h8300_end_irq(unsigned int irq)
+static unsigned int h8300_startup_irq(struct irq_data *data)
 {
-}
-
-static unsigned int h8300_startup_irq(unsigned int irq)
-{
-	if (is_ext_irq(irq))
-		return h8300_enable_irq_pin(irq);
+	if (is_ext_irq(data->irq))
+		return h8300_enable_irq_pin(data->irq);
 	else
 		return 0;
 }
 
-static void h8300_shutdown_irq(unsigned int irq)
+static void h8300_shutdown_irq(struct irq_data *data)
 {
-	if (is_ext_irq(irq))
-		h8300_disable_irq_pin(irq);
+	if (is_ext_irq(data->irq))
+		h8300_disable_irq_pin(data->irq);
 }
 
 /*
- * h8300 interrupt controler implementation
+ * h8300 interrupt controller implementation
  */
 struct irq_chip h8300irq_chip = {
 	.name		= "H8300-INTC",
-	.startup	= h8300_startup_irq,
-	.shutdown	= h8300_shutdown_irq,
-	.enable		= h8300_enable_irq,
-	.disable	= h8300_disable_irq,
-	.ack		= NULL,
-	.end		= h8300_end_irq,
+	.irq_startup	= h8300_startup_irq,
+	.irq_shutdown	= h8300_shutdown_irq,
+	.irq_enable	= h8300_enable_irq,
+	.irq_disable	= h8300_disable_irq,
 };
-
-void ack_bad_irq(unsigned int irq)
-{
-	printk("unexpected IRQ trap at vector %02x\n", irq);
-}
 
 #if defined(CONFIG_RAMKERNEL)
 static unsigned long __init *get_vector_address(void)
@@ -115,7 +105,7 @@ static void __init setup_vector(void)
 {
 	int i;
 	unsigned long *ramvec,*ramvec_p;
-	const unsigned long *trap_entry;
+	const h8300_vector *trap_entry;
 	const int *saved_vector;
 
 	ramvec = get_vector_address();
@@ -164,48 +154,13 @@ void __init init_IRQ(void)
 
 	setup_vector();
 
-	for (c = 0; c < NR_IRQS; c++) {
-		irq_desc[c].status = IRQ_DISABLED;
-		irq_desc[c].action = NULL;
-		irq_desc[c].depth = 1;
-		irq_desc[c].chip = &h8300irq_chip;
-	}
+	for (c = 0; c < NR_IRQS; c++)
+		irq_set_chip_and_handler(c, &h8300irq_chip, handle_simple_irq);
 }
 
 asmlinkage void do_IRQ(int irq)
 {
 	irq_enter();
-	__do_IRQ(irq);
+	generic_handle_irq(irq);
 	irq_exit();
 }
-
-#if defined(CONFIG_PROC_FS)
-int show_interrupts(struct seq_file *p, void *v)
-{
-	int i = *(loff_t *) v, j;
-	struct irqaction * action;
-	unsigned long flags;
-
-	if (i == 0)
-		seq_puts(p, "           CPU0");
-
-	if (i < NR_IRQS) {
-		spin_lock_irqsave(&irq_desc[i].lock, flags);
-		action = irq_desc[i].action;
-		if (!action)
-			goto unlock;
-		seq_printf(p, "%3d: ",i);
-		seq_printf(p, "%10u ", kstat_cpu(j).irqs[i]);
-		seq_printf(p, " %14s", irq_desc[i].chip->name);
-		seq_printf(p, "-%-8s", irq_desc[i].name);
-		seq_printf(p, "  %s", action->name);
-
-		for (action=action->next; action; action = action->next)
-			seq_printf(p, ", %s", action->name);
-		seq_putc(p, '\n');
-unlock:
-		spin_unlock_irqrestore(&irq_desc[i].lock, flags);
-	}
-	return 0;
-}
-#endif

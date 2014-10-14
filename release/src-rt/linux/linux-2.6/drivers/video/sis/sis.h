@@ -24,9 +24,6 @@
 #ifndef _SIS_H_
 #define _SIS_H_
 
-#include <linux/version.h>
-
-#include "osdef.h"
 #include <video/sisfb.h>
 
 #include "vgatypes.h"
@@ -39,28 +36,13 @@
 #include <linux/spinlock.h>
 
 #ifdef CONFIG_COMPAT
-#if LINUX_VERSION_CODE <= KERNEL_VERSION(2,6,10)
-#include <linux/ioctl32.h>
-#define SIS_OLD_CONFIG_COMPAT
-#else
 #define SIS_NEW_CONFIG_COMPAT
-#endif
 #endif	/* CONFIG_COMPAT */
-
-#if LINUX_VERSION_CODE > KERNEL_VERSION(2,6,8)
-#define SIS_IOTYPE1 void __iomem
-#define SIS_IOTYPE2 __iomem
-#define SISINITSTATIC static
-#else
-#define SIS_IOTYPE1 unsigned char
-#define SIS_IOTYPE2
-#define SISINITSTATIC
-#endif
 
 #undef SISFBDEBUG
 
 #ifdef SISFBDEBUG
-#define DPRINTK(fmt, args...) printk(KERN_DEBUG "%s: " fmt, __FUNCTION__ , ## args)
+#define DPRINTK(fmt, args...) printk(KERN_DEBUG "%s: " fmt, __func__ , ## args)
 #define TWDEBUG(x) printk(KERN_INFO x "\n");
 #else
 #define DPRINTK(fmt, args...)
@@ -325,58 +307,19 @@
 #define VB2_LCDOVER1600BRIDGE	(VB2_307T  | VB2_307LV)
 #define VB2_RAMDAC202MHZBRIDGE	(VB2_301C  | VB2_307T)
 
-/* I/O port access macros */
-#define inSISREG(base)		inb(base)
+/* I/O port access functions */
 
-#define outSISREG(base,val)	outb(val,base)
-
-#define orSISREG(base,val)      			\
-		do {					\
-			u8 __Temp = inSISREG(base); 	\
-			outSISREG(base, __Temp | (val));\
-		} while (0)
-
-#define andSISREG(base,val)     			\
-		do {					\
-			u8 __Temp = inSISREG(base); 	\
-			outSISREG(base, __Temp & (val));\
-		} while (0)
-
-#define inSISIDXREG(base,idx,var)			\
-		do {					\
-			outSISREG(base, idx); 		\
-			var = inSISREG((base)+1);	\
-		} while (0)
-
-#define outSISIDXREG(base,idx,val)			\
-		do {					\
-			outSISREG(base, idx);		\
-			outSISREG((base)+1, val);	\
-		} while (0)
-
-#define orSISIDXREG(base,idx,val)				\
-		do {						\
-			u8 __Temp; 				\
-			outSISREG(base, idx);   		\
-			__Temp = inSISREG((base)+1) | (val); 	\
-			outSISREG((base)+1, __Temp);		\
-		} while (0)
-
-#define andSISIDXREG(base,idx,and)				\
-		do {						\
-			u8 __Temp; 				\
-			outSISREG(base, idx);   		\
-			__Temp = inSISREG((base)+1) & (and); 	\
-			outSISREG((base)+1, __Temp);		\
-		} while (0)
-
-#define setSISIDXREG(base,idx,and,or)   				\
-		do {							\
-			u8 __Temp; 					\
-			outSISREG(base, idx);				\
-			__Temp = (inSISREG((base)+1) & (and)) | (or); 	\
-			outSISREG((base)+1, __Temp);			\
-		} while (0)
+void SiS_SetReg(SISIOADDRESS, u8, u8);
+void SiS_SetRegByte(SISIOADDRESS, u8);
+void SiS_SetRegShort(SISIOADDRESS, u16);
+void SiS_SetRegLong(SISIOADDRESS, u32);
+void SiS_SetRegANDOR(SISIOADDRESS, u8, u8, u8);
+void SiS_SetRegAND(SISIOADDRESS, u8, u8);
+void SiS_SetRegOR(SISIOADDRESS, u8, u8);
+u8 SiS_GetReg(SISIOADDRESS, u8);
+u8 SiS_GetRegByte(SISIOADDRESS);
+u16 SiS_GetRegShort(SISIOADDRESS);
+u32 SiS_GetRegLong(SISIOADDRESS);
 
 /* MMIO access macros */
 #define MMIO_IN8(base, offset)  readb((base+offset))
@@ -479,7 +422,7 @@ struct sis_video_info {
 	struct fb_var_screeninfo default_var;
 
 	struct fb_fix_screeninfo sisfb_fix;
-	u32		pseudo_palette[17];
+	u32		pseudo_palette[16];
 
 	struct sisfb_monitor {
 		u16 hmin;
@@ -510,8 +453,8 @@ struct sis_video_info {
 
 	unsigned long	UMAsize, LFBsize;
 
-	SIS_IOTYPE1	*video_vbase;
-	SIS_IOTYPE1	*mmio_vbase;
+	void __iomem	*video_vbase;
+	void __iomem	*mmio_vbase;
 
 	unsigned char	*bios_abase;
 
@@ -538,8 +481,8 @@ struct sis_video_info {
 	int		sisfb_nocrt2rate;
 
 	u32		heapstart;		/* offset  */
-	SIS_IOTYPE1	*sisfb_heap_start;	/* address */
-	SIS_IOTYPE1	*sisfb_heap_end;	/* address */
+	void __iomem	*sisfb_heap_start;	/* address */
+	void __iomem	*sisfb_heap_end;	/* address */
 	u32		sisfb_heap_size;
 	int		havenoheap;
 
@@ -552,6 +495,7 @@ struct sis_video_info {
 	unsigned int	refresh_rate;
 
 	unsigned int	chip;
+	unsigned int	chip_real_id;
 	u8		revision_id;
 	int		sisvga_enabled;		/* PCI device was enabled */
 
@@ -607,9 +551,6 @@ struct sis_video_info {
 	int		haveXGIROM;
 	int		registered;
 	int		warncount;
-#ifdef SIS_OLD_CONFIG_COMPAT
-	int		ioctl32registered;
-#endif
 
 	int		sisvga_engine;
 	int		hwcursor_size;
@@ -620,7 +561,7 @@ struct sis_video_info {
 	u8		detectedpdca;
 	u8		detectedlcda;
 
-	SIS_IOTYPE1	*hwcursor_vbase;
+	void __iomem	*hwcursor_vbase;
 
 	int		chronteltype;
 	int		tvxpos, tvypos;

@@ -29,6 +29,7 @@
 #include "seq_oss_event.h"
 #include <linux/init.h>
 #include <linux/moduleparam.h>
+#include <linux/slab.h>
 
 /*
  * common variables
@@ -176,28 +177,28 @@ snd_seq_oss_open(struct file *file, int level)
 	int i, rc;
 	struct seq_oss_devinfo *dp;
 
-	if ((dp = kzalloc(sizeof(*dp), GFP_KERNEL)) == NULL) {
+	dp = kzalloc(sizeof(*dp), GFP_KERNEL);
+	if (!dp) {
 		snd_printk(KERN_ERR "can't malloc device info\n");
 		return -ENOMEM;
 	}
 	debug_printk(("oss_open: dp = %p\n", dp));
 
+	dp->cseq = system_client;
+	dp->port = -1;
+	dp->queue = -1;
+
 	for (i = 0; i < SNDRV_SEQ_OSS_MAX_CLIENTS; i++) {
 		if (client_table[i] == NULL)
 			break;
 	}
-	if (i >= SNDRV_SEQ_OSS_MAX_CLIENTS) {
-		snd_printk(KERN_ERR "too many applications\n");
-		kfree(dp);
-		return -ENOMEM;
-	}
 
 	dp->index = i;
-	dp->cseq = system_client;
-	dp->port = -1;
-	dp->queue = -1;
-	dp->readq = NULL;
-	dp->writeq = NULL;
+	if (i >= SNDRV_SEQ_OSS_MAX_CLIENTS) {
+		snd_printk(KERN_ERR "too many applications\n");
+		rc = -ENOMEM;
+		goto _error;
+	}
 
 	/* look up synth and midi devices */
 	snd_seq_oss_synth_setup(dp);
@@ -211,14 +212,16 @@ snd_seq_oss_open(struct file *file, int level)
 
 	/* create port */
 	debug_printk(("create new port\n"));
-	if ((rc = create_port(dp)) < 0) {
+	rc = create_port(dp);
+	if (rc < 0) {
 		snd_printk(KERN_ERR "can't create port\n");
 		goto _error;
 	}
 
 	/* allocate queue */
 	debug_printk(("allocate queue\n"));
-	if ((rc = alloc_seq_queue(dp)) < 0)
+	rc = alloc_seq_queue(dp);
+	if (rc < 0)
 		goto _error;
 
 	/* set address */
@@ -235,7 +238,8 @@ snd_seq_oss_open(struct file *file, int level)
 	/* initialize read queue */
 	debug_printk(("initialize read queue\n"));
 	if (is_read_mode(dp->file_mode)) {
-		if ((dp->readq = snd_seq_oss_readq_new(dp, maxqlen)) == NULL) {
+		dp->readq = snd_seq_oss_readq_new(dp, maxqlen);
+		if (!dp->readq) {
 			rc = -ENOMEM;
 			goto _error;
 		}
@@ -245,7 +249,7 @@ snd_seq_oss_open(struct file *file, int level)
 	debug_printk(("initialize write queue\n"));
 	if (is_write_mode(dp->file_mode)) {
 		dp->writeq = snd_seq_oss_writeq_new(dp, maxqlen);
-		if (dp->writeq == NULL) {
+		if (!dp->writeq) {
 			rc = -ENOMEM;
 			goto _error;
 		}
@@ -253,7 +257,8 @@ snd_seq_oss_open(struct file *file, int level)
 
 	/* initialize timer */
 	debug_printk(("initialize timer\n"));
-	if ((dp->timer = snd_seq_oss_timer_new(dp)) == NULL) {
+	dp->timer = snd_seq_oss_timer_new(dp);
+	if (!dp->timer) {
 		snd_printk(KERN_ERR "can't alloc timer\n");
 		rc = -ENOMEM;
 		goto _error;
@@ -278,9 +283,8 @@ snd_seq_oss_open(struct file *file, int level)
  _error:
 	snd_seq_oss_synth_cleanup(dp);
 	snd_seq_oss_midi_cleanup(dp);
-	i = dp->queue;
+	delete_seq_queue(dp->queue);
 	delete_port(dp);
-	delete_seq_queue(i);
 
 	return rc;
 }
@@ -343,8 +347,10 @@ create_port(struct seq_oss_devinfo *dp)
 static int
 delete_port(struct seq_oss_devinfo *dp)
 {
-	if (dp->port < 0)
+	if (dp->port < 0) {
+		kfree(dp);
 		return 0;
+	}
 
 	debug_printk(("delete_port %i\n", dp->port));
 	return snd_seq_event_port_detach(dp->cseq, dp->port);

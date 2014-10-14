@@ -12,20 +12,19 @@
 
 #include <linux/netfilter/x_tables.h>
 #include <linux/netfilter/xt_NFLOG.h>
+#include <net/netfilter/nf_log.h>
+#include <net/netfilter/nfnetlink_log.h>
 
 MODULE_AUTHOR("Patrick McHardy <kaber@trash.net>");
-MODULE_DESCRIPTION("x_tables NFLOG target");
+MODULE_DESCRIPTION("Xtables: packet logging to netlink using NFLOG");
 MODULE_LICENSE("GPL");
 MODULE_ALIAS("ipt_NFLOG");
 MODULE_ALIAS("ip6t_NFLOG");
 
 static unsigned int
-nflog_target(struct sk_buff **pskb,
-	     const struct net_device *in, const struct net_device *out,
-	     unsigned int hooknum, const struct xt_target *target,
-	     const void *targinfo)
+nflog_tg(struct sk_buff *skb, const struct xt_action_param *par)
 {
-	const struct xt_nflog_info *info = targinfo;
+	const struct xt_nflog_info *info = par->targinfo;
 	struct nf_loginfo li;
 
 	li.type		     = NF_LOG_TYPE_ULOG;
@@ -33,54 +32,41 @@ nflog_target(struct sk_buff **pskb,
 	li.u.ulog.group	     = info->group;
 	li.u.ulog.qthreshold = info->threshold;
 
-	nf_log_packet(target->family, hooknum, *pskb, in, out, &li,
-		      "%s", info->prefix);
+	nfulnl_log_packet(par->family, par->hooknum, skb, par->in,
+			  par->out, &li, info->prefix);
 	return XT_CONTINUE;
 }
 
-static int
-nflog_checkentry(const char *tablename, const void *entry,
-		 const struct xt_target *target, void *targetinfo,
-		 unsigned int hookmask)
+static int nflog_tg_check(const struct xt_tgchk_param *par)
 {
-	struct xt_nflog_info *info = targetinfo;
+	const struct xt_nflog_info *info = par->targinfo;
 
 	if (info->flags & ~XT_NFLOG_MASK)
-		return 0;
+		return -EINVAL;
 	if (info->prefix[sizeof(info->prefix) - 1] != '\0')
-		return 0;
-	return 1;
+		return -EINVAL;
+	return 0;
 }
 
-static struct xt_target xt_nflog_target[] = {
-	{
-		.name		= "NFLOG",
-		.family		= AF_INET,
-		.checkentry	= nflog_checkentry,
-		.target		= nflog_target,
-		.targetsize	= sizeof(struct xt_nflog_info),
-		.me		= THIS_MODULE,
-	},
-	{
-		.name		= "NFLOG",
-		.family		= AF_INET6,
-		.checkentry	= nflog_checkentry,
-		.target		= nflog_target,
-		.targetsize	= sizeof(struct xt_nflog_info),
-		.me		= THIS_MODULE,
-	},
+static struct xt_target nflog_tg_reg __read_mostly = {
+	.name       = "NFLOG",
+	.revision   = 0,
+	.family     = NFPROTO_UNSPEC,
+	.checkentry = nflog_tg_check,
+	.target     = nflog_tg,
+	.targetsize = sizeof(struct xt_nflog_info),
+	.me         = THIS_MODULE,
 };
 
-static int __init xt_nflog_init(void)
+static int __init nflog_tg_init(void)
 {
-	return xt_register_targets(xt_nflog_target,
-				   ARRAY_SIZE(xt_nflog_target));
+	return xt_register_target(&nflog_tg_reg);
 }
 
-static void __exit xt_nflog_fini(void)
+static void __exit nflog_tg_exit(void)
 {
-	xt_unregister_targets(xt_nflog_target, ARRAY_SIZE(xt_nflog_target));
+	xt_unregister_target(&nflog_tg_reg);
 }
 
-module_init(xt_nflog_init);
-module_exit(xt_nflog_fini);
+module_init(nflog_tg_init);
+module_exit(nflog_tg_exit);

@@ -16,6 +16,7 @@
 #include <linux/init.h>
 #include <linux/threads.h>
 
+#include <asm/addrspace.h>
 #include <asm/asm.h>
 #include <asm/asmmacro.h>
 #include <asm/irqflags.h>
@@ -26,16 +27,6 @@
 #include <asm/stackframe.h>
 
 #include <kernel-entry-init.h>
-
-	.macro	ARC64_TWIDDLE_PC
-#if defined(CONFIG_ARC64) || defined(CONFIG_MAPPED_KERNEL)
-	/* We get launched at a XKPHYS address but the kernel is linked to
-	   run at a KSEG0 address, so jump there.  */
-	PTR_LA	t0, \@f
-	jr	t0
-\@:
-#endif
-	.endm
 
 	/*
 	 * inputs are the text nasid in t1, data nasid in t2.
@@ -130,32 +121,27 @@
 #endif
 	.endm
 
-#ifdef CONFIG_BCM47XX
-#undef eret
-#define eret nop; nop; eret
-#endif
-
-	j	kernel_entry
-	nop
-
+#ifndef CONFIG_NO_EXCEPT_FILL
 	/*
 	 * Reserved space for exception handlers.
 	 * Necessary for machines which link their kernels at KSEG0.
 	 */
-	.fill	0x3f4
+	.fill	0x400
+#endif
 
-EXPORT(stext)					# used for profiling
 EXPORT(_stext)
 
-#ifdef CONFIG_MIPS_SIM
+#ifdef CONFIG_BOOT_RAW
 	/*
 	 * Give us a fighting chance of running if execution beings at the
 	 * kernel load address.  This is needed because this platform does
 	 * not have a ELF loader yet.
 	 */
+FEXPORT(__kernel_entry)
 	j	kernel_entry
 #endif
-	__INIT_REFOK
+
+	__REF
 
 NESTED(kernel_entry, 16, sp)			# kernel entry point
 
@@ -163,7 +149,11 @@ NESTED(kernel_entry, 16, sp)			# kernel entry point
 
 	setup_c0_status_pri
 
-	ARC64_TWIDDLE_PC
+	/* We might not get launched at the address the kernel is linked to,
+	   so we jump there.  */
+	PTR_LA	t0, 0f
+	jr	t0
+0:
 
 #ifdef CONFIG_MIPS_MT_SMTC
 	/*
@@ -183,7 +173,6 @@ NESTED(kernel_entry, 16, sp)			# kernel entry point
 	mtc0	t0, CP0_STATUS
 #endif /* CONFIG_MIPS_MT_SMTC */
 
-#if !defined(CONFIG_HWSIM) || defined(CONFIG_HWSIM_ZMEM)
 	PTR_LA		t0, __bss_start		# clear .bss
 	LONG_S		zero, (t0)
 	PTR_LA		t1, __bss_stop - LONGSIZE
@@ -191,7 +180,6 @@ NESTED(kernel_entry, 16, sp)			# kernel entry point
 	PTR_ADDIU	t0, LONGSIZE
 	LONG_S		zero, (t0)
 	bne		t0, t1, 1b
-#endif
 
 	LONG_S		a0, fw_arg0		# firmware arguments
 	LONG_S		a1, fw_arg1
@@ -209,16 +197,10 @@ NESTED(kernel_entry, 16, sp)			# kernel entry point
 
 	j		start_kernel
 	END(kernel_entry)
-	__FINIT
 
-#ifdef CONFIG_QEMU
-	__INIT
-#endif
+	__CPUINIT
 
 #ifdef CONFIG_SMP
-#ifndef CONFIG_HOTPLUG_CPU
-	__INIT			/* no __CPUINIT; it's a 2.6.25 thing  */
-#endif
 /*
  * SMP slave cpus entry point.  Board specific code for bootstrap calls this
  * function after setting up the stack and gp registers.
@@ -247,6 +229,4 @@ NESTED(smp_bootstrap, 16, sp)
 	END(smp_bootstrap)
 #endif /* CONFIG_SMP */
 
-#ifndef CONFIG_HOTPLUG_CPU
 	__FINIT
-#endif

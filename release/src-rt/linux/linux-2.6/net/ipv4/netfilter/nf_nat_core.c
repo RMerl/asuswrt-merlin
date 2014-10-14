@@ -12,7 +12,7 @@
 #include <linux/types.h>
 #include <linux/timer.h>
 #include <linux/skbuff.h>
-#include <linux/vmalloc.h>
+#include <linux/gfp.h>
 #include <net/checksum.h>
 #include <net/icmp.h>
 #include <net/ip.h>
@@ -31,89 +31,34 @@
 #include <net/netfilter/nf_conntrack_helper.h>
 #include <net/netfilter/nf_conntrack_l3proto.h>
 #include <net/netfilter/nf_conntrack_l4proto.h>
-#include <linux/netfilter_ipv4/ipt_cone.h>
+#include <net/netfilter/nf_conntrack_zones.h>
 
-#ifdef HNDCTF
-#include <linux/if.h>
-#include <linux/if_vlan.h>
-#include <typedefs.h>
-#include <osl.h>
-#include <ctf/hndctf.h>
+static DEFINE_SPINLOCK(nf_nat_lock);
 
-#define NFC_CTF_ENABLED	(1 << 31)
-#endif /* HNDCTF */
-
-#define DEBUGP(format, args...)
-
-static DEFINE_RWLOCK(nf_nat_lock);
-
-static struct nf_conntrack_l3proto *l3proto = NULL;
-
-/* Calculated at init based on memory size */
-static unsigned int nf_nat_htable_size;
-
-static struct list_head *bysource;
+static struct nf_conntrack_l3proto *l3proto __read_mostly;
 
 #define MAX_IP_NAT_PROTO 256
-static struct nf_nat_protocol *nf_nat_protos[MAX_IP_NAT_PROTO];
+static const struct nf_nat_protocol __rcu *nf_nat_protos[MAX_IP_NAT_PROTO]
+						__read_mostly;
 
-static inline struct nf_nat_protocol *
+static inline const struct nf_nat_protocol *
 __nf_nat_proto_find(u_int8_t protonum)
 {
 	return rcu_dereference(nf_nat_protos[protonum]);
 }
 
-struct nf_nat_protocol *
-nf_nat_proto_find_get(u_int8_t protonum)
-{
-	struct nf_nat_protocol *p;
-
-	rcu_read_lock();
-	p = __nf_nat_proto_find(protonum);
-	if (!try_module_get(p->me))
-		p = &nf_nat_unknown_protocol;
-	rcu_read_unlock();
-
-	return p;
-}
-EXPORT_SYMBOL_GPL(nf_nat_proto_find_get);
-
-void
-nf_nat_proto_put(struct nf_nat_protocol *p)
-{
-	module_put(p->me);
-}
-EXPORT_SYMBOL_GPL(nf_nat_proto_put);
-
 /* We keep an extra hash for each conntrack, for fast searching. */
 static inline unsigned int
-hash_by_src(const struct nf_conntrack_tuple *tuple)
+hash_by_src(const struct net *net, u16 zone,
+	    const struct nf_conntrack_tuple *tuple)
 {
+	unsigned int hash;
+
 	/* Original src, to ensure we map it consistently if poss. */
-	return jhash_3words((__force u32)tuple->src.u3.ip, tuple->src.u.all,
-			    tuple->dst.protonum, 0) % nf_nat_htable_size;
-}
-
-#ifdef HNDCTF
-extern void ip_conntrack_ipct_add(struct sk_buff *skb, u_int32_t hooknum,
-	struct nf_conn *ct, enum ip_conntrack_info ci,
-	struct nf_conntrack_tuple *manip);
-#endif /* HNDCTF */
-
-/* Noone using conntrack by the time this called. */
-static void nf_nat_cleanup_conntrack(struct nf_conn *conn)
-{
-	struct nf_conn_nat *nat;
-	if (!(conn->status & IPS_NAT_DONE_MASK))
-		return;
-
-	nat = nfct_nat(conn);
-	write_lock_bh(&nf_nat_lock);
-	list_del(&nat->info.bysource);
-	write_unlock_bh(&nf_nat_lock);
-
-	/* Detach from cone list */
-	ipt_cone_cleanup_conntrack(nat);
+	hash = jhash_3words((__force u32)tuple->src.u3.ip,
+			    (__force u32)tuple->src.u.all ^ zone,
+			    tuple->dst.protonum, 0);
+	return ((u64)hash * net->ipv4.nat_htable_size) >> 32;
 }
 
 /* Is this tuple already taken? (not by us) */
@@ -129,7 +74,6 @@ nf_nat_used_tuple(const struct nf_conntrack_tuple *tuple,
 	struct nf_conntrack_tuple reply;
 
 	nf_ct_invert_tuplepr(&reply, tuple);
-
 	return nf_conntrack_tuple_taken(&reply, ignored_conntrack);
 }
 EXPORT_SYMBOL(nf_nat_used_tuple);
@@ -140,7 +84,7 @@ static int
 in_range(const struct nf_conntrack_tuple *tuple,
 	 const struct nf_nat_range *range)
 {
-	struct nf_nat_protocol *proto;
+	const struct nf_nat_protocol *proto;
 	int ret = 0;
 
 	/* If we are supposed to map IPs, then we must be in the
@@ -176,30 +120,32 @@ same_src(const struct nf_conn *ct,
 
 /* Only called for SRC manip */
 static int
-find_appropriate_src(const struct nf_conntrack_tuple *tuple,
+find_appropriate_src(struct net *net, u16 zone,
+		     const struct nf_conntrack_tuple *tuple,
 		     struct nf_conntrack_tuple *result,
 		     const struct nf_nat_range *range)
 {
-	unsigned int h = hash_by_src(tuple);
-	struct nf_conn_nat *nat;
-	struct nf_conn *ct;
+	unsigned int h = hash_by_src(net, zone, tuple);
+	const struct nf_conn_nat *nat;
+	const struct nf_conn *ct;
+	const struct hlist_node *n;
 
-	read_lock_bh(&nf_nat_lock);
-	list_for_each_entry(nat, &bysource[h], info.bysource) {
-		ct = (struct nf_conn *)((char *)nat - offsetof(struct nf_conn, data));
-		if (same_src(ct, tuple)) {
+	rcu_read_lock();
+	hlist_for_each_entry_rcu(nat, n, &net->ipv4.nat_bysource[h], bysource) {
+		ct = nat->ct;
+		if (same_src(ct, tuple) && nf_ct_zone(ct) == zone) {
 			/* Copy source part from reply tuple. */
 			nf_ct_invert_tuplepr(result,
 				       &ct->tuplehash[IP_CT_DIR_REPLY].tuple);
 			result->dst = tuple->dst;
 
 			if (in_range(result, range)) {
-				read_unlock_bh(&nf_nat_lock);
+				rcu_read_unlock();
 				return 1;
 			}
 		}
 	}
-	read_unlock_bh(&nf_nat_lock);
+	rcu_read_unlock();
 	return 0;
 }
 
@@ -210,7 +156,7 @@ find_appropriate_src(const struct nf_conntrack_tuple *tuple,
    the ip with the lowest src-ip/dst-ip/proto usage.
 */
 static void
-find_best_ips_proto(struct nf_conntrack_tuple *tuple,
+find_best_ips_proto(u16 zone, struct nf_conntrack_tuple *tuple,
 		    const struct nf_nat_range *range,
 		    const struct nf_conn *ct,
 		    enum nf_nat_manip_type maniptype)
@@ -243,13 +189,15 @@ find_best_ips_proto(struct nf_conntrack_tuple *tuple,
 	minip = ntohl(range->min_ip);
 	maxip = ntohl(range->max_ip);
 	j = jhash_2words((__force u32)tuple->src.u3.ip,
-			 (__force u32)tuple->dst.u3.ip, 0);
-	*var_ipp = htonl(minip + j % (maxip - minip + 1));
+			 range->flags & IP_NAT_RANGE_PERSISTENT ?
+				0 : (__force u32)tuple->dst.u3.ip ^ zone, 0);
+	j = ((u64)j * (maxip - minip + 1)) >> 32;
+	*var_ipp = htonl(minip + j);
 }
 
-/* Manipulate the tuple into the range given.  For NF_IP_POST_ROUTING,
- * we change the source to map into the range.  For NF_IP_PRE_ROUTING
- * and NF_IP_LOCAL_OUT, we change the destination to map into the
+/* Manipulate the tuple into the range given.  For NF_INET_POST_ROUTING,
+ * we change the source to map into the range.  For NF_INET_PRE_ROUTING
+ * and NF_INET_LOCAL_OUT, we change the destination to map into the
  * range.  It might not be possible to get a unique tuple, but we try.
  * At worst (or if we race), we will end up with a final duplicate in
  * __ip_conntrack_confirm and drop the packet. */
@@ -260,7 +208,9 @@ get_unique_tuple(struct nf_conntrack_tuple *tuple,
 		 struct nf_conn *ct,
 		 enum nf_nat_manip_type maniptype)
 {
-	struct nf_nat_protocol *proto;
+	struct net *net = nf_ct_net(ct);
+	const struct nf_nat_protocol *proto;
+	u16 zone = nf_ct_zone(ct);
 
 	/* 1) If this srcip/proto/src-proto-part is currently mapped,
 	   and that same mapping gives a unique tuple within the given
@@ -269,19 +219,26 @@ get_unique_tuple(struct nf_conntrack_tuple *tuple,
 	   This is only required for source (ie. NAT/masq) mappings.
 	   So far, we don't do local source mappings, so multiple
 	   manips not an issue.  */
-	if (maniptype == IP_NAT_MANIP_SRC) {
-		if (find_appropriate_src(orig_tuple, tuple, range)) {
-			DEBUGP("get_unique_tuple: Found current src map\n");
-			if (!(range->flags & IP_NAT_RANGE_PROTO_RANDOM))
-				if (!nf_nat_used_tuple(tuple, ct))
-					return;
+	if (maniptype == IP_NAT_MANIP_SRC &&
+	    !(range->flags & IP_NAT_RANGE_PROTO_RANDOM)) {
+		/* try the original tuple first */
+		if (in_range(orig_tuple, range)) {
+			if (!nf_nat_used_tuple(orig_tuple, ct)) {
+				*tuple = *orig_tuple;
+				return;
+			}
+		} else if (find_appropriate_src(net, zone, orig_tuple, tuple,
+			   range)) {
+			pr_debug("get_unique_tuple: Found current src map\n");
+			if (!nf_nat_used_tuple(tuple, ct))
+				return;
 		}
 	}
 
 	/* 2) Select the least-used IP/proto combination in the given
 	   range. */
 	*tuple = *orig_tuple;
-	find_best_ips_proto(tuple, range, ct, maniptype);
+	find_best_ips_proto(zone, tuple, range, ct, maniptype);
 
 	/* 3) The per-protocol part of the manip is made to map into
 	   the range to make a unique tuple. */
@@ -289,17 +246,18 @@ get_unique_tuple(struct nf_conntrack_tuple *tuple,
 	rcu_read_lock();
 	proto = __nf_nat_proto_find(orig_tuple->dst.protonum);
 
-	/* Change protocol info to have some randomization */
-	if (range->flags & IP_NAT_RANGE_PROTO_RANDOM) {
-		proto->unique_tuple(tuple, range, maniptype, ct);
-		goto out;
-	}
-
 	/* Only bother mapping if it's not already in range and unique */
-	if ((!(range->flags & IP_NAT_RANGE_PROTO_SPECIFIED) ||
-	     proto->in_range(tuple, maniptype, &range->min, &range->max)) &&
-	    !nf_nat_used_tuple(tuple, ct))
-		goto out;
+	if (!(range->flags & IP_NAT_RANGE_PROTO_RANDOM)) {
+		if (range->flags & IP_NAT_RANGE_PROTO_SPECIFIED) {
+			if (proto->in_range(tuple, maniptype, &range->min,
+					    &range->max) &&
+			    (range->min.all == range->max.all ||
+			     !nf_nat_used_tuple(tuple, ct)))
+				goto out;
+		} else if (!nf_nat_used_tuple(tuple, ct)) {
+			goto out;
+		}
+	}
 
 	/* Last change: get protocol to try to obtain unique tuple. */
 	proto->unique_tuple(tuple, range, maniptype, ct);
@@ -310,18 +268,24 @@ out:
 unsigned int
 nf_nat_setup_info(struct nf_conn *ct,
 		  const struct nf_nat_range *range,
-		  unsigned int hooknum)
+		  enum nf_nat_manip_type maniptype)
 {
+	struct net *net = nf_ct_net(ct);
 	struct nf_conntrack_tuple curr_tuple, new_tuple;
-	struct nf_conn_nat *nat = nfct_nat(ct);
-	struct nf_nat_info *info = &nat->info;
-	int have_to_hash = !(ct->status & IPS_NAT_DONE_MASK);
-	enum nf_nat_manip_type maniptype = HOOK2MANIP(hooknum);
+	struct nf_conn_nat *nat;
 
-	NF_CT_ASSERT(hooknum == NF_IP_PRE_ROUTING ||
-		     hooknum == NF_IP_POST_ROUTING ||
-		     hooknum == NF_IP_LOCAL_IN ||
-		     hooknum == NF_IP_LOCAL_OUT);
+	/* nat helper or nfctnetlink also setup binding */
+	nat = nfct_nat(ct);
+	if (!nat) {
+		nat = nf_ct_ext_add(ct, NF_CT_EXT_NAT, GFP_ATOMIC);
+		if (nat == NULL) {
+			pr_debug("failed to add NAT extension\n");
+			return NF_ACCEPT;
+		}
+	}
+
+	NF_CT_ASSERT(maniptype == IP_NAT_MANIP_SRC ||
+		     maniptype == IP_NAT_MANIP_DST);
 	BUG_ON(nf_nat_initialized(ct, maniptype));
 
 	/* What we've got will look like inverse of reply. Normally
@@ -348,66 +312,70 @@ nf_nat_setup_info(struct nf_conn *ct,
 			ct->status |= IPS_DST_NAT;
 	}
 
-	/* Place in source hash if this is the first time. */
-	if (have_to_hash) {
+	if (maniptype == IP_NAT_MANIP_SRC) {
 		unsigned int srchash;
 
-		srchash = hash_by_src(&ct->tuplehash[IP_CT_DIR_ORIGINAL].tuple);
-		write_lock_bh(&nf_nat_lock);
-		list_add(&info->bysource, &bysource[srchash]);
-		write_unlock_bh(&nf_nat_lock);
+		srchash = hash_by_src(net, nf_ct_zone(ct),
+				      &ct->tuplehash[IP_CT_DIR_ORIGINAL].tuple);
+		spin_lock_bh(&nf_nat_lock);
+		/* nf_conntrack_alter_reply might re-allocate exntension aera */
+		nat = nfct_nat(ct);
+		nat->ct = ct;
+		hlist_add_head_rcu(&nat->bysource,
+				   &net->ipv4.nat_bysource[srchash]);
+		spin_unlock_bh(&nf_nat_lock);
 	}
 
 	/* It's done. */
 	if (maniptype == IP_NAT_MANIP_DST)
-		set_bit(IPS_DST_NAT_DONE_BIT, &ct->status);
+		ct->status |= IPS_DST_NAT_DONE;
 	else
-		set_bit(IPS_SRC_NAT_DONE_BIT, &ct->status);
+		ct->status |= IPS_SRC_NAT_DONE;
 
 	return NF_ACCEPT;
 }
 EXPORT_SYMBOL(nf_nat_setup_info);
 
 /* Returns true if succeeded. */
-static int
+static bool
 manip_pkt(u_int16_t proto,
-	  struct sk_buff **pskb,
+	  struct sk_buff *skb,
 	  unsigned int iphdroff,
 	  const struct nf_conntrack_tuple *target,
 	  enum nf_nat_manip_type maniptype)
 {
 	struct iphdr *iph;
-	struct nf_nat_protocol *p;
+	const struct nf_nat_protocol *p;
 
-	if (!skb_make_writable(pskb, iphdroff + sizeof(*iph)))
-		return 0;
+	if (!skb_make_writable(skb, iphdroff + sizeof(*iph)))
+		return false;
 
-	iph = (void *)(*pskb)->data + iphdroff;
+	iph = (void *)skb->data + iphdroff;
 
 	/* Manipulate protcol part. */
 
 	/* rcu_read_lock()ed by nf_hook_slow */
 	p = __nf_nat_proto_find(proto);
-	if (!p->manip_pkt(pskb, iphdroff, target, maniptype))
-		return 0;
+	if (!p->manip_pkt(skb, iphdroff, target, maniptype))
+		return false;
 
-	iph = (void *)(*pskb)->data + iphdroff;
+	iph = (void *)skb->data + iphdroff;
 
 	if (maniptype == IP_NAT_MANIP_SRC) {
-		nf_csum_replace4(&iph->check, iph->saddr, target->src.u3.ip);
+		csum_replace4(&iph->check, iph->saddr, target->src.u3.ip);
 		iph->saddr = target->src.u3.ip;
 	} else {
-		nf_csum_replace4(&iph->check, iph->daddr, target->dst.u3.ip);
+		csum_replace4(&iph->check, iph->daddr, target->dst.u3.ip);
 		iph->daddr = target->dst.u3.ip;
 	}
-	return 1;
+	return true;
 }
 
 /* Do packet manipulations according to nf_nat_setup_info. */
 unsigned int nf_nat_packet(struct nf_conn *ct,
 			   enum ip_conntrack_info ctinfo,
 			   unsigned int hooknum,
-			   struct sk_buff **pskb)
+			   struct sk_buff *skb)
 {
 	enum ip_conntrack_dir dir = CTINFO2DIR(ctinfo);
 	unsigned long statusbit;
@@ -428,16 +396,10 @@ unsigned int nf_nat_packet(struct nf_conn *ct,
 
 		/* We are aiming to look like inverse of other direction. */
 		nf_ct_invert_tuplepr(&target, &ct->tuplehash[!dir].tuple);
-#ifdef HNDCTF
-		ip_conntrack_ipct_add(*pskb, hooknum, ct, ctinfo, &target);
-#endif /* HNDCTF */
-		if (!manip_pkt(target.dst.protonum, pskb, 0, &target, mtype))
-			return NF_DROP;
-	} else {
-#ifdef HNDCTF
-#endif /* HNDCTF */
-	}
 
+		if (!manip_pkt(target.dst.protonum, skb, 0, &target, mtype))
+			return NF_DROP;
+	}
 	return NF_ACCEPT;
 }
 EXPORT_SYMBOL_GPL(nf_nat_packet);
@@ -446,32 +408,32 @@ EXPORT_SYMBOL_GPL(nf_nat_packet);
 int nf_nat_icmp_reply_translation(struct nf_conn *ct,
 				  enum ip_conntrack_info ctinfo,
 				  unsigned int hooknum,
-				  struct sk_buff **pskb)
+				  struct sk_buff *skb)
 {
 	struct {
 		struct icmphdr icmp;
 		struct iphdr ip;
 	} *inside;
-	struct nf_conntrack_l4proto *l4proto;
+	const struct nf_conntrack_l4proto *l4proto;
 	struct nf_conntrack_tuple inner, target;
-	int hdrlen = ip_hdrlen(*pskb);
+	int hdrlen = ip_hdrlen(skb);
 	enum ip_conntrack_dir dir = CTINFO2DIR(ctinfo);
 	unsigned long statusbit;
 	enum nf_nat_manip_type manip = HOOK2MANIP(hooknum);
 
-	if (!skb_make_writable(pskb, hdrlen + sizeof(*inside)))
+	if (!skb_make_writable(skb, hdrlen + sizeof(*inside)))
 		return 0;
 
-	inside = (void *)(*pskb)->data + ip_hdrlen(*pskb);
+	inside = (void *)skb->data + hdrlen;
 
 	/* We're actually going to mangle it beyond trivial checksum
 	   adjustment, so make sure the current checksum is correct. */
-	if (nf_ip_checksum(*pskb, hooknum, hdrlen, 0))
+	if (nf_ip_checksum(skb, hooknum, hdrlen, 0))
 		return 0;
 
 	/* Must be RELATED */
-	NF_CT_ASSERT((*pskb)->nfctinfo == IP_CT_RELATED ||
-		     (*pskb)->nfctinfo == IP_CT_RELATED+IP_CT_IS_REPLY);
+	NF_CT_ASSERT(skb->nfctinfo == IP_CT_RELATED ||
+		     skb->nfctinfo == IP_CT_RELATED+IP_CT_IS_REPLY);
 
 	/* Redirects on non-null nats must be dropped, else they'll
 	   start talking to each other without our translation, and be
@@ -485,43 +447,6 @@ int nf_nat_icmp_reply_translation(struct nf_conn *ct,
 			return 0;
 	}
 
-	DEBUGP("icmp_reply_translation: translating error %p manp %u dir %s\n",
-	       *pskb, manip, dir == IP_CT_DIR_ORIGINAL ? "ORIG" : "REPLY");
-
-	/* rcu_read_lock()ed by nf_hook_slow */
-	l4proto = __nf_ct_l4proto_find(PF_INET, inside->ip.protocol);
-
-	if (!nf_ct_get_tuple(*pskb,
-			     ip_hdrlen(*pskb) + sizeof(struct icmphdr),
-			     (ip_hdrlen(*pskb) +
-			      sizeof(struct icmphdr) + inside->ip.ihl * 4),
-			     (u_int16_t)AF_INET,
-			     inside->ip.protocol,
-			     &inner, l3proto, l4proto))
-		return 0;
-
-	/* Change inner back to look like incoming packet.  We do the
-	   opposite manip on this hook to normal, because it might not
-	   pass all hooks (locally-generated ICMP).  Consider incoming
-	   packet: PREROUTING (DST manip), routing produces ICMP, goes
-	   through POSTROUTING (which must correct the DST manip). */
-	if (!manip_pkt(inside->ip.protocol, pskb,
-		       ip_hdrlen(*pskb) + sizeof(inside->icmp),
-		       &ct->tuplehash[!dir].tuple,
-		       !manip))
-		return 0;
-
-	if ((*pskb)->ip_summed != CHECKSUM_PARTIAL) {
-		/* Reloading "inside" here since manip_pkt inner. */
-		inside = (void *)(*pskb)->data + ip_hdrlen(*pskb);
-		inside->icmp.checksum = 0;
-		inside->icmp.checksum =
-			csum_fold(skb_checksum(*pskb, hdrlen,
-					       (*pskb)->len - hdrlen, 0));
-	}
-
-	/* Change outer to look the reply to an incoming packet
-	 * (proto 0 means don't invert per-proto part). */
 	if (manip == IP_NAT_MANIP_SRC)
 		statusbit = IPS_SRC_NAT;
 	else
@@ -531,120 +456,239 @@ int nf_nat_icmp_reply_translation(struct nf_conn *ct,
 	if (dir == IP_CT_DIR_REPLY)
 		statusbit ^= IPS_NAT_MASK;
 
-	if (ct->status & statusbit) {
-		nf_ct_invert_tuplepr(&target, &ct->tuplehash[!dir].tuple);
-		if (!manip_pkt(0, pskb, 0, &target, manip))
-			return 0;
+	if (!(ct->status & statusbit))
+		return 1;
+
+	pr_debug("icmp_reply_translation: translating error %p manip %u "
+		 "dir %s\n", skb, manip,
+		 dir == IP_CT_DIR_ORIGINAL ? "ORIG" : "REPLY");
+
+	/* rcu_read_lock()ed by nf_hook_slow */
+	l4proto = __nf_ct_l4proto_find(PF_INET, inside->ip.protocol);
+
+	if (!nf_ct_get_tuple(skb, hdrlen + sizeof(struct icmphdr),
+			     (hdrlen +
+			      sizeof(struct icmphdr) + inside->ip.ihl * 4),
+			     (u_int16_t)AF_INET, inside->ip.protocol,
+			     &inner, l3proto, l4proto))
+		return 0;
+
+	/* Change inner back to look like incoming packet.  We do the
+	   opposite manip on this hook to normal, because it might not
+	   pass all hooks (locally-generated ICMP).  Consider incoming
+	   packet: PREROUTING (DST manip), routing produces ICMP, goes
+	   through POSTROUTING (which must correct the DST manip). */
+	if (!manip_pkt(inside->ip.protocol, skb, hdrlen + sizeof(inside->icmp),
+		       &ct->tuplehash[!dir].tuple, !manip))
+		return 0;
+
+	if (skb->ip_summed != CHECKSUM_PARTIAL) {
+		/* Reloading "inside" here since manip_pkt inner. */
+		inside = (void *)skb->data + hdrlen;
+		inside->icmp.checksum = 0;
+		inside->icmp.checksum =
+			csum_fold(skb_checksum(skb, hdrlen,
+					       skb->len - hdrlen, 0));
 	}
+
+	/* Change outer to look the reply to an incoming packet
+	 * (proto 0 means don't invert per-proto part). */
+	nf_ct_invert_tuplepr(&target, &ct->tuplehash[!dir].tuple);
+	if (!manip_pkt(0, skb, 0, &target, manip))
+		return 0;
 
 	return 1;
 }
 EXPORT_SYMBOL_GPL(nf_nat_icmp_reply_translation);
 
 /* Protocol registration. */
-int nf_nat_protocol_register(struct nf_nat_protocol *proto)
+int nf_nat_protocol_register(const struct nf_nat_protocol *proto)
 {
 	int ret = 0;
 
-	write_lock_bh(&nf_nat_lock);
-	if (nf_nat_protos[proto->protonum] != &nf_nat_unknown_protocol) {
+	spin_lock_bh(&nf_nat_lock);
+	if (rcu_dereference_protected(
+			nf_nat_protos[proto->protonum],
+			lockdep_is_held(&nf_nat_lock)
+			) != &nf_nat_unknown_protocol) {
 		ret = -EBUSY;
 		goto out;
 	}
 	rcu_assign_pointer(nf_nat_protos[proto->protonum], proto);
  out:
-	write_unlock_bh(&nf_nat_lock);
+	spin_unlock_bh(&nf_nat_lock);
 	return ret;
 }
 EXPORT_SYMBOL(nf_nat_protocol_register);
 
-/* Noone stores the protocol anywhere; simply delete it. */
-void nf_nat_protocol_unregister(struct nf_nat_protocol *proto)
+/* No one stores the protocol anywhere; simply delete it. */
+void nf_nat_protocol_unregister(const struct nf_nat_protocol *proto)
 {
-	write_lock_bh(&nf_nat_lock);
+	spin_lock_bh(&nf_nat_lock);
 	rcu_assign_pointer(nf_nat_protos[proto->protonum],
 			   &nf_nat_unknown_protocol);
-	write_unlock_bh(&nf_nat_lock);
+	spin_unlock_bh(&nf_nat_lock);
 	synchronize_rcu();
 }
 EXPORT_SYMBOL(nf_nat_protocol_unregister);
 
-#if defined(CONFIG_NF_CT_NETLINK) || defined(CONFIG_NF_CT_NETLINK_MODULE)
-int
-nf_nat_port_range_to_nfattr(struct sk_buff *skb,
-			    const struct nf_nat_range *range)
+/* No one using conntrack by the time this called. */
+static void nf_nat_cleanup_conntrack(struct nf_conn *ct)
 {
-	NFA_PUT(skb, CTA_PROTONAT_PORT_MIN, sizeof(__be16),
-		&range->min.tcp.port);
-	NFA_PUT(skb, CTA_PROTONAT_PORT_MAX, sizeof(__be16),
-		&range->max.tcp.port);
+	struct nf_conn_nat *nat = nf_ct_ext_find(ct, NF_CT_EXT_NAT);
+
+	if (nat == NULL || nat->ct == NULL)
+		return;
+
+	NF_CT_ASSERT(nat->ct->status & IPS_SRC_NAT_DONE);
+
+	spin_lock_bh(&nf_nat_lock);
+	hlist_del_rcu(&nat->bysource);
+	spin_unlock_bh(&nf_nat_lock);
+}
+
+static void nf_nat_move_storage(void *new, void *old)
+{
+	struct nf_conn_nat *new_nat = new;
+	struct nf_conn_nat *old_nat = old;
+	struct nf_conn *ct = old_nat->ct;
+
+	if (!ct || !(ct->status & IPS_SRC_NAT_DONE))
+		return;
+
+	spin_lock_bh(&nf_nat_lock);
+	hlist_replace_rcu(&old_nat->bysource, &new_nat->bysource);
+	spin_unlock_bh(&nf_nat_lock);
+}
+
+static struct nf_ct_ext_type nat_extend __read_mostly = {
+	.len		= sizeof(struct nf_conn_nat),
+	.align		= __alignof__(struct nf_conn_nat),
+	.destroy	= nf_nat_cleanup_conntrack,
+	.move		= nf_nat_move_storage,
+	.id		= NF_CT_EXT_NAT,
+	.flags		= NF_CT_EXT_F_PREALLOC,
+};
+
+#if defined(CONFIG_NF_CT_NETLINK) || defined(CONFIG_NF_CT_NETLINK_MODULE)
+
+#include <linux/netfilter/nfnetlink.h>
+#include <linux/netfilter/nfnetlink_conntrack.h>
+
+static const struct nf_nat_protocol *
+nf_nat_proto_find_get(u_int8_t protonum)
+{
+	const struct nf_nat_protocol *p;
+
+	rcu_read_lock();
+	p = __nf_nat_proto_find(protonum);
+	if (!try_module_get(p->me))
+		p = &nf_nat_unknown_protocol;
+	rcu_read_unlock();
+
+	return p;
+}
+
+static void
+nf_nat_proto_put(const struct nf_nat_protocol *p)
+{
+	module_put(p->me);
+}
+
+static const struct nla_policy protonat_nla_policy[CTA_PROTONAT_MAX+1] = {
+	[CTA_PROTONAT_PORT_MIN]	= { .type = NLA_U16 },
+	[CTA_PROTONAT_PORT_MAX]	= { .type = NLA_U16 },
+};
+
+static int nfnetlink_parse_nat_proto(struct nlattr *attr,
+				     const struct nf_conn *ct,
+				     struct nf_nat_range *range)
+{
+	struct nlattr *tb[CTA_PROTONAT_MAX+1];
+	const struct nf_nat_protocol *npt;
+	int err;
+
+	err = nla_parse_nested(tb, CTA_PROTONAT_MAX, attr, protonat_nla_policy);
+	if (err < 0)
+		return err;
+
+	npt = nf_nat_proto_find_get(nf_ct_protonum(ct));
+	if (npt->nlattr_to_range)
+		err = npt->nlattr_to_range(tb, range);
+	nf_nat_proto_put(npt);
+	return err;
+}
+
+static const struct nla_policy nat_nla_policy[CTA_NAT_MAX+1] = {
+	[CTA_NAT_MINIP]		= { .type = NLA_U32 },
+	[CTA_NAT_MAXIP]		= { .type = NLA_U32 },
+};
+
+static int
+nfnetlink_parse_nat(const struct nlattr *nat,
+		    const struct nf_conn *ct, struct nf_nat_range *range)
+{
+	struct nlattr *tb[CTA_NAT_MAX+1];
+	int err;
+
+	memset(range, 0, sizeof(*range));
+
+	err = nla_parse_nested(tb, CTA_NAT_MAX, nat, nat_nla_policy);
+	if (err < 0)
+		return err;
+
+	if (tb[CTA_NAT_MINIP])
+		range->min_ip = nla_get_be32(tb[CTA_NAT_MINIP]);
+
+	if (!tb[CTA_NAT_MAXIP])
+		range->max_ip = range->min_ip;
+	else
+		range->max_ip = nla_get_be32(tb[CTA_NAT_MAXIP]);
+
+	if (range->min_ip)
+		range->flags |= IP_NAT_RANGE_MAP_IPS;
+
+	if (!tb[CTA_NAT_PROTO])
+		return 0;
+
+	err = nfnetlink_parse_nat_proto(tb[CTA_NAT_PROTO], ct, range);
+	if (err < 0)
+		return err;
 
 	return 0;
-
-nfattr_failure:
-	return -1;
 }
-EXPORT_SYMBOL_GPL(nf_nat_port_nfattr_to_range);
 
-int
-nf_nat_port_nfattr_to_range(struct nfattr *tb[], struct nf_nat_range *range)
+static int
+nfnetlink_parse_nat_setup(struct nf_conn *ct,
+			  enum nf_nat_manip_type manip,
+			  const struct nlattr *attr)
 {
-	int ret = 0;
+	struct nf_nat_range range;
 
-	/* we have to return whether we actually parsed something or not */
+	if (nfnetlink_parse_nat(attr, ct, &range) < 0)
+		return -EINVAL;
+	if (nf_nat_initialized(ct, manip))
+		return -EEXIST;
 
-	if (tb[CTA_PROTONAT_PORT_MIN-1]) {
-		ret = 1;
-		range->min.tcp.port =
-			*(__be16 *)NFA_DATA(tb[CTA_PROTONAT_PORT_MIN-1]);
-	}
-
-	if (!tb[CTA_PROTONAT_PORT_MAX-1]) {
-		if (ret)
-			range->max.tcp.port = range->min.tcp.port;
-	} else {
-		ret = 1;
-		range->max.tcp.port =
-			*(__be16 *)NFA_DATA(tb[CTA_PROTONAT_PORT_MAX-1]);
-	}
-
-	return ret;
+	return nf_nat_setup_info(ct, &range, manip);
 }
-EXPORT_SYMBOL_GPL(nf_nat_port_range_to_nfattr);
+#else
+static int
+nfnetlink_parse_nat_setup(struct nf_conn *ct,
+			  enum nf_nat_manip_type manip,
+			  const struct nlattr *attr)
+{
+	return -EOPNOTSUPP;
+}
 #endif
 
-static int __init nf_nat_init(void)
+static int __net_init nf_nat_net_init(struct net *net)
 {
-	size_t i;
-
 	/* Leave them the same for the moment. */
-	nf_nat_htable_size = nf_conntrack_htable_size;
-
-	/* One vmalloc for both hash tables */
-	bysource = vmalloc(sizeof(struct list_head) * nf_nat_htable_size);
-	if (!bysource)
+	net->ipv4.nat_htable_size = net->ct.htable_size;
+	net->ipv4.nat_bysource = nf_ct_alloc_hashtable(&net->ipv4.nat_htable_size, 0);
+	if (!net->ipv4.nat_bysource)
 		return -ENOMEM;
-
-	/* Sew in builtin protocols. */
-	write_lock_bh(&nf_nat_lock);
-	for (i = 0; i < MAX_IP_NAT_PROTO; i++)
-		rcu_assign_pointer(nf_nat_protos[i], &nf_nat_unknown_protocol);
-	rcu_assign_pointer(nf_nat_protos[IPPROTO_TCP], &nf_nat_protocol_tcp);
-	rcu_assign_pointer(nf_nat_protos[IPPROTO_UDP], &nf_nat_protocol_udp);
-	rcu_assign_pointer(nf_nat_protos[IPPROTO_ICMP], &nf_nat_protocol_icmp);
-	write_unlock_bh(&nf_nat_lock);
-
-	for (i = 0; i < nf_nat_htable_size; i++) {
-		INIT_LIST_HEAD(&bysource[i]);
-	}
-
-	NF_CT_ASSERT(rcu_dereference(nf_conntrack_destroyed) == NULL);
-	rcu_assign_pointer(nf_conntrack_destroyed, nf_nat_cleanup_conntrack);
-
-	/* Initialize fake conntrack so that NAT will skip it */
-	nf_conntrack_untracked.status |= IPS_NAT_DONE_MASK;
-
-	l3proto = nf_ct_l3proto_find_get((u_int16_t)AF_INET);
 	return 0;
 }
 
@@ -655,21 +699,81 @@ static int clean_nat(struct nf_conn *i, void *data)
 
 	if (!nat)
 		return 0;
-	memset(nat, 0, sizeof(nat));
+	memset(nat, 0, sizeof(*nat));
 	i->status &= ~(IPS_NAT_MASK | IPS_NAT_DONE_MASK | IPS_SEQ_ADJUST);
 	return 0;
 }
 
+static void __net_exit nf_nat_net_exit(struct net *net)
+{
+	nf_ct_iterate_cleanup(net, &clean_nat, NULL);
+	synchronize_rcu();
+	nf_ct_free_hashtable(net->ipv4.nat_bysource, net->ipv4.nat_htable_size);
+}
+
+static struct pernet_operations nf_nat_net_ops = {
+	.init = nf_nat_net_init,
+	.exit = nf_nat_net_exit,
+};
+
+static int __init nf_nat_init(void)
+{
+	size_t i;
+	int ret;
+
+	need_ipv4_conntrack();
+
+	ret = nf_ct_extend_register(&nat_extend);
+	if (ret < 0) {
+		printk(KERN_ERR "nf_nat_core: Unable to register extension\n");
+		return ret;
+	}
+
+	ret = register_pernet_subsys(&nf_nat_net_ops);
+	if (ret < 0)
+		goto cleanup_extend;
+
+	/* Sew in builtin protocols. */
+	spin_lock_bh(&nf_nat_lock);
+	for (i = 0; i < MAX_IP_NAT_PROTO; i++)
+		rcu_assign_pointer(nf_nat_protos[i], &nf_nat_unknown_protocol);
+	rcu_assign_pointer(nf_nat_protos[IPPROTO_TCP], &nf_nat_protocol_tcp);
+	rcu_assign_pointer(nf_nat_protos[IPPROTO_UDP], &nf_nat_protocol_udp);
+	rcu_assign_pointer(nf_nat_protos[IPPROTO_ICMP], &nf_nat_protocol_icmp);
+	spin_unlock_bh(&nf_nat_lock);
+
+	/* Initialize fake conntrack so that NAT will skip it */
+	nf_ct_untracked_status_or(IPS_NAT_DONE_MASK);
+
+	l3proto = nf_ct_l3proto_find_get((u_int16_t)AF_INET);
+
+	BUG_ON(nf_nat_seq_adjust_hook != NULL);
+	rcu_assign_pointer(nf_nat_seq_adjust_hook, nf_nat_seq_adjust);
+	BUG_ON(nfnetlink_parse_nat_setup_hook != NULL);
+	rcu_assign_pointer(nfnetlink_parse_nat_setup_hook,
+			   nfnetlink_parse_nat_setup);
+	BUG_ON(nf_ct_nat_offset != NULL);
+	rcu_assign_pointer(nf_ct_nat_offset, nf_nat_get_offset);
+	return 0;
+
+ cleanup_extend:
+	nf_ct_extend_unregister(&nat_extend);
+	return ret;
+}
+
 static void __exit nf_nat_cleanup(void)
 {
-	nf_ct_iterate_cleanup(&clean_nat, NULL);
-	rcu_assign_pointer(nf_conntrack_destroyed, NULL);
-	synchronize_rcu();
-	vfree(bysource);
+	unregister_pernet_subsys(&nf_nat_net_ops);
 	nf_ct_l3proto_put(l3proto);
+	nf_ct_extend_unregister(&nat_extend);
+	rcu_assign_pointer(nf_nat_seq_adjust_hook, NULL);
+	rcu_assign_pointer(nfnetlink_parse_nat_setup_hook, NULL);
+	rcu_assign_pointer(nf_ct_nat_offset, NULL);
+	synchronize_net();
 }
 
 MODULE_LICENSE("GPL");
+MODULE_ALIAS("nf-nat-ipv4");
 
 module_init(nf_nat_init);
 module_exit(nf_nat_cleanup);

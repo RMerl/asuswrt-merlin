@@ -12,6 +12,8 @@
 #include <linux/mutex.h>
 #include <linux/console_struct.h>
 #include <linux/mm.h>
+#include <linux/consolemap.h>
+#include <linux/notifier.h>
 
 /*
  * Presently, a lot of graphics programs do not restore the contents of
@@ -34,7 +36,6 @@ extern int fg_console, last_console, want_console;
 int vc_allocate(unsigned int console);
 int vc_cons_allocated(unsigned int console);
 int vc_resize(struct vc_data *vc, unsigned int cols, unsigned int lines);
-int vc_lock_resize(struct vc_data *vc, unsigned int cols, unsigned int lines);
 void vc_deallocate(unsigned int console);
 void reset_palette(struct vc_data *vc);
 void do_blank_screen(int entering_gfx);
@@ -54,6 +55,7 @@ void redraw_screen(struct vc_data *vc, int is_switch);
 struct tty_struct;
 int tioclinux(struct tty_struct *tty, unsigned long arg);
 
+#ifdef CONFIG_CONSOLE_TRANSLATIONS
 /* consolemap.c */
 
 struct unimapinit;
@@ -71,21 +73,78 @@ void con_free_unimap(struct vc_data *vc);
 void con_protect_unimap(struct vc_data *vc, int rdonly);
 int con_copy_unimap(struct vc_data *dst_vc, struct vc_data *src_vc);
 
+#define vc_translate(vc, c) ((vc)->vc_translate[(c) |			\
+					((vc)->vc_toggle_meta ? 0x80 : 0)])
+#else
+static inline int con_set_trans_old(unsigned char __user *table)
+{
+	return 0;
+}
+static inline int con_get_trans_old(unsigned char __user *table)
+{
+	return -EINVAL;
+}
+static inline int con_set_trans_new(unsigned short __user *table)
+{
+	return 0;
+}
+static inline int con_get_trans_new(unsigned short __user *table)
+{
+	return -EINVAL;
+}
+static inline int con_clear_unimap(struct vc_data *vc, struct unimapinit *ui)
+{
+	return 0;
+}
+static inline
+int con_set_unimap(struct vc_data *vc, ushort ct, struct unipair __user *list)
+{
+	return 0;
+}
+static inline
+int con_get_unimap(struct vc_data *vc, ushort ct, ushort __user *uct,
+		   struct unipair __user *list)
+{
+	return -EINVAL;
+}
+static inline int con_set_default_unimap(struct vc_data *vc)
+{
+	return 0;
+}
+static inline void con_free_unimap(struct vc_data *vc)
+{
+}
+static inline void con_protect_unimap(struct vc_data *vc, int rdonly)
+{
+}
+static inline
+int con_copy_unimap(struct vc_data *dst_vc, struct vc_data *src_vc)
+{
+	return 0;
+}
+
+#define vc_translate(vc, c) (c)
+#endif
+
 /* vt.c */
-int vt_waitactive(int vt);
+void vt_event_post(unsigned int event, unsigned int old, unsigned int new);
+int vt_waitactive(int n);
 void change_console(struct vc_data *new_vc);
 void reset_vc(struct vc_data *vc);
-int vty_init(void);
+extern int unbind_con_driver(const struct consw *csw, int first, int last,
+			     int deflt);
+int vty_init(const struct file_operations *console_fops);
 
-/*
- * vc_screen.c shares this temporary buffer with the console write code so that
- * we can easily avoid touching user space while holding the console spinlock.
- */
+static inline bool vt_force_oops_output(struct vc_data *vc)
+{
+	if (oops_in_progress && vc->vc_panic_force_write)
+		return true;
+	return false;
+}
 
-#define CON_BUF_SIZE (CONFIG_BASE_SMALL ? 256 : PAGE_SIZE)
-extern char con_buf[CON_BUF_SIZE];
-extern struct mutex con_buf_mtx;
 extern char vt_dont_switch;
+extern int default_utf8;
+extern int global_cursor_default;
 
 struct vt_spawn_console {
 	spinlock_t lock;
@@ -93,5 +152,19 @@ struct vt_spawn_console {
 	int sig;
 };
 extern struct vt_spawn_console vt_spawn_con;
+
+extern int vt_move_to_console(unsigned int vt, int alloc);
+
+/* Interfaces for VC notification of character events (for accessibility etc) */
+
+struct vt_notifier_param {
+	struct vc_data *vc;	/* VC on which the update happened */
+	unsigned int c;		/* Printed char */
+};
+
+extern int register_vt_notifier(struct notifier_block *nb);
+extern int unregister_vt_notifier(struct notifier_block *nb);
+
+extern void hide_boot_cursor(bool hide);
 
 #endif /* _VT_KERN_H */

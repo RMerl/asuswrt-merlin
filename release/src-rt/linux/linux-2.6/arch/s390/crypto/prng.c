@@ -10,6 +10,7 @@
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/random.h>
+#include <linux/slab.h>
 #include <asm/debug.h>
 #include <asm/uaccess.h>
 
@@ -75,7 +76,7 @@ static void prng_seed(int nbytes)
 
 	/* Add the entropy */
 	while (nbytes >= 8) {
-		*((__u64 *)parm_block) ^= *((__u64 *)buf+i*8);
+		*((__u64 *)parm_block) ^= *((__u64 *)(buf+i));
 		prng_add_entropy();
 		i += 8;
 		nbytes -= 8;
@@ -90,7 +91,7 @@ static ssize_t prng_read(struct file *file, char __user *ubuf, size_t nbytes,
 	int ret = 0;
 	int tmp;
 
-	/* nbytes can be arbitrary long, we spilt it into chunks */
+	/* nbytes can be arbitrary length, we split it into chunks */
 	while (nbytes) {
 		/* same as in extract_entropy_user in random.c */
 		if (need_resched()) {
@@ -146,11 +147,12 @@ static ssize_t prng_read(struct file *file, char __user *ubuf, size_t nbytes,
 	return ret;
 }
 
-static struct file_operations prng_fops = {
+static const struct file_operations prng_fops = {
 	.owner		= THIS_MODULE,
 	.open		= &prng_open,
 	.release	= NULL,
 	.read		= &prng_read,
+	.llseek		= noop_llseek,
 };
 
 static struct miscdevice prng_dev = {
@@ -185,11 +187,8 @@ static int __init prng_init(void)
 	prng_seed(16);
 
 	ret = misc_register(&prng_dev);
-	if (ret) {
-		printk(KERN_WARNING
-		       "Could not register misc device for PRNG.\n");
+	if (ret)
 		goto out_buf;
-	}
 	return 0;
 
 out_buf:
@@ -202,8 +201,7 @@ out_free:
 static void __exit prng_exit(void)
 {
 	/* wipe me */
-	memset(p->buf, 0, prng_chunk_size);
-	kfree(p->buf);
+	kzfree(p->buf);
 	kfree(p);
 
 	misc_deregister(&prng_dev);

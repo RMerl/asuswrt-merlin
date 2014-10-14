@@ -25,12 +25,12 @@
 
 #include <media/saa7146_vv.h>
 
-static int debug = 0;
+static int debug;
 module_param(debug, int, 0);
 MODULE_PARM_DESC(debug, "debug verbosity");
 
 /* global variables */
-static int hexium_num = 0;
+static int hexium_num;
 
 #define HEXIUM_HV_PCI6_ORION		1
 #define HEXIUM_ORION_1SVHS_3BNC		2
@@ -38,15 +38,15 @@ static int hexium_num = 0;
 
 #define HEXIUM_INPUTS	9
 static struct v4l2_input hexium_inputs[HEXIUM_INPUTS] = {
-	{ 0, "CVBS 1",	V4L2_INPUT_TYPE_CAMERA,	2, 0, V4L2_STD_PAL_BG|V4L2_STD_NTSC_M, 0 },
-	{ 1, "CVBS 2",	V4L2_INPUT_TYPE_CAMERA,	2, 0, V4L2_STD_PAL_BG|V4L2_STD_NTSC_M, 0 },
-	{ 2, "CVBS 3",	V4L2_INPUT_TYPE_CAMERA,	2, 0, V4L2_STD_PAL_BG|V4L2_STD_NTSC_M, 0 },
-	{ 3, "CVBS 4",	V4L2_INPUT_TYPE_CAMERA,	2, 0, V4L2_STD_PAL_BG|V4L2_STD_NTSC_M, 0 },
-	{ 4, "CVBS 5",	V4L2_INPUT_TYPE_CAMERA,	2, 0, V4L2_STD_PAL_BG|V4L2_STD_NTSC_M, 0 },
-	{ 5, "CVBS 6",	V4L2_INPUT_TYPE_CAMERA,	2, 0, V4L2_STD_PAL_BG|V4L2_STD_NTSC_M, 0 },
-	{ 6, "Y/C 1",	V4L2_INPUT_TYPE_CAMERA,	2, 0, V4L2_STD_PAL_BG|V4L2_STD_NTSC_M, 0 },
-	{ 7, "Y/C 2",	V4L2_INPUT_TYPE_CAMERA,	2, 0, V4L2_STD_PAL_BG|V4L2_STD_NTSC_M, 0 },
-	{ 8, "Y/C 3",	V4L2_INPUT_TYPE_CAMERA,	2, 0, V4L2_STD_PAL_BG|V4L2_STD_NTSC_M, 0 },
+	{ 0, "CVBS 1",	V4L2_INPUT_TYPE_CAMERA,	2, 0, V4L2_STD_PAL_BG|V4L2_STD_NTSC_M, 0, V4L2_IN_CAP_STD },
+	{ 1, "CVBS 2",	V4L2_INPUT_TYPE_CAMERA,	2, 0, V4L2_STD_PAL_BG|V4L2_STD_NTSC_M, 0, V4L2_IN_CAP_STD },
+	{ 2, "CVBS 3",	V4L2_INPUT_TYPE_CAMERA,	2, 0, V4L2_STD_PAL_BG|V4L2_STD_NTSC_M, 0, V4L2_IN_CAP_STD },
+	{ 3, "CVBS 4",	V4L2_INPUT_TYPE_CAMERA,	2, 0, V4L2_STD_PAL_BG|V4L2_STD_NTSC_M, 0, V4L2_IN_CAP_STD },
+	{ 4, "CVBS 5",	V4L2_INPUT_TYPE_CAMERA,	2, 0, V4L2_STD_PAL_BG|V4L2_STD_NTSC_M, 0, V4L2_IN_CAP_STD },
+	{ 5, "CVBS 6",	V4L2_INPUT_TYPE_CAMERA,	2, 0, V4L2_STD_PAL_BG|V4L2_STD_NTSC_M, 0, V4L2_IN_CAP_STD },
+	{ 6, "Y/C 1",	V4L2_INPUT_TYPE_CAMERA,	2, 0, V4L2_STD_PAL_BG|V4L2_STD_NTSC_M, 0, V4L2_IN_CAP_STD },
+	{ 7, "Y/C 2",	V4L2_INPUT_TYPE_CAMERA,	2, 0, V4L2_STD_PAL_BG|V4L2_STD_NTSC_M, 0, V4L2_IN_CAP_STD },
+	{ 8, "Y/C 3",	V4L2_INPUT_TYPE_CAMERA,	2, 0, V4L2_STD_PAL_BG|V4L2_STD_NTSC_M, 0, V4L2_IN_CAP_STD },
 };
 
 #define HEXIUM_AUDIOS	0
@@ -55,14 +55,6 @@ struct hexium_data
 {
 	s8 adr;
 	u8 byte;
-};
-
-static struct saa7146_extension_ioctls ioctls[] = {
-	{ VIDIOC_G_INPUT,	SAA7146_EXCLUSIVE },
-	{ VIDIOC_S_INPUT,	SAA7146_EXCLUSIVE },
-	{ VIDIOC_ENUMINPUT, 	SAA7146_EXCLUSIVE },
-	{ VIDIOC_S_STD,		SAA7146_AFTER },
-	{ 0,			0 }
 };
 
 struct hexium
@@ -238,7 +230,6 @@ static int hexium_probe(struct saa7146_dev *dev)
 	saa7146_write(dev, MC2, (MASK_09 | MASK_25 | MASK_10 | MASK_26));
 
 	hexium->i2c_adapter = (struct i2c_adapter) {
-		.class = I2C_CLASS_TV_ANALOG,
 		.name = "hexium orion",
 	};
 	saa7146_i2c_adapter_prepare(dev, &hexium->i2c_adapter, SAA7146_I2C_BUS_BIT_RATE_480);
@@ -329,6 +320,44 @@ static int hexium_set_input(struct hexium *hexium, int input)
 	return 0;
 }
 
+static int vidioc_enum_input(struct file *file, void *fh, struct v4l2_input *i)
+{
+	DEB_EE(("VIDIOC_ENUMINPUT %d.\n", i->index));
+
+	if (i->index >= HEXIUM_INPUTS)
+		return -EINVAL;
+
+	memcpy(i, &hexium_inputs[i->index], sizeof(struct v4l2_input));
+
+	DEB_D(("v4l2_ioctl: VIDIOC_ENUMINPUT %d.\n", i->index));
+	return 0;
+}
+
+static int vidioc_g_input(struct file *file, void *fh, unsigned int *input)
+{
+	struct saa7146_dev *dev = ((struct saa7146_fh *)fh)->dev;
+	struct hexium *hexium = (struct hexium *) dev->ext_priv;
+
+	*input = hexium->cur_input;
+
+	DEB_D(("VIDIOC_G_INPUT: %d\n", *input));
+	return 0;
+}
+
+static int vidioc_s_input(struct file *file, void *fh, unsigned int input)
+{
+	struct saa7146_dev *dev = ((struct saa7146_fh *)fh)->dev;
+	struct hexium *hexium = (struct hexium *) dev->ext_priv;
+
+	if (input >= HEXIUM_INPUTS)
+		return -EINVAL;
+
+	hexium->cur_input = input;
+	hexium_set_input(hexium, input);
+
+	return 0;
+}
+
 static struct saa7146_ext_vv vv_data;
 
 /* this function only gets called when the probing was successful */
@@ -339,6 +368,9 @@ static int hexium_attach(struct saa7146_dev *dev, struct saa7146_pci_extension_d
 	DEB_EE((".\n"));
 
 	saa7146_vv_init(dev, &vv_data);
+	vv_data.ops.vidioc_enum_input = vidioc_enum_input;
+	vv_data.ops.vidioc_g_input = vidioc_g_input;
+	vv_data.ops.vidioc_s_input = vidioc_s_input;
 	if (0 != saa7146_register_device(&hexium->video_dev, dev, "hexium orion", VFL_TYPE_GRABBER)) {
 		printk("hexium_orion: cannot register capture v4l2 device. skipping.\n");
 		return -1;
@@ -367,58 +399,6 @@ static int hexium_detach(struct saa7146_dev *dev)
 
 	i2c_del_adapter(&hexium->i2c_adapter);
 	kfree(hexium);
-	return 0;
-}
-
-static int hexium_ioctl(struct saa7146_fh *fh, unsigned int cmd, void *arg)
-{
-	struct saa7146_dev *dev = fh->dev;
-	struct hexium *hexium = (struct hexium *) dev->ext_priv;
-/*
-	struct saa7146_vv *vv = dev->vv_data;
-*/
-	switch (cmd) {
-	case VIDIOC_ENUMINPUT:
-		{
-			struct v4l2_input *i = arg;
-			DEB_EE(("VIDIOC_ENUMINPUT %d.\n", i->index));
-
-			if (i->index < 0 || i->index >= HEXIUM_INPUTS) {
-				return -EINVAL;
-			}
-
-			memcpy(i, &hexium_inputs[i->index], sizeof(struct v4l2_input));
-
-			DEB_D(("v4l2_ioctl: VIDIOC_ENUMINPUT %d.\n", i->index));
-			return 0;
-		}
-	case VIDIOC_G_INPUT:
-		{
-			int *input = (int *) arg;
-			*input = hexium->cur_input;
-
-			DEB_D(("VIDIOC_G_INPUT: %d\n", *input));
-			return 0;
-		}
-	case VIDIOC_S_INPUT:
-		{
-			int input = *(int *) arg;
-
-			if (input < 0 || input >= HEXIUM_INPUTS) {
-				return -EINVAL;
-			}
-
-			hexium->cur_input = input;
-			hexium_set_input(hexium, input);
-
-			return 0;
-		}
-	default:
-/*
-		DEB_D(("hexium_ioctl() does not handle this ioctl.\n"));
-*/
-		return -ENOIOCTLCMD;
-	}
 	return 0;
 }
 
@@ -479,8 +459,6 @@ static struct saa7146_ext_vv vv_data = {
 	.stds = &hexium_standards[0],
 	.num_stds = sizeof(hexium_standards) / sizeof(struct saa7146_standard),
 	.std_callback = &std_callback,
-	.ioctls = &ioctls[0],
-	.ioctl = hexium_ioctl,
 };
 
 static struct saa7146_extension extension = {

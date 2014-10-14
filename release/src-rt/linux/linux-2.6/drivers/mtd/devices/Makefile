@@ -1,7 +1,6 @@
 #
-# linux/drivers/devices/Makefile
+# linux/drivers/mtd/devices/Makefile
 #
-# $Id: Makefile.common,v 1.7 2004/12/22 17:51:15 joern Exp $
 
 obj-$(CONFIG_MTD_DOC2000)	+= doc2000.o
 obj-$(CONFIG_MTD_DOC2001)	+= doc2001.o
@@ -16,12 +15,5 @@ obj-$(CONFIG_MTD_MTDRAM)	+= mtdram.o
 obj-$(CONFIG_MTD_LART)		+= lart.o
 obj-$(CONFIG_MTD_BLOCK2MTD)	+= block2mtd.o
 obj-$(CONFIG_MTD_DATAFLASH)	+= mtd_dataflash.o
-obj-$(CONFIG_MTD_DATAFLASH26)	+= at91_dataflash26.o
 obj-$(CONFIG_MTD_M25P80)	+= m25p80.o
-ifeq ($(CONFIG_MTD_NFLASH),y)
-obj-$(CONFIG_MTD_SFLASH)	+= sflash.o
-obj-$(CONFIG_MTD_NFLASH)        += bcm_nflash.o
-else
-obj-$(CONFIG_MTD_SFLASH)	+= sflash-nonand.o
-obj-$(CONFIG_MTD_NFLASH)	+= bcm_nflash-nonand.o
-endif
+obj-$(CONFIG_MTD_SST25L)	+= sst25l.o

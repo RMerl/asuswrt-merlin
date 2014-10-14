@@ -901,7 +901,7 @@ static int titan_ge_port_start(struct net_device *netdev,
 		reg_data |= 0x200000;
 
 		TITAN_GE_WRITE(0x48a0, reg_data);
-		
+
 		reg_data = TITAN_GE_READ(0x4958);
 		reg_data |= 0x100000;
 
@@ -2002,32 +2002,32 @@ static int __init titan_ge_init_module(void)
 	for (i = 0; i < 3; i++) {
 		titan_ge_device[i] = NULL;
 
-	        if (!(pldev = kmalloc (sizeof (*pldev), GFP_KERNEL)))
-	                continue;
+		if (!(pldev = kmalloc (sizeof (*pldev), GFP_KERNEL)))
+			continue;
 
-                memset (pldev, 0, sizeof (*pldev));
-                pldev->name		= titan_string;
-                pldev->id		= i;
-                pldev->dev.release	= titan_platform_release;
-                titan_ge_device[i]	= pldev;
+		memset (pldev, 0, sizeof (*pldev));
+		pldev->name		= titan_string;
+		pldev->id		= i;
+		pldev->dev.release	= titan_platform_release;
+		titan_ge_device[i]	= pldev;
 
-                if (platform_device_register (pldev)) {
-                        kfree (pldev);
-                        titan_ge_device[i] = NULL;
-                        continue;
-                }
-                                                                                
-                if (!pldev->dev.driver) {
-	                /*
+		if (platform_device_register (pldev)) {
+			kfree (pldev);
+			titan_ge_device[i] = NULL;
+			continue;
+		}
+
+		if (!pldev->dev.driver) {
+			/*
 			 * The driver was not bound to this device, there was
-	                 * no hardware at this address. Unregister it, as the
-	                 * release fuction will take care of freeing the
-	                 * allocated structure
+			 * no hardware at this address. Unregister it, as the
+			 * release fuction will take care of freeing the
+			 * allocated structure
 			 */
-                        titan_ge_device[i] = NULL;
-                        platform_device_unregister (pldev);
-                }
-        }
+			titan_ge_device[i] = NULL;
+			platform_device_unregister (pldev);
+		}
+	}
 
 	return 0;
 

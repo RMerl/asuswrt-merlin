@@ -26,26 +26,23 @@
 #define _BTTVP_H_
 
 #include <linux/version.h>
-#define BTTV_VERSION_CODE KERNEL_VERSION(0,9,17)
+#define BTTV_VERSION_CODE KERNEL_VERSION(0,9,18)
 
 #include <linux/types.h>
 #include <linux/wait.h>
 #include <linux/i2c.h>
 #include <linux/i2c-algo-bit.h>
-#include <linux/videodev.h>
-#include <media/v4l2-common.h>
 #include <linux/pci.h>
 #include <linux/input.h>
 #include <linux/mutex.h>
-#include <asm/scatterlist.h>
+#include <linux/scatterlist.h>
 #include <asm/io.h>
-
+#include <media/v4l2-common.h>
 #include <linux/device.h>
-#include <media/video-buf.h>
-#include <media/tuner.h>
+#include <media/videobuf-dma-sg.h>
 #include <media/tveeprom.h>
-#include <media/ir-common.h>
-
+#include <media/rc-core.h>
+#include <media/ir-kbd-i2c.h>
 
 #include "bt848.h"
 #include "bttv.h"
@@ -82,8 +79,11 @@
 /* Limits scaled width, which must be a multiple of 4. */
 #define MAX_HACTIVE (0x3FF & -4)
 
-#define clamp(x, low, high) min (max (low, x), high)
-
+#define BTTV_NORMS    (\
+		V4L2_STD_PAL    | V4L2_STD_PAL_N | \
+		V4L2_STD_PAL_Nc | V4L2_STD_SECAM | \
+		V4L2_STD_NTSC   | V4L2_STD_PAL_M | \
+		V4L2_STD_PAL_60)
 /* ---------------------------------------------------------- */
 
 struct bttv_tvnorm {
@@ -112,7 +112,6 @@ extern const struct bttv_tvnorm bttv_tvnorms[];
 
 struct bttv_format {
 	char *name;
-	int  palette;         /* video4linux 1      */
 	int  fourcc;          /* video4linux 2      */
 	int  btformat;        /* BT848_COLOR_FMT_*  */
 	int  btswap;          /* BT848_COLOR_CTL_*  */
@@ -120,6 +119,33 @@ struct bttv_format {
 	int  flags;
 	int  hshift,vshift;   /* for planar modes   */
 };
+
+struct bttv_ir {
+	struct rc_dev           *dev;
+	struct timer_list       timer;
+
+	char                    name[32];
+	char                    phys[32];
+
+	/* Usual gpio signalling */
+	u32                     mask_keycode;
+	u32                     mask_keydown;
+	u32                     mask_keyup;
+	u32                     polling;
+	u32                     last_gpio;
+	int                     shift_by;
+	int                     start; // What should RC5_START() be
+	int                     addr; // What RC5_ADDR() should be.
+	int                     rc5_remote_gap;
+
+	/* RC5 gpio */
+	bool			rc5_gpio;   /* Is RC5 legacy GPIO enabled? */
+	u32                     last_bit;   /* last raw bit seen */
+	u32                     code;       /* raw code under construction */
+	struct timeval          base_time;  /* time of last seen code */
+	bool                    active;     /* building raw code */
+};
+
 
 /* ---------------------------------------------------------- */
 
@@ -135,7 +161,7 @@ struct bttv_buffer {
 
 	/* bttv specific */
 	const struct bttv_format   *fmt;
-	int                        tvnorm;
+	unsigned int               tvnorm;
 	int                        btformat;
 	int                        btswap;
 	struct bttv_geometry       geo;
@@ -154,7 +180,7 @@ struct bttv_buffer_set {
 };
 
 struct bttv_overlay {
-	int                    tvnorm;
+	unsigned int           tvnorm;
 	struct v4l2_rect       w;
 	enum v4l2_field        field;
 	struct v4l2_clip       *clips;
@@ -174,7 +200,7 @@ struct bttv_vbi_fmt {
 };
 
 /* bttv-vbi.c */
-void bttv_vbi_fmt_reset(struct bttv_vbi_fmt *f, int norm);
+void bttv_vbi_fmt_reset(struct bttv_vbi_fmt *f, unsigned int norm);
 
 struct bttv_crop {
 	/* A cropping rectangle in struct bttv_tvnorm.cropcap units. */
@@ -253,20 +279,29 @@ int bttv_overlay_risc(struct bttv *btv, struct bttv_overlay *ov,
 /* ---------------------------------------------------------- */
 /* bttv-vbi.c                                                 */
 
-int bttv_vbi_try_fmt(struct bttv_fh *fh, struct v4l2_vbi_format *f);
-void bttv_vbi_get_fmt(struct bttv_fh *fh, struct v4l2_vbi_format *f);
-int bttv_vbi_set_fmt(struct bttv_fh *fh, struct v4l2_vbi_format *f);
+int bttv_try_fmt_vbi_cap(struct file *file, void *fh, struct v4l2_format *f);
+int bttv_g_fmt_vbi_cap(struct file *file, void *fh, struct v4l2_format *f);
+int bttv_s_fmt_vbi_cap(struct file *file, void *fh, struct v4l2_format *f);
 
 extern struct videobuf_queue_ops bttv_vbi_qops;
 
 /* ---------------------------------------------------------- */
 /* bttv-gpio.c */
 
-
 extern struct bus_type bttv_sub_bus_type;
 int bttv_sub_add_device(struct bttv_core *core, char *name);
 int bttv_sub_del_devices(struct bttv_core *core);
 
+/* ---------------------------------------------------------- */
+/* bttv-cards.c                                               */
+
+extern int no_overlay;
+
+/* ---------------------------------------------------------- */
+/* bttv-input.c                                               */
+
+extern void init_bttv_i2c_ir(struct bttv *btv);
+extern int fini_bttv_i2c(struct bttv *btv);
 
 /* ---------------------------------------------------------- */
 /* bttv-driver.c                                              */
@@ -277,15 +312,14 @@ extern unsigned int bttv_debug;
 extern unsigned int bttv_gpio;
 extern void bttv_gpio_tracking(struct bttv *btv, char *comment);
 extern int init_bttv_i2c(struct bttv *btv);
-extern int fini_bttv_i2c(struct bttv *btv);
 
 #define bttv_printk if (bttv_verbose) printk
 #define dprintk  if (bttv_debug >= 1) printk
 #define d2printk if (bttv_debug >= 2) printk
 
 #define BTTV_MAX_FBUF   0x208000
-#define BTTV_TIMEOUT    (HZ/2) /* 0.5 seconds */
-#define BTTV_FREE_IDLE  (HZ)   /* one second */
+#define BTTV_TIMEOUT    msecs_to_jiffies(500)    /* 0.5 seconds */
+#define BTTV_FREE_IDLE  msecs_to_jiffies(1000)   /* one second */
 
 
 struct bttv_pll_info {
@@ -298,7 +332,6 @@ struct bttv_pll_info {
 /* for gpio-connected remote control */
 struct bttv_input {
 	struct input_dev      *dev;
-	struct ir_input_state ir;
 	char                  name[32];
 	char                  phys[32];
 	u32                   mask_keycode;
@@ -326,18 +359,19 @@ struct bttv {
 	unsigned int cardid;   /* pci subsystem id (bt878 based ones) */
 	unsigned int tuner_type;  /* tuner chip type */
 	unsigned int tda9887_conf;
-	unsigned int svhs;
+	unsigned int svhs, dig;
+	unsigned int has_saa6588:1;
 	struct bttv_pll_info pll;
 	int triton1;
 	int gpioirq;
-	int (*custom_irq)(struct bttv *btv);
 
 	int use_i2c_hw;
 
 	/* old gpio interface */
-	wait_queue_head_t gpioq;
 	int shutdown;
-	void (*audio_hook)(struct bttv *btv, struct video_audio *v, int set);
+
+	void (*volume_gpio)(struct bttv *btv, __u16 volume);
+	void (*audio_mode_gpio)(struct bttv *btv, struct v4l2_tuner *tuner, int set);
 
 	/* new gpio interface */
 	spinlock_t gpio_lock;
@@ -348,8 +382,8 @@ struct bttv {
 	int                        i2c_state, i2c_rc;
 	int                        i2c_done;
 	wait_queue_head_t          i2c_queue;
-	struct i2c_client 	  *i2c_msp34xx_client;
-	struct i2c_client 	  *i2c_tvaudio_client;
+	struct v4l2_subdev 	  *sd_msp34xx;
+	struct v4l2_subdev 	  *sd_tvaudio;
 
 	/* video4linux (1) */
 	struct video_device *video_dev;
@@ -358,7 +392,10 @@ struct bttv {
 
 	/* infrared remote */
 	int has_remote;
-	struct card_ir *remote;
+	struct bttv_ir *remote;
+
+	/* I2C remote data */
+	struct IR_i2c_init_data    init_data;
 
 	/* locking */
 	spinlock_t s_lock;
@@ -373,7 +410,8 @@ struct bttv {
 	unsigned int audio;
 	unsigned int mute;
 	unsigned long freq;
-	int tvnorm,hue,contrast,bright,saturation;
+	unsigned int tvnorm;
+	int hue, contrast, bright, saturation;
 	struct v4l2_framebuffer fbuf;
 	unsigned int field_count;
 
@@ -453,14 +491,21 @@ struct bttv {
 	__s32			crop_start;
 };
 
-/* our devices */
-#define BTTV_MAX 16
-extern unsigned int bttv_num;
-extern struct bttv bttvs[BTTV_MAX];
+static inline struct bttv *to_bttv(struct v4l2_device *v4l2_dev)
+{
+	return container_of(v4l2_dev, struct bttv, c.v4l2_dev);
+}
 
-/* private ioctls */
-#define BTTV_VERSION            _IOR('v' , BASE_VIDIOCPRIVATE+6, int)
-#define BTTV_VBISIZE            _IOR('v' , BASE_VIDIOCPRIVATE+8, int)
+/* our devices */
+#define BTTV_MAX 32
+extern unsigned int bttv_num;
+extern struct bttv *bttvs[BTTV_MAX];
+
+static inline unsigned int bttv_muxsel(const struct bttv *btv,
+				       unsigned int input)
+{
+	return (bttv_tvcards[btv->c.type].muxsel >> (input * 2)) & 3;
+}
 
 #endif
 

@@ -13,6 +13,7 @@
 #include <linux/platform_device.h>
 #include <linux/dma-mapping.h>
 #include <linux/errno.h>
+#include <linux/gfp.h>
 #include <linux/fb.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>
@@ -75,7 +76,7 @@ struct gbefb_par {
 static unsigned int gbe_mem_size = CONFIG_FB_GBE_MEM * 1024*1024;
 static void *gbe_mem;
 static dma_addr_t gbe_dma_addr;
-unsigned long gbe_mem_phys;
+static unsigned long gbe_mem_phys;
 
 static struct {
 	uint16_t *cpu;
@@ -86,12 +87,14 @@ static int gbe_revision;
 
 static int ypan, ywrap;
 
-static uint32_t pseudo_palette[256];
+static uint32_t pseudo_palette[16];
+static uint32_t gbe_cmap[256];
+static int gbe_turned_on; /* 0 turned off, 1 turned on */
 
-static char *mode_option __initdata = NULL;
+static char *mode_option __devinitdata = NULL;
 
 /* default CRT mode */
-static struct fb_var_screeninfo default_var_CRT __initdata = {
+static struct fb_var_screeninfo default_var_CRT __devinitdata = {
 	/* 640x480, 60 Hz, Non-Interlaced (25.175 MHz dotclock) */
 	.xres		= 640,
 	.yres		= 480,
@@ -122,7 +125,7 @@ static struct fb_var_screeninfo default_var_CRT __initdata = {
 };
 
 /* default LCD mode */
-static struct fb_var_screeninfo default_var_LCD __initdata = {
+static struct fb_var_screeninfo default_var_LCD __devinitdata = {
 	/* 1600x1024, 8 bpp */
 	.xres		= 1600,
 	.yres		= 1024,
@@ -154,7 +157,7 @@ static struct fb_var_screeninfo default_var_LCD __initdata = {
 
 /* default modedb mode */
 /* 640x480, 60 Hz, Non-Interlaced (25.172 MHz dotclock) */
-static struct fb_videomode default_mode_CRT __initdata = {
+static struct fb_videomode default_mode_CRT __devinitdata = {
 	.refresh	= 60,
 	.xres		= 640,
 	.yres		= 480,
@@ -169,7 +172,7 @@ static struct fb_videomode default_mode_CRT __initdata = {
 	.vmode		= FB_VMODE_NONINTERLACED,
 };
 /* 1600x1024 SGI flatpanel 1600sw */
-static struct fb_videomode default_mode_LCD __initdata = {
+static struct fb_videomode default_mode_LCD __devinitdata = {
 	/* 1600x1024, 8 bpp */
 	.xres		= 1600,
 	.yres		= 1024,
@@ -183,8 +186,8 @@ static struct fb_videomode default_mode_LCD __initdata = {
 	.vmode		= FB_VMODE_NONINTERLACED,
 };
 
-struct fb_videomode *default_mode = &default_mode_CRT;
-struct fb_var_screeninfo *default_var = &default_var_CRT;
+static struct fb_videomode *default_mode __devinitdata = &default_mode_CRT;
+static struct fb_var_screeninfo *default_var __devinitdata = &default_var_CRT;
 
 static int flat_panel_enabled = 0;
 
@@ -203,10 +206,12 @@ static void gbe_reset(void)
  *              console.
  */
 
-void gbe_turn_off(void)
+static void gbe_turn_off(void)
 {
 	int i;
 	unsigned int val, x, y, vpixen_off;
+
+	gbe_turned_on = 0;
 
 	/* check if pixel counter is on */
 	val = gbe->vt_xy;
@@ -371,6 +376,22 @@ static void gbe_turn_on(void)
 	}
 	if (i == 10000)
 		printk(KERN_ERR "gbefb: turn on DMA timed out\n");
+
+	gbe_turned_on = 1;
+}
+
+static void gbe_loadcmap(void)
+{
+	int i, j;
+
+	for (i = 0; i < 256; i++) {
+		for (j = 0; j < 1000 && gbe->cm_fifo >= 63; j++)
+			udelay(10);
+		if (j == 1000)
+			printk(KERN_ERR "gbefb: cmap FIFO timeout\n");
+
+		gbe->cmap[i] = gbe_cmap[i];
+	}
 }
 
 /*
@@ -382,6 +403,7 @@ static int gbefb_blank(int blank, struct fb_info *info)
 	switch (blank) {
 	case FB_BLANK_UNBLANK:		/* unblank */
 		gbe_turn_on();
+		gbe_loadcmap();
 		break;
 
 	case FB_BLANK_NORMAL:		/* blank */
@@ -680,7 +702,7 @@ static int gbefb_set_par(struct fb_info *info)
 	   blocks of 512x128, 256x128 or 128x128 pixels, respectively for 8bit,
 	   16bit and 32 bit modes (64 kB). They cover the screen with partial
 	   tiles on the right and/or bottom of the screen if needed.
-	   For exemple in 640x480 8 bit mode the mapping is:
+	   For example in 640x480 8 bit mode the mapping is:
 
 	   <-------- 640 ----->
 	   <---- 512 ----><128|384 offscreen>
@@ -699,7 +721,7 @@ static int gbefb_set_par(struct fb_info *info)
 
 	   Tiles have the advantage that they can be allocated individually in
 	   memory. However, this mapping is not linear at all, which is not
-	   really convienient. In order to support linear addressing, the GBE
+	   really convenient. In order to support linear addressing, the GBE
 	   DMA hardware is fooled into thinking the screen is only one tile
 	   large and but has a greater height, so that the DMA transfer covers
 	   the same region.
@@ -796,16 +818,10 @@ static int gbefb_set_par(struct fb_info *info)
 		gbe->gmap[i] = (i << 24) | (i << 16) | (i << 8);
 
 	/* Initialize the color map */
-	for (i = 0; i < 256; i++) {
-		int j;
+	for (i = 0; i < 256; i++)
+		gbe_cmap[i] = (i << 8) | (i << 16) | (i << 24);
 
-		for (j = 0; j < 1000 && gbe->cm_fifo >= 63; j++)
-			udelay(10);
-		if (j == 1000)
-			printk(KERN_ERR "gbefb: cmap FIFO timeout\n");
-
-		gbe->cmap[i] = (i << 8) | (i << 16) | (i << 24);
-	}
+	gbe_loadcmap();
 
 	return 0;
 }
@@ -854,33 +870,37 @@ static int gbefb_setcolreg(unsigned regno, unsigned red, unsigned green,
 	green >>= 8;
 	blue >>= 8;
 
-	switch (info->var.bits_per_pixel) {
-	case 8:
-		/* wait for the color map FIFO to have a free entry */
-		for (i = 0; i < 1000 && gbe->cm_fifo >= 63; i++)
-			udelay(10);
-		if (i == 1000) {
-			printk(KERN_ERR "gbefb: cmap FIFO timeout\n");
-			return 1;
+	if (info->var.bits_per_pixel <= 8) {
+		gbe_cmap[regno] = (red << 24) | (green << 16) | (blue << 8);
+		if (gbe_turned_on) {
+			/* wait for the color map FIFO to have a free entry */
+			for (i = 0; i < 1000 && gbe->cm_fifo >= 63; i++)
+				udelay(10);
+			if (i == 1000) {
+				printk(KERN_ERR "gbefb: cmap FIFO timeout\n");
+				return 1;
+			}
+			gbe->cmap[regno] = gbe_cmap[regno];
 		}
-		gbe->cmap[regno] = (red << 24) | (green << 16) | (blue << 8);
-		break;
-	case 15:
-	case 16:
-		red >>= 3;
-		green >>= 3;
-		blue >>= 3;
-		pseudo_palette[regno] =
-			(red << info->var.red.offset) |
-			(green << info->var.green.offset) |
-			(blue << info->var.blue.offset);
-		break;
-	case 32:
-		pseudo_palette[regno] =
-			(red << info->var.red.offset) |
-			(green << info->var.green.offset) |
-			(blue << info->var.blue.offset);
-		break;
+	} else if (regno < 16) {
+		switch (info->var.bits_per_pixel) {
+		case 15:
+		case 16:
+			red >>= 3;
+			green >>= 3;
+			blue >>= 3;
+			pseudo_palette[regno] =
+				(red << info->var.red.offset) |
+				(green << info->var.green.offset) |
+				(blue << info->var.blue.offset);
+			break;
+		case 32:
+			pseudo_palette[regno] =
+				(red << info->var.red.offset) |
+				(green << info->var.green.offset) |
+				(blue << info->var.blue.offset);
+			break;
+		}
 	}
 
 	return 0;
@@ -893,6 +913,7 @@ static int gbefb_check_var(struct fb_var_screeninfo *var, struct fb_info *info)
 {
 	unsigned int line_length;
 	struct gbe_timing_info timing;
+	int ret;
 
 	/* Limit bpp to 8, 16, and 32 */
 	if (var->bits_per_pixel <= 8)
@@ -911,8 +932,10 @@ static int gbefb_check_var(struct fb_var_screeninfo *var, struct fb_info *info)
 
 	var->grayscale = 0;	/* No grayscale for now */
 
-	if ((var->pixclock = compute_gbe_timing(var, &timing)) < 0)
-		return(-EINVAL);
+	ret = compute_gbe_timing(var, &timing);
+	var->pixclock = ret;
+	if (ret < 0)
+		return -EINVAL;
 
 	/* Adjust virtual resolution, if necessary */
 	if (var->xres > var->xres_virtual || (!ywrap && !ypan))
@@ -1075,7 +1098,7 @@ static void gbefb_create_sysfs(struct device *dev)
  * Initialization
  */
 
-int __init gbefb_setup(char *options)
+static int __devinit gbefb_setup(char *options)
 {
 	char *this_opt;
 
@@ -1106,7 +1129,7 @@ int __init gbefb_setup(char *options)
 	return 0;
 }
 
-static int __init gbefb_probe(struct platform_device *p_dev)
+static int __devinit gbefb_probe(struct platform_device *p_dev)
 {
 	int i, ret = 0;
 	struct fb_info *info;
@@ -1120,12 +1143,14 @@ static int __init gbefb_probe(struct platform_device *p_dev)
 		return -ENOMEM;
 
 #ifndef MODULE
-	if (fb_get_options("gbefb", &options))
-		return -ENODEV;
+	if (fb_get_options("gbefb", &options)) {
+		ret = -ENODEV;
+		goto out_release_framebuffer;
+	}
 	gbefb_setup(options);
 #endif
 
-	if (!request_region(GBE_BASE, sizeof(struct sgi_gbe), "GBE")) {
+	if (!request_mem_region(GBE_BASE, sizeof(struct sgi_gbe), "GBE")) {
 		printk(KERN_ERR "gbefb: couldn't reserve mmio region\n");
 		ret = -EBUSY;
 		goto out_release_framebuffer;
@@ -1261,7 +1286,7 @@ static struct platform_driver gbefb_driver = {
 
 static struct platform_device *gbefb_device;
 
-int __init gbefb_init(void)
+static int __init gbefb_init(void)
 {
 	int ret = platform_driver_register(&gbefb_driver);
 	if (!ret) {
@@ -1279,7 +1304,7 @@ int __init gbefb_init(void)
 	return ret;
 }
 
-void __exit gbefb_exit(void)
+static void __exit gbefb_exit(void)
 {
 	platform_device_unregister(gbefb_device);
 	platform_driver_unregister(&gbefb_driver);

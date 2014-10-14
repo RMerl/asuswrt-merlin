@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.28 2005/03/17 10:44:37 larsv Exp $
+#
 # cris/Makefile
 #
 # This file is included by the global makefile so that you can add your own
@@ -10,121 +10,89 @@
 # License.  See the file "COPYING" in the main directory of this archive
 # for more details.
 
-# A bug in ld prevents us from having a (constant-value) symbol in a
-# "ORIGIN =" or "LENGTH =" expression.
+KBUILD_DEFCONFIG := etrax-100lx_v2_defconfig
 
 arch-y := v10
 arch-$(CONFIG_ETRAX_ARCH_V10) := v10
 arch-$(CONFIG_ETRAX_ARCH_V32) := v32
 
-# No config avaiable for make clean etc
+# No config available for make clean etc
+mach-y := fs
+mach-$(CONFIG_CRIS_MACH_ARTPEC3) := a3
+mach-$(CONFIG_ETRAXFS) := fs
+
 ifneq ($(arch-y),)
 SARCH := arch-$(arch-y)
+inc := -Iarch/cris/include/$(SARCH)
+inc += -Iarch/cris/include/$(SARCH)/arch
 else
 SARCH :=
+inc :=
+endif
+
+ifneq ($(mach-y),)
+MACH := mach-$(mach-y)
+inc += -Iarch/cris/include/$(SARCH)/$(MACH)/
+inc += -Iarch/cris/include/$(SARCH)/$(MACH)/mach
+else
+MACH :=
 endif
 
 LD = $(CROSS_COMPILE)ld -mcrislinux
 
 OBJCOPYFLAGS := -O binary -R .note -R .comment -S
 
-CPPFLAGS_vmlinux.lds = -DDRAM_VIRTUAL_BASE=0x$(CONFIG_ETRAX_DRAM_VIRTUAL_BASE)
-AFLAGS += -mlinux
-
-CFLAGS := $(CFLAGS) -mlinux -march=$(arch-y) -pipe
+KBUILD_AFLAGS += -mlinux -march=$(arch-y) $(inc)
+KBUILD_CFLAGS += -mlinux -march=$(arch-y) -pipe $(inc)
+KBUILD_CPPFLAGS += $(inc)
 
 ifdef CONFIG_FRAME_POINTER
-CFLAGS := $(subst -fomit-frame-pointer,,$(CFLAGS)) -g
-CFLAGS += -fno-omit-frame-pointer
+KBUILD_CFLAGS := $(subst -fomit-frame-pointer,,$(KBUILD_CFLAGS)) -g
+KBUILD_CFLAGS += -fno-omit-frame-pointer
 endif
 
-head-y := arch/$(ARCH)/$(SARCH)/kernel/head.o
+head-y := arch/cris/$(SARCH)/kernel/head.o
 
-LIBGCC = $(shell $(CC) $(CFLAGS) -print-file-name=libgcc.a)
+LIBGCC = $(shell $(CC) $(KBUILD_CFLAGS) -print-file-name=libgcc.a)
 
-core-y		+= arch/$(ARCH)/kernel/ arch/$(ARCH)/mm/
-core-y		+= arch/$(ARCH)/$(SARCH)/kernel/ arch/$(ARCH)/$(SARCH)/mm/
-drivers-y	+= arch/$(ARCH)/$(SARCH)/drivers/
-libs-y		+= arch/$(ARCH)/$(SARCH)/lib/ $(LIBGCC)
+core-y		+= arch/cris/kernel/ arch/cris/mm/
+core-y		+= arch/cris/$(SARCH)/kernel/ arch/cris/$(SARCH)/mm/
+ifdef CONFIG_ETRAX_ARCH_V32
+core-y		+= arch/cris/$(SARCH)/$(MACH)/
+endif
+drivers-y	+= arch/cris/$(SARCH)/drivers/
+libs-y		+= arch/cris/$(SARCH)/lib/ $(LIBGCC)
 
 # cris source path
-SRC_ARCH              = $(srctree)/arch/$(ARCH)
+SRC_ARCH              = $(srctree)/arch/cris
 # cris object files path
-OBJ_ARCH              = $(objtree)/arch/$(ARCH)
+OBJ_ARCH              = $(objtree)/arch/cris
 
-target_boot_arch_dir  = $(OBJ_ARCH)/$(SARCH)/boot
-target_boot_dir       = $(OBJ_ARCH)/boot
-src_boot_dir          = $(SRC_ARCH)/boot
-target_compressed_dir = $(OBJ_ARCH)/boot/compressed
-src_compressed_dir    = $(SRC_ARCH)/boot/compressed
-target_rescue_dir     = $(OBJ_ARCH)/boot/rescue
-src_rescue_dir        = $(SRC_ARCH)/boot/rescue
+boot := arch/cris/boot
+MACHINE := arch/cris/$(SARCH)
 
-export target_boot_arch_dir target_boot_dir src_boot_dir target_compressed_dir src_compressed_dir target_rescue_dir src_rescue_dir
+all: zImage
 
-vmlinux.bin: vmlinux
-	$(OBJCOPY) $(OBJCOPYFLAGS) vmlinux vmlinux.bin
+zImage Image: vmlinux
+	$(Q)$(MAKE) $(build)=$(boot) MACHINE=$(MACHINE) $(boot)/$@
 
-timage: vmlinux.bin
-	cat vmlinux.bin cramfs.img >timage
+archprepare:
 
-simimage: timage
-	cp vmlinux.bin simvmlinux.bin
-
-# the following will remake timage without compiling the kernel
-# it does of course require that all object files exist...
-
-cramfs:
-## cramfs      - Creates a cramfs image
-	mkcramfs -b 8192 -m romfs_meta.txt root cramfs.img
-	cat vmlinux.bin cramfs.img >timage
-
-clinux: vmlinux.bin decompress.bin rescue.bin
-
-decompress.bin: $(target_boot_dir)
-	@$(MAKE) -f $(src_compressed_dir)/Makefile $(target_compressed_dir)/decompress.bin
-
-$(target_rescue_dir)/rescue.bin: $(target_boot_dir)
-	@$(MAKE) -f $(src_rescue_dir)/Makefile $(target_rescue_dir)/rescue.bin
-
-zImage: $(target_boot_dir) vmlinux.bin $(target_rescue_dir)/rescue.bin
-## zImage     - Compressed kernel (gzip)
-	@$(MAKE) -f $(src_boot_dir)/Makefile zImage
-
-$(target_boot_dir): $(target_boot_arch_dir)
-	ln -sfn $< $@
-
-$(target_boot_arch_dir):
-	mkdir -p $@
-
-compressed: zImage
-
-archmrproper:
 archclean:
-	@if [ -d arch/$(ARCH)/boot ]; then \
-		$(MAKE) $(clean)=arch/$(ARCH)/boot ; \
+	$(Q)if [ -e arch/cris/boot ]; then \
+		$(MAKE) $(clean)=arch/cris/boot; \
 	fi
-	rm -f timage vmlinux.bin decompress.bin rescue.bin cramfs.img
-	rm -rf $(LD_SCRIPT).tmp
 
-archprepare: $(SRC_ARCH)/.links $(srctree)/include/asm-$(ARCH)/.arch
+CLEAN_FILES += \
+	$(boot)/zImage \
+	$(boot)/compressed/decompress.bin \
+	$(boot)/compressed/piggy.gz \
+	$(boot)/rescue/rescue.bin
 
-# Create some links to make all tools happy
-$(SRC_ARCH)/.links:
-	@rm -rf $(SRC_ARCH)/drivers
-	@ln -sfn $(SRC_ARCH)/$(SARCH)/drivers $(SRC_ARCH)/drivers
-	@rm -rf $(SRC_ARCH)/boot
-	@ln -sfn $(SRC_ARCH)/$(SARCH)/boot $(SRC_ARCH)/boot
-	@rm -rf $(SRC_ARCH)/lib
-	@ln -sfn $(SRC_ARCH)/$(SARCH)/lib $(SRC_ARCH)/lib
-	@ln -sfn $(SRC_ARCH)/$(SARCH) $(SRC_ARCH)/arch
-	@ln -sfn $(SRC_ARCH)/$(SARCH)/vmlinux.lds.S $(SRC_ARCH)/kernel/vmlinux.lds.S
-	@ln -sfn $(SRC_ARCH)/$(SARCH)/kernel/asm-offsets.c $(SRC_ARCH)/kernel/asm-offsets.c
-	@touch $@
 
-# Create link to sub arch includes
-$(srctree)/include/asm-$(ARCH)/.arch: $(wildcard include/config/arch/*.h)
-	@echo '  Making $(srctree)/include/asm-$(ARCH)/arch -> $(srctree)/include/asm-$(ARCH)/$(SARCH) symlink'
-	@rm -f include/asm-$(ARCH)/arch
-	@ln -sf $(srctree)/include/asm-$(ARCH)/$(SARCH) $(srctree)/include/asm-$(ARCH)/arch
-	@touch $@
+# MRPROPER_FILES +=
+
+define archhelp
+  echo  '* zImage        - Compressed kernel image (arch/cris/boot/zImage)'
+  echo  '* Image         - Uncompressed kernel image (arch/cris/boot/Image)'
+endef

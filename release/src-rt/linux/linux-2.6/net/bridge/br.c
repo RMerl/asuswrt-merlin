@@ -5,8 +5,6 @@
  *	Authors:
  *	Lennert Buytenhek		<buytenh@gnu.org>
  *
- *	$Id: br.c,v 1.1.1.1 2007-08-03 18:53:50 $
- *
  *	This program is free software; you can redistribute it and/or
  *	modify it under the terms of the GNU General Public License
  *	as published by the Free Software Foundation; either version
@@ -20,77 +18,87 @@
 #include <linux/init.h>
 #include <linux/llc.h>
 #include <net/llc.h>
+#include <net/stp.h>
 
 #include "br_private.h"
 
-int (*br_should_route_hook) (struct sk_buff **pskb) = NULL;
+static const struct stp_proto br_stp_proto = {
+	.rcv	= br_stp_rcv,
+};
 
-static struct llc_sap *br_stp_sap;
+static struct pernet_operations br_net_ops = {
+	.exit	= br_net_exit,
+};
 
 static int __init br_init(void)
 {
 	int err;
 
-	br_stp_sap = llc_sap_open(LLC_SAP_BSPAN, br_stp_rcv);
-	if (!br_stp_sap) {
-		printk(KERN_ERR "bridge: can't register sap for STP\n");
-		return -EADDRINUSE;
+	err = stp_proto_register(&br_stp_proto);
+	if (err < 0) {
+		pr_err("bridge: can't register sap for STP\n");
+		return err;
 	}
 
 	err = br_fdb_init();
+	if (err)
+		goto err_out;
+
+	err = register_pernet_subsys(&br_net_ops);
 	if (err)
 		goto err_out1;
 
 	err = br_netfilter_init();
 	if (err)
-		goto err_out1;
+		goto err_out2;
 
 	err = register_netdevice_notifier(&br_device_notifier);
 	if (err)
-		goto err_out2;
+		goto err_out3;
 
 	err = br_netlink_init();
 	if (err)
-		goto err_out3;
+		goto err_out4;
 
 	brioctl_set(br_ioctl_deviceless_stub);
-	br_handle_frame_hook = br_handle_frame;
 
-	br_fdb_get_hook = br_fdb_get;
-	br_fdb_put_hook = br_fdb_put;
+#if defined(CONFIG_ATM_LANE) || defined(CONFIG_ATM_LANE_MODULE)
+	br_fdb_test_addr_hook = br_fdb_test_addr;
+#endif
 
 	return 0;
-err_out3:
+err_out4:
 	unregister_netdevice_notifier(&br_device_notifier);
-err_out2:
+err_out3:
 	br_netfilter_fini();
+err_out2:
+	unregister_pernet_subsys(&br_net_ops);
 err_out1:
-	llc_sap_put(br_stp_sap);
+	br_fdb_fini();
+err_out:
+	stp_proto_unregister(&br_stp_proto);
 	return err;
 }
 
 static void __exit br_deinit(void)
 {
-	rcu_assign_pointer(br_stp_sap->rcv_func, NULL);
+	stp_proto_unregister(&br_stp_proto);
 
 	br_netlink_fini();
-	br_netfilter_fini();
 	unregister_netdevice_notifier(&br_device_notifier);
 	brioctl_set(NULL);
 
-	br_cleanup_bridges();
+	unregister_pernet_subsys(&br_net_ops);
 
-	synchronize_net();
+	rcu_barrier(); /* Wait for completion of call_rcu()'s */
 
-	llc_sap_put(br_stp_sap);
-	br_fdb_get_hook = NULL;
-	br_fdb_put_hook = NULL;
+	br_netfilter_fini();
+#if defined(CONFIG_ATM_LANE) || defined(CONFIG_ATM_LANE_MODULE)
+	br_fdb_test_addr_hook = NULL;
+#endif
 
-	br_handle_frame_hook = NULL;
 	br_fdb_fini();
 }
-
-EXPORT_SYMBOL(br_should_route_hook);
 
 module_init(br_init)
 module_exit(br_deinit)

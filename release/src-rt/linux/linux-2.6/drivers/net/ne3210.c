@@ -45,9 +45,6 @@
 
 #define DRV_NAME "ne3210"
 
-static int ne3210_open(struct net_device *dev);
-static int ne3210_close(struct net_device *dev);
-
 static void ne3210_reset_8390(struct net_device *dev);
 
 static void ne3210_get_8390_hdr(struct net_device *dev, struct e8390_pkt_hdr *hdr, int ring_page);
@@ -106,9 +103,8 @@ static int __init ne3210_eisa_probe (struct device *device)
 		return -ENOMEM;
 	}
 
-	SET_MODULE_OWNER(dev);
 	SET_NETDEV_DEV(dev, device);
-	device->driver_data = dev;
+	dev_set_drvdata(device, dev);
 	ioaddr = edev->base_addr;
 
 	if (!request_region(ioaddr, NE3210_IO_EXTENT, DRV_NAME)) {
@@ -128,17 +124,15 @@ static int __init ne3210_eisa_probe (struct device *device)
 		inb(ioaddr + NE3210_CFG1), inb(ioaddr + NE3210_CFG2));
 #endif
 
-
 	port_index = inb(ioaddr + NE3210_CFG2) >> 6;
-	printk("ne3210.c: NE3210 in EISA slot %d, media: %s, addr:",
-		edev->slot, ifmap[port_index]);
 	for(i = 0; i < ETHER_ADDR_LEN; i++)
-		printk(" %02x", (dev->dev_addr[i] = inb(ioaddr + NE3210_SA_PROM + i)));
-
+		dev->dev_addr[i] = inb(ioaddr + NE3210_SA_PROM + i);
+	printk("ne3210.c: NE3210 in EISA slot %d, media: %s, addr: %pM.\n",
+		edev->slot, ifmap[port_index], dev->dev_addr);
 
 	/* Snarf the interrupt now. CFG file has them all listed as `edge' with share=NO */
 	dev->irq = irq_map[(inb(ioaddr + NE3210_CFG2) >> 3) & 0x07];
-	printk(".\nne3210.c: using IRQ %d, ", dev->irq);
+	printk("ne3210.c: using IRQ %d, ", dev->irq);
 
 	retval = request_irq(dev->irq, ei_interrupt, 0, DRV_NAME, dev);
 	if (retval) {
@@ -156,7 +150,8 @@ static int __init ne3210_eisa_probe (struct device *device)
 		if (phys_mem < virt_to_phys(high_memory)) {
 			printk(KERN_CRIT "ne3210.c: Card RAM overlaps with normal memory!!!\n");
 			printk(KERN_CRIT "ne3210.c: Use EISA SCU to set card memory below 1MB,\n");
-			printk(KERN_CRIT "ne3210.c: or to an address above 0x%lx.\n", virt_to_phys(high_memory));
+			printk(KERN_CRIT "ne3210.c: or to an address above 0x%llx.\n",
+				(u64)virt_to_phys(high_memory));
 			printk(KERN_CRIT "ne3210.c: Driver NOT installed.\n");
 			retval = -EINVAL;
 			goto out3;
@@ -202,11 +197,8 @@ static int __init ne3210_eisa_probe (struct device *device)
 	ei_status.block_output = &ne3210_block_output;
 	ei_status.get_8390_hdr = &ne3210_get_8390_hdr;
 
-	dev->open = &ne3210_open;
-	dev->stop = &ne3210_close;
-#ifdef CONFIG_NET_POLL_CONTROLLER
-	dev->poll_controller = ei_poll;
-#endif
+	dev->netdev_ops = &ei_netdev_ops;
+
 	dev->if_port = ifmap_val[port_index];
 
 	if ((retval = register_netdev (dev)))
@@ -233,7 +225,7 @@ static int __init ne3210_eisa_probe (struct device *device)
 
 static int __devexit ne3210_eisa_remove (struct device *device)
 {
-	struct net_device  *dev    = device->driver_data;
+	struct net_device  *dev    = dev_get_drvdata(device);
 	unsigned long       ioaddr = to_eisa_device (device)->base_addr;
 
 	unregister_netdev (dev);
@@ -263,8 +255,6 @@ static void ne3210_reset_8390(struct net_device *dev)
 	ei_status.txing = 0;
 	outb(0x01, ioaddr + NE3210_RESET_PORT);
 	if (ei_debug > 1) printk("reset done\n");
-
-	return;
 }
 
 /*
@@ -321,22 +311,6 @@ static void ne3210_block_output(struct net_device *dev, int count,
 
 	count = (count + 3) & ~3;     /* Round up to doubleword */
 	memcpy_toio(shmem, buf, count);
-}
-
-static int ne3210_open(struct net_device *dev)
-{
-	ei_open(dev);
-	return 0;
-}
-
-static int ne3210_close(struct net_device *dev)
-{
-
-	if (ei_debug > 1)
-		printk("%s: Shutting down ethercard.\n", dev->name);
-
-	ei_close(dev);
-	return 0;
 }
 
 static struct eisa_device_id ne3210_ids[] = {

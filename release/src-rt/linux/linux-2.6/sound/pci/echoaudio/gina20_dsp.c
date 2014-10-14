@@ -38,7 +38,8 @@ static int init_hw(struct echoaudio *chip, u16 device_id, u16 subdevice_id)
 	int err;
 
 	DE_INIT(("init_hw() - Gina20\n"));
-	snd_assert((subdevice_id & 0xfff0) == GINA20, return -ENODEV);
+	if (snd_BUG_ON((subdevice_id & 0xfff0) != GINA20))
+		return -ENODEV;
 
 	if ((err = init_dsp_comm_page(chip))) {
 		DE_INIT(("init_hw - could not initialize DSP comm page\n"));
@@ -48,7 +49,7 @@ static int init_hw(struct echoaudio *chip, u16 device_id, u16 subdevice_id)
 	chip->device_id = device_id;
 	chip->subdevice_id = subdevice_id;
 	chip->bad_board = TRUE;
-	chip->dsp_code_to_load = &card_fw[FW_GINA20_DSP];
+	chip->dsp_code_to_load = FW_GINA20_DSP;
 	chip->spdif_status = GD_SPDIF_STATUS_UNDEF;
 	chip->clock_state = GD_CLOCK_UNDEF;
 	/* Since this card has no ASIC, mark it as loaded so everything
@@ -61,13 +62,16 @@ static int init_hw(struct echoaudio *chip, u16 device_id, u16 subdevice_id)
 		return err;
 	chip->bad_board = FALSE;
 
-	if ((err = init_line_levels(chip)) < 0)
-		return err;
-
-	err = set_professional_spdif(chip, TRUE);
-
 	DE_INIT(("init_hw done\n"));
 	return err;
+}
+
+
+
+static int set_mixer_defaults(struct echoaudio *chip)
+{
+	chip->professional_spdif = FALSE;
+	return init_line_levels(chip);
 }
 
 
@@ -177,7 +181,8 @@ static int set_input_clock(struct echoaudio *chip, u16 clock)
 /* Set input bus gain (one unit is 0.5dB !) */
 static int set_input_gain(struct echoaudio *chip, u16 input, int gain)
 {
-	snd_assert(input < num_busses_in(chip), return -EINVAL);
+	if (snd_BUG_ON(input >= num_busses_in(chip)))
+		return -EINVAL;
 
 	if (wait_handshake(chip))
 		return -EIO;
@@ -206,10 +211,10 @@ static int set_professional_spdif(struct echoaudio *chip, char prof)
 	DE_ACT(("set_professional_spdif %d\n", prof));
 	if (prof)
 		chip->comm_page->flags |=
-			__constant_cpu_to_le32(DSP_FLAG_PROFESSIONAL_SPDIF);
+			cpu_to_le32(DSP_FLAG_PROFESSIONAL_SPDIF);
 	else
 		chip->comm_page->flags &=
-			~__constant_cpu_to_le32(DSP_FLAG_PROFESSIONAL_SPDIF);
+			~cpu_to_le32(DSP_FLAG_PROFESSIONAL_SPDIF);
 	chip->professional_spdif = prof;
 	return update_flags(chip);
 }

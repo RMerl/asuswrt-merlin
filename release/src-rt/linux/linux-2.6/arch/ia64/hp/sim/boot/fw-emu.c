@@ -285,7 +285,7 @@ sys_fw_init (const char *args, int arglen)
 	}
 	cmd_line[arglen] = '\0';
 
-	memset(efi_systab, 0, sizeof(efi_systab));
+	memset(efi_systab, 0, sizeof(*efi_systab));
 	efi_systab->hdr.signature = EFI_SYSTEM_TABLE_SIGNATURE;
 	efi_systab->hdr.revision  = ((1 << 16) | 00);
 	efi_systab->hdr.headersize = sizeof(efi_systab->hdr);
@@ -327,11 +327,6 @@ sys_fw_init (const char *args, int arglen)
 #ifdef CONFIG_IA64_HP_SIM
 	strcpy(sal_systab->oem_id, "Hewlett-Packard");
 	strcpy(sal_systab->product_id, "HP-simulator");
-#endif
-
-#ifdef CONFIG_IA64_SDV
-	strcpy(sal_systab->oem_id, "Intel");
-	strcpy(sal_systab->product_id, "SDV");
 #endif
 
 	/* fill in an entry point: */

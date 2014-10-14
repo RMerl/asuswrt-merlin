@@ -1,4 +1,4 @@
-Version 1.49 April 26, 2007
+Version 1.53 May 20, 2008
 
 A Partial List of Missing Features
 ==================================
@@ -16,25 +16,24 @@ SecurityDescriptors
 c) Better pam/winbind integration (e.g. to handle uid mapping
 better)
 
-d) Verify that Kerberos signing works
-
-e) Cleanup now unneeded SessSetup code in
+d) Cleanup now unneeded SessSetup code in
 fs/cifs/connect.c and add back in NTLMSSP code if any servers
 need it
 
-f) MD5-HMAC signing SMB PDUs when SPNEGO style SessionSetup 
-used (Kerberos or NTLMSSP). Signing alreadyimplemented for NTLM
-and raw NTLMSSP already. This is important when enabling
-extended security and mounting to Windows 2003 Servers
+e) fix NTLMv2 signing when two mounts with different users to same
+server.
 
-g) Directory entry caching relies on a 1 second timer, rather than 
+f) Directory entry caching relies on a 1 second timer, rather than 
 using FindNotify or equivalent.  - (started)
 
-h) quota support (needs minor kernel change since quota calls
+g) quota support (needs minor kernel change since quota calls
 to make it to network filesystems or deviceless filesystems)
 
-i) investigate sync behavior (including syncpage) and check  
+h) investigate sync behavior (including syncpage) and check  
 for proper behavior of intr/nointr
+
+i) improve support for very old servers (OS/2 and Win9x for example)
+Including support for changing the time remotely (utimes command).
 
 j) hook lower into the sockets api (as NFS/SunRPC does) to avoid the
 extra copy in/out of the socket buffers in some cases.
@@ -82,7 +81,7 @@ u) DOS attrs - returned as pseudo-xattr in Samba format (check VFAT and NTFS for
 
 v) mount check for unmatched uids
 
-w) Add support for new vfs entry points for setlease and fallocate 
+w) Add support for new vfs entry point for fallocate
 
 x) Fix Samba 3 server to handle Linux kernel aio so dbench with lots of 
 processes can proceed better in parallel (on the server)

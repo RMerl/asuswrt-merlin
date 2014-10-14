@@ -1,6 +1,6 @@
 /* linux/arch/arm/mach-s3c2410/bast-irq.c
  *
- * Copyright (c) 2003,2005 Simtec Electronics
+ * Copyright 2003-2005 Simtec Electronics
  *   Ben Dooks <ben@simtec.co.uk>
  *
  * http://www.simtec.co.uk/products/EB2410ITX/
@@ -25,20 +25,20 @@
 #include <linux/module.h>
 #include <linux/ioport.h>
 #include <linux/sysdev.h>
+#include <linux/io.h>
 
 #include <asm/mach-types.h>
 
-#include <asm/hardware.h>
+#include <mach/hardware.h>
 #include <asm/irq.h>
-#include <asm/io.h>
 
 #include <asm/mach/irq.h>
 
-#include <asm/arch/regs-irq.h>
-#include <asm/arch/bast-map.h>
-#include <asm/arch/bast-irq.h>
+#include <mach/regs-irq.h>
+#include <mach/bast-map.h>
+#include <mach/bast-irq.h>
 
-#include <asm/plat-s3c24xx/irq.h>
+#include <plat/irq.h>
 
 #if 0
 #include <asm/debug-ll.h>
@@ -75,38 +75,38 @@ static unsigned char bast_pc104_irqmasks[] = {
 static unsigned char bast_pc104_irqs[] = { 3, 5, 7, 10 };
 
 static void
-bast_pc104_mask(unsigned int irqno)
+bast_pc104_mask(struct irq_data *data)
 {
 	unsigned long temp;
 
 	temp = __raw_readb(BAST_VA_PC104_IRQMASK);
-	temp &= ~bast_pc104_irqmasks[irqno];
+	temp &= ~bast_pc104_irqmasks[data->irq];
 	__raw_writeb(temp, BAST_VA_PC104_IRQMASK);
 }
 
 static void
-bast_pc104_maskack(unsigned int irqno)
+bast_pc104_maskack(struct irq_data *data)
 {
 	struct irq_desc *desc = irq_desc + IRQ_ISA;
 
-	bast_pc104_mask(irqno);
-	desc->chip->ack(IRQ_ISA);
+	bast_pc104_mask(data);
+	desc->irq_data.chip->irq_ack(&desc->irq_data);
 }
 
 static void
-bast_pc104_unmask(unsigned int irqno)
+bast_pc104_unmask(struct irq_data *data)
 {
 	unsigned long temp;
 
 	temp = __raw_readb(BAST_VA_PC104_IRQMASK);
-	temp |= bast_pc104_irqmasks[irqno];
+	temp |= bast_pc104_irqmasks[data->irq];
 	__raw_writeb(temp, BAST_VA_PC104_IRQMASK);
 }
 
 static struct irq_chip  bast_pc104_chip = {
-	.mask	     = bast_pc104_mask,
-	.unmask	     = bast_pc104_unmask,
-	.ack	     = bast_pc104_maskack
+	.irq_mask	= bast_pc104_mask,
+	.irq_unmask	= bast_pc104_unmask,
+	.irq_ack	= bast_pc104_maskack
 };
 
 static void
@@ -123,15 +123,14 @@ bast_irq_pc104_demux(unsigned int irq,
 		/* ack if we get an irq with nothing (ie, startup) */
 
 		desc = irq_desc + IRQ_ISA;
-		desc->chip->ack(IRQ_ISA);
+		desc->irq_data.chip->irq_ack(&desc->irq_data);
 	} else {
 		/* handle the IRQ */
 
 		for (i = 0; stat != 0; i++, stat >>= 1) {
 			if (stat & 1) {
 				irqno = bast_pc104_irqs[i];
-				desc = irq_desc + irqno;
-				desc_handle_irq(irqno, desc);
+				generic_handle_irq(irqno);
 			}
 		}
 	}
@@ -142,21 +141,21 @@ static __init int bast_irq_init(void)
 	unsigned int i;
 
 	if (machine_is_bast()) {
-		printk(KERN_INFO "BAST PC104 IRQ routing, (c) 2005 Simtec Electronics\n");
+		printk(KERN_INFO "BAST PC104 IRQ routing, Copyright 2005 Simtec Electronics\n");
 
 		/* zap all the IRQs */
 
 		__raw_writeb(0x0, BAST_VA_PC104_IRQMASK);
 
-		set_irq_chained_handler(IRQ_ISA, bast_irq_pc104_demux);
+		irq_set_chained_handler(IRQ_ISA, bast_irq_pc104_demux);
 
 		/* register our IRQs */
 
 		for (i = 0; i < 4; i++) {
 			unsigned int irqno = bast_pc104_irqs[i];
 
-			set_irq_chip(irqno, &bast_pc104_chip);
-			set_irq_handler(irqno, handle_level_irq);
+			irq_set_chip_and_handler(irqno, &bast_pc104_chip,
+						 handle_level_irq);
 			set_irq_flags(irqno, IRQF_VALID);
 		}
 	}

@@ -21,7 +21,7 @@
  *    query vendor-specific element types
  *
  *    accessing elements works by specifing type and unit of the element.
- *    for eample, storage elements are addressed with type = CHET_ST and
+ *    for example, storage elements are addressed with type = CHET_ST and
  *    unit = 0 .. cp_nslots-1
  *
  */
@@ -108,7 +108,7 @@ struct changer_element_status {
 
 /*
  * CHIOGELEM
- *    get more detailed status informtion for a single element
+ *    get more detailed status information for a single element
  */
 struct changer_get_element {
 	int	cge_type;	 /* type/unit */

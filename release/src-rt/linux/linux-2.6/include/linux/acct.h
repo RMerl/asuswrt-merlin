@@ -120,17 +120,19 @@ struct acct_v3
 struct vfsmount;
 struct super_block;
 struct pacct_struct;
+struct pid_namespace;
+extern int acct_parm[]; /* for sysctl */
 extern void acct_auto_close_mnt(struct vfsmount *m);
 extern void acct_auto_close(struct super_block *sb);
-extern void acct_init_pacct(struct pacct_struct *pacct);
 extern void acct_collect(long exitcode, int group_dead);
 extern void acct_process(void);
+extern void acct_exit_ns(struct pid_namespace *);
 #else
 #define acct_auto_close_mnt(x)	do { } while (0)
 #define acct_auto_close(x)	do { } while (0)
-#define acct_init_pacct(x)	do { } while (0)
 #define acct_collect(x,y)	do { } while (0)
 #define acct_process()		do { } while (0)
+#define acct_exit_ns(ns)	do { } while (0)
 #endif
 
 /*
@@ -173,7 +175,11 @@ typedef struct acct acct_t;
 static inline u32 jiffies_to_AHZ(unsigned long x)
 {
 #if (TICK_NSEC % (NSEC_PER_SEC / AHZ)) == 0
+# if HZ < AHZ
+	return x * (AHZ / HZ);
+# else
 	return x / (HZ / AHZ);
+# endif
 #else
         u64 tmp = (u64)x * TICK_NSEC;
         do_div(tmp, (NSEC_PER_SEC / AHZ));

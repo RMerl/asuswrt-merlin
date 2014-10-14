@@ -6,10 +6,7 @@ struct tx_radiotap_hdr {
 	u8 txpower;
 	u8 rts_retries;
 	u8 data_retries;
-#if 0
-	u8 pad[IEEE80211_RADIOTAP_HDRLEN - 12];
-#endif
-} __attribute__ ((packed));
+} __packed;
 
 #define TX_RADIOTAP_PRESENT (				\
 	(1 << IEEE80211_RADIOTAP_RATE) |		\
@@ -36,22 +33,12 @@ struct rx_radiotap_hdr {
 	struct ieee80211_radiotap_header hdr;
 	u8 flags;
 	u8 rate;
-	u16 chan_freq;
-	u16 chan_flags;
-	u8 antenna;
 	u8 antsignal;
-	u16 rx_flags;
-#if 0
-	u8 pad[IEEE80211_RADIOTAP_HDRLEN - 18];
-#endif
-} __attribute__ ((packed));
+} __packed;
 
 #define RX_RADIOTAP_PRESENT (			\
 	(1 << IEEE80211_RADIOTAP_FLAGS) |	\
 	(1 << IEEE80211_RADIOTAP_RATE) |	\
-	(1 << IEEE80211_RADIOTAP_CHANNEL) |	\
-	(1 << IEEE80211_RADIOTAP_ANTENNA) |	\
 	(1 << IEEE80211_RADIOTAP_DB_ANTSIGNAL) |\
-	(1 << IEEE80211_RADIOTAP_RX_FLAGS) |	\
 	0)
 

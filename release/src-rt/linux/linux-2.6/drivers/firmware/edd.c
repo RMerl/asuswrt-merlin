@@ -11,11 +11,11 @@
  *
  * This code takes information provided by BIOS EDD calls
  * fn41 - Check Extensions Present and
- * fn48 - Get Device Parametes with EDD extensions
+ * fn48 - Get Device Parameters with EDD extensions
  * made in setup.S, copied to safe structures in setup.c,
  * and presents it in sysfs.
  *
- * Please see http://linux.dell.com/edd30/results.html for
+ * Please see http://linux.dell.com/edd/results.html for
  * the list of BIOSs which have been reported to implement EDD.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -74,7 +74,7 @@ static struct edd_device *edd_devices[EDD_MBR_SIG_MAX];
 
 #define EDD_DEVICE_ATTR(_name,_mode,_show,_test) \
 struct edd_attribute edd_attr_##_name = { 	\
-	.attr = {.name = __stringify(_name), .mode = _mode, .owner = THIS_MODULE },	\
+	.attr = {.name = __stringify(_name), .mode = _mode },	\
 	.show	= _show,				\
 	.test	= _test,				\
 };
@@ -122,7 +122,7 @@ edd_attr_show(struct kobject * kobj, struct attribute *attr, char *buf)
 	return ret;
 }
 
-static struct sysfs_ops edd_attr_ops = {
+static const struct sysfs_ops edd_attr_ops = {
 	.show = edd_attr_show,
 };
 
@@ -625,13 +625,13 @@ static void edd_release(struct kobject * kobj)
 	kfree(dev);
 }
 
-static struct kobj_type ktype_edd = {
+static struct kobj_type edd_ktype = {
 	.release	= edd_release,
 	.sysfs_ops	= &edd_attr_ops,
 	.default_attrs	= def_attrs,
 };
 
-static decl_subsys(edd,&ktype_edd,NULL);
+static struct kset *edd_kset;
 
 
 /**
@@ -669,7 +669,7 @@ edd_get_pci_dev(struct edd_device *edev)
 	struct edd_info *info = edd_dev_get_info(edev);
 
 	if (edd_dev_is_type(edev, "PCI")) {
-		return pci_find_slot(info->params.interface_path.pci.bus,
+		return pci_get_bus_and_slot(info->params.interface_path.pci.bus,
 				     PCI_DEVFN(info->params.interface_path.pci.slot,
 					       info->params.interface_path.pci.
 					       function));
@@ -682,15 +682,18 @@ edd_create_symlink_to_pcidev(struct edd_device *edev)
 {
 
 	struct pci_dev *pci_dev = edd_get_pci_dev(edev);
+	int ret;
 	if (!pci_dev)
 		return 1;
-	return sysfs_create_link(&edev->kobj,&pci_dev->dev.kobj,"pci_dev");
+	ret = sysfs_create_link(&edev->kobj,&pci_dev->dev.kobj,"pci_dev");
+	pci_dev_put(pci_dev);
+	return ret;
 }
 
 static inline void
 edd_device_unregister(struct edd_device *edev)
 {
-	kobject_unregister(&edev->kobj);
+	kobject_put(&edev->kobj);
 }
 
 static void edd_populate_dir(struct edd_device * edev)
@@ -718,12 +721,13 @@ edd_device_register(struct edd_device *edev, int i)
 	if (!edev)
 		return 1;
 	edd_dev_set_info(edev, i);
-	kobject_set_name(&edev->kobj, "int13_dev%02x",
-			 0x80 + i);
-	kobj_set_kset_s(edev,edd_subsys);
-	error = kobject_register(&edev->kobj);
-	if (!error)
+	edev->kobj.kset = edd_kset;
+	error = kobject_init_and_add(&edev->kobj, &edd_ktype, NULL,
+				     "int13_dev%02x", 0x80 + i);
+	if (!error) {
 		edd_populate_dir(edev);
+		kobject_uevent(&edev->kobj, KOBJ_ADD);
+	}
 	return error;
 }
 
@@ -740,7 +744,7 @@ static inline int edd_num_devices(void)
 static int __init
 edd_init(void)
 {
-	unsigned int i;
+	int i;
 	int rc=0;
 	struct edd_device *edev;
 
@@ -749,28 +753,34 @@ edd_init(void)
 
 	if (!edd_num_devices()) {
 		printk(KERN_INFO "EDD information not available.\n");
-		return 1;
+		return -ENODEV;
 	}
 
-	rc = firmware_register(&edd_subsys);
-	if (rc)
-		return rc;
+	edd_kset = kset_create_and_add("edd", NULL, firmware_kobj);
+	if (!edd_kset)
+		return -ENOMEM;
 
-	for (i = 0; i < edd_num_devices() && !rc; i++) {
+	for (i = 0; i < edd_num_devices(); i++) {
 		edev = kzalloc(sizeof (*edev), GFP_KERNEL);
-		if (!edev)
-			return -ENOMEM;
+		if (!edev) {
+			rc = -ENOMEM;
+			goto out;
+		}
 
 		rc = edd_device_register(edev, i);
 		if (rc) {
 			kfree(edev);
-			break;
+			goto out;
 		}
 		edd_devices[i] = edev;
 	}
 
-	if (rc)
-		firmware_unregister(&edd_subsys);
+	return 0;
+
+out:
+	while (--i >= 0)
+		edd_device_unregister(edd_devices[i]);
+	kset_unregister(edd_kset);
 	return rc;
 }
 
@@ -784,7 +794,7 @@ edd_exit(void)
 		if ((edev = edd_devices[i]))
 			edd_device_unregister(edev);
 	}
-	firmware_unregister(&edd_subsys);
+	kset_unregister(edd_kset);
 }
 
 late_initcall(edd_init);

@@ -39,6 +39,10 @@ void default_machine_kexec(struct kimage *image)
 	/* Interrupts aren't acceptable while we reboot */
 	local_irq_disable();
 
+	/* mask each interrupt so we are in a more sane state for the
+	 * kexec kernel */
+	machine_kexec_mask_interrupts();
+
 	page_list = image->head;
 
 	/* we need both effective and real address here */
@@ -51,7 +55,7 @@ void default_machine_kexec(struct kimage *image)
 						relocate_new_kernel_size);
 
 	flush_icache_range(reboot_code_buffer,
-				reboot_code_buffer + KEXEC_CONTROL_CODE_SIZE);
+				reboot_code_buffer + KEXEC_CONTROL_PAGE_SIZE);
 	printk(KERN_INFO "Bye!\n");
 
 	/* now call it */

@@ -1,7 +1,7 @@
 /*
  * Generic heartbeat driver for regular LED banks
  *
- * Copyright (C) 2007  Paul Mundt
+ * Copyright (C) 2007 - 2010  Paul Mundt
  *
  * Most SH reference boards include a number of individual LEDs that can
  * be independently controlled (either via a pre-defined hardware
@@ -24,24 +24,50 @@
 #include <linux/sched.h>
 #include <linux/timer.h>
 #include <linux/io.h>
+#include <linux/slab.h>
+#include <asm/heartbeat.h>
 
 #define DRV_NAME "heartbeat"
-#define DRV_VERSION "0.1.0"
+#define DRV_VERSION "0.1.2"
 
-struct heartbeat_data {
-	void __iomem *base;
-	unsigned char bit_pos[8];
-	struct timer_list timer;
-};
+static unsigned char default_bit_pos[] = { 0, 1, 2, 3, 4, 5, 6, 7 };
+
+static inline void heartbeat_toggle_bit(struct heartbeat_data *hd,
+					unsigned bit, unsigned int inverted)
+{
+	unsigned int new;
+
+	new = (1 << hd->bit_pos[bit]);
+	if (inverted)
+		new = ~new;
+
+	new &= hd->mask;
+
+	switch (hd->regsize) {
+	case 32:
+		new |= ioread32(hd->base) & ~hd->mask;
+		iowrite32(new, hd->base);
+		break;
+	case 16:
+		new |= ioread16(hd->base) & ~hd->mask;
+		iowrite16(new, hd->base);
+		break;
+	default:
+		new |= ioread8(hd->base) & ~hd->mask;
+		iowrite8(new, hd->base);
+		break;
+	}
+}
 
 static void heartbeat_timer(unsigned long data)
 {
 	struct heartbeat_data *hd = (struct heartbeat_data *)data;
 	static unsigned bit = 0, up = 1;
 
-	ctrl_outw(1 << hd->bit_pos[bit], (unsigned long)hd->base);
+	heartbeat_toggle_bit(hd, bit, hd->flags & HEARTBEAT_INVERTED);
+
 	bit += up;
-	if ((bit == 0) || (bit == ARRAY_SIZE(hd->bit_pos)-1))
+	if ((bit == 0) || (bit == (hd->nr_bits)-1))
 		up = -up;
 
 	mod_timer(&hd->timer, jiffies + (110 - ((300 << FSHIFT) /
@@ -52,6 +78,7 @@ static int heartbeat_drv_probe(struct platform_device *pdev)
 {
 	struct resource *res;
 	struct heartbeat_data *hd;
+	int i;
 
 	if (unlikely(pdev->num_resources != 1)) {
 		dev_err(&pdev->dev, "invalid number of resources\n");
@@ -64,21 +91,47 @@ static int heartbeat_drv_probe(struct platform_device *pdev)
 		return -EINVAL;
 	}
 
-	hd = kmalloc(sizeof(struct heartbeat_data), GFP_KERNEL);
-	if (unlikely(!hd))
-		return -ENOMEM;
-
 	if (pdev->dev.platform_data) {
-		memcpy(hd->bit_pos, pdev->dev.platform_data,
-		       ARRAY_SIZE(hd->bit_pos));
+		hd = pdev->dev.platform_data;
 	} else {
-		int i;
-
-		for (i = 0; i < ARRAY_SIZE(hd->bit_pos); i++)
-			hd->bit_pos[i] = i;
+		hd = kzalloc(sizeof(struct heartbeat_data), GFP_KERNEL);
+		if (unlikely(!hd))
+			return -ENOMEM;
 	}
 
-	hd->base = (void __iomem *)res->start;
+	hd->base = ioremap_nocache(res->start, resource_size(res));
+	if (unlikely(!hd->base)) {
+		dev_err(&pdev->dev, "ioremap failed\n");
+
+		if (!pdev->dev.platform_data)
+			kfree(hd);
+
+		return -ENXIO;
+	}
+
+	if (!hd->nr_bits) {
+		hd->bit_pos = default_bit_pos;
+		hd->nr_bits = ARRAY_SIZE(default_bit_pos);
+	}
+
+	hd->mask = 0;
+	for (i = 0; i < hd->nr_bits; i++)
+		hd->mask |= (1 << hd->bit_pos[i]);
+
+	if (!hd->regsize) {
+		switch (res->flags & IORESOURCE_MEM_TYPE_MASK) {
+		case IORESOURCE_MEM_32BIT:
+			hd->regsize = 32;
+			break;
+		case IORESOURCE_MEM_16BIT:
+			hd->regsize = 16;
+			break;
+		case IORESOURCE_MEM_8BIT:
+		default:
+			hd->regsize = 8;
+			break;
+		}
+	}
 
 	setup_timer(&hd->timer, heartbeat_timer, (unsigned long)hd);
 	platform_set_drvdata(pdev, hd);
@@ -91,10 +144,12 @@ static int heartbeat_drv_remove(struct platform_device *pdev)
 	struct heartbeat_data *hd = platform_get_drvdata(pdev);
 
 	del_timer_sync(&hd->timer);
+	iounmap(hd->base);
 
 	platform_set_drvdata(pdev, NULL);
 
-	kfree(hd);
+	if (!pdev->dev.platform_data)
+		kfree(hd);
 
 	return 0;
 }
@@ -122,4 +177,4 @@ module_exit(heartbeat_exit);
 
 MODULE_VERSION(DRV_VERSION);
 MODULE_AUTHOR("Paul Mundt");
-MODULE_LICENSE("GPLv2");
+MODULE_LICENSE("GPL v2");

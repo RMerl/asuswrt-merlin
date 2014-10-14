@@ -16,7 +16,7 @@
  *     published by the Free Software Foundation; either version 2 of 
  *     the License, or (at your option) any later version.
  *  
- *     Neither Dag Brattli nor University of Tromsø admit liability nor
+ *     Neither Dag Brattli nor University of TromsÃ¸ admit liability nor
  *     provide warranty for any of this software. This material is 
  *     provided "AS-IS" and at no charge.
  *     
@@ -172,7 +172,6 @@ struct w83977af_ir {
 	int tx_len;          /* Number of frames in tx_buff */
 
 	struct net_device *netdev; /* Yes! we are some kind of netdevice */
-	struct net_device_stats stats;
 	
 	struct irlap_cb    *irlap; /* The link layer we are binded to */
 	struct qos_info     qos;   /* QoS capabilities for this device */

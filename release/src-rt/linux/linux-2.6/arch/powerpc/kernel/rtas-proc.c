@@ -160,7 +160,7 @@ static int sensors_open(struct inode *inode, struct file *file)
 	return single_open(file, ppc_rtas_sensors_show, NULL);
 }
 
-const struct file_operations ppc_rtas_sensors_operations = {
+static const struct file_operations ppc_rtas_sensors_operations = {
 	.open		= sensors_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
@@ -172,7 +172,7 @@ static int poweron_open(struct inode *inode, struct file *file)
 	return single_open(file, ppc_rtas_poweron_show, NULL);
 }
 
-const struct file_operations ppc_rtas_poweron_operations = {
+static const struct file_operations ppc_rtas_poweron_operations = {
 	.open		= poweron_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
@@ -185,7 +185,7 @@ static int progress_open(struct inode *inode, struct file *file)
 	return single_open(file, ppc_rtas_progress_show, NULL);
 }
 
-const struct file_operations ppc_rtas_progress_operations = {
+static const struct file_operations ppc_rtas_progress_operations = {
 	.open		= progress_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
@@ -198,7 +198,7 @@ static int clock_open(struct inode *inode, struct file *file)
 	return single_open(file, ppc_rtas_clock_show, NULL);
 }
 
-const struct file_operations ppc_rtas_clock_operations = {
+static const struct file_operations ppc_rtas_clock_operations = {
 	.open		= clock_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
@@ -211,7 +211,7 @@ static int tone_freq_open(struct inode *inode, struct file *file)
 	return single_open(file, ppc_rtas_tone_freq_show, NULL);
 }
 
-const struct file_operations ppc_rtas_tone_freq_operations = {
+static const struct file_operations ppc_rtas_tone_freq_operations = {
 	.open		= tone_freq_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
@@ -224,7 +224,7 @@ static int tone_volume_open(struct inode *inode, struct file *file)
 	return single_open(file, ppc_rtas_tone_volume_show, NULL);
 }
 
-const struct file_operations ppc_rtas_tone_volume_operations = {
+static const struct file_operations ppc_rtas_tone_volume_operations = {
 	.open		= tone_volume_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
@@ -237,7 +237,7 @@ static int rmo_buf_open(struct inode *inode, struct file *file)
 	return single_open(file, ppc_rtas_rmo_buf_show, NULL);
 }
 
-const struct file_operations ppc_rtas_rmo_buf_ops = {
+static const struct file_operations ppc_rtas_rmo_buf_ops = {
 	.open		= rmo_buf_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
@@ -255,8 +255,6 @@ static void check_location(struct seq_file *m, const char *c);
 
 static int __init proc_rtas_init(void)
 {
-	struct proc_dir_entry *entry;
-
 	if (!machine_is(pseries))
 		return -ENODEV;
 
@@ -264,35 +262,20 @@ static int __init proc_rtas_init(void)
 	if (rtas_node == NULL)
 		return -ENODEV;
 
-	entry = create_proc_entry("ppc64/rtas/progress", S_IRUGO|S_IWUSR, NULL);
-	if (entry)
-		entry->proc_fops = &ppc_rtas_progress_operations;
-
-	entry = create_proc_entry("ppc64/rtas/clock", S_IRUGO|S_IWUSR, NULL);
-	if (entry)
-		entry->proc_fops = &ppc_rtas_clock_operations;
-
-	entry = create_proc_entry("ppc64/rtas/poweron", S_IWUSR|S_IRUGO, NULL);
-	if (entry)
-		entry->proc_fops = &ppc_rtas_poweron_operations;
-
-	entry = create_proc_entry("ppc64/rtas/sensors", S_IRUGO, NULL);
-	if (entry)
-		entry->proc_fops = &ppc_rtas_sensors_operations;
-
-	entry = create_proc_entry("ppc64/rtas/frequency", S_IWUSR|S_IRUGO,
-				  NULL);
-	if (entry)
-		entry->proc_fops = &ppc_rtas_tone_freq_operations;
-
-	entry = create_proc_entry("ppc64/rtas/volume", S_IWUSR|S_IRUGO, NULL);
-	if (entry)
-		entry->proc_fops = &ppc_rtas_tone_volume_operations;
-
-	entry = create_proc_entry("ppc64/rtas/rmo_buffer", S_IRUSR, NULL);
-	if (entry)
-		entry->proc_fops = &ppc_rtas_rmo_buf_ops;
-
+	proc_create("powerpc/rtas/progress", S_IRUGO|S_IWUSR, NULL,
+		    &ppc_rtas_progress_operations);
+	proc_create("powerpc/rtas/clock", S_IRUGO|S_IWUSR, NULL,
+		    &ppc_rtas_clock_operations);
+	proc_create("powerpc/rtas/poweron", S_IWUSR|S_IRUGO, NULL,
+		    &ppc_rtas_poweron_operations);
+	proc_create("powerpc/rtas/sensors", S_IRUGO, NULL,
+		    &ppc_rtas_sensors_operations);
+	proc_create("powerpc/rtas/frequency", S_IWUSR|S_IRUGO, NULL,
+		    &ppc_rtas_tone_freq_operations);
+	proc_create("powerpc/rtas/volume", S_IWUSR|S_IRUGO, NULL,
+		    &ppc_rtas_tone_volume_operations);
+	proc_create("powerpc/rtas/rmo_buffer", S_IRUSR, NULL,
+		    &ppc_rtas_rmo_buf_ops);
 	return 0;
 }
 

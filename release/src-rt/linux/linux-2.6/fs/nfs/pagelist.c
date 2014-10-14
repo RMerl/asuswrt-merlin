@@ -20,18 +20,16 @@
 #include <linux/nfs_mount.h>
 
 #include "internal.h"
+#include "pnfs.h"
 
 static struct kmem_cache *nfs_page_cachep;
 
 static inline struct nfs_page *
 nfs_page_alloc(void)
 {
-	struct nfs_page	*p;
-	p = kmem_cache_alloc(nfs_page_cachep, GFP_KERNEL);
-	if (p) {
-		memset(p, 0, sizeof(*p));
+	struct nfs_page	*p = kmem_cache_zalloc(nfs_page_cachep, GFP_KERNEL);
+	if (p)
 		INIT_LIST_HEAD(&p->wb_list);
-	}
 	return p;
 }
 
@@ -58,18 +56,18 @@ nfs_create_request(struct nfs_open_context *ctx, struct inode *inode,
 		   struct page *page,
 		   unsigned int offset, unsigned int count)
 {
-	struct nfs_server *server = NFS_SERVER(inode);
 	struct nfs_page		*req;
 
-	for (;;) {
-		/* try to allocate the request struct */
-		req = nfs_page_alloc();
-		if (req != NULL)
-			break;
+	/* try to allocate the request struct */
+	req = nfs_page_alloc();
+	if (req == NULL)
+		return ERR_PTR(-ENOMEM);
 
-		if (signalled() && (server->flags & NFS_MOUNT_INTR))
-			return ERR_PTR(-ERESTARTSYS);
-		yield();
+	/* get lock context early so we can deal with alloc failures */
+	req->wb_lock_context = nfs_get_lock_context(ctx);
+	if (req->wb_lock_context == NULL) {
+		nfs_page_free(req);
+		return ERR_PTR(-ENOMEM);
 	}
 
 	/* Initialize the request struct. Initially, we assume a
@@ -111,13 +109,12 @@ void nfs_unlock_request(struct nfs_page *req)
  * nfs_set_page_tag_locked - Tag a request as locked
  * @req:
  */
-static int nfs_set_page_tag_locked(struct nfs_page *req)
+int nfs_set_page_tag_locked(struct nfs_page *req)
 {
-	struct nfs_inode *nfsi = NFS_I(req->wb_context->path.dentry->d_inode);
-
-	if (!nfs_lock_request(req))
+	if (!nfs_lock_request_dontget(req))
 		return 0;
-	radix_tree_tag_set(&nfsi->nfs_page_tree, req->wb_index, NFS_PAGE_TAG_LOCKED);
+	if (test_bit(PG_MAPPED, &req->wb_flags))
+		radix_tree_tag_set(&NFS_I(req->wb_context->path.dentry->d_inode)->nfs_page_tree, req->wb_index, NFS_PAGE_TAG_LOCKED);
 	return 1;
 }
 
@@ -126,30 +123,42 @@ static int nfs_set_page_tag_locked(struct nfs_page *req)
  */
 void nfs_clear_page_tag_locked(struct nfs_page *req)
 {
-	struct inode *inode = req->wb_context->path.dentry->d_inode;
-	struct nfs_inode *nfsi = NFS_I(inode);
+	if (test_bit(PG_MAPPED, &req->wb_flags)) {
+		struct inode *inode = req->wb_context->path.dentry->d_inode;
+		struct nfs_inode *nfsi = NFS_I(inode);
 
-	if (req->wb_page != NULL) {
 		spin_lock(&inode->i_lock);
 		radix_tree_tag_clear(&nfsi->nfs_page_tree, req->wb_index, NFS_PAGE_TAG_LOCKED);
+		nfs_unlock_request(req);
 		spin_unlock(&inode->i_lock);
-	}
-	nfs_unlock_request(req);
+	} else
+		nfs_unlock_request(req);
 }
 
-/**
+/*
  * nfs_clear_request - Free up all resources allocated to the request
  * @req:
  *
- * Release page resources associated with a write request after it
- * has completed.
+ * Release page and open context resources associated with a read/write
+ * request after it has completed.
  */
-void nfs_clear_request(struct nfs_page *req)
+static void nfs_clear_request(struct nfs_page *req)
 {
 	struct page *page = req->wb_page;
+	struct nfs_open_context *ctx = req->wb_context;
+	struct nfs_lock_context *l_ctx = req->wb_lock_context;
+
 	if (page != NULL) {
 		page_cache_release(page);
 		req->wb_page = NULL;
+	}
+	if (l_ctx != NULL) {
+		nfs_put_lock_context(l_ctx);
+		req->wb_lock_context = NULL;
+	}
+	if (ctx != NULL) {
+		put_nfs_open_context(ctx);
+		req->wb_context = NULL;
 	}
 }
 
@@ -164,9 +173,8 @@ static void nfs_free_request(struct kref *kref)
 {
 	struct nfs_page *req = container_of(kref, struct nfs_page, wb_kref);
 
-	/* Release struct file or cached credential */
+	/* Release struct file and open context */
 	nfs_clear_request(req);
-	put_nfs_open_context(req->wb_context);
 	nfs_page_free(req);
 }
 
@@ -175,43 +183,25 @@ void nfs_release_request(struct nfs_page *req)
 	kref_put(&req->wb_kref, nfs_free_request);
 }
 
-static int nfs_wait_bit_interruptible(void *word)
+static int nfs_wait_bit_uninterruptible(void *word)
 {
-	int ret = 0;
-
-	if (signal_pending(current))
-		ret = -ERESTARTSYS;
-	else
-		schedule();
-	return ret;
+	io_schedule();
+	return 0;
 }
 
 /**
  * nfs_wait_on_request - Wait for a request to complete.
  * @req: request to wait upon.
  *
- * Interruptible by signals only if mounted with intr flag.
+ * Interruptible by fatal signals only.
  * The user is responsible for holding a count on the request.
  */
 int
 nfs_wait_on_request(struct nfs_page *req)
 {
-	struct rpc_clnt *clnt = NFS_CLIENT(req->wb_context->path.dentry->d_inode);
-	sigset_t oldmask;
-	int ret = 0;
-
-	if (!test_bit(PG_BUSY, &req->wb_flags))
-		goto out;
-	/*
-	 * Note: the call to rpc_clnt_sigmask() suffices to ensure that we
-	 *	 are not interrupted if intr flag is not set
-	 */
-	rpc_clnt_sigmask(clnt, &oldmask);
-	ret = out_of_line_wait_on_bit(&req->wb_flags, PG_BUSY,
-			nfs_wait_bit_interruptible, TASK_INTERRUPTIBLE);
-	rpc_clnt_sigunmask(clnt, &oldmask);
-out:
-	return ret;
+	return wait_on_bit(&req->wb_flags, PG_BUSY,
+			nfs_wait_bit_uninterruptible,
+			TASK_UNINTERRUPTIBLE);
 }
 
 /**
@@ -224,7 +214,7 @@ out:
  */
 void nfs_pageio_init(struct nfs_pageio_descriptor *desc,
 		     struct inode *inode,
-		     int (*doio)(struct inode *, struct list_head *, unsigned int, size_t, int),
+		     int (*doio)(struct nfs_pageio_descriptor *),
 		     size_t bsize,
 		     int io_flags)
 {
@@ -233,10 +223,12 @@ void nfs_pageio_init(struct nfs_pageio_descriptor *desc,
 	desc->pg_count = 0;
 	desc->pg_bsize = bsize;
 	desc->pg_base = 0;
+	desc->pg_moreio = 0;
 	desc->pg_inode = inode;
 	desc->pg_doio = doio;
 	desc->pg_ioflags = io_flags;
 	desc->pg_error = 0;
+	desc->pg_lseg = NULL;
 }
 
 /**
@@ -251,11 +243,12 @@ void nfs_pageio_init(struct nfs_pageio_descriptor *desc,
  * Return 'true' if this is the case, else return 'false'.
  */
 static int nfs_can_coalesce_requests(struct nfs_page *prev,
-				     struct nfs_page *req)
+				     struct nfs_page *req,
+				     struct nfs_pageio_descriptor *pgio)
 {
 	if (req->wb_context->cred != prev->wb_context->cred)
 		return 0;
-	if (req->wb_context->lockowner != prev->wb_context->lockowner)
+	if (req->wb_lock_context->lockowner != prev->wb_lock_context->lockowner)
 		return 0;
 	if (req->wb_context->state != prev->wb_context->state)
 		return 0;
@@ -264,6 +257,12 @@ static int nfs_can_coalesce_requests(struct nfs_page *prev,
 	if (req->wb_pgbase != 0)
 		return 0;
 	if (prev->wb_pgbase + prev->wb_bytes != PAGE_CACHE_SIZE)
+		return 0;
+	/*
+	 * Non-whole file layouts need to check that req is inside of
+	 * pgio->pg_lseg.
+	 */
+	if (pgio->pg_test && !pgio->pg_test(pgio, prev, req))
 		return 0;
 	return 1;
 }
@@ -297,7 +296,7 @@ static int nfs_pageio_do_add_request(struct nfs_pageio_descriptor *desc,
 		if (newlen > desc->pg_bsize)
 			return 0;
 		prev = nfs_list_entry(desc->pg_list.prev);
-		if (!nfs_can_coalesce_requests(prev, req))
+		if (!nfs_can_coalesce_requests(prev, req, desc))
 			return 0;
 	} else
 		desc->pg_base = req->wb_pgbase;
@@ -313,12 +312,7 @@ static int nfs_pageio_do_add_request(struct nfs_pageio_descriptor *desc,
 static void nfs_pageio_doio(struct nfs_pageio_descriptor *desc)
 {
 	if (!list_empty(&desc->pg_list)) {
-		int error = desc->pg_doio(desc->pg_inode,
-					  &desc->pg_list,
-					  nfs_page_array_len(desc->pg_base,
-							     desc->pg_count),
-					  desc->pg_count,
-					  desc->pg_ioflags);
+		int error = desc->pg_doio(desc);
 		if (error < 0)
 			desc->pg_error = error;
 		else
@@ -342,9 +336,11 @@ int nfs_pageio_add_request(struct nfs_pageio_descriptor *desc,
 			   struct nfs_page *req)
 {
 	while (!nfs_pageio_do_add_request(desc, req)) {
+		desc->pg_moreio = 1;
 		nfs_pageio_doio(desc);
 		if (desc->pg_error < 0)
 			return 0;
+		desc->pg_moreio = 0;
 	}
 	return 1;
 }
@@ -402,6 +398,7 @@ int nfs_scan_list(struct nfs_inode *nfsi,
 	pgoff_t idx_end;
 	int found, i;
 	int res;
+	struct list_head *list;
 
 	res = 0;
 	if (npages == 0)
@@ -421,10 +418,11 @@ int nfs_scan_list(struct nfs_inode *nfsi,
 				goto out;
 			idx_start = req->wb_index + 1;
 			if (nfs_set_page_tag_locked(req)) {
-				nfs_list_remove_request(req);
+				kref_get(&req->wb_kref);
 				radix_tree_tag_clear(&nfsi->nfs_page_tree,
 						req->wb_index, tag);
-				nfs_list_add_request(req, dst);
+				list = pnfs_choose_commit_list(req, dst);
+				nfs_list_add_request(req, list);
 				res++;
 				if (res == INT_MAX)
 					goto out;
@@ -442,7 +440,7 @@ int __init nfs_init_nfspagecache(void)
 	nfs_page_cachep = kmem_cache_create("nfs_page",
 					    sizeof(struct nfs_page),
 					    0, SLAB_HWCACHE_ALIGN,
-					    NULL, NULL);
+					    NULL);
 	if (nfs_page_cachep == NULL)
 		return -ENOMEM;
 

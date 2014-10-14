@@ -23,29 +23,23 @@
 # Copyright (C) 1994 by Hamish Macdonald
 #
 
-CCSPECS	:= $(shell $(CC) -v 2>&1 | grep "^Reading specs from " | head -1 | cut -c20-)
-CCDIR	:= $(strip $(patsubst %/specs,%,$(CCSPECS)))
-CPUCLASS := fr400
-
-# test for cross compiling
-COMPILE_ARCH = $(shell uname -m)
-
 ifdef CONFIG_MMU
 UTS_SYSNAME = -DUTS_SYSNAME=\"Linux\"
 else
 UTS_SYSNAME = -DUTS_SYSNAME=\"uClinux\"
 endif
 
-ARCHMODFLAGS	+= -G0 -mlong-calls
+KBUILD_AFLAGS_MODULE += -G0 -mlong-calls
+KBUILD_CFLAGS_MODULE += -G0 -mlong-calls
 
 ifdef CONFIG_GPREL_DATA_8
-CFLAGS		+= -G8
+KBUILD_CFLAGS	+= -G8
 else
 ifdef CONFIG_GPREL_DATA_4
-CFLAGS		+= -G4
+KBUILD_CFLAGS	+= -G4
 else
 ifdef CONFIG_GPREL_DATA_NONE
-CFLAGS		+= -G0
+KBUILD_CFLAGS	+= -G0
 endif
 endif
 endif
@@ -53,44 +47,38 @@ endif
 #LDFLAGS_vmlinux	:= -Map linkmap.txt
 
 ifdef CONFIG_GC_SECTIONS
-CFLAGS		+= -ffunction-sections -fdata-sections
-LINKFLAGS	+= --gc-sections
+KBUILD_CFLAGS	+= -ffunction-sections -fdata-sections
 endif
 
 ifndef CONFIG_FRAME_POINTER
-CFLAGS		+= -mno-linked-fp
+KBUILD_CFLAGS	+= -mno-linked-fp
 endif
 
 ifdef CONFIG_CPU_FR451_COMPILE
-CFLAGS		+= -mcpu=fr450
-AFLAGS		+= -mcpu=fr450
-ASFLAGS		+= -mcpu=fr450
+KBUILD_CFLAGS	+= -mcpu=fr450
+KBUILD_AFLAGS	+= -mcpu=fr450
 else
 ifdef CONFIG_CPU_FR551_COMPILE
-CFLAGS		+= -mcpu=fr550
-AFLAGS		+= -mcpu=fr550
-ASFLAGS		+= -mcpu=fr550
+KBUILD_CFLAGS	+= -mcpu=fr550
+KBUILD_AFLAGS	+= -mcpu=fr550
 else
-CFLAGS		+= -mcpu=fr400
-AFLAGS		+= -mcpu=fr400
-ASFLAGS		+= -mcpu=fr400
+KBUILD_CFLAGS	+= -mcpu=fr400
+KBUILD_AFLAGS	+= -mcpu=fr400
 endif
 endif
 
 # pretend the kernel is going to run on an FR400 with no media-fp unit
 # - reserve CC3 for use with atomic ops
 # - all the extra registers are dealt with only at context switch time
-CFLAGS		+= -mno-fdpic -mgpr-32 -msoft-float -mno-media
-CFLAGS		+= -ffixed-fcc3 -ffixed-cc3 -ffixed-gr15 -ffixed-icc2
-AFLAGS		+= -mno-fdpic
-ASFLAGS		+= -mno-fdpic
+KBUILD_CFLAGS	+= -mno-fdpic -mgpr-32 -msoft-float -mno-media
+KBUILD_CFLAGS	+= -ffixed-fcc3 -ffixed-cc3 -ffixed-gr15 -ffixed-icc2
+KBUILD_AFLAGS	+= -mno-fdpic
 
 # make sure the .S files get compiled with debug info
 # and disable optimisations that are unhelpful whilst debugging
 ifdef CONFIG_DEBUG_INFO
-CFLAGS		+= -O1
-AFLAGS		+= -Wa,--gdwarf2
-ASFLAGS		+= -Wa,--gdwarf2
+#KBUILD_CFLAGS	+= -O1
+KBUILD_AFLAGS	+= -Wa,--gdwarf2
 endif
 
 head-y		:= arch/frv/kernel/head.o arch/frv/kernel/init_task.o
@@ -105,11 +93,5 @@ all: Image
 Image: vmlinux
 	$(Q)$(MAKE) $(build)=arch/frv/boot $@
 
-bootstrap:
-	$(Q)$(MAKEBOOT) bootstrap
-
 archclean:
 	$(Q)$(MAKE) $(clean)=arch/frv/boot
-
-archdep: scripts/mkdep symlinks
-	$(Q)$(MAKE) $(build)=arch/frv/boot dep

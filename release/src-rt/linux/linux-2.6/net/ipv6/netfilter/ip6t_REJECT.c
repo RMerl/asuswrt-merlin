@@ -14,7 +14,9 @@
  * as published by the Free Software Foundation; either version
  * 2 of the License, or (at your option) any later version.
  */
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/gfp.h>
 #include <linux/module.h>
 #include <linux/skbuff.h>
 #include <linux/icmpv6.h>
@@ -31,30 +33,27 @@
 #include <linux/netfilter_ipv6/ip6t_REJECT.h>
 
 MODULE_AUTHOR("Yasuyuki KOZAKAI <yasuyuki.kozakai@toshiba.co.jp>");
-MODULE_DESCRIPTION("IP6 tables REJECT target module");
+MODULE_DESCRIPTION("Xtables: packet \"rejection\" target for IPv6");
 MODULE_LICENSE("GPL");
 
-#if 0
-#define DEBUGP printk
-#else
-#define DEBUGP(format, args...)
-#endif
-
 /* Send RST reply */
-static void send_reset(struct sk_buff *oldskb)
+static void send_reset(struct net *net, struct sk_buff *oldskb)
 {
 	struct sk_buff *nskb;
 	struct tcphdr otcph, *tcph;
 	unsigned int otcplen, hh_len;
 	int tcphoff, needs_ack;
-	struct ipv6hdr *oip6h = ipv6_hdr(oldskb), *ip6h;
+	const struct ipv6hdr *oip6h = ipv6_hdr(oldskb);
+	struct ipv6hdr *ip6h;
+#define DEFAULT_TOS_VALUE	0x0U
+	const __u8 tclass = DEFAULT_TOS_VALUE;
 	struct dst_entry *dst = NULL;
 	u8 proto;
-	struct flowi fl;
+	struct flowi6 fl6;
 
 	if ((!(ipv6_addr_type(&oip6h->saddr) & IPV6_ADDR_UNICAST)) ||
 	    (!(ipv6_addr_type(&oip6h->daddr) & IPV6_ADDR_UNICAST))) {
-		DEBUGP("ip6t_REJECT: addr is not unicast.\n");
+		pr_debug("addr is not unicast.\n");
 		return;
 	}
 
@@ -62,16 +61,17 @@ static void send_reset(struct sk_buff *oldskb)
 	tcphoff = ipv6_skip_exthdr(oldskb, ((u8*)(oip6h+1) - oldskb->data), &proto);
 
 	if ((tcphoff < 0) || (tcphoff > oldskb->len)) {
-		DEBUGP("ip6t_REJECT: Can't get TCP header.\n");
+		pr_debug("Cannot get TCP header.\n");
 		return;
 	}
 
 	otcplen = oldskb->len - tcphoff;
 
 	/* IP header checks: fragment, too short. */
-	if ((proto != IPPROTO_TCP) || (otcplen < sizeof(struct tcphdr))) {
-		DEBUGP("ip6t_REJECT: proto(%d) != IPPROTO_TCP, or too short. otcplen = %d\n",
-			proto, otcplen);
+	if (proto != IPPROTO_TCP || otcplen < sizeof(struct tcphdr)) {
+		pr_debug("proto(%d) != IPPROTO_TCP, "
+			 "or too short. otcplen = %d\n",
+			 proto, otcplen);
 		return;
 	}
 
@@ -80,30 +80,31 @@ static void send_reset(struct sk_buff *oldskb)
 
 	/* No RST for RST. */
 	if (otcph.rst) {
-		DEBUGP("ip6t_REJECT: RST is set\n");
+		pr_debug("RST is set\n");
 		return;
 	}
 
 	/* Check checksum. */
 	if (csum_ipv6_magic(&oip6h->saddr, &oip6h->daddr, otcplen, IPPROTO_TCP,
 			    skb_checksum(oldskb, tcphoff, otcplen, 0))) {
-		DEBUGP("ip6t_REJECT: TCP checksum is invalid\n");
+		pr_debug("TCP checksum is invalid\n");
 		return;
 	}
 
-	memset(&fl, 0, sizeof(fl));
-	fl.proto = IPPROTO_TCP;
-	ipv6_addr_copy(&fl.fl6_src, &oip6h->daddr);
-	ipv6_addr_copy(&fl.fl6_dst, &oip6h->saddr);
-	fl.fl_ip_sport = otcph.dest;
-	fl.fl_ip_dport = otcph.source;
-	security_skb_classify_flow(oldskb, &fl);
-	dst = ip6_route_output(NULL, &fl);
+	memset(&fl6, 0, sizeof(fl6));
+	fl6.flowi6_proto = IPPROTO_TCP;
+	ipv6_addr_copy(&fl6.saddr, &oip6h->daddr);
+	ipv6_addr_copy(&fl6.daddr, &oip6h->saddr);
+	fl6.fl6_sport = otcph.dest;
+	fl6.fl6_dport = otcph.source;
+	security_skb_classify_flow(oldskb, flowi6_to_flowi(&fl6));
+	dst = ip6_route_output(net, NULL, &fl6);
 	if (dst == NULL || dst->error) {
 		dst_release(dst);
 		return;
 	}
-	if (xfrm_lookup(&dst, &fl, NULL, 0))
+	dst = xfrm_lookup(net, dst, flowi6_to_flowi(&fl6), NULL, 0);
+	if (IS_ERR(dst))
 		return;
 
 	hh_len = (dst->dev->hard_header_len + 15)&~15;
@@ -113,22 +114,21 @@ static void send_reset(struct sk_buff *oldskb)
 
 	if (!nskb) {
 		if (net_ratelimit())
-			printk("ip6t_REJECT: Can't alloc skb\n");
+			pr_debug("cannot alloc skb\n");
 		dst_release(dst);
 		return;
 	}
 
-	nskb->dst = dst;
+	skb_dst_set(nskb, dst);
 
 	skb_reserve(nskb, hh_len + dst->header_len);
 
 	skb_put(nskb, sizeof(struct ipv6hdr));
 	skb_reset_network_header(nskb);
 	ip6h = ipv6_hdr(nskb);
-	ip6h->version = 6;
-	ip6h->hop_limit = dst_metric(dst, RTAX_HOPLIMIT);
+	*(__be32 *)ip6h =  htonl(0x60000000 | (tclass << 20));
+	ip6h->hop_limit = ip6_dst_hoplimit(dst);
 	ip6h->nexthdr = IPPROTO_TCP;
-	ip6h->payload_len = htons(sizeof(struct tcphdr));
 	ipv6_addr_copy(&ip6h->saddr, &oip6h->daddr);
 	ipv6_addr_copy(&ip6h->daddr, &oip6h->saddr);
 
@@ -161,115 +161,102 @@ static void send_reset(struct sk_buff *oldskb)
 	tcph->check = csum_ipv6_magic(&ipv6_hdr(nskb)->saddr,
 				      &ipv6_hdr(nskb)->daddr,
 				      sizeof(struct tcphdr), IPPROTO_TCP,
-				      csum_partial((char *)tcph,
+				      csum_partial(tcph,
 						   sizeof(struct tcphdr), 0));
 
 	nf_ct_attach(nskb, oldskb);
 
-	NF_HOOK(PF_INET6, NF_IP6_LOCAL_OUT, nskb, NULL, nskb->dst->dev,
-		dst_output);
+	ip6_local_out(nskb);
 }
 
 static inline void
-send_unreach(struct sk_buff *skb_in, unsigned char code, unsigned int hooknum)
+send_unreach(struct net *net, struct sk_buff *skb_in, unsigned char code,
+	     unsigned int hooknum)
 {
-	if (hooknum == NF_IP6_LOCAL_OUT && skb_in->dev == NULL)
-		skb_in->dev = &loopback_dev;
+	if (hooknum == NF_INET_LOCAL_OUT && skb_in->dev == NULL)
+		skb_in->dev = net->loopback_dev;
 
-	icmpv6_send(skb_in, ICMPV6_DEST_UNREACH, code, 0, NULL);
+	icmpv6_send(skb_in, ICMPV6_DEST_UNREACH, code, 0);
 }
 
-static unsigned int reject6_target(struct sk_buff **pskb,
-			   const struct net_device *in,
-			   const struct net_device *out,
-			   unsigned int hooknum,
-			   const struct xt_target *target,
-			   const void *targinfo)
+static unsigned int
+reject_tg6(struct sk_buff *skb, const struct xt_action_param *par)
 {
-	const struct ip6t_reject_info *reject = targinfo;
+	const struct ip6t_reject_info *reject = par->targinfo;
+	struct net *net = dev_net((par->in != NULL) ? par->in : par->out);
 
-	DEBUGP(KERN_DEBUG "%s: medium point\n", __FUNCTION__);
-	/* WARNING: This code causes reentry within ip6tables.
-	   This means that the ip6tables jump stack is now crap.  We
-	   must return an absolute verdict. --RR */
+	pr_debug("%s: medium point\n", __func__);
 	switch (reject->with) {
 	case IP6T_ICMP6_NO_ROUTE:
-		send_unreach(*pskb, ICMPV6_NOROUTE, hooknum);
+		send_unreach(net, skb, ICMPV6_NOROUTE, par->hooknum);
 		break;
 	case IP6T_ICMP6_ADM_PROHIBITED:
-		send_unreach(*pskb, ICMPV6_ADM_PROHIBITED, hooknum);
+		send_unreach(net, skb, ICMPV6_ADM_PROHIBITED, par->hooknum);
 		break;
 	case IP6T_ICMP6_NOT_NEIGHBOUR:
-		send_unreach(*pskb, ICMPV6_NOT_NEIGHBOUR, hooknum);
+		send_unreach(net, skb, ICMPV6_NOT_NEIGHBOUR, par->hooknum);
 		break;
 	case IP6T_ICMP6_ADDR_UNREACH:
-		send_unreach(*pskb, ICMPV6_ADDR_UNREACH, hooknum);
+		send_unreach(net, skb, ICMPV6_ADDR_UNREACH, par->hooknum);
 		break;
 	case IP6T_ICMP6_PORT_UNREACH:
-		send_unreach(*pskb, ICMPV6_PORT_UNREACH, hooknum);
-		break;
-	case IP6T_ICMP6_SRC_ADDR_FAIL_POLICY:
-		send_unreach(*pskb, ICMPV6_SRC_ADDR_FAIL_POLICY, hooknum);
+		send_unreach(net, skb, ICMPV6_PORT_UNREACH, par->hooknum);
 		break;
 	case IP6T_ICMP6_ECHOREPLY:
 		/* Do nothing */
 		break;
 	case IP6T_TCP_RESET:
-		send_reset(*pskb);
+		send_reset(net, skb);
 		break;
 	default:
 		if (net_ratelimit())
-			printk(KERN_WARNING "ip6t_REJECT: case %u not handled yet\n", reject->with);
+			pr_info("case %u not handled yet\n", reject->with);
 		break;
 	}
 
 	return NF_DROP;
 }
 
-static int check(const char *tablename,
-		 const void *entry,
-		 const struct xt_target *target,
-		 void *targinfo,
-		 unsigned int hook_mask)
+static int reject_tg6_check(const struct xt_tgchk_param *par)
 {
-	const struct ip6t_reject_info *rejinfo = targinfo;
-	const struct ip6t_entry *e = entry;
+	const struct ip6t_reject_info *rejinfo = par->targinfo;
+	const struct ip6t_entry *e = par->entryinfo;
 
 	if (rejinfo->with == IP6T_ICMP6_ECHOREPLY) {
-		printk("ip6t_REJECT: ECHOREPLY is not supported.\n");
-		return 0;
+		pr_info("ECHOREPLY is not supported.\n");
+		return -EINVAL;
 	} else if (rejinfo->with == IP6T_TCP_RESET) {
 		/* Must specify that it's a TCP packet */
-		if (e->ipv6.proto != IPPROTO_TCP
-		    || (e->ipv6.invflags & XT_INV_PROTO)) {
-			DEBUGP("ip6t_REJECT: TCP_RESET illegal for non-tcp\n");
-			return 0;
+		if (e->ipv6.proto != IPPROTO_TCP ||
+		    (e->ipv6.invflags & XT_INV_PROTO)) {
+			pr_info("TCP_RESET illegal for non-tcp\n");
+			return -EINVAL;
 		}
 	}
-	return 1;
+	return 0;
 }
 
-static struct xt_target ip6t_reject_reg = {
+static struct xt_target reject_tg6_reg __read_mostly = {
 	.name		= "REJECT",
-	.family		= AF_INET6,
-	.target		= reject6_target,
+	.family		= NFPROTO_IPV6,
+	.target		= reject_tg6,
 	.targetsize	= sizeof(struct ip6t_reject_info),
 	.table		= "filter",
-	.hooks		= (1 << NF_IP6_LOCAL_IN) | (1 << NF_IP6_FORWARD) |
-			  (1 << NF_IP6_LOCAL_OUT),
-	.checkentry	= check,
+	.hooks		= (1 << NF_INET_LOCAL_IN) | (1 << NF_INET_FORWARD) |
+			  (1 << NF_INET_LOCAL_OUT),
+	.checkentry	= reject_tg6_check,
 	.me		= THIS_MODULE
 };
 
-static int __init ip6t_reject_init(void)
+static int __init reject_tg6_init(void)
 {
-	return xt_register_target(&ip6t_reject_reg);
+	return xt_register_target(&reject_tg6_reg);
 }
 
-static void __exit ip6t_reject_fini(void)
+static void __exit reject_tg6_exit(void)
 {
-	xt_unregister_target(&ip6t_reject_reg);
+	xt_unregister_target(&reject_tg6_reg);
 }
 
-module_init(ip6t_reject_init);
-module_exit(ip6t_reject_fini);
+module_init(reject_tg6_init);
+module_exit(reject_tg6_exit);

@@ -39,6 +39,7 @@
 #define AGPIOC_DEALLOCATE32 _IOW (AGPIOC_BASE, 7, compat_int_t)
 #define AGPIOC_BIND32       _IOW (AGPIOC_BASE, 8, compat_uptr_t)
 #define AGPIOC_UNBIND32     _IOW (AGPIOC_BASE, 9, compat_uptr_t)
+#define AGPIOC_CHIPSET_FLUSH32 _IO (AGPIOC_BASE, 10)
 
 struct agp_info32 {
 	struct agp_version version;	/* version of the driver        */

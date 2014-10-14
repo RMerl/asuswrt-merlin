@@ -9,6 +9,7 @@
  */
 
 #include <linux/module.h>
+#include <linux/slab.h>
 #include <linux/string.h>
 #include <linux/fb.h>
 #include <linux/vt_kern.h>
@@ -21,7 +22,7 @@
  * Rotation 270 degrees
  */
 
-static inline void ccw_update_attr(u8 *dst, u8 *src, int attribute,
+static void ccw_update_attr(u8 *dst, u8 *src, int attribute,
 				  struct vc_data *vc)
 {
 	int i, j, offset = (vc->vc_font.height < 10) ? 1 : 2;
@@ -84,7 +85,7 @@ static void ccw_clear(struct vc_data *vc, struct fb_info *info, int sy,
 	int bgshift = (vc->vc_hi_font_mask) ? 13 : 12;
 	u32 vyres = GETVYRES(ops->p->scrollmode, info);
 
-	region.color = attr_bgcol_ec(bgshift,vc);
+	region.color = attr_bgcol_ec(bgshift,vc,info);
 	region.dx = sy * vc->vc_font.height;
 	region.dy = vyres - ((sx + width) * vc->vc_font.width);
 	region.height = width * vc->vc_font.width;
@@ -198,7 +199,7 @@ static void ccw_clear_margins(struct vc_data *vc, struct fb_info *info,
 	struct fb_fillrect region;
 	int bgshift = (vc->vc_hi_font_mask) ? 13 : 12;
 
-	region.color = attr_bgcol_ec(bgshift,vc);
+	region.color = attr_bgcol_ec(bgshift,vc,info);
 	region.rop = ROP_COPY;
 
 	if (rw && !bottom_only) {

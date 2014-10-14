@@ -1,6 +1,5 @@
 /* Wrapper for DMA channel allocator that updates DMA client muxing.
- * Copyright 2004, Axis Communications AB
- * $Id: dma.c,v 1.1 2004/12/13 12:21:51 starvik Exp $
+ * Copyright 2004-2007, Axis Communications AB
  */
 
 #include <linux/kernel.h>
@@ -8,7 +7,7 @@
 #include <linux/errno.h>
 
 #include <asm/dma.h>
-#include <asm/arch/svinto.h>
+#include <arch/svinto.h>
 
 /* Macro to access ETRAX 100 registers */
 #define SETS(var, reg, field, val) var = (var & ~IO_MASK_(reg##_, field##_)) | \
@@ -25,7 +24,7 @@ int cris_request_dma(unsigned int dmanr, const char * device_id,
 	unsigned long int gens;
 	int fail = -EINVAL;
 
-	if ((dmanr < 0) || (dmanr >= MAX_DMA_CHANNELS)) {
+	if (dmanr >= MAX_DMA_CHANNELS) {
 		printk(KERN_CRIT "cris_request_dma: invalid DMA channel %u\n", dmanr);
 		return -EINVAL;
 	}
@@ -214,7 +213,7 @@ int cris_request_dma(unsigned int dmanr, const char * device_id,
 void cris_free_dma(unsigned int dmanr, const char * device_id)
 {
 	unsigned long flags;
-	if ((dmanr < 0) || (dmanr >= MAX_DMA_CHANNELS)) {
+	if (dmanr >= MAX_DMA_CHANNELS) {
 		printk(KERN_CRIT "cris_free_dma: invalid DMA channel %u\n", dmanr);
 		return;
 	}

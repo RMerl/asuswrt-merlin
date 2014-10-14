@@ -11,11 +11,11 @@
 #include <linux/device.h>
 #include <linux/init.h>
 
-#include <asm/hardware.h>
+#include <mach/hardware.h>
 #include <asm/mach-types.h>
 #include <asm/irq.h>
 #include <asm/signal.h>
-#include <asm/arch/assabet.h>
+#include <mach/assabet.h>
 
 #include "sa1100_generic.h"
 
@@ -27,7 +27,7 @@ static struct pcmcia_irqs irqs[] = {
 
 static int assabet_pcmcia_hw_init(struct soc_pcmcia_socket *skt)
 {
-	skt->irq = ASSABET_IRQ_GPIO_CF_IRQ;
+	skt->socket.pci_irq = ASSABET_IRQ_GPIO_CF_IRQ;
 
 	return soc_pcmcia_request_irqs(skt, irqs, ARRAY_SIZE(irqs));
 }
@@ -66,14 +66,14 @@ assabet_pcmcia_configure_socket(struct soc_pcmcia_socket *skt, const socket_stat
 
 	case 50:
 		printk(KERN_WARNING "%s(): CS asked for 5V, applying 3.3V...\n",
-			__FUNCTION__);
+			__func__);
 
 	case 33:  /* Can only apply 3.3V to the CF slot. */
 		mask = ASSABET_BCR_CF_PWR;
 		break;
 
 	default:
-		printk(KERN_ERR "%s(): unrecognized Vcc %u\n", __FUNCTION__,
+		printk(KERN_ERR "%s(): unrecognized Vcc %u\n", __func__,
 			state->Vcc);
 		return -1;
 	}
@@ -130,7 +130,7 @@ static struct pcmcia_low_level assabet_pcmcia_ops = {
 	.socket_suspend		= assabet_pcmcia_socket_suspend,
 };
 
-int __init pcmcia_assabet_init(struct device *dev)
+int __devinit pcmcia_assabet_init(struct device *dev)
 {
 	int ret = -ENODEV;
 

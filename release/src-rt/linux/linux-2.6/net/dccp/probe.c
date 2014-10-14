@@ -30,6 +30,8 @@
 #include <linux/module.h>
 #include <linux/kfifo.h>
 #include <linux/vmalloc.h>
+#include <linux/gfp.h>
+#include <net/net_namespace.h>
 
 #include "dccp.h"
 #include "ccid.h"
@@ -41,67 +43,58 @@ static int bufsize = 64 * 1024;
 
 static const char procname[] = "dccpprobe";
 
-struct {
-	struct kfifo	  *fifo;
+static struct {
+	struct kfifo	  fifo;
 	spinlock_t	  lock;
 	wait_queue_head_t wait;
-	struct timeval	  tstart;
+	struct timespec	  tstart;
 } dccpw;
 
 static void printl(const char *fmt, ...)
 {
 	va_list args;
 	int len;
-	struct timeval now;
+	struct timespec now;
 	char tbuf[256];
 
 	va_start(args, fmt);
-	do_gettimeofday(&now);
+	getnstimeofday(&now);
 
-	now.tv_sec -= dccpw.tstart.tv_sec;
-	now.tv_usec -= dccpw.tstart.tv_usec;
-	if (now.tv_usec < 0) {
-		--now.tv_sec;
-		now.tv_usec += 1000000;
-	}
+	now = timespec_sub(now, dccpw.tstart);
 
 	len = sprintf(tbuf, "%lu.%06lu ",
 		      (unsigned long) now.tv_sec,
-		      (unsigned long) now.tv_usec);
+		      (unsigned long) now.tv_nsec / NSEC_PER_USEC);
 	len += vscnprintf(tbuf+len, sizeof(tbuf)-len, fmt, args);
 	va_end(args);
 
-	kfifo_put(dccpw.fifo, tbuf, len);
+	kfifo_in_locked(&dccpw.fifo, tbuf, len, &dccpw.lock);
 	wake_up(&dccpw.wait);
 }
 
 static int jdccp_sendmsg(struct kiocb *iocb, struct sock *sk,
 			 struct msghdr *msg, size_t size)
 {
-	const struct dccp_minisock *dmsk = dccp_msk(sk);
 	const struct inet_sock *inet = inet_sk(sk);
-	const struct ccid3_hc_tx_sock *hctx;
+	struct ccid3_hc_tx_sock *hc = NULL;
 
-	if (dmsk->dccpms_tx_ccid == DCCPC_CCID3)
-		hctx = ccid3_hc_tx_sk(sk);
-	else
-		hctx = NULL;
+	if (ccid_get_current_tx_ccid(dccp_sk(sk)) == DCCPC_CCID3)
+		hc = ccid3_hc_tx_sk(sk);
 
-	if (port == 0 || ntohs(inet->dport) == port ||
-	    ntohs(inet->sport) == port) {
-		if (hctx)
-			printl("%d.%d.%d.%d:%u %d.%d.%d.%d:%u %d %d %d %d %u "
-			       "%llu %llu %d\n",
-			       NIPQUAD(inet->saddr), ntohs(inet->sport),
-			       NIPQUAD(inet->daddr), ntohs(inet->dport), size,
-			       hctx->ccid3hctx_s, hctx->ccid3hctx_rtt,
-			       hctx->ccid3hctx_p, hctx->ccid3hctx_x_calc,
-			       hctx->ccid3hctx_x_recv >> 6,
-			       hctx->ccid3hctx_x >> 6, hctx->ccid3hctx_t_ipi);
+	if (port == 0 || ntohs(inet->inet_dport) == port ||
+	    ntohs(inet->inet_sport) == port) {
+		if (hc)
+			printl("%pI4:%u %pI4:%u %d %d %d %d %u %llu %llu %d\n",
+			       &inet->inet_saddr, ntohs(inet->inet_sport),
+			       &inet->inet_daddr, ntohs(inet->inet_dport), size,
+			       hc->tx_s, hc->tx_rtt, hc->tx_p,
+			       hc->tx_x_calc, hc->tx_x_recv >> 6,
+			       hc->tx_x >> 6, hc->tx_t_ipi);
 		else
-			printl("%d.%d.%d.%d:%u %d.%d.%d.%d:%u %d\n",
-			       NIPQUAD(inet->saddr), ntohs(inet->sport),
-			       NIPQUAD(inet->daddr), ntohs(inet->dport), size);
+			printl("%pI4:%u %pI4:%u %d\n",
+			       &inet->inet_saddr, ntohs(inet->inet_sport),
+			       &inet->inet_daddr, ntohs(inet->inet_dport),
+			       size);
 	}
 
 	jprobe_return();
@@ -112,13 +105,13 @@ static struct jprobe dccp_send_probe = {
 	.kp	= {
 		.symbol_name = "dccp_sendmsg",
 	},
-	.entry	= JPROBE_ENTRY(jdccp_sendmsg),
+	.entry	= jdccp_sendmsg,
 };
 
 static int dccpprobe_open(struct inode *inode, struct file *file)
 {
-	kfifo_reset(dccpw.fifo);
-	do_gettimeofday(&dccpw.tstart);
+	kfifo_reset(&dccpw.fifo);
+	getnstimeofday(&dccpw.tstart);
 	return 0;
 }
 
@@ -139,12 +132,12 @@ static ssize_t dccpprobe_read(struct file *file, char __user *buf,
 		return -ENOMEM;
 
 	error = wait_event_interruptible(dccpw.wait,
-					 __kfifo_len(dccpw.fifo) != 0);
+					 kfifo_len(&dccpw.fifo) != 0);
 	if (error)
 		goto out_free;
 
-	cnt = kfifo_get(dccpw.fifo, tbuf, len);
-	error = copy_to_user(buf, tbuf, cnt);
+	cnt = kfifo_out_locked(&dccpw.fifo, tbuf, len, &dccpw.lock);
+	error = copy_to_user(buf, tbuf, cnt) ? -EFAULT : 0;
 
 out_free:
 	vfree(tbuf);
@@ -156,6 +149,7 @@ static const struct file_operations dccpprobe_fops = {
 	.owner	 = THIS_MODULE,
 	.open	 = dccpprobe_open,
 	.read    = dccpprobe_read,
+	.llseek  = noop_llseek,
 };
 
 static __init int dccpprobe_init(void)
@@ -164,31 +158,30 @@ static __init int dccpprobe_init(void)
 
 	init_waitqueue_head(&dccpw.wait);
 	spin_lock_init(&dccpw.lock);
-	dccpw.fifo = kfifo_alloc(bufsize, GFP_KERNEL, &dccpw.lock);
-	if (IS_ERR(dccpw.fifo))
-		return PTR_ERR(dccpw.fifo);
-
-	if (!proc_net_fops_create(procname, S_IRUSR, &dccpprobe_fops))
+	if (kfifo_alloc(&dccpw.fifo, bufsize, GFP_KERNEL))
+		return ret;
+	if (!proc_net_fops_create(&init_net, procname, S_IRUSR, &dccpprobe_fops))
 		goto err0;
 
-	ret = register_jprobe(&dccp_send_probe);
+	try_then_request_module((ret = register_jprobe(&dccp_send_probe)) == 0,
+				"dccp");
 	if (ret)
 		goto err1;
 
 	pr_info("DCCP watch registered (port=%d)\n", port);
 	return 0;
 err1:
-	proc_net_remove(procname);
+	proc_net_remove(&init_net, procname);
 err0:
-	kfifo_free(dccpw.fifo);
+	kfifo_free(&dccpw.fifo);
 	return ret;
 }
 module_init(dccpprobe_init);
 
 static __exit void dccpprobe_exit(void)
 {
-	kfifo_free(dccpw.fifo);
-	proc_net_remove(procname);
+	kfifo_free(&dccpw.fifo);
+	proc_net_remove(&init_net, procname);
 	unregister_jprobe(&dccp_send_probe);
 
 }

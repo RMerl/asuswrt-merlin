@@ -39,6 +39,7 @@
 #include <linux/tty.h>
 #include <linux/serial.h>
 #include <linux/serial_core.h>
+#include <linux/serial_8250.h>
 
 #include <asm/time.h>
 #include <asm/bootinfo.h>
@@ -58,7 +59,7 @@ unsigned char titan_ge_mac_addr_base[6] = {
 	0x00, 0xe0, 0x04, 0x00, 0x00, 0x21
 };
 
-unsigned long cpu_clock;
+unsigned long cpu_clock_freq;
 unsigned long yosemite_base;
 
 static struct m48t37_rtc *m48t37_base;
@@ -69,7 +70,7 @@ void __init bus_error_init(void)
 }
 
 
-unsigned long m48t37y_get_time(void)
+void read_persistent_clock(struct timespec *ts)
 {
 	unsigned int year, month, day, hour, min, sec;
 	unsigned long flags;
@@ -78,29 +79,34 @@ unsigned long m48t37y_get_time(void)
 	/* Stop the update to the time */
 	m48t37_base->control = 0x40;
 
-	year = BCD2BIN(m48t37_base->year);
-	year += BCD2BIN(m48t37_base->century) * 100;
+	year = bcd2bin(m48t37_base->year);
+	year += bcd2bin(m48t37_base->century) * 100;
 
-	month = BCD2BIN(m48t37_base->month);
-	day = BCD2BIN(m48t37_base->date);
-	hour = BCD2BIN(m48t37_base->hour);
-	min = BCD2BIN(m48t37_base->min);
-	sec = BCD2BIN(m48t37_base->sec);
+	month = bcd2bin(m48t37_base->month);
+	day = bcd2bin(m48t37_base->date);
+	hour = bcd2bin(m48t37_base->hour);
+	min = bcd2bin(m48t37_base->min);
+	sec = bcd2bin(m48t37_base->sec);
 
 	/* Start the update to the time again */
 	m48t37_base->control = 0x00;
 	spin_unlock_irqrestore(&rtc_lock, flags);
 
-	return mktime(year, month, day, hour, min, sec);
+	ts->tv_sec = mktime(year, month, day, hour, min, sec);
+	ts->tv_nsec = 0;
 }
 
-int m48t37y_set_time(unsigned long sec)
+int rtc_mips_set_time(unsigned long tim)
 {
 	struct rtc_time tm;
 	unsigned long flags;
 
-	/* convert to a more useful format -- note months count from 0 */
-	to_tm(sec, &tm);
+	/*
+	 * Convert to a more useful format -- note months count from 0
+	 * and years from 1900
+	 */
+	rtc_time_to_tm(tim, &tm);
+	tm.tm_year += 1900;
 	tm.tm_mon += 1;
 
 	spin_lock_irqsave(&rtc_lock, flags);
@@ -108,22 +114,22 @@ int m48t37y_set_time(unsigned long sec)
 	m48t37_base->control = 0x80;
 
 	/* year */
-	m48t37_base->year = BIN2BCD(tm.tm_year % 100);
-	m48t37_base->century = BIN2BCD(tm.tm_year / 100);
+	m48t37_base->year = bin2bcd(tm.tm_year % 100);
+	m48t37_base->century = bin2bcd(tm.tm_year / 100);
 
 	/* month */
-	m48t37_base->month = BIN2BCD(tm.tm_mon);
+	m48t37_base->month = bin2bcd(tm.tm_mon);
 
 	/* day */
-	m48t37_base->date = BIN2BCD(tm.tm_mday);
+	m48t37_base->date = bin2bcd(tm.tm_mday);
 
 	/* hour/min/sec */
-	m48t37_base->hour = BIN2BCD(tm.tm_hour);
-	m48t37_base->min = BIN2BCD(tm.tm_min);
-	m48t37_base->sec = BIN2BCD(tm.tm_sec);
+	m48t37_base->hour = bin2bcd(tm.tm_hour);
+	m48t37_base->min = bin2bcd(tm.tm_min);
+	m48t37_base->sec = bin2bcd(tm.tm_sec);
 
 	/* day of week -- not really used, but let's keep it up-to-date */
-	m48t37_base->day = BIN2BCD(tm.tm_wday + 1);
+	m48t37_base->day = bin2bcd(tm.tm_wday + 1);
 
 	/* disable writing */
 	m48t37_base->control = 0x00;
@@ -132,19 +138,11 @@ int m48t37y_set_time(unsigned long sec)
 	return 0;
 }
 
-void __init plat_timer_setup(struct irqaction *irq)
+void __init plat_time_init(void)
 {
-	setup_irq(7, irq);
-}
-
-void yosemite_time_init(void)
-{
-	mips_hpt_frequency = cpu_clock / 2;
+	mips_hpt_frequency = cpu_clock_freq / 2;
 mips_hpt_frequency = 33000000 * 3 * 5;
 }
-
-/* No other usable initialization hook than this ...  */
-extern void (*late_time_init)(void);
 
 unsigned long ocd_base;
 
@@ -197,17 +195,6 @@ static void __init py_rtc_setup(void)
 	m48t37_base = ioremap(YOSEMITE_RTC_BASE, YOSEMITE_RTC_SIZE);
 	if (!m48t37_base)
 		printk(KERN_ERR "Mapping the RTC failed\n");
-
-	rtc_mips_get_time = m48t37y_get_time;
-	rtc_mips_set_time = m48t37y_set_time;
-
-	write_seqlock(&xtime_lock);
-	xtime.tv_sec = m48t37y_get_time();
-	xtime.tv_nsec = 0;
-
-	set_normalized_timespec(&wall_to_monotonic,
-	                        -xtime.tv_sec, -xtime.tv_nsec);
-	write_sequnlock(&xtime_lock);
 }
 
 /* Not only time init but that's what the hook it's called through is named */
@@ -220,7 +207,6 @@ static void __init py_late_time_init(void)
 
 void __init plat_mem_setup(void)
 {
-	board_time_init = yosemite_time_init;
 	late_time_init = py_late_time_init;
 
 	/* Add memory regions */

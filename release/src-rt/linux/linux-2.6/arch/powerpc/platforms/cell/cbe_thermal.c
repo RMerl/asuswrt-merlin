@@ -52,8 +52,8 @@
 #include <asm/spu.h>
 #include <asm/io.h>
 #include <asm/prom.h>
+#include <asm/cell-regs.h>
 
-#include "cbe_regs.h"
 #include "spu_priv1_mmio.h"
 
 #define TEMP_MIN 65
@@ -88,20 +88,17 @@ static struct cbe_pmd_regs __iomem *get_pmd_regs(struct sys_device *sysdev)
 /* returns the value for a given spu in a given register */
 static u8 spu_read_register_value(struct sys_device *sysdev, union spe_reg __iomem *reg)
 {
-	const unsigned int *id;
 	union spe_reg value;
 	struct spu *spu;
 
-	/* getting the id from the reg attribute will not work on future device-tree layouts
-	 * in future we should store the id to the spu struct and use it here */
 	spu = container_of(sysdev, struct spu, sysdev);
-	id = of_get_property(spu_devnode(spu), "reg", NULL);
 	value.val = in_be64(&reg->val);
 
-	return value.spe[*id];
+	return value.spe[spu->spe_id];
 }
 
-static ssize_t spu_show_temp(struct sys_device *sysdev, char *buf)
+static ssize_t spu_show_temp(struct sys_device *sysdev, struct sysdev_attribute *attr,
+			char *buf)
 {
 	u8 value;
 	struct cbe_pmd_regs __iomem *pmd_regs;
@@ -150,32 +147,38 @@ static ssize_t store_throttle(struct cbe_pmd_regs __iomem *pmd_regs, const char 
 	return size;
 }
 
-static ssize_t spu_show_throttle_end(struct sys_device *sysdev, char *buf)
+static ssize_t spu_show_throttle_end(struct sys_device *sysdev,
+			struct sysdev_attribute *attr, char *buf)
 {
 	return show_throttle(get_pmd_regs(sysdev), buf, 0);
 }
 
-static ssize_t spu_show_throttle_begin(struct sys_device *sysdev, char *buf)
+static ssize_t spu_show_throttle_begin(struct sys_device *sysdev,
+			struct sysdev_attribute *attr, char *buf)
 {
 	return show_throttle(get_pmd_regs(sysdev), buf, 8);
 }
 
-static ssize_t spu_show_throttle_full_stop(struct sys_device *sysdev, char *buf)
+static ssize_t spu_show_throttle_full_stop(struct sys_device *sysdev,
+			struct sysdev_attribute *attr, char *buf)
 {
 	return show_throttle(get_pmd_regs(sysdev), buf, 16);
 }
 
-static ssize_t spu_store_throttle_end(struct sys_device *sysdev, const char *buf, size_t size)
+static ssize_t spu_store_throttle_end(struct sys_device *sysdev,
+			struct sysdev_attribute *attr, const char *buf, size_t size)
 {
 	return store_throttle(get_pmd_regs(sysdev), buf, size, 0);
 }
 
-static ssize_t spu_store_throttle_begin(struct sys_device *sysdev, const char *buf, size_t size)
+static ssize_t spu_store_throttle_begin(struct sys_device *sysdev,
+			struct sysdev_attribute *attr, const char *buf, size_t size)
 {
 	return store_throttle(get_pmd_regs(sysdev), buf, size, 8);
 }
 
-static ssize_t spu_store_throttle_full_stop(struct sys_device *sysdev, const char *buf, size_t size)
+static ssize_t spu_store_throttle_full_stop(struct sys_device *sysdev,
+			struct sysdev_attribute *attr, const char *buf, size_t size)
 {
 	return store_throttle(get_pmd_regs(sysdev), buf, size, 16);
 }
@@ -196,43 +199,51 @@ static ssize_t ppe_show_temp(struct sys_device *sysdev, char *buf, int pos)
 
 /* shows the temperature of the DTS on the PPE,
  * located near the linear thermal sensor */
-static ssize_t ppe_show_temp0(struct sys_device *sysdev, char *buf)
+static ssize_t ppe_show_temp0(struct sys_device *sysdev,
+			struct sysdev_attribute *attr, char *buf)
 {
 	return ppe_show_temp(sysdev, buf, 32);
 }
 
 /* shows the temperature of the second DTS on the PPE */
-static ssize_t ppe_show_temp1(struct sys_device *sysdev, char *buf)
+static ssize_t ppe_show_temp1(struct sys_device *sysdev,
+			struct sysdev_attribute *attr, char *buf)
 {
 	return ppe_show_temp(sysdev, buf, 0);
 }
 
-static ssize_t ppe_show_throttle_end(struct sys_device *sysdev, char *buf)
+static ssize_t ppe_show_throttle_end(struct sys_device *sysdev,
+			struct sysdev_attribute *attr, char *buf)
 {
 	return show_throttle(cbe_get_cpu_pmd_regs(sysdev->id), buf, 32);
 }
 
-static ssize_t ppe_show_throttle_begin(struct sys_device *sysdev, char *buf)
+static ssize_t ppe_show_throttle_begin(struct sys_device *sysdev,
+			struct sysdev_attribute *attr, char *buf)
 {
 	return show_throttle(cbe_get_cpu_pmd_regs(sysdev->id), buf, 40);
 }
 
-static ssize_t ppe_show_throttle_full_stop(struct sys_device *sysdev, char *buf)
+static ssize_t ppe_show_throttle_full_stop(struct sys_device *sysdev,
+			struct sysdev_attribute *attr, char *buf)
 {
 	return show_throttle(cbe_get_cpu_pmd_regs(sysdev->id), buf, 48);
 }
 
-static ssize_t ppe_store_throttle_end(struct sys_device *sysdev, const char *buf, size_t size)
+static ssize_t ppe_store_throttle_end(struct sys_device *sysdev,
+			struct sysdev_attribute *attr, const char *buf, size_t size)
 {
 	return store_throttle(cbe_get_cpu_pmd_regs(sysdev->id), buf, size, 32);
 }
 
-static ssize_t ppe_store_throttle_begin(struct sys_device *sysdev, const char *buf, size_t size)
+static ssize_t ppe_store_throttle_begin(struct sys_device *sysdev,
+			struct sysdev_attribute *attr, const char *buf, size_t size)
 {
 	return store_throttle(cbe_get_cpu_pmd_regs(sysdev->id), buf, size, 40);
 }
 
-static ssize_t ppe_store_throttle_full_stop(struct sys_device *sysdev, const char *buf, size_t size)
+static ssize_t ppe_store_throttle_full_stop(struct sys_device *sysdev,
+			struct sysdev_attribute *attr, const char *buf, size_t size)
 {
 	return store_throttle(cbe_get_cpu_pmd_regs(sysdev->id), buf, size, 48);
 }
@@ -292,7 +303,7 @@ static struct attribute_group ppe_attribute_group = {
 /*
  * initialize throttling with default values
  */
-static void __init init_default_values(void)
+static int __init init_default_values(void)
 {
 	int cpu;
 	struct cbe_pmd_regs __iomem *pmd_regs;
@@ -339,7 +350,18 @@ static void __init init_default_values(void)
 	for_each_possible_cpu (cpu) {
 		pr_debug("processing cpu %d\n", cpu);
 		sysdev = get_cpu_sysdev(cpu);
+
+		if (!sysdev) {
+			pr_info("invalid sysdev pointer for cbe_thermal\n");
+			return -EINVAL;
+		}
+
 		pmd_regs = cbe_get_cpu_pmd_regs(sysdev->id);
+
+		if (!pmd_regs) {
+			pr_info("invalid CBE regs pointer for cbe_thermal\n");
+			return -EINVAL;
+		}
 
 		out_be64(&pmd_regs->tm_str2, str2);
 		out_be64(&pmd_regs->tm_str1.val, str1.val);
@@ -347,17 +369,21 @@ static void __init init_default_values(void)
 		out_be64(&pmd_regs->tm_cr1.val, cr1.val);
 		out_be64(&pmd_regs->tm_cr2, cr2);
 	}
+
+	return 0;
 }
 
 
 static int __init thermal_init(void)
 {
-	init_default_values();
+	int rc = init_default_values();
 
-	spu_add_sysdev_attr_group(&spu_attribute_group);
-	cpu_add_sysdev_attr_group(&ppe_attribute_group);
+	if (rc == 0) {
+		spu_add_sysdev_attr_group(&spu_attribute_group);
+		cpu_add_sysdev_attr_group(&ppe_attribute_group);
+	}
 
-	return 0;
+	return rc;
 }
 module_init(thermal_init);
 

@@ -38,21 +38,24 @@
 #include <linux/errno.h>
 #include <linux/kernel.h>
 #include <linux/mm.h>
+#include <linux/fs.h>
 #include <linux/module.h>
 #include <linux/personality.h>
 #include <linux/ptrace.h>
 #include <linux/sched.h>
+#include <linux/slab.h>
 #include <linux/stddef.h>
 #include <linux/unistd.h>
 #include <linux/kallsyms.h>
+#include <linux/uaccess.h>
 
 #include <asm/io.h>
 #include <asm/asm-offsets.h>
 #include <asm/pdc.h>
 #include <asm/pdc_chassis.h>
 #include <asm/pgalloc.h>
-#include <asm/uaccess.h>
 #include <asm/unwind.h>
+#include <asm/sections.h>
 
 /*
  * The idle thread. There's no useful work to be
@@ -154,7 +157,7 @@ void machine_power_off(void)
 	 * software. The user has to press the button himself. */
 
 	printk(KERN_EMERG "System shut down completed.\n"
-	       KERN_EMERG "Please power this system off now.");
+	       "Please power this system off now.");
 }
 
 void (*pm_power_off)(void) = machine_power_off;
@@ -230,8 +233,8 @@ sys_clone(unsigned long clone_flags, unsigned long usp,
 	   
 	   However, these last 3 args are only examined
 	   if the proper flags are set. */
-	int __user *child_tidptr;
-	int __user *parent_tidptr;
+	int __user *parent_tidptr = (int __user *)regs->gr[24];
+	int __user *child_tidptr  = (int __user *)regs->gr[22];
 
 	/* usp must be word aligned.  This also prevents users from
 	 * passing in the value 1 (which is the signal for a special
@@ -241,16 +244,6 @@ sys_clone(unsigned long clone_flags, unsigned long usp,
 	/* A zero value for usp means use the current stack */
 	if (usp == 0)
 	  usp = regs->gr[30];
-
-	if (clone_flags & CLONE_PARENT_SETTID)
-	  parent_tidptr = (int __user *)regs->gr[24];
-	else
-	  parent_tidptr = NULL;
-	
-	if (clone_flags & (CLONE_CHILD_SETTID | CLONE_CHILD_CLEARTID))
-	  child_tidptr = (int __user *)regs->gr[22];
-	else
-	  child_tidptr = NULL;
 
 	return do_fork(clone_flags, usp, regs, 0, parent_tidptr, child_tidptr);
 }
@@ -262,7 +255,7 @@ sys_vfork(struct pt_regs *regs)
 }
 
 int
-copy_thread(int nr, unsigned long clone_flags, unsigned long usp,
+copy_thread(unsigned long clone_flags, unsigned long usp,
 	    unsigned long unused,	/* in ia64 this is "user_stack_size" */
 	    struct task_struct * p, struct pt_regs * pregs)
 {
@@ -355,22 +348,22 @@ asmlinkage int sys_execve(struct pt_regs *regs)
 	error = PTR_ERR(filename);
 	if (IS_ERR(filename))
 		goto out;
-	error = do_execve(filename, (char __user * __user *) regs->gr[25],
-		(char __user * __user *) regs->gr[24], regs);
-	if (error == 0) {
-		task_lock(current);
-		current->ptrace &= ~PT_DTRACE;
-		task_unlock(current);
-	}
+	error = do_execve(filename,
+			  (const char __user *const __user *) regs->gr[25],
+			  (const char __user *const __user *) regs->gr[24],
+			  regs);
 	putname(filename);
 out:
 
 	return error;
 }
 
-extern int __execve(const char *filename, char *const argv[],
-		char *const envp[], struct task_struct *task);
-int kernel_execve(const char *filename, char *const argv[], char *const envp[])
+extern int __execve(const char *filename,
+		    const char *const argv[],
+		    const char *const envp[], struct task_struct *task);
+int kernel_execve(const char *filename,
+		  const char *const argv[],
+		  const char *const envp[])
 {
 	return __execve(filename, argv, envp, current);
 }
@@ -399,3 +392,15 @@ get_wchan(struct task_struct *p)
 	} while (count++ < 16);
 	return 0;
 }
+
+#ifdef CONFIG_64BIT
+void *dereference_function_descriptor(void *ptr)
+{
+	Elf64_Fdesc *desc = ptr;
+	void *p;
+
+	if (!probe_kernel_address(&desc->addr, p))
+		ptr = p;
+	return ptr;
+}
+#endif

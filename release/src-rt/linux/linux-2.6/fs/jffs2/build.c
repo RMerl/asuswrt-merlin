@@ -2,6 +2,7 @@
  * JFFS2 -- Journalling Flash File System, Version 2.
  *
  * Copyright © 2001-2007 Red Hat, Inc.
+ * Copyright © 2004-2010 David Woodhouse <dwmw2@infradead.org>
  *
  * Created by David Woodhouse <dwmw2@infradead.org>
  *
@@ -22,7 +23,7 @@ static void jffs2_build_remove_unlinked_inode(struct jffs2_sb_info *,
 static inline struct jffs2_inode_cache *
 first_inode_chain(int *i, struct jffs2_sb_info *c)
 {
-	for (; *i < INOCACHE_HASHSIZE; (*i)++) {
+	for (; *i < c->inocache_hashsize; (*i)++) {
 		if (c->inocache_list[*i])
 			return c->inocache_list[*i];
 	}
@@ -46,7 +47,7 @@ next_inode(int *i, struct jffs2_inode_cache *ic, struct jffs2_sb_info *c)
 
 
 static void jffs2_build_inode_pass1(struct jffs2_sb_info *c,
-					struct jffs2_inode_cache *ic)
+				    struct jffs2_inode_cache *ic)
 {
 	struct jffs2_full_dirent *fd;
 
@@ -68,11 +69,17 @@ static void jffs2_build_inode_pass1(struct jffs2_sb_info *c,
 			continue;
 		}
 
-		if (child_ic->nlink++ && fd->type == DT_DIR) {
-			JFFS2_ERROR("child dir \"%s\" (ino #%u) of dir ino #%u appears to be a hard link\n",
-				fd->name, fd->ino, ic->ino);
-			/* TODO: What do we do about it? */
-		}
+		if (fd->type == DT_DIR) {
+			if (child_ic->pino_nlink) {
+				JFFS2_ERROR("child dir \"%s\" (ino #%u) of dir ino #%u appears to be a hard link\n",
+					    fd->name, fd->ino, ic->ino);
+				/* TODO: What do we do about it? */
+			} else {
+				child_ic->pino_nlink = ic->ino;
+			}
+		} else
+			child_ic->pino_nlink++;
+
 		dbg_fsbuild("increased nlink for child \"%s\" (ino #%u)\n", fd->name, fd->ino);
 		/* Can't free scan_dents so far. We might need them in pass 2 */
 	}
@@ -105,17 +112,6 @@ static int jffs2_build_filesystem(struct jffs2_sb_info *c)
 	dbg_fsbuild("scanned flash completely\n");
 	jffs2_dbg_dump_block_lists_nolock(c);
 
-	if (c->flags & (1 << 7)) {
-		printk("%s(): unlocking the mtd device... ", __func__);
-		if (c->mtd->unlock)
-			c->mtd->unlock(c->mtd, 0, c->mtd->size);
-		printk("done.\n");
-		
-		printk("%s(): erasing all blocks after the end marker... ", __func__);
-		jffs2_erase_pending_blocks(c, -1);
-		printk("done.\n");
-	}
-
 	dbg_fsbuild("pass 1 starting\n");
 	c->flags |= JFFS2_SB_FLAG_BUILDING;
 	/* Now scan the directory tree, increasing nlink according to every dirent found. */
@@ -136,7 +132,7 @@ static int jffs2_build_filesystem(struct jffs2_sb_info *c)
 	dbg_fsbuild("pass 2 starting\n");
 
 	for_each_inode(i, c, ic) {
-		if (ic->nlink)
+		if (ic->pino_nlink)
 			continue;
 
 		jffs2_build_remove_unlinked_inode(c, ic, &dead_fds);
@@ -243,16 +239,19 @@ static void jffs2_build_remove_unlinked_inode(struct jffs2_sb_info *c,
 			/* Reduce nlink of the child. If it's now zero, stick it on the
 			   dead_fds list to be cleaned up later. Else just free the fd */
 
-			child_ic->nlink--;
+			if (fd->type == DT_DIR)
+				child_ic->pino_nlink = 0;
+			else
+				child_ic->pino_nlink--;
 
-			if (!child_ic->nlink) {
-				dbg_fsbuild("inode #%u (\"%s\") has now got zero nlink, adding to dead_fds list.\n",
+			if (!child_ic->pino_nlink) {
+				dbg_fsbuild("inode #%u (\"%s\") now has no links; adding to dead_fds list.\n",
 					  fd->ino, fd->name);
 				fd->next = *dead_fds;
 				*dead_fds = fd;
 			} else {
 				dbg_fsbuild("inode #%u (\"%s\") has now got nlink %d. Ignoring.\n",
-					  fd->ino, fd->name, child_ic->nlink);
+					  fd->ino, fd->name, child_ic->pino_nlink);
 				jffs2_free_full_dirent(fd);
 			}
 		}
@@ -296,6 +295,14 @@ static void jffs2_calc_trigger_levels(struct jffs2_sb_info *c)
 	   than actually making progress? */
 	c->resv_blocks_gcbad = 0;//c->resv_blocks_deletion + 2;
 
+	/* What number of 'very dirty' eraseblocks do we allow before we
+	   trigger the GC thread even if we don't _need_ the space. When we
+	   can't mark nodes obsolete on the medium, the old dirty nodes cause
+	   performance problems because we have to inspect and discard them. */
+	c->vdirty_blocks_gctrigger = c->resv_blocks_gctrigger;
+	if (jffs2_can_mark_obsolete(c))
+		c->vdirty_blocks_gctrigger *= 10;
+
 	/* If there's less than this amount of dirty space, don't bother
 	   trying to GC to make more space. It'll be a fruitless task */
 	c->nospc_dirty_size = c->sector_size + (c->flash_size / 100);
@@ -314,6 +321,8 @@ static void jffs2_calc_trigger_levels(struct jffs2_sb_info *c)
 		  c->resv_blocks_gcbad, c->resv_blocks_gcbad*c->sector_size/1024);
 	dbg_fsbuild("Amount of dirty space required to GC: %d bytes\n",
 		  c->nospc_dirty_size);
+	dbg_fsbuild("Very dirty blocks before GC triggered: %d\n",
+		  c->vdirty_blocks_gctrigger);
 }
 
 int jffs2_do_mount_fs(struct jffs2_sb_info *c)
@@ -327,14 +336,13 @@ int jffs2_do_mount_fs(struct jffs2_sb_info *c)
 	size = sizeof(struct jffs2_eraseblock) * c->nr_blocks;
 #ifndef __ECOS
 	if (jffs2_blocks_use_vmalloc(c))
-		c->blocks = vmalloc(size);
+		c->blocks = vzalloc(size);
 	else
 #endif
-		c->blocks = kmalloc(size, GFP_KERNEL);
+		c->blocks = kzalloc(size, GFP_KERNEL);
 	if (!c->blocks)
 		return -ENOMEM;
 
-	memset(c->blocks, 0, size);
 	for (i=0; i<c->nr_blocks; i++) {
 		INIT_LIST_HEAD(&c->blocks[i].list);
 		c->blocks[i].offset = i * c->sector_size;
@@ -346,6 +354,7 @@ int jffs2_do_mount_fs(struct jffs2_sb_info *c)
 	INIT_LIST_HEAD(&c->dirty_list);
 	INIT_LIST_HEAD(&c->erasable_list);
 	INIT_LIST_HEAD(&c->erasing_list);
+	INIT_LIST_HEAD(&c->erase_checking_list);
 	INIT_LIST_HEAD(&c->erase_pending_list);
 	INIT_LIST_HEAD(&c->erasable_pending_wbuf_list);
 	INIT_LIST_HEAD(&c->erase_complete_list);

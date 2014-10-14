@@ -34,7 +34,8 @@ static int init_hw(struct echoaudio *chip, u16 device_id, u16 subdevice_id)
 	int err;
 
 	DE_INIT(("init_hw() - Darla20\n"));
-	snd_assert((subdevice_id & 0xfff0) == DARLA20, return -ENODEV);
+	if (snd_BUG_ON((subdevice_id & 0xfff0) != DARLA20))
+		return -ENODEV;
 
 	if ((err = init_dsp_comm_page(chip))) {
 		DE_INIT(("init_hw - could not initialize DSP comm page\n"));
@@ -44,7 +45,7 @@ static int init_hw(struct echoaudio *chip, u16 device_id, u16 subdevice_id)
 	chip->device_id = device_id;
 	chip->subdevice_id = subdevice_id;
 	chip->bad_board = TRUE;
-	chip->dsp_code_to_load = &card_fw[FW_DARLA20_DSP];
+	chip->dsp_code_to_load = FW_DARLA20_DSP;
 	chip->spdif_status = GD_SPDIF_STATUS_UNDEF;
 	chip->clock_state = GD_CLOCK_UNDEF;
 	/* Since this card has no ASIC, mark it as loaded so everything
@@ -56,11 +57,15 @@ static int init_hw(struct echoaudio *chip, u16 device_id, u16 subdevice_id)
 		return err;
 	chip->bad_board = FALSE;
 
-	if ((err = init_line_levels(chip)) < 0)
-		return err;
-
 	DE_INIT(("init_hw done\n"));
 	return err;
+}
+
+
+
+static int set_mixer_defaults(struct echoaudio *chip)
+{
+	return init_line_levels(chip);
 }
 
 

@@ -18,6 +18,7 @@
  * See the GNU General Public License for more details.
  */
 #include <linux/netdevice.h>
+#include <linux/slab.h>
 #include <net/llc_conn.h>
 #include <net/llc_sap.h>
 #include <net/sock.h>
@@ -1430,14 +1431,14 @@ static void llc_process_tmr_ev(struct sock *sk, struct sk_buff *skb)
 {
 	if (llc_sk(sk)->state == LLC_CONN_OUT_OF_SVC) {
 		printk(KERN_WARNING "%s: timer called on closed connection\n",
-		       __FUNCTION__);
+		       __func__);
 		kfree_skb(skb);
 	} else {
 		if (!sock_owned_by_user(sk))
 			llc_conn_state_process(sk, skb);
 		else {
 			llc_set_backlog_type(skb, LLC_EVENT);
-			sk_add_backlog(sk, skb);
+			__sk_add_backlog(sk, skb);
 		}
 	}
 }

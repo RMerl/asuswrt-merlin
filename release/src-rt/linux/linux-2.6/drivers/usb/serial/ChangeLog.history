@@ -400,7 +400,7 @@ visor.c Change Log comments:
 
  (11/11/2001) gkh
 	Added support for the m125 devices, and added check to prevent oopses
-	for Clié devices that lie about the number of ports they have.
+	for CliÃ© devices that lie about the number of ports they have.
 
  (08/30/2001) gkh
 	Added support for the Clie devices, both the 3.5 and 4.0 os versions.
@@ -715,7 +715,7 @@ io_edgeport.c Change Log comments:
 
  0.2 (01/30/2000) greg kroah-hartman
 	Milestone 1 release.
-	Device is found by USB subsystem, enumerated, fimware is downloaded
+	Device is found by USB subsystem, enumerated, firmware is downloaded
 	and the descriptors are printed to the debug log, config is set, and
 	green light starts to blink. Open port works, and data can be sent
 	and received at the default settings of the UART. Loopback connector

@@ -1,7 +1,7 @@
 /*
  *    pata_oldpiix.c - Intel PATA/SATA controllers
  *
- *	(C) 2005 Red Hat <alan@redhat.com>
+ *	(C) 2005 Red Hat
  *
  *    Some parts based on ata_piix.c by Jeff Garzik and others.
  *
@@ -29,14 +29,15 @@
 
 /**
  *	oldpiix_pre_reset		-	probe begin
- *	@ap: ATA port
+ *	@link: ATA link
  *	@deadline: deadline jiffies for the operation
  *
  *	Set up cable type and use generic probe init
  */
 
-static int oldpiix_pre_reset(struct ata_port *ap, unsigned long deadline)
+static int oldpiix_pre_reset(struct ata_link *link, unsigned long deadline)
 {
+	struct ata_port *ap = link->ap;
 	struct pci_dev *pdev = to_pci_dev(ap->host->dev);
 	static const struct pci_bits oldpiix_enable_bits[] = {
 		{ 0x41U, 1U, 0x80UL, 0x80UL },	/* port 0 */
@@ -46,21 +47,7 @@ static int oldpiix_pre_reset(struct ata_port *ap, unsigned long deadline)
 	if (!pci_test_config_bits(pdev, &oldpiix_enable_bits[ap->port_no]))
 		return -ENOENT;
 
-	return ata_std_prereset(ap, deadline);
-}
-
-/**
- *	oldpiix_pata_error_handler - Probe specified port on PATA host controller
- *	@ap: Port to probe
- *	@classes:
- *
- *	LOCKING:
- *	None (inherited from caller).
- */
-
-static void oldpiix_pata_error_handler(struct ata_port *ap)
-{
-	ata_bmdma_drive_eh(ap, oldpiix_pre_reset, ata_std_softreset, NULL, ata_std_postreset);
+	return ata_sff_prereset(link, deadline);
 }
 
 /**
@@ -129,7 +116,6 @@ static void oldpiix_set_piomode (struct ata_port *ap, struct ata_device *adev)
  *	oldpiix_set_dmamode - Initialize host controller PATA DMA timings
  *	@ap: Port whose timings we are configuring
  *	@adev: Device to program
- *	@isich: True if the device is an ICH and has IOCFG registers
  *
  *	Set MWDMA mode for device, in host controller PCI config space.
  *
@@ -194,80 +180,41 @@ static void oldpiix_set_dmamode (struct ata_port *ap, struct ata_device *adev)
 }
 
 /**
- *	oldpiix_qc_issue_prot	-	command issue
+ *	oldpiix_qc_issue	-	command issue
  *	@qc: command pending
  *
  *	Called when the libata layer is about to issue a command. We wrap
  *	this interface so that we can load the correct ATA timings if
- *	neccessary. Our logic also clears TIME0/TIME1 for the other device so
+ *	necessary. Our logic also clears TIME0/TIME1 for the other device so
  *	that, even if we get this wrong, cycles to the other device will
  *	be made PIO0.
  */
 
-static unsigned int oldpiix_qc_issue_prot(struct ata_queued_cmd *qc)
+static unsigned int oldpiix_qc_issue(struct ata_queued_cmd *qc)
 {
 	struct ata_port *ap = qc->ap;
 	struct ata_device *adev = qc->dev;
 
 	if (adev != ap->private_data) {
 		oldpiix_set_piomode(ap, adev);
-		if (adev->dma_mode)
+		if (ata_dma_enabled(adev))
 			oldpiix_set_dmamode(ap, adev);
 	}
-	return ata_qc_issue_prot(qc);
+	return ata_bmdma_qc_issue(qc);
 }
 
 
 static struct scsi_host_template oldpiix_sht = {
-	.module			= THIS_MODULE,
-	.name			= DRV_NAME,
-	.ioctl			= ata_scsi_ioctl,
-	.queuecommand		= ata_scsi_queuecmd,
-	.can_queue		= ATA_DEF_QUEUE,
-	.this_id		= ATA_SHT_THIS_ID,
-	.sg_tablesize		= LIBATA_MAX_PRD,
-	.cmd_per_lun		= ATA_SHT_CMD_PER_LUN,
-	.emulated		= ATA_SHT_EMULATED,
-	.use_clustering		= ATA_SHT_USE_CLUSTERING,
-	.proc_name		= DRV_NAME,
-	.dma_boundary		= ATA_DMA_BOUNDARY,
-	.slave_configure	= ata_scsi_slave_config,
-	.slave_destroy		= ata_scsi_slave_destroy,
-	.bios_param		= ata_std_bios_param,
+	ATA_BMDMA_SHT(DRV_NAME),
 };
 
-static const struct ata_port_operations oldpiix_pata_ops = {
-	.port_disable		= ata_port_disable,
+static struct ata_port_operations oldpiix_pata_ops = {
+	.inherits		= &ata_bmdma_port_ops,
+	.qc_issue		= oldpiix_qc_issue,
+	.cable_detect		= ata_cable_40wire,
 	.set_piomode		= oldpiix_set_piomode,
 	.set_dmamode		= oldpiix_set_dmamode,
-	.mode_filter		= ata_pci_default_filter,
-
-	.tf_load		= ata_tf_load,
-	.tf_read		= ata_tf_read,
-	.check_status		= ata_check_status,
-	.exec_command		= ata_exec_command,
-	.dev_select		= ata_std_dev_select,
-
-	.freeze			= ata_bmdma_freeze,
-	.thaw			= ata_bmdma_thaw,
-	.error_handler		= oldpiix_pata_error_handler,
-	.post_internal_cmd 	= ata_bmdma_post_internal_cmd,
-	.cable_detect		= ata_cable_40wire,
-
-	.bmdma_setup		= ata_bmdma_setup,
-	.bmdma_start		= ata_bmdma_start,
-	.bmdma_stop		= ata_bmdma_stop,
-	.bmdma_status		= ata_bmdma_status,
-	.qc_prep		= ata_qc_prep,
-	.qc_issue		= oldpiix_qc_issue_prot,
-	.data_xfer		= ata_data_xfer,
-
-	.irq_handler		= ata_interrupt,
-	.irq_clear		= ata_bmdma_irq_clear,
-	.irq_on			= ata_irq_on,
-	.irq_ack		= ata_irq_ack,
-
-	.port_start		= ata_port_start,
+	.prereset		= oldpiix_pre_reset,
 };
 
 
@@ -290,10 +237,9 @@ static int oldpiix_init_one (struct pci_dev *pdev, const struct pci_device_id *e
 {
 	static int printed_version;
 	static const struct ata_port_info info = {
-		.sht		= &oldpiix_sht,
-		.flags		= ATA_FLAG_SLAVE_POSS | ATA_FLAG_SRST,
-		.pio_mask	= 0x1f,	/* pio0-4 */
-		.mwdma_mask	= 0x07, /* mwdma1-2 */
+		.flags		= ATA_FLAG_SLAVE_POSS,
+		.pio_mask	= ATA_PIO4,
+		.mwdma_mask	= ATA_MWDMA12_ONLY,
 		.port_ops	= &oldpiix_pata_ops,
 	};
 	const struct ata_port_info *ppi[] = { &info, NULL };
@@ -302,7 +248,7 @@ static int oldpiix_init_one (struct pci_dev *pdev, const struct pci_device_id *e
 		dev_printk(KERN_DEBUG, &pdev->dev,
 			   "version " DRV_VERSION "\n");
 
-	return ata_pci_init_one(pdev, ppi);
+	return ata_pci_bmdma_init_one(pdev, ppi, &oldpiix_sht, NULL, 0);
 }
 
 static const struct pci_device_id oldpiix_pci_tbl[] = {

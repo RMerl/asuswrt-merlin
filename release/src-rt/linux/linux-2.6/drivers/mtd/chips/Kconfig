@@ -1,11 +1,10 @@
-# drivers/mtd/chips/Kconfig
-
 menu "RAM/ROM/Flash chip drivers"
 	depends on MTD!=n
 
 config MTD_CFI
 	tristate "Detect flash chips by Common Flash Interface (CFI) probe"
 	select MTD_GEN_PROBE
+	select MTD_CFI_UTIL
 	help
 	  The Common Flash Interface specification was developed by Intel,
 	  AMD and other flash manufactures that provides a universal method
@@ -20,7 +19,7 @@ config MTD_JEDECPROBE
 	help
 	  This option enables JEDEC-style probing of flash chips which are not
 	  compatible with the Common Flash Interface, but will use the common
-	  CFI-targetted flash drivers for any chips which are identified which
+	  CFI-targeted flash drivers for any chips which are identified which
 	  are in fact compatible in all but the probe method. This actually
 	  covers most AMD/Fujitsu-compatible chips and also non-CFI
 	  Intel chips.
@@ -154,6 +153,7 @@ config MTD_CFI_I8
 config MTD_OTP
 	bool "Protection Registers aka one-time programmable (OTP) bits"
 	depends on MTD_CFI_ADV_OPTIONS
+	select HAVE_MTD_OTP
 	default n
 	help
 	  This enables support for reading, writing and locking so called
@@ -187,7 +187,7 @@ config MTD_CFI_INTELEXT
 	  StrataFlash and other parts.
 
 config MTD_CFI_AMDSTD
-	tristate "Support for AMD/Fujitsu flash chips"
+	tristate "Support for AMD/Fujitsu/Spansion flash chips"
 	depends on MTD_GEN_PROBE
 	select MTD_CFI_UTIL
 	help
@@ -240,4 +240,3 @@ config MTD_XIP
 	  then say N.
 
 endmenu
-

@@ -23,6 +23,7 @@
  */
 #include <linux/module.h>
 #include <linux/video_output.h>
+#include <linux/slab.h>
 #include <linux/err.h>
 #include <linux/ctype.h>
 
@@ -31,7 +32,8 @@ MODULE_DESCRIPTION("Display Output Switcher Lowlevel Control Abstraction");
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Luming Yu <luming.yu@intel.com>");
 
-static ssize_t video_output_show_state(struct class_device *dev,char *buf)
+static ssize_t video_output_show_state(struct device *dev,
+				       struct device_attribute *attr, char *buf)
 {
 	ssize_t ret_size = 0;
 	struct output_device *od = to_output_device(dev);
@@ -40,15 +42,16 @@ static ssize_t video_output_show_state(struct class_device *dev,char *buf)
 	return ret_size;
 }
 
-static ssize_t video_output_store_state(struct class_device *dev,
-	const char *buf,size_t count)
+static ssize_t video_output_store_state(struct device *dev,
+					struct device_attribute *attr,
+					const char *buf,size_t count)
 {
 	char *endp;
 	struct output_device *od = to_output_device(dev);
 	int request_state = simple_strtoul(buf,&endp,0);
 	size_t size = endp - buf;
 
-	if (*endp && isspace(*endp))
+	if (isspace(*endp))
 		size++;
 	if (size != count)
 		return -EINVAL;
@@ -60,21 +63,22 @@ static ssize_t video_output_store_state(struct class_device *dev,
 	return count;
 }
 
-static void video_output_class_release(struct class_device *dev)
+static void video_output_release(struct device *dev)
 {
 	struct output_device *od = to_output_device(dev);
 	kfree(od);
 }
 
-static struct class_device_attribute video_output_attributes[] = {
+static struct device_attribute video_output_attributes[] = {
 	__ATTR(state, 0644, video_output_show_state, video_output_store_state),
 	__ATTR_NULL,
 };
 
+
 static struct class video_output_class = {
 	.name = "video_output",
-	.release = video_output_class_release,
-	.class_dev_attrs = video_output_attributes,
+	.dev_release = video_output_release,
+	.dev_attrs = video_output_attributes,
 };
 
 struct output_device *video_output_register(const char *name,
@@ -91,11 +95,11 @@ struct output_device *video_output_register(const char *name,
 		goto error_return;
 	}
 	new_dev->props = op;
-	new_dev->class_dev.class = &video_output_class;
-	new_dev->class_dev.dev = dev;
-	strlcpy(new_dev->class_dev.class_id,name,KOBJ_NAME_LEN);
-	class_set_devdata(&new_dev->class_dev,devdata);
-	ret_code = class_device_register(&new_dev->class_dev);
+	new_dev->dev.class = &video_output_class;
+	new_dev->dev.parent = dev;
+	dev_set_name(&new_dev->dev, name);
+	dev_set_drvdata(&new_dev->dev, devdata);
+	ret_code = device_register(&new_dev->dev);
 	if (ret_code) {
 		kfree(new_dev);
 		goto error_return;
@@ -111,7 +115,7 @@ void video_output_unregister(struct output_device *dev)
 {
 	if (!dev)
 		return;
-	class_device_unregister(&dev->class_dev);
+	device_unregister(&dev->dev);
 }
 EXPORT_SYMBOL(video_output_unregister);
 

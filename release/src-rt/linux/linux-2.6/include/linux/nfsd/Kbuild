@@ -1,7 +1,6 @@
-unifdef-y += const.h
-unifdef-y += export.h
-unifdef-y += stats.h
-unifdef-y += syscall.h
-unifdef-y += nfsfh.h
-unifdef-y += debug.h
-unifdef-y += auth.h
+header-y += const.h
+header-y += debug.h
+header-y += export.h
+header-y += nfsfh.h
+header-y += stats.h
+header-y += syscall.h

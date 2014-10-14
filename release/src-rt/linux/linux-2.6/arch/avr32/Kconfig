@@ -1,16 +1,15 @@
-#
-# For a description of the syntax of this configuration file,
-# see Documentation/kbuild/kconfig-language.txt.
-#
-
-mainmenu "Linux Kernel Configuration"
-
 config AVR32
-	bool
-	default y
-	# With EMBEDDED=n, we get lots of stuff automatically selected
+	def_bool y
+	# With EXPERT=n, we get lots of stuff automatically selected
 	# that we usually don't need on AVR32.
-	select EMBEDDED
+	select EXPERT
+	select HAVE_CLK
+	select HAVE_OPROFILE
+	select HAVE_KPROBES
+	select HAVE_GENERIC_HARDIRQS
+	select GENERIC_IRQ_PROBE
+	select HARDIRQS_SW_RESEND
+	select GENERIC_IRQ_SHOW
 	help
 	  AVR32 is a high-performance 32-bit RISC microprocessor core,
 	  designed for cost-sensitive embedded applications, with particular
@@ -19,60 +18,50 @@ config AVR32
 	  There is an AVR32 Linux project with a web page at
 	  http://avr32linux.org/.
 
-config UID16
-	bool
-
 config GENERIC_GPIO
-	bool
-	default y
+	def_bool y
 
-config GENERIC_HARDIRQS
-	bool
-	default y
+config STACKTRACE_SUPPORT
+	def_bool y
 
-config HARDIRQS_SW_RESEND
-	bool
-	default y
+config LOCKDEP_SUPPORT
+	def_bool y
 
-config GENERIC_IRQ_PROBE
-	bool
-	default y
+config TRACE_IRQFLAGS_SUPPORT
+	def_bool y
 
 config RWSEM_GENERIC_SPINLOCK
-	bool
-	default y
+	def_bool y
 
-config GENERIC_TIME
-	bool
-	default y
+config GENERIC_CLOCKEVENTS
+	def_bool y
 
 config RWSEM_XCHGADD_ALGORITHM
-	bool
+	def_bool n
 
 config ARCH_HAS_ILOG2_U32
-	bool
-	default n
+	def_bool n
 
 config ARCH_HAS_ILOG2_U64
-	bool
-	default n
+	def_bool n
 
 config GENERIC_HWEIGHT
-	bool
-	default y
+	def_bool y
 
 config GENERIC_CALIBRATE_DELAY
-	bool
-	default y
+	def_bool y
 
 config GENERIC_BUG
-	bool
-	default y
+	def_bool y
 	depends on BUG
 
 source "init/Kconfig"
 
+source "kernel/Kconfig.freezer"
+
 menu "System Type and features"
+
+source "kernel/time/Kconfig"
 
 config SUBARCH_AVR32B
 	bool
@@ -86,20 +75,33 @@ config PLATFORM_AT32AP
 	select SUBARCH_AVR32B
 	select MMU
 	select PERFORMANCE_COUNTERS
-
-choice
-	prompt "AVR32 CPU type"
-	default CPU_AT32AP7000
-
-config CPU_AT32AP7000
-	bool "AT32AP7000"
-	select PLATFORM_AT32AP
-endchoice
+	select ARCH_REQUIRE_GPIOLIB
+	select GENERIC_ALLOCATOR
+	select HAVE_FB_ATMEL
+	select HAVE_NET_MACB
 
 #
-# CPU Daughterboards for ATSTK1000
-config BOARD_ATSTK1002
+# CPU types
+#
+
+# AP7000 derivatives
+config CPU_AT32AP700X
 	bool
+	select PLATFORM_AT32AP
+config CPU_AT32AP7000
+	bool
+	select CPU_AT32AP700X
+config CPU_AT32AP7001
+	bool
+	select CPU_AT32AP700X
+config CPU_AT32AP7002
+	bool
+	select CPU_AT32AP700X
+
+# AP700X boards
+config BOARD_ATNGW100_COMMON
+	bool
+	select CPU_AT32AP7000
 
 choice
 	prompt "AVR32 board type"
@@ -107,11 +109,60 @@ choice
 
 config BOARD_ATSTK1000
 	bool "ATSTK1000 evaluation board"
-	select BOARD_ATSTK1002 if CPU_AT32AP7000
 
-config BOARD_ATNGW100
+config BOARD_ATNGW100_MKI
 	bool "ATNGW100 Network Gateway"
+	select BOARD_ATNGW100_COMMON
+
+config BOARD_ATNGW100_MKII
+	bool "ATNGW100 mkII Network Gateway"
+	select BOARD_ATNGW100_COMMON
+
+config BOARD_HAMMERHEAD
+	bool "Hammerhead board"
+	select CPU_AT32AP7000
+	select USB_ARCH_HAS_HCD
+	help
+	  The Hammerhead platform is built around an AVR32 32-bit microcontroller from Atmel.
+	  It offers versatile peripherals, such as ethernet, usb device, usb host etc.
+
+	  The board also incorporates a power supply and is a Power over Ethernet (PoE) Powered
+	  Device (PD).
+
+	  Additionally, a Cyclone III FPGA from Altera is integrated on the board. The FPGA is
+	  mapped into the 32-bit AVR memory bus. The FPGA offers two DDR2 SDRAM interfaces, which
+	  will cover even the most exceptional need of memory bandwidth. Together with the onboard
+	  video decoder the board is ready for video processing.
+
+	  For more information see: http://www.miromico.ch/index.php/hammerhead.html 
+
+config BOARD_FAVR_32
+	bool "Favr-32 LCD-board"
+	select CPU_AT32AP7000
+
+config BOARD_MERISC
+	bool "Merisc board"
+	select CPU_AT32AP7000
+	help
+	  Merisc is the family name for a range of AVR32-based boards.
+
+	  The boards are designed to be used in a man-machine
+	  interfacing environment, utilizing a touch-based graphical
+	  user interface. They host a vast range of I/O peripherals as
+	  well as a large SDRAM & Flash memory bank.
+
+	  For more information see: http://www.martinsson.se/merisc
+
+config BOARD_MIMC200
+	bool "MIMC200 CPU board"
+	select CPU_AT32AP7000
 endchoice
+
+source "arch/avr32/boards/atstk1000/Kconfig"
+source "arch/avr32/boards/atngw100/Kconfig"
+source "arch/avr32/boards/hammerhead/Kconfig"
+source "arch/avr32/boards/favr-32/Kconfig"
+source "arch/avr32/boards/merisc/Kconfig"
 
 choice
 	prompt "Boot loader type"
@@ -125,41 +176,38 @@ source "arch/avr32/mach-at32ap/Kconfig"
 
 config LOAD_ADDRESS
 	hex
-	default 0x10000000 if LOADER_U_BOOT=y && CPU_AT32AP7000=y
+	default 0x10000000 if LOADER_U_BOOT=y && CPU_AT32AP700X=y
 
 config ENTRY_ADDRESS
 	hex
-	default 0x90000000 if LOADER_U_BOOT=y && CPU_AT32AP7000=y
+	default 0x90000000 if LOADER_U_BOOT=y && CPU_AT32AP700X=y
 
 config PHYS_OFFSET
 	hex
-	default 0x10000000 if CPU_AT32AP7000=y
+	default 0x10000000 if CPU_AT32AP700X=y
 
 source "kernel/Kconfig.preempt"
 
-config HAVE_ARCH_BOOTMEM_NODE
-	bool
-	default n
+config QUICKLIST
+	def_bool y
+
+config HAVE_ARCH_BOOTMEM
+	def_bool n
 
 config ARCH_HAVE_MEMORY_PRESENT
-	bool
-	default n
+	def_bool n
 
 config NEED_NODE_MEMMAP_SIZE
-	bool
-	default n
+	def_bool n
 
 config ARCH_FLATMEM_ENABLE
-	bool
-	default y
+	def_bool y
 
 config ARCH_DISCONTIGMEM_ENABLE
-	bool
-	default n
+	def_bool n
 
 config ARCH_SPARSEMEM_ENABLE
-	bool
-	default n
+	def_bool n
 
 source "mm/Kconfig"
 
@@ -170,6 +218,16 @@ config OWNERSHIP_TRACE
 	  Say Y to generate an Ownership Trace message on every context switch,
 	  enabling Nexus-compliant debuggers to keep track of the PID of the
 	  currently executing task.
+
+config NMI_DEBUGGING
+	bool "NMI Debugging"
+	default n
+	help
+	  Say Y here and pass the nmi_debug command-line parameter to
+	  the kernel to turn on NMI debugging. Depending on the value
+	  of the nmi_debug option, various pieces of information will
+	  be dumped to the console when a Non-Maskable Interrupt
+	  happens.
 
 # FPU emulation goes here
 
@@ -182,6 +240,32 @@ config CMDLINE
 	  If you don't have a boot loader capable of passing a command line string
 	  to the kernel, you may specify one here. As a minimum, you should specify
 	  the memory size and the root device (e.g., mem=8M, root=/dev/nfs).
+
+endmenu
+
+menu "Power management options"
+
+source "kernel/power/Kconfig"
+
+config ARCH_SUSPEND_POSSIBLE
+	def_bool y
+
+menu "CPU Frequency scaling"
+
+source "drivers/cpufreq/Kconfig"
+
+config CPU_FREQ_AT32AP
+	bool "CPU frequency driver for AT32AP"
+	depends on CPU_FREQ && PLATFORM_AT32AP
+	default n
+	help
+	  This enables the CPU frequency driver for AT32AP processors.
+
+	  For details, take a look in <file:Documentation/cpu-freq>.
+
+	  If in doubt, say N.
+
+endmenu
 
 endmenu
 

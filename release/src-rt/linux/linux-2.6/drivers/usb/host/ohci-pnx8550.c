@@ -201,7 +201,6 @@ static const struct hc_driver ohci_pnx8550_hc_driver = {
 	 */
 	.hub_status_data =	ohci_hub_status_data,
 	.hub_control =		ohci_hub_control,
-	.hub_irq_enable =	ohci_rhsc_enable,
 #ifdef	CONFIG_PM
 	.bus_suspend =		ohci_bus_suspend,
 	.bus_resume =		ohci_bus_resume,
@@ -230,11 +229,12 @@ static int ohci_hcd_pnx8550_drv_remove(struct platform_device *pdev)
 	return 0;
 }
 
-MODULE_ALIAS("pnx8550-ohci");
+MODULE_ALIAS("platform:pnx8550-ohci");
 
 static struct platform_driver ohci_hcd_pnx8550_driver = {
 	.driver = {
-		.name		= "pnx8550-ohci",
+		.name	= "pnx8550-ohci",
+		.owner	= THIS_MODULE,
 	},
 	.probe		= ohci_hcd_pnx8550_drv_probe,
 	.remove		= ohci_hcd_pnx8550_drv_remove,

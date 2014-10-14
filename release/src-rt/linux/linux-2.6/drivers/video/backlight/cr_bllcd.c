@@ -36,7 +36,7 @@
 #include <linux/backlight.h>
 #include <linux/lcd.h>
 #include <linux/pci.h>
-#include <asm/uaccess.h>
+#include <linux/slab.h>
 
 /* The LVDS- and panel power controls sits on the
  * GPIO port of the ISA bridge.
@@ -109,7 +109,7 @@ static int cr_backlight_get_intensity(struct backlight_device *bd)
 	return intensity;
 }
 
-static struct backlight_ops cr_backlight_ops = {
+static const struct backlight_ops cr_backlight_ops = {
 	.get_brightness = cr_backlight_get_intensity,
 	.update_status = cr_backlight_set_intensity,
 };
@@ -171,12 +171,11 @@ static struct lcd_ops cr_lcd_ops = {
 
 static int cr_backlight_probe(struct platform_device *pdev)
 {
+	struct backlight_properties props;
+	struct backlight_device *bdp;
+	struct lcd_device *ldp;
 	struct cr_panel *crp;
 	u8 dev_en;
-
-	crp = kzalloc(sizeof(*crp), GFP_KERNEL);
-	if (crp == NULL)
-		return -ENOMEM;
 
 	lpc_dev = pci_get_device(PCI_VENDOR_ID_INTEL,
 					CRVML_DEVICE_LPC, NULL);
@@ -193,32 +192,39 @@ static int cr_backlight_probe(struct platform_device *pdev)
 		return -ENODEV;
 	}
 
-	crp->cr_backlight_device = backlight_device_register("cr-backlight",
-							     &pdev->dev, NULL,
-							     &cr_backlight_ops);
-	if (IS_ERR(crp->cr_backlight_device)) {
+	memset(&props, 0, sizeof(struct backlight_properties));
+	props.type = BACKLIGHT_RAW;
+	bdp = backlight_device_register("cr-backlight", &pdev->dev, NULL,
+					&cr_backlight_ops, &props);
+	if (IS_ERR(bdp)) {
 		pci_dev_put(lpc_dev);
-		return PTR_ERR(crp->cr_backlight_device);
+		return PTR_ERR(bdp);
 	}
 
-	crp->cr_lcd_device = lcd_device_register("cr-lcd",
-							&pdev->dev,
-							&cr_lcd_ops);
-
-	if (IS_ERR(crp->cr_lcd_device)) {
+	ldp = lcd_device_register("cr-lcd", &pdev->dev, NULL, &cr_lcd_ops);
+	if (IS_ERR(ldp)) {
+		backlight_device_unregister(bdp);
 		pci_dev_put(lpc_dev);
-		return PTR_ERR(crp->cr_backlight_device);
+		return PTR_ERR(ldp);
 	}
 
 	pci_read_config_dword(lpc_dev, CRVML_REG_GPIOBAR,
 			      &gpio_bar);
 	gpio_bar &= ~0x3F;
 
+	crp = kzalloc(sizeof(*crp), GFP_KERNEL);
+	if (!crp) {
+		lcd_device_unregister(ldp);
+		backlight_device_unregister(bdp);
+		pci_dev_put(lpc_dev);
+		return -ENOMEM;
+	}
+
+	crp->cr_backlight_device = bdp;
+	crp->cr_lcd_device = ldp;
 	crp->cr_backlight_device->props.power = FB_BLANK_UNBLANK;
 	crp->cr_backlight_device->props.brightness = 0;
-	crp->cr_backlight_device->props.max_brightness = 0;
 	cr_backlight_set_intensity(crp->cr_backlight_device);
-
 	cr_lcd_set_power(crp->cr_lcd_device, FB_BLANK_UNBLANK);
 
 	platform_set_drvdata(pdev, crp);
@@ -237,6 +243,7 @@ static int cr_backlight_remove(struct platform_device *pdev)
 	backlight_device_unregister(crp->cr_backlight_device);
 	lcd_device_unregister(crp->cr_lcd_device);
 	pci_dev_put(lpc_dev);
+	kfree(crp);
 
 	return 0;
 }
@@ -255,22 +262,18 @@ static int __init cr_backlight_init(void)
 {
 	int ret = platform_driver_register(&cr_backlight_driver);
 
-	if (!ret) {
-		crp = platform_device_alloc("cr_backlight", -1);
-		if (!crp)
-			return -ENOMEM;
+	if (ret)
+		return ret;
 
-		ret = platform_device_add(crp);
-
-		if (ret) {
-			platform_device_put(crp);
-			platform_driver_unregister(&cr_backlight_driver);
-		}
+	crp = platform_device_register_simple("cr_backlight", -1, NULL, 0);
+	if (IS_ERR(crp)) {
+		platform_driver_unregister(&cr_backlight_driver);
+		return PTR_ERR(crp);
 	}
 
 	printk("Carillo Ranch Backlight Driver Initialized.\n");
 
-	return ret;
+	return 0;
 }
 
 static void __exit cr_backlight_exit(void)

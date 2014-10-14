@@ -1,7 +1,7 @@
 /*
  * lm83.c - Part of lm_sensors, Linux kernel modules for hardware
  *          monitoring
- * Copyright (C) 2003-2006  Jean Delvare <khali@linux-fr.org>
+ * Copyright (C) 2003-2009  Jean Delvare <khali@linux-fr.org>
  *
  * Heavily inspired from the lm78, lm75 and adm1021 drivers. The LM83 is
  * a sensor chip made by National Semiconductor. It reports up to four
@@ -48,16 +48,10 @@
  * addresses.
  */
 
-static unsigned short normal_i2c[] = { 0x18, 0x19, 0x1a,
-					0x29, 0x2a, 0x2b,
-					0x4c, 0x4d, 0x4e,
-					I2C_CLIENT_END };
+static const unsigned short normal_i2c[] = {
+	0x18, 0x19, 0x1a, 0x29, 0x2a, 0x2b, 0x4c, 0x4d, 0x4e, I2C_CLIENT_END };
 
-/*
- * Insmod parameters
- */
-
-I2C_CLIENT_INSMOD_2(lm83, lm82);
+enum chips { lm83, lm82 };
 
 /*
  * The LM83 registers
@@ -120,22 +114,34 @@ static const u8 LM83_REG_W_HIGH[] = {
  * Functions declaration
  */
 
-static int lm83_attach_adapter(struct i2c_adapter *adapter);
-static int lm83_detect(struct i2c_adapter *adapter, int address, int kind);
-static int lm83_detach_client(struct i2c_client *client);
+static int lm83_detect(struct i2c_client *new_client,
+		       struct i2c_board_info *info);
+static int lm83_probe(struct i2c_client *client,
+		      const struct i2c_device_id *id);
+static int lm83_remove(struct i2c_client *client);
 static struct lm83_data *lm83_update_device(struct device *dev);
 
 /*
  * Driver data (common to all clients)
  */
  
+static const struct i2c_device_id lm83_id[] = {
+	{ "lm83", lm83 },
+	{ "lm82", lm82 },
+	{ }
+};
+MODULE_DEVICE_TABLE(i2c, lm83_id);
+
 static struct i2c_driver lm83_driver = {
+	.class		= I2C_CLASS_HWMON,
 	.driver = {
 		.name	= "lm83",
 	},
-	.id		= I2C_DRIVERID_LM83,
-	.attach_adapter	= lm83_attach_adapter,
-	.detach_client	= lm83_detach_client,
+	.probe		= lm83_probe,
+	.remove		= lm83_remove,
+	.id_table	= lm83_id,
+	.detect		= lm83_detect,
+	.address_list	= normal_i2c,
 };
 
 /*
@@ -143,8 +149,7 @@ static struct i2c_driver lm83_driver = {
  */
 
 struct lm83_data {
-	struct i2c_client client;
-	struct class_device *class_dev;
+	struct device *hwmon_dev;
 	struct mutex update_lock;
 	char valid; /* zero until following fields are valid */
 	unsigned long last_updated; /* in jiffies */
@@ -223,14 +228,14 @@ static SENSOR_DEVICE_ATTR(temp4_crit, S_IRUGO, show_temp, NULL, 8);
 /* Individual alarm files */
 static SENSOR_DEVICE_ATTR(temp1_crit_alarm, S_IRUGO, show_alarm, NULL, 0);
 static SENSOR_DEVICE_ATTR(temp3_crit_alarm, S_IRUGO, show_alarm, NULL, 1);
-static SENSOR_DEVICE_ATTR(temp3_input_fault, S_IRUGO, show_alarm, NULL, 2);
+static SENSOR_DEVICE_ATTR(temp3_fault, S_IRUGO, show_alarm, NULL, 2);
 static SENSOR_DEVICE_ATTR(temp3_max_alarm, S_IRUGO, show_alarm, NULL, 4);
 static SENSOR_DEVICE_ATTR(temp1_max_alarm, S_IRUGO, show_alarm, NULL, 6);
 static SENSOR_DEVICE_ATTR(temp2_crit_alarm, S_IRUGO, show_alarm, NULL, 8);
 static SENSOR_DEVICE_ATTR(temp4_crit_alarm, S_IRUGO, show_alarm, NULL, 9);
-static SENSOR_DEVICE_ATTR(temp4_input_fault, S_IRUGO, show_alarm, NULL, 10);
+static SENSOR_DEVICE_ATTR(temp4_fault, S_IRUGO, show_alarm, NULL, 10);
 static SENSOR_DEVICE_ATTR(temp4_max_alarm, S_IRUGO, show_alarm, NULL, 12);
-static SENSOR_DEVICE_ATTR(temp2_input_fault, S_IRUGO, show_alarm, NULL, 13);
+static SENSOR_DEVICE_ATTR(temp2_fault, S_IRUGO, show_alarm, NULL, 13);
 static SENSOR_DEVICE_ATTR(temp2_max_alarm, S_IRUGO, show_alarm, NULL, 15);
 /* Raw alarm file for compatibility */
 static DEVICE_ATTR(alarms, S_IRUGO, show_alarms, NULL);
@@ -245,7 +250,7 @@ static struct attribute *lm83_attributes[] = {
 
 	&sensor_dev_attr_temp1_crit_alarm.dev_attr.attr,
 	&sensor_dev_attr_temp3_crit_alarm.dev_attr.attr,
-	&sensor_dev_attr_temp3_input_fault.dev_attr.attr,
+	&sensor_dev_attr_temp3_fault.dev_attr.attr,
 	&sensor_dev_attr_temp3_max_alarm.dev_attr.attr,
 	&sensor_dev_attr_temp1_max_alarm.dev_attr.attr,
 	&dev_attr_alarms.attr,
@@ -266,9 +271,9 @@ static struct attribute *lm83_attributes_opt[] = {
 
 	&sensor_dev_attr_temp2_crit_alarm.dev_attr.attr,
 	&sensor_dev_attr_temp4_crit_alarm.dev_attr.attr,
-	&sensor_dev_attr_temp4_input_fault.dev_attr.attr,
+	&sensor_dev_attr_temp4_fault.dev_attr.attr,
 	&sensor_dev_attr_temp4_max_alarm.dev_attr.attr,
-	&sensor_dev_attr_temp2_input_fault.dev_attr.attr,
+	&sensor_dev_attr_temp2_fault.dev_attr.attr,
 	&sensor_dev_attr_temp2_max_alarm.dev_attr.attr,
 	NULL
 };
@@ -281,108 +286,67 @@ static const struct attribute_group lm83_group_opt = {
  * Real code
  */
 
-static int lm83_attach_adapter(struct i2c_adapter *adapter)
+/* Return 0 if detection is successful, -ENODEV otherwise */
+static int lm83_detect(struct i2c_client *new_client,
+		       struct i2c_board_info *info)
 {
-	if (!(adapter->class & I2C_CLASS_HWMON))
-		return 0;
-	return i2c_probe(adapter, &addr_data, lm83_detect);
-}
-
-/*
- * The following function does more than just detection. If detection
- * succeeds, it also registers the new chip.
- */
-static int lm83_detect(struct i2c_adapter *adapter, int address, int kind)
-{
-	struct i2c_client *new_client;
-	struct lm83_data *data;
-	int err = 0;
-	const char *name = "";
+	struct i2c_adapter *adapter = new_client->adapter;
+	const char *name;
+	u8 man_id, chip_id;
 
 	if (!i2c_check_functionality(adapter, I2C_FUNC_SMBUS_BYTE_DATA))
-		goto exit;
+		return -ENODEV;
 
-	if (!(data = kzalloc(sizeof(struct lm83_data), GFP_KERNEL))) {
+	/* Detection */
+	if ((i2c_smbus_read_byte_data(new_client, LM83_REG_R_STATUS1) & 0xA8) ||
+	    (i2c_smbus_read_byte_data(new_client, LM83_REG_R_STATUS2) & 0x48) ||
+	    (i2c_smbus_read_byte_data(new_client, LM83_REG_R_CONFIG) & 0x41)) {
+		dev_dbg(&adapter->dev, "LM83 detection failed at 0x%02x\n",
+			new_client->addr);
+		return -ENODEV;
+	}
+
+	/* Identification */
+	man_id = i2c_smbus_read_byte_data(new_client, LM83_REG_R_MAN_ID);
+	if (man_id != 0x01)	/* National Semiconductor */
+		return -ENODEV;
+
+	chip_id = i2c_smbus_read_byte_data(new_client, LM83_REG_R_CHIP_ID);
+	switch (chip_id) {
+	case 0x03:
+		name = "lm83";
+		break;
+	case 0x01:
+		name = "lm82";
+		break;
+	default:
+		/* identification failed */
+		dev_info(&adapter->dev,
+			 "Unsupported chip (man_id=0x%02X, chip_id=0x%02X)\n",
+			 man_id, chip_id);
+		return -ENODEV;
+	}
+
+	strlcpy(info->type, name, I2C_NAME_SIZE);
+
+	return 0;
+}
+
+static int lm83_probe(struct i2c_client *new_client,
+		      const struct i2c_device_id *id)
+{
+	struct lm83_data *data;
+	int err;
+
+	data = kzalloc(sizeof(struct lm83_data), GFP_KERNEL);
+	if (!data) {
 		err = -ENOMEM;
 		goto exit;
 	}
 
-	/* The common I2C client data is placed right after the
-	 * LM83-specific data. */
-	new_client = &data->client;
 	i2c_set_clientdata(new_client, data);
-	new_client->addr = address;
-	new_client->adapter = adapter;
-	new_client->driver = &lm83_driver;
-	new_client->flags = 0;
-
-	/* Now we do the detection and identification. A negative kind
-	 * means that the driver was loaded with no force parameter
-	 * (default), so we must both detect and identify the chip
-	 * (actually there is only one possible kind of chip for now, LM83).
-	 * A zero kind means that the driver was loaded with the force
-	 * parameter, the detection step shall be skipped. A positive kind
-	 * means that the driver was loaded with the force parameter and a
-	 * given kind of chip is requested, so both the detection and the
-	 * identification steps are skipped. */
-
-	/* Default to an LM83 if forced */
-	if (kind == 0)
-		kind = lm83;
-
-	if (kind < 0) { /* detection */
-		if (((i2c_smbus_read_byte_data(new_client, LM83_REG_R_STATUS1)
-		    & 0xA8) != 0x00) ||
-		    ((i2c_smbus_read_byte_data(new_client, LM83_REG_R_STATUS2)
-		    & 0x48) != 0x00) ||
-		    ((i2c_smbus_read_byte_data(new_client, LM83_REG_R_CONFIG)
-		    & 0x41) != 0x00)) {
-			dev_dbg(&adapter->dev,
-			    "LM83 detection failed at 0x%02x.\n", address);
-			goto exit_free;
-		}
-	}
-
-	if (kind <= 0) { /* identification */
-		u8 man_id, chip_id;
-
-		man_id = i2c_smbus_read_byte_data(new_client,
-		    LM83_REG_R_MAN_ID);
-		chip_id = i2c_smbus_read_byte_data(new_client,
-		    LM83_REG_R_CHIP_ID);
-
-		if (man_id == 0x01) { /* National Semiconductor */
-			if (chip_id == 0x03) {
-				kind = lm83;
-			} else
-			if (chip_id == 0x01) {
-				kind = lm82;
-			}
-		}
-
-		if (kind <= 0) { /* identification failed */
-			dev_info(&adapter->dev,
-			    "Unsupported chip (man_id=0x%02X, "
-			    "chip_id=0x%02X).\n", man_id, chip_id);
-			goto exit_free;
-		}
-	}
-
-	if (kind == lm83) {
-		name = "lm83";
-	} else
-	if (kind == lm82) {
-		name = "lm82";
-	}
-
-	/* We can fill in the remaining client fields */
-	strlcpy(new_client->name, name, I2C_NAME_SIZE);
 	data->valid = 0;
 	mutex_init(&data->update_lock);
-
-	/* Tell the I2C layer a new client has arrived */
-	if ((err = i2c_attach_client(new_client)))
-		goto exit_free;
 
 	/*
 	 * Register sysfs hooks
@@ -392,17 +356,17 @@ static int lm83_detect(struct i2c_adapter *adapter, int address, int kind)
 	 */
 
 	if ((err = sysfs_create_group(&new_client->dev.kobj, &lm83_group)))
-		goto exit_detach;
+		goto exit_free;
 
-	if (kind == lm83) {
+	if (id->driver_data == lm83) {
 		if ((err = sysfs_create_group(&new_client->dev.kobj,
 					      &lm83_group_opt)))
 			goto exit_remove_files;
 	}
 
-	data->class_dev = hwmon_device_register(&new_client->dev);
-	if (IS_ERR(data->class_dev)) {
-		err = PTR_ERR(data->class_dev);
+	data->hwmon_dev = hwmon_device_register(&new_client->dev);
+	if (IS_ERR(data->hwmon_dev)) {
+		err = PTR_ERR(data->hwmon_dev);
 		goto exit_remove_files;
 	}
 
@@ -411,25 +375,19 @@ static int lm83_detect(struct i2c_adapter *adapter, int address, int kind)
 exit_remove_files:
 	sysfs_remove_group(&new_client->dev.kobj, &lm83_group);
 	sysfs_remove_group(&new_client->dev.kobj, &lm83_group_opt);
-exit_detach:
-	i2c_detach_client(new_client);
 exit_free:
 	kfree(data);
 exit:
 	return err;
 }
 
-static int lm83_detach_client(struct i2c_client *client)
+static int lm83_remove(struct i2c_client *client)
 {
 	struct lm83_data *data = i2c_get_clientdata(client);
-	int err;
 
-	hwmon_device_unregister(data->class_dev);
+	hwmon_device_unregister(data->hwmon_dev);
 	sysfs_remove_group(&client->dev.kobj, &lm83_group);
 	sysfs_remove_group(&client->dev.kobj, &lm83_group_opt);
-
-	if ((err = i2c_detach_client(client)))
-		return err;
 
 	kfree(data);
 	return 0;

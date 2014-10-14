@@ -3,6 +3,7 @@
 #define _ST_H
 
 #include <linux/completion.h>
+#include <linux/mutex.h>
 #include <linux/kref.h>
 #include <scsi/scsi_cmnd.h>
 
@@ -11,6 +12,7 @@ struct st_cmdstatus {
 	int midlevel_result;
 	struct scsi_sense_hdr sense_hdr;
 	int have_sense;
+	int residual;
 	u64 uremainder64;
 	u8 flags;
 	u8 remainder_valid;
@@ -27,12 +29,14 @@ struct st_request {
 	int result;
 	struct scsi_tape *stp;
 	struct completion *waiting;
+	struct bio *bio;
 };
 
 /* The tape buffer descriptor. */
 struct st_buffer {
 	unsigned char dma;	/* DMA-able buffer */
 	unsigned char do_dio;   /* direct i/o set up? */
+	unsigned char cleared;  /* internal buffer cleared after open? */
 	int buffer_size;
 	int buffer_blocks;
 	int buffer_bytes;
@@ -41,20 +45,14 @@ struct st_buffer {
 	int syscall_result;
 	struct st_request *last_SRpnt;
 	struct st_cmdstatus cmdstat;
+	struct page **reserved_pages;
+	int reserved_page_order;
+	struct page **mapped_pages;
+	struct rq_map_data map_data;
 	unsigned char *b_data;
 	unsigned short use_sg;	/* zero or max number of s/g segments for this adapter */
 	unsigned short sg_segs;		/* number of segments in s/g list */
-	unsigned short orig_frp_segs;	/* number of segments allocated at first try */
 	unsigned short frp_segs;	/* number of buffer segments */
-	unsigned int frp_sg_current;	/* driver buffer length currently in s/g list */
-	struct st_buf_fragment *frp;	/* the allocated buffer fragment list */
-	struct scatterlist sg[1];	/* MUST BE last item */
-};
-
-/* The tape buffer fragment descriptor */
-struct st_buf_fragment {
-	struct page *page;
-	unsigned int length;
 };
 
 /* The tape mode definition */
@@ -98,7 +96,7 @@ struct st_partstat {
 struct scsi_tape {
 	struct scsi_driver *driver;
 	struct scsi_device *device;
-	struct semaphore lock;	/* For serialization */
+	struct mutex lock;	/* For serialization */
 	struct completion wait;	/* For SCSI commands */
 	struct st_buffer *buffer;
 
@@ -121,6 +119,7 @@ struct scsi_tape {
 	unsigned char try_dio_now;		/* try direct i/o before next close? */
 	unsigned char c_algo;			/* compression algorithm */
 	unsigned char pos_unknown;			/* after reset position unknown */
+	unsigned char sili;			/* use SILI when reading in variable b mode */
 	int tape_type;
 	int long_timeout;	/* timeout for commands known to take long time */
 
@@ -163,7 +162,6 @@ struct scsi_tape {
 	int nbr_requests;
 	int nbr_dio;
 	int nbr_pages;
-	int nbr_combinable;
 	unsigned char last_cmnd[6];
 	unsigned char last_sense[16];
 #endif

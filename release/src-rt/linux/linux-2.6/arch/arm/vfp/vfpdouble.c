@@ -668,8 +668,8 @@ static struct op fops_ext[32] = {
 	[FEXT_TO_IDX(FEXT_FCMPZ)]	= { vfp_double_fcmpz,  OP_SCALAR },
 	[FEXT_TO_IDX(FEXT_FCMPEZ)]	= { vfp_double_fcmpez, OP_SCALAR },
 	[FEXT_TO_IDX(FEXT_FCVT)]	= { vfp_double_fcvts,  OP_SCALAR|OP_SD },
-	[FEXT_TO_IDX(FEXT_FUITO)]	= { vfp_double_fuito,  OP_SCALAR },
-	[FEXT_TO_IDX(FEXT_FSITO)]	= { vfp_double_fsito,  OP_SCALAR },
+	[FEXT_TO_IDX(FEXT_FUITO)]	= { vfp_double_fuito,  OP_SCALAR|OP_SM },
+	[FEXT_TO_IDX(FEXT_FSITO)]	= { vfp_double_fsito,  OP_SCALAR|OP_SM },
 	[FEXT_TO_IDX(FEXT_FTOUI)]	= { vfp_double_ftoui,  OP_SCALAR|OP_SD },
 	[FEXT_TO_IDX(FEXT_FTOUIZ)]	= { vfp_double_ftouiz, OP_SCALAR|OP_SD },
 	[FEXT_TO_IDX(FEXT_FTOSI)]	= { vfp_double_ftosi,  OP_SCALAR|OP_SD },
@@ -1128,11 +1128,11 @@ u32 vfp_double_cpdo(u32 inst, u32 fpscr)
 	u32 exceptions = 0;
 	unsigned int dest;
 	unsigned int dn = vfp_get_dn(inst);
-	unsigned int dm = vfp_get_dm(inst);
+	unsigned int dm;
 	unsigned int vecitr, veclen, vecstride;
 	struct op *fop;
 
-	vecstride = (1 + ((fpscr & FPSCR_STRIDE_MASK) == FPSCR_STRIDE_MASK)) * 2;
+	vecstride = (1 + ((fpscr & FPSCR_STRIDE_MASK) == FPSCR_STRIDE_MASK));
 
 	fop = (op == FOP_EXT) ? &fops_ext[FEXT_TO_IDX(inst)] : &fops[FOP_TO_IDX(op)];
 
@@ -1144,6 +1144,14 @@ u32 vfp_double_cpdo(u32 inst, u32 fpscr)
 		dest = vfp_get_sd(inst);
 	else
 		dest = vfp_get_dd(inst);
+
+	/*
+	 * f[us]ito takes a sN operand, not a dN operand.
+	 */
+	if (fop->flags & OP_SM)
+		dm = vfp_get_sm(inst);
+	else
+		dm = vfp_get_dm(inst);
 
 	/*
 	 * If destination bank is zero, vector length is always '1'.
@@ -1184,10 +1192,10 @@ u32 vfp_double_cpdo(u32 inst, u32 fpscr)
 		 * CHECK: It appears to be undefined whether we stop when
 		 * we encounter an exception.  We continue.
 		 */
-		dest = FREG_BANK(dest) + ((FREG_IDX(dest) + vecstride) & 6);
-		dn = FREG_BANK(dn) + ((FREG_IDX(dn) + vecstride) & 6);
+		dest = FREG_BANK(dest) + ((FREG_IDX(dest) + vecstride) & 3);
+		dn = FREG_BANK(dn) + ((FREG_IDX(dn) + vecstride) & 3);
 		if (FREG_BANK(dm) != 0)
-			dm = FREG_BANK(dm) + ((FREG_IDX(dm) + vecstride) & 6);
+			dm = FREG_BANK(dm) + ((FREG_IDX(dm) + vecstride) & 3);
 	}
 	return exceptions;
 

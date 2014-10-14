@@ -81,9 +81,9 @@ static irqreturn_t cycx_isr(int irq, void *dev_id);
  */
 
 /* private data */
-static char cycx_drvname[] = "cyclomx";
-static char cycx_fullname[] = "CYCLOM 2X(tm) Sync Card Driver";
-static char cycx_copyright[] = "(c) 1998-2003 Arnaldo Carvalho de Melo "
+static const char cycx_drvname[] = "cyclomx";
+static const char cycx_fullname[] = "CYCLOM 2X(tm) Sync Card Driver";
+static const char cycx_copyright[] = "(c) 1998-2003 Arnaldo Carvalho de Melo "
 			  "<acme@conectiva.com.br>";
 static int cycx_ncards = CONFIG_CYCX_CARDS;
 static struct cycx_device *cycx_card_array;	/* adapter data space */
@@ -113,12 +113,10 @@ static int __init cycx_init(void)
 	/* Verify number of cards and allocate adapter data space */
 	cycx_ncards = min_t(int, cycx_ncards, CYCX_MAX_CARDS);
 	cycx_ncards = max_t(int, cycx_ncards, 1);
-	cycx_card_array = kmalloc(sizeof(struct cycx_device) * cycx_ncards,
-				  GFP_KERNEL);
+	cycx_card_array = kcalloc(cycx_ncards, sizeof(struct cycx_device), GFP_KERNEL);
 	if (!cycx_card_array)
 		goto out;
 
-	memset(cycx_card_array, 0, sizeof(struct cycx_device) * cycx_ncards);
 
 	/* Register adapters with WAN router */
 	for (cnt = 0; cnt < cycx_ncards; ++cnt) {

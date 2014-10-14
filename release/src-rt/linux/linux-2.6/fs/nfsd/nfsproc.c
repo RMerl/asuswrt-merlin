@@ -1,29 +1,14 @@
 /*
- * nfsproc2.c	Process version 2 NFS requests.
- * linux/fs/nfsd/nfs2proc.c
- * 
  * Process version 2 NFS requests.
  *
  * Copyright (C) 1995-1997 Olaf Kirch <okir@monad.swb.de>
  */
 
-#include <linux/linkage.h>
-#include <linux/time.h>
-#include <linux/errno.h>
-#include <linux/fs.h>
-#include <linux/stat.h>
-#include <linux/fcntl.h>
-#include <linux/net.h>
-#include <linux/in.h>
 #include <linux/namei.h>
-#include <linux/unistd.h>
-#include <linux/slab.h>
 
-#include <linux/sunrpc/clnt.h>
-#include <linux/sunrpc/svc.h>
-#include <linux/nfsd/nfsd.h>
-#include <linux/nfsd/cache.h>
-#include <linux/nfsd/xdr.h>
+#include "cache.h"
+#include "xdr.h"
+#include "vfs.h"
 
 typedef struct svc_rqst	svc_rqst;
 typedef struct svc_buf	svc_buf;
@@ -41,7 +26,7 @@ static __be32
 nfsd_return_attrs(__be32 err, struct nfsd_attrstat *resp)
 {
 	if (err) return err;
-	return nfserrno(vfs_getattr(resp->fh.fh_export->ex_mnt,
+	return nfserrno(vfs_getattr(resp->fh.fh_export->ex_path.mnt,
 				    resp->fh.fh_dentry,
 				    &resp->stat));
 }
@@ -49,7 +34,7 @@ static __be32
 nfsd_return_dirop(__be32 err, struct nfsd_diropres *resp)
 {
 	if (err) return err;
-	return nfserrno(vfs_getattr(resp->fh.fh_export->ex_mnt,
+	return nfserrno(vfs_getattr(resp->fh.fh_export->ex_path.mnt,
 				    resp->fh.fh_dentry,
 				    &resp->stat));
 }
@@ -65,7 +50,8 @@ nfsd_proc_getattr(struct svc_rqst *rqstp, struct nfsd_fhandle  *argp,
 	dprintk("nfsd: GETATTR  %s\n", SVCFH_fmt(&argp->fh));
 
 	fh_copy(&resp->fh, &argp->fh);
-	nfserr = fh_verify(rqstp, &resp->fh, 0, MAY_NOP);
+	nfserr = fh_verify(rqstp, &resp->fh, 0,
+			NFSD_MAY_NOP | NFSD_MAY_BYPASS_GSS_ON_ROOT);
 	return nfsd_return_attrs(nfserr, resp);
 }
 
@@ -158,13 +144,13 @@ nfsd_proc_read(struct svc_rqst *rqstp, struct nfsd_readargs *argp,
 	svc_reserve_auth(rqstp, (19<<2) + argp->count + 4);
 
 	resp->count = argp->count;
-	nfserr = nfsd_read(rqstp, fh_copy(&resp->fh, &argp->fh), NULL,
+	nfserr = nfsd_read(rqstp, fh_copy(&resp->fh, &argp->fh),
 				  argp->offset,
 			   	  rqstp->rq_vec, argp->vlen,
 				  &resp->count);
 
 	if (nfserr) return nfserr;
-	return nfserrno(vfs_getattr(resp->fh.fh_export->ex_mnt,
+	return nfserrno(vfs_getattr(resp->fh.fh_export->ex_path.mnt,
 				    resp->fh.fh_dentry,
 				    &resp->stat));
 }
@@ -179,6 +165,7 @@ nfsd_proc_write(struct svc_rqst *rqstp, struct nfsd_writeargs *argp,
 {
 	__be32	nfserr;
 	int	stable = 1;
+	unsigned long cnt = argp->len;
 
 	dprintk("nfsd: WRITE    %s %d bytes at %d\n",
 		SVCFH_fmt(&argp->fh),
@@ -187,7 +174,7 @@ nfsd_proc_write(struct svc_rqst *rqstp, struct nfsd_writeargs *argp,
 	nfserr = nfsd_write(rqstp, fh_copy(&resp->fh, &argp->fh), NULL,
 				   argp->offset,
 				   rqstp->rq_vec, argp->vlen,
-				   argp->len,
+			           &cnt,
 				   &stable);
 	return nfsd_return_attrs(nfserr, resp);
 }
@@ -215,11 +202,11 @@ nfsd_proc_create(struct svc_rqst *rqstp, struct nfsd_createargs *argp,
 		SVCFH_fmt(dirfhp), argp->len, argp->name);
 
 	/* First verify the parent file handle */
-	nfserr = fh_verify(rqstp, dirfhp, S_IFDIR, MAY_EXEC);
+	nfserr = fh_verify(rqstp, dirfhp, S_IFDIR, NFSD_MAY_EXEC);
 	if (nfserr)
 		goto done; /* must fh_put dirfhp even on error */
 
-	/* Check for MAY_WRITE in nfsd_create if necessary */
+	/* Check for NFSD_MAY_WRITE in nfsd_create if necessary */
 
 	nfserr = nfserr_acces;
 	if (!argp->len)
@@ -278,9 +265,10 @@ nfsd_proc_create(struct svc_rqst *rqstp, struct nfsd_createargs *argp,
 					 *   echo thing > device-special-file-or-pipe
 					 * by doing a CREATE with type==0
 					 */
-					nfserr = nfsd_permission(newfhp->fh_export,
+					nfserr = nfsd_permission(rqstp,
+								 newfhp->fh_export,
 								 newfhp->fh_dentry,
-								 MAY_WRITE|MAY_LOCAL_ACCESS);
+								 NFSD_MAY_WRITE|NFSD_MAY_LOCAL_ACCESS);
 					if (nfserr && nfserr != nfserr_rofs)
 						goto out_unlock;
 				}
@@ -302,7 +290,6 @@ nfsd_proc_create(struct svc_rqst *rqstp, struct nfsd_createargs *argp,
 	 * gospel of sun micro
 	 */
 	if (type != S_IFREG) {
-		int	is_borc = 0;
 		if (type != S_IFBLK && type != S_IFCHR) {
 			rdev = 0;
 		} else if (type == S_IFCHR && !(attr->ia_valid & ATTR_SIZE)) {
@@ -310,7 +297,6 @@ nfsd_proc_create(struct svc_rqst *rqstp, struct nfsd_createargs *argp,
 			type = S_IFIFO;
 		} else {
 			/* Okay, char or block special */
-			is_borc = 1;
 			if (!rdev)
 				rdev = wanted;
 		}
@@ -520,7 +506,8 @@ nfsd_proc_statfs(struct svc_rqst * rqstp, struct nfsd_fhandle   *argp,
 
 	dprintk("nfsd: STATFS   %s\n", SVCFH_fmt(&argp->fh));
 
-	nfserr = nfsd_statfs(rqstp, &argp->fh, &resp->stats);
+	nfserr = nfsd_statfs(rqstp, &argp->fh, &resp->stats,
+			NFSD_MAY_BYPASS_GSS_ON_ROOT);
 	fh_put(&argp->fh);
 	return nfserr;
 }
@@ -529,45 +516,179 @@ nfsd_proc_statfs(struct svc_rqst * rqstp, struct nfsd_fhandle   *argp,
  * NFSv2 Server procedures.
  * Only the results of non-idempotent operations are cached.
  */
-#define nfsd_proc_none		NULL
-#define nfssvc_release_none	NULL
 struct nfsd_void { int dummy; };
-
-#define PROC(name, argt, rest, relt, cache, respsize)	\
- { (svc_procfunc) nfsd_proc_##name,		\
-   (kxdrproc_t) nfssvc_decode_##argt,		\
-   (kxdrproc_t) nfssvc_encode_##rest,		\
-   (kxdrproc_t) nfssvc_release_##relt,		\
-   sizeof(struct nfsd_##argt),			\
-   sizeof(struct nfsd_##rest),			\
-   0,						\
-   cache,					\
-   respsize,				       	\
- }
 
 #define ST 1		/* status */
 #define FH 8		/* filehandle */
 #define	AT 18		/* attributes */
 
 static struct svc_procedure		nfsd_procedures2[18] = {
-  PROC(null,	 void,		void,		none,		RC_NOCACHE, ST),
-  PROC(getattr,	 fhandle,	attrstat,	fhandle,	RC_NOCACHE, ST+AT),
-  PROC(setattr,  sattrargs,	attrstat,	fhandle,	RC_REPLBUFF, ST+AT),
-  PROC(none,	 void,		void,		none,		RC_NOCACHE, ST),
-  PROC(lookup,	 diropargs,	diropres,	fhandle,	RC_NOCACHE, ST+FH+AT),
-  PROC(readlink, readlinkargs,	readlinkres,	none,		RC_NOCACHE, ST+1+NFS_MAXPATHLEN/4),
-  PROC(read,	 readargs,	readres,	fhandle,	RC_NOCACHE, ST+AT+1+NFSSVC_MAXBLKSIZE_V2/4),
-  PROC(none,	 void,		void,		none,		RC_NOCACHE, ST),
-  PROC(write,	 writeargs,	attrstat,	fhandle,	RC_REPLBUFF, ST+AT),
-  PROC(create,	 createargs,	diropres,	fhandle,	RC_REPLBUFF, ST+FH+AT),
-  PROC(remove,	 diropargs,	void,		none,		RC_REPLSTAT, ST),
-  PROC(rename,	 renameargs,	void,		none,		RC_REPLSTAT, ST),
-  PROC(link,	 linkargs,	void,		none,		RC_REPLSTAT, ST),
-  PROC(symlink,	 symlinkargs,	void,		none,		RC_REPLSTAT, ST),
-  PROC(mkdir,	 createargs,	diropres,	fhandle,	RC_REPLBUFF, ST+FH+AT),
-  PROC(rmdir,	 diropargs,	void,		none,		RC_REPLSTAT, ST),
-  PROC(readdir,	 readdirargs,	readdirres,	none,		RC_NOCACHE, 0),
-  PROC(statfs,	 fhandle,	statfsres,	none,		RC_NOCACHE, ST+5),
+	[NFSPROC_NULL] = {
+		.pc_func = (svc_procfunc) nfsd_proc_null,
+		.pc_decode = (kxdrproc_t) nfssvc_decode_void,
+		.pc_encode = (kxdrproc_t) nfssvc_encode_void,
+		.pc_argsize = sizeof(struct nfsd_void),
+		.pc_ressize = sizeof(struct nfsd_void),
+		.pc_cachetype = RC_NOCACHE,
+		.pc_xdrressize = ST,
+	},
+	[NFSPROC_GETATTR] = {
+		.pc_func = (svc_procfunc) nfsd_proc_getattr,
+		.pc_decode = (kxdrproc_t) nfssvc_decode_fhandle,
+		.pc_encode = (kxdrproc_t) nfssvc_encode_attrstat,
+		.pc_release = (kxdrproc_t) nfssvc_release_fhandle,
+		.pc_argsize = sizeof(struct nfsd_fhandle),
+		.pc_ressize = sizeof(struct nfsd_attrstat),
+		.pc_cachetype = RC_NOCACHE,
+		.pc_xdrressize = ST+AT,
+	},
+	[NFSPROC_SETATTR] = {
+		.pc_func = (svc_procfunc) nfsd_proc_setattr,
+		.pc_decode = (kxdrproc_t) nfssvc_decode_sattrargs,
+		.pc_encode = (kxdrproc_t) nfssvc_encode_attrstat,
+		.pc_release = (kxdrproc_t) nfssvc_release_fhandle,
+		.pc_argsize = sizeof(struct nfsd_sattrargs),
+		.pc_ressize = sizeof(struct nfsd_attrstat),
+		.pc_cachetype = RC_REPLBUFF,
+		.pc_xdrressize = ST+AT,
+	},
+	[NFSPROC_ROOT] = {
+		.pc_decode = (kxdrproc_t) nfssvc_decode_void,
+		.pc_encode = (kxdrproc_t) nfssvc_encode_void,
+		.pc_argsize = sizeof(struct nfsd_void),
+		.pc_ressize = sizeof(struct nfsd_void),
+		.pc_cachetype = RC_NOCACHE,
+		.pc_xdrressize = ST,
+	},
+	[NFSPROC_LOOKUP] = {
+		.pc_func = (svc_procfunc) nfsd_proc_lookup,
+		.pc_decode = (kxdrproc_t) nfssvc_decode_diropargs,
+		.pc_encode = (kxdrproc_t) nfssvc_encode_diropres,
+		.pc_release = (kxdrproc_t) nfssvc_release_fhandle,
+		.pc_argsize = sizeof(struct nfsd_diropargs),
+		.pc_ressize = sizeof(struct nfsd_diropres),
+		.pc_cachetype = RC_NOCACHE,
+		.pc_xdrressize = ST+FH+AT,
+	},
+	[NFSPROC_READLINK] = {
+		.pc_func = (svc_procfunc) nfsd_proc_readlink,
+		.pc_decode = (kxdrproc_t) nfssvc_decode_readlinkargs,
+		.pc_encode = (kxdrproc_t) nfssvc_encode_readlinkres,
+		.pc_argsize = sizeof(struct nfsd_readlinkargs),
+		.pc_ressize = sizeof(struct nfsd_readlinkres),
+		.pc_cachetype = RC_NOCACHE,
+		.pc_xdrressize = ST+1+NFS_MAXPATHLEN/4,
+	},
+	[NFSPROC_READ] = {
+		.pc_func = (svc_procfunc) nfsd_proc_read,
+		.pc_decode = (kxdrproc_t) nfssvc_decode_readargs,
+		.pc_encode = (kxdrproc_t) nfssvc_encode_readres,
+		.pc_release = (kxdrproc_t) nfssvc_release_fhandle,
+		.pc_argsize = sizeof(struct nfsd_readargs),
+		.pc_ressize = sizeof(struct nfsd_readres),
+		.pc_cachetype = RC_NOCACHE,
+		.pc_xdrressize = ST+AT+1+NFSSVC_MAXBLKSIZE_V2/4,
+	},
+	[NFSPROC_WRITECACHE] = {
+		.pc_decode = (kxdrproc_t) nfssvc_decode_void,
+		.pc_encode = (kxdrproc_t) nfssvc_encode_void,
+		.pc_argsize = sizeof(struct nfsd_void),
+		.pc_ressize = sizeof(struct nfsd_void),
+		.pc_cachetype = RC_NOCACHE,
+		.pc_xdrressize = ST,
+	},
+	[NFSPROC_WRITE] = {
+		.pc_func = (svc_procfunc) nfsd_proc_write,
+		.pc_decode = (kxdrproc_t) nfssvc_decode_writeargs,
+		.pc_encode = (kxdrproc_t) nfssvc_encode_attrstat,
+		.pc_release = (kxdrproc_t) nfssvc_release_fhandle,
+		.pc_argsize = sizeof(struct nfsd_writeargs),
+		.pc_ressize = sizeof(struct nfsd_attrstat),
+		.pc_cachetype = RC_REPLBUFF,
+		.pc_xdrressize = ST+AT,
+	},
+	[NFSPROC_CREATE] = {
+		.pc_func = (svc_procfunc) nfsd_proc_create,
+		.pc_decode = (kxdrproc_t) nfssvc_decode_createargs,
+		.pc_encode = (kxdrproc_t) nfssvc_encode_diropres,
+		.pc_release = (kxdrproc_t) nfssvc_release_fhandle,
+		.pc_argsize = sizeof(struct nfsd_createargs),
+		.pc_ressize = sizeof(struct nfsd_diropres),
+		.pc_cachetype = RC_REPLBUFF,
+		.pc_xdrressize = ST+FH+AT,
+	},
+	[NFSPROC_REMOVE] = {
+		.pc_func = (svc_procfunc) nfsd_proc_remove,
+		.pc_decode = (kxdrproc_t) nfssvc_decode_diropargs,
+		.pc_encode = (kxdrproc_t) nfssvc_encode_void,
+		.pc_argsize = sizeof(struct nfsd_diropargs),
+		.pc_ressize = sizeof(struct nfsd_void),
+		.pc_cachetype = RC_REPLSTAT,
+		.pc_xdrressize = ST,
+	},
+	[NFSPROC_RENAME] = {
+		.pc_func = (svc_procfunc) nfsd_proc_rename,
+		.pc_decode = (kxdrproc_t) nfssvc_decode_renameargs,
+		.pc_encode = (kxdrproc_t) nfssvc_encode_void,
+		.pc_argsize = sizeof(struct nfsd_renameargs),
+		.pc_ressize = sizeof(struct nfsd_void),
+		.pc_cachetype = RC_REPLSTAT,
+		.pc_xdrressize = ST,
+	},
+	[NFSPROC_LINK] = {
+		.pc_func = (svc_procfunc) nfsd_proc_link,
+		.pc_decode = (kxdrproc_t) nfssvc_decode_linkargs,
+		.pc_encode = (kxdrproc_t) nfssvc_encode_void,
+		.pc_argsize = sizeof(struct nfsd_linkargs),
+		.pc_ressize = sizeof(struct nfsd_void),
+		.pc_cachetype = RC_REPLSTAT,
+		.pc_xdrressize = ST,
+	},
+	[NFSPROC_SYMLINK] = {
+		.pc_func = (svc_procfunc) nfsd_proc_symlink,
+		.pc_decode = (kxdrproc_t) nfssvc_decode_symlinkargs,
+		.pc_encode = (kxdrproc_t) nfssvc_encode_void,
+		.pc_argsize = sizeof(struct nfsd_symlinkargs),
+		.pc_ressize = sizeof(struct nfsd_void),
+		.pc_cachetype = RC_REPLSTAT,
+		.pc_xdrressize = ST,
+	},
+	[NFSPROC_MKDIR] = {
+		.pc_func = (svc_procfunc) nfsd_proc_mkdir,
+		.pc_decode = (kxdrproc_t) nfssvc_decode_createargs,
+		.pc_encode = (kxdrproc_t) nfssvc_encode_diropres,
+		.pc_release = (kxdrproc_t) nfssvc_release_fhandle,
+		.pc_argsize = sizeof(struct nfsd_createargs),
+		.pc_ressize = sizeof(struct nfsd_diropres),
+		.pc_cachetype = RC_REPLBUFF,
+		.pc_xdrressize = ST+FH+AT,
+	},
+	[NFSPROC_RMDIR] = {
+		.pc_func = (svc_procfunc) nfsd_proc_rmdir,
+		.pc_decode = (kxdrproc_t) nfssvc_decode_diropargs,
+		.pc_encode = (kxdrproc_t) nfssvc_encode_void,
+		.pc_argsize = sizeof(struct nfsd_diropargs),
+		.pc_ressize = sizeof(struct nfsd_void),
+		.pc_cachetype = RC_REPLSTAT,
+		.pc_xdrressize = ST,
+	},
+	[NFSPROC_READDIR] = {
+		.pc_func = (svc_procfunc) nfsd_proc_readdir,
+		.pc_decode = (kxdrproc_t) nfssvc_decode_readdirargs,
+		.pc_encode = (kxdrproc_t) nfssvc_encode_readdirres,
+		.pc_argsize = sizeof(struct nfsd_readdirargs),
+		.pc_ressize = sizeof(struct nfsd_readdirres),
+		.pc_cachetype = RC_NOCACHE,
+	},
+	[NFSPROC_STATFS] = {
+		.pc_func = (svc_procfunc) nfsd_proc_statfs,
+		.pc_decode = (kxdrproc_t) nfssvc_decode_fhandle,
+		.pc_encode = (kxdrproc_t) nfssvc_encode_statfsres,
+		.pc_argsize = sizeof(struct nfsd_fhandle),
+		.pc_ressize = sizeof(struct nfsd_statfsres),
+		.pc_cachetype = RC_NOCACHE,
+		.pc_xdrressize = ST+5,
+	},
 };
 
 
@@ -613,11 +734,14 @@ nfserrno (int errno)
 #endif
 		{ nfserr_stale, -ESTALE },
 		{ nfserr_jukebox, -ETIMEDOUT },
-		{ nfserr_dropit, -EAGAIN },
-		{ nfserr_dropit, -ENOMEM },
-		{ nfserr_badname, -ESRCH },
+		{ nfserr_jukebox, -ERESTARTSYS },
+		{ nfserr_jukebox, -EAGAIN },
+		{ nfserr_jukebox, -EWOULDBLOCK },
+		{ nfserr_jukebox, -ENOMEM },
 		{ nfserr_io, -ETXTBSY },
 		{ nfserr_notsupp, -EOPNOTSUPP },
+		{ nfserr_toosmall, -ETOOSMALL },
+		{ nfserr_serverfault, -ESERVERFAULT },
 	};
 	int	i;
 

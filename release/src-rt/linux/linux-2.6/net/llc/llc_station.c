@@ -13,6 +13,7 @@
  */
 #include <linux/init.h>
 #include <linux/module.h>
+#include <linux/slab.h>
 #include <net/llc.h>
 #include <net/llc_sap.h>
 #include <net/llc_conn.h>
@@ -260,7 +261,7 @@ static int llc_station_ac_send_null_dsap_xid_c(struct sk_buff *skb)
 		goto out;
 	llc_pdu_header_init(nskb, LLC_PDU_TYPE_U, 0, 0, LLC_PDU_CMD);
 	llc_pdu_init_as_xid_cmd(nskb, LLC_XID_NULL_CLASS_2, 127);
-	rc = llc_mac_hdr_init(nskb, llc_station_mac_sa, llc_station_mac_sa);
+	rc = llc_mac_hdr_init(nskb, skb->dev->dev_addr, skb->dev->dev_addr);
 	if (unlikely(rc))
 		goto free;
 	llc_station_send_pdu(nskb);
@@ -285,7 +286,7 @@ static int llc_station_ac_send_xid_r(struct sk_buff *skb)
 	llc_pdu_decode_ssap(skb, &dsap);
 	llc_pdu_header_init(nskb, LLC_PDU_TYPE_U, 0, dsap, LLC_PDU_RSP);
 	llc_pdu_init_as_xid_rsp(nskb, LLC_XID_NULL_CLASS_2, 127);
-	rc = llc_mac_hdr_init(nskb, llc_station_mac_sa, mac_da);
+	rc = llc_mac_hdr_init(nskb, skb->dev->dev_addr, mac_da);
 	if (unlikely(rc))
 		goto free;
 	llc_station_send_pdu(nskb);
@@ -314,7 +315,7 @@ static int llc_station_ac_send_test_r(struct sk_buff *skb)
 	llc_pdu_decode_ssap(skb, &dsap);
 	llc_pdu_header_init(nskb, LLC_PDU_TYPE_U, 0, dsap, LLC_PDU_RSP);
 	llc_pdu_init_as_test_rsp(nskb, skb);
-	rc = llc_mac_hdr_init(nskb, llc_station_mac_sa, mac_da);
+	rc = llc_mac_hdr_init(nskb, skb->dev->dev_addr, mac_da);
 	if (unlikely(rc))
 		goto free;
 	llc_station_send_pdu(nskb);
@@ -688,16 +689,15 @@ static void llc_station_rcv(struct sk_buff *skb)
 
 int __init llc_station_init(void)
 {
-	u16 rc = -ENOBUFS;
+	int rc = -ENOBUFS;
 	struct sk_buff *skb;
 	struct llc_station_state_ev *ev;
 
 	skb_queue_head_init(&llc_main_station.mac_pdu_q);
 	skb_queue_head_init(&llc_main_station.ev_q.list);
 	spin_lock_init(&llc_main_station.ev_q.lock);
-	init_timer(&llc_main_station.ack_timer);
-	llc_main_station.ack_timer.data     = (unsigned long)&llc_main_station;
-	llc_main_station.ack_timer.function = llc_station_ack_tmr_cb;
+	setup_timer(&llc_main_station.ack_timer, llc_station_ack_tmr_cb,
+			(unsigned long)&llc_main_station);
 	llc_main_station.ack_timer.expires  = jiffies +
 						sysctl_llc_station_ack_timeout;
 	skb = alloc_skb(0, GFP_ATOMIC);

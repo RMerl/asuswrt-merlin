@@ -77,23 +77,22 @@ static int dvb_usb_stop_feed(struct dvb_demux_feed *dvbdmxfeed)
 	return dvb_usb_ctrl_feed(dvbdmxfeed,0);
 }
 
-int dvb_usb_adapter_dvb_init(struct dvb_usb_adapter *adap)
+int dvb_usb_adapter_dvb_init(struct dvb_usb_adapter *adap, short *adapter_nums)
 {
-	int ret;
+	int ret = dvb_register_adapter(&adap->dvb_adap, adap->dev->desc->name,
+				       adap->dev->owner, &adap->dev->udev->dev,
+				       adapter_nums);
 
-	if ((ret = dvb_register_adapter(&adap->dvb_adap, adap->dev->desc->name,
-			adap->dev->owner, &adap->dev->udev->dev)) < 0) {
+	if (ret < 0) {
 		deb_info("dvb_register_adapter failed: error %d", ret);
 		goto err;
 	}
 	adap->dvb_adap.priv = adap;
+	adap->dvb_adap.fe_ioctl_override = adap->props.fe_ioctl_override;
 
 	if (adap->dev->props.read_mac_address) {
 		if (adap->dev->props.read_mac_address(adap->dev,adap->dvb_adap.proposed_mac) == 0)
-			info("MAC address: %02x:%02x:%02x:%02x:%02x:%02x",adap->dvb_adap.proposed_mac[0],
-					adap->dvb_adap.proposed_mac[1], adap->dvb_adap.proposed_mac[2],
-					adap->dvb_adap.proposed_mac[3], adap->dvb_adap.proposed_mac[4],
-					adap->dvb_adap.proposed_mac[5]);
+			info("MAC address: %pM",adap->dvb_adap.proposed_mac);
 		else
 			err("MAC address reading failed.");
 	}

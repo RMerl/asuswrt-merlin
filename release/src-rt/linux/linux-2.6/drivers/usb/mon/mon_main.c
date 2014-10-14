@@ -9,11 +9,13 @@
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/usb.h>
+#include <linux/usb/hcd.h>
+#include <linux/slab.h>
 #include <linux/notifier.h>
 #include <linux/mutex.h>
 
 #include "usb_mon.h"
-#include "../core/hcd.h"
+
 
 static void mon_stop(struct mon_bus *mbus);
 static void mon_dissolve(struct mon_bus *mbus, struct usb_bus *ubus);
@@ -88,7 +90,6 @@ static void mon_bus_submit(struct mon_bus *mbus, struct urb *urb)
 		r->rnf_submit(r->r_data, urb);
 	}
 	spin_unlock_irqrestore(&mbus->lock, flags);
-	return;
 }
 
 static void mon_submit(struct usb_bus *ubus, struct urb *urb)
@@ -115,7 +116,6 @@ static void mon_bus_submit_error(struct mon_bus *mbus, struct urb *urb, int erro
 		r->rnf_error(r->r_data, urb, error);
 	}
 	spin_unlock_irqrestore(&mbus->lock, flags);
-	return;
 }
 
 static void mon_submit_error(struct usb_bus *ubus, struct urb *urb, int error)
@@ -129,8 +129,7 @@ static void mon_submit_error(struct usb_bus *ubus, struct urb *urb, int error)
 
 /*
  */
-static void mon_bus_complete(struct mon_bus *mbus, struct urb *urb,
-		int status)
+static void mon_bus_complete(struct mon_bus *mbus, struct urb *urb, int status)
 {
 	unsigned long flags;
 	struct list_head *pos;
@@ -149,7 +148,7 @@ static void mon_complete(struct usb_bus *ubus, struct urb *urb, int status)
 {
 	struct mon_bus *mbus;
 
- 	if ((mbus = ubus->mon_bus) != NULL)
+	if ((mbus = ubus->mon_bus) != NULL)
 		mon_bus_complete(mbus, urb, status);
 	mon_bus_complete(&mon_bus0, urb, status);
 }
@@ -362,12 +361,11 @@ static int __init mon_init(void)
 	}
 	// MOD_INC_USE_COUNT(which_module?);
 
-	usb_register_notify(&mon_nb);
-
 	mutex_lock(&usb_bus_list_lock);
 	list_for_each_entry (ubus, &usb_bus_list, bus_list) {
 		mon_bus_init(ubus);
 	}
+	usb_register_notify(&mon_nb);
 	mutex_unlock(&usb_bus_list_lock);
 	return 0;
 

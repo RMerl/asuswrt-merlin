@@ -28,6 +28,8 @@
 #include <linux/mm.h>
 #include <linux/string.h>
 #include <linux/pci.h>
+#include <linux/scatterlist.h>
+#include <linux/iommu-helper.h>
 
 #include <asm/byteorder.h>
 #include <asm/io.h>
@@ -312,6 +314,12 @@ sba_dump_sg( struct ioc *ioc, struct scatterlist *startsg, int nents)
 #define RESMAP_MASK(n)    (~0UL << (BITS_PER_LONG - (n)))
 #define RESMAP_IDX_MASK   (sizeof(unsigned long) - 1)
 
+static unsigned long ptr_to_pide(struct ioc *ioc, unsigned long *res_ptr,
+				 unsigned int bitshiftcnt)
+{
+	return (((unsigned long)res_ptr - (unsigned long)ioc->res_map) << 3)
+		+ bitshiftcnt;
+}
 
 /**
  * sba_search_bitmap - find free space in IO PDIR resource bitmap
@@ -323,19 +331,36 @@ sba_dump_sg( struct ioc *ioc, struct scatterlist *startsg, int nents)
  * Cool perf optimization: search for log2(size) bits at a time.
  */
 static SBA_INLINE unsigned long
-sba_search_bitmap(struct ioc *ioc, unsigned long bits_wanted)
+sba_search_bitmap(struct ioc *ioc, struct device *dev,
+		  unsigned long bits_wanted)
 {
 	unsigned long *res_ptr = ioc->res_hint;
 	unsigned long *res_end = (unsigned long *) &(ioc->res_map[ioc->res_size]);
-	unsigned long pide = ~0UL;
+	unsigned long pide = ~0UL, tpide;
+	unsigned long boundary_size;
+	unsigned long shift;
+	int ret;
+
+	boundary_size = ALIGN((unsigned long long)dma_get_seg_boundary(dev) + 1,
+			      1ULL << IOVP_SHIFT) >> IOVP_SHIFT;
+
+#if defined(ZX1_SUPPORT)
+	BUG_ON(ioc->ibase & ~IOVP_MASK);
+	shift = ioc->ibase >> IOVP_SHIFT;
+#else
+	shift = 0;
+#endif
 
 	if (bits_wanted > (BITS_PER_LONG/2)) {
 		/* Search word at a time - no mask needed */
 		for(; res_ptr < res_end; ++res_ptr) {
-			if (*res_ptr == 0) {
+			tpide = ptr_to_pide(ioc, res_ptr, 0);
+			ret = iommu_is_span_boundary(tpide, bits_wanted,
+						     shift,
+						     boundary_size);
+			if ((*res_ptr == 0) && !ret) {
 				*res_ptr = RESMAP_MASK(bits_wanted);
-				pide = ((unsigned long)res_ptr - (unsigned long)ioc->res_map);
-				pide <<= 3;	/* convert to bit address */
+				pide = tpide;
 				break;
 			}
 		}
@@ -359,16 +384,18 @@ sba_search_bitmap(struct ioc *ioc, unsigned long bits_wanted)
 		}
 		mask = RESMAP_MASK(bits_wanted) >> bitshiftcnt;
 
-		DBG_RES("%s() o %ld %p", __FUNCTION__, o, res_ptr);
+		DBG_RES("%s() o %ld %p", __func__, o, res_ptr);
 		while(res_ptr < res_end)
 		{ 
 			DBG_RES("    %p %lx %lx\n", res_ptr, mask, *res_ptr);
 			WARN_ON(mask == 0);
-			if(((*res_ptr) & mask) == 0) {
+			tpide = ptr_to_pide(ioc, res_ptr, bitshiftcnt);
+			ret = iommu_is_span_boundary(tpide, bits_wanted,
+						     shift,
+						     boundary_size);
+			if ((((*res_ptr) & mask) == 0) && !ret) {
 				*res_ptr |= mask;     /* mark resources busy! */
-				pide = ((unsigned long)res_ptr - (unsigned long)ioc->res_map);
-				pide <<= 3;	/* convert to bit address */
-				pide += bitshiftcnt;
+				pide = tpide;
 				break;
 			}
 			mask >>= o;
@@ -403,7 +430,7 @@ sba_search_bitmap(struct ioc *ioc, unsigned long bits_wanted)
  * resource bit map.
  */
 static int
-sba_alloc_range(struct ioc *ioc, size_t size)
+sba_alloc_range(struct ioc *ioc, struct device *dev, size_t size)
 {
 	unsigned int pages_needed = size >> IOVP_SHIFT;
 #ifdef SBA_COLLECT_STATS
@@ -411,9 +438,9 @@ sba_alloc_range(struct ioc *ioc, size_t size)
 #endif
 	unsigned long pide;
 
-	pide = sba_search_bitmap(ioc, pages_needed);
+	pide = sba_search_bitmap(ioc, dev, pages_needed);
 	if (pide >= (ioc->res_size << 3)) {
-		pide = sba_search_bitmap(ioc, pages_needed);
+		pide = sba_search_bitmap(ioc, dev, pages_needed);
 		if (pide >= (ioc->res_size << 3))
 			panic("%s: I/O MMU @ %p is out of mapping resources\n",
 			      __FILE__, ioc->ioc_hpa);
@@ -427,7 +454,7 @@ sba_alloc_range(struct ioc *ioc, size_t size)
 #endif
 
 	DBG_RES("%s(%x) %d -> %lx hint %x/%x\n",
-		__FUNCTION__, size, pages_needed, pide,
+		__func__, size, pages_needed, pide,
 		(uint) ((unsigned long) ioc->res_hint - (unsigned long) ioc->res_map),
 		ioc->res_bitshift );
 
@@ -470,7 +497,7 @@ sba_free_range(struct ioc *ioc, dma_addr_t iova, size_t size)
 	unsigned long m = RESMAP_MASK(bits_not_wanted) >> (pide & (BITS_PER_LONG - 1));
 
 	DBG_RES("%s( ,%x,%x) %x/%lx %x %p %lx\n",
-		__FUNCTION__, (uint) iova, size,
+		__func__, (uint) iova, size,
 		bits_not_wanted, m, pide, res_ptr, *res_ptr);
 
 #ifdef SBA_COLLECT_STATS
@@ -534,7 +561,7 @@ typedef unsigned long space_t;
  * IOMMU uses little endian for the pdir.
  */
 
-void SBA_INLINE
+static void SBA_INLINE
 sba_io_pdir_entry(u64 *pdir_ptr, space_t sid, unsigned long vba,
 		  unsigned long hint)
 {
@@ -641,7 +668,7 @@ sba_mark_invalid(struct ioc *ioc, dma_addr_t iova, size_t byte_cnt)
  * @dev: instance of PCI owned by the driver that's asking
  * @mask:  number of address bits this PCI device can handle
  *
- * See Documentation/DMA-mapping.txt
+ * See Documentation/PCI/PCI-DMA-mapping.txt
  */
 static int sba_dma_supported( struct device *dev, u64 mask)
 {
@@ -653,8 +680,8 @@ static int sba_dma_supported( struct device *dev, u64 mask)
 		return(0);
 	}
 
-	/* Documentation/DMA-mapping.txt tells drivers to try 64-bit first,
-	 * then fall back to 32-bit if that fails.
+	/* Documentation/PCI/PCI-DMA-mapping.txt tells drivers to try 64-bit
+	 * first, then fall back to 32-bit if that fails.
 	 * We are just "encouraging" 32-bit DMA masks here since we can
 	 * never allow IOMMU bypass unless we add special support for ZX1.
 	 */
@@ -679,7 +706,7 @@ static int sba_dma_supported( struct device *dev, u64 mask)
  * @size:  number of bytes to map in driver buffer.
  * @direction:  R/W or both.
  *
- * See Documentation/DMA-mapping.txt
+ * See Documentation/PCI/PCI-DMA-mapping.txt
  */
 static dma_addr_t
 sba_map_single(struct device *dev, void *addr, size_t size,
@@ -709,11 +736,11 @@ sba_map_single(struct device *dev, void *addr, size_t size,
 	ioc->msingle_calls++;
 	ioc->msingle_pages += size >> IOVP_SHIFT;
 #endif
-	pide = sba_alloc_range(ioc, size);
+	pide = sba_alloc_range(ioc, dev, size);
 	iovp = (dma_addr_t) pide << IOVP_SHIFT;
 
 	DBG_RUN("%s() 0x%p -> 0x%lx\n",
-		__FUNCTION__, addr, (long) iovp | offset);
+		__func__, addr, (long) iovp | offset);
 
 	pdir_start = &(ioc->pdir_base[pide]);
 
@@ -758,7 +785,7 @@ sba_map_single(struct device *dev, void *addr, size_t size,
  * @size:  number of bytes mapped in driver buffer.
  * @direction:  R/W or both.
  *
- * See Documentation/DMA-mapping.txt
+ * See Documentation/PCI/PCI-DMA-mapping.txt
  */
 static void
 sba_unmap_single(struct device *dev, dma_addr_t iova, size_t size,
@@ -771,7 +798,7 @@ sba_unmap_single(struct device *dev, dma_addr_t iova, size_t size,
 	unsigned long flags; 
 	dma_addr_t offset;
 
-	DBG_RUN("%s() iovp 0x%lx/%x\n", __FUNCTION__, (long) iova, size);
+	DBG_RUN("%s() iovp 0x%lx/%x\n", __func__, (long) iova, size);
 
 	ioc = GET_IOC(dev);
 	offset = iova & ~IOVP_MASK;
@@ -834,7 +861,7 @@ sba_unmap_single(struct device *dev, dma_addr_t iova, size_t size,
  * @size:  number of bytes mapped in driver buffer.
  * @dma_handle:  IOVA of new buffer.
  *
- * See Documentation/DMA-mapping.txt
+ * See Documentation/PCI/PCI-DMA-mapping.txt
  */
 static void *sba_alloc_consistent(struct device *hwdev, size_t size,
 					dma_addr_t *dma_handle, gfp_t gfp)
@@ -865,7 +892,7 @@ static void *sba_alloc_consistent(struct device *hwdev, size_t size,
  * @vaddr:  virtual address IOVA of "consistent" buffer.
  * @dma_handler:  IO virtual address of "consistent" buffer.
  *
- * See Documentation/DMA-mapping.txt
+ * See Documentation/PCI/PCI-DMA-mapping.txt
  */
 static void
 sba_free_consistent(struct device *hwdev, size_t size, void *vaddr,
@@ -900,7 +927,7 @@ int dump_run_sg = 0;
  * @nents:  number of entries in list
  * @direction:  R/W or both.
  *
- * See Documentation/DMA-mapping.txt
+ * See Documentation/PCI/PCI-DMA-mapping.txt
  */
 static int
 sba_map_sg(struct device *dev, struct scatterlist *sglist, int nents,
@@ -910,7 +937,7 @@ sba_map_sg(struct device *dev, struct scatterlist *sglist, int nents,
 	int coalesced, filled = 0;
 	unsigned long flags;
 
-	DBG_RUN_SG("%s() START %d entries\n", __FUNCTION__, nents);
+	DBG_RUN_SG("%s() START %d entries\n", __func__, nents);
 
 	ioc = GET_IOC(dev);
 
@@ -945,7 +972,7 @@ sba_map_sg(struct device *dev, struct scatterlist *sglist, int nents,
 	** w/o this association, we wouldn't have coherent DMA!
 	** Access to the virtual address is what forces a two pass algorithm.
 	*/
-	coalesced = iommu_coalesce_chunks(ioc, sglist, nents, sba_alloc_range);
+	coalesced = iommu_coalesce_chunks(ioc, dev, sglist, nents, sba_alloc_range);
 
 	/*
 	** Program the I/O Pdir
@@ -971,7 +998,7 @@ sba_map_sg(struct device *dev, struct scatterlist *sglist, int nents,
 
 	spin_unlock_irqrestore(&ioc->res_lock, flags);
 
-	DBG_RUN_SG("%s() DONE %d mappings\n", __FUNCTION__, filled);
+	DBG_RUN_SG("%s() DONE %d mappings\n", __func__, filled);
 
 	return filled;
 }
@@ -984,7 +1011,7 @@ sba_map_sg(struct device *dev, struct scatterlist *sglist, int nents,
  * @nents:  number of entries in list
  * @direction:  R/W or both.
  *
- * See Documentation/DMA-mapping.txt
+ * See Documentation/PCI/PCI-DMA-mapping.txt
  */
 static void 
 sba_unmap_sg(struct device *dev, struct scatterlist *sglist, int nents,
@@ -996,7 +1023,7 @@ sba_unmap_sg(struct device *dev, struct scatterlist *sglist, int nents,
 #endif
 
 	DBG_RUN_SG("%s() START %d entries,  %p,%x\n",
-		__FUNCTION__, nents, sg_virt_addr(sglist), sglist->length);
+		__func__, nents, sg_virt_addr(sglist), sglist->length);
 
 	ioc = GET_IOC(dev);
 
@@ -1020,7 +1047,7 @@ sba_unmap_sg(struct device *dev, struct scatterlist *sglist, int nents,
 		++sglist;
 	}
 
-	DBG_RUN_SG("%s() DONE (nents %d)\n", __FUNCTION__,  nents);
+	DBG_RUN_SG("%s() DONE (nents %d)\n", __func__,  nents);
 
 #ifdef ASSERT_PDIR_SANITY
 	spin_lock_irqsave(&ioc->res_lock, flags);
@@ -1091,7 +1118,7 @@ sba_alloc_pdir(unsigned int pdir_size)
 	pdir_base = __get_free_pages(GFP_KERNEL, pdir_order);
 	if (NULL == (void *) pdir_base)	{
 		panic("%s() could not allocate I/O Page Table\n",
-			__FUNCTION__);
+			__func__);
 	}
 
 	/* If this is not PA8700 (PCX-W2)
@@ -1179,30 +1206,48 @@ sba_alloc_pdir(unsigned int pdir_size)
 	return (void *) pdir_base;
 }
 
-static struct device *next_device(struct klist_iter *i)
+struct ibase_data_struct {
+	struct ioc *ioc;
+	int ioc_num;
+};
+
+static int setup_ibase_imask_callback(struct device *dev, void *data)
 {
-        struct klist_node * n = klist_next(i);
-        return n ? container_of(n, struct device, knode_parent) : NULL;
+	/* lba_set_iregs() is in drivers/parisc/lba_pci.c */
+        extern void lba_set_iregs(struct parisc_device *, u32, u32);
+	struct parisc_device *lba = to_parisc_device(dev);
+	struct ibase_data_struct *ibd = data;
+	int rope_num = (lba->hpa.start >> 13) & 0xf;
+	if (rope_num >> 3 == ibd->ioc_num)
+		lba_set_iregs(lba, ibd->ioc->ibase, ibd->ioc->imask);
+	return 0;
 }
 
 /* setup Mercury or Elroy IBASE/IMASK registers. */
 static void 
 setup_ibase_imask(struct parisc_device *sba, struct ioc *ioc, int ioc_num)
 {
-	/* lba_set_iregs() is in drivers/parisc/lba_pci.c */
-        extern void lba_set_iregs(struct parisc_device *, u32, u32);
-	struct device *dev;
-	struct klist_iter i;
+	struct ibase_data_struct ibase_data = {
+		.ioc		= ioc,
+		.ioc_num	= ioc_num,
+	};
 
-	klist_iter_init(&sba->dev.klist_children, &i);
-	while ((dev = next_device(&i))) {
-		struct parisc_device *lba = to_parisc_device(dev);
-		int rope_num = (lba->hpa.start >> 13) & 0xf;
-		if (rope_num >> 3 == ioc_num)
-			lba_set_iregs(lba, ioc->ibase, ioc->imask);
-	}
-	klist_iter_exit(&i);
+	device_for_each_child(&sba->dev, &ibase_data,
+			      setup_ibase_imask_callback);
 }
+
+#ifdef SBA_AGP_SUPPORT
+static int
+sba_ioc_find_quicksilver(struct device *dev, void *data)
+{
+	int *agp_found = data;
+	struct parisc_device *lba = to_parisc_device(dev);
+
+	if (IS_QUICKSILVER(lba))
+		*agp_found = 1;
+	return 0;
+}
+#endif
 
 static void
 sba_ioc_init_pluto(struct parisc_device *sba, struct ioc *ioc, int ioc_num)
@@ -1234,7 +1279,7 @@ sba_ioc_init_pluto(struct parisc_device *sba, struct ioc *ioc, int ioc_num)
 	ioc->pdir_size = (iova_space_size / IOVP_SIZE) * sizeof(u64);
 
 	DBG_INIT("%s() hpa 0x%p IOV %dMB (%d bits)\n",
-		__FUNCTION__, ioc->ioc_hpa, iova_space_size >> 20,
+		__func__, ioc->ioc_hpa, iova_space_size >> 20,
 		iov_order + PAGE_SHIFT);
 
 	ioc->pdir_base = (void *) __get_free_pages(GFP_KERNEL,
@@ -1245,7 +1290,7 @@ sba_ioc_init_pluto(struct parisc_device *sba, struct ioc *ioc, int ioc_num)
 	memset(ioc->pdir_base, 0, ioc->pdir_size);
 
 	DBG_INIT("%s() pdir %p size %x\n",
-			__FUNCTION__, ioc->pdir_base, ioc->pdir_size);
+			__func__, ioc->pdir_base, ioc->pdir_size);
 
 #ifdef SBA_HINT_SUPPORT
 	ioc->hint_shift_pdir = iov_order + PAGE_SHIFT;
@@ -1305,9 +1350,6 @@ sba_ioc_init_pluto(struct parisc_device *sba, struct ioc *ioc, int ioc_num)
 	WRITE_REG(ioc->ibase | 31, ioc->ioc_hpa + IOC_PCOM);
 
 #ifdef SBA_AGP_SUPPORT
-{
-	struct klist_iter i;
-	struct device *dev = NULL;
 
 	/*
 	** If an AGP device is present, only use half of the IOV space
@@ -1317,23 +1359,15 @@ sba_ioc_init_pluto(struct parisc_device *sba, struct ioc *ioc, int ioc_num)
 	** We program the next pdir index after we stop w/ a key for
 	** the GART code to handshake on.
 	*/
-	klist_iter_init(&sba->dev.klist_children, &i);
-	while ((dev = next_device(&i))) {
-		struct parisc_device *lba = to_parisc_device(dev);
-		if (IS_QUICKSILVER(lba))
-			agp_found = 1;
-	}
-	klist_iter_exit(&i);
+	device_for_each_child(&sba->dev, &agp_found, sba_ioc_find_quicksilver);
 
 	if (agp_found && sba_reserve_agpgart) {
 		printk(KERN_INFO "%s: reserving %dMb of IOVA space for agpgart\n",
-		       __FUNCTION__, (iova_space_size/2) >> 20);
+		       __func__, (iova_space_size/2) >> 20);
 		ioc->pdir_size /= 2;
 		ioc->pdir_base[PDIR_INDEX(iova_space_size/2)] = SBA_AGPGART_COOKIE;
 	}
-}
 #endif /*SBA_AGP_SUPPORT*/
-
 }
 
 static void
@@ -1356,7 +1390,7 @@ sba_ioc_init(struct parisc_device *sba, struct ioc *ioc, int ioc_num)
 	** for DMA hints - ergo only 30 bits max.
 	*/
 
-	iova_space_size = (u32) (num_physpages/global_ioc_cnt);
+	iova_space_size = (u32) (totalram_pages/global_ioc_cnt);
 
 	/* limit IOVA space size to 1MB-1GB */
 	if (iova_space_size < (1 << (20 - PAGE_SHIFT))) {
@@ -1379,16 +1413,16 @@ sba_ioc_init(struct parisc_device *sba, struct ioc *ioc, int ioc_num)
 	ioc->pdir_size = pdir_size = (iova_space_size/IOVP_SIZE) * sizeof(u64);
 
 	DBG_INIT("%s() hpa 0x%lx mem %ldMB IOV %dMB (%d bits)\n",
-			__FUNCTION__,
+			__func__,
 			ioc->ioc_hpa,
-			(unsigned long) num_physpages >> (20 - PAGE_SHIFT),
+			(unsigned long) totalram_pages >> (20 - PAGE_SHIFT),
 			iova_space_size>>20,
 			iov_order + PAGE_SHIFT);
 
 	ioc->pdir_base = sba_alloc_pdir(pdir_size);
 
 	DBG_INIT("%s() pdir %p size %x\n",
-			__FUNCTION__, ioc->pdir_base, pdir_size);
+			__func__, ioc->pdir_base, pdir_size);
 
 #ifdef SBA_HINT_SUPPORT
 	/* FIXME : DMA HINTs not used */
@@ -1416,7 +1450,7 @@ sba_ioc_init(struct parisc_device *sba, struct ioc *ioc, int ioc_num)
 #endif
 
 	DBG_INIT("%s() IOV base 0x%lx mask 0x%0lx\n",
-		__FUNCTION__, ioc->ibase, ioc->imask);
+		__func__, ioc->ibase, ioc->imask);
 
 	/*
 	** FIXME: Hint registers are programmed with default hint
@@ -1443,7 +1477,7 @@ sba_ioc_init(struct parisc_device *sba, struct ioc *ioc, int ioc_num)
 
 	ioc->ibase = 0; /* used by SBA_IOVA and related macros */	
 
-	DBG_INIT("%s() DONE\n", __FUNCTION__);
+	DBG_INIT("%s() DONE\n", __func__);
 }
 
 
@@ -1517,7 +1551,7 @@ printk("sba_hw_init(): mem_boot 0x%x 0x%x 0x%x 0x%x\n", PAGE0->mem_boot.hpa,
 	if (!IS_PLUTO(sba_dev->dev)) {
 		ioc_ctl = READ_REG(sba_dev->sba_hpa+IOC_CTRL);
 		DBG_INIT("%s() hpa 0x%lx ioc_ctl 0x%Lx ->",
-			__FUNCTION__, sba_dev->sba_hpa, ioc_ctl);
+			__func__, sba_dev->sba_hpa, ioc_ctl);
 		ioc_ctl &= ~(IOC_CTRL_RM | IOC_CTRL_NC | IOC_CTRL_CE);
 		ioc_ctl |= IOC_CTRL_DD | IOC_CTRL_D4 | IOC_CTRL_TC;
 			/* j6700 v1.6 firmware sets 0x294f */
@@ -1648,7 +1682,7 @@ sba_common_init(struct sba_device *sba_dev)
 
 		res_size >>= 3;  /* convert bit count to byte count */
 		DBG_INIT("%s() res_size 0x%x\n",
-			__FUNCTION__, res_size);
+			__func__, res_size);
 
 		sba_dev->ioc[i].res_size = res_size;
 		sba_dev->ioc[i].res_map = (char *) __get_free_pages(GFP_KERNEL, get_order(res_size));
@@ -1661,7 +1695,7 @@ sba_common_init(struct sba_device *sba_dev)
 		if (NULL == sba_dev->ioc[i].res_map)
 		{
 			panic("%s:%s() could not allocate resource map\n",
-			      __FILE__, __FUNCTION__ );
+			      __FILE__, __func__ );
 		}
 
 		memset(sba_dev->ioc[i].res_map, 0, res_size);
@@ -1698,7 +1732,7 @@ sba_common_init(struct sba_device *sba_dev)
 #endif
 
 		DBG_INIT("%s() %d res_map %x %p\n",
-			__FUNCTION__, i, res_size, sba_dev->ioc[i].res_map);
+			__func__, i, res_size, sba_dev->ioc[i].res_map);
 	}
 
 	spin_lock_init(&sba_dev->sba_lock);
@@ -1847,7 +1881,7 @@ static struct parisc_device_id sba_tbl[] = {
 	{ 0, }
 };
 
-int sba_driver_callback(struct parisc_device *);
+static int sba_driver_callback(struct parisc_device *);
 
 static struct parisc_driver sba_driver = {
 	.name =		MODULE_NAME,
@@ -1860,15 +1894,16 @@ static struct parisc_driver sba_driver = {
 ** If so, initialize the chip and tell other partners in crime they
 ** have work to do.
 */
-int
-sba_driver_callback(struct parisc_device *dev)
+static int sba_driver_callback(struct parisc_device *dev)
 {
 	struct sba_device *sba_dev;
 	u32 func_class;
 	int i;
 	char *version;
 	void __iomem *sba_addr = ioremap_nocache(dev->hpa.start, SBA_FUNC_SIZE);
-	struct proc_dir_entry *info_entry, *bitmap_entry, *root;
+#ifdef CONFIG_PROC_FS
+	struct proc_dir_entry *root;
+#endif
 
 	sba_dump_ranges(sba_addr);
 
@@ -1909,8 +1944,8 @@ sba_driver_callback(struct parisc_device *dev)
 			global_ioc_cnt *= 2;
 	}
 
-	printk(KERN_INFO "%s found %s at 0x%lx\n",
-		MODULE_NAME, version, dev->hpa.start);
+	printk(KERN_INFO "%s found %s at 0x%llx\n",
+		MODULE_NAME, version, (unsigned long long)dev->hpa.start);
 
 	sba_dev = kzalloc(sizeof(struct sba_device), GFP_KERNEL);
 	if (!sba_dev) {
@@ -1946,18 +1981,10 @@ sba_driver_callback(struct parisc_device *dev)
 		break;
 	}
 
-	info_entry = create_proc_entry("sba_iommu", 0, root);
-	bitmap_entry = create_proc_entry("sba_iommu-bitmap", 0, root);
-
-	if (info_entry)
-		info_entry->proc_fops = &sba_proc_fops;
-
-	if (bitmap_entry)
-		bitmap_entry->proc_fops = &sba_proc_bitmap_fops;
+	proc_create("sba_iommu", 0, root, &sba_proc_fops);
+	proc_create("sba_iommu-bitmap", 0, root, &sba_proc_bitmap_fops);
 #endif
 
-	parisc_vmerge_boundary = IOVP_SIZE;
-	parisc_vmerge_max_size = IOVP_SIZE * BITS_PER_LONG;
 	parisc_has_iommu();
 	return 0;
 }
@@ -1983,7 +2010,7 @@ void __init sba_init(void)
 void * sba_get_iommu(struct parisc_device *pci_hba)
 {
 	struct parisc_device *sba_dev = parisc_parent(pci_hba);
-	struct sba_device *sba = sba_dev->dev.driver_data;
+	struct sba_device *sba = dev_get_drvdata(&sba_dev->dev);
 	char t = sba_dev->id.hw_type;
 	int iocnum = (pci_hba->hw_path >> 3);	/* rope # */
 
@@ -2004,7 +2031,7 @@ void * sba_get_iommu(struct parisc_device *pci_hba)
 void sba_directed_lmmio(struct parisc_device *pci_hba, struct resource *r)
 {
 	struct parisc_device *sba_dev = parisc_parent(pci_hba);
-	struct sba_device *sba = sba_dev->dev.driver_data;
+	struct sba_device *sba = dev_get_drvdata(&sba_dev->dev);
 	char t = sba_dev->id.hw_type;
 	int i;
 	int rope = (pci_hba->hw_path & (ROPES_PER_IOC-1));  /* rope # */
@@ -2030,6 +2057,7 @@ void sba_directed_lmmio(struct parisc_device *pci_hba, struct resource *r)
 		r->start = (base & ~1UL) | PCI_F_EXTEND;
 		size = ~ READ_REG32(reg + LMMIO_DIRECT0_MASK);
 		r->end = r->start + size;
+		r->flags = IORESOURCE_MEM;
 	}
 }
 
@@ -2046,7 +2074,7 @@ void sba_directed_lmmio(struct parisc_device *pci_hba, struct resource *r)
 void sba_distributed_lmmio(struct parisc_device *pci_hba, struct resource *r )
 {
 	struct parisc_device *sba_dev = parisc_parent(pci_hba);
-	struct sba_device *sba = sba_dev->dev.driver_data;
+	struct sba_device *sba = dev_get_drvdata(&sba_dev->dev);
 	char t = sba_dev->id.hw_type;
 	int base, size;
 	int rope = (pci_hba->hw_path & (ROPES_PER_IOC-1));  /* rope # */
@@ -2066,4 +2094,5 @@ void sba_distributed_lmmio(struct parisc_device *pci_hba, struct resource *r )
 	size = (~READ_REG32(sba->sba_hpa + LMMIO_DIST_MASK)) / ROPES_PER_IOC;
 	r->start += rope * (size + 1);	/* adjust base for this rope */
 	r->end = r->start + size;
+	r->flags = IORESOURCE_MEM;
 }

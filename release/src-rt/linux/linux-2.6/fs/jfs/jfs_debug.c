@@ -21,66 +21,29 @@
 #include <linux/ctype.h>
 #include <linux/module.h>
 #include <linux/proc_fs.h>
+#include <linux/seq_file.h>
 #include <asm/uaccess.h>
 #include "jfs_incore.h"
 #include "jfs_filsys.h"
 #include "jfs_debug.h"
 
-#ifdef CONFIG_JFS_DEBUG
-void dump_mem(char *label, void *data, int length)
-{
-	int i, j;
-	int *intptr = data;
-	char *charptr = data;
-	char buf[10], line[80];
-
-	printk("%s: dump of %d bytes of data at 0x%p\n\n", label, length,
-	       data);
-	for (i = 0; i < length; i += 16) {
-		line[0] = 0;
-		for (j = 0; (j < 4) && (i + j * 4 < length); j++) {
-			sprintf(buf, " %08x", intptr[i / 4 + j]);
-			strcat(line, buf);
-		}
-		buf[0] = ' ';
-		buf[2] = 0;
-		for (j = 0; (j < 16) && (i + j < length); j++) {
-			buf[1] =
-			    isprint(charptr[i + j]) ? charptr[i + j] : '.';
-			strcat(line, buf);
-		}
-		printk("%s\n", line);
-	}
-}
-#endif
-
 #ifdef PROC_FS_JFS /* see jfs_debug.h */
 
 static struct proc_dir_entry *base;
 #ifdef CONFIG_JFS_DEBUG
-static int loglevel_read(char *page, char **start, off_t off,
-			 int count, int *eof, void *data)
+static int jfs_loglevel_proc_show(struct seq_file *m, void *v)
 {
-	int len;
-
-	len = sprintf(page, "%d\n", jfsloglevel);
-
-	len -= off;
-	*start = page + off;
-
-	if (len > count)
-		len = count;
-	else
-		*eof = 1;
-
-	if (len < 0)
-		len = 0;
-
-	return len;
+	seq_printf(m, "%d\n", jfsloglevel);
+	return 0;
 }
 
-static int loglevel_write(struct file *file, const char __user *buffer,
-			unsigned long count, void *data)
+static int jfs_loglevel_proc_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, jfs_loglevel_proc_show, NULL);
+}
+
+static ssize_t jfs_loglevel_proc_write(struct file *file,
+		const char __user *buffer, size_t count, loff_t *ppos)
 {
 	char c;
 
@@ -93,22 +56,30 @@ static int loglevel_write(struct file *file, const char __user *buffer,
 	jfsloglevel = c - '0';
 	return count;
 }
+
+static const struct file_operations jfs_loglevel_proc_fops = {
+	.owner		= THIS_MODULE,
+	.open		= jfs_loglevel_proc_open,
+	.read		= seq_read,
+	.llseek		= seq_lseek,
+	.release	= single_release,
+	.write		= jfs_loglevel_proc_write,
+};
 #endif
 
 static struct {
 	const char	*name;
-	read_proc_t	*read_fn;
-	write_proc_t	*write_fn;
+	const struct file_operations *proc_fops;
 } Entries[] = {
 #ifdef CONFIG_JFS_STATISTICS
-	{ "lmstats",	jfs_lmstats_read, },
-	{ "txstats",	jfs_txstats_read, },
-	{ "xtstat",	jfs_xtstat_read, },
-	{ "mpstat",	jfs_mpstat_read, },
+	{ "lmstats",	&jfs_lmstats_proc_fops, },
+	{ "txstats",	&jfs_txstats_proc_fops, },
+	{ "xtstat",	&jfs_xtstat_proc_fops, },
+	{ "mpstat",	&jfs_mpstat_proc_fops, },
 #endif
 #ifdef CONFIG_JFS_DEBUG
-	{ "TxAnchor",	jfs_txanchor_read, },
-	{ "loglevel",	loglevel_read, loglevel_write }
+	{ "TxAnchor",	&jfs_txanchor_proc_fops, },
+	{ "loglevel",	&jfs_loglevel_proc_fops }
 #endif
 };
 #define NPROCENT	ARRAY_SIZE(Entries)
@@ -117,17 +88,11 @@ void jfs_proc_init(void)
 {
 	int i;
 
-	if (!(base = proc_mkdir("jfs", proc_root_fs)))
+	if (!(base = proc_mkdir("fs/jfs", NULL)))
 		return;
-	base->owner = THIS_MODULE;
 
-	for (i = 0; i < NPROCENT; i++) {
-		struct proc_dir_entry *p;
-		if ((p = create_proc_entry(Entries[i].name, 0, base))) {
-			p->read_proc = Entries[i].read_fn;
-			p->write_proc = Entries[i].write_fn;
-		}
-	}
+	for (i = 0; i < NPROCENT; i++)
+		proc_create(Entries[i].name, 0, base, Entries[i].proc_fops);
 }
 
 void jfs_proc_clean(void)
@@ -137,7 +102,7 @@ void jfs_proc_clean(void)
 	if (base) {
 		for (i = 0; i < NPROCENT; i++)
 			remove_proc_entry(Entries[i].name, base);
-		remove_proc_entry("jfs", proc_root_fs);
+		remove_proc_entry("fs/jfs", NULL);
 	}
 }
 

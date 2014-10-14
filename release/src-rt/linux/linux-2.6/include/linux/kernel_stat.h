@@ -1,11 +1,12 @@
 #ifndef _LINUX_KERNEL_STAT_H
 #define _LINUX_KERNEL_STAT_H
 
-#include <asm/irq.h>
 #include <linux/smp.h>
 #include <linux/threads.h>
 #include <linux/percpu.h>
 #include <linux/cpumask.h>
+#include <linux/interrupt.h>
+#include <asm/irq.h>
 #include <asm/cputime.h>
 
 /*
@@ -23,11 +24,17 @@ struct cpu_usage_stat {
 	cputime64_t idle;
 	cputime64_t iowait;
 	cputime64_t steal;
+	cputime64_t guest;
+	cputime64_t guest_nice;
 };
 
 struct kernel_stat {
 	struct cpu_usage_stat	cpustat;
-	unsigned int irqs[NR_IRQS];
+#ifndef CONFIG_GENERIC_HARDIRQS
+       unsigned int irqs[NR_IRQS];
+#endif
+	unsigned long irqs_sum;
+	unsigned int softirqs[NR_SOFTIRQS];
 };
 
 DECLARE_PER_CPU(struct kernel_stat, kstat);
@@ -38,21 +45,81 @@ DECLARE_PER_CPU(struct kernel_stat, kstat);
 
 extern unsigned long long nr_context_switches(void);
 
+#ifndef CONFIG_GENERIC_HARDIRQS
+
+struct irq_desc;
+
+static inline void kstat_incr_irqs_this_cpu(unsigned int irq,
+					    struct irq_desc *desc)
+{
+	__this_cpu_inc(kstat.irqs[irq]);
+	__this_cpu_inc(kstat.irqs_sum);
+}
+
+static inline unsigned int kstat_irqs_cpu(unsigned int irq, int cpu)
+{
+       return kstat_cpu(cpu).irqs[irq];
+}
+#else
+#include <linux/irq.h>
+extern unsigned int kstat_irqs_cpu(unsigned int irq, int cpu);
+
+#define kstat_incr_irqs_this_cpu(irqno, DESC)		\
+do {							\
+	__this_cpu_inc(*(DESC)->kstat_irqs);		\
+	__this_cpu_inc(kstat.irqs_sum);			\
+} while (0)
+
+#endif
+
+static inline void kstat_incr_softirqs_this_cpu(unsigned int irq)
+{
+	__this_cpu_inc(kstat.softirqs[irq]);
+}
+
+static inline unsigned int kstat_softirqs_cpu(unsigned int irq, int cpu)
+{
+       return kstat_cpu(cpu).softirqs[irq];
+}
+
 /*
  * Number of interrupts per specific IRQ source, since bootup
  */
-static inline int kstat_irqs(int irq)
+#ifndef CONFIG_GENERIC_HARDIRQS
+static inline unsigned int kstat_irqs(unsigned int irq)
 {
-	int cpu, sum = 0;
+	unsigned int sum = 0;
+	int cpu;
 
 	for_each_possible_cpu(cpu)
-		sum += kstat_cpu(cpu).irqs[irq];
+		sum += kstat_irqs_cpu(irq, cpu);
 
 	return sum;
 }
+#else
+extern unsigned int kstat_irqs(unsigned int irq);
+#endif
 
-extern void account_user_time(struct task_struct *, cputime_t);
-extern void account_system_time(struct task_struct *, int, cputime_t);
-extern void account_steal_time(struct task_struct *, cputime_t);
+/*
+ * Number of interrupts per cpu, since bootup
+ */
+static inline unsigned int kstat_cpu_irqs_sum(unsigned int cpu)
+{
+	return kstat_cpu(cpu).irqs_sum;
+}
+
+/*
+ * Lock/unlock the current runqueue - to extract task statistics:
+ */
+extern unsigned long long task_delta_exec(struct task_struct *);
+
+extern void account_user_time(struct task_struct *, cputime_t, cputime_t);
+extern void account_system_time(struct task_struct *, int, cputime_t, cputime_t);
+extern void account_steal_time(cputime_t);
+extern void account_idle_time(cputime_t);
+
+extern void account_process_tick(struct task_struct *, int user);
+extern void account_steal_ticks(unsigned long ticks);
+extern void account_idle_ticks(unsigned long ticks);
 
 #endif /* _LINUX_KERNEL_STAT_H */

@@ -22,13 +22,12 @@
 #include <linux/spinlock.h>
 #include <linux/smp.h>
 #include <linux/mm.h>
-#include <linux/slab.h>
 #include <linux/kernel_stat.h>
 
 #include <asm/errno.h>
-#include <asm/gdb-stub.h>
 #include <asm/signal.h>
 #include <asm/system.h>
+#include <asm/time.h>
 #include <asm/io.h>
 
 #include <asm/sibyte/sb1250_regs.h>
@@ -44,58 +43,27 @@
  * for interrupt lines
  */
 
-
-static void end_sb1250_irq(unsigned int irq);
-static void enable_sb1250_irq(unsigned int irq);
-static void disable_sb1250_irq(unsigned int irq);
-static void ack_sb1250_irq(unsigned int irq);
-#ifdef CONFIG_SMP
-static void sb1250_set_affinity(unsigned int irq, cpumask_t mask);
-#endif
-
 #ifdef CONFIG_SIBYTE_HAS_LDT
 extern unsigned long ldt_eoi_space;
 #endif
 
-#ifdef CONFIG_KGDB
-static int kgdb_irq;
-
-/* Default to UART1 */
-int kgdb_port = 1;
-#ifdef CONFIG_SIBYTE_SB1250_DUART
-extern char sb1250_duart_present[];
-#endif
-#endif
-
-static struct irq_chip sb1250_irq_type = {
-	.name = "SB1250-IMR",
-	.ack = ack_sb1250_irq,
-	.mask = disable_sb1250_irq,
-	.mask_ack = ack_sb1250_irq,
-	.unmask = enable_sb1250_irq,
-	.end = end_sb1250_irq,
-#ifdef CONFIG_SMP
-	.set_affinity = sb1250_set_affinity
-#endif
-};
-
 /* Store the CPU id (not the logical number) */
 int sb1250_irq_owner[SB1250_NR_IRQS];
 
-DEFINE_SPINLOCK(sb1250_imr_lock);
+static DEFINE_RAW_SPINLOCK(sb1250_imr_lock);
 
 void sb1250_mask_irq(int cpu, int irq)
 {
 	unsigned long flags;
 	u64 cur_ints;
 
-	spin_lock_irqsave(&sb1250_imr_lock, flags);
+	raw_spin_lock_irqsave(&sb1250_imr_lock, flags);
 	cur_ints = ____raw_readq(IOADDR(A_IMR_MAPPER(cpu) +
 					R_IMR_INTERRUPT_MASK));
 	cur_ints |= (((u64) 1) << irq);
 	____raw_writeq(cur_ints, IOADDR(A_IMR_MAPPER(cpu) +
 					R_IMR_INTERRUPT_MASK));
-	spin_unlock_irqrestore(&sb1250_imr_lock, flags);
+	raw_spin_unlock_irqrestore(&sb1250_imr_lock, flags);
 }
 
 void sb1250_unmask_irq(int cpu, int irq)
@@ -103,29 +71,31 @@ void sb1250_unmask_irq(int cpu, int irq)
 	unsigned long flags;
 	u64 cur_ints;
 
-	spin_lock_irqsave(&sb1250_imr_lock, flags);
+	raw_spin_lock_irqsave(&sb1250_imr_lock, flags);
 	cur_ints = ____raw_readq(IOADDR(A_IMR_MAPPER(cpu) +
 					R_IMR_INTERRUPT_MASK));
 	cur_ints &= ~(((u64) 1) << irq);
 	____raw_writeq(cur_ints, IOADDR(A_IMR_MAPPER(cpu) +
 					R_IMR_INTERRUPT_MASK));
-	spin_unlock_irqrestore(&sb1250_imr_lock, flags);
+	raw_spin_unlock_irqrestore(&sb1250_imr_lock, flags);
 }
 
 #ifdef CONFIG_SMP
-static void sb1250_set_affinity(unsigned int irq, cpumask_t mask)
+static int sb1250_set_affinity(struct irq_data *d, const struct cpumask *mask,
+			       bool force)
 {
 	int i = 0, old_cpu, cpu, int_on;
+	unsigned int irq = d->irq;
 	u64 cur_ints;
 	unsigned long flags;
 
-	i = first_cpu(mask);
+	i = cpumask_first(mask);
 
 	/* Convert logical CPU to physical CPU */
 	cpu = cpu_logical_map(i);
 
 	/* Protect against other affinity changers and IMR manipulation */
-	spin_lock_irqsave(&sb1250_imr_lock, flags);
+	raw_spin_lock_irqsave(&sb1250_imr_lock, flags);
 
 	/* Swizzle each CPU's IMR (but leave the IP selection alone) */
 	old_cpu = sb1250_irq_owner[irq];
@@ -147,25 +117,30 @@ static void sb1250_set_affinity(unsigned int irq, cpumask_t mask)
 		____raw_writeq(cur_ints, IOADDR(A_IMR_MAPPER(cpu) +
 					R_IMR_INTERRUPT_MASK));
 	}
-	spin_unlock_irqrestore(&sb1250_imr_lock, flags);
+	raw_spin_unlock_irqrestore(&sb1250_imr_lock, flags);
+
+	return 0;
 }
 #endif
 
-/*****************************************************************************/
-
-static void disable_sb1250_irq(unsigned int irq)
+static void disable_sb1250_irq(struct irq_data *d)
 {
+	unsigned int irq = d->irq;
+
 	sb1250_mask_irq(sb1250_irq_owner[irq], irq);
 }
 
-static void enable_sb1250_irq(unsigned int irq)
+static void enable_sb1250_irq(struct irq_data *d)
 {
+	unsigned int irq = d->irq;
+
 	sb1250_unmask_irq(sb1250_irq_owner[irq], irq);
 }
 
 
-static void ack_sb1250_irq(unsigned int irq)
+static void ack_sb1250_irq(struct irq_data *d)
 {
+	unsigned int irq = d->irq;
 #ifdef CONFIG_SIBYTE_HAS_LDT
 	u64 pending;
 
@@ -208,60 +183,27 @@ static void ack_sb1250_irq(unsigned int irq)
 	sb1250_mask_irq(sb1250_irq_owner[irq], irq);
 }
 
-
-static void end_sb1250_irq(unsigned int irq)
-{
-	if (!(irq_desc[irq].status & (IRQ_DISABLED | IRQ_INPROGRESS))) {
-		sb1250_unmask_irq(sb1250_irq_owner[irq], irq);
-	}
-}
-
+static struct irq_chip sb1250_irq_type = {
+	.name = "SB1250-IMR",
+	.irq_mask_ack = ack_sb1250_irq,
+	.irq_unmask = enable_sb1250_irq,
+	.irq_mask = disable_sb1250_irq,
+#ifdef CONFIG_SMP
+	.irq_set_affinity = sb1250_set_affinity
+#endif
+};
 
 void __init init_sb1250_irqs(void)
 {
 	int i;
 
 	for (i = 0; i < SB1250_NR_IRQS; i++) {
-		set_irq_chip(i, &sb1250_irq_type);
+		irq_set_chip_and_handler(i, &sb1250_irq_type,
+					 handle_level_irq);
 		sb1250_irq_owner[i] = 0;
 	}
 }
 
-
-static irqreturn_t  sb1250_dummy_handler(int irq, void *dev_id)
-{
-	return IRQ_NONE;
-}
-
-static struct irqaction sb1250_dummy_action = {
-	.handler = sb1250_dummy_handler,
-	.flags   = 0,
-	.mask    = CPU_MASK_NONE,
-	.name    = "sb1250-private",
-	.next    = NULL,
-	.dev_id  = 0
-};
-
-int sb1250_steal_irq(int irq)
-{
-	struct irq_desc *desc = irq_desc + irq;
-	unsigned long flags;
-	int retval = 0;
-
-	if (irq >= SB1250_NR_IRQS)
-		return -EINVAL;
-
-	spin_lock_irqsave(&desc->lock,flags);
-	/* Don't allow sharing at all for these */
-	if (desc->action != NULL)
-		retval = -EBUSY;
-	else {
-		desc->action = &sb1250_dummy_action;
-		desc->depth = 0;
-	}
-	spin_unlock_irqrestore(&desc->lock,flags);
-	return 0;
-}
 
 /*
  *  arch_init_irq is called early in the boot sequence from init/main.c via
@@ -280,7 +222,7 @@ int sb1250_steal_irq(int irq)
  * On the second cpu, everything is set to IP5, which is
  * ignored, EXCEPT the mailbox interrupt.  That one is
  * set to IP[2] so it is handled.  This is needed so we
- * can do cross-cpu function calls, as requred by SMP
+ * can do cross-cpu function calls, as required by SMP
  */
 
 #define IMR_IP2_VAL	K_INT_MAP_I0
@@ -334,75 +276,38 @@ void __init arch_init_irq(void)
 	__raw_writeq(tmp, IOADDR(A_IMR_REGISTER(0, R_IMR_INTERRUPT_MASK)));
 	__raw_writeq(tmp, IOADDR(A_IMR_REGISTER(1, R_IMR_INTERRUPT_MASK)));
 
-	sb1250_steal_irq(K_INT_MBOX_0);
-
 	/*
 	 * Note that the timer interrupts are also mapped, but this is
 	 * done in sb1250_time_init().  Also, the profiling driver
 	 * does its own management of IP7.
 	 */
 
-#ifdef CONFIG_KGDB
-	imask |= STATUSF_IP6;
-#endif
 	/* Enable necessary IPs, disable the rest */
 	change_c0_status(ST0_IM, imask);
-
-#ifdef CONFIG_KGDB
-	if (kgdb_flag) {
-		kgdb_irq = K_INT_UART_0 + kgdb_port;
-
-#ifdef CONFIG_SIBYTE_SB1250_DUART
-		sb1250_duart_present[kgdb_port] = 0;
-#endif
-		/* Setup uart 1 settings, mapper */
-		__raw_writeq(M_DUART_IMR_BRK,
-			     IOADDR(A_DUART_IMRREG(kgdb_port)));
-
-		sb1250_steal_irq(kgdb_irq);
-		__raw_writeq(IMR_IP6_VAL,
-			     IOADDR(A_IMR_REGISTER(0,
-						   R_IMR_INTERRUPT_MAP_BASE) +
-				    (kgdb_irq << 3)));
-		sb1250_unmask_irq(0, kgdb_irq);
-	}
-#endif
 }
 
-#ifdef CONFIG_KGDB
-
-#include <linux/delay.h>
-
-#define duart_out(reg, val)     csr_out32(val, IOADDR(A_DUART_CHANREG(kgdb_port,reg)))
-#define duart_in(reg)           csr_in32(IOADDR(A_DUART_CHANREG(kgdb_port,reg)))
-
-static void sb1250_kgdb_interrupt(void)
-{
-	/*
-	 * Clear break-change status (allow some time for the remote
-	 * host to stop the break, since we would see another
-	 * interrupt on the end-of-break too)
-	 */
-	kstat_this_cpu.irqs[kgdb_irq]++;
-	mdelay(500);
-	duart_out(R_DUART_CMD, V_DUART_MISC_CMD_RESET_BREAK_INT |
-				M_DUART_RX_EN | M_DUART_TX_EN);
-	set_async_breakpoint(&get_irq_regs()->cp0_epc);
-}
-
-#endif 	/* CONFIG_KGDB */
-
-extern void sb1250_timer_interrupt(void);
 extern void sb1250_mailbox_interrupt(void);
+
+static inline void dispatch_ip2(void)
+{
+	unsigned int cpu = smp_processor_id();
+	unsigned long long mask;
+
+	/*
+	 * Default...we've hit an IP[2] interrupt, which means we've got to
+	 * check the 1250 interrupt registers to figure out what to do.  Need
+	 * to detect which CPU we're on, now that smp_affinity is supported.
+	 */
+	mask = __raw_readq(IOADDR(A_IMR_REGISTER(cpu,
+				  R_IMR_INTERRUPT_STATUS_BASE)));
+	if (mask)
+		do_IRQ(fls64(mask) - 1);
+}
 
 asmlinkage void plat_irq_dispatch(void)
 {
+	unsigned int cpu = smp_processor_id();
 	unsigned int pending;
-
-#ifdef CONFIG_SIBYTE_SB1250_PROF
-	/* Set compare to count to silence count/compare timer interrupts */
-	write_c0_compare(read_c0_count());
-#endif
 
 	/*
 	 * What a pain. We have to be really careful saving the upper 32 bits
@@ -416,40 +321,18 @@ asmlinkage void plat_irq_dispatch(void)
 
 	pending = read_c0_cause() & read_c0_status() & ST0_IM;
 
-#ifdef CONFIG_SIBYTE_SB1250_PROF
-	if (pending & CAUSEF_IP7) /* Cpu performance counter interrupt */
-		sbprof_cpu_intr();
-	else
-#endif
-
-	if (pending & CAUSEF_IP4)
-		sb1250_timer_interrupt();
+	if (pending & CAUSEF_IP7) /* CPU performance counter interrupt */
+		do_IRQ(MIPS_CPU_IRQ_BASE + 7);
+	else if (pending & CAUSEF_IP4)
+		do_IRQ(K_INT_TIMER_0 + cpu); 	/* sb1250_timer_interrupt() */
 
 #ifdef CONFIG_SMP
 	else if (pending & CAUSEF_IP3)
 		sb1250_mailbox_interrupt();
 #endif
 
-#ifdef CONFIG_KGDB
-	else if (pending & CAUSEF_IP6)			/* KGDB (uart 1) */
-		sb1250_kgdb_interrupt();
-#endif
-
-	else if (pending & CAUSEF_IP2) {
-		unsigned long long mask;
-
-		/*
-		 * Default...we've hit an IP[2] interrupt, which means we've
-		 * got to check the 1250 interrupt registers to figure out what
-		 * to do.  Need to detect which CPU we're on, now that
-		 * smp_affinity is supported.
-		 */
-		mask = __raw_readq(IOADDR(A_IMR_REGISTER(smp_processor_id(),
-		                              R_IMR_INTERRUPT_STATUS_BASE)));
-		if (mask)
-			do_IRQ(fls64(mask) - 1);
-		else
-			spurious_interrupt();
-	} else
+	else if (pending & CAUSEF_IP2)
+		dispatch_ip2();
+	else
 		spurious_interrupt();
 }

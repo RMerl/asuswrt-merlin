@@ -7,10 +7,11 @@
 #include <linux/jiffies.h>
 #include <linux/delay.h>
 #include <linux/init.h>
+#include <linux/timex.h>
+#include <linux/smp.h>
 
-#include <asm/timex.h>
-
-static unsigned long preset_lpj;
+unsigned long lpj_fine;
+unsigned long preset_lpj;
 static int __init lpj_setup(char *str)
 {
 	preset_lpj = simple_strtoul(str,NULL,0);
@@ -29,14 +30,14 @@ __setup("lpj=", lpj_setup);
 #define DELAY_CALIBRATION_TICKS			((HZ < 100) ? 1 : (HZ/100))
 #define MAX_DIRECT_CALIBRATION_RETRIES		5
 
-static unsigned long __devinit calibrate_delay_direct(void)
+static unsigned long __cpuinit calibrate_delay_direct(void)
 {
 	unsigned long pre_start, start, post_start;
 	unsigned long pre_end, end, post_end;
 	unsigned long start_jiffies;
-	unsigned long tsc_rate_min, tsc_rate_max;
-	unsigned long good_tsc_sum = 0;
-	unsigned long good_tsc_count = 0;
+	unsigned long timer_rate_min, timer_rate_max;
+	unsigned long good_timer_sum = 0;
+	unsigned long good_timer_count = 0;
 	int i;
 
 	if (read_current_timer(&pre_start) < 0 )
@@ -65,7 +66,7 @@ static unsigned long __devinit calibrate_delay_direct(void)
 		pre_start = 0;
 		read_current_timer(&start);
 		start_jiffies = jiffies;
-		while (jiffies <= (start_jiffies + 1)) {
+		while (time_before_eq(jiffies, start_jiffies + 1)) {
 			pre_start = start;
 			read_current_timer(&start);
 		}
@@ -73,108 +74,143 @@ static unsigned long __devinit calibrate_delay_direct(void)
 
 		pre_end = 0;
 		end = post_start;
-		while (jiffies <=
-		       (start_jiffies + 1 + DELAY_CALIBRATION_TICKS)) {
+		while (time_before_eq(jiffies, start_jiffies + 1 +
+					       DELAY_CALIBRATION_TICKS)) {
 			pre_end = end;
 			read_current_timer(&end);
 		}
 		read_current_timer(&post_end);
 
-		tsc_rate_max = (post_end - pre_start) / DELAY_CALIBRATION_TICKS;
-		tsc_rate_min = (pre_end - post_start) / DELAY_CALIBRATION_TICKS;
+		timer_rate_max = (post_end - pre_start) /
+					DELAY_CALIBRATION_TICKS;
+		timer_rate_min = (pre_end - post_start) /
+					DELAY_CALIBRATION_TICKS;
 
 		/*
-	 	 * If the upper limit and lower limit of the tsc_rate is
+		 * If the upper limit and lower limit of the timer_rate is
 		 * >= 12.5% apart, redo calibration.
 		 */
 		if (pre_start != 0 && pre_end != 0 &&
-		    (tsc_rate_max - tsc_rate_min) < (tsc_rate_max >> 3)) {
-			good_tsc_count++;
-			good_tsc_sum += tsc_rate_max;
+		    (timer_rate_max - timer_rate_min) < (timer_rate_max >> 3)) {
+			good_timer_count++;
+			good_timer_sum += timer_rate_max;
 		}
 	}
 
-	if (good_tsc_count)
-		return (good_tsc_sum/good_tsc_count);
+	if (good_timer_count)
+		return (good_timer_sum/good_timer_count);
 
 	printk(KERN_WARNING "calibrate_delay_direct() failed to get a good "
 	       "estimate for loops_per_jiffy.\nProbably due to long platform interrupts. Consider using \"lpj=\" boot option.\n");
 	return 0;
 }
 #else
-static unsigned long __devinit calibrate_delay_direct(void) {return 0;}
-#endif
-
-#if defined(CONFIG_BCM947XX) && defined(CONFIG_HWSIM)
-#include <asm/time.h>
+static unsigned long __cpuinit calibrate_delay_direct(void) {return 0;}
 #endif
 
 /*
  * This is the number of bits of precision for the loops_per_jiffy.  Each
- * bit takes on average 1.5/HZ seconds.  This (like the original) is a little
- * better than 1%
+ * time we refine our estimate after the first takes 1.5/HZ seconds, so try
+ * to start with a good estimate.
+ * For the boot cpu we can skip the delay calibration and assign it a value
+ * calculated based on the timer frequency.
+ * For the rest of the CPUs we cannot assume that the timer frequency is same as
+ * the cpu frequency, hence do the calibration for those.
  */
 #define LPS_PREC 8
 
-void __devinit calibrate_delay(void)
+static unsigned long __cpuinit calibrate_delay_converge(void)
 {
-	unsigned long ticks, loopbit;
-	int lps_precision = LPS_PREC;
+	/* First stage - slowly accelerate to find initial bounds */
+	unsigned long lpj, lpj_base, ticks, loopadd, loopadd_base, chop_limit;
+	int trials = 0, band = 0, trial_in_band = 0;
 
-#if defined(CONFIG_BCM947XX) && defined(CONFIG_HWSIM)
-	preset_lpj = 10 * (mips_hpt_frequency / 1000);
-#endif
-	if (preset_lpj) {
-		loops_per_jiffy = preset_lpj;
-		printk("Calibrating delay loop (skipped)... "
-			"%lu.%02lu BogoMIPS preset\n",
-			loops_per_jiffy/(500000/HZ),
-			(loops_per_jiffy/(5000/HZ)) % 100);
-	} else if ((loops_per_jiffy = calibrate_delay_direct()) != 0) {
-		printk("Calibrating delay using timer specific routine.. ");
-		printk("%lu.%02lu BogoMIPS (lpj=%lu)\n",
-			loops_per_jiffy/(500000/HZ),
-			(loops_per_jiffy/(5000/HZ)) % 100,
-			loops_per_jiffy);
-	} else {
-		loops_per_jiffy = (1<<12);
+	lpj = (1<<12);
 
-		printk(KERN_DEBUG "Calibrating delay loop... ");
-		while ((loops_per_jiffy <<= 1) != 0) {
-			/* wait for "start of" clock tick */
-			ticks = jiffies;
-			while (ticks == jiffies)
-				/* nothing */;
-			/* Go .. */
-			ticks = jiffies;
-			__delay(loops_per_jiffy);
-			ticks = jiffies - ticks;
-			if (ticks)
-				break;
+	/* wait for "start of" clock tick */
+	ticks = jiffies;
+	while (ticks == jiffies)
+		; /* nothing */
+	/* Go .. */
+	ticks = jiffies;
+	do {
+		if (++trial_in_band == (1<<band)) {
+			++band;
+			trial_in_band = 0;
 		}
+		__delay(lpj * band);
+		trials += band;
+	} while (ticks == jiffies);
+	/*
+	 * We overshot, so retreat to a clear underestimate. Then estimate
+	 * the largest likely undershoot. This defines our chop bounds.
+	 */
+	trials -= band;
+	loopadd_base = lpj * band;
+	lpj_base = lpj * trials;
 
-		/*
-		 * Do a binary approximation to get loops_per_jiffy set to
-		 * equal one clock (up to lps_precision bits)
-		 */
-		loops_per_jiffy >>= 1;
-		loopbit = loops_per_jiffy;
-		while (lps_precision-- && (loopbit >>= 1)) {
-			loops_per_jiffy |= loopbit;
-			ticks = jiffies;
-			while (ticks == jiffies)
-				/* nothing */;
-			ticks = jiffies;
-			__delay(loops_per_jiffy);
-			if (jiffies != ticks)	/* longer than 1 tick */
-				loops_per_jiffy &= ~loopbit;
-		}
+recalibrate:
+	lpj = lpj_base;
+	loopadd = loopadd_base;
 
-		/* Round the value and print it */
-		printk("%lu.%02lu BogoMIPS (lpj=%lu)\n",
-			loops_per_jiffy/(500000/HZ),
-			(loops_per_jiffy/(5000/HZ)) % 100,
-			loops_per_jiffy);
+	/*
+	 * Do a binary approximation to get lpj set to
+	 * equal one clock (up to LPS_PREC bits)
+	 */
+	chop_limit = lpj >> LPS_PREC;
+	while (loopadd > chop_limit) {
+		lpj += loopadd;
+		ticks = jiffies;
+		while (ticks == jiffies)
+			; /* nothing */
+		ticks = jiffies;
+		__delay(lpj);
+		if (jiffies != ticks)	/* longer than 1 tick */
+			lpj -= loopadd;
+		loopadd >>= 1;
+	}
+	/*
+	 * If we incremented every single time possible, presume we've
+	 * massively underestimated initially, and retry with a higher
+	 * start, and larger range. (Only seen on x86_64, due to SMIs)
+	 */
+	if (lpj + loopadd * 2 == lpj_base + loopadd_base * 2) {
+		lpj_base = lpj;
+		loopadd_base <<= 2;
+		goto recalibrate;
 	}
 
+	return lpj;
+}
+
+void __cpuinit calibrate_delay(void)
+{
+	unsigned long lpj;
+	static bool printed;
+
+	if (preset_lpj) {
+		lpj = preset_lpj;
+		if (!printed)
+			pr_info("Calibrating delay loop (skipped) "
+				"preset value.. ");
+	} else if ((!printed) && lpj_fine) {
+		lpj = lpj_fine;
+		pr_info("Calibrating delay loop (skipped), "
+			"value calculated using timer frequency.. ");
+	} else if ((lpj = calibrate_delay_direct()) != 0) {
+		if (!printed)
+			pr_info("Calibrating delay using timer "
+				"specific routine.. ");
+	} else {
+		if (!printed)
+			pr_info("Calibrating delay loop... ");
+		lpj = calibrate_delay_converge();
+	}
+	if (!printed)
+		pr_cont("%lu.%02lu BogoMIPS (lpj=%lu)\n",
+			lpj/(500000/HZ),
+			(lpj/(5000/HZ)) % 100, lpj);
+
+	loops_per_jiffy = lpj;
+	printed = true;
 }

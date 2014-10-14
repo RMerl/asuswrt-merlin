@@ -20,8 +20,8 @@
  *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
  */
 
-#include <sound/driver.h>
 #include <linux/interrupt.h>
+#include <linux/slab.h>
 #include <linux/usb.h>
 #include <sound/core.h>
 #include <sound/memalloc.h>
@@ -31,37 +31,31 @@
 #include "usbusx2y.h"
 #include "usX2Yhwdep.h"
 
-int usX2Y_hwdep_pcm_new(struct snd_card *card);
-
-
-static struct page * snd_us428ctls_vm_nopage(struct vm_area_struct *area, unsigned long address, int *type)
+static int snd_us428ctls_vm_fault(struct vm_area_struct *area,
+				  struct vm_fault *vmf)
 {
 	unsigned long offset;
 	struct page * page;
 	void *vaddr;
 
-	snd_printdd("ENTER, start %lXh, ofs %lXh, pgoff %ld, addr %lXh\n",
+	snd_printdd("ENTER, start %lXh, pgoff %ld\n",
 		   area->vm_start,
-		   address - area->vm_start,
-		   (address - area->vm_start) >> PAGE_SHIFT,
-		   address);
+		   vmf->pgoff);
 	
-	offset = area->vm_pgoff << PAGE_SHIFT;
-	offset += address - area->vm_start;
-	snd_assert((offset % PAGE_SIZE) == 0, return NOPAGE_SIGBUS);
+	offset = vmf->pgoff << PAGE_SHIFT;
 	vaddr = (char*)((struct usX2Ydev *)area->vm_private_data)->us428ctls_sharedmem + offset;
 	page = virt_to_page(vaddr);
 	get_page(page);
-	snd_printdd( "vaddr=%p made us428ctls_vm_nopage() return %p; offset=%lX\n", vaddr, page, offset);
+	vmf->page = page;
 
-	if (type)
-		*type = VM_FAULT_MINOR;
+	snd_printdd("vaddr=%p made us428ctls_vm_fault() page %p\n",
+		    vaddr, page);
 
-	return page;
+	return 0;
 }
 
-static struct vm_operations_struct us428ctls_vm_ops = {
-	.nopage = snd_us428ctls_vm_nopage,
+static const struct vm_operations_struct us428ctls_vm_ops = {
+	.fault = snd_us428ctls_vm_fault,
 };
 
 static int snd_us428ctls_mmap(struct snd_hwdep * hw, struct file *filp, struct vm_area_struct *area)
@@ -110,16 +104,6 @@ static unsigned int snd_us428ctls_poll(struct snd_hwdep *hw, struct file *file, 
 }
 
 
-static int snd_usX2Y_hwdep_open(struct snd_hwdep *hw, struct file *file)
-{
-	return 0;
-}
-
-static int snd_usX2Y_hwdep_release(struct snd_hwdep *hw, struct file *file)
-{
-	return 0;
-}
-
 static int snd_usX2Y_hwdep_dsp_status(struct snd_hwdep *hw,
 				      struct snd_hwdep_dsp_status *info)
 {
@@ -131,7 +115,7 @@ static int snd_usX2Y_hwdep_dsp_status(struct snd_hwdep *hw,
 	struct usX2Ydev	*us428 = hw->private_data;
 	int id = -1;
 
-	switch (le16_to_cpu(us428->chip.dev->descriptor.idProduct)) {
+	switch (le16_to_cpu(us428->dev->descriptor.idProduct)) {
 	case USB_ID_US122:
 		id = USX2Y_TYPE_122;
 		break;
@@ -181,14 +165,14 @@ static int usX2Y_create_usbmidi(struct snd_card *card)
        		.type = QUIRK_MIDI_FIXED_ENDPOINT,
 		.data = &quirk_data_2
 	};
-	struct usb_device *dev = usX2Y(card)->chip.dev;
+	struct usb_device *dev = usX2Y(card)->dev;
 	struct usb_interface *iface = usb_ifnum_to_if(dev, 0);
 	struct snd_usb_audio_quirk *quirk =
 		le16_to_cpu(dev->descriptor.idProduct) == USB_ID_US428 ?
 		&quirk_2 : &quirk_1;
 
 	snd_printdd("usX2Y_create_usbmidi \n");
-	return snd_usb_create_midi_interface(&usX2Y(card)->chip, iface, quirk);
+	return snd_usbmidi_create(card, iface, &usX2Y(card)->midi_list, quirk);
 }
 
 static int usX2Y_create_alsa_devices(struct snd_card *card)
@@ -219,14 +203,13 @@ static int snd_usX2Y_hwdep_dsp_load(struct snd_hwdep *hw,
 	snd_printdd( "dsp_load %s\n", dsp->name);
 
 	if (access_ok(VERIFY_READ, dsp->image, dsp->length)) {
-		struct usb_device* dev = priv->chip.dev;
-		char *buf = kmalloc(dsp->length, GFP_KERNEL);
-		if (!buf)
-			return -ENOMEM;
-		if (copy_from_user(buf, dsp->image, dsp->length)) {
-			kfree(buf);
-			return -EFAULT;
-		}
+		struct usb_device* dev = priv->dev;
+		char *buf;
+
+		buf = memdup_user(dsp->image, dsp->length);
+		if (IS_ERR(buf))
+			return PTR_ERR(buf);
+
 		err = usb_set_interface(dev, 0, 1);
 		if (err)
 			snd_printk(KERN_ERR "usb_set_interface error \n");
@@ -271,8 +254,6 @@ int usX2Y_hwdep_new(struct snd_card *card, struct usb_device* device)
 
 	hw->iface = SNDRV_HWDEP_IFACE_USX2Y;
 	hw->private_data = usX2Y(card);
-	hw->ops.open = snd_usX2Y_hwdep_open;
-	hw->ops.release = snd_usX2Y_hwdep_release;
 	hw->ops.dsp_status = snd_usX2Y_hwdep_dsp_status;
 	hw->ops.dsp_load = snd_usX2Y_hwdep_dsp_load;
 	hw->ops.mmap = snd_us428ctls_mmap;

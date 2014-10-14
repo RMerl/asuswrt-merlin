@@ -21,8 +21,8 @@
 #ifndef _LINUX_SISFB_H_
 #define _LINUX_SISFB_H_
 
+#include <linux/types.h>
 #include <asm/ioctl.h>
-#include <asm/types.h>
 
 /**********************************************/
 /*                   PUBLIC                   */
@@ -151,7 +151,7 @@ struct sisfb_cmd {
 	__u32  sisfb_result[4];
 };
 
-/* Addtional IOCTLs for communication sisfb <> X driver                */
+/* Additional IOCTLs for communication sisfb <> X driver                */
 /* If changing this, vgatypes.h must also be changed (for X driver)    */
 
 /* ioctl for identifying and giving some info (esp. memory heap start) */

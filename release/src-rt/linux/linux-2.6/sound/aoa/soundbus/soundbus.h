@@ -8,7 +8,7 @@
 #ifndef __SOUNDBUS_H
 #define __SOUNDBUS_H
 
-#include <asm/of_device.h>
+#include <linux/of_device.h>
 #include <sound/pcm.h>
 #include <linux/list.h>
 
@@ -141,7 +141,7 @@ struct soundbus_dev {
 	struct list_head onbuslist;
 
 	/* the of device it represents */
-	struct of_device ofdev;
+	struct platform_device ofdev;
 
 	/* what modules go by */
 	char modalias[32];

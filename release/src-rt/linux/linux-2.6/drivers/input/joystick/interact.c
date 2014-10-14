@@ -1,6 +1,4 @@
 /*
- * $Id: interact.c,v 1.16 2002/01/22 20:28:25 vojtech Exp $
- *
  *  Copyright (c) 2001 Vojtech Pavlik
  *
  *  Based on the work of:
@@ -269,21 +267,17 @@ static int interact_connect(struct gameport *gameport, struct gameport_driver *d
 	input_dev->open = interact_open;
 	input_dev->close = interact_close;
 
-	input_dev->evbit[0] = BIT(EV_KEY) | BIT(EV_ABS);
+	input_dev->evbit[0] = BIT_MASK(EV_KEY) | BIT_MASK(EV_ABS);
 
 	for (i = 0; (t = interact_type[interact->type].abs[i]) >= 0; i++) {
-		set_bit(t, input_dev->absbit);
-		if (i < interact_type[interact->type].b8) {
-			input_dev->absmin[t] = 0;
-			input_dev->absmax[t] = 255;
-		} else {
-			input_dev->absmin[t] = -1;
-			input_dev->absmax[t] = 1;
-		}
+		if (i < interact_type[interact->type].b8)
+			input_set_abs_params(input_dev, t, 0, 255, 0, 0);
+		else
+			input_set_abs_params(input_dev, t, -1, 1, 0, 0);
 	}
 
 	for (i = 0; (t = interact_type[interact->type].btn[i]) >= 0; i++)
-		set_bit(t, input_dev->keybit);
+		__set_bit(t, input_dev->keybit);
 
 	err = input_register_device(interact->dev);
 	if (err)
@@ -319,8 +313,7 @@ static struct gameport_driver interact_drv = {
 
 static int __init interact_init(void)
 {
-	gameport_register_driver(&interact_drv);
-	return 0;
+	return gameport_register_driver(&interact_drv);
 }
 
 static void __exit interact_exit(void)

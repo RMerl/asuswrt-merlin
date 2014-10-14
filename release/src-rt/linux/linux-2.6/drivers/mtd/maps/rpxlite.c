@@ -1,6 +1,4 @@
 /*
- * $Id: rpxlite.c,v 1.22 2004/11/04 13:24:15 gleixner Exp $
- *
  * Handle mapping of the flash on the RPX Lite and CLLF boards
  */
 
@@ -25,7 +23,7 @@ static struct map_info rpxlite_map = {
 	.phys = WINDOW_ADDR,
 };
 
-int __init init_rpxlite(void)
+static int __init init_rpxlite(void)
 {
 	printk(KERN_NOTICE "RPX Lite or CLLF flash device: %x at %x\n", WINDOW_SIZE*4, WINDOW_ADDR);
 	rpxlite_map.virt = ioremap(WINDOW_ADDR, WINDOW_SIZE * 4);

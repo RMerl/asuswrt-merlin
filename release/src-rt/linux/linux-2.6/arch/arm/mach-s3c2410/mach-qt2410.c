@@ -27,12 +27,13 @@
 #include <linux/list.h>
 #include <linux/timer.h>
 #include <linux/init.h>
+#include <linux/gpio.h>
 #include <linux/sysdev.h>
 #include <linux/platform_device.h>
 #include <linux/serial_core.h>
 #include <linux/spi/spi.h>
 #include <linux/spi/spi_bitbang.h>
-
+#include <linux/io.h>
 #include <linux/mtd/mtd.h>
 #include <linux/mtd/nand.h>
 #include <linux/mtd/nand_ecc.h>
@@ -42,24 +43,25 @@
 #include <asm/mach/map.h>
 #include <asm/mach/irq.h>
 
-#include <asm/hardware.h>
-#include <asm/io.h>
+#include <mach/hardware.h>
 #include <asm/irq.h>
 #include <asm/mach-types.h>
 
-#include <asm/arch/regs-gpio.h>
-#include <asm/arch/leds-gpio.h>
-#include <asm/arch/regs-serial.h>
-#include <asm/arch/fb.h>
-#include <asm/arch/nand.h>
-#include <asm/arch/udc.h>
-#include <asm/arch/spi.h>
-#include <asm/arch/spi-gpio.h>
+#include <mach/regs-gpio.h>
+#include <mach/leds-gpio.h>
+#include <plat/regs-serial.h>
+#include <mach/fb.h>
+#include <plat/nand.h>
+#include <plat/udc.h>
+#include <mach/spi.h>
+#include <mach/spi-gpio.h>
+#include <plat/iic.h>
 
-#include <asm/plat-s3c24xx/common-smdk.h>
-#include <asm/plat-s3c24xx/devs.h>
-#include <asm/plat-s3c24xx/cpu.h>
-#include <asm/plat-s3c24xx/pm.h>
+#include <plat/common-smdk.h>
+#include <plat/gpio-cfg.h>
+#include <plat/devs.h>
+#include <plat/cpu.h>
+#include <plat/pm.h>
 
 static struct map_desc qt2410_iodesc[] __initdata = {
 	{ 0xe0000000, __phys_to_pfn(S3C2410_CS3+0x01000000), SZ_1M, MT_DEVICE }
@@ -95,157 +97,83 @@ static struct s3c2410_uartcfg smdk2410_uartcfgs[] = {
 
 /* LCD driver info */
 
-/* Configuration for 640x480 SHARP LQ080V3DG01 */
-static struct s3c2410fb_mach_info qt2410_biglcd_cfg __initdata = {
-	.regs	= {
+static struct s3c2410fb_display qt2410_lcd_cfg[] __initdata = {
+	{
+		/* Configuration for 640x480 SHARP LQ080V3DG01 */
+		.lcdcon5 = S3C2410_LCDCON5_FRM565 |
+			   S3C2410_LCDCON5_INVVLINE |
+			   S3C2410_LCDCON5_INVVFRAME |
+			   S3C2410_LCDCON5_PWREN |
+			   S3C2410_LCDCON5_HWSWP,
 
-		.lcdcon1	= S3C2410_LCDCON1_TFT16BPP |
-				  S3C2410_LCDCON1_TFT |
-				  S3C2410_LCDCON1_CLKVAL(0x01),	/* HCLK/4 */
+		.type		= S3C2410_LCDCON1_TFT,
+		.width		= 640,
+		.height		= 480,
 
-		.lcdcon2	= S3C2410_LCDCON2_VBPD(18) |	/* 19 */
-				  S3C2410_LCDCON2_LINEVAL(479) |
-				  S3C2410_LCDCON2_VFPD(10) |	/* 11 */
-				  S3C2410_LCDCON2_VSPW(14),	/* 15 */
-
-		.lcdcon3	= S3C2410_LCDCON3_HBPD(43) |	/* 44 */
-				  S3C2410_LCDCON3_HOZVAL(639) |	/* 640 */
-				  S3C2410_LCDCON3_HFPD(115),	/* 116 */
-
-		.lcdcon4	= S3C2410_LCDCON4_MVAL(0) |
-				  S3C2410_LCDCON4_HSPW(95),	/* 96 */
-
-		.lcdcon5	= S3C2410_LCDCON5_FRM565 |
-				  S3C2410_LCDCON5_INVVLINE |
-				  S3C2410_LCDCON5_INVVFRAME |
-				  S3C2410_LCDCON5_PWREN |
-				  S3C2410_LCDCON5_HWSWP,
+		.pixclock	= 40000, /* HCLK/4 */
+		.xres		= 640,
+		.yres		= 480,
+		.bpp		= 16,
+		.left_margin	= 44,
+		.right_margin	= 116,
+		.hsync_len	= 96,
+		.upper_margin	= 19,
+		.lower_margin	= 11,
+		.vsync_len	= 15,
 	},
+	{
+		/* Configuration for 480x640 toppoly TD028TTEC1 */
+		.lcdcon5 = S3C2410_LCDCON5_FRM565 |
+			   S3C2410_LCDCON5_INVVLINE |
+			   S3C2410_LCDCON5_INVVFRAME |
+			   S3C2410_LCDCON5_PWREN |
+			   S3C2410_LCDCON5_HWSWP,
 
-	.lpcsel		= ((0xCE6) & ~7) | 1<<4,
-
-	.width		= 640,
-	.height		= 480,
-
-	.xres		= {
-		.min	= 640,
-		.max	= 640,
-		.defval	= 640,
+		.type		= S3C2410_LCDCON1_TFT,
+		.width		= 480,
+		.height		= 640,
+		.pixclock	= 40000, /* HCLK/4 */
+		.xres		= 480,
+		.yres		= 640,
+		.bpp		= 16,
+		.left_margin	= 8,
+		.right_margin	= 24,
+		.hsync_len	= 8,
+		.upper_margin	= 2,
+		.lower_margin	= 4,
+		.vsync_len	= 2,
 	},
+	{
+		/* Config for 240x320 LCD */
+		.lcdcon5 = S3C2410_LCDCON5_FRM565 |
+			   S3C2410_LCDCON5_INVVLINE |
+			   S3C2410_LCDCON5_INVVFRAME |
+			   S3C2410_LCDCON5_PWREN |
+			   S3C2410_LCDCON5_HWSWP,
 
-	.yres		= {
-		.min	= 480,
-		.max	= 480,
-		.defval = 480,
-	},
-
-	.bpp		= {
-		.min	= 16,
-		.max	= 16,
-		.defval = 16,
-	},
-};
-
-/* Configuration for 480x640 toppoly TD028TTEC1 */
-static struct s3c2410fb_mach_info qt2410_prodlcd_cfg __initdata = {
-	.regs	= {
-
-		.lcdcon1	= S3C2410_LCDCON1_TFT16BPP |
-				  S3C2410_LCDCON1_TFT |
-				  S3C2410_LCDCON1_CLKVAL(0x01),	/* HCLK/4 */
-
-		.lcdcon2	= S3C2410_LCDCON2_VBPD(1) |	/* 2 */
-				  S3C2410_LCDCON2_LINEVAL(639) |/* 640 */
-				  S3C2410_LCDCON2_VFPD(3) |	/* 4 */
-				  S3C2410_LCDCON2_VSPW(1),	/* 2 */
-
-		.lcdcon3	= S3C2410_LCDCON3_HBPD(7) |	/* 8 */
-				  S3C2410_LCDCON3_HOZVAL(479) |	/* 479 */
-				  S3C2410_LCDCON3_HFPD(23),	/* 24 */
-
-		.lcdcon4	= S3C2410_LCDCON4_MVAL(0) |
-				  S3C2410_LCDCON4_HSPW(7),	/* 8 */
-
-		.lcdcon5	= S3C2410_LCDCON5_FRM565 |
-				  S3C2410_LCDCON5_INVVLINE |
-				  S3C2410_LCDCON5_INVVFRAME |
-				  S3C2410_LCDCON5_PWREN |
-				  S3C2410_LCDCON5_HWSWP,
-	},
-
-	.lpcsel		= ((0xCE6) & ~7) | 1<<4,
-
-	.width		= 480,
-	.height		= 640,
-
-	.xres		= {
-		.min	= 480,
-		.max	= 480,
-		.defval	= 480,
-	},
-
-	.yres		= {
-		.min	= 640,
-		.max	= 640,
-		.defval = 640,
-	},
-
-	.bpp		= {
-		.min	= 16,
-		.max	= 16,
-		.defval = 16,
+		.type		= S3C2410_LCDCON1_TFT,
+		.width		= 240,
+		.height		= 320,
+		.pixclock	= 100000, /* HCLK/10 */
+		.xres		= 240,
+		.yres		= 320,
+		.bpp		= 16,
+		.left_margin	= 13,
+		.right_margin	= 8,
+		.hsync_len	= 4,
+		.upper_margin	= 2,
+		.lower_margin	= 7,
+		.vsync_len	= 4,
 	},
 };
 
-/* Config for 240x320 LCD */
-static struct s3c2410fb_mach_info qt2410_lcd_cfg __initdata = {
-	.regs	= {
 
-		.lcdcon1	= S3C2410_LCDCON1_TFT16BPP |
-				  S3C2410_LCDCON1_TFT |
-				  S3C2410_LCDCON1_CLKVAL(0x04),
-
-		.lcdcon2	= S3C2410_LCDCON2_VBPD(1) |
-				  S3C2410_LCDCON2_LINEVAL(319) |
-				  S3C2410_LCDCON2_VFPD(6) |
-				  S3C2410_LCDCON2_VSPW(3),
-
-		.lcdcon3	= S3C2410_LCDCON3_HBPD(12) |
-				  S3C2410_LCDCON3_HOZVAL(239) |
-				  S3C2410_LCDCON3_HFPD(7),
-
-		.lcdcon4	= S3C2410_LCDCON4_MVAL(0) |
-				  S3C2410_LCDCON4_HSPW(3),
-
-		.lcdcon5	= S3C2410_LCDCON5_FRM565 |
-				  S3C2410_LCDCON5_INVVLINE |
-				  S3C2410_LCDCON5_INVVFRAME |
-				  S3C2410_LCDCON5_PWREN |
-				  S3C2410_LCDCON5_HWSWP,
-	},
+static struct s3c2410fb_mach_info qt2410_fb_info __initdata = {
+	.displays 	= qt2410_lcd_cfg,
+	.num_displays 	= ARRAY_SIZE(qt2410_lcd_cfg),
+	.default_display = 0,
 
 	.lpcsel		= ((0xCE6) & ~7) | 1<<4,
-
-	.width		= 240,
-	.height		= 320,
-
-	.xres		= {
-		.min	= 240,
-		.max	= 240,
-		.defval	= 240,
-	},
-
-	.yres		= {
-		.min	= 320,
-		.max	= 320,
-		.defval = 320,
-	},
-
-	.bpp		= {
-		.min	= 16,
-		.max	= 16,
-		.defval = 16,
-	},
 };
 
 /* CS8900 */
@@ -272,7 +200,7 @@ static struct platform_device qt2410_cs89x0 = {
 /* LED */
 
 static struct s3c24xx_led_platdata qt2410_pdata_led = {
-	.gpio		= S3C2410_GPB0,
+	.gpio		= S3C2410_GPB(0),
 	.flags		= S3C24XX_LEDF_ACTLOW | S3C24XX_LEDF_TRISTATE,
 	.name		= "led",
 	.def_trigger	= "timer",
@@ -292,18 +220,18 @@ static void spi_gpio_cs(struct s3c2410_spigpio_info *spi, int cs)
 {
 	switch (cs) {
 	case BITBANG_CS_ACTIVE:
-		s3c2410_gpio_setpin(S3C2410_GPB5, 0);
+		gpio_set_value(S3C2410_GPB(5), 0);
 		break;
 	case BITBANG_CS_INACTIVE:
-		s3c2410_gpio_setpin(S3C2410_GPB5, 1);
+		gpio_set_value(S3C2410_GPB(5), 1);
 		break;
 	}
 }
 
 static struct s3c2410_spigpio_info spi_gpio_cfg = {
-	.pin_clk	= S3C2410_GPG7,
-	.pin_mosi	= S3C2410_GPG6,
-	.pin_miso	= S3C2410_GPG5,
+	.pin_clk	= S3C2410_GPG(7),
+	.pin_mosi	= S3C2410_GPG(6),
+	.pin_miso	= S3C2410_GPG(5),
 	.chip_select	= &spi_gpio_cs,
 };
 
@@ -319,10 +247,10 @@ static struct platform_device qt2410_spi = {
 /* Board devices */
 
 static struct platform_device *qt2410_devices[] __initdata = {
-	&s3c_device_usb,
+	&s3c_device_ohci,
 	&s3c_device_lcd,
 	&s3c_device_wdt,
-	&s3c_device_i2c,
+	&s3c_device_i2c0,
 	&s3c_device_iis,
 	&s3c_device_sdi,
 	&s3c_device_usbgadget,
@@ -331,7 +259,7 @@ static struct platform_device *qt2410_devices[] __initdata = {
 	&qt2410_led,
 };
 
-static struct mtd_partition qt2410_nand_part[] = {
+static struct mtd_partition __initdata qt2410_nand_part[] = {
 	[0] = {
 		.name	= "U-Boot",
 		.size	= 0x30000,
@@ -359,7 +287,7 @@ static struct mtd_partition qt2410_nand_part[] = {
 	},
 };
 
-static struct s3c2410_nand_set qt2410_nand_sets[] = {
+static struct s3c2410_nand_set __initdata qt2410_nand_sets[] = {
 	[0] = {
 		.name		= "NAND",
 		.nr_chips	= 1,
@@ -372,7 +300,7 @@ static struct s3c2410_nand_set qt2410_nand_sets[] = {
  * chips and beyond.
  */
 
-static struct s3c2410_platform_nand qt2410_nand_info = {
+static struct s3c2410_platform_nand __initdata qt2410_nand_info = {
 	.tacls		= 20,
 	.twrph0		= 60,
 	.twrph1		= 20,
@@ -404,35 +332,36 @@ static void __init qt2410_map_io(void)
 
 static void __init qt2410_machine_init(void)
 {
-	s3c_device_nand.dev.platform_data = &qt2410_nand_info;
+	s3c_nand_set_platdata(&qt2410_nand_info);
 
 	switch (tft_type) {
 	case 'p': /* production */
-		s3c24xx_fb_set_platdata(&qt2410_prodlcd_cfg);
+		qt2410_fb_info.default_display = 1;
 		break;
 	case 'b': /* big */
-		s3c24xx_fb_set_platdata(&qt2410_biglcd_cfg);
+		qt2410_fb_info.default_display = 0;
 		break;
 	case 's': /* small */
 	default:
-		s3c24xx_fb_set_platdata(&qt2410_lcd_cfg);
+		qt2410_fb_info.default_display = 2;
 		break;
 	}
+	s3c24xx_fb_set_platdata(&qt2410_fb_info);
 
-	s3c2410_gpio_cfgpin(S3C2410_GPB0, S3C2410_GPIO_OUTPUT);
-	s3c2410_gpio_setpin(S3C2410_GPB0, 1);
+	s3c_gpio_cfgpin(S3C2410_GPB(0), S3C2410_GPIO_OUTPUT);
+	s3c2410_gpio_setpin(S3C2410_GPB(0), 1);
 
 	s3c24xx_udc_set_platdata(&qt2410_udc_cfg);
+	s3c_i2c0_set_platdata(NULL);
 
-	s3c2410_gpio_cfgpin(S3C2410_GPB5, S3C2410_GPIO_OUTPUT);
+	WARN_ON(gpio_request(S3C2410_GPB(5), "spi cs"));
+	gpio_direction_output(S3C2410_GPB(5), 1);
 
 	platform_add_devices(qt2410_devices, ARRAY_SIZE(qt2410_devices));
-	s3c2410_pm_init();
+	s3c_pm_init();
 }
 
 MACHINE_START(QT2410, "QT2410")
-	.phys_io	= S3C2410_PA_UART,
-	.io_pg_offst	= (((u32)S3C24XX_VA_UART) >> 18) & 0xfffc,
 	.boot_params	= S3C2410_SDRAM_PA + 0x100,
 	.map_io		= qt2410_map_io,
 	.init_irq	= s3c24xx_init_irq,

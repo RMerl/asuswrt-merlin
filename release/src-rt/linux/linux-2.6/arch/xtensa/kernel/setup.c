@@ -16,6 +16,7 @@
 
 #include <linux/errno.h>
 #include <linux/init.h>
+#include <linux/mm.h>
 #include <linux/proc_fs.h>
 #include <linux/screen_info.h>
 #include <linux/bootmem.h>
@@ -43,6 +44,8 @@
 #include <asm/setup.h>
 #include <asm/param.h>
 
+#include <platform/hardware.h>
+
 #if defined(CONFIG_VGA_CONSOLE) || defined(CONFIG_DUMMY_CONSOLE)
 struct screen_info screen_info = { 0, 24, 0, 0, 0, 80, 0, 0, 0, 24, 1, 16};
 #endif
@@ -52,18 +55,8 @@ extern struct fd_ops no_fd_ops;
 struct fd_ops *fd_ops;
 #endif
 
-#if defined(CONFIG_BLK_DEV_IDE) || defined(CONFIG_BLK_DEV_IDE_MODULE)
-extern struct ide_ops no_ide_ops;
-struct ide_ops *ide_ops;
-#endif
-
 extern struct rtc_ops no_rtc_ops;
 struct rtc_ops *rtc_ops;
-
-#ifdef CONFIG_PC_KEYB
-extern struct kbd_ops no_kbd_ops;
-struct kbd_ops *kbd_ops;
-#endif
 
 #ifdef CONFIG_BLK_DEV_INITRD
 extern void *initrd_start;
@@ -91,7 +84,13 @@ sysmem_info_t __initdata sysmem;
 int initrd_is_mapped;
 #endif
 
+#ifdef CONFIG_MMU
 extern void init_mmu(void);
+#else
+static inline void init_mmu(void) { }
+#endif
+
+extern void zones_init(void);
 
 /*
  * Boot parameter parsing.
@@ -293,6 +292,7 @@ void __init setup_arch(char **cmdline_p)
 
 
 	paging_init();
+	zones_init();
 
 #ifdef CONFIG_VT
 # if defined(CONFIG_VGA_CONSOLE)
@@ -469,7 +469,7 @@ c_stop(struct seq_file *f, void *v)
 {
 }
 
-struct seq_operations cpuinfo_op =
+const struct seq_operations cpuinfo_op =
 {
 	start:  c_start,
 	next:   c_next,

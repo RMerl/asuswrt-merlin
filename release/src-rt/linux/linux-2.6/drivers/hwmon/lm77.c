@@ -31,14 +31,13 @@
 #include <linux/jiffies.h>
 #include <linux/i2c.h>
 #include <linux/hwmon.h>
+#include <linux/hwmon-sysfs.h>
 #include <linux/err.h>
 #include <linux/mutex.h>
 
 /* Addresses to scan */
-static unsigned short normal_i2c[] = { 0x48, 0x49, 0x4a, 0x4b, I2C_CLIENT_END };
-
-/* Insmod parameters */
-I2C_CLIENT_INSMOD_1(lm77);
+static const unsigned short normal_i2c[] = { 0x48, 0x49, 0x4a, 0x4b,
+						I2C_CLIENT_END };
 
 /* The LM77 registers */
 #define LM77_REG_TEMP		0x00
@@ -50,8 +49,7 @@ I2C_CLIENT_INSMOD_1(lm77);
 
 /* Each client has this additional data */
 struct lm77_data {
-	struct i2c_client	client;
-	struct class_device *class_dev;
+	struct device 		*hwmon_dev;
 	struct mutex		update_lock;
 	char			valid;
 	unsigned long		last_updated;	/* In jiffies */
@@ -63,23 +61,34 @@ struct lm77_data {
 	u8			alarms;
 };
 
-static int lm77_attach_adapter(struct i2c_adapter *adapter);
-static int lm77_detect(struct i2c_adapter *adapter, int address, int kind);
+static int lm77_probe(struct i2c_client *client,
+		      const struct i2c_device_id *id);
+static int lm77_detect(struct i2c_client *client, struct i2c_board_info *info);
 static void lm77_init_client(struct i2c_client *client);
-static int lm77_detach_client(struct i2c_client *client);
+static int lm77_remove(struct i2c_client *client);
 static u16 lm77_read_value(struct i2c_client *client, u8 reg);
 static int lm77_write_value(struct i2c_client *client, u8 reg, u16 value);
 
 static struct lm77_data *lm77_update_device(struct device *dev);
 
 
+static const struct i2c_device_id lm77_id[] = {
+	{ "lm77", 0 },
+	{ }
+};
+MODULE_DEVICE_TABLE(i2c, lm77_id);
+
 /* This is the driver that will be inserted */
 static struct i2c_driver lm77_driver = {
+	.class		= I2C_CLASS_HWMON,
 	.driver = {
 		.name	= "lm77",
 	},
-	.attach_adapter = lm77_attach_adapter,
-	.detach_client	= lm77_detach_client,
+	.probe		= lm77_probe,
+	.remove		= lm77_remove,
+	.id_table	= lm77_id,
+	.detect		= lm77_detect,
+	.address_list	= normal_i2c,
 };
 
 /* straight from the datasheet */
@@ -113,7 +122,6 @@ show(temp_input);
 show(temp_crit);
 show(temp_min);
 show(temp_max);
-show(alarms);
 
 /* read routines for hysteresis values */
 static ssize_t show_temp_crit_hyst(struct device *dev, struct device_attribute *attr, char *buf)
@@ -138,7 +146,7 @@ static ssize_t set_##value(struct device *dev, struct device_attribute *attr, co
 {										\
 	struct i2c_client *client = to_i2c_client(dev);				\
 	struct lm77_data *data = i2c_get_clientdata(client);			\
-	long val = simple_strtoul(buf, NULL, 10);				\
+	long val = simple_strtol(buf, NULL, 10);				\
 										\
 	mutex_lock(&data->update_lock);						\
 	data->value = val;				\
@@ -186,6 +194,14 @@ static ssize_t set_temp_crit(struct device *dev, struct device_attribute *attr, 
 	return count;
 }
 
+static ssize_t show_alarm(struct device *dev, struct device_attribute *attr,
+			  char *buf)
+{
+	int bitnr = to_sensor_dev_attr(attr)->index;
+	struct lm77_data *data = lm77_update_device(dev);
+	return sprintf(buf, "%u\n", (data->alarms >> bitnr) & 1);
+}
+
 static DEVICE_ATTR(temp1_input, S_IRUGO,
 		   show_temp_input, NULL);
 static DEVICE_ATTR(temp1_crit, S_IWUSR | S_IRUGO,
@@ -202,15 +218,9 @@ static DEVICE_ATTR(temp1_min_hyst, S_IRUGO,
 static DEVICE_ATTR(temp1_max_hyst, S_IRUGO,
 		   show_temp_max_hyst, NULL);
 
-static DEVICE_ATTR(alarms, S_IRUGO,
-		   show_alarms, NULL);
-
-static int lm77_attach_adapter(struct i2c_adapter *adapter)
-{
-	if (!(adapter->class & I2C_CLASS_HWMON))
-		return 0;
-	return i2c_probe(adapter, &addr_data, lm77_detect);
-}
+static SENSOR_DEVICE_ATTR(temp1_crit_alarm, S_IRUGO, show_alarm, NULL, 2);
+static SENSOR_DEVICE_ATTR(temp1_min_alarm, S_IRUGO, show_alarm, NULL, 0);
+static SENSOR_DEVICE_ATTR(temp1_max_alarm, S_IRUGO, show_alarm, NULL, 1);
 
 static struct attribute *lm77_attributes[] = {
 	&dev_attr_temp1_input.attr,
@@ -220,8 +230,9 @@ static struct attribute *lm77_attributes[] = {
 	&dev_attr_temp1_crit_hyst.attr,
 	&dev_attr_temp1_min_hyst.attr,
 	&dev_attr_temp1_max_hyst.attr,
-	&dev_attr_alarms.attr,
-
+	&sensor_dev_attr_temp1_crit_alarm.dev_attr.attr,
+	&sensor_dev_attr_temp1_min_alarm.dev_attr.attr,
+	&sensor_dev_attr_temp1_max_alarm.dev_attr.attr,
 	NULL
 };
 
@@ -229,32 +240,16 @@ static const struct attribute_group lm77_group = {
 	.attrs = lm77_attributes,
 };
 
-/* This function is called by i2c_probe */
-static int lm77_detect(struct i2c_adapter *adapter, int address, int kind)
+/* Return 0 if detection is successful, -ENODEV otherwise */
+static int lm77_detect(struct i2c_client *new_client,
+		       struct i2c_board_info *info)
 {
-	struct i2c_client *new_client;
-	struct lm77_data *data;
-	int err = 0;
-	const char *name = "";
+	struct i2c_adapter *adapter = new_client->adapter;
+	int i, cur, conf, hyst, crit, min, max;
 
 	if (!i2c_check_functionality(adapter, I2C_FUNC_SMBUS_BYTE_DATA |
 				     I2C_FUNC_SMBUS_WORD_DATA))
-		goto exit;
-
-	/* OK. For now, we presume we have a valid client. We now create the
-	   client structure, even though we cannot fill it completely yet.
-	   But it allows us to access lm77_{read,write}_value. */
-	if (!(data = kzalloc(sizeof(struct lm77_data), GFP_KERNEL))) {
-		err = -ENOMEM;
-		goto exit;
-	}
-
-	new_client = &data->client;
-	i2c_set_clientdata(new_client, data);
-	new_client->addr = address;
-	new_client->adapter = adapter;
-	new_client->driver = &lm77_driver;
-	new_client->flags = 0;
+		return -ENODEV;
 
 	/* Here comes the remaining detection.  Since the LM77 has no
 	   register dedicated to identification, we have to rely on the
@@ -267,79 +262,80 @@ static int lm77_detect(struct i2c_adapter *adapter, int address, int kind)
 	   4. registers cycling over 8-address boundaries
 
 	   Word-sized registers are high-byte first. */
-	if (kind < 0) {
-		int i, cur, conf, hyst, crit, min, max;
 
-		/* addresses cycling */
-		cur = i2c_smbus_read_word_data(new_client, 0);
-		conf = i2c_smbus_read_byte_data(new_client, 1);
-		hyst = i2c_smbus_read_word_data(new_client, 2);
-		crit = i2c_smbus_read_word_data(new_client, 3);
-		min = i2c_smbus_read_word_data(new_client, 4);
-		max = i2c_smbus_read_word_data(new_client, 5);
-		for (i = 8; i <= 0xff; i += 8)
-			if (i2c_smbus_read_byte_data(new_client, i + 1) != conf
-			    || i2c_smbus_read_word_data(new_client, i + 2) != hyst
-			    || i2c_smbus_read_word_data(new_client, i + 3) != crit
-			    || i2c_smbus_read_word_data(new_client, i + 4) != min
-			    || i2c_smbus_read_word_data(new_client, i + 5) != max)
-				goto exit_free;
-
-		/* sign bits */
-		if (((cur & 0x00f0) != 0xf0 && (cur & 0x00f0) != 0x0)
-		    || ((hyst & 0x00f0) != 0xf0 && (hyst & 0x00f0) != 0x0)
-		    || ((crit & 0x00f0) != 0xf0 && (crit & 0x00f0) != 0x0)
-		    || ((min & 0x00f0) != 0xf0 && (min & 0x00f0) != 0x0)
-		    || ((max & 0x00f0) != 0xf0 && (max & 0x00f0) != 0x0))
-			goto exit_free;
-
-		/* unused bits */
-		if (conf & 0xe0)
-			goto exit_free;
-
-		/* 0x06 and 0x07 return the last read value */
-		cur = i2c_smbus_read_word_data(new_client, 0);
-		if (i2c_smbus_read_word_data(new_client, 6) != cur
-		    || i2c_smbus_read_word_data(new_client, 7) != cur)
-			goto exit_free;
-		hyst = i2c_smbus_read_word_data(new_client, 2);
-		if (i2c_smbus_read_word_data(new_client, 6) != hyst
-		    || i2c_smbus_read_word_data(new_client, 7) != hyst)
-			goto exit_free;
-		min = i2c_smbus_read_word_data(new_client, 4);
-		if (i2c_smbus_read_word_data(new_client, 6) != min
-		    || i2c_smbus_read_word_data(new_client, 7) != min)
-			goto exit_free;
-
+	/* addresses cycling */
+	cur = i2c_smbus_read_word_data(new_client, 0);
+	conf = i2c_smbus_read_byte_data(new_client, 1);
+	hyst = i2c_smbus_read_word_data(new_client, 2);
+	crit = i2c_smbus_read_word_data(new_client, 3);
+	min = i2c_smbus_read_word_data(new_client, 4);
+	max = i2c_smbus_read_word_data(new_client, 5);
+	for (i = 8; i <= 0xff; i += 8) {
+		if (i2c_smbus_read_byte_data(new_client, i + 1) != conf
+		 || i2c_smbus_read_word_data(new_client, i + 2) != hyst
+		 || i2c_smbus_read_word_data(new_client, i + 3) != crit
+		 || i2c_smbus_read_word_data(new_client, i + 4) != min
+		 || i2c_smbus_read_word_data(new_client, i + 5) != max)
+			return -ENODEV;
 	}
 
-	/* Determine the chip type - only one kind supported! */
-	if (kind <= 0)
-		kind = lm77;
+	/* sign bits */
+	if (((cur & 0x00f0) != 0xf0 && (cur & 0x00f0) != 0x0)
+	 || ((hyst & 0x00f0) != 0xf0 && (hyst & 0x00f0) != 0x0)
+	 || ((crit & 0x00f0) != 0xf0 && (crit & 0x00f0) != 0x0)
+	 || ((min & 0x00f0) != 0xf0 && (min & 0x00f0) != 0x0)
+	 || ((max & 0x00f0) != 0xf0 && (max & 0x00f0) != 0x0))
+		return -ENODEV;
 
-	if (kind == lm77) {
-		name = "lm77";
+	/* unused bits */
+	if (conf & 0xe0)
+		return -ENODEV;
+
+	/* 0x06 and 0x07 return the last read value */
+	cur = i2c_smbus_read_word_data(new_client, 0);
+	if (i2c_smbus_read_word_data(new_client, 6) != cur
+	 || i2c_smbus_read_word_data(new_client, 7) != cur)
+		return -ENODEV;
+	hyst = i2c_smbus_read_word_data(new_client, 2);
+	if (i2c_smbus_read_word_data(new_client, 6) != hyst
+	 || i2c_smbus_read_word_data(new_client, 7) != hyst)
+		return -ENODEV;
+	min = i2c_smbus_read_word_data(new_client, 4);
+	if (i2c_smbus_read_word_data(new_client, 6) != min
+	 || i2c_smbus_read_word_data(new_client, 7) != min)
+		return -ENODEV;
+
+	strlcpy(info->type, "lm77", I2C_NAME_SIZE);
+
+	return 0;
+}
+
+static int lm77_probe(struct i2c_client *new_client,
+		      const struct i2c_device_id *id)
+{
+	struct lm77_data *data;
+	int err;
+
+	data = kzalloc(sizeof(struct lm77_data), GFP_KERNEL);
+	if (!data) {
+		err = -ENOMEM;
+		goto exit;
 	}
 
-	/* Fill in the remaining client fields and put it into the global list */
-	strlcpy(new_client->name, name, I2C_NAME_SIZE);
+	i2c_set_clientdata(new_client, data);
 	data->valid = 0;
 	mutex_init(&data->update_lock);
-
-	/* Tell the I2C layer a new client has arrived */
-	if ((err = i2c_attach_client(new_client)))
-		goto exit_free;
 
 	/* Initialize the LM77 chip */
 	lm77_init_client(new_client);
 
 	/* Register sysfs hooks */
 	if ((err = sysfs_create_group(&new_client->dev.kobj, &lm77_group)))
-		goto exit_detach;
+		goto exit_free;
 
-	data->class_dev = hwmon_device_register(&new_client->dev);
-	if (IS_ERR(data->class_dev)) {
-		err = PTR_ERR(data->class_dev);
+	data->hwmon_dev = hwmon_device_register(&new_client->dev);
+	if (IS_ERR(data->hwmon_dev)) {
+		err = PTR_ERR(data->hwmon_dev);
 		goto exit_remove;
 	}
 
@@ -347,20 +343,17 @@ static int lm77_detect(struct i2c_adapter *adapter, int address, int kind)
 
 exit_remove:
 	sysfs_remove_group(&new_client->dev.kobj, &lm77_group);
-exit_detach:
-	i2c_detach_client(new_client);
 exit_free:
 	kfree(data);
 exit:
 	return err;
 }
 
-static int lm77_detach_client(struct i2c_client *client)
+static int lm77_remove(struct i2c_client *client)
 {
 	struct lm77_data *data = i2c_get_clientdata(client);
-	hwmon_device_unregister(data->class_dev);
+	hwmon_device_unregister(data->hwmon_dev);
 	sysfs_remove_group(&client->dev.kobj, &lm77_group);
-	i2c_detach_client(client);
 	kfree(data);
 	return 0;
 }

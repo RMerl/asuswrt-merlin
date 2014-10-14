@@ -1,6 +1,6 @@
 /*
  *  The driver for the Cirrus Logic's Sound Fusion CS46XX based soundcards
- *  Copyright (c) by Jaroslav Kysela <perex@suse.cz>
+ *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  *
  *
  *   This program is free software; you can redistribute it and/or modify
@@ -107,6 +107,7 @@ struct dsp_scb_descriptor {
 	char scb_name[DSP_MAX_SCB_NAME];
 	u32 address;
 	int index;
+	u32 *data;
 
 	struct dsp_scb_descriptor * sub_list_ptr;
 	struct dsp_scb_descriptor * next_scb_ptr;
@@ -117,9 +118,11 @@ struct dsp_scb_descriptor {
 
 	struct snd_info_entry *proc_info;
 	int ref_count;
-	spinlock_t lock;
 
-	int deleted;
+	u16 volume[2];
+	unsigned int deleted :1;
+	unsigned int updated :1;
+	unsigned int volume_set :1;
 };
 
 struct dsp_task_descriptor {
@@ -127,6 +130,7 @@ struct dsp_task_descriptor {
 	int size;
 	u32 address;
 	int index;
+	u32 *data;
 };
 
 struct dsp_pcm_channel_descriptor {
@@ -143,7 +147,7 @@ struct dsp_pcm_channel_descriptor {
 };
 
 struct dsp_spos_instance {
-	struct dsp_symbol_desc symbol_table; /* currently availble loaded symbols in SP */
+	struct dsp_symbol_desc symbol_table; /* currently available loaded symbols in SP */
 
 	int nmodules;
 	struct dsp_module_desc * modules; /* modules loaded into SP */

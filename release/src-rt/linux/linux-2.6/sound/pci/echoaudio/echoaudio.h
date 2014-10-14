@@ -189,6 +189,9 @@
 #define INDIGO			0x0090
 #define INDIGO_IO		0x00a0
 #define INDIGO_DJ		0x00b0
+#define DC8			0x00c0
+#define INDIGO_IOX		0x00d0
+#define INDIGO_DJX		0x00e0
 #define ECHO3G			0x0100
 
 
@@ -361,7 +364,7 @@ struct echoaudio {
 	spinlock_t lock;
 	struct snd_pcm_substream *substream[DSP_MAXPIPES];
 	int last_period[DSP_MAXPIPES];
-	struct semaphore mode_mutex;
+	struct mutex mode_mutex;
 	u16 num_digital_modes, digital_mode_list[6];
 	u16 num_clock_sources, clock_source_list[10];
 	atomic_t opencount;
@@ -439,13 +442,16 @@ struct echoaudio {
 	u16 device_id, subdevice_id;
 	u16 *dsp_code;			/* Current DSP code loaded,
 					 * NULL if nothing loaded */
-	const struct firmware *dsp_code_to_load;/* DSP code to load */
-	const struct firmware *asic_code;	/* Current ASIC code */
+	short dsp_code_to_load;		/* DSP code to load */
+	short asic_code;		/* Current ASIC code */
 	u32 comm_page_phys;			/* Physical address of the
 						 * memory seen by DSP */
 	volatile u32 __iomem *dsp_registers;	/* DSP's register base */
 	u32 active_mask;			/* Chs. active mask or
 						 * punks out */
+#ifdef CONFIG_PM
+	const struct firmware *fw_cache[8];	/* Cached firmwares */
+#endif
 
 #ifdef ECHOCARD_HAS_MIDI
 	u16 mtc_state;				/* State for MIDI input parsing state machine */
@@ -461,11 +467,13 @@ static int load_firmware(struct echoaudio *chip);
 static int wait_handshake(struct echoaudio *chip);
 static int send_vector(struct echoaudio *chip, u32 command);
 static int get_firmware(const struct firmware **fw_entry,
-			const struct firmware *frm, struct echoaudio *chip);
+			struct echoaudio *chip, const short fw_index);
 static void free_firmware(const struct firmware *fw_entry);
 
 #ifdef ECHOCARD_HAS_MIDI
 static int enable_midi_input(struct echoaudio *chip, char enable);
+static void snd_echo_midi_output_trigger(
+			struct snd_rawmidi_substream *substream, int up);
 static int midi_service_irq(struct echoaudio *chip);
 static int __devinit snd_echo_midi_create(struct snd_card *card,
 					  struct echoaudio *chip);
