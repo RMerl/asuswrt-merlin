@@ -11,16 +11,24 @@
 
 #include <linux/proc_fs.h>
 
+extern struct proc_dir_entry proc_root;
 #ifdef CONFIG_PROC_SYSCTL
 extern int proc_sys_init(void);
 #else
 static inline void proc_sys_init(void) { }
+#endif
+#ifdef CONFIG_NET
+extern int proc_net_init(void);
+#else
+static inline int proc_net_init(void) { return 0; }
 #endif
 
 struct vmalloc_info {
 	unsigned long	used;
 	unsigned long	largest_chunk;
 };
+
+extern struct mm_struct *mm_for_maps(struct task_struct *);
 
 #ifdef CONFIG_MMU
 #define VMALLOC_TOTAL (VMALLOC_END - VMALLOC_START)
@@ -33,31 +41,27 @@ do {						\
 	(vmi)->used = 0;			\
 	(vmi)->largest_chunk = 0;		\
 } while(0)
-
-extern int nommu_vma_show(struct seq_file *, struct vm_area_struct *);
 #endif
 
-extern int maps_protect;
-
-extern void create_seq_entry(char *name, mode_t mode, const struct file_operations *f);
-extern int proc_exe_link(struct inode *, struct dentry **, struct vfsmount **);
-extern int proc_tid_stat(struct task_struct *,  char *);
-extern int proc_tgid_stat(struct task_struct *, char *);
-extern int proc_pid_status(struct task_struct *, char *);
-extern int proc_pid_statm(struct task_struct *, char *);
-
-extern const struct file_operations proc_maps_operations;
-extern const struct file_operations proc_numa_maps_operations;
-extern const struct file_operations proc_smaps_operations;
+extern int proc_tid_stat(struct seq_file *m, struct pid_namespace *ns,
+				struct pid *pid, struct task_struct *task);
+extern int proc_tgid_stat(struct seq_file *m, struct pid_namespace *ns,
+				struct pid *pid, struct task_struct *task);
+extern int proc_pid_status(struct seq_file *m, struct pid_namespace *ns,
+				struct pid *pid, struct task_struct *task);
+extern int proc_pid_statm(struct seq_file *m, struct pid_namespace *ns,
+				struct pid *pid, struct task_struct *task);
+extern loff_t mem_lseek(struct file *file, loff_t offset, int orig);
 
 extern const struct file_operations proc_maps_operations;
 extern const struct file_operations proc_numa_maps_operations;
 extern const struct file_operations proc_smaps_operations;
+extern const struct file_operations proc_clear_refs_operations;
+extern const struct file_operations proc_pagemap_operations;
+extern const struct file_operations proc_net_operations;
+extern const struct inode_operations proc_net_inode_operations;
 
-
-void free_proc_entry(struct proc_dir_entry *de);
-
-int proc_init_inodecache(void);
+void proc_init_inodecache(void);
 
 static inline struct pid *proc_pid(struct inode *inode)
 {
@@ -73,3 +77,45 @@ static inline int proc_fd(struct inode *inode)
 {
 	return PROC_I(inode)->fd;
 }
+
+struct dentry *proc_lookup_de(struct proc_dir_entry *de, struct inode *ino,
+		struct dentry *dentry);
+int proc_readdir_de(struct proc_dir_entry *de, struct file *filp, void *dirent,
+		filldir_t filldir);
+
+struct pde_opener {
+	struct inode *inode;
+	struct file *file;
+	int (*release)(struct inode *, struct file *);
+	struct list_head lh;
+};
+void pde_users_dec(struct proc_dir_entry *pde);
+
+extern spinlock_t proc_subdir_lock;
+
+struct dentry *proc_pid_lookup(struct inode *dir, struct dentry * dentry, struct nameidata *);
+int proc_pid_readdir(struct file * filp, void * dirent, filldir_t filldir);
+unsigned long task_vsize(struct mm_struct *);
+unsigned long task_statm(struct mm_struct *,
+	unsigned long *, unsigned long *, unsigned long *, unsigned long *);
+void task_mem(struct seq_file *, struct mm_struct *);
+
+static inline struct proc_dir_entry *pde_get(struct proc_dir_entry *pde)
+{
+	atomic_inc(&pde->count);
+	return pde;
+}
+void pde_put(struct proc_dir_entry *pde);
+
+int proc_fill_super(struct super_block *);
+struct inode *proc_get_inode(struct super_block *, struct proc_dir_entry *);
+
+/*
+ * These are generic /proc routines that use the internal
+ * "struct proc_dir_entry" tree to traverse the filesystem.
+ *
+ * The /proc root directory has extended versions to take care
+ * of the /proc/<pid> subdirectories.
+ */
+int proc_readdir(struct file *, void *, filldir_t);
+struct dentry *proc_lookup(struct inode *, struct dentry *, struct nameidata *);

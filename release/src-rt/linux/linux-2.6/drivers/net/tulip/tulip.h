@@ -8,9 +8,9 @@
 	of the GNU General Public License, incorporated herein by reference.
 
 	Please refer to Documentation/DocBook/tulip-user.{pdf,ps,html}
-	for more information on this driver, or visit the project
-	Web page at http://sourceforge.net/projects/tulip/
+	for more information on this driver.
 
+	Please submit bugs to http://bugzilla.kernel.org/ .
 */
 
 #ifndef __NET_TULIP_H__
@@ -20,11 +20,13 @@
 #include <linux/types.h>
 #include <linux/spinlock.h>
 #include <linux/netdevice.h>
+#include <linux/ethtool.h>
 #include <linux/timer.h>
 #include <linux/delay.h>
 #include <linux/pci.h>
 #include <asm/io.h>
 #include <asm/irq.h>
+#include <asm/unaligned.h>
 
 
 
@@ -50,22 +52,23 @@ struct tulip_chip_table {
 
 
 enum tbl_flag {
-	HAS_MII			= 0x0001,
-	HAS_MEDIA_TABLE		= 0x0002,
-	CSR12_IN_SROM		= 0x0004,
-	ALWAYS_CHECK_MII	= 0x0008,
-	HAS_ACPI		= 0x0010,
-	MC_HASH_ONLY		= 0x0020, /* Hash-only multicast filter. */
-	HAS_PNICNWAY		= 0x0080,
-	HAS_NWAY		= 0x0040, /* Uses internal NWay xcvr. */
-	HAS_INTR_MITIGATION	= 0x0100,
-	IS_ASIX			= 0x0200,
-	HAS_8023X		= 0x0400,
-	COMET_MAC_ADDR		= 0x0800,
-	HAS_PCI_MWI		= 0x1000,
-	HAS_PHY_IRQ		= 0x2000,
-	HAS_SWAPPED_SEEPROM	= 0x4000,
-	NEEDS_FAKE_MEDIA_TABLE	= 0x8000,
+	HAS_MII			= 0x00001,
+	HAS_MEDIA_TABLE		= 0x00002,
+	CSR12_IN_SROM		= 0x00004,
+	ALWAYS_CHECK_MII	= 0x00008,
+	HAS_ACPI		= 0x00010,
+	MC_HASH_ONLY		= 0x00020, /* Hash-only multicast filter. */
+	HAS_PNICNWAY		= 0x00080,
+	HAS_NWAY		= 0x00040, /* Uses internal NWay xcvr. */
+	HAS_INTR_MITIGATION	= 0x00100,
+	IS_ASIX			= 0x00200,
+	HAS_8023X		= 0x00400,
+	COMET_MAC_ADDR		= 0x00800,
+	HAS_PCI_MWI		= 0x01000,
+	HAS_PHY_IRQ		= 0x02000,
+	HAS_SWAPPED_SEEPROM	= 0x04000,
+	NEEDS_FAKE_MEDIA_TABLE	= 0x08000,
+	COMET_PM		= 0x10000,
 };
 
 
@@ -119,6 +122,11 @@ enum tulip_offsets {
 	CSR13 = 0x68,
 	CSR14 = 0x70,
 	CSR15 = 0x78,
+	CSR18 = 0x88,
+	CSR19 = 0x8c,
+	CSR20 = 0x90,
+	CSR27 = 0xAC,
+	CSR28 = 0xB0,
 };
 
 /* register offset and bits for CFDD PCI config reg */
@@ -178,18 +186,18 @@ enum tulip_busconfig_bits {
 
 /* The Tulip Rx and Tx buffer descriptors. */
 struct tulip_rx_desc {
-	s32 status;
-	s32 length;
-	u32 buffer1;
-	u32 buffer2;
+	__le32 status;
+	__le32 length;
+	__le32 buffer1;
+	__le32 buffer2;
 };
 
 
 struct tulip_tx_desc {
-	s32 status;
-	s32 length;
-	u32 buffer1;
-	u32 buffer2;		/* We use only buffer 1.  */
+	__le32 status;
+	__le32 length;
+	__le32 buffer1;
+	__le32 buffer2;		/* We use only buffer 1.  */
 };
 
 
@@ -200,8 +208,38 @@ enum desc_status_bits {
 	DescStartPkt = 0x20000000,
 	DescEndRing  = 0x02000000,
 	DescUseLink  = 0x01000000,
-	RxDescFatalErr = 0x008000,
+
+	/*
+	 * Error summary flag is logical or of 'CRC Error', 'Collision Seen',
+	 * 'Frame Too Long', 'Runt' and 'Descriptor Error' flags generated
+	 * within tulip chip.
+	 */
+	RxDescErrorSummary = 0x8000,
+	RxDescCRCError = 0x0002,
+	RxDescCollisionSeen = 0x0040,
+
+	/*
+	 * 'Frame Too Long' flag is set if packet length including CRC exceeds
+	 * 1518.  However, a full sized VLAN tagged frame is 1522 bytes
+	 * including CRC.
+	 *
+	 * The tulip chip does not block oversized frames, and if this flag is
+	 * set on a receive descriptor it does not indicate the frame has been
+	 * truncated.  The receive descriptor also includes the actual length.
+	 * Therefore we can safety ignore this flag and check the length
+	 * ourselves.
+	 */
+	RxDescFrameTooLong = 0x0080,
+	RxDescRunt = 0x0800,
+	RxDescDescErr = 0x4000,
 	RxWholePkt   = 0x00000300,
+	/*
+	 * Top three bits of 14 bit frame length (status bits 27-29) should
+	 * never be set as that would make frame over 2047 bytes. The Receive
+	 * Watchdog flag (bit 4) may indicate the length is over 2048 and the
+	 * length field is invalid.
+	 */
+	RxLengthOver2047 = 0x38000010
 };
 
 
@@ -258,6 +296,30 @@ enum t21143_csr6_bits {
 	csr6_mask_100bt = (csr6_scr | csr6_pcs | csr6_hbd),
 };
 
+enum tulip_comet_csr13_bits {
+/* The LINKOFFE and LINKONE work in conjunction with LSCE, i.e. they
+ * determine which link status transition wakes up if LSCE is
+ * enabled */
+        comet_csr13_linkoffe = (1 << 17),
+        comet_csr13_linkone = (1 << 16),
+        comet_csr13_wfre = (1 << 10),
+        comet_csr13_mpre = (1 << 9),
+        comet_csr13_lsce = (1 << 8),
+        comet_csr13_wfr = (1 << 2),
+        comet_csr13_mpr = (1 << 1),
+        comet_csr13_lsc = (1 << 0),
+};
+
+enum tulip_comet_csr18_bits {
+        comet_csr18_pmes_sticky = (1 << 24),
+        comet_csr18_pm_mode = (1 << 19),
+        comet_csr18_apm_mode = (1 << 18),
+        comet_csr18_d3a = (1 << 7)
+};
+
+enum tulip_comet_csr20_bits {
+        comet_csr20_pmes = (1 << 15),
+};
 
 /* Keep the ring sizes a power of two for efficiency.
    Making the Tx ring too large decreases the effectiveness of channel
@@ -268,7 +330,12 @@ enum t21143_csr6_bits {
 #define RX_RING_SIZE	128
 #define MEDIA_MASK     31
 
-#define PKT_BUF_SZ		1536	/* Size of each temporary Rx buffer. */
+/* The receiver on the DC21143 rev 65 can fail to close the last
+ * receive descriptor in certain circumstances (see errata) when
+ * using MWI. This can only occur if the receive buffer ends on
+ * a cache line boundary, so the "+ 4" below ensures it doesn't.
+ */
+#define PKT_BUF_SZ	(1536 + 4)	/* Size of each temporary Rx buffer. */
 
 #define TULIP_MIN_CACHE_LINE	8	/* in units of 32-bit words */
 
@@ -299,11 +366,7 @@ enum t21143_csr6_bits {
 
 #define RUN_AT(x) (jiffies + (x))
 
-#if defined(__i386__)			/* AKA get_unaligned() */
-#define get_u16(ptr) (*(u16 *)(ptr))
-#else
-#define get_u16(ptr) (((u8*)(ptr))[0] + (((u8*)(ptr))[1]<<8))
-#endif
+#define get_u16(ptr) get_unaligned_le16((ptr))
 
 struct medialeaf {
 	u8 type;
@@ -353,7 +416,7 @@ struct tulip_private {
 	int chip_id;
 	int revision;
 	int flags;
-	struct net_device_stats stats;
+	struct napi_struct napi;
 	struct timer_list timer;	/* Media selection timer. */
 	struct timer_list oom_timer;    /* Out of memory timer. */
 	u32 mc_filter[2];
@@ -378,6 +441,7 @@ struct tulip_private {
 	unsigned int csr6;	/* Current CSR6 control settings. */
 	unsigned char eeprom[EEPROM_SIZE];	/* Serial EEPROM contents. */
 	void (*link_change) (struct net_device * dev, int csr5);
+        struct ethtool_wolinfo wolinfo;        /* WOL settings */
 	u16 sym_advertise, mii_advertise; /* NWay capabilities advertised.  */
 	u16 lpar;		/* 21143 Link partner ability. */
 	u16 advertising[4];
@@ -429,7 +493,7 @@ extern int tulip_rx_copybreak;
 irqreturn_t tulip_interrupt(int irq, void *dev_instance);
 int tulip_refill_rx(struct net_device *dev);
 #ifdef CONFIG_TULIP_NAPI
-int tulip_poll(struct net_device *dev, int *budget);
+int tulip_poll(struct napi_struct *napi, int budget);
 #endif
 
 
@@ -505,7 +569,7 @@ static inline void tulip_tx_timeout_complete(struct tulip_private *tp, void __io
 	/* Trigger an immediate transmit demand. */
 	iowrite32(0, ioaddr + CSR1);
 
-	tp->stats.tx_errors++;
+	tp->dev->stats.tx_errors++;
 }
 
 #endif /* __NET_TULIP_H__ */

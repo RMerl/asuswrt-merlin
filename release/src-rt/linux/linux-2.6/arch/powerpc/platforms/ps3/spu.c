@@ -20,6 +20,7 @@
 
 #include <linux/kernel.h>
 #include <linux/init.h>
+#include <linux/slab.h>
 #include <linux/mmzone.h>
 #include <linux/io.h>
 #include <linux/mm.h>
@@ -27,7 +28,9 @@
 #include <asm/spu.h>
 #include <asm/spu_priv1.h>
 #include <asm/lv1call.h>
+#include <asm/ps3.h>
 
+#include "../cell/spufs/spufs.h"
 #include "platform.h"
 
 /* spu_management_ops */
@@ -139,9 +142,15 @@ static void _dump_areas(unsigned int spe_id, unsigned long priv2,
 	pr_debug("%s:%d: shadow:  %lxh\n", func, line, shadow);
 }
 
+inline u64 ps3_get_spe_id(void *arg)
+{
+	return spu_pdata(arg)->spe_id;
+}
+EXPORT_SYMBOL_GPL(ps3_get_spe_id);
+
 static unsigned long get_vas_id(void)
 {
-	unsigned long id;
+	u64 id;
 
 	lv1_get_logical_ppe_id(&id);
 	lv1_get_virtual_address_space_id_of_ppe(id, &id);
@@ -152,14 +161,18 @@ static unsigned long get_vas_id(void)
 static int __init construct_spu(struct spu *spu)
 {
 	int result;
-	unsigned long unused;
+	u64 unused;
+	u64 problem_phys;
+	u64 local_store_phys;
 
 	result = lv1_construct_logical_spe(PAGE_SHIFT, PAGE_SHIFT, PAGE_SHIFT,
 		PAGE_SHIFT, PAGE_SHIFT, get_vas_id(), SPE_TYPE_LOGICAL,
-		&spu_pdata(spu)->priv2_addr, &spu->problem_phys,
-		&spu->local_store_phys, &unused,
+		&spu_pdata(spu)->priv2_addr, &problem_phys,
+		&local_store_phys, &unused,
 		&spu_pdata(spu)->shadow_addr,
 		&spu_pdata(spu)->spe_id);
+	spu->problem_phys = problem_phys;
+	spu->local_store_phys = local_store_phys;
 
 	if (result) {
 		pr_debug("%s:%d: lv1_construct_logical_spe failed: %s\n",
@@ -178,19 +191,32 @@ static void spu_unmap(struct spu *spu)
 	iounmap(spu_pdata(spu)->shadow);
 }
 
+/**
+ * setup_areas - Map the spu regions into the address space.
+ *
+ * The current HV requires the spu shadow regs to be mapped with the
+ * PTE page protection bits set as read-only (PP=3).  This implementation
+ * uses the low level __ioremap() to bypass the page protection settings
+ * inforced by ioremap_flags() to get the needed PTE bits set for the
+ * shadow regs.
+ */
+
 static int __init setup_areas(struct spu *spu)
 {
 	struct table {char* name; unsigned long addr; unsigned long size;};
+	static const unsigned long shadow_flags = _PAGE_NO_CACHE | 3;
 
-	spu_pdata(spu)->shadow = __ioremap(
-		spu_pdata(spu)->shadow_addr, sizeof(struct spe_shadow),
-		pgprot_val(PAGE_READONLY) | _PAGE_NO_CACHE | _PAGE_GUARDED);
+	spu_pdata(spu)->shadow = __ioremap(spu_pdata(spu)->shadow_addr,
+					   sizeof(struct spe_shadow),
+					   shadow_flags);
 	if (!spu_pdata(spu)->shadow) {
 		pr_debug("%s:%d: ioremap shadow failed\n", __func__, __LINE__);
 		goto fail_ioremap;
 	}
 
-	spu->local_store = ioremap(spu->local_store_phys, LS_SIZE);
+	spu->local_store = (__force void *)ioremap_flags(spu->local_store_phys,
+		LS_SIZE, _PAGE_NO_CACHE);
+
 	if (!spu->local_store) {
 		pr_debug("%s:%d: ioremap local_store failed\n",
 			__func__, __LINE__);
@@ -199,6 +225,7 @@ static int __init setup_areas(struct spu *spu)
 
 	spu->problem = ioremap(spu->problem_phys,
 		sizeof(struct spu_problem));
+
 	if (!spu->problem) {
 		pr_debug("%s:%d: ioremap problem failed\n", __func__, __LINE__);
 		goto fail_ioremap;
@@ -206,6 +233,7 @@ static int __init setup_areas(struct spu *spu)
 
 	spu->priv2 = ioremap(spu_pdata(spu)->priv2_addr,
 		sizeof(struct spu_priv2));
+
 	if (!spu->priv2) {
 		pr_debug("%s:%d: ioremap priv2 failed\n", __func__, __LINE__);
 		goto fail_ioremap;
@@ -400,17 +428,49 @@ static int __init ps3_enumerate_spus(int (*fn)(void *data))
 		}
 	}
 
-	if (result)
+	if (result) {
 		printk(KERN_WARNING "%s:%d: Error initializing spus\n",
 			__func__, __LINE__);
+		return result;
+	}
 
-	return result;
+	return num_resource_id;
+}
+
+static int ps3_init_affinity(void)
+{
+	return 0;
+}
+
+/**
+ * ps3_enable_spu - Enable SPU run control.
+ *
+ * An outstanding enhancement for the PS3 would be to add a guard to check
+ * for incorrect access to the spu problem state when the spu context is
+ * disabled.  This check could be implemented with a flag added to the spu
+ * context that would inhibit mapping problem state pages, and a routine
+ * to unmap spu problem state pages.  When the spu is enabled with
+ * ps3_enable_spu() the flag would be set allowing pages to be mapped,
+ * and when the spu is disabled with ps3_disable_spu() the flag would be
+ * cleared and the mapped problem state pages would be unmapped.
+ */
+
+static void ps3_enable_spu(struct spu_context *ctx)
+{
+}
+
+static void ps3_disable_spu(struct spu_context *ctx)
+{
+	ctx->ops->runcntl_stop(ctx);
 }
 
 const struct spu_management_ops spu_management_ps3_ops = {
 	.enumerate_spus = ps3_enumerate_spus,
 	.create_spu = ps3_create_spu,
 	.destroy_spu = ps3_destroy_spu,
+	.enable_spu = ps3_enable_spu,
+	.disable_spu = ps3_disable_spu,
+	.init_affinity = ps3_init_affinity,
 };
 
 /* spu_priv1_ops */

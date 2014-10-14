@@ -60,18 +60,9 @@ static int ati_create_page_map(struct ati_page_map *page_map)
 	if (page_map->real == NULL)
 		return -ENOMEM;
 
-	SetPageReserved(virt_to_page(page_map->real));
+	set_memory_uc((unsigned long)page_map->real, 1);
 	err = map_page_into_agp(virt_to_page(page_map->real));
-	page_map->remapped = ioremap_nocache(virt_to_gart(page_map->real),
-					    PAGE_SIZE);
-	if (page_map->remapped == NULL || err) {
-		ClearPageReserved(virt_to_page(page_map->real));
-		free_page((unsigned long) page_map->real);
-		page_map->real = NULL;
-		return -ENOMEM;
-	}
-	/*CACHE_FLUSH();*/
-	global_cache_flush();
+	page_map->remapped = page_map->real;
 
 	for (i = 0; i < PAGE_SIZE / sizeof(unsigned long); i++) {
 		writel(agp_bridge->scratch_page, page_map->remapped+i);
@@ -85,8 +76,7 @@ static int ati_create_page_map(struct ati_page_map *page_map)
 static void ati_free_page_map(struct ati_page_map *page_map)
 {
 	unmap_page_from_agp(virt_to_page(page_map->real));
-	iounmap(page_map->remapped);
-	ClearPageReserved(virt_to_page(page_map->real));
+	set_memory_wb((unsigned long)page_map->real, 1);
 	free_page((unsigned long) page_map->real);
 }
 
@@ -123,21 +113,16 @@ static int ati_create_gatt_pages(int nr_tables)
 
 	for (i = 0; i < nr_tables; i++) {
 		entry = kzalloc(sizeof(struct ati_page_map), GFP_KERNEL);
+		tables[i] = entry;
 		if (entry == NULL) {
-			while (i > 0) {
-				kfree(tables[i-1]);
-				i--;
-			}
-			kfree(tables);
 			retval = -ENOMEM;
 			break;
 		}
-		tables[i] = entry;
 		retval = ati_create_page_map(entry);
 		if (retval != 0)
 			break;
 	}
-	ati_generic_private.num_tables = nr_tables;
+	ati_generic_private.num_tables = i;
 	ati_generic_private.gatt_pages = tables;
 
 	if (retval != 0)
@@ -218,6 +203,9 @@ static int ati_configure(void)
 	temp = (temp & 0xfffff000);
 	ati_generic_private.registers = (volatile u8 __iomem *) ioremap(temp, 4096);
 
+	if (!ati_generic_private.registers)
+		return -ENOMEM;
+
 	if (is_r200())
 		pci_write_config_dword(agp_bridge->dev, ATI_RS100_IG_AGPMODE, 0x20000);
 	else
@@ -281,11 +269,16 @@ static int ati_insert_memory(struct agp_memory * mem,
 	int i, j, num_entries;
 	unsigned long __iomem *cur_gatt;
 	unsigned long addr;
+	int mask_type;
 
 	num_entries = A_SIZE_LVL2(agp_bridge->current_size)->num_entries;
 
-	if (type != 0 || mem->type != 0)
+	mask_type = agp_generic_type_to_mask_type(mem->bridge, type);
+	if (mask_type != 0 || type != mem->type)
 		return -EINVAL;
+
+	if (mem->page_count == 0)
+		return 0;
 
 	if ((pg_start + mem->page_count) > num_entries)
 		return -EINVAL;
@@ -299,19 +292,21 @@ static int ati_insert_memory(struct agp_memory * mem,
 		j++;
 	}
 
-	if (mem->is_flushed == FALSE) {
+	if (!mem->is_flushed) {
 		/*CACHE_FLUSH(); */
 		global_cache_flush();
-		mem->is_flushed = TRUE;
+		mem->is_flushed = true;
 	}
 
 	for (i = 0, j = pg_start; i < mem->page_count; i++, j++) {
 		addr = (j * PAGE_SIZE) + agp_bridge->gart_bus_addr;
 		cur_gatt = GET_GATT(addr);
-		writel(agp_bridge->driver->mask_memory(agp_bridge,
-			mem->memory[i], mem->type), cur_gatt+GET_GATT_OFF(addr));
-		readl(cur_gatt+GET_GATT_OFF(addr));	/* PCI Posting. */
+		writel(agp_bridge->driver->mask_memory(agp_bridge,	
+						       page_to_phys(mem->pages[i]),
+						       mem->type),
+		       cur_gatt+GET_GATT_OFF(addr));
 	}
+	readl(GET_GATT(agp_bridge->gart_bus_addr)); /* PCI posting */
 	agp_bridge->driver->tlb_flush(mem);
 	return 0;
 }
@@ -322,17 +317,22 @@ static int ati_remove_memory(struct agp_memory * mem, off_t pg_start,
 	int i;
 	unsigned long __iomem *cur_gatt;
 	unsigned long addr;
+	int mask_type;
 
-	if (type != 0 || mem->type != 0)
+	mask_type = agp_generic_type_to_mask_type(mem->bridge, type);
+	if (mask_type != 0 || type != mem->type)
 		return -EINVAL;
+
+	if (mem->page_count == 0)
+		return 0;
 
 	for (i = pg_start; i < (mem->page_count + pg_start); i++) {
 		addr = (i * PAGE_SIZE) + agp_bridge->gart_bus_addr;
 		cur_gatt = GET_GATT(addr);
 		writel(agp_bridge->scratch_page, cur_gatt+GET_GATT_OFF(addr));
-		readl(cur_gatt+GET_GATT_OFF(addr)); /* PCI Posting. */
 	}
 
+	readl(GET_GATT(agp_bridge->gart_bus_addr)); /* PCI posting */
 	agp_bridge->driver->tlb_flush(mem);
 	return 0;
 }
@@ -341,6 +341,7 @@ static int ati_create_gatt_table(struct agp_bridge_data *bridge)
 {
 	struct aper_size_info_lvl2 *value;
 	struct ati_page_map page_dir;
+	unsigned long __iomem *cur_gatt;
 	unsigned long addr;
 	int retval;
 	u32 temp;
@@ -360,7 +361,7 @@ static int ati_create_gatt_table(struct agp_bridge_data *bridge)
 
 	agp_bridge->gatt_table_real = (u32 *)page_dir.real;
 	agp_bridge->gatt_table = (u32 __iomem *) page_dir.remapped;
-	agp_bridge->gatt_bus_addr = virt_to_gart(page_dir.real);
+	agp_bridge->gatt_bus_addr = virt_to_phys(page_dir.real);
 
 	/* Write out the size register */
 	current_size = A_SIZE_LVL2(agp_bridge->current_size);
@@ -390,9 +391,15 @@ static int ati_create_gatt_table(struct agp_bridge_data *bridge)
 
 	/* Calculate the agp offset */
 	for (i = 0; i < value->num_entries / 1024; i++, addr += 0x00400000) {
-		writel(virt_to_gart(ati_generic_private.gatt_pages[i]->real) | 1,
+		writel(virt_to_phys(ati_generic_private.gatt_pages[i]->real) | 1,
 			page_dir.remapped+GET_PAGE_DIR_OFF(addr));
 		readl(page_dir.remapped+GET_PAGE_DIR_OFF(addr));	/* PCI Posting. */
+	}
+
+	for (i = 0; i < value->num_entries; i++) {
+		addr = (i * PAGE_SIZE) + agp_bridge->gart_bus_addr;
+		cur_gatt = GET_GATT(addr);
+		writel(agp_bridge->scratch_page, cur_gatt+GET_GATT_OFF(addr));
 	}
 
 	return 0;
@@ -415,6 +422,7 @@ static const struct agp_bridge_driver ati_generic_bridge = {
 	.aperture_sizes		= ati_generic_sizes,
 	.size_type		= LVL2_APER_SIZE,
 	.num_aperture_sizes	= 7,
+	.needs_scratch_page	= true,
 	.configure		= ati_configure,
 	.fetch_size		= ati_fetch_size,
 	.cleanup		= ati_cleanup,
@@ -430,7 +438,9 @@ static const struct agp_bridge_driver ati_generic_bridge = {
 	.alloc_by_type		= agp_generic_alloc_by_type,
 	.free_by_type		= agp_generic_free_by_type,
 	.agp_alloc_page		= agp_generic_alloc_page,
+	.agp_alloc_pages	= agp_generic_alloc_pages,
 	.agp_destroy_page	= agp_generic_destroy_page,
+	.agp_destroy_pages	= agp_generic_destroy_pages,
 	.agp_type_to_mask_type  = agp_generic_type_to_mask_type,
 };
 
@@ -470,6 +480,10 @@ static struct agp_device_ids ati_agp_device_ids[] __devinitdata =
 		.chipset_name	= "IGP9100/M",
 	},
 	{
+		.device_id	= PCI_DEVICE_ID_ATI_RS350_133,
+		.chipset_name	= "IGP9000/M",
+	},
+	{
 		.device_id	= PCI_DEVICE_ID_ATI_RS350_200,
 		.chipset_name	= "IGP9100/M",
 	},
@@ -494,8 +508,8 @@ static int __devinit agp_ati_probe(struct pci_dev *pdev,
 			goto found;
 	}
 
-	printk(KERN_ERR PFX
-	     "Unsupported Ati chipset (device id: %04x)\n", pdev->device);
+	dev_err(&pdev->dev, "unsupported Ati chipset [%04x/%04x])\n",
+		pdev->vendor, pdev->device);
 	return -ENODEV;
 
 found:
@@ -508,8 +522,7 @@ found:
 
 	bridge->driver = &ati_generic_bridge;
 
-	printk(KERN_INFO PFX "Detected Ati %s chipset\n",
-			devs[j].chipset_name);
+	dev_info(&pdev->dev, "Ati %s chipset\n", devs[j].chipset_name);
 
 	/* Fill in the mode register */
 	pci_read_config_dword(pdev,
@@ -568,6 +581,6 @@ static void __exit agp_ati_cleanup(void)
 module_init(agp_ati_init);
 module_exit(agp_ati_cleanup);
 
-MODULE_AUTHOR("Dave Jones <davej@codemonkey.org.uk>");
+MODULE_AUTHOR("Dave Jones <davej@redhat.com>");
 MODULE_LICENSE("GPL and additional rights");
 

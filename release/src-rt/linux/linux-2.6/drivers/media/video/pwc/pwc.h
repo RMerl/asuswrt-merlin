@@ -29,12 +29,17 @@
 #include <linux/usb.h>
 #include <linux/spinlock.h>
 #include <linux/wait.h>
-#include <linux/smp_lock.h>
 #include <linux/version.h>
-#include <asm/semaphore.h>
+#include <linux/mutex.h>
+#include <linux/mm.h>
+#include <linux/slab.h>
 #include <asm/errno.h>
-#include <linux/videodev.h>
+#include <linux/videodev2.h>
 #include <media/v4l2-common.h>
+#include <media/v4l2-ioctl.h>
+#ifdef CONFIG_USB_PWC_INPUT_EVDEV
+#include <linux/input.h>
+#endif
 
 #include "pwc-uncompress.h"
 #include <media/pwc-ioctl.h>
@@ -44,7 +49,7 @@
 #define PWC_MINOR	0
 #define PWC_EXTRAMINOR	12
 #define PWC_VERSION_CODE KERNEL_VERSION(PWC_MAJOR,PWC_MINOR,PWC_EXTRAMINOR)
-#define PWC_VERSION 	"10.0.13"
+#define PWC_VERSION	"10.0.14"
 #define PWC_NAME 	"pwc"
 #define PFX		PWC_NAME ": "
 
@@ -131,12 +136,6 @@
 #define DEVICE_USE_CODEC3(x) ((x)>=700)
 #define DEVICE_USE_CODEC23(x) ((x)>=675)
 
-
-#ifndef V4L2_PIX_FMT_PWC1
-#define V4L2_PIX_FMT_PWC1	v4l2_fourcc('P','W','C','1')
-#define V4L2_PIX_FMT_PWC2	v4l2_fourcc('P','W','C','2')
-#endif
-
 /* The following structures were based on cpia.h. Why reinvent the wheel? :-) */
 struct pwc_iso_buf
 {
@@ -181,7 +180,7 @@ struct pwc_device
    int vcinterface;		/* video control interface */
    int valternate;		/* alternate interface needed */
    int vframes, vsize;		/* frames-per-second & size (see PSZ_*) */
-   int vpalette;		/* palette: 420P, RAW or RGBBAYER */
+   int pixfmt;			/* pixelformat: V4L2_PIX_FMT_YUV420 or raw: _PWC1, _PWC2 */
    int vframe_count;		/* received frames */
    int vframes_dumped; 		/* counter for dumped frames */
    int vframes_error;		/* frames received in error */
@@ -245,7 +244,7 @@ struct pwc_device
    int image_read_pos;			/* In case we read data in pieces, keep track of were we are in the imagebuffer */
    int image_used[MAX_IMAGES];		/* For MCAPTURE and SYNC */
 
-   struct semaphore modlock;		/* to prevent races in video_open(), etc */
+   struct mutex modlock;		/* to prevent races in video_open(), etc */
    spinlock_t ptrlock;			/* for manipulating the buffer pointers */
 
    /*** motorized pan/tilt feature */
@@ -253,6 +252,10 @@ struct pwc_device
    int pan_angle;			/* in degrees * 100 */
    int tilt_angle;			/* absolute angle; 0,0 is home position */
    int snapshot_button_status;		/* set to 1 when the user push the button, reset to 0 when this value is read */
+#ifdef CONFIG_USB_PWC_INPUT_EVDEV
+   struct input_dev *button_dev;	/* webcam snapshot button input */
+   char button_phys[64];
+#endif
 
    /*** Misc. data ***/
    wait_queue_head_t frameq;		/* When waiting for a frame to finish... */
@@ -272,7 +275,6 @@ extern int pwc_trace;
 extern int pwc_mbufs;
 
 /** functions in pwc-if.c */
-int pwc_try_video_mode(struct pwc_device *pdev, int width, int height, int new_fps, int new_compression, int new_snapshot);
 int pwc_handle_frame(struct pwc_device *pdev);
 void pwc_next_image(struct pwc_device *pdev);
 int pwc_isoc_init(struct pwc_device *pdev);
@@ -335,11 +337,9 @@ extern int pwc_get_dynamic_noise(struct pwc_device *pdev, int *noise);
 extern int pwc_camera_power(struct pwc_device *pdev, int power);
 
 /* Private ioctl()s; see pwc-ioctl.h */
-extern int pwc_ioctl(struct pwc_device *pdev, unsigned int cmd, void *arg);
+extern long pwc_ioctl(struct pwc_device *pdev, unsigned int cmd, void *arg);
 
-/** Functions in pwc-v4l.c */
-extern int pwc_video_do_ioctl(struct inode *inode, struct file *file,
-			      unsigned int cmd, void *arg);
+extern const struct v4l2_ioctl_ops pwc_ioctl_ops;
 
 /** pwc-uncompress.c */
 /* Expand frame to image, possibly including decompression. Uses read_frame and fill_image */

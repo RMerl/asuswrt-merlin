@@ -1,6 +1,10 @@
 #ifndef __LINUX_BIT_SPINLOCK_H
 #define __LINUX_BIT_SPINLOCK_H
 
+#include <linux/kernel.h>
+#include <linux/preempt.h>
+#include <asm/atomic.h>
+
 /*
  *  bit-based spin_lock()
  *
@@ -18,12 +22,12 @@ static inline void bit_spin_lock(int bitnum, unsigned long *addr)
 	 */
 	preempt_disable();
 #if defined(CONFIG_SMP) || defined(CONFIG_DEBUG_SPINLOCK)
-	while (test_and_set_bit(bitnum, addr)) {
-		while (test_bit(bitnum, addr)) {
-			preempt_enable();
+	while (unlikely(test_and_set_bit_lock(bitnum, addr))) {
+		preempt_enable();
+		do {
 			cpu_relax();
-			preempt_disable();
-		}
+		} while (test_bit(bitnum, addr));
+		preempt_disable();
 	}
 #endif
 	__acquire(bitlock);
@@ -36,7 +40,7 @@ static inline int bit_spin_trylock(int bitnum, unsigned long *addr)
 {
 	preempt_disable();
 #if defined(CONFIG_SMP) || defined(CONFIG_DEBUG_SPINLOCK)
-	if (test_and_set_bit(bitnum, addr)) {
+	if (unlikely(test_and_set_bit_lock(bitnum, addr))) {
 		preempt_enable();
 		return 0;
 	}
@@ -50,10 +54,28 @@ static inline int bit_spin_trylock(int bitnum, unsigned long *addr)
  */
 static inline void bit_spin_unlock(int bitnum, unsigned long *addr)
 {
-#if defined(CONFIG_SMP) || defined(CONFIG_DEBUG_SPINLOCK)
+#ifdef CONFIG_DEBUG_SPINLOCK
 	BUG_ON(!test_bit(bitnum, addr));
-	smp_mb__before_clear_bit();
-	clear_bit(bitnum, addr);
+#endif
+#if defined(CONFIG_SMP) || defined(CONFIG_DEBUG_SPINLOCK)
+	clear_bit_unlock(bitnum, addr);
+#endif
+	preempt_enable();
+	__release(bitlock);
+}
+
+/*
+ *  bit-based spin_unlock()
+ *  non-atomic version, which can be used eg. if the bit lock itself is
+ *  protecting the rest of the flags in the word.
+ */
+static inline void __bit_spin_unlock(int bitnum, unsigned long *addr)
+{
+#ifdef CONFIG_DEBUG_SPINLOCK
+	BUG_ON(!test_bit(bitnum, addr));
+#endif
+#if defined(CONFIG_SMP) || defined(CONFIG_DEBUG_SPINLOCK)
+	__clear_bit_unlock(bitnum, addr);
 #endif
 	preempt_enable();
 	__release(bitlock);

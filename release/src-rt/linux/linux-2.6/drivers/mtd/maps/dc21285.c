@@ -1,11 +1,9 @@
 /*
  * MTD map driver for flash on the DC21285 (the StrongARM-110 companion chip)
  *
- * (C) 2000  Nicolas Pitre <nico@cam.org>
+ * (C) 2000  Nicolas Pitre <nico@fluxnic.net>
  *
  * This code is GPL
- *
- * $Id: dc21285.c,v 1.24 2005/11/07 11:14:26 gleixner Exp $
  */
 #include <linux/module.h>
 #include <linux/types.h>
@@ -34,16 +32,15 @@ static struct mtd_info *dc21285_mtd;
  */
 static void nw_en_write(void)
 {
-	extern spinlock_t gpio_lock;
 	unsigned long flags;
 
 	/*
 	 * we want to write a bit pattern XXX1 to Xilinx to enable
 	 * the write gate, which will be open for about the next 2ms.
 	 */
-	spin_lock_irqsave(&gpio_lock, flags);
-	cpld_modify(1, 1);
-	spin_unlock_irqrestore(&gpio_lock, flags);
+	spin_lock_irqsave(&nw_gpio_lock, flags);
+	nw_cpld_modify(CPLD_FLASH_WR_ENABLE, CPLD_FLASH_WR_ENABLE);
+	spin_unlock_irqrestore(&nw_gpio_lock, flags);
 
 	/*
 	 * let the ISA bus to catch on...
@@ -252,5 +249,5 @@ module_exit(cleanup_dc21285);
 
 
 MODULE_LICENSE("GPL");
-MODULE_AUTHOR("Nicolas Pitre <nico@cam.org>");
+MODULE_AUTHOR("Nicolas Pitre <nico@fluxnic.net>");
 MODULE_DESCRIPTION("MTD map driver for DC21285 boards");

@@ -17,8 +17,6 @@
 #include <linux/slab.h>
 #include <linux/jiffies.h>
 
-#include <asm/ebus.h>
-#include <asm/sbus.h> /* for sanity check... */
 #include <asm/swift.h> /* for cache flushing. */
 #include <asm/io.h>
 
@@ -32,10 +30,12 @@
 #include <asm/oplib.h>
 #include <asm/prom.h>
 #include <asm/pcic.h>
+#include <asm/timex.h>
 #include <asm/timer.h>
 #include <asm/uaccess.h>
 #include <asm/irq_regs.h>
 
+#include "irq.h"
 
 /*
  * I studied different documents and many live PROMs both from 2.30
@@ -164,8 +164,6 @@ void __iomem *pcic_regs;
 volatile int pcic_speculative;
 volatile int pcic_trapped;
 
-static void pci_do_gettimeofday(struct timeval *tv);
-static int pci_do_settimeofday(struct timespec *tv);
 
 #define CONFIG_CMD(bus, device_fn, where) (0x80000000 | (((unsigned int)bus) << 16) | (((unsigned int)device_fn) << 8) | (where & ~3))
 
@@ -286,7 +284,7 @@ int __init pcic_probe(void)
 	struct linux_prom_registers regs[PROMREG_MAX];
 	struct linux_pbm_info* pbm;
 	char namebuf[64];
-	int node;
+	phandle node;
 	int err;
 
 	if (pcic0_up) {
@@ -328,7 +326,7 @@ int __init pcic_probe(void)
 	pcic->pcic_res_cfg_addr.name = "pcic_cfg_addr";
 	if ((pcic->pcic_config_space_addr =
 	    ioremap(regs[2].phys_addr, regs[2].reg_size * 2)) == 0) {
-		prom_printf("PCIC: Error, cannot map" 
+		prom_printf("PCIC: Error, cannot map "
 			    "PCI Configuration Space Address.\n");
 		prom_halt();
 	}
@@ -340,7 +338,7 @@ int __init pcic_probe(void)
 	pcic->pcic_res_cfg_data.name = "pcic_cfg_data";
 	if ((pcic->pcic_config_space_data =
 	    ioremap(regs[3].phys_addr, regs[3].reg_size * 2)) == 0) {
-		prom_printf("PCIC: Error, cannot map" 
+		prom_printf("PCIC: Error, cannot map "
 			    "PCI Configuration Space Data.\n");
 		prom_halt();
 	}
@@ -429,7 +427,6 @@ static int __init pcic_init(void)
 
 	pcic_pbm_scan_bus(pcic);
 
-	ebus_init();
 	return 0;
 }
 
@@ -438,12 +435,12 @@ int pcic_present(void)
 	return pcic0_up;
 }
 
-static int __init pdev_to_pnode(struct linux_pbm_info *pbm, 
+static int __devinit pdev_to_pnode(struct linux_pbm_info *pbm,
 				    struct pci_dev *pdev)
 {
 	struct linux_prom_pci_registers regs[PROMREG_MAX];
 	int err;
-	int node = prom_getchild(pbm->prom_node);
+	phandle node = prom_getchild(pbm->prom_node);
 
 	while(node) {
 		err = prom_getproperty(node, "reg", 
@@ -492,10 +489,6 @@ static void pcic_map_pci_device(struct linux_pcic *pcic,
 				 * do ioremap() before accessing PC-style I/O,
 				 * we supply virtual, ready to access address.
 				 *
-				 * Ebus devices do not come here even if
-				 * CheerIO makes a similar conversion.
-				 * See ebus.c for details.
-				 *
 				 * Note that request_region()
 				 * works for these devices.
 				 *
@@ -517,8 +510,8 @@ static void pcic_map_pci_device(struct linux_pcic *pcic,
 				 * board in a PCI slot. We must remap it
 				 * under 64K but it is not done yet. XXX
 				 */
-				printk("PCIC: Skipping I/O space at 0x%lx,"
-				    "this will Oops if a driver attaches;"
+				printk("PCIC: Skipping I/O space at 0x%lx, "
+				    "this will Oops if a driver attaches "
 				    "device '%s' at %02x:%02x)\n", address,
 				    namebuf, dev->bus->number, dev->devfn);
 			}
@@ -592,8 +585,6 @@ pcic_fill_irq(struct linux_pcic *pcic, struct pci_dev *dev, int node)
 			writew(ivec, pcic->pcic_regs+PCI_INT_SELECT_LO);
 		}
  	}
-
-	return;
 }
 
 /*
@@ -676,7 +667,7 @@ void __devinit pcibios_fixup_bus(struct pci_bus *bus)
 }
 
 /*
- * pcic_pin_to_irq() is exported to ebus.c.
+ * pcic_pin_to_irq() is exported to bus probing code
  */
 unsigned int
 pcic_pin_to_irq(unsigned int pin, const char *name)
@@ -709,18 +700,29 @@ static void pcic_clear_clock_irq(void)
 
 static irqreturn_t pcic_timer_handler (int irq, void *h)
 {
-	write_seqlock(&xtime_lock);	/* Dummy, to show that we remember */
 	pcic_clear_clock_irq();
-	do_timer(1);
+	xtime_update(1);
 #ifndef CONFIG_SMP
 	update_process_times(user_mode(get_irq_regs()));
 #endif
-	write_sequnlock(&xtime_lock);
 	return IRQ_HANDLED;
 }
 
 #define USECS_PER_JIFFY  10000  /* We have 100HZ "standard" timer for sparc */
 #define TICK_TIMER_LIMIT ((100*1000000/4)/100)
+
+u32 pci_gettimeoffset(void)
+{
+	/*
+	 * We divide all by 100
+	 * to have microsecond resolution and to avoid overflow
+	 */
+	unsigned long count =
+	    readl(pcic0.pcic_regs+PCI_SYS_COUNTER) & ~PCI_SYS_COUNTER_OVERFLOW;
+	count = ((count/100)*USECS_PER_JIFFY) / (TICK_TIMER_LIMIT/100);
+	return count * 1000;
+}
+
 
 void __init pci_time_init(void)
 {
@@ -728,13 +730,8 @@ void __init pci_time_init(void)
 	unsigned long v;
 	int timer_irq, irq;
 
-	/* A hack until do_gettimeofday prototype is moved to arch specific headers
-	   and btfixupped. Patch do_gettimeofday with ba pci_do_gettimeofday; nop */
-	((unsigned int *)do_gettimeofday)[0] = 
-	    0x10800000 | ((((unsigned long)pci_do_gettimeofday -
-	     (unsigned long)do_gettimeofday) >> 2) & 0x003fffff);
-	((unsigned int *)do_gettimeofday)[1] = 0x01000000;
-	BTFIXUPSET_CALL(bus_do_settimeofday, pci_do_settimeofday, BTFIXUPCALL_NORM);
+	do_arch_gettimeoffset = pci_gettimeoffset;
+
 	btfixup();
 
 	writel (TICK_TIMER_LIMIT, pcic->pcic_regs+PCI_SYS_LIMIT);
@@ -752,84 +749,6 @@ void __init pci_time_init(void)
 	local_irq_enable();
 }
 
-static __inline__ unsigned long do_gettimeoffset(void)
-{
-	/*
-	 * We divide all by 100
-	 * to have microsecond resolution and to avoid overflow
-	 */
-	unsigned long count =
-	    readl(pcic0.pcic_regs+PCI_SYS_COUNTER) & ~PCI_SYS_COUNTER_OVERFLOW;
-	count = ((count/100)*USECS_PER_JIFFY) / (TICK_TIMER_LIMIT/100);
-	return count;
-}
-
-static void pci_do_gettimeofday(struct timeval *tv)
-{
-	unsigned long flags;
-	unsigned long seq;
-	unsigned long usec, sec;
-	unsigned long max_ntp_tick = tick_usec - tickadj;
-
-	do {
-		seq = read_seqbegin_irqsave(&xtime_lock, flags);
-		usec = do_gettimeoffset();
-
-		/*
-		 * If time_adjust is negative then NTP is slowing the clock
-		 * so make sure not to go into next possible interval.
-		 * Better to lose some accuracy than have time go backwards..
-		 */
-		if (unlikely(time_adjust < 0))
-			usec = min(usec, max_ntp_tick);
-
-		sec = xtime.tv_sec;
-		usec += (xtime.tv_nsec / 1000);
-	} while (read_seqretry_irqrestore(&xtime_lock, seq, flags));
-
-	while (usec >= 1000000) {
-		usec -= 1000000;
-		sec++;
-	}
-
-	tv->tv_sec = sec;
-	tv->tv_usec = usec;
-}
-
-static int pci_do_settimeofday(struct timespec *tv)
-{
-	if ((unsigned long)tv->tv_nsec >= NSEC_PER_SEC)
-		return -EINVAL;
-
-	/*
-	 * This is revolting. We need to set "xtime" correctly. However, the
-	 * value in this location is the value at the most recent update of
-	 * wall time.  Discover what correction gettimeofday() would have
-	 * made, and then undo it!
-	 */
-	tv->tv_nsec -= 1000 * do_gettimeoffset();
-	while (tv->tv_nsec < 0) {
-		tv->tv_nsec += NSEC_PER_SEC;
-		tv->tv_sec--;
-	}
-
-	wall_to_monotonic.tv_sec += xtime.tv_sec - tv->tv_sec;
-	wall_to_monotonic.tv_nsec += xtime.tv_nsec - tv->tv_nsec;
-
-	if (wall_to_monotonic.tv_nsec > NSEC_PER_SEC) {
-		wall_to_monotonic.tv_nsec -= NSEC_PER_SEC;
-		wall_to_monotonic.tv_sec++;
-	}
-	if (wall_to_monotonic.tv_nsec < 0) {
-		wall_to_monotonic.tv_nsec += NSEC_PER_SEC;
-		wall_to_monotonic.tv_sec--;
-	}
-
-	xtime.tv_sec = tv->tv_sec;
-	xtime.tv_nsec = tv->tv_nsec;
-	ntp_clear();
-	return 0;
-}
 
 #if 0
 static void watchdog_reset() {
@@ -845,9 +764,10 @@ char * __devinit pcibios_setup(char *str)
 	return str;
 }
 
-void pcibios_align_resource(void *data, struct resource *res,
-			    resource_size_t size, resource_size_t align)
+resource_size_t pcibios_align_resource(void *data, const struct resource *res,
+				resource_size_t size, resource_size_t align)
 {
+	return res->start;
 }
 
 int pcibios_enable_device(struct pci_dev *pdev, int mask)
@@ -903,11 +823,6 @@ static void pcic_enable_irq(unsigned int irq_nr)
 	local_irq_restore(flags);
 }
 
-static void pcic_clear_profile_irq(int cpu)
-{
-	printk("PCIC: unimplemented code: FILE=%s LINE=%d", __FILE__, __LINE__);
-}
-
 static void pcic_load_profile_irq(int cpu, unsigned int limit)
 {
 	printk("PCIC: unimplemented code: FILE=%s LINE=%d", __FILE__, __LINE__);
@@ -933,7 +848,6 @@ void __init sun4m_pci_init_IRQ(void)
 	BTFIXUPSET_CALL(enable_pil_irq, pcic_enable_pil_irq, BTFIXUPCALL_NORM);
 	BTFIXUPSET_CALL(disable_pil_irq, pcic_disable_pil_irq, BTFIXUPCALL_NORM);
 	BTFIXUPSET_CALL(clear_clock_irq, pcic_clear_clock_irq, BTFIXUPCALL_NORM);
-	BTFIXUPSET_CALL(clear_profile_irq, pcic_clear_profile_irq, BTFIXUPCALL_NORM);
 	BTFIXUPSET_CALL(load_profile_irq, pcic_load_profile_irq, BTFIXUPCALL_NORM);
 }
 
@@ -968,6 +882,7 @@ void outsb(unsigned long addr, const void *src, unsigned long count)
 		/* addr += 1; */
 	}
 }
+EXPORT_SYMBOL(outsb);
 
 void outsw(unsigned long addr, const void *src, unsigned long count)
 {
@@ -978,6 +893,7 @@ void outsw(unsigned long addr, const void *src, unsigned long count)
 		/* addr += 2; */
 	}
 }
+EXPORT_SYMBOL(outsw);
 
 void outsl(unsigned long addr, const void *src, unsigned long count)
 {
@@ -988,6 +904,7 @@ void outsl(unsigned long addr, const void *src, unsigned long count)
 		/* addr += 4; */
 	}
 }
+EXPORT_SYMBOL(outsl);
 
 void insb(unsigned long addr, void *dst, unsigned long count)
 {
@@ -998,6 +915,7 @@ void insb(unsigned long addr, void *dst, unsigned long count)
 		/* addr += 1; */
 	}
 }
+EXPORT_SYMBOL(insb);
 
 void insw(unsigned long addr, void *dst, unsigned long count)
 {
@@ -1008,6 +926,7 @@ void insw(unsigned long addr, void *dst, unsigned long count)
 		/* addr += 2; */
 	}
 }
+EXPORT_SYMBOL(insw);
 
 void insl(unsigned long addr, void *dst, unsigned long count)
 {
@@ -1021,5 +940,6 @@ void insl(unsigned long addr, void *dst, unsigned long count)
 		/* addr += 4; */
 	}
 }
+EXPORT_SYMBOL(insl);
 
 subsys_initcall(pcic_init);

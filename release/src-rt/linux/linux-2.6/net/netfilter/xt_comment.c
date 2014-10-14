@@ -10,52 +10,36 @@
 #include <linux/netfilter/xt_comment.h>
 
 MODULE_AUTHOR("Brad Fisher <brad@info-link.net>");
-MODULE_DESCRIPTION("iptables comment match module");
+MODULE_DESCRIPTION("Xtables: No-op match which can be tagged with a comment");
 MODULE_LICENSE("GPL");
 MODULE_ALIAS("ipt_comment");
 MODULE_ALIAS("ip6t_comment");
 
-static int
-match(const struct sk_buff *skb,
-      const struct net_device *in,
-      const struct net_device *out,
-      const struct xt_match *match,
-      const void *matchinfo,
-      int offset,
-      unsigned int protooff,
-      int *hotdrop)
+static bool
+comment_mt(const struct sk_buff *skb, struct xt_action_param *par)
 {
 	/* We always match */
-	return 1;
+	return true;
 }
 
-static struct xt_match xt_comment_match[] = {
-	{
-		.name		= "comment",
-		.family		= AF_INET,
-		.match		= match,
-		.matchsize	= sizeof(struct xt_comment_info),
-		.me		= THIS_MODULE
-	},
-	{
-		.name		= "comment",
-		.family		= AF_INET6,
-		.match		= match,
-		.matchsize	= sizeof(struct xt_comment_info),
-		.me		= THIS_MODULE
-	},
+static struct xt_match comment_mt_reg __read_mostly = {
+	.name      = "comment",
+	.revision  = 0,
+	.family    = NFPROTO_UNSPEC,
+	.match     = comment_mt,
+	.matchsize = sizeof(struct xt_comment_info),
+	.me        = THIS_MODULE,
 };
 
-static int __init xt_comment_init(void)
+static int __init comment_mt_init(void)
 {
-	return xt_register_matches(xt_comment_match,
-				   ARRAY_SIZE(xt_comment_match));
+	return xt_register_match(&comment_mt_reg);
 }
 
-static void __exit xt_comment_fini(void)
+static void __exit comment_mt_exit(void)
 {
-	xt_unregister_matches(xt_comment_match, ARRAY_SIZE(xt_comment_match));
+	xt_unregister_match(&comment_mt_reg);
 }
 
-module_init(xt_comment_init);
-module_exit(xt_comment_fini);
+module_init(comment_mt_init);
+module_exit(comment_mt_exit);

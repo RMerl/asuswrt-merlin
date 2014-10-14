@@ -56,7 +56,7 @@
 
 /* Receive queue sizes */
 /* Minimum of credit that the peer should hold.
- * If the peer has less credits than 9 frames, we will explicitely send
+ * If the peer has less credits than 9 frames, we will explicitly send
  * him some credits (through irttp_give_credit() and a specific frame).
  * Note that when we give credits it's likely that it won't be sent in
  * this LAP window, but in the next one. So, we make sure that the peer
@@ -66,7 +66,7 @@
 /* This is the default maximum number of credits held by the peer, so the
  * default maximum number of frames he can send us before needing flow
  * control answer from us (this may be negociated differently at TSAP setup).
- * We want to minimise the number of times we have to explicitely send some
+ * We want to minimise the number of times we have to explicitly send some
  * credit to the peer, hoping we can piggyback it on the return data. In
  * particular, it doesn't make sense for us to send credit more than once
  * per LAP window.
@@ -97,7 +97,7 @@
 #define TTP_MAX_SDU_SIZE 0x01
 
 /*
- *  This structure contains all data assosiated with one instance of a TTP 
+ *  This structure contains all data associated with one instance of a TTP 
  *  connection.
  */
 struct tsap_cb {
@@ -169,17 +169,17 @@ int irttp_disconnect_request(struct tsap_cb *self, struct sk_buff *skb,
 void irttp_flow_request(struct tsap_cb *self, LOCAL_FLOW flow);
 struct tsap_cb *irttp_dup(struct tsap_cb *self, void *instance);
 
-static __inline __u32 irttp_get_saddr(struct tsap_cb *self)
+static inline __u32 irttp_get_saddr(struct tsap_cb *self)
 {
 	return irlmp_get_saddr(self->lsap);
 }
 
-static __inline __u32 irttp_get_daddr(struct tsap_cb *self)
+static inline __u32 irttp_get_daddr(struct tsap_cb *self)
 {
 	return irlmp_get_daddr(self->lsap);
 }
 
-static __inline __u32 irttp_get_max_seg_size(struct tsap_cb *self)
+static inline __u32 irttp_get_max_seg_size(struct tsap_cb *self)
 {
 	return self->max_seg_size;
 }
@@ -204,7 +204,7 @@ static inline int irttp_is_primary(struct tsap_cb *self)
 	    (self->lsap->lap == NULL) ||
 	    (self->lsap->lap->irlap == NULL))
 		return -2;
-	return(irlap_is_primary(self->lsap->lap->irlap));
+	return irlap_is_primary(self->lsap->lap->irlap);
 }
 
 #endif /* IRTTP_H */

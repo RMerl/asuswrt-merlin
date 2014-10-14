@@ -22,9 +22,9 @@
 #include <linux/types.h>
 #include <linux/string.h>
 #include <linux/mm.h>
+#include <linux/io.h>
 
-#include <asm/hardware.h>
-#include <asm/io.h>
+#include <mach/hardware.h>
 #include <asm/pgtable.h>
 #include <asm/page.h>
 #include <asm/setup.h>
@@ -32,7 +32,7 @@
 #include <asm/mach-types.h>
 #include <asm/mach/arch.h>
 #include <asm/mach/map.h>
-#include <asm/arch/syspld.h>
+#include <mach/syspld.h>
 
 #include "common.h"
 
@@ -89,8 +89,6 @@ static void __init p720t_map_io(void)
 
 MACHINE_START(P720T, "ARM-Prospector720T")
 	/* Maintainer: ARM Ltd/Deep Blue Solutions Ltd */
-	.phys_io	= 0x80000000,
-	.io_pg_offst	= ((0xff000000) >> 18) & 0xfffc,
 	.boot_params	= 0xc0000100,
 	.fixup		= fixup_p720t,
 	.map_io		= p720t_map_io,

@@ -34,6 +34,7 @@
 #include <rdma/ib_smi.h>
 
 #include <linux/mlx4/cmd.h>
+#include <linux/gfp.h>
 
 #include "mlx4_ib.h"
 
@@ -109,7 +110,7 @@ int mlx4_MAD_IFC(struct mlx4_ib_dev *dev, int ignore_mkey, int ignore_bkey,
 			   in_modifier, op_modifier,
 			   MLX4_CMD_MAD_IFC, MLX4_CMD_TIME_CLASS_C);
 
-	if (!err);
+	if (!err)
 		memcpy(response_mad, outmailbox->buf, 256);
 
 	mlx4_free_cmd_mailbox(dev->dev, inmailbox);
@@ -147,7 +148,8 @@ static void update_sm_ah(struct mlx4_ib_dev *dev, u8 port_num, u16 lid, u8 sl)
  * Snoop SM MADs for port info and P_Key table sets, so we can
  * synthesize LID change and P_Key change events.
  */
-static void smp_snoop(struct ib_device *ibdev, u8 port_num, struct ib_mad *mad)
+static void smp_snoop(struct ib_device *ibdev, u8 port_num, struct ib_mad *mad,
+				u16 prev_lid)
 {
 	struct ib_event event;
 
@@ -157,6 +159,7 @@ static void smp_snoop(struct ib_device *ibdev, u8 port_num, struct ib_mad *mad)
 		if (mad->mad_hdr.attr_id == IB_SMP_ATTR_PORT_INFO) {
 			struct ib_port_info *pinfo =
 				(struct ib_port_info *) ((struct ib_smp *) mad)->data;
+			u16 lid = be16_to_cpu(pinfo->lid);
 
 			update_sm_ah(to_mdev(ibdev), port_num,
 				     be16_to_cpu(pinfo->sm_lid),
@@ -165,12 +168,15 @@ static void smp_snoop(struct ib_device *ibdev, u8 port_num, struct ib_mad *mad)
 			event.device	       = ibdev;
 			event.element.port_num = port_num;
 
-			if(pinfo->clientrereg_resv_subnetto & 0x80)
+			if (pinfo->clientrereg_resv_subnetto & 0x80) {
 				event.event    = IB_EVENT_CLIENT_REREGISTER;
-			else
-				event.event    = IB_EVENT_LID_CHANGE;
+				ib_dispatch_event(&event);
+			}
 
-			ib_dispatch_event(&event);
+			if (prev_lid != lid) {
+				event.event    = IB_EVENT_LID_CHANGE;
+				ib_dispatch_event(&event);
+			}
 		}
 
 		if (mad->mad_hdr.attr_id == IB_SMP_ATTR_PKEY_TABLE) {
@@ -205,6 +211,8 @@ static void forward_trap(struct mlx4_ib_dev *dev, u8 port_num, struct ib_mad *ma
 	if (agent) {
 		send_buf = ib_create_send_mad(agent, qpn, 0, 0, IB_MGMT_MAD_HDR,
 					      IB_MGMT_MAD_DATA, GFP_ATOMIC);
+		if (IS_ERR(send_buf))
+			return;
 		/*
 		 * We rely here on the fact that MLX QPs don't use the
 		 * address handle after the send is posted (this is
@@ -228,8 +236,9 @@ int mlx4_ib_process_mad(struct ib_device *ibdev, int mad_flags,	u8 port_num,
 			struct ib_wc *in_wc, struct ib_grh *in_grh,
 			struct ib_mad *in_mad, struct ib_mad *out_mad)
 {
-	u16 slid;
+	u16 slid, prev_lid = 0;
 	int err;
+	struct ib_port_attr pattr;
 
 	slid = in_wc ? in_wc->slid : be16_to_cpu(IB_LID_PERMISSIVE);
 
@@ -255,12 +264,20 @@ int mlx4_ib_process_mad(struct ib_device *ibdev, int mad_flags,	u8 port_num,
 			return IB_MAD_RESULT_SUCCESS;
 	} else if (in_mad->mad_hdr.mgmt_class == IB_MGMT_CLASS_PERF_MGMT ||
 		   in_mad->mad_hdr.mgmt_class == MLX4_IB_VENDOR_CLASS1   ||
-		   in_mad->mad_hdr.mgmt_class == MLX4_IB_VENDOR_CLASS2) {
+		   in_mad->mad_hdr.mgmt_class == MLX4_IB_VENDOR_CLASS2   ||
+		   in_mad->mad_hdr.mgmt_class == IB_MGMT_CLASS_CONG_MGMT) {
 		if (in_mad->mad_hdr.method  != IB_MGMT_METHOD_GET &&
 		    in_mad->mad_hdr.method  != IB_MGMT_METHOD_SET)
 			return IB_MAD_RESULT_SUCCESS;
 	} else
 		return IB_MAD_RESULT_SUCCESS;
+
+	if ((in_mad->mad_hdr.mgmt_class == IB_MGMT_CLASS_SUBN_LID_ROUTED ||
+	     in_mad->mad_hdr.mgmt_class == IB_MGMT_CLASS_SUBN_DIRECTED_ROUTE) &&
+	    in_mad->mad_hdr.method == IB_MGMT_METHOD_SET &&
+	    in_mad->mad_hdr.attr_id == IB_SMP_ATTR_PORT_INFO &&
+	    !ib_query_port(ibdev, port_num, &pattr))
+		prev_lid = pattr.lid;
 
 	err = mlx4_MAD_IFC(to_mdev(ibdev),
 			   mad_flags & IB_MAD_IGNORE_MKEY,
@@ -270,7 +287,7 @@ int mlx4_ib_process_mad(struct ib_device *ibdev, int mad_flags,	u8 port_num,
 		return IB_MAD_RESULT_FAILURE;
 
 	if (!out_mad->mad_hdr.status) {
-		smp_snoop(ibdev, port_num, in_mad);
+		smp_snoop(ibdev, port_num, in_mad, prev_lid);
 		node_desc_override(ibdev, out_mad);
 	}
 
@@ -296,24 +313,30 @@ int mlx4_ib_mad_init(struct mlx4_ib_dev *dev)
 	struct ib_mad_agent *agent;
 	int p, q;
 	int ret;
+	enum rdma_link_layer ll;
 
-	for (p = 0; p < dev->dev->caps.num_ports; ++p)
+	for (p = 0; p < dev->num_ports; ++p) {
+		ll = rdma_port_get_link_layer(&dev->ib_dev, p + 1);
 		for (q = 0; q <= 1; ++q) {
-			agent = ib_register_mad_agent(&dev->ib_dev, p + 1,
-						      q ? IB_QPT_GSI : IB_QPT_SMI,
-						      NULL, 0, send_handler,
-						      NULL, NULL);
-			if (IS_ERR(agent)) {
-				ret = PTR_ERR(agent);
-				goto err;
-			}
-			dev->send_agent[p][q] = agent;
+			if (ll == IB_LINK_LAYER_INFINIBAND) {
+				agent = ib_register_mad_agent(&dev->ib_dev, p + 1,
+							      q ? IB_QPT_GSI : IB_QPT_SMI,
+							      NULL, 0, send_handler,
+							      NULL, NULL);
+				if (IS_ERR(agent)) {
+					ret = PTR_ERR(agent);
+					goto err;
+				}
+				dev->send_agent[p][q] = agent;
+			} else
+				dev->send_agent[p][q] = NULL;
 		}
+	}
 
 	return 0;
 
 err:
-	for (p = 0; p < dev->dev->caps.num_ports; ++p)
+	for (p = 0; p < dev->num_ports; ++p)
 		for (q = 0; q <= 1; ++q)
 			if (dev->send_agent[p][q])
 				ib_unregister_mad_agent(dev->send_agent[p][q]);
@@ -326,11 +349,13 @@ void mlx4_ib_mad_cleanup(struct mlx4_ib_dev *dev)
 	struct ib_mad_agent *agent;
 	int p, q;
 
-	for (p = 0; p < dev->dev->caps.num_ports; ++p) {
+	for (p = 0; p < dev->num_ports; ++p) {
 		for (q = 0; q <= 1; ++q) {
 			agent = dev->send_agent[p][q];
-			dev->send_agent[p][q] = NULL;
-			ib_unregister_mad_agent(agent);
+			if (agent) {
+				dev->send_agent[p][q] = NULL;
+				ib_unregister_mad_agent(agent);
+			}
 		}
 
 		if (dev->sm_ah[p])

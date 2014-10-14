@@ -29,8 +29,6 @@
  * ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
- *
- * $Id: mthca_profile.h 1349 2004-12-16 21:09:43Z roland $
  */
 
 #ifndef MTHCA_PROFILE_H
@@ -53,7 +51,7 @@ struct mthca_profile {
 	int fmr_reserved_mtts;
 };
 
-u64 mthca_make_profile(struct mthca_dev *mdev,
+s64 mthca_make_profile(struct mthca_dev *mdev,
 		       struct mthca_profile *request,
 		       struct mthca_dev_lim *dev_lim,
 		       struct mthca_init_hca_param *init_hca);

@@ -44,12 +44,10 @@
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/module.h>
-#include <linux/moduleparam.h>
 #include <linux/slab.h>
 #include <linux/string.h>
 
 #include "dvb_frontend.h"
-#include "dvb-pll.h"
 #include "nxt200x.h"
 
 struct nxt200x_state {
@@ -76,26 +74,27 @@ static int i2c_writebytes (struct nxt200x_state* state, u8 addr, u8 *buf, u8 len
 
 	if ((err = i2c_transfer (state->i2c, &msg, 1)) != 1) {
 		printk (KERN_WARNING "nxt200x: %s: i2c write error (addr 0x%02x, err == %i)\n",
-			__FUNCTION__, addr, err);
+			__func__, addr, err);
 		return -EREMOTEIO;
 	}
 	return 0;
 }
 
-static u8 i2c_readbytes (struct nxt200x_state* state, u8 addr, u8* buf, u8 len)
+static int i2c_readbytes(struct nxt200x_state *state, u8 addr, u8 *buf, u8 len)
 {
 	int err;
 	struct i2c_msg msg = { .addr = addr, .flags = I2C_M_RD, .buf = buf, .len = len };
 
 	if ((err = i2c_transfer (state->i2c, &msg, 1)) != 1) {
 		printk (KERN_WARNING "nxt200x: %s: i2c read error (addr 0x%02x, err == %i)\n",
-			__FUNCTION__, addr, err);
+			__func__, addr, err);
 		return -EREMOTEIO;
 	}
 	return 0;
 }
 
-static int nxt200x_writebytes (struct nxt200x_state* state, u8 reg, u8 *buf, u8 len)
+static int nxt200x_writebytes (struct nxt200x_state* state, u8 reg,
+			       const u8 *buf, u8 len)
 {
 	u8 buf2 [len+1];
 	int err;
@@ -106,13 +105,13 @@ static int nxt200x_writebytes (struct nxt200x_state* state, u8 reg, u8 *buf, u8 
 
 	if ((err = i2c_transfer (state->i2c, &msg, 1)) != 1) {
 		printk (KERN_WARNING "nxt200x: %s: i2c write error (addr 0x%02x, err == %i)\n",
-			__FUNCTION__, state->config->demod_address, err);
+			__func__, state->config->demod_address, err);
 		return -EREMOTEIO;
 	}
 	return 0;
 }
 
-static u8 nxt200x_readbytes (struct nxt200x_state* state, u8 reg, u8* buf, u8 len)
+static int nxt200x_readbytes(struct nxt200x_state *state, u8 reg, u8 *buf, u8 len)
 {
 	u8 reg2 [] = { reg };
 
@@ -123,7 +122,7 @@ static u8 nxt200x_readbytes (struct nxt200x_state* state, u8 reg, u8* buf, u8 le
 
 	if ((err = i2c_transfer (state->i2c, msg, 2)) != 2) {
 		printk (KERN_WARNING "nxt200x: %s: i2c read error (addr 0x%02x, err == %i)\n",
-			__FUNCTION__, state->config->demod_address, err);
+			__func__, state->config->demod_address, err);
 		return -EREMOTEIO;
 	}
 	return 0;
@@ -148,7 +147,7 @@ static u16 nxt200x_crc(u16 crc, u8 c)
 static int nxt200x_writereg_multibyte (struct nxt200x_state* state, u8 reg, u8* data, u8 len)
 {
 	u8 attr, len2, buf;
-	dprintk("%s\n", __FUNCTION__);
+	dprintk("%s\n", __func__);
 
 	/* set mutli register register */
 	nxt200x_writebytes(state, 0x35, &reg, 1);
@@ -209,7 +208,7 @@ static int nxt200x_readreg_multibyte (struct nxt200x_state* state, u8 reg, u8* d
 {
 	int i;
 	u8 buf, len2, attr;
-	dprintk("%s\n", __FUNCTION__);
+	dprintk("%s\n", __func__);
 
 	/* set mutli register register */
 	nxt200x_writebytes(state, 0x35, &reg, 1);
@@ -256,7 +255,7 @@ static int nxt200x_readreg_multibyte (struct nxt200x_state* state, u8 reg, u8* d
 static void nxt200x_microcontroller_stop (struct nxt200x_state* state)
 {
 	u8 buf, stopval, counter = 0;
-	dprintk("%s\n", __FUNCTION__);
+	dprintk("%s\n", __func__);
 
 	/* set correct stop value */
 	switch (state->demod_chip) {
@@ -289,7 +288,7 @@ static void nxt200x_microcontroller_stop (struct nxt200x_state* state)
 static void nxt200x_microcontroller_start (struct nxt200x_state* state)
 {
 	u8 buf;
-	dprintk("%s\n", __FUNCTION__);
+	dprintk("%s\n", __func__);
 
 	buf = 0x00;
 	nxt200x_writebytes(state, 0x22, &buf, 1);
@@ -299,7 +298,7 @@ static void nxt2004_microcontroller_init (struct nxt200x_state* state)
 {
 	u8 buf[9];
 	u8 counter = 0;
-	dprintk("%s\n", __FUNCTION__);
+	dprintk("%s\n", __func__);
 
 	buf[0] = 0x00;
 	nxt200x_writebytes(state, 0x2b, buf, 1);
@@ -330,7 +329,7 @@ static int nxt200x_writetuner (struct nxt200x_state* state, u8* data)
 {
 	u8 buf, count = 0;
 
-	dprintk("%s\n", __FUNCTION__);
+	dprintk("%s\n", __func__);
 
 	dprintk("Tuner Bytes: %02X %02X %02X %02X\n", data[1], data[2], data[3], data[4]);
 
@@ -389,7 +388,7 @@ static int nxt200x_writetuner (struct nxt200x_state* state, u8* data)
 static void nxt200x_agc_reset(struct nxt200x_state* state)
 {
 	u8 buf;
-	dprintk("%s\n", __FUNCTION__);
+	dprintk("%s\n", __func__);
 
 	switch (state->demod_chip) {
 		case NXT2002:
@@ -418,7 +417,7 @@ static int nxt2002_load_firmware (struct dvb_frontend* fe, const struct firmware
 	u8 buf[3], written = 0, chunkpos = 0;
 	u16 rambase, position, crc = 0;
 
-	dprintk("%s\n", __FUNCTION__);
+	dprintk("%s\n", __func__);
 	dprintk("Firmware is %zu bytes\n", fw->size);
 
 	/* Get the RAM base for this nxt2002 */
@@ -485,7 +484,7 @@ static int nxt2004_load_firmware (struct dvb_frontend* fe, const struct firmware
 	u8 buf[3];
 	u16 rambase, position, crc=0;
 
-	dprintk("%s\n", __FUNCTION__);
+	dprintk("%s\n", __func__);
 	dprintk("Firmware is %zu bytes\n", fw->size);
 
 	/* set rambase */
@@ -546,11 +545,6 @@ static int nxt200x_setup_frontend_parameters (struct dvb_frontend* fe,
 		nxt200x_writebytes(state, 0x17, buf, 1);
 	}
 
-	/* get tuning information */
-	if (fe->ops.tuner_ops.calc_regs) {
-		fe->ops.tuner_ops.calc_regs(fe, p, buf, 5);
-	}
-
 	/* set additional params */
 	switch (p->u.vsb.modulation) {
 		case QAM_64:
@@ -559,27 +553,24 @@ static int nxt200x_setup_frontend_parameters (struct dvb_frontend* fe,
 			/* This is just a guess since I am unable to test it */
 			if (state->config->set_ts_params)
 				state->config->set_ts_params(fe, 1);
-
-			/* set input */
-			if (state->config->set_pll_input)
-				state->config->set_pll_input(buf+1, 1);
 			break;
 		case VSB_8:
 			/* Set non-punctured clock for VSB */
 			if (state->config->set_ts_params)
 				state->config->set_ts_params(fe, 0);
-
-			/* set input */
-			if (state->config->set_pll_input)
-				state->config->set_pll_input(buf+1, 0);
 			break;
 		default:
 			return -EINVAL;
 			break;
 	}
 
-	/* write frequency information */
-	nxt200x_writetuner(state, buf);
+	if (fe->ops.tuner_ops.calc_regs) {
+		/* get tuning information */
+		fe->ops.tuner_ops.calc_regs(fe, p, buf, 5);
+
+		/* write frequency information */
+		nxt200x_writetuner(state, buf);
+	}
 
 	/* reset the agc now that tuning has been completed */
 	nxt200x_agc_reset(state);
@@ -888,7 +879,8 @@ static int nxt2002_init(struct dvb_frontend* fe)
 
 	/* request the firmware, this will block until someone uploads it */
 	printk("nxt2002: Waiting for firmware upload (%s)...\n", NXT2002_DEFAULT_FIRMWARE);
-	ret = request_firmware(&fw, NXT2002_DEFAULT_FIRMWARE, &state->i2c->dev);
+	ret = request_firmware(&fw, NXT2002_DEFAULT_FIRMWARE,
+			       state->i2c->dev.parent);
 	printk("nxt2002: Waiting for firmware upload(2)...\n");
 	if (ret) {
 		printk("nxt2002: No firmware uploaded (timeout or file not found?)\n");
@@ -952,7 +944,8 @@ static int nxt2004_init(struct dvb_frontend* fe)
 
 	/* request the firmware, this will block until someone uploads it */
 	printk("nxt2004: Waiting for firmware upload (%s)...\n", NXT2004_DEFAULT_FIRMWARE);
-	ret = request_firmware(&fw, NXT2004_DEFAULT_FIRMWARE, &state->i2c->dev);
+	ret = request_firmware(&fw, NXT2004_DEFAULT_FIRMWARE,
+			       state->i2c->dev.parent);
 	printk("nxt2004: Waiting for firmware upload(2)...\n");
 	if (ret) {
 		printk("nxt2004: No firmware uploaded (timeout or file not found?)\n");

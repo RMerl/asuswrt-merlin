@@ -1,7 +1,7 @@
 /*
  *  Driver for ESS Solo-1 (ES1938, ES1946, ES1969) soundcard
  *  Copyright (c) by Jaromir Koutek <miri@punknet.cz>,
- *                   Jaroslav Kysela <perex@suse.cz>,
+ *                   Jaroslav Kysela <perex@perex.cz>,
  *                   Thomas Sailer <sailer@ife.ee.ethz.ch>,
  *                   Abramo Bagnara <abramo@alsa-project.org>,
  *                   Markus Gruber <gruber@eikon.tum.de>
@@ -47,7 +47,6 @@
 */
 
 
-#include <sound/driver.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>
 #include <linux/pci.h>
@@ -227,6 +226,7 @@ struct es1938 {
 	unsigned int dma2_start;
 	unsigned int dma1_shift;
 	unsigned int dma2_shift;
+	unsigned int last_capture_dmaaddr;
 	unsigned int active;
 
 	spinlock_t reg_lock;
@@ -243,8 +243,8 @@ struct es1938 {
 
 static irqreturn_t snd_es1938_interrupt(int irq, void *dev_id);
 
-static struct pci_device_id snd_es1938_ids[] = {
-        { 0x125d, 0x1969, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0, },   /* Solo-1 */
+static DEFINE_PCI_DEVICE_TABLE(snd_es1938_ids) = {
+	{ PCI_VDEVICE(ESS, 0x1969), 0, },   /* Solo-1 */
 	{ 0, }
 };
 
@@ -529,6 +529,7 @@ static void snd_es1938_capture_setdma(struct es1938 *chip)
 	outb(1, SLDM_REG(chip, DMAMASK));
 	outb(0x14, SLDM_REG(chip, DMAMODE));
 	outl(chip->dma1_start, SLDM_REG(chip, DMAADDR));
+	chip->last_capture_dmaaddr = chip->dma1_start;
 	outw(chip->dma1_size - 1, SLDM_REG(chip, DMACOUNT));
 	/* 3. Unmask DMA */
 	outb(0, SLDM_REG(chip, DMAMASK));
@@ -770,19 +771,40 @@ static int snd_es1938_playback_prepare(struct snd_pcm_substream *substream)
 	return -EINVAL;
 }
 
+/* during the incrementing of dma counters the DMA register reads sometimes
+   returns garbage. To ensure a valid hw pointer, the following checks which
+   should be very unlikely to fail are used:
+   - is the current DMA address in the valid DMA range ?
+   - is the sum of DMA address and DMA counter pointing to the last DMA byte ?
+   One can argue this could differ by one byte depending on which register is
+   updated first, so the implementation below allows for that.
+*/
 static snd_pcm_uframes_t snd_es1938_capture_pointer(struct snd_pcm_substream *substream)
 {
 	struct es1938 *chip = snd_pcm_substream_chip(substream);
 	size_t ptr;
+#if 0
 	size_t old, new;
-#if 1
 	/* This stuff is *needed*, don't ask why - AB */
 	old = inw(SLDM_REG(chip, DMACOUNT));
 	while ((new = inw(SLDM_REG(chip, DMACOUNT))) != old)
 		old = new;
 	ptr = chip->dma1_size - 1 - new;
 #else
-	ptr = inl(SLDM_REG(chip, DMAADDR)) - chip->dma1_start;
+	size_t count;
+	unsigned int diff;
+
+	ptr = inl(SLDM_REG(chip, DMAADDR));
+	count = inw(SLDM_REG(chip, DMACOUNT));
+	diff = chip->dma1_start + chip->dma1_size - ptr - count;
+
+	if (diff > 3 || ptr < chip->dma1_start
+	      || ptr >= chip->dma1_start+chip->dma1_size)
+	  ptr = chip->last_capture_dmaaddr;            /* bad, use last saved */
+	else
+	  chip->last_capture_dmaaddr = ptr;            /* good, remember it */
+
+	ptr -= chip->dma1_start;
 #endif
 	return ptr >> chip->dma1_shift;
 }
@@ -838,7 +860,8 @@ static int snd_es1938_capture_copy(struct snd_pcm_substream *substream,
 	struct es1938 *chip = snd_pcm_substream_chip(substream);
 	pos <<= chip->dma1_shift;
 	count <<= chip->dma1_shift;
-	snd_assert(pos + count <= chip->dma1_size, return -EINVAL);
+	if (snd_BUG_ON(pos + count > chip->dma1_size))
+		return -EINVAL;
 	if (pos + count < chip->dma1_size) {
 		if (copy_to_user(dst, runtime->dma_area + pos + 1, count))
 			return -EFAULT;
@@ -1066,15 +1089,7 @@ static int snd_es1938_put_mux(struct snd_kcontrol *kcontrol,
 	return snd_es1938_mixer_bits(chip, 0x1c, 0x07, val) != val;
 }
 
-static int snd_es1938_info_spatializer_enable(struct snd_kcontrol *kcontrol,
-					      struct snd_ctl_elem_info *uinfo)
-{
-	uinfo->type = SNDRV_CTL_ELEM_TYPE_BOOLEAN;
-	uinfo->count = 1;
-	uinfo->value.integer.min = 0;
-	uinfo->value.integer.max = 1;
-	return 0;
-}
+#define snd_es1938_info_spatializer_enable	snd_ctl_boolean_mono_info
 
 static int snd_es1938_get_spatializer_enable(struct snd_kcontrol *kcontrol,
 					     struct snd_ctl_elem_value *ucontrol)
@@ -1120,15 +1135,7 @@ static int snd_es1938_get_hw_volume(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
-static int snd_es1938_info_hw_switch(struct snd_kcontrol *kcontrol,
-				     struct snd_ctl_elem_info *uinfo)
-{
-	uinfo->type = SNDRV_CTL_ELEM_TYPE_BOOLEAN;
-	uinfo->count = 2;
-	uinfo->value.integer.min = 0;
-	uinfo->value.integer.max = 1;
-	return 0;
-}
+#define snd_es1938_info_hw_switch		snd_ctl_boolean_stereo_info
 
 static int snd_es1938_get_hw_switch(struct snd_kcontrol *kcontrol,
 				    struct snd_ctl_elem_value *ucontrol)
@@ -1380,7 +1387,7 @@ ES1938_DOUBLE_TLV("Aux Playback Volume", 0, 0x3a, 0x3a, 4, 0, 15, 0,
 		  db_scale_line),
 ES1938_DOUBLE_TLV("Capture Volume", 0, 0xb4, 0xb4, 4, 0, 15, 0,
 		  db_scale_capture),
-ES1938_SINGLE("PC Speaker Volume", 0, 0x3c, 0, 7, 0),
+ES1938_SINGLE("Beep Volume", 0, 0x3c, 0, 7, 0),
 ES1938_SINGLE("Record Monitor", 0, 0xa8, 3, 1, 0),
 ES1938_SINGLE("Capture Switch", 0, 0x1c, 4, 1, 1),
 {
@@ -1482,7 +1489,6 @@ static int es1938_suspend(struct pci_dev *pci, pm_message_t state)
 
 	outb(0x00, SLIO_REG(chip, IRQCONTROL)); /* disable irqs */
 	if (chip->irq >= 0) {
-		synchronize_irq(chip->irq);
 		free_irq(chip->irq, chip);
 		chip->irq = -1;
 	}
@@ -1572,10 +1578,8 @@ static int snd_es1938_free(struct es1938 *chip)
 
 	snd_es1938_free_gameport(chip);
 
-	if (chip->irq >= 0) {
-		synchronize_irq(chip->irq);
+	if (chip->irq >= 0)
 		free_irq(chip->irq, chip);
-	}
 	pci_release_regions(chip->pci);
 	pci_disable_device(chip->pci);
 	kfree(chip);
@@ -1604,8 +1608,8 @@ static int __devinit snd_es1938_create(struct snd_card *card,
 	if ((err = pci_enable_device(pci)) < 0)
 		return err;
         /* check, if we can restrict PCI DMA transfers to 24 bits */
-	if (pci_set_dma_mask(pci, DMA_24BIT_MASK) < 0 ||
-	    pci_set_consistent_dma_mask(pci, DMA_24BIT_MASK) < 0) {
+	if (pci_set_dma_mask(pci, DMA_BIT_MASK(24)) < 0 ||
+	    pci_set_consistent_dma_mask(pci, DMA_BIT_MASK(24)) < 0) {
 		snd_printk(KERN_ERR "architecture does not support 24bit PCI busmaster DMA\n");
 		pci_disable_device(pci);
                 return -ENXIO;
@@ -1669,18 +1673,22 @@ static irqreturn_t snd_es1938_interrupt(int irq, void *dev_id)
 
 	status = inb(SLIO_REG(chip, IRQCONTROL));
 #if 0
-	printk("Es1938debug - interrupt status: =0x%x\n", status);
+	printk(KERN_DEBUG "Es1938debug - interrupt status: =0x%x\n", status);
 #endif
 	
 	/* AUDIO 1 */
 	if (status & 0x10) {
 #if 0
-                printk("Es1938debug - AUDIO channel 1 interrupt\n");
-		printk("Es1938debug - AUDIO channel 1 DMAC DMA count: %u\n",
+                printk(KERN_DEBUG
+		       "Es1938debug - AUDIO channel 1 interrupt\n");
+		printk(KERN_DEBUG
+		       "Es1938debug - AUDIO channel 1 DMAC DMA count: %u\n",
 		       inw(SLDM_REG(chip, DMACOUNT)));
-		printk("Es1938debug - AUDIO channel 1 DMAC DMA base: %u\n",
+		printk(KERN_DEBUG
+		       "Es1938debug - AUDIO channel 1 DMAC DMA base: %u\n",
 		       inl(SLDM_REG(chip, DMAADDR)));
-		printk("Es1938debug - AUDIO channel 1 DMAC DMA status: 0x%x\n",
+		printk(KERN_DEBUG
+		       "Es1938debug - AUDIO channel 1 DMAC DMA status: 0x%x\n",
 		       inl(SLDM_REG(chip, DMASTATUS)));
 #endif
 		/* clear irq */
@@ -1695,10 +1703,13 @@ static irqreturn_t snd_es1938_interrupt(int irq, void *dev_id)
 	/* AUDIO 2 */
 	if (status & 0x20) {
 #if 0
-                printk("Es1938debug - AUDIO channel 2 interrupt\n");
-		printk("Es1938debug - AUDIO channel 2 DMAC DMA count: %u\n",
+                printk(KERN_DEBUG
+		       "Es1938debug - AUDIO channel 2 interrupt\n");
+		printk(KERN_DEBUG
+		       "Es1938debug - AUDIO channel 2 DMAC DMA count: %u\n",
 		       inw(SLIO_REG(chip, AUDIO2DMACOUNT)));
-		printk("Es1938debug - AUDIO channel 2 DMAC DMA base: %u\n",
+		printk(KERN_DEBUG
+		       "Es1938debug - AUDIO channel 2 DMAC DMA base: %u\n",
 		       inl(SLIO_REG(chip, AUDIO2DMAADDR)));
 
 #endif
@@ -1795,9 +1806,9 @@ static int __devinit snd_es1938_probe(struct pci_dev *pci,
 		return -ENOENT;
 	}
 
-	card = snd_card_new(index[dev], id[dev], THIS_MODULE, 0);
-	if (card == NULL)
-		return -ENOMEM;
+	err = snd_card_create(index[dev], id[dev], THIS_MODULE, 0, &card);
+	if (err < 0)
+		return err;
 	for (idx = 0; idx < 5; idx++) {
 		if (pci_resource_start(pci, idx) == 0 ||
 		    !(pci_resource_flags(pci, idx) & IORESOURCE_IO)) {

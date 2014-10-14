@@ -13,11 +13,13 @@
  *	2) as a control channel (write commands, read events)
  */
 
+#include <linux/sched.h>
+#include <linux/slab.h>
 #include "irnet_ppp.h"		/* Private header */
 /* Please put other headers in irnet.h - Thanks */
 
 /* Generic PPP callbacks (to call us) */
-static struct ppp_channel_ops irnet_ppp_ops = {
+static const struct ppp_channel_ops irnet_ppp_ops = {
 	.start_xmit = ppp_irnet_send,
 	.ioctl = ppp_irnet_ioctl
 };
@@ -74,9 +76,8 @@ irnet_ctrl_write(irnet_socket *	ap,
       /* Look at the next command */
       start = next;
 
-      /* Scrap whitespaces before the command */
-      while(isspace(*start))
-	start++;
+	/* Scrap whitespaces before the command */
+	start = skip_spaces(start);
 
       /* ',' is our command separator */
       next = strchr(start, ',');
@@ -103,6 +104,9 @@ irnet_ctrl_write(irnet_socket *	ap,
 	      /* Strip out trailing whitespaces */
 	      while(isspace(start[length - 1]))
 		length--;
+
+	      DABORT(length < 5 || length > NICKNAME_MAX_LEN + 5,
+		     -EINVAL, CTRL_ERROR, "Invalid nickname.\n");
 
 	      /* Copy the name for later reuse */
 	      memcpy(ap->rname, start + 5, length - 5);
@@ -131,8 +135,7 @@ irnet_ctrl_write(irnet_socket *	ap,
 	      char *	endp;
 
 	      /* Scrap whitespaces before the command */
-	      while(isspace(*begp))
-		begp++;
+	      begp = skip_spaces(begp);
 
 	      /* Convert argument to a number (last arg is the base) */
 	      addr = simple_strtoul(begp, &endp, 16);
@@ -165,7 +168,7 @@ irnet_ctrl_write(irnet_socket *	ap,
     }
 
   /* Success : we have parsed all commands successfully */
-  return(count);
+  return count;
 }
 
 #ifdef INITIAL_DISCOVERY
@@ -299,7 +302,7 @@ irnet_ctrl_read(irnet_socket *	ap,
 	}
 
       DEXIT(CTRL_TRACE, "\n");
-      return(strlen(event));
+      return strlen(event);
     }
 #endif /* INITIAL_DISCOVERY */
 
@@ -408,7 +411,7 @@ irnet_ctrl_read(irnet_socket *	ap,
     }
 
   DEXIT(CTRL_TRACE, "\n");
-  return(strlen(event));
+  return strlen(event);
 }
 
 /*------------------------------------------------------------------*/
@@ -500,16 +503,20 @@ dev_irnet_open(struct inode *	inode,
     {
       DERROR(FS_ERROR, "Can't setup IrDA link...\n");
       kfree(ap);
+
       return err;
     }
 
   /* For the control channel */
   ap->event_index = irnet_events.index;	/* Cancel all past events */
 
+  mutex_init(&ap->lock);
+
   /* Put our stuff where we will be able to find it later */
   file->private_data = ap;
 
   DEXIT(FS_TRACE, " - ap=0x%p\n", ap);
+
   return 0;
 }
 
@@ -523,7 +530,7 @@ static int
 dev_irnet_close(struct inode *	inode,
 		struct file *	file)
 {
-  irnet_socket *	ap = (struct irnet_socket *) file->private_data;
+  irnet_socket *	ap = file->private_data;
 
   DENTER(FS_TRACE, "(file=0x%p, ap=0x%p)\n",
 	 file, ap);
@@ -560,7 +567,7 @@ dev_irnet_write(struct file *	file,
 		size_t		count,
 		loff_t *	ppos)
 {
-  irnet_socket *	ap = (struct irnet_socket *) file->private_data;
+  irnet_socket *	ap = file->private_data;
 
   DPASS(FS_TRACE, "(file=0x%p, ap=0x%p, count=%Zd)\n",
 	file, ap, count);
@@ -584,7 +591,7 @@ dev_irnet_read(struct file *	file,
 	       size_t		count,
 	       loff_t *		ppos)
 {
-  irnet_socket *	ap = (struct irnet_socket *) file->private_data;
+  irnet_socket *	ap = file->private_data;
 
   DPASS(FS_TRACE, "(file=0x%p, ap=0x%p, count=%Zd)\n",
 	file, ap, count);
@@ -605,7 +612,7 @@ static unsigned int
 dev_irnet_poll(struct file *	file,
 	       poll_table *	wait)
 {
-  irnet_socket *	ap = (struct irnet_socket *) file->private_data;
+  irnet_socket *	ap = file->private_data;
   unsigned int		mask;
 
   DENTER(FS_TRACE, "(file=0x%p, ap=0x%p)\n",
@@ -619,7 +626,7 @@ dev_irnet_poll(struct file *	file,
     mask |= irnet_ctrl_poll(ap, file, wait);
 
   DEXIT(FS_TRACE, " - mask=0x%X\n", mask);
-  return(mask);
+  return mask;
 }
 
 /*------------------------------------------------------------------*/
@@ -628,13 +635,13 @@ dev_irnet_poll(struct file *	file,
  * This is the way pppd configure us and control us while the PPP
  * instance is active.
  */
-static int
-dev_irnet_ioctl(struct inode *	inode,
+static long
+dev_irnet_ioctl(
 		struct file *	file,
 		unsigned int	cmd,
 		unsigned long	arg)
 {
-  irnet_socket *	ap = (struct irnet_socket *) file->private_data;
+  irnet_socket *	ap = file->private_data;
   int			err;
   int			val;
   void __user *argp = (void __user *)arg;
@@ -659,7 +666,10 @@ dev_irnet_ioctl(struct inode *	inode,
       if((val == N_SYNC_PPP) || (val == N_PPP))
 	{
 	  DEBUG(FS_INFO, "Entering PPP discipline.\n");
-	  /* PPP channel setup (ap->chan in configued in dev_irnet_open())*/
+	  /* PPP channel setup (ap->chan in configured in dev_irnet_open())*/
+	  if (mutex_lock_interruptible(&ap->lock))
+		  return -EINTR;
+
 	  err = ppp_register_channel(&ap->chan);
 	  if(err == 0)
 	    {
@@ -672,12 +682,17 @@ dev_irnet_ioctl(struct inode *	inode,
 	    }
 	  else
 	    DERROR(FS_ERROR, "Can't setup PPP channel...\n");
+
+          mutex_unlock(&ap->lock);
 	}
       else
 	{
 	  /* In theory, should be N_TTY */
 	  DEBUG(FS_INFO, "Exiting PPP discipline.\n");
 	  /* Disconnect from the generic PPP layer */
+	  if (mutex_lock_interruptible(&ap->lock))
+		  return -EINTR;
+
 	  if(ap->ppp_open)
 	    {
 	      ap->ppp_open = 0;
@@ -686,25 +701,31 @@ dev_irnet_ioctl(struct inode *	inode,
 	  else
 	    DERROR(FS_ERROR, "Channel not registered !\n");
 	  err = 0;
+
+	  mutex_unlock(&ap->lock);
 	}
       break;
 
       /* Query PPP channel and unit number */
     case PPPIOCGCHAN:
-      if(!ap->ppp_open)
-	break;
-      if(put_user(ppp_channel_index(&ap->chan), (int __user *)argp))
-	break;
-      DEBUG(FS_INFO, "Query channel.\n");
-      err = 0;
+      if (mutex_lock_interruptible(&ap->lock))
+	      return -EINTR;
+
+      if(ap->ppp_open && !put_user(ppp_channel_index(&ap->chan),
+						(int __user *)argp))
+	err = 0;
+
+      mutex_unlock(&ap->lock);
       break;
     case PPPIOCGUNIT:
-      if(!ap->ppp_open)
-	break;
-      if(put_user(ppp_unit_number(&ap->chan), (int __user *)argp))
-	break;
-      DEBUG(FS_INFO, "Query unit number.\n");
-      err = 0;
+      if (mutex_lock_interruptible(&ap->lock))
+	      return -EINTR;
+
+      if(ap->ppp_open && !put_user(ppp_unit_number(&ap->chan),
+						(int __user *)argp))
+        err = 0;
+
+      mutex_unlock(&ap->lock);
       break;
 
       /* All these ioctls can be passed both directly and from ppp_generic,
@@ -723,24 +744,48 @@ dev_irnet_ioctl(struct inode *	inode,
       DEBUG(FS_INFO, "Standard PPP ioctl.\n");
       if(!capable(CAP_NET_ADMIN))
 	err = -EPERM;
-      else
+      else {
+	if (mutex_lock_interruptible(&ap->lock))
+	      return -EINTR;
+
 	err = ppp_irnet_ioctl(&ap->chan, cmd, arg);
+
+	mutex_unlock(&ap->lock);
+      }
       break;
 
       /* TTY IOCTLs : Pretend that we are a tty, to keep pppd happy */
       /* Get termios */
     case TCGETS:
       DEBUG(FS_INFO, "Get termios.\n");
-      if(kernel_termios_to_user_termios((struct termios __user *)argp, &ap->termios))
-	break;
-      err = 0;
+      if (mutex_lock_interruptible(&ap->lock))
+	      return -EINTR;
+
+#ifndef TCGETS2
+      if(!kernel_termios_to_user_termios((struct termios __user *)argp, &ap->termios))
+	err = 0;
+#else
+      if(kernel_termios_to_user_termios_1((struct termios __user *)argp, &ap->termios))
+	err = 0;
+#endif
+
+      mutex_unlock(&ap->lock);
       break;
       /* Set termios */
     case TCSETSF:
       DEBUG(FS_INFO, "Set termios.\n");
-      if(user_termios_to_kernel_termios(&ap->termios, (struct termios __user *)argp))
-	break;
-      err = 0;
+      if (mutex_lock_interruptible(&ap->lock))
+	      return -EINTR;
+
+#ifndef TCGETS2
+      if(!user_termios_to_kernel_termios(&ap->termios, (struct termios __user *)argp))
+	err = 0;
+#else
+      if(!user_termios_to_kernel_termios_1(&ap->termios, (struct termios __user *)argp))
+	err = 0;
+#endif
+
+      mutex_unlock(&ap->lock);
       break;
 
       /* Set DTR/RTS */
@@ -763,7 +808,10 @@ dev_irnet_ioctl(struct inode *	inode,
        * We should also worry that we don't accept junk here and that
        * we get rid of our own buffers */
 #ifdef FLUSH_TO_PPP
+      if (mutex_lock_interruptible(&ap->lock))
+	      return -EINTR;
       ppp_output_wakeup(&ap->chan);
+      mutex_unlock(&ap->lock);
 #endif /* FLUSH_TO_PPP */
       err = 0;
       break;
@@ -778,7 +826,7 @@ dev_irnet_ioctl(struct inode *	inode,
 
     default:
       DERROR(FS_ERROR, "Unsupported ioctl (0x%X)\n", cmd);
-      err = -ENOIOCTLCMD;
+      err = -ENOTTY;
     }
 
   DEXIT(FS_TRACE, " - err = 0x%X\n", err);

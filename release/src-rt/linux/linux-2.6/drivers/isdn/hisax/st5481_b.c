@@ -11,8 +11,8 @@
  */
 
 #include <linux/init.h>
+#include <linux/gfp.h>
 #include <linux/usb.h>
-#include <linux/slab.h>
 #include <linux/netdevice.h>
 #include <linux/bitrev.h>
 #include "st5481.h"
@@ -124,7 +124,7 @@ static void usb_b_out(struct st5481_bcs *bcs,int buf_nr)
 }
 
 /*
- * Start transfering (flags or data) on the B channel, since
+ * Start transferring (flags or data) on the B channel, since
  * FIFO counters has been set to a non-zero value.
  */
 static void st5481B_start_xfer(void *context)
@@ -180,7 +180,7 @@ static void usb_b_out_complete(struct urb *urb)
 				DBG(4,"urb killed status %d", urb->status);
 				return; // Give up
 			default: 
-				WARN("urb status %d",urb->status);
+				WARNING("urb status %d",urb->status);
 				if (b_out->busy == 0) {
 					st5481_usb_pipe_reset(adapter, (bcs->channel+1)*2 | USB_DIR_OUT, NULL, NULL);
 				}
@@ -218,7 +218,10 @@ static void st5481B_mode(struct st5481_bcs *bcs, int mode)
 	if (bcs->mode != L1_MODE_NULL) {
 		// Open the B channel
 		if (bcs->mode != L1_MODE_TRANS) {
-			isdnhdlc_out_init(&b_out->hdlc_state, 0, bcs->mode == L1_MODE_HDLC_56K);
+			u32 features = HDLC_BITREVERSE;
+			if (bcs->mode == L1_MODE_HDLC_56K)
+				features |= HDLC_56KBIT;
+			isdnhdlc_out_init(&b_out->hdlc_state, features);
 		}
 		st5481_usb_pipe_reset(adapter, (bcs->channel+1)*2, NULL, NULL);
 	
@@ -372,6 +375,6 @@ void st5481_b_l2l1(struct hisax_if *ifc, int pr, void *arg)
 		B_L1L2(bcs, PH_DEACTIVATE | INDICATION, NULL);
 		break;
 	default:
-		WARN("pr %#x\n", pr);
+		WARNING("pr %#x\n", pr);
 	}
 }

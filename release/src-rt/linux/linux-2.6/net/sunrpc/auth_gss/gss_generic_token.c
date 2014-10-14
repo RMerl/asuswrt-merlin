@@ -33,7 +33,6 @@
 
 #include <linux/types.h>
 #include <linux/module.h>
-#include <linux/slab.h>
 #include <linux/string.h>
 #include <linux/sunrpc/sched.h>
 #include <linux/sunrpc/gss_asn1.h>
@@ -77,19 +76,19 @@ static int
 der_length_size( int length)
 {
 	if (length < (1<<7))
-		return(1);
+		return 1;
 	else if (length < (1<<8))
-		return(2);
+		return 2;
 #if (SIZEOF_INT == 2)
 	else
-		return(3);
+		return 3;
 #else
 	else if (length < (1<<16))
-		return(3);
+		return 3;
 	else if (length < (1<<24))
-		return(4);
+		return 4;
 	else
-		return(5);
+		return 5;
 #endif
 }
 
@@ -122,14 +121,14 @@ der_read_length(unsigned char **buf, int *bufsize)
 	int ret;
 
 	if (*bufsize < 1)
-		return(-1);
+		return -1;
 	sf = *(*buf)++;
 	(*bufsize)--;
 	if (sf & 0x80) {
 		if ((sf &= 0x7f) > ((*bufsize)-1))
-			return(-1);
+			return -1;
 		if (sf > SIZEOF_INT)
-			return (-1);
+			return -1;
 		ret = 0;
 		for (; sf; sf--) {
 			ret = (ret<<8) + (*(*buf)++);
@@ -139,7 +138,7 @@ der_read_length(unsigned char **buf, int *bufsize)
 		ret = sf;
 	}
 
-	return(ret);
+	return ret;
 }
 
 /* returns the length of a token, given the mech oid and the body size */
@@ -148,11 +147,11 @@ int
 g_token_size(struct xdr_netobj *mech, unsigned int body_size)
 {
 	/* set body_size to sequence contents size */
-	body_size += 4 + (int) mech->len;         /* NEED overflow check */
-	return(1 + der_length_size(body_size) + body_size);
+	body_size += 2 + (int) mech->len;         /* NEED overflow check */
+	return 1 + der_length_size(body_size) + body_size;
 }
 
-EXPORT_SYMBOL(g_token_size);
+EXPORT_SYMBOL_GPL(g_token_size);
 
 /* fills in a buffer with the token header.  The buffer is assumed to
    be the right size.  buf is advanced past the token header */
@@ -161,13 +160,13 @@ void
 g_make_token_header(struct xdr_netobj *mech, int body_size, unsigned char **buf)
 {
 	*(*buf)++ = 0x60;
-	der_write_length(buf, 4 + mech->len + body_size);
+	der_write_length(buf, 2 + mech->len + body_size);
 	*(*buf)++ = 0x06;
 	*(*buf)++ = (unsigned char) mech->len;
 	TWRITE_STR(*buf, mech->data, ((int) mech->len));
 }
 
-EXPORT_SYMBOL(g_make_token_header);
+EXPORT_SYMBOL_GPL(g_make_token_header);
 
 /*
  * Given a buffer containing a token, reads and verifies the token,
@@ -187,27 +186,27 @@ g_verify_token_header(struct xdr_netobj *mech, int *body_size,
 	int ret = 0;
 
 	if ((toksize-=1) < 0)
-		return(G_BAD_TOK_HEADER);
+		return G_BAD_TOK_HEADER;
 	if (*buf++ != 0x60)
-		return(G_BAD_TOK_HEADER);
+		return G_BAD_TOK_HEADER;
 
 	if ((seqsize = der_read_length(&buf, &toksize)) < 0)
-		return(G_BAD_TOK_HEADER);
+		return G_BAD_TOK_HEADER;
 
 	if (seqsize != toksize)
-		return(G_BAD_TOK_HEADER);
+		return G_BAD_TOK_HEADER;
 
 	if ((toksize-=1) < 0)
-		return(G_BAD_TOK_HEADER);
+		return G_BAD_TOK_HEADER;
 	if (*buf++ != 0x06)
-		return(G_BAD_TOK_HEADER);
+		return G_BAD_TOK_HEADER;
 
 	if ((toksize-=1) < 0)
-		return(G_BAD_TOK_HEADER);
+		return G_BAD_TOK_HEADER;
 	toid.len = *buf++;
 
 	if ((toksize-=toid.len) < 0)
-		return(G_BAD_TOK_HEADER);
+		return G_BAD_TOK_HEADER;
 	toid.data = buf;
 	buf+=toid.len;
 
@@ -218,18 +217,18 @@ g_verify_token_header(struct xdr_netobj *mech, int *body_size,
       to return G_BAD_TOK_HEADER if the token header is in fact bad */
 
 	if ((toksize-=2) < 0)
-		return(G_BAD_TOK_HEADER);
+		return G_BAD_TOK_HEADER;
 
 	if (ret)
-		return(ret);
+		return ret;
 
 	if (!ret) {
 		*buf_in = buf;
 		*body_size = toksize;
 	}
 
-	return(ret);
+	return ret;
 }
 
-EXPORT_SYMBOL(g_verify_token_header);
+EXPORT_SYMBOL_GPL(g_verify_token_header);
 

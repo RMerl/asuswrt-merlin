@@ -132,8 +132,7 @@ good_area:
 	 * sure we exit gracefully rather than endlessly redo the
 	 * fault.
 	 */
-survive:
-	fault = handle_mm_fault(mm, vma, address, writeaccess);
+	fault = handle_mm_fault(mm, vma, address, writeaccess ? FAULT_FLAG_WRITE : 0);
 	if (unlikely(fault & VM_FAULT_ERROR)) {
 		if (fault & VM_FAULT_OOM)
 			goto out_of_memory;
@@ -160,7 +159,7 @@ bad_area:
 		if (exception_trace && printk_ratelimit())
 			printk("%s%s[%d]: segfault at %08lx pc %08lx "
 			       "sp %08lx ecr %lu\n",
-			       is_init(tsk) ? KERN_EMERG : KERN_INFO,
+			       is_global_init(tsk) ? KERN_EMERG : KERN_INFO,
 			       tsk->comm, tsk->pid, address, regs->pc,
 			       regs->sp, ecr);
 		_exception(SIGSEGV, regs, code, address);
@@ -189,6 +188,8 @@ no_context:
 
 	page = sysreg_read(PTBR);
 	printk(KERN_ALERT "ptbr = %08lx", page);
+	if (address >= TASK_SIZE)
+		page = (unsigned long)swapper_pg_dir;
 	if (page) {
 		page = ((unsigned long *)page)[address >> 22];
 		printk(" pgd = %08lx", page);
@@ -209,15 +210,10 @@ no_context:
 	 */
 out_of_memory:
 	up_read(&mm->mmap_sem);
-	if (is_init(current)) {
-		yield();
-		down_read(&mm->mmap_sem);
-		goto survive;
-	}
-	printk("VM: Killing process %s\n", tsk->comm);
-	if (user_mode(regs))
-		do_exit(SIGKILL);
-	goto no_context;
+	pagefault_out_of_memory();
+	if (!user_mode(regs))
+		goto no_context;
+	return;
 
 do_sigbus:
 	up_read(&mm->mmap_sem);
@@ -231,7 +227,7 @@ do_sigbus:
 	if (exception_trace)
 		printk("%s%s[%d]: bus error at %08lx pc %08lx "
 		       "sp %08lx ecr %lu\n",
-		       is_init(tsk) ? KERN_EMERG : KERN_INFO,
+		       is_global_init(tsk) ? KERN_EMERG : KERN_INFO,
 		       tsk->comm, tsk->pid, address, regs->pc,
 		       regs->sp, ecr);
 
@@ -248,21 +244,3 @@ asmlinkage void do_bus_error(unsigned long addr, int write_access,
 	dump_dtlb();
 	die("Bus Error", regs, SIGKILL);
 }
-
-/*
- * This functionality is currently not possible to implement because
- * we're using segmentation to ensure a fixed mapping of the kernel
- * virtual address space.
- *
- * It would be possible to implement this, but it would require us to
- * disable segmentation at startup and load the kernel mappings into
- * the TLB like any other pages. There will be lots of trickery to
- * avoid recursive invocation of the TLB miss handler, though...
- */
-#ifdef CONFIG_DEBUG_PAGEALLOC
-void kernel_map_pages(struct page *page, int numpages, int enable)
-{
-
-}
-EXPORT_SYMBOL(kernel_map_pages);
-#endif

@@ -21,9 +21,7 @@
 #include <linux/stddef.h>
 #include <linux/unistd.h>
 #include <linux/ptrace.h>
-#include <linux/slab.h>
 #include <linux/user.h>
-#include <linux/a.out.h>
 #include <linux/tty.h>
 #include <linux/string.h>
 #include <linux/delay.h>
@@ -41,23 +39,22 @@
 #include <linux/root_dev.h>
 #include <linux/serial.h>
 #include <linux/smp.h>
+#include <linux/bitops.h>
+#include <linux/of_device.h>
+#include <linux/memblock.h>
 
 #include <asm/processor.h>
 #include <asm/sections.h>
 #include <asm/prom.h>
 #include <asm/system.h>
 #include <asm/pgtable.h>
-#include <asm/bitops.h>
 #include <asm/io.h>
-#include <asm/kexec.h>
 #include <asm/pci-bridge.h>
 #include <asm/iommu.h>
 #include <asm/machdep.h>
 #include <asm/dma.h>
 #include <asm/cputable.h>
 #include <asm/time.h>
-#include <asm/of_device.h>
-#include <asm/lmb.h>
 #include <asm/mpic.h>
 #include <asm/rtas.h>
 #include <asm/udbg.h>
@@ -319,7 +316,7 @@ static int __init maple_probe(void)
 	return 1;
 }
 
-define_machine(maple_md) {
+define_machine(maple) {
 	.name			= "Maple",
 	.probe			= maple_probe,
 	.setup_arch		= maple_setup_arch,
@@ -336,9 +333,64 @@ define_machine(maple_md) {
       	.calibrate_decr		= generic_calibrate_decr,
 	.progress		= maple_progress,
 	.power_save		= power4_idle,
-#ifdef CONFIG_KEXEC
-	.machine_kexec		= default_machine_kexec,
-	.machine_kexec_prepare	= default_machine_kexec_prepare,
-	.machine_crash_shutdown	= default_machine_crash_shutdown,
-#endif
 };
+
+#ifdef CONFIG_EDAC
+/*
+ * Register a platform device for CPC925 memory controller on
+ * Motorola ATCA-6101 blade.
+ */
+#define MAPLE_CPC925_MODEL	"Motorola,ATCA-6101"
+static int __init maple_cpc925_edac_setup(void)
+{
+	struct platform_device *pdev;
+	struct device_node *np = NULL;
+	struct resource r;
+	const unsigned char *model;
+	int ret;
+
+	np = of_find_node_by_path("/");
+	if (!np) {
+		printk(KERN_ERR "%s: Unable to get root node\n", __func__);
+		return -ENODEV;
+	}
+
+	model = (const unsigned char *)of_get_property(np, "model", NULL);
+	if (!model) {
+		printk(KERN_ERR "%s: Unabel to get model info\n", __func__);
+		of_node_put(np);
+		return -ENODEV;
+	}
+
+	ret = strcmp(model, MAPLE_CPC925_MODEL);
+	of_node_put(np);
+
+	if (ret != 0)
+		return 0;
+
+	np = of_find_node_by_type(NULL, "memory-controller");
+	if (!np) {
+		printk(KERN_ERR "%s: Unable to find memory-controller node\n",
+			__func__);
+		return -ENODEV;
+	}
+
+	ret = of_address_to_resource(np, 0, &r);
+	of_node_put(np);
+
+	if (ret < 0) {
+		printk(KERN_ERR "%s: Unable to get memory-controller reg\n",
+			__func__);
+		return -ENODEV;
+	}
+
+	pdev = platform_device_register_simple("cpc925_edac", 0, &r, 1);
+	if (IS_ERR(pdev))
+		return PTR_ERR(pdev);
+
+	printk(KERN_INFO "%s: CPC925 platform device created\n", __func__);
+
+	return 0;
+}
+machine_device_initcall(maple, maple_cpc925_edac_setup);
+#endif

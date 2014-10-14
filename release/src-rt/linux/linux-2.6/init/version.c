@@ -6,17 +6,20 @@
  *  May be freely distributed as part of Linux.
  */
 
-#include <linux/compile.h>
+#include <generated/compile.h>
 #include <linux/module.h>
 #include <linux/uts.h>
 #include <linux/utsname.h>
-#include <linux/utsrelease.h>
+#include <generated/utsrelease.h>
 #include <linux/version.h>
 
+#ifndef CONFIG_KALLSYMS
 #define version(a) Version_ ## a
 #define version_string(a) version(a)
 
+extern int version_string(LINUX_VERSION_CODE);
 int version_string(LINUX_VERSION_CODE);
+#endif
 
 struct uts_namespace init_uts_ns = {
 	.kref = {
@@ -30,6 +33,7 @@ struct uts_namespace init_uts_ns = {
 		.machine	= UTS_MACHINE,
 		.domainname	= UTS_DOMAINNAME,
 	},
+	.user_ns = &init_user_ns,
 };
 EXPORT_SYMBOL_GPL(init_uts_ns);
 

@@ -28,9 +28,6 @@
 #include <linux/signal.h>
 #include <linux/platform_device.h>
 
-#include <asm/mach-types.h>
-#include <asm/hardware.h>
-
 static struct clk *usb_host_clock;
 
 static void ep93xx_start_hc(struct device *dev)
@@ -50,7 +47,7 @@ static int usb_hcd_ep93xx_probe(const struct hc_driver *driver,
 	struct usb_hcd *hcd;
 
 	if (pdev->resource[1].flags != IORESOURCE_IRQ) {
-		pr_debug("resource[1] is not IORESOURCE_IRQ");
+		dbg("resource[1] is not IORESOURCE_IRQ");
 		return -ENOMEM;
 	}
 
@@ -68,12 +65,18 @@ static int usb_hcd_ep93xx_probe(const struct hc_driver *driver,
 
 	hcd->regs = ioremap(hcd->rsrc_start, hcd->rsrc_len);
 	if (hcd->regs == NULL) {
-		pr_debug("ioremap failed");
+		dbg("ioremap failed");
 		retval = -ENOMEM;
 		goto err2;
 	}
 
-	usb_host_clock = clk_get(&pdev->dev, "usb_host");
+	usb_host_clock = clk_get(&pdev->dev, NULL);
+	if (IS_ERR(usb_host_clock)) {
+		dbg("clk_get failed");
+		retval = PTR_ERR(usb_host_clock);
+		goto err3;
+	}
+
 	ep93xx_start_hc(&pdev->dev);
 
 	ohci_hcd_init(hcd_to_ohci(hcd));
@@ -83,6 +86,7 @@ static int usb_hcd_ep93xx_probe(const struct hc_driver *driver,
 		return retval;
 
 	ep93xx_stop_hc(&pdev->dev);
+err3:
 	iounmap(hcd->regs);
 err2:
 	release_mem_region(hcd->rsrc_start, hcd->rsrc_len);
@@ -135,7 +139,6 @@ static struct hc_driver ohci_ep93xx_hc_driver = {
 	.get_frame_number	= ohci_get_frame,
 	.hub_status_data	= ohci_hub_status_data,
 	.hub_control		= ohci_hub_control,
-	.hub_irq_enable		= ohci_rhsc_enable,
 #ifdef CONFIG_PM
 	.bus_suspend		= ohci_bus_suspend,
 	.bus_resume		= ohci_bus_resume,
@@ -185,7 +188,6 @@ static int ohci_hcd_ep93xx_drv_resume(struct platform_device *pdev)
 {
 	struct usb_hcd *hcd = platform_get_drvdata(pdev);
 	struct ohci_hcd *ohci = hcd_to_ohci(hcd);
-	int status;
 
 	if (time_before(jiffies, ohci->next_statechange))
 		msleep(5);
@@ -209,6 +211,8 @@ static struct platform_driver ohci_hcd_ep93xx_driver = {
 #endif
 	.driver		= {
 		.name	= "ep93xx-ohci",
+		.owner	= THIS_MODULE,
 	},
 };
 
+MODULE_ALIAS("platform:ep93xx-ohci");

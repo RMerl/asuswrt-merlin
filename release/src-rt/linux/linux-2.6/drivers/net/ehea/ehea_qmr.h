@@ -36,8 +36,17 @@
  * page size of ehea hardware queues
  */
 
-#define EHEA_PAGESHIFT  12
-#define EHEA_PAGESIZE   4096UL
+#define EHEA_PAGESHIFT         12
+#define EHEA_PAGESIZE          (1UL << EHEA_PAGESHIFT)
+#define EHEA_SECTSIZE          (1UL << 24)
+#define EHEA_PAGES_PER_SECTION (EHEA_SECTSIZE >> EHEA_PAGESHIFT)
+#define EHEA_HUGEPAGESHIFT     34
+#define EHEA_HUGEPAGE_SIZE     (1UL << EHEA_HUGEPAGESHIFT)
+#define EHEA_HUGEPAGE_PFN_MASK ((EHEA_HUGEPAGE_SIZE - 1) >> PAGE_SHIFT)
+
+#if ((1UL << SECTION_SIZE_BITS) < EHEA_SECTSIZE)
+#error eHEA module cannot work if kernel sectionsize < ehea sectionsize
+#endif
 
 /* Some abbreviations used here:
  *
@@ -117,7 +126,7 @@ struct ehea_swqe {
 			u8 immediate_data[SWQE2_MAX_IMM];
 			/* 0xd0 */
 			struct ehea_vsgentry sg_list[EHEA_MAX_WQE_SG_ENTRIES-1];
-		} immdata_desc __attribute__ ((packed));
+		} immdata_desc __packed;
 
 		/*  Send WQE Format 3 */
 		struct {
@@ -139,11 +148,15 @@ struct ehea_rwqe {
 #define EHEA_CQE_VLAN_TAG_XTRACT   0x0400
 
 #define EHEA_CQE_TYPE_RQ           0x60
-#define EHEA_CQE_STAT_ERR_MASK     0x721F
-#define EHEA_CQE_STAT_FAT_ERR_MASK 0x1F
+#define EHEA_CQE_STAT_ERR_MASK     0x700F
+#define EHEA_CQE_STAT_FAT_ERR_MASK 0xF
+#define EHEA_CQE_BLIND_CKSUM       0x8000
 #define EHEA_CQE_STAT_ERR_TCP      0x4000
 #define EHEA_CQE_STAT_ERR_IP       0x2000
 #define EHEA_CQE_STAT_ERR_CRC      0x1000
+
+/* Defines which bad send cqe stati lead to a port reset */
+#define EHEA_CQE_STAT_RESET_MASK   0x0002
 
 struct ehea_cqe {
 	u64 wr_id;		/* work request ID from WQE */
@@ -178,12 +191,20 @@ struct ehea_cqe {
 #define EHEA_EQE_SM_MECH_NUMBER  EHEA_BMASK_IBM(48, 55)
 #define EHEA_EQE_SM_PORT_NUMBER  EHEA_BMASK_IBM(56, 63)
 
+#define EHEA_AER_RESTYPE_QP  0x8
+#define EHEA_AER_RESTYPE_CQ  0x4
+#define EHEA_AER_RESTYPE_EQ  0x3
+
+/* Defines which affiliated errors lead to a port reset */
+#define EHEA_AER_RESET_MASK   0xFFFFFFFFFEFFFFFFULL
+#define EHEA_AERR_RESET_MASK  0xFFFFFFFFFFFFFFFFULL
+
 struct ehea_eqe {
 	u64 entry;
 };
 
-#define ERROR_DATA_LENGTH  EHEA_BMASK_IBM(52,63)
-#define ERROR_DATA_TYPE    EHEA_BMASK_IBM(0,7)
+#define ERROR_DATA_LENGTH  EHEA_BMASK_IBM(52, 63)
+#define ERROR_DATA_TYPE    EHEA_BMASK_IBM(0, 7)
 
 static inline void *hw_qeit_calc(struct hw_queue *queue, u64 q_offset)
 {
@@ -273,7 +294,7 @@ static inline void *hw_qeit_eq_get_inc(struct hw_queue *queue)
 static inline void *hw_eqit_eq_get_inc_valid(struct hw_queue *queue)
 {
 	void *retvalue = hw_qeit_get(queue);
-	u32 qe = *(u8*)retvalue;
+	u32 qe = *(u8 *)retvalue;
 	if ((qe >> 7) == (queue->toggle_state & 1))
 		hw_qeit_eq_get_inc(queue);
 	else
@@ -358,7 +379,7 @@ struct ehea_cq *ehea_create_cq(struct ehea_adapter *adapter, int cqe,
 
 int ehea_destroy_cq(struct ehea_cq *cq);
 
-struct ehea_qp *ehea_create_qp(struct ehea_adapter * adapter, u32 pd,
+struct ehea_qp *ehea_create_qp(struct ehea_adapter *adapter, u32 pd,
 			       struct ehea_qp_init_attr *init_attr);
 
 int ehea_destroy_qp(struct ehea_qp *qp);
@@ -370,6 +391,13 @@ int ehea_gen_smr(struct ehea_adapter *adapter, struct ehea_mr *old_mr,
 
 int ehea_rem_mr(struct ehea_mr *mr);
 
-void ehea_error_data(struct ehea_adapter *adapter, u64 res_handle);
+u64 ehea_error_data(struct ehea_adapter *adapter, u64 res_handle,
+		    u64 *aer, u64 *aerr);
+
+int ehea_add_sect_bmap(unsigned long pfn, unsigned long nr_pages);
+int ehea_rem_sect_bmap(unsigned long pfn, unsigned long nr_pages);
+int ehea_create_busmap(void);
+void ehea_destroy_busmap(void);
+u64 ehea_map_vaddr(void *caddr);
 
 #endif	/* __EHEA_QMR_H__ */

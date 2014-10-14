@@ -46,20 +46,20 @@
 
 #include "ehca_tools.h"
 
-/* virtual scatter gather entry to specify remote adresses with length */
+/* virtual scatter gather entry to specify remote addresses with length */
 struct ehca_vsgentry {
 	u64 vaddr;
 	u32 lkey;
 	u32 length;
 };
 
-#define GRH_FLAG_MASK        EHCA_BMASK_IBM(7,7)
-#define GRH_IPVERSION_MASK   EHCA_BMASK_IBM(0,3)
-#define GRH_TCLASS_MASK      EHCA_BMASK_IBM(4,12)
-#define GRH_FLOWLABEL_MASK   EHCA_BMASK_IBM(13,31)
-#define GRH_PAYLEN_MASK      EHCA_BMASK_IBM(32,47)
-#define GRH_NEXTHEADER_MASK  EHCA_BMASK_IBM(48,55)
-#define GRH_HOPLIMIT_MASK    EHCA_BMASK_IBM(56,63)
+#define GRH_FLAG_MASK        EHCA_BMASK_IBM( 7,  7)
+#define GRH_IPVERSION_MASK   EHCA_BMASK_IBM( 0,  3)
+#define GRH_TCLASS_MASK      EHCA_BMASK_IBM( 4, 12)
+#define GRH_FLOWLABEL_MASK   EHCA_BMASK_IBM(13, 31)
+#define GRH_PAYLEN_MASK      EHCA_BMASK_IBM(32, 47)
+#define GRH_NEXTHEADER_MASK  EHCA_BMASK_IBM(48, 55)
+#define GRH_HOPLIMIT_MASK    EHCA_BMASK_IBM(56, 63)
 
 /*
  * Unreliable Datagram Address Vector Format
@@ -148,7 +148,7 @@ struct ehca_wqe {
 	u32 immediate_data;
 	union {
 		struct {
-			u64 remote_virtual_adress;
+			u64 remote_virtual_address;
 			u32 rkey;
 			u32 reserved;
 			u64 atomic_1st_op_dma_len;
@@ -206,13 +206,14 @@ struct ehca_wqe {
 
 };
 
-#define WC_SEND_RECEIVE EHCA_BMASK_IBM(0,0)
-#define WC_IMM_DATA     EHCA_BMASK_IBM(1,1)
-#define WC_GRH_PRESENT  EHCA_BMASK_IBM(2,2)
-#define WC_SE_BIT       EHCA_BMASK_IBM(3,3)
+#define WC_SEND_RECEIVE EHCA_BMASK_IBM(0, 0)
+#define WC_IMM_DATA     EHCA_BMASK_IBM(1, 1)
+#define WC_GRH_PRESENT  EHCA_BMASK_IBM(2, 2)
+#define WC_SE_BIT       EHCA_BMASK_IBM(3, 3)
 #define WC_STATUS_ERROR_BIT 0x80000000
 #define WC_STATUS_REMOTE_ERROR_FLAGS 0x0000F800
 #define WC_STATUS_PURGE_BIT 0x10
+#define WC_SEND_RECEIVE_BIT 0x80
 
 struct ehca_cqe {
 	u64 work_request_id;

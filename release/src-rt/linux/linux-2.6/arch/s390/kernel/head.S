@@ -1,7 +1,5 @@
 /*
- *  arch/s390/kernel/head.S
- *
- * Copyright (C) IBM Corp. 1999,2006
+ * Copyright IBM Corp. 1999,2010
  *
  *    Author(s): Hartmut Penner <hp@de.ibm.com>
  *		 Martin Schwidefsky <schwidefsky@de.ibm.com>
@@ -23,8 +21,7 @@
  *
  */
 
-#include <asm/setup.h>
-#include <asm/lowcore.h>
+#include <linux/init.h>
 #include <asm/asm-offsets.h>
 #include <asm/thread_info.h>
 #include <asm/page.h>
@@ -35,6 +32,7 @@
 #define ARCH_OFFSET	0
 #endif
 
+__HEAD
 #ifndef CONFIG_IPL
 	.org   0
 	.long  0x00080000,0x80000000+startup	# Just a restart PSW
@@ -62,7 +60,7 @@
 	.org   0x100
 #
 # subroutine for loading from tape
-# Paramters:
+# Parameters:
 #  R1 = device number
 #  R2 = load address
 .Lloader:
@@ -287,19 +285,7 @@ iplstart:
 	bz	.Lagain1		# skip dateset trailer
 	la	%r5,0(%r4,%r2)
 	lr	%r3,%r2
-.Lidebc:
-	tm	0(%r5),0x80		# high order bit set ?
-	bo	.Ldocv			#  yes -> convert from EBCDIC
-	ahi	%r5,-1
-	bct	%r3,.Lidebc
-	b	.Lnocv
-.Ldocv:
-	l	%r3,.Lcvtab
-	tr	0(256,%r4),0(%r3)	# convert parameters to ascii
-	tr	256(256,%r4),0(%r3)
-	tr	512(256,%r4),0(%r3)
-	tr	768(122,%r4),0(%r3)
-.Lnocv: la	%r3,COMMAND_LINE-PARMAREA(%r12) # load adr. of command line
+	la	%r3,COMMAND_LINE-PARMAREA(%r12) # load adr. of command line
 	mvc	0(256,%r3),0(%r4)
 	mvc	256(256,%r3),256(%r4)
 	mvc	512(256,%r3),512(%r4)
@@ -342,8 +328,8 @@ iplstart:
 #
 # reset files in VM reader
 #
-	stidp	__LC_CPUID		# store cpuid
-	tm	__LC_CPUID,0xff 	# running VM ?
+	stidp	__LC_SAVE_AREA		# store cpuid
+	tm	__LC_SAVE_AREA,0xff	# running VM ?
 	bno	.Lnoreset
 	la	%r2,.Lreset
 	lhi	%r3,26
@@ -380,10 +366,9 @@ iplstart:
 	l	%r1,.Lstartup
 	br	%r1
 
-.Linitrd:.long _end + 0x400000		# default address of initrd
+.Linitrd:.long _end			# default address of initrd
 .Lparm:	.long  PARMAREA
 .Lstartup: .long startup
-.Lcvtab:.long	_ebcasc 		# ebcdic to ascii table
 .Lreset:.byte	0xc3,0xc8,0xc1,0xd5,0xc7,0xc5,0x40,0xd9,0xc4,0xd9,0x40
 	.byte	0xc1,0xd3,0xd3,0x40,0xd2,0xc5,0xc5,0xd7,0x40,0xd5,0xd6
 	.byte	0xc8,0xd6,0xd3,0xc4	# "change rdr all keep nohold"
@@ -416,13 +401,10 @@ start:
 .sk8x8:
 	mvc	0(240,%r8),0(%r9)	# copy iplparms into buffer
 .gotr:
-	l	%r10,.tbl		# EBCDIC to ASCII table
-	tr	0(240,%r8),0(%r10)
 	slr	%r0,%r0
 	st	%r0,INITRD_SIZE+ARCH_OFFSET-PARMAREA(%r11)
 	st	%r0,INITRD_START+ARCH_OFFSET-PARMAREA(%r11)
 	j	startup 		# continue with startup
-.tbl:	.long	_ebcasc			# translate table
 .cmd:	.long	COMMAND_LINE		# address of command line buffer
 .parm:	.long	PARMAREA
 .lowcase:
@@ -460,8 +442,109 @@ start:
 	.byte 0xf0,0xf1,0xf2,0xf3,0xf4,0xf5,0xf6,0xf7
 	.byte 0xf8,0xf9,0xfa,0xfb,0xfc,0xfd,0xfe,0xff
 
-#ifdef CONFIG_64BIT
-#include "head64.S"
-#else
-#include "head31.S"
+#
+# startup-code at 0x10000, running in absolute addressing mode
+# this is called either by the ipl loader or directly by PSW restart
+# or linload or SALIPL
+#
+	.org	0x10000
+	.globl	startup
+startup:
+	basr	%r13,0			# get base
+.LPG0:
+	xc	0x200(256),0x200	# partially clear lowcore
+	xc	0x300(256),0x300
+	stck	__LC_LAST_UPDATE_CLOCK
+	spt	5f-.LPG0(%r13)
+	mvc	__LC_LAST_UPDATE_TIMER(8),5f-.LPG0(%r13)
+#ifndef CONFIG_MARCH_G5
+	# check capabilities against MARCH_{G5,Z900,Z990,Z9_109,Z10}
+	xc	__LC_STFL_FAC_LIST(8),__LC_STFL_FAC_LIST
+	.insn	s,0xb2b10000,__LC_STFL_FAC_LIST	# store facility list
+	tm	__LC_STFL_FAC_LIST,0x01	# stfle available ?
+	jz	0f
+	la	%r0,0
+	.insn	s,0xb2b00000,__LC_STFL_FAC_LIST	# store facility list extended
+0:	l	%r0,__LC_STFL_FAC_LIST
+	n	%r0,2f+8-.LPG0(%r13)
+	cl	%r0,2f+8-.LPG0(%r13)
+	jne	1f
+	l	%r0,__LC_STFL_FAC_LIST+4
+	n	%r0,2f+12-.LPG0(%r13)
+	cl	%r0,2f+12-.LPG0(%r13)
+	je	3f
+1:	l	%r15,.Lstack-.LPG0(%r13)
+	ahi	%r15,-96
+	la	%r2,.Lals_string-.LPG0(%r13)
+	l	%r3,.Lsclp_print-.LPG0(%r13)
+	basr	%r14,%r3
+	lpsw	2f-.LPG0(%r13)		# machine type not good enough, crash
+.Lals_string:
+	.asciz	"The Linux kernel requires more recent processor hardware"
+.Lsclp_print:
+	.long	_sclp_print_early
+.Lstack:
+	.long	0x8000 + (1<<(PAGE_SHIFT+THREAD_ORDER))
+	.align 16
+2:	.long	0x000a0000,0x8badcccc
+#if defined(CONFIG_64BIT)
+#if defined(CONFIG_MARCH_Z196)
+	.long 0xc100efe3, 0xf46c0000
+#elif defined(CONFIG_MARCH_Z10)
+	.long 0xc100efe3, 0xf0680000
+#elif defined(CONFIG_MARCH_Z9_109)
+	.long 0xc100efc3, 0x00000000
+#elif defined(CONFIG_MARCH_Z990)
+	.long 0xc0002000, 0x00000000
+#elif defined(CONFIG_MARCH_Z900)
+	.long 0xc0000000, 0x00000000
 #endif
+#else
+#if defined(CONFIG_MARCH_Z196)
+	.long 0x8100c880, 0x00000000
+#elif defined(CONFIG_MARCH_Z10)
+	.long 0x8100c880, 0x00000000
+#elif defined(CONFIG_MARCH_Z9_109)
+	.long 0x8100c880, 0x00000000
+#elif defined(CONFIG_MARCH_Z990)
+	.long 0x80002000, 0x00000000
+#elif defined(CONFIG_MARCH_Z900)
+	.long 0x80000000, 0x00000000
+#endif
+#endif
+3:
+#endif
+
+#ifdef CONFIG_64BIT
+	mvi	__LC_AR_MODE_ID,1	# set esame flag
+	slr	%r0,%r0 		# set cpuid to zero
+	lhi	%r1,2			# mode 2 = esame (dump)
+	sigp	%r1,%r0,0x12		# switch to esame mode
+	sam64				# switch to 64 bit mode
+	larl	%r13,4f
+	lmh	%r0,%r15,0(%r13)	# clear high-order half
+	jg	startup_continue
+4:	.fill	16,4,0x0
+#else
+	mvi	__LC_AR_MODE_ID,0	# set ESA flag (mode 0)
+	l	%r13,4f-.LPG0(%r13)
+	b	0(%r13)
+	.align	8
+4:	.long	startup_continue
+#endif
+	.align	8
+5:	.long	0x7fffffff,0xffffffff
+
+#
+# params at 10400 (setup.h)
+#
+	.org	PARMAREA
+	.long	0,0			# IPL_DEVICE
+	.long	0,0			# INITRD_START
+	.long	0,0			# INITRD_SIZE
+
+	.org	COMMAND_LINE
+	.byte	"root=/dev/ram0 ro"
+	.byte	0
+
+	.org	0x11000

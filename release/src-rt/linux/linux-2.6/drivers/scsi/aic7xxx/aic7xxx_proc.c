@@ -58,7 +58,7 @@ static int	ahc_proc_write_seeprom(struct ahc_softc *ahc,
  * Table of syncrates that don't follow the "divisible by 4"
  * rule. This table will be expanded in future SCSI specs.
  */
-static struct {
+static const struct {
 	u_int period_factor;
 	u_int period;	/* in 100ths of ns */
 } scsi_syncrates[] = {
@@ -137,7 +137,7 @@ copy_info(struct info_str *info, char *fmt, ...)
 	return (len);
 }
 
-void
+static void
 ahc_format_transinfo(struct info_str *info, struct ahc_transinfo *tinfo)
 {
 	u_int speed;
@@ -248,13 +248,13 @@ ahc_proc_write_seeprom(struct ahc_softc *ahc, char *buffer, int length)
 		ahc_pause(ahc);
 
 	if (length != sizeof(struct seeprom_config)) {
-		printf("ahc_proc_write_seeprom: incorrect buffer size\n");
+		printk("ahc_proc_write_seeprom: incorrect buffer size\n");
 		goto done;
 	}
 
 	have_seeprom = ahc_verify_cksum((struct seeprom_config*)buffer);
 	if (have_seeprom == 0) {
-		printf("ahc_proc_write_seeprom: cksum verification failed\n");
+		printk("ahc_proc_write_seeprom: cksum verification failed\n");
 		goto done;
 	}
 
@@ -290,26 +290,25 @@ ahc_proc_write_seeprom(struct ahc_softc *ahc, char *buffer, int length)
 		sd.sd_DI = DI_2840;
 		have_seeprom = TRUE;
 	} else {
-		printf("ahc_proc_write_seeprom: unsupported adapter type\n");
+		printk("ahc_proc_write_seeprom: unsupported adapter type\n");
 		goto done;
 	}
 
 	if (!have_seeprom) {
-		printf("ahc_proc_write_seeprom: No Serial EEPROM\n");
+		printk("ahc_proc_write_seeprom: No Serial EEPROM\n");
 		goto done;
 	} else {
 		u_int start_addr;
 
 		if (ahc->seep_config == NULL) {
-			ahc->seep_config = malloc(sizeof(*ahc->seep_config),
-						  M_DEVBUF, M_NOWAIT);
+			ahc->seep_config = kmalloc(sizeof(*ahc->seep_config), GFP_ATOMIC);
 			if (ahc->seep_config == NULL) {
-				printf("aic7xxx: Unable to allocate serial "
+				printk("aic7xxx: Unable to allocate serial "
 				       "eeprom buffer.  Write failing\n");
 				goto done;
 			}
 		}
-		printf("aic7xxx: Writing Serial EEPROM\n");
+		printk("aic7xxx: Writing Serial EEPROM\n");
 		start_addr = 32 * (ahc->channel - 'A');
 		ahc_write_seeprom(&sd, (u_int16_t *)buffer, start_addr,
 				  sizeof(struct seeprom_config)/2);

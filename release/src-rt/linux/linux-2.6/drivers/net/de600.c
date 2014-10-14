@@ -38,14 +38,6 @@ static const char version[] = "de600.c: $Revision: 1.41-2.5 $,  Bjorn Ekwall (bj
 /* Add more time here if your adapter won't work OK: */
 #define DE600_SLOW_DOWN	udelay(delay_time)
 
-/* use 0 for production, 1 for verification, >2 for debug */
-#ifdef DE600_DEBUG
-#define PRINTK(x) if (de600_debug >= 2) printk x
-#else
-#define DE600_DEBUG 0
-#define PRINTK(x) /**/
-#endif
-
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/types.h>
@@ -66,10 +58,6 @@ static const char version[] = "de600.c: $Revision: 1.41-2.5 $,  Bjorn Ekwall (bj
 #include <asm/io.h>
 
 #include "de600.h"
-
-static unsigned int de600_debug = DE600_DEBUG;
-module_param(de600_debug, int, 0);
-MODULE_PARM_DESC(de600_debug, "DE-600 debug level (0-2)");
 
 static unsigned int check_lost = 1;
 module_param(check_lost, bool, 0);
@@ -154,11 +142,6 @@ static int de600_close(struct net_device *dev)
 	return 0;
 }
 
-static struct net_device_stats *get_stats(struct net_device *dev)
-{
-	return (struct net_device_stats *)(dev->priv);
-}
-
 static inline void trigger_interrupt(struct net_device *dev)
 {
 	de600_put_command(FLIP_IRQ);
@@ -183,22 +166,22 @@ static int de600_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	int	i;
 
 	if (free_tx_pages <= 0) {	/* Do timeouts, to avoid hangs. */
-		tickssofar = jiffies - dev->trans_start;
-		if (tickssofar < 5)
-			return 1;
+		tickssofar = jiffies - dev_trans_start(dev);
+		if (tickssofar < HZ/20)
+			return NETDEV_TX_BUSY;
 		/* else */
 		printk(KERN_WARNING "%s: transmit timed out (%d), %s?\n", dev->name, tickssofar, "network cable problem");
 		/* Restart the adapter. */
 		spin_lock_irqsave(&de600_lock, flags);
 		if (adapter_init(dev)) {
 			spin_unlock_irqrestore(&de600_lock, flags);
-			return 1;
+			return NETDEV_TX_BUSY;
 		}
 		spin_unlock_irqrestore(&de600_lock, flags);
 	}
 
 	/* Start real output */
-	PRINTK(("de600_start_xmit:len=%d, page %d/%d\n", skb->len, tx_fifo_in, free_tx_pages));
+	pr_debug("de600_start_xmit:len=%d, page %d/%d\n", skb->len, tx_fifo_in, free_tx_pages);
 
 	if ((len = skb->len) < RUNT)
 		len = RUNT;
@@ -216,7 +199,7 @@ static int de600_start_xmit(struct sk_buff *skb, struct net_device *dev)
 		if (was_down || (de600_read_byte(READ_DATA, dev) != 0xde)) {
 			if (adapter_init(dev)) {
 				spin_unlock_irqrestore(&de600_lock, flags);
-				return 1;
+				return NETDEV_TX_BUSY;
 			}
 		}
 	}
@@ -243,7 +226,7 @@ static int de600_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	}
 	spin_unlock_irqrestore(&de600_lock, flags);
 	dev_kfree_skb(skb);
-	return 0;
+	return NETDEV_TX_OK;
 }
 
 /*
@@ -264,7 +247,7 @@ static irqreturn_t de600_interrupt(int irq, void *dev_id)
 	irq_status = de600_read_status(dev);
 
 	do {
-		PRINTK(("de600_interrupt (%02X)\n", irq_status));
+		pr_debug("de600_interrupt (%02X)\n", irq_status);
 
 		if (irq_status & RX_GOOD)
 			de600_rx_intr(dev);
@@ -308,7 +291,7 @@ static int de600_tx_intr(struct net_device *dev, int irq_status)
 	if (!(irq_status & TX_FAILED16)) {
 		tx_fifo_out = (tx_fifo_out + 1) % TX_PAGES;
 		++free_tx_pages;
-		((struct net_device_stats *)(dev->priv))->tx_packets++;
+		dev->stats.tx_packets++;
 		netif_wake_queue(dev);
 	}
 
@@ -374,9 +357,8 @@ static void de600_rx_intr(struct net_device *dev)
 	netif_rx(skb);
 
 	/* update stats */
-	dev->last_rx = jiffies;
-	((struct net_device_stats *)(dev->priv))->rx_packets++; /* count all receives */
-	((struct net_device_stats *)(dev->priv))->rx_bytes += size; /* count all received bytes */
+	dev->stats.rx_packets++; /* count all receives */
+	dev->stats.rx_bytes += size; /* count all received bytes */
 
 	/*
 	 * If any worth-while packets have been received, netif_rx()
@@ -384,17 +366,26 @@ static void de600_rx_intr(struct net_device *dev)
 	 */
 }
 
+static const struct net_device_ops de600_netdev_ops = {
+	.ndo_open		= de600_open,
+	.ndo_stop		= de600_close,
+	.ndo_start_xmit		= de600_start_xmit,
+	.ndo_change_mtu		= eth_change_mtu,
+	.ndo_set_mac_address 	= eth_mac_addr,
+	.ndo_validate_addr	= eth_validate_addr,
+};
+
+
 static struct net_device * __init de600_probe(void)
 {
 	int	i;
 	struct net_device *dev;
 	int err;
 
-	dev = alloc_etherdev(sizeof(struct net_device_stats));
+	dev = alloc_etherdev(0);
 	if (!dev)
 		return ERR_PTR(-ENOMEM);
 
-	SET_MODULE_OWNER(dev);
 
 	if (!request_region(DE600_IO, 3, "de600")) {
 		printk(KERN_WARNING "DE600: port 0x%x busy\n", DE600_IO);
@@ -404,8 +395,7 @@ static struct net_device * __init de600_probe(void)
 
 	printk(KERN_INFO "%s: D-Link DE-600 pocket adapter", dev->name);
 	/* Alpha testers must have the version number to report bugs. */
-	if (de600_debug > 1)
-		printk(version);
+	pr_debug("%s", version);
 
 	/* probe for adapter */
 	err = -ENODEV;
@@ -444,16 +434,9 @@ static struct net_device * __init de600_probe(void)
 		goto out1;
 	}
 
-	printk(", Ethernet Address: %02X", dev->dev_addr[0]);
-	for (i = 1; i < ETH_ALEN; i++)
-		printk(":%02X",dev->dev_addr[i]);
-	printk("\n");
+	printk(", Ethernet Address: %pM\n", dev->dev_addr);
 
-	dev->get_stats = get_stats;
-
-	dev->open = de600_open;
-	dev->stop = de600_close;
-	dev->hard_start_xmit = &de600_start_xmit;
+	dev->netdev_ops = &de600_netdev_ops;
 
 	dev->flags&=~IFF_MULTICAST;
 

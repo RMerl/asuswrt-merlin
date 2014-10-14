@@ -81,6 +81,7 @@ struct unimapinit {
 #define		K_XLATE		0x01
 #define		K_MEDIUMRAW	0x02
 #define		K_UNICODE	0x03
+#define		K_OFF		0x04
 #define KDGKBMODE	0x4B44	/* gets current keyboard mode */
 #define KDSKBMODE	0x4B45	/* sets current keyboard mode */
 
@@ -124,6 +125,16 @@ struct kbdiacrs {
 };
 #define KDGKBDIACR      0x4B4A  /* read kernel accent table */
 #define KDSKBDIACR      0x4B4B  /* write kernel accent table */
+
+struct kbdiacruc {
+	unsigned int diacr, base, result;
+};
+struct kbdiacrsuc {
+        unsigned int kb_cnt;    /* number of entries in following array */
+	struct kbdiacruc kbdiacruc[256];    /* MAX_DIACR from keyboard.h */
+};
+#define KDGKBDIACRUC    0x4BFA  /* read kernel accent table - UCS */
+#define KDSKBDIACRUC    0x4BFB  /* write kernel accent table - UCS */
 
 struct kbkeycode {
 	unsigned int scancode, keycode;

@@ -83,7 +83,7 @@
  */
 #define RING_MIN_FREE			64
 
-#define IPEHR     		0x2088
+#define IPEHR			0x2088
 
 #define INSTDONE		0x2090
 #define PRI_RING_EMPTY			1
@@ -93,7 +93,7 @@
 #define IIR			0x20A4
 #define IMR			0x20A8
 #define VSYNC_PIPE_A_INTERRUPT		(1 << 7)
-#define PIPE_A_EVENT_INTERRUPT		(1 << 4)
+#define PIPE_A_EVENT_INTERRUPT		(1 << 6)
 #define VSYNC_PIPE_B_INTERRUPT		(1 << 5)
 #define PIPE_B_EVENT_INTERRUPT		(1 << 4)
 #define HOST_PORT_EVENT_INTERRUPT	(1 << 3)
@@ -128,9 +128,9 @@
 
 #define GPIOA             0x5010
 #define GPIOB             0x5014
-#define GPIOC             0x5018 // this may be external DDC on i830
-#define GPIOD             0x501C // this is DVO DDC
-#define GPIOE             0x5020 // this is DVO i2C
+#define GPIOC             0x5018 /* this may be external DDC on i830 */
+#define GPIOD             0x501C /* this is DVO DDC */
+#define GPIOE             0x5020 /* this is DVO i2C */
 #define GPIOF             0x5024
 
 /* PLL registers */
@@ -269,15 +269,20 @@
 #define PORT_ENABLE		        (1 << 31)
 #define PORT_PIPE_SELECT_SHIFT	        30
 #define PORT_TV_FLAGS_MASK              0xFF
-#define PORT_TV_FLAGS                   0xC4  // ripped from my BIOS
-                                              // to understand and correct
+#define PORT_TV_FLAGS                   0xC4	/* ripped from my BIOS
+						   to understand and correct */
 
 #define DVOA_SRCDIM		0x61124
 #define DVOB_SRCDIM		0x61144
 #define DVOC_SRCDIM		0x61164
 
+#define PIPEA_DSL		0x70000
+#define PIPEB_DSL		0x71000
 #define PIPEACONF		0x70008
 #define PIPEBCONF		0x71008
+#define PIPEASTAT		0x70024 /* bits 0-15 are "write 1 to clear" */
+#define PIPEBSTAT		0x71024
+
 #define PIPECONF_ENABLE			(1 << 31)
 #define PIPECONF_DISABLE		0
 #define PIPECONF_DOUBLE_WIDE		(1 << 30)
@@ -286,6 +291,35 @@
 #define PIPECONF_UNLOCKED		0
 #define PIPECONF_GAMMA			(1 << 24)
 #define PIPECONF_PALETTE		0
+#define PIPECONF_PROGRESSIVE			(0 << 21)
+#define PIPECONF_INTERLACE_W_FIELD_INDICATION	(6 << 21)
+#define PIPECONF_INTERLACE_FIELD_0_ONLY		(7 << 21)
+#define PIPECONF_INTERLACE_MASK			(7 << 21)
+
+/* enable bits, write 1 to enable */
+#define PIPESTAT_FIFO_UNDERRUN		(1 << 31)
+#define PIPESTAT_CRC_ERROR_EN		(1 << 29)
+#define PIPESTAT_CRC_DONE_EN		(1 << 28)
+#define PIPESTAT_HOTPLUG_EN		(1 << 26)
+#define PIPESTAT_VERTICAL_SYNC_EN	(1 << 25)
+#define PIPESTAT_DISPLINE_COMP_EN	(1 << 24)
+#define PIPESTAT_FLD_EVT_ODD_EN		(1 << 21)
+#define PIPESTAT_FLD_EVT_EVEN_EN	(1 << 20)
+#define PIPESTAT_TV_HOTPLUG_EN		(1 << 18)
+#define PIPESTAT_VBLANK_EN		(1 << 17)
+#define PIPESTAT_OVL_UPDATE_EN		(1 << 16)
+/* status bits, write 1 to clear */
+#define PIPESTAT_HOTPLUG_STATE		(1 << 15)
+#define PIPESTAT_CRC_ERROR		(1 << 13)
+#define PIPESTAT_CRC_DONE		(1 << 12)
+#define PIPESTAT_HOTPLUG		(1 << 10)
+#define PIPESTAT_VSYNC			(1 << 9)
+#define PIPESTAT_DISPLINE_COMP		(1 << 8)
+#define PIPESTAT_FLD_EVT_ODD		(1 << 5)
+#define PIPESTAT_FLD_EVT_EVEN		(1 << 4)
+#define PIPESTAT_TV_HOTPLUG		(1 << 2)
+#define PIPESTAT_VBLANK			(1 << 1)
+#define PIPESTAT_OVL_UPDATE		(1 << 0)
 
 #define DISPARB			0x70030
 #define DISPARB_AEND_MASK		0x1ff
@@ -365,7 +399,7 @@
 #define DISPPLANE_8BPP			(0x2<<26)
 #define DISPPLANE_15_16BPP		(0x4<<26)
 #define DISPPLANE_16BPP			(0x5<<26)
-#define DISPPLANE_32BPP_NO_ALPHA 	(0x6<<26)
+#define DISPPLANE_32BPP_NO_ALPHA	(0x6<<26)
 #define DISPPLANE_32BPP			(0x7<<26)
 #define DISPPLANE_STEREO_ENABLE		(1<<25)
 #define DISPPLANE_STEREO_DISABLE	0
@@ -567,8 +601,9 @@ extern void intelfbhw_cursor_setcolor(struct intelfb_info *dinfo, u32 bg,
 extern void intelfbhw_cursor_load(struct intelfb_info *dinfo, int width,
 				  int height, u8 *data);
 extern void intelfbhw_cursor_reset(struct intelfb_info *dinfo);
-extern int intelfbhw_enable_irq(struct intelfb_info *dinfo, int reenable);
+extern int intelfbhw_enable_irq(struct intelfb_info *dinfo);
 extern void intelfbhw_disable_irq(struct intelfb_info *dinfo);
 extern int intelfbhw_wait_for_vsync(struct intelfb_info *dinfo, u32 pipe);
+extern int intelfbhw_active_pipe(const struct intelfb_hwstate *hw);
 
 #endif /* _INTELFBHW_H */

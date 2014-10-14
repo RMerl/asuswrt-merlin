@@ -37,7 +37,7 @@ int ubi_calc_data_len(const struct ubi_device *ubi, const void *buf,
 {
 	int i;
 
-	ubi_assert(length % ubi->min_io_size == 0);
+	ubi_assert(!(length & (ubi->min_io_size - 1)));
 
 	for (i = length - 1; i >= 0; i--)
 		if (((const uint8_t *)buf)[i] != 0xFF)
@@ -67,7 +67,7 @@ int ubi_check_volume(struct ubi_device *ubi, int vol_id)
 	if (vol->vol_type != UBI_STATIC_VOLUME)
 		return 0;
 
-	buf = kmalloc(vol->usable_leb_size, GFP_KERNEL);
+	buf = vmalloc(vol->usable_leb_size);
 	if (!buf)
 		return -ENOMEM;
 
@@ -79,7 +79,7 @@ int ubi_check_volume(struct ubi_device *ubi, int vol_id)
 		else
 			size = vol->usable_leb_size;
 
-		err = ubi_eba_read_leb(ubi, vol_id, i, buf, 0, size, 1);
+		err = ubi_eba_read_leb(ubi, vol, i, buf, 0, size, 1);
 		if (err) {
 			if (err == -EBADMSG)
 				err = 1;
@@ -87,7 +87,7 @@ int ubi_check_volume(struct ubi_device *ubi, int vol_id)
 		}
 	}
 
-	kfree(buf);
+	vfree(buf);
 	return err;
 }
 
@@ -102,4 +102,23 @@ void ubi_calculate_reserved(struct ubi_device *ubi)
 	ubi->beb_rsvd_level *= CONFIG_MTD_UBI_BEB_RESERVE;
 	if (ubi->beb_rsvd_level < MIN_RESEVED_PEBS)
 		ubi->beb_rsvd_level = MIN_RESEVED_PEBS;
+}
+
+/**
+ * ubi_check_pattern - check if buffer contains only a certain byte pattern.
+ * @buf: buffer to check
+ * @patt: the pattern to check
+ * @size: buffer size in bytes
+ *
+ * This function returns %1 in there are only @patt bytes in @buf, and %0 if
+ * something else was also found.
+ */
+int ubi_check_pattern(const void *buf, uint8_t patt, int size)
+{
+	int i;
+
+	for (i = 0; i < size; i++)
+		if (((const uint8_t *)buf)[i] != patt)
+			return 0;
+	return 1;
 }

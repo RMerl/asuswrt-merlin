@@ -14,13 +14,14 @@
 #ifndef _LINUX_AUTO_FS_H
 #define _LINUX_AUTO_FS_H
 
+#include <linux/types.h>
 #ifdef __KERNEL__
 #include <linux/fs.h>
 #include <linux/limits.h>
-#include <asm/types.h>
-#endif /* __KERNEL__ */
-
 #include <linux/ioctl.h>
+#else
+#include <sys/ioctl.h>
+#endif /* __KERNEL__ */
 
 /* This file describes autofs v3 */
 #define AUTOFS_PROTO_VERSION	3
@@ -78,6 +79,7 @@ struct autofs_packet_expire {
 #define AUTOFS_IOC_FAIL       _IO(0x93,0x61)
 #define AUTOFS_IOC_CATATONIC  _IO(0x93,0x62)
 #define AUTOFS_IOC_PROTOVER   _IOR(0x93,0x63,int)
+#define AUTOFS_IOC_SETTIMEOUT32 _IOWR(0x93,0x64,compat_ulong_t)
 #define AUTOFS_IOC_SETTIMEOUT _IOWR(0x93,0x64,unsigned long)
 #define AUTOFS_IOC_EXPIRE     _IOR(0x93,0x65,struct autofs_packet_expire)
 

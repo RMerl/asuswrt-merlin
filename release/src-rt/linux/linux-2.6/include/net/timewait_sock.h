@@ -16,10 +16,12 @@
 
 struct timewait_sock_ops {
 	struct kmem_cache	*twsk_slab;
+	char		*twsk_slab_name;
 	unsigned int	twsk_obj_size;
 	int		(*twsk_unique)(struct sock *sk,
 				       struct sock *sktw, void *twp);
 	void		(*twsk_destructor)(struct sock *sk);
+	void		*(*twsk_getpeer)(struct sock *sk);
 };
 
 static inline int twsk_unique(struct sock *sk, struct sock *sktw, void *twp)
@@ -36,6 +38,13 @@ static inline void twsk_destructor(struct sock *sk)
 	BUG_ON(sk->sk_prot->twsk_prot == NULL);
 	if (sk->sk_prot->twsk_prot->twsk_destructor != NULL)
 		sk->sk_prot->twsk_prot->twsk_destructor(sk);
+}
+
+static inline void *twsk_getpeer(struct sock *sk)
+{
+	if (sk->sk_prot->twsk_prot->twsk_getpeer)
+		return sk->sk_prot->twsk_prot->twsk_getpeer(sk);
+	return NULL;
 }
 
 #endif /* _TIMEWAIT_SOCK_H */

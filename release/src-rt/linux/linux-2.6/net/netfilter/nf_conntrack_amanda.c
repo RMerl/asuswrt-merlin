@@ -16,6 +16,7 @@
 #include <linux/in.h>
 #include <linux/udp.h>
 #include <linux/netfilter.h>
+#include <linux/gfp.h>
 
 #include <net/netfilter/nf_conntrack.h>
 #include <net/netfilter/nf_conntrack_expect.h>
@@ -30,13 +31,14 @@ MODULE_AUTHOR("Brian J. Murrell <netfilter@interlinx.bc.ca>");
 MODULE_DESCRIPTION("Amanda connection tracking module");
 MODULE_LICENSE("GPL");
 MODULE_ALIAS("ip_conntrack_amanda");
+MODULE_ALIAS_NFCT_HELPER("amanda");
 
 module_param(master_timeout, uint, 0600);
 MODULE_PARM_DESC(master_timeout, "timeout for the master connection");
 module_param(ts_algo, charp, 0400);
 MODULE_PARM_DESC(ts_algo, "textsearch algorithm to use (default kmp)");
 
-unsigned int (*nf_nat_amanda_hook)(struct sk_buff **pskb,
+unsigned int (*nf_nat_amanda_hook)(struct sk_buff *skb,
 				   enum ip_conntrack_info ctinfo,
 				   unsigned int matchoff,
 				   unsigned int matchlen,
@@ -53,7 +55,7 @@ enum amanda_strings {
 };
 
 static struct {
-	char			*string;
+	const char		*string;
 	size_t			len;
 	struct ts_config	*ts;
 } search[] __read_mostly = {
@@ -79,7 +81,7 @@ static struct {
 	},
 };
 
-static int amanda_help(struct sk_buff **pskb,
+static int amanda_help(struct sk_buff *skb,
 		       unsigned int protoff,
 		       struct nf_conn *ct,
 		       enum ip_conntrack_info ctinfo)
@@ -91,7 +93,6 @@ static int amanda_help(struct sk_buff **pskb,
 	char pbuf[sizeof("65535")], *tmp;
 	u_int16_t len;
 	__be16 port;
-	int family = ct->tuplehash[IP_CT_DIR_ORIGINAL].tuple.src.l3num;
 	int ret = NF_ACCEPT;
 	typeof(nf_nat_amanda_hook) nf_nat_amanda;
 
@@ -101,25 +102,25 @@ static int amanda_help(struct sk_buff **pskb,
 
 	/* increase the UDP timeout of the master connection as replies from
 	 * Amanda clients to the server can be quite delayed */
-	nf_ct_refresh(ct, *pskb, master_timeout * HZ);
+	nf_ct_refresh(ct, skb, master_timeout * HZ);
 
 	/* No data? */
 	dataoff = protoff + sizeof(struct udphdr);
-	if (dataoff >= (*pskb)->len) {
+	if (dataoff >= skb->len) {
 		if (net_ratelimit())
-			printk("amanda_help: skblen = %u\n", (*pskb)->len);
+			printk(KERN_ERR "amanda_help: skblen = %u\n", skb->len);
 		return NF_ACCEPT;
 	}
 
 	memset(&ts, 0, sizeof(ts));
-	start = skb_find_text(*pskb, dataoff, (*pskb)->len,
+	start = skb_find_text(skb, dataoff, skb->len,
 			      search[SEARCH_CONNECT].ts, &ts);
 	if (start == UINT_MAX)
 		goto out;
 	start += dataoff + search[SEARCH_CONNECT].len;
 
 	memset(&ts, 0, sizeof(ts));
-	stop = skb_find_text(*pskb, start, (*pskb)->len,
+	stop = skb_find_text(skb, start, skb->len,
 			     search[SEARCH_NEWLINE].ts, &ts);
 	if (stop == UINT_MAX)
 		goto out;
@@ -127,13 +128,13 @@ static int amanda_help(struct sk_buff **pskb,
 
 	for (i = SEARCH_DATA; i <= SEARCH_INDEX; i++) {
 		memset(&ts, 0, sizeof(ts));
-		off = skb_find_text(*pskb, start, stop, search[i].ts, &ts);
+		off = skb_find_text(skb, start, stop, search[i].ts, &ts);
 		if (off == UINT_MAX)
 			continue;
 		off += start + search[i].len;
 
 		len = min_t(unsigned int, sizeof(pbuf) - 1, stop - off);
-		if (skb_copy_bits(*pskb, off, pbuf, len))
+		if (skb_copy_bits(skb, off, pbuf, len))
 			break;
 		pbuf[len] = '\0';
 
@@ -142,55 +143,53 @@ static int amanda_help(struct sk_buff **pskb,
 		if (port == 0 || len > 5)
 			break;
 
-		exp = nf_conntrack_expect_alloc(ct);
+		exp = nf_ct_expect_alloc(ct);
 		if (exp == NULL) {
 			ret = NF_DROP;
 			goto out;
 		}
 		tuple = &ct->tuplehash[IP_CT_DIR_ORIGINAL].tuple;
-		nf_conntrack_expect_init(exp, family,
-					 &tuple->src.u3, &tuple->dst.u3,
-					 IPPROTO_TCP, NULL, &port);
+		nf_ct_expect_init(exp, NF_CT_EXPECT_CLASS_DEFAULT,
+				  nf_ct_l3num(ct),
+				  &tuple->src.u3, &tuple->dst.u3,
+				  IPPROTO_TCP, NULL, &port);
 
 		nf_nat_amanda = rcu_dereference(nf_nat_amanda_hook);
 		if (nf_nat_amanda && ct->status & IPS_NAT_MASK)
-			ret = nf_nat_amanda(pskb, ctinfo, off - dataoff,
+			ret = nf_nat_amanda(skb, ctinfo, off - dataoff,
 					    len, exp);
-		else if (nf_conntrack_expect_related(exp) != 0)
+		else if (nf_ct_expect_related(exp) != 0)
 			ret = NF_DROP;
-		nf_conntrack_expect_put(exp);
+		nf_ct_expect_put(exp);
 	}
 
 out:
 	return ret;
 }
 
+static const struct nf_conntrack_expect_policy amanda_exp_policy = {
+	.max_expected		= 3,
+	.timeout		= 180,
+};
+
 static struct nf_conntrack_helper amanda_helper[2] __read_mostly = {
 	{
 		.name			= "amanda",
-		.max_expected		= 3,
-		.timeout		= 180,
 		.me			= THIS_MODULE,
 		.help			= amanda_help,
 		.tuple.src.l3num	= AF_INET,
-		.tuple.src.u.udp.port	= __constant_htons(10080),
+		.tuple.src.u.udp.port	= cpu_to_be16(10080),
 		.tuple.dst.protonum	= IPPROTO_UDP,
-		.mask.src.l3num		= 0xFFFF,
-		.mask.src.u.udp.port	= __constant_htons(0xFFFF),
-		.mask.dst.protonum	= 0xFF,
+		.expect_policy		= &amanda_exp_policy,
 	},
 	{
 		.name			= "amanda",
-		.max_expected		= 3,
-		.timeout		= 180,
 		.me			= THIS_MODULE,
 		.help			= amanda_help,
 		.tuple.src.l3num	= AF_INET6,
-		.tuple.src.u.udp.port	= __constant_htons(10080),
+		.tuple.src.u.udp.port	= cpu_to_be16(10080),
 		.tuple.dst.protonum	= IPPROTO_UDP,
-		.mask.src.l3num		= 0xFFFF,
-		.mask.src.u.udp.port	= __constant_htons(0xFFFF),
-		.mask.dst.protonum	= 0xFF,
+		.expect_policy		= &amanda_exp_policy,
 	},
 };
 

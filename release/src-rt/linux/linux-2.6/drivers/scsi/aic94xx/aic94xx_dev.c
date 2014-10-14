@@ -35,7 +35,7 @@
 #define SET_DDB(_ddb, _ha) set_bit(_ddb, (_ha)->hw_prof.ddb_bitmap)
 #define CLEAR_DDB(_ddb, _ha) clear_bit(_ddb, (_ha)->hw_prof.ddb_bitmap)
 
-static inline int asd_get_ddb(struct asd_ha_struct *asd_ha)
+static int asd_get_ddb(struct asd_ha_struct *asd_ha)
 {
 	int ddb, i;
 
@@ -71,7 +71,7 @@ out:
 #define NCQ_DATA_SCB_PTR offsetof(struct asd_ddb_stp_sata_target_port, ncq_data_scb_ptr)
 #define ITNL_TIMEOUT    offsetof(struct asd_ddb_ssp_smp_target_port, itnl_timeout)
 
-static inline void asd_free_ddb(struct asd_ha_struct *asd_ha, int ddb)
+static void asd_free_ddb(struct asd_ha_struct *asd_ha, int ddb)
 {
 	if (!ddb || ddb >= 0xFFFF)
 		return;
@@ -79,7 +79,7 @@ static inline void asd_free_ddb(struct asd_ha_struct *asd_ha, int ddb)
 	CLEAR_DDB(ddb, asd_ha);
 }
 
-static inline void asd_set_ddb_type(struct domain_device *dev)
+static void asd_set_ddb_type(struct domain_device *dev)
 {
 	struct asd_ha_struct *asd_ha = dev->port->ha->lldd_ha;
 	int ddb = (int) (unsigned long) dev->lldd_dev;
@@ -109,7 +109,7 @@ static int asd_init_sata_tag_ddb(struct domain_device *dev)
 	return 0;
 }
 
-static inline int asd_init_sata(struct domain_device *dev)
+static int asd_init_sata(struct domain_device *dev)
 {
 	struct asd_ha_struct *asd_ha = dev->port->ha->lldd_ha;
 	int ddb = (int) (unsigned long) dev->lldd_dev;
@@ -126,7 +126,7 @@ static inline int asd_init_sata(struct domain_device *dev)
 		if (w76 & 0x100) /* NCQ? */
 			qdepth = (w75 & 0x1F) + 1;
 		asd_ddbsite_write_dword(asd_ha, ddb, SATA_TAG_ALLOC_MASK,
-					(1<<qdepth)-1);
+					(1ULL<<qdepth)-1);
 		asd_ddbsite_write_byte(asd_ha, ddb, NUM_SATA_TAGS, qdepth);
 	}
 	if (dev->dev_type == SATA_DEV || dev->dev_type == SATA_PM ||
@@ -165,7 +165,7 @@ static int asd_init_target_ddb(struct domain_device *dev)
 	if (dev->port->oob_mode != SATA_OOB_MODE) {
 		flags |= OPEN_REQUIRED;
 		if ((dev->dev_type == SATA_DEV) ||
-		    (dev->tproto & SAS_PROTO_STP)) {
+		    (dev->tproto & SAS_PROTOCOL_STP)) {
 			struct smp_resp *rps_resp = &dev->sata_dev.rps_resp;
 			if (rps_resp->frame_type == SMP_RESPONSE &&
 			    rps_resp->function == SMP_REPORT_PHY_SATA &&
@@ -193,7 +193,7 @@ static int asd_init_target_ddb(struct domain_device *dev)
 	asd_ddbsite_write_byte(asd_ha, ddb, DDB_TARG_FLAGS, flags);
 
 	flags = 0;
-	if (dev->tproto & SAS_PROTO_STP)
+	if (dev->tproto & SAS_PROTOCOL_STP)
 		flags |= STP_CL_POL_NO_TX;
 	asd_ddbsite_write_byte(asd_ha, ddb, DDB_TARG_FLAGS2, flags);
 
@@ -201,7 +201,7 @@ static int asd_init_target_ddb(struct domain_device *dev)
 	asd_ddbsite_write_word(asd_ha, ddb, SEND_QUEUE_TAIL, 0xFFFF);
 	asd_ddbsite_write_word(asd_ha, ddb, SISTER_DDB, 0xFFFF);
 
-	if (dev->dev_type == SATA_DEV || (dev->tproto & SAS_PROTO_STP)) {
+	if (dev->dev_type == SATA_DEV || (dev->tproto & SAS_PROTOCOL_STP)) {
 		i = asd_init_sata(dev);
 		if (i < 0) {
 			asd_free_ddb(asd_ha, ddb);

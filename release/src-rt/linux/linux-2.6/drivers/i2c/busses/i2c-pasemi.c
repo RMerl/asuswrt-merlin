@@ -24,7 +24,8 @@
 #include <linux/sched.h>
 #include <linux/i2c.h>
 #include <linux/delay.h>
-#include <asm/io.h>
+#include <linux/slab.h>
+#include <linux/io.h>
 
 static struct pci_driver pasemi_smb_driver;
 
@@ -87,7 +88,7 @@ static void pasemi_smb_clear(struct pasemi_smbus *smbus)
 	reg_write(smbus, REG_SMSTA, status);
 }
 
-static unsigned int pasemi_smb_waitready(struct pasemi_smbus *smbus)
+static int pasemi_smb_waitready(struct pasemi_smbus *smbus)
 {
 	int timeout = 10;
 	unsigned int status;
@@ -365,17 +366,18 @@ static int __devinit pasemi_smb_probe(struct pci_dev *dev,
 	smbus->adapter.owner = THIS_MODULE;
 	snprintf(smbus->adapter.name, sizeof(smbus->adapter.name),
 		 "PA Semi SMBus adapter at 0x%lx", smbus->base);
-	smbus->adapter.class = I2C_CLASS_HWMON;
+	smbus->adapter.class = I2C_CLASS_HWMON | I2C_CLASS_SPD;
 	smbus->adapter.algo = &smbus_algorithm;
 	smbus->adapter.algo_data = smbus;
+	smbus->adapter.nr = PCI_FUNC(dev->devfn);
 
-	/* set up the driverfs linkage to our parent device */
+	/* set up the sysfs linkage to our parent device */
 	smbus->adapter.dev.parent = &dev->dev;
 
 	reg_write(smbus, REG_CTL, (CTL_MTR | CTL_MRR |
 		  (CLK_100K_DIV & CTL_CLK_M)));
 
-	error = i2c_add_adapter(&smbus->adapter);
+	error = i2c_add_numbered_adapter(&smbus->adapter);
 	if (error)
 		goto out_release_region;
 
@@ -399,7 +401,7 @@ static void __devexit pasemi_smb_remove(struct pci_dev *dev)
 	kfree(smbus);
 }
 
-static struct pci_device_id pasemi_smb_ids[] = {
+static const struct pci_device_id pasemi_smb_ids[] = {
 	{ PCI_DEVICE(0x1959, 0xa003) },
 	{ 0, }
 };

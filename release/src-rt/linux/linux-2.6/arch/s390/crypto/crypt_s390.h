@@ -24,7 +24,7 @@
 #define CRYPT_S390_PRIORITY 300
 #define CRYPT_S390_COMPOSITE_PRIORITY 400
 
-/* s930 cryptographic operations */
+/* s390 cryptographic operations */
 enum crypt_s390_operations {
 	CRYPT_S390_KM   = 0x0100,
 	CRYPT_S390_KMC  = 0x0200,
@@ -82,6 +82,7 @@ enum crypt_s390_kimd_func {
 	KIMD_QUERY   = CRYPT_S390_KIMD | 0,
 	KIMD_SHA_1   = CRYPT_S390_KIMD | 1,
 	KIMD_SHA_256 = CRYPT_S390_KIMD | 2,
+	KIMD_SHA_512 = CRYPT_S390_KIMD | 3,
 };
 
 /*
@@ -92,6 +93,7 @@ enum crypt_s390_klmd_func {
 	KLMD_QUERY   = CRYPT_S390_KLMD | 0,
 	KLMD_SHA_1   = CRYPT_S390_KLMD | 1,
 	KLMD_SHA_256 = CRYPT_S390_KLMD | 2,
+	KLMD_SHA_512 = CRYPT_S390_KLMD | 3,
 };
 
 /*
@@ -293,6 +295,10 @@ static inline int crypt_s390_func_available(int func)
 {
 	unsigned char status[16];
 	int ret;
+
+	/* check if CPACF facility (bit 17) is available */
+	if (!test_facility(17))
+		return 0;
 
 	switch (func & CRYPT_S390_OP_MASK) {
 	case CRYPT_S390_KM:

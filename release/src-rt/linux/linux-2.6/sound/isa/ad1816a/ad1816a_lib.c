@@ -17,7 +17,6 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
 */
 
-#include <sound/driver.h>
 #include <linux/delay.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>
@@ -38,7 +37,7 @@ static inline int snd_ad1816a_busy_wait(struct snd_ad1816a *chip)
 		if (inb(AD1816A_REG(AD1816A_CHIP_STATUS)) & AD1816A_READY)
 			return 0;
 
-	snd_printk("chip busy.\n");
+	snd_printk(KERN_WARNING "chip busy.\n");
 	return -EBUSY;
 }
 
@@ -197,7 +196,7 @@ static int snd_ad1816a_trigger(struct snd_ad1816a *chip, unsigned char what,
 		spin_unlock(&chip->lock);
 		break;
 	default:
-		snd_printk("invalid trigger mode 0x%x.\n", what);
+		snd_printk(KERN_WARNING "invalid trigger mode 0x%x.\n", what);
 		error = -EINVAL;
 	}
 
@@ -378,7 +377,6 @@ static struct snd_pcm_hardware snd_ad1816a_capture = {
 	.fifo_size =		0,
 };
 
-#if 0 /* not used now */
 static int snd_ad1816a_timer_close(struct snd_timer *timer)
 {
 	struct snd_ad1816a *chip = snd_timer_chip(timer);
@@ -395,7 +393,8 @@ static int snd_ad1816a_timer_open(struct snd_timer *timer)
 
 static unsigned long snd_ad1816a_timer_resolution(struct snd_timer *timer)
 {
-	snd_assert(timer != NULL, return 0);
+	if (snd_BUG_ON(!timer))
+		return 0;
 
 	return 10000;
 }
@@ -442,8 +441,6 @@ static struct snd_timer_hardware snd_ad1816a_timer_table = {
 	.start =	snd_ad1816a_timer_start,
 	.stop =		snd_ad1816a_timer_stop,
 };
-#endif /* not used now */
-
 
 static int snd_ad1816a_playback_open(struct snd_pcm_substream *substream)
 {
@@ -453,7 +450,6 @@ static int snd_ad1816a_playback_open(struct snd_pcm_substream *substream)
 
 	if ((error = snd_ad1816a_open(chip, AD1816A_MODE_PLAYBACK)) < 0)
 		return error;
-	snd_pcm_set_sync(substream);
 	runtime->hw = snd_ad1816a_playback;
 	snd_pcm_limit_isa_dma_size(chip->dma1, &runtime->hw.buffer_bytes_max);
 	snd_pcm_limit_isa_dma_size(chip->dma1, &runtime->hw.period_bytes_max);
@@ -469,7 +465,6 @@ static int snd_ad1816a_capture_open(struct snd_pcm_substream *substream)
 
 	if ((error = snd_ad1816a_open(chip, AD1816A_MODE_CAPTURE)) < 0)
 		return error;
-	snd_pcm_set_sync(substream);
 	runtime->hw = snd_ad1816a_capture;
 	snd_pcm_limit_isa_dma_size(chip->dma2, &runtime->hw.buffer_bytes_max);
 	snd_pcm_limit_isa_dma_size(chip->dma2, &runtime->hw.period_bytes_max);
@@ -570,7 +565,7 @@ static const char __devinit *snd_ad1816a_chip_id(struct snd_ad1816a *chip)
 	case AD1816A_HW_AD1815:	return "AD1815";
 	case AD1816A_HW_AD18MAX10: return "AD18max10";
 	default:
-		snd_printk("Unknown chip version %d:%d.\n",
+		snd_printk(KERN_WARNING "Unknown chip version %d:%d.\n",
 			chip->version, chip->hardware);
 		return "AD1816A - unknown";
 	}
@@ -689,7 +684,6 @@ int __devinit snd_ad1816a_pcm(struct snd_ad1816a *chip, int device, struct snd_p
 	return 0;
 }
 
-#if 0 /* not used now */
 int __devinit snd_ad1816a_timer(struct snd_ad1816a *chip, int device, struct snd_timer **rtimer)
 {
 	struct snd_timer *timer;
@@ -711,7 +705,6 @@ int __devinit snd_ad1816a_timer(struct snd_ad1816a *chip, int device, struct snd
 		*rtimer = timer;
 	return 0;
 }
-#endif /* not used now */
 
 /*
  *
@@ -964,7 +957,8 @@ int __devinit snd_ad1816a_mixer(struct snd_ad1816a *chip)
 	unsigned int idx;
 	int err;
 
-	snd_assert(chip != NULL && chip->card != NULL, return -EINVAL);
+	if (snd_BUG_ON(!chip || !chip->card))
+		return -EINVAL;
 
 	card = chip->card;
 

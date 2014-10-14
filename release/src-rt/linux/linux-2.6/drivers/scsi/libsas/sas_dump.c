@@ -24,8 +24,6 @@
 
 #include "sas_dump.h"
 
-#ifdef SAS_DEBUG
-
 static const char *sas_hae_str[] = {
 	[0] = "HAE_RESET",
 };
@@ -56,7 +54,7 @@ void sas_dprint_phye(int phyid, enum phy_event pe)
 
 void sas_dprint_hae(struct sas_ha_struct *sas_ha, enum ha_event he)
 {
-	SAS_DPRINTK("ha %s: %s event\n", pci_name(sas_ha->pcidev),
+	SAS_DPRINTK("ha %s: %s event\n", dev_name(sas_ha->dev),
 		    sas_hae_str[he]);
 }
 
@@ -72,5 +70,3 @@ void sas_dump_port(struct asd_sas_port *port)
 	SAS_DPRINTK("port%d: oob_mode:0x%x\n", port->id, port->oob_mode);
 	SAS_DPRINTK("port%d: num_phys:%d\n", port->id, port->num_phys);
 }
-
-#endif /* SAS_DEBUG */

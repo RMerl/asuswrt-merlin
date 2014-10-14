@@ -2,7 +2,6 @@
 #include <linux/errno.h>
 #include <linux/string.h>
 #include <linux/mm.h>
-#include <linux/slab.h>
 #include <linux/delay.h>
 #include <linux/interrupt.h>
 #include <linux/platform_device.h>
@@ -283,6 +282,9 @@ static struct platform_device dnfb_device = {
 int __init dnfb_init(void)
 {
 	int ret;
+
+	if (!MACH_IS_APOLLO)
+		return -ENODEV;
 
 	if (fb_get_options("dnfb", NULL))
 		return -ENODEV;

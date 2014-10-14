@@ -1,7 +1,7 @@
 /*
  * sysctl.c - Code for sysctl handling in NTFS Linux kernel driver. Part of
  *	      the Linux-NTFS project. Adapted from the old NTFS driver,
- *	      Copyright (C) 1997 Martin von Löwis, Régis Duchesne
+ *	      Copyright (C) 1997 Martin von LÃ¶wis, RÃ©gis Duchesne
  *
  * Copyright (c) 2002-2005 Anton Altaparmakov
  *
@@ -36,12 +36,11 @@
 /* Definition of the ntfs sysctl. */
 static ctl_table ntfs_sysctls[] = {
 	{
-		.ctl_name	= CTL_UNNUMBERED,	/* Binary and text IDs. */
 		.procname	= "ntfs-debug",
 		.data		= &debug_msgs,		/* Data pointer and size. */
 		.maxlen		= sizeof(debug_msgs),
 		.mode		= 0644,			/* Mode, proc handler. */
-		.proc_handler	= &proc_dointvec
+		.proc_handler	= proc_dointvec
 	},
 	{}
 };
@@ -49,7 +48,6 @@ static ctl_table ntfs_sysctls[] = {
 /* Define the parent directory /proc/sys/fs. */
 static ctl_table sysctls_root[] = {
 	{
-		.ctl_name	= CTL_FS,
 		.procname	= "fs",
 		.mode		= 0555,
 		.child		= ntfs_sysctls

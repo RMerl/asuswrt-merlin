@@ -16,10 +16,6 @@
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
 */
 
-/*
- * $Id: bnep.h,v 1.5 2002/08/04 21:23:58 maxk Exp $
- */
-
 #ifndef _BNEP_H
 #define _BNEP_H
 
@@ -90,26 +86,26 @@ struct bnep_setup_conn_req {
 	__u8  ctrl;
 	__u8  uuid_size;
 	__u8  service[0];
-} __attribute__((packed));
+} __packed;
 
 struct bnep_set_filter_req {
 	__u8  type;
 	__u8  ctrl;
 	__be16 len;
 	__u8  list[0];
-} __attribute__((packed));
+} __packed;
 
 struct bnep_control_rsp {
 	__u8  type;
 	__u8  ctrl;
 	__be16 resp;
-} __attribute__((packed));
+} __packed;
 
 struct bnep_ext_hdr {
 	__u8  type;
 	__u8  len;
 	__u8  data[0];
-} __attribute__((packed));
+} __packed;
 
 /* BNEP ioctl defines */
 #define BNEPCONNADD	_IOW('B', 200, int)
@@ -165,16 +161,15 @@ struct bnep_session {
 	struct msghdr msg;
 
 	struct bnep_proto_filter proto_filter[BNEP_MAX_PROTO_FILTERS];
-	u64    mc_filter;
+	unsigned long long mc_filter;
 
 	struct socket    *sock;
 	struct net_device *dev;
-	struct net_device_stats stats;
 };
 
 void bnep_net_setup(struct net_device *dev);
 int bnep_sock_init(void);
-int bnep_sock_cleanup(void);
+void bnep_sock_cleanup(void);
 
 static inline int bnep_mc_hash(__u8 *addr)
 {

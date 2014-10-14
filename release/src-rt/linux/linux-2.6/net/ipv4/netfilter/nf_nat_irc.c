@@ -22,18 +22,12 @@
 #include <net/netfilter/nf_conntrack_expect.h>
 #include <linux/netfilter/nf_conntrack_irc.h>
 
-#if 0
-#define DEBUGP printk
-#else
-#define DEBUGP(format, args...)
-#endif
-
 MODULE_AUTHOR("Harald Welte <laforge@gnumonks.org>");
 MODULE_DESCRIPTION("IRC (DCC) NAT helper");
 MODULE_LICENSE("GPL");
 MODULE_ALIAS("ip_nat_irc");
 
-static unsigned int help(struct sk_buff **pskb,
+static unsigned int help(struct sk_buff *skb,
 			 enum ip_conntrack_info ctinfo,
 			 unsigned int matchoff,
 			 unsigned int matchlen,
@@ -44,9 +38,6 @@ static unsigned int help(struct sk_buff **pskb,
 	u_int16_t port;
 	unsigned int ret;
 
-	DEBUGP("IRC_NAT: info (seq %u + %u) in %u\n",
-	       expect->seq, exp_irc_info->len, ntohl(tcph->seq));
-
 	/* Reply comes from server. */
 	exp->saved_proto.tcp.port = exp->tuple.dst.u.tcp.port;
 	exp->dir = IP_CT_DIR_REPLY;
@@ -54,9 +45,16 @@ static unsigned int help(struct sk_buff **pskb,
 
 	/* Try to get same port: if not, try to change it. */
 	for (port = ntohs(exp->saved_proto.tcp.port); port != 0; port++) {
+		int ret;
+
 		exp->tuple.dst.u.tcp.port = htons(port);
-		if (nf_conntrack_expect_related(exp) == 0)
+		ret = nf_ct_expect_related(exp);
+		if (ret == 0)
 			break;
+		else if (ret != -EBUSY) {
+			port = 0;
+			break;
+		}
 	}
 
 	if (port == 0)
@@ -64,14 +62,14 @@ static unsigned int help(struct sk_buff **pskb,
 
 	ip = ntohl(exp->master->tuplehash[IP_CT_DIR_REPLY].tuple.dst.u3.ip);
 	sprintf(buffer, "%u %u", ip, port);
-	DEBUGP("nf_nat_irc: inserting '%s' == %u.%u.%u.%u, port %u\n",
-	       buffer, NIPQUAD(ip), port);
+	pr_debug("nf_nat_irc: inserting '%s' == %pI4, port %u\n",
+		 buffer, &ip, port);
 
-	ret = nf_nat_mangle_tcp_packet(pskb, exp->master, ctinfo,
+	ret = nf_nat_mangle_tcp_packet(skb, exp->master, ctinfo,
 				       matchoff, matchlen, buffer,
 				       strlen(buffer));
 	if (ret != NF_ACCEPT)
-		nf_conntrack_unexpect_related(exp);
+		nf_ct_unexpect_related(exp);
 	return ret;
 }
 
@@ -83,7 +81,7 @@ static void __exit nf_nat_irc_fini(void)
 
 static int __init nf_nat_irc_init(void)
 {
-	BUG_ON(rcu_dereference(nf_nat_irc_hook));
+	BUG_ON(nf_nat_irc_hook != NULL);
 	rcu_assign_pointer(nf_nat_irc_hook, help);
 	return 0;
 }

@@ -3,7 +3,14 @@ features such as hierarchical dfs like namespace, hardlinks, locking and more.
 It was designed to comply with the SNIA CIFS Technical Reference (which 
 supersedes the 1992 X/Open SMB Standard) as well as to perform best practice 
 practical interoperability with Windows 2000, Windows XP, Samba and equivalent 
-servers.  
+servers.  This code was developed in participation with the Protocol Freedom
+Information Foundation.
+
+Please see
+  http://protocolfreedom.org/ and
+  http://samba.org/samba/PFIF/
+for more details.
+
 
 For questions or bug reports please contact:
     sfrench@samba.org (sfrench@us.ibm.com) 
@@ -56,7 +63,8 @@ the CIFS VFS web site) copy it to the same directory in which mount.smbfs and
 similar files reside (usually /sbin).  Although the helper software is not  
 required, mount.cifs is recommended.  Eventually the Samba 3.0 utility program 
 "net" may also be helpful since it may someday provide easier mount syntax for
-users who are used to Windows e.g.  net use <mount point> <UNC name or cifs URL>
+users who are used to Windows e.g.
+	net use <mount point> <UNC name or cifs URL>
 Note that running the Winbind pam/nss module (logon service) on all of your
 Linux clients is useful in mapping Uids and Gids consistently across the
 domain to the proper network user.  The mount.cifs mount helper can be
@@ -248,16 +256,17 @@ A partial list of the supported mount options follows:
 		the CIFS session.
   password	The user password.  If the mount helper is
 		installed, the user will be prompted for password
-		if it is not supplied.
+		if not supplied.
   ip		The ip address of the target server
   unc		The target server Universal Network Name (export) to 
 		mount.	
   domain	Set the SMB/CIFS workgroup name prepended to the
 		username during CIFS session establishment
-  uid		Set the default uid for inodes. For mounts to servers
+  forceuid	Set the default uid for inodes to the uid
+		passed in on mount. For mounts to servers
 		which do support the CIFS Unix extensions, such as a
 		properly configured Samba server, the server provides
-		the uid, gid and mode so this parameter should  not be
+		the uid, gid and mode so this parameter should not be
 		specified unless the server and clients uid and gid
 		numbering differ.  If the server and client are in the
 		same domain (e.g. running winbind or nss_ldap) and
@@ -269,11 +278,7 @@ A partial list of the supported mount options follows:
 		of existing files will be the uid (gid) of the person
 		who executed the mount (root, except when mount.cifs
 		is configured setuid for user mounts) unless the "uid=" 
-		(gid) mount option is specified.  For the uid (gid) of newly
-		created files and directories, ie files created since 
-		the last mount of the server share, the expected uid 
-		(gid) is cached as long as the inode remains in 
-		memory on the client.   Also note that permission
+		(gid) mount option is specified. Also note that permission
 		checks (authorization checks) on accesses to a file occur
 		at the server, but there are cases in which an administrator
 		may want to restrict at the client as well.  For those
@@ -281,12 +286,31 @@ A partial list of the supported mount options follows:
 		(such as Windows), permissions can also be checked at the
 		client, and a crude form of client side permission checking 
 		can be enabled by specifying file_mode and dir_mode on 
-		the client.  Note that the mount.cifs helper must be
-		at version 1.10 or higher to support specifying the uid
-		(or gid) in non-numberic form.
+		the client.  (default)
+  forcegid	(similar to above but for the groupid instead of uid) (default)
+  noforceuid	Fill in file owner information (uid) by requesting it from
+		the server if possible. With this option, the value given in
+		the uid= option (on mount) will only be used if the server
+		can not support returning uids on inodes.
+  noforcegid	(similar to above but for the group owner, gid, instead of uid)
+  uid		Set the default uid for inodes, and indicate to the
+		cifs kernel driver which local user mounted. If the server
+		supports the unix extensions the default uid is
+		not used to fill in the owner fields of inodes (files)
+		unless the "forceuid" parameter is specified.
   gid		Set the default gid for inodes (similar to above).
   file_mode     If CIFS Unix extensions are not supported by the server
 		this overrides the default mode for file inodes.
+  fsc		Enable local disk caching using FS-Cache (off by default). This
+  		option could be useful to improve performance on a slow link,
+		heavily loaded server and/or network where reading from the
+		disk is faster than reading from the server (over the network).
+		This could also impact scalability positively as the
+		number of calls to the server are reduced. However, local
+		caching is not suitable for all workloads for e.g. read-once
+		type workloads. So, you need to consider carefully your
+		workload/scenario before using this option. Currently, local
+		disk caching is functional for CIFS files opened as read-only.
   dir_mode      If CIFS Unix extensions are not supported by the server 
 		this overrides the default mode for directory inodes.
   port		attempt to contact the server on this tcp port, before
@@ -313,6 +337,15 @@ A partial list of the supported mount options follows:
   wsize		default write size (default 57344)
 		maximum wsize currently allowed by CIFS is 57344 (fourteen
 		4096 byte pages)
+  actimeo=n	attribute cache timeout in seconds (default 1 second).
+		After this timeout, the cifs client requests fresh attribute
+		information from the server. This option allows to tune the
+		attribute cache timeout to suit the workload needs. Shorter
+		timeouts mean better the cache coherency, but increased number
+		of calls to the server. Longer timeouts mean reduced number
+		of calls to the server at the expense of less stricter cache
+		coherency checks (i.e. incorrect attribute cache for a short
+		period of time).
   rw		mount the network share read-write (note that the
 		server may still consider the share read-only)
   ro		mount network share read-only
@@ -380,8 +413,13 @@ A partial list of the supported mount options follows:
 		or the CIFS Unix Extensions equivalent and for those
 		this mount option will have no effect.  Exporting cifs mounts
 		under nfsd requires this mount option on the cifs mount.
+		This is now the default if server supports the 
+		required network operation.
   noserverino   Client generates inode numbers (rather than using the actual one
-		from the server) by default.
+		from the server). These inode numbers will vary after
+		unmount or reboot which can confuse some applications,
+		but not all server filesystems support unique inode
+		numbers.
   setuids       If the CIFS Unix extensions are negotiated with the server
 		the client will attempt to set the effective uid and gid of
 		the local process on newly created files, directories, and
@@ -404,7 +442,7 @@ A partial list of the supported mount options follows:
 		source name to use to represent the client netbios machine 
 		name when doing the RFC1001 netbios session initialize.
   direct        Do not do inode data caching on files opened on this mount.
-		This precludes mmaping files on this mount. In some cases
+		This precludes mmapping files on this mount. In some cases
 		with fast networks and little or no caching benefits on the
 		client (e.g. when the application is doing large sequential
 		reads bigger than page size without rereading the same data) 
@@ -414,12 +452,18 @@ A partial list of the supported mount options follows:
 		if oplock (caching token) is granted and held. Note that
 		direct allows write operations larger than page size
 		to be sent to the server.
+  strictcache   Use for switching on strict cache mode. In this mode the
+		client read from the cache all the time it has Oplock Level II,
+		otherwise - read from the server. All written data are stored
+		in the cache, but if the client doesn't have Exclusive Oplock,
+		it writes the data to the server.
   acl   	Allow setfacl and getfacl to manage posix ACLs if server
 		supports them.  (default)
   noacl 	Do not allow setfacl and getfacl calls on this mount
-  user_xattr    Allow getting and setting user xattrs as OS/2 EAs (extended
-		attributes) to the server (default) e.g. via setfattr 
-		and getfattr utilities. 
+  user_xattr    Allow getting and setting user xattrs (those attributes whose
+		name begins with "user." or "os2.") as OS/2 EAs (extended
+		attributes) to the server.  This allows support of the
+		setfattr and getfattr utilities. (default)
   nouser_xattr  Do not allow getfattr/setfattr to get/set/list xattrs 
   mapchars      Translate six of the seven reserved characters (not backslash)
 			*?<>|:
@@ -434,6 +478,7 @@ A partial list of the supported mount options follows:
  nomapchars     Do not translate any of these seven characters (default).
  nocase         Request case insensitive path name matching (case
 		sensitive is the default if the server suports it).
+		(mount option "ignorecase" is identical to "nocase")
  posixpaths     If CIFS Unix extensions are supported, attempt to
 		negotiate posix path name support which allows certain
 		characters forbidden in typical CIFS filenames, without
@@ -453,12 +498,38 @@ A partial list of the supported mount options follows:
 		with cifs style mandatory byte range locks (and most
 		cifs servers do not yet support requesting advisory
 		byte range locks).
+ forcemandatorylock Even if the server supports posix (advisory) byte range
+		locking, send only mandatory lock requests.  For some
+		(presumably rare) applications, originally coded for
+		DOS/Windows, which require Windows style mandatory byte range
+		locking, they may be able to take advantage of this option,
+		forcing the cifs client to only send mandatory locks
+		even if the cifs server would support posix advisory locks.
+		"forcemand" is accepted as a shorter form of this mount
+		option.
+ nostrictsync   If this mount option is set, when an application does an
+		fsync call then the cifs client does not send an SMB Flush
+		to the server (to force the server to write all dirty data
+		for this file immediately to disk), although cifs still sends
+		all dirty (cached) file data to the server and waits for the
+		server to respond to the write.  Since SMB Flush can be
+		very slow, and some servers may be reliable enough (to risk
+		delaying slightly flushing the data to disk on the server),
+		turning on this option may be useful to improve performance for
+		applications that fsync too much, at a small risk of server
+		crash.  If this mount option is not set, by default cifs will
+		send an SMB flush request (and wait for a response) on every
+		fsync call.
+ nodfs          Disable DFS (global name space support) even if the
+		server claims to support it.  This can help work around
+		a problem with parsing of DFS paths with Samba server
+		versions 3.0.24 and 3.0.25.
  remount        remount the share (often used to change from ro to rw mounts
 	        or vice versa)
  cifsacl        Report mode bits (e.g. on stat) based on the Windows ACL for
 	        the file. (EXPERIMENTAL)
  servern        Specify the server 's netbios name (RFC1001 name) to use
-		when attempting to setup a session to the server.  This is
+		when attempting to setup a session to the server. 
 		This is needed for mounting to some older servers (such
 		as OS/2 or Windows 98 and Windows ME) since they do not
 		support a default server name.  A server name can be up
@@ -470,9 +541,32 @@ A partial list of the supported mount options follows:
 		SFU does).  In the future the bottom 9 bits of the
 		mode also will be emulated using queries of the security
 		descriptor (ACL).
+ mfsymlinks     Enable support for Minshall+French symlinks
+		(see http://wiki.samba.org/index.php/UNIX_Extensions#Minshall.2BFrench_symlinks)
+		This option is ignored when specified together with the
+		'sfu' option. Minshall+French symlinks are used even if
+		the server supports the CIFS Unix Extensions.
  sign           Must use packet signing (helps avoid unwanted data modification
 		by intermediate systems in the route).  Note that signing
 		does not work with lanman or plaintext authentication.
+ seal           Must seal (encrypt) all data on this mounted share before
+		sending on the network.  Requires support for Unix Extensions.
+		Note that this differs from the sign mount option in that it
+		causes encryption of data sent over this mounted share but other
+		shares mounted to the same server are unaffected.
+ locallease     This option is rarely needed. Fcntl F_SETLEASE is
+		used by some applications such as Samba and NFSv4 server to
+		check to see whether a file is cacheable.  CIFS has no way
+		to explicitly request a lease, but can check whether a file
+		is cacheable (oplocked).  Unfortunately, even if a file
+		is not oplocked, it could still be cacheable (ie cifs client
+		could grant fcntl leases if no other local processes are using
+		the file) for cases for example such as when the server does not
+		support oplocks and the user is sure that the only updates to
+		the file will be from this client. Specifying this mount option
+		will allow the cifs client to check for leases (only) locally
+		for files which are not oplocked instead of denying leases
+		in that case. (EXPERIMENTAL)
  sec            Security mode.  Allowed values are:
 			none	attempt to connection as a null user (no name)
 			krb5    Use Kerberos version 5 authentication
@@ -485,6 +579,9 @@ A partial list of the supported mount options follows:
 			ntlmv2i Use NTLMv2 password hashing with packet signing
 			lanman  (if configured in kernel config) use older
 				lanman hash
+hard		Retry file operations if server is not responding
+soft		Limit retries to unresponsive servers (usually only
+		one retry) before returning an error.  (default)
 
 The mount.cifs mount helper also accepts a few mount options before -o
 including:
@@ -500,8 +597,9 @@ module can be displayed via modinfo.
 Misc /proc/fs/cifs Flags and Debug Info
 =======================================
 Informational pseudo-files:
-DebugData		Displays information about active CIFS sessions
-			and shares, as well as the cifs.ko version.
+DebugData		Displays information about active CIFS sessions and
+			shares, features enabled as well as the cifs.ko
+			version.
 Stats			Lists summary resource usage information as well as per
 			share statistics, if CONFIG_CIFS_STATS in enabled
 			in the kernel configuration.
@@ -524,10 +622,20 @@ SecurityFlags		Flags which control security negotiation and
 			hashing mechanisms (as "must use") on the other hand 
 			does not make much sense. Default flags are 
 				0x07007 
-			(NTLM, NTLMv2 and packet signing allowed).  Maximum 
+			(NTLM, NTLMv2 and packet signing allowed).  The maximum 
 			allowable flags if you want to allow mounts to servers
 			using weaker password hashes is 0x37037 (lanman,
-			plaintext, ntlm, ntlmv2, signing allowed):
+			plaintext, ntlm, ntlmv2, signing allowed).  Some
+			SecurityFlags require the corresponding menuconfig
+			options to be enabled (lanman and plaintext require
+			CONFIG_CIFS_WEAK_PW_HASH for example).  Enabling
+			plaintext authentication currently requires also
+			enabling lanman authentication in the security flags
+			because the cifs module only supports sending
+			laintext passwords using the older lanman dialect
+			form of the session setup SMB.  (e.g. for authentication
+			using plain text passwords, set the SecurityFlags
+			to 0x30030):
  
 			may use packet signing 				0x00001
 			must use packet signing				0x01001
@@ -535,8 +643,8 @@ SecurityFlags		Flags which control security negotiation and
 			must use NTLM					0x02002
 			may use NTLMv2					0x00004
 			must use NTLMv2					0x04004
-			may use Kerberos security (not implemented yet) 0x00008
-			must use Kerberos (not implemented yet)         0x08008
+			may use Kerberos security			0x00008
+			must use Kerberos				0x08008
 			may use lanman (weak) password hash  		0x00010
 			must use lanman password hash			0x10010
 			may use plaintext passwords    			0x00020
@@ -577,14 +685,6 @@ LinuxExtensionsEnabled	If set to one then the client will attempt to
 			support and want to map the uid and gid fields 
 			to values supplied at mount (rather than the 
 			actual values, then set this to zero. (default 1)
-Experimental            When set to 1 used to enable certain experimental
-			features (currently enables multipage writes
-			when signing is enabled, the multipage write
-			performance enhancement was disabled when
-			signing turned on in case buffer was modified
-			just before it was sent, also this flag will
-			be used to use the new experimental directory change 
-			notification code).
 
 These experimental features and tracing can be enabled by changing flags in 
 /proc/fs/cifs (after the cifs module has been installed or built into the 
@@ -610,6 +710,9 @@ requires enabling CONFIG_CIFS_EXPERIMENTAL
 	cifsacl support needed to retrieve approximated mode bits based on
 		the contents on the CIFS ACL.
 
+	lease support: cifs will check the oplock state before calling into
+	the vfs to see if we can grant a lease on a file.
+
 	DNOTIFY fcntl: needed for support of directory change 
 			    notification and perhaps later for file leases)
 
@@ -624,8 +727,31 @@ The statistics for the number of total SMBs and oplock breaks are different in
 that they represent all for that share, not just those for which the server
 returned success.
 	
-Also note that "cat /proc/fs/cifs/DebugData" will display information about 
+Also note that "cat /proc/fs/cifs/DebugData" will display information about
 the active sessions and the shares that are mounted.
-Enabling Kerberos (extended security) works when CONFIG_CIFS_EXPERIMENTAL is enabled
-but requires a user space helper (from the Samba project). NTLM and NTLMv2 and
-LANMAN support do not require this helpr.
+
+Enabling Kerberos (extended security) works but requires version 1.2 or later
+of the helper program cifs.upcall to be present and to be configured in the
+/etc/request-key.conf file.  The cifs.upcall helper program is from the Samba
+project(http://www.samba.org). NTLM and NTLMv2 and LANMAN support do not
+require this helper. Note that NTLMv2 security (which does not require the
+cifs.upcall helper program), instead of using Kerberos, is sufficient for
+some use cases.
+
+DFS support allows transparent redirection to shares in an MS-DFS name space.
+In addition, DFS support for target shares which are specified as UNC
+names which begin with host names (rather than IP addresses) requires
+a user space helper (such as cifs.upcall) to be present in order to
+translate host names to ip address, and the user space helper must also
+be configured in the file /etc/request-key.conf.  Samba, Windows servers and
+many NAS appliances support DFS as a way of constructing a global name
+space to ease network configuration and improve reliability.
+
+To use cifs Kerberos and DFS support, the Linux keyutils package should be
+installed and something like the following lines should be added to the
+/etc/request-key.conf file:
+
+create cifs.spnego * * /usr/local/sbin/cifs.upcall %k
+create dns_resolver * * /usr/local/sbin/cifs.upcall %k
+
+

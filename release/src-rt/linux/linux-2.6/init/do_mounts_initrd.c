@@ -24,17 +24,14 @@ static int __init no_initrd(char *str)
 
 __setup("noinitrd", no_initrd);
 
-static int __init do_linuxrc(void * shell)
+static int __init do_linuxrc(void *_shell)
 {
-	static char *argv[] = { "linuxrc", NULL, };
-	extern char * envp_init[];
+	static const char *argv[] = { "linuxrc", NULL, };
+	extern const char *envp_init[];
+	const char *shell = _shell;
 
 	sys_close(old_fd);sys_close(root_fd);
-	sys_close(0);sys_close(1);sys_close(2);
 	sys_setsid();
-	(void) sys_open("/dev/console",O_RDWR,0);
-	(void) sys_dup(0);
-	(void) sys_dup(0);
 	return kernel_execve(shell, argv, envp_init);
 }
 
@@ -55,13 +52,18 @@ static void __init handle_initrd(void)
 	sys_mount(".", "/", NULL, MS_MOVE, NULL);
 	sys_chroot(".");
 
+	/*
+	 * In case that a resume from disk is carried out by linuxrc or one of
+	 * its children, we need to tell the freezer not to wait for us.
+	 */
+	current->flags |= PF_FREEZER_SKIP;
+
 	pid = kernel_thread(do_linuxrc, "/linuxrc", SIGCHLD);
-	if (pid > 0) {
-		while (pid != sys_wait4(-1, NULL, 0, NULL)) {
-			try_to_freeze();
+	if (pid > 0)
+		while (pid != sys_wait4(-1, NULL, 0, NULL))
 			yield();
-		}
-	}
+
+	current->flags &= ~PF_FREEZER_SKIP;
 
 	/* move initrd to rootfs' /old */
 	sys_fchdir(old_fd);

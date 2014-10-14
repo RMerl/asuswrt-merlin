@@ -26,6 +26,7 @@
 #define NBD_PRINT_DEBUG	_IO( 0xab, 6 )
 #define NBD_SET_SIZE_BLOCKS	_IO( 0xab, 7 )
 #define NBD_DISCONNECT  _IO( 0xab, 8 )
+#define NBD_SET_TIMEOUT _IO( 0xab, 9 )
 
 enum {
 	NBD_CMD_READ = 0,
@@ -34,7 +35,6 @@ enum {
 };
 
 #define nbd_cmd(req) ((req)->cmd[0])
-#define MAX_NBD 128
 
 /* userspace doesn't need the nbd_device structure */
 #ifdef __KERNEL__
@@ -56,15 +56,18 @@ struct nbd_device {
 	int magic;
 
 	spinlock_t queue_lock;
-	struct list_head queue_head;/* Requests are added here...	*/
+	struct list_head queue_head;	/* Requests waiting result */
 	struct request *active_req;
 	wait_queue_head_t active_wq;
+	struct list_head waiting_queue;	/* Requests to be sent */
+	wait_queue_head_t waiting_wq;
 
 	struct mutex tx_lock;
 	struct gendisk *disk;
 	int blksize;
 	u64 bytesize;
 	pid_t pid; /* pid of nbd-client, if attached */
+	int xmit_timeout;
 };
 
 #endif
@@ -85,11 +88,7 @@ struct nbd_request {
 	char handle[8];
 	__be64 from;
 	__be32 len;
-}
-#ifdef __GNUC__
-	__attribute__ ((packed))
-#endif
-;
+} __attribute__((packed));
 
 /*
  * This is the reply packet that nbd-server sends back to the client after

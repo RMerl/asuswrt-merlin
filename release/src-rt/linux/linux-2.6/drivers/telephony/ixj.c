@@ -42,8 +42,6 @@
  ***************************************************************************/
 
 /*
- * $Log: ixj.c,v $
- *
  * Revision 4.8  2003/07/09 19:39:00  Daniele Bellucci
  * Audit some copy_*_user and minor cleanup.
  *
@@ -171,7 +169,7 @@
  * Added support for Linux 2.4.x kernels.
  *
  * Revision 3.77  2001/01/09 04:00:52  eokerson
- * Linetest will now test the line, even if it has previously succeded.
+ * Linetest will now test the line, even if it has previously succeeded.
  *
  * Revision 3.76  2001/01/08 19:27:00  eokerson
  * Fixed problem with standard cable on Internet PhoneCARD.
@@ -259,6 +257,7 @@
 #include <linux/fs.h>		/* everything... */
 #include <linux/errno.h>	/* error codes */
 #include <linux/slab.h>
+#include <linux/mutex.h>
 #include <linux/mm.h>
 #include <linux/ioport.h>
 #include <linux/interrupt.h>
@@ -278,18 +277,18 @@
 #define TYPE(inode) (iminor(inode) >> 4)
 #define NUM(inode) (iminor(inode) & 0xf)
 
+static DEFINE_MUTEX(ixj_mutex);
 static int ixjdebug;
 static int hertz = HZ;
 static int samplerate = 100;
 
 module_param(ixjdebug, int, 0);
 
-static struct pci_device_id ixj_pci_tbl[] __devinitdata = {
+static DEFINE_PCI_DEVICE_TABLE(ixj_pci_tbl) = {
 	{ PCI_VENDOR_ID_QUICKNET, PCI_DEVICE_ID_QUICKNET_XJ,
 	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
 	{ }
 };
-
 MODULE_DEVICE_TABLE(pci, ixj_pci_tbl);
 
 /************************************************************************
@@ -353,7 +352,7 @@ static void ixj_fsk_alloc(IXJ *j)
 		} else {
 			j->fsksize = 8000;
 			if(ixjdebug & 0x0200) {
-				printk("IXJ phone%d - allocate succeded\n", j->board);
+				printk("IXJ phone%d - allocate succeeded\n", j->board);
 			}
 		}
 	}
@@ -488,7 +487,7 @@ DSPbase +
 8-9		Hardware Status Register			Read Only
 A-B		Hardware Control Register			Read Write
 C-D Host Transmit (Write) Data Buffer Access Port (buffer input)Write Only
-E-F Host Recieve (Read) Data Buffer Access Port (buffer input)	Read Only
+E-F Host Receive (Read) Data Buffer Access Port (buffer input)	Read Only
 ************************************************************************/
 
 static inline void ixj_read_HSR(IXJ *j)
@@ -2330,7 +2329,6 @@ static int ixj_release(struct inode *inode, struct file *file_p)
 	j->rec_codec = j->play_codec = 0;
 	j->rec_frame_size = j->play_frame_size = 0;
 	j->flags.cidsent = j->flags.cidring = 0;
-	ixj_fasync(-1, file_p, 0);	/* remove from list of async notification */
 
 	if(j->cardtype == QTI_LINEJACK && !j->readers && !j->writers) {
 		ixj_set_port(j, PORT_PSTN);
@@ -3453,7 +3451,6 @@ static void ixj_write_frame(IXJ *j)
 {
 	int cnt, frame_count, dly;
 	IXJ_WORD dat;
-	BYTES blankword;
 
 	frame_count = 0;
 	if(j->flags.cidplay) {
@@ -3501,6 +3498,8 @@ static void ixj_write_frame(IXJ *j)
 		}
 		if (frame_count >= 1) {
 			if (j->ver.low == 0x12 && j->play_mode && j->flags.play_first_frame) {
+				BYTES blankword;
+
 				switch (j->play_mode) {
 				case PLAYBACK_MODE_ULAW:
 				case PLAYBACK_MODE_ALAW:
@@ -3508,6 +3507,7 @@ static void ixj_write_frame(IXJ *j)
 					break;
 				case PLAYBACK_MODE_8LINEAR:
 				case PLAYBACK_MODE_16LINEAR:
+				default:
 					blankword.low = blankword.high = 0x00;
 					break;
 				case PLAYBACK_MODE_8LINEAR_WSS:
@@ -3531,6 +3531,8 @@ static void ixj_write_frame(IXJ *j)
 				j->flags.play_first_frame = 0;
 			} else	if (j->play_codec == G723_63 && j->flags.play_first_frame) {
 				for (cnt = 0; cnt < 24; cnt++) {
+					BYTES blankword;
+
 					if(cnt == 12) {
 						blankword.low = 0x02;
 						blankword.high = 0x00;
@@ -4188,12 +4190,12 @@ static void ixj_aec_start(IXJ *j, int level)
 				ixj_WriteDSPCommand(0x1224, j);
 
 			ixj_WriteDSPCommand(0xE014, j);
-			ixj_WriteDSPCommand(0x0003, j);	/* Lock threashold at 3dB */
+			ixj_WriteDSPCommand(0x0003, j);	/* Lock threshold at 3dB */
 
 			ixj_WriteDSPCommand(0xE338, j);	/* Set Echo Suppresser Attenuation to 0dB */
 
 			/* Now we can set the AGC initial parameters and turn it on */
-			ixj_WriteDSPCommand(0xCF90, j);	/* Set AGC Minumum gain */
+			ixj_WriteDSPCommand(0xCF90, j);	/* Set AGC Minimum gain */
 			ixj_WriteDSPCommand(0x0020, j);	/* to 0.125 (-18dB) */
 	
 			ixj_WriteDSPCommand(0xCF91, j);	/* Set AGC Maximum gain */
@@ -4233,7 +4235,7 @@ static void ixj_aec_start(IXJ *j, int level)
 				ixj_WriteDSPCommand(0x1224, j);
 
 			ixj_WriteDSPCommand(0xE014, j);
-			ixj_WriteDSPCommand(0x0003, j);	/* Lock threashold at 3dB */
+			ixj_WriteDSPCommand(0x0003, j);	/* Lock threshold at 3dB */
 
 			ixj_WriteDSPCommand(0xE338, j);	/* Set Echo Suppresser Attenuation to 0dB */
 
@@ -4868,6 +4870,7 @@ static char daa_CR_read(IXJ *j, int cr)
 		bytes.high = 0xB0 + cr;
 		break;
 	case SOP_PU_PULSEDIALING:
+	default:
 		bytes.high = 0xF0 + cr;
 		break;
 	}
@@ -5876,20 +5879,13 @@ out:
 static int ixj_build_filter_cadence(IXJ *j, IXJ_FILTER_CADENCE __user * cp)
 {
 	IXJ_FILTER_CADENCE *lcp;
-	lcp = kmalloc(sizeof(IXJ_FILTER_CADENCE), GFP_KERNEL);
-	if (lcp == NULL) {
+	lcp = memdup_user(cp, sizeof(IXJ_FILTER_CADENCE));
+	if (IS_ERR(lcp)) {
 		if(ixjdebug & 0x0001) {
-			printk(KERN_INFO "Could not allocate memory for cadence\n");
+			printk(KERN_INFO "Could not allocate memory for cadence or could not copy cadence to kernel\n");
 		}
-		return -ENOMEM;
+		return PTR_ERR(lcp);
         }
-	if (copy_from_user(lcp, cp, sizeof(IXJ_FILTER_CADENCE))) {
-		if(ixjdebug & 0x0001) {
-			printk(KERN_INFO "Could not copy cadence to kernel\n");
-		}
-		kfree(lcp);
-		return -EFAULT;
-	}
 	if (lcp->filter > 5) {
 		if(ixjdebug & 0x0001) {
 			printk(KERN_INFO "Cadence out of range\n");
@@ -6090,15 +6086,15 @@ static int capabilities_check(IXJ *j, struct phone_capability *pcreq)
 	return retval;
 }
 
-static int ixj_ioctl(struct inode *inode, struct file *file_p, unsigned int cmd, unsigned long arg)
+static long do_ixj_ioctl(struct file *file_p, unsigned int cmd, unsigned long arg)
 {
 	IXJ_TONE ti;
 	IXJ_FILTER jf;
 	IXJ_FILTER_RAW jfr;
 	void __user *argp = (void __user *)arg;
-
-	unsigned int raise, mant;
+	struct inode *inode = file_p->f_path.dentry->d_inode;
 	unsigned int minor = iminor(inode);
+	unsigned int raise, mant;
 	int board = NUM(inode);
 
 	IXJ *j = get_ixj(NUM(inode));
@@ -6584,7 +6580,8 @@ static int ixj_ioctl(struct inode *inode, struct file *file_p, unsigned int cmd,
 	case IXJCTL_SET_FILTER:
 		if (copy_from_user(&jf, argp, sizeof(jf))) 
 			retval = -EFAULT;
-		retval = ixj_init_filter(j, &jf);
+		else
+			retval = ixj_init_filter(j, &jf);
 		break;
 	case IXJCTL_SET_FILTER_RAW:
 		if (copy_from_user(&jfr, argp, sizeof(jfr))) 
@@ -6656,6 +6653,15 @@ static int ixj_ioctl(struct inode *inode, struct file *file_p, unsigned int cmd,
 	return retval;
 }
 
+static long ixj_ioctl(struct file *file_p, unsigned int cmd, unsigned long arg)
+{
+	long ret;
+	mutex_lock(&ixj_mutex);
+	ret = do_ixj_ioctl(file_p, cmd, arg);
+	mutex_unlock(&ixj_mutex);
+	return ret;
+}
+
 static int ixj_fasync(int fd, struct file *file_p, int mode)
 {
 	IXJ *j = get_ixj(NUM(file_p->f_path.dentry->d_inode));
@@ -6669,9 +6675,10 @@ static const struct file_operations ixj_fops =
         .read           = ixj_enhanced_read,
         .write          = ixj_enhanced_write,
         .poll           = ixj_poll,
-        .ioctl          = ixj_ioctl,
+        .unlocked_ioctl = ixj_ioctl,
         .release        = ixj_release,
-        .fasync         = ixj_fasync
+        .fasync         = ixj_fasync,
+        .llseek	 = default_llseek,
 };
 
 static int ixj_linetest(IXJ *j)

@@ -4,16 +4,16 @@
  *  Low level bus fault handler
  *
  *
- *  Copyright (C) 2000, 2001  Axis Communications AB
+ *  Copyright (C) 2000-2007  Axis Communications AB
  *
- *  Authors:  Bjorn Wesen 
- * 
+ *  Authors:  Bjorn Wesen
+ *
  */
 
 #include <linux/mm.h>
 #include <asm/uaccess.h>
 #include <asm/pgtable.h>
-#include <asm/arch/svinto.h>
+#include <arch/svinto.h>
 #include <asm/mmu_context.h>
 
 /* debug of low-level TLB reload */
@@ -60,7 +60,7 @@ handle_mmu_bus_fault(struct pt_regs *regs)
 #ifdef DEBUG
 	page_id = IO_EXTRACT(R_MMU_CAUSE,  page_id,   cause);
 	acc     = IO_EXTRACT(R_MMU_CAUSE,  acc_excp,  cause);
-	inv     = IO_EXTRACT(R_MMU_CAUSE,  inv_excp,  cause);  
+	inv     = IO_EXTRACT(R_MMU_CAUSE,  inv_excp,  cause);
 	index   = IO_EXTRACT(R_TLB_SELECT, index,     select);
 #endif
 	miss    = IO_EXTRACT(R_MMU_CAUSE,  miss_excp, cause);
@@ -80,16 +80,16 @@ handle_mmu_bus_fault(struct pt_regs *regs)
 	 * do_page_fault may have flushed the TLB so we have to restore
 	 * the MMU registers.
 	 */
-	local_save_flags(flags);
-	local_irq_disable();
+	local_irq_save(flags);
 	pmd = (pmd_t *)(pgd + pgd_index(address));
 	if (pmd_none(*pmd))
-		return;
+		goto exit;
 	pte = *pte_offset_kernel(pmd, address);
 	if (!pte_present(pte))
-		return;
+		goto exit;
 	*R_TLB_SELECT = select;
 	*R_TLB_HI = cause;
 	*R_TLB_LO = pte_val(pte);
+exit:
 	local_irq_restore(flags);
 }

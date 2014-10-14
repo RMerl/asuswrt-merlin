@@ -15,17 +15,15 @@
 #include <linux/console.h>
 #include <linux/init.h>
 #include <linux/delay.h>
+#include <linux/module.h>
 
 #include <asm/atarihw.h>
 #include <asm/atariints.h>
 
-/* Flag that Modem1 port is already initialized and used */
-int atari_MFP_init_done;
-/* Flag that Modem1 port is already initialized and used */
-int atari_SCC_init_done;
 /* Can be set somewhere, if a SCC master reset has already be done and should
  * not be repeated; used by kgdb */
 int atari_SCC_reset_done;
+EXPORT_SYMBOL(atari_SCC_reset_done);
 
 static struct console atari_console_driver = {
 	.name	= "debug",
@@ -36,13 +34,13 @@ static struct console atari_console_driver = {
 
 static inline void ata_mfp_out(char c)
 {
-	while (!(mfp.trn_stat & 0x80))	/* wait for tx buf empty */
+	while (!(st_mfp.trn_stat & 0x80))	/* wait for tx buf empty */
 		barrier();
-	mfp.usart_dta = c;
+	st_mfp.usart_dta = c;
 }
 
-void atari_mfp_console_write(struct console *co, const char *str,
-			     unsigned int count)
+static void atari_mfp_console_write(struct console *co, const char *str,
+				    unsigned int count)
 {
 	while (count--) {
 		if (*str == '\n')
@@ -55,13 +53,13 @@ static inline void ata_scc_out(char c)
 {
 	do {
 		MFPDELAY();
-	} while (!(scc.cha_b_ctrl & 0x04)); /* wait for tx buf empty */
+	} while (!(atari_scc.cha_b_ctrl & 0x04)); /* wait for tx buf empty */
 	MFPDELAY();
-	scc.cha_b_data = c;
+	atari_scc.cha_b_data = c;
 }
 
-void atari_scc_console_write(struct console *co, const char *str,
-			     unsigned int count)
+static void atari_scc_console_write(struct console *co, const char *str,
+				    unsigned int count)
 {
 	while (count--) {
 		if (*str == '\n')
@@ -77,8 +75,8 @@ static inline void ata_midi_out(char c)
 	acia.mid_data = c;
 }
 
-void atari_midi_console_write(struct console *co, const char *str,
-			      unsigned int count)
+static void atari_midi_console_write(struct console *co, const char *str,
+				     unsigned int count)
 {
 	while (count--) {
 		if (*str == '\n')
@@ -93,7 +91,7 @@ static int ata_par_out(char c)
 	/* This a some-seconds timeout in case no printer is connected */
 	unsigned long i = loops_per_jiffy > 1 ? loops_per_jiffy : 10000000/HZ;
 
-	while ((mfp.par_dt_reg & 1) && --i) /* wait for BUSY == L */
+	while ((st_mfp.par_dt_reg & 1) && --i) /* wait for BUSY == L */
 		;
 	if (!i)
 		return 0;
@@ -130,21 +128,21 @@ static void atari_par_console_write(struct console *co, const char *str,
 	}
 }
 
-#ifdef CONFIG_SERIAL_CONSOLE
+#if 0
 int atari_mfp_console_wait_key(struct console *co)
 {
-	while (!(mfp.rcv_stat & 0x80))	/* wait for rx buf filled */
+	while (!(st_mfp.rcv_stat & 0x80))	/* wait for rx buf filled */
 		barrier();
-	return mfp.usart_dta;
+	return st_mfp.usart_dta;
 }
 
 int atari_scc_console_wait_key(struct console *co)
 {
 	do {
 		MFPDELAY();
-	} while (!(scc.cha_b_ctrl & 0x01)); /* wait for rx buf filled */
+	} while (!(atari_scc.cha_b_ctrl & 0x01)); /* wait for rx buf filled */
 	MFPDELAY();
-	return scc.cha_b_data;
+	return atari_scc.cha_b_data;
 }
 
 int atari_midi_console_wait_key(struct console *co)
@@ -160,11 +158,7 @@ int atari_midi_console_wait_key(struct console *co)
  * SCC serial ports. They're used by the debugging interface, kgdb, and the
  * serial console code.
  */
-#ifndef CONFIG_SERIAL_CONSOLE
 static void __init atari_init_mfp_port(int cflag)
-#else
-void atari_init_mfp_port(int cflag)
-#endif
 {
 	/*
 	 * timer values for 1200...115200 bps; > 38400 select 110, 134, or 150
@@ -181,21 +175,19 @@ void atari_init_mfp_port(int cflag)
 		baud = B9600;		/* use default 9600bps for non-implemented rates */
 	baud -= B1200;			/* baud_table[] starts at 1200bps */
 
-	mfp.trn_stat &= ~0x01;		/* disable TX */
-	mfp.usart_ctr = parity | csize | 0x88; /* 1:16 clk mode, 1 stop bit */
-	mfp.tim_ct_cd &= 0x70;		/* stop timer D */
-	mfp.tim_dt_d = baud_table[baud];
-	mfp.tim_ct_cd |= 0x01;		/* start timer D, 1:4 */
-	mfp.trn_stat |= 0x01;		/* enable TX */
-
-	atari_MFP_init_done = 1;
+	st_mfp.trn_stat &= ~0x01;	/* disable TX */
+	st_mfp.usart_ctr = parity | csize | 0x88; /* 1:16 clk mode, 1 stop bit */
+	st_mfp.tim_ct_cd &= 0x70;	/* stop timer D */
+	st_mfp.tim_dt_d = baud_table[baud];
+	st_mfp.tim_ct_cd |= 0x01;	/* start timer D, 1:4 */
+	st_mfp.trn_stat |= 0x01;	/* enable TX */
 }
 
 #define SCC_WRITE(reg, val)				\
 	do {						\
-		scc.cha_b_ctrl = (reg);			\
+		atari_scc.cha_b_ctrl = (reg);		\
 		MFPDELAY();				\
-		scc.cha_b_ctrl = (val);			\
+		atari_scc.cha_b_ctrl = (val);		\
 		MFPDELAY();				\
 	} while (0)
 
@@ -208,11 +200,7 @@ void atari_init_mfp_port(int cflag)
 			MFPDELAY();			\
 	} while (0)
 
-#ifndef CONFIG_SERIAL_CONSOLE
 static void __init atari_init_scc_port(int cflag)
-#else
-void atari_init_scc_port(int cflag)
-#endif
 {
 	extern int atari_SCC_reset_done;
 	static int clksrc_table[9] =
@@ -252,7 +240,7 @@ void atari_init_scc_port(int cflag)
 	reg3 = (cflag & CSIZE) == CS8 ? 0xc0 : 0x40;
 	reg5 = (cflag & CSIZE) == CS8 ? 0x60 : 0x20 | 0x82 /* assert DTR/RTS */;
 
-	(void)scc.cha_b_ctrl;		/* reset reg pointer */
+	(void)atari_scc.cha_b_ctrl;	/* reset reg pointer */
 	SCC_WRITE(9, 0xc0);		/* reset */
 	LONG_DELAY();			/* extra delay after WR9 access */
 	SCC_WRITE(4, (cflag & PARENB) ? ((cflag & PARODD) ? 0x01 : 0x03)
@@ -271,14 +259,9 @@ void atari_init_scc_port(int cflag)
 	SCC_WRITE(5, reg5 | 8);
 
 	atari_SCC_reset_done = 1;
-	atari_SCC_init_done = 1;
 }
 
-#ifndef CONFIG_SERIAL_CONSOLE
 static void __init atari_init_midi_port(int cflag)
-#else
-void atari_init_midi_port(int cflag)
-#endif
 {
 	int baud = cflag & CBAUD;
 	int csize = ((cflag & CSIZE) == CS8) ? 0x10 : 0x00;

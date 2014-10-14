@@ -14,11 +14,12 @@
 #include <linux/device.h>
 #include <linux/scatterlist.h>
 #include <linux/usb/quirks.h>
+#include <linux/usb/hcd.h>	/* for usbcore internals */
 #include <asm/byteorder.h>
-#include <asm/scatterlist.h>
 
-#include "hcd.h"	/* for usbcore internals */
 #include "usb.h"
+
+static void cancel_async_set_config(struct usb_device *udev);
 
 struct api_context {
 	struct completion	done;
@@ -225,8 +226,7 @@ int usb_bulk_msg(struct usb_device *usb_dev, unsigned int pipe,
 	struct urb *urb;
 	struct usb_host_endpoint *ep;
 
-	ep = (usb_pipein(pipe) ? usb_dev->ep_in : usb_dev->ep_out)
-			[usb_pipeendpoint(pipe)];
+	ep = usb_pipe_endpoint(usb_dev, pipe);
 	if (!ep || len < 0)
 		return -EINVAL;
 
@@ -258,9 +258,6 @@ static void sg_clean(struct usb_sg_request *io)
 		kfree(io->urbs);
 		io->urbs = NULL;
 	}
-	if (io->dev->dev.dma_mask != NULL)
-		usb_buffer_unmap_sg(io->dev, usb_pipein(io->pipe),
-				    io->sg, io->nents);
 	io->dev = NULL;
 }
 
@@ -314,7 +311,7 @@ static void sg_complete(struct urb *urb)
 				    retval != -EBUSY)
 					dev_err(&io->dev->dev,
 						"%s, unlink --> %d\n",
-						__FUNCTION__, retval);
+						__func__, retval);
 			} else if (urb == io->urbs [i])
 				found = 1;
 		}
@@ -363,7 +360,7 @@ int usb_sg_init(struct usb_sg_request *io, struct usb_device *dev,
 {
 	int i;
 	int urb_flags;
-	int dma;
+	int use_sg;
 
 	if (!io || !dev || !sg
 			|| usb_pipecontrol(pipe)
@@ -374,87 +371,79 @@ int usb_sg_init(struct usb_sg_request *io, struct usb_device *dev,
 	spin_lock_init(&io->lock);
 	io->dev = dev;
 	io->pipe = pipe;
-	io->sg = sg;
-	io->nents = nents;
 
-	/* not all host controllers use DMA (like the mainstream pci ones);
-	 * they can use PIO (sl811) or be software over another transport.
-	 */
-	dma = (dev->dev.dma_mask != NULL);
-	if (dma)
-		io->entries = usb_buffer_map_sg(dev, usb_pipein(pipe),
-						sg, nents);
-	else
+	if (dev->bus->sg_tablesize > 0) {
+		use_sg = true;
+		io->entries = 1;
+	} else {
+		use_sg = false;
 		io->entries = nents;
+	}
 
 	/* initialize all the urbs we'll use */
-	if (io->entries <= 0)
-		return io->entries;
-
 	io->urbs = kmalloc(io->entries * sizeof *io->urbs, mem_flags);
 	if (!io->urbs)
 		goto nomem;
 
-	urb_flags = URB_NO_TRANSFER_DMA_MAP | URB_NO_INTERRUPT;
+	urb_flags = URB_NO_INTERRUPT;
 	if (usb_pipein(pipe))
 		urb_flags |= URB_SHORT_NOT_OK;
 
-	for (i = 0; i < io->entries; i++) {
+	for_each_sg(sg, sg, io->entries, i) {
+		struct urb *urb;
 		unsigned len;
 
-		io->urbs[i] = usb_alloc_urb(0, mem_flags);
-		if (!io->urbs[i]) {
+		urb = usb_alloc_urb(0, mem_flags);
+		if (!urb) {
 			io->entries = i;
 			goto nomem;
 		}
+		io->urbs[i] = urb;
 
-		io->urbs[i]->dev = NULL;
-		io->urbs[i]->pipe = pipe;
-		io->urbs[i]->interval = period;
-		io->urbs[i]->transfer_flags = urb_flags;
+		urb->dev = NULL;
+		urb->pipe = pipe;
+		urb->interval = period;
+		urb->transfer_flags = urb_flags;
+		urb->complete = sg_complete;
+		urb->context = io;
+		urb->sg = sg;
 
-		io->urbs[i]->complete = sg_complete;
-		io->urbs[i]->context = io;
+		if (use_sg) {
+			/* There is no single transfer buffer */
+			urb->transfer_buffer = NULL;
+			urb->num_sgs = nents;
 
-		/*
-		 * Some systems need to revert to PIO when DMA is temporarily
-		 * unavailable.  For their sakes, both transfer_buffer and
-		 * transfer_dma are set when possible.  However this can only
-		 * work on systems without:
-		 *
-		 *  - HIGHMEM, since DMA buffers located in high memory are
-		 *    not directly addressable by the CPU for PIO;
-		 *
-		 *  - IOMMU, since dma_map_sg() is allowed to use an IOMMU to
-		 *    make virtually discontiguous buffers be "dma-contiguous"
-		 *    so that PIO and DMA need diferent numbers of URBs.
-		 *
-		 * So when HIGHMEM or IOMMU are in use, transfer_buffer is NULL
-		 * to prevent stale pointers and to help spot bugs.
-		 */
-		if (dma) {
-			io->urbs[i]->transfer_dma = sg_dma_address(sg + i);
-			len = sg_dma_len(sg + i);
-#if defined(CONFIG_HIGHMEM) || defined(CONFIG_IOMMU)
-			io->urbs[i]->transfer_buffer = NULL;
-#else
-			io->urbs[i]->transfer_buffer = sg_virt(&sg[i]);
-#endif
+			/* A length of zero means transfer the whole sg list */
+			len = length;
+			if (len == 0) {
+				struct scatterlist	*sg2;
+				int			j;
+
+				for_each_sg(sg, sg2, nents, j)
+					len += sg2->length;
+			}
 		} else {
-			/* hc may use _only_ transfer_buffer */
-			io->urbs[i]->transfer_buffer = sg_virt(&sg[i]);
-			len = sg[i].length;
-		}
+			/*
+			 * Some systems can't use DMA; they use PIO instead.
+			 * For their sakes, transfer_buffer is set whenever
+			 * possible.
+			 */
+			if (!PageHighMem(sg_page(sg)))
+				urb->transfer_buffer = sg_virt(sg);
+			else
+				urb->transfer_buffer = NULL;
 
-		if (length) {
-			len = min_t(unsigned, len, length);
-			length -= len;
-			if (length == 0)
-				io->entries = i + 1;
+			len = sg->length;
+			if (length) {
+				len = min_t(unsigned, len, length);
+				length -= len;
+				if (length == 0)
+					io->entries = i + 1;
+			}
 		}
-		io->urbs[i]->transfer_buffer_length = len;
+		urb->transfer_buffer_length = len;
 	}
-	io->urbs [--i]->transfer_flags &= ~URB_NO_INTERRUPT;
+	io->urbs[--i]->transfer_flags &= ~URB_NO_INTERRUPT;
 
 	/* transaction state */
 	io->count = io->entries;
@@ -507,6 +496,10 @@ EXPORT_SYMBOL_GPL(usb_sg_init);
  * could be transferred.  That capability is less useful for low or full
  * speed interrupt endpoints, which allow at most one packet per millisecond,
  * of at most 8 or 64 bytes (respectively).
+ *
+ * It is not necessary to call this function to reserve bandwidth for devices
+ * under an xHCI host controller, as the bandwidth is reserved when the
+ * configuration or interface alt setting is selected.
  */
 void usb_sg_wait(struct usb_sg_request *io)
 {
@@ -552,7 +545,7 @@ void usb_sg_wait(struct usb_sg_request *io)
 			io->urbs[i]->dev = NULL;
 			io->urbs[i]->status = retval;
 			dev_dbg(&io->dev->dev, "%s, submit --> %d\n",
-				__FUNCTION__, retval);
+				__func__, retval);
 			usb_sg_cancel(io);
 		}
 		spin_lock_irq(&io->lock);
@@ -602,7 +595,7 @@ void usb_sg_cancel(struct usb_sg_request *io)
 			retval = usb_unlink_urb(io->urbs [i]);
 			if (retval != -EINPROGRESS && retval != -EBUSY)
 				dev_warn(&io->dev->dev, "%s, unlink --> %d\n",
-					__FUNCTION__, retval);
+					__func__, retval);
 		}
 		spin_lock(&io->lock);
 	}
@@ -819,14 +812,13 @@ int usb_string(struct usb_device *dev, int index, char *buf, size_t size)
 {
 	unsigned char *tbuf;
 	int err;
-	unsigned int u;
 
 	if (dev->state == USB_STATE_SUSPENDED)
 		return -EHOSTUNREACH;
 	if (size <= 0 || !buf || !index)
 		return -EINVAL;
 	buf[0] = 0;
-	tbuf = kmalloc(256 + 2, GFP_NOIO);
+	tbuf = kmalloc(256, GFP_NOIO);
 	if (!tbuf)
 		return -ENOMEM;
 
@@ -838,12 +830,9 @@ int usb_string(struct usb_device *dev, int index, char *buf, size_t size)
 	if (err < 0)
 		goto errout;
 
-	for (u = 2; u < err; u += 2)
-		le16_to_cpus((u16 *)&tbuf[u]);
-	tbuf[u] = 0;
-	tbuf[u + 1] = 0;
 	size--;		/* leave room for trailing NULL char in output buffer */
-	err = utf8_wcstombs(buf, (u16 *)&tbuf[2], size);
+	err = utf16s_to_utf8s((wchar_t *) &tbuf[2], (err - 2) / 2,
+			UTF16_LITTLE_ENDIAN, buf, size);
 	buf[err] = 0;
 
 	if (tbuf[1] != USB_DT_STRING)
@@ -1019,26 +1008,54 @@ int usb_clear_halt(struct usb_device *dev, int pipe)
 	 * the copy in usb-storage, for as long as we need two copies.
 	 */
 
-	/* toggle was reset by the clear */
-	usb_settoggle(dev, usb_pipeendpoint(pipe), usb_pipeout(pipe), 0);
+	usb_reset_endpoint(dev, endp);
 
 	return 0;
 }
 EXPORT_SYMBOL_GPL(usb_clear_halt);
+
+static int create_intf_ep_devs(struct usb_interface *intf)
+{
+	struct usb_device *udev = interface_to_usbdev(intf);
+	struct usb_host_interface *alt = intf->cur_altsetting;
+	int i;
+
+	if (intf->ep_devs_created || intf->unregistering)
+		return 0;
+
+	for (i = 0; i < alt->desc.bNumEndpoints; ++i)
+		(void) usb_create_ep_devs(&intf->dev, &alt->endpoint[i], udev);
+	intf->ep_devs_created = 1;
+	return 0;
+}
+
+static void remove_intf_ep_devs(struct usb_interface *intf)
+{
+	struct usb_host_interface *alt = intf->cur_altsetting;
+	int i;
+
+	if (!intf->ep_devs_created)
+		return;
+
+	for (i = 0; i < alt->desc.bNumEndpoints; ++i)
+		usb_remove_ep_devs(&alt->endpoint[i]);
+	intf->ep_devs_created = 0;
+}
 
 /**
  * usb_disable_endpoint -- Disable an endpoint by address
  * @dev: the device whose endpoint is being disabled
  * @epaddr: the endpoint's address.  Endpoint number for output,
  *	endpoint number + USB_DIR_IN for input
+ * @reset_hardware: flag to erase any endpoint state stored in the
+ *	controller hardware
  *
- * Deallocates hcd/hardware state for this endpoint ... and nukes all
- * pending urbs.
- *
- * If the HCD hasn't registered a disable() function, this sets the
- * endpoint's maxpacket size to 0 to prevent further submissions.
+ * Disables the endpoint for URB submission and nukes all pending URBs.
+ * If @reset_hardware is set then also deallocates hcd/hardware state
+ * for the endpoint.
  */
-void usb_disable_endpoint(struct usb_device *dev, unsigned int epaddr)
+void usb_disable_endpoint(struct usb_device *dev, unsigned int epaddr,
+		bool reset_hardware)
 {
 	unsigned int epnum = epaddr & USB_ENDPOINT_NUMBER_MASK;
 	struct usb_host_endpoint *ep;
@@ -1048,33 +1065,64 @@ void usb_disable_endpoint(struct usb_device *dev, unsigned int epaddr)
 
 	if (usb_endpoint_out(epaddr)) {
 		ep = dev->ep_out[epnum];
-		dev->ep_out[epnum] = NULL;
+		if (reset_hardware)
+			dev->ep_out[epnum] = NULL;
 	} else {
 		ep = dev->ep_in[epnum];
-		dev->ep_in[epnum] = NULL;
+		if (reset_hardware)
+			dev->ep_in[epnum] = NULL;
 	}
 	if (ep) {
 		ep->enabled = 0;
 		usb_hcd_flush_endpoint(dev, ep);
-		usb_hcd_disable_endpoint(dev, ep);
+		if (reset_hardware)
+			usb_hcd_disable_endpoint(dev, ep);
 	}
 }
+
+/**
+ * usb_reset_endpoint - Reset an endpoint's state.
+ * @dev: the device whose endpoint is to be reset
+ * @epaddr: the endpoint's address.  Endpoint number for output,
+ *	endpoint number + USB_DIR_IN for input
+ *
+ * Resets any host-side endpoint state such as the toggle bit,
+ * sequence number or current window.
+ */
+void usb_reset_endpoint(struct usb_device *dev, unsigned int epaddr)
+{
+	unsigned int epnum = epaddr & USB_ENDPOINT_NUMBER_MASK;
+	struct usb_host_endpoint *ep;
+
+	if (usb_endpoint_out(epaddr))
+		ep = dev->ep_out[epnum];
+	else
+		ep = dev->ep_in[epnum];
+	if (ep)
+		usb_hcd_reset_endpoint(dev, ep);
+}
+EXPORT_SYMBOL_GPL(usb_reset_endpoint);
+
 
 /**
  * usb_disable_interface -- Disable all endpoints for an interface
  * @dev: the device whose interface is being disabled
  * @intf: pointer to the interface descriptor
+ * @reset_hardware: flag to erase any endpoint state stored in the
+ *	controller hardware
  *
  * Disables all the endpoints for the interface's current altsetting.
  */
-void usb_disable_interface(struct usb_device *dev, struct usb_interface *intf)
+void usb_disable_interface(struct usb_device *dev, struct usb_interface *intf,
+		bool reset_hardware)
 {
 	struct usb_host_interface *alt = intf->cur_altsetting;
 	int i;
 
 	for (i = 0; i < alt->desc.bNumEndpoints; ++i) {
 		usb_disable_endpoint(dev,
-				alt->endpoint[i].desc.bEndpointAddress);
+				alt->endpoint[i].desc.bEndpointAddress,
+				reset_hardware);
 	}
 }
 
@@ -1087,17 +1135,26 @@ void usb_disable_interface(struct usb_device *dev, struct usb_interface *intf)
  * Deallocates hcd/hardware state for the endpoints (nuking all or most
  * pending urbs) and usbcore state for the interfaces, so that usbcore
  * must usb_set_configuration() before any interfaces could be used.
+ *
+ * Must be called with hcd->bandwidth_mutex held.
  */
 void usb_disable_device(struct usb_device *dev, int skip_ep0)
 {
 	int i;
-
-	dev->toggle[0] = dev->toggle[1] = 0;
+	struct usb_hcd *hcd = bus_to_hcd(dev->bus);
 
 	/* getting rid of interfaces will disconnect
 	 * any drivers bound to them (a key side effect)
 	 */
 	if (dev->actconfig) {
+		/*
+		 * FIXME: In order to avoid self-deadlock involving the
+		 * bandwidth_mutex, we have to mark all the interfaces
+		 * before unregistering any of them.
+		 */
+		for (i = 0; i < dev->actconfig->desc.bNumInterfaces; i++)
+			dev->actconfig->interface[i]->unregistering = 1;
+
 		for (i = 0; i < dev->actconfig->desc.bNumInterfaces; i++) {
 			struct usb_interface	*interface;
 
@@ -1106,9 +1163,8 @@ void usb_disable_device(struct usb_device *dev, int skip_ep0)
 			if (!device_is_registered(&interface->dev))
 				continue;
 			dev_dbg(&dev->dev, "unregistering interface %s\n",
-				interface->dev.bus_id);
-			interface->unregistering = 1;
-			usb_remove_sysfs_intf_files(interface);
+				dev_name(&interface->dev));
+			remove_intf_ep_devs(interface);
 			device_del(&interface->dev);
 		}
 
@@ -1124,11 +1180,21 @@ void usb_disable_device(struct usb_device *dev, int skip_ep0)
 			usb_set_device_state(dev, USB_STATE_ADDRESS);
 	}
 
-	dev_dbg(&dev->dev, "%s nuking %s URBs\n", __FUNCTION__,
+	dev_dbg(&dev->dev, "%s nuking %s URBs\n", __func__,
 		skip_ep0 ? "non-ep0" : "all");
+	if (hcd->driver->check_bandwidth) {
+		/* First pass: Cancel URBs, leave endpoint pointers intact. */
+		for (i = skip_ep0; i < 16; ++i) {
+			usb_disable_endpoint(dev, i, false);
+			usb_disable_endpoint(dev, i + USB_DIR_IN, false);
+		}
+		/* Remove endpoints from the host controller internal state */
+		usb_hcd_alloc_bandwidth(dev, NULL, NULL, NULL);
+		/* Second pass: remove endpoint pointers */
+	}
 	for (i = skip_ep0; i < 16; ++i) {
-		usb_disable_endpoint(dev, i);
-		usb_disable_endpoint(dev, i + USB_DIR_IN);
+		usb_disable_endpoint(dev, i, true);
+		usb_disable_endpoint(dev, i + USB_DIR_IN, true);
 	}
 }
 
@@ -1136,24 +1202,24 @@ void usb_disable_device(struct usb_device *dev, int skip_ep0)
  * usb_enable_endpoint - Enable an endpoint for USB communications
  * @dev: the device whose interface is being enabled
  * @ep: the endpoint
+ * @reset_ep: flag to reset the endpoint state
  *
- * Resets the endpoint toggle, and sets dev->ep_{in,out} pointers.
+ * Resets the endpoint state if asked, and sets dev->ep_{in,out} pointers.
  * For control endpoints, both the input and output sides are handled.
  */
-void usb_enable_endpoint(struct usb_device *dev, struct usb_host_endpoint *ep)
+void usb_enable_endpoint(struct usb_device *dev, struct usb_host_endpoint *ep,
+		bool reset_ep)
 {
 	int epnum = usb_endpoint_num(&ep->desc);
 	int is_out = usb_endpoint_dir_out(&ep->desc);
 	int is_control = usb_endpoint_xfer_control(&ep->desc);
 
-	if (is_out || is_control) {
-		usb_settoggle(dev, epnum, 1, 0);
+	if (reset_ep)
+		usb_hcd_reset_endpoint(dev, ep);
+	if (is_out || is_control)
 		dev->ep_out[epnum] = ep;
-	}
-	if (!is_out || is_control) {
-		usb_settoggle(dev, epnum, 0, 0);
+	if (!is_out || is_control)
 		dev->ep_in[epnum] = ep;
-	}
 	ep->enabled = 1;
 }
 
@@ -1161,17 +1227,18 @@ void usb_enable_endpoint(struct usb_device *dev, struct usb_host_endpoint *ep)
  * usb_enable_interface - Enable all the endpoints for an interface
  * @dev: the device whose interface is being enabled
  * @intf: pointer to the interface descriptor
+ * @reset_eps: flag to reset the endpoints' state
  *
  * Enables all the endpoints for the interface's current altsetting.
  */
 void usb_enable_interface(struct usb_device *dev,
-				 struct usb_interface *intf)
+		struct usb_interface *intf, bool reset_eps)
 {
 	struct usb_host_interface *alt = intf->cur_altsetting;
 	int i;
 
 	for (i = 0; i < alt->desc.bNumEndpoints; ++i)
-		usb_enable_endpoint(dev, &alt->endpoint[i]);
+		usb_enable_endpoint(dev, &alt->endpoint[i], reset_eps);
 }
 
 /**
@@ -1211,6 +1278,7 @@ int usb_set_interface(struct usb_device *dev, int interface, int alternate)
 {
 	struct usb_interface *iface;
 	struct usb_host_interface *alt;
+	struct usb_hcd *hcd = bus_to_hcd(dev->bus);
 	int ret;
 	int manual = 0;
 	unsigned int epaddr;
@@ -1225,11 +1293,26 @@ int usb_set_interface(struct usb_device *dev, int interface, int alternate)
 			interface);
 		return -EINVAL;
 	}
+	if (iface->unregistering)
+		return -ENODEV;
 
 	alt = usb_altnum_to_altsetting(iface, alternate);
 	if (!alt) {
-		warn("selecting invalid altsetting %d\n", alternate);
+		dev_warn(&dev->dev, "selecting invalid altsetting %d\n",
+			 alternate);
 		return -EINVAL;
+	}
+
+	/* Make sure we have enough bandwidth for this alternate interface.
+	 * Remove the current alt setting and add the new alt setting.
+	 */
+	mutex_lock(hcd->bandwidth_mutex);
+	ret = usb_hcd_alloc_bandwidth(dev, NULL, iface->cur_altsetting, alt);
+	if (ret < 0) {
+		dev_info(&dev->dev, "Not enough bandwidth for altsetting %d\n",
+				alternate);
+		mutex_unlock(hcd->bandwidth_mutex);
+		return ret;
 	}
 
 	if (dev->quirks & USB_QUIRK_NO_SET_INTF)
@@ -1247,8 +1330,13 @@ int usb_set_interface(struct usb_device *dev, int interface, int alternate)
 			"manual set_interface for iface %d, alt %d\n",
 			interface, alternate);
 		manual = 1;
-	} else if (ret < 0)
+	} else if (ret < 0) {
+		/* Re-instate the old alt setting */
+		usb_hcd_alloc_bandwidth(dev, NULL, alt, iface->cur_altsetting);
+		mutex_unlock(hcd->bandwidth_mutex);
 		return ret;
+	}
+	mutex_unlock(hcd->bandwidth_mutex);
 
 	/* FIXME drivers shouldn't need to replicate/bugfix the logic here
 	 * when they implement async or easily-killable versions of this or
@@ -1257,9 +1345,11 @@ int usb_set_interface(struct usb_device *dev, int interface, int alternate)
 	 */
 
 	/* prevent submissions using previous endpoint settings */
-	if (iface->cur_altsetting != alt)
+	if (iface->cur_altsetting != alt) {
+		remove_intf_ep_devs(iface);
 		usb_remove_sysfs_intf_files(iface);
-	usb_disable_interface(dev, iface);
+	}
+	usb_disable_interface(dev, iface, true);
 
 	iface->cur_altsetting = alt;
 
@@ -1293,10 +1383,11 @@ int usb_set_interface(struct usb_device *dev, int interface, int alternate)
 	 * during the SETUP stage - hence EP0 toggles are "don't care" here.
 	 * (Likewise, EP0 never "halts" on well designed devices.)
 	 */
-	usb_enable_interface(dev, iface);
-	if (device_is_registered(&iface->dev))
+	usb_enable_interface(dev, iface, true);
+	if (device_is_registered(&iface->dev)) {
 		usb_create_sysfs_intf_files(iface);
-
+		create_intf_ep_devs(iface);
+	}
 	return 0;
 }
 EXPORT_SYMBOL_GPL(usb_set_interface);
@@ -1308,7 +1399,7 @@ EXPORT_SYMBOL_GPL(usb_set_interface);
  * This issues a standard SET_CONFIGURATION request to the device using
  * the current configuration.  The effect is to reset most USB-related
  * state in the device, including interface altsettings (reset to zero),
- * endpoint halts (cleared), and data toggle (only for bulk and interrupt
+ * endpoint halts (cleared), and endpoint state (only for bulk and interrupt
  * endpoints).  Other usbcore state is unchanged, including bindings of
  * usb device drivers to interfaces.
  *
@@ -1316,7 +1407,7 @@ EXPORT_SYMBOL_GPL(usb_set_interface);
  * (multi-interface) devices.  Instead, the driver for each interface may
  * use usb_set_interface() on the interfaces it claims.  Be careful though;
  * some devices don't support the SET_INTERFACE request, and others won't
- * reset all the interface state (notably data toggles).  Resetting the whole
+ * reset all the interface state (notably endpoint state).  Resetting the whole
  * configuration would affect other drivers' interfaces.
  *
  * The caller must own the device lock.
@@ -1327,6 +1418,7 @@ int usb_reset_configuration(struct usb_device *dev)
 {
 	int			i, retval;
 	struct usb_host_config	*config;
+	struct usb_hcd *hcd = bus_to_hcd(dev->bus);
 
 	if (dev->state == USB_STATE_SUSPENDED)
 		return -EHOSTUNREACH;
@@ -1337,26 +1429,57 @@ int usb_reset_configuration(struct usb_device *dev)
 	 */
 
 	for (i = 1; i < 16; ++i) {
-		usb_disable_endpoint(dev, i);
-		usb_disable_endpoint(dev, i + USB_DIR_IN);
+		usb_disable_endpoint(dev, i, true);
+		usb_disable_endpoint(dev, i + USB_DIR_IN, true);
 	}
 
 	config = dev->actconfig;
+	retval = 0;
+	mutex_lock(hcd->bandwidth_mutex);
+	/* Make sure we have enough bandwidth for each alternate setting 0 */
+	for (i = 0; i < config->desc.bNumInterfaces; i++) {
+		struct usb_interface *intf = config->interface[i];
+		struct usb_host_interface *alt;
+
+		alt = usb_altnum_to_altsetting(intf, 0);
+		if (!alt)
+			alt = &intf->altsetting[0];
+		if (alt != intf->cur_altsetting)
+			retval = usb_hcd_alloc_bandwidth(dev, NULL,
+					intf->cur_altsetting, alt);
+		if (retval < 0)
+			break;
+	}
+	/* If not, reinstate the old alternate settings */
+	if (retval < 0) {
+reset_old_alts:
+		for (i--; i >= 0; i--) {
+			struct usb_interface *intf = config->interface[i];
+			struct usb_host_interface *alt;
+
+			alt = usb_altnum_to_altsetting(intf, 0);
+			if (!alt)
+				alt = &intf->altsetting[0];
+			if (alt != intf->cur_altsetting)
+				usb_hcd_alloc_bandwidth(dev, NULL,
+						alt, intf->cur_altsetting);
+		}
+		mutex_unlock(hcd->bandwidth_mutex);
+		return retval;
+	}
 	retval = usb_control_msg(dev, usb_sndctrlpipe(dev, 0),
 			USB_REQ_SET_CONFIGURATION, 0,
 			config->desc.bConfigurationValue, 0,
 			NULL, 0, USB_CTRL_SET_TIMEOUT);
 	if (retval < 0)
-		return retval;
-
-	dev->toggle[0] = dev->toggle[1] = 0;
+		goto reset_old_alts;
+	mutex_unlock(hcd->bandwidth_mutex);
 
 	/* re-init hc/hcd interface/endpoint state */
 	for (i = 0; i < config->desc.bNumInterfaces; i++) {
 		struct usb_interface *intf = config->interface[i];
 		struct usb_host_interface *alt;
 
-		usb_remove_sysfs_intf_files(intf);
 		alt = usb_altnum_to_altsetting(intf, 0);
 
 		/* No altsetting 0?  We'll assume the first altsetting.
@@ -1367,10 +1490,16 @@ int usb_reset_configuration(struct usb_device *dev)
 		if (!alt)
 			alt = &intf->altsetting[0];
 
+		if (alt != intf->cur_altsetting) {
+			remove_intf_ep_devs(intf);
+			usb_remove_sysfs_intf_files(intf);
+		}
 		intf->cur_altsetting = alt;
-		usb_enable_interface(dev, intf);
-		if (device_is_registered(&intf->dev))
+		usb_enable_interface(dev, intf, true);
+		if (device_is_registered(&intf->dev)) {
 			usb_create_sysfs_intf_files(intf);
+			create_intf_ep_devs(intf);
+		}
 	}
 	return 0;
 }
@@ -1387,65 +1516,23 @@ static void usb_release_interface(struct device *dev)
 }
 
 #ifdef	CONFIG_HOTPLUG
-static int usb_if_uevent(struct device *dev, char **envp, int num_envp,
-		 char *buffer, int buffer_size)
+static int usb_if_uevent(struct device *dev, struct kobj_uevent_env *env)
 {
 	struct usb_device *usb_dev;
 	struct usb_interface *intf;
 	struct usb_host_interface *alt;
-	int i = 0;
-	int length = 0;
-
-	if (!dev)
-		return -ENODEV;
-
-	/* driver is often null here; dev_dbg() would oops */
-	pr_debug ("usb %s: uevent\n", dev->bus_id);
 
 	intf = to_usb_interface(dev);
 	usb_dev = interface_to_usbdev(intf);
 	alt = intf->cur_altsetting;
 
-#ifdef CONFIG_USB_DEVICEFS
-	if (add_uevent_var(envp, num_envp, &i,
-			   buffer, buffer_size, &length,
-			   "DEVICE=/proc/bus/usb/%03d/%03d",
-			   usb_dev->bus->busnum, usb_dev->devnum))
-		return -ENOMEM;
-#endif
-
-	if (add_uevent_var(envp, num_envp, &i,
-			   buffer, buffer_size, &length,
-			   "PRODUCT=%x/%x/%x",
-			   le16_to_cpu(usb_dev->descriptor.idVendor),
-			   le16_to_cpu(usb_dev->descriptor.idProduct),
-			   le16_to_cpu(usb_dev->descriptor.bcdDevice)))
-		return -ENOMEM;
-
-	if (add_uevent_var(envp, num_envp, &i,
-			   buffer, buffer_size, &length,
-			   "TYPE=%d/%d/%d",
-			   usb_dev->descriptor.bDeviceClass,
-			   usb_dev->descriptor.bDeviceSubClass,
-			   usb_dev->descriptor.bDeviceProtocol))
-		return -ENOMEM;
-
-	if (add_uevent_var(envp, num_envp, &i,
-		   buffer, buffer_size, &length,
-		   "INTERFACE=%d/%d/%d",
+	if (add_uevent_var(env, "INTERFACE=%d/%d/%d",
 		   alt->desc.bInterfaceClass,
 		   alt->desc.bInterfaceSubClass,
 		   alt->desc.bInterfaceProtocol))
 		return -ENOMEM;
 
-	if (add_uevent_var(envp, num_envp, &i,
-		   buffer, buffer_size, &length,
-		   "USBDEVICE_PATH=%s",
-		   usb_dev->devpath))
-		return -ENOMEM;
-
-	if (add_uevent_var(envp, num_envp, &i,
-		   buffer, buffer_size, &length,
+	if (add_uevent_var(env,
 		   "MODALIAS=usb:"
 		   "v%04Xp%04Xd%04Xdc%02Xdsc%02Xdp%02Xic%02Xisc%02Xip%02X",
 		   le16_to_cpu(usb_dev->descriptor.idVendor),
@@ -1459,14 +1546,12 @@ static int usb_if_uevent(struct device *dev, char **envp, int num_envp,
 		   alt->desc.bInterfaceProtocol))
 		return -ENOMEM;
 
-	envp[i] = NULL;
 	return 0;
 }
 
 #else
 
-static int usb_if_uevent(struct device *dev, char **envp,
-			 int num_envp, char *buffer, int buffer_size)
+static int usb_if_uevent(struct device *dev, struct kobj_uevent_env *env)
 {
 	return -ENODEV;
 }
@@ -1575,6 +1660,9 @@ static void __usb_queue_reset_device(struct work_struct *ws)
  * channels are available independently; and choosing between open
  * standard device protocols (like CDC) or proprietary ones.
  *
+ * Note that a non-authorized device (dev->authorized == 0) will only
+ * be put in unconfigured mode.
+ *
  * Note that USB has an additional level of device configurability,
  * associated with interfaces.  That configurability is accessed using
  * usb_set_interface().
@@ -1594,9 +1682,10 @@ int usb_set_configuration(struct usb_device *dev, int configuration)
 	int i, ret;
 	struct usb_host_config *cp = NULL;
 	struct usb_interface **new_interfaces = NULL;
+	struct usb_hcd *hcd = bus_to_hcd(dev->bus);
 	int n, nintf;
 
-	if (configuration == -1)
+	if (dev->authorized == 0 || configuration == -1)
 		configuration = 0;
 	else {
 		for (i = 0; i < dev->descriptor.bNumConfigurations; i++) {
@@ -1660,8 +1749,25 @@ free_interfaces:
 	/* if it's already configured, clear out old state first.
 	 * getting rid of old interfaces means unbinding their drivers.
 	 */
+	mutex_lock(hcd->bandwidth_mutex);
 	if (dev->state != USB_STATE_ADDRESS)
 		usb_disable_device(dev, 1);	/* Skip ep0 */
+
+	/* Get rid of pending async Set-Config requests for this device */
+	cancel_async_set_config(dev);
+
+	/* Make sure we have bandwidth (and available HCD resources) for this
+	 * configuration.  Remove endpoints from the schedule if we're dropping
+	 * this configuration to set configuration 0.  After this point, the
+	 * host controller will not allow submissions to dropped endpoints.  If
+	 * this call fails, the device state is unchanged.
+	 */
+	ret = usb_hcd_alloc_bandwidth(dev, cp, NULL, NULL);
+	if (ret < 0) {
+		mutex_unlock(hcd->bandwidth_mutex);
+		usb_autosuspend_device(dev);
+		goto free_interfaces;
+	}
 
 	ret = usb_control_msg(dev, usb_sndctrlpipe(dev, 0),
 			      USB_REQ_SET_CONFIGURATION, 0, configuration, 0,
@@ -1676,9 +1782,12 @@ free_interfaces:
 	dev->actconfig = cp;
 	if (!cp) {
 		usb_set_device_state(dev, USB_STATE_ADDRESS);
+		usb_hcd_alloc_bandwidth(dev, NULL, NULL, NULL);
+		mutex_unlock(hcd->bandwidth_mutex);
 		usb_autosuspend_device(dev);
 		goto free_interfaces;
 	}
+	mutex_unlock(hcd->bandwidth_mutex);
 	usb_set_device_state(dev, USB_STATE_CONFIGURED);
 
 	/* Initialize the new interface structures and the
@@ -1707,7 +1816,7 @@ free_interfaces:
 			alt = &intf->altsetting[0];
 
 		intf->cur_altsetting = alt;
-		usb_enable_interface(dev, intf);
+		usb_enable_interface(dev, intf, true);
 		intf->dev.parent = &dev->dev;
 		intf->dev.driver = NULL;
 		intf->dev.bus = &usb_bus_type;
@@ -1717,8 +1826,8 @@ free_interfaces:
 		INIT_WORK(&intf->reset_ws, __usb_queue_reset_device);
 		intf->minor = -1;
 		device_initialize(&intf->dev);
-		mark_quiesced(intf);
-		sprintf(&intf->dev.bus_id[0], "%d-%s:%d.%d",
+		pm_runtime_no_callbacks(&intf->dev);
+		dev_set_name(&intf->dev, "%d-%s:%d.%d",
 			dev->bus->busnum, dev->devpath,
 			configuration, alt->desc.bInterfaceNumber);
 	}
@@ -1739,25 +1848,30 @@ free_interfaces:
 
 		dev_dbg(&dev->dev,
 			"adding %s (config #%d, interface %d)\n",
-			intf->dev.bus_id, configuration,
+			dev_name(&intf->dev), configuration,
 			intf->cur_altsetting->desc.bInterfaceNumber);
+		device_enable_async_suspend(&intf->dev);
 		ret = device_add(&intf->dev);
 		if (ret != 0) {
 			dev_err(&dev->dev, "device_add(%s) --> %d\n",
-				intf->dev.bus_id, ret);
+				dev_name(&intf->dev), ret);
 			continue;
 		}
-		usb_create_sysfs_intf_files(intf);
+		create_intf_ep_devs(intf);
 	}
 
 	usb_autosuspend_device(dev);
 	return 0;
 }
 
+static LIST_HEAD(set_config_list);
+static DEFINE_SPINLOCK(set_config_lock);
+
 struct set_config_request {
 	struct usb_device	*udev;
 	int			config;
 	struct work_struct	work;
+	struct list_head	node;
 };
 
 /* Worker routine for usb_driver_set_configuration() */
@@ -1765,12 +1879,33 @@ static void driver_set_config_work(struct work_struct *work)
 {
 	struct set_config_request *req =
 		container_of(work, struct set_config_request, work);
+	struct usb_device *udev = req->udev;
 
-	usb_lock_device(req->udev);
-	usb_set_configuration(req->udev, req->config);
-	usb_unlock_device(req->udev);
-	usb_put_dev(req->udev);
+	usb_lock_device(udev);
+	spin_lock(&set_config_lock);
+	list_del(&req->node);
+	spin_unlock(&set_config_lock);
+
+	if (req->config >= -1)		/* Is req still valid? */
+		usb_set_configuration(udev, req->config);
+	usb_unlock_device(udev);
+	usb_put_dev(udev);
 	kfree(req);
+}
+
+/* Cancel pending Set-Config requests for a device whose configuration
+ * was just changed
+ */
+static void cancel_async_set_config(struct usb_device *udev)
+{
+	struct set_config_request *req;
+
+	spin_lock(&set_config_lock);
+	list_for_each_entry(req, &set_config_list, node) {
+		if (req->udev == udev)
+			req->config = -999;	/* Mark as cancelled */
+	}
+	spin_unlock(&set_config_lock);
 }
 
 /**
@@ -1789,7 +1924,7 @@ static void driver_set_config_work(struct work_struct *work)
  * routine gets around the normal restrictions by using a work thread to
  * submit the change-config request.
  *
- * Returns 0 if the request was succesfully queued, error code otherwise.
+ * Returns 0 if the request was successfully queued, error code otherwise.
  * The caller has no way to know whether the queued request will eventually
  * succeed.
  */
@@ -1803,6 +1938,10 @@ int usb_driver_set_configuration(struct usb_device *udev, int config)
 	req->udev = udev;
 	req->config = config;
 	INIT_WORK(&req->work, driver_set_config_work);
+
+	spin_lock(&set_config_lock);
+	list_add(&req->node, &set_config_list);
+	spin_unlock(&set_config_lock);
 
 	usb_get_dev(udev);
 	schedule_work(&req->work);

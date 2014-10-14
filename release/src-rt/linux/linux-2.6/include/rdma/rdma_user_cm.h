@@ -60,7 +60,8 @@ enum {
 	RDMA_USER_CM_CMD_SET_OPTION,
 	RDMA_USER_CM_CMD_NOTIFY,
 	RDMA_USER_CM_CMD_JOIN_MCAST,
-	RDMA_USER_CM_CMD_LEAVE_MCAST
+	RDMA_USER_CM_CMD_LEAVE_MCAST,
+	RDMA_USER_CM_CMD_MIGRATE_ID
 };
 
 /*
@@ -210,6 +211,36 @@ struct rdma_ucm_event_resp {
 		struct rdma_ucm_conn_param conn;
 		struct rdma_ucm_ud_param   ud;
 	} param;
+};
+
+/* Option levels */
+enum {
+	RDMA_OPTION_ID		= 0,
+	RDMA_OPTION_IB		= 1
+};
+
+/* Option details */
+enum {
+	RDMA_OPTION_ID_TOS	= 0,
+	RDMA_OPTION_IB_PATH	= 1
+};
+
+struct rdma_ucm_set_option {
+	__u64 optval;
+	__u32 id;
+	__u32 level;
+	__u32 optname;
+	__u32 optlen;
+};
+
+struct rdma_ucm_migrate_id {
+	__u64 response;
+	__u32 id;
+	__u32 fd;
+};
+
+struct rdma_ucm_migrate_resp {
+	__u32 events_reported;
 };
 
 #endif /* RDMA_USER_CM_H */

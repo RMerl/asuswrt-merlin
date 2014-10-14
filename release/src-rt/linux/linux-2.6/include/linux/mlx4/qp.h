@@ -109,10 +109,11 @@ struct mlx4_qp_path {
 	__be32			tclass_flowlabel;
 	u8			rgid[16];
 	u8			sched_queue;
-	u8			snooper_flags;
+	u8			vlan_index;
 	u8			reserved3[2];
 	u8			counter_index;
-	u8			reserved4[7];
+	u8			reserved4;
+	u8			dmac[6];
 };
 
 struct mlx4_qp_context {
@@ -154,15 +155,25 @@ struct mlx4_qp_context {
 	u32			reserved5[10];
 };
 
+/* Which firmware version adds support for NEC (NoErrorCompletion) bit */
+#define MLX4_FW_VER_WQE_CTRL_NEC mlx4_fw_ver(2, 2, 232)
+
 enum {
-	MLX4_WQE_CTRL_FENCE	= 1 << 6,
-	MLX4_WQE_CTRL_CQ_UPDATE	= 3 << 2,
-	MLX4_WQE_CTRL_SOLICITED	= 1 << 1,
+	MLX4_WQE_CTRL_NEC		= 1 << 29,
+	MLX4_WQE_CTRL_FENCE		= 1 << 6,
+	MLX4_WQE_CTRL_CQ_UPDATE		= 3 << 2,
+	MLX4_WQE_CTRL_SOLICITED		= 1 << 1,
+	MLX4_WQE_CTRL_IP_CSUM		= 1 << 4,
+	MLX4_WQE_CTRL_TCP_UDP_CSUM	= 1 << 5,
+	MLX4_WQE_CTRL_INS_VLAN		= 1 << 6,
+	MLX4_WQE_CTRL_STRONG_ORDER	= 1 << 7,
+	MLX4_WQE_CTRL_FORCE_LOOPBACK	= 1 << 0,
 };
 
 struct mlx4_wqe_ctrl_seg {
 	__be32			owner_opcode;
-	u8			reserved2[3];
+	__be16			vlan_tag;
+	u8			ins_vlan;
 	u8			fence_size;
 	/*
 	 * High 24 bits are SRC remote buffer; low 8 bits are flags:
@@ -210,7 +221,13 @@ struct mlx4_wqe_datagram_seg {
 	__be32			av[8];
 	__be32			dqpn;
 	__be32			qkey;
-	__be32			reservd[2];
+	__be16			vlan;
+	u8			mac[6];
+};
+
+struct mlx4_wqe_lso_seg {
+	__be32			mss_hdr_size;
+	__be32			header[0];
 };
 
 struct mlx4_wqe_bind_seg {
@@ -220,6 +237,14 @@ struct mlx4_wqe_bind_seg {
 	__be32			lkey;
 	__be64			addr;
 	__be64			length;
+};
+
+enum {
+	MLX4_WQE_FMR_PERM_LOCAL_READ	= 1 << 27,
+	MLX4_WQE_FMR_PERM_LOCAL_WRITE	= 1 << 28,
+	MLX4_WQE_FMR_PERM_REMOTE_READ	= 1 << 29,
+	MLX4_WQE_FMR_PERM_REMOTE_WRITE	= 1 << 30,
+	MLX4_WQE_FMR_PERM_ATOMIC	= 1 << 31
 };
 
 struct mlx4_wqe_fmr_seg {
@@ -244,11 +269,11 @@ struct mlx4_wqe_fmr_ext_seg {
 };
 
 struct mlx4_wqe_local_inval_seg {
-	u8			flags;
-	u8			reserved1[3];
+	__be32			flags;
+	u32			reserved1;
 	__be32			mem_key;
-	u8			reserved2[3];
-	u8			guest_id;
+	u32			reserved2[2];
+	__be32			guest_id;
 	__be64			pa;
 };
 
@@ -263,6 +288,13 @@ struct mlx4_wqe_atomic_seg {
 	__be64			compare;
 };
 
+struct mlx4_wqe_masked_atomic_seg {
+	__be64			swap_add;
+	__be64			compare;
+	__be64			swap_add_mask;
+	__be64			compare_mask;
+};
+
 struct mlx4_wqe_data_seg {
 	__be32			byte_count;
 	__be32			lkey;
@@ -271,6 +303,7 @@ struct mlx4_wqe_data_seg {
 
 enum {
 	MLX4_INLINE_ALIGN	= 64,
+	MLX4_INLINE_SEG		= 1 << 31,
 };
 
 struct mlx4_wqe_inline_seg {
@@ -281,6 +314,13 @@ int mlx4_qp_modify(struct mlx4_dev *dev, struct mlx4_mtt *mtt,
 		   enum mlx4_qp_state cur_state, enum mlx4_qp_state new_state,
 		   struct mlx4_qp_context *context, enum mlx4_qp_optpar optpar,
 		   int sqd_event, struct mlx4_qp *qp);
+
+int mlx4_qp_query(struct mlx4_dev *dev, struct mlx4_qp *qp,
+		  struct mlx4_qp_context *context);
+
+int mlx4_qp_to_ready(struct mlx4_dev *dev, struct mlx4_mtt *mtt,
+		     struct mlx4_qp_context *context,
+		     struct mlx4_qp *qp, enum mlx4_qp_state *qp_state);
 
 static inline struct mlx4_qp *__mlx4_qp_lookup(struct mlx4_dev *dev, u32 qpn)
 {

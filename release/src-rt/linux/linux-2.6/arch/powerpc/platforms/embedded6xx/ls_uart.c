@@ -1,13 +1,24 @@
+/*
+ * AVR power-management chip interface for the Buffalo Linkstation /
+ * Kurobox Platform.
+ *
+ * Author: 2006 (c) G. Liakhovetski
+ *	 g.liakhovetski@gmx.de
+ *
+ * This file is licensed under the terms of the GNU General Public License
+ * version 2.  This program is licensed "as is" without any warranty of
+ * any kind, whether express or implied.
+ */
 #include <linux/workqueue.h>
 #include <linux/string.h>
 #include <linux/delay.h>
 #include <linux/serial_reg.h>
 #include <linux/serial_8250.h>
 #include <asm/io.h>
-#include <asm/mpc10x.h>
-#include <asm/ppc_sys.h>
 #include <asm/prom.h>
 #include <asm/termbits.h>
+
+#include "mpc10x.h"
 
 static void __iomem *avr_addr;
 static unsigned long avr_clock;
@@ -128,4 +139,4 @@ static int __init ls_uarts_init(void)
 	return 0;
 }
 
-late_initcall(ls_uarts_init);
+machine_late_initcall(linkstation, ls_uarts_init);

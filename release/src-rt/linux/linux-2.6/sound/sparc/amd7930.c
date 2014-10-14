@@ -1,6 +1,6 @@
 /*
  * Driver for AMD7930 sound chips found on Sparcs.
- * Copyright (C) 2002 David S. Miller <davem@redhat.com>
+ * Copyright (C) 2002, 2008 David S. Miller <davem@davemloft.net>
  *
  * Based entirely upon drivers/sbus/audio/amd7930.c which is:
  * Copyright (C) 1996,1997 Thomas K. Dyas (tdyas@eden.rutgers.edu)
@@ -35,8 +35,9 @@
 #include <linux/init.h>
 #include <linux/interrupt.h>
 #include <linux/moduleparam.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
 
-#include <sound/driver.h>
 #include <sound/core.h>
 #include <sound/pcm.h>
 #include <sound/info.h>
@@ -45,7 +46,6 @@
 
 #include <asm/io.h>
 #include <asm/irq.h>
-#include <asm/sbus.h>
 #include <asm/prom.h>
 
 static int index[SNDRV_CARDS] = SNDRV_DEFAULT_IDX;	/* Index 0-MAX */
@@ -336,8 +336,8 @@ struct snd_amd7930 {
 	int			pgain;
 	int			mgain;
 
+	struct platform_device	*op;
 	unsigned int		irq;
-	unsigned int		regs_size;
 	struct snd_amd7930	*next;
 };
 
@@ -766,7 +766,6 @@ static int __devinit snd_amd7930_pcm(struct snd_amd7930 *amd)
 			       /* playback count */ 1,
 			       /* capture count */  1, &pcm)) < 0)
 		return err;
-	snd_assert(pcm != NULL, return -EINVAL);
 
 	snd_pcm_set_ops(pcm, SNDRV_PCM_STREAM_PLAYBACK, &snd_amd7930_playback_ops);
 	snd_pcm_set_ops(pcm, SNDRV_PCM_STREAM_CAPTURE, &snd_amd7930_capture_ops);
@@ -789,13 +788,6 @@ static int __devinit snd_amd7930_pcm(struct snd_amd7930 *amd)
 
 static int snd_amd7930_info_volume(struct snd_kcontrol *kctl, struct snd_ctl_elem_info *uinfo)
 {
-	int type = kctl->private_value;
-
-	snd_assert(type == VOLUME_MONITOR ||
-		   type == VOLUME_CAPTURE ||
-		   type == VOLUME_PLAYBACK, return -EINVAL);
-	(void) type;
-
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = 1;
 	uinfo->value.integer.min = 0;
@@ -809,10 +801,6 @@ static int snd_amd7930_get_volume(struct snd_kcontrol *kctl, struct snd_ctl_elem
 	struct snd_amd7930 *amd = snd_kcontrol_chip(kctl);
 	int type = kctl->private_value;
 	int *swval;
-
-	snd_assert(type == VOLUME_MONITOR ||
-		   type == VOLUME_CAPTURE ||
-		   type == VOLUME_PLAYBACK, return -EINVAL);
 
 	switch (type) {
 	case VOLUME_MONITOR:
@@ -839,10 +827,6 @@ static int snd_amd7930_put_volume(struct snd_kcontrol *kctl, struct snd_ctl_elem
 	int type = kctl->private_value;
 	int *swval, change;
 
-	snd_assert(type == VOLUME_MONITOR ||
-		   type == VOLUME_CAPTURE ||
-		   type == VOLUME_PLAYBACK, return -EINVAL);
-
 	switch (type) {
 	case VOLUME_MONITOR:
 		swval = &amd->mgain;
@@ -859,7 +843,7 @@ static int snd_amd7930_put_volume(struct snd_kcontrol *kctl, struct snd_ctl_elem
 	spin_lock_irqsave(&amd->lock, flags);
 
 	if (*swval != ucontrol->value.integer.value[0]) {
-		*swval = ucontrol->value.integer.value[0];
+		*swval = ucontrol->value.integer.value[0] & 0xff;
 		__amd7930_update_map(amd);
 		change = 1;
 	} else
@@ -905,7 +889,8 @@ static int __devinit snd_amd7930_mixer(struct snd_amd7930 *amd)
 	struct snd_card *card;
 	int idx, err;
 
-	snd_assert(amd != NULL && amd->card != NULL, return -EINVAL);
+	if (snd_BUG_ON(!amd || !amd->card))
+		return -EINVAL;
 
 	card = amd->card;
 	strcpy(card->mixername, card->shortname);
@@ -921,13 +906,16 @@ static int __devinit snd_amd7930_mixer(struct snd_amd7930 *amd)
 
 static int snd_amd7930_free(struct snd_amd7930 *amd)
 {
+	struct platform_device *op = amd->op;
+
 	amd7930_idle(amd);
 
 	if (amd->irq)
 		free_irq(amd->irq, amd);
 
 	if (amd->regs)
-		sbus_iounmap(amd->regs, amd->regs_size);
+		of_iounmap(&op->resource[0], amd->regs,
+			   resource_size(&op->resource[0]));
 
 	kfree(amd);
 
@@ -946,13 +934,12 @@ static struct snd_device_ops snd_amd7930_dev_ops = {
 };
 
 static int __devinit snd_amd7930_create(struct snd_card *card,
-					struct resource *rp,
-					unsigned int reg_size,
+					struct platform_device *op,
 					int irq, int dev,
 					struct snd_amd7930 **ramd)
 {
-	unsigned long flags;
 	struct snd_amd7930 *amd;
+	unsigned long flags;
 	int err;
 
 	*ramd = NULL;
@@ -962,11 +949,13 @@ static int __devinit snd_amd7930_create(struct snd_card *card,
 
 	spin_lock_init(&amd->lock);
 	amd->card = card;
-	amd->regs_size = reg_size;
+	amd->op = op;
 
-	amd->regs = sbus_ioremap(rp, 0, amd->regs_size, "amd7930");
+	amd->regs = of_ioremap(&op->resource[0], 0,
+			       resource_size(&op->resource[0]), "amd7930");
 	if (!amd->regs) {
-		snd_printk("amd7930-%d: Unable to map chip registers.\n", dev);
+		snd_printk(KERN_ERR
+			   "amd7930-%d: Unable to map chip registers.\n", dev);
 		return -EIO;
 	}
 
@@ -974,7 +963,7 @@ static int __devinit snd_amd7930_create(struct snd_card *card,
 
 	if (request_irq(irq, snd_amd7930_interrupt,
 			IRQF_DISABLED | IRQF_SHARED, "amd7930", amd)) {
-		snd_printk("amd7930-%d: Unable to grab IRQ %d\n",
+		snd_printk(KERN_ERR "amd7930-%d: Unable to grab IRQ %d\n",
 			   dev, irq);
 		snd_amd7930_free(amd);
 		return -EBUSY;
@@ -1013,12 +1002,15 @@ static int __devinit snd_amd7930_create(struct snd_card *card,
 	return 0;
 }
 
-static int __devinit amd7930_attach_common(struct resource *rp, int irq)
+static int __devinit amd7930_sbus_probe(struct platform_device *op)
 {
+	struct resource *rp = &op->resource[0];
 	static int dev_num;
 	struct snd_card *card;
 	struct snd_amd7930 *amd;
-	int err;
+	int err, irq;
+
+	irq = op->archdata.irqs[0];
 
 	if (dev_num >= SNDRV_CARDS)
 		return -ENODEV;
@@ -1027,9 +1019,10 @@ static int __devinit amd7930_attach_common(struct resource *rp, int irq)
 		return -ENOENT;
 	}
 
-	card = snd_card_new(index[dev_num], id[dev_num], THIS_MODULE, 0);
-	if (card == NULL)
-		return -ENOMEM;
+	err = snd_card_create(index[dev_num], id[dev_num], THIS_MODULE, 0,
+			      &card);
+	if (err < 0)
+		return err;
 
 	strcpy(card->driver, "AMD7930");
 	strcpy(card->shortname, "Sun AMD7930");
@@ -1039,8 +1032,7 @@ static int __devinit amd7930_attach_common(struct resource *rp, int irq)
 		(unsigned long long)rp->start,
 		irq);
 
-	if ((err = snd_amd7930_create(card, rp,
-				      (rp->end - rp->start) + 1,
+	if ((err = snd_amd7930_create(card, op,
 				      irq, dev_num, &amd)) < 0)
 		goto out_err;
 
@@ -1065,71 +1057,25 @@ out_err:
 	return err;
 }
 
-static int __devinit amd7930_obio_attach(struct device_node *dp)
-{
-	const struct linux_prom_registers *regs;
-	const struct linux_prom_irqs *irqp;
-	struct resource res, *rp;
-	int len;
-
-	irqp = of_get_property(dp, "intr", &len);
-	if (!irqp) {
-		snd_printk("%s: Firmware node lacks IRQ property.\n",
-			   dp->full_name);
-		return -ENODEV;
-	}
-
-	regs = of_get_property(dp, "reg", &len);
-	if (!regs) {
-		snd_printk("%s: Firmware node lacks register property.\n",
-			   dp->full_name);
-		return -ENODEV;
-	}
-
-	rp = &res;
-	rp->start = regs->phys_addr;
-	rp->end = rp->start + regs->reg_size - 1;
-	rp->flags = IORESOURCE_IO | (regs->which_io & 0xff);
-
-	return amd7930_attach_common(rp, irqp->pri);
-}
-
-static int __devinit amd7930_sbus_probe(struct of_device *dev, const struct of_device_id *match)
-{
-	struct sbus_dev *sdev = to_sbus_device(&dev->dev);
-
-	return amd7930_attach_common(&sdev->resource[0], sdev->irqs[0]);
-}
-
-static struct of_device_id amd7930_match[] = {
+static const struct of_device_id amd7930_match[] = {
 	{
 		.name = "audio",
 	},
 	{},
 };
 
-static struct of_platform_driver amd7930_sbus_driver = {
-	.name		= "audio",
-	.match_table	= amd7930_match,
+static struct platform_driver amd7930_sbus_driver = {
+	.driver = {
+		.name = "audio",
+		.owner = THIS_MODULE,
+		.of_match_table = amd7930_match,
+	},
 	.probe		= amd7930_sbus_probe,
 };
 
 static int __init amd7930_init(void)
 {
-	struct device_node *dp;
-
-	/* Try to find the sun4c "audio" node first. */
-	dp = of_find_node_by_path("/");
-	dp = dp->child;
-	while (dp) {
-		if (!strcmp(dp->name, "audio"))
-			amd7930_obio_attach(dp);
-
-		dp = dp->sibling;
-	}
-
-	/* Probe each SBUS for amd7930 chips. */
-	return of_register_driver(&amd7930_sbus_driver, &sbus_bus_type);
+	return platform_driver_register(&amd7930_sbus_driver);
 }
 
 static void __exit amd7930_exit(void)
@@ -1146,7 +1092,7 @@ static void __exit amd7930_exit(void)
 
 	amd7930_list = NULL;
 
-	of_unregister_driver(&amd7930_sbus_driver);
+	platform_driver_unregister(&amd7930_sbus_driver);
 }
 
 module_init(amd7930_init);

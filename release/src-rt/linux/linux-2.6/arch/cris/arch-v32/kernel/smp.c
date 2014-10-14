@@ -1,11 +1,12 @@
+#include <linux/types.h>
 #include <asm/delay.h>
-#include <asm/arch/irq.h>
-#include <asm/arch/hwregs/intr_vect.h>
-#include <asm/arch/hwregs/intr_vect_defs.h>
+#include <irq.h>
+#include <hwregs/intr_vect.h>
+#include <hwregs/intr_vect_defs.h>
 #include <asm/tlbflush.h>
 #include <asm/mmu_context.h>
-#include <asm/arch/hwregs/mmu_defs_asm.h>
-#include <asm/arch/hwregs/supp_reg.h>
+#include <hwregs/asm/mmu_defs_asm.h>
+#include <hwregs/supp_reg.h>
 #include <asm/atomic.h>
 
 #include <linux/err.h>
@@ -20,15 +21,16 @@
 #define IPI_SCHEDULE 1
 #define IPI_CALL 2
 #define IPI_FLUSH_TLB 4
+#define IPI_BOOT 8
 
 #define FLUSH_ALL (void*)0xffffffff
 
 /* Vector of locks used for various atomic operations */
-spinlock_t cris_atomic_locks[] = { [0 ... LOCK_COUNT - 1] = SPIN_LOCK_UNLOCKED};
+spinlock_t cris_atomic_locks[] = {
+	[0 ... LOCK_COUNT - 1] = __SPIN_LOCK_UNLOCKED(cris_atomic_locks)
+};
 
 /* CPU masks */
-cpumask_t cpu_online_map = CPU_MASK_NONE;
-EXPORT_SYMBOL(cpu_online_map);
 cpumask_t phys_cpu_present_map = CPU_MASK_NONE;
 EXPORT_SYMBOL(phys_cpu_present_map);
 
@@ -52,19 +54,19 @@ static struct mm_struct* flush_mm;
 static struct vm_area_struct* flush_vma;
 static unsigned long flush_addr;
 
-extern int setup_irq(int, struct irqaction *);
-
 /* Mode registers */
-static unsigned long irq_regs[NR_CPUS] =
-{
+static unsigned long irq_regs[NR_CPUS] = {
   regi_irq,
   regi_irq2
 };
 
-static irqreturn_t crisv32_ipi_interrupt(int irq, void *dev_id, struct pt_regs *regs);
+static irqreturn_t crisv32_ipi_interrupt(int irq, void *dev_id);
 static int send_ipi(int vector, int wait, cpumask_t cpu_mask);
-static struct irqaction irq_ipi  = { crisv32_ipi_interrupt, IRQF_DISABLED,
-                                     CPU_MASK_NONE, "ipi", NULL, NULL};
+static struct irqaction irq_ipi  = {
+	.handler = crisv32_ipi_interrupt,
+	.flags = IRQF_DISABLED,
+	.name = "ipi",
+};
 
 extern void cris_mmu_init(void);
 extern void cris_timer_init(void);
@@ -95,8 +97,9 @@ void __devinit smp_prepare_boot_cpu(void)
 	SUPP_BANK_SEL(2);
 	SUPP_REG_WR(RW_MM_TLB_PGD, pgd);
 
-	cpu_set(0, cpu_online_map);
+	set_cpu_online(0, true);
 	cpu_set(0, phys_cpu_present_map);
+	set_cpu_possible(0, true);
 }
 
 void __init smp_cpus_done(unsigned int max_cpus)
@@ -109,6 +112,7 @@ smp_boot_one_cpu(int cpuid)
 {
 	unsigned timeout;
 	struct task_struct *idle;
+	cpumask_t cpu_mask = CPU_MASK_NONE;
 
 	idle = fork_idle(cpuid);
 	if (IS_ERR(idle))
@@ -119,6 +123,12 @@ smp_boot_one_cpu(int cpuid)
 	/* Information to the CPU that is about to boot */
 	smp_init_current_idle_thread = task_thread_info(idle);
 	cpu_now_booting = cpuid;
+
+	/* Kick it */
+	cpu_set(cpuid, cpu_online_map);
+	cpu_set(cpuid, cpu_mask);
+	send_ipi(IPI_BOOT, 0, cpu_mask);
+	cpu_clear(cpuid, cpu_online_map);
 
 	/* Wait for CPU to come online */
 	for (timeout = 0; timeout < 10000; timeout++) {
@@ -138,7 +148,7 @@ smp_boot_one_cpu(int cpuid)
 	return -1;
 }
 
-/* Secondary CPUs starts uing C here. Here we need to setup CPU
+/* Secondary CPUs starts using C here. Here we need to setup CPU
  * specific stuff such as the local timer and the MMU. */
 void __init smp_callin(void)
 {
@@ -160,9 +170,10 @@ void __init smp_callin(void)
 
 	/* Enable IRQ and idle */
 	REG_WR(intr_vect, irq_regs[cpu], rw_mask, vect_mask);
-	unmask_irq(IPI_INTR_VECT);
-	unmask_irq(TIMER_INTR_VECT);
+	crisv32_unmask_irq(IPI_INTR_VECT);
+	crisv32_unmask_irq(TIMER0_INTR_VECT);
 	preempt_disable();
+	notify_cpu_starting(cpu);
 	local_irq_enable();
 
 	cpu_set(cpu, cpu_online_map);
@@ -179,7 +190,7 @@ void stop_this_cpu(void* dummy)
 /* Other calls */
 void smp_send_stop(void)
 {
-	smp_call_function(stop_this_cpu, NULL, 1, 0);
+	smp_call_function(stop_this_cpu, NULL, 0);
 }
 
 int setup_profiling_timer(unsigned int multiplier)
@@ -220,7 +231,7 @@ void flush_tlb_common(struct mm_struct* mm, struct vm_area_struct* vma, unsigned
 	cpumask_t cpu_mask;
 
 	spin_lock_irqsave(&tlbstate_lock, flags);
-	cpu_mask = (mm == FLUSH_ALL ? CPU_MASK_ALL : mm->cpu_vm_mask);
+	cpu_mask = (mm == FLUSH_ALL ? cpu_all_mask : *mm_cpumask(mm));
 	cpu_clear(smp_processor_id(), cpu_mask);
 	flush_mm = mm;
 	flush_vma = vma;
@@ -240,8 +251,8 @@ void flush_tlb_mm(struct mm_struct *mm)
 	__flush_tlb_mm(mm);
 	flush_tlb_common(mm, FLUSH_ALL, 0);
 	/* No more mappings in other CPUs */
-	cpus_clear(mm->cpu_vm_mask);
-	cpu_set(smp_processor_id(), mm->cpu_vm_mask);
+	cpumask_clear(mm_cpumask(mm));
+	cpumask_set_cpu(smp_processor_id(), mm_cpumask(mm));
 }
 
 void flush_tlb_page(struct vm_area_struct *vma,
@@ -301,8 +312,7 @@ int send_ipi(int vector, int wait, cpumask_t cpu_mask)
  * You must not call this function with disabled interrupts or from a
  * hardware interrupt handler or from a bottom half handler.
  */
-int smp_call_function(void (*func)(void *info), void *info,
-		      int nonatomic, int wait)
+int smp_call_function(void (*func)(void *info), void *info, int wait)
 {
 	cpumask_t cpu_mask = CPU_MASK_ALL;
 	struct call_data_struct data;
@@ -324,7 +334,7 @@ int smp_call_function(void (*func)(void *info), void *info,
 	return ret;
 }
 
-irqreturn_t crisv32_ipi_interrupt(int irq, void *dev_id, struct pt_regs *regs)
+irqreturn_t crisv32_ipi_interrupt(int irq, void *dev_id)
 {
 	void (*func) (void *info) = call_data->func;
 	void *info = call_data->info;

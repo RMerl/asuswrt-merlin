@@ -11,6 +11,42 @@
 #include <linux/serial_8250.h>
 
 #include <asm/irq.h>
+#include <asm/hardware/dec21285.h>
+
+#include "common.h"
+
+static struct resource rtc_resources[] = {
+	[0] = {
+		.start	= 0x70,
+		.end	= 0x73,
+		.flags	= IORESOURCE_IO,
+	},
+	[1] = {
+		.start	= IRQ_ISA_RTC_ALARM,
+		.end	= IRQ_ISA_RTC_ALARM,
+		.flags	= IORESOURCE_IRQ,
+	}
+};
+
+static struct platform_device rtc_device = {
+	.name		= "rtc_cmos",
+	.id		= -1,
+	.resource	= rtc_resources,
+	.num_resources	= ARRAY_SIZE(rtc_resources),
+};
+
+static struct resource serial_resources[] = {
+	[0] = {
+		.start	= 0x3f8,
+		.end	= 0x3ff,
+		.flags	= IORESOURCE_IO,
+	},
+	[1] = {
+		.start	= 0x2f8,
+		.end	= 0x2ff,
+		.flags	= IORESOURCE_IO,
+	},
+};
 
 static struct plat_serial8250_port serial_platform_data[] = {
 	{
@@ -38,11 +74,28 @@ static struct platform_device serial_device = {
 	.dev			= {
 		.platform_data	= serial_platform_data,
 	},
+	.resource		= serial_resources,
+	.num_resources		= ARRAY_SIZE(serial_resources),
 };
 
 static int __init footbridge_isa_init(void)
 {
-	return platform_device_register(&serial_device);
+	int err = 0;
+
+	if (!footbridge_cfn_mode())
+		return 0;
+
+	/* Personal server doesn't have RTC */
+	if (!machine_is_personal_server()) {
+		isa_rtc_init();
+		err = platform_device_register(&rtc_device);
+		if (err)
+			printk(KERN_ERR "Unable to register RTC device: %d\n", err);
+	}
+	err = platform_device_register(&serial_device);
+	if (err)
+		printk(KERN_ERR "Unable to register serial device: %d\n", err);
+	return 0;
 }
 
 arch_initcall(footbridge_isa_init);

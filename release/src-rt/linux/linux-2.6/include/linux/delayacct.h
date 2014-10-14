@@ -18,7 +18,7 @@
 #define _LINUX_DELAYACCT_H
 
 #include <linux/sched.h>
-#include <linux/taskstats_kern.h>
+#include <linux/slab.h>
 
 /*
  * Per-task flags relevant to delay accounting
@@ -26,6 +26,7 @@
  * Used to set current->delays->flags
  */
 #define DELAYACCT_PF_SWAPIN	0x00000001	/* I am doing a swapin */
+#define DELAYACCT_PF_BLKIO	0x00000002	/* I am waiting on IO */
 
 #ifdef CONFIG_TASK_DELAY_ACCT
 
@@ -38,6 +39,16 @@ extern void __delayacct_blkio_start(void);
 extern void __delayacct_blkio_end(void);
 extern int __delayacct_add_tsk(struct taskstats *, struct task_struct *);
 extern __u64 __delayacct_blkio_ticks(struct task_struct *);
+extern void __delayacct_freepages_start(void);
+extern void __delayacct_freepages_end(void);
+
+static inline int delayacct_is_task_waiting_on_io(struct task_struct *p)
+{
+	if (p->delays)
+		return (p->delays->flags & DELAYACCT_PF_BLKIO);
+	else
+		return 0;
+}
 
 static inline void delayacct_set_flag(int flag)
 {
@@ -71,6 +82,7 @@ static inline void delayacct_tsk_free(struct task_struct *tsk)
 
 static inline void delayacct_blkio_start(void)
 {
+	delayacct_set_flag(DELAYACCT_PF_BLKIO);
 	if (current->delays)
 		__delayacct_blkio_start();
 }
@@ -79,6 +91,7 @@ static inline void delayacct_blkio_end(void)
 {
 	if (current->delays)
 		__delayacct_blkio_end();
+	delayacct_clear_flag(DELAYACCT_PF_BLKIO);
 }
 
 static inline int delayacct_add_tsk(struct taskstats *d,
@@ -94,6 +107,18 @@ static inline __u64 delayacct_blkio_ticks(struct task_struct *tsk)
 	if (tsk->delays)
 		return __delayacct_blkio_ticks(tsk);
 	return 0;
+}
+
+static inline void delayacct_freepages_start(void)
+{
+	if (current->delays)
+		__delayacct_freepages_start();
+}
+
+static inline void delayacct_freepages_end(void)
+{
+	if (current->delays)
+		__delayacct_freepages_end();
 }
 
 #else
@@ -116,6 +141,13 @@ static inline int delayacct_add_tsk(struct taskstats *d,
 { return 0; }
 static inline __u64 delayacct_blkio_ticks(struct task_struct *tsk)
 { return 0; }
+static inline int delayacct_is_task_waiting_on_io(struct task_struct *p)
+{ return 0; }
+static inline void delayacct_freepages_start(void)
+{}
+static inline void delayacct_freepages_end(void)
+{}
+
 #endif /* CONFIG_TASK_DELAY_ACCT */
 
 #endif

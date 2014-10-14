@@ -16,6 +16,7 @@
 #include "isdnl1.h"
 #include <linux/interrupt.h>
 #include <linux/pci.h>
+#include <linux/slab.h>
 
 /* table entry in the PCI devices list */
 typedef struct {
@@ -37,8 +38,6 @@ static const PCI_ENTRY id_list[] =
 #define W6692_WINBOND  0
 #define W6692_DYNALINK 1
 #define W6692_USR      2
-
-extern const char *CardType[];
 
 static const char *w6692_revision = "$Revision: 1.18.2.4 $";
 
@@ -107,8 +106,6 @@ W6692_bh(struct work_struct *work)
 		container_of(work, struct IsdnCardState, tqueue);
 	struct PStack *stptr;
 
-	if (!cs)
-		return;
 	if (test_and_clear_bit(D_CLEARBUSY, &cs->event)) {
 		if (cs->debug)
 			debugl1(cs, "D-Channel Busy cleared");
@@ -1009,9 +1006,9 @@ setup_w6692(struct IsdnCard *card)
 	printk(KERN_INFO "HiSax: W6692 driver Rev. %s\n", HiSax_getrev(tmp));
 	if (cs->typ != ISDN_CTYPE_W6692)
 		return (0);
-#ifdef CONFIG_PCI
+
 	while (id_list[id_idx].vendor_id) {
-		dev_w6692 = pci_find_device(id_list[id_idx].vendor_id,
+		dev_w6692 = hisax_find_pci_device(id_list[id_idx].vendor_id,
 					    id_list[id_idx].device_id,
 					    dev_w6692);
 		if (dev_w6692) {
@@ -1061,11 +1058,6 @@ setup_w6692(struct IsdnCard *card)
 		       cs->hw.w6692.iobase + 255);
 		return (0);
 	}
-#else
-	printk(KERN_WARNING "HiSax: W6692 and NO_PCI_BIOS\n");
-	printk(KERN_WARNING "HiSax: W6692 unable to config\n");
-	return (0);
-#endif				/* CONFIG_PCI */
 
 	printk(KERN_INFO
 	       "HiSax: %s config irq:%d I/O:%x\n",

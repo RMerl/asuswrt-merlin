@@ -15,9 +15,6 @@
  **  The kernel will then return -ENOTDIR to any application using
  **  the old binary interface.
  **
- **  For new interfaces unless you really need a binary number
- **  please use CTL_UNNUMBERED.
- **
  ****************************************************************
  ****************************************************************
  */
@@ -29,7 +26,6 @@
 #include <linux/types.h>
 #include <linux/compiler.h>
 
-struct file;
 struct completion;
 
 #define CTL_MAXNAME 10		/* how many path components do we allow in a
@@ -51,18 +47,12 @@ struct __sysctl_args {
 
 /* Top-level names: */
 
-/* For internal pattern-matching use only: */
-#ifdef __KERNEL__
-#define CTL_NONE	0
-#define CTL_UNNUMBERED	CTL_NONE	/* sysctl without a binary number */
-#endif
-
 enum
 {
 	CTL_KERN=1,		/* General kernel info and control */
 	CTL_VM=2,		/* VM management */
 	CTL_NET=3,		/* Networking */
-	/* was CTL_PROC */
+	CTL_PROC=4,		/* removal breaks strace(1) compilation */
 	CTL_FS=5,		/* Filesystems */
 	CTL_DEBUG=6,		/* Debugging */
 	CTL_DEV=7,		/* Devices */
@@ -70,7 +60,6 @@ enum
 	CTL_ABI=9,		/* Binary emulation */
 	CTL_CPU=10,		/* CPU stuff (speed scaling, etc) */
 	CTL_ARLAN=254,		/* arlan wireless driver */
-	CTL_APPLDATA=2120,	/* s390 appldata */
 	CTL_S390DBF=5677,	/* s390 debug */
 	CTL_SUNRPC=7249,	/* sunrpc debug */
 	CTL_PM=9899,		/* frv power management */
@@ -100,10 +89,9 @@ enum
 	KERN_VERSION=4,		/* string: compile time info */
 	KERN_SECUREMASK=5,	/* struct: maximum rights mask */
 	KERN_PROF=6,		/* table: profiling information */
-	KERN_NODENAME=7,
-	KERN_DOMAINNAME=8,
+	KERN_NODENAME=7,	/* string: hostname */
+	KERN_DOMAINNAME=8,	/* string: domainname */
 
-	KERN_CAP_BSET=14,	/* int: capability bounding set */
 	KERN_PANIC=15,		/* int: panic timeout */
 	KERN_REALROOTDEV=16,	/* real root device to mount after initrd */
 
@@ -114,8 +102,8 @@ enum
 	KERN_PPC_HTABRECLAIM=25, /* turn htab reclaimation on/off on PPC */
 	KERN_PPC_ZEROPAGED=26,	/* turn idle page zeroing on/off on PPC */
 	KERN_PPC_POWERSAVE_NAP=27, /* use nap mode for power saving */
-	KERN_MODPROBE=28,
-	KERN_SG_BIG_BUFF=29,
+	KERN_MODPROBE=28,	/* string: modprobe path */
+	KERN_SG_BIG_BUFF=29,	/* int: sg driver reserved buffer size */
 	KERN_ACCT=30,		/* BSD process accounting parameters */
 	KERN_PPC_L2CR=31,	/* l2cr register on PPC */
 
@@ -162,7 +150,7 @@ enum
 	KERN_ACPI_VIDEO_FLAGS=71, /* int: flags for setting up video after ACPI sleep */
 	KERN_IA64_UNALIGNED=72, /* int: ia64 unaligned userland trap enable */
 	KERN_COMPAT_LOG=73,	/* int: print compat layer  messages */
-	KERN_MAX_LOCK_DEPTH=74,
+	KERN_MAX_LOCK_DEPTH=74, /* int: rtmutex's maximum lock depth */
 	KERN_NMI_WATCHDOG=75, /* int: enable/disable nmi watchdog */
 	KERN_PANIC_ON_NMI=76, /* int: whether we will panic on an unrecovered */
 };
@@ -207,11 +195,6 @@ enum
 	VM_PANIC_ON_OOM=33,	/* panic at out-of-memory */
 	VM_VDSO_ENABLED=34,	/* map VDSO into new processes? */
 	VM_MIN_SLAB=35,		 /* Percent pages ignored by zone reclaim */
-
-	/* s390 vm cmm sysctls */
-	VM_CMM_PAGES=1111,
-	VM_CMM_TIMED_PAGES=1112,
-	VM_CMM_TIMEOUT=1113,
 };
 
 
@@ -238,6 +221,7 @@ enum
 	NET_LLC=18,
 	NET_NETFILTER=19,
 	NET_DCCP=20,
+	NET_IRDA=412,
 };
 
 /* /proc/sys/kernel/random */
@@ -445,8 +429,8 @@ enum
 
 enum {
 	NET_IPV4_ROUTE_FLUSH=1,
-	NET_IPV4_ROUTE_MIN_DELAY=2,
-	NET_IPV4_ROUTE_MAX_DELAY=3,
+	NET_IPV4_ROUTE_MIN_DELAY=2, /* obsolete since 2.6.25 */
+	NET_IPV4_ROUTE_MAX_DELAY=3, /* obsolete since 2.6.25 */
 	NET_IPV4_ROUTE_GC_THRESH=4,
 	NET_IPV4_ROUTE_MAX_SIZE=5,
 	NET_IPV4_ROUTE_GC_MIN_INTERVAL=6,
@@ -496,7 +480,7 @@ enum
 	NET_IPV4_CONF_ARP_IGNORE=19,
 	NET_IPV4_CONF_PROMOTE_SECONDARIES=20,
 	NET_IPV4_CONF_ARP_ACCEPT=21,
-	__NET_IPV4_CONF_MAX
+	NET_IPV4_CONF_ARP_NOTIFY=22,
 };
 
 /* /proc/sys/net/ipv4/netfilter */
@@ -612,7 +596,6 @@ enum {
 	NET_NEIGH_GC_THRESH3=16,
 	NET_NEIGH_RETRANS_TIME_MS=17,
 	NET_NEIGH_REACHABLE_TIME_MS=18,
-	__NET_NEIGH_MAX
 };
 
 /* /proc/sys/net/dccp */
@@ -795,6 +778,25 @@ enum {
 	NET_BRIDGE_NF_FILTER_PPPOE_TAGGED = 5,
 };
 
+/* proc/sys/net/irda */
+enum {
+	NET_IRDA_DISCOVERY=1,
+	NET_IRDA_DEVNAME=2,
+	NET_IRDA_DEBUG=3,
+	NET_IRDA_FAST_POLL=4,
+	NET_IRDA_DISCOVERY_SLOTS=5,
+	NET_IRDA_DISCOVERY_TIMEOUT=6,
+	NET_IRDA_SLOT_TIMEOUT=7,
+	NET_IRDA_MAX_BAUD_RATE=8,
+	NET_IRDA_MIN_TX_TURN_TIME=9,
+	NET_IRDA_MAX_TX_DATA_SIZE=10,
+	NET_IRDA_MAX_TX_WINDOW=11,
+	NET_IRDA_MAX_NOREPLY_TIME=12,
+	NET_IRDA_WARN_NOREPLY_TIME=13,
+	NET_IRDA_LAP_KEEPALIVE_TIME=14,
+};
+
+
 /* CTL_FS names: */
 enum
 {
@@ -928,60 +930,64 @@ enum
 
 #ifdef __KERNEL__
 #include <linux/list.h>
+#include <linux/rcupdate.h>
 
 /* For the /proc/sys support */
 struct ctl_table;
+struct nsproxy;
+struct ctl_table_root;
+
+struct ctl_table_set {
+	struct list_head list;
+	struct ctl_table_set *parent;
+	int (*is_seen)(struct ctl_table_set *);
+};
+
+extern void setup_sysctl_set(struct ctl_table_set *p,
+	struct ctl_table_set *parent,
+	int (*is_seen)(struct ctl_table_set *));
+
+struct ctl_table_header;
+
+extern void sysctl_head_get(struct ctl_table_header *);
+extern void sysctl_head_put(struct ctl_table_header *);
+extern int sysctl_is_seen(struct ctl_table_header *);
+extern struct ctl_table_header *sysctl_head_grab(struct ctl_table_header *);
 extern struct ctl_table_header *sysctl_head_next(struct ctl_table_header *prev);
+extern struct ctl_table_header *__sysctl_head_next(struct nsproxy *namespaces,
+						struct ctl_table_header *prev);
 extern void sysctl_head_finish(struct ctl_table_header *prev);
-extern int sysctl_perm(struct ctl_table *table, int op);
+extern int sysctl_perm(struct ctl_table_root *root,
+		struct ctl_table *table, int op);
 
 typedef struct ctl_table ctl_table;
 
-typedef int ctl_handler (ctl_table *table, int __user *name, int nlen,
-			 void __user *oldval, size_t __user *oldlenp,
-			 void __user *newval, size_t newlen);
-
-typedef int proc_handler (ctl_table *ctl, int write, struct file * filp,
+typedef int proc_handler (struct ctl_table *ctl, int write,
 			  void __user *buffer, size_t *lenp, loff_t *ppos);
 
-extern int proc_dostring(ctl_table *, int, struct file *,
+extern int proc_dostring(struct ctl_table *, int,
 			 void __user *, size_t *, loff_t *);
-extern int proc_dointvec(ctl_table *, int, struct file *,
+extern int proc_dointvec(struct ctl_table *, int,
 			 void __user *, size_t *, loff_t *);
-extern int proc_dointvec_bset(ctl_table *, int, struct file *,
-			      void __user *, size_t *, loff_t *);
-extern int proc_dointvec_minmax(ctl_table *, int, struct file *,
+extern int proc_dointvec_minmax(struct ctl_table *, int,
 				void __user *, size_t *, loff_t *);
-extern int proc_dointvec_jiffies(ctl_table *, int, struct file *,
+extern int proc_dointvec_jiffies(struct ctl_table *, int,
 				 void __user *, size_t *, loff_t *);
-extern int proc_dointvec_userhz_jiffies(ctl_table *, int, struct file *,
+extern int proc_dointvec_userhz_jiffies(struct ctl_table *, int,
 					void __user *, size_t *, loff_t *);
-extern int proc_dointvec_ms_jiffies(ctl_table *, int, struct file *,
+extern int proc_dointvec_ms_jiffies(struct ctl_table *, int,
 				    void __user *, size_t *, loff_t *);
-extern int proc_doulongvec_minmax(ctl_table *, int, struct file *,
+extern int proc_doulongvec_minmax(struct ctl_table *, int,
 				  void __user *, size_t *, loff_t *);
-extern int proc_doulongvec_ms_jiffies_minmax(ctl_table *table, int,
-				      struct file *, void __user *, size_t *, loff_t *);
-
-extern int do_sysctl (int __user *name, int nlen,
-		      void __user *oldval, size_t __user *oldlenp,
-		      void __user *newval, size_t newlen);
-
-extern int do_sysctl_strategy (ctl_table *table, 
-			       int __user *name, int nlen,
-			       void __user *oldval, size_t __user *oldlenp,
-			       void __user *newval, size_t newlen);
-
-extern ctl_handler sysctl_string;
-extern ctl_handler sysctl_intvec;
-extern ctl_handler sysctl_jiffies;
-extern ctl_handler sysctl_ms_jiffies;
-
+extern int proc_doulongvec_ms_jiffies_minmax(struct ctl_table *table, int,
+				      void __user *, size_t *, loff_t *);
+extern int proc_do_large_bitmap(struct ctl_table *, int,
+				void __user *, size_t *, loff_t *);
 
 /*
  * Register a set of sysctl names by calling register_sysctl_table
- * with an initialised array of ctl_table's.  An entry with zero
- * ctl_name and NULL procname terminates the table.  table->de will be
+ * with an initialised array of struct ctl_table's.  An entry with 
+ * NULL procname terminates the table.  table->de will be
  * set up by the registration and need not be initialised in advance.
  *
  * sysctl names can be mirrored automatically under /proc/sys.  The
@@ -994,23 +1000,10 @@ extern ctl_handler sysctl_ms_jiffies;
  * under /proc; non-leaf nodes will be represented by directories.  A
  * null procname disables /proc mirroring at this node.
  *
- * sysctl entries with a zero ctl_name will not be available through
- * the binary sysctl interface.
- *
  * sysctl(2) can automatically manage read and write requests through
  * the sysctl table.  The data and maxlen fields of the ctl_table
  * struct enable minimal validation of the values being written to be
  * performed, and the mode field allows minimal authentication.
- * 
- * More sophisticated management can be enabled by the provision of a
- * strategy routine with the table entry.  This will be called before
- * any automatic read or write of the data is performed.
- * 
- * The strategy routine may return:
- * <0: Error occurred (error is passed to user process)
- * 0:  OK - proceed with automatic read or write.
- * >0: OK - read or write has been done by the strategy routine, so 
- *     return immediately.
  * 
  * There must be a proc_handler routine for any terminal nodes
  * mirrored under /proc/sys (non-terminals are handled by a built-in
@@ -1021,34 +1014,63 @@ extern ctl_handler sysctl_ms_jiffies;
 /* A sysctl table is an array of struct ctl_table: */
 struct ctl_table 
 {
-	int ctl_name;			/* Binary ID */
 	const char *procname;		/* Text ID for /proc/sys, or zero */
 	void *data;
 	int maxlen;
 	mode_t mode;
-	ctl_table *child;
-	ctl_table *parent;		/* Automatically set */
+	struct ctl_table *child;
+	struct ctl_table *parent;	/* Automatically set */
 	proc_handler *proc_handler;	/* Callback for text formatting */
-	ctl_handler *strategy;		/* Callback function for all r/w */
 	void *extra1;
 	void *extra2;
 };
 
-/* struct ctl_table_header is used to maintain dynamic lists of
-   ctl_table trees. */
-struct ctl_table_header
-{
-	ctl_table *ctl_table;
-	struct list_head ctl_entry;
-	int used;
-	struct completion *unregistering;
+struct ctl_table_root {
+	struct list_head root_list;
+	struct ctl_table_set default_set;
+	struct ctl_table_set *(*lookup)(struct ctl_table_root *root,
+					   struct nsproxy *namespaces);
+	int (*permissions)(struct ctl_table_root *root,
+			struct nsproxy *namespaces, struct ctl_table *table);
 };
 
-struct ctl_table_header * register_sysctl_table(ctl_table * table);
+/* struct ctl_table_header is used to maintain dynamic lists of
+   struct ctl_table trees. */
+struct ctl_table_header
+{
+	union {
+		struct {
+			struct ctl_table *ctl_table;
+			struct list_head ctl_entry;
+			int used;
+			int count;
+		};
+		struct rcu_head rcu;
+	};
+	struct completion *unregistering;
+	struct ctl_table *ctl_table_arg;
+	struct ctl_table_root *root;
+	struct ctl_table_set *set;
+	struct ctl_table *attached_by;
+	struct ctl_table *attached_to;
+	struct ctl_table_header *parent;
+};
+
+/* struct ctl_path describes where in the hierarchy a table is added */
+struct ctl_path {
+	const char *procname;
+};
+
+void register_sysctl_root(struct ctl_table_root *root);
+struct ctl_table_header *__register_sysctl_paths(
+	struct ctl_table_root *root, struct nsproxy *namespaces,
+	const struct ctl_path *path, struct ctl_table *table);
+struct ctl_table_header *register_sysctl_table(struct ctl_table * table);
+struct ctl_table_header *register_sysctl_paths(const struct ctl_path *path,
+						struct ctl_table *table);
 
 void unregister_sysctl_table(struct ctl_table_header * table);
-
-#else /* __KERNEL__ */
+int sysctl_check_table(struct nsproxy *namespaces, struct ctl_table *table);
 
 #endif /* __KERNEL__ */
 

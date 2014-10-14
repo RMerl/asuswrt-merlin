@@ -50,7 +50,7 @@ aic7770_map_registers(struct ahc_softc *ahc, u_int port)
 	/*
 	 * Lock out other contenders for our i/o space.
 	 */
-	if (request_region(port, AHC_EISA_IOSIZE, "aic7xxx") == 0)
+	if (!request_region(port, AHC_EISA_IOSIZE, "aic7xxx"))
 		return (ENOMEM);
 	ahc->tag = BUS_SPACE_PIO;
 	ahc->bsh.ioport = port;
@@ -85,7 +85,7 @@ aic7770_probe(struct device *dev)
 	int	error;
 
 	sprintf(buf, "ahc_eisa:%d", eisaBase >> 12);
-	name = malloc(strlen(buf) + 1, M_DEVBUF, M_NOWAIT);
+	name = kmalloc(strlen(buf) + 1, GFP_ATOMIC);
 	if (name == NULL)
 		return (ENOMEM);
 	strcpy(name, buf);

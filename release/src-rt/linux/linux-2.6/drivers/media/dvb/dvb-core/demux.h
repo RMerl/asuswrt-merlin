@@ -80,6 +80,8 @@ enum dmx_success {
 #define	TS_PAYLOAD_ONLY 2   /* in case TS_PACKET is set, only send the TS
 			       payload (<=184 bytes per packet) to callback */
 #define TS_DECODER      4   /* send stream to built-in decoder (if present) */
+#define TS_DEMUX        8   /* in case TS_PACKET is set, send the TS to
+			       the demux device, not to the dvr device */
 
 /* PES type for filters which write to built-in decoder */
 /* these should be kept identical to the types in dmx.h */
@@ -245,7 +247,7 @@ struct dmx_demux {
 	void* priv;                  /* Pointer to private data of the API client */
 	int (*open) (struct dmx_demux* demux);
 	int (*close) (struct dmx_demux* demux);
-	int (*write) (struct dmx_demux* demux, const char* buf, size_t count);
+	int (*write) (struct dmx_demux* demux, const char __user *buf, size_t count);
 	int (*allocate_ts_feed) (struct dmx_demux* demux,
 				 struct dmx_ts_feed** feed,
 				 dmx_ts_cb callback);

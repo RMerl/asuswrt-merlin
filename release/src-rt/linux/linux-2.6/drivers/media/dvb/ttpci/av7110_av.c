@@ -25,7 +25,7 @@
  * Or, point your browser to http://www.gnu.org/copyleft/gpl.html
  *
  *
- * the project's page is at http://www.linuxtv.org/dvb/
+ * the project's page is at http://www.linuxtv.org/ 
  */
 
 #include <linux/types.h>
@@ -89,6 +89,7 @@
 
 static void p_to_t(u8 const *buf, long int length, u16 pid,
 		   u8 *counter, struct dvb_demux_feed *feed);
+static int write_ts_to_decoder(struct av7110 *av7110, int type, const u8 *buf, size_t len);
 
 
 int av7110_record_cb(struct dvb_filter_pes2ts *p2t, u8 *buf, size_t len)
@@ -192,8 +193,6 @@ int av7110_av_start_play(struct av7110 *av7110, int av)
 		ret = av7110_fw_cmd(av7110, COMTYPE_REC_PLAY, __Play, 2, AV_PES, 0);
 		break;
 	}
-	if (!ret)
-		ret = av7110->playing;
 	return ret;
 }
 
@@ -246,8 +245,11 @@ int av7110_pes_play(void *dest, struct dvb_ringbuffer *buf, int dlen)
 		return -1;
 	}
 	while (1) {
-		if ((len = dvb_ringbuffer_avail(buf)) < 6)
+		len = dvb_ringbuffer_avail(buf);
+		if (len < 6) {
+			wake_up(&buf->queue);
 			return -1;
+		}
 		sync =  DVB_RINGBUFFER_PEEK(buf, 0) << 24;
 		sync |= DVB_RINGBUFFER_PEEK(buf, 1) << 16;
 		sync |= DVB_RINGBUFFER_PEEK(buf, 2) << 8;
@@ -269,7 +271,7 @@ int av7110_pes_play(void *dest, struct dvb_ringbuffer *buf, int dlen)
 		return -1;
 	}
 
-	dvb_ringbuffer_read(buf, dest, (size_t) blen, 0);
+	dvb_ringbuffer_read(buf, dest, (size_t) blen);
 
 	dprintk(2, "pread=0x%08lx, pwrite=0x%08lx\n",
 	       (unsigned long) buf->pread, (unsigned long) buf->pwrite);
@@ -329,7 +331,7 @@ int av7110_set_volume(struct av7110 *av7110, int volleft, int volright)
 	return 0;
 }
 
-int av7110_set_vidmode(struct av7110 *av7110, int mode)
+int av7110_set_vidmode(struct av7110 *av7110, enum av7110_video_mode mode)
 {
 	int ret;
 	dprintk(2, "av7110:%p, \n", av7110);
@@ -348,11 +350,15 @@ int av7110_set_vidmode(struct av7110 *av7110, int mode)
 }
 
 
-static int sw2mode[16] = {
-	VIDEO_MODE_PAL, VIDEO_MODE_NTSC, VIDEO_MODE_NTSC, VIDEO_MODE_PAL,
-	VIDEO_MODE_NTSC, VIDEO_MODE_NTSC, VIDEO_MODE_PAL, VIDEO_MODE_NTSC,
-	VIDEO_MODE_PAL, VIDEO_MODE_PAL, VIDEO_MODE_PAL, VIDEO_MODE_PAL,
-	VIDEO_MODE_PAL, VIDEO_MODE_PAL, VIDEO_MODE_PAL, VIDEO_MODE_PAL,
+static enum av7110_video_mode sw2mode[16] = {
+	AV7110_VIDEO_MODE_PAL, AV7110_VIDEO_MODE_NTSC,
+	AV7110_VIDEO_MODE_NTSC, AV7110_VIDEO_MODE_PAL,
+	AV7110_VIDEO_MODE_NTSC, AV7110_VIDEO_MODE_NTSC,
+	AV7110_VIDEO_MODE_PAL, AV7110_VIDEO_MODE_NTSC,
+	AV7110_VIDEO_MODE_PAL, AV7110_VIDEO_MODE_PAL,
+	AV7110_VIDEO_MODE_PAL, AV7110_VIDEO_MODE_PAL,
+	AV7110_VIDEO_MODE_PAL, AV7110_VIDEO_MODE_PAL,
+	AV7110_VIDEO_MODE_PAL, AV7110_VIDEO_MODE_PAL,
 };
 
 static int get_video_format(struct av7110 *av7110, u8 *buf, int count)
@@ -391,7 +397,7 @@ static int get_video_format(struct av7110 *av7110, u8 *buf, int count)
  ****************************************************************************/
 
 static inline long aux_ring_buffer_write(struct dvb_ringbuffer *rbuf,
-					 const char *buf, unsigned long count)
+					 const u8 *buf, unsigned long count)
 {
 	unsigned long todo = count;
 	int free;
@@ -433,10 +439,49 @@ static void play_audio_cb(u8 *buf, int count, void *priv)
 	aux_ring_buffer_write(&av7110->aout, buf, count);
 }
 
+
+#define FREE_COND_TS (dvb_ringbuffer_free(rb) >= 4096)
+
+static ssize_t ts_play(struct av7110 *av7110, const char __user *buf,
+		       unsigned long count, int nonblock, int type)
+{
+	struct dvb_ringbuffer *rb;
+	u8 *kb;
+	unsigned long todo = count;
+
+	dprintk(2, "%s: type %d cnt %lu\n", __func__, type, count);
+
+	rb = (type) ? &av7110->avout : &av7110->aout;
+	kb = av7110->kbuf[type];
+
+	if (!kb)
+		return -ENOBUFS;
+
+	if (nonblock && !FREE_COND_TS)
+		return -EWOULDBLOCK;
+
+	while (todo >= TS_SIZE) {
+		if (!FREE_COND_TS) {
+			if (nonblock)
+				return count - todo;
+			if (wait_event_interruptible(rb->queue, FREE_COND_TS))
+				return count - todo;
+		}
+		if (copy_from_user(kb, buf, TS_SIZE))
+			return -EFAULT;
+		write_ts_to_decoder(av7110, type, kb, TS_SIZE);
+		todo -= TS_SIZE;
+		buf += TS_SIZE;
+	}
+
+	return count - todo;
+}
+
+
 #define FREE_COND (dvb_ringbuffer_free(&av7110->avout) >= 20 * 1024 && \
 		   dvb_ringbuffer_free(&av7110->aout) >= 20 * 1024)
 
-static ssize_t dvb_play(struct av7110 *av7110, const u8 __user *buf,
+static ssize_t dvb_play(struct av7110 *av7110, const char __user *buf,
 			unsigned long count, int nonblock, int type)
 {
 	unsigned long todo = count, n;
@@ -499,7 +544,7 @@ static ssize_t dvb_play_kernel(struct av7110 *av7110, const u8 *buf,
 	return count - todo;
 }
 
-static ssize_t dvb_aplay(struct av7110 *av7110, const u8 __user *buf,
+static ssize_t dvb_aplay(struct av7110 *av7110, const char __user *buf,
 			 unsigned long count, int nonblock, int type)
 {
 	unsigned long todo = count, n;
@@ -776,13 +821,42 @@ static void p_to_t(u8 const *buf, long int length, u16 pid, u8 *counter,
 }
 
 
+static int write_ts_to_decoder(struct av7110 *av7110, int type, const u8 *buf, size_t len)
+{
+	struct ipack *ipack = &av7110->ipack[type];
+
+	if (buf[1] & TRANS_ERROR) {
+		av7110_ipack_reset(ipack);
+		return -1;
+	}
+
+	if (!(buf[3] & PAYLOAD))
+		return -1;
+
+	if (buf[1] & PAY_START)
+		av7110_ipack_flush(ipack);
+
+	if (buf[3] & ADAPT_FIELD) {
+		len -= buf[4] + 1;
+		buf += buf[4] + 1;
+		if (!len)
+			return 0;
+	}
+
+	av7110_ipack_instant_repack(buf + 4, len - 4, ipack);
+	return 0;
+}
+
+
 int av7110_write_to_decoder(struct dvb_demux_feed *feed, const u8 *buf, size_t len)
 {
 	struct dvb_demux *demux = feed->demux;
 	struct av7110 *av7110 = (struct av7110 *) demux->priv;
-	struct ipack *ipack = &av7110->ipack[feed->pes_type];
 
 	dprintk(2, "av7110:%p, \n", av7110);
+
+	if (av7110->full_ts && demux->dmx.frontend->source != DMX_MEMORY_FE)
+		return 0;
 
 	switch (feed->pes_type) {
 	case 0:
@@ -797,20 +871,7 @@ int av7110_write_to_decoder(struct dvb_demux_feed *feed, const u8 *buf, size_t l
 		return -1;
 	}
 
-	if (!(buf[3] & 0x10)) /* no payload? */
-		return -1;
-	if (buf[1] & 0x40)
-		av7110_ipack_flush(ipack);
-
-	if (buf[3] & 0x20) {  /* adaptation field? */
-		len -= buf[4] + 1;
-		buf += buf[4] + 1;
-		if (!len)
-			return 0;
-	}
-
-	av7110_ipack_instant_repack(buf + 4, len - 4, &av7110->ipack[feed->pes_type]);
-	return 0;
+	return write_ts_to_decoder(av7110, feed->pes_type, buf, len);
 }
 
 
@@ -909,6 +970,7 @@ static ssize_t dvb_video_write(struct file *file, const char __user *buf,
 {
 	struct dvb_device *dvbdev = file->private_data;
 	struct av7110 *av7110 = dvbdev->priv;
+	unsigned char c;
 
 	dprintk(2, "av7110:%p, \n", av7110);
 
@@ -918,7 +980,12 @@ static ssize_t dvb_video_write(struct file *file, const char __user *buf,
 	if (av7110->videostate.stream_source != VIDEO_SOURCE_MEMORY)
 		return -EPERM;
 
-	return dvb_play(av7110, buf, count, file->f_flags & O_NONBLOCK, 1);
+	if (get_user(c, buf))
+		return -EFAULT;
+	if (c == 0x47 && count % TS_SIZE == 0)
+		return ts_play(av7110, buf, count, file->f_flags & O_NONBLOCK, 1);
+	else
+		return dvb_play(av7110, buf, count, file->f_flags & O_NONBLOCK, 1);
 }
 
 static unsigned int dvb_audio_poll(struct file *file, poll_table *wait)
@@ -945,6 +1012,7 @@ static ssize_t dvb_audio_write(struct file *file, const char __user *buf,
 {
 	struct dvb_device *dvbdev = file->private_data;
 	struct av7110 *av7110 = dvbdev->priv;
+	unsigned char c;
 
 	dprintk(2, "av7110:%p, \n", av7110);
 
@@ -952,22 +1020,57 @@ static ssize_t dvb_audio_write(struct file *file, const char __user *buf,
 		printk(KERN_ERR "not audio source memory\n");
 		return -EPERM;
 	}
-	return dvb_aplay(av7110, buf, count, file->f_flags & O_NONBLOCK, 0);
+
+	if (get_user(c, buf))
+		return -EFAULT;
+	if (c == 0x47 && count % TS_SIZE == 0)
+		return ts_play(av7110, buf, count, file->f_flags & O_NONBLOCK, 0);
+	else
+		return dvb_aplay(av7110, buf, count, file->f_flags & O_NONBLOCK, 0);
 }
 
 static u8 iframe_header[] = { 0x00, 0x00, 0x01, 0xe0, 0x00, 0x00, 0x80, 0x00, 0x00 };
 
 #define MIN_IFRAME 400000
 
-static int play_iframe(struct av7110 *av7110, u8 __user *buf, unsigned int len, int nonblock)
+static int play_iframe(struct av7110 *av7110, char __user *buf, unsigned int len, int nonblock)
 {
-	int i, n;
+	unsigned i, n;
+	int progressive = 0;
+	int match = 0;
 
 	dprintk(2, "av7110:%p, \n", av7110);
 
 	if (!(av7110->playing & RP_VIDEO)) {
 		if (av7110_av_start_play(av7110, RP_VIDEO) < 0)
 			return -EBUSY;
+	}
+
+	/* search in buf for instances of 00 00 01 b5 1? */
+	for (i = 0; i < len; i++) {
+		unsigned char c;
+		if (get_user(c, buf + i))
+			return -EFAULT;
+		if (match == 5) {
+			progressive = c & 0x08;
+			match = 0;
+		}
+		if (c == 0x00) {
+			match = (match == 1 || match == 2) ? 2 : 1;
+			continue;
+		}
+		switch (match++) {
+		case 2: if (c == 0x01)
+				continue;
+			break;
+		case 3: if (c == 0xb5)
+				continue;
+			break;
+		case 4: if ((c & 0xf0) == 0x10)
+				continue;
+			break;
+		}
+		match = 0;
 	}
 
 	/* setting n always > 1, fixes problems when playing stillframes
@@ -981,11 +1084,15 @@ static int play_iframe(struct av7110 *av7110, u8 __user *buf, unsigned int len, 
 		dvb_play(av7110, buf, len, 0, 1);
 
 	av7110_ipack_flush(&av7110->ipack[1]);
-	return 0;
+
+	if (progressive)
+		return vidcom(av7110, AV_VIDEO_CMD_FREEZE, 1);
+	else
+		return 0;
 }
 
 
-static int dvb_video_ioctl(struct inode *inode, struct file *file,
+static int dvb_video_ioctl(struct file *file,
 			   unsigned int cmd, void *parg)
 {
 	struct dvb_device *dvbdev = file->private_data;
@@ -1022,7 +1129,6 @@ static int dvb_video_ioctl(struct inode *inode, struct file *file,
 			if (ret)
 				break;
 		}
-
 		if (av7110->videostate.stream_source == VIDEO_SOURCE_MEMORY) {
 			if (av7110->playing == RP_AV) {
 				ret = av7110_fw_cmd(av7110, COMTYPE_REC_PLAY, __Stop, 0);
@@ -1082,21 +1188,16 @@ static int dvb_video_ioctl(struct inode *inode, struct file *file,
 	case VIDEO_SET_DISPLAY_FORMAT:
 	{
 		video_displayformat_t format = (video_displayformat_t) arg;
-		u16 val = 0;
-
 		switch (format) {
 		case VIDEO_PAN_SCAN:
-			val = VID_PAN_SCAN_PREF;
+			av7110->display_panscan = VID_PAN_SCAN_PREF;
 			break;
-
 		case VIDEO_LETTER_BOX:
-			val = VID_VC_AND_PS_PREF;
+			av7110->display_panscan = VID_VC_AND_PS_PREF;
 			break;
-
 		case VIDEO_CENTER_CUT_OUT:
-			val = VID_CENTRE_CUT_PREF;
+			av7110->display_panscan = VID_CENTRE_CUT_PREF;
 			break;
-
 		default:
 			ret = -EINVAL;
 		}
@@ -1104,7 +1205,7 @@ static int dvb_video_ioctl(struct inode *inode, struct file *file,
 			break;
 		av7110->videostate.display_format = format;
 		ret = av7110_fw_cmd(av7110, COMTYPE_ENCODER, SetPanScanType,
-				    1, (u16) val);
+				    1, av7110->display_panscan);
 		break;
 	}
 
@@ -1144,7 +1245,8 @@ static int dvb_video_ioctl(struct inode *inode, struct file *file,
 
 	case VIDEO_SLOWMOTION:
 		if (av7110->playing&RP_VIDEO) {
-			ret = av7110_fw_cmd(av7110, COMTYPE_REC_PLAY, __Slow, 2, 0, 0);
+			if (av7110->trickmode != TRICK_SLOW)
+				ret = av7110_fw_cmd(av7110, COMTYPE_REC_PLAY, __Slow, 2, 0, 0);
 			if (!ret)
 				ret = vidcom(av7110, AV_VIDEO_CMD_SLOW, arg);
 		} else {
@@ -1168,7 +1270,6 @@ static int dvb_video_ioctl(struct inode *inode, struct file *file,
 	case VIDEO_CLEAR_BUFFER:
 		dvb_ringbuffer_flush_spinlock_wakeup(&av7110->avout);
 		av7110_ipack_reset(&av7110->ipack[1]);
-
 		if (av7110->playing == RP_AV) {
 			ret = av7110_fw_cmd(av7110, COMTYPE_REC_PLAY,
 					    __Play, 2, AV_PES, 0);
@@ -1189,17 +1290,17 @@ static int dvb_video_ioctl(struct inode *inode, struct file *file,
 		break;
 
 	case VIDEO_SET_STREAMTYPE:
-
 		break;
 
 	default:
 		ret = -ENOIOCTLCMD;
 		break;
 	}
+
 	return ret;
 }
 
-static int dvb_audio_ioctl(struct inode *inode, struct file *file,
+static int dvb_audio_ioctl(struct file *file,
 			   unsigned int cmd, void *parg)
 {
 	struct dvb_device *dvbdev = file->private_data;
@@ -1270,7 +1371,6 @@ static int dvb_audio_ioctl(struct inode *inode, struct file *file,
 
 	case AUDIO_CHANNEL_SELECT:
 		av7110->audiostate.channel_select = (audio_channel_select_t) arg;
-
 		switch(av7110->audiostate.channel_select) {
 		case AUDIO_STEREO:
 			ret = audcom(av7110, AUDIO_CMD_STEREO);
@@ -1281,7 +1381,6 @@ static int dvb_audio_ioctl(struct inode *inode, struct file *file,
 					msp_writereg(av7110, MSP_WR_DSP, 0x0008, 0x0220);
 			}
 			break;
-
 		case AUDIO_MONO_LEFT:
 			ret = audcom(av7110, AUDIO_CMD_MONO_L);
 			if (!ret) {
@@ -1291,7 +1390,6 @@ static int dvb_audio_ioctl(struct inode *inode, struct file *file,
 					msp_writereg(av7110, MSP_WR_DSP, 0x0008, 0x0200);
 			}
 			break;
-
 		case AUDIO_MONO_RIGHT:
 			ret = audcom(av7110, AUDIO_CMD_MONO_R);
 			if (!ret) {
@@ -1301,7 +1399,6 @@ static int dvb_audio_ioctl(struct inode *inode, struct file *file,
 					msp_writereg(av7110, MSP_WR_DSP, 0x0008, 0x0210);
 			}
 			break;
-
 		default:
 			ret = -EINVAL;
 			break;
@@ -1327,21 +1424,24 @@ static int dvb_audio_ioctl(struct inode *inode, struct file *file,
 			ret = av7110_fw_cmd(av7110, COMTYPE_REC_PLAY,
 					    __Play, 2, AV_PES, 0);
 		break;
-	case AUDIO_SET_ID:
 
+	case AUDIO_SET_ID:
 		break;
+
 	case AUDIO_SET_MIXER:
 	{
 		struct audio_mixer *amix = (struct audio_mixer *)parg;
-
 		ret = av7110_set_volume(av7110, amix->volume_left, amix->volume_right);
 		break;
 	}
+
 	case AUDIO_SET_STREAMTYPE:
 		break;
+
 	default:
 		ret = -ENOIOCTLCMD;
 	}
+
 	return ret;
 }
 
@@ -1417,13 +1517,14 @@ static int dvb_audio_release(struct inode *inode, struct file *file)
  * driver registration
  ******************************************************************************/
 
-static struct file_operations dvb_video_fops = {
+static const struct file_operations dvb_video_fops = {
 	.owner		= THIS_MODULE,
 	.write		= dvb_video_write,
-	.ioctl		= dvb_generic_ioctl,
+	.unlocked_ioctl	= dvb_generic_ioctl,
 	.open		= dvb_video_open,
 	.release	= dvb_video_release,
 	.poll		= dvb_video_poll,
+	.llseek		= noop_llseek,
 };
 
 static struct dvb_device dvbdev_video = {
@@ -1435,13 +1536,14 @@ static struct dvb_device dvbdev_video = {
 	.kernel_ioctl	= dvb_video_ioctl,
 };
 
-static struct file_operations dvb_audio_fops = {
+static const struct file_operations dvb_audio_fops = {
 	.owner		= THIS_MODULE,
 	.write		= dvb_audio_write,
-	.ioctl		= dvb_generic_ioctl,
+	.unlocked_ioctl	= dvb_generic_ioctl,
 	.open		= dvb_audio_open,
 	.release	= dvb_audio_release,
 	.poll		= dvb_audio_poll,
+	.llseek		= noop_llseek,
 };
 
 static struct dvb_device dvbdev_audio = {
@@ -1466,8 +1568,9 @@ int av7110_av_register(struct av7110 *av7110)
 	av7110->videostate.play_state = VIDEO_STOPPED;
 	av7110->videostate.stream_source = VIDEO_SOURCE_DEMUX;
 	av7110->videostate.video_format = VIDEO_FORMAT_4_3;
-	av7110->videostate.display_format = VIDEO_CENTER_CUT_OUT;
+	av7110->videostate.display_format = VIDEO_LETTER_BOX;
 	av7110->display_ar = VIDEO_FORMAT_4_3;
+	av7110->display_panscan = VID_VC_AND_PS_PREF;
 
 	init_waitqueue_head(&av7110->video_events.wait_queue);
 	spin_lock_init(&av7110->video_events.lock);

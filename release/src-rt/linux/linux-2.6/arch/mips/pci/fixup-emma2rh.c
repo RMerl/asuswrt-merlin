@@ -1,7 +1,4 @@
 /*
- *  arch/mips/pci/fixup-emma2rh.c
- *      This file defines the PCI configration.
- *
  *  Copyright (C) NEC Electronics Corporation 2004-2006
  *
  *  This file is based on the arch/mips/ddb5xxx/ddb5477/pci.c
@@ -29,9 +26,8 @@
 #include <linux/pci.h>
 
 #include <asm/bootinfo.h>
-#include <asm/debug.h>
 
-#include <asm/emma2rh/emma2rh.h>
+#include <asm/emma/emma2rh.h>
 
 #define EMMA2RH_PCI_HOST_SLOT 0x09
 #define EMMA2RH_USB_SLOT 0x03
@@ -89,7 +85,7 @@ static void __devinit emma2rh_pci_host_fixup(struct pci_dev *dev)
 DECLARE_PCI_FIXUP_HEADER(PCI_VENDOR_ID_NEC, PCI_DEVICE_ID_NEC_EMMA2RH,
 			 emma2rh_pci_host_fixup);
 
-int __init pcibios_map_irq(struct pci_dev *dev, u8 slot, u8 pin)
+int __init pcibios_map_irq(const struct pci_dev *dev, u8 slot, u8 pin)
 {
 	return irq_map[slot][pin];
 }

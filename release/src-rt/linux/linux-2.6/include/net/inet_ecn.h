@@ -27,7 +27,7 @@ static inline int INET_ECN_is_not_ect(__u8 dsfield)
 
 static inline int INET_ECN_is_capable(__u8 dsfield)
 {
-	return (dsfield & INET_ECN_ECT_0);
+	return dsfield & INET_ECN_ECT_0;
 }
 
 static inline __u8 INET_ECN_encapsulate(__u8 outer, __u8 inner)
@@ -38,16 +38,26 @@ static inline __u8 INET_ECN_encapsulate(__u8 outer, __u8 inner)
 	return outer;
 }
 
-#define	INET_ECN_xmit(sk) do { inet_sk(sk)->tos |= INET_ECN_ECT_0; } while (0)
-#define	INET_ECN_dontxmit(sk) \
-	do { inet_sk(sk)->tos &= ~INET_ECN_MASK; } while (0)
+static inline void INET_ECN_xmit(struct sock *sk)
+{
+	inet_sk(sk)->tos |= INET_ECN_ECT_0;
+	if (inet6_sk(sk) != NULL)
+		inet6_sk(sk)->tclass |= INET_ECN_ECT_0;
+}
+
+static inline void INET_ECN_dontxmit(struct sock *sk)
+{
+	inet_sk(sk)->tos &= ~INET_ECN_MASK;
+	if (inet6_sk(sk) != NULL)
+		inet6_sk(sk)->tclass &= ~INET_ECN_MASK;
+}
 
 #define IP6_ECN_flow_init(label) do {		\
       (label) &= ~htonl(INET_ECN_MASK << 20);	\
     } while (0)
 
 #define	IP6_ECN_flow_xmit(sk, label) do {				\
-	if (INET_ECN_is_capable(inet_sk(sk)->tos))			\
+	if (INET_ECN_is_capable(inet6_sk(sk)->tclass))			\
 		(label) |= htonl(INET_ECN_ECT_0 << 20);			\
     } while (0)
 
@@ -83,9 +93,9 @@ static inline void IP_ECN_clear(struct iphdr *iph)
 	iph->tos &= ~INET_ECN_MASK;
 }
 
-static inline void ipv4_copy_dscp(struct iphdr *outer, struct iphdr *inner)
+static inline void ipv4_copy_dscp(unsigned int dscp, struct iphdr *inner)
 {
-	u32 dscp = ipv4_get_dsfield(outer) & ~INET_ECN_MASK;
+	dscp &= ~INET_ECN_MASK;
 	ipv4_change_dsfield(inner, INET_ECN_MASK, dscp);
 }
 
@@ -104,21 +114,21 @@ static inline void IP6_ECN_clear(struct ipv6hdr *iph)
 	*(__be32*)iph &= ~htonl(INET_ECN_MASK << 20);
 }
 
-static inline void ipv6_copy_dscp(struct ipv6hdr *outer, struct ipv6hdr *inner)
+static inline void ipv6_copy_dscp(unsigned int dscp, struct ipv6hdr *inner)
 {
-	u32 dscp = ipv6_get_dsfield(outer) & ~INET_ECN_MASK;
+	dscp &= ~INET_ECN_MASK;
 	ipv6_change_dsfield(inner, INET_ECN_MASK, dscp);
 }
 
 static inline int INET_ECN_set_ce(struct sk_buff *skb)
 {
 	switch (skb->protocol) {
-	case __constant_htons(ETH_P_IP):
+	case cpu_to_be16(ETH_P_IP):
 		if (skb->network_header + sizeof(struct iphdr) <= skb->tail)
 			return IP_ECN_set_ce(ip_hdr(skb));
 		break;
 
-	case __constant_htons(ETH_P_IPV6):
+	case cpu_to_be16(ETH_P_IPV6):
 		if (skb->network_header + sizeof(struct ipv6hdr) <= skb->tail)
 			return IP6_ECN_set_ce(ipv6_hdr(skb));
 		break;

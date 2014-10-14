@@ -44,10 +44,10 @@ static int enable_midi_input(struct echoaudio *chip, char enable)
 	if (enable) {
 		chip->mtc_state = MIDI_IN_STATE_NORMAL;
 		chip->comm_page->flags |=
-			__constant_cpu_to_le32(DSP_FLAG_MIDI_INPUT);
+			cpu_to_le32(DSP_FLAG_MIDI_INPUT);
 	} else
 		chip->comm_page->flags &=
-			~__constant_cpu_to_le32(DSP_FLAG_MIDI_INPUT);
+			~cpu_to_le32(DSP_FLAG_MIDI_INPUT);
 
 	clear_handshake(chip);
 	return send_vector(chip, DSP_VC_UPDATE_FLAGS);
@@ -59,7 +59,8 @@ static int enable_midi_input(struct echoaudio *chip, char enable)
 Returns how many actually written or < 0 on error */
 static int write_midi(struct echoaudio *chip, u8 *data, int bytes)
 {
-	snd_assert(bytes > 0 && bytes < MIDI_OUT_BUFFER_SIZE, return -EINVAL);
+	if (snd_BUG_ON(bytes <= 0 || bytes >= MIDI_OUT_BUFFER_SIZE))
+		return -EINVAL;
 
 	if (wait_handshake(chip))
 		return -EIO;
@@ -119,7 +120,8 @@ static int midi_service_irq(struct echoaudio *chip)
 	/* The count is at index 0, followed by actual data */
 	count = le16_to_cpu(chip->comm_page->midi_input[0]);
 
-	snd_assert(count < MIDI_IN_BUFFER_SIZE, return 0);
+	if (snd_BUG_ON(count >= MIDI_IN_BUFFER_SIZE))
+		return 0;
 
 	/* Get the MIDI data from the comm page */
 	i = 1;

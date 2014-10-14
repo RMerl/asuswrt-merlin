@@ -57,27 +57,31 @@ extern const u8 * scsi_sense_desc_find(const u8 * sense_buffer, int sb_len,
 
 extern int scsi_get_sense_info_fld(const u8 * sense_buffer, int sb_len,
 				   u64 * info_out);
- 
+
+extern void scsi_build_sense_buffer(int desc, u8 *buf, u8 key, u8 asc, u8 ascq);
+
 /*
  * Reset request from external source
  */
 #define SCSI_TRY_RESET_DEVICE	1
 #define SCSI_TRY_RESET_BUS	2
 #define SCSI_TRY_RESET_HOST	3
+#define SCSI_TRY_RESET_TARGET	4
 
 extern int scsi_reset_provider(struct scsi_device *, int);
 
 struct scsi_eh_save {
+	/* saved state */
 	int result;
 	enum dma_data_direction data_direction;
+	unsigned underflow;
 	unsigned char cmd_len;
-	unsigned char cmnd[MAX_COMMAND_SIZE];
-
-	void *buffer;
-	unsigned bufflen;
-	unsigned short use_sg;
-	int resid;
-
+	unsigned char prot_op;
+	unsigned char *cmnd;
+	struct scsi_data_buffer sdb;
+	struct request *next_rq;
+	/* new command support */
+	unsigned char eh_cmnd[BLK_MAX_CDB];
 	struct scatterlist sense_sgl;
 };
 

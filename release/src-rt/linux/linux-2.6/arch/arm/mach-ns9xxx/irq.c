@@ -9,66 +9,46 @@
  * the Free Software Foundation.
  */
 #include <linux/interrupt.h>
+#include <linux/kernel_stat.h>
+#include <linux/io.h>
 #include <asm/mach/irq.h>
-#include <asm/mach-types.h>
-#include <asm/arch-ns9xxx/regs-sys.h>
-#include <asm/arch-ns9xxx/irqs.h>
-#include <asm/arch-ns9xxx/board.h>
+#include <mach/regs-sys-common.h>
+#include <mach/irqs.h>
+#include <mach/board.h>
 
 #include "generic.h"
 
-static void ns9xxx_ack_irq_timer(unsigned int irq)
-{
-	u32 tc = SYS_TC(irq - IRQ_TIMER0);
+/* simple interrupt prio table: prio(x) < prio(y) <=> x < y */
+#define irq2prio(i) (i)
+#define prio2irq(p) (p)
 
-	REGSET(tc, SYS_TCx, INTC, SET);
-	SYS_TC(irq - IRQ_TIMER0) = tc;
-
-	REGSET(tc, SYS_TCx, INTC, UNSET);
-	SYS_TC(irq - IRQ_TIMER0) = tc;
-}
-
-void (*ns9xxx_ack_irq_functions[NR_IRQS])(unsigned int) = {
-	[IRQ_TIMER0] = ns9xxx_ack_irq_timer,
-	[IRQ_TIMER1] = ns9xxx_ack_irq_timer,
-	[IRQ_TIMER2] = ns9xxx_ack_irq_timer,
-	[IRQ_TIMER3] = ns9xxx_ack_irq_timer,
-};
-
-static void ns9xxx_mask_irq(unsigned int irq)
+static void ns9xxx_mask_irq(struct irq_data *d)
 {
 	/* XXX: better use cpp symbols */
-	SYS_IC(irq / 4) &= ~(1 << (7 + 8 * (3 - (irq & 3))));
+	int prio = irq2prio(d->irq);
+	u32 ic = __raw_readl(SYS_IC(prio / 4));
+	ic &= ~(1 << (7 + 8 * (3 - (prio & 3))));
+	__raw_writel(ic, SYS_IC(prio / 4));
 }
 
-static void ns9xxx_ack_irq(unsigned int irq)
+static void ns9xxx_eoi_irq(struct irq_data *d)
 {
-	if (!ns9xxx_ack_irq_functions[irq]) {
-		printk(KERN_ERR "no ack function for irq %u\n", irq);
-		BUG();
-	}
-
-	ns9xxx_ack_irq_functions[irq](irq);
-	SYS_ISRADDR = 0;
+	__raw_writel(0, SYS_ISRADDR);
 }
 
-static void ns9xxx_maskack_irq(unsigned int irq)
-{
-	ns9xxx_mask_irq(irq);
-	ns9xxx_ack_irq(irq);
-}
-
-static void ns9xxx_unmask_irq(unsigned int irq)
+static void ns9xxx_unmask_irq(struct irq_data *d)
 {
 	/* XXX: better use cpp symbols */
-	SYS_IC(irq / 4) |= 1 << (7 + 8 * (3 - (irq & 3)));
+	int prio = irq2prio(d->irq);
+	u32 ic = __raw_readl(SYS_IC(prio / 4));
+	ic |= 1 << (7 + 8 * (3 - (prio & 3)));
+	__raw_writel(ic, SYS_IC(prio / 4));
 }
 
 static struct irq_chip ns9xxx_chip = {
-	.ack		= ns9xxx_ack_irq,
-	.mask		= ns9xxx_mask_irq,
-	.mask_ack	= ns9xxx_maskack_irq,
-	.unmask		= ns9xxx_unmask_irq,
+	.irq_eoi	= ns9xxx_eoi_irq,
+	.irq_mask	= ns9xxx_mask_irq,
+	.irq_unmask	= ns9xxx_unmask_irq,
 };
 
 void __init ns9xxx_init_irq(void)
@@ -77,18 +57,18 @@ void __init ns9xxx_init_irq(void)
 
 	/* disable all IRQs */
 	for (i = 0; i < 8; ++i)
-		SYS_IC(i) = (4 * i) << 24 | (4 * i + 1) << 16 |
-			(4 * i + 2) << 8 | (4 * i + 3);
+		__raw_writel(prio2irq(4 * i) << 24 |
+				prio2irq(4 * i + 1) << 16 |
+				prio2irq(4 * i + 2) << 8 |
+				prio2irq(4 * i + 3),
+				SYS_IC(i));
 
-	/* simple interrupt prio table:
-	 * prio(x) < prio(y) <=> x < y
-	 */
 	for (i = 0; i < 32; ++i)
-		SYS_IVA(i) = i;
+		__raw_writel(prio2irq(i), SYS_IVA(i));
 
-	for (i = IRQ_WATCHDOG; i <= IRQ_EXT3; ++i) {
-		set_irq_chip(i, &ns9xxx_chip);
-		set_irq_handler(i, handle_level_irq);
+	for (i = 0; i <= 31; ++i) {
+		irq_set_chip_and_handler(i, &ns9xxx_chip, handle_fasteoi_irq);
 		set_irq_flags(i, IRQF_VALID);
+		irq_set_status_flags(i, IRQ_LEVEL);
 	}
 }

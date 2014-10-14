@@ -44,14 +44,12 @@
 
 #include <linux/linkage.h>
 #include <asm/ptrace.h>
-#include <asm/ptrace.h>
 #include <asm/current.h>
 #include <asm/asm-offsets.h>
 #include <asm/pgtable.h>
 #include <asm/processor.h>
 #include <asm/page.h>
 #include <asm/thread_info.h>
-#include <asm/processor.h>
 
 #define WINDOW_VECTORS_SIZE   0x180
 
@@ -309,6 +307,7 @@ ENTRY(_DoubleExceptionVector)
 	 * All other exceptions are unexpected and thus unrecoverable!
 	 */
 
+#ifdef CONFIG_MMU
 	.extern fast_second_level_miss_double_kernel
 
 .Lksp:	/* a0: a0, a1: a1, a2: a2, a3: trashed, depc: depc, excsave: a3 */
@@ -319,6 +318,9 @@ ENTRY(_DoubleExceptionVector)
 	bnez	a3, .Lunrecoverable
 1:	movi	a3, fast_second_level_miss_double_kernel
 	jx	a3
+#else
+.equ	.Lksp,	.Lunrecoverable
+#endif
 
 	/* Critical! We can't handle this situation. PANIC! */
 

@@ -1,6 +1,6 @@
 config INFINIBAND_ISER
 	tristate "iSCSI Extensions for RDMA (iSER)"
-	depends on INFINIBAND && SCSI && INET
+	depends on SCSI && INET && INFINIBAND_ADDR_TRANS
 	select SCSI_ISCSI_ATTRS
 	---help---
 	  Support for the iSCSI Extensions for RDMA (iSER) Protocol
@@ -8,5 +8,5 @@ config INFINIBAND_ISER
           that speak iSCSI over iSER over InfiniBand.
 
 	  The iSER protocol is defined by IETF.
-	  See <http://www.ietf.org/internet-drafts/draft-ietf-ips-iser-05.txt>
-	  and <http://www.infinibandta.org/members/spec/iser_annex_060418.pdf>
+	  See <http://www.ietf.org/rfc/rfc5046.txt>
+	  and <http://members.infinibandta.org/kwspub/spec/Annex_iSER.PDF>

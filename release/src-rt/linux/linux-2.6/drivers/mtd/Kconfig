@@ -1,5 +1,3 @@
-# $Id: Kconfig,v 1.11 2005/11/07 11:14:19 gleixner Exp $
-
 menuconfig MTD
 	tristate "Memory Technology Device (MTD) support"
 	depends on HAS_IOMEM
@@ -27,13 +25,13 @@ config MTD_DEBUG_VERBOSE
 	help
 	  Determines the verbosity level of the MTD debugging messages.
 
-config MTD_CONCAT
-	tristate "MTD concatenating support"
+config MTD_TESTS
+	tristate "MTD tests support"
+	depends on m
 	help
-	  Support for concatenating several MTD devices into a single
-	  (virtual) one. This allows you to have -for example- a JFFS(2)
-	  file system spanning multiple physical flash chips. If unsure,
-	  say 'Y'.
+	  This option includes various MTD tests into compilation. The tests
+	  should normally be compiled as kernel modules. The modules perform
+	  various checks and verifications when loaded.
 
 config MTD_PARTITIONS
 	bool "MTD partitioning support"
@@ -47,9 +45,10 @@ config MTD_PARTITIONS
 	  devices. Partitioning on NFTL 'devices' is a different - that's the
 	  'normal' form of partitioning used on a block device.
 
+if MTD_PARTITIONS
+
 config MTD_REDBOOT_PARTS
 	tristate "RedBoot partition table parsing"
-	depends on MTD_PARTITIONS
 	---help---
 	  RedBoot is a ROM monitor and bootloader which deals with multiple
 	  'images' in flash devices by putting a table one of the erase
@@ -66,9 +65,10 @@ config MTD_REDBOOT_PARTS
 	  SA1100 map driver (CONFIG_MTD_SA1100) has an option for this, for
 	  example.
 
+if MTD_REDBOOT_PARTS
+
 config MTD_REDBOOT_DIRECTORY_BLOCK
 	int "Location of RedBoot partition table"
-	depends on MTD_REDBOOT_PARTS
 	default "-1"
 	---help---
 	  This option is the Linux counterpart to the
@@ -85,17 +85,17 @@ config MTD_REDBOOT_DIRECTORY_BLOCK
 
 config MTD_REDBOOT_PARTS_UNALLOCATED
 	bool "Include unallocated flash regions"
-	depends on MTD_REDBOOT_PARTS
 	help
 	  If you need to register each unallocated flash region as a MTD
 	  'partition', enable this option.
 
 config MTD_REDBOOT_PARTS_READONLY
 	bool "Force read-only for RedBoot system images"
-	depends on MTD_REDBOOT_PARTS
 	help
 	  If you need to force read-only for 'RedBoot', 'RedBoot Config' and
 	  'FIS directory' images, enable this option.
+
+endif # MTD_REDBOOT_PARTS
 
 config MTD_CMDLINE_PARTS
 	bool "Command line partition table parsing"
@@ -136,7 +136,7 @@ config MTD_CMDLINE_PARTS
 
 config MTD_AFS_PARTS
 	tristate "ARM Firmware Suite partition parsing"
-	depends on ARM && MTD_PARTITIONS
+	depends on ARM
 	---help---
 	  The ARM Firmware Suite allows the user to divide flash devices into
 	  multiple 'images'. Each such image has a header containing its name
@@ -148,12 +148,23 @@ config MTD_AFS_PARTS
 
 	  You will still need the parsing functions to be called by the driver
 	  for your particular device. It won't happen automatically. The
-	  'armflash' map driver (CONFIG_MTD_ARMFLASH) does this, for example.
+	  'armflash' map driver (CONFIG_MTD_ARM_INTEGRATOR) does this, for
+	  example.
 
-config MTD_BCMCONF_PARTS
-	bool "Add confmtd partition"
-	depends on MTD_PARTITIONS
-	default n
+config MTD_OF_PARTS
+	def_bool y
+	depends on OF
+	help
+	  This provides a partition parsing function which derives
+	  the partition map from the children of the flash node,
+	  as described in Documentation/powerpc/booting-without-of.txt.
+
+config MTD_AR7_PARTS
+	tristate "TI AR7 partitioning support"
+	---help---
+	  TI AR7 partitioning support
+
+endif # MTD_PARTITIONS
 
 comment "User Modules And Translation Layers"
 
@@ -164,6 +175,11 @@ config MTD_CHAR
 	  the system, allowing the user to read and write directly to the
 	  memory chips, and also use ioctl() to obtain information about
 	  the device, or to erase parts of it.
+
+config HAVE_MTD_OTP
+	bool
+	help
+	  Enable access to OTP regions using MTD_CHAR.
 
 config MTD_BLKDEVS
 	tristate "Common interface to block layer for MTD 'translation layers'"
@@ -283,6 +299,42 @@ config SSFDC
 	  This enables read only access to SmartMedia formatted NAND
 	  flash. You can mount it with FAT file system.
 
+
+config SM_FTL
+	tristate "SmartMedia/xD new translation layer"
+	depends on EXPERIMENTAL && BLOCK
+	select MTD_BLKDEVS
+	select MTD_NAND_ECC
+	help
+	  This enables EXPERIMENTAL R/W support for SmartMedia/xD
+	  FTL (Flash translation layer).
+	  Write support is only lightly tested, therefore this driver
+	  isn't recommended to use with valuable data (anyway if you have
+	  valuable data, do backups regardless of software/hardware you
+	  use, because you never know what will eat your data...)
+	  If you only need R/O access, you can use older R/O driver
+	  (CONFIG_SSFDC)
+
+config MTD_OOPS
+	tristate "Log panic/oops to an MTD buffer"
+	help
+	  This enables panic and oops messages to be logged to a circular
+	  buffer in a flash partition where it can be read back at some
+	  later point.
+
+	  To use, add console=ttyMTDx to the kernel command line,
+	  where x is the MTD device number to use.
+
+config MTD_SWAP
+	tristate "Swap on MTD device support"
+	depends on MTD && SWAP
+	select MTD_BLKDEVS
+	help
+	  Provides volatile block device driver on top of mtd partition
+          suitable for swapping.  The mapping of written blocks is not saved.
+	  The driver provides wear leveling by storing erase counter into the
+	  OOB.
+
 source "drivers/mtd/chips/Kconfig"
 
 source "drivers/mtd/maps/Kconfig"
@@ -293,7 +345,7 @@ source "drivers/mtd/nand/Kconfig"
 
 source "drivers/mtd/onenand/Kconfig"
 
-source "drivers/mtd/47xxnand/Kconfig"
+source "drivers/mtd/lpddr/Kconfig"
 
 source "drivers/mtd/ubi/Kconfig"
 

@@ -24,6 +24,7 @@
 #include <asm/system.h>
 #include <asm/cache.h>
 #include <asm/cputable.h>
+#include <asm/emulated_ops.h>
 
 struct aligninfo {
 	unsigned char len;
@@ -38,7 +39,7 @@ struct aligninfo {
 /* Bits in the flags field */
 #define LD	0	/* load */
 #define ST	1	/* store */
-#define	SE	2	/* sign-extend value */
+#define SE	2	/* sign-extend value, or FP ld/st as word */
 #define F	4	/* to/from fp regs */
 #define U	8	/* update index register */
 #define M	0x10	/* multiple load/store */
@@ -46,6 +47,9 @@ struct aligninfo {
 #define S	0x40	/* single-precision fp or... */
 #define SX	0x40	/* ... byte count in XER */
 #define HARD	0x80	/* string, stwcx. */
+#define E4	0x40	/* SPE endianness is word */
+#define E8	0x80	/* SPE endianness is double word */
+#define SPLT	0x80	/* VSX SPLAT load */
 
 /* DSISR bits reported for a DCBZ instruction: */
 #define DCBZ	0x5f	/* 8xx/82xx dcbz faults when cache not enabled */
@@ -87,9 +91,9 @@ static struct aligninfo aligninfo[128] = {
 	{ 8, LD+F+U },		/* 00 1 1001: lfdu */
 	{ 4, ST+F+S+U },	/* 00 1 1010: stfsu */
 	{ 8, ST+F+U },		/* 00 1 1011: stfdu */
-	INVALID,		/* 00 1 1100 */
+	{ 16, LD+F },		/* 00 1 1100: lfdp */
 	INVALID,		/* 00 1 1101 */
-	INVALID,		/* 00 1 1110 */
+	{ 16, ST+F },		/* 00 1 1110: stfdp */
 	INVALID,		/* 00 1 1111 */
 	{ 8, LD },		/* 01 0 0000: ldx */
 	INVALID,		/* 01 0 0001 */
@@ -167,10 +171,10 @@ static struct aligninfo aligninfo[128] = {
 	{ 8, LD+F },		/* 11 0 1001: lfdx */
 	{ 4, ST+F+S },		/* 11 0 1010: stfsx */
 	{ 8, ST+F },		/* 11 0 1011: stfdx */
-	INVALID,		/* 11 0 1100 */
-	{ 8, LD+M },		/* 11 0 1101: lmd */
-	INVALID,		/* 11 0 1110 */
-	{ 8, ST+M },		/* 11 0 1111: stmd */
+	{ 16, LD+F },		/* 11 0 1100: lfdpx */
+	{ 4, LD+F+SE },		/* 11 0 1101: lfiwax */
+	{ 16, ST+F },		/* 11 0 1110: stfdpx */
+	{ 4, ST+F },		/* 11 0 1111: stfiwx */
 	{ 4, LD+U },		/* 11 1 0000: lwzux */
 	INVALID,		/* 11 1 0001 */
 	{ 4, ST+U },		/* 11 1 0010: stwux */
@@ -184,7 +188,7 @@ static struct aligninfo aligninfo[128] = {
 	{ 4, ST+F+S+U },	/* 11 1 1010: stfsux */
 	{ 8, ST+F+U },		/* 11 1 1011: stfdux */
 	INVALID,		/* 11 1 1100 */
-	INVALID,		/* 11 1 1101 */
+	{ 4, LD+F },		/* 11 1 1101: lfiwzx */
 	INVALID,		/* 11 1 1110 */
 	INVALID,		/* 11 1 1111 */
 };
@@ -356,6 +360,336 @@ static int emulate_multiple(struct pt_regs *regs, unsigned char __user *addr,
 	return 1;
 }
 
+/*
+ * Emulate floating-point pair loads and stores.
+ * Only POWER6 has these instructions, and it does true little-endian,
+ * so we don't need the address swizzling.
+ */
+static int emulate_fp_pair(unsigned char __user *addr, unsigned int reg,
+			   unsigned int flags)
+{
+	char *ptr0 = (char *) &current->thread.TS_FPR(reg);
+	char *ptr1 = (char *) &current->thread.TS_FPR(reg+1);
+	int i, ret, sw = 0;
+
+	if (!(flags & F))
+		return 0;
+	if (reg & 1)
+		return 0;	/* invalid form: FRS/FRT must be even */
+	if (flags & SW)
+		sw = 7;
+	ret = 0;
+	for (i = 0; i < 8; ++i) {
+		if (!(flags & ST)) {
+			ret |= __get_user(ptr0[i^sw], addr + i);
+			ret |= __get_user(ptr1[i^sw], addr + i + 8);
+		} else {
+			ret |= __put_user(ptr0[i^sw], addr + i);
+			ret |= __put_user(ptr1[i^sw], addr + i + 8);
+		}
+	}
+	if (ret)
+		return -EFAULT;
+	return 1;	/* exception handled and fixed up */
+}
+
+#ifdef CONFIG_SPE
+
+static struct aligninfo spe_aligninfo[32] = {
+	{ 8, LD+E8 },		/* 0 00 00: evldd[x] */
+	{ 8, LD+E4 },		/* 0 00 01: evldw[x] */
+	{ 8, LD },		/* 0 00 10: evldh[x] */
+	INVALID,		/* 0 00 11 */
+	{ 2, LD },		/* 0 01 00: evlhhesplat[x] */
+	INVALID,		/* 0 01 01 */
+	{ 2, LD },		/* 0 01 10: evlhhousplat[x] */
+	{ 2, LD+SE },		/* 0 01 11: evlhhossplat[x] */
+	{ 4, LD },		/* 0 10 00: evlwhe[x] */
+	INVALID,		/* 0 10 01 */
+	{ 4, LD },		/* 0 10 10: evlwhou[x] */
+	{ 4, LD+SE },		/* 0 10 11: evlwhos[x] */
+	{ 4, LD+E4 },		/* 0 11 00: evlwwsplat[x] */
+	INVALID,		/* 0 11 01 */
+	{ 4, LD },		/* 0 11 10: evlwhsplat[x] */
+	INVALID,		/* 0 11 11 */
+
+	{ 8, ST+E8 },		/* 1 00 00: evstdd[x] */
+	{ 8, ST+E4 },		/* 1 00 01: evstdw[x] */
+	{ 8, ST },		/* 1 00 10: evstdh[x] */
+	INVALID,		/* 1 00 11 */
+	INVALID,		/* 1 01 00 */
+	INVALID,		/* 1 01 01 */
+	INVALID,		/* 1 01 10 */
+	INVALID,		/* 1 01 11 */
+	{ 4, ST },		/* 1 10 00: evstwhe[x] */
+	INVALID,		/* 1 10 01 */
+	{ 4, ST },		/* 1 10 10: evstwho[x] */
+	INVALID,		/* 1 10 11 */
+	{ 4, ST+E4 },		/* 1 11 00: evstwwe[x] */
+	INVALID,		/* 1 11 01 */
+	{ 4, ST+E4 },		/* 1 11 10: evstwwo[x] */
+	INVALID,		/* 1 11 11 */
+};
+
+#define	EVLDD		0x00
+#define	EVLDW		0x01
+#define	EVLDH		0x02
+#define	EVLHHESPLAT	0x04
+#define	EVLHHOUSPLAT	0x06
+#define	EVLHHOSSPLAT	0x07
+#define	EVLWHE		0x08
+#define	EVLWHOU		0x0A
+#define	EVLWHOS		0x0B
+#define	EVLWWSPLAT	0x0C
+#define	EVLWHSPLAT	0x0E
+#define	EVSTDD		0x10
+#define	EVSTDW		0x11
+#define	EVSTDH		0x12
+#define	EVSTWHE		0x18
+#define	EVSTWHO		0x1A
+#define	EVSTWWE		0x1C
+#define	EVSTWWO		0x1E
+
+/*
+ * Emulate SPE loads and stores.
+ * Only Book-E has these instructions, and it does true little-endian,
+ * so we don't need the address swizzling.
+ */
+static int emulate_spe(struct pt_regs *regs, unsigned int reg,
+		       unsigned int instr)
+{
+	int t, ret;
+	union {
+		u64 ll;
+		u32 w[2];
+		u16 h[4];
+		u8 v[8];
+	} data, temp;
+	unsigned char __user *p, *addr;
+	unsigned long *evr = &current->thread.evr[reg];
+	unsigned int nb, flags;
+
+	instr = (instr >> 1) & 0x1f;
+
+	/* DAR has the operand effective address */
+	addr = (unsigned char __user *)regs->dar;
+
+	nb = spe_aligninfo[instr].len;
+	flags = spe_aligninfo[instr].flags;
+
+	/* Verify the address of the operand */
+	if (unlikely(user_mode(regs) &&
+		     !access_ok((flags & ST ? VERIFY_WRITE : VERIFY_READ),
+				addr, nb)))
+		return -EFAULT;
+
+	/* userland only */
+	if (unlikely(!user_mode(regs)))
+		return 0;
+
+	flush_spe_to_thread(current);
+
+	/* If we are loading, get the data from user space, else
+	 * get it from register values
+	 */
+	if (flags & ST) {
+		data.ll = 0;
+		switch (instr) {
+		case EVSTDD:
+		case EVSTDW:
+		case EVSTDH:
+			data.w[0] = *evr;
+			data.w[1] = regs->gpr[reg];
+			break;
+		case EVSTWHE:
+			data.h[2] = *evr >> 16;
+			data.h[3] = regs->gpr[reg] >> 16;
+			break;
+		case EVSTWHO:
+			data.h[2] = *evr & 0xffff;
+			data.h[3] = regs->gpr[reg] & 0xffff;
+			break;
+		case EVSTWWE:
+			data.w[1] = *evr;
+			break;
+		case EVSTWWO:
+			data.w[1] = regs->gpr[reg];
+			break;
+		default:
+			return -EINVAL;
+		}
+	} else {
+		temp.ll = data.ll = 0;
+		ret = 0;
+		p = addr;
+
+		switch (nb) {
+		case 8:
+			ret |= __get_user_inatomic(temp.v[0], p++);
+			ret |= __get_user_inatomic(temp.v[1], p++);
+			ret |= __get_user_inatomic(temp.v[2], p++);
+			ret |= __get_user_inatomic(temp.v[3], p++);
+		case 4:
+			ret |= __get_user_inatomic(temp.v[4], p++);
+			ret |= __get_user_inatomic(temp.v[5], p++);
+		case 2:
+			ret |= __get_user_inatomic(temp.v[6], p++);
+			ret |= __get_user_inatomic(temp.v[7], p++);
+			if (unlikely(ret))
+				return -EFAULT;
+		}
+
+		switch (instr) {
+		case EVLDD:
+		case EVLDW:
+		case EVLDH:
+			data.ll = temp.ll;
+			break;
+		case EVLHHESPLAT:
+			data.h[0] = temp.h[3];
+			data.h[2] = temp.h[3];
+			break;
+		case EVLHHOUSPLAT:
+		case EVLHHOSSPLAT:
+			data.h[1] = temp.h[3];
+			data.h[3] = temp.h[3];
+			break;
+		case EVLWHE:
+			data.h[0] = temp.h[2];
+			data.h[2] = temp.h[3];
+			break;
+		case EVLWHOU:
+		case EVLWHOS:
+			data.h[1] = temp.h[2];
+			data.h[3] = temp.h[3];
+			break;
+		case EVLWWSPLAT:
+			data.w[0] = temp.w[1];
+			data.w[1] = temp.w[1];
+			break;
+		case EVLWHSPLAT:
+			data.h[0] = temp.h[2];
+			data.h[1] = temp.h[2];
+			data.h[2] = temp.h[3];
+			data.h[3] = temp.h[3];
+			break;
+		default:
+			return -EINVAL;
+		}
+	}
+
+	if (flags & SW) {
+		switch (flags & 0xf0) {
+		case E8:
+			SWAP(data.v[0], data.v[7]);
+			SWAP(data.v[1], data.v[6]);
+			SWAP(data.v[2], data.v[5]);
+			SWAP(data.v[3], data.v[4]);
+			break;
+		case E4:
+
+			SWAP(data.v[0], data.v[3]);
+			SWAP(data.v[1], data.v[2]);
+			SWAP(data.v[4], data.v[7]);
+			SWAP(data.v[5], data.v[6]);
+			break;
+		/* Its half word endian */
+		default:
+			SWAP(data.v[0], data.v[1]);
+			SWAP(data.v[2], data.v[3]);
+			SWAP(data.v[4], data.v[5]);
+			SWAP(data.v[6], data.v[7]);
+			break;
+		}
+	}
+
+	if (flags & SE) {
+		data.w[0] = (s16)data.h[1];
+		data.w[1] = (s16)data.h[3];
+	}
+
+	/* Store result to memory or update registers */
+	if (flags & ST) {
+		ret = 0;
+		p = addr;
+		switch (nb) {
+		case 8:
+			ret |= __put_user_inatomic(data.v[0], p++);
+			ret |= __put_user_inatomic(data.v[1], p++);
+			ret |= __put_user_inatomic(data.v[2], p++);
+			ret |= __put_user_inatomic(data.v[3], p++);
+		case 4:
+			ret |= __put_user_inatomic(data.v[4], p++);
+			ret |= __put_user_inatomic(data.v[5], p++);
+		case 2:
+			ret |= __put_user_inatomic(data.v[6], p++);
+			ret |= __put_user_inatomic(data.v[7], p++);
+		}
+		if (unlikely(ret))
+			return -EFAULT;
+	} else {
+		*evr = data.w[0];
+		regs->gpr[reg] = data.w[1];
+	}
+
+	return 1;
+}
+#endif /* CONFIG_SPE */
+
+#ifdef CONFIG_VSX
+/*
+ * Emulate VSX instructions...
+ */
+static int emulate_vsx(unsigned char __user *addr, unsigned int reg,
+		       unsigned int areg, struct pt_regs *regs,
+		       unsigned int flags, unsigned int length,
+		       unsigned int elsize)
+{
+	char *ptr;
+	unsigned long *lptr;
+	int ret = 0;
+	int sw = 0;
+	int i, j;
+
+	flush_vsx_to_thread(current);
+
+	if (reg < 32)
+		ptr = (char *) &current->thread.TS_FPR(reg);
+	else
+		ptr = (char *) &current->thread.vr[reg - 32];
+
+	lptr = (unsigned long *) ptr;
+
+	if (flags & SW)
+		sw = elsize-1;
+
+	for (j = 0; j < length; j += elsize) {
+		for (i = 0; i < elsize; ++i) {
+			if (flags & ST)
+				ret |= __put_user(ptr[i^sw], addr + i);
+			else
+				ret |= __get_user(ptr[i^sw], addr + i);
+		}
+		ptr  += elsize;
+		addr += elsize;
+	}
+
+	if (!ret) {
+		if (flags & U)
+			regs->gpr[areg] = regs->dar;
+
+		/* Splat load copies the same data to top and bottom 8 bytes */
+		if (flags & SPLT)
+			lptr[1] = lptr[0];
+		/* For 8 byte loads, zero the top 8 bytes */
+		else if (!(flags & ST) && (8 == length))
+			lptr[1] = 0;
+	} else
+		return -EFAULT;
+
+	return 1;
+}
+#endif
 
 /*
  * Called on alignment exception. Attempts to fixup
@@ -367,7 +701,7 @@ static int emulate_multiple(struct pt_regs *regs, unsigned char __user *addr,
 
 int fix_alignment(struct pt_regs *regs)
 {
-	unsigned int instr, nb, flags;
+	unsigned int instr, nb, flags, instruction = 0;
 	unsigned int reg, areg;
 	unsigned int dsisr;
 	unsigned char __user *addr;
@@ -409,11 +743,20 @@ int fix_alignment(struct pt_regs *regs)
 		if (cpu_has_feature(CPU_FTR_REAL_LE) && (regs->msr & MSR_LE))
 			instr = cpu_to_le32(instr);
 		dsisr = make_dsisr(instr);
+		instruction = instr;
 	}
 
 	/* extract the operation and registers from the dsisr */
 	reg = (dsisr >> 5) & 0x1f;	/* source/dest register */
 	areg = dsisr & 0x1f;		/* register to update */
+
+#ifdef CONFIG_SPE
+	if ((instr >> 26) == 0x4) {
+		PPC_WARN_ALIGNMENT(spe, regs);
+		return emulate_spe(regs, reg, instr);
+	}
+#endif
+
 	instr = (dsisr >> 10) & 0x7f;
 	instr |= (dsisr >> 13) & 0x60;
 
@@ -442,20 +785,58 @@ int fix_alignment(struct pt_regs *regs)
 	/* DAR has the operand effective address */
 	addr = (unsigned char __user *)regs->dar;
 
+#ifdef CONFIG_VSX
+	if ((instruction & 0xfc00003e) == 0x7c000018) {
+		unsigned int elsize;
+
+		/* Additional register addressing bit (64 VSX vs 32 FPR/GPR) */
+		reg |= (instruction & 0x1) << 5;
+		/* Simple inline decoder instead of a table */
+		/* VSX has only 8 and 16 byte memory accesses */
+		nb = 8;
+		if (instruction & 0x200)
+			nb = 16;
+
+		/* Vector stores in little-endian mode swap individual
+		   elements, so process them separately */
+		elsize = 4;
+		if (instruction & 0x80)
+			elsize = 8;
+
+		flags = 0;
+		if (regs->msr & MSR_LE)
+			flags |= SW;
+		if (instruction & 0x100)
+			flags |= ST;
+		if (instruction & 0x040)
+			flags |= U;
+		/* splat load needs a special decoder */
+		if ((instruction & 0x400) == 0){
+			flags |= SPLT;
+			nb = 8;
+		}
+		PPC_WARN_ALIGNMENT(vsx, regs);
+		return emulate_vsx(addr, reg, areg, regs, flags, nb, elsize);
+	}
+#endif
 	/* A size of 0 indicates an instruction we don't support, with
 	 * the exception of DCBZ which is handled as a special case here
 	 */
-	if (instr == DCBZ)
+	if (instr == DCBZ) {
+		PPC_WARN_ALIGNMENT(dcbz, regs);
 		return emulate_dcbz(regs, addr);
+	}
 	if (unlikely(nb == 0))
 		return 0;
 
 	/* Load/Store Multiple instructions are handled in their own
 	 * function
 	 */
-	if (flags & M)
+	if (flags & M) {
+		PPC_WARN_ALIGNMENT(multiple, regs);
 		return emulate_multiple(regs, addr, reg, nb,
 					flags, instr, swiz);
+	}
 
 	/* Verify the address of the operand */
 	if (unlikely(user_mode(regs) &&
@@ -470,6 +851,14 @@ int fix_alignment(struct pt_regs *regs)
 			return 0;
 		flush_fp_to_thread(current);
 	}
+
+	/* Special case for 16-byte FP loads and stores */
+	if (nb == 16) {
+		PPC_WARN_ALIGNMENT(fp_pair, regs);
+		return emulate_fp_pair(addr, reg, flags);
+	}
+
+	PPC_WARN_ALIGNMENT(unaligned, regs);
 
 	/* If we are loading, get the data from user space, else
 	 * get it from register values
@@ -494,13 +883,13 @@ int fix_alignment(struct pt_regs *regs)
 				return -EFAULT;
 		}
 	} else if (flags & F) {
-		data.dd = current->thread.fpr[reg];
+		data.dd = current->thread.TS_FPR(reg);
 		if (flags & S) {
 			/* Single-precision FP store requires conversion... */
 #ifdef CONFIG_PPC_FPU
 			preempt_disable();
 			enable_kernel_fp();
-			cvt_df(&data.dd, (float *)&data.v[4], &current->thread);
+			cvt_df(&data.dd, (float *)&data.v[4]);
 			preempt_enable();
 #else
 			return 0;
@@ -531,7 +920,8 @@ int fix_alignment(struct pt_regs *regs)
 	 * or floating point single precision conversion
 	 */
 	switch (flags & ~(U|SW)) {
-	case LD+SE:	/* sign extend */
+	case LD+SE:	/* sign extending integer loads */
+	case LD+F+SE:	/* sign extend for lfiwax */
 		if ( nb == 2 )
 			data.ll = data.x16.low16;
 		else	/* nb must be 4 */
@@ -543,7 +933,7 @@ int fix_alignment(struct pt_regs *regs)
 #ifdef CONFIG_PPC_FPU
 		preempt_disable();
 		enable_kernel_fp();
-		cvt_fd((float *)&data.v[4], &data.dd, &current->thread);
+		cvt_fd((float *)&data.v[4], &data.dd);
 		preempt_enable();
 #else
 		return 0;
@@ -571,7 +961,7 @@ int fix_alignment(struct pt_regs *regs)
 		if (unlikely(ret))
 			return -EFAULT;
 	} else if (flags & F)
-		current->thread.fpr[reg] = data.dd;
+		current->thread.TS_FPR(reg) = data.dd;
 	else
 		regs->gpr[reg] = data.ll;
 

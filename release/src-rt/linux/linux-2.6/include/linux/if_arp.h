@@ -41,7 +41,6 @@
 #define	ARPHRD_IEEE1394	24		/* IEEE 1394 IPv4 - RFC 2734	*/
 #define ARPHRD_EUI64	27		/* EUI-64                       */
 #define ARPHRD_INFINIBAND 32		/* InfiniBand			*/
-#define ARPHRD_PUREIP	35		/* Pure IP (no hw headers)	*/
 
 /* Dummy types for non ARP hardware */
 #define ARPHRD_SLIP	256
@@ -87,6 +86,11 @@
 #define ARPHRD_IEEE80211 801		/* IEEE 802.11			*/
 #define ARPHRD_IEEE80211_PRISM 802	/* IEEE 802.11 + Prism2 header  */
 #define ARPHRD_IEEE80211_RADIOTAP 803	/* IEEE 802.11 + radiotap header */
+#define ARPHRD_IEEE802154	  804
+
+#define ARPHRD_PHONET	820		/* PhoNet media type		*/
+#define ARPHRD_PHONET_PIPE 821		/* PhoNet pipe header		*/
+#define ARPHRD_CAIF	822		/* CAIF media type		*/
 
 #define ARPHRD_VOID	  0xFFFF	/* Void type, nothing is known */
 #define ARPHRD_NONE	  0xFFFE	/* zero header length */
@@ -130,8 +134,7 @@ struct arpreq_old {
  *	This structure defines an ethernet arp header.
  */
 
-struct arphdr
-{
+struct arphdr {
 	__be16		ar_hrd;		/* format of hardware address	*/
 	__be16		ar_pro;		/* format of protocol address	*/
 	unsigned char	ar_hln;		/* length of hardware address	*/
@@ -156,6 +159,12 @@ struct arphdr
 static inline struct arphdr *arp_hdr(const struct sk_buff *skb)
 {
 	return (struct arphdr *)skb_network_header(skb);
+}
+
+static inline int arp_hdr_len(struct net_device *dev)
+{
+	/* ARP header, plus 2 device addresses, plus 2 IP addresses. */
+	return sizeof(struct arphdr) + (dev->addr_len + sizeof(u32)) * 2;
 }
 #endif
 

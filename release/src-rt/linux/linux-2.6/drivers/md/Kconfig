@@ -2,19 +2,17 @@
 # Block device driver configuration
 #
 
-if BLOCK
-
-menu "Multi-device support (RAID and LVM)"
-
-config MD
+menuconfig MD
 	bool "Multiple devices driver support (RAID and LVM)"
+	depends on BLOCK
 	help
 	  Support multiple physical spindles through a single logical device.
 	  Required for RAID and logical volume management.
 
+if MD
+
 config BLK_DEV_MD
 	tristate "RAID support"
-	depends on MD
 	---help---
 	  This driver lets you combine several hard disk partitions into one
 	  logical block device. This can be used to simply append one
@@ -31,6 +29,20 @@ config BLK_DEV_MD
 	  where to get the supporting user space utilities raidtools.
 
 	  If unsure, say N.
+
+config MD_AUTODETECT
+	bool "Autodetect RAID arrays during kernel boot"
+	depends on BLK_DEV_MD=y
+	default y
+	---help---
+	  If you say Y here, then the kernel will try to autodetect raid
+	  arrays as part of its boot process. 
+
+	  If you don't use raid and say Y, this autodetection can cause 
+	  a several-second delay in the boot time due to various
+	  synchronisation steps that are part of this step.
+
+	  If unsure, say Y.
 
 config MD_LINEAR
 	tristate "Linear (append) mode"
@@ -88,8 +100,8 @@ config MD_RAID1
 	  If unsure, say Y.
 
 config MD_RAID10
-	tristate "RAID-10 (mirrored striping) mode (EXPERIMENTAL)"
-	depends on BLK_DEV_MD && EXPERIMENTAL
+	tristate "RAID-10 (mirrored striping) mode"
+	depends on BLK_DEV_MD
 	---help---
 	  RAID-10 provides a combination of striping (RAID-0) and
 	  mirroring (RAID-1) with easier configuration and more flexible
@@ -109,6 +121,11 @@ config MD_RAID10
 config MD_RAID456
 	tristate "RAID-4/RAID-5/RAID-6 mode"
 	depends on BLK_DEV_MD
+	select RAID6_PQ
+	select ASYNC_MEMCPY
+	select ASYNC_XOR
+	select ASYNC_PQ
+	select ASYNC_RAID6_RECOV
 	---help---
 	  A RAID-5 set of N drives with a capacity of C MB per drive provides
 	  the capacity of C * (N - 1) MB, and protects against a failure
@@ -137,44 +154,25 @@ config MD_RAID456
 
 	  If unsure, say Y.
 
-config MD_RAID5_RESHAPE
-	bool "Support adding drives to a raid-5 array"
+config MULTICORE_RAID456
+	bool "RAID-4/RAID-5/RAID-6 Multicore processing (EXPERIMENTAL)"
 	depends on MD_RAID456
-	default y
+	depends on SMP
+	depends on EXPERIMENTAL
 	---help---
-	  A RAID-5 set can be expanded by adding extra drives. This
-	  requires "restriping" the array which means (almost) every
-	  block must be written to a different place.
+	  Enable the raid456 module to dispatch per-stripe raid operations to a
+	  thread pool.
 
-          This option allows such restriping to be done while the array
-	  is online.
-
-	  You will need mdadm version 2.4.1 or later to use this
-	  feature safely.  During the early stage of reshape there is
-	  a critical section where live data is being over-written.  A
-	  crash during this time needs extra care for recovery.  The
-	  newer mdadm takes a copy of the data in the critical section
-	  and will restore it, if necessary, after a crash.
-
-	  The mdadm usage is e.g.
-	       mdadm --grow /dev/md1 --raid-disks=6
-	  to grow '/dev/md1' to having 6 disks.
-
-	  Note: The array can only be expanded, not contracted.
-	  There should be enough spares already present to make the new
-	  array workable.
-
-	  If unsure, say Y.
+	  If unsure, say N.
 
 config MD_MULTIPATH
 	tristate "Multipath I/O support"
 	depends on BLK_DEV_MD
 	help
-	  Multipath-IO is the ability of certain devices to address the same
-	  physical disk over multiple 'IO paths'. The code ensures that such
-	  paths can be defined and handled at runtime, and ensures that a
-	  transparent failover to the backup path(s) happens if a IO errors
-	  arrives on the primary path.
+	  MD_MULTIPATH provides a simple multi-path personality for use
+	  the MD framework.  It is not under active development.  New
+	  projects should consider using DM_MULTIPATH which has more
+	  features and more testing.
 
 	  If unsure, say N.
 
@@ -189,7 +187,6 @@ config MD_FAULTY
 
 config BLK_DEV_DM
 	tristate "Device mapper support"
-	depends on MD
 	---help---
 	  Device-mapper is a low level volume manager.  It works by allowing
 	  people to specify mappings for ranges of logical sectors.  Various
@@ -205,7 +202,7 @@ config BLK_DEV_DM
 
 config DM_DEBUG
 	boolean "Device mapper debugging support"
-	depends on BLK_DEV_DM && EXPERIMENTAL
+	depends on BLK_DEV_DM
 	---help---
 	  Enable this for messages that may help debug device-mapper problems.
 
@@ -213,7 +210,7 @@ config DM_DEBUG
 
 config DM_CRYPT
 	tristate "Crypt target support"
-	depends on BLK_DEV_DM && EXPERIMENTAL
+	depends on BLK_DEV_DM
 	select CRYPTO
 	select CRYPTO_CBC
 	---help---
@@ -231,36 +228,89 @@ config DM_CRYPT
 	  If unsure, say N.
 
 config DM_SNAPSHOT
-       tristate "Snapshot target (EXPERIMENTAL)"
-       depends on BLK_DEV_DM && EXPERIMENTAL
+       tristate "Snapshot target"
+       depends on BLK_DEV_DM
        ---help---
          Allow volume managers to take writable snapshots of a device.
 
 config DM_MIRROR
-       tristate "Mirror target (EXPERIMENTAL)"
-       depends on BLK_DEV_DM && EXPERIMENTAL
+       tristate "Mirror target"
+       depends on BLK_DEV_DM
        ---help---
          Allow volume managers to mirror logical volumes, also
          needed for live data migration tools such as 'pvmove'.
 
+config DM_RAID
+       tristate "RAID 4/5/6 target (EXPERIMENTAL)"
+       depends on BLK_DEV_DM && EXPERIMENTAL
+       select MD_RAID456
+       select BLK_DEV_MD
+       ---help---
+	 A dm target that supports RAID4, RAID5 and RAID6 mappings
+
+	 A RAID-5 set of N drives with a capacity of C MB per drive provides
+	 the capacity of C * (N - 1) MB, and protects against a failure
+	 of a single drive. For a given sector (row) number, (N - 1) drives
+	 contain data sectors, and one drive contains the parity protection.
+	 For a RAID-4 set, the parity blocks are present on a single drive,
+	 while a RAID-5 set distributes the parity across the drives in one
+	 of the available parity distribution methods.
+
+	 A RAID-6 set of N drives with a capacity of C MB per drive
+	 provides the capacity of C * (N - 2) MB, and protects
+	 against a failure of any two drives. For a given sector
+	 (row) number, (N - 2) drives contain data sectors, and two
+	 drives contains two independent redundancy syndromes.  Like
+	 RAID-5, RAID-6 distributes the syndromes across the drives
+	 in one of the available parity distribution methods.
+
+config DM_LOG_USERSPACE
+	tristate "Mirror userspace logging (EXPERIMENTAL)"
+	depends on DM_MIRROR && EXPERIMENTAL && NET
+	select CONNECTOR
+	---help---
+	  The userspace logging module provides a mechanism for
+	  relaying the dm-dirty-log API to userspace.  Log designs
+	  which are more suited to userspace implementation (e.g.
+	  shared storage logs) or experimental logs can be implemented
+	  by leveraging this framework.
+
 config DM_ZERO
-	tristate "Zero target (EXPERIMENTAL)"
-	depends on BLK_DEV_DM && EXPERIMENTAL
+	tristate "Zero target"
+	depends on BLK_DEV_DM
 	---help---
 	  A target that discards writes, and returns all zeroes for
 	  reads.  Useful in some recovery situations.
 
 config DM_MULTIPATH
-	tristate "Multipath target (EXPERIMENTAL)"
-	depends on BLK_DEV_DM && EXPERIMENTAL
+	tristate "Multipath target"
+	depends on BLK_DEV_DM
+	# nasty syntax but means make DM_MULTIPATH independent
+	# of SCSI_DH if the latter isn't defined but if
+	# it is, DM_MULTIPATH must depend on it.  We get a build
+	# error if SCSI_DH=m and DM_MULTIPATH=y
+	depends on SCSI_DH || !SCSI_DH
 	---help---
 	  Allow volume managers to support multipath hardware.
 
-config DM_MULTIPATH_EMC
-	tristate "EMC CX/AX multipath support (EXPERIMENTAL)"
-	depends on DM_MULTIPATH && BLK_DEV_DM && EXPERIMENTAL
+config DM_MULTIPATH_QL
+	tristate "I/O Path Selector based on the number of in-flight I/Os"
+	depends on DM_MULTIPATH
 	---help---
-	  Multipath support for EMC CX/AX series hardware.
+	  This path selector is a dynamic load balancer which selects
+	  the path with the least number of in-flight I/Os.
+
+	  If unsure, say N.
+
+config DM_MULTIPATH_ST
+	tristate "I/O Path Selector based on the service time"
+	depends on DM_MULTIPATH
+	---help---
+	  This path selector is a dynamic load balancer which selects
+	  the path expected to complete the incoming I/O in the shortest
+	  time.
+
+	  If unsure, say N.
 
 config DM_DELAY
 	tristate "I/O delaying target (EXPERIMENTAL)"
@@ -271,6 +321,16 @@ config DM_DELAY
 
 	If unsure, say N.
 
-endmenu
+config DM_UEVENT
+	bool "DM uevents (EXPERIMENTAL)"
+	depends on BLK_DEV_DM && EXPERIMENTAL
+	---help---
+	Generate udev events for DM events.
 
-endif
+config DM_FLAKEY
+       tristate "Flakey target (EXPERIMENTAL)"
+       depends on BLK_DEV_DM && EXPERIMENTAL
+       ---help---
+         A target that intermittently fails I/O for debugging purposes.
+
+endif # MD

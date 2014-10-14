@@ -40,9 +40,11 @@
 #include <linux/idr.h>
 #include <linux/interrupt.h>
 #include <linux/rbtree.h>
+#include <linux/sched.h>
 #include <linux/spinlock.h>
 #include <linux/workqueue.h>
 #include <linux/completion.h>
+#include <linux/slab.h>
 
 #include <rdma/iw_cm.h>
 #include <rdma/ib_addr.h>
@@ -362,6 +364,9 @@ static void destroy_cm_id(struct iw_cm_id *cm_id)
 		 * In either case, must tell the provider to reject.
 		 */
 		cm_id_priv->state = IW_CM_STATE_DESTROYING;
+		spin_unlock_irqrestore(&cm_id_priv->lock, flags);
+		cm_id->device->iwcm->reject(cm_id, NULL, 0);
+		spin_lock_irqsave(&cm_id_priv->lock, flags);
 		break;
 	case IW_CM_STATE_CONN_SENT:
 	case IW_CM_STATE_DESTROYING:
@@ -501,6 +506,8 @@ int iw_cm_accept(struct iw_cm_id *cm_id,
 	qp = cm_id->device->iwcm->get_qp(cm_id->device, iw_param->qpn);
 	if (!qp) {
 		spin_unlock_irqrestore(&cm_id_priv->lock, flags);
+		clear_bit(IWCM_F_CONNECT_WAIT, &cm_id_priv->flags);
+		wake_up_all(&cm_id_priv->connect_wait);
 		return -EINVAL;
 	}
 	cm_id->device->iwcm->add_ref(qp);
@@ -560,6 +567,8 @@ int iw_cm_connect(struct iw_cm_id *cm_id, struct iw_cm_conn_param *iw_param)
 	qp = cm_id->device->iwcm->get_qp(cm_id->device, iw_param->qpn);
 	if (!qp) {
 		spin_unlock_irqrestore(&cm_id_priv->lock, flags);
+		clear_bit(IWCM_F_CONNECT_WAIT, &cm_id_priv->flags);
+		wake_up_all(&cm_id_priv->connect_wait);
 		return -EINVAL;
 	}
 	cm_id->device->iwcm->add_ref(qp);
@@ -839,6 +848,7 @@ static void cm_work_handler(struct work_struct *_work)
 	unsigned long flags;
 	int empty;
 	int ret = 0;
+	int destroy_id;
 
 	spin_lock_irqsave(&cm_id_priv->lock, flags);
 	empty = list_empty(&cm_id_priv->work_list);
@@ -857,9 +867,9 @@ static void cm_work_handler(struct work_struct *_work)
 			destroy_cm_id(&cm_id_priv->id);
 		}
 		BUG_ON(atomic_read(&cm_id_priv->refcount)==0);
+		destroy_id = test_bit(IWCM_F_CALLBACK_DESTROY, &cm_id_priv->flags);
 		if (iwcm_deref_id(cm_id_priv)) {
-			if (test_bit(IWCM_F_CALLBACK_DESTROY,
-				     &cm_id_priv->flags)) {
+			if (destroy_id) {
 				BUG_ON(!list_empty(&cm_id_priv->work_list));
 				free_cm_id(cm_id_priv);
 			}
@@ -941,8 +951,7 @@ static int iwcm_init_qp_init_attr(struct iwcm_id_private *cm_id_priv,
 	case IW_CM_STATE_CONN_RECV:
 	case IW_CM_STATE_ESTABLISHED:
 		*qp_attr_mask = IB_QP_STATE | IB_QP_ACCESS_FLAGS;
-		qp_attr->qp_access_flags = IB_ACCESS_LOCAL_WRITE |
-					   IB_ACCESS_REMOTE_WRITE|
+		qp_attr->qp_access_flags = IB_ACCESS_REMOTE_WRITE|
 					   IB_ACCESS_REMOTE_READ;
 		ret = 0;
 		break;

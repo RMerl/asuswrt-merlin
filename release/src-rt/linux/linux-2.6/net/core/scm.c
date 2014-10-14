@@ -24,6 +24,9 @@
 #include <linux/interrupt.h>
 #include <linux/netdevice.h>
 #include <linux/security.h>
+#include <linux/pid.h>
+#include <linux/nsproxy.h>
+#include <linux/slab.h>
 
 #include <asm/system.h>
 #include <asm/uaccess.h>
@@ -42,11 +45,13 @@
 
 static __inline__ int scm_check_creds(struct ucred *creds)
 {
-	if ((creds->pid == current->tgid || capable(CAP_SYS_ADMIN)) &&
-	    ((creds->uid == current->uid || creds->uid == current->euid ||
-	      creds->uid == current->suid) || capable(CAP_SETUID)) &&
-	    ((creds->gid == current->gid || creds->gid == current->egid ||
-	      creds->gid == current->sgid) || capable(CAP_SETGID))) {
+	const struct cred *cred = current_cred();
+
+	if ((creds->pid == task_tgid_vnr(current) || capable(CAP_SYS_ADMIN)) &&
+	    ((creds->uid == cred->uid   || creds->uid == cred->euid ||
+	      creds->uid == cred->suid) || capable(CAP_SETUID)) &&
+	    ((creds->gid == cred->gid   || creds->gid == cred->egid ||
+	      creds->gid == cred->sgid) || capable(CAP_SETGID))) {
 	       return 0;
 	}
 	return -EPERM;
@@ -74,10 +79,11 @@ static int scm_fp_copy(struct cmsghdr *cmsg, struct scm_fp_list **fplp)
 			return -ENOMEM;
 		*fplp = fpl;
 		fpl->count = 0;
+		fpl->max = SCM_MAX_FD;
 	}
 	fpp = &fpl->fp[fpl->count];
 
-	if (fpl->count + num > SCM_MAX_FD)
+	if (fpl->count + num > fpl->max)
 		return -EINVAL;
 
 	/*
@@ -89,7 +95,7 @@ static int scm_fp_copy(struct cmsghdr *cmsg, struct scm_fp_list **fplp)
 		int fd = fdp[i];
 		struct file *file;
 
-		if (fd < 0 || !(file = fget(fd)))
+		if (fd < 0 || !(file = fget_raw(fd)))
 			return -EBADF;
 		*fpp++ = file;
 		fpl->count++;
@@ -104,11 +110,28 @@ void __scm_destroy(struct scm_cookie *scm)
 
 	if (fpl) {
 		scm->fp = NULL;
-		for (i=fpl->count-1; i>=0; i--)
-			fput(fpl->fp[i]);
-		kfree(fpl);
+		if (current->scm_work_list) {
+			list_add_tail(&fpl->list, current->scm_work_list);
+		} else {
+			LIST_HEAD(work_list);
+
+			current->scm_work_list = &work_list;
+
+			list_add(&fpl->list, &work_list);
+			while (!list_empty(&work_list)) {
+				fpl = list_first_entry(&work_list, struct scm_fp_list, list);
+
+				list_del(&fpl->list);
+				for (i=fpl->count-1; i>=0; i--)
+					fput(fpl->fp[i]);
+				kfree(fpl);
+			}
+
+			current->scm_work_list = NULL;
+		}
 	}
 }
+EXPORT_SYMBOL(__scm_destroy);
 
 int __scm_send(struct socket *sock, struct msghdr *msg, struct scm_cookie *p)
 {
@@ -136,6 +159,8 @@ int __scm_send(struct socket *sock, struct msghdr *msg, struct scm_cookie *p)
 		switch (cmsg->cmsg_type)
 		{
 		case SCM_RIGHTS:
+			if (!sock->ops || sock->ops->family != PF_UNIX)
+				goto error;
 			err=scm_fp_copy(cmsg, &p->fp);
 			if (err<0)
 				goto error;
@@ -147,6 +172,30 @@ int __scm_send(struct socket *sock, struct msghdr *msg, struct scm_cookie *p)
 			err = scm_check_creds(&p->creds);
 			if (err)
 				goto error;
+
+			if (pid_vnr(p->pid) != p->creds.pid) {
+				struct pid *pid;
+				err = -ESRCH;
+				pid = find_get_pid(p->creds.pid);
+				if (!pid)
+					goto error;
+				put_pid(p->pid);
+				p->pid = pid;
+			}
+
+			if ((p->cred->euid != p->creds.uid) ||
+				(p->cred->egid != p->creds.gid)) {
+				struct cred *cred;
+				err = -ENOMEM;
+				cred = prepare_creds();
+				if (!cred)
+					goto error;
+
+				cred->uid = cred->euid = p->creds.uid;
+				cred->gid = cred->egid = p->creds.uid;
+				put_cred(p->cred);
+				p->cred = cred;
+			}
 			break;
 		default:
 			goto error;
@@ -164,10 +213,12 @@ error:
 	scm_destroy(p);
 	return err;
 }
+EXPORT_SYMBOL(__scm_send);
 
 int put_cmsg(struct msghdr * msg, int level, int type, int len, void *data)
 {
-	struct cmsghdr __user *cm = (struct cmsghdr __user *)msg->msg_control;
+	struct cmsghdr __user *cm
+		= (__force struct cmsghdr __user *)msg->msg_control;
 	struct cmsghdr cmhdr;
 	int cmlen = CMSG_LEN(len);
 	int err;
@@ -193,16 +244,20 @@ int put_cmsg(struct msghdr * msg, int level, int type, int len, void *data)
 	if (copy_to_user(CMSG_DATA(cm), data, cmlen - sizeof(struct cmsghdr)))
 		goto out;
 	cmlen = CMSG_SPACE(len);
+	if (msg->msg_controllen < cmlen)
+		cmlen = msg->msg_controllen;
 	msg->msg_control += cmlen;
 	msg->msg_controllen -= cmlen;
 	err = 0;
 out:
 	return err;
 }
+EXPORT_SYMBOL(put_cmsg);
 
 void scm_detach_fds(struct msghdr *msg, struct scm_cookie *scm)
 {
-	struct cmsghdr __user *cm = (struct cmsghdr __user*)msg->msg_control;
+	struct cmsghdr __user *cm
+		= (__force struct cmsghdr __user*)msg->msg_control;
 
 	int fdmax = 0;
 	int fdnum = scm->fp->count;
@@ -222,7 +277,8 @@ void scm_detach_fds(struct msghdr *msg, struct scm_cookie *scm)
 	if (fdnum < fdmax)
 		fdmax = fdnum;
 
-	for (i=0, cmfptr=(int __user *)CMSG_DATA(cm); i<fdmax; i++, cmfptr++)
+	for (i=0, cmfptr=(__force int __user *)CMSG_DATA(cm); i<fdmax;
+	     i++, cmfptr++)
 	{
 		int new_fd;
 		err = security_file_receive(fp[i]);
@@ -266,6 +322,7 @@ void scm_detach_fds(struct msghdr *msg, struct scm_cookie *scm)
 	 */
 	__scm_destroy(scm);
 }
+EXPORT_SYMBOL(scm_detach_fds);
 
 struct scm_fp_list *scm_fp_dup(struct scm_fp_list *fpl)
 {
@@ -275,17 +332,13 @@ struct scm_fp_list *scm_fp_dup(struct scm_fp_list *fpl)
 	if (!fpl)
 		return NULL;
 
-	new_fpl = kmalloc(sizeof(*fpl), GFP_KERNEL);
+	new_fpl = kmemdup(fpl, offsetof(struct scm_fp_list, fp[fpl->count]),
+			  GFP_KERNEL);
 	if (new_fpl) {
-		for (i=fpl->count-1; i>=0; i--)
+		for (i = 0; i < fpl->count; i++)
 			get_file(fpl->fp[i]);
-		memcpy(new_fpl, fpl, sizeof(*fpl));
+		new_fpl->max = new_fpl->count;
 	}
 	return new_fpl;
 }
-
-EXPORT_SYMBOL(__scm_destroy);
-EXPORT_SYMBOL(__scm_send);
-EXPORT_SYMBOL(put_cmsg);
-EXPORT_SYMBOL(scm_detach_fds);
 EXPORT_SYMBOL(scm_fp_dup);

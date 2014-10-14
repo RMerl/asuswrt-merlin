@@ -40,8 +40,8 @@ static void tile_clear(struct vc_data *vc, struct fb_info *info, int sy,
 
 	rect.index = vc->vc_video_erase_char &
 		((vc->vc_hi_font_mask) ? 0x1ff : 0xff);
-	rect.fg = attr_fgcol_ec(fgshift, vc);
-	rect.bg = attr_bgcol_ec(bgshift, vc);
+	rect.fg = attr_fgcol_ec(fgshift, vc, info);
+	rect.bg = attr_bgcol_ec(bgshift, vc, info);
 	rect.sx = sx;
 	rect.sy = sy;
 	rect.width = width;
@@ -83,7 +83,7 @@ static void tile_cursor(struct vc_data *vc, struct fb_info *info, int mode,
 			int softback_lines, int fg, int bg)
 {
 	struct fb_tilecursor cursor;
-	int use_sw = (vc->vc_cursor_type & 0x01);
+	int use_sw = (vc->vc_cursor_type & 0x10);
 
 	cursor.sx = vc->vc_x;
 	cursor.sy = vc->vc_y;

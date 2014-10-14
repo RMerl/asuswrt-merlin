@@ -13,7 +13,7 @@
 
 /**
  * match_one: - Determines if a string matches a simple pattern
- * @s: the string to examine for presense of the pattern
+ * @s: the string to examine for presence of the pattern
  * @p: the string containing the pattern
  * @args: array of %MAX_OPT_ARGS &substring_t elements. Used to return match
  * locations.
@@ -103,7 +103,7 @@ static int match_one(char *s, const char *p, substring_t args[])
  * format identifiers which will be taken into account when matching the
  * tokens, and whose locations will be returned in the @args array.
  */
-int match_token(char *s, match_table_t table, substring_t args[])
+int match_token(char *s, const match_table_t table, substring_t args[])
 {
 	const struct match_token *p;
 
@@ -128,12 +128,13 @@ static int match_number(substring_t *s, int *result, int base)
 	char *endp;
 	char *buf;
 	int ret;
+	size_t len = s->to - s->from;
 
-	buf = kmalloc(s->to - s->from + 1, GFP_KERNEL);
+	buf = kmalloc(len + 1, GFP_KERNEL);
 	if (!buf)
 		return -ENOMEM;
-	memcpy(buf, s->from, s->to - s->from);
-	buf[s->to - s->from] = '\0';
+	memcpy(buf, s->from, len);
+	buf[len] = '\0';
 	*result = simple_strtol(buf, &endp, base);
 	ret = 0;
 	if (endp == buf)
@@ -185,18 +186,25 @@ int match_hex(substring_t *s, int *result)
 }
 
 /**
- * match_strcpy: - copies the characters from a substring_t to a string
- * @to: string to copy characters to.
- * @s: &substring_t to copy
+ * match_strlcpy: - Copy the characters from a substring_t to a sized buffer
+ * @dest: where to copy to
+ * @src: &substring_t to copy
+ * @size: size of destination buffer
  *
- * Description: Copies the set of characters represented by the given
- * &substring_t @s to the c-style string @to. Caller guarantees that @to is
- * large enough to hold the characters of @s.
+ * Description: Copy the characters in &substring_t @src to the
+ * c-style string @dest.  Copy no more than @size - 1 characters, plus
+ * the terminating NUL.  Return length of @src.
  */
-void match_strcpy(char *to, const substring_t *s)
+size_t match_strlcpy(char *dest, const substring_t *src, size_t size)
 {
-	memcpy(to, s->from, s->to - s->from);
-	to[s->to - s->from] = '\0';
+	size_t ret = src->to - src->from;
+
+	if (size) {
+		size_t len = ret >= size ? size - 1 : ret;
+		memcpy(dest, src->from, len);
+		dest[len] = '\0';
+	}
+	return ret;
 }
 
 /**
@@ -209,9 +217,10 @@ void match_strcpy(char *to, const substring_t *s)
  */
 char *match_strdup(const substring_t *s)
 {
-	char *p = kmalloc(s->to - s->from + 1, GFP_KERNEL);
+	size_t sz = s->to - s->from + 1;
+	char *p = kmalloc(sz, GFP_KERNEL);
 	if (p)
-		match_strcpy(p, s);
+		match_strlcpy(p, s, sz);
 	return p;
 }
 
@@ -219,5 +228,5 @@ EXPORT_SYMBOL(match_token);
 EXPORT_SYMBOL(match_int);
 EXPORT_SYMBOL(match_octal);
 EXPORT_SYMBOL(match_hex);
-EXPORT_SYMBOL(match_strcpy);
+EXPORT_SYMBOL(match_strlcpy);
 EXPORT_SYMBOL(match_strdup);

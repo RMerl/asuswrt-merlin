@@ -36,7 +36,7 @@ irqreturn_t psc_irq(int, void *);
  * Debugging dump, used in various places to see what's going on.
  */
 
-void psc_debug_dump(void)
+static void psc_debug_dump(void)
 {
 	int	i;
 
@@ -55,7 +55,7 @@ void psc_debug_dump(void)
  * expanded to cover what I think are the other 7 channels.
  */
 
-void psc_dma_die_die_die(void)
+static void psc_dma_die_die_die(void)
 {
 	int i;
 
@@ -88,7 +88,7 @@ void __init psc_init(void)
 
 	/*
 	 * The PSC is always at the same spot, but using psc
-	 * keeps things consisant with the psc_xxxx functions.
+	 * keeps things consistent with the psc_xxxx functions.
 	 */
 
 	psc = (void *) PSC_BASE;
@@ -117,10 +117,14 @@ void __init psc_init(void)
 
 void __init psc_register_interrupts(void)
 {
-	request_irq(IRQ_AUTO_3, psc_irq, 0, "psc3", (void *) 0x30);
-	request_irq(IRQ_AUTO_4, psc_irq, 0, "psc4", (void *) 0x40);
-	request_irq(IRQ_AUTO_5, psc_irq, 0, "psc5", (void *) 0x50);
-	request_irq(IRQ_AUTO_6, psc_irq, 0, "psc6", (void *) 0x60);
+	if (request_irq(IRQ_AUTO_3, psc_irq, 0, "psc3", (void *) 0x30))
+		pr_err("Couldn't register psc%d interrupt\n", 3);
+	if (request_irq(IRQ_AUTO_4, psc_irq, 0, "psc4", (void *) 0x40))
+		pr_err("Couldn't register psc%d interrupt\n", 4);
+	if (request_irq(IRQ_AUTO_5, psc_irq, 0, "psc5", (void *) 0x50))
+		pr_err("Couldn't register psc%d interrupt\n", 5);
+	if (request_irq(IRQ_AUTO_6, psc_irq, 0, "psc6", (void *) 0x60))
+		pr_err("Couldn't register psc%d interrupt\n", 6);
 }
 
 /*

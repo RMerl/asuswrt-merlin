@@ -33,7 +33,7 @@
 
 #include "qe_ic.h"
 
-static DEFINE_SPINLOCK(qe_ic_lock);
+static DEFINE_RAW_SPINLOCK(qe_ic_lock);
 
 static struct qe_ic_info qe_ic_info[] = {
 	[1] = {
@@ -189,35 +189,40 @@ static inline void qe_ic_write(volatile __be32  __iomem * base, unsigned int reg
 
 static inline struct qe_ic *qe_ic_from_irq(unsigned int virq)
 {
-	return irq_desc[virq].chip_data;
+	return irq_get_chip_data(virq);
+}
+
+static inline struct qe_ic *qe_ic_from_irq_data(struct irq_data *d)
+{
+	return irq_data_get_irq_chip_data(d);
 }
 
 #define virq_to_hw(virq)	((unsigned int)irq_map[virq].hwirq)
 
-static void qe_ic_unmask_irq(unsigned int virq)
+static void qe_ic_unmask_irq(struct irq_data *d)
 {
-	struct qe_ic *qe_ic = qe_ic_from_irq(virq);
-	unsigned int src = virq_to_hw(virq);
+	struct qe_ic *qe_ic = qe_ic_from_irq_data(d);
+	unsigned int src = virq_to_hw(d->irq);
 	unsigned long flags;
 	u32 temp;
 
-	spin_lock_irqsave(&qe_ic_lock, flags);
+	raw_spin_lock_irqsave(&qe_ic_lock, flags);
 
 	temp = qe_ic_read(qe_ic->regs, qe_ic_info[src].mask_reg);
 	qe_ic_write(qe_ic->regs, qe_ic_info[src].mask_reg,
 		    temp | qe_ic_info[src].mask);
 
-	spin_unlock_irqrestore(&qe_ic_lock, flags);
+	raw_spin_unlock_irqrestore(&qe_ic_lock, flags);
 }
 
-static void qe_ic_mask_irq(unsigned int virq)
+static void qe_ic_mask_irq(struct irq_data *d)
 {
-	struct qe_ic *qe_ic = qe_ic_from_irq(virq);
-	unsigned int src = virq_to_hw(virq);
+	struct qe_ic *qe_ic = qe_ic_from_irq_data(d);
+	unsigned int src = virq_to_hw(d->irq);
 	unsigned long flags;
 	u32 temp;
 
-	spin_lock_irqsave(&qe_ic_lock, flags);
+	raw_spin_lock_irqsave(&qe_ic_lock, flags);
 
 	temp = qe_ic_read(qe_ic->regs, qe_ic_info[src].mask_reg);
 	qe_ic_write(qe_ic->regs, qe_ic_info[src].mask_reg,
@@ -233,22 +238,20 @@ static void qe_ic_mask_irq(unsigned int virq)
 	 */
 	mb();
 
-	spin_unlock_irqrestore(&qe_ic_lock, flags);
+	raw_spin_unlock_irqrestore(&qe_ic_lock, flags);
 }
 
 static struct irq_chip qe_ic_irq_chip = {
-	.typename = " QEIC  ",
-	.unmask = qe_ic_unmask_irq,
-	.mask = qe_ic_mask_irq,
-	.mask_ack = qe_ic_mask_irq,
+	.name = "QEIC",
+	.irq_unmask = qe_ic_unmask_irq,
+	.irq_mask = qe_ic_mask_irq,
+	.irq_mask_ack = qe_ic_mask_irq,
 };
 
 static int qe_ic_host_match(struct irq_host *h, struct device_node *node)
 {
-	struct qe_ic *qe_ic = h->host_data;
-
 	/* Exact match, unless qe_ic node is NULL */
-	return qe_ic->of_node == NULL || qe_ic->of_node == node;
+	return h->of_node == NULL || h->of_node == node;
 }
 
 static int qe_ic_host_map(struct irq_host *h, unsigned int virq,
@@ -258,22 +261,22 @@ static int qe_ic_host_map(struct irq_host *h, unsigned int virq,
 	struct irq_chip *chip;
 
 	if (qe_ic_info[hw].mask == 0) {
-		printk(KERN_ERR "Can't map reserved IRQ \n");
+		printk(KERN_ERR "Can't map reserved IRQ\n");
 		return -EINVAL;
 	}
 	/* Default chip */
 	chip = &qe_ic->hc_irq;
 
-	set_irq_chip_data(virq, qe_ic);
-	get_irq_desc(virq)->status |= IRQ_LEVEL;
+	irq_set_chip_data(virq, qe_ic);
+	irq_set_status_flags(virq, IRQ_LEVEL);
 
-	set_irq_chip_and_handler(virq, chip, handle_level_irq);
+	irq_set_chip_and_handler(virq, chip, handle_level_irq);
 
 	return 0;
 }
 
 static int qe_ic_host_xlate(struct irq_host *h, struct device_node *ct,
-			    u32 * intspec, unsigned int intsize,
+			    const u32 * intspec, unsigned int intsize,
 			    irq_hw_number_t * out_hwirq,
 			    unsigned int *out_flags)
 {
@@ -323,47 +326,28 @@ unsigned int qe_ic_get_high_irq(struct qe_ic *qe_ic)
 	return irq_linear_revmap(qe_ic->irqhost, irq);
 }
 
-void qe_ic_cascade_low(unsigned int irq, struct irq_desc *desc)
-{
-	struct qe_ic *qe_ic = desc->handler_data;
-	unsigned int cascade_irq = qe_ic_get_low_irq(qe_ic);
-
-	if (cascade_irq != NO_IRQ)
-		generic_handle_irq(cascade_irq);
-}
-
-void qe_ic_cascade_high(unsigned int irq, struct irq_desc *desc)
-{
-	struct qe_ic *qe_ic = desc->handler_data;
-	unsigned int cascade_irq = qe_ic_get_high_irq(qe_ic);
-
-	if (cascade_irq != NO_IRQ)
-		generic_handle_irq(cascade_irq);
-}
-
-void __init qe_ic_init(struct device_node *node, unsigned int flags)
+void __init qe_ic_init(struct device_node *node, unsigned int flags,
+		void (*low_handler)(unsigned int irq, struct irq_desc *desc),
+		void (*high_handler)(unsigned int irq, struct irq_desc *desc))
 {
 	struct qe_ic *qe_ic;
 	struct resource res;
 	u32 temp = 0, ret, high_active = 0;
 
-	qe_ic = alloc_bootmem(sizeof(struct qe_ic));
-	if (qe_ic == NULL)
-		return;
-
-	memset(qe_ic, 0, sizeof(struct qe_ic));
-	qe_ic->of_node = of_node_get(node);
-
-	qe_ic->irqhost = irq_alloc_host(IRQ_HOST_MAP_LINEAR,
-					NR_QE_IC_INTS, &qe_ic_host_ops, 0);
-	if (qe_ic->irqhost == NULL) {
-		of_node_put(node);
-		return;
-	}
-
 	ret = of_address_to_resource(node, 0, &res);
 	if (ret)
 		return;
+
+	qe_ic = kzalloc(sizeof(*qe_ic), GFP_KERNEL);
+	if (qe_ic == NULL)
+		return;
+
+	qe_ic->irqhost = irq_alloc_host(node, IRQ_HOST_MAP_LINEAR,
+					NR_QE_IC_INTS, &qe_ic_host_ops, 0);
+	if (qe_ic->irqhost == NULL) {
+		kfree(qe_ic);
+		return;
+	}
 
 	qe_ic->regs = ioremap(res.start, res.end - res.start + 1);
 
@@ -375,6 +359,7 @@ void __init qe_ic_init(struct device_node *node, unsigned int flags)
 
 	if (qe_ic->virq_low == NO_IRQ) {
 		printk(KERN_ERR "Failed to map QE_IC low IRQ\n");
+		kfree(qe_ic);
 		return;
 	}
 
@@ -401,15 +386,14 @@ void __init qe_ic_init(struct device_node *node, unsigned int flags)
 
 	qe_ic_write(qe_ic->regs, QEIC_CICR, temp);
 
-	set_irq_data(qe_ic->virq_low, qe_ic);
-	set_irq_chained_handler(qe_ic->virq_low, qe_ic_cascade_low);
+	irq_set_handler_data(qe_ic->virq_low, qe_ic);
+	irq_set_chained_handler(qe_ic->virq_low, low_handler);
 
-	if (qe_ic->virq_high != NO_IRQ) {
-		set_irq_data(qe_ic->virq_high, qe_ic);
-		set_irq_chained_handler(qe_ic->virq_high, qe_ic_cascade_high);
+	if (qe_ic->virq_high != NO_IRQ &&
+			qe_ic->virq_high != qe_ic->virq_low) {
+		irq_set_handler_data(qe_ic->virq_high, qe_ic);
+		irq_set_chained_handler(qe_ic->virq_high, high_handler);
 	}
-
-	printk("QEIC (%d IRQ sources) at %p\n", NR_QE_IC_INTS, qe_ic->regs);
 }
 
 void qe_ic_set_highest_priority(unsigned int virq, int high)
@@ -503,7 +487,7 @@ int qe_ic_set_high_priority(unsigned int virq, unsigned int priority, int high)
 }
 
 static struct sysdev_class qe_ic_sysclass = {
-	set_kset_name("qe_ic"),
+	.name = "qe_ic",
 };
 
 static struct sys_device device_qe_ic = {

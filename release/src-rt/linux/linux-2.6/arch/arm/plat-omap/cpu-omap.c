@@ -20,12 +20,15 @@
 #include <linux/init.h>
 #include <linux/err.h>
 #include <linux/clk.h>
+#include <linux/io.h>
 
-#include <asm/hardware.h>
-#include <asm/io.h>
+#include <mach/hardware.h>
+#include <plat/clock.h>
 #include <asm/system.h>
 
 #define VERY_HI_RATE	900000000
+
+static struct cpufreq_frequency_table *freq_table;
 
 #ifdef CONFIG_ARCH_OMAP1
 #define MPU_CLK		"mpu"
@@ -33,43 +36,36 @@
 #define MPU_CLK		"virt_prcm_set"
 #endif
 
+static struct clk *mpu_clk;
+
 /* TODO: Add support for SDRAM timing changes */
 
-int omap_verify_speed(struct cpufreq_policy *policy)
+static int omap_verify_speed(struct cpufreq_policy *policy)
 {
-	struct clk * mpu_clk;
+	if (freq_table)
+		return cpufreq_frequency_table_verify(policy, freq_table);
 
 	if (policy->cpu)
 		return -EINVAL;
 
 	cpufreq_verify_within_limits(policy, policy->cpuinfo.min_freq,
 				     policy->cpuinfo.max_freq);
-	mpu_clk = clk_get(NULL, MPU_CLK);
-	if (IS_ERR(mpu_clk))
-		return PTR_ERR(mpu_clk);
+
 	policy->min = clk_round_rate(mpu_clk, policy->min * 1000) / 1000;
 	policy->max = clk_round_rate(mpu_clk, policy->max * 1000) / 1000;
 	cpufreq_verify_within_limits(policy, policy->cpuinfo.min_freq,
 				     policy->cpuinfo.max_freq);
-	clk_put(mpu_clk);
-
 	return 0;
 }
 
-unsigned int omap_getspeed(unsigned int cpu)
+static unsigned int omap_getspeed(unsigned int cpu)
 {
-	struct clk * mpu_clk;
 	unsigned long rate;
 
 	if (cpu)
 		return 0;
 
-	mpu_clk = clk_get(NULL, MPU_CLK);
-	if (IS_ERR(mpu_clk))
-		return 0;
 	rate = clk_get_rate(mpu_clk) / 1000;
-	clk_put(mpu_clk);
-
 	return rate;
 }
 
@@ -77,29 +73,37 @@ static int omap_target(struct cpufreq_policy *policy,
 		       unsigned int target_freq,
 		       unsigned int relation)
 {
-	struct clk * mpu_clk;
 	struct cpufreq_freqs freqs;
 	int ret = 0;
 
-	mpu_clk = clk_get(NULL, MPU_CLK);
-	if (IS_ERR(mpu_clk))
-		return PTR_ERR(mpu_clk);
+	/* Ensure desired rate is within allowed range.  Some govenors
+	 * (ondemand) will just pass target_freq=0 to get the minimum. */
+	if (target_freq < policy->min)
+		target_freq = policy->min;
+	if (target_freq > policy->max)
+		target_freq = policy->max;
 
 	freqs.old = omap_getspeed(0);
 	freqs.new = clk_round_rate(mpu_clk, target_freq * 1000) / 1000;
 	freqs.cpu = 0;
 
+	if (freqs.old == freqs.new)
+		return ret;
+
 	cpufreq_notify_transition(&freqs, CPUFREQ_PRECHANGE);
-	ret = clk_set_rate(mpu_clk, target_freq * 1000);
+#ifdef CONFIG_CPU_FREQ_DEBUG
+	printk(KERN_DEBUG "cpufreq-omap: transition: %u --> %u\n",
+	       freqs.old, freqs.new);
+#endif
+	ret = clk_set_rate(mpu_clk, freqs.new * 1000);
 	cpufreq_notify_transition(&freqs, CPUFREQ_POSTCHANGE);
-	clk_put(mpu_clk);
 
 	return ret;
 }
 
-static int __init omap_cpu_init(struct cpufreq_policy *policy)
+static int __cpuinit omap_cpu_init(struct cpufreq_policy *policy)
 {
-	struct clk * mpu_clk;
+	int result = 0;
 
 	mpu_clk = clk_get(NULL, MPU_CLK);
 	if (IS_ERR(mpu_clk))
@@ -107,15 +111,38 @@ static int __init omap_cpu_init(struct cpufreq_policy *policy)
 
 	if (policy->cpu != 0)
 		return -EINVAL;
+
 	policy->cur = policy->min = policy->max = omap_getspeed(0);
-	policy->governor = CPUFREQ_DEFAULT_GOVERNOR;
-	policy->cpuinfo.min_freq = clk_round_rate(mpu_clk, 0) / 1000;
-	policy->cpuinfo.max_freq = clk_round_rate(mpu_clk, VERY_HI_RATE) / 1000;
-	policy->cpuinfo.transition_latency = CPUFREQ_ETERNAL;
-	clk_put(mpu_clk);
+
+	clk_init_cpufreq_table(&freq_table);
+	if (freq_table) {
+		result = cpufreq_frequency_table_cpuinfo(policy, freq_table);
+		if (!result)
+			cpufreq_frequency_table_get_attr(freq_table,
+							policy->cpu);
+	} else {
+		policy->cpuinfo.min_freq = clk_round_rate(mpu_clk, 0) / 1000;
+		policy->cpuinfo.max_freq = clk_round_rate(mpu_clk,
+							VERY_HI_RATE) / 1000;
+	}
+
+	/* FIXME: what's the actual transition time? */
+	policy->cpuinfo.transition_latency = 300 * 1000;
 
 	return 0;
 }
+
+static int omap_cpu_exit(struct cpufreq_policy *policy)
+{
+	clk_exit_cpufreq_table(&freq_table);
+	clk_put(mpu_clk);
+	return 0;
+}
+
+static struct freq_attr *omap_cpufreq_attr[] = {
+	&cpufreq_freq_attr_scaling_available_freqs,
+	NULL,
+};
 
 static struct cpufreq_driver omap_driver = {
 	.flags		= CPUFREQ_STICKY,
@@ -123,7 +150,9 @@ static struct cpufreq_driver omap_driver = {
 	.target		= omap_target,
 	.get		= omap_getspeed,
 	.init		= omap_cpu_init,
+	.exit		= omap_cpu_exit,
 	.name		= "omap",
+	.attr		= omap_cpufreq_attr,
 };
 
 static int __init omap_cpufreq_init(void)
@@ -132,3 +161,11 @@ static int __init omap_cpufreq_init(void)
 }
 
 arch_initcall(omap_cpufreq_init);
+
+/*
+ * if ever we want to remove this, upon cleanup call:
+ *
+ * cpufreq_unregister_driver()
+ * cpufreq_frequency_table_put_attr()
+ */
+

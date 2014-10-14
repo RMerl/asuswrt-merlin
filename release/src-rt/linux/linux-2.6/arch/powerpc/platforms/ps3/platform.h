@@ -41,12 +41,17 @@ void ps3_mm_shutdown(void);
 /* irq */
 
 void ps3_init_IRQ(void);
+void ps3_shutdown_IRQ(int cpu);
 void __init ps3_register_ipi_debug_brk(unsigned int cpu, unsigned int virq);
 
 /* smp */
 
 void smp_init_ps3(void);
+#ifdef CONFIG_SMP
 void ps3_smp_cleanup_cpu(int cpu);
+#else
+static inline void ps3_smp_cleanup_cpu(int cpu) { }
+#endif
 
 /* time */
 
@@ -57,8 +62,8 @@ int ps3_set_rtc_time(struct rtc_time *time);
 
 /* os area */
 
-int __init ps3_os_area_init(void);
-u64 ps3_os_area_rtc_diff(void);
+void __init ps3_os_area_save_params(void);
+void __init ps3_os_area_init(void);
 
 /* spu */
 
@@ -86,7 +91,7 @@ enum ps3_dev_type {
 
 int ps3_repository_read_bus_str(unsigned int bus_index, const char *bus_str,
 	u64 *value);
-int ps3_repository_read_bus_id(unsigned int bus_index, unsigned int *bus_id);
+int ps3_repository_read_bus_id(unsigned int bus_index, u64 *bus_id);
 int ps3_repository_read_bus_type(unsigned int bus_index,
 	enum ps3_bus_type *bus_type);
 int ps3_repository_read_bus_num_dev(unsigned int bus_index,
@@ -110,7 +115,7 @@ enum ps3_reg_type {
 int ps3_repository_read_dev_str(unsigned int bus_index,
 	unsigned int dev_index, const char *dev_str, u64 *value);
 int ps3_repository_read_dev_id(unsigned int bus_index, unsigned int dev_index,
-	unsigned int *dev_id);
+	u64 *dev_id);
 int ps3_repository_read_dev_type(unsigned int bus_index,
 	unsigned int dev_index, enum ps3_dev_type *dev_type);
 int ps3_repository_read_dev_intr(unsigned int bus_index,
@@ -131,22 +136,22 @@ int ps3_repository_read_dev_reg(unsigned int bus_index,
 struct ps3_repository_device {
 	unsigned int bus_index;
 	unsigned int dev_index;
-	struct ps3_device_id did;
+	enum ps3_bus_type bus_type;
+	enum ps3_dev_type dev_type;
+	u64 bus_id;
+	u64 dev_id;
 };
 
-int ps3_repository_find_device(enum ps3_bus_type bus_type,
-	enum ps3_dev_type dev_type,
-	const struct ps3_repository_device *start_dev,
-	struct ps3_repository_device *dev);
-static inline int ps3_repository_find_first_device(
-	enum ps3_bus_type bus_type, enum ps3_dev_type dev_type,
-	struct ps3_repository_device *dev)
-{
-	return ps3_repository_find_device(bus_type, dev_type, NULL, dev);
-}
-int ps3_repository_find_interrupt(const struct ps3_repository_device *dev,
+int ps3_repository_find_device(struct ps3_repository_device *repo);
+int ps3_repository_find_device_by_id(struct ps3_repository_device *repo,
+				     u64 bus_id, u64 dev_id);
+int ps3_repository_find_devices(enum ps3_bus_type bus_type,
+	int (*callback)(const struct ps3_repository_device *repo));
+int ps3_repository_find_bus(enum ps3_bus_type bus_type, unsigned int from,
+	unsigned int *bus_index);
+int ps3_repository_find_interrupt(const struct ps3_repository_device *repo,
 	enum ps3_interrupt_type intr_type, unsigned int *interrupt_id);
-int ps3_repository_find_reg(const struct ps3_repository_device *dev,
+int ps3_repository_find_reg(const struct ps3_repository_device *repo,
 	enum ps3_reg_type reg_type, u64 *bus_addr, u64 *len);
 
 /* repository block device info */
@@ -173,10 +178,10 @@ int ps3_repository_read_stor_dev_region(unsigned int bus_index,
 	unsigned int dev_index, unsigned int region_index,
 	unsigned int *region_id, u64 *region_start, u64 *region_size);
 
-/* repository pu and memory info */
+/* repository logical pu and memory info */
 
-int ps3_repository_read_num_pu(unsigned int *num_pu);
-int ps3_repository_read_ppe_id(unsigned int *pu_index, unsigned int *ppe_id);
+int ps3_repository_read_num_pu(u64 *num_pu);
+int ps3_repository_read_pu_id(unsigned int pu_index, u64 *pu_id);
 int ps3_repository_read_rm_base(unsigned int ppe_id, u64 *rm_base);
 int ps3_repository_read_rm_size(unsigned int ppe_id, u64 *rm_size);
 int ps3_repository_read_region_total(u64 *region_total);
@@ -187,8 +192,14 @@ int ps3_repository_read_mm_info(u64 *rm_base, u64 *rm_size,
 
 int ps3_repository_read_num_be(unsigned int *num_be);
 int ps3_repository_read_be_node_id(unsigned int be_index, u64 *node_id);
+int ps3_repository_read_be_id(u64 node_id, u64 *be_id);
 int ps3_repository_read_tb_freq(u64 node_id, u64 *tb_freq);
 int ps3_repository_read_be_tb_freq(unsigned int be_index, u64 *tb_freq);
+
+/* repository performance monitor info */
+
+int ps3_repository_read_lpm_privileges(unsigned int be_index, u64 *lpar,
+	u64 *rights);
 
 /* repository 'Other OS' area */
 
@@ -215,5 +226,10 @@ int ps3_repository_read_num_spu_reserved(unsigned int *num_spu_reserved);
 int ps3_repository_read_num_spu_resource_id(unsigned int *num_resource_id);
 int ps3_repository_read_spu_resource_id(unsigned int res_index,
 	enum ps3_spu_resource_type* resource_type, unsigned int *resource_id);
+
+/* repository vuart info */
+
+int ps3_repository_read_vuart_av_port(unsigned int *port);
+int ps3_repository_read_vuart_sysmgr_port(unsigned int *port);
 
 #endif

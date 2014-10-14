@@ -144,7 +144,7 @@ static void init_shared_classes(void)
 
 #define HARDIRQ_ENTER()				\
 	local_irq_disable();			\
-	irq_enter();				\
+	__irq_enter();				\
 	WARN_ON(!in_irq());
 
 #define HARDIRQ_EXIT()				\
@@ -157,11 +157,11 @@ static void init_shared_classes(void)
 #define SOFTIRQ_ENTER()				\
 		local_bh_disable();		\
 		local_irq_disable();		\
-		trace_softirq_enter();		\
+		lockdep_softirq_enter();	\
 		WARN_ON(!in_softirq());
 
 #define SOFTIRQ_EXIT()				\
-		trace_softirq_exit();		\
+		lockdep_softirq_exit();		\
 		local_irq_enable();		\
 		local_bh_enable();
 

@@ -17,6 +17,7 @@
 #include <linux/platform_device.h>
 #include <linux/mm.h>
 #include <linux/sched.h>
+#include <linux/slab.h>
 #include <asm/dma.h>
 
 DEFINE_SPINLOCK(dma_spin_lock);
@@ -31,8 +32,8 @@ struct dma_info *get_dma_info(unsigned int chan)
 	 * the channel is.
 	 */
 	list_for_each_entry(info, &registered_dmac_list, list) {
-		if ((chan <  info->first_channel_nr) ||
-		    (chan >= info->first_channel_nr + info->nr_channels))
+		if ((chan <  info->first_vchannel_nr) ||
+		    (chan >= info->first_vchannel_nr + info->nr_channels))
 			continue;
 
 		return info;
@@ -82,7 +83,7 @@ struct dma_channel *get_dma_channel(unsigned int chan)
 
 	for (i = 0; i < info->nr_channels; i++) {
 		channel = &info->channels[i];
-		if (channel->chan == chan)
+		if (channel->vchan == chan)
 			return channel;
 	}
 
@@ -350,7 +351,7 @@ int register_dmac(struct dma_info *info)
 
 	BUG_ON((info->flags & DMAC_CHANNELS_CONFIGURED) && !info->channels);
 
-	info->pdev = platform_device_register_simple((char *)info->name, -1,
+	info->pdev = platform_device_register_simple(info->name, -1,
 						     NULL, 0);
 	if (IS_ERR(info->pdev))
 		return PTR_ERR(info->pdev);
@@ -369,6 +370,7 @@ int register_dmac(struct dma_info *info)
 	}
 
 	total_channels = get_nr_channels();
+	info->first_vchannel_nr = total_channels;
 	for (i = 0; i < info->nr_channels; i++) {
 		struct dma_channel *chan = &info->channels[i];
 
@@ -410,8 +412,8 @@ EXPORT_SYMBOL(unregister_dmac);
 static int __init dma_api_init(void)
 {
 	printk(KERN_NOTICE "DMA: Registering DMA API.\n");
-	create_proc_read_entry("dma", 0, 0, dma_read_proc, 0);
-	return 0;
+	return create_proc_read_entry("dma", 0, 0, dma_read_proc, 0)
+		    ? 0 : -ENOMEM;
 }
 subsys_initcall(dma_api_init);
 

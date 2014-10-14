@@ -21,8 +21,7 @@
 
 #include <asm/io.h>
 #include <asm/mtrr.h>
-
-#include <setup_arch.h>
+#include <asm/visws/sgivw.h>
 
 #define INCLUDE_TIMING_TABLE_DATA
 #define DBE_REG_BASE par->regs
@@ -48,7 +47,7 @@ static int ywrap = 0;
 
 static int flatpanel_id = -1;
 
-static struct fb_fix_screeninfo sgivwfb_fix __initdata = {
+static struct fb_fix_screeninfo sgivwfb_fix __devinitdata = {
 	.id		= "SGI Vis WS FB",
 	.type		= FB_TYPE_PACKED_PIXELS,
         .visual		= FB_VISUAL_PSEUDOCOLOR,
@@ -58,7 +57,7 @@ static struct fb_fix_screeninfo sgivwfb_fix __initdata = {
 	.line_length	= 640,
 };
 
-static struct fb_var_screeninfo sgivwfb_var __initdata = {
+static struct fb_var_screeninfo sgivwfb_var __devinitdata = {
 	/* 640x480, 8 bpp */
 	.xres		= 640,
 	.yres		= 480,
@@ -80,7 +79,7 @@ static struct fb_var_screeninfo sgivwfb_var __initdata = {
 	.vmode		= FB_VMODE_NONINTERLACED
 };
 
-static struct fb_var_screeninfo sgivwfb_var1600sw __initdata = {
+static struct fb_var_screeninfo sgivwfb_var1600sw __devinitdata = {
 	/* 1600x1024, 8 bpp */
 	.xres		= 1600,
 	.yres		= 1024,
@@ -261,13 +260,13 @@ static int sgivwfb_check_var(struct fb_var_screeninfo *var,
 	var->grayscale = 0;	/* No grayscale for now */
 
 	/* determine valid resolution and timing */
-	for (min_mode = 0; min_mode < DBE_VT_SIZE; min_mode++) {
+	for (min_mode = 0; min_mode < ARRAY_SIZE(dbeVTimings); min_mode++) {
 		if (dbeVTimings[min_mode].width >= var->xres &&
 		    dbeVTimings[min_mode].height >= var->yres)
 			break;
 	}
 
-	if (min_mode == DBE_VT_SIZE)
+	if (min_mode == ARRAY_SIZE(dbeVTimings))
 		return -EINVAL;	/* Resolution to high */
 
 	/* XXX FIXME - should try to pick best refresh rate */
@@ -746,13 +745,13 @@ int __init sgivwfb_setup(char *options)
 /*
  *  Initialisation
  */
-static int __init sgivwfb_probe(struct platform_device *dev)
+static int __devinit sgivwfb_probe(struct platform_device *dev)
 {
 	struct sgivw_par *par;
 	struct fb_info *info;
 	char *monitor;
 
-	info = framebuffer_alloc(sizeof(struct sgivw_par) + sizeof(u32) * 256, &dev->dev);
+	info = framebuffer_alloc(sizeof(struct sgivw_par) + sizeof(u32) * 16, &dev->dev);
 	if (!info)
 		return -ENOMEM;
 	par = info->par;
@@ -826,7 +825,7 @@ fail_ioremap_regs:
 	return -ENXIO;
 }
 
-static int sgivwfb_remove(struct platform_device *dev)
+static int __devexit sgivwfb_remove(struct platform_device *dev)
 {
 	struct fb_info *info = platform_get_drvdata(dev);
 
@@ -838,13 +837,15 @@ static int sgivwfb_remove(struct platform_device *dev)
 		iounmap(par->regs);
 		iounmap(info->screen_base);
 		release_mem_region(DBE_REG_PHYS, DBE_REG_SIZE);
+		fb_dealloc_cmap(&info->cmap);
+		framebuffer_release(info);
 	}
 	return 0;
 }
 
 static struct platform_driver sgivwfb_driver = {
 	.probe	= sgivwfb_probe,
-	.remove	= sgivwfb_remove,
+	.remove	= __devexit_p(sgivwfb_remove),
 	.driver	= {
 		.name	= "sgivwfb",
 	},

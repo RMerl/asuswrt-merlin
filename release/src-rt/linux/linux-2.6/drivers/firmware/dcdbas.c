@@ -23,6 +23,7 @@
 #include <linux/platform_device.h>
 #include <linux/dma-mapping.h>
 #include <linux/errno.h>
+#include <linux/gfp.h>
 #include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/mc146818rtc.h>
@@ -35,7 +36,6 @@
 #include <linux/types.h>
 #include <linux/mutex.h>
 #include <asm/io.h>
-#include <asm/semaphore.h>
 
 #include "dcdbas.h"
 
@@ -64,7 +64,7 @@ static void smi_data_buf_free(void)
 		return;
 
 	dev_dbg(&dcdbas_pdev->dev, "%s: phys: %x size: %lu\n",
-		__FUNCTION__, smi_data_buf_phys_addr, smi_data_buf_size);
+		__func__, smi_data_buf_phys_addr, smi_data_buf_size);
 
 	dma_free_coherent(&dcdbas_pdev->dev, smi_data_buf_size, smi_data_buf,
 			  smi_data_buf_handle);
@@ -93,7 +93,7 @@ static int smi_data_buf_realloc(unsigned long size)
 	if (!buf) {
 		dev_dbg(&dcdbas_pdev->dev,
 			"%s: failed to allocate memory size %lu\n",
-			__FUNCTION__, size);
+			__func__, size);
 		return -ENOMEM;
 	}
 	/* memory zeroed by dma_alloc_coherent */
@@ -111,7 +111,7 @@ static int smi_data_buf_realloc(unsigned long size)
 	smi_data_buf_size = size;
 
 	dev_dbg(&dcdbas_pdev->dev, "%s: phys: %x size: %lu\n",
-		__FUNCTION__, smi_data_buf_phys_addr, smi_data_buf_size);
+		__func__, smi_data_buf_phys_addr, smi_data_buf_size);
 
 	return 0;
 }
@@ -149,29 +149,22 @@ static ssize_t smi_data_buf_size_store(struct device *dev,
 	return count;
 }
 
-static ssize_t smi_data_read(struct kobject *kobj, char *buf, loff_t pos,
-			     size_t count)
+static ssize_t smi_data_read(struct file *filp, struct kobject *kobj,
+			     struct bin_attribute *bin_attr,
+			     char *buf, loff_t pos, size_t count)
 {
-	size_t max_read;
 	ssize_t ret;
 
 	mutex_lock(&smi_data_lock);
-
-	if (pos >= smi_data_buf_size) {
-		ret = 0;
-		goto out;
-	}
-
-	max_read = smi_data_buf_size - pos;
-	ret = min(max_read, count);
-	memcpy(buf, smi_data_buf + pos, ret);
-out:
+	ret = memory_read_from_buffer(buf, count, &pos, smi_data_buf,
+					smi_data_buf_size);
 	mutex_unlock(&smi_data_lock);
 	return ret;
 }
 
-static ssize_t smi_data_write(struct kobject *kobj, char *buf, loff_t pos,
-			      size_t count)
+static ssize_t smi_data_write(struct file *filp, struct kobject *kobj,
+			      struct bin_attribute *bin_attr,
+			      char *buf, loff_t pos, size_t count)
 {
 	ssize_t ret;
 
@@ -246,34 +239,39 @@ static ssize_t host_control_on_shutdown_store(struct device *dev,
 }
 
 /**
- * smi_request: generate SMI request
+ * dcdbas_smi_request: generate SMI request
  *
  * Called with smi_data_lock.
  */
-static int smi_request(struct smi_cmd *smi_cmd)
+int dcdbas_smi_request(struct smi_cmd *smi_cmd)
 {
-	cpumask_t old_mask;
+	cpumask_var_t old_mask;
 	int ret = 0;
 
 	if (smi_cmd->magic != SMI_CMD_MAGIC) {
 		dev_info(&dcdbas_pdev->dev, "%s: invalid magic value\n",
-			 __FUNCTION__);
+			 __func__);
 		return -EBADR;
 	}
 
 	/* SMI requires CPU 0 */
-	old_mask = current->cpus_allowed;
-	set_cpus_allowed(current, cpumask_of_cpu(0));
+	if (!alloc_cpumask_var(&old_mask, GFP_KERNEL))
+		return -ENOMEM;
+
+	cpumask_copy(old_mask, &current->cpus_allowed);
+	set_cpus_allowed_ptr(current, cpumask_of(0));
 	if (smp_processor_id() != 0) {
 		dev_dbg(&dcdbas_pdev->dev, "%s: failed to get CPU 0\n",
-			__FUNCTION__);
+			__func__);
 		ret = -EBUSY;
 		goto out;
 	}
 
 	/* generate SMI */
+	/* inb to force posted write through and make SMI happen now */
 	asm volatile (
-		"outb %b0,%w1"
+		"outb %b0,%w1\n"
+		"inb %w1"
 		: /* no output args */
 		: "a" (smi_cmd->command_code),
 		  "d" (smi_cmd->command_address),
@@ -283,7 +281,8 @@ static int smi_request(struct smi_cmd *smi_cmd)
 	);
 
 out:
-	set_cpus_allowed(current, old_mask);
+	set_cpus_allowed_ptr(current, old_mask);
+	free_cpumask_var(old_mask);
 	return ret;
 }
 
@@ -317,14 +316,14 @@ static ssize_t smi_request_store(struct device *dev,
 	switch (val) {
 	case 2:
 		/* Raw SMI */
-		ret = smi_request(smi_cmd);
+		ret = dcdbas_smi_request(smi_cmd);
 		if (!ret)
 			ret = count;
 		break;
 	case 1:
 		/* Calling Interface SMI */
 		smi_cmd->ebx = (u32) virt_to_phys(smi_cmd->command_buffer);
-		ret = smi_request(smi_cmd);
+		ret = dcdbas_smi_request(smi_cmd);
 		if (!ret)
 			ret = count;
 		break;
@@ -341,6 +340,7 @@ out:
 	mutex_unlock(&smi_data_lock);
 	return ret;
 }
+EXPORT_SYMBOL(dcdbas_smi_request);
 
 /**
  * host_control_smi: generate host control SMI
@@ -427,7 +427,7 @@ static int host_control_smi(void)
 
 	default:
 		dev_dbg(&dcdbas_pdev->dev, "%s: invalid SMI type %u\n",
-			__FUNCTION__, host_control_smi_type);
+			__func__, host_control_smi_type);
 		return -ENOSYS;
 	}
 
@@ -455,13 +455,13 @@ static void dcdbas_host_control(void)
 	host_control_action = HC_ACTION_NONE;
 
 	if (!smi_data_buf) {
-		dev_dbg(&dcdbas_pdev->dev, "%s: no SMI buffer\n", __FUNCTION__);
+		dev_dbg(&dcdbas_pdev->dev, "%s: no SMI buffer\n", __func__);
 		return;
 	}
 
 	if (smi_data_buf_size < sizeof(struct apm_cmd)) {
 		dev_dbg(&dcdbas_pdev->dev, "%s: SMI buffer too small\n",
-			__FUNCTION__);
+			__func__);
 		return;
 	}
 
@@ -548,7 +548,7 @@ static int __devinit dcdbas_probe(struct platform_device *dev)
 	 * BIOS SMI calls require buffer addresses be in 32-bit address space.
 	 * This is done by setting the DMA mask below.
 	 */
-	dcdbas_pdev->dev.coherent_dma_mask = DMA_32BIT_MASK;
+	dcdbas_pdev->dev.coherent_dma_mask = DMA_BIT_MASK(32);
 	dcdbas_pdev->dev.dma_mask = &dcdbas_pdev->dev.coherent_dma_mask;
 
 	error = sysfs_create_group(&dev->dev.kobj, &dcdbas_attr_group);
@@ -636,9 +636,6 @@ static void __exit dcdbas_exit(void)
 	 * before platform_device_unregister
 	 */
 	unregister_reboot_notifier(&dcdbas_reboot_nb);
-	smi_data_buf_free();
-	platform_device_unregister(dcdbas_pdev);
-	platform_driver_unregister(&dcdbas_driver);
 
 	/*
 	 * We have to free the buffer here instead of dcdbas_remove
@@ -647,6 +644,8 @@ static void __exit dcdbas_exit(void)
 	 * released.
 	 */
 	smi_data_buf_free();
+	platform_device_unregister(dcdbas_pdev);
+	platform_driver_unregister(&dcdbas_driver);
 }
 
 module_init(dcdbas_init);
@@ -656,4 +655,5 @@ MODULE_DESCRIPTION(DRIVER_DESCRIPTION " (version " DRIVER_VERSION ")");
 MODULE_VERSION(DRIVER_VERSION);
 MODULE_AUTHOR("Dell Inc.");
 MODULE_LICENSE("GPL");
-
+/* Any System or BIOS claiming to be by Dell */
+MODULE_ALIAS("dmi:*:[bs]vnD[Ee][Ll][Ll]*:*");

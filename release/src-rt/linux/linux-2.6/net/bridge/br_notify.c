@@ -5,8 +5,6 @@
  *	Authors:
  *	Lennert Buytenhek		<buytenh@gnu.org>
  *
- *	$Id: br_notify.c,v 1.1.1.1 2007-08-03 18:53:50 $
- *
  *	This program is free software; you can redistribute it and/or
  *	modify it under the terms of the GNU General Public License
  *	as published by the Free Software Foundation; either version
@@ -15,6 +13,7 @@
 
 #include <linux/kernel.h>
 #include <linux/rtnetlink.h>
+#include <net/net_namespace.h>
 
 #include "br_private.h"
 
@@ -33,11 +32,13 @@ struct notifier_block br_device_notifier = {
 static int br_device_event(struct notifier_block *unused, unsigned long event, void *ptr)
 {
 	struct net_device *dev = ptr;
-	struct net_bridge_port *p = dev->br_port;
+	struct net_bridge_port *p;
 	struct net_bridge *br;
+	int err;
 
 	/* not a port of a bridge */
-	if (p == NULL)
+	p = br_port_get_rtnl(dev);
+	if (!p)
 		return NOTIFY_DONE;
 
 	br = p->br;
@@ -83,6 +84,16 @@ static int br_device_event(struct notifier_block *unused, unsigned long event, v
 	case NETDEV_UNREGISTER:
 		br_del_if(br, dev);
 		break;
+
+	case NETDEV_CHANGENAME:
+		err = br_sysfs_renameif(p);
+		if (err)
+			return notifier_from_errno(err);
+		break;
+
+	case NETDEV_PRE_TYPE_CHANGE:
+		/* Forbid underlaying device to change its type. */
+		return NOTIFY_BAD;
 	}
 
 	/* Events that may cause spanning tree to refresh */

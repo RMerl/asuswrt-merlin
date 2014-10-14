@@ -8,50 +8,25 @@
 #include <linux/i2c.h>
 #include "dvb_frontend.h"
 
-struct dvb_pll_desc {
-	char *name;
-	u32  min;
-	u32  max;
-	u32  iffreq;
-	void (*setbw)(u8 *buf, u32 freq, int bandwidth);
-	u8   *initdata;
-	u8   *sleepdata;
-	int  count;
-	struct {
-		u32 limit;
-		u32 stepsize;
-		u8  config;
-		u8  cb;
-	} entries[12];
-};
-
-extern struct dvb_pll_desc dvb_pll_thomson_dtt7579;
-extern struct dvb_pll_desc dvb_pll_thomson_dtt759x;
-extern struct dvb_pll_desc dvb_pll_thomson_dtt7610;
-extern struct dvb_pll_desc dvb_pll_lg_z201;
-extern struct dvb_pll_desc dvb_pll_microtune_4042;
-extern struct dvb_pll_desc dvb_pll_thomson_dtt761x;
-extern struct dvb_pll_desc dvb_pll_unknown_1;
-
-extern struct dvb_pll_desc dvb_pll_tua6010xs;
-extern struct dvb_pll_desc dvb_pll_env57h1xd5;
-extern struct dvb_pll_desc dvb_pll_tua6034;
-extern struct dvb_pll_desc dvb_pll_lg_tdvs_h06xf;
-extern struct dvb_pll_desc dvb_pll_tda665x;
-extern struct dvb_pll_desc dvb_pll_fmd1216me;
-extern struct dvb_pll_desc dvb_pll_tded4;
-
-extern struct dvb_pll_desc dvb_pll_tuv1236d;
-extern struct dvb_pll_desc dvb_pll_tdhu2;
-extern struct dvb_pll_desc dvb_pll_samsung_tbmv;
-extern struct dvb_pll_desc dvb_pll_philips_sd1878_tda8261;
-extern struct dvb_pll_desc dvb_pll_philips_td1316;
-
-extern struct dvb_pll_desc dvb_pll_thomson_fe6600;
-extern struct dvb_pll_desc dvb_pll_opera1;
-
-extern int dvb_pll_configure(struct dvb_pll_desc *desc, u8 *buf,
-			     u32 freq, int bandwidth);
+#define DVB_PLL_UNDEFINED               0
+#define DVB_PLL_THOMSON_DTT7579         1
+#define DVB_PLL_THOMSON_DTT759X         2
+#define DVB_PLL_LG_Z201                 3
+#define DVB_PLL_UNKNOWN_1               4
+#define DVB_PLL_TUA6010XS               5
+#define DVB_PLL_ENV57H1XD5              6
+#define DVB_PLL_TUA6034                 7
+#define DVB_PLL_TDA665X                 8
+#define DVB_PLL_TDED4                   9
+#define DVB_PLL_TDHU2                  10
+#define DVB_PLL_SAMSUNG_TBMV           11
+#define DVB_PLL_PHILIPS_SD1878_TDA8261 12
+#define DVB_PLL_OPERA1                 13
+#define DVB_PLL_SAMSUNG_DTOS403IH102A  14
+#define DVB_PLL_SAMSUNG_TDTC9251DH0    15
+#define DVB_PLL_SAMSUNG_TBDU18132      16
+#define DVB_PLL_SAMSUNG_TBMU24112      17
+#define DVB_PLL_TDEE4		       18
 
 /**
  * Attach a dvb-pll to the supplied frontend structure.
@@ -59,21 +34,21 @@ extern int dvb_pll_configure(struct dvb_pll_desc *desc, u8 *buf,
  * @param fe Frontend to attach to.
  * @param pll_addr i2c address of the PLL (if used).
  * @param i2c i2c adapter to use (set to NULL if not used).
- * @param desc dvb_pll_desc to use.
+ * @param pll_desc_id dvb_pll_desc to use.
  * @return Frontend pointer on success, NULL on failure
  */
 #if defined(CONFIG_DVB_PLL) || (defined(CONFIG_DVB_PLL_MODULE) && defined(MODULE))
 extern struct dvb_frontend *dvb_pll_attach(struct dvb_frontend *fe,
 					   int pll_addr,
 					   struct i2c_adapter *i2c,
-					   struct dvb_pll_desc *desc);
+					   unsigned int pll_desc_id);
 #else
 static inline struct dvb_frontend *dvb_pll_attach(struct dvb_frontend *fe,
 					   int pll_addr,
 					   struct i2c_adapter *i2c,
-					   struct dvb_pll_desc *desc)
+					   unsigned int pll_desc_id)
 {
-	printk(KERN_WARNING "%s: driver disabled by Kconfig\n", __FUNCTION__);
+	printk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
 	return NULL;
 }
 #endif

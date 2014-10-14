@@ -19,18 +19,13 @@
  *
  */
 
-#include <sound/driver.h>
-
-#ifdef CONFIG_SND_PCM_OSS_PLUGINS
-
-#include <linux/slab.h>
 #include <linux/time.h>
 #include <sound/core.h>
 #include <sound/pcm.h>
 #include "pcm_plugin.h"
 
 static void zero_areas(struct snd_pcm_plugin_channel *dvp, int ndsts,
-		       snd_pcm_uframes_t frames, int format)
+		       snd_pcm_uframes_t frames, snd_pcm_format_t format)
 {
 	int dst = 0;
 	for (; dst < ndsts; ++dst) {
@@ -43,7 +38,7 @@ static void zero_areas(struct snd_pcm_plugin_channel *dvp, int ndsts,
 
 static inline void copy_area(const struct snd_pcm_plugin_channel *src_channel,
 			     struct snd_pcm_plugin_channel *dst_channel,
-			     snd_pcm_uframes_t frames, int format)
+			     snd_pcm_uframes_t frames, snd_pcm_format_t format)
 {
 	dst_channel->enabled = 1;
 	snd_pcm_area_copy(&src_channel->area, 0, &dst_channel->area, 0, frames, format);
@@ -56,9 +51,10 @@ static snd_pcm_sframes_t route_transfer(struct snd_pcm_plugin *plugin,
 {
 	int nsrcs, ndsts, dst;
 	struct snd_pcm_plugin_channel *dvp;
-	int format;
+	snd_pcm_format_t format;
 
-	snd_assert(plugin != NULL && src_channels != NULL && dst_channels != NULL, return -ENXIO);
+	if (snd_BUG_ON(!plugin || !src_channels || !dst_channels))
+		return -ENXIO;
 	if (frames == 0)
 		return 0;
 
@@ -94,10 +90,13 @@ int snd_pcm_plugin_build_route(struct snd_pcm_substream *plug,
 	struct snd_pcm_plugin *plugin;
 	int err;
 
-	snd_assert(r_plugin != NULL, return -ENXIO);
+	if (snd_BUG_ON(!r_plugin))
+		return -ENXIO;
 	*r_plugin = NULL;
-	snd_assert(src_format->rate == dst_format->rate, return -ENXIO);
-	snd_assert(src_format->format == dst_format->format, return -ENXIO);
+	if (snd_BUG_ON(src_format->rate != dst_format->rate))
+		return -ENXIO;
+	if (snd_BUG_ON(src_format->format != dst_format->format))
+		return -ENXIO;
 
 	err = snd_pcm_plugin_build(plug, "route conversion",
 				   src_format, dst_format, 0, &plugin);
@@ -108,5 +107,3 @@ int snd_pcm_plugin_build_route(struct snd_pcm_substream *plug,
 	*r_plugin = plugin;
 	return 0;
 }
-
-#endif

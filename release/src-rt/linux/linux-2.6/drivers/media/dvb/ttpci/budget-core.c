@@ -31,10 +31,9 @@
  * Or, point your browser to http://www.gnu.org/copyleft/gpl.html
  *
  *
- * the project's page is at http://www.linuxtv.org/dvb/
+ * the project's page is at http://www.linuxtv.org/ 
  */
 
-#include <linux/moduleparam.h>
 
 #include "budget.h"
 #include "ttpci-eeprom.h"
@@ -224,7 +223,7 @@ static void vpeirq(unsigned long data)
 
 	if (budget->buffer_warnings && time_after(jiffies, budget->buffer_warning_time)) {
 		printk("%s %s: used %d times >80%% of buffer (%u bytes now)\n",
-			budget->dev->name, __FUNCTION__, budget->buffer_warnings, count);
+			budget->dev->name, __func__, budget->buffer_warnings, count);
 		budget->buffer_warning_time = jiffies + BUFFER_WARNING_WAIT;
 		budget->buffer_warnings = 0;
 	}
@@ -410,7 +409,7 @@ static void budget_unregister(struct budget *budget)
 
 int ttpci_budget_init(struct budget *budget, struct saa7146_dev *dev,
 		      struct saa7146_pci_extension_data *info,
-		      struct module *owner)
+		      struct module *owner, short *adapter_nums)
 {
 	int ret = 0;
 	struct budget_info *bi = info->ext_priv;
@@ -472,9 +471,10 @@ int ttpci_budget_init(struct budget *budget, struct saa7146_dev *dev,
 		budget->buffer_width, budget->buffer_height);
 	printk("%s: dma buffer size %u\n", budget->dev->name, budget->buffer_size);
 
-	if ((ret = dvb_register_adapter(&budget->dvb_adapter, budget->card->name, owner, &budget->dev->pci->dev)) < 0) {
+	ret = dvb_register_adapter(&budget->dvb_adapter, budget->card->name,
+				   owner, &budget->dev->pci->dev, adapter_nums);
+	if (ret < 0)
 		return ret;
-	}
 
 	/* set dd1 stream a & b */
 	saa7146_write(dev, DD1_STREAM_B, 0x00000000);
@@ -494,12 +494,6 @@ int ttpci_budget_init(struct budget *budget, struct saa7146_dev *dev,
 	   get recognized before the main driver is loaded */
 	if (bi->type != BUDGET_FS_ACTIVY)
 		saa7146_write(dev, GPIO_CTRL, 0x500000);	/* GPIO 3 = 1 */
-
-#ifdef I2C_ADAP_CLASS_TV_DIGITAL
-	budget->i2c_adap.class = I2C_ADAP_CLASS_TV_DIGITAL;
-#else
-	budget->i2c_adap.class = I2C_CLASS_TV_DIGITAL;
-#endif
 
 	strlcpy(budget->i2c_adap.name, budget->card->name, sizeof(budget->i2c_adap.name));
 

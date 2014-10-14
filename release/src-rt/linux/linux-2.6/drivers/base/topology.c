@@ -28,64 +28,113 @@
 #include <linux/mm.h>
 #include <linux/cpu.h>
 #include <linux/module.h>
+#include <linux/hardirq.h>
 #include <linux/topology.h>
 
-#define define_one_ro(_name) 		\
+#define define_one_ro_named(_name, _func)				\
+static SYSDEV_ATTR(_name, 0444, _func, NULL)
+
+#define define_one_ro(_name)				\
 static SYSDEV_ATTR(_name, 0444, show_##_name, NULL)
 
 #define define_id_show_func(name)				\
-static ssize_t show_##name(struct sys_device *dev, char *buf)	\
+static ssize_t show_##name(struct sys_device *dev,		\
+		struct sysdev_attribute *attr, char *buf)	\
 {								\
 	unsigned int cpu = dev->id;				\
 	return sprintf(buf, "%d\n", topology_##name(cpu));	\
 }
 
-#define define_siblings_show_func(name)					\
-static ssize_t show_##name(struct sys_device *dev, char *buf)		\
+#if defined(topology_thread_cpumask) || defined(topology_core_cpumask) || \
+    defined(topology_book_cpumask)
+static ssize_t show_cpumap(int type, const struct cpumask *mask, char *buf)
+{
+	ptrdiff_t len = PTR_ALIGN(buf + PAGE_SIZE - 1, PAGE_SIZE) - buf;
+	int n = 0;
+
+	if (len > 1) {
+		n = type?
+			cpulist_scnprintf(buf, len-2, mask) :
+			cpumask_scnprintf(buf, len-2, mask);
+		buf[n++] = '\n';
+		buf[n] = '\0';
+	}
+	return n;
+}
+#endif
+
+#ifdef arch_provides_topology_pointers
+#define define_siblings_show_map(name)					\
+static ssize_t show_##name(struct sys_device *dev,			\
+			   struct sysdev_attribute *attr, char *buf)	\
 {									\
-	ssize_t len = -1;						\
 	unsigned int cpu = dev->id;					\
-	len = cpumask_scnprintf(buf, NR_CPUS+1, topology_##name(cpu));	\
-	return (len + sprintf(buf + len, "\n"));			\
+	return show_cpumap(0, topology_##name(cpu), buf);		\
 }
 
-#ifdef	topology_physical_package_id
+#define define_siblings_show_list(name)					\
+static ssize_t show_##name##_list(struct sys_device *dev,		\
+				  struct sysdev_attribute *attr,	\
+				  char *buf)				\
+{									\
+	unsigned int cpu = dev->id;					\
+	return show_cpumap(1, topology_##name(cpu), buf);		\
+}
+
+#else
+#define define_siblings_show_map(name)					\
+static ssize_t show_##name(struct sys_device *dev,			\
+			   struct sysdev_attribute *attr, char *buf)	\
+{									\
+	return show_cpumap(0, topology_##name(dev->id), buf);		\
+}
+
+#define define_siblings_show_list(name)					\
+static ssize_t show_##name##_list(struct sys_device *dev,		\
+				  struct sysdev_attribute *attr,	\
+				  char *buf)				\
+{									\
+	return show_cpumap(1, topology_##name(dev->id), buf);		\
+}
+#endif
+
+#define define_siblings_show_func(name)		\
+	define_siblings_show_map(name); define_siblings_show_list(name)
+
 define_id_show_func(physical_package_id);
 define_one_ro(physical_package_id);
-#define ref_physical_package_id_attr	&attr_physical_package_id.attr,
-#else
-#define ref_physical_package_id_attr
-#endif
 
-#ifdef topology_core_id
 define_id_show_func(core_id);
 define_one_ro(core_id);
-#define ref_core_id_attr		&attr_core_id.attr,
-#else
-#define ref_core_id_attr
-#endif
 
-#ifdef topology_thread_siblings
-define_siblings_show_func(thread_siblings);
-define_one_ro(thread_siblings);
-#define ref_thread_siblings_attr	&attr_thread_siblings.attr,
-#else
-#define ref_thread_siblings_attr
-#endif
+define_siblings_show_func(thread_cpumask);
+define_one_ro_named(thread_siblings, show_thread_cpumask);
+define_one_ro_named(thread_siblings_list, show_thread_cpumask_list);
 
-#ifdef topology_core_siblings
-define_siblings_show_func(core_siblings);
-define_one_ro(core_siblings);
-#define ref_core_siblings_attr		&attr_core_siblings.attr,
-#else
-#define ref_core_siblings_attr
+define_siblings_show_func(core_cpumask);
+define_one_ro_named(core_siblings, show_core_cpumask);
+define_one_ro_named(core_siblings_list, show_core_cpumask_list);
+
+#ifdef CONFIG_SCHED_BOOK
+define_id_show_func(book_id);
+define_one_ro(book_id);
+define_siblings_show_func(book_cpumask);
+define_one_ro_named(book_siblings, show_book_cpumask);
+define_one_ro_named(book_siblings_list, show_book_cpumask_list);
 #endif
 
 static struct attribute *default_attrs[] = {
-	ref_physical_package_id_attr
-	ref_core_id_attr
-	ref_thread_siblings_attr
-	ref_core_siblings_attr
+	&attr_physical_package_id.attr,
+	&attr_core_id.attr,
+	&attr_thread_siblings.attr,
+	&attr_thread_siblings_list.attr,
+	&attr_core_siblings.attr,
+	&attr_core_siblings_list.attr,
+#ifdef CONFIG_SCHED_BOOK
+	&attr_book_id.attr,
+	&attr_book_siblings.attr,
+	&attr_book_siblings_list.attr,
+#endif
 	NULL
 };
 
@@ -94,27 +143,18 @@ static struct attribute_group topology_attr_group = {
 	.name = "topology"
 };
 
-static cpumask_t topology_dev_map = CPU_MASK_NONE;
-
 /* Add/Remove cpu_topology interface for CPU device */
 static int __cpuinit topology_add_dev(unsigned int cpu)
 {
-	int rc;
 	struct sys_device *sys_dev = get_cpu_sysdev(cpu);
 
-	rc = sysfs_create_group(&sys_dev->kobj, &topology_attr_group);
-	if (!rc)
-		cpu_set(cpu, topology_dev_map);
-	return rc;
+	return sysfs_create_group(&sys_dev->kobj, &topology_attr_group);
 }
 
 static void __cpuinit topology_remove_dev(unsigned int cpu)
 {
 	struct sys_device *sys_dev = get_cpu_sysdev(cpu);
 
-	if (!cpu_isset(cpu, topology_dev_map))
-		return;
-	cpu_clear(cpu, topology_dev_map);
 	sysfs_remove_group(&sys_dev->kobj, &topology_attr_group);
 }
 
@@ -136,7 +176,7 @@ static int __cpuinit topology_cpu_callback(struct notifier_block *nfb,
 		topology_remove_dev(cpu);
 		break;
 	}
-	return rc ? NOTIFY_BAD : NOTIFY_OK;
+	return notifier_from_errno(rc);
 }
 
 static int __cpuinit topology_sysfs_init(void)

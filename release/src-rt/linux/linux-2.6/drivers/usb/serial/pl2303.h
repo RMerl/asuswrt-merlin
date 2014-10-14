@@ -5,7 +5,7 @@
  *	it under the terms of the GNU General Public License as published by
  *	the Free Software Foundation; either version 2 of the License, or
  *	(at your option) any later version.
- * 
+ *
  */
 
 #define BENQ_VENDOR_ID			0x04a5
@@ -20,6 +20,8 @@
 #define PL2303_PRODUCT_ID_ALDIGA	0x0611
 #define PL2303_PRODUCT_ID_MMX		0x0612
 #define PL2303_PRODUCT_ID_GPRS		0x0609
+#define PL2303_PRODUCT_ID_HCR331	0x331a
+#define PL2303_PRODUCT_ID_MOTOROLA	0x0307
 
 #define ATEN_VENDOR_ID		0x0557
 #define ATEN_VENDOR_ID2		0x0547
@@ -111,10 +113,6 @@
 #define COREGA_VENDOR_ID	0x07aa
 #define COREGA_PRODUCT_ID	0x002a
 
-/* HL HL-340 (ID: 4348:5523) */
-#define HL340_VENDOR_ID		0x4348
-#define HL340_PRODUCT_ID	0x5523
-
 /* Y.C. Cable U.S.A., Inc - USB to RS-232 */
 #define YCCABLE_VENDOR_ID	0x05ad
 #define YCCABLE_PRODUCT_ID	0x0fba
@@ -127,6 +125,26 @@
 #define HP_VENDOR_ID		0x03f0
 #define HP_LD220_PRODUCT_ID	0x3524
 
+/* Cressi Edy (diving computer) PC interface */
+#define CRESSI_VENDOR_ID	0x04b8
+#define CRESSI_EDY_PRODUCT_ID	0x0521
+
 /* Zeagle dive computer interface */
 #define ZEAGLE_VENDOR_ID	0x04b8
 #define ZEAGLE_N2ITION3_PRODUCT_ID	0x0522
+
+/* Sony, USB data cable for CMD-Jxx mobile phones */
+#define SONY_VENDOR_ID		0x054c
+#define SONY_QN3USB_PRODUCT_ID	0x0437
+
+/* Sanwa KB-USB2 multimeter cable (ID: 11ad:0001) */
+#define SANWA_VENDOR_ID		0x11ad
+#define SANWA_PRODUCT_ID	0x0001
+
+/* ADLINK ND-6530 RS232,RS485 and RS422 adapter */
+#define ADLINK_VENDOR_ID		0x0b63
+#define ADLINK_ND6530_PRODUCT_ID	0x6530
+
+/* WinChipHead USB->RS 232 adapter */
+#define WINCHIPHEAD_VENDOR_ID		0x4348
+#define WINCHIPHEAD_USBSER_PRODUCT_ID	0x5523

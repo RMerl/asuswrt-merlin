@@ -1,6 +1,6 @@
 /*
  *  The driver for the EMU10K1 (SB Live!) based soundcards
- *  Copyright (c) by Jaroslav Kysela <perex@suse.cz>
+ *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  *
  *  Copyright (c) by James Courtier-Dutton <James@superbug.demon.co.uk>
  *      Added support for Audigy 2 Value.
@@ -23,7 +23,6 @@
  * 
  */
 
-#include <sound/driver.h>
 #include <linux/init.h>
 #include <linux/pci.h>
 #include <linux/time.h>
@@ -32,7 +31,7 @@
 #include <sound/emu10k1.h>
 #include <sound/initval.h>
 
-MODULE_AUTHOR("Jaroslav Kysela <perex@suse.cz>");
+MODULE_AUTHOR("Jaroslav Kysela <perex@perex.cz>");
 MODULE_DESCRIPTION("EMU10K1");
 MODULE_LICENSE("GPL");
 MODULE_SUPPORTED_DEVICE("{{Creative Labs,SB Live!/PCI512/E-mu APS},"
@@ -53,6 +52,7 @@ static int max_synth_voices[SNDRV_CARDS] = {[0 ... (SNDRV_CARDS - 1)] = 64};
 static int max_buffer_size[SNDRV_CARDS] = {[0 ... (SNDRV_CARDS - 1)] = 128};
 static int enable_ir[SNDRV_CARDS];
 static uint subsystem[SNDRV_CARDS]; /* Force card subsystem model */
+static uint delay_pcm_irq[SNDRV_CARDS] = {[0 ... (SNDRV_CARDS - 1)] = 2};
 
 module_param_array(index, int, NULL, 0444);
 MODULE_PARM_DESC(index, "Index value for the EMU10K1 soundcard.");
@@ -74,13 +74,15 @@ module_param_array(enable_ir, bool, NULL, 0444);
 MODULE_PARM_DESC(enable_ir, "Enable IR.");
 module_param_array(subsystem, uint, NULL, 0444);
 MODULE_PARM_DESC(subsystem, "Force card subsystem model.");
+module_param_array(delay_pcm_irq, uint, NULL, 0444);
+MODULE_PARM_DESC(delay_pcm_irq, "Delay PCM interrupt by specified number of samples (default 0).");
 /*
  * Class 0401: 1102:0008 (rev 00) Subsystem: 1102:1001 -> Audigy2 Value  Model:SB0400
  */
-static struct pci_device_id snd_emu10k1_ids[] = {
-	{ 0x1102, 0x0002, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },	/* EMU10K1 */
-	{ 0x1102, 0x0004, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 1 },	/* Audigy */
-	{ 0x1102, 0x0008, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 1 },	/* Audigy 2 Value SB0400 */
+static DEFINE_PCI_DEVICE_TABLE(snd_emu10k1_ids) = {
+	{ PCI_VDEVICE(CREATIVE, 0x0002), 0 },	/* EMU10K1 */
+	{ PCI_VDEVICE(CREATIVE, 0x0004), 1 },	/* Audigy */
+	{ PCI_VDEVICE(CREATIVE, 0x0008), 1 },	/* Audigy 2 Value SB0400 */
 	{ 0, }
 };
 
@@ -115,9 +117,9 @@ static int __devinit snd_card_emu10k1_probe(struct pci_dev *pci,
 		return -ENOENT;
 	}
 
-	card = snd_card_new(index[dev], id[dev], THIS_MODULE, 0);
-	if (card == NULL)
-		return -ENOMEM;
+	err = snd_card_create(index[dev], id[dev], THIS_MODULE, 0, &card);
+	if (err < 0)
+		return err;
 	if (max_buffer_size[dev] < 32)
 		max_buffer_size[dev] = 32;
 	else if (max_buffer_size[dev] > 1024)
@@ -128,6 +130,7 @@ static int __devinit snd_card_emu10k1_probe(struct pci_dev *pci,
 				      &emu)) < 0)
 		goto error;
 	card->private_data = emu;
+	emu->delay_pcm_irq = delay_pcm_irq[dev] & 0x1f;
 	if ((err = snd_emu10k1_pcm(emu, 0, NULL)) < 0)
 		goto error;
 	if ((err = snd_emu10k1_pcm_mic(emu, 1, NULL)) < 0)

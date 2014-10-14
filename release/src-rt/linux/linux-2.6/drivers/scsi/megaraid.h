@@ -13,7 +13,7 @@
  */
 
 /*
- * Comand coalescing - This feature allows the driver to be able to combine
+ * Command coalescing - This feature allows the driver to be able to combine
  * two or more commands and issue as one command in order to boost I/O
  * performance. Useful if the nature of the I/O is sequential. It is not very
  * useful for random natured I/Os.
@@ -381,7 +381,7 @@ typedef struct {
 	u8	battery_status;	/*
 				 * BIT 0: battery module missing
 				 * BIT 1: VBAD
-				 * BIT 2: temprature high
+				 * BIT 2: temperature high
 				 * BIT 3: battery pack missing
 				 * BIT 4,5:
 				 *   00 - charge complete
@@ -469,7 +469,7 @@ typedef struct {
 	u8	type;		/* Type of the device */
 	u8	cur_status;	/* current status of the device */
 	u8	tag_depth;	/* Level of tagging */
-	u8	sync_neg;	/* sync negotiation - ENABLE or DISBALE */
+	u8	sync_neg;	/* sync negotiation - ENABLE or DISABLE */
 	u32	size;		/* configurable size in terms of 512 byte
 				   blocks */
 }__attribute__ ((packed)) phys_drv;
@@ -532,9 +532,9 @@ struct uioctl_t {
 
 /*
  * struct mcontroller is used to pass information about the controllers in the
- * system. Its upto the application how to use the information. We are passing
+ * system. Its up to the application how to use the information. We are passing
  * as much info about the cards as possible and useful. Before issuing the
- * call to find information about the cards, the applicaiton needs to issue a
+ * call to find information about the cards, the application needs to issue a
  * ioctl first to find out the number of controllers in the system.
  */
 #define MAX_CONTROLLERS 32
@@ -804,7 +804,7 @@ typedef struct {
 	unsigned long		base;
 	void __iomem		*mmio_base;
 
-	/* mbox64 with mbox not aligned on 16-byte boundry */
+	/* mbox64 with mbox not aligned on 16-byte boundary */
 	mbox64_t	*una_mbox64;
 	dma_addr_t	una_mbox64_dma;
 
@@ -888,8 +888,8 @@ typedef struct {
 
 	u8	sglen;	/* f/w supported scatter-gather list length */
 
+	unsigned char int_cdb[MAX_COMMAND_SIZE];
 	scb_t			int_scb;
-	Scsi_Cmnd		int_scmd;
 	struct mutex		int_mtx;	/* To synchronize the internal
 						commands */
 	struct completion	int_waitq;	/* wait queue for internal
@@ -987,7 +987,7 @@ static int mega_query_adapter(adapter_t *);
 static int issue_scb(adapter_t *, scb_t *);
 static int mega_setup_mailbox(adapter_t *);
 
-static int megaraid_queue (Scsi_Cmnd *, void (*)(Scsi_Cmnd *));
+static int megaraid_queue (struct Scsi_Host *, struct scsi_cmnd *);
 static scb_t * mega_build_cmd(adapter_t *, Scsi_Cmnd *, int *);
 static void __mega_runpendq(adapter_t *);
 static int issue_scb_block(adapter_t *, u_char *);
@@ -1013,8 +1013,7 @@ static void mega_8_to_40ld (mraid_inquiry *inquiry,
 		mega_inquiry3 *enquiry3, mega_product_info *);
 
 static int megadev_open (struct inode *, struct file *);
-static int megadev_ioctl (struct inode *, struct file *, unsigned int,
-		unsigned long);
+static int megadev_ioctl (struct file *, unsigned int, unsigned long);
 static int mega_m_to_n(void __user *, nitioctl_t *);
 static int mega_n_to_m(void __user *, megacmd_t *);
 

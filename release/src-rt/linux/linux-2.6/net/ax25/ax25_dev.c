@@ -9,6 +9,7 @@
 #include <linux/errno.h>
 #include <linux/types.h>
 #include <linux/socket.h>
+#include <linux/slab.h>
 #include <linux/in.h>
 #include <linux/kernel.h>
 #include <linux/timer.h>
@@ -82,7 +83,7 @@ void ax25_dev_device_up(struct net_device *dev)
 	ax25_dev->values[AX25_VALUES_DS_TIMEOUT]= AX25_DEF_DS_TIMEOUT;
 
 #if defined(CONFIG_AX25_DAMA_SLAVE) || defined(CONFIG_AX25_DAMA_MASTER)
-	init_timer(&ax25_dev->dama.slave_timer);
+	ax25_ds_setup_timer(ax25_dev);
 #endif
 
 	spin_lock_bh(&ax25_dev_lock);

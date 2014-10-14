@@ -30,6 +30,7 @@
 #include <linux/pci.h>
 #include <linux/ioc4.h>
 #include <linux/ktime.h>
+#include <linux/slab.h>
 #include <linux/mutex.h>
 #include <linux/time.h>
 #include <asm/io.h>
@@ -75,7 +76,7 @@ ioc4_register_submodule(struct ioc4_submodule *is)
 			printk(KERN_WARNING
 			       "%s: IOC4 submodule %s probe failed "
 			       "for pci_dev %s",
-			       __FUNCTION__, module_name(is->is_owner),
+			       __func__, module_name(is->is_owner),
 			       pci_name(idd->idd_pdev));
 		}
 	}
@@ -102,7 +103,7 @@ ioc4_unregister_submodule(struct ioc4_submodule *is)
 			printk(KERN_WARNING
 			       "%s: IOC4 submodule %s remove failed "
 			       "for pci_dev %s.\n",
-			       __FUNCTION__, module_name(is->is_owner),
+			       __func__, module_name(is->is_owner),
 			       pci_name(idd->idd_pdev));
 		}
 	}
@@ -138,7 +139,7 @@ ioc4_unregister_submodule(struct ioc4_submodule *is)
  * even though the following code utilizes external interrupt registers
  * to perform the speed calculation.
  */
-static void
+static void __devinit
 ioc4_clock_calibrate(struct ioc4_driver_data *idd)
 {
 	union ioc4_int_out int_out;
@@ -230,7 +231,7 @@ ioc4_clock_calibrate(struct ioc4_driver_data *idd)
  * on the same PCI bus at slot number 3 to differentiate IO9 from IO10.
  * If neither is present, it's a PCI-RT.
  */
-static unsigned int
+static unsigned int __devinit
 ioc4_variant(struct ioc4_driver_data *idd)
 {
 	struct pci_dev *pdev = NULL;
@@ -244,10 +245,11 @@ ioc4_variant(struct ioc4_driver_data *idd)
 		    idd->idd_pdev->bus->number == pdev->bus->number &&
 		    3 == PCI_SLOT(pdev->devfn))
 			found = 1;
-		pci_dev_put(pdev);
 	} while (pdev && !found);
-	if (NULL != pdev)
+	if (NULL != pdev) {
+		pci_dev_put(pdev);
 		return IOC4_VARIANT_IO9;
+	}
 
 	/* IO10: Look for a Vitesse VSC 7174 at the same bus and slot 3. */
 	pdev = NULL;
@@ -258,17 +260,26 @@ ioc4_variant(struct ioc4_driver_data *idd)
 		    idd->idd_pdev->bus->number == pdev->bus->number &&
 		    3 == PCI_SLOT(pdev->devfn))
 			found = 1;
-		pci_dev_put(pdev);
 	} while (pdev && !found);
-	if (NULL != pdev)
+	if (NULL != pdev) {
+		pci_dev_put(pdev);
 		return IOC4_VARIANT_IO10;
+	}
 
 	/* PCI-RT: No SCSI/SATA controller will be present */
 	return IOC4_VARIANT_PCI_RT;
 }
 
+static void __devinit
+ioc4_load_modules(struct work_struct *work)
+{
+	request_module("sgiioc4");
+}
+
+static DECLARE_WORK(ioc4_load_modules_work, ioc4_load_modules);
+
 /* Adds a new instance of an IOC4 card */
-static int
+static int __devinit
 ioc4_probe(struct pci_dev *pdev, const struct pci_device_id *pci_id)
 {
 	struct ioc4_driver_data *idd;
@@ -280,7 +291,7 @@ ioc4_probe(struct pci_dev *pdev, const struct pci_device_id *pci_id)
 	if ((ret = pci_enable_device(pdev))) {
 		printk(KERN_WARNING
 		       "%s: Failed to enable IOC4 device for pci_dev %s.\n",
-		       __FUNCTION__, pci_name(pdev));
+		       __func__, pci_name(pdev));
 		goto out;
 	}
 	pci_set_master(pdev);
@@ -290,7 +301,7 @@ ioc4_probe(struct pci_dev *pdev, const struct pci_device_id *pci_id)
 	if (!idd) {
 		printk(KERN_WARNING
 		       "%s: Failed to allocate IOC4 data for pci_dev %s.\n",
-		       __FUNCTION__, pci_name(pdev));
+		       __func__, pci_name(pdev));
 		ret = -ENODEV;
 		goto out_idd;
 	}
@@ -305,7 +316,7 @@ ioc4_probe(struct pci_dev *pdev, const struct pci_device_id *pci_id)
 		printk(KERN_WARNING
 		       "%s: Unable to find IOC4 misc resource "
 		       "for pci_dev %s.\n",
-		       __FUNCTION__, pci_name(idd->idd_pdev));
+		       __func__, pci_name(idd->idd_pdev));
 		ret = -ENODEV;
 		goto out_pci;
 	}
@@ -314,7 +325,7 @@ ioc4_probe(struct pci_dev *pdev, const struct pci_device_id *pci_id)
 		printk(KERN_WARNING
 		       "%s: Unable to request IOC4 misc region "
 		       "for pci_dev %s.\n",
-		       __FUNCTION__, pci_name(idd->idd_pdev));
+		       __func__, pci_name(idd->idd_pdev));
 		ret = -ENODEV;
 		goto out_pci;
 	}
@@ -324,7 +335,7 @@ ioc4_probe(struct pci_dev *pdev, const struct pci_device_id *pci_id)
 		printk(KERN_WARNING
 		       "%s: Unable to remap IOC4 misc region "
 		       "for pci_dev %s.\n",
-		       __FUNCTION__, pci_name(idd->idd_pdev));
+		       __func__, pci_name(idd->idd_pdev));
 		ret = -ENODEV;
 		goto out_misc_region;
 	}
@@ -370,11 +381,26 @@ ioc4_probe(struct pci_dev *pdev, const struct pci_device_id *pci_id)
 			printk(KERN_WARNING
 			       "%s: IOC4 submodule 0x%s probe failed "
 			       "for pci_dev %s.\n",
-			       __FUNCTION__, module_name(is->is_owner),
+			       __func__, module_name(is->is_owner),
 			       pci_name(idd->idd_pdev));
 		}
 	}
 	mutex_unlock(&ioc4_mutex);
+
+	/* Request sgiioc4 IDE driver on boards that bring that functionality
+	 * off of IOC4.  The root filesystem may be hosted on a drive connected
+	 * to IOC4, so we need to make sure the sgiioc4 driver is loaded as it
+	 * won't be picked up by modprobes due to the ioc4 module owning the
+	 * PCI device.
+	 */
+	if (idd->idd_variant != IOC4_VARIANT_PCI_RT) {
+		/* Request the module from a work procedure as the modprobe
+		 * goes out to a userland helper and that will hang if done
+		 * directly from ioc4_probe().
+		 */
+		printk(KERN_INFO "IOC4 loading sgiioc4 submodule\n");
+		schedule_work(&ioc4_load_modules_work);
+	}
 
 	return 0;
 
@@ -389,7 +415,7 @@ out:
 }
 
 /* Removes a particular instance of an IOC4 card. */
-static void
+static void __devexit
 ioc4_remove(struct pci_dev *pdev)
 {
 	struct ioc4_submodule *is;
@@ -404,7 +430,7 @@ ioc4_remove(struct pci_dev *pdev)
 			printk(KERN_WARNING
 			       "%s: IOC4 submodule 0x%s remove failed "
 			       "for pci_dev %s.\n",
-			       __FUNCTION__, module_name(is->is_owner),
+			       __func__, module_name(is->is_owner),
 			       pci_name(idd->idd_pdev));
 		}
 	}
@@ -416,7 +442,7 @@ ioc4_remove(struct pci_dev *pdev)
 		printk(KERN_WARNING
 		       "%s: Unable to get IOC4 misc mapping for pci_dev %s. "
 		       "Device removal may be incomplete.\n",
-		       __FUNCTION__, pci_name(idd->idd_pdev));
+		       __func__, pci_name(idd->idd_pdev));
 	}
 	release_mem_region(idd->idd_bar0, sizeof(struct ioc4_misc_regs));
 
@@ -440,7 +466,7 @@ static struct pci_driver ioc4_driver = {
 	.name = "IOC4",
 	.id_table = ioc4_id_table,
 	.probe = ioc4_probe,
-	.remove = ioc4_remove,
+	.remove = __devexit_p(ioc4_remove),
 };
 
 MODULE_DEVICE_TABLE(pci, ioc4_id_table);
@@ -450,16 +476,18 @@ MODULE_DEVICE_TABLE(pci, ioc4_id_table);
  *********************/
 
 /* Module load */
-static int __devinit
+static int __init
 ioc4_init(void)
 {
 	return pci_register_driver(&ioc4_driver);
 }
 
 /* Module unload */
-static void __devexit
+static void __exit
 ioc4_exit(void)
 {
+	/* Ensure ioc4_load_modules() has completed before exiting */
+	flush_work_sync(&ioc4_load_modules_work);
 	pci_unregister_driver(&ioc4_driver);
 }
 

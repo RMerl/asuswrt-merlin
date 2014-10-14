@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) by Jaroslav Kysela <perex@suse.cz>,
+ *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>,
  *                   Hannu Savolainen 1993-1996,
  *                   Rob Hooft
  *                   
@@ -31,7 +31,7 @@
 #include <linux/ioport.h>
 #include <sound/minors.h>
 
-MODULE_AUTHOR("Jaroslav Kysela <perex@suse.cz>, Hannu Savolainen 1993-1996, Rob Hooft");
+MODULE_AUTHOR("Jaroslav Kysela <perex@perex.cz>, Hannu Savolainen 1993-1996, Rob Hooft");
 MODULE_DESCRIPTION("Routines for control of AdLib FM cards (OPL2/OPL3/OPL4 chips)");
 MODULE_LICENSE("GPL");
 
@@ -139,7 +139,8 @@ static int snd_opl3_detect(struct snd_opl3 * opl3)
 		 * If we had an OPL4 chip, opl3->hardware would have been set
 		 * by the OPL4 driver; so we can assume OPL3 here.
 		 */
-		snd_assert(opl3->r_port != 0, return -ENODEV);
+		if (snd_BUG_ON(!opl3->r_port))
+			return -ENODEV;
 		opl3->hardware = OPL3_HW_OPL3;
 	}
 	return 0;
@@ -301,7 +302,7 @@ void snd_opl3_interrupt(struct snd_hwdep * hw)
 	opl3 = hw->private_data;
 	status = inb(opl3->l_port);
 #if 0
-	snd_printk("AdLib IRQ status = 0x%x\n", status);
+	snd_printk(KERN_DEBUG "AdLib IRQ status = 0x%x\n", status);
 #endif
 	if (!(status & 0x80))
 		return;
@@ -324,9 +325,11 @@ EXPORT_SYMBOL(snd_opl3_interrupt);
 
 static int snd_opl3_free(struct snd_opl3 *opl3)
 {
-	snd_assert(opl3 != NULL, return -ENXIO);
+	if (snd_BUG_ON(!opl3))
+		return -ENXIO;
 	if (opl3->private_free)
 		opl3->private_free(opl3);
+	snd_opl3_clear_patches(opl3);
 	release_and_free_resource(opl3->res_l_port);
 	release_and_free_resource(opl3->res_r_port);
 	kfree(opl3);
@@ -360,7 +363,6 @@ int snd_opl3_new(struct snd_card *card,
 	opl3->hardware = hardware;
 	spin_lock_init(&opl3->reg_lock);
 	spin_lock_init(&opl3->timer_lock);
-	mutex_init(&opl3->access_mutex);
 
 	if ((err = snd_device_new(card, SNDRV_DEV_CODEC, opl3, &ops)) < 0) {
 		snd_opl3_free(opl3);
@@ -496,6 +498,7 @@ int snd_opl3_hwdep_new(struct snd_opl3 * opl3,
 		return err;
 	}
 	hw->private_data = opl3;
+	hw->exclusive = 1;
 #ifdef CONFIG_SND_OSSEMUL
 	if (device == 0) {
 		hw->oss_type = SNDRV_OSS_DEVICE_TYPE_DMFM;
@@ -521,8 +524,10 @@ int snd_opl3_hwdep_new(struct snd_opl3 * opl3,
 	/* operators - only ioctl */
 	hw->ops.open = snd_opl3_open;
 	hw->ops.ioctl = snd_opl3_ioctl;
+	hw->ops.write = snd_opl3_write;
 	hw->ops.release = snd_opl3_release;
 
+	opl3->hwdep = hw;
 	opl3->seq_dev_num = seq_device;
 #if defined(CONFIG_SND_SEQUENCER) || (defined(MODULE) && defined(CONFIG_SND_SEQUENCER_MODULE))
 	if (snd_seq_device_new(card, seq_device, SNDRV_SEQ_DEV_ID_OPL3,

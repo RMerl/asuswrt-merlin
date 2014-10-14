@@ -1,6 +1,6 @@
 /*
  *  Device management routines
- *  Copyright (c) by Jaroslav Kysela <perex@suse.cz>
+ *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  *
  *
  *   This program is free software; you can redistribute it and/or modify
@@ -19,7 +19,6 @@
  *
  */
 
-#include <sound/driver.h>
 #include <linux/slab.h>
 #include <linux/time.h>
 #include <linux/errno.h>
@@ -46,9 +45,8 @@ int snd_device_new(struct snd_card *card, snd_device_type_t type,
 {
 	struct snd_device *dev;
 
-	snd_assert(card != NULL, return -ENXIO);
-	snd_assert(device_data != NULL, return -ENXIO);
-	snd_assert(ops != NULL, return -ENXIO);
+	if (snd_BUG_ON(!card || !device_data || !ops))
+		return -ENXIO;
 	dev = kzalloc(sizeof(*dev), GFP_KERNEL);
 	if (dev == NULL) {
 		snd_printk(KERN_ERR "Cannot allocate device\n");
@@ -81,8 +79,8 @@ int snd_device_free(struct snd_card *card, void *device_data)
 {
 	struct snd_device *dev;
 	
-	snd_assert(card != NULL, return -ENXIO);
-	snd_assert(device_data != NULL, return -ENXIO);
+	if (snd_BUG_ON(!card || !device_data))
+		return -ENXIO;
 	list_for_each_entry(dev, &card->devices, list) {
 		if (dev->device_data != device_data)
 			continue;
@@ -100,7 +98,7 @@ int snd_device_free(struct snd_card *card, void *device_data)
 		kfree(dev);
 		return 0;
 	}
-	snd_printd("device free %p (from %p), not found\n", device_data,
+	snd_printd("device free %p (from %pF), not found\n", device_data,
 		   __builtin_return_address(0));
 	return -ENXIO;
 }
@@ -124,8 +122,8 @@ int snd_device_disconnect(struct snd_card *card, void *device_data)
 {
 	struct snd_device *dev;
 
-	snd_assert(card != NULL, return -ENXIO);
-	snd_assert(device_data != NULL, return -ENXIO);
+	if (snd_BUG_ON(!card || !device_data))
+		return -ENXIO;
 	list_for_each_entry(dev, &card->devices, list) {
 		if (dev->device_data != device_data)
 			continue;
@@ -137,7 +135,7 @@ int snd_device_disconnect(struct snd_card *card, void *device_data)
 		}
 		return 0;
 	}
-	snd_printd("device disconnect %p (from %p), not found\n", device_data,
+	snd_printd("device disconnect %p (from %pF), not found\n", device_data,
 		   __builtin_return_address(0));
 	return -ENXIO;
 }
@@ -160,8 +158,8 @@ int snd_device_register(struct snd_card *card, void *device_data)
 	struct snd_device *dev;
 	int err;
 
-	snd_assert(card != NULL, return -ENXIO);
-	snd_assert(device_data != NULL, return -ENXIO);
+	if (snd_BUG_ON(!card || !device_data))
+		return -ENXIO;
 	list_for_each_entry(dev, &card->devices, list) {
 		if (dev->device_data != device_data)
 			continue;
@@ -189,7 +187,8 @@ int snd_device_register_all(struct snd_card *card)
 	struct snd_device *dev;
 	int err;
 	
-	snd_assert(card != NULL, return -ENXIO);
+	if (snd_BUG_ON(!card))
+		return -ENXIO;
 	list_for_each_entry(dev, &card->devices, list) {
 		if (dev->state == SNDRV_DEV_BUILD && dev->ops->dev_register) {
 			if ((err = dev->ops->dev_register(dev)) < 0)
@@ -209,7 +208,8 @@ int snd_device_disconnect_all(struct snd_card *card)
 	struct snd_device *dev;
 	int err = 0;
 
-	snd_assert(card != NULL, return -ENXIO);
+	if (snd_BUG_ON(!card))
+		return -ENXIO;
 	list_for_each_entry(dev, &card->devices, list) {
 		if (snd_device_disconnect(card, dev->device_data) < 0)
 			err = -ENXIO;
@@ -225,14 +225,16 @@ int snd_device_free_all(struct snd_card *card, snd_device_cmd_t cmd)
 {
 	struct snd_device *dev;
 	int err;
-	unsigned int range_low, range_high;
+	unsigned int range_low, range_high, type;
 
-	snd_assert(card != NULL, return -ENXIO);
-	range_low = cmd * SNDRV_DEV_TYPE_RANGE_SIZE;
+	if (snd_BUG_ON(!card))
+		return -ENXIO;
+	range_low = (__force unsigned int)cmd * SNDRV_DEV_TYPE_RANGE_SIZE;
 	range_high = range_low + SNDRV_DEV_TYPE_RANGE_SIZE - 1;
       __again:
 	list_for_each_entry(dev, &card->devices, list) {
-		if (dev->type >= range_low && dev->type <= range_high) {
+		type = (__force unsigned int)dev->type;
+		if (type >= range_low && type <= range_high) {
 			if ((err = snd_device_free(card, dev->device_data)) < 0)
 				return err;
 			goto __again;

@@ -15,11 +15,11 @@
  *
  *	Fixes/additions:
  *		Philipp Rumpf
- *		Juha Siev‰nen <Juha.Sievanen@cs.Helsinki.FI>
- *		Auvo H‰kkinen <Auvo.Hakkinen@cs.Helsinki.FI>
+ *		Juha Siev√§nen <Juha.Sievanen@cs.Helsinki.FI>
+ *		Auvo H√§kkinen <Auvo.Hakkinen@cs.Helsinki.FI>
  *		Deepak Saxena <deepak@plexity.net>
  *		Boji T Kannanthanam <boji.t.kannanthanam@intel.com>
- *		Alan Cox <alan@redhat.com>:
+ *		Alan Cox <alan@lxorguk.ukuu.org.uk>:
  *			Ported to Linux 2.5.
  *		Markus Lidel <Markus.Lidel@shadowconnect.com>:
  *			Minor fixes for 2.6.
@@ -29,6 +29,7 @@
 #include <linux/i2o.h>
 #include <linux/delay.h>
 #include <linux/sched.h>
+#include <linux/slab.h>
 #include "core.h"
 
 #define OSM_NAME	"i2o"
@@ -49,7 +50,6 @@ static int i2o_hrt_get(struct i2o_controller *c);
 /**
  *	i2o_msg_get_wait - obtain an I2O message from the IOP
  *	@c: I2O controller
- *	@msg: pointer to a I2O message pointer
  *	@wait: how long to wait until timeout
  *
  *	This function waits up to wait seconds for a message slot to be
@@ -133,7 +133,7 @@ u32 i2o_cntxt_list_add(struct i2o_controller * c, void *ptr)
  *	Removes a previously added pointer from the context list and returns
  *	the matching context id.
  *
- *	Returns context id on succes or 0 on failure.
+ *	Returns context id on success or 0 on failure.
  */
 u32 i2o_cntxt_list_remove(struct i2o_controller * c, void *ptr)
 {
@@ -199,7 +199,7 @@ void *i2o_cntxt_list_get(struct i2o_controller *c, u32 context)
  *	@c: controller to which the context list belong
  *	@ptr: pointer to which the context id should be fetched
  *
- *	Returns context id which matches to the pointer on succes or 0 on
+ *	Returns context id which matches to the pointer on success or 0 on
  *	failure.
  */
 u32 i2o_cntxt_list_get_ptr(struct i2o_controller * c, void *ptr)
@@ -540,7 +540,7 @@ static int i2o_iop_reset(struct i2o_controller *c)
 		 * which is indeterminate. We need to wait until the IOP has
 		 * rebooted before we can let the system talk to it. We read
 		 * the inbound Free_List until a message is available. If we
-		 * can't read one in the given ammount of time, we assume the
+		 * can't read one in the given amount of time, we assume the
 		 * IOP could not reboot properly.
 		 */
 		osm_debug("%s: Reset in progress, waiting for reboot...\n",
@@ -916,7 +916,7 @@ static int i2o_parse_hrt(struct i2o_controller *c)
  *	status block. The status block could then be accessed through
  *	c->status_block.
  *
- *	Returns 0 on sucess or negative error code on failure.
+ *	Returns 0 on success or negative error code on failure.
  */
 int i2o_status_get(struct i2o_controller *c)
 {
@@ -1004,7 +1004,7 @@ static int i2o_hrt_get(struct i2o_controller *c)
 
 		size = hrt->num_entries * hrt->entry_len << 2;
 		if (size > c->hrt.len) {
-			if (i2o_dma_realloc(dev, &c->hrt, size, GFP_KERNEL))
+			if (i2o_dma_realloc(dev, &c->hrt, size))
 				return -ENOMEM;
 			else
 				hrt = c->hrt.virt;
@@ -1067,13 +1067,13 @@ struct i2o_controller *i2o_iop_alloc(void)
 
 	INIT_LIST_HEAD(&c->devices);
 	spin_lock_init(&c->lock);
-	init_MUTEX(&c->lct_lock);
+	mutex_init(&c->lct_lock);
 
 	device_initialize(&c->device);
 
 	c->device.release = &i2o_iop_release;
 
-	snprintf(c->device.bus_id, BUS_ID_SIZE, "iop%d", c->unit);
+	dev_set_name(&c->device, "iop%d", c->unit);
 
 #if BITS_PER_LONG == 64
 	spin_lock_init(&c->context_list_lock);

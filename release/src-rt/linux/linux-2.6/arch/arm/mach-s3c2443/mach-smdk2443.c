@@ -21,30 +21,31 @@
 #include <linux/init.h>
 #include <linux/serial_core.h>
 #include <linux/platform_device.h>
+#include <linux/io.h>
 
 #include <asm/mach/arch.h>
 #include <asm/mach/map.h>
 #include <asm/mach/irq.h>
 
-#include <asm/hardware.h>
-#include <asm/io.h>
+#include <mach/hardware.h>
 #include <asm/irq.h>
 #include <asm/mach-types.h>
 
-#include <asm/arch/regs-serial.h>
-#include <asm/arch/regs-gpio.h>
-#include <asm/arch/regs-lcd.h>
+#include <plat/regs-serial.h>
+#include <mach/regs-gpio.h>
+#include <mach/regs-lcd.h>
 
-#include <asm/arch/idle.h>
-#include <asm/arch/fb.h>
+#include <mach/idle.h>
+#include <mach/fb.h>
+#include <plat/iic.h>
 
-#include <asm/plat-s3c24xx/s3c2410.h>
-#include <asm/plat-s3c24xx/s3c2440.h>
-#include <asm/plat-s3c24xx/clock.h>
-#include <asm/plat-s3c24xx/devs.h>
-#include <asm/plat-s3c24xx/cpu.h>
+#include <plat/s3c2410.h>
+#include <plat/s3c2443.h>
+#include <plat/clock.h>
+#include <plat/devs.h>
+#include <plat/cpu.h>
 
-#include <asm/plat-s3c24xx/common-smdk.h>
+#include <plat/common-smdk.h>
 
 static struct map_desc smdk2443_iodesc[] __initdata = {
 	/* ISA IO Space map (memory space selected by A24) */
@@ -98,13 +99,23 @@ static struct s3c2410_uartcfg smdk2443_uartcfgs[] __initdata = {
 		.ucon	     = 0x3c5,
 		.ulcon	     = 0x43,
 		.ufcon	     = 0x51,
+	},
+	[3] = {
+		.hwport	     = 3,
+		.flags	     = 0,
+		.ucon	     = 0x3c5,
+		.ulcon	     = 0x03,
+		.ufcon	     = 0x51,
 	}
 };
 
 static struct platform_device *smdk2443_devices[] __initdata = {
 	&s3c_device_wdt,
-	&s3c_device_i2c,
-	&s3c_device_hsmmc,
+	&s3c_device_i2c0,
+	&s3c_device_hsmmc1,
+#ifdef CONFIG_SND_SOC_SMDK2443_WM9710
+	&s3c_device_ac97,
+#endif
 };
 
 static void __init smdk2443_map_io(void)
@@ -116,14 +127,18 @@ static void __init smdk2443_map_io(void)
 
 static void __init smdk2443_machine_init(void)
 {
+	s3c_i2c0_set_platdata(NULL);
+
+#ifdef CONFIG_SND_SOC_SMDK2443_WM9710
+	s3c24xx_ac97_setup_gpio(S3C24XX_AC97_GPE0);
+#endif
+
 	platform_add_devices(smdk2443_devices, ARRAY_SIZE(smdk2443_devices));
 	smdk_machine_init();
 }
 
 MACHINE_START(SMDK2443, "SMDK2443")
-	/* Maintainer: Ben Dooks <ben@fluff.org> */
-	.phys_io	= S3C2410_PA_UART,
-	.io_pg_offst	= (((u32)S3C24XX_VA_UART) >> 18) & 0xfffc,
+	/* Maintainer: Ben Dooks <ben-linux@fluff.org> */
 	.boot_params	= S3C2410_SDRAM_PA + 0x100,
 
 	.init_irq	= s3c24xx_init_irq,

@@ -1,29 +1,16 @@
 /*
- * linux/fs/nfsd/nfs3proc.c
- *
  * Process version 3 NFS requests.
  *
  * Copyright (C) 1996, 1997, 1998 Olaf Kirch <okir@monad.swb.de>
  */
 
-#include <linux/linkage.h>
-#include <linux/time.h>
-#include <linux/errno.h>
 #include <linux/fs.h>
 #include <linux/ext2_fs.h>
-#include <linux/stat.h>
-#include <linux/fcntl.h>
-#include <linux/net.h>
-#include <linux/in.h>
-#include <linux/unistd.h>
-#include <linux/slab.h>
-#include <linux/major.h>
+#include <linux/magic.h>
 
-#include <linux/sunrpc/svc.h>
-#include <linux/nfsd/nfsd.h>
-#include <linux/nfsd/cache.h>
-#include <linux/nfsd/xdr3.h>
-#include <linux/nfs3.h>
+#include "cache.h"
+#include "xdr3.h"
+#include "vfs.h"
 
 #define NFSDDBG_FACILITY		NFSDDBG_PROC
 
@@ -63,11 +50,12 @@ nfsd3_proc_getattr(struct svc_rqst *rqstp, struct nfsd_fhandle  *argp,
 		SVCFH_fmt(&argp->fh));
 
 	fh_copy(&resp->fh, &argp->fh);
-	nfserr = fh_verify(rqstp, &resp->fh, 0, MAY_NOP);
+	nfserr = fh_verify(rqstp, &resp->fh, 0,
+			NFSD_MAY_NOP | NFSD_MAY_BYPASS_GSS_ON_ROOT);
 	if (nfserr)
 		RETURN_STATUS(nfserr);
 
-	err = vfs_getattr(resp->fh.fh_export->ex_mnt,
+	err = vfs_getattr(resp->fh.fh_export->ex_path.mnt,
 			  resp->fh.fh_dentry, &resp->stat);
 	nfserr = nfserrno(err);
 
@@ -163,10 +151,10 @@ nfsd3_proc_read(struct svc_rqst *rqstp, struct nfsd3_readargs *argp,
 	__be32	nfserr;
 	u32	max_blocksize = svc_max_payload(rqstp);
 
-	dprintk("nfsd: READ(3) %s %lu bytes at %lu\n",
+	dprintk("nfsd: READ(3) %s %lu bytes at %Lu\n",
 				SVCFH_fmt(&argp->fh),
 				(unsigned long) argp->count,
-				(unsigned long) argp->offset);
+				(unsigned long long) argp->offset);
 
 	/* Obtain buffer pointer for payload.
 	 * 1 (status) + 22 (post_op_attr) + 1 (count) + 1 (eof)
@@ -180,7 +168,7 @@ nfsd3_proc_read(struct svc_rqst *rqstp, struct nfsd3_readargs *argp,
 	svc_reserve_auth(rqstp, ((1 + NFS3_POST_OP_ATTR_WORDS + 3)<<2) + resp->count +4);
 
 	fh_copy(&resp->fh, &argp->fh);
-	nfserr = nfsd_read(rqstp, &resp->fh, NULL,
+	nfserr = nfsd_read(rqstp, &resp->fh,
 				  argp->offset,
 			   	  rqstp->rq_vec, argp->vlen,
 				  &resp->count);
@@ -201,11 +189,12 @@ nfsd3_proc_write(struct svc_rqst *rqstp, struct nfsd3_writeargs *argp,
 					 struct nfsd3_writeres  *resp)
 {
 	__be32	nfserr;
+	unsigned long cnt = argp->len;
 
-	dprintk("nfsd: WRITE(3)    %s %d bytes at %ld%s\n",
+	dprintk("nfsd: WRITE(3)    %s %d bytes at %Lu%s\n",
 				SVCFH_fmt(&argp->fh),
 				argp->len,
-				(unsigned long) argp->offset,
+				(unsigned long long) argp->offset,
 				argp->stable? " stable" : "");
 
 	fh_copy(&resp->fh, &argp->fh);
@@ -213,9 +202,9 @@ nfsd3_proc_write(struct svc_rqst *rqstp, struct nfsd3_writeargs *argp,
 	nfserr = nfsd_write(rqstp, &resp->fh, NULL,
 				   argp->offset,
 				   rqstp->rq_vec, argp->vlen,
-				   argp->len,
+				   &cnt,
 				   &resp->committed);
-	resp->count = argp->count;
+	resp->count = cnt;
 	RETURN_STATUS(nfserr);
 }
 
@@ -242,7 +231,7 @@ nfsd3_proc_create(struct svc_rqst *rqstp, struct nfsd3_createargs *argp,
 	attr   = &argp->attrs;
 
 	/* Get the directory inode */
-	nfserr = fh_verify(rqstp, dirfhp, S_IFDIR, MAY_CREATE);
+	nfserr = fh_verify(rqstp, dirfhp, S_IFDIR, NFSD_MAY_CREATE);
 	if (nfserr)
 		RETURN_STATUS(nfserr);
 
@@ -282,7 +271,7 @@ nfsd3_proc_mkdir(struct svc_rqst *rqstp, struct nfsd3_createargs *argp,
 	fh_init(&resp->fh, NFS3_FHSIZE);
 	nfserr = nfsd_create(rqstp, &resp->dirfh, argp->name, argp->len,
 				    &argp->attrs, S_IFDIR, 0, &resp->fh);
-
+	fh_unlock(&resp->dirfh);
 	RETURN_STATUS(nfserr);
 }
 
@@ -338,7 +327,7 @@ nfsd3_proc_mknod(struct svc_rqst *rqstp, struct nfsd3_mknodargs *argp,
 	type = nfs3_ftypes[argp->ftype];
 	nfserr = nfsd_create(rqstp, &resp->dirfh, argp->name, argp->len,
 				    &argp->attrs, type, rdev, &resp->fh);
-
+	fh_unlock(&resp->dirfh);
 	RETURN_STATUS(nfserr);
 }
 
@@ -359,6 +348,7 @@ nfsd3_proc_remove(struct svc_rqst *rqstp, struct nfsd3_diropargs *argp,
 	/* Unlink. -S_IFDIR means file must not be a directory */
 	fh_copy(&resp->fh, &argp->fh);
 	nfserr = nfsd_unlink(rqstp, &resp->fh, -S_IFDIR, argp->name, argp->len);
+	fh_unlock(&resp->fh);
 	RETURN_STATUS(nfserr);
 }
 
@@ -378,6 +368,7 @@ nfsd3_proc_rmdir(struct svc_rqst *rqstp, struct nfsd3_diropargs *argp,
 
 	fh_copy(&resp->fh, &argp->fh);
 	nfserr = nfsd_unlink(rqstp, &resp->fh, S_IFDIR, argp->name, argp->len);
+	fh_unlock(&resp->fh);
 	RETURN_STATUS(nfserr);
 }
 
@@ -530,7 +521,7 @@ nfsd3_proc_fsstat(struct svc_rqst * rqstp, struct nfsd_fhandle    *argp,
 	dprintk("nfsd: FSSTAT(3)   %s\n",
 				SVCFH_fmt(&argp->fh));
 
-	nfserr = nfsd_statfs(rqstp, &argp->fh, &resp->stats);
+	nfserr = nfsd_statfs(rqstp, &argp->fh, &resp->stats, 0);
 	fh_put(&argp->fh);
 	RETURN_STATUS(nfserr);
 }
@@ -558,7 +549,8 @@ nfsd3_proc_fsinfo(struct svc_rqst * rqstp, struct nfsd_fhandle    *argp,
 	resp->f_maxfilesize = ~(u32) 0;
 	resp->f_properties = NFS3_FSF_DEFAULT;
 
-	nfserr = fh_verify(rqstp, &argp->fh, 0, MAY_NOP);
+	nfserr = fh_verify(rqstp, &argp->fh, 0,
+			NFSD_MAY_NOP | NFSD_MAY_BYPASS_GSS_ON_ROOT);
 
 	/* Check special features of the file system. May request
 	 * different read/write sizes for file systems known to have
@@ -567,7 +559,7 @@ nfsd3_proc_fsinfo(struct svc_rqst * rqstp, struct nfsd_fhandle    *argp,
 		struct super_block *sb = argp->fh.fh_dentry->d_inode->i_sb;
 
 		/* Note that we don't care for remote fs's here */
-		if (sb->s_magic == 0x4d44 /* MSDOS_SUPER_MAGIC */) {
+		if (sb->s_magic == MSDOS_SUPER_MAGIC) {
 			resp->f_properties = NFS3_FSF_BILLYBOY;
 		}
 		resp->f_maxfilesize = sb->s_maxbytes;
@@ -597,7 +589,7 @@ nfsd3_proc_pathconf(struct svc_rqst * rqstp, struct nfsd_fhandle      *argp,
 	resp->p_case_insensitive = 0;
 	resp->p_case_preserving = 1;
 
-	nfserr = fh_verify(rqstp, &argp->fh, 0, MAY_NOP);
+	nfserr = fh_verify(rqstp, &argp->fh, 0, NFSD_MAY_NOP);
 
 	if (nfserr == 0) {
 		struct super_block *sb = argp->fh.fh_dentry->d_inode->i_sb;
@@ -608,7 +600,7 @@ nfsd3_proc_pathconf(struct svc_rqst * rqstp, struct nfsd_fhandle      *argp,
 			resp->p_link_max = EXT2_LINK_MAX;
 			resp->p_name_max = EXT2_NAME_LEN;
 			break;
-		case 0x4d44:	/* MSDOS_SUPER_MAGIC */
+		case MSDOS_SUPER_MAGIC:
 			resp->p_case_insensitive = 1;
 			resp->p_case_preserving  = 0;
 			break;
@@ -648,8 +640,6 @@ nfsd3_proc_commit(struct svc_rqst * rqstp, struct nfsd3_commitargs *argp,
  * NFSv3 Server procedures.
  * Only the results of non-idempotent operations are cached.
  */
-#define nfs3svc_decode_voidargs		NULL
-#define nfs3svc_release_void		NULL
 #define nfs3svc_decode_fhandleargs	nfs3svc_decode_fhandle
 #define nfs3svc_encode_attrstatres	nfs3svc_encode_attrstat
 #define nfs3svc_encode_wccstatres	nfs3svc_encode_wccstat
@@ -682,28 +672,219 @@ struct nfsd3_voidargs { int dummy; };
 #define WC (7+pAT)	/* WCC attributes */
 
 static struct svc_procedure		nfsd_procedures3[22] = {
-  PROC(null,	 void,		void,		void,	  RC_NOCACHE, ST),
-  PROC(getattr,	 fhandle,	attrstat,	fhandle,  RC_NOCACHE, ST+AT),
-  PROC(setattr,  sattr,		wccstat,	fhandle,  RC_REPLBUFF, ST+WC),
-  PROC(lookup,	 dirop,		dirop,		fhandle2, RC_NOCACHE, ST+FH+pAT+pAT),
-  PROC(access,	 access,	access,		fhandle,  RC_NOCACHE, ST+pAT+1),
-  PROC(readlink, readlink,	readlink,	fhandle,  RC_NOCACHE, ST+pAT+1+NFS3_MAXPATHLEN/4),
-  PROC(read,	 read,		read,		fhandle,  RC_NOCACHE, ST+pAT+4+NFSSVC_MAXBLKSIZE/4),
-  PROC(write,	 write,		write,		fhandle,  RC_REPLBUFF, ST+WC+4),
-  PROC(create,	 create,	create,		fhandle2, RC_REPLBUFF, ST+(1+FH+pAT)+WC),
-  PROC(mkdir,	 mkdir,		create,		fhandle2, RC_REPLBUFF, ST+(1+FH+pAT)+WC),
-  PROC(symlink,	 symlink,	create,		fhandle2, RC_REPLBUFF, ST+(1+FH+pAT)+WC),
-  PROC(mknod,	 mknod,		create,		fhandle2, RC_REPLBUFF, ST+(1+FH+pAT)+WC),
-  PROC(remove,	 dirop,		wccstat,	fhandle,  RC_REPLBUFF, ST+WC),
-  PROC(rmdir,	 dirop,		wccstat,	fhandle,  RC_REPLBUFF, ST+WC),
-  PROC(rename,	 rename,	rename,		fhandle2, RC_REPLBUFF, ST+WC+WC),
-  PROC(link,	 link,		link,		fhandle2, RC_REPLBUFF, ST+pAT+WC),
-  PROC(readdir,	 readdir,	readdir,	fhandle,  RC_NOCACHE, 0),
-  PROC(readdirplus,readdirplus,	readdir,	fhandle,  RC_NOCACHE, 0),
-  PROC(fsstat,	 fhandle,	fsstat,		void,     RC_NOCACHE, ST+pAT+2*6+1),
-  PROC(fsinfo,   fhandle,	fsinfo,		void,     RC_NOCACHE, ST+pAT+12),
-  PROC(pathconf, fhandle,	pathconf,	void,     RC_NOCACHE, ST+pAT+6),
-  PROC(commit,	 commit,	commit,		fhandle,  RC_NOCACHE, ST+WC+2),
+	[NFS3PROC_NULL] = {
+		.pc_func = (svc_procfunc) nfsd3_proc_null,
+		.pc_encode = (kxdrproc_t) nfs3svc_encode_voidres,
+		.pc_argsize = sizeof(struct nfsd3_voidargs),
+		.pc_ressize = sizeof(struct nfsd3_voidres),
+		.pc_cachetype = RC_NOCACHE,
+		.pc_xdrressize = ST,
+	},
+	[NFS3PROC_GETATTR] = {
+		.pc_func = (svc_procfunc) nfsd3_proc_getattr,
+		.pc_decode = (kxdrproc_t) nfs3svc_decode_fhandleargs,
+		.pc_encode = (kxdrproc_t) nfs3svc_encode_attrstatres,
+		.pc_release = (kxdrproc_t) nfs3svc_release_fhandle,
+		.pc_argsize = sizeof(struct nfsd3_fhandleargs),
+		.pc_ressize = sizeof(struct nfsd3_attrstatres),
+		.pc_cachetype = RC_NOCACHE,
+		.pc_xdrressize = ST+AT,
+	},
+	[NFS3PROC_SETATTR] = {
+		.pc_func = (svc_procfunc) nfsd3_proc_setattr,
+		.pc_decode = (kxdrproc_t) nfs3svc_decode_sattrargs,
+		.pc_encode = (kxdrproc_t) nfs3svc_encode_wccstatres,
+		.pc_release = (kxdrproc_t) nfs3svc_release_fhandle,
+		.pc_argsize = sizeof(struct nfsd3_sattrargs),
+		.pc_ressize = sizeof(struct nfsd3_wccstatres),
+		.pc_cachetype = RC_REPLBUFF,
+		.pc_xdrressize = ST+WC,
+	},
+	[NFS3PROC_LOOKUP] = {
+		.pc_func = (svc_procfunc) nfsd3_proc_lookup,
+		.pc_decode = (kxdrproc_t) nfs3svc_decode_diropargs,
+		.pc_encode = (kxdrproc_t) nfs3svc_encode_diropres,
+		.pc_release = (kxdrproc_t) nfs3svc_release_fhandle2,
+		.pc_argsize = sizeof(struct nfsd3_diropargs),
+		.pc_ressize = sizeof(struct nfsd3_diropres),
+		.pc_cachetype = RC_NOCACHE,
+		.pc_xdrressize = ST+FH+pAT+pAT,
+	},
+	[NFS3PROC_ACCESS] = {
+		.pc_func = (svc_procfunc) nfsd3_proc_access,
+		.pc_decode = (kxdrproc_t) nfs3svc_decode_accessargs,
+		.pc_encode = (kxdrproc_t) nfs3svc_encode_accessres,
+		.pc_release = (kxdrproc_t) nfs3svc_release_fhandle,
+		.pc_argsize = sizeof(struct nfsd3_accessargs),
+		.pc_ressize = sizeof(struct nfsd3_accessres),
+		.pc_cachetype = RC_NOCACHE,
+		.pc_xdrressize = ST+pAT+1,
+	},
+	[NFS3PROC_READLINK] = {
+		.pc_func = (svc_procfunc) nfsd3_proc_readlink,
+		.pc_decode = (kxdrproc_t) nfs3svc_decode_readlinkargs,
+		.pc_encode = (kxdrproc_t) nfs3svc_encode_readlinkres,
+		.pc_release = (kxdrproc_t) nfs3svc_release_fhandle,
+		.pc_argsize = sizeof(struct nfsd3_readlinkargs),
+		.pc_ressize = sizeof(struct nfsd3_readlinkres),
+		.pc_cachetype = RC_NOCACHE,
+		.pc_xdrressize = ST+pAT+1+NFS3_MAXPATHLEN/4,
+	},
+	[NFS3PROC_READ] = {
+		.pc_func = (svc_procfunc) nfsd3_proc_read,
+		.pc_decode = (kxdrproc_t) nfs3svc_decode_readargs,
+		.pc_encode = (kxdrproc_t) nfs3svc_encode_readres,
+		.pc_release = (kxdrproc_t) nfs3svc_release_fhandle,
+		.pc_argsize = sizeof(struct nfsd3_readargs),
+		.pc_ressize = sizeof(struct nfsd3_readres),
+		.pc_cachetype = RC_NOCACHE,
+		.pc_xdrressize = ST+pAT+4+NFSSVC_MAXBLKSIZE/4,
+	},
+	[NFS3PROC_WRITE] = {
+		.pc_func = (svc_procfunc) nfsd3_proc_write,
+		.pc_decode = (kxdrproc_t) nfs3svc_decode_writeargs,
+		.pc_encode = (kxdrproc_t) nfs3svc_encode_writeres,
+		.pc_release = (kxdrproc_t) nfs3svc_release_fhandle,
+		.pc_argsize = sizeof(struct nfsd3_writeargs),
+		.pc_ressize = sizeof(struct nfsd3_writeres),
+		.pc_cachetype = RC_REPLBUFF,
+		.pc_xdrressize = ST+WC+4,
+	},
+	[NFS3PROC_CREATE] = {
+		.pc_func = (svc_procfunc) nfsd3_proc_create,
+		.pc_decode = (kxdrproc_t) nfs3svc_decode_createargs,
+		.pc_encode = (kxdrproc_t) nfs3svc_encode_createres,
+		.pc_release = (kxdrproc_t) nfs3svc_release_fhandle2,
+		.pc_argsize = sizeof(struct nfsd3_createargs),
+		.pc_ressize = sizeof(struct nfsd3_createres),
+		.pc_cachetype = RC_REPLBUFF,
+		.pc_xdrressize = ST+(1+FH+pAT)+WC,
+	},
+	[NFS3PROC_MKDIR] = {
+		.pc_func = (svc_procfunc) nfsd3_proc_mkdir,
+		.pc_decode = (kxdrproc_t) nfs3svc_decode_mkdirargs,
+		.pc_encode = (kxdrproc_t) nfs3svc_encode_createres,
+		.pc_release = (kxdrproc_t) nfs3svc_release_fhandle2,
+		.pc_argsize = sizeof(struct nfsd3_mkdirargs),
+		.pc_ressize = sizeof(struct nfsd3_createres),
+		.pc_cachetype = RC_REPLBUFF,
+		.pc_xdrressize = ST+(1+FH+pAT)+WC,
+	},
+	[NFS3PROC_SYMLINK] = {
+		.pc_func = (svc_procfunc) nfsd3_proc_symlink,
+		.pc_decode = (kxdrproc_t) nfs3svc_decode_symlinkargs,
+		.pc_encode = (kxdrproc_t) nfs3svc_encode_createres,
+		.pc_release = (kxdrproc_t) nfs3svc_release_fhandle2,
+		.pc_argsize = sizeof(struct nfsd3_symlinkargs),
+		.pc_ressize = sizeof(struct nfsd3_createres),
+		.pc_cachetype = RC_REPLBUFF,
+		.pc_xdrressize = ST+(1+FH+pAT)+WC,
+	},
+	[NFS3PROC_MKNOD] = {
+		.pc_func = (svc_procfunc) nfsd3_proc_mknod,
+		.pc_decode = (kxdrproc_t) nfs3svc_decode_mknodargs,
+		.pc_encode = (kxdrproc_t) nfs3svc_encode_createres,
+		.pc_release = (kxdrproc_t) nfs3svc_release_fhandle2,
+		.pc_argsize = sizeof(struct nfsd3_mknodargs),
+		.pc_ressize = sizeof(struct nfsd3_createres),
+		.pc_cachetype = RC_REPLBUFF,
+		.pc_xdrressize = ST+(1+FH+pAT)+WC,
+	},
+	[NFS3PROC_REMOVE] = {
+		.pc_func = (svc_procfunc) nfsd3_proc_remove,
+		.pc_decode = (kxdrproc_t) nfs3svc_decode_diropargs,
+		.pc_encode = (kxdrproc_t) nfs3svc_encode_wccstatres,
+		.pc_release = (kxdrproc_t) nfs3svc_release_fhandle,
+		.pc_argsize = sizeof(struct nfsd3_diropargs),
+		.pc_ressize = sizeof(struct nfsd3_wccstatres),
+		.pc_cachetype = RC_REPLBUFF,
+		.pc_xdrressize = ST+WC,
+	},
+	[NFS3PROC_RMDIR] = {
+		.pc_func = (svc_procfunc) nfsd3_proc_rmdir,
+		.pc_decode = (kxdrproc_t) nfs3svc_decode_diropargs,
+		.pc_encode = (kxdrproc_t) nfs3svc_encode_wccstatres,
+		.pc_release = (kxdrproc_t) nfs3svc_release_fhandle,
+		.pc_argsize = sizeof(struct nfsd3_diropargs),
+		.pc_ressize = sizeof(struct nfsd3_wccstatres),
+		.pc_cachetype = RC_REPLBUFF,
+		.pc_xdrressize = ST+WC,
+	},
+	[NFS3PROC_RENAME] = {
+		.pc_func = (svc_procfunc) nfsd3_proc_rename,
+		.pc_decode = (kxdrproc_t) nfs3svc_decode_renameargs,
+		.pc_encode = (kxdrproc_t) nfs3svc_encode_renameres,
+		.pc_release = (kxdrproc_t) nfs3svc_release_fhandle2,
+		.pc_argsize = sizeof(struct nfsd3_renameargs),
+		.pc_ressize = sizeof(struct nfsd3_renameres),
+		.pc_cachetype = RC_REPLBUFF,
+		.pc_xdrressize = ST+WC+WC,
+	},
+	[NFS3PROC_LINK] = {
+		.pc_func = (svc_procfunc) nfsd3_proc_link,
+		.pc_decode = (kxdrproc_t) nfs3svc_decode_linkargs,
+		.pc_encode = (kxdrproc_t) nfs3svc_encode_linkres,
+		.pc_release = (kxdrproc_t) nfs3svc_release_fhandle2,
+		.pc_argsize = sizeof(struct nfsd3_linkargs),
+		.pc_ressize = sizeof(struct nfsd3_linkres),
+		.pc_cachetype = RC_REPLBUFF,
+		.pc_xdrressize = ST+pAT+WC,
+	},
+	[NFS3PROC_READDIR] = {
+		.pc_func = (svc_procfunc) nfsd3_proc_readdir,
+		.pc_decode = (kxdrproc_t) nfs3svc_decode_readdirargs,
+		.pc_encode = (kxdrproc_t) nfs3svc_encode_readdirres,
+		.pc_release = (kxdrproc_t) nfs3svc_release_fhandle,
+		.pc_argsize = sizeof(struct nfsd3_readdirargs),
+		.pc_ressize = sizeof(struct nfsd3_readdirres),
+		.pc_cachetype = RC_NOCACHE,
+	},
+	[NFS3PROC_READDIRPLUS] = {
+		.pc_func = (svc_procfunc) nfsd3_proc_readdirplus,
+		.pc_decode = (kxdrproc_t) nfs3svc_decode_readdirplusargs,
+		.pc_encode = (kxdrproc_t) nfs3svc_encode_readdirres,
+		.pc_release = (kxdrproc_t) nfs3svc_release_fhandle,
+		.pc_argsize = sizeof(struct nfsd3_readdirplusargs),
+		.pc_ressize = sizeof(struct nfsd3_readdirres),
+		.pc_cachetype = RC_NOCACHE,
+	},
+	[NFS3PROC_FSSTAT] = {
+		.pc_func = (svc_procfunc) nfsd3_proc_fsstat,
+		.pc_decode = (kxdrproc_t) nfs3svc_decode_fhandleargs,
+		.pc_encode = (kxdrproc_t) nfs3svc_encode_fsstatres,
+		.pc_argsize = sizeof(struct nfsd3_fhandleargs),
+		.pc_ressize = sizeof(struct nfsd3_fsstatres),
+		.pc_cachetype = RC_NOCACHE,
+		.pc_xdrressize = ST+pAT+2*6+1,
+	},
+	[NFS3PROC_FSINFO] = {
+		.pc_func = (svc_procfunc) nfsd3_proc_fsinfo,
+		.pc_decode = (kxdrproc_t) nfs3svc_decode_fhandleargs,
+		.pc_encode = (kxdrproc_t) nfs3svc_encode_fsinfores,
+		.pc_argsize = sizeof(struct nfsd3_fhandleargs),
+		.pc_ressize = sizeof(struct nfsd3_fsinfores),
+		.pc_cachetype = RC_NOCACHE,
+		.pc_xdrressize = ST+pAT+12,
+	},
+	[NFS3PROC_PATHCONF] = {
+		.pc_func = (svc_procfunc) nfsd3_proc_pathconf,
+		.pc_decode = (kxdrproc_t) nfs3svc_decode_fhandleargs,
+		.pc_encode = (kxdrproc_t) nfs3svc_encode_pathconfres,
+		.pc_argsize = sizeof(struct nfsd3_fhandleargs),
+		.pc_ressize = sizeof(struct nfsd3_pathconfres),
+		.pc_cachetype = RC_NOCACHE,
+		.pc_xdrressize = ST+pAT+6,
+	},
+	[NFS3PROC_COMMIT] = {
+		.pc_func = (svc_procfunc) nfsd3_proc_commit,
+		.pc_decode = (kxdrproc_t) nfs3svc_decode_commitargs,
+		.pc_encode = (kxdrproc_t) nfs3svc_encode_commitres,
+		.pc_release = (kxdrproc_t) nfs3svc_release_fhandle,
+		.pc_argsize = sizeof(struct nfsd3_commitargs),
+		.pc_ressize = sizeof(struct nfsd3_commitres),
+		.pc_cachetype = RC_NOCACHE,
+		.pc_xdrressize = ST+WC+2,
+	},
 };
 
 struct svc_version	nfsd_version3 = {

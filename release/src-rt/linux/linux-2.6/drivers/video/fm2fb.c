@@ -45,7 +45,7 @@
  *	buffer needs an amount of memory of 1.769.472 bytes which
  *	is near to 2 MByte (the allocated address space of Zorro2).
  *	The memory is channel interleaved. That means every channel
- *	owns four VRAMs. Unfortunatly most FrameMasters II are
+ *	owns four VRAMs. Unfortunately most FrameMasters II are
  *	not assembled with memory for the alpha channel. In this
  *	case it could be possible to add the frame buffer into the
  *	normal memory pool.
@@ -195,13 +195,15 @@ static int fm2fb_blank(int blank, struct fb_info *info)
 static int fm2fb_setcolreg(u_int regno, u_int red, u_int green, u_int blue,
                          u_int transp, struct fb_info *info)
 {
-	if (regno > info->cmap.len)
-		return 1;
-	red >>= 8;
-	green >>= 8;
-	blue >>= 8;
+	if (regno < 16) {
+		red >>= 8;
+		green >>= 8;
+		blue >>= 8;
 
-	((u32*)(info->pseudo_palette))[regno] = (red << 16) | (green << 8) | blue;
+		((u32*)(info->pseudo_palette))[regno] = (red << 16) |
+			(green << 8) | blue;
+	}
+
 	return 0;
 }
 
@@ -217,6 +219,7 @@ static struct zorro_device_id fm2fb_devices[] __devinitdata = {
 	{ ZORRO_PROD_HELFRICH_RAINBOW_II },
 	{ 0 }
 };
+MODULE_DEVICE_TABLE(zorro, fm2fb_devices);
 
 static struct zorro_driver fm2fb_driver = {
 	.name		= "fm2fb",
@@ -237,7 +240,7 @@ static int __devinit fm2fb_probe(struct zorro_dev *z,
 	if (!zorro_request_device(z,"fm2fb"))
 		return -ENXIO;
 
-	info = framebuffer_alloc(256 * sizeof(u32), &z->dev);
+	info = framebuffer_alloc(16 * sizeof(u32), &z->dev);
 	if (!info) {
 		zorro_release_device(z);
 		return -ENOMEM;

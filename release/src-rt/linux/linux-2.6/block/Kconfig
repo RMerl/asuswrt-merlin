@@ -1,54 +1,99 @@
 #
 # Block layer core configuration
 #
-config BLOCK
-       bool "Enable the block layer" if EMBEDDED
+menuconfig BLOCK
+       bool "Enable the block layer" if EXPERT
        default y
        help
-	 This permits the block layer to be removed from the kernel if it's not
-	 needed (on some embedded devices for example).  If this option is
-	 disabled, then blockdev files will become unusable and some
-	 filesystems (such as ext3) will become unavailable.
+	 Provide block layer support for the kernel.
 
-	 This option will also disable SCSI character devices and USB storage
-	 since they make use of various block layer definitions and
-	 facilities.
+	 Disable this option to remove the block layer support from the
+	 kernel. This may be useful for embedded devices.
+
+	 If this option is disabled:
+
+	   - block device files will become unusable
+	   - some filesystems (such as ext3) will become unavailable.
+
+	 Also, SCSI character devices and USB storage will be disabled since
+	 they make use of various block layer definitions and facilities.
 
 	 Say Y here unless you know you really don't want to mount disks and
 	 suchlike.
 
 if BLOCK
 
-config LBD
-	bool "Support for Large Block Devices"
+config LBDAF
+	bool "Support for large (2TB+) block devices and files"
 	depends on !64BIT
+	default y
 	help
-	  Say Y here if you want to attach large (bigger than 2TB) discs to
-	  your machine, or if you want to have a raid or loopback device
-	  bigger than 2TB.  Otherwise say N.
+	  Enable block devices or files of size 2TB and larger.
 
-config BLK_DEV_IO_TRACE
-	bool "Support for tracing block io actions"
-	depends on SYSFS
-	select RELAY
-	select DEBUG_FS
-	help
-	  Say Y here, if you want to be able to trace the block layer actions
-	  on a given queue. Tracing allows you to see any traffic happening
-	  on a block device queue. For more information (and the user space
-	  support tools needed), fetch the blktrace app from:
+	  This option is required to support the full capacity of large
+	  (2TB+) block devices, including RAID, disk, Network Block Device,
+	  Logical Volume Manager (LVM) and loopback.
+	
+	  This option also enables support for single files larger than
+	  2TB.
 
-	  git://brick.kernel.dk/data/git/blktrace.git
+	  The ext4 filesystem requires that this feature be enabled in
+	  order to support filesystems that have the huge_file feature
+	  enabled.  Otherwise, it will refuse to mount in the read-write
+	  mode any filesystems that use the huge_file feature, which is
+	  enabled by default by mke2fs.ext4.
 
-config LSF
-	bool "Support for Large Single Files"
-	depends on !64BIT
-	help
-	  Say Y here if you want to be able to handle very large files (bigger
-	  than 2TB), otherwise say N.
+	  The GFS2 filesystem also requires this feature.
 
 	  If unsure, say Y.
 
-endif
+config BLK_DEV_BSG
+	bool "Block layer SG support v4"
+	default y
+	help
+	  Saying Y here will enable generic SG (SCSI generic) v4 support
+	  for any block device.
+
+	  Unlike SG v3 (aka block/scsi_ioctl.c drivers/scsi/sg.c), SG v4
+	  can handle complicated SCSI commands: tagged variable length cdbs
+	  with bidirectional data transfers and generic request/response
+	  protocols (e.g. Task Management Functions and SMP in Serial
+	  Attached SCSI).
+
+	  This option is required by recent UDEV versions to properly
+	  access device serial numbers, etc.
+
+	  If unsure, say Y.
+
+config BLK_DEV_INTEGRITY
+	bool "Block layer data integrity support"
+	---help---
+	Some storage devices allow extra information to be
+	stored/retrieved to help protect the data.  The block layer
+	data integrity option provides hooks which can be used by
+	filesystems to ensure better data integrity.
+
+	Say yes here if you have a storage device that provides the
+	T10/SCSI Data Integrity Field or the T13/ATA External Path
+	Protection.  If in doubt, say N.
+
+config BLK_DEV_THROTTLING
+	bool "Block layer bio throttling support"
+	depends on BLK_CGROUP=y && EXPERIMENTAL
+	default n
+	---help---
+	Block layer bio throttling support. It can be used to limit
+	the IO rate to a device. IO rate policies are per cgroup and
+	one needs to mount and use blkio cgroup controller for creating
+	cgroups and specifying per device IO rate policies.
+
+	See Documentation/cgroups/blkio-controller.txt for more information.
+
+endif # BLOCK
+
+config BLOCK_COMPAT
+	bool
+	depends on BLOCK && COMPAT
+	default y
 
 source block/Kconfig.iosched

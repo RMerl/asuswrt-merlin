@@ -40,11 +40,16 @@
 extern int av7110_debug;
 
 #define dprintk(level,args...) \
-	    do { if ((av7110_debug & level)) { printk("dvb-ttpci: %s(): ", __FUNCTION__); printk(args); } } while (0)
+	    do { if ((av7110_debug & level)) { printk("dvb-ttpci: %s(): ", __func__); printk(args); } } while (0)
 
 #define MAXFILT 32
 
 enum {AV_PES_STREAM, PS_STREAM, TS_STREAM, PES_STREAM};
+
+enum av7110_video_mode {
+	AV7110_VIDEO_MODE_PAL 	= 0,
+	AV7110_VIDEO_MODE_NTSC	= 1
+};
 
 struct av7110_p2t {
 	u8		  pes[TS_SIZE];
@@ -170,7 +175,7 @@ struct av7110 {
 
 	ca_slot_info_t		ci_slot[2];
 
-	int			vidmode;
+	enum av7110_video_mode	vidmode;
 	struct dmxdev		dmxdev;
 	struct dvb_demux	demux;
 
@@ -183,17 +188,18 @@ struct av7110 {
 	struct dvb_net		dvb_net1;
 	spinlock_t		feedlock1;
 	int			feeding1;
-	u8			tsf;
 	u32			ttbp;
 	unsigned char           *grabbing;
 	struct saa7146_pgtable  pt;
 	struct tasklet_struct   vpe_tasklet;
+	bool			full_ts;
 
 	int			fe_synced;
 	struct mutex		pid_mutex;
 
 	int			video_blank;
 	struct video_status	videostate;
+	u16			display_panscan;
 	int			display_ar;
 	int			trickmode;
 #define TRICK_NONE   0

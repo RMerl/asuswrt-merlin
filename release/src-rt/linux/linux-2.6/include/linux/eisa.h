@@ -40,7 +40,7 @@ struct eisa_device {
 	u64                   dma_mask;
 	struct device         dev; /* generic device */
 #ifdef CONFIG_EISA_NAMES
-	char		      pretty_name[DEVICE_NAME_SIZE];
+	char		      pretty_name[50];
 #endif
 };
 
@@ -78,12 +78,12 @@ static inline void eisa_driver_unregister (struct eisa_driver *edrv) { }
 /* Mimics pci.h... */
 static inline void *eisa_get_drvdata (struct eisa_device *edev)
 {
-        return edev->dev.driver_data;
+        return dev_get_drvdata(&edev->dev);
 }
 
 static inline void eisa_set_drvdata (struct eisa_device *edev, void *data)
 {
-        edev->dev.driver_data = data;
+        dev_set_drvdata(&edev->dev, data);
 }
 
 /* The EISA root device. There's rumours about machines with multiple

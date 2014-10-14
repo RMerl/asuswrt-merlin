@@ -1,15 +1,29 @@
 /*
- * $Id: cmdlinepart.c,v 1.19 2005/11/07 11:14:19 gleixner Exp $
- *
  * Read flash partition table from command line
  *
- * Copyright 2002 SYSGO Real-Time Solutions GmbH
+ * Copyright © 2002      SYSGO Real-Time Solutions GmbH
+ * Copyright © 2002-2010 David Woodhouse <dwmw2@infradead.org>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * The format for the command line is as follows:
  *
  * mtdparts=<mtddef>[;<mtddef]
  * <mtddef>  := <mtd-id>:<partdef>[,<partdef>]
- * <partdef> := <size>[@offset][<name>][ro]
+ *              where <mtd-id> is the name from the "cat /proc/mtd" command
+ * <partdef> := <size>[@offset][<name>][ro][lk]
  * <mtd-id>  := unique name used in mapping driver/device (mtd->name)
  * <size>    := standard linux memsize OR "-" to denote all remaining space
  * <name>    := '(' NAME ')'
@@ -119,7 +133,8 @@ static struct mtd_partition * newpart(char *s,
 		char *p;
 
 	    	name = ++s;
-		if ((p = strchr(name, delim)) == 0)
+		p = strchr(name, delim);
+		if (!p)
 		{
 			printk(KERN_ERR ERRP "no closing %c found in partition name\n", delim);
 			return NULL;
@@ -143,6 +158,13 @@ static struct mtd_partition * newpart(char *s,
 		s += 2;
         }
 
+        /* if lk is found do NOT unlock the MTD partition*/
+        if (strncmp(s, "lk", 2) == 0)
+	{
+		mask_flags |= MTD_POWERUP_LOCK;
+		s += 2;
+        }
+
 	/* test if more partitions are following */
 	if (*s == ',')
 	{
@@ -152,9 +174,10 @@ static struct mtd_partition * newpart(char *s,
 			return NULL;
 		}
 		/* more partitions follow, parse them */
-		if ((parts = newpart(s + 1, &s, num_parts,
-		                     this_part + 1, &extra_mem, extra_mem_size)) == 0)
-		  return NULL;
+		parts = newpart(s + 1, &s, num_parts, this_part + 1,
+				&extra_mem, extra_mem_size);
+		if (!parts)
+			return NULL;
 	}
 	else
 	{	/* this is the last partition: allocate space for all */
@@ -186,7 +209,7 @@ static struct mtd_partition * newpart(char *s,
 	parts[this_part].name = extra_mem;
 	extra_mem += name_len + 1;
 
-	dbg(("partition %d: name <%s>, offset %x, size %x, mask flags %x\n",
+	dbg(("partition %d: name <%s>, offset %llx, size %llx, mask flags %x\n",
 	     this_part,
 	     parts[this_part].name,
 	     parts[this_part].offset,
@@ -299,10 +322,7 @@ static int parse_cmdline_partitions(struct mtd_info *master,
 	unsigned long offset;
 	int i;
 	struct cmdline_mtd_partition *part;
-	char *mtd_id = master->name;
-
-	if(!cmdline)
-		return -EINVAL;
+	const char *mtd_id = master->name;
 
 	/* parse command line */
 	if (!cmdline_parsed)
@@ -330,11 +350,15 @@ static int parse_cmdline_partitions(struct mtd_info *master,
 				}
 				offset += part->parts[i].size;
 			}
-			*pparts = part->parts;
+			*pparts = kmemdup(part->parts,
+					sizeof(*part->parts) * part->num_parts,
+					GFP_KERNEL);
+			if (!*pparts)
+				return -ENOMEM;
 			return part->num_parts;
 		}
 	}
-	return -EINVAL;
+	return 0;
 }
 
 

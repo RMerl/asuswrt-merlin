@@ -693,12 +693,12 @@ static void wait_intr(void)
 }
 #endif
 
-static int NCR53c406a_queue(Scsi_Cmnd * SCpnt, void (*done) (Scsi_Cmnd *))
+static int NCR53c406a_queue_lck(Scsi_Cmnd * SCpnt, void (*done) (Scsi_Cmnd *))
 {
 	int i;
 
 	VDEB(printk("NCR53c406a_queue called\n"));
-	DEB(printk("cmd=%02x, cmd_len=%02x, target=%02x, lun=%02x, bufflen=%d\n", SCpnt->cmnd[0], SCpnt->cmd_len, SCpnt->target, SCpnt->lun, SCpnt->request_bufflen));
+	DEB(printk("cmd=%02x, cmd_len=%02x, target=%02x, lun=%02x, bufflen=%d\n", SCpnt->cmnd[0], SCpnt->cmd_len, SCpnt->target, SCpnt->lun, scsi_bufflen(SCpnt)));
 
 #if 0
 	VDEB(for (i = 0; i < SCpnt->cmd_len; i++)
@@ -725,6 +725,8 @@ static int NCR53c406a_queue(Scsi_Cmnd * SCpnt, void (*done) (Scsi_Cmnd *))
 	rtrc(1);
 	return 0;
 }
+
+static DEF_SCSI_QCMD(NCR53c406a_queue)
 
 static int NCR53c406a_host_reset(Scsi_Cmnd * SCpnt)
 {
@@ -785,8 +787,8 @@ static void NCR53c406a_intr(void *dev_id)
 	unsigned char status, int_reg;
 #if USE_PIO
 	unsigned char pio_status;
-	struct scatterlist *sglist;
-	unsigned int sgcount;
+	struct scatterlist *sg;
+        int i;
 #endif
 
 	VDEB(printk("NCR53c406a_intr called\n"));
@@ -866,22 +868,17 @@ static void NCR53c406a_intr(void *dev_id)
 			current_SC->SCp.phase = data_out;
 			VDEB(printk("NCR53c406a: Data-Out phase\n"));
 			outb(FLUSH_FIFO, CMD_REG);
-			LOAD_DMA_COUNT(current_SC->request_bufflen);	/* Max transfer size */
+			LOAD_DMA_COUNT(scsi_bufflen(current_SC));	/* Max transfer size */
 #if USE_DMA			/* No s/g support for DMA */
-			NCR53c406a_dma_write(current_SC->request_buffer, current_SC->request_bufflen);
+			NCR53c406a_dma_write(scsi_sglist(current_SC),
+                                             scsdi_bufflen(current_SC));
+
 #endif				/* USE_DMA */
 			outb(TRANSFER_INFO | DMA_OP, CMD_REG);
 #if USE_PIO
-			if (!current_SC->use_sg)	/* Don't use scatter-gather */
-				NCR53c406a_pio_write(current_SC->request_buffer, current_SC->request_bufflen);
-			else {	/* use scatter-gather */
-				sgcount = current_SC->use_sg;
-				sglist = current_SC->request_buffer;
-				while (sgcount--) {
-					NCR53c406a_pio_write(page_address(sglist->page) + sglist->offset, sglist->length);
-					sglist++;
-				}
-			}
+                        scsi_for_each_sg(current_SC, sg, scsi_sg_count(current_SC), i) {
+                                NCR53c406a_pio_write(sg_virt(sg), sg->length);
+                        }
 			REG0;
 #endif				/* USE_PIO */
 		}
@@ -893,22 +890,16 @@ static void NCR53c406a_intr(void *dev_id)
 			current_SC->SCp.phase = data_in;
 			VDEB(printk("NCR53c406a: Data-In phase\n"));
 			outb(FLUSH_FIFO, CMD_REG);
-			LOAD_DMA_COUNT(current_SC->request_bufflen);	/* Max transfer size */
+			LOAD_DMA_COUNT(scsi_bufflen(current_SC));	/* Max transfer size */
 #if USE_DMA			/* No s/g support for DMA */
-			NCR53c406a_dma_read(current_SC->request_buffer, current_SC->request_bufflen);
+			NCR53c406a_dma_read(scsi_sglist(current_SC),
+                                            scsdi_bufflen(current_SC));
 #endif				/* USE_DMA */
 			outb(TRANSFER_INFO | DMA_OP, CMD_REG);
 #if USE_PIO
-			if (!current_SC->use_sg)	/* Don't use scatter-gather */
-				NCR53c406a_pio_read(current_SC->request_buffer, current_SC->request_bufflen);
-			else {	/* Use scatter-gather */
-				sgcount = current_SC->use_sg;
-				sglist = current_SC->request_buffer;
-				while (sgcount--) {
-					NCR53c406a_pio_read(page_address(sglist->page) + sglist->offset, sglist->length);
-					sglist++;
-				}
-			}
+                        scsi_for_each_sg(current_SC, sg, scsi_sg_count(current_SC), i) {
+                                NCR53c406a_pio_read(sg_virt(sg), sg->length);
+                        }
 			REG0;
 #endif				/* USE_PIO */
 		}
@@ -1075,7 +1066,7 @@ static struct scsi_host_template driver_template =
      .sg_tablesize      	= 32			/*SG_ALL*/ /*SG_NONE*/, 
      .cmd_per_lun       	= 1			/* commands per lun */, 
      .unchecked_isa_dma 	= 1			/* unchecked_isa_dma */,
-     .use_clustering    	= ENABLE_CLUSTERING                               
+     .use_clustering    	= ENABLE_CLUSTERING,
 };
 
 #include "scsi_module.c"

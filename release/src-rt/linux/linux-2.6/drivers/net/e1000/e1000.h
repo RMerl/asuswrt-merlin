@@ -81,32 +81,21 @@ struct e1000_adapter;
 
 #include "e1000_hw.h"
 
-#ifdef DBG
-#define E1000_DBG(args...) printk(KERN_DEBUG "e1000: " args)
-#else
-#define E1000_DBG(args...)
-#endif
-
-#define E1000_ERR(args...) printk(KERN_ERR "e1000: " args)
-
-#define PFX "e1000: "
-#define DPRINTK(nlevel, klevel, fmt, args...) \
-	(void)((NETIF_MSG_##nlevel & adapter->msg_enable) && \
-	printk(KERN_##klevel PFX "%s: %s: " fmt, adapter->netdev->name, \
-		__FUNCTION__ , ## args))
-
 #define E1000_MAX_INTR 10
 
 /* TX/RX descriptor defines */
 #define E1000_DEFAULT_TXD                  256
 #define E1000_MAX_TXD                      256
-#define E1000_MIN_TXD                       80
+#define E1000_MIN_TXD                       48
 #define E1000_MAX_82544_TXD               4096
 
 #define E1000_DEFAULT_RXD                  256
 #define E1000_MAX_RXD                      256
-#define E1000_MIN_RXD                       80
+#define E1000_MIN_RXD                       48
 #define E1000_MAX_82544_RXD               4096
+
+#define E1000_MIN_ITR_USECS		10 /* 100000 irq/sec */
+#define E1000_MAX_ITR_USECS		10000 /* 100    irq/sec */
 
 /* this is the size past which hardware will drop packets when setting LPE=0 */
 #define MAXIMUM_ETHERNET_VLAN_SIZE 1522
@@ -134,7 +123,7 @@ struct e1000_adapter;
 #define E1000_FC_HIGH_DIFF 0x1638  /* High: 5688 bytes below Rx FIFO size */
 #define E1000_FC_LOW_DIFF 0x1640   /* Low:  5696 bytes below Rx FIFO size */
 
-#define E1000_FC_PAUSE_TIME 0x0680 /* 858 usec */
+#define E1000_FC_PAUSE_TIME 0xFFFF /* pause for the max or until send xon */
 
 /* How many Tx Descriptors do we need to call netif_wake_queue ? */
 #define E1000_TX_QUEUE_WAKE	16
@@ -143,7 +132,6 @@ struct e1000_adapter;
 
 #define AUTO_ALL_MODES            0
 #define E1000_EEPROM_82544_APM    0x0004
-#define E1000_EEPROM_ICH8_APME    0x0004
 #define E1000_EEPROM_APME         0x0400
 
 #ifndef E1000_MASTER_SLAVE
@@ -151,23 +139,19 @@ struct e1000_adapter;
 #define E1000_MASTER_SLAVE	e1000_ms_hw_default
 #endif
 
-#define E1000_MNG_VLAN_NONE -1
-/* Number of packet split data buffers (not including the header buffer) */
-#define PS_PAGE_BUFFERS MAX_PS_BUFFERS-1
+#define E1000_MNG_VLAN_NONE (-1)
 
 /* wrapper around a pointer to a socket buffer,
  * so a DMA handle can be stored along with the buffer */
 struct e1000_buffer {
 	struct sk_buff *skb;
 	dma_addr_t dma;
+	struct page *page;
 	unsigned long time_stamp;
-	uint16_t length;
-	uint16_t next_to_watch;
+	u16 length;
+	u16 next_to_watch;
+	u16 mapped_as_page;
 };
-
-
-struct e1000_ps_page { struct page *ps_page[PS_PAGE_BUFFERS]; };
-struct e1000_ps_page_dma { uint64_t ps_page_dma[PS_PAGE_BUFFERS]; };
 
 struct e1000_tx_ring {
 	/* pointer to the descriptor ring memory */
@@ -185,10 +169,9 @@ struct e1000_tx_ring {
 	/* array of buffer information structs */
 	struct e1000_buffer *buffer_info;
 
-	spinlock_t tx_lock;
-	uint16_t tdh;
-	uint16_t tdt;
-	boolean_t last_tx_tso;
+	u16 tdh;
+	u16 tdt;
+	bool last_tx_tso;
 };
 
 struct e1000_rx_ring {
@@ -206,24 +189,20 @@ struct e1000_rx_ring {
 	unsigned int next_to_clean;
 	/* array of buffer information structs */
 	struct e1000_buffer *buffer_info;
-	/* arrays of page information for packet split */
-	struct e1000_ps_page *ps_page;
-	struct e1000_ps_page_dma *ps_page_dma;
+	struct sk_buff *rx_skb_top;
 
 	/* cpu for rx queue */
 	int cpu;
 
-	uint16_t rdh;
-	uint16_t rdt;
+	u16 rdh;
+	u16 rdt;
 };
 
-#define E1000_DESC_UNUSED(R) \
-	((((R)->next_to_clean > (R)->next_to_use) ? 0 : (R)->count) + \
-	(R)->next_to_clean - (R)->next_to_use - 1)
+#define E1000_DESC_UNUSED(R)						\
+	((((R)->next_to_clean > (R)->next_to_use)			\
+	  ? 0 : (R)->count) + (R)->next_to_clean - (R)->next_to_use - 1)
 
-#define E1000_RX_DESC_PS(R, i)	    \
-	(&(((union e1000_rx_desc_packet_split *)((R).desc))[i]))
-#define E1000_RX_DESC_EXT(R, i)	    \
+#define E1000_RX_DESC_EXT(R, i)						\
 	(&(((union e1000_rx_desc_extended *)((R).desc))[i]))
 #define E1000_GET_DESC(R, i, type)	(&(((struct type *)((R).desc))[i]))
 #define E1000_RX_DESC(R, i)		E1000_GET_DESC(R, i, e1000_rx_desc)
@@ -237,31 +216,27 @@ struct e1000_adapter {
 	struct timer_list watchdog_timer;
 	struct timer_list phy_info_timer;
 	struct vlan_group *vlgrp;
-	uint16_t mng_vlan_id;
-	uint32_t bd_number;
-	uint32_t rx_buffer_len;
-	uint32_t wol;
-	uint32_t smartspeed;
-	uint32_t en_mng_pt;
-	uint16_t link_speed;
-	uint16_t link_duplex;
+	u16 mng_vlan_id;
+	u32 bd_number;
+	u32 rx_buffer_len;
+	u32 wol;
+	u32 smartspeed;
+	u32 en_mng_pt;
+	u16 link_speed;
+	u16 link_duplex;
 	spinlock_t stats_lock;
-#ifdef CONFIG_E1000_NAPI
-	spinlock_t tx_queue_lock;
-#endif
-	atomic_t irq_sem;
 	unsigned int total_tx_bytes;
 	unsigned int total_tx_packets;
 	unsigned int total_rx_bytes;
 	unsigned int total_rx_packets;
 	/* Interrupt Throttle Rate */
-	uint32_t itr;
-	uint32_t itr_setting;
-	uint16_t tx_itr;
-	uint16_t rx_itr;
+	u32 itr;
+	u32 itr_setting;
+	u16 tx_itr;
+	u16 rx_itr;
 
 	struct work_struct reset_task;
-	uint8_t fc_autoneg;
+	u8 fc_autoneg;
 
 	struct timer_list blink_timer;
 	unsigned long led_status;
@@ -269,59 +244,47 @@ struct e1000_adapter {
 	/* TX */
 	struct e1000_tx_ring *tx_ring;      /* One per active queue */
 	unsigned int restart_queue;
-	unsigned long tx_queue_len;
-	uint32_t txd_cmd;
-	uint32_t tx_int_delay;
-	uint32_t tx_abs_int_delay;
-	uint32_t gotcl;
-	uint64_t gotcl_old;
-	uint64_t tpt_old;
-	uint64_t colc_old;
-	uint32_t tx_timeout_count;
-	uint32_t tx_fifo_head;
-	uint32_t tx_head_addr;
-	uint32_t tx_fifo_size;
-	uint8_t  tx_timeout_factor;
+	u32 txd_cmd;
+	u32 tx_int_delay;
+	u32 tx_abs_int_delay;
+	u32 gotcl;
+	u64 gotcl_old;
+	u64 tpt_old;
+	u64 colc_old;
+	u32 tx_timeout_count;
+	u32 tx_fifo_head;
+	u32 tx_head_addr;
+	u32 tx_fifo_size;
+	u8  tx_timeout_factor;
 	atomic_t tx_fifo_stall;
-	boolean_t pcix_82544;
-	boolean_t detect_tx_hung;
+	bool pcix_82544;
+	bool detect_tx_hung;
 
 	/* RX */
-#ifdef CONFIG_E1000_NAPI
-	boolean_t (*clean_rx) (struct e1000_adapter *adapter,
-			       struct e1000_rx_ring *rx_ring,
-			       int *work_done, int work_to_do);
-#else
-	boolean_t (*clean_rx) (struct e1000_adapter *adapter,
-			       struct e1000_rx_ring *rx_ring);
-#endif
-	void (*alloc_rx_buf) (struct e1000_adapter *adapter,
-			      struct e1000_rx_ring *rx_ring,
-				int cleaned_count);
+	bool (*clean_rx)(struct e1000_adapter *adapter,
+			 struct e1000_rx_ring *rx_ring,
+			 int *work_done, int work_to_do);
+	void (*alloc_rx_buf)(struct e1000_adapter *adapter,
+			     struct e1000_rx_ring *rx_ring,
+			     int cleaned_count);
 	struct e1000_rx_ring *rx_ring;      /* One per active queue */
-#ifdef CONFIG_E1000_NAPI
-	struct net_device *polling_netdev;  /* One per active queue */
-#endif
+	struct napi_struct napi;
+
 	int num_tx_queues;
 	int num_rx_queues;
 
-	uint64_t hw_csum_err;
-	uint64_t hw_csum_good;
-	uint64_t rx_hdr_split;
-	uint32_t alloc_rx_buff_failed;
-	uint32_t rx_int_delay;
-	uint32_t rx_abs_int_delay;
-	boolean_t rx_csum;
-	unsigned int rx_ps_pages;
-	uint32_t gorcl;
-	uint64_t gorcl_old;
-	uint16_t rx_ps_bsize0;
-
+	u64 hw_csum_err;
+	u64 hw_csum_good;
+	u32 alloc_rx_buff_failed;
+	u32 rx_int_delay;
+	u32 rx_abs_int_delay;
+	bool rx_csum;
+	u32 gorcl;
+	u64 gorcl_old;
 
 	/* OS defined structs */
 	struct net_device *netdev;
 	struct pci_dev *pdev;
-	struct net_device_stats net_stats;
 
 	/* structs defined in e1000_hw.h */
 	struct e1000_hw hw;
@@ -329,19 +292,27 @@ struct e1000_adapter {
 	struct e1000_phy_info phy_info;
 	struct e1000_phy_stats phy_stats;
 
-	uint32_t test_icr;
+	u32 test_icr;
 	struct e1000_tx_ring test_tx_ring;
 	struct e1000_rx_ring test_rx_ring;
 
 	int msg_enable;
-	boolean_t have_msi;
 
 	/* to not mess up cache alignment, always add to the bottom */
-	boolean_t tso_force;
-	boolean_t smart_power_down;	/* phy smart power down */
-	boolean_t quad_port_a;
+	bool tso_force;
+	bool smart_power_down;	/* phy smart power down */
+	bool quad_port_a;
 	unsigned long flags;
-	uint32_t eeprom_wol;
+	u32 eeprom_wol;
+
+	/* for ioport free */
+	int bars;
+	int need_ioport;
+
+	bool discarding;
+
+	struct work_struct fifo_stall_task;
+	struct work_struct phy_info_task;
 };
 
 enum e1000_state_t {
@@ -349,5 +320,45 @@ enum e1000_state_t {
 	__E1000_RESETTING,
 	__E1000_DOWN
 };
+
+#undef pr_fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+
+extern struct net_device *e1000_get_hw_dev(struct e1000_hw *hw);
+#define e_dbg(format, arg...) \
+	netdev_dbg(e1000_get_hw_dev(hw), format, ## arg)
+#define e_err(msglvl, format, arg...) \
+	netif_err(adapter, msglvl, adapter->netdev, format, ## arg)
+#define e_info(msglvl, format, arg...) \
+	netif_info(adapter, msglvl, adapter->netdev, format, ## arg)
+#define e_warn(msglvl, format, arg...) \
+	netif_warn(adapter, msglvl, adapter->netdev, format, ## arg)
+#define e_notice(msglvl, format, arg...) \
+	netif_notice(adapter, msglvl, adapter->netdev, format, ## arg)
+#define e_dev_info(format, arg...) \
+	dev_info(&adapter->pdev->dev, format, ## arg)
+#define e_dev_warn(format, arg...) \
+	dev_warn(&adapter->pdev->dev, format, ## arg)
+#define e_dev_err(format, arg...) \
+	dev_err(&adapter->pdev->dev, format, ## arg)
+
+extern char e1000_driver_name[];
+extern const char e1000_driver_version[];
+
+extern int e1000_up(struct e1000_adapter *adapter);
+extern void e1000_down(struct e1000_adapter *adapter);
+extern void e1000_reinit_locked(struct e1000_adapter *adapter);
+extern void e1000_reset(struct e1000_adapter *adapter);
+extern int e1000_set_spd_dplx(struct e1000_adapter *adapter, u16 spddplx);
+extern int e1000_setup_all_rx_resources(struct e1000_adapter *adapter);
+extern int e1000_setup_all_tx_resources(struct e1000_adapter *adapter);
+extern void e1000_free_all_rx_resources(struct e1000_adapter *adapter);
+extern void e1000_free_all_tx_resources(struct e1000_adapter *adapter);
+extern void e1000_update_stats(struct e1000_adapter *adapter);
+extern bool e1000_has_link(struct e1000_adapter *adapter);
+extern void e1000_power_up_phy(struct e1000_adapter *);
+extern void e1000_set_ethtool_ops(struct net_device *netdev);
+extern void e1000_check_options(struct e1000_adapter *adapter);
+extern char *e1000_get_hw_dev_name(struct e1000_hw *hw);
 
 #endif /* _E1000_H_ */

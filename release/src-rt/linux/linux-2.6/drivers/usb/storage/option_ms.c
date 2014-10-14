@@ -21,6 +21,7 @@
  */
 
 #include <linux/usb.h>
+#include <linux/slab.h>
 
 #include "usb.h"
 #include "transport.h"
@@ -166,4 +167,3 @@ int option_ms_init(struct us_data *us)
 	return 0;
 }
 
-EXPORT_SYMBOL(option_ms_init);

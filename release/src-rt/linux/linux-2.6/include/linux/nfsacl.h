@@ -29,6 +29,7 @@
 #ifdef __KERNEL__
 
 #include <linux/posix_acl.h>
+#include <linux/sunrpc/xdr.h>
 
 /* Maximum number of ACL entries over NFS */
 #define NFS_ACL_MAX_ENTRIES	1024
@@ -36,6 +37,9 @@
 #define NFSACL_MAXWORDS		(2*(2+3*NFS_ACL_MAX_ENTRIES))
 #define NFSACL_MAXPAGES		((2*(8+12*NFS_ACL_MAX_ENTRIES) + PAGE_SIZE-1) \
 				 >> PAGE_SHIFT)
+
+#define NFS_ACL_MAX_ENTRIES_INLINE	(5)
+#define NFS_ACL_INLINE_BUFSIZE	((2*(2+3*NFS_ACL_MAX_ENTRIES_INLINE)) << 2)
 
 static inline unsigned int
 nfsacl_size(struct posix_acl *acl_access, struct posix_acl *acl_default)
@@ -47,10 +51,10 @@ nfsacl_size(struct posix_acl *acl_access, struct posix_acl *acl_default)
 	return w;
 }
 
-extern unsigned int
+extern int
 nfsacl_encode(struct xdr_buf *buf, unsigned int base, struct inode *inode,
 	      struct posix_acl *acl, int encode_entries, int typeflag);
-extern unsigned int
+extern int
 nfsacl_decode(struct xdr_buf *buf, unsigned int base, unsigned int *aclcnt,
 	      struct posix_acl **pacl);
 

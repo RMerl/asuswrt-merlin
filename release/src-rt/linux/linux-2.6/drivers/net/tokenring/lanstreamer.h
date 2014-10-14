@@ -60,8 +60,6 @@
  *
  */
 
-#include <linux/version.h>
-
 /* MAX_INTR - the maximum number of times we can loop
  * inside the interrupt function before returning
  * control to the OS (maximum value is 256)
@@ -301,7 +299,6 @@ struct streamer_private {
 	int tx_ring_free, tx_ring_last_status, rx_ring_last_received,
 	    free_tx_ring_entries;
 
-	struct net_device_stats streamer_stats;
 	__u16 streamer_lan_status;
 	__u8 streamer_ring_speed;
 	__u16 pkt_buf_sz;

@@ -1,41 +1,13 @@
+if ETRAX_ARCH_V10
+
 config ETRAX_ETHERNET
 	bool "Ethernet support"
 	depends on ETRAX_ARCH_V10
 	select NET_ETHERNET
+	select MII
 	help
 	  This option enables the ETRAX 100LX built-in 10/100Mbit Ethernet
 	  controller.
-
-choice
-	prompt "Network LED behavior"
-	depends on ETRAX_ETHERNET
-	default ETRAX_NETWORK_LED_ON_WHEN_ACTIVITY
-
-config ETRAX_NETWORK_LED_ON_WHEN_LINK
-	bool "LED_on_when_link"
-	help
-	  Selecting LED_on_when_link will light the LED when there is a
-	  connection and will flash off when there is activity.
-
-	  Selecting LED_on_when_activity will light the LED only when
-	  there is activity.
-
-	  This setting will also affect the behaviour of other activity LEDs
-	  e.g. Bluetooth.
-
-config ETRAX_NETWORK_LED_ON_WHEN_ACTIVITY
-	bool "LED_on_when_activity"
-	help
-	  Selecting LED_on_when_link will light the LED when there is a
-	  connection and will flash off when there is activity.
-
-	  Selecting LED_on_when_activity will light the LED only when
-	  there is activity.
-
-	  This setting will also affect the behaviour of other activity LEDs
-	  e.g. Bluetooth.
-
-endchoice
 
 config ETRAX_SERIAL
 	bool "Serial-port support"
@@ -79,32 +51,6 @@ config ETRAX_SERIAL_PORT0
 	  Enables the ETRAX 100 serial driver for ser0 (ttyS0)
 	  Normally you want this on, unless you use external DMA 1 that uses
 	  the same DMA channels.
-
-choice
-	prompt "Ser0 DMA out assignment"
-	depends on ETRAX_SERIAL_PORT0
-	default ETRAX_SERIAL_PORT0_DMA6_OUT
-
-config ETRAX_SERIAL_PORT0_NO_DMA_OUT
-	bool "No DMA out"
-
-config ETRAX_SERIAL_PORT0_DMA6_OUT
-	bool "DMA 6"
-
-endchoice
-
-choice
-	prompt "Ser0 DMA in assignment"
-	depends on ETRAX_SERIAL_PORT0
-	default ETRAX_SERIAL_PORT0_DMA7_IN
-
-config ETRAX_SERIAL_PORT0_NO_DMA_IN
-	bool "No DMA in"
-
-config ETRAX_SERIAL_PORT0_DMA7_IN
-	bool "DMA 7"
-
-endchoice
 
 choice
 	prompt "Ser0 DTR, RI, DSR and CD assignment"
@@ -193,32 +139,6 @@ config ETRAX_SERIAL_PORT1
 	depends on ETRAX_SERIAL
 	help
 	  Enables the ETRAX 100 serial driver for ser1 (ttyS1).
-
-choice
-	prompt "Ser1 DMA out assignment"
-	depends on ETRAX_SERIAL_PORT1
-	default ETRAX_SERIAL_PORT1_DMA8_OUT
-
-config ETRAX_SERIAL_PORT1_NO_DMA_OUT
-	bool "No DMA out"
-
-config ETRAX_SERIAL_PORT1_DMA8_OUT
-	bool "DMA 8"
-
-endchoice
-
-choice
-	prompt "Ser1 DMA in assignment"
-	depends on ETRAX_SERIAL_PORT1
-	default ETRAX_SERIAL_PORT1_DMA9_IN
-
-config ETRAX_SERIAL_PORT1_NO_DMA_IN
-	bool "No DMA in"
-
-config ETRAX_SERIAL_PORT1_DMA9_IN
-	bool "DMA 9"
-
-endchoice
 
 choice
 	prompt "Ser1 DTR, RI, DSR and CD assignment"
@@ -312,32 +232,6 @@ config ETRAX_SERIAL_PORT2
 	  Enables the ETRAX 100 serial driver for ser2 (ttyS2).
 
 choice
-	prompt "Ser2 DMA out assignment"
-	depends on ETRAX_SERIAL_PORT2
-	default ETRAX_SERIAL_PORT2_DMA2_OUT
-
-config ETRAX_SERIAL_PORT2_NO_DMA_OUT
-	bool "No DMA out"
-
-config ETRAX_SERIAL_PORT2_DMA2_OUT
-	bool "DMA 2"
-
-endchoice
-
-choice
-	prompt "Ser2 DMA in assignment"
-	depends on ETRAX_SERIAL_PORT2
-	default ETRAX_SERIAL_PORT2_DMA3_IN
-
-config ETRAX_SERIAL_PORT2_NO_DMA_IN
-	bool "No DMA in"
-
-config ETRAX_SERIAL_PORT2_DMA3_IN
-	bool "DMA 3"
-
-endchoice
-
-choice
 	prompt "Ser2 DTR, RI, DSR and CD assignment"
 	depends on ETRAX_SERIAL_PORT2
 	default ETRAX_SER2_DTR_RI_DSR_CD_ON_NONE
@@ -426,32 +320,6 @@ config ETRAX_SERIAL_PORT3
 	  Enables the ETRAX 100 serial driver for ser3 (ttyS3).
 
 choice
-	prompt "Ser3 DMA out assignment"
-	depends on ETRAX_SERIAL_PORT3
-	default ETRAX_SERIAL_PORT3_DMA4_OUT
-
-config ETRAX_SERIAL_PORT3_NO_DMA_OUT
-	bool "No DMA out"
-
-config ETRAX_SERIAL_PORT3_DMA4_OUT
-	bool "DMA 4"
-
-endchoice
-
-choice
-	prompt "Ser3 DMA in assignment"
-	depends on ETRAX_SERIAL_PORT3
-	default ETRAX_SERIAL_PORT3_DMA5_IN
-
-config ETRAX_SERIAL_PORT3_NO_DMA_IN
-	bool "No DMA in"
-
-config ETRAX_SERIAL_PORT3_DMA5_IN
-	bool "DMA 5"
-
-endchoice
-
-choice
 	prompt "Ser3 DTR, RI, DSR and CD assignment"
 	depends on ETRAX_SERIAL_PORT3
 	default ETRAX_SER3_DTR_RI_DSR_CD_ON_NONE
@@ -515,7 +383,7 @@ config ETRAX_RS485
 	depends on ETRAX_SERIAL
 	help
 	  Enables support for RS-485 serial communication.  For a primer on
-	  RS-485, see <http://www.hw.cz/english/docs/rs485/rs485.html>.
+	  RS-485, see <http://en.wikipedia.org/wiki/Rs485>
 
 config ETRAX_RS485_ON_PA
 	bool "RS-485 mode on PA"
@@ -541,44 +409,6 @@ config ETRAX_RS485_DISABLE_RECEIVER
 	  loopback.  Not all products are able to do this in software only.
 	  Axis 2400/2401 must disable receiver.
 
-config ETRAX_IDE
-	bool "ATA/IDE support"
-	select IDE
-	select BLK_DEV_IDE
-	select BLK_DEV_IDEDISK
-	select BLK_DEV_IDECD
-	select BLK_DEV_IDEDMA
-	help
-	  Enable this to get support for ATA/IDE.
-	  You can't use parallel ports or SCSI ports
-	  at the same time.
-
-
-config ETRAX_IDE_DELAY
-	int "Delay for drives to regain consciousness"
-	depends on ETRAX_IDE
-	default 15
-	help
-	  Number of seconds to wait for IDE drives to spin up after an IDE
-	  reset.
-choice
-	prompt "IDE reset pin"
-	depends on ETRAX_IDE
-	default ETRAX_IDE_PB7_RESET
-
-config ETRAX_IDE_PB7_RESET
-	bool "Port_PB_Bit_7"
-	help
-	  IDE reset on pin 7 on port B
-
-config ETRAX_IDE_G27_RESET
-	bool "Port_G_Bit_27"
-	help
-	  IDE reset on pin 27 on port G
-
-endchoice
-
-
 config ETRAX_USB_HOST
 	bool "USB host"
 	select USB
@@ -597,23 +427,6 @@ config ETRAX_USB_HOST_PORT2
 	bool "USB port 2 enabled"
 	depends on ETRAX_USB_HOST
 	default n
-
-config ETRAX_AXISFLASHMAP
-	bool "Axis flash-map support"
-	depends on ETRAX_ARCH_V10
-	select MTD
-	select MTD_CFI
-	select MTD_CFI_AMDSTD
-	select MTD_OBSOLETE_CHIPS
-	select MTD_AMDSTD
-	select MTD_CHAR
-	select MTD_BLOCK
-	select MTD_PARTITIONS
-	select MTD_CONCAT
-	select MTD_COMPLEX_MAPPINGS
-	help
-	  This option enables MTD mapping of flash devices.  Needed to use
-	  flash memories.  If unsure, say Y.
 
 config ETRAX_PTABLE_SECTOR
 	int "Byte-offset of partition table sector"
@@ -768,37 +581,6 @@ config ETRAX_PB_CHANGEABLE_BITS
 	  Bit set = changeable.
 	  You probably want 00 here.
 
-config ETRAX_RTC
-	bool "Real Time Clock support"
-	depends on ETRAX_ARCH_V10
-	help
-	  Enables drivers for the Real-Time Clock battery-backed chips on
-	  some products. The kernel reads the time when booting, and
-	  the date can be set using ioctl(fd, RTC_SET_TIME, &rt) with rt a
-	  rtc_time struct (see <file:include/asm-cris/rtc.h>) on the /dev/rtc
-	  device, major 121.  You can check the time with cat /proc/rtc, but
-	  normal time reading should be done using libc function time and
-	  friends.
-
-choice
-	prompt "RTC chip"
-	depends on ETRAX_RTC
-	default ETRAX_DS1302
-
-config ETRAX_DS1302
-	bool "DS1302"
-	help
-	  Enables the driver for the DS1302 Real-Time Clock battery-backed
-	  chip on some products.
-
-config ETRAX_PCF8563
-	bool "PCF8563"
-	help
-	  Enables the driver for the PCF8563 Real-Time Clock battery-backed
-	  chip on some products.
-
-endchoice
-
 config ETRAX_DS1302_RST_ON_GENERIC_PORT
 	bool "DS1302 RST on Generic Port"
 	depends on ETRAX_DS1302
@@ -845,3 +627,5 @@ config ETRAX_DS1302_TRICKLE_CHARGE
 	  1 = 2kohm, 2 = 4kohm, 3 = 4kohm
 	  4 = 1 diode, 8 = 2 diodes
 	  Allowed values are (increasing current): 0, 11, 10, 9, 7, 6, 5
+
+endif

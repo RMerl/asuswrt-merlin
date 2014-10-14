@@ -7,8 +7,9 @@
  *
  *  Author: Andy Fleming
  *  Maintainer: Kumar Gala
+ *  Modifier: Sandeep Gopalpet <sandeep.kumar@freescale.com>
  *
- *  Copyright (c) 2003,2004 Freescale Semiconductor, Inc.
+ *  Copyright 2003-2006, 2008-2009 Freescale Semiconductor, Inc.
  *
  *  This software may be used and distributed according to
  *  the terms of the GNU Public License, Version 2, incorporated herein
@@ -18,7 +19,6 @@
 #include <linux/kernel.h>
 #include <linux/string.h>
 #include <linux/errno.h>
-#include <linux/slab.h>
 #include <linux/interrupt.h>
 #include <linux/init.h>
 #include <linux/delay.h>
@@ -34,7 +34,6 @@
 #include <linux/module.h>
 #include <linux/crc32.h>
 #include <asm/types.h>
-#include <asm/uaccess.h>
 #include <linux/ethtool.h>
 #include <linux/mii.h>
 #include <linux/phy.h>
@@ -42,7 +41,7 @@
 #include "gianfar.h"
 
 extern void gfar_start(struct net_device *dev);
-extern int gfar_clean_rx_ring(struct net_device *dev, int rx_work_limit);
+extern int gfar_clean_rx_ring(struct gfar_priv_rx_q *rx_queue, int rx_work_limit);
 
 #define GFAR_MAX_COAL_USECS 0xffff
 #define GFAR_MAX_COAL_FRAMES 0xff
@@ -122,7 +121,7 @@ static void gfar_gstrings(struct net_device *dev, u32 stringset, u8 * buf)
 {
 	struct gfar_private *priv = netdev_priv(dev);
 
-	if (priv->einfo->device_flags & FSL_GIANFAR_DEV_HAS_RMON)
+	if (priv->device_flags & FSL_GIANFAR_DEV_HAS_RMON)
 		memcpy(buf, stat_gstrings, GFAR_STATS_LEN * ETH_GSTRING_LEN);
 	else
 		memcpy(buf, stat_gstrings,
@@ -137,10 +136,11 @@ static void gfar_fill_stats(struct net_device *dev, struct ethtool_stats *dummy,
 {
 	int i;
 	struct gfar_private *priv = netdev_priv(dev);
+	struct gfar __iomem *regs = priv->gfargrp[0].regs;
 	u64 *extra = (u64 *) & priv->extra_stats;
 
-	if (priv->einfo->device_flags & FSL_GIANFAR_DEV_HAS_RMON) {
-		u32 __iomem *rmon = (u32 __iomem *) & priv->regs->rmon;
+	if (priv->device_flags & FSL_GIANFAR_DEV_HAS_RMON) {
+		u32 __iomem *rmon = (u32 __iomem *) &regs->rmon;
 		struct gfar_stats *stats = (struct gfar_stats *) buf;
 
 		for (i = 0; i < GFAR_RMON_LEN; i++)
@@ -153,15 +153,19 @@ static void gfar_fill_stats(struct net_device *dev, struct ethtool_stats *dummy,
 			buf[i] = extra[i];
 }
 
-/* Returns the number of stats (and their corresponding strings) */
-static int gfar_stats_count(struct net_device *dev)
+static int gfar_sset_count(struct net_device *dev, int sset)
 {
 	struct gfar_private *priv = netdev_priv(dev);
 
-	if (priv->einfo->device_flags & FSL_GIANFAR_DEV_HAS_RMON)
-		return GFAR_STATS_LEN;
-	else
-		return GFAR_EXTRA_STATS_LEN;
+	switch (sset) {
+	case ETH_SS_STATS:
+		if (priv->device_flags & FSL_GIANFAR_DEV_HAS_RMON)
+			return GFAR_STATS_LEN;
+		else
+			return GFAR_EXTRA_STATS_LEN;
+	default:
+		return -EOPNOTSUPP;
+	}
 }
 
 /* Fills in the drvinfo structure with some basic info */
@@ -172,8 +176,6 @@ static void gfar_gdrvinfo(struct net_device *dev, struct
 	strncpy(drvinfo->version, gfar_driver_version, GFAR_INFOSTR_LEN);
 	strncpy(drvinfo->fw_version, "N/A", GFAR_INFOSTR_LEN);
 	strncpy(drvinfo->bus_info, "N/A", GFAR_INFOSTR_LEN);
-	drvinfo->n_stats = GFAR_STATS_LEN;
-	drvinfo->testinfo_len = 0;
 	drvinfo->regdump_len = 0;
 	drvinfo->eedump_len = 0;
 }
@@ -196,12 +198,18 @@ static int gfar_gsettings(struct net_device *dev, struct ethtool_cmd *cmd)
 {
 	struct gfar_private *priv = netdev_priv(dev);
 	struct phy_device *phydev = priv->phydev;
+	struct gfar_priv_rx_q *rx_queue = NULL;
+	struct gfar_priv_tx_q *tx_queue = NULL;
 
 	if (NULL == phydev)
 		return -ENODEV;
+	tx_queue = priv->tx_queue[0];
+	rx_queue = priv->rx_queue[0];
 
-	cmd->maxtxpkt = priv->txcount;
-	cmd->maxrxpkt = priv->rxcount;
+	/* etsec-1.7 and older versions have only one txic
+	 * and rxic regs although they support multiple queues */
+	cmd->maxtxpkt = get_icft_value(tx_queue->txic);
+	cmd->maxrxpkt = get_icft_value(rx_queue->rxic);
 
 	return phy_ethtool_gset(phydev, cmd);
 }
@@ -217,7 +225,7 @@ static void gfar_get_regs(struct net_device *dev, struct ethtool_regs *regs, voi
 {
 	int i;
 	struct gfar_private *priv = netdev_priv(dev);
-	u32 __iomem *theregs = (u32 __iomem *) priv->regs;
+	u32 __iomem *theregs = (u32 __iomem *) priv->gfargrp[0].regs;
 	u32 *buf = (u32 *) regbuf;
 
 	for (i = 0; i < sizeof (struct gfar) / sizeof (u32); i++)
@@ -246,7 +254,7 @@ static unsigned int gfar_usecs2ticks(struct gfar_private *priv, unsigned int use
 
 	/* Make sure we return a number greater than 0
 	 * if usecs > 0 */
-	return ((usecs * 1000 + count - 1) / count);
+	return (usecs * 1000 + count - 1) / count;
 }
 
 /* Convert ethernet clock ticks to microseconds */
@@ -270,7 +278,7 @@ static unsigned int gfar_ticks2usecs(struct gfar_private *priv, unsigned int tic
 
 	/* Make sure we return a number greater than 0 */
 	/* if ticks is > 0 */
-	return ((ticks * count) / 1000);
+	return (ticks * count) / 1000;
 }
 
 /* Get the coalescing parameters, and put them in the cvals
@@ -278,18 +286,31 @@ static unsigned int gfar_ticks2usecs(struct gfar_private *priv, unsigned int tic
 static int gfar_gcoalesce(struct net_device *dev, struct ethtool_coalesce *cvals)
 {
 	struct gfar_private *priv = netdev_priv(dev);
+	struct gfar_priv_rx_q *rx_queue = NULL;
+	struct gfar_priv_tx_q *tx_queue = NULL;
+	unsigned long rxtime;
+	unsigned long rxcount;
+	unsigned long txtime;
+	unsigned long txcount;
 
-	if (!(priv->einfo->device_flags & FSL_GIANFAR_DEV_HAS_COALESCE))
+	if (!(priv->device_flags & FSL_GIANFAR_DEV_HAS_COALESCE))
 		return -EOPNOTSUPP;
 
 	if (NULL == priv->phydev)
 		return -ENODEV;
 
-	cvals->rx_coalesce_usecs = gfar_ticks2usecs(priv, priv->rxtime);
-	cvals->rx_max_coalesced_frames = priv->rxcount;
+	rx_queue = priv->rx_queue[0];
+	tx_queue = priv->tx_queue[0];
 
-	cvals->tx_coalesce_usecs = gfar_ticks2usecs(priv, priv->txtime);
-	cvals->tx_max_coalesced_frames = priv->txcount;
+	rxtime  = get_ictt_value(rx_queue->rxic);
+	rxcount = get_icft_value(rx_queue->rxic);
+	txtime  = get_ictt_value(tx_queue->txic);
+	txcount = get_icft_value(tx_queue->txic);
+	cvals->rx_coalesce_usecs = gfar_ticks2usecs(priv, rxtime);
+	cvals->rx_max_coalesced_frames = rxcount;
+
+	cvals->tx_coalesce_usecs = gfar_ticks2usecs(priv, txtime);
+	cvals->tx_max_coalesced_frames = txcount;
 
 	cvals->use_adaptive_rx_coalesce = 0;
 	cvals->use_adaptive_tx_coalesce = 0;
@@ -330,16 +351,23 @@ static int gfar_gcoalesce(struct net_device *dev, struct ethtool_coalesce *cvals
 static int gfar_scoalesce(struct net_device *dev, struct ethtool_coalesce *cvals)
 {
 	struct gfar_private *priv = netdev_priv(dev);
+	int i = 0;
 
-	if (!(priv->einfo->device_flags & FSL_GIANFAR_DEV_HAS_COALESCE))
+	if (!(priv->device_flags & FSL_GIANFAR_DEV_HAS_COALESCE))
 		return -EOPNOTSUPP;
 
 	/* Set up rx coalescing */
+	/* As of now, we will enable/disable coalescing for all
+	 * queues together in case of eTSEC2, this will be modified
+	 * along with the ethtool interface */
 	if ((cvals->rx_coalesce_usecs == 0) ||
-	    (cvals->rx_max_coalesced_frames == 0))
-		priv->rxcoalescing = 0;
-	else
-		priv->rxcoalescing = 1;
+	    (cvals->rx_max_coalesced_frames == 0)) {
+		for (i = 0; i < priv->num_rx_queues; i++)
+			priv->rx_queue[i]->rxcoalescing = 0;
+	} else {
+		for (i = 0; i < priv->num_rx_queues; i++)
+			priv->rx_queue[i]->rxcoalescing = 1;
+	}
 
 	if (NULL == priv->phydev)
 		return -ENODEV;
@@ -357,15 +385,21 @@ static int gfar_scoalesce(struct net_device *dev, struct ethtool_coalesce *cvals
 		return -EINVAL;
 	}
 
-	priv->rxtime = gfar_usecs2ticks(priv, cvals->rx_coalesce_usecs);
-	priv->rxcount = cvals->rx_max_coalesced_frames;
+	for (i = 0; i < priv->num_rx_queues; i++) {
+		priv->rx_queue[i]->rxic = mk_ic_value(
+			cvals->rx_max_coalesced_frames,
+			gfar_usecs2ticks(priv, cvals->rx_coalesce_usecs));
+	}
 
 	/* Set up tx coalescing */
 	if ((cvals->tx_coalesce_usecs == 0) ||
-	    (cvals->tx_max_coalesced_frames == 0))
-		priv->txcoalescing = 0;
-	else
-		priv->txcoalescing = 1;
+	    (cvals->tx_max_coalesced_frames == 0)) {
+		for (i = 0; i < priv->num_tx_queues; i++)
+			priv->tx_queue[i]->txcoalescing = 0;
+	} else {
+		for (i = 0; i < priv->num_tx_queues; i++)
+			priv->tx_queue[i]->txcoalescing = 1;
+	}
 
 	/* Check the bounds of the values */
 	if (cvals->tx_coalesce_usecs > GFAR_MAX_COAL_USECS) {
@@ -380,20 +414,13 @@ static int gfar_scoalesce(struct net_device *dev, struct ethtool_coalesce *cvals
 		return -EINVAL;
 	}
 
-	priv->txtime = gfar_usecs2ticks(priv, cvals->tx_coalesce_usecs);
-	priv->txcount = cvals->tx_max_coalesced_frames;
+	for (i = 0; i < priv->num_tx_queues; i++) {
+		priv->tx_queue[i]->txic = mk_ic_value(
+			cvals->tx_max_coalesced_frames,
+			gfar_usecs2ticks(priv, cvals->tx_coalesce_usecs));
+	}
 
-	if (priv->rxcoalescing)
-		gfar_write(&priv->regs->rxic,
-			   mk_ic_value(priv->rxcount, priv->rxtime));
-	else
-		gfar_write(&priv->regs->rxic, 0);
-
-	if (priv->txcoalescing)
-		gfar_write(&priv->regs->txic,
-			   mk_ic_value(priv->txcount, priv->txtime));
-	else
-		gfar_write(&priv->regs->txic, 0);
+	gfar_configure_coalescing(priv, 0xFF, 0xFF);
 
 	return 0;
 }
@@ -404,6 +431,11 @@ static int gfar_scoalesce(struct net_device *dev, struct ethtool_coalesce *cvals
 static void gfar_gringparam(struct net_device *dev, struct ethtool_ringparam *rvals)
 {
 	struct gfar_private *priv = netdev_priv(dev);
+	struct gfar_priv_tx_q *tx_queue = NULL;
+	struct gfar_priv_rx_q *rx_queue = NULL;
+
+	tx_queue = priv->tx_queue[0];
+	rx_queue = priv->rx_queue[0];
 
 	rvals->rx_max_pending = GFAR_RX_MAX_RING_SIZE;
 	rvals->rx_mini_max_pending = GFAR_RX_MAX_RING_SIZE;
@@ -413,10 +445,10 @@ static void gfar_gringparam(struct net_device *dev, struct ethtool_ringparam *rv
 	/* Values changeable by the user.  The valid values are
 	 * in the range 1 to the "*_max_pending" counterpart above.
 	 */
-	rvals->rx_pending = priv->rx_ring_size;
-	rvals->rx_mini_pending = priv->rx_ring_size;
-	rvals->rx_jumbo_pending = priv->rx_ring_size;
-	rvals->tx_pending = priv->tx_ring_size;
+	rvals->rx_pending = rx_queue->rx_ring_size;
+	rvals->rx_mini_pending = rx_queue->rx_ring_size;
+	rvals->rx_jumbo_pending = rx_queue->rx_ring_size;
+	rvals->tx_pending = tx_queue->tx_ring_size;
 }
 
 /* Change the current ring parameters, stopping the controller if
@@ -426,7 +458,7 @@ static void gfar_gringparam(struct net_device *dev, struct ethtool_ringparam *rv
 static int gfar_sringparam(struct net_device *dev, struct ethtool_ringparam *rvals)
 {
 	struct gfar_private *priv = netdev_priv(dev);
-	int err = 0;
+	int err = 0, i = 0;
 
 	if (rvals->rx_pending > GFAR_RX_MAX_RING_SIZE)
 		return -EINVAL;
@@ -446,66 +478,84 @@ static int gfar_sringparam(struct net_device *dev, struct ethtool_ringparam *rva
 		return -EINVAL;
 	}
 
+
 	if (dev->flags & IFF_UP) {
 		unsigned long flags;
 
 		/* Halt TX and RX, and process the frames which
 		 * have already been received */
-		spin_lock_irqsave(&priv->txlock, flags);
-		spin_lock(&priv->rxlock);
+		local_irq_save(flags);
+		lock_tx_qs(priv);
+		lock_rx_qs(priv);
 
 		gfar_halt(dev);
-		gfar_clean_rx_ring(dev, priv->rx_ring_size);
 
-		spin_unlock(&priv->rxlock);
-		spin_unlock_irqrestore(&priv->txlock, flags);
+		unlock_rx_qs(priv);
+		unlock_tx_qs(priv);
+		local_irq_restore(flags);
+
+		for (i = 0; i < priv->num_rx_queues; i++)
+			gfar_clean_rx_ring(priv->rx_queue[i],
+					priv->rx_queue[i]->rx_ring_size);
 
 		/* Now we take down the rings to rebuild them */
 		stop_gfar(dev);
 	}
 
 	/* Change the size */
-	priv->rx_ring_size = rvals->rx_pending;
-	priv->tx_ring_size = rvals->tx_pending;
+	for (i = 0; i < priv->num_rx_queues; i++) {
+		priv->rx_queue[i]->rx_ring_size = rvals->rx_pending;
+		priv->tx_queue[i]->tx_ring_size = rvals->tx_pending;
+		priv->tx_queue[i]->num_txbdfree = priv->tx_queue[i]->tx_ring_size;
+	}
 
 	/* Rebuild the rings with the new size */
-	if (dev->flags & IFF_UP)
+	if (dev->flags & IFF_UP) {
 		err = startup_gfar(dev);
-
+		netif_tx_wake_all_queues(dev);
+	}
 	return err;
 }
 
 static int gfar_set_rx_csum(struct net_device *dev, uint32_t data)
 {
 	struct gfar_private *priv = netdev_priv(dev);
-	int err = 0;
+	unsigned long flags;
+	int err = 0, i = 0;
 
-	if (!(priv->einfo->device_flags & FSL_GIANFAR_DEV_HAS_CSUM))
+	if (!(priv->device_flags & FSL_GIANFAR_DEV_HAS_CSUM))
 		return -EOPNOTSUPP;
 
-	if (dev->flags & IFF_UP) {
-		unsigned long flags;
 
+	if (dev->flags & IFF_UP) {
 		/* Halt TX and RX, and process the frames which
 		 * have already been received */
-		spin_lock_irqsave(&priv->txlock, flags);
-		spin_lock(&priv->rxlock);
+		local_irq_save(flags);
+		lock_tx_qs(priv);
+		lock_rx_qs(priv);
 
 		gfar_halt(dev);
-		gfar_clean_rx_ring(dev, priv->rx_ring_size);
 
-		spin_unlock(&priv->rxlock);
-		spin_unlock_irqrestore(&priv->txlock, flags);
+		unlock_tx_qs(priv);
+		unlock_rx_qs(priv);
+		local_irq_restore(flags);
+
+		for (i = 0; i < priv->num_rx_queues; i++)
+			gfar_clean_rx_ring(priv->rx_queue[i],
+					priv->rx_queue[i]->rx_ring_size);
 
 		/* Now we take down the rings to rebuild them */
 		stop_gfar(dev);
 	}
 
+	spin_lock_irqsave(&priv->bflock, flags);
 	priv->rx_csum_enable = data;
+	spin_unlock_irqrestore(&priv->bflock, flags);
 
-	if (dev->flags & IFF_UP)
+	if (dev->flags & IFF_UP) {
 		err = startup_gfar(dev);
-
+		netif_tx_wake_all_queues(dev);
+	}
 	return err;
 }
 
@@ -513,7 +563,7 @@ static uint32_t gfar_get_rx_csum(struct net_device *dev)
 {
 	struct gfar_private *priv = netdev_priv(dev);
 
-	if (!(priv->einfo->device_flags & FSL_GIANFAR_DEV_HAS_CSUM))
+	if (!(priv->device_flags & FSL_GIANFAR_DEV_HAS_CSUM))
 		return 0;
 
 	return priv->rx_csum_enable;
@@ -521,22 +571,19 @@ static uint32_t gfar_get_rx_csum(struct net_device *dev)
 
 static int gfar_set_tx_csum(struct net_device *dev, uint32_t data)
 {
-	unsigned long flags;
 	struct gfar_private *priv = netdev_priv(dev);
 
-	if (!(priv->einfo->device_flags & FSL_GIANFAR_DEV_HAS_CSUM))
+	if (!(priv->device_flags & FSL_GIANFAR_DEV_HAS_CSUM))
 		return -EOPNOTSUPP;
 
-	spin_lock_irqsave(&priv->txlock, flags);
-	gfar_halt(dev);
+	netif_tx_lock_bh(dev);
 
 	if (data)
 		dev->features |= NETIF_F_IP_CSUM;
 	else
 		dev->features &= ~NETIF_F_IP_CSUM;
 
-	gfar_start(dev);
-	spin_unlock_irqrestore(&priv->txlock, flags);
+	netif_tx_unlock_bh(dev);
 
 	return 0;
 }
@@ -545,7 +592,7 @@ static uint32_t gfar_get_tx_csum(struct net_device *dev)
 {
 	struct gfar_private *priv = netdev_priv(dev);
 
-	if (!(priv->einfo->device_flags & FSL_GIANFAR_DEV_HAS_CSUM))
+	if (!(priv->device_flags & FSL_GIANFAR_DEV_HAS_CSUM))
 		return 0;
 
 	return (dev->features & NETIF_F_IP_CSUM) != 0;
@@ -563,6 +610,275 @@ static void gfar_set_msglevel(struct net_device *dev, uint32_t data)
 	priv->msg_enable = data;
 }
 
+#ifdef CONFIG_PM
+static void gfar_get_wol(struct net_device *dev, struct ethtool_wolinfo *wol)
+{
+	struct gfar_private *priv = netdev_priv(dev);
+
+	if (priv->device_flags & FSL_GIANFAR_DEV_HAS_MAGIC_PACKET) {
+		wol->supported = WAKE_MAGIC;
+		wol->wolopts = priv->wol_en ? WAKE_MAGIC : 0;
+	} else {
+		wol->supported = wol->wolopts = 0;
+	}
+}
+
+static int gfar_set_wol(struct net_device *dev, struct ethtool_wolinfo *wol)
+{
+	struct gfar_private *priv = netdev_priv(dev);
+	unsigned long flags;
+
+	if (!(priv->device_flags & FSL_GIANFAR_DEV_HAS_MAGIC_PACKET) &&
+	    wol->wolopts != 0)
+		return -EINVAL;
+
+	if (wol->wolopts & ~WAKE_MAGIC)
+		return -EINVAL;
+
+	device_set_wakeup_enable(&dev->dev, wol->wolopts & WAKE_MAGIC);
+
+	spin_lock_irqsave(&priv->bflock, flags);
+	priv->wol_en =  !!device_may_wakeup(&dev->dev);
+	spin_unlock_irqrestore(&priv->bflock, flags);
+
+	return 0;
+}
+#endif
+
+static int gfar_ethflow_to_class(int flow_type, u64 *class)
+{
+	switch (flow_type) {
+	case TCP_V4_FLOW:
+		*class = CLASS_CODE_TCP_IPV4;
+		break;
+	case UDP_V4_FLOW:
+		*class = CLASS_CODE_UDP_IPV4;
+		break;
+	case AH_V4_FLOW:
+	case ESP_V4_FLOW:
+		*class = CLASS_CODE_AH_ESP_IPV4;
+		break;
+	case SCTP_V4_FLOW:
+		*class = CLASS_CODE_SCTP_IPV4;
+		break;
+	case TCP_V6_FLOW:
+		*class = CLASS_CODE_TCP_IPV6;
+		break;
+	case UDP_V6_FLOW:
+		*class = CLASS_CODE_UDP_IPV6;
+		break;
+	case AH_V6_FLOW:
+	case ESP_V6_FLOW:
+		*class = CLASS_CODE_AH_ESP_IPV6;
+		break;
+	case SCTP_V6_FLOW:
+		*class = CLASS_CODE_SCTP_IPV6;
+		break;
+	default:
+		return 0;
+	}
+
+	return 1;
+}
+
+static void ethflow_to_filer_rules (struct gfar_private *priv, u64 ethflow)
+{
+	u32 fcr = 0x0, fpr = FPR_FILER_MASK;
+
+	if (ethflow & RXH_L2DA) {
+		fcr = RQFCR_PID_DAH |RQFCR_CMP_NOMATCH |
+			RQFCR_HASH | RQFCR_AND | RQFCR_HASHTBL_0;
+		ftp_rqfpr[priv->cur_filer_idx] = fpr;
+		ftp_rqfcr[priv->cur_filer_idx] = fcr;
+		gfar_write_filer(priv, priv->cur_filer_idx, fcr, fpr);
+		priv->cur_filer_idx = priv->cur_filer_idx - 1;
+
+		fcr = RQFCR_PID_DAL | RQFCR_AND | RQFCR_CMP_NOMATCH |
+				RQFCR_HASH | RQFCR_AND | RQFCR_HASHTBL_0;
+		ftp_rqfpr[priv->cur_filer_idx] = fpr;
+		ftp_rqfcr[priv->cur_filer_idx] = fcr;
+		gfar_write_filer(priv, priv->cur_filer_idx, fcr, fpr);
+		priv->cur_filer_idx = priv->cur_filer_idx - 1;
+	}
+
+	if (ethflow & RXH_VLAN) {
+		fcr = RQFCR_PID_VID | RQFCR_CMP_NOMATCH | RQFCR_HASH |
+				RQFCR_AND | RQFCR_HASHTBL_0;
+		gfar_write_filer(priv, priv->cur_filer_idx, fcr, fpr);
+		ftp_rqfpr[priv->cur_filer_idx] = fpr;
+		ftp_rqfcr[priv->cur_filer_idx] = fcr;
+		priv->cur_filer_idx = priv->cur_filer_idx - 1;
+	}
+
+	if (ethflow & RXH_IP_SRC) {
+		fcr = RQFCR_PID_SIA | RQFCR_CMP_NOMATCH | RQFCR_HASH |
+			RQFCR_AND | RQFCR_HASHTBL_0;
+		ftp_rqfpr[priv->cur_filer_idx] = fpr;
+		ftp_rqfcr[priv->cur_filer_idx] = fcr;
+		gfar_write_filer(priv, priv->cur_filer_idx, fcr, fpr);
+		priv->cur_filer_idx = priv->cur_filer_idx - 1;
+	}
+
+	if (ethflow & (RXH_IP_DST)) {
+		fcr = RQFCR_PID_DIA | RQFCR_CMP_NOMATCH | RQFCR_HASH |
+			RQFCR_AND | RQFCR_HASHTBL_0;
+		ftp_rqfpr[priv->cur_filer_idx] = fpr;
+		ftp_rqfcr[priv->cur_filer_idx] = fcr;
+		gfar_write_filer(priv, priv->cur_filer_idx, fcr, fpr);
+		priv->cur_filer_idx = priv->cur_filer_idx - 1;
+	}
+
+	if (ethflow & RXH_L3_PROTO) {
+		fcr = RQFCR_PID_L4P | RQFCR_CMP_NOMATCH | RQFCR_HASH |
+			RQFCR_AND | RQFCR_HASHTBL_0;
+		ftp_rqfpr[priv->cur_filer_idx] = fpr;
+		ftp_rqfcr[priv->cur_filer_idx] = fcr;
+		gfar_write_filer(priv, priv->cur_filer_idx, fcr, fpr);
+		priv->cur_filer_idx = priv->cur_filer_idx - 1;
+	}
+
+	if (ethflow & RXH_L4_B_0_1) {
+		fcr = RQFCR_PID_SPT | RQFCR_CMP_NOMATCH | RQFCR_HASH |
+			RQFCR_AND | RQFCR_HASHTBL_0;
+		ftp_rqfpr[priv->cur_filer_idx] = fpr;
+		ftp_rqfcr[priv->cur_filer_idx] = fcr;
+		gfar_write_filer(priv, priv->cur_filer_idx, fcr, fpr);
+		priv->cur_filer_idx = priv->cur_filer_idx - 1;
+	}
+
+	if (ethflow & RXH_L4_B_2_3) {
+		fcr = RQFCR_PID_DPT | RQFCR_CMP_NOMATCH | RQFCR_HASH |
+			RQFCR_AND | RQFCR_HASHTBL_0;
+		ftp_rqfpr[priv->cur_filer_idx] = fpr;
+		ftp_rqfcr[priv->cur_filer_idx] = fcr;
+		gfar_write_filer(priv, priv->cur_filer_idx, fcr, fpr);
+		priv->cur_filer_idx = priv->cur_filer_idx - 1;
+	}
+}
+
+static int gfar_ethflow_to_filer_table(struct gfar_private *priv, u64 ethflow, u64 class)
+{
+	unsigned int last_rule_idx = priv->cur_filer_idx;
+	unsigned int cmp_rqfpr;
+	unsigned int local_rqfpr[MAX_FILER_IDX + 1];
+	unsigned int local_rqfcr[MAX_FILER_IDX + 1];
+	int i = 0x0, k = 0x0;
+	int j = MAX_FILER_IDX, l = 0x0;
+
+	switch (class) {
+	case TCP_V4_FLOW:
+		cmp_rqfpr = RQFPR_IPV4 |RQFPR_TCP;
+		break;
+	case UDP_V4_FLOW:
+		cmp_rqfpr = RQFPR_IPV4 |RQFPR_UDP;
+		break;
+	case TCP_V6_FLOW:
+		cmp_rqfpr = RQFPR_IPV6 |RQFPR_TCP;
+		break;
+	case UDP_V6_FLOW:
+		cmp_rqfpr = RQFPR_IPV6 |RQFPR_UDP;
+		break;
+	case IPV4_FLOW:
+		cmp_rqfpr = RQFPR_IPV4;
+	case IPV6_FLOW:
+		cmp_rqfpr = RQFPR_IPV6;
+		break;
+	default:
+		printk(KERN_ERR "Right now this class is not supported\n");
+		return 0;
+	}
+
+	for (i = 0; i < MAX_FILER_IDX + 1; i++) {
+		local_rqfpr[j] = ftp_rqfpr[i];
+		local_rqfcr[j] = ftp_rqfcr[i];
+		j--;
+		if ((ftp_rqfcr[i] == (RQFCR_PID_PARSE |
+			RQFCR_CLE |RQFCR_AND)) &&
+			(ftp_rqfpr[i] == cmp_rqfpr))
+			break;
+	}
+
+	if (i == MAX_FILER_IDX + 1) {
+		printk(KERN_ERR "No parse rule found, ");
+		printk(KERN_ERR "can't create hash rules\n");
+		return 0;
+	}
+
+	/* If a match was found, then it begins the starting of a cluster rule
+	 * if it was already programmed, we need to overwrite these rules
+	 */
+	for (l = i+1; l < MAX_FILER_IDX; l++) {
+		if ((ftp_rqfcr[l] & RQFCR_CLE) &&
+			!(ftp_rqfcr[l] & RQFCR_AND)) {
+			ftp_rqfcr[l] = RQFCR_CLE | RQFCR_CMP_EXACT |
+				RQFCR_HASHTBL_0 | RQFCR_PID_MASK;
+			ftp_rqfpr[l] = FPR_FILER_MASK;
+			gfar_write_filer(priv, l, ftp_rqfcr[l], ftp_rqfpr[l]);
+			break;
+		}
+
+		if (!(ftp_rqfcr[l] & RQFCR_CLE) && (ftp_rqfcr[l] & RQFCR_AND))
+			continue;
+		else {
+			local_rqfpr[j] = ftp_rqfpr[l];
+			local_rqfcr[j] = ftp_rqfcr[l];
+			j--;
+		}
+	}
+
+	priv->cur_filer_idx = l - 1;
+	last_rule_idx = l;
+
+	/* hash rules */
+	ethflow_to_filer_rules(priv, ethflow);
+
+	/* Write back the popped out rules again */
+	for (k = j+1; k < MAX_FILER_IDX; k++) {
+		ftp_rqfpr[priv->cur_filer_idx] = local_rqfpr[k];
+		ftp_rqfcr[priv->cur_filer_idx] = local_rqfcr[k];
+		gfar_write_filer(priv, priv->cur_filer_idx,
+				local_rqfcr[k], local_rqfpr[k]);
+		if (!priv->cur_filer_idx)
+			break;
+		priv->cur_filer_idx = priv->cur_filer_idx - 1;
+	}
+
+	return 1;
+}
+
+static int gfar_set_hash_opts(struct gfar_private *priv, struct ethtool_rxnfc *cmd)
+{
+	u64 class;
+
+	if (!gfar_ethflow_to_class(cmd->flow_type, &class))
+		return -EINVAL;
+
+	if (class < CLASS_CODE_USER_PROG1 ||
+			class > CLASS_CODE_SCTP_IPV6)
+		return -EINVAL;
+
+	/* write the filer rules here */
+	if (!gfar_ethflow_to_filer_table(priv, cmd->data, cmd->flow_type))
+		return -1;
+
+	return 0;
+}
+
+static int gfar_set_nfc(struct net_device *dev, struct ethtool_rxnfc *cmd)
+{
+	struct gfar_private *priv = netdev_priv(dev);
+	int ret = 0;
+
+	switch(cmd->cmd) {
+	case ETHTOOL_SRXFH:
+		ret = gfar_set_hash_opts(priv, cmd);
+		break;
+	default:
+		ret = -EINVAL;
+	}
+
+	return ret;
+}
 
 const struct ethtool_ops gfar_ethtool_ops = {
 	.get_settings = gfar_gsettings,
@@ -576,12 +892,18 @@ const struct ethtool_ops gfar_ethtool_ops = {
 	.get_ringparam = gfar_gringparam,
 	.set_ringparam = gfar_sringparam,
 	.get_strings = gfar_gstrings,
-	.get_stats_count = gfar_stats_count,
+	.get_sset_count = gfar_sset_count,
 	.get_ethtool_stats = gfar_fill_stats,
 	.get_rx_csum = gfar_get_rx_csum,
 	.get_tx_csum = gfar_get_tx_csum,
 	.set_rx_csum = gfar_set_rx_csum,
 	.set_tx_csum = gfar_set_tx_csum,
+	.set_sg = ethtool_op_set_sg,
 	.get_msglevel = gfar_get_msglevel,
 	.set_msglevel = gfar_set_msglevel,
+#ifdef CONFIG_PM
+	.get_wol = gfar_get_wol,
+	.set_wol = gfar_set_wol,
+#endif
+	.set_rxnfc = gfar_set_nfc,
 };

@@ -1,4 +1,7 @@
-/* zd_rf.c
+/* ZD1211 USB-WLAN driver for Linux
+ *
+ * Copyright (C) 2005-2007 Ulrich Kunitz <kune@deine-taler.de>
+ * Copyright (C) 2006-2007 Daniel Drake <dsd@gentoo.org>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,7 +23,7 @@
 
 #include "zd_def.h"
 #include "zd_rf.h"
-#include "zd_ieee80211.h"
+#include "zd_mac.h"
 #include "zd_chip.h"
 
 static const char * const rfs[] = {
@@ -34,7 +37,7 @@ static const char * const rfs[] = {
 	[AL2210_RF]	= "AL2210_RF",
 	[MAXIM_NEW_RF]	= "MAXIM_NEW_RF",
 	[UW2453_RF]	= "UW2453_RF",
-	[UNKNOWN_A_RF]	= "UNKNOWN_A_RF",
+	[AL2230S_RF]	= "AL2230S_RF",
 	[RALINK_RF]	= "RALINK_RF",
 	[INTERSIL_RF]	= "INTERSIL_RF",
 	[RF2959_RF]	= "RF2959_RF",
@@ -52,34 +55,40 @@ const char *zd_rf_name(u8 type)
 void zd_rf_init(struct zd_rf *rf)
 {
 	memset(rf, 0, sizeof(*rf));
+
+	/* default to update channel integration, as almost all RF's do want
+	 * this */
+	rf->update_channel_int = 1;
 }
 
 void zd_rf_clear(struct zd_rf *rf)
 {
+	if (rf->clear)
+		rf->clear(rf);
 	ZD_MEMCLEAR(rf, sizeof(*rf));
 }
 
 int zd_rf_init_hw(struct zd_rf *rf, u8 type)
 {
-	int r, t;
+	int r = 0;
+	int t;
 	struct zd_chip *chip = zd_rf_to_chip(rf);
 
 	ZD_ASSERT(mutex_is_locked(&chip->mutex));
 	switch (type) {
 	case RF2959_RF:
 		r = zd_rf_init_rf2959(rf);
-		if (r)
-			return r;
 		break;
 	case AL2230_RF:
+	case AL2230S_RF:
 		r = zd_rf_init_al2230(rf);
-		if (r)
-			return r;
 		break;
 	case AL7230B_RF:
 		r = zd_rf_init_al7230b(rf);
-		if (r)
-			return r;
+		break;
+	case MAXIM_NEW_RF:
+	case UW2453_RF:
+		r = zd_rf_init_uw2453(rf);
 		break;
 	default:
 		dev_err(zd_chip_dev(chip),
@@ -87,6 +96,9 @@ int zd_rf_init_hw(struct zd_rf *rf, u8 type)
 		rf->type = 0;
 		return -ENODEV;
 	}
+
+	if (r)
+		return r;
 
 	rf->type = type;
 

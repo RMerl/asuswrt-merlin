@@ -35,7 +35,7 @@
 
 static int fc_header(struct sk_buff *skb, struct net_device *dev,
 		     unsigned short type,
-		     void *daddr, void *saddr, unsigned len)
+		     const void *daddr, const void *saddr, unsigned len)
 {
 	struct fch_hdr *fch;
 	int hdr_len;
@@ -70,7 +70,7 @@ static int fc_header(struct sk_buff *skb, struct net_device *dev,
 	if(daddr)
 	{
 		memcpy(fch->daddr,daddr,dev->addr_len);
-		return(hdr_len);
+		return hdr_len;
 	}
 	return -hdr_len;
 }
@@ -82,24 +82,27 @@ static int fc_header(struct sk_buff *skb, struct net_device *dev,
 
 static int fc_rebuild_header(struct sk_buff *skb)
 {
+#ifdef CONFIG_INET
 	struct fch_hdr *fch=(struct fch_hdr *)skb->data;
 	struct fcllc *fcllc=(struct fcllc *)(skb->data+sizeof(struct fch_hdr));
 	if(fcllc->ethertype != htons(ETH_P_IP)) {
 		printk("fc_rebuild_header: Don't know how to resolve type %04X addresses ?\n", ntohs(fcllc->ethertype));
 		return 0;
 	}
-#ifdef CONFIG_INET
 	return arp_find(fch->daddr, skb);
 #else
 	return 0;
 #endif
 }
 
+static const struct header_ops fc_header_ops = {
+	.create	 = fc_header,
+	.rebuild = fc_rebuild_header,
+};
+
 static void fc_setup(struct net_device *dev)
 {
-	dev->hard_header	= fc_header;
-	dev->rebuild_header	= fc_rebuild_header;
-
+	dev->header_ops		= &fc_header_ops;
 	dev->type		= ARPHRD_IEEE802;
 	dev->hard_header_len	= FC_HLEN;
 	dev->mtu		= 2024;

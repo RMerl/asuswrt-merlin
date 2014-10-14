@@ -69,78 +69,24 @@ EXPORT_SYMBOL_GPL(pcibios_find_pci_bus);
  * Remove all of the PCI devices under this bus both from the
  * linux pci device tree, and from the powerpc EEH address cache.
  */
-void
-pcibios_remove_pci_devices(struct pci_bus *bus)
+void pcibios_remove_pci_devices(struct pci_bus *bus)
 {
-	struct pci_dev *dev, *tmp;
-
-	list_for_each_entry_safe(dev, tmp, &bus->devices, bus_list) {
-		eeh_remove_bus_device(dev);
-		pci_remove_bus_device(dev);
-	}
-}
-EXPORT_SYMBOL_GPL(pcibios_remove_pci_devices);
-
-/* Must be called before pci_bus_add_devices */
-void
-pcibios_fixup_new_pci_devices(struct pci_bus *bus, int fix_bus)
-{
-	struct pci_dev *dev;
-
-	list_for_each_entry(dev, &bus->devices, bus_list) {
-		/*
-		 * Skip already-present devices (which are on the
-		 * global device list.)
-		 */
-		if (list_empty(&dev->global_list)) {
-			int i;
-
-			/* Fill device archdata and setup iommu table */
-			pcibios_setup_new_device(dev);
-
-			if(fix_bus)
-				pcibios_fixup_device_resources(dev, bus);
-			pci_read_irq_line(dev);
-			for (i = 0; i < PCI_NUM_RESOURCES; i++) {
-				struct resource *r = &dev->resource[i];
-
-				if (r->parent || !r->start || !r->flags)
-					continue;
-				pci_claim_resource(dev, i);
-			}
-		}
-	}
-
-	eeh_add_device_tree_late(bus);
-}
-EXPORT_SYMBOL_GPL(pcibios_fixup_new_pci_devices);
-
-static int
-pcibios_pci_config_bridge(struct pci_dev *dev)
-{
-	u8 sec_busno;
+ 	struct pci_dev *dev, *tmp;
 	struct pci_bus *child_bus;
 
-	/* Get busno of downstream bus */
-	pci_read_config_byte(dev, PCI_SECONDARY_BUS, &sec_busno);
+	/* First go down child busses */
+	list_for_each_entry(child_bus, &bus->children, node)
+		pcibios_remove_pci_devices(child_bus);
 
-	/* Add to children of PCI bridge dev->bus */
-	child_bus = pci_add_new_bus(dev->bus, dev, sec_busno);
-	if (!child_bus) {
-		printk (KERN_ERR "%s: could not add second bus\n", __FUNCTION__);
-		return -EIO;
-	}
-	sprintf(child_bus->name, "PCI Bus #%02x", child_bus->number);
-
-	pci_scan_child_bus(child_bus);
-
-	/* Fixup new pci devices without touching bus struct */
-	pcibios_fixup_new_pci_devices(child_bus, 0);
-
-	/* Make the discovered devices available */
-	pci_bus_add_devices(child_bus);
-	return 0;
+	pr_debug("PCI: Removing devices on bus %04x:%02x\n",
+		 pci_domain_nr(bus),  bus->number);
+	list_for_each_entry_safe(dev, tmp, &bus->devices, bus_list) {
+		pr_debug("     * Removing %s...\n", pci_name(dev));
+		eeh_remove_bus_device(dev);
+ 		pci_remove_bus_device(dev);
+ 	}
 }
+EXPORT_SYMBOL_GPL(pcibios_remove_pci_devices);
 
 /**
  * pcibios_add_pci_devices - adds new pci devices to bus
@@ -152,10 +98,9 @@ pcibios_pci_config_bridge(struct pci_dev *dev)
  * is how this routine differs from other, similar pcibios
  * routines.)
  */
-void
-pcibios_add_pci_devices(struct pci_bus * bus)
+void pcibios_add_pci_devices(struct pci_bus * bus)
 {
-	int slotno, num, mode;
+	int slotno, num, mode, pass, max;
 	struct pci_dev *dev;
 	struct device_node *dn = pci_bus_to_OF_node(bus);
 
@@ -167,50 +112,97 @@ pcibios_add_pci_devices(struct pci_bus * bus)
 
 	if (mode == PCI_PROBE_DEVTREE) {
 		/* use ofdt-based probe */
-		of_scan_bus(dn, bus);
-		if (!list_empty(&bus->devices)) {
-			pcibios_fixup_new_pci_devices(bus, 0);
-			pci_bus_add_devices(bus);
-		}
+		of_rescan_bus(dn, bus);
 	} else if (mode == PCI_PROBE_NORMAL) {
 		/* use legacy probe */
 		slotno = PCI_SLOT(PCI_DN(dn->child)->devfn);
 		num = pci_scan_slot(bus, PCI_DEVFN(slotno, 0));
-		if (num) {
-			pcibios_fixup_new_pci_devices(bus, 1);
-			pci_bus_add_devices(bus);
+		if (!num)
+			return;
+		pcibios_setup_bus_devices(bus);
+		max = bus->secondary;
+		for (pass=0; pass < 2; pass++)
+			list_for_each_entry(dev, &bus->devices, bus_list) {
+			if (dev->hdr_type == PCI_HEADER_TYPE_BRIDGE ||
+			    dev->hdr_type == PCI_HEADER_TYPE_CARDBUS)
+				max = pci_scan_bridge(bus, dev, max, pass);
 		}
-
-		list_for_each_entry(dev, &bus->devices, bus_list)
-			if (dev->hdr_type == PCI_HEADER_TYPE_BRIDGE)
-				pcibios_pci_config_bridge(dev);
 	}
+	pcibios_finish_adding_to_bus(bus);
 }
 EXPORT_SYMBOL_GPL(pcibios_add_pci_devices);
 
 struct pci_controller * __devinit init_phb_dynamic(struct device_node *dn)
 {
 	struct pci_controller *phb;
-	int primary;
 
-	primary = list_empty(&hose_list);
+	pr_debug("PCI: Initializing new hotplug PHB %s\n", dn->full_name);
+
 	phb = pcibios_alloc_controller(dn);
 	if (!phb)
 		return NULL;
 	rtas_setup_phb(phb);
 	pci_process_bridge_OF_ranges(phb, dn, 0);
 
-	pci_setup_phb_io_dynamic(phb, primary);
-
 	pci_devs_phb_init_dynamic(phb);
 
 	if (dn->child)
 		eeh_add_device_tree_early(dn);
 
-	scan_phb(phb);
-	pcibios_fixup_new_pci_devices(phb->bus, 0);
-	pci_bus_add_devices(phb->bus);
+	pcibios_scan_phb(phb);
+	pcibios_finish_adding_to_bus(phb->bus);
 
 	return phb;
 }
 EXPORT_SYMBOL_GPL(init_phb_dynamic);
+
+/* RPA-specific bits for removing PHBs */
+int remove_phb_dynamic(struct pci_controller *phb)
+{
+	struct pci_bus *b = phb->bus;
+	struct resource *res;
+	int rc, i;
+
+	pr_debug("PCI: Removing PHB %04x:%02x...\n",
+		 pci_domain_nr(b), b->number);
+
+	/* We cannot to remove a root bus that has children */
+	if (!(list_empty(&b->children) && list_empty(&b->devices)))
+		return -EBUSY;
+
+	/* We -know- there aren't any child devices anymore at this stage
+	 * and thus, we can safely unmap the IO space as it's not in use
+	 */
+	res = &phb->io_resource;
+	if (res->flags & IORESOURCE_IO) {
+		rc = pcibios_unmap_io_space(b);
+		if (rc) {
+			printk(KERN_ERR "%s: failed to unmap IO on bus %s\n",
+			       __func__, b->name);
+			return 1;
+		}
+	}
+
+	/* Unregister the bridge device from sysfs and remove the PCI bus */
+	device_unregister(b->bridge);
+	phb->bus = NULL;
+	pci_remove_bus(b);
+
+	/* Now release the IO resource */
+	if (res->flags & IORESOURCE_IO)
+		release_resource(res);
+
+	/* Release memory resources */
+	for (i = 0; i < 3; ++i) {
+		res = &phb->mem_resources[i];
+		if (!(res->flags & IORESOURCE_MEM))
+			continue;
+		release_resource(res);
+	}
+
+	/* Free pci_controller data structure */
+	pcibios_free_controller(phb);
+
+	return 0;
+}
+EXPORT_SYMBOL_GPL(remove_phb_dynamic);

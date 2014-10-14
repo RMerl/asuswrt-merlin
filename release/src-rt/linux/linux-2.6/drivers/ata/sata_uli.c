@@ -26,6 +26,7 @@
 
 #include <linux/kernel.h>
 #include <linux/module.h>
+#include <linux/gfp.h>
 #include <linux/pci.h>
 #include <linux/init.h>
 #include <linux/blkdev.h>
@@ -36,7 +37,7 @@
 #include <linux/libata.h>
 
 #define DRV_NAME	"sata_uli"
-#define DRV_VERSION	"1.2"
+#define DRV_VERSION	"1.3"
 
 enum {
 	uli_5289		= 0,
@@ -56,9 +57,9 @@ struct uli_priv {
 	unsigned int		scr_cfg_addr[uli_max_ports];
 };
 
-static int uli_init_one (struct pci_dev *pdev, const struct pci_device_id *ent);
-static u32 uli_scr_read (struct ata_port *ap, unsigned int sc_reg);
-static void uli_scr_write (struct ata_port *ap, unsigned int sc_reg, u32 val);
+static int uli_init_one(struct pci_dev *pdev, const struct pci_device_id *ent);
+static int uli_scr_read(struct ata_link *link, unsigned int sc_reg, u32 *val);
+static int uli_scr_write(struct ata_link *link, unsigned int sc_reg, u32 val);
 
 static const struct pci_device_id uli_pci_tbl[] = {
 	{ PCI_VDEVICE(AL, 0x5289), uli_5289 },
@@ -76,60 +77,20 @@ static struct pci_driver uli_pci_driver = {
 };
 
 static struct scsi_host_template uli_sht = {
-	.module			= THIS_MODULE,
-	.name			= DRV_NAME,
-	.ioctl			= ata_scsi_ioctl,
-	.queuecommand		= ata_scsi_queuecmd,
-	.can_queue		= ATA_DEF_QUEUE,
-	.this_id		= ATA_SHT_THIS_ID,
-	.sg_tablesize		= LIBATA_MAX_PRD,
-	.cmd_per_lun		= ATA_SHT_CMD_PER_LUN,
-	.emulated		= ATA_SHT_EMULATED,
-	.use_clustering		= ATA_SHT_USE_CLUSTERING,
-	.proc_name		= DRV_NAME,
-	.dma_boundary		= ATA_DMA_BOUNDARY,
-	.slave_configure	= ata_scsi_slave_config,
-	.slave_destroy		= ata_scsi_slave_destroy,
-	.bios_param		= ata_std_bios_param,
+	ATA_BMDMA_SHT(DRV_NAME),
 };
 
-static const struct ata_port_operations uli_ops = {
-	.port_disable		= ata_port_disable,
-
-	.tf_load		= ata_tf_load,
-	.tf_read		= ata_tf_read,
-	.check_status		= ata_check_status,
-	.exec_command		= ata_exec_command,
-	.dev_select		= ata_std_dev_select,
-
-	.bmdma_setup            = ata_bmdma_setup,
-	.bmdma_start            = ata_bmdma_start,
-	.bmdma_stop		= ata_bmdma_stop,
-	.bmdma_status		= ata_bmdma_status,
-	.qc_prep		= ata_qc_prep,
-	.qc_issue		= ata_qc_issue_prot,
-	.data_xfer		= ata_data_xfer,
-
-	.freeze			= ata_bmdma_freeze,
-	.thaw			= ata_bmdma_thaw,
-	.error_handler		= ata_bmdma_error_handler,
-	.post_internal_cmd	= ata_bmdma_post_internal_cmd,
-
-	.irq_clear		= ata_bmdma_irq_clear,
-	.irq_on			= ata_irq_on,
-	.irq_ack		= ata_irq_ack,
-
+static struct ata_port_operations uli_ops = {
+	.inherits		= &ata_bmdma_port_ops,
 	.scr_read		= uli_scr_read,
 	.scr_write		= uli_scr_write,
-
-	.port_start		= ata_port_start,
+	.hardreset		= ATA_OP_NULL,
 };
 
 static const struct ata_port_info uli_port_info = {
-	.flags		= ATA_FLAG_SATA | ATA_FLAG_NO_LEGACY |
-			  ATA_FLAG_IGN_SIMPLEX,
-	.pio_mask       = 0x1f,		/* pio0-4 */
-	.udma_mask      = 0x7f,		/* udma0-6 */
+	.flags		= ATA_FLAG_SATA | ATA_FLAG_IGN_SIMPLEX,
+	.pio_mask       = ATA_PIO4,
+	.udma_mask      = ATA_UDMA6,
 	.port_ops       = &uli_ops,
 };
 
@@ -146,41 +107,43 @@ static unsigned int get_scr_cfg_addr(struct ata_port *ap, unsigned int sc_reg)
 	return hpriv->scr_cfg_addr[ap->port_no] + (4 * sc_reg);
 }
 
-static u32 uli_scr_cfg_read (struct ata_port *ap, unsigned int sc_reg)
+static u32 uli_scr_cfg_read(struct ata_link *link, unsigned int sc_reg)
 {
-	struct pci_dev *pdev = to_pci_dev(ap->host->dev);
-	unsigned int cfg_addr = get_scr_cfg_addr(ap, sc_reg);
+	struct pci_dev *pdev = to_pci_dev(link->ap->host->dev);
+	unsigned int cfg_addr = get_scr_cfg_addr(link->ap, sc_reg);
 	u32 val;
 
 	pci_read_config_dword(pdev, cfg_addr, &val);
 	return val;
 }
 
-static void uli_scr_cfg_write (struct ata_port *ap, unsigned int scr, u32 val)
+static void uli_scr_cfg_write(struct ata_link *link, unsigned int scr, u32 val)
 {
-	struct pci_dev *pdev = to_pci_dev(ap->host->dev);
-	unsigned int cfg_addr = get_scr_cfg_addr(ap, scr);
+	struct pci_dev *pdev = to_pci_dev(link->ap->host->dev);
+	unsigned int cfg_addr = get_scr_cfg_addr(link->ap, scr);
 
 	pci_write_config_dword(pdev, cfg_addr, val);
 }
 
-static u32 uli_scr_read (struct ata_port *ap, unsigned int sc_reg)
+static int uli_scr_read(struct ata_link *link, unsigned int sc_reg, u32 *val)
 {
 	if (sc_reg > SCR_CONTROL)
-		return 0xffffffffU;
+		return -EINVAL;
 
-	return uli_scr_cfg_read(ap, sc_reg);
+	*val = uli_scr_cfg_read(link, sc_reg);
+	return 0;
 }
 
-static void uli_scr_write (struct ata_port *ap, unsigned int sc_reg, u32 val)
+static int uli_scr_write(struct ata_link *link, unsigned int sc_reg, u32 val)
 {
-	if (sc_reg > SCR_CONTROL)	//SCR_CONTROL=2, SCR_ERROR=1, SCR_STATUS=0
-		return;
+	if (sc_reg > SCR_CONTROL) //SCR_CONTROL=2, SCR_ERROR=1, SCR_STATUS=0
+		return -EINVAL;
 
-	uli_scr_cfg_write(ap, sc_reg, val);
+	uli_scr_cfg_write(link, sc_reg, val);
+	return 0;
 }
 
-static int uli_init_one (struct pci_dev *pdev, const struct pci_device_id *ent)
+static int uli_init_one(struct pci_dev *pdev, const struct pci_device_id *ent)
 {
 	static int printed_version;
 	const struct ata_port_info *ppi[] = { &uli_port_info, NULL };
@@ -213,13 +176,11 @@ static int uli_init_one (struct pci_dev *pdev, const struct pci_device_id *ent)
 	host->private_data = hpriv;
 
 	/* the first two ports are standard SFF */
-	rc = ata_pci_init_native_host(host);
+	rc = ata_pci_sff_init_host(host);
 	if (rc)
 		return rc;
 
-	rc = ata_pci_init_bmdma(host);
-	if (rc)
-		return rc;
+	ata_pci_bmdma_init(host);
 
 	iomap = host->iomap;
 
@@ -238,7 +199,13 @@ static int uli_init_one (struct pci_dev *pdev, const struct pci_device_id *ent)
 			((unsigned long)iomap[1] | ATA_PCI_CTL_OFS) + 4;
 		ioaddr->bmdma_addr = iomap[4] + 16;
 		hpriv->scr_cfg_addr[2] = ULI5287_BASE + ULI5287_OFFS*4;
-		ata_std_ports(ioaddr);
+		ata_sff_std_ports(ioaddr);
+
+		ata_port_desc(host->ports[2],
+			"cmd 0x%llx ctl 0x%llx bmdma 0x%llx",
+			(unsigned long long)pci_resource_start(pdev, 0) + 8,
+			((unsigned long long)pci_resource_start(pdev, 1) | ATA_PCI_CTL_OFS) + 4,
+			(unsigned long long)pci_resource_start(pdev, 4) + 16);
 
 		ioaddr = &host->ports[3]->ioaddr;
 		ioaddr->cmd_addr = iomap[2] + 8;
@@ -247,7 +214,14 @@ static int uli_init_one (struct pci_dev *pdev, const struct pci_device_id *ent)
 			((unsigned long)iomap[3] | ATA_PCI_CTL_OFS) + 4;
 		ioaddr->bmdma_addr = iomap[4] + 24;
 		hpriv->scr_cfg_addr[3] = ULI5287_BASE + ULI5287_OFFS*5;
-		ata_std_ports(ioaddr);
+		ata_sff_std_ports(ioaddr);
+
+		ata_port_desc(host->ports[2],
+			"cmd 0x%llx ctl 0x%llx bmdma 0x%llx",
+			(unsigned long long)pci_resource_start(pdev, 2) + 9,
+			((unsigned long long)pci_resource_start(pdev, 3) | ATA_PCI_CTL_OFS) + 4,
+			(unsigned long long)pci_resource_start(pdev, 4) + 24);
+
 		break;
 
 	case uli_5289:
@@ -267,8 +241,8 @@ static int uli_init_one (struct pci_dev *pdev, const struct pci_device_id *ent)
 
 	pci_set_master(pdev);
 	pci_intx(pdev, 1);
-	return ata_host_activate(host, pdev->irq, ata_interrupt, IRQF_SHARED,
-				 &uli_sht);
+	return ata_host_activate(host, pdev->irq, ata_bmdma_interrupt,
+				 IRQF_SHARED, &uli_sht);
 }
 
 static int __init uli_init(void)

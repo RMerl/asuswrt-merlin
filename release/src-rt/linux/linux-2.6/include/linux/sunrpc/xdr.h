@@ -1,7 +1,10 @@
 /*
- * include/linux/sunrpc/xdr.h
+ * XDR standard data types and function declarations
  *
  * Copyright (C) 1995-1997 Olaf Kirch <okir@monad.swb.de>
+ *
+ * Based on:
+ *   RFC 4506 "XDR: External Data Representation Standard", May 2006
  */
 
 #ifndef _SUNRPC_XDR_H_
@@ -11,6 +14,7 @@
 
 #include <linux/uio.h>
 #include <asm/byteorder.h>
+#include <asm/unaligned.h>
 #include <linux/scatterlist.h>
 
 /*
@@ -29,8 +33,8 @@ struct xdr_netobj {
 };
 
 /*
- * This is the generic XDR function. rqstp is either a rpc_rqst (client
- * side) or svc_rqst pointer (server side).
+ * This is the legacy generic XDR function. rqstp is either a rpc_rqst
+ * (client side) or svc_rqst pointer (server side).
  * Encode functions always assume there's enough room in the buffer.
  */
 typedef int	(*kxdrproc_t)(void *rqstp, __be32 *data, void *obj);
@@ -54,38 +58,40 @@ struct xdr_buf {
 
 	struct page **	pages;		/* Array of contiguous pages */
 	unsigned int	page_base,	/* Start of page data */
-			page_len;	/* Length of page data */
+			page_len,	/* Length of page data */
+			flags;		/* Flags for data disposition */
+#define XDRBUF_READ		0x01		/* target of file read */
+#define XDRBUF_WRITE		0x02		/* source of file write */
 
 	unsigned int	buflen,		/* Total length of storage buffer */
 			len;		/* Length of XDR encoded message */
-
 };
 
 /*
  * pre-xdr'ed macros.
  */
 
-#define	xdr_zero	__constant_htonl(0)
-#define	xdr_one		__constant_htonl(1)
-#define	xdr_two		__constant_htonl(2)
+#define	xdr_zero	cpu_to_be32(0)
+#define	xdr_one		cpu_to_be32(1)
+#define	xdr_two		cpu_to_be32(2)
 
-#define	rpc_success		__constant_htonl(RPC_SUCCESS)
-#define	rpc_prog_unavail	__constant_htonl(RPC_PROG_UNAVAIL)
-#define	rpc_prog_mismatch	__constant_htonl(RPC_PROG_MISMATCH)
-#define	rpc_proc_unavail	__constant_htonl(RPC_PROC_UNAVAIL)
-#define	rpc_garbage_args	__constant_htonl(RPC_GARBAGE_ARGS)
-#define	rpc_system_err		__constant_htonl(RPC_SYSTEM_ERR)
-#define	rpc_drop_reply		__constant_htonl(RPC_DROP_REPLY)
+#define	rpc_success		cpu_to_be32(RPC_SUCCESS)
+#define	rpc_prog_unavail	cpu_to_be32(RPC_PROG_UNAVAIL)
+#define	rpc_prog_mismatch	cpu_to_be32(RPC_PROG_MISMATCH)
+#define	rpc_proc_unavail	cpu_to_be32(RPC_PROC_UNAVAIL)
+#define	rpc_garbage_args	cpu_to_be32(RPC_GARBAGE_ARGS)
+#define	rpc_system_err		cpu_to_be32(RPC_SYSTEM_ERR)
+#define	rpc_drop_reply		cpu_to_be32(RPC_DROP_REPLY)
 
-#define	rpc_auth_ok		__constant_htonl(RPC_AUTH_OK)
-#define	rpc_autherr_badcred	__constant_htonl(RPC_AUTH_BADCRED)
-#define	rpc_autherr_rejectedcred __constant_htonl(RPC_AUTH_REJECTEDCRED)
-#define	rpc_autherr_badverf	__constant_htonl(RPC_AUTH_BADVERF)
-#define	rpc_autherr_rejectedverf __constant_htonl(RPC_AUTH_REJECTEDVERF)
-#define	rpc_autherr_tooweak	__constant_htonl(RPC_AUTH_TOOWEAK)
-#define	rpcsec_gsserr_credproblem	__constant_htonl(RPCSEC_GSS_CREDPROBLEM)
-#define	rpcsec_gsserr_ctxproblem	__constant_htonl(RPCSEC_GSS_CTXPROBLEM)
-#define	rpc_autherr_oldseqnum	__constant_htonl(101)
+#define	rpc_auth_ok		cpu_to_be32(RPC_AUTH_OK)
+#define	rpc_autherr_badcred	cpu_to_be32(RPC_AUTH_BADCRED)
+#define	rpc_autherr_rejectedcred cpu_to_be32(RPC_AUTH_REJECTEDCRED)
+#define	rpc_autherr_badverf	cpu_to_be32(RPC_AUTH_BADVERF)
+#define	rpc_autherr_rejectedverf cpu_to_be32(RPC_AUTH_REJECTEDVERF)
+#define	rpc_autherr_tooweak	cpu_to_be32(RPC_AUTH_TOOWEAK)
+#define	rpcsec_gsserr_credproblem	cpu_to_be32(RPCSEC_GSS_CREDPROBLEM)
+#define	rpcsec_gsserr_ctxproblem	cpu_to_be32(RPCSEC_GSS_CTXPROBLEM)
+#define	rpc_autherr_oldseqnum	cpu_to_be32(101)
 
 /*
  * Miscellaneous XDR helper functions
@@ -93,7 +99,8 @@ struct xdr_buf {
 __be32 *xdr_encode_opaque_fixed(__be32 *p, const void *ptr, unsigned int len);
 __be32 *xdr_encode_opaque(__be32 *p, const void *ptr, unsigned int len);
 __be32 *xdr_encode_string(__be32 *p, const char *s);
-__be32 *xdr_decode_string_inplace(__be32 *p, char **sp, int *lenp, int maxlen);
+__be32 *xdr_decode_string_inplace(__be32 *p, char **sp, unsigned int *lenp,
+			unsigned int maxlen);
 __be32 *xdr_encode_netobj(__be32 *p, const struct xdr_netobj *);
 __be32 *xdr_decode_netobj(__be32 *p, struct xdr_netobj *);
 
@@ -101,6 +108,7 @@ void	xdr_encode_pages(struct xdr_buf *, struct page **, unsigned int,
 			 unsigned int);
 void	xdr_inline_pages(struct xdr_buf *, unsigned int,
 			 struct page **, unsigned int, unsigned int);
+void	xdr_terminate_string(struct xdr_buf *, const u32);
 
 static inline __be32 *xdr_encode_array(__be32 *p, const void *s, unsigned int len)
 {
@@ -113,17 +121,22 @@ static inline __be32 *xdr_encode_array(__be32 *p, const void *s, unsigned int le
 static inline __be32 *
 xdr_encode_hyper(__be32 *p, __u64 val)
 {
-	*p++ = htonl(val >> 32);
-	*p++ = htonl(val & 0xFFFFFFFF);
-	return p;
+	put_unaligned_be64(val, p);
+	return p + 2;
 }
 
 static inline __be32 *
 xdr_decode_hyper(__be32 *p, __u64 *valp)
 {
-	*valp  = ((__u64) ntohl(*p++)) << 32;
-	*valp |= ntohl(*p++);
-	return p;
+	*valp = get_unaligned_be64(p);
+	return p + 2;
+}
+
+static inline __be32 *
+xdr_decode_opaque_fixed(__be32 *p, void *ptr, unsigned int len)
+{
+	memcpy(ptr, p, len);
+	return p + XDR_QUADLEN(len);
 }
 
 /*
@@ -175,7 +188,7 @@ struct xdr_array2_desc {
 };
 
 extern int xdr_decode_array2(struct xdr_buf *buf, unsigned int base,
-                             struct xdr_array2_desc *desc);
+			     struct xdr_array2_desc *desc);
 extern int xdr_encode_array2(struct xdr_buf *buf, unsigned int base,
 			     struct xdr_array2_desc *desc);
 
@@ -188,13 +201,22 @@ struct xdr_stream {
 
 	__be32 *end;		/* end of available buffer space */
 	struct kvec *iov;	/* pointer to the current kvec */
+	struct kvec scratch;	/* Scratch buffer */
+	struct page **page_ptr;	/* pointer to the current page */
 };
+
+/*
+ * These are the xdr_stream style generic XDR encode and decode functions.
+ */
+typedef void	(*kxdreproc_t)(void *rqstp, struct xdr_stream *xdr, void *obj);
+typedef int	(*kxdrdproc_t)(void *rqstp, struct xdr_stream *xdr, void *obj);
 
 extern void xdr_init_encode(struct xdr_stream *xdr, struct xdr_buf *buf, __be32 *p);
 extern __be32 *xdr_reserve_space(struct xdr_stream *xdr, size_t nbytes);
 extern void xdr_write_pages(struct xdr_stream *xdr, struct page **pages,
 		unsigned int base, unsigned int len);
 extern void xdr_init_decode(struct xdr_stream *xdr, struct xdr_buf *buf, __be32 *p);
+extern void xdr_set_scratch_buffer(struct xdr_stream *xdr, void *buf, size_t buflen);
 extern __be32 *xdr_inline_decode(struct xdr_stream *xdr, size_t nbytes);
 extern void xdr_read_pages(struct xdr_stream *xdr, unsigned int len);
 extern void xdr_enter_page(struct xdr_stream *xdr, unsigned int len);

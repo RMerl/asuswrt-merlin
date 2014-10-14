@@ -21,7 +21,6 @@
  *
  */
 
-#include <sound/driver.h>
 #include <linux/init.h>
 #include <linux/pci.h>
 #include <linux/time.h>
@@ -30,7 +29,7 @@
 #include <sound/trident.h>
 #include <sound/initval.h>
 
-MODULE_AUTHOR("Jaroslav Kysela <perex@suse.cz>, <audio@tridentmicro.com>");
+MODULE_AUTHOR("Jaroslav Kysela <perex@perex.cz>, <audio@tridentmicro.com>");
 MODULE_DESCRIPTION("Trident 4D-WaveDX/NX & SiS SI7018");
 MODULE_LICENSE("GPL");
 MODULE_SUPPORTED_DEVICE("{{Trident,4DWave DX},"
@@ -63,7 +62,7 @@ MODULE_PARM_DESC(pcm_channels, "Number of hardware channels assigned for PCM.");
 module_param_array(wavetable_size, int, NULL, 0444);
 MODULE_PARM_DESC(wavetable_size, "Maximum memory size in kB for wavetable synth.");
 
-static struct pci_device_id snd_trident_ids[] = {
+static DEFINE_PCI_DEVICE_TABLE(snd_trident_ids) = {
 	{PCI_DEVICE(PCI_VENDOR_ID_TRIDENT, PCI_DEVICE_ID_TRIDENT_4DWAVE_DX), 
 		PCI_CLASS_MULTIMEDIA_AUDIO << 8, 0xffff00, 0},
 	{PCI_DEVICE(PCI_VENDOR_ID_TRIDENT, PCI_DEVICE_ID_TRIDENT_4DWAVE_NX), 
@@ -90,9 +89,9 @@ static int __devinit snd_trident_probe(struct pci_dev *pci,
 		return -ENOENT;
 	}
 
-	card = snd_card_new(index[dev], id[dev], THIS_MODULE, 0);
-	if (card == NULL)
-		return -ENOMEM;
+	err = snd_card_create(index[dev], id[dev], THIS_MODULE, 0, &card);
+	if (err < 0)
+		return err;
 
 	if ((err = snd_trident_create(card, pci,
 				      pcm_channels[dev],
@@ -154,13 +153,6 @@ static int __devinit snd_trident_probe(struct pci_dev *pci,
 		snd_card_free(card);
 		return err;
 	}
-
-#if defined(CONFIG_SND_SEQUENCER) || (defined(MODULE) && defined(CONFIG_SND_SEQUENCER_MODULE))
-	if ((err = snd_trident_attach_synthesizer(trident)) < 0) {
-		snd_card_free(card);
-		return err;
-	}
-#endif
 
 	snd_trident_create_gameport(trident);
 

@@ -15,7 +15,6 @@
 #include <linux/init.h>
 #include <linux/interrupt.h>
 #include <linux/module.h>
-#include <linux/slab.h>
 #include <linux/types.h>
 #include <asm/io.h>
 #include <asm/led.h>
@@ -71,8 +70,7 @@ static void asp_choose_irq(struct parisc_device *dev, void *ctrl)
  */
 #define ASP_INTERRUPT_ADDR 0xf0800000
 
-int __init
-asp_init_chip(struct parisc_device *dev)
+static int __init asp_init_chip(struct parisc_device *dev)
 {
 	struct gsc_irq gsc_irq;
 	int ret;
@@ -82,13 +80,13 @@ asp_init_chip(struct parisc_device *dev)
 	asp.hpa = ASP_INTERRUPT_ADDR;
 
 	printk(KERN_INFO "%s version %d at 0x%lx found.\n", 
-		asp.name, asp.version, dev->hpa.start);
+		asp.name, asp.version, (unsigned long)dev->hpa.start);
 
 	/* the IRQ ASP should use */
 	ret = -EBUSY;
 	dev->irq = gsc_claim_irq(&gsc_irq, ASP_GSC_IRQ);
 	if (dev->irq < 0) {
-		printk(KERN_ERR "%s(): cannot get GSC irq\n", __FUNCTION__);
+		printk(KERN_ERR "%s(): cannot get GSC irq\n", __func__);
 		goto out;
 	}
 

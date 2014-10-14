@@ -46,6 +46,7 @@
 #include <linux/tcp.h>
 #include <linux/init.h>
 #include <linux/dma-mapping.h>
+#include <linux/slab.h>
 
 #include <asm/io.h>
 #include <asm/irq.h>
@@ -76,7 +77,6 @@ static irqreturn_t c2_interrupt(int irq, void *dev_id);
 static void c2_tx_timeout(struct net_device *netdev);
 static int c2_change_mtu(struct net_device *netdev, int new_mtu);
 static void c2_reset(struct c2_port *c2_port);
-static struct net_device_stats *c2_get_stats(struct net_device *netdev);
 
 static struct pci_device_id c2_pci_table[] = {
 	{ PCI_DEVICE(0x18b8, 0xb001) },
@@ -87,11 +87,7 @@ MODULE_DEVICE_TABLE(pci, c2_pci_table);
 
 static void c2_print_macaddr(struct net_device *netdev)
 {
-	pr_debug("%s: MAC %02X:%02X:%02X:%02X:%02X:%02X, "
-		"IRQ %u\n", netdev->name,
-		netdev->dev_addr[0], netdev->dev_addr[1], netdev->dev_addr[2],
-		netdev->dev_addr[3], netdev->dev_addr[4], netdev->dev_addr[5],
-		netdev->irq);
+	pr_debug("%s: MAC %pM, IRQ %u\n", netdev->name, netdev->dev_addr, netdev->irq);
 }
 
 static void c2_set_rxbufsize(struct c2_port *c2_port)
@@ -130,10 +126,10 @@ static int c2_tx_ring_alloc(struct c2_ring *tx_ring, void *vaddr,
 		tx_desc->status = 0;
 
 		/* Set TXP_HTXD_UNINIT */
-		__raw_writeq(cpu_to_be64(0x1122334455667788ULL),
+		__raw_writeq((__force u64) cpu_to_be64(0x1122334455667788ULL),
 			     (void __iomem *) txp_desc + C2_TXP_ADDR);
 		__raw_writew(0, (void __iomem *) txp_desc + C2_TXP_LEN);
-		__raw_writew(cpu_to_be16(TXP_HTXD_UNINIT),
+		__raw_writew((__force u16) cpu_to_be16(TXP_HTXD_UNINIT),
 			     (void __iomem *) txp_desc + C2_TXP_FLAGS);
 
 		elem->skb = NULL;
@@ -179,13 +175,13 @@ static int c2_rx_ring_alloc(struct c2_ring *rx_ring, void *vaddr,
 		rx_desc->status = 0;
 
 		/* Set RXP_HRXD_UNINIT */
-		__raw_writew(cpu_to_be16(RXP_HRXD_OK),
+		__raw_writew((__force u16) cpu_to_be16(RXP_HRXD_OK),
 		       (void __iomem *) rxp_desc + C2_RXP_STATUS);
 		__raw_writew(0, (void __iomem *) rxp_desc + C2_RXP_COUNT);
 		__raw_writew(0, (void __iomem *) rxp_desc + C2_RXP_LEN);
-		__raw_writeq(cpu_to_be64(0x99aabbccddeeffULL),
+		__raw_writeq((__force u64) cpu_to_be64(0x99aabbccddeeffULL),
 			     (void __iomem *) rxp_desc + C2_RXP_ADDR);
-		__raw_writew(cpu_to_be16(RXP_HRXD_UNINIT),
+		__raw_writew((__force u16) cpu_to_be16(RXP_HRXD_UNINIT),
 			     (void __iomem *) rxp_desc + C2_RXP_FLAGS);
 
 		elem->skb = NULL;
@@ -239,10 +235,11 @@ static inline int c2_rx_alloc(struct c2_port *c2_port, struct c2_element *elem)
 	rxp_hdr->flags = RXP_HRXD_READY;
 
 	__raw_writew(0, elem->hw_desc + C2_RXP_STATUS);
-	__raw_writew(cpu_to_be16((u16) maplen - sizeof(*rxp_hdr)),
+	__raw_writew((__force u16) cpu_to_be16((u16) maplen - sizeof(*rxp_hdr)),
 		     elem->hw_desc + C2_RXP_LEN);
-	__raw_writeq(cpu_to_be64(mapaddr), elem->hw_desc + C2_RXP_ADDR);
-	__raw_writew(cpu_to_be16(RXP_HRXD_READY), elem->hw_desc + C2_RXP_FLAGS);
+	__raw_writeq((__force u64) cpu_to_be64(mapaddr), elem->hw_desc + C2_RXP_ADDR);
+	__raw_writew((__force u16) cpu_to_be16(RXP_HRXD_READY),
+		     elem->hw_desc + C2_RXP_FLAGS);
 
 	elem->skb = skb;
 	elem->mapaddr = mapaddr;
@@ -290,9 +287,9 @@ static void c2_rx_clean(struct c2_port *c2_port)
 		__raw_writew(0, elem->hw_desc + C2_RXP_STATUS);
 		__raw_writew(0, elem->hw_desc + C2_RXP_COUNT);
 		__raw_writew(0, elem->hw_desc + C2_RXP_LEN);
-		__raw_writeq(cpu_to_be64(0x99aabbccddeeffULL),
+		__raw_writeq((__force u64) cpu_to_be64(0x99aabbccddeeffULL),
 			     elem->hw_desc + C2_RXP_ADDR);
-		__raw_writew(cpu_to_be16(RXP_HRXD_UNINIT),
+		__raw_writew((__force u16) cpu_to_be16(RXP_HRXD_UNINIT),
 			     elem->hw_desc + C2_RXP_FLAGS);
 
 		if (elem->skb) {
@@ -346,16 +343,16 @@ static void c2_tx_clean(struct c2_port *c2_port)
 					     elem->hw_desc + C2_TXP_LEN);
 				__raw_writeq(0,
 					     elem->hw_desc + C2_TXP_ADDR);
-				__raw_writew(cpu_to_be16(TXP_HTXD_DONE),
+				__raw_writew((__force u16) cpu_to_be16(TXP_HTXD_DONE),
 					     elem->hw_desc + C2_TXP_FLAGS);
-				c2_port->netstats.tx_dropped++;
+				c2_port->netdev->stats.tx_dropped++;
 				break;
 			} else {
 				__raw_writew(0,
 					     elem->hw_desc + C2_TXP_LEN);
-				__raw_writeq(cpu_to_be64(0x1122334455667788ULL),
+				__raw_writeq((__force u64) cpu_to_be64(0x1122334455667788ULL),
 					     elem->hw_desc + C2_TXP_ADDR);
-				__raw_writew(cpu_to_be16(TXP_HTXD_UNINIT),
+				__raw_writew((__force u16) cpu_to_be16(TXP_HTXD_UNINIT),
 					     elem->hw_desc + C2_TXP_FLAGS);
 			}
 
@@ -390,7 +387,7 @@ static void c2_tx_interrupt(struct net_device *netdev)
 	for (elem = tx_ring->to_clean; elem != tx_ring->to_use;
 	     elem = elem->next) {
 		txp_htxd.flags =
-		    be16_to_cpu(readw(elem->hw_desc + C2_TXP_FLAGS));
+		    be16_to_cpu((__force __be16) readw(elem->hw_desc + C2_TXP_FLAGS));
 
 		if (txp_htxd.flags != TXP_HTXD_DONE)
 			break;
@@ -398,7 +395,7 @@ static void c2_tx_interrupt(struct net_device *netdev)
 		if (netif_msg_tx_done(c2_port)) {
 			/* PCI reads are expensive in fast path */
 			txp_htxd.len =
-			    be16_to_cpu(readw(elem->hw_desc + C2_TXP_LEN));
+			    be16_to_cpu((__force __be16) readw(elem->hw_desc + C2_TXP_LEN));
 			pr_debug("%s: tx done slot %3Zu status 0x%x len "
 				"%5u bytes\n",
 				netdev->name, elem - tx_ring->start,
@@ -448,13 +445,15 @@ static void c2_rx_error(struct c2_port *c2_port, struct c2_element *elem)
 	/* Write the descriptor to the adapter's rx ring */
 	__raw_writew(0, elem->hw_desc + C2_RXP_STATUS);
 	__raw_writew(0, elem->hw_desc + C2_RXP_COUNT);
-	__raw_writew(cpu_to_be16((u16) elem->maplen - sizeof(*rxp_hdr)),
+	__raw_writew((__force u16) cpu_to_be16((u16) elem->maplen - sizeof(*rxp_hdr)),
 		     elem->hw_desc + C2_RXP_LEN);
-	__raw_writeq(cpu_to_be64(elem->mapaddr), elem->hw_desc + C2_RXP_ADDR);
-	__raw_writew(cpu_to_be16(RXP_HRXD_READY), elem->hw_desc + C2_RXP_FLAGS);
+	__raw_writeq((__force u64) cpu_to_be64(elem->mapaddr),
+		     elem->hw_desc + C2_RXP_ADDR);
+	__raw_writew((__force u16) cpu_to_be16(RXP_HRXD_READY),
+		     elem->hw_desc + C2_RXP_FLAGS);
 
 	pr_debug("packet dropped\n");
-	c2_port->netstats.rx_dropped++;
+	c2_port->netdev->stats.rx_dropped++;
 }
 
 static void c2_rx_interrupt(struct net_device *netdev)
@@ -528,9 +527,8 @@ static void c2_rx_interrupt(struct net_device *netdev)
 
 		netif_rx(skb);
 
-		netdev->last_rx = jiffies;
-		c2_port->netstats.rx_packets++;
-		c2_port->netstats.rx_bytes += buflen;
+		netdev->stats.rx_packets++;
+		netdev->stats.rx_bytes += buflen;
 	}
 
 	/* Save where we left off */
@@ -653,7 +651,7 @@ static int c2_up(struct net_device *netdev)
 	     i++, elem++) {
 		rxp_hdr = (struct c2_rxp_hdr *) elem->skb->data;
 		rxp_hdr->flags = 0;
-		__raw_writew(cpu_to_be16(RXP_HRXD_READY),
+		__raw_writew((__force u16) cpu_to_be16(RXP_HRXD_READY),
 			     elem->hw_desc + C2_RXP_FLAGS);
 	}
 
@@ -787,12 +785,15 @@ static int c2_xmit_frame(struct sk_buff *skb, struct net_device *netdev)
 	elem->maplen = maplen;
 
 	/* Tell HW to xmit */
-	__raw_writeq(cpu_to_be64(mapaddr), elem->hw_desc + C2_TXP_ADDR);
-	__raw_writew(cpu_to_be16(maplen), elem->hw_desc + C2_TXP_LEN);
-	__raw_writew(cpu_to_be16(TXP_HTXD_READY), elem->hw_desc + C2_TXP_FLAGS);
+	__raw_writeq((__force u64) cpu_to_be64(mapaddr),
+		     elem->hw_desc + C2_TXP_ADDR);
+	__raw_writew((__force u16) cpu_to_be16(maplen),
+		     elem->hw_desc + C2_TXP_LEN);
+	__raw_writew((__force u16) cpu_to_be16(TXP_HTXD_READY),
+		     elem->hw_desc + C2_TXP_FLAGS);
 
-	c2_port->netstats.tx_packets++;
-	c2_port->netstats.tx_bytes += maplen;
+	netdev->stats.tx_packets++;
+	netdev->stats.tx_bytes += maplen;
 
 	/* Loop thru additional data fragments and queue them */
 	if (skb_shinfo(skb)->nr_frags) {
@@ -810,15 +811,15 @@ static int c2_xmit_frame(struct sk_buff *skb, struct net_device *netdev)
 			elem->maplen = maplen;
 
 			/* Tell HW to xmit */
-			__raw_writeq(cpu_to_be64(mapaddr),
+			__raw_writeq((__force u64) cpu_to_be64(mapaddr),
 				     elem->hw_desc + C2_TXP_ADDR);
-			__raw_writew(cpu_to_be16(maplen),
+			__raw_writew((__force u16) cpu_to_be16(maplen),
 				     elem->hw_desc + C2_TXP_LEN);
-			__raw_writew(cpu_to_be16(TXP_HTXD_READY),
+			__raw_writew((__force u16) cpu_to_be16(TXP_HTXD_READY),
 				     elem->hw_desc + C2_TXP_FLAGS);
 
-			c2_port->netstats.tx_packets++;
-			c2_port->netstats.tx_bytes += maplen;
+			netdev->stats.tx_packets++;
+			netdev->stats.tx_bytes += maplen;
 		}
 	}
 
@@ -837,13 +838,6 @@ static int c2_xmit_frame(struct sk_buff *skb, struct net_device *netdev)
 	netdev->trans_start = jiffies;
 
 	return NETDEV_TX_OK;
-}
-
-static struct net_device_stats *c2_get_stats(struct net_device *netdev)
-{
-	struct c2_port *c2_port = netdev_priv(netdev);
-
-	return &c2_port->netstats;
 }
 
 static void c2_tx_timeout(struct net_device *netdev)
@@ -874,6 +868,16 @@ static int c2_change_mtu(struct net_device *netdev, int new_mtu)
 	return ret;
 }
 
+static const struct net_device_ops c2_netdev = {
+	.ndo_open 		= c2_up,
+	.ndo_stop 		= c2_down,
+	.ndo_start_xmit		= c2_xmit_frame,
+	.ndo_tx_timeout		= c2_tx_timeout,
+	.ndo_change_mtu		= c2_change_mtu,
+	.ndo_set_mac_address 	= eth_mac_addr,
+	.ndo_validate_addr	= eth_validate_addr,
+};
+
 /* Initialize network device */
 static struct net_device *c2_devinit(struct c2_dev *c2dev,
 				     void __iomem * mmio_addr)
@@ -886,15 +890,9 @@ static struct net_device *c2_devinit(struct c2_dev *c2dev,
 		return NULL;
 	}
 
-	SET_MODULE_OWNER(netdev);
 	SET_NETDEV_DEV(netdev, &c2dev->pcidev->dev);
 
-	netdev->open = c2_up;
-	netdev->stop = c2_down;
-	netdev->hard_start_xmit = c2_xmit_frame;
-	netdev->get_stats = c2_get_stats;
-	netdev->tx_timeout = c2_tx_timeout;
-	netdev->change_mtu = c2_change_mtu;
+	netdev->netdev_ops = &c2_netdev;
 	netdev->watchdog_timeo = C2_TX_TIMEOUT;
 	netdev->irq = c2dev->pcidev->irq;
 
@@ -987,13 +985,13 @@ static int __devinit c2_probe(struct pci_dev *pcidev,
 	}
 
 	if ((sizeof(dma_addr_t) > 4)) {
-		ret = pci_set_dma_mask(pcidev, DMA_64BIT_MASK);
+		ret = pci_set_dma_mask(pcidev, DMA_BIT_MASK(64));
 		if (ret < 0) {
 			printk(KERN_ERR PFX "64b DMA configuration failed\n");
 			goto bail2;
 		}
 	} else {
-		ret = pci_set_dma_mask(pcidev, DMA_32BIT_MASK);
+		ret = pci_set_dma_mask(pcidev, DMA_BIT_MASK(32));
 		if (ret < 0) {
 			printk(KERN_ERR PFX "32b DMA configuration failed\n");
 			goto bail2;
@@ -1006,7 +1004,7 @@ static int __devinit c2_probe(struct pci_dev *pcidev,
 	/* Remap the adapter PCI registers in BAR4 */
 	mmio_regs = ioremap_nocache(reg4_start + C2_PCI_REGS_OFFSET,
 				    sizeof(struct c2_adapter_pci_regs));
-	if (mmio_regs == 0UL) {
+	if (!mmio_regs) {
 		printk(KERN_ERR PFX
 			"Unable to remap adapter PCI registers in BAR4\n");
 		ret = -EIO;
@@ -1030,10 +1028,10 @@ static int __devinit c2_probe(struct pci_dev *pcidev,
 	}
 
 	/* Validate the adapter version */
-	if (be32_to_cpu(readl(mmio_regs + C2_REGS_VERS)) != C2_VERSION) {
+	if (be32_to_cpu((__force __be32) readl(mmio_regs + C2_REGS_VERS)) != C2_VERSION) {
 		printk(KERN_ERR PFX "Version mismatch "
 			"[fw=%u, c2=%u], Adapter not claimed\n",
-			be32_to_cpu(readl(mmio_regs + C2_REGS_VERS)),
+			be32_to_cpu((__force __be32) readl(mmio_regs + C2_REGS_VERS)),
 			C2_VERSION);
 		ret = -EINVAL;
 		iounmap(mmio_regs);
@@ -1041,12 +1039,12 @@ static int __devinit c2_probe(struct pci_dev *pcidev,
 	}
 
 	/* Validate the adapter IVN */
-	if (be32_to_cpu(readl(mmio_regs + C2_REGS_IVN)) != C2_IVN) {
+	if (be32_to_cpu((__force __be32) readl(mmio_regs + C2_REGS_IVN)) != C2_IVN) {
 		printk(KERN_ERR PFX "Downlevel FIrmware level. You should be using "
 		       "the OpenIB device support kit. "
 		       "[fw=0x%x, c2=0x%x], Adapter not claimed\n",
-			be32_to_cpu(readl(mmio_regs + C2_REGS_IVN)),
-			C2_IVN);
+		       be32_to_cpu((__force __be32) readl(mmio_regs + C2_REGS_IVN)),
+		       C2_IVN);
 		ret = -EINVAL;
 		iounmap(mmio_regs);
 		goto bail2;
@@ -1069,7 +1067,7 @@ static int __devinit c2_probe(struct pci_dev *pcidev,
 
 	/* Get the last RX index */
 	c2dev->cur_rx =
-	    (be32_to_cpu(readl(mmio_regs + C2_REGS_HRX_CUR)) -
+	    (be32_to_cpu((__force __be32) readl(mmio_regs + C2_REGS_HRX_CUR)) -
 	     0xffffc000) / sizeof(struct c2_rxp_desc);
 
 	/* Request an interrupt line for the driver */
@@ -1091,7 +1089,7 @@ static int __devinit c2_probe(struct pci_dev *pcidev,
 	}
 
 	/* Save off the actual size prior to unmapping mmio_regs */
-	kva_map_size = be32_to_cpu(readl(mmio_regs + C2_REGS_PCI_WINSIZE));
+	kva_map_size = be32_to_cpu((__force __be32) readl(mmio_regs + C2_REGS_PCI_WINSIZE));
 
 	/* Unmap the adapter PCI registers in BAR4 */
 	iounmap(mmio_regs);
@@ -1110,7 +1108,7 @@ static int __devinit c2_probe(struct pci_dev *pcidev,
 	/* Remap the adapter HRXDQ PA space to kernel VA space */
 	c2dev->mmio_rxp_ring = ioremap_nocache(reg4_start + C2_RXP_HRXDQ_OFFSET,
 					       C2_RXP_HRXDQ_SIZE);
-	if (c2dev->mmio_rxp_ring == 0UL) {
+	if (!c2dev->mmio_rxp_ring) {
 		printk(KERN_ERR PFX "Unable to remap MMIO HRXDQ region\n");
 		ret = -EIO;
 		goto bail6;
@@ -1119,7 +1117,7 @@ static int __devinit c2_probe(struct pci_dev *pcidev,
 	/* Remap the adapter HTXDQ PA space to kernel VA space */
 	c2dev->mmio_txp_ring = ioremap_nocache(reg4_start + C2_TXP_HTXDQ_OFFSET,
 					       C2_TXP_HTXDQ_SIZE);
-	if (c2dev->mmio_txp_ring == 0UL) {
+	if (!c2dev->mmio_txp_ring) {
 		printk(KERN_ERR PFX "Unable to remap MMIO HTXDQ region\n");
 		ret = -EIO;
 		goto bail7;
@@ -1130,7 +1128,7 @@ static int __devinit c2_probe(struct pci_dev *pcidev,
 
 	/* Remap the PCI registers in adapter BAR0 to kernel VA space */
 	c2dev->regs = ioremap_nocache(reg0_start, reg0_len);
-	if (c2dev->regs == 0UL) {
+	if (!c2dev->regs) {
 		printk(KERN_ERR PFX "Unable to remap BAR0\n");
 		ret = -EIO;
 		goto bail8;
@@ -1140,7 +1138,7 @@ static int __devinit c2_probe(struct pci_dev *pcidev,
 	c2dev->pa = reg4_start + C2_PCI_REGS_OFFSET;
 	c2dev->kva = ioremap_nocache(reg4_start + C2_PCI_REGS_OFFSET,
 				     kva_map_size);
-	if (c2dev->kva == 0UL) {
+	if (!c2dev->kva) {
 		printk(KERN_ERR PFX "Unable to remap BAR4\n");
 		ret = -EIO;
 		goto bail9;

@@ -17,7 +17,6 @@
 #include <linux/string.h>
 #include <linux/errno.h>
 #include <linux/ioport.h>
-#include <linux/slab.h>
 #include <linux/interrupt.h>
 #include <linux/netdevice.h>
 #include <linux/etherdevice.h>
@@ -72,6 +71,7 @@ static struct zorro_device_id hydra_zorro_tbl[] __devinitdata = {
     { ZORRO_PROD_HYDRA_SYSTEMS_AMIGANET },
     { 0 }
 };
+MODULE_DEVICE_TABLE(zorro, hydra_zorro_tbl);
 
 static struct zorro_driver hydra_driver = {
     .name	= "hydra",
@@ -94,6 +94,22 @@ static int __devinit hydra_init_one(struct zorro_dev *z,
     return 0;
 }
 
+static const struct net_device_ops hydra_netdev_ops = {
+	.ndo_open		= hydra_open,
+	.ndo_stop		= hydra_close,
+
+	.ndo_start_xmit		= __ei_start_xmit,
+	.ndo_tx_timeout		= __ei_tx_timeout,
+	.ndo_get_stats		= __ei_get_stats,
+	.ndo_set_multicast_list = __ei_set_multicast_list,
+	.ndo_validate_addr	= eth_validate_addr,
+	.ndo_set_mac_address	= eth_mac_addr,
+	.ndo_change_mtu		= eth_change_mtu,
+#ifdef CONFIG_NET_POLL_CONTROLLER
+	.ndo_poll_controller	= __ei_poll,
+#endif
+};
+
 static int __devinit hydra_init(struct zorro_dev *z)
 {
     struct net_device *dev;
@@ -112,7 +128,6 @@ static int __devinit hydra_init(struct zorro_dev *z)
     dev = ____alloc_ei_netdev(0);
     if (!dev)
 	return -ENOMEM;
-    SET_MODULE_OWNER(dev);
 
     for(j = 0; j < ETHER_ADDR_LEN; j++)
 	dev->dev_addr[j] = *((u8 *)(board + HYDRA_ADDRPROM + 2*j));
@@ -140,17 +155,13 @@ static int __devinit hydra_init(struct zorro_dev *z)
 
     ei_status.rx_start_page = start_page + TX_PAGES;
 
-    ei_status.reset_8390 = &hydra_reset_8390;
-    ei_status.block_input = &hydra_block_input;
-    ei_status.block_output = &hydra_block_output;
-    ei_status.get_8390_hdr = &hydra_get_8390_hdr;
+    ei_status.reset_8390 = hydra_reset_8390;
+    ei_status.block_input = hydra_block_input;
+    ei_status.block_output = hydra_block_output;
+    ei_status.get_8390_hdr = hydra_get_8390_hdr;
     ei_status.reg_offset = hydra_offsets;
-    dev->open = &hydra_open;
-    dev->stop = &hydra_close;
-#ifdef CONFIG_NET_POLL_CONTROLLER
-    dev->poll_controller = __ei_poll;
-#endif
 
+    dev->netdev_ops = &hydra_netdev_ops;
     __NS8390_init(dev, 0);
 
     err = register_netdev(dev);
@@ -162,11 +173,8 @@ static int __devinit hydra_init(struct zorro_dev *z)
 
     zorro_set_drvdata(z, dev);
 
-    printk(KERN_INFO "%s: Hydra at 0x%08lx, address "
-	   "%02x:%02x:%02x:%02x:%02x:%02x (hydra.c " HYDRA_VERSION ")\n",
-	   dev->name, z->resource.start, dev->dev_addr[0], dev->dev_addr[1],
-	   dev->dev_addr[2], dev->dev_addr[3], dev->dev_addr[4],
-	   dev->dev_addr[5]);
+    pr_info("%s: Hydra at %pR, address %pM (hydra.c " HYDRA_VERSION ")\n",
+	    dev->name, &z->resource, dev->dev_addr);
 
     return 0;
 }

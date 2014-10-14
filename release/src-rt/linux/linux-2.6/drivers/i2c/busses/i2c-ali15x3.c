@@ -1,6 +1,4 @@
 /*
-    ali15x3.c - Part of lm_sensors, Linux kernel modules for hardware
-              monitoring
     Copyright (c) 1999  Frodo Looijaard <frodol@dds.nl> and
     Philip Edelbrock <phil@netroedge.com> and
     Mark D. Studebaker <mdsxyz123@yahoo.com>
@@ -68,7 +66,8 @@
 #include <linux/delay.h>
 #include <linux/i2c.h>
 #include <linux/init.h>
-#include <asm/io.h>
+#include <linux/acpi.h>
+#include <linux/io.h>
 
 /* ALI15X3 SMBus address offsets */
 #define SMBHSTSTS	(0 + ali15x3_smba)
@@ -132,7 +131,7 @@ MODULE_PARM_DESC(force_addr,
 static struct pci_driver ali15x3_driver;
 static unsigned short ali15x3_smba;
 
-static int ali15x3_setup(struct pci_dev *ALI15X3_dev)
+static int __devinit ali15x3_setup(struct pci_dev *ALI15X3_dev)
 {
 	u16 a;
 	unsigned char temp;
@@ -165,6 +164,10 @@ static int ali15x3_setup(struct pci_dev *ALI15X3_dev)
 
 	if(force_addr)
 		ali15x3_smba = force_addr & ~(ALI15X3_SMB_IOSIZE - 1);
+
+	if (acpi_check_region(ali15x3_smba, ALI15X3_SMB_IOSIZE,
+			      ali15x3_driver.name))
+		return -EBUSY;
 
 	if (!request_region(ali15x3_smba, ALI15X3_SMB_IOSIZE,
 			    ali15x3_driver.name)) {
@@ -282,7 +285,7 @@ static int ali15x3_transaction(struct i2c_adapter *adap)
 			dev_err(&adap->dev, "SMBus reset failed! (0x%02x) - "
 				"controller or device on bus is probably hung\n",
 				temp);
-			return -1;
+			return -EBUSY;
 		}
 	} else {
 		/* check and clear done bit */
@@ -303,24 +306,24 @@ static int ali15x3_transaction(struct i2c_adapter *adap)
 		 && (timeout++ < MAX_TIMEOUT));
 
 	/* If the SMBus is still busy, we give up */
-	if (timeout >= MAX_TIMEOUT) {
-		result = -1;
+	if (timeout > MAX_TIMEOUT) {
+		result = -ETIMEDOUT;
 		dev_err(&adap->dev, "SMBus Timeout!\n");
 	}
 
 	if (temp & ALI15X3_STS_TERM) {
-		result = -1;
+		result = -EIO;
 		dev_dbg(&adap->dev, "Error: Failed bus transaction\n");
 	}
 
 	/*
 	  Unfortunately the ALI SMB controller maps "no response" and "bus
-	  collision" into a single bit. No reponse is the usual case so don't
+	  collision" into a single bit. No response is the usual case so don't
 	  do a printk.
 	  This means that bus collisions go unreported.
 	*/
 	if (temp & ALI15X3_STS_COLL) {
-		result = -1;
+		result = -ENXIO;
 		dev_dbg(&adap->dev,
 			"Error: no response or bus collision ADD=%02x\n",
 			inb_p(SMBHSTADD));
@@ -328,7 +331,7 @@ static int ali15x3_transaction(struct i2c_adapter *adap)
 
 	/* haven't ever seen this */
 	if (temp & ALI15X3_STS_DEV) {
-		result = -1;
+		result = -EIO;
 		dev_err(&adap->dev, "Error: device error\n");
 	}
 	dev_dbg(&adap->dev, "Transaction (post): STS=%02x, CNT=%02x, CMD=%02x, "
@@ -338,7 +341,7 @@ static int ali15x3_transaction(struct i2c_adapter *adap)
 	return result;
 }
 
-/* Return -1 on error. */
+/* Return negative errno on error. */
 static s32 ali15x3_access(struct i2c_adapter * adap, u16 addr,
 		   unsigned short flags, char read_write, u8 command,
 		   int size, union i2c_smbus_data * data)
@@ -362,9 +365,6 @@ static s32 ali15x3_access(struct i2c_adapter * adap, u16 addr,
 	}
 
 	switch (size) {
-	case I2C_SMBUS_PROC_CALL:
-		dev_err(&adap->dev, "I2C_SMBUS_PROC_CALL not supported!\n");
-		return -1;
 	case I2C_SMBUS_QUICK:
 		outb_p(((addr & 0x7f) << 1) | (read_write & 0x01),
 		       SMBHSTADD);
@@ -417,12 +417,16 @@ static s32 ali15x3_access(struct i2c_adapter * adap, u16 addr,
 		}
 		size = ALI15X3_BLOCK_DATA;
 		break;
+	default:
+		dev_warn(&adap->dev, "Unsupported transaction %d\n", size);
+		return -EOPNOTSUPP;
 	}
 
 	outb_p(size, SMBHSTCNT);	/* output command */
 
-	if (ali15x3_transaction(adap))	/* Error in transaction */
-		return -1;
+	temp = ali15x3_transaction(adap);
+	if (temp)
+		return temp;
 
 	if ((read_write == I2C_SMBUS_WRITE) || (size == ALI15X3_QUICK))
 		return 0;
@@ -469,12 +473,11 @@ static const struct i2c_algorithm smbus_algorithm = {
 
 static struct i2c_adapter ali15x3_adapter = {
 	.owner		= THIS_MODULE,
-	.id		= I2C_HW_SMBUS_ALI15X3,
-	.class          = I2C_CLASS_HWMON,
+	.class          = I2C_CLASS_HWMON | I2C_CLASS_SPD,
 	.algo		= &smbus_algorithm,
 };
 
-static struct pci_device_id ali15x3_ids[] = {
+static const struct pci_device_id ali15x3_ids[] = {
 	{ PCI_DEVICE(PCI_VENDOR_ID_AL, PCI_DEVICE_ID_AL_M7101) },
 	{ 0, }
 };

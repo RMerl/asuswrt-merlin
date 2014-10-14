@@ -55,8 +55,12 @@ enum super_flags {
 };
 
 #define BEFS_BYTEORDER_NATIVE 0x42494745
+#define BEFS_BYTEORDER_NATIVE_LE (__force fs32)cpu_to_le32(BEFS_BYTEORDER_NATIVE)
+#define BEFS_BYTEORDER_NATIVE_BE (__force fs32)cpu_to_be32(BEFS_BYTEORDER_NATIVE)
 
 #define BEFS_SUPER_MAGIC BEFS_SUPER_MAGIC1
+#define BEFS_SUPER_MAGIC1_LE (__force fs32)cpu_to_le32(BEFS_SUPER_MAGIC1)
+#define BEFS_SUPER_MAGIC1_BE (__force fs32)cpu_to_be32(BEFS_SUPER_MAGIC1)
 
 /*
  * Flags of inode
@@ -230,7 +234,7 @@ typedef struct {
 } PACKED befs_btree_super;
 
 /*
- * Header stucture of each btree node
+ * Header structure of each btree node
  */
 typedef struct {
 	fs64 left;

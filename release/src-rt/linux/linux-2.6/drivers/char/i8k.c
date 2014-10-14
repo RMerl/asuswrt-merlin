@@ -23,6 +23,7 @@
 #include <linux/seq_file.h>
 #include <linux/dmi.h>
 #include <linux/capability.h>
+#include <linux/mutex.h>
 #include <asm/uaccess.h>
 #include <asm/io.h>
 
@@ -55,6 +56,7 @@
 
 #define I8K_TEMPERATURE_BUG	1
 
+static DEFINE_MUTEX(i8k_mutex);
 static char bios_version[4];
 
 MODULE_AUTHOR("Massimo Dal Zotto (dz@debian.org)");
@@ -77,16 +79,20 @@ static int power_status;
 module_param(power_status, bool, 0600);
 MODULE_PARM_DESC(power_status, "Report power status in /proc/i8k");
 
+static int fan_mult = I8K_FAN_MULT;
+module_param(fan_mult, int, 0);
+MODULE_PARM_DESC(fan_mult, "Factor to multiply fan speed with");
+
 static int i8k_open_fs(struct inode *inode, struct file *file);
-static int i8k_ioctl(struct inode *, struct file *, unsigned int,
-		     unsigned long);
+static long i8k_ioctl(struct file *, unsigned int, unsigned long);
 
 static const struct file_operations i8k_fops = {
+	.owner		= THIS_MODULE,
 	.open		= i8k_open_fs,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
 	.release	= single_release,
-	.ioctl		= i8k_ioctl,
+	.unlocked_ioctl	= i8k_ioctl,
 };
 
 struct smm_regs {
@@ -98,9 +104,9 @@ struct smm_regs {
 	unsigned int edi __attribute__ ((packed));
 };
 
-static inline char *i8k_get_dmi_data(int field)
+static inline const char *i8k_get_dmi_data(int field)
 {
-	char *dmi_data = dmi_get_system_info(field);
+	const char *dmi_data = dmi_get_system_info(field);
 
 	return dmi_data && *dmi_data ? dmi_data : "?";
 }
@@ -113,7 +119,34 @@ static int i8k_smm(struct smm_regs *regs)
 	int rc;
 	int eax = regs->eax;
 
-	asm("pushl %%eax\n\t"
+#if defined(CONFIG_X86_64)
+	asm volatile("pushq %%rax\n\t"
+		"movl 0(%%rax),%%edx\n\t"
+		"pushq %%rdx\n\t"
+		"movl 4(%%rax),%%ebx\n\t"
+		"movl 8(%%rax),%%ecx\n\t"
+		"movl 12(%%rax),%%edx\n\t"
+		"movl 16(%%rax),%%esi\n\t"
+		"movl 20(%%rax),%%edi\n\t"
+		"popq %%rax\n\t"
+		"out %%al,$0xb2\n\t"
+		"out %%al,$0x84\n\t"
+		"xchgq %%rax,(%%rsp)\n\t"
+		"movl %%ebx,4(%%rax)\n\t"
+		"movl %%ecx,8(%%rax)\n\t"
+		"movl %%edx,12(%%rax)\n\t"
+		"movl %%esi,16(%%rax)\n\t"
+		"movl %%edi,20(%%rax)\n\t"
+		"popq %%rdx\n\t"
+		"movl %%edx,0(%%rax)\n\t"
+		"pushfq\n\t"
+		"popq %%rax\n\t"
+		"andl $1,%%eax\n"
+		:"=a"(rc)
+		:    "a"(regs)
+		:    "%ebx", "%ecx", "%edx", "%esi", "%edi", "memory");
+#else
+	asm volatile("pushl %%eax\n\t"
 	    "movl 0(%%eax),%%edx\n\t"
 	    "push %%edx\n\t"
 	    "movl 4(%%eax),%%ebx\n\t"
@@ -134,10 +167,11 @@ static int i8k_smm(struct smm_regs *regs)
 	    "movl %%edx,0(%%eax)\n\t"
 	    "lahf\n\t"
 	    "shrl $8,%%eax\n\t"
-	    "andl $1,%%eax\n":"=a"(rc)
+	    "andl $1,%%eax\n"
+	    :"=a"(rc)
 	    :    "a"(regs)
 	    :    "%ebx", "%ecx", "%edx", "%esi", "%edi", "memory");
-
+#endif
 	if (rc != 0 || (regs->eax & 0xffff) == 0xffff || regs->eax == eax)
 		return -EINVAL;
 
@@ -211,7 +245,7 @@ static int i8k_get_fan_speed(int fan)
 	struct smm_regs regs = { .eax = I8K_SMM_GET_SPEED, };
 
 	regs.ebx = fan & 0xff;
-	return i8k_smm(&regs) ? : (regs.eax & 0xffff) * I8K_FAN_MULT;
+	return i8k_smm(&regs) ? : (regs.eax & 0xffff) * fan_mult;
 }
 
 /*
@@ -275,8 +309,8 @@ static int i8k_get_dell_signature(int req_fn)
 	return regs.eax == 1145651527 && regs.edx == 1145392204 ? 0 : -1;
 }
 
-static int i8k_ioctl(struct inode *ip, struct file *fp, unsigned int cmd,
-		     unsigned long arg)
+static int
+i8k_ioctl_unlocked(struct file *fp, unsigned int cmd, unsigned long arg)
 {
 	int val = 0;
 	int speed;
@@ -363,6 +397,17 @@ static int i8k_ioctl(struct inode *ip, struct file *fp, unsigned int cmd,
 	return 0;
 }
 
+static long i8k_ioctl(struct file *fp, unsigned int cmd, unsigned long arg)
+{
+	long ret;
+
+	mutex_lock(&i8k_mutex);
+	ret = i8k_ioctl_unlocked(fp, cmd, arg);
+	mutex_unlock(&i8k_mutex);
+
+	return ret;
+}
+
 /*
  * Print the information for /proc/i8k.
  */
@@ -371,14 +416,14 @@ static int i8k_proc_show(struct seq_file *seq, void *offset)
 	int fn_key, cpu_temp, ac_power;
 	int left_fan, right_fan, left_speed, right_speed;
 
-	cpu_temp	= i8k_get_temp(0);			/* 11100 µs */
-	left_fan	= i8k_get_fan_status(I8K_FAN_LEFT);	/*   580 µs */
-	right_fan	= i8k_get_fan_status(I8K_FAN_RIGHT);	/*   580 µs */
-	left_speed	= i8k_get_fan_speed(I8K_FAN_LEFT);	/*   580 µs */
-	right_speed	= i8k_get_fan_speed(I8K_FAN_RIGHT);	/*   580 µs */
-	fn_key		= i8k_get_fn_status();			/*   750 µs */
+	cpu_temp	= i8k_get_temp(0);			/* 11100 Âµs */
+	left_fan	= i8k_get_fan_status(I8K_FAN_LEFT);	/*   580 Âµs */
+	right_fan	= i8k_get_fan_status(I8K_FAN_RIGHT);	/*   580 Âµs */
+	left_speed	= i8k_get_fan_speed(I8K_FAN_LEFT);	/*   580 Âµs */
+	right_speed	= i8k_get_fan_speed(I8K_FAN_RIGHT);	/*   580 Âµs */
+	fn_key		= i8k_get_fn_status();			/*   750 Âµs */
 	if (power_status)
-		ac_power = i8k_get_power_status();		/* 14700 µs */
+		ac_power = i8k_get_power_status();		/* 14700 Âµs */
 	else
 		ac_power = -1;
 
@@ -439,7 +484,35 @@ static struct dmi_system_id __initdata i8k_dmi_table[] = {
 			DMI_MATCH(DMI_PRODUCT_NAME, "Latitude"),
 		},
 	},
-	{ }
+	{	/* UK Inspiron 6400  */
+		.ident = "Dell Inspiron 3",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, "Dell Inc."),
+			DMI_MATCH(DMI_PRODUCT_NAME, "MM061"),
+		},
+	},
+	{
+		.ident = "Dell Inspiron 3",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, "Dell Inc."),
+			DMI_MATCH(DMI_PRODUCT_NAME, "MP061"),
+		},
+	},
+	{
+		.ident = "Dell Precision",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, "Dell Inc."),
+			DMI_MATCH(DMI_PRODUCT_NAME, "Precision"),
+		},
+	},
+	{
+		.ident = "Dell Vostro",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, "Dell Inc."),
+			DMI_MATCH(DMI_PRODUCT_NAME, "Vostro"),
+		},
+	},
+        { }
 };
 
 /*
@@ -513,12 +586,9 @@ static int __init i8k_init(void)
 		return -ENODEV;
 
 	/* Register the proc entry */
-	proc_i8k = create_proc_entry("i8k", 0, NULL);
+	proc_i8k = proc_create("i8k", 0, NULL, &i8k_fops);
 	if (!proc_i8k)
 		return -ENOENT;
-
-	proc_i8k->proc_fops = &i8k_fops;
-	proc_i8k->owner = THIS_MODULE;
 
 	printk(KERN_INFO
 	       "Dell laptop SMM driver v%s Massimo Dal Zotto (dz@debian.org)\n",

@@ -36,13 +36,13 @@ typedef struct boot_block {
 } boot_block_t;
 
 #define IMGBLK	512
-char	tmpbuf[IMGBLK];
+unsigned int	tmpbuf[IMGBLK / sizeof(unsigned int)];
 
 int main(int argc, char *argv[])
 {
 	int	in_fd, out_fd;
 	int	nblks, i;
-	uint	cksum, *cp;
+	unsigned int	cksum, *cp;
 	struct	stat	st;
 	boot_block_t	bt;
 
@@ -90,18 +90,18 @@ int main(int argc, char *argv[])
 
 	cksum = 0;
 	cp = (void *)&bt;
-	for (i=0; i<sizeof(bt)/sizeof(uint); i++)
+	for (i = 0; i < sizeof(bt) / sizeof(unsigned int); i++)
 		cksum += *cp++;
 
 	/* Assume zImage is an ELF file, and skip the 64K header.
 	*/
-	if (read(in_fd, tmpbuf, IMGBLK) != IMGBLK) {
+	if (read(in_fd, tmpbuf, sizeof(tmpbuf)) != sizeof(tmpbuf)) {
 		fprintf(stderr, "%s is too small to be an ELF image\n",
 				argv[1]);
 		exit(4);
 	}
 
-	if ((*(uint *)tmpbuf) != htonl(0x7f454c46)) {
+	if (tmpbuf[0] != htonl(0x7f454c46)) {
 		fprintf(stderr, "%s is not an ELF image\n", argv[1]);
 		exit(4);
 	}
@@ -121,12 +121,12 @@ int main(int argc, char *argv[])
 	}
 
 	while (nblks-- > 0) {
-		if (read(in_fd, tmpbuf, IMGBLK) < 0) {
+		if (read(in_fd, tmpbuf, sizeof(tmpbuf)) < 0) {
 			perror("zImage read");
 			exit(5);
 		}
-		cp = (uint *)tmpbuf;
-		for (i=0; i<sizeof(tmpbuf)/sizeof(uint); i++)
+		cp = tmpbuf;
+		for (i = 0; i < sizeof(tmpbuf) / sizeof(unsigned int); i++)
 			cksum += *cp++;
 		if (write(out_fd, tmpbuf, sizeof(tmpbuf)) != sizeof(tmpbuf)) {
 			perror("boot-image write");

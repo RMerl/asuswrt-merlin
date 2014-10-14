@@ -412,3 +412,4 @@ typedef struct _eth_port_ctrl {
 #define        TITAN_GE_TRTG_CONFIG	     0x1000  /* TRTG Config */
 
 #endif 				/* _TITAN_GE_H_ */
+

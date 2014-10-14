@@ -47,6 +47,7 @@ void __init_rwsem(struct rw_semaphore *sem, const char *name,
 	spin_lock_init(&sem->wait_lock);
 	INIT_LIST_HEAD(&sem->wait_list);
 }
+EXPORT_SYMBOL(__init_rwsem);
 
 /*
  * handle the lock release when processes blocked on it that can now run
@@ -138,17 +139,18 @@ __rwsem_wake_one_writer(struct rw_semaphore *sem)
 /*
  * get a read lock on the semaphore
  */
-void fastcall __sched __down_read(struct rw_semaphore *sem)
+void __sched __down_read(struct rw_semaphore *sem)
 {
 	struct rwsem_waiter waiter;
 	struct task_struct *tsk;
+	unsigned long flags;
 
-	spin_lock_irq(&sem->wait_lock);
+	spin_lock_irqsave(&sem->wait_lock, flags);
 
 	if (sem->activity >= 0 && list_empty(&sem->wait_list)) {
 		/* granted */
 		sem->activity++;
-		spin_unlock_irq(&sem->wait_lock);
+		spin_unlock_irqrestore(&sem->wait_lock, flags);
 		goto out;
 	}
 
@@ -163,7 +165,7 @@ void fastcall __sched __down_read(struct rw_semaphore *sem)
 	list_add_tail(&waiter.list, &sem->wait_list);
 
 	/* we don't need to touch the semaphore struct anymore */
-	spin_unlock_irq(&sem->wait_lock);
+	spin_unlock_irqrestore(&sem->wait_lock, flags);
 
 	/* wait to be given the lock */
 	for (;;) {
@@ -181,7 +183,7 @@ void fastcall __sched __down_read(struct rw_semaphore *sem)
 /*
  * trylock for reading -- returns 1 if successful, 0 if contention
  */
-int fastcall __down_read_trylock(struct rw_semaphore *sem)
+int __down_read_trylock(struct rw_semaphore *sem)
 {
 	unsigned long flags;
 	int ret = 0;
@@ -204,17 +206,18 @@ int fastcall __down_read_trylock(struct rw_semaphore *sem)
  * get a write lock on the semaphore
  * - we increment the waiting count anyway to indicate an exclusive lock
  */
-void fastcall __sched __down_write_nested(struct rw_semaphore *sem, int subclass)
+void __sched __down_write_nested(struct rw_semaphore *sem, int subclass)
 {
 	struct rwsem_waiter waiter;
 	struct task_struct *tsk;
+	unsigned long flags;
 
-	spin_lock_irq(&sem->wait_lock);
+	spin_lock_irqsave(&sem->wait_lock, flags);
 
 	if (sem->activity == 0 && list_empty(&sem->wait_list)) {
 		/* granted */
 		sem->activity = -1;
-		spin_unlock_irq(&sem->wait_lock);
+		spin_unlock_irqrestore(&sem->wait_lock, flags);
 		goto out;
 	}
 
@@ -229,7 +232,7 @@ void fastcall __sched __down_write_nested(struct rw_semaphore *sem, int subclass
 	list_add_tail(&waiter.list, &sem->wait_list);
 
 	/* we don't need to touch the semaphore struct anymore */
-	spin_unlock_irq(&sem->wait_lock);
+	spin_unlock_irqrestore(&sem->wait_lock, flags);
 
 	/* wait to be given the lock */
 	for (;;) {
@@ -244,7 +247,7 @@ void fastcall __sched __down_write_nested(struct rw_semaphore *sem, int subclass
 	;
 }
 
-void fastcall __sched __down_write(struct rw_semaphore *sem)
+void __sched __down_write(struct rw_semaphore *sem)
 {
 	__down_write_nested(sem, 0);
 }
@@ -252,7 +255,7 @@ void fastcall __sched __down_write(struct rw_semaphore *sem)
 /*
  * trylock for writing -- returns 1 if successful, 0 if contention
  */
-int fastcall __down_write_trylock(struct rw_semaphore *sem)
+int __down_write_trylock(struct rw_semaphore *sem)
 {
 	unsigned long flags;
 	int ret = 0;
@@ -273,7 +276,7 @@ int fastcall __down_write_trylock(struct rw_semaphore *sem)
 /*
  * release a read lock on the semaphore
  */
-void fastcall __up_read(struct rw_semaphore *sem)
+void __up_read(struct rw_semaphore *sem)
 {
 	unsigned long flags;
 
@@ -288,7 +291,7 @@ void fastcall __up_read(struct rw_semaphore *sem)
 /*
  * release a write lock on the semaphore
  */
-void fastcall __up_write(struct rw_semaphore *sem)
+void __up_write(struct rw_semaphore *sem)
 {
 	unsigned long flags;
 
@@ -305,7 +308,7 @@ void fastcall __up_write(struct rw_semaphore *sem)
  * downgrade a write lock into a read lock
  * - just wake up any readers at the front of the queue
  */
-void fastcall __downgrade_write(struct rw_semaphore *sem)
+void __downgrade_write(struct rw_semaphore *sem)
 {
 	unsigned long flags;
 
@@ -318,12 +321,3 @@ void fastcall __downgrade_write(struct rw_semaphore *sem)
 	spin_unlock_irqrestore(&sem->wait_lock, flags);
 }
 
-EXPORT_SYMBOL(__init_rwsem);
-EXPORT_SYMBOL(__down_read);
-EXPORT_SYMBOL(__down_read_trylock);
-EXPORT_SYMBOL(__down_write_nested);
-EXPORT_SYMBOL(__down_write);
-EXPORT_SYMBOL(__down_write_trylock);
-EXPORT_SYMBOL(__up_read);
-EXPORT_SYMBOL(__up_write);
-EXPORT_SYMBOL(__downgrade_write);

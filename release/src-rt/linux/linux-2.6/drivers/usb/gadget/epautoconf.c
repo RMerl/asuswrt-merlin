@@ -28,18 +28,18 @@
 #include <linux/string.h>
 
 #include <linux/usb/ch9.h>
-#include <linux/usb_gadget.h>
+#include <linux/usb/gadget.h>
 
 #include "gadget_chips.h"
 
 
 /* we must assign addresses for configurable endpoints (like net2280) */
-static __devinitdata unsigned epnum;
+static unsigned epnum;
 
 // #define MANY_ENDPOINTS
 #ifdef MANY_ENDPOINTS
 /* more than 15 configurable endpoints */
-static __devinitdata unsigned in_epnum;
+static unsigned in_epnum;
 #endif
 
 
@@ -59,7 +59,7 @@ static __devinitdata unsigned in_epnum;
  * NOTE:  each endpoint is unidirectional, as specified by its USB
  * descriptor; and isn't specific to a configuration or altsetting.
  */
-static int __devinit
+static int
 ep_matches (
 	struct usb_gadget		*gadget,
 	struct usb_ep			*ep,
@@ -128,6 +128,13 @@ ep_matches (
 		}
 	}
 
+	/*
+	 * If the protocol driver hasn't yet decided on wMaxPacketSize
+	 * and wants to know the maximum possible, provide the info.
+	 */
+	if (desc->wMaxPacketSize == 0)
+		desc->wMaxPacketSize = cpu_to_le16(ep->maxpacket);
+
 	/* endpoint maxpacket size is an input parameter, except for bulk
 	 * where it's an output parameter representing the full speed limit.
 	 * the usb spec fixes high speed bulk maxpacket at 512 bytes.
@@ -148,7 +155,7 @@ ep_matches (
 			return 0;
 
 		/* BOTH:  "high bandwidth" works only at high speed */
-		if ((desc->wMaxPacketSize & __constant_cpu_to_le16(3<<11))) {
+		if ((desc->wMaxPacketSize & cpu_to_le16(3<<11))) {
 			if (!gadget->is_dualspeed)
 				return 0;
 			/* configure your hardware with enough buffering!! */
@@ -159,8 +166,9 @@ ep_matches (
 	/* MATCH!! */
 
 	/* report address */
+	desc->bEndpointAddress &= USB_DIR_IN;
 	if (isdigit (ep->name [2])) {
-		u8	num = simple_strtol (&ep->name [2], NULL, 10);
+		u8	num = simple_strtoul (&ep->name [2], NULL, 10);
 		desc->bEndpointAddress |= num;
 #ifdef	MANY_ENDPOINTS
 	} else if (desc->bEndpointAddress & USB_DIR_IN) {
@@ -186,7 +194,7 @@ ep_matches (
 	return 1;
 }
 
-static struct usb_ep * __devinit
+static struct usb_ep *
 find_ep (struct usb_gadget *gadget, const char *name)
 {
 	struct usb_ep	*ep;
@@ -228,7 +236,7 @@ find_ep (struct usb_gadget *gadget, const char *name)
  *
  * On failure, this returns a null endpoint descriptor.
  */
-struct usb_ep * __devinit usb_ep_autoconfig (
+struct usb_ep *usb_ep_autoconfig (
 	struct usb_gadget		*gadget,
 	struct usb_endpoint_descriptor	*desc
 )
@@ -264,16 +272,24 @@ struct usb_ep * __devinit usb_ep_autoconfig (
 				return ep;
 		}
 
-	} else if (gadget_is_sh (gadget) && USB_ENDPOINT_XFER_INT == type) {
-		/* single buffering is enough; maybe 8 byte fifo is too */
-		ep = find_ep (gadget, "ep3in-bulk");
+#ifdef CONFIG_BLACKFIN
+	} else if (gadget_is_musbhdrc(gadget)) {
+		if ((USB_ENDPOINT_XFER_BULK == type) ||
+		    (USB_ENDPOINT_XFER_ISOC == type)) {
+			if (USB_DIR_IN & desc->bEndpointAddress)
+				ep = find_ep (gadget, "ep5in");
+			else
+				ep = find_ep (gadget, "ep6out");
+		} else if (USB_ENDPOINT_XFER_INT == type) {
+			if (USB_DIR_IN & desc->bEndpointAddress)
+				ep = find_ep(gadget, "ep1in");
+			else
+				ep = find_ep(gadget, "ep2out");
+		} else
+			ep = NULL;
 		if (ep && ep_matches (gadget, ep, desc))
 			return ep;
-
-	} else if (gadget_is_mq11xx (gadget) && USB_ENDPOINT_XFER_INT == type) {
-		ep = find_ep (gadget, "ep1-bulk");
-		if (ep && ep_matches (gadget, ep, desc))
-			return ep;
+#endif
 	}
 
 	/* Second, look at endpoints until an unclaimed one looks usable */
@@ -295,7 +311,7 @@ struct usb_ep * __devinit usb_ep_autoconfig (
  * state such as ep->driver_data and the record of assigned endpoints
  * used by usb_ep_autoconfig().
  */
-void __devinit usb_ep_autoconfig_reset (struct usb_gadget *gadget)
+void usb_ep_autoconfig_reset (struct usb_gadget *gadget)
 {
 	struct usb_ep	*ep;
 

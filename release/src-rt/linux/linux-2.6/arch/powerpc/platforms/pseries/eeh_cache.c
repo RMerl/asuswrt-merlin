@@ -2,7 +2,8 @@
  * eeh_cache.c
  * PCI address cache; allows the lookup of PCI devices based on I/O address
  *
- * Copyright (C) 2004 Linas Vepstas <linas@austin.ibm.com> IBM Corporation
+ * Copyright IBM Corporation 2004
+ * Copyright Linas Vepstas <linas@austin.ibm.com> 2004
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,12 +23,12 @@
 #include <linux/list.h>
 #include <linux/pci.h>
 #include <linux/rbtree.h>
+#include <linux/slab.h>
 #include <linux/spinlock.h>
 #include <asm/atomic.h>
 #include <asm/pci-bridge.h>
 #include <asm/ppc-pci.h>
 
-#undef DEBUG
 
 /**
  * The pci address cache subsystem.  This subsystem places
@@ -224,6 +225,10 @@ void pci_addr_cache_insert_device(struct pci_dev *dev)
 {
 	unsigned long flags;
 
+	/* Ignore PCI bridges */
+	if ((dev->class >> 16) == PCI_BASE_CLASS_BRIDGE)
+		return;
+
 	spin_lock_irqsave(&pci_io_addr_cache_root.piar_lock, flags);
 	__pci_addr_cache_insert_device(dev);
 	spin_unlock_irqrestore(&pci_io_addr_cache_root.piar_lock, flags);
@@ -283,18 +288,16 @@ void __init pci_addr_cache_build(void)
 
 	spin_lock_init(&pci_io_addr_cache_root.piar_lock);
 
-	while ((dev = pci_get_device(PCI_ANY_ID, PCI_ANY_ID, dev)) != NULL) {
-		/* Ignore PCI bridges */
-		if ((dev->class >> 16) == PCI_BASE_CLASS_BRIDGE)
-			continue;
-
+	for_each_pci_dev(dev) {
 		pci_addr_cache_insert_device(dev);
 
 		dn = pci_device_to_OF_node(dev);
 		if (!dn)
 			continue;
-		pci_dev_get (dev);  /* matching put is in eeh_remove_device() */
+		pci_dev_get(dev);  /* matching put is in eeh_remove_device() */
 		PCI_DN(dn)->pcidev = dev;
+
+		eeh_sysfs_add_device(dev);
 	}
 
 #ifdef DEBUG

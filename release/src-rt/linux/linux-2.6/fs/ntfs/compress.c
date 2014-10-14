@@ -25,6 +25,7 @@
 #include <linux/buffer_head.h>
 #include <linux/blkdev.h>
 #include <linux/vmalloc.h>
+#include <linux/slab.h>
 
 #include "attrib.h"
 #include "inode.h"
@@ -500,7 +501,7 @@ int ntfs_read_compressed_block(struct page *page)
 	VCN start_vcn = (((s64)index << PAGE_CACHE_SHIFT) & ~cb_size_mask) >>
 			vol->cluster_size_bits;
 	/*
-	 * The first vcn after the last wanted vcn (minumum alignment is again
+	 * The first vcn after the last wanted vcn (minimum alignment is again
 	 * PAGE_CACHE_SIZE.
 	 */
 	VCN end_vcn = ((((s64)(index + 1UL) << PAGE_CACHE_SHIFT) + cb_size - 1)
@@ -561,6 +562,16 @@ int ntfs_read_compressed_block(struct page *page)
 	read_unlock_irqrestore(&ni->size_lock, flags);
 	max_page = ((i_size + PAGE_CACHE_SIZE - 1) >> PAGE_CACHE_SHIFT) -
 			offset;
+	/* Is the page fully outside i_size? (truncate in progress) */
+	if (xpage >= max_page) {
+		kfree(bhs);
+		kfree(pages);
+		zero_user(page, 0, PAGE_CACHE_SIZE);
+		ntfs_debug("Compressed read outside i_size - truncated?");
+		SetPageUptodate(page);
+		unlock_page(page);
+		return 0;
+	}
 	if (nr_pages < max_page)
 		max_page = nr_pages;
 	for (i = 0; i < max_page; i++, offset++) {
@@ -655,7 +666,7 @@ lock_retry_remap:
 	for (i = 0; i < nr_bhs; i++) {
 		struct buffer_head *tbh = bhs[i];
 
-		if (unlikely(test_set_buffer_locked(tbh)))
+		if (!trylock_buffer(tbh))
 			continue;
 		if (unlikely(buffer_uptodate(tbh))) {
 			unlock_buffer(tbh);
@@ -687,8 +698,7 @@ lock_retry_remap:
 					"uptodate! Unplugging the disk queue "
 					"and rescheduling.");
 			get_bh(tbh);
-			blk_run_address_space(mapping);
-			schedule();
+			io_schedule();
 			put_bh(tbh);
 			if (unlikely(!buffer_uptodate(tbh)))
 				goto read_err;
@@ -917,7 +927,7 @@ lock_retry_remap:
 		return 0;
 
 	ntfs_debug("Failed. Returning error code %s.", err == -EOVERFLOW ?
-			"EOVERFLOW" : (!err ? "EIO" : "unkown error"));
+			"EOVERFLOW" : (!err ? "EIO" : "unknown error"));
 	return err < 0 ? err : -EIO;
 
 read_err:

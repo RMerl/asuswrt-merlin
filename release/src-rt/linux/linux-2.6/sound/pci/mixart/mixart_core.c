@@ -20,7 +20,6 @@
  *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
  */
 
-#include <sound/driver.h>
 #include <linux/interrupt.h>
 #include <linux/mutex.h>
 
@@ -57,8 +56,10 @@ static int retrieve_msg_frame(struct mixart_mgr *mgr, u32 *msg_frame)
 	if (tailptr == headptr)
 		return 0; /* no message posted */
 
-	snd_assert( tailptr >= MSG_OUTBOUND_POST_STACK, return 0); /* error */
-	snd_assert( tailptr < (MSG_OUTBOUND_POST_STACK+MSG_BOUND_STACK_SIZE), return 0); /* error */
+	if (tailptr < MSG_OUTBOUND_POST_STACK)
+		return 0; /* error */
+	if (tailptr >= MSG_OUTBOUND_POST_STACK + MSG_BOUND_STACK_SIZE)
+		return 0; /* error */
 
 	*msg_frame = readl_be(MIXART_MEM(mgr, tailptr));
 
@@ -150,7 +151,8 @@ static int send_msg( struct mixart_mgr *mgr,
 	u32 msg_frame_address;
 	int err, i;
 
-	snd_assert(msg->size % 4 == 0, return -EINVAL);
+	if (snd_BUG_ON(msg->size % 4))
+		return -EINVAL;
 
 	err = 0;
 
@@ -263,7 +265,7 @@ int snd_mixart_send_msg(struct mixart_mgr *mgr, struct mixart_msg *request, int 
 	if (! timeout) {
 		/* error - no ack */
 		mutex_unlock(&mgr->msg_mutex);
-		snd_printk(KERN_ERR "error: no reponse on msg %x\n", msg_frame);
+		snd_printk(KERN_ERR "error: no response on msg %x\n", msg_frame);
 		return -EIO;
 	}
 
@@ -276,7 +278,7 @@ int snd_mixart_send_msg(struct mixart_mgr *mgr, struct mixart_msg *request, int 
 	err = get_msg(mgr, &resp, msg_frame);
 
 	if( request->message_id != resp.message_id )
-		snd_printk(KERN_ERR "REPONSE ERROR!\n");
+		snd_printk(KERN_ERR "RESPONSE ERROR!\n");
 
 	mutex_unlock(&mgr->msg_mutex);
 	return err;
@@ -290,9 +292,12 @@ int snd_mixart_send_msg_wait_notif(struct mixart_mgr *mgr,
 	wait_queue_t wait;
 	long timeout;
 
-	snd_assert(notif_event != 0, return -EINVAL);
-	snd_assert((notif_event & MSG_TYPE_MASK) == MSG_TYPE_NOTIFY, return -EINVAL);
-	snd_assert((notif_event & MSG_CANCEL_NOTIFY_MASK) == 0, return -EINVAL);
+	if (snd_BUG_ON(!notif_event))
+		return -EINVAL;
+	if (snd_BUG_ON((notif_event & MSG_TYPE_MASK) != MSG_TYPE_NOTIFY))
+		return -EINVAL;
+	if (snd_BUG_ON(notif_event & MSG_CANCEL_NOTIFY_MASK))
+		return -EINVAL;
 
 	mutex_lock(&mgr->msg_mutex);
 
@@ -545,7 +550,7 @@ irqreturn_t snd_mixart_interrupt(int irq, void *dev_id)
 				mgr->msg_fifo[mgr->msg_fifo_writeptr] = msg;
 				mgr->msg_fifo_writeptr++;
 				mgr->msg_fifo_writeptr %= MSG_FIFO_SIZE;
-				tasklet_hi_schedule(&mgr->msg_taskq);
+				tasklet_schedule(&mgr->msg_taskq);
 			}
 			spin_unlock(&mgr->msg_lock);
 			break;

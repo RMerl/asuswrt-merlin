@@ -1,13 +1,13 @@
-#
-# For a description of the syntax of this configuration file,
-# see Documentation/kbuild/config-language.txt.
-#
-
-mainmenu "uClinux/h8300 (w/o MMU) Kernel Configuration"
-
 config H8300
 	bool
 	default y
+	select HAVE_IDE
+	select HAVE_GENERIC_HARDIRQS
+	select GENERIC_IRQ_SHOW
+
+config SYMBOL_PREFIX
+	string
+	default "_"
 
 config MMU
 	bool
@@ -45,11 +45,11 @@ config GENERIC_FIND_NEXT_BIT
 	bool
 	default y
 
-config GENERIC_HWEIGHT
+config GENERIC_FIND_BIT_LE
 	bool
 	default y
 
-config GENERIC_HARDIRQS
+config GENERIC_HWEIGHT
 	bool
 	default y
 
@@ -57,15 +57,18 @@ config GENERIC_CALIBRATE_DELAY
 	bool
 	default y
 
-config GENERIC_TIME
-	bool
-	default y
+config GENERIC_BUG
+        bool
+        depends on BUG
 
 config TIME_LOW_RES
 	bool
 	default y
 
 config NO_IOPORT
+	def_bool y
+
+config NO_DMA
 	def_bool y
 
 config ISA
@@ -76,7 +79,13 @@ config PCI
 	bool
 	default n
 
+config HZ
+	int
+	default 100
+
 source "init/Kconfig"
+
+source "kernel/Kconfig.freezer"
 
 source "arch/h8300/Kconfig.cpu"
 
@@ -192,20 +201,6 @@ config UNIX98_PTYS
 	  Read the instructions in <file:Documentation/Changes> pertaining to
 	  pseudo terminals. It's safe to say N.
 
-config UNIX98_PTY_COUNT
-	int "Maximum number of Unix98 PTYs in use (0-2048)"
-	depends on UNIX98_PTYS
-	default "256"
-	help
-	  The maximum number of Unix98 PTYs that can be used at any one time.
-	  The default is 256, and should be enough for desktop systems. Server
-	  machines which support incoming telnet/rlogin/ssh connections and/or
-	  serve several X terminals may want to increase this: every incoming
-	  connection and every xterm uses up one PTY.
-
-	  When not in use, each additional set of 256 PTYs occupy
-	  approximately 8 KB of kernel memory on 32-bit architectures.
-
 source "drivers/char/pcmcia/Kconfig"
 
 source "drivers/serial/Kconfig"
@@ -216,7 +211,11 @@ source "drivers/hwmon/Kconfig"
 
 source "drivers/usb/Kconfig"
 
+source "drivers/uwb/Kconfig"
+
 endmenu
+
+source "drivers/staging/Kconfig"
 
 source "fs/Kconfig"
 

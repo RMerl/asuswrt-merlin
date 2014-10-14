@@ -117,15 +117,15 @@
 struct irda_class_desc {
 	__u8  bLength;
 	__u8  bDescriptorType;
-	__u16 bcdSpecRevision;
+	__le16 bcdSpecRevision;
 	__u8  bmDataSize;
 	__u8  bmWindowSize;
 	__u8  bmMinTurnaroundTime;
-	__u16 wBaudRate;
+	__le16 wBaudRate;
 	__u8  bmAdditionalBOFs;
 	__u8  bIrdaRateSniff;
 	__u8  bMaxUnicastList;
-} __attribute__ ((packed));
+} __packed;
 
 /* class specific interface request to get the IrDA-USB class descriptor
  * (6.2.5, USB-IrDA class spec 1.0) */
@@ -152,7 +152,6 @@ struct irda_usb_cb {
 	struct urb *speed_urb;		/* URB used to send speed commands */
 	
 	struct net_device *netdev;	/* Yes! we are some kind of netdev. */
-	struct net_device_stats stats;
 	struct irlap_cb   *irlap;	/* The link layer we are binded to */
 	struct qos_info qos;
 	char *speed_buff;		/* Buffer for speed changes */

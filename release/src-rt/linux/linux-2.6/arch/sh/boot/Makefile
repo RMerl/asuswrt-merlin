@@ -18,12 +18,20 @@ CONFIG_PAGE_OFFSET	?= 0x80000000
 CONFIG_MEMORY_START	?= 0x0c000000
 CONFIG_BOOT_LINK_OFFSET	?= 0x00800000
 CONFIG_ZERO_PAGE_OFFSET	?= 0x00001000
+CONFIG_ENTRY_OFFSET	?= 0x00001000
 
-export CONFIG_PAGE_OFFSET CONFIG_MEMORY_START CONFIG_BOOT_LINK_OFFSET \
-       CONFIG_ZERO_PAGE_OFFSET
+suffix-y := bin
+suffix-$(CONFIG_KERNEL_GZIP)	:= gz
+suffix-$(CONFIG_KERNEL_BZIP2)	:= bz2
+suffix-$(CONFIG_KERNEL_LZMA)	:= lzma
+suffix-$(CONFIG_KERNEL_XZ)	:= xz
+suffix-$(CONFIG_KERNEL_LZO)	:= lzo
 
-targets := zImage vmlinux.srec uImage uImage.srec
-subdir- := compressed
+targets := zImage vmlinux.srec romImage uImage uImage.srec uImage.gz \
+	   uImage.bz2 uImage.lzma uImage.xz uImage.lzo uImage.bin
+extra-y += vmlinux.bin vmlinux.bin.gz vmlinux.bin.bz2 vmlinux.bin.lzma \
+	   vmlinux.bin.xz vmlinux.bin.lzo
+subdir- := compressed romimage
 
 $(obj)/zImage: $(obj)/compressed/vmlinux FORCE
 	$(call if_changed,objcopy)
@@ -32,18 +40,66 @@ $(obj)/zImage: $(obj)/compressed/vmlinux FORCE
 $(obj)/compressed/vmlinux: FORCE
 	$(Q)$(MAKE) $(build)=$(obj)/compressed $@
 
-KERNEL_LOAD	:= $(shell printf "0x%8x" $$[$(CONFIG_PAGE_OFFSET)  + \
-					     $(CONFIG_MEMORY_START) + \
-					     $(CONFIG_ZERO_PAGE_OFFSET)+0x1000])
+$(obj)/romImage: $(obj)/romimage/vmlinux FORCE
+	$(call if_changed,objcopy)
+	@echo '  Kernel: $@ is ready'
+
+$(obj)/romimage/vmlinux: $(obj)/zImage FORCE
+	$(Q)$(MAKE) $(build)=$(obj)/romimage $@
+
+KERNEL_MEMORY	:= $(shell /bin/bash -c 'printf "0x%08x" \
+		     $$[$(CONFIG_MEMORY_START) & 0x1fffffff]')
+
+KERNEL_LOAD	:= $(shell /bin/bash -c 'printf "0x%08x" \
+		     $$[$(CONFIG_PAGE_OFFSET)  + \
+			$(KERNEL_MEMORY) + \
+			$(CONFIG_ZERO_PAGE_OFFSET)]')
+
+KERNEL_ENTRY	:= $(shell /bin/bash -c 'printf "0x%08x" \
+		     $$[$(CONFIG_PAGE_OFFSET)  + \
+			$(KERNEL_MEMORY) + \
+			$(CONFIG_ZERO_PAGE_OFFSET) + $(CONFIG_ENTRY_OFFSET)]')
 
 quiet_cmd_uimage = UIMAGE  $@
       cmd_uimage = $(CONFIG_SHELL) $(MKIMAGE) -A sh -O linux -T kernel \
-		   -C gzip -a $(KERNEL_LOAD) -e $(KERNEL_LOAD) \
+		   -C $(2) -a $(KERNEL_LOAD) -e $(KERNEL_ENTRY) \
 		   -n 'Linux-$(KERNELRELEASE)' -d $< $@
 
-$(obj)/uImage: $(obj)/zImage FORCE
-	$(call if_changed,uimage)
-	@echo '  Image $@ is ready'
+$(obj)/vmlinux.bin: vmlinux FORCE
+	$(call if_changed,objcopy)
+
+$(obj)/vmlinux.bin.gz: $(obj)/vmlinux.bin FORCE
+	$(call if_changed,gzip)
+
+$(obj)/vmlinux.bin.bz2: $(obj)/vmlinux.bin FORCE
+	$(call if_changed,bzip2)
+
+$(obj)/vmlinux.bin.lzma: $(obj)/vmlinux.bin FORCE
+	$(call if_changed,lzma)
+
+$(obj)/vmlinux.bin.xz: $(obj)/vmlinux.bin FORCE
+	$(call if_changed,xzkern)
+
+$(obj)/vmlinux.bin.lzo: $(obj)/vmlinux.bin FORCE
+	$(call if_changed,lzo)
+
+$(obj)/uImage.bz2: $(obj)/vmlinux.bin.bz2
+	$(call if_changed,uimage,bzip2)
+
+$(obj)/uImage.gz: $(obj)/vmlinux.bin.gz
+	$(call if_changed,uimage,gzip)
+
+$(obj)/uImage.lzma: $(obj)/vmlinux.bin.lzma
+	$(call if_changed,uimage,lzma)
+
+$(obj)/uImage.xz: $(obj)/vmlinux.bin.xz
+	$(call if_changed,uimage,xz)
+
+$(obj)/uImage.lzo: $(obj)/vmlinux.bin.lzo
+	$(call if_changed,uimage,lzo)
+
+$(obj)/uImage.bin: $(obj)/vmlinux.bin
+	$(call if_changed,uimage,none)
 
 OBJCOPYFLAGS_vmlinux.srec := -I binary -O srec
 $(obj)/vmlinux.srec: $(obj)/compressed/vmlinux
@@ -53,4 +109,9 @@ OBJCOPYFLAGS_uImage.srec := -I binary -O srec
 $(obj)/uImage.srec: $(obj)/uImage
 	$(call if_changed,objcopy)
 
-clean-files	+= uImage uImage.srec vmlinux.srec
+$(obj)/uImage: $(obj)/uImage.$(suffix-y)
+	@ln -sf $(notdir $<) $@
+	@echo '  Image $@ is ready'
+
+export CONFIG_PAGE_OFFSET CONFIG_MEMORY_START CONFIG_BOOT_LINK_OFFSET \
+       CONFIG_ZERO_PAGE_OFFSET CONFIG_ENTRY_OFFSET KERNEL_MEMORY suffix-y

@@ -5,7 +5,6 @@
 #include <linux/types.h>
 #include <linux/i2c.h>
 #include <linux/i2c-algo-bit.h>
-#include <linux/mutex.h>
 #include <video/vga.h>
 
 #define NV_ARCH_04  0x04
@@ -86,6 +85,7 @@ typedef struct _riva_hw_state {
 	u32 timingV;
 	u32 displayV;
 	u32 crtcSync;
+	u32 control;
 } RIVA_HW_STATE;
 
 struct riva_regs {
@@ -98,7 +98,6 @@ struct nvidia_par {
 	RIVA_HW_STATE initial_state;
 	RIVA_HW_STATE *CurrentState;
 	struct vgastate vgastate;
-	struct mutex open_lock;
 	u32 pseudo_palette[16];
 	struct pci_dev *pci_dev;
 	u32 Architecture;
@@ -134,6 +133,7 @@ struct nvidia_par {
 	int paneltweak;
 	int LVDS;
 	int pm_state;
+	int reverse_i2c;
 	u32 crtcSync_read;
 	u32 fpSyncs;
 	u32 dmaPut;

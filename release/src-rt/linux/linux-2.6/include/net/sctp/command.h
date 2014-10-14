@@ -1,18 +1,18 @@
-/* SCTP kernel reference Implementation
+/* SCTP kernel Implementation
  * (C) Copyright IBM Corp. 2001, 2004
  * Copyright (C) 1999-2001 Cisco, Motorola
  *
- * This file is part of the SCTP kernel reference Implementation
+ * This file is part of the SCTP kernel implementation
  *
  * These are the definitions needed for the command object.
  *
- * The SCTP reference implementation  is free software;
+ * This SCTP implementation  is free software;
  * you can redistribute it and/or modify it under the terms of
  * the GNU General Public License as published by
  * the Free Software Foundation; either version 2, or (at your option)
  * any later version.
  *
- * the SCTP reference implementation  is distributed in the hope that it
+ * This SCTP implementation  is distributed in the hope that it
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied
  *                 ************************
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -77,7 +77,8 @@ typedef enum {
 	SCTP_CMD_HB_TIMERS_START,    /* Start the heartbeat timers. */
 	SCTP_CMD_HB_TIMER_UPDATE,    /* Update a heartbeat timers.  */
 	SCTP_CMD_HB_TIMERS_STOP,     /* Stop the heartbeat timers.  */
-	SCTP_CMD_TRANSPORT_RESET,    /* Reset the status of a transport. */
+	SCTP_CMD_TRANSPORT_HB_SENT,  /* Reset the status of a transport. */
+	SCTP_CMD_TRANSPORT_IDLE,     /* Do manipulations on idle transport */
 	SCTP_CMD_TRANSPORT_ON,       /* Mark the transport as active. */
 	SCTP_CMD_REPORT_ERROR,   /* Pass this error back out of the sm. */
 	SCTP_CMD_REPORT_BAD_TAG, /* Verification tags didn't match. */
@@ -102,11 +103,13 @@ typedef enum {
 	SCTP_CMD_SET_SK_ERR,	 /* Set sk_err */
 	SCTP_CMD_ASSOC_CHANGE,	 /* generate and send assoc_change event */
 	SCTP_CMD_ADAPTATION_IND, /* generate and send adaptation event */
+	SCTP_CMD_ASSOC_SHKEY,    /* generate the association shared keys */
+	SCTP_CMD_T1_RETRAN,	 /* Mark for retransmission after T1 timeout  */
+	SCTP_CMD_UPDATE_INITTAG, /* Update peer inittag */
+	SCTP_CMD_SEND_MSG,	 /* Send the whole use message */
+	SCTP_CMD_SEND_NEXT_ASCONF, /* Send the next ASCONF after ACK */
 	SCTP_CMD_LAST
 } sctp_verb_t;
-
-#define SCTP_CMD_MAX		(SCTP_CMD_LAST - 1)
-#define SCTP_CMD_NUM_VERBS	(SCTP_CMD_MAX + 1)
 
 /* How many commands can you put in an sctp_cmd_seq_t?
  * This is a rather arbitrary number, ideally derived from a careful
@@ -135,6 +138,7 @@ typedef union {
 	struct sctp_ulpevent *ulpevent;
 	struct sctp_packet *packet;
 	sctp_sackhdr_t *sackh;
+	struct sctp_datamsg *msg;
 } sctp_arg_t;
 
 /* We are simulating ML type constructors here.
@@ -184,6 +188,7 @@ SCTP_ARG_CONSTRUCTOR(PEER_INIT,	sctp_init_chunk_t *, init)
 SCTP_ARG_CONSTRUCTOR(ULPEVENT,  struct sctp_ulpevent *, ulpevent)
 SCTP_ARG_CONSTRUCTOR(PACKET,	struct sctp_packet *, packet)
 SCTP_ARG_CONSTRUCTOR(SACKH,	sctp_sackhdr_t *, sackh)
+SCTP_ARG_CONSTRUCTOR(DATAMSG,	struct sctp_datamsg *, msg)
 
 typedef struct {
 	sctp_arg_t obj;
@@ -203,12 +208,11 @@ typedef struct {
 int sctp_init_cmd_seq(sctp_cmd_seq_t *seq);
 
 /* Add a command to an sctp_cmd_seq_t.
- * Return 0 if the command sequence is full.
  *
  * Use the SCTP_* constructors defined by SCTP_ARG_CONSTRUCTOR() above
  * to wrap data which goes in the obj argument.
  */
-int sctp_add_cmd(sctp_cmd_seq_t *seq, sctp_verb_t verb, sctp_arg_t obj);
+void sctp_add_cmd_sf(sctp_cmd_seq_t *seq, sctp_verb_t verb, sctp_arg_t obj);
 
 /* Return the next command structure in an sctp_cmd_seq.
  * Return NULL at the end of the sequence.

@@ -69,7 +69,7 @@ typedef union tagFPREG {
  * This structure is exported to user space.  Do not re-order.
  * Only add new stuff to the end, and do not change the size of
  * any element.  Elements of this structure are used by user
- * space, and must match struct user_fp in include/asm-arm/user.h.
+ * space, and must match struct user_fp in <asm/user.h>.
  * We include the byte offsets below for documentation purposes.
  *
  * The size of this structure and FPREG are checked by fpmodule.c
@@ -113,5 +113,9 @@ extern unsigned int SingleCPDO(struct roundingData *roundData,
 /* double_cpdo.c */
 extern unsigned int DoubleCPDO(struct roundingData *roundData,
 			       const unsigned int opcode, FPREG * rFd);
+
+/* extneded_cpdo.c */
+extern unsigned int ExtendedCPDO(struct roundingData *roundData,
+				 const unsigned int opcode, FPREG * rFd);
 
 #endif

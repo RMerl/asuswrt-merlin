@@ -1,17 +1,24 @@
 /*
  * Watchdog implementation based on z/VM Watchdog Timer API
  *
+ * Copyright IBM Corp. 2004,2009
+ *
  * The user space watchdog daemon can use this driver as
  * /dev/vmwatchdog to have z/VM execute the specified CP
  * command when the timeout expires. The default command is
  * "IPL", which which cause an immediate reboot.
  */
+#define KMSG_COMPONENT "vmwatchdog"
+#define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
+
 #include <linux/init.h>
 #include <linux/fs.h>
 #include <linux/kernel.h>
 #include <linux/miscdevice.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
+#include <linux/slab.h>
+#include <linux/suspend.h>
 #include <linux/watchdog.h>
 
 #include <asm/ebcdic.h>
@@ -42,6 +49,11 @@ static unsigned int vmwdt_interval = 60;
 static unsigned long vmwdt_is_open;
 static int vmwdt_expect_close;
 
+static DEFINE_MUTEX(vmwdt_mutex);
+
+#define VMWDT_OPEN	0	/* devnode is open or suspend in progress */
+#define VMWDT_RUNNING	1	/* The watchdog is armed */
+
 enum vmwdt_func {
 	/* function codes */
 	wdt_init   = 0,
@@ -66,8 +78,8 @@ static int __diag288(enum vmwdt_func func, unsigned int timeout,
 		"0:	la	%0,0\n"
 		"1:\n"
 		EX_TABLE(0b,1b)
-		: "=d" (err) : "d"(__func), "d"(__timeout),
-		  "d"(__cmdp), "d"(__cmdl), "0" (-EINVAL) : "1", "cc");
+		: "+d" (err) : "d"(__func), "d"(__timeout),
+		  "d"(__cmdp), "d"(__cmdl) : "1", "cc");
 	return err;
 }
 
@@ -91,24 +103,18 @@ static int vmwdt_keepalive(void)
 	EBC_TOUPPER(ebc_cmd, MAX_CMDLEN);
 
 	func = vmwdt_conceal ? (wdt_init | wdt_conceal) : wdt_init;
+	set_bit(VMWDT_RUNNING, &vmwdt_is_open);
 	ret = __diag288(func, vmwdt_interval, ebc_cmd, len);
+	WARN_ON(ret != 0);
 	kfree(ebc_cmd);
-
-	if (ret) {
-		printk(KERN_WARNING "%s: problem setting interval %d, "
-			"cmd %s\n", __FUNCTION__, vmwdt_interval,
-			vmwdt_cmd);
-	}
 	return ret;
 }
 
 static int vmwdt_disable(void)
 {
 	int ret = __diag288(wdt_cancel, 0, "", 0);
-	if (ret) {
-		printk(KERN_WARNING "%s: problem disabling watchdog\n",
-			__FUNCTION__);
-	}
+	WARN_ON(ret != 0);
+	clear_bit(VMWDT_RUNNING, &vmwdt_is_open);
 	return ret;
 }
 
@@ -121,21 +127,19 @@ static int __init vmwdt_probe(void)
 	static char __initdata ebc_begin[] = {
 		194, 197, 199, 201, 213
 	};
-	if (__diag288(wdt_init, 15, ebc_begin, sizeof(ebc_begin)) != 0) {
-		printk(KERN_INFO "z/VM watchdog not available\n");
+	if (__diag288(wdt_init, 15, ebc_begin, sizeof(ebc_begin)) != 0)
 		return -EINVAL;
-	}
 	return vmwdt_disable();
 }
 
 static int vmwdt_open(struct inode *i, struct file *f)
 {
 	int ret;
-	if (test_and_set_bit(0, &vmwdt_is_open))
+	if (test_and_set_bit(VMWDT_OPEN, &vmwdt_is_open))
 		return -EBUSY;
 	ret = vmwdt_keepalive();
 	if (ret)
-		clear_bit(0, &vmwdt_is_open);
+		clear_bit(VMWDT_OPEN, &vmwdt_is_open);
 	return ret ? ret : nonseekable_open(i, f);
 }
 
@@ -144,7 +148,7 @@ static int vmwdt_close(struct inode *i, struct file *f)
 	if (vmwdt_expect_close == 42)
 		vmwdt_disable();
 	vmwdt_expect_close = 0;
-	clear_bit(0, &vmwdt_is_open);
+	clear_bit(VMWDT_OPEN, &vmwdt_is_open);
 	return 0;
 }
 
@@ -154,8 +158,7 @@ static struct watchdog_info vmwdt_info = {
 	.identity = "z/VM Watchdog Timer",
 };
 
-static int vmwdt_ioctl(struct inode *i, struct file *f,
-			  unsigned int cmd, unsigned long arg)
+static int __vmwdt_ioctl(unsigned int cmd, unsigned long arg)
 {
 	switch (cmd) {
 	case WDIOC_GETSUPPORT:
@@ -199,8 +202,17 @@ static int vmwdt_ioctl(struct inode *i, struct file *f,
 	case WDIOC_KEEPALIVE:
 		return vmwdt_keepalive();
 	}
-
 	return -EINVAL;
+}
+
+static long vmwdt_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
+{
+	int rc;
+
+	mutex_lock(&vmwdt_mutex);
+	rc = __vmwdt_ioctl(cmd, arg);
+	mutex_unlock(&vmwdt_mutex);
+	return (long) rc;
 }
 
 static ssize_t vmwdt_write(struct file *f, const char __user *buf,
@@ -228,12 +240,64 @@ static ssize_t vmwdt_write(struct file *f, const char __user *buf,
 	return count;
 }
 
+static int vmwdt_resume(void)
+{
+	clear_bit(VMWDT_OPEN, &vmwdt_is_open);
+	return NOTIFY_DONE;
+}
+
+/*
+ * It makes no sense to go into suspend while the watchdog is running.
+ * Depending on the memory size, the watchdog might trigger, while we
+ * are still saving the memory.
+ * We reuse the open flag to ensure that suspend and watchdog open are
+ * exclusive operations
+ */
+static int vmwdt_suspend(void)
+{
+	if (test_and_set_bit(VMWDT_OPEN, &vmwdt_is_open)) {
+		pr_err("The system cannot be suspended while the watchdog"
+			" is in use\n");
+		return NOTIFY_BAD;
+	}
+	if (test_bit(VMWDT_RUNNING, &vmwdt_is_open)) {
+		clear_bit(VMWDT_OPEN, &vmwdt_is_open);
+		pr_err("The system cannot be suspended while the watchdog"
+			" is running\n");
+		return NOTIFY_BAD;
+	}
+	return NOTIFY_DONE;
+}
+
+/*
+ * This function is called for suspend and resume.
+ */
+static int vmwdt_power_event(struct notifier_block *this, unsigned long event,
+			     void *ptr)
+{
+	switch (event) {
+	case PM_POST_HIBERNATION:
+	case PM_POST_SUSPEND:
+		return vmwdt_resume();
+	case PM_HIBERNATION_PREPARE:
+	case PM_SUSPEND_PREPARE:
+		return vmwdt_suspend();
+	default:
+		return NOTIFY_DONE;
+	}
+}
+
+static struct notifier_block vmwdt_power_notifier = {
+	.notifier_call = vmwdt_power_event,
+};
+
 static const struct file_operations vmwdt_fops = {
 	.open    = &vmwdt_open,
 	.release = &vmwdt_close,
-	.ioctl   = &vmwdt_ioctl,
+	.unlocked_ioctl = &vmwdt_ioctl,
 	.write   = &vmwdt_write,
 	.owner   = THIS_MODULE,
+	.llseek  = noop_llseek,
 };
 
 static struct miscdevice vmwdt_dev = {
@@ -249,12 +313,25 @@ static int __init vmwdt_init(void)
 	ret = vmwdt_probe();
 	if (ret)
 		return ret;
-	return misc_register(&vmwdt_dev);
+	ret = register_pm_notifier(&vmwdt_power_notifier);
+	if (ret)
+		return ret;
+	/*
+	 * misc_register() has to be the last action in module_init(), because
+	 * file operations will be available right after this.
+	 */
+	ret = misc_register(&vmwdt_dev);
+	if (ret) {
+		unregister_pm_notifier(&vmwdt_power_notifier);
+		return ret;
+	}
+	return 0;
 }
 module_init(vmwdt_init);
 
 static void __exit vmwdt_exit(void)
 {
-	WARN_ON(misc_deregister(&vmwdt_dev) != 0);
+	unregister_pm_notifier(&vmwdt_power_notifier);
+	misc_deregister(&vmwdt_dev);
 }
 module_exit(vmwdt_exit);

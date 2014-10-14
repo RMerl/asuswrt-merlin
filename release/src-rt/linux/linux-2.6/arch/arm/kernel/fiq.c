@@ -45,7 +45,7 @@
 #include <asm/fiq.h>
 #include <asm/irq.h>
 #include <asm/system.h>
-#include <asm/uaccess.h>
+#include <asm/traps.h>
 
 static unsigned long no_fiq_insn;
 
@@ -68,17 +68,22 @@ static struct fiq_handler default_owner = {
 
 static struct fiq_handler *current_fiq = &default_owner;
 
-int show_fiq_list(struct seq_file *p, void *v)
+int show_fiq_list(struct seq_file *p, int prec)
 {
 	if (current_fiq != &default_owner)
-		seq_printf(p, "FIQ:              %s\n", current_fiq->name);
+		seq_printf(p, "%*s:              %s\n", prec, "FIQ",
+			current_fiq->name);
 
 	return 0;
 }
 
 void set_fiq_handler(void *start, unsigned int length)
 {
+#if defined(CONFIG_CPU_USE_DOMAINS)
 	memcpy((void *)0xffff001c, start, length);
+#else
+	memcpy(vectors_page + 0x1c, start, length);
+#endif
 	flush_icache_range(0xffff001c, 0xffff001c + length);
 	if (!vectors_high())
 		flush_icache_range(0x1c, 0x1c + length);
@@ -89,7 +94,7 @@ void set_fiq_handler(void *start, unsigned int length)
  * disable irqs for the duration.  Note - these functions are almost
  * entirely coded in assembly.
  */
-void __attribute__((naked)) set_fiq_regs(struct pt_regs *regs)
+void __naked set_fiq_regs(struct pt_regs *regs)
 {
 	register unsigned long tmp;
 	asm volatile (
@@ -107,7 +112,7 @@ void __attribute__((naked)) set_fiq_regs(struct pt_regs *regs)
 	: "r" (&regs->ARM_r8), "I" (PSR_I_BIT | PSR_F_BIT | FIQ_MODE));
 }
 
-void __attribute__((naked)) get_fiq_regs(struct pt_regs *regs)
+void __naked get_fiq_regs(struct pt_regs *regs)
 {
 	register unsigned long tmp;
 	asm volatile (

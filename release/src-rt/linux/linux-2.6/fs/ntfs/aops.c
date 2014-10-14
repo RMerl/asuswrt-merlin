@@ -2,7 +2,7 @@
  * aops.c - NTFS kernel address space operations and page cache handling.
  *	    Part of the Linux-NTFS project.
  *
- * Copyright (c) 2001-2006 Anton Altaparmakov
+ * Copyright (c) 2001-2007 Anton Altaparmakov
  * Copyright (c) 2002 Richard Russon
  *
  * This program/include file is free software; you can redistribute it and/or
@@ -23,6 +23,7 @@
 
 #include <linux/errno.h>
 #include <linux/fs.h>
+#include <linux/gfp.h>
 #include <linux/mm.h>
 #include <linux/pagemap.h>
 #include <linux/swap.h>
@@ -87,13 +88,17 @@ static void ntfs_end_buffer_async_read(struct buffer_head *bh, int uptodate)
 		/* Check for the current buffer head overflowing. */
 		if (unlikely(file_ofs + bh->b_size > init_size)) {
 			int ofs;
+			void *kaddr;
 
 			ofs = 0;
 			if (file_ofs < init_size)
 				ofs = init_size - file_ofs;
 			local_irq_save(flags);
-			zero_user_page(page, bh_offset(bh) + ofs,
-					 bh->b_size - ofs, KM_BIO_SRC_IRQ);
+			kaddr = kmap_atomic(page, KM_BIO_SRC_IRQ);
+			memset(kaddr + bh_offset(bh) + ofs, 0,
+					bh->b_size - ofs);
+			flush_dcache_page(page);
+			kunmap_atomic(kaddr, KM_BIO_SRC_IRQ);
 			local_irq_restore(flags);
 		}
 	} else {
@@ -334,7 +339,7 @@ handle_hole:
 		bh->b_blocknr = -1UL;
 		clear_buffer_mapped(bh);
 handle_zblock:
-		zero_user_page(page, i * blocksize, blocksize, KM_USER0);
+		zero_user(page, i * blocksize, blocksize);
 		if (likely(!err))
 			set_buffer_uptodate(bh);
 	} while (i++, iblock++, (bh = bh->b_this_page) != head);
@@ -396,7 +401,7 @@ static int ntfs_readpage(struct file *file, struct page *page)
 	loff_t i_size;
 	struct inode *vi;
 	ntfs_inode *ni, *base_ni;
-	u8 *kaddr;
+	u8 *addr;
 	ntfs_attr_search_ctx *ctx;
 	MFT_RECORD *mrec;
 	unsigned long flags;
@@ -405,6 +410,15 @@ static int ntfs_readpage(struct file *file, struct page *page)
 
 retry_readpage:
 	BUG_ON(!PageLocked(page));
+	vi = page->mapping->host;
+	i_size = i_size_read(vi);
+	/* Is the page fully outside i_size? (truncate in progress) */
+	if (unlikely(page->index >= (i_size + PAGE_CACHE_SIZE - 1) >>
+			PAGE_CACHE_SHIFT)) {
+		zero_user(page, 0, PAGE_CACHE_SIZE);
+		ntfs_debug("Read outside i_size - truncated?");
+		goto done;
+	}
 	/*
 	 * This can potentially happen because we clear PageUptodate() during
 	 * ntfs_writepage() of MstProtected() attributes.
@@ -413,7 +427,6 @@ retry_readpage:
 		unlock_page(page);
 		return 0;
 	}
-	vi = page->mapping->host;
 	ni = NTFS_I(vi);
 	/*
 	 * Only $DATA attributes can be encrypted and only unnamed $DATA
@@ -451,7 +464,7 @@ retry_readpage:
 	 * ok to ignore the compressed flag here.
 	 */
 	if (unlikely(page->index > 0)) {
-		zero_user_page(page, 0, PAGE_CACHE_SIZE, KM_USER0);
+		zero_user(page, 0, PAGE_CACHE_SIZE);
 		goto done;
 	}
 	if (!NInoAttr(ni))
@@ -491,15 +504,15 @@ retry_readpage:
 		/* Race with shrinking truncate. */
 		attr_len = i_size;
 	}
-	kaddr = kmap_atomic(page, KM_USER0);
+	addr = kmap_atomic(page, KM_USER0);
 	/* Copy the data to the page. */
-	memcpy(kaddr, (u8*)ctx->attr +
+	memcpy(addr, (u8*)ctx->attr +
 			le16_to_cpu(ctx->attr->data.resident.value_offset),
 			attr_len);
 	/* Zero the remainder of the page. */
-	memset(kaddr + attr_len, 0, PAGE_CACHE_SIZE - attr_len);
+	memset(addr + attr_len, 0, PAGE_CACHE_SIZE - attr_len);
 	flush_dcache_page(page);
-	kunmap_atomic(kaddr, KM_USER0);
+	kunmap_atomic(addr, KM_USER0);
 put_unm_err_out:
 	ntfs_attr_put_search_ctx(ctx);
 unm_err_out:
@@ -780,8 +793,7 @@ lock_retry_remap:
 		if (err == -ENOENT || lcn == LCN_ENOENT) {
 			bh->b_blocknr = -1;
 			clear_buffer_dirty(bh);
-			zero_user_page(page, bh_offset(bh), blocksize,
-					KM_USER0);
+			zero_user(page, bh_offset(bh), blocksize);
 			set_buffer_uptodate(bh);
 			err = 0;
 			continue;
@@ -1183,7 +1195,7 @@ lock_retry_remap:
 		tbh = bhs[i];
 		if (!tbh)
 			continue;
-		if (unlikely(test_set_buffer_locked(tbh)))
+		if (!trylock_buffer(tbh))
 			BUG();
 		/* The buffer dirty state is now irrelevant, just clean it. */
 		clear_buffer_dirty(tbh);
@@ -1344,7 +1356,7 @@ static int ntfs_writepage(struct page *page, struct writeback_control *wbc)
 	loff_t i_size;
 	struct inode *vi = page->mapping->host;
 	ntfs_inode *base_ni = NULL, *ni = NTFS_I(vi);
-	char *kaddr;
+	char *addr;
 	ntfs_attr_search_ctx *ctx = NULL;
 	MFT_RECORD *m = NULL;
 	u32 attr_len;
@@ -1406,8 +1418,7 @@ retry_writepage:
 		if (page->index >= (i_size >> PAGE_CACHE_SHIFT)) {
 			/* The page straddles i_size. */
 			unsigned int ofs = i_size & ~PAGE_CACHE_MASK;
-			zero_user_page(page, ofs, PAGE_CACHE_SIZE - ofs,
-					KM_USER0);
+			zero_user_segment(page, ofs, PAGE_CACHE_SIZE);
 		}
 		/* Handle mst protected attributes. */
 		if (NInoMstProtected(ni))
@@ -1484,14 +1495,14 @@ retry_writepage:
 		/* Shrinking cannot fail. */
 		BUG_ON(err);
 	}
-	kaddr = kmap_atomic(page, KM_USER0);
+	addr = kmap_atomic(page, KM_USER0);
 	/* Copy the data from the page to the mft record. */
 	memcpy((u8*)ctx->attr +
 			le16_to_cpu(ctx->attr->data.resident.value_offset),
-			kaddr, attr_len);
+			addr, attr_len);
 	/* Zero out of bounds area in the page cache page. */
-	memset(kaddr + attr_len, 0, PAGE_CACHE_SIZE - attr_len);
-	kunmap_atomic(kaddr, KM_USER0);
+	memset(addr + attr_len, 0, PAGE_CACHE_SIZE - attr_len);
+	kunmap_atomic(addr, KM_USER0);
 	flush_dcache_page(page);
 	flush_dcache_mft_record_page(ctx->ntfs_ino);
 	/* We are done with the page. */
@@ -1532,14 +1543,13 @@ err_out:
  */
 const struct address_space_operations ntfs_aops = {
 	.readpage	= ntfs_readpage,	/* Fill page with data. */
-	.sync_page	= block_sync_page,	/* Currently, just unplugs the
-						   disk request queue. */
 #ifdef NTFS_RW
 	.writepage	= ntfs_writepage,	/* Write dirty page to disk. */
 #endif /* NTFS_RW */
 	.migratepage	= buffer_migrate_page,	/* Move a page cache page from
 						   one physical page to an
 						   other. */
+	.error_remove_page = generic_error_remove_page,
 };
 
 /**
@@ -1548,8 +1558,6 @@ const struct address_space_operations ntfs_aops = {
  */
 const struct address_space_operations ntfs_mst_aops = {
 	.readpage	= ntfs_readpage,	/* Fill page with data. */
-	.sync_page	= block_sync_page,	/* Currently, just unplugs the
-						   disk request queue. */
 #ifdef NTFS_RW
 	.writepage	= ntfs_writepage,	/* Write dirty page to disk. */
 	.set_page_dirty	= __set_page_dirty_nobuffers,	/* Set the page dirty
@@ -1559,6 +1567,7 @@ const struct address_space_operations ntfs_mst_aops = {
 	.migratepage	= buffer_migrate_page,	/* Move a page cache page from
 						   one physical page to an
 						   other. */
+	.error_remove_page = generic_error_remove_page,
 };
 
 #ifdef NTFS_RW

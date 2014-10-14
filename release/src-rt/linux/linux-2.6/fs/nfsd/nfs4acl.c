@@ -1,6 +1,4 @@
 /*
- *  fs/nfs4acl/acl.c
- *
  *  Common NFSv4 ACL handling code.
  *
  *  Copyright (c) 2002, 2003 The Regents of the University of Michigan.
@@ -36,16 +34,9 @@
  *  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <linux/string.h>
 #include <linux/slab.h>
-#include <linux/list.h>
-#include <linux/types.h>
-#include <linux/fs.h>
-#include <linux/module.h>
 #include <linux/nfs_fs.h>
-#include <linux/posix_acl.h>
-#include <linux/nfs4.h>
-#include <linux/nfs4_acl.h>
+#include "acl.h"
 
 
 /* mode bit translations: */
@@ -183,8 +174,13 @@ static void
 summarize_posix_acl(struct posix_acl *acl, struct posix_acl_summary *pas)
 {
 	struct posix_acl_entry *pa, *pe;
-	pas->users = 0;
-	pas->groups = 0;
+
+	/*
+	 * Only pas.users and pas.groups need initialization; previous
+	 * posix_acl_valid() calls ensure that the other fields will be
+	 * initialized in the following loop.  But, just to placate gcc:
+	 */
+	memset(pas, 0, sizeof(*pas));
 	pas->mask = 07;
 
 	pe = acl->a_entries + acl->a_count;
@@ -316,7 +312,7 @@ _posix_to_nfsv4_one(struct posix_acl *pacl, struct nfs4_acl *acl,
 	deny = ~pas.group & pas.other;
 	if (deny) {
 		ace->type = NFS4_ACE_ACCESS_DENIED_ACE_TYPE;
-		ace->flag = eflag | NFS4_ACE_IDENTIFIER_GROUP;
+		ace->flag = eflag;
 		ace->access_mask = deny_mask_from_posix(deny, flags);
 		ace->whotype = NFS4_ACL_WHO_GROUP;
 		ace++;
@@ -330,7 +326,7 @@ _posix_to_nfsv4_one(struct posix_acl *pacl, struct nfs4_acl *acl,
 		if (deny) {
 			ace->type = NFS4_ACE_ACCESS_DENIED_ACE_TYPE;
 			ace->flag = eflag | NFS4_ACE_IDENTIFIER_GROUP;
-			ace->access_mask = mask_from_posix(deny, flags);
+			ace->access_mask = deny_mask_from_posix(deny, flags);
 			ace->whotype = NFS4_ACL_WHO_NAMED;
 			ace->who = pa->e_id;
 			ace++;
@@ -384,7 +380,7 @@ sort_pacl(struct posix_acl *pacl)
 	sort_pacl_range(pacl, 1, i-1);
 
 	BUG_ON(pacl->a_entries[i].e_tag != ACL_GROUP_OBJ);
-	j = i++;
+	j = ++i;
 	while (pacl->a_entries[j].e_tag == ACL_GROUP)
 		j++;
 	sort_pacl_range(pacl, i, j-1);
@@ -438,7 +434,7 @@ init_state(struct posix_acl_state *state, int cnt)
 	 * enough space for either:
 	 */
 	alloc = sizeof(struct posix_ace_state_array)
-		+ cnt*sizeof(struct posix_ace_state);
+		+ cnt*sizeof(struct posix_user_ace_state);
 	state->users = kzalloc(alloc, GFP_KERNEL);
 	if (!state->users)
 		return -ENOMEM;
@@ -732,13 +728,16 @@ int nfs4_acl_nfsv4_to_posix(struct nfs4_acl *acl, struct posix_acl **pacl,
 	*pacl = posix_state_to_acl(&effective_acl_state, flags);
 	if (IS_ERR(*pacl)) {
 		ret = PTR_ERR(*pacl);
+		*pacl = NULL;
 		goto out_dstate;
 	}
 	*dpacl = posix_state_to_acl(&default_acl_state,
 						flags | NFS4_ACL_TYPE_DEFAULT);
 	if (IS_ERR(*dpacl)) {
 		ret = PTR_ERR(*dpacl);
+		*dpacl = NULL;
 		posix_acl_release(*pacl);
+		*pacl = NULL;
 		goto out_dstate;
 	}
 	sort_pacl(*pacl);

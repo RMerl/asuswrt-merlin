@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006 QLogic, Inc. All rights reserved.
+ * Copyright (c) 2006, 2007, 2008 QLogic Corporation. All rights reserved.
  * Copyright (c) 2003, 2004, 2005, 2006 PathScale, Inc. All rights reserved.
  *
  * This software is available to you under a choice of one of two
@@ -44,6 +44,7 @@
 #include <linux/io.h>
 #include <linux/pci.h>
 #include <linux/vmalloc.h>
+#include <linux/fs.h>
 #include <asm/uaccess.h>
 
 #include "ipath_kernel.h"
@@ -64,7 +65,8 @@ static const struct file_operations diag_file_ops = {
 	.write = ipath_diag_write,
 	.read = ipath_diag_read,
 	.open = ipath_diag_open,
-	.release = ipath_diag_release
+	.release = ipath_diag_release,
+	.llseek = default_llseek,
 };
 
 static ssize_t ipath_diagpkt_write(struct file *fp,
@@ -74,11 +76,12 @@ static ssize_t ipath_diagpkt_write(struct file *fp,
 static const struct file_operations diagpkt_file_ops = {
 	.owner = THIS_MODULE,
 	.write = ipath_diagpkt_write,
+	.llseek = noop_llseek,
 };
 
 static atomic_t diagpkt_count = ATOMIC_INIT(0);
 static struct cdev *diagpkt_cdev;
-static struct class_device *diagpkt_class_dev;
+static struct device *diagpkt_dev;
 
 int ipath_diag_add(struct ipath_devdata *dd)
 {
@@ -88,7 +91,7 @@ int ipath_diag_add(struct ipath_devdata *dd)
 	if (atomic_inc_return(&diagpkt_count) == 1) {
 		ret = ipath_cdev_init(IPATH_DIAGPKT_MINOR,
 				      "ipath_diagpkt", &diagpkt_file_ops,
-				      &diagpkt_cdev, &diagpkt_class_dev);
+				      &diagpkt_cdev, &diagpkt_dev);
 
 		if (ret) {
 			ipath_dev_err(dd, "Couldn't create ipath_diagpkt "
@@ -101,7 +104,7 @@ int ipath_diag_add(struct ipath_devdata *dd)
 
 	ret = ipath_cdev_init(IPATH_DIAG_MINOR_BASE + dd->ipath_unit, name,
 			      &diag_file_ops, &dd->diag_cdev,
-			      &dd->diag_class_dev);
+			      &dd->diag_dev);
 	if (ret)
 		ipath_dev_err(dd, "Couldn't create %s device: %d",
 			      name, ret);
@@ -113,9 +116,9 @@ done:
 void ipath_diag_remove(struct ipath_devdata *dd)
 {
 	if (atomic_dec_and_test(&diagpkt_count))
-		ipath_cdev_cleanup(&diagpkt_cdev, &diagpkt_class_dev);
+		ipath_cdev_cleanup(&diagpkt_cdev, &diagpkt_dev);
 
-	ipath_cdev_cleanup(&dd->diag_cdev, &dd->diag_class_dev);
+	ipath_cdev_cleanup(&dd->diag_cdev, &dd->diag_dev);
 }
 
 /**
@@ -323,20 +326,50 @@ static ssize_t ipath_diagpkt_write(struct file *fp,
 {
 	u32 __iomem *piobuf;
 	u32 plen, clen, pbufn;
-	struct ipath_diag_pkt dp;
+	struct ipath_diag_pkt odp;
+	struct ipath_diag_xpkt dp;
 	u32 *tmpbuf = NULL;
 	struct ipath_devdata *dd;
 	ssize_t ret = 0;
 	u64 val;
+	u32 l_state, lt_state; /* LinkState, LinkTrainingState */
 
-	if (count < sizeof(dp)) {
+	if (count < sizeof(odp)) {
 		ret = -EINVAL;
 		goto bail;
 	}
 
-	if (copy_from_user(&dp, data, sizeof(dp))) {
+	if (count == sizeof(dp)) {
+		if (copy_from_user(&dp, data, sizeof(dp))) {
+			ret = -EFAULT;
+			goto bail;
+		}
+	} else if (copy_from_user(&odp, data, sizeof(odp))) {
 		ret = -EFAULT;
 		goto bail;
+	}
+
+	/*
+	 * Due to padding/alignment issues (lessened with new struct)
+	 * the old and new structs are the same length. We need to
+	 * disambiguate them, which we can do because odp.len has never
+	 * been less than the total of LRH+BTH+DETH so far, while
+	 * dp.unit (same offset) unit is unlikely to get that high.
+	 * Similarly, dp.data, the pointer to user at the same offset
+	 * as odp.unit, is almost certainly at least one (512byte)page
+	 * "above" NULL. The if-block below can be omitted if compatibility
+	 * between a new driver and older diagnostic code is unimportant.
+	 * compatibility the other direction (new diags, old driver) is
+	 * handled in the diagnostic code, with a warning.
+	 */
+	if (dp.unit >= 20 && dp.data < 512) {
+		/* very probable version mismatch. Fix it up */
+		memcpy(&odp, &dp, sizeof(odp));
+		/* We got a legacy dp, copy elements to dp */
+		dp.unit = odp.unit;
+		dp.data = odp.data;
+		dp.len = odp.len;
+		dp.pbc_wd = 0; /* Indicate we need to compute PBC wd */
 	}
 
 	/* send count must be an exact number of dwords */
@@ -371,9 +404,17 @@ static ssize_t ipath_diagpkt_write(struct file *fp,
 		ret = -ENODEV;
 		goto bail;
 	}
-	val = dd->ipath_lastibcstat & IPATH_IBSTATE_MASK;
-	if (val != IPATH_IBSTATE_INIT && val != IPATH_IBSTATE_ARM &&
-	    val != IPATH_IBSTATE_ACTIVE) {
+	/*
+	 * Want to skip check for l_state if using custom PBC,
+	 * because we might be trying to force an SM packet out.
+	 * first-cut, skip _all_ state checking in that case.
+	 */
+	val = ipath_ib_state(dd, dd->ipath_lastibcstat);
+	lt_state = ipath_ib_linktrstate(dd, dd->ipath_lastibcstat);
+	l_state = ipath_ib_linkstate(dd, dd->ipath_lastibcstat);
+	if (!dp.pbc_wd && (lt_state != INFINIPATH_IBCS_LT_STATE_LINKUP ||
+	    (val != dd->ib_init && val != dd->ib_arm &&
+	    val != dd->ib_active))) {
 		ipath_cdbg(VERBOSE, "unit %u not ready (state %llx)\n",
 			   dd->ipath_unit, (unsigned long long) val);
 		ret = -EINVAL;
@@ -405,30 +446,38 @@ static ssize_t ipath_diagpkt_write(struct file *fp,
 		goto bail;
 	}
 
-	piobuf = ipath_getpiobuf(dd, &pbufn);
+	plen >>= 2;		/* in dwords */
+
+	piobuf = ipath_getpiobuf(dd, plen, &pbufn);
 	if (!piobuf) {
 		ipath_cdbg(VERBOSE, "No PIO buffers avail unit for %u\n",
 			   dd->ipath_unit);
 		ret = -EBUSY;
 		goto bail;
 	}
-
-	plen >>= 2;		/* in dwords */
+	/* disarm it just to be extra sure */
+	ipath_disarm_piobufs(dd, pbufn, 1);
 
 	if (ipath_debug & __IPATH_PKTDBG)
 		ipath_cdbg(VERBOSE, "unit %u 0x%x+1w pio%d\n",
 			   dd->ipath_unit, plen - 1, pbufn);
 
-	/* we have to flush after the PBC for correctness on some cpus
-	 * or WC buffer can be written out of order */
-	writeq(plen, piobuf);
-	ipath_flush_wc();
-	/* copy all by the trigger word, then flush, so it's written
+	if (dp.pbc_wd == 0)
+		dp.pbc_wd = plen;
+	writeq(dp.pbc_wd, piobuf);
+	/*
+	 * Copy all by the trigger word, then flush, so it's written
 	 * to chip before trigger word, then write trigger word, then
-	 * flush again, so packet is sent. */
-	__iowrite32_copy(piobuf + 2, tmpbuf, clen - 1);
-	ipath_flush_wc();
-	__raw_writel(tmpbuf[clen - 1], piobuf + clen + 1);
+	 * flush again, so packet is sent.
+	 */
+	if (dd->ipath_flags & IPATH_PIO_FLUSH_WC) {
+		ipath_flush_wc();
+		__iowrite32_copy(piobuf + 2, tmpbuf, clen - 1);
+		ipath_flush_wc();
+		__raw_writel(tmpbuf[clen - 1], piobuf + clen + 1);
+	} else
+		__iowrite32_copy(piobuf + 2, tmpbuf, clen);
+
 	ipath_flush_wc();
 
 	ret = sizeof(dp);

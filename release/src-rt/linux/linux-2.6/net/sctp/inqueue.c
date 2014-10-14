@@ -1,9 +1,9 @@
-/* SCTP kernel reference Implementation
+/* SCTP kernel implementation
  * Copyright (c) 1999-2000 Cisco, Inc.
  * Copyright (c) 1999-2001 Motorola, Inc.
  * Copyright (c) 2002 International Business Machines, Corp.
  *
- * This file is part of the SCTP kernel reference Implementation
+ * This file is part of the SCTP kernel implementation
  *
  * These functions are the methods for accessing the SCTP inqueue.
  *
@@ -11,13 +11,13 @@
  * (which might be bundles or fragments of chunks) and out of which you
  * pop SCTP whole chunks.
  *
- * The SCTP reference implementation is free software;
+ * This SCTP implementation is free software;
  * you can redistribute it and/or modify it under the terms of
  * the GNU General Public License as published by
  * the Free Software Foundation; either version 2, or (at your option)
  * any later version.
  *
- * The SCTP reference implementation is distributed in the hope that it
+ * This SCTP implementation is distributed in the hope that it
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied
  *                 ************************
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -43,9 +43,12 @@
  * be incorporated into the next SCTP release.
  */
 
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+
 #include <net/sctp/sctp.h>
 #include <net/sctp/sm.h>
 #include <linux/interrupt.h>
+#include <linux/slab.h>
 
 /* Initialize an SCTP inqueue.  */
 void sctp_inq_init(struct sctp_inq *queue)
@@ -90,6 +93,10 @@ void sctp_inq_free(struct sctp_inq *queue)
 void sctp_inq_push(struct sctp_inq *q, struct sctp_chunk *chunk)
 {
 	/* Directly call the packet handling routine. */
+	if (chunk->rcvr->dead) {
+		sctp_chunk_free(chunk);
+		return;
+	}
 
 	/* We are now calling this either from the soft interrupt
 	 * or from the backlog processing.
@@ -99,6 +106,25 @@ void sctp_inq_push(struct sctp_inq *q, struct sctp_chunk *chunk)
 	list_add_tail(&chunk->list, &q->in_chunk_list);
 	q->immediate.func(&q->immediate);
 }
+
+/* Peek at the next chunk on the inqeue. */
+struct sctp_chunkhdr *sctp_inq_peek(struct sctp_inq *queue)
+{
+	struct sctp_chunk *chunk;
+	sctp_chunkhdr_t *ch = NULL;
+
+	chunk = queue->in_progress;
+	/* If there is no more chunks in this packet, say so */
+	if (chunk->singleton ||
+	    chunk->end_of_packet ||
+	    chunk->pdiscard)
+		    return NULL;
+
+	ch = (sctp_chunkhdr_t *)chunk->chunk_end;
+
+	return ch;
+}
+
 
 /* Extract a chunk from an SCTP inqueue.
  *
@@ -130,6 +156,14 @@ struct sctp_chunk *sctp_inq_pop(struct sctp_inq *queue)
 			/* Force chunk->skb->data to chunk->chunk_end.  */
 			skb_pull(chunk->skb,
 				 chunk->chunk_end - chunk->skb->data);
+
+			/* Verify that we have at least chunk headers
+			 * worth of buffer left.
+			 */
+			if (skb_headlen(chunk->skb) < sizeof(sctp_chunkhdr_t)) {
+				sctp_chunk_free(chunk);
+				chunk = queue->in_progress = NULL;
+			}
 		}
 	}
 

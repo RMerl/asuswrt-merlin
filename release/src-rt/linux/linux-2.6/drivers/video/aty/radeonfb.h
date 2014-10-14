@@ -1,6 +1,10 @@
 #ifndef __RADEONFB_H__
 #define __RADEONFB_H__
 
+#ifdef CONFIG_FB_RADEON_DEBUG
+#define DEBUG		1
+#endif
+
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/sched.h>
@@ -48,6 +52,8 @@ enum radeon_family {
 	CHIP_FAMILY_RV350,
 	CHIP_FAMILY_RV380,    /* RV370/RV380/M22/M24 */
 	CHIP_FAMILY_R420,     /* R420/R423/M18 */
+	CHIP_FAMILY_RC410,
+	CHIP_FAMILY_RS400,
 	CHIP_FAMILY_RS480,
 	CHIP_FAMILY_LAST,
 };
@@ -66,7 +72,8 @@ enum radeon_family {
 				((rinfo)->family == CHIP_FAMILY_R350)  || \
 				((rinfo)->family == CHIP_FAMILY_RV380) || \
 				((rinfo)->family == CHIP_FAMILY_R420)  || \
-		                ((rinfo)->family == CHIP_FAMILY_RS480) )
+                               ((rinfo)->family == CHIP_FAMILY_RC410) || \
+                               ((rinfo)->family == CHIP_FAMILY_RS480))
 
 /*
  * Chip flags
@@ -283,7 +290,7 @@ struct radeonfb_info {
 	struct radeon_regs 	state;
 	struct radeon_regs	init_state;
 
-	char			name[DEVICE_NAME_SIZE];
+	char			name[50];
 
 	unsigned long		mmio_base_phys;
 	unsigned long		fb_base_phys;
@@ -301,7 +308,7 @@ struct radeonfb_info {
 	void __iomem		*bios_seg;
 	int			fp_bios_start;
 
-	u32			pseudo_palette[17];
+	u32			pseudo_palette[16];
 	struct { u8 red, green, blue, pad; }
 				palette[256];
 
@@ -354,28 +361,10 @@ struct radeonfb_info {
 #ifdef CONFIG_FB_RADEON_I2C
 	struct radeon_i2c_chan 	i2c[4];
 #endif
-
-	u32			cfg_save[64];
 };
 
 
 #define PRIMARY_MONITOR(rinfo)	(rinfo->mon1_type)
-
-
-/*
- * Debugging stuffs
- */
-#ifdef CONFIG_FB_RADEON_DEBUG
-#define DEBUG		1
-#else
-#define DEBUG		0
-#endif
-
-#if DEBUG
-#define RTRACE		printk
-#else
-#define RTRACE		if(0) printk
-#endif
 
 
 /*
@@ -543,22 +532,6 @@ static inline u32 radeon_get_dstbpp(u16 depth)
 /*
  * 2D Engine helper routines
  */
-static inline void radeon_engine_flush (struct radeonfb_info *rinfo)
-{
-	int i;
-
-	/* initiate flush */
-	OUTREGP(RB2D_DSTCACHE_CTLSTAT, RB2D_DC_FLUSH_ALL,
-	        ~RB2D_DC_FLUSH_ALL);
-
-	for (i=0; i < 2000000; i++) {
-		if (!(INREG(RB2D_DSTCACHE_CTLSTAT) & RB2D_DC_BUSY))
-			return;
-		udelay(1);
-	}
-	printk(KERN_ERR "radeonfb: Flush Timeout !\n");
-}
-
 
 static inline void _radeon_fifo_wait(struct radeonfb_info *rinfo, int entries)
 {
@@ -570,6 +543,28 @@ static inline void _radeon_fifo_wait(struct radeonfb_info *rinfo, int entries)
 		udelay(1);
 	}
 	printk(KERN_ERR "radeonfb: FIFO Timeout !\n");
+}
+
+static inline void radeon_engine_flush (struct radeonfb_info *rinfo)
+{
+	int i;
+
+	/* Initiate flush */
+	OUTREGP(DSTCACHE_CTLSTAT, RB2D_DC_FLUSH_ALL,
+	        ~RB2D_DC_FLUSH_ALL);
+
+	/* Ensure FIFO is empty, ie, make sure the flush commands
+	 * has reached the cache
+	 */
+	_radeon_fifo_wait (rinfo, 64);
+
+	/* Wait for the flush to complete */
+	for (i=0; i < 2000000; i++) {
+		if (!(INREG(DSTCACHE_CTLSTAT) & RB2D_DC_BUSY))
+			return;
+		udelay(1);
+	}
+	printk(KERN_ERR "radeonfb: Flush Timeout !\n");
 }
 
 

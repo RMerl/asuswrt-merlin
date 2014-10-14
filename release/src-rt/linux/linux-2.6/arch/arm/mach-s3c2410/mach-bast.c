@@ -1,6 +1,6 @@
 /* linux/arch/arm/mach-s3c2410/mach-bast.c
  *
- * Copyright (c) 2003-2005 Simtec Electronics
+ * Copyright 2003-2008 Simtec Electronics
  *   Ben Dooks <ben@simtec.co.uk>
  *
  * http://www.simtec.co.uk/products/EB2410ITX/
@@ -16,32 +16,39 @@
 #include <linux/list.h>
 #include <linux/timer.h>
 #include <linux/init.h>
+#include <linux/gpio.h>
+#include <linux/sysdev.h>
 #include <linux/serial_core.h>
 #include <linux/platform_device.h>
 #include <linux/dm9000.h>
+#include <linux/ata_platform.h>
+#include <linux/i2c.h>
+#include <linux/io.h>
+
+#include <net/ax88796.h>
 
 #include <asm/mach/arch.h>
 #include <asm/mach/map.h>
 #include <asm/mach/irq.h>
 
-#include <asm/arch/bast-map.h>
-#include <asm/arch/bast-irq.h>
-#include <asm/arch/bast-cpld.h>
+#include <mach/bast-map.h>
+#include <mach/bast-irq.h>
+#include <mach/bast-cpld.h>
 
-#include <asm/hardware.h>
-#include <asm/io.h>
+#include <mach/hardware.h>
 #include <asm/irq.h>
 #include <asm/mach-types.h>
 
 //#include <asm/debug-ll.h>
-#include <asm/arch/regs-serial.h>
-#include <asm/arch/regs-gpio.h>
-#include <asm/arch/regs-mem.h>
-#include <asm/arch/regs-lcd.h>
+#include <plat/regs-serial.h>
+#include <mach/regs-gpio.h>
+#include <mach/regs-mem.h>
+#include <mach/regs-lcd.h>
 
-#include <asm/arch/nand.h>
-#include <asm/arch/iic.h>
-#include <asm/arch/fb.h>
+#include <plat/hwmon.h>
+#include <plat/nand.h>
+#include <plat/iic.h>
+#include <mach/fb.h>
 
 #include <linux/mtd/mtd.h>
 #include <linux/mtd/nand.h>
@@ -50,12 +57,17 @@
 
 #include <linux/serial_8250.h>
 
-#include <asm/plat-s3c24xx/clock.h>
-#include <asm/plat-s3c24xx/devs.h>
-#include <asm/plat-s3c24xx/cpu.h>
-#include "usb-simtec.h"
+#include <plat/clock.h>
+#include <plat/devs.h>
+#include <plat/cpu.h>
+#include <plat/cpu-freq.h>
+#include <plat/gpio-cfg.h>
+#include <plat/audio-simtec.h>
 
-#define COPYRIGHT ", (c) 2004-2005 Simtec Electronics"
+#include "usb-simtec.h"
+#include "nor-simtec.h"
+
+#define COPYRIGHT ", Copyright 2004-2008 Simtec Electronics"
 
 /* macros for virtual address mods for the io space entries */
 #define VA_C5(item) ((unsigned long)(item) + BAST_VAM_CS5)
@@ -131,37 +143,21 @@ static struct map_desc bast_iodesc[] __initdata = {
   { VA_C2(BAST_VA_ISAIO),   PA_CS2(BAST_PA_ISAIO),    SZ_16M, MT_DEVICE },
   { VA_C2(BAST_VA_ISAMEM),  PA_CS2(BAST_PA_ISAMEM),   SZ_16M, MT_DEVICE },
   { VA_C2(BAST_VA_SUPERIO), PA_CS2(BAST_PA_SUPERIO),  SZ_1M,  MT_DEVICE },
-  { VA_C2(BAST_VA_IDEPRI),  PA_CS3(BAST_PA_IDEPRI),   SZ_1M,  MT_DEVICE },
-  { VA_C2(BAST_VA_IDESEC),  PA_CS3(BAST_PA_IDESEC),   SZ_1M,  MT_DEVICE },
-  { VA_C2(BAST_VA_IDEPRIAUX), PA_CS3(BAST_PA_IDEPRIAUX), SZ_1M, MT_DEVICE },
-  { VA_C2(BAST_VA_IDESECAUX), PA_CS3(BAST_PA_IDESECAUX), SZ_1M, MT_DEVICE },
 
   /* slow, word */
   { VA_C3(BAST_VA_ISAIO),   PA_CS3(BAST_PA_ISAIO),    SZ_16M, MT_DEVICE },
   { VA_C3(BAST_VA_ISAMEM),  PA_CS3(BAST_PA_ISAMEM),   SZ_16M, MT_DEVICE },
   { VA_C3(BAST_VA_SUPERIO), PA_CS3(BAST_PA_SUPERIO),  SZ_1M,  MT_DEVICE },
-  { VA_C3(BAST_VA_IDEPRI),  PA_CS3(BAST_PA_IDEPRI),   SZ_1M,  MT_DEVICE },
-  { VA_C3(BAST_VA_IDESEC),  PA_CS3(BAST_PA_IDESEC),   SZ_1M,  MT_DEVICE },
-  { VA_C3(BAST_VA_IDEPRIAUX), PA_CS3(BAST_PA_IDEPRIAUX), SZ_1M, MT_DEVICE },
-  { VA_C3(BAST_VA_IDESECAUX), PA_CS3(BAST_PA_IDESECAUX), SZ_1M, MT_DEVICE },
 
   /* fast, byte */
   { VA_C4(BAST_VA_ISAIO),   PA_CS4(BAST_PA_ISAIO),    SZ_16M, MT_DEVICE },
   { VA_C4(BAST_VA_ISAMEM),  PA_CS4(BAST_PA_ISAMEM),   SZ_16M, MT_DEVICE },
   { VA_C4(BAST_VA_SUPERIO), PA_CS4(BAST_PA_SUPERIO),  SZ_1M,  MT_DEVICE },
-  { VA_C4(BAST_VA_IDEPRI),  PA_CS5(BAST_PA_IDEPRI),   SZ_1M,  MT_DEVICE },
-  { VA_C4(BAST_VA_IDESEC),  PA_CS5(BAST_PA_IDESEC),   SZ_1M,  MT_DEVICE },
-  { VA_C4(BAST_VA_IDEPRIAUX), PA_CS5(BAST_PA_IDEPRIAUX), SZ_1M, MT_DEVICE },
-  { VA_C4(BAST_VA_IDESECAUX), PA_CS5(BAST_PA_IDESECAUX), SZ_1M, MT_DEVICE },
 
   /* fast, word */
   { VA_C5(BAST_VA_ISAIO),   PA_CS5(BAST_PA_ISAIO),    SZ_16M, MT_DEVICE },
   { VA_C5(BAST_VA_ISAMEM),  PA_CS5(BAST_PA_ISAMEM),   SZ_16M, MT_DEVICE },
   { VA_C5(BAST_VA_SUPERIO), PA_CS5(BAST_PA_SUPERIO),  SZ_1M,  MT_DEVICE },
-  { VA_C5(BAST_VA_IDEPRI),  PA_CS5(BAST_PA_IDEPRI),   SZ_1M,  MT_DEVICE },
-  { VA_C5(BAST_VA_IDESEC),  PA_CS5(BAST_PA_IDESEC),   SZ_1M,  MT_DEVICE },
-  { VA_C5(BAST_VA_IDEPRIAUX), PA_CS5(BAST_PA_IDEPRIAUX), SZ_1M, MT_DEVICE },
-  { VA_C5(BAST_VA_IDESECAUX), PA_CS5(BAST_PA_IDESECAUX), SZ_1M, MT_DEVICE },
 };
 
 #define UCON S3C2410_UCON_DEFAULT | S3C2410_UCON_UCLK
@@ -215,32 +211,43 @@ static struct s3c2410_uartcfg bast_uartcfgs[] __initdata = {
 	}
 };
 
-/* NOR Flash on BAST board */
-
-static struct resource bast_nor_resource[] = {
-	[0] = {
-		.start = S3C2410_CS1 + 0x4000000,
-		.end   = S3C2410_CS1 + 0x4000000 + (32*1024*1024) - 1,
-		.flags = IORESOURCE_MEM,
-	}
-};
-
-static struct platform_device bast_device_nor = {
-	.name		= "bast-nor",
-	.id		= -1,
-	.num_resources	= ARRAY_SIZE(bast_nor_resource),
-	.resource	= bast_nor_resource,
-};
-
 /* NAND Flash on BAST board */
 
+#ifdef CONFIG_PM
+static int bast_pm_suspend(struct sys_device *sd, pm_message_t state)
+{
+	/* ensure that an nRESET is not generated on resume. */
+	gpio_direction_output(S3C2410_GPA(21), 1);
+	return 0;
+}
+
+static int bast_pm_resume(struct sys_device *sd)
+{
+	s3c_gpio_cfgpin(S3C2410_GPA(21), S3C2410_GPA21_nRSTOUT);
+	return 0;
+}
+
+#else
+#define bast_pm_suspend NULL
+#define bast_pm_resume NULL
+#endif
+
+static struct sysdev_class bast_pm_sysclass = {
+	.name		= "mach-bast",
+	.suspend	= bast_pm_suspend,
+	.resume		= bast_pm_resume,
+};
+
+static struct sys_device bast_pm_sysdev = {
+	.cls		= &bast_pm_sysclass,
+};
 
 static int smartmedia_map[] = { 0 };
 static int chip0_map[] = { 1 };
 static int chip1_map[] = { 2 };
 static int chip2_map[] = { 3 };
 
-static struct mtd_partition bast_default_nand_part[] = {
+static struct mtd_partition __initdata bast_default_nand_part[] = {
 	[0] = {
 		.name	= "Boot Agent",
 		.size	= SZ_16K,
@@ -266,11 +273,12 @@ static struct mtd_partition bast_default_nand_part[] = {
  * socket.
 */
 
-static struct s3c2410_nand_set bast_nand_sets[] = {
+static struct s3c2410_nand_set __initdata bast_nand_sets[] = {
 	[0] = {
 		.name		= "SmartMedia",
 		.nr_chips	= 1,
 		.nr_map		= smartmedia_map,
+		.options        = NAND_SCAN_SILENT_NODEV,
 		.nr_partitions	= ARRAY_SIZE(bast_default_nand_part),
 		.partitions	= bast_default_nand_part,
 	},
@@ -285,6 +293,7 @@ static struct s3c2410_nand_set bast_nand_sets[] = {
 		.name		= "chip1",
 		.nr_chips	= 1,
 		.nr_map		= chip1_map,
+		.options        = NAND_SCAN_SILENT_NODEV,
 		.nr_partitions	= ARRAY_SIZE(bast_default_nand_part),
 		.partitions	= bast_default_nand_part,
 	},
@@ -292,6 +301,7 @@ static struct s3c2410_nand_set bast_nand_sets[] = {
 		.name		= "chip2",
 		.nr_chips	= 1,
 		.nr_map		= chip2_map,
+		.options        = NAND_SCAN_SILENT_NODEV,
 		.nr_partitions	= ARRAY_SIZE(bast_default_nand_part),
 		.partitions	= bast_default_nand_part,
 	}
@@ -316,7 +326,7 @@ static void bast_nand_select(struct s3c2410_nand_set *set, int slot)
 	__raw_writeb(tmp, BAST_VA_CTRL2);
 }
 
-static struct s3c2410_platform_nand bast_nand_info = {
+static struct s3c2410_platform_nand __initdata bast_nand_info = {
 	.tacls		= 30,
 	.twrph0		= 60,
 	.twrph1		= 60,
@@ -341,7 +351,7 @@ static struct resource bast_dm9k_resource[] = {
 	[2] = {
 		.start = IRQ_DM9000,
 		.end   = IRQ_DM9000,
-		.flags = IORESOURCE_IRQ,
+		.flags = IORESOURCE_IRQ | IORESOURCE_IRQ_HIGHLEVEL,
 	}
 
 };
@@ -402,61 +412,192 @@ static struct platform_device bast_sio = {
  * standard 100KHz i2c bus frequency
 */
 
-static struct s3c2410_platform_i2c bast_i2c_info = {
+static struct s3c2410_platform_i2c __initdata bast_i2c_info = {
 	.flags		= 0,
 	.slave_addr	= 0x10,
-	.bus_freq	= 100*1000,
-	.max_freq	= 130*1000,
+	.frequency	= 100*1000,
 };
 
+/* Asix AX88796 10/100 ethernet controller */
 
-static struct s3c2410fb_mach_info __initdata bast_lcd_info = {
-	.width		= 640,
-	.height		= 480,
+static struct ax_plat_data bast_asix_platdata = {
+	.flags		= AXFLG_MAC_FROMDEV,
+	.wordlength	= 2,
+	.dcr_val	= 0x48,
+	.rcr_val	= 0x40,
+};
 
-	.xres		= {
-		.min		= 320,
-		.max		= 1024,
-		.defval		= 640,
+static struct resource bast_asix_resource[] = {
+	[0] = {
+		.start = S3C2410_CS5 + BAST_PA_ASIXNET,
+		.end   = S3C2410_CS5 + BAST_PA_ASIXNET + (0x18 * 0x20) - 1,
+		.flags = IORESOURCE_MEM,
 	},
-
-	.yres		= {
-		.min		= 240,
-		.max	        = 600,
-		.defval		= 480,
+	[1] = {
+		.start = S3C2410_CS5 + BAST_PA_ASIXNET + (0x1f * 0x20),
+		.end   = S3C2410_CS5 + BAST_PA_ASIXNET + (0x1f * 0x20),
+		.flags = IORESOURCE_MEM,
 	},
-
-	.bpp		= {
-		.min		= 4,
-		.max		= 16,
-		.defval		= 8,
-	},
-
-	.regs		= {
-		.lcdcon1	= 0x00000176,
-		.lcdcon2	= 0x1d77c7c2,
-		.lcdcon3	= 0x013a7f13,
-		.lcdcon4	= 0x00000057,
-		.lcdcon5	= 0x00014b02,
+	[2] = {
+		.start = IRQ_ASIX,
+		.end   = IRQ_ASIX,
+		.flags = IORESOURCE_IRQ
 	}
 };
 
+static struct platform_device bast_device_asix = {
+	.name		= "ax88796",
+	.id		= 0,
+	.num_resources	= ARRAY_SIZE(bast_asix_resource),
+	.resource	= bast_asix_resource,
+	.dev		= {
+		.platform_data = &bast_asix_platdata
+	}
+};
+
+/* Asix AX88796 10/100 ethernet controller parallel port */
+
+static struct resource bast_asixpp_resource[] = {
+	[0] = {
+		.start = S3C2410_CS5 + BAST_PA_ASIXNET + (0x18 * 0x20),
+		.end   = S3C2410_CS5 + BAST_PA_ASIXNET + (0x1b * 0x20) - 1,
+		.flags = IORESOURCE_MEM,
+	}
+};
+
+static struct platform_device bast_device_axpp = {
+	.name		= "ax88796-pp",
+	.id		= 0,
+	.num_resources	= ARRAY_SIZE(bast_asixpp_resource),
+	.resource	= bast_asixpp_resource,
+};
+
+/* LCD/VGA controller */
+
+static struct s3c2410fb_display __initdata bast_lcd_info[] = {
+	{
+		.type		= S3C2410_LCDCON1_TFT,
+		.width		= 640,
+		.height		= 480,
+
+		.pixclock	= 33333,
+		.xres		= 640,
+		.yres		= 480,
+		.bpp		= 4,
+		.left_margin	= 40,
+		.right_margin	= 20,
+		.hsync_len	= 88,
+		.upper_margin	= 30,
+		.lower_margin	= 32,
+		.vsync_len	= 3,
+
+		.lcdcon5	= 0x00014b02,
+	},
+	{
+		.type		= S3C2410_LCDCON1_TFT,
+		.width		= 640,
+		.height		= 480,
+
+		.pixclock	= 33333,
+		.xres		= 640,
+		.yres		= 480,
+		.bpp		= 8,
+		.left_margin	= 40,
+		.right_margin	= 20,
+		.hsync_len	= 88,
+		.upper_margin	= 30,
+		.lower_margin	= 32,
+		.vsync_len	= 3,
+
+		.lcdcon5	= 0x00014b02,
+	},
+	{
+		.type		= S3C2410_LCDCON1_TFT,
+		.width		= 640,
+		.height		= 480,
+
+		.pixclock	= 33333,
+		.xres		= 640,
+		.yres		= 480,
+		.bpp		= 16,
+		.left_margin	= 40,
+		.right_margin	= 20,
+		.hsync_len	= 88,
+		.upper_margin	= 30,
+		.lower_margin	= 32,
+		.vsync_len	= 3,
+
+		.lcdcon5	= 0x00014b02,
+	},
+};
+
+/* LCD/VGA controller */
+
+static struct s3c2410fb_mach_info __initdata bast_fb_info = {
+
+	.displays = bast_lcd_info,
+	.num_displays = ARRAY_SIZE(bast_lcd_info),
+	.default_display = 1,
+};
+
+/* I2C devices fitted. */
+
+static struct i2c_board_info bast_i2c_devs[] __initdata = {
+	{
+		I2C_BOARD_INFO("tlv320aic23", 0x1a),
+	}, {
+		I2C_BOARD_INFO("simtec-pmu", 0x6b),
+	}, {
+		I2C_BOARD_INFO("ch7013", 0x75),
+	},
+};
+
+static struct s3c_hwmon_pdata bast_hwmon_info = {
+	/* LCD contrast (0-6.6V) */
+	.in[0] = &(struct s3c_hwmon_chcfg) {
+		.name		= "lcd-contrast",
+		.mult		= 3300,
+		.div		= 512,
+	},
+	/* LED current feedback */
+	.in[1] = &(struct s3c_hwmon_chcfg) {
+		.name		= "led-feedback",
+		.mult		= 3300,
+		.div		= 1024,
+	},
+	/* LCD feedback (0-6.6V) */
+	.in[2] = &(struct s3c_hwmon_chcfg) {
+		.name		= "lcd-feedback",
+		.mult		= 3300,
+		.div		= 512,
+	},
+	/* Vcore (1.8-2.0V), Vref 3.3V  */
+	.in[3] = &(struct s3c_hwmon_chcfg) {
+		.name		= "vcore",
+		.mult		= 3300,
+		.div		= 1024,
+	},
+};
+
 /* Standard BAST devices */
+// cat /sys/devices/platform/s3c24xx-adc/s3c-hwmon/in_0
 
 static struct platform_device *bast_devices[] __initdata = {
-	&s3c_device_usb,
+	&s3c_device_ohci,
 	&s3c_device_lcd,
 	&s3c_device_wdt,
-	&s3c_device_i2c,
-	&s3c_device_iis,
+	&s3c_device_i2c0,
  	&s3c_device_rtc,
 	&s3c_device_nand,
-	&bast_device_nor,
+	&s3c_device_adc,
+	&s3c_device_hwmon,
 	&bast_device_dm9k,
+	&bast_device_asix,
+	&bast_device_axpp,
 	&bast_sio,
 };
 
-static struct clk *bast_clocks[] = {
+static struct clk *bast_clocks[] __initdata = {
 	&s3c24xx_dclk0,
 	&s3c24xx_dclk1,
 	&s3c24xx_clkout0,
@@ -464,14 +605,25 @@ static struct clk *bast_clocks[] = {
 	&s3c24xx_uclk,
 };
 
+static struct s3c_cpufreq_board __initdata bast_cpufreq = {
+	.refresh	= 7800, /* 7.8usec */
+	.auto_io	= 1,
+	.need_io	= 1,
+};
+
+static struct s3c24xx_audio_simtec_pdata __initdata bast_audio = {
+	.have_mic	= 1,
+	.have_lout	= 1,
+};
+
 static void __init bast_map_io(void)
 {
 	/* initialise the clocks */
 
-	s3c24xx_dclk0.parent = NULL;
+	s3c24xx_dclk0.parent = &clk_upll;
 	s3c24xx_dclk0.rate   = 12*1000*1000;
 
-	s3c24xx_dclk1.parent = NULL;
+	s3c24xx_dclk1.parent = &clk_upll;
 	s3c24xx_dclk1.rate   = 24*1000*1000;
 
 	s3c24xx_clkout0.parent  = &s3c24xx_dclk0;
@@ -481,26 +633,37 @@ static void __init bast_map_io(void)
 
 	s3c24xx_register_clocks(bast_clocks, ARRAY_SIZE(bast_clocks));
 
-	s3c_device_nand.dev.platform_data = &bast_nand_info;
-	s3c_device_i2c.dev.platform_data = &bast_i2c_info;
+	s3c_hwmon_set_platdata(&bast_hwmon_info);
 
 	s3c24xx_init_io(bast_iodesc, ARRAY_SIZE(bast_iodesc));
 	s3c24xx_init_clocks(0);
 	s3c24xx_init_uarts(bast_uartcfgs, ARRAY_SIZE(bast_uartcfgs));
-
-	usb_simtec_init();
 }
 
 static void __init bast_init(void)
 {
-	s3c24xx_fb_set_platdata(&bast_lcd_info);
+	sysdev_class_register(&bast_pm_sysclass);
+	sysdev_register(&bast_pm_sysdev);
+
+	s3c_i2c0_set_platdata(&bast_i2c_info);
+	s3c_nand_set_platdata(&bast_nand_info);
+	s3c24xx_fb_set_platdata(&bast_fb_info);
 	platform_add_devices(bast_devices, ARRAY_SIZE(bast_devices));
+
+	i2c_register_board_info(0, bast_i2c_devs,
+				ARRAY_SIZE(bast_i2c_devs));
+
+	usb_simtec_init();
+	nor_simtec_init();
+	simtec_audio_add(NULL, true, &bast_audio);
+
+	WARN_ON(gpio_request(S3C2410_GPA(21), "bast nreset"));
+	
+	s3c_cpufreq_setboard(&bast_cpufreq);
 }
 
 MACHINE_START(BAST, "Simtec-BAST")
 	/* Maintainer: Ben Dooks <ben@simtec.co.uk> */
-	.phys_io	= S3C2410_PA_UART,
-	.io_pg_offst	= (((u32)S3C24XX_VA_UART) >> 18) & 0xfffc,
 	.boot_params	= S3C2410_SDRAM_PA + 0x100,
 	.map_io		= bast_map_io,
 	.init_irq	= s3c24xx_init_irq,

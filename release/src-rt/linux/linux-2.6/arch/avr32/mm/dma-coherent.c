@@ -7,6 +7,7 @@
  */
 
 #include <linux/dma-mapping.h>
+#include <linux/gfp.h>
 
 #include <asm/addrspace.h>
 #include <asm/cacheflush.h>
@@ -21,13 +22,13 @@ void dma_cache_sync(struct device *dev, void *vaddr, size_t size, int direction)
 
 	switch (direction) {
 	case DMA_FROM_DEVICE:		/* invalidate only */
-		dma_cache_inv(vaddr, size);
+		invalidate_dcache_region(vaddr, size);
 		break;
 	case DMA_TO_DEVICE:		/* writeback only */
-		dma_cache_wback(vaddr, size);
+		clean_dcache_region(vaddr, size);
 		break;
 	case DMA_BIDIRECTIONAL:		/* writeback and invalidate */
-		dma_cache_wback_inv(vaddr, size);
+		flush_dcache_region(vaddr, size);
 		break;
 	default:
 		BUG();
@@ -40,6 +41,13 @@ static struct page *__dma_alloc(struct device *dev, size_t size,
 {
 	struct page *page, *free, *end;
 	int order;
+
+	/* Following is a work-around (a.k.a. hack) to prevent pages
+	 * with __GFP_COMP being passed to split_page() which cannot
+	 * handle them.  The real problem is that this flag probably
+	 * should be 0 on AVR32 as it is not supported on this
+	 * platform--see CONFIG_HUGETLB_PAGE. */
+	gfp &= ~(__GFP_COMP);
 
 	size = PAGE_ALIGN(size);
 	order = get_order(size);

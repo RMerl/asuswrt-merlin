@@ -30,15 +30,21 @@
  * ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
- *
- * $Id: uverbs_mem.c 2743 2005-06-28 22:27:59Z roland $
  */
 
 #include <linux/mm.h>
 #include <linux/dma-mapping.h>
 #include <linux/sched.h>
+#include <linux/hugetlb.h>
+#include <linux/dma-attrs.h>
+#include <linux/slab.h>
 
 #include "uverbs.h"
+
+#define IB_UMEM_MAX_PAGE_CHUNK						\
+	((PAGE_SIZE - offsetof(struct ib_umem_chunk, page_list)) /	\
+	 ((void *) &((struct ib_umem_chunk *) 0)->page_list[1] -	\
+	  (void *) &((struct ib_umem_chunk *) 0)->page_list[0]))
 
 static void __ib_umem_release(struct ib_device *dev, struct ib_umem *umem, int dirty)
 {
@@ -49,9 +55,11 @@ static void __ib_umem_release(struct ib_device *dev, struct ib_umem *umem, int d
 		ib_dma_unmap_sg(dev, chunk->page_list,
 				chunk->nents, DMA_BIDIRECTIONAL);
 		for (i = 0; i < chunk->nents; ++i) {
+			struct page *page = sg_page(&chunk->page_list[i]);
+
 			if (umem->writable && dirty)
-				set_page_dirty_lock(chunk->page_list[i].page);
-			put_page(chunk->page_list[i].page);
+				set_page_dirty_lock(page);
+			put_page(page);
 		}
 
 		kfree(chunk);
@@ -64,12 +72,14 @@ static void __ib_umem_release(struct ib_device *dev, struct ib_umem *umem, int d
  * @addr: userspace virtual address to start at
  * @size: length of region to pin
  * @access: IB_ACCESS_xxx flags for memory being pinned
+ * @dmasync: flush in-flight DMA when the memory region is written
  */
 struct ib_umem *ib_umem_get(struct ib_ucontext *context, unsigned long addr,
-			    size_t size, int access)
+			    size_t size, int access, int dmasync)
 {
 	struct ib_umem *umem;
 	struct page **page_list;
+	struct vm_area_struct **vma_list;
 	struct ib_umem_chunk *chunk;
 	unsigned long locked;
 	unsigned long lock_limit;
@@ -78,6 +88,10 @@ struct ib_umem *ib_umem_get(struct ib_ucontext *context, unsigned long addr,
 	int ret;
 	int off;
 	int i;
+	DEFINE_DMA_ATTRS(attrs);
+
+	if (dmasync)
+		dma_set_attr(DMA_ATTR_WRITE_BARRIER, &attrs);
 
 	if (!can_do_mlock())
 		return ERR_PTR(-EPERM);
@@ -99,6 +113,9 @@ struct ib_umem *ib_umem_get(struct ib_ucontext *context, unsigned long addr,
 	 */
 	umem->writable  = !!(access & ~IB_ACCESS_REMOTE_READ);
 
+	/* We assume the memory is from hugetlb until proved otherwise */
+	umem->hugetlb   = 1;
+
 	INIT_LIST_HEAD(&umem->chunk_list);
 
 	page_list = (struct page **) __get_free_page(GFP_KERNEL);
@@ -107,12 +124,20 @@ struct ib_umem *ib_umem_get(struct ib_ucontext *context, unsigned long addr,
 		return ERR_PTR(-ENOMEM);
 	}
 
+	/*
+	 * if we can't alloc the vma_list, it's not so bad;
+	 * just assume the memory is not hugetlb memory
+	 */
+	vma_list = (struct vm_area_struct **) __get_free_page(GFP_KERNEL);
+	if (!vma_list)
+		umem->hugetlb = 0;
+
 	npages = PAGE_ALIGN(size + umem->offset) >> PAGE_SHIFT;
 
 	down_write(&current->mm->mmap_sem);
 
 	locked     = npages + current->mm->locked_vm;
-	lock_limit = current->signal->rlim[RLIMIT_MEMLOCK].rlim_cur >> PAGE_SHIFT;
+	lock_limit = rlimit(RLIMIT_MEMLOCK) >> PAGE_SHIFT;
 
 	if ((locked > lock_limit) && !capable(CAP_IPC_LOCK)) {
 		ret = -ENOMEM;
@@ -121,11 +146,12 @@ struct ib_umem *ib_umem_get(struct ib_ucontext *context, unsigned long addr,
 
 	cur_base = addr & PAGE_MASK;
 
+	ret = 0;
 	while (npages) {
 		ret = get_user_pages(current, current->mm, cur_base,
-				     min_t(int, npages,
+				     min_t(unsigned long, npages,
 					   PAGE_SIZE / sizeof (struct page *)),
-				     1, !umem->writable, page_list, NULL);
+				     1, !umem->writable, page_list, vma_list);
 
 		if (ret < 0)
 			goto out;
@@ -145,19 +171,22 @@ struct ib_umem *ib_umem_get(struct ib_ucontext *context, unsigned long addr,
 			}
 
 			chunk->nents = min_t(int, ret, IB_UMEM_MAX_PAGE_CHUNK);
+			sg_init_table(chunk->page_list, chunk->nents);
 			for (i = 0; i < chunk->nents; ++i) {
-				chunk->page_list[i].page   = page_list[i + off];
-				chunk->page_list[i].offset = 0;
-				chunk->page_list[i].length = PAGE_SIZE;
+				if (vma_list &&
+				    !is_vm_hugetlb_page(vma_list[i + off]))
+					umem->hugetlb = 0;
+				sg_set_page(&chunk->page_list[i], page_list[i + off], PAGE_SIZE, 0);
 			}
 
-			chunk->nmap = ib_dma_map_sg(context->device,
-						    &chunk->page_list[0],
-						    chunk->nents,
-						    DMA_BIDIRECTIONAL);
+			chunk->nmap = ib_dma_map_sg_attrs(context->device,
+							  &chunk->page_list[0],
+							  chunk->nents,
+							  DMA_BIDIRECTIONAL,
+							  &attrs);
 			if (chunk->nmap <= 0) {
 				for (i = 0; i < chunk->nents; ++i)
-					put_page(chunk->page_list[i].page);
+					put_page(sg_page(&chunk->page_list[i]));
 				kfree(chunk);
 
 				ret = -ENOMEM;
@@ -180,6 +209,8 @@ out:
 		current->mm->locked_vm = locked;
 
 	up_write(&current->mm->mmap_sem);
+	if (vma_list)
+		free_page((unsigned long) vma_list);
 	free_page((unsigned long) page_list);
 
 	return ret < 0 ? ERR_PTR(ret) : umem;
@@ -231,7 +262,7 @@ void ib_umem_release(struct ib_umem *umem)
 			umem->mm   = mm;
 			umem->diff = diff;
 
-			schedule_work(&umem->work);
+			queue_work(ib_wq, &umem->work);
 			return;
 		}
 	} else

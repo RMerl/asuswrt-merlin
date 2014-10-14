@@ -18,12 +18,12 @@
  *
  */
 
-#include <sound/driver.h>
 #include <linux/init.h>
 #include <linux/platform_device.h>
 #include <linux/parport.h>
 #include <linux/spinlock.h>
 #include <linux/delay.h>
+#include <linux/slab.h>
 #include <sound/core.h>
 #include <sound/initval.h>
 #include <sound/rawmidi.h>
@@ -440,15 +440,7 @@ static void mts64_write_midi(struct mts64 *mts, u8 c,
  *********************************************************************/
 
 /* SMPTE Switch */
-static int snd_mts64_ctl_smpte_switch_info(struct snd_kcontrol *kctl,
-					   struct snd_ctl_elem_info *uinfo)
-{
-	uinfo->type = SNDRV_CTL_ELEM_TYPE_BOOLEAN;
-	uinfo->count = 1;
-	uinfo->value.integer.min = 0;
-	uinfo->value.integer.max = 1;
-	return 0;
-}
+#define snd_mts64_ctl_smpte_switch_info		snd_ctl_boolean_mono_info
 
 static int snd_mts64_ctl_smpte_switch_get(struct snd_kcontrol* kctl,
 					  struct snd_ctl_elem_value *uctl)
@@ -469,13 +461,14 @@ static int snd_mts64_ctl_smpte_switch_put(struct snd_kcontrol* kctl,
 {
 	struct mts64 *mts = snd_kcontrol_chip(kctl);
 	int changed = 0;
+	int val = !!uctl->value.integer.value[0];
 
 	spin_lock_irq(&mts->lock);
-	if (mts->smpte_switch == uctl->value.integer.value[0])
+	if (mts->smpte_switch == val)
 		goto __out;
 
 	changed = 1;
-	mts->smpte_switch = uctl->value.integer.value[0];
+	mts->smpte_switch = val;
 	if (mts->smpte_switch) {
 		mts64_smpte_start(mts->pardev->port,
 				  mts->time[0], mts->time[1],
@@ -549,12 +542,13 @@ static int snd_mts64_ctl_smpte_time_put(struct snd_kcontrol *kctl,
 {
 	struct mts64 *mts = snd_kcontrol_chip(kctl);
 	int idx = kctl->private_value;
+	unsigned int time = uctl->value.integer.value[0] % 60;
 	int changed = 0;
 
 	spin_lock_irq(&mts->lock);
-	if (mts->time[idx] != uctl->value.integer.value[0]) {
+	if (mts->time[idx] != time) {
 		changed = 1;
-		mts->time[idx] = uctl->value.integer.value[0];
+		mts->time[idx] = time;
 	}
 	spin_unlock_irq(&mts->lock);
 
@@ -644,6 +638,8 @@ static int snd_mts64_ctl_smpte_fps_put(struct snd_kcontrol *kctl,
 	struct mts64 *mts = snd_kcontrol_chip(kctl);
 	int changed = 0;
 
+	if (uctl->value.enumerated.item[0] >= 5)
+		return -EINVAL;
 	spin_lock_irq(&mts->lock);
 	if (mts->fps != uctl->value.enumerated.item[0]) {
 		changed = 1;
@@ -670,7 +666,7 @@ static int __devinit snd_mts64_ctl_create(struct snd_card *card,
 					  struct mts64 *mts) 
 {
 	int err, i;
-	static struct snd_kcontrol_new *control[] = {
+	static struct snd_kcontrol_new *control[] __devinitdata = {
 		&mts64_ctl_smpte_switch,
 		&mts64_ctl_smpte_time_hours,
 		&mts64_ctl_smpte_time_minutes,
@@ -838,7 +834,7 @@ static int __devinit snd_mts64_rawmidi_create(struct snd_card *card)
 /*********************************************************************
  * parport stuff
  *********************************************************************/
-static void snd_mts64_interrupt(int irq, void *private)
+static void snd_mts64_interrupt(void *private)
 {
 	struct mts64 *mts = ((struct snd_card*)private)->private_data;
 	u16 ret;
@@ -962,10 +958,10 @@ static int __devinit snd_mts64_probe(struct platform_device *pdev)
 	if ((err = snd_mts64_probe_port(p)) < 0)
 		return err;
 
-	card = snd_card_new(index[dev], id[dev], THIS_MODULE, 0);
-	if (card == NULL) {
+	err = snd_card_create(index[dev], id[dev], THIS_MODULE, 0, &card);
+	if (err < 0) {
 		snd_printd("Cannot create card\n");
-		return -ENOMEM;
+		return err;
 	}
 	strcpy(card->driver, DRIVER_NAME);
 	strcpy(card->shortname, "ESI " CARD_NAME);
@@ -1012,13 +1008,15 @@ static int __devinit snd_mts64_probe(struct platform_device *pdev)
 
 	platform_set_drvdata(pdev, card);
 
+	snd_card_set_dev(card, &pdev->dev);
+
 	/* At this point card will be usable */
 	if ((err = snd_card_register(card)) < 0) {
 		snd_printd("Cannot register card\n");
 		goto __err;
 	}
 
-	snd_printk("ESI Miditerminal 4140 on 0x%lx\n", p->base);
+	snd_printk(KERN_INFO "ESI Miditerminal 4140 on 0x%lx\n", p->base);
 	return 0;
 
 __err:

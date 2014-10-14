@@ -7,11 +7,11 @@
  * Copyright (C) 1999, 2000 Silicon Graphics, Inc.
  * Copyright (C) 2001 MIPS Technologies, Inc.
  */
-#include <linux/a.out.h>
 #include <linux/capability.h>
 #include <linux/errno.h>
 #include <linux/linkage.h>
 #include <linux/mm.h>
+#include <linux/fs.h>
 #include <linux/smp.h>
 #include <linux/mman.h>
 #include <linux/ptrace.h>
@@ -19,7 +19,6 @@
 #include <linux/string.h>
 #include <linux/syscalls.h>
 #include <linux/file.h>
-#include <linux/slab.h>
 #include <linux/utsname.h>
 #include <linux/unistd.h>
 #include <linux/sem.h>
@@ -27,11 +26,16 @@
 #include <linux/shm.h>
 #include <linux/compiler.h>
 #include <linux/module.h>
+#include <linux/ipc.h>
+#include <linux/uaccess.h>
+#include <linux/slab.h>
+#include <linux/random.h>
+#include <linux/elf.h>
 
+#include <asm/asm.h>
 #include <asm/branch.h>
 #include <asm/cachectl.h>
 #include <asm/cacheflush.h>
-#include <asm/ipc.h>
 #include <asm/asm-offsets.h>
 #include <asm/signal.h>
 #include <asm/sim.h>
@@ -39,12 +43,19 @@
 #include <asm/sysmips.h>
 #include <asm/uaccess.h>
 
-asmlinkage int sys_pipe(nabi_no_regargs volatile struct pt_regs regs)
+/*
+ * For historic reasons the pipe(2) syscall on MIPS has an unusual calling
+ * convention.  It returns results in registers $v0 / $v1 which means there
+ * is no need for it to do verify the validity of a userspace pointer
+ * argument.  Historically that used to be expensive in Linux.  These days
+ * the performance advantage is negligible.
+ */
+asmlinkage int sysm_pipe(nabi_no_regargs volatile struct pt_regs regs)
 {
 	int fd[2];
 	int error, res;
 
-	error = do_pipe(fd);
+	error = do_pipe_flags(fd, 0);
 	if (error) {
 		res = error;
 		goto out;
@@ -56,10 +67,8 @@ out:
 }
 
 unsigned long shm_align_mask = PAGE_SIZE - 1;	/* Sane caches */
-unsigned char shm_align_shift = PAGE_SHIFT;	/* Sane caches */
 
 EXPORT_SYMBOL(shm_align_mask);
-EXPORT_SYMBOL(shm_align_shift);
 
 #define COLOUR_ALIGN(addr,pgoff)				\
 	((((addr) + shm_align_mask) & ~shm_align_mask) +	\
@@ -109,7 +118,7 @@ unsigned long arch_get_unmapped_area(struct file *filp, unsigned long addr,
 		    (!vmm || addr + len <= vmm->vm_start))
 			return addr;
 	}
-	addr = TASK_UNMAPPED_BASE;
+	addr = current->mm->mmap_base;
 	if (do_color_align)
 		addr = COLOUR_ALIGN(addr, pgoff);
 	else
@@ -127,34 +136,54 @@ unsigned long arch_get_unmapped_area(struct file *filp, unsigned long addr,
 	}
 }
 
-/* common code for old and new mmaps */
-static inline unsigned long
-do_mmap2(unsigned long addr, unsigned long len, unsigned long prot,
-        unsigned long flags, unsigned long fd, unsigned long pgoff)
+void arch_pick_mmap_layout(struct mm_struct *mm)
 {
-	unsigned long error = -EBADF;
-	struct file * file = NULL;
+	unsigned long random_factor = 0UL;
 
-	flags &= ~(MAP_EXECUTABLE | MAP_DENYWRITE);
-	if (!(flags & MAP_ANONYMOUS)) {
-		file = fget(fd);
-		if (!file)
-			goto out;
+	if (current->flags & PF_RANDOMIZE) {
+		random_factor = get_random_int();
+		random_factor = random_factor << PAGE_SHIFT;
+		if (TASK_IS_32BIT_ADDR)
+			random_factor &= 0xfffffful;
+		else
+			random_factor &= 0xffffffful;
 	}
 
-	down_write(&current->mm->mmap_sem);
-	error = do_mmap_pgoff(file, addr, len, prot, flags, pgoff);
-	up_write(&current->mm->mmap_sem);
-
-	if (file)
-		fput(file);
-out:
-	return error;
+	mm->mmap_base = TASK_UNMAPPED_BASE + random_factor;
+	mm->get_unmapped_area = arch_get_unmapped_area;
+	mm->unmap_area = arch_unmap_area;
 }
 
-asmlinkage unsigned long
-old_mmap(unsigned long addr, unsigned long len, int prot,
-	int flags, int fd, off_t offset)
+static inline unsigned long brk_rnd(void)
+{
+	unsigned long rnd = get_random_int();
+
+	rnd = rnd << PAGE_SHIFT;
+	/* 8MB for 32bit, 256MB for 64bit */
+	if (TASK_IS_32BIT_ADDR)
+		rnd = rnd & 0x7ffffful;
+	else
+		rnd = rnd & 0xffffffful;
+
+	return rnd;
+}
+
+unsigned long arch_randomize_brk(struct mm_struct *mm)
+{
+	unsigned long base = mm->brk;
+	unsigned long ret;
+
+	ret = PAGE_ALIGN(base + brk_rnd());
+
+	if (ret < mm->brk)
+		return mm->brk;
+
+	return ret;
+}
+
+SYSCALL_DEFINE6(mips_mmap, unsigned long, addr, unsigned long, len,
+	unsigned long, prot, unsigned long, flags, unsigned long,
+	fd, off_t, offset)
 {
 	unsigned long result;
 
@@ -162,31 +191,31 @@ old_mmap(unsigned long addr, unsigned long len, int prot,
 	if (offset & ~PAGE_MASK)
 		goto out;
 
-	result = do_mmap2(addr, len, prot, flags, fd, offset >> PAGE_SHIFT);
+	result = sys_mmap_pgoff(addr, len, prot, flags, fd, offset >> PAGE_SHIFT);
 
 out:
 	return result;
 }
 
-asmlinkage unsigned long
-sys_mmap2(unsigned long addr, unsigned long len, unsigned long prot,
-          unsigned long flags, unsigned long fd, unsigned long pgoff)
+SYSCALL_DEFINE6(mips_mmap2, unsigned long, addr, unsigned long, len,
+	unsigned long, prot, unsigned long, flags, unsigned long, fd,
+	unsigned long, pgoff)
 {
 	if (pgoff & (~PAGE_MASK >> 12))
 		return -EINVAL;
 
-	return do_mmap2(addr, len, prot, flags, fd, pgoff >> (PAGE_SHIFT-12));
+	return sys_mmap_pgoff(addr, len, prot, flags, fd, pgoff >> (PAGE_SHIFT-12));
 }
 
 save_static_function(sys_fork);
-__attribute_used__ noinline static int
+static int __used noinline
 _sys_fork(nabi_no_regargs struct pt_regs regs)
 {
 	return do_fork(SIGCHLD, regs.regs[29], &regs, 0, NULL, NULL);
 }
 
 save_static_function(sys_clone);
-__attribute_used__ noinline static int
+static int __used noinline
 _sys_clone(nabi_no_regargs struct pt_regs regs)
 {
 	unsigned long clone_flags;
@@ -225,61 +254,21 @@ asmlinkage int sys_execve(nabi_no_regargs struct pt_regs regs)
 	int error;
 	char * filename;
 
-	filename = getname((char __user *) (long)regs.regs[4]);
+	filename = getname((const char __user *) (long)regs.regs[4]);
 	error = PTR_ERR(filename);
 	if (IS_ERR(filename))
 		goto out;
-	error = do_execve(filename, (char __user *__user *) (long)regs.regs[5],
-	                  (char __user *__user *) (long)regs.regs[6], &regs);
+	error = do_execve(filename,
+			  (const char __user *const __user *) (long)regs.regs[5],
+	                  (const char __user *const __user *) (long)regs.regs[6],
+			  &regs);
 	putname(filename);
 
 out:
 	return error;
 }
 
-/*
- * Compacrapability ...
- */
-asmlinkage int sys_uname(struct old_utsname __user * name)
-{
-	if (name && !copy_to_user(name, utsname(), sizeof (*name)))
-		return 0;
-	return -EFAULT;
-}
-
-/*
- * Compacrapability ...
- */
-asmlinkage int sys_olduname(struct oldold_utsname __user * name)
-{
-	int error;
-
-	if (!name)
-		return -EFAULT;
-	if (!access_ok(VERIFY_WRITE,name,sizeof(struct oldold_utsname)))
-		return -EFAULT;
-
-	error = __copy_to_user(&name->sysname, &utsname()->sysname,
-			       __OLD_UTS_LEN);
-	error -= __put_user(0, name->sysname + __OLD_UTS_LEN);
-	error -= __copy_to_user(&name->nodename, &utsname()->nodename,
-				__OLD_UTS_LEN);
-	error -= __put_user(0, name->nodename + __OLD_UTS_LEN);
-	error -= __copy_to_user(&name->release, &utsname()->release,
-				__OLD_UTS_LEN);
-	error -= __put_user(0, name->release + __OLD_UTS_LEN);
-	error -= __copy_to_user(&name->version, &utsname()->version,
-				__OLD_UTS_LEN);
-	error -= __put_user(0, name->version + __OLD_UTS_LEN);
-	error -= __copy_to_user(&name->machine, &utsname()->machine,
-				__OLD_UTS_LEN);
-	error = __put_user(0, name->machine + __OLD_UTS_LEN);
-	error = error ? -EFAULT : 0;
-
-	return error;
-}
-
-asmlinkage int sys_set_thread_area(unsigned long addr)
+SYSCALL_DEFINE1(set_thread_area, unsigned long, addr)
 {
 	struct thread_info *ti = task_thread_info(current);
 
@@ -290,18 +279,133 @@ asmlinkage int sys_set_thread_area(unsigned long addr)
 	return 0;
 }
 
-asmlinkage int _sys_sysmips(int cmd, long arg1, int arg2, int arg3)
+static inline int mips_atomic_set(struct pt_regs *regs,
+	unsigned long addr, unsigned long new)
 {
-	int	tmp;
+	unsigned long old, tmp;
+	unsigned int err;
 
-	switch(cmd) {
-	case MIPS_ATOMIC_SET:
-		printk(KERN_CRIT "How did I get here?\n");
+	if (unlikely(addr & 3))
 		return -EINVAL;
 
+	if (unlikely(!access_ok(VERIFY_WRITE, addr, 4)))
+		return -EINVAL;
+
+	if (cpu_has_llsc && R10000_LLSC_WAR) {
+		__asm__ __volatile__ (
+		"	.set	mips3					\n"
+		"	li	%[err], 0				\n"
+		"1:	ll	%[old], (%[addr])			\n"
+		"	move	%[tmp], %[new]				\n"
+		"2:	sc	%[tmp], (%[addr])			\n"
+		"	beqzl	%[tmp], 1b				\n"
+		"3:							\n"
+		"	.section .fixup,\"ax\"				\n"
+		"4:	li	%[err], %[efault]			\n"
+		"	j	3b					\n"
+		"	.previous					\n"
+		"	.section __ex_table,\"a\"			\n"
+		"	"STR(PTR)"	1b, 4b				\n"
+		"	"STR(PTR)"	2b, 4b				\n"
+		"	.previous					\n"
+		"	.set	mips0					\n"
+		: [old] "=&r" (old),
+		  [err] "=&r" (err),
+		  [tmp] "=&r" (tmp)
+		: [addr] "r" (addr),
+		  [new] "r" (new),
+		  [efault] "i" (-EFAULT)
+		: "memory");
+	} else if (cpu_has_llsc) {
+		__asm__ __volatile__ (
+		"	.set	mips3					\n"
+		"	li	%[err], 0				\n"
+		"1:	ll	%[old], (%[addr])			\n"
+		"	move	%[tmp], %[new]				\n"
+		"2:	sc	%[tmp], (%[addr])			\n"
+		"	bnez	%[tmp], 4f				\n"
+		"3:							\n"
+		"	.subsection 2					\n"
+		"4:	b	1b					\n"
+		"	.previous					\n"
+		"							\n"
+		"	.section .fixup,\"ax\"				\n"
+		"5:	li	%[err], %[efault]			\n"
+		"	j	3b					\n"
+		"	.previous					\n"
+		"	.section __ex_table,\"a\"			\n"
+		"	"STR(PTR)"	1b, 5b				\n"
+		"	"STR(PTR)"	2b, 5b				\n"
+		"	.previous					\n"
+		"	.set	mips0					\n"
+		: [old] "=&r" (old),
+		  [err] "=&r" (err),
+		  [tmp] "=&r" (tmp)
+		: [addr] "r" (addr),
+		  [new] "r" (new),
+		  [efault] "i" (-EFAULT)
+		: "memory");
+	} else {
+		do {
+			preempt_disable();
+			ll_bit = 1;
+			ll_task = current;
+			preempt_enable();
+
+			err = __get_user(old, (unsigned int *) addr);
+			err |= __put_user(new, (unsigned int *) addr);
+			if (err)
+				break;
+			rmb();
+		} while (!ll_bit);
+	}
+
+	if (unlikely(err))
+		return err;
+
+	regs->regs[2] = old;
+	regs->regs[7] = 0;	/* No error */
+
+	/*
+	 * Don't let your children do this ...
+	 */
+	__asm__ __volatile__(
+	"	move	$29, %0						\n"
+	"	j	syscall_exit					\n"
+	: /* no outputs */
+	: "r" (regs));
+
+	/* unreached.  Honestly.  */
+	while (1);
+}
+
+save_static_function(sys_sysmips);
+static int __used noinline
+_sys_sysmips(nabi_no_regargs struct pt_regs regs)
+{
+	long cmd, arg1, arg2;
+
+	cmd = regs.regs[4];
+	arg1 = regs.regs[5];
+	arg2 = regs.regs[6];
+
+	switch (cmd) {
+	case MIPS_ATOMIC_SET:
+		return mips_atomic_set(&regs, arg1, arg2);
+
 	case MIPS_FIXADE:
-		tmp = current->thread.mflags & ~3;
-		current->thread.mflags = tmp | (arg1 & 3);
+		if (arg1 & ~3)
+			return -EINVAL;
+
+		if (arg1 & 1)
+			set_thread_flag(TIF_FIXADE);
+		else
+			clear_thread_flag(TIF_FIXADE);
+		if (arg1 & 2)
+			set_thread_flag(TIF_LOGADE);
+		else
+			clear_thread_flag(TIF_LOGADE);
+
 		return 0;
 
 	case FLUSH_CACHE:
@@ -313,97 +417,9 @@ asmlinkage int _sys_sysmips(int cmd, long arg1, int arg2, int arg3)
 }
 
 /*
- * sys_ipc() is the de-multiplexer for the SysV IPC calls..
- *
- * This is really horribly ugly.
- */
-asmlinkage int sys_ipc (unsigned int call, int first, int second,
-			unsigned long third, void __user *ptr, long fifth)
-{
-	int version, ret;
-
-	version = call >> 16; /* hack for backward compatibility */
-	call &= 0xffff;
-
-	switch (call) {
-	case SEMOP:
-		return sys_semtimedop (first, (struct sembuf __user *)ptr,
-		                       second, NULL);
-	case SEMTIMEDOP:
-		return sys_semtimedop (first, (struct sembuf __user *)ptr,
-				       second,
-				       (const struct timespec __user *)fifth);
-	case SEMGET:
-		return sys_semget (first, second, third);
-	case SEMCTL: {
-		union semun fourth;
-		if (!ptr)
-			return -EINVAL;
-		if (get_user(fourth.__pad, (void __user *__user *) ptr))
-			return -EFAULT;
-		return sys_semctl (first, second, third, fourth);
-	}
-
-	case MSGSND:
-		return sys_msgsnd (first, (struct msgbuf __user *) ptr,
-				   second, third);
-	case MSGRCV:
-		switch (version) {
-		case 0: {
-			struct ipc_kludge tmp;
-			if (!ptr)
-				return -EINVAL;
-
-			if (copy_from_user(&tmp,
-					   (struct ipc_kludge __user *) ptr,
-					   sizeof (tmp)))
-				return -EFAULT;
-			return sys_msgrcv (first, tmp.msgp, second,
-					   tmp.msgtyp, third);
-		}
-		default:
-			return sys_msgrcv (first,
-					   (struct msgbuf __user *) ptr,
-					   second, fifth, third);
-		}
-	case MSGGET:
-		return sys_msgget ((key_t) first, second);
-	case MSGCTL:
-		return sys_msgctl (first, second,
-				   (struct msqid_ds __user *) ptr);
-
-	case SHMAT:
-		switch (version) {
-		default: {
-			unsigned long raddr;
-			ret = do_shmat (first, (char __user *) ptr, second,
-					&raddr);
-			if (ret)
-				return ret;
-			return put_user (raddr, (unsigned long __user *) third);
-		}
-		case 1:	/* iBCS2 emulator entry point */
-			if (!segment_eq(get_fs(), get_ds()))
-				return -EINVAL;
-			return do_shmat (first, (char __user *) ptr, second,
-					 (unsigned long *) third);
-		}
-	case SHMDT:
-		return sys_shmdt ((char __user *)ptr);
-	case SHMGET:
-		return sys_shmget (first, second, third);
-	case SHMCTL:
-		return sys_shmctl (first, second,
-				   (struct shmid_ds __user *) ptr);
-	default:
-		return -ENOSYS;
-	}
-}
-
-/*
  * No implemented yet ...
  */
-asmlinkage int sys_cachectl(char *addr, int nbytes, int op)
+SYSCALL_DEFINE3(cachectl, char *, addr, int, nbytes, int, op)
 {
 	return -ENOSYS;
 }
@@ -421,7 +437,9 @@ asmlinkage void bad_stack(void)
  * Do a system call from kernel instead of calling sys_execve so we
  * end up with proper pt_regs.
  */
-int kernel_execve(const char *filename, char *const argv[], char *const envp[])
+int kernel_execve(const char *filename,
+		  const char *const argv[],
+		  const char *const envp[])
 {
 	register unsigned long __a0 asm("$4") = (unsigned long) filename;
 	register unsigned long __a1 asm("$5") = (unsigned long) argv;
@@ -445,56 +463,3 @@ int kernel_execve(const char *filename, char *const argv[], char *const envp[])
 
 	return -__v0;
 }
-
-/*
- * Build the string table for the builtin "poor man's strace".
- */
-#ifdef CONFIG_PRINT_SYSCALLS
-#define SYS(fun, narg) #fun,
-static char *sfnames[] = {
-#include "syscalls.h"
-};
-
-#ifdef	CONFIG_HWSIM
-int do_strace = 1;
-#else
-int do_strace = 0;
-#endif
-
-asmlinkage void strace(struct pt_regs *regs)
-{
-	int i;
-	unsigned long scn, narg, *pa0;
-	char *name, space[16];
-	extern char sys_call_table[];
-
-	if (do_strace == 0)
-		return;
-
-	scn = regs->regs[2];
-	pa0 = &regs->regs[4];
-
-	if ((scn >= __NR_Linux)  && (scn < (__NR_Linux + __NR_Linux_syscalls))) {
-		name = sfnames[scn - __NR_Linux];
-		narg = *(unsigned long *)(((char *)(&sys_call_table[scn])) + 4);
-	} else {
-		sprintf(space, "sc%lu", scn);
-		name = space;
-		narg = 0;
-	}
-
-	printk("%lu[%s:%d]@0x%08lx: %s(", jiffies, current->comm, current->pid, regs->cp0_epc, name);
-
-	if (narg > 6) narg = 6;
-
-	for (i = 0; i < narg; i++) {
-		if (i) printk(", ");
-		if (i < 4)
-			printk("0x%08lx", pa0[i]);
-		else
-			printk("0x%08lx", regs->pad0[i]);
-	}
-
-	printk(")\n");
-}
-#endif

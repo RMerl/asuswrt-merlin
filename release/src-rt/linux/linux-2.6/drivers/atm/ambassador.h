@@ -626,7 +626,7 @@ typedef struct {
 
 struct amb_dev {
   u8               irq;
-  long		   flags;
+  unsigned long	   flags;
   u32              iobase;
   u32 *            membase;
 
@@ -638,7 +638,7 @@ struct amb_dev {
   amb_txq          txq;
   amb_rxq          rxq[NUM_RX_POOLS];
   
-  struct semaphore vcc_sf;
+  struct mutex     vcc_sf;
   amb_tx_info      txer[NUM_VCS];
   struct atm_vcc * rxer[NUM_VCS];
   unsigned int     tx_avail;
@@ -655,17 +655,6 @@ typedef struct amb_dev amb_dev;
 
 #define AMB_DEV(atm_dev) ((amb_dev *) (atm_dev)->dev_data)
 #define AMB_VCC(atm_vcc) ((amb_vcc *) (atm_vcc)->dev_data)
-
-/* the microcode */
-
-typedef struct {
-  u32 start;
-  unsigned int count;
-} region;
-
-static region ucode_regions[];
-static u32 ucode_data[];
-static u32 ucode_start;
 
 /* rate rounding */
 

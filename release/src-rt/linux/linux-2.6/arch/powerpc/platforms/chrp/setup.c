@@ -15,16 +15,14 @@
 #include <linux/stddef.h>
 #include <linux/unistd.h>
 #include <linux/ptrace.h>
-#include <linux/slab.h>
 #include <linux/user.h>
-#include <linux/a.out.h>
 #include <linux/tty.h>
 #include <linux/major.h>
 #include <linux/interrupt.h>
 #include <linux/reboot.h>
 #include <linux/init.h>
 #include <linux/pci.h>
-#include <linux/utsrelease.h>
+#include <generated/utsrelease.h>
 #include <linux/adb.h>
 #include <linux/module.h>
 #include <linux/delay.h>
@@ -32,13 +30,11 @@
 #include <linux/seq_file.h>
 #include <linux/root_dev.h>
 #include <linux/initrd.h>
-#include <linux/module.h>
 #include <linux/timer.h>
 
 #include <asm/io.h>
 #include <asm/pgtable.h>
 #include <asm/prom.h>
-#include <asm/gg2.h>
 #include <asm/pci-bridge.h>
 #include <asm/dma.h>
 #include <asm/machdep.h>
@@ -52,6 +48,7 @@
 #include <asm/xmon.h>
 
 #include "chrp.h"
+#include "gg2.h"
 
 void rtas_indicator_progress(char *, unsigned short);
 
@@ -63,13 +60,6 @@ static struct mpic *chrp_mpic;
 /* Used for doing CHRP event-scans */
 DEFINE_PER_CPU(struct timer_list, heartbeat_timer);
 unsigned long event_scan_interval;
-
-/*
- * XXX this should be in xmon.h, but putting it there means xmon.h
- * has to include <linux/interrupt.h> (to get irqreturn_t), which
- * causes all sorts of problems.  -- paulus
- */
-extern irqreturn_t xmon_irq(int, void *);
 
 extern unsigned long loops_per_jiffy;
 
@@ -116,7 +106,7 @@ void chrp_show_cpuinfo(struct seq_file *m)
 	seq_printf(m, "machine\t\t: CHRP %s\n", model);
 
 	/* longtrail (goldengate) stuff */
-	if (!strncmp(model, "IBM,LongTrail", 13)) {
+	if (model && !strncmp(model, "IBM,LongTrail", 13)) {
 		/* VLSI VAS96011/12 `Golden Gate 2' */
 		/* Memory banks */
 		sdramen = (in_le32(gg2_pci_config_base + GG2_PCI_DRAM_CTRL)
@@ -204,15 +194,20 @@ static void __init sio_fixup_irq(const char *name, u8 device, u8 level,
 static void __init sio_init(void)
 {
 	struct device_node *root;
+	const char *model;
 
-	if ((root = of_find_node_by_path("/")) &&
-	    !strncmp(of_get_property(root, "model", NULL),
-			"IBM,LongTrail", 13)) {
+	root = of_find_node_by_path("/");
+	if (!root)
+		return;
+
+	model = of_get_property(root, "model", NULL);
+	if (model && !strncmp(model, "IBM,LongTrail", 13)) {
 		/* logical device 0 (KBC/Keyboard) */
 		sio_fixup_irq("keyboard", 0, 1, 2);
 		/* select logical device 1 (KBC/Mouse) */
 		sio_fixup_irq("mouse", 1, 12, 2);
 	}
+
 	of_node_put(root);
 }
 
@@ -250,6 +245,57 @@ static void briq_restart(char *cmd)
 	if (briq_SPOR)
 		out_be32(briq_SPOR, 0);
 	for(;;);
+}
+
+/*
+ * Per default, input/output-device points to the keyboard/screen
+ * If no card is installed, the built-in serial port is used as a fallback.
+ * But unfortunately, the firmware does not connect /chosen/{stdin,stdout}
+ * the the built-in serial node. Instead, a /failsafe node is created.
+ */
+static void chrp_init_early(void)
+{
+	struct device_node *node;
+	const char *property;
+
+	if (strstr(cmd_line, "console="))
+		return;
+	/* find the boot console from /chosen/stdout */
+	if (!of_chosen)
+		return;
+	node = of_find_node_by_path("/");
+	if (!node)
+		return;
+	property = of_get_property(node, "model", NULL);
+	if (!property)
+		goto out_put;
+	if (strcmp(property, "Pegasos2"))
+		goto out_put;
+	/* this is a Pegasos2 */
+	property = of_get_property(of_chosen, "linux,stdout-path", NULL);
+	if (!property)
+		goto out_put;
+	of_node_put(node);
+	node = of_find_node_by_path(property);
+	if (!node)
+		return;
+	property = of_get_property(node, "device_type", NULL);
+	if (!property)
+		goto out_put;
+	if (strcmp(property, "serial"))
+		goto out_put;
+	/*
+	 * The 9pin connector is either /failsafe
+	 * or /pci@80000000/isa@C/serial@i2F8
+	 * The optional graphics card has also type 'serial' in VGA mode.
+	 */
+	property = of_get_property(node, "name", NULL);
+	if (!property)
+		goto out_put;
+	if (!strcmp(property, "failsafe") || !strcmp(property, "serial"))
+		add_preferred_console("ttyS", 0, NULL);
+out_put:
+	of_node_put(node);
 }
 
 void __init chrp_setup_arch(void)
@@ -291,16 +337,6 @@ void __init chrp_setup_arch(void)
 		ppc_md.set_rtc_time	= rtas_set_rtc_time;
 	}
 
-#ifdef CONFIG_BLK_DEV_INITRD
-	/* this is fine for chrp */
-	initrd_below_start_ok = 1;
-
-	if (initrd_start)
-		ROOT_DEV = Root_RAM0;
-	else
-#endif
-		ROOT_DEV = Root_SDA2; /* sda2 (sda1 is for the kernel) */
-
 	/* On pegasos, enable the L2 cache if not already done by OF */
 	pegasos_set_l2cr();
 
@@ -327,25 +363,15 @@ void __init chrp_setup_arch(void)
 	if (ppc_md.progress) ppc_md.progress("Linux/PPC "UTS_RELEASE"\n", 0x0);
 }
 
-void
-chrp_event_scan(unsigned long unused)
-{
-	unsigned char log[1024];
-	int ret = 0;
-
-	/* XXX: we should loop until the hardware says no more error logs -- Cort */
-	rtas_call(rtas_token("event-scan"), 4, 1, &ret, 0xffffffff, 0,
-		  __pa(log), 1024);
-	mod_timer(&__get_cpu_var(heartbeat_timer),
-		  jiffies + event_scan_interval);
-}
-
 static void chrp_8259_cascade(unsigned int irq, struct irq_desc *desc)
 {
+	struct irq_chip *chip = irq_desc_get_chip(desc);
 	unsigned int cascade_irq = i8259_irq();
+
 	if (cascade_irq != NO_IRQ)
 		generic_handle_irq(cascade_irq);
-	desc->chip->eoi(irq);
+
+	chip->irq_eoi(&desc->irq_data);
 }
 
 /*
@@ -435,7 +461,6 @@ static void __init chrp_find_openpic(void)
 #if defined(CONFIG_VT) && defined(CONFIG_INPUT_ADBHID) && defined(CONFIG_XMON)
 static struct irqaction xmon_irqaction = {
 	.handler = xmon_irq,
-	.mask = CPU_MASK_NONE,
 	.name = "XMON break",
 };
 #endif
@@ -492,7 +517,7 @@ static void __init chrp_find_8259(void)
 		if (cascade_irq == NO_IRQ)
 			printk(KERN_ERR "i8259: failed to map cascade irq\n");
 		else
-			set_irq_chained_handler(cascade_irq,
+			irq_set_chained_handler(cascade_irq,
 						chrp_8259_cascade);
 	}
 }
@@ -532,9 +557,6 @@ void __init chrp_init_IRQ(void)
 void __init
 chrp_init2(void)
 {
-	struct device_node *device;
-	const unsigned int *p = NULL;
-
 #ifdef CONFIG_NVRAM
 	chrp_nvram_init();
 #endif
@@ -545,40 +567,6 @@ chrp_init2(void)
 	request_region(0x40,0x20,"timer");
 	request_region(0x80,0x10,"dma page reg");
 	request_region(0xc0,0x20,"dma2");
-
-	/* Get the event scan rate for the rtas so we know how
-	 * often it expects a heartbeat. -- Cort
-	 */
-	device = of_find_node_by_name(NULL, "rtas");
-	if (device)
-		p = of_get_property(device, "rtas-event-scan-rate", NULL);
-	if (p && *p) {
-		/*
-		 * Arrange to call chrp_event_scan at least *p times
-		 * per minute.  We use 59 rather than 60 here so that
-		 * the rate will be slightly higher than the minimum.
-		 * This all assumes we don't do hotplug CPU on any
-		 * machine that needs the event scans done.
-		 */
-		unsigned long interval, offset;
-		int cpu, ncpus;
-		struct timer_list *timer;
-
-		interval = HZ * 59 / *p;
-		offset = HZ;
-		ncpus = num_online_cpus();
-		event_scan_interval = ncpus * interval;
-		for (cpu = 0; cpu < ncpus; ++cpu) {
-			timer = &per_cpu(heartbeat_timer, cpu);
-			setup_timer(timer, chrp_event_scan, 0);
-			timer->expires = jiffies + offset;
-			add_timer_on(timer, cpu);
-			offset += interval;
-		}
-		printk("RTAS Event Scan Rate: %u (%lu jiffies)\n",
-		       *p, interval);
-	}
-	of_node_put(device);
 
 	if (ppc_md.progress)
 		ppc_md.progress("  Have fun!    ", 0x7777);
@@ -605,6 +593,7 @@ define_machine(chrp) {
 	.probe			= chrp_probe,
 	.setup_arch		= chrp_setup_arch,
 	.init			= chrp_init2,
+	.init_early		= chrp_init_early,
 	.show_cpuinfo		= chrp_show_cpuinfo,
 	.init_IRQ		= chrp_init_IRQ,
 	.restart		= rtas_restart,

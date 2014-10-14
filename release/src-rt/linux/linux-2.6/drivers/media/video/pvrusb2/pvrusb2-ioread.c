@@ -1,6 +1,5 @@
 /*
  *
- *  $Id$
  *
  *  Copyright (C) 2005 Mike Isely <isely@pobox.com>
  *
@@ -23,6 +22,7 @@
 #include "pvrusb2-debug.h"
 #include <linux/errno.h>
 #include <linux/string.h>
+#include <linux/mm.h>
 #include <linux/slab.h>
 #include <linux/mutex.h>
 #include <asm/uaccess.h>
@@ -165,7 +165,7 @@ static int pvr2_ioread_start(struct pvr2_ioread *cp)
 	if (!(cp->stream)) return 0;
 	pvr2_trace(PVR2_TRACE_START_STOP,
 		   "/*---TRACE_READ---*/ pvr2_ioread_start id=%p",cp);
-	while ((bp = pvr2_stream_get_idle_buffer(cp->stream)) != 0) {
+	while ((bp = pvr2_stream_get_idle_buffer(cp->stream)) != NULL) {
 		stat = pvr2_buffer_queue(bp);
 		if (stat < 0) {
 			pvr2_trace(PVR2_TRACE_DATA_FLOW,
@@ -223,7 +223,10 @@ int pvr2_ioread_setup(struct pvr2_ioread *cp,struct pvr2_stream *sp)
 				   " pvr2_ioread_setup (setup) id=%p",cp);
 			pvr2_stream_kill(sp);
 			ret = pvr2_stream_set_buffer_count(sp,BUFFER_COUNT);
-			if (ret < 0) return ret;
+			if (ret < 0) {
+				mutex_unlock(&cp->mutex);
+				return ret;
+			}
 			for (idx = 0; idx < BUFFER_COUNT; idx++) {
 				bp = pvr2_stream_get_buffer(sp,idx);
 				pvr2_buffer_set_buffer(bp,

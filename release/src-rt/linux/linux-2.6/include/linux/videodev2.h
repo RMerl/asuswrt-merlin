@@ -70,6 +70,7 @@
  * Moved from videodev.h
  */
 #define VIDEO_MAX_FRAME               32
+#define VIDEO_MAX_PLANES               8
 
 #ifndef __KERNEL__
 
@@ -157,18 +158,22 @@ enum v4l2_buf_type {
 	/* Experimental */
 	V4L2_BUF_TYPE_VIDEO_OUTPUT_OVERLAY = 8,
 #endif
+	V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE = 9,
+	V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE  = 10,
 	V4L2_BUF_TYPE_PRIVATE              = 0x80,
 };
 
-enum v4l2_ctrl_type {
-	V4L2_CTRL_TYPE_INTEGER	     = 1,
-	V4L2_CTRL_TYPE_BOOLEAN	     = 2,
-	V4L2_CTRL_TYPE_MENU	     = 3,
-	V4L2_CTRL_TYPE_BUTTON	     = 4,
-	V4L2_CTRL_TYPE_INTEGER64     = 5,
-	V4L2_CTRL_TYPE_CTRL_CLASS    = 6,
-	V4L2_CTRL_TYPE_STRING        = 7,
-};
+#define V4L2_TYPE_IS_MULTIPLANAR(type)			\
+	((type) == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE	\
+	 || (type) == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE)
+
+#define V4L2_TYPE_IS_OUTPUT(type)				\
+	((type) == V4L2_BUF_TYPE_VIDEO_OUTPUT			\
+	 || (type) == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE		\
+	 || (type) == V4L2_BUF_TYPE_VIDEO_OVERLAY		\
+	 || (type) == V4L2_BUF_TYPE_VIDEO_OUTPUT_OVERLAY	\
+	 || (type) == V4L2_BUF_TYPE_VBI_OUTPUT			\
+	 || (type) == V4L2_BUF_TYPE_SLICED_VBI_OUTPUT)
 
 enum v4l2_tuner_type {
 	V4L2_TUNER_RADIO	     = 1,
@@ -255,6 +260,11 @@ struct v4l2_capability {
 #define V4L2_CAP_HW_FREQ_SEEK		0x00000400  /* Can do hardware frequency seek  */
 #define V4L2_CAP_RDS_OUTPUT		0x00000800  /* Is an RDS encoder */
 
+/* Is a video capture device that supports multiplanar formats */
+#define V4L2_CAP_VIDEO_CAPTURE_MPLANE	0x00001000
+/* Is a video output device that supports multiplanar formats */
+#define V4L2_CAP_VIDEO_OUTPUT_MPLANE	0x00002000
+
 #define V4L2_CAP_TUNER			0x00010000  /* has a tuner */
 #define V4L2_CAP_AUDIO			0x00020000  /* has audio support */
 #define V4L2_CAP_RADIO			0x00040000  /* is a radio device */
@@ -287,6 +297,7 @@ struct v4l2_pix_format {
 #define V4L2_PIX_FMT_RGB565  v4l2_fourcc('R', 'G', 'B', 'P') /* 16  RGB-5-6-5     */
 #define V4L2_PIX_FMT_RGB555X v4l2_fourcc('R', 'G', 'B', 'Q') /* 16  RGB-5-5-5 BE  */
 #define V4L2_PIX_FMT_RGB565X v4l2_fourcc('R', 'G', 'B', 'R') /* 16  RGB-5-6-5 BE  */
+#define V4L2_PIX_FMT_BGR666  v4l2_fourcc('B', 'G', 'R', 'H') /* 18  BGR-6-6-6	  */
 #define V4L2_PIX_FMT_BGR24   v4l2_fourcc('B', 'G', 'R', '3') /* 24  BGR-8-8-8     */
 #define V4L2_PIX_FMT_RGB24   v4l2_fourcc('R', 'G', 'B', '3') /* 24  RGB-8-8-8     */
 #define V4L2_PIX_FMT_BGR32   v4l2_fourcc('B', 'G', 'R', '4') /* 32  BGR-8-8-8-8   */
@@ -297,6 +308,7 @@ struct v4l2_pix_format {
 #define V4L2_PIX_FMT_Y4      v4l2_fourcc('Y', '0', '4', ' ') /*  4  Greyscale     */
 #define V4L2_PIX_FMT_Y6      v4l2_fourcc('Y', '0', '6', ' ') /*  6  Greyscale     */
 #define V4L2_PIX_FMT_Y10     v4l2_fourcc('Y', '1', '0', ' ') /* 10  Greyscale     */
+#define V4L2_PIX_FMT_Y12     v4l2_fourcc('Y', '1', '2', ' ') /* 12  Greyscale     */
 #define V4L2_PIX_FMT_Y16     v4l2_fourcc('Y', '1', '6', ' ') /* 16  Greyscale     */
 
 /* Palette formats */
@@ -328,6 +340,13 @@ struct v4l2_pix_format {
 #define V4L2_PIX_FMT_NV16    v4l2_fourcc('N', 'V', '1', '6') /* 16  Y/CbCr 4:2:2  */
 #define V4L2_PIX_FMT_NV61    v4l2_fourcc('N', 'V', '6', '1') /* 16  Y/CrCb 4:2:2  */
 
+/* two non contiguous planes - one Y, one Cr + Cb interleaved  */
+#define V4L2_PIX_FMT_NV12M   v4l2_fourcc('N', 'M', '1', '2') /* 12  Y/CbCr 4:2:0  */
+#define V4L2_PIX_FMT_NV12MT  v4l2_fourcc('T', 'M', '1', '2') /* 12  Y/CbCr 4:2:0 64x32 macroblocks */
+
+/* three non contiguous planes - Y, Cb, Cr */
+#define V4L2_PIX_FMT_YUV420M v4l2_fourcc('Y', 'M', '1', '2') /* 12  YUV420 planar */
+
 /* Bayer formats - see http://www.siliconimaging.com/RGB%20Bayer.htm */
 #define V4L2_PIX_FMT_SBGGR8  v4l2_fourcc('B', 'A', '8', '1') /*  8  BGBG.. GRGR.. */
 #define V4L2_PIX_FMT_SGBRG8  v4l2_fourcc('G', 'B', 'R', 'G') /*  8  GBGB.. RGRG.. */
@@ -337,6 +356,10 @@ struct v4l2_pix_format {
 #define V4L2_PIX_FMT_SGBRG10 v4l2_fourcc('G', 'B', '1', '0') /* 10  GBGB.. RGRG.. */
 #define V4L2_PIX_FMT_SGRBG10 v4l2_fourcc('B', 'A', '1', '0') /* 10  GRGR.. BGBG.. */
 #define V4L2_PIX_FMT_SRGGB10 v4l2_fourcc('R', 'G', '1', '0') /* 10  RGRG.. GBGB.. */
+#define V4L2_PIX_FMT_SBGGR12 v4l2_fourcc('B', 'G', '1', '2') /* 12  BGBG.. GRGR.. */
+#define V4L2_PIX_FMT_SGBRG12 v4l2_fourcc('G', 'B', '1', '2') /* 12  GBGB.. RGRG.. */
+#define V4L2_PIX_FMT_SGRBG12 v4l2_fourcc('B', 'A', '1', '2') /* 12  GRGR.. BGBG.. */
+#define V4L2_PIX_FMT_SRGGB12 v4l2_fourcc('R', 'G', '1', '2') /* 12  RGRG.. GBGB.. */
 	/* 10bit raw bayer DPCM compressed to 8 bits */
 #define V4L2_PIX_FMT_SGRBG10DPCM8 v4l2_fourcc('B', 'D', '1', '0')
 	/*
@@ -374,6 +397,7 @@ struct v4l2_pix_format {
 #define V4L2_PIX_FMT_TM6000   v4l2_fourcc('T', 'M', '6', '0') /* tm5600/tm60x0 */
 #define V4L2_PIX_FMT_CIT_YYVYUY v4l2_fourcc('C', 'I', 'T', 'V') /* one line of Y then 1 line of VYUY */
 #define V4L2_PIX_FMT_KONICA420  v4l2_fourcc('K', 'O', 'N', 'I') /* YUV420 planar in blocks of 256 pixels */
+#define V4L2_PIX_FMT_JPGL	v4l2_fourcc('J', 'P', 'G', 'L') /* JPEG-Lite */
 
 /*
  *	F O R M A T   E N U M E R A T I O N
@@ -503,7 +527,7 @@ struct v4l2_jpegcompression {
 				 * you do, leave them untouched.
 				 * Inluding less markers will make the
 				 * resulting code smaller, but there will
-				 * be fewer aplications which can read it.
+				 * be fewer applications which can read it.
 				 * The presence of the APP and COM marker
 				 * is influenced by APP_len and COM_len
 				 * ONLY, not by this property! */
@@ -526,6 +550,62 @@ struct v4l2_requestbuffers {
 	__u32			reserved[2];
 };
 
+/**
+ * struct v4l2_plane - plane info for multi-planar buffers
+ * @bytesused:		number of bytes occupied by data in the plane (payload)
+ * @length:		size of this plane (NOT the payload) in bytes
+ * @mem_offset:		when memory in the associated struct v4l2_buffer is
+ *			V4L2_MEMORY_MMAP, equals the offset from the start of
+ *			the device memory for this plane (or is a "cookie" that
+ *			should be passed to mmap() called on the video node)
+ * @userptr:		when memory is V4L2_MEMORY_USERPTR, a userspace pointer
+ *			pointing to this plane
+ * @data_offset:	offset in the plane to the start of data; usually 0,
+ *			unless there is a header in front of the data
+ *
+ * Multi-planar buffers consist of one or more planes, e.g. an YCbCr buffer
+ * with two planes can have one plane for Y, and another for interleaved CbCr
+ * components. Each plane can reside in a separate memory buffer, or even in
+ * a completely separate memory node (e.g. in embedded devices).
+ */
+struct v4l2_plane {
+	__u32			bytesused;
+	__u32			length;
+	union {
+		__u32		mem_offset;
+		unsigned long	userptr;
+	} m;
+	__u32			data_offset;
+	__u32			reserved[11];
+};
+
+/**
+ * struct v4l2_buffer - video buffer info
+ * @index:	id number of the buffer
+ * @type:	buffer type (type == *_MPLANE for multiplanar buffers)
+ * @bytesused:	number of bytes occupied by data in the buffer (payload);
+ *		unused (set to 0) for multiplanar buffers
+ * @flags:	buffer informational flags
+ * @field:	field order of the image in the buffer
+ * @timestamp:	frame timestamp
+ * @timecode:	frame timecode
+ * @sequence:	sequence count of this frame
+ * @memory:	the method, in which the actual video data is passed
+ * @offset:	for non-multiplanar buffers with memory == V4L2_MEMORY_MMAP;
+ *		offset from the start of the device memory for this plane,
+ *		(or a "cookie" that should be passed to mmap() as offset)
+ * @userptr:	for non-multiplanar buffers with memory == V4L2_MEMORY_USERPTR;
+ *		a userspace pointer pointing to this buffer
+ * @planes:	for multiplanar buffers; userspace pointer to the array of plane
+ *		info structs for this buffer
+ * @length:	size in bytes of the buffer (NOT its payload) for single-plane
+ *		buffers (when type != *_MPLANE); number of elements in the
+ *		planes array for multi-plane buffers
+ * @input:	input number from which the video data has has been captured
+ *
+ * Contains data exchanged by application and driver using one of the Streaming
+ * I/O methods.
+ */
 struct v4l2_buffer {
 	__u32			index;
 	enum v4l2_buf_type      type;
@@ -541,6 +621,7 @@ struct v4l2_buffer {
 	union {
 		__u32           offset;
 		unsigned long   userptr;
+		struct v4l2_plane *planes;
 	} m;
 	__u32			length;
 	__u32			input;
@@ -554,6 +635,8 @@ struct v4l2_buffer {
 #define V4L2_BUF_FLAG_KEYFRAME	0x0008	/* Image is a keyframe (I-frame) */
 #define V4L2_BUF_FLAG_PFRAME	0x0010	/* Image is a P-frame */
 #define V4L2_BUF_FLAG_BFRAME	0x0020	/* Image is a B-frame */
+/* Buffer is ready, but the data contained within is corrupted. */
+#define V4L2_BUF_FLAG_ERROR	0x0040
 #define V4L2_BUF_FLAG_TIMECODE	0x0100	/* timecode field is valid */
 #define V4L2_BUF_FLAG_INPUT     0x0200  /* input field is valid */
 
@@ -576,6 +659,7 @@ struct v4l2_framebuffer {
 #define V4L2_FBUF_CAP_LOCAL_ALPHA	0x0010
 #define V4L2_FBUF_CAP_GLOBAL_ALPHA	0x0020
 #define V4L2_FBUF_CAP_LOCAL_INV_ALPHA	0x0040
+#define V4L2_FBUF_CAP_SRC_CHROMAKEY	0x0080
 /*  Flags for the 'flags' field. */
 #define V4L2_FBUF_FLAG_PRIMARY		0x0001
 #define V4L2_FBUF_FLAG_OVERLAY		0x0002
@@ -583,6 +667,7 @@ struct v4l2_framebuffer {
 #define V4L2_FBUF_FLAG_LOCAL_ALPHA	0x0008
 #define V4L2_FBUF_FLAG_GLOBAL_ALPHA	0x0010
 #define V4L2_FBUF_FLAG_LOCAL_INV_ALPHA	0x0020
+#define V4L2_FBUF_FLAG_SRC_CHROMAKEY	0x0040
 
 struct v4l2_clip {
 	struct v4l2_rect        c;
@@ -742,6 +827,99 @@ struct v4l2_standard {
 };
 
 /*
+ *	V I D E O	T I M I N G S	D V	P R E S E T
+ */
+struct v4l2_dv_preset {
+	__u32	preset;
+	__u32	reserved[4];
+};
+
+/*
+ *	D V	P R E S E T S	E N U M E R A T I O N
+ */
+struct v4l2_dv_enum_preset {
+	__u32	index;
+	__u32	preset;
+	__u8	name[32]; /* Name of the preset timing */
+	__u32	width;
+	__u32	height;
+	__u32	reserved[4];
+};
+
+/*
+ * 	D V	P R E S E T	V A L U E S
+ */
+#define		V4L2_DV_INVALID		0
+#define		V4L2_DV_480P59_94	1 /* BT.1362 */
+#define		V4L2_DV_576P50		2 /* BT.1362 */
+#define		V4L2_DV_720P24		3 /* SMPTE 296M */
+#define		V4L2_DV_720P25		4 /* SMPTE 296M */
+#define		V4L2_DV_720P30		5 /* SMPTE 296M */
+#define		V4L2_DV_720P50		6 /* SMPTE 296M */
+#define		V4L2_DV_720P59_94	7 /* SMPTE 274M */
+#define		V4L2_DV_720P60		8 /* SMPTE 274M/296M */
+#define		V4L2_DV_1080I29_97	9 /* BT.1120/ SMPTE 274M */
+#define		V4L2_DV_1080I30		10 /* BT.1120/ SMPTE 274M */
+#define		V4L2_DV_1080I25		11 /* BT.1120 */
+#define		V4L2_DV_1080I50		12 /* SMPTE 296M */
+#define		V4L2_DV_1080I60		13 /* SMPTE 296M */
+#define		V4L2_DV_1080P24		14 /* SMPTE 296M */
+#define		V4L2_DV_1080P25		15 /* SMPTE 296M */
+#define		V4L2_DV_1080P30		16 /* SMPTE 296M */
+#define		V4L2_DV_1080P50		17 /* BT.1120 */
+#define		V4L2_DV_1080P60		18 /* BT.1120 */
+
+/*
+ *	D V 	B T	T I M I N G S
+ */
+
+/* BT.656/BT.1120 timing data */
+struct v4l2_bt_timings {
+	__u32	width;		/* width in pixels */
+	__u32	height;		/* height in lines */
+	__u32	interlaced;	/* Interlaced or progressive */
+	__u32	polarities;	/* Positive or negative polarity */
+	__u64	pixelclock;	/* Pixel clock in HZ. Ex. 74.25MHz->74250000 */
+	__u32	hfrontporch;	/* Horizpontal front porch in pixels */
+	__u32	hsync;		/* Horizontal Sync length in pixels */
+	__u32	hbackporch;	/* Horizontal back porch in pixels */
+	__u32	vfrontporch;	/* Vertical front porch in pixels */
+	__u32	vsync;		/* Vertical Sync length in lines */
+	__u32	vbackporch;	/* Vertical back porch in lines */
+	__u32	il_vfrontporch;	/* Vertical front porch for bottom field of
+				 * interlaced field formats
+				 */
+	__u32	il_vsync;	/* Vertical sync length for bottom field of
+				 * interlaced field formats
+				 */
+	__u32	il_vbackporch;	/* Vertical back porch for bottom field of
+				 * interlaced field formats
+				 */
+	__u32	reserved[16];
+} __attribute__ ((packed));
+
+/* Interlaced or progressive format */
+#define	V4L2_DV_PROGRESSIVE	0
+#define	V4L2_DV_INTERLACED	1
+
+/* Polarities. If bit is not set, it is assumed to be negative polarity */
+#define V4L2_DV_VSYNC_POS_POL	0x00000001
+#define V4L2_DV_HSYNC_POS_POL	0x00000002
+
+
+/* DV timings */
+struct v4l2_dv_timings {
+	__u32 type;
+	union {
+		struct v4l2_bt_timings	bt;
+		__u32	reserved[32];
+	};
+} __attribute__ ((packed));
+
+/* Values for the type field */
+#define V4L2_DV_BT_656_1120	0	/* BT.656/1120 timing type */
+
+/*
  *	V I D E O   I N P U T S
  */
 struct v4l2_input {
@@ -752,7 +930,8 @@ struct v4l2_input {
 	__u32        tuner;             /*  Associated tuner */
 	v4l2_std_id  std;
 	__u32	     status;
-	__u32	     reserved[4];
+	__u32	     capabilities;
+	__u32	     reserved[3];
 };
 
 /*  Values for the 'type' field */
@@ -783,6 +962,11 @@ struct v4l2_input {
 #define V4L2_IN_ST_NO_ACCESS   0x02000000  /* Conditional access denied */
 #define V4L2_IN_ST_VTR         0x04000000  /* VTR time constant */
 
+/* capabilities flags */
+#define V4L2_IN_CAP_PRESETS		0x00000001 /* Supports S_DV_PRESET */
+#define V4L2_IN_CAP_CUSTOM_TIMINGS	0x00000002 /* Supports S_DV_TIMINGS */
+#define V4L2_IN_CAP_STD			0x00000004 /* Supports S_STD */
+
 /*
  *	V I D E O   O U T P U T S
  */
@@ -793,12 +977,18 @@ struct v4l2_output {
 	__u32	     audioset;		/*  Associated audios (bitfield) */
 	__u32	     modulator;         /*  Associated modulator */
 	v4l2_std_id  std;
-	__u32	     reserved[4];
+	__u32	     capabilities;
+	__u32	     reserved[3];
 };
 /*  Values for the 'type' field */
 #define V4L2_OUTPUT_TYPE_MODULATOR		1
 #define V4L2_OUTPUT_TYPE_ANALOG			2
 #define V4L2_OUTPUT_TYPE_ANALOGVGAOVERLAY	3
+
+/* capabilities flags */
+#define V4L2_OUT_CAP_PRESETS		0x00000001 /* Supports S_DV_PRESET */
+#define V4L2_OUT_CAP_CUSTOM_TIMINGS	0x00000002 /* Supports S_DV_TIMINGS */
+#define V4L2_OUT_CAP_STD		0x00000004 /* Supports S_STD */
 
 /*
  *	C O N T R O L S
@@ -836,6 +1026,16 @@ struct v4l2_ext_controls {
 #define V4L2_CTRL_ID_MASK      	  (0x0fffffff)
 #define V4L2_CTRL_ID2CLASS(id)    ((id) & 0x0fff0000UL)
 #define V4L2_CTRL_DRIVER_PRIV(id) (((id) & 0xffff) >= 0x1000)
+
+enum v4l2_ctrl_type {
+	V4L2_CTRL_TYPE_INTEGER	     = 1,
+	V4L2_CTRL_TYPE_BOOLEAN	     = 2,
+	V4L2_CTRL_TYPE_MENU	     = 3,
+	V4L2_CTRL_TYPE_BUTTON	     = 4,
+	V4L2_CTRL_TYPE_INTEGER64     = 5,
+	V4L2_CTRL_TYPE_CTRL_CLASS    = 6,
+	V4L2_CTRL_TYPE_STRING        = 7,
+};
 
 /*  Used in the VIDIOC_QUERYCTRL ioctl for querying controls */
 struct v4l2_queryctrl {
@@ -921,14 +1121,27 @@ enum v4l2_colorfx {
 	V4L2_COLORFX_NONE	= 0,
 	V4L2_COLORFX_BW		= 1,
 	V4L2_COLORFX_SEPIA	= 2,
+	V4L2_COLORFX_NEGATIVE = 3,
+	V4L2_COLORFX_EMBOSS = 4,
+	V4L2_COLORFX_SKETCH = 5,
+	V4L2_COLORFX_SKY_BLUE = 6,
+	V4L2_COLORFX_GRASS_GREEN = 7,
+	V4L2_COLORFX_SKIN_WHITEN = 8,
+	V4L2_COLORFX_VIVID = 9,
 };
 #define V4L2_CID_AUTOBRIGHTNESS			(V4L2_CID_BASE+32)
 #define V4L2_CID_BAND_STOP_FILTER		(V4L2_CID_BASE+33)
 
 #define V4L2_CID_ROTATE				(V4L2_CID_BASE+34)
 #define V4L2_CID_BG_COLOR			(V4L2_CID_BASE+35)
+
+#define V4L2_CID_CHROMA_GAIN                    (V4L2_CID_BASE+36)
+
+#define V4L2_CID_ILLUMINATORS_1			(V4L2_CID_BASE+37)
+#define V4L2_CID_ILLUMINATORS_2			(V4L2_CID_BASE+38)
+
 /* last CID + 1 */
-#define V4L2_CID_LASTP1                         (V4L2_CID_BASE+36)
+#define V4L2_CID_LASTP1                         (V4L2_CID_BASE+39)
 
 /*  MPEG-class control IDs defined by V4L2 */
 #define V4L2_CID_MPEG_BASE 			(V4L2_CTRL_CLASS_MPEG | 0x900)
@@ -1245,6 +1458,8 @@ struct v4l2_modulator {
 #define V4L2_TUNER_CAP_SAP		0x0020
 #define V4L2_TUNER_CAP_LANG1		0x0040
 #define V4L2_TUNER_CAP_RDS		0x0080
+#define V4L2_TUNER_CAP_RDS_BLOCK_IO	0x0100
+#define V4L2_TUNER_CAP_RDS_CONTROLS	0x0200
 
 /*  Flags for the 'rxsubchans' field */
 #define V4L2_TUNER_SUB_MONO		0x0001
@@ -1274,7 +1489,8 @@ struct v4l2_hw_freq_seek {
 	enum v4l2_tuner_type  type;
 	__u32		      seek_upward;
 	__u32		      wrap_around;
-	__u32		      reserved[8];
+	__u32		      spacing;
+	__u32		      reserved[7];
 };
 
 /*
@@ -1473,7 +1689,7 @@ struct v4l2_mpeg_vbi_itv0_line {
 } __attribute__ ((packed));
 
 struct v4l2_mpeg_vbi_itv0 {
-	__u32 linemask[2]; /* Bitmasks of VBI service lines present */
+	__le32 linemask[2]; /* Bitmasks of VBI service lines present */
 	struct v4l2_mpeg_vbi_itv0_line line[35];
 } __attribute__ ((packed));
 
@@ -1496,19 +1712,62 @@ struct v4l2_mpeg_vbi_fmt_ivtv {
  *	A G G R E G A T E   S T R U C T U R E S
  */
 
-/*	Stream data format
+/**
+ * struct v4l2_plane_pix_format - additional, per-plane format definition
+ * @sizeimage:		maximum size in bytes required for data, for which
+ *			this plane will be used
+ * @bytesperline:	distance in bytes between the leftmost pixels in two
+ *			adjacent lines
+ */
+struct v4l2_plane_pix_format {
+	__u32		sizeimage;
+	__u16		bytesperline;
+	__u16		reserved[7];
+} __attribute__ ((packed));
+
+/**
+ * struct v4l2_pix_format_mplane - multiplanar format definition
+ * @width:		image width in pixels
+ * @height:		image height in pixels
+ * @pixelformat:	little endian four character code (fourcc)
+ * @field:		field order (for interlaced video)
+ * @colorspace:		supplemental to pixelformat
+ * @plane_fmt:		per-plane information
+ * @num_planes:		number of planes for this format
+ */
+struct v4l2_pix_format_mplane {
+	__u32				width;
+	__u32				height;
+	__u32				pixelformat;
+	enum v4l2_field			field;
+	enum v4l2_colorspace		colorspace;
+
+	struct v4l2_plane_pix_format	plane_fmt[VIDEO_MAX_PLANES];
+	__u8				num_planes;
+	__u8				reserved[11];
+} __attribute__ ((packed));
+
+/**
+ * struct v4l2_format - stream data format
+ * @type:	type of the data stream
+ * @pix:	definition of an image format
+ * @pix_mp:	definition of a multiplanar image format
+ * @win:	definition of an overlaid image
+ * @vbi:	raw VBI capture or output parameters
+ * @sliced:	sliced VBI capture or output parameters
+ * @raw_data:	placeholder for future extensions and custom formats
  */
 struct v4l2_format {
 	enum v4l2_buf_type type;
 	union {
 		struct v4l2_pix_format		pix;     /* V4L2_BUF_TYPE_VIDEO_CAPTURE */
+		struct v4l2_pix_format_mplane	pix_mp;  /* V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE */
 		struct v4l2_window		win;     /* V4L2_BUF_TYPE_VIDEO_OVERLAY */
 		struct v4l2_vbi_format		vbi;     /* V4L2_BUF_TYPE_VBI_CAPTURE */
 		struct v4l2_sliced_vbi_format	sliced;  /* V4L2_BUF_TYPE_SLICED_VBI_CAPTURE */
 		__u8	raw_data[200];                   /* user-defined */
 	} fmt;
 };
-
 
 /*	Stream type-dependent parameters
  */
@@ -1519,6 +1778,38 @@ struct v4l2_streamparm {
 		struct v4l2_outputparm	output;
 		__u8	raw_data[200];  /* user-defined */
 	} parm;
+};
+
+/*
+ *	E V E N T S
+ */
+
+#define V4L2_EVENT_ALL				0
+#define V4L2_EVENT_VSYNC			1
+#define V4L2_EVENT_EOS				2
+#define V4L2_EVENT_PRIVATE_START		0x08000000
+
+/* Payload for V4L2_EVENT_VSYNC */
+struct v4l2_event_vsync {
+	/* Can be V4L2_FIELD_ANY, _NONE, _TOP or _BOTTOM */
+	__u8 field;
+} __attribute__ ((packed));
+
+struct v4l2_event {
+	__u32				type;
+	union {
+		struct v4l2_event_vsync vsync;
+		__u8			data[64];
+	} u;
+	__u32				pending;
+	__u32				sequence;
+	struct timespec			timestamp;
+	__u32				reserved[9];
+};
+
+struct v4l2_event_subscription {
+	__u32				type;
+	__u32				reserved[7];
 };
 
 /*
@@ -1637,18 +1928,18 @@ struct v4l2_dbg_chip_ident {
 #endif
 
 #define VIDIOC_S_HW_FREQ_SEEK	 _IOW('V', 82, struct v4l2_hw_freq_seek)
+#define	VIDIOC_ENUM_DV_PRESETS	_IOWR('V', 83, struct v4l2_dv_enum_preset)
+#define	VIDIOC_S_DV_PRESET	_IOWR('V', 84, struct v4l2_dv_preset)
+#define	VIDIOC_G_DV_PRESET	_IOWR('V', 85, struct v4l2_dv_preset)
+#define	VIDIOC_QUERY_DV_PRESET	_IOR('V',  86, struct v4l2_dv_preset)
+#define	VIDIOC_S_DV_TIMINGS	_IOWR('V', 87, struct v4l2_dv_timings)
+#define	VIDIOC_G_DV_TIMINGS	_IOWR('V', 88, struct v4l2_dv_timings)
+#define	VIDIOC_DQEVENT		 _IOR('V', 89, struct v4l2_event)
+#define	VIDIOC_SUBSCRIBE_EVENT	 _IOW('V', 90, struct v4l2_event_subscription)
+#define	VIDIOC_UNSUBSCRIBE_EVENT _IOW('V', 91, struct v4l2_event_subscription)
+
 /* Reminder: when adding new ioctls please add support for them to
    drivers/media/video/v4l2-compat-ioctl32.c as well! */
-
-#ifdef __OLD_VIDIOC_
-/* for compatibility, will go away some day */
-#define VIDIOC_OVERLAY_OLD     	_IOWR('V', 14, int)
-#define VIDIOC_S_PARM_OLD      	 _IOW('V', 22, struct v4l2_streamparm)
-#define VIDIOC_S_CTRL_OLD      	 _IOW('V', 28, struct v4l2_control)
-#define VIDIOC_G_AUDIO_OLD     	_IOWR('V', 33, struct v4l2_audio)
-#define VIDIOC_G_AUDOUT_OLD    	_IOWR('V', 49, struct v4l2_audioout)
-#define VIDIOC_CROPCAP_OLD     	 _IOR('V', 58, struct v4l2_cropcap)
-#endif
 
 #define BASE_VIDIOC_PRIVATE	192		/* 192-255 are private */
 

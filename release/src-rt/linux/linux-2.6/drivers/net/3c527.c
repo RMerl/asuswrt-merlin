@@ -51,7 +51,7 @@ DRV_NAME ".c:v" DRV_VERSION " " DRV_RELDATE " Richard Procter <rnp@paradise.net.
  *	circular buffer queues.
  *
  *	The mailboxes can be used for controlling how the card traverses
- *	its buffer rings, but are used only for inital setup in this
+ *	its buffer rings, but are used only for initial setup in this
  *	implementation.  The exec mailbox allows a variety of commands to
  *	be executed. Each command must complete before the next is
  *	executed. Primarily we use the exec mailbox for controlling the
@@ -103,8 +103,8 @@ DRV_NAME ".c:v" DRV_VERSION " " DRV_RELDATE " Richard Procter <rnp@paradise.net.
 #include <linux/ethtool.h>
 #include <linux/completion.h>
 #include <linux/bitops.h>
+#include <linux/semaphore.h>
 
-#include <asm/semaphore.h>
 #include <asm/uaccess.h>
 #include <asm/system.h>
 #include <asm/io.h>
@@ -124,8 +124,6 @@ static const char* cardname = DRV_NAME;
 #ifndef NET_DEBUG
 #define NET_DEBUG 2
 #endif
-
-#undef DEBUG_IRQ
 
 static unsigned int mc32_debug = NET_DEBUG;
 
@@ -158,7 +156,6 @@ struct mc32_local
 	int slot;
 
 	u32 base;
-	struct net_device_stats net_stats;
 	volatile struct mc32_mailbox *rx_box;
 	volatile struct mc32_mailbox *tx_box;
 	volatile struct mc32_mailbox *exec_box;
@@ -216,7 +213,8 @@ static int	mc32_probe1(struct net_device *dev, int ioaddr);
 static int      mc32_command(struct net_device *dev, u16 cmd, void *data, int len);
 static int	mc32_open(struct net_device *dev);
 static void	mc32_timeout(struct net_device *dev);
-static int	mc32_send_packet(struct sk_buff *skb, struct net_device *dev);
+static netdev_tx_t mc32_send_packet(struct sk_buff *skb,
+				    struct net_device *dev);
 static irqreturn_t mc32_interrupt(int irq, void *dev_id);
 static int	mc32_close(struct net_device *dev);
 static struct	net_device_stats *mc32_get_stats(struct net_device *dev);
@@ -257,8 +255,6 @@ struct net_device *__init mc32_probe(int unit)
 	if (unit >= 0)
 		sprintf(dev->name, "eth%d", unit);
 
-	SET_MODULE_OWNER(dev);
-
 	/* Do not check any supplied i/o locations.
 	   POS registers usually don't fail :) */
 
@@ -291,6 +287,18 @@ struct net_device *__init mc32_probe(int unit)
 	return ERR_PTR(-ENODEV);
 }
 
+static const struct net_device_ops netdev_ops = {
+	.ndo_open		= mc32_open,
+	.ndo_stop		= mc32_close,
+	.ndo_start_xmit		= mc32_send_packet,
+	.ndo_get_stats		= mc32_get_stats,
+	.ndo_set_multicast_list = mc32_set_multicast_list,
+	.ndo_tx_timeout		= mc32_timeout,
+	.ndo_change_mtu		= eth_change_mtu,
+	.ndo_set_mac_address 	= eth_mac_addr,
+	.ndo_validate_addr	= eth_validate_addr,
+};
+
 /**
  * mc32_probe1	-	Check a given slot for a board and test the card
  * @dev:  Device structure to fill in
@@ -309,13 +317,13 @@ static int __init mc32_probe1(struct net_device *dev, int slot)
 	u8 POS;
 	u32 base;
 	struct mc32_local *lp = netdev_priv(dev);
-	static u16 mca_io_bases[]={
+	static const u16 mca_io_bases[] = {
 		0x7280,0x7290,
 		0x7680,0x7690,
 		0x7A80,0x7A90,
 		0x7E80,0x7E90
 	};
-	static u32 mca_mem_bases[]={
+	static const u32 mca_mem_bases[] = {
 		0x00C0000,
 		0x00C4000,
 		0x00C8000,
@@ -325,7 +333,7 @@ static int __init mc32_probe1(struct net_device *dev, int slot)
 		0x00D8000,
 		0x00DC000
 	};
-	static char *failures[]={
+	static const char * const failures[] = {
 		"Processor instruction",
 		"Processor data bus",
 		"Processor data bus",
@@ -342,15 +350,15 @@ static int __init mc32_probe1(struct net_device *dev, int slot)
 	/* Time to play MCA games */
 
 	if (mc32_debug  &&  version_printed++ == 0)
-		printk(KERN_DEBUG "%s", version);
+		pr_debug("%s", version);
 
-	printk(KERN_INFO "%s: %s found in slot %d:", dev->name, cardname, slot);
+	pr_info("%s: %s found in slot %d: ", dev->name, cardname, slot);
 
 	POS = mca_read_stored_pos(slot, 2);
 
 	if(!(POS&1))
 	{
-		printk(" disabled.\n");
+		pr_cont("disabled.\n");
 		return -ENODEV;
 	}
 
@@ -361,7 +369,7 @@ static int __init mc32_probe1(struct net_device *dev, int slot)
 	POS = mca_read_stored_pos(slot, 4);
 	if(!(POS&1))
 	{
-		printk("memory window disabled.\n");
+		pr_cont("memory window disabled.\n");
 		return -ENODEV;
 	}
 
@@ -370,7 +378,7 @@ static int __init mc32_probe1(struct net_device *dev, int slot)
 	i=(POS>>4)&3;
 	if(i==3)
 	{
-		printk("invalid memory window.\n");
+		pr_cont("invalid memory window.\n");
 		return -ENODEV;
 	}
 
@@ -383,11 +391,11 @@ static int __init mc32_probe1(struct net_device *dev, int slot)
 
 	if(!request_region(dev->base_addr, MC32_IO_EXTENT, cardname))
 	{
-		printk("io 0x%3lX, which is busy.\n", dev->base_addr);
+		pr_cont("io 0x%3lX, which is busy.\n", dev->base_addr);
 		return -EBUSY;
 	}
 
-	printk("io 0x%3lX irq %d mem 0x%lX (%dK)\n",
+	pr_cont("io 0x%3lX irq %d mem 0x%lX (%dK)\n",
 		dev->base_addr, dev->irq, dev->mem_start, i/1024);
 
 
@@ -398,16 +406,16 @@ static int __init mc32_probe1(struct net_device *dev, int slot)
 	 *	Go PROM browsing
 	 */
 
-	printk("%s: Address ", dev->name);
-
 	/* Retrieve and print the ethernet address. */
 	for (i = 0; i < 6; i++)
 	{
 		mca_write_pos(slot, 6, i+12);
 		mca_write_pos(slot, 7, 0);
 
-		printk(" %2.2x", dev->dev_addr[i] = mca_read_pos(slot,3));
+		dev->dev_addr[i] = mca_read_pos(slot,3);
 	}
+
+	pr_info("%s: Address %pM ", dev->name, dev->dev_addr);
 
 	mca_write_pos(slot, 6, 0);
 	mca_write_pos(slot, 7, 0);
@@ -415,9 +423,9 @@ static int __init mc32_probe1(struct net_device *dev, int slot)
 	POS = mca_read_stored_pos(slot, 4);
 
 	if(POS&2)
-		printk(" : BNC port selected.\n");
+		pr_cont(": BNC port selected.\n");
 	else
-		printk(" : AUI port selected.\n");
+		pr_cont(": AUI port selected.\n");
 
 	POS=inb(dev->base_addr+HOST_CTRL);
 	POS|=HOST_CTRL_ATTN|HOST_CTRL_RESET;
@@ -435,10 +443,10 @@ static int __init mc32_probe1(struct net_device *dev, int slot)
 	 *	Grab the IRQ
 	 */
 
-	err = request_irq(dev->irq, &mc32_interrupt, IRQF_SHARED | IRQF_SAMPLE_RANDOM, DRV_NAME, dev);
+	err = request_irq(dev->irq, mc32_interrupt, IRQF_SHARED, DRV_NAME, dev);
 	if (err) {
 		release_region(dev->base_addr, MC32_IO_EXTENT);
-		printk(KERN_ERR "%s: unable to get IRQ %d.\n", DRV_NAME, dev->irq);
+		pr_err("%s: unable to get IRQ %d.\n", DRV_NAME, dev->irq);
 		goto err_exit_ports;
 	}
 
@@ -454,7 +462,7 @@ static int __init mc32_probe1(struct net_device *dev, int slot)
 		i++;
 		if(i == 1000)
 		{
-			printk(KERN_ERR "%s: failed to boot adapter.\n", dev->name);
+			pr_err("%s: failed to boot adapter.\n", dev->name);
 			err = -ENODEV;
 			goto err_exit_irq;
 		}
@@ -466,10 +474,10 @@ static int __init mc32_probe1(struct net_device *dev, int slot)
 	if(base>0)
 	{
 		if(base < 0x0C)
-			printk(KERN_ERR "%s: %s%s.\n", dev->name, failures[base-1],
+			pr_err("%s: %s%s.\n", dev->name, failures[base-1],
 				base<0x0A?" test failure":"");
 		else
-			printk(KERN_ERR "%s: unknown failure %d.\n", dev->name, base);
+			pr_err("%s: unknown failure %d.\n", dev->name, base);
 		err = -ENODEV;
 		goto err_exit_irq;
 	}
@@ -485,7 +493,7 @@ static int __init mc32_probe1(struct net_device *dev, int slot)
 			udelay(50);
 			if(n>100)
 			{
-				printk(KERN_ERR "%s: mailbox read fail (%d).\n", dev->name, i);
+				pr_err("%s: mailbox read fail (%d).\n", dev->name, i);
 				err = -ENODEV;
 				goto err_exit_irq;
 			}
@@ -514,19 +522,14 @@ static int __init mc32_probe1(struct net_device *dev, int slot)
 	lp->tx_len 		= lp->exec_box->data[9];   /* Transmit list count */
 	lp->rx_len 		= lp->exec_box->data[11];  /* Receive list count */
 
-	init_MUTEX_LOCKED(&lp->cmd_mutex);
+	sema_init(&lp->cmd_mutex, 0);
 	init_completion(&lp->execution_cmd);
 	init_completion(&lp->xceiver_cmd);
 
-	printk("%s: Firmware Rev %d. %d RX buffers, %d TX buffers. Base of 0x%08X.\n",
+	pr_info("%s: Firmware Rev %d. %d RX buffers, %d TX buffers. Base of 0x%08X.\n",
 		dev->name, lp->exec_box->data[12], lp->rx_len, lp->tx_len, lp->base);
 
-	dev->open		= mc32_open;
-	dev->stop		= mc32_close;
-	dev->hard_start_xmit	= mc32_send_packet;
-	dev->get_stats		= mc32_get_stats;
-	dev->set_multicast_list = mc32_set_multicast_list;
-	dev->tx_timeout		= mc32_timeout;
+	dev->netdev_ops		= &netdev_ops;
 	dev->watchdog_timeo	= HZ*5;	/* Board does all the work */
 	dev->ethtool_ops	= &netdev_ethtool_ops;
 
@@ -726,14 +729,14 @@ static void mc32_halt_transceiver(struct net_device *dev)
  *	mc32_load_rx_ring	-	load the ring of receive buffers
  *	@dev: 3c527 to build the ring for
  *
- *	This initalises the on-card and driver datastructures to
+ *	This initialises the on-card and driver datastructures to
  *	the point where mc32_start_transceiver() can be called.
  *
  *	The card sets up the receive ring for us. We are required to use the
  *	ring it provides, although the size of the ring is configurable.
  *
  * 	We allocate an sk_buff for each ring entry in turn and
- * 	initalise its house-keeping info. At the same time, we read
+ * 	initialise its house-keeping info. At the same time, we read
  * 	each 'next' pointer in our rx_ring array. This reduces slow
  * 	shared-memory reads and makes it easy to access predecessor
  * 	descriptors.
@@ -810,7 +813,7 @@ static void mc32_flush_rx_ring(struct net_device *dev)
  *
  *	This sets up the host transmit data-structures.
  *
- *	First, we obtain from the card it's current postion in the tx
+ *	First, we obtain from the card it's current position in the tx
  *	ring, so that we will know where to begin transmitting
  *	packets.
  *
@@ -935,7 +938,7 @@ static int mc32_open(struct net_device *dev)
 	 */
 
 	if(mc32_command(dev, 8, descnumbuffs, 4)) {
-		printk("%s: %s rejected our buffer configuration!\n",
+		pr_info("%s: %s rejected our buffer configuration!\n",
 	 	       dev->name, cardname);
 		mc32_close(dev);
 		return -ENOBUFS;
@@ -991,7 +994,7 @@ static int mc32_open(struct net_device *dev)
 
 static void mc32_timeout(struct net_device *dev)
 {
-	printk(KERN_WARNING "%s: transmit timed out?\n", dev->name);
+	pr_warning("%s: transmit timed out?\n", dev->name);
 	/* Try to restart the adaptor. */
 	netif_wake_queue(dev);
 }
@@ -1018,7 +1021,8 @@ static void mc32_timeout(struct net_device *dev)
  *
  */
 
-static int mc32_send_packet(struct sk_buff *skb, struct net_device *dev)
+static netdev_tx_t mc32_send_packet(struct sk_buff *skb,
+				    struct net_device *dev)
 {
 	struct mc32_local *lp = netdev_priv(dev);
 	u32 head = atomic_read(&lp->tx_ring_head);
@@ -1028,12 +1032,12 @@ static int mc32_send_packet(struct sk_buff *skb, struct net_device *dev)
 	netif_stop_queue(dev);
 
 	if(atomic_read(&lp->tx_count)==0) {
-		return 1;
+		return NETDEV_TX_BUSY;
 	}
 
 	if (skb_padto(skb, ETH_ZLEN)) {
 		netif_wake_queue(dev);
-		return 0;
+		return NETDEV_TX_OK;
 	}
 
 	atomic_dec(&lp->tx_count);
@@ -1064,7 +1068,7 @@ static int mc32_send_packet(struct sk_buff *skb, struct net_device *dev)
 	p->control     &= ~CONTROL_EOL;
 
 	netif_wake_queue(dev);
-	return 0;
+	return NETDEV_TX_OK;
 }
 
 
@@ -1094,24 +1098,24 @@ static void mc32_update_stats(struct net_device *dev)
 
 	u32 rx_errors=0;
 
-	rx_errors+=lp->net_stats.rx_crc_errors   +=st->rx_crc_errors;
+	rx_errors+=dev->stats.rx_crc_errors   +=st->rx_crc_errors;
 	                                           st->rx_crc_errors=0;
-	rx_errors+=lp->net_stats.rx_fifo_errors  +=st->rx_overrun_errors;
+	rx_errors+=dev->stats.rx_fifo_errors  +=st->rx_overrun_errors;
 	                                           st->rx_overrun_errors=0;
-	rx_errors+=lp->net_stats.rx_frame_errors +=st->rx_alignment_errors;
+	rx_errors+=dev->stats.rx_frame_errors +=st->rx_alignment_errors;
  	                                           st->rx_alignment_errors=0;
-	rx_errors+=lp->net_stats.rx_length_errors+=st->rx_tooshort_errors;
+	rx_errors+=dev->stats.rx_length_errors+=st->rx_tooshort_errors;
 	                                           st->rx_tooshort_errors=0;
-	rx_errors+=lp->net_stats.rx_missed_errors+=st->rx_outofresource_errors;
+	rx_errors+=dev->stats.rx_missed_errors+=st->rx_outofresource_errors;
 	                                           st->rx_outofresource_errors=0;
-        lp->net_stats.rx_errors=rx_errors;
+        dev->stats.rx_errors=rx_errors;
 
 	/* Number of packets which saw one collision */
-	lp->net_stats.collisions+=st->dataC[10];
+	dev->stats.collisions+=st->dataC[10];
 	st->dataC[10]=0;
 
 	/* Number of packets which saw 2--15 collisions */
-	lp->net_stats.collisions+=st->dataC[11];
+	dev->stats.collisions+=st->dataC[11];
 	st->dataC[11]=0;
 }
 
@@ -1164,8 +1168,8 @@ static void mc32_rx_ring(struct net_device *dev)
 
 			/* Try to save time by avoiding a copy on big frames */
 
-			if ((length > RX_COPYBREAK)
-			    && ((newskb=dev_alloc_skb(1532)) != NULL))
+			if ((length > RX_COPYBREAK) &&
+			    ((newskb=dev_alloc_skb(1532)) != NULL))
 			{
 				skb=lp->rx_ring[rx_ring_tail].skb;
 				skb_put(skb, length);
@@ -1179,7 +1183,7 @@ static void mc32_rx_ring(struct net_device *dev)
 				skb=dev_alloc_skb(length+2);
 
 				if(skb==NULL) {
-					lp->net_stats.rx_dropped++;
+					dev->stats.rx_dropped++;
 					goto dropped;
 				}
 
@@ -1189,9 +1193,8 @@ static void mc32_rx_ring(struct net_device *dev)
 			}
 
 			skb->protocol=eth_type_trans(skb,dev);
-			dev->last_rx = jiffies;
- 			lp->net_stats.rx_packets++;
- 			lp->net_stats.rx_bytes += length;
+ 			dev->stats.rx_packets++;
+ 			dev->stats.rx_bytes += length;
 			netif_rx(skb);
 		}
 
@@ -1254,34 +1257,34 @@ static void mc32_tx_ring(struct net_device *dev)
 			/* Not COMPLETED */
 			break;
 		}
-		lp->net_stats.tx_packets++;
+		dev->stats.tx_packets++;
 		if(!(np->status & (1<<6))) /* Not COMPLETED_OK */
 		{
-			lp->net_stats.tx_errors++;
+			dev->stats.tx_errors++;
 
 			switch(np->status&0x0F)
 			{
 				case 1:
-					lp->net_stats.tx_aborted_errors++;
+					dev->stats.tx_aborted_errors++;
 					break; /* Max collisions */
 				case 2:
-					lp->net_stats.tx_fifo_errors++;
+					dev->stats.tx_fifo_errors++;
 					break;
 				case 3:
-					lp->net_stats.tx_carrier_errors++;
+					dev->stats.tx_carrier_errors++;
 					break;
 				case 4:
-					lp->net_stats.tx_window_errors++;
+					dev->stats.tx_window_errors++;
 					break;  /* CTS Lost */
 				case 5:
-					lp->net_stats.tx_aborted_errors++;
+					dev->stats.tx_aborted_errors++;
 					break; /* Transmit timeout */
 			}
 		}
 		/* Packets are sent in order - this is
 		    basically a FIFO queue of buffers matching
 		    the card ring */
-		lp->net_stats.tx_bytes+=lp->tx_ring[t].skb->len;
+		dev->stats.tx_bytes+=lp->tx_ring[t].skb->len;
 		dev_kfree_skb_irq(lp->tx_ring[t].skb);
 		lp->tx_ring[t].skb=NULL;
 		atomic_inc(&lp->tx_count);
@@ -1332,11 +1335,9 @@ static irqreturn_t mc32_interrupt(int irq, void *dev_id)
 	{
 		status=inb(ioaddr+HOST_CMD);
 
-#ifdef DEBUG_IRQ
-		printk("Status TX%d RX%d EX%d OV%d BC%d\n",
+		pr_debug("Status TX%d RX%d EX%d OV%d BC%d\n",
 			(status&7), (status>>3)&7, (status>>6)&1,
 			(status>>7)&1, boguscount);
-#endif
 
 		switch(status&7)
 		{
@@ -1351,7 +1352,7 @@ static irqreturn_t mc32_interrupt(int irq, void *dev_id)
 				complete(&lp->xceiver_cmd);
 				break;
 			default:
-				printk("%s: strange tx ack %d\n", dev->name, status&7);
+				pr_notice("%s: strange tx ack %d\n", dev->name, status&7);
 		}
 		status>>=3;
 		switch(status&7)
@@ -1368,12 +1369,12 @@ static irqreturn_t mc32_interrupt(int irq, void *dev_id)
 			case 6:
 				/* Out of RX buffers stat */
 				/* Must restart rx */
-				lp->net_stats.rx_dropped++;
+				dev->stats.rx_dropped++;
 				mc32_rx_ring(dev);
 				mc32_start_transceiver(dev);
 				break;
 			default:
-				printk("%s: strange rx ack %d\n",
+				pr_notice("%s: strange rx ack %d\n",
 					dev->name, status&7);
 		}
 		status>>=3;
@@ -1490,10 +1491,8 @@ static int mc32_close(struct net_device *dev)
 
 static struct net_device_stats *mc32_get_stats(struct net_device *dev)
 {
-	struct mc32_local *lp = netdev_priv(dev);
-
 	mc32_update_stats(dev);
-	return &lp->net_stats;
+	return &dev->stats;
 }
 
 
@@ -1525,37 +1524,31 @@ static void do_mc32_set_multicast_list(struct net_device *dev, int retry)
 	struct mc32_local *lp = netdev_priv(dev);
 	u16 filt = (1<<2); /* Save Bad Packets, for stats purposes */
 
-	if (dev->flags&IFF_PROMISC)
+	if ((dev->flags&IFF_PROMISC) ||
+	    (dev->flags&IFF_ALLMULTI) ||
+	    netdev_mc_count(dev) > 10)
 		/* Enable promiscuous mode */
 		filt |= 1;
-	else if((dev->flags&IFF_ALLMULTI) || dev->mc_count > 10)
-	{
-		dev->flags|=IFF_PROMISC;
-		filt |= 1;
-	}
-	else if(dev->mc_count)
+	else if (!netdev_mc_empty(dev))
 	{
 		unsigned char block[62];
 		unsigned char *bp;
-		struct dev_mc_list *dmc=dev->mc_list;
-
-		int i;
+		struct netdev_hw_addr *ha;
 
 		if(retry==0)
 			lp->mc_list_valid = 0;
 		if(!lp->mc_list_valid)
 		{
 			block[1]=0;
-			block[0]=dev->mc_count;
+			block[0]=netdev_mc_count(dev);
 			bp=block+2;
 
-			for(i=0;i<dev->mc_count;i++)
-			{
-				memcpy(bp, dmc->dmi_addr, 6);
+			netdev_for_each_mc_addr(ha, dev) {
+				memcpy(bp, ha->addr, 6);
 				bp+=6;
-				dmc=dmc->next;
 			}
-			if(mc32_command_nowait(dev, 2, block, 2+6*dev->mc_count)==-1)
+			if(mc32_command_nowait(dev, 2, block,
+					       2+6*netdev_mc_count(dev))==-1)
 			{
 				lp->mc_reload_wait = 1;
 				return;

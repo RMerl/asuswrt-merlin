@@ -1,8 +1,14 @@
+config TTPCI_EEPROM
+	tristate
+	depends on I2C
+	default n
+
 config DVB_AV7110
 	tristate "AV7110 cards"
-	depends on DVB_CORE && PCI && I2C && VIDEO_V4L1
-	select FW_LOADER if !DVB_AV7110_FIRMWARE
+	depends on DVB_CORE && PCI && I2C
+	select TTPCI_EEPROM
 	select VIDEO_SAA7146_VV
+	depends on VIDEO_DEV	# dependencies of VIDEO_SAA7146_VV
 	select DVB_VES1820 if !DVB_FE_CUSTOMISE
 	select DVB_VES1X93 if !DVB_FE_CUSTOMISE
 	select DVB_STV0299 if !DVB_FE_CUSTOMISE
@@ -23,25 +29,12 @@ config DVB_AV7110
 	  download/extract it, and then copy it to /usr/lib/hotplug/firmware
 	  or /lib/firmware (depending on configuration of firmware hotplug).
 
+	  Alternatively, you can download the file and use the kernel's
+	  EXTRA_FIRMWARE configuration option to build it into your
+	  kernel image by adding the filename to the EXTRA_FIRMWARE
+	  configuration option string.
+
 	  Say Y if you own such a card and want to use it.
-
-config DVB_AV7110_FIRMWARE
-	bool "Compile AV7110 firmware into the driver"
-	depends on DVB_AV7110 && !STANDALONE
-	default y if DVB_AV7110=y
-	help
-	  The AV7110 firmware is normally loaded by the firmware hotplug manager.
-	  If you want to compile the firmware into the driver you need to say
-	  Y here and provide the correct path of the firmware. You need this
-	  option if you want to compile the whole driver statically into the
-	  kernel.
-
-	  All other people say N.
-
-config DVB_AV7110_FIRMWARE_FILE
-	string "Full pathname of av7110 firmware file"
-	depends on DVB_AV7110_FIRMWARE
-	default "/usr/lib/hotplug/firmware/dvb-ttpci-01.fw"
 
 config DVB_AV7110_OSD
 	bool "AV7110 OSD support"
@@ -57,25 +50,36 @@ config DVB_AV7110_OSD
 
 	  All other people say N.
 
+config DVB_BUDGET_CORE
+	tristate "SAA7146 DVB cards (aka Budget, Nova-PCI)"
+	depends on DVB_CORE && PCI && I2C
+	select VIDEO_SAA7146
+	select TTPCI_EEPROM
+	help
+	  Support for simple SAA7146 based DVB cards
+	  (so called Budget- or Nova-PCI cards) without onboard
+	  MPEG2 decoder.
+
 config DVB_BUDGET
 	tristate "Budget cards"
-	depends on DVB_CORE && PCI && I2C && VIDEO_V4L1
-	select VIDEO_SAA7146
+	depends on DVB_BUDGET_CORE && I2C
 	select DVB_STV0299 if !DVB_FE_CUSTOMISE
 	select DVB_VES1X93 if !DVB_FE_CUSTOMISE
 	select DVB_VES1820 if !DVB_FE_CUSTOMISE
 	select DVB_L64781 if !DVB_FE_CUSTOMISE
 	select DVB_TDA8083 if !DVB_FE_CUSTOMISE
-	select DVB_TDA10021 if !DVB_FE_CUSTOMISE
-	select DVB_TDA10023 if !DVB_FE_CUSTOMISE
 	select DVB_S5H1420 if !DVB_FE_CUSTOMISE
 	select DVB_TDA10086 if !DVB_FE_CUSTOMISE
 	select DVB_TDA826X if !DVB_FE_CUSTOMISE
 	select DVB_LNBP21 if !DVB_FE_CUSTOMISE
+	select DVB_TDA1004X if !DVB_FE_CUSTOMISE
+	select DVB_ISL6423 if !DVB_FE_CUSTOMISE
+	select DVB_STV090x if !DVB_FE_CUSTOMISE
+	select DVB_STV6110x if !DVB_FE_CUSTOMISE
 	help
-	  Support for simple SAA7146 based DVB cards
-	  (so called Budget- or Nova-PCI cards) without onboard
-	  MPEG2 decoder.
+	  Support for simple SAA7146 based DVB cards (so called Budget-
+	  or Nova-PCI cards) without onboard MPEG2 decoder, and without
+	  analog inputs or an onboard Common Interface connector.
 
 	  Say Y if you own such a card and want to use it.
 
@@ -84,13 +88,16 @@ config DVB_BUDGET
 
 config DVB_BUDGET_CI
 	tristate "Budget cards with onboard CI connector"
-	depends on DVB_CORE && PCI && I2C && VIDEO_V4L1
-	select VIDEO_SAA7146
+	depends on DVB_BUDGET_CORE && I2C
 	select DVB_STV0297 if !DVB_FE_CUSTOMISE
 	select DVB_STV0299 if !DVB_FE_CUSTOMISE
 	select DVB_TDA1004X if !DVB_FE_CUSTOMISE
+	select DVB_STB0899 if !DVB_FE_CUSTOMISE
+	select DVB_STB6100 if !DVB_FE_CUSTOMISE
 	select DVB_LNBP21 if !DVB_FE_CUSTOMISE
-	select VIDEO_IR
+	select DVB_TDA10023 if !DVB_FE_CUSTOMISE
+	select MEDIA_TUNER_TDA827X if !MEDIA_TUNER_CUSTOMISE
+	depends on RC_CORE
 	help
 	  Support for simple SAA7146 based DVB cards
 	  (so called Budget- or Nova-PCI cards) without onboard
@@ -106,15 +113,17 @@ config DVB_BUDGET_CI
 
 config DVB_BUDGET_AV
 	tristate "Budget cards with analog video inputs"
-	depends on DVB_CORE && PCI && I2C && VIDEO_V4L1
+	depends on DVB_BUDGET_CORE && I2C
 	select VIDEO_SAA7146_VV
-	select DVB_PLL
+	depends on VIDEO_DEV	# dependencies of VIDEO_SAA7146_VV
+	select DVB_PLL if !DVB_FE_CUSTOMISE
 	select DVB_STV0299 if !DVB_FE_CUSTOMISE
 	select DVB_TDA1004X if !DVB_FE_CUSTOMISE
 	select DVB_TDA10021 if !DVB_FE_CUSTOMISE
 	select DVB_TDA10023 if !DVB_FE_CUSTOMISE
+	select DVB_STB0899 if !DVB_FE_CUSTOMISE
+	select DVB_TDA8261 if !DVB_FE_CUSTOMISE
 	select DVB_TUA6100 if !DVB_FE_CUSTOMISE
-	select FW_LOADER
 	help
 	  Support for simple SAA7146 based DVB cards
 	  (so called Budget- or Nova-PCI cards) without onboard
@@ -127,8 +136,8 @@ config DVB_BUDGET_AV
 
 config DVB_BUDGET_PATCH
 	tristate "AV7110 cards with Budget Patch"
-	depends on DVB_CORE && DVB_BUDGET && VIDEO_V4L1
-	select DVB_AV7110
+	depends on DVB_BUDGET_CORE && I2C
+	depends on DVB_AV7110
 	select DVB_STV0299 if !DVB_FE_CUSTOMISE
 	select DVB_VES1X93 if !DVB_FE_CUSTOMISE
 	select DVB_TDA8083 if !DVB_FE_CUSTOMISE

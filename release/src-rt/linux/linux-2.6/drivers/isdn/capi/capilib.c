@@ -1,10 +1,11 @@
 
+#include <linux/slab.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/isdn/capilli.h>
 
 #define DBG(format, arg...) do { \
-printk(KERN_DEBUG "%s: " format "\n" , __FUNCTION__ , ## arg); \
+printk(KERN_DEBUG "%s: " format "\n" , __func__ , ## arg); \
 } while (0)
 
 struct capilib_msgidqueue {
@@ -44,7 +45,7 @@ static inline void mq_init(struct capilib_ncci * np)
 static inline int mq_enqueue(struct capilib_ncci * np, u16 msgid)
 {
 	struct capilib_msgidqueue *mq;
-	if ((mq = np->msgidfree) == 0)
+	if ((mq = np->msgidfree) == NULL)
 		return 0;
 	np->msgidfree = mq->next;
 	mq->msgid = msgid;

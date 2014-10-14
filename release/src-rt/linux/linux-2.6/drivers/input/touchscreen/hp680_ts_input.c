@@ -5,7 +5,7 @@
 #include <asm/io.h>
 #include <asm/delay.h>
 #include <asm/adc.h>
-#include <asm/hp6xx.h>
+#include <mach/hp6xx.h>
 
 #define MODNAME "hp680_ts_input"
 
@@ -28,29 +28,29 @@ static void do_softint(struct work_struct *work)
 	u8 scpdr;
 	int touched = 0;
 
-	if (ctrl_inb(PHDR) & PHDR_TS_PEN_DOWN) {
-		scpdr = ctrl_inb(SCPDR);
+	if (__raw_readb(PHDR) & PHDR_TS_PEN_DOWN) {
+		scpdr = __raw_readb(SCPDR);
 		scpdr |= SCPDR_TS_SCAN_ENABLE;
 		scpdr &= ~SCPDR_TS_SCAN_Y;
-		ctrl_outb(scpdr, SCPDR);
+		__raw_writeb(scpdr, SCPDR);
 		udelay(30);
 
 		absy = adc_single(ADC_CHANNEL_TS_Y);
 
-		scpdr = ctrl_inb(SCPDR);
+		scpdr = __raw_readb(SCPDR);
 		scpdr |= SCPDR_TS_SCAN_Y;
 		scpdr &= ~SCPDR_TS_SCAN_X;
-		ctrl_outb(scpdr, SCPDR);
+		__raw_writeb(scpdr, SCPDR);
 		udelay(30);
 
 		absx = adc_single(ADC_CHANNEL_TS_X);
 
-		scpdr = ctrl_inb(SCPDR);
+		scpdr = __raw_readb(SCPDR);
 		scpdr |= SCPDR_TS_SCAN_X;
 		scpdr &= ~SCPDR_TS_SCAN_ENABLE;
-		ctrl_outb(scpdr, SCPDR);
+		__raw_writeb(scpdr, SCPDR);
 		udelay(100);
-		touched = ctrl_inb(PHDR) & PHDR_TS_PEN_DOWN;
+		touched = __raw_readb(PHDR) & PHDR_TS_PEN_DOWN;
 	}
 
 	if (touched) {
@@ -81,8 +81,8 @@ static int __init hp680_ts_init(void)
 	if (!hp680_ts_dev)
 		return -ENOMEM;
 
-	hp680_ts_dev->evbit[0] = BIT(EV_ABS) | BIT(EV_KEY);
-	hp680_ts_dev->keybit[LONG(BTN_TOUCH)] = BIT(BTN_TOUCH);
+	hp680_ts_dev->evbit[0] = BIT_MASK(EV_ABS) | BIT_MASK(EV_KEY);
+	hp680_ts_dev->keybit[BIT_WORD(BTN_TOUCH)] = BIT_MASK(BTN_TOUCH);
 
 	input_set_abs_params(hp680_ts_dev, ABS_X,
 		HP680_TS_ABS_X_MIN, HP680_TS_ABS_X_MAX, 0, 0);
@@ -107,8 +107,7 @@ static int __init hp680_ts_init(void)
 	return 0;
 
  fail2:	free_irq(HP680_TS_IRQ, NULL);
-	cancel_delayed_work(&work);
-	flush_scheduled_work();
+	cancel_delayed_work_sync(&work);
  fail1:	input_free_device(hp680_ts_dev);
 	return err;
 }
@@ -116,8 +115,7 @@ static int __init hp680_ts_init(void)
 static void __exit hp680_ts_exit(void)
 {
 	free_irq(HP680_TS_IRQ, NULL);
-	cancel_delayed_work(&work);
-	flush_scheduled_work();
+	cancel_delayed_work_sync(&work);
 	input_unregister_device(hp680_ts_dev);
 }
 

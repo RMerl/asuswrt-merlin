@@ -1,6 +1,6 @@
 /*
  *  Routines for Gravis UltraSound soundcards
- *  Copyright (c) by Jaroslav Kysela <perex@suse.cz>
+ *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  *
  *
  *   This program is free software; you can redistribute it and/or modify
@@ -19,7 +19,6 @@
  *
  */
 
-#include <sound/driver.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>
 #include <linux/delay.h>
@@ -31,7 +30,7 @@
 
 #include <asm/dma.h>
 
-MODULE_AUTHOR("Jaroslav Kysela <perex@suse.cz>");
+MODULE_AUTHOR("Jaroslav Kysela <perex@perex.cz>");
 MODULE_DESCRIPTION("Routines for Gravis UltraSound soundcards");
 MODULE_LICENSE("GPL");
 
@@ -104,12 +103,6 @@ static int snd_gus_free(struct snd_gus_card *gus)
 {
 	if (gus->gf1.res_port2 == NULL)
 		goto __hw_end;
-#if defined(CONFIG_SND_SEQUENCER) || (defined(MODULE) && defined(CONFIG_SND_SEQUENCER_MODULE))
-	if (gus->seq_dev) {
-		snd_device_free(gus->card, gus->seq_dev);
-		gus->seq_dev = NULL;
-	}
-#endif
 	snd_gf1_stop(gus);
 	snd_gus_init_dma_irq(gus, 0);
       __hw_end:
@@ -154,6 +147,14 @@ int snd_gus_create(struct snd_card *card,
 	gus = kzalloc(sizeof(*gus), GFP_KERNEL);
 	if (gus == NULL)
 		return -ENOMEM;
+	spin_lock_init(&gus->reg_lock);
+	spin_lock_init(&gus->voice_alloc);
+	spin_lock_init(&gus->active_voice_lock);
+	spin_lock_init(&gus->event_lock);
+	spin_lock_init(&gus->dma_lock);
+	spin_lock_init(&gus->pcm_volume_level_lock);
+	spin_lock_init(&gus->uart_cmd_lock);
+	mutex_init(&gus->dma_mutex);
 	gus->gf1.irq = -1;
 	gus->gf1.dma1 = -1;
 	gus->gf1.dma2 = -1;
@@ -218,14 +219,6 @@ int snd_gus_create(struct snd_card *card,
 	gus->gf1.pcm_channels = pcm_channels;
 	gus->gf1.volume_ramp = 25;
 	gus->gf1.smooth_pan = 1;
-	spin_lock_init(&gus->reg_lock);
-	spin_lock_init(&gus->voice_alloc);
-	spin_lock_init(&gus->active_voice_lock);
-	spin_lock_init(&gus->event_lock);
-	spin_lock_init(&gus->dma_lock);
-	spin_lock_init(&gus->pcm_volume_level_lock);
-	spin_lock_init(&gus->uart_cmd_lock);
-	mutex_init(&gus->dma_mutex);
 	if ((err = snd_device_new(card, SNDRV_DEV_LOWLEVEL, gus, &ops)) < 0) {
 		snd_gus_free(gus);
 		return err;
@@ -283,9 +276,11 @@ static int snd_gus_init_dma_irq(struct snd_gus_card * gus, int latches)
 	static unsigned char dmas[8] =
 		{6, 1, 0, 2, 0, 3, 4, 5};
 
-	snd_assert(gus != NULL, return -EINVAL);
+	if (snd_BUG_ON(!gus))
+		return -EINVAL;
 	card = gus->card;
-	snd_assert(card != NULL, return -EINVAL);
+	if (snd_BUG_ON(!card))
+		return -EINVAL;
 
 	gus->mix_cntrl_reg &= 0xf8;
 	gus->mix_cntrl_reg |= 0x01;	/* disable MIC, LINE IN, enable LINE OUT */
@@ -398,7 +393,7 @@ static int snd_gus_check_version(struct snd_gus_card * gus)
 				gus->ess_flag = 1;
 			} else {
 				snd_printk(KERN_ERR "unknown GF1 revision number at 0x%lx - 0x%x (0x%x)\n", gus->gf1.port, rev, val);
-				snd_printk(KERN_ERR "  please - report to <perex@suse.cz>\n");
+				snd_printk(KERN_ERR "  please - report to <perex@perex.cz>\n");
 			}
 		}
 	}
@@ -407,14 +402,6 @@ static int snd_gus_check_version(struct snd_gus_card * gus)
 	snd_gus_init_control(gus);
 	return 0;
 }
-
-#if defined(CONFIG_SND_SEQUENCER) || (defined(MODULE) && defined(CONFIG_SND_SEQUENCER_MODULE))
-static void snd_gus_seq_dev_free(struct snd_seq_device *seq_dev)
-{
-	struct snd_gus_card *gus = seq_dev->private_data;
-	gus->seq_dev = NULL;
-}
-#endif
 
 int snd_gus_initialize(struct snd_gus_card *gus)
 {
@@ -430,15 +417,6 @@ int snd_gus_initialize(struct snd_gus_card *gus)
 	}
 	if ((err = snd_gus_init_dma_irq(gus, 1)) < 0)
 		return err;
-#if defined(CONFIG_SND_SEQUENCER) || (defined(MODULE) && defined(CONFIG_SND_SEQUENCER_MODULE))
-	if (snd_seq_device_new(gus->card, 1, SNDRV_SEQ_DEV_ID_GUS,
-			       sizeof(struct snd_gus_card *), &gus->seq_dev) >= 0) {
-		strcpy(gus->seq_dev->name, "GUS");
-		*(struct snd_gus_card **)SNDRV_SEQ_DEVICE_ARGPTR(gus->seq_dev) = gus;
-		gus->seq_dev->private_data = gus;
-		gus->seq_dev->private_free = snd_gus_seq_dev_free;
-	}
-#endif
 	snd_gf1_start(gus);
 	gus->initialized = 1;
 	return 0;

@@ -1,6 +1,6 @@
 /*
  *  The driver for the Cirrus Logic's Sound Fusion CS46XX based soundcards
- *  Copyright (c) by Jaroslav Kysela <perex@suse.cz>
+ *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  *
  *
  *   This program is free software; you can redistribute it and/or modify
@@ -212,6 +212,7 @@ static inline void cs46xx_dsp_spos_update_scb (struct snd_cs46xx * chip,
 			(scb->address + SCBsubListPtr) << 2,
 			(scb->sub_list_ptr->address << 0x10) |
 			(scb->next_scb_ptr->address));	
+	scb->updated = 1;
 }
 
 static inline void cs46xx_dsp_scb_set_volume (struct snd_cs46xx * chip,
@@ -222,6 +223,9 @@ static inline void cs46xx_dsp_scb_set_volume (struct snd_cs46xx * chip,
 
 	snd_cs46xx_poke(chip, (scb->address + SCBVolumeCtrl) << 2, val);
 	snd_cs46xx_poke(chip, (scb->address + SCBVolumeCtrl + 1) << 2, val);
+	scb->volume_set = 1;
+	scb->volume[0] = left;
+	scb->volume[1] = right;
 }
 #endif /* __DSP_SPOS_H__ */
 #endif /* CONFIG_SND_CS46XX_NEW_DSP  */

@@ -1,31 +1,47 @@
-choice
-	prompt "Machine Type"
-	depends on PPC_83xx
-	default MPC834x_MDS
+menuconfig PPC_83xx
+	bool "83xx-based boards"
+	depends on 6xx
+	select PPC_UDBG_16550
+	select PPC_PCI_CHOICE
+	select FSL_PCI if PCI
+	select FSL_SOC
+	select IPIC
 
-config MPC8313_RDB
-	bool "Freescale MPC8313 RDB"
+if PPC_83xx
+
+config MPC830x_RDB
+	bool "Freescale MPC830x RDB and derivatives"
 	select DEFAULT_UIMAGE
+	select PPC_MPC831x
+	select FSL_GTM
 	help
-	  This option enables support for the MPC8313 RDB board.
+	  This option enables support for the MPC8308 RDB and MPC8308 P1M boards.
+
+config MPC831x_RDB
+	bool "Freescale MPC831x RDB"
+	select DEFAULT_UIMAGE
+	select PPC_MPC831x
+	help
+	  This option enables support for the MPC8313 RDB and MPC8315 RDB boards.
 
 config MPC832x_MDS
 	bool "Freescale MPC832x MDS"
 	select DEFAULT_UIMAGE
-	select QUICC_ENGINE
+	select PPC_MPC832x
 	help
 	  This option enables support for the MPC832x MDS evaluation board.
 
 config MPC832x_RDB
 	bool "Freescale MPC832x RDB"
 	select DEFAULT_UIMAGE
-	select QUICC_ENGINE
+	select PPC_MPC832x
 	help
 	  This option enables support for the MPC8323 RDB board.
 
 config MPC834x_MDS
 	bool "Freescale MPC834x MDS"
 	select DEFAULT_UIMAGE
+	select PPC_MPC834x
 	help
 	  This option enables support for the MPC 834x MDS evaluation board.
 
@@ -37,6 +53,7 @@ config MPC834x_MDS
 config MPC834x_ITX
 	bool "Freescale MPC834x ITX"
 	select DEFAULT_UIMAGE
+	select PPC_MPC834x
 	help
 	  This option enables support for the MPC 834x ITX evaluation board.
 
@@ -46,32 +63,69 @@ config MPC834x_ITX
 config MPC836x_MDS
 	bool "Freescale MPC836x MDS"
 	select DEFAULT_UIMAGE
-	select QUICC_ENGINE
 	help
 	  This option enables support for the MPC836x MDS Processor Board.
 
-endchoice
+config MPC836x_RDK
+	bool "Freescale/Logic MPC836x RDK"
+	select DEFAULT_UIMAGE
+	select FSL_GTM
+	select FSL_LBC
+	help
+	  This option enables support for the MPC836x RDK Processor Board,
+	  also known as ZOOM PowerQUICC Kit.
 
+config MPC837x_MDS
+	bool "Freescale MPC837x MDS"
+	select DEFAULT_UIMAGE
+	select PPC_MPC837x
+	help
+	  This option enables support for the MPC837x MDS Processor Board.
+
+config MPC837x_RDB
+	bool "Freescale MPC837x RDB/WLAN"
+	select DEFAULT_UIMAGE
+	select PPC_MPC837x
+	help
+	  This option enables support for the MPC837x RDB and WLAN Boards.
+
+config SBC834x
+	bool "Wind River SBC834x"
+	select DEFAULT_UIMAGE
+	select PPC_MPC834x
+	help
+	  This option enables support for the Wind River SBC834x board.
+
+config ASP834x
+	bool "Analogue & Micro ASP 834x"
+	select PPC_MPC834x
+	select REDBOOT
+	help
+	  This enables support for the Analogue & Micro ASP 83xx
+	  board.
+
+config KMETER1
+	bool "Keymile KMETER1"
+	select DEFAULT_UIMAGE
+	select QUICC_ENGINE
+	help
+	  This enables support for the Keymile KMETER1 board.
+
+
+endif
+
+# used for usb
 config PPC_MPC831x
 	bool
-	select PPC_UDBG_16550
-	select PPC_INDIRECT_PCI
-	default y if MPC8313_RDB
 
+# used for math-emu
 config PPC_MPC832x
 	bool
-	select PPC_UDBG_16550
-	select PPC_INDIRECT_PCI
-	default y if MPC832x_MDS || MPC832x_RDB
 
-config MPC834x
+# used for usb
+config PPC_MPC834x
 	bool
-	select PPC_UDBG_16550
-	select PPC_INDIRECT_PCI
-	default y if MPC834x_MDS || MPC834x_ITX
 
-config PPC_MPC836x
+# used for usb
+config PPC_MPC837x
 	bool
-	select PPC_UDBG_16550
-	select PPC_INDIRECT_PCI
-	default y if MPC836x_MDS

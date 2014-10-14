@@ -43,11 +43,11 @@ static int wait_handshake(struct echoaudio *chip)
 {
 	int i;
 
-	/* Wait up to 10ms for the handshake from the DSP */
+	/* Wait up to 20ms for the handshake from the DSP */
 	for (i = 0; i < HANDSHAKE_TIMEOUT; i++) {
 		/* Look for the handshake value */
+		barrier();
 		if (chip->comm_page->handshake) {
-			/*if (i)  DE_ACT(("Handshake time: %d\n", i));*/
 			return 0;
 		}
 		udelay(1);
@@ -175,15 +175,15 @@ static inline int check_asic_status(struct echoaudio *chip)
 #ifdef ECHOCARD_HAS_ASIC
 
 /* Load ASIC code - done after the DSP is loaded */
-static int load_asic_generic(struct echoaudio *chip, u32 cmd,
-			     const struct firmware *asic)
+static int load_asic_generic(struct echoaudio *chip, u32 cmd, short asic)
 {
 	const struct firmware *fw;
 	int err;
 	u32 i, size;
 	u8 *code;
 
-	if ((err = get_firmware(&fw, asic, chip)) < 0) {
+	err = get_firmware(&fw, chip, asic);
+	if (err < 0) {
 		snd_printk(KERN_WARNING "Firmware not found !\n");
 		return err;
 	}
@@ -245,7 +245,8 @@ static int install_resident_loader(struct echoaudio *chip)
 		return 0;
 	}
 
-	if ((i = get_firmware(&fw, &card_fw[FW_361_LOADER], chip)) < 0) {
+	i = get_firmware(&fw, chip, FW_361_LOADER);
+	if (i < 0) {
 		snd_printk(KERN_WARNING "Firmware not found !\n");
 		return i;
 	}
@@ -474,7 +475,8 @@ static int load_firmware(struct echoaudio *chip)
 	const struct firmware *fw;
 	int box_type, err;
 
-	snd_assert(chip->dsp_code_to_load && chip->comm_page, return -EPERM);
+	if (snd_BUG_ON(!chip->dsp_code_to_load || !chip->comm_page))
+		return -EPERM;
 
 	/* See if the ASIC is present and working - only if the DSP is already loaded */
 	if (chip->dsp_code) {
@@ -484,7 +486,8 @@ static int load_firmware(struct echoaudio *chip)
 		chip->dsp_code = NULL;
 	}
 
-	if ((err = get_firmware(&fw, chip->dsp_code_to_load, chip)) < 0)
+	err = get_firmware(&fw, chip, chip->dsp_code_to_load);
+	if (err < 0)
 		return err;
 	err = load_dsp(chip, (u16 *)fw->data);
 	free_firmware(fw);
@@ -493,9 +496,6 @@ static int load_firmware(struct echoaudio *chip)
 
 	if ((box_type = load_asic(chip)) < 0)
 		return box_type;	/* error */
-
-	if ((err = restore_dsp_rettings(chip)) < 0)
-		return err;
 
 	return box_type;
 }
@@ -512,8 +512,8 @@ static int load_firmware(struct echoaudio *chip)
 /* Set the nominal level for an input or output bus (true = -10dBV, false = +4dBu) */
 static int set_nominal_level(struct echoaudio *chip, u16 index, char consumer)
 {
-	snd_assert(index < num_busses_out(chip) + num_busses_in(chip),
-		   return -EINVAL);
+	if (snd_BUG_ON(index >= num_busses_out(chip) + num_busses_in(chip)))
+		return -EINVAL;
 
 	/* Wait for the handshake (OK even if ASIC is not loaded) */
 	if (wait_handshake(chip))
@@ -536,7 +536,8 @@ static int set_nominal_level(struct echoaudio *chip, u16 index, char consumer)
 /* Set the gain for a single physical output channel (dB). */
 static int set_output_gain(struct echoaudio *chip, u16 channel, s8 gain)
 {
-	snd_assert(channel < num_busses_out(chip), return -EINVAL);
+	if (snd_BUG_ON(channel >= num_busses_out(chip)))
+		return -EINVAL;
 
 	if (wait_handshake(chip))
 		return -EIO;
@@ -554,8 +555,9 @@ static int set_output_gain(struct echoaudio *chip, u16 channel, s8 gain)
 static int set_monitor_gain(struct echoaudio *chip, u16 output, u16 input,
 			    s8 gain)
 {
-	snd_assert(output < num_busses_out(chip) &&
-		   input < num_busses_in(chip), return -EINVAL);
+	if (snd_BUG_ON(output >= num_busses_out(chip) ||
+		    input >= num_busses_in(chip)))
+		return -EINVAL;
 
 	if (wait_handshake(chip))
 		return -EIO;
@@ -654,25 +656,89 @@ static void get_audio_meters(struct echoaudio *chip, long *meters)
 
 static int restore_dsp_rettings(struct echoaudio *chip)
 {
-	int err;
+	int i, o, err;
 	DE_INIT(("restore_dsp_settings\n"));
 
 	if ((err = check_asic_status(chip)) < 0)
 		return err;
 
-	/* @ Gina20/Darla20 only. Should be harmless for other cards. */
+	/* Gina20/Darla20 only. Should be harmless for other cards. */
 	chip->comm_page->gd_clock_state = GD_CLOCK_UNDEF;
 	chip->comm_page->gd_spdif_status = GD_SPDIF_STATUS_UNDEF;
 	chip->comm_page->handshake = 0xffffffff;
 
-	if ((err = set_sample_rate(chip, chip->sample_rate)) < 0)
+	/* Restore output busses */
+	for (i = 0; i < num_busses_out(chip); i++) {
+		err = set_output_gain(chip, i, chip->output_gain[i]);
+		if (err < 0)
+			return err;
+	}
+
+#ifdef ECHOCARD_HAS_VMIXER
+	for (i = 0; i < num_pipes_out(chip); i++)
+		for (o = 0; o < num_busses_out(chip); o++) {
+			err = set_vmixer_gain(chip, o, i,
+						chip->vmixer_gain[o][i]);
+			if (err < 0)
+				return err;
+		}
+	if (update_vmixer_level(chip) < 0)
+		return -EIO;
+#endif /* ECHOCARD_HAS_VMIXER */
+
+#ifdef ECHOCARD_HAS_MONITOR
+	for (o = 0; o < num_busses_out(chip); o++)
+		for (i = 0; i < num_busses_in(chip); i++) {
+			err = set_monitor_gain(chip, o, i,
+						chip->monitor_gain[o][i]);
+			if (err < 0)
+				return err;
+		}
+#endif /* ECHOCARD_HAS_MONITOR */
+
+#ifdef ECHOCARD_HAS_INPUT_GAIN
+	for (i = 0; i < num_busses_in(chip); i++) {
+		err = set_input_gain(chip, i, chip->input_gain[i]);
+		if (err < 0)
+			return err;
+	}
+#endif /* ECHOCARD_HAS_INPUT_GAIN */
+
+	err = update_output_line_level(chip);
+	if (err < 0)
 		return err;
 
-	if (chip->meters_enabled)
-		if (send_vector(chip, DSP_VC_METERS_ON) < 0)
-			return -EIO;
+	err = update_input_line_level(chip);
+	if (err < 0)
+		return err;
+
+	err = set_sample_rate(chip, chip->sample_rate);
+	if (err < 0)
+		return err;
+
+	if (chip->meters_enabled) {
+		err = send_vector(chip, DSP_VC_METERS_ON);
+		if (err < 0)
+			return err;
+	}
+
+#ifdef ECHOCARD_HAS_DIGITAL_MODE_SWITCH
+	if (set_digital_mode(chip, chip->digital_mode) < 0)
+		return -EIO;
+#endif
+
+#ifdef ECHOCARD_HAS_DIGITAL_IO
+	if (set_professional_spdif(chip, chip->professional_spdif) < 0)
+		return -EIO;
+#endif
+
+#ifdef ECHOCARD_HAS_PHANTOM_POWER
+	if (set_phantom_power(chip, chip->phantom_power) < 0)
+		return -EIO;
+#endif
 
 #ifdef ECHOCARD_HAS_EXTERNAL_CLOCK
+	/* set_input_clock() also restores automute setting */
 	if (set_input_clock(chip, chip->input_clock) < 0)
 		return -EIO;
 #endif
@@ -682,23 +748,14 @@ static int restore_dsp_rettings(struct echoaudio *chip)
 		return -EIO;
 #endif
 
-	if (update_output_line_level(chip) < 0)
-		return -EIO;
-
-	if (update_input_line_level(chip) < 0)
-		return -EIO;
-
-#ifdef ECHOCARD_HAS_VMIXER
-	if (update_vmixer_level(chip) < 0)
-		return -EIO;
-#endif
-
 	if (wait_handshake(chip) < 0)
 		return -EIO;
 	clear_handshake(chip);
+	if (send_vector(chip, DSP_VC_UPDATE_FLAGS) < 0)
+		return -EIO;
 
 	DE_INIT(("restore_dsp_rettings done\n"));
-	return send_vector(chip, DSP_VC_UPDATE_FLAGS);
+	return 0;
 }
 
 
@@ -915,20 +972,16 @@ static int init_dsp_comm_page(struct echoaudio *chip)
 	chip->card_name = ECHOCARD_NAME;
 	chip->bad_board = TRUE;	/* Set TRUE until DSP loaded */
 	chip->dsp_code = NULL;	/* Current DSP code not loaded */
-	chip->digital_mode = DIGITAL_MODE_NONE;
-	chip->input_clock = ECHO_CLOCK_INTERNAL;
-	chip->output_clock = ECHO_CLOCK_WORD;
 	chip->asic_loaded = FALSE;
 	memset(chip->comm_page, 0, sizeof(struct comm_page));
 
 	/* Init the comm page */
 	chip->comm_page->comm_size =
-		__constant_cpu_to_le32(sizeof(struct comm_page));
+		cpu_to_le32(sizeof(struct comm_page));
 	chip->comm_page->handshake = 0xffffffff;
 	chip->comm_page->midi_out_free_count =
-		__constant_cpu_to_le32(DSP_MIDI_OUT_FIFO_SIZE);
-	chip->comm_page->sample_rate = __constant_cpu_to_le32(44100);
-	chip->sample_rate = 44100;
+		cpu_to_le32(DSP_MIDI_OUT_FIFO_SIZE);
+	chip->comm_page->sample_rate = cpu_to_le32(44100);
 
 	/* Set line levels so we don't blast any inputs on startup */
 	memset(chip->comm_page->monitors, ECHOGAIN_MUTED, MONITOR_ARRAY_SIZE);
@@ -939,50 +992,21 @@ static int init_dsp_comm_page(struct echoaudio *chip)
 
 
 
-/* This function initializes the several volume controls for busses and pipes.
-This MUST be called after the DSP is up and running ! */
+/* This function initializes the chip structure with default values, ie. all
+ * muted and internal clock source. Then it copies the settings to the DSP.
+ * This MUST be called after the DSP is up and running !
+ */
 static int init_line_levels(struct echoaudio *chip)
 {
-	int st, i, o;
-
 	DE_INIT(("init_line_levels\n"));
-
-	/* Mute output busses */
-	for (i = 0; i < num_busses_out(chip); i++)
-		if ((st = set_output_gain(chip, i, ECHOGAIN_MUTED)))
-			return st;
-	if ((st = update_output_line_level(chip)))
-		return st;
-
-#ifdef ECHOCARD_HAS_VMIXER
-	/* Mute the Vmixer */
-	for (i = 0; i < num_pipes_out(chip); i++)
-		for (o = 0; o < num_busses_out(chip); o++)
-			if ((st = set_vmixer_gain(chip, o, i, ECHOGAIN_MUTED)))
-				return st;
-	if ((st = update_vmixer_level(chip)))
-		return st;
-#endif /* ECHOCARD_HAS_VMIXER */
-
-#ifdef ECHOCARD_HAS_MONITOR
-	/* Mute the monitor mixer */
-	for (o = 0; o < num_busses_out(chip); o++)
-		for (i = 0; i < num_busses_in(chip); i++)
-			if ((st = set_monitor_gain(chip, o, i, ECHOGAIN_MUTED)))
-				return st;
-	if ((st = update_output_line_level(chip)))
-		return st;
-#endif /* ECHOCARD_HAS_MONITOR */
-
-#ifdef ECHOCARD_HAS_INPUT_GAIN
-	for (i = 0; i < num_busses_in(chip); i++)
-		if ((st = set_input_gain(chip, i, ECHOGAIN_MUTED)))
-			return st;
-	if ((st = update_input_line_level(chip)))
-		return st;
-#endif /* ECHOCARD_HAS_INPUT_GAIN */
-
-	return 0;
+	memset(chip->output_gain, ECHOGAIN_MUTED, sizeof(chip->output_gain));
+	memset(chip->input_gain, ECHOGAIN_MUTED, sizeof(chip->input_gain));
+	memset(chip->monitor_gain, ECHOGAIN_MUTED, sizeof(chip->monitor_gain));
+	memset(chip->vmixer_gain, ECHOGAIN_MUTED, sizeof(chip->vmixer_gain));
+	chip->input_clock = ECHO_CLOCK_INTERNAL;
+	chip->output_clock = ECHO_CLOCK_WORD;
+	chip->sample_rate = 44100;
+	return restore_dsp_rettings(chip);
 }
 
 
@@ -1065,8 +1089,10 @@ static int free_pipes(struct echoaudio *chip, struct audiopipe *pipe)
 	int i;
 
 	DE_ACT(("free_pipes: Pipe %d\n", pipe->index));
-	snd_assert(is_pipe_allocated(chip, pipe->index), return -EINVAL);
-	snd_assert(pipe->state == PIPE_STATE_STOPPED, return -EINVAL);
+	if (snd_BUG_ON(!is_pipe_allocated(chip, pipe->index)))
+		return -EINVAL;
+	if (snd_BUG_ON(pipe->state != PIPE_STATE_STOPPED))
+		return -EINVAL;
 
 	for (channel_mask = i = 0; i < pipe->interleave; i++)
 		channel_mask |= 1 << (pipe->index + i);

@@ -28,8 +28,6 @@
  * ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
- *
- * $Id$
  */
 
 #include <linux/jiffies.h>
@@ -70,11 +68,16 @@ static void catas_reset(struct work_struct *work)
 	spin_unlock_irq(&catas_lock);
 
 	list_for_each_entry_safe(dev, tmpdev, &tlist, catas_err.list) {
+		struct pci_dev *pdev = dev->pdev;
 		ret = __mthca_restart_one(dev->pdev);
+		/* 'dev' now is not valid */
 		if (ret)
-			mthca_err(dev, "Reset failed (%d)\n", ret);
-		else
-			mthca_dbg(dev, "Reset succeeded\n");
+			printk(KERN_ERR "mthca %s: Reset failed (%d)\n",
+			       pci_name(pdev), ret);
+		else {
+			struct mthca_dev *d = pci_get_drvdata(pdev);
+			mthca_dbg(d, "Reset succeeded\n");
+		}
 	}
 
 	mutex_unlock(&mthca_device_mutex);
@@ -90,6 +93,7 @@ static void handle_catas(struct mthca_dev *dev)
 	event.device = &dev->ib_dev;
 	event.event  = IB_EVENT_DEVICE_FATAL;
 	event.element.port_num = 0;
+	dev->active = false;
 
 	ib_dispatch_event(&event);
 
@@ -128,7 +132,6 @@ static void handle_catas(struct mthca_dev *dev)
 static void poll_catas(unsigned long dev_ptr)
 {
 	struct mthca_dev *dev = (struct mthca_dev *) dev_ptr;
-	unsigned long flags;
 	int i;
 
 	for (i = 0; i < dev->catas_err.size; ++i)
@@ -137,39 +140,26 @@ static void poll_catas(unsigned long dev_ptr)
 			return;
 		}
 
-	spin_lock_irqsave(&catas_lock, flags);
-	if (!dev->catas_err.stop)
-		mod_timer(&dev->catas_err.timer,
-			  jiffies + MTHCA_CATAS_POLL_INTERVAL);
-	spin_unlock_irqrestore(&catas_lock, flags);
-
-	return;
+	mod_timer(&dev->catas_err.timer,
+		  round_jiffies(jiffies + MTHCA_CATAS_POLL_INTERVAL));
 }
 
 void mthca_start_catas_poll(struct mthca_dev *dev)
 {
-	unsigned long addr;
+	phys_addr_t addr;
 
 	init_timer(&dev->catas_err.timer);
-	dev->catas_err.stop = 0;
 	dev->catas_err.map  = NULL;
 
 	addr = pci_resource_start(dev->pdev, 0) +
 		((pci_resource_len(dev->pdev, 0) - 1) &
 		 dev->catas_err.addr);
 
-	if (!request_mem_region(addr, dev->catas_err.size * 4,
-				DRV_NAME)) {
-		mthca_warn(dev, "couldn't request catastrophic error region "
-			   "at 0x%lx/0x%x\n", addr, dev->catas_err.size * 4);
-		return;
-	}
-
 	dev->catas_err.map = ioremap(addr, dev->catas_err.size * 4);
 	if (!dev->catas_err.map) {
 		mthca_warn(dev, "couldn't map catastrophic error region "
-			   "at 0x%lx/0x%x\n", addr, dev->catas_err.size * 4);
-		release_mem_region(addr, dev->catas_err.size * 4);
+			   "at 0x%llx/0x%x\n", (unsigned long long) addr,
+			   dev->catas_err.size * 4);
 		return;
 	}
 
@@ -182,19 +172,10 @@ void mthca_start_catas_poll(struct mthca_dev *dev)
 
 void mthca_stop_catas_poll(struct mthca_dev *dev)
 {
-	spin_lock_irq(&catas_lock);
-	dev->catas_err.stop = 1;
-	spin_unlock_irq(&catas_lock);
-
 	del_timer_sync(&dev->catas_err.timer);
 
-	if (dev->catas_err.map) {
+	if (dev->catas_err.map)
 		iounmap(dev->catas_err.map);
-		release_mem_region(pci_resource_start(dev->pdev, 0) +
-				   ((pci_resource_len(dev->pdev, 0) - 1) &
-				    dev->catas_err.addr),
-				   dev->catas_err.size * 4);
-	}
 
 	spin_lock_irq(&catas_lock);
 	list_del(&dev->catas_err.list);

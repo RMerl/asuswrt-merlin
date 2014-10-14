@@ -1,7 +1,20 @@
-
-/* Common Flash Interface structures
- * See http://support.intel.com/design/flash/technote/index.htm
- * $Id: cfi.h,v 1.57 2005/11/15 23:28:17 tpoynor Exp $
+/*
+ * Copyright © 2000-2010 David Woodhouse <dwmw2@infradead.org> et al.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ *
  */
 
 #ifndef __MTD_CFI_H__
@@ -13,6 +26,7 @@
 #include <linux/mtd/flashchip.h>
 #include <linux/mtd/map.h>
 #include <linux/mtd/cfi_endian.h>
+#include <linux/mtd/xip.h>
 
 #ifdef CONFIG_MTD_CFI_I1
 #define cfi_interleave(cfi) 1
@@ -57,6 +71,15 @@
 #define cfi_interleave_is_8(cfi) (0)
 #endif
 
+#ifndef cfi_interleave
+#warning No CONFIG_MTD_CFI_Ix selected. No NOR chip support can work.
+static inline int cfi_interleave(void *cfi)
+{
+	BUG();
+	return 0;
+}
+#endif
+
 static inline int cfi_interleave_supported(int i)
 {
 	switch (i) {
@@ -88,6 +111,18 @@ static inline int cfi_interleave_supported(int i)
 #define CFI_DEVICETYPE_X16 (16 / 8)
 #define CFI_DEVICETYPE_X32 (32 / 8)
 #define CFI_DEVICETYPE_X64 (64 / 8)
+
+
+/* Device Interface Code Assignments from the "Common Flash Memory Interface
+ * Publication 100" dated December 1, 2001.
+ */
+#define CFI_INTERFACE_X8_ASYNC		0x0000
+#define CFI_INTERFACE_X16_ASYNC		0x0001
+#define CFI_INTERFACE_X8_BY_X16_ASYNC	0x0002
+#define CFI_INTERFACE_X32_ASYNC		0x0003
+#define CFI_INTERFACE_X16_BY_X32_ASYNC	0x0005
+#define CFI_INTERFACE_NOT_ALLOWED	0xffff
+
 
 /* NB: We keep these structures in memory in HOST byteorder, except
  * where individually noted.
@@ -232,6 +267,7 @@ struct cfi_bri_query {
 #define P_ID_MITSUBISHI_STD     0x0100
 #define P_ID_MITSUBISHI_EXT     0x0101
 #define P_ID_SST_PAGE           0x0102
+#define P_ID_SST_OLD            0x0701
 #define P_ID_INTEL_PERFORMANCE  0x0200
 #define P_ID_INTEL_DATA         0x0210
 #define P_ID_RESERVED           0xffff
@@ -253,6 +289,7 @@ struct cfi_private {
 				  must be of the same type. */
 	int mfr, id;
 	int numchips;
+	map_word sector_erase_cmd;
 	unsigned long chipshift; /* Because they're of the same type */
 	const char *im_name;	 /* inter_module name for cmdset_setup */
 	struct flchip chips[0];  /* per-chip data structure for each chip */
@@ -261,9 +298,25 @@ struct cfi_private {
 /*
  * Returns the command address according to the given geometry.
  */
-static inline uint32_t cfi_build_cmd_addr(uint32_t cmd_ofs, int interleave, int type)
+static inline uint32_t cfi_build_cmd_addr(uint32_t cmd_ofs,
+				struct map_info *map, struct cfi_private *cfi)
 {
-	return (cmd_ofs * type) * interleave;
+	unsigned bankwidth = map_bankwidth(map);
+	unsigned interleave = cfi_interleave(cfi);
+	unsigned type = cfi->device_type;
+	uint32_t addr;
+	
+	addr = (cmd_ofs * type) * interleave;
+
+	/* Modify the unlock address if we are in compatibility mode.
+	 * For 16bit devices on 8 bit busses
+	 * and 32bit devices on 16 bit busses
+	 * set the low bit of the alternating bit sequence of the address.
+	 */
+	if (((type * interleave) > bankwidth) && ((cmd_ofs & 0xff) == 0xaa))
+		addr |= (type >> 1)*interleave;
+
+	return  addr;
 }
 
 /*
@@ -409,8 +462,7 @@ static inline uint32_t cfi_send_gen_cmd(u_char cmd, uint32_t cmd_addr, uint32_t 
 				int type, map_word *prev_val)
 {
 	map_word val;
-	uint32_t addr = base + cfi_build_cmd_addr(cmd_addr, cfi_interleave(cfi), type);
-
+	uint32_t addr = base + cfi_build_cmd_addr(cmd_addr, map, cfi);
 	val = cfi_build_cmd(cmd, map, cfi);
 
 	if (prev_val)
@@ -463,21 +515,41 @@ static inline void cfi_udelay(int us)
 	}
 }
 
+int __xipram cfi_qry_present(struct map_info *map, __u32 base,
+			     struct cfi_private *cfi);
+int __xipram cfi_qry_mode_on(uint32_t base, struct map_info *map,
+			     struct cfi_private *cfi);
+void __xipram cfi_qry_mode_off(uint32_t base, struct map_info *map,
+			       struct cfi_private *cfi);
+
 struct cfi_extquery *cfi_read_pri(struct map_info *map, uint16_t adr, uint16_t size,
 			     const char* name);
 struct cfi_fixup {
 	uint16_t mfr;
 	uint16_t id;
-	void (*fixup)(struct mtd_info *mtd, void* param);
-	void* param;
+	void (*fixup)(struct mtd_info *mtd);
 };
 
-#define CFI_MFR_ANY 0xffff
-#define CFI_ID_ANY  0xffff
+#define CFI_MFR_ANY		0xFFFF
+#define CFI_ID_ANY		0xFFFF
+#define CFI_MFR_CONTINUATION	0x007F
 
-#define CFI_MFR_AMD 0x0001
-#define CFI_MFR_ATMEL 0x001F
-#define CFI_MFR_ST  0x0020 	/* STMicroelectronics */
+#define CFI_MFR_AMD		0x0001
+#define CFI_MFR_AMIC		0x0037
+#define CFI_MFR_ATMEL		0x001F
+#define CFI_MFR_EON		0x001C
+#define CFI_MFR_FUJITSU		0x0004
+#define CFI_MFR_HYUNDAI		0x00AD
+#define CFI_MFR_INTEL		0x0089
+#define CFI_MFR_MACRONIX	0x00C2
+#define CFI_MFR_NEC		0x0010
+#define CFI_MFR_PMC		0x009D
+#define CFI_MFR_SAMSUNG		0x00EC
+#define CFI_MFR_SHARP		0x00B0
+#define CFI_MFR_SST		0x00BF
+#define CFI_MFR_ST		0x0020 /* STMicroelectronics */
+#define CFI_MFR_TOSHIBA		0x0098
+#define CFI_MFR_WINBOND		0x00DA
 
 void cfi_fixup(struct mtd_info *mtd, struct cfi_fixup* fixups);
 

@@ -1,5 +1,4 @@
-/* $Id: shadows.c,v 1.2 2004/12/13 12:21:51 starvik Exp $
- * 
+/*
  * Various shadow registers. Defines for these are in include/asm-etrax100/io.h
  */
 
@@ -20,7 +19,7 @@ unsigned long r_timer_ctrl_shadow;
  * These are only usable if there actually IS a latch connected
  * to the corresponding external chip-select pin.
  *
- * A common usage is that CSP0 controls LED's and CSP4 video chips.
+ * A common usage is that CSP0 controls LEDs and CSP4 video chips.
  */
 
 unsigned long port_cse1_shadow;

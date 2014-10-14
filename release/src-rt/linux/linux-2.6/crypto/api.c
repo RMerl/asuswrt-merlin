@@ -6,11 +6,11 @@
  * Copyright (c) 2005 Herbert Xu <herbert@gondor.apana.org.au>
  *
  * Portions derived from Cryptoapi, by Alexander Kjeldaas <astor@fast.no>
- * and Nettle, by Niels Möller.
+ * and Nettle, by Niels MÃ¶ller.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
- * Software Foundation; either version 2 of the License, or (at your option) 
+ * Software Foundation; either version 2 of the License, or (at your option)
  * any later version.
  *
  */
@@ -55,7 +55,13 @@ void crypto_mod_put(struct crypto_alg *alg)
 }
 EXPORT_SYMBOL_GPL(crypto_mod_put);
 
-struct crypto_alg *__crypto_alg_lookup(const char *name, u32 type, u32 mask)
+static inline int crypto_is_test_larval(struct crypto_larval *larval)
+{
+	return larval->alg.cra_driver_name[0];
+}
+
+static struct crypto_alg *__crypto_alg_lookup(const char *name, u32 type,
+					      u32 mask)
 {
 	struct crypto_alg *q, *alg = NULL;
 	int best = -2;
@@ -70,6 +76,7 @@ struct crypto_alg *__crypto_alg_lookup(const char *name, u32 type, u32 mask)
 			continue;
 
 		if (crypto_is_larval(q) &&
+		    !crypto_is_test_larval((struct crypto_larval *)q) &&
 		    ((struct crypto_larval *)q)->mask != mask)
 			continue;
 
@@ -92,7 +99,6 @@ struct crypto_alg *__crypto_alg_lookup(const char *name, u32 type, u32 mask)
 
 	return alg;
 }
-EXPORT_SYMBOL_GPL(__crypto_alg_lookup);
 
 static void crypto_larval_destroy(struct crypto_alg *alg)
 {
@@ -104,10 +110,8 @@ static void crypto_larval_destroy(struct crypto_alg *alg)
 	kfree(larval);
 }
 
-static struct crypto_alg *crypto_larval_alloc(const char *name, u32 type,
-					      u32 mask)
+struct crypto_larval *crypto_larval_alloc(const char *name, u32 type, u32 mask)
 {
-	struct crypto_alg *alg;
 	struct crypto_larval *larval;
 
 	larval = kzalloc(sizeof(*larval), GFP_KERNEL);
@@ -119,9 +123,24 @@ static struct crypto_alg *crypto_larval_alloc(const char *name, u32 type,
 	larval->alg.cra_priority = -1;
 	larval->alg.cra_destroy = crypto_larval_destroy;
 
-	atomic_set(&larval->alg.cra_refcnt, 2);
 	strlcpy(larval->alg.cra_name, name, CRYPTO_MAX_ALG_NAME);
 	init_completion(&larval->completion);
+
+	return larval;
+}
+EXPORT_SYMBOL_GPL(crypto_larval_alloc);
+
+static struct crypto_alg *crypto_larval_add(const char *name, u32 type,
+					    u32 mask)
+{
+	struct crypto_alg *alg;
+	struct crypto_larval *larval;
+
+	larval = crypto_larval_alloc(name, type, mask);
+	if (IS_ERR(larval))
+		return ERR_CAST(larval);
+
+	atomic_set(&larval->alg.cra_refcnt, 2);
 
 	down_write(&crypto_alg_sem);
 	alg = __crypto_alg_lookup(name, type, mask);
@@ -137,35 +156,44 @@ static struct crypto_alg *crypto_larval_alloc(const char *name, u32 type,
 	return alg;
 }
 
-static void crypto_larval_kill(struct crypto_alg *alg)
+void crypto_larval_kill(struct crypto_alg *alg)
 {
 	struct crypto_larval *larval = (void *)alg;
 
 	down_write(&crypto_alg_sem);
 	list_del(&alg->cra_list);
 	up_write(&crypto_alg_sem);
-	complete(&larval->completion);
+	complete_all(&larval->completion);
 	crypto_alg_put(alg);
 }
+EXPORT_SYMBOL_GPL(crypto_larval_kill);
 
 static struct crypto_alg *crypto_larval_wait(struct crypto_alg *alg)
 {
 	struct crypto_larval *larval = (void *)alg;
+	long timeout;
 
-	wait_for_completion_interruptible_timeout(&larval->completion, 60 * HZ);
+	timeout = wait_for_completion_interruptible_timeout(
+		&larval->completion, 60 * HZ);
+
 	alg = larval->adult;
-	if (alg) {
-		if (!crypto_mod_get(alg))
-			alg = ERR_PTR(-EAGAIN);
-	} else
+	if (timeout < 0)
+		alg = ERR_PTR(-EINTR);
+	else if (!timeout)
+		alg = ERR_PTR(-ETIMEDOUT);
+	else if (!alg)
 		alg = ERR_PTR(-ENOENT);
+	else if (crypto_is_test_larval(larval) &&
+		 !(alg->cra_flags & CRYPTO_ALG_TESTED))
+		alg = ERR_PTR(-EAGAIN);
+	else if (!crypto_mod_get(alg))
+		alg = ERR_PTR(-EAGAIN);
 	crypto_mod_put(&larval->alg);
 
 	return alg;
 }
 
-static struct crypto_alg *crypto_alg_lookup(const char *name, u32 type,
-					    u32 mask)
+struct crypto_alg *crypto_alg_lookup(const char *name, u32 type, u32 mask)
 {
 	struct crypto_alg *alg;
 
@@ -175,12 +203,11 @@ static struct crypto_alg *crypto_alg_lookup(const char *name, u32 type,
 
 	return alg;
 }
+EXPORT_SYMBOL_GPL(crypto_alg_lookup);
 
-struct crypto_alg *crypto_alg_mod_lookup(const char *name, u32 type, u32 mask)
+struct crypto_alg *crypto_larval_lookup(const char *name, u32 type, u32 mask)
 {
 	struct crypto_alg *alg;
-	struct crypto_alg *larval;
-	int ok;
 
 	if (!name)
 		return ERR_PTR(-ENOENT);
@@ -188,20 +215,54 @@ struct crypto_alg *crypto_alg_mod_lookup(const char *name, u32 type, u32 mask)
 	mask &= ~(CRYPTO_ALG_LARVAL | CRYPTO_ALG_DEAD);
 	type &= mask;
 
-	alg = try_then_request_module(crypto_alg_lookup(name, type, mask),
-				      name);
+	alg = crypto_alg_lookup(name, type, mask);
+	if (!alg) {
+		request_module("%s", name);
+
+		if (!((type ^ CRYPTO_ALG_NEED_FALLBACK) & mask &
+		      CRYPTO_ALG_NEED_FALLBACK))
+			request_module("%s-all", name);
+
+		alg = crypto_alg_lookup(name, type, mask);
+	}
+
 	if (alg)
 		return crypto_is_larval(alg) ? crypto_larval_wait(alg) : alg;
 
-	larval = crypto_larval_alloc(name, type, mask);
+	return crypto_larval_add(name, type, mask);
+}
+EXPORT_SYMBOL_GPL(crypto_larval_lookup);
+
+int crypto_probing_notify(unsigned long val, void *v)
+{
+	int ok;
+
+	ok = blocking_notifier_call_chain(&crypto_chain, val, v);
+	if (ok == NOTIFY_DONE) {
+		request_module("cryptomgr");
+		ok = blocking_notifier_call_chain(&crypto_chain, val, v);
+	}
+
+	return ok;
+}
+EXPORT_SYMBOL_GPL(crypto_probing_notify);
+
+struct crypto_alg *crypto_alg_mod_lookup(const char *name, u32 type, u32 mask)
+{
+	struct crypto_alg *alg;
+	struct crypto_alg *larval;
+	int ok;
+
+	if (!((type | mask) & CRYPTO_ALG_TESTED)) {
+		type |= CRYPTO_ALG_TESTED;
+		mask |= CRYPTO_ALG_TESTED;
+	}
+
+	larval = crypto_larval_lookup(name, type, mask);
 	if (IS_ERR(larval) || !crypto_is_larval(larval))
 		return larval;
 
-	ok = crypto_notify(CRYPTO_MSG_ALG_REQUEST, larval);
-	if (ok == NOTIFY_DONE) {
-		request_module("cryptomgr");
-		ok = crypto_notify(CRYPTO_MSG_ALG_REQUEST, larval);
-	}
+	ok = crypto_probing_notify(CRYPTO_MSG_ALG_REQUEST, larval);
 
 	if (ok == NOTIFY_STOP)
 		alg = crypto_larval_wait(larval);
@@ -224,17 +285,14 @@ static int crypto_init_ops(struct crypto_tfm *tfm, u32 type, u32 mask)
 	switch (crypto_tfm_alg_type(tfm)) {
 	case CRYPTO_ALG_TYPE_CIPHER:
 		return crypto_init_cipher_ops(tfm);
-		
-	case CRYPTO_ALG_TYPE_DIGEST:
-		return crypto_init_digest_ops(tfm);
-		
+
 	case CRYPTO_ALG_TYPE_COMPRESS:
 		return crypto_init_compress_ops(tfm);
-	
+
 	default:
 		break;
 	}
-	
+
 	BUG();
 	return -EINVAL;
 }
@@ -244,8 +302,8 @@ static void crypto_exit_ops(struct crypto_tfm *tfm)
 	const struct crypto_type *type = tfm->__crt_alg->cra_type;
 
 	if (type) {
-		if (type->exit)
-			type->exit(tfm);
+		if (tfm->exit)
+			tfm->exit(tfm);
 		return;
 	}
 
@@ -253,18 +311,13 @@ static void crypto_exit_ops(struct crypto_tfm *tfm)
 	case CRYPTO_ALG_TYPE_CIPHER:
 		crypto_exit_cipher_ops(tfm);
 		break;
-		
-	case CRYPTO_ALG_TYPE_DIGEST:
-		crypto_exit_digest_ops(tfm);
-		break;
-		
+
 	case CRYPTO_ALG_TYPE_COMPRESS:
 		crypto_exit_compress_ops(tfm);
 		break;
-	
+
 	default:
 		BUG();
-		
 	}
 }
 
@@ -284,11 +337,7 @@ static unsigned int crypto_ctxsize(struct crypto_alg *alg, u32 type, u32 mask)
 	case CRYPTO_ALG_TYPE_CIPHER:
 		len += crypto_cipher_ctxsize(alg);
 		break;
-		
-	case CRYPTO_ALG_TYPE_DIGEST:
-		len += crypto_digest_ctxsize(alg);
-		break;
-		
+
 	case CRYPTO_ALG_TYPE_COMPRESS:
 		len += crypto_compress_ctxsize(alg);
 		break;
@@ -323,17 +372,16 @@ struct crypto_tfm *__crypto_alloc_tfm(struct crypto_alg *alg, u32 type,
 	if (err)
 		goto out_free_tfm;
 
-	if (alg->cra_init && (err = alg->cra_init(tfm))) {
-		if (err == -EAGAIN)
-			crypto_shoot_alg(alg);
+	if (!tfm->exit && alg->cra_init && (err = alg->cra_init(tfm)))
 		goto cra_init_failed;
-	}
 
 	goto out;
 
 cra_init_failed:
 	crypto_exit_ops(tfm);
 out_free_tfm:
+	if (err == -EAGAIN)
+		crypto_shoot_alg(alg);
 	kfree(tfm);
 out_err:
 	tfm = ERR_PTR(err);
@@ -347,6 +395,9 @@ EXPORT_SYMBOL_GPL(__crypto_alloc_tfm);
  *	@alg_name: Name of algorithm
  *	@type: Type of algorithm
  *	@mask: Mask for type comparison
+ *
+ *	This function should not be used by new algorithm types.
+ *	Plesae use crypto_alloc_tfm instead.
  *
  *	crypto_alloc_base() will first attempt to locate an already loaded
  *	algorithm.  If that fails and the kernel supports dynamically loadable
@@ -394,62 +445,162 @@ err:
 	return ERR_PTR(err);
 }
 EXPORT_SYMBOL_GPL(crypto_alloc_base);
- 
+
+void *crypto_create_tfm(struct crypto_alg *alg,
+			const struct crypto_type *frontend)
+{
+	char *mem;
+	struct crypto_tfm *tfm = NULL;
+	unsigned int tfmsize;
+	unsigned int total;
+	int err = -ENOMEM;
+
+	tfmsize = frontend->tfmsize;
+	total = tfmsize + sizeof(*tfm) + frontend->extsize(alg);
+
+	mem = kzalloc(total, GFP_KERNEL);
+	if (mem == NULL)
+		goto out_err;
+
+	tfm = (struct crypto_tfm *)(mem + tfmsize);
+	tfm->__crt_alg = alg;
+
+	err = frontend->init_tfm(tfm);
+	if (err)
+		goto out_free_tfm;
+
+	if (!tfm->exit && alg->cra_init && (err = alg->cra_init(tfm)))
+		goto cra_init_failed;
+
+	goto out;
+
+cra_init_failed:
+	crypto_exit_ops(tfm);
+out_free_tfm:
+	if (err == -EAGAIN)
+		crypto_shoot_alg(alg);
+	kfree(mem);
+out_err:
+	mem = ERR_PTR(err);
+out:
+	return mem;
+}
+EXPORT_SYMBOL_GPL(crypto_create_tfm);
+
+struct crypto_alg *crypto_find_alg(const char *alg_name,
+				   const struct crypto_type *frontend,
+				   u32 type, u32 mask)
+{
+	struct crypto_alg *(*lookup)(const char *name, u32 type, u32 mask) =
+		crypto_alg_mod_lookup;
+
+	if (frontend) {
+		type &= frontend->maskclear;
+		mask &= frontend->maskclear;
+		type |= frontend->type;
+		mask |= frontend->maskset;
+
+		if (frontend->lookup)
+			lookup = frontend->lookup;
+	}
+
+	return lookup(alg_name, type, mask);
+}
+EXPORT_SYMBOL_GPL(crypto_find_alg);
+
 /*
- *	crypto_free_tfm - Free crypto transform
+ *	crypto_alloc_tfm - Locate algorithm and allocate transform
+ *	@alg_name: Name of algorithm
+ *	@frontend: Frontend algorithm type
+ *	@type: Type of algorithm
+ *	@mask: Mask for type comparison
+ *
+ *	crypto_alloc_tfm() will first attempt to locate an already loaded
+ *	algorithm.  If that fails and the kernel supports dynamically loadable
+ *	modules, it will then attempt to load a module of the same name or
+ *	alias.  If that fails it will send a query to any loaded crypto manager
+ *	to construct an algorithm on the fly.  A refcount is grabbed on the
+ *	algorithm which is then associated with the new transform.
+ *
+ *	The returned transform is of a non-determinate type.  Most people
+ *	should use one of the more specific allocation functions such as
+ *	crypto_alloc_blkcipher.
+ *
+ *	In case of error the return value is an error pointer.
+ */
+void *crypto_alloc_tfm(const char *alg_name,
+		       const struct crypto_type *frontend, u32 type, u32 mask)
+{
+	void *tfm;
+	int err;
+
+	for (;;) {
+		struct crypto_alg *alg;
+
+		alg = crypto_find_alg(alg_name, frontend, type, mask);
+		if (IS_ERR(alg)) {
+			err = PTR_ERR(alg);
+			goto err;
+		}
+
+		tfm = crypto_create_tfm(alg, frontend);
+		if (!IS_ERR(tfm))
+			return tfm;
+
+		crypto_mod_put(alg);
+		err = PTR_ERR(tfm);
+
+err:
+		if (err != -EAGAIN)
+			break;
+		if (signal_pending(current)) {
+			err = -EINTR;
+			break;
+		}
+	}
+
+	return ERR_PTR(err);
+}
+EXPORT_SYMBOL_GPL(crypto_alloc_tfm);
+
+/*
+ *	crypto_destroy_tfm - Free crypto transform
+ *	@mem: Start of tfm slab
  *	@tfm: Transform to free
  *
- *	crypto_free_tfm() frees up the transform and any associated resources,
+ *	This function frees up the transform and any associated resources,
  *	then drops the refcount on the associated algorithm.
  */
-void crypto_free_tfm(struct crypto_tfm *tfm)
+void crypto_destroy_tfm(void *mem, struct crypto_tfm *tfm)
 {
 	struct crypto_alg *alg;
-	int size;
 
-	if (unlikely(!tfm))
+	if (unlikely(!mem))
 		return;
 
 	alg = tfm->__crt_alg;
-	size = sizeof(*tfm) + alg->cra_ctxsize;
 
-	if (alg->cra_exit)
+	if (!tfm->exit && alg->cra_exit)
 		alg->cra_exit(tfm);
 	crypto_exit_ops(tfm);
 	crypto_mod_put(alg);
-	memset(tfm, 0, size);
-	kfree(tfm);
+	kzfree(mem);
 }
-
-EXPORT_SYMBOL_GPL(crypto_free_tfm);
+EXPORT_SYMBOL_GPL(crypto_destroy_tfm);
 
 int crypto_has_alg(const char *name, u32 type, u32 mask)
 {
 	int ret = 0;
 	struct crypto_alg *alg = crypto_alg_mod_lookup(name, type, mask);
-	
+
 	if (!IS_ERR(alg)) {
 		crypto_mod_put(alg);
 		ret = 1;
 	}
-	
+
 	return ret;
 }
-
 EXPORT_SYMBOL_GPL(crypto_has_alg);
 
-int crypto_alg_available(const char *name, u32 flags)
-{
-	int ret = 0;
-	struct crypto_alg *alg = crypto_alg_mod_lookup(name, 0,
-						       CRYPTO_ALG_ASYNC);
-	
-	if (!IS_ERR(alg)) {
-		crypto_mod_put(alg);
-		ret = 1;
-	}
-	
-	return ret;
-}
-
-EXPORT_SYMBOL_GPL(crypto_alg_available);
+MODULE_DESCRIPTION("Cryptographic core API");
+MODULE_LICENSE("GPL");

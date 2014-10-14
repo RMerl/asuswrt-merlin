@@ -10,6 +10,7 @@
 #include <linux/mm.h>
 #include <linux/types.h>
 #include <linux/list.h>
+#include <linux/gfp.h>
 #include <net/tcp.h>
 
 int sysctl_tcp_max_ssthresh = 0;
@@ -115,8 +116,8 @@ int tcp_set_default_congestion_control(const char *name)
 
 	spin_lock(&tcp_cong_list_lock);
 	ca = tcp_ca_find(name);
-#ifdef CONFIG_KMOD
-	if (!ca && capable(CAP_SYS_MODULE)) {
+#ifdef CONFIG_MODULES
+	if (!ca && capable(CAP_NET_ADMIN)) {
 		spin_unlock(&tcp_cong_list_lock);
 
 		request_module("tcp_%s", name);
@@ -245,9 +246,9 @@ int tcp_set_congestion_control(struct sock *sk, const char *name)
 	if (ca == icsk->icsk_ca_ops)
 		goto out;
 
-#ifdef CONFIG_KMOD
+#ifdef CONFIG_MODULES
 	/* not found attempt to autoload module */
-	if (!ca && capable(CAP_SYS_MODULE)) {
+	if (!ca && capable(CAP_NET_ADMIN)) {
 		rcu_read_unlock();
 		request_module("tcp_%s", name);
 		rcu_read_lock();
@@ -275,6 +276,25 @@ int tcp_set_congestion_control(struct sock *sk, const char *name)
 	return err;
 }
 
+/* RFC2861 Check whether we are limited by application or congestion window
+ * This is the inverse of cwnd check in tcp_tso_should_defer
+ */
+int tcp_is_cwnd_limited(const struct sock *sk, u32 in_flight)
+{
+	const struct tcp_sock *tp = tcp_sk(sk);
+	u32 left;
+
+	if (in_flight >= tp->snd_cwnd)
+		return 1;
+
+	left = tp->snd_cwnd - in_flight;
+	if (sk_can_gso(sk) &&
+	    left * sysctl_tcp_tso_win_divisor < tp->snd_cwnd &&
+	    left * tp->mss_cache < sk->sk_gso_max_size)
+		return 1;
+	return left <= tcp_max_burst(tp);
+}
+EXPORT_SYMBOL_GPL(tcp_is_cwnd_limited);
 
 /*
  * Slow start is used when congestion window is less than slow start
@@ -318,6 +338,19 @@ void tcp_slow_start(struct tcp_sock *tp)
 }
 EXPORT_SYMBOL_GPL(tcp_slow_start);
 
+/* In theory this is tp->snd_cwnd += 1 / tp->snd_cwnd (or alternative w) */
+void tcp_cong_avoid_ai(struct tcp_sock *tp, u32 w)
+{
+	if (tp->snd_cwnd_cnt >= w) {
+		if (tp->snd_cwnd < tp->snd_cwnd_clamp)
+			tp->snd_cwnd++;
+		tp->snd_cwnd_cnt = 0;
+	} else {
+		tp->snd_cwnd_cnt++;
+	}
+}
+EXPORT_SYMBOL_GPL(tcp_cong_avoid_ai);
+
 /*
  * TCP Reno congestion control
  * This is special case used for fallback as well.
@@ -325,8 +358,7 @@ EXPORT_SYMBOL_GPL(tcp_slow_start);
 /* This is Jacobson's slow start and congestion avoidance.
  * SIGCOMM '88, p. 328.
  */
-void tcp_reno_cong_avoid(struct sock *sk, u32 ack, u32 rtt, u32 in_flight,
-			 int flag)
+void tcp_reno_cong_avoid(struct sock *sk, u32 ack, u32 in_flight)
 {
 	struct tcp_sock *tp = tcp_sk(sk);
 
@@ -348,13 +380,7 @@ void tcp_reno_cong_avoid(struct sock *sk, u32 ack, u32 rtt, u32 in_flight,
 				tp->snd_cwnd++;
 		}
 	} else {
-		/* In theory this is tp->snd_cwnd += 1 / tp->snd_cwnd */
-		if (tp->snd_cwnd_cnt >= tp->snd_cwnd) {
-			if (tp->snd_cwnd < tp->snd_cwnd_clamp)
-				tp->snd_cwnd++;
-			tp->snd_cwnd_cnt = 0;
-		} else
-			tp->snd_cwnd_cnt++;
+		tcp_cong_avoid_ai(tp, tp->snd_cwnd);
 	}
 }
 EXPORT_SYMBOL_GPL(tcp_reno_cong_avoid);

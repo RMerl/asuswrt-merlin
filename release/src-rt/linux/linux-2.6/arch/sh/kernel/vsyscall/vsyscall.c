@@ -11,13 +11,13 @@
  * for more details.
  */
 #include <linux/mm.h>
-#include <linux/slab.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/gfp.h>
 #include <linux/module.h>
 #include <linux/elf.h>
 #include <linux/sched.h>
+#include <linux/err.h>
 
 /*
  * Should the kernel map a VDSO page into processes and pass its
@@ -58,8 +58,7 @@ int __init vsyscall_init(void)
 }
 
 /* Setup a VMA at program startup for the vsyscall page */
-int arch_setup_additional_pages(struct linux_binprm *bprm,
-				int executable_stack)
+int arch_setup_additional_pages(struct linux_binprm *bprm, int uses_interp)
 {
 	struct mm_struct *mm = current->mm;
 	unsigned long addr;
@@ -95,17 +94,17 @@ const char *arch_vma_name(struct vm_area_struct *vma)
 	return NULL;
 }
 
-struct vm_area_struct *get_gate_vma(struct task_struct *task)
+struct vm_area_struct *get_gate_vma(struct mm_struct *mm)
 {
 	return NULL;
 }
 
-int in_gate_area(struct task_struct *task, unsigned long address)
+int in_gate_area(struct mm_struct *mm, unsigned long address)
 {
 	return 0;
 }
 
-int in_gate_area_no_task(unsigned long address)
+int in_gate_area_no_mm(unsigned long address)
 {
 	return 0;
 }

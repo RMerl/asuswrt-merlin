@@ -3,6 +3,7 @@
  *
  * HP Jornada720 init code
  *
+ * Copyright (C) 2007 Kristoffer Ericson <Kristoffer.Ericson@gmail.com>
  * Copyright (C) 2006 Filip Zyzniewski <filip.zyzniewski@tefnet.pl>
  *  Copyright (C) 2005 Michael Gernoth <michael@gernoth.net>
  *
@@ -22,7 +23,7 @@
 #include <linux/mtd/partitions.h>
 #include <video/s1d13xxxfb.h>
 
-#include <asm/hardware.h>
+#include <mach/hardware.h>
 #include <asm/hardware/sa1111.h>
 #include <asm/irq.h>
 #include <asm/mach-types.h>
@@ -207,6 +208,10 @@ static struct resource sa1111_resources[] = {
 	},
 };
 
+static struct sa1111_platform_data sa1111_info = {
+	.irq_base	= IRQ_BOARD_END,
+};
+
 static u64 sa1111_dmamask = 0xffffffffUL;
 
 static struct platform_device sa1111_device = {
@@ -215,20 +220,33 @@ static struct platform_device sa1111_device = {
 	.dev		= {
 		.dma_mask = &sa1111_dmamask,
 		.coherent_dma_mask = 0xffffffff,
+		.platform_data = &sa1111_info,
 	},
 	.num_resources	= ARRAY_SIZE(sa1111_resources),
 	.resource	= sa1111_resources,
 };
 
-static struct platform_device jornada720_mcu_device = {
-	.name		= "jornada720_mcu",
+static struct platform_device jornada_ssp_device = {
+	.name           = "jornada_ssp",
+	.id             = -1,
+};
+
+static struct platform_device jornada_kbd_device = {
+	.name		= "jornada720_kbd",
+	.id		= -1,
+};
+
+static struct platform_device jornada_ts_device = {
+	.name		= "jornada_ts",
 	.id		= -1,
 };
 
 static struct platform_device *devices[] __initdata = {
 	&sa1111_device,
-	&jornada720_mcu_device,
+	&jornada_ssp_device,
 	&s1d13xxxfb_device,
+	&jornada_kbd_device,
+	&jornada_ts_device,
 };
 
 static int __init jornada720_init(void)
@@ -236,19 +254,19 @@ static int __init jornada720_init(void)
 	int ret = -ENODEV;
 
 	if (machine_is_jornada720()) {
-		GPDR |= GPIO_GPIO20;
-		/* oscillator setup (line 116 of HP's doc) */
+		/* we want to use gpio20 as input to drive the clock of our uart 3 */
+		GPDR |= GPIO_GPIO20;	/* Clear gpio20 pin as input */
 		TUCR = TUCR_VAL;
-		/* resetting SA1111 (line 118 of HP's doc) */
-		GPSR = GPIO_GPIO20;
+		GPSR = GPIO_GPIO20;	/* start gpio20 pin */
 		udelay(1);
-		GPCR = GPIO_GPIO20;
+		GPCR = GPIO_GPIO20;	/* stop gpio20 */
 		udelay(1);
-		GPSR = GPIO_GPIO20;
-		udelay(20);
+		GPSR = GPIO_GPIO20;	/* restart gpio20 */
+		udelay(20);		/* give it some time to restart */
 
 		ret = platform_add_devices(devices, ARRAY_SIZE(devices));
 	}
+
 	return ret;
 }
 
@@ -341,13 +359,11 @@ static struct resource jornada720_flash_resource = {
 
 static void __init jornada720_mach_init(void)
 {
-	sa11x0_set_flash_data(&jornada720_flash_data, &jornada720_flash_resource, 1);
+	sa11x0_register_mtd(&jornada720_flash_data, &jornada720_flash_resource, 1);
 }
 
 MACHINE_START(JORNADA720, "HP Jornada 720")
-	/* Maintainer: Michael Gernoth <michael@gernoth.net> */
-	.phys_io	= 0x80000000,
-	.io_pg_offst	= ((0xf8000000) >> 18) & 0xfffc,
+	/* Maintainer: Kristoffer Ericson <Kristoffer.Ericson@gmail.com> */
 	.boot_params	= 0xc0000100,
 	.map_io		= jornada720_map_io,
 	.init_irq	= sa1100_init_irq,

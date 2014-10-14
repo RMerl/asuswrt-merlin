@@ -30,10 +30,6 @@
  * We did not keep that part of the original driver in the Linux 2.6
  * version, since it was making the driver significantly more complex
  * with no real benefit.
- *
- * History:
- * 2004-01-28  Original port. (Hong-Gunn Chew)
- * 2004-01-31  Code review and approval. (Jean Delvare)
  */
 
 #include <linux/module.h>
@@ -42,15 +38,15 @@
 #include <linux/jiffies.h>
 #include <linux/i2c.h>
 #include <linux/hwmon.h>
+#include <linux/hwmon-sysfs.h>
 #include <linux/err.h>
 #include <linux/mutex.h>
 #include <linux/sysfs.h>
 
 /* Addresses to scan */
-static unsigned short normal_i2c[] = { 0x2c, 0x2d, I2C_CLIENT_END };
+static const unsigned short normal_i2c[] = { 0x2c, 0x2d, I2C_CLIENT_END };
 
-/* Insmod parameters */
-I2C_CLIENT_INSMOD_2(gl518sm_r00, gl518sm_r80);
+enum chips { gl518sm_r00, gl518sm_r80 };
 
 /* Many GL518 constants specified below */
 
@@ -99,10 +95,10 @@ static inline u8 FAN_TO_REG(long rpm, int div)
 	long rpmdiv;
 	if (rpm == 0)
 		return 0;
-	rpmdiv = SENSORS_LIMIT(rpm, 1, 1920000) * div;
-	return SENSORS_LIMIT((960000 + rpmdiv / 2) / rpmdiv, 1, 255);
+	rpmdiv = SENSORS_LIMIT(rpm, 1, 960000) * div;
+	return SENSORS_LIMIT((480000 + rpmdiv / 2) / rpmdiv, 1, 255);
 }
-#define FAN_FROM_REG(val,div)	((val)==0 ? 0 : (960000/((val)*(div))))
+#define FAN_FROM_REG(val,div)	((val)==0 ? 0 : (480000/((val)*(div))))
 
 #define IN_TO_REG(val)		(SENSORS_LIMIT((((val)+9)/19),0,255))
 #define IN_FROM_REG(val)	((val)*19)
@@ -110,7 +106,6 @@ static inline u8 FAN_TO_REG(long rpm, int div)
 #define VDD_TO_REG(val)		(SENSORS_LIMIT((((val)*4+47)/95),0,255))
 #define VDD_FROM_REG(val)	(((val)*95+2)/4)
 
-#define DIV_TO_REG(val)		((val)==4?2:(val)==2?1:(val)==1?0:3)
 #define DIV_FROM_REG(val)	(1 << (val))
 
 #define BEEP_MASK_TO_REG(val)	((val) & 0x7f & data->alarm_mask)
@@ -118,8 +113,7 @@ static inline u8 FAN_TO_REG(long rpm, int div)
 
 /* Each client has this additional data */
 struct gl518_data {
-	struct i2c_client client;
-	struct class_device *class_dev;
+	struct device *hwmon_dev;
 	enum chips type;
 
 	struct mutex update_lock;
@@ -129,7 +123,6 @@ struct gl518_data {
 	u8 voltage_in[4];	/* Register values; [0] = VDD */
 	u8 voltage_min[4];	/* Register values; [0] = VDD */
 	u8 voltage_max[4];	/* Register values; [0] = VDD */
-	u8 iter_voltage_in[4];	/* Register values; [0] = VDD */
 	u8 fan_in[2];
 	u8 fan_min[2];
 	u8 fan_div[2];		/* Register encoding, shifted right */
@@ -138,27 +131,37 @@ struct gl518_data {
 	u8 temp_max;		/* Register values */
 	u8 temp_hyst;		/* Register values */
 	u8 alarms;		/* Register value */
-	u8 alarm_mask;		/* Register value */
+	u8 alarm_mask;
 	u8 beep_mask;		/* Register value */
 	u8 beep_enable;		/* Boolean */
 };
 
-static int gl518_attach_adapter(struct i2c_adapter *adapter);
-static int gl518_detect(struct i2c_adapter *adapter, int address, int kind);
+static int gl518_probe(struct i2c_client *client,
+		       const struct i2c_device_id *id);
+static int gl518_detect(struct i2c_client *client, struct i2c_board_info *info);
 static void gl518_init_client(struct i2c_client *client);
-static int gl518_detach_client(struct i2c_client *client);
+static int gl518_remove(struct i2c_client *client);
 static int gl518_read_value(struct i2c_client *client, u8 reg);
 static int gl518_write_value(struct i2c_client *client, u8 reg, u16 value);
 static struct gl518_data *gl518_update_device(struct device *dev);
 
+static const struct i2c_device_id gl518_id[] = {
+	{ "gl518sm", 0 },
+	{ }
+};
+MODULE_DEVICE_TABLE(i2c, gl518_id);
+
 /* This is the driver that will be inserted */
 static struct i2c_driver gl518_driver = {
+	.class		= I2C_CLASS_HWMON,
 	.driver = {
 		.name	= "gl518sm",
 	},
-	.id		= I2C_DRIVERID_GL518,
-	.attach_adapter	= gl518_attach_adapter,
-	.detach_client	= gl518_detach_client,
+	.probe		= gl518_probe,
+	.remove		= gl518_remove,
+	.id_table	= gl518_id,
+	.detect		= gl518_detect,
+	.address_list	= normal_i2c,
 };
 
 /*
@@ -172,24 +175,10 @@ static ssize_t show_##suffix(struct device *dev, struct device_attribute *attr, 
 	return sprintf(buf, "%d\n", type##_FROM_REG(data->value));	\
 }
 
-#define show_fan(suffix, value, index)					\
-static ssize_t show_##suffix(struct device *dev, struct device_attribute *attr, char *buf)		\
-{									\
-	struct gl518_data *data = gl518_update_device(dev);		\
-	return sprintf(buf, "%d\n", FAN_FROM_REG(data->value[index],	\
-		DIV_FROM_REG(data->fan_div[index])));			\
-}
-
 show(TEMP, temp_input1, temp_in);
 show(TEMP, temp_max1, temp_max);
 show(TEMP, temp_hyst1, temp_hyst);
 show(BOOL, fan_auto1, fan_auto1);
-show_fan(fan_input1, fan_in, 0);
-show_fan(fan_input2, fan_in, 1);
-show_fan(fan_min1, fan_min, 0);
-show_fan(fan_min2, fan_min, 1);
-show(DIV, fan_div1, fan_div[0]);
-show(DIV, fan_div2, fan_div[1]);
 show(VDD, in_input0, voltage_in[0]);
 show(IN, in_input1, voltage_in[1]);
 show(IN, in_input2, voltage_in[2]);
@@ -205,6 +194,32 @@ show(IN, in_max3, voltage_max[3]);
 show(RAW, alarms, alarms);
 show(BOOL, beep_enable, beep_enable);
 show(BEEP_MASK, beep_mask, beep_mask);
+
+static ssize_t show_fan_input(struct device *dev,
+			      struct device_attribute *attr, char *buf)
+{
+	int nr = to_sensor_dev_attr(attr)->index;
+	struct gl518_data *data = gl518_update_device(dev);
+	return sprintf(buf, "%d\n", FAN_FROM_REG(data->fan_in[nr],
+					DIV_FROM_REG(data->fan_div[nr])));
+}
+
+static ssize_t show_fan_min(struct device *dev,
+			    struct device_attribute *attr, char *buf)
+{
+	int nr = to_sensor_dev_attr(attr)->index;
+	struct gl518_data *data = gl518_update_device(dev);
+	return sprintf(buf, "%d\n", FAN_FROM_REG(data->fan_min[nr],
+					DIV_FROM_REG(data->fan_div[nr])));
+}
+
+static ssize_t show_fan_div(struct device *dev,
+			    struct device_attribute *attr, char *buf)
+{
+	int nr = to_sensor_dev_attr(attr)->index;
+	struct gl518_data *data = gl518_update_device(dev);
+	return sprintf(buf, "%d\n", DIV_FROM_REG(data->fan_div[nr]));
+}
 
 #define set(type, suffix, value, reg)					\
 static ssize_t set_##suffix(struct device *dev, struct device_attribute *attr, const char *buf,	\
@@ -247,8 +262,6 @@ static ssize_t set_##suffix(struct device *dev, struct device_attribute *attr, c
 set(TEMP, temp_max1, temp_max, GL518_REG_TEMP_MAX);
 set(TEMP, temp_hyst1, temp_hyst, GL518_REG_TEMP_HYST);
 set_bits(BOOL, fan_auto1, fan_auto1, GL518_REG_MISC, 0x08, 3);
-set_bits(DIV, fan_div1, fan_div[0], GL518_REG_MISC, 0xc0, 6);
-set_bits(DIV, fan_div2, fan_div[1], GL518_REG_MISC, 0x30, 4);
 set_low(VDD, in_min0, voltage_min[0], GL518_REG_VDD_LIMIT);
 set_low(IN, in_min1, voltage_min[1], GL518_REG_VIN1_LIMIT);
 set_low(IN, in_min2, voltage_min[2], GL518_REG_VIN2_LIMIT);
@@ -260,25 +273,27 @@ set_high(IN, in_max3, voltage_max[3], GL518_REG_VIN3_LIMIT);
 set_bits(BOOL, beep_enable, beep_enable, GL518_REG_CONF, 0x04, 2);
 set(BEEP_MASK, beep_mask, beep_mask, GL518_REG_ALARM);
 
-static ssize_t set_fan_min1(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
+static ssize_t set_fan_min(struct device *dev, struct device_attribute *attr,
+			   const char *buf, size_t count)
 {
 	struct i2c_client *client = to_i2c_client(dev);
 	struct gl518_data *data = i2c_get_clientdata(client);
+	int nr = to_sensor_dev_attr(attr)->index;
 	int regvalue;
 	unsigned long val = simple_strtoul(buf, NULL, 10);
 
 	mutex_lock(&data->update_lock);
 	regvalue = gl518_read_value(client, GL518_REG_FAN_LIMIT);
-	data->fan_min[0] = FAN_TO_REG(val,
-		DIV_FROM_REG(data->fan_div[0]));
-	regvalue = (regvalue & 0x00ff) | (data->fan_min[0] << 8);
+	data->fan_min[nr] = FAN_TO_REG(val, DIV_FROM_REG(data->fan_div[nr]));
+	regvalue = (regvalue & (0xff << (8 * nr)))
+		 | (data->fan_min[nr] << (8 * (1 - nr)));
 	gl518_write_value(client, GL518_REG_FAN_LIMIT, regvalue);
 
 	data->beep_mask = gl518_read_value(client, GL518_REG_ALARM);
-	if (data->fan_min[0] == 0)
-		data->alarm_mask &= ~0x20;
+	if (data->fan_min[nr] == 0)
+		data->alarm_mask &= ~(0x20 << nr);
 	else
-		data->alarm_mask |= 0x20;
+		data->alarm_mask |= (0x20 << nr);
 	data->beep_mask &= data->alarm_mask;
 	gl518_write_value(client, GL518_REG_ALARM, data->beep_mask);
 
@@ -286,28 +301,32 @@ static ssize_t set_fan_min1(struct device *dev, struct device_attribute *attr, c
 	return count;
 }
 
-static ssize_t set_fan_min2(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
+static ssize_t set_fan_div(struct device *dev, struct device_attribute *attr,
+			   const char *buf, size_t count)
 {
 	struct i2c_client *client = to_i2c_client(dev);
 	struct gl518_data *data = i2c_get_clientdata(client);
+	int nr = to_sensor_dev_attr(attr)->index;
 	int regvalue;
 	unsigned long val = simple_strtoul(buf, NULL, 10);
 
+	switch (val) {
+	case 1: val = 0; break;
+	case 2: val = 1; break;
+	case 4: val = 2; break;
+	case 8: val = 3; break;
+	default:
+		dev_err(dev, "Invalid fan clock divider %lu, choose one "
+			"of 1, 2, 4 or 8\n", val);
+		return -EINVAL;
+	}
+
 	mutex_lock(&data->update_lock);
-	regvalue = gl518_read_value(client, GL518_REG_FAN_LIMIT);
-	data->fan_min[1] = FAN_TO_REG(val,
-		DIV_FROM_REG(data->fan_div[1]));
-	regvalue = (regvalue & 0xff00) | data->fan_min[1];
-	gl518_write_value(client, GL518_REG_FAN_LIMIT, regvalue);
-
-	data->beep_mask = gl518_read_value(client, GL518_REG_ALARM);
-	if (data->fan_min[1] == 0)
-		data->alarm_mask &= ~0x40;
-	else
-		data->alarm_mask |= 0x40;
-	data->beep_mask &= data->alarm_mask;
-	gl518_write_value(client, GL518_REG_ALARM, data->beep_mask);
-
+	regvalue = gl518_read_value(client, GL518_REG_MISC);
+	data->fan_div[nr] = val;
+	regvalue = (regvalue & ~(0xc0 >> (2 * nr)))
+		 | (data->fan_div[nr] << (6 - 2 * nr));
+	gl518_write_value(client, GL518_REG_MISC, regvalue);
 	mutex_unlock(&data->update_lock);
 	return count;
 }
@@ -317,12 +336,16 @@ static DEVICE_ATTR(temp1_max, S_IWUSR|S_IRUGO, show_temp_max1, set_temp_max1);
 static DEVICE_ATTR(temp1_max_hyst, S_IWUSR|S_IRUGO,
 	show_temp_hyst1, set_temp_hyst1);
 static DEVICE_ATTR(fan1_auto, S_IWUSR|S_IRUGO, show_fan_auto1, set_fan_auto1);
-static DEVICE_ATTR(fan1_input, S_IRUGO, show_fan_input1, NULL);
-static DEVICE_ATTR(fan2_input, S_IRUGO, show_fan_input2, NULL);
-static DEVICE_ATTR(fan1_min, S_IWUSR|S_IRUGO, show_fan_min1, set_fan_min1);
-static DEVICE_ATTR(fan2_min, S_IWUSR|S_IRUGO, show_fan_min2, set_fan_min2);
-static DEVICE_ATTR(fan1_div, S_IWUSR|S_IRUGO, show_fan_div1, set_fan_div1);
-static DEVICE_ATTR(fan2_div, S_IWUSR|S_IRUGO, show_fan_div2, set_fan_div2);
+static SENSOR_DEVICE_ATTR(fan1_input, S_IRUGO, show_fan_input, NULL, 0);
+static SENSOR_DEVICE_ATTR(fan2_input, S_IRUGO, show_fan_input, NULL, 1);
+static SENSOR_DEVICE_ATTR(fan1_min, S_IWUSR|S_IRUGO,
+	show_fan_min, set_fan_min, 0);
+static SENSOR_DEVICE_ATTR(fan2_min, S_IWUSR|S_IRUGO,
+	show_fan_min, set_fan_min, 1);
+static SENSOR_DEVICE_ATTR(fan1_div, S_IWUSR|S_IRUGO,
+	show_fan_div, set_fan_div, 0);
+static SENSOR_DEVICE_ATTR(fan2_div, S_IWUSR|S_IRUGO,
+	show_fan_div, set_fan_div, 1);
 static DEVICE_ATTR(in0_input, S_IRUGO, show_in_input0, NULL);
 static DEVICE_ATTR(in1_input, S_IRUGO, show_in_input1, NULL);
 static DEVICE_ATTR(in2_input, S_IRUGO, show_in_input2, NULL);
@@ -341,10 +364,62 @@ static DEVICE_ATTR(beep_enable, S_IWUSR|S_IRUGO,
 static DEVICE_ATTR(beep_mask, S_IWUSR|S_IRUGO,
 	show_beep_mask, set_beep_mask);
 
+static ssize_t show_alarm(struct device *dev, struct device_attribute *attr,
+			  char *buf)
+{
+	int bitnr = to_sensor_dev_attr(attr)->index;
+	struct gl518_data *data = gl518_update_device(dev);
+	return sprintf(buf, "%u\n", (data->alarms >> bitnr) & 1);
+}
+
+static SENSOR_DEVICE_ATTR(in0_alarm, S_IRUGO, show_alarm, NULL, 0);
+static SENSOR_DEVICE_ATTR(in1_alarm, S_IRUGO, show_alarm, NULL, 1);
+static SENSOR_DEVICE_ATTR(in2_alarm, S_IRUGO, show_alarm, NULL, 2);
+static SENSOR_DEVICE_ATTR(in3_alarm, S_IRUGO, show_alarm, NULL, 3);
+static SENSOR_DEVICE_ATTR(temp1_alarm, S_IRUGO, show_alarm, NULL, 4);
+static SENSOR_DEVICE_ATTR(fan1_alarm, S_IRUGO, show_alarm, NULL, 5);
+static SENSOR_DEVICE_ATTR(fan2_alarm, S_IRUGO, show_alarm, NULL, 6);
+
+static ssize_t show_beep(struct device *dev, struct device_attribute *attr,
+			  char *buf)
+{
+	int bitnr = to_sensor_dev_attr(attr)->index;
+	struct gl518_data *data = gl518_update_device(dev);
+	return sprintf(buf, "%u\n", (data->beep_mask >> bitnr) & 1);
+}
+
+static ssize_t set_beep(struct device *dev, struct device_attribute *attr,
+			const char *buf, size_t count)
+{
+	struct i2c_client *client = to_i2c_client(dev);
+	struct gl518_data *data = i2c_get_clientdata(client);
+	int bitnr = to_sensor_dev_attr(attr)->index;
+	unsigned long bit;
+
+	bit = simple_strtoul(buf, NULL, 10);
+	if (bit & ~1)
+		return -EINVAL;
+
+	mutex_lock(&data->update_lock);
+	data->beep_mask = gl518_read_value(client, GL518_REG_ALARM);
+	if (bit)
+		data->beep_mask |= (1 << bitnr);
+	else
+		data->beep_mask &= ~(1 << bitnr);
+	gl518_write_value(client, GL518_REG_ALARM, data->beep_mask);
+	mutex_unlock(&data->update_lock);
+	return count;
+}
+
+static SENSOR_DEVICE_ATTR(in0_beep, S_IRUGO|S_IWUSR, show_beep, set_beep, 0);
+static SENSOR_DEVICE_ATTR(in1_beep, S_IRUGO|S_IWUSR, show_beep, set_beep, 1);
+static SENSOR_DEVICE_ATTR(in2_beep, S_IRUGO|S_IWUSR, show_beep, set_beep, 2);
+static SENSOR_DEVICE_ATTR(in3_beep, S_IRUGO|S_IWUSR, show_beep, set_beep, 3);
+static SENSOR_DEVICE_ATTR(temp1_beep, S_IRUGO|S_IWUSR, show_beep, set_beep, 4);
+static SENSOR_DEVICE_ATTR(fan1_beep, S_IRUGO|S_IWUSR, show_beep, set_beep, 5);
+static SENSOR_DEVICE_ATTR(fan2_beep, S_IRUGO|S_IWUSR, show_beep, set_beep, 6);
+
 static struct attribute *gl518_attributes[] = {
-	&dev_attr_in0_input.attr,
-	&dev_attr_in1_input.attr,
-	&dev_attr_in2_input.attr,
 	&dev_attr_in3_input.attr,
 	&dev_attr_in0_min.attr,
 	&dev_attr_in1_min.attr,
@@ -354,18 +429,32 @@ static struct attribute *gl518_attributes[] = {
 	&dev_attr_in1_max.attr,
 	&dev_attr_in2_max.attr,
 	&dev_attr_in3_max.attr,
+	&sensor_dev_attr_in0_alarm.dev_attr.attr,
+	&sensor_dev_attr_in1_alarm.dev_attr.attr,
+	&sensor_dev_attr_in2_alarm.dev_attr.attr,
+	&sensor_dev_attr_in3_alarm.dev_attr.attr,
+	&sensor_dev_attr_in0_beep.dev_attr.attr,
+	&sensor_dev_attr_in1_beep.dev_attr.attr,
+	&sensor_dev_attr_in2_beep.dev_attr.attr,
+	&sensor_dev_attr_in3_beep.dev_attr.attr,
 
 	&dev_attr_fan1_auto.attr,
-	&dev_attr_fan1_input.attr,
-	&dev_attr_fan2_input.attr,
-	&dev_attr_fan1_min.attr,
-	&dev_attr_fan2_min.attr,
-	&dev_attr_fan1_div.attr,
-	&dev_attr_fan2_div.attr,
+	&sensor_dev_attr_fan1_input.dev_attr.attr,
+	&sensor_dev_attr_fan2_input.dev_attr.attr,
+	&sensor_dev_attr_fan1_min.dev_attr.attr,
+	&sensor_dev_attr_fan2_min.dev_attr.attr,
+	&sensor_dev_attr_fan1_div.dev_attr.attr,
+	&sensor_dev_attr_fan2_div.dev_attr.attr,
+	&sensor_dev_attr_fan1_alarm.dev_attr.attr,
+	&sensor_dev_attr_fan2_alarm.dev_attr.attr,
+	&sensor_dev_attr_fan1_beep.dev_attr.attr,
+	&sensor_dev_attr_fan2_beep.dev_attr.attr,
 
 	&dev_attr_temp1_input.attr,
 	&dev_attr_temp1_max.attr,
 	&dev_attr_temp1_max_hyst.attr,
+	&sensor_dev_attr_temp1_alarm.dev_attr.attr,
+	&sensor_dev_attr_temp1_beep.dev_attr.attr,
 
 	&dev_attr_alarms.attr,
 	&dev_attr_beep_enable.attr,
@@ -377,101 +466,87 @@ static const struct attribute_group gl518_group = {
 	.attrs = gl518_attributes,
 };
 
+static struct attribute *gl518_attributes_r80[] = {
+	&dev_attr_in0_input.attr,
+	&dev_attr_in1_input.attr,
+	&dev_attr_in2_input.attr,
+	NULL
+};
+
+static const struct attribute_group gl518_group_r80 = {
+	.attrs = gl518_attributes_r80,
+};
+
 /*
  * Real code
  */
 
-static int gl518_attach_adapter(struct i2c_adapter *adapter)
+/* Return 0 if detection is successful, -ENODEV otherwise */
+static int gl518_detect(struct i2c_client *client, struct i2c_board_info *info)
 {
-	if (!(adapter->class & I2C_CLASS_HWMON))
-		return 0;
-	return i2c_probe(adapter, &addr_data, gl518_detect);
-}
-
-static int gl518_detect(struct i2c_adapter *adapter, int address, int kind)
-{
-	int i;
-	struct i2c_client *new_client;
-	struct gl518_data *data;
-	int err = 0;
+	struct i2c_adapter *adapter = client->adapter;
+	int rev;
 
 	if (!i2c_check_functionality(adapter, I2C_FUNC_SMBUS_BYTE_DATA |
 				     I2C_FUNC_SMBUS_WORD_DATA))
-		goto exit;
+		return -ENODEV;
 
-	/* OK. For now, we presume we have a valid client. We now create the
-	   client structure, even though we cannot fill it completely yet.
-	   But it allows us to access gl518_{read,write}_value. */
+	/* Now, we do the remaining detection. */
+	if ((gl518_read_value(client, GL518_REG_CHIP_ID) != 0x80)
+	 || (gl518_read_value(client, GL518_REG_CONF) & 0x80))
+		return -ENODEV;
 
-	if (!(data = kzalloc(sizeof(struct gl518_data), GFP_KERNEL))) {
+	/* Determine the chip type. */
+	rev = gl518_read_value(client, GL518_REG_REVISION);
+	if (rev != 0x00 && rev != 0x80)
+		return -ENODEV;
+
+	strlcpy(info->type, "gl518sm", I2C_NAME_SIZE);
+
+	return 0;
+}
+
+static int gl518_probe(struct i2c_client *client,
+		       const struct i2c_device_id *id)
+{
+	struct gl518_data *data;
+	int err, revision;
+
+	data = kzalloc(sizeof(struct gl518_data), GFP_KERNEL);
+	if (!data) {
 		err = -ENOMEM;
 		goto exit;
 	}
 
-	new_client = &data->client;
-	i2c_set_clientdata(new_client, data);
-
-	new_client->addr = address;
-	new_client->adapter = adapter;
-	new_client->driver = &gl518_driver;
-	new_client->flags = 0;
-
-	/* Now, we do the remaining detection. */
-
-	if (kind < 0) {
-		if ((gl518_read_value(new_client, GL518_REG_CHIP_ID) != 0x80)
-		 || (gl518_read_value(new_client, GL518_REG_CONF) & 0x80))
-			goto exit_free;
-	}
-
-	/* Determine the chip type. */
-	if (kind <= 0) {
-		i = gl518_read_value(new_client, GL518_REG_REVISION);
-		if (i == 0x00) {
-			kind = gl518sm_r00;
-		} else if (i == 0x80) {
-			kind = gl518sm_r80;
-		} else {
-			if (kind <= 0)
-				dev_info(&adapter->dev,
-				    "Ignoring 'force' parameter for unknown "
-				    "chip at adapter %d, address 0x%02x\n",
-				    i2c_adapter_id(adapter), address);
-			goto exit_free;
-		}
-	}
-
-	/* Fill in the remaining client fields */
-	strlcpy(new_client->name, "gl518sm", I2C_NAME_SIZE);
-	data->type = kind;
-	data->valid = 0;
+	i2c_set_clientdata(client, data);
+	revision = gl518_read_value(client, GL518_REG_REVISION);
+	data->type = revision == 0x80 ? gl518sm_r80 : gl518sm_r00;
 	mutex_init(&data->update_lock);
-
-	/* Tell the I2C layer a new client has arrived */
-	if ((err = i2c_attach_client(new_client)))
-		goto exit_free;
 
 	/* Initialize the GL518SM chip */
 	data->alarm_mask = 0xff;
-	data->voltage_in[0]=data->voltage_in[1]=data->voltage_in[2]=0;
-	gl518_init_client((struct i2c_client *) new_client);
+	gl518_init_client(client);
 
 	/* Register sysfs hooks */
-	if ((err = sysfs_create_group(&new_client->dev.kobj, &gl518_group)))
-		goto exit_detach;
+	if ((err = sysfs_create_group(&client->dev.kobj, &gl518_group)))
+		goto exit_free;
+	if (data->type == gl518sm_r80)
+		if ((err = sysfs_create_group(&client->dev.kobj,
+					      &gl518_group_r80)))
+			goto exit_remove_files;
 
-	data->class_dev = hwmon_device_register(&new_client->dev);
-	if (IS_ERR(data->class_dev)) {
-		err = PTR_ERR(data->class_dev);
+	data->hwmon_dev = hwmon_device_register(&client->dev);
+	if (IS_ERR(data->hwmon_dev)) {
+		err = PTR_ERR(data->hwmon_dev);
 		goto exit_remove_files;
 	}
 
 	return 0;
 
 exit_remove_files:
-	sysfs_remove_group(&new_client->dev.kobj, &gl518_group);
-exit_detach:
-	i2c_detach_client(new_client);
+	sysfs_remove_group(&client->dev.kobj, &gl518_group);
+	if (data->type == gl518sm_r80)
+		sysfs_remove_group(&client->dev.kobj, &gl518_group_r80);
 exit_free:
 	kfree(data);
 exit:
@@ -497,24 +572,22 @@ static void gl518_init_client(struct i2c_client *client)
 	gl518_write_value(client, GL518_REG_CONF, 0x40 | regvalue);
 }
 
-static int gl518_detach_client(struct i2c_client *client)
+static int gl518_remove(struct i2c_client *client)
 {
 	struct gl518_data *data = i2c_get_clientdata(client);
-	int err;
 
-	hwmon_device_unregister(data->class_dev);
+	hwmon_device_unregister(data->hwmon_dev);
 	sysfs_remove_group(&client->dev.kobj, &gl518_group);
-
-	if ((err = i2c_detach_client(client)))
-		return err;
+	if (data->type == gl518sm_r80)
+		sysfs_remove_group(&client->dev.kobj, &gl518_group_r80);
 
 	kfree(data);
 	return 0;
 }
 
-/* Registers 0x07 to 0x0c are word-sized, others are byte-sized 
+/* Registers 0x07 to 0x0c are word-sized, others are byte-sized
    GL518 uses a high-byte first convention, which is exactly opposite to
-   the usual practice. */
+   the SMBus standard. */
 static int gl518_read_value(struct i2c_client *client, u8 reg)
 {
 	if ((reg >= 0x07) && (reg <= 0x0c))
@@ -523,9 +596,6 @@ static int gl518_read_value(struct i2c_client *client, u8 reg)
 		return i2c_smbus_read_byte_data(client, reg);
 }
 
-/* Registers 0x07 to 0x0c are word-sized, others are byte-sized 
-   GL518 uses a high-byte first convention, which is exactly opposite to
-   the usual practice. */
 static int gl518_write_value(struct i2c_client *client, u8 reg, u16 value)
 {
 	if ((reg >= 0x07) && (reg <= 0x0c))

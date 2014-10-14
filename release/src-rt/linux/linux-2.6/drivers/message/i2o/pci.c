@@ -15,11 +15,11 @@
  *
  *	Fixes/additions:
  *		Philipp Rumpf
- *		Juha Siev‰nen <Juha.Sievanen@cs.Helsinki.FI>
- *		Auvo H‰kkinen <Auvo.Hakkinen@cs.Helsinki.FI>
+ *		Juha Siev√§nen <Juha.Sievanen@cs.Helsinki.FI>
+ *		Auvo H√§kkinen <Auvo.Hakkinen@cs.Helsinki.FI>
  *		Deepak Saxena <deepak@plexity.net>
  *		Boji T Kannanthanam <boji.t.kannanthanam@intel.com>
- *		Alan Cox <alan@redhat.com>:
+ *		Alan Cox <alan@lxorguk.ukuu.org.uk>:
  *			Ported to Linux 2.5.
  *		Markus Lidel <Markus.Lidel@shadowconnect.com>:
  *			Minor fixes for 2.6.
@@ -29,6 +29,7 @@
 
 #include <linux/pci.h>
 #include <linux/interrupt.h>
+#include <linux/slab.h>
 #include <linux/i2o.h>
 #include "core.h"
 
@@ -186,31 +187,29 @@ static int __devinit i2o_pci_alloc(struct i2o_controller *c)
 		}
 	}
 
-	if (i2o_dma_alloc(dev, &c->status, 8, GFP_KERNEL)) {
+	if (i2o_dma_alloc(dev, &c->status, 8)) {
 		i2o_pci_free(c);
 		return -ENOMEM;
 	}
 
-	if (i2o_dma_alloc(dev, &c->hrt, sizeof(i2o_hrt), GFP_KERNEL)) {
+	if (i2o_dma_alloc(dev, &c->hrt, sizeof(i2o_hrt))) {
 		i2o_pci_free(c);
 		return -ENOMEM;
 	}
 
-	if (i2o_dma_alloc(dev, &c->dlct, 8192, GFP_KERNEL)) {
+	if (i2o_dma_alloc(dev, &c->dlct, 8192)) {
 		i2o_pci_free(c);
 		return -ENOMEM;
 	}
 
-	if (i2o_dma_alloc(dev, &c->status_block, sizeof(i2o_status_block),
-			  GFP_KERNEL)) {
+	if (i2o_dma_alloc(dev, &c->status_block, sizeof(i2o_status_block))) {
 		i2o_pci_free(c);
 		return -ENOMEM;
 	}
 
-	if (i2o_dma_alloc
-	    (dev, &c->out_queue,
-	     I2O_MAX_OUTBOUND_MSG_FRAMES * I2O_OUTBOUND_MSG_FRAME_SIZE *
-	     sizeof(u32), GFP_KERNEL)) {
+	if (i2o_dma_alloc(dev, &c->out_queue,
+		I2O_MAX_OUTBOUND_MSG_FRAMES * I2O_OUTBOUND_MSG_FRAME_SIZE *
+				sizeof(u32))) {
 		i2o_pci_free(c);
 		return -ENOMEM;
 	}
@@ -336,7 +335,7 @@ static int __devinit i2o_pci_probe(struct pci_dev *pdev,
 		return rc;
 	}
 
-	if (pci_set_dma_mask(pdev, DMA_32BIT_MASK)) {
+	if (pci_set_dma_mask(pdev, DMA_BIT_MASK(32))) {
 		printk(KERN_WARNING "i2o: no suitable DMA found for %s\n",
 		       pci_name(pdev));
 		rc = -ENODEV;
@@ -399,7 +398,7 @@ static int __devinit i2o_pci_probe(struct pci_dev *pdev,
 		}
 #ifdef CONFIG_I2O_EXT_ADAPTEC_DMA64
 		if (sizeof(dma_addr_t) > 4) {
-			if (pci_set_dma_mask(pdev, DMA_64BIT_MASK))
+			if (pci_set_dma_mask(pdev, DMA_BIT_MASK(64)))
 				printk(KERN_INFO "%s: 64-bit DMA unavailable\n",
 				       c->name);
 			else {

@@ -21,6 +21,7 @@
 #include <linux/poll.h>
 #include <linux/module.h>
 #include <linux/slab.h>
+#include <linux/mutex.h>
 #include <asm/sn/io.h>
 #include <asm/sn/sn_sal.h>
 #include <asm/sn/module.h>
@@ -33,6 +34,7 @@
 #define SCDRV_BUFSZ	2048
 #define SCDRV_TIMEOUT	1000
 
+static DEFINE_MUTEX(scdrv_mutex);
 static irqreturn_t
 scdrv_interrupt(int irq, void *subch_data)
 {
@@ -80,7 +82,7 @@ scdrv_open(struct inode *inode, struct file *file)
 	sd = kzalloc(sizeof (struct subch_data_s), GFP_KERNEL);
 	if (sd == NULL) {
 		printk("%s: couldn't allocate subchannel data\n",
-		       __FUNCTION__);
+		       __func__);
 		return -ENOMEM;
 	}
 
@@ -90,7 +92,7 @@ scdrv_open(struct inode *inode, struct file *file)
 
 	if (sd->sd_subch < 0) {
 		kfree(sd);
-		printk("%s: couldn't allocate subchannel\n", __FUNCTION__);
+		printk("%s: couldn't allocate subchannel\n", __func__);
 		return -EBUSY;
 	}
 
@@ -104,16 +106,18 @@ scdrv_open(struct inode *inode, struct file *file)
 	file->private_data = sd;
 
 	/* hook this subchannel up to the system controller interrupt */
+	mutex_lock(&scdrv_mutex);
 	rv = request_irq(SGI_UART_VECTOR, scdrv_interrupt,
 			 IRQF_SHARED | IRQF_DISABLED,
 			 SYSCTL_BASENAME, sd);
 	if (rv) {
 		ia64_sn_irtr_close(sd->sd_nasid, sd->sd_subch);
 		kfree(sd);
-		printk("%s: irq request failed (%d)\n", __FUNCTION__, rv);
+		printk("%s: irq request failed (%d)\n", __func__, rv);
+		mutex_unlock(&scdrv_mutex);
 		return -EBUSY;
 	}
-
+	mutex_unlock(&scdrv_mutex);
 	return 0;
 }
 
@@ -215,7 +219,7 @@ scdrv_read(struct file *file, char __user *buf, size_t count, loff_t *f_pos)
 		 */
 		if (count < len) {
 			pr_debug("%s: only accepting %d of %d bytes\n",
-				 __FUNCTION__, (int) count, len);
+				 __func__, (int) count, len);
 		}
 		len = min((int) count, len);
 		if (copy_to_user(buf, sd->sd_rb, len))
@@ -354,6 +358,7 @@ static const struct file_operations scdrv_fops = {
 	.poll =		scdrv_poll,
 	.open =		scdrv_open,
 	.release =	scdrv_release,
+	.llseek =	noop_llseek,
 };
 
 static struct class *snsc_class;
@@ -384,7 +389,7 @@ scdrv_init(void)
 	if (alloc_chrdev_region(&first_dev, 0, num_cnodes,
 				SYSCTL_BASENAME) < 0) {
 		printk("%s: failed to register SN system controller device\n",
-		       __FUNCTION__);
+		       __func__);
 		return -ENODEV;
 	}
 	snsc_class = class_create(THIS_MODULE, SYSCTL_BASENAME);
@@ -403,7 +408,7 @@ scdrv_init(void)
 				      GFP_KERNEL);
 			if (!scd) {
 				printk("%s: failed to allocate device info"
-				       "for %s/%s\n", __FUNCTION__,
+				       "for %s/%s\n", __func__,
 				       SYSCTL_BASENAME, devname);
 				continue;
 			}
@@ -412,7 +417,7 @@ scdrv_init(void)
 			scd->scd_nasid = cnodeid_to_nasid(cnode);
 			if (!(salbuf = kmalloc(SCDRV_BUFSZ, GFP_KERNEL))) {
 				printk("%s: failed to allocate driver buffer"
-				       "(%s%s)\n", __FUNCTION__,
+				       "(%s%s)\n", __func__,
 				       SYSCTL_BASENAME, devname);
 				kfree(scd);
 				continue;
@@ -424,7 +429,7 @@ scdrv_init(void)
 				    ("%s: failed to initialize SAL for"
 				     " system controller communication"
 				     " (%s/%s): outdated PROM?\n",
-				     __FUNCTION__, SYSCTL_BASENAME, devname);
+				     __func__, SYSCTL_BASENAME, devname);
 				kfree(scd);
 				kfree(salbuf);
 				continue;
@@ -435,14 +440,14 @@ scdrv_init(void)
 			if (cdev_add(&scd->scd_cdev, dev, 1)) {
 				printk("%s: failed to register system"
 				       " controller device (%s%s)\n",
-				       __FUNCTION__, SYSCTL_BASENAME, devname);
+				       __func__, SYSCTL_BASENAME, devname);
 				kfree(scd);
 				kfree(salbuf);
 				continue;
 			}
 
-			class_device_create(snsc_class, NULL, dev, NULL,
-						"%s", devname);
+			device_create(snsc_class, NULL, dev, NULL,
+				      "%s", devname);
 
 			ia64_sn_irtr_intr_enable(scd->scd_nasid,
 						 0 /*ignored */ ,

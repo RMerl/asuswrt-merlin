@@ -1,6 +1,4 @@
 /*
- *	linux/arch/mips/dec/ecc-berr.c
- *
  *	Bus error event handling code for systems equipped with ECC
  *	handling logic, i.e. DECstation/DECsystem 5000/200 (KN02),
  *	5000/240 (KN03), 5000/260 (KN05) and DECsystem 5900 (KN03),
@@ -263,7 +261,7 @@ static inline void dec_kn03_be_init(void)
 	 */
 	*mcr = (*mcr & ~(KN03_MCR_DIAGCHK | KN03_MCR_DIAGGEN)) |
 	       KN03_MCR_CORRECT;
-	if (current_cpu_data.cputype == CPU_R4400SC)
+	if (current_cpu_type() == CPU_R4400SC)
 		*mbcs |= KN4K_MB_CSR_EE;
 	fast_iob();
 }

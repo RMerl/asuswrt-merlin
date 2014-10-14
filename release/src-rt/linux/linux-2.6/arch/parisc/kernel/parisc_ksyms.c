@@ -69,11 +69,6 @@ EXPORT_SYMBOL(memcpy_toio);
 EXPORT_SYMBOL(memcpy_fromio);
 EXPORT_SYMBOL(memset_io);
 
-#include <asm/semaphore.h>
-EXPORT_SYMBOL(__up);
-EXPORT_SYMBOL(__down_interruptible);
-EXPORT_SYMBOL(__down);
-
 extern void $$divI(void);
 extern void $$divU(void);
 extern void $$remI(void);
@@ -157,3 +152,11 @@ EXPORT_SYMBOL($$dyncall);
 EXPORT_SYMBOL(node_data);
 EXPORT_SYMBOL(pfnnid_map);
 #endif
+
+#ifdef CONFIG_FUNCTION_TRACER
+extern void _mcount(void);
+EXPORT_SYMBOL(_mcount);
+#endif
+
+/* from pacache.S -- needed for copy_page */
+EXPORT_SYMBOL(copy_user_page_asm);

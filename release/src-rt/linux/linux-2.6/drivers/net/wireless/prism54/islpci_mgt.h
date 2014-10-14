@@ -22,6 +22,7 @@
 
 #include <linux/wireless.h>
 #include <linux/skbuff.h>
+#include <linux/slab.h>
 
 /*
  *  Function definitions
@@ -85,12 +86,6 @@ extern int pc_debug;
 #define PIMFOR_FLAG_APPLIC_ORIGIN               0x01
 #define PIMFOR_FLAG_LITTLE_ENDIAN               0x02
 
-static inline void
-add_le32p(u32 * le_number, u32 add)
-{
-	*le_number = cpu_to_le32(le32_to_cpup(le_number) + add);
-}
-
 void display_buffer(char *, int);
 
 /*
@@ -106,7 +101,7 @@ typedef struct {
 	u8 device_id;
 	u8 flags;
 	u32 length;
-} __attribute__ ((packed))
+} __packed
 pimfor_header_t;
 
 /* A received and interrupt-processed management frame, either for

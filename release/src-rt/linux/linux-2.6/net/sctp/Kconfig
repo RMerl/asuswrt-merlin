@@ -6,10 +6,11 @@ menuconfig IP_SCTP
 	tristate "The SCTP Protocol (EXPERIMENTAL)"
 	depends on INET && EXPERIMENTAL
 	depends on IPV6 || IPV6=n
-	select CRYPTO if SCTP_HMAC_SHA1 || SCTP_HMAC_MD5
-	select CRYPTO_HMAC if SCTP_HMAC_SHA1 || SCTP_HMAC_MD5
-	select CRYPTO_SHA1 if SCTP_HMAC_SHA1
+	select CRYPTO
+	select CRYPTO_HMAC
+	select CRYPTO_SHA1
 	select CRYPTO_MD5 if SCTP_HMAC_MD5
+	select LIBCRC32C
 	---help---
 	  Stream Control Transmission Protocol
 
@@ -36,6 +37,18 @@ menuconfig IP_SCTP
 
 if IP_SCTP
 
+config NET_SCTPPROBE
+	tristate "SCTP: Association probing"
+        depends on PROC_FS && KPROBES
+        ---help---
+        This module allows for capturing the changes to SCTP association
+        state in response to incoming packets. It is used for debugging
+        SCTP congestion control algorithms. If you don't understand
+        what was just said, you don't need it: say N.
+
+        To compile this code as a module, choose M here: the
+        module will be called sctp_probe.
+
 config SCTP_DBG_MSG
 	bool "SCTP: Debug messages"
 	help
@@ -46,11 +59,11 @@ config SCTP_DBG_MSG
 
 config SCTP_DBG_OBJCNT
 	bool "SCTP: Debug object counts"
+	depends on PROC_FS
 	help
 	  If you say Y, this will enable debugging support for counting the 
 	  type of objects that are currently allocated.  This is useful for 
-	  identifying memory leaks.   If the /proc filesystem is enabled this 
-	  debug information can be viewed by 
+	  identifying memory leaks. This debug information can be viewed by
 	  'cat /proc/net/sctp/sctp_dbg_objcnt'
 
 	  If unsure, say N

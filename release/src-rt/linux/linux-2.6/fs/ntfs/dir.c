@@ -21,6 +21,7 @@
  */
 
 #include <linux/buffer_head.h>
+#include <linux/slab.h>
 
 #include "dir.h"
 #include "aops.h"
@@ -32,8 +33,8 @@
 /**
  * The little endian Unicode string $I30 as a global constant.
  */
-ntfschar I30[5] = { const_cpu_to_le16('$'), const_cpu_to_le16('I'),
-		const_cpu_to_le16('3'),	const_cpu_to_le16('0'), 0 };
+ntfschar I30[5] = { cpu_to_le16('$'), cpu_to_le16('I'),
+		cpu_to_le16('3'),	cpu_to_le16('0'), 0 };
 
 /**
  * ntfs_lookup_inode_by_name - find an inode in a directory given its name
@@ -1526,10 +1527,9 @@ static int ntfs_dir_open(struct inode *vi, struct file *filp)
  * this problem for now.  We do write the $BITMAP attribute if it is present
  * which is the important one for a directory so things are not too bad.
  */
-static int ntfs_dir_fsync(struct file *filp, struct dentry *dentry,
-		int datasync)
+static int ntfs_dir_fsync(struct file *filp, int datasync)
 {
-	struct inode *bmp_vi, *vi = dentry->d_inode;
+	struct inode *bmp_vi, *vi = filp->f_mapping->host;
 	int err, ret;
 	ntfs_attr na;
 
@@ -1545,7 +1545,7 @@ static int ntfs_dir_fsync(struct file *filp, struct dentry *dentry,
  		write_inode_now(bmp_vi, !datasync);
 		iput(bmp_vi);
 	}
-	ret = ntfs_write_inode(vi, 1);
+	ret = __ntfs_write_inode(vi, 1);
 	write_inode_now(vi, !datasync);
 	err = sync_blockdev(vi->i_sb->s_bdev);
 	if (unlikely(err && !ret))

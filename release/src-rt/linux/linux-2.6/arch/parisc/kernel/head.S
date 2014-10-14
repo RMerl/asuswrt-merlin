@@ -20,10 +20,11 @@
 #include <asm/pgtable.h>
 
 #include <linux/linkage.h>
+#include <linux/init.h>
 
 	.level	LEVEL
 
-	.data
+	__INITDATA
 ENTRY(boot_args)
 	.word 0 /* arg0 */
 	.word 0 /* arg1 */
@@ -31,7 +32,8 @@ ENTRY(boot_args)
 	.word 0 /* arg3 */
 END(boot_args)
 
-	.text
+	__HEAD
+
 	.align	4
 	.import init_thread_union,data
 	.import fault_vector_20,code    /* IVA parisc 2.0 32 bit */
@@ -95,7 +97,7 @@ $bss_loop:
 
 1:
 	stw		%r3,0(%r4)
-	ldo		(ASM_PAGE_SIZE >> PxD_VALUE_SHIFT)(%r3),%r3
+	ldo		(PAGE_SIZE >> PxD_VALUE_SHIFT)(%r3),%r3
 	addib,>		-1,%r1,1b
 #if PT_NLEVELS == 3
 	ldo             ASM_PMD_ENTRY_SIZE(%r4),%r4
@@ -119,7 +121,7 @@ $pgt_fill_loop:
 	copy		%r0,%r2
 
 	/* And the RFI Target address too */
-	load32		start_kernel,%r11
+	load32		start_parisc,%r11
 
 	/* And the initial task pointer */
 	load32		init_thread_union,%r6
@@ -128,12 +130,8 @@ $pgt_fill_loop:
 	/* And the stack pointer too */
 	ldo             THREAD_SZ_ALGN(%r6),%sp
 
-	/* And the interrupt stack */
-	load32		interrupt_stack,%r6
-	mtctl           %r6,%cr31
-
 #ifdef CONFIG_SMP
-	/* Set the smp rendevous address into page zero.
+	/* Set the smp rendezvous address into page zero.
 	** It would be safer to do this in init_smp_config() but
 	** it's just way easier to deal with here because
 	** of 64-bit function ptrs and the address is local to this file.
@@ -347,7 +345,7 @@ smp_slave_stext:
 ENDPROC(stext)
 
 #ifndef CONFIG_64BIT
-	.data
+	.section .data..read_mostly
 
 	.align	4
 	.export	$global$,data

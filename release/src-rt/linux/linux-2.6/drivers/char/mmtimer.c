@@ -25,10 +25,15 @@
 #include <linux/init.h>
 #include <linux/errno.h>
 #include <linux/mm.h>
+#include <linux/fs.h>
 #include <linux/mmtimer.h>
 #include <linux/miscdevice.h>
 #include <linux/posix-timers.h>
 #include <linux/interrupt.h>
+#include <linux/time.h>
+#include <linux/math64.h>
+#include <linux/mutex.h>
+#include <linux/slab.h>
 
 #include <asm/uaccess.h>
 #include <asm/sn/addrs.h>
@@ -48,14 +53,17 @@ MODULE_LICENSE("GPL");
 
 #define RTC_BITS 55 /* 55 bits for this implementation */
 
+static struct k_clock sgi_clock;
+
 extern unsigned long sn_rtc_cycles_per_second;
 
 #define RTC_COUNTER_ADDR        ((long *)LOCAL_MMR_ADDR(SH_RTC))
 
 #define rtc_time()              (*RTC_COUNTER_ADDR)
 
-static int mmtimer_ioctl(struct inode *inode, struct file *file,
-			 unsigned int cmd, unsigned long arg);
+static DEFINE_MUTEX(mmtimer_mutex);
+static long mmtimer_ioctl(struct file *file, unsigned int cmd,
+						unsigned long arg);
 static int mmtimer_mmap(struct file *file, struct vm_area_struct *vma);
 
 /*
@@ -64,18 +72,18 @@ static int mmtimer_mmap(struct file *file, struct vm_area_struct *vma);
 static unsigned long mmtimer_femtoperiod = 0;
 
 static const struct file_operations mmtimer_fops = {
-	.owner =	THIS_MODULE,
-	.mmap =		mmtimer_mmap,
-	.ioctl =	mmtimer_ioctl,
+	.owner = THIS_MODULE,
+	.mmap =	mmtimer_mmap,
+	.unlocked_ioctl = mmtimer_ioctl,
+	.llseek = noop_llseek,
 };
 
 /*
  * We only have comparison registers RTC1-4 currently available per
  * node.  RTC0 is used by SAL.
  */
-#define NUM_COMPARATORS 3
 /* Check for an RTC interrupt pending */
-static int inline mmtimer_int_pending(int comparator)
+static int mmtimer_int_pending(int comparator)
 {
 	if (HUB_L((unsigned long *)LOCAL_MMR_ADDR(SH_EVENT_OCCURRED)) &
 			SH_EVENT_OCCURRED_RTC1_INT_MASK << comparator)
@@ -83,15 +91,16 @@ static int inline mmtimer_int_pending(int comparator)
 	else
 		return 0;
 }
+
 /* Clear the RTC interrupt pending bit */
-static void inline mmtimer_clr_int_pending(int comparator)
+static void mmtimer_clr_int_pending(int comparator)
 {
 	HUB_S((u64 *)LOCAL_MMR_ADDR(SH_EVENT_OCCURRED_ALIAS),
 		SH_EVENT_OCCURRED_RTC1_INT_MASK << comparator);
 }
 
 /* Setup timer on comparator RTC1 */
-static void inline mmtimer_setup_int_0(u64 expires)
+static void mmtimer_setup_int_0(int cpu, u64 expires)
 {
 	u64 val;
 
@@ -105,7 +114,7 @@ static void inline mmtimer_setup_int_0(u64 expires)
 	mmtimer_clr_int_pending(0);
 
 	val = ((u64)SGI_MMTIMER_VECTOR << SH_RTC1_INT_CONFIG_IDX_SHFT) |
-		((u64)cpu_physical_id(smp_processor_id()) <<
+		((u64)cpu_physical_id(cpu) <<
 			SH_RTC1_INT_CONFIG_PID_SHFT);
 
 	/* Set configuration */
@@ -121,7 +130,7 @@ static void inline mmtimer_setup_int_0(u64 expires)
 }
 
 /* Setup timer on comparator RTC2 */
-static void inline mmtimer_setup_int_1(u64 expires)
+static void mmtimer_setup_int_1(int cpu, u64 expires)
 {
 	u64 val;
 
@@ -132,7 +141,7 @@ static void inline mmtimer_setup_int_1(u64 expires)
 	mmtimer_clr_int_pending(1);
 
 	val = ((u64)SGI_MMTIMER_VECTOR << SH_RTC2_INT_CONFIG_IDX_SHFT) |
-		((u64)cpu_physical_id(smp_processor_id()) <<
+		((u64)cpu_physical_id(cpu) <<
 			SH_RTC2_INT_CONFIG_PID_SHFT);
 
 	HUB_S((u64 *)LOCAL_MMR_ADDR(SH_RTC2_INT_CONFIG), val);
@@ -143,7 +152,7 @@ static void inline mmtimer_setup_int_1(u64 expires)
 }
 
 /* Setup timer on comparator RTC3 */
-static void inline mmtimer_setup_int_2(u64 expires)
+static void mmtimer_setup_int_2(int cpu, u64 expires)
 {
 	u64 val;
 
@@ -154,7 +163,7 @@ static void inline mmtimer_setup_int_2(u64 expires)
 	mmtimer_clr_int_pending(2);
 
 	val = ((u64)SGI_MMTIMER_VECTOR << SH_RTC3_INT_CONFIG_IDX_SHFT) |
-		((u64)cpu_physical_id(smp_processor_id()) <<
+		((u64)cpu_physical_id(cpu) <<
 			SH_RTC3_INT_CONFIG_PID_SHFT);
 
 	HUB_S((u64 *)LOCAL_MMR_ADDR(SH_RTC3_INT_CONFIG), val);
@@ -169,22 +178,23 @@ static void inline mmtimer_setup_int_2(u64 expires)
  * in order to insure that the setup succeeds in a deterministic time frame.
  * It will check if the interrupt setup succeeded.
  */
-static int inline mmtimer_setup(int comparator, unsigned long expires)
+static int mmtimer_setup(int cpu, int comparator, unsigned long expires,
+	u64 *set_completion_time)
 {
-
 	switch (comparator) {
 	case 0:
-		mmtimer_setup_int_0(expires);
+		mmtimer_setup_int_0(cpu, expires);
 		break;
 	case 1:
-		mmtimer_setup_int_1(expires);
+		mmtimer_setup_int_1(cpu, expires);
 		break;
 	case 2:
-		mmtimer_setup_int_2(expires);
+		mmtimer_setup_int_2(cpu, expires);
 		break;
 	}
 	/* We might've missed our expiration time */
-	if (rtc_time() < expires)
+	*set_completion_time = rtc_time();
+	if (*set_completion_time <= expires)
 		return 1;
 
 	/*
@@ -194,7 +204,7 @@ static int inline mmtimer_setup(int comparator, unsigned long expires)
 	return mmtimer_int_pending(comparator);
 }
 
-static int inline mmtimer_disable_int(long nasid, int comparator)
+static int mmtimer_disable_int(long nasid, int comparator)
 {
 	switch (comparator) {
 	case 0:
@@ -215,22 +225,130 @@ static int inline mmtimer_disable_int(long nasid, int comparator)
 	return 0;
 }
 
-#define TIMER_OFF 0xbadcabLL
+#define COMPARATOR	1		/* The comparator to use */
 
-/* There is one of these for each comparator */
-typedef struct mmtimer {
-	spinlock_t lock ____cacheline_aligned;
+#define TIMER_OFF	0xbadcabLL	/* Timer is not setup */
+#define TIMER_SET	0		/* Comparator is set for this timer */
+
+#define MMTIMER_INTERVAL_RETRY_INCREMENT_DEFAULT 40
+
+/* There is one of these for each timer */
+struct mmtimer {
+	struct rb_node list;
 	struct k_itimer *timer;
-	int i;
 	int cpu;
-	struct tasklet_struct tasklet;
-} mmtimer_t;
+};
 
-static mmtimer_t ** timers;
+struct mmtimer_node {
+	spinlock_t lock ____cacheline_aligned;
+	struct rb_root timer_head;
+	struct rb_node *next;
+	struct tasklet_struct tasklet;
+};
+static struct mmtimer_node *timers;
+
+static unsigned mmtimer_interval_retry_increment =
+	MMTIMER_INTERVAL_RETRY_INCREMENT_DEFAULT;
+module_param(mmtimer_interval_retry_increment, uint, 0644);
+MODULE_PARM_DESC(mmtimer_interval_retry_increment,
+	"RTC ticks to add to expiration on interval retry (default 40)");
+
+/*
+ * Add a new mmtimer struct to the node's mmtimer list.
+ * This function assumes the struct mmtimer_node is locked.
+ */
+static void mmtimer_add_list(struct mmtimer *n)
+{
+	int nodeid = n->timer->it.mmtimer.node;
+	unsigned long expires = n->timer->it.mmtimer.expires;
+	struct rb_node **link = &timers[nodeid].timer_head.rb_node;
+	struct rb_node *parent = NULL;
+	struct mmtimer *x;
+
+	/*
+	 * Find the right place in the rbtree:
+	 */
+	while (*link) {
+		parent = *link;
+		x = rb_entry(parent, struct mmtimer, list);
+
+		if (expires < x->timer->it.mmtimer.expires)
+			link = &(*link)->rb_left;
+		else
+			link = &(*link)->rb_right;
+	}
+
+	/*
+	 * Insert the timer to the rbtree and check whether it
+	 * replaces the first pending timer
+	 */
+	rb_link_node(&n->list, parent, link);
+	rb_insert_color(&n->list, &timers[nodeid].timer_head);
+
+	if (!timers[nodeid].next || expires < rb_entry(timers[nodeid].next,
+			struct mmtimer, list)->timer->it.mmtimer.expires)
+		timers[nodeid].next = &n->list;
+}
+
+/*
+ * Set the comparator for the next timer.
+ * This function assumes the struct mmtimer_node is locked.
+ */
+static void mmtimer_set_next_timer(int nodeid)
+{
+	struct mmtimer_node *n = &timers[nodeid];
+	struct mmtimer *x;
+	struct k_itimer *t;
+	u64 expires, exp, set_completion_time;
+	int i;
+
+restart:
+	if (n->next == NULL)
+		return;
+
+	x = rb_entry(n->next, struct mmtimer, list);
+	t = x->timer;
+	if (!t->it.mmtimer.incr) {
+		/* Not an interval timer */
+		if (!mmtimer_setup(x->cpu, COMPARATOR,
+					t->it.mmtimer.expires,
+					&set_completion_time)) {
+			/* Late setup, fire now */
+			tasklet_schedule(&n->tasklet);
+		}
+		return;
+	}
+
+	/* Interval timer */
+	i = 0;
+	expires = exp = t->it.mmtimer.expires;
+	while (!mmtimer_setup(x->cpu, COMPARATOR, expires,
+				&set_completion_time)) {
+		int to;
+
+		i++;
+		expires = set_completion_time +
+				mmtimer_interval_retry_increment + (1 << i);
+		/* Calculate overruns as we go. */
+		to = ((u64)(expires - exp) / t->it.mmtimer.incr);
+		if (to) {
+			t->it_overrun += to;
+			t->it.mmtimer.expires += t->it.mmtimer.incr * to;
+			exp = t->it.mmtimer.expires;
+		}
+		if (i > 20) {
+			printk(KERN_ALERT "mmtimer: cannot reschedule timer\n");
+			t->it.mmtimer.clock = TIMER_OFF;
+			n->next = rb_next(&x->list);
+			rb_erase(&x->list, &n->timer_head);
+			kfree(x);
+			goto restart;
+		}
+	}
+}
 
 /**
  * mmtimer_ioctl - ioctl interface for /dev/mmtimer
- * @inode: inode of the device
  * @file: file structure for the device
  * @cmd: command to execute
  * @arg: optional argument to command
@@ -256,10 +374,12 @@ static mmtimer_t ** timers;
  * %MMTIMER_GETCOUNTER - Gets the current value in the counter and places it
  * in the address specified by @arg.
  */
-static int mmtimer_ioctl(struct inode *inode, struct file *file,
-			 unsigned int cmd, unsigned long arg)
+static long mmtimer_ioctl(struct file *file, unsigned int cmd,
+						unsigned long arg)
 {
 	int ret = 0;
+
+	mutex_lock(&mmtimer_mutex);
 
 	switch (cmd) {
 	case MMTIMER_GETOFFSET:	/* offset of the counter */
@@ -275,15 +395,14 @@ static int mmtimer_ioctl(struct inode *inode, struct file *file,
 	case MMTIMER_GETRES: /* resolution of the clock in 10^-15 s */
 		if(copy_to_user((unsigned long __user *)arg,
 				&mmtimer_femtoperiod, sizeof(unsigned long)))
-			return -EFAULT;
+			ret = -EFAULT;
 		break;
 
 	case MMTIMER_GETFREQ: /* frequency in Hz */
 		if(copy_to_user((unsigned long __user *)arg,
 				&sn_rtc_cycles_per_second,
 				sizeof(unsigned long)))
-			return -EFAULT;
-		ret = 0;
+			ret = -EFAULT;
 		break;
 
 	case MMTIMER_GETBITS: /* number of bits in the clock */
@@ -297,13 +416,13 @@ static int mmtimer_ioctl(struct inode *inode, struct file *file,
 	case MMTIMER_GETCOUNTER:
 		if(copy_to_user((unsigned long __user *)arg,
 				RTC_COUNTER_ADDR, sizeof(unsigned long)))
-			return -EFAULT;
+			ret = -EFAULT;
 		break;
 	default:
-		ret = -ENOSYS;
+		ret = -ENOTTY;
 		break;
 	}
-
+	mutex_unlock(&mmtimer_mutex);
 	return ret;
 }
 
@@ -365,20 +484,20 @@ static int sgi_clock_get(clockid_t clockid, struct timespec *tp)
 
 	nsec = rtc_time() * sgi_clock_period
 			+ sgi_clock_offset.tv_nsec;
-	tp->tv_sec = div_long_long_rem(nsec, NSEC_PER_SEC, &tp->tv_nsec)
-			+ sgi_clock_offset.tv_sec;
+	*tp = ns_to_timespec(nsec);
+	tp->tv_sec += sgi_clock_offset.tv_sec;
 	return 0;
 };
 
-static int sgi_clock_set(clockid_t clockid, struct timespec *tp)
+static int sgi_clock_set(const clockid_t clockid, const struct timespec *tp)
 {
 
 	u64 nsec;
-	u64 rem;
+	u32 rem;
 
 	nsec = rtc_time() * sgi_clock_period;
 
-	sgi_clock_offset.tv_sec = tp->tv_sec - div_long_long_rem(nsec, NSEC_PER_SEC, &rem);
+	sgi_clock_offset.tv_sec = tp->tv_sec - div_u64_rem(nsec, NSEC_PER_SEC, &rem);
 
 	if (rem <= tp->tv_nsec)
 		sgi_clock_offset.tv_nsec = tp->tv_sec - rem;
@@ -386,35 +505,6 @@ static int sgi_clock_set(clockid_t clockid, struct timespec *tp)
 		sgi_clock_offset.tv_nsec = tp->tv_sec + NSEC_PER_SEC - rem;
 		sgi_clock_offset.tv_sec--;
 	}
-	return 0;
-}
-
-/*
- * Schedule the next periodic interrupt. This function will attempt
- * to schedule a periodic interrupt later if necessary. If the scheduling
- * of an interrupt fails then the time to skip is lengthened
- * exponentially in order to ensure that the next interrupt
- * can be properly scheduled..
- */
-static int inline reschedule_periodic_timer(mmtimer_t *x)
-{
-	int n;
-	struct k_itimer *t = x->timer;
-
-	t->it.mmtimer.clock = x->i;
-	t->it_overrun--;
-
-	n = 0;
-	do {
-
-		t->it.mmtimer.expires += t->it.mmtimer.incr << n;
-		t->it_overrun += 1 << n;
-		n++;
-		if (n > 20)
-			return 1;
-
-	} while (!mmtimer_setup(x->i, t->it.mmtimer.expires));
-
 	return 0;
 }
 
@@ -434,71 +524,75 @@ static int inline reschedule_periodic_timer(mmtimer_t *x)
 static irqreturn_t
 mmtimer_interrupt(int irq, void *dev_id)
 {
-	int i;
 	unsigned long expires = 0;
 	int result = IRQ_NONE;
 	unsigned indx = cpu_to_node(smp_processor_id());
+	struct mmtimer *base;
 
-	/*
-	 * Do this once for each comparison register
-	 */
-	for (i = 0; i < NUM_COMPARATORS; i++) {
-		mmtimer_t *base = timers[indx] + i;
-		/* Make sure this doesn't get reused before tasklet_sched */
-		spin_lock(&base->lock);
-		if (base->cpu == smp_processor_id()) {
-			if (base->timer)
-				expires = base->timer->it.mmtimer.expires;
-			/* expires test won't work with shared irqs */
-			if ((mmtimer_int_pending(i) > 0) ||
-				(expires && (expires < rtc_time()))) {
-				mmtimer_clr_int_pending(i);
-				tasklet_schedule(&base->tasklet);
-				result = IRQ_HANDLED;
-			}
-		}
-		spin_unlock(&base->lock);
-		expires = 0;
+	spin_lock(&timers[indx].lock);
+	base = rb_entry(timers[indx].next, struct mmtimer, list);
+	if (base == NULL) {
+		spin_unlock(&timers[indx].lock);
+		return result;
 	}
+
+	if (base->cpu == smp_processor_id()) {
+		if (base->timer)
+			expires = base->timer->it.mmtimer.expires;
+		/* expires test won't work with shared irqs */
+		if ((mmtimer_int_pending(COMPARATOR) > 0) ||
+			(expires && (expires <= rtc_time()))) {
+			mmtimer_clr_int_pending(COMPARATOR);
+			tasklet_schedule(&timers[indx].tasklet);
+			result = IRQ_HANDLED;
+		}
+	}
+	spin_unlock(&timers[indx].lock);
 	return result;
 }
 
-void mmtimer_tasklet(unsigned long data) {
-	mmtimer_t *x = (mmtimer_t *)data;
-	struct k_itimer *t = x->timer;
+static void mmtimer_tasklet(unsigned long data)
+{
+	int nodeid = data;
+	struct mmtimer_node *mn = &timers[nodeid];
+	struct mmtimer *x;
+	struct k_itimer *t;
 	unsigned long flags;
 
-	if (t == NULL)
-		return;
-
 	/* Send signal and deal with periodic signals */
-	spin_lock_irqsave(&t->it_lock, flags);
-	spin_lock(&x->lock);
-	/* If timer was deleted between interrupt and here, leave */
-	if (t != x->timer)
+	spin_lock_irqsave(&mn->lock, flags);
+	if (!mn->next)
 		goto out;
+
+	x = rb_entry(mn->next, struct mmtimer, list);
+	t = x->timer;
+
+	if (t->it.mmtimer.clock == TIMER_OFF)
+		goto out;
+
 	t->it_overrun = 0;
 
-	if (posix_timer_event(t, 0) != 0) {
+	mn->next = rb_next(&x->list);
+	rb_erase(&x->list, &mn->timer_head);
 
-		// printk(KERN_WARNING "mmtimer: cannot deliver signal.\n");
-
+	if (posix_timer_event(t, 0) != 0)
 		t->it_overrun++;
-	}
+
 	if(t->it.mmtimer.incr) {
-		/* Periodic timer */
-		if (reschedule_periodic_timer(x)) {
-			printk(KERN_WARNING "mmtimer: unable to reschedule\n");
-			x->timer = NULL;
-		}
+		t->it.mmtimer.expires += t->it.mmtimer.incr;
+		mmtimer_add_list(x);
 	} else {
 		/* Ensure we don't false trigger in mmtimer_interrupt */
+		t->it.mmtimer.clock = TIMER_OFF;
 		t->it.mmtimer.expires = 0;
+		kfree(x);
 	}
+	/* Set comparator for next timer, if there is one */
+	mmtimer_set_next_timer(nodeid);
+
 	t->it_overrun_last = t->it_overrun;
 out:
-	spin_unlock(&x->lock);
-	spin_unlock_irqrestore(&t->it_lock, flags);
+	spin_unlock_irqrestore(&mn->lock, flags);
 }
 
 static int sgi_timer_create(struct k_itimer *timer)
@@ -515,24 +609,52 @@ static int sgi_timer_create(struct k_itimer *timer)
  */
 static int sgi_timer_del(struct k_itimer *timr)
 {
-	int i = timr->it.mmtimer.clock;
 	cnodeid_t nodeid = timr->it.mmtimer.node;
-	mmtimer_t *t = timers[nodeid] + i;
 	unsigned long irqflags;
 
-	if (i != TIMER_OFF) {
-		spin_lock_irqsave(&t->lock, irqflags);
-		mmtimer_disable_int(cnodeid_to_nasid(nodeid),i);
-		t->timer = NULL;
+	spin_lock_irqsave(&timers[nodeid].lock, irqflags);
+	if (timr->it.mmtimer.clock != TIMER_OFF) {
+		unsigned long expires = timr->it.mmtimer.expires;
+		struct rb_node *n = timers[nodeid].timer_head.rb_node;
+		struct mmtimer *uninitialized_var(t);
+		int r = 0;
+
 		timr->it.mmtimer.clock = TIMER_OFF;
 		timr->it.mmtimer.expires = 0;
-		spin_unlock_irqrestore(&t->lock, irqflags);
+
+		while (n) {
+			t = rb_entry(n, struct mmtimer, list);
+			if (t->timer == timr)
+				break;
+
+			if (expires < t->timer->it.mmtimer.expires)
+				n = n->rb_left;
+			else
+				n = n->rb_right;
+		}
+
+		if (!n) {
+			spin_unlock_irqrestore(&timers[nodeid].lock, irqflags);
+			return 0;
+		}
+
+		if (timers[nodeid].next == n) {
+			timers[nodeid].next = rb_next(n);
+			r = 1;
+		}
+
+		rb_erase(n, &timers[nodeid].timer_head);
+		kfree(t);
+
+		if (r) {
+			mmtimer_disable_int(cnodeid_to_nasid(nodeid),
+				COMPARATOR);
+			mmtimer_set_next_timer(nodeid);
+		}
 	}
+	spin_unlock_irqrestore(&timers[nodeid].lock, irqflags);
 	return 0;
 }
-
-#define timespec_to_ns(x) ((x).tv_nsec + (x).tv_sec * NSEC_PER_SEC)
-#define ns_to_timespec(ts, nsec) (ts).tv_sec = div_long_long_rem(nsec, NSEC_PER_SEC, &(ts).tv_nsec)
 
 /* Assumption: it_lock is already held with irq's disabled */
 static void sgi_timer_get(struct k_itimer *timr, struct itimerspec *cur_setting)
@@ -546,9 +668,8 @@ static void sgi_timer_get(struct k_itimer *timr, struct itimerspec *cur_setting)
 		return;
 	}
 
-	ns_to_timespec(cur_setting->it_interval, timr->it.mmtimer.incr * sgi_clock_period);
-	ns_to_timespec(cur_setting->it_value, (timr->it.mmtimer.expires - rtc_time())* sgi_clock_period);
-	return;
+	cur_setting->it_interval = ns_to_timespec(timr->it.mmtimer.incr * sgi_clock_period);
+	cur_setting->it_value = ns_to_timespec((timr->it.mmtimer.expires - rtc_time()) * sgi_clock_period);
 }
 
 
@@ -556,30 +677,33 @@ static int sgi_timer_set(struct k_itimer *timr, int flags,
 	struct itimerspec * new_setting,
 	struct itimerspec * old_setting)
 {
-
-	int i;
 	unsigned long when, period, irqflags;
 	int err = 0;
 	cnodeid_t nodeid;
-	mmtimer_t *base;
+	struct mmtimer *base;
+	struct rb_node *n;
 
 	if (old_setting)
 		sgi_timer_get(timr, old_setting);
 
 	sgi_timer_del(timr);
-	when = timespec_to_ns(new_setting->it_value);
-	period = timespec_to_ns(new_setting->it_interval);
+	when = timespec_to_ns(&new_setting->it_value);
+	period = timespec_to_ns(&new_setting->it_interval);
 
 	if (when == 0)
 		/* Clear timer */
 		return 0;
+
+	base = kmalloc(sizeof(struct mmtimer), GFP_KERNEL);
+	if (base == NULL)
+		return -ENOMEM;
 
 	if (flags & TIMER_ABSTIME) {
 		struct timespec n;
 		unsigned long now;
 
 		getnstimeofday(&n);
-		now = timespec_to_ns(n);
+		now = timespec_to_ns(&n);
 		if (when > now)
 			when -= now;
 		else
@@ -603,62 +727,59 @@ static int sgi_timer_set(struct k_itimer *timr, int flags,
 	preempt_disable();
 
 	nodeid =  cpu_to_node(smp_processor_id());
-retry:
-	/* Don't use an allocated timer, or a deleted one that's pending */
-	for(i = 0; i< NUM_COMPARATORS; i++) {
-		base = timers[nodeid] + i;
-		if (!base->timer && !base->tasklet.state) {
-			break;
-		}
-	}
 
-	if (i == NUM_COMPARATORS) {
-		preempt_enable();
-		return -EBUSY;
-	}
+	/* Lock the node timer structure */
+	spin_lock_irqsave(&timers[nodeid].lock, irqflags);
 
-	spin_lock_irqsave(&base->lock, irqflags);
-
-	if (base->timer || base->tasklet.state != 0) {
-		spin_unlock_irqrestore(&base->lock, irqflags);
-		goto retry;
-	}
 	base->timer = timr;
 	base->cpu = smp_processor_id();
 
-	timr->it.mmtimer.clock = i;
+	timr->it.mmtimer.clock = TIMER_SET;
 	timr->it.mmtimer.node = nodeid;
 	timr->it.mmtimer.incr = period;
 	timr->it.mmtimer.expires = when;
 
-	if (period == 0) {
-		if (!mmtimer_setup(i, when)) {
-			mmtimer_disable_int(-1, i);
-			posix_timer_event(timr, 0);
-			timr->it.mmtimer.expires = 0;
-		}
-	} else {
-		timr->it.mmtimer.expires -= period;
-		if (reschedule_periodic_timer(base))
-			err = -EINVAL;
+	n = timers[nodeid].next;
+
+	/* Add the new struct mmtimer to node's timer list */
+	mmtimer_add_list(base);
+
+	if (timers[nodeid].next == n) {
+		/* No need to reprogram comparator for now */
+		spin_unlock_irqrestore(&timers[nodeid].lock, irqflags);
+		preempt_enable();
+		return err;
 	}
 
-	spin_unlock_irqrestore(&base->lock, irqflags);
+	/* We need to reprogram the comparator */
+	if (n)
+		mmtimer_disable_int(cnodeid_to_nasid(nodeid), COMPARATOR);
+
+	mmtimer_set_next_timer(nodeid);
+
+	/* Unlock the node timer structure */
+	spin_unlock_irqrestore(&timers[nodeid].lock, irqflags);
 
 	preempt_enable();
 
 	return err;
 }
 
+static int sgi_clock_getres(const clockid_t which_clock, struct timespec *tp)
+{
+	tp->tv_sec = 0;
+	tp->tv_nsec = sgi_clock_period;
+	return 0;
+}
+
 static struct k_clock sgi_clock = {
-	.res = 0,
-	.clock_set = sgi_clock_set,
-	.clock_get = sgi_clock_get,
-	.timer_create = sgi_timer_create,
-	.nsleep = do_posix_clock_nonanosleep,
-	.timer_set = sgi_timer_set,
-	.timer_del = sgi_timer_del,
-	.timer_get = sgi_timer_get
+	.clock_set	= sgi_clock_set,
+	.clock_get	= sgi_clock_get,
+	.clock_getres	= sgi_clock_getres,
+	.timer_create	= sgi_timer_create,
+	.timer_set	= sgi_timer_set,
+	.timer_del	= sgi_timer_del,
+	.timer_get	= sgi_timer_get
 };
 
 /**
@@ -668,7 +789,6 @@ static struct k_clock sgi_clock = {
  */
 static int __init mmtimer_init(void)
 {
-	unsigned i;
 	cnodeid_t node, maxn = -1;
 
 	if (!ia64_platform_is("sn2"))
@@ -705,46 +825,30 @@ static int __init mmtimer_init(void)
 	maxn++;
 
 	/* Allocate list of node ptrs to mmtimer_t's */
-	timers = kzalloc(sizeof(mmtimer_t *)*maxn, GFP_KERNEL);
+	timers = kzalloc(sizeof(struct mmtimer_node)*maxn, GFP_KERNEL);
 	if (timers == NULL) {
 		printk(KERN_ERR "%s: failed to allocate memory for device\n",
 				MMTIMER_NAME);
 		goto out3;
 	}
 
-	/* Allocate mmtimer_t's for each online node */
+	/* Initialize struct mmtimer's for each online node */
 	for_each_online_node(node) {
-		timers[node] = kmalloc_node(sizeof(mmtimer_t)*NUM_COMPARATORS, GFP_KERNEL, node);
-		if (timers[node] == NULL) {
-			printk(KERN_ERR "%s: failed to allocate memory for device\n",
-				MMTIMER_NAME);
-			goto out4;
-		}
-		for (i=0; i< NUM_COMPARATORS; i++) {
-			mmtimer_t * base = timers[node] + i;
-
-			spin_lock_init(&base->lock);
-			base->timer = NULL;
-			base->cpu = 0;
-			base->i = i;
-			tasklet_init(&base->tasklet, mmtimer_tasklet,
-				(unsigned long) (base));
-		}
+		spin_lock_init(&timers[node].lock);
+		tasklet_init(&timers[node].tasklet, mmtimer_tasklet,
+			(unsigned long) node);
 	}
 
-	sgi_clock_period = sgi_clock.res = NSEC_PER_SEC / sn_rtc_cycles_per_second;
-	register_posix_clock(CLOCK_SGI_CYCLE, &sgi_clock);
+	sgi_clock_period = NSEC_PER_SEC / sn_rtc_cycles_per_second;
+	posix_timers_register_clock(CLOCK_SGI_CYCLE, &sgi_clock);
 
 	printk(KERN_INFO "%s: v%s, %ld MHz\n", MMTIMER_DESC, MMTIMER_VERSION,
 	       sn_rtc_cycles_per_second/(unsigned long)1E6);
 
 	return 0;
 
-out4:
-	for_each_online_node(node) {
-		kfree(timers[node]);
-	}
 out3:
+	kfree(timers);
 	misc_deregister(&mmtimer_miscdev);
 out2:
 	free_irq(SGI_MMTIMER_VECTOR, NULL);
@@ -753,4 +857,3 @@ out1:
 }
 
 module_init(mmtimer_init);
-

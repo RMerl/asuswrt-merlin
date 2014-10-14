@@ -13,6 +13,7 @@
 #include <asm/cachectl.h>
 #include <asm/processor.h>
 #include <asm/uaccess.h>
+#include <asm/syscalls.h>
 
 /*
  * If you attempt to flush anything more than this, you need superuser
@@ -112,7 +113,7 @@ void flush_icache_range(unsigned long start, unsigned long end)
 }
 
 /*
- * This one is called from do_no_page(), do_swap_page() and install_page().
+ * This one is called from __do_fault() and do_swap_page().
  */
 void flush_icache_page(struct vm_area_struct *vma, struct page *page)
 {
@@ -120,16 +121,6 @@ void flush_icache_page(struct vm_area_struct *vma, struct page *page)
 		void *v = page_address(page);
 		__flush_icache_range((unsigned long)v, (unsigned long)v + PAGE_SIZE);
 	}
-}
-
-/*
- * This one is used by copy_to_user_page()
- */
-void flush_icache_user_range(struct vm_area_struct *vma, struct page *page,
-			     unsigned long addr, int len)
-{
-	if (vma->vm_flags & VM_EXEC)
-		flush_icache_range(addr, addr + len);
 }
 
 asmlinkage int sys_cacheflush(int operation, void __user *addr, size_t len)
@@ -158,4 +149,14 @@ asmlinkage int sys_cacheflush(int operation, void __user *addr, size_t len)
 
 out:
 	return ret;
+}
+
+void copy_to_user_page(struct vm_area_struct *vma, struct page *page,
+		unsigned long vaddr, void *dst, const void *src,
+		unsigned long len)
+{
+	memcpy(dst, src, len);
+	if (vma->vm_flags & VM_EXEC)
+		flush_icache_range((unsigned long)dst,
+				(unsigned long)dst + len);
 }

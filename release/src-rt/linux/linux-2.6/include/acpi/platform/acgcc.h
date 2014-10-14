@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2007, R. Byron Moore
+ * Copyright (C) 2000 - 2011, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -44,9 +44,11 @@
 #ifndef __ACGCC_H__
 #define __ACGCC_H__
 
+#define ACPI_INLINE             __inline__
+
 /* Function name is used for debug output. Non-ANSI, compiler-dependent */
 
-#define ACPI_GET_FUNCTION_NAME          __FUNCTION__
+#define ACPI_GET_FUNCTION_NAME          __func__
 
 /*
  * This macro is used to tag functions as "printf-like" because
@@ -57,9 +59,13 @@
 /*
  * Some compilers complain about unused variables. Sometimes we don't want to
  * use all the variables (for example, _acpi_module_name). This allows us
- * to to tell the compiler warning in a per-variable manner that a variable
+ * to tell the compiler warning in a per-variable manner that a variable
  * is unused.
  */
 #define ACPI_UNUSED_VAR __attribute__ ((unused))
+
+#ifdef _ANSI
+#define inline
+#endif
 
 #endif				/* __ACGCC_H__ */

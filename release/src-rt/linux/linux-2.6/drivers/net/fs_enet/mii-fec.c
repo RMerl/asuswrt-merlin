@@ -31,10 +31,12 @@
 #include <linux/ethtool.h>
 #include <linux/bitops.h>
 #include <linux/platform_device.h>
+#include <linux/of_platform.h>
 
 #include <asm/pgtable.h>
 #include <asm/irq.h>
 #include <asm/uaccess.h>
+#include <asm/mpc5xxx.h>
 
 #include "fs_enet.h"
 #include "fec.h"
@@ -47,58 +49,13 @@
 
 #define FEC_MII_LOOPS	10000
 
-static int match_has_phy (struct device *dev, void* data)
-{
-	struct platform_device* pdev = container_of(dev, struct platform_device, dev);
-	struct fs_platform_info* fpi;
-	if(strcmp(pdev->name, (char*)data))
-	{
-	    return 0;
-	}
-
-	fpi = pdev->dev.platform_data;
-	if((fpi)&&(fpi->has_phy))
-		return 1;
-	return 0;
-}
-
-static int fs_mii_fec_init(struct fec_info* fec, struct fs_mii_fec_platform_info *fmpi)
-{
-	struct resource *r;
-	fec_t *fecp;
-	char* name = "fsl-cpm-fec";
-
-	/* we need fec in order to be useful */
-	struct platform_device *fec_pdev =
-		container_of(bus_find_device(&platform_bus_type, NULL, name, match_has_phy),
-				struct platform_device, dev);
-
-	if(fec_pdev == NULL) {
-		printk(KERN_ERR"Unable to find PHY for %s", name);
-		return -ENODEV;
-	}
-
-	r = platform_get_resource_byname(fec_pdev, IORESOURCE_MEM, "regs");
-
-	fec->fecp = fecp = (fec_t*)ioremap(r->start,sizeof(fec_t));
-	fec->mii_speed = fmpi->mii_speed;
-
-	setbits32(&fecp->fec_r_cntrl, FEC_RCNTRL_MII_MODE);	/* MII enable */
-	setbits32(&fecp->fec_ecntrl, FEC_ECNTRL_PINMUX | FEC_ECNTRL_ETHER_EN);
-	out_be32(&fecp->fec_ievent, FEC_ENET_MII);
-	out_be32(&fecp->fec_mii_speed, fec->mii_speed);
-
-	return 0;
-}
-
 static int fs_enet_fec_mii_read(struct mii_bus *bus , int phy_id, int location)
 {
 	struct fec_info* fec = bus->priv;
-	fec_t *fecp = fec->fecp;
+	struct fec __iomem *fecp = fec->fecp;
 	int i, ret = -1;
 
-	if ((in_be32(&fecp->fec_r_cntrl) & FEC_RCNTRL_MII_MODE) == 0)
-		BUG();
+	BUG_ON((in_be32(&fecp->fec_r_cntrl) & FEC_RCNTRL_MII_MODE) == 0);
 
 	/* Add PHY address to register command.  */
 	out_be32(&fecp->fec_mii_data, (phy_id << 23) | mk_mii_read(location));
@@ -113,18 +70,16 @@ static int fs_enet_fec_mii_read(struct mii_bus *bus , int phy_id, int location)
 	}
 
 	return ret;
-
 }
 
 static int fs_enet_fec_mii_write(struct mii_bus *bus, int phy_id, int location, u16 val)
 {
 	struct fec_info* fec = bus->priv;
-	fec_t *fecp = fec->fecp;
+	struct fec __iomem *fecp = fec->fecp;
 	int i;
 
 	/* this must never happen */
-	if ((in_be32(&fecp->fec_r_cntrl) & FEC_RCNTRL_MII_MODE) == 0)
-		BUG();
+	BUG_ON((in_be32(&fecp->fec_r_cntrl) & FEC_RCNTRL_MII_MODE) == 0);
 
 	/* Add PHY address to register command.  */
 	out_be32(&fecp->fec_mii_data, (phy_id << 23) | mk_mii_write(location, val));
@@ -146,94 +101,151 @@ static int fs_enet_fec_mii_reset(struct mii_bus *bus)
 	return 0;
 }
 
-static int __devinit fs_enet_fec_mdio_probe(struct device *dev)
+static struct of_device_id fs_enet_mdio_fec_match[];
+static int __devinit fs_enet_mdio_probe(struct platform_device *ofdev)
 {
-	struct platform_device *pdev = to_platform_device(dev);
-	struct fs_mii_fec_platform_info *pdata;
+	const struct of_device_id *match;
+	struct resource res;
 	struct mii_bus *new_bus;
 	struct fec_info *fec;
-	int err = 0;
-	if (NULL == dev)
-		return -EINVAL;
-	new_bus = kzalloc(sizeof(struct mii_bus), GFP_KERNEL);
+	int (*get_bus_freq)(struct device_node *);
+	int ret = -ENOMEM, clock, speed;
 
-	if (NULL == new_bus)
-		return -ENOMEM;
+	match = of_match_device(fs_enet_mdio_fec_match, &ofdev->dev);
+	if (!match)
+		return -EINVAL;
+	get_bus_freq = match->data;
+
+	new_bus = mdiobus_alloc();
+	if (!new_bus)
+		goto out;
 
 	fec = kzalloc(sizeof(struct fec_info), GFP_KERNEL);
+	if (!fec)
+		goto out_mii;
 
-	if (NULL == fec)
-		return -ENOMEM;
-
-	new_bus->name = "FEC MII Bus",
-	new_bus->read = &fs_enet_fec_mii_read,
-	new_bus->write = &fs_enet_fec_mii_write,
-	new_bus->reset = &fs_enet_fec_mii_reset,
-	new_bus->id = pdev->id;
-
-	pdata = (struct fs_mii_fec_platform_info *)pdev->dev.platform_data;
-
-	if (NULL == pdata) {
-		printk(KERN_ERR "fs_enet FEC mdio %d: Missing platform data!\n", pdev->id);
-		return -ENODEV;
-	}
-
-	/*set up workspace*/
-
-	fs_mii_fec_init(fec, pdata);
 	new_bus->priv = fec;
+	new_bus->name = "FEC MII Bus";
+	new_bus->read = &fs_enet_fec_mii_read;
+	new_bus->write = &fs_enet_fec_mii_write;
+	new_bus->reset = &fs_enet_fec_mii_reset;
 
-	new_bus->irq = pdata->irq;
+	ret = of_address_to_resource(ofdev->dev.of_node, 0, &res);
+	if (ret)
+		goto out_res;
 
-	new_bus->dev = dev;
-	dev_set_drvdata(dev, new_bus);
+	snprintf(new_bus->id, MII_BUS_ID_SIZE, "%x", res.start);
 
-	err = mdiobus_register(new_bus);
+	fec->fecp = ioremap(res.start, res.end - res.start + 1);
+	if (!fec->fecp)
+		goto out_fec;
 
-	if (0 != err) {
-		printk (KERN_ERR "%s: Cannot register as MDIO bus\n",
-				new_bus->name);
-		goto bus_register_fail;
+	if (get_bus_freq) {
+		clock = get_bus_freq(ofdev->dev.of_node);
+		if (!clock) {
+			/* Use maximum divider if clock is unknown */
+			dev_warn(&ofdev->dev, "could not determine IPS clock\n");
+			clock = 0x3F * 5000000;
+		}
+	} else
+		clock = ppc_proc_freq;
+
+	/*
+	 * Scale for a MII clock <= 2.5 MHz
+	 * Note that only 6 bits (25:30) are available for MII speed.
+	 */
+	speed = (clock + 4999999) / 5000000;
+	if (speed > 0x3F) {
+		speed = 0x3F;
+		dev_err(&ofdev->dev,
+			"MII clock (%d Hz) exceeds max (2.5 MHz)\n",
+			clock / speed);
 	}
+
+	fec->mii_speed = speed << 1;
+
+	setbits32(&fec->fecp->fec_r_cntrl, FEC_RCNTRL_MII_MODE);
+	setbits32(&fec->fecp->fec_ecntrl, FEC_ECNTRL_PINMUX |
+	                                  FEC_ECNTRL_ETHER_EN);
+	out_be32(&fec->fecp->fec_ievent, FEC_ENET_MII);
+	clrsetbits_be32(&fec->fecp->fec_mii_speed, 0x7E, fec->mii_speed);
+
+	new_bus->phy_mask = ~0;
+	new_bus->irq = kmalloc(sizeof(int) * PHY_MAX_ADDR, GFP_KERNEL);
+	if (!new_bus->irq)
+		goto out_unmap_regs;
+
+	new_bus->parent = &ofdev->dev;
+	dev_set_drvdata(&ofdev->dev, new_bus);
+
+	ret = of_mdiobus_register(new_bus, ofdev->dev.of_node);
+	if (ret)
+		goto out_free_irqs;
 
 	return 0;
 
-bus_register_fail:
-	kfree(new_bus);
-
-	return err;
+out_free_irqs:
+	dev_set_drvdata(&ofdev->dev, NULL);
+	kfree(new_bus->irq);
+out_unmap_regs:
+	iounmap(fec->fecp);
+out_res:
+out_fec:
+	kfree(fec);
+out_mii:
+	mdiobus_free(new_bus);
+out:
+	return ret;
 }
 
-
-static int fs_enet_fec_mdio_remove(struct device *dev)
+static int fs_enet_mdio_remove(struct platform_device *ofdev)
 {
-	struct mii_bus *bus = dev_get_drvdata(dev);
+	struct mii_bus *bus = dev_get_drvdata(&ofdev->dev);
+	struct fec_info *fec = bus->priv;
 
 	mdiobus_unregister(bus);
-
-	dev_set_drvdata(dev, NULL);
-	kfree(bus->priv);
-
-	bus->priv = NULL;
-	kfree(bus);
+	dev_set_drvdata(&ofdev->dev, NULL);
+	kfree(bus->irq);
+	iounmap(fec->fecp);
+	kfree(fec);
+	mdiobus_free(bus);
 
 	return 0;
 }
 
-static struct device_driver fs_enet_fec_mdio_driver = {
-	.name = "fsl-cpm-fec-mdio",
-	.bus = &platform_bus_type,
-	.probe = fs_enet_fec_mdio_probe,
-	.remove = fs_enet_fec_mdio_remove,
+static struct of_device_id fs_enet_mdio_fec_match[] = {
+	{
+		.compatible = "fsl,pq1-fec-mdio",
+	},
+#if defined(CONFIG_PPC_MPC512x)
+	{
+		.compatible = "fsl,mpc5121-fec-mdio",
+		.data = mpc5xxx_get_bus_frequency,
+	},
+#endif
+	{},
+};
+MODULE_DEVICE_TABLE(of, fs_enet_mdio_fec_match);
+
+static struct platform_driver fs_enet_fec_mdio_driver = {
+	.driver = {
+		.name = "fsl-fec-mdio",
+		.owner = THIS_MODULE,
+		.of_match_table = fs_enet_mdio_fec_match,
+	},
+	.probe = fs_enet_mdio_probe,
+	.remove = fs_enet_mdio_remove,
 };
 
-int fs_enet_mdio_fec_init(void)
+static int fs_enet_mdio_fec_init(void)
 {
-	return driver_register(&fs_enet_fec_mdio_driver);
+	return platform_driver_register(&fs_enet_fec_mdio_driver);
 }
 
-void fs_enet_mdio_fec_exit(void)
+static void fs_enet_mdio_fec_exit(void)
 {
-	driver_unregister(&fs_enet_fec_mdio_driver);
+	platform_driver_unregister(&fs_enet_fec_mdio_driver);
 }
 
+module_init(fs_enet_mdio_fec_init);
+module_exit(fs_enet_mdio_fec_exit);

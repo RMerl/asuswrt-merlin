@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2007 Chelsio, Inc. All rights reserved.
+ * Copyright (c) 2006-2008 Chelsio, Inc. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
@@ -51,6 +51,8 @@ void cxgb3_offload_deactivate(struct adapter *adapter);
 
 void cxgb3_set_dummy_ops(struct t3cdev *dev);
 
+struct t3cdev *dev2t3cdev(struct net_device *dev);
+
 /*
  * Client registration.  Users of T3 driver must register themselves.
  * The T3 driver will call the add function of every client for each T3
@@ -62,9 +64,20 @@ void cxgb3_register_client(struct cxgb3_client *client);
 void cxgb3_unregister_client(struct cxgb3_client *client);
 void cxgb3_add_clients(struct t3cdev *tdev);
 void cxgb3_remove_clients(struct t3cdev *tdev);
+void cxgb3_event_notify(struct t3cdev *tdev, u32 event, u32 port);
 
 typedef int (*cxgb3_cpl_handler_func)(struct t3cdev *dev,
 				      struct sk_buff *skb, void *ctx);
+
+enum {
+	OFFLOAD_STATUS_UP,
+	OFFLOAD_STATUS_DOWN,
+	OFFLOAD_PORT_DOWN,
+	OFFLOAD_PORT_UP,
+	OFFLOAD_DB_FULL,
+	OFFLOAD_DB_EMPTY,
+	OFFLOAD_DB_DROP
+};
 
 struct cxgb3_client {
 	char *name;
@@ -74,6 +87,7 @@ struct cxgb3_client {
 	int (*redirect)(void *ctx, struct dst_entry *old,
 			struct dst_entry *new, struct l2t_entry *l2t);
 	struct list_head client_list;
+	void (*event_handler)(struct t3cdev *tdev, u32 event, u32 port);
 };
 
 /*
@@ -182,6 +196,9 @@ struct t3c_data {
 	struct t3c_tid_entry *tid_release_list;
 	spinlock_t tid_release_lock;
 	struct work_struct tid_release_task;
+
+	struct sk_buff *nofail_skb;
+	unsigned int release_list_incomplete;
 };
 
 /*

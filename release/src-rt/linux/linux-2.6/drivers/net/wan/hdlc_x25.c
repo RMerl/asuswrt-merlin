@@ -9,20 +9,19 @@
  * as published by the Free Software Foundation.
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/poll.h>
 #include <linux/errno.h>
-#include <linux/if_arp.h>
-#include <linux/init.h>
-#include <linux/skbuff.h>
-#include <linux/pkt_sched.h>
-#include <linux/inetdevice.h>
-#include <linux/lapb.h>
-#include <linux/rtnetlink.h>
+#include <linux/gfp.h>
 #include <linux/hdlc.h>
-
+#include <linux/if_arp.h>
+#include <linux/inetdevice.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/lapb.h>
+#include <linux/module.h>
+#include <linux/pkt_sched.h>
+#include <linux/poll.h>
+#include <linux/rtnetlink.h>
+#include <linux/skbuff.h>
 #include <net/x25device.h>
 
 static int x25_ioctl(struct net_device *dev, struct ifreq *ifr);
@@ -50,14 +49,14 @@ static void x25_connect_disconnect(struct net_device *dev, int reason, int code)
 
 static void x25_connected(struct net_device *dev, int reason)
 {
-	x25_connect_disconnect(dev, reason, 1);
+	x25_connect_disconnect(dev, reason, X25_IFACE_CONNECT);
 }
 
 
 
 static void x25_disconnected(struct net_device *dev, int reason)
 {
-	x25_connect_disconnect(dev, reason, 2);
+	x25_connect_disconnect(dev, reason, X25_IFACE_DISCONNECT);
 }
 
 
@@ -72,7 +71,7 @@ static int x25_data_indication(struct net_device *dev, struct sk_buff *skb)
 		return NET_RX_DROP;
 
 	ptr  = skb->data;
-	*ptr = 0;
+	*ptr = X25_IFACE_DATA;
 
 	skb->protocol = x25_type_trans(skb, dev);
 	return netif_rx(skb);
@@ -88,20 +87,20 @@ static void x25_data_transmit(struct net_device *dev, struct sk_buff *skb)
 
 
 
-static int x25_xmit(struct sk_buff *skb, struct net_device *dev)
+static netdev_tx_t x25_xmit(struct sk_buff *skb, struct net_device *dev)
 {
 	int result;
 
 
 	/* X.25 to LAPB */
 	switch (skb->data[0]) {
-	case 0:		/* Data to be transmitted */
+	case X25_IFACE_DATA:	/* Data to be transmitted */
 		skb_pull(skb, 1);
 		if ((result = lapb_data_request(dev, skb)) != LAPB_OK)
 			dev_kfree_skb(skb);
-		return 0;
+		return NETDEV_TX_OK;
 
-	case 1:
+	case X25_IFACE_CONNECT:
 		if ((result = lapb_connect_request(dev))!= LAPB_OK) {
 			if (result == LAPB_CONNECTED)
 				/* Send connect confirm. msg to level 3 */
@@ -113,7 +112,7 @@ static int x25_xmit(struct sk_buff *skb, struct net_device *dev)
 		}
 		break;
 
-	case 2:
+	case X25_IFACE_DISCONNECT:
 		if ((result = lapb_disconnect_request(dev)) != LAPB_OK) {
 			if (result == LAPB_NOTCONNECTED)
 				/* Send disconnect confirm. msg to level 3 */
@@ -130,7 +129,7 @@ static int x25_xmit(struct sk_buff *skb, struct net_device *dev)
 	}
 
 	dev_kfree_skb(skb);
-	return 0;
+	return NETDEV_TX_OK;
 }
 
 
@@ -164,17 +163,17 @@ static void x25_close(struct net_device *dev)
 
 static int x25_rx(struct sk_buff *skb)
 {
-	struct hdlc_device_desc *desc = dev_to_desc(skb->dev);
+	struct net_device *dev = skb->dev;
 
 	if ((skb = skb_share_check(skb, GFP_ATOMIC)) == NULL) {
-		desc->stats.rx_dropped++;
+		dev->stats.rx_dropped++;
 		return NET_RX_DROP;
 	}
 
-	if (lapb_data_received(skb->dev, skb) == LAPB_OK)
+	if (lapb_data_received(dev, skb) == LAPB_OK)
 		return NET_RX_SUCCESS;
 
-	desc->stats.rx_errors++;
+	dev->stats.rx_errors++;
 	dev_kfree_skb_any(skb);
 	return NET_RX_DROP;
 }
@@ -184,6 +183,8 @@ static struct hdlc_proto proto = {
 	.open		= x25_open,
 	.close		= x25_close,
 	.ioctl		= x25_ioctl,
+	.netif_rx	= x25_rx,
+	.xmit		= x25_xmit,
 	.module		= THIS_MODULE,
 };
 
@@ -201,20 +202,18 @@ static int x25_ioctl(struct net_device *dev, struct ifreq *ifr)
 		return 0; /* return protocol only, no settable parameters */
 
 	case IF_PROTO_X25:
-		if(!capable(CAP_NET_ADMIN))
+		if (!capable(CAP_NET_ADMIN))
 			return -EPERM;
 
-		if(dev->flags & IFF_UP)
+		if (dev->flags & IFF_UP)
 			return -EBUSY;
 
 		result=hdlc->attach(dev, ENCODING_NRZ,PARITY_CRC16_PR1_CCITT);
 		if (result)
 			return result;
 
-		if ((result = attach_hdlc_protocol(dev, &proto,
-						   x25_rx, 0)) != 0)
+		if ((result = attach_hdlc_protocol(dev, &proto, 0)))
 			return result;
-		dev->hard_start_xmit = x25_xmit;
 		dev->type = ARPHRD_X25;
 		netif_dormant_off(dev);
 		return 0;

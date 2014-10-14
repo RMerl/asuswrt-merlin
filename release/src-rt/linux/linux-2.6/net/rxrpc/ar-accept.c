@@ -17,6 +17,7 @@
 #include <linux/in.h>
 #include <linux/in6.h>
 #include <linux/icmp.h>
+#include <linux/gfp.h>
 #include <net/sock.h>
 #include <net/af_rxrpc.h>
 #include <net/ip.h>
@@ -88,6 +89,11 @@ static int rxrpc_accept_incoming_call(struct rxrpc_local *local,
 
 	/* get a notification message to send to the server app */
 	notification = alloc_skb(0, GFP_NOFS);
+	if (!notification) {
+		_debug("no memory");
+		ret = -ENOMEM;
+		goto error_nofree;
+	}
 	rxrpc_new_skb(notification);
 	notification->mark = RXRPC_SKB_MARK_NEW_CALL;
 
@@ -100,7 +106,7 @@ static int rxrpc_accept_incoming_call(struct rxrpc_local *local,
 
 	trans = rxrpc_get_transport(local, peer, GFP_NOIO);
 	rxrpc_put_peer(peer);
-	if (!trans) {
+	if (IS_ERR(trans)) {
 		_debug("no trans");
 		ret = -EBUSY;
 		goto error;
@@ -156,8 +162,7 @@ static int rxrpc_accept_incoming_call(struct rxrpc_local *local,
 						  false);
 			spin_unlock(&call->lock);
 			notification = NULL;
-			if (ret < 0)
-				BUG();
+			BUG_ON(ret < 0);
 		}
 		spin_unlock(&call->conn->state_lock);
 
@@ -190,6 +195,7 @@ invalid_service:
 	ret = -ECONNREFUSED;
 error:
 	rxrpc_free_skb(notification);
+error_nofree:
 	_leave(" = %d", ret);
 	return ret;
 }

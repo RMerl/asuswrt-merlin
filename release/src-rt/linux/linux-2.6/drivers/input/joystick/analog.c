@@ -1,6 +1,4 @@
 /*
- * $Id: analog.c,v 1.68 2002/01/22 20:18:32 vojtech Exp $
- *
  *  Copyright (c) 1996-2001 Vojtech Pavlik
  */
 
@@ -31,14 +29,13 @@
 #include <linux/delay.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
-#include <linux/moduleparam.h>
 #include <linux/slab.h>
 #include <linux/bitops.h>
 #include <linux/init.h>
 #include <linux/input.h>
 #include <linux/gameport.h>
 #include <linux/jiffies.h>
-#include <asm/timex.h>
+#include <linux/timex.h>
 
 #define DRIVER_DESC	"Analog joystick and gamepad driver"
 
@@ -149,11 +146,11 @@ static unsigned int get_time_pit(void)
         unsigned long flags;
         unsigned int count;
 
-        spin_lock_irqsave(&i8253_lock, flags);
+        raw_spin_lock_irqsave(&i8253_lock, flags);
         outb_p(0x00, 0x43);
         count = inb_p(0x40);
         count |= inb_p(0x40) << 8;
-        spin_unlock_irqrestore(&i8253_lock, flags);
+        raw_spin_unlock_irqrestore(&i8253_lock, flags);
 
         return count;
 }
@@ -165,6 +162,10 @@ static unsigned int get_time_pit(void)
 #define GET_TIME(x)	do { x = get_cycles(); } while (0)
 #define DELTA(x,y)	((y)-(x))
 #define TIME_NAME	"PCC"
+#elif defined(CONFIG_MN10300)
+#define GET_TIME(x)	do { x = get_cycles(); } while (0)
+#define DELTA(x, y)	((x) - (y))
+#define TIME_NAME	"TSC"
 #else
 #define FAKE_TIME
 static unsigned long analog_faketime = 0;
@@ -456,7 +457,7 @@ static int analog_init_device(struct analog_port *port, struct analog *analog, i
 	input_dev->open = analog_open;
 	input_dev->close = analog_close;
 
-	input_dev->evbit[0] = BIT(EV_KEY) | BIT(EV_ABS);
+	input_dev->evbit[0] = BIT_MASK(EV_KEY) | BIT_MASK(EV_ABS);
 
 	for (i = j = 0; i < 4; i++)
 		if (analog->mask & (1 << i)) {
@@ -760,9 +761,7 @@ static struct gameport_driver analog_drv = {
 static int __init analog_init(void)
 {
 	analog_parse_options();
-	gameport_register_driver(&analog_drv);
-
-	return 0;
+	return gameport_register_driver(&analog_drv);
 }
 
 static void __exit analog_exit(void)

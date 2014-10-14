@@ -40,7 +40,7 @@ static void update_resources (struct bus_node *bus_cur, int type, int rangeno);
 static int once_over (void);
 static int remove_ranges (struct bus_node *, struct bus_node *);
 static int update_bridge_ranges (struct bus_node **);
-static int add_range (int type, struct range_node *, struct bus_node *);
+static int add_bus_range (int type, struct range_node *, struct bus_node *);
 static void fix_resources (struct bus_node *);
 static struct bus_node *find_bus_wprev (u8, struct bus_node **, u8);
 
@@ -133,7 +133,7 @@ static int __init alloc_bus_range (struct bus_node **new_bus, struct range_node 
 		newrange->rangeno = 1;
 	else {
 		/* need to insert our range */
-		add_range (flag, newrange, newbus);
+		add_bus_range (flag, newrange, newbus);
 		debug ("%d resource Primary Bus inserted on bus %x [%x - %x]\n", flag, newbus->busno, newrange->start, newrange->end);
 	}
 
@@ -384,7 +384,7 @@ int __init ibmphp_rsrc_init (void)
  * Input: type of the resource, range to add, current bus
  * Output: 0 or -1, bus and range ptrs 
  ********************************************************************************/
-static int add_range (int type, struct range_node *range, struct bus_node *bus_cur)
+static int add_bus_range (int type, struct range_node *range, struct bus_node *bus_cur)
 {
 	struct range_node *range_cur = NULL;
 	struct range_node *range_prev;
@@ -455,7 +455,7 @@ static int add_range (int type, struct range_node *range, struct bus_node *bus_c
 
 /*******************************************************************************
  * This routine goes through the list of resources of type 'type' and updates
- * the range numbers that they correspond to.  It was called from add_range fnc
+ * the range numbers that they correspond to.  It was called from add_bus_range fnc
  *
  * Input: bus, type of the resource, the rangeno starting from which to update
  ******************************************************************************/
@@ -563,7 +563,7 @@ static void fix_resources (struct bus_node *bus_cur)
 	struct range_node *range;
 	struct resource_node *res;
 
-	debug ("%s - bus_cur->busno = %d\n", __FUNCTION__, bus_cur->busno);
+	debug ("%s - bus_cur->busno = %d\n", __func__, bus_cur->busno);
 
 	if (bus_cur->needIOUpdate) {
 		res = bus_cur->firstIO;
@@ -599,7 +599,7 @@ int ibmphp_add_resource (struct resource_node *res)
 	struct range_node *range_cur = NULL;
 	struct resource_node *res_start = NULL;
 
-	debug ("%s - enter\n", __FUNCTION__);
+	debug ("%s - enter\n", __func__);
 
 	if (!res) {
 		err ("NULL passed to add\n");
@@ -762,7 +762,7 @@ int ibmphp_add_resource (struct resource_node *res)
 		}
 	}
 
-	debug ("%s - exit\n", __FUNCTION__);
+	debug ("%s - exit\n", __func__);
 	return 0;
 }
 
@@ -1001,7 +1001,7 @@ int ibmphp_check_resource (struct resource_node *res, u8 bridge)
 		return -EINVAL;
 	}
 
-	debug ("%s - enter\n", __FUNCTION__);
+	debug ("%s - enter\n", __func__);
 	debug ("bus_cur->busno is %d\n", bus_cur->busno);
 
 	/* This is a quick fix to not mess up with the code very much.  i.e.,
@@ -1029,7 +1029,7 @@ int ibmphp_check_resource (struct resource_node *res, u8 bridge)
 
 	while (res_cur) {
 		range = find_range (bus_cur, res_cur);
-		debug ("%s - rangeno = %d\n", __FUNCTION__, res_cur->rangeno);
+		debug ("%s - rangeno = %d\n", __func__, res_cur->rangeno);
 
 		if (!range) {
 			err ("no range for the device exists... bailing out...\n");
@@ -1942,7 +1942,7 @@ static int __init update_bridge_ranges (struct bus_node **bus)
 		return -ENODEV;
 	ibmphp_pci_bus->number = bus_cur->busno;
 
-	debug ("inside %s\n", __FUNCTION__);
+	debug ("inside %s\n", __func__);
 	debug ("bus_cur->busno = %x\n", bus_cur->busno);
 
 	for (device = 0; device < 32; device++) {
@@ -1999,7 +1999,7 @@ static int __init update_bridge_ranges (struct bus_node **bus)
 
 							if (bus_sec->noIORanges > 0) {
 								if (!range_exists_already (range, bus_sec, IO)) {
-									add_range (IO, range, bus_sec);
+									add_bus_range (IO, range, bus_sec);
 									++bus_sec->noIORanges;
 								} else {
 									kfree (range);
@@ -2048,7 +2048,7 @@ static int __init update_bridge_ranges (struct bus_node **bus)
 
 							if (bus_sec->noMemRanges > 0) {
 								if (!range_exists_already (range, bus_sec, MEM)) {
-									add_range (MEM, range, bus_sec);
+									add_bus_range (MEM, range, bus_sec);
 									++bus_sec->noMemRanges;
 								} else {
 									kfree (range);
@@ -2102,7 +2102,7 @@ static int __init update_bridge_ranges (struct bus_node **bus)
 
 							if (bus_sec->noPFMemRanges > 0) {
 								if (!range_exists_already (range, bus_sec, PFMEM)) {
-									add_range (PFMEM, range, bus_sec);
+									add_bus_range (PFMEM, range, bus_sec);
 									++bus_sec->noPFMemRanges;
 								} else {
 									kfree (range);

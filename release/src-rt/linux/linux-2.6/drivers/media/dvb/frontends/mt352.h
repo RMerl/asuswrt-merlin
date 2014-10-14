@@ -58,12 +58,12 @@ extern struct dvb_frontend* mt352_attach(const struct mt352_config* config,
 static inline struct dvb_frontend* mt352_attach(const struct mt352_config* config,
 					 struct i2c_adapter* i2c)
 {
-	printk(KERN_WARNING "%s: driver disabled by Kconfig\n", __FUNCTION__);
+	printk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
 	return NULL;
 }
 #endif // CONFIG_DVB_MT352
 
-static inline int mt352_write(struct dvb_frontend *fe, u8 *buf, int len) {
+static inline int mt352_write(struct dvb_frontend *fe, const u8 buf[], int len) {
 	int r = 0;
 	if (fe->ops.write)
 		r = fe->ops.write(fe, buf, len);

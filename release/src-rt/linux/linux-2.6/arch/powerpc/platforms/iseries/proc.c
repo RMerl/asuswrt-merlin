@@ -85,7 +85,7 @@ static int proc_titantod_show(struct seq_file *m, void *v)
 
 		seq_printf(m, "  titan elapsed = %lu uSec\n", titan_usec);
 		seq_printf(m, "  tb elapsed    = %lu ticks\n", tb_ticks);
-		seq_printf(m, "  titan jiffies = %lu.%04lu \n", titan_jiffies,
+		seq_printf(m, "  titan jiffies = %lu.%04lu\n", titan_jiffies,
 			   titan_jiff_rem_usec);
 		seq_printf(m, "  tb jiffies    = %lu.%04lu\n", tb_jiffies,
 			   tb_jiff_rem_usec);
@@ -110,15 +110,11 @@ static const struct file_operations proc_titantod_operations = {
 
 static int __init iseries_proc_init(void)
 {
-	struct proc_dir_entry *e;
-
 	if (!firmware_has_feature(FW_FEATURE_ISERIES))
 		return 0;
 
-	e = create_proc_entry("iSeries/titanTod", S_IFREG|S_IRUGO, NULL);
-	if (e)
-		e->proc_fops = &proc_titantod_operations;
-
+	proc_create("iSeries/titanTod", S_IFREG|S_IRUGO, NULL,
+		    &proc_titantod_operations);
 	return 0;
 }
 __initcall(iseries_proc_init);

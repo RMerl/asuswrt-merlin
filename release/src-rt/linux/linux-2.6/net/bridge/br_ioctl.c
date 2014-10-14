@@ -5,8 +5,6 @@
  *	Authors:
  *	Lennert Buytenhek		<buytenh@gnu.org>
  *
- *	$Id: br_ioctl.c,v 1.1.1.1 2007-08-03 18:53:50 $
- *
  *	This program is free software; you can redistribute it and/or
  *	modify it under the terms of the GNU General Public License
  *	as published by the Free Software Foundation; either version
@@ -17,17 +15,19 @@
 #include <linux/kernel.h>
 #include <linux/if_bridge.h>
 #include <linux/netdevice.h>
+#include <linux/slab.h>
 #include <linux/times.h>
+#include <net/net_namespace.h>
 #include <asm/uaccess.h>
 #include "br_private.h"
 
 /* called with RTNL */
-static int get_bridge_ifindices(int *indices, int num)
+static int get_bridge_ifindices(struct net *net, int *indices, int num)
 {
 	struct net_device *dev;
 	int i = 0;
 
-	for_each_netdev(dev) {
+	for_each_netdev(net, dev) {
 		if (i >= num)
 			break;
 		if (dev->priv_flags & IFF_EBRIDGE)
@@ -82,6 +82,7 @@ static int get_fdb_entries(struct net_bridge *br, void __user *userbuf,
 	return num;
 }
 
+/* called with RTNL */
 static int add_del_if(struct net_bridge *br, int ifindex, int isadd)
 {
 	struct net_device *dev;
@@ -90,7 +91,7 @@ static int add_del_if(struct net_bridge *br, int ifindex, int isadd)
 	if (!capable(CAP_NET_ADMIN))
 		return -EPERM;
 
-	dev = dev_get_by_index(ifindex);
+	dev = __dev_get_by_index(dev_net(br->dev), ifindex);
 	if (dev == NULL)
 		return -EINVAL;
 
@@ -99,14 +100,13 @@ static int add_del_if(struct net_bridge *br, int ifindex, int isadd)
 	else
 		ret = br_del_if(br, dev);
 
-	dev_put(dev);
 	return ret;
 }
 
 /*
  * Legacy ioctl's through SIOCDEVPRIVATE
  * This interface is deprecated because it was too difficult to
- * to do the translation for 32/64bit ioctl compatability.
+ * to do the translation for 32/64bit ioctl compatibility.
  */
 static int old_dev_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
 {
@@ -189,15 +189,21 @@ static int old_dev_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
 		return 0;
 
 	case BRCTL_SET_BRIDGE_HELLO_TIME:
+	{
+		unsigned long t = clock_t_to_jiffies(args[1]);
 		if (!capable(CAP_NET_ADMIN))
 			return -EPERM;
 
+		if (t < HZ)
+			return -EINVAL;
+
 		spin_lock_bh(&br->lock);
-		br->bridge_hello_time = clock_t_to_jiffies(args[1]);
+		br->bridge_hello_time = t;
 		if (br_is_root_bridge(br))
 			br->hello_time = br->bridge_hello_time;
 		spin_unlock_bh(&br->lock);
 		return 0;
+	}
 
 	case BRCTL_SET_BRIDGE_MAX_AGE:
 		if (!capable(CAP_NET_ADMIN))
@@ -310,7 +316,7 @@ static int old_dev_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
 	return -EOPNOTSUPP;
 }
 
-static int old_deviceless(void __user *uarg)
+static int old_deviceless(struct net *net, void __user *uarg)
 {
 	unsigned long args[3];
 
@@ -332,7 +338,7 @@ static int old_deviceless(void __user *uarg)
 		if (indices == NULL)
 			return -ENOMEM;
 
-		args[2] = get_bridge_ifindices(indices, args[2]);
+		args[2] = get_bridge_ifindices(net, indices, args[2]);
 
 		ret = copy_to_user((void __user *)args[1], indices, args[2]*sizeof(int))
 			? -EFAULT : args[2];
@@ -355,21 +361,21 @@ static int old_deviceless(void __user *uarg)
 		buf[IFNAMSIZ-1] = 0;
 
 		if (args[0] == BRCTL_ADD_BRIDGE)
-			return br_add_bridge(buf);
+			return br_add_bridge(net, buf);
 
-		return br_del_bridge(buf);
+		return br_del_bridge(net, buf);
 	}
 	}
 
 	return -EOPNOTSUPP;
 }
 
-int br_ioctl_deviceless_stub(unsigned int cmd, void __user *uarg)
+int br_ioctl_deviceless_stub(struct net *net, unsigned int cmd, void __user *uarg)
 {
 	switch (cmd) {
 	case SIOCGIFBR:
 	case SIOCSIFBR:
-		return old_deviceless(uarg);
+		return old_deviceless(net, uarg);
 
 	case SIOCBRADDBR:
 	case SIOCBRDELBR:
@@ -384,9 +390,9 @@ int br_ioctl_deviceless_stub(unsigned int cmd, void __user *uarg)
 
 		buf[IFNAMSIZ-1] = 0;
 		if (cmd == SIOCBRADDBR)
-			return br_add_bridge(buf);
+			return br_add_bridge(net, buf);
 
-		return br_del_bridge(buf);
+		return br_del_bridge(net, buf);
 	}
 	}
 	return -EOPNOTSUPP;
@@ -406,6 +412,6 @@ int br_dev_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
 
 	}
 
-	pr_debug("Bridge does not support ioctl 0x%x\n", cmd);
+	br_debug(br, "Bridge does not support ioctl 0x%x\n", cmd);
 	return -EOPNOTSUPP;
 }

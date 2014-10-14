@@ -3,7 +3,7 @@
  *
  * buffer_head fields for JBD
  *
- * 27 May 2001 Andrew Morton <akpm@digeo.com>
+ * 27 May 2001 Andrew Morton
  *	Created - pulled out of fs.h
  */
 
@@ -12,6 +12,8 @@
 
 typedef unsigned int		tid_t;		/* Unique transaction ID */
 typedef struct transaction_s	transaction_t;	/* Compound transaction type */
+
+
 struct buffer_head;
 
 struct journal_head {
@@ -37,6 +39,13 @@ struct journal_head {
 	 * [jbd_lock_bh_state()]
 	 */
 	unsigned b_modified;
+
+	/*
+	 * This feild tracks the last transaction id in which this buffer
+	 * has been cowed
+	 * [jbd_lock_bh_state()]
+	 */
+	unsigned b_cow_tid;
 
 	/*
 	 * Copy of the buffer data frozen for writing to the log.
@@ -87,6 +96,12 @@ struct journal_head {
 	 * [j_list_lock]
 	 */
 	struct journal_head *b_cpnext, *b_cpprev;
+
+	/* Trigger type */
+	struct jbd2_buffer_trigger_type *b_triggers;
+
+	/* Trigger type for the committing transaction's frozen data */
+	struct jbd2_buffer_trigger_type *b_frozen_triggers;
 };
 
 #endif		/* JOURNAL_HEAD_H_INCLUDED */

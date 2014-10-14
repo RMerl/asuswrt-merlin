@@ -34,9 +34,9 @@
 #include <asm/prom.h>
 #include <asm/pgtable.h>
 #include <asm/reg.h>
+#include <asm/cell-regs.h>
 
 #include "pervasive.h"
-#include "cbe_regs.h"
 
 static void cbe_power_save(void)
 {
@@ -63,7 +63,7 @@ static void cbe_power_save(void)
 		break;
 	default:
 		printk(KERN_WARNING "%s: unknown configuration\n",
-			__FUNCTION__);
+			__func__);
 		break;
 	}
 	mtspr(SPRN_TSC_CELL, thread_switch_control);
@@ -93,7 +93,7 @@ static int cbe_system_reset_exception(struct pt_regs *regs)
 		timer_interrupt(regs);
 		break;
 	case SRR1_WAKEMT:
-		break;
+		return cbe_sysreset_hack();
 #ifdef CONFIG_CBE_RAS
 	case SRR1_WAKESYSERR:
 		cbe_system_error_exception(regs);
@@ -113,6 +113,7 @@ static int cbe_system_reset_exception(struct pt_regs *regs)
 void __init cbe_pervasive_init(void)
 {
 	int cpu;
+
 	if (!cpu_has_feature(CPU_FTR_PAUSE_ZERO))
 		return;
 

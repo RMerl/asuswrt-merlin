@@ -9,9 +9,9 @@
  */
 /*
  * Modification history kernel/time.c
- * 
+ *
  * 1993-09-02    Philip Gladstone
- *      Created file with time related functions from sched.c and adjtimex() 
+ *      Created file with time related functions from sched.c and adjtimex()
  * 1993-10-08    Torsten Duwe
  *      adjtime interface update and CMOS clock write code
  * 1995-08-13    Torsten Duwe
@@ -30,16 +30,20 @@
 #include <linux/module.h>
 #include <linux/timex.h>
 #include <linux/capability.h>
+#include <linux/clocksource.h>
 #include <linux/errno.h>
 #include <linux/syscalls.h>
 #include <linux/security.h>
 #include <linux/fs.h>
-#include <linux/module.h>
+#include <linux/math64.h>
+#include <linux/ptrace.h>
 
 #include <asm/uaccess.h>
 #include <asm/unistd.h>
 
-/* 
+#include "timeconst.h"
+
+/*
  * The timezone where the local system is located.  Used as a default by some
  * programs who obtain this value by using gettimeofday.
  */
@@ -55,18 +59,15 @@ EXPORT_SYMBOL(sys_tz);
  * why not move it into the appropriate arch directory (for those
  * architectures that need it).
  */
-asmlinkage long sys_time(time_t __user * tloc)
+SYSCALL_DEFINE1(time, time_t __user *, tloc)
 {
-	time_t i;
-	struct timeval tv;
-
-	do_gettimeofday(&tv);
-	i = tv.tv_sec;
+	time_t i = get_seconds();
 
 	if (tloc) {
 		if (put_user(i,tloc))
-			i = -EFAULT;
+			return -EFAULT;
 	}
+	force_successful_syscall_return();
 	return i;
 }
 
@@ -76,8 +77,8 @@ asmlinkage long sys_time(time_t __user * tloc)
  * why not move it into the appropriate arch directory (for those
  * architectures that need it).
  */
- 
-asmlinkage long sys_stime(time_t __user *tptr)
+
+SYSCALL_DEFINE1(stime, time_t __user *, tptr)
 {
 	struct timespec tv;
 	int err;
@@ -97,7 +98,8 @@ asmlinkage long sys_stime(time_t __user *tptr)
 
 #endif /* __ARCH_WANT_SYS_TIME */
 
-asmlinkage long sys_gettimeofday(struct timeval __user *tv, struct timezone __user *tz)
+SYSCALL_DEFINE2(gettimeofday, struct timeval __user *, tv,
+		struct timezone __user *, tz)
 {
 	if (likely(tv != NULL)) {
 		struct timeval ktv;
@@ -115,14 +117,14 @@ asmlinkage long sys_gettimeofday(struct timeval __user *tv, struct timezone __us
 /*
  * Adjust the time obtained from the CMOS to be UTC time instead of
  * local time.
- * 
+ *
  * This is ugly, but preferable to the alternatives.  Otherwise we
  * would either need to write a program to do it in /etc/rc (and risk
- * confusion if the program gets run more than once; it would also be 
+ * confusion if the program gets run more than once; it would also be
  * hard to make the program warp the clock precisely n hours)  or
  * compile in the timezone information into the kernel.  Bad, bad....
  *
- *              				- TYT, 1992-01-01
+ *						- TYT, 1992-01-01
  *
  * The best thing to do is to keep the CMOS clock in universal time (UTC)
  * as real UNIX machines always do it. This avoids all headaches about
@@ -130,12 +132,11 @@ asmlinkage long sys_gettimeofday(struct timeval __user *tv, struct timezone __us
  */
 static inline void warp_clock(void)
 {
-	write_seqlock_irq(&xtime_lock);
-	wall_to_monotonic.tv_sec -= sys_tz.tz_minuteswest * 60;
-	xtime.tv_sec += sys_tz.tz_minuteswest * 60;
-	time_interpolator_reset();
-	write_sequnlock_irq(&xtime_lock);
-	clock_was_set();
+	struct timespec adjust;
+
+	adjust = current_kernel_time();
+	adjust.tv_sec += sys_tz.tz_minuteswest * 60;
+	do_settimeofday(&adjust);
 }
 
 /*
@@ -149,8 +150,7 @@ static inline void warp_clock(void)
  * various programs will get confused when the clock gets warped.
  */
 
-#define DEBUG_TZ 0
-int do_sys_settimeofday(struct timespec *tv, struct timezone *tz)
+int do_sys_settimeofday(const struct timespec *tv, const struct timezone *tz)
 {
 	static int firsttime = 1;
 	int error = 0;
@@ -165,6 +165,7 @@ int do_sys_settimeofday(struct timespec *tv, struct timezone *tz)
 	if (tz) {
 		/* SMP safe, global irq locking makes it work. */
 		sys_tz = *tz;
+		update_vsyscall_tz();
 		if (firsttime) {
 			firsttime = 0;
 			if (!tv)
@@ -176,37 +177,13 @@ int do_sys_settimeofday(struct timespec *tv, struct timezone *tz)
 		/* SMP safe, again the code in arch/foo/time.c should
 		 * globally block out interrupts when it runs.
 		 */
-#if DEBUG_TZ
-		error = do_settimeofday(tv);
-	}
-	if (tz || tv) {
-		static int minutes = 0xdeadbeef;
-		if (tv) {
-			unsigned int s = tv->tv_sec % 86400;
-			unsigned int m = s / 60;
-			minutes = -sys_tz.tz_minuteswest;
-			printk(KERN_WARNING "set timezone %s%02d:%02d "
-			       "time %02d:%02d:%02d UTC\n",
-				minutes < 0 ? "" : "+",
-				minutes / 60, minutes % 60,
-				m / 60, m % 60, s % 60);
-			return error;
-		} else if (minutes != -sys_tz.tz_minuteswest) {
-			minutes = -sys_tz.tz_minuteswest;
-			printk(KERN_WARNING "set timezone %s%02d:%02d\n",
-				minutes < 0 ? "" : "+",
-				minutes / 60, minutes % 60);
-		}
-#else
 		return do_settimeofday(tv);
-#endif
 	}
-
 	return 0;
 }
 
-asmlinkage long sys_settimeofday(struct timeval __user *tv,
-				struct timezone __user *tz)
+SYSCALL_DEFINE2(settimeofday, struct timeval __user *, tv,
+		struct timezone __user *, tz)
 {
 	struct timeval user_tv;
 	struct timespec	new_ts;
@@ -226,7 +203,7 @@ asmlinkage long sys_settimeofday(struct timeval __user *tv,
 	return do_sys_settimeofday(tv ? &new_ts : NULL, tz ? &new_tz : NULL);
 }
 
-asmlinkage long sys_adjtimex(struct timex __user *txc_p)
+SYSCALL_DEFINE1(adjtimex, struct timex __user *, txc_p)
 {
 	struct timex txc;		/* Local copy of parameter */
 	int ret;
@@ -240,22 +217,6 @@ asmlinkage long sys_adjtimex(struct timex __user *txc_p)
 	ret = do_adjtimex(&txc);
 	return copy_to_user(txc_p, &txc, sizeof(struct timex)) ? -EFAULT : ret;
 }
-
-inline struct timespec current_kernel_time(void)
-{
-        struct timespec now;
-        unsigned long seq;
-
-	do {
-		seq = read_seqbegin(&xtime_lock);
-		
-		now = xtime;
-	} while (read_seqretry(&xtime_lock, seq));
-
-	return now; 
-}
-
-EXPORT_SYMBOL(current_kernel_time);
 
 /**
  * current_fs_time - Return FS time
@@ -277,26 +238,34 @@ EXPORT_SYMBOL(current_fs_time);
  * Avoid unnecessary multiplications/divisions in the
  * two most common HZ cases:
  */
-unsigned int inline jiffies_to_msecs(const unsigned long j)
+inline unsigned int jiffies_to_msecs(const unsigned long j)
 {
 #if HZ <= MSEC_PER_SEC && !(MSEC_PER_SEC % HZ)
 	return (MSEC_PER_SEC / HZ) * j;
 #elif HZ > MSEC_PER_SEC && !(HZ % MSEC_PER_SEC)
 	return (j + (HZ / MSEC_PER_SEC) - 1)/(HZ / MSEC_PER_SEC);
 #else
-	return (j * MSEC_PER_SEC) / HZ;
+# if BITS_PER_LONG == 32
+	return (HZ_TO_MSEC_MUL32 * j) >> HZ_TO_MSEC_SHR32;
+# else
+	return (j * HZ_TO_MSEC_NUM) / HZ_TO_MSEC_DEN;
+# endif
 #endif
 }
 EXPORT_SYMBOL(jiffies_to_msecs);
 
-unsigned int inline jiffies_to_usecs(const unsigned long j)
+inline unsigned int jiffies_to_usecs(const unsigned long j)
 {
 #if HZ <= USEC_PER_SEC && !(USEC_PER_SEC % HZ)
 	return (USEC_PER_SEC / HZ) * j;
 #elif HZ > USEC_PER_SEC && !(HZ % USEC_PER_SEC)
 	return (j + (HZ / USEC_PER_SEC) - 1)/(HZ / USEC_PER_SEC);
 #else
-	return (j * USEC_PER_SEC) / HZ;
+# if BITS_PER_LONG == 32
+	return (HZ_TO_USEC_MUL32 * j) >> HZ_TO_USEC_SHR32;
+# else
+	return (j * HZ_TO_USEC_NUM) / HZ_TO_USEC_DEN;
+# endif
 #endif
 }
 EXPORT_SYMBOL(jiffies_to_usecs);
@@ -311,7 +280,7 @@ EXPORT_SYMBOL(jiffies_to_usecs);
  *
  * This function should be only used for timestamps returned by
  * current_kernel_time() or CURRENT_TIME, not with do_gettimeofday() because
- * it doesn't handle the better resolution of the later.
+ * it doesn't handle the better resolution of the latter.
  */
 struct timespec timespec_trunc(struct timespec t, unsigned gran)
 {
@@ -331,96 +300,6 @@ struct timespec timespec_trunc(struct timespec t, unsigned gran)
 }
 EXPORT_SYMBOL(timespec_trunc);
 
-#ifdef CONFIG_TIME_INTERPOLATION
-void getnstimeofday (struct timespec *tv)
-{
-	unsigned long seq,sec,nsec;
-
-	do {
-		seq = read_seqbegin(&xtime_lock);
-		sec = xtime.tv_sec;
-		nsec = xtime.tv_nsec+time_interpolator_get_offset();
-	} while (unlikely(read_seqretry(&xtime_lock, seq)));
-
-	while (unlikely(nsec >= NSEC_PER_SEC)) {
-		nsec -= NSEC_PER_SEC;
-		++sec;
-	}
-	tv->tv_sec = sec;
-	tv->tv_nsec = nsec;
-}
-EXPORT_SYMBOL_GPL(getnstimeofday);
-
-int do_settimeofday (struct timespec *tv)
-{
-	time_t wtm_sec, sec = tv->tv_sec;
-	long wtm_nsec, nsec = tv->tv_nsec;
-
-	if ((unsigned long)tv->tv_nsec >= NSEC_PER_SEC)
-		return -EINVAL;
-
-	write_seqlock_irq(&xtime_lock);
-	{
-		wtm_sec  = wall_to_monotonic.tv_sec + (xtime.tv_sec - sec);
-		wtm_nsec = wall_to_monotonic.tv_nsec + (xtime.tv_nsec - nsec);
-
-		set_normalized_timespec(&xtime, sec, nsec);
-		set_normalized_timespec(&wall_to_monotonic, wtm_sec, wtm_nsec);
-
-		time_adjust = 0;		/* stop active adjtime() */
-		time_status |= STA_UNSYNC;
-		time_maxerror = NTP_PHASE_LIMIT;
-		time_esterror = NTP_PHASE_LIMIT;
-		time_interpolator_reset();
-	}
-	write_sequnlock_irq(&xtime_lock);
-	clock_was_set();
-	return 0;
-}
-EXPORT_SYMBOL(do_settimeofday);
-
-void do_gettimeofday (struct timeval *tv)
-{
-	unsigned long seq, nsec, usec, sec, offset;
-	do {
-		seq = read_seqbegin(&xtime_lock);
-		offset = time_interpolator_get_offset();
-		sec = xtime.tv_sec;
-		nsec = xtime.tv_nsec;
-	} while (unlikely(read_seqretry(&xtime_lock, seq)));
-
-	usec = (nsec + offset) / 1000;
-
-	while (unlikely(usec >= USEC_PER_SEC)) {
-		usec -= USEC_PER_SEC;
-		++sec;
-	}
-
-	tv->tv_sec = sec;
-	tv->tv_usec = usec;
-}
-
-EXPORT_SYMBOL(do_gettimeofday);
-
-
-#else
-#ifndef CONFIG_GENERIC_TIME
-/*
- * Simulate gettimeofday using do_gettimeofday which only allows a timeval
- * and therefore only yields usec accuracy
- */
-void getnstimeofday(struct timespec *tv)
-{
-	struct timeval x;
-
-	do_gettimeofday(&x);
-	tv->tv_sec = x.tv_sec;
-	tv->tv_nsec = x.tv_usec * NSEC_PER_USEC;
-}
-EXPORT_SYMBOL_GPL(getnstimeofday);
-#endif
-#endif
-
 /* Converts Gregorian date to seconds since 1970-01-01 00:00:00.
  * Assumes input in normal date format, i.e. 1980-12-31 23:59:59
  * => year=1980, mon=12, day=31, hour=23, min=59, sec=59.
@@ -433,7 +312,7 @@ EXPORT_SYMBOL_GPL(getnstimeofday);
  * This algorithm was first published by Gauss (I think).
  *
  * WARNING: this function will overflow on 2106-02-07 06:28:16 on
- * machines were long is 32-bit! (However, as time_t is signed, we
+ * machines where long is 32-bit! (However, as time_t is signed, we
  * will already get problems at other places on 2038-01-19 03:14:08)
  */
 unsigned long
@@ -470,22 +349,30 @@ EXPORT_SYMBOL(mktime);
  * normalize to the timespec storage format
  *
  * Note: The tv_nsec part is always in the range of
- * 	0 <= tv_nsec < NSEC_PER_SEC
+ *	0 <= tv_nsec < NSEC_PER_SEC
  * For negative values only the tv_sec field is negative !
  */
-void set_normalized_timespec(struct timespec *ts, time_t sec, long nsec)
+void set_normalized_timespec(struct timespec *ts, time_t sec, s64 nsec)
 {
 	while (nsec >= NSEC_PER_SEC) {
+		/*
+		 * The following asm() prevents the compiler from
+		 * optimising this loop into a modulo operation. See
+		 * also __iter_div_u64_rem() in include/linux/time.h
+		 */
+		asm("" : "+rm"(nsec));
 		nsec -= NSEC_PER_SEC;
 		++sec;
 	}
 	while (nsec < 0) {
+		asm("" : "+rm"(nsec));
 		nsec += NSEC_PER_SEC;
 		--sec;
 	}
 	ts->tv_sec = sec;
 	ts->tv_nsec = nsec;
 }
+EXPORT_SYMBOL(set_normalized_timespec);
 
 /**
  * ns_to_timespec - Convert nanoseconds to timespec
@@ -496,13 +383,17 @@ void set_normalized_timespec(struct timespec *ts, time_t sec, long nsec)
 struct timespec ns_to_timespec(const s64 nsec)
 {
 	struct timespec ts;
+	s32 rem;
 
 	if (!nsec)
 		return (struct timespec) {0, 0};
 
-	ts.tv_sec = div_long_long_rem_signed(nsec, NSEC_PER_SEC, &ts.tv_nsec);
-	if (unlikely(nsec < 0))
-		set_normalized_timespec(&ts, ts.tv_sec, ts.tv_nsec);
+	ts.tv_sec = div_s64_rem(nsec, NSEC_PER_SEC, &rem);
+	if (unlikely(rem < 0)) {
+		ts.tv_sec--;
+		rem += NSEC_PER_SEC;
+	}
+	ts.tv_nsec = rem;
 
 	return ts;
 }
@@ -571,12 +462,13 @@ unsigned long msecs_to_jiffies(const unsigned int m)
 	/*
 	 * Generic case - multiply, round and divide. But first
 	 * check that if we are doing a net multiplication, that
-	 * we wouldnt overflow:
+	 * we wouldn't overflow:
 	 */
 	if (HZ > MSEC_PER_SEC && m > jiffies_to_msecs(MAX_JIFFY_OFFSET))
 		return MAX_JIFFY_OFFSET;
 
-	return (m * HZ + MSEC_PER_SEC - 1) / MSEC_PER_SEC;
+	return (MSEC_TO_HZ_MUL32 * m + MSEC_TO_HZ_ADJ32)
+		>> MSEC_TO_HZ_SHR32;
 #endif
 }
 EXPORT_SYMBOL(msecs_to_jiffies);
@@ -590,7 +482,8 @@ unsigned long usecs_to_jiffies(const unsigned int u)
 #elif HZ > USEC_PER_SEC && !(HZ % USEC_PER_SEC)
 	return u * (HZ / USEC_PER_SEC);
 #else
-	return (u * HZ + USEC_PER_SEC - 1) / USEC_PER_SEC;
+	return (USEC_TO_HZ_MUL32 * u + USEC_TO_HZ_ADJ32)
+		>> USEC_TO_HZ_SHR32;
 #endif
 }
 EXPORT_SYMBOL(usecs_to_jiffies);
@@ -630,8 +523,10 @@ jiffies_to_timespec(const unsigned long jiffies, struct timespec *value)
 	 * Convert jiffies to nanoseconds and separate with
 	 * one divide.
 	 */
-	u64 nsec = (u64)jiffies * TICK_NSEC;
-	value->tv_sec = div_long_long_rem(nsec, NSEC_PER_SEC, &value->tv_nsec);
+	u32 rem;
+	value->tv_sec = div_u64_rem((u64)jiffies * TICK_NSEC,
+				    NSEC_PER_SEC, &rem);
+	value->tv_nsec = rem;
 }
 EXPORT_SYMBOL(jiffies_to_timespec);
 
@@ -669,12 +564,11 @@ void jiffies_to_timeval(const unsigned long jiffies, struct timeval *value)
 	 * Convert jiffies to nanoseconds and separate with
 	 * one divide.
 	 */
-	u64 nsec = (u64)jiffies * TICK_NSEC;
-	long tv_usec;
+	u32 rem;
 
-	value->tv_sec = div_long_long_rem(nsec, NSEC_PER_SEC, &tv_usec);
-	tv_usec /= NSEC_PER_USEC;
-	value->tv_usec = tv_usec;
+	value->tv_sec = div_u64_rem((u64)jiffies * TICK_NSEC,
+				    NSEC_PER_SEC, &rem);
+	value->tv_usec = rem / NSEC_PER_USEC;
 }
 EXPORT_SYMBOL(jiffies_to_timeval);
 
@@ -684,11 +578,13 @@ EXPORT_SYMBOL(jiffies_to_timeval);
 clock_t jiffies_to_clock_t(long x)
 {
 #if (TICK_NSEC % (NSEC_PER_SEC / USER_HZ)) == 0
+# if HZ < USER_HZ
+	return x * (USER_HZ / HZ);
+# else
 	return x / (HZ / USER_HZ);
+# endif
 #else
-	u64 tmp = (u64)x * TICK_NSEC;
-	do_div(tmp, (NSEC_PER_SEC / USER_HZ));
-	return (long)tmp;
+	return div_u64((u64)x * TICK_NSEC, NSEC_PER_SEC / USER_HZ);
 #endif
 }
 EXPORT_SYMBOL(jiffies_to_clock_t);
@@ -700,16 +596,12 @@ unsigned long clock_t_to_jiffies(unsigned long x)
 		return ~0UL;
 	return x * (HZ / USER_HZ);
 #else
-	u64 jif;
-
 	/* Don't worry about loss of precision here .. */
 	if (x >= ~0UL / HZ * USER_HZ)
 		return ~0UL;
 
 	/* .. but do try to contain it here */
-	jif = x * (u64) HZ;
-	do_div(jif, USER_HZ);
-	return jif;
+	return div_u64((u64)x * HZ, USER_HZ);
 #endif
 }
 EXPORT_SYMBOL(clock_t_to_jiffies);
@@ -717,55 +609,103 @@ EXPORT_SYMBOL(clock_t_to_jiffies);
 u64 jiffies_64_to_clock_t(u64 x)
 {
 #if (TICK_NSEC % (NSEC_PER_SEC / USER_HZ)) == 0
-	do_div(x, HZ / USER_HZ);
+# if HZ < USER_HZ
+	x = div_u64(x * USER_HZ, HZ);
+# elif HZ > USER_HZ
+	x = div_u64(x, HZ / USER_HZ);
+# else
+	/* Nothing to do */
+# endif
 #else
 	/*
 	 * There are better ways that don't overflow early,
 	 * but even this doesn't overflow in hundreds of years
 	 * in 64 bits, so..
 	 */
-	x *= TICK_NSEC;
-	do_div(x, (NSEC_PER_SEC / USER_HZ));
+	x = div_u64(x * TICK_NSEC, (NSEC_PER_SEC / USER_HZ));
 #endif
 	return x;
 }
-
 EXPORT_SYMBOL(jiffies_64_to_clock_t);
 
 u64 nsec_to_clock_t(u64 x)
 {
 #if (NSEC_PER_SEC % USER_HZ) == 0
-	do_div(x, (NSEC_PER_SEC / USER_HZ));
+	return div_u64(x, NSEC_PER_SEC / USER_HZ);
 #elif (USER_HZ % 512) == 0
-	x *= USER_HZ/512;
-	do_div(x, (NSEC_PER_SEC / 512));
+	return div_u64(x * USER_HZ / 512, NSEC_PER_SEC / 512);
 #else
 	/*
          * max relative error 5.7e-8 (1.8s per year) for USER_HZ <= 1024,
          * overflow after 64.99 years.
          * exact for HZ=60, 72, 90, 120, 144, 180, 300, 600, 900, ...
          */
-	x *= 9;
-	do_div(x, (unsigned long)((9ull * NSEC_PER_SEC + (USER_HZ/2)) /
-				  USER_HZ));
+	return div_u64(x * 9, (9ull * NSEC_PER_SEC + (USER_HZ / 2)) / USER_HZ);
 #endif
-	return x;
 }
 
-#if (BITS_PER_LONG < 64)
-u64 get_jiffies_64(void)
+/**
+ * nsecs_to_jiffies64 - Convert nsecs in u64 to jiffies64
+ *
+ * @n:	nsecs in u64
+ *
+ * Unlike {m,u}secs_to_jiffies, type of input is not unsigned int but u64.
+ * And this doesn't return MAX_JIFFY_OFFSET since this function is designed
+ * for scheduler, not for use in device drivers to calculate timeout value.
+ *
+ * note:
+ *   NSEC_PER_SEC = 10^9 = (5^9 * 2^9) = (1953125 * 512)
+ *   ULLONG_MAX ns = 18446744073.709551615 secs = about 584 years
+ */
+u64 nsecs_to_jiffies64(u64 n)
 {
-	unsigned long seq;
-	u64 ret;
-
-	do {
-		seq = read_seqbegin(&xtime_lock);
-		ret = jiffies_64;
-	} while (read_seqretry(&xtime_lock, seq));
-	return ret;
+#if (NSEC_PER_SEC % HZ) == 0
+	/* Common case, HZ = 100, 128, 200, 250, 256, 500, 512, 1000 etc. */
+	return div_u64(n, NSEC_PER_SEC / HZ);
+#elif (HZ % 512) == 0
+	/* overflow after 292 years if HZ = 1024 */
+	return div_u64(n * HZ / 512, NSEC_PER_SEC / 512);
+#else
+	/*
+	 * Generic case - optimized for cases where HZ is a multiple of 3.
+	 * overflow after 64.99 years, exact for HZ = 60, 72, 90, 120 etc.
+	 */
+	return div_u64(n * 9, (9ull * NSEC_PER_SEC + HZ / 2) / HZ);
+#endif
 }
 
-EXPORT_SYMBOL(get_jiffies_64);
-#endif
+/**
+ * nsecs_to_jiffies - Convert nsecs in u64 to jiffies
+ *
+ * @n:	nsecs in u64
+ *
+ * Unlike {m,u}secs_to_jiffies, type of input is not unsigned int but u64.
+ * And this doesn't return MAX_JIFFY_OFFSET since this function is designed
+ * for scheduler, not for use in device drivers to calculate timeout value.
+ *
+ * note:
+ *   NSEC_PER_SEC = 10^9 = (5^9 * 2^9) = (1953125 * 512)
+ *   ULLONG_MAX ns = 18446744073.709551615 secs = about 584 years
+ */
+unsigned long nsecs_to_jiffies(u64 n)
+{
+	return (unsigned long)nsecs_to_jiffies64(n);
+}
 
-EXPORT_SYMBOL(jiffies);
+/*
+ * Add two timespec values and do a safety check for overflow.
+ * It's assumed that both values are valid (>= 0)
+ */
+struct timespec timespec_add_safe(const struct timespec lhs,
+				  const struct timespec rhs)
+{
+	struct timespec res;
+
+	set_normalized_timespec(&res, lhs.tv_sec + rhs.tv_sec,
+				lhs.tv_nsec + rhs.tv_nsec);
+
+	if (res.tv_sec < lhs.tv_sec || res.tv_sec < rhs.tv_sec)
+		res.tv_sec = TIME_T_MAX;
+
+	return res;
+}

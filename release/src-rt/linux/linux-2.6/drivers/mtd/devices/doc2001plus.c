@@ -6,8 +6,6 @@
  * (c) 1999 Machine Vision Holdings, Inc.
  * (c) 1999, 2000 David Woodhouse <dwmw2@infradead.org>
  *
- * $Id: doc2001plus.c,v 1.14 2005/11/07 11:14:24 gleixner Exp $
- *
  * Released under GPL
  */
 
@@ -16,7 +14,6 @@
 #include <asm/errno.h>
 #include <asm/io.h>
 #include <asm/uaccess.h>
-#include <linux/miscdevice.h>
 #include <linux/delay.h>
 #include <linux/slab.h>
 #include <linux/init.h>
@@ -93,7 +90,7 @@ static inline int DoC_WaitReady(void __iomem * docptr)
 	return ret;
 }
 
-/* For some reason the Millennium Plus seems to occassionally put itself
+/* For some reason the Millennium Plus seems to occasionally put itself
  * into reset mode. For me this happens randomly, with no pattern that I
  * can detect. M-systems suggest always check this on any block level
  * operation and setting to normal mode if in reset mode.
@@ -748,7 +745,7 @@ static int doc_write(struct mtd_info *mtd, loff_t to, size_t len,
 	WriteDOC(DoC_GetDataOffset(mtd, &fto), docptr, Mplus_FlashCmd);
 
 	/* On interleaved devices the flags for 2nd half 512 are before data */
-	if (eccbuf && before)
+	if (before)
 		fto -= 2;
 
 	/* issue the Serial Data In command to initial the Page Program process */

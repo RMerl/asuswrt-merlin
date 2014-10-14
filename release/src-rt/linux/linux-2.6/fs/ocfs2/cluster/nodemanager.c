@@ -19,9 +19,9 @@
  * Boston, MA 021110-1307, USA.
  */
 
+#include <linux/slab.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
-#include <linux/sysctl.h>
 #include <linux/configfs.h>
 
 #include "tcp.h"
@@ -36,65 +36,10 @@
  * cluster references throughout where nodes are looked up */
 struct o2nm_cluster *o2nm_single_cluster = NULL;
 
-#define OCFS2_MAX_HB_CTL_PATH 256
-static char ocfs2_hb_ctl_path[OCFS2_MAX_HB_CTL_PATH] = "/sbin/ocfs2_hb_ctl";
-
-static ctl_table ocfs2_nm_table[] = {
-	{
-		.ctl_name	= 1,
-		.procname	= "hb_ctl_path",
-		.data		= ocfs2_hb_ctl_path,
-		.maxlen		= OCFS2_MAX_HB_CTL_PATH,
-		.mode		= 0644,
-		.proc_handler	= &proc_dostring,
-		.strategy	= &sysctl_string,
-	},
-	{ .ctl_name = 0 }
+char *o2nm_fence_method_desc[O2NM_FENCE_METHODS] = {
+		"reset",	/* O2NM_FENCE_RESET */
+		"panic",	/* O2NM_FENCE_PANIC */
 };
-
-static ctl_table ocfs2_mod_table[] = {
-	{
-		.ctl_name	= FS_OCFS2_NM,
-		.procname	= "nm",
-		.data		= NULL,
-		.maxlen		= 0,
-		.mode		= 0555,
-		.child		= ocfs2_nm_table
-	},
-	{ .ctl_name = 0}
-};
-
-static ctl_table ocfs2_kern_table[] = {
-	{
-		.ctl_name	= FS_OCFS2,
-		.procname	= "ocfs2",
-		.data		= NULL,
-		.maxlen		= 0,
-		.mode		= 0555,
-		.child		= ocfs2_mod_table
-	},
-	{ .ctl_name = 0}
-};
-
-static ctl_table ocfs2_root_table[] = {
-	{
-		.ctl_name	= CTL_FS,
-		.procname	= "fs",
-		.data		= NULL,
-		.maxlen		= 0,
-		.mode		= 0555,
-		.child		= ocfs2_kern_table
-	},
-	{ .ctl_name = 0 }
-};
-
-static struct ctl_table_header *ocfs2_table_header = NULL;
-
-const char *o2nm_get_hb_ctl_path(void)
-{
-	return ocfs2_hb_ctl_path;
-}
-EXPORT_SYMBOL_GPL(o2nm_get_hb_ctl_path);
 
 struct o2nm_node *o2nm_get_node_by_num(u8 node_num)
 {
@@ -310,7 +255,7 @@ static ssize_t o2nm_node_ipv4_port_write(struct o2nm_node *node,
 
 static ssize_t o2nm_node_ipv4_address_read(struct o2nm_node *node, char *page)
 {
-	return sprintf(page, "%u.%u.%u.%u\n", NIPQUAD(node->nd_ipv4_address));
+	return sprintf(page, "%pI4\n", &node->nd_ipv4_address);
 }
 
 static ssize_t o2nm_node_ipv4_address_write(struct o2nm_node *node,
@@ -639,6 +584,43 @@ static ssize_t o2nm_cluster_attr_reconnect_delay_ms_write(
 	return o2nm_cluster_attr_write(page, count,
 	                               &cluster->cl_reconnect_delay_ms);
 }
+
+static ssize_t o2nm_cluster_attr_fence_method_read(
+	struct o2nm_cluster *cluster, char *page)
+{
+	ssize_t ret = 0;
+
+	if (cluster)
+		ret = sprintf(page, "%s\n",
+			      o2nm_fence_method_desc[cluster->cl_fence_method]);
+	return ret;
+}
+
+static ssize_t o2nm_cluster_attr_fence_method_write(
+	struct o2nm_cluster *cluster, const char *page, size_t count)
+{
+	unsigned int i;
+
+	if (page[count - 1] != '\n')
+		goto bail;
+
+	for (i = 0; i < O2NM_FENCE_METHODS; ++i) {
+		if (count != strlen(o2nm_fence_method_desc[i]) + 1)
+			continue;
+		if (strncasecmp(page, o2nm_fence_method_desc[i], count - 1))
+			continue;
+		if (cluster->cl_fence_method != i) {
+			printk(KERN_INFO "ocfs2: Changing fence method to %s\n",
+			       o2nm_fence_method_desc[i]);
+			cluster->cl_fence_method = i;
+		}
+		return count;
+	}
+
+bail:
+	return -EINVAL;
+}
+
 static struct o2nm_cluster_attribute o2nm_cluster_attr_idle_timeout_ms = {
 	.attr	= { .ca_owner = THIS_MODULE,
 		    .ca_name = "idle_timeout_ms",
@@ -663,10 +645,19 @@ static struct o2nm_cluster_attribute o2nm_cluster_attr_reconnect_delay_ms = {
 	.store	= o2nm_cluster_attr_reconnect_delay_ms_write,
 };
 
+static struct o2nm_cluster_attribute o2nm_cluster_attr_fence_method = {
+	.attr	= { .ca_owner = THIS_MODULE,
+		    .ca_name = "fence_method",
+		    .ca_mode = S_IRUGO | S_IWUSR },
+	.show	= o2nm_cluster_attr_fence_method_read,
+	.store	= o2nm_cluster_attr_fence_method_write,
+};
+
 static struct configfs_attribute *o2nm_cluster_attrs[] = {
 	&o2nm_cluster_attr_idle_timeout_ms.attr,
 	&o2nm_cluster_attr_keepalive_delay_ms.attr,
 	&o2nm_cluster_attr_reconnect_delay_ms.attr,
+	&o2nm_cluster_attr_fence_method.attr,
 	NULL,
 };
 static ssize_t o2nm_cluster_show(struct config_item *item,
@@ -708,26 +699,21 @@ static struct config_item *o2nm_node_group_make_item(struct config_group *group,
 						     const char *name)
 {
 	struct o2nm_node *node = NULL;
-	struct config_item *ret = NULL;
 
 	if (strlen(name) > O2NM_MAX_NAME_LEN)
-		goto out; /* ENAMETOOLONG */
+		return ERR_PTR(-ENAMETOOLONG);
 
 	node = kzalloc(sizeof(struct o2nm_node), GFP_KERNEL);
 	if (node == NULL)
-		goto out; /* ENOMEM */
+		return ERR_PTR(-ENOMEM);
 
 	strcpy(node->nd_name, name); /* use item.ci_namebuf instead? */
 	config_item_init_type_name(&node->nd_item, name, &o2nm_node_type);
 	spin_lock_init(&node->nd_lock);
 
-	ret = &node->nd_item;
+	mlog(ML_CLUSTER, "o2nm: Registering node %s\n", name);
 
-out:
-	if (ret == NULL)
-		kfree(node);
-
-	return ret;
+	return &node->nd_item;
 }
 
 static void o2nm_node_group_drop_item(struct config_group *group,
@@ -759,6 +745,9 @@ static void o2nm_node_group_drop_item(struct config_group *group,
 		clear_bit(node->nd_num, cluster->cl_nodes_bitmap);
 	}
 	write_unlock(&cluster->cl_nodes_lock);
+
+	mlog(ML_CLUSTER, "o2nm: Unregistered node %s\n",
+	     config_item_name(&node->nd_item));
 
 	config_item_put(item);
 }
@@ -822,7 +811,7 @@ static struct config_group *o2nm_cluster_group_make_group(struct config_group *g
 	/* this runs under the parent dir's i_mutex; there can be only
 	 * one caller in here at a time */
 	if (o2nm_single_cluster)
-		goto out; /* ENOSPC */
+		return ERR_PTR(-ENOSPC);
 
 	cluster = kzalloc(sizeof(struct o2nm_cluster), GFP_KERNEL);
 	ns = kzalloc(sizeof(struct o2nm_node_group), GFP_KERNEL);
@@ -845,6 +834,7 @@ static struct config_group *o2nm_cluster_group_make_group(struct config_group *g
 	cluster->cl_reconnect_delay_ms = O2NET_RECONNECT_DELAY_MS_DEFAULT;
 	cluster->cl_idle_timeout_ms    = O2NET_IDLE_TIMEOUT_MS_DEFAULT;
 	cluster->cl_keepalive_delay_ms = O2NET_KEEPALIVE_DELAY_MS_DEFAULT;
+	cluster->cl_fence_method       = O2NM_FENCE_RESET;
 
 	ret = &cluster->cl_group;
 	o2nm_single_cluster = cluster;
@@ -855,6 +845,7 @@ out:
 		kfree(ns);
 		o2hb_free_hb_set(o2hb_group);
 		kfree(defs);
+		ret = ERR_PTR(-ENOMEM);
 	}
 
 	return ret;
@@ -899,17 +890,55 @@ static struct o2nm_cluster_group o2nm_cluster_group = {
 	},
 };
 
+int o2nm_depend_item(struct config_item *item)
+{
+	return configfs_depend_item(&o2nm_cluster_group.cs_subsys, item);
+}
+
+void o2nm_undepend_item(struct config_item *item)
+{
+	configfs_undepend_item(&o2nm_cluster_group.cs_subsys, item);
+}
+
+int o2nm_depend_this_node(void)
+{
+	int ret = 0;
+	struct o2nm_node *local_node;
+
+	local_node = o2nm_get_node_by_num(o2nm_this_node());
+	if (!local_node) {
+		ret = -EINVAL;
+		goto out;
+	}
+
+	ret = o2nm_depend_item(&local_node->nd_item);
+	o2nm_node_put(local_node);
+
+out:
+	return ret;
+}
+
+void o2nm_undepend_this_node(void)
+{
+	struct o2nm_node *local_node;
+
+	local_node = o2nm_get_node_by_num(o2nm_this_node());
+	BUG_ON(!local_node);
+
+	o2nm_undepend_item(&local_node->nd_item);
+	o2nm_node_put(local_node);
+}
+
+
 static void __exit exit_o2nm(void)
 {
-	if (ocfs2_table_header)
-		unregister_sysctl_table(ocfs2_table_header);
-
 	/* XXX sync with hb callbacks and shut down hb? */
 	o2net_unregister_hb_callbacks();
 	configfs_unregister_subsystem(&o2nm_cluster_group.cs_subsys);
 	o2cb_sys_shutdown();
 
 	o2net_exit();
+	o2hb_exit();
 }
 
 static int __init init_o2nm(void)
@@ -918,22 +947,20 @@ static int __init init_o2nm(void)
 
 	cluster_print_version();
 
-	o2hb_init();
-	o2net_init();
+	ret = o2hb_init();
+	if (ret)
+		goto out;
 
-	ocfs2_table_header = register_sysctl_table(ocfs2_root_table);
-	if (!ocfs2_table_header) {
-		printk(KERN_ERR "nodemanager: unable to register sysctl\n");
-		ret = -ENOMEM; /* or something. */
-		goto out_o2net;
-	}
+	ret = o2net_init();
+	if (ret)
+		goto out_o2hb;
 
 	ret = o2net_register_hb_callbacks();
 	if (ret)
-		goto out_sysctl;
+		goto out_o2net;
 
 	config_group_init(&o2nm_cluster_group.cs_subsys.su_group);
-	init_MUTEX(&o2nm_cluster_group.cs_subsys.su_sem);
+	mutex_init(&o2nm_cluster_group.cs_subsys.su_mutex);
 	ret = configfs_register_subsystem(&o2nm_cluster_group.cs_subsys);
 	if (ret) {
 		printk(KERN_ERR "nodemanager: Registration returned %d\n", ret);
@@ -947,10 +974,10 @@ static int __init init_o2nm(void)
 	configfs_unregister_subsystem(&o2nm_cluster_group.cs_subsys);
 out_callbacks:
 	o2net_unregister_hb_callbacks();
-out_sysctl:
-	unregister_sysctl_table(ocfs2_table_header);
 out_o2net:
 	o2net_exit();
+out_o2hb:
+	o2hb_exit();
 out:
 	return ret;
 }

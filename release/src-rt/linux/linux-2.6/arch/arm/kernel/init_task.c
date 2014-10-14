@@ -8,18 +8,12 @@
 #include <linux/init.h>
 #include <linux/init_task.h>
 #include <linux/mqueue.h>
+#include <linux/uaccess.h>
 
-#include <asm/uaccess.h>
 #include <asm/pgtable.h>
 
-static struct fs_struct init_fs = INIT_FS;
-static struct files_struct init_files = INIT_FILES;
 static struct signal_struct init_signals = INIT_SIGNALS(init_signals);
 static struct sighand_struct init_sighand = INIT_SIGHAND(init_sighand);
-struct mm_struct init_mm = INIT_MM(init_mm);
-
-EXPORT_SYMBOL(init_mm);
-
 /*
  * Initial thread structure.
  *
@@ -30,9 +24,8 @@ EXPORT_SYMBOL(init_mm);
  *
  * The things we do for performance..
  */
-union thread_union init_thread_union
-	__attribute__((__section__(".data.init_task"))) =
-		{ INIT_THREAD_INFO(init_task) };
+union thread_union init_thread_union __init_task_data =
+	{ INIT_THREAD_INFO(init_task) };
 
 /*
  * Initial task structure.

@@ -20,6 +20,7 @@
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/netfilter.h>
+#include <linux/slab.h>
 #include <linux/in.h>
 #include <linux/tcp.h>
 #include <net/netfilter/nf_conntrack.h>
@@ -30,6 +31,7 @@
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Michal Schmidt <mschmidt@redhat.com>");
 MODULE_DESCRIPTION("SANE connection tracking helper");
+MODULE_ALIAS_NFCT_HELPER("sane");
 
 static char *sane_buffer;
 
@@ -39,12 +41,6 @@ static DEFINE_SPINLOCK(nf_sane_lock);
 static u_int16_t ports[MAX_PORTS];
 static unsigned int ports_c;
 module_param_array(ports, ushort, &ports_c, 0400);
-
-#if 0
-#define DEBUGP printk
-#else
-#define DEBUGP(format, args...)
-#endif
 
 struct sane_request {
 	__be32 RPC_code;
@@ -62,14 +58,15 @@ struct sane_reply_net_start {
 	/* other fields aren't interesting for conntrack */
 };
 
-static int help(struct sk_buff **pskb,
+static int help(struct sk_buff *skb,
 		unsigned int protoff,
 		struct nf_conn *ct,
 		enum ip_conntrack_info ctinfo)
 {
 	unsigned int dataoff, datalen;
-	struct tcphdr _tcph, *th;
-	char *sb_ptr;
+	const struct tcphdr *th;
+	struct tcphdr _tcph;
+	void *sb_ptr;
 	int ret = NF_ACCEPT;
 	int dir = CTINFO2DIR(ctinfo);
 	struct nf_ct_sane_master *ct_sane_info;
@@ -77,7 +74,6 @@ static int help(struct sk_buff **pskb,
 	struct nf_conntrack_tuple *tuple;
 	struct sane_request *req;
 	struct sane_reply_net_start *reply;
-	int family = ct->tuplehash[IP_CT_DIR_ORIGINAL].tuple.src.l3num;
 
 	ct_sane_info = &nfct_help(ct)->help.ct_sane_info;
 	/* Until there's been traffic both ways, don't look in packets. */
@@ -86,26 +82,26 @@ static int help(struct sk_buff **pskb,
 		return NF_ACCEPT;
 
 	/* Not a full tcp header? */
-	th = skb_header_pointer(*pskb, protoff, sizeof(_tcph), &_tcph);
+	th = skb_header_pointer(skb, protoff, sizeof(_tcph), &_tcph);
 	if (th == NULL)
 		return NF_ACCEPT;
 
 	/* No data? */
 	dataoff = protoff + th->doff * 4;
-	if (dataoff >= (*pskb)->len)
+	if (dataoff >= skb->len)
 		return NF_ACCEPT;
 
-	datalen = (*pskb)->len - dataoff;
+	datalen = skb->len - dataoff;
 
 	spin_lock_bh(&nf_sane_lock);
-	sb_ptr = skb_header_pointer(*pskb, dataoff, datalen, sane_buffer);
+	sb_ptr = skb_header_pointer(skb, dataoff, datalen, sane_buffer);
 	BUG_ON(sb_ptr == NULL);
 
 	if (dir == IP_CT_DIR_ORIGINAL) {
 		if (datalen != sizeof(struct sane_request))
 			goto out;
 
-		req = (struct sane_request *)sb_ptr;
+		req = sb_ptr;
 		if (req->RPC_code != htonl(SANE_NET_START)) {
 			/* Not an interesting command */
 			ct_sane_info->state = SANE_STATE_NORMAL;
@@ -125,15 +121,15 @@ static int help(struct sk_buff **pskb,
 	ct_sane_info->state = SANE_STATE_NORMAL;
 
 	if (datalen < sizeof(struct sane_reply_net_start)) {
-		DEBUGP("nf_ct_sane: NET_START reply too short\n");
+		pr_debug("nf_ct_sane: NET_START reply too short\n");
 		goto out;
 	}
 
-	reply = (struct sane_reply_net_start *)sb_ptr;
+	reply = sb_ptr;
 	if (reply->status != htonl(SANE_STATUS_SUCCESS)) {
 		/* saned refused the command */
-		DEBUGP("nf_ct_sane: unsuccessful SANE_STATUS = %u\n",
-			ntohl(reply->status));
+		pr_debug("nf_ct_sane: unsuccessful SANE_STATUS = %u\n",
+			 ntohl(reply->status));
 		goto out;
 	}
 
@@ -141,35 +137,38 @@ static int help(struct sk_buff **pskb,
 	if (reply->zero != 0)
 		goto out;
 
-	exp = nf_conntrack_expect_alloc(ct);
+	exp = nf_ct_expect_alloc(ct);
 	if (exp == NULL) {
 		ret = NF_DROP;
 		goto out;
 	}
 
 	tuple = &ct->tuplehash[IP_CT_DIR_ORIGINAL].tuple;
-	nf_conntrack_expect_init(exp, family,
-				 &tuple->src.u3, &tuple->dst.u3,
-				 IPPROTO_TCP,
-				 NULL, &reply->port);
+	nf_ct_expect_init(exp, NF_CT_EXPECT_CLASS_DEFAULT, nf_ct_l3num(ct),
+			  &tuple->src.u3, &tuple->dst.u3,
+			  IPPROTO_TCP, NULL, &reply->port);
 
-	DEBUGP("nf_ct_sane: expect: ");
-	NF_CT_DUMP_TUPLE(&exp->tuple);
-	NF_CT_DUMP_TUPLE(&exp->mask);
+	pr_debug("nf_ct_sane: expect: ");
+	nf_ct_dump_tuple(&exp->tuple);
 
 	/* Can't expect this?  Best to drop packet now. */
-	if (nf_conntrack_expect_related(exp) != 0)
+	if (nf_ct_expect_related(exp) != 0)
 		ret = NF_DROP;
 
-	nf_conntrack_expect_put(exp);
+	nf_ct_expect_put(exp);
 
 out:
 	spin_unlock_bh(&nf_sane_lock);
 	return ret;
 }
 
-static struct nf_conntrack_helper sane[MAX_PORTS][2];
-static char sane_names[MAX_PORTS][2][sizeof("sane-65535")];
+static struct nf_conntrack_helper sane[MAX_PORTS][2] __read_mostly;
+static char sane_names[MAX_PORTS][2][sizeof("sane-65535")] __read_mostly;
+
+static const struct nf_conntrack_expect_policy sane_exp_policy = {
+	.max_expected	= 1,
+	.timeout	= 5 * 60,
+};
 
 /* don't make this __exit, since it's called from __init ! */
 static void nf_conntrack_sane_fini(void)
@@ -178,9 +177,9 @@ static void nf_conntrack_sane_fini(void)
 
 	for (i = 0; i < ports_c; i++) {
 		for (j = 0; j < 2; j++) {
-			DEBUGP("nf_ct_sane: unregistering helper for pf: %d "
-			       "port: %d\n",
-				sane[i][j].tuple.src.l3num, ports[i]);
+			pr_debug("nf_ct_sane: unregistering helper for pf: %d "
+				 "port: %d\n",
+				 sane[i][j].tuple.src.l3num, ports[i]);
 			nf_conntrack_helper_unregister(&sane[i][j]);
 		}
 	}
@@ -208,10 +207,7 @@ static int __init nf_conntrack_sane_init(void)
 		for (j = 0; j < 2; j++) {
 			sane[i][j].tuple.src.u.tcp.port = htons(ports[i]);
 			sane[i][j].tuple.dst.protonum = IPPROTO_TCP;
-			sane[i][j].mask.src.u.tcp.port = 0xFFFF;
-			sane[i][j].mask.dst.protonum = 0xFF;
-			sane[i][j].max_expected = 1;
-			sane[i][j].timeout = 5 * 60;	/* 5 Minutes */
+			sane[i][j].expect_policy = &sane_exp_policy;
 			sane[i][j].me = THIS_MODULE;
 			sane[i][j].help = help;
 			tmpname = &sane_names[i][j][0];
@@ -221,9 +217,9 @@ static int __init nf_conntrack_sane_init(void)
 				sprintf(tmpname, "sane-%d", ports[i]);
 			sane[i][j].name = tmpname;
 
-			DEBUGP("nf_ct_sane: registering helper for pf: %d "
-			       "port: %d\n",
-				sane[i][j].tuple.src.l3num, ports[i]);
+			pr_debug("nf_ct_sane: registering helper for pf: %d "
+				 "port: %d\n",
+				 sane[i][j].tuple.src.l3num, ports[i]);
 			ret = nf_conntrack_helper_register(&sane[i][j]);
 			if (ret) {
 				printk(KERN_ERR "nf_ct_sane: failed to "

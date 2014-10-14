@@ -67,17 +67,22 @@
 #define   USBPORTSC_RES3	0x4000	/* reserved, write zeroes */
 #define   USBPORTSC_RES4	0x8000	/* reserved, write zeroes */
 
-/* Legacy support register */
+/* PCI legacy support register */
 #define USBLEGSUP		0xc0
 #define   USBLEGSUP_DEFAULT	0x2000	/* only PIRQ enable set */
 #define   USBLEGSUP_RWC		0x8f00	/* the R/WC bits */
 #define   USBLEGSUP_RO		0x5040	/* R/O and reserved bits */
 
-#define UHCI_PTR_BITS		__constant_cpu_to_le32(0x000F)
-#define UHCI_PTR_TERM		__constant_cpu_to_le32(0x0001)
-#define UHCI_PTR_QH		__constant_cpu_to_le32(0x0002)
-#define UHCI_PTR_DEPTH		__constant_cpu_to_le32(0x0004)
-#define UHCI_PTR_BREADTH	__constant_cpu_to_le32(0x0000)
+/* PCI Intel-specific resume-enable register */
+#define USBRES_INTEL		0xc4
+#define   USBPORT1EN		0x01
+#define   USBPORT2EN		0x02
+
+#define UHCI_PTR_BITS		cpu_to_le32(0x000F)
+#define UHCI_PTR_TERM		cpu_to_le32(0x0001)
+#define UHCI_PTR_QH		cpu_to_le32(0x0002)
+#define UHCI_PTR_DEPTH		cpu_to_le32(0x0004)
+#define UHCI_PTR_BREADTH	cpu_to_le32(0x0000)
 
 #define UHCI_NUMFRAMES		1024	/* in the frame list [array] */
 #define UHCI_MAX_SOF_NUMBER	2047	/* in an SOF packet */

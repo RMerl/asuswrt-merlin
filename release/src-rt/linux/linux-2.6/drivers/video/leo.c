@@ -11,15 +11,13 @@
 #include <linux/kernel.h>
 #include <linux/errno.h>
 #include <linux/string.h>
-#include <linux/slab.h>
 #include <linux/delay.h>
 #include <linux/init.h>
 #include <linux/fb.h>
 #include <linux/mm.h>
+#include <linux/of_device.h>
+#include <linux/io.h>
 
-#include <asm/io.h>
-#include <asm/prom.h>
-#include <asm/of_device.h>
 #include <asm/fbio.h>
 
 #include "sbuslib.h"
@@ -79,7 +77,7 @@ static struct fb_ops leo_ops = {
 #define LEO_CUR_TYPE_CMAP	0x00000050
 
 struct leo_cursor {
-	u8		xxx0[16];
+	u8	xxx0[16];
 	u32	cur_type;
 	u32	cur_misc;
 	u32	cur_cursxy;
@@ -106,7 +104,7 @@ struct leo_lx_krn {
 
 struct leo_lc_ss0_krn {
 	u32 	misc;
-	u8		xxx0[0x800-4];
+	u8	xxx0[0x800-4];
 	u32	rev;
 };
 
@@ -117,7 +115,7 @@ struct leo_lc_ss0_usr {
 	u32	fontt;
 	u32	extent;
 	u32	src;
-	u32		dst;
+	u32	dst;
 	u32	copy;
 	u32	fill;
 };
@@ -130,8 +128,8 @@ struct leo_lc_ss1_usr {
 	u8	unknown;
 };
 
-struct leo_ld {
-	u8		xxx0[0xe00];
+struct leo_ld_ss0 {
+	u8	xxx0[0xe00];
 	u32	csr;
 	u32	wid;
 	u32	wmask;
@@ -145,13 +143,13 @@ struct leo_ld {
 	u32	src;		/* Copy/Scroll (SS0 only) */
 	u32	dst;		/* Copy/Scroll/Fill (SS0 only) */
 	u32	extent;		/* Copy/Scroll/Fill size (SS0 only) */
-	u32		xxx1[3];
+	u32	xxx1[3];
 	u32	setsem;		/* SS1 only */
 	u32	clrsem;		/* SS1 only */
 	u32	clrpick;	/* SS1 only */
 	u32	clrdat;		/* SS1 only */
 	u32	alpha;		/* SS1 only */
-	u8		xxx2[0x2c];
+	u8	xxx2[0x2c];
 	u32	winbg;
 	u32	planemask;
 	u32	rop;
@@ -192,20 +190,73 @@ struct leo_par {
 	u32			flags;
 #define LEO_FLAG_BLANKED	0x00000001
 
-	unsigned long		physbase;
 	unsigned long		which_io;
-	unsigned long		fbsize;
 };
 
 static void leo_wait(struct leo_lx_krn __iomem *lx_krn)
 {
 	int i;
-	
+
 	for (i = 0;
-	     (sbus_readl(&lx_krn->krn_csr) & LEO_KRN_CSR_PROGRESS) && i < 300000;
+	     (sbus_readl(&lx_krn->krn_csr) & LEO_KRN_CSR_PROGRESS) &&
+	     i < 300000;
 	     i++)
-		udelay (1); /* Busy wait at most 0.3 sec */
+		udelay(1); /* Busy wait at most 0.3 sec */
 	return;
+}
+
+static void leo_switch_from_graph(struct fb_info *info)
+{
+	struct leo_par *par = (struct leo_par *) info->par;
+	struct leo_ld_ss0 __iomem *ss = par->ld_ss0;
+	struct leo_cursor __iomem *cursor = par->cursor;
+	unsigned long flags;
+	u32 val;
+
+	spin_lock_irqsave(&par->lock, flags);
+
+	par->extent = ((info->var.xres - 1) |
+		       ((info->var.yres - 1) << 16));
+
+	sbus_writel(0xffffffff, &ss->wid);
+	sbus_writel(0xffff, &ss->wmask);
+	sbus_writel(0, &ss->vclipmin);
+	sbus_writel(par->extent, &ss->vclipmax);
+	sbus_writel(0, &ss->fg);
+	sbus_writel(0xff000000, &ss->planemask);
+	sbus_writel(0x310850, &ss->rop);
+	sbus_writel(0, &ss->widclip);
+	sbus_writel((info->var.xres-1) | ((info->var.yres-1) << 11),
+		    &par->lc_ss0_usr->extent);
+	sbus_writel(4, &par->lc_ss0_usr->addrspace);
+	sbus_writel(0x80000000, &par->lc_ss0_usr->fill);
+	sbus_writel(0, &par->lc_ss0_usr->fontt);
+	do {
+		val = sbus_readl(&par->lc_ss0_usr->csr);
+	} while (val & 0x20000000);
+
+	/* setup screen buffer for cfb_* functions */
+	sbus_writel(1, &ss->wid);
+	sbus_writel(0x00ffffff, &ss->planemask);
+	sbus_writel(0x310b90, &ss->rop);
+	sbus_writel(0, &par->lc_ss0_usr->addrspace);
+
+	/* hide cursor */
+	sbus_writel(sbus_readl(&cursor->cur_misc) & ~LEO_CUR_ENABLE, &cursor->cur_misc);
+
+	spin_unlock_irqrestore(&par->lock, flags);
+}
+
+static int leo_pan_display(struct fb_var_screeninfo *var, struct fb_info *info)
+{
+	/* We just use this to catch switches out of
+	 * graphics mode.
+	 */
+	leo_switch_from_graph(info);
+
+	if (var->xoffset || var->yoffset || var->vmode)
+		return -EINVAL;
+	return 0;
 }
 
 /**
@@ -222,7 +273,7 @@ static int leo_setcolreg(unsigned regno,
 			 unsigned transp, struct fb_info *info)
 {
 	struct leo_par *par = (struct leo_par *) info->par;
-        struct leo_lx_krn __iomem *lx_krn = par->lx_krn;
+	struct leo_lx_krn __iomem *lx_krn = par->lx_krn;
 	unsigned long flags;
 	u32 val;
 	int i;
@@ -366,16 +417,14 @@ static int leo_mmap(struct fb_info *info, struct vm_area_struct *vma)
 	struct leo_par *par = (struct leo_par *)info->par;
 
 	return sbusfb_mmap_helper(leo_mmap_map,
-				  par->physbase, par->fbsize,
+				  info->fix.smem_start, info->fix.smem_len,
 				  par->which_io, vma);
 }
 
 static int leo_ioctl(struct fb_info *info, unsigned int cmd, unsigned long arg)
 {
-	struct leo_par *par = (struct leo_par *) info->par;
-
 	return sbusfb_ioctl_helper(cmd, arg, info,
-				   FBTYPE_SUNLEO, 32, par->fbsize);
+				   FBTYPE_SUNLEO, 32, info->fix.smem_len);
 }
 
 /*
@@ -409,7 +458,7 @@ static void leo_wid_put(struct fb_info *info, struct fb_wid_list *wl)
 	leo_wait(lx_krn);
 
 	for (i = 0, wi = wl->wl_list; i < wl->wl_count; i++, wi++) {
-		switch(wi->wi_type) {
+		switch (wi->wi_type) {
 		case FB_WID_DBL_8:
 			j = (wi->wi_index & 0xf) + 0x40;
 			break;
@@ -454,51 +503,6 @@ static void leo_init_wids(struct fb_info *info)
 	wi.wi_index = 1;
 	wi.wi_values [0] = 0x30;
 	leo_wid_put(info, &wl);
-
-}
-
-static void leo_switch_from_graph(struct fb_info *info)
-{
-	struct leo_par *par = (struct leo_par *) info->par;
-	struct leo_ld __iomem *ss = (struct leo_ld __iomem *) par->ld_ss0;
-	unsigned long flags;
-	u32 val;
-
-	spin_lock_irqsave(&par->lock, flags);
-
-	par->extent = ((info->var.xres - 1) |
-		       ((info->var.yres - 1) << 16));
-
-	sbus_writel(0xffffffff, &ss->wid);
-	sbus_writel(0xffff, &ss->wmask);
-	sbus_writel(0, &ss->vclipmin);
-	sbus_writel(par->extent, &ss->vclipmax);
-	sbus_writel(0, &ss->fg);
-	sbus_writel(0xff000000, &ss->planemask);
-	sbus_writel(0x310850, &ss->rop);
-	sbus_writel(0, &ss->widclip);
-	sbus_writel((info->var.xres-1) | ((info->var.yres-1) << 11),
-		    &par->lc_ss0_usr->extent);
-	sbus_writel(4, &par->lc_ss0_usr->addrspace);
-	sbus_writel(0x80000000, &par->lc_ss0_usr->fill);
-	sbus_writel(0, &par->lc_ss0_usr->fontt);
-	do {
-		val = sbus_readl(&par->lc_ss0_usr->csr);
-	} while (val & 0x20000000);
-
-	spin_unlock_irqrestore(&par->lock, flags);
-}
-
-static int leo_pan_display(struct fb_var_screeninfo *var, struct fb_info *info)
-{
-	/* We just use this to catch switches out of
-	 * graphics mode.
-	 */
-	leo_switch_from_graph(info);
-
-	if (var->xoffset || var->yoffset || var->vmode)
-		return -EINVAL;
-	return 0;
 }
 
 static void leo_init_hw(struct fb_info *info)
@@ -525,147 +529,144 @@ static void leo_fixup_var_rgb(struct fb_var_screeninfo *var)
 	var->transp.length = 0;
 }
 
-struct all_info {
-	struct fb_info info;
-	struct leo_par par;
-};
-
-static void leo_unmap_regs(struct of_device *op, struct all_info *all)
+static void leo_unmap_regs(struct platform_device *op, struct fb_info *info,
+			   struct leo_par *par)
 {
-	if (all->par.lc_ss0_usr)
-		of_iounmap(&op->resource[0], all->par.lc_ss0_usr, 0x1000);
-	if (all->par.ld_ss0)
-		of_iounmap(&op->resource[0], all->par.ld_ss0, 0x1000);
-	if (all->par.ld_ss1)
-		of_iounmap(&op->resource[0], all->par.ld_ss1, 0x1000);
-	if (all->par.lx_krn)
-		of_iounmap(&op->resource[0], all->par.lx_krn, 0x1000);
-	if (all->par.cursor)
+	if (par->lc_ss0_usr)
+		of_iounmap(&op->resource[0], par->lc_ss0_usr, 0x1000);
+	if (par->ld_ss0)
+		of_iounmap(&op->resource[0], par->ld_ss0, 0x1000);
+	if (par->ld_ss1)
+		of_iounmap(&op->resource[0], par->ld_ss1, 0x1000);
+	if (par->lx_krn)
+		of_iounmap(&op->resource[0], par->lx_krn, 0x1000);
+	if (par->cursor)
 		of_iounmap(&op->resource[0],
-			   all->par.cursor, sizeof(struct leo_cursor));
-	if (all->info.screen_base)
-		of_iounmap(&op->resource[0], all->info.screen_base, 0x800000);
+			   par->cursor, sizeof(struct leo_cursor));
+	if (info->screen_base)
+		of_iounmap(&op->resource[0], info->screen_base, 0x800000);
 }
 
-static int __devinit leo_init_one(struct of_device *op)
+static int __devinit leo_probe(struct platform_device *op)
 {
-	struct device_node *dp = op->node;
-	struct all_info *all;
+	struct device_node *dp = op->dev.of_node;
+	struct fb_info *info;
+	struct leo_par *par;
 	int linebytes, err;
 
-	all = kzalloc(sizeof(*all), GFP_KERNEL);
-	if (!all)
-		return -ENOMEM;
+	info = framebuffer_alloc(sizeof(struct leo_par), &op->dev);
 
-	spin_lock_init(&all->par.lock);
+	err = -ENOMEM;
+	if (!info)
+		goto out_err;
+	par = info->par;
 
-	all->par.physbase = op->resource[0].start;
-	all->par.which_io = op->resource[0].flags & IORESOURCE_BITS;
+	spin_lock_init(&par->lock);
 
-	sbusfb_fill_var(&all->info.var, dp->node, 32);
-	leo_fixup_var_rgb(&all->info.var);
+	info->fix.smem_start = op->resource[0].start;
+	par->which_io = op->resource[0].flags & IORESOURCE_BITS;
+
+	sbusfb_fill_var(&info->var, dp, 32);
+	leo_fixup_var_rgb(&info->var);
 
 	linebytes = of_getintprop_default(dp, "linebytes",
-					  all->info.var.xres);
-	all->par.fbsize = PAGE_ALIGN(linebytes * all->info.var.yres);
+					  info->var.xres);
+	info->fix.smem_len = PAGE_ALIGN(linebytes * info->var.yres);
 
-	all->par.lc_ss0_usr =
+	par->lc_ss0_usr =
 		of_ioremap(&op->resource[0], LEO_OFF_LC_SS0_USR,
 			   0x1000, "leolc ss0usr");
-	all->par.ld_ss0 =
+	par->ld_ss0 =
 		of_ioremap(&op->resource[0], LEO_OFF_LD_SS0,
 			   0x1000, "leold ss0");
-	all->par.ld_ss1 =
+	par->ld_ss1 =
 		of_ioremap(&op->resource[0], LEO_OFF_LD_SS1,
 			   0x1000, "leold ss1");
-	all->par.lx_krn =
+	par->lx_krn =
 		of_ioremap(&op->resource[0], LEO_OFF_LX_KRN,
 			   0x1000, "leolx krn");
-	all->par.cursor =
+	par->cursor =
 		of_ioremap(&op->resource[0], LEO_OFF_LX_CURSOR,
 			   sizeof(struct leo_cursor), "leolx cursor");
-	all->info.screen_base = 
+	info->screen_base =
 		of_ioremap(&op->resource[0], LEO_OFF_SS0,
 			   0x800000, "leo ram");
-	if (!all->par.lc_ss0_usr ||
-	    !all->par.ld_ss0 ||
-	    !all->par.ld_ss1 ||
-	    !all->par.lx_krn ||
-	    !all->par.cursor ||
-	    !all->info.screen_base) {
-		leo_unmap_regs(op, all);
-		kfree(all);
-		return -ENOMEM;
-	}
+	if (!par->lc_ss0_usr ||
+	    !par->ld_ss0 ||
+	    !par->ld_ss1 ||
+	    !par->lx_krn ||
+	    !par->cursor ||
+	    !info->screen_base)
+		goto out_unmap_regs;
 
-	all->info.flags = FBINFO_DEFAULT | FBINFO_HWACCEL_YPAN;
-	all->info.fbops = &leo_ops;
-	all->info.par = &all->par;
+	info->flags = FBINFO_DEFAULT;
+	info->fbops = &leo_ops;
+	info->pseudo_palette = par->clut_data;
 
-	leo_init_wids(&all->info);
-	leo_init_hw(&all->info);
+	leo_init_wids(info);
+	leo_init_hw(info);
 
-	leo_blank(0, &all->info);
+	leo_blank(FB_BLANK_UNBLANK, info);
 
-	if (fb_alloc_cmap(&all->info.cmap, 256, 0)) {
-		leo_unmap_regs(op, all);
-		kfree(all);
-		return -ENOMEM;;
-	}
+	if (fb_alloc_cmap(&info->cmap, 256, 0))
+		goto out_unmap_regs;
 
-	leo_init_fix(&all->info, dp);
+	leo_init_fix(info, dp);
 
-	err = register_framebuffer(&all->info);
-	if (err < 0) {
-		fb_dealloc_cmap(&all->info.cmap);
-		leo_unmap_regs(op, all);
-		kfree(all);
-		return err;
-	}
+	err = register_framebuffer(info);
+	if (err < 0)
+		goto out_dealloc_cmap;
 
-	dev_set_drvdata(&op->dev, all);
+	dev_set_drvdata(&op->dev, info);
 
-	printk("%s: leo at %lx:%lx\n",
+	printk(KERN_INFO "%s: leo at %lx:%lx\n",
 	       dp->full_name,
-	       all->par.which_io, all->par.physbase);
+	       par->which_io, info->fix.smem_start);
 
 	return 0;
+
+out_dealloc_cmap:
+	fb_dealloc_cmap(&info->cmap);
+
+out_unmap_regs:
+	leo_unmap_regs(op, info, par);
+	framebuffer_release(info);
+
+out_err:
+	return err;
 }
 
-static int __devinit leo_probe(struct of_device *dev, const struct of_device_id *match)
+static int __devexit leo_remove(struct platform_device *op)
 {
-	struct of_device *op = to_of_device(&dev->dev);
+	struct fb_info *info = dev_get_drvdata(&op->dev);
+	struct leo_par *par = info->par;
 
-	return leo_init_one(op);
-}
+	unregister_framebuffer(info);
+	fb_dealloc_cmap(&info->cmap);
 
-static int __devexit leo_remove(struct of_device *op)
-{
-	struct all_info *all = dev_get_drvdata(&op->dev);
+	leo_unmap_regs(op, info, par);
 
-	unregister_framebuffer(&all->info);
-	fb_dealloc_cmap(&all->info.cmap);
-
-	leo_unmap_regs(op, all);
-
-	kfree(all);
+	framebuffer_release(info);
 
 	dev_set_drvdata(&op->dev, NULL);
 
 	return 0;
 }
 
-static struct of_device_id leo_match[] = {
+static const struct of_device_id leo_match[] = {
 	{
-		.name = "leo",
+		.name = "SUNW,leo",
 	},
 	{},
 };
 MODULE_DEVICE_TABLE(of, leo_match);
 
-static struct of_platform_driver leo_driver = {
-	.name		= "leo",
-	.match_table	= leo_match,
+static struct platform_driver leo_driver = {
+	.driver = {
+		.name = "leo",
+		.owner = THIS_MODULE,
+		.of_match_table = leo_match,
+	},
 	.probe		= leo_probe,
 	.remove		= __devexit_p(leo_remove),
 };
@@ -675,12 +676,12 @@ static int __init leo_init(void)
 	if (fb_get_options("leofb", NULL))
 		return -ENODEV;
 
-	return of_register_driver(&leo_driver, &of_bus_type);
+	return platform_driver_register(&leo_driver);
 }
 
 static void __exit leo_exit(void)
 {
-	of_unregister_driver(&leo_driver);
+	platform_driver_unregister(&leo_driver);
 }
 
 module_init(leo_init);

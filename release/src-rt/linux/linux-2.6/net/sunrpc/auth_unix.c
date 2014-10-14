@@ -6,6 +6,7 @@
  * Copyright (C) 1996, Olaf Kirch <okir@monad.swb.de>
  */
 
+#include <linux/slab.h>
 #include <linux/types.h>
 #include <linux/sched.h>
 #include <linux/module.h>
@@ -28,7 +29,6 @@ struct unx_cred {
 #endif
 
 static struct rpc_auth		unix_auth;
-static struct rpc_cred_cache	unix_cred_cache;
 static const struct rpc_credops	unix_credops;
 
 static struct rpc_auth *
@@ -60,31 +60,28 @@ static struct rpc_cred *
 unx_create_cred(struct rpc_auth *auth, struct auth_cred *acred, int flags)
 {
 	struct unx_cred	*cred;
-	int		i;
+	unsigned int groups = 0;
+	unsigned int i;
 
 	dprintk("RPC:       allocating UNIX cred for uid %d gid %d\n",
 			acred->uid, acred->gid);
 
-	if (!(cred = kmalloc(sizeof(*cred), GFP_KERNEL)))
+	if (!(cred = kmalloc(sizeof(*cred), GFP_NOFS)))
 		return ERR_PTR(-ENOMEM);
 
 	rpcauth_init_cred(&cred->uc_base, acred, auth, &unix_credops);
 	cred->uc_base.cr_flags = 1UL << RPCAUTH_CRED_UPTODATE;
-	if (flags & RPCAUTH_LOOKUP_ROOTCREDS) {
-		cred->uc_uid = 0;
-		cred->uc_gid = 0;
-		cred->uc_gids[0] = NOGROUP;
-	} else {
-		int groups = acred->group_info->ngroups;
-		if (groups > NFS_NGROUPS)
-			groups = NFS_NGROUPS;
 
-		cred->uc_gid = acred->gid;
-		for (i = 0; i < groups; i++)
-			cred->uc_gids[i] = GROUP_AT(acred->group_info, i);
-		if (i < NFS_NGROUPS)
-		  cred->uc_gids[i] = NOGROUP;
-	}
+	if (acred->group_info != NULL)
+		groups = acred->group_info->ngroups;
+	if (groups > NFS_NGROUPS)
+		groups = NFS_NGROUPS;
+
+	cred->uc_gid = acred->gid;
+	for (i = 0; i < groups; i++)
+		cred->uc_gids[i] = GROUP_AT(acred->group_info, i);
+	if (i < NFS_NGROUPS)
+		cred->uc_gids[i] = NOGROUP;
 
 	return &cred->uc_base;
 }
@@ -118,26 +115,21 @@ static int
 unx_match(struct auth_cred *acred, struct rpc_cred *rcred, int flags)
 {
 	struct unx_cred	*cred = container_of(rcred, struct unx_cred, uc_base);
-	int		i;
+	unsigned int groups = 0;
+	unsigned int i;
 
-	if (!(flags & RPCAUTH_LOOKUP_ROOTCREDS)) {
-		int groups;
 
-		if (cred->uc_uid != acred->uid
-		 || cred->uc_gid != acred->gid)
-			return 0;
+	if (cred->uc_uid != acred->uid || cred->uc_gid != acred->gid)
+		return 0;
 
+	if (acred->group_info != NULL)
 		groups = acred->group_info->ngroups;
-		if (groups > NFS_NGROUPS)
-			groups = NFS_NGROUPS;
-		for (i = 0; i < groups ; i++)
-			if (cred->uc_gids[i] != GROUP_AT(acred->group_info, i))
-				return 0;
-		return 1;
-	}
-	return (cred->uc_uid == 0
-	     && cred->uc_gid == 0
-	     && cred->uc_gids[0] == (gid_t) NOGROUP);
+	if (groups > NFS_NGROUPS)
+		groups = NFS_NGROUPS;
+	for (i = 0; i < groups ; i++)
+		if (cred->uc_gids[i] != GROUP_AT(acred->group_info, i))
+			return 0;
+	return 1;
 }
 
 /*
@@ -148,7 +140,7 @@ static __be32 *
 unx_marshal(struct rpc_task *task, __be32 *p)
 {
 	struct rpc_clnt	*clnt = task->tk_client;
-	struct unx_cred	*cred = container_of(task->tk_msg.rpc_cred, struct unx_cred, uc_base);
+	struct unx_cred	*cred = container_of(task->tk_rqstp->rq_cred, struct unx_cred, uc_base);
 	__be32		*base, *hold;
 	int		i;
 
@@ -181,7 +173,7 @@ unx_marshal(struct rpc_task *task, __be32 *p)
 static int
 unx_refresh(struct rpc_task *task)
 {
-	set_bit(RPCAUTH_CRED_UPTODATE, &task->tk_msg.rpc_cred->cr_flags);
+	set_bit(RPCAUTH_CRED_UPTODATE, &task->tk_rqstp->rq_cred->cr_flags);
 	return 0;
 }
 
@@ -204,31 +196,30 @@ unx_validate(struct rpc_task *task, __be32 *p)
 		printk("RPC: giant verf size: %u\n", size);
 		return NULL;
 	}
-	task->tk_msg.rpc_cred->cr_auth->au_rslack = (size >> 2) + 2;
+	task->tk_rqstp->rq_cred->cr_auth->au_rslack = (size >> 2) + 2;
 	p += (size >> 2);
 
 	return p;
 }
 
-void __init rpc_init_authunix(void)
+int __init rpc_init_authunix(void)
 {
-	spin_lock_init(&unix_cred_cache.lock);
+	return rpcauth_init_credcache(&unix_auth);
+}
+
+void rpc_destroy_authunix(void)
+{
+	rpcauth_destroy_credcache(&unix_auth);
 }
 
 const struct rpc_authops authunix_ops = {
 	.owner		= THIS_MODULE,
 	.au_flavor	= RPC_AUTH_UNIX,
-#ifdef RPC_DEBUG
 	.au_name	= "UNIX",
-#endif
 	.create		= unx_create,
 	.destroy	= unx_destroy,
 	.lookup_cred	= unx_lookup_cred,
 	.crcreate	= unx_create_cred,
-};
-
-static
-struct rpc_cred_cache	unix_cred_cache = {
 };
 
 static
@@ -238,13 +229,13 @@ struct rpc_auth		unix_auth = {
 	.au_ops		= &authunix_ops,
 	.au_flavor	= RPC_AUTH_UNIX,
 	.au_count	= ATOMIC_INIT(0),
-	.au_credcache	= &unix_cred_cache,
 };
 
 static
 const struct rpc_credops unix_credops = {
 	.cr_name	= "AUTH_UNIX",
 	.crdestroy	= unx_destroy_cred,
+	.crbind		= rpcauth_generic_bind_cred,
 	.crmatch	= unx_match,
 	.crmarshal	= unx_marshal,
 	.crrefresh	= unx_refresh,

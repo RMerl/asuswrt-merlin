@@ -41,13 +41,10 @@
 
 /*
  * task_struct *resume(task_struct *prev, task_struct *next,
- *                     struct thread_info *next_ti)
+ *                     struct thread_info *next_ti, int usedfpu)
  */
 	.align	5
 	LEAF(resume)
-#ifndef CONFIG_CPU_HAS_LLSC
-	sw	zero, ll_bit
-#endif
 	mfc0	t1, CP0_STATUS
 	LONG_S	t1, THREAD_STATUS(a0)
 	cpu_save_nonscratch a0
@@ -56,16 +53,10 @@
 	/*
 	 * check if we need to save FPU registers
 	 */
+
+	beqz    a3, 1f
+
 	PTR_L	t3, TASK_THREAD_INFO(a0)
-	LONG_L	t0, TI_FLAGS(t3)
-	li	t1, _TIF_USEDFPU
-	and	t2, t0, t1
-	beqz	t2, 1f
-	nor	t1, zero, t1
-
-	and	t0, t0, t1
-	LONG_S	t0, TI_FLAGS(t3)
-
 	/*
 	 * clear saved user stack CU1 bit
 	 */
@@ -85,12 +76,7 @@
 	move	$28, a2
 	cpu_restore_nonscratch a1
 
-#if (_THREAD_SIZE - 32) < 0x10000
-	PTR_ADDIU	t0, $28, _THREAD_SIZE - 32
-#else
-	PTR_LI		t0, _THREAD_SIZE - 32
-	PTR_ADDU	t0, $28
-#endif
+	PTR_ADDU	t0, $28, _THREAD_SIZE - 32
 	set_saved_sp	t0, t1, t2
 #ifdef CONFIG_MIPS_MT_SMTC
 	/* Read-modify-writes of Status must be atomic on a VPE */

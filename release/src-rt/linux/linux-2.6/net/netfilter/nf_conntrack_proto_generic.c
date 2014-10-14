@@ -14,23 +14,23 @@
 
 static unsigned int nf_ct_generic_timeout __read_mostly = 600*HZ;
 
-static int generic_pkt_to_tuple(const struct sk_buff *skb,
-				unsigned int dataoff,
-				struct nf_conntrack_tuple *tuple)
+static bool generic_pkt_to_tuple(const struct sk_buff *skb,
+				 unsigned int dataoff,
+				 struct nf_conntrack_tuple *tuple)
 {
 	tuple->src.u.all = 0;
 	tuple->dst.u.all = 0;
 
-	return 1;
+	return true;
 }
 
-static int generic_invert_tuple(struct nf_conntrack_tuple *tuple,
-				const struct nf_conntrack_tuple *orig)
+static bool generic_invert_tuple(struct nf_conntrack_tuple *tuple,
+				 const struct nf_conntrack_tuple *orig)
 {
 	tuple->src.u.all = 0;
 	tuple->dst.u.all = 0;
 
-	return 1;
+	return true;
 }
 
 /* Print out the per-protocol part of the tuple. */
@@ -41,60 +41,54 @@ static int generic_print_tuple(struct seq_file *s,
 }
 
 /* Returns verdict for packet, or -1 for invalid. */
-static int packet(struct nf_conn *conntrack,
+static int packet(struct nf_conn *ct,
 		  const struct sk_buff *skb,
 		  unsigned int dataoff,
 		  enum ip_conntrack_info ctinfo,
-		  int pf,
+		  u_int8_t pf,
 		  unsigned int hooknum)
 {
-	nf_ct_refresh_acct(conntrack, ctinfo, skb, nf_ct_generic_timeout);
+	nf_ct_refresh_acct(ct, ctinfo, skb, nf_ct_generic_timeout);
 	return NF_ACCEPT;
 }
 
 /* Called when a new connection for this protocol found. */
-static int new(struct nf_conn *conntrack, const struct sk_buff *skb,
-	       unsigned int dataoff)
+static bool new(struct nf_conn *ct, const struct sk_buff *skb,
+		unsigned int dataoff)
 {
-	return 1;
+	return true;
 }
 
 #ifdef CONFIG_SYSCTL
 static struct ctl_table_header *generic_sysctl_header;
 static struct ctl_table generic_sysctl_table[] = {
 	{
-		.ctl_name	= NET_NF_CONNTRACK_GENERIC_TIMEOUT,
 		.procname	= "nf_conntrack_generic_timeout",
 		.data		= &nf_ct_generic_timeout,
 		.maxlen		= sizeof(unsigned int),
 		.mode		= 0644,
-		.proc_handler	= &proc_dointvec_jiffies,
+		.proc_handler	= proc_dointvec_jiffies,
 	},
-	{
-		.ctl_name	= 0
-	}
+	{ }
 };
 #ifdef CONFIG_NF_CONNTRACK_PROC_COMPAT
 static struct ctl_table generic_compat_sysctl_table[] = {
 	{
-		.ctl_name	= NET_IPV4_NF_CONNTRACK_GENERIC_TIMEOUT,
 		.procname	= "ip_conntrack_generic_timeout",
 		.data		= &nf_ct_generic_timeout,
 		.maxlen		= sizeof(unsigned int),
 		.mode		= 0644,
-		.proc_handler	= &proc_dointvec_jiffies,
+		.proc_handler	= proc_dointvec_jiffies,
 	},
-	{
-		.ctl_name	= 0
-	}
+	{ }
 };
 #endif /* CONFIG_NF_CONNTRACK_PROC_COMPAT */
 #endif /* CONFIG_SYSCTL */
 
-struct nf_conntrack_l4proto nf_conntrack_l4proto_generic =
+struct nf_conntrack_l4proto nf_conntrack_l4proto_generic __read_mostly =
 {
 	.l3proto		= PF_UNSPEC,
-	.l4proto		= 0,
+	.l4proto		= 255,
 	.name			= "unknown",
 	.pkt_to_tuple		= generic_pkt_to_tuple,
 	.invert_tuple		= generic_invert_tuple,

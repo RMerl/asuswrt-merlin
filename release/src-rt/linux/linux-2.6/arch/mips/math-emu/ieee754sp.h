@@ -5,7 +5,6 @@
 /*
  * MIPS floating point support
  * Copyright (C) 1994-2000 Algorithmics Ltd.
- * http://www.algor.co.uk
  *
  * ########################################################################
  *
@@ -48,10 +47,10 @@
 /* convert denormal to normalized with extended exponent */
 #define SPDNORMx(m,e) \
   while( (m >> SP_MBITS) == 0) { m <<= 1; e--; }
-#define SPDNORMX	SPDNORMx(xm,xe)
-#define SPDNORMY	SPDNORMx(ym,ye)
+#define SPDNORMX	SPDNORMx(xm, xe)
+#define SPDNORMY	SPDNORMx(ym, ye)
 
-static __inline ieee754sp buildsp(int s, int bx, unsigned m)
+static inline ieee754sp buildsp(int s, int bx, unsigned m)
 {
 	ieee754sp r;
 
@@ -77,13 +76,13 @@ extern ieee754sp ieee754sp_bestnan(ieee754sp, ieee754sp);
 extern ieee754sp ieee754sp_format(int, int, unsigned);
 
 
-#define SPNORMRET2(s,e,m,name,a0,a1) \
+#define SPNORMRET2(s, e, m, name, a0, a1) \
 { \
-    ieee754sp V = ieee754sp_format(s,e,m); \
+    ieee754sp V = ieee754sp_format(s, e, m); \
     if(TSTX()) \
-      return ieee754sp_xcpt(V,name,a0,a1); \
+      return ieee754sp_xcpt(V, name, a0, a1); \
     else \
       return V; \
 }
 
-#define SPNORMRET1(s,e,m,name,a0)  SPNORMRET2(s,e,m,name,a0,a0)
+#define SPNORMRET1(s, e, m, name, a0)  SPNORMRET2(s, e, m, name, a0, a0)

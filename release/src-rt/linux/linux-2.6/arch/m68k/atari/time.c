@@ -20,16 +20,20 @@
 
 #include <asm/atariints.h>
 
+DEFINE_SPINLOCK(rtc_lock);
+EXPORT_SYMBOL_GPL(rtc_lock);
+
 void __init
 atari_sched_init(irq_handler_t timer_routine)
 {
     /* set Timer C data Register */
-    mfp.tim_dt_c = INT_TICKS;
+    st_mfp.tim_dt_c = INT_TICKS;
     /* start timer C, div = 1:100 */
-    mfp.tim_ct_cd = (mfp.tim_ct_cd & 15) | 0x60;
+    st_mfp.tim_ct_cd = (st_mfp.tim_ct_cd & 15) | 0x60;
     /* install interrupt service routine for MFP Timer C */
-    request_irq(IRQ_MFP_TIMC, timer_routine, IRQ_TYPE_SLOW,
-                "timer", timer_routine);
+    if (request_irq(IRQ_MFP_TIMC, timer_routine, IRQ_TYPE_SLOW,
+		    "timer", timer_routine))
+	pr_err("Couldn't register timer interrupt\n");
 }
 
 /* ++andreas: gettimeoffset fixed to check for pending interrupt */
@@ -42,11 +46,11 @@ unsigned long atari_gettimeoffset (void)
   unsigned long ticks, offset = 0;
 
   /* read MFP timer C current value */
-  ticks = mfp.tim_dt_c;
+  ticks = st_mfp.tim_dt_c;
   /* The probability of underflow is less than 2% */
   if (ticks > INT_TICKS - INT_TICKS / 50)
     /* Check for pending timer interrupt */
-    if (mfp.int_pn_b & (1 << 5))
+    if (st_mfp.int_pn_b & (1 << 5))
       offset = TICK_SIZE;
 
   ticks = INT_TICKS - ticks;
@@ -191,13 +195,14 @@ int atari_tt_hwclk( int op, struct rtc_time *t )
         }
 
         if (!(ctrl & RTC_DM_BINARY)) {
-            BIN_TO_BCD(sec);
-            BIN_TO_BCD(min);
-            BIN_TO_BCD(hour);
-            BIN_TO_BCD(day);
-            BIN_TO_BCD(mon);
-            BIN_TO_BCD(year);
-            if (wday >= 0) BIN_TO_BCD(wday);
+	    sec = bin2bcd(sec);
+	    min = bin2bcd(min);
+	    hour = bin2bcd(hour);
+	    day = bin2bcd(day);
+	    mon = bin2bcd(mon);
+	    year = bin2bcd(year);
+	    if (wday >= 0)
+		wday = bin2bcd(wday);
         }
     }
 
@@ -252,13 +257,13 @@ int atari_tt_hwclk( int op, struct rtc_time *t )
 	}
 
 	if (!(ctrl & RTC_DM_BINARY)) {
-            BCD_TO_BIN(sec);
-            BCD_TO_BIN(min);
-            BCD_TO_BIN(hour);
-            BCD_TO_BIN(day);
-            BCD_TO_BIN(mon);
-            BCD_TO_BIN(year);
-            BCD_TO_BIN(wday);
+	    sec = bcd2bin(sec);
+	    min = bcd2bin(min);
+	    hour = bcd2bin(hour);
+	    day = bcd2bin(day);
+	    mon = bcd2bin(mon);
+	    year = bcd2bin(year);
+	    wday = bcd2bin(wday);
         }
 
         if (!(ctrl & RTC_24H)) {
@@ -318,7 +323,7 @@ int atari_tt_set_clock_mmss (unsigned long nowtime)
 
     rtc_minutes = RTC_READ (RTC_MINUTES);
     if (!(save_control & RTC_DM_BINARY))
-        BCD_TO_BIN (rtc_minutes);
+	rtc_minutes = bcd2bin(rtc_minutes);
 
     /* Since we're only adjusting minutes and seconds, don't interfere
        with hour overflow.  This avoids messing with unknown time zones
@@ -329,8 +334,8 @@ int atari_tt_set_clock_mmss (unsigned long nowtime)
         {
             if (!(save_control & RTC_DM_BINARY))
                 {
-                    BIN_TO_BCD (real_seconds);
-                    BIN_TO_BCD (real_minutes);
+		    real_seconds = bin2bcd(real_seconds);
+		    real_minutes = bin2bcd(real_minutes);
                 }
             RTC_WRITE (RTC_SECONDS, real_seconds);
             RTC_WRITE (RTC_MINUTES, real_minutes);

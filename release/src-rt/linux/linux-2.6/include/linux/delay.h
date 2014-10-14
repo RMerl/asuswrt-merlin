@@ -7,6 +7,8 @@
  * Delay routines, using a pre-computed "loops_per_jiffy" value.
  */
 
+#include <linux/kernel.h>
+
 extern unsigned long loops_per_jiffy;
 
 #include <asm/delay.h>
@@ -32,12 +34,18 @@ extern unsigned long loops_per_jiffy;
 #endif
 
 #ifndef ndelay
-#define ndelay(x)	udelay(((x)+999)/1000)
+static inline void ndelay(unsigned long x)
+{
+	udelay(DIV_ROUND_UP(x, 1000));
+}
+#define ndelay(x) ndelay(x)
 #endif
 
+extern unsigned long lpj_fine;
 void calibrate_delay(void);
 void msleep(unsigned int msecs);
 unsigned long msleep_interruptible(unsigned int msecs);
+void usleep_range(unsigned long min, unsigned long max);
 
 static inline void ssleep(unsigned int seconds)
 {

@@ -102,7 +102,7 @@
 
 static const char bc_drvname[] = "baycom_par";
 static const char bc_drvinfo[] = KERN_INFO "baycom_par: (C) 1996-2000 Thomas Sailer, HB9JNX/AE4WA\n"
-KERN_INFO "baycom_par: version 0.9 compiled " __TIME__ " " __DATE__ "\n";
+"baycom_par: version 0.9 compiled " __TIME__ " " __DATE__ "\n";
 
 /* --------------------------------------------------------------------- */
 
@@ -270,9 +270,9 @@ static __inline__ void par96_rx(struct net_device *dev, struct baycom_state *bc)
 
 /* --------------------------------------------------------------------- */
 
-static void par96_interrupt(int irq, void *dev_id)
+static void par96_interrupt(void *dev_id)
 {
-	struct net_device *dev = (struct net_device *)dev_id;
+	struct net_device *dev = dev_id;
 	struct baycom_state *bc = netdev_priv(dev);
 
 	baycom_int_freq(bc);

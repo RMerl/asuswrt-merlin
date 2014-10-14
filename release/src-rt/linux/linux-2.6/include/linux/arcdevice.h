@@ -214,7 +214,7 @@ extern struct ArcProto *arc_proto_map[256], *arc_proto_default,
  */
 struct Incoming {
 	struct sk_buff *skb;	/* packet data buffer             */
-	uint16_t sequence;	/* sequence number of assembly    */
+	__be16 sequence;	/* sequence number of assembly    */
 	uint8_t lastpacket,	/* number of last packet (from 1) */
 		numpackets;	/* number of packets in split     */
 };
@@ -235,8 +235,6 @@ struct Outgoing {
 
 
 struct arcnet_local {
-	struct net_device_stats stats;
-
 	uint8_t config,		/* current value of CONFIG register */
 		timeout,	/* Extended timeout for COM20020 */
 		backplane,	/* Backplane flag for COM20020 */
@@ -283,8 +281,8 @@ struct arcnet_local {
 	int next_buf, first_free_buf;
 
 	/* network "reconfiguration" handling */
-	time_t first_recon,	/* time of "first" RECON message to count */
-		last_recon;	/* time of most recent RECON */
+	unsigned long first_recon; /* time of "first" RECON message to count */
+	unsigned long last_recon;  /* time of most recent RECON */
 	int num_recons;		/* number of RECONs between first and last. */
 	bool network_down;	/* do we think the network is down? */
 
@@ -292,7 +290,7 @@ struct arcnet_local {
 
 	struct {
 		uint16_t sequence;	/* sequence number (incs with each packet) */
-		uint16_t aborted_seq;
+		__be16 aborted_seq;
 
 		struct Incoming incoming[256];	/* one from each address */
 	} rfc1201;
@@ -335,7 +333,13 @@ void arcnet_dump_skb(struct net_device *dev, struct sk_buff *skb, char *desc);
 
 void arcnet_unregister_proto(struct ArcProto *proto);
 irqreturn_t arcnet_interrupt(int irq, void *dev_id);
-struct net_device *alloc_arcdev(char *name);
+struct net_device *alloc_arcdev(const char *name);
+
+int arcnet_open(struct net_device *dev);
+int arcnet_close(struct net_device *dev);
+netdev_tx_t arcnet_send_packet(struct sk_buff *skb,
+				     struct net_device *dev);
+void arcnet_timeout(struct net_device *dev);
 
 #endif				/* __KERNEL__ */
 #endif				/* _LINUX_ARCDEVICE_H */

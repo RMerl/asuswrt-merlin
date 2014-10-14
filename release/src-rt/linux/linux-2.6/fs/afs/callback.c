@@ -8,7 +8,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * Authors: David Woodhouse <dwmw2@cambridge.redhat.com>
+ * Authors: David Woodhouse <dwmw2@infradead.org>
  *          David Howells <dhowells@redhat.com>
  *
  */
@@ -20,7 +20,9 @@
 #include <linux/sched.h>
 #include "internal.h"
 
+#if 0
 unsigned afs_vnode_update_timeout = 10;
+#endif  /*  0  */
 
 #define afs_breakring_space(server) \
 	CIRC_SPACE((server)->cb_break_head, (server)->cb_break_tail,	\
@@ -125,6 +127,9 @@ static void afs_break_callback(struct afs_server *server,
 		spin_unlock(&server->cb_lock);
 
 		queue_work(afs_callback_update_worker, &vnode->cb_broken_work);
+		if (list_empty(&vnode->granted_locks) &&
+		    !list_empty(&vnode->pending_locks))
+			afs_lock_may_be_available(vnode);
 		spin_unlock(&vnode->lock);
 	}
 }

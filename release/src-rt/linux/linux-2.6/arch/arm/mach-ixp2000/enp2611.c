@@ -26,19 +26,18 @@
 #include <linux/bitops.h>
 #include <linux/pci.h>
 #include <linux/ioport.h>
-#include <linux/slab.h>
 #include <linux/delay.h>
 #include <linux/serial.h>
 #include <linux/tty.h>
 #include <linux/serial_core.h>
 #include <linux/platform_device.h>
+#include <linux/io.h>
 
-#include <asm/io.h>
 #include <asm/irq.h>
 #include <asm/pgtable.h>
 #include <asm/page.h>
 #include <asm/system.h>
-#include <asm/hardware.h>
+#include <mach/hardware.h>
 #include <asm/mach-types.h>
 
 #include <asm/mach/pci.h>
@@ -70,17 +69,17 @@ static struct map_desc enp2611_io_desc[] __initdata = {
 		.virtual	= ENP2611_CALEB_VIRT_BASE,
 		.pfn		= __phys_to_pfn(ENP2611_CALEB_PHYS_BASE),
 		.length		= ENP2611_CALEB_SIZE,
-		.type		= MT_DEVICE_IXP2000,
+		.type		= MT_DEVICE,
 	}, {
 		.virtual	= ENP2611_PM3386_0_VIRT_BASE,
 		.pfn		= __phys_to_pfn(ENP2611_PM3386_0_PHYS_BASE),
 		.length		= ENP2611_PM3386_0_SIZE,
-		.type		= MT_DEVICE_IXP2000,
+		.type		= MT_DEVICE,
 	}, {
 		.virtual	= ENP2611_PM3386_1_VIRT_BASE,
 		.pfn		= __phys_to_pfn(ENP2611_PM3386_1_PHYS_BASE),
 		.length		= ENP2611_PM3386_1_SIZE,
-		.type		= MT_DEVICE_IXP2000,
+		.type		= MT_DEVICE,
 	}
 };
 
@@ -254,8 +253,6 @@ static void __init enp2611_init_machine(void)
 
 MACHINE_START(ENP2611, "Radisys ENP-2611 PCI network processor board")
 	/* Maintainer: Lennert Buytenhek <buytenh@wantstofly.org> */
-	.phys_io	= IXP2000_UART_PHYS_BASE,
-	.io_pg_offst	= ((IXP2000_UART_VIRT_BASE) >> 18) & 0xfffc,
 	.boot_params	= 0x00000100,
 	.map_io		= enp2611_map_io,
 	.init_irq	= ixp2000_init_irq,

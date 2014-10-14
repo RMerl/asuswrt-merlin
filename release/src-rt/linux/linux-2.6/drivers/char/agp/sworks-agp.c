@@ -52,28 +52,20 @@ static int serverworks_create_page_map(struct serverworks_page_map *page_map)
 	if (page_map->real == NULL) {
 		return -ENOMEM;
 	}
-	SetPageReserved(virt_to_page(page_map->real));
-	global_cache_flush();
-	page_map->remapped = ioremap_nocache(virt_to_gart(page_map->real),
-					    PAGE_SIZE);
-	if (page_map->remapped == NULL) {
-		ClearPageReserved(virt_to_page(page_map->real));
-		free_page((unsigned long) page_map->real);
-		page_map->real = NULL;
-		return -ENOMEM;
-	}
-	global_cache_flush();
+
+	set_memory_uc((unsigned long)page_map->real, 1);
+	page_map->remapped = page_map->real;
 
 	for (i = 0; i < PAGE_SIZE / sizeof(unsigned long); i++)
 		writel(agp_bridge->scratch_page, page_map->remapped+i);
+		/* Red Pen: Everyone else does pci posting flush here */
 
 	return 0;
 }
 
 static void serverworks_free_page_map(struct serverworks_page_map *page_map)
 {
-	iounmap(page_map->remapped);
-	ClearPageReserved(virt_to_page(page_map->real));
+	set_memory_wb((unsigned long)page_map->real, 1);
 	free_page((unsigned long) page_map->real);
 }
 
@@ -163,7 +155,7 @@ static int serverworks_create_gatt_table(struct agp_bridge_data *bridge)
 	/* Create a fake scratch directory */
 	for (i = 0; i < 1024; i++) {
 		writel(agp_bridge->scratch_page, serverworks_private.scratch_dir.remapped+i);
-		writel(virt_to_gart(serverworks_private.scratch_dir.real) | 1, page_dir.remapped+i);
+		writel(virt_to_phys(serverworks_private.scratch_dir.real) | 1, page_dir.remapped+i);
 	}
 
 	retval = serverworks_create_gatt_pages(value->num_entries / 1024);
@@ -175,7 +167,7 @@ static int serverworks_create_gatt_table(struct agp_bridge_data *bridge)
 
 	agp_bridge->gatt_table_real = (u32 *)page_dir.real;
 	agp_bridge->gatt_table = (u32 __iomem *)page_dir.remapped;
-	agp_bridge->gatt_bus_addr = virt_to_gart(page_dir.real);
+	agp_bridge->gatt_bus_addr = virt_to_phys(page_dir.real);
 
 	/* Get the address for the gart region.
 	 * This is a bus address even on the alpha, b/c its
@@ -187,7 +179,7 @@ static int serverworks_create_gatt_table(struct agp_bridge_data *bridge)
 
 	/* Calculate the agp offset */
 	for (i = 0; i < value->num_entries / 1024; i++)
-		writel(virt_to_gart(serverworks_private.gatt_pages[i]->real)|1, page_dir.remapped+i);
+		writel(virt_to_phys(serverworks_private.gatt_pages[i]->real)|1, page_dir.remapped+i);
 
 	return 0;
 }
@@ -237,7 +229,7 @@ static int serverworks_fetch_size(void)
  * This routine could be implemented by taking the addresses
  * written to the GATT, and flushing them individually.  However
  * currently it just flushes the whole table.  Which is probably
- * more efficent, since agp_memory blocks can be a large number of
+ * more efficient, since agp_memory blocks can be a large number of
  * entries.
  */
 static void serverworks_tlbflush(struct agp_memory *temp)
@@ -249,7 +241,8 @@ static void serverworks_tlbflush(struct agp_memory *temp)
 	while (readb(serverworks_private.registers+SVWRKS_POSTFLUSH) == 1) {
 		cpu_relax();
 		if (time_after(jiffies, timeout)) {
-			printk(KERN_ERR PFX "TLB post flush took more than 3 seconds\n");
+			dev_err(&serverworks_private.svrwrks_dev->dev,
+				"TLB post flush took more than 3 seconds\n");
 			break;
 		}
 	}
@@ -259,7 +252,8 @@ static void serverworks_tlbflush(struct agp_memory *temp)
 	while (readl(serverworks_private.registers+SVWRKS_DIRFLUSH) == 1) {
 		cpu_relax();
 		if (time_after(jiffies, timeout)) {
-			printk(KERN_ERR PFX "TLB Dir flush took more than 3 seconds\n");
+			dev_err(&serverworks_private.svrwrks_dev->dev,
+				"TLB Dir flush took more than 3 seconds\n");
 			break;
 		}
 	}
@@ -279,7 +273,7 @@ static int serverworks_configure(void)
 	temp = (temp & PCI_BASE_ADDRESS_MEM_MASK);
 	serverworks_private.registers = (volatile u8 __iomem *) ioremap(temp, 4096);
 	if (!serverworks_private.registers) {
-		printk (KERN_ERR PFX "Unable to ioremap() memory.\n");
+		dev_err(&agp_bridge->dev->dev, "can't ioremap(%#x)\n", temp);
 		return -ENOMEM;
 	}
 
@@ -347,15 +341,17 @@ static int serverworks_insert_memory(struct agp_memory *mem,
 		j++;
 	}
 
-	if (mem->is_flushed == FALSE) {
+	if (!mem->is_flushed) {
 		global_cache_flush();
-		mem->is_flushed = TRUE;
+		mem->is_flushed = true;
 	}
 
 	for (i = 0, j = pg_start; i < mem->page_count; i++, j++) {
 		addr = (j * PAGE_SIZE) + agp_bridge->gart_bus_addr;
 		cur_gatt = SVRWRKS_GET_GATT(addr);
-		writel(agp_bridge->driver->mask_memory(agp_bridge, mem->memory[i], mem->type), cur_gatt+GET_GATT_OFF(addr));
+		writel(agp_bridge->driver->mask_memory(agp_bridge, 
+				page_to_phys(mem->pages[i]), mem->type),
+		       cur_gatt+GET_GATT_OFF(addr));
 	}
 	serverworks_tlbflush(mem);
 	return 0;
@@ -420,7 +416,7 @@ static void serverworks_agp_enable(struct agp_bridge_data *bridge, u32 mode)
 			       bridge->capndx + PCI_AGP_COMMAND,
 			       command);
 
-	agp_device_command(command, 0);
+	agp_device_command(command, false);
 }
 
 static const struct agp_bridge_driver sworks_driver = {
@@ -443,7 +439,9 @@ static const struct agp_bridge_driver sworks_driver = {
 	.alloc_by_type		= agp_generic_alloc_by_type,
 	.free_by_type		= agp_generic_free_by_type,
 	.agp_alloc_page		= agp_generic_alloc_page,
+	.agp_alloc_pages	= agp_generic_alloc_pages,
 	.agp_destroy_page	= agp_generic_destroy_page,
+	.agp_destroy_pages	= agp_generic_destroy_pages,
 	.agp_type_to_mask_type  = agp_generic_type_to_mask_type,
 };
 
@@ -459,7 +457,7 @@ static int __devinit agp_serverworks_probe(struct pci_dev *pdev,
 
 	switch (pdev->device) {
 	case 0x0006:
-		printk (KERN_ERR PFX "ServerWorks CNB20HE is unsupported due to lack of documentation.\n");
+		dev_err(&pdev->dev, "ServerWorks CNB20HE is unsupported due to lack of documentation\n");
 		return -ENODEV;
 
 	case PCI_DEVICE_ID_SERVERWORKS_HE:
@@ -469,8 +467,8 @@ static int __devinit agp_serverworks_probe(struct pci_dev *pdev,
 
 	default:
 		if (cap_ptr)
-			printk(KERN_ERR PFX "Unsupported Serverworks chipset "
-					"(device id: %04x)\n", pdev->device);
+			dev_err(&pdev->dev, "unsupported Serverworks chipset "
+				"[%04x/%04x]\n", pdev->vendor, pdev->device);
 		return -ENODEV;
 	}
 
@@ -478,8 +476,7 @@ static int __devinit agp_serverworks_probe(struct pci_dev *pdev,
 	bridge_dev = pci_get_bus_and_slot((unsigned int)pdev->bus->number,
 			PCI_DEVFN(0, 1));
 	if (!bridge_dev) {
-		printk(KERN_INFO PFX "Detected a Serverworks chipset "
-		       "but could not find the secondary device.\n");
+		dev_info(&pdev->dev, "can't find secondary device\n");
 		return -ENODEV;
 	}
 
@@ -490,8 +487,8 @@ static int __devinit agp_serverworks_probe(struct pci_dev *pdev,
 	if (temp & PCI_BASE_ADDRESS_MEM_TYPE_64) {
 		pci_read_config_dword(pdev, SVWRKS_APSIZE + 4, &temp2);
 		if (temp2 != 0) {
-			printk(KERN_INFO PFX "Detected 64 bit aperture address, "
-			       "but top bits are not zero.  Disabling agp\n");
+			dev_info(&pdev->dev, "64 bit aperture address, "
+				 "but top bits are not zero; disabling AGP\n");
 			return -ENODEV;
 		}
 		serverworks_private.mm_addr_ofs = 0x18;
@@ -503,8 +500,8 @@ static int __devinit agp_serverworks_probe(struct pci_dev *pdev,
 		pci_read_config_dword(pdev,
 				serverworks_private.mm_addr_ofs + 4, &temp2);
 		if (temp2 != 0) {
-			printk(KERN_INFO PFX "Detected 64 bit MMIO address, "
-			       "but top bits are not zero.  Disabling agp\n");
+			dev_info(&pdev->dev, "64 bit MMIO address, but top "
+				 "bits are not zero; disabling AGP\n");
 			return -ENODEV;
 		}
 	}

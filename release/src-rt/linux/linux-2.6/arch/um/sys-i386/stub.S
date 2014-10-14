@@ -1,12 +1,12 @@
-#include "uml-config.h"
+#include "as-layout.h"
 
 	.globl syscall_stub
-.section .__syscall_stub, "x"
+.section .__syscall_stub, "ax"
 
 	.globl batch_syscall_stub
 batch_syscall_stub:
 	/* load pointer to first operation */
-	mov	$(UML_CONFIG_STUB_DATA+8), %esp
+	mov	$(STUB_DATA+8), %esp
 
 again:
 	/* load length of additional data */
@@ -14,12 +14,12 @@ again:
 
 	/* if(length == 0) : end of list */
 	/* write possible 0 to header */
-	mov	%eax, UML_CONFIG_STUB_DATA+4
+	mov	%eax, STUB_DATA+4
 	cmpl	$0, %eax
 	jz	done
 
 	/* save current pointer */
-	mov	%esp, UML_CONFIG_STUB_DATA+4
+	mov	%esp, STUB_DATA+4
 
 	/* skip additional data */
 	add	%eax, %esp
@@ -45,7 +45,7 @@ again:
 
 done:
 	/* save return value */
-	mov	%eax, UML_CONFIG_STUB_DATA
+	mov	%eax, STUB_DATA
 
 	/* stop */
 	int3

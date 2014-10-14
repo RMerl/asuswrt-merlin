@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006 QLogic, Inc. All rights reserved.
+ * Copyright (c) 2006, 2007 QLogic Corporation. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
@@ -32,6 +32,7 @@
 
 #include <linux/module.h>
 #include <linux/vmalloc.h>
+#include <linux/slab.h>
 #include <linux/mm.h>
 #include <linux/errno.h>
 #include <asm/pgtable.h>
@@ -74,7 +75,7 @@ static void ipath_vma_close(struct vm_area_struct *vma)
 	kref_put(&ip->ref, ipath_release_mmap_info);
 }
 
-static struct vm_operations_struct ipath_vm_ops = {
+static const struct vm_operations_struct ipath_vm_ops = {
 	.open =     ipath_vma_open,
 	.close =    ipath_vma_close,
 };

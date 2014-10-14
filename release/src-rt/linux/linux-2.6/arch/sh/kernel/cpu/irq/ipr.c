@@ -8,7 +8,7 @@
  *
  * Supported system:
  *	On-chip supporting modules (TMU, RTC, etc.).
- *	On-chip supporting modules for SH7709/SH7709A/SH7729/SH7300.
+ *	On-chip supporting modules for SH7709/SH7709A/SH7729.
  *	Hitachi SolutionEngine external I/O:
  *		MS7709SE01, MS7709ASE01, and MS7750SE01
  *
@@ -17,67 +17,67 @@
  * for more details.
  */
 #include <linux/init.h>
-#include <linux/irq.h>
-#include <linux/module.h>
-#include <linux/io.h>
 #include <linux/interrupt.h>
+#include <linux/io.h>
+#include <linux/irq.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/topology.h>
 
-static void disable_ipr_irq(unsigned int irq)
+static inline struct ipr_desc *get_ipr_desc(struct irq_data *data)
 {
-	struct ipr_data *p = get_irq_chip_data(irq);
+	struct irq_chip *chip = irq_data_get_irq_chip(data);
+	return container_of(chip, struct ipr_desc, chip);
+}
+
+static void disable_ipr_irq(struct irq_data *data)
+{
+	struct ipr_data *p = irq_data_get_irq_chip_data(data);
+	unsigned long addr = get_ipr_desc(data)->ipr_offsets[p->ipr_idx];
 	/* Set the priority in IPR to 0 */
-	ctrl_outw(ctrl_inw(p->addr) & (0xffff ^ (0xf << p->shift)), p->addr);
+	__raw_writew(__raw_readw(addr) & (0xffff ^ (0xf << p->shift)), addr);
+	(void)__raw_readw(addr);	/* Read back to flush write posting */
 }
 
-static void enable_ipr_irq(unsigned int irq)
+static void enable_ipr_irq(struct irq_data *data)
 {
-	struct ipr_data *p = get_irq_chip_data(irq);
+	struct ipr_data *p = irq_data_get_irq_chip_data(data);
+	unsigned long addr = get_ipr_desc(data)->ipr_offsets[p->ipr_idx];
 	/* Set priority in IPR back to original value */
-	ctrl_outw(ctrl_inw(p->addr) | (p->priority << p->shift), p->addr);
+	__raw_writew(__raw_readw(addr) | (p->priority << p->shift), addr);
 }
 
-static struct irq_chip ipr_irq_chip = {
-	.name		= "IPR",
-	.mask		= disable_ipr_irq,
-	.unmask		= enable_ipr_irq,
-	.mask_ack	= disable_ipr_irq,
-};
-
-unsigned int map_ipridx_to_addr(int idx) __attribute__ ((weak));
-unsigned int map_ipridx_to_addr(int idx)
-{
-	return 0;
-}
-
-void make_ipr_irq(struct ipr_data *table, unsigned int nr_irqs)
+/*
+ * The shift value is now the number of bits to shift, not the number of
+ * bits/4. This is to make it easier to read the value directly from the
+ * datasheets. The IPR address is calculated using the ipr_offset table.
+ */
+void register_ipr_controller(struct ipr_desc *desc)
 {
 	int i;
 
-	for (i = 0; i < nr_irqs; i++) {
-		unsigned int irq = table[i].irq;
+	desc->chip.irq_mask = disable_ipr_irq;
+	desc->chip.irq_unmask = enable_ipr_irq;
 
-		if (!irq)
-			irq = table[i].irq = i;
+	for (i = 0; i < desc->nr_irqs; i++) {
+		struct ipr_data *p = desc->ipr_data + i;
+		int res;
 
-		/* could the IPR index be mapped, if not we ignore this */
-		if (!table[i].addr) {
-			table[i].addr = map_ipridx_to_addr(table[i].ipr_idx);
-			if (!table[i].addr)
-				continue;
+		BUG_ON(p->ipr_idx >= desc->nr_offsets);
+		BUG_ON(!desc->ipr_offsets[p->ipr_idx]);
+
+		res = irq_alloc_desc_at(p->irq, numa_node_id());
+		if (unlikely(res != p->irq && res != -EEXIST)) {
+			printk(KERN_INFO "can not get irq_desc for %d\n",
+			       p->irq);
+			continue;
 		}
 
-		disable_irq_nosync(irq);
-		set_irq_chip_and_handler_name(irq, &ipr_irq_chip,
-				      handle_level_irq, "level");
-		set_irq_chip_data(irq, &table[i]);
-		enable_ipr_irq(irq);
+		disable_irq_nosync(p->irq);
+		irq_set_chip_and_handler_name(p->irq, &desc->chip,
+					      handle_level_irq, "level");
+		irq_set_chip_data(p->irq, p);
+		disable_ipr_irq(irq_get_irq_data(p->irq));
 	}
 }
-EXPORT_SYMBOL(make_ipr_irq);
-
-#if !defined(CONFIG_CPU_HAS_PINT_IRQ)
-int ipr_irq_demux(int irq)
-{
-	return irq;
-}
-#endif
+EXPORT_SYMBOL(register_ipr_controller);

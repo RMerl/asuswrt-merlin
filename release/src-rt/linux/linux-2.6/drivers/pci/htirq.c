@@ -10,7 +10,6 @@
 #include <linux/pci.h>
 #include <linux/spinlock.h>
 #include <linux/slab.h>
-#include <linux/gfp.h>
 #include <linux/htirq.h>
 
 /* Global ht irq lock.
@@ -35,7 +34,7 @@ struct ht_irq_cfg {
 
 void write_ht_irq_msg(unsigned int irq, struct ht_irq_msg *msg)
 {
-	struct ht_irq_cfg *cfg = get_irq_data(irq);
+	struct ht_irq_cfg *cfg = irq_get_handler_data(irq);
 	unsigned long flags;
 	spin_lock_irqsave(&ht_irq_lock, flags);
 	if (cfg->msg.address_lo != msg->address_lo) {
@@ -54,32 +53,26 @@ void write_ht_irq_msg(unsigned int irq, struct ht_irq_msg *msg)
 
 void fetch_ht_irq_msg(unsigned int irq, struct ht_irq_msg *msg)
 {
-	struct ht_irq_cfg *cfg = get_irq_data(irq);
+	struct ht_irq_cfg *cfg = irq_get_handler_data(irq);
 	*msg = cfg->msg;
 }
 
-void mask_ht_irq(unsigned int irq)
+void mask_ht_irq(struct irq_data *data)
 {
-	struct ht_irq_cfg *cfg;
-	struct ht_irq_msg msg;
+	struct ht_irq_cfg *cfg = irq_data_get_irq_handler_data(data);
+	struct ht_irq_msg msg = cfg->msg;
 
-	cfg = get_irq_data(irq);
-
-	msg = cfg->msg;
 	msg.address_lo |= 1;
-	write_ht_irq_msg(irq, &msg);
+	write_ht_irq_msg(data->irq, &msg);
 }
 
-void unmask_ht_irq(unsigned int irq)
+void unmask_ht_irq(struct irq_data *data)
 {
-	struct ht_irq_cfg *cfg;
-	struct ht_irq_msg msg;
+	struct ht_irq_cfg *cfg = irq_data_get_irq_handler_data(data);
+	struct ht_irq_msg msg = cfg->msg;
 
-	cfg = get_irq_data(irq);
-
-	msg = cfg->msg;
 	msg.address_lo &= ~1;
-	write_ht_irq_msg(irq, &msg);
+	write_ht_irq_msg(data->irq, &msg);
 }
 
 /**
@@ -98,6 +91,7 @@ int __ht_create_irq(struct pci_dev *dev, int idx, ht_irq_update_t *update)
 	int max_irq;
 	int pos;
 	int irq;
+	int node;
 
 	pos = pci_find_ht_capability(dev, HT_CAPTYPE_IRQ);
 	if (!pos)
@@ -125,12 +119,14 @@ int __ht_create_irq(struct pci_dev *dev, int idx, ht_irq_update_t *update)
 	cfg->msg.address_lo = 0xffffffff;
 	cfg->msg.address_hi = 0xffffffff;
 
-	irq = create_irq();
-	if (irq < 0) {
+	node = dev_to_node(&dev->dev);
+	irq = create_irq_nr(0, node);
+
+	if (irq <= 0) {
 		kfree(cfg);
 		return -EBUSY;
 	}
-	set_irq_data(irq, cfg);
+	irq_set_handler_data(irq, cfg);
 
 	if (arch_setup_ht_irq(irq, dev) < 0) {
 		ht_destroy_irq(irq);
@@ -157,6 +153,7 @@ int ht_create_irq(struct pci_dev *dev, int idx)
 
 /**
  * ht_destroy_irq - destroy an irq created with ht_create_irq
+ * @irq: irq to be destroyed
  *
  * This reverses ht_create_irq removing the specified irq from
  * existence.  The irq should be free before this happens.
@@ -165,9 +162,9 @@ void ht_destroy_irq(unsigned int irq)
 {
 	struct ht_irq_cfg *cfg;
 
-	cfg = get_irq_data(irq);
-	set_irq_chip(irq, NULL);
-	set_irq_data(irq, NULL);
+	cfg = irq_get_handler_data(irq);
+	irq_set_chip(irq, NULL);
+	irq_set_handler_data(irq, NULL);
 	destroy_irq(irq);
 
 	kfree(cfg);

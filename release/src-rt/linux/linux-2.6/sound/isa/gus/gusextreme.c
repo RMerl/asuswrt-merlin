@@ -1,6 +1,6 @@
 /*
  *  Driver for Gravis UltraSound Extreme soundcards
- *  Copyright (c) by Jaroslav Kysela <perex@suse.cz>
+ *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  *
  *
  *   This program is free software; you can redistribute it and/or modify
@@ -19,7 +19,6 @@
  *
  */
 
-#include <sound/driver.h>
 #include <linux/init.h>
 #include <linux/err.h>
 #include <linux/isa.h>
@@ -41,7 +40,7 @@
 #define DEV_NAME "gusextreme"
 
 MODULE_DESCRIPTION(CRD_NAME);
-MODULE_AUTHOR("Jaroslav Kysela <perex@suse.cz>");
+MODULE_AUTHOR("Jaroslav Kysela <perex@perex.cz>");
 MODULE_LICENSE("GPL");
 MODULE_SUPPORTED_DEVICE("{{Gravis,UltraSound Extreme}}");
 
@@ -96,7 +95,7 @@ static int __devinit snd_gusextreme_match(struct device *dev, unsigned int n)
 }
 
 static int __devinit snd_gusextreme_es1688_create(struct snd_card *card,
-		struct device *dev, unsigned int n, struct snd_es1688 **rchip)
+		struct snd_es1688 *chip, struct device *dev, unsigned int n)
 {
 	static long possible_ports[] = {0x220, 0x240, 0x260};
 	static int possible_irqs[] = {5, 9, 10, 7, -1};
@@ -107,29 +106,27 @@ static int __devinit snd_gusextreme_es1688_create(struct snd_card *card,
 	if (irq[n] == SNDRV_AUTO_IRQ) {
 		irq[n] = snd_legacy_find_free_irq(possible_irqs);
 		if (irq[n] < 0) {
-			snd_printk(KERN_ERR "%s: unable to find a free IRQ "
-				"for ES1688\n", dev->bus_id);
+			dev_err(dev, "unable to find a free IRQ for ES1688\n");
 			return -EBUSY;
 		}
 	}
 	if (dma8[n] == SNDRV_AUTO_DMA) {
 		dma8[n] = snd_legacy_find_free_dma(possible_dmas);
 		if (dma8[n] < 0) {
-			snd_printk(KERN_ERR "%s: unable to find a free DMA "
-				"for ES1688\n", dev->bus_id);
+			dev_err(dev, "unable to find a free DMA for ES1688\n");
 			return -EBUSY;
 		}
 	}
 
 	if (port[n] != SNDRV_AUTO_PORT)
-		return snd_es1688_create(card, port[n], mpu_port[n], irq[n],
-				mpu_irq[n], dma8[n], ES1688_HW_1688, rchip);
+		return snd_es1688_create(card, chip, port[n], mpu_port[n],
+				irq[n], mpu_irq[n], dma8[n], ES1688_HW_1688);
 
 	i = 0;
 	do {
 		port[n] = possible_ports[i];
-		error = snd_es1688_create(card, port[n], mpu_port[n], irq[n],
-				mpu_irq[n], dma8[n], ES1688_HW_1688, rchip);
+		error = snd_es1688_create(card, chip, port[n], mpu_port[n],
+				irq[n], mpu_irq[n], dma8[n], ES1688_HW_1688);
 	} while (error < 0 && ++i < ARRAY_SIZE(possible_ports));
 
 	return error;
@@ -144,16 +141,14 @@ static int __devinit snd_gusextreme_gus_card_create(struct snd_card *card,
 	if (gf1_irq[n] == SNDRV_AUTO_IRQ) {
 		gf1_irq[n] = snd_legacy_find_free_irq(possible_irqs);
 		if (gf1_irq[n] < 0) {
-			snd_printk(KERN_ERR "%s: unable to find a free IRQ "
-				"for GF1\n", dev->bus_id);
+			dev_err(dev, "unable to find a free IRQ for GF1\n");
 			return -EBUSY;
 		}
 	}
 	if (dma1[n] == SNDRV_AUTO_DMA) {
 		dma1[n] = snd_legacy_find_free_dma(possible_dmas);
 		if (dma1[n] < 0) {
-			snd_printk(KERN_ERR "%s: unable to find a free DMA "
-				"for GF1\n", dev->bus_id);
+			dev_err(dev, "unable to find a free DMA for GF1\n");
 			return -EBUSY;
 		}
 	}
@@ -211,9 +206,8 @@ static int __devinit snd_gusextreme_detect(struct snd_gus_card *gus,
 	return 0;
 }
 
-static int __devinit snd_gusextreme_mixer(struct snd_es1688 *chip)
+static int __devinit snd_gusextreme_mixer(struct snd_card *card)
 {
-	struct snd_card *card = chip->card;
 	struct snd_ctl_elem_id id1, id2;
 	int error;
 
@@ -246,9 +240,12 @@ static int __devinit snd_gusextreme_probe(struct device *dev, unsigned int n)
 	struct snd_opl3 *opl3;
 	int error;
 
-	card = snd_card_new(index[n], id[n], THIS_MODULE, 0);
-	if (!card)
-		return -EINVAL;
+	error = snd_card_create(index[n], id[n], THIS_MODULE,
+				sizeof(struct snd_es1688), &card);
+	if (error < 0)
+		return error;
+
+	es1688 = card->private_data;
 
 	if (mpu_port[n] == SNDRV_AUTO_PORT)
 		mpu_port[n] = 0;
@@ -256,7 +253,7 @@ static int __devinit snd_gusextreme_probe(struct device *dev, unsigned int n)
 	if (mpu_irq[n] > 15)
 		mpu_irq[n] = -1;
 
-	error = snd_gusextreme_es1688_create(card, dev, n, &es1688);
+	error = snd_gusextreme_es1688_create(card, es1688, dev, n);
 	if (error < 0)
 		goto out;
 
@@ -279,17 +276,17 @@ static int __devinit snd_gusextreme_probe(struct device *dev, unsigned int n)
 
 	error = -ENODEV;
 	if (!gus->ess_flag) {
-		snd_printk(KERN_ERR "%s: GUS Extreme soundcard was not "
-			"detected at 0x%lx\n", dev->bus_id, gus->gf1.port);
+		dev_err(dev, "GUS Extreme soundcard was not "
+			"detected at 0x%lx\n", gus->gf1.port);
 		goto out;
 	}
 	gus->codec_flag = 1;
 
-	error = snd_es1688_pcm(es1688, 0, NULL);
+	error = snd_es1688_pcm(card, es1688, 0, NULL);
 	if (error < 0)
 		goto out;
 
-	error = snd_es1688_mixer(es1688);
+	error = snd_es1688_mixer(card, es1688);
 	if (error < 0)
 		goto out;
 
@@ -305,14 +302,13 @@ static int __devinit snd_gusextreme_probe(struct device *dev, unsigned int n)
 	if (error < 0)
 		goto out;
 
-	error = snd_gusextreme_mixer(es1688);
+	error = snd_gusextreme_mixer(card);
 	if (error < 0)
 		goto out;
 
 	if (snd_opl3_create(card, es1688->port, es1688->port + 2,
 			OPL3_HW_OPL3, 0, &opl3) < 0)
-		printk(KERN_ERR "%s: opl3 not detected at 0x%lx\n",
-			dev->bus_id, es1688->port);
+		dev_warn(dev, "opl3 not detected at 0x%lx\n", es1688->port);
 	else {
 		error = snd_opl3_hwdep_new(opl3, 0, 2, NULL);
 		if (error < 0)
@@ -354,7 +350,7 @@ static int __devexit snd_gusextreme_remove(struct device *dev, unsigned int n)
 static struct isa_driver snd_gusextreme_driver = {
 	.match		= snd_gusextreme_match,
 	.probe		= snd_gusextreme_probe,
-	.remove		= snd_gusextreme_remove,
+	.remove		= __devexit_p(snd_gusextreme_remove),
 #if 0	/* FIXME */
 	.suspend	= snd_gusextreme_suspend,
 	.resume		= snd_gusextreme_resume,

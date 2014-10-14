@@ -24,13 +24,14 @@
 #include <linux/io.h>
 #include <linux/module.h>
 #include <linux/types.h>
+#include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/errno.h>
 #include <linux/ioport.h>
 #include <linux/interrupt.h>
 #include <linux/phy.h>
-#include <linux/platform_device.h>
-#include <asm/of_platform.h>
+#include <linux/of_mdio.h>
+#include <linux/of_platform.h>
 
 #define DELAY 1
 
@@ -39,6 +40,7 @@ static void __iomem *gpio_regs;
 struct gpio_priv {
 	int mdc_pin;
 	int mdio_pin;
+	int mdio_irqs[PHY_MAX_ADDR];
 };
 
 #define MDC_PIN(bus)	(((struct gpio_priv *)bus->priv)->mdc_pin)
@@ -214,60 +216,35 @@ static int gpio_mdio_reset(struct mii_bus *bus)
 }
 
 
-static int __devinit gpio_mdio_probe(struct of_device *ofdev,
-				     const struct of_device_id *match)
+static int __devinit gpio_mdio_probe(struct platform_device *ofdev)
 {
 	struct device *dev = &ofdev->dev;
-	struct device_node *np = ofdev->node;
-	struct device_node *gpio_np;
+	struct device_node *np = ofdev->dev.of_node;
 	struct mii_bus *new_bus;
-	struct resource res;
 	struct gpio_priv *priv;
 	const unsigned int *prop;
-	int err = 0;
-	int i;
+	int err;
 
-	gpio_np = of_find_compatible_node(NULL, "gpio", "1682m-gpio");
-
-	if (!gpio_np)
-		return -ENODEV;
-
-	err = of_address_to_resource(gpio_np, 0, &res);
-	of_node_put(gpio_np);
-
-	if (err)
-		return -EINVAL;
-
-	if (!gpio_regs)
-		gpio_regs = ioremap(res.start, 0x100);
-
-	if (!gpio_regs)
-		return -EPERM;
-
+	err = -ENOMEM;
 	priv = kzalloc(sizeof(struct gpio_priv), GFP_KERNEL);
-	if (priv == NULL)
-		return -ENOMEM;
+	if (!priv)
+		goto out;
 
-	new_bus = kzalloc(sizeof(struct mii_bus), GFP_KERNEL);
+	new_bus = mdiobus_alloc();
 
-	if (new_bus == NULL)
-		return -ENOMEM;
+	if (!new_bus)
+		goto out_free_priv;
 
-	new_bus->name = "pasemi gpio mdio bus",
-	new_bus->read = &gpio_mdio_read,
-	new_bus->write = &gpio_mdio_write,
-	new_bus->reset = &gpio_mdio_reset,
+	new_bus->name = "pasemi gpio mdio bus";
+	new_bus->read = &gpio_mdio_read;
+	new_bus->write = &gpio_mdio_write;
+	new_bus->reset = &gpio_mdio_reset;
 
 	prop = of_get_property(np, "reg", NULL);
-	new_bus->id = *prop;
+	snprintf(new_bus->id, MII_BUS_ID_SIZE, "%x", *prop);
 	new_bus->priv = priv;
 
-	new_bus->phy_mask = 0;
-
-	new_bus->irq = kmalloc(sizeof(int)*PHY_MAX_ADDR, GFP_KERNEL);
-	for(i = 0; i < PHY_MAX_ADDR; ++i)
-		new_bus->irq[i] = irq_create_mapping(NULL, 10);
-
+	new_bus->irq = priv->mdio_irqs;
 
 	prop = of_get_property(np, "mdc-pin", NULL);
 	priv->mdc_pin = *prop;
@@ -275,27 +252,29 @@ static int __devinit gpio_mdio_probe(struct of_device *ofdev,
 	prop = of_get_property(np, "mdio-pin", NULL);
 	priv->mdio_pin = *prop;
 
-	new_bus->dev = dev;
+	new_bus->parent = dev;
 	dev_set_drvdata(dev, new_bus);
 
-	err = mdiobus_register(new_bus);
+	err = of_mdiobus_register(new_bus, np);
 
-	if (0 != err) {
+	if (err != 0) {
 		printk(KERN_ERR "%s: Cannot register as MDIO bus, err %d\n",
 				new_bus->name, err);
-		goto bus_register_fail;
+		goto out_free_irq;
 	}
 
 	return 0;
 
-bus_register_fail:
+out_free_irq:
 	kfree(new_bus);
-
+out_free_priv:
+	kfree(priv);
+out:
 	return err;
 }
 
 
-static int gpio_mdio_remove(struct of_device *dev)
+static int gpio_mdio_remove(struct platform_device *dev)
 {
 	struct mii_bus *bus = dev_get_drvdata(&dev->dev);
 
@@ -305,7 +284,7 @@ static int gpio_mdio_remove(struct of_device *dev)
 
 	kfree(bus->priv);
 	bus->priv = NULL;
-	kfree(bus);
+	mdiobus_free(bus);
 
 	return 0;
 }
@@ -317,23 +296,47 @@ static struct of_device_id gpio_mdio_match[] =
 	},
 	{},
 };
+MODULE_DEVICE_TABLE(of, gpio_mdio_match);
 
-static struct of_platform_driver gpio_mdio_driver =
+static struct platform_driver gpio_mdio_driver =
 {
-	.name		= "gpio-mdio-bitbang",
-	.match_table	= gpio_mdio_match,
 	.probe		= gpio_mdio_probe,
 	.remove		= gpio_mdio_remove,
+	.driver = {
+		.name = "gpio-mdio-bitbang",
+		.owner = THIS_MODULE,
+		.of_match_table = gpio_mdio_match,
+	},
 };
 
 int gpio_mdio_init(void)
 {
-	return of_register_platform_driver(&gpio_mdio_driver);
+	struct device_node *np;
+
+	np = of_find_compatible_node(NULL, NULL, "1682m-gpio");
+	if (!np)
+		np = of_find_compatible_node(NULL, NULL,
+					     "pasemi,pwrficient-gpio");
+	if (!np)
+		return -ENODEV;
+	gpio_regs = of_iomap(np, 0);
+	of_node_put(np);
+
+	if (!gpio_regs)
+		return -ENODEV;
+
+	return platform_driver_register(&gpio_mdio_driver);
 }
+module_init(gpio_mdio_init);
 
 void gpio_mdio_exit(void)
 {
-	of_unregister_platform_driver(&gpio_mdio_driver);
+	platform_driver_unregister(&gpio_mdio_driver);
+	if (gpio_regs)
+		iounmap(gpio_regs);
 }
-device_initcall(gpio_mdio_init);
+module_exit(gpio_mdio_exit);
 
+MODULE_LICENSE("GPL");
+MODULE_AUTHOR("Olof Johansson <olof@lixom.net>");
+MODULE_DESCRIPTION("Driver for MDIO over GPIO on PA Semi PWRficient-based boards");

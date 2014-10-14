@@ -58,7 +58,7 @@ static int stv0297_writereg(struct stv0297_state *state, u8 reg, u8 data)
 
 	if (ret != 1)
 		dprintk("%s: writereg error (reg == 0x%02x, val == 0x%02x, "
-			"ret == %i)\n", __FUNCTION__, reg, data, ret);
+			"ret == %i)\n", __func__, reg, data, ret);
 
 	return (ret != 1) ? -1 : 0;
 }
@@ -75,16 +75,16 @@ static int stv0297_readreg(struct stv0297_state *state, u8 reg)
 	// this device needs a STOP between the register and data
 	if (state->config->stop_during_read) {
 		if ((ret = i2c_transfer(state->i2c, &msg[0], 1)) != 1) {
-			dprintk("%s: readreg error (reg == 0x%02x, ret == %i)\n", __FUNCTION__, reg, ret);
+			dprintk("%s: readreg error (reg == 0x%02x, ret == %i)\n", __func__, reg, ret);
 			return -1;
 		}
 		if ((ret = i2c_transfer(state->i2c, &msg[1], 1)) != 1) {
-			dprintk("%s: readreg error (reg == 0x%02x, ret == %i)\n", __FUNCTION__, reg, ret);
+			dprintk("%s: readreg error (reg == 0x%02x, ret == %i)\n", __func__, reg, ret);
 			return -1;
 		}
 	} else {
 		if ((ret = i2c_transfer(state->i2c, msg, 2)) != 2) {
-			dprintk("%s: readreg error (reg == 0x%02x, ret == %i)\n", __FUNCTION__, reg, ret);
+			dprintk("%s: readreg error (reg == 0x%02x, ret == %i)\n", __func__, reg, ret);
 			return -1;
 		}
 	}
@@ -115,16 +115,16 @@ static int stv0297_readregs(struct stv0297_state *state, u8 reg1, u8 * b, u8 len
 	// this device needs a STOP between the register and data
 	if (state->config->stop_during_read) {
 		if ((ret = i2c_transfer(state->i2c, &msg[0], 1)) != 1) {
-			dprintk("%s: readreg error (reg == 0x%02x, ret == %i)\n", __FUNCTION__, reg1, ret);
+			dprintk("%s: readreg error (reg == 0x%02x, ret == %i)\n", __func__, reg1, ret);
 			return -1;
 		}
 		if ((ret = i2c_transfer(state->i2c, &msg[1], 1)) != 1) {
-			dprintk("%s: readreg error (reg == 0x%02x, ret == %i)\n", __FUNCTION__, reg1, ret);
+			dprintk("%s: readreg error (reg == 0x%02x, ret == %i)\n", __func__, reg1, ret);
 			return -1;
 		}
 	} else {
 		if ((ret = i2c_transfer(state->i2c, msg, 2)) != 2) {
-			dprintk("%s: readreg error (reg == 0x%02x, ret == %i)\n", __FUNCTION__, reg1, ret);
+			dprintk("%s: readreg error (reg == 0x%02x, ret == %i)\n", __func__, reg1, ret);
 			return -1;
 		}
 	}
@@ -358,11 +358,23 @@ static int stv0297_read_ber(struct dvb_frontend *fe, u32 * ber)
 static int stv0297_read_signal_strength(struct dvb_frontend *fe, u16 * strength)
 {
 	struct stv0297_state *state = fe->demodulator_priv;
-	u8 STRENGTH[2];
+	u8 STRENGTH[3];
+	u16 tmp;
 
-	stv0297_readregs(state, 0x41, STRENGTH, 2);
-	*strength = (STRENGTH[1] & 0x03) << 8 | STRENGTH[0];
-
+	stv0297_readregs(state, 0x41, STRENGTH, 3);
+	tmp = (STRENGTH[1] & 0x03) << 8 | STRENGTH[0];
+	if (STRENGTH[2] & 0x20) {
+		if (tmp < 0x200)
+			tmp = 0;
+		else
+			tmp = tmp - 0x200;
+	} else {
+		if (tmp > 0x1ff)
+			tmp = 0;
+		else
+			tmp = 0x1ff - tmp;
+	}
+	*strength = (tmp << 7) | (tmp >> 2);
 	return 0;
 }
 
@@ -423,7 +435,7 @@ static int stv0297_set_frontend(struct dvb_frontend *fe, struct dvb_frontend_par
 		return -EINVAL;
 	}
 
-	// determine inversion dependant parameters
+	// determine inversion dependent parameters
 	inversion = p->inversion;
 	if (state->config->invert)
 		inversion = (inversion == INVERSION_ON) ? INVERSION_OFF : INVERSION_ON;
@@ -651,7 +663,7 @@ struct dvb_frontend *stv0297_attach(const struct stv0297_config *config,
 	struct stv0297_state *state = NULL;
 
 	/* allocate memory for the internal state */
-	state = kmalloc(sizeof(struct stv0297_state), GFP_KERNEL);
+	state = kzalloc(sizeof(struct stv0297_state), GFP_KERNEL);
 	if (state == NULL)
 		goto error;
 
@@ -680,8 +692,8 @@ static struct dvb_frontend_ops stv0297_ops = {
 	.info = {
 		 .name = "ST STV0297 DVB-C",
 		 .type = FE_QAM,
-		 .frequency_min = 64000000,
-		 .frequency_max = 1300000000,
+		 .frequency_min = 47000000,
+		 .frequency_max = 862000000,
 		 .frequency_stepsize = 62500,
 		 .symbol_rate_min = 870000,
 		 .symbol_rate_max = 11700000,

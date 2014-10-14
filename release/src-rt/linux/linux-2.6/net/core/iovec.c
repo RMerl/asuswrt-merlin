@@ -20,7 +20,6 @@
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/mm.h>
-#include <linux/slab.h>
 #include <linux/net.h>
 #include <linux/in6.h>
 #include <asm/uaccess.h>
@@ -36,13 +35,15 @@
  *	in any case.
  */
 
-int verify_iovec(struct msghdr *m, struct iovec *iov, char *address, int mode)
+int verify_iovec(struct msghdr *m, struct iovec *iov, struct sockaddr *address, int mode)
 {
-	int size, err, ct;
+	int size, ct, err;
 
 	if (m->msg_namelen) {
 		if (mode == VERIFY_READ) {
-			err = move_addr_to_kernel(m->msg_name, m->msg_namelen,
+			void __user *namep;
+			namep = (void __user __force *) m->msg_name;
+			err = move_addr_to_kernel(namep, m->msg_namelen,
 						  address);
 			if (err < 0)
 				return err;
@@ -53,21 +54,20 @@ int verify_iovec(struct msghdr *m, struct iovec *iov, char *address, int mode)
 	}
 
 	size = m->msg_iovlen * sizeof(struct iovec);
-	if (copy_from_user(iov, m->msg_iov, size))
+	if (copy_from_user(iov, (void __user __force *) m->msg_iov, size))
 		return -EFAULT;
 
 	m->msg_iov = iov;
 	err = 0;
 
 	for (ct = 0; ct < m->msg_iovlen; ct++) {
-		err += iov[ct].iov_len;
-		/*
-		 * Goal is not to verify user data, but to prevent returning
-		 * negative value, which is interpreted as errno.
-		 * Overflow is still possible, but it is harmless.
-		 */
-		if (err < 0)
-			return -EMSGSIZE;
+		size_t len = iov[ct].iov_len;
+
+		if (len > INT_MAX - err) {
+			len = INT_MAX - err;
+			iov[ct].iov_len = len;
+		}
+		err += len;
 	}
 
 	return err;
@@ -96,6 +96,33 @@ int memcpy_toiovec(struct iovec *iov, unsigned char *kdata, int len)
 
 	return 0;
 }
+EXPORT_SYMBOL(memcpy_toiovec);
+
+/*
+ *	Copy kernel to iovec. Returns -EFAULT on error.
+ */
+
+int memcpy_toiovecend(const struct iovec *iov, unsigned char *kdata,
+		      int offset, int len)
+{
+	int copy;
+	for (; len > 0; ++iov) {
+		/* Skip over the finished iovecs */
+		if (unlikely(offset >= iov->iov_len)) {
+			offset -= iov->iov_len;
+			continue;
+		}
+		copy = min_t(unsigned int, iov->iov_len - offset, len);
+		if (copy_to_user(iov->iov_base + offset, kdata, copy))
+			return -EFAULT;
+		offset = 0;
+		kdata += copy;
+		len -= copy;
+	}
+
+	return 0;
+}
+EXPORT_SYMBOL(memcpy_toiovecend);
 
 /*
  *	Copy iovec to kernel. Returns -EFAULT on error.
@@ -120,12 +147,14 @@ int memcpy_fromiovec(unsigned char *kdata, struct iovec *iov, int len)
 
 	return 0;
 }
+EXPORT_SYMBOL(memcpy_fromiovec);
 
 /*
- *	For use with ip_build_xmit
+ *	Copy iovec from kernel. Returns -EFAULT on error.
  */
-int memcpy_fromiovecend(unsigned char *kdata, struct iovec *iov, int offset,
-			int len)
+
+int memcpy_fromiovecend(unsigned char *kdata, const struct iovec *iov,
+			int offset, int len)
 {
 	/* Skip over the finished iovecs */
 	while (offset >= iov->iov_len) {
@@ -147,6 +176,7 @@ int memcpy_fromiovecend(unsigned char *kdata, struct iovec *iov, int offset,
 
 	return 0;
 }
+EXPORT_SYMBOL(memcpy_fromiovecend);
 
 /*
  *	And now for the all-in-one: copy and checksum from a user iovec
@@ -231,8 +261,4 @@ out_fault:
 	err = -EFAULT;
 	goto out;
 }
-
 EXPORT_SYMBOL(csum_partial_copy_fromiovecend);
-EXPORT_SYMBOL(memcpy_fromiovec);
-EXPORT_SYMBOL(memcpy_fromiovecend);
-EXPORT_SYMBOL(memcpy_toiovec);

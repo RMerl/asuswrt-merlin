@@ -42,24 +42,26 @@
 #include "ehca_classes.h"
 #include "hipz_hw.h"
 
-int hcall_map_page(u64 physaddr, u64 *mapaddr)
+u64 hcall_map_page(u64 physaddr)
 {
-	*mapaddr = (u64)(ioremap(physaddr, EHCA_PAGESIZE));
-	return 0;
+	return (u64)ioremap(physaddr, EHCA_PAGESIZE);
 }
 
 int hcall_unmap_page(u64 mapaddr)
 {
-	iounmap((volatile void __iomem*)mapaddr);
+	iounmap((volatile void __iomem *) mapaddr);
 	return 0;
 }
 
-int hcp_galpas_ctor(struct h_galpas *galpas,
+int hcp_galpas_ctor(struct h_galpas *galpas, int is_user,
 		    u64 paddr_kernel, u64 paddr_user)
 {
-	int ret = hcall_map_page(paddr_kernel, &galpas->kernel.fw_handle);
-	if (ret)
-		return ret;
+	if (!is_user) {
+		galpas->kernel.fw_handle = hcall_map_page(paddr_kernel);
+		if (!galpas->kernel.fw_handle)
+			return -ENOMEM;
+	} else
+		galpas->kernel.fw_handle = 0;
 
 	galpas->user.fw_handle = paddr_user;
 

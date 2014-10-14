@@ -27,6 +27,7 @@
 #define NUM_SUBAUTHS 5 /* number of sub authority fields */
 #define NUM_WK_SIDS 7 /* number of well known sids */
 #define SIDNAMELENGTH 20 /* long enough for the ones we care about */
+#define DEFSECDESCLEN 192 /* sec desc len contaiting a dacl with three aces */
 
 #define READ_BIT        0x4
 #define WRITE_BIT       0x2
@@ -73,11 +74,7 @@ struct cifs_wksid {
 	char sidname[SIDNAMELENGTH];
 } __attribute__((packed));
 
-#ifdef CONFIG_CIFS_EXPERIMENTAL
-
 extern int match_sid(struct cifs_sid *);
 extern int compare_sids(const struct cifs_sid *, const struct cifs_sid *);
-
-#endif /*  CONFIG_CIFS_EXPERIMENTAL */
 
 #endif /* _CIFSACL_H */

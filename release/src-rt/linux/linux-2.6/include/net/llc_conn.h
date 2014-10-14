@@ -76,6 +76,8 @@ struct llc_sock {
 	u32		    rx_pdu_hdr;	   /* used for saving header of last pdu
 					      received and caused sending FRMR.
 					      Used for resending FRMR */
+	u32		    cmsg_flags;
+	struct hlist_node   dev_hash_node;
 };
 
 static inline struct llc_sock *llc_sk(const struct sock *sk)
@@ -93,7 +95,7 @@ static __inline__ char llc_backlog_type(struct sk_buff *skb)
 	return skb->cb[sizeof(skb->cb) - 1];
 }
 
-extern struct sock *llc_sk_alloc(int family, gfp_t priority,
+extern struct sock *llc_sk_alloc(struct net *net, int family, gfp_t priority,
 				 struct proto *prot);
 extern void llc_sk_free(struct sock *sk);
 

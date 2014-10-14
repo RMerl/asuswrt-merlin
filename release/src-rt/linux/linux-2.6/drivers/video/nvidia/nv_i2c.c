@@ -13,6 +13,7 @@
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/delay.h>
+#include <linux/gfp.h>
 #include <linux/pci.h>
 #include <linux/fb.h>
 
@@ -87,7 +88,6 @@ static int nvidia_setup_i2c_bus(struct nvidia_i2c_chan *chan, const char *name,
 
 	strcpy(chan->adapter.name, name);
 	chan->adapter.owner = THIS_MODULE;
-	chan->adapter.id = I2C_HW_B_NVIDIA;
 	chan->adapter.class = i2c_class;
 	chan->adapter.algo_data = &chan->algo;
 	chan->adapter.dev.parent = &chan->par->pci_dev->dev;
@@ -125,11 +125,13 @@ void nvidia_create_i2c_busses(struct nvidia_par *par)
 	par->chan[1].par = par;
 	par->chan[2].par = par;
 
-	par->chan[0].ddc_base = 0x36;
- 	nvidia_setup_i2c_bus(&par->chan[0], "nvidia #0", I2C_CLASS_HWMON);
+	par->chan[0].ddc_base = (par->reverse_i2c) ? 0x36 : 0x3e;
+ 	nvidia_setup_i2c_bus(&par->chan[0], "nvidia #0",
+			     (par->reverse_i2c) ? I2C_CLASS_HWMON : 0);
 
-	par->chan[1].ddc_base = 0x3e;
- 	nvidia_setup_i2c_bus(&par->chan[1], "nvidia #1", 0);
+	par->chan[1].ddc_base = (par->reverse_i2c) ? 0x3e : 0x36;
+ 	nvidia_setup_i2c_bus(&par->chan[1], "nvidia #1",
+			     (par->reverse_i2c) ? 0 : I2C_CLASS_HWMON);
 
 	par->chan[2].ddc_base = 0x50;
  	nvidia_setup_i2c_bus(&par->chan[2], "nvidia #2", 0);

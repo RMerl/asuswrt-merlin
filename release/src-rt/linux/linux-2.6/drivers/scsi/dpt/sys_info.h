@@ -79,9 +79,9 @@
    typedef struct  {
 #endif
 
-   uSHORT       cylinders;      /* Upto 1024 */
-   uCHAR        heads;          /* Upto 255 */
-   uCHAR        sectors;        /* Upto 63 */
+   uSHORT       cylinders;      /* Up to 1024 */
+   uCHAR        heads;          /* Up to 255 */
+   uCHAR        sectors;        /* Up to 63 */
 
 #ifdef  __cplusplus
 
@@ -145,8 +145,8 @@
    uCHAR        smartROMRevision;
    uSHORT       flags;                  /* See bit definitions above */
    uSHORT       conventionalMemSize;    /* in KB */
-   uLONG        extendedMemSize;        /* in KB */
-   uLONG        osType;                 /* Same as DPTSIG's definition */
+   uINT         extendedMemSize;        /* in KB */
+   uINT         osType;                 /* Same as DPTSIG's definition */
    uCHAR        osMajorVersion;
    uCHAR        osMinorVersion;         /* The OS version */
    uCHAR        osRevision;

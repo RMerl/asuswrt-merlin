@@ -1,13 +1,10 @@
 /*
-    i2c-hydra.c - Part of lm_sensors,  Linux kernel modules
-                  for hardware monitoring
-
     i2c Support for the Apple `Hydra' Mac I/O
 
     Copyright (c) 1999-2004 Geert Uytterhoeven <geert@linux-m68k.org>
 
     Based on i2c Support for Via Technologies 82C586B South Bridge
-    Copyright (c) 1998, 1999 Kyösti Mälkki <kmalkki@cc.hut.fi>
+    Copyright (c) 1998, 1999 KyÃ¶sti MÃ¤lkki <kmalkki@cc.hut.fi>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -31,7 +28,7 @@
 #include <linux/i2c.h>
 #include <linux/i2c-algo-bit.h>
 #include <linux/init.h>
-#include <asm/io.h>
+#include <linux/io.h>
 #include <asm/hydra.h>
 
 
@@ -105,11 +102,10 @@ static struct i2c_algo_bit_data hydra_bit_data = {
 static struct i2c_adapter hydra_adap = {
 	.owner		= THIS_MODULE,
 	.name		= "Hydra i2c",
-	.id		= I2C_HW_B_HYDRA,
 	.algo_data	= &hydra_bit_data,
 };
 
-static struct pci_device_id hydra_ids[] = {
+static const struct pci_device_id hydra_ids[] = {
 	{ PCI_DEVICE(PCI_VENDOR_ID_APPLE, PCI_DEVICE_ID_APPLE_HYDRA) },
 	{ 0, }
 };
@@ -126,7 +122,7 @@ static int __devinit hydra_probe(struct pci_dev *dev,
 				hydra_adap.name))
 		return -EBUSY;
 
-	hydra_bit_data.data = ioremap(base, pci_resource_len(dev, 0));
+	hydra_bit_data.data = pci_ioremap_bar(dev, 0);
 	if (hydra_bit_data.data == NULL) {
 		release_mem_region(base+offsetof(struct Hydra, CachePD), 4);
 		return -ENODEV;

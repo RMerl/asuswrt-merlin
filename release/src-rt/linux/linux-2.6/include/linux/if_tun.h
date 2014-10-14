@@ -11,51 +11,14 @@
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  *  GNU General Public License for more details.
- *
- *  $Id: if_tun.h,v 1.2 2001/06/01 18:39:47 davem Exp $
  */
 
 #ifndef __IF_TUN_H
 #define __IF_TUN_H
 
-/* Uncomment to enable debugging */
-/* #define TUN_DEBUG 1 */
-
-#ifdef __KERNEL__
-
-#ifdef TUN_DEBUG
-#define DBG  if(tun->debug)printk
-#define DBG1 if(debug==2)printk
-#else
-#define DBG( a... )
-#define DBG1( a... )
-#endif
-
-struct tun_struct {
-	struct list_head        list;
-	unsigned long 		flags;
-	int			attached;
-	uid_t			owner;
-
-	wait_queue_head_t	read_wait;
-	struct sk_buff_head	readq;
-
-	struct net_device	*dev;
-	struct net_device_stats	stats;
-
-	struct fasync_struct    *fasync;
-
-	unsigned long if_flags;
-	u8 dev_addr[ETH_ALEN];
-	u32 chr_filter[2];
-	u32 net_filter[2];
-
-#ifdef TUN_DEBUG	
-	int debug;
-#endif  
-};
-
-#endif /* __KERNEL__ */
+#include <linux/types.h>
+#include <linux/if_ether.h>
+#include <linux/filter.h>
 
 /* Read queue size */
 #define TUN_READQ_SIZE	500
@@ -70,6 +33,7 @@ struct tun_struct {
 #define TUN_NO_PI	0x0040
 #define TUN_ONE_QUEUE	0x0080
 #define TUN_PERSIST 	0x0100	
+#define TUN_VNET_HDR 	0x0200
 
 /* Ioctl defines */
 #define TUNSETNOCSUM  _IOW('T', 200, int) 
@@ -78,17 +42,67 @@ struct tun_struct {
 #define TUNSETPERSIST _IOW('T', 203, int) 
 #define TUNSETOWNER   _IOW('T', 204, int)
 #define TUNSETLINK    _IOW('T', 205, int)
+#define TUNSETGROUP   _IOW('T', 206, int)
+#define TUNGETFEATURES _IOR('T', 207, unsigned int)
+#define TUNSETOFFLOAD  _IOW('T', 208, unsigned int)
+#define TUNSETTXFILTER _IOW('T', 209, unsigned int)
+#define TUNGETIFF      _IOR('T', 210, unsigned int)
+#define TUNGETSNDBUF   _IOR('T', 211, int)
+#define TUNSETSNDBUF   _IOW('T', 212, int)
+#define TUNATTACHFILTER _IOW('T', 213, struct sock_fprog)
+#define TUNDETACHFILTER _IOW('T', 214, struct sock_fprog)
+#define TUNGETVNETHDRSZ _IOR('T', 215, int)
+#define TUNSETVNETHDRSZ _IOW('T', 216, int)
 
 /* TUNSETIFF ifr flags */
 #define IFF_TUN		0x0001
 #define IFF_TAP		0x0002
 #define IFF_NO_PI	0x1000
 #define IFF_ONE_QUEUE	0x2000
+#define IFF_VNET_HDR	0x4000
+#define IFF_TUN_EXCL	0x8000
 
-struct tun_pi {
-	unsigned short flags;
-	unsigned short proto;
-};
+/* Features for GSO (TUNSETOFFLOAD). */
+#define TUN_F_CSUM	0x01	/* You can hand me unchecksummed packets. */
+#define TUN_F_TSO4	0x02	/* I can handle TSO for IPv4 packets */
+#define TUN_F_TSO6	0x04	/* I can handle TSO for IPv6 packets */
+#define TUN_F_TSO_ECN	0x08	/* I can handle TSO with ECN bits. */
+#define TUN_F_UFO	0x10	/* I can handle UFO packets */
+
+/* Protocol info prepended to the packets (when IFF_NO_PI is not set) */
 #define TUN_PKT_STRIP	0x0001
+struct tun_pi {
+	__u16  flags;
+	__be16 proto;
+};
 
+/*
+ * Filter spec (used for SETXXFILTER ioctls)
+ * This stuff is applicable only to the TAP (Ethernet) devices.
+ * If the count is zero the filter is disabled and the driver accepts
+ * all packets (promisc mode).
+ * If the filter is enabled in order to accept broadcast packets
+ * broadcast addr must be explicitly included in the addr list.
+ */
+#define TUN_FLT_ALLMULTI 0x0001 /* Accept all multicast packets */
+struct tun_filter {
+	__u16  flags; /* TUN_FLT_ flags see above */
+	__u16  count; /* Number of addresses */
+	__u8   addr[0][ETH_ALEN];
+};
+
+#ifdef __KERNEL__
+#if defined(CONFIG_TUN) || defined(CONFIG_TUN_MODULE)
+struct socket *tun_get_socket(struct file *);
+#else
+#include <linux/err.h>
+#include <linux/errno.h>
+struct file;
+struct socket;
+static inline struct socket *tun_get_socket(struct file *f)
+{
+	return ERR_PTR(-EINVAL);
+}
+#endif /* CONFIG_TUN */
+#endif /* __KERNEL__ */
 #endif /* __IF_TUN_H */

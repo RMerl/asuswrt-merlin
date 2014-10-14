@@ -57,9 +57,10 @@ struct sa1100fb_lcd_reg {
 	unsigned long lccr3;
 };
 
-#define RGB_8	(0)
-#define RGB_16	(1)
-#define NR_RGB	2
+#define RGB_4	(0)
+#define RGB_8	(1)
+#define RGB_16	(2)
+#define NR_RGB	3
 
 struct sa1100fb_info {
 	struct fb_info		fb;
@@ -100,7 +101,7 @@ struct sa1100fb_info {
 
 	volatile u_char		state;
 	volatile u_char		task_state;
-	struct semaphore	ctrlr_sem;
+	struct mutex		ctrlr_lock;
 	wait_queue_head_t	ctrlr_wait;
 	struct work_struct	task;
 
@@ -132,7 +133,7 @@ struct sa1100fb_info {
  *  Debug macros 
  */
 #if DEBUG
-#  define DPRINTK(fmt, args...)	printk("%s: " fmt, __FUNCTION__ , ## args)
+#  define DPRINTK(fmt, args...)	printk("%s: " fmt, __func__ , ## args)
 #else
 #  define DPRINTK(fmt, args...)
 #endif

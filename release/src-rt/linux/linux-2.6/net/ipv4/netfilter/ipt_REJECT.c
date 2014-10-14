@@ -9,9 +9,10 @@
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  */
-
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 #include <linux/module.h>
 #include <linux/skbuff.h>
+#include <linux/slab.h>
 #include <linux/ip.h>
 #include <linux/udp.h>
 #include <linux/icmp.h>
@@ -29,24 +30,16 @@
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Netfilter Core Team <coreteam@netfilter.org>");
-MODULE_DESCRIPTION("iptables REJECT target module");
-
-#if 0
-#define DEBUGP printk
-#else
-#define DEBUGP(format, args...)
-#endif
+MODULE_DESCRIPTION("Xtables: packet \"rejection\" target for IPv4");
 
 /* Send RST reply */
 static void send_reset(struct sk_buff *oldskb, int hook)
 {
 	struct sk_buff *nskb;
+	const struct iphdr *oiph;
 	struct iphdr *niph;
-	struct tcphdr _otcph, *oth, *tcph;
-	__be16 tmp_port;
-	__be32 tmp_addr;
-	int needs_ack;
-	unsigned int addr_type;
+	const struct tcphdr *oth;
+	struct tcphdr _otcph, *tcph;
 
 	/* IP header checks: fragment. */
 	if (ip_hdr(oldskb)->frag_off & htons(IP_OFFSET))
@@ -61,102 +54,71 @@ static void send_reset(struct sk_buff *oldskb, int hook)
 	if (oth->rst)
 		return;
 
+	if (skb_rtable(oldskb)->rt_flags & (RTCF_BROADCAST | RTCF_MULTICAST))
+		return;
+
 	/* Check checksum */
 	if (nf_ip_checksum(oldskb, hook, ip_hdrlen(oldskb), IPPROTO_TCP))
 		return;
+	oiph = ip_hdr(oldskb);
 
-	/* We need a linear, writeable skb.  We also need to expand
-	   headroom in case hh_len of incoming interface < hh_len of
-	   outgoing interface */
-	nskb = skb_copy_expand(oldskb, LL_MAX_HEADER, skb_tailroom(oldskb),
-			       GFP_ATOMIC);
+	nskb = alloc_skb(sizeof(struct iphdr) + sizeof(struct tcphdr) +
+			 LL_MAX_HEADER, GFP_ATOMIC);
 	if (!nskb)
 		return;
 
-	/* This packet will not be the same as the other: clear nf fields */
-	nf_reset(nskb);
-	nskb->mark = 0;
-	skb_init_secmark(nskb);
+	skb_reserve(nskb, LL_MAX_HEADER);
 
-	skb_shinfo(nskb)->gso_size = 0;
-	skb_shinfo(nskb)->gso_segs = 0;
-	skb_shinfo(nskb)->gso_type = 0;
+	skb_reset_network_header(nskb);
+	niph = (struct iphdr *)skb_put(nskb, sizeof(struct iphdr));
+	niph->version	= 4;
+	niph->ihl	= sizeof(struct iphdr) / 4;
+	niph->tos	= 0;
+	niph->id	= 0;
+	niph->frag_off	= htons(IP_DF);
+	niph->protocol	= IPPROTO_TCP;
+	niph->check	= 0;
+	niph->saddr	= oiph->daddr;
+	niph->daddr	= oiph->saddr;
 
-	tcph = (struct tcphdr *)(skb_network_header(nskb) + ip_hdrlen(nskb));
+	tcph = (struct tcphdr *)skb_put(nskb, sizeof(struct tcphdr));
+	memset(tcph, 0, sizeof(*tcph));
+	tcph->source	= oth->dest;
+	tcph->dest	= oth->source;
+	tcph->doff	= sizeof(struct tcphdr) / 4;
 
-	/* Swap source and dest */
-	niph = ip_hdr(nskb);
-	tmp_addr = niph->saddr;
-	niph->saddr = niph->daddr;
-	niph->daddr = tmp_addr;
-	tmp_port = tcph->source;
-	tcph->source = tcph->dest;
-	tcph->dest = tmp_port;
-
-	/* Truncate to length (no data) */
-	tcph->doff = sizeof(struct tcphdr)/4;
-	skb_trim(nskb, ip_hdrlen(nskb) + sizeof(struct tcphdr));
-	niph->tot_len = htons(nskb->len);
-
-	if (tcph->ack) {
-		needs_ack = 0;
+	if (oth->ack)
 		tcph->seq = oth->ack_seq;
-		tcph->ack_seq = 0;
-	} else {
-		needs_ack = 1;
+	else {
 		tcph->ack_seq = htonl(ntohl(oth->seq) + oth->syn + oth->fin +
 				      oldskb->len - ip_hdrlen(oldskb) -
 				      (oth->doff << 2));
-		tcph->seq = 0;
+		tcph->ack = 1;
 	}
 
-	/* Reset flags */
-	((u_int8_t *)tcph)[13] = 0;
-	tcph->rst = 1;
-	tcph->ack = needs_ack;
+	tcph->rst	= 1;
+	tcph->check = ~tcp_v4_check(sizeof(struct tcphdr), niph->saddr,
+				    niph->daddr, 0);
+	nskb->ip_summed = CHECKSUM_PARTIAL;
+	nskb->csum_start = (unsigned char *)tcph - nskb->head;
+	nskb->csum_offset = offsetof(struct tcphdr, check);
 
-	tcph->window = 0;
-	tcph->urg_ptr = 0;
+	/* ip_route_me_harder expects skb->dst to be set */
+	skb_dst_set_noref(nskb, skb_dst(oldskb));
 
-	/* Adjust TCP checksum */
-	tcph->check = 0;
-	tcph->check = tcp_v4_check(sizeof(struct tcphdr),
-				   niph->saddr, niph->daddr,
-				   csum_partial((char *)tcph,
-						sizeof(struct tcphdr), 0));
-
-	/* Set DF, id = 0 */
-	niph->frag_off = htons(IP_DF);
-	niph->id = 0;
-
-	addr_type = RTN_UNSPEC;
-	if (hook != NF_IP_FORWARD
-#ifdef CONFIG_BRIDGE_NETFILTER
-	    || (nskb->nf_bridge && nskb->nf_bridge->mask & BRNF_BRIDGED)
-#endif
-	   )
-		addr_type = RTN_LOCAL;
-
-	if (ip_route_me_harder(&nskb, addr_type))
+	nskb->protocol = htons(ETH_P_IP);
+	if (ip_route_me_harder(nskb, RTN_UNSPEC))
 		goto free_nskb;
 
-	nskb->ip_summed = CHECKSUM_NONE;
-
-	/* Adjust IP TTL */
-	niph->ttl = dst_metric(nskb->dst, RTAX_HOPLIMIT);
-
-	/* Adjust IP checksum */
-	niph->check = 0;
-	niph->check = ip_fast_csum(skb_network_header(nskb), niph->ihl);
+	niph->ttl	= ip4_dst_hoplimit(skb_dst(nskb));
 
 	/* "Never happens" */
-	if (nskb->len > dst_mtu(nskb->dst))
+	if (nskb->len > dst_mtu(skb_dst(nskb)))
 		goto free_nskb;
 
 	nf_ct_attach(nskb, oldskb);
 
-	NF_HOOK(PF_INET, NF_IP_LOCAL_OUT, nskb, NULL, nskb->dst->dev,
-		dst_output);
+	ip_local_out(nskb);
 	return;
 
  free_nskb:
@@ -168,47 +130,35 @@ static inline void send_unreach(struct sk_buff *skb_in, int code)
 	icmp_send(skb_in, ICMP_DEST_UNREACH, code, 0);
 }
 
-static unsigned int reject(struct sk_buff **pskb,
-			   const struct net_device *in,
-			   const struct net_device *out,
-			   unsigned int hooknum,
-			   const struct xt_target *target,
-			   const void *targinfo)
+static unsigned int
+reject_tg(struct sk_buff *skb, const struct xt_action_param *par)
 {
-	const struct ipt_reject_info *reject = targinfo;
+	const struct ipt_reject_info *reject = par->targinfo;
 
-	/* Our naive response construction doesn't deal with IP
-	   options, and probably shouldn't try. */
-	if (ip_hdrlen(*pskb) != sizeof(struct iphdr))
-		return NF_DROP;
-
-	/* WARNING: This code causes reentry within iptables.
-	   This means that the iptables jump stack is now crap.  We
-	   must return an absolute verdict. --RR */
 	switch (reject->with) {
 	case IPT_ICMP_NET_UNREACHABLE:
-		send_unreach(*pskb, ICMP_NET_UNREACH);
+		send_unreach(skb, ICMP_NET_UNREACH);
 		break;
 	case IPT_ICMP_HOST_UNREACHABLE:
-		send_unreach(*pskb, ICMP_HOST_UNREACH);
+		send_unreach(skb, ICMP_HOST_UNREACH);
 		break;
 	case IPT_ICMP_PROT_UNREACHABLE:
-		send_unreach(*pskb, ICMP_PROT_UNREACH);
+		send_unreach(skb, ICMP_PROT_UNREACH);
 		break;
 	case IPT_ICMP_PORT_UNREACHABLE:
-		send_unreach(*pskb, ICMP_PORT_UNREACH);
+		send_unreach(skb, ICMP_PORT_UNREACH);
 		break;
 	case IPT_ICMP_NET_PROHIBITED:
-		send_unreach(*pskb, ICMP_NET_ANO);
+		send_unreach(skb, ICMP_NET_ANO);
 		break;
 	case IPT_ICMP_HOST_PROHIBITED:
-		send_unreach(*pskb, ICMP_HOST_ANO);
+		send_unreach(skb, ICMP_HOST_ANO);
 		break;
 	case IPT_ICMP_ADMIN_PROHIBITED:
-		send_unreach(*pskb, ICMP_PKT_FILTERED);
+		send_unreach(skb, ICMP_PKT_FILTERED);
 		break;
 	case IPT_TCP_RESET:
-		send_reset(*pskb, hooknum);
+		send_reset(skb, par->hooknum);
 	case IPT_ICMP_ECHOREPLY:
 		/* Doesn't happen. */
 		break;
@@ -217,50 +167,46 @@ static unsigned int reject(struct sk_buff **pskb,
 	return NF_DROP;
 }
 
-static int check(const char *tablename,
-		 const void *e_void,
-		 const struct xt_target *target,
-		 void *targinfo,
-		 unsigned int hook_mask)
+static int reject_tg_check(const struct xt_tgchk_param *par)
 {
-	const struct ipt_reject_info *rejinfo = targinfo;
-	const struct ipt_entry *e = e_void;
+	const struct ipt_reject_info *rejinfo = par->targinfo;
+	const struct ipt_entry *e = par->entryinfo;
 
 	if (rejinfo->with == IPT_ICMP_ECHOREPLY) {
-		printk("REJECT: ECHOREPLY no longer supported.\n");
-		return 0;
+		pr_info("ECHOREPLY no longer supported.\n");
+		return -EINVAL;
 	} else if (rejinfo->with == IPT_TCP_RESET) {
 		/* Must specify that it's a TCP packet */
-		if (e->ip.proto != IPPROTO_TCP
-		    || (e->ip.invflags & XT_INV_PROTO)) {
-			DEBUGP("REJECT: TCP_RESET invalid for non-tcp\n");
-			return 0;
+		if (e->ip.proto != IPPROTO_TCP ||
+		    (e->ip.invflags & XT_INV_PROTO)) {
+			pr_info("TCP_RESET invalid for non-tcp\n");
+			return -EINVAL;
 		}
 	}
-	return 1;
+	return 0;
 }
 
-static struct xt_target ipt_reject_reg = {
+static struct xt_target reject_tg_reg __read_mostly = {
 	.name		= "REJECT",
-	.family		= AF_INET,
-	.target		= reject,
+	.family		= NFPROTO_IPV4,
+	.target		= reject_tg,
 	.targetsize	= sizeof(struct ipt_reject_info),
 	.table		= "filter",
-	.hooks		= (1 << NF_IP_LOCAL_IN) | (1 << NF_IP_FORWARD) |
-			  (1 << NF_IP_LOCAL_OUT),
-	.checkentry	= check,
+	.hooks		= (1 << NF_INET_LOCAL_IN) | (1 << NF_INET_FORWARD) |
+			  (1 << NF_INET_LOCAL_OUT),
+	.checkentry	= reject_tg_check,
 	.me		= THIS_MODULE,
 };
 
-static int __init ipt_reject_init(void)
+static int __init reject_tg_init(void)
 {
-	return xt_register_target(&ipt_reject_reg);
+	return xt_register_target(&reject_tg_reg);
 }
 
-static void __exit ipt_reject_fini(void)
+static void __exit reject_tg_exit(void)
 {
-	xt_unregister_target(&ipt_reject_reg);
+	xt_unregister_target(&reject_tg_reg);
 }
 
-module_init(ipt_reject_init);
-module_exit(ipt_reject_fini);
+module_init(reject_tg_init);
+module_exit(reject_tg_exit);

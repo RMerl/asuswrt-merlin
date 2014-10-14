@@ -9,7 +9,7 @@
 #include <linux/mtd/mtd.h>
 #include <linux/mtd/partitions.h>
 
-#include <asm/hardware.h>
+#include <mach/hardware.h>
 #include <asm/mach-types.h>
 #include <asm/setup.h>
 
@@ -17,8 +17,8 @@
 #include <asm/mach/flash.h>
 #include <asm/mach/map.h>
 #include <asm/mach/serial_sa1100.h>
-#include <asm/arch/mcp.h>
-#include <asm/arch/shannon.h>
+#include <mach/mcp.h>
+#include <mach/shannon.h>
 
 #include "generic.h"
 
@@ -33,7 +33,7 @@ static struct mtd_partition shannon_partitions[] = {
 		.offset		= MTDPART_OFS_APPEND,
 		.size		= 0xe0000
 	},
-	{ 
+	{
 		.name		= "initrd",
 		.offset		= MTDPART_OFS_APPEND,	
 		.size		= MTDPART_SIZ_FULL
@@ -59,8 +59,8 @@ static struct mcp_plat_data shannon_mcp_data = {
 
 static void __init shannon_init(void)
 {
-	sa11x0_set_flash_data(&shannon_flash_data, &shannon_flash_resource, 1);
-	sa11x0_set_mcp_data(&shannon_mcp_data);
+	sa11x0_register_mtd(&shannon_flash_data, &shannon_flash_resource, 1);
+	sa11x0_register_mcp(&shannon_mcp_data);
 }
 
 static void __init shannon_map_io(void)
@@ -82,8 +82,6 @@ static void __init shannon_map_io(void)
 }
 
 MACHINE_START(SHANNON, "Shannon (AKA: Tuxscreen)")
-	.phys_io	= 0x80000000,
-	.io_pg_offst	= ((0xf8000000) >> 18) & 0xfffc,
 	.boot_params	= 0xc0000100,
 	.map_io		= shannon_map_io,
 	.init_irq	= sa1100_init_irq,

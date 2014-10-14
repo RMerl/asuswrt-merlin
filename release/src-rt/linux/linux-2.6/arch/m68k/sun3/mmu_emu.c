@@ -27,7 +27,6 @@
 #include <asm/mmu_context.h>
 #include <asm/dvma.h>
 
-extern void prom_reboot (char *) __attribute__ ((__noreturn__));
 
 #undef DEBUG_MMU_EMU
 #define DEBUG_PROM_MAPS
@@ -46,8 +45,8 @@ extern void prom_reboot (char *) __attribute__ ((__noreturn__));
 ** Globals
 */
 
-unsigned long vmalloc_end;
-EXPORT_SYMBOL(vmalloc_end);
+unsigned long m68k_vmalloc_end;
+EXPORT_SYMBOL(m68k_vmalloc_end);
 
 unsigned long pmeg_vaddr[PMEGS_NUM];
 unsigned char pmeg_alloc[PMEGS_NUM];
@@ -55,7 +54,7 @@ unsigned char pmeg_ctx[PMEGS_NUM];
 
 /* pointers to the mm structs for each task in each
    context. 0xffffffff is a marker for kernel context */
-struct mm_struct *ctx_alloc[CONTEXTS_NUM] = {
+static struct mm_struct *ctx_alloc[CONTEXTS_NUM] = {
     [0] = (struct mm_struct *)0xffffffff
 };
 
@@ -173,8 +172,8 @@ void mmu_emu_init(unsigned long bootmem_end)
 #endif
 			// the lowest mapping here is the end of our
 			// vmalloc region
-			if(!vmalloc_end)
-				vmalloc_end = seg;
+			if (!m68k_vmalloc_end)
+				m68k_vmalloc_end = seg;
 
 			// mark the segmap alloc'd, and reserve any
 			// of the first 0xbff pages the hardware is
@@ -239,7 +238,7 @@ void clear_context(unsigned long context)
 /* gets an empty context.  if full, kills the next context listed to
    die first */
 /* This context invalidation scheme is, well, totally arbitrary, I'm
-   sure it could be much more intellegent...  but it gets the job done
+   sure it could be much more intelligent...  but it gets the job done
    for now without much overhead in making it's decision. */
 /* todo: come up with optimized scheme for flushing contexts */
 unsigned long get_free_context(struct mm_struct *mm)

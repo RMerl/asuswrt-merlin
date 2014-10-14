@@ -174,10 +174,10 @@
 #include <asm/ptrace.h>
 
 #include <asm/irq.h>
-#include <asm/arch/hwregs/reg_map.h>
-#include <asm/arch/hwregs/reg_rdwr.h>
-#include <asm/arch/hwregs/intr_vect_defs.h>
-#include <asm/arch/hwregs/ser_defs.h>
+#include <hwregs/reg_map.h>
+#include <hwregs/reg_rdwr.h>
+#include <hwregs/intr_vect_defs.h>
+#include <hwregs/ser_defs.h>
 
 /* From entry.S. */
 extern void gdb_handle_exception(void);
@@ -381,7 +381,7 @@ static int read_register(char regno, unsigned int *valptr);
 /* Serial port, reads one character. ETRAX 100 specific. from debugport.c */
 int getDebugChar(void);
 
-#ifdef CONFIG_ETRAXFS_SIM
+#ifdef CONFIG_ETRAX_VCS_SIM
 int getDebugChar(void)
 {
   return socketread();
@@ -391,20 +391,12 @@ int getDebugChar(void)
 /* Serial port, writes one character. ETRAX 100 specific. from debugport.c */
 void putDebugChar(int val);
 
-#ifdef CONFIG_ETRAXFS_SIM
+#ifdef CONFIG_ETRAX_VCS_SIM
 void putDebugChar(int val)
 {
   socketwrite((char *)&val, 1);
 }
 #endif
-
-/* Returns the character equivalent of a nibble, bit 7, 6, 5, and 4 of a byte,
-   represented by int x. */
-static char highhex(int x);
-
-/* Returns the character equivalent of a nibble, bit 3, 2, 1, and 0 of a byte,
-   represented by int x. */
-static char lowhex(int x);
 
 /* Returns the integer equivalent of a hexadecimal character. */
 static int hex(char ch);
@@ -463,9 +455,6 @@ void breakpoint(void);
 
 /* Run-length encoding maximum length. Send 64 at most. */
 #define RUNLENMAX 64
-
-/* Definition of all valid hexadecimal characters */
-static const char hexchars[] = "0123456789abcdef";
 
 /* The inbound/outbound buffers used in packet I/O */
 static char input_buffer[BUFMAX];
@@ -550,8 +539,8 @@ gdb_cris_strtol(const char *s, char **endptr, int base)
 	char *sd;
 	int x = 0;
 
-	for (s1 = (char*)s; (sd = gdb_cris_memchr(hexchars, *s1, base)) != NULL; ++s1)
-		x = x * base + (sd - hexchars);
+	for (s1 = (char*)s; (sd = gdb_cris_memchr(hex_asc, *s1, base)) != NULL; ++s1)
+		x = x * base + (sd - hex_asc);
 
         if (endptr) {
                 /* Unconverted suffix is stored in endptr unless endptr is NULL. */
@@ -655,22 +644,6 @@ read_register(char regno, unsigned int *valptr)
 }
 
 /********************************** Packet I/O ******************************/
-/* Returns the character equivalent of a nibble, bit 7, 6, 5, and 4 of a byte,
-   represented by int x. */
-static inline char
-highhex(int x)
-{
-	return hexchars[(x >> 4) & 0xf];
-}
-
-/* Returns the character equivalent of a nibble, bit 3, 2, 1, and 0 of a byte,
-   represented by int x. */
-static inline char
-lowhex(int x)
-{
-	return hexchars[x & 0xf];
-}
-
 /* Returns the integer equivalent of a hexadecimal character. */
 static int
 hex(char ch)
@@ -704,8 +677,7 @@ mem2hex(char *buf, unsigned char *mem, int count)
                 /* Valid mem address. */
 		for (i = 0; i < count; i++) {
 			ch = *mem++;
-			*buf++ = highhex (ch);
-			*buf++ = lowhex (ch);
+			buf = pack_hex_byte(buf, ch);
 		}
         }
         /* Terminate properly. */
@@ -723,8 +695,7 @@ mem2hex_nbo(char *buf, unsigned char *mem, int count)
 	mem += count - 1;
 	for (i = 0; i < count; i++) {
 		ch = *mem--;
-		*buf++ = highhex (ch);
-		*buf++ = lowhex (ch);
+		buf = pack_hex_byte(buf, ch);
         }
 
         /* Terminate properly. */
@@ -862,8 +833,8 @@ putpacket(char *buffer)
 			}
 		}
 		putDebugChar('#');
-		putDebugChar(highhex (checksum));
-		putDebugChar(lowhex (checksum));
+		putDebugChar(hex_asc_hi(checksum));
+		putDebugChar(hex_asc_lo(checksum));
 	} while(kgdb_started && (getDebugChar() != '+'));
 }
 
@@ -909,8 +880,7 @@ stub_is_stopped(int sigval)
 	/* Send trap type (converted to signal) */
 
 	*ptr++ = 'T';
-	*ptr++ = highhex(sigval);
-	*ptr++ = lowhex(sigval);
+	ptr = pack_hex_byte(ptr, sigval);
 
 	if (((reg.exs & 0xff00) >> 8) == 0xc) {
 
@@ -955,7 +925,7 @@ stub_is_stopped(int sigval)
 
 					if (reg.eda >= bp_d_regs[bp * 2] &&
 					    reg.eda <= bp_d_regs[bp * 2 + 1]) {
-						/* EDA withing range for this BP; it must be the one
+						/* EDA within range for this BP; it must be the one
 						   we're looking for. */
 						stopped_data_address = reg.eda;
 						break;
@@ -1018,30 +988,26 @@ stub_is_stopped(int sigval)
 	}
 	/* Only send PC, frame and stack pointer. */
 	read_register(PC, &reg_cont);
-	*ptr++ = highhex(PC);
-	*ptr++ = lowhex(PC);
+	ptr = pack_hex_byte(ptr, PC);
 	*ptr++ = ':';
 	ptr = mem2hex(ptr, (unsigned char *)&reg_cont, register_size[PC]);
 	*ptr++ = ';';
 
 	read_register(R8, &reg_cont);
-	*ptr++ = highhex(R8);
-	*ptr++ = lowhex(R8);
+	ptr = pack_hex_byte(ptr, R8);
 	*ptr++ = ':';
 	ptr = mem2hex(ptr, (unsigned char *)&reg_cont, register_size[R8]);
 	*ptr++ = ';';
 
 	read_register(SP, &reg_cont);
-	*ptr++ = highhex(SP);
-	*ptr++ = lowhex(SP);
+	ptr = pack_hex_byte(ptr, SP);
 	*ptr++ = ':';
 	ptr = mem2hex(ptr, (unsigned char *)&reg_cont, register_size[SP]);
 	*ptr++ = ';';
 
 	/* Send ERP as well; this will save us an entire register fetch in some cases. */
         read_register(ERP, &reg_cont);
-        *ptr++ = highhex(ERP);
-        *ptr++ = lowhex(ERP);
+	ptr = pack_hex_byte(ptr, ERP);
         *ptr++ = ':';
         ptr = mem2hex(ptr, (unsigned char *)&reg_cont, register_size[ERP]);
         *ptr++ = ';';
@@ -1533,8 +1499,8 @@ handle_exception(int sigval)
 				   Success: SAA, where AA is the signal number.
 				   Failure: void. */
 				output_buffer[0] = 'S';
-				output_buffer[1] = highhex(sigval);
-				output_buffer[2] = lowhex(sigval);
+				output_buffer[1] = hex_asc_hi(sigval);
+				output_buffer[2] = hex_asc_lo(sigval);
 				output_buffer[3] = 0;
 				break;
 
@@ -1599,7 +1565,7 @@ kgdb_init(void)
 	REG_WR(intr_vect, regi_irq, rw_mask, intr_mask);
 
 	ser_intr_mask = REG_RD(ser, regi_ser0, rw_intr_mask);
-	ser_intr_mask.data_avail = regk_ser_yes;
+	ser_intr_mask.dav = regk_ser_yes;
 	REG_WR(ser, regi_ser0, rw_intr_mask, ser_intr_mask);
 #elif defined(CONFIG_ETRAX_KGDB_PORT1)
 	/* Note: no shortcut registered (not handled by multiple_interrupt).
@@ -1611,7 +1577,7 @@ kgdb_init(void)
 	REG_WR(intr_vect, regi_irq, rw_mask, intr_mask);
 
 	ser_intr_mask = REG_RD(ser, regi_ser1, rw_intr_mask);
-	ser_intr_mask.data_avail = regk_ser_yes;
+	ser_intr_mask.dav = regk_ser_yes;
 	REG_WR(ser, regi_ser1, rw_intr_mask, ser_intr_mask);
 #elif defined(CONFIG_ETRAX_KGDB_PORT2)
 	/* Note: no shortcut registered (not handled by multiple_interrupt).
@@ -1623,7 +1589,7 @@ kgdb_init(void)
 	REG_WR(intr_vect, regi_irq, rw_mask, intr_mask);
 
 	ser_intr_mask = REG_RD(ser, regi_ser2, rw_intr_mask);
-	ser_intr_mask.data_avail = regk_ser_yes;
+	ser_intr_mask.dav = regk_ser_yes;
 	REG_WR(ser, regi_ser2, rw_intr_mask, ser_intr_mask);
 #elif defined(CONFIG_ETRAX_KGDB_PORT3)
 	/* Note: no shortcut registered (not handled by multiple_interrupt).
@@ -1635,7 +1601,7 @@ kgdb_init(void)
 	REG_WR(intr_vect, regi_irq, rw_mask, intr_mask);
 
 	ser_intr_mask = REG_RD(ser, regi_ser3, rw_intr_mask);
-	ser_intr_mask.data_avail = regk_ser_yes;
+	ser_intr_mask.dav = regk_ser_yes;
 	REG_WR(ser, regi_ser3, rw_intr_mask, ser_intr_mask);
 #endif
 

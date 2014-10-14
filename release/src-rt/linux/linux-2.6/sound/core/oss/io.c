@@ -1,6 +1,6 @@
 /*
  *  PCM I/O Plug-In Interface
- *  Copyright (c) 1999 by Jaroslav Kysela <perex@suse.cz>
+ *  Copyright (c) 1999 by Jaroslav Kysela <perex@perex.cz>
  *
  *
  *   This library is free software; you can redistribute it and/or modify
@@ -19,10 +19,6 @@
  *
  */
   
-#include <sound/driver.h>
-
-#ifdef CONFIG_SND_PCM_OSS_PLUGINS
-
 #include <linux/time.h>
 #include <sound/core.h>
 #include <sound/pcm.h>
@@ -43,14 +39,17 @@ static snd_pcm_sframes_t io_playback_transfer(struct snd_pcm_plugin *plugin,
 				    struct snd_pcm_plugin_channel *dst_channels,
 				    snd_pcm_uframes_t frames)
 {
-	snd_assert(plugin != NULL, return -ENXIO);
-	snd_assert(src_channels != NULL, return -ENXIO);
+	if (snd_BUG_ON(!plugin))
+		return -ENXIO;
+	if (snd_BUG_ON(!src_channels))
+		return -ENXIO;
 	if (plugin->access == SNDRV_PCM_ACCESS_RW_INTERLEAVED) {
 		return pcm_write(plugin->plug, src_channels->area.addr, frames);
 	} else {
 		int channel, channels = plugin->dst_format.channels;
 		void **bufs = (void**)plugin->extra_data;
-		snd_assert(bufs != NULL, return -ENXIO);
+		if (snd_BUG_ON(!bufs))
+			return -ENXIO;
 		for (channel = 0; channel < channels; channel++) {
 			if (src_channels[channel].enabled)
 				bufs[channel] = src_channels[channel].area.addr;
@@ -66,14 +65,17 @@ static snd_pcm_sframes_t io_capture_transfer(struct snd_pcm_plugin *plugin,
 				   struct snd_pcm_plugin_channel *dst_channels,
 				   snd_pcm_uframes_t frames)
 {
-	snd_assert(plugin != NULL, return -ENXIO);
-	snd_assert(dst_channels != NULL, return -ENXIO);
+	if (snd_BUG_ON(!plugin))
+		return -ENXIO;
+	if (snd_BUG_ON(!dst_channels))
+		return -ENXIO;
 	if (plugin->access == SNDRV_PCM_ACCESS_RW_INTERLEAVED) {
 		return pcm_read(plugin->plug, dst_channels->area.addr, frames);
 	} else {
 		int channel, channels = plugin->dst_format.channels;
 		void **bufs = (void**)plugin->extra_data;
-		snd_assert(bufs != NULL, return -ENXIO);
+		if (snd_BUG_ON(!bufs))
+			return -ENXIO;
 		for (channel = 0; channel < channels; channel++) {
 			if (dst_channels[channel].enabled)
 				bufs[channel] = dst_channels[channel].area.addr;
@@ -111,9 +113,11 @@ int snd_pcm_plugin_build_io(struct snd_pcm_substream *plug,
 	struct snd_pcm_plugin_format format;
 	struct snd_pcm_plugin *plugin;
 
-	snd_assert(r_plugin != NULL, return -ENXIO);
+	if (snd_BUG_ON(!r_plugin))
+		return -ENXIO;
 	*r_plugin = NULL;
-	snd_assert(plug != NULL && params != NULL, return -ENXIO);
+	if (snd_BUG_ON(!plug || !params))
+		return -ENXIO;
 	format.format = params_format(params);
 	format.rate = params_rate(params);
 	format.channels = params_channels(params);
@@ -135,5 +139,3 @@ int snd_pcm_plugin_build_io(struct snd_pcm_substream *plug,
 	*r_plugin = plugin;
 	return 0;
 }
-
-#endif

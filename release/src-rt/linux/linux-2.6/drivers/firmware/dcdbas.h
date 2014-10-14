@@ -17,7 +17,6 @@
 #define _DCDBAS_H_
 
 #include <linux/device.h>
-#include <linux/input.h>
 #include <linux/sysfs.h>
 #include <linux/types.h>
 
@@ -67,8 +66,7 @@
 #define DCDBAS_BIN_ATTR_RW(_name) \
 struct bin_attribute bin_attr_##_name = { \
 	.attr =  { .name = __stringify(_name), \
-		   .mode = 0600, \
-		   .owner = THIS_MODULE }, \
+		   .mode = 0600 }, \
 	.read =  _name##_read, \
 	.write = _name##_write, \
 }
@@ -102,6 +100,8 @@ struct apm_cmd {
 		} __attribute__ ((packed)) longreq;
 	} __attribute__ ((packed)) parameters;
 } __attribute__ ((packed));
+
+int dcdbas_smi_request(struct smi_cmd *smi_cmd);
 
 #endif /* _DCDBAS_H_ */
 

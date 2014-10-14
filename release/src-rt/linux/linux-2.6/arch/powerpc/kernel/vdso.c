@@ -1,3 +1,4 @@
+
 /*
  *    Copyright (C) 2004 Benjamin Herrenschmidt, IBM Corp.
  *			 <benh@kernel.crashing.org>
@@ -21,13 +22,14 @@
 #include <linux/elf.h>
 #include <linux/security.h>
 #include <linux/bootmem.h>
+#include <linux/memblock.h>
 
 #include <asm/pgtable.h>
 #include <asm/system.h>
 #include <asm/processor.h>
 #include <asm/mmu.h>
 #include <asm/mmu_context.h>
-#include <asm/lmb.h>
+#include <asm/prom.h>
 #include <asm/machdep.h>
 #include <asm/cputable.h>
 #include <asm/sections.h>
@@ -47,6 +49,9 @@
 
 /* Max supported size for symbol names */
 #define MAX_SYMNAME	64
+
+/* The alignment of the vDSO */
+#define VDSO_ALIGNMENT	(1 << 16)
 
 extern char vdso32_start, vdso32_end;
 static void *vdso32_kbase = &vdso32_start;
@@ -73,7 +78,7 @@ static int vdso_ready;
 static union {
 	struct vdso_data	data;
 	u8			page[PAGE_SIZE];
-} vdso_data_store __attribute__((__section__(".data.page_aligned")));
+} vdso_data_store __page_aligned_data;
 struct vdso_data *vdso_data = &vdso_data_store.data;
 
 /* Format of the patch table */
@@ -97,6 +102,18 @@ static struct vdso_patch_def vdso_patches[] = {
 	{
 		CPU_FTR_USE_TB, 0,
 		"__kernel_gettimeofday", NULL
+	},
+	{
+		CPU_FTR_USE_TB, 0,
+		"__kernel_clock_gettime", NULL
+	},
+	{
+		CPU_FTR_USE_TB, 0,
+		"__kernel_clock_getres", NULL
+	},
+	{
+		CPU_FTR_USE_TB, 0,
+		"__kernel_get_tbfreq", NULL
 	},
 };
 
@@ -129,7 +146,7 @@ static void dump_one_vdso_page(struct page *pg, struct page *upg)
 	printk("kpg: %p (c:%d,f:%08lx)", __va(page_to_pfn(pg) << PAGE_SHIFT),
 	       page_count(pg),
 	       pg->flags);
-	if (upg/* && pg != upg*/) {
+	if (upg && !IS_ERR(upg) /* && pg != upg*/) {
 		printk(" upg: %p (c:%d,f:%08lx)", __va(page_to_pfn(upg)
 						       << PAGE_SHIFT),
 		       page_count(upg),
@@ -142,7 +159,7 @@ static void dump_vdso_pages(struct vm_area_struct * vma)
 {
 	int i;
 
-	if (!vma || test_thread_flag(TIF_32BIT)) {
+	if (!vma || is_32bit_task()) {
 		printk("vDSO32 @ %016lx:\n", (unsigned long)vdso32_kbase);
 		for (i=0; i<vdso32_pages; i++) {
 			struct page *pg = virt_to_page(vdso32_kbase +
@@ -153,7 +170,7 @@ static void dump_vdso_pages(struct vm_area_struct * vma)
 			dump_one_vdso_page(pg, upg);
 		}
 	}
-	if (!vma || !test_thread_flag(TIF_32BIT)) {
+	if (!vma || !is_32bit_task()) {
 		printk("vDSO64 @ %016lx:\n", (unsigned long)vdso64_kbase);
 		for (i=0; i<vdso64_pages; i++) {
 			struct page *pg = virt_to_page(vdso64_kbase +
@@ -171,8 +188,7 @@ static void dump_vdso_pages(struct vm_area_struct * vma)
  * This is called from binfmt_elf, we create the special vma for the
  * vDSO and insert it into the mm struct tree
  */
-int arch_setup_additional_pages(struct linux_binprm *bprm,
-				int executable_stack)
+int arch_setup_additional_pages(struct linux_binprm *bprm, int uses_interp)
 {
 	struct mm_struct *mm = current->mm;
 	struct page **vdso_pagelist;
@@ -184,14 +200,19 @@ int arch_setup_additional_pages(struct linux_binprm *bprm,
 		return 0;
 
 #ifdef CONFIG_PPC64
-	if (test_thread_flag(TIF_32BIT)) {
+	if (is_32bit_task()) {
 		vdso_pagelist = vdso32_pagelist;
 		vdso_pages = vdso32_pages;
 		vdso_base = VDSO32_MBASE;
 	} else {
 		vdso_pagelist = vdso64_pagelist;
 		vdso_pages = vdso64_pages;
-		vdso_base = VDSO64_MBASE;
+		/*
+		 * On 64bit we don't have a preferred map address. This
+		 * allows get_unmapped_area to find an area near other mmaps
+		 * and most likely share a SLB entry.
+		 */
+		vdso_base = 0;
 	}
 #else
 	vdso_pagelist = vdso32_pagelist;
@@ -213,14 +234,27 @@ int arch_setup_additional_pages(struct linux_binprm *bprm,
 	 * pick a base address for the vDSO in process space. We try to put it
 	 * at vdso_base which is the "natural" base for it, but we might fail
 	 * and end up putting it elsewhere.
+	 * Add enough to the size so that the result can be aligned.
 	 */
 	down_write(&mm->mmap_sem);
 	vdso_base = get_unmapped_area(NULL, vdso_base,
-				      vdso_pages << PAGE_SHIFT, 0, 0);
+				      (vdso_pages << PAGE_SHIFT) +
+				      ((VDSO_ALIGNMENT - 1) & PAGE_MASK),
+				      0, 0);
 	if (IS_ERR_VALUE(vdso_base)) {
 		rc = vdso_base;
 		goto fail_mmapsem;
 	}
+
+	/* Add required alignment. */
+	vdso_base = ALIGN(vdso_base, VDSO_ALIGNMENT);
+
+	/*
+	 * Put vDSO base into mm struct. We need to do this before calling
+	 * install_special_mapping or the perf counter mmap tracking code
+	 * will fail to recognise it as a vDSO (since arch_vma_name fails).
+	 */
+	current->mm->context.vdso_base = vdso_base;
 
 	/*
 	 * our vma flags don't have VM_WRITE so by default, the process isn't
@@ -242,11 +276,10 @@ int arch_setup_additional_pages(struct linux_binprm *bprm,
 				     VM_MAYREAD|VM_MAYWRITE|VM_MAYEXEC|
 				     VM_ALWAYSDUMP,
 				     vdso_pagelist);
-	if (rc)
+	if (rc) {
+		current->mm->context.vdso_base = 0;
 		goto fail_mmapsem;
-
-	/* Put vDSO base into mm struct */
-	current->mm->context.vdso_base = vdso_base;
+	}
 
 	up_write(&mm->mmap_sem);
 	return 0;
@@ -324,9 +357,9 @@ static unsigned long __init find_function32(struct lib32_elfinfo *lib,
 	return sym->st_value - VDSO32_LBASE;
 }
 
-static int vdso_do_func_patch32(struct lib32_elfinfo *v32,
-				struct lib64_elfinfo *v64,
-				const char *orig, const char *fix)
+static int __init vdso_do_func_patch32(struct lib32_elfinfo *v32,
+				       struct lib64_elfinfo *v64,
+				       const char *orig, const char *fix)
 {
 	Elf32_Sym *sym32_gen, *sym32_fix;
 
@@ -421,9 +454,9 @@ static unsigned long __init find_function64(struct lib64_elfinfo *lib,
 #endif
 }
 
-static int vdso_do_func_patch64(struct lib32_elfinfo *v32,
-				struct lib64_elfinfo *v64,
-				const char *orig, const char *fix)
+static int __init vdso_do_func_patch64(struct lib32_elfinfo *v32,
+				       struct lib64_elfinfo *v64,
+				       const char *orig, const char *fix)
 {
 	Elf64_Sym *sym64_gen, *sym64_fix;
 
@@ -554,15 +587,30 @@ static __init int vdso_fixup_features(struct lib32_elfinfo *v32,
 		do_feature_fixups(cur_cpu_spec->cpu_features,
 				  start64, start64 + size64);
 
+	start64 = find_section64(v64->hdr, "__mmu_ftr_fixup", &size64);
+	if (start64)
+		do_feature_fixups(cur_cpu_spec->mmu_features,
+				  start64, start64 + size64);
+
 	start64 = find_section64(v64->hdr, "__fw_ftr_fixup", &size64);
 	if (start64)
 		do_feature_fixups(powerpc_firmware_features,
 				  start64, start64 + size64);
+
+	start64 = find_section64(v64->hdr, "__lwsync_fixup", &size64);
+	if (start64)
+		do_lwsync_fixups(cur_cpu_spec->cpu_features,
+				 start64, start64 + size64);
 #endif /* CONFIG_PPC64 */
 
 	start32 = find_section32(v32->hdr, "__ftr_fixup", &size32);
 	if (start32)
 		do_feature_fixups(cur_cpu_spec->cpu_features,
+				  start32, start32 + size32);
+
+	start32 = find_section32(v32->hdr, "__mmu_ftr_fixup", &size32);
+	if (start32)
+		do_feature_fixups(cur_cpu_spec->mmu_features,
 				  start32, start32 + size32);
 
 #ifdef CONFIG_PPC64
@@ -571,6 +619,11 @@ static __init int vdso_fixup_features(struct lib32_elfinfo *v32,
 		do_feature_fixups(powerpc_firmware_features,
 				  start32, start32 + size32);
 #endif /* CONFIG_PPC64 */
+
+	start32 = find_section32(v32->hdr, "__lwsync_fixup", &size32);
+	if (start32)
+		do_lwsync_fixups(cur_cpu_spec->cpu_features,
+				 start32, start32 + size32);
 
 	return 0;
 }
@@ -668,9 +721,9 @@ static int __init vdso_init(void)
 
 #ifdef CONFIG_PPC64
 	/*
-	 * Fill up the "systemcfg" stuff for backward compatiblity
+	 * Fill up the "systemcfg" stuff for backward compatibility
 	 */
-	strcpy(vdso_data->eye_catcher, "SYSTEMCFG:PPC64");
+	strcpy((char *)vdso_data->eye_catcher, "SYSTEMCFG:PPC64");
 	vdso_data->version.major = SYSTEMCFG_MAJOR;
 	vdso_data->version.minor = SYSTEMCFG_MINOR;
 	vdso_data->processor = mfspr(SPRN_PVR);
@@ -681,17 +734,28 @@ static int __init vdso_init(void)
 	vdso_data->platform = machine_is(iseries) ? 0x200 : 0x100;
 	if (firmware_has_feature(FW_FEATURE_LPAR))
 		vdso_data->platform |= 1;
-	vdso_data->physicalMemorySize = lmb_phys_mem_size();
+	vdso_data->physicalMemorySize = memblock_phys_mem_size();
 	vdso_data->dcache_size = ppc64_caches.dsize;
 	vdso_data->dcache_line_size = ppc64_caches.dline_size;
 	vdso_data->icache_size = ppc64_caches.isize;
 	vdso_data->icache_line_size = ppc64_caches.iline_size;
+
+	/* XXXOJN: Blocks should be added to ppc64_caches and used instead */
+	vdso_data->dcache_block_size = ppc64_caches.dline_size;
+	vdso_data->icache_block_size = ppc64_caches.iline_size;
+	vdso_data->dcache_log_block_size = ppc64_caches.log_dline_size;
+	vdso_data->icache_log_block_size = ppc64_caches.log_iline_size;
 
 	/*
 	 * Calculate the size of the 64 bits vDSO
 	 */
 	vdso64_pages = (&vdso64_end - &vdso64_start) >> PAGE_SHIFT;
 	DBG("vdso64_kbase: %p, 0x%x pages\n", vdso64_kbase, vdso64_pages);
+#else
+	vdso_data->dcache_block_size = L1_CACHE_BYTES;
+	vdso_data->dcache_log_block_size = L1_CACHE_SHIFT;
+	vdso_data->icache_block_size = L1_CACHE_BYTES;
+	vdso_data->icache_log_block_size = L1_CACHE_SHIFT;
 #endif /* CONFIG_PPC64 */
 
 
@@ -756,17 +820,17 @@ static int __init vdso_init(void)
 }
 arch_initcall(vdso_init);
 
-int in_gate_area_no_task(unsigned long addr)
+int in_gate_area_no_mm(unsigned long addr)
 {
 	return 0;
 }
 
-int in_gate_area(struct task_struct *task, unsigned long addr)
+int in_gate_area(struct mm_struct *mm, unsigned long addr)
 {
 	return 0;
 }
 
-struct vm_area_struct *get_gate_vma(struct task_struct *tsk)
+struct vm_area_struct *get_gate_vma(struct mm_struct *mm)
 {
 	return NULL;
 }

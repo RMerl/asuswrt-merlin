@@ -33,34 +33,37 @@
 #include <linux/backing-dev.h>
 #include <linux/ramfs.h>
 #include <linux/sched.h>
+#include <linux/parser.h>
+#include <linux/magic.h>
+#include <linux/slab.h>
 #include <asm/uaccess.h>
 #include "internal.h"
 
-/* some random number */
-#define RAMFS_MAGIC	0x858458f6
+#define RAMFS_DEFAULT_MODE	0755
 
 static const struct super_operations ramfs_ops;
 static const struct inode_operations ramfs_dir_inode_operations;
 
 static struct backing_dev_info ramfs_backing_dev_info = {
+	.name		= "ramfs",
 	.ra_pages	= 0,	/* No readahead */
-	.capabilities	= BDI_CAP_NO_ACCT_DIRTY | BDI_CAP_NO_WRITEBACK |
+	.capabilities	= BDI_CAP_NO_ACCT_AND_WRITEBACK |
 			  BDI_CAP_MAP_DIRECT | BDI_CAP_MAP_COPY |
 			  BDI_CAP_READ_MAP | BDI_CAP_WRITE_MAP | BDI_CAP_EXEC_MAP,
 };
 
-struct inode *ramfs_get_inode(struct super_block *sb, int mode, dev_t dev)
+struct inode *ramfs_get_inode(struct super_block *sb,
+				const struct inode *dir, int mode, dev_t dev)
 {
 	struct inode * inode = new_inode(sb);
 
 	if (inode) {
-		inode->i_mode = mode;
-		inode->i_uid = current->fsuid;
-		inode->i_gid = current->fsgid;
-		inode->i_blocks = 0;
+		inode->i_ino = get_next_ino();
+		inode_init_owner(inode, dir, mode);
 		inode->i_mapping->a_ops = &ramfs_aops;
 		inode->i_mapping->backing_dev_info = &ramfs_backing_dev_info;
 		mapping_set_gfp_mask(inode->i_mapping, GFP_HIGHUSER);
+		mapping_set_unevictable(inode->i_mapping);
 		inode->i_atime = inode->i_mtime = inode->i_ctime = CURRENT_TIME;
 		switch (mode & S_IFMT) {
 		default:
@@ -92,15 +95,10 @@ struct inode *ramfs_get_inode(struct super_block *sb, int mode, dev_t dev)
 static int
 ramfs_mknod(struct inode *dir, struct dentry *dentry, int mode, dev_t dev)
 {
-	struct inode * inode = ramfs_get_inode(dir->i_sb, mode, dev);
+	struct inode * inode = ramfs_get_inode(dir->i_sb, dir, mode, dev);
 	int error = -ENOSPC;
 
 	if (inode) {
-		if (dir->i_mode & S_ISGID) {
-			inode->i_gid = dir->i_gid;
-			if (S_ISDIR(mode))
-				inode->i_mode |= S_ISGID;
-		}
 		d_instantiate(dentry, inode);
 		dget(dentry);	/* Extra count - pin the dentry in core */
 		error = 0;
@@ -127,13 +125,11 @@ static int ramfs_symlink(struct inode * dir, struct dentry *dentry, const char *
 	struct inode *inode;
 	int error = -ENOSPC;
 
-	inode = ramfs_get_inode(dir->i_sb, S_IFLNK|S_IRWXUGO, 0);
+	inode = ramfs_get_inode(dir->i_sb, dir, S_IFLNK|S_IRWXUGO, 0);
 	if (inode) {
 		int l = strlen(symname)+1;
 		error = page_symlink(inode, symname, l);
 		if (!error) {
-			if (dir->i_mode & S_ISGID)
-				inode->i_gid = dir->i_gid;
 			d_instantiate(dentry, inode);
 			dget(dentry);
 			dir->i_mtime = dir->i_ctime = CURRENT_TIME;
@@ -158,53 +154,133 @@ static const struct inode_operations ramfs_dir_inode_operations = {
 static const struct super_operations ramfs_ops = {
 	.statfs		= simple_statfs,
 	.drop_inode	= generic_delete_inode,
+	.show_options	= generic_show_options,
 };
 
-static int ramfs_fill_super(struct super_block * sb, void * data, int silent)
+struct ramfs_mount_opts {
+	umode_t mode;
+};
+
+enum {
+	Opt_mode,
+	Opt_err
+};
+
+static const match_table_t tokens = {
+	{Opt_mode, "mode=%o"},
+	{Opt_err, NULL}
+};
+
+struct ramfs_fs_info {
+	struct ramfs_mount_opts mount_opts;
+};
+
+static int ramfs_parse_options(char *data, struct ramfs_mount_opts *opts)
 {
-	struct inode * inode;
-	struct dentry * root;
+	substring_t args[MAX_OPT_ARGS];
+	int option;
+	int token;
+	char *p;
 
-	sb->s_maxbytes = MAX_LFS_FILESIZE;
-	sb->s_blocksize = PAGE_CACHE_SIZE;
-	sb->s_blocksize_bits = PAGE_CACHE_SHIFT;
-	sb->s_magic = RAMFS_MAGIC;
-	sb->s_op = &ramfs_ops;
-	sb->s_time_gran = 1;
-	inode = ramfs_get_inode(sb, S_IFDIR | 0755, 0);
-	if (!inode)
-		return -ENOMEM;
+	opts->mode = RAMFS_DEFAULT_MODE;
 
-	root = d_alloc_root(inode);
-	if (!root) {
-		iput(inode);
-		return -ENOMEM;
+	while ((p = strsep(&data, ",")) != NULL) {
+		if (!*p)
+			continue;
+
+		token = match_token(p, tokens, args);
+		switch (token) {
+		case Opt_mode:
+			if (match_octal(&args[0], &option))
+				return -EINVAL;
+			opts->mode = option & S_IALLUGO;
+			break;
+		/*
+		 * We might like to report bad mount options here;
+		 * but traditionally ramfs has ignored all mount options,
+		 * and as it is used as a !CONFIG_SHMEM simple substitute
+		 * for tmpfs, better continue to ignore other mount options.
+		 */
+		}
 	}
-	sb->s_root = root;
+
 	return 0;
 }
 
-int ramfs_get_sb(struct file_system_type *fs_type,
-	int flags, const char *dev_name, void *data, struct vfsmount *mnt)
+int ramfs_fill_super(struct super_block *sb, void *data, int silent)
 {
-	return get_sb_nodev(fs_type, flags, data, ramfs_fill_super, mnt);
+	struct ramfs_fs_info *fsi;
+	struct inode *inode = NULL;
+	struct dentry *root;
+	int err;
+
+	save_mount_options(sb, data);
+
+	fsi = kzalloc(sizeof(struct ramfs_fs_info), GFP_KERNEL);
+	sb->s_fs_info = fsi;
+	if (!fsi) {
+		err = -ENOMEM;
+		goto fail;
+	}
+
+	err = ramfs_parse_options(data, &fsi->mount_opts);
+	if (err)
+		goto fail;
+
+	sb->s_maxbytes		= MAX_LFS_FILESIZE;
+	sb->s_blocksize		= PAGE_CACHE_SIZE;
+	sb->s_blocksize_bits	= PAGE_CACHE_SHIFT;
+	sb->s_magic		= RAMFS_MAGIC;
+	sb->s_op		= &ramfs_ops;
+	sb->s_time_gran		= 1;
+
+	inode = ramfs_get_inode(sb, NULL, S_IFDIR | fsi->mount_opts.mode, 0);
+	if (!inode) {
+		err = -ENOMEM;
+		goto fail;
+	}
+
+	root = d_alloc_root(inode);
+	sb->s_root = root;
+	if (!root) {
+		err = -ENOMEM;
+		goto fail;
+	}
+
+	return 0;
+fail:
+	kfree(fsi);
+	sb->s_fs_info = NULL;
+	iput(inode);
+	return err;
 }
 
-static int rootfs_get_sb(struct file_system_type *fs_type,
-	int flags, const char *dev_name, void *data, struct vfsmount *mnt)
+struct dentry *ramfs_mount(struct file_system_type *fs_type,
+	int flags, const char *dev_name, void *data)
 {
-	return get_sb_nodev(fs_type, flags|MS_NOUSER, data, ramfs_fill_super,
-			    mnt);
+	return mount_nodev(fs_type, flags, data, ramfs_fill_super);
+}
+
+static struct dentry *rootfs_mount(struct file_system_type *fs_type,
+	int flags, const char *dev_name, void *data)
+{
+	return mount_nodev(fs_type, flags|MS_NOUSER, data, ramfs_fill_super);
+}
+
+static void ramfs_kill_sb(struct super_block *sb)
+{
+	kfree(sb->s_fs_info);
+	kill_litter_super(sb);
 }
 
 static struct file_system_type ramfs_fs_type = {
 	.name		= "ramfs",
-	.get_sb		= ramfs_get_sb,
-	.kill_sb	= kill_litter_super,
+	.mount		= ramfs_mount,
+	.kill_sb	= ramfs_kill_sb,
 };
 static struct file_system_type rootfs_fs_type = {
 	.name		= "rootfs",
-	.get_sb		= rootfs_get_sb,
+	.mount		= rootfs_mount,
 	.kill_sb	= kill_litter_super,
 };
 
@@ -223,7 +299,17 @@ module_exit(exit_ramfs_fs)
 
 int __init init_rootfs(void)
 {
-	return register_filesystem(&rootfs_fs_type);
+	int err;
+
+	err = bdi_init(&ramfs_backing_dev_info);
+	if (err)
+		return err;
+
+	err = register_filesystem(&rootfs_fs_type);
+	if (err)
+		bdi_destroy(&ramfs_backing_dev_info);
+
+	return err;
 }
 
 MODULE_LICENSE("GPL");

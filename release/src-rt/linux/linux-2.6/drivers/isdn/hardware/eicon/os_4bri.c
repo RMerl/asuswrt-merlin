@@ -149,8 +149,7 @@ int diva_4bri_init_card(diva_os_xdi_adapter_t * a)
 	diva_os_xdi_adapter_t *diva_current;
 	diva_os_xdi_adapter_t *adapter_list[4];
 	PISDN_ADAPTER Slave;
-	unsigned long bar_length[sizeof(_4bri_bar_length) /
-				 sizeof(_4bri_bar_length[0])];
+	unsigned long bar_length[ARRAY_SIZE(_4bri_bar_length)];
 	int v2 = _4bri_is_rev_2_card(a->CardOrdinal);
 	int tasks = _4bri_is_rev_2_bri_card(a->CardOrdinal) ? 1 : MQ_INSTANCE_COUNT;
 	int factor = (tasks == 1) ? 1 : 2;
@@ -997,7 +996,7 @@ diva_4bri_start_adapter(PISDN_ADAPTER IoAdapter,
 	diva_xdi_display_adapter_features(IoAdapter->ANum);
 
 	for (i = 0; i < IoAdapter->tasks; i++) {
-		DBG_LOG(("A(%d) %s adapter successfull started",
+		DBG_LOG(("A(%d) %s adapter successfully started",
 			 IoAdapter->QuadroList->QuadroAdapter[i]->ANum,
 			 (IoAdapter->tasks == 1) ? "BRI 2.0" : "4BRI"))
 		diva_xdi_didd_register_adapter(IoAdapter->QuadroList->QuadroAdapter[i]->ANum);

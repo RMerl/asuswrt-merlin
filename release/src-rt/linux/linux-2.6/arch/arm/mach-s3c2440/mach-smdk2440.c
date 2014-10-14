@@ -1,6 +1,6 @@
 /* linux/arch/arm/mach-s3c2440/mach-smdk2440.c
  *
- * Copyright (c) 2004,2005 Simtec Electronics
+ * Copyright (c) 2004-2005 Simtec Electronics
  *	Ben Dooks <ben@simtec.co.uk>
  *
  * http://www.fluff.org/ben/smdk2440/
@@ -21,30 +21,31 @@
 #include <linux/init.h>
 #include <linux/serial_core.h>
 #include <linux/platform_device.h>
+#include <linux/io.h>
 
 #include <asm/mach/arch.h>
 #include <asm/mach/map.h>
 #include <asm/mach/irq.h>
 
-#include <asm/hardware.h>
-#include <asm/io.h>
+#include <mach/hardware.h>
 #include <asm/irq.h>
 #include <asm/mach-types.h>
 
-#include <asm/arch/regs-serial.h>
-#include <asm/arch/regs-gpio.h>
-#include <asm/arch/regs-lcd.h>
+#include <plat/regs-serial.h>
+#include <mach/regs-gpio.h>
+#include <mach/regs-lcd.h>
 
-#include <asm/arch/idle.h>
-#include <asm/arch/fb.h>
+#include <mach/idle.h>
+#include <mach/fb.h>
+#include <plat/iic.h>
 
-#include <asm/plat-s3c24xx/s3c2410.h>
-#include <asm/plat-s3c24xx/s3c2440.h>
-#include <asm/plat-s3c24xx/clock.h>
-#include <asm/plat-s3c24xx/devs.h>
-#include <asm/plat-s3c24xx/cpu.h>
+#include <plat/s3c2410.h>
+#include <plat/s3c244x.h>
+#include <plat/clock.h>
+#include <plat/devs.h>
+#include <plat/cpu.h>
 
-#include <asm/plat-s3c24xx/common-smdk.h>
+#include <plat/common-smdk.h>
 
 static struct map_desc smdk2440_iodesc[] __initdata = {
 	/* ISA IO Space map (memory space selected by A24) */
@@ -103,31 +104,35 @@ static struct s3c2410_uartcfg smdk2440_uartcfgs[] __initdata = {
 
 /* LCD driver info */
 
-static struct s3c2410fb_mach_info smdk2440_lcd_cfg __initdata = {
-	.regs	= {
+static struct s3c2410fb_display smdk2440_lcd_cfg __initdata = {
 
-		.lcdcon1	= S3C2410_LCDCON1_TFT16BPP |
-				  S3C2410_LCDCON1_TFT |
-				  S3C2410_LCDCON1_CLKVAL(0x04),
+	.lcdcon5	= S3C2410_LCDCON5_FRM565 |
+			  S3C2410_LCDCON5_INVVLINE |
+			  S3C2410_LCDCON5_INVVFRAME |
+			  S3C2410_LCDCON5_PWREN |
+			  S3C2410_LCDCON5_HWSWP,
 
-		.lcdcon2	= S3C2410_LCDCON2_VBPD(7) |
-				  S3C2410_LCDCON2_LINEVAL(319) |
-				  S3C2410_LCDCON2_VFPD(6) |
-				  S3C2410_LCDCON2_VSPW(3),
+	.type		= S3C2410_LCDCON1_TFT,
 
-		.lcdcon3	= S3C2410_LCDCON3_HBPD(19) |
-				  S3C2410_LCDCON3_HOZVAL(239) |
-				  S3C2410_LCDCON3_HFPD(7),
+	.width		= 240,
+	.height		= 320,
 
-		.lcdcon4	= S3C2410_LCDCON4_MVAL(0) |
-				  S3C2410_LCDCON4_HSPW(3),
+	.pixclock	= 166667, /* HCLK 60 MHz, divisor 10 */
+	.xres		= 240,
+	.yres		= 320,
+	.bpp		= 16,
+	.left_margin	= 20,
+	.right_margin	= 8,
+	.hsync_len	= 4,
+	.upper_margin	= 8,
+	.lower_margin	= 7,
+	.vsync_len	= 4,
+};
 
-		.lcdcon5	= S3C2410_LCDCON5_FRM565 |
-				  S3C2410_LCDCON5_INVVLINE |
-				  S3C2410_LCDCON5_INVVFRAME |
-				  S3C2410_LCDCON5_PWREN |
-				  S3C2410_LCDCON5_HWSWP,
-	},
+static struct s3c2410fb_mach_info smdk2440_fb_info __initdata = {
+	.displays	= &smdk2440_lcd_cfg,
+	.num_displays	= 1,
+	.default_display = 0,
 
 #if 0
 	/* currently setup by downloader */
@@ -142,35 +147,13 @@ static struct s3c2410fb_mach_info smdk2440_lcd_cfg __initdata = {
 #endif
 
 	.lpcsel		= ((0xCE6) & ~7) | 1<<4,
-	.type		= S3C2410_LCDCON1_TFT16BPP,
-
-	.width		= 240,
-	.height		= 320,
-
-	.xres		= {
-		.min	= 240,
-		.max	= 240,
-		.defval	= 240,
-	},
-
-	.yres		= {
-		.min	= 320,
-		.max	= 320,
-		.defval = 320,
-	},
-
-	.bpp		= {
-		.min	= 16,
-		.max	= 16,
-		.defval = 16,
-	},
 };
 
 static struct platform_device *smdk2440_devices[] __initdata = {
-	&s3c_device_usb,
+	&s3c_device_ohci,
 	&s3c_device_lcd,
 	&s3c_device_wdt,
-	&s3c_device_i2c,
+	&s3c_device_i2c0,
 	&s3c_device_iis,
 };
 
@@ -183,16 +166,15 @@ static void __init smdk2440_map_io(void)
 
 static void __init smdk2440_machine_init(void)
 {
-	s3c24xx_fb_set_platdata(&smdk2440_lcd_cfg);
+	s3c24xx_fb_set_platdata(&smdk2440_fb_info);
+	s3c_i2c0_set_platdata(NULL);
 
 	platform_add_devices(smdk2440_devices, ARRAY_SIZE(smdk2440_devices));
 	smdk_machine_init();
 }
 
 MACHINE_START(S3C2440, "SMDK2440")
-	/* Maintainer: Ben Dooks <ben@fluff.org> */
-	.phys_io	= S3C2410_PA_UART,
-	.io_pg_offst	= (((u32)S3C24XX_VA_UART) >> 18) & 0xfffc,
+	/* Maintainer: Ben Dooks <ben-linux@fluff.org> */
 	.boot_params	= S3C2410_SDRAM_PA + 0x100,
 
 	.init_irq	= s3c24xx_init_irq,

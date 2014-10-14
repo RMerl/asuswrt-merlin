@@ -20,7 +20,6 @@
 #include "hscx.h"
 #include "isdnl1.h"
 
-extern const char *CardType[];
 static const char *teles3_revision = "$Revision: 2.19.2.4 $";
 
 #define byteout(addr,val) outb(val,addr)
@@ -301,7 +300,7 @@ setup_teles3(struct IsdnCard *card)
 					err = pnp_activate_dev(pnp_d);
 					if (err<0) {
 						printk(KERN_WARNING "%s: pnp_activate_dev ret(%d)\n",
-							__FUNCTION__, err);
+							__func__, err);
 						return(0);
 					}
 					card->para[3] = pnp_port_start(pnp_d, 2);

@@ -21,6 +21,7 @@
 
 
 #include <linux/module.h>
+#include <linux/bitops.h>
 #include <linux/delay.h>
 #include <linux/errno.h>
 #include <linux/if_arp.h>
@@ -31,11 +32,11 @@
 #include <linux/kernel.h>
 #include <linux/mm.h>
 #include <linux/netdevice.h>
+#include <linux/slab.h>
 #include <linux/rtnetlink.h>
 #include <linux/sockios.h>
 #include <linux/workqueue.h>
 #include <asm/atomic.h>
-#include <asm/bitops.h>
 #include <asm/dma.h>
 #include <asm/io.h>
 #include <asm/irq.h>
@@ -195,7 +196,7 @@ struct scc_priv {
 	int chip;
 	struct net_device *dev;
 	struct scc_info *info;
-	struct net_device_stats stats;
+
 	int channel;
 	int card_base, scc_cmd, scc_data;
 	int tmr_cnt, tmr_ctrl, tmr_mode;
@@ -239,7 +240,6 @@ static int scc_open(struct net_device *dev);
 static int scc_close(struct net_device *dev);
 static int scc_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd);
 static int scc_send_packet(struct sk_buff *skb, struct net_device *dev);
-static struct net_device_stats *scc_get_stats(struct net_device *dev);
 static int scc_set_mac_address(struct net_device *dev, void *sa);
 
 static inline void tx_on(struct scc_priv *priv);
@@ -262,8 +262,8 @@ static void tm_isr(struct scc_priv *priv);
 
 static int io[MAX_NUM_DEVS] __initdata = { 0, };
 
-/* Beware! hw[] is also used in cleanup_module(). */
-static struct scc_hardware hw[NUM_TYPES] __initdata_or_module = HARDWARE;
+/* Beware! hw[] is also used in dmascc_exit(). */
+static struct scc_hardware hw[NUM_TYPES] = HARDWARE;
 
 
 /* Global variables */
@@ -332,8 +332,8 @@ static int __init dmascc_init(void)
 			for (i = 0; i < MAX_NUM_DEVS && io[i]; i++) {
 				j = (io[i] -
 				     hw[h].io_region) / hw[h].io_delta;
-				if (j >= 0 && j < hw[h].num_devs
-				    && hw[h].io_region +
+				if (j >= 0 && j < hw[h].num_devs &&
+				    hw[h].io_region +
 				    j * hw[h].io_delta == io[i]) {
 					base[j] = io[i];
 				}
@@ -397,8 +397,8 @@ static int __init dmascc_init(void)
 					t_val =
 					    inb(t1[i]) + (inb(t1[i]) << 8);
 					/* Also check whether counter did wrap */
-					if (t_val == 0
-					    || t_val > TMR_0_HZ / HZ * 10)
+					if (t_val == 0 ||
+					    t_val > TMR_0_HZ / HZ * 10)
 						counting[i] = 0;
 					delay[i] = jiffies - start[i];
 				}
@@ -441,6 +441,14 @@ static void __init dev_setup(struct net_device *dev)
 	memcpy(dev->dev_addr, &ax25_defaddr, AX25_ADDR_LEN);
 }
 
+static const struct net_device_ops scc_netdev_ops = {
+	.ndo_open = scc_open,
+	.ndo_stop = scc_close,
+	.ndo_start_xmit = scc_send_packet,
+	.ndo_do_ioctl = scc_ioctl,
+	.ndo_set_mac_address = scc_set_mac_address,
+};
+
 static int __init setup_adapter(int card_base, int type, int n)
 {
 	int i, irq, chip;
@@ -453,8 +461,8 @@ static int __init setup_adapter(int card_base, int type, int n)
 	int scc_base = card_base + hw[type].scc_offset;
 	char *chipnames[] = CHIPNAMES;
 
-	/* Allocate memory */
-	info = kmalloc(sizeof(struct scc_info), GFP_KERNEL | GFP_DMA);
+	/* Initialize what is necessary for write_scc and write_scc_data */
+	info = kzalloc(sizeof(struct scc_info), GFP_KERNEL | GFP_DMA);
 	if (!info) {
 		printk(KERN_ERR "dmascc: "
 		       "could not allocate memory for %s at %#3x\n",
@@ -462,8 +470,6 @@ static int __init setup_adapter(int card_base, int type, int n)
 		goto out;
 	}
 
-	/* Initialize what is necessary for write_scc and write_scc_data */
-	memset(info, 0, sizeof(struct scc_info));
 
 	info->dev[0] = alloc_netdev(0, "", dev_setup);
 	if (!info->dev[0]) {
@@ -574,18 +580,12 @@ static int __init setup_adapter(int card_base, int type, int n)
 		priv->param.persist = 256;
 		priv->param.dma = -1;
 		INIT_WORK(&priv->rx_work, rx_bh);
-		dev->priv = priv;
+		dev->ml_priv = priv;
 		sprintf(dev->name, "dmascc%i", 2 * n + i);
 		dev->base_addr = card_base;
 		dev->irq = irq;
-		dev->open = scc_open;
-		dev->stop = scc_close;
-		dev->do_ioctl = scc_ioctl;
-		dev->hard_start_xmit = scc_send_packet;
-		dev->get_stats = scc_get_stats;
-		dev->hard_header = ax25_hard_header;
-		dev->rebuild_header = ax25_rebuild_header;
-		dev->set_mac_address = scc_set_mac_address;
+		dev->netdev_ops = &scc_netdev_ops;
+		dev->header_ops = &ax25_header_ops;
 	}
 	if (register_netdev(info->dev[0])) {
 		printk(KERN_ERR "dmascc: could not register %s\n",
@@ -723,7 +723,7 @@ static int read_scc_data(struct scc_priv *priv)
 
 static int scc_open(struct net_device *dev)
 {
-	struct scc_priv *priv = dev->priv;
+	struct scc_priv *priv = dev->ml_priv;
 	struct scc_info *info = priv->info;
 	int card_base = priv->card_base;
 
@@ -865,7 +865,7 @@ static int scc_open(struct net_device *dev)
 
 static int scc_close(struct net_device *dev)
 {
-	struct scc_priv *priv = dev->priv;
+	struct scc_priv *priv = dev->ml_priv;
 	struct scc_info *info = priv->info;
 	int card_base = priv->card_base;
 
@@ -894,7 +894,7 @@ static int scc_close(struct net_device *dev)
 
 static int scc_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
 {
-	struct scc_priv *priv = dev->priv;
+	struct scc_priv *priv = dev->ml_priv;
 
 	switch (cmd) {
 	case SIOCGSCCPARAM:
@@ -921,7 +921,7 @@ static int scc_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
 
 static int scc_send_packet(struct sk_buff *skb, struct net_device *dev)
 {
-	struct scc_priv *priv = dev->priv;
+	struct scc_priv *priv = dev->ml_priv;
 	unsigned long flags;
 	int i;
 
@@ -960,15 +960,7 @@ static int scc_send_packet(struct sk_buff *skb, struct net_device *dev)
 	spin_unlock_irqrestore(&priv->ring_lock, flags);
 	dev_kfree_skb(skb);
 
-	return 0;
-}
-
-
-static struct net_device_stats *scc_get_stats(struct net_device *dev)
-{
-	struct scc_priv *priv = dev->priv;
-
-	return &priv->stats;
+	return NETDEV_TX_OK;
 }
 
 
@@ -1080,21 +1072,16 @@ static inline void rx_off(struct scc_priv *priv)
 
 static void start_timer(struct scc_priv *priv, int t, int r15)
 {
-	unsigned long flags;
-
 	outb(priv->tmr_mode, priv->tmr_ctrl);
 	if (t == 0) {
 		tm_isr(priv);
 	} else if (t > 0) {
-		save_flags(flags);
-		cli();
 		outb(t & 0xFF, priv->tmr_cnt);
 		outb((t >> 8) & 0xFF, priv->tmr_cnt);
 		if (priv->type != TYPE_TWIN) {
 			write_scc(priv, R15, r15 | CTSIE);
 			priv->rr0 |= CTS;
 		}
-		restore_flags(flags);
 	}
 }
 
@@ -1224,17 +1211,17 @@ static void special_condition(struct scc_priv *priv, int rc)
 		}
 		if (priv->rx_over) {
 			/* We had an overrun */
-			priv->stats.rx_errors++;
+			priv->dev->stats.rx_errors++;
 			if (priv->rx_over == 2)
-				priv->stats.rx_length_errors++;
+				priv->dev->stats.rx_length_errors++;
 			else
-				priv->stats.rx_fifo_errors++;
+				priv->dev->stats.rx_fifo_errors++;
 			priv->rx_over = 0;
 		} else if (rc & CRC_ERR) {
 			/* Count invalid CRC only if packet length >= minimum */
 			if (cb >= 15) {
-				priv->stats.rx_errors++;
-				priv->stats.rx_crc_errors++;
+				priv->dev->stats.rx_errors++;
+				priv->dev->stats.rx_crc_errors++;
 			}
 		} else {
 			if (cb >= 15) {
@@ -1247,8 +1234,8 @@ static void special_condition(struct scc_priv *priv, int rc)
 					priv->rx_count++;
 					schedule_work(&priv->rx_work);
 				} else {
-					priv->stats.rx_errors++;
-					priv->stats.rx_over_errors++;
+					priv->dev->stats.rx_errors++;
+					priv->dev->stats.rx_over_errors++;
 				}
 			}
 		}
@@ -1283,7 +1270,7 @@ static void rx_bh(struct work_struct *ugli_api)
 		skb = dev_alloc_skb(cb + 1);
 		if (skb == NULL) {
 			/* Drop packet */
-			priv->stats.rx_dropped++;
+			priv->dev->stats.rx_dropped++;
 		} else {
 			/* Fill buffer */
 			data = skb_put(skb, cb + 1);
@@ -1291,9 +1278,8 @@ static void rx_bh(struct work_struct *ugli_api)
 			memcpy(&data[1], priv->rx_buf[i], cb);
 			skb->protocol = ax25_type_trans(skb, priv->dev);
 			netif_rx(skb);
-			priv->dev->last_rx = jiffies;
-			priv->stats.rx_packets++;
-			priv->stats.rx_bytes += cb;
+			priv->dev->stats.rx_packets++;
+			priv->dev->stats.rx_bytes += cb;
 		}
 		spin_lock_irqsave(&priv->ring_lock, flags);
 		/* Move tail */
@@ -1360,15 +1346,15 @@ static void es_isr(struct scc_priv *priv)
 			write_scc(priv, R1, EXT_INT_ENAB | WT_FN_RDYFN);
 		if (res) {
 			/* Update packet statistics */
-			priv->stats.tx_errors++;
-			priv->stats.tx_fifo_errors++;
+			priv->dev->stats.tx_errors++;
+			priv->dev->stats.tx_fifo_errors++;
 			/* Other underrun interrupts may already be waiting */
 			write_scc(priv, R0, RES_EXT_INT);
 			write_scc(priv, R0, RES_EXT_INT);
 		} else {
 			/* Update packet statistics */
-			priv->stats.tx_packets++;
-			priv->stats.tx_bytes += priv->tx_len[i];
+			priv->dev->stats.tx_packets++;
+			priv->dev->stats.tx_bytes += priv->tx_len[i];
 			/* Remove frame from FIFO */
 			priv->tx_tail = (i + 1) % NUM_TX_BUF;
 			priv->tx_count--;
@@ -1434,7 +1420,7 @@ static void tm_isr(struct scc_priv *priv)
 		write_scc(priv, R15, DCDIE);
 		priv->rr0 = read_scc(priv, R0);
 		if (priv->rr0 & DCD) {
-			priv->stats.collisions++;
+			priv->dev->stats.collisions++;
 			rx_on(priv);
 			priv->state = RX_ON;
 		} else {

@@ -1,4 +1,7 @@
-/* zd_rf_al7230b.c: Functions for the AL7230B RF controller
+/* ZD1211 USB-WLAN driver for Linux
+ *
+ * Copyright (C) 2005-2007 Ulrich Kunitz <kune@deine-taler.de>
+ * Copyright (C) 2006-2007 Daniel Drake <dsd@gentoo.org>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -473,7 +476,7 @@ int zd_rf_init_al7230b(struct zd_rf *rf)
 {
 	struct zd_chip *chip = zd_rf_to_chip(rf);
 
-	if (chip->is_zd1211b) {
+	if (zd_chip_is_zd1211b(chip)) {
 		rf->init_hw = zd1211b_al7230b_init_hw;
 		rf->switch_radio_on = zd1211b_al7230b_switch_radio_on;
 		rf->set_channel = zd1211b_al7230b_set_channel;
@@ -483,6 +486,7 @@ int zd_rf_init_al7230b(struct zd_rf *rf)
 		rf->switch_radio_on = zd1211_al7230b_switch_radio_on;
 		rf->set_channel = zd1211_al7230b_set_channel;
 		rf->patch_6m_band_edge = zd_rf_generic_patch_6m;
+		rf->patch_cck_gain = 1;
 	}
 
 	rf->switch_radio_off = al7230b_switch_radio_off;

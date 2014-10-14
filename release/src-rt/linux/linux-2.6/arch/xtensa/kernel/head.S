@@ -19,6 +19,7 @@
 #include <asm/page.h>
 #include <asm/cacheasm.h>
 
+#include <linux/init.h>
 #include <linux/linkage.h>
 
 /*
@@ -45,7 +46,7 @@
 	 * instruction.
 	 */
 
-	.section .head.text, "ax"
+	__HEAD
 	.globl _start
 _start:	_j	2f
 	.align	4
@@ -53,7 +54,7 @@ _start:	_j	2f
 2:	l32r	a0, 1b
 	jx	a0
 
-	.text
+	.section .init.text, "ax"
 	.align 4
 _startup:
 
@@ -183,8 +184,8 @@ _startup:
 	 * Now clear the BSS segment.
 	 */
 
-	movi	a2, _bss_start	# start of BSS
-	movi	a3, _bss_end	# end of BSS
+	movi	a2, __bss_start	# start of BSS
+	movi	a3, __bss_stop	# end of BSS
 
 	__loopt	a2, a3, a4, 2
 	s32i	a0, a2, 0
@@ -234,9 +235,10 @@ should_never_return:
  * BSS section
  */
 	
-.section ".bss.page_aligned", "w"
+__PAGE_ALIGNED_BSS
+#ifdef CONFIG_MMU
 ENTRY(swapper_pg_dir)
 	.fill	PAGE_SIZE, 1, 0
+#endif
 ENTRY(empty_zero_page)
 	.fill	PAGE_SIZE, 1, 0
-

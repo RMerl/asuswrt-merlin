@@ -102,6 +102,7 @@ static struct zorro_device_id zorro8390_zorro_tbl[] __devinitdata = {
     { ZORRO_PROD_INDIVIDUAL_COMPUTERS_X_SURF, },
     { 0 }
 };
+MODULE_DEVICE_TABLE(zorro, zorro8390_zorro_tbl);
 
 static struct zorro_driver zorro8390_driver = {
     .name	= "zorro8390",
@@ -120,12 +121,14 @@ static int __devinit zorro8390_init_one(struct zorro_dev *z,
     for (i = ARRAY_SIZE(cards)-1; i >= 0; i--)
 	if (z->id == cards[i].id)
 	    break;
+    if (i < 0)
+        return -ENODEV;
+
     board = z->resource.start;
     ioaddr = board+cards[i].offset;
     dev = ____alloc_ei_netdev(0);
     if (!dev)
 	return -ENOMEM;
-    SET_MODULE_OWNER(dev);
     if (!request_mem_region(ioaddr, NE_IO_EXTENT*2, DRV_NAME)) {
 	free_netdev(dev);
 	return -EBUSY;
@@ -139,6 +142,21 @@ static int __devinit zorro8390_init_one(struct zorro_dev *z,
     zorro_set_drvdata(z, dev);
     return 0;
 }
+
+static const struct net_device_ops zorro8390_netdev_ops = {
+	.ndo_open		= zorro8390_open,
+	.ndo_stop		= zorro8390_close,
+	.ndo_start_xmit		= __ei_start_xmit,
+	.ndo_tx_timeout		= __ei_tx_timeout,
+	.ndo_get_stats		= __ei_get_stats,
+	.ndo_set_multicast_list = __ei_set_multicast_list,
+	.ndo_validate_addr	= eth_validate_addr,
+	.ndo_set_mac_address 	= eth_mac_addr,
+	.ndo_change_mtu		= eth_change_mtu,
+#ifdef CONFIG_NET_POLL_CONTROLLER
+	.ndo_poll_controller	= __ei_poll,
+#endif
+};
 
 static int __devinit zorro8390_init(struct net_device *dev,
 				    unsigned long board, const char *name,
@@ -191,7 +209,7 @@ static int __devinit zorro8390_init(struct net_device *dev,
 	    {0x00,	NE_EN0_RSARHI},
 	    {E8390_RREAD+E8390_START, NE_CMD},
 	};
-	for (i = 0; i < sizeof(program_seq)/sizeof(program_seq[0]); i++) {
+	for (i = 0; i < ARRAY_SIZE(program_seq); i++) {
 	    z_writeb(program_seq[i].value, ioaddr + program_seq[i].offset);
 	}
     }
@@ -212,12 +230,12 @@ static int __devinit zorro8390_init(struct net_device *dev,
     i = request_irq(IRQ_AMIGA_PORTS, __ei_interrupt, IRQF_SHARED, DRV_NAME, dev);
     if (i) return i;
 
-    for(i = 0; i < ETHER_ADDR_LEN; i++) {
-#ifdef DEBUG
-	printk(" %2.2x", SA_prom[i]);
-#endif
+    for(i = 0; i < ETHER_ADDR_LEN; i++)
 	dev->dev_addr[i] = SA_prom[i];
-    }
+
+#ifdef DEBUG
+    printk("%pM", dev->dev_addr);
+#endif
 
     ei_status.name = name;
     ei_status.tx_start_page = start_page;
@@ -231,12 +249,8 @@ static int __devinit zorro8390_init(struct net_device *dev,
     ei_status.block_output = &zorro8390_block_output;
     ei_status.get_8390_hdr = &zorro8390_get_8390_hdr;
     ei_status.reg_offset = zorro8390_offsets;
-    dev->open = &zorro8390_open;
-    dev->stop = &zorro8390_close;
-#ifdef CONFIG_NET_POLL_CONTROLLER
-    dev->poll_controller = __ei_poll;
-#endif
 
+    dev->netdev_ops = &zorro8390_netdev_ops;
     __NS8390_init(dev, 0);
     err = register_netdev(dev);
     if (err) {
@@ -244,10 +258,8 @@ static int __devinit zorro8390_init(struct net_device *dev,
 	return err;
     }
 
-    printk(KERN_INFO "%s: %s at 0x%08lx, Ethernet Address "
-	   "%02x:%02x:%02x:%02x:%02x:%02x\n", dev->name, name, board,
-	   dev->dev_addr[0], dev->dev_addr[1], dev->dev_addr[2],
-	   dev->dev_addr[3], dev->dev_addr[4], dev->dev_addr[5]);
+    printk(KERN_INFO "%s: %s at 0x%08lx, Ethernet Address %pM\n",
+	   dev->name, name, board, dev->dev_addr);
 
     return 0;
 }
@@ -419,7 +431,6 @@ static void zorro8390_block_output(struct net_device *dev, int count,
 
     z_writeb(ENISR_RDC, nic_base + NE_EN0_ISR);	/* Ack intr. */
     ei_status.dmaing &= ~0x01;
-    return;
 }
 
 static void __devexit zorro8390_remove_one(struct zorro_dev *z)

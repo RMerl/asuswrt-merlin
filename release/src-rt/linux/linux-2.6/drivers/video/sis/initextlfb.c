@@ -25,12 +25,10 @@
  * Author:	Thomas Winischhofer <thomas@winischhofer.net>
  */
 
-#include "osdef.h"
 #include "initdef.h"
 #include "vgatypes.h"
 #include "vstruct.h"
 
-#include <linux/version.h>
 #include <linux/types.h>
 #include <linux/fb.h>
 
@@ -60,7 +58,7 @@ sisfb_mode_rate_to_dclock(struct SiS_Private *SiS_Pr, unsigned char modeno,
 
     if(rateindex > 0) rateindex--;
 
-#ifdef SIS315H
+#ifdef CONFIG_FB_SIS_315
     switch(ModeNo) {
     case 0x5a: ModeNo = 0x50; break;
     case 0x5b: ModeNo = 0x56;
@@ -104,7 +102,7 @@ sisfb_mode_rate_to_ddata(struct SiS_Private *SiS_Pr, unsigned char modeno,
 
     if(rateindex > 0) rateindex--;
 
-#ifdef SIS315H
+#ifdef CONFIG_FB_SIS_315
     switch(ModeNo) {
        case 0x5a: ModeNo = 0x50; break;
        case 0x5b: ModeNo = 0x56;
@@ -188,7 +186,7 @@ sisfb_gettotalfrommode(struct SiS_Private *SiS_Pr, unsigned char modeno, int *ht
 
     if(rateindex > 0) rateindex--;
 
-#ifdef SIS315H
+#ifdef CONFIG_FB_SIS_315
     switch(ModeNo) {
        case 0x5a: ModeNo = 0x50; break;
        case 0x5b: ModeNo = 0x56;

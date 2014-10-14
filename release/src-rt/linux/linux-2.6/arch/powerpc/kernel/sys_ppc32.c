@@ -22,9 +22,7 @@
 #include <linux/signal.h>
 #include <linux/resource.h>
 #include <linux/times.h>
-#include <linux/utsname.h>
 #include <linux/smp.h>
-#include <linux/smp_lock.h>
 #include <linux/sem.h>
 #include <linux/msg.h>
 #include <linux/shm.h>
@@ -41,75 +39,18 @@
 #include <linux/compat.h>
 #include <linux/ptrace.h>
 #include <linux/elf.h>
+#include <linux/ipc.h>
+#include <linux/slab.h>
 
 #include <asm/ptrace.h>
 #include <asm/types.h>
-#include <asm/ipc.h>
 #include <asm/uaccess.h>
 #include <asm/unistd.h>
-#include <asm/semaphore.h>
 #include <asm/time.h>
 #include <asm/mmu_context.h>
 #include <asm/ppc-pci.h>
 #include <asm/syscalls.h>
 
-struct old_linux_dirent32 {
-	u32		d_ino;
-	u32		d_offset;
-	unsigned short	d_namlen;
-	char		d_name[1];
-};
-
-struct readdir_callback32 {
-	struct old_linux_dirent32 __user * dirent;
-	int count;
-};
-
-static int fillonedir(void * __buf, const char * name, int namlen,
-		                  off_t offset, u64 ino, unsigned int d_type)
-{
-	struct readdir_callback32 * buf = (struct readdir_callback32 *) __buf;
-	struct old_linux_dirent32 __user * dirent;
-	ino_t d_ino;
-
-	if (buf->count)
-		return -EINVAL;
-	d_ino = ino;
-	if (sizeof(d_ino) < sizeof(ino) && d_ino != ino)
-		return -EOVERFLOW;
-	buf->count++;
-	dirent = buf->dirent;
-	put_user(d_ino, &dirent->d_ino);
-	put_user(offset, &dirent->d_offset);
-	put_user(namlen, &dirent->d_namlen);
-	copy_to_user(dirent->d_name, name, namlen);
-	put_user(0, dirent->d_name + namlen);
-	return 0;
-}
-
-asmlinkage int old32_readdir(unsigned int fd, struct old_linux_dirent32 __user *dirent, unsigned int count)
-{
-	int error = -EBADF;
-	struct file * file;
-	struct readdir_callback32 buf;
-
-	file = fget(fd);
-	if (!file)
-		goto out;
-
-	buf.count = 0;
-	buf.dirent = dirent;
-
-	error = vfs_readdir(file, (filldir_t)fillonedir, &buf);
-	if (error < 0)
-		goto out_putf;
-	error = buf.count;
-
-out_putf:
-	fput(file);
-out:
-	return error;
-}
 
 asmlinkage long ppc32_select(u32 n, compat_ulong_t __user *inp,
 		compat_ulong_t __user *outp, compat_ulong_t __user *exp,
@@ -117,42 +58,6 @@ asmlinkage long ppc32_select(u32 n, compat_ulong_t __user *inp,
 {
 	/* sign extend n */
 	return compat_sys_select((int)n, inp, outp, exp, compat_ptr(tvp_x));
-}
-
-int cp_compat_stat(struct kstat *stat, struct compat_stat __user *statbuf)
-{
-	compat_ino_t ino;
-	long err;
-
-	if (stat->size > MAX_NON_LFS || !new_valid_dev(stat->dev) ||
-	    !new_valid_dev(stat->rdev))
-		return -EOVERFLOW;
-
-	ino = stat->ino;
-	if (sizeof(ino) < sizeof(stat->ino) && ino != stat->ino)
-		return -EOVERFLOW;
-
-	err  = access_ok(VERIFY_WRITE, statbuf, sizeof(*statbuf)) ? 0 : -EFAULT;
-	err |= __put_user(new_encode_dev(stat->dev), &statbuf->st_dev);
-	err |= __put_user(ino, &statbuf->st_ino);
-	err |= __put_user(stat->mode, &statbuf->st_mode);
-	err |= __put_user(stat->nlink, &statbuf->st_nlink);
-	err |= __put_user(stat->uid, &statbuf->st_uid);
-	err |= __put_user(stat->gid, &statbuf->st_gid);
-	err |= __put_user(new_encode_dev(stat->rdev), &statbuf->st_rdev);
-	err |= __put_user(stat->size, &statbuf->st_size);
-	err |= __put_user(stat->atime.tv_sec, &statbuf->st_atime);
-	err |= __put_user(stat->atime.tv_nsec, &statbuf->st_atime_nsec);
-	err |= __put_user(stat->mtime.tv_sec, &statbuf->st_mtime);
-	err |= __put_user(stat->mtime.tv_nsec, &statbuf->st_mtime_nsec);
-	err |= __put_user(stat->ctime.tv_sec, &statbuf->st_ctime);
-	err |= __put_user(stat->ctime.tv_nsec, &statbuf->st_ctime_nsec);
-	err |= __put_user(stat->blksize, &statbuf->st_blksize);
-	err |= __put_user(stat->blocks, &statbuf->st_blocks);
-	err |= __put_user(0, &statbuf->__unused4[0]);
-	err |= __put_user(0, &statbuf->__unused4[1]);
-
-	return err;
 }
 
 /* Note: it is necessary to treat option as an unsigned int,
@@ -163,77 +68,6 @@ int cp_compat_stat(struct kstat *stat, struct compat_stat __user *statbuf)
 asmlinkage long compat_sys_sysfs(u32 option, u32 arg1, u32 arg2)
 {
 	return sys_sysfs((int)option, arg1, arg2);
-}
-
-asmlinkage long compat_sys_pause(void)
-{
-	current->state = TASK_INTERRUPTIBLE;
-	schedule();
-	
-	return -ERESTARTNOHAND;
-}
-
-static inline long get_ts32(struct timespec *o, struct compat_timeval __user *i)
-{
-	long usec;
-
-	if (!access_ok(VERIFY_READ, i, sizeof(*i)))
-		return -EFAULT;
-	if (__get_user(o->tv_sec, &i->tv_sec))
-		return -EFAULT;
-	if (__get_user(usec, &i->tv_usec))
-		return -EFAULT;
-	o->tv_nsec = usec * 1000;
-	return 0;
-}
-
-static inline long put_tv32(struct compat_timeval __user *o, struct timeval *i)
-{
-	return (!access_ok(VERIFY_WRITE, o, sizeof(*o)) ||
-		(__put_user(i->tv_sec, &o->tv_sec) |
-		 __put_user(i->tv_usec, &o->tv_usec)));
-}
-
-
-
-
-/* Translations due to time_t size differences.  Which affects all
-   sorts of things, like timeval and itimerval.  */
-extern struct timezone sys_tz;
-
-asmlinkage long compat_sys_gettimeofday(struct compat_timeval __user *tv, struct timezone __user *tz)
-{
-	if (tv) {
-		struct timeval ktv;
-		do_gettimeofday(&ktv);
-		if (put_tv32(tv, &ktv))
-			return -EFAULT;
-	}
-	if (tz) {
-		if (copy_to_user(tz, &sys_tz, sizeof(sys_tz)))
-			return -EFAULT;
-	}
-	
-	return 0;
-}
-
-
-
-asmlinkage long compat_sys_settimeofday(struct compat_timeval __user *tv, struct timezone __user *tz)
-{
-	struct timespec kts;
-	struct timezone ktz;
-	
- 	if (tv) {
-		if (get_ts32(&kts, tv))
-			return -EFAULT;
-	}
-	if (tz) {
-		if (copy_from_user(&ktz, tz, sizeof(ktz)))
-			return -EFAULT;
-	}
-
-	return do_sys_settimeofday(tv ? &kts : NULL, tz ? &ktz : NULL);
 }
 
 #ifdef CONFIG_SYSVIPC
@@ -368,11 +202,6 @@ long compat_sys_execve(unsigned long a0, unsigned long a1, unsigned long a2,
 
 	error = compat_do_execve(filename, compat_ptr(a1), compat_ptr(a2), regs);
 
-	if (error == 0) {
-		task_lock(current);
-		current->ptrace &= ~PT_DTRACE;
-		task_unlock(current);
-	}
 	putname(filename);
 
 out:
@@ -511,6 +340,18 @@ off_t ppc32_lseek(unsigned int fd, u32 offset, unsigned int origin)
 {
 	/* sign extend n */
 	return sys_lseek(fd, (int)offset, origin);
+}
+
+long compat_sys_truncate(const char __user * path, u32 length)
+{
+	/* sign extend length */
+	return sys_truncate(path, (int)length);
+}
+
+long compat_sys_ftruncate(int fd, u32 length)
+{
+	/* sign extend length */
+	return sys_ftruncate(fd, (int)length);
 }
 
 /* Note: it is necessary to treat bufsiz as an unsigned int,
@@ -679,58 +520,6 @@ asmlinkage long compat_sys_umask(u32 mask)
 	return sys_umask((int)mask);
 }
 
-#ifdef CONFIG_SYSCTL_SYSCALL
-struct __sysctl_args32 {
-	u32 name;
-	int nlen;
-	u32 oldval;
-	u32 oldlenp;
-	u32 newval;
-	u32 newlen;
-	u32 __unused[4];
-};
-
-asmlinkage long compat_sys_sysctl(struct __sysctl_args32 __user *args)
-{
-	struct __sysctl_args32 tmp;
-	int error;
-	size_t oldlen;
-	size_t __user *oldlenp = NULL;
-	unsigned long addr = (((unsigned long)&args->__unused[0]) + 7) & ~7;
-
-	if (copy_from_user(&tmp, args, sizeof(tmp)))
-		return -EFAULT;
-
-	if (tmp.oldval && tmp.oldlenp) {
-		/* Duh, this is ugly and might not work if sysctl_args
-		   is in read-only memory, but do_sysctl does indirectly
-		   a lot of uaccess in both directions and we'd have to
-		   basically copy the whole sysctl.c here, and
-		   glibc's __sysctl uses rw memory for the structure
-		   anyway.  */
-		oldlenp = (size_t __user *)addr;
-		if (get_user(oldlen, (compat_size_t __user *)compat_ptr(tmp.oldlenp)) ||
-		    put_user(oldlen, oldlenp))
-			return -EFAULT;
-	}
-
-	lock_kernel();
-	error = do_sysctl(compat_ptr(tmp.name), tmp.nlen,
-			  compat_ptr(tmp.oldval), oldlenp,
-			  compat_ptr(tmp.newval), tmp.newlen);
-	unlock_kernel();
-	if (oldlenp) {
-		if (!error) {
-			if (get_user(oldlen, oldlenp) ||
-			    put_user(oldlen, (compat_size_t __user *)compat_ptr(tmp.oldlenp)))
-				error = -EFAULT;
-		}
-		copy_to_user(args->__unused, tmp.__unused, sizeof(tmp.__unused));
-	}
-	return error;
-}
-#endif
-
 unsigned long compat_sys_mmap2(unsigned long addr, size_t len,
 			  unsigned long prot, unsigned long flags,
 			  unsigned long fd, unsigned long pgoff)
@@ -756,7 +545,7 @@ compat_ssize_t compat_sys_pread64(unsigned int fd, char __user *ubuf, compat_siz
 	return sys_pread64(fd, ubuf, count, ((loff_t)poshi << 32) | poslo);
 }
 
-compat_ssize_t compat_sys_pwrite64(unsigned int fd, char __user *ubuf, compat_size_t count,
+compat_ssize_t compat_sys_pwrite64(unsigned int fd, const char __user *ubuf, compat_size_t count,
 			      u32 reg6, u32 poshi, u32 poslo)
 {
 	return sys_pwrite64(fd, ubuf, count, ((loff_t)poshi << 32) | poslo);
@@ -771,6 +560,13 @@ asmlinkage int compat_sys_truncate64(const char __user * path, u32 reg4,
 				unsigned long high, unsigned long low)
 {
 	return sys_truncate(path, (high << 32) | low);
+}
+
+asmlinkage long compat_sys_fallocate(int fd, int mode, u32 offhi, u32 offlo,
+				     u32 lenhi, u32 lenlo)
+{
+	return sys_fallocate(fd, mode, ((loff_t)offhi << 32) | offlo,
+			     ((loff_t)lenhi << 32) | lenlo);
 }
 
 asmlinkage int compat_sys_ftruncate64(unsigned int fd, u32 reg4, unsigned long high,
@@ -818,4 +614,12 @@ asmlinkage long compat_sys_sync_file_range2(int fd, unsigned int flags,
 	loff_t nbytes = ((loff_t)nbytes_hi << 32) | nbytes_lo;
 
 	return sys_sync_file_range(fd, offset, nbytes, flags);
+}
+
+asmlinkage long compat_sys_fanotify_mark(int fanotify_fd, unsigned int flags,
+					 unsigned mask_hi, unsigned mask_lo,
+					 int dfd, const char __user *pathname)
+{
+	u64 mask = ((u64)mask_hi << 32) | mask_lo;
+	return sys_fanotify_mark(fanotify_fd, flags, mask, dfd, pathname);
 }

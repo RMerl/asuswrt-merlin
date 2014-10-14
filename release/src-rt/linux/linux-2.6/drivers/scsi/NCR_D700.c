@@ -97,7 +97,7 @@
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/mca.h>
-#include <linux/interrupt.h>
+#include <linux/slab.h>
 #include <asm/io.h>
 #include <scsi/scsi_host.h>
 #include <scsi/scsi_device.h>
@@ -181,13 +181,12 @@ NCR_D700_probe_one(struct NCR_D700_private *p, int siop, int irq,
 	struct Scsi_Host *host;
 	int ret;
 
-	hostdata = kmalloc(sizeof(*hostdata), GFP_KERNEL);
+	hostdata = kzalloc(sizeof(*hostdata), GFP_KERNEL);
 	if (!hostdata) {
 		printk(KERN_ERR "NCR D700: SIOP%d: Failed to allocate host"
 		       "data, detatching\n", siop);
 		return -ENOMEM;
 	}
-	memset(hostdata, 0, sizeof(*hostdata));
 
 	if (!request_region(region, 64, "NCR_D700")) {
 		printk(KERN_ERR "NCR D700: Failed to reserve IO region 0x%x\n",
@@ -226,7 +225,7 @@ NCR_D700_probe_one(struct NCR_D700_private *p, int siop, int irq,
 	return ret;
 }
 
-static int
+static irqreturn_t
 NCR_D700_intr(int irq, void *data)
 {
 	struct NCR_D700_private *p = (struct NCR_D700_private *)data;
@@ -315,12 +314,12 @@ NCR_D700_probe(struct device *dev)
 		break;
 	}
 
-	p = kmalloc(sizeof(*p), GFP_KERNEL);
+	p = kzalloc(sizeof(*p), GFP_KERNEL);
 	if (!p)
 		return -ENOMEM;
-	memset(p, '\0', sizeof(*p));
+
 	p->dev = dev;
-	snprintf(p->name, sizeof(p->name), "D700(%s)", dev->bus_id);
+	snprintf(p->name, sizeof(p->name), "D700(%s)", dev_name(dev));
 	if (request_irq(irq, NCR_D700_intr, IRQF_SHARED, p->name, p)) {
 		printk(KERN_ERR "D700: request_irq failed\n");
 		kfree(p);

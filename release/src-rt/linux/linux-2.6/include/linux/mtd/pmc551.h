@@ -1,6 +1,4 @@
 /*
- * $Id: pmc551.h,v 1.6 2005/11/07 11:14:55 gleixner Exp $
- *
  * PMC551 PCI Mezzanine Ram Device
  *
  * Author:
@@ -17,7 +15,7 @@
 
 #include <linux/mtd/mtd.h>
 
-#define PMC551_VERSION "$Id: pmc551.h,v 1.6 2005/11/07 11:14:55 gleixner Exp $\n"\
+#define PMC551_VERSION \
        "Ramix PMC551 PCI Mezzanine Ram Driver. (C) 1999,2000 Nortel Networks.\n"
 
 /*
@@ -36,8 +34,9 @@ struct mypriv {
  * Function Prototypes
  */
 static int pmc551_erase(struct mtd_info *, struct erase_info *);
-static void pmc551_unpoint(struct mtd_info *, u_char *, loff_t, size_t);
-static int pmc551_point (struct mtd_info *mtd, loff_t from, size_t len, size_t *retlen, u_char **mtdbuf);
+static void pmc551_unpoint(struct mtd_info *, loff_t, size_t);
+static int pmc551_point(struct mtd_info *mtd, loff_t from, size_t len,
+		size_t *retlen, void **virt, resource_size_t *phys);
 static int pmc551_read(struct mtd_info *, loff_t, size_t, size_t *, u_char *);
 static int pmc551_write(struct mtd_info *, loff_t, size_t, size_t *, const u_char *);
 

@@ -51,6 +51,7 @@
  */
 
 #include <linux/module.h>
+#include <linux/slab.h>
 #include <linux/types.h>
 #include <linux/string.h>
 #include <linux/errno.h>
@@ -174,7 +175,7 @@ put16(unsigned char *cp, unsigned short x)
 
 
 /* Encode a number */
-unsigned char *
+static unsigned char *
 encode(unsigned char *cp, unsigned short n)
 {
 	if(n >= 256 || n == 0){
@@ -199,7 +200,7 @@ pull16(unsigned char **cpp)
 }
 
 /* Decode a number */
-long
+static long
 decode(unsigned char **cpp)
 {
 	register int x;
@@ -233,6 +234,7 @@ slhc_compress(struct slcompress *comp, unsigned char *icp, int isize,
 	register unsigned char *cp = new_seq;
 	struct iphdr *ip;
 	struct tcphdr *th, *oth;
+	__sum16 csum;
 
 
 	/*
@@ -428,7 +430,7 @@ found:
 	/* Grab the cksum before we overwrite it below.  Then update our
 	 * state with this packet's header.
 	 */
-	deltaA = ntohs(th->check);
+	csum = th->check;
 	memcpy(&cs->cs_ip,ip,20);
 	memcpy(&cs->cs_tcp,th,20);
 	/* We want to use the original packet as our compressed packet.
@@ -449,7 +451,8 @@ found:
 		*cpp = ocp;
 		*cp++ = changes;
 	}
-	cp = put16(cp,(short)deltaA);	/* Write TCP checksum */
+	*(__sum16 *)cp = csum;
+	cp += 2;
 /* deltaS is now the size of the change section of the compressed header */
 	memcpy(cp,new_seq,deltaS);	/* Write list of deltas */
 	memcpy(cp+deltaS,icp+hlen,isize-hlen);
@@ -519,10 +522,8 @@ slhc_uncompress(struct slcompress *comp, unsigned char *icp, int isize)
 	thp = &cs->cs_tcp;
 	ip = &cs->cs_ip;
 
-	if((x = pull16(&cp)) == -1) {	/* Read the TCP checksum */
-		goto bad;
-        }
-	thp->check = htons(x);
+	thp->check = *(__sum16 *)cp;
+	cp += 2;
 
 	thp->psh = (changes & TCP_PUSH_BIT) ? 1 : 0;
 /*
@@ -687,17 +688,7 @@ slhc_toss(struct slcompress *comp)
 	return 0;
 }
 
-
-/* VJ header compression */
-EXPORT_SYMBOL(slhc_init);
-EXPORT_SYMBOL(slhc_free);
-EXPORT_SYMBOL(slhc_remember);
-EXPORT_SYMBOL(slhc_compress);
-EXPORT_SYMBOL(slhc_uncompress);
-EXPORT_SYMBOL(slhc_toss);
-
 #else /* CONFIG_INET */
-
 
 int
 slhc_toss(struct slcompress *comp)
@@ -730,7 +721,6 @@ void
 slhc_free(struct slcompress *comp)
 {
   printk(KERN_DEBUG "Called IP function on non IP-system: slhc_free");
-  return;
 }
 struct slcompress *
 slhc_init(int rslots, int tslots)
@@ -738,6 +728,10 @@ slhc_init(int rslots, int tslots)
   printk(KERN_DEBUG "Called IP function on non IP-system: slhc_init");
   return NULL;
 }
+
+#endif /* CONFIG_INET */
+
+/* VJ header compression */
 EXPORT_SYMBOL(slhc_init);
 EXPORT_SYMBOL(slhc_free);
 EXPORT_SYMBOL(slhc_remember);
@@ -745,5 +739,4 @@ EXPORT_SYMBOL(slhc_compress);
 EXPORT_SYMBOL(slhc_uncompress);
 EXPORT_SYMBOL(slhc_toss);
 
-#endif /* CONFIG_INET */
 MODULE_LICENSE("Dual BSD/GPL");

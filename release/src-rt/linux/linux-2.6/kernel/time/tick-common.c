@@ -14,11 +14,12 @@
 #include <linux/cpu.h>
 #include <linux/err.h>
 #include <linux/hrtimer.h>
-#include <linux/irq.h>
+#include <linux/interrupt.h>
 #include <linux/percpu.h>
 #include <linux/profile.h>
 #include <linux/sched.h>
-#include <linux/tick.h>
+
+#include <asm/irq_regs.h>
 
 #include "tick-internal.h"
 
@@ -31,8 +32,8 @@ DEFINE_PER_CPU(struct tick_device, tick_cpu_device);
  */
 ktime_t tick_next_period;
 ktime_t tick_period;
-int tick_do_timer_cpu __read_mostly = -1;
-DEFINE_SPINLOCK(tick_device_lock);
+int tick_do_timer_cpu __read_mostly = TICK_DO_TIMER_BOOT;
+static DEFINE_RAW_SPINLOCK(tick_device_lock);
 
 /*
  * Debugging: see timer_list.c
@@ -47,9 +48,13 @@ struct tick_device *tick_get_device(int cpu)
  */
 int tick_is_oneshot_available(void)
 {
-	struct clock_event_device *dev = __get_cpu_var(tick_cpu_device).evtdev;
+	struct clock_event_device *dev = __this_cpu_read(tick_cpu_device.evtdev);
 
-	return dev && (dev->features & CLOCK_EVT_FEAT_ONESHOT);
+	if (!dev || !(dev->features & CLOCK_EVT_FEAT_ONESHOT))
+		return 0;
+	if (!(dev->features & CLOCK_EVT_FEAT_C3STOP))
+		return 1;
+	return tick_broadcast_oneshot_available();
 }
 
 /*
@@ -91,7 +96,17 @@ void tick_handle_periodic(struct clock_event_device *dev)
 	for (;;) {
 		if (!clockevents_program_event(dev, next, ktime_get()))
 			return;
-		tick_periodic(cpu);
+		/*
+		 * Have to be careful here. If we're in oneshot mode,
+		 * before we call tick_periodic() in a loop, we need
+		 * to be sure we're using a real hardware clocksource.
+		 * Otherwise we could get trapped in an infinite
+		 * loop, as the tick_periodic() increments jiffies,
+		 * when then will increment time, posibly causing
+		 * the loop to trigger again and again.
+		 */
+		if (timekeeping_valid_for_hres())
+			tick_periodic(cpu);
 		next = ktime_add(next, tick_period);
 	}
 }
@@ -107,7 +122,8 @@ void tick_setup_periodic(struct clock_event_device *dev, int broadcast)
 	if (!tick_device_is_functional(dev))
 		return;
 
-	if (dev->features & CLOCK_EVT_FEAT_PERIODIC) {
+	if ((dev->features & CLOCK_EVT_FEAT_PERIODIC) &&
+	    !tick_broadcast_oneshot_active()) {
 		clockevents_set_mode(dev, CLOCK_EVT_MODE_PERIODIC);
 	} else {
 		unsigned long seq;
@@ -133,7 +149,7 @@ void tick_setup_periodic(struct clock_event_device *dev, int broadcast)
  */
 static void tick_setup_device(struct tick_device *td,
 			      struct clock_event_device *newdev, int cpu,
-			      cpumask_t cpumask)
+			      const struct cpumask *cpumask)
 {
 	ktime_t next_event;
 	void (*handler)(struct clock_event_device *) = NULL;
@@ -146,7 +162,7 @@ static void tick_setup_device(struct tick_device *td,
 		 * If no cpu took the do_timer update, assign it to
 		 * this cpu:
 		 */
-		if (tick_do_timer_cpu == -1) {
+		if (tick_do_timer_cpu == TICK_DO_TIMER_BOOT) {
 			tick_do_timer_cpu = cpu;
 			tick_next_period = ktime_get();
 			tick_period = ktime_set(0, NSEC_PER_SEC / HZ);
@@ -159,6 +175,7 @@ static void tick_setup_device(struct tick_device *td,
 	} else {
 		handler = td->evtdev->event_handler;
 		next_event = td->evtdev->next_event;
+		td->evtdev->event_handler = clockevents_handle_noop;
 	}
 
 	td->evtdev = newdev;
@@ -167,7 +184,7 @@ static void tick_setup_device(struct tick_device *td,
 	 * When the device is not per cpu, pin the interrupt to the
 	 * current cpu:
 	 */
-	if (!cpus_equal(newdev->cpumask, cpumask))
+	if (!cpumask_equal(newdev->cpumask, cpumask))
 		irq_set_affinity(newdev->irq, cpumask);
 
 	/*
@@ -194,20 +211,18 @@ static int tick_check_new_device(struct clock_event_device *newdev)
 	struct tick_device *td;
 	int cpu, ret = NOTIFY_OK;
 	unsigned long flags;
-	cpumask_t cpumask;
 
-	spin_lock_irqsave(&tick_device_lock, flags);
+	raw_spin_lock_irqsave(&tick_device_lock, flags);
 
 	cpu = smp_processor_id();
-	if (!cpu_isset(cpu, newdev->cpumask))
-		goto out;
+	if (!cpumask_test_cpu(cpu, newdev->cpumask))
+		goto out_bc;
 
 	td = &per_cpu(tick_cpu_device, cpu);
 	curdev = td->evtdev;
-	cpumask = cpumask_of_cpu(cpu);
 
 	/* cpu local device ? */
-	if (!cpus_equal(newdev->cpumask, cpumask)) {
+	if (!cpumask_equal(newdev->cpumask, cpumask_of(cpu))) {
 
 		/*
 		 * If the cpu affinity of the device interrupt can not
@@ -220,7 +235,7 @@ static int tick_check_new_device(struct clock_event_device *newdev)
 		 * If we have a cpu local device already, do not replace it
 		 * by a non cpu local device
 		 */
-		if (curdev && cpus_equal(curdev->cpumask, cpumask))
+		if (curdev && cpumask_equal(curdev->cpumask, cpumask_of(cpu)))
 			goto out_bc;
 	}
 
@@ -248,15 +263,15 @@ static int tick_check_new_device(struct clock_event_device *newdev)
 	 * not give it back to the clockevents layer !
 	 */
 	if (tick_is_broadcast_device(curdev)) {
-		clockevents_set_mode(curdev, CLOCK_EVT_MODE_SHUTDOWN);
+		clockevents_shutdown(curdev);
 		curdev = NULL;
 	}
 	clockevents_exchange_device(curdev, newdev);
-	tick_setup_device(td, newdev, cpu, cpumask);
+	tick_setup_device(td, newdev, cpu, cpumask_of(cpu));
 	if (newdev->features & CLOCK_EVT_FEAT_ONESHOT)
 		tick_oneshot_notify();
 
-	spin_unlock_irqrestore(&tick_device_lock, flags);
+	raw_spin_unlock_irqrestore(&tick_device_lock, flags);
 	return NOTIFY_STOP;
 
 out_bc:
@@ -265,10 +280,25 @@ out_bc:
 	 */
 	if (tick_check_broadcast_device(newdev))
 		ret = NOTIFY_STOP;
-out:
-	spin_unlock_irqrestore(&tick_device_lock, flags);
+
+	raw_spin_unlock_irqrestore(&tick_device_lock, flags);
 
 	return ret;
+}
+
+/*
+ * Transfer the do_timer job away from a dying cpu.
+ *
+ * Called with interrupts disabled.
+ */
+static void tick_handover_do_timer(int *cpup)
+{
+	if (*cpup == tick_do_timer_cpu) {
+		int cpu = cpumask_first(cpu_online_mask);
+
+		tick_do_timer_cpu = (cpu < nr_cpu_ids) ? cpu :
+			TICK_DO_TIMER_NONE;
+	}
 }
 
 /*
@@ -284,7 +314,7 @@ static void tick_shutdown(unsigned int *cpup)
 	struct clock_event_device *dev = td->evtdev;
 	unsigned long flags;
 
-	spin_lock_irqsave(&tick_device_lock, flags);
+	raw_spin_lock_irqsave(&tick_device_lock, flags);
 	td->mode = TICKDEV_MODE_PERIODIC;
 	if (dev) {
 		/*
@@ -295,13 +325,7 @@ static void tick_shutdown(unsigned int *cpup)
 		clockevents_exchange_device(dev, NULL);
 		td->evtdev = NULL;
 	}
-	/* Transfer the do_timer job away from this cpu */
-	if (*cpup == tick_do_timer_cpu) {
-		int cpu = first_cpu(cpu_online_map);
-
-		tick_do_timer_cpu = (cpu != NR_CPUS) ? cpu : -1;
-	}
-	spin_unlock_irqrestore(&tick_device_lock, flags);
+	raw_spin_unlock_irqrestore(&tick_device_lock, flags);
 }
 
 static void tick_suspend(void)
@@ -309,22 +333,27 @@ static void tick_suspend(void)
 	struct tick_device *td = &__get_cpu_var(tick_cpu_device);
 	unsigned long flags;
 
-	spin_lock_irqsave(&tick_device_lock, flags);
-	clockevents_set_mode(td->evtdev, CLOCK_EVT_MODE_SHUTDOWN);
-	spin_unlock_irqrestore(&tick_device_lock, flags);
+	raw_spin_lock_irqsave(&tick_device_lock, flags);
+	clockevents_shutdown(td->evtdev);
+	raw_spin_unlock_irqrestore(&tick_device_lock, flags);
 }
 
 static void tick_resume(void)
 {
 	struct tick_device *td = &__get_cpu_var(tick_cpu_device);
 	unsigned long flags;
+	int broadcast = tick_resume_broadcast();
 
-	spin_lock_irqsave(&tick_device_lock, flags);
-	if (td->mode == TICKDEV_MODE_PERIODIC)
-		tick_setup_periodic(td->evtdev, 0);
-	else
-		tick_resume_oneshot();
-	spin_unlock_irqrestore(&tick_device_lock, flags);
+	raw_spin_lock_irqsave(&tick_device_lock, flags);
+	clockevents_set_mode(td->evtdev, CLOCK_EVT_MODE_RESUME);
+
+	if (!broadcast) {
+		if (td->mode == TICKDEV_MODE_PERIODIC)
+			tick_setup_periodic(td->evtdev, 0);
+		else
+			tick_resume_oneshot();
+	}
+	raw_spin_unlock_irqrestore(&tick_device_lock, flags);
 }
 
 /*
@@ -340,12 +369,17 @@ static int tick_notify(struct notifier_block *nb, unsigned long reason,
 
 	case CLOCK_EVT_NOTIFY_BROADCAST_ON:
 	case CLOCK_EVT_NOTIFY_BROADCAST_OFF:
+	case CLOCK_EVT_NOTIFY_BROADCAST_FORCE:
 		tick_broadcast_on_off(reason, dev);
 		break;
 
 	case CLOCK_EVT_NOTIFY_BROADCAST_ENTER:
 	case CLOCK_EVT_NOTIFY_BROADCAST_EXIT:
 		tick_broadcast_oneshot_control(reason);
+		break;
+
+	case CLOCK_EVT_NOTIFY_CPU_DYING:
+		tick_handover_do_timer(dev);
 		break;
 
 	case CLOCK_EVT_NOTIFY_CPU_DEAD:
@@ -360,8 +394,7 @@ static int tick_notify(struct notifier_block *nb, unsigned long reason,
 		break;
 
 	case CLOCK_EVT_NOTIFY_RESUME:
-		if (!tick_resume_broadcast())
-			tick_resume();
+		tick_resume();
 		break;
 
 	default:

@@ -388,15 +388,15 @@ struct smt_config {
 	u_long	rmt_t_poll ;		/* RMT : claim/beacon poller */
 	u_long  rmt_dup_mac_behavior ;  /* Flag for the beavior of SMT if
 					 * a Duplicate MAC Address was detected.
-					 * FALSE: SMT will leave finaly the ring
+					 * FALSE: SMT will leave finally the ring
 					 * TRUE:  SMT will reinstert into the ring
 					 */
 	u_long	mac_d_max ;		/* MAC : D_Max timer value */
 
-	u_long lct_short ;		/* LCT : error threshhold */
-	u_long lct_medium ;		/* LCT : error threshhold */
-	u_long lct_long ;		/* LCT : error threshhold */
-	u_long lct_extended ;		/* LCT : error threshhold */
+	u_long lct_short ;		/* LCT : error threshold */
+	u_long lct_medium ;		/* LCT : error threshold */
+	u_long lct_long ;		/* LCT : error threshold */
+	u_long lct_extended ;		/* LCT : error threshold */
 } ;
 
 #ifdef	DEBUG
@@ -466,6 +466,23 @@ struct s_smc {
 	struct smt_debug	debug;	/* Declaration of debug struct */
 #endif	/* DEBUG_BRD && DEBUG */
 } ;
+
+extern const struct fddi_addr fddi_broadcast;
+
+extern void all_selection_criteria(struct s_smc *smc);
+extern void card_stop(struct s_smc *smc);
+extern void init_board(struct s_smc *smc, u_char *mac_addr);
+extern int init_fplus(struct s_smc *smc);
+extern void init_plc(struct s_smc *smc);
+extern int init_smt(struct s_smc *smc, u_char * mac_addr);
+extern void mac1_irq(struct s_smc *smc, u_short stu, u_short stl);
+extern void mac2_irq(struct s_smc *smc, u_short code_s2u, u_short code_s2l);
+extern void mac3_irq(struct s_smc *smc, u_short code_s3u, u_short code_s3l);
+extern int pcm_status_twisted(struct s_smc *smc);
+extern void plc1_irq(struct s_smc *smc);
+extern void plc2_irq(struct s_smc *smc);
+extern void read_address(struct s_smc *smc, u_char * mac_addr);
+extern void timer_irq(struct s_smc *smc);
 
 #endif	/* _SCMECM_ */
 

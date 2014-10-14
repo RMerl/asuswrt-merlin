@@ -50,12 +50,12 @@ struct err_st {
  *	Transmit Descriptor struct
  */
 struct s_smt_fp_txd {
-	u_int txd_tbctrl ;		/* transmit buffer control */
-	u_int txd_txdscr ;		/* transmit frame status word */
-	u_int txd_tbadr ;		/* physical tx buffer address */
-	u_int txd_ntdadr ;		/* physical pointer to the next TxD */
+	__le32 txd_tbctrl ;		/* transmit buffer control */
+	__le32 txd_txdscr ;		/* transmit frame status word */
+	__le32 txd_tbadr ;		/* physical tx buffer address */
+	__le32 txd_ntdadr ;		/* physical pointer to the next TxD */
 #ifdef	ENA_64BIT_SUP
-	u_int txd_tbadr_hi ;		/* physical tx buffer addr (high dword)*/
+	__le32 txd_tbadr_hi ;		/* physical tx buffer addr (high dword)*/
 #endif
 	char far *txd_virt ;		/* virtual pointer to the data frag */
 					/* virt pointer to the next TxD */
@@ -67,12 +67,12 @@ struct s_smt_fp_txd {
  *	Receive Descriptor struct
  */
 struct s_smt_fp_rxd {
-	u_int rxd_rbctrl ;		/* receive buffer control */
-	u_int rxd_rfsw ;		/* receive frame status word */
-	u_int rxd_rbadr ;		/* physical rx buffer address */
-	u_int rxd_nrdadr ;		/* physical pointer to the next RxD */
+	__le32 rxd_rbctrl ;		/* receive buffer control */
+	__le32 rxd_rfsw ;		/* receive frame status word */
+	__le32 rxd_rbadr ;		/* physical rx buffer address */
+	__le32 rxd_nrdadr ;		/* physical pointer to the next RxD */
 #ifdef	ENA_64BIT_SUP
-	u_int rxd_rbadr_hi ;		/* physical tx buffer addr (high dword)*/
+	__le32 rxd_rbadr_hi ;		/* physical tx buffer addr (high dword)*/
 #endif
 	char far *rxd_virt ;		/* virtual pointer to the data frag */
 					/* virt pointer to the next RxD */
@@ -237,8 +237,8 @@ struct s_smt_fp {
  */
 #define RX_ENABLE_ALLMULTI	1	/* enable all multicasts */
 #define RX_DISABLE_ALLMULTI	2	/* disable "enable all multicasts" */
-#define RX_ENABLE_PROMISC	3	/* enable promiscous */
-#define RX_DISABLE_PROMISC	4	/* disable promiscous */
+#define RX_ENABLE_PROMISC	3	/* enable promiscuous */
+#define RX_DISABLE_PROMISC	4	/* disable promiscuous */
 #define RX_ENABLE_NSA		5	/* enable reception of NSA frames */
 #define RX_DISABLE_NSA		6	/* disable reception of NSA frames */
 

@@ -30,34 +30,6 @@
 #ifndef _ZCRYPT_API_H_
 #define _ZCRYPT_API_H_
 
-/**
- * Macro definitions
- *
- * PDEBUG debugs in the form "zcrypt: function_name -> message"
- *
- * PRINTK is like PDEBUG, except that it is always enabled
- * PRINTKN is like PRINTK, except that it does not include the function name
- * PRINTKW is like PRINTK, except that it uses KERN_WARNING
- * PRINTKC is like PRINTK, except that it uses KERN_CRIT
- */
-#define DEV_NAME	"zcrypt"
-
-#define PRINTK(fmt, args...) \
-	printk(KERN_DEBUG DEV_NAME ": %s -> " fmt, __FUNCTION__ , ## args)
-#define PRINTKN(fmt, args...) \
-	printk(KERN_DEBUG DEV_NAME ": " fmt, ## args)
-#define PRINTKW(fmt, args...) \
-	printk(KERN_WARNING DEV_NAME ": %s -> " fmt, __FUNCTION__ , ## args)
-#define PRINTKC(fmt, args...) \
-	printk(KERN_CRIT DEV_NAME ": %s -> " fmt, __FUNCTION__ , ## args)
-
-#ifdef ZCRYPT_DEBUG
-#define PDEBUG(fmt, args...) \
-	printk(KERN_DEBUG DEV_NAME ": %s -> " fmt, __FUNCTION__ , ## args)
-#else
-#define PDEBUG(fmt, args...) do {} while (0)
-#endif
-
 #include "ap_bus.h"
 #include <asm/zcrypt.h>
 
@@ -99,6 +71,15 @@ struct ica_z90_status {
 #define ZCRYPT_PCIXCC_MCL3	4
 #define ZCRYPT_CEX2C		5
 #define ZCRYPT_CEX2A		6
+#define ZCRYPT_CEX3C		7
+#define ZCRYPT_CEX3A		8
+
+/**
+ * Large random numbers are pulled in 4096 byte chunks from the crypto cards
+ * and stored in a page. Be careful when increasing this buffer due to size
+ * limitations for AP requests.
+ */
+#define ZCRYPT_RNG_BUFFER_SIZE	4096
 
 struct zcrypt_device;
 
@@ -107,6 +88,7 @@ struct zcrypt_ops {
 	long (*rsa_modexpo_crt)(struct zcrypt_device *,
 				struct ica_rsa_modexpo_crt *);
 	long (*send_cprb)(struct zcrypt_device *, struct ica_xcRB *);
+	long (*rng)(struct zcrypt_device *, char *);
 };
 
 struct zcrypt_device {
@@ -127,6 +109,7 @@ struct zcrypt_device {
 	int request_count;		/* # current requests. */
 
 	struct ap_message reply;	/* Per-device reply structure. */
+	int max_exp_bit_length;
 };
 
 struct zcrypt_device *zcrypt_device_alloc(size_t);

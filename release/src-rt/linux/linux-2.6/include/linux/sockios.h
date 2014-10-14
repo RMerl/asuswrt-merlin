@@ -22,7 +22,7 @@
 
 /* Linux-specific socket ioctls */
 #define SIOCINQ		FIONREAD
-#define SIOCOUTQ	TIOCOUTQ
+#define SIOCOUTQ	TIOCOUTQ        /* output queue size (not sent + not acked) */
 
 /* Routing table calls. */
 #define SIOCADDRT	0x890B		/* add routing table entry	*/
@@ -83,6 +83,8 @@
 
 #define SIOCWANDEV	0x894A		/* get/set netdev parameters	*/
 
+#define SIOCOUTQNSD	0x894B		/* output queue size (not sent only) */
+
 /* ARP cache control calls. */
 		    /*  0x8950 - 0x8952  * obsolete calls, don't re-use */
 #define SIOCDARP	0x8953		/* delete ARP table entry	*/
@@ -121,6 +123,9 @@
 #define SIOCBRDELBR     0x89a1		/* remove bridge device         */
 #define SIOCBRADDIF	0x89a2		/* add interface to bridge      */
 #define SIOCBRDELIF	0x89a3		/* remove interface from bridge */
+
+/* hardware time stamping: parameters in linux/net_tstamp.h */
+#define SIOCSHWTSTAMP   0x89b0
 
 /* Device private ioctl calls */
 

@@ -24,9 +24,6 @@
 #include <linux/ctype.h>
 #include <linux/module.h>
 
-#include <typedefs.h>
-#include <bcmdefs.h>
-
 #ifndef __HAVE_ARCH_STRNICMP
 /**
  * strnicmp - Case insensitive, length-limited string comparison
@@ -337,10 +334,10 @@ EXPORT_SYMBOL(strnchr);
 #endif
 
 /**
- * skip_spaces - Removes leading whitespace from @s.
- * @s: The string to be stripped.
+ * skip_spaces - Removes leading whitespace from @str.
+ * @str: The string to be stripped.
  *
- * Returns a pointer to the first non-whitespace character in @s.
+ * Returns a pointer to the first non-whitespace character in @str.
  */
 char *skip_spaces(const char *str)
 {
@@ -351,14 +348,14 @@ char *skip_spaces(const char *str)
 EXPORT_SYMBOL(skip_spaces);
 
 /**
- * strstrip - Removes leading and trailing whitespace from @s.
+ * strim - Removes leading and trailing whitespace from @s.
  * @s: The string to be stripped.
  *
  * Note that the first trailing whitespace is replaced with a %NUL-terminator
  * in the given string @s. Returns a pointer to the first non-whitespace
  * character in @s.
  */
-char *strstrip(char *s)
+char *strim(char *s)
 {
 	size_t size;
 	char *end;
@@ -375,7 +372,7 @@ char *strstrip(char *s)
 
 	return s;
 }
-EXPORT_SYMBOL(strstrip);
+EXPORT_SYMBOL(strim);
 
 #ifndef __HAVE_ARCH_STRLEN
 /**
@@ -511,6 +508,33 @@ char *strsep(char **s, const char *ct)
 EXPORT_SYMBOL(strsep);
 #endif
 
+/**
+ * sysfs_streq - return true if strings are equal, modulo trailing newline
+ * @s1: one string
+ * @s2: another string
+ *
+ * This routine returns true iff two strings are equal, treating both
+ * NUL and newline-then-NUL as equivalent string terminations.  It's
+ * geared for use with sysfs input strings, which generally terminate
+ * with newlines but are compared against values without newlines.
+ */
+bool sysfs_streq(const char *s1, const char *s2)
+{
+	while (*s1 && *s1 == *s2) {
+		s1++;
+		s2++;
+	}
+
+	if (*s1 == *s2)
+		return true;
+	if (!*s1 && *s2 == '\n' && !s2[1])
+		return true;
+	if (*s1 == '\n' && !s1[1] && !*s2)
+		return true;
+	return false;
+}
+EXPORT_SYMBOL(sysfs_streq);
+
 #ifndef __HAVE_ARCH_MEMSET
 /**
  * memset - Fill a region of memory with the given value
@@ -593,7 +617,7 @@ EXPORT_SYMBOL(memmove);
  * @count: The size of the area.
  */
 #undef memcmp
-int BCMFASTPATH memcmp(const void *cs, const void *ct, size_t count)
+int memcmp(const void *cs, const void *ct, size_t count)
 {
 	const unsigned char *su1, *su2;
 	int res = 0;
@@ -639,7 +663,7 @@ EXPORT_SYMBOL(memscan);
  */
 char *strstr(const char *s1, const char *s2)
 {
-	int l1, l2;
+	size_t l1, l2;
 
 	l2 = strlen(s2);
 	if (!l2)
@@ -654,6 +678,31 @@ char *strstr(const char *s1, const char *s2)
 	return NULL;
 }
 EXPORT_SYMBOL(strstr);
+#endif
+
+#ifndef __HAVE_ARCH_STRNSTR
+/**
+ * strnstr - Find the first substring in a length-limited string
+ * @s1: The string to be searched
+ * @s2: The string to search for
+ * @len: the maximum number of characters to search
+ */
+char *strnstr(const char *s1, const char *s2, size_t len)
+{
+	size_t l2;
+
+	l2 = strlen(s2);
+	if (!l2)
+		return (char *)s1;
+	while (len >= l2) {
+		len--;
+		if (!memcmp(s1, s2, l2))
+			return (char *)s1;
+		s1++;
+	}
+	return NULL;
+}
+EXPORT_SYMBOL(strnstr);
 #endif
 
 #ifndef __HAVE_ARCH_MEMCHR

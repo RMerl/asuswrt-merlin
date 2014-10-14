@@ -83,9 +83,14 @@
 
 #define BOND_DEFAULT_MAX_BONDS  1   /* Default maximum number of devices to support */
 
+#define BOND_DEFAULT_TX_QUEUES 16   /* Default number of tx queues per device */
+
+#define BOND_DEFAULT_RESEND_IGMP	1 /* Default number of IGMP membership reports */
+
 /* hashing types */
 #define BOND_XMIT_POLICY_LAYER2		0 /* layer 2 (MAC only), default */
-#define BOND_XMIT_POLICY_LAYER34	1 /* layer 3+4 (IP ^ MAC) */
+#define BOND_XMIT_POLICY_LAYER34	1 /* layer 3+4 (IP ^ (TCP || UDP)) */
+#define BOND_XMIT_POLICY_LAYER23	2 /* layer 2+3 (IP ^ MAC) */
 
 typedef struct ifbond {
 	__s32 bond_mode;
@@ -93,8 +98,7 @@ typedef struct ifbond {
 	__s32 miimon;
 } ifbond;
 
-typedef struct ifslave
-{
+typedef struct ifslave {
 	__s32 slave_id; /* Used as an IN param to the BOND_SLAVE_INFO_QUERY ioctl */
 	char slave_name[IFNAMSIZ];
 	__s8 link;

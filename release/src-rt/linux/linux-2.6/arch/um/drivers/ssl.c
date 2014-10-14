@@ -15,7 +15,6 @@
 #include "line.h"
 #include "ssl.h"
 #include "chan_kern.h"
-#include "kern_util.h"
 #include "kern.h"
 #include "init.h"
 #include "irq_user.h"
@@ -42,8 +41,6 @@ static struct chan_opts opts = {
 	.announce 	= ssl_announce,
 	.xterm_title	= "Serial Line #%d",
 	.raw		= 1,
-	.tramp_stack 	= 0,
-	.in_kernel 	= 1,
 };
 
 static int ssl_config(char *str, char **error_out);
@@ -99,7 +96,13 @@ static int ssl_remove(int n, char **error_out)
 
 static int ssl_open(struct tty_struct *tty, struct file *filp)
 {
-	return line_open(serial_lines, tty);
+	int err = line_open(serial_lines, tty);
+
+	if (err)
+		printk(KERN_ERR "Failed to open serial line %d, err = %d\n",
+		       tty->index, err);
+
+	return err;
 }
 
 #if 0

@@ -1,34 +1,31 @@
 config PPC_ISERIES
 	bool "IBM Legacy iSeries"
-	depends on PPC_MULTIPLATFORM && PPC64
+	depends on PPC64 && PPC_BOOK3S
 	select PPC_INDIRECT_IO
+	select PPC_PCI_CHOICE if EXPERT
 
 menu "iSeries device drivers"
 	depends on PPC_ISERIES
 
-config VIOCONS
-	bool "iSeries Virtual Console Support (Obsolete)"
-	depends on !HVC_ISERIES
-	default n
-	help
-	  This is the old virtual console driver for legacy iSeries.
-	  You should use the iSeries Hypervisor Virtual Console
-	  support instead.
-
 config VIODASD
 	tristate "iSeries Virtual I/O disk support"
+	depends on BLOCK
+	select VIOPATH
 	help
 	  If you are running on an iSeries system and you want to use
 	  virtual disks created and managed by OS/400, say Y.
 
 config VIOCD
 	tristate "iSeries Virtual I/O CD support"
+	depends on BLOCK
+	select VIOPATH
 	help
 	  If you are running Linux on an IBM iSeries system and you want to
 	  read a CD drive owned by OS/400, say Y here.
 
 config VIOTAPE
 	tristate "iSeries Virtual Tape Support"
+	select VIOPATH
 	help
 	  If you are running Linux on an iSeries system and you want Linux
 	  to read and/or write a tape drive owned by OS/400, say Y here.
@@ -37,5 +34,3 @@ endmenu
 
 config VIOPATH
 	bool
-	depends on VIOCONS || VIODASD || VIOCD || VIOTAPE || ISERIES_VETH
-	default y

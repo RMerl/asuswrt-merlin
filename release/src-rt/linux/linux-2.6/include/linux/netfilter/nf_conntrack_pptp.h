@@ -4,6 +4,8 @@
 
 #include <linux/netfilter/nf_conntrack_common.h>
 
+extern const char *const pptp_msg_name[];
+
 /* state of the control session */
 enum pptp_ctrlsess_state {
 	PPTP_SESSION_NONE,			/* no session present */
@@ -299,13 +301,13 @@ struct nf_conn;
 struct nf_conntrack_expect;
 
 extern int
-(*nf_nat_pptp_hook_outbound)(struct sk_buff **pskb,
+(*nf_nat_pptp_hook_outbound)(struct sk_buff *skb,
 			     struct nf_conn *ct, enum ip_conntrack_info ctinfo,
 			     struct PptpControlHeader *ctlh,
 			     union pptp_ctrl_union *pptpReq);
 
 extern int
-(*nf_nat_pptp_hook_inbound)(struct sk_buff **pskb,
+(*nf_nat_pptp_hook_inbound)(struct sk_buff *skb,
 			    struct nf_conn *ct, enum ip_conntrack_info ctinfo,
 			    struct PptpControlHeader *ctlh,
 			    union pptp_ctrl_union *pptpReq);

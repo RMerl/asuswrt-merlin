@@ -1,8 +1,10 @@
-
 /*
  * board initialization should put one of these into dev->platform_data
  * and place the sl811hs onto platform_bus named "sl811-hcd".
  */
+
+#ifndef __LINUX_USB_SL811_H
+#define __LINUX_USB_SL811_H
 
 struct sl811_platform_data {
 	unsigned	can_wakeup:1;
@@ -19,8 +21,9 @@ struct sl811_platform_data {
 	/* pulse sl811 nRST (probably with a GPIO) */
 	void		(*reset)(struct device *dev);
 
-	// some boards need something like these:
-	// int		(*check_overcurrent)(struct device *dev);
-	// void		(*clock_enable)(struct device *dev, int is_on);
+	/* some boards need something like these: */
+	/* int		(*check_overcurrent)(struct device *dev); */
+	/* void		(*clock_enable)(struct device *dev, int is_on); */
 };
 
+#endif /* __LINUX_USB_SL811_H */

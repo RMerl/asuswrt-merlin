@@ -1,6 +1,4 @@
 /*
- * $Id: logibm.c,v 1.11 2001/09/25 10:12:07 vojtech Exp $
- *
  *  Copyright (c) 1999-2001 Vojtech Pavlik
  *
  *  Based on the work of:
@@ -36,7 +34,6 @@
  */
 
 #include <linux/module.h>
-#include <linux/moduleparam.h>
 #include <linux/delay.h>
 #include <linux/ioport.h>
 #include <linux/init.h>
@@ -134,7 +131,7 @@ static int __init logibm_init(void)
 	udelay(100);
 
 	if (inb(LOGIBM_SIGNATURE_PORT) != LOGIBM_SIGNATURE_BYTE) {
-		printk(KERN_ERR "logibm.c: Didn't find Logitech busmouse at %#x\n", LOGIBM_BASE);
+		printk(KERN_INFO "logibm.c: Didn't find Logitech busmouse at %#x\n", LOGIBM_BASE);
 		err = -ENODEV;
 		goto err_release_region;
 	}
@@ -156,9 +153,10 @@ static int __init logibm_init(void)
 	logibm_dev->id.product = 0x0001;
 	logibm_dev->id.version = 0x0100;
 
-	logibm_dev->evbit[0] = BIT(EV_KEY) | BIT(EV_REL);
-	logibm_dev->keybit[LONG(BTN_LEFT)] = BIT(BTN_LEFT) | BIT(BTN_MIDDLE) | BIT(BTN_RIGHT);
-	logibm_dev->relbit[0] = BIT(REL_X) | BIT(REL_Y);
+	logibm_dev->evbit[0] = BIT_MASK(EV_KEY) | BIT_MASK(EV_REL);
+	logibm_dev->keybit[BIT_WORD(BTN_LEFT)] = BIT_MASK(BTN_LEFT) |
+		BIT_MASK(BTN_MIDDLE) | BIT_MASK(BTN_RIGHT);
+	logibm_dev->relbit[0] = BIT_MASK(REL_X) | BIT_MASK(REL_Y);
 
 	logibm_dev->open  = logibm_open;
 	logibm_dev->close = logibm_close;

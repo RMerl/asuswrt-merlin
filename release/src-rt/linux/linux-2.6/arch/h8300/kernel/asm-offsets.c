@@ -13,14 +13,10 @@
 #include <linux/kernel_stat.h>
 #include <linux/ptrace.h>
 #include <linux/hardirq.h>
+#include <linux/kbuild.h>
 #include <asm/bootinfo.h>
 #include <asm/irq.h>
 #include <asm/ptrace.h>
-
-#define DEFINE(sym, val) \
-        asm volatile("\n->" #sym " %0 " #val : : "i" (val))
-
-#define BLANK() asm volatile("\n->" : : )
 
 int main(void)
 {
@@ -59,7 +55,6 @@ int main(void)
 	DEFINE(LRET,  offsetof(struct pt_regs, pc)       - sizeof(long));
 
 	DEFINE(PT_PTRACED, PT_PTRACED);
-	DEFINE(PT_DTRACE, PT_DTRACE);
 
 	return 0;
 }

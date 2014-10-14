@@ -17,8 +17,8 @@
 #include <linux/init.h>
 #include <asm/assembler.h>
 #include <asm/asm-offsets.h>
-#include <asm/elf.h>
-#include <asm/hardware.h>
+#include <asm/hwcap.h>
+#include <mach/hardware.h>
 #include <asm/pgtable-hwdef.h>
 #include <asm/pgtable.h>
 #include <asm/ptrace.h>
@@ -44,17 +44,13 @@ ENTRY(cpu_sa110_proc_init)
  * cpu_sa110_proc_fin()
  */
 ENTRY(cpu_sa110_proc_fin)
-	stmfd	sp!, {lr}
-	mov	ip, #PSR_F_BIT | PSR_I_BIT | SVC_MODE
-	msr	cpsr_c, ip
-	bl	v4wb_flush_kern_cache_all	@ clean caches
-1:	mov	r0, #0
+	mov	r0, #0
 	mcr	p15, 0, r0, c15, c2, 2		@ Disable clock switching
 	mrc	p15, 0, r0, c1, c0, 0		@ ctrl register
 	bic	r0, r0, #0x1000			@ ...i............
 	bic	r0, r0, #0x000e			@ ............wca.
 	mcr	p15, 0, r0, c1, c0, 0		@ disable caches
-	ldmfd	sp!, {pc}
+	mov	pc, lr
 
 /*
  * cpu_sa110_reset(loc)
@@ -153,31 +149,14 @@ ENTRY(cpu_sa110_switch_mm)
 	.align	5
 ENTRY(cpu_sa110_set_pte_ext)
 #ifdef CONFIG_MMU
-	str	r1, [r0], #-2048		@ linux version
-
-	eor	r1, r1, #L_PTE_PRESENT | L_PTE_YOUNG | L_PTE_WRITE | L_PTE_DIRTY
-
-	bic	r2, r1, #PTE_SMALL_AP_MASK
-	bic	r2, r2, #PTE_TYPE_MASK
-	orr	r2, r2, #PTE_TYPE_SMALL
-
-	tst	r1, #L_PTE_USER			@ User?
-	orrne	r2, r2, #PTE_SMALL_AP_URO_SRW
-
-	tst	r1, #L_PTE_WRITE | L_PTE_DIRTY	@ Write and Dirty?
-	orreq	r2, r2, #PTE_SMALL_AP_UNO_SRW
-
-	tst	r1, #L_PTE_PRESENT | L_PTE_YOUNG	@ Present and Young?
-	movne	r2, #0
-
-	str	r2, [r0]			@ hardware version
+	armv3_set_pte_ext wc_disable=0
 	mov	r0, r0
 	mcr	p15, 0, r0, c7, c10, 1		@ clean D entry
 	mcr	p15, 0, r0, c7, c10, 4		@ drain WB
 #endif
 	mov	pc, lr
 
-	__INIT
+	__CPUINIT
 
 	.type	__sa110_setup, #function
 __sa110_setup:
@@ -216,6 +195,7 @@ sa110_crval:
 	.type	sa110_processor_functions, #object
 ENTRY(sa110_processor_functions)
 	.word	v4_early_abort
+	.word	legacy_pabort
 	.word	cpu_sa110_proc_init
 	.word	cpu_sa110_proc_fin
 	.word	cpu_sa110_reset
@@ -223,6 +203,9 @@ ENTRY(sa110_processor_functions)
 	.word	cpu_sa110_dcache_clean_area
 	.word	cpu_sa110_switch_mm
 	.word	cpu_sa110_set_pte_ext
+	.word	0
+	.word	0
+	.word	0
 	.size	sa110_processor_functions, . - sa110_processor_functions
 
 	.section ".rodata"

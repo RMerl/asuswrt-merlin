@@ -1,7 +1,7 @@
 /* atomic-ops.S: kernel atomic operations
  *
  * For an explanation of how atomic ops work in this arch, see:
- *   Documentation/fujitsu/frv/atomic-ops.txt
+ *   Documentation/frv/atomic-ops.txt
  *
  * Copyright (C) 2004 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
@@ -163,11 +163,10 @@ __cmpxchg_32:
 	ld.p		@(gr11,gr0),gr8
 	orcr		cc7,cc7,cc3
 	subcc		gr8,gr9,gr7,icc0
-	bne		icc0,#0,1f
+	bnelr		icc0,#0
 	cst.p		gr10,@(gr11,gr0)	,cc3,#1
 	corcc		gr29,gr29,gr0		,cc3,#1
 	beq		icc3,#0,0b
-1:
 	bralr
 
 	.size		__cmpxchg_32, .-__cmpxchg_32

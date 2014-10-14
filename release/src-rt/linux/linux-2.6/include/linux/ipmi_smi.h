@@ -39,7 +39,7 @@
 #include <linux/module.h>
 #include <linux/device.h>
 #include <linux/platform_device.h>
-#include <linux/ipmi_smi.h>
+#include <linux/ipmi.h>
 
 /* This files describes the interface for IPMI system management interface
    drivers to bind into the IPMI message handler. */
@@ -60,8 +60,7 @@ typedef struct ipmi_smi *ipmi_smi_t;
  * asynchronous data and messages and request them from the
  * interface.
  */
-struct ipmi_smi_msg
-{
+struct ipmi_smi_msg {
 	struct list_head link;
 
 	long    msgid;
@@ -74,12 +73,11 @@ struct ipmi_smi_msg
 	unsigned char rsp[IPMI_MAX_MSG_LENGTH];
 
 	/* Will be called when the system is done with the message
-           (presumably to free it). */
+	   (presumably to free it). */
 	void (*done)(struct ipmi_smi_msg *msg);
 };
 
-struct ipmi_smi_handlers
-{
+struct ipmi_smi_handlers {
 	struct module *owner;
 
 	/* The low-level interface cannot start sending messages to
@@ -88,6 +86,13 @@ struct ipmi_smi_handlers
 	   this call. */
 	int (*start_processing)(void       *send_info,
 				ipmi_smi_t new_intf);
+
+	/*
+	 * Get the detailed private info of the low level interface and store
+	 * it into the structure of ipmi_smi_data. For example: the
+	 * ACPI device handle will be returned for the pnp_acpi IPMI device.
+	 */
+	int (*get_smi_info)(void *send_info, struct ipmi_smi_info *data);
 
 	/* Called to enqueue an SMI message to be sent.  This
 	   operation is not allowed to fail.  If an error occurs, it
@@ -118,7 +123,7 @@ struct ipmi_smi_handlers
 	/* Enable/disable firmware maintenance mode.  Note that this
 	   is *not* the modes defined, this is simply an on/off
 	   setting.  The message handler does the mode handling.  Note
-	   that this is called from interupt context, so it cannot
+	   that this is called from interrupt context, so it cannot
 	   block. */
 	void (*set_maintenance_mode)(void *send_info, int enable);
 
@@ -148,26 +153,46 @@ struct ipmi_device_id {
 
 /* Take a pointer to a raw data buffer and a length and extract device
    id information from it.  The first byte of data must point to the
-   byte from the get device id response after the completion code.
-   The caller is responsible for making sure the length is at least
-   11 and the command completed without error. */
-static inline void ipmi_demangle_device_id(unsigned char *data,
-					   unsigned int  data_len,
-					   struct ipmi_device_id *id)
+   netfn << 2, the data should be of the format:
+      netfn << 2, cmd, completion code, data
+   as normally comes from a device interface. */
+static inline int ipmi_demangle_device_id(const unsigned char *data,
+					  unsigned int data_len,
+					  struct ipmi_device_id *id)
 {
+	if (data_len < 9)
+		return -EINVAL;
+	if (data[0] != IPMI_NETFN_APP_RESPONSE << 2 ||
+	    data[1] != IPMI_GET_DEVICE_ID_CMD)
+		/* Strange, didn't get the response we expected. */
+		return -EINVAL;
+	if (data[2] != 0)
+		/* That's odd, it shouldn't be able to fail. */
+		return -EINVAL;
+
+	data += 3;
+	data_len -= 3;
 	id->device_id = data[0];
 	id->device_revision = data[1];
 	id->firmware_revision_1 = data[2];
 	id->firmware_revision_2 = data[3];
 	id->ipmi_version = data[4];
 	id->additional_device_support = data[5];
-	id->manufacturer_id = data[6] | (data[7] << 8) | (data[8] << 16);
-	id->product_id = data[9] | (data[10] << 8);
+	if (data_len >= 11) {
+		id->manufacturer_id = (data[6] | (data[7] << 8) |
+				       (data[8] << 16));
+		id->product_id = data[9] | (data[10] << 8);
+	} else {
+		id->manufacturer_id = 0;
+		id->product_id = 0;
+	}
 	if (data_len >= 15) {
 		memcpy(id->aux_firmware_revision, data+11, 4);
 		id->aux_firmware_revision_set = 1;
 	} else
 		id->aux_firmware_revision_set = 0;
+
+	return 0;
 }
 
 /* Add a low-level interface to the IPMI driver.  Note that if the
@@ -211,7 +236,7 @@ static inline void ipmi_free_smi_msg(struct ipmi_smi_msg *msg)
    directory for this interface.  Note that the entry will
    automatically be dstroyed when the interface is destroyed. */
 int ipmi_smi_add_proc_entry(ipmi_smi_t smi, char *name,
-			    read_proc_t *read_proc, write_proc_t *write_proc,
-			    void *data, struct module *owner);
+			    read_proc_t *read_proc,
+			    void *data);
 
 #endif /* __LINUX_IPMI_SMI_H */

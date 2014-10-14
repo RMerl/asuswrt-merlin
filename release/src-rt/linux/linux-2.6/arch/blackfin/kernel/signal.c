@@ -1,30 +1,7 @@
 /*
- * File:         arch/blackfin/kernel/signal.c
- * Based on:
- * Author:
+ * Copyright 2004-2010 Analog Devices Inc.
  *
- * Created:
- * Description:
- *
- * Modified:
- *               Copyright 2004-2006 Analog Devices Inc.
- *
- * Bugs:         Enter bugs at http://blackfin.uclinux.org/
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, see the file COPYING, or write
- * to the Free Software Foundation, Inc.,
- * 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ * Licensed under the GPL-2 or later
  */
 
 #include <linux/signal.h>
@@ -34,12 +11,18 @@
 #include <linux/personality.h>
 #include <linux/binfmts.h>
 #include <linux/freezer.h>
+#include <linux/uaccess.h>
+#include <linux/tracehook.h>
 
-#include <asm/uaccess.h>
 #include <asm/cacheflush.h>
 #include <asm/ucontext.h>
+#include <asm/fixed_code.h>
+#include <asm/syscall.h>
 
 #define _BLOCKABLE (~(sigmask(SIGKILL) | sigmask(SIGSTOP)))
+
+/* Location of the trace bit in SYSCFG. */
+#define TRACE_BITS 0x0001
 
 struct fdpic_func_descriptor {
 	unsigned long	text;
@@ -50,21 +33,26 @@ struct rt_sigframe {
 	int sig;
 	struct siginfo *pinfo;
 	void *puc;
+	/* This is no longer needed by the kernel, but unfortunately userspace
+	 * code expects it to be there.  */
 	char retcode[8];
 	struct siginfo info;
 	struct ucontext uc;
 };
 
-asmlinkage int sys_sigaltstack(const stack_t * uss, stack_t * uoss)
+asmlinkage int sys_sigaltstack(const stack_t __user *uss, stack_t __user *uoss)
 {
 	return do_sigaltstack(uss, uoss, rdusp());
 }
 
 static inline int
-rt_restore_sigcontext(struct pt_regs *regs, struct sigcontext *sc, int *pr0)
+rt_restore_sigcontext(struct pt_regs *regs, struct sigcontext __user *sc, int *pr0)
 {
 	unsigned long usp = 0;
 	int err = 0;
+
+	/* Always make any pending restarted system calls return -EINTR */
+	current_thread_info()->restart_block.fn = do_no_restart_syscall;
 
 #define RESTORE(x) err |= __get_user(regs->x, &sc->sc_##x)
 
@@ -124,7 +112,7 @@ asmlinkage int do_rt_sigreturn(unsigned long __unused)
 
 	return r0;
 
-      badframe:
+ badframe:
 	force_sig(SIGSEGV, current);
 	return 0;
 }
@@ -157,11 +145,6 @@ static inline int rt_setup_sigcontext(struct sigcontext *sc, struct pt_regs *reg
 	SETUP(seqstat);
 
 	return err;
-}
-
-static inline void push_cache(unsigned long vaddr, unsigned int len)
-{
-	flush_icache_range(vaddr, vaddr + len);
 }
 
 static inline void *get_sigframe(struct k_sigaction *ka, struct pt_regs *regs,
@@ -209,29 +192,19 @@ setup_rt_frame(int sig, struct k_sigaction *ka, siginfo_t * info,
 	err |= rt_setup_sigcontext(&frame->uc.uc_mcontext, regs);
 	err |= copy_to_user(&frame->uc.uc_sigmask, set, sizeof(*set));
 
-	/* Set up to return from userspace.  */
-	err |= __put_user(0x28, &(frame->retcode[0]));
-	err |= __put_user(0xe1, &(frame->retcode[1]));
-	err |= __put_user(0xad, &(frame->retcode[2]));
-	err |= __put_user(0x00, &(frame->retcode[3]));
-	err |= __put_user(0xa0, &(frame->retcode[4]));
-	err |= __put_user(0x00, &(frame->retcode[5]));
-
 	if (err)
 		goto give_sigsegv;
 
-	push_cache((unsigned long)&frame->retcode, sizeof(frame->retcode));
-
 	/* Set up registers for signal handler */
 	wrusp((unsigned long)frame);
-	if (get_personality & FDPIC_FUNCPTRS) {
+	if (current->personality & FDPIC_FUNCPTRS) {
 		struct fdpic_func_descriptor __user *funcptr =
 			(struct fdpic_func_descriptor *) ka->sa.sa_handler;
 		__get_user(regs->pc, &funcptr->text);
 		__get_user(regs->p3, &funcptr->GOT);
 	} else
 		regs->pc = (unsigned long)ka->sa.sa_handler;
-	regs->rets = (unsigned long)(frame->retcode);
+	regs->rets = SIGRETURN_STUB;
 
 	regs->r0 = frame->sig;
 	regs->r1 = (unsigned long)(&frame->info);
@@ -239,7 +212,7 @@ setup_rt_frame(int sig, struct k_sigaction *ka, siginfo_t * info,
 
 	return 0;
 
-      give_sigsegv:
+ give_sigsegv:
 	if (sig == SIGSEGV)
 		ka->sa.sa_handler = SIG_DFL;
 	force_sig(SIGSEGV, current);
@@ -263,9 +236,14 @@ handle_restart(struct pt_regs *regs, struct k_sigaction *ka, int has_handler)
 		}
 		/* fallthrough */
 	case -ERESTARTNOINTR:
-	      do_restart:
+ do_restart:
 		regs->p0 = regs->orig_p0;
 		regs->r0 = regs->orig_r0;
+		regs->pc -= 2;
+		break;
+
+	case -ERESTART_RESTARTBLOCK:
+		regs->p0 = __NR_restart_syscall;
 		regs->pc -= 2;
 		break;
 	}
@@ -336,12 +314,15 @@ asmlinkage void do_signal(struct pt_regs *regs)
 			 * clear the TIF_RESTORE_SIGMASK flag */
 			if (test_thread_flag(TIF_RESTORE_SIGMASK))
 				clear_thread_flag(TIF_RESTORE_SIGMASK);
+
+			tracehook_signal_handler(signr, &info, &ka, regs,
+				test_thread_flag(TIF_SINGLESTEP));
 		}
 
 		return;
 	}
 
-no_signal:
+ no_signal:
 	/* Did we come from a system call? */
 	if (regs->orig_p0 >= 0)
 		/* Restart the system call - no handlers present */
@@ -354,3 +335,20 @@ no_signal:
 		sigprocmask(SIG_SETMASK, &current->saved_sigmask, NULL);
 	}
 }
+
+/*
+ * notification of userspace execution resumption
+ */
+asmlinkage void do_notify_resume(struct pt_regs *regs)
+{
+	if (test_thread_flag(TIF_SIGPENDING) || test_thread_flag(TIF_RESTORE_SIGMASK))
+		do_signal(regs);
+
+	if (test_thread_flag(TIF_NOTIFY_RESUME)) {
+		clear_thread_flag(TIF_NOTIFY_RESUME);
+		tracehook_notify_resume(regs);
+		if (current->replacement_session_keyring)
+			key_replace_session_keyring();
+	}
+}
+

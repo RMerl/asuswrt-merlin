@@ -82,342 +82,175 @@ static int decode_vps(u8 * dst, u8 * p)
 	return err & 0xf0;
 }
 
-void cx25840_vbi_setup(struct i2c_client *client)
+int cx25840_g_sliced_fmt(struct v4l2_subdev *sd, struct v4l2_sliced_vbi_format *svbi)
 {
-	struct cx25840_state *state = i2c_get_clientdata(client);
-	v4l2_std_id std = cx25840_get_v4lstd(client);
-	int hblank,hactive,burst,vblank,vactive,sc,vblank656,src_decimation;
-	int luma_lpf,uv_lpf, comb;
-	u32 pll_int,pll_frac,pll_post;
+	struct i2c_client *client = v4l2_get_subdevdata(sd);
+	struct cx25840_state *state = to_state(sd);
+	static const u16 lcr2vbi[] = {
+		0, V4L2_SLICED_TELETEXT_B, 0,	/* 1 */
+		0, V4L2_SLICED_WSS_625, 0,	/* 4 */
+		V4L2_SLICED_CAPTION_525,	/* 6 */
+		0, 0, V4L2_SLICED_VPS, 0, 0,	/* 9 */
+		0, 0, 0, 0
+	};
+	int is_pal = !(state->std & V4L2_STD_525_60);
+	int i;
 
-	/* datasheet startup, step 8d */
-	if (std & ~V4L2_STD_NTSC) {
-		cx25840_write(client, 0x49f, 0x11);
-	} else {
-		cx25840_write(client, 0x49f, 0x14);
-	}
+	memset(svbi, 0, sizeof(*svbi));
+	/* we're done if raw VBI is active */
+	if ((cx25840_read(client, 0x404) & 0x10) == 0)
+		return 0;
 
-	if (std & V4L2_STD_625_50) {
-		hblank=0x084;
-		hactive=0x2d0;
-		burst=0x5d;
-		vblank=0x024;
-		vactive=0x244;
-		vblank656=0x28;
-		src_decimation=0x21f;
+	if (is_pal) {
+		for (i = 7; i <= 23; i++) {
+			u8 v = cx25840_read(client, 0x424 + i - 7);
 
-		luma_lpf=2;
-		if (std & V4L2_STD_SECAM) {
-			uv_lpf=0;
-			comb=0;
-			sc=0x0a425f;
-		} else if (std == V4L2_STD_PAL_Nc) {
-			uv_lpf=1;
-			comb=0x20;
-			sc=556453;
-		} else {
-			uv_lpf=1;
-			comb=0x20;
-			sc=0x0a8263;
+			svbi->service_lines[0][i] = lcr2vbi[v >> 4];
+			svbi->service_lines[1][i] = lcr2vbi[v & 0xf];
+			svbi->service_set |= svbi->service_lines[0][i] |
+					     svbi->service_lines[1][i];
 		}
 	} else {
-		hactive=720;
-		hblank=122;
-		vactive=487;
-		luma_lpf=1;
-		uv_lpf=1;
+		for (i = 10; i <= 21; i++) {
+			u8 v = cx25840_read(client, 0x424 + i - 10);
 
-		src_decimation=0x21f;
-		if (std == V4L2_STD_PAL_60) {
-			vblank=26;
-			vblank656=26;
-			burst=0x5b;
-			luma_lpf=2;
-			comb=0x20;
-			sc=0x0a8263;
-		} else if (std == V4L2_STD_PAL_M) {
-			vblank=20;
-			vblank656=24;
-			burst=0x61;
-			comb=0x20;
-
-			sc=555452;
-		} else {
-			vblank=26;
-			vblank656=26;
-			burst=0x5b;
-			comb=0x66;
-			sc=556063;
+			svbi->service_lines[0][i] = lcr2vbi[v >> 4];
+			svbi->service_lines[1][i] = lcr2vbi[v & 0xf];
+			svbi->service_set |= svbi->service_lines[0][i] |
+					     svbi->service_lines[1][i];
 		}
 	}
-
-	/* DEBUG: Displays configured PLL frequency */
-	pll_int=cx25840_read(client, 0x108);
-	pll_frac=cx25840_read4(client, 0x10c)&0x1ffffff;
-	pll_post=cx25840_read(client, 0x109);
-	v4l_dbg(1, cx25840_debug, client,
-				"PLL regs = int: %u, frac: %u, post: %u\n",
-				pll_int,pll_frac,pll_post);
-
-	if (pll_post) {
-		int fin, fsc;
-		int pll= (28636363L*((((u64)pll_int)<<25L)+pll_frac)) >>25L;
-
-		pll/=pll_post;
-		v4l_dbg(1, cx25840_debug, client, "PLL = %d.%06d MHz\n",
-						pll/1000000, pll%1000000);
-		v4l_dbg(1, cx25840_debug, client, "PLL/8 = %d.%06d MHz\n",
-						pll/8000000, (pll/8)%1000000);
-
-		fin=((u64)src_decimation*pll)>>12;
-		v4l_dbg(1, cx25840_debug, client, "ADC Sampling freq = "
-						"%d.%06d MHz\n",
-						fin/1000000,fin%1000000);
-
-		fsc= (((u64)sc)*pll) >> 24L;
-		v4l_dbg(1, cx25840_debug, client, "Chroma sub-carrier freq = "
-						"%d.%06d MHz\n",
-						fsc/1000000,fsc%1000000);
-
-		v4l_dbg(1, cx25840_debug, client, "hblank %i, hactive %i, "
-			"vblank %i , vactive %i, vblank656 %i, src_dec %i,"
-			"burst 0x%02x, luma_lpf %i, uv_lpf %i, comb 0x%02x,"
-			" sc 0x%06x\n",
-			hblank, hactive, vblank, vactive, vblank656,
-			src_decimation, burst, luma_lpf, uv_lpf, comb, sc);
-	}
-
-	/* Sets horizontal blanking delay and active lines */
-	cx25840_write(client, 0x470, hblank);
-	cx25840_write(client, 0x471, 0xff&(((hblank>>8)&0x3)|(hactive <<4)));
-	cx25840_write(client, 0x472, hactive>>4);
-
-	/* Sets burst gate delay */
-	cx25840_write(client, 0x473, burst);
-
-	/* Sets vertical blanking delay and active duration */
-	cx25840_write(client, 0x474, vblank);
-	cx25840_write(client, 0x475, 0xff&(((vblank>>8)&0x3)|(vactive <<4)));
-	cx25840_write(client, 0x476, vactive>>4);
-	cx25840_write(client, 0x477, vblank656);
-
-	/* Sets src decimation rate */
-	cx25840_write(client, 0x478, 0xff&src_decimation);
-	cx25840_write(client, 0x479, 0xff&(src_decimation>>8));
-
-	/* Sets Luma and UV Low pass filters */
-	cx25840_write(client, 0x47a, luma_lpf<<6|((uv_lpf<<4)&0x30));
-
-	/* Enables comb filters */
-	cx25840_write(client, 0x47b, comb);
-
-	/* Sets SC Step*/
-	cx25840_write(client, 0x47c, sc);
-	cx25840_write(client, 0x47d, 0xff&sc>>8);
-	cx25840_write(client, 0x47e, 0xff&sc>>16);
-
-	/* Sets VBI parameters */
-	if (std & V4L2_STD_625_50) {
-		cx25840_write(client, 0x47f, 0x01);
-		state->vbi_line_offset = 5;
-	} else {
-		cx25840_write(client, 0x47f, 0x00);
-		state->vbi_line_offset = 8;
-	}
+	return 0;
 }
 
-int cx25840_vbi(struct i2c_client *client, unsigned int cmd, void *arg)
+int cx25840_s_raw_fmt(struct v4l2_subdev *sd, struct v4l2_vbi_format *fmt)
 {
-	struct cx25840_state *state = i2c_get_clientdata(client);
-	struct v4l2_format *fmt;
-	struct v4l2_sliced_vbi_format *svbi;
+	struct i2c_client *client = v4l2_get_subdevdata(sd);
+	struct cx25840_state *state = to_state(sd);
+	int is_pal = !(state->std & V4L2_STD_525_60);
+	int vbi_offset = is_pal ? 1 : 0;
 
-	switch (cmd) {
-	case VIDIOC_G_FMT:
-	{
-		static u16 lcr2vbi[] = {
-			0, V4L2_SLICED_TELETEXT_B, 0,	/* 1 */
-			0, V4L2_SLICED_WSS_625, 0,	/* 4 */
-			V4L2_SLICED_CAPTION_525,	/* 6 */
-			0, 0, V4L2_SLICED_VPS, 0, 0,	/* 9 */
-			0, 0, 0, 0
-		};
-		int is_pal = !(cx25840_get_v4lstd(client) & V4L2_STD_525_60);
-		int i;
+	/* Setup standard */
+	cx25840_std_setup(client);
 
-		fmt = arg;
-		if (fmt->type != V4L2_BUF_TYPE_SLICED_VBI_CAPTURE)
-			return -EINVAL;
-		svbi = &fmt->fmt.sliced;
-		memset(svbi, 0, sizeof(*svbi));
-		/* we're done if raw VBI is active */
-		if ((cx25840_read(client, 0x404) & 0x10) == 0)
-			break;
+	/* VBI Offset */
+	cx25840_write(client, 0x47f, vbi_offset);
+	cx25840_write(client, 0x404, 0x2e);
+	return 0;
+}
 
-		if (is_pal) {
-			for (i = 7; i <= 23; i++) {
-				u8 v = cx25840_read(client, 0x424 + i - 7);
+int cx25840_s_sliced_fmt(struct v4l2_subdev *sd, struct v4l2_sliced_vbi_format *svbi)
+{
+	struct i2c_client *client = v4l2_get_subdevdata(sd);
+	struct cx25840_state *state = to_state(sd);
+	int is_pal = !(state->std & V4L2_STD_525_60);
+	int vbi_offset = is_pal ? 1 : 0;
+	int i, x;
+	u8 lcr[24];
 
-				svbi->service_lines[0][i] = lcr2vbi[v >> 4];
-				svbi->service_lines[1][i] = lcr2vbi[v & 0xf];
-				svbi->service_set |=
-					svbi->service_lines[0][i] | svbi->service_lines[1][i];
-			}
-		}
-		else {
-			for (i = 10; i <= 21; i++) {
-				u8 v = cx25840_read(client, 0x424 + i - 10);
+	for (x = 0; x <= 23; x++)
+		lcr[x] = 0x00;
 
-				svbi->service_lines[0][i] = lcr2vbi[v >> 4];
-				svbi->service_lines[1][i] = lcr2vbi[v & 0xf];
-				svbi->service_set |=
-					svbi->service_lines[0][i] | svbi->service_lines[1][i];
-			}
-		}
-		break;
+	/* Setup standard */
+	cx25840_std_setup(client);
+
+	/* Sliced VBI */
+	cx25840_write(client, 0x404, 0x32);	/* Ancillary data */
+	cx25840_write(client, 0x406, 0x13);
+	cx25840_write(client, 0x47f, vbi_offset);
+
+	if (is_pal) {
+		for (i = 0; i <= 6; i++)
+			svbi->service_lines[0][i] =
+				svbi->service_lines[1][i] = 0;
+	} else {
+		for (i = 0; i <= 9; i++)
+			svbi->service_lines[0][i] =
+				svbi->service_lines[1][i] = 0;
+
+		for (i = 22; i <= 23; i++)
+			svbi->service_lines[0][i] =
+				svbi->service_lines[1][i] = 0;
 	}
 
-	case VIDIOC_S_FMT:
-	{
-		int is_pal = !(cx25840_get_v4lstd(client) & V4L2_STD_525_60);
-		int vbi_offset = is_pal ? 1 : 0;
-		int i, x;
-		u8 lcr[24];
-
-		fmt = arg;
-		if (fmt->type != V4L2_BUF_TYPE_SLICED_VBI_CAPTURE)
-			return -EINVAL;
-		svbi = &fmt->fmt.sliced;
-		if (svbi->service_set == 0) {
-			/* raw VBI */
-			memset(svbi, 0, sizeof(*svbi));
-
-			/* Setup VBI */
-			cx25840_vbi_setup(client);
-
-			/* VBI Offset */
-			cx25840_write(client, 0x47f, vbi_offset);
-			cx25840_write(client, 0x404, 0x2e);
-			break;
-		}
-
-		for (x = 0; x <= 23; x++)
-			lcr[x] = 0x00;
-
-		/* Setup VBI */
-		cx25840_vbi_setup(client);
-
-		/* Sliced VBI */
-		cx25840_write(client, 0x404, 0x32);	/* Ancillary data */
-		cx25840_write(client, 0x406, 0x13);
-		cx25840_write(client, 0x47f, vbi_offset);
-
-		if (is_pal) {
-			for (i = 0; i <= 6; i++)
-				svbi->service_lines[0][i] =
-					svbi->service_lines[1][i] = 0;
-		} else {
-			for (i = 0; i <= 9; i++)
-				svbi->service_lines[0][i] =
-					svbi->service_lines[1][i] = 0;
-
-			for (i = 22; i <= 23; i++)
-				svbi->service_lines[0][i] =
-					svbi->service_lines[1][i] = 0;
-		}
-
-		for (i = 7; i <= 23; i++) {
-			for (x = 0; x <= 1; x++) {
-				switch (svbi->service_lines[1-x][i]) {
-				case V4L2_SLICED_TELETEXT_B:
-					lcr[i] |= 1 << (4 * x);
-					break;
-				case V4L2_SLICED_WSS_625:
-					lcr[i] |= 4 << (4 * x);
-					break;
-				case V4L2_SLICED_CAPTION_525:
-					lcr[i] |= 6 << (4 * x);
-					break;
-				case V4L2_SLICED_VPS:
-					lcr[i] |= 9 << (4 * x);
-					break;
-				}
+	for (i = 7; i <= 23; i++) {
+		for (x = 0; x <= 1; x++) {
+			switch (svbi->service_lines[1-x][i]) {
+			case V4L2_SLICED_TELETEXT_B:
+				lcr[i] |= 1 << (4 * x);
+				break;
+			case V4L2_SLICED_WSS_625:
+				lcr[i] |= 4 << (4 * x);
+				break;
+			case V4L2_SLICED_CAPTION_525:
+				lcr[i] |= 6 << (4 * x);
+				break;
+			case V4L2_SLICED_VPS:
+				lcr[i] |= 9 << (4 * x);
+				break;
 			}
 		}
-
-		if (is_pal) {
-			for (x = 1, i = 0x424; i <= 0x434; i++, x++) {
-				cx25840_write(client, i, lcr[6 + x]);
-			}
-		}
-		else {
-			for (x = 1, i = 0x424; i <= 0x430; i++, x++) {
-				cx25840_write(client, i, lcr[9 + x]);
-			}
-			for (i = 0x431; i <= 0x434; i++) {
-				cx25840_write(client, i, 0);
-			}
-		}
-
-		cx25840_write(client, 0x43c, 0x16);
-
-		if (is_pal) {
-			cx25840_write(client, 0x474, 0x2a);
-		} else {
-			cx25840_write(client, 0x474, 0x22);
-		}
-		break;
 	}
 
-	case VIDIOC_INT_DECODE_VBI_LINE:
-	{
-		struct v4l2_decode_vbi_line *vbi = arg;
-		u8 *p = vbi->p;
-		int id1, id2, l, err = 0;
+	if (is_pal) {
+		for (x = 1, i = 0x424; i <= 0x434; i++, x++)
+			cx25840_write(client, i, lcr[6 + x]);
+	} else {
+		for (x = 1, i = 0x424; i <= 0x430; i++, x++)
+			cx25840_write(client, i, lcr[9 + x]);
+		for (i = 0x431; i <= 0x434; i++)
+			cx25840_write(client, i, 0);
+	}
 
-		if (p[0] || p[1] != 0xff || p[2] != 0xff ||
-		    (p[3] != 0x55 && p[3] != 0x91)) {
-			vbi->line = vbi->type = 0;
-			break;
-		}
+	cx25840_write(client, 0x43c, 0x16);
+	cx25840_write(client, 0x474, is_pal ? 0x2a : 0x22);
+	return 0;
+}
 
-		p += 4;
-		id1 = p[-1];
-		id2 = p[0] & 0xf;
-		l = p[2] & 0x3f;
-		l += state->vbi_line_offset;
-		p += 4;
+int cx25840_decode_vbi_line(struct v4l2_subdev *sd, struct v4l2_decode_vbi_line *vbi)
+{
+	struct cx25840_state *state = to_state(sd);
+	u8 *p = vbi->p;
+	int id1, id2, l, err = 0;
 
-		switch (id2) {
-		case 1:
-			id2 = V4L2_SLICED_TELETEXT_B;
-			break;
-		case 4:
-			id2 = V4L2_SLICED_WSS_625;
-			break;
-		case 6:
-			id2 = V4L2_SLICED_CAPTION_525;
-			err = !odd_parity(p[0]) || !odd_parity(p[1]);
-			break;
-		case 9:
-			id2 = V4L2_SLICED_VPS;
-			if (decode_vps(p, p) != 0) {
-				err = 1;
-			}
-			break;
-		default:
-			id2 = 0;
+	if (p[0] || p[1] != 0xff || p[2] != 0xff ||
+			(p[3] != 0x55 && p[3] != 0x91)) {
+		vbi->line = vbi->type = 0;
+		return 0;
+	}
+
+	p += 4;
+	id1 = p[-1];
+	id2 = p[0] & 0xf;
+	l = p[2] & 0x3f;
+	l += state->vbi_line_offset;
+	p += 4;
+
+	switch (id2) {
+	case 1:
+		id2 = V4L2_SLICED_TELETEXT_B;
+		break;
+	case 4:
+		id2 = V4L2_SLICED_WSS_625;
+		break;
+	case 6:
+		id2 = V4L2_SLICED_CAPTION_525;
+		err = !odd_parity(p[0]) || !odd_parity(p[1]);
+		break;
+	case 9:
+		id2 = V4L2_SLICED_VPS;
+		if (decode_vps(p, p) != 0)
 			err = 1;
-			break;
-		}
-
-		vbi->type = err ? 0 : id2;
-		vbi->line = err ? 0 : l;
-		vbi->is_second_field = err ? 0 : (id1 == 0x55);
-		vbi->p = p;
+		break;
+	default:
+		id2 = 0;
+		err = 1;
 		break;
 	}
-	}
 
+	vbi->type = err ? 0 : id2;
+	vbi->line = err ? 0 : l;
+	vbi->is_second_field = err ? 0 : (id1 == 0x55);
+	vbi->p = p;
 	return 0;
 }

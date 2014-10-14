@@ -6,7 +6,7 @@
  *  (C) 1991  Linus Torvalds - minix filesystem
  */
 
-#include <linux/smp_lock.h>
+#include <linux/gfp.h>
 #include "isofs.h"
 
 /*
@@ -15,7 +15,7 @@
  * some sanity tests.
  */
 static int
-isofs_cmp(struct dentry * dentry, const char * compare, int dlen)
+isofs_cmp(struct dentry *dentry, const char *compare, int dlen)
 {
 	struct qstr qstr;
 
@@ -37,7 +37,8 @@ isofs_cmp(struct dentry * dentry, const char * compare, int dlen)
 
 	qstr.name = compare;
 	qstr.len = dlen;
-	return dentry->d_op->d_compare(dentry, &dentry->d_name, &qstr);
+	return dentry->d_op->d_compare(NULL, NULL, NULL, NULL,
+			dentry->d_name.len, dentry->d_name.name, &qstr);
 }
 
 /*
@@ -48,24 +49,24 @@ isofs_cmp(struct dentry * dentry, const char * compare, int dlen)
  */
 static unsigned long
 isofs_find_entry(struct inode *dir, struct dentry *dentry,
-	unsigned long *block_rv, unsigned long* offset_rv,
-	char * tmpname, struct iso_directory_record * tmpde)
+	unsigned long *block_rv, unsigned long *offset_rv,
+	char *tmpname, struct iso_directory_record *tmpde)
 {
 	unsigned long bufsize = ISOFS_BUFFER_SIZE(dir);
 	unsigned char bufbits = ISOFS_BUFFER_BITS(dir);
 	unsigned long block, f_pos, offset, block_saved, offset_saved;
-	struct buffer_head * bh = NULL;
+	struct buffer_head *bh = NULL;
 	struct isofs_sb_info *sbi = ISOFS_SB(dir->i_sb);
 
 	if (!ISOFS_I(dir)->i_first_extent)
 		return 0;
-  
+
 	f_pos = 0;
 	offset = 0;
 	block = 0;
 
 	while (f_pos < dir->i_size) {
-		struct iso_directory_record * de;
+		struct iso_directory_record *de;
 		int de_len, match, i, dlen;
 		char *dpnt;
 
@@ -111,10 +112,17 @@ isofs_find_entry(struct inode *dir, struct dentry *dentry,
 
 		dlen = de->name_len[0];
 		dpnt = de->name;
+		/* Basic sanity check, whether name doesn't exceed dir entry */
+		if (de_len < dlen + sizeof(struct iso_directory_record)) {
+			printk(KERN_NOTICE "iso9660: Corrupted directory entry"
+			       " in block %lu of inode %lu\n", block,
+			       dir->i_ino);
+			return 0;
+		}
 
 		if (sbi->s_rock &&
 		    ((i = get_rock_ridge_filename(de, tmpname, dir)))) {
-			dlen = i; 	/* possibly -1 */
+			dlen = i;	/* possibly -1 */
 			dpnt = tmpname;
 #ifdef CONFIG_JOLIET
 		} else if (sbi->s_joliet_level) {
@@ -135,9 +143,9 @@ isofs_find_entry(struct inode *dir, struct dentry *dentry,
 		 */
 		match = 0;
 		if (dlen > 0 &&
-			(sbi->s_hide =='n' ||
+			(!sbi->s_hide ||
 				(!(de->flags[-sbi->s_high_sierra] & 1))) &&
-			(sbi->s_showassoc =='y' ||
+			(sbi->s_showassoc ||
 				(!(de->flags[-sbi->s_high_sierra] & 4)))) {
 			match = (isofs_cmp(dentry, dpnt, dlen) == 0);
 		}
@@ -145,8 +153,8 @@ isofs_find_entry(struct inode *dir, struct dentry *dentry,
 			isofs_normalize_block_and_offset(de,
 							 &block_saved,
 							 &offset_saved);
-                        *block_rv = block_saved;
-                        *offset_rv = offset_saved;
+			*block_rv = block_saved;
+			*offset_rv = offset_saved;
 			brelse(bh);
 			return 1;
 		}
@@ -155,34 +163,34 @@ isofs_find_entry(struct inode *dir, struct dentry *dentry,
 	return 0;
 }
 
-struct dentry *isofs_lookup(struct inode * dir, struct dentry * dentry, struct nameidata *nd)
+struct dentry *isofs_lookup(struct inode *dir, struct dentry *dentry, struct nameidata *nd)
 {
 	int found;
-	unsigned long block, offset;
+	unsigned long uninitialized_var(block);
+	unsigned long uninitialized_var(offset);
+	struct isofs_sb_info *sbi = ISOFS_SB(dir->i_sb);
 	struct inode *inode;
 	struct page *page;
-
-	dentry->d_op = dir->i_sb->s_root->d_op;
 
 	page = alloc_page(GFP_USER);
 	if (!page)
 		return ERR_PTR(-ENOMEM);
 
-	lock_kernel();
+	mutex_lock(&sbi->s_mutex);
 	found = isofs_find_entry(dir, dentry,
-				 &block, &offset,
-				 page_address(page),
-				 1024 + page_address(page));
+				&block, &offset,
+				page_address(page),
+				1024 + page_address(page));
 	__free_page(page);
 
 	inode = NULL;
 	if (found) {
 		inode = isofs_iget(dir->i_sb, block, offset);
-		if (!inode) {
-			unlock_kernel();
-			return ERR_PTR(-EACCES);
+		if (IS_ERR(inode)) {
+			mutex_unlock(&sbi->s_mutex);
+			return ERR_CAST(inode);
 		}
 	}
-	unlock_kernel();
+	mutex_unlock(&sbi->s_mutex);
 	return d_splice_alias(inode, dentry);
 }

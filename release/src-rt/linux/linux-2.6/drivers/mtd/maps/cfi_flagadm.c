@@ -1,8 +1,6 @@
 /*
  *  Copyright © 2001 Flaga hf. Medical Devices, Kári Davíðsson <kd@flaga.is>
  *
- *  $Id: cfi_flagadm.c,v 1.15 2005/11/07 11:14:26 gleixner Exp $
- *
  *  This program is free software; you can redistribute  it and/or modify it
  *  under  the terms of  the GNU General  Public License as published by the
  *  Free Software Foundation;  either version 2 of the  License, or (at your
@@ -35,7 +33,7 @@
 
 
 /* We split the flash chip up into four parts.
- * 1: bootloader firts 128k			(0x00000000 - 0x0001FFFF) size 0x020000
+ * 1: bootloader first 128k			(0x00000000 - 0x0001FFFF) size 0x020000
  * 2: kernel 640k					(0x00020000 - 0x000BFFFF) size 0x0A0000
  * 3: compressed 1536k root ramdisk	(0x000C0000 - 0x0023FFFF) size 0x180000
  * 4: writeable diskpartition (jffs)(0x00240000 - 0x003FFFFF) size 0x1C0000
@@ -90,7 +88,7 @@ struct mtd_partition flagadm_parts[] = {
 
 static struct mtd_info *mymtd;
 
-int __init init_flagadm(void)
+static int __init init_flagadm(void)
 {
 	printk(KERN_NOTICE "FlagaDM flash device: %x at %x\n",
 			FLASH_SIZE, FLASH_PHYS_ADDR);

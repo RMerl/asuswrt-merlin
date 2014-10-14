@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2007 Chelsio, Inc. All rights reserved.
+ * Copyright (c) 2003-2008 Chelsio, Inc. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
@@ -41,20 +41,40 @@
 #include <linux/timer.h>
 #include <linux/cache.h>
 #include <linux/mutex.h>
+#include <linux/bitops.h>
 #include "t3cdev.h"
-#include <asm/semaphore.h>
-#include <asm/bitops.h>
 #include <asm/io.h>
 
-typedef irqreturn_t(*intr_handler_t) (int, void *);
-
 struct vlan_group;
+struct adapter;
+struct sge_qset;
+struct port_info;
+
+enum {			/* rx_offload flags */
+	T3_RX_CSUM	= 1 << 0,
+	T3_LRO		= 1 << 1,
+};
+
+enum mac_idx_types {
+	LAN_MAC_IDX	= 0,
+	SAN_MAC_IDX,
+
+	MAX_MAC_IDX
+};
+
+struct iscsi_config {
+	__u8	mac_addr[ETH_ALEN];
+	__u32	flags;
+	int (*send)(struct port_info *pi, struct sk_buff **skb);
+	int (*recv)(struct port_info *pi, struct sk_buff *skb);
+};
 
 struct port_info {
+	struct adapter *adapter;
 	struct vlan_group *vlan_grp;
-	const struct port_type_info *port_type;
+	struct sge_qset *qs;
 	u8 port_id;
-	u8 rx_csum_offload;
+	u8 rx_offload;
 	u8 nqsets;
 	u8 first_qset;
 	struct cphy phy;
@@ -62,6 +82,10 @@ struct port_info {
 	struct link_config link_config;
 	struct net_device_stats netstats;
 	int activity;
+	__be32 iscsi_ipv4addr;
+	struct iscsi_config iscsic;
+
+	int link_fault; /* link fault was detected */
 };
 
 enum {				/* adapter flags */
@@ -69,29 +93,38 @@ enum {				/* adapter flags */
 	USING_MSI = (1 << 1),
 	USING_MSIX = (1 << 2),
 	QUEUES_BOUND = (1 << 3),
+	TP_PARITY_INIT = (1 << 4),
+	NAPI_INIT = (1 << 5),
+};
+
+struct fl_pg_chunk {
+	struct page *page;
+	void *va;
+	unsigned int offset;
+	unsigned long *p_cnt;
+	dma_addr_t mapping;
 };
 
 struct rx_desc;
 struct rx_sw_desc;
 
-struct sge_fl_page {
-	struct skb_frag_struct frag;
-	unsigned char *va;
-};
-
-struct sge_fl {			/* SGE per free-buffer list state */
-	unsigned int buf_size;	/* size of each Rx buffer */
-	unsigned int credits;	/* # of available Rx buffers */
-	unsigned int size;	/* capacity of free list */
-	unsigned int cidx;	/* consumer index */
-	unsigned int pidx;	/* producer index */
-	unsigned int gen;	/* free list generation */
-	unsigned int cntxt_id;	/* SGE context id for the free list */
-	struct sge_fl_page page;
-	struct rx_desc *desc;	/* address of HW Rx descriptor ring */
-	struct rx_sw_desc *sdesc;	/* address of SW Rx descriptor ring */
-	dma_addr_t phys_addr;	/* physical address of HW ring start */
-	unsigned long empty;	/* # of times queue ran out of buffers */
+struct sge_fl {                     /* SGE per free-buffer list state */
+	unsigned int buf_size;      /* size of each Rx buffer */
+	unsigned int credits;       /* # of available Rx buffers */
+	unsigned int pend_cred;     /* new buffers since last FL DB ring */
+	unsigned int size;          /* capacity of free list */
+	unsigned int cidx;          /* consumer index */
+	unsigned int pidx;          /* producer index */
+	unsigned int gen;           /* free list generation */
+	struct fl_pg_chunk pg_chunk;/* page chunk cache */
+	unsigned int use_pages;     /* whether FL uses pages or sk_buffs */
+	unsigned int order;	    /* order of page allocations */
+	unsigned int alloc_size;    /* size of allocated buffer */
+	struct rx_desc *desc;       /* address of HW Rx descriptor ring */
+	struct rx_sw_desc *sdesc;   /* address of SW Rx descriptor ring */
+	dma_addr_t   phys_addr;     /* physical address of HW ring start */
+	unsigned int cntxt_id;      /* SGE context id for the free list */
+	unsigned long empty;        /* # of times queue ran out of buffers */
 	unsigned long alloc_failed; /* # of times buffer allocation failed */
 };
 
@@ -111,12 +144,14 @@ struct sge_rspq {		/* state for an SGE response queue */
 	unsigned int polling;	/* is the queue serviced through NAPI? */
 	unsigned int holdoff_tmr;	/* interrupt holdoff timer in 100ns */
 	unsigned int next_holdoff;	/* holdoff time for next interrupt */
+	unsigned int rx_recycle_buf; /* whether recycling occurred
+					within current sop-eop */
 	struct rsp_desc *desc;	/* address of HW response ring */
 	dma_addr_t phys_addr;	/* physical address of the ring */
 	unsigned int cntxt_id;	/* SGE context id for the response q */
 	spinlock_t lock;	/* guards response processing */
-	struct sk_buff *rx_head;	/* offload packet receive queue head */
-	struct sk_buff *rx_tail;	/* offload packet receive queue tail */
+	struct sk_buff_head rx_queue; /* offload packet receive queue */
+	struct sk_buff *pg_skb; /* used to build frag list in napi handler */
 
 	unsigned long offload_pkts;
 	unsigned long offload_bundles;
@@ -168,13 +203,22 @@ enum {				/* per port SGE statistics */
 	SGE_PSTAT_MAX		/* must be last */
 };
 
+struct napi_gro_fraginfo;
+
 struct sge_qset {		/* an SGE queue set */
+	struct adapter *adap;
+	struct napi_struct napi;
 	struct sge_rspq rspq;
 	struct sge_fl fl[SGE_RXQ_PER_SET];
 	struct sge_txq txq[SGE_TXQ_PER_SET];
-	struct net_device *netdev;	/* associated net device */
+	int nomem;
+	int lro_enabled;
+	void *lro_va;
+	struct net_device *netdev;
+	struct netdev_queue *tx_q;	/* associated netdev TX queue */
 	unsigned long txq_stopped;	/* which Tx queues are stopped */
 	struct timer_list tx_reclaim_timer;	/* reclaims TX buffers */
+	struct timer_list rx_reclaim_timer;	/* reclaims RX buffers */
 	unsigned long port_stats[SGE_PSTAT_MAX];
 } ____cacheline_aligned;
 
@@ -200,6 +244,7 @@ struct adapter {
 	unsigned int slow_intr_mask;
 	unsigned long irq_stats[IRQ_NUM_STATS];
 
+	int msix_nvectors;
 	struct {
 		unsigned short vec;
 		char desc[22];
@@ -216,18 +261,20 @@ struct adapter {
 	unsigned int check_task_cnt;
 	struct delayed_work adap_check_task;
 	struct work_struct ext_intr_handler_task;
+	struct work_struct fatal_error_handler_task;
+	struct work_struct link_fault_handler_task;
 
-	/*
-	 * Dummy netdevices are needed when using multiple receive queues with
-	 * NAPI as each netdevice can service only one queue.
-	 */
-	struct net_device *dummy_netdev[SGE_QSETS - 1];
+	struct work_struct db_full_task;
+	struct work_struct db_empty_task;
+	struct work_struct db_drop_task;
 
 	struct dentry *debugfs_root;
 
 	struct mutex mdio_lock;
 	spinlock_t stats_lock;
 	spinlock_t work_lock;
+
+	struct sk_buff *nofail_skb;
 };
 
 static inline u32 t3_read_reg(struct adapter *adapter, u32 reg_addr)
@@ -249,11 +296,13 @@ static inline struct port_info *adap2pinfo(struct adapter *adap, int idx)
 	return netdev_priv(adap->port[idx]);
 }
 
-/*
- * We use the spare atalk_ptr to map a net device to its SGE queue set.
- * This is a macro so it can be used as l-value.
- */
-#define dev2qset(netdev) ((netdev)->atalk_ptr)
+static inline int phy2portid(struct cphy *phy)
+{
+	struct adapter *adap = phy->adapter;
+	struct port_info *port0 = adap2pinfo(adap, 0);
+
+	return &port0->phy == phy ? 0 : 1;
+}
 
 #define OFFLOAD_DEVMAP_BIT 15
 
@@ -269,20 +318,26 @@ int t3_offload_tx(struct t3cdev *tdev, struct sk_buff *skb);
 void t3_os_ext_intr_handler(struct adapter *adapter);
 void t3_os_link_changed(struct adapter *adapter, int port_id, int link_status,
 			int speed, int duplex, int fc);
+void t3_os_phymod_changed(struct adapter *adap, int port_id);
+void t3_os_link_fault(struct adapter *adapter, int port_id, int state);
+void t3_os_link_fault_handler(struct adapter *adapter, int port_id);
 
 void t3_sge_start(struct adapter *adap);
 void t3_sge_stop(struct adapter *adap);
+void t3_start_sge_timers(struct adapter *adap);
+void t3_stop_sge_timers(struct adapter *adap);
 void t3_free_sge_resources(struct adapter *adap);
 void t3_sge_err_intr_handler(struct adapter *adapter);
-intr_handler_t t3_intr_handler(struct adapter *adap, int polling);
-int t3_eth_xmit(struct sk_buff *skb, struct net_device *dev);
+irq_handler_t t3_intr_handler(struct adapter *adap, int polling);
+netdev_tx_t t3_eth_xmit(struct sk_buff *skb, struct net_device *dev);
 int t3_mgmt_tx(struct adapter *adap, struct sk_buff *skb);
 void t3_update_qset_coalesce(struct sge_qset *qs, const struct qset_params *p);
 int t3_sge_alloc_qset(struct adapter *adapter, unsigned int id, int nports,
 		      int irq_vec_idx, const struct qset_params *p,
-		      int ntxq, struct net_device *netdev);
-int t3_get_desc(const struct sge_qset *qs, unsigned int qnum, unsigned int idx,
-		unsigned char *data);
-irqreturn_t t3_sge_intr_msix(int irq, void *cookie);
+		      int ntxq, struct net_device *dev,
+		      struct netdev_queue *netdevq);
+extern struct workqueue_struct *cxgb3_wq;
+
+int t3_get_edc_fw(struct cphy *phy, int edc_idx, int size);
 
 #endif				/* __T3_ADAPTER_H__ */

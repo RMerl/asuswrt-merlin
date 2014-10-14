@@ -5,7 +5,7 @@
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  */
-
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 #include <linux/in.h>
 #include <linux/module.h>
 #include <linux/skbuff.h>
@@ -16,51 +16,37 @@
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Yon Uriarte <yon@astaro.de>");
-MODULE_DESCRIPTION("iptables AH SPI match module");
-
-#ifdef DEBUG_CONNTRACK
-#define duprintf(format, args...) printk(format , ## args)
-#else
-#define duprintf(format, args...)
-#endif
+MODULE_DESCRIPTION("Xtables: IPv4 IPsec-AH SPI match");
 
 /* Returns 1 if the spi is matched by the range, 0 otherwise */
-static inline int
-spi_match(u_int32_t min, u_int32_t max, u_int32_t spi, int invert)
+static inline bool
+spi_match(u_int32_t min, u_int32_t max, u_int32_t spi, bool invert)
 {
-	int r=0;
-	duprintf("ah spi_match:%c 0x%x <= 0x%x <= 0x%x",invert? '!':' ',
-		min,spi,max);
+	bool r;
+	pr_debug("spi_match:%c 0x%x <= 0x%x <= 0x%x\n",
+		 invert ? '!' : ' ', min, spi, max);
 	r=(spi >= min && spi <= max) ^ invert;
-	duprintf(" result %s\n",r? "PASS" : "FAILED");
+	pr_debug(" result %s\n", r ? "PASS" : "FAILED");
 	return r;
 }
 
-static int
-match(const struct sk_buff *skb,
-      const struct net_device *in,
-      const struct net_device *out,
-      const struct xt_match *match,
-      const void *matchinfo,
-      int offset,
-      unsigned int protoff,
-      int *hotdrop)
+static bool ah_mt(const struct sk_buff *skb, struct xt_action_param *par)
 {
-	struct ip_auth_hdr _ahdr, *ah;
-	const struct ipt_ah *ahinfo = matchinfo;
+	struct ip_auth_hdr _ahdr;
+	const struct ip_auth_hdr *ah;
+	const struct ipt_ah *ahinfo = par->matchinfo;
 
 	/* Must not be a fragment. */
-	if (offset)
-		return 0;
+	if (par->fragoff != 0)
+		return false;
 
-	ah = skb_header_pointer(skb, protoff,
-				sizeof(_ahdr), &_ahdr);
+	ah = skb_header_pointer(skb, par->thoff, sizeof(_ahdr), &_ahdr);
 	if (ah == NULL) {
 		/* We've been asked to examine this packet, and we
 		 * can't.  Hence, no choice but to drop.
 		 */
-		duprintf("Dropping evil AH tinygram.\n");
-		*hotdrop = 1;
+		pr_debug("Dropping evil AH tinygram.\n");
+		par->hotdrop = true;
 		return 0;
 	}
 
@@ -69,43 +55,37 @@ match(const struct sk_buff *skb,
 			 !!(ahinfo->invflags & IPT_AH_INV_SPI));
 }
 
-/* Called when user tries to insert an entry of this type. */
-static int
-checkentry(const char *tablename,
-	   const void *ip_void,
-	   const struct xt_match *match,
-	   void *matchinfo,
-	   unsigned int hook_mask)
+static int ah_mt_check(const struct xt_mtchk_param *par)
 {
-	const struct ipt_ah *ahinfo = matchinfo;
+	const struct ipt_ah *ahinfo = par->matchinfo;
 
 	/* Must specify no unknown invflags */
 	if (ahinfo->invflags & ~IPT_AH_INV_MASK) {
-		duprintf("ipt_ah: unknown flags %X\n", ahinfo->invflags);
-		return 0;
+		pr_debug("unknown flags %X\n", ahinfo->invflags);
+		return -EINVAL;
 	}
-	return 1;
+	return 0;
 }
 
-static struct xt_match ah_match = {
+static struct xt_match ah_mt_reg __read_mostly = {
 	.name		= "ah",
-	.family		= AF_INET,
-	.match		= match,
+	.family		= NFPROTO_IPV4,
+	.match		= ah_mt,
 	.matchsize	= sizeof(struct ipt_ah),
 	.proto		= IPPROTO_AH,
-	.checkentry	= checkentry,
+	.checkentry	= ah_mt_check,
 	.me		= THIS_MODULE,
 };
 
-static int __init ipt_ah_init(void)
+static int __init ah_mt_init(void)
 {
-	return xt_register_match(&ah_match);
+	return xt_register_match(&ah_mt_reg);
 }
 
-static void __exit ipt_ah_fini(void)
+static void __exit ah_mt_exit(void)
 {
-	xt_unregister_match(&ah_match);
+	xt_unregister_match(&ah_mt_reg);
 }
 
-module_init(ipt_ah_init);
-module_exit(ipt_ah_fini);
+module_init(ah_mt_init);
+module_exit(ah_mt_exit);

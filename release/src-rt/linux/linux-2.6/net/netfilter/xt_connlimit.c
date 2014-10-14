@@ -5,18 +5,19 @@
  *   Nov 2002: Martin Bene <martin.bene@icomedias.com>:
  *		only ignore TIME_WAIT or gone connections
  *   (C) CC Computer Consultants GmbH, 2007
- *   Contact: <jengelh@computergmbh.de>
  *
  * based on ...
  *
  * Kernel module to match connection tracking information.
  * GPL (C) 1999  Rusty Russell (rusty@rustcorp.com.au).
  */
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 #include <linux/in.h>
 #include <linux/in6.h>
 #include <linux/ip.h>
 #include <linux/ipv6.h>
 #include <linux/jhash.h>
+#include <linux/slab.h>
 #include <linux/list.h>
 #include <linux/module.h>
 #include <linux/random.h>
@@ -28,44 +29,43 @@
 #include <net/netfilter/nf_conntrack.h>
 #include <net/netfilter/nf_conntrack_core.h>
 #include <net/netfilter/nf_conntrack_tuple.h>
+#include <net/netfilter/nf_conntrack_zones.h>
 
 /* we will save the tuples of all connections we care about */
 struct xt_connlimit_conn {
-	struct list_head list;
-	struct nf_conntrack_tuple tuple;
+	struct hlist_node		node;
+	struct nf_conntrack_tuple	tuple;
+	union nf_inet_addr		addr;
 };
 
 struct xt_connlimit_data {
-	struct list_head iphash[256];
-	spinlock_t lock;
+	struct hlist_head	iphash[256];
+	spinlock_t		lock;
 };
 
 static u_int32_t connlimit_rnd __read_mostly;
-static bool connlimit_rnd_inited __read_mostly;
 
-static inline unsigned int connlimit_iphash(u_int32_t addr)
+static inline unsigned int connlimit_iphash(__be32 addr)
 {
-	return jhash_1word(addr, connlimit_rnd) & 0xFF;
+	return jhash_1word((__force __u32)addr, connlimit_rnd) & 0xFF;
 }
 
 static inline unsigned int
-connlimit_iphash6(const union nf_conntrack_address *addr,
-                  const union nf_conntrack_address *mask)
+connlimit_iphash6(const union nf_inet_addr *addr,
+                  const union nf_inet_addr *mask)
 {
-	union nf_conntrack_address res;
+	union nf_inet_addr res;
 	unsigned int i;
 
 	for (i = 0; i < ARRAY_SIZE(addr->ip6); ++i)
 		res.ip6[i] = addr->ip6[i] & mask->ip6[i];
 
-	return jhash2(res.ip6, ARRAY_SIZE(res.ip6), connlimit_rnd) & 0xFF;
+	return jhash2((u32 *)res.ip6, ARRAY_SIZE(res.ip6), connlimit_rnd) & 0xFF;
 }
 
 static inline bool already_closed(const struct nf_conn *conn)
 {
-	u_int16_t proto = conn->tuplehash[0].tuple.dst.protonum;
-
-	if (proto == IPPROTO_TCP)
+	if (nf_ct_protonum(conn) == IPPROTO_TCP)
 		return conn->proto.tcp.state == TCP_CONNTRACK_TIME_WAIT ||
 		       conn->proto.tcp.state == TCP_CONNTRACK_CLOSE;
 	else
@@ -73,14 +73,14 @@ static inline bool already_closed(const struct nf_conn *conn)
 }
 
 static inline unsigned int
-same_source_net(const union nf_conntrack_address *addr,
-		const union nf_conntrack_address *mask,
-		const union nf_conntrack_address *u3, unsigned int family)
+same_source_net(const union nf_inet_addr *addr,
+		const union nf_inet_addr *mask,
+		const union nf_inet_addr *u3, u_int8_t family)
 {
-	if (family == AF_INET) {
+	if (family == NFPROTO_IPV4) {
 		return (addr->ip & mask->ip) == (u3->ip & mask->ip);
 	} else {
-		union nf_conntrack_address lh, rh;
+		union nf_inet_addr lh, rh;
 		unsigned int i;
 
 		for (i = 0; i < ARRAY_SIZE(addr->ip6); ++i) {
@@ -92,31 +92,32 @@ same_source_net(const union nf_conntrack_address *addr,
 	}
 }
 
-static int count_them(struct xt_connlimit_data *data,
+static int count_them(struct net *net,
+		      struct xt_connlimit_data *data,
 		      const struct nf_conntrack_tuple *tuple,
-		      const union nf_conntrack_address *addr,
-		      const union nf_conntrack_address *mask,
-		      const struct xt_match *match)
+		      const union nf_inet_addr *addr,
+		      const union nf_inet_addr *mask,
+		      u_int8_t family)
 {
-	struct nf_conntrack_tuple_hash *found;
+	const struct nf_conntrack_tuple_hash *found;
 	struct xt_connlimit_conn *conn;
-	struct xt_connlimit_conn *tmp;
+	struct hlist_node *pos, *n;
 	struct nf_conn *found_ct;
-	struct list_head *hash;
+	struct hlist_head *hash;
 	bool addit = true;
 	int matches = 0;
 
-
-	if (match->family == AF_INET6)
+	if (family == NFPROTO_IPV6)
 		hash = &data->iphash[connlimit_iphash6(addr, mask)];
 	else
 		hash = &data->iphash[connlimit_iphash(addr->ip & mask->ip)];
 
-	read_lock_bh(&nf_conntrack_lock);
+	rcu_read_lock();
 
 	/* check the saved connections */
-	list_for_each_entry_safe(conn, tmp, hash, list) {
-		found    = __nf_conntrack_find(&conn->tuple);
+	hlist_for_each_entry_safe(conn, pos, n, hash, node) {
+		found    = nf_conntrack_find_get(net, NF_CT_DEFAULT_ZONE,
+						 &conn->tuple);
 		found_ct = NULL;
 
 		if (found != NULL)
@@ -134,7 +135,7 @@ static int count_them(struct xt_connlimit_data *data,
 
 		if (found == NULL) {
 			/* this one is gone */
-			list_del(&conn->list);
+			hlist_del(&conn->node);
 			kfree(conn);
 			continue;
 		}
@@ -144,40 +145,40 @@ static int count_them(struct xt_connlimit_data *data,
 			 * we do not care about connections which are
 			 * closed already -> ditch it
 			 */
-			list_del(&conn->list);
+			nf_ct_put(found_ct);
+			hlist_del(&conn->node);
 			kfree(conn);
 			continue;
 		}
 
-		if (same_source_net(addr, mask, &conn->tuple.src.u3,
-		    match->family))
+		if (same_source_net(addr, mask, &conn->addr, family))
 			/* same source network -> be counted! */
 			++matches;
+		nf_ct_put(found_ct);
 	}
 
-	read_unlock_bh(&nf_conntrack_lock);
+	rcu_read_unlock();
 
 	if (addit) {
 		/* save the new connection in our list */
-		conn = kzalloc(sizeof(*conn), GFP_ATOMIC);
+		conn = kmalloc(sizeof(*conn), GFP_ATOMIC);
 		if (conn == NULL)
 			return -ENOMEM;
 		conn->tuple = *tuple;
-		list_add(&conn->list, hash);
+		conn->addr = *addr;
+		hlist_add_head(&conn->node, hash);
 		++matches;
 	}
 
 	return matches;
 }
 
-static int
-connlimit_mt(const struct sk_buff *skb, const struct net_device *in,
-             const struct net_device *out, const struct xt_match *match,
-             const void *matchinfo, int offset, unsigned int protoff,
-             int *hotdrop)
+static bool
+connlimit_mt(const struct sk_buff *skb, struct xt_action_param *par)
 {
-	const struct xt_connlimit_info *info = matchinfo;
-	union nf_conntrack_address addr, mask;
+	struct net *net = dev_net(par->in ? par->in : par->out);
+	const struct xt_connlimit_info *info = par->matchinfo;
+	union nf_inet_addr addr;
 	struct nf_conntrack_tuple tuple;
 	const struct nf_conntrack_tuple *tuple_ptr = &tuple;
 	enum ip_conntrack_info ctinfo;
@@ -186,96 +187,86 @@ connlimit_mt(const struct sk_buff *skb, const struct net_device *in,
 
 	ct = nf_ct_get(skb, &ctinfo);
 	if (ct != NULL)
-		tuple_ptr = &ct->tuplehash[0].tuple;
-	else {
-		struct nf_conntrack_l3proto *l3proto;
-		struct nf_conntrack_l4proto *l4proto;
+		tuple_ptr = &ct->tuplehash[IP_CT_DIR_ORIGINAL].tuple;
+	else if (!nf_ct_get_tuplepr(skb, skb_network_offset(skb),
+				    par->family, &tuple))
+		goto hotdrop;
 
-		l3proto = __nf_ct_l3proto_find(match->family);
-		if (l3proto == NULL)
-			goto hotdrop;
-		l4proto = __nf_ct_l4proto_find(match->family, match->proto);
-		if (l4proto == NULL)
-			goto hotdrop;
-		if (nf_ct_get_tuple(skb, 0, 0, match->family, match->proto,
-		    &tuple, NULL, NULL) != 0)
-			goto hotdrop;
-	}
-
-	if (match->family == AF_INET6) {
+	if (par->family == NFPROTO_IPV6) {
 		const struct ipv6hdr *iph = ipv6_hdr(skb);
-		memcpy(&addr.ip6, &iph->saddr, sizeof(iph->saddr));
-		memcpy(&mask.ip6, info->v6_mask, sizeof(info->v6_mask));
+		memcpy(&addr.ip6, (info->flags & XT_CONNLIMIT_DADDR) ?
+		       &iph->daddr : &iph->saddr, sizeof(addr.ip6));
 	} else {
 		const struct iphdr *iph = ip_hdr(skb);
-		addr.ip = iph->saddr;
-		mask.ip = info->v4_mask;
+		addr.ip = (info->flags & XT_CONNLIMIT_DADDR) ?
+			  iph->daddr : iph->saddr;
 	}
 
 	spin_lock_bh(&info->data->lock);
-	connections = count_them(info->data, tuple_ptr, &addr, &mask, match);
+	connections = count_them(net, info->data, tuple_ptr, &addr,
+	                         &info->mask, par->family);
 	spin_unlock_bh(&info->data->lock);
 
-	if (connections < 0) {
+	if (connections < 0)
 		/* kmalloc failed, drop it entirely */
-		*hotdrop = true;
-		return 0;
-	}
+		goto hotdrop;
 
-	return (connections > info->limit) ^ info->inverse;
+	return (connections > info->limit) ^
+	       !!(info->flags & XT_CONNLIMIT_INVERT);
 
  hotdrop:
-	rcu_read_unlock();
-	*hotdrop = true;
-	return 0;
+	par->hotdrop = true;
+	return false;
 }
 
-static int
-connlimit_mt_check(const char *tablename, const void *ip,
-                   const struct xt_match *match, void *matchinfo,
-                   unsigned int hook_mask)
+static int connlimit_mt_check(const struct xt_mtchk_param *par)
 {
-	struct xt_connlimit_info *info = matchinfo;
+	struct xt_connlimit_info *info = par->matchinfo;
 	unsigned int i;
+	int ret;
 
-	if (unlikely(!connlimit_rnd_inited)) {
-		get_random_bytes(&connlimit_rnd, sizeof(connlimit_rnd));
-		connlimit_rnd_inited = true;
+	if (unlikely(!connlimit_rnd)) {
+		u_int32_t rand;
+
+		do {
+			get_random_bytes(&rand, sizeof(rand));
+		} while (!rand);
+		cmpxchg(&connlimit_rnd, 0, rand);
 	}
-	if (nf_ct_l3proto_try_module_get(match->family) < 0) {
-		printk(KERN_WARNING "cannot load conntrack support for "
-		       "address family %u\n", match->family);
-		return 0;
+	ret = nf_ct_l3proto_try_module_get(par->family);
+	if (ret < 0) {
+		pr_info("cannot load conntrack support for "
+			"address family %u\n", par->family);
+		return ret;
 	}
 
 	/* init private data */
 	info->data = kmalloc(sizeof(struct xt_connlimit_data), GFP_KERNEL);
 	if (info->data == NULL) {
-		nf_ct_l3proto_module_put(match->family);
-		return 0;
+		nf_ct_l3proto_module_put(par->family);
+		return -ENOMEM;
 	}
 
 	spin_lock_init(&info->data->lock);
 	for (i = 0; i < ARRAY_SIZE(info->data->iphash); ++i)
-		INIT_LIST_HEAD(&info->data->iphash[i]);
+		INIT_HLIST_HEAD(&info->data->iphash[i]);
 
-	return 1;
+	return 0;
 }
 
-static void
-connlimit_mt_destroy(const struct xt_match *match, void *matchinfo)
+static void connlimit_mt_destroy(const struct xt_mtdtor_param *par)
 {
-	struct xt_connlimit_info *info = matchinfo;
+	const struct xt_connlimit_info *info = par->matchinfo;
 	struct xt_connlimit_conn *conn;
-	struct xt_connlimit_conn *tmp;
-	struct list_head *hash = info->data->iphash;
+	struct hlist_node *pos, *n;
+	struct hlist_head *hash = info->data->iphash;
 	unsigned int i;
 
-	nf_ct_l3proto_module_put(match->family);
+	nf_ct_l3proto_module_put(par->family);
 
 	for (i = 0; i < ARRAY_SIZE(info->data->iphash); ++i) {
-		list_for_each_entry_safe(conn, tmp, &hash[i], list) {
-			list_del(&conn->list);
+		hlist_for_each_entry_safe(conn, pos, n, &hash[i], node) {
+			hlist_del(&conn->node);
 			kfree(conn);
 		}
 	}
@@ -286,7 +277,8 @@ connlimit_mt_destroy(const struct xt_match *match, void *matchinfo)
 static struct xt_match connlimit_mt_reg[] __read_mostly = {
 	{
 		.name       = "connlimit",
-		.family     = AF_INET,
+		.revision   = 0,
+		.family     = NFPROTO_UNSPEC,
 		.checkentry = connlimit_mt_check,
 		.match      = connlimit_mt,
 		.matchsize  = sizeof(struct xt_connlimit_info),
@@ -295,7 +287,8 @@ static struct xt_match connlimit_mt_reg[] __read_mostly = {
 	},
 	{
 		.name       = "connlimit",
-		.family     = AF_INET6,
+		.revision   = 1,
+		.family     = NFPROTO_UNSPEC,
 		.checkentry = connlimit_mt_check,
 		.match      = connlimit_mt,
 		.matchsize  = sizeof(struct xt_connlimit_info),
@@ -317,8 +310,8 @@ static void __exit connlimit_mt_exit(void)
 
 module_init(connlimit_mt_init);
 module_exit(connlimit_mt_exit);
-MODULE_AUTHOR("Jan Engelhardt <jengelh@computergmbh.de>");
-MODULE_DESCRIPTION("netfilter xt_connlimit match module");
+MODULE_AUTHOR("Jan Engelhardt <jengelh@medozas.de>");
+MODULE_DESCRIPTION("Xtables: Number of connections matching");
 MODULE_LICENSE("GPL");
 MODULE_ALIAS("ipt_connlimit");
 MODULE_ALIAS("ip6t_connlimit");

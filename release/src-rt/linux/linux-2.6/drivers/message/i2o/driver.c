@@ -84,7 +84,8 @@ int i2o_driver_register(struct i2o_driver *drv)
 	osm_debug("Register driver %s\n", drv->name);
 
 	if (drv->event) {
-		drv->event_queue = create_workqueue(drv->name);
+		drv->event_queue = alloc_workqueue(drv->name,
+						   WQ_MEM_RECLAIM, 1);
 		if (!drv->event_queue) {
 			osm_err("Could not initialize event queue for driver "
 				"%s\n", drv->name);
@@ -173,7 +174,6 @@ void i2o_driver_unregister(struct i2o_driver *drv)
  *	i2o_driver_dispatch - dispatch an I2O reply message
  *	@c: I2O controller of the message
  *	@m: I2O message number
- *	@msg: I2O message to be delivered
  *
  *	The reply is delivered to the driver from which the original message
  *	was. This function is only called from interrupt context.

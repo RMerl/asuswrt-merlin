@@ -13,17 +13,17 @@
  */
 
 #include <asm/processor.h>
+#include <asm/coprocessor.h>
 
 #include <linux/types.h>
 #include <linux/stddef.h>
 #include <linux/thread_info.h>
 #include <linux/ptrace.h>
-#include <asm/ptrace.h>
-#include <asm/processor.h>
-#include <asm/uaccess.h>
+#include <linux/mm.h>
+#include <linux/kbuild.h>
 
-#define DEFINE(sym, val) asm volatile("\n->" #sym " %0 " #val : : "i" (val))
-#define BLANK() asm volatile("\n->" : : )
+#include <asm/ptrace.h>
+#include <asm/uaccess.h>
 
 int main(void)
 {
@@ -63,7 +63,8 @@ int main(void)
 	DEFINE(PT_SIZE, sizeof(struct pt_regs));
 	DEFINE(PT_AREG_END, offsetof (struct pt_regs, areg[XCHAL_NUM_AREGS]));
 	DEFINE(PT_USER_SIZE, offsetof(struct pt_regs, areg[XCHAL_NUM_AREGS]));
-	BLANK();
+	DEFINE(PT_XTREGS_OPT, offsetof(struct pt_regs, xtregs_opt));
+	DEFINE(XTREGS_OPT_SIZE, sizeof(xtregs_opt_t));
 
 	/* struct task_struct */
 	DEFINE(TASK_PTRACE, offsetof (struct task_struct, ptrace));
@@ -73,27 +74,38 @@ int main(void)
 	DEFINE(TASK_THREAD, offsetof (struct task_struct, thread));
 	DEFINE(TASK_THREAD_INFO, offsetof (struct task_struct, stack));
 	DEFINE(TASK_STRUCT_SIZE, sizeof (struct task_struct));
-	BLANK();
 
 	/* struct thread_info (offset from start_struct) */
 	DEFINE(THREAD_RA, offsetof (struct task_struct, thread.ra));
 	DEFINE(THREAD_SP, offsetof (struct task_struct, thread.sp));
-	DEFINE(THREAD_CP_SAVE, offsetof (struct task_struct, thread.cp_save));
+	DEFINE(THREAD_CPENABLE, offsetof (struct thread_info, cpenable));
+#if XTENSA_HAVE_COPROCESSORS
+	DEFINE(THREAD_XTREGS_CP0, offsetof (struct thread_info, xtregs_cp));
+	DEFINE(THREAD_XTREGS_CP1, offsetof (struct thread_info, xtregs_cp));
+	DEFINE(THREAD_XTREGS_CP2, offsetof (struct thread_info, xtregs_cp));
+	DEFINE(THREAD_XTREGS_CP3, offsetof (struct thread_info, xtregs_cp));
+	DEFINE(THREAD_XTREGS_CP4, offsetof (struct thread_info, xtregs_cp));
+	DEFINE(THREAD_XTREGS_CP5, offsetof (struct thread_info, xtregs_cp));
+	DEFINE(THREAD_XTREGS_CP6, offsetof (struct thread_info, xtregs_cp));
+	DEFINE(THREAD_XTREGS_CP7, offsetof (struct thread_info, xtregs_cp));
+#endif
+	DEFINE(THREAD_XTREGS_USER, offsetof (struct thread_info, xtregs_user));
+	DEFINE(XTREGS_USER_SIZE, sizeof(xtregs_user_t));
 	DEFINE(THREAD_CURRENT_DS, offsetof (struct task_struct, thread.current_ds));
-	BLANK();
 
 	/* struct mm_struct */
 	DEFINE(MM_USERS, offsetof(struct mm_struct, mm_users));
 	DEFINE(MM_PGD, offsetof (struct mm_struct, pgd));
 	DEFINE(MM_CONTEXT, offsetof (struct mm_struct, context));
-	BLANK();
-	DEFINE(PT_SINGLESTEP_BIT, PT_SINGLESTEP_BIT);
+
+	/* struct page */
+	DEFINE(PAGE_FLAGS, offsetof(struct page, flags));
 
 	/* constants */
 	DEFINE(_CLONE_VM, CLONE_VM);
 	DEFINE(_CLONE_UNTRACED, CLONE_UNTRACED);
+	DEFINE(PG_ARCH_1, PG_arch_1);
 
 	return 0;
 }
-
 

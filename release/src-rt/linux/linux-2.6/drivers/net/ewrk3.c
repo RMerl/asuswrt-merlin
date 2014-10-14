@@ -145,6 +145,7 @@
 
 #include <linux/module.h>
 #include <linux/kernel.h>
+#include <linux/sched.h>
 #include <linux/string.h>
 #include <linux/errno.h>
 #include <linux/ioport.h>
@@ -275,7 +276,6 @@ struct ewrk3_private {
 	u_long shmem_base;	/* Shared memory start address */
 	void __iomem *shmem;
 	u_long shmem_length;	/* Shared memory window length */
-	struct net_device_stats stats;	/* Public stats */
 	struct ewrk3_stats pktStats; /* Private stats counters */
 	u_char irq_mask;	/* Adapter IRQ mask bits */
 	u_char mPage;		/* Maximum 2kB Page number */
@@ -299,10 +299,9 @@ struct ewrk3_private {
    ** Public Functions
  */
 static int ewrk3_open(struct net_device *dev);
-static int ewrk3_queue_pkt(struct sk_buff *skb, struct net_device *dev);
+static netdev_tx_t ewrk3_queue_pkt(struct sk_buff *skb, struct net_device *dev);
 static irqreturn_t ewrk3_interrupt(int irq, void *dev_id);
 static int ewrk3_close(struct net_device *dev);
-static struct net_device_stats *ewrk3_get_stats(struct net_device *dev);
 static void set_multicast_list(struct net_device *dev);
 static int ewrk3_ioctl(struct net_device *dev, struct ifreq *rq, int cmd);
 static const struct ethtool_ops ethtool_ops_203;
@@ -356,7 +355,6 @@ struct net_device * __init ewrk3_probe(int unit)
 		sprintf(dev->name, "eth%d", unit);
 		netdev_boot_setup_check(dev);
 	}
-	SET_MODULE_OWNER(dev);
 
 	err = ewrk3_probe1(dev, dev->base_addr, dev->irq);
 	if (err)
@@ -390,6 +388,18 @@ static int __init ewrk3_probe1(struct net_device *dev, u_long iobase, int irq)
 
 	return err;
 }
+
+static const struct net_device_ops ewrk3_netdev_ops = {
+	.ndo_open		= ewrk3_open,
+	.ndo_start_xmit		= ewrk3_queue_pkt,
+	.ndo_stop		= ewrk3_close,
+	.ndo_set_multicast_list = set_multicast_list,
+	.ndo_do_ioctl		= ewrk3_ioctl,
+	.ndo_tx_timeout		= ewrk3_timeout,
+	.ndo_change_mtu		= eth_change_mtu,
+	.ndo_set_mac_address 	= eth_mac_addr,
+	.ndo_validate_addr	= eth_validate_addr,
+};
 
 static int __init
 ewrk3_hw_init(struct net_device *dev, u_long iobase)
@@ -463,10 +473,7 @@ ewrk3_hw_init(struct net_device *dev, u_long iobase)
 	if (lemac != LeMAC2)
 		DevicePresent(iobase);	/* need after EWRK3_INIT */
 	status = get_hw_addr(dev, eeprom_image, lemac);
-	for (i = 0; i < ETH_ALEN - 1; i++) {	/* get the ethernet addr. */
-		printk("%2.2x:", dev->dev_addr[i]);
-	}
-	printk("%2.2x,\n", dev->dev_addr[i]);
+	printk("%pM\n", dev->dev_addr);
 
 	if (status) {
 		printk("      which has an EEPROM CRC error.\n");
@@ -609,17 +616,11 @@ ewrk3_hw_init(struct net_device *dev, u_long iobase)
 		printk(version);
 	}
 	/* The EWRK3-specific entries in the device structure. */
-	dev->open = ewrk3_open;
-	dev->hard_start_xmit = ewrk3_queue_pkt;
-	dev->stop = ewrk3_close;
-	dev->get_stats = ewrk3_get_stats;
-	dev->set_multicast_list = set_multicast_list;
-	dev->do_ioctl = ewrk3_ioctl;
+	dev->netdev_ops = &ewrk3_netdev_ops;
 	if (lp->adapter_name[4] == '3')
 		SET_ETHTOOL_OPS(dev, &ethtool_ops_203);
 	else
 		SET_ETHTOOL_OPS(dev, &ethtool_ops);
-	dev->tx_timeout = ewrk3_timeout;
 	dev->watchdog_timeo = QUEUE_PKT_TIMEOUT;
 
 	dev->mem_start = 0;
@@ -632,7 +633,7 @@ static int ewrk3_open(struct net_device *dev)
 {
 	struct ewrk3_private *lp = netdev_priv(dev);
 	u_long iobase = dev->base_addr;
-	int i, status = 0;
+	int status = 0;
 	u_char icr, csr;
 
 	/*
@@ -653,11 +654,7 @@ static int ewrk3_open(struct net_device *dev)
 
 			if (ewrk3_debug > 1) {
 				printk("%s: ewrk3 open with irq %d\n", dev->name, dev->irq);
-				printk("  physical address: ");
-				for (i = 0; i < 5; i++) {
-					printk("%2.2x:", (u_char) dev->dev_addr[i]);
-				}
-				printk("%2.2x\n", (u_char) dev->dev_addr[i]);
+				printk("  physical address: %pM\n", dev->dev_addr);
 				if (lp->shmem_length == 0) {
 					printk("  no shared memory, I/O only mode\n");
 				} else {
@@ -760,7 +757,7 @@ static void ewrk3_timeout(struct net_device *dev)
 		 */
 		ENABLE_IRQs;
 
-		dev->trans_start = jiffies;
+		dev->trans_start = jiffies; /* prevent tx timeout */
 		netif_wake_queue(dev);
 	}
 }
@@ -768,7 +765,7 @@ static void ewrk3_timeout(struct net_device *dev)
 /*
    ** Writes a socket buffer to the free page queue
  */
-static int ewrk3_queue_pkt (struct sk_buff *skb, struct net_device *dev)
+static netdev_tx_t ewrk3_queue_pkt(struct sk_buff *skb, struct net_device *dev)
 {
 	struct ewrk3_private *lp = netdev_priv(dev);
 	u_long iobase = dev->base_addr;
@@ -864,20 +861,19 @@ static int ewrk3_queue_pkt (struct sk_buff *skb, struct net_device *dev)
 	ENABLE_IRQs;
 	spin_unlock_irq (&lp->hw_lock);
 
-	lp->stats.tx_bytes += skb->len;
-	dev->trans_start = jiffies;
+	dev->stats.tx_bytes += skb->len;
 	dev_kfree_skb (skb);
 
 	/* Check for free resources: stop Tx queue if there are none */
 	if (inb (EWRK3_FMQC) == 0)
 		netif_stop_queue (dev);
 
-	return 0;
+	return NETDEV_TX_OK;
 
 err_out:
 	ENABLE_IRQs;
 	spin_unlock_irq (&lp->hw_lock);
-	return 1;
+	return NETDEV_TX_BUSY;
 }
 
 /*
@@ -981,13 +977,13 @@ static int ewrk3_rx(struct net_device *dev)
 				}
 
 				if (!(rx_status & R_ROK)) {	/* There was an error. */
-					lp->stats.rx_errors++;	/* Update the error stats. */
+					dev->stats.rx_errors++;	/* Update the error stats. */
 					if (rx_status & R_DBE)
-						lp->stats.rx_frame_errors++;
+						dev->stats.rx_frame_errors++;
 					if (rx_status & R_CRC)
-						lp->stats.rx_crc_errors++;
+						dev->stats.rx_crc_errors++;
 					if (rx_status & R_PLL)
-						lp->stats.rx_fifo_errors++;
+						dev->stats.rx_fifo_errors++;
 				} else {
 					struct sk_buff *skb;
 
@@ -1037,12 +1033,11 @@ static int ewrk3_rx(struct net_device *dev)
 						/*
 						   ** Update stats
 						 */
-						dev->last_rx = jiffies;
-						lp->stats.rx_packets++;
-						lp->stats.rx_bytes += pkt_len;
+						dev->stats.rx_packets++;
+						dev->stats.rx_bytes += pkt_len;
 					} else {
 						printk("%s: Insufficient memory; nuking packet.\n", dev->name);
-						lp->stats.rx_dropped++;		/* Really, deferred. */
+						dev->stats.rx_dropped++;		/* Really, deferred. */
 						break;
 					}
 				}
@@ -1072,11 +1067,11 @@ static int ewrk3_tx(struct net_device *dev)
 	while ((tx_status = inb(EWRK3_TDQ)) > 0) {	/* Whilst there's old buffers */
 		if (tx_status & T_VSTS) {	/* The status is valid */
 			if (tx_status & T_TXE) {
-				lp->stats.tx_errors++;
+				dev->stats.tx_errors++;
 				if (tx_status & T_NCL)
-					lp->stats.tx_carrier_errors++;
+					dev->stats.tx_carrier_errors++;
 				if (tx_status & T_LCL)
-					lp->stats.tx_window_errors++;
+					dev->stats.tx_window_errors++;
 				if (tx_status & T_CTU) {
 					if ((tx_status & T_COLL) ^ T_XUR) {
 						lp->pktStats.tx_underruns++;
@@ -1085,13 +1080,13 @@ static int ewrk3_tx(struct net_device *dev)
 					}
 				} else if (tx_status & T_COLL) {
 					if ((tx_status & T_COLL) ^ T_XCOLL) {
-						lp->stats.collisions++;
+						dev->stats.collisions++;
 					} else {
 						lp->pktStats.excessive_collisions++;
 					}
 				}
 			} else {
-				lp->stats.tx_packets++;
+				dev->stats.tx_packets++;
 			}
 		}
 	}
@@ -1134,14 +1129,6 @@ static int ewrk3_close(struct net_device *dev)
 	return 0;
 }
 
-static struct net_device_stats *ewrk3_get_stats(struct net_device *dev)
-{
-	struct ewrk3_private *lp = netdev_priv(dev);
-
-	/* Null body since there is no framing error counter */
-	return &lp->stats;
-}
-
 /*
    ** Set or clear the multicast filter for this adapter.
  */
@@ -1181,7 +1168,7 @@ static void set_multicast_list(struct net_device *dev)
 static void SetMulticastFilter(struct net_device *dev)
 {
 	struct ewrk3_private *lp = netdev_priv(dev);
-	struct dev_mc_list *dmi = dev->mc_list;
+	struct netdev_hw_addr *ha;
 	u_long iobase = dev->base_addr;
 	int i;
 	char *addrs, bit, byte;
@@ -1225,9 +1212,8 @@ static void SetMulticastFilter(struct net_device *dev)
 		}
 
 		/* Update table */
-		for (i = 0; i < dev->mc_count; i++) {	/* for each address in the list */
-			addrs = dmi->dmi_addr;
-			dmi = dmi->next;
+		netdev_for_each_mc_addr(ha, dev) {
+			addrs = ha->addr;
 			if ((*addrs & 0x01) == 1) {	/* multicast address? */
 				crc = ether_crc_le(ETH_ALEN, addrs);
 				hashcode = crc & ((1 << 9) - 1);	/* hashcode is 9 LSb of CRC */
@@ -1383,8 +1369,6 @@ static void __init EthwrkSignature(char *name, char *eeprom_image)
 		name[EWRK3_STRLEN] = '\0';
 	} else
 		name[0] = '\0';
-
-	return;
 }
 
 /*
@@ -1789,8 +1773,7 @@ static int ewrk3_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
 		break;
 	case EWRK3_SET_MCA:	/* Set a multicast address */
 		if (capable(CAP_NET_ADMIN)) {
-			if (ioc->len > 1024)
-			{
+			if (ioc->len > HASH_TABLE_LEN) {
 				status = -EINVAL;
 				break;
 			}
@@ -1987,13 +1970,3 @@ module_exit(ewrk3_exit_module);
 module_init(ewrk3_init_module);
 #endif				/* MODULE */
 MODULE_LICENSE("GPL");
-
-
-
-/*
- * Local variables:
- *  compile-command: "gcc -D__KERNEL__ -I/linux/include -Wall -Wstrict-prototypes -fomit-frame-pointer -fno-strength-reduce -malign-loops=2 -malign-jumps=2 -malign-functions=2 -O2 -m486 -c ewrk3.c"
- *
- *  compile-command: "gcc -D__KERNEL__ -DMODULE -I/linux/include -Wall -Wstrict-prototypes -fomit-frame-pointer -fno-strength-reduce -malign-loops=2 -malign-jumps=2 -malign-functions=2 -O2 -m486 -c ewrk3.c"
- * End:
- */

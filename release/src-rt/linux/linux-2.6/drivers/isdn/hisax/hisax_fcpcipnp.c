@@ -68,15 +68,16 @@ static struct pci_device_id fcpci_ids[] = {
 
 MODULE_DEVICE_TABLE(pci, fcpci_ids);
 
-#ifdef __ISAPNP__
+#ifdef CONFIG_PNP
 static struct pnp_device_id fcpnp_ids[] __devinitdata = {
 	{ 
 		.id		= "AVM0900",
 		.driver_data	= (unsigned long) "Fritz!Card PnP",
 	},
+	{ .id = "" }
 };
 
-MODULE_DEVICE_TABLE(isapnp, fcpnp_ids);
+MODULE_DEVICE_TABLE(pnp, fcpnp_ids);
 #endif
 
 static int protocol = 2;       /* EURO-ISDN Default */
@@ -725,23 +726,6 @@ static int __devinit fcpcipnp_setup(struct fritz_adapter *adapter)
 
 	switch (adapter->type) {
 	case AVM_FRITZ_PCIV2:
-		retval = request_irq(adapter->irq, fcpci2_irq, IRQF_SHARED,
-				     "fcpcipnp", adapter);
-		break;
-	case AVM_FRITZ_PCI:
-		retval = request_irq(adapter->irq, fcpci_irq, IRQF_SHARED,
-				     "fcpcipnp", adapter);
-		break;
-	case AVM_FRITZ_PNP:
-		retval = request_irq(adapter->irq, fcpci_irq, 0,
-				     "fcpcipnp", adapter);
-		break;
-	}
-	if (retval)
-		goto err_region;
-
-	switch (adapter->type) {
-	case AVM_FRITZ_PCIV2:
 	case AVM_FRITZ_PCI:
 		val = inl(adapter->io);
 		break;
@@ -793,6 +777,23 @@ static int __devinit fcpcipnp_setup(struct fritz_adapter *adapter)
 	mdelay(10);
 	outb(0, adapter->io + AVM_STATUS0);
 	mdelay(10);
+
+	switch (adapter->type) {
+	case AVM_FRITZ_PCIV2:
+		retval = request_irq(adapter->irq, fcpci2_irq, IRQF_SHARED,
+				     "fcpcipnp", adapter);
+		break;
+	case AVM_FRITZ_PCI:
+		retval = request_irq(adapter->irq, fcpci_irq, IRQF_SHARED,
+				     "fcpcipnp", adapter);
+		break;
+	case AVM_FRITZ_PNP:
+		retval = request_irq(adapter->irq, fcpci_irq, 0,
+				     "fcpcipnp", adapter);
+		break;
+	}
+	if (retval)
+		goto err_region;
 
 	switch (adapter->type) {
 	case AVM_FRITZ_PCIV2:
@@ -914,7 +915,7 @@ static int __devinit fcpci_probe(struct pci_dev *pdev,
 	return retval;
 }
 
-#ifdef __ISAPNP__
+#ifdef CONFIG_PNP
 static int __devinit fcpnp_probe(struct pnp_dev *pdev, const struct pnp_device_id *dev_id)
 {
 	struct fritz_adapter *adapter;
@@ -935,7 +936,7 @@ static int __devinit fcpnp_probe(struct pnp_dev *pdev, const struct pnp_device_i
 	pnp_disable_dev(pdev);
 	retval = pnp_activate_dev(pdev);
 	if (retval < 0) {
-		printk(KERN_WARNING "%s: pnp_activate_dev(%s) ret(%d)\n", __FUNCTION__,
+		printk(KERN_WARNING "%s: pnp_activate_dev(%s) ret(%d)\n", __func__,
 			(char *)dev_id->driver_data, retval);
 		goto err_free;
 	}
@@ -1001,7 +1002,7 @@ static int __init hisax_fcpcipnp_init(void)
 	retval = pci_register_driver(&fcpci_driver);
 	if (retval)
 		return retval;
-#ifdef __ISAPNP__
+#ifdef CONFIG_PNP
 	retval = pnp_register_driver(&fcpnp_driver);
 	if (retval < 0) {
 		pci_unregister_driver(&fcpci_driver);
@@ -1013,7 +1014,7 @@ static int __init hisax_fcpcipnp_init(void)
 
 static void __exit hisax_fcpcipnp_exit(void)
 {
-#ifdef __ISAPNP__
+#ifdef CONFIG_PNP
 	pnp_unregister_driver(&fcpnp_driver);
 #endif
 	pci_unregister_driver(&fcpci_driver);

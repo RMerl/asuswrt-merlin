@@ -35,10 +35,6 @@
 /*max window size: 1024(direct blocks) + 3([t,d]indirect blocks) */
 #define EXT3_MAX_RESERVE_BLOCKS         1027
 #define EXT3_RESERVE_WINDOW_NOT_ALLOCATED 0
-/*
- * Always enable hashed directories
- */
-#define CONFIG_EXT3_INDEX
 
 /*
  * Debug code
@@ -47,7 +43,7 @@
 #define ext3_debug(f, a...)						\
 	do {								\
 		printk (KERN_DEBUG "EXT3-fs DEBUG (%s, %d): %s:",	\
-			__FILE__, __LINE__, __FUNCTION__);		\
+			__FILE__, __LINE__, __func__);		\
 		printk (KERN_DEBUG f, ## a);				\
 	} while (0)
 #else
@@ -182,12 +178,29 @@ struct ext3_group_desc
 #define EXT3_FL_USER_VISIBLE		0x0003DFFF /* User visible flags */
 #define EXT3_FL_USER_MODIFIABLE		0x000380FF /* User modifiable flags */
 
-/*
- * Inode dynamic state flags
- */
-#define EXT3_STATE_JDATA		0x00000001 /* journaled data exists */
-#define EXT3_STATE_NEW			0x00000002 /* inode is newly created */
-#define EXT3_STATE_XATTR		0x00000004 /* has in-inode xattrs */
+/* Flags that should be inherited by new inodes from their parent. */
+#define EXT3_FL_INHERITED (EXT3_SECRM_FL | EXT3_UNRM_FL | EXT3_COMPR_FL |\
+			   EXT3_SYNC_FL | EXT3_IMMUTABLE_FL | EXT3_APPEND_FL |\
+			   EXT3_NODUMP_FL | EXT3_NOATIME_FL | EXT3_COMPRBLK_FL|\
+			   EXT3_NOCOMPR_FL | EXT3_JOURNAL_DATA_FL |\
+			   EXT3_NOTAIL_FL | EXT3_DIRSYNC_FL)
+
+/* Flags that are appropriate for regular files (all but dir-specific ones). */
+#define EXT3_REG_FLMASK (~(EXT3_DIRSYNC_FL | EXT3_TOPDIR_FL))
+
+/* Flags that are appropriate for non-directories/regular files. */
+#define EXT3_OTHER_FLMASK (EXT3_NODUMP_FL | EXT3_NOATIME_FL)
+
+/* Mask out flags that are inappropriate for the given type of inode. */
+static inline __u32 ext3_mask_flags(umode_t mode, __u32 flags)
+{
+	if (S_ISDIR(mode))
+		return flags;
+	else if (S_ISREG(mode))
+		return flags & EXT3_REG_FLMASK;
+	else
+		return flags & EXT3_OTHER_FLMASK;
+}
 
 /* Used to pass group descriptor data when online resize is done */
 struct ext3_new_group_input {
@@ -358,6 +371,13 @@ struct ext3_inode {
 #define	EXT3_ORPHAN_FS			0x0004	/* Orphans being recovered */
 
 /*
+ * Misc. filesystem flags
+ */
+#define EXT2_FLAGS_SIGNED_HASH		0x0001  /* Signed dirhash in use */
+#define EXT2_FLAGS_UNSIGNED_HASH	0x0002  /* Unsigned dirhash in use */
+#define EXT2_FLAGS_TEST_FILESYS		0x0004	/* to test development code */
+
+/*
  * Mount flags
  */
 #define EXT3_MOUNT_CHECK		0x00001	/* Do mount-time checks */
@@ -380,10 +400,11 @@ struct ext3_inode {
 #define EXT3_MOUNT_POSIX_ACL		0x08000	/* POSIX Access Control Lists */
 #define EXT3_MOUNT_RESERVATION		0x10000	/* Preallocation */
 #define EXT3_MOUNT_BARRIER		0x20000 /* Use block barriers */
-#define EXT3_MOUNT_NOBH			0x40000 /* No bufferheads */
 #define EXT3_MOUNT_QUOTA		0x80000 /* Some quota option set */
 #define EXT3_MOUNT_USRQUOTA		0x100000 /* "old" user quota */
 #define EXT3_MOUNT_GRPQUOTA		0x200000 /* "old" group quota */
+#define EXT3_MOUNT_DATA_ERR_ABORT	0x400000 /* Abort on file data write
+						  * error in ordered mode */
 
 /* Compatibility, for having both ext2_fs.h and ext3_fs.h included at once */
 #ifndef _LINUX_EXT2_FS_H
@@ -397,13 +418,13 @@ struct ext3_inode {
 #define EXT2_MOUNT_DATA_FLAGS		EXT3_MOUNT_DATA_FLAGS
 #endif
 
-#define ext3_set_bit			ext2_set_bit
+#define ext3_set_bit			__test_and_set_bit_le
 #define ext3_set_bit_atomic		ext2_set_bit_atomic
-#define ext3_clear_bit			ext2_clear_bit
+#define ext3_clear_bit			__test_and_clear_bit_le
 #define ext3_clear_bit_atomic		ext2_clear_bit_atomic
-#define ext3_test_bit			ext2_test_bit
-#define ext3_find_first_zero_bit	ext2_find_first_zero_bit
-#define ext3_find_next_zero_bit		ext2_find_next_zero_bit
+#define ext3_test_bit			test_bit_le
+#define ext3_find_first_zero_bit	find_first_zero_bit_le
+#define ext3_find_next_zero_bit		find_next_zero_bit_le
 
 /*
  * Maximal mount counts between two filesystem checks
@@ -491,7 +512,23 @@ struct ext3_super_block {
 	__u16	s_reserved_word_pad;
 	__le32	s_default_mount_opts;
 	__le32	s_first_meta_bg;	/* First metablock block group */
-	__u32	s_reserved[190];	/* Padding to the end of the block */
+	__le32	s_mkfs_time;		/* When the filesystem was created */
+	__le32	s_jnl_blocks[17];	/* Backup of the journal inode */
+	/* 64bit support valid if EXT4_FEATURE_COMPAT_64BIT */
+/*150*/	__le32	s_blocks_count_hi;	/* Blocks count */
+	__le32	s_r_blocks_count_hi;	/* Reserved blocks count */
+	__le32	s_free_blocks_count_hi;	/* Free blocks count */
+	__le16	s_min_extra_isize;	/* All inodes have at least # bytes */
+	__le16	s_want_extra_isize; 	/* New inodes should reserve # bytes */
+	__le32	s_flags;		/* Miscellaneous flags */
+	__le16  s_raid_stride;		/* RAID stride */
+	__le16  s_mmp_interval;         /* # seconds to wait in MMP checking */
+	__le64  s_mmp_block;            /* Block for multi-mount protection */
+	__le32  s_raid_stripe_width;    /* blocks on all data disks (N*stride)*/
+	__u8	s_log_groups_per_flex;  /* FLEX_BG group size */
+	__u8	s_reserved_char_pad2;
+	__le16  s_reserved_pad;
+	__u32   s_reserved[162];        /* Padding to the end of the block */
 };
 
 #ifdef __KERNEL__
@@ -513,6 +550,31 @@ static inline int ext3_valid_inum(struct super_block *sb, unsigned long ino)
 		ino == EXT3_RESIZE_INO ||
 		(ino >= EXT3_FIRST_INO(sb) &&
 		 ino <= le32_to_cpu(EXT3_SB(sb)->s_es->s_inodes_count));
+}
+
+/*
+ * Inode dynamic state flags
+ */
+enum {
+	EXT3_STATE_JDATA,		/* journaled data exists */
+	EXT3_STATE_NEW,			/* inode is newly created */
+	EXT3_STATE_XATTR,		/* has in-inode xattrs */
+	EXT3_STATE_FLUSH_ON_CLOSE,	/* flush dirty pages on close */
+};
+
+static inline int ext3_test_inode_state(struct inode *inode, int bit)
+{
+	return test_bit(bit, &EXT3_I(inode)->i_state_flags);
+}
+
+static inline void ext3_set_inode_state(struct inode *inode, int bit)
+{
+	set_bit(bit, &EXT3_I(inode)->i_state_flags);
+}
+
+static inline void ext3_clear_inode_state(struct inode *inode, int bit)
+{
+	clear_bit(bit, &EXT3_I(inode)->i_state_flags);
 }
 #else
 /* Assume that user mode programs are passing in an ext3fs superblock, not
@@ -662,21 +724,30 @@ struct ext3_dir_entry_2 {
 					 ~EXT3_DIR_ROUND)
 #define EXT3_MAX_REC_LEN		((1<<16)-1)
 
+/*
+ * Tests against MAX_REC_LEN etc were put in place for 64k block
+ * sizes; if that is not possible on this arch, we can skip
+ * those tests and speed things up.
+ */
 static inline unsigned ext3_rec_len_from_disk(__le16 dlen)
 {
 	unsigned len = le16_to_cpu(dlen);
 
+#if (PAGE_CACHE_SIZE >= 65536)
 	if (len == EXT3_MAX_REC_LEN)
 		return 1 << 16;
+#endif
 	return len;
 }
 
 static inline __le16 ext3_rec_len_to_disk(unsigned len)
 {
+#if (PAGE_CACHE_SIZE >= 65536)
 	if (len == (1 << 16))
 		return cpu_to_le16(EXT3_MAX_REC_LEN);
 	else if (len > (1 << 16))
 		BUG();
+#endif
 	return cpu_to_le16(len);
 }
 
@@ -685,23 +756,20 @@ static inline __le16 ext3_rec_len_to_disk(unsigned len)
  * (c) Daniel Phillips, 2001
  */
 
-#ifdef CONFIG_EXT3_INDEX
-  #define is_dx(dir) (EXT3_HAS_COMPAT_FEATURE(dir->i_sb, \
-					      EXT3_FEATURE_COMPAT_DIR_INDEX) && \
+#define is_dx(dir) (EXT3_HAS_COMPAT_FEATURE(dir->i_sb, \
+				      EXT3_FEATURE_COMPAT_DIR_INDEX) && \
 		      (EXT3_I(dir)->i_flags & EXT3_INDEX_FL))
 #define EXT3_DIR_LINK_MAX(dir) (!is_dx(dir) && (dir)->i_nlink >= EXT3_LINK_MAX)
 #define EXT3_DIR_LINK_EMPTY(dir) ((dir)->i_nlink == 2 || (dir)->i_nlink == 1)
-#else
-  #define is_dx(dir) 0
-#define EXT3_DIR_LINK_MAX(dir) ((dir)->i_nlink >= EXT3_LINK_MAX)
-#define EXT3_DIR_LINK_EMPTY(dir) ((dir)->i_nlink == 2)
-#endif
 
 /* Legal values for the dx_root hash_version field: */
 
 #define DX_HASH_LEGACY		0
 #define DX_HASH_HALF_MD4	1
 #define DX_HASH_TEA		2
+#define DX_HASH_LEGACY_UNSIGNED	3
+#define DX_HASH_HALF_MD4_UNSIGNED	4
+#define DX_HASH_TEA_UNSIGNED		5
 
 #ifdef __KERNEL__
 
@@ -797,6 +865,7 @@ extern struct ext3_group_desc * ext3_get_group_desc(struct super_block * sb,
 extern int ext3_should_retry_alloc(struct super_block *sb, int *retries);
 extern void ext3_init_block_alloc_info(struct inode *);
 extern void ext3_rsv_window_add(struct super_block *sb, struct ext3_reserve_window_node *rsv);
+extern int ext3_trim_fs(struct super_block *sb, struct fstrim_range *range);
 
 /* dir.c */
 extern int ext3_check_dir_entry(const char *, struct inode *,
@@ -808,14 +877,15 @@ extern int ext3_htree_store_dirent(struct file *dir_file, __u32 hash,
 extern void ext3_htree_free_dir_info(struct dir_private_info *p);
 
 /* fsync.c */
-extern int ext3_sync_file (struct file *, struct dentry *, int);
+extern int ext3_sync_file(struct file *, int);
 
 /* hash.c */
 extern int ext3fs_dirhash(const char *name, int len, struct
 			  dx_hash_info *hinfo);
 
 /* ialloc.c */
-extern struct inode * ext3_new_inode (handle_t *, struct inode *, int);
+extern struct inode * ext3_new_inode (handle_t *, struct inode *,
+				      const struct qstr *, int);
 extern void ext3_free_inode (handle_t *, struct inode *);
 extern struct inode * ext3_orphan_get (struct super_block *, unsigned long);
 extern unsigned long ext3_count_free_inodes (struct super_block *);
@@ -831,26 +901,28 @@ struct buffer_head * ext3_getblk (handle_t *, struct inode *, long, int, int *);
 struct buffer_head * ext3_bread (handle_t *, struct inode *, int, int, int *);
 int ext3_get_blocks_handle(handle_t *handle, struct inode *inode,
 	sector_t iblock, unsigned long maxblocks, struct buffer_head *bh_result,
-	int create, int extend_disksize);
+	int create);
 
-extern void ext3_read_inode (struct inode *);
-extern int  ext3_write_inode (struct inode *, int);
+extern struct inode *ext3_iget(struct super_block *, unsigned long);
+extern int  ext3_write_inode (struct inode *, struct writeback_control *);
 extern int  ext3_setattr (struct dentry *, struct iattr *);
-extern void ext3_delete_inode (struct inode *);
+extern void ext3_evict_inode (struct inode *);
 extern int  ext3_sync_inode (handle_t *, struct inode *);
 extern void ext3_discard_reservation (struct inode *);
 extern void ext3_dirty_inode(struct inode *);
 extern int ext3_change_inode_journal_flag(struct inode *, int);
 extern int ext3_get_inode_loc(struct inode *, struct ext3_iloc *);
+extern int ext3_can_truncate(struct inode *inode);
 extern void ext3_truncate (struct inode *);
 extern void ext3_set_inode_flags(struct inode *);
 extern void ext3_get_inode_flags(struct ext3_inode_info *);
 extern void ext3_set_aops(struct inode *inode);
+extern int ext3_fiemap(struct inode *inode, struct fiemap_extent_info *fieinfo,
+		       u64 start, u64 len);
 
 /* ioctl.c */
-extern int ext3_ioctl (struct inode *, struct file *, unsigned int,
-		       unsigned long);
-extern long ext3_compat_ioctl (struct file *, unsigned int, unsigned long);
+extern long ext3_ioctl(struct file *, unsigned int, unsigned long);
+extern long ext3_compat_ioctl(struct file *, unsigned int, unsigned long);
 
 /* namei.c */
 extern int ext3_orphan_add(handle_t *, struct inode *);
@@ -873,12 +945,14 @@ extern void ext3_abort (struct super_block *, const char *, const char *, ...)
 	__attribute__ ((format (printf, 3, 4)));
 extern void ext3_warning (struct super_block *, const char *, const char *, ...)
 	__attribute__ ((format (printf, 3, 4)));
+extern void ext3_msg(struct super_block *, const char *, const char *, ...)
+	__attribute__ ((format (printf, 3, 4)));
 extern void ext3_update_dynamic_rev (struct super_block *sb);
 
 #define ext3_std_error(sb, errno)				\
 do {								\
 	if ((errno))						\
-		__ext3_std_error((sb), __FUNCTION__, (errno));	\
+		__ext3_std_error((sb), __func__, (errno));	\
 } while (0)
 
 /*

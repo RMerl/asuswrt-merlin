@@ -19,6 +19,7 @@
 #include <linux/stddef.h>
 #include <linux/interrupt.h>
 #include <linux/err.h>
+#include <linux/module.h>
 
 #include <asm/io.h>
 #include <asm/immap_qe.h>
@@ -41,6 +42,7 @@ u32 ucc_slow_get_qe_cr_subblock(int uccs_num)
 	default: return QE_CR_SUBBLOCK_INVALID;
 	}
 }
+EXPORT_SYMBOL(ucc_slow_get_qe_cr_subblock);
 
 void ucc_slow_poll_transmitter_now(struct ucc_slow_private * uccs)
 {
@@ -56,6 +58,7 @@ void ucc_slow_graceful_stop_tx(struct ucc_slow_private * uccs)
 	qe_issue_cmd(QE_GRACEFUL_STOP_TX, id,
 			 QE_CR_PROTOCOL_UNSPECIFIED, 0);
 }
+EXPORT_SYMBOL(ucc_slow_graceful_stop_tx);
 
 void ucc_slow_stop_tx(struct ucc_slow_private * uccs)
 {
@@ -65,6 +68,7 @@ void ucc_slow_stop_tx(struct ucc_slow_private * uccs)
 	id = ucc_slow_get_qe_cr_subblock(us_info->ucc_num);
 	qe_issue_cmd(QE_STOP_TX, id, QE_CR_PROTOCOL_UNSPECIFIED, 0);
 }
+EXPORT_SYMBOL(ucc_slow_stop_tx);
 
 void ucc_slow_restart_tx(struct ucc_slow_private * uccs)
 {
@@ -74,6 +78,7 @@ void ucc_slow_restart_tx(struct ucc_slow_private * uccs)
 	id = ucc_slow_get_qe_cr_subblock(us_info->ucc_num);
 	qe_issue_cmd(QE_RESTART_TX, id, QE_CR_PROTOCOL_UNSPECIFIED, 0);
 }
+EXPORT_SYMBOL(ucc_slow_restart_tx);
 
 void ucc_slow_enable(struct ucc_slow_private * uccs, enum comm_dir mode)
 {
@@ -94,6 +99,7 @@ void ucc_slow_enable(struct ucc_slow_private * uccs, enum comm_dir mode)
 	}
 	out_be32(&us_regs->gumr_l, gumr_l);
 }
+EXPORT_SYMBOL(ucc_slow_enable);
 
 void ucc_slow_disable(struct ucc_slow_private * uccs, enum comm_dir mode)
 {
@@ -114,12 +120,17 @@ void ucc_slow_disable(struct ucc_slow_private * uccs, enum comm_dir mode)
 	}
 	out_be32(&us_regs->gumr_l, gumr_l);
 }
+EXPORT_SYMBOL(ucc_slow_disable);
 
+/* Initialize the UCC for Slow operations
+ *
+ * The caller should initialize the following us_info
+ */
 int ucc_slow_init(struct ucc_slow_info * us_info, struct ucc_slow_private ** uccs_ret)
 {
 	struct ucc_slow_private *uccs;
 	u32 i;
-	struct ucc_slow *us_regs;
+	struct ucc_slow __iomem *us_regs;
 	u32 gumr;
 	struct qe_bd *bd;
 	u32 id;
@@ -131,7 +142,7 @@ int ucc_slow_init(struct ucc_slow_info * us_info, struct ucc_slow_private ** ucc
 
 	/* check if the UCC port number is in range. */
 	if ((us_info->ucc_num < 0) || (us_info->ucc_num > UCC_MAX_NUM - 1)) {
-		printk(KERN_ERR "%s: illegal UCC number", __FUNCTION__);
+		printk(KERN_ERR "%s: illegal UCC number\n", __func__);
 		return -EINVAL;
 	}
 
@@ -143,13 +154,14 @@ int ucc_slow_init(struct ucc_slow_info * us_info, struct ucc_slow_private ** ucc
 	 */
 	if ((!us_info->rfw) &&
 		(us_info->max_rx_buf_length & (UCC_SLOW_MRBLR_ALIGNMENT - 1))) {
-		printk(KERN_ERR "max_rx_buf_length not aligned.");
+		printk(KERN_ERR "max_rx_buf_length not aligned.\n");
 		return -EINVAL;
 	}
 
 	uccs = kzalloc(sizeof(struct ucc_slow_private), GFP_KERNEL);
 	if (!uccs) {
-		printk(KERN_ERR "%s: Cannot allocate private data", __FUNCTION__);
+		printk(KERN_ERR "%s: Cannot allocate private data\n",
+			__func__);
 		return -ENOMEM;
 	}
 
@@ -158,7 +170,8 @@ int ucc_slow_init(struct ucc_slow_info * us_info, struct ucc_slow_private ** ucc
 	/* Set the PHY base address */
 	uccs->us_regs = ioremap(us_info->regs, sizeof(struct ucc_slow));
 	if (uccs->us_regs == NULL) {
-		printk(KERN_ERR "%s: Cannot map UCC registers", __FUNCTION__);
+		printk(KERN_ERR "%s: Cannot map UCC registers\n", __func__);
+		kfree(uccs);
 		return -ENOMEM;
 	}
 
@@ -177,28 +190,20 @@ int ucc_slow_init(struct ucc_slow_info * us_info, struct ucc_slow_private ** ucc
 	uccs->us_pram_offset =
 		qe_muram_alloc(UCC_SLOW_PRAM_SIZE, ALIGNMENT_OF_UCC_SLOW_PRAM);
 	if (IS_ERR_VALUE(uccs->us_pram_offset)) {
-		printk(KERN_ERR "%s: cannot allocate MURAM for PRAM", __FUNCTION__);
+		printk(KERN_ERR "%s: cannot allocate MURAM for PRAM", __func__);
 		ucc_slow_free(uccs);
 		return -ENOMEM;
 	}
 	id = ucc_slow_get_qe_cr_subblock(us_info->ucc_num);
-	qe_issue_cmd(QE_ASSIGN_PAGE_TO_DEVICE, id, QE_CR_PROTOCOL_UNSPECIFIED,
+	qe_issue_cmd(QE_ASSIGN_PAGE_TO_DEVICE, id, us_info->protocol,
 		     uccs->us_pram_offset);
 
 	uccs->us_pram = qe_muram_addr(uccs->us_pram_offset);
 
-	/* Init Guemr register */
-	if ((ret = ucc_init_guemr((struct ucc_common *) us_regs))) {
-		printk(KERN_ERR "%s: cannot init GUEMR", __FUNCTION__);
-		ucc_slow_free(uccs);
-		return ret;
-	}
-
 	/* Set UCC to slow type */
-	if ((ret = ucc_set_type(us_info->ucc_num,
-				(struct ucc_common *) us_regs,
-				UCC_SPEED_TYPE_SLOW))) {
-		printk(KERN_ERR "%s: cannot set UCC type", __FUNCTION__);
+	ret = ucc_set_type(us_info->ucc_num, UCC_SPEED_TYPE_SLOW);
+	if (ret) {
+		printk(KERN_ERR "%s: cannot set UCC type", __func__);
 		ucc_slow_free(uccs);
 		return ret;
 	}
@@ -212,7 +217,8 @@ int ucc_slow_init(struct ucc_slow_info * us_info, struct ucc_slow_private ** ucc
 		qe_muram_alloc(us_info->rx_bd_ring_len * sizeof(struct qe_bd),
 				QE_ALIGNMENT_OF_BD);
 	if (IS_ERR_VALUE(uccs->rx_base_offset)) {
-		printk(KERN_ERR "%s: cannot allocate RX BDs", __FUNCTION__);
+		printk(KERN_ERR "%s: cannot allocate %u RX BDs\n", __func__,
+			us_info->rx_bd_ring_len);
 		uccs->rx_base_offset = 0;
 		ucc_slow_free(uccs);
 		return -ENOMEM;
@@ -222,7 +228,7 @@ int ucc_slow_init(struct ucc_slow_info * us_info, struct ucc_slow_private ** ucc
 		qe_muram_alloc(us_info->tx_bd_ring_len * sizeof(struct qe_bd),
 			QE_ALIGNMENT_OF_BD);
 	if (IS_ERR_VALUE(uccs->tx_base_offset)) {
-		printk(KERN_ERR "%s: cannot allocate TX BDs", __FUNCTION__);
+		printk(KERN_ERR "%s: cannot allocate TX BDs", __func__);
 		uccs->tx_base_offset = 0;
 		ucc_slow_free(uccs);
 		return -ENOMEM;
@@ -292,12 +298,12 @@ int ucc_slow_init(struct ucc_slow_info * us_info, struct ucc_slow_private ** ucc
 
 	/* if the data is in cachable memory, the 'global' */
 	/* in the function code should be set. */
-	uccs->us_pram->tfcr = uccs->us_pram->rfcr =
-		us_info->data_mem_part | QE_BMR_BYTE_ORDER_BO_MOT;
+	uccs->us_pram->tbmr = UCC_BMR_BO_BE;
+	uccs->us_pram->rbmr = UCC_BMR_BO_BE;
 
 	/* rbase, tbase are offsets from MURAM base */
-	out_be16(&uccs->us_pram->rbase, uccs->us_pram_offset);
-	out_be16(&uccs->us_pram->tbase, uccs->us_pram_offset);
+	out_be16(&uccs->us_pram->rbase, uccs->rx_base_offset);
+	out_be16(&uccs->us_pram->tbase, uccs->tx_base_offset);
 
 	/* Mux clocking */
 	/* Grant Support */
@@ -311,16 +317,16 @@ int ucc_slow_init(struct ucc_slow_info * us_info, struct ucc_slow_private ** ucc
 		/* Rx clock routing */
 		if (ucc_set_qe_mux_rxtx(us_info->ucc_num, us_info->rx_clock,
 					COMM_DIR_RX)) {
-			printk(KERN_ERR "%s: illegal value for RX clock",
-			       __FUNCTION__);
+			printk(KERN_ERR "%s: illegal value for RX clock\n",
+			       __func__);
 			ucc_slow_free(uccs);
 			return -EINVAL;
 		}
 		/* Tx clock routing */
 		if (ucc_set_qe_mux_rxtx(us_info->ucc_num, us_info->tx_clock,
 					COMM_DIR_TX)) {
-			printk(KERN_ERR "%s: illegal value for TX clock",
-			       __FUNCTION__);
+			printk(KERN_ERR "%s: illegal value for TX clock\n",
+			       __func__);
 			ucc_slow_free(uccs);
 			return -EINVAL;
 		}
@@ -343,12 +349,13 @@ int ucc_slow_init(struct ucc_slow_info * us_info, struct ucc_slow_private ** ucc
 		command = QE_INIT_TX;
 	else
 		command = QE_INIT_RX;	/* We know at least one is TRUE */
-	id = ucc_slow_get_qe_cr_subblock(us_info->ucc_num);
-	qe_issue_cmd(command, id, QE_CR_PROTOCOL_UNSPECIFIED, 0);
+
+	qe_issue_cmd(command, id, us_info->protocol, 0);
 
 	*uccs_ret = uccs;
 	return 0;
 }
+EXPORT_SYMBOL(ucc_slow_init);
 
 void ucc_slow_free(struct ucc_slow_private * uccs)
 {
@@ -361,12 +368,13 @@ void ucc_slow_free(struct ucc_slow_private * uccs)
 	if (uccs->tx_base_offset)
 		qe_muram_free(uccs->tx_base_offset);
 
-	if (uccs->us_pram) {
+	if (uccs->us_pram)
 		qe_muram_free(uccs->us_pram_offset);
-		uccs->us_pram = NULL;
-	}
+
+	if (uccs->us_regs)
+		iounmap(uccs->us_regs);
 
 	kfree(uccs);
 }
-
+EXPORT_SYMBOL(ucc_slow_free);
 

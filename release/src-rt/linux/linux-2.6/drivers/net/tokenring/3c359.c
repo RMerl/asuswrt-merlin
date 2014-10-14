@@ -42,6 +42,7 @@
 
 #define XL_DEBUG 0
 
+#include <linux/jiffies.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>
@@ -61,6 +62,8 @@
 #include <linux/pci.h>
 #include <linux/spinlock.h>
 #include <linux/bitops.h>
+#include <linux/firmware.h>
+#include <linux/slab.h>
 
 #include <net/checksum.h>
 
@@ -72,10 +75,12 @@
 static char version[] __devinitdata  = 
 "3c359.c v1.2.0 2/17/01 - Mike Phillips (mikep@linuxtr.net)" ; 
 
+#define FW_NAME		"3com/3C359.bin"
 MODULE_AUTHOR("Mike Phillips <mikep@linuxtr.net>") ; 
-MODULE_DESCRIPTION("3Com 3C359 Velocity XL Token Ring Adapter Driver \n") ;
+MODULE_DESCRIPTION("3Com 3C359 Velocity XL Token Ring Adapter Driver\n") ;
+MODULE_FIRMWARE(FW_NAME);
 
-/* Module paramters */
+/* Module parameters */
 
 /* Ring Speed 0,4,16 
  * 0 = Autosense   
@@ -94,28 +99,26 @@ MODULE_DESCRIPTION("3Com 3C359 Velocity XL Token Ring Adapter Driver \n") ;
 static int ringspeed[XL_MAX_ADAPTERS] = {0,} ;
 
 module_param_array(ringspeed, int, NULL, 0);
-MODULE_PARM_DESC(ringspeed,"3c359: Ringspeed selection - 4,16 or 0") ; 
+MODULE_PARM_DESC(ringspeed,"3c359: Ringspeed selection - 4,16 or 0") ;
 
 /* Packet buffer size */
 
 static int pkt_buf_sz[XL_MAX_ADAPTERS] = {0,} ;
  
 module_param_array(pkt_buf_sz, int, NULL, 0) ;
-MODULE_PARM_DESC(pkt_buf_sz,"3c359: Initial buffer size") ; 
+MODULE_PARM_DESC(pkt_buf_sz,"3c359: Initial buffer size") ;
 /* Message Level */
 
-static int message_level[XL_MAX_ADAPTERS] = {0,} ; 
+static int message_level[XL_MAX_ADAPTERS] = {0,} ;
 
 module_param_array(message_level, int, NULL, 0) ;
-MODULE_PARM_DESC(message_level, "3c359: Level of reported messages \n") ; 
+MODULE_PARM_DESC(message_level, "3c359: Level of reported messages") ;
 /* 
  *	This is a real nasty way of doing this, but otherwise you
  *	will be stuck with 1555 lines of hex #'s in the code.
  */
 
-#include "3c359_microcode.h" 
-
-static struct pci_device_id xl_pci_tbl[] =
+static DEFINE_PCI_DEVICE_TABLE(xl_pci_tbl) =
 {
 	{PCI_VENDOR_ID_3COM,PCI_DEVICE_ID_3COM_3C359, PCI_ANY_ID, PCI_ANY_ID, },
 	{ }			/* terminate list */
@@ -126,12 +129,11 @@ static int xl_init(struct net_device *dev);
 static int xl_open(struct net_device *dev);
 static int xl_open_hw(struct net_device *dev) ;  
 static int xl_hw_reset(struct net_device *dev); 
-static int xl_xmit(struct sk_buff *skb, struct net_device *dev);
+static netdev_tx_t xl_xmit(struct sk_buff *skb, struct net_device *dev);
 static void xl_dn_comp(struct net_device *dev); 
 static int xl_close(struct net_device *dev);
 static void xl_set_rx_mode(struct net_device *dev);
 static irqreturn_t xl_interrupt(int irq, void *dev_id);
-static struct net_device_stats * xl_get_stats(struct net_device *dev);
 static int xl_set_mac_address(struct net_device *dev, void *addr) ; 
 static void xl_arb_cmd(struct net_device *dev);
 static void xl_asb_cmd(struct net_device *dev) ; 
@@ -156,47 +158,47 @@ static void print_rx_state(struct net_device *dev) ;
 static void print_tx_state(struct net_device *dev)
 {
 
-	struct xl_private *xl_priv = (struct xl_private *)dev->priv ; 
+	struct xl_private *xl_priv = netdev_priv(dev);
 	struct xl_tx_desc *txd ; 
 	u8 __iomem *xl_mmio = xl_priv->xl_mmio ; 
 	int i ; 
 
-	printk("tx_ring_head: %d, tx_ring_tail: %d, free_ent: %d \n",xl_priv->tx_ring_head, 
+	printk("tx_ring_head: %d, tx_ring_tail: %d, free_ent: %d\n",xl_priv->tx_ring_head,
 		xl_priv->tx_ring_tail, xl_priv->free_ring_entries) ; 
-	printk("Ring    , Address ,   FSH  , DnNextPtr, Buffer, Buffer_Len \n"); 
+	printk("Ring    , Address ,   FSH  , DnNextPtr, Buffer, Buffer_Len\n");
 	for (i = 0; i < 16; i++) {
 		txd = &(xl_priv->xl_tx_ring[i]) ; 
-		printk("%d, %08lx, %08x, %08x, %08x, %08x \n", i, virt_to_bus(txd), 
+		printk("%d, %08lx, %08x, %08x, %08x, %08x\n", i, virt_to_bus(txd),
 			txd->framestartheader, txd->dnnextptr, txd->buffer, txd->buffer_length ) ; 
 	}
 
-	printk("DNLISTPTR = %04x \n", readl(xl_mmio + MMIO_DNLISTPTR) ); 
+	printk("DNLISTPTR = %04x\n", readl(xl_mmio + MMIO_DNLISTPTR) );
 	
-	printk("DmaCtl = %04x \n", readl(xl_mmio + MMIO_DMA_CTRL) ); 
-	printk("Queue status = %0x \n",netif_running(dev) ) ; 
+	printk("DmaCtl = %04x\n", readl(xl_mmio + MMIO_DMA_CTRL) );
+	printk("Queue status = %0x\n",netif_running(dev) ) ;
 }
 
 static void print_rx_state(struct net_device *dev)
 {
 
-	struct xl_private *xl_priv = (struct xl_private *)dev->priv ; 
+	struct xl_private *xl_priv = netdev_priv(dev);
 	struct xl_rx_desc *rxd ; 
 	u8 __iomem *xl_mmio = xl_priv->xl_mmio ; 
 	int i ; 
 
-	printk("rx_ring_tail: %d \n", xl_priv->rx_ring_tail) ; 
-	printk("Ring    , Address ,   FrameState  , UPNextPtr, FragAddr, Frag_Len \n"); 
+	printk("rx_ring_tail: %d\n", xl_priv->rx_ring_tail);
+	printk("Ring    , Address ,   FrameState  , UPNextPtr, FragAddr, Frag_Len\n");
 	for (i = 0; i < 16; i++) { 
 		/* rxd = (struct xl_rx_desc *)xl_priv->rx_ring_dma_addr + (i * sizeof(struct xl_rx_desc)) ; */
 		rxd = &(xl_priv->xl_rx_ring[i]) ; 
-		printk("%d, %08lx, %08x, %08x, %08x, %08x \n", i, virt_to_bus(rxd), 
+		printk("%d, %08lx, %08x, %08x, %08x, %08x\n", i, virt_to_bus(rxd),
 			rxd->framestatus, rxd->upnextptr, rxd->upfragaddr, rxd->upfraglen ) ; 
 	}
 
-	printk("UPLISTPTR = %04x \n", readl(xl_mmio + MMIO_UPLISTPTR) ); 
+	printk("UPLISTPTR = %04x\n", readl(xl_mmio + MMIO_UPLISTPTR));
 	
-	printk("DmaCtl = %04x \n", readl(xl_mmio + MMIO_DMA_CTRL) ); 
-	printk("Queue status = %0x \n",netif_running(dev) ) ;
+	printk("DmaCtl = %04x\n", readl(xl_mmio + MMIO_DMA_CTRL));
+	printk("Queue status = %0x\n",netif_running(dev));
 } 
 #endif
 
@@ -206,14 +208,14 @@ static void print_rx_state(struct net_device *dev)
  *	passing/getting the next value from the nic. As with all requests
  *	on this nic it has to be done in two stages, a) tell the nic which
  *	memory address you want to access and b) pass/get the value from the nic.
- *	With the EEProm, you have to wait before and inbetween access a) and b).
+ *	With the EEProm, you have to wait before and between access a) and b).
  *	As this is only read at initialization time and the wait period is very 
  *	small we shouldn't have to worry about scheduling issues.
  */
 
 static u16 xl_ee_read(struct net_device *dev, int ee_addr)
 { 
-    	struct xl_private *xl_priv = (struct xl_private *)dev->priv ;
+	struct xl_private *xl_priv = netdev_priv(dev);
 	u8 __iomem *xl_mmio = xl_priv->xl_mmio ; 
 
 	/* Wait for EEProm to not be busy */
@@ -245,7 +247,7 @@ static u16 xl_ee_read(struct net_device *dev, int ee_addr)
 
 static void  xl_ee_write(struct net_device *dev, int ee_addr, u16 ee_value) 
 {
-    	struct xl_private *xl_priv = (struct xl_private *)dev->priv ;
+	struct xl_private *xl_priv = netdev_priv(dev);
 	u8 __iomem *xl_mmio = xl_priv->xl_mmio ; 
 
 	/* Wait for EEProm to not be busy */
@@ -274,6 +276,15 @@ static void  xl_ee_write(struct net_device *dev, int ee_addr, u16 ee_value)
 	
 	return ; 
 }
+
+static const struct net_device_ops xl_netdev_ops = {
+	.ndo_open		= xl_open,
+	.ndo_stop		= xl_close,
+	.ndo_start_xmit		= xl_xmit,
+	.ndo_change_mtu		= xl_change_mtu,
+	.ndo_set_multicast_list = xl_set_rx_mode,
+	.ndo_set_mac_address	= xl_set_mac_address,
+};
  
 static int __devinit xl_probe(struct pci_dev *pdev,
 			      const struct pci_device_id *ent) 
@@ -296,8 +307,9 @@ static int __devinit xl_probe(struct pci_dev *pdev,
 	} ; 
 
 	/* 
-	 * Allowing init_trdev to allocate the dev->priv structure will align xl_private
-   	 * on a 32 bytes boundary which we need for the rx/tx descriptors
+	 * Allowing init_trdev to allocate the private data will align
+	 * xl_private on a 32 bytes boundary which we need for the rx/tx
+	 * descriptors
 	 */
 
 	dev = alloc_trdev(sizeof(struct xl_private)) ; 
@@ -305,11 +317,11 @@ static int __devinit xl_probe(struct pci_dev *pdev,
 		pci_release_regions(pdev) ; 
 		return -ENOMEM ; 
 	} 
-	xl_priv = dev->priv ; 
+	xl_priv = netdev_priv(dev);
 
 #if XL_DEBUG  
 	printk("pci_device: %p, dev:%p, dev->priv: %p, ba[0]: %10x, ba[1]:%10x\n", 
-		pdev, dev, dev->priv, (unsigned int)pdev->resource[0].start, (unsigned int)pdev->resource[1].start) ;  
+		pdev, dev, netdev_priv(dev), (unsigned int)pdev->resource[0].start, (unsigned int)pdev->resource[1].start);
 #endif 
 
 	dev->irq=pdev->irq;
@@ -336,15 +348,7 @@ static int __devinit xl_probe(struct pci_dev *pdev,
 		return i ; 
 	}				
 
-	dev->open=&xl_open;
-	dev->hard_start_xmit=&xl_xmit;
-	dev->change_mtu=&xl_change_mtu;
-	dev->stop=&xl_close;
-	dev->do_ioctl=NULL;
-	dev->set_multicast_list=&xl_set_rx_mode;
-	dev->get_stats=&xl_get_stats ;
-	dev->set_mac_address=&xl_set_mac_address ; 
-	SET_MODULE_OWNER(dev); 
+	dev->netdev_ops = &xl_netdev_ops;
 	SET_NETDEV_DEV(dev, &pdev->dev);
 
 	pci_set_drvdata(pdev,dev) ; 
@@ -362,19 +366,42 @@ static int __devinit xl_probe(struct pci_dev *pdev,
 	return 0; 
 }
 
-
-static int __init xl_init(struct net_device *dev) 
+static int xl_init_firmware(struct xl_private *xl_priv)
 {
-    	struct xl_private *xl_priv = (struct xl_private *)dev->priv ;
+	int err;
 
-	printk(KERN_INFO "%s \n", version);
+	err = request_firmware(&xl_priv->fw, FW_NAME, &xl_priv->pdev->dev);
+	if (err) {
+		printk(KERN_ERR "Failed to load firmware \"%s\"\n", FW_NAME);
+		return err;
+	}
+
+	if (xl_priv->fw->size < 16) {
+		printk(KERN_ERR "Bogus length %zu in \"%s\"\n",
+		       xl_priv->fw->size, FW_NAME);
+		release_firmware(xl_priv->fw);
+		err = -EINVAL;
+	}
+
+	return err;
+}
+
+static int __devinit xl_init(struct net_device *dev) 
+{
+	struct xl_private *xl_priv = netdev_priv(dev);
+	int err;
+
+	printk(KERN_INFO "%s\n", version);
 	printk(KERN_INFO "%s: I/O at %hx, MMIO at %p, using irq %d\n",
 		xl_priv->xl_card_name, (unsigned int)dev->base_addr ,xl_priv->xl_mmio, dev->irq);
 
 	spin_lock_init(&xl_priv->xl_lock) ; 
 
-	return xl_hw_reset(dev) ; 
+	err = xl_init_firmware(xl_priv);
+	if (err == 0)
+		err = xl_hw_reset(dev);
 
+	return err;
 }
 
 
@@ -384,8 +411,8 @@ static int __init xl_init(struct net_device *dev)
  */
 
 static int xl_hw_reset(struct net_device *dev) 
-{ 
-    	struct xl_private *xl_priv = (struct xl_private *)dev->priv ;
+{
+	struct xl_private *xl_priv = netdev_priv(dev);
 	u8 __iomem *xl_mmio = xl_priv->xl_mmio ; 
 	unsigned long t ; 
 	u16 i ; 
@@ -393,6 +420,9 @@ static int xl_hw_reset(struct net_device *dev)
 	u8 result_8 ;
 	u16 start ; 
 	int j ;
+
+	if (xl_priv->fw == NULL)
+		return -EINVAL;
 
 	/*
 	 *  Reset the card.  If the card has got the microcode on board, we have 
@@ -409,7 +439,7 @@ static int xl_hw_reset(struct net_device *dev)
 	t=jiffies;
 	while (readw(xl_mmio + MMIO_INTSTATUS) & INTSTAT_CMD_IN_PROGRESS) { 
 		schedule();		
-		if(jiffies-t > 40*HZ) {
+		if (time_after(jiffies, t + 40 * HZ)) {
 			printk(KERN_ERR "%s: 3COM 3C359 Velocity XL  card not responding to global reset.\n", dev->name);
 			return -ENODEV;
 		}
@@ -433,7 +463,7 @@ static int xl_hw_reset(struct net_device *dev)
 	writel( (IO_WORD_READ | PMBAR),xl_mmio + MMIO_MAC_ACCESS_CMD);  
 
 #if XL_DEBUG
-	printk(KERN_INFO "Read from PMBAR = %04x \n", readw(xl_mmio + MMIO_MACDATA)) ; 
+	printk(KERN_INFO "Read from PMBAR = %04x\n", readw(xl_mmio + MMIO_MACDATA));
 #endif
 
 	if ( readw( (xl_mmio + MMIO_MACDATA))  & PMB_CPHOLD ) { 
@@ -456,25 +486,30 @@ static int xl_hw_reset(struct net_device *dev)
 
 		/* 
 		 * Now to write the microcode into the shared ram 
-	 	 * The microcode must finish at position 0xFFFF, so we must subtract
-		 * to get the start position for the code
+	 	 * The microcode must finish at position 0xFFFF,
+	 	 * so we must subtract to get the start position for the code
+	 	 *
+		 * Looks strange but ensures compiler only uses
+		 * 16 bit unsigned int
 		 */
+		start = (0xFFFF - (xl_priv->fw->size) + 1) ;
 
-		start = (0xFFFF - (mc_size) + 1 ) ; /* Looks strange but ensures compiler only uses 16 bit unsigned int for this */ 
-		
 		printk(KERN_INFO "3C359: Uploading Microcode: "); 
-		
-		for (i = start, j = 0; j < mc_size; i++, j++) { 
-			writel(MEM_BYTE_WRITE | 0XD0000 | i, xl_mmio + MMIO_MAC_ACCESS_CMD) ; 
-			writeb(microcode[j],xl_mmio + MMIO_MACDATA) ; 
+
+		for (i = start, j = 0; j < xl_priv->fw->size; i++, j++) {
+			writel(MEM_BYTE_WRITE | 0XD0000 | i,
+			       xl_mmio + MMIO_MAC_ACCESS_CMD);
+			writeb(xl_priv->fw->data[j], xl_mmio + MMIO_MACDATA);
 			if (j % 1024 == 0)
 				printk(".");
 		}
 		printk("\n") ; 
 
-		for (i=0;i < 16; i++) { 
-			writel( (MEM_BYTE_WRITE | 0xDFFF0) + i, xl_mmio + MMIO_MAC_ACCESS_CMD) ; 
-			writeb(microcode[mc_size - 16 + i], xl_mmio + MMIO_MACDATA) ; 
+		for (i = 0; i < 16; i++) {
+			writel((MEM_BYTE_WRITE | 0xDFFF0) + i,
+			       xl_mmio + MMIO_MAC_ACCESS_CMD);
+			writeb(xl_priv->fw->data[xl_priv->fw->size - 16 + i],
+			       xl_mmio + MMIO_MACDATA);
 		}
 
 		/*
@@ -520,7 +555,7 @@ static int xl_hw_reset(struct net_device *dev)
 	t=jiffies;
 	while ( !(readw(xl_mmio + MMIO_INTSTATUS_AUTO) & INTSTAT_SRB) ) { 
 		schedule();		
-		if(jiffies-t > 15*HZ) {
+		if (time_after(jiffies, t + 15 * HZ)) {
 			printk(KERN_ERR "3COM 3C359 Velocity XL  card not responding.\n");
 			return -ENODEV; 
 		}
@@ -556,9 +591,9 @@ static int xl_hw_reset(struct net_device *dev)
 #if XL_DEBUG
 	writel(IO_WORD_READ | SWITCHSETTINGS, xl_mmio + MMIO_MAC_ACCESS_CMD) ; 
 	if ( readw(xl_mmio + MMIO_MACDATA) & 2) { 
-		printk(KERN_INFO "Default ring speed 4 mbps \n") ;
+		printk(KERN_INFO "Default ring speed 4 mbps\n");
 	} else {
-		printk(KERN_INFO "Default ring speed 16 mbps \n") ; 
+		printk(KERN_INFO "Default ring speed 16 mbps\n");
 	} 
 	printk(KERN_INFO "%s: xl_priv->srb = %04x\n",xl_priv->xl_card_name, xl_priv->srb);
 #endif
@@ -568,28 +603,24 @@ static int xl_hw_reset(struct net_device *dev)
 
 static int xl_open(struct net_device *dev) 
 {
-	struct xl_private *xl_priv=(struct xl_private *)dev->priv;
+	struct xl_private *xl_priv=netdev_priv(dev);
 	u8 __iomem *xl_mmio = xl_priv->xl_mmio ; 
 	u8 i ; 
-	u16 hwaddr[3] ; /* Should be u8[6] but we get word return values */
+	__le16 hwaddr[3] ; /* Should be u8[6] but we get word return values */
 	int open_err ;
 
 	u16 switchsettings, switchsettings_eeprom  ;
  
-	if(request_irq(dev->irq, &xl_interrupt, IRQF_SHARED , "3c359", dev)) {
+	if (request_irq(dev->irq, xl_interrupt, IRQF_SHARED , "3c359", dev))
 		return -EAGAIN;
-	}
 
 	/* 
-	 * Read the information from the EEPROM that we need. I know we
- 	 * should use ntohs, but the word gets stored reversed in the 16
-	 * bit field anyway and it all works its self out when we memcpy
-	 * it into dev->dev_addr. 
+	 * Read the information from the EEPROM that we need.
 	 */
 	
-	hwaddr[0] = xl_ee_read(dev,0x10) ; 
-	hwaddr[1] = xl_ee_read(dev,0x11) ; 
-	hwaddr[2] = xl_ee_read(dev,0x12) ; 
+	hwaddr[0] = cpu_to_le16(xl_ee_read(dev,0x10));
+	hwaddr[1] = cpu_to_le16(xl_ee_read(dev,0x11));
+	hwaddr[2] = cpu_to_le16(xl_ee_read(dev,0x12));
 
 	/* Ring speed */
 
@@ -620,7 +651,7 @@ static int xl_open(struct net_device *dev)
 
 	if (open_err != 0) { /* Something went wrong with the open command */
 		if (open_err & 0x07) { /* Wrong speed, retry at different speed */
-			printk(KERN_WARNING "%s: Open Error, retrying at different ringspeed \n", dev->name) ; 
+			printk(KERN_WARNING "%s: Open Error, retrying at different ringspeed\n", dev->name);
 			switchsettings = switchsettings ^ 2 ; 
 			xl_ee_write(dev,0x08,switchsettings) ; 
 			xl_hw_reset(dev) ; 
@@ -641,23 +672,21 @@ static int xl_open(struct net_device *dev)
 	 * Now to set up the Rx and Tx buffer structures
 	 */
 	/* These MUST be on 8 byte boundaries */
-	xl_priv->xl_tx_ring = kmalloc((sizeof(struct xl_tx_desc) * XL_TX_RING_SIZE) + 7, GFP_DMA | GFP_KERNEL) ; 
+	xl_priv->xl_tx_ring = kzalloc((sizeof(struct xl_tx_desc) * XL_TX_RING_SIZE) + 7, GFP_DMA | GFP_KERNEL);
 	if (xl_priv->xl_tx_ring == NULL) {
-		printk(KERN_WARNING "%s: Not enough memory to allocate rx buffers.\n",
+		printk(KERN_WARNING "%s: Not enough memory to allocate tx buffers.\n",
 				     dev->name);
 		free_irq(dev->irq,dev);
 		return -ENOMEM;
 	}
-	xl_priv->xl_rx_ring = kmalloc((sizeof(struct xl_rx_desc) * XL_RX_RING_SIZE) +7, GFP_DMA | GFP_KERNEL) ; 
-	if (xl_priv->xl_tx_ring == NULL) {
+	xl_priv->xl_rx_ring = kzalloc((sizeof(struct xl_rx_desc) * XL_RX_RING_SIZE) +7, GFP_DMA | GFP_KERNEL);
+	if (xl_priv->xl_rx_ring == NULL) {
 		printk(KERN_WARNING "%s: Not enough memory to allocate rx buffers.\n",
 				     dev->name);
 		free_irq(dev->irq,dev);
 		kfree(xl_priv->xl_tx_ring);
 		return -ENOMEM;
 	}
-	memset(xl_priv->xl_tx_ring,0,sizeof(struct xl_tx_desc) * XL_TX_RING_SIZE) ; 
-	memset(xl_priv->xl_rx_ring,0,sizeof(struct xl_rx_desc) * XL_RX_RING_SIZE) ; 
 
 	 /* Setup Rx Ring */
 	 for (i=0 ; i < XL_RX_RING_SIZE ; i++) { 
@@ -668,14 +697,16 @@ static int xl_open(struct net_device *dev)
 			break ; 
 
 		skb->dev = dev ; 
-		xl_priv->xl_rx_ring[i].upfragaddr = pci_map_single(xl_priv->pdev, skb->data,xl_priv->pkt_buf_sz, PCI_DMA_FROMDEVICE) ; 
-		xl_priv->xl_rx_ring[i].upfraglen = xl_priv->pkt_buf_sz | RXUPLASTFRAG;
+		xl_priv->xl_rx_ring[i].upfragaddr = cpu_to_le32(pci_map_single(xl_priv->pdev, skb->data,xl_priv->pkt_buf_sz, PCI_DMA_FROMDEVICE));
+		xl_priv->xl_rx_ring[i].upfraglen = cpu_to_le32(xl_priv->pkt_buf_sz) | RXUPLASTFRAG;
 		xl_priv->rx_ring_skb[i] = skb ; 	
 	}
 
 	if (i==0) { 
-		printk(KERN_WARNING "%s: Not enough memory to allocate rx buffers. Adapter disabled \n",dev->name) ; 
+		printk(KERN_WARNING "%s: Not enough memory to allocate rx buffers. Adapter disabled\n",dev->name);
 		free_irq(dev->irq,dev) ; 
+		kfree(xl_priv->xl_tx_ring);
+		kfree(xl_priv->xl_rx_ring);
 		return -EIO ; 
 	} 
 
@@ -683,7 +714,7 @@ static int xl_open(struct net_device *dev)
 	xl_priv->rx_ring_tail = 0 ; 
 	xl_priv->rx_ring_dma_addr = pci_map_single(xl_priv->pdev,xl_priv->xl_rx_ring, sizeof(struct xl_rx_desc) * XL_RX_RING_SIZE, PCI_DMA_TODEVICE) ; 
 	for (i=0;i<(xl_priv->rx_ring_no-1);i++) { 
-		xl_priv->xl_rx_ring[i].upnextptr = xl_priv->rx_ring_dma_addr + (sizeof (struct xl_rx_desc) * (i+1)) ; 
+		xl_priv->xl_rx_ring[i].upnextptr = cpu_to_le32(xl_priv->rx_ring_dma_addr + (sizeof (struct xl_rx_desc) * (i+1)));
 	} 
 	xl_priv->xl_rx_ring[i].upnextptr = 0 ; 
 
@@ -701,7 +732,7 @@ static int xl_open(struct net_device *dev)
  	 * Setup the first dummy DPD entry for polling to start working.
 	 */
 
-	xl_priv->xl_tx_ring[0].framestartheader = TXDPDEMPTY ; 
+	xl_priv->xl_tx_ring[0].framestartheader = TXDPDEMPTY;
 	xl_priv->xl_tx_ring[0].buffer = 0 ; 
 	xl_priv->xl_tx_ring[0].buffer_length = 0 ; 
 	xl_priv->xl_tx_ring[0].dnnextptr = 0 ; 
@@ -726,7 +757,7 @@ static int xl_open(struct net_device *dev)
 
 static int xl_open_hw(struct net_device *dev) 
 { 
-	struct xl_private *xl_priv=(struct xl_private *)dev->priv;
+	struct xl_private *xl_priv=netdev_priv(dev);
 	u8 __iomem *xl_mmio = xl_priv->xl_mmio ; 
 	u16 vsoff ;
 	char ver_str[33];  
@@ -763,7 +794,7 @@ static int xl_open_hw(struct net_device *dev)
 	if (xl_priv->xl_laa[0]) {  /* If using a LAA address */
 		for (i=10;i<16;i++) { 
 			writel( (MEM_BYTE_WRITE | 0xD0000 | xl_priv->srb) + i, xl_mmio + MMIO_MAC_ACCESS_CMD) ; 
-			writeb(xl_priv->xl_laa[i],xl_mmio + MMIO_MACDATA) ; 
+			writeb(xl_priv->xl_laa[i-10],xl_mmio + MMIO_MACDATA) ;
 		}
 		memcpy(dev->dev_addr,xl_priv->xl_laa,dev->addr_len) ; 
 	} else { /* Regular hardware address */ 
@@ -796,7 +827,7 @@ static int xl_open_hw(struct net_device *dev)
 	t=jiffies;
 	while (! (readw(xl_mmio + MMIO_INTSTATUS) & INTSTAT_SRB)) { 
 		schedule();		
-		if(jiffies-t > 40*HZ) {
+		if (time_after(jiffies, t + 40 * HZ)) {
 			printk(KERN_ERR "3COM 3C359 Velocity XL  card not responding.\n");
 			break ; 
 		}
@@ -814,17 +845,17 @@ static int xl_open_hw(struct net_device *dev)
 		return open_err ; 
 	} else { 
 		writel( (MEM_WORD_READ | 0xD0000 | xl_priv->srb) + 8, xl_mmio + MMIO_MAC_ACCESS_CMD) ; 
-		xl_priv->asb = ntohs(readw(xl_mmio + MMIO_MACDATA)) ; 
+		xl_priv->asb = swab16(readw(xl_mmio + MMIO_MACDATA)) ;
 		printk(KERN_INFO "%s: Adapter Opened Details: ",dev->name) ; 
 		printk("ASB: %04x",xl_priv->asb ) ; 
 		writel( (MEM_WORD_READ | 0xD0000 | xl_priv->srb) + 10, xl_mmio + MMIO_MAC_ACCESS_CMD) ; 
-		printk(", SRB: %04x",ntohs(readw(xl_mmio + MMIO_MACDATA)) ) ; 
+		printk(", SRB: %04x",swab16(readw(xl_mmio + MMIO_MACDATA)) ) ;
  
 		writel( (MEM_WORD_READ | 0xD0000 | xl_priv->srb) + 12, xl_mmio + MMIO_MAC_ACCESS_CMD) ; 
-		xl_priv->arb = ntohs(readw(xl_mmio + MMIO_MACDATA)) ; 
-		printk(", ARB: %04x \n",xl_priv->arb ) ; 
+		xl_priv->arb = swab16(readw(xl_mmio + MMIO_MACDATA)) ;
+		printk(", ARB: %04x\n",xl_priv->arb );
 		writel( (MEM_WORD_READ | 0xD0000 | xl_priv->srb) + 14, xl_mmio + MMIO_MAC_ACCESS_CMD) ; 
-		vsoff = ntohs(readw(xl_mmio + MMIO_MACDATA)) ; 
+		vsoff = swab16(readw(xl_mmio + MMIO_MACDATA)) ;
 
 		/* 
 		 * Interesting, sending the individual characters directly to printk was causing klogd to use
@@ -836,7 +867,7 @@ static int xl_open_hw(struct net_device *dev)
 			ver_str[i] = readb(xl_mmio + MMIO_MACDATA) ; 
 		}
 		ver_str[i] = '\0' ; 
-		printk(KERN_INFO "%s: Microcode version String: %s \n",dev->name,ver_str); 
+		printk(KERN_INFO "%s: Microcode version String: %s\n",dev->name,ver_str);
 	} 	
 	
 	/*
@@ -875,22 +906,21 @@ static int xl_open_hw(struct net_device *dev)
 
 static void adv_rx_ring(struct net_device *dev) /* Advance rx_ring, cut down on bloat in xl_rx */ 
 {
-	struct xl_private *xl_priv=(struct xl_private *)dev->priv;
-	int prev_ring_loc ; 
+	struct xl_private *xl_priv=netdev_priv(dev);
+	int n = xl_priv->rx_ring_tail;
+	int prev_ring_loc;
 
-	prev_ring_loc = (xl_priv->rx_ring_tail + XL_RX_RING_SIZE - 1) & (XL_RX_RING_SIZE - 1);
-	xl_priv->xl_rx_ring[prev_ring_loc].upnextptr = xl_priv->rx_ring_dma_addr + (sizeof (struct xl_rx_desc) * xl_priv->rx_ring_tail) ; 
-	xl_priv->xl_rx_ring[xl_priv->rx_ring_tail].framestatus = 0 ; 
-	xl_priv->xl_rx_ring[xl_priv->rx_ring_tail].upnextptr = 0 ; 	
-	xl_priv->rx_ring_tail++ ; 
-	xl_priv->rx_ring_tail &= (XL_RX_RING_SIZE-1) ; 
-
-	return ; 
+	prev_ring_loc = (n + XL_RX_RING_SIZE - 1) & (XL_RX_RING_SIZE - 1);
+	xl_priv->xl_rx_ring[prev_ring_loc].upnextptr = cpu_to_le32(xl_priv->rx_ring_dma_addr + (sizeof (struct xl_rx_desc) * n));
+	xl_priv->xl_rx_ring[n].framestatus = 0;
+	xl_priv->xl_rx_ring[n].upnextptr = 0;
+	xl_priv->rx_ring_tail++;
+	xl_priv->rx_ring_tail &= (XL_RX_RING_SIZE-1);
 }
 
 static void xl_rx(struct net_device *dev)
 {
-	struct xl_private *xl_priv=(struct xl_private *)dev->priv;
+	struct xl_private *xl_priv=netdev_priv(dev);
 	u8 __iomem * xl_mmio = xl_priv->xl_mmio ; 
 	struct sk_buff *skb, *skb2 ; 
 	int frame_length = 0, copy_len = 0  ; 	
@@ -917,7 +947,7 @@ static void xl_rx(struct net_device *dev)
 				temp_ring_loc &= (XL_RX_RING_SIZE-1) ; 
 			}
 
-			frame_length = xl_priv->xl_rx_ring[temp_ring_loc].framestatus & 0x7FFF ; 
+			frame_length = le32_to_cpu(xl_priv->xl_rx_ring[temp_ring_loc].framestatus) & 0x7FFF;
 
 			skb = dev_alloc_skb(frame_length) ;
  
@@ -927,62 +957,61 @@ static void xl_rx(struct net_device *dev)
 					adv_rx_ring(dev) ; 
 				
 				adv_rx_ring(dev) ; /* One more time just for luck :) */ 
-				xl_priv->xl_stats.rx_dropped++ ; 
+				dev->stats.rx_dropped++ ; 
 
 				writel(ACK_INTERRUPT | UPCOMPACK | LATCH_ACK , xl_mmio + MMIO_COMMAND) ; 
 				return ; 				
 			}
 	
 			while (xl_priv->rx_ring_tail != temp_ring_loc) { 
-				copy_len = xl_priv->xl_rx_ring[xl_priv->rx_ring_tail].upfraglen & 0x7FFF ; 
+				copy_len = le32_to_cpu(xl_priv->xl_rx_ring[xl_priv->rx_ring_tail].upfraglen) & 0x7FFF;
 				frame_length -= copy_len ;  
-				pci_dma_sync_single_for_cpu(xl_priv->pdev,xl_priv->xl_rx_ring[xl_priv->rx_ring_tail].upfragaddr,xl_priv->pkt_buf_sz,PCI_DMA_FROMDEVICE) ;
+				pci_dma_sync_single_for_cpu(xl_priv->pdev,le32_to_cpu(xl_priv->xl_rx_ring[xl_priv->rx_ring_tail].upfragaddr),xl_priv->pkt_buf_sz,PCI_DMA_FROMDEVICE);
 				skb_copy_from_linear_data(xl_priv->rx_ring_skb[xl_priv->rx_ring_tail],
 							  skb_put(skb, copy_len),
 							  copy_len);
-				pci_dma_sync_single_for_device(xl_priv->pdev,xl_priv->xl_rx_ring[xl_priv->rx_ring_tail].upfragaddr,xl_priv->pkt_buf_sz,PCI_DMA_FROMDEVICE) ;
+				pci_dma_sync_single_for_device(xl_priv->pdev,le32_to_cpu(xl_priv->xl_rx_ring[xl_priv->rx_ring_tail].upfragaddr),xl_priv->pkt_buf_sz,PCI_DMA_FROMDEVICE);
 				adv_rx_ring(dev) ; 
 			} 
 
 			/* Now we have found the last fragment */
-			pci_dma_sync_single_for_cpu(xl_priv->pdev,xl_priv->xl_rx_ring[xl_priv->rx_ring_tail].upfragaddr,xl_priv->pkt_buf_sz,PCI_DMA_FROMDEVICE) ;
+			pci_dma_sync_single_for_cpu(xl_priv->pdev,le32_to_cpu(xl_priv->xl_rx_ring[xl_priv->rx_ring_tail].upfragaddr),xl_priv->pkt_buf_sz,PCI_DMA_FROMDEVICE);
 			skb_copy_from_linear_data(xl_priv->rx_ring_skb[xl_priv->rx_ring_tail],
 				      skb_put(skb,copy_len), frame_length);
 /*			memcpy(skb_put(skb,frame_length), bus_to_virt(xl_priv->xl_rx_ring[xl_priv->rx_ring_tail].upfragaddr), frame_length) ; */
-			pci_dma_sync_single_for_device(xl_priv->pdev,xl_priv->xl_rx_ring[xl_priv->rx_ring_tail].upfragaddr,xl_priv->pkt_buf_sz,PCI_DMA_FROMDEVICE) ;
+			pci_dma_sync_single_for_device(xl_priv->pdev,le32_to_cpu(xl_priv->xl_rx_ring[xl_priv->rx_ring_tail].upfragaddr),xl_priv->pkt_buf_sz,PCI_DMA_FROMDEVICE);
 			adv_rx_ring(dev) ; 
 			skb->protocol = tr_type_trans(skb,dev) ; 
 			netif_rx(skb) ; 
 
 		} else { /* Single Descriptor Used, simply swap buffers over, fast path  */
 
-			frame_length = xl_priv->xl_rx_ring[xl_priv->rx_ring_tail].framestatus & 0x7FFF ; 
+			frame_length = le32_to_cpu(xl_priv->xl_rx_ring[xl_priv->rx_ring_tail].framestatus) & 0x7FFF;
 			
 			skb = dev_alloc_skb(xl_priv->pkt_buf_sz) ; 
 
 			if (skb==NULL) { /* Still need to fix the rx ring */
-				printk(KERN_WARNING "%s: dev_alloc_skb failed in rx, single buffer \n",dev->name) ; 
+				printk(KERN_WARNING "%s: dev_alloc_skb failed in rx, single buffer\n",dev->name);
 				adv_rx_ring(dev) ; 
-				xl_priv->xl_stats.rx_dropped++ ; 
+				dev->stats.rx_dropped++ ; 
 				writel(ACK_INTERRUPT | UPCOMPACK | LATCH_ACK , xl_mmio + MMIO_COMMAND) ; 
 				return ; 
 			}
 
 			skb2 = xl_priv->rx_ring_skb[xl_priv->rx_ring_tail] ; 
-			pci_unmap_single(xl_priv->pdev, xl_priv->xl_rx_ring[xl_priv->rx_ring_tail].upfragaddr, xl_priv->pkt_buf_sz,PCI_DMA_FROMDEVICE) ; 
+			pci_unmap_single(xl_priv->pdev, le32_to_cpu(xl_priv->xl_rx_ring[xl_priv->rx_ring_tail].upfragaddr), xl_priv->pkt_buf_sz,PCI_DMA_FROMDEVICE) ;
 			skb_put(skb2, frame_length) ; 
 			skb2->protocol = tr_type_trans(skb2,dev) ; 
 
 			xl_priv->rx_ring_skb[xl_priv->rx_ring_tail] = skb ; 	
-			xl_priv->xl_rx_ring[xl_priv->rx_ring_tail].upfragaddr = pci_map_single(xl_priv->pdev,skb->data,xl_priv->pkt_buf_sz, PCI_DMA_FROMDEVICE) ; 
-			xl_priv->xl_rx_ring[xl_priv->rx_ring_tail].upfraglen = xl_priv->pkt_buf_sz | RXUPLASTFRAG ; 
+			xl_priv->xl_rx_ring[xl_priv->rx_ring_tail].upfragaddr = cpu_to_le32(pci_map_single(xl_priv->pdev,skb->data,xl_priv->pkt_buf_sz, PCI_DMA_FROMDEVICE));
+			xl_priv->xl_rx_ring[xl_priv->rx_ring_tail].upfraglen = cpu_to_le32(xl_priv->pkt_buf_sz) | RXUPLASTFRAG;
 			adv_rx_ring(dev) ; 
-			xl_priv->xl_stats.rx_packets++ ; 
-			xl_priv->xl_stats.rx_bytes += frame_length ; 	
+			dev->stats.rx_packets++ ; 
+			dev->stats.rx_bytes += frame_length ; 	
 
 			netif_rx(skb2) ; 		
 		 } /* if multiple buffers */
-		dev->last_rx = jiffies ; 	
 	} /* while packet to do */
 
 	/* Clear the updComplete interrupt */
@@ -997,7 +1026,7 @@ static void xl_rx(struct net_device *dev)
 
 static void xl_reset(struct net_device *dev) 
 {
-	struct xl_private *xl_priv=(struct xl_private *)dev->priv;
+	struct xl_private *xl_priv=netdev_priv(dev);
 	u8 __iomem * xl_mmio = xl_priv->xl_mmio ; 
 	unsigned long t; 
 
@@ -1010,7 +1039,7 @@ static void xl_reset(struct net_device *dev)
 
 	t=jiffies;
 	while (readw(xl_mmio + MMIO_INTSTATUS) & INTSTAT_CMD_IN_PROGRESS) { 
-		if(jiffies-t > 40*HZ) {
+		if (time_after(jiffies, t + 40 * HZ)) {
 			printk(KERN_ERR "3COM 3C359 Velocity XL  card not responding.\n");
 			break ; 
 		}
@@ -1020,12 +1049,12 @@ static void xl_reset(struct net_device *dev)
 
 static void xl_freemem(struct net_device *dev) 
 {
-	struct xl_private *xl_priv=(struct xl_private *)dev->priv ; 
+	struct xl_private *xl_priv=netdev_priv(dev);
 	int i ; 
 
 	for (i=0;i<XL_RX_RING_SIZE;i++) {
 		dev_kfree_skb_irq(xl_priv->rx_ring_skb[xl_priv->rx_ring_tail]) ; 
-		pci_unmap_single(xl_priv->pdev,xl_priv->xl_rx_ring[xl_priv->rx_ring_tail].upfragaddr,xl_priv->pkt_buf_sz, PCI_DMA_FROMDEVICE) ; 
+		pci_unmap_single(xl_priv->pdev,le32_to_cpu(xl_priv->xl_rx_ring[xl_priv->rx_ring_tail].upfragaddr),xl_priv->pkt_buf_sz, PCI_DMA_FROMDEVICE);
 		xl_priv->rx_ring_tail++ ; 
 		xl_priv->rx_ring_tail &= XL_RX_RING_SIZE-1; 
 	} 
@@ -1044,14 +1073,9 @@ static void xl_freemem(struct net_device *dev)
 static irqreturn_t xl_interrupt(int irq, void *dev_id) 
 {
 	struct net_device *dev = (struct net_device *)dev_id;
- 	struct xl_private *xl_priv =(struct xl_private *)dev->priv;
+	struct xl_private *xl_priv =netdev_priv(dev);
 	u8 __iomem * xl_mmio = xl_priv->xl_mmio ; 
 	u16 intstatus, macstatus  ;
-
-	if (!dev) { 
-		printk(KERN_WARNING "Device structure dead, aaahhhh !\n") ;
-		return IRQ_NONE; 
-	}
 
 	intstatus = readw(xl_mmio + MMIO_INTSTATUS) ;  
 
@@ -1068,7 +1092,7 @@ static irqreturn_t xl_interrupt(int irq, void *dev_id)
 	 */
 	if (intstatus == 0x0001) {  
 		writel(ACK_INTERRUPT | LATCH_ACK, xl_mmio + MMIO_COMMAND) ;
-		printk(KERN_INFO "%s: 00001 int received \n",dev->name) ;  
+		printk(KERN_INFO "%s: 00001 int received\n",dev->name);
 	} else {  
 		if (intstatus &	(HOSTERRINT | SRBRINT | ARBCINT | UPCOMPINT | DNCOMPINT | HARDERRINT | (1<<8) | TXUNDERRUN | ASBFINT)) { 
 			
@@ -1079,9 +1103,9 @@ static irqreturn_t xl_interrupt(int irq, void *dev_id)
 			 */
 
 			if (intstatus & HOSTERRINT) {
-				printk(KERN_WARNING "%s: Host Error, performing global reset, intstatus = %04x \n",dev->name,intstatus) ; 
+				printk(KERN_WARNING "%s: Host Error, performing global reset, intstatus = %04x\n",dev->name,intstatus);
 				writew( GLOBAL_RESET, xl_mmio + MMIO_COMMAND ) ;
-				printk(KERN_WARNING "%s: Resetting hardware: \n", dev->name); 
+				printk(KERN_WARNING "%s: Resetting hardware:\n", dev->name);
 				netif_stop_queue(dev) ;
 				xl_freemem(dev) ; 
 				free_irq(dev->irq,dev); 	
@@ -1104,7 +1128,7 @@ static irqreturn_t xl_interrupt(int irq, void *dev_id)
 					Must put a timeout check here ! */
 					/* Empty Loop */
 				} 
-				printk(KERN_WARNING "%s: TX Underrun received \n",dev->name) ;
+				printk(KERN_WARNING "%s: TX Underrun received\n",dev->name);
 				writel(ACK_INTERRUPT | LATCH_ACK, xl_mmio + MMIO_COMMAND) ; 
 			} /* TxUnderRun */
 	
@@ -1133,13 +1157,13 @@ static irqreturn_t xl_interrupt(int irq, void *dev_id)
 				macstatus = readw(xl_mmio + MMIO_MACDATA) ; 
 				printk(KERN_WARNING "%s: MacStatusError, details: ", dev->name);
 				if (macstatus & (1<<14)) 
-					printk(KERN_WARNING "tchk error: Unrecoverable error \n") ; 
+					printk(KERN_WARNING "tchk error: Unrecoverable error\n");
 				if (macstatus & (1<<3))
-					printk(KERN_WARNING "eint error: Internal watchdog timer expired \n") ;
+					printk(KERN_WARNING "eint error: Internal watchdog timer expired\n");
 				if (macstatus & (1<<2))
-					printk(KERN_WARNING "aint error: Host tried to perform invalid operation \n") ; 
+					printk(KERN_WARNING "aint error: Host tried to perform invalid operation\n");
 				printk(KERN_WARNING "Instatus = %02x, macstatus = %02x\n",intstatus,macstatus) ; 
-				printk(KERN_WARNING "%s: Resetting hardware: \n", dev->name); 
+				printk(KERN_WARNING "%s: Resetting hardware:\n", dev->name);
 				netif_stop_queue(dev) ;
 				xl_freemem(dev) ; 
 				free_irq(dev->irq,dev); 
@@ -1151,7 +1175,7 @@ static irqreturn_t xl_interrupt(int irq, void *dev_id)
 				return IRQ_HANDLED;
 			}
 		} else { 
-			printk(KERN_WARNING "%s: Received Unknown interrupt : %04x \n", dev->name, intstatus) ;
+			printk(KERN_WARNING "%s: Received Unknown interrupt : %04x\n", dev->name, intstatus);
 			writel(ACK_INTERRUPT | LATCH_ACK, xl_mmio + MMIO_COMMAND) ; 	
 		}
 	} 
@@ -1169,9 +1193,9 @@ static irqreturn_t xl_interrupt(int irq, void *dev_id)
  *	Tx - Polling configuration
  */
 	
-static int xl_xmit(struct sk_buff *skb, struct net_device *dev) 
+static netdev_tx_t xl_xmit(struct sk_buff *skb, struct net_device *dev)
 {
-	struct xl_private *xl_priv=(struct xl_private *)dev->priv;
+	struct xl_private *xl_priv=netdev_priv(dev);
 	struct xl_tx_desc *txd ; 
 	int tx_head, tx_tail, tx_prev ; 
 	unsigned long flags ; 	
@@ -1189,12 +1213,12 @@ static int xl_xmit(struct sk_buff *skb, struct net_device *dev)
 
 		txd = &(xl_priv->xl_tx_ring[tx_head]) ; 
 		txd->dnnextptr = 0 ; 
-		txd->framestartheader = skb->len | TXDNINDICATE ; 
-		txd->buffer = pci_map_single(xl_priv->pdev, skb->data, skb->len, PCI_DMA_TODEVICE) ; 
-		txd->buffer_length = skb->len | TXDNFRAGLAST  ; 
+		txd->framestartheader = cpu_to_le32(skb->len) | TXDNINDICATE;
+		txd->buffer = cpu_to_le32(pci_map_single(xl_priv->pdev, skb->data, skb->len, PCI_DMA_TODEVICE));
+		txd->buffer_length = cpu_to_le32(skb->len) | TXDNFRAGLAST;
 		xl_priv->tx_ring_skb[tx_head] = skb ; 
-		xl_priv->xl_stats.tx_packets++ ; 
-		xl_priv->xl_stats.tx_bytes += skb->len ;
+		dev->stats.tx_packets++ ; 
+		dev->stats.tx_bytes += skb->len ;
 
 		/* 
 		 * Set the nextptr of the previous descriptor equal to this descriptor, add XL_TX_RING_SIZE -1 
@@ -1207,7 +1231,7 @@ static int xl_xmit(struct sk_buff *skb, struct net_device *dev)
 		xl_priv->tx_ring_head &= (XL_TX_RING_SIZE - 1) ;
 		xl_priv->free_ring_entries-- ; 
 
-		xl_priv->xl_tx_ring[tx_prev].dnnextptr = xl_priv->tx_ring_dma_addr + (sizeof (struct xl_tx_desc) * tx_head) ; 
+		xl_priv->xl_tx_ring[tx_prev].dnnextptr = cpu_to_le32(xl_priv->tx_ring_dma_addr + (sizeof (struct xl_tx_desc) * tx_head));
 
 		/* Sneaky, by doing a read on DnListPtr we can force the card to poll on the DnNextPtr */
 		/* readl(xl_mmio + MMIO_DNLISTPTR) ; */
@@ -1216,10 +1240,10 @@ static int xl_xmit(struct sk_buff *skb, struct net_device *dev)
 
 		spin_unlock_irqrestore(&xl_priv->xl_lock,flags) ; 
  
-		return 0;
+		return NETDEV_TX_OK;
 	} else {
 		spin_unlock_irqrestore(&xl_priv->xl_lock,flags) ; 
-		return 1;
+		return NETDEV_TX_BUSY;
 	}
 
 }
@@ -1227,12 +1251,12 @@ static int xl_xmit(struct sk_buff *skb, struct net_device *dev)
 /* 
  * The NIC has told us that a packet has been downloaded onto the card, we must
  * find out which packet it has done, clear the skb and information for the packet
- * then advance around the ring for all tranmitted packets
+ * then advance around the ring for all transmitted packets
  */
 
 static void xl_dn_comp(struct net_device *dev) 
 {
-	struct xl_private *xl_priv=(struct xl_private *)dev->priv;
+	struct xl_private *xl_priv=netdev_priv(dev);
 	u8 __iomem * xl_mmio = xl_priv->xl_mmio ; 
 	struct xl_tx_desc *txd ; 
 
@@ -1245,9 +1269,9 @@ static void xl_dn_comp(struct net_device *dev)
 
 	while (xl_priv->xl_tx_ring[xl_priv->tx_ring_tail].framestartheader & TXDNCOMPLETE ) { 
 		txd = &(xl_priv->xl_tx_ring[xl_priv->tx_ring_tail]) ;
-		pci_unmap_single(xl_priv->pdev,txd->buffer, xl_priv->tx_ring_skb[xl_priv->tx_ring_tail]->len, PCI_DMA_TODEVICE) ; 
+		pci_unmap_single(xl_priv->pdev, le32_to_cpu(txd->buffer), xl_priv->tx_ring_skb[xl_priv->tx_ring_tail]->len, PCI_DMA_TODEVICE);
 		txd->framestartheader = 0 ; 
-		txd->buffer = 0xdeadbeef  ; 
+		txd->buffer = cpu_to_le32(0xdeadbeef);
 		txd->buffer_length  = 0 ;  
 		dev_kfree_skb_irq(xl_priv->tx_ring_skb[xl_priv->tx_ring_tail]) ;
 		xl_priv->tx_ring_tail++ ; 
@@ -1268,7 +1292,7 @@ static void xl_dn_comp(struct net_device *dev)
 
 static int xl_close(struct net_device *dev) 
 {
-	struct xl_private *xl_priv = (struct xl_private *) dev->priv ; 
+	struct xl_private *xl_priv = netdev_priv(dev);
 	u8 __iomem * xl_mmio = xl_priv->xl_mmio ; 
 	unsigned long t ; 
 
@@ -1282,7 +1306,7 @@ static int xl_close(struct net_device *dev)
 	t=jiffies;
 	while (readw(xl_mmio + MMIO_INTSTATUS) & INTSTAT_CMD_IN_PROGRESS) { 
 		schedule();		
-		if(jiffies-t > 10*HZ) {
+		if (time_after(jiffies, t + 10 * HZ)) {
 			printk(KERN_ERR "%s: 3COM 3C359 Velocity XL-DNSTALL not responding.\n", dev->name);
 			break ; 
 		}
@@ -1291,7 +1315,7 @@ static int xl_close(struct net_device *dev)
 	t=jiffies;
 	while (readw(xl_mmio + MMIO_INTSTATUS) & INTSTAT_CMD_IN_PROGRESS) { 
 		schedule();		
-		if(jiffies-t > 10*HZ) {
+		if (time_after(jiffies, t + 10 * HZ)) {
 			printk(KERN_ERR "%s: 3COM 3C359 Velocity XL-DNDISABLE not responding.\n", dev->name);
 			break ;
 		}
@@ -1300,7 +1324,7 @@ static int xl_close(struct net_device *dev)
 	t=jiffies;
 	while (readw(xl_mmio + MMIO_INTSTATUS) & INTSTAT_CMD_IN_PROGRESS) { 
 		schedule();		
-		if(jiffies-t > 10*HZ) {
+		if (time_after(jiffies, t + 10 * HZ)) {
 			printk(KERN_ERR "%s: 3COM 3C359 Velocity XL-UPSTALL not responding.\n", dev->name);
 			break ; 
 		}
@@ -1317,7 +1341,7 @@ static int xl_close(struct net_device *dev)
 	t=jiffies;
 	while (!(readw(xl_mmio + MMIO_INTSTATUS) & INTSTAT_SRB)) { 
 		schedule();		
-		if(jiffies-t > 10*HZ) {
+		if (time_after(jiffies, t + 10 * HZ)) {
 			printk(KERN_ERR "%s: 3COM 3C359 Velocity XL-CLOSENIC not responding.\n", dev->name);
 			break ; 
 		}
@@ -1326,11 +1350,11 @@ static int xl_close(struct net_device *dev)
 
 	writel(MEM_BYTE_READ | 0xd0000 | xl_priv->srb, xl_mmio + MMIO_MAC_ACCESS_CMD);
 	if (readb(xl_mmio + MMIO_MACDATA) != CLOSE_NIC) { 
-		printk(KERN_INFO "%s: CLOSE_NIC did not get a CLOSE_NIC response \n",dev->name) ; 
+		printk(KERN_INFO "%s: CLOSE_NIC did not get a CLOSE_NIC response\n",dev->name);
 	} else { 
 		writel((MEM_BYTE_READ | 0xd0000 | xl_priv->srb) +2, xl_mmio + MMIO_MAC_ACCESS_CMD) ;
 		if (readb(xl_mmio + MMIO_MACDATA)==0) { 
-			printk(KERN_INFO "%s: Adapter has been closed \n",dev->name) ;
+			printk(KERN_INFO "%s: Adapter has been closed\n",dev->name);
 			writew(ACK_INTERRUPT | SRBRACK | LATCH_ACK, xl_mmio + MMIO_COMMAND) ; 
 
 			xl_freemem(dev) ; 
@@ -1346,7 +1370,7 @@ static int xl_close(struct net_device *dev)
 	t=jiffies;
 	while (readw(xl_mmio + MMIO_INTSTATUS) & INTSTAT_CMD_IN_PROGRESS) { 
 		schedule();		
-		if(jiffies-t > 10*HZ) {
+		if (time_after(jiffies, t + 10 * HZ)) {
 			printk(KERN_ERR "%s: 3COM 3C359 Velocity XL-UPRESET not responding.\n", dev->name);
 			break ; 
 		}
@@ -1355,7 +1379,7 @@ static int xl_close(struct net_device *dev)
 	t=jiffies;
 	while (readw(xl_mmio + MMIO_INTSTATUS) & INTSTAT_CMD_IN_PROGRESS) { 
 		schedule();		
-		if(jiffies-t > 10*HZ) {
+		if (time_after(jiffies, t + 10 * HZ)) {
 			printk(KERN_ERR "%s: 3COM 3C359 Velocity XL-DNRESET not responding.\n", dev->name);
 			break ; 
 		}
@@ -1366,11 +1390,10 @@ static int xl_close(struct net_device *dev)
 
 static void xl_set_rx_mode(struct net_device *dev) 
 {
-	struct xl_private *xl_priv = (struct xl_private *) dev->priv ; 
-	struct dev_mc_list *dmi ; 
+	struct xl_private *xl_priv = netdev_priv(dev);
+	struct netdev_hw_addr *ha;
 	unsigned char dev_mc_address[4] ; 
 	u16 options ; 
-	int i ; 
 
 	if (dev->flags & IFF_PROMISC)
 		options = 0x0004 ; 
@@ -1385,11 +1408,11 @@ static void xl_set_rx_mode(struct net_device *dev)
 
 	dev_mc_address[0] = dev_mc_address[1] = dev_mc_address[2] = dev_mc_address[3] = 0 ;
 
-        for (i=0,dmi=dev->mc_list;i < dev->mc_count; i++,dmi = dmi->next) {
-                dev_mc_address[0] |= dmi->dmi_addr[2] ;
-                dev_mc_address[1] |= dmi->dmi_addr[3] ;
-                dev_mc_address[2] |= dmi->dmi_addr[4] ;
-                dev_mc_address[3] |= dmi->dmi_addr[5] ;
+	netdev_for_each_mc_addr(ha, dev) {
+		dev_mc_address[0] |= ha->addr[2];
+		dev_mc_address[1] |= ha->addr[3];
+		dev_mc_address[2] |= ha->addr[4];
+		dev_mc_address[3] |= ha->addr[5];
         }
 
 	if (memcmp(xl_priv->xl_functional_addr,dev_mc_address,4) != 0) { /* Options have changed, run the command */
@@ -1407,7 +1430,7 @@ static void xl_set_rx_mode(struct net_device *dev)
 
 static void xl_srb_bh(struct net_device *dev) 
 { 
-	struct xl_private *xl_priv = (struct xl_private *) dev->priv ; 
+	struct xl_private *xl_priv = netdev_priv(dev);
 	u8 __iomem * xl_mmio = xl_priv->xl_mmio ; 
 	u8 srb_cmd, ret_code ; 
 	int i ; 
@@ -1424,11 +1447,11 @@ static void xl_srb_bh(struct net_device *dev)
 		printk(KERN_INFO "%s: Command: %d - Invalid Command code\n",dev->name,srb_cmd) ; 
 		break ; 
 	case 4:
-		printk(KERN_INFO "%s: Command: %d - Adapter is closed, must be open for this command \n",dev->name,srb_cmd) ; 
+		printk(KERN_INFO "%s: Command: %d - Adapter is closed, must be open for this command\n",dev->name,srb_cmd);
 		break ;
 	
 	case 6:
-		printk(KERN_INFO "%s: Command: %d - Options Invalid for command \n",dev->name,srb_cmd) ;
+		printk(KERN_INFO "%s: Command: %d - Options Invalid for command\n",dev->name,srb_cmd);
 		break ;
 
 	case 0: /* Successful command execution */ 
@@ -1449,11 +1472,11 @@ static void xl_srb_bh(struct net_device *dev)
 			break ; 
 		case SET_FUNC_ADDRESS:
 			if(xl_priv->xl_message_level) 
-				printk(KERN_INFO "%s: Functional Address Set \n",dev->name) ;  
+				printk(KERN_INFO "%s: Functional Address Set\n",dev->name);
 			break ; 
 		case CLOSE_NIC:
 			if(xl_priv->xl_message_level)
-				printk(KERN_INFO "%s: Received CLOSE_NIC interrupt in interrupt handler \n",dev->name) ; 	
+				printk(KERN_INFO "%s: Received CLOSE_NIC interrupt in interrupt handler\n",dev->name);
 			break ; 
 		case SET_MULTICAST_MODE:
 			if(xl_priv->xl_message_level)
@@ -1462,9 +1485,9 @@ static void xl_srb_bh(struct net_device *dev)
 		case SET_RECEIVE_MODE:
 			if(xl_priv->xl_message_level) {  
 				if (xl_priv->xl_copy_all_options == 0x0004) 
-					printk(KERN_INFO "%s: Entering promiscuous mode \n", dev->name) ; 
+					printk(KERN_INFO "%s: Entering promiscuous mode\n", dev->name);
 				else
-					printk(KERN_INFO "%s: Entering normal receive mode \n",dev->name) ; 
+					printk(KERN_INFO "%s: Entering normal receive mode\n",dev->name);
 			}
 			break ; 
  
@@ -1474,16 +1497,10 @@ static void xl_srb_bh(struct net_device *dev)
 	return ; 	
 } 
 
-static struct net_device_stats * xl_get_stats(struct net_device *dev)
-{
-	struct xl_private *xl_priv = (struct xl_private *) dev->priv ;
-	return (struct net_device_stats *) &xl_priv->xl_stats; 
-}
-
 static int xl_set_mac_address (struct net_device *dev, void *addr) 
 {
 	struct sockaddr *saddr = addr ; 
-	struct xl_private *xl_priv = (struct xl_private *)dev->priv ; 
+	struct xl_private *xl_priv = netdev_priv(dev);
 
 	if (netif_running(dev)) { 
 		printk(KERN_WARNING "%s: Cannot set mac/laa address while card is open\n", dev->name) ; 
@@ -1504,7 +1521,7 @@ static int xl_set_mac_address (struct net_device *dev, void *addr)
 
 static void xl_arb_cmd(struct net_device *dev)
 {
-	struct xl_private *xl_priv = (struct xl_private *) dev->priv;
+	struct xl_private *xl_priv = netdev_priv(dev);
 	u8 __iomem * xl_mmio = xl_priv->xl_mmio ; 
 	u8 arb_cmd ; 
 	u16 lan_status, lan_status_diff ; 
@@ -1515,9 +1532,9 @@ static void xl_arb_cmd(struct net_device *dev)
 	if (arb_cmd == RING_STATUS_CHANGE) { /* Ring.Status.Change */
 		writel( ( (MEM_WORD_READ | 0xD0000 | xl_priv->arb) + 6), xl_mmio + MMIO_MAC_ACCESS_CMD) ;
 		 
-		printk(KERN_INFO "%s: Ring Status Change: New Status = %04x\n", dev->name, ntohs(readw(xl_mmio + MMIO_MACDATA) )) ; 
+		printk(KERN_INFO "%s: Ring Status Change: New Status = %04x\n", dev->name, swab16(readw(xl_mmio + MMIO_MACDATA) )) ;
 
-		lan_status = ntohs(readw(xl_mmio + MMIO_MACDATA));
+		lan_status = swab16(readw(xl_mmio + MMIO_MACDATA));
 	
 		/* Acknowledge interrupt, this tells nic we are done with the arb */
 		writel(ACK_INTERRUPT | ARBCACK | LATCH_ACK, xl_mmio + MMIO_COMMAND) ; 
@@ -1540,20 +1557,20 @@ static void xl_arb_cmd(struct net_device *dev)
 			xl_freemem(dev) ; 
 			free_irq(dev->irq,dev);
 			
-			printk(KERN_WARNING "%s: Adapter has been closed \n", dev->name) ; 
+			printk(KERN_WARNING "%s: Adapter has been closed\n", dev->name);
 		} /* If serious error */
 		
 		if (xl_priv->xl_message_level) { 
 			if (lan_status_diff & LSC_SIG_LOSS) 
-					printk(KERN_WARNING "%s: No receive signal detected \n", dev->name) ; 
+					printk(KERN_WARNING "%s: No receive signal detected\n", dev->name);
 			if (lan_status_diff & LSC_HARD_ERR)
-					printk(KERN_INFO "%s: Beaconing \n",dev->name);
+					printk(KERN_INFO "%s: Beaconing\n",dev->name);
 			if (lan_status_diff & LSC_SOFT_ERR)
-					printk(KERN_WARNING "%s: Adapter transmitted Soft Error Report Mac Frame \n",dev->name);
+					printk(KERN_WARNING "%s: Adapter transmitted Soft Error Report Mac Frame\n",dev->name);
 			if (lan_status_diff & LSC_TRAN_BCN) 
-					printk(KERN_INFO "%s: We are tranmitting the beacon, aaah\n",dev->name);
+					printk(KERN_INFO "%s: We are transmitting the beacon, aaah\n",dev->name);
 			if (lan_status_diff & LSC_SS) 
-					printk(KERN_INFO "%s: Single Station on the ring \n", dev->name);
+					printk(KERN_INFO "%s: Single Station on the ring\n", dev->name);
 			if (lan_status_diff & LSC_RING_REC)
 					printk(KERN_INFO "%s: Ring recovery ongoing\n",dev->name);
 			if (lan_status_diff & LSC_FDX_MODE)
@@ -1562,7 +1579,7 @@ static void xl_arb_cmd(struct net_device *dev)
 		
 		if (lan_status_diff & LSC_CO) { 
 				if (xl_priv->xl_message_level) 
-					printk(KERN_INFO "%s: Counter Overflow \n", dev->name);
+					printk(KERN_INFO "%s: Counter Overflow\n", dev->name);
 				/* Issue READ.LOG command */
 				xl_srb_cmd(dev, READ_LOG) ; 	
 		}
@@ -1578,10 +1595,10 @@ static void xl_arb_cmd(struct net_device *dev)
 	}  /* Lan.change.status */
 	else if ( arb_cmd == RECEIVE_DATA) { /* Received.Data */
 #if XL_DEBUG
-		printk(KERN_INFO "Received.Data \n") ; 
+		printk(KERN_INFO "Received.Data\n");
 #endif 		
 		writel( ((MEM_WORD_READ | 0xD0000 | xl_priv->arb) + 6), xl_mmio + MMIO_MAC_ACCESS_CMD) ;
-		xl_priv->mac_buffer = ntohs(readw(xl_mmio + MMIO_MACDATA)) ;
+		xl_priv->mac_buffer = swab16(readw(xl_mmio + MMIO_MACDATA)) ;
 		
 		/* Now we are going to be really basic here and not do anything
 		 * with the data at all. The tech docs do not give me enough
@@ -1590,7 +1607,6 @@ static void xl_arb_cmd(struct net_device *dev)
 		 * anyway.
 		 */
 
-		dev->last_rx = jiffies ; 
 		/* Acknowledge interrupt, this tells nic we are done with the arb */
 		writel(ACK_INTERRUPT | ARBCACK | LATCH_ACK, xl_mmio + MMIO_COMMAND) ; 
 
@@ -1614,7 +1630,7 @@ static void xl_arb_cmd(struct net_device *dev)
 		xl_asb_cmd(dev) ; 
 		
 	} else {
-		printk(KERN_WARNING "%s: Received unknown arb (xl_priv) command: %02x \n",dev->name,arb_cmd) ; 
+		printk(KERN_WARNING "%s: Received unknown arb (xl_priv) command: %02x\n",dev->name,arb_cmd);
 	}
 
 	/* Acknowledge the arb interrupt */
@@ -1632,7 +1648,7 @@ static void xl_arb_cmd(struct net_device *dev)
 
 static void xl_asb_cmd(struct net_device *dev)
 {
-	struct xl_private *xl_priv = (struct xl_private *) dev->priv ; 
+	struct xl_private *xl_priv = netdev_priv(dev);
 	u8 __iomem * xl_mmio = xl_priv->xl_mmio ; 
 
 	if (xl_priv->asb_queued == 1) 
@@ -1642,7 +1658,7 @@ static void xl_asb_cmd(struct net_device *dev)
 	writeb(0x81, xl_mmio + MMIO_MACDATA) ; 
 
 	writel(MEM_WORD_WRITE | 0xd0000 | xl_priv->asb | 6, xl_mmio + MMIO_MAC_ACCESS_CMD) ; 
-	writew(ntohs(xl_priv->mac_buffer), xl_mmio + MMIO_MACDATA) ; 
+	writew(swab16(xl_priv->mac_buffer), xl_mmio + MMIO_MACDATA) ;
 
 	xl_wait_misr_flags(dev) ; 	
 
@@ -1663,7 +1679,7 @@ static void xl_asb_cmd(struct net_device *dev)
  */
 static void xl_asb_bh(struct net_device *dev) 
 {
-	struct xl_private *xl_priv = (struct xl_private *) dev->priv ; 
+	struct xl_private *xl_priv = netdev_priv(dev);
 	u8 __iomem * xl_mmio = xl_priv->xl_mmio ; 
 	u8 ret_code ; 
 
@@ -1671,13 +1687,13 @@ static void xl_asb_bh(struct net_device *dev)
 	ret_code = readb(xl_mmio + MMIO_MACDATA) ; 
 	switch (ret_code) { 
 		case 0x01:
-			printk(KERN_INFO "%s: ASB Command, unrecognized command code \n",dev->name) ;
+			printk(KERN_INFO "%s: ASB Command, unrecognized command code\n",dev->name);
 			break ;
 		case 0x26:
-			printk(KERN_INFO "%s: ASB Command, unexpected receive buffer \n", dev->name) ; 
+			printk(KERN_INFO "%s: ASB Command, unexpected receive buffer\n", dev->name);
 			break ; 
 		case 0x40:
-			printk(KERN_INFO "%s: ASB Command, Invalid Station ID \n", dev->name) ; 
+			printk(KERN_INFO "%s: ASB Command, Invalid Station ID\n", dev->name);
 			break ;  
 	}
 	xl_priv->asb_queued = 0 ; 
@@ -1691,7 +1707,7 @@ static void xl_asb_bh(struct net_device *dev)
 
 static void xl_srb_cmd(struct net_device *dev, int srb_cmd) 
 {
-	struct xl_private *xl_priv = (struct xl_private *) dev->priv ; 
+	struct xl_private *xl_priv = netdev_priv(dev);
 	u8 __iomem * xl_mmio = xl_priv->xl_mmio ; 
 
 	switch (srb_cmd) { 
@@ -1748,7 +1764,7 @@ static void xl_srb_cmd(struct net_device *dev, int srb_cmd)
 
 static void xl_wait_misr_flags(struct net_device *dev) 
 {
-	struct xl_private *xl_priv = (struct xl_private *) dev->priv ; 
+	struct xl_private *xl_priv = netdev_priv(dev);
 	u8 __iomem * xl_mmio = xl_priv->xl_mmio ; 
 	
 	int i  ; 
@@ -1773,7 +1789,7 @@ static void xl_wait_misr_flags(struct net_device *dev)
 
 static int xl_change_mtu(struct net_device *dev, int mtu) 
 {
-	struct xl_private *xl_priv = (struct xl_private *) dev->priv;
+	struct xl_private *xl_priv = netdev_priv(dev);
 	u16 max_mtu ; 
 
 	if (xl_priv->xl_ring_speed == 4)
@@ -1795,8 +1811,9 @@ static int xl_change_mtu(struct net_device *dev, int mtu)
 static void __devexit xl_remove_one (struct pci_dev *pdev)
 {
 	struct net_device *dev = pci_get_drvdata(pdev);
-	struct xl_private *xl_priv=(struct xl_private *)dev->priv;
+	struct xl_private *xl_priv=netdev_priv(dev);
 	
+	release_firmware(xl_priv->fw);
 	unregister_netdev(dev);
 	iounmap(xl_priv->xl_mmio) ; 
 	pci_release_regions(pdev) ; 

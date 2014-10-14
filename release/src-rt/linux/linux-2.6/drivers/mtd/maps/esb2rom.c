@@ -12,9 +12,9 @@
 
 #include <linux/module.h>
 #include <linux/types.h>
-#include <linux/version.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
+#include <linux/slab.h>
 #include <asm/io.h>
 #include <linux/mtd/mtd.h>
 #include <linux/mtd/map.h>
@@ -242,12 +242,9 @@ static int __devinit esb2rom_init_one(struct pci_dev *pdev,
 	window->rsrc.flags = IORESOURCE_MEM | IORESOURCE_BUSY;
 	if (request_resource(&iomem_resource, &window->rsrc)) {
 		window->rsrc.parent = NULL;
-		printk(KERN_DEBUG MOD_NAME
-			": %s(): Unable to register resource"
-			" 0x%.08llx-0x%.08llx - kernel bug?\n",
-			__func__,
-			(unsigned long long)window->rsrc.start,
-			(unsigned long long)window->rsrc.end);
+		printk(KERN_DEBUG MOD_NAME ": "
+		       "%s(): Unable to register resource %pR - kernel bug?\n",
+			__func__, &window->rsrc);
 	}
 
 	/* Map the firmware hub into my address space. */
@@ -325,8 +322,8 @@ static int __devinit esb2rom_init_one(struct pci_dev *pdev,
 		/* Trim the size if we are larger than the map */
 		if (map->mtd->size > map->map.size) {
 			printk(KERN_WARNING MOD_NAME
-				" rom(%u) larger than window(%lu). fixing...\n",
-				map->mtd->size, map->map.size);
+				" rom(%llu) larger than window(%lu). fixing...\n",
+				(unsigned long long)map->mtd->size, map->map.size);
 			map->mtd->size = map->map.size;
 		}
 		if (window->rsrc.parent) {

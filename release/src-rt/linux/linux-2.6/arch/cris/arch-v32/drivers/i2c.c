@@ -19,20 +19,20 @@
 *!
 *! ---------------------------------------------------------------------------
 *!
-*! (C) Copyright 1999-2002 Axis Communications AB, LUND, SWEDEN
+*! (C) Copyright 1999-2007 Axis Communications AB, LUND, SWEDEN
 *!
 *!***************************************************************************/
-/* $Id: i2c.c,v 1.2 2005/05/09 15:29:49 starvik Exp $ */
+
 /****************** INCLUDE FILES SECTION ***********************************/
 
 #include <linux/module.h>
 #include <linux/sched.h>
-#include <linux/slab.h>
 #include <linux/errno.h>
 #include <linux/kernel.h>
 #include <linux/fs.h>
 #include <linux/string.h>
 #include <linux/init.h>
+#include <linux/mutex.h>
 
 #include <asm/etraxi2c.h>
 
@@ -47,6 +47,7 @@
 #define D(x)
 
 #define I2C_MAJOR 123  /* LOCAL/EXPERIMENTAL */
+static DEFINE_MUTEX(i2c_mutex);
 static const char i2c_name[] = "i2c";
 
 #define CLOCK_LOW_TIME            8
@@ -78,6 +79,8 @@ static const char i2c_name[] = "i2c";
 #define i2c_getbit() crisv32_io_rd(&cris_i2c_data)
 
 #define i2c_delay(usecs) udelay(usecs)
+
+static DEFINE_SPINLOCK(i2c_lock); /* Protect directions etc */
 
 /****************** VARIABLE SECTION ************************************/
 
@@ -252,6 +255,7 @@ i2c_getack(void)
 	 * generate ACK clock pulse
 	 */
 	i2c_clk(I2C_CLOCK_HIGH);
+#if 0
 	/*
 	 * Use PORT PB instead of I2C
 	 * for input. (I2C not working)
@@ -264,6 +268,8 @@ i2c_getack(void)
 	i2c_data(1);
 	i2c_disable();
 	i2c_dir_in();
+#endif
+
 	/*
 	 * now wait for ack
 	 */
@@ -271,11 +277,11 @@ i2c_getack(void)
 	/*
 	 * check for ack
 	 */
-	if(i2c_getbit())
+	if (i2c_getbit())
 		ack = 0;
 	i2c_delay(CLOCK_HIGH_TIME/2);
-	if(!ack){
-		if(!i2c_getbit()) /* receiver pulld SDA low */
+	if (!ack) {
+		if (!i2c_getbit()) /* receiver pulld SDA low */
 			ack = 1;
 		i2c_delay(CLOCK_HIGH_TIME/2);
 	}
@@ -285,6 +291,7 @@ i2c_getack(void)
     * before we enable our output. If we keep data high
     * and enable output, we would generate a stop condition.
     */
+#if 0
    i2c_data(I2C_DATA_LOW);
 
 	/*
@@ -292,6 +299,7 @@ i2c_getack(void)
 	 */
 	i2c_enable();
 	i2c_dir_out();
+#endif
 	i2c_clk(I2C_CLOCK_LOW);
 	i2c_delay(CLOCK_HIGH_TIME/4);
 	/*
@@ -375,6 +383,121 @@ i2c_sendnack(void)
 
 /*#---------------------------------------------------------------------------
 *#
+*# FUNCTION NAME: i2c_write
+*#
+*# DESCRIPTION  : Writes a value to an I2C device
+*#
+*#--------------------------------------------------------------------------*/
+int
+i2c_write(unsigned char theSlave, void *data, size_t nbytes)
+{
+	int error, cntr = 3;
+	unsigned char bytes_wrote = 0;
+	unsigned char value;
+	unsigned long flags;
+
+	spin_lock_irqsave(&i2c_lock, flags);
+
+	do {
+		error = 0;
+
+		i2c_start();
+		/*
+		 * send slave address
+		 */
+		i2c_outbyte((theSlave & 0xfe));
+		/*
+		 * wait for ack
+		 */
+		if (!i2c_getack())
+			error = 1;
+		/*
+		 * send data
+		 */
+		for (bytes_wrote = 0; bytes_wrote < nbytes; bytes_wrote++) {
+			memcpy(&value, data + bytes_wrote, sizeof value);
+			i2c_outbyte(value);
+			/*
+			 * now it's time to wait for ack
+			 */
+			if (!i2c_getack())
+				error |= 4;
+		}
+		/*
+		 * end byte stream
+		 */
+		i2c_stop();
+
+	} while (error && cntr--);
+
+	i2c_delay(CLOCK_LOW_TIME);
+
+	spin_unlock_irqrestore(&i2c_lock, flags);
+
+	return -error;
+}
+
+/*#---------------------------------------------------------------------------
+*#
+*# FUNCTION NAME: i2c_read
+*#
+*# DESCRIPTION  : Reads a value from an I2C device
+*#
+*#--------------------------------------------------------------------------*/
+int
+i2c_read(unsigned char theSlave, void *data, size_t nbytes)
+{
+	unsigned char b = 0;
+	unsigned char bytes_read = 0;
+	int error, cntr = 3;
+	unsigned long flags;
+
+	spin_lock_irqsave(&i2c_lock, flags);
+
+	do {
+		error = 0;
+		memset(data, 0, nbytes);
+		/*
+		 * generate start condition
+		 */
+		i2c_start();
+		/*
+		 * send slave address
+		 */
+		i2c_outbyte((theSlave | 0x01));
+		/*
+		 * wait for ack
+		 */
+		if (!i2c_getack())
+			error = 1;
+		/*
+		 * fetch data
+		 */
+		for (bytes_read = 0; bytes_read < nbytes; bytes_read++) {
+			b = i2c_inbyte();
+			memcpy(data + bytes_read, &b, sizeof b);
+
+			if (bytes_read < (nbytes - 1))
+				i2c_sendack();
+		}
+		/*
+		 * last received byte needs to be nacked
+		 * instead of acked
+		 */
+		i2c_sendnack();
+		/*
+		 * end sequence
+		 */
+		i2c_stop();
+	} while (error && cntr--);
+
+	spin_unlock_irqrestore(&i2c_lock, flags);
+
+	return -error;
+}
+
+/*#---------------------------------------------------------------------------
+*#
 *# FUNCTION NAME: i2c_writereg
 *#
 *# DESCRIPTION  : Writes a value to an I2C device
@@ -387,12 +510,10 @@ i2c_writereg(unsigned char theSlave, unsigned char theReg,
 	int error, cntr = 3;
 	unsigned long flags;
 
+	spin_lock_irqsave(&i2c_lock, flags);
+
 	do {
 		error = 0;
-		/*
-		 * we don't like to be interrupted
-		 */
-                local_irq_save(flags);
 
 		i2c_start();
 		/*
@@ -427,14 +548,11 @@ i2c_writereg(unsigned char theSlave, unsigned char theReg,
 		 * end byte stream
 		 */
 		i2c_stop();
-		/*
-		 * enable interrupt again
-		 */
-		local_irq_restore(flags);
-
 	} while(error && cntr--);
 
 	i2c_delay(CLOCK_LOW_TIME);
+
+	spin_unlock_irqrestore(&i2c_lock, flags);
 
 	return -error;
 }
@@ -453,12 +571,10 @@ i2c_readreg(unsigned char theSlave, unsigned char theReg)
 	int error, cntr = 3;
 	unsigned long flags;
 
+	spin_lock_irqsave(&i2c_lock, flags);
+
 	do {
 		error = 0;
-		/*
-		 * we don't like to be interrupted
-		 */
-                local_irq_save(flags);
 		/*
 		 * generate start condition
 		 */
@@ -482,7 +598,7 @@ i2c_readreg(unsigned char theSlave, unsigned char theReg)
 		 * now it's time to wait for ack
 		 */
 		if(!i2c_getack())
-			error = 1;
+			error |= 2;
 		/*
 		 * repeat start condition
 		 */
@@ -496,7 +612,7 @@ i2c_readreg(unsigned char theSlave, unsigned char theReg)
 		 * wait for ack
 		 */
 		if(!i2c_getack())
-			error = 1;
+			error |= 4;
 		/*
 		 * fetch register
 		 */
@@ -510,12 +626,10 @@ i2c_readreg(unsigned char theSlave, unsigned char theReg)
 		 * end sequence
 		 */
 		i2c_stop();
-		/*
-		 * enable interrupt again
-		 */
-		local_irq_restore(flags);
 
 	} while(error && cntr--);
+
+	spin_unlock_irqrestore(&i2c_lock, flags);
 
 	return b;
 }
@@ -535,12 +649,12 @@ i2c_release(struct inode *inode, struct file *filp)
 /* Main device API. ioctl's to write or read to/from i2c registers.
  */
 
-static int
-i2c_ioctl(struct inode *inode, struct file *file,
-	  unsigned int cmd, unsigned long arg)
+static long
+i2c_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 {
+	int ret;
 	if(_IOC_TYPE(cmd) != ETRAXI2C_IOCTYPE) {
-		return -EINVAL;
+		return -ENOTTY;
 	}
 
 	switch (_IOC_NR(cmd)) {
@@ -551,9 +665,13 @@ i2c_ioctl(struct inode *inode, struct file *file,
 				 I2C_ARGREG(arg),
 				 I2C_ARGVALUE(arg)));
 
-			return i2c_writereg(I2C_ARGSLAVE(arg),
+			mutex_lock(&i2c_mutex);
+			ret = i2c_writereg(I2C_ARGSLAVE(arg),
 					    I2C_ARGREG(arg),
 					    I2C_ARGVALUE(arg));
+			mutex_unlock(&i2c_mutex);
+			return ret;
+
 		case I2C_READREG:
 		{
 			unsigned char val;
@@ -561,7 +679,9 @@ i2c_ioctl(struct inode *inode, struct file *file,
 			D(printk("i2cr %d %d ",
 				I2C_ARGSLAVE(arg),
 				I2C_ARGREG(arg)));
+			mutex_lock(&i2c_mutex);
 			val = i2c_readreg(I2C_ARGSLAVE(arg), I2C_ARGREG(arg));
+			mutex_unlock(&i2c_mutex);
 			D(printk("= %d\n", val));
 			return val;
 		}
@@ -574,37 +694,59 @@ i2c_ioctl(struct inode *inode, struct file *file,
 }
 
 static const struct file_operations i2c_fops = {
-	owner:    THIS_MODULE,
-	ioctl:    i2c_ioctl,
-	open:     i2c_open,
-	release:  i2c_release,
+	.owner		= THIS_MODULE,
+	.unlocked_ioctl = i2c_ioctl,
+	.open		= i2c_open,
+	.release	= i2c_release,
+	.llseek		= noop_llseek,
 };
 
-int __init
-i2c_init(void)
+static int __init i2c_init(void)
+{
+	static int res;
+	static int first = 1;
+
+	if (!first)
+		return res;
+
+	first = 0;
+
+	/* Setup and enable the DATA and CLK pins */
+
+	res = crisv32_io_get_name(&cris_i2c_data,
+		CONFIG_ETRAX_V32_I2C_DATA_PORT);
+	if (res < 0)
+		return res;
+
+	res = crisv32_io_get_name(&cris_i2c_clk, CONFIG_ETRAX_V32_I2C_CLK_PORT);
+	crisv32_io_set_dir(&cris_i2c_clk, crisv32_io_dir_out);
+
+	return res;
+}
+
+
+static int __init i2c_register(void)
 {
 	int res;
 
-	/* Setup and enable the Port B I2C interface */
-
-        crisv32_io_get_name(&cris_i2c_data, CONFIG_ETRAX_I2C_DATA_PORT);
-        crisv32_io_get_name(&cris_i2c_clk, CONFIG_ETRAX_I2C_CLK_PORT);
+	res = i2c_init();
+	if (res < 0)
+		return res;
 
 	/* register char device */
 
 	res = register_chrdev(I2C_MAJOR, i2c_name, &i2c_fops);
-	if(res < 0) {
+	if (res < 0) {
 		printk(KERN_ERR "i2c: couldn't get a major number.\n");
 		return res;
 	}
 
-	printk(KERN_INFO "I2C driver v2.2, (c) 1999-2001 Axis Communications AB\n");
+	printk(KERN_INFO
+		"I2C driver v2.2, (c) 1999-2007 Axis Communications AB\n");
 
 	return 0;
 }
-
 /* this makes sure that i2c_init is called during boot */
-
-module_init(i2c_init);
+module_init(i2c_register);
 
 /****************** END OF FILE i2c.c ********************************/

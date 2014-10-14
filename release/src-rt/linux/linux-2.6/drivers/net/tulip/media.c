@@ -1,7 +1,6 @@
 /*
 	drivers/net/tulip/media.c
 
-	Maintained by Valerie Henson <val_henson@linux.intel.com>
 	Copyright 2000,2001  The Linux Kernel Team
 	Written/copyright 1994-2001 by Donald Becker.
 
@@ -9,9 +8,9 @@
 	of the GNU General Public License, incorporated herein by reference.
 
 	Please refer to Documentation/DocBook/tulip-user.{pdf,ps,html}
-	for more information on this driver, or visit the project
-	Web page at http://sourceforge.net/projects/tulip/
+	for more information on this driver.
 
+	Please submit bugs to http://bugzilla.kernel.org/ .
 */
 
 #include <linux/kernel.h>
@@ -70,11 +69,10 @@ int tulip_mdio_read(struct net_device *dev, int phy_id, int location)
 
 	spin_lock_irqsave(&tp->mii_lock, flags);
 	if (tp->chip_id == LC82C168) {
-		int i = 1000;
 		iowrite32(0x60020000 + (phy_id<<23) + (location<<18), ioaddr + 0xA0);
 		ioread32(ioaddr + 0xA0);
 		ioread32(ioaddr + 0xA0);
-		while (--i > 0) {
+		for (i = 1000; i >= 0; --i) {
 			barrier();
 			if ( ! ((retval = ioread32(ioaddr + 0xA0)) & 0x80000000))
 				break;
@@ -132,13 +130,12 @@ void tulip_mdio_write(struct net_device *dev, int phy_id, int location, int val)
 
 	spin_lock_irqsave(&tp->mii_lock, flags);
 	if (tp->chip_id == LC82C168) {
-		int i = 1000;
 		iowrite32(cmd, ioaddr + 0xA0);
-		do {
+		for (i = 1000; i >= 0; --i) {
 			barrier();
 			if ( ! (ioread32(ioaddr + 0xA0) & 0x80000000))
 				break;
-		} while (--i > 0);
+		}
 		spin_unlock_irqrestore(&tp->mii_lock, flags);
 		return;
 	}
@@ -185,9 +182,8 @@ void tulip_select_media(struct net_device *dev, int startup)
 		switch (mleaf->type) {
 		case 0:					/* 21140 non-MII xcvr. */
 			if (tulip_debug > 1)
-				printk(KERN_DEBUG "%s: Using a 21140 non-MII transceiver"
-					   " with control setting %2.2x.\n",
-					   dev->name, p[1]);
+				printk(KERN_DEBUG "%s: Using a 21140 non-MII transceiver with control setting %02x\n",
+				       dev->name, p[1]);
 			dev->if_port = p[0];
 			if (startup)
 				iowrite32(mtable->csr12dir | 0x100, ioaddr + CSR12);
@@ -208,15 +204,15 @@ void tulip_select_media(struct net_device *dev, int startup)
 				struct medialeaf *rleaf = &mtable->mleaf[mtable->has_reset];
 				unsigned char *rst = rleaf->leafdata;
 				if (tulip_debug > 1)
-					printk(KERN_DEBUG "%s: Resetting the transceiver.\n",
-						   dev->name);
+					printk(KERN_DEBUG "%s: Resetting the transceiver\n",
+					       dev->name);
 				for (i = 0; i < rst[0]; i++)
 					iowrite32(get_u16(rst + 1 + (i<<1)) << 16, ioaddr + CSR15);
 			}
 			if (tulip_debug > 1)
-				printk(KERN_DEBUG "%s: 21143 non-MII %s transceiver control "
-					   "%4.4x/%4.4x.\n",
-					   dev->name, medianame[dev->if_port], setup[0], setup[1]);
+				printk(KERN_DEBUG "%s: 21143 non-MII %s transceiver control %04x/%04x\n",
+				       dev->name, medianame[dev->if_port],
+				       setup[0], setup[1]);
 			if (p[0] & 0x40) {	/* SIA (CSR13-15) setup values are provided. */
 				csr13val = setup[0];
 				csr14val = setup[1];
@@ -243,8 +239,8 @@ void tulip_select_media(struct net_device *dev, int startup)
 				if (startup) iowrite32(csr13val, ioaddr + CSR13);
 			}
 			if (tulip_debug > 1)
-				printk(KERN_DEBUG "%s:  Setting CSR15 to %8.8x/%8.8x.\n",
-					   dev->name, csr15dir, csr15val);
+				printk(KERN_DEBUG "%s:  Setting CSR15 to %08x/%08x\n",
+				       dev->name, csr15dir, csr15val);
 			if (mleaf->type == 4)
 				new_csr6 = 0x82020000 | ((setup[2] & 0x71) << 18);
 			else
@@ -320,8 +316,9 @@ void tulip_select_media(struct net_device *dev, int startup)
 				if (tp->mii_advertise == 0)
 					tp->mii_advertise = tp->advertising[phy_num];
 				if (tulip_debug > 1)
-					printk(KERN_DEBUG "%s:  Advertising %4.4x on MII %d.\n",
-					       dev->name, tp->mii_advertise, tp->phys[phy_num]);
+					printk(KERN_DEBUG "%s:  Advertising %04x on MII %d\n",
+					       dev->name, tp->mii_advertise,
+					       tp->phys[phy_num]);
 				tulip_mdio_write(dev, tp->phys[phy_num], 4, tp->mii_advertise);
 			}
 			break;
@@ -338,8 +335,8 @@ void tulip_select_media(struct net_device *dev, int startup)
 				struct medialeaf *rleaf = &mtable->mleaf[mtable->has_reset];
 				unsigned char *rst = rleaf->leafdata;
 				if (tulip_debug > 1)
-					printk(KERN_DEBUG "%s: Resetting the transceiver.\n",
-						   dev->name);
+					printk(KERN_DEBUG "%s: Resetting the transceiver\n",
+					       dev->name);
 				for (i = 0; i < rst[0]; i++)
 					iowrite32(get_u16(rst + 1 + (i<<1)) << 16, ioaddr + CSR15);
 			}
@@ -347,20 +344,20 @@ void tulip_select_media(struct net_device *dev, int startup)
 			break;
 		}
 		default:
-			printk(KERN_DEBUG "%s:  Invalid media table selection %d.\n",
-					   dev->name, mleaf->type);
+			printk(KERN_DEBUG "%s:  Invalid media table selection %d\n",
+			       dev->name, mleaf->type);
 			new_csr6 = 0x020E0000;
 		}
 		if (tulip_debug > 1)
-			printk(KERN_DEBUG "%s: Using media type %s, CSR12 is %2.2x.\n",
-				   dev->name, medianame[dev->if_port],
+			printk(KERN_DEBUG "%s: Using media type %s, CSR12 is %02x\n",
+			       dev->name, medianame[dev->if_port],
 				   ioread32(ioaddr + CSR12) & 0xff);
 	} else if (tp->chip_id == LC82C168) {
 		if (startup && ! tp->medialock)
 			dev->if_port = tp->mii_cnt ? 11 : 0;
 		if (tulip_debug > 1)
-			printk(KERN_DEBUG "%s: PNIC PHY status is %3.3x, media %s.\n",
-				   dev->name, ioread32(ioaddr + 0xB8), medianame[dev->if_port]);
+			printk(KERN_DEBUG "%s: PNIC PHY status is %3.3x, media %s\n",
+			       dev->name, ioread32(ioaddr + 0xB8), medianame[dev->if_port]);
 		if (tp->mii_cnt) {
 			new_csr6 = 0x810C0000;
 			iowrite32(0x0001, ioaddr + CSR15);
@@ -391,17 +388,14 @@ void tulip_select_media(struct net_device *dev, int startup)
 		} else
 			new_csr6 = 0x03860000;
 		if (tulip_debug > 1)
-			printk(KERN_DEBUG "%s: No media description table, assuming "
-				   "%s transceiver, CSR12 %2.2x.\n",
-				   dev->name, medianame[dev->if_port],
-				   ioread32(ioaddr + CSR12));
+			printk(KERN_DEBUG "%s: No media description table, assuming %s transceiver, CSR12 %02x\n",
+			       dev->name, medianame[dev->if_port],
+			       ioread32(ioaddr + CSR12));
 	}
 
 	tp->csr6 = new_csr6 | (tp->csr6 & 0xfdff) | (tp->full_duplex ? 0x0200 : 0);
 
 	mdelay(1);
-
-	return;
 }
 
 /*
@@ -418,16 +412,17 @@ int tulip_check_duplex(struct net_device *dev)
 	bmsr = tulip_mdio_read(dev, tp->phys[0], MII_BMSR);
 	lpa = tulip_mdio_read(dev, tp->phys[0], MII_LPA);
 	if (tulip_debug > 1)
-		printk(KERN_INFO "%s: MII status %4.4x, Link partner report "
-			   "%4.4x.\n", dev->name, bmsr, lpa);
+		dev_info(&dev->dev, "MII status %04x, Link partner report %04x\n",
+			 bmsr, lpa);
 	if (bmsr == 0xffff)
 		return -2;
 	if ((bmsr & BMSR_LSTATUS) == 0) {
 		int new_bmsr = tulip_mdio_read(dev, tp->phys[0], MII_BMSR);
 		if ((new_bmsr & BMSR_LSTATUS) == 0) {
 			if (tulip_debug  > 1)
-				printk(KERN_INFO "%s: No link beat on the MII interface,"
-					   " status %4.4x.\n", dev->name, new_bmsr);
+				dev_info(&dev->dev,
+					 "No link beat on the MII interface, status %04x\n",
+					 new_bmsr);
 			return -1;
 		}
 	}
@@ -446,10 +441,10 @@ int tulip_check_duplex(struct net_device *dev)
 		tulip_restart_rxtx(tp);
 
 		if (tulip_debug > 0)
-			printk(KERN_INFO "%s: Setting %s-duplex based on MII"
-				   "#%d link partner capability of %4.4x.\n",
-				   dev->name, tp->full_duplex ? "full" : "half",
-				   tp->phys[0], lpa);
+			dev_info(&dev->dev,
+				 "Setting %s-duplex based on MII#%d link partner capability of %04x\n",
+				 tp->full_duplex ? "full" : "half",
+				 tp->phys[0], lpa);
 		return 1;
 	}
 
@@ -471,8 +466,8 @@ void __devinit tulip_find_mii (struct net_device *dev, int board_idx)
 		int phy = phyn & 0x1f;
 		int mii_status = tulip_mdio_read (dev, phy, MII_BMSR);
 		if ((mii_status & 0x8301) == 0x8001 ||
-		    ((mii_status & BMSR_100BASE4) == 0
-		     && (mii_status & 0x7800) != 0)) {
+		    ((mii_status & BMSR_100BASE4) == 0 &&
+		     (mii_status & 0x7800) != 0)) {
 			/* preserve Becker logic, gain indentation level */
 		} else {
 			continue;
@@ -504,15 +499,13 @@ void __devinit tulip_find_mii (struct net_device *dev, int board_idx)
 
 		tp->phys[phy_idx++] = phy;
 
-		printk (KERN_INFO "tulip%d:  MII transceiver #%d "
-			"config %4.4x status %4.4x advertising %4.4x.\n",
+		pr_info("tulip%d:  MII transceiver #%d config %04x status %04x advertising %04x\n",
 			board_idx, phy, mii_reg0, mii_status, mii_advert);
 
 		/* Fixup for DLink with miswired PHY. */
 		if (mii_advert != to_advert) {
-			printk (KERN_DEBUG "tulip%d:  Advertising %4.4x on PHY %d,"
-				" previously advertising %4.4x.\n",
-				board_idx, to_advert, phy, mii_advert);
+			printk(KERN_DEBUG "tulip%d:  Advertising %04x on PHY %d, previously advertising %04x\n",
+			       board_idx, to_advert, phy, mii_advert);
 			tulip_mdio_write (dev, phy, 4, to_advert);
 		}
 
@@ -557,7 +550,7 @@ void __devinit tulip_find_mii (struct net_device *dev, int board_idx)
 	}
 	tp->mii_cnt = phy_idx;
 	if (tp->mtable && tp->mtable->has_mii && phy_idx == 0) {
-		printk (KERN_INFO "tulip%d: ***WARNING***: No MII transceiver found!\n",
+		pr_info("tulip%d: ***WARNING***: No MII transceiver found!\n",
 			board_idx);
 		tp->phys[0] = 1;
 	}

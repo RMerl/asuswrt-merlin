@@ -15,10 +15,11 @@
 #include <linux/clk.h>
 #include <linux/platform_device.h>
 
-#include <asm/mach-types.h>
-#include <asm/hardware.h>
-#include <asm/arch/board.h>
-#include <asm/arch/cpu.h>
+#include <mach/hardware.h>
+#include <asm/gpio.h>
+
+#include <mach/board.h>
+#include <mach/cpu.h>
 
 #ifndef CONFIG_ARCH_AT91
 #error "CONFIG_ARCH_AT91 must be defined."
@@ -34,7 +35,7 @@ extern int usb_disabled(void);
 
 static void at91_start_clock(void)
 {
-	if (cpu_is_at91sam9261())
+	if (cpu_is_at91sam9261() || cpu_is_at91sam9g10())
 		clk_enable(hclk);
 	clk_enable(iclk);
 	clk_enable(fclk);
@@ -45,7 +46,7 @@ static void at91_stop_clock(void)
 {
 	clk_disable(fclk);
 	clk_disable(iclk);
-	if (cpu_is_at91sam9261())
+	if (cpu_is_at91sam9261() || cpu_is_at91sam9g10())
 		clk_disable(hclk);
 	clocked = 0;
 }
@@ -89,7 +90,7 @@ static void at91_stop_hc(struct platform_device *pdev)
 
 /*-------------------------------------------------------------------------*/
 
-static int usb_hcd_at91_remove (struct usb_hcd *, struct platform_device *);
+static void usb_hcd_at91_remove (struct usb_hcd *, struct platform_device *);
 
 /* configure so an HC device and id are always provided */
 /* always called with process context; sleeping is OK */
@@ -141,20 +142,20 @@ static int usb_hcd_at91_probe(const struct hc_driver *driver,
 
 	iclk = clk_get(&pdev->dev, "ohci_clk");
 	fclk = clk_get(&pdev->dev, "uhpck");
-	if (cpu_is_at91sam9261())
+	if (cpu_is_at91sam9261() || cpu_is_at91sam9g10())
 		hclk = clk_get(&pdev->dev, "hck0");
 
 	at91_start_hc(pdev);
 	ohci_hcd_init(hcd_to_ohci(hcd));
 
-	retval = usb_add_hcd(hcd, pdev->resource[1].start, IRQF_DISABLED);
+	retval = usb_add_hcd(hcd, pdev->resource[1].start, IRQF_SHARED);
 	if (retval == 0)
 		return retval;
 
 	/* Error handling */
 	at91_stop_hc(pdev);
 
-	if (cpu_is_at91sam9261())
+	if (cpu_is_at91sam9261() || cpu_is_at91sam9g10())
 		clk_put(hclk);
 	clk_put(fclk);
 	clk_put(iclk);
@@ -182,22 +183,22 @@ static int usb_hcd_at91_probe(const struct hc_driver *driver,
  * context, "rmmod" or something similar.
  *
  */
-static int usb_hcd_at91_remove(struct usb_hcd *hcd,
+static void usb_hcd_at91_remove(struct usb_hcd *hcd,
 				struct platform_device *pdev)
 {
 	usb_remove_hcd(hcd);
 	at91_stop_hc(pdev);
 	iounmap(hcd->regs);
 	release_mem_region(hcd->rsrc_start, hcd->rsrc_len);
+	usb_put_hcd(hcd);
 
-	if (cpu_is_at91sam9261())
+	if (cpu_is_at91sam9261() || cpu_is_at91sam9g10())
 		clk_put(hclk);
 	clk_put(fclk);
 	clk_put(iclk);
 	fclk = iclk = hclk = NULL;
 
 	dev_set_drvdata(&pdev->dev, NULL);
-	return 0;
 }
 
 /*-------------------------------------------------------------------------*/
@@ -259,7 +260,6 @@ static const struct hc_driver ohci_at91_hc_driver = {
 	 */
 	.hub_status_data =	ohci_hub_status_data,
 	.hub_control =		ohci_hub_control,
-	.hub_irq_enable =	ohci_rhsc_enable,
 #ifdef CONFIG_PM
 	.bus_suspend =		ohci_bus_suspend,
 	.bus_resume =		ohci_bus_resume,
@@ -271,14 +271,44 @@ static const struct hc_driver ohci_at91_hc_driver = {
 
 static int ohci_hcd_at91_drv_probe(struct platform_device *pdev)
 {
+	struct at91_usbh_data	*pdata = pdev->dev.platform_data;
+	int			i;
+
+	if (pdata) {
+		/* REVISIT make the driver support per-port power switching,
+		 * and also overcurrent detection.  Here we assume the ports
+		 * are always powered while this driver is active, and use
+		 * active-low power switches.
+		 */
+		for (i = 0; i < ARRAY_SIZE(pdata->vbus_pin); i++) {
+			if (pdata->vbus_pin[i] <= 0)
+				continue;
+			gpio_request(pdata->vbus_pin[i], "ohci_vbus");
+			gpio_direction_output(pdata->vbus_pin[i], 0);
+		}
+	}
+
 	device_init_wakeup(&pdev->dev, 1);
 	return usb_hcd_at91_probe(&ohci_at91_hc_driver, pdev);
 }
 
 static int ohci_hcd_at91_drv_remove(struct platform_device *pdev)
 {
+	struct at91_usbh_data	*pdata = pdev->dev.platform_data;
+	int			i;
+
+	if (pdata) {
+		for (i = 0; i < ARRAY_SIZE(pdata->vbus_pin); i++) {
+			if (pdata->vbus_pin[i] <= 0)
+				continue;
+			gpio_direction_output(pdata->vbus_pin[i], 1);
+			gpio_free(pdata->vbus_pin[i]);
+		}
+	}
+
 	device_init_wakeup(&pdev->dev, 0);
-	return usb_hcd_at91_remove(platform_get_drvdata(pdev), pdev);
+	usb_hcd_at91_remove(platform_get_drvdata(pdev), pdev);
+	return 0;
 }
 
 #ifdef CONFIG_PM
@@ -301,6 +331,8 @@ ohci_hcd_at91_drv_suspend(struct platform_device *pdev, pm_message_t mesg)
 	 */
 	if (at91_suspend_entering_slow_clock()) {
 		ohci_usb_reset (ohci);
+		/* flush the writes */
+		(void) ohci_readl (ohci, &ohci->regs->control);
 		at91_stop_clock();
 	}
 
@@ -325,7 +357,7 @@ static int ohci_hcd_at91_drv_resume(struct platform_device *pdev)
 #define ohci_hcd_at91_drv_resume  NULL
 #endif
 
-MODULE_ALIAS("at91_ohci");
+MODULE_ALIAS("platform:at91_ohci");
 
 static struct platform_driver ohci_hcd_at91_driver = {
 	.probe		= ohci_hcd_at91_drv_probe,
@@ -338,4 +370,3 @@ static struct platform_driver ohci_hcd_at91_driver = {
 		.owner	= THIS_MODULE,
 	},
 };
-

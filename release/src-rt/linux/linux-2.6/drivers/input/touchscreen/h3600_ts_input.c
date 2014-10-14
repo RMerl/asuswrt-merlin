@@ -1,6 +1,4 @@
 /*
- * $Id: h3600_ts_input.c,v 1.4 2002/01/23 06:39:37 jsimmons Exp $
- *
  *  Copyright (c) 2001 "Crazy" James Simmons jsimmons@transvirtual.com
  *
  *  Sponsored by Transvirtual Technology.
@@ -41,8 +39,8 @@
 #include <linux/delay.h>
 
 /* SA1100 serial defines */
-#include <asm/arch/hardware.h>
-#include <asm/arch/irqs.h>
+#include <mach/hardware.h>
+#include <mach/irqs.h>
 
 #define DRIVER_DESC	"H3600 touchscreen driver"
 
@@ -64,7 +62,7 @@ MODULE_LICENSE("GPL");
         Programmer has no control over these numbers.
         TODO there are holes - specifically  1,7,0x0a
 */
-#define VERSION_ID              0       /* Get Version (request/respose) */
+#define VERSION_ID              0       /* Get Version (request/response) */
 #define KEYBD_ID                2       /* Keyboard (event) */
 #define TOUCHS_ID               3       /* Touch Screen (event)*/
 #define EEPROM_READ_ID          4       /* (request/response) */
@@ -109,7 +107,7 @@ struct h3600_dev {
 static irqreturn_t action_button_handler(int irq, void *dev_id)
 {
 	int down = (GPLR & GPIO_BITSY_ACTION_BUTTON) ? 0 : 1;
-	struct input_dev *dev = (struct input_dev *) dev_id;
+	struct input_dev *dev = dev_id;
 
 	input_report_key(dev, KEY_ENTER, down);
 	input_sync(dev);
@@ -120,7 +118,7 @@ static irqreturn_t action_button_handler(int irq, void *dev_id)
 static irqreturn_t npower_button_handler(int irq, void *dev_id)
 {
 	int down = (GPLR & GPIO_BITSY_NPOWER_BUTTON) ? 0 : 1;
-	struct input_dev *dev = (struct input_dev *) dev_id;
+	struct input_dev *dev = dev_id;
 
 	/*
 	 * This interrupt is only called when we release the key. So we have
@@ -150,9 +148,10 @@ unsigned int h3600_flite_power(struct input_dev *dev, enum flite_pwr pwr)
 	struct h3600_dev *ts = input_get_drvdata(dev);
 
 	/* Must be in this order */
-	ts->serio->write(ts->serio, 1);
-	ts->serio->write(ts->serio, pwr);
-	ts->serio->write(ts->serio, brightness);
+	serio_write(ts->serio, 1);
+	serio_write(ts->serio, pwr);
+	serio_write(ts->serio, brightness);
+
 	return 0;
 }
 
@@ -264,7 +263,7 @@ static int h3600ts_event(struct input_dev *dev, unsigned int type,
 
 	switch (type) {
 		case EV_LED: {
-		//	ts->serio->write(ts->serio, SOME_CMD);
+		//	serio_write(ts->serio, SOME_CMD);
 			return 0;
 		}
 	}
@@ -373,8 +372,9 @@ static int h3600ts_connect(struct serio *serio, struct serio_driver *drv)
 
 	input_dev->event = h3600ts_event;
 
-	input_dev->evbit[0] = BIT(EV_KEY) | BIT(EV_ABS) | BIT(EV_LED) | BIT(EV_PWR);
-	input_dev->ledbit[0] = BIT(LED_SLEEP);
+	input_dev->evbit[0] = BIT_MASK(EV_KEY) | BIT_MASK(EV_ABS) |
+		BIT_MASK(EV_LED) | BIT_MASK(EV_PWR);
+	input_dev->ledbit[0] = BIT_MASK(LED_SLEEP);
 	input_set_abs_params(input_dev, ABS_X, 60, 985, 0, 0);
 	input_set_abs_params(input_dev, ABS_Y, 35, 1024, 0, 0);
 
@@ -399,31 +399,34 @@ static int h3600ts_connect(struct serio *serio, struct serio_driver *drv)
 			IRQF_SHARED | IRQF_DISABLED, "h3600_action", &ts->dev)) {
 		printk(KERN_ERR "h3600ts.c: Could not allocate Action Button IRQ!\n");
 		err = -EBUSY;
-		goto fail2;
+		goto fail1;
 	}
 
 	if (request_irq(IRQ_GPIO_BITSY_NPOWER_BUTTON, npower_button_handler,
 			IRQF_SHARED | IRQF_DISABLED, "h3600_suspend", &ts->dev)) {
 		printk(KERN_ERR "h3600ts.c: Could not allocate Power Button IRQ!\n");
 		err = -EBUSY;
-		goto fail3;
+		goto fail2;
 	}
 
 	serio_set_drvdata(serio, ts);
 
 	err = serio_open(serio, drv);
 	if (err)
-		return err;
+		goto fail3;
 
 	//h3600_flite_control(1, 25);     /* default brightness */
-	input_register_device(ts->dev);
+	err = input_register_device(ts->dev);
+	if (err)
+		goto fail4;
 
 	return 0;
 
-fail3:	free_irq(IRQ_GPIO_BITSY_NPOWER_BUTTON, ts->dev);
+fail4:	serio_close(serio);
+fail3:	serio_set_drvdata(serio, NULL);
+	free_irq(IRQ_GPIO_BITSY_NPOWER_BUTTON, ts->dev);
 fail2:	free_irq(IRQ_GPIO_BITSY_ACTION_BUTTON, ts->dev);
-fail1:	serio_set_drvdata(serio, NULL);
-	input_free_device(input_dev);
+fail1:	input_free_device(input_dev);
 	kfree(ts);
 	return err;
 }

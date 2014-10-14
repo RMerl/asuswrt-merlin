@@ -1,4 +1,3 @@
-// $Id: octagon-5066.c,v 1.28 2005/11/07 11:14:27 gleixner Exp $
 /* ######################################################################
 
    Octagon 5066 MTD Driver.
@@ -25,7 +24,6 @@
    ##################################################################### */
 
 #include <linux/module.h>
-#include <linux/slab.h>
 #include <linux/ioport.h>
 #include <linux/init.h>
 #include <asm/io.h>
@@ -185,7 +183,7 @@ void cleanup_oct5066(void)
 	release_region(PAGE_IO, 1);
 }
 
-int __init init_oct5066(void)
+static int __init init_oct5066(void)
 {
 	int i;
 	int ret = 0;

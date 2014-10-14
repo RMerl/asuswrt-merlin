@@ -22,14 +22,12 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
  */
 
-#include <sound/driver.h>
 #include <linux/init.h>
 #include <linux/delay.h>
 #include <linux/slab.h>
 #include <sound/core.h>
 #include "hda_codec.h"
 #include "hda_local.h"
-
 
 /* si3054 verbs */
 #define SI3054_VERB_READ_NODE  0x900
@@ -78,6 +76,8 @@
 /* si3054 codec registers (nodes) access macros */
 #define GET_REG(codec,reg) (snd_hda_codec_read(codec,reg,0,SI3054_VERB_READ_NODE,0))
 #define SET_REG(codec,reg,val) (snd_hda_codec_write(codec,reg,0,SI3054_VERB_WRITE_NODE,val))
+#define SET_REG_CACHE(codec,reg,val) \
+	snd_hda_codec_write_cache(codec,reg,0,SI3054_VERB_WRITE_NODE,val)
 
 
 struct si3054_spec {
@@ -94,15 +94,7 @@ struct si3054_spec {
 #define PRIVATE_REG(val) ((val>>16)&0xffff)
 #define PRIVATE_MASK(val) (val&0xffff)
 
-static int si3054_switch_info(struct snd_kcontrol *kcontrol,
-		               struct snd_ctl_elem_info *uinfo)
-{
-	uinfo->type = SNDRV_CTL_ELEM_TYPE_BOOLEAN;
-	uinfo->count = 1;
-	uinfo->value.integer.min = 0;
-	uinfo->value.integer.max = 1;
-	return 0;
-}
+#define si3054_switch_info	snd_ctl_boolean_mono_info
 
 static int si3054_switch_get(struct snd_kcontrol *kcontrol,
 		               struct snd_ctl_elem_value *uvalue)
@@ -121,15 +113,16 @@ static int si3054_switch_put(struct snd_kcontrol *kcontrol,
 	u16 reg  = PRIVATE_REG(kcontrol->private_value);
 	u16 mask = PRIVATE_MASK(kcontrol->private_value);
 	if (uvalue->value.integer.value[0])
-		SET_REG(codec, reg, (GET_REG(codec, reg)) | mask);
+		SET_REG_CACHE(codec, reg, (GET_REG(codec, reg)) | mask);
 	else
-		SET_REG(codec, reg, (GET_REG(codec, reg)) & ~mask);
+		SET_REG_CACHE(codec, reg, (GET_REG(codec, reg)) & ~mask);
 	return 0;
 }
 
 #define SI3054_KCONTROL(kname,reg,mask) { \
 	.iface = SNDRV_CTL_ELEM_IFACE_MIXER, \
 	.name = kname, \
+	.subdevice = HDA_SUBDEV_NID_FLAG | reg, \
 	.info = si3054_switch_info, \
 	.get  = si3054_switch_get, \
 	.put  = si3054_switch_put, \
@@ -213,7 +206,7 @@ static int si3054_build_pcms(struct hda_codec *codec)
 	info->name = "Si3054 Modem";
 	info->stream[SNDRV_PCM_STREAM_PLAYBACK] = si3054_pcm;
 	info->stream[SNDRV_PCM_STREAM_CAPTURE]  = si3054_pcm;
-	info->is_modem = 1;
+	info->pcm_type = HDA_PCM_TYPE_MODEM;
 	return 0;
 }
 
@@ -275,10 +268,6 @@ static struct hda_codec_ops si3054_patch_ops = {
 	.build_pcms = si3054_build_pcms,
 	.init = si3054_init,
 	.free = si3054_free,
-#ifdef CONFIG_PM
-	//.suspend = si3054_suspend,
-	.resume = si3054_init,
-#endif
 };
 
 static int patch_si3054(struct hda_codec *codec)
@@ -294,18 +283,53 @@ static int patch_si3054(struct hda_codec *codec)
 /*
  * patch entries
  */
-struct hda_codec_preset snd_hda_preset_si3054[] = {
+static struct hda_codec_preset snd_hda_preset_si3054[] = {
  	{ .id = 0x163c3055, .name = "Si3054", .patch = patch_si3054 },
  	{ .id = 0x163c3155, .name = "Si3054", .patch = patch_si3054 },
- 	{ .id = 0x11c11040, .name = "Si3054", .patch = patch_si3054 },
  	{ .id = 0x11c13026, .name = "Si3054", .patch = patch_si3054 },
  	{ .id = 0x11c13055, .name = "Si3054", .patch = patch_si3054 },
  	{ .id = 0x11c13155, .name = "Si3054", .patch = patch_si3054 },
  	{ .id = 0x10573055, .name = "Si3054", .patch = patch_si3054 },
  	{ .id = 0x10573057, .name = "Si3054", .patch = patch_si3054 },
  	{ .id = 0x10573155, .name = "Si3054", .patch = patch_si3054 },
+	/* VIA HDA on Clevo m540 */
+	{ .id = 0x11063288, .name = "Si3054", .patch = patch_si3054 },
 	/* Asus A8J Modem (SM56) */
 	{ .id = 0x15433155, .name = "Si3054", .patch = patch_si3054 },
+	/* LG LW20 modem */
+	{ .id = 0x18540018, .name = "Si3054", .patch = patch_si3054 },
 	{}
 };
 
+MODULE_ALIAS("snd-hda-codec-id:163c3055");
+MODULE_ALIAS("snd-hda-codec-id:163c3155");
+MODULE_ALIAS("snd-hda-codec-id:11c13026");
+MODULE_ALIAS("snd-hda-codec-id:11c13055");
+MODULE_ALIAS("snd-hda-codec-id:11c13155");
+MODULE_ALIAS("snd-hda-codec-id:10573055");
+MODULE_ALIAS("snd-hda-codec-id:10573057");
+MODULE_ALIAS("snd-hda-codec-id:10573155");
+MODULE_ALIAS("snd-hda-codec-id:11063288");
+MODULE_ALIAS("snd-hda-codec-id:15433155");
+MODULE_ALIAS("snd-hda-codec-id:18540018");
+
+MODULE_LICENSE("GPL");
+MODULE_DESCRIPTION("Si3054 HD-audio modem codec");
+
+static struct hda_codec_preset_list si3054_list = {
+	.preset = snd_hda_preset_si3054,
+	.owner = THIS_MODULE,
+};
+
+static int __init patch_si3054_init(void)
+{
+	return snd_hda_add_codec_preset(&si3054_list);
+}
+
+static void __exit patch_si3054_exit(void)
+{
+	snd_hda_delete_codec_preset(&si3054_list);
+}
+
+module_init(patch_si3054_init)
+module_exit(patch_si3054_exit)

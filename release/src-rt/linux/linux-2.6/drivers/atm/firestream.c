@@ -46,6 +46,7 @@
 #include <linux/init.h>
 #include <linux/capability.h>
 #include <linux/bitops.h>
+#include <linux/slab.h>
 #include <asm/byteorder.h>
 #include <asm/system.h>
 #include <asm/string.h>
@@ -171,8 +172,8 @@ static char *res_strings[] = {
 	"packet purged", 
 	"packet ageing timeout", 
 	"channel ageing timeout", 
-	"calculated lenght error", 
-	"programmed lenght limit error", 
+	"calculated length error", 
+	"programmed length limit error", 
 	"aal5 crc32 error", 
 	"oam transp or transpc crc10 error", 
 	"reserved 25", 
@@ -331,8 +332,8 @@ module_param(fs_keystream, int, 0);
 #define FS_DEBUG_QSIZE   0x00001000
 
 
-#define func_enter() fs_dprintk (FS_DEBUG_FLOW, "fs: enter %s\n", __FUNCTION__)
-#define func_exit()  fs_dprintk (FS_DEBUG_FLOW, "fs: exit  %s\n", __FUNCTION__)
+#define func_enter() fs_dprintk(FS_DEBUG_FLOW, "fs: enter %s\n", __func__)
+#define func_exit()  fs_dprintk(FS_DEBUG_FLOW, "fs: exit  %s\n", __func__)
 
 
 static struct fs_dev *fs_boards = NULL;
@@ -443,8 +444,8 @@ static inline void fs_kfree_skb (struct sk_buff * skb)
 #define ROUND_NEAREST 3
 /********** make rate (not quite as much fun as Horizon) **********/
 
-static unsigned int make_rate (unsigned int rate, int r,
-			       u16 * bits, unsigned int * actual) 
+static int make_rate(unsigned int rate, int r,
+		      u16 *bits, unsigned int *actual)
 {
 	unsigned char exp = -1; /* hush gcc */
 	unsigned int man = -1;  /* hush gcc */
@@ -978,6 +979,7 @@ static int fs_open(struct atm_vcc *atm_vcc)
 		/* Docs are vague about this atm_hdr field. By the way, the FS
 		 * chip makes odd errors if lower bits are set.... -- REW */
 		tc->atm_hdr =  (vpi << 20) | (vci << 4); 
+		tmc0 = 0;
 		{
 			int pcr = atm_pcr_goal (txtp);
 
@@ -1029,7 +1031,7 @@ static int fs_open(struct atm_vcc *atm_vcc)
 		/* We now use the "submit_command" function to submit commands to
 		   the firestream. There is a define up near the definition of
 		   that routine that switches this routine between immediate write
-		   to the immediate comamnd registers and queuing the commands in
+		   to the immediate command registers and queuing the commands in
 		   the HPTXQ for execution. This last technique might be more
 		   efficient if we know we're going to submit a whole lot of
 		   commands in one go, but this driver is not setup to be able to
@@ -1243,7 +1245,7 @@ static int fs_getsockopt(struct atm_vcc *vcc,int level,int optname,
 
 
 static int fs_setsockopt(struct atm_vcc *vcc,int level,int optname,
-			 void __user *optval,int optlen)
+			 void __user *optval,unsigned int optlen)
 {
 	func_enter ();
 	func_exit ();
@@ -1295,7 +1297,7 @@ static const struct atmdev_ops ops = {
 
 static void __devinit undocumented_pci_fix (struct pci_dev *pdev)
 {
-	int tint;
+	u32 tint;
 
 	/* The Windows driver says: */
 	/* Switch off FireStream Retry Limit Threshold 
@@ -1596,7 +1598,7 @@ static irqreturn_t fs_irq (int irq, void *dev_id)
 
 	/* print the bits in the ISR register. */
 	if (fs_debug & FS_DEBUG_IRQ) {
-		/* The FS_DEBUG things are unneccesary here. But this way it is
+		/* The FS_DEBUG things are unnecessary here. But this way it is
 		   clear for grep that these are debug prints. */
 		fs_dprintk (FS_DEBUG_IRQ,  "IRQ status:");
 		for (i=0;i<27;i++) 
@@ -1689,17 +1691,17 @@ static int __devinit fs_init (struct fs_dev *dev)
 		  | (0 * SARMODE0_SHADEN) /* We don't use shadow registers. */
 		  | (1 * SARMODE0_INTMODE_READCLEAR)
 		  | (1 * SARMODE0_CWRE)
-		  | IS_FS50(dev)?SARMODE0_PRPWT_FS50_5: 
-		                 SARMODE0_PRPWT_FS155_3
+		  | (IS_FS50(dev) ? SARMODE0_PRPWT_FS50_5:
+			  SARMODE0_PRPWT_FS155_3)
 		  | (1 * SARMODE0_CALSUP_1)
-		  | IS_FS50 (dev)?(0
+		  | (IS_FS50(dev) ? (0
 				   | SARMODE0_RXVCS_32
 				   | SARMODE0_ABRVCS_32 
 				   | SARMODE0_TXVCS_32):
 		                  (0
 				   | SARMODE0_RXVCS_1k
 				   | SARMODE0_ABRVCS_1k 
-				   | SARMODE0_TXVCS_1k));
+				   | SARMODE0_TXVCS_1k)));
 
 	/* 10ms * 100 is 1 second. That should be enough, as AN3:9 says it takes
 	   1ms. */
@@ -1710,7 +1712,7 @@ static int __devinit fs_init (struct fs_dev *dev)
 		/* This bit is documented as "RESERVED" */
 		if (isr & ISR_INIT_ERR) {
 			printk (KERN_ERR "Error initializing the FS... \n");
-			return 1;
+			goto unmap;
 		}
 		if (isr & ISR_INIT) {
 			fs_dprintk (FS_DEBUG_INIT, "Ha! Initialized OK!\n");
@@ -1723,7 +1725,7 @@ static int __devinit fs_init (struct fs_dev *dev)
 
 	if (!to) {
 		printk (KERN_ERR "timeout initializing the FS... \n");
-		return 1;
+		goto unmap;
 	}
 
 	/* XXX fix for fs155 */
@@ -1780,7 +1782,7 @@ static int __devinit fs_init (struct fs_dev *dev)
 		write_fs (dev, RAS0, RAS0_DCD_XHLT 
 			  | (((1 << FS155_VPI_BITS) - 1) * RAS0_VPSEL)
 			  | (((1 << FS155_VCI_BITS) - 1) * RAS0_VCSEL));
-		/* We can chose the split arbitarily. We might be able to 
+		/* We can chose the split arbitrarily. We might be able to 
 		   support more. Whatever. This should do for now. */
 		dev->atm_dev->ci_range.vpi_bits = FS155_VPI_BITS;
 		dev->atm_dev->ci_range.vci_bits = FS155_VCI_BITS;
@@ -1803,7 +1805,7 @@ static int __devinit fs_init (struct fs_dev *dev)
 	if (!dev->atm_vccs) {
 		printk (KERN_WARNING "Couldn't allocate memory for VCC buffers. Woops!\n");
 		/* XXX Clean up..... */
-		return 1;
+		goto unmap;
 	}
 
 	dev->tx_inuse = kzalloc (dev->nchannels / 8 /* bits/byte */ , GFP_KERNEL);
@@ -1813,7 +1815,7 @@ static int __devinit fs_init (struct fs_dev *dev)
 	if (!dev->tx_inuse) {
 		printk (KERN_WARNING "Couldn't allocate memory for tx_inuse bits!\n");
 		/* XXX Clean up..... */
-		return 1;
+		goto unmap;
 	}
 	/* -- RAS1 : FS155 and 50 differ. Default (0) should be OK for both */
 	/* -- RAS2 : FS50 only: Default is OK. */
@@ -1840,7 +1842,7 @@ static int __devinit fs_init (struct fs_dev *dev)
 	if (request_irq (dev->irq, fs_irq, IRQF_SHARED, "firestream", dev)) {
 		printk (KERN_WARNING "couldn't get irq %d for firestream.\n", pci_dev->irq);
 		/* XXX undo all previous stuff... */
-		return 1;
+		goto unmap;
 	}
 	fs_dprintk (FS_DEBUG_INIT, "Grabbed irq %d for dev at %p.\n", dev->irq, dev);
   
@@ -1890,6 +1892,9 @@ static int __devinit fs_init (struct fs_dev *dev)
   
 	func_exit ();
 	return 0;
+unmap:
+	iounmap(dev->base);
+	return 1;
 }
 
 static int __devinit firestream_init_one (struct pci_dev *pci_dev,
@@ -1906,7 +1911,7 @@ static int __devinit firestream_init_one (struct pci_dev *pci_dev,
 		    fs_dev, sizeof (struct fs_dev));
 	if (!fs_dev)
 		goto err_out;
-	atm_dev = atm_dev_register("fs", &ops, -1, NULL);
+	atm_dev = atm_dev_register("fs", &pci_dev->dev, &ops, -1, NULL);
 	if (!atm_dev)
 		goto err_out_free_fs_dev;
   
@@ -2012,6 +2017,7 @@ static void __devexit firestream_remove_one (struct pci_dev *pdev)
 		for (i=0;i < FS_NR_RX_QUEUES;i++)
 			free_queue (dev, &dev->rx_rq[i]);
 
+		iounmap(dev->base);
 		fs_dprintk (FS_DEBUG_ALLOC, "Free fs-dev: %p\n", dev);
 		nxtdev = dev->next;
 		kfree (dev);
@@ -2021,10 +2027,8 @@ static void __devexit firestream_remove_one (struct pci_dev *pdev)
 }
 
 static struct pci_device_id firestream_pci_tbl[] = {
-	{ PCI_VENDOR_ID_FUJITSU_ME, PCI_DEVICE_ID_FUJITSU_FS50, 
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, FS_IS50},
-	{ PCI_VENDOR_ID_FUJITSU_ME, PCI_DEVICE_ID_FUJITSU_FS155, 
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, FS_IS155},
+	{ PCI_VDEVICE(FUJITSU_ME, PCI_DEVICE_ID_FUJITSU_FS50), FS_IS50},
+	{ PCI_VDEVICE(FUJITSU_ME, PCI_DEVICE_ID_FUJITSU_FS155), FS_IS155},
 	{ 0, }
 };
 

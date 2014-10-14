@@ -56,13 +56,12 @@ static int soundbus_probe(struct device *dev)
 }
 
 
-static int soundbus_uevent(struct device *dev, char **envp, int num_envp,
-			   char *buffer, int buffer_size)
+static int soundbus_uevent(struct device *dev, struct kobj_uevent_env *env)
 {
 	struct soundbus_dev * soundbus_dev;
-	struct of_device * of;
+	struct platform_device * of;
 	const char *compat;
-	int retval = 0, i = 0, length = 0;
+	int retval = 0;
 	int cplen, seen = 0;
 
 	if (!dev)
@@ -75,15 +74,11 @@ static int soundbus_uevent(struct device *dev, char **envp, int num_envp,
 	of = &soundbus_dev->ofdev;
 
 	/* stuff we want to pass to /sbin/hotplug */
-	retval = add_uevent_var(envp, num_envp, &i,
-				buffer, buffer_size, &length,
-				"OF_NAME=%s", of->node->name);
+	retval = add_uevent_var(env, "OF_NAME=%s", of->dev.of_node->name);
 	if (retval)
 		return retval;
 
-	retval = add_uevent_var(envp, num_envp, &i,
-				buffer, buffer_size, &length,
-				"OF_TYPE=%s", of->node->type);
+	retval = add_uevent_var(env, "OF_TYPE=%s", of->dev.of_node->type);
 	if (retval)
 		return retval;
 
@@ -91,29 +86,21 @@ static int soundbus_uevent(struct device *dev, char **envp, int num_envp,
 	 * it's not really legal to split it out with commas. We split it
 	 * up using a number of environment variables instead. */
 
-	compat = of_get_property(of->node, "compatible", &cplen);
+	compat = of_get_property(of->dev.of_node, "compatible", &cplen);
 	while (compat && cplen > 0) {
-		int tmp = length;
-		retval = add_uevent_var(envp, num_envp, &i,
-					buffer, buffer_size, &length,
-					"OF_COMPATIBLE_%d=%s", seen, compat);
+		int tmp = env->buflen;
+		retval = add_uevent_var(env, "OF_COMPATIBLE_%d=%s", seen, compat);
 		if (retval)
 			return retval;
-		compat += length - tmp;
-		cplen -= length - tmp;
+		compat += env->buflen - tmp;
+		cplen -= env->buflen - tmp;
 		seen += 1;
 	}
 
-	retval = add_uevent_var(envp, num_envp, &i,
-				buffer, buffer_size, &length,
-				"OF_COMPATIBLE_N=%d", seen);
+	retval = add_uevent_var(env, "OF_COMPATIBLE_N=%d", seen);
 	if (retval)
 		return retval;
-	retval = add_uevent_var(envp, num_envp, &i,
-				buffer, buffer_size, &length,
-				"MODALIAS=%s", soundbus_dev->modalias);
-
-	envp[i] = NULL;
+	retval = add_uevent_var(env, "MODALIAS=%s", soundbus_dev->modalias);
 
 	return retval;
 }
@@ -182,14 +169,14 @@ int soundbus_add_one(struct soundbus_dev *dev)
 
 	/* sanity checks */
 	if (!dev->attach_codec ||
-	    !dev->ofdev.node ||
+	    !dev->ofdev.dev.of_node ||
 	    dev->pcmname ||
 	    dev->pcmid != -1) {
 		printk(KERN_ERR "soundbus: adding device failed sanity check!\n");
 		return -EINVAL;
 	}
 
-	snprintf(dev->ofdev.dev.bus_id, BUS_ID_SIZE, "soundbus:%x", ++devcount);
+	dev_set_name(&dev->ofdev.dev, "soundbus:%x", ++devcount);
 	dev->ofdev.dev.bus = &soundbus_bus_type;
 	return of_device_register(&dev->ofdev);
 }

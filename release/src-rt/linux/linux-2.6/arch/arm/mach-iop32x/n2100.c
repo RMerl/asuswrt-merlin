@@ -16,19 +16,21 @@
 
 #include <linux/mm.h>
 #include <linux/init.h>
+#include <linux/f75375s.h>
+#include <linux/leds-pca9532.h>
 #include <linux/delay.h>
 #include <linux/kernel.h>
 #include <linux/pci.h>
 #include <linux/pm.h>
 #include <linux/string.h>
-#include <linux/slab.h>
 #include <linux/serial_core.h>
 #include <linux/serial_8250.h>
 #include <linux/mtd/physmap.h>
+#include <linux/i2c.h>
 #include <linux/platform_device.h>
 #include <linux/reboot.h>
-#include <asm/hardware.h>
-#include <asm/io.h>
+#include <linux/io.h>
+#include <mach/hardware.h>
 #include <asm/irq.h>
 #include <asm/mach/arch.h>
 #include <asm/mach/map.h>
@@ -37,7 +39,7 @@
 #include <asm/mach-types.h>
 #include <asm/page.h>
 #include <asm/pgtable.h>
-#include <asm/arch/time.h>
+#include <mach/time.h>
 
 /*
  * N2100 timer tick configuration.
@@ -50,7 +52,6 @@ static void __init n2100_timer_init(void)
 
 static struct sys_timer n2100_timer = {
 	.init		= n2100_timer_init,
-	.offset		= iop_gettimeoffset,
 };
 
 
@@ -175,7 +176,7 @@ static struct plat_serial8250_port n2100_serial_port[] = {
 		.mapbase	= N2100_UART,
 		.membase	= (char *)N2100_UART,
 		.irq		= 0,
-		.flags		= UPF_SKIP_TEST,
+		.flags		= UPF_SKIP_TEST | UPF_AUTO_IRQ | UPF_SHARE_IRQ,
 		.iotype		= UPIO_MEM,
 		.regshift	= 0,
 		.uartclk	= 1843200,
@@ -199,6 +200,71 @@ static struct platform_device n2100_serial_device = {
 	.resource	= &n2100_uart_resource,
 };
 
+static struct f75375s_platform_data n2100_f75375s = {
+	.pwm		= { 255, 255 },
+	.pwm_enable = { 0, 0 },
+};
+
+static struct pca9532_platform_data n2100_leds = {
+	.leds = {
+	{	.name = "n2100:red:satafail0",
+		.state = PCA9532_OFF,
+		.type = PCA9532_TYPE_LED,
+	},
+	{	.name = "n2100:red:satafail1",
+		.state = PCA9532_OFF,
+		.type = PCA9532_TYPE_LED,
+	},
+	{	.name = "n2100:blue:usb",
+		.state = PCA9532_OFF,
+		.type = PCA9532_TYPE_LED,
+	},
+	{ 	.type = PCA9532_TYPE_NONE },
+
+	{ 	.type = PCA9532_TYPE_NONE },
+	{ 	.type = PCA9532_TYPE_NONE },
+	{ 	.type = PCA9532_TYPE_NONE },
+	{	.name = "n2100:red:usb",
+		.state = PCA9532_OFF,
+		.type = PCA9532_TYPE_LED,
+	},
+
+	{	.type = PCA9532_TYPE_NONE }, /* power OFF gpio */
+	{	.type = PCA9532_TYPE_NONE }, /* reset gpio */
+	{	.type = PCA9532_TYPE_NONE },
+	{	.type = PCA9532_TYPE_NONE },
+
+	{	.type = PCA9532_TYPE_NONE },
+	{	.name = "n2100:orange:system",
+		.state = PCA9532_OFF,
+		.type = PCA9532_TYPE_LED,
+	},
+	{	.name = "n2100:red:system",
+		.state = PCA9532_OFF,
+		.type = PCA9532_TYPE_LED,
+	},
+	{	.name = "N2100 beeper"  ,
+		.state =  PCA9532_OFF,
+		.type = PCA9532_TYPE_N2100_BEEP,
+	},
+	},
+	.psc = { 0, 0 },
+	.pwm = { 0, 0 },
+};
+
+static struct i2c_board_info __initdata n2100_i2c_devices[] = {
+	{
+		I2C_BOARD_INFO("rs5c372b", 0x32),
+	},
+	{
+		I2C_BOARD_INFO("f75375", 0x2e),
+		.platform_data = &n2100_f75375s,
+	},
+	{
+		I2C_BOARD_INFO("pca9532", 0x60),
+		.platform_data = &n2100_leds,
+	},
+};
 
 /*
  * Pull PCA9532 GPIO #8 low to power off the machine.
@@ -245,6 +311,11 @@ static void __init n2100_init_machine(void)
 	platform_device_register(&iop3xx_i2c0_device);
 	platform_device_register(&n2100_flash_device);
 	platform_device_register(&n2100_serial_device);
+	platform_device_register(&iop3xx_dma_0_channel);
+	platform_device_register(&iop3xx_dma_1_channel);
+
+	i2c_register_board_info(0, n2100_i2c_devices,
+		ARRAY_SIZE(n2100_i2c_devices));
 
 	pm_power_off = n2100_power_off;
 
@@ -256,8 +327,6 @@ static void __init n2100_init_machine(void)
 
 MACHINE_START(N2100, "Thecus N2100")
 	/* Maintainer: Lennert Buytenhek <buytenh@wantstofly.org> */
-	.phys_io	= N2100_UART,
-	.io_pg_offst	= ((N2100_UART) >> 18) & 0xfffc,
 	.boot_params	= 0xa0000100,
 	.map_io		= n2100_map_io,
 	.init_irq	= iop32x_init_irq,

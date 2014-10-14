@@ -33,7 +33,7 @@ static void asd_unbuild_ata_ascb(struct asd_ascb *a);
 static void asd_unbuild_smp_ascb(struct asd_ascb *a);
 static void asd_unbuild_ssp_ascb(struct asd_ascb *a);
 
-static inline void asd_can_dequeue(struct asd_ha_struct *asd_ha, int num)
+static void asd_can_dequeue(struct asd_ha_struct *asd_ha, int num)
 {
 	unsigned long flags;
 
@@ -51,9 +51,9 @@ static const u8 data_dir_flags[] = {
 	[PCI_DMA_NONE]          = DATA_DIR_NONE, /* NO TRANSFER */
 };
 
-static inline int asd_map_scatterlist(struct sas_task *task,
-				      struct sg_el *sg_arr,
-				      gfp_t gfp_flags)
+static int asd_map_scatterlist(struct sas_task *task,
+			       struct sg_el *sg_arr,
+			       gfp_t gfp_flags)
 {
 	struct asd_ascb *ascb = task->lldd_task;
 	struct asd_ha_struct *asd_ha = ascb->ha;
@@ -74,8 +74,13 @@ static inline int asd_map_scatterlist(struct sas_task *task,
 		return 0;
 	}
 
-	num_sg = pci_map_sg(asd_ha->pcidev, task->scatter, task->num_scatter,
-			    task->data_dir);
+	/* STP tasks come from libata which has already mapped
+	 * the SG list */
+	if (sas_protocol_ata(task->task_proto))
+		num_sg = task->num_scatter;
+	else
+		num_sg = pci_map_sg(asd_ha->pcidev, task->scatter,
+				    task->num_scatter, task->data_dir);
 	if (num_sg == 0)
 		return -ENOMEM;
 
@@ -89,7 +94,7 @@ static inline int asd_map_scatterlist(struct sas_task *task,
 			res = -ENOMEM;
 			goto err_unmap;
 		}
-		for (sc = task->scatter, i = 0; i < num_sg; i++, sc++) {
+		for_each_sg(task->scatter, sc, num_sg, i) {
 			struct sg_el *sg =
 				&((struct sg_el *)ascb->sg_arr->vaddr)[i];
 			sg->bus_addr = cpu_to_le64((u64)sg_dma_address(sc));
@@ -98,7 +103,7 @@ static inline int asd_map_scatterlist(struct sas_task *task,
 				sg->flags |= ASD_SG_EL_LIST_EOL;
 		}
 
-		for (sc = task->scatter, i = 0; i < 2; i++, sc++) {
+		for_each_sg(task->scatter, sc, 2, i) {
 			sg_arr[i].bus_addr =
 				cpu_to_le64((u64)sg_dma_address(sc));
 			sg_arr[i].size = cpu_to_le32((u32)sg_dma_len(sc));
@@ -110,7 +115,7 @@ static inline int asd_map_scatterlist(struct sas_task *task,
 		sg_arr[2].bus_addr=cpu_to_le64((u64)ascb->sg_arr->dma_handle);
 	} else {
 		int i;
-		for (sc = task->scatter, i = 0; i < num_sg; i++, sc++) {
+		for_each_sg(task->scatter, sc, num_sg, i) {
 			sg_arr[i].bus_addr =
 				cpu_to_le64((u64)sg_dma_address(sc));
 			sg_arr[i].size = cpu_to_le32((u32)sg_dma_len(sc));
@@ -120,12 +125,13 @@ static inline int asd_map_scatterlist(struct sas_task *task,
 
 	return 0;
 err_unmap:
-	pci_unmap_sg(asd_ha->pcidev, task->scatter, task->num_scatter,
-		     task->data_dir);
+	if (sas_protocol_ata(task->task_proto))
+		pci_unmap_sg(asd_ha->pcidev, task->scatter, task->num_scatter,
+			     task->data_dir);
 	return res;
 }
 
-static inline void asd_unmap_scatterlist(struct asd_ascb *ascb)
+static void asd_unmap_scatterlist(struct asd_ascb *ascb)
 {
 	struct asd_ha_struct *asd_ha = ascb->ha;
 	struct sas_task *task = ascb->uldd_task;
@@ -142,8 +148,9 @@ static inline void asd_unmap_scatterlist(struct asd_ascb *ascb)
 	}
 
 	asd_free_coherent(asd_ha, ascb->sg_arr);
-	pci_unmap_sg(asd_ha->pcidev, task->scatter, task->num_scatter,
-		     task->data_dir);
+	if (task->task_proto != SAS_PROTOCOL_STP)
+		pci_unmap_sg(asd_ha->pcidev, task->scatter, task->num_scatter,
+			     task->data_dir);
 }
 
 /* ---------- Task complete tasklet ---------- */
@@ -180,29 +187,13 @@ static void asd_get_response_tasklet(struct asd_ascb *ascb,
 	ts->buf_valid_size = 0;
 	edb = asd_ha->seq.edb_arr[edb_id + escb->edb_index];
 	r = edb->vaddr;
-	if (task->task_proto == SAS_PROTO_SSP) {
+	if (task->task_proto == SAS_PROTOCOL_SSP) {
 		struct ssp_response_iu *iu =
 			r + 16 + sizeof(struct ssp_frame_hdr);
 
 		ts->residual = le32_to_cpu(*(__le32 *)r);
-		ts->resp = SAS_TASK_COMPLETE;
-		if (iu->datapres == 0)
-			ts->stat = iu->status;
-		else if (iu->datapres == 1)
-			ts->stat = iu->resp_data[3];
-		else if (iu->datapres == 2) {
-			ts->stat = SAM_CHECK_COND;
-			ts->buf_valid_size = min((u32) SAS_STATUS_BUF_SIZE,
-					 be32_to_cpu(iu->sense_data_len));
-			memcpy(ts->buf, iu->sense_data, ts->buf_valid_size);
-			if (iu->status != SAM_CHECK_COND) {
-				ASD_DPRINTK("device %llx sent sense data, but "
-					    "stat(0x%x) is not CHECK_CONDITION"
-					    "\n",
-					    SAS_ADDR(task->dev->sas_addr),
-					    ts->stat);
-			}
-		}
+
+		sas_ssp_task_response(&asd_ha->pcidev->dev, task, iu);
 	}  else {
 		struct ata_task_resp *resp = (void *) &ts->buf[0];
 
@@ -232,7 +223,7 @@ Again:
 	switch (opcode) {
 	case TC_NO_ERROR:
 		ts->resp = SAS_TASK_COMPLETE;
-		ts->stat = SAM_GOOD;
+		ts->stat = SAM_STAT_GOOD;
 		break;
 	case TC_UNDERRUN:
 		ts->resp = SAS_TASK_COMPLETE;
@@ -329,19 +320,19 @@ Again:
 	case TC_RESUME:
 	case TC_PARTIAL_SG_LIST:
 	default:
-		ASD_DPRINTK("%s: dl opcode: 0x%x?\n", __FUNCTION__, opcode);
+		ASD_DPRINTK("%s: dl opcode: 0x%x?\n", __func__, opcode);
 		break;
 	}
 
 	switch (task->task_proto) {
-	case SATA_PROTO:
-	case SAS_PROTO_STP:
+	case SAS_PROTOCOL_SATA:
+	case SAS_PROTOCOL_STP:
 		asd_unbuild_ata_ascb(ascb);
 		break;
-	case SAS_PROTO_SMP:
+	case SAS_PROTOCOL_SMP:
 		asd_unbuild_smp_ascb(ascb);
 		break;
-	case SAS_PROTO_SSP:
+	case SAS_PROTOCOL_SSP:
 		asd_unbuild_ssp_ascb(ascb);
 	default:
 		break;
@@ -352,11 +343,13 @@ Again:
 	task->task_state_flags &= ~SAS_TASK_AT_INITIATOR;
 	task->task_state_flags |= SAS_TASK_STATE_DONE;
 	if (unlikely((task->task_state_flags & SAS_TASK_STATE_ABORTED))) {
+		struct completion *completion = ascb->completion;
 		spin_unlock_irqrestore(&task->task_state_lock, flags);
 		ASD_DPRINTK("task 0x%p done with opcode 0x%x resp 0x%x "
 			    "stat 0x%x but aborted by upper layer!\n",
 			    task, opcode, ts->resp, ts->stat);
-		complete(&ascb->completion);
+		if (completion)
+			complete(completion);
 	} else {
 		spin_unlock_irqrestore(&task->task_state_lock, flags);
 		task->lldd_task = NULL;
@@ -391,7 +384,6 @@ static int asd_build_ata_ascb(struct asd_ascb *ascb, struct sas_task *task,
 
 	scb->ata_task.total_xfer_len = cpu_to_le32(task->total_xfer_len);
 	scb->ata_task.fis = task->ata_task.fis;
-	scb->ata_task.fis.fis_type = 0x27;
 	if (likely(!task->ata_task.device_control_reg_update))
 		scb->ata_task.fis.flags |= 0x80; /* C=1: update ATA cmd reg */
 	scb->ata_task.fis.flags &= 0xF0; /* PM_PORT field shall be 0 */
@@ -445,7 +437,7 @@ static int asd_build_smp_ascb(struct asd_ascb *ascb, struct sas_task *task,
 	struct scb *scb;
 
 	pci_map_sg(asd_ha->pcidev, &task->smp_task.smp_req, 1,
-		   PCI_DMA_FROMDEVICE);
+		   PCI_DMA_TODEVICE);
 	pci_map_sg(asd_ha->pcidev, &task->smp_task.smp_resp, 1,
 		   PCI_DMA_FROMDEVICE);
 
@@ -480,7 +472,7 @@ static void asd_unbuild_smp_ascb(struct asd_ascb *a)
 
 	BUG_ON(!task);
 	pci_unmap_sg(a->ha->pcidev, &task->smp_task.smp_req, 1,
-		     PCI_DMA_FROMDEVICE);
+		     PCI_DMA_TODEVICE);
 	pci_unmap_sg(a->ha->pcidev, &task->smp_task.smp_resp, 1,
 		     PCI_DMA_FROMDEVICE);
 }
@@ -535,7 +527,7 @@ static void asd_unbuild_ssp_ascb(struct asd_ascb *a)
 
 /* ---------- Execute Task ---------- */
 
-static inline int asd_can_queue(struct asd_ha_struct *asd_ha, int num)
+static int asd_can_queue(struct asd_ha_struct *asd_ha, int num)
 {
 	int res = 0;
 	unsigned long flags;
@@ -580,17 +572,17 @@ int asd_execute_task(struct sas_task *task, const int num,
 	list_for_each_entry(a, &alist, list) {
 		t = a->uldd_task;
 		a->uldd_timer = 1;
-		if (t->task_proto & SAS_PROTO_STP)
-			t->task_proto = SAS_PROTO_STP;
+		if (t->task_proto & SAS_PROTOCOL_STP)
+			t->task_proto = SAS_PROTOCOL_STP;
 		switch (t->task_proto) {
-		case SATA_PROTO:
-		case SAS_PROTO_STP:
+		case SAS_PROTOCOL_SATA:
+		case SAS_PROTOCOL_STP:
 			res = asd_build_ata_ascb(a, t, gfp_flags);
 			break;
-		case SAS_PROTO_SMP:
+		case SAS_PROTOCOL_SMP:
 			res = asd_build_smp_ascb(a, t, gfp_flags);
 			break;
-		case SAS_PROTO_SSP:
+		case SAS_PROTOCOL_SSP:
 			res = asd_build_ssp_ascb(a, t, gfp_flags);
 			break;
 		default:
@@ -627,14 +619,14 @@ out_err_unmap:
 			t->task_state_flags &= ~SAS_TASK_AT_INITIATOR;
 			spin_unlock_irqrestore(&t->task_state_lock, flags);
 			switch (t->task_proto) {
-			case SATA_PROTO:
-			case SAS_PROTO_STP:
+			case SAS_PROTOCOL_SATA:
+			case SAS_PROTOCOL_STP:
 				asd_unbuild_ata_ascb(a);
 				break;
-			case SAS_PROTO_SMP:
+			case SAS_PROTOCOL_SMP:
 				asd_unbuild_smp_ascb(a);
 				break;
-			case SAS_PROTO_SSP:
+			case SAS_PROTOCOL_SSP:
 				asd_unbuild_ssp_ascb(a);
 			default:
 				break;

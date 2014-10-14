@@ -1,6 +1,6 @@
 /* AFS client file system
  *
- * Copyright (C) 2002 Red Hat, Inc. All Rights Reserved.
+ * Copyright (C) 2002,5 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  *
  * This program is free software; you can redistribute it and/or
@@ -22,26 +22,15 @@ MODULE_LICENSE("GPL");
 
 unsigned afs_debug;
 module_param_named(debug, afs_debug, uint, S_IWUSR | S_IRUGO);
-MODULE_PARM_DESC(afs_debug, "AFS debugging mask");
+MODULE_PARM_DESC(debug, "AFS debugging mask");
 
 static char *rootcell;
 
 module_param(rootcell, charp, 0);
 MODULE_PARM_DESC(rootcell, "root AFS cell name and VL server IP addr list");
 
-#ifdef AFS_CACHING_SUPPORT
-static struct cachefs_netfs_operations afs_cache_ops = {
-	.get_page_cookie	= afs_cache_get_page_cookie,
-};
-
-struct cachefs_netfs afs_cache_netfs = {
-	.name			= "afs",
-	.version		= 0,
-	.ops			= &afs_cache_ops,
-};
-#endif
-
 struct afs_uuid afs_uuid;
+struct workqueue_struct *afs_wq;
 
 /*
  * get a client UUID
@@ -99,15 +88,20 @@ static int __init afs_init(void)
 	if (ret < 0)
 		return ret;
 
+	/* create workqueue */
+	ret = -ENOMEM;
+	afs_wq = alloc_workqueue("afs", 0, 0);
+	if (!afs_wq)
+		return ret;
+
 	/* register the /proc stuff */
 	ret = afs_proc_init();
 	if (ret < 0)
-		return ret;
+		goto error_proc;
 
-#ifdef AFS_CACHING_SUPPORT
+#ifdef CONFIG_AFS_FSCACHE
 	/* we want to be able to cache */
-	ret = cachefs_register_netfs(&afs_cache_netfs,
-				     &afs_cache_cell_index_def);
+	ret = fscache_register_netfs(&afs_cache_netfs);
 	if (ret < 0)
 		goto error_cache;
 #endif
@@ -124,6 +118,8 @@ static int __init afs_init(void)
 
 	/* initialise the callback update process */
 	ret = afs_callback_update_init();
+	if (ret < 0)
+		goto error_callback_update_init;
 
 	/* create the RxRPC transport */
 	ret = afs_open_socket();
@@ -140,16 +136,19 @@ static int __init afs_init(void)
 error_fs:
 	afs_close_socket();
 error_open_socket:
+	afs_callback_update_kill();
+error_callback_update_init:
+	afs_vlocation_purge();
 error_vl_update_init:
+	afs_cell_purge();
 error_cell_init:
-#ifdef AFS_CACHING_SUPPORT
-	cachefs_unregister_netfs(&afs_cache_netfs);
+#ifdef CONFIG_AFS_FSCACHE
+	fscache_unregister_netfs(&afs_cache_netfs);
 error_cache:
 #endif
-	afs_callback_update_kill();
-	afs_vlocation_purge();
-	afs_cell_purge();
 	afs_proc_cleanup();
+error_proc:
+	destroy_workqueue(afs_wq);
 	rcu_barrier();
 	printk(KERN_ERR "kAFS: failed to register: %d\n", ret);
 	return ret;
@@ -168,14 +167,15 @@ static void __exit afs_exit(void)
 	printk(KERN_INFO "kAFS: Red Hat AFS client v0.1 unregistering.\n");
 
 	afs_fs_exit();
+	afs_kill_lock_manager();
 	afs_close_socket();
 	afs_purge_servers();
 	afs_callback_update_kill();
 	afs_vlocation_purge();
-	flush_scheduled_work();
+	destroy_workqueue(afs_wq);
 	afs_cell_purge();
-#ifdef AFS_CACHING_SUPPORT
-	cachefs_unregister_netfs(&afs_cache_netfs);
+#ifdef CONFIG_AFS_FSCACHE
+	fscache_unregister_netfs(&afs_cache_netfs);
 #endif
 	afs_proc_cleanup();
 	rcu_barrier();

@@ -1,12 +1,13 @@
 #ifndef _IP6T_FRAG_H
 #define _IP6T_FRAG_H
 
-struct ip6t_frag
-{
-	u_int32_t ids[2];			/* Security Parameter Index */
-	u_int32_t hdrlen;			/* Header Length */
-	u_int8_t  flags;			/*  */
-	u_int8_t  invflags;			/* Inverse flags */
+#include <linux/types.h>
+
+struct ip6t_frag {
+	__u32 ids[2];			/* Security Parameter Index */
+	__u32 hdrlen;			/* Header Length */
+	__u8  flags;			/*  */
+	__u8  invflags;			/* Inverse flags */
 };
 
 #define IP6T_FRAG_IDS 		0x01

@@ -69,36 +69,36 @@ static u32 htcp_cwnd_undo(struct sock *sk)
 	const struct tcp_sock *tp = tcp_sk(sk);
 	struct htcp *ca = inet_csk_ca(sk);
 
-	ca->last_cong = ca->undo_last_cong;
-	ca->maxRTT = ca->undo_maxRTT;
-	ca->old_maxB = ca->undo_old_maxB;
+	if (ca->undo_last_cong) {
+		ca->last_cong = ca->undo_last_cong;
+		ca->maxRTT = ca->undo_maxRTT;
+		ca->old_maxB = ca->undo_old_maxB;
+		ca->undo_last_cong = 0;
+	}
 
 	return max(tp->snd_cwnd, (tp->snd_ssthresh << 7) / ca->beta);
 }
 
-static inline void measure_rtt(struct sock *sk)
+static inline void measure_rtt(struct sock *sk, u32 srtt)
 {
 	const struct inet_connection_sock *icsk = inet_csk(sk);
-	const struct tcp_sock *tp = tcp_sk(sk);
 	struct htcp *ca = inet_csk_ca(sk);
-	u32 srtt = tp->srtt >> 3;
 
 	/* keep track of minimum RTT seen so far, minRTT is zero at first */
 	if (ca->minRTT > srtt || !ca->minRTT)
 		ca->minRTT = srtt;
 
 	/* max RTT */
-	if (icsk->icsk_ca_state == TCP_CA_Open
-	    && tp->snd_ssthresh < 0xFFFF && htcp_ccount(ca) > 3) {
+	if (icsk->icsk_ca_state == TCP_CA_Open) {
 		if (ca->maxRTT < ca->minRTT)
 			ca->maxRTT = ca->minRTT;
-		if (ca->maxRTT < srtt
-		    && srtt <= ca->maxRTT + msecs_to_jiffies(20))
+		if (ca->maxRTT < srtt &&
+		    srtt <= ca->maxRTT + msecs_to_jiffies(20))
 			ca->maxRTT = srtt;
 	}
 }
 
-static void measure_achieved_throughput(struct sock *sk, u32 pkts_acked, ktime_t last)
+static void measure_achieved_throughput(struct sock *sk, u32 pkts_acked, s32 rtt)
 {
 	const struct inet_connection_sock *icsk = inet_csk(sk);
 	const struct tcp_sock *tp = tcp_sk(sk);
@@ -108,12 +108,14 @@ static void measure_achieved_throughput(struct sock *sk, u32 pkts_acked, ktime_t
 	if (icsk->icsk_ca_state == TCP_CA_Open)
 		ca->pkts_acked = pkts_acked;
 
+	if (rtt > 0)
+		measure_rtt(sk, usecs_to_jiffies(rtt));
+
 	if (!use_bandwidth_switch)
 		return;
 
 	/* achieved throughput calculations */
-	if (icsk->icsk_ca_state != TCP_CA_Open &&
-	    icsk->icsk_ca_state != TCP_CA_Disorder) {
+	if (!((1 << icsk->icsk_ca_state) & (TCPF_CA_Open | TCPF_CA_Disorder))) {
 		ca->packetcount = 0;
 		ca->lasttime = now;
 		return;
@@ -121,9 +123,9 @@ static void measure_achieved_throughput(struct sock *sk, u32 pkts_acked, ktime_t
 
 	ca->packetcount += pkts_acked;
 
-	if (ca->packetcount >= tp->snd_cwnd - (ca->alpha >> 7 ? : 1)
-	    && now - ca->lasttime >= ca->minRTT
-	    && ca->minRTT > 0) {
+	if (ca->packetcount >= tp->snd_cwnd - (ca->alpha >> 7 ? : 1) &&
+	    now - ca->lasttime >= ca->minRTT &&
+	    ca->minRTT > 0) {
 		__u32 cur_Bi = ca->packetcount * HZ / (now - ca->lasttime);
 
 		if (htcp_ccount(ca) <= 3) {
@@ -225,8 +227,7 @@ static u32 htcp_recalc_ssthresh(struct sock *sk)
 	return max((tp->snd_cwnd * ca->beta) >> 7, 2U);
 }
 
-static void htcp_cong_avoid(struct sock *sk, u32 ack, u32 rtt,
-			    u32 in_flight, int data_acked)
+static void htcp_cong_avoid(struct sock *sk, u32 ack, u32 in_flight)
 {
 	struct tcp_sock *tp = tcp_sk(sk);
 	struct htcp *ca = inet_csk_ca(sk);
@@ -237,8 +238,6 @@ static void htcp_cong_avoid(struct sock *sk, u32 ack, u32 rtt,
 	if (tp->snd_cwnd <= tp->snd_ssthresh)
 		tcp_slow_start(tp);
 	else {
-		measure_rtt(sk);
-
 		/* In dangerous area, increase slowly.
 		 * In theory this is tp->snd_cwnd += alpha / tp->snd_cwnd
 		 */
@@ -271,7 +270,10 @@ static void htcp_state(struct sock *sk, u8 new_state)
 	case TCP_CA_Open:
 		{
 			struct htcp *ca = inet_csk_ca(sk);
-			ca->last_cong = jiffies;
+			if (ca->undo_last_cong) {
+				ca->last_cong = jiffies;
+				ca->undo_last_cong = 0;
+			}
 		}
 		break;
 	case TCP_CA_CWR:
@@ -282,7 +284,7 @@ static void htcp_state(struct sock *sk, u8 new_state)
 	}
 }
 
-static struct tcp_congestion_ops htcp = {
+static struct tcp_congestion_ops htcp __read_mostly = {
 	.init		= htcp_init,
 	.ssthresh	= htcp_recalc_ssthresh,
 	.cong_avoid	= htcp_cong_avoid,

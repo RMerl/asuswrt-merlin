@@ -29,8 +29,7 @@
 #include <linux/crc32.h>
 #include <linux/usb.h>
 #include <linux/usb/cdc.h>
-
-#include "usbnet.h"
+#include <linux/usb/usbnet.h>
 
 
 /*
@@ -103,7 +102,7 @@ static int always_connected (struct usbnet *dev)
 
 static const struct driver_info	zaurus_sl5x00_info = {
 	.description =	"Sharp Zaurus SL-5x00",
-	.flags =	FLAG_FRAMING_Z,
+	.flags =	FLAG_POINTTOPOINT | FLAG_FRAMING_Z,
 	.check_connect = always_connected,
 	.bind =		zaurus_bind,
 	.unbind =	usbnet_cdc_unbind,
@@ -113,7 +112,7 @@ static const struct driver_info	zaurus_sl5x00_info = {
 
 static const struct driver_info	zaurus_pxa_info = {
 	.description =	"Sharp Zaurus, PXA-2xx based",
-	.flags =	FLAG_FRAMING_Z,
+	.flags =	FLAG_POINTTOPOINT | FLAG_FRAMING_Z,
 	.check_connect = always_connected,
 	.bind =		zaurus_bind,
 	.unbind =	usbnet_cdc_unbind,
@@ -123,7 +122,7 @@ static const struct driver_info	zaurus_pxa_info = {
 
 static const struct driver_info	olympus_mxl_info = {
 	.description =	"Olympus R1000",
-	.flags =	FLAG_FRAMING_Z,
+	.flags =	FLAG_POINTTOPOINT | FLAG_FRAMING_Z,
 	.check_connect = always_connected,
 	.bind =		zaurus_bind,
 	.unbind =	usbnet_cdc_unbind,
@@ -175,8 +174,8 @@ static int blan_mdlm_bind(struct usbnet *dev, struct usb_interface *intf)
 				goto bad_desc;
 			}
 			/* expect bcdVersion 1.0, ignore */
-			if (memcmp(&desc->bGUID, blan_guid, 16)
-				    && memcmp(&desc->bGUID, safe_guid, 16) ) {
+			if (memcmp(&desc->bGUID, blan_guid, 16) &&
+			    memcmp(&desc->bGUID, safe_guid, 16)) {
 				/* hey, this one might _really_ be MDLM! */
 				dev_dbg(&intf->dev, "MDLM guid\n");
 				goto bad_desc;
@@ -259,7 +258,7 @@ bad_desc:
 
 static const struct driver_info	bogus_mdlm_info = {
 	.description =	"pseudo-MDLM (BLAN) device",
-	.flags =	FLAG_FRAMING_Z,
+	.flags =	FLAG_POINTTOPOINT | FLAG_FRAMING_Z,
 	.check_connect = always_connected,
 	.tx_fixup =	zaurus_tx_fixup,
 	.bind =		blan_mdlm_bind,
@@ -341,6 +340,11 @@ static const struct usb_device_id	products [] = {
 {
 	USB_INTERFACE_INFO(USB_CLASS_COMM, USB_CDC_SUBCLASS_MDLM,
 			USB_CDC_PROTO_NONE),
+	.driver_info = (unsigned long) &bogus_mdlm_info,
+}, {
+	/* Motorola MOTOMAGX phones */
+	USB_DEVICE_AND_INTERFACE_INFO(0x22b8, 0x6425, USB_CLASS_COMM,
+			USB_CDC_SUBCLASS_MDLM, USB_CDC_PROTO_NONE),
 	.driver_info = (unsigned long) &bogus_mdlm_info,
 },
 

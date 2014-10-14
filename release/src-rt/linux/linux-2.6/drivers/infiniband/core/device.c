@@ -29,8 +29,6 @@
  * ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
- *
- * $Id: device.c 1349 2004-12-16 21:09:43Z roland $
  */
 
 #include <linux/module.h>
@@ -40,7 +38,6 @@
 #include <linux/slab.h>
 #include <linux/init.h>
 #include <linux/mutex.h>
-#include <linux/workqueue.h>
 
 #include "core_priv.h"
 
@@ -53,6 +50,9 @@ struct ib_client_data {
 	struct ib_client *client;
 	void *            data;
 };
+
+struct workqueue_struct *ib_wq;
+EXPORT_SYMBOL_GPL(ib_wq);
 
 static LIST_HEAD(device_list);
 static LIST_HEAD(client_list);
@@ -120,12 +120,12 @@ static struct ib_device *__ib_device_get_by_name(const char *name)
 
 static int alloc_name(char *name)
 {
-	long *inuse;
+	unsigned long *inuse;
 	char buf[IB_DEVICE_NAME_MAX];
 	struct ib_device *device;
 	int i;
 
-	inuse = (long *) get_zeroed_page(GFP_KERNEL);
+	inuse = (unsigned long *) get_zeroed_page(GFP_KERNEL);
 	if (!inuse)
 		return -ENOMEM;
 
@@ -195,7 +195,7 @@ void ib_dealloc_device(struct ib_device *device)
 
 	BUG_ON(device->reg_state != IB_DEV_UNREGISTERED);
 
-	ib_device_unregister_sysfs(device);
+	kobject_put(&device->dev.kobj);
 }
 EXPORT_SYMBOL(ib_dealloc_device);
 
@@ -269,7 +269,9 @@ out:
  * callback for each device that is added. @device must be allocated
  * with ib_alloc_device().
  */
-int ib_register_device(struct ib_device *device)
+int ib_register_device(struct ib_device *device,
+		       int (*port_callback)(struct ib_device *,
+					    u8, struct kobject *))
 {
 	int ret;
 
@@ -298,7 +300,7 @@ int ib_register_device(struct ib_device *device)
 		goto out;
 	}
 
-	ret = ib_device_register_sysfs(device);
+	ret = ib_device_register_sysfs(device, port_callback);
 	if (ret) {
 		printk(KERN_WARNING "Couldn't register device %s with driver model\n",
 		       device->name);
@@ -349,6 +351,8 @@ void ib_unregister_device(struct ib_device *device)
 	kfree(device->pkey_tbl_len);
 
 	mutex_unlock(&device_mutex);
+
+	ib_device_unregister_sysfs(device);
 
 	spin_lock_irqsave(&device->client_data_lock, flags);
 	list_for_each_entry_safe(context, tmp, &device->client_data_list, list)
@@ -702,7 +706,7 @@ int ib_find_pkey(struct ib_device *device,
 		if (ret)
 			return ret;
 
-		if (pkey == tmp_pkey) {
+		if ((pkey & 0x7fff) == (tmp_pkey & 0x7fff)) {
 			*index = i;
 			return 0;
 		}
@@ -716,6 +720,10 @@ static int __init ib_core_init(void)
 {
 	int ret;
 
+	ib_wq = alloc_workqueue("infiniband", 0, 0);
+	if (!ib_wq)
+		return -ENOMEM;
+
 	ret = ib_sysfs_setup();
 	if (ret)
 		printk(KERN_WARNING "Couldn't create InfiniBand device class\n");
@@ -724,6 +732,7 @@ static int __init ib_core_init(void)
 	if (ret) {
 		printk(KERN_WARNING "Couldn't set up InfiniBand P_Key/GID cache\n");
 		ib_sysfs_cleanup();
+		destroy_workqueue(ib_wq);
 	}
 
 	return ret;
@@ -734,7 +743,7 @@ static void __exit ib_core_cleanup(void)
 	ib_cache_cleanup();
 	ib_sysfs_cleanup();
 	/* Make sure that any pending umem accounting work is done. */
-	flush_scheduled_work();
+	destroy_workqueue(ib_wq);
 }
 
 module_init(ib_core_init);

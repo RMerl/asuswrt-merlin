@@ -45,7 +45,7 @@ struct pmagbbfb_par {
 };
 
 
-static struct fb_var_screeninfo pmagbbfb_defined __initdata = {
+static struct fb_var_screeninfo pmagbbfb_defined __devinitdata = {
 	.bits_per_pixel	= 8,
 	.red.length	= 8,
 	.green.length	= 8,
@@ -58,7 +58,7 @@ static struct fb_var_screeninfo pmagbbfb_defined __initdata = {
 	.vmode		= FB_VMODE_NONINTERLACED,
 };
 
-static struct fb_fix_screeninfo pmagbbfb_fix __initdata = {
+static struct fb_fix_screeninfo pmagbbfb_fix __devinitdata = {
 	.id		= "PMAGB-BA",
 	.smem_len	= (2048 * 1024),
 	.type		= FB_TYPE_PACKED_PIXELS,
@@ -102,7 +102,8 @@ static int pmagbbfb_setcolreg(unsigned int regno, unsigned int red,
 {
 	struct pmagbbfb_par *par = info->par;
 
-	BUG_ON(regno >= info->cmap.len);
+	if (regno >= info->cmap.len)
+		return 1;
 
 	red   >>= 8;	/* The cmap fields are 16 bits    */
 	green >>= 8;	/* wide, but the hardware colormap */
@@ -147,7 +148,7 @@ static void __init pmagbbfb_erase_cursor(struct fb_info *info)
 /*
  * Set up screen parameters.
  */
-static void __init pmagbbfb_screen_setup(struct fb_info *info)
+static void __devinit pmagbbfb_screen_setup(struct fb_info *info)
 {
 	struct pmagbbfb_par *par = info->par;
 
@@ -179,9 +180,9 @@ static void __init pmagbbfb_screen_setup(struct fb_info *info)
 /*
  * Determine oscillator configuration.
  */
-static void __init pmagbbfb_osc_setup(struct fb_info *info)
+static void __devinit pmagbbfb_osc_setup(struct fb_info *info)
 {
-	static unsigned int pmagbbfb_freqs[] __initdata = {
+	static unsigned int pmagbbfb_freqs[] __devinitdata = {
 		130808, 119843, 104000, 92980, 74370, 72800,
 		69197, 66000, 65000, 50350, 36000, 32000, 25175
 	};
@@ -246,7 +247,7 @@ static void __init pmagbbfb_osc_setup(struct fb_info *info)
 };
 
 
-static int __init pmagbbfb_probe(struct device *dev)
+static int __devinit pmagbbfb_probe(struct device *dev)
 {
 	struct tc_dev *tdev = to_tc_dev(dev);
 	resource_size_t start, len;
@@ -254,16 +255,23 @@ static int __init pmagbbfb_probe(struct device *dev)
 	struct pmagbbfb_par *par;
 	char freq0[12], freq1[12];
 	u32 vid_base;
+	int err;
 
 	info = framebuffer_alloc(sizeof(struct pmagbbfb_par), dev);
-	if (!info)
+	if (!info) {
+		printk(KERN_ERR "%s: Cannot allocate memory\n", dev_name(dev));
 		return -ENOMEM;
+	}
 
 	par = info->par;
 	dev_set_drvdata(dev, info);
 
-	if (fb_alloc_cmap(&info->cmap, 256, 0) < 0)
+	if (fb_alloc_cmap(&info->cmap, 256, 0) < 0) {
+		printk(KERN_ERR "%s: Cannot allocate color map\n",
+		       dev_name(dev));
+		err = -ENOMEM;
 		goto err_alloc;
+	}
 
 	info->fbops = &pmagbbfb_ops;
 	info->fix = pmagbbfb_fix;
@@ -273,22 +281,32 @@ static int __init pmagbbfb_probe(struct device *dev)
 	/* Request the I/O MEM resource.  */
 	start = tdev->resource.start;
 	len = tdev->resource.end - start + 1;
-	if (!request_mem_region(start, len, dev->bus_id))
+	if (!request_mem_region(start, len, dev_name(dev))) {
+		printk(KERN_ERR "%s: Cannot reserve FB region\n",
+		       dev_name(dev));
+		err = -EBUSY;
 		goto err_cmap;
+	}
 
 	/* MMIO mapping setup.  */
 	info->fix.mmio_start = start;
 	par->mmio = ioremap_nocache(info->fix.mmio_start, info->fix.mmio_len);
-	if (!par->mmio)
+	if (!par->mmio) {
+		printk(KERN_ERR "%s: Cannot map MMIO\n", dev_name(dev));
+		err = -ENOMEM;
 		goto err_resource;
+	}
 	par->sfb = par->mmio + PMAGB_B_SFB;
 	par->dac = par->mmio + PMAGB_B_BT459;
 
 	/* Frame buffer mapping setup.  */
 	info->fix.smem_start = start + PMAGB_B_FBMEM;
 	par->smem = ioremap_nocache(info->fix.smem_start, info->fix.smem_len);
-	if (!par->smem)
+	if (!par->smem) {
+		printk(KERN_ERR "%s: Cannot map FB\n", dev_name(dev));
+		err = -ENOMEM;
 		goto err_mmio_map;
+	}
 	vid_base = sfb_read(par, SFB_REG_VID_BASE);
 	info->screen_base = (void __iomem *)par->smem + vid_base * 0x1000;
 	info->screen_size = info->fix.smem_len - 2 * vid_base * 0x1000;
@@ -297,8 +315,12 @@ static int __init pmagbbfb_probe(struct device *dev)
 	pmagbbfb_screen_setup(info);
 	pmagbbfb_osc_setup(info);
 
-	if (register_framebuffer(info) < 0)
+	err = register_framebuffer(info);
+	if (err < 0) {
+		printk(KERN_ERR "%s: Cannot register framebuffer\n",
+		       dev_name(dev));
 		goto err_smem_map;
+	}
 
 	get_device(dev);
 
@@ -308,7 +330,7 @@ static int __init pmagbbfb_probe(struct device *dev)
 		 par->osc1 / 1000, par->osc1 % 1000);
 
 	pr_info("fb%d: %s frame buffer device at %s\n",
-		info->node, info->fix.id, dev->bus_id);
+		info->node, info->fix.id, dev_name(dev));
 	pr_info("fb%d: Osc0: %s, Osc1: %s, Osc%u selected\n",
 		info->node, freq0, par->osc1 ? freq1 : "disabled",
 		par->osc1 != 0);
@@ -330,7 +352,7 @@ err_cmap:
 
 err_alloc:
 	framebuffer_release(info);
-	return -ENXIO;
+	return err;
 }
 
 static int __exit pmagbbfb_remove(struct device *dev)

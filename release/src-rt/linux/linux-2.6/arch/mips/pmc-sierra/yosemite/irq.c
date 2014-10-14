@@ -37,7 +37,6 @@
 #include <linux/ioport.h>
 #include <linux/irq.h>
 #include <linux/timex.h>
-#include <linux/slab.h>
 #include <linux/random.h>
 #include <linux/bitops.h>
 #include <asm/bootinfo.h>
@@ -56,6 +55,9 @@
 #define HYPERTRANSPORT_INTC     0x7a		/* INTC# */
 #define HYPERTRANSPORT_INTD     0x7b		/* INTD# */
 
+extern void titan_mailbox_irq(void);
+
+#ifdef CONFIG_HYPERTRANSPORT
 /*
  * Handle hypertransport & SMP interrupts. The interrupt lines are scarce.
  * For interprocessor interrupts, the best thing to do is to use the INTMSG
@@ -107,6 +109,7 @@ static void ll_ht_smp_irq_handler(int irq)
 
 	do_IRQ(irq);
 }
+#endif
 
 asmlinkage void plat_irq_dispatch(void)
 {
@@ -137,10 +140,6 @@ asmlinkage void plat_irq_dispatch(void)
 	}
 }
 
-#ifdef CONFIG_KGDB
-extern void init_second_port(void);
-#endif
-
 /*
  * Initialize the next level interrupt handler
  */
@@ -151,13 +150,4 @@ void __init arch_init_irq(void)
 	mips_cpu_irq_init();
 	rm7k_cpu_irq_init();
 	rm9k_cpu_irq_init();
-
-#ifdef CONFIG_KGDB
-	/* At this point, initialize the second serial port */
-	init_second_port();
-#endif
-
-#ifdef CONFIG_GDB_CONSOLE
-	register_gdb_console();
-#endif
 }

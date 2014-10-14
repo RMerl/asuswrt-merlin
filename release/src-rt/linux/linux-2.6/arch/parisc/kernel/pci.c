@@ -1,5 +1,4 @@
-/* $Id: pci.c,v 1.6 2000/01/29 00:12:05 grundler Exp $
- *
+/*
  * This file is subject to the terms and conditions of the GNU General Public
  * License.  See the file "COPYING" in the main directory of this archive
  * for more details.
@@ -14,12 +13,10 @@
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/pci.h>
-#include <linux/slab.h>
 #include <linux/types.h>
 
 #include <asm/io.h>
 #include <asm/system.h>
-#include <asm/cache.h>		/* for L1_CACHE_BYTES */
 #include <asm/superio.h>
 
 #define DEBUG_RESOURCES 0
@@ -124,6 +121,10 @@ static int __init pcibios_init(void)
 	} else {
 		printk(KERN_WARNING "pci_bios != NULL but init() is!\n");
 	}
+
+	/* Set the CLS for PCI as early as possible. */
+	pci_cache_line_size = pci_dfl_cache_line_size;
+
 	return 0;
 }
 
@@ -172,7 +173,7 @@ void pcibios_set_master(struct pci_dev *dev)
 	** upper byte is PCI_LATENCY_TIMER.
 	*/
 	pci_write_config_word(dev, PCI_CACHE_LINE_SIZE,
-				(0x80 << 8) | (L1_CACHE_BYTES / sizeof(u32)));
+			      (0x80 << 8) | pci_cache_line_size);
 }
 
 
@@ -194,37 +195,13 @@ void __init pcibios_init_bus(struct pci_bus *bus)
 	pci_write_config_word(dev, PCI_BRIDGE_CONTROL, bridge_ctl);
 }
 
-
-/* KLUGE: Link the child and parent resources - generic PCI didn't */
-static void
-pcibios_link_hba_resources( struct resource *hba_res, struct resource *r)
-{
-	if (!r->parent) {
-		printk(KERN_EMERG "PCI: resource not parented! [%p-%p]\n",
-				(void*) r->start, (void*) r->end);
-		r->parent = hba_res;
-
-		/* reverse link is harder *sigh*  */
-		if (r->parent->child) {
-			if (r->parent->sibling) {
-				struct resource *next = r->parent->sibling;
-				while (next->sibling)
-					 next = next->sibling;
-				next->sibling = r;
-			} else {
-				r->parent->sibling = r;
-			}
-		} else
-			r->parent->child = r;
-	}
-}
-
 /* called by drivers/pci/setup-bus.c:pci_setup_bridge().  */
 void __devinit pcibios_resource_to_bus(struct pci_dev *dev,
 		struct pci_bus_region *region, struct resource *res)
 {
-	struct pci_bus *bus = dev->bus;
-	struct pci_hba_data *hba = HBA_DATA(bus->bridge->platform_data);
+#ifdef CONFIG_64BIT
+	struct pci_hba_data *hba = HBA_DATA(dev->bus->bridge->platform_data);
+#endif
 
 	if (res->flags & IORESOURCE_IO) {
 		/*
@@ -243,23 +220,15 @@ void __devinit pcibios_resource_to_bus(struct pci_dev *dev,
 	}
 
 	DBG_RES("pcibios_resource_to_bus(%02x %s [%lx,%lx])\n",
-		bus->number, res->flags & IORESOURCE_IO ? "IO" : "MEM",
+		dev->bus->number, res->flags & IORESOURCE_IO ? "IO" : "MEM",
 		region->start, region->end);
-
-	/* KLUGE ALERT
-	** if this resource isn't linked to a "parent", then it seems
-	** to be a child of the HBA - lets link it in.
-	*/
-	pcibios_link_hba_resources(&hba->io_space, bus->resource[0]);
-	pcibios_link_hba_resources(&hba->lmmio_space, bus->resource[1]);
 }
 
 void pcibios_bus_to_resource(struct pci_dev *dev, struct resource *res,
 			      struct pci_bus_region *region)
 {
 #ifdef CONFIG_64BIT
-	struct pci_bus *bus = dev->bus;
-	struct pci_hba_data *hba = HBA_DATA(bus->bridge->platform_data);
+	struct pci_hba_data *hba = HBA_DATA(dev->bus->bridge->platform_data);
 #endif
 
 	if (res->flags & IORESOURCE_MEM) {
@@ -287,10 +256,10 @@ EXPORT_SYMBOL(pcibios_bus_to_resource);
  * Since we are just checking candidates, don't use any fields other
  * than res->start.
  */
-void pcibios_align_resource(void *data, struct resource *res,
+resource_size_t pcibios_align_resource(void *data, const struct resource *res,
 				resource_size_t size, resource_size_t alignment)
 {
-	resource_size_t mask, align;
+	resource_size_t mask, align, start = res->start;
 
 	DBG_RES("pcibios_align_resource(%s, (%p) [%lx,%lx]/%x, 0x%lx, 0x%lx)\n",
 		pci_name(((struct pci_dev *) data)),
@@ -302,10 +271,10 @@ void pcibios_align_resource(void *data, struct resource *res,
 
 	/* Align to largest of MIN or input size */
 	mask = max(alignment, align) - 1;
-	res->start += mask;
-	res->start &= ~mask;
+	start += mask;
+	start &= ~mask;
 
-	/* The caller updates the end field, we don't.  */
+	return start;
 }
 
 
@@ -319,23 +288,15 @@ void pcibios_align_resource(void *data, struct resource *res,
  */
 int pcibios_enable_device(struct pci_dev *dev, int mask)
 {
-	u16 cmd;
-	int idx;
+	int err;
+	u16 cmd, old_cmd;
+
+	err = pci_enable_resources(dev, mask);
+	if (err < 0)
+		return err;
 
 	pci_read_config_word(dev, PCI_COMMAND, &cmd);
-
-	for (idx = 0; idx < DEVICE_COUNT_RESOURCE; idx++) {
-		struct resource *r = &dev->resource[idx];
-
-		/* only setup requested resources */
-		if (!(mask & (1<<idx)))
-			continue;
-
-		if (r->flags & IORESOURCE_IO)
-			cmd |= PCI_COMMAND_IO;
-		if (r->flags & IORESOURCE_MEM)
-			cmd |= PCI_COMMAND_MEMORY;
-	}
+	old_cmd = cmd;
 
 	cmd |= (PCI_COMMAND_SERR | PCI_COMMAND_PARITY);
 
@@ -344,8 +305,12 @@ int pcibios_enable_device(struct pci_dev *dev, int mask)
 	if (dev->bus->bridge_ctl & PCI_BRIDGE_CTL_FAST_BACK)
 		cmd |= PCI_COMMAND_FAST_BACK;
 #endif
-	DBGC("PCIBIOS: Enabling device %s cmd 0x%04x\n", pci_name(dev), cmd);
-	pci_write_config_word(dev, PCI_COMMAND, cmd);
+
+	if (cmd != old_cmd) {
+		dev_info(&dev->dev, "enabling SERR and PARITY (%04x -> %04x)\n",
+			old_cmd, cmd);
+		pci_write_config_word(dev, PCI_COMMAND, cmd);
+	}
 	return 0;
 }
 

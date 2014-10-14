@@ -20,12 +20,11 @@
  *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
  */
 
-#include <sound/driver.h>
 #include <linux/delay.h>
 #include <linux/device.h>
 #include <linux/firmware.h>
+#include <linux/io.h>
 #include <sound/core.h>
-#include <asm/io.h>
 #include "vxpocket.h"
 
 
@@ -152,7 +151,7 @@ static int vxp_load_xilinx_binary(struct vx_core *_chip, const struct firmware *
 	unsigned int i;
 	int c;
 	int regCSUER, regRUER;
-	unsigned char *image;
+	const unsigned char *image;
 	unsigned char data;
 
 	/* Switch to programmation mode */
@@ -409,7 +408,8 @@ static void vxp_dma_read(struct vx_core *chip, struct snd_pcm_runtime *runtime,
 	int offset = pipe->hw_ptr;
 	unsigned short *addr = (unsigned short *)(runtime->dma_area + offset);
 
-	snd_assert(count % 2 == 0, return);
+	if (snd_BUG_ON(count % 2))
+		return;
 	vx_setup_pseudo_dma(chip, 0);
 	if (offset + count > pipe->buffer_bytes) {
 		int length = pipe->buffer_bytes - offset;

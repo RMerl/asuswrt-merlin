@@ -10,7 +10,10 @@
 #include <linux/tiocl.h>
 #include <linux/vt_buffer.h>
 
+struct tty_struct;
+
 extern struct vc_data *sel_cons;
+struct tty_struct;
 
 extern void clear_selection(void);
 extern int set_selection(const struct tiocl_selection __user *sel, struct tty_struct *tty);
@@ -36,5 +39,6 @@ extern void putconsxy(struct vc_data *vc, unsigned char *p);
 
 extern u16 vcs_scr_readw(struct vc_data *vc, const u16 *org);
 extern void vcs_scr_writew(struct vc_data *vc, u16 val, u16 *org);
+extern void vcs_scr_updated(struct vc_data *vc);
 
 #endif

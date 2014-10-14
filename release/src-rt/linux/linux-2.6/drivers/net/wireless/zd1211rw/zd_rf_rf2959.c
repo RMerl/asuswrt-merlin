@@ -1,4 +1,7 @@
-/* zd_rf_rfmd.c: Functions for the RFMD RF controller
+/* ZD1211 USB-WLAN driver for Linux
+ *
+ * Copyright (C) 2005-2007 Ulrich Kunitz <kune@deine-taler.de>
+ * Copyright (C) 2006-2007 Daniel Drake <dsd@gentoo.org>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -166,7 +169,7 @@ static int rf2959_init_hw(struct zd_rf *rf)
 		{ CR85,  0x00 }, { CR86,  0x10 }, { CR87,  0x2A },
 		{ CR88,  0x10 }, { CR89,  0x24 }, { CR90,  0x18 },
 		/* { CR91,  0x18 }, */
-		/* should solve continous CTS frame problems */
+		/* should solve continuous CTS frame problems */
 		{ CR91,  0x00 },
 		{ CR92,  0x0a }, { CR93,  0x00 }, { CR94,  0x01 },
 		{ CR95,  0x00 }, { CR96,  0x40 }, { CR97,  0x37 },
@@ -265,7 +268,7 @@ int zd_rf_init_rf2959(struct zd_rf *rf)
 {
 	struct zd_chip *chip = zd_rf_to_chip(rf);
 
-	if (chip->is_zd1211b) {
+	if (zd_chip_is_zd1211b(chip)) {
 		dev_err(zd_chip_dev(chip),
 		       "RF2959 is currently not supported for ZD1211B"
 		       " devices\n");

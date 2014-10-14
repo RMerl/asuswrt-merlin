@@ -12,10 +12,13 @@
 #include <linux/kmod.h>
 #include <linux/module.h>
 #include <linux/personality.h>
+#include <linux/proc_fs.h>
 #include <linux/sched.h>
+#include <linux/seq_file.h>
 #include <linux/syscalls.h>
 #include <linux/sysctl.h>
 #include <linux/types.h>
+#include <linux/fs_struct.h>
 
 
 static void default_handler(int, struct pt_regs *);
@@ -24,7 +27,7 @@ static struct exec_domain *exec_domains = &default_exec_domain;
 static DEFINE_RWLOCK(exec_domains_lock);
 
 
-static u_long ident_map[32] = {
+static unsigned long ident_map[32] = {
 	0,	1,	2,	3,	4,	5,	6,	7,
 	8,	9,	10,	11,	12,	13,	14,	15,
 	16,	17,	18,	19,	20,	21,	22,	23,
@@ -53,11 +56,11 @@ default_handler(int segment, struct pt_regs *regp)
 }
 
 static struct exec_domain *
-lookup_exec_domain(u_long personality)
+lookup_exec_domain(unsigned int personality)
 {
-	struct exec_domain *	ep;
-	u_long			pers = personality(personality);
-		
+	unsigned int pers = personality(personality);
+	struct exec_domain *ep;
+
 	read_lock(&exec_domains_lock);
 	for (ep = exec_domains; ep; ep = ep->next) {
 		if (pers >= ep->pers_low && pers <= ep->pers_high)
@@ -65,9 +68,9 @@ lookup_exec_domain(u_long personality)
 				goto out;
 	}
 
-#ifdef CONFIG_KMOD
+#ifdef CONFIG_MODULES
 	read_unlock(&exec_domains_lock);
-	request_module("personality-%ld", pers);
+	request_module("personality-%d", pers);
 	read_lock(&exec_domains_lock);
 
 	for (ep = exec_domains; ep; ep = ep->next) {
@@ -131,76 +134,59 @@ unregister:
 	return 0;
 }
 
-int
-__set_personality(u_long personality)
+int __set_personality(unsigned int personality)
 {
-	struct exec_domain	*ep, *oep;
+	struct exec_domain *oep = current_thread_info()->exec_domain;
 
-	ep = lookup_exec_domain(personality);
-	if (ep == current_thread_info()->exec_domain) {
-		current->personality = personality;
-		module_put(ep->module);
-		return 0;
-	}
-
-	if (atomic_read(&current->fs->count) != 1) {
-		struct fs_struct *fsp, *ofsp;
-
-		fsp = copy_fs_struct(current->fs);
-		if (fsp == NULL) {
-			module_put(ep->module);
-			return -ENOMEM;
-		}
-
-		task_lock(current);
-		ofsp = current->fs;
-		current->fs = fsp;
-		task_unlock(current);
-
-		put_fs_struct(ofsp);
-	}
-
-	/*
-	 * At that point we are guaranteed to be the sole owner of
-	 * current->fs.
-	 */
-
+	current_thread_info()->exec_domain = lookup_exec_domain(personality);
 	current->personality = personality;
-	oep = current_thread_info()->exec_domain;
-	current_thread_info()->exec_domain = ep;
-	set_fs_altroot();
-
 	module_put(oep->module);
+
 	return 0;
 }
 
-int
-get_exec_domain_list(char *page)
+#ifdef CONFIG_PROC_FS
+static int execdomains_proc_show(struct seq_file *m, void *v)
 {
 	struct exec_domain	*ep;
-	int			len = 0;
 
 	read_lock(&exec_domains_lock);
-	for (ep = exec_domains; ep && len < PAGE_SIZE - 80; ep = ep->next)
-		len += sprintf(page + len, "%d-%d\t%-16s\t[%s]\n",
+	for (ep = exec_domains; ep; ep = ep->next)
+		seq_printf(m, "%d-%d\t%-16s\t[%s]\n",
 			       ep->pers_low, ep->pers_high, ep->name,
 			       module_name(ep->module));
 	read_unlock(&exec_domains_lock);
-	return (len);
+	return 0;
 }
 
-asmlinkage long
-sys_personality(u_long personality)
+static int execdomains_proc_open(struct inode *inode, struct file *file)
 {
-	u_long old = current->personality;
+	return single_open(file, execdomains_proc_show, NULL);
+}
 
-	if (personality != 0xffffffff) {
+static const struct file_operations execdomains_proc_fops = {
+	.open		= execdomains_proc_open,
+	.read		= seq_read,
+	.llseek		= seq_lseek,
+	.release	= single_release,
+};
+
+static int __init proc_execdomains_init(void)
+{
+	proc_create("execdomains", 0, NULL, &execdomains_proc_fops);
+	return 0;
+}
+module_init(proc_execdomains_init);
+#endif
+
+SYSCALL_DEFINE1(personality, unsigned int, personality)
+{
+	unsigned int old = current->personality;
+
+	if (personality != 0xffffffff)
 		set_personality(personality);
-		if (current->personality != personality)
-			return -EINVAL;
-	}
 
-	return (long)old;
+	return old;
 }
 
 

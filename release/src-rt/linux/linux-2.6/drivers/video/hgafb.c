@@ -36,7 +36,6 @@
 #include <linux/spinlock.h>
 #include <linux/string.h>
 #include <linux/mm.h>
-#include <linux/slab.h>
 #include <linux/delay.h>
 #include <linux/fb.h>
 #include <linux/init.h>
@@ -107,7 +106,7 @@ static DEFINE_SPINLOCK(hga_reg_lock);
 
 /* Framebuffer driver structures */
 
-static struct fb_var_screeninfo __initdata hga_default_var = {
+static struct fb_var_screeninfo hga_default_var __devinitdata = {
 	.xres		= 720,
 	.yres 		= 348,
 	.xres_virtual 	= 720,
@@ -121,7 +120,7 @@ static struct fb_var_screeninfo __initdata hga_default_var = {
 	.width 		= -1,
 };
 
-static struct fb_fix_screeninfo __initdata hga_fix = {
+static struct fb_fix_screeninfo hga_fix __devinitdata = {
 	.id 		= "HGA",
 	.type 		= FB_TYPE_PACKED_PIXELS,	/* (not sure) */
 	.visual 	= FB_VISUAL_MONO10,
@@ -277,9 +276,9 @@ static void hga_blank(int blank_mode)
 	spin_unlock_irqrestore(&hga_reg_lock, flags);
 }
 
-static int __init hga_card_detect(void)
+static int __devinit hga_card_detect(void)
 {
-	int count=0;
+	int count = 0;
 	void __iomem *p, *q;
 	unsigned short p_save, q_save;
 
@@ -303,20 +302,18 @@ static int __init hga_card_detect(void)
 	writew(0x55aa, p); if (readw(p) == 0x55aa) count++;
 	writew(p_save, p);
 
-	if (count != 2) {
-		return 0;
-	}
+	if (count != 2)
+		goto error;
 
 	/* Ok, there is definitely a card registering at the correct
 	 * memory location, so now we do an I/O port test.
 	 */
 	
-	if (!test_hga_b(0x66, 0x0f)) {	    /* cursor low register */
-		return 0;
-	}
-	if (!test_hga_b(0x99, 0x0f)) {     /* cursor low register */
-		return 0;
-	}
+	if (!test_hga_b(0x66, 0x0f))	    /* cursor low register */
+		goto error;
+
+	if (!test_hga_b(0x99, 0x0f))     /* cursor low register */
+		goto error;
 
 	/* See if the card is a Hercules, by checking whether the vsync
 	 * bit of the status register is changing.  This test lasts for
@@ -331,7 +328,7 @@ static int __init hga_card_detect(void)
 	}
 
 	if (p_save == q_save) 
-		return 0;
+		goto error;
 
 	switch (inb_p(HGA_STATUS_PORT) & 0x70) {
 		case 0x10:
@@ -348,6 +345,12 @@ static int __init hga_card_detect(void)
 			break;
 	}
 	return 1;
+error:
+	if (release_io_ports)
+		release_region(0x3b0, 12);
+	if (release_io_port)
+		release_region(0x3bf, 1);
+	return 0;
 }
 
 /**
@@ -451,7 +454,6 @@ static int hgafb_blank(int blank_mode, struct fb_info *info)
 /*
  * Accel functions
  */
-#ifdef CONFIG_FB_HGA_ACCEL
 static void hgafb_fillrect(struct fb_info *info, const struct fb_fillrect *rect)
 {
 	u_int rows, y;
@@ -463,7 +465,7 @@ static void hgafb_fillrect(struct fb_info *info, const struct fb_fillrect *rect)
 		dest = rowaddr(info, y) + (rect->dx >> 3);
 		switch (rect->rop) {
 		case ROP_COPY:
-			//fb_memset(dest, rect->color, (rect->width >> 3));
+			memset_io(dest, rect->color, (rect->width >> 3));
 			break;
 		case ROP_XOR:
 			fb_writeb(~(fb_readb(dest)), dest);
@@ -485,7 +487,7 @@ static void hgafb_copyarea(struct fb_info *info, const struct fb_copyarea *area)
 		for (rows = area->height; rows--; ) {
 			src = rowaddr(info, y1) + (area->sx >> 3);
 			dest = rowaddr(info, y2) + (area->dx >> 3);
-			//fb_memmove(dest, src, (area->width >> 3));
+			memmove(dest, src, (area->width >> 3));
 			y1++;
 			y2++;
 		}
@@ -496,7 +498,7 @@ static void hgafb_copyarea(struct fb_info *info, const struct fb_copyarea *area)
 		for (rows = area->height; rows--;) {
 			src = rowaddr(info, y1) + (area->sx >> 3);
 			dest = rowaddr(info, y2) + (area->dx >> 3);
-			//fb_memmove(dest, src, (area->width >> 3));
+			memmove(dest, src, (area->width >> 3));
 			y1--;
 			y2--;
 		}
@@ -508,20 +510,17 @@ static void hgafb_imageblit(struct fb_info *info, const struct fb_image *image)
 	u8 __iomem *dest;
 	u8 *cdat = (u8 *) image->data;
 	u_int rows, y = image->dy;
+	u_int x;
 	u8 d;
 
 	for (rows = image->height; rows--; y++) {
-		d = *cdat++;
-		dest = rowaddr(info, y) + (image->dx >> 3);
-		fb_writeb(d, dest);
+		for (x = 0; x < image->width; x+= 8) {
+			d = *cdat++;
+			dest = rowaddr(info, y) + ((image->dx + x)>> 3);
+			fb_writeb(d, dest);
+		}
 	}
 }
-#else /* !CONFIG_FB_HGA_ACCEL */
-#define hgafb_fillrect cfb_fillrect
-#define hgafb_copyarea cfb_copyarea
-#define hgafb_imageblit cfb_imageblit
-#endif /* CONFIG_FB_HGA_ACCEL */
-
 
 static struct fb_ops hgafb_ops = {
 	.owner		= THIS_MODULE,
@@ -547,7 +546,7 @@ static struct fb_ops hgafb_ops = {
 	 *  Initialization
 	 */
 
-static int __init hgafb_probe(struct device *device)
+static int __devinit hgafb_probe(struct platform_device *pdev)
 {
 	struct fb_info *info;
 
@@ -561,7 +560,7 @@ static int __init hgafb_probe(struct device *device)
 	printk(KERN_INFO "hgafb: %s with %ldK of memory detected.\n",
 		hga_type_name, hga_vram_len/1024);
 
-	info = framebuffer_alloc(0, NULL);
+	info = framebuffer_alloc(0, &pdev->dev);
 	if (!info) {
 		iounmap(hga_vram);
 		return -ENOMEM;
@@ -589,13 +588,13 @@ static int __init hgafb_probe(struct device *device)
 
         printk(KERN_INFO "fb%d: %s frame buffer device\n",
                info->node, info->fix.id);
-	dev_set_drvdata(device, info);
+	platform_set_drvdata(pdev, info);
 	return 0;
 }
 
-static int hgafb_remove(struct device *device)
+static int __devexit hgafb_remove(struct platform_device *pdev)
 {
-	struct fb_info *info = dev_get_drvdata(device);
+	struct fb_info *info = platform_get_drvdata(pdev);
 
 	hga_txt_mode();
 	hga_clear_screen();
@@ -616,16 +615,15 @@ static int hgafb_remove(struct device *device)
 	return 0;
 }
 
-static struct device_driver hgafb_driver = {
-	.name = "hgafb",
-	.bus  = &platform_bus_type,
+static struct platform_driver hgafb_driver = {
 	.probe = hgafb_probe,
-	.remove = hgafb_remove,
+	.remove = __devexit_p(hgafb_remove),
+	.driver = {
+		.name = "hgafb",
+	},
 };
 
-static struct platform_device hgafb_device = {
-	.name = "hgafb",
-};
+static struct platform_device *hgafb_device;
 
 static int __init hgafb_init(void)
 {
@@ -634,12 +632,15 @@ static int __init hgafb_init(void)
 	if (fb_get_options("hgafb", NULL))
 		return -ENODEV;
 
-	ret = driver_register(&hgafb_driver);
+	ret = platform_driver_register(&hgafb_driver);
 
 	if (!ret) {
-		ret = platform_device_register(&hgafb_device);
-		if (ret)
-			driver_unregister(&hgafb_driver);
+		hgafb_device = platform_device_register_simple("hgafb", 0, NULL, 0);
+
+		if (IS_ERR(hgafb_device)) {
+			platform_driver_unregister(&hgafb_driver);
+			ret = PTR_ERR(hgafb_device);
+		}
 	}
 
 	return ret;
@@ -647,8 +648,8 @@ static int __init hgafb_init(void)
 
 static void __exit hgafb_exit(void)
 {
-	platform_device_unregister(&hgafb_device);
-	driver_unregister(&hgafb_driver);
+	platform_device_unregister(hgafb_device);
+	platform_driver_unregister(&hgafb_driver);
 }
 
 /* -------------------------------------------------------------------------

@@ -19,7 +19,7 @@
  *     published by the Free Software Foundation; either version 2 of 
  *     the License, or (at your option) any later version.
  *  
- *     Neither Dag Brattli nor University of Tromsø admit liability nor
+ *     Neither Dag Brattli nor University of TromsÃ¸ admit liability nor
  *     provide warranty for any of this software. This material is 
  *     provided "AS-IS" and at no charge.
  *     
@@ -34,6 +34,9 @@
 #include <linux/pm.h>
 #include <linux/types.h>
 #include <asm/io.h>
+
+/* Features for chips (set in driver_data) */
+#define NSC_FORCE_DONGLE_TYPE9	0x00000001
 
 /* DMA modes needed */
 #define DMA_TX_MODE     0x08    /* Mem to I/O, ++, demand. */
@@ -132,7 +135,7 @@
 #define LSR_TXRDY       0x20 /* Transmitter ready */
 #define LSR_TXEMP       0x40 /* Transmitter empty */
 
-#define ASCR            0x07 /* Auxillary Status and Control Register */
+#define ASCR            0x07 /* Auxiliary Status and Control Register */
 #define ASCR_RXF_TOUT   0x01 /* Rx FIFO timeout */
 #define ASCR_FEND_INF   0x02 /* Frame end bytes in rx FIFO */
 #define ASCR_S_EOT      0x04 /* Set end of transmission */
@@ -231,13 +234,13 @@ struct st_fifo {
 
 struct frame_cb {
 	void *start; /* Start of frame in DMA mem */
-	int len;     /* Lenght of frame in DMA mem */
+	int len;     /* Length of frame in DMA mem */
 };
 
 struct tx_fifo {
 	struct frame_cb queue[MAX_TX_WINDOW]; /* Info about frames in queue */
 	int             ptr;                  /* Currently being sent */
-	int             len;                  /* Lenght of queue */
+	int             len;                  /* Length of queue */
 	int             free;                 /* Next free slot */
 	void           *tail;                 /* Next free start in DMA mem */
 };
@@ -248,7 +251,6 @@ struct nsc_ircc_cb {
 	struct tx_fifo tx_fifo;    /* Info about frames to be transmitted */
 
 	struct net_device *netdev;     /* Yes! we are some kind of netdevice */
-	struct net_device_stats stats;
 	
 	struct irlap_cb *irlap;    /* The link layer we are binded to */
 	struct qos_info qos;       /* QoS capabilities for this device */

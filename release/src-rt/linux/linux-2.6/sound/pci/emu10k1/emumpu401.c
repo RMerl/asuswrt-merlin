@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) by Jaroslav Kysela <perex@suse.cz>
+ *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  *  Routines for control of EMU10K1 MPU-401 in UART mode
  *
  *
@@ -19,7 +19,6 @@
  *
  */
 
-#include <sound/driver.h>
 #include <linux/time.h>
 #include <linux/init.h>
 #include <sound/core.h>
@@ -158,7 +157,8 @@ static int snd_emu10k1_midi_input_open(struct snd_rawmidi_substream *substream)
 	unsigned long flags;
 
 	emu = midi->emu;
-	snd_assert(emu, return -ENXIO);
+	if (snd_BUG_ON(!emu))
+		return -ENXIO;
 	spin_lock_irqsave(&midi->open_lock, flags);
 	midi->midi_mode |= EMU10K1_MIDI_MODE_INPUT;
 	midi->substream_input = substream;
@@ -184,7 +184,8 @@ static int snd_emu10k1_midi_output_open(struct snd_rawmidi_substream *substream)
 	unsigned long flags;
 
 	emu = midi->emu;
-	snd_assert(emu, return -ENXIO);
+	if (snd_BUG_ON(!emu))
+		return -ENXIO;
 	spin_lock_irqsave(&midi->open_lock, flags);
 	midi->midi_mode |= EMU10K1_MIDI_MODE_OUTPUT;
 	midi->substream_output = substream;
@@ -211,7 +212,8 @@ static int snd_emu10k1_midi_input_close(struct snd_rawmidi_substream *substream)
 	int err = 0;
 
 	emu = midi->emu;
-	snd_assert(emu, return -ENXIO);
+	if (snd_BUG_ON(!emu))
+		return -ENXIO;
 	spin_lock_irqsave(&midi->open_lock, flags);
 	snd_emu10k1_intr_disable(emu, midi->rx_enable);
 	midi->midi_mode &= ~EMU10K1_MIDI_MODE_INPUT;
@@ -233,7 +235,8 @@ static int snd_emu10k1_midi_output_close(struct snd_rawmidi_substream *substream
 	int err = 0;
 
 	emu = midi->emu;
-	snd_assert(emu, return -ENXIO);
+	if (snd_BUG_ON(!emu))
+		return -ENXIO;
 	spin_lock_irqsave(&midi->open_lock, flags);
 	snd_emu10k1_intr_disable(emu, midi->tx_enable);
 	midi->midi_mode &= ~EMU10K1_MIDI_MODE_OUTPUT;
@@ -252,7 +255,8 @@ static void snd_emu10k1_midi_input_trigger(struct snd_rawmidi_substream *substre
 	struct snd_emu10k1 *emu;
 	struct snd_emu10k1_midi *midi = (struct snd_emu10k1_midi *)substream->rmidi->private_data;
 	emu = midi->emu;
-	snd_assert(emu, return);
+	if (snd_BUG_ON(!emu))
+		return;
 
 	if (up)
 		snd_emu10k1_intr_enable(emu, midi->rx_enable);
@@ -267,7 +271,8 @@ static void snd_emu10k1_midi_output_trigger(struct snd_rawmidi_substream *substr
 	unsigned long flags;
 
 	emu = midi->emu;
-	snd_assert(emu, return);
+	if (snd_BUG_ON(!emu))
+		return;
 
 	if (up) {
 		int max = 4;
@@ -316,7 +321,7 @@ static struct snd_rawmidi_ops snd_emu10k1_midi_input =
 
 static void snd_emu10k1_midi_free(struct snd_rawmidi *rmidi)
 {
-	struct snd_emu10k1_midi *midi = (struct snd_emu10k1_midi *)rmidi->private_data;
+	struct snd_emu10k1_midi *midi = rmidi->private_data;
 	midi->interrupt = NULL;
 	midi->rmidi = NULL;
 }

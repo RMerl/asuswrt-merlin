@@ -1,16 +1,13 @@
 #include <linux/init.h>
-#include <linux/pm.h>
+#include <linux/suspend.h>
 #include <linux/io.h>
 #include <asm/time.h>
 #include <asm/cacheflush.h>
 #include <asm/mpc52xx.h>
 
-#include "mpc52xx_pic.h"
-
-
 /* these are defined in mpc52xx_sleep.S, and only used here */
-extern void mpc52xx_deep_sleep(void *sram, void *sdram_regs,
-		struct mpc52xx_cdm *, struct mpc52xx_intr *);
+extern void mpc52xx_deep_sleep(void __iomem *sram, void __iomem *sdram_regs,
+		struct mpc52xx_cdm __iomem *, struct mpc52xx_intr __iomem*);
 extern void mpc52xx_ds_sram(void);
 extern const long mpc52xx_ds_sram_size;
 extern void mpc52xx_ds_cached(void);
@@ -21,7 +18,7 @@ static void __iomem *sdram;
 static struct mpc52xx_cdm __iomem *cdm;
 static struct mpc52xx_intr __iomem *intr;
 static struct mpc52xx_gpio_wkup __iomem *gpiow;
-static void *sram;
+static void __iomem *sram;
 static int sram_size;
 
 struct mpc52xx_suspend mpc52xx_suspend;
@@ -57,15 +54,32 @@ int mpc52xx_set_wakeup_gpio(u8 pin, u8 level)
 	return 0;
 }
 
-int mpc52xx_pm_prepare(suspend_state_t state)
+int mpc52xx_pm_prepare(void)
 {
-	if (state != PM_SUSPEND_STANDBY)
-		return -EINVAL;
+	struct device_node *np;
+	const struct of_device_id immr_ids[] = {
+		{ .compatible = "fsl,mpc5200-immr", },
+		{ .compatible = "fsl,mpc5200b-immr", },
+		{ .type = "soc", .compatible = "mpc5200", }, /* lite5200 */
+		{ .type = "builtin", .compatible = "mpc5200", }, /* efika */
+		{}
+	};
+	struct resource res;
 
 	/* map the whole register space */
-	mbar = mpc52xx_find_and_map("mpc5200");
+	np = of_find_matching_node(NULL, immr_ids);
+
+	if (of_address_to_resource(np, 0, &res)) {
+		pr_err("mpc52xx_pm_prepare(): could not get IMMR address\n");
+		of_node_put(np);
+		return -ENOSYS;
+	}
+
+	mbar = ioremap(res.start, 0xc000); /* we should map whole region including SRAM */
+
+	of_node_put(np);
 	if (!mbar) {
-		printk(KERN_ERR "%s:%i Error mapping registers\n", __func__, __LINE__);
+		pr_err("mpc52xx_pm_prepare(): could not map registers\n");
 		return -ENOSYS;
 	}
 	/* these offsets are from mpc5200 users manual */
@@ -100,7 +114,7 @@ int mpc52xx_pm_enter(suspend_state_t state)
 	u32 clk_enables;
 	u32 msr, hid0;
 	u32 intr_main_mask;
-	void __iomem * irq_0x500 = (void *)CONFIG_KERNEL_START + 0x500;
+	void __iomem * irq_0x500 = (void __iomem *)CONFIG_KERNEL_START + 0x500;
 	unsigned long irq_0x500_stop = (unsigned long)irq_0x500 + mpc52xx_ds_cached_size;
 	char saved_0x500[mpc52xx_ds_cached_size];
 
@@ -157,27 +171,22 @@ int mpc52xx_pm_enter(suspend_state_t state)
 	/* restore SRAM */
 	memcpy(sram, saved_sram, sram_size);
 
-	/* restart jiffies */
-	wakeup_decrementer();
-
 	/* reenable interrupts in PIC */
 	out_be32(&intr->main_mask, intr_main_mask);
 
 	return 0;
 }
 
-int mpc52xx_pm_finish(suspend_state_t state)
+void mpc52xx_pm_finish(void)
 {
 	/* call board resume code */
 	if (mpc52xx_suspend.board_resume_finish)
 		mpc52xx_suspend.board_resume_finish(mbar);
 
 	iounmap(mbar);
-
-	return 0;
 }
 
-static struct pm_ops mpc52xx_pm_ops = {
+static const struct platform_suspend_ops mpc52xx_pm_ops = {
 	.valid		= mpc52xx_pm_valid,
 	.prepare	= mpc52xx_pm_prepare,
 	.enter		= mpc52xx_pm_enter,
@@ -186,6 +195,6 @@ static struct pm_ops mpc52xx_pm_ops = {
 
 int __init mpc52xx_pm_init(void)
 {
-	pm_set_ops(&mpc52xx_pm_ops);
+	suspend_set_ops(&mpc52xx_pm_ops);
 	return 0;
 }

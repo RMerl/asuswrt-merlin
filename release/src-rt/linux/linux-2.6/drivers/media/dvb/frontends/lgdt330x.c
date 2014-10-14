@@ -35,7 +35,6 @@
 
 #include <linux/kernel.h>
 #include <linux/module.h>
-#include <linux/moduleparam.h>
 #include <linux/init.h>
 #include <linux/delay.h>
 #include <linux/string.h>
@@ -50,7 +49,7 @@
 /* Use Equalizer Mean Squared Error instead of Phaser Tracker MSE */
 /* #define USE_EQMSE */
 
-static int debug = 0;
+static int debug;
 module_param(debug, int, 0644);
 MODULE_PARM_DESC(debug,"Turn on/off lgdt330x frontend debugging (default:off).");
 #define dprintk(args...) \
@@ -89,7 +88,7 @@ static int i2c_write_demod_bytes (struct lgdt330x_state* state,
 
 	for (i=0; i<len-1; i+=2){
 		if ((err = i2c_transfer(state->i2c, &msg, 1)) != 1) {
-			printk(KERN_WARNING "lgdt330x: %s error (addr %02x <- %02x, err = %i)\n", __FUNCTION__, msg.buf[0], msg.buf[1], err);
+			printk(KERN_WARNING "lgdt330x: %s error (addr %02x <- %02x, err = %i)\n", __func__, msg.buf[0], msg.buf[1], err);
 			if (err < 0)
 				return err;
 			else
@@ -118,7 +117,7 @@ static u8 i2c_read_demod_bytes (struct lgdt330x_state* state,
 	int ret;
 	ret = i2c_transfer(state->i2c, msg, 2);
 	if (ret != 2) {
-		printk(KERN_WARNING "lgdt330x: %s: addr 0x%02x select 0x%02x error (ret == %i)\n", __FUNCTION__, state->config->demod_address, reg, ret);
+		printk(KERN_WARNING "lgdt330x: %s: addr 0x%02x select 0x%02x error (ret == %i)\n", __func__, state->config->demod_address, reg, ret);
 	} else {
 		ret = 0;
 	}
@@ -227,9 +226,14 @@ static int lgdt330x_init(struct dvb_frontend* fe)
 		0x4c, 0x14
 	};
 
-	static u8 flip_lgdt3303_init_data[] = {
+	static u8 flip_1_lgdt3303_init_data[] = {
 		0x4c, 0x14,
 		0x87, 0xf3
+	};
+
+	static u8 flip_2_lgdt3303_init_data[] = {
+		0x4c, 0x14,
+		0x87, 0xda
 	};
 
 	struct lgdt330x_state* state = fe->demodulator_priv;
@@ -244,10 +248,19 @@ static int lgdt330x_init(struct dvb_frontend* fe)
 		break;
 	case LGDT3303:
 		chip_name = "LGDT3303";
-		if (state->config->clock_polarity_flip) {
-			err = i2c_write_demod_bytes(state, flip_lgdt3303_init_data,
-						    sizeof(flip_lgdt3303_init_data));
-		} else {
+		switch (state->config->clock_polarity_flip) {
+		case 2:
+			err = i2c_write_demod_bytes(state,
+					flip_2_lgdt3303_init_data,
+					sizeof(flip_2_lgdt3303_init_data));
+			break;
+		case 1:
+			err = i2c_write_demod_bytes(state,
+					flip_1_lgdt3303_init_data,
+					sizeof(flip_1_lgdt3303_init_data));
+			break;
+		case 0:
+		default:
 			err = i2c_write_demod_bytes(state, lgdt3303_init_data,
 						    sizeof(lgdt3303_init_data));
 		}
@@ -257,7 +270,7 @@ static int lgdt330x_init(struct dvb_frontend* fe)
 		printk (KERN_WARNING "Only LGDT3302 and LGDT3303 are supported chips.\n");
 		err = -ENODEV;
 	}
-	dprintk("%s entered as %s\n", __FUNCTION__, chip_name);
+	dprintk("%s entered as %s\n", __func__, chip_name);
 	if (err < 0)
 		return err;
 	return lgdt330x_SwReset(state);
@@ -335,7 +348,7 @@ static int lgdt330x_set_parameters(struct dvb_frontend* fe,
 	if (state->current_modulation != param->u.vsb.modulation) {
 		switch(param->u.vsb.modulation) {
 		case VSB_8:
-			dprintk("%s: VSB_8 MODE\n", __FUNCTION__);
+			dprintk("%s: VSB_8 MODE\n", __func__);
 
 			/* Select VSB mode */
 			top_ctrl_cfg[1] = 0x03;
@@ -351,7 +364,7 @@ static int lgdt330x_set_parameters(struct dvb_frontend* fe,
 			break;
 
 		case QAM_64:
-			dprintk("%s: QAM_64 MODE\n", __FUNCTION__);
+			dprintk("%s: QAM_64 MODE\n", __func__);
 
 			/* Select QAM_64 mode */
 			top_ctrl_cfg[1] = 0x00;
@@ -367,7 +380,7 @@ static int lgdt330x_set_parameters(struct dvb_frontend* fe,
 			break;
 
 		case QAM_256:
-			dprintk("%s: QAM_256 MODE\n", __FUNCTION__);
+			dprintk("%s: QAM_256 MODE\n", __func__);
 
 			/* Select QAM_256 mode */
 			top_ctrl_cfg[1] = 0x01;
@@ -382,7 +395,7 @@ static int lgdt330x_set_parameters(struct dvb_frontend* fe,
 			}
 			break;
 		default:
-			printk(KERN_WARNING "lgdt330x: %s: Modulation type(%d) UNSUPPORTED\n", __FUNCTION__, param->u.vsb.modulation);
+			printk(KERN_WARNING "lgdt330x: %s: Modulation type(%d) UNSUPPORTED\n", __func__, param->u.vsb.modulation);
 			return -1;
 		}
 		/*
@@ -432,7 +445,7 @@ static int lgdt3302_read_status(struct dvb_frontend* fe, fe_status_t* status)
 
 	/* AGC status register */
 	i2c_read_demod_bytes(state, AGC_STATUS, buf, 1);
-	dprintk("%s: AGC_STATUS = 0x%02x\n", __FUNCTION__, buf[0]);
+	dprintk("%s: AGC_STATUS = 0x%02x\n", __func__, buf[0]);
 	if ((buf[0] & 0x0c) == 0x8){
 		/* Test signal does not exist flag */
 		/* as well as the AGC lock flag.   */
@@ -446,7 +459,7 @@ static int lgdt3302_read_status(struct dvb_frontend* fe, fe_status_t* status)
 	 */
 	/* signal status */
 	i2c_read_demod_bytes(state, TOP_CONTROL, buf, sizeof(buf));
-	dprintk("%s: TOP_CONTROL = 0x%02x, IRO_MASK = 0x%02x, IRQ_STATUS = 0x%02x\n", __FUNCTION__, buf[0], buf[1], buf[2]);
+	dprintk("%s: TOP_CONTROL = 0x%02x, IRO_MASK = 0x%02x, IRQ_STATUS = 0x%02x\n", __func__, buf[0], buf[1], buf[2]);
 
 
 	/* sync status */
@@ -462,11 +475,11 @@ static int lgdt3302_read_status(struct dvb_frontend* fe, fe_status_t* status)
 
 	/* Carrier Recovery Lock Status Register */
 	i2c_read_demod_bytes(state, CARRIER_LOCK, buf, 1);
-	dprintk("%s: CARRIER_LOCK = 0x%02x\n", __FUNCTION__, buf[0]);
+	dprintk("%s: CARRIER_LOCK = 0x%02x\n", __func__, buf[0]);
 	switch (state->current_modulation) {
 	case QAM_256:
 	case QAM_64:
-		/* Need to undestand why there are 3 lock levels here */
+		/* Need to understand why there are 3 lock levels here */
 		if ((buf[0] & 0x07) == 0x07)
 			*status |= FE_HAS_CARRIER;
 		break;
@@ -475,7 +488,7 @@ static int lgdt3302_read_status(struct dvb_frontend* fe, fe_status_t* status)
 			*status |= FE_HAS_CARRIER;
 		break;
 	default:
-		printk(KERN_WARNING "lgdt330x: %s: Modulation set to unsupported value\n", __FUNCTION__);
+		printk(KERN_WARNING "lgdt330x: %s: Modulation set to unsupported value\n", __func__);
 	}
 
 	return 0;
@@ -494,7 +507,7 @@ static int lgdt3303_read_status(struct dvb_frontend* fe, fe_status_t* status)
 	if (err < 0)
 		return err;
 
-	dprintk("%s: AGC_STATUS = 0x%02x\n", __FUNCTION__, buf[0]);
+	dprintk("%s: AGC_STATUS = 0x%02x\n", __func__, buf[0]);
 	if ((buf[0] & 0x21) == 0x01){
 		/* Test input signal does not exist flag */
 		/* as well as the AGC lock flag.   */
@@ -503,11 +516,11 @@ static int lgdt3303_read_status(struct dvb_frontend* fe, fe_status_t* status)
 
 	/* Carrier Recovery Lock Status Register */
 	i2c_read_demod_bytes(state, CARRIER_LOCK, buf, 1);
-	dprintk("%s: CARRIER_LOCK = 0x%02x\n", __FUNCTION__, buf[0]);
+	dprintk("%s: CARRIER_LOCK = 0x%02x\n", __func__, buf[0]);
 	switch (state->current_modulation) {
 	case QAM_256:
 	case QAM_64:
-		/* Need to undestand why there are 3 lock levels here */
+		/* Need to understand why there are 3 lock levels here */
 		if ((buf[0] & 0x07) == 0x07)
 			*status |= FE_HAS_CARRIER;
 		else
@@ -534,7 +547,7 @@ static int lgdt3303_read_status(struct dvb_frontend* fe, fe_status_t* status)
 		}
 		break;
 	default:
-		printk(KERN_WARNING "lgdt330x: %s: Modulation set to unsupported value\n", __FUNCTION__);
+		printk(KERN_WARNING "lgdt330x: %s: Modulation set to unsupported value\n", __func__);
 	}
 	return 0;
 }
@@ -608,14 +621,14 @@ static int lgdt3302_read_snr(struct dvb_frontend* fe, u16* snr)
 		break;
 	default:
 		printk(KERN_ERR "lgdt330x: %s: Modulation set to unsupported value\n",
-		       __FUNCTION__);
+		       __func__);
 		return -EREMOTEIO; /* return -EDRIVER_IS_GIBBERED; */
 	}
 
 	state->snr = calculate_snr(noise, c);
 	*snr = (state->snr) >> 16; /* Convert from 8.24 fixed-point to 8.8 */
 
-	dprintk("%s: noise = 0x%08x, snr = %d.%02d dB\n", __FUNCTION__, noise,
+	dprintk("%s: noise = 0x%08x, snr = %d.%02d dB\n", __func__, noise,
 		state->snr >> 24, (((state->snr>>8) & 0xffff) * 100) >> 16);
 
 	return 0;
@@ -652,14 +665,14 @@ static int lgdt3303_read_snr(struct dvb_frontend* fe, u16* snr)
 		break;
 	default:
 		printk(KERN_ERR "lgdt330x: %s: Modulation set to unsupported value\n",
-		       __FUNCTION__);
+		       __func__);
 		return -EREMOTEIO; /* return -EDRIVER_IS_GIBBERED; */
 	}
 
 	state->snr = calculate_snr(noise, c);
 	*snr = (state->snr) >> 16; /* Convert from 8.24 fixed-point to 8.8 */
 
-	dprintk("%s: noise = 0x%08x, snr = %d.%02d dB\n", __FUNCTION__, noise,
+	dprintk("%s: noise = 0x%08x, snr = %d.%02d dB\n", __func__, noise,
 		state->snr >> 24, (((state->snr >> 8) & 0xffff) * 100) >> 16);
 
 	return 0;
@@ -744,7 +757,7 @@ struct dvb_frontend* lgdt330x_attach(const struct lgdt330x_config* config,
 
 error:
 	kfree(state);
-	dprintk("%s: ERROR\n",__FUNCTION__);
+	dprintk("%s: ERROR\n",__func__);
 	return NULL;
 }
 

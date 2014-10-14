@@ -60,8 +60,7 @@ static int		vxfs_statfs(struct dentry *, struct kstatfs *);
 static int		vxfs_remount(struct super_block *, int *, char *);
 
 static const struct super_operations vxfs_super_ops = {
-	.read_inode =		vxfs_read_inode,
-	.clear_inode =		vxfs_clear_inode,
+	.evict_inode =		vxfs_evict_inode,
 	.put_super =		vxfs_put_super,
 	.statfs =		vxfs_statfs,
 	.remount_fs =		vxfs_remount,
@@ -131,7 +130,7 @@ static int vxfs_remount(struct super_block *sb, int *flags, char *data)
 }
 
 /**
- * vxfs_read_super - read superblock into memory and initalize filesystem
+ * vxfs_read_super - read superblock into memory and initialize filesystem
  * @sbp:		VFS superblock (to fill)
  * @dp:			fs private mount data
  * @silent:		do not complain loudly when sth is wrong
@@ -144,7 +143,7 @@ static int vxfs_remount(struct super_block *sb, int *flags, char *data)
  *   The superblock on success, else %NULL.
  *
  * Locking:
- *   We are under the bkl and @sbp->s_lock.
+ *   We are under @sbp->s_lock.
  */
 static int vxfs_fill_super(struct super_block *sbp, void *dp, int silent)
 {
@@ -153,6 +152,7 @@ static int vxfs_fill_super(struct super_block *sbp, void *dp, int silent)
 	struct buffer_head	*bp = NULL;
 	u_long			bsize;
 	struct inode *root;
+	int ret = -EINVAL;
 
 	sbp->s_flags |= MS_RDONLY;
 
@@ -219,7 +219,11 @@ static int vxfs_fill_super(struct super_block *sbp, void *dp, int silent)
 	}
 
 	sbp->s_op = &vxfs_super_ops;
-	root = iget(sbp, VXFS_ROOT_INO);
+	root = vxfs_iget(sbp, VXFS_ROOT_INO);
+	if (IS_ERR(root)) {
+		ret = PTR_ERR(root);
+		goto out;
+	}
 	sbp->s_root = d_alloc_root(root);
 	if (!sbp->s_root) {
 		iput(root);
@@ -236,23 +240,22 @@ out_free_ilist:
 out:
 	brelse(bp);
 	kfree(infp);
-	return -EINVAL;
+	return ret;
 }
 
 /*
  * The usual module blurb.
  */
-static int vxfs_get_sb(struct file_system_type *fs_type,
-	int flags, const char *dev_name, void *data, struct vfsmount *mnt)
+static struct dentry *vxfs_mount(struct file_system_type *fs_type,
+	int flags, const char *dev_name, void *data)
 {
-	return get_sb_bdev(fs_type, flags, dev_name, data, vxfs_fill_super,
-			   mnt);
+	return mount_bdev(fs_type, flags, dev_name, data, vxfs_fill_super);
 }
 
 static struct file_system_type vxfs_fs_type = {
 	.owner		= THIS_MODULE,
 	.name		= "vxfs",
-	.get_sb		= vxfs_get_sb,
+	.mount		= vxfs_mount,
 	.kill_sb	= kill_block_super,
 	.fs_flags	= FS_REQUIRES_DEV,
 };
@@ -263,8 +266,8 @@ vxfs_init(void)
 	int rv;
 
 	vxfs_inode_cachep = kmem_cache_create("vxfs_inode",
-			sizeof(struct vxfs_inode_info), 0, 
-			SLAB_RECLAIM_ACCOUNT|SLAB_MEM_SPREAD, NULL, NULL);
+			sizeof(struct vxfs_inode_info), 0,
+			SLAB_RECLAIM_ACCOUNT|SLAB_MEM_SPREAD, NULL);
 	if (!vxfs_inode_cachep)
 		return -ENOMEM;
 	rv = register_filesystem(&vxfs_fs_type);

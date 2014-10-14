@@ -1,7 +1,5 @@
 /* Special Initializers for certain USB Mass Storage devices
  *
- * $Id: initializers.c,v 1.2 2000/09/06 22:35:57 mdharm Exp $
- *
  * Current development and maintenance by:
  *   (c) 1999, 2000 Matthew Dharm (mdharm-usb@one-eyed-alien.net)
  *
@@ -66,7 +64,8 @@ int usb_stor_ucr61s2b_init(struct us_data *us)
 {
 	struct bulk_cb_wrap *bcb = (struct bulk_cb_wrap*) us->iobuf;
 	struct bulk_cs_wrap *bcs = (struct bulk_cs_wrap*) us->iobuf;
-	int res, partial;
+	int res;
+	unsigned int partial;
 	static char init_string[] = "\xec\x0a\x06\x00$PCCHIPS";
 
 	US_DEBUGP("Sending UCR-61S2B initialization packet...\n");

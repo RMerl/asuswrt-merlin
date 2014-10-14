@@ -1,20 +1,19 @@
 /*
  * JFFS2 -- Journalling Flash File System, Version 2.
  *
- * Copyright (C) 2001-2003 Red Hat, Inc.
+ * Copyright © 2001-2007 Red Hat, Inc.
+ * Copyright © 2004-2010 David Woodhouse <dwmw2@infradead.org>
  *
  * Created by David Woodhouse <dwmw2@infradead.org>
  *
  * For licensing information, see the file 'LICENCE' in the
  * jffs2 directory.
- *
- * $Id: jffs2.h,v 1.38 2005/09/26 11:37:23 havasi Exp $
- *
  */
 
 #ifndef __LINUX_JFFS2_H__
 #define __LINUX_JFFS2_H__
 
+#include <linux/types.h>
 #include <linux/magic.h>
 
 /* You must include something which defines the C99 uintXX_t types. 
@@ -94,15 +93,15 @@
    byteswapping */
 
 typedef struct {
-	uint32_t v32;
+	__u32 v32;
 } __attribute__((packed)) jint32_t;
 
 typedef struct {
-	uint32_t m;
+	__u32 m;
 } __attribute__((packed)) jmode_t;
 
 typedef struct {
-	uint16_t v16;
+	__u16 v16;
 } __attribute__((packed)) jint16_t;
 
 struct jffs2_unknown_node
@@ -124,12 +123,12 @@ struct jffs2_raw_dirent
 	jint32_t version;
 	jint32_t ino; /* == zero for unlink */
 	jint32_t mctime;
-	uint8_t nsize;
-	uint8_t type;
-	uint8_t unused[2];
+	__u8 nsize;
+	__u8 type;
+	__u8 unused[2];
 	jint32_t node_crc;
 	jint32_t name_crc;
-	uint8_t name[0];
+	__u8 name[0];
 };
 
 /* The JFFS2 raw inode structure: Used for storage on physical media.  */
@@ -156,12 +155,12 @@ struct jffs2_raw_inode
 	jint32_t offset;     /* Where to begin to write.  */
 	jint32_t csize;      /* (Compressed) data size */
 	jint32_t dsize;	     /* Size of the node's data. (after decompression) */
-	uint8_t compr;       /* Compression algorithm used */
-	uint8_t usercompr;   /* Compression algorithm requested by the user */
+	__u8 compr;       /* Compression algorithm used */
+	__u8 usercompr;   /* Compression algorithm requested by the user */
 	jint16_t flags;	     /* See JFFS2_INO_FLAG_* */
 	jint32_t data_crc;   /* CRC for the (compressed) data.  */
 	jint32_t node_crc;   /* CRC for the raw inode (excluding data)  */
-	uint8_t data[0];
+	__u8 data[0];
 };
 
 struct jffs2_raw_xattr {
@@ -171,12 +170,12 @@ struct jffs2_raw_xattr {
 	jint32_t hdr_crc;
 	jint32_t xid;		/* XATTR identifier number */
 	jint32_t version;
-	uint8_t xprefix;
-	uint8_t name_len;
+	__u8 xprefix;
+	__u8 name_len;
 	jint16_t value_len;
 	jint32_t data_crc;
 	jint32_t node_crc;
-	uint8_t data[0];
+	__u8 data[0];
 } __attribute__((packed));
 
 struct jffs2_raw_xref
@@ -187,7 +186,7 @@ struct jffs2_raw_xref
 	jint32_t hdr_crc;
 	jint32_t ino;		/* inode number */
 	jint32_t xid;		/* XATTR identifier number */
-	jint32_t xseqno;	/* xref sequencial number */
+	jint32_t xseqno;	/* xref sequential number */
 	jint32_t node_crc;
 } __attribute__((packed));
 
@@ -217,8 +216,8 @@ union jffs2_node_union
 
 /* Data payload for device nodes. */
 union jffs2_device_node {
-	jint16_t old;
-	jint32_t new;
+	jint16_t old_id;
+	jint32_t new_id;
 };
 
 #endif /* __LINUX_JFFS2_H__ */

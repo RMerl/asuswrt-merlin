@@ -13,7 +13,7 @@
  *	- SysKonnect TR4/16(+) ISA	(SK-4190)
  *
  *  Maintainer(s):
- *    AF        Adam Fritzler           mid@auk.cx
+ *    AF        Adam Fritzler
  *    JF	Jochen Friedrich	jochen@scram.de
  *
  *  Modification History:
@@ -133,6 +133,8 @@ static int __init sk_isa_probe1(struct net_device *dev, int ioaddr)
 	return 0;
 }
 
+static struct net_device_ops sk_isa_netdev_ops __read_mostly;
+
 static int __init setup_card(struct net_device *dev, struct device *pdev)
 {
 	struct net_local *tp;
@@ -143,7 +145,6 @@ static int __init setup_card(struct net_device *dev, struct device *pdev)
 	if (!dev)
 		return -ENOMEM;
 
-	SET_MODULE_OWNER(dev);
 	if (dev->base_addr)	/* probe specific location */
 		err = sk_isa_probe1(dev, dev->base_addr);
 	else {
@@ -170,11 +171,8 @@ static int __init setup_card(struct net_device *dev, struct device *pdev)
 		
 	sk_isa_read_eeprom(dev);
 
-	printk(KERN_DEBUG "skisa.c:    Ring Station Address: ");
-	printk("%2.2x", dev->dev_addr[0]);
-	for (j = 1; j < 6; j++)
-		printk(":%2.2x", dev->dev_addr[j]);
-	printk("\n");
+	printk(KERN_DEBUG "skisa.c:    Ring Station Address: %pM\n",
+	       dev->dev_addr);
 		
 	tp = netdev_priv(dev);
 	tp->setnselout = sk_isa_setnselout_pins;
@@ -188,8 +186,7 @@ static int __init setup_card(struct net_device *dev, struct device *pdev)
 
 	tp->tmspriv = NULL;
 
-	dev->open = sk_isa_open;
-	dev->stop = tms380tr_close;
+	dev->netdev_ops = &sk_isa_netdev_ops;
 
 	if (dev->irq == 0)
 	{
@@ -304,7 +301,7 @@ static void sk_isa_read_eeprom(struct net_device *dev)
 		dev->dev_addr[i] = sk_isa_sifreadw(dev, SIFINC) >> 8;
 }
 
-unsigned short sk_isa_setnselout_pins(struct net_device *dev)
+static unsigned short sk_isa_setnselout_pins(struct net_device *dev)
 {
 	return 0;
 }
@@ -365,6 +362,10 @@ static int __init sk_isa_init(void)
 	struct net_device *dev;
 	struct platform_device *pdev;
 	int i, num = 0, err = 0;
+
+	sk_isa_netdev_ops = tms380tr_netdev_ops;
+	sk_isa_netdev_ops.ndo_open = sk_isa_open;
+	sk_isa_netdev_ops.ndo_stop = tms380tr_close;
 
 	err = platform_driver_register(&sk_isa_driver);
 	if (err)

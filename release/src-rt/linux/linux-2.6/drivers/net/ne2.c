@@ -66,7 +66,6 @@ static const char *version = "ne2.c:v0.91 Nov 16 1998 Wim Dumon <wimpie@kotnet.o
 #include <linux/interrupt.h>
 #include <linux/ioport.h>
 #include <linux/in.h>
-#include <linux/slab.h>
 #include <linux/string.h>
 #include <linux/errno.h>
 #include <linux/init.h>
@@ -136,9 +135,6 @@ static struct ne2_adapters_t ne2_adapters[] __initdata = {
 extern int netcard_probe(struct net_device *dev);
 
 static int ne2_probe1(struct net_device *dev, int slot);
-
-static int ne_open(struct net_device *dev);
-static int ne_close(struct net_device *dev);
 
 static void ne_reset_8390(struct net_device *dev);
 static void ne_get_8390_hdr(struct net_device *dev, struct e8390_pkt_hdr *hdr,
@@ -251,8 +247,6 @@ static int __init do_ne2_probe(struct net_device *dev)
 	int i;
 	int adapter_found = 0;
 
-	SET_MODULE_OWNER(dev);
-
 	/* Do not check any supplied i/o locations.
 	   POS registers usually don't fail :) */
 
@@ -282,7 +276,7 @@ static int __init do_ne2_probe(struct net_device *dev)
 #ifndef MODULE
 struct net_device * __init ne2_probe(int unit)
 {
-	struct net_device *dev = alloc_ei_netdev();
+	struct net_device *dev = alloc_eip_netdev();
 	int err;
 
 	if (!dev)
@@ -314,12 +308,7 @@ static int ne2_procinfo(char *buf, int slot, struct net_device *dev)
 	len += sprintf(buf+len, "Based on the original NE2000 drivers\n" );
 	len += sprintf(buf+len, "Base IO: %#x\n", (unsigned int)dev->base_addr);
 	len += sprintf(buf+len, "IRQ    : %d\n", dev->irq);
-
-#define HW_ADDR(i) dev->dev_addr[i]
-	len += sprintf(buf+len, "HW addr : %x:%x:%x:%x:%x:%x\n",
-			HW_ADDR(0), HW_ADDR(1), HW_ADDR(2),
-			HW_ADDR(3), HW_ADDR(4), HW_ADDR(5) );
-#undef HW_ADDR
+	len += sprintf(buf+len, "HW addr : %pM\n", dev->dev_addr);
 
 	return len;
 }
@@ -409,7 +398,7 @@ static int __init ne2_probe1(struct net_device *dev, int slot)
 
 	/* Read the 16 bytes of station address PROM.
 	   We must first initialize registers, similar to
-	   NS8390_init(eifdev, 0).
+	   NS8390p_init(eifdev, 0).
 	   We can't reliably read the SAPROM address without this.
 	   (I learned the hard way!). */
 	{
@@ -432,7 +421,7 @@ static int __init ne2_probe1(struct net_device *dev, int slot)
 			{E8390_RREAD+E8390_START, E8390_CMD},
 		};
 
-		for (i = 0; i < sizeof(program_seq)/sizeof(program_seq[0]); i++)
+		for (i = 0; i < ARRAY_SIZE(program_seq); i++)
 			outb_p(program_seq[i].value, base_addr +
 				program_seq[i].offset);
 
@@ -462,7 +451,7 @@ static int __init ne2_probe1(struct net_device *dev, int slot)
 
 	/* Snarf the interrupt now.  There's no point in waiting since we cannot
 	   share and the board will usually be enabled. */
-	retval = request_irq(dev->irq, ei_interrupt, 0, DRV_NAME, dev);
+	retval = request_irq(dev->irq, eip_interrupt, 0, DRV_NAME, dev);
 	if (retval) {
 		printk (" unable to get IRQ %d (irqval=%d).\n",
 				dev->irq, retval);
@@ -471,12 +460,12 @@ static int __init ne2_probe1(struct net_device *dev, int slot)
 
 	dev->base_addr = base_addr;
 
-	for(i = 0; i < ETHER_ADDR_LEN; i++) {
-		printk(" %2.2x", SA_prom[i]);
+	for(i = 0; i < ETHER_ADDR_LEN; i++)
 		dev->dev_addr[i] = SA_prom[i];
-	}
 
-	printk("\n%s: %s found at %#x, using IRQ %d.\n",
+	printk(" %pM\n", dev->dev_addr);
+
+	printk("%s: %s found at %#x, using IRQ %d.\n",
 			dev->name, name, base_addr, dev->irq);
 
 	mca_set_adapter_procfn(slot, (MCA_ProcFn) ne2_procinfo, dev);
@@ -499,12 +488,8 @@ static int __init ne2_probe1(struct net_device *dev, int slot)
 
 	ei_status.priv = slot;
 
-	dev->open = &ne_open;
-	dev->stop = &ne_close;
-#ifdef CONFIG_NET_POLL_CONTROLLER
-	dev->poll_controller = ei_poll;
-#endif
-	NS8390_init(dev, 0);
+	dev->netdev_ops = &eip_netdev_ops;
+	NS8390p_init(dev, 0);
 
 	retval = register_netdev(dev);
 	if (retval)
@@ -516,20 +501,6 @@ out1:
 out:
 	release_region(base_addr, NE_IO_EXTENT);
 	return retval;
-}
-
-static int ne_open(struct net_device *dev)
-{
-	ei_open(dev);
-	return 0;
-}
-
-static int ne_close(struct net_device *dev)
-{
-	if (ei_debug > 1)
-		printk("%s: Shutting down ethercard.\n", dev->name);
-	ei_close(dev);
-	return 0;
 }
 
 /* Hard reset the card.  This used to pause for the same period that a
@@ -753,13 +724,12 @@ retry:
 		if (time_after(jiffies, dma_start + 2*HZ/100)) {		/* 20ms */
 			printk("%s: timeout waiting for Tx RDC.\n", dev->name);
 			ne_reset_8390(dev);
-			NS8390_init(dev,1);
+			NS8390p_init(dev, 1);
 			break;
 		}
 
 	outb_p(ENISR_RDC, nic_base + EN0_ISR);	/* Ack intr. */
 	ei_status.dmaing &= ~0x01;
-	return;
 }
 
 
@@ -786,7 +756,7 @@ int __init init_module(void)
 	int this_dev, found = 0;
 
 	for (this_dev = 0; this_dev < MAX_NE_CARDS; this_dev++) {
-		dev = alloc_ei_netdev();
+		dev = alloc_eip_netdev();
 		if (!dev)
 			break;
 		dev->irq = irq[this_dev];

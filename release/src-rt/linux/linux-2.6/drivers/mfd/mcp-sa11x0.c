@@ -17,18 +17,17 @@
 #include <linux/kernel.h>
 #include <linux/delay.h>
 #include <linux/spinlock.h>
-#include <linux/slab.h>
 #include <linux/platform_device.h>
+#include <linux/mfd/mcp.h>
 
-#include <asm/dma.h>
-#include <asm/hardware.h>
+#include <mach/dma.h>
+#include <mach/hardware.h>
 #include <asm/mach-types.h>
 #include <asm/system.h>
-#include <asm/arch/mcp.h>
+#include <mach/mcp.h>
 
-#include <asm/arch/assabet.h>
+#include <mach/assabet.h>
 
-#include "mcp.h"
 
 struct mcp_sa11x0 {
 	u32	mccr0;
@@ -163,6 +162,7 @@ static int mcp_sa11x0_probe(struct platform_device *pdev)
 	mcp->dma_audio_wr	= DMA_Ser4MCP0Wr;
 	mcp->dma_telco_rd	= DMA_Ser4MCP1Rd;
 	mcp->dma_telco_wr	= DMA_Ser4MCP1Wr;
+	mcp->gpio_base		= data->gpio_base;
 
 	platform_set_drvdata(pdev, mcp);
 
@@ -242,6 +242,8 @@ static int mcp_sa11x0_resume(struct platform_device *dev)
 /*
  * The driver for the SA11x0 MCP port.
  */
+MODULE_ALIAS("platform:sa11x0-mcp");
+
 static struct platform_driver mcp_sa11x0_driver = {
 	.probe		= mcp_sa11x0_probe,
 	.remove		= mcp_sa11x0_remove,

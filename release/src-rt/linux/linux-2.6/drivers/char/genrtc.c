@@ -43,6 +43,7 @@
 #define RTC_VERSION	"1.07"
 
 #include <linux/module.h>
+#include <linux/sched.h>
 #include <linux/errno.h>
 #include <linux/miscdevice.h>
 #include <linux/fcntl.h>
@@ -51,6 +52,7 @@
 #include <linux/init.h>
 #include <linux/poll.h>
 #include <linux/proc_fs.h>
+#include <linux/mutex.h>
 #include <linux/workqueue.h>
 
 #include <asm/uaccess.h>
@@ -64,6 +66,7 @@
  *	ioctls.
  */
 
+static DEFINE_MUTEX(gen_rtc_mutex);
 static DECLARE_WAIT_QUEUE_HEAD(gen_rtc_wait);
 
 /*
@@ -173,7 +176,6 @@ static void gen_rtc_interrupt(unsigned long arg)
 static ssize_t gen_rtc_read(struct file *file, char __user *buf,
 			size_t count, loff_t *ppos)
 {
-	DECLARE_WAITQUEUE(wait, current);
 	unsigned long data;
 	ssize_t retval;
 
@@ -183,18 +185,10 @@ static ssize_t gen_rtc_read(struct file *file, char __user *buf,
 	if (file->f_flags & O_NONBLOCK && !gen_rtc_irq_data)
 		return -EAGAIN;
 
-	add_wait_queue(&gen_rtc_wait, &wait);
-	retval = -ERESTARTSYS;
-
-	while (1) {
-		set_current_state(TASK_INTERRUPTIBLE);
-		data = xchg(&gen_rtc_irq_data, 0);
-		if (data)
-			break;
-		if (signal_pending(current))
-			goto out;
-		schedule();
-	}
+	retval = wait_event_interruptible(gen_rtc_wait,
+			(data = xchg(&gen_rtc_irq_data, 0)));
+	if (retval)
+		goto out;
 
 	/* first test allows optimizer to nuke this case for 32-bit machines */
 	if (sizeof (int) != sizeof (long) && count == sizeof (unsigned int)) {
@@ -206,10 +200,7 @@ static ssize_t gen_rtc_read(struct file *file, char __user *buf,
 		retval = put_user(data, (unsigned long __user *)buf) ?:
 			sizeof(unsigned long);
 	}
- out:
-	__set_current_state(TASK_RUNNING);
-	remove_wait_queue(&gen_rtc_wait, &wait);
-
+out:
 	return retval;
 }
 
@@ -272,7 +263,7 @@ static inline int gen_set_rtc_irq_bit(unsigned char bit)
 #endif
 }
 
-static int gen_rtc_ioctl(struct inode *inode, struct file *file,
+static int gen_rtc_ioctl(struct file *file,
 			 unsigned int cmd, unsigned long arg)
 {
 	struct rtc_time wtime;
@@ -342,6 +333,18 @@ static int gen_rtc_ioctl(struct inode *inode, struct file *file,
 	return -EINVAL;
 }
 
+static long gen_rtc_unlocked_ioctl(struct file *file, unsigned int cmd,
+				   unsigned long arg)
+{
+	int ret;
+
+	mutex_lock(&gen_rtc_mutex);
+	ret = gen_rtc_ioctl(file, cmd, arg);
+	mutex_unlock(&gen_rtc_mutex);
+
+	return ret;
+}
+
 /*
  *	We enforce only one user at a time here with the open/close.
  *	Also clear the previous interrupt data on an open, and clean
@@ -350,12 +353,16 @@ static int gen_rtc_ioctl(struct inode *inode, struct file *file,
 
 static int gen_rtc_open(struct inode *inode, struct file *file)
 {
-	if (gen_rtc_status & RTC_IS_OPEN)
+	mutex_lock(&gen_rtc_mutex);
+	if (gen_rtc_status & RTC_IS_OPEN) {
+		mutex_unlock(&gen_rtc_mutex);
 		return -EBUSY;
+	}
 
 	gen_rtc_status |= RTC_IS_OPEN;
 	gen_rtc_irq_data = 0;
 	irq_active = 0;
+	mutex_unlock(&gen_rtc_mutex);
 
 	return 0;
 }
@@ -488,9 +495,10 @@ static const struct file_operations gen_rtc_fops = {
 	.read		= gen_rtc_read,
 	.poll		= gen_rtc_poll,
 #endif
-	.ioctl		= gen_rtc_ioctl,
+	.unlocked_ioctl	= gen_rtc_unlocked_ioctl,
 	.open		= gen_rtc_open,
 	.release	= gen_rtc_release,
+	.llseek		= noop_llseek,
 };
 
 static struct miscdevice rtc_gen_dev =

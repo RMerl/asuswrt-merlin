@@ -9,6 +9,10 @@
  */
 
 #include "irnet_irda.h"		/* Private header */
+#include <linux/sched.h>
+#include <linux/seq_file.h>
+#include <linux/slab.h>
+#include <asm/unaligned.h>
 
 /*
  * PPP disconnect work: we need to make sure we're in
@@ -234,7 +238,7 @@ irnet_ias_to_tsap(irnet_socket *	self,
   DEXIT(IRDA_SR_TRACE, "\n");
 
   /* Return the TSAP */
-  return(dtsap_sel);
+  return dtsap_sel;
 }
 
 /*------------------------------------------------------------------*/
@@ -297,7 +301,7 @@ irnet_connect_tsap(irnet_socket *	self)
     {
       clear_bit(0, &self->ttp_connect);
       DERROR(IRDA_SR_ERROR, "connect aborted!\n");
-      return(err);
+      return err;
     }
 
   /* Connect to remote device */
@@ -308,7 +312,7 @@ irnet_connect_tsap(irnet_socket *	self)
     {
       clear_bit(0, &self->ttp_connect);
       DERROR(IRDA_SR_ERROR, "connect aborted!\n");
-      return(err);
+      return err;
     }
 
   /* The above call is non-blocking.
@@ -317,7 +321,7 @@ irnet_connect_tsap(irnet_socket *	self)
    * See you there ;-) */
 
   DEXIT(IRDA_SR_TRACE, "\n");
-  return(err);
+  return err;
 }
 
 /*------------------------------------------------------------------*/
@@ -358,10 +362,10 @@ irnet_discover_next_daddr(irnet_socket *	self)
       /* The above request is non-blocking.
        * After a while, IrDA will call us back in irnet_discovervalue_confirm()
        * We will then call irnet_ias_to_tsap() and come back here again... */
-      return(0);
+      return 0;
     }
   else
-    return(1);
+    return 1;
 }
 
 /*------------------------------------------------------------------*/
@@ -432,7 +436,7 @@ irnet_discover_daddr_and_lsap_sel(irnet_socket *	self)
   /* Follow me in irnet_discovervalue_confirm() */
 
   DEXIT(IRDA_SR_TRACE, "\n");
-  return(0);
+  return 0;
 }
 
 /*------------------------------------------------------------------*/
@@ -481,7 +485,7 @@ irnet_dname_to_daddr(irnet_socket *	self)
   /* No luck ! */
   DEBUG(IRDA_SR_INFO, "cannot discover device ``%s'' !!!\n", self->rname);
   kfree(discoveries);
-  return(-EADDRNOTAVAIL);
+  return -EADDRNOTAVAIL;
 }
 
 
@@ -523,7 +527,7 @@ irda_irnet_create(irnet_socket *	self)
   INIT_WORK(&self->disconnect_work, irnet_ppp_disconnect);
 
   DEXIT(IRDA_SOCK_TRACE, "\n");
-  return(0);
+  return 0;
 }
 
 /*------------------------------------------------------------------*/
@@ -597,7 +601,7 @@ irda_irnet_connect(irnet_socket *	self)
    * We will finish the connection procedure in irnet_connect_tsap().
    */
   DEXIT(IRDA_SOCK_TRACE, "\n");
-  return(0);
+  return 0;
 }
 
 /*------------------------------------------------------------------*/
@@ -674,7 +678,6 @@ irda_irnet_destroy(irnet_socket *	self)
   self->stsap_sel = 0;
 
   DEXIT(IRDA_SOCK_TRACE, "\n");
-  return;
 }
 
 
@@ -730,7 +733,7 @@ irnet_daddr_to_dname(irnet_socket *	self)
   /* No luck ! */
   DEXIT(IRDA_SERV_INFO, ": cannot discover device 0x%08x !!!\n", self->daddr);
   kfree(discoveries);
-  return(-EADDRNOTAVAIL);
+  return -EADDRNOTAVAIL;
 }
 
 /*------------------------------------------------------------------*/
@@ -924,7 +927,6 @@ irnet_disconnect_server(irnet_socket *	self,
   irttp_listen(self->tsap);
 
   DEXIT(IRDA_SERV_TRACE, "\n");
-  return;
 }
 
 /*------------------------------------------------------------------*/
@@ -1009,7 +1011,6 @@ irnet_destroy_server(void)
   irda_irnet_destroy(&irnet_server.s);
 
   DEXIT(IRDA_SERV_TRACE, "\n");
-  return;
 }
 
 
@@ -1400,8 +1401,8 @@ irnet_connect_indication(void *		instance,
   /* Socket already connecting ? On primary ? */
   if(0
 #ifdef ALLOW_SIMULT_CONNECT
-     || ((irttp_is_primary(server->tsap) == 1)	/* primary */
-	 && (test_and_clear_bit(0, &new->ttp_connect)))
+     || ((irttp_is_primary(server->tsap) == 1) &&	/* primary */
+	 (test_and_clear_bit(0, &new->ttp_connect)))
 #endif /* ALLOW_SIMULT_CONNECT */
      )
     {
@@ -1672,7 +1673,7 @@ irnet_discovery_indication(discinfo_t *		discovery,
   /* Notify the control channel */
   irnet_post_event(NULL, IRNET_DISCOVER,
 		   discovery->saddr, discovery->daddr, discovery->info,
-		   u16ho(discovery->hints));
+		   get_unaligned((__u16 *)discovery->hints));
 
   DEXIT(IRDA_OCB_TRACE, "\n");
 }
@@ -1703,7 +1704,7 @@ irnet_expiry_indication(discinfo_t *	expiry,
   /* Notify the control channel */
   irnet_post_event(NULL, IRNET_EXPIRE,
 		   expiry->saddr, expiry->daddr, expiry->info,
-		   u16ho(expiry->hints));
+		   get_unaligned((__u16 *)expiry->hints));
 
   DEXIT(IRDA_OCB_TRACE, "\n");
 }
@@ -1717,34 +1718,23 @@ irnet_expiry_indication(discinfo_t *	expiry,
  */
 
 #ifdef CONFIG_PROC_FS
-/*------------------------------------------------------------------*/
-/*
- * Function irnet_proc_read (buf, start, offset, len, unused)
- *
- *    Give some info to the /proc file system
- */
 static int
-irnet_proc_read(char *	buf,
-		char **	start,
-		off_t	offset,
-		int	len)
+irnet_proc_show(struct seq_file *m, void *v)
 {
   irnet_socket *	self;
   char *		state;
   int			i = 0;
 
-  len = 0;
-
   /* Get the IrNET server information... */
-  len += sprintf(buf+len, "IrNET server - ");
-  len += sprintf(buf+len, "IrDA state: %s, ",
+  seq_printf(m, "IrNET server - ");
+  seq_printf(m, "IrDA state: %s, ",
 		 (irnet_server.running ? "running" : "dead"));
-  len += sprintf(buf+len, "stsap_sel: %02x, ", irnet_server.s.stsap_sel);
-  len += sprintf(buf+len, "dtsap_sel: %02x\n", irnet_server.s.dtsap_sel);
+  seq_printf(m, "stsap_sel: %02x, ", irnet_server.s.stsap_sel);
+  seq_printf(m, "dtsap_sel: %02x\n", irnet_server.s.dtsap_sel);
 
   /* Do we need to continue ? */
   if(!irnet_server.running)
-    return len;
+    return 0;
 
   /* Protect access to the instance list */
   spin_lock_bh(&irnet_server.spinlock);
@@ -1754,23 +1744,23 @@ irnet_proc_read(char *	buf,
   while(self != NULL)
     {
       /* Start printing info about the socket. */
-      len += sprintf(buf+len, "\nIrNET socket %d - ", i++);
+      seq_printf(m, "\nIrNET socket %d - ", i++);
 
       /* First, get the requested configuration */
-      len += sprintf(buf+len, "Requested IrDA name: \"%s\", ", self->rname);
-      len += sprintf(buf+len, "daddr: %08x, ", self->rdaddr);
-      len += sprintf(buf+len, "saddr: %08x\n", self->rsaddr);
+      seq_printf(m, "Requested IrDA name: \"%s\", ", self->rname);
+      seq_printf(m, "daddr: %08x, ", self->rdaddr);
+      seq_printf(m, "saddr: %08x\n", self->rsaddr);
 
       /* Second, get all the PPP info */
-      len += sprintf(buf+len, "	PPP state: %s",
+      seq_printf(m, "	PPP state: %s",
 		 (self->ppp_open ? "registered" : "unregistered"));
       if(self->ppp_open)
 	{
-	  len += sprintf(buf+len, ", unit: ppp%d",
+	  seq_printf(m, ", unit: ppp%d",
 			 ppp_unit_number(&self->chan));
-	  len += sprintf(buf+len, ", channel: %d",
+	  seq_printf(m, ", channel: %d",
 			 ppp_channel_index(&self->chan));
-	  len += sprintf(buf+len, ", mru: %d",
+	  seq_printf(m, ", mru: %d",
 			 self->mru);
 	  /* Maybe add self->flags ? Later... */
 	}
@@ -1789,10 +1779,10 @@ irnet_proc_read(char *	buf,
 	      state = "weird";
 	    else
 	      state = "idle";
-      len += sprintf(buf+len, "\n	IrDA state: %s, ", state);
-      len += sprintf(buf+len, "daddr: %08x, ", self->daddr);
-      len += sprintf(buf+len, "stsap_sel: %02x, ", self->stsap_sel);
-      len += sprintf(buf+len, "dtsap_sel: %02x\n", self->dtsap_sel);
+      seq_printf(m, "\n	IrDA state: %s, ", state);
+      seq_printf(m, "daddr: %08x, ", self->daddr);
+      seq_printf(m, "stsap_sel: %02x, ", self->stsap_sel);
+      seq_printf(m, "dtsap_sel: %02x\n", self->dtsap_sel);
 
       /* Next socket, please... */
       self = (irnet_socket *) hashbin_get_next(irnet_server.list);
@@ -1801,8 +1791,21 @@ irnet_proc_read(char *	buf,
   /* Spin lock end */
   spin_unlock_bh(&irnet_server.spinlock);
 
-  return len;
+  return 0;
 }
+
+static int irnet_proc_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, irnet_proc_show, NULL);
+}
+
+static const struct file_operations irnet_proc_fops = {
+	.owner		= THIS_MODULE,
+	.open		= irnet_proc_open,
+	.read		= seq_read,
+	.llseek		= seq_lseek,
+	.release	= single_release,
+};
 #endif /* PROC_FS */
 
 
@@ -1841,7 +1844,7 @@ irda_irnet_init(void)
 
 #ifdef CONFIG_PROC_FS
   /* Add a /proc file for irnet infos */
-  create_proc_info_entry("irnet", 0, proc_irda, irnet_proc_read);
+  proc_create("irnet", 0, proc_irda, &irnet_proc_fops);
 #endif /* CONFIG_PROC_FS */
 
   /* Setup the IrNET server */

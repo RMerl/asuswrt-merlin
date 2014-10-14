@@ -21,6 +21,7 @@
 /* This file included from pcm_native.c */
 
 #include <linux/compat.h>
+#include <linux/slab.h>
 
 static int snd_pcm_ioctl_delay_compat(struct snd_pcm_substream *substream,
 				      s32 __user *src)
@@ -232,14 +233,11 @@ static int snd_pcm_ioctl_hw_params_compat(struct snd_pcm_substream *substream,
 	if (! (runtime = substream->runtime))
 		return -ENOTTY;
 
-	data = kmalloc(sizeof(*data), GFP_KERNEL);
-	if (data == NULL)
-		return -ENOMEM;
 	/* only fifo_size is different, so just copy all */
-	if (copy_from_user(data, data32, sizeof(*data32))) {
-		err = -EFAULT;
-		goto error;
-	}
+	data = memdup_user(data32, sizeof(*data32));
+	if (IS_ERR(data))
+		return PTR_ERR(data);
+
 	if (refine)
 		err = snd_pcm_hw_refine(substream, data);
 	else
@@ -397,7 +395,8 @@ static int snd_pcm_ioctl_sync_ptr_compat(struct snd_pcm_substream *substream,
 	snd_pcm_uframes_t boundary;
 	int err;
 
-	snd_assert(runtime, return -EINVAL);
+	if (snd_BUG_ON(!runtime))
+		return -EINVAL;
 
 	if (get_user(sflags, &src->flags) ||
 	    get_user(scontrol.appl_ptr, &src->c.control.appl_ptr) ||
@@ -484,6 +483,7 @@ static long snd_pcm_ioctl_compat(struct file *file, unsigned int cmd, unsigned l
 	case SNDRV_PCM_IOCTL_PVERSION:
 	case SNDRV_PCM_IOCTL_INFO:
 	case SNDRV_PCM_IOCTL_TSTAMP:
+	case SNDRV_PCM_IOCTL_TTSTAMP:
 	case SNDRV_PCM_IOCTL_HWSYNC:
 	case SNDRV_PCM_IOCTL_PREPARE:
 	case SNDRV_PCM_IOCTL_RESET:

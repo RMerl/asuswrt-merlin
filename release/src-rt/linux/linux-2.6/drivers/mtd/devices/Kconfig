@@ -1,14 +1,5 @@
-# drivers/mtd/maps/Kconfig
-# $Id: Kconfig,v 1.18 2005/11/07 11:14:24 gleixner Exp $
-
 menu "Self-contained MTD device drivers"
 	depends on MTD!=n
-
-config MTD_SFLASH
-	bool "Broadcom Chipcommon Serial Flash support"
-
-config MTD_NFLASH
-	bool "Broadcom Chipcommon NAND Flash support"
 
 config MTD_PMC551
 	tristate "Ramix PMC551 PCI Mezzanine RAM card support"
@@ -56,7 +47,7 @@ config MTD_MS02NV
 	  If you want to compile this driver as a module ( = code which can be
 	  inserted in and removed from the running kernel whenever you want),
 	  say M here and read <file:Documentation/kbuild/modules.txt>.
-	  The module will be called ms02-nv.ko.
+	  The module will be called ms02-nv.
 
 config MTD_DATAFLASH
 	tristate "Support for AT45xxx DataFlash"
@@ -66,21 +57,60 @@ config MTD_DATAFLASH
 	  Sometimes DataFlash chips are packaged inside MMC-format
 	  cards; at this writing, the MMC stack won't handle those.
 
-config MTD_DATAFLASH26
-	tristate "AT91RM9200 DataFlash AT26xxx"
-	depends on MTD && ARCH_AT91RM9200 && AT91_SPI
+config MTD_DATAFLASH_WRITE_VERIFY
+	bool "Verify DataFlash page writes"
+	depends on MTD_DATAFLASH
 	help
-	  This enables access to the DataFlash chip (AT26xxx) on an
-	  AT91RM9200-based board.
-	  If you have such a board and such a DataFlash, say 'Y'.
+	  This adds an extra check when data is written to the flash.
+	  It may help if you are verifying chip setup (timings etc) on
+	  your board.  There is a rare possibility that even though the
+	  device thinks the write was successful, a bit could have been
+	  flipped accidentally due to device wear or something else.
+
+config MTD_DATAFLASH_OTP
+	bool "DataFlash OTP support (Security Register)"
+	depends on MTD_DATAFLASH
+	select HAVE_MTD_OTP
+	help
+	  Newer DataFlash chips (revisions C and D) support 128 bytes of
+	  one-time-programmable (OTP) data.  The first half may be written
+	  (once) with up to 64 bytes of data, such as a serial number or
+	  other key product data.  The second half is programmed with a
+	  unique-to-each-chip bit pattern at the factory.
 
 config MTD_M25P80
-	tristate "Support for M25 SPI Flash"
+	tristate "Support most SPI Flash chips (AT26DF, M25P, W25X, ...)"
 	depends on SPI_MASTER && EXPERIMENTAL
 	help
-	  This enables access to ST M25P80 and similar SPI flash chips,
-	  used for program and data storage.  Set up your spi devices
-	  with the right board-specific platform data.
+	  This enables access to most modern SPI flash chips, used for
+	  program and data storage.   Series supported include Atmel AT26DF,
+	  Spansion S25SL, SST 25VF, ST M25P, and Winbond W25X.  Other chips
+	  are supported as well.  See the driver source for the current list,
+	  or to add other chips.
+
+	  Note that the original DataFlash chips (AT45 series, not AT26DF),
+	  need an entirely different driver.
+
+	  Set up your spi devices with the right board-specific platform data,
+	  if you want to specify device partitioning or to use a device which
+	  doesn't support the JEDEC ID instruction.
+
+config M25PXX_USE_FAST_READ
+	bool "Use FAST_READ OPCode allowing SPI CLK <= 50MHz"
+	depends on MTD_M25P80
+	default y
+	help
+	  This option enables FAST_READ access supported by ST M25Pxx.
+
+config MTD_SST25L
+	tristate "Support SST25L (non JEDEC) SPI Flash chips"
+	depends on SPI_MASTER
+	help
+	  This enables access to the non JEDEC SST25L SPI flash chips, used
+	  for program and data storage.
+
+	  Set up your spi devices with the right board-specific platform data,
+	  if you want to specify device partitioning.
 
 config MTD_SLRAM
 	tristate "Uncached system RAM"
@@ -276,4 +306,3 @@ config MTD_DOCPROBE_55AA
 	  you have managed to wipe the first block.
 
 endmenu
-

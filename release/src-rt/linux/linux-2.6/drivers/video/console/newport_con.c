@@ -98,13 +98,18 @@ static inline void newport_init_cmap(void)
 	}
 }
 
-static void newport_show_logo(void)
+static const struct linux_logo *newport_show_logo(void)
 {
 #ifdef CONFIG_LOGO_SGI_CLUT224
 	const struct linux_logo *logo = fb_find_logo(8);
-	const unsigned char *clut = logo->clut;
-	const unsigned char *data = logo->data;
+	const unsigned char *clut;
+	const unsigned char *data;
 	unsigned long i;
+
+	if (!logo)
+		return NULL;
+	clut = logo->clut;
+	data = logo->data;
 
 	for (i = 0; i < logo->clutsize; i++) {
 		newport_bfwait(npregs);
@@ -123,6 +128,8 @@ static void newport_show_logo(void)
 
 	for (i = 0; i < logo->width*logo->height; i++)
 		npregs->go.hostrw0 = *data++ << 24;
+
+	return logo;
 #endif /* CONFIG_LOGO_SGI_CLUT224 */
 }
 
@@ -209,7 +216,7 @@ static void newport_get_screensize(void)
 	}
 
 	newport_xsize = newport_ysize = 0;
-	for (i = 0; linetable[i + 1] && (i < sizeof(linetable)); i += 2) {
+	for (i = 0; i < ARRAY_SIZE(linetable) - 1 && linetable[i + 1]; i += 2) {
 		cols = 0;
 		newport_vc2_set(npregs, VC2_IREG_RADDR, linetable[i]);
 		npregs->set.dcbmode = (NPORT_DMODE_AVC2 | VC2_REGADDR_RAM |
@@ -465,9 +472,10 @@ static int newport_switch(struct vc_data *vc)
 	npregs->cset.topscan = 0x3ff;
 
 	if (!logo_drawn) {
-		newport_show_logo();
-		logo_drawn = 1;
-		logo_active = 1;
+		if (newport_show_logo()) {
+			logo_drawn = 1;
+			logo_active = 1;
+		}
 	}
 
 	return 1;
@@ -738,9 +746,8 @@ const struct consw newport_con = {
 #ifdef MODULE
 static int __init newport_console_init(void)
 {
-
 	if (!sgi_gfxaddr)
-		return NULL;
+		return 0;
 
 	if (!npregs)
 		npregs = (struct newport_regs *)/* ioremap cannot fail */

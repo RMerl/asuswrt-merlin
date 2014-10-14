@@ -50,7 +50,6 @@
 #ifndef _IPS_H_
    #define _IPS_H_
 
-#include <linux/version.h>
 #include <linux/nmi.h>
    #include <asm/uaccess.h>
    #include <asm/io.h>
@@ -58,20 +57,16 @@
    /*
     * Some handy macros
     */
-   #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,4,20) || defined CONFIG_HIGHIO
-      #define IPS_HIGHIO
-   #endif
-
    #define IPS_HA(x)                   ((ips_ha_t *) x->hostdata)
    #define IPS_COMMAND_ID(ha, scb)     (int) (scb - ha->scbs)
-   #define IPS_IS_TROMBONE(ha)         (((ha->device_id == IPS_DEVICEID_COPPERHEAD) && \
-                                         (ha->revision_id >= IPS_REVID_TROMBONE32) && \
-                                         (ha->revision_id <= IPS_REVID_TROMBONE64)) ? 1 : 0)
-   #define IPS_IS_CLARINET(ha)         (((ha->device_id == IPS_DEVICEID_COPPERHEAD) && \
-                                         (ha->revision_id >= IPS_REVID_CLARINETP1) && \
-                                         (ha->revision_id <= IPS_REVID_CLARINETP3)) ? 1 : 0)
-   #define IPS_IS_MORPHEUS(ha)         (ha->device_id == IPS_DEVICEID_MORPHEUS)
-   #define IPS_IS_MARCO(ha)            (ha->device_id == IPS_DEVICEID_MARCO)
+   #define IPS_IS_TROMBONE(ha)         (((ha->pcidev->device == IPS_DEVICEID_COPPERHEAD) && \
+                                         (ha->pcidev->revision >= IPS_REVID_TROMBONE32) && \
+                                         (ha->pcidev->revision <= IPS_REVID_TROMBONE64)) ? 1 : 0)
+   #define IPS_IS_CLARINET(ha)         (((ha->pcidev->device == IPS_DEVICEID_COPPERHEAD) && \
+                                         (ha->pcidev->revision >= IPS_REVID_CLARINETP1) && \
+                                         (ha->pcidev->revision <= IPS_REVID_CLARINETP3)) ? 1 : 0)
+   #define IPS_IS_MORPHEUS(ha)         (ha->pcidev->device == IPS_DEVICEID_MORPHEUS)
+   #define IPS_IS_MARCO(ha)            (ha->pcidev->device == IPS_DEVICEID_MARCO)
    #define IPS_USE_I2O_DELIVER(ha)     ((IPS_IS_MORPHEUS(ha) || \
                                          (IPS_IS_TROMBONE(ha) && \
                                           (ips_force_i2o))) ? 1 : 0)
@@ -84,38 +79,8 @@
     #define IPS_SGLIST_SIZE(ha)       (IPS_USE_ENH_SGLIST(ha) ? \
                                          sizeof(IPS_ENH_SG_LIST) : sizeof(IPS_STD_SG_LIST))
 
-   #if LINUX_VERSION_CODE < KERNEL_VERSION(2,4,4)
-      #define pci_set_dma_mask(dev,mask) ( mask > 0xffffffff ? 1:0 )
-      #define scsi_set_pci_device(sh,dev) (0)
-   #endif
-
-   #ifndef IRQ_NONE
-      typedef void irqreturn_t;
-      #define IRQ_NONE
-      #define IRQ_HANDLED
-      #define IRQ_RETVAL(x)
-   #endif
-   
-   #if LINUX_VERSION_CODE < KERNEL_VERSION(2,5,0)
-      #define IPS_REGISTER_HOSTS(SHT)      scsi_register_module(MODULE_SCSI_HA,SHT)
-      #define IPS_UNREGISTER_HOSTS(SHT)    scsi_unregister_module(MODULE_SCSI_HA,SHT)
-      #define IPS_ADD_HOST(shost,device)
-      #define IPS_REMOVE_HOST(shost)
-      #define IPS_SCSI_SET_DEVICE(sh,ha)   scsi_set_pci_device(sh, (ha)->pcidev)
-      #define IPS_PRINTK(level, pcidev, format, arg...)                 \
-            printk(level "%s %s:" format , "ips" ,     \
-            (pcidev)->slot_name , ## arg)
-      #define scsi_host_alloc(sh,size)         scsi_register(sh,size)
-      #define scsi_host_put(sh)             scsi_unregister(sh)
-   #else
-      #define IPS_REGISTER_HOSTS(SHT)      (!ips_detect(SHT))
-      #define IPS_UNREGISTER_HOSTS(SHT)
-      #define IPS_ADD_HOST(shost,device)   do { scsi_add_host(shost,device); scsi_scan_host(shost); } while (0)
-      #define IPS_REMOVE_HOST(shost)       scsi_remove_host(shost)
-      #define IPS_SCSI_SET_DEVICE(sh,ha)   do { } while (0)
-      #define IPS_PRINTK(level, pcidev, format, arg...)                 \
+  #define IPS_PRINTK(level, pcidev, format, arg...)                 \
             dev_printk(level , &((pcidev)->dev) , format , ## arg)
-   #endif
 
    #define MDELAY(n)			\
 	do {				\
@@ -126,7 +91,7 @@
    #ifndef min
       #define min(x,y) ((x) < (y) ? x : y)
    #endif
-   
+
    #ifndef __iomem       /* For clean compiles in earlier kernels without __iomem annotations */
       #define __iomem
    #endif
@@ -134,7 +99,7 @@
    #define pci_dma_hi32(a)         ((a >> 16) >> 16)
    #define pci_dma_lo32(a)         (a & 0xffffffff)
 
-   #if (BITS_PER_LONG > 32) || (defined CONFIG_HIGHMEM64G && defined IPS_HIGHIO)
+   #if (BITS_PER_LONG > 32) || defined(CONFIG_HIGHMEM64G)
       #define IPS_ENABLE_DMA64        (1)
    #else
       #define IPS_ENABLE_DMA64        (0)
@@ -205,7 +170,7 @@
    #define IPS_CMD_DOWNLOAD             0x20
    #define IPS_CMD_RW_BIOSFW            0x22
    #define IPS_CMD_GET_VERSION_INFO     0xC6
-   #define IPS_CMD_RESET_CHANNEL        0x1A  
+   #define IPS_CMD_RESET_CHANNEL        0x1A
 
    /*
     * Adapter Equates
@@ -451,16 +416,10 @@
    /*
     * Scsi_Host Template
     */
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,5,0)
-   static int ips_proc24_info(char *, char **, off_t, int, int, int);
-   static void ips_select_queue_depth(struct Scsi_Host *, struct scsi_device *);
-   static int ips_biosparam(Disk *disk, kdev_t dev, int geom[]);
-#else
    static int ips_proc_info(struct Scsi_Host *, char *, char **, off_t, int, int);
    static int ips_biosparam(struct scsi_device *sdev, struct block_device *bdev,
 		sector_t capacity, int geom[]);
    static int ips_slave_configure(struct scsi_device *SDptr);
-#endif
 
 /*
  * Raid Command Formats
@@ -498,7 +457,7 @@ typedef struct {
    uint32_t reserved3;
    uint32_t buffer_addr;
    uint32_t reserved4;
-} IPS_IOCTL_CMD, *PIPS_IOCTL_CMD; 
+} IPS_IOCTL_CMD, *PIPS_IOCTL_CMD;
 
 typedef struct {
    uint8_t  op_code;
@@ -592,7 +551,7 @@ typedef struct {
    uint32_t cccr;
 } IPS_NVRAM_CMD, *PIPS_NVRAM_CMD;
 
-typedef struct 
+typedef struct
 {
     uint8_t  op_code;
     uint8_t  command_id;
@@ -690,7 +649,7 @@ typedef struct {
    uint8_t   device_address;
    uint8_t   cmd_attribute;
    uint8_t   cdb_length;
-   uint8_t   reserved_for_LUN; 	 
+   uint8_t   reserved_for_LUN;
    uint32_t  transfer_length;
    uint32_t  buffer_pointer;
    uint16_t  sg_count;
@@ -830,7 +789,7 @@ typedef struct {
                                              /* SubSystem Parameter[4]      */
 #define  IPS_GET_VERSION_SUPPORT 0x00018000  /* Mask for Versioning Support */
 
-typedef struct 
+typedef struct
 {
    uint32_t  revision;
    uint8_t   bootBlkVersion[32];
@@ -1074,7 +1033,6 @@ typedef struct ips_ha {
    uint8_t            ha_id[IPS_MAX_CHANNELS+1];
    uint32_t           dcdb_active[IPS_MAX_CHANNELS];
    uint32_t           io_addr;            /* Base I/O address           */
-   uint8_t            irq;                /* IRQ for adapter            */
    uint8_t            ntargets;           /* Number of targets          */
    uint8_t            nbus;               /* Number of buses            */
    uint8_t            nlun;               /* Number of Luns             */
@@ -1106,10 +1064,7 @@ typedef struct ips_ha {
    int                ioctl_reset;        /* IOCTL Requested Reset Flag */
    uint16_t           reset_count;        /* number of resets           */
    time_t             last_ffdc;          /* last time we sent ffdc info*/
-   uint8_t            revision_id;        /* Revision level             */
-   uint16_t           device_id;          /* PCI device ID              */
    uint8_t            slot_num;           /* PCI Slot Number            */
-   uint16_t           subdevice_id;       /* Subsystem device ID        */
    int                ioctl_len;          /* size of ioctl buffer       */
    dma_addr_t         ioctl_busaddr;      /* dma address of ioctl buffer*/
    uint8_t            bios_version[8];    /* BIOS Revision              */
@@ -1212,12 +1167,13 @@ typedef struct {
 *************************************************************************/
 
 #define IPS_VER_MAJOR 7
-#define IPS_VER_MAJOR_STRING "7"
+#define IPS_VER_MAJOR_STRING __stringify(IPS_VER_MAJOR)
 #define IPS_VER_MINOR 12
-#define IPS_VER_MINOR_STRING "12"
-#define IPS_VER_BUILD 02
-#define IPS_VER_BUILD_STRING "02"
-#define IPS_VER_STRING "7.12.02"
+#define IPS_VER_MINOR_STRING __stringify(IPS_VER_MINOR)
+#define IPS_VER_BUILD 05
+#define IPS_VER_BUILD_STRING __stringify(IPS_VER_BUILD)
+#define IPS_VER_STRING IPS_VER_MAJOR_STRING "." \
+		IPS_VER_MINOR_STRING "." IPS_VER_BUILD_STRING
 #define IPS_RELEASE_ID 0x00020000
 #define IPS_BUILD_IDENT 761
 #define IPS_LEGALCOPYRIGHT_STRING "(C) Copyright IBM Corp. 1994, 2002. All Rights Reserved."
@@ -1237,7 +1193,7 @@ typedef struct {
 #define IPS_VER_SEBRING "7.12.02"
 #define IPS_VER_KEYWEST "7.12.02"
 
-/* Compatability IDs for various adapters */
+/* Compatibility IDs for various adapters */
 #define IPS_COMPAT_UNKNOWN ""
 #define IPS_COMPAT_CURRENT "KW710"
 #define IPS_COMPAT_SERVERAID1 "2.25.01"

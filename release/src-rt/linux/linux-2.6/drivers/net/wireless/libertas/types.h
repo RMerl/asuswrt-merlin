@@ -1,124 +1,58 @@
 /**
   * This header file contains definition for global types
   */
-#ifndef _WLAN_TYPES_
-#define _WLAN_TYPES_
+#ifndef _LBS_TYPES_H_
+#define _LBS_TYPES_H_
 
 #include <linux/if_ether.h>
+#include <linux/ieee80211.h>
 #include <asm/byteorder.h>
 
-/** IEEE type definitions  */
-enum ieeetypes_elementid {
-	SSID = 0,
-	SUPPORTED_RATES,
-	FH_PARAM_SET,
-	DS_PARAM_SET,
-	CF_PARAM_SET,
-	TIM,
-	IBSS_PARAM_SET,
-	COUNTRY_INFO = 7,
-
-	CHALLENGE_TEXT = 16,
-
-	EXTENDED_SUPPORTED_RATES = 50,
-
-	VENDOR_SPECIFIC_221 = 221,
-
-	WPA_IE = 221,
-	WPA2_IE = 48,
-
-	EXTRA_IE = 133,
-} __attribute__ ((packed));
-
-#ifdef __BIG_ENDIAN
-#define CAPINFO_MASK	(~(0xda00))
-#else
-#define CAPINFO_MASK	(~(0x00da))
-#endif
-
-struct ieeetypes_capinfo {
-#ifdef __BIG_ENDIAN_BITFIELD
-	u8 chanagility:1;
-	u8 pbcc:1;
-	u8 shortpreamble:1;
-	u8 privacy:1;
-	u8 cfpollrqst:1;
-	u8 cfpollable:1;
-	u8 ibss:1;
-	u8 ess:1;
-	u8 rsrvd1:2;
-	u8 dsssofdm:1;
-	u8 rsvrd2:1;
-	u8 apsd:1;
-	u8 shortslottime:1;
-	u8 rsrvd3:1;
-	u8 spectrummgmt:1;
-#else
-	u8 ess:1;
-	u8 ibss:1;
-	u8 cfpollable:1;
-	u8 cfpollrqst:1;
-	u8 privacy:1;
-	u8 shortpreamble:1;
-	u8 pbcc:1;
-	u8 chanagility:1;
-	u8 spectrummgmt:1;
-	u8 rsrvd3:1;
-	u8 shortslottime:1;
-	u8 apsd:1;
-	u8 rsvrd2:1;
-	u8 dsssofdm:1;
-	u8 rsrvd1:2;
-#endif
-} __attribute__ ((packed));
-
-struct ieeetypes_cfparamset {
-	u8 elementid;
+struct ieee_ie_header {
+	u8 id;
 	u8 len;
+} __packed;
+
+struct ieee_ie_cf_param_set {
+	struct ieee_ie_header header;
+
 	u8 cfpcnt;
 	u8 cfpperiod;
 	__le16 cfpmaxduration;
 	__le16 cfpdurationremaining;
-} __attribute__ ((packed));
+} __packed;
 
 
-struct ieeetypes_ibssparamset {
-	u8 elementid;
-	u8 len;
+struct ieee_ie_ibss_param_set {
+	struct ieee_ie_header header;
+
 	__le16 atimwindow;
-} __attribute__ ((packed));
+} __packed;
 
-union IEEEtypes_ssparamset {
-	struct ieeetypes_cfparamset cfparamset;
-	struct ieeetypes_ibssparamset ibssparamset;
-} __attribute__ ((packed));
+union ieee_ss_param_set {
+	struct ieee_ie_cf_param_set cf;
+	struct ieee_ie_ibss_param_set ibss;
+} __packed;
 
-struct ieeetypes_fhparamset {
-	u8 elementid;
-	u8 len;
+struct ieee_ie_fh_param_set {
+	struct ieee_ie_header header;
+
 	__le16 dwelltime;
 	u8 hopset;
 	u8 hoppattern;
 	u8 hopindex;
-} __attribute__ ((packed));
+} __packed;
 
-struct ieeetypes_dsparamset {
-	u8 elementid;
-	u8 len;
-	u8 currentchan;
-} __attribute__ ((packed));
+struct ieee_ie_ds_param_set {
+	struct ieee_ie_header header;
 
-union ieeetypes_phyparamset {
-	struct ieeetypes_fhparamset fhparamset;
-	struct ieeetypes_dsparamset dsparamset;
-} __attribute__ ((packed));
+	u8 channel;
+} __packed;
 
-struct ieeetypes_assocrsp {
-	struct ieeetypes_capinfo capability;
-	__le16 statuscode;
-	__le16 aid;
-	u8 iebuffer[1];
-} __attribute__ ((packed));
+union ieee_phy_param_set {
+	struct ieee_ie_fh_param_set fh;
+	struct ieee_ie_ds_param_set ds;
+} __packed;
 
 /** TLV  type ID definition */
 #define PROPRIETARY_TLV_BASE_ID		0x0100
@@ -158,33 +92,36 @@ struct ieeetypes_assocrsp {
 #define TLV_TYPE_TSFTIMESTAMP	    (PROPRIETARY_TLV_BASE_ID + 19)
 #define TLV_TYPE_RSSI_HIGH          (PROPRIETARY_TLV_BASE_ID + 22)
 #define TLV_TYPE_SNR_HIGH           (PROPRIETARY_TLV_BASE_ID + 23)
+#define TLV_TYPE_AUTH_TYPE          (PROPRIETARY_TLV_BASE_ID + 31)
+#define TLV_TYPE_MESH_ID            (PROPRIETARY_TLV_BASE_ID + 37)
+#define TLV_TYPE_OLD_MESH_ID        (PROPRIETARY_TLV_BASE_ID + 291)
 
 /** TLV related data structures*/
-struct mrvlietypesheader {
+struct mrvl_ie_header {
 	__le16 type;
 	__le16 len;
-} __attribute__ ((packed));
+} __packed;
 
-struct mrvlietypes_data {
-	struct mrvlietypesheader header;
+struct mrvl_ie_data {
+	struct mrvl_ie_header header;
 	u8 Data[1];
-} __attribute__ ((packed));
+} __packed;
 
-struct mrvlietypes_ratesparamset {
-	struct mrvlietypesheader header;
+struct mrvl_ie_rates_param_set {
+	struct mrvl_ie_header header;
 	u8 rates[1];
-} __attribute__ ((packed));
+} __packed;
 
-struct mrvlietypes_ssidparamset {
-	struct mrvlietypesheader header;
+struct mrvl_ie_ssid_param_set {
+	struct mrvl_ie_header header;
 	u8 ssid[1];
-} __attribute__ ((packed));
+} __packed;
 
-struct mrvlietypes_wildcardssidparamset {
-	struct mrvlietypesheader header;
+struct mrvl_ie_wildcard_ssid_param_set {
+	struct mrvl_ie_header header;
 	u8 MaxSsidlength;
 	u8 ssid[1];
-} __attribute__ ((packed));
+} __packed;
 
 struct chanscanmode {
 #ifdef __BIG_ENDIAN_BITFIELD
@@ -196,7 +133,7 @@ struct chanscanmode {
 	u8 disablechanfilt:1;
 	u8 reserved_2_7:6;
 #endif
-} __attribute__ ((packed));
+} __packed;
 
 struct chanscanparamset {
 	u8 radiotype;
@@ -204,115 +141,126 @@ struct chanscanparamset {
 	struct chanscanmode chanscanmode;
 	__le16 minscantime;
 	__le16 maxscantime;
-} __attribute__ ((packed));
+} __packed;
 
-struct mrvlietypes_chanlistparamset {
-	struct mrvlietypesheader header;
+struct mrvl_ie_chanlist_param_set {
+	struct mrvl_ie_header header;
 	struct chanscanparamset chanscanparam[1];
-} __attribute__ ((packed));
+} __packed;
 
-struct cfparamset {
+struct mrvl_ie_cf_param_set {
+	struct mrvl_ie_header header;
 	u8 cfpcnt;
 	u8 cfpperiod;
 	__le16 cfpmaxduration;
 	__le16 cfpdurationremaining;
-} __attribute__ ((packed));
+} __packed;
 
-struct ibssparamset {
-	__le16 atimwindow;
-} __attribute__ ((packed));
+struct mrvl_ie_ds_param_set {
+	struct mrvl_ie_header header;
+	u8 channel;
+} __packed;
 
-struct mrvlietypes_ssparamset {
-	struct mrvlietypesheader header;
-	union {
-		struct cfparamset cfparamset[1];
-		struct ibssparamset ibssparamset[1];
-	} cf_ibss;
-} __attribute__ ((packed));
-
-struct fhparamset {
-	__le16 dwelltime;
-	u8 hopset;
-	u8 hoppattern;
-	u8 hopindex;
-} __attribute__ ((packed));
-
-struct dsparamset {
-	u8 currentchan;
-} __attribute__ ((packed));
-
-struct mrvlietypes_phyparamset {
-	struct mrvlietypesheader header;
-	union {
-		struct fhparamset fhparamset[1];
-		struct dsparamset dsparamset[1];
-	} fh_ds;
-} __attribute__ ((packed));
-
-struct mrvlietypes_rsnparamset {
-	struct mrvlietypesheader header;
+struct mrvl_ie_rsn_param_set {
+	struct mrvl_ie_header header;
 	u8 rsnie[1];
-} __attribute__ ((packed));
+} __packed;
 
-struct mrvlietypes_tsftimestamp {
-	struct mrvlietypesheader header;
+struct mrvl_ie_tsf_timestamp {
+	struct mrvl_ie_header header;
 	__le64 tsftable[1];
-} __attribute__ ((packed));
+} __packed;
+
+/* v9 and later firmware only */
+struct mrvl_ie_auth_type {
+	struct mrvl_ie_header header;
+	__le16 auth;
+} __packed;
 
 /**  Local Power capability */
-struct mrvlietypes_powercapability {
-	struct mrvlietypesheader header;
+struct mrvl_ie_power_capability {
+	struct mrvl_ie_header header;
 	s8 minpower;
 	s8 maxpower;
-} __attribute__ ((packed));
+} __packed;
 
-struct mrvlietypes_rssithreshold {
-	struct mrvlietypesheader header;
-	u8 rssivalue;
-	u8 rssifreq;
-} __attribute__ ((packed));
+/* used in CMD_802_11_SUBSCRIBE_EVENT for SNR, RSSI and Failure */
+struct mrvl_ie_thresholds {
+	struct mrvl_ie_header header;
+	u8 value;
+	u8 freq;
+} __packed;
 
-struct mrvlietypes_snrthreshold {
-	struct mrvlietypesheader header;
-	u8 snrvalue;
-	u8 snrfreq;
-} __attribute__ ((packed));
-
-struct mrvlietypes_failurecount {
-	struct mrvlietypesheader header;
-	u8 failvalue;
-	u8 Failfreq;
-} __attribute__ ((packed));
-
-struct mrvlietypes_beaconsmissed {
-	struct mrvlietypesheader header;
+struct mrvl_ie_beacons_missed {
+	struct mrvl_ie_header header;
 	u8 beaconmissed;
 	u8 reserved;
-} __attribute__ ((packed));
+} __packed;
 
-struct mrvlietypes_numprobes {
-	struct mrvlietypesheader header;
+struct mrvl_ie_num_probes {
+	struct mrvl_ie_header header;
 	__le16 numprobes;
-} __attribute__ ((packed));
+} __packed;
 
-struct mrvlietypes_bcastprobe {
-	struct mrvlietypesheader header;
+struct mrvl_ie_bcast_probe {
+	struct mrvl_ie_header header;
 	__le16 bcastprobe;
-} __attribute__ ((packed));
+} __packed;
 
-struct mrvlietypes_numssidprobe {
-	struct mrvlietypesheader header;
+struct mrvl_ie_num_ssid_probe {
+	struct mrvl_ie_header header;
 	__le16 numssidprobe;
-} __attribute__ ((packed));
+} __packed;
 
 struct led_pin {
 	u8 led;
 	u8 pin;
-} __attribute__ ((packed));
+} __packed;
 
-struct mrvlietypes_ledgpio {
-	struct mrvlietypesheader header;
+struct mrvl_ie_ledgpio {
+	struct mrvl_ie_header header;
 	struct led_pin ledpin[1];
-} __attribute__ ((packed));
+} __packed;
 
-#endif				/* _WLAN_TYPES_ */
+struct led_bhv {
+	uint8_t	firmwarestate;
+	uint8_t	led;
+	uint8_t	ledstate;
+	uint8_t	ledarg;
+} __packed;
+
+
+struct mrvl_ie_ledbhv {
+	struct mrvl_ie_header header;
+	struct led_bhv ledbhv[1];
+} __packed;
+
+/* Meant to be packed as the value member of a struct ieee80211_info_element.
+ * Note that the len member of the ieee80211_info_element varies depending on
+ * the mesh_id_len */
+struct mrvl_meshie_val {
+	uint8_t oui[3];
+	uint8_t type;
+	uint8_t subtype;
+	uint8_t version;
+	uint8_t active_protocol_id;
+	uint8_t active_metric_id;
+	uint8_t mesh_capability;
+	uint8_t mesh_id_len;
+	uint8_t mesh_id[IEEE80211_MAX_SSID_LEN];
+} __packed;
+
+struct mrvl_meshie {
+	u8 id, len;
+	struct mrvl_meshie_val val;
+} __packed;
+
+struct mrvl_mesh_defaults {
+	__le32 bootflag;
+	uint8_t boottime;
+	uint8_t reserved;
+	__le16 channel;
+	struct mrvl_meshie meshie;
+} __packed;
+
+#endif

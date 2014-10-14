@@ -9,39 +9,12 @@
 extern void unix_inflight(struct file *fp);
 extern void unix_notinflight(struct file *fp);
 extern void unix_gc(void);
+extern void wait_for_unix_gc(void);
+extern struct sock *unix_get_socket(struct file *filp);
 
 #define UNIX_HASH_SIZE	256
 
-extern struct hlist_head unix_socket_table[UNIX_HASH_SIZE + 1];
-extern spinlock_t unix_table_lock;
-
-extern atomic_t unix_tot_inflight;
-
-static inline struct sock *first_unix_socket(int *i)
-{
-	for (*i = 0; *i <= UNIX_HASH_SIZE; (*i)++) {
-		if (!hlist_empty(&unix_socket_table[*i]))
-			return __sk_head(&unix_socket_table[*i]);
-	}
-	return NULL;
-}
-
-static inline struct sock *next_unix_socket(int *i, struct sock *s)
-{
-	struct sock *next = sk_next(s);
-	/* More in this chain? */
-	if (next)
-		return next;
-	/* Look for next non-empty chain. */
-	for ((*i)++; *i <= UNIX_HASH_SIZE; (*i)++) {
-		if (!hlist_empty(&unix_socket_table[*i]))
-			return __sk_head(&unix_socket_table[*i]);
-	}
-	return NULL;
-}
-
-#define forall_unix_sockets(i, s) \
-	for (s = first_unix_socket(&(i)); s; s = next_unix_socket(&(i),(s)))
+extern unsigned int unix_tot_inflight;
 
 struct unix_address {
 	atomic_t	refcnt;
@@ -51,15 +24,15 @@ struct unix_address {
 };
 
 struct unix_skb_parms {
-	struct ucred		creds;		/* Skb credentials	*/
+	struct pid		*pid;		/* Skb credentials	*/
+	const struct cred	*cred;
 	struct scm_fp_list	*fp;		/* Passed files		*/
 #ifdef CONFIG_SECURITY_NETWORK
 	u32			secid;		/* Security ID		*/
 #endif
 };
 
-#define UNIXCB(skb) 	(*(struct unix_skb_parms*)&((skb)->cb))
-#define UNIXCREDS(skb)	(&UNIXCB((skb)).creds)
+#define UNIXCB(skb) 	(*(struct unix_skb_parms *)&((skb)->cb))
 #define UNIXSID(skb)	(&UNIXCB((skb)).secid)
 
 #define unix_state_lock(s)	spin_lock(&unix_sk(s)->lock)
@@ -73,26 +46,30 @@ struct unix_skb_parms {
 struct unix_sock {
 	/* WARNING: sk has to be the first member */
 	struct sock		sk;
-        struct unix_address     *addr;
-        struct dentry		*dentry;
-        struct vfsmount		*mnt;
+	struct unix_address     *addr;
+	struct dentry		*dentry;
+	struct vfsmount		*mnt;
 	struct mutex		readlock;
-        struct sock		*peer;
-        struct sock		*other;
-        struct sock		*gc_tree;
-        atomic_t                inflight;
-        spinlock_t		lock;
-        wait_queue_head_t       peer_wait;
+	struct sock		*peer;
+	struct sock		*other;
+	struct list_head	link;
+	atomic_long_t		inflight;
+	spinlock_t		lock;
+	unsigned int		gc_candidate : 1;
+	unsigned int		gc_maybe_cycle : 1;
+	unsigned char		recursion_level;
+	struct socket_wq	peer_wq;
 };
 #define unix_sk(__sk) ((struct unix_sock *)__sk)
 
+#define peer_wait peer_wq.wait
+
 #ifdef CONFIG_SYSCTL
-extern int sysctl_unix_max_dgram_qlen;
-extern void unix_sysctl_register(void);
-extern void unix_sysctl_unregister(void);
+extern int unix_sysctl_register(struct net *net);
+extern void unix_sysctl_unregister(struct net *net);
 #else
-static inline void unix_sysctl_register(void) {}
-static inline void unix_sysctl_unregister(void) {}
+static inline int unix_sysctl_register(struct net *net) { return 0; }
+static inline void unix_sysctl_unregister(struct net *net) {}
 #endif
 #endif
 #endif

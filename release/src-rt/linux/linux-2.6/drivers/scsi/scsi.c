@@ -59,12 +59,16 @@
 #include <scsi/scsi_cmnd.h>
 #include <scsi/scsi_dbg.h>
 #include <scsi/scsi_device.h>
+#include <scsi/scsi_driver.h>
 #include <scsi/scsi_eh.h>
 #include <scsi/scsi_host.h>
 #include <scsi/scsi_tcq.h>
 
 #include "scsi_priv.h"
 #include "scsi_logging.h"
+
+#define CREATE_TRACE_POINTS
+#include <trace/events/scsi.h>
 
 static void scsi_done(struct scsi_cmnd *cmd);
 
@@ -76,15 +80,6 @@ static void scsi_done(struct scsi_cmnd *cmd);
 
 /* Do not call reset on error if we just did a reset within 15 sec. */
 #define MIN_RESET_PERIOD (15*HZ)
-
-/*
- * Macro to determine the size of SCSI command. This macro takes vendor
- * unique commands into account. SCSI commands in groups 6 and 7 are
- * vendor unique and we will depend upon the command length being
- * supplied correctly in cmd_len.
- */
-#define CDB_SIZE(cmd)	(((((cmd)->cmnd[0] >> 5) & 7) < 6) ? \
-				COMMAND_SIZE((cmd)->cmnd[0]) : (cmd)->cmd_len)
 
 /*
  * Note - the initial logging level can be set here to log events at boot time.
@@ -121,6 +116,11 @@ static const char *const scsi_device_types[] = {
 	"Automation/Drive ",
 };
 
+/**
+ * scsi_device_type - Return 17 char string indicating device type.
+ * @type: type number to look up
+ */
+
 const char * scsi_device_type(unsigned type)
 {
 	if (type == 0x1e)
@@ -135,32 +135,116 @@ const char * scsi_device_type(unsigned type)
 EXPORT_SYMBOL(scsi_device_type);
 
 struct scsi_host_cmd_pool {
-	struct kmem_cache	*slab;
-	unsigned int	users;
-	char		*name;
-	unsigned int	slab_flags;
-	gfp_t		gfp_mask;
+	struct kmem_cache	*cmd_slab;
+	struct kmem_cache	*sense_slab;
+	unsigned int		users;
+	char			*cmd_name;
+	char			*sense_name;
+	unsigned int		slab_flags;
+	gfp_t			gfp_mask;
 };
 
 static struct scsi_host_cmd_pool scsi_cmd_pool = {
-	.name		= "scsi_cmd_cache",
+	.cmd_name	= "scsi_cmd_cache",
+	.sense_name	= "scsi_sense_cache",
 	.slab_flags	= SLAB_HWCACHE_ALIGN,
 };
 
 static struct scsi_host_cmd_pool scsi_cmd_dma_pool = {
-	.name		= "scsi_cmd_cache(DMA)",
+	.cmd_name	= "scsi_cmd_cache(DMA)",
+	.sense_name	= "scsi_sense_cache(DMA)",
 	.slab_flags	= SLAB_HWCACHE_ALIGN|SLAB_CACHE_DMA,
 	.gfp_mask	= __GFP_DMA,
 };
 
 static DEFINE_MUTEX(host_cmd_pool_mutex);
 
-struct scsi_cmnd *__scsi_get_command(struct Scsi_Host *shost, gfp_t gfp_mask)
+/**
+ * scsi_pool_alloc_command - internal function to get a fully allocated command
+ * @pool:	slab pool to allocate the command from
+ * @gfp_mask:	mask for the allocation
+ *
+ * Returns a fully allocated command (with the allied sense buffer) or
+ * NULL on failure
+ */
+static struct scsi_cmnd *
+scsi_pool_alloc_command(struct scsi_host_cmd_pool *pool, gfp_t gfp_mask)
 {
 	struct scsi_cmnd *cmd;
 
-	cmd = kmem_cache_alloc(shost->cmd_pool->slab,
-			gfp_mask | shost->cmd_pool->gfp_mask);
+	cmd = kmem_cache_zalloc(pool->cmd_slab, gfp_mask | pool->gfp_mask);
+	if (!cmd)
+		return NULL;
+
+	cmd->sense_buffer = kmem_cache_alloc(pool->sense_slab,
+					     gfp_mask | pool->gfp_mask);
+	if (!cmd->sense_buffer) {
+		kmem_cache_free(pool->cmd_slab, cmd);
+		return NULL;
+	}
+
+	return cmd;
+}
+
+/**
+ * scsi_pool_free_command - internal function to release a command
+ * @pool:	slab pool to allocate the command from
+ * @cmd:	command to release
+ *
+ * the command must previously have been allocated by
+ * scsi_pool_alloc_command.
+ */
+static void
+scsi_pool_free_command(struct scsi_host_cmd_pool *pool,
+			 struct scsi_cmnd *cmd)
+{
+	if (cmd->prot_sdb)
+		kmem_cache_free(scsi_sdb_cache, cmd->prot_sdb);
+
+	kmem_cache_free(pool->sense_slab, cmd->sense_buffer);
+	kmem_cache_free(pool->cmd_slab, cmd);
+}
+
+/**
+ * scsi_host_alloc_command - internal function to allocate command
+ * @shost:	SCSI host whose pool to allocate from
+ * @gfp_mask:	mask for the allocation
+ *
+ * Returns a fully allocated command with sense buffer and protection
+ * data buffer (where applicable) or NULL on failure
+ */
+static struct scsi_cmnd *
+scsi_host_alloc_command(struct Scsi_Host *shost, gfp_t gfp_mask)
+{
+	struct scsi_cmnd *cmd;
+
+	cmd = scsi_pool_alloc_command(shost->cmd_pool, gfp_mask);
+	if (!cmd)
+		return NULL;
+
+	if (scsi_host_get_prot(shost) >= SHOST_DIX_TYPE0_PROTECTION) {
+		cmd->prot_sdb = kmem_cache_zalloc(scsi_sdb_cache, gfp_mask);
+
+		if (!cmd->prot_sdb) {
+			scsi_pool_free_command(shost->cmd_pool, cmd);
+			return NULL;
+		}
+	}
+
+	return cmd;
+}
+
+/**
+ * __scsi_get_command - Allocate a struct scsi_cmnd
+ * @shost: host to transmit command
+ * @gfp_mask: allocation mask
+ *
+ * Description: allocate a struct scsi_cmd from host's slab, recycling from the
+ *              host's free_list if necessary.
+ */
+struct scsi_cmnd *__scsi_get_command(struct Scsi_Host *shost, gfp_t gfp_mask)
+{
+	struct scsi_cmnd *cmd = scsi_host_alloc_command(shost, gfp_mask);
 
 	if (unlikely(!cmd)) {
 		unsigned long flags;
@@ -172,19 +256,28 @@ struct scsi_cmnd *__scsi_get_command(struct Scsi_Host *shost, gfp_t gfp_mask)
 			list_del_init(&cmd->list);
 		}
 		spin_unlock_irqrestore(&shost->free_list_lock, flags);
+
+		if (cmd) {
+			void *buf, *prot;
+
+			buf = cmd->sense_buffer;
+			prot = cmd->prot_sdb;
+
+			memset(cmd, 0, sizeof(*cmd));
+
+			cmd->sense_buffer = buf;
+			cmd->prot_sdb = prot;
+		}
 	}
 
 	return cmd;
 }
 EXPORT_SYMBOL_GPL(__scsi_get_command);
 
-/*
- * Function:	scsi_get_command()
- *
- * Purpose:	Allocate and setup a scsi command block
- *
- * Arguments:	dev	- parent scsi device
- *		gfp_mask- allocator flags
+/**
+ * scsi_get_command - Allocate and setup a scsi command block
+ * @dev: parent scsi device
+ * @gfp_mask: allocator flags
  *
  * Returns:	The allocated scsi command structure.
  */
@@ -201,9 +294,7 @@ struct scsi_cmnd *scsi_get_command(struct scsi_device *dev, gfp_t gfp_mask)
 	if (likely(cmd != NULL)) {
 		unsigned long flags;
 
-		memset(cmd, 0, sizeof(*cmd));
 		cmd->device = dev;
-		init_timer(&cmd->eh_timeout);
 		INIT_LIST_HEAD(&cmd->list);
 		spin_lock_irqsave(&dev->list_lock, flags);
 		list_add_tail(&cmd->list, &dev->cmd_list);
@@ -216,6 +307,12 @@ struct scsi_cmnd *scsi_get_command(struct scsi_device *dev, gfp_t gfp_mask)
 }
 EXPORT_SYMBOL(scsi_get_command);
 
+/**
+ * __scsi_put_command - Free a struct scsi_cmnd
+ * @shost: dev->host
+ * @cmd: Command to free
+ * @dev: parent scsi device
+ */
 void __scsi_put_command(struct Scsi_Host *shost, struct scsi_cmnd *cmd,
 			struct device *dev)
 {
@@ -230,18 +327,15 @@ void __scsi_put_command(struct Scsi_Host *shost, struct scsi_cmnd *cmd,
 	spin_unlock_irqrestore(&shost->free_list_lock, flags);
 
 	if (likely(cmd != NULL))
-		kmem_cache_free(shost->cmd_pool->slab, cmd);
+		scsi_pool_free_command(shost->cmd_pool, cmd);
 
 	put_device(dev);
 }
 EXPORT_SYMBOL(__scsi_put_command);
 
-/*
- * Function:	scsi_put_command()
- *
- * Purpose:	Free a scsi command block
- *
- * Arguments:	cmd	- command block to free
+/**
+ * scsi_put_command - Free a scsi command block
+ * @cmd: command block to free
  *
  * Returns:	Nothing.
  *
@@ -262,82 +356,174 @@ void scsi_put_command(struct scsi_cmnd *cmd)
 }
 EXPORT_SYMBOL(scsi_put_command);
 
-/*
- * Function:	scsi_setup_command_freelist()
+static struct scsi_host_cmd_pool *scsi_get_host_cmd_pool(gfp_t gfp_mask)
+{
+	struct scsi_host_cmd_pool *retval = NULL, *pool;
+	/*
+	 * Select a command slab for this host and create it if not
+	 * yet existent.
+	 */
+	mutex_lock(&host_cmd_pool_mutex);
+	pool = (gfp_mask & __GFP_DMA) ? &scsi_cmd_dma_pool :
+		&scsi_cmd_pool;
+	if (!pool->users) {
+		pool->cmd_slab = kmem_cache_create(pool->cmd_name,
+						   sizeof(struct scsi_cmnd), 0,
+						   pool->slab_flags, NULL);
+		if (!pool->cmd_slab)
+			goto fail;
+
+		pool->sense_slab = kmem_cache_create(pool->sense_name,
+						     SCSI_SENSE_BUFFERSIZE, 0,
+						     pool->slab_flags, NULL);
+		if (!pool->sense_slab) {
+			kmem_cache_destroy(pool->cmd_slab);
+			goto fail;
+		}
+	}
+
+	pool->users++;
+	retval = pool;
+ fail:
+	mutex_unlock(&host_cmd_pool_mutex);
+	return retval;
+}
+
+static void scsi_put_host_cmd_pool(gfp_t gfp_mask)
+{
+	struct scsi_host_cmd_pool *pool;
+
+	mutex_lock(&host_cmd_pool_mutex);
+	pool = (gfp_mask & __GFP_DMA) ? &scsi_cmd_dma_pool :
+		&scsi_cmd_pool;
+	/*
+	 * This may happen if a driver has a mismatched get and put
+	 * of the command pool; the driver should be implicated in
+	 * the stack trace
+	 */
+	BUG_ON(pool->users == 0);
+
+	if (!--pool->users) {
+		kmem_cache_destroy(pool->cmd_slab);
+		kmem_cache_destroy(pool->sense_slab);
+	}
+	mutex_unlock(&host_cmd_pool_mutex);
+}
+
+/**
+ * scsi_allocate_command - get a fully allocated SCSI command
+ * @gfp_mask:	allocation mask
  *
- * Purpose:	Setup the command freelist for a scsi host.
+ * This function is for use outside of the normal host based pools.
+ * It allocates the relevant command and takes an additional reference
+ * on the pool it used.  This function *must* be paired with
+ * scsi_free_command which also has the identical mask, otherwise the
+ * free pool counts will eventually go wrong and you'll trigger a bug.
  *
- * Arguments:	shost	- host to allocate the freelist for.
+ * This function should *only* be used by drivers that need a static
+ * command allocation at start of day for internal functions.
+ */
+struct scsi_cmnd *scsi_allocate_command(gfp_t gfp_mask)
+{
+	struct scsi_host_cmd_pool *pool = scsi_get_host_cmd_pool(gfp_mask);
+
+	if (!pool)
+		return NULL;
+
+	return scsi_pool_alloc_command(pool, gfp_mask);
+}
+EXPORT_SYMBOL(scsi_allocate_command);
+
+/**
+ * scsi_free_command - free a command allocated by scsi_allocate_command
+ * @gfp_mask:	mask used in the original allocation
+ * @cmd:	command to free
+ *
+ * Note: using the original allocation mask is vital because that's
+ * what determines which command pool we use to free the command.  Any
+ * mismatch will cause the system to BUG eventually.
+ */
+void scsi_free_command(gfp_t gfp_mask, struct scsi_cmnd *cmd)
+{
+	struct scsi_host_cmd_pool *pool = scsi_get_host_cmd_pool(gfp_mask);
+
+	/*
+	 * this could trigger if the mask to scsi_allocate_command
+	 * doesn't match this mask.  Otherwise we're guaranteed that this
+	 * succeeds because scsi_allocate_command must have taken a reference
+	 * on the pool
+	 */
+	BUG_ON(!pool);
+
+	scsi_pool_free_command(pool, cmd);
+	/*
+	 * scsi_put_host_cmd_pool is called twice; once to release the
+	 * reference we took above, and once to release the reference
+	 * originally taken by scsi_allocate_command
+	 */
+	scsi_put_host_cmd_pool(gfp_mask);
+	scsi_put_host_cmd_pool(gfp_mask);
+}
+EXPORT_SYMBOL(scsi_free_command);
+
+/**
+ * scsi_setup_command_freelist - Setup the command freelist for a scsi host.
+ * @shost: host to allocate the freelist for.
+ *
+ * Description: The command freelist protects against system-wide out of memory
+ * deadlock by preallocating one SCSI command structure for each host, so the
+ * system can always write to a swap file on a device associated with that host.
  *
  * Returns:	Nothing.
  */
 int scsi_setup_command_freelist(struct Scsi_Host *shost)
 {
-	struct scsi_host_cmd_pool *pool;
 	struct scsi_cmnd *cmd;
+	const gfp_t gfp_mask = shost->unchecked_isa_dma ? GFP_DMA : GFP_KERNEL;
 
 	spin_lock_init(&shost->free_list_lock);
 	INIT_LIST_HEAD(&shost->free_list);
 
-	/*
-	 * Select a command slab for this host and create it if not
-	 * yet existant.
-	 */
-	mutex_lock(&host_cmd_pool_mutex);
-	pool = (shost->unchecked_isa_dma ? &scsi_cmd_dma_pool : &scsi_cmd_pool);
-	if (!pool->users) {
-		pool->slab = kmem_cache_create(pool->name,
-				sizeof(struct scsi_cmnd), 0,
-				pool->slab_flags, NULL, NULL);
-		if (!pool->slab)
-			goto fail;
-	}
+	shost->cmd_pool = scsi_get_host_cmd_pool(gfp_mask);
 
-	pool->users++;
-	shost->cmd_pool = pool;
-	mutex_unlock(&host_cmd_pool_mutex);
+	if (!shost->cmd_pool)
+		return -ENOMEM;
 
 	/*
 	 * Get one backup command for this host.
 	 */
-	cmd = kmem_cache_alloc(shost->cmd_pool->slab,
-			GFP_KERNEL | shost->cmd_pool->gfp_mask);
-	if (!cmd)
-		goto fail2;
-	list_add(&cmd->list, &shost->free_list);		
+	cmd = scsi_host_alloc_command(shost, gfp_mask);
+	if (!cmd) {
+		scsi_put_host_cmd_pool(gfp_mask);
+		shost->cmd_pool = NULL;
+		return -ENOMEM;
+	}
+	list_add(&cmd->list, &shost->free_list);
 	return 0;
-
- fail2:
-	if (!--pool->users)
-		kmem_cache_destroy(pool->slab);
-	return -ENOMEM;
- fail:
-	mutex_unlock(&host_cmd_pool_mutex);
-	return -ENOMEM;
-
 }
 
-/*
- * Function:	scsi_destroy_command_freelist()
- *
- * Purpose:	Release the command freelist for a scsi host.
- *
- * Arguments:	shost	- host that's freelist is going to be destroyed
+/**
+ * scsi_destroy_command_freelist - Release the command freelist for a scsi host.
+ * @shost: host whose freelist is going to be destroyed
  */
 void scsi_destroy_command_freelist(struct Scsi_Host *shost)
 {
+	/*
+	 * If cmd_pool is NULL the free list was not initialized, so
+	 * do not attempt to release resources.
+	 */
+	if (!shost->cmd_pool)
+		return;
+
 	while (!list_empty(&shost->free_list)) {
 		struct scsi_cmnd *cmd;
 
 		cmd = list_entry(shost->free_list.next, struct scsi_cmnd, list);
 		list_del_init(&cmd->list);
-		kmem_cache_free(shost->cmd_pool->slab, cmd);
+		scsi_pool_free_command(shost->cmd_pool, cmd);
 	}
-
-	mutex_lock(&host_cmd_pool_mutex);
-	if (!--shost->cmd_pool->users)
-		kmem_cache_destroy(shost->cmd_pool->slab);
-	mutex_unlock(&host_cmd_pool_mutex);
+	shost->cmd_pool = NULL;
+	scsi_put_host_cmd_pool(shost->unchecked_isa_dma ? GFP_DMA : GFP_KERNEL);
 }
 
 #ifdef CONFIG_SCSI_LOGGING
@@ -367,9 +553,8 @@ void scsi_log_send(struct scsi_cmnd *cmd)
 			scsi_print_command(cmd);
 			if (level > 3) {
 				printk(KERN_INFO "buffer = 0x%p, bufflen = %d,"
-				       " done = 0x%p, queuecommand 0x%p\n",
+				       " queuecommand 0x%p\n",
 					scsi_sglist(cmd), scsi_bufflen(cmd),
-					cmd->done,
 					cmd->device->host->hostt->queuecommand);
 
 			}
@@ -441,36 +626,36 @@ void scsi_log_completion(struct scsi_cmnd *cmd, int disposition)
 }
 #endif
 
-/* 
- * Assign a serial number and pid to the request for error recovery
+/**
+ * scsi_cmd_get_serial - Assign a serial number to a command
+ * @host: the scsi host
+ * @cmd: command to assign serial number to
+ *
+ * Description: a serial number identifies a request for error recovery
  * and debugging purposes.  Protected by the Host_Lock of host.
  */
-static inline void scsi_cmd_get_serial(struct Scsi_Host *host, struct scsi_cmnd *cmd)
+void scsi_cmd_get_serial(struct Scsi_Host *host, struct scsi_cmnd *cmd)
 {
 	cmd->serial_number = host->cmd_serial_number++;
 	if (cmd->serial_number == 0) 
 		cmd->serial_number = host->cmd_serial_number++;
-	
-	cmd->pid = host->cmd_pid++;
-	if (cmd->pid == 0)
-		cmd->pid = host->cmd_pid++;
 }
+EXPORT_SYMBOL(scsi_cmd_get_serial);
 
-/*
- * Function:    scsi_dispatch_command
+/**
+ * scsi_dispatch_command - Dispatch a command to the low-level driver.
+ * @cmd: command block we are dispatching.
  *
- * Purpose:     Dispatch a command to the low-level driver.
- *
- * Arguments:   cmd - command block we are dispatching.
- *
- * Notes:
+ * Return: nonzero return request was rejected and device's queue needs to be
+ * plugged.
  */
 int scsi_dispatch_cmd(struct scsi_cmnd *cmd)
 {
 	struct Scsi_Host *host = cmd->device->host;
-	unsigned long flags = 0;
 	unsigned long timeout;
 	int rtn = 0;
+
+	atomic_inc(&cmd->device->iorequest_cnt);
 
 	/* check if the device is still usable */
 	if (unlikely(cmd->device->sdev_state == SDEV_DEL)) {
@@ -478,20 +663,21 @@ int scsi_dispatch_cmd(struct scsi_cmnd *cmd)
 		 * returns an immediate error upwards, and signals
 		 * that the device is no longer present */
 		cmd->result = DID_NO_CONNECT << 16;
-		atomic_inc(&cmd->device->iorequest_cnt);
-		__scsi_done(cmd);
+		scsi_done(cmd);
 		/* return 0 (because the command has been processed) */
 		goto out;
 	}
 
-	/* Check to see if the scsi lld put this device into state SDEV_BLOCK. */
-	if (unlikely(cmd->device->sdev_state == SDEV_BLOCK)) {
+	/* Check to see if the scsi lld made this device blocked. */
+	if (unlikely(scsi_device_blocked(cmd->device))) {
 		/* 
-		 * in SDEV_BLOCK, the command is just put back on the device
-		 * queue.  The suspend state has already blocked the queue so
-		 * future requests should not occur until the device 
-		 * transitions out of the suspend state.
+		 * in blocked state, the command is just put back on
+		 * the device queue.  The suspend state has already
+		 * blocked the queue so future requests should not
+		 * occur until the device transitions out of the
+		 * suspend state.
 		 */
+
 		scsi_queue_insert(cmd, SCSI_MLQUEUE_DEVICE_BUSY);
 
 		SCSI_LOG_MLQUEUE(3, printk("queuecommand : device blocked \n"));
@@ -534,50 +720,40 @@ int scsi_dispatch_cmd(struct scsi_cmnd *cmd)
 		host->resetting = 0;
 	}
 
-	/* 
-	 * AK: unlikely race here: for some reason the timer could
-	 * expire before the serial number is set up below.
-	 */
-	scsi_add_timer(cmd, cmd->timeout_per_command, scsi_times_out);
-
 	scsi_log_send(cmd);
-
-	/*
-	 * We will use a queued command if possible, otherwise we will
-	 * emulate the queuing and calling of completion function ourselves.
-	 */
-	atomic_inc(&cmd->device->iorequest_cnt);
 
 	/*
 	 * Before we queue this command, check if the command
 	 * length exceeds what the host adapter can handle.
 	 */
-	if (CDB_SIZE(cmd) > cmd->device->host->max_cmd_len) {
+	if (cmd->cmd_len > cmd->device->host->max_cmd_len) {
 		SCSI_LOG_MLQUEUE(3,
-				printk("queuecommand : command too long.\n"));
+			printk("queuecommand : command too long. "
+			       "cdb_size=%d host->max_cmd_len=%d\n",
+			       cmd->cmd_len, cmd->device->host->max_cmd_len));
 		cmd->result = (DID_ABORT << 16);
 
 		scsi_done(cmd);
 		goto out;
 	}
 
-	spin_lock_irqsave(host->host_lock, flags);
-	scsi_cmd_get_serial(host, cmd); 
-
 	if (unlikely(host->shost_state == SHOST_DEL)) {
 		cmd->result = (DID_NO_CONNECT << 16);
 		scsi_done(cmd);
 	} else {
-		rtn = host->hostt->queuecommand(cmd, scsi_done);
+		trace_scsi_dispatch_cmd_start(cmd);
+		cmd->scsi_done = scsi_done;
+		rtn = host->hostt->queuecommand(host, cmd);
 	}
-	spin_unlock_irqrestore(host->host_lock, flags);
+
 	if (rtn) {
-		if (scsi_delete_timer(cmd)) {
-			atomic_inc(&cmd->device->iodone_cnt);
-			scsi_queue_insert(cmd,
-					  (rtn == SCSI_MLQUEUE_DEVICE_BUSY) ?
-					  rtn : SCSI_MLQUEUE_HOST_BUSY);
-		}
+		trace_scsi_dispatch_cmd_error(cmd, rtn);
+		if (rtn != SCSI_MLQUEUE_DEVICE_BUSY &&
+		    rtn != SCSI_MLQUEUE_TARGET_BUSY)
+			rtn = SCSI_MLQUEUE_HOST_BUSY;
+
+		scsi_queue_insert(cmd, rtn);
+
 		SCSI_LOG_MLQUEUE(3,
 		    printk("queuecommand : request rejected\n"));
 	}
@@ -588,31 +764,13 @@ int scsi_dispatch_cmd(struct scsi_cmnd *cmd)
 }
 
 /**
- * scsi_req_abort_cmd -- Request command recovery for the specified command
- * cmd: pointer to the SCSI command of interest
- *
- * This function requests that SCSI Core start recovery for the
- * command by deleting the timer and adding the command to the eh
- * queue.  It can be called by either LLDDs or SCSI Core.  LLDDs who
- * implement their own error recovery MAY ignore the timeout event if
- * they generated scsi_req_abort_cmd.
- */
-void scsi_req_abort_cmd(struct scsi_cmnd *cmd)
-{
-	if (!scsi_delete_timer(cmd))
-		return;
-	scsi_times_out(cmd);
-}
-EXPORT_SYMBOL(scsi_req_abort_cmd);
-
-/**
  * scsi_done - Enqueue the finished SCSI command into the done queue.
  * @cmd: The SCSI Command for which a low-level device driver (LLDD) gives
  * ownership back to SCSI Core -- i.e. the LLDD has finished with it.
  *
- * This function is the mid-level's (SCSI Core) interrupt routine, which
- * regains ownership of the SCSI command (de facto) from a LLDD, and enqueues
- * the command to the done queue for further processing.
+ * Description: This function is the mid-level's (SCSI Core) interrupt routine,
+ * which regains ownership of the SCSI command (de facto) from a LLDD, and
+ * enqueues the command to the done queue for further processing.
  *
  * This is the producer of the done queue who enqueues at the tail.
  *
@@ -620,55 +778,31 @@ EXPORT_SYMBOL(scsi_req_abort_cmd);
  */
 static void scsi_done(struct scsi_cmnd *cmd)
 {
-	/*
-	 * We don't have to worry about this one timing out any more.
-	 * If we are unable to remove the timer, then the command
-	 * has already timed out.  In which case, we have no choice but to
-	 * let the timeout function run, as we have no idea where in fact
-	 * that function could really be.  It might be on another processor,
-	 * etc, etc.
-	 */
-	if (!scsi_delete_timer(cmd))
-		return;
-	__scsi_done(cmd);
+	trace_scsi_dispatch_cmd_done(cmd);
+	blk_complete_request(cmd->request);
 }
 
-/* Private entry to scsi_done() to complete a command when the timer
- * isn't running --- used by scsi_times_out */
-void __scsi_done(struct scsi_cmnd *cmd)
+/* Move this to a header if it becomes more generally useful */
+static struct scsi_driver *scsi_cmd_to_driver(struct scsi_cmnd *cmd)
 {
-	struct request *rq = cmd->request;
-
-	/*
-	 * Set the serial numbers back to zero
-	 */
-	cmd->serial_number = 0;
-
-	atomic_inc(&cmd->device->iodone_cnt);
-	if (cmd->result)
-		atomic_inc(&cmd->device->ioerr_cnt);
-
-	BUG_ON(!rq);
-
-	/*
-	 * The uptodate/nbytes values don't matter, as we allow partial
-	 * completes and thus will check this in the softirq callback
-	 */
-	rq->completion_data = cmd;
-	blk_complete_request(rq);
+	return *(struct scsi_driver **)cmd->request->rq_disk->private_data;
 }
 
-/*
- * Function:    scsi_finish_command
+/**
+ * scsi_finish_command - cleanup and pass command back to upper layer
+ * @cmd: the command
  *
- * Purpose:     Pass command off to upper layer for finishing of I/O
+ * Description: Pass command off to upper layer for finishing of I/O
  *              request, waking processes that are waiting on results,
  *              etc.
  */
 void scsi_finish_command(struct scsi_cmnd *cmd)
 {
 	struct scsi_device *sdev = cmd->device;
+	struct scsi_target *starget = scsi_target(sdev);
 	struct Scsi_Host *shost = sdev->host;
+	struct scsi_driver *drv;
+	unsigned int good_bytes;
 
 	scsi_device_unbusy(sdev);
 
@@ -681,6 +815,7 @@ void scsi_finish_command(struct scsi_cmnd *cmd)
 	 * XXX(hch): What about locking?
          */
         shost->host_blocked = 0;
+	starget->target_blocked = 0;
         sdev->device_blocked = 0;
 
 	/*
@@ -694,22 +829,33 @@ void scsi_finish_command(struct scsi_cmnd *cmd)
 				"Notifying upper driver of completion "
 				"(result %x)\n", cmd->result));
 
-	cmd->done(cmd);
+	good_bytes = scsi_bufflen(cmd);
+        if (cmd->request->cmd_type != REQ_TYPE_BLOCK_PC) {
+		int old_good_bytes = good_bytes;
+		drv = scsi_cmd_to_driver(cmd);
+		if (drv->done)
+			good_bytes = drv->done(cmd);
+		/*
+		 * USB may not give sense identifying bad sector and
+		 * simply return a residue instead, so subtract off the
+		 * residue if drv->done() error processing indicates no
+		 * change to the completion length.
+		 */
+		if (good_bytes == old_good_bytes)
+			good_bytes -= scsi_get_resid(cmd);
+	}
+	scsi_io_completion(cmd, good_bytes);
 }
 EXPORT_SYMBOL(scsi_finish_command);
 
-/*
- * Function:	scsi_adjust_queue_depth()
- *
- * Purpose:	Allow low level drivers to tell us to change the queue depth
- * 		on a specific SCSI device
- *
- * Arguments:	sdev	- SCSI Device in question
- * 		tagged	- Do we use tagged queueing (non-0) or do we treat
- * 			  this device as an untagged device (0)
- * 		tags	- Number of tags allowed if tagged queueing enabled,
- * 			  or number of commands the low level driver can
- * 			  queue up in non-tagged mode (as per cmd_per_lun).
+/**
+ * scsi_adjust_queue_depth - Let low level drivers change a device's queue depth
+ * @sdev: SCSI Device in question
+ * @tagged: Do we use tagged queueing (non-0) or do we treat
+ *          this device as an untagged device (0)
+ * @tags: Number of tags allowed if tagged queueing enabled,
+ *        or number of commands the low level driver can
+ *        queue up in non-tagged mode (as per cmd_per_lun).
  *
  * Returns:	Nothing
  *
@@ -732,11 +878,20 @@ void scsi_adjust_queue_depth(struct scsi_device *sdev, int tagged, int tags)
 
 	spin_lock_irqsave(sdev->request_queue->queue_lock, flags);
 
-	/* Check to see if the queue is managed by the block layer
-	 * if it is, and we fail to adjust the depth, exit */
-	if (blk_queue_tagged(sdev->request_queue) &&
-	    blk_queue_resize_tags(sdev->request_queue, tags) != 0)
-		goto out;
+	/*
+	 * Check to see if the queue is managed by the block layer.
+	 * If it is, and we fail to adjust the depth, exit.
+	 *
+	 * Do not resize the tag map if it is a host wide share bqt,
+	 * because the size should be the hosts's can_queue. If there
+	 * is more IO than the LLD's can_queue (so there are not enuogh
+	 * tags) request_fn's host queue ready check will handle it.
+	 */
+	if (!sdev->host->bqt) {
+		if (blk_queue_tagged(sdev->request_queue) &&
+		    blk_queue_resize_tags(sdev->request_queue, tags) != 0)
+			goto out;
+	}
 
 	sdev->queue_depth = tags;
 	switch (tagged) {
@@ -762,20 +917,17 @@ void scsi_adjust_queue_depth(struct scsi_device *sdev, int tagged, int tags)
 }
 EXPORT_SYMBOL(scsi_adjust_queue_depth);
 
-/*
- * Function:	scsi_track_queue_full()
+/**
+ * scsi_track_queue_full - track QUEUE_FULL events to adjust queue depth
+ * @sdev: SCSI Device in question
+ * @depth: Current number of outstanding SCSI commands on this device,
+ *         not counting the one returned as QUEUE_FULL.
  *
- * Purpose:	This function will track successive QUEUE_FULL events on a
+ * Description:	This function will track successive QUEUE_FULL events on a
  * 		specific SCSI device to determine if and when there is a
  * 		need to adjust the queue depth on the device.
  *
- * Arguments:	sdev	- SCSI Device in question
- * 		depth	- Current number of outstanding SCSI commands on
- * 			  this device, not counting the one returned as
- * 			  QUEUE_FULL.
- *
- * Returns:	0 - No change needed
- * 		>0 - Adjust queue depth to this new depth
+ * Returns:	0 - No change needed, >0 - Adjust queue depth to this new depth,
  * 		-1 - Drop back to untagged operation using host->cmd_per_lun
  * 			as the untagged command depth
  *
@@ -786,10 +938,16 @@ EXPORT_SYMBOL(scsi_adjust_queue_depth);
  */
 int scsi_track_queue_full(struct scsi_device *sdev, int depth)
 {
-	if ((jiffies >> 4) == sdev->last_queue_full_time)
+
+	/*
+	 * Don't let QUEUE_FULLs on the same
+	 * jiffies count, they could all be from
+	 * same event.
+	 */
+	if ((jiffies >> 4) == (sdev->last_queue_full_time >> 4))
 		return 0;
 
-	sdev->last_queue_full_time = (jiffies >> 4);
+	sdev->last_queue_full_time = jiffies;
 	if (sdev->last_queue_full_depth != depth) {
 		sdev->last_queue_full_count = 1;
 		sdev->last_queue_full_depth = depth;
@@ -814,10 +972,101 @@ int scsi_track_queue_full(struct scsi_device *sdev, int depth)
 EXPORT_SYMBOL(scsi_track_queue_full);
 
 /**
- * scsi_device_get  -  get an addition reference to a scsi_device
+ * scsi_vpd_inquiry - Request a device provide us with a VPD page
+ * @sdev: The device to ask
+ * @buffer: Where to put the result
+ * @page: Which Vital Product Data to return
+ * @len: The length of the buffer
+ *
+ * This is an internal helper function.  You probably want to use
+ * scsi_get_vpd_page instead.
+ *
+ * Returns 0 on success or a negative error number.
+ */
+static int scsi_vpd_inquiry(struct scsi_device *sdev, unsigned char *buffer,
+							u8 page, unsigned len)
+{
+	int result;
+	unsigned char cmd[16];
+
+	cmd[0] = INQUIRY;
+	cmd[1] = 1;		/* EVPD */
+	cmd[2] = page;
+	cmd[3] = len >> 8;
+	cmd[4] = len & 0xff;
+	cmd[5] = 0;		/* Control byte */
+
+	/*
+	 * I'm not convinced we need to try quite this hard to get VPD, but
+	 * all the existing users tried this hard.
+	 */
+	result = scsi_execute_req(sdev, cmd, DMA_FROM_DEVICE, buffer,
+				  len, NULL, 30 * HZ, 3, NULL);
+	if (result)
+		return result;
+
+	/* Sanity check that we got the page back that we asked for */
+	if (buffer[1] != page)
+		return -EIO;
+
+	return 0;
+}
+
+/**
+ * scsi_get_vpd_page - Get Vital Product Data from a SCSI device
+ * @sdev: The device to ask
+ * @page: Which Vital Product Data to return
+ * @buf: where to store the VPD
+ * @buf_len: number of bytes in the VPD buffer area
+ *
+ * SCSI devices may optionally supply Vital Product Data.  Each 'page'
+ * of VPD is defined in the appropriate SCSI document (eg SPC, SBC).
+ * If the device supports this VPD page, this routine returns a pointer
+ * to a buffer containing the data from that page.  The caller is
+ * responsible for calling kfree() on this pointer when it is no longer
+ * needed.  If we cannot retrieve the VPD page this routine returns %NULL.
+ */
+int scsi_get_vpd_page(struct scsi_device *sdev, u8 page, unsigned char *buf,
+		      int buf_len)
+{
+	int i, result;
+
+	/* Ask for all the pages supported by this device */
+	result = scsi_vpd_inquiry(sdev, buf, 0, buf_len);
+	if (result)
+		goto fail;
+
+	/* If the user actually wanted this page, we can skip the rest */
+	if (page == 0)
+		return 0;
+
+	for (i = 0; i < min((int)buf[3], buf_len - 4); i++)
+		if (buf[i + 4] == page)
+			goto found;
+
+	if (i < buf[3] && i >= buf_len - 4)
+		/* ran off the end of the buffer, give us benefit of doubt */
+		goto found;
+	/* The device claims it doesn't support the requested page */
+	goto fail;
+
+ found:
+	result = scsi_vpd_inquiry(sdev, buf, page, buf_len);
+	if (result)
+		goto fail;
+
+	return 0;
+
+ fail:
+	return -EINVAL;
+}
+EXPORT_SYMBOL_GPL(scsi_get_vpd_page);
+
+/**
+ * scsi_device_get  -  get an additional reference to a scsi_device
  * @sdev:	device to get a reference to
  *
- * Gets a reference to the scsi_device and increments the use count
+ * Description: Gets a reference to the scsi_device and increments the use count
  * of the underlying LLDD module.  You must hold host_lock of the
  * parent Scsi_Host or already have a reference when calling this.
  */
@@ -839,8 +1088,8 @@ EXPORT_SYMBOL(scsi_device_get);
  * scsi_device_put  -  release a reference to a scsi_device
  * @sdev:	device to release a reference on.
  *
- * Release a reference to the scsi_device and decrements the use count
- * of the underlying LLDD module.  The device is freed once the last
+ * Description: Release a reference to the scsi_device and decrements the use
+ * count of the underlying LLDD module.  The device is freed once the last
  * user vanishes.
  */
 void scsi_device_put(struct scsi_device *sdev)
@@ -857,7 +1106,7 @@ void scsi_device_put(struct scsi_device *sdev)
 }
 EXPORT_SYMBOL(scsi_device_put);
 
-/* helper for shost_for_each_device, thus not documented */
+/* helper for shost_for_each_device, see that for documentation */
 struct scsi_device *__scsi_iterate_devices(struct Scsi_Host *shost,
 					   struct scsi_device *prev)
 {
@@ -885,12 +1134,14 @@ EXPORT_SYMBOL(__scsi_iterate_devices);
 /**
  * starget_for_each_device  -  helper to walk all devices of a target
  * @starget:	target whose devices we want to iterate over.
+ * @data:	Opaque passed to each function call.
+ * @fn:		Function to call on each device
  *
- * This traverses over each devices of @shost.  The devices have
+ * This traverses over each device of @starget.  The devices have
  * a reference that must be released by scsi_host_put when breaking
  * out of the loop.
  */
-void starget_for_each_device(struct scsi_target *starget, void * data,
+void starget_for_each_device(struct scsi_target *starget, void *data,
 		     void (*fn)(struct scsi_device *, void *))
 {
 	struct Scsi_Host *shost = dev_to_shost(starget->dev.parent);
@@ -905,17 +1156,46 @@ void starget_for_each_device(struct scsi_target *starget, void * data,
 EXPORT_SYMBOL(starget_for_each_device);
 
 /**
+ * __starget_for_each_device - helper to walk all devices of a target (UNLOCKED)
+ * @starget:	target whose devices we want to iterate over.
+ * @data:	parameter for callback @fn()
+ * @fn:		callback function that is invoked for each device
+ *
+ * This traverses over each device of @starget.  It does _not_
+ * take a reference on the scsi_device, so the whole loop must be
+ * protected by shost->host_lock.
+ *
+ * Note:  The only reason why drivers would want to use this is because
+ * they need to access the device list in irq context.  Otherwise you
+ * really want to use starget_for_each_device instead.
+ **/
+void __starget_for_each_device(struct scsi_target *starget, void *data,
+			       void (*fn)(struct scsi_device *, void *))
+{
+	struct Scsi_Host *shost = dev_to_shost(starget->dev.parent);
+	struct scsi_device *sdev;
+
+	__shost_for_each_device(sdev, shost) {
+		if ((sdev->channel == starget->channel) &&
+		    (sdev->id == starget->id))
+			fn(sdev, data);
+	}
+}
+EXPORT_SYMBOL(__starget_for_each_device);
+
+/**
  * __scsi_device_lookup_by_target - find a device given the target (UNLOCKED)
  * @starget:	SCSI target pointer
  * @lun:	SCSI Logical Unit Number
  *
- * Looks up the scsi_device with the specified @lun for a give
- * @starget. The returned scsi_device does not have an additional
+ * Description: Looks up the scsi_device with the specified @lun for a given
+ * @starget.  The returned scsi_device does not have an additional
  * reference.  You must hold the host's host_lock over this call and
- * any access to the returned scsi_device.
+ * any access to the returned scsi_device. A scsi_device in state
+ * SDEV_DEL is skipped.
  *
- * Note:  The only reason why drivers would want to use this is because
- * they're need to access the device list in irq context.  Otherwise you
+ * Note:  The only reason why drivers should use this is because
+ * they need to access the device list in irq context.  Otherwise you
  * really want to use scsi_device_lookup_by_target instead.
  **/
 struct scsi_device *__scsi_device_lookup_by_target(struct scsi_target *starget,
@@ -924,6 +1204,8 @@ struct scsi_device *__scsi_device_lookup_by_target(struct scsi_target *starget,
 	struct scsi_device *sdev;
 
 	list_for_each_entry(sdev, &starget->devices, same_target_siblings) {
+		if (sdev->sdev_state == SDEV_DEL)
+			continue;
 		if (sdev->lun ==lun)
 			return sdev;
 	}
@@ -937,9 +1219,9 @@ EXPORT_SYMBOL(__scsi_device_lookup_by_target);
  * @starget:	SCSI target pointer
  * @lun:	SCSI Logical Unit Number
  *
- * Looks up the scsi_device with the specified @channel, @id, @lun for a
- * give host.  The returned scsi_device has an additional reference that
- * needs to be release with scsi_host_put once you're done with it.
+ * Description: Looks up the scsi_device with the specified @lun for a given
+ * @starget.  The returned scsi_device has an additional reference that
+ * needs to be released with scsi_device_put once you're done with it.
  **/
 struct scsi_device *scsi_device_lookup_by_target(struct scsi_target *starget,
 						 uint lun)
@@ -959,19 +1241,19 @@ struct scsi_device *scsi_device_lookup_by_target(struct scsi_target *starget,
 EXPORT_SYMBOL(scsi_device_lookup_by_target);
 
 /**
- * scsi_device_lookup - find a device given the host (UNLOCKED)
+ * __scsi_device_lookup - find a device given the host (UNLOCKED)
  * @shost:	SCSI host pointer
  * @channel:	SCSI channel (zero if only one channel)
- * @pun:	SCSI target number (physical unit number)
+ * @id:		SCSI target number (physical unit number)
  * @lun:	SCSI Logical Unit Number
  *
- * Looks up the scsi_device with the specified @channel, @id, @lun for a
- * give host. The returned scsi_device does not have an additional reference.
- * You must hold the host's host_lock over this call and any access to the
- * returned scsi_device.
+ * Description: Looks up the scsi_device with the specified @channel, @id, @lun
+ * for a given host. The returned scsi_device does not have an additional
+ * reference.  You must hold the host's host_lock over this call and any access
+ * to the returned scsi_device.
  *
  * Note:  The only reason why drivers would want to use this is because
- * they're need to access the device list in irq context.  Otherwise you
+ * they need to access the device list in irq context.  Otherwise you
  * really want to use scsi_device_lookup instead.
  **/
 struct scsi_device *__scsi_device_lookup(struct Scsi_Host *shost,
@@ -996,9 +1278,9 @@ EXPORT_SYMBOL(__scsi_device_lookup);
  * @id:		SCSI target number (physical unit number)
  * @lun:	SCSI Logical Unit Number
  *
- * Looks up the scsi_device with the specified @channel, @id, @lun for a
- * give host.  The returned scsi_device has an additional reference that
- * needs to be release with scsi_host_put once you're done with it.
+ * Description: Looks up the scsi_device with the specified @channel, @id, @lun
+ * for a given host.  The returned scsi_device has an additional reference that
+ * needs to be released with scsi_device_put once you're done with it.
  **/
 struct scsi_device *scsi_device_lookup(struct Scsi_Host *shost,
 		uint channel, uint id, uint lun)
@@ -1015,52 +1297,6 @@ struct scsi_device *scsi_device_lookup(struct Scsi_Host *shost,
 	return sdev;
 }
 EXPORT_SYMBOL(scsi_device_lookup);
-
-/**
- * scsi_device_cancel - cancel outstanding IO to this device
- * @sdev:	Pointer to struct scsi_device
- * @recovery:	Boolean instructing function to recover device or not.
- *
- **/
-int scsi_device_cancel(struct scsi_device *sdev, int recovery)
-{
-	struct scsi_cmnd *scmd;
-	LIST_HEAD(active_list);
-	struct list_head *lh, *lh_sf;
-	unsigned long flags;
-
-	scsi_device_set_state(sdev, SDEV_CANCEL);
-
-	spin_lock_irqsave(&sdev->list_lock, flags);
-	list_for_each_entry(scmd, &sdev->cmd_list, list) {
-		if (scmd->request) {
-			/*
-			 * If we are unable to remove the timer, it means
-			 * that the command has already timed out or
-			 * finished.
-			 */
-			if (!scsi_delete_timer(scmd))
-				continue;
-			list_add_tail(&scmd->eh_entry, &active_list);
-		}
-	}
-	spin_unlock_irqrestore(&sdev->list_lock, flags);
-
-	if (!list_empty(&active_list)) {
-		list_for_each_safe(lh, lh_sf, &active_list) {
-			scmd = list_entry(lh, struct scsi_cmnd, eh_entry);
-			list_del_init(lh);
-			if (recovery &&
-			    !scsi_eh_scmd_add(scmd, SCSI_EH_CANCEL_CMD)) {
-				scmd->result = (DID_ABORT << 16);
-				scsi_finish_command(scmd);
-			}
-		}
-	}
-
-	return 0;
-}
-EXPORT_SYMBOL(scsi_device_cancel);
 
 MODULE_DESCRIPTION("SCSI core");
 MODULE_LICENSE("GPL");

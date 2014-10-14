@@ -275,7 +275,7 @@ sys_call_table:
 	.long	sys_set_robust_list
 	.long	sys_get_robust_list	/* 260 */
 	.long	__sys_splice
-	.long	sys_sync_file_range
+	.long	__sys_sync_file_range
 	.long	sys_tee
 	.long	sys_vmsplice
 	.long	__sys_epoll_pwait	/* 265 */
@@ -295,4 +295,5 @@ sys_call_table:
 	.long	sys_signalfd
 	.long	sys_ni_syscall		/* 280, was sys_timerfd */
 	.long	sys_eventfd
+	.long	sys_recvmmsg
 	.long	sys_ni_syscall		/* r8 is saturated at nr_syscalls */

@@ -31,12 +31,10 @@
 #include <linux/hwmon-vid.h>
 #include <linux/err.h>
 #include <linux/sysfs.h>
+#include <linux/mutex.h>
 
 /* Addresses to scan */
-static unsigned short normal_i2c[] = { 0x2c, 0x2d, I2C_CLIENT_END };
-
-/* Insmod parameters */
-I2C_CLIENT_INSMOD_1(smsc47m192);
+static const unsigned short normal_i2c[] = { 0x2c, 0x2d, I2C_CLIENT_END };
 
 /* SMSC47M192 registers */
 #define SMSC47M192_REG_IN(nr)		((nr)<6 ? (0x20 + (nr)) : \
@@ -95,9 +93,8 @@ static inline int TEMP_FROM_REG(s8 val)
 }
 
 struct smsc47m192_data {
-	struct i2c_client client;
-	struct class_device *class_dev;
-	struct semaphore update_lock;
+	struct device *hwmon_dev;
+	struct mutex update_lock;
 	char valid;		/* !=0 if following fields are valid */
 	unsigned long last_updated;	/* In jiffies */
 
@@ -113,18 +110,29 @@ struct smsc47m192_data {
 	u8 vrm;
 };
 
-static int smsc47m192_attach_adapter(struct i2c_adapter *adapter);
-static int smsc47m192_detect(struct i2c_adapter *adapter, int address,
-		int kind);
-static int smsc47m192_detach_client(struct i2c_client *client);
+static int smsc47m192_probe(struct i2c_client *client,
+			    const struct i2c_device_id *id);
+static int smsc47m192_detect(struct i2c_client *client,
+			     struct i2c_board_info *info);
+static int smsc47m192_remove(struct i2c_client *client);
 static struct smsc47m192_data *smsc47m192_update_device(struct device *dev);
 
+static const struct i2c_device_id smsc47m192_id[] = {
+	{ "smsc47m192", 0 },
+	{ }
+};
+MODULE_DEVICE_TABLE(i2c, smsc47m192_id);
+
 static struct i2c_driver smsc47m192_driver = {
+	.class		= I2C_CLASS_HWMON,
 	.driver = {
 		.name	= "smsc47m192",
 	},
-	.attach_adapter	= smsc47m192_attach_adapter,
-	.detach_client	= smsc47m192_detach_client,
+	.probe		= smsc47m192_probe,
+	.remove		= smsc47m192_remove,
+	.id_table	= smsc47m192_id,
+	.detect		= smsc47m192_detect,
+	.address_list	= normal_i2c,
 };
 
 /* Voltages */
@@ -164,11 +172,11 @@ static ssize_t set_in_min(struct device *dev, struct device_attribute *attr,
 	struct smsc47m192_data *data = i2c_get_clientdata(client);
 	unsigned long val = simple_strtoul(buf, NULL, 10);
 
-	down(&data->update_lock);
+	mutex_lock(&data->update_lock);
 	data->in_min[nr] = IN_TO_REG(val, nr);
 	i2c_smbus_write_byte_data(client, SMSC47M192_REG_IN_MIN(nr),
 							data->in_min[nr]);
-	up(&data->update_lock);
+	mutex_unlock(&data->update_lock);
 	return count;
 }
 
@@ -181,11 +189,11 @@ static ssize_t set_in_max(struct device *dev, struct device_attribute *attr,
 	struct smsc47m192_data *data = i2c_get_clientdata(client);
 	unsigned long val = simple_strtoul(buf, NULL, 10);
 
-	down(&data->update_lock);
+	mutex_lock(&data->update_lock);
 	data->in_max[nr] = IN_TO_REG(val, nr);
 	i2c_smbus_write_byte_data(client, SMSC47M192_REG_IN_MAX(nr),
 							data->in_max[nr]);
-	up(&data->update_lock);
+	mutex_unlock(&data->update_lock);
 	return count;
 }
 
@@ -243,11 +251,11 @@ static ssize_t set_temp_min(struct device *dev, struct device_attribute *attr,
 	struct smsc47m192_data *data = i2c_get_clientdata(client);
 	long val = simple_strtol(buf, NULL, 10);
 
-	down(&data->update_lock);
+	mutex_lock(&data->update_lock);
 	data->temp_min[nr] = TEMP_TO_REG(val);
 	i2c_smbus_write_byte_data(client, SMSC47M192_REG_TEMP_MIN[nr],
 						data->temp_min[nr]);
-	up(&data->update_lock);
+	mutex_unlock(&data->update_lock);
 	return count;
 }
 
@@ -260,11 +268,11 @@ static ssize_t set_temp_max(struct device *dev, struct device_attribute *attr,
 	struct smsc47m192_data *data = i2c_get_clientdata(client);
 	long val = simple_strtol(buf, NULL, 10);
 
-	down(&data->update_lock);
+	mutex_lock(&data->update_lock);
 	data->temp_max[nr] = TEMP_TO_REG(val);
 	i2c_smbus_write_byte_data(client, SMSC47M192_REG_TEMP_MAX[nr],
 						data->temp_max[nr]);
-	up(&data->update_lock);
+	mutex_unlock(&data->update_lock);
 	return count;
 }
 
@@ -287,7 +295,7 @@ static ssize_t set_temp_offset(struct device *dev, struct device_attribute
 	u8 sfr = i2c_smbus_read_byte_data(client, SMSC47M192_REG_SFR);
 	long val = simple_strtol(buf, NULL, 10);
 
-	down(&data->update_lock);
+	mutex_lock(&data->update_lock);
 	data->temp_offset[nr] = TEMP_TO_REG(val);
 	if (nr>1)
 		i2c_smbus_write_byte_data(client,
@@ -303,7 +311,7 @@ static ssize_t set_temp_offset(struct device *dev, struct device_attribute
 	} else if ((sfr & 0x10) == (nr==0 ? 0x10 : 0))
 		i2c_smbus_write_byte_data(client,
 					SMSC47M192_REG_TEMP_OFFSET(nr), 0);
-	up(&data->update_lock);
+	mutex_unlock(&data->update_lock);
 	return count;
 }
 
@@ -333,15 +341,14 @@ static DEVICE_ATTR(cpu0_vid, S_IRUGO, show_vid, NULL);
 static ssize_t show_vrm(struct device *dev, struct device_attribute *attr,
 		char *buf)
 {
-	struct smsc47m192_data *data = smsc47m192_update_device(dev);
+	struct smsc47m192_data *data = dev_get_drvdata(dev);
 	return sprintf(buf, "%d\n", data->vrm);
 }
 
 static ssize_t set_vrm(struct device *dev, struct device_attribute *attr,
 		const char *buf, size_t count)
 {
-	struct i2c_client *client = to_i2c_client(dev);
-	struct smsc47m192_data *data = i2c_get_clientdata(client);
+	struct smsc47m192_data *data = dev_get_drvdata(dev);
 	data->vrm = simple_strtoul(buf, NULL, 10);
 	return count;
 }
@@ -360,8 +367,8 @@ static ssize_t show_alarm(struct device *dev, struct device_attribute *attr,
 static SENSOR_DEVICE_ATTR(temp1_alarm, S_IRUGO, show_alarm, NULL, 0x0010);
 static SENSOR_DEVICE_ATTR(temp2_alarm, S_IRUGO, show_alarm, NULL, 0x0020);
 static SENSOR_DEVICE_ATTR(temp3_alarm, S_IRUGO, show_alarm, NULL, 0x0040);
-static SENSOR_DEVICE_ATTR(temp2_input_fault, S_IRUGO, show_alarm, NULL, 0x4000);
-static SENSOR_DEVICE_ATTR(temp3_input_fault, S_IRUGO, show_alarm, NULL, 0x8000);
+static SENSOR_DEVICE_ATTR(temp2_fault, S_IRUGO, show_alarm, NULL, 0x4000);
+static SENSOR_DEVICE_ATTR(temp3_fault, S_IRUGO, show_alarm, NULL, 0x8000);
 static SENSOR_DEVICE_ATTR(in0_alarm, S_IRUGO, show_alarm, NULL, 0x0001);
 static SENSOR_DEVICE_ATTR(in1_alarm, S_IRUGO, show_alarm, NULL, 0x0002);
 static SENSOR_DEVICE_ATTR(in2_alarm, S_IRUGO, show_alarm, NULL, 0x0004);
@@ -411,13 +418,13 @@ static struct attribute *smsc47m192_attributes[] = {
 	&sensor_dev_attr_temp2_min.dev_attr.attr,
 	&sensor_dev_attr_temp2_offset.dev_attr.attr,
 	&sensor_dev_attr_temp2_alarm.dev_attr.attr,
-	&sensor_dev_attr_temp2_input_fault.dev_attr.attr,
+	&sensor_dev_attr_temp2_fault.dev_attr.attr,
 	&sensor_dev_attr_temp3_input.dev_attr.attr,
 	&sensor_dev_attr_temp3_max.dev_attr.attr,
 	&sensor_dev_attr_temp3_min.dev_attr.attr,
 	&sensor_dev_attr_temp3_offset.dev_attr.attr,
 	&sensor_dev_attr_temp3_alarm.dev_attr.attr,
-	&sensor_dev_attr_temp3_input_fault.dev_attr.attr,
+	&sensor_dev_attr_temp3_fault.dev_attr.attr,
 
 	&dev_attr_cpu0_vid.attr,
 	&dev_attr_vrm.attr,
@@ -439,17 +446,6 @@ static struct attribute *smsc47m192_attributes_in4[] = {
 static const struct attribute_group smsc47m192_group_in4 = {
 	.attrs = smsc47m192_attributes_in4,
 };
-
-/* This function is called when:
-    * smsc47m192_driver is inserted (when this module is loaded), for each
-      available adapter
-    * when a new adapter is inserted (and smsc47m192_driver is still present) */
-static int smsc47m192_attach_adapter(struct i2c_adapter *adapter)
-{
-	if (!(adapter->class & I2C_CLASS_HWMON))
-		return 0;
-	return i2c_probe(adapter, &addr_data, smsc47m192_detect);
-}
 
 static void smsc47m192_init_client(struct i2c_client *client)
 {
@@ -481,68 +477,63 @@ static void smsc47m192_init_client(struct i2c_client *client)
 	}
 }
 
-/* This function is called by i2c_probe */
-static int smsc47m192_detect(struct i2c_adapter *adapter, int address,
-		int kind)
+/* Return 0 if detection is successful, -ENODEV otherwise */
+static int smsc47m192_detect(struct i2c_client *client,
+			     struct i2c_board_info *info)
 {
-	struct i2c_client *client;
-	struct smsc47m192_data *data;
-	int err = 0;
-	int version, config;
+	struct i2c_adapter *adapter = client->adapter;
+	int version;
 
 	if (!i2c_check_functionality(adapter, I2C_FUNC_SMBUS_BYTE_DATA))
-		goto exit;
+		return -ENODEV;
 
-	if (!(data = kzalloc(sizeof(struct smsc47m192_data), GFP_KERNEL))) {
+	/* Detection criteria from sensors_detect script */
+	version = i2c_smbus_read_byte_data(client, SMSC47M192_REG_VERSION);
+	if (i2c_smbus_read_byte_data(client,
+				SMSC47M192_REG_COMPANY_ID) == 0x55
+	 && (version & 0xf0) == 0x20
+	 && (i2c_smbus_read_byte_data(client,
+				SMSC47M192_REG_VID) & 0x70) == 0x00
+	 && (i2c_smbus_read_byte_data(client,
+				SMSC47M192_REG_VID4) & 0xfe) == 0x80) {
+		dev_info(&adapter->dev,
+			 "found SMSC47M192 or compatible, "
+			 "version 2, stepping A%d\n", version & 0x0f);
+	} else {
+		dev_dbg(&adapter->dev,
+			"SMSC47M192 detection failed at 0x%02x\n",
+			client->addr);
+		return -ENODEV;
+	}
+
+	strlcpy(info->type, "smsc47m192", I2C_NAME_SIZE);
+
+	return 0;
+}
+
+static int smsc47m192_probe(struct i2c_client *client,
+			    const struct i2c_device_id *id)
+{
+	struct smsc47m192_data *data;
+	int config;
+	int err;
+
+	data = kzalloc(sizeof(struct smsc47m192_data), GFP_KERNEL);
+	if (!data) {
 		err = -ENOMEM;
 		goto exit;
 	}
 
-	client = &data->client;
 	i2c_set_clientdata(client, data);
-	client->addr = address;
-	client->adapter = adapter;
-	client->driver = &smsc47m192_driver;
-
-	if (kind == 0)
-		kind = smsc47m192;
-
-	/* Detection criteria from sensors_detect script */
-	if (kind < 0) {
-		if (i2c_smbus_read_byte_data(client,
-				SMSC47M192_REG_COMPANY_ID) == 0x55
-		 && ((version = i2c_smbus_read_byte_data(client,
-				SMSC47M192_REG_VERSION)) & 0xf0) == 0x20
-		 && (i2c_smbus_read_byte_data(client,
-				SMSC47M192_REG_VID) & 0x70) == 0x00
-		 && (i2c_smbus_read_byte_data(client,
-				SMSC47M192_REG_VID4) & 0xfe) == 0x80) {
-			dev_info(&adapter->dev,
-				 "found SMSC47M192 or compatible, "
-				 "version 2, stepping A%d\n", version & 0x0f);
-		} else {
-			dev_dbg(&adapter->dev,
-				"SMSC47M192 detection failed at 0x%02x\n",
-				address);
-			goto exit_free;
-		}
-	}
-
-	/* Fill in the remaining client fields and put into the global list */
-	strlcpy(client->name, "smsc47m192", I2C_NAME_SIZE);
 	data->vrm = vid_which_vrm();
-	init_MUTEX(&data->update_lock);
-
-	/* Tell the I2C layer a new client has arrived */
-	if ((err = i2c_attach_client(client)))
-		goto exit_free;
+	mutex_init(&data->update_lock);
 
 	/* Initialize the SMSC47M192 chip */
 	smsc47m192_init_client(client);
 
 	/* Register sysfs hooks */
 	if ((err = sysfs_create_group(&client->dev.kobj, &smsc47m192_group)))
-		goto exit_detach;
+		goto exit_free;
 
 	/* Pin 110 is either in4 (+12V) or VID4 */
 	config = i2c_smbus_read_byte_data(client, SMSC47M192_REG_CONFIG);
@@ -552,9 +543,9 @@ static int smsc47m192_detect(struct i2c_adapter *adapter, int address,
 			goto exit_remove_files;
 	}
 
-	data->class_dev = hwmon_device_register(&client->dev);
-	if (IS_ERR(data->class_dev)) {
-		err = PTR_ERR(data->class_dev);
+	data->hwmon_dev = hwmon_device_register(&client->dev);
+	if (IS_ERR(data->hwmon_dev)) {
+		err = PTR_ERR(data->hwmon_dev);
 		goto exit_remove_files;
 	}
 
@@ -563,25 +554,19 @@ static int smsc47m192_detect(struct i2c_adapter *adapter, int address,
 exit_remove_files:
 	sysfs_remove_group(&client->dev.kobj, &smsc47m192_group);
 	sysfs_remove_group(&client->dev.kobj, &smsc47m192_group_in4);
-exit_detach:
-	i2c_detach_client(client);
 exit_free:
 	kfree(data);
 exit:
 	return err;
 }
 
-static int smsc47m192_detach_client(struct i2c_client *client)
+static int smsc47m192_remove(struct i2c_client *client)
 {
 	struct smsc47m192_data *data = i2c_get_clientdata(client);
-	int err;
 
-	hwmon_device_unregister(data->class_dev);
+	hwmon_device_unregister(data->hwmon_dev);
 	sysfs_remove_group(&client->dev.kobj, &smsc47m192_group);
 	sysfs_remove_group(&client->dev.kobj, &smsc47m192_group_in4);
-
-	if ((err = i2c_detach_client(client)))
-		return err;
 
 	kfree(data);
 
@@ -594,7 +579,7 @@ static struct smsc47m192_data *smsc47m192_update_device(struct device *dev)
 	struct smsc47m192_data *data = i2c_get_clientdata(client);
 	int i, config;
 
-	down(&data->update_lock);
+	mutex_lock(&data->update_lock);
 
 	if (time_after(jiffies, data->last_updated + HZ + HZ / 2)
 	 || !data->valid) {
@@ -645,7 +630,7 @@ static struct smsc47m192_data *smsc47m192_update_device(struct device *dev)
 		data->valid = 1;
 	}
 
-	up(&data->update_lock);
+	mutex_unlock(&data->update_lock);
 
 	return data;
 }

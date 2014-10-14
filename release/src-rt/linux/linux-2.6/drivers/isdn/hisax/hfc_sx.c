@@ -17,8 +17,7 @@
 #include "isdnl1.h"
 #include <linux/interrupt.h>
 #include <linux/isapnp.h>
-
-extern const char *CardType[];
+#include <linux/slab.h>
 
 static const char *hfcsx_revision = "$Revision: 1.12.2.5 $";
 
@@ -180,7 +179,7 @@ write_fifo(struct IsdnCardState *cs, struct sk_buff *skb, u_char fifo, int trans
 	  count += fifo_size;	/* count now contains available bytes */
 
 	if (cs->debug & L1_DEB_ISAC_FIFO)
-	  debugl1(cs, "hfcsx_write_fifo %d count(%ld/%d)",
+	  debugl1(cs, "hfcsx_write_fifo %d count(%u/%d)",
 		  fifo, skb->len, count);
 	if (count < skb->len) {
 	  if (cs->debug & L1_DEB_ISAC_FIFO)
@@ -235,13 +234,14 @@ read_fifo(struct IsdnCardState *cs, u_char fifo, int trans_max)
 	  count++;
 	  if (count > trans_max) 
 	    count = trans_max; /* limit length */
-	    if ((skb = dev_alloc_skb(count))) {
-	      dst = skb_put(skb, count);
-	      while (count--) 
+	  skb = dev_alloc_skb(count);
+	  if (skb) {
+	    dst = skb_put(skb, count);
+	    while (count--)
 		*dst++ = Read_hfc(cs, HFCSX_FIF_DRD);
-	      return(skb);
-	    }
-	    else return(NULL); /* no memory */
+	    return skb;
+	  } else
+		return NULL; /* no memory */
 	}
 
 	do {
@@ -265,7 +265,7 @@ read_fifo(struct IsdnCardState *cs, u_char fifo, int trans_max)
 	  count++;
 
 	  if (cs->debug & L1_DEB_ISAC_FIFO)
-	    debugl1(cs, "hfcsx_read_fifo %d count %ld)",
+	    debugl1(cs, "hfcsx_read_fifo %d count %u)",
 		    fifo, count);
 
 	  if ((count > fifo_size) || (count < 4)) {
@@ -399,7 +399,7 @@ reset_hfcsx(struct IsdnCardState *cs)
 	/* D- and monitor/CI channel are not enabled */
 	/* STIO1 is used as output for data, B1+B2 from ST->IOM+HFC */
 	/* STIO2 is used as data input, B1+B2 from IOM->ST */
-	/* ST B-channel send disabled -> continous 1s */
+	/* ST B-channel send disabled -> continuous 1s */
 	/* The IOM slots are always enabled */
 	cs->hw.hfcsx.conn = 0x36;	/* set data flow directions */
 	Write_hfc(cs, HFCSX_CONNECT, cs->hw.hfcsx.conn);
@@ -986,7 +986,7 @@ HFCSX_l1hw(struct PStack *st, int pr, void *arg)
 				default:
 					spin_unlock_irqrestore(&cs->lock, flags);
 					if (cs->debug & L1_DEB_WARN)
-						debugl1(cs, "hfcsx_l1hw loop invalid %4lx", arg);
+						debugl1(cs, "hfcsx_l1hw loop invalid %4lx", (unsigned long)arg);
 					return;
 			}
 			cs->hw.hfcsx.trm |= 0x80;	/* enable IOM-loop */
@@ -1257,8 +1257,6 @@ hfcsx_bh(struct work_struct *work)
 		container_of(work, struct IsdnCardState, tqueue);
 	u_long flags;
 
-	if (!cs)
-		return;
 	if (test_and_clear_bit(D_L1STATECHANGE, &cs->event)) {
 		if (!cs->hw.hfcsx.nt_mode)
 			switch (cs->dc.hfcsx.ph_state) {
@@ -1330,8 +1328,7 @@ hfcsx_bh(struct work_struct *work)
 /********************************/
 /* called for card init message */
 /********************************/
-static void __devinit
-inithfcsx(struct IsdnCardState *cs)
+static void inithfcsx(struct IsdnCardState *cs)
 {
 	cs->setstack_d = setstack_hfcsx;
 	cs->BC_Send_Data = &hfcsx_send_data;
@@ -1420,7 +1417,7 @@ setup_hfcsx(struct IsdnCard *card)
 					err = pnp_activate_dev(pnp_d);
 					if (err<0) {
 						printk(KERN_WARNING "%s: pnp_activate_dev ret(%d)\n",
-							__FUNCTION__, err);
+							__func__, err);
 						return(0);
 					}
 					card->para[1] = pnp_port_start(pnp_d, 0);

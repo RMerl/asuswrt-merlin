@@ -7,8 +7,6 @@
  * Author: Fabrice Bellard (fabrice.bellard@netgem.com)
  * Copyright (C) 2000 Netgem S.A.
  *
- * $Id: docecc.c,v 1.7 2005/11/07 11:14:25 gleixner Exp $
- *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -28,13 +26,11 @@
 #include <asm/errno.h>
 #include <asm/io.h>
 #include <asm/uaccess.h>
-#include <linux/miscdevice.h>
 #include <linux/delay.h>
 #include <linux/slab.h>
 #include <linux/init.h>
 #include <linux/types.h>
 
-#include <linux/mtd/compatmac.h> /* for min() in older kernels */
 #include <linux/mtd/mtd.h>
 #include <linux/mtd/doc2000.h>
 
@@ -113,7 +109,7 @@ for(ci=(n)-1;ci >=0;ci--)\
    of the integer "alpha_to[i]" with a(0) being the LSB and a(m-1) the MSB. Thus for
    example the polynomial representation of @^5 would be given by the binary
    representation of the integer "alpha_to[5]".
-                   Similarily, index_of[] can be used as follows:
+                   Similarly, index_of[] can be used as follows:
         As above, let @ represent the primitive element of GF(2^m) that is
    the root of the primitive polynomial p(x). In order to find the power
    of @ (alpha) that has the polynomial representation
@@ -125,7 +121,7 @@ for(ci=(n)-1;ci >=0;ci--)\
    NOTE:
         The element alpha_to[2^m-1] = 0 always signifying that the
    representation of "@^infinity" = 0 is (0,0,0,...,0).
-        Similarily, the element index_of[0] = A0 always signifying
+        Similarly, the element index_of[0] = A0 always signifying
    that the power of alpha which has the polynomial representation
    (0,0,...,0) is "infinity".
 

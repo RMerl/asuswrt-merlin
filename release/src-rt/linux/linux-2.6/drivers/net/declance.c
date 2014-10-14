@@ -258,8 +258,6 @@ struct lance_private {
 	int rx_new, tx_new;
 	int rx_old, tx_old;
 
-	struct net_device_stats stats;
-
 	unsigned short busmaster_regval;
 
 	struct timer_list       multicast_timer;
@@ -583,22 +581,22 @@ static int lance_rx(struct net_device *dev)
 
 		/* We got an incomplete frame? */
 		if ((bits & LE_R1_POK) != LE_R1_POK) {
-			lp->stats.rx_over_errors++;
-			lp->stats.rx_errors++;
+			dev->stats.rx_over_errors++;
+			dev->stats.rx_errors++;
 		} else if (bits & LE_R1_ERR) {
 			/* Count only the end frame as a rx error,
 			 * not the beginning
 			 */
 			if (bits & LE_R1_BUF)
-				lp->stats.rx_fifo_errors++;
+				dev->stats.rx_fifo_errors++;
 			if (bits & LE_R1_CRC)
-				lp->stats.rx_crc_errors++;
+				dev->stats.rx_crc_errors++;
 			if (bits & LE_R1_OFL)
-				lp->stats.rx_over_errors++;
+				dev->stats.rx_over_errors++;
 			if (bits & LE_R1_FRA)
-				lp->stats.rx_frame_errors++;
+				dev->stats.rx_frame_errors++;
 			if (bits & LE_R1_EOP)
-				lp->stats.rx_errors++;
+				dev->stats.rx_errors++;
 		} else {
 			len = (*rds_ptr(rd, mblength, lp->type) & 0xfff) - 4;
 			skb = dev_alloc_skb(len + 2);
@@ -606,7 +604,7 @@ static int lance_rx(struct net_device *dev)
 			if (skb == 0) {
 				printk("%s: Memory squeeze, deferring packet.\n",
 				       dev->name);
-				lp->stats.rx_dropped++;
+				dev->stats.rx_dropped++;
 				*rds_ptr(rd, mblength, lp->type) = 0;
 				*rds_ptr(rd, rmd1, lp->type) =
 					((lp->rx_buf_ptr_lnc[entry] >> 16) &
@@ -614,7 +612,7 @@ static int lance_rx(struct net_device *dev)
 				lp->rx_new = (entry + 1) & RX_RING_MOD_MASK;
 				return 0;
 			}
-			lp->stats.rx_bytes += len;
+			dev->stats.rx_bytes += len;
 
 			skb_reserve(skb, 2);	/* 16 byte align */
 			skb_put(skb, len);	/* make room */
@@ -624,8 +622,7 @@ static int lance_rx(struct net_device *dev)
 
 			skb->protocol = eth_type_trans(skb, dev);
 			netif_rx(skb);
-			dev->last_rx = jiffies;
-			lp->stats.rx_packets++;
+			dev->stats.rx_packets++;
 		}
 
 		/* Return the packet to the pool */
@@ -660,14 +657,14 @@ static void lance_tx(struct net_device *dev)
 		if (*tds_ptr(td, tmd1, lp->type) & LE_T1_ERR) {
 			status = *tds_ptr(td, misc, lp->type);
 
-			lp->stats.tx_errors++;
+			dev->stats.tx_errors++;
 			if (status & LE_T3_RTY)
-				lp->stats.tx_aborted_errors++;
+				dev->stats.tx_aborted_errors++;
 			if (status & LE_T3_LCOL)
-				lp->stats.tx_window_errors++;
+				dev->stats.tx_window_errors++;
 
 			if (status & LE_T3_CLOS) {
-				lp->stats.tx_carrier_errors++;
+				dev->stats.tx_carrier_errors++;
 				printk("%s: Carrier Lost\n", dev->name);
 				/* Stop the lance */
 				writereg(&ll->rap, LE_CSR0);
@@ -681,7 +678,7 @@ static void lance_tx(struct net_device *dev)
 			 * transmitter, restart the adapter.
 			 */
 			if (status & (LE_T3_BUF | LE_T3_UFL)) {
-				lp->stats.tx_fifo_errors++;
+				dev->stats.tx_fifo_errors++;
 
 				printk("%s: Tx: ERR_BUF|ERR_UFL, restarting\n",
 				       dev->name);
@@ -702,13 +699,13 @@ static void lance_tx(struct net_device *dev)
 
 			/* One collision before packet was sent. */
 			if (*tds_ptr(td, tmd1, lp->type) & LE_T1_EONE)
-				lp->stats.collisions++;
+				dev->stats.collisions++;
 
 			/* More than one collision, be optimistic. */
 			if (*tds_ptr(td, tmd1, lp->type) & LE_T1_EMORE)
-				lp->stats.collisions += 2;
+				dev->stats.collisions += 2;
 
-			lp->stats.tx_packets++;
+			dev->stats.tx_packets++;
 		}
 		j = (j + 1) & TX_RING_MOD_MASK;
 	}
@@ -721,15 +718,15 @@ out:
 	spin_unlock(&lp->lock);
 }
 
-static irqreturn_t lance_dma_merr_int(const int irq, void *dev_id)
+static irqreturn_t lance_dma_merr_int(int irq, void *dev_id)
 {
 	struct net_device *dev = dev_id;
 
-	printk("%s: DMA error\n", dev->name);
+	printk(KERN_ERR "%s: DMA error\n", dev->name);
 	return IRQ_HANDLED;
 }
 
-static irqreturn_t lance_interrupt(const int irq, void *dev_id)
+static irqreturn_t lance_interrupt(int irq, void *dev_id)
 {
 	struct net_device *dev = dev_id;
 	struct lance_private *lp = netdev_priv(dev);
@@ -754,10 +751,10 @@ static irqreturn_t lance_interrupt(const int irq, void *dev_id)
 		lance_tx(dev);
 
 	if (csr0 & LE_C0_BABL)
-		lp->stats.tx_errors++;
+		dev->stats.tx_errors++;
 
 	if (csr0 & LE_C0_MISS)
-		lp->stats.rx_errors++;
+		dev->stats.rx_errors++;
 
 	if (csr0 & LE_C0_MERR) {
 		printk("%s: Memory error, status %04x\n", dev->name, csr0);
@@ -775,16 +772,12 @@ static irqreturn_t lance_interrupt(const int irq, void *dev_id)
 	return IRQ_HANDLED;
 }
 
-struct net_device *last_dev = 0;
-
 static int lance_open(struct net_device *dev)
 {
 	volatile u16 *ib = (volatile u16 *)dev->mem_start;
 	struct lance_private *lp = netdev_priv(dev);
 	volatile struct lance_regs *ll = lp->ll;
 	int status = 0;
-
-	last_dev = dev;
 
 	/* Stop the Lance */
 	writereg(&ll->rap, LE_CSR0);
@@ -808,14 +801,14 @@ static int lance_open(struct net_device *dev)
 	netif_start_queue(dev);
 
 	/* Associate IRQ with lance_interrupt */
-	if (request_irq(dev->irq, &lance_interrupt, 0, "lance", dev)) {
+	if (request_irq(dev->irq, lance_interrupt, 0, "lance", dev)) {
 		printk("%s: Can't get IRQ %d\n", dev->name, dev->irq);
 		return -EAGAIN;
 	}
 	if (lp->dma_irq >= 0) {
 		unsigned long flags;
 
-		if (request_irq(lp->dma_irq, &lance_dma_merr_int, 0,
+		if (request_irq(lp->dma_irq, lance_dma_merr_int, 0,
 				"lance error", dev)) {
 			free_irq(dev->irq, dev);
 			printk("%s: Can't get DMA IRQ %d\n", dev->name,
@@ -881,7 +874,7 @@ static inline int lance_reset(struct net_device *dev)
 
 	lance_init_ring(dev);
 	load_csrs(lp);
-	dev->trans_start = jiffies;
+	dev->trans_start = jiffies; /* prevent tx timeout */
 	status = init_restart_lance(lp);
 	return status;
 }
@@ -902,17 +895,20 @@ static int lance_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	struct lance_private *lp = netdev_priv(dev);
 	volatile struct lance_regs *ll = lp->ll;
 	volatile u16 *ib = (volatile u16 *)dev->mem_start;
+	unsigned long flags;
 	int entry, len;
 
 	len = skb->len;
 
 	if (len < ETH_ZLEN) {
 		if (skb_padto(skb, ETH_ZLEN))
-			return 0;
+			return NETDEV_TX_OK;
 		len = ETH_ZLEN;
 	}
 
-	lp->stats.tx_bytes += len;
+	dev->stats.tx_bytes += len;
+
+	spin_lock_irqsave(&lp->lock, flags);
 
 	entry = lp->tx_new;
 	*lib_ptr(ib, btx_ring[entry].length, lp->type) = (-len);
@@ -932,26 +928,19 @@ static int lance_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	/* Kick the lance: transmit now */
 	writereg(&ll->rdp, LE_C0_INEA | LE_C0_TDMD);
 
-	dev->trans_start = jiffies;
+	spin_unlock_irqrestore(&lp->lock, flags);
+
 	dev_kfree_skb(skb);
 
- 	return 0;
-}
-
-static struct net_device_stats *lance_get_stats(struct net_device *dev)
-{
-	struct lance_private *lp = netdev_priv(dev);
-
-	return &lp->stats;
+ 	return NETDEV_TX_OK;
 }
 
 static void lance_load_multicast(struct net_device *dev)
 {
 	struct lance_private *lp = netdev_priv(dev);
 	volatile u16 *ib = (volatile u16 *)dev->mem_start;
-	struct dev_mc_list *dmi = dev->mc_list;
+	struct netdev_hw_addr *ha;
 	char *addrs;
-	int i;
 	u32 crc;
 
 	/* set all multicast bits */
@@ -969,9 +958,8 @@ static void lance_load_multicast(struct net_device *dev)
 	*lib_ptr(ib, filter[3], lp->type) = 0;
 
 	/* Add addresses */
-	for (i = 0; i < dev->mc_count; i++) {
-		addrs = dmi->dmi_addr;
-		dmi = dmi->next;
+	netdev_for_each_mc_addr(ha, dev) {
+		addrs = ha->addr;
 
 		/* multicast address? */
 		if (!(*addrs & 1))
@@ -981,7 +969,6 @@ static void lance_load_multicast(struct net_device *dev)
 		crc = crc >> 26;
 		*lib_ptr(ib, filter[crc >> 4], lp->type) |= 1 << (crc & 0xf);
 	}
-	return;
 }
 
 static void lance_set_multicast(struct net_device *dev)
@@ -1024,7 +1011,18 @@ static void lance_set_multicast_retry(unsigned long _opaque)
 	lance_set_multicast(dev);
 }
 
-static int __init dec_lance_probe(struct device *bdev, const int type)
+static const struct net_device_ops lance_netdev_ops = {
+	.ndo_open		= lance_open,
+	.ndo_stop		= lance_close,
+	.ndo_start_xmit		= lance_start_xmit,
+	.ndo_tx_timeout		= lance_tx_timeout,
+	.ndo_set_multicast_list	= lance_set_multicast,
+	.ndo_change_mtu		= eth_change_mtu,
+	.ndo_validate_addr	= eth_validate_addr,
+	.ndo_set_mac_address	= eth_mac_addr,
+};
+
+static int __devinit dec_lance_probe(struct device *bdev, const int type)
 {
 	static unsigned version_printed;
 	static const char fmt[] = "declance%d";
@@ -1041,13 +1039,13 @@ static int __init dec_lance_probe(struct device *bdev, const int type)
 		printk(version);
 
 	if (bdev)
-		snprintf(name, sizeof(name), "%s", bdev->bus_id);
+		snprintf(name, sizeof(name), "%s", dev_name(bdev));
 	else {
 		i = 0;
 		dev = root_lance_dev;
 		while (dev) {
 			i++;
-			lp = (struct lance_private *)dev->priv;
+			lp = netdev_priv(dev);
 			dev = lp->next;
 		}
 		snprintf(name, sizeof(name), fmt, i);
@@ -1119,10 +1117,10 @@ static int __init dec_lance_probe(struct device *bdev, const int type)
 
 		start = to_tc_dev(bdev)->resource.start;
 		len = to_tc_dev(bdev)->resource.end - start + 1;
-		if (!request_mem_region(start, len, bdev->bus_id)) {
+		if (!request_mem_region(start, len, dev_name(bdev))) {
 			printk(KERN_ERR
 			       "%s: Unable to reserve MMIO resource\n",
-			       bdev->bus_id);
+			       dev_name(bdev));
 			ret = -EBUSY;
 			goto err_out_dev;
 		}
@@ -1223,29 +1221,22 @@ static int __init dec_lance_probe(struct device *bdev, const int type)
 	 */
 	switch (type) {
 	case ASIC_LANCE:
-		printk("%s: IOASIC onboard LANCE, addr = ", name);
+		printk("%s: IOASIC onboard LANCE", name);
 		break;
 	case PMAD_LANCE:
-		printk("%s: PMAD-AA, addr = ", name);
+		printk("%s: PMAD-AA", name);
 		break;
 	case PMAX_LANCE:
-		printk("%s: PMAX onboard LANCE, addr = ", name);
+		printk("%s: PMAX onboard LANCE", name);
 		break;
 	}
-	for (i = 0; i < 6; i++) {
+	for (i = 0; i < 6; i++)
 		dev->dev_addr[i] = esar[i * 4];
-		printk("%2.2x%c", dev->dev_addr[i], i == 5 ? ',' : ':');
-	}
 
-	printk(" irq = %d\n", dev->irq);
+	printk(", addr = %pM, irq = %d\n", dev->dev_addr, dev->irq);
 
-	dev->open = &lance_open;
-	dev->stop = &lance_close;
-	dev->hard_start_xmit = &lance_start_xmit;
-	dev->tx_timeout = &lance_tx_timeout;
+	dev->netdev_ops = &lance_netdev_ops;
 	dev->watchdog_timeo = 5*HZ;
-	dev->get_stats = &lance_get_stats;
-	dev->set_multicast_list = &lance_set_multicast;
 
 	/* lp->ll is the location of the registers for lance card */
 	lp->ll = ll;
@@ -1264,7 +1255,7 @@ static int __init dec_lance_probe(struct device *bdev, const int type)
 	 */
 	init_timer(&lp->multicast_timer);
 	lp->multicast_timer.data = (unsigned long) dev;
-	lp->multicast_timer.function = &lance_set_multicast_retry;
+	lp->multicast_timer.function = lance_set_multicast_retry;
 
 	ret = register_netdev(dev);
 	if (ret) {
@@ -1335,7 +1326,7 @@ static void __exit dec_lance_platform_remove(void)
 }
 
 #ifdef CONFIG_TC
-static int __init dec_lance_tc_probe(struct device *dev);
+static int __devinit dec_lance_tc_probe(struct device *dev);
 static int __exit dec_lance_tc_remove(struct device *dev);
 
 static const struct tc_device_id dec_lance_tc_table[] = {
@@ -1354,7 +1345,7 @@ static struct tc_driver dec_lance_tc_driver = {
 	},
 };
 
-static int __init dec_lance_tc_probe(struct device *dev)
+static int __devinit dec_lance_tc_probe(struct device *dev)
 {
         int status = dec_lance_probe(dev, PMAD_LANCE);
         if (!status)

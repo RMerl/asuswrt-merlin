@@ -10,7 +10,6 @@
  *  nfs symlink handling code
  */
 
-#define NFS_NEED_XDR_TYPES
 #include <linux/time.h>
 #include <linux/errno.h>
 #include <linux/sunrpc/clnt.h>
@@ -20,7 +19,6 @@
 #include <linux/pagemap.h>
 #include <linux/stat.h>
 #include <linux/mm.h>
-#include <linux/slab.h>
 #include <linux/string.h>
 #include <linux/namei.h>
 
@@ -51,7 +49,7 @@ static void *nfs_follow_link(struct dentry *dentry, struct nameidata *nd)
 	struct page *page;
 	void *err;
 
-	err = ERR_PTR(nfs_revalidate_mapping_nolock(inode, inode->i_mapping));
+	err = ERR_PTR(nfs_revalidate_mapping(inode, inode->i_mapping));
 	if (err)
 		goto read_failed;
 	page = read_cache_page(&inode->i_data, 0,

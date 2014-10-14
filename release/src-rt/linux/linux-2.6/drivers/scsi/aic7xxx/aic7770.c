@@ -60,8 +60,6 @@
 #define	ID_OLV_274xD	0x04907783 /* Olivetti OEM (Differential) */
 
 static int aic7770_chip_init(struct ahc_softc *ahc);
-static int aic7770_suspend(struct ahc_softc *ahc);
-static int aic7770_resume(struct ahc_softc *ahc);
 static int aha2840_load_seeprom(struct ahc_softc *ahc);
 static ahc_device_setup_t ahc_aic7770_VL_setup;
 static ahc_device_setup_t ahc_aic7770_EISA_setup;
@@ -155,8 +153,6 @@ aic7770_config(struct ahc_softc *ahc, struct aic7770_identity *entry, u_int io)
 		return (error);
 
 	ahc->bus_chip_init = aic7770_chip_init;
-	ahc->bus_suspend = aic7770_suspend;
-	ahc->bus_resume = aic7770_resume;
 
 	error = ahc_reset(ahc, /*reinit*/FALSE);
 	if (error != 0)
@@ -174,7 +170,7 @@ aic7770_config(struct ahc_softc *ahc, struct aic7770_identity *entry, u_int io)
 	case 15:
 		break;
 	default:
-		printf("aic7770_config: invalid irq setting %d\n", intdef);
+		printk("aic7770_config: invalid irq setting %d\n", intdef);
 		return (ENXIO);
 	}
 
@@ -225,7 +221,7 @@ aic7770_config(struct ahc_softc *ahc, struct aic7770_identity *entry, u_int io)
 		break;
 	}
 	if (have_seeprom == 0) {
-		free(ahc->seep_config, M_DEVBUF);
+		kfree(ahc->seep_config);
 		ahc->seep_config = NULL;
 	}
 
@@ -272,18 +268,6 @@ aic7770_chip_init(struct ahc_softc *ahc)
 	return (ahc_chip_init(ahc));
 }
 
-static int
-aic7770_suspend(struct ahc_softc *ahc)
-{
-	return (ahc_suspend(ahc));
-}
-
-static int
-aic7770_resume(struct ahc_softc *ahc)
-{
-	return (ahc_resume(ahc));
-}
-
 /*
  * Read the 284x SEEPROM.
  */
@@ -309,7 +293,7 @@ aha2840_load_seeprom(struct ahc_softc *ahc)
 	sc = ahc->seep_config;
 
 	if (bootverbose)
-		printf("%s: Reading SEEPROM...", ahc_name(ahc));
+		printk("%s: Reading SEEPROM...", ahc_name(ahc));
 	have_seeprom = ahc_read_seeprom(&sd, (uint16_t *)sc,
 					/*start_addr*/0, sizeof(*sc)/2);
 
@@ -317,16 +301,16 @@ aha2840_load_seeprom(struct ahc_softc *ahc)
 
 		if (ahc_verify_cksum(sc) == 0) {
 			if(bootverbose)
-				printf ("checksum error\n");
+				printk ("checksum error\n");
 			have_seeprom = 0;
 		} else if (bootverbose) {
-			printf("done.\n");
+			printk("done.\n");
 		}
 	}
 
 	if (!have_seeprom) {
 		if (bootverbose)
-			printf("%s: No SEEPROM available\n", ahc_name(ahc));
+			printk("%s: No SEEPROM available\n", ahc_name(ahc));
 		ahc->flags |= AHC_USEDEFAULTS;
 	} else {
 		/*

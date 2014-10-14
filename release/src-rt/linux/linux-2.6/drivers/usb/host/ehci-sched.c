@@ -215,7 +215,7 @@ static inline unsigned char tt_start_uframe(struct ehci_hcd *ehci, __hc32 mask)
 }
 
 static const unsigned char
-max_tt_usecs[] = { 125, 125, 125, 125, 125, 125, 58, 0 };
+max_tt_usecs[] = { 125, 125, 125, 125, 125, 125, 30, 0 };
 
 /* carryover low/fullspeed bandwidth that crosses uframe boundries */
 static inline void carryover_tt_bandwidth(unsigned short tt_usecs[8])
@@ -471,8 +471,10 @@ static int enable_periodic (struct ehci_hcd *ehci)
 	 */
 	status = handshake_on_error_set_halt(ehci, &ehci->regs->status,
 					     STS_PSS, 0, 9 * 125);
-	if (status)
+	if (status) {
+		usb_hc_died(ehci_to_hcd(ehci));
 		return status;
+	}
 
 	cmd = ehci_readl(ehci, &ehci->regs->command) | CMD_PSE;
 	ehci_writel(ehci, cmd, &ehci->regs->command);
@@ -510,8 +512,10 @@ static int disable_periodic (struct ehci_hcd *ehci)
 	 */
 	status = handshake_on_error_set_halt(ehci, &ehci->regs->status,
 					     STS_PSS, STS_PSS, 9 * 125);
-	if (status)
+	if (status) {
+		usb_hc_died(ehci_to_hcd(ehci));
 		return status;
+	}
 
 	cmd = ehci_readl(ehci, &ehci->regs->command) & ~CMD_PSE;
 	ehci_writel(ehci, cmd, &ehci->regs->command);
@@ -605,7 +609,7 @@ static int qh_unlink_periodic(struct ehci_hcd *ehci, struct ehci_qh *qh)
 	//   and this qh is active in the current uframe
 	//   (and overlay token SplitXstate is false?)
 	// THEN
-	//   qh->hw_info1 |= __constant_cpu_to_hc32(1 << 7 /* "ignore" */);
+	//   qh->hw_info1 |= cpu_to_hc32(1 << 7 /* "ignore" */);
 
 	/* high bandwidth, or otherwise part of every microframe */
 	if ((period = qh->period) == 0)
@@ -887,8 +891,7 @@ static int intr_submit (
 
 	spin_lock_irqsave (&ehci->lock, flags);
 
-	if (unlikely(!test_bit(HCD_FLAG_HW_ACCESSIBLE,
-			&ehci_to_hcd(ehci)->flags))) {
+	if (unlikely(!HCD_HW_ACCESSIBLE(ehci_to_hcd(ehci)))) {
 		status = -ESHUTDOWN;
 		goto done_not_linked;
 	}
@@ -1049,8 +1052,6 @@ iso_stream_put(struct ehci_hcd *ehci, struct ehci_iso_stream *stream)
 	 * not like a QH -- no persistent state (toggle, halt)
 	 */
 	if (stream->refcount == 1) {
-		int		is_in;
-
 		// BUG_ON (!list_empty(&stream->td_list));
 
 		while (!list_empty (&stream->free_list)) {
@@ -1077,7 +1078,6 @@ iso_stream_put(struct ehci_hcd *ehci, struct ehci_iso_stream *stream)
 			}
 		}
 
-		is_in = (stream->bEndpointAddress & USB_DIR_IN) ? 0x10 : 0;
 		stream->bEndpointAddress &= 0x0f;
 		if (stream->ep)
 			stream->ep->hcpriv = NULL;
@@ -1617,6 +1617,12 @@ itd_link_urb (
 			urb->interval,
 			next_uframe >> 3, next_uframe & 0x7);
 	}
+
+	if (ehci_to_hcd(ehci)->self.bandwidth_isoc_reqs == 0) {
+		if (ehci->amd_pll_fix == 1)
+			usb_amd_quirk_pll_disable();
+	}
+
 	ehci_to_hcd(ehci)->self.bandwidth_isoc_reqs++;
 
 	/* fill iTDs uframe by uframe */
@@ -1741,6 +1747,11 @@ itd_complete (
 	(void) disable_periodic(ehci);
 	ehci_to_hcd(ehci)->self.bandwidth_isoc_reqs--;
 
+	if (ehci_to_hcd(ehci)->self.bandwidth_isoc_reqs == 0) {
+		if (ehci->amd_pll_fix == 1)
+			usb_amd_quirk_pll_enable();
+	}
+
 	if (unlikely(list_is_singular(&stream->td_list))) {
 		ehci_to_hcd(ehci)->self.bandwidth_allocated
 				-= stream->bandwidth;
@@ -1798,7 +1809,7 @@ static int itd_submit (struct ehci_hcd *ehci, struct urb *urb,
 #ifdef EHCI_URB_TRACE
 	ehci_dbg (ehci,
 		"%s %s urb %p ep%d%s len %d, %d pkts %d uframes [%p]\n",
-		__FUNCTION__, urb->dev->devpath, urb,
+		__func__, urb->dev->devpath, urb,
 		usb_pipeendpoint (urb->pipe),
 		usb_pipein (urb->pipe) ? "in" : "out",
 		urb->transfer_buffer_length,
@@ -1815,8 +1826,7 @@ static int itd_submit (struct ehci_hcd *ehci, struct urb *urb,
 
 	/* schedule ... need to lock */
 	spin_lock_irqsave (&ehci->lock, flags);
-	if (unlikely(!test_bit(HCD_FLAG_HW_ACCESSIBLE,
-			       &ehci_to_hcd(ehci)->flags))) {
+	if (unlikely(!HCD_HW_ACCESSIBLE(ehci_to_hcd(ehci)))) {
 		status = -ESHUTDOWN;
 		goto done_not_linked;
 	}
@@ -2027,6 +2037,12 @@ sitd_link_urb (
 			(next_uframe >> 3) & (ehci->periodic_size - 1),
 			stream->interval, hc32_to_cpu(ehci, stream->splits));
 	}
+
+	if (ehci_to_hcd(ehci)->self.bandwidth_isoc_reqs == 0) {
+		if (ehci->amd_pll_fix == 1)
+			usb_amd_quirk_pll_disable();
+	}
+
 	ehci_to_hcd(ehci)->self.bandwidth_isoc_reqs++;
 
 	/* fill sITDs frame by frame */
@@ -2127,6 +2143,11 @@ sitd_complete (
 	(void) disable_periodic(ehci);
 	ehci_to_hcd(ehci)->self.bandwidth_isoc_reqs--;
 
+	if (ehci_to_hcd(ehci)->self.bandwidth_isoc_reqs == 0) {
+		if (ehci->amd_pll_fix == 1)
+			usb_amd_quirk_pll_enable();
+	}
+
 	if (list_is_singular(&stream->td_list)) {
 		ehci_to_hcd(ehci)->self.bandwidth_allocated
 				-= stream->bandwidth;
@@ -2198,8 +2219,7 @@ static int sitd_submit (struct ehci_hcd *ehci, struct urb *urb,
 
 	/* schedule ... need to lock */
 	spin_lock_irqsave (&ehci->lock, flags);
-	if (unlikely(!test_bit(HCD_FLAG_HW_ACCESSIBLE,
-			       &ehci_to_hcd(ehci)->flags))) {
+	if (unlikely(!HCD_HW_ACCESSIBLE(ehci_to_hcd(ehci)))) {
 		status = -ESHUTDOWN;
 		goto done_not_linked;
 	}

@@ -2,10 +2,9 @@
 # Network configuration
 #
 
-menu "Networking"
-
-config NET
+menuconfig NET
 	bool "Networking support"
+	select NLATTR
 	---help---
 	  Unless you really know what you are doing, you should say Y here.
 	  The reason is that some programs need kernel networking support even
@@ -22,8 +21,27 @@ config NET
 	  recommended to read the NET-HOWTO, available from
 	  <http://www.tldp.org/docs.html#howto>.
 
-# Make sure that all config symbols are dependent on NET
 if NET
+
+config WANT_COMPAT_NETLINK_MESSAGES
+	bool
+	help
+	  This option can be selected by other options that need compat
+	  netlink messages.
+
+config COMPAT_NETLINK_MESSAGES
+	def_bool y
+	depends on COMPAT
+	depends on WEXT_CORE || WANT_COMPAT_NETLINK_MESSAGES
+	help
+	  This option makes it possible to send different netlink messages
+	  to tasks depending on whether the task is a compat task or not. To
+	  achieve this, you need to set skb_shinfo(skb)->frag_list to the
+	  compat skb before sending the skb, the netlink code will sort out
+	  which message to actually pass to the task.
+
+	  Newly written code should NEVER need this option but do
+	  compat-independent messages instead!
 
 menu "Networking options"
 
@@ -37,7 +55,7 @@ config INET
 	---help---
 	  These are the protocols used on the Internet and on most local
 	  Ethernets. It is highly recommended to say Y here (this will enlarge
-	  your kernel by about 144 KB), since some programs (e.g. the X window
+	  your kernel by about 400 KB), since some programs (e.g. the X window
 	  system) use TCP/IP even if your machine is not connected to any
 	  other computer. You will get the so-called loopback device which
 	  allows you to ping yourself (great fun, that!).
@@ -59,14 +77,6 @@ source "net/ipv4/Kconfig"
 source "net/ipv6/Kconfig"
 source "net/netlabel/Kconfig"
 
-config	INET_GRO
-	bool "TCP/IP Generic Receive Offload"
-	default n
-
-config	INET_GSO
-	bool "TCP/IP Generic Segmentation Offload"
-	default n
-
 endif # if INET
 
 config NETWORK_SECMARK
@@ -74,6 +84,16 @@ config NETWORK_SECMARK
 	help
 	  This enables security marking of network packets, similar
 	  to nfmark, but designated for security purposes.
+	  If you are unsure how to answer this question, answer N.
+
+config NETWORK_PHY_TIMESTAMPING
+	bool "Timestamping in PHY devices"
+	depends on EXPERIMENTAL
+	help
+	  This allows timestamping of network packets by PHYs with
+	  hardware timestamping capabilities. This option adds some
+	  overhead in the transmit and receive paths.
+
 	  If you are unsure how to answer this question, answer N.
 
 menuconfig NETFILTER
@@ -129,12 +149,6 @@ menuconfig NETFILTER
 	  <file:Documentation/Changes> under "iptables" for the location of
 	  these packages.
 
-	  Make sure to say N to "Fast switching" below if you intend to say Y
-	  here, as Fast switching currently bypasses netfilter.
-
-	  Chances are that you should say Y here if you compile a kernel which
-	  will run as a router and N for regular hosts. If unsure, say N.
-
 if NETFILTER
 
 config NETFILTER_DEBUG
@@ -144,9 +158,21 @@ config NETFILTER_DEBUG
 	  You can say Y here if you want to get additional messages useful in
 	  debugging the netfilter code.
 
+config NETFILTER_ADVANCED
+	bool "Advanced netfilter configuration"
+	depends on NETFILTER
+	default y
+	help
+	  If you say Y here you can select between all the netfilter modules.
+	  If you say N the more unusual ones will not be shown and the
+	  basic ones needed by most people will default to 'M'.
+
+	  If unsure, say Y.
+
 config BRIDGE_NETFILTER
 	bool "Bridged IP/ARP packets filtering"
 	depends on BRIDGE && NETFILTER && INET
+	depends on NETFILTER_ADVANCED
 	default y
 	---help---
 	  Enabling this option will let arptables resp. iptables see bridged
@@ -167,9 +193,13 @@ endif
 
 source "net/dccp/Kconfig"
 source "net/sctp/Kconfig"
+source "net/rds/Kconfig"
 source "net/tipc/Kconfig"
 source "net/atm/Kconfig"
+source "net/l2tp/Kconfig"
+source "net/802/Kconfig"
 source "net/bridge/Kconfig"
+source "net/dsa/Kconfig"
 source "net/8021q/Kconfig"
 source "net/decnet/Kconfig"
 source "net/llc/Kconfig"
@@ -179,7 +209,28 @@ source "net/x25/Kconfig"
 source "net/lapb/Kconfig"
 source "net/econet/Kconfig"
 source "net/wanrouter/Kconfig"
+source "net/phonet/Kconfig"
+source "net/ieee802154/Kconfig"
 source "net/sched/Kconfig"
+source "net/dcb/Kconfig"
+source "net/dns_resolver/Kconfig"
+source "net/batman-adv/Kconfig"
+
+config RPS
+	boolean
+	depends on SMP && SYSFS && USE_GENERIC_SMP_HELPERS
+	default y
+
+config RFS_ACCEL
+	boolean
+	depends on RPS && GENERIC_HARDIRQS
+	select CPU_RMAP
+	default y
+
+config XPS
+	boolean
+	depends on SMP && SYSFS && USE_GENERIC_SMP_HELPERS
+	default y
 
 menu "Network testing"
 
@@ -208,16 +259,30 @@ config NET_TCPPROBE
 	what was just said, you don't need it: say N.
 
 	Documentation on how to use TCP connection probing can be found
-	at http://linux-net.osdl.org/index.php/TcpProbe
+	at:
+	
+	  http://www.linuxfoundation.org/collaborate/workgroups/networking/tcpprobe
 
 	To compile this code as a module, choose M here: the
 	module will be called tcp_probe.
+
+config NET_DROP_MONITOR
+	boolean "Network packet drop alerting service"
+	depends on INET && EXPERIMENTAL && TRACEPOINTS
+	---help---
+	This feature provides an alerting service to userspace in the
+	event that packets are discarded in the network stack.  Alerts
+	are broadcast via netlink socket to any listening user space
+	process.  If you don't need network drop alerts, or if you are ok
+	just checking the various proc files and other utilities for
+	drop statistics, say N here.
 
 endmenu
 
 endmenu
 
 source "net/ax25/Kconfig"
+source "net/can/Kconfig"
 source "net/irda/Kconfig"
 source "net/bluetooth/Kconfig"
 source "net/rxrpc/Kconfig"
@@ -225,17 +290,24 @@ source "net/rxrpc/Kconfig"
 config FIB_RULES
 	bool
 
-menu "Wireless"
+menuconfig WIRELESS
+	bool "Wireless"
 	depends on !S390
+	default y
+
+if WIRELESS
 
 source "net/wireless/Kconfig"
 source "net/mac80211/Kconfig"
-source "net/ieee80211/Kconfig"
 
-endmenu
+endif # WIRELESS
+
+source "net/wimax/Kconfig"
 
 source "net/rfkill/Kconfig"
+source "net/9p/Kconfig"
+source "net/caif/Kconfig"
+source "net/ceph/Kconfig"
+
 
 endif   # if NET
-endmenu # Networking
-

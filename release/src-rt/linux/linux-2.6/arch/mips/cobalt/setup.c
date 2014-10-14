@@ -9,13 +9,13 @@
  * Copyright (C) 2001, 2002, 2003 by Liam Davies (ldavies@agile.tv)
  *
  */
-#include <linux/interrupt.h>
 #include <linux/init.h>
+#include <linux/interrupt.h>
+#include <linux/io.h>
+#include <linux/ioport.h>
 #include <linux/pm.h>
 
 #include <asm/bootinfo.h>
-#include <asm/time.h>
-#include <asm/io.h>
 #include <asm/reboot.h>
 #include <asm/gt64120.h>
 
@@ -23,7 +23,6 @@
 
 extern void cobalt_machine_restart(char *command);
 extern void cobalt_machine_halt(void);
-extern void cobalt_machine_power_off(void);
 
 const char *get_system_type(void)
 {
@@ -38,21 +37,6 @@ const char *get_system_type(void)
 			return "Cobalt RaQ2";
 	}
 	return "MIPS Cobalt";
-}
-
-void __init plat_timer_setup(struct irqaction *irq)
-{
-	/* Load timer value for HZ (TCLK is 50MHz) */
-	GT_WRITE(GT_TC0_OFS, 50*1000*1000 / HZ);
-
-	/* Enable timer */
-	GT_WRITE(GT_TC_CONTROL_OFS, GT_TC_CONTROL_ENTC0_MSK | GT_TC_CONTROL_SELTC0_MSK);
-
-	/* Register interrupt */
-	setup_irq(COBALT_GALILEO_IRQ, irq);
-
-	/* Enable interrupt */
-	GT_WRITE(GT_INTRMASK_OFS, GT_INTR_T0EXP_MSK | GT_READ(GT_INTRMASK_OFS));
 }
 
 /*
@@ -93,12 +77,12 @@ void __init plat_mem_setup(void)
 
 	_machine_restart = cobalt_machine_restart;
 	_machine_halt = cobalt_machine_halt;
-	pm_power_off = cobalt_machine_power_off;
+	pm_power_off = cobalt_machine_halt;
 
 	set_io_port_base(CKSEG1ADDR(GT_DEF_PCI0_IO_BASE));
 
-	/* I/O port resource must include LCD/buttons */
-	ioport_resource.end = 0x0fffffff;
+	/* I/O port resource */
+	ioport_resource.end = 0x01ffffff;
 
 	/* These resources have been reserved by VIA SuperI/O chip. */
 	for (i = 0; i < ARRAY_SIZE(cobalt_reserved_resources); i++)
@@ -113,28 +97,18 @@ void __init plat_mem_setup(void)
 
 void __init prom_init(void)
 {
-	int narg, indx, posn, nchr;
 	unsigned long memsz;
+	int argc, i;
 	char **argv;
 
-	mips_machgroup = MACH_GROUP_COBALT;
-
 	memsz = fw_arg0 & 0x7fff0000;
-	narg = fw_arg0 & 0x0000ffff;
+	argc = fw_arg0 & 0x0000ffff;
+	argv = (char **)fw_arg1;
 
-	if (narg) {
-		arcs_cmdline[0] = '\0';
-		argv = (char **) fw_arg1;
-		posn = 0;
-		for (indx = 1; indx < narg; ++indx) {
-			nchr = strlen(argv[indx]);
-			if (posn + 1 + nchr + 1 > sizeof(arcs_cmdline))
-				break;
-			if (posn)
-				arcs_cmdline[posn++] = ' ';
-			strcpy(arcs_cmdline + posn, argv[indx]);
-			posn += nchr;
-		}
+	for (i = 1; i < argc; i++) {
+		strlcat(arcs_cmdline, argv[i], COMMAND_LINE_SIZE);
+		if (i < (argc - 1))
+			strlcat(arcs_cmdline, " ", COMMAND_LINE_SIZE);
 	}
 
 	add_memory_region(0x0, memsz, BOOT_MEM_RAM);

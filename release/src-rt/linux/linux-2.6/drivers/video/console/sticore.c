@@ -24,12 +24,13 @@
 #include <asm/hardware.h>
 #include <asm/parisc-device.h>
 #include <asm/cacheflush.h>
+#include <asm/grfioctl.h>
 
 #include "../sticore.h"
 
 #define STI_DRIVERVERSION "Version 0.9a"
 
-struct sti_struct *default_sti __read_mostly;
+static struct sti_struct *default_sti __read_mostly;
 
 /* number of STI ROMS found and their ptrs to each struct */
 static int num_sti_roms __read_mostly;
@@ -68,8 +69,7 @@ static const struct sti_init_flags default_init_flags = {
 	.init_cmap_tx = 1,
 };
 
-int
-sti_init_graph(struct sti_struct *sti) 
+static int sti_init_graph(struct sti_struct *sti)
 {
 	struct sti_init_inptr_ext inptr_ext = { 0, };
 	struct sti_init_inptr inptr = {
@@ -100,8 +100,7 @@ static const struct sti_conf_flags default_conf_flags = {
 	.wait	= STI_WAIT,
 };
 
-void
-sti_inq_conf(struct sti_struct *sti)
+static void sti_inq_conf(struct sti_struct *sti)
 {
 	struct sti_conf_inptr inptr = { 0, };
 	unsigned long flags;
@@ -232,18 +231,14 @@ sti_bmove(struct sti_struct *sti, int src_y, int src_x,
 }
 
 
-/* FIXME: Do we have another solution for this ? */
-static void sti_flush(unsigned long from, unsigned long len)
+static void sti_flush(unsigned long start, unsigned long end)
 {
-	flush_data_cache();
-	flush_kernel_dcache_range(from, len);
-	flush_icache_range(from, from+len);
+	flush_icache_range(start, end);
 }
 
-void __devinit
-sti_rom_copy(unsigned long base, unsigned long count, void *dest)
+static void __devinit sti_rom_copy(unsigned long base, unsigned long count,
+				   void *dest)
 {
-	unsigned long dest_len = count;
 	unsigned long dest_start = (unsigned long) dest;
 
 	/* this still needs to be revisited (see arch/parisc/mm/init.c:246) ! */
@@ -260,7 +255,7 @@ sti_rom_copy(unsigned long base, unsigned long count, void *dest)
 		dest++;
 	}
 
-	sti_flush(dest_start, dest_len);
+	sti_flush(dest_start, (unsigned long)dest);
 }
 
 
@@ -441,7 +436,7 @@ sti_init_glob_cfg(struct sti_struct *sti,
 			    (offs < PCI_BASE_ADDRESS_0 ||
 			     offs > PCI_BASE_ADDRESS_5)) {
 				printk (KERN_WARNING
-					"STI pci region maping for region %d (%02x) can't be mapped\n",
+					"STI pci region mapping for region %d (%02x) can't be mapped\n",
 					i,sti->rm_entry[i]);
 				continue;
 			}
@@ -482,8 +477,8 @@ sti_init_glob_cfg(struct sti_struct *sti,
 }
 
 #ifdef CONFIG_FB
-struct sti_cooked_font * __devinit
-sti_select_fbfont(struct sti_cooked_rom *cooked_rom, const char *fbfont_name)
+static struct sti_cooked_font __devinit
+*sti_select_fbfont(struct sti_cooked_rom *cooked_rom, const char *fbfont_name)
 {
 	const struct font_desc *fbfont;
 	unsigned int size, bpc;
@@ -538,16 +533,16 @@ sti_select_fbfont(struct sti_cooked_rom *cooked_rom, const char *fbfont_name)
 	return cooked_font;
 }
 #else
-struct sti_cooked_font * __devinit
-sti_select_fbfont(struct sti_cooked_rom *cooked_rom, const char *fbfont_name)
+static struct sti_cooked_font __devinit
+*sti_select_fbfont(struct sti_cooked_rom *cooked_rom, const char *fbfont_name)
 {
 	return NULL;
 }
 #endif
 
-struct sti_cooked_font * __devinit
-sti_select_font(struct sti_cooked_rom *rom,
-	    int (*search_font_fnc) (struct sti_cooked_rom *,int,int) )
+static struct sti_cooked_font __devinit
+*sti_select_font(struct sti_cooked_rom *rom,
+		 int (*search_font_fnc)(struct sti_cooked_rom *, int, int))
 {
 	struct sti_cooked_font *font;
 	int i;
@@ -663,7 +658,6 @@ sti_bmode_font_raw(struct sti_cooked_font *f)
 static void __devinit
 sti_bmode_rom_copy(unsigned long base, unsigned long count, void *dest)
 {
-	unsigned long dest_len = count;
 	unsigned long dest_start = (unsigned long) dest;
 
 	while (count) {
@@ -672,7 +666,8 @@ sti_bmode_rom_copy(unsigned long base, unsigned long count, void *dest)
 		base += 4;
 		dest++;
 	}
-	sti_flush(dest_start, dest_len);
+
+	sti_flush(dest_start, (unsigned long)dest);
 }
 
 static struct sti_rom * __devinit
@@ -711,8 +706,7 @@ sti_get_bmode_rom (unsigned long address)
 	return raw;
 }
 
-struct sti_rom * __devinit
-sti_get_wmode_rom (unsigned long address)
+static struct sti_rom __devinit *sti_get_wmode_rom(unsigned long address)
 {
 	struct sti_rom *raw;
 	unsigned long size;
@@ -727,11 +721,12 @@ sti_get_wmode_rom (unsigned long address)
 	return raw;
 }
 
-int __devinit
-sti_read_rom(int wordmode, struct sti_struct *sti, unsigned long address)
+static int __devinit sti_read_rom(int wordmode, struct sti_struct *sti,
+				  unsigned long address)
 {
 	struct sti_cooked_rom *cooked;
 	struct sti_rom *raw = NULL;
+	unsigned long revno;
 
 	cooked = kmalloc(sizeof *cooked, GFP_KERNEL);
 	if (!cooked)
@@ -774,9 +769,35 @@ sti_read_rom(int wordmode, struct sti_struct *sti, unsigned long address)
 	sti->graphics_id[1] = raw->graphics_id[1];
 	
 	sti_dump_rom(raw);
-	
+
+	/* check if the ROM routines in this card are compatible */
+	if (wordmode || sti->graphics_id[1] != 0x09A02587)
+		goto ok;
+
+	revno = (raw->revno[0] << 8) | raw->revno[1];
+
+	switch (sti->graphics_id[0]) {
+	case S9000_ID_HCRX:
+		/* HyperA or HyperB ? */
+		if (revno == 0x8408 || revno == 0x840b)
+			goto msg_not_supported;
+		break;
+	case CRT_ID_THUNDER:
+		if (revno == 0x8509)
+			goto msg_not_supported;
+		break;
+	case CRT_ID_THUNDER2:
+		if (revno == 0x850c)
+			goto msg_not_supported;
+	}
+ok:
 	return 1;
 
+msg_not_supported:
+	printk(KERN_ERR "Sorry, this GSC/STI card is not yet supported.\n");
+	printk(KERN_ERR "Please see http://parisc-linux.org/faq/"
+			"graphics-howto.html for more info.\n");
+	/* fall through */
 out_err:
 	kfree(raw);
 	kfree(cooked);
@@ -936,9 +957,14 @@ static int __devinit sticore_pci_init(struct pci_dev *pd,
 #ifdef CONFIG_PCI
 	unsigned long fb_base, rom_base;
 	unsigned int fb_len, rom_len;
+	int err;
 	struct sti_struct *sti;
 	
-	pci_enable_device(pd);
+	err = pci_enable_device(pd);
+	if (err < 0) {
+		dev_err(&pd->dev, "Cannot enable PCI device\n");
+		return err;
+	}
 
 	fb_base = pci_resource_start(pd, 0);
 	fb_len = pci_resource_len(pd, 0);
@@ -1027,7 +1053,7 @@ static void __devinit sti_init_roms(void)
 
 	/* Register drivers for native & PCI cards */
 	register_parisc_driver(&pa_sti_driver);
-	pci_register_driver(&pci_sti_driver);
+	WARN_ON(pci_register_driver(&pci_sti_driver));
 
 	/* if we didn't find the given default sti, take the first one */
 	if (!default_sti)

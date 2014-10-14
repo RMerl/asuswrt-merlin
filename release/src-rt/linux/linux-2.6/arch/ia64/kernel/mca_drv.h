@@ -3,7 +3,7 @@
  * Purpose:	Define helpers for Generic MCA handling
  *
  * Copyright (C) 2004 FUJITSU LIMITED
- * Copyright (C) Hidetoshi Seto (seto.hidetoshi@jp.fujitsu.com)
+ * Copyright (C) 2004 Hidetoshi Seto <seto.hidetoshi@jp.fujitsu.com>
  */
 /*
  * Processor error section:
@@ -118,7 +118,5 @@ struct mca_table_entry {
 
 extern const struct mca_table_entry *search_mca_tables (unsigned long addr);
 extern int mca_recover_range(unsigned long);
-extern void ia64_mca_printk(const char * fmt, ...)
-	 __attribute__ ((format (printf, 1, 2)));
 extern void ia64_mlogbuf_dump(void);
 

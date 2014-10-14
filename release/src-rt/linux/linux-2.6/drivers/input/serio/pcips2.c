@@ -15,6 +15,7 @@
 #include <linux/ioport.h>
 #include <linux/input.h>
 #include <linux/pci.h>
+#include <linux/slab.h>
 #include <linux/init.h>
 #include <linux/serio.h>
 #include <linux/delay.h>
@@ -140,22 +141,20 @@ static int __devinit pcips2_probe(struct pci_dev *dev, const struct pci_device_i
 	if (ret)
 		goto disable;
 
-	ps2if = kmalloc(sizeof(struct pcips2_data), GFP_KERNEL);
-	serio = kmalloc(sizeof(struct serio), GFP_KERNEL);
+	ps2if = kzalloc(sizeof(struct pcips2_data), GFP_KERNEL);
+	serio = kzalloc(sizeof(struct serio), GFP_KERNEL);
 	if (!ps2if || !serio) {
 		ret = -ENOMEM;
 		goto release;
 	}
 
-	memset(ps2if, 0, sizeof(struct pcips2_data));
-	memset(serio, 0, sizeof(struct serio));
 
 	serio->id.type		= SERIO_8042;
 	serio->write		= pcips2_write;
 	serio->open		= pcips2_open;
 	serio->close		= pcips2_close;
 	strlcpy(serio->name, pci_name(dev), sizeof(serio->name));
-	strlcpy(serio->phys, dev->dev.bus_id, sizeof(serio->phys));
+	strlcpy(serio->phys, dev_name(&dev->dev), sizeof(serio->phys));
 	serio->port_data	= ps2if;
 	serio->dev.parent	= &dev->dev;
 	ps2if->io		= serio;
@@ -188,7 +187,7 @@ static void __devexit pcips2_remove(struct pci_dev *dev)
 	pci_disable_device(dev);
 }
 
-static struct pci_device_id pcips2_ids[] = {
+static const struct pci_device_id pcips2_ids[] = {
 	{
 		.vendor		= 0x14f2,	/* MOBILITY */
 		.device		= 0x0123,	/* Keyboard */

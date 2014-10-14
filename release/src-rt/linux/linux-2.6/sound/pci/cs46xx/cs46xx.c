@@ -1,6 +1,6 @@
 /*
  *  The driver for the Cirrus Logic's Sound Fusion CS46XX based soundcards
- *  Copyright (c) by Jaroslav Kysela <perex@suse.cz>
+ *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  *
  *
  *   This program is free software; you can redistribute it and/or modify
@@ -25,7 +25,6 @@
     reloading the module may solve this.
 */
 
-#include <sound/driver.h>
 #include <linux/pci.h>
 #include <linux/time.h>
 #include <linux/init.h>
@@ -34,7 +33,7 @@
 #include <sound/cs46xx.h>
 #include <sound/initval.h>
 
-MODULE_AUTHOR("Jaroslav Kysela <perex@suse.cz>");
+MODULE_AUTHOR("Jaroslav Kysela <perex@perex.cz>");
 MODULE_DESCRIPTION("Cirrus Logic Sound Fusion CS46XX");
 MODULE_LICENSE("GPL");
 MODULE_SUPPORTED_DEVICE("{{Cirrus Logic,Sound Fusion (CS4280)},"
@@ -65,10 +64,10 @@ MODULE_PARM_DESC(thinkpad, "Force to enable Thinkpad's CLKRUN control.");
 module_param_array(mmap_valid, bool, NULL, 0444);
 MODULE_PARM_DESC(mmap_valid, "Support OSS mmap.");
 
-static struct pci_device_id snd_cs46xx_ids[] = {
-        { 0x1013, 0x6001, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0, },   /* CS4280 */
-        { 0x1013, 0x6003, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0, },   /* CS4612 */
-        { 0x1013, 0x6004, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0, },   /* CS4615 */
+static DEFINE_PCI_DEVICE_TABLE(snd_cs46xx_ids) = {
+	{ PCI_VDEVICE(CIRRUS, 0x6001), 0, },   /* CS4280 */
+	{ PCI_VDEVICE(CIRRUS, 0x6003), 0, },   /* CS4612 */
+	{ PCI_VDEVICE(CIRRUS, 0x6004), 0, },   /* CS4615 */
 	{ 0, }
 };
 
@@ -89,9 +88,9 @@ static int __devinit snd_card_cs46xx_probe(struct pci_dev *pci,
 		return -ENOENT;
 	}
 
-	card = snd_card_new(index[dev], id[dev], THIS_MODULE, 0);
-	if (card == NULL)
-		return -ENOMEM;
+	err = snd_card_create(index[dev], id[dev], THIS_MODULE, 0, &card);
+	if (err < 0)
+		return err;
 	if ((err = snd_cs46xx_create(card, pci,
 				     external_amp[dev], thinkpad[dev],
 				     &chip)) < 0) {

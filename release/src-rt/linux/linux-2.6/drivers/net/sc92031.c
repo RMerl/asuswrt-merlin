@@ -13,6 +13,9 @@
  *  Both are almost identical and seem to be based on pci-skeleton.c
  *
  *  Rewritten for 2.6 by Cesar Eduardo Barros
+ *
+ *  A datasheet for this chip can be found at
+ *  http://www.silan.com.cn/english/product/pdf/SC92031AY.pdf 
  */
 
 /* Note about set_mac_address: I don't know how to change the hardware
@@ -31,13 +34,7 @@
 
 #include <asm/irq.h>
 
-#define PCI_VENDOR_ID_SILAN		0x1904
-#define PCI_DEVICE_ID_SILAN_SC92031	0x2031
-#define PCI_DEVICE_ID_SILAN_8139D	0x8139
-
 #define SC92031_NAME "sc92031"
-#define SC92031_DESCRIPTION "Silan SC92031 PCI Fast Ethernet Adapter driver"
-#define SC92031_VERSION "2.0c"
 
 /* BAR 0 is MMIO, BAR 1 is PIO */
 #ifndef SC92031_USE_BAR
@@ -311,7 +308,6 @@ struct sc92031_priv {
 
 	/* for dev->get_stats */
 	long			rx_value;
-	struct net_device_stats	stats;
 };
 
 /* I don't know which registers can be safely read; however, I can guess
@@ -421,7 +417,7 @@ static void _sc92031_tx_clear(struct net_device *dev)
 
 	while (priv->tx_head - priv->tx_tail > 0) {
 		priv->tx_tail++;
-		priv->stats.tx_dropped++;
+		dev->stats.tx_dropped++;
 	}
 	priv->tx_head = priv->tx_tail = 0;
 }
@@ -432,18 +428,18 @@ static void _sc92031_set_mar(struct net_device *dev)
 	void __iomem *port_base = priv->port_base;
 	u32 mar0 = 0, mar1 = 0;
 
-	if ((dev->flags & IFF_PROMISC)
-			|| dev->mc_count > multicast_filter_limit
-			|| (dev->flags & IFF_ALLMULTI))
+	if ((dev->flags & IFF_PROMISC) ||
+	    netdev_mc_count(dev) > multicast_filter_limit ||
+	    (dev->flags & IFF_ALLMULTI))
 		mar0 = mar1 = 0xffffffff;
 	else if (dev->flags & IFF_MULTICAST) {
-		struct dev_mc_list *mc_list;
+		struct netdev_hw_addr *ha;
 
-		for (mc_list = dev->mc_list; mc_list; mc_list = mc_list->next) {
+		netdev_for_each_mc_addr(ha, dev) {
 			u32 crc;
 			unsigned bit = 0;
 
-			crc = ~ether_crc(ETH_ALEN, mc_list->dmi_addr);
+			crc = ~ether_crc(ETH_ALEN, ha->addr);
 			crc >>= 24;
 
 			if (crc & 0x01)	bit |= 0x02;
@@ -676,27 +672,27 @@ static void _sc92031_tx_tasklet(struct net_device *dev)
 		priv->tx_tail++;
 
 		if (tx_status & TxStatOK) {
-			priv->stats.tx_bytes += tx_status & 0x1fff;
-			priv->stats.tx_packets++;
+			dev->stats.tx_bytes += tx_status & 0x1fff;
+			dev->stats.tx_packets++;
 			/* Note: TxCarrierLost is always asserted at 100mbps. */
-			priv->stats.collisions += (tx_status >> 22) & 0xf;
+			dev->stats.collisions += (tx_status >> 22) & 0xf;
 		}
 
 		if (tx_status & (TxOutOfWindow | TxAborted)) {
-			priv->stats.tx_errors++;
+			dev->stats.tx_errors++;
 
 			if (tx_status & TxAborted)
-				priv->stats.tx_aborted_errors++;
+				dev->stats.tx_aborted_errors++;
 
 			if (tx_status & TxCarrierLost)
-				priv->stats.tx_carrier_errors++;
+				dev->stats.tx_carrier_errors++;
 
 			if (tx_status & TxOutOfWindow)
-				priv->stats.tx_window_errors++;
+				dev->stats.tx_window_errors++;
 		}
 
 		if (tx_status & TxUnderrun)
-			priv->stats.tx_fifo_errors++;
+			dev->stats.tx_fifo_errors++;
 	}
 
 	if (priv->tx_tail != old_tx_tail)
@@ -704,27 +700,29 @@ static void _sc92031_tx_tasklet(struct net_device *dev)
 			netif_wake_queue(dev);
 }
 
-static void _sc92031_rx_tasklet_error(u32 rx_status,
-		struct sc92031_priv *priv, unsigned rx_size)
+static void _sc92031_rx_tasklet_error(struct net_device *dev,
+				      u32 rx_status, unsigned rx_size)
 {
 	if(rx_size > (MAX_ETH_FRAME_SIZE + 4) || rx_size < 16) {
-		priv->stats.rx_errors++;
-		priv->stats.rx_length_errors++;
+		dev->stats.rx_errors++;
+		dev->stats.rx_length_errors++;
 	}
 
 	if (!(rx_status & RxStatesOK)) {
-		priv->stats.rx_errors++;
+		dev->stats.rx_errors++;
 
 		if (rx_status & (RxHugeFrame | RxSmallFrame))
-			priv->stats.rx_length_errors++;
+			dev->stats.rx_length_errors++;
 
 		if (rx_status & RxBadAlign)
-			priv->stats.rx_frame_errors++;
+			dev->stats.rx_frame_errors++;
 
 		if (!(rx_status & RxCRCOK))
-			priv->stats.rx_crc_errors++;
-	} else
+			dev->stats.rx_crc_errors++;
+	} else {
+		struct sc92031_priv *priv = netdev_priv(dev);
 		priv->rx_loss++;
+	}
 }
 
 static void _sc92031_rx_tasklet(struct net_device *dev)
@@ -779,11 +777,11 @@ static void _sc92031_rx_tasklet(struct net_device *dev)
 
 		rx_ring_offset = (rx_ring_offset + 4) % RX_BUF_LEN;
 
-		if (unlikely(rx_status == 0
-				|| rx_size > (MAX_ETH_FRAME_SIZE + 4)
-				|| rx_size < 16
-				|| !(rx_status & RxStatesOK))) {
-			_sc92031_rx_tasklet_error(rx_status, priv, rx_size);
+		if (unlikely(rx_status == 0 ||
+			     rx_size > (MAX_ETH_FRAME_SIZE + 4) ||
+			     rx_size < 16 ||
+			     !(rx_status & RxStatesOK))) {
+			_sc92031_rx_tasklet_error(dev, rx_status, rx_size);
 			break;
 		}
 
@@ -795,15 +793,13 @@ static void _sc92031_rx_tasklet(struct net_device *dev)
 
 		rx_len -= rx_size_align + 4;
 
-		skb = dev_alloc_skb(pkt_size + NET_IP_ALIGN);
+		skb = netdev_alloc_skb_ip_align(dev, pkt_size);
 		if (unlikely(!skb)) {
 			if (printk_ratelimit())
 				printk(KERN_ERR "%s: Couldn't allocate a skb_buff for a packet of size %u\n",
 						dev->name, pkt_size);
 			goto next;
 		}
-
-		skb_reserve(skb, NET_IP_ALIGN);
 
 		if ((rx_ring_offset + pkt_size) > RX_BUF_LEN) {
 			memcpy(skb_put(skb, RX_BUF_LEN - rx_ring_offset),
@@ -815,14 +811,13 @@ static void _sc92031_rx_tasklet(struct net_device *dev)
 		}
 
 		skb->protocol = eth_type_trans(skb, dev);
-		dev->last_rx = jiffies;
 		netif_rx(skb);
 
-		priv->stats.rx_bytes += pkt_size;
-		priv->stats.rx_packets++;
+		dev->stats.rx_bytes += pkt_size;
+		dev->stats.rx_packets++;
 
 		if (rx_status & Rx_Multicast)
-			priv->stats.multicast++;
+			dev->stats.multicast++;
 
 	next:
 		rx_ring_offset = (rx_ring_offset + rx_size_align) % RX_BUF_LEN;
@@ -835,13 +830,11 @@ static void _sc92031_rx_tasklet(struct net_device *dev)
 
 static void _sc92031_link_tasklet(struct net_device *dev)
 {
-	struct sc92031_priv *priv = netdev_priv(dev);
-
 	if (_sc92031_check_media(dev))
 		netif_wake_queue(dev);
 	else {
 		netif_stop_queue(dev);
-		priv->stats.tx_carrier_errors++;
+		dev->stats.tx_carrier_errors++;
 	}
 }
 
@@ -866,11 +859,11 @@ static void sc92031_tasklet(unsigned long data)
 		_sc92031_rx_tasklet(dev);
 
 	if (intr_status & RxOverflow)
-		priv->stats.rx_errors++;
+		dev->stats.rx_errors++;
 
 	if (intr_status & TimeOut) {
-		priv->stats.rx_errors++;
-		priv->stats.rx_length_errors++;
+		dev->stats.rx_errors++;
+		dev->stats.rx_length_errors++;
 	}
 
 	if (intr_status & (LinkFail | LinkOK))
@@ -936,38 +929,34 @@ static struct net_device_stats *sc92031_get_stats(struct net_device *dev)
 
 		if (temp == 0xffff) {
 			priv->rx_value += temp;
-			priv->stats.rx_fifo_errors = priv->rx_value;
-		} else {
-			priv->stats.rx_fifo_errors = temp + priv->rx_value;
-		}
+			dev->stats.rx_fifo_errors = priv->rx_value;
+		} else
+			dev->stats.rx_fifo_errors = temp + priv->rx_value;
 
 		spin_unlock_bh(&priv->lock);
 	}
 
-	return &priv->stats;
+	return &dev->stats;
 }
 
-static int sc92031_start_xmit(struct sk_buff *skb, struct net_device *dev)
+static netdev_tx_t sc92031_start_xmit(struct sk_buff *skb,
+				      struct net_device *dev)
 {
-	int err = 0;
 	struct sc92031_priv *priv = netdev_priv(dev);
 	void __iomem *port_base = priv->port_base;
-
 	unsigned len;
 	unsigned entry;
 	u32 tx_status;
 
 	if (unlikely(skb->len > TX_BUF_SIZE)) {
-		err = -EMSGSIZE;
-		priv->stats.tx_dropped++;
+		dev->stats.tx_dropped++;
 		goto out;
 	}
 
 	spin_lock(&priv->lock);
 
 	if (unlikely(!netif_carrier_ok(dev))) {
-		err = -ENOLINK;
-		priv->stats.tx_dropped++;
+		dev->stats.tx_dropped++;
 		goto out_unlock;
 	}
 
@@ -978,7 +967,7 @@ static int sc92031_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	skb_copy_and_csum_dev(skb, priv->tx_bufs + entry * TX_BUF_SIZE);
 
 	len = skb->len;
-	if (unlikely(len < ETH_ZLEN)) {
+	if (len < ETH_ZLEN) {
 		memset(priv->tx_bufs + entry * TX_BUF_SIZE + len,
 				0, ETH_ZLEN - len);
 		len = ETH_ZLEN;
@@ -998,8 +987,6 @@ static int sc92031_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	iowrite32(tx_status, port_base + TxStatus0 + entry * 4);
 	mmiowb();
 
-	dev->trans_start = jiffies;
-
 	if (priv->tx_head - priv->tx_tail >= NUM_TX_DESC)
 		netif_stop_queue(dev);
 
@@ -1009,7 +996,7 @@ out_unlock:
 out:
 	dev_kfree_skb(skb);
 
-	return err;
+	return NETDEV_TX_OK;
 }
 
 static int sc92031_open(struct net_device *dev)
@@ -1264,17 +1251,6 @@ static int sc92031_ethtool_set_settings(struct net_device *dev,
 	return 0;
 }
 
-static void sc92031_ethtool_get_drvinfo(struct net_device *dev,
-		struct ethtool_drvinfo *drvinfo)
-{
-	struct sc92031_priv *priv = netdev_priv(dev);
-	struct pci_dev *pdev = priv->pdev;
-
-	strcpy(drvinfo->driver, SC92031_NAME);
-	strcpy(drvinfo->version, SC92031_VERSION);
-	strcpy(drvinfo->bus_info, pci_name(pdev));
-}
-
 static void sc92031_ethtool_get_wol(struct net_device *dev,
 		struct ethtool_wolinfo *wolinfo)
 {
@@ -1372,9 +1348,14 @@ static void sc92031_ethtool_get_strings(struct net_device *dev,
 				SILAN_STATS_NUM * ETH_GSTRING_LEN);
 }
 
-static int sc92031_ethtool_get_stats_count(struct net_device *dev)
+static int sc92031_ethtool_get_sset_count(struct net_device *dev, int sset)
 {
-	return SILAN_STATS_NUM;
+	switch (sset) {
+	case ETH_SS_STATS:
+		return SILAN_STATS_NUM;
+	default:
+		return -EOPNOTSUPP;
+	}
 }
 
 static void sc92031_ethtool_get_ethtool_stats(struct net_device *dev,
@@ -1388,22 +1369,32 @@ static void sc92031_ethtool_get_ethtool_stats(struct net_device *dev,
 	spin_unlock_bh(&priv->lock);
 }
 
-static struct ethtool_ops sc92031_ethtool_ops = {
+static const struct ethtool_ops sc92031_ethtool_ops = {
 	.get_settings		= sc92031_ethtool_get_settings,
 	.set_settings		= sc92031_ethtool_set_settings,
-	.get_drvinfo		= sc92031_ethtool_get_drvinfo,
 	.get_wol		= sc92031_ethtool_get_wol,
 	.set_wol		= sc92031_ethtool_set_wol,
 	.nway_reset		= sc92031_ethtool_nway_reset,
 	.get_link		= ethtool_op_get_link,
-	.get_tx_csum		= ethtool_op_get_tx_csum,
-	.get_sg			= ethtool_op_get_sg,
-	.get_tso		= ethtool_op_get_tso,
 	.get_strings		= sc92031_ethtool_get_strings,
-	.get_stats_count	= sc92031_ethtool_get_stats_count,
+	.get_sset_count		= sc92031_ethtool_get_sset_count,
 	.get_ethtool_stats	= sc92031_ethtool_get_ethtool_stats,
-	.get_perm_addr		= ethtool_op_get_perm_addr,
-	.get_ufo		= ethtool_op_get_ufo,
+};
+
+
+static const struct net_device_ops sc92031_netdev_ops = {
+	.ndo_get_stats		= sc92031_get_stats,
+	.ndo_start_xmit		= sc92031_start_xmit,
+	.ndo_open		= sc92031_open,
+	.ndo_stop		= sc92031_stop,
+	.ndo_set_multicast_list	= sc92031_set_multicast_list,
+	.ndo_change_mtu		= eth_change_mtu,
+	.ndo_validate_addr	= eth_validate_addr,
+	.ndo_set_mac_address 	= eth_mac_addr,
+	.ndo_tx_timeout		= sc92031_tx_timeout,
+#ifdef CONFIG_NET_POLL_CONTROLLER
+	.ndo_poll_controller	= sc92031_poll_controller,
+#endif
 };
 
 static int __devinit sc92031_probe(struct pci_dev *pdev,
@@ -1414,6 +1405,7 @@ static int __devinit sc92031_probe(struct pci_dev *pdev,
 	struct net_device *dev;
 	struct sc92031_priv *priv;
 	u32 mac0, mac1;
+	unsigned long base_addr;
 
 	err = pci_enable_device(pdev);
 	if (unlikely(err < 0))
@@ -1421,11 +1413,11 @@ static int __devinit sc92031_probe(struct pci_dev *pdev,
 
 	pci_set_master(pdev);
 
-	err = pci_set_dma_mask(pdev, DMA_32BIT_MASK);
+	err = pci_set_dma_mask(pdev, DMA_BIT_MASK(32));
 	if (unlikely(err < 0))
 		goto out_set_dma_mask;
 
-	err = pci_set_consistent_dma_mask(pdev, DMA_32BIT_MASK);
+	err = pci_set_consistent_dma_mask(pdev, DMA_BIT_MASK(32));
 	if (unlikely(err < 0))
 		goto out_set_dma_mask;
 
@@ -1446,6 +1438,7 @@ static int __devinit sc92031_probe(struct pci_dev *pdev,
 	}
 
 	pci_set_drvdata(pdev, dev);
+	SET_NETDEV_DEV(dev, &pdev->dev);
 
 #if SC92031_USE_BAR == 0
 	dev->mem_start = pci_resource_start(pdev, SC92031_USE_BAR);
@@ -1456,19 +1449,12 @@ static int __devinit sc92031_probe(struct pci_dev *pdev,
 	dev->irq = pdev->irq;
 
 	/* faked with skb_copy_and_csum_dev */
-	dev->features = NETIF_F_SG | NETIF_F_HW_CSUM | NETIF_F_HIGHDMA;
+	dev->features = NETIF_F_SG | NETIF_F_HIGHDMA |
+		NETIF_F_IP_CSUM | NETIF_F_IPV6_CSUM;
 
-	dev->get_stats		= sc92031_get_stats;
-	dev->ethtool_ops	= &sc92031_ethtool_ops;
-	dev->hard_start_xmit	= sc92031_start_xmit;
+	dev->netdev_ops		= &sc92031_netdev_ops;
 	dev->watchdog_timeo	= TX_TIMEOUT;
-	dev->open		= sc92031_open;
-	dev->stop		= sc92031_stop;
-	dev->set_multicast_list	= sc92031_set_multicast_list;
-	dev->tx_timeout		= sc92031_tx_timeout;
-#ifdef CONFIG_NET_POLL_CONTROLLER
-	dev->poll_controller	= sc92031_poll_controller;
-#endif
+	dev->ethtool_ops	= &sc92031_ethtool_ops;
 
 	priv = netdev_priv(dev);
 	spin_lock_init(&priv->lock);
@@ -1494,6 +1480,14 @@ static int __devinit sc92031_probe(struct pci_dev *pdev,
 	err = register_netdev(dev);
 	if (err < 0)
 		goto out_register_netdev;
+
+#if SC92031_USE_BAR == 0
+	base_addr = dev->mem_start;
+#elif SC92031_USE_BAR == 1
+	base_addr = dev->base_addr;
+#endif
+	printk(KERN_INFO "%s: SC92031 at 0x%lx, %pM, IRQ %d\n", dev->name,
+			base_addr, dev->dev_addr, dev->irq);
 
 	return 0;
 
@@ -1583,9 +1577,10 @@ out:
 	return 0;
 }
 
-static struct pci_device_id sc92031_pci_device_id_table[] __devinitdata = {
-	{ PCI_DEVICE(PCI_VENDOR_ID_SILAN, PCI_DEVICE_ID_SILAN_SC92031) },
-	{ PCI_DEVICE(PCI_VENDOR_ID_SILAN, PCI_DEVICE_ID_SILAN_8139D) },
+static DEFINE_PCI_DEVICE_TABLE(sc92031_pci_device_id_table) = {
+	{ PCI_DEVICE(PCI_VENDOR_ID_SILAN, 0x2031) },
+	{ PCI_DEVICE(PCI_VENDOR_ID_SILAN, 0x8139) },
+	{ PCI_DEVICE(0x1088, 0x2031) },
 	{ 0, }
 };
 MODULE_DEVICE_TABLE(pci, sc92031_pci_device_id_table);
@@ -1601,7 +1596,6 @@ static struct pci_driver sc92031_pci_driver = {
 
 static int __init sc92031_init(void)
 {
-	printk(KERN_INFO SC92031_DESCRIPTION " " SC92031_VERSION "\n");
 	return pci_register_driver(&sc92031_pci_driver);
 }
 
@@ -1615,5 +1609,4 @@ module_exit(sc92031_exit);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Cesar Eduardo Barros <cesarb@cesarb.net>");
-MODULE_DESCRIPTION(SC92031_DESCRIPTION);
-MODULE_VERSION(SC92031_VERSION);
+MODULE_DESCRIPTION("Silan SC92031 PCI Fast Ethernet Adapter driver");

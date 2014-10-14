@@ -40,18 +40,6 @@
 #define ASD_MAX_PHYS       8
 #define ASD_PCBA_SN_SIZE   12
 
-/* Those are to be further named properly, the "RAZORx" part, and
- * subsequently included in include/linux/pci_ids.h.
- */
-#define PCI_DEVICE_ID_ADAPTEC2_RAZOR10 0x410
-#define PCI_DEVICE_ID_ADAPTEC2_RAZOR12 0x412
-#define PCI_DEVICE_ID_ADAPTEC2_RAZOR1E 0x41E
-#define PCI_DEVICE_ID_ADAPTEC2_RAZOR1F 0x41F
-#define PCI_DEVICE_ID_ADAPTEC2_RAZOR30 0x430
-#define PCI_DEVICE_ID_ADAPTEC2_RAZOR32 0x432
-#define PCI_DEVICE_ID_ADAPTEC2_RAZOR3E 0x43E
-#define PCI_DEVICE_ID_ADAPTEC2_RAZOR3F 0x43F
-
 struct asd_ha_addrspace {
 	void __iomem  *addr;
 	unsigned long  start;       /* pci resource start */
@@ -84,6 +72,7 @@ struct flash_struct {
 	u8     manuf;
 	u8     dev_id;
 	u8     sec_prot;
+	u8     method;
 
 	u32    dir_offs;
 };
@@ -151,7 +140,7 @@ struct asd_ascb {
 
 	/* internally generated command */
 	struct timer_list timer;
-	struct completion completion;
+	struct completion *completion;
 	u8        tag_valid:1;
 	__be16    tag;		  /* error recovery only */
 
@@ -228,6 +217,8 @@ struct asd_ha_struct {
 	struct dma_pool  *scb_pool;
 
 	struct asd_seq_data  seq; /* sequencer related */
+	u32    bios_status;
+	const struct firmware *bios_image;
 };
 
 /* ---------- Common macros ---------- */
@@ -303,7 +294,6 @@ static inline void asd_init_ascb(struct asd_ha_struct *asd_ha,
 	ascb->timer.function = NULL;
 	init_timer(&ascb->timer);
 	ascb->tc_index = -1;
-	init_completion(&ascb->completion);
 }
 
 /* Must be called with the tc_index_lock held!
@@ -401,8 +391,6 @@ void asd_build_control_phy(struct asd_ascb *ascb, int phy_id, u8 subfunc);
 void asd_control_led(struct asd_ha_struct *asd_ha, int phy_id, int op);
 void asd_turn_led(struct asd_ha_struct *asd_ha, int phy_id, int op);
 int  asd_enable_phys(struct asd_ha_struct *asd_ha, const u8 phy_mask);
-void asd_build_initiate_link_adm_task(struct asd_ascb *ascb, int phy_id,
-				      u8 subfunc);
 
 void asd_ascb_timedout(unsigned long data);
 int  asd_chip_hardrst(struct asd_ha_struct *asd_ha);

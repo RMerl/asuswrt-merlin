@@ -17,6 +17,7 @@
  */
 
 #include <linux/kernel.h>
+#include <linux/slab.h>
 
 #include "prismcompat.h"
 #include "islpci_dev.h"
@@ -244,13 +245,11 @@ mgt_init(islpci_private *priv)
 	/* Alloc the cache */
 	for (i = 0; i < OID_NUM_LAST; i++) {
 		if (isl_oid[i].flags & OID_FLAG_CACHED) {
-			priv->mib[i] = kmalloc(isl_oid[i].size *
+			priv->mib[i] = kzalloc(isl_oid[i].size *
 					       (isl_oid[i].range + 1),
 					       GFP_KERNEL);
 			if (!priv->mib[i])
 				return -ENOMEM;
-			memset(priv->mib[i], 0,
-			       isl_oid[i].size * (isl_oid[i].range + 1));
 		} else
 			priv->mib[i] = NULL;
 	}
@@ -700,7 +699,7 @@ int
 mgt_commit(islpci_private *priv)
 {
 	int rvalue;
-	u32 u;
+	enum oid_num_t u;
 
 	if (islpci_get_state(priv) < PRV_STATE_INIT)
 		return 0;
@@ -821,7 +820,7 @@ mgt_response_to_str(enum oid_num_t n, union oid_res_t *r, char *str)
 			k = snprintf(str, PRIV_STR_SIZE, "nr=%u\n", list->nr);
 			for (i = 0; i < list->nr; i++)
 				k += snprintf(str + k, PRIV_STR_SIZE - k,
-					      "bss[%u] : \nage=%u\nchannel=%u\n"
+					      "bss[%u] :\nage=%u\nchannel=%u\n"
 					      "capinfo=0x%X\nrates=0x%X\n"
 					      "basic_rates=0x%X\n",
 					      i, list->bsslist[i].age,

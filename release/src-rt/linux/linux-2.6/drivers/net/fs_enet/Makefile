@@ -4,7 +4,11 @@
 
 obj-$(CONFIG_FS_ENET) += fs_enet.o
 
-obj-$(CONFIG_8xx) += mac-fec.o mac-scc.o mii-fec.o
-obj-$(CONFIG_CPM2) += mac-fcc.o mii-bitbang.o
+fs_enet-$(CONFIG_FS_ENET_HAS_SCC) += mac-scc.o
+fs_enet-$(CONFIG_FS_ENET_HAS_FEC) += mac-fec.o
+fs_enet-$(CONFIG_FS_ENET_HAS_FCC) += mac-fcc.o
 
-fs_enet-objs := fs_enet-main.o
+obj-$(CONFIG_FS_ENET_MDIO_FEC) += mii-fec.o
+obj-$(CONFIG_FS_ENET_MDIO_FCC) += mii-bitbang.o
+
+fs_enet-objs := fs_enet-main.o $(fs_enet-m)

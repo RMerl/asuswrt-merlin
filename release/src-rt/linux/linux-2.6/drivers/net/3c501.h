@@ -6,12 +6,11 @@
 static int  el1_probe1(struct net_device *dev, int ioaddr);
 static int  el_open(struct net_device *dev);
 static void el_timeout(struct net_device *dev);
-static int  el_start_xmit(struct sk_buff *skb, struct net_device *dev);
+static netdev_tx_t el_start_xmit(struct sk_buff *skb, struct net_device *dev);
 static irqreturn_t el_interrupt(int irq, void *dev_id);
 static void el_receive(struct net_device *dev);
 static void el_reset(struct net_device *dev);
 static int  el1_close(struct net_device *dev);
-static struct net_device_stats *el1_get_stats(struct net_device *dev);
 static void set_multicast_list(struct net_device *dev);
 static const struct ethtool_ops netdev_ethtool_ops;
 
@@ -24,12 +23,11 @@ static const struct ethtool_ops netdev_ethtool_ops;
 static int el_debug = EL_DEBUG;
 
 /*
- *	Board-specific info in dev->priv.
+ *	Board-specific info in netdev_priv(dev).
  */
 
 struct net_local
 {
-	struct net_device_stats stats;
 	int		tx_pkt_start;	/* The length of the current Tx packet. */
 	int		collisions;	/* Tx collisions this packet */
 	int		loading;	/* Spot buffer load collisions */

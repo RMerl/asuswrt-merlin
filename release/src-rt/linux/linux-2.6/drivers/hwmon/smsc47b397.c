@@ -26,6 +26,8 @@
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+
 #include <linux/module.h>
 #include <linux/slab.h>
 #include <linux/ioport.h>
@@ -36,7 +38,12 @@
 #include <linux/err.h>
 #include <linux/init.h>
 #include <linux/mutex.h>
-#include <asm/io.h>
+#include <linux/acpi.h>
+#include <linux/io.h>
+
+static unsigned short force_id;
+module_param(force_id, ushort, 0);
+MODULE_PARM_DESC(force_id, "Override the detected device ID");
 
 static struct platform_device *pdev;
 
@@ -94,7 +101,7 @@ static u8 smsc47b397_reg_temp[] = {0x25, 0x26, 0x27, 0x80};
 struct smsc47b397_data {
 	unsigned short addr;
 	const char *name;
-	struct class_device *class_dev;
+	struct device *hwmon_dev;
 	struct mutex lock;
 
 	struct mutex update_lock;
@@ -174,6 +181,8 @@ static SENSOR_DEVICE_ATTR(temp4_input, S_IRUGO, show_temp, NULL, 3);
    REG: count of 90kHz pulses / revolution */
 static int fan_from_reg(u16 reg)
 {
+	if (reg == 0 || reg == 0xffff)
+		return 0;
 	return 90000 * 60 / reg;
 }
 
@@ -220,7 +229,7 @@ static int __devexit smsc47b397_remove(struct platform_device *pdev)
 	struct smsc47b397_data *data = platform_get_drvdata(pdev);
 	struct resource *res;
 
-	hwmon_device_unregister(data->class_dev);
+	hwmon_device_unregister(data->hwmon_dev);
 	sysfs_remove_group(&pdev->dev.kobj, &smsc47b397_group);
 	res = platform_get_resource(pdev, IORESOURCE_IO, 0);
 	release_region(res->start, SMSC_EXTENT);
@@ -270,9 +279,9 @@ static int __devinit smsc47b397_probe(struct platform_device *pdev)
 	if ((err = sysfs_create_group(&dev->kobj, &smsc47b397_group)))
 		goto error_free;
 
-	data->class_dev = hwmon_device_register(dev);
-	if (IS_ERR(data->class_dev)) {
-		err = PTR_ERR(data->class_dev);
+	data->hwmon_dev = hwmon_device_register(dev);
+	if (IS_ERR(data->hwmon_dev)) {
+		err = PTR_ERR(data->hwmon_dev);
 		goto error_remove;
 	}
 
@@ -297,24 +306,26 @@ static int __init smsc47b397_device_add(unsigned short address)
 	};
 	int err;
 
+	err = acpi_check_resource_conflict(&res);
+	if (err)
+		goto exit;
+
 	pdev = platform_device_alloc(DRVNAME, address);
 	if (!pdev) {
 		err = -ENOMEM;
-		printk(KERN_ERR DRVNAME ": Device allocation failed\n");
+		pr_err("Device allocation failed\n");
 		goto exit;
 	}
 
 	err = platform_device_add_resources(pdev, &res, 1);
 	if (err) {
-		printk(KERN_ERR DRVNAME ": Device resource addition failed "
-		       "(%d)\n", err);
+		pr_err("Device resource addition failed (%d)\n", err);
 		goto exit_device_put;
 	}
 
 	err = platform_device_add(pdev);
 	if (err) {
-		printk(KERN_ERR DRVNAME ": Device addition failed (%d)\n",
-		       err);
+		pr_err("Device addition failed (%d)\n", err);
 		goto exit_device_put;
 	}
 
@@ -329,11 +340,23 @@ exit:
 static int __init smsc47b397_find(unsigned short *addr)
 {
 	u8 id, rev;
+	char *name;
 
 	superio_enter();
-	id = superio_inb(SUPERIO_REG_DEVID);
+	id = force_id ? force_id : superio_inb(SUPERIO_REG_DEVID);
 
-	if ((id != 0x6f) && (id != 0x81)) {
+	switch(id) {
+	case 0x81:
+		name = "SCH5307-NS";
+		break;
+	case 0x6f:
+		name = "LPC47B397-NC";
+		break;
+	case 0x85:
+	case 0x8c:
+		name = "SCH5317";
+		break;
+	default:
 		superio_exit();
 		return -ENODEV;
 	}
@@ -344,9 +367,8 @@ static int __init smsc47b397_find(unsigned short *addr)
 	*addr = (superio_inb(SUPERIO_REG_BASE_MSB) << 8)
 		 |  superio_inb(SUPERIO_REG_BASE_LSB);
 
-	printk(KERN_INFO DRVNAME ": found SMSC %s "
-		"(base address 0x%04x, revision %u)\n",
-		id == 0x81 ? "SCH5307-NS" : "LPC47B397-NC", *addr, rev);
+	pr_info("found SMSC %s (base address 0x%04x, revision %u)\n",
+		name, *addr, rev);
 
 	superio_exit();
 	return 0;

@@ -1,9 +1,18 @@
 /*
- * Copyright (2003-2004) 	Dominik Brodowski <linux@brodo.de>
- *				David Woodhouse
+ * device_id.h -- PCMCIA driver matching helpers
  *
- * License: GPL v2
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+ *
+ * (C) 2003 - 2004	David Woodhouse
+ * (C) 2003 - 2004	Dominik Brodowski
  */
+
+#ifndef _LINUX_PCMCIA_DEVICE_ID_H
+#define _LINUX_PCMCIA_DEVICE_ID_H
+
+#ifdef __KERNEL__
 
 #define PCMCIA_DEVICE_MANF_CARD(manf, card) { \
 	.match_flags = PCMCIA_DEV_ID_MATCH_MANF_ID| \
@@ -24,6 +33,11 @@
 	.match_flags = PCMCIA_DEV_ID_MATCH_PROD_ID2, \
 	.prod_id = { NULL, (v2), NULL, NULL },  \
 	.prod_id_hash = { 0, (vh2), 0, 0 }, }
+
+#define PCMCIA_DEVICE_PROD_ID3(v3, vh3) { \
+	.match_flags = PCMCIA_DEV_ID_MATCH_PROD_ID3, \
+	.prod_id = { NULL, NULL, (v3), NULL },  \
+	.prod_id_hash = { 0, 0, (vh3), 0 }, }
 
 #define PCMCIA_DEVICE_PROD_ID12(v1, v2, vh1, vh2) { \
 	.match_flags = PCMCIA_DEV_ID_MATCH_PROD_ID1| \
@@ -256,3 +270,6 @@
 
 
 #define PCMCIA_DEVICE_NULL { .match_flags = 0, }
+
+#endif /* __KERNEL__ */
+#endif /* _LINUX_PCMCIA_DEVICE_ID_H */

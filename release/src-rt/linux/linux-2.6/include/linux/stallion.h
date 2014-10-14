@@ -69,19 +69,18 @@ struct stlrq {
  */
 struct stlport {
 	unsigned long		magic;
+	struct tty_port		port;
 	unsigned int		portnr;
 	unsigned int		panelnr;
 	unsigned int		brdnr;
 	int			ioaddr;
 	int			uartaddr;
 	unsigned int		pagenr;
-	long			istate;
-	int			flags;
+	unsigned long		istate;
 	int			baud_base;
 	int			custom_divisor;
 	int			close_delay;
 	int			closing_wait;
-	int			refcount;
 	int			openwaitcnt;
 	int			brklen;
 	unsigned int		sigs;
@@ -92,10 +91,6 @@ struct stlport {
 	unsigned long		clk;
 	unsigned long		hwid;
 	void			*uartp;
-	struct tty_struct	*tty;
-	wait_queue_head_t	open_wait;
-	wait_queue_head_t	close_wait;
-	struct work_struct	tqueue;
 	comstats_t		stats;
 	struct stlrq		tx;
 };

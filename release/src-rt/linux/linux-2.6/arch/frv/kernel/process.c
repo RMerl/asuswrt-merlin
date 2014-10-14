@@ -16,7 +16,6 @@
 #include <linux/kernel.h>
 #include <linux/mm.h>
 #include <linux/smp.h>
-#include <linux/smp_lock.h>
 #include <linux/stddef.h>
 #include <linux/unistd.h>
 #include <linux/ptrace.h>
@@ -45,9 +44,10 @@ asmlinkage void ret_from_fork(void);
 void (*pm_power_off)(void);
 EXPORT_SYMBOL(pm_power_off);
 
-struct task_struct *alloc_task_struct(void)
+struct task_struct *alloc_task_struct_node(int node)
 {
-	struct task_struct *p = kmalloc(THREAD_SIZE, GFP_KERNEL);
+	struct task_struct *p = kmalloc_node(THREAD_SIZE, GFP_KERNEL, node);
+
 	if (p)
 		atomic_set((atomic_t *)(p+1), 1);
 	return p;
@@ -83,13 +83,9 @@ void (*idle)(void) = core_sleep_idle;
  */
 void cpu_idle(void)
 {
-	int cpu = smp_processor_id();
-
 	/* endless idle loop with no priority at all */
 	while (1) {
 		while (!need_resched()) {
-			irq_stat[cpu].idle_timestamp = jiffies;
-
 			check_pgt_cache();
 
 			if (!frv_dma_inprogress && idle)
@@ -204,7 +200,7 @@ void prepare_to_copy(struct task_struct *tsk)
 /*
  * set up the kernel stack and exception frames for a new process
  */
-int copy_thread(int nr, unsigned long clone_flags,
+int copy_thread(unsigned long clone_flags,
 		unsigned long usp, unsigned long topstk,
 		struct task_struct *p, struct pt_regs *regs)
 {
@@ -254,20 +250,19 @@ int copy_thread(int nr, unsigned long clone_flags,
 /*
  * sys_execve() executes a new program.
  */
-asmlinkage int sys_execve(char __user *name, char __user * __user *argv, char __user * __user *envp)
+asmlinkage int sys_execve(const char __user *name,
+			  const char __user *const __user *argv,
+			  const char __user *const __user *envp)
 {
 	int error;
 	char * filename;
 
-	lock_kernel();
 	filename = getname(name);
 	error = PTR_ERR(filename);
 	if (IS_ERR(filename))
-		goto out;
+		return error;
 	error = do_execve(filename, argv, envp, __frame);
 	putname(filename);
- out:
-	unlock_kernel();
 	return error;
 }
 

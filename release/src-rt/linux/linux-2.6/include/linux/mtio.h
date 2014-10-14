@@ -63,6 +63,7 @@ struct	mtop {
 #define MTCOMPRESSION 32/* control compression with SCSI mode page 15 */
 #define MTSETPART 33	/* Change the active tape partition */
 #define MTMKPART  34	/* Format the tape with one or two partitions */
+#define MTWEOFI	35	/* write an end-of-file record (mark) in immediate mode */
 
 /* structure for MTIOCGET - mag tape get status command */
 
@@ -192,6 +193,7 @@ struct	mtpos {
 #define MT_ST_SCSI2LOGICAL      0x800
 #define MT_ST_SYSV              0x1000
 #define MT_ST_NOWAIT            0x2000
+#define MT_ST_SILI		0x4000
 
 /* The mode parameters to be controlled. Parameter chosen with bits 20-28 */
 #define MT_ST_CLEAR_DEFAULT	0xfffff

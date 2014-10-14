@@ -33,7 +33,6 @@
 #include <linux/module.h>
 #include <linux/mm.h>
 #include <asm/byteorder.h>
-#include <asm/scatterlist.h>
 #include <linux/crypto.h>
 #include <linux/types.h>
 
@@ -470,14 +469,13 @@ static int anubis_setkey(struct crypto_tfm *tfm, const u8 *in_key,
 	u32 kappa[ANUBIS_MAX_N];
 	u32 inter[ANUBIS_MAX_N];
 
-	switch (key_len)
-	{
+	switch (key_len) {
 		case 16: case 20: case 24: case 28:
 		case 32: case 36: case 40:
 			break;
 		default:
 			*flags |= CRYPTO_TFM_RES_BAD_KEY_LEN;
-			return - EINVAL;
+			return -EINVAL;
 	}
 
 	ctx->key_len = key_len * 8;
@@ -531,23 +529,24 @@ static int anubis_setkey(struct crypto_tfm *tfm, const u8 *in_key,
 		/*
 		 * compute kappa^{r+1} from kappa^r:
 		 */
-		if (r == R) {
+		if (r == R)
 			break;
-		}
 		for (i = 0; i < N; i++) {
 			int j = i;
 			inter[i]  = T0[(kappa[j--] >> 24)       ];
-			if (j < 0) j = N - 1;
+			if (j < 0)
+				j = N - 1;
 			inter[i] ^= T1[(kappa[j--] >> 16) & 0xff];
-			if (j < 0) j = N - 1;
+			if (j < 0)
+				j = N - 1;
 			inter[i] ^= T2[(kappa[j--] >>  8) & 0xff];
-			if (j < 0) j = N - 1;
+			if (j < 0)
+				j = N - 1;
 			inter[i] ^= T3[(kappa[j  ]      ) & 0xff];
 		}
 		kappa[0] = inter[0] ^ rc[r];
-		for (i = 1; i < N; i++) {
+		for (i = 1; i < N; i++)
 			kappa[i] = inter[i];
-		}
 	}
 
 	/*
@@ -688,21 +687,21 @@ static struct crypto_alg anubis_alg = {
 	.cia_decrypt		=	anubis_decrypt } }
 };
 
-static int __init init(void)
+static int __init anubis_mod_init(void)
 {
 	int ret = 0;
-	
+
 	ret = crypto_register_alg(&anubis_alg);
 	return ret;
 }
 
-static void __exit fini(void)
+static void __exit anubis_mod_fini(void)
 {
 	crypto_unregister_alg(&anubis_alg);
 }
 
-module_init(init);
-module_exit(fini);
+module_init(anubis_mod_init);
+module_exit(anubis_mod_fini);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Anubis Cryptographic Algorithm");

@@ -27,6 +27,7 @@
 #include <linux/ktime.h>
 #include <linux/init.h>
 #include <linux/connector.h>
+#include <linux/gfp.h>
 #include <asm/atomic.h>
 #include <asm/unaligned.h>
 
@@ -42,9 +43,10 @@ static DEFINE_PER_CPU(__u32, proc_event_counts) = { 0 };
 
 static inline void get_seq(__u32 *ts, int *cpu)
 {
-	*ts = get_cpu_var(proc_event_counts)++;
+	preempt_disable();
+	*ts = __this_cpu_inc_return(proc_event_counts) -1;
 	*cpu = smp_processor_id();
-	put_cpu_var(proc_event_counts);
+	preempt_enable();
 }
 
 void proc_fork_connector(struct task_struct *task)
@@ -106,6 +108,7 @@ void proc_id_connector(struct task_struct *task, int which_id)
 	struct proc_event *ev;
 	__u8 buffer[CN_PROC_MSG_SIZE];
 	struct timespec ts;
+	const struct cred *cred;
 
 	if (atomic_read(&proc_event_num_listeners) < 1)
 		return;
@@ -115,17 +118,47 @@ void proc_id_connector(struct task_struct *task, int which_id)
 	ev->what = which_id;
 	ev->event_data.id.process_pid = task->pid;
 	ev->event_data.id.process_tgid = task->tgid;
+	rcu_read_lock();
+	cred = __task_cred(task);
 	if (which_id == PROC_EVENT_UID) {
-	 	ev->event_data.id.r.ruid = task->uid;
-	 	ev->event_data.id.e.euid = task->euid;
+		ev->event_data.id.r.ruid = cred->uid;
+		ev->event_data.id.e.euid = cred->euid;
 	} else if (which_id == PROC_EVENT_GID) {
-	   	ev->event_data.id.r.rgid = task->gid;
-	   	ev->event_data.id.e.egid = task->egid;
-	} else
+		ev->event_data.id.r.rgid = cred->gid;
+		ev->event_data.id.e.egid = cred->egid;
+	} else {
+		rcu_read_unlock();
 	     	return;
+	}
+	rcu_read_unlock();
 	get_seq(&msg->seq, &ev->cpu);
 	ktime_get_ts(&ts); /* get high res monotonic timestamp */
 	put_unaligned(timespec_to_ns(&ts), (__u64 *)&ev->timestamp_ns);
+
+	memcpy(&msg->id, &cn_proc_event_id, sizeof(msg->id));
+	msg->ack = 0; /* not used */
+	msg->len = sizeof(*ev);
+	cn_netlink_send(msg, CN_IDX_PROC, GFP_KERNEL);
+}
+
+void proc_sid_connector(struct task_struct *task)
+{
+	struct cn_msg *msg;
+	struct proc_event *ev;
+	struct timespec ts;
+	__u8 buffer[CN_PROC_MSG_SIZE];
+
+	if (atomic_read(&proc_event_num_listeners) < 1)
+		return;
+
+	msg = (struct cn_msg *)buffer;
+	ev = (struct proc_event *)msg->data;
+	get_seq(&msg->seq, &ev->cpu);
+	ktime_get_ts(&ts); /* get high res monotonic timestamp */
+	put_unaligned(timespec_to_ns(&ts), (__u64 *)&ev->timestamp_ns);
+	ev->what = PROC_EVENT_SID;
+	ev->event_data.sid.process_pid = task->pid;
+	ev->event_data.sid.process_tgid = task->tgid;
 
 	memcpy(&msg->id, &cn_proc_event_id, sizeof(msg->id));
 	msg->ack = 0; /* not used */
@@ -196,9 +229,9 @@ static void cn_proc_ack(int err, int rcvd_seq, int rcvd_ack)
  * cn_proc_mcast_ctl
  * @data: message sent from userspace via the connector
  */
-static void cn_proc_mcast_ctl(void *data)
+static void cn_proc_mcast_ctl(struct cn_msg *msg,
+			      struct netlink_skb_parms *nsp)
 {
-	struct cn_msg *msg = data;
 	enum proc_cn_mcast_op *mc_op = NULL;
 	int err = 0;
 

@@ -12,15 +12,13 @@
 #include <linux/kernel.h>
 #include <linux/errno.h>
 #include <linux/string.h>
-#include <linux/slab.h>
 #include <linux/delay.h>
 #include <linux/init.h>
 #include <linux/fb.h>
 #include <linux/mm.h>
+#include <linux/of_device.h>
 
 #include <asm/io.h>
-#include <asm/prom.h>
-#include <asm/of_device.h>
 #include <asm/fbio.h>
 
 #include "sbuslib.h"
@@ -35,9 +33,11 @@ static int cg6_blank(int, struct fb_info *);
 
 static void cg6_imageblit(struct fb_info *, const struct fb_image *);
 static void cg6_fillrect(struct fb_info *, const struct fb_fillrect *);
+static void cg6_copyarea(struct fb_info *info, const struct fb_copyarea *area);
 static int cg6_sync(struct fb_info *);
 static int cg6_mmap(struct fb_info *, struct vm_area_struct *);
 static int cg6_ioctl(struct fb_info *, unsigned int, unsigned long);
+static int cg6_pan_display(struct fb_var_screeninfo *, struct fb_info *);
 
 /*
  *  Frame buffer operations
@@ -47,8 +47,9 @@ static struct fb_ops cg6_ops = {
 	.owner			= THIS_MODULE,
 	.fb_setcolreg		= cg6_setcolreg,
 	.fb_blank		= cg6_blank,
+	.fb_pan_display		= cg6_pan_display,
 	.fb_fillrect		= cg6_fillrect,
-	.fb_copyarea		= cfb_copyarea,
+	.fb_copyarea		= cg6_copyarea,
 	.fb_imageblit		= cg6_imageblit,
 	.fb_sync		= cg6_sync,
 	.fb_mmap		= cg6_mmap,
@@ -65,41 +66,41 @@ static struct fb_ops cg6_ops = {
  * The FBC could be the frame buffer control
  * The FHC could is the frame buffer hardware control.
  */
-#define CG6_ROM_OFFSET       0x0UL
-#define CG6_BROOKTREE_OFFSET 0x200000UL
-#define CG6_DHC_OFFSET       0x240000UL
-#define CG6_ALT_OFFSET       0x280000UL
-#define CG6_FHC_OFFSET       0x300000UL
-#define CG6_THC_OFFSET       0x301000UL
-#define CG6_FBC_OFFSET       0x700000UL
-#define CG6_TEC_OFFSET       0x701000UL
-#define CG6_RAM_OFFSET       0x800000UL
+#define CG6_ROM_OFFSET			0x0UL
+#define CG6_BROOKTREE_OFFSET		0x200000UL
+#define CG6_DHC_OFFSET			0x240000UL
+#define CG6_ALT_OFFSET			0x280000UL
+#define CG6_FHC_OFFSET			0x300000UL
+#define CG6_THC_OFFSET			0x301000UL
+#define CG6_FBC_OFFSET			0x700000UL
+#define CG6_TEC_OFFSET			0x701000UL
+#define CG6_RAM_OFFSET			0x800000UL
 
 /* FHC definitions */
-#define CG6_FHC_FBID_SHIFT           24
-#define CG6_FHC_FBID_MASK            255
-#define CG6_FHC_REV_SHIFT            20
-#define CG6_FHC_REV_MASK             15
-#define CG6_FHC_FROP_DISABLE         (1 << 19)
-#define CG6_FHC_ROW_DISABLE          (1 << 18)
-#define CG6_FHC_SRC_DISABLE          (1 << 17)
-#define CG6_FHC_DST_DISABLE          (1 << 16)
-#define CG6_FHC_RESET                (1 << 15)
-#define CG6_FHC_LITTLE_ENDIAN        (1 << 13)
-#define CG6_FHC_RES_MASK             (3 << 11)
-#define CG6_FHC_1024                 (0 << 11)
-#define CG6_FHC_1152                 (1 << 11)
-#define CG6_FHC_1280                 (2 << 11)
-#define CG6_FHC_1600                 (3 << 11)
-#define CG6_FHC_CPU_MASK             (3 << 9)
-#define CG6_FHC_CPU_SPARC            (0 << 9)
-#define CG6_FHC_CPU_68020            (1 << 9)
-#define CG6_FHC_CPU_386              (2 << 9)
-#define CG6_FHC_TEST		     (1 << 8)
-#define CG6_FHC_TEST_X_SHIFT	     4
-#define CG6_FHC_TEST_X_MASK	     15
-#define CG6_FHC_TEST_Y_SHIFT	     0
-#define CG6_FHC_TEST_Y_MASK	     15
+#define CG6_FHC_FBID_SHIFT		24
+#define CG6_FHC_FBID_MASK		255
+#define CG6_FHC_REV_SHIFT		20
+#define CG6_FHC_REV_MASK		15
+#define CG6_FHC_FROP_DISABLE		(1 << 19)
+#define CG6_FHC_ROW_DISABLE		(1 << 18)
+#define CG6_FHC_SRC_DISABLE		(1 << 17)
+#define CG6_FHC_DST_DISABLE		(1 << 16)
+#define CG6_FHC_RESET			(1 << 15)
+#define CG6_FHC_LITTLE_ENDIAN		(1 << 13)
+#define CG6_FHC_RES_MASK		(3 << 11)
+#define CG6_FHC_1024			(0 << 11)
+#define CG6_FHC_1152			(1 << 11)
+#define CG6_FHC_1280			(2 << 11)
+#define CG6_FHC_1600			(3 << 11)
+#define CG6_FHC_CPU_MASK		(3 << 9)
+#define CG6_FHC_CPU_SPARC		(0 << 9)
+#define CG6_FHC_CPU_68020		(1 << 9)
+#define CG6_FHC_CPU_386			(2 << 9)
+#define CG6_FHC_TEST			(1 << 8)
+#define CG6_FHC_TEST_X_SHIFT		4
+#define CG6_FHC_TEST_X_MASK		15
+#define CG6_FHC_TEST_Y_SHIFT		0
+#define CG6_FHC_TEST_Y_MASK		15
 
 /* FBC mode definitions */
 #define CG6_FBC_BLIT_IGNORE		0x00000000
@@ -150,17 +151,18 @@ static struct fb_ops cg6_ops = {
 #define CG6_FBC_INDEX_MASK		0x00000030
 
 /* THC definitions */
-#define CG6_THC_MISC_REV_SHIFT       16
-#define CG6_THC_MISC_REV_MASK        15
-#define CG6_THC_MISC_RESET           (1 << 12)
-#define CG6_THC_MISC_VIDEO           (1 << 10)
-#define CG6_THC_MISC_SYNC            (1 << 9)
-#define CG6_THC_MISC_VSYNC           (1 << 8)
-#define CG6_THC_MISC_SYNC_ENAB       (1 << 7)
-#define CG6_THC_MISC_CURS_RES        (1 << 6)
-#define CG6_THC_MISC_INT_ENAB        (1 << 5)
-#define CG6_THC_MISC_INT             (1 << 4)
-#define CG6_THC_MISC_INIT            0x9f
+#define CG6_THC_MISC_REV_SHIFT		16
+#define CG6_THC_MISC_REV_MASK		15
+#define CG6_THC_MISC_RESET		(1 << 12)
+#define CG6_THC_MISC_VIDEO		(1 << 10)
+#define CG6_THC_MISC_SYNC		(1 << 9)
+#define CG6_THC_MISC_VSYNC		(1 << 8)
+#define CG6_THC_MISC_SYNC_ENAB		(1 << 7)
+#define CG6_THC_MISC_CURS_RES		(1 << 6)
+#define CG6_THC_MISC_INT_ENAB		(1 << 5)
+#define CG6_THC_MISC_INT		(1 << 4)
+#define CG6_THC_MISC_INIT		0x9f
+#define CG6_THC_CURSOFF			((65536-32) | ((65536-32) << 16))
 
 /* The contents are unknown */
 struct cg6_tec {
@@ -170,25 +172,25 @@ struct cg6_tec {
 };
 
 struct cg6_thc {
-        u32 thc_pad0[512];
-	u32 thc_hs;		/* hsync timing */
-	u32 thc_hsdvs;
-	u32 thc_hd;
-	u32 thc_vs;		/* vsync timing */
-	u32 thc_vd;
-	u32 thc_refresh;
-	u32 thc_misc;
-	u32 thc_pad1[56];
-	u32 thc_cursxy;	/* cursor x,y position (16 bits each) */
-	u32 thc_cursmask[32];	/* cursor mask bits */
-	u32 thc_cursbits[32];	/* what to show where mask enabled */
+	u32	thc_pad0[512];
+	u32	thc_hs;		/* hsync timing */
+	u32	thc_hsdvs;
+	u32	thc_hd;
+	u32	thc_vs;		/* vsync timing */
+	u32	thc_vd;
+	u32	thc_refresh;
+	u32	thc_misc;
+	u32	thc_pad1[56];
+	u32	thc_cursxy;	/* cursor x,y position (16 bits each) */
+	u32	thc_cursmask[32];	/* cursor mask bits */
+	u32	thc_cursbits[32];	/* what to show where mask enabled */
 };
 
 struct cg6_fbc {
 	u32	xxx0[1];
 	u32	mode;
 	u32	clip;
-	u32	xxx1[1];	    
+	u32	xxx1[1];
 	u32	s;
 	u32	draw;
 	u32	blit;
@@ -243,10 +245,10 @@ struct cg6_fbc {
 };
 
 struct bt_regs {
-	u32 addr;
-	u32 color_map;
-	u32 control;
-	u32 cursor;
+	u32	addr;
+	u32	color_map;
+	u32	control;
+	u32	cursor;
 };
 
 struct cg6_par {
@@ -260,14 +262,12 @@ struct cg6_par {
 	u32			flags;
 #define CG6_FLAG_BLANKED	0x00000001
 
-	unsigned long		physbase;
 	unsigned long		which_io;
-	unsigned long		fbsize;
 };
 
 static int cg6_sync(struct fb_info *info)
 {
-	struct cg6_par *par = (struct cg6_par *) info->par;
+	struct cg6_par *par = (struct cg6_par *)info->par;
 	struct cg6_fbc __iomem *fbc = par->fbc;
 	int limit = 10000;
 
@@ -280,25 +280,52 @@ static int cg6_sync(struct fb_info *info)
 	return 0;
 }
 
+static void cg6_switch_from_graph(struct cg6_par *par)
+{
+	struct cg6_thc __iomem *thc = par->thc;
+	unsigned long flags;
+
+	spin_lock_irqsave(&par->lock, flags);
+
+	/* Hide the cursor. */
+	sbus_writel(CG6_THC_CURSOFF, &thc->thc_cursxy);
+
+	spin_unlock_irqrestore(&par->lock, flags);
+}
+
+static int cg6_pan_display(struct fb_var_screeninfo *var, struct fb_info *info)
+{
+	struct cg6_par *par = (struct cg6_par *)info->par;
+
+	/* We just use this to catch switches out of
+	 * graphics mode.
+	 */
+	cg6_switch_from_graph(par);
+
+	if (var->xoffset || var->yoffset || var->vmode)
+		return -EINVAL;
+	return 0;
+}
+
 /**
- *      cg6_fillrect - REQUIRED function. Can use generic routines if 
- *                     non acclerated hardware and packed pixel based.
- *                     Draws a rectangle on the screen.               
+ *	cg6_fillrect -	Draws a rectangle on the screen.
  *
- *      @info: frame buffer structure that represents a single frame buffer
- *      @rect: structure defining the rectagle and operation.
+ *	@info: frame buffer structure that represents a single frame buffer
+ *	@rect: structure defining the rectagle and operation.
  */
 static void cg6_fillrect(struct fb_info *info, const struct fb_fillrect *rect)
 {
-	struct cg6_par *par = (struct cg6_par *) info->par;
+	struct cg6_par *par = (struct cg6_par *)info->par;
 	struct cg6_fbc __iomem *fbc = par->fbc;
 	unsigned long flags;
 	s32 val;
 
-	/* XXX doesn't handle ROP_XOR */
+	/* CG6 doesn't handle ROP_XOR */
 
 	spin_lock_irqsave(&par->lock, flags);
+
 	cg6_sync(info);
+
 	sbus_writel(rect->color, &fbc->fg);
 	sbus_writel(~(u32)0, &fbc->pixelm);
 	sbus_writel(0xea80ff00, &fbc->alu);
@@ -316,16 +343,56 @@ static void cg6_fillrect(struct fb_info *info, const struct fb_fillrect *rect)
 }
 
 /**
- *      cg6_imageblit - REQUIRED function. Can use generic routines if
- *                      non acclerated hardware and packed pixel based.
- *                      Copies a image from system memory to the screen. 
+ *	cg6_copyarea - Copies one area of the screen to another area.
  *
- *      @info: frame buffer structure that represents a single frame buffer
- *      @image: structure defining the image.
+ *	@info: frame buffer structure that represents a single frame buffer
+ *	@area: Structure providing the data to copy the framebuffer contents
+ *		from one region to another.
+ *
+ *	This drawing operation copies a rectangular area from one area of the
+ *	screen to another area.
+ */
+static void cg6_copyarea(struct fb_info *info, const struct fb_copyarea *area)
+{
+	struct cg6_par *par = (struct cg6_par *)info->par;
+	struct cg6_fbc __iomem *fbc = par->fbc;
+	unsigned long flags;
+	int i;
+
+	spin_lock_irqsave(&par->lock, flags);
+
+	cg6_sync(info);
+
+	sbus_writel(0xff, &fbc->fg);
+	sbus_writel(0x00, &fbc->bg);
+	sbus_writel(~0, &fbc->pixelm);
+	sbus_writel(0xe880cccc, &fbc->alu);
+	sbus_writel(0, &fbc->s);
+	sbus_writel(0, &fbc->clip);
+
+	sbus_writel(area->sy, &fbc->y0);
+	sbus_writel(area->sx, &fbc->x0);
+	sbus_writel(area->sy + area->height - 1, &fbc->y1);
+	sbus_writel(area->sx + area->width - 1, &fbc->x1);
+	sbus_writel(area->dy, &fbc->y2);
+	sbus_writel(area->dx, &fbc->x2);
+	sbus_writel(area->dy + area->height - 1, &fbc->y3);
+	sbus_writel(area->dx + area->width - 1, &fbc->x3);
+	do {
+		i = sbus_readl(&fbc->blit);
+	} while (i < 0 && (i & 0x20000000));
+	spin_unlock_irqrestore(&par->lock, flags);
+}
+
+/**
+ *	cg6_imageblit -	Copies a image from system memory to the screen.
+ *
+ *	@info: frame buffer structure that represents a single frame buffer
+ *	@image: structure defining the image.
  */
 static void cg6_imageblit(struct fb_info *info, const struct fb_image *image)
 {
-	struct cg6_par *par = (struct cg6_par *) info->par;
+	struct cg6_par *par = (struct cg6_par *)info->par;
 	struct cg6_fbc __iomem *fbc = par->fbc;
 	const u8 *data = image->data;
 	unsigned long flags;
@@ -363,7 +430,7 @@ static void cg6_imageblit(struct fb_info *info, const struct fb_image *image)
 			sbus_writel(y, &fbc->y0);
 			sbus_writel(x, &fbc->x0);
 			sbus_writel(x + 32 - 1, &fbc->x1);
-			
+
 			val = ((u32)data[0] << 24) |
 			      ((u32)data[1] << 16) |
 			      ((u32)data[2] <<  8) |
@@ -404,19 +471,20 @@ static void cg6_imageblit(struct fb_info *info, const struct fb_image *image)
 }
 
 /**
- *      cg6_setcolreg - Optional function. Sets a color register.
- *      @regno: boolean, 0 copy local, 1 get_user() function
- *      @red: frame buffer colormap structure
- *      @green: The green value which can be up to 16 bits wide
- *      @blue:  The blue value which can be up to 16 bits wide.
- *      @transp: If supported the alpha value which can be up to 16 bits wide.
- *      @info: frame buffer info structure
+ *	cg6_setcolreg - Sets a color register.
+ *
+ *	@regno: boolean, 0 copy local, 1 get_user() function
+ *	@red: frame buffer colormap structure
+ *	@green: The green value which can be up to 16 bits wide
+ *	@blue:  The blue value which can be up to 16 bits wide.
+ *	@transp: If supported the alpha value which can be up to 16 bits wide.
+ *	@info: frame buffer info structure
  */
 static int cg6_setcolreg(unsigned regno,
 			 unsigned red, unsigned green, unsigned blue,
 			 unsigned transp, struct fb_info *info)
 {
-	struct cg6_par *par = (struct cg6_par *) info->par;
+	struct cg6_par *par = (struct cg6_par *)info->par;
 	struct bt_regs __iomem *bt = par->bt;
 	unsigned long flags;
 
@@ -440,25 +508,24 @@ static int cg6_setcolreg(unsigned regno,
 }
 
 /**
- *      cg6_blank - Optional function.  Blanks the display.
- *      @blank_mode: the blank mode we want.
- *      @info: frame buffer structure that represents a single frame buffer
+ *	cg6_blank - Blanks the display.
+ *
+ *	@blank_mode: the blank mode we want.
+ *	@info: frame buffer structure that represents a single frame buffer
  */
-static int
-cg6_blank(int blank, struct fb_info *info)
+static int cg6_blank(int blank, struct fb_info *info)
 {
-	struct cg6_par *par = (struct cg6_par *) info->par;
+	struct cg6_par *par = (struct cg6_par *)info->par;
 	struct cg6_thc __iomem *thc = par->thc;
 	unsigned long flags;
 	u32 val;
 
 	spin_lock_irqsave(&par->lock, flags);
+	val = sbus_readl(&thc->thc_misc);
 
 	switch (blank) {
 	case FB_BLANK_UNBLANK: /* Unblanking */
-		val = sbus_readl(&thc->thc_misc);
 		val |= CG6_THC_MISC_VIDEO;
-		sbus_writel(val, &thc->thc_misc);
 		par->flags &= ~CG6_FLAG_BLANKED;
 		break;
 
@@ -466,13 +533,12 @@ cg6_blank(int blank, struct fb_info *info)
 	case FB_BLANK_VSYNC_SUSPEND: /* VESA blank (vsync off) */
 	case FB_BLANK_HSYNC_SUSPEND: /* VESA blank (hsync off) */
 	case FB_BLANK_POWERDOWN: /* Poweroff */
-		val = sbus_readl(&thc->thc_misc);
 		val &= ~CG6_THC_MISC_VIDEO;
-		sbus_writel(val, &thc->thc_misc);
 		par->flags |= CG6_FLAG_BLANKED;
 		break;
 	}
 
+	sbus_writel(val, &thc->thc_misc);
 	spin_unlock_irqrestore(&par->lock, flags);
 
 	return 0;
@@ -527,31 +593,28 @@ static int cg6_mmap(struct fb_info *info, struct vm_area_struct *vma)
 	struct cg6_par *par = (struct cg6_par *)info->par;
 
 	return sbusfb_mmap_helper(cg6_mmap_map,
-				  par->physbase, par->fbsize,
+				  info->fix.smem_start, info->fix.smem_len,
 				  par->which_io, vma);
 }
 
 static int cg6_ioctl(struct fb_info *info, unsigned int cmd, unsigned long arg)
 {
-	struct cg6_par *par = (struct cg6_par *) info->par;
-
 	return sbusfb_ioctl_helper(cmd, arg, info,
-				   FBTYPE_SUNFAST_COLOR, 8, par->fbsize);
+				   FBTYPE_SUNFAST_COLOR, 8, info->fix.smem_len);
 }
 
 /*
  *  Initialisation
  */
 
-static void
-cg6_init_fix(struct fb_info *info, int linebytes)
+static void __devinit cg6_init_fix(struct fb_info *info, int linebytes)
 {
 	struct cg6_par *par = (struct cg6_par *)info->par;
 	const char *cg6_cpu_name, *cg6_card_name;
 	u32 conf;
 
 	conf = sbus_readl(par->fhc);
-	switch(conf & CG6_FHC_CPU_MASK) {
+	switch (conf & CG6_FHC_CPU_MASK) {
 	case CG6_FHC_CPU_SPARC:
 		cg6_cpu_name = "sparc";
 		break;
@@ -563,21 +626,19 @@ cg6_init_fix(struct fb_info *info, int linebytes)
 		break;
 	};
 	if (((conf >> CG6_FHC_REV_SHIFT) & CG6_FHC_REV_MASK) >= 11) {
-		if (par->fbsize <= 0x100000) {
+		if (info->fix.smem_len <= 0x100000)
 			cg6_card_name = "TGX";
-		} else {
+		else
 			cg6_card_name = "TGX+";
-		}
 	} else {
-		if (par->fbsize <= 0x100000) {
+		if (info->fix.smem_len <= 0x100000)
 			cg6_card_name = "GX";
-		} else {
+		else
 			cg6_card_name = "GX+";
-		}
 	}
 
 	sprintf(info->fix.id, "%s %s", cg6_card_name, cg6_cpu_name);
-	info->fix.id[sizeof(info->fix.id)-1] = 0;
+	info->fix.id[sizeof(info->fix.id) - 1] = 0;
 
 	info->fix.type = FB_TYPE_PACKED_PIXELS;
 	info->fix.visual = FB_VISUAL_PSEUDOCOLOR;
@@ -588,28 +649,32 @@ cg6_init_fix(struct fb_info *info, int linebytes)
 }
 
 /* Initialize Brooktree DAC */
-static void cg6_bt_init(struct cg6_par *par)
+static void __devinit cg6_bt_init(struct cg6_par *par)
 {
 	struct bt_regs __iomem *bt = par->bt;
 
-	sbus_writel(0x04 << 24, &bt->addr);         /* color planes */
+	sbus_writel(0x04 << 24, &bt->addr);	 /* color planes */
 	sbus_writel(0xff << 24, &bt->control);
 	sbus_writel(0x05 << 24, &bt->addr);
 	sbus_writel(0x00 << 24, &bt->control);
-	sbus_writel(0x06 << 24, &bt->addr);         /* overlay plane */
+	sbus_writel(0x06 << 24, &bt->addr);	 /* overlay plane */
 	sbus_writel(0x73 << 24, &bt->control);
 	sbus_writel(0x07 << 24, &bt->addr);
 	sbus_writel(0x00 << 24, &bt->control);
 }
 
-static void cg6_chip_init(struct fb_info *info)
+static void __devinit cg6_chip_init(struct fb_info *info)
 {
-	struct cg6_par *par = (struct cg6_par *) info->par;
+	struct cg6_par *par = (struct cg6_par *)info->par;
 	struct cg6_tec __iomem *tec = par->tec;
 	struct cg6_fbc __iomem *fbc = par->fbc;
+	struct cg6_thc __iomem *thc = par->thc;
 	u32 rev, conf, mode;
 	int i;
-	
+
+	/* Hide the cursor. */
+	sbus_writel(CG6_THC_CURSOFF, &thc->thc_cursxy);
+
 	/* Turn off stuff in the Transform Engine. */
 	sbus_writel(0, &tec->tec_matrix);
 	sbus_writel(0, &tec->tec_clip);
@@ -635,13 +700,13 @@ static void cg6_chip_init(struct fb_info *info)
 		i = sbus_readl(&fbc->s);
 	} while (i & 0x10000000);
 	mode &= ~(CG6_FBC_BLIT_MASK | CG6_FBC_MODE_MASK |
-		       CG6_FBC_DRAW_MASK | CG6_FBC_BWRITE0_MASK |
-		       CG6_FBC_BWRITE1_MASK | CG6_FBC_BREAD_MASK |
-		       CG6_FBC_BDISP_MASK);
+		  CG6_FBC_DRAW_MASK | CG6_FBC_BWRITE0_MASK |
+		  CG6_FBC_BWRITE1_MASK | CG6_FBC_BREAD_MASK |
+		  CG6_FBC_BDISP_MASK);
 	mode |= (CG6_FBC_BLIT_SRC | CG6_FBC_MODE_COLOR8 |
-		      CG6_FBC_DRAW_RENDER | CG6_FBC_BWRITE0_ENABLE |
-		      CG6_FBC_BWRITE1_DISABLE | CG6_FBC_BREAD_0 |
-		      CG6_FBC_BDISP_0);
+		 CG6_FBC_DRAW_RENDER | CG6_FBC_BWRITE0_ENABLE |
+		 CG6_FBC_BWRITE1_DISABLE | CG6_FBC_BREAD_0 |
+		 CG6_FBC_BDISP_0);
 	sbus_writel(mode, &fbc->mode);
 
 	sbus_writel(0, &fbc->clip);
@@ -653,142 +718,133 @@ static void cg6_chip_init(struct fb_info *info)
 	sbus_writel(info->var.yres - 1, &fbc->clipmaxy);
 }
 
-struct all_info {
-	struct fb_info info;
-	struct cg6_par par;
-};
-
-static void cg6_unmap_regs(struct of_device *op, struct all_info *all)
+static void cg6_unmap_regs(struct platform_device *op, struct fb_info *info,
+			   struct cg6_par *par)
 {
-	if (all->par.fbc)
-		of_iounmap(&op->resource[0], all->par.fbc, 4096);
-	if (all->par.tec)
-		of_iounmap(&op->resource[0],
-			   all->par.tec, sizeof(struct cg6_tec));
-	if (all->par.thc)
-		of_iounmap(&op->resource[0],
-			   all->par.thc, sizeof(struct cg6_thc));
-	if (all->par.bt)
-		of_iounmap(&op->resource[0],
-			   all->par.bt, sizeof(struct bt_regs));
-	if (all->par.fhc)
-		of_iounmap(&op->resource[0],
-			   all->par.fhc, sizeof(u32));
+	if (par->fbc)
+		of_iounmap(&op->resource[0], par->fbc, 4096);
+	if (par->tec)
+		of_iounmap(&op->resource[0], par->tec, sizeof(struct cg6_tec));
+	if (par->thc)
+		of_iounmap(&op->resource[0], par->thc, sizeof(struct cg6_thc));
+	if (par->bt)
+		of_iounmap(&op->resource[0], par->bt, sizeof(struct bt_regs));
+	if (par->fhc)
+		of_iounmap(&op->resource[0], par->fhc, sizeof(u32));
 
-	if (all->info.screen_base)
-		of_iounmap(&op->resource[0],
-			   all->info.screen_base, all->par.fbsize);
+	if (info->screen_base)
+		of_iounmap(&op->resource[0], info->screen_base,
+			   info->fix.smem_len);
 }
 
-static int __devinit cg6_init_one(struct of_device *op)
+static int __devinit cg6_probe(struct platform_device *op)
 {
-	struct device_node *dp = op->node;
-	struct all_info *all;
+	struct device_node *dp = op->dev.of_node;
+	struct fb_info *info;
+	struct cg6_par *par;
 	int linebytes, err;
+	int dblbuf;
 
-	all = kzalloc(sizeof(*all), GFP_KERNEL);
-	if (!all)
-		return -ENOMEM;
+	info = framebuffer_alloc(sizeof(struct cg6_par), &op->dev);
 
-	spin_lock_init(&all->par.lock);
+	err = -ENOMEM;
+	if (!info)
+		goto out_err;
+	par = info->par;
 
-	all->par.physbase = op->resource[0].start;
-	all->par.which_io = op->resource[0].flags & IORESOURCE_BITS;
+	spin_lock_init(&par->lock);
 
-	sbusfb_fill_var(&all->info.var, dp->node, 8);
-	all->info.var.red.length = 8;
-	all->info.var.green.length = 8;
-	all->info.var.blue.length = 8;
+	info->fix.smem_start = op->resource[0].start;
+	par->which_io = op->resource[0].flags & IORESOURCE_BITS;
+
+	sbusfb_fill_var(&info->var, dp, 8);
+	info->var.red.length = 8;
+	info->var.green.length = 8;
+	info->var.blue.length = 8;
 
 	linebytes = of_getintprop_default(dp, "linebytes",
-					  all->info.var.xres);
-	all->par.fbsize = PAGE_ALIGN(linebytes * all->info.var.yres);
-	if (of_find_property(dp, "dblbuf", NULL))
-		all->par.fbsize *= 4;
+					  info->var.xres);
+	info->fix.smem_len = PAGE_ALIGN(linebytes * info->var.yres);
 
-	all->par.fbc = of_ioremap(&op->resource[0], CG6_FBC_OFFSET,
-				  4096, "cgsix fbc");
-	all->par.tec = of_ioremap(&op->resource[0], CG6_TEC_OFFSET,
-				  sizeof(struct cg6_tec), "cgsix tec");
-	all->par.thc = of_ioremap(&op->resource[0], CG6_THC_OFFSET,
-				  sizeof(struct cg6_thc), "cgsix thc");
-	all->par.bt = of_ioremap(&op->resource[0], CG6_BROOKTREE_OFFSET,
-				 sizeof(struct bt_regs), "cgsix dac");
-	all->par.fhc = of_ioremap(&op->resource[0], CG6_FHC_OFFSET,
-				  sizeof(u32), "cgsix fhc");
+	dblbuf = of_getintprop_default(dp, "dblbuf", 0);
+	if (dblbuf)
+		info->fix.smem_len *= 4;
 
-	all->info.flags = FBINFO_DEFAULT | FBINFO_HWACCEL_IMAGEBLIT |
-                          FBINFO_HWACCEL_COPYAREA | FBINFO_HWACCEL_FILLRECT;
-	all->info.fbops = &cg6_ops;
+	par->fbc = of_ioremap(&op->resource[0], CG6_FBC_OFFSET,
+				4096, "cgsix fbc");
+	par->tec = of_ioremap(&op->resource[0], CG6_TEC_OFFSET,
+				sizeof(struct cg6_tec), "cgsix tec");
+	par->thc = of_ioremap(&op->resource[0], CG6_THC_OFFSET,
+				sizeof(struct cg6_thc), "cgsix thc");
+	par->bt = of_ioremap(&op->resource[0], CG6_BROOKTREE_OFFSET,
+				sizeof(struct bt_regs), "cgsix dac");
+	par->fhc = of_ioremap(&op->resource[0], CG6_FHC_OFFSET,
+				sizeof(u32), "cgsix fhc");
 
-	all->info.screen_base =  of_ioremap(&op->resource[0], CG6_RAM_OFFSET,
-					    all->par.fbsize, "cgsix ram");
-	if (!all->par.fbc || !all->par.tec || !all->par.thc ||
-	    !all->par.bt || !all->par.fhc || !all->info.screen_base) {
-		cg6_unmap_regs(op, all);
-		kfree(all);
-		return -ENOMEM;
-	}
+	info->flags = FBINFO_DEFAULT | FBINFO_HWACCEL_IMAGEBLIT |
+			FBINFO_HWACCEL_COPYAREA | FBINFO_HWACCEL_FILLRECT |
+			FBINFO_READS_FAST;
+	info->fbops = &cg6_ops;
 
-	all->info.par = &all->par;
+	info->screen_base = of_ioremap(&op->resource[0], CG6_RAM_OFFSET,
+					info->fix.smem_len, "cgsix ram");
+	if (!par->fbc || !par->tec || !par->thc ||
+	    !par->bt || !par->fhc || !info->screen_base)
+		goto out_unmap_regs;
 
-	all->info.var.accel_flags = FB_ACCELF_TEXT;
+	info->var.accel_flags = FB_ACCELF_TEXT;
 
-	cg6_bt_init(&all->par);
-	cg6_chip_init(&all->info);
-	cg6_blank(0, &all->info);
+	cg6_bt_init(par);
+	cg6_chip_init(info);
+	cg6_blank(FB_BLANK_UNBLANK, info);
 
-	if (fb_alloc_cmap(&all->info.cmap, 256, 0)) {
-		cg6_unmap_regs(op, all);
-		kfree(all);
-		return -ENOMEM;
-	}
+	if (fb_alloc_cmap(&info->cmap, 256, 0))
+		goto out_unmap_regs;
 
-	fb_set_cmap(&all->info.cmap, &all->info);
-	cg6_init_fix(&all->info, linebytes);
+	fb_set_cmap(&info->cmap, info);
+	cg6_init_fix(info, linebytes);
 
-	err = register_framebuffer(&all->info);
-	if (err < 0) {
-		cg6_unmap_regs(op, all);
-		fb_dealloc_cmap(&all->info.cmap);
-		kfree(all);
-		return err;
-	}
+	err = register_framebuffer(info);
+	if (err < 0)
+		goto out_dealloc_cmap;
 
-	dev_set_drvdata(&op->dev, all);
+	dev_set_drvdata(&op->dev, info);
 
-	printk("%s: CGsix [%s] at %lx:%lx\n",
-	       dp->full_name,
-	       all->info.fix.id,
-	       all->par.which_io, all->par.physbase);
+	printk(KERN_INFO "%s: CGsix [%s] at %lx:%lx\n",
+	       dp->full_name, info->fix.id,
+	       par->which_io, info->fix.smem_start);
 
 	return 0;
+
+out_dealloc_cmap:
+	fb_dealloc_cmap(&info->cmap);
+
+out_unmap_regs:
+	cg6_unmap_regs(op, info, par);
+	framebuffer_release(info);
+
+out_err:
+	return err;
 }
 
-static int __devinit cg6_probe(struct of_device *dev, const struct of_device_id *match)
+static int __devexit cg6_remove(struct platform_device *op)
 {
-	struct of_device *op = to_of_device(&dev->dev);
+	struct fb_info *info = dev_get_drvdata(&op->dev);
+	struct cg6_par *par = info->par;
 
-	return cg6_init_one(op);
-}
+	unregister_framebuffer(info);
+	fb_dealloc_cmap(&info->cmap);
 
-static int __devexit cg6_remove(struct of_device *op)
-{
-	struct all_info *all = dev_get_drvdata(&op->dev);
+	cg6_unmap_regs(op, info, par);
 
-	unregister_framebuffer(&all->info);
-	fb_dealloc_cmap(&all->info.cmap);
-
-	cg6_unmap_regs(op, all);
-
-	kfree(all);
+	framebuffer_release(info);
 
 	dev_set_drvdata(&op->dev, NULL);
 
 	return 0;
 }
 
-static struct of_device_id cg6_match[] = {
+static const struct of_device_id cg6_match[] = {
 	{
 		.name = "cgsix",
 	},
@@ -799,9 +855,12 @@ static struct of_device_id cg6_match[] = {
 };
 MODULE_DEVICE_TABLE(of, cg6_match);
 
-static struct of_platform_driver cg6_driver = {
-	.name		= "cg6",
-	.match_table	= cg6_match,
+static struct platform_driver cg6_driver = {
+	.driver = {
+		.name = "cg6",
+		.owner = THIS_MODULE,
+		.of_match_table = cg6_match,
+	},
 	.probe		= cg6_probe,
 	.remove		= __devexit_p(cg6_remove),
 };
@@ -811,12 +870,12 @@ static int __init cg6_init(void)
 	if (fb_get_options("cg6fb", NULL))
 		return -ENODEV;
 
-	return of_register_driver(&cg6_driver, &of_bus_type);
+	return platform_driver_register(&cg6_driver);
 }
 
 static void __exit cg6_exit(void)
 {
-	of_unregister_driver(&cg6_driver);
+	platform_driver_unregister(&cg6_driver);
 }
 
 module_init(cg6_init);

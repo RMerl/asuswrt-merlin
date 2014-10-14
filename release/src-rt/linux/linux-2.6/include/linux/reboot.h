@@ -59,13 +59,18 @@ extern void machine_crash_shutdown(struct pt_regs *);
  * Architecture independent implemenations of sys_reboot commands.
  */
 
-extern void kernel_shutdown_prepare(enum system_states state);
-
+extern void kernel_restart_prepare(char *cmd);
 extern void kernel_restart(char *cmd);
 extern void kernel_halt(void);
 extern void kernel_power_off(void);
 
+extern int C_A_D; /* for sysctl */
 void ctrl_alt_del(void);
+
+#define POWEROFF_CMD_PATH_LEN	256
+extern char poweroff_cmd[POWEROFF_CMD_PATH_LEN];
+
+extern int orderly_poweroff(bool force);
 
 /*
  * Emergency restart, callable from an interrupt handler.

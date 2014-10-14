@@ -2,9 +2,9 @@
  * JFFS2 -- Journalling Flash File System, Version 2.
  *
  * Copyright © 2004  Ferenc Havasi <havasi@inf.u-szeged.hu>,
- *                   Zoltan Sogor <weth@inf.u-szeged.hu>,
- *                   Patrik Kluba <pajko@halom.u-szeged.hu>,
- *                   University of Szeged, Hungary
+ *		     Zoltan Sogor <weth@inf.u-szeged.hu>,
+ *		     Patrik Kluba <pajko@halom.u-szeged.hu>,
+ *		     University of Szeged, Hungary
  *
  * For licensing information, see the file 'LICENCE' in this directory.
  *
@@ -12,6 +12,12 @@
 
 #ifndef JFFS2_SUMMARY_H
 #define JFFS2_SUMMARY_H
+
+/* Limit summary size to 64KiB so that we can kmalloc it. If the summary
+   is larger than that, we have to just ditch it and avoid using summary
+   for the eraseblock in question... and it probably doesn't hurt us much
+   anyway. */
+#define MAX_SUMMARY_SIZE 65536
 
 #include <linux/uio.h>
 #include <linux/jffs2.h>

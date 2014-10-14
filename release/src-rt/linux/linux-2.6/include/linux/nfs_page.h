@@ -27,16 +27,24 @@
 /*
  * Valid flags for a dirty buffer
  */
-#define PG_BUSY			0
-#define PG_NEED_COMMIT		1
-#define PG_NEED_RESCHED		2
-#define PG_NEED_FLUSH		3
+enum {
+	PG_BUSY = 0,
+	PG_MAPPED,
+	PG_CLEAN,
+	PG_NEED_COMMIT,
+	PG_NEED_RESCHED,
+	PG_PNFS_COMMIT,
+};
 
 struct nfs_inode;
 struct nfs_page {
-	struct list_head	wb_list;	/* Defines state of page: */
+	union {
+		struct list_head	wb_list;	/* Defines state of page: */
+		struct pnfs_layout_segment *wb_commit_lseg; /* Used when PG_PNFS_COMMIT set */
+	};
 	struct page		*wb_page;	/* page to read in/write out */
 	struct nfs_open_context	*wb_context;	/* File state context info */
+	struct nfs_lock_context	*wb_lock_context;	/* lock context info */
 	atomic_t		wb_complete;	/* i/os we're waiting for */
 	pgoff_t			wb_index;	/* Offset >> PAGE_CACHE_SHIFT */
 	unsigned int		wb_offset,	/* Offset & ~PAGE_CACHE_MASK */
@@ -53,11 +61,14 @@ struct nfs_pageio_descriptor {
 	size_t			pg_count;
 	size_t			pg_bsize;
 	unsigned int		pg_base;
+	char			pg_moreio;
 
 	struct inode		*pg_inode;
-	int			(*pg_doio)(struct inode *, struct list_head *, unsigned int, size_t, int);
+	int			(*pg_doio)(struct nfs_pageio_descriptor *);
 	int 			pg_ioflags;
 	int			pg_error;
+	struct pnfs_layout_segment *pg_lseg;
+	int			(*pg_test)(struct nfs_pageio_descriptor *, struct nfs_page *, struct nfs_page *);
 };
 
 #define NFS_WBACK_BUSY(req)	(test_bit(PG_BUSY,&(req)->wb_flags))
@@ -67,7 +78,6 @@ extern	struct nfs_page *nfs_create_request(struct nfs_open_context *ctx,
 					    struct page *page,
 					    unsigned int offset,
 					    unsigned int count);
-extern	void nfs_clear_request(struct nfs_page *req);
 extern	void nfs_release_request(struct nfs_page *req);
 
 
@@ -75,7 +85,7 @@ extern	int nfs_scan_list(struct nfs_inode *nfsi, struct list_head *dst,
 			  pgoff_t idx_start, unsigned int npages, int tag);
 extern	void nfs_pageio_init(struct nfs_pageio_descriptor *desc,
 			     struct inode *inode,
-			     int (*doio)(struct inode *, struct list_head *, unsigned int, size_t, int),
+			     int (*doio)(struct nfs_pageio_descriptor *desc),
 			     size_t bsize,
 			     int how);
 extern	int nfs_pageio_add_request(struct nfs_pageio_descriptor *,
@@ -84,6 +94,7 @@ extern	void nfs_pageio_complete(struct nfs_pageio_descriptor *desc);
 extern	void nfs_pageio_cond_complete(struct nfs_pageio_descriptor *, pgoff_t);
 extern  int nfs_wait_on_request(struct nfs_page *);
 extern	void nfs_unlock_request(struct nfs_page *req);
+extern	int nfs_set_page_tag_locked(struct nfs_page *req);
 extern  void nfs_clear_page_tag_locked(struct nfs_page *req);
 
 
@@ -94,18 +105,6 @@ static inline int
 nfs_lock_request_dontget(struct nfs_page *req)
 {
 	return !test_and_set_bit(PG_BUSY, &req->wb_flags);
-}
-
-/*
- * Lock the page of an asynchronous request and take a reference
- */
-static inline int
-nfs_lock_request(struct nfs_page *req)
-{
-	if (test_and_set_bit(PG_BUSY, &req->wb_flags))
-		return 0;
-	kref_get(&req->wb_kref);
-	return 1;
 }
 
 /**

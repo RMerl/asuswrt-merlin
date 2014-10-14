@@ -8,17 +8,17 @@
  * under the terms of the GNU General Public License version 2 as published by
  * the Free Software Foundation.
  */
-#include <linux/platform_device.h>
-#include <linux/serial_8250.h>
 #include <linux/irq.h>
 
 #include <asm/mach/map.h>
+#include <asm/gpio.h>
 
-#include <asm/arch-ns9xxx/board.h>
-#include <asm/arch-ns9xxx/regs-sys.h>
-#include <asm/arch-ns9xxx/regs-mem.h>
-#include <asm/arch-ns9xxx/regs-bbu.h>
-#include <asm/arch-ns9xxx/regs-board-a9m9750dev.h>
+#include <mach/board.h>
+#include <mach/processor-ns9360.h>
+#include <mach/regs-sys-ns9360.h>
+#include <mach/regs-mem.h>
+#include <mach/regs-bbu.h>
+#include <mach/regs-board-a9m9750dev.h>
 
 #include "board-a9m9750dev.h"
 
@@ -37,163 +37,120 @@ void __init board_a9m9750dev_map_io(void)
 		     ARRAY_SIZE(board_a9m9750dev_io_desc));
 }
 
-static void a9m9750dev_fpga_ack_irq(unsigned int irq)
+static void a9m9750dev_fpga_ack_irq(struct irq_data *d)
 {
 	/* nothing */
 }
 
-static void a9m9750dev_fpga_mask_irq(unsigned int irq)
+static void a9m9750dev_fpga_mask_irq(struct irq_data *d)
 {
-	FPGA_IER &= ~(1 << (irq - FPGA_IRQ(0)));
+	u8 ier;
+
+	ier = __raw_readb(FPGA_IER);
+
+	ier &= ~(1 << (d->irq - FPGA_IRQ(0)));
+
+	__raw_writeb(ier, FPGA_IER);
 }
 
-static void a9m9750dev_fpga_maskack_irq(unsigned int irq)
+static void a9m9750dev_fpga_maskack_irq(struct irq_data *d)
 {
-	a9m9750dev_fpga_mask_irq(irq);
-	a9m9750dev_fpga_ack_irq(irq);
+	a9m9750dev_fpga_mask_irq(d);
+	a9m9750dev_fpga_ack_irq(d);
 }
 
-static void a9m9750dev_fpga_unmask_irq(unsigned int irq)
+static void a9m9750dev_fpga_unmask_irq(struct irq_data *d)
 {
-	FPGA_IER |= 1 << (irq - FPGA_IRQ(0));
+	u8 ier;
+
+	ier = __raw_readb(FPGA_IER);
+
+	ier |= 1 << (d->irq - FPGA_IRQ(0));
+
+	__raw_writeb(ier, FPGA_IER);
 }
 
 static struct irq_chip a9m9750dev_fpga_chip = {
-	.ack		= a9m9750dev_fpga_ack_irq,
-	.mask		= a9m9750dev_fpga_mask_irq,
-	.mask_ack	= a9m9750dev_fpga_maskack_irq,
-	.unmask		= a9m9750dev_fpga_unmask_irq,
+	.irq_ack	= a9m9750dev_fpga_ack_irq,
+	.irq_mask	= a9m9750dev_fpga_mask_irq,
+	.irq_mask_ack	= a9m9750dev_fpga_maskack_irq,
+	.irq_unmask	= a9m9750dev_fpga_unmask_irq,
 };
 
 static void a9m9750dev_fpga_demux_handler(unsigned int irq,
 		struct irq_desc *desc)
 {
-	int stat = FPGA_ISR;
+	u8 stat = __raw_readb(FPGA_ISR);
+
+	desc->irq_data.chip->irq_mask_ack(&desc->irq_data);
 
 	while (stat != 0) {
 		int irqno = fls(stat) - 1;
 
 		stat &= ~(1 << irqno);
 
-		desc = irq_desc + FPGA_IRQ(irqno);
-
-		desc_handle_irq(irqno, desc);
+		generic_handle_irq(FPGA_IRQ(irqno));
 	}
+
+	desc->irq_data.chip->irq_unmask(&desc->irq_data);
 }
 
 void __init board_a9m9750dev_init_irq(void)
 {
-	u32 reg;
+	u32 eic;
 	int i;
 
-	/*
-	 * configure gpio for IRQ_EXT2
-	 * use GPIO 11, because GPIO 32 is used for the LCD
-	 */
-	/* XXX: proper GPIO handling */
-	BBU_GC(2) &= ~0x2000;
+	if (gpio_request(11, "board a9m9750dev extirq2") == 0)
+		ns9360_gpio_configure(11, 0, 1);
+	else
+		printk(KERN_ERR "%s: cannot get gpio 11 for IRQ_NS9XXX_EXT2\n",
+				__func__);
 
 	for (i = FPGA_IRQ(0); i <= FPGA_IRQ(7); ++i) {
-		set_irq_chip(i, &a9m9750dev_fpga_chip);
-		set_irq_handler(i, handle_level_irq);
+		irq_set_chip_and_handler(i, &a9m9750dev_fpga_chip,
+					 handle_level_irq);
 		set_irq_flags(i, IRQF_VALID);
 	}
 
-	/* IRQ_EXT2: level sensitive + active low */
-	reg = SYS_EIC(2);
-	REGSET(reg, SYS_EIC, PLTY, AL);
-	REGSET(reg, SYS_EIC, LVEDG, LEVEL);
-	SYS_EIC(2) = reg;
+	/* IRQ_NS9XXX_EXT2: level sensitive + active low */
+	eic = __raw_readl(SYS_EIC(2));
+	REGSET(eic, SYS_EIC, PLTY, AL);
+	REGSET(eic, SYS_EIC, LVEDG, LEVEL);
+	__raw_writel(eic, SYS_EIC(2));
 
-	set_irq_chained_handler(IRQ_EXT2,
-			a9m9750dev_fpga_demux_handler);
+	irq_set_chained_handler(IRQ_NS9XXX_EXT2,
+				a9m9750dev_fpga_demux_handler);
 }
-
-static struct plat_serial8250_port board_a9m9750dev_serial8250_port[] = {
-	{
-		.iobase         = FPGA_UARTA_BASE,
-		.membase        = (unsigned char*)FPGA_UARTA_BASE,
-		.mapbase        = FPGA_UARTA_BASE,
-		.irq            = IRQ_FPGA_UARTA,
-		.iotype         = UPIO_MEM,
-		.uartclk        = 18432000,
-		.regshift       = 0,
-		.flags          = UPF_BOOT_AUTOCONF | UPF_SHARE_IRQ,
-	}, {
-		.iobase         = FPGA_UARTB_BASE,
-		.membase        = (unsigned char*)FPGA_UARTB_BASE,
-		.mapbase        = FPGA_UARTB_BASE,
-		.irq            = IRQ_FPGA_UARTB,
-		.iotype         = UPIO_MEM,
-		.uartclk        = 18432000,
-		.regshift       = 0,
-		.flags          = UPF_BOOT_AUTOCONF | UPF_SHARE_IRQ,
-	}, {
-		.iobase         = FPGA_UARTC_BASE,
-		.membase        = (unsigned char*)FPGA_UARTC_BASE,
-		.mapbase        = FPGA_UARTC_BASE,
-		.irq            = IRQ_FPGA_UARTC,
-		.iotype         = UPIO_MEM,
-		.uartclk        = 18432000,
-		.regshift       = 0,
-		.flags          = UPF_BOOT_AUTOCONF | UPF_SHARE_IRQ,
-	}, {
-		.iobase         = FPGA_UARTD_BASE,
-		.membase        = (unsigned char*)FPGA_UARTD_BASE,
-		.mapbase        = FPGA_UARTD_BASE,
-		.irq            = IRQ_FPGA_UARTD,
-		.iotype         = UPIO_MEM,
-		.uartclk        = 18432000,
-		.regshift       = 0,
-		.flags          = UPF_BOOT_AUTOCONF | UPF_SHARE_IRQ,
-	}, {
-		/* end marker */
-	},
-};
-
-static struct platform_device board_a9m9750dev_serial_device = {
-	.name = "serial8250",
-	.dev = {
-		.platform_data = board_a9m9750dev_serial8250_port,
-	},
-};
-
-static struct platform_device *board_a9m9750dev_devices[] __initdata = {
-	&board_a9m9750dev_serial_device,
-};
 
 void __init board_a9m9750dev_init_machine(void)
 {
 	u32 reg;
 
 	/* setup static CS0: memory base ... */
-	REGSETIM(SYS_SMCSSMB(0), SYS_SMCSSMB, CSxB,
-			NS9XXX_CSxSTAT_PHYS(0) >> 12);
+	reg = __raw_readl(SYS_SMCSSMB(0));
+	REGSETIM(reg, SYS_SMCSSMB, CSxB, NS9XXX_CSxSTAT_PHYS(0) >> 12);
+	__raw_writel(reg, SYS_SMCSSMB(0));
 
 	/* ... and mask */
-	reg = SYS_SMCSSMM(0);
+	reg = __raw_readl(SYS_SMCSSMM(0));
 	REGSETIM(reg, SYS_SMCSSMM, CSxM, 0xfffff);
 	REGSET(reg, SYS_SMCSSMM, CSEx, EN);
-	SYS_SMCSSMM(0) = reg;
+	__raw_writel(reg, SYS_SMCSSMM(0));
 
 	/* setup static CS0: memory configuration */
-	reg = MEM_SMC(0);
-	REGSET(reg, MEM_SMC, WSMC, OFF);
+	reg = __raw_readl(MEM_SMC(0));
+	REGSET(reg, MEM_SMC, PSMC, OFF);
 	REGSET(reg, MEM_SMC, BSMC, OFF);
 	REGSET(reg, MEM_SMC, EW, OFF);
 	REGSET(reg, MEM_SMC, PB, 1);
 	REGSET(reg, MEM_SMC, PC, AL);
 	REGSET(reg, MEM_SMC, PM, DIS);
 	REGSET(reg, MEM_SMC, MW, 8);
-	MEM_SMC(0) = reg;
+	__raw_writel(reg, MEM_SMC(0));
 
 	/* setup static CS0: timing */
-	MEM_SMWED(0) = 0x2;
-	MEM_SMOED(0) = 0x2;
-	MEM_SMRD(0) = 0x6;
-	MEM_SMWD(0) = 0x6;
-
-	platform_add_devices(board_a9m9750dev_devices,
-			ARRAY_SIZE(board_a9m9750dev_devices));
+	__raw_writel(0x2, MEM_SMWED(0));
+	__raw_writel(0x2, MEM_SMOED(0));
+	__raw_writel(0x6, MEM_SMRD(0));
+	__raw_writel(0x6, MEM_SMWD(0));
 }
-

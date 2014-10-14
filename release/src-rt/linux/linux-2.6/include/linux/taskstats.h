@@ -16,6 +16,8 @@
 #ifndef _LINUX_TASKSTATS_H
 #define _LINUX_TASKSTATS_H
 
+#include <linux/types.h>
+
 /* Format for per-task data returned to userland when
  *	- a task exits
  *	- listener requests stats for a task
@@ -31,7 +33,7 @@
  */
 
 
-#define TASKSTATS_VERSION	4
+#define TASKSTATS_VERSION	8
 #define TS_COMM_LEN		32	/* should be >= TASK_COMM_LEN
 					 * in linux/sched.h */
 
@@ -149,6 +151,18 @@ struct taskstats {
 	__u64	read_bytes;		/* bytes of read I/O */
 	__u64	write_bytes;		/* bytes of write I/O */
 	__u64	cancelled_write_bytes;	/* bytes of cancelled write I/O */
+
+	__u64  nvcsw;			/* voluntary_ctxt_switches */
+	__u64  nivcsw;			/* nonvoluntary_ctxt_switches */
+
+	/* time accounting for SMT machines */
+	__u64	ac_utimescaled;		/* utime scaled on frequency etc */
+	__u64	ac_stimescaled;		/* stime scaled on frequency etc */
+	__u64	cpu_scaled_run_real_total; /* scaled cpu_run_real_total */
+
+	/* Delay waiting for memory reclaim */
+	__u64	freepages_count;
+	__u64	freepages_delay_total;
 };
 
 
@@ -174,6 +188,7 @@ enum {
 	TASKSTATS_TYPE_STATS,		/* taskstats structure */
 	TASKSTATS_TYPE_AGGR_PID,	/* contains pid + stats */
 	TASKSTATS_TYPE_AGGR_TGID,	/* contains tgid + stats */
+	TASKSTATS_TYPE_NULL,		/* contains nothing */
 	__TASKSTATS_TYPE_MAX,
 };
 

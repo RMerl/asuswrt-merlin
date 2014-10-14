@@ -23,6 +23,7 @@
  *						restriction on response.
  */
 
+#include <linux/slab.h>
 #include <linux/kernel.h>
 #include <linux/string.h>
 #include <linux/skbuff.h>
@@ -225,6 +226,12 @@ void x25_write_internal(struct sock *sk, int frametype)
 			break;
 
 		case X25_CLEAR_REQUEST:
+			dptr    = skb_put(skb, 3);
+			*dptr++ = frametype;
+			*dptr++ = x25->causediag.cause;
+			*dptr++ = x25->causediag.diagnostic;
+			break;
+
 		case X25_RESET_REQUEST:
 			dptr    = skb_put(skb, 3);
 			*dptr++ = frametype;
@@ -359,7 +366,7 @@ void x25_check_rbuf(struct sock *sk)
 {
 	struct x25_sock *x25 = x25_sk(sk);
 
-	if (atomic_read(&sk->sk_rmem_alloc) < (sk->sk_rcvbuf / 2) &&
+	if (atomic_read(&sk->sk_rmem_alloc) < (sk->sk_rcvbuf >> 1) &&
 	    (x25->condition & X25_COND_OWN_RX_BUSY)) {
 		x25->condition &= ~X25_COND_OWN_RX_BUSY;
 		x25->condition &= ~X25_COND_ACK_PENDING;

@@ -13,6 +13,7 @@
 #include <linux/kernel.h>
 #include <linux/pfkeyv2.h>
 #include <linux/crypto.h>
+#include <linux/scatterlist.h>
 #include <net/xfrm.h>
 #if defined(CONFIG_INET_AH) || defined(CONFIG_INET_AH_MODULE) || defined(CONFIG_INET6_AH) || defined(CONFIG_INET6_AH_MODULE)
 #include <net/ah.h>
@@ -20,7 +21,6 @@
 #if defined(CONFIG_INET_ESP) || defined(CONFIG_INET_ESP_MODULE) || defined(CONFIG_INET6_ESP) || defined(CONFIG_INET6_ESP_MODULE)
 #include <net/esp.h>
 #endif
-#include <asm/scatterlist.h>
 
 /*
  * Algorithms supported by IPsec.  These entries contain properties which
@@ -28,10 +28,124 @@
  * that instantiated crypto transforms have correct parameters for IPsec
  * purposes.
  */
+static struct xfrm_algo_desc aead_list[] = {
+{
+	.name = "rfc4106(gcm(aes))",
+
+	.uinfo = {
+		.aead = {
+			.icv_truncbits = 64,
+		}
+	},
+
+	.desc = {
+		.sadb_alg_id = SADB_X_EALG_AES_GCM_ICV8,
+		.sadb_alg_ivlen = 8,
+		.sadb_alg_minbits = 128,
+		.sadb_alg_maxbits = 256
+	}
+},
+{
+	.name = "rfc4106(gcm(aes))",
+
+	.uinfo = {
+		.aead = {
+			.icv_truncbits = 96,
+		}
+	},
+
+	.desc = {
+		.sadb_alg_id = SADB_X_EALG_AES_GCM_ICV12,
+		.sadb_alg_ivlen = 8,
+		.sadb_alg_minbits = 128,
+		.sadb_alg_maxbits = 256
+	}
+},
+{
+	.name = "rfc4106(gcm(aes))",
+
+	.uinfo = {
+		.aead = {
+			.icv_truncbits = 128,
+		}
+	},
+
+	.desc = {
+		.sadb_alg_id = SADB_X_EALG_AES_GCM_ICV16,
+		.sadb_alg_ivlen = 8,
+		.sadb_alg_minbits = 128,
+		.sadb_alg_maxbits = 256
+	}
+},
+{
+	.name = "rfc4309(ccm(aes))",
+
+	.uinfo = {
+		.aead = {
+			.icv_truncbits = 64,
+		}
+	},
+
+	.desc = {
+		.sadb_alg_id = SADB_X_EALG_AES_CCM_ICV8,
+		.sadb_alg_ivlen = 8,
+		.sadb_alg_minbits = 128,
+		.sadb_alg_maxbits = 256
+	}
+},
+{
+	.name = "rfc4309(ccm(aes))",
+
+	.uinfo = {
+		.aead = {
+			.icv_truncbits = 96,
+		}
+	},
+
+	.desc = {
+		.sadb_alg_id = SADB_X_EALG_AES_CCM_ICV12,
+		.sadb_alg_ivlen = 8,
+		.sadb_alg_minbits = 128,
+		.sadb_alg_maxbits = 256
+	}
+},
+{
+	.name = "rfc4309(ccm(aes))",
+
+	.uinfo = {
+		.aead = {
+			.icv_truncbits = 128,
+		}
+	},
+
+	.desc = {
+		.sadb_alg_id = SADB_X_EALG_AES_CCM_ICV16,
+		.sadb_alg_ivlen = 8,
+		.sadb_alg_minbits = 128,
+		.sadb_alg_maxbits = 256
+	}
+},
+{
+	.name = "rfc4543(gcm(aes))",
+
+	.uinfo = {
+		.aead = {
+			.icv_truncbits = 128,
+		}
+	},
+
+	.desc = {
+		.sadb_alg_id = SADB_X_EALG_NULL_AES_GMAC,
+		.sadb_alg_ivlen = 8,
+		.sadb_alg_minbits = 128,
+		.sadb_alg_maxbits = 256
+	}
+},
+};
+
 static struct xfrm_algo_desc aalg_list[] = {
 {
-	.name = "hmac(digest_null)",
-	.compat = "digest_null",
+	.name = "digest_null",
 
 	.uinfo = {
 		.auth = {
@@ -102,8 +216,42 @@ static struct xfrm_algo_desc aalg_list[] = {
 	}
 },
 {
-	.name = "hmac(ripemd160)",
-	.compat = "ripemd160",
+	.name = "hmac(sha384)",
+
+	.uinfo = {
+		.auth = {
+			.icv_truncbits = 192,
+			.icv_fullbits = 384,
+		}
+	},
+
+	.desc = {
+		.sadb_alg_id = SADB_X_AALG_SHA2_384HMAC,
+		.sadb_alg_ivlen = 0,
+		.sadb_alg_minbits = 384,
+		.sadb_alg_maxbits = 384
+	}
+},
+{
+	.name = "hmac(sha512)",
+
+	.uinfo = {
+		.auth = {
+			.icv_truncbits = 256,
+			.icv_fullbits = 512,
+		}
+	},
+
+	.desc = {
+		.sadb_alg_id = SADB_X_AALG_SHA2_512HMAC,
+		.sadb_alg_ivlen = 0,
+		.sadb_alg_minbits = 512,
+		.sadb_alg_maxbits = 512
+	}
+},
+{
+	.name = "hmac(rmd160)",
+	.compat = "rmd160",
 
 	.uinfo = {
 		.auth = {
@@ -194,8 +342,8 @@ static struct xfrm_algo_desc ealg_list[] = {
 	}
 },
 {
-	.name = "cbc(cast128)",
-	.compat = "cast128",
+	.name = "cbc(cast5)",
+	.compat = "cast5",
 
 	.uinfo = {
 		.encr = {
@@ -267,6 +415,7 @@ static struct xfrm_algo_desc ealg_list[] = {
 },
 {
 	.name = "cbc(camellia)",
+	.compat = "camellia",
 
 	.uinfo = {
 		.encr = {
@@ -296,6 +445,23 @@ static struct xfrm_algo_desc ealg_list[] = {
 	.desc = {
 		.sadb_alg_id = SADB_X_EALG_TWOFISHCBC,
 		.sadb_alg_ivlen = 8,
+		.sadb_alg_minbits = 128,
+		.sadb_alg_maxbits = 256
+	}
+},
+{
+	.name = "rfc3686(ctr(aes))",
+
+	.uinfo = {
+		.encr = {
+			.blockbits = 128,
+			.defkeybits = 160, /* 128-bit key + 32-bit nonce */
+		}
+	},
+
+	.desc = {
+		.sadb_alg_id = SADB_X_EALG_AESCTR,
+		.sadb_alg_ivlen	= 8,
 		.sadb_alg_minbits = 128,
 		.sadb_alg_maxbits = 256
 	}
@@ -332,6 +498,11 @@ static struct xfrm_algo_desc calg_list[] = {
 },
 };
 
+static inline int aead_entries(void)
+{
+	return ARRAY_SIZE(aead_list);
+}
+
 static inline int aalg_entries(void)
 {
 	return ARRAY_SIZE(aalg_list);
@@ -354,25 +525,32 @@ struct xfrm_algo_list {
 	u32 mask;
 };
 
+static const struct xfrm_algo_list xfrm_aead_list = {
+	.algs = aead_list,
+	.entries = ARRAY_SIZE(aead_list),
+	.type = CRYPTO_ALG_TYPE_AEAD,
+	.mask = CRYPTO_ALG_TYPE_MASK,
+};
+
 static const struct xfrm_algo_list xfrm_aalg_list = {
 	.algs = aalg_list,
 	.entries = ARRAY_SIZE(aalg_list),
 	.type = CRYPTO_ALG_TYPE_HASH,
-	.mask = CRYPTO_ALG_TYPE_HASH_MASK | CRYPTO_ALG_ASYNC,
+	.mask = CRYPTO_ALG_TYPE_HASH_MASK,
 };
 
 static const struct xfrm_algo_list xfrm_ealg_list = {
 	.algs = ealg_list,
 	.entries = ARRAY_SIZE(ealg_list),
 	.type = CRYPTO_ALG_TYPE_BLKCIPHER,
-	.mask = CRYPTO_ALG_TYPE_MASK | CRYPTO_ALG_ASYNC,
+	.mask = CRYPTO_ALG_TYPE_BLKCIPHER_MASK,
 };
 
 static const struct xfrm_algo_list xfrm_calg_list = {
 	.algs = calg_list,
 	.entries = ARRAY_SIZE(calg_list),
 	.type = CRYPTO_ALG_TYPE_COMPRESS,
-	.mask = CRYPTO_ALG_TYPE_MASK | CRYPTO_ALG_ASYNC,
+	.mask = CRYPTO_ALG_TYPE_MASK,
 };
 
 static struct xfrm_algo_desc *xfrm_find_algo(
@@ -440,26 +618,53 @@ static int xfrm_alg_name_match(const struct xfrm_algo_desc *entry,
 			(entry->compat && !strcmp(name, entry->compat)));
 }
 
-struct xfrm_algo_desc *xfrm_aalg_get_byname(char *name, int probe)
+struct xfrm_algo_desc *xfrm_aalg_get_byname(const char *name, int probe)
 {
 	return xfrm_find_algo(&xfrm_aalg_list, xfrm_alg_name_match, name,
 			      probe);
 }
 EXPORT_SYMBOL_GPL(xfrm_aalg_get_byname);
 
-struct xfrm_algo_desc *xfrm_ealg_get_byname(char *name, int probe)
+struct xfrm_algo_desc *xfrm_ealg_get_byname(const char *name, int probe)
 {
 	return xfrm_find_algo(&xfrm_ealg_list, xfrm_alg_name_match, name,
 			      probe);
 }
 EXPORT_SYMBOL_GPL(xfrm_ealg_get_byname);
 
-struct xfrm_algo_desc *xfrm_calg_get_byname(char *name, int probe)
+struct xfrm_algo_desc *xfrm_calg_get_byname(const char *name, int probe)
 {
 	return xfrm_find_algo(&xfrm_calg_list, xfrm_alg_name_match, name,
 			      probe);
 }
 EXPORT_SYMBOL_GPL(xfrm_calg_get_byname);
+
+struct xfrm_aead_name {
+	const char *name;
+	int icvbits;
+};
+
+static int xfrm_aead_name_match(const struct xfrm_algo_desc *entry,
+				const void *data)
+{
+	const struct xfrm_aead_name *aead = data;
+	const char *name = aead->name;
+
+	return aead->icvbits == entry->uinfo.aead.icv_truncbits && name &&
+	       !strcmp(name, entry->name);
+}
+
+struct xfrm_algo_desc *xfrm_aead_get_byname(const char *name, int icv_len, int probe)
+{
+	struct xfrm_aead_name data = {
+		.name = name,
+		.icvbits = icv_len,
+	};
+
+	return xfrm_find_algo(&xfrm_aead_list, xfrm_aead_name_match, &data,
+			      probe);
+}
+EXPORT_SYMBOL_GPL(xfrm_aead_get_byname);
 
 struct xfrm_algo_desc *xfrm_aalg_get_byidx(unsigned int idx)
 {
@@ -486,7 +691,6 @@ EXPORT_SYMBOL_GPL(xfrm_ealg_get_byidx);
  */
 void xfrm_probe_algs(void)
 {
-#ifdef CONFIG_CRYPTO
 	int i, status;
 
 	BUG_ON(in_softirq());
@@ -511,7 +715,6 @@ void xfrm_probe_algs(void)
 		if (calg_list[i].available != status)
 			calg_list[i].available = status;
 	}
-#endif
 }
 EXPORT_SYMBOL_GPL(xfrm_probe_algs);
 
@@ -536,89 +739,6 @@ int xfrm_count_enc_supported(void)
 	return n;
 }
 EXPORT_SYMBOL_GPL(xfrm_count_enc_supported);
-
-/* Move to common area: it is shared with AH. */
-
-int skb_icv_walk(const struct sk_buff *skb, struct hash_desc *desc,
-		 int offset, int len, icv_update_fn_t icv_update)
-{
-	int start = skb_headlen(skb);
-	int i, copy = start - offset;
-	int err;
-	struct scatterlist sg;
-
-	/* Checksum header. */
-	if (copy > 0) {
-		if (copy > len)
-			copy = len;
-
-		sg.page = virt_to_page(skb->data + offset);
-		sg.offset = (unsigned long)(skb->data + offset) % PAGE_SIZE;
-		sg.length = copy;
-
-		err = icv_update(desc, &sg, copy);
-		if (unlikely(err))
-			return err;
-
-		if ((len -= copy) == 0)
-			return 0;
-		offset += copy;
-	}
-
-	for (i = 0; i < skb_shinfo(skb)->nr_frags; i++) {
-		int end;
-
-		BUG_TRAP(start <= offset + len);
-
-		end = start + skb_shinfo(skb)->frags[i].size;
-		if ((copy = end - offset) > 0) {
-			skb_frag_t *frag = &skb_shinfo(skb)->frags[i];
-
-			if (copy > len)
-				copy = len;
-
-			sg.page = frag->page;
-			sg.offset = frag->page_offset + offset-start;
-			sg.length = copy;
-
-			err = icv_update(desc, &sg, copy);
-			if (unlikely(err))
-				return err;
-
-			if (!(len -= copy))
-				return 0;
-			offset += copy;
-		}
-		start = end;
-	}
-
-	if (skb_shinfo(skb)->frag_list) {
-		struct sk_buff *list = skb_shinfo(skb)->frag_list;
-
-		for (; list; list = list->next) {
-			int end;
-
-			BUG_TRAP(start <= offset + len);
-
-			end = start + list->len;
-			if ((copy = end - offset) > 0) {
-				if (copy > len)
-					copy = len;
-				err = skb_icv_walk(list, desc, offset-start,
-						   copy, icv_update);
-				if (unlikely(err))
-					return err;
-				if ((len -= copy) == 0)
-					return 0;
-				offset += copy;
-			}
-			start = end;
-		}
-	}
-	BUG_ON(len);
-	return 0;
-}
-EXPORT_SYMBOL_GPL(skb_icv_walk);
 
 #if defined(CONFIG_INET_ESP) || defined(CONFIG_INET_ESP_MODULE) || defined(CONFIG_INET6_ESP) || defined(CONFIG_INET6_ESP_MODULE)
 

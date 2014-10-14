@@ -15,6 +15,7 @@
 #include <linux/moduleparam.h>
 #include <linux/types.h>
 #include <linux/ioport.h>
+#include <linux/kernel.h>
 #include <linux/notifier.h>
 #include <linux/reboot.h>
 #include <linux/init.h>
@@ -22,8 +23,9 @@
 #include <linux/delay.h>
 #include <linux/device.h>
 #include <linux/mm.h>
-#include <linux/fs.h>
 #include <linux/uio.h>
+#include <linux/mutex.h>
+#include <linux/slab.h>
 #include <asm/io.h>
 #include <asm/uaccess.h>
 #include <asm/system.h>
@@ -39,14 +41,15 @@
 #else
 #define DBG(fmt...)
 #endif
-int mbcs_major;
+static DEFINE_MUTEX(mbcs_mutex);
+static int mbcs_major;
 
-LIST_HEAD(soft_list);
+static LIST_HEAD(soft_list);
 
 /*
  * file operations
  */
-const struct file_operations mbcs_ops = {
+static const struct file_operations mbcs_ops = {
 	.open = mbcs_open,
 	.llseek = mbcs_sram_llseek,
 	.read = mbcs_sram_read,
@@ -282,7 +285,7 @@ static inline int mbcs_algo_start(struct mbcs_soft *soft)
 	void *mmr_base = soft->mmr_base;
 	union cm_control cm_control;
 
-	if (down_interruptible(&soft->algolock))
+	if (mutex_lock_interruptible(&soft->algolock))
 		return -ERESTARTSYS;
 
 	atomic_set(&soft->algo_done, 0);
@@ -299,7 +302,7 @@ static inline int mbcs_algo_start(struct mbcs_soft *soft)
 	cm_control.alg_go = 1;
 	MBCS_MMR_SET(mmr_base, MBCS_CM_CONTROL, cm_control.cm_control_reg);
 
-	up(&soft->algolock);
+	mutex_unlock(&soft->algolock);
 
 	return 0;
 }
@@ -310,7 +313,7 @@ do_mbcs_sram_dmawrite(struct mbcs_soft *soft, uint64_t hostAddr,
 {
 	int rv = 0;
 
-	if (down_interruptible(&soft->dmawritelock))
+	if (mutex_lock_interruptible(&soft->dmawritelock))
 		return -ERESTARTSYS;
 
 	atomic_set(&soft->dmawrite_done, 0);
@@ -336,7 +339,7 @@ do_mbcs_sram_dmawrite(struct mbcs_soft *soft, uint64_t hostAddr,
 	*off += len;
 
 dmawrite_exit:
-	up(&soft->dmawritelock);
+	mutex_unlock(&soft->dmawritelock);
 
 	return rv;
 }
@@ -347,7 +350,7 @@ do_mbcs_sram_dmaread(struct mbcs_soft *soft, uint64_t hostAddr,
 {
 	int rv = 0;
 
-	if (down_interruptible(&soft->dmareadlock))
+	if (mutex_lock_interruptible(&soft->dmareadlock))
 		return -ERESTARTSYS;
 
 	atomic_set(&soft->dmawrite_done, 0);
@@ -372,29 +375,33 @@ do_mbcs_sram_dmaread(struct mbcs_soft *soft, uint64_t hostAddr,
 	*off += len;
 
 dmaread_exit:
-	up(&soft->dmareadlock);
+	mutex_unlock(&soft->dmareadlock);
 
 	return rv;
 }
 
-int mbcs_open(struct inode *ip, struct file *fp)
+static int mbcs_open(struct inode *ip, struct file *fp)
 {
 	struct mbcs_soft *soft;
 	int minor;
 
+	mutex_lock(&mbcs_mutex);
 	minor = iminor(ip);
 
+	/* Nothing protects access to this list... */
 	list_for_each_entry(soft, &soft_list, list) {
 		if (soft->nasid == minor) {
 			fp->private_data = soft->cxdev;
+			mutex_unlock(&mbcs_mutex);
 			return 0;
 		}
 	}
 
+	mutex_unlock(&mbcs_mutex);
 	return -ENODEV;
 }
 
-ssize_t mbcs_sram_read(struct file * fp, char __user *buf, size_t len, loff_t * off)
+static ssize_t mbcs_sram_read(struct file * fp, char __user *buf, size_t len, loff_t * off)
 {
 	struct cx_dev *cx_dev = fp->private_data;
 	struct mbcs_soft *soft = cx_dev->soft;
@@ -418,7 +425,7 @@ ssize_t mbcs_sram_read(struct file * fp, char __user *buf, size_t len, loff_t * 
 	return rv;
 }
 
-ssize_t
+static ssize_t
 mbcs_sram_write(struct file * fp, const char __user *buf, size_t len, loff_t * off)
 {
 	struct cx_dev *cx_dev = fp->private_data;
@@ -443,7 +450,7 @@ mbcs_sram_write(struct file * fp, const char __user *buf, size_t len, loff_t * o
 	return rv;
 }
 
-loff_t mbcs_sram_llseek(struct file * filp, loff_t off, int whence)
+static loff_t mbcs_sram_llseek(struct file * filp, loff_t off, int whence)
 {
 	loff_t newpos;
 
@@ -491,7 +498,7 @@ static void mbcs_gscr_pioaddr_set(struct mbcs_soft *soft)
 	soft->gscr_addr = mbcs_pioaddr(soft, MBCS_GSCR_START);
 }
 
-int mbcs_gscr_mmap(struct file *fp, struct vm_area_struct *vma)
+static int mbcs_gscr_mmap(struct file *fp, struct vm_area_struct *vma)
 {
 	struct cx_dev *cx_dev = fp->private_data;
 	struct mbcs_soft *soft = cx_dev->soft;
@@ -710,8 +717,8 @@ static ssize_t show_algo(struct device *dev, struct device_attribute *attr, char
 	 */
 	debug0 = *(uint64_t *) soft->debug_addr;
 
-	return sprintf(buf, "0x%lx 0x%lx\n",
-		       (debug0 >> 32), (debug0 & 0xffffffff));
+	return sprintf(buf, "0x%x 0x%x\n",
+		       upper_32_bits(debug0), lower_32_bits(debug0));
 }
 
 static ssize_t store_algo(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
@@ -763,9 +770,9 @@ static int mbcs_probe(struct cx_dev *dev, const struct cx_device_id *id)
 	init_waitqueue_head(&soft->dmaread_queue);
 	init_waitqueue_head(&soft->algo_queue);
 
-	init_MUTEX(&soft->dmawritelock);
-	init_MUTEX(&soft->dmareadlock);
-	init_MUTEX(&soft->algolock);
+	mutex_init(&soft->dmawritelock);
+	mutex_init(&soft->dmareadlock);
+	mutex_init(&soft->algolock);
 
 	mbcs_getdma_init(&soft->getdma);
 	mbcs_putdma_init(&soft->putdma);
@@ -793,7 +800,7 @@ static int mbcs_remove(struct cx_dev *dev)
 	return 0;
 }
 
-const struct cx_device_id __devinitdata mbcs_id_table[] = {
+static const struct cx_device_id __devinitdata mbcs_id_table[] = {
 	{
 	 .part_num = MBCS_PART_NUM,
 	 .mfg_num = MBCS_MFG_NUM,
@@ -807,7 +814,7 @@ const struct cx_device_id __devinitdata mbcs_id_table[] = {
 
 MODULE_DEVICE_TABLE(cx, mbcs_id_table);
 
-struct cx_drv mbcs_driver = {
+static struct cx_drv mbcs_driver = {
 	.name = DEVICE_NAME,
 	.id_table = mbcs_id_table,
 	.probe = mbcs_probe,
@@ -816,12 +823,7 @@ struct cx_drv mbcs_driver = {
 
 static void __exit mbcs_exit(void)
 {
-	int rv;
-
-	rv = unregister_chrdev(mbcs_major, DEVICE_NAME);
-	if (rv < 0)
-		DBG(KERN_ALERT "Error in unregister_chrdev: %d\n", rv);
-
+	unregister_chrdev(mbcs_major, DEVICE_NAME);
 	cx_driver_unregister(&mbcs_driver);
 }
 

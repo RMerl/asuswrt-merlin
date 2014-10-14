@@ -55,7 +55,10 @@ enum {
 	MLX4_CMD_CLOSE_PORT	 = 0xa,
 	MLX4_CMD_QUERY_HCA	 = 0xb,
 	MLX4_CMD_QUERY_PORT	 = 0x43,
+	MLX4_CMD_SENSE_PORT	 = 0x4d,
+	MLX4_CMD_HW_HEALTH_CHECK = 0x50,
 	MLX4_CMD_SET_PORT	 = 0xc,
+	MLX4_CMD_SET_NODE	 = 0x5a,
 	MLX4_CMD_ACCESS_DDR	 = 0x2e,
 	MLX4_CMD_MAP_ICM	 = 0xffa,
 	MLX4_CMD_UNMAP_ICM	 = 0xff9,
@@ -81,7 +84,7 @@ enum {
 	MLX4_CMD_SW2HW_CQ	 = 0x16,
 	MLX4_CMD_HW2SW_CQ	 = 0x17,
 	MLX4_CMD_QUERY_CQ	 = 0x18,
-	MLX4_CMD_RESIZE_CQ	 = 0x2c,
+	MLX4_CMD_MODIFY_CQ	 = 0x2c,
 
 	/* SRQ commands */
 	MLX4_CMD_SW2HW_SRQ	 = 0x35,
@@ -130,6 +133,16 @@ enum {
 
 enum {
 	MLX4_MAILBOX_SIZE	=  4096
+};
+
+enum {
+	/* set port opcode modifiers */
+	MLX4_SET_PORT_GENERAL   = 0x0,
+	MLX4_SET_PORT_RQP_CALC  = 0x1,
+	MLX4_SET_PORT_MAC_TABLE = 0x2,
+	MLX4_SET_PORT_VLAN_TABLE = 0x3,
+	MLX4_SET_PORT_PRIO_MAP  = 0x4,
+	MLX4_SET_PORT_GID_TABLE = 0x5,
 };
 
 struct mlx4_dev;

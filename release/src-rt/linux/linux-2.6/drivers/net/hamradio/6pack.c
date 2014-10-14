@@ -3,7 +3,7 @@
  *		devices like TTY. It interfaces between a raw TTY and the
  *		kernel's AX.25 protocol layers.
  *
- * Authors:	Andreas Könsgen <ajk@iehk.rwth-aachen.de>
+ * Authors:	Andreas KÃ¶nsgen <ajk@comnets.uni-bremen.de>
  *              Ralf Baechle DL5RB <ralf@linux-mips.org>
  *
  * Quite a lot of stuff "stolen" by Joerg Reuter from slip.c, written by
@@ -24,6 +24,7 @@
 #include <linux/errno.h>
 #include <linux/netdevice.h>
 #include <linux/timer.h>
+#include <linux/slab.h>
 #include <net/ax25.h>
 #include <linux/etherdevice.h>
 #include <linux/skbuff.h>
@@ -33,7 +34,8 @@
 #include <linux/init.h>
 #include <linux/ip.h>
 #include <linux/tcp.h>
-#include <asm/semaphore.h>
+#include <linux/semaphore.h>
+#include <linux/compat.h>
 #include <asm/atomic.h>
 
 #define SIXPACK_VERSION    "Revision: 0.3.0"
@@ -99,9 +101,6 @@ struct sixpack {
 	unsigned int		rx_count;
 	unsigned int		rx_count_cooked;
 
-	/* 6pack interface statistics. */
-	struct net_device_stats stats;
-
 	int			mtu;		/* Our mtu (to spot changes!) */
 	int			buffsize;       /* Max buffers sizes */
 
@@ -148,13 +147,13 @@ static void sp_xmit_on_air(unsigned long channel)
 
 	if (((sp->status1 & SIXP_DCD_MASK) == 0) && (random < sp->persistence)) {
 		sp->led_state = 0x70;
-		sp->tty->driver->write(sp->tty, &sp->led_state, 1);
+		sp->tty->ops->write(sp->tty, &sp->led_state, 1);
 		sp->tx_enable = 1;
-		actual = sp->tty->driver->write(sp->tty, sp->xbuff, sp->status2);
+		actual = sp->tty->ops->write(sp->tty, sp->xbuff, sp->status2);
 		sp->xleft -= actual;
 		sp->xhead += actual;
 		sp->led_state = 0x60;
-		sp->tty->driver->write(sp->tty, &sp->led_state, 1);
+		sp->tty->ops->write(sp->tty, &sp->led_state, 1);
 		sp->status2 = 0;
 	} else
 		mod_timer(&sp->tx_t, jiffies + ((when + 1) * HZ) / 100);
@@ -220,13 +219,13 @@ static void sp_encaps(struct sixpack *sp, unsigned char *icp, int len)
 	 */
 	if (sp->duplex == 1) {
 		sp->led_state = 0x70;
-		sp->tty->driver->write(sp->tty, &sp->led_state, 1);
+		sp->tty->ops->write(sp->tty, &sp->led_state, 1);
 		sp->tx_enable = 1;
-		actual = sp->tty->driver->write(sp->tty, sp->xbuff, count);
+		actual = sp->tty->ops->write(sp->tty, sp->xbuff, count);
 		sp->xleft = count - actual;
 		sp->xhead = sp->xbuff + actual;
 		sp->led_state = 0x60;
-		sp->tty->driver->write(sp->tty, &sp->led_state, 1);
+		sp->tty->ops->write(sp->tty, &sp->led_state, 1);
 	} else {
 		sp->xleft = count;
 		sp->xhead = sp->xbuff;
@@ -237,7 +236,7 @@ static void sp_encaps(struct sixpack *sp, unsigned char *icp, int len)
 	return;
 
 out_drop:
-	sp->stats.tx_dropped++;
+	sp->dev->stats.tx_dropped++;
 	netif_start_queue(sp->dev);
 	if (net_ratelimit())
 		printk(KERN_DEBUG "%s: %s - dropped.\n", sp->dev->name, msg);
@@ -245,20 +244,20 @@ out_drop:
 
 /* Encapsulate an IP datagram and kick it into a TTY queue. */
 
-static int sp_xmit(struct sk_buff *skb, struct net_device *dev)
+static netdev_tx_t sp_xmit(struct sk_buff *skb, struct net_device *dev)
 {
 	struct sixpack *sp = netdev_priv(dev);
 
 	spin_lock_bh(&sp->lock);
 	/* We were not busy, so we are now... :-) */
 	netif_stop_queue(dev);
-	sp->stats.tx_bytes += skb->len;
+	dev->stats.tx_bytes += skb->len;
 	sp_encaps(sp, skb->data, skb->len);
 	spin_unlock_bh(&sp->lock);
 
 	dev_kfree_skb(skb);
 
-	return 0;
+	return NETDEV_TX_OK;
 }
 
 static int sp_open_dev(struct net_device *dev)
@@ -288,19 +287,14 @@ static int sp_close(struct net_device *dev)
 
 /* Return the frame type ID */
 static int sp_header(struct sk_buff *skb, struct net_device *dev,
-	unsigned short type, void *daddr, void *saddr, unsigned len)
+		     unsigned short type, const void *daddr,
+		     const void *saddr, unsigned len)
 {
 #ifdef CONFIG_INET
-	if (type != htons(ETH_P_AX25))
+	if (type != ETH_P_AX25)
 		return ax25_hard_header(skb, dev, type, daddr, saddr, len);
 #endif
 	return 0;
-}
-
-static struct net_device_stats *sp_get_stats(struct net_device *dev)
-{
-	struct sixpack *sp = netdev_priv(dev);
-	return &sp->stats;
 }
 
 static int sp_set_mac_address(struct net_device *dev, void *addr)
@@ -308,7 +302,9 @@ static int sp_set_mac_address(struct net_device *dev, void *addr)
 	struct sockaddr_ax25 *sa = addr;
 
 	netif_tx_lock_bh(dev);
+	netif_addr_lock(dev);
 	memcpy(dev->dev_addr, &sa->sax25_call, AX25_ADDR_LEN);
+	netif_addr_unlock(dev);
 	netif_tx_unlock_bh(dev);
 
 	return 0;
@@ -323,29 +319,34 @@ static int sp_rebuild_header(struct sk_buff *skb)
 #endif
 }
 
+static const struct header_ops sp_header_ops = {
+	.create		= sp_header,
+	.rebuild	= sp_rebuild_header,
+};
+
+static const struct net_device_ops sp_netdev_ops = {
+	.ndo_open		= sp_open_dev,
+	.ndo_stop		= sp_close,
+	.ndo_start_xmit		= sp_xmit,
+	.ndo_set_mac_address    = sp_set_mac_address,
+};
+
 static void sp_setup(struct net_device *dev)
 {
 	/* Finish setting up the DEVICE info. */
-	dev->mtu		= SIXP_MTU;
-	dev->hard_start_xmit	= sp_xmit;
-	dev->open		= sp_open_dev;
+	dev->netdev_ops		= &sp_netdev_ops;
 	dev->destructor		= free_netdev;
-	dev->stop		= sp_close;
-	dev->hard_header	= sp_header;
-	dev->get_stats	        = sp_get_stats;
-	dev->set_mac_address    = sp_set_mac_address;
+	dev->mtu		= SIXP_MTU;
 	dev->hard_header_len	= AX25_MAX_HEADER_LEN;
+	dev->header_ops 	= &sp_header_ops;
+
 	dev->addr_len		= AX25_ADDR_LEN;
 	dev->type		= ARPHRD_AX25;
 	dev->tx_queue_len	= 10;
-	dev->rebuild_header	= sp_rebuild_header;
-	dev->tx_timeout		= NULL;
 
 	/* Only activated in AX.25 mode */
 	memcpy(dev->broadcast, &ax25_bcast, AX25_ADDR_LEN);
 	memcpy(dev->dev_addr, &ax25_defaddr, AX25_ADDR_LEN);
-
-	SET_MODULE_OWNER(dev);
 
 	dev->flags		= 0;
 }
@@ -365,7 +366,7 @@ static void sp_bump(struct sixpack *sp, char cmd)
 
 	count = sp->rcount + 1;
 
-	sp->stats.rx_bytes += count;
+	sp->dev->stats.rx_bytes += count;
 
 	if ((skb = dev_alloc_skb(count)) == NULL)
 		goto out_mem;
@@ -376,13 +377,12 @@ static void sp_bump(struct sixpack *sp, char cmd)
 	memcpy(ptr, sp->cooked_buf + 1, count);
 	skb->protocol = ax25_type_trans(skb, sp->dev);
 	netif_rx(skb);
-	sp->dev->last_rx = jiffies;
-	sp->stats.rx_packets++;
+	sp->dev->stats.rx_packets++;
 
 	return;
 
 out_mem:
-	sp->stats.rx_dropped++;
+	sp->dev->stats.rx_dropped++;
 }
 
 
@@ -431,7 +431,7 @@ static void sixpack_write_wakeup(struct tty_struct *tty)
 	if (sp->xleft <= 0)  {
 		/* Now serial buffer is almost free & we can start
 		 * transmission of another packet */
-		sp->stats.tx_packets++;
+		sp->dev->stats.tx_packets++;
 		clear_bit(TTY_DO_WRITE_WAKEUP, &tty->flags);
 		sp->tx_enable = 0;
 		netif_wake_queue(sp->dev);
@@ -439,7 +439,7 @@ static void sixpack_write_wakeup(struct tty_struct *tty)
 	}
 
 	if (sp->tx_enable) {
-		actual = tty->driver->write(tty, sp->xhead, sp->xleft);
+		actual = tty->ops->write(tty, sp->xhead, sp->xleft);
 		sp->xleft -= actual;
 		sp->xhead += actual;
 	}
@@ -479,16 +479,14 @@ static void sixpack_receive_buf(struct tty_struct *tty,
 		count--;
 		if (fp && *fp++) {
 			if (!test_and_set_bit(SIXPF_ERROR, &sp->flags))
-				sp->stats.rx_errors++;
+				sp->dev->stats.rx_errors++;
 			continue;
 		}
 	}
 	sixpack_decode(sp, buf, count1);
 
 	sp_put(sp);
-	if (test_and_clear_bit(TTY_THROTTLED, &tty->flags)
-	    && tty->driver->unthrottle)
-		tty->driver->unthrottle(tty);
+	tty_unthrottle(tty);
 }
 
 /*
@@ -549,8 +547,8 @@ static void resync_tnc(unsigned long channel)
 	/* resync the TNC */
 
 	sp->led_state = 0x60;
-	sp->tty->driver->write(sp->tty, &sp->led_state, 1);
-	sp->tty->driver->write(sp->tty, &resync_cmd, 1);
+	sp->tty->ops->write(sp->tty, &sp->led_state, 1);
+	sp->tty->ops->write(sp->tty, &resync_cmd, 1);
 
 
 	/* Start resync timer again -- the TNC might be still absent */
@@ -568,7 +566,7 @@ static inline int tnc_init(struct sixpack *sp)
 
 	tnc_set_sync_state(sp, TNC_UNSYNC_STARTUP);
 
-	sp->tty->driver->write(sp->tty, &inbyte, 1);
+	sp->tty->ops->write(sp->tty, &inbyte, 1);
 
 	del_timer(&sp->resync_t);
 	sp->resync_t.data = (unsigned long) sp;
@@ -596,6 +594,8 @@ static int sixpack_open(struct tty_struct *tty)
 
 	if (!capable(CAP_NET_ADMIN))
 		return -EPERM;
+	if (tty->ops->write == NULL)
+		return -EOPNOTSUPP;
 
 	dev = alloc_netdev(sizeof(struct sixpack), "sp%d", sp_setup);
 	if (!dev) {
@@ -608,7 +608,7 @@ static int sixpack_open(struct tty_struct *tty)
 
 	spin_lock_init(&sp->lock);
 	atomic_set(&sp->refcnt, 1);
-	init_MUTEX_LOCKED(&sp->dead_sem);
+	sema_init(&sp->dead_sem, 0);
 
 	/* !!! length of the buffers. MTU is IP MTU, not PACLEN!  */
 
@@ -692,11 +692,11 @@ static void sixpack_close(struct tty_struct *tty)
 {
 	struct sixpack *sp;
 
-	write_lock(&disc_data_lock);
+	write_lock_bh(&disc_data_lock);
 	sp = tty->disc_data;
 	tty->disc_data = NULL;
-	write_unlock(&disc_data_lock);
-	if (sp == 0)
+	write_unlock_bh(&disc_data_lock);
+	if (!sp)
 		return;
 
 	/*
@@ -721,11 +721,12 @@ static int sixpack_ioctl(struct tty_struct *tty, struct file *file,
 	unsigned int cmd, unsigned long arg)
 {
 	struct sixpack *sp = sp_get(tty);
-	struct net_device *dev = sp->dev;
+	struct net_device *dev;
 	unsigned int tmp, err;
 
 	if (!sp)
 		return -ENXIO;
+	dev = sp->dev;
 
 	switch(cmd) {
 	case SIOCGIFNAME:
@@ -757,26 +758,20 @@ static int sixpack_ioctl(struct tty_struct *tty, struct file *file,
 
 		if (copy_from_user(&addr,
 		                   (void __user *) arg, AX25_ADDR_LEN)) {
-			err = -EFAULT;
+				err = -EFAULT;
+				break;
+			}
+
+			netif_tx_lock_bh(dev);
+			memcpy(dev->dev_addr, &addr, AX25_ADDR_LEN);
+			netif_tx_unlock_bh(dev);
+
+			err = 0;
 			break;
 		}
 
-		netif_tx_lock_bh(dev);
-		memcpy(dev->dev_addr, &addr, AX25_ADDR_LEN);
-		netif_tx_unlock_bh(dev);
-
-		err = 0;
-		break;
-	}
-
-	/* Allow stty to read, but not set, the serial port */
-	case TCGETS:
-	case TCGETA:
-		err = n_tty_ioctl(tty, (struct file *) file, cmd, arg);
-		break;
-
 	default:
-		err = -ENOIOCTLCMD;
+		err = tty_mode_ioctl(tty, file, cmd, arg);
 	}
 
 	sp_put(sp);
@@ -784,22 +779,42 @@ static int sixpack_ioctl(struct tty_struct *tty, struct file *file,
 	return err;
 }
 
-static struct tty_ldisc sp_ldisc = {
+#ifdef CONFIG_COMPAT
+static long sixpack_compat_ioctl(struct tty_struct * tty, struct file * file,
+				unsigned int cmd, unsigned long arg)
+{
+	switch (cmd) {
+	case SIOCGIFNAME:
+	case SIOCGIFENCAP:
+	case SIOCSIFENCAP:
+	case SIOCSIFHWADDR:
+		return sixpack_ioctl(tty, file, cmd,
+				(unsigned long)compat_ptr(arg));
+	}
+
+	return -ENOIOCTLCMD;
+}
+#endif
+
+static struct tty_ldisc_ops sp_ldisc = {
 	.owner		= THIS_MODULE,
 	.magic		= TTY_LDISC_MAGIC,
 	.name		= "6pack",
 	.open		= sixpack_open,
 	.close		= sixpack_close,
 	.ioctl		= sixpack_ioctl,
+#ifdef CONFIG_COMPAT
+	.compat_ioctl	= sixpack_compat_ioctl,
+#endif
 	.receive_buf	= sixpack_receive_buf,
 	.write_wakeup	= sixpack_write_wakeup,
 };
 
 /* Initialize 6pack control device -- register 6pack line discipline */
 
-static char msg_banner[]  __initdata = KERN_INFO \
+static const char msg_banner[]  __initdata = KERN_INFO \
 	"AX.25: 6pack driver, " SIXPACK_VERSION "\n";
-static char msg_regfail[] __initdata = KERN_ERR  \
+static const char msg_regfail[] __initdata = KERN_ERR  \
 	"6pack: can't register line discipline (err = %d)\n";
 
 static int __init sixpack_init_driver(void)
@@ -915,9 +930,9 @@ static void decode_prio_command(struct sixpack *sp, unsigned char cmd)
 	} else { /* output watchdog char if idle */
 		if ((sp->status2 != 0) && (sp->duplex == 1)) {
 			sp->led_state = 0x70;
-			sp->tty->driver->write(sp->tty, &sp->led_state, 1);
+			sp->tty->ops->write(sp->tty, &sp->led_state, 1);
 			sp->tx_enable = 1;
-			actual = sp->tty->driver->write(sp->tty, sp->xbuff, sp->status2);
+			actual = sp->tty->ops->write(sp->tty, sp->xbuff, sp->status2);
 			sp->xleft -= actual;
 			sp->xhead += actual;
 			sp->led_state = 0x60;
@@ -927,7 +942,7 @@ static void decode_prio_command(struct sixpack *sp, unsigned char cmd)
 	}
 
 	/* needed to trigger the TNC watchdog */
-	sp->tty->driver->write(sp->tty, &sp->led_state, 1);
+	sp->tty->ops->write(sp->tty, &sp->led_state, 1);
 
         /* if the state byte has been received, the TNC is present,
            so the resync timer can be reset. */
@@ -957,12 +972,12 @@ static void decode_std_command(struct sixpack *sp, unsigned char cmd)
 			if ((sp->status & SIXP_RX_DCD_MASK) ==
 				SIXP_RX_DCD_MASK) {
 				sp->led_state = 0x68;
-				sp->tty->driver->write(sp->tty, &sp->led_state, 1);
+				sp->tty->ops->write(sp->tty, &sp->led_state, 1);
 			}
 		} else {
 			sp->led_state = 0x60;
 			/* fill trailing bytes with zeroes */
-			sp->tty->driver->write(sp->tty, &sp->led_state, 1);
+			sp->tty->ops->write(sp->tty, &sp->led_state, 1);
 			rest = sp->rx_count;
 			if (rest != 0)
 				 for (i = rest; i <= 3; i++)

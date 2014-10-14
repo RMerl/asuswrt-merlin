@@ -42,7 +42,7 @@
  *  0.0.18
  *    Implement support for Line-in capture on SB Live 24bit.
  *
- *  This code was initally based on code from ALSA's emu10k1x.c which is:
+ *  This code was initially based on code from ALSA's emu10k1x.c which is:
  *  Copyright (c) by Francisco Moraes <fmoraes@nc.rr.com>
  *
  *   This program is free software; you can redistribute it and/or modify
@@ -60,11 +60,9 @@
  *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
  *
  */
-#include <sound/driver.h>
 #include <linux/delay.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>
-#include <linux/slab.h>
 #include <linux/moduleparam.h>
 #include <sound/core.h>
 #include <sound/initval.h>
@@ -234,7 +232,7 @@ static void snd_ca0106_proc_dump_iec958( struct snd_info_buffer *buffer, u32 val
 			snd_iprintf(buffer, "user-defined\n");
 			break;
 		default:
-			snd_iprintf(buffer, "unkown\n");
+			snd_iprintf(buffer, "unknown\n");
 			break;
 		}
 		snd_iprintf(buffer, "Sample Bits: ");
@@ -305,7 +303,7 @@ static void snd_ca0106_proc_reg_write32(struct snd_info_entry *entry,
         while (!snd_info_get_line(buffer, line, sizeof(line))) {
                 if (sscanf(line, "%x %x", &reg, &val) != 2)
                         continue;
-                if ((reg < 0x40) && (reg >=0) && (val <= 0xffffffff) ) {
+		if (reg < 0x40 && val <= 0xffffffff) {
 			spin_lock_irqsave(&emu->emu_lock, flags);
 			outl(val, emu->port + (reg & 0xfffffffc));
 			spin_unlock_irqrestore(&emu->emu_lock, flags);
@@ -406,7 +404,7 @@ static void snd_ca0106_proc_reg_write(struct snd_info_entry *entry,
         while (!snd_info_get_line(buffer, line, sizeof(line))) {
                 if (sscanf(line, "%x %x %x", &reg, &channel_id, &val) != 3)
                         continue;
-                if ((reg < 0x80) && (reg >=0) && (val <= 0xffffffff) && (channel_id >=0) && (channel_id <= 3) )
+		if (reg < 0x80 && val <= 0xffffffff && channel_id <= 3)
                         snd_ca0106_ptr_write(emu, reg, channel_id, val);
         }
 }
@@ -445,13 +443,11 @@ int __devinit snd_ca0106_proc_init(struct snd_ca0106 * emu)
 		snd_info_set_text_ops(entry, emu, snd_ca0106_proc_reg_read1);
 		entry->c.text.write = snd_ca0106_proc_reg_write;
 		entry->mode |= S_IWUSR;
-//		entry->private_data = emu;
 	}
 	if(! snd_card_proc_new(emu->card, "ca0106_i2c", &entry)) {
-		snd_info_set_text_ops(entry, emu, snd_ca0106_proc_i2c_write);
 		entry->c.text.write = snd_ca0106_proc_i2c_write;
+		entry->private_data = emu;
 		entry->mode |= S_IWUSR;
-//		entry->private_data = emu;
 	}
 	if(! snd_card_proc_new(emu->card, "ca0106_regs2", &entry)) 
 		snd_info_set_text_ops(entry, emu, snd_ca0106_proc_reg_read2);

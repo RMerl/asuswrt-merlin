@@ -9,9 +9,6 @@ config CPU_FREQ
 	  clock speed, you need to either enable a dynamic cpufreq governor
 	  (see below) after boot, or use a userspace tool.
 
-	  To compile this driver as a module, choose M here: the
-	  module will be called cpufreq.
-
 	  For details, take a look at <file:Documentation/cpu-freq>.
 
 	  If in doubt, say N.
@@ -56,10 +53,6 @@ config CPU_FREQ_STAT_DETAILS
 
 	  If in doubt, say N.
 
-# Note that it is not currently possible to set the other governors (such as ondemand)
-# as the default, since if they fail to initialise, cpufreq will be
-# left in an undefined state.
-
 choice
 	prompt "Default CPUFreq governor"
 	default CPU_FREQ_DEFAULT_GOV_USERSPACE if CPU_FREQ_SA1100 || CPU_FREQ_SA1110
@@ -76,15 +69,47 @@ config CPU_FREQ_DEFAULT_GOV_PERFORMANCE
 	  the frequency statically to the highest frequency supported by
 	  the CPU.
 
+config CPU_FREQ_DEFAULT_GOV_POWERSAVE
+	bool "powersave"
+	depends on EXPERT
+	select CPU_FREQ_GOV_POWERSAVE
+	help
+	  Use the CPUFreq governor 'powersave' as default. This sets
+	  the frequency statically to the lowest frequency supported by
+	  the CPU.
+
 config CPU_FREQ_DEFAULT_GOV_USERSPACE
 	bool "userspace"
 	select CPU_FREQ_GOV_USERSPACE
 	help
 	  Use the CPUFreq governor 'userspace' as default. This allows
-	  you to set the CPU frequency manually or when an userspace 
+	  you to set the CPU frequency manually or when a userspace 
 	  program shall be able to set the CPU dynamically without having
 	  to enable the userspace governor manually.
 
+config CPU_FREQ_DEFAULT_GOV_ONDEMAND
+	bool "ondemand"
+	select CPU_FREQ_GOV_ONDEMAND
+	select CPU_FREQ_GOV_PERFORMANCE
+	help
+	  Use the CPUFreq governor 'ondemand' as default. This allows
+	  you to get a full dynamic frequency capable system by simply
+	  loading your cpufreq low-level hardware driver.
+	  Be aware that not all cpufreq drivers support the ondemand
+	  governor. If unsure have a look at the help section of the
+	  driver. Fallback governor will be the performance governor.
+
+config CPU_FREQ_DEFAULT_GOV_CONSERVATIVE
+	bool "conservative"
+	select CPU_FREQ_GOV_CONSERVATIVE
+	select CPU_FREQ_GOV_PERFORMANCE
+	help
+	  Use the CPUFreq governor 'conservative' as default. This allows
+	  you to get a full dynamic frequency capable system by simply
+	  loading your cpufreq low-level hardware driver.
+	  Be aware that not all cpufreq drivers support the conservative
+	  governor. If unsure have a look at the help section of the
+	  driver. Fallback governor will be the performance governor.
 endchoice
 
 config CPU_FREQ_GOV_PERFORMANCE
@@ -113,7 +138,7 @@ config CPU_FREQ_GOV_USERSPACE
 	tristate "'userspace' governor for userspace frequency scaling"
 	help
 	  Enable this cpufreq governor when you either want to set the
-	  CPU frequency manually or when an userspace program shall
+	  CPU frequency manually or when a userspace program shall
 	  be able to set the CPU dynamically, like on LART 
 	  <http://www.lartmaker.nl/>.
 

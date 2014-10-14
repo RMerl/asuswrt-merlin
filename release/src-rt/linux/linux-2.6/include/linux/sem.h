@@ -78,6 +78,8 @@ struct  seminfo {
 
 #ifdef __KERNEL__
 #include <asm/atomic.h>
+#include <linux/rcupdate.h>
+#include <linux/cache.h>
 
 struct task_struct;
 
@@ -85,32 +87,31 @@ struct task_struct;
 struct sem {
 	int	semval;		/* current value */
 	int	sempid;		/* pid of last operation */
+	struct list_head sem_pending; /* pending single-sop operations */
 };
 
 /* One sem_array data structure for each set of semaphores in the system. */
 struct sem_array {
-	struct kern_ipc_perm	sem_perm;	/* permissions .. see ipc.h */
-	int			sem_id;
+	struct kern_ipc_perm	____cacheline_aligned_in_smp
+				sem_perm;	/* permissions .. see ipc.h */
 	time_t			sem_otime;	/* last semop time */
 	time_t			sem_ctime;	/* last change time */
 	struct sem		*sem_base;	/* ptr to first semaphore in array */
-	struct sem_queue	*sem_pending;	/* pending operations to be processed */
-	struct sem_queue	**sem_pending_last; /* last pending operation */
-	struct sem_undo		*undo;		/* undo requests on this array */
-	unsigned long		sem_nsems;	/* no. of semaphores in array */
+	struct list_head	sem_pending;	/* pending operations to be processed */
+	struct list_head	list_id;	/* undo requests on this array */
+	int			sem_nsems;	/* no. of semaphores in array */
+	int			complex_count;	/* pending complex operations */
 };
 
 /* One queue for each sleeping process in the system. */
 struct sem_queue {
-	struct sem_queue *	next;	 /* next entry in the queue */
-	struct sem_queue **	prev;	 /* previous entry in the queue, *(q->prev) == q */
-	struct task_struct*	sleeper; /* this process */
-	struct sem_undo *	undo;	 /* undo structure */
+	struct list_head	simple_list; /* queue of pending operations */
+	struct list_head	list;	 /* queue of pending operations */
+	struct task_struct	*sleeper; /* this process */
+	struct sem_undo		*undo;	 /* undo structure */
 	int    			pid;	 /* process id of requesting process */
 	int    			status;	 /* completion status of operation */
-	struct sem_array *	sma;	 /* semaphore array for operations */
-	int			id;	 /* internal sem id */
-	struct sembuf *		sops;	 /* array of pending operations */
+	struct sembuf		*sops;	 /* array of pending operations */
 	int			nsops;	 /* number of operations */
 	int			alter;   /* does the operation alter the array? */
 };
@@ -119,8 +120,11 @@ struct sem_queue {
  * when the process exits.
  */
 struct sem_undo {
-	struct sem_undo *	proc_next;	/* next entry on this process */
-	struct sem_undo *	id_next;	/* next entry on this semaphore set */
+	struct list_head	list_proc;	/* per-process list: all undos from one process. */
+						/* rcu protected */
+	struct rcu_head		rcu;		/* rcu struct for sem_undo() */
+	struct sem_undo_list	*ulp;		/* sem_undo_list for the process */
+	struct list_head	list_id;	/* per semaphore array list: all undos for one array */
 	int			semid;		/* semaphore set identifier */
 	short *			semadj;		/* array of adjustments, one per semaphore */
 };
@@ -129,9 +133,9 @@ struct sem_undo {
  * that may be shared among all a CLONE_SYSVSEM task group.
  */ 
 struct sem_undo_list {
-	atomic_t	refcnt;
-	spinlock_t	lock;
-	struct sem_undo	*proc_list;
+	atomic_t		refcnt;
+	spinlock_t		lock;
+	struct list_head	list_proc;
 };
 
 struct sysv_sem {

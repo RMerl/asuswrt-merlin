@@ -8,9 +8,10 @@
  *
  * Author: Andy Fleming
  * Maintainer: Kumar Gala
+ * Modifier: Sandeep Gopalpet <sandeep.kumar@freescale.com>
  *
- * Copyright (c) 2002-2006 Freescale Semiconductor, Inc.
- * Copyright (c) 2007 MontaVista Software, Inc.
+ * Copyright 2002-2009 Freescale Semiconductor, Inc.
+ * Copyright 2007 MontaVista Software, Inc.
  *
  * This program is free software; you can redistribute  it and/or modify it
  * under  the terms of  the GNU General  Public License as published by the
@@ -25,11 +26,8 @@
  *
  *  Theory of operation
  *
- *  The driver is initialized through platform_device.  Structures which
- *  define the configuration needed by the board are defined in a
- *  board structure in arch/ppc/platforms (though I do not
- *  discount the possibility that other architectures could one
- *  day be supported.
+ *  The driver is initialized through of_device. Configuration information
+ *  is therefore conveyed through an OF-style device tree.
  *
  *  The Gianfar Ethernet Controller uses a ring of buffer
  *  descriptors.  The beginning is indicated by a register
@@ -44,8 +42,7 @@
  *  happen immediately, but will wait until either a set number
  *  of frames or amount of time have passed).  In NAPI, the
  *  interrupt handler will signal there is work to be done, and
- *  exit.  Without NAPI, the packet(s) will be handled
- *  immediately.  Both methods will start at the last known empty
+ *  exit. This method will start at the last known empty
  *  descriptor, and process every subsequent descriptor until there
  *  are none left with data (NAPI will stop after a set number of
  *  packets to give time to other tasks, but will eventually
@@ -79,13 +76,16 @@
 #include <linux/if_vlan.h>
 #include <linux/spinlock.h>
 #include <linux/mm.h>
-#include <linux/platform_device.h>
+#include <linux/of_mdio.h>
+#include <linux/of_platform.h>
 #include <linux/ip.h>
 #include <linux/tcp.h>
 #include <linux/udp.h>
 #include <linux/in.h>
+#include <linux/net_tstamp.h>
 
 #include <asm/io.h>
+#include <asm/reg.h>
 #include <asm/irq.h>
 #include <asm/uaccess.h>
 #include <linux/module.h>
@@ -93,30 +93,28 @@
 #include <linux/crc32.h>
 #include <linux/mii.h>
 #include <linux/phy.h>
+#include <linux/phy_fixed.h>
+#include <linux/of.h>
+#include <linux/of_net.h>
 
 #include "gianfar.h"
-#include "gianfar_mii.h"
+#include "fsl_pq_mdio.h"
 
 #define TX_TIMEOUT      (1*HZ)
-#define SKB_ALLOC_TIMEOUT 1000000
 #undef BRIEF_GFAR_ERRORS
 #undef VERBOSE_GFAR_ERRORS
-
-#ifdef CONFIG_GFAR_NAPI
-#define RECEIVE(x) netif_receive_skb(x)
-#else
-#define RECEIVE(x) netif_rx(x)
-#endif
 
 const char gfar_driver_name[] = "Gianfar Ethernet";
 const char gfar_driver_version[] = "1.3";
 
 static int gfar_enet_open(struct net_device *dev);
 static int gfar_start_xmit(struct sk_buff *skb, struct net_device *dev);
+static void gfar_reset_task(struct work_struct *work);
 static void gfar_timeout(struct net_device *dev);
 static int gfar_close(struct net_device *dev);
-struct sk_buff *gfar_new_skb(struct net_device *dev, struct rxbd8 *bdp);
-static struct net_device_stats *gfar_get_stats(struct net_device *dev);
+struct sk_buff *gfar_new_skb(struct net_device *dev);
+static void gfar_new_rxbdp(struct gfar_priv_rx_q *rx_queue, struct rxbd8 *bdp,
+		struct sk_buff *skb);
 static int gfar_set_mac_address(struct net_device *dev);
 static int gfar_change_mtu(struct net_device *dev, int new_mtu);
 static irqreturn_t gfar_error(int irq, void *dev_id);
@@ -125,226 +123,1040 @@ static irqreturn_t gfar_interrupt(int irq, void *dev_id);
 static void adjust_link(struct net_device *dev);
 static void init_registers(struct net_device *dev);
 static int init_phy(struct net_device *dev);
-static int gfar_probe(struct platform_device *pdev);
-static int gfar_remove(struct platform_device *pdev);
+static int gfar_probe(struct platform_device *ofdev);
+static int gfar_remove(struct platform_device *ofdev);
 static void free_skb_resources(struct gfar_private *priv);
 static void gfar_set_multi(struct net_device *dev);
 static void gfar_set_hash_for_addr(struct net_device *dev, u8 *addr);
-#ifdef CONFIG_GFAR_NAPI
-static int gfar_poll(struct net_device *dev, int *budget);
-#endif
+static void gfar_configure_serdes(struct net_device *dev);
+static int gfar_poll(struct napi_struct *napi, int budget);
 #ifdef CONFIG_NET_POLL_CONTROLLER
 static void gfar_netpoll(struct net_device *dev);
 #endif
-int gfar_clean_rx_ring(struct net_device *dev, int rx_work_limit);
-static int gfar_process_frame(struct net_device *dev, struct sk_buff *skb, int length);
+int gfar_clean_rx_ring(struct gfar_priv_rx_q *rx_queue, int rx_work_limit);
+static int gfar_clean_tx_ring(struct gfar_priv_tx_q *tx_queue);
+static int gfar_process_frame(struct net_device *dev, struct sk_buff *skb,
+			      int amount_pull);
 static void gfar_vlan_rx_register(struct net_device *netdev,
 		                struct vlan_group *grp);
 void gfar_halt(struct net_device *dev);
+static void gfar_halt_nodisable(struct net_device *dev);
 void gfar_start(struct net_device *dev);
 static void gfar_clear_exact_match(struct net_device *dev);
-static void gfar_set_mac_for_addr(struct net_device *dev, int num, u8 *addr);
-
-extern const struct ethtool_ops gfar_ethtool_ops;
+static void gfar_set_mac_for_addr(struct net_device *dev, int num,
+				  const u8 *addr);
+static int gfar_ioctl(struct net_device *dev, struct ifreq *rq, int cmd);
 
 MODULE_AUTHOR("Freescale Semiconductor, Inc");
 MODULE_DESCRIPTION("Gianfar Ethernet Driver");
 MODULE_LICENSE("GPL");
 
+static void gfar_init_rxbdp(struct gfar_priv_rx_q *rx_queue, struct rxbd8 *bdp,
+			    dma_addr_t buf)
+{
+	u32 lstatus;
+
+	bdp->bufPtr = buf;
+
+	lstatus = BD_LFLAG(RXBD_EMPTY | RXBD_INTERRUPT);
+	if (bdp == rx_queue->rx_bd_base + rx_queue->rx_ring_size - 1)
+		lstatus |= BD_LFLAG(RXBD_WRAP);
+
+	eieio();
+
+	bdp->lstatus = lstatus;
+}
+
+static int gfar_init_bds(struct net_device *ndev)
+{
+	struct gfar_private *priv = netdev_priv(ndev);
+	struct gfar_priv_tx_q *tx_queue = NULL;
+	struct gfar_priv_rx_q *rx_queue = NULL;
+	struct txbd8 *txbdp;
+	struct rxbd8 *rxbdp;
+	int i, j;
+
+	for (i = 0; i < priv->num_tx_queues; i++) {
+		tx_queue = priv->tx_queue[i];
+		/* Initialize some variables in our dev structure */
+		tx_queue->num_txbdfree = tx_queue->tx_ring_size;
+		tx_queue->dirty_tx = tx_queue->tx_bd_base;
+		tx_queue->cur_tx = tx_queue->tx_bd_base;
+		tx_queue->skb_curtx = 0;
+		tx_queue->skb_dirtytx = 0;
+
+		/* Initialize Transmit Descriptor Ring */
+		txbdp = tx_queue->tx_bd_base;
+		for (j = 0; j < tx_queue->tx_ring_size; j++) {
+			txbdp->lstatus = 0;
+			txbdp->bufPtr = 0;
+			txbdp++;
+		}
+
+		/* Set the last descriptor in the ring to indicate wrap */
+		txbdp--;
+		txbdp->status |= TXBD_WRAP;
+	}
+
+	for (i = 0; i < priv->num_rx_queues; i++) {
+		rx_queue = priv->rx_queue[i];
+		rx_queue->cur_rx = rx_queue->rx_bd_base;
+		rx_queue->skb_currx = 0;
+		rxbdp = rx_queue->rx_bd_base;
+
+		for (j = 0; j < rx_queue->rx_ring_size; j++) {
+			struct sk_buff *skb = rx_queue->rx_skbuff[j];
+
+			if (skb) {
+				gfar_init_rxbdp(rx_queue, rxbdp,
+						rxbdp->bufPtr);
+			} else {
+				skb = gfar_new_skb(ndev);
+				if (!skb) {
+					pr_err("%s: Can't allocate RX buffers\n",
+							ndev->name);
+					goto err_rxalloc_fail;
+				}
+				rx_queue->rx_skbuff[j] = skb;
+
+				gfar_new_rxbdp(rx_queue, rxbdp, skb);
+			}
+
+			rxbdp++;
+		}
+
+	}
+
+	return 0;
+
+err_rxalloc_fail:
+	free_skb_resources(priv);
+	return -ENOMEM;
+}
+
+static int gfar_alloc_skb_resources(struct net_device *ndev)
+{
+	void *vaddr;
+	dma_addr_t addr;
+	int i, j, k;
+	struct gfar_private *priv = netdev_priv(ndev);
+	struct device *dev = &priv->ofdev->dev;
+	struct gfar_priv_tx_q *tx_queue = NULL;
+	struct gfar_priv_rx_q *rx_queue = NULL;
+
+	priv->total_tx_ring_size = 0;
+	for (i = 0; i < priv->num_tx_queues; i++)
+		priv->total_tx_ring_size += priv->tx_queue[i]->tx_ring_size;
+
+	priv->total_rx_ring_size = 0;
+	for (i = 0; i < priv->num_rx_queues; i++)
+		priv->total_rx_ring_size += priv->rx_queue[i]->rx_ring_size;
+
+	/* Allocate memory for the buffer descriptors */
+	vaddr = dma_alloc_coherent(dev,
+			sizeof(struct txbd8) * priv->total_tx_ring_size +
+			sizeof(struct rxbd8) * priv->total_rx_ring_size,
+			&addr, GFP_KERNEL);
+	if (!vaddr) {
+		if (netif_msg_ifup(priv))
+			pr_err("%s: Could not allocate buffer descriptors!\n",
+			       ndev->name);
+		return -ENOMEM;
+	}
+
+	for (i = 0; i < priv->num_tx_queues; i++) {
+		tx_queue = priv->tx_queue[i];
+		tx_queue->tx_bd_base = (struct txbd8 *) vaddr;
+		tx_queue->tx_bd_dma_base = addr;
+		tx_queue->dev = ndev;
+		/* enet DMA only understands physical addresses */
+		addr    += sizeof(struct txbd8) *tx_queue->tx_ring_size;
+		vaddr   += sizeof(struct txbd8) *tx_queue->tx_ring_size;
+	}
+
+	/* Start the rx descriptor ring where the tx ring leaves off */
+	for (i = 0; i < priv->num_rx_queues; i++) {
+		rx_queue = priv->rx_queue[i];
+		rx_queue->rx_bd_base = (struct rxbd8 *) vaddr;
+		rx_queue->rx_bd_dma_base = addr;
+		rx_queue->dev = ndev;
+		addr    += sizeof (struct rxbd8) * rx_queue->rx_ring_size;
+		vaddr   += sizeof (struct rxbd8) * rx_queue->rx_ring_size;
+	}
+
+	/* Setup the skbuff rings */
+	for (i = 0; i < priv->num_tx_queues; i++) {
+		tx_queue = priv->tx_queue[i];
+		tx_queue->tx_skbuff = kmalloc(sizeof(*tx_queue->tx_skbuff) *
+				  tx_queue->tx_ring_size, GFP_KERNEL);
+		if (!tx_queue->tx_skbuff) {
+			if (netif_msg_ifup(priv))
+				pr_err("%s: Could not allocate tx_skbuff\n",
+						ndev->name);
+			goto cleanup;
+		}
+
+		for (k = 0; k < tx_queue->tx_ring_size; k++)
+			tx_queue->tx_skbuff[k] = NULL;
+	}
+
+	for (i = 0; i < priv->num_rx_queues; i++) {
+		rx_queue = priv->rx_queue[i];
+		rx_queue->rx_skbuff = kmalloc(sizeof(*rx_queue->rx_skbuff) *
+				  rx_queue->rx_ring_size, GFP_KERNEL);
+
+		if (!rx_queue->rx_skbuff) {
+			if (netif_msg_ifup(priv))
+				pr_err("%s: Could not allocate rx_skbuff\n",
+				       ndev->name);
+			goto cleanup;
+		}
+
+		for (j = 0; j < rx_queue->rx_ring_size; j++)
+			rx_queue->rx_skbuff[j] = NULL;
+	}
+
+	if (gfar_init_bds(ndev))
+		goto cleanup;
+
+	return 0;
+
+cleanup:
+	free_skb_resources(priv);
+	return -ENOMEM;
+}
+
+static void gfar_init_tx_rx_base(struct gfar_private *priv)
+{
+	struct gfar __iomem *regs = priv->gfargrp[0].regs;
+	u32 __iomem *baddr;
+	int i;
+
+	baddr = &regs->tbase0;
+	for(i = 0; i < priv->num_tx_queues; i++) {
+		gfar_write(baddr, priv->tx_queue[i]->tx_bd_dma_base);
+		baddr	+= 2;
+	}
+
+	baddr = &regs->rbase0;
+	for(i = 0; i < priv->num_rx_queues; i++) {
+		gfar_write(baddr, priv->rx_queue[i]->rx_bd_dma_base);
+		baddr   += 2;
+	}
+}
+
+static void gfar_init_mac(struct net_device *ndev)
+{
+	struct gfar_private *priv = netdev_priv(ndev);
+	struct gfar __iomem *regs = priv->gfargrp[0].regs;
+	u32 rctrl = 0;
+	u32 tctrl = 0;
+	u32 attrs = 0;
+
+	/* write the tx/rx base registers */
+	gfar_init_tx_rx_base(priv);
+
+	/* Configure the coalescing support */
+	gfar_configure_coalescing(priv, 0xFF, 0xFF);
+
+	if (priv->rx_filer_enable) {
+		rctrl |= RCTRL_FILREN;
+		/* Program the RIR0 reg with the required distribution */
+		gfar_write(&regs->rir0, DEFAULT_RIR0);
+	}
+
+	if (priv->rx_csum_enable)
+		rctrl |= RCTRL_CHECKSUMMING;
+
+	if (priv->extended_hash) {
+		rctrl |= RCTRL_EXTHASH;
+
+		gfar_clear_exact_match(ndev);
+		rctrl |= RCTRL_EMEN;
+	}
+
+	if (priv->padding) {
+		rctrl &= ~RCTRL_PAL_MASK;
+		rctrl |= RCTRL_PADDING(priv->padding);
+	}
+
+	/* Insert receive time stamps into padding alignment bytes */
+	if (priv->device_flags & FSL_GIANFAR_DEV_HAS_TIMER) {
+		rctrl &= ~RCTRL_PAL_MASK;
+		rctrl |= RCTRL_PADDING(8);
+		priv->padding = 8;
+	}
+
+	/* Enable HW time stamping if requested from user space */
+	if (priv->hwts_rx_en)
+		rctrl |= RCTRL_PRSDEP_INIT | RCTRL_TS_ENABLE;
+
+	/* keep vlan related bits if it's enabled */
+	if (priv->vlgrp) {
+		rctrl |= RCTRL_VLEX | RCTRL_PRSDEP_INIT;
+		tctrl |= TCTRL_VLINS;
+	}
+
+	/* Init rctrl based on our settings */
+	gfar_write(&regs->rctrl, rctrl);
+
+	if (ndev->features & NETIF_F_IP_CSUM)
+		tctrl |= TCTRL_INIT_CSUM;
+
+	tctrl |= TCTRL_TXSCHED_PRIO;
+
+	gfar_write(&regs->tctrl, tctrl);
+
+	/* Set the extraction length and index */
+	attrs = ATTRELI_EL(priv->rx_stash_size) |
+		ATTRELI_EI(priv->rx_stash_index);
+
+	gfar_write(&regs->attreli, attrs);
+
+	/* Start with defaults, and add stashing or locking
+	 * depending on the approprate variables */
+	attrs = ATTR_INIT_SETTINGS;
+
+	if (priv->bd_stash_en)
+		attrs |= ATTR_BDSTASH;
+
+	if (priv->rx_stash_size != 0)
+		attrs |= ATTR_BUFSTASH;
+
+	gfar_write(&regs->attr, attrs);
+
+	gfar_write(&regs->fifo_tx_thr, priv->fifo_threshold);
+	gfar_write(&regs->fifo_tx_starve, priv->fifo_starve);
+	gfar_write(&regs->fifo_tx_starve_shutoff, priv->fifo_starve_off);
+}
+
+static struct net_device_stats *gfar_get_stats(struct net_device *dev)
+{
+	struct gfar_private *priv = netdev_priv(dev);
+	unsigned long rx_packets = 0, rx_bytes = 0, rx_dropped = 0;
+	unsigned long tx_packets = 0, tx_bytes = 0;
+	int i = 0;
+
+	for (i = 0; i < priv->num_rx_queues; i++) {
+		rx_packets += priv->rx_queue[i]->stats.rx_packets;
+		rx_bytes += priv->rx_queue[i]->stats.rx_bytes;
+		rx_dropped += priv->rx_queue[i]->stats.rx_dropped;
+	}
+
+	dev->stats.rx_packets = rx_packets;
+	dev->stats.rx_bytes = rx_bytes;
+	dev->stats.rx_dropped = rx_dropped;
+
+	for (i = 0; i < priv->num_tx_queues; i++) {
+		tx_bytes += priv->tx_queue[i]->stats.tx_bytes;
+		tx_packets += priv->tx_queue[i]->stats.tx_packets;
+	}
+
+	dev->stats.tx_bytes = tx_bytes;
+	dev->stats.tx_packets = tx_packets;
+
+	return &dev->stats;
+}
+
+static const struct net_device_ops gfar_netdev_ops = {
+	.ndo_open = gfar_enet_open,
+	.ndo_start_xmit = gfar_start_xmit,
+	.ndo_stop = gfar_close,
+	.ndo_change_mtu = gfar_change_mtu,
+	.ndo_set_multicast_list = gfar_set_multi,
+	.ndo_tx_timeout = gfar_timeout,
+	.ndo_do_ioctl = gfar_ioctl,
+	.ndo_get_stats = gfar_get_stats,
+	.ndo_vlan_rx_register = gfar_vlan_rx_register,
+	.ndo_set_mac_address = eth_mac_addr,
+	.ndo_validate_addr = eth_validate_addr,
+#ifdef CONFIG_NET_POLL_CONTROLLER
+	.ndo_poll_controller = gfar_netpoll,
+#endif
+};
+
+unsigned int ftp_rqfpr[MAX_FILER_IDX + 1];
+unsigned int ftp_rqfcr[MAX_FILER_IDX + 1];
+
+void lock_rx_qs(struct gfar_private *priv)
+{
+	int i = 0x0;
+
+	for (i = 0; i < priv->num_rx_queues; i++)
+		spin_lock(&priv->rx_queue[i]->rxlock);
+}
+
+void lock_tx_qs(struct gfar_private *priv)
+{
+	int i = 0x0;
+
+	for (i = 0; i < priv->num_tx_queues; i++)
+		spin_lock(&priv->tx_queue[i]->txlock);
+}
+
+void unlock_rx_qs(struct gfar_private *priv)
+{
+	int i = 0x0;
+
+	for (i = 0; i < priv->num_rx_queues; i++)
+		spin_unlock(&priv->rx_queue[i]->rxlock);
+}
+
+void unlock_tx_qs(struct gfar_private *priv)
+{
+	int i = 0x0;
+
+	for (i = 0; i < priv->num_tx_queues; i++)
+		spin_unlock(&priv->tx_queue[i]->txlock);
+}
+
 /* Returns 1 if incoming frames use an FCB */
 static inline int gfar_uses_fcb(struct gfar_private *priv)
 {
-	return (priv->vlan_enable || priv->rx_csum_enable);
+	return priv->vlgrp || priv->rx_csum_enable ||
+		(priv->device_flags & FSL_GIANFAR_DEV_HAS_TIMER);
 }
 
-/* Set up the ethernet device structure, private data,
- * and anything else we need before we start */
-static int gfar_probe(struct platform_device *pdev)
+static void free_tx_pointers(struct gfar_private *priv)
 {
-	u32 tempval;
-	struct net_device *dev = NULL;
-	struct gfar_private *priv = NULL;
-	struct gianfar_platform_data *einfo;
-	struct resource *r;
-	int idx;
-	int err = 0;
+	int i = 0;
 
-	einfo = (struct gianfar_platform_data *) pdev->dev.platform_data;
+	for (i = 0; i < priv->num_tx_queues; i++)
+		kfree(priv->tx_queue[i]);
+}
 
-	if (NULL == einfo) {
-		printk(KERN_ERR "gfar %d: Missing additional data!\n",
-		       pdev->id);
+static void free_rx_pointers(struct gfar_private *priv)
+{
+	int i = 0;
 
-		return -ENODEV;
+	for (i = 0; i < priv->num_rx_queues; i++)
+		kfree(priv->rx_queue[i]);
+}
+
+static void unmap_group_regs(struct gfar_private *priv)
+{
+	int i = 0;
+
+	for (i = 0; i < MAXGROUPS; i++)
+		if (priv->gfargrp[i].regs)
+			iounmap(priv->gfargrp[i].regs);
+}
+
+static void disable_napi(struct gfar_private *priv)
+{
+	int i = 0;
+
+	for (i = 0; i < priv->num_grps; i++)
+		napi_disable(&priv->gfargrp[i].napi);
+}
+
+static void enable_napi(struct gfar_private *priv)
+{
+	int i = 0;
+
+	for (i = 0; i < priv->num_grps; i++)
+		napi_enable(&priv->gfargrp[i].napi);
+}
+
+static int gfar_parse_group(struct device_node *np,
+		struct gfar_private *priv, const char *model)
+{
+	u32 *queue_mask;
+
+	priv->gfargrp[priv->num_grps].regs = of_iomap(np, 0);
+	if (!priv->gfargrp[priv->num_grps].regs)
+		return -ENOMEM;
+
+	priv->gfargrp[priv->num_grps].interruptTransmit =
+			irq_of_parse_and_map(np, 0);
+
+	/* If we aren't the FEC we have multiple interrupts */
+	if (model && strcasecmp(model, "FEC")) {
+		priv->gfargrp[priv->num_grps].interruptReceive =
+			irq_of_parse_and_map(np, 1);
+		priv->gfargrp[priv->num_grps].interruptError =
+			irq_of_parse_and_map(np,2);
+		if (priv->gfargrp[priv->num_grps].interruptTransmit == NO_IRQ ||
+		    priv->gfargrp[priv->num_grps].interruptReceive  == NO_IRQ ||
+		    priv->gfargrp[priv->num_grps].interruptError    == NO_IRQ)
+			return -EINVAL;
 	}
 
-	/* Create an ethernet device instance */
-	dev = alloc_etherdev(sizeof (*priv));
+	priv->gfargrp[priv->num_grps].grp_id = priv->num_grps;
+	priv->gfargrp[priv->num_grps].priv = priv;
+	spin_lock_init(&priv->gfargrp[priv->num_grps].grplock);
+	if(priv->mode == MQ_MG_MODE) {
+		queue_mask = (u32 *)of_get_property(np,
+					"fsl,rx-bit-map", NULL);
+		priv->gfargrp[priv->num_grps].rx_bit_map =
+			queue_mask ?  *queue_mask :(DEFAULT_MAPPING >> priv->num_grps);
+		queue_mask = (u32 *)of_get_property(np,
+					"fsl,tx-bit-map", NULL);
+		priv->gfargrp[priv->num_grps].tx_bit_map =
+			queue_mask ? *queue_mask : (DEFAULT_MAPPING >> priv->num_grps);
+	} else {
+		priv->gfargrp[priv->num_grps].rx_bit_map = 0xFF;
+		priv->gfargrp[priv->num_grps].tx_bit_map = 0xFF;
+	}
+	priv->num_grps++;
 
+	return 0;
+}
+
+static int gfar_of_init(struct platform_device *ofdev, struct net_device **pdev)
+{
+	const char *model;
+	const char *ctype;
+	const void *mac_addr;
+	int err = 0, i;
+	struct net_device *dev = NULL;
+	struct gfar_private *priv = NULL;
+	struct device_node *np = ofdev->dev.of_node;
+	struct device_node *child = NULL;
+	const u32 *stash;
+	const u32 *stash_len;
+	const u32 *stash_idx;
+	unsigned int num_tx_qs, num_rx_qs;
+	u32 *tx_queues, *rx_queues;
+
+	if (!np || !of_device_is_available(np))
+		return -ENODEV;
+
+	/* parse the num of tx and rx queues */
+	tx_queues = (u32 *)of_get_property(np, "fsl,num_tx_queues", NULL);
+	num_tx_qs = tx_queues ? *tx_queues : 1;
+
+	if (num_tx_qs > MAX_TX_QS) {
+		printk(KERN_ERR "num_tx_qs(=%d) greater than MAX_TX_QS(=%d)\n",
+				num_tx_qs, MAX_TX_QS);
+		printk(KERN_ERR "Cannot do alloc_etherdev, aborting\n");
+		return -EINVAL;
+	}
+
+	rx_queues = (u32 *)of_get_property(np, "fsl,num_rx_queues", NULL);
+	num_rx_qs = rx_queues ? *rx_queues : 1;
+
+	if (num_rx_qs > MAX_RX_QS) {
+		printk(KERN_ERR "num_rx_qs(=%d) greater than MAX_RX_QS(=%d)\n",
+				num_tx_qs, MAX_TX_QS);
+		printk(KERN_ERR "Cannot do alloc_etherdev, aborting\n");
+		return -EINVAL;
+	}
+
+	*pdev = alloc_etherdev_mq(sizeof(*priv), num_tx_qs);
+	dev = *pdev;
 	if (NULL == dev)
 		return -ENOMEM;
 
 	priv = netdev_priv(dev);
+	priv->node = ofdev->dev.of_node;
+	priv->ndev = dev;
 
-	/* Set the info in the priv to the current info */
-	priv->einfo = einfo;
+	priv->num_tx_queues = num_tx_qs;
+	netif_set_real_num_rx_queues(dev, num_rx_qs);
+	priv->num_rx_queues = num_rx_qs;
+	priv->num_grps = 0x0;
 
-	/* fill out IRQ fields */
-	if (einfo->device_flags & FSL_GIANFAR_DEV_HAS_MULTI_INTR) {
-		priv->interruptTransmit = platform_get_irq_byname(pdev, "tx");
-		priv->interruptReceive = platform_get_irq_byname(pdev, "rx");
-		priv->interruptError = platform_get_irq_byname(pdev, "error");
-		if (priv->interruptTransmit < 0 || priv->interruptReceive < 0 || priv->interruptError < 0)
-			goto regs_fail;
+	model = of_get_property(np, "model", NULL);
+
+	for (i = 0; i < MAXGROUPS; i++)
+		priv->gfargrp[i].regs = NULL;
+
+	/* Parse and initialize group specific information */
+	if (of_device_is_compatible(np, "fsl,etsec2")) {
+		priv->mode = MQ_MG_MODE;
+		for_each_child_of_node(np, child) {
+			err = gfar_parse_group(child, priv, model);
+			if (err)
+				goto err_grp_init;
+		}
 	} else {
-		priv->interruptTransmit = platform_get_irq(pdev, 0);
-		if (priv->interruptTransmit < 0)
-			goto regs_fail;
+		priv->mode = SQ_SG_MODE;
+		err = gfar_parse_group(np, priv, model);
+		if(err)
+			goto err_grp_init;
 	}
 
-	/* get a pointer to the register memory */
-	r = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	priv->regs = ioremap(r->start, sizeof (struct gfar));
+	for (i = 0; i < priv->num_tx_queues; i++)
+	       priv->tx_queue[i] = NULL;
+	for (i = 0; i < priv->num_rx_queues; i++)
+		priv->rx_queue[i] = NULL;
 
-	if (NULL == priv->regs) {
-		err = -ENOMEM;
-		goto regs_fail;
+	for (i = 0; i < priv->num_tx_queues; i++) {
+		priv->tx_queue[i] = kzalloc(sizeof(struct gfar_priv_tx_q),
+					    GFP_KERNEL);
+		if (!priv->tx_queue[i]) {
+			err = -ENOMEM;
+			goto tx_alloc_failed;
+		}
+		priv->tx_queue[i]->tx_skbuff = NULL;
+		priv->tx_queue[i]->qindex = i;
+		priv->tx_queue[i]->dev = dev;
+		spin_lock_init(&(priv->tx_queue[i]->txlock));
 	}
 
-	spin_lock_init(&priv->txlock);
-	spin_lock_init(&priv->rxlock);
+	for (i = 0; i < priv->num_rx_queues; i++) {
+		priv->rx_queue[i] = kzalloc(sizeof(struct gfar_priv_rx_q),
+					    GFP_KERNEL);
+		if (!priv->rx_queue[i]) {
+			err = -ENOMEM;
+			goto rx_alloc_failed;
+		}
+		priv->rx_queue[i]->rx_skbuff = NULL;
+		priv->rx_queue[i]->qindex = i;
+		priv->rx_queue[i]->dev = dev;
+		spin_lock_init(&(priv->rx_queue[i]->rxlock));
+	}
 
-	platform_set_drvdata(pdev, dev);
+
+	stash = of_get_property(np, "bd-stash", NULL);
+
+	if (stash) {
+		priv->device_flags |= FSL_GIANFAR_DEV_HAS_BD_STASHING;
+		priv->bd_stash_en = 1;
+	}
+
+	stash_len = of_get_property(np, "rx-stash-len", NULL);
+
+	if (stash_len)
+		priv->rx_stash_size = *stash_len;
+
+	stash_idx = of_get_property(np, "rx-stash-idx", NULL);
+
+	if (stash_idx)
+		priv->rx_stash_index = *stash_idx;
+
+	if (stash_len || stash_idx)
+		priv->device_flags |= FSL_GIANFAR_DEV_HAS_BUF_STASHING;
+
+	mac_addr = of_get_mac_address(np);
+	if (mac_addr)
+		memcpy(dev->dev_addr, mac_addr, MAC_ADDR_LEN);
+
+	if (model && !strcasecmp(model, "TSEC"))
+		priv->device_flags =
+			FSL_GIANFAR_DEV_HAS_GIGABIT |
+			FSL_GIANFAR_DEV_HAS_COALESCE |
+			FSL_GIANFAR_DEV_HAS_RMON |
+			FSL_GIANFAR_DEV_HAS_MULTI_INTR;
+	if (model && !strcasecmp(model, "eTSEC"))
+		priv->device_flags =
+			FSL_GIANFAR_DEV_HAS_GIGABIT |
+			FSL_GIANFAR_DEV_HAS_COALESCE |
+			FSL_GIANFAR_DEV_HAS_RMON |
+			FSL_GIANFAR_DEV_HAS_MULTI_INTR |
+			FSL_GIANFAR_DEV_HAS_PADDING |
+			FSL_GIANFAR_DEV_HAS_CSUM |
+			FSL_GIANFAR_DEV_HAS_VLAN |
+			FSL_GIANFAR_DEV_HAS_MAGIC_PACKET |
+			FSL_GIANFAR_DEV_HAS_EXTENDED_HASH |
+			FSL_GIANFAR_DEV_HAS_TIMER;
+
+	ctype = of_get_property(np, "phy-connection-type", NULL);
+
+	/* We only care about rgmii-id.  The rest are autodetected */
+	if (ctype && !strcmp(ctype, "rgmii-id"))
+		priv->interface = PHY_INTERFACE_MODE_RGMII_ID;
+	else
+		priv->interface = PHY_INTERFACE_MODE_MII;
+
+	if (of_get_property(np, "fsl,magic-packet", NULL))
+		priv->device_flags |= FSL_GIANFAR_DEV_HAS_MAGIC_PACKET;
+
+	priv->phy_node = of_parse_phandle(np, "phy-handle", 0);
+
+	/* Find the TBI PHY.  If it's not there, we don't support SGMII */
+	priv->tbi_node = of_parse_phandle(np, "tbi-handle", 0);
+
+	return 0;
+
+rx_alloc_failed:
+	free_rx_pointers(priv);
+tx_alloc_failed:
+	free_tx_pointers(priv);
+err_grp_init:
+	unmap_group_regs(priv);
+	free_netdev(dev);
+	return err;
+}
+
+static int gfar_hwtstamp_ioctl(struct net_device *netdev,
+			struct ifreq *ifr, int cmd)
+{
+	struct hwtstamp_config config;
+	struct gfar_private *priv = netdev_priv(netdev);
+
+	if (copy_from_user(&config, ifr->ifr_data, sizeof(config)))
+		return -EFAULT;
+
+	/* reserved for future extensions */
+	if (config.flags)
+		return -EINVAL;
+
+	switch (config.tx_type) {
+	case HWTSTAMP_TX_OFF:
+		priv->hwts_tx_en = 0;
+		break;
+	case HWTSTAMP_TX_ON:
+		if (!(priv->device_flags & FSL_GIANFAR_DEV_HAS_TIMER))
+			return -ERANGE;
+		priv->hwts_tx_en = 1;
+		break;
+	default:
+		return -ERANGE;
+	}
+
+	switch (config.rx_filter) {
+	case HWTSTAMP_FILTER_NONE:
+		if (priv->hwts_rx_en) {
+			stop_gfar(netdev);
+			priv->hwts_rx_en = 0;
+			startup_gfar(netdev);
+		}
+		break;
+	default:
+		if (!(priv->device_flags & FSL_GIANFAR_DEV_HAS_TIMER))
+			return -ERANGE;
+		if (!priv->hwts_rx_en) {
+			stop_gfar(netdev);
+			priv->hwts_rx_en = 1;
+			startup_gfar(netdev);
+		}
+		config.rx_filter = HWTSTAMP_FILTER_ALL;
+		break;
+	}
+
+	return copy_to_user(ifr->ifr_data, &config, sizeof(config)) ?
+		-EFAULT : 0;
+}
+
+/* Ioctl MII Interface */
+static int gfar_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
+{
+	struct gfar_private *priv = netdev_priv(dev);
+
+	if (!netif_running(dev))
+		return -EINVAL;
+
+	if (cmd == SIOCSHWTSTAMP)
+		return gfar_hwtstamp_ioctl(dev, rq, cmd);
+
+	if (!priv->phydev)
+		return -ENODEV;
+
+	return phy_mii_ioctl(priv->phydev, rq, cmd);
+}
+
+static unsigned int reverse_bitmap(unsigned int bit_map, unsigned int max_qs)
+{
+	unsigned int new_bit_map = 0x0;
+	int mask = 0x1 << (max_qs - 1), i;
+	for (i = 0; i < max_qs; i++) {
+		if (bit_map & mask)
+			new_bit_map = new_bit_map + (1 << i);
+		mask = mask >> 0x1;
+	}
+	return new_bit_map;
+}
+
+static u32 cluster_entry_per_class(struct gfar_private *priv, u32 rqfar,
+				   u32 class)
+{
+	u32 rqfpr = FPR_FILER_MASK;
+	u32 rqfcr = 0x0;
+
+	rqfar--;
+	rqfcr = RQFCR_CLE | RQFCR_PID_MASK | RQFCR_CMP_EXACT;
+	ftp_rqfpr[rqfar] = rqfpr;
+	ftp_rqfcr[rqfar] = rqfcr;
+	gfar_write_filer(priv, rqfar, rqfcr, rqfpr);
+
+	rqfar--;
+	rqfcr = RQFCR_CMP_NOMATCH;
+	ftp_rqfpr[rqfar] = rqfpr;
+	ftp_rqfcr[rqfar] = rqfcr;
+	gfar_write_filer(priv, rqfar, rqfcr, rqfpr);
+
+	rqfar--;
+	rqfcr = RQFCR_CMP_EXACT | RQFCR_PID_PARSE | RQFCR_CLE | RQFCR_AND;
+	rqfpr = class;
+	ftp_rqfcr[rqfar] = rqfcr;
+	ftp_rqfpr[rqfar] = rqfpr;
+	gfar_write_filer(priv, rqfar, rqfcr, rqfpr);
+
+	rqfar--;
+	rqfcr = RQFCR_CMP_EXACT | RQFCR_PID_MASK | RQFCR_AND;
+	rqfpr = class;
+	ftp_rqfcr[rqfar] = rqfcr;
+	ftp_rqfpr[rqfar] = rqfpr;
+	gfar_write_filer(priv, rqfar, rqfcr, rqfpr);
+
+	return rqfar;
+}
+
+static void gfar_init_filer_table(struct gfar_private *priv)
+{
+	int i = 0x0;
+	u32 rqfar = MAX_FILER_IDX;
+	u32 rqfcr = 0x0;
+	u32 rqfpr = FPR_FILER_MASK;
+
+	/* Default rule */
+	rqfcr = RQFCR_CMP_MATCH;
+	ftp_rqfcr[rqfar] = rqfcr;
+	ftp_rqfpr[rqfar] = rqfpr;
+	gfar_write_filer(priv, rqfar, rqfcr, rqfpr);
+
+	rqfar = cluster_entry_per_class(priv, rqfar, RQFPR_IPV6);
+	rqfar = cluster_entry_per_class(priv, rqfar, RQFPR_IPV6 | RQFPR_UDP);
+	rqfar = cluster_entry_per_class(priv, rqfar, RQFPR_IPV6 | RQFPR_TCP);
+	rqfar = cluster_entry_per_class(priv, rqfar, RQFPR_IPV4);
+	rqfar = cluster_entry_per_class(priv, rqfar, RQFPR_IPV4 | RQFPR_UDP);
+	rqfar = cluster_entry_per_class(priv, rqfar, RQFPR_IPV4 | RQFPR_TCP);
+
+	/* cur_filer_idx indicated the first non-masked rule */
+	priv->cur_filer_idx = rqfar;
+
+	/* Rest are masked rules */
+	rqfcr = RQFCR_CMP_NOMATCH;
+	for (i = 0; i < rqfar; i++) {
+		ftp_rqfcr[i] = rqfcr;
+		ftp_rqfpr[i] = rqfpr;
+		gfar_write_filer(priv, i, rqfcr, rqfpr);
+	}
+}
+
+static void gfar_detect_errata(struct gfar_private *priv)
+{
+	struct device *dev = &priv->ofdev->dev;
+	unsigned int pvr = mfspr(SPRN_PVR);
+	unsigned int svr = mfspr(SPRN_SVR);
+	unsigned int mod = (svr >> 16) & 0xfff6; /* w/o E suffix */
+	unsigned int rev = svr & 0xffff;
+
+	/* MPC8313 Rev 2.0 and higher; All MPC837x */
+	if ((pvr == 0x80850010 && mod == 0x80b0 && rev >= 0x0020) ||
+			(pvr == 0x80861010 && (mod & 0xfff9) == 0x80c0))
+		priv->errata |= GFAR_ERRATA_74;
+
+	/* MPC8313 and MPC837x all rev */
+	if ((pvr == 0x80850010 && mod == 0x80b0) ||
+			(pvr == 0x80861010 && (mod & 0xfff9) == 0x80c0))
+		priv->errata |= GFAR_ERRATA_76;
+
+	/* MPC8313 and MPC837x all rev */
+	if ((pvr == 0x80850010 && mod == 0x80b0) ||
+			(pvr == 0x80861010 && (mod & 0xfff9) == 0x80c0))
+		priv->errata |= GFAR_ERRATA_A002;
+
+	/* MPC8313 Rev < 2.0, MPC8548 rev 2.0 */
+	if ((pvr == 0x80850010 && mod == 0x80b0 && rev < 0x0020) ||
+			(pvr == 0x80210020 && mod == 0x8030 && rev == 0x0020))
+		priv->errata |= GFAR_ERRATA_12;
+
+	if (priv->errata)
+		dev_info(dev, "enabled errata workarounds, flags: 0x%x\n",
+			 priv->errata);
+}
+
+/* Set up the ethernet device structure, private data,
+ * and anything else we need before we start */
+static int gfar_probe(struct platform_device *ofdev)
+{
+	u32 tempval;
+	struct net_device *dev = NULL;
+	struct gfar_private *priv = NULL;
+	struct gfar __iomem *regs = NULL;
+	int err = 0, i, grp_idx = 0;
+	int len_devname;
+	u32 rstat = 0, tstat = 0, rqueue = 0, tqueue = 0;
+	u32 isrg = 0;
+	u32 __iomem *baddr;
+
+	err = gfar_of_init(ofdev, &dev);
+
+	if (err)
+		return err;
+
+	priv = netdev_priv(dev);
+	priv->ndev = dev;
+	priv->ofdev = ofdev;
+	priv->node = ofdev->dev.of_node;
+	SET_NETDEV_DEV(dev, &ofdev->dev);
+
+	spin_lock_init(&priv->bflock);
+	INIT_WORK(&priv->reset_task, gfar_reset_task);
+
+	dev_set_drvdata(&ofdev->dev, priv);
+	regs = priv->gfargrp[0].regs;
+
+	gfar_detect_errata(priv);
 
 	/* Stop the DMA engine now, in case it was running before */
 	/* (The firmware could have used it, and left it running). */
-	/* To do this, we write Graceful Receive Stop and Graceful */
-	/* Transmit Stop, and then wait until the corresponding bits */
-	/* in IEVENT indicate the stops have completed. */
-	tempval = gfar_read(&priv->regs->dmactrl);
-	tempval &= ~(DMACTRL_GRS | DMACTRL_GTS);
-	gfar_write(&priv->regs->dmactrl, tempval);
-
-	tempval = gfar_read(&priv->regs->dmactrl);
-	tempval |= (DMACTRL_GRS | DMACTRL_GTS);
-	gfar_write(&priv->regs->dmactrl, tempval);
-
-	while (!(gfar_read(&priv->regs->ievent) & (IEVENT_GRSC | IEVENT_GTSC)))
-		cpu_relax();
+	gfar_halt(dev);
 
 	/* Reset MAC layer */
-	gfar_write(&priv->regs->maccfg1, MACCFG1_SOFT_RESET);
+	gfar_write(&regs->maccfg1, MACCFG1_SOFT_RESET);
+
+	/* We need to delay at least 3 TX clocks */
+	udelay(2);
 
 	tempval = (MACCFG1_TX_FLOW | MACCFG1_RX_FLOW);
-	gfar_write(&priv->regs->maccfg1, tempval);
+	gfar_write(&regs->maccfg1, tempval);
 
 	/* Initialize MACCFG2. */
-	gfar_write(&priv->regs->maccfg2, MACCFG2_INIT_SETTINGS);
+	tempval = MACCFG2_INIT_SETTINGS;
+	if (gfar_has_errata(priv, GFAR_ERRATA_74))
+		tempval |= MACCFG2_HUGEFRAME | MACCFG2_LENGTHCHECK;
+	gfar_write(&regs->maccfg2, tempval);
 
 	/* Initialize ECNTRL */
-	gfar_write(&priv->regs->ecntrl, ECNTRL_INIT_SETTINGS);
-
-	/* Copy the station address into the dev structure, */
-	memcpy(dev->dev_addr, einfo->mac_addr, MAC_ADDR_LEN);
+	gfar_write(&regs->ecntrl, ECNTRL_INIT_SETTINGS);
 
 	/* Set the dev->base_addr to the gfar reg region */
-	dev->base_addr = (unsigned long) (priv->regs);
+	dev->base_addr = (unsigned long) regs;
 
-	SET_MODULE_OWNER(dev);
-	SET_NETDEV_DEV(dev, &pdev->dev);
+	SET_NETDEV_DEV(dev, &ofdev->dev);
 
 	/* Fill in the dev structure */
-	dev->open = gfar_enet_open;
-	dev->hard_start_xmit = gfar_start_xmit;
-	dev->tx_timeout = gfar_timeout;
 	dev->watchdog_timeo = TX_TIMEOUT;
-#ifdef CONFIG_GFAR_NAPI
-	dev->poll = gfar_poll;
-	dev->weight = GFAR_DEV_WEIGHT;
-#endif
-#ifdef CONFIG_NET_POLL_CONTROLLER
-	dev->poll_controller = gfar_netpoll;
-#endif
-	dev->stop = gfar_close;
-	dev->get_stats = gfar_get_stats;
-	dev->change_mtu = gfar_change_mtu;
 	dev->mtu = 1500;
-	dev->set_multicast_list = gfar_set_multi;
-
+	dev->netdev_ops = &gfar_netdev_ops;
 	dev->ethtool_ops = &gfar_ethtool_ops;
 
-	if (priv->einfo->device_flags & FSL_GIANFAR_DEV_HAS_CSUM) {
+	/* Register for napi ...We are registering NAPI for each grp */
+	for (i = 0; i < priv->num_grps; i++)
+		netif_napi_add(dev, &priv->gfargrp[i].napi, gfar_poll, GFAR_DEV_WEIGHT);
+
+	if (priv->device_flags & FSL_GIANFAR_DEV_HAS_CSUM) {
 		priv->rx_csum_enable = 1;
-		dev->features |= NETIF_F_IP_CSUM;
+		dev->features |= NETIF_F_IP_CSUM | NETIF_F_SG | NETIF_F_HIGHDMA;
 	} else
 		priv->rx_csum_enable = 0;
 
 	priv->vlgrp = NULL;
 
-	if (priv->einfo->device_flags & FSL_GIANFAR_DEV_HAS_VLAN) {
-		dev->vlan_rx_register = gfar_vlan_rx_register;
-
+	if (priv->device_flags & FSL_GIANFAR_DEV_HAS_VLAN)
 		dev->features |= NETIF_F_HW_VLAN_TX | NETIF_F_HW_VLAN_RX;
 
-		priv->vlan_enable = 1;
-	}
-
-	if (priv->einfo->device_flags & FSL_GIANFAR_DEV_HAS_EXTENDED_HASH) {
+	if (priv->device_flags & FSL_GIANFAR_DEV_HAS_EXTENDED_HASH) {
 		priv->extended_hash = 1;
 		priv->hash_width = 9;
 
-		priv->hash_regs[0] = &priv->regs->igaddr0;
-		priv->hash_regs[1] = &priv->regs->igaddr1;
-		priv->hash_regs[2] = &priv->regs->igaddr2;
-		priv->hash_regs[3] = &priv->regs->igaddr3;
-		priv->hash_regs[4] = &priv->regs->igaddr4;
-		priv->hash_regs[5] = &priv->regs->igaddr5;
-		priv->hash_regs[6] = &priv->regs->igaddr6;
-		priv->hash_regs[7] = &priv->regs->igaddr7;
-		priv->hash_regs[8] = &priv->regs->gaddr0;
-		priv->hash_regs[9] = &priv->regs->gaddr1;
-		priv->hash_regs[10] = &priv->regs->gaddr2;
-		priv->hash_regs[11] = &priv->regs->gaddr3;
-		priv->hash_regs[12] = &priv->regs->gaddr4;
-		priv->hash_regs[13] = &priv->regs->gaddr5;
-		priv->hash_regs[14] = &priv->regs->gaddr6;
-		priv->hash_regs[15] = &priv->regs->gaddr7;
+		priv->hash_regs[0] = &regs->igaddr0;
+		priv->hash_regs[1] = &regs->igaddr1;
+		priv->hash_regs[2] = &regs->igaddr2;
+		priv->hash_regs[3] = &regs->igaddr3;
+		priv->hash_regs[4] = &regs->igaddr4;
+		priv->hash_regs[5] = &regs->igaddr5;
+		priv->hash_regs[6] = &regs->igaddr6;
+		priv->hash_regs[7] = &regs->igaddr7;
+		priv->hash_regs[8] = &regs->gaddr0;
+		priv->hash_regs[9] = &regs->gaddr1;
+		priv->hash_regs[10] = &regs->gaddr2;
+		priv->hash_regs[11] = &regs->gaddr3;
+		priv->hash_regs[12] = &regs->gaddr4;
+		priv->hash_regs[13] = &regs->gaddr5;
+		priv->hash_regs[14] = &regs->gaddr6;
+		priv->hash_regs[15] = &regs->gaddr7;
 
 	} else {
 		priv->extended_hash = 0;
 		priv->hash_width = 8;
 
-		priv->hash_regs[0] = &priv->regs->gaddr0;
-                priv->hash_regs[1] = &priv->regs->gaddr1;
-		priv->hash_regs[2] = &priv->regs->gaddr2;
-		priv->hash_regs[3] = &priv->regs->gaddr3;
-		priv->hash_regs[4] = &priv->regs->gaddr4;
-		priv->hash_regs[5] = &priv->regs->gaddr5;
-		priv->hash_regs[6] = &priv->regs->gaddr6;
-		priv->hash_regs[7] = &priv->regs->gaddr7;
+		priv->hash_regs[0] = &regs->gaddr0;
+		priv->hash_regs[1] = &regs->gaddr1;
+		priv->hash_regs[2] = &regs->gaddr2;
+		priv->hash_regs[3] = &regs->gaddr3;
+		priv->hash_regs[4] = &regs->gaddr4;
+		priv->hash_regs[5] = &regs->gaddr5;
+		priv->hash_regs[6] = &regs->gaddr6;
+		priv->hash_regs[7] = &regs->gaddr7;
 	}
 
-	if (priv->einfo->device_flags & FSL_GIANFAR_DEV_HAS_PADDING)
+	if (priv->device_flags & FSL_GIANFAR_DEV_HAS_PADDING)
 		priv->padding = DEFAULT_PADDING;
 	else
 		priv->padding = 0;
 
-	if (dev->features & NETIF_F_IP_CSUM)
+	if (dev->features & NETIF_F_IP_CSUM ||
+			priv->device_flags & FSL_GIANFAR_DEV_HAS_TIMER)
 		dev->hard_header_len += GMAC_FCB_LEN;
 
+	/* Program the isrg regs only if number of grps > 1 */
+	if (priv->num_grps > 1) {
+		baddr = &regs->isrg0;
+		for (i = 0; i < priv->num_grps; i++) {
+			isrg |= (priv->gfargrp[i].rx_bit_map << ISRG_SHIFT_RX);
+			isrg |= (priv->gfargrp[i].tx_bit_map << ISRG_SHIFT_TX);
+			gfar_write(baddr, isrg);
+			baddr++;
+			isrg = 0x0;
+		}
+	}
+
+	/* Need to reverse the bit maps as  bit_map's MSB is q0
+	 * but, for_each_set_bit parses from right to left, which
+	 * basically reverses the queue numbers */
+	for (i = 0; i< priv->num_grps; i++) {
+		priv->gfargrp[i].tx_bit_map = reverse_bitmap(
+				priv->gfargrp[i].tx_bit_map, MAX_TX_QS);
+		priv->gfargrp[i].rx_bit_map = reverse_bitmap(
+				priv->gfargrp[i].rx_bit_map, MAX_RX_QS);
+	}
+
+	/* Calculate RSTAT, TSTAT, RQUEUE and TQUEUE values,
+	 * also assign queues to groups */
+	for (grp_idx = 0; grp_idx < priv->num_grps; grp_idx++) {
+		priv->gfargrp[grp_idx].num_rx_queues = 0x0;
+		for_each_set_bit(i, &priv->gfargrp[grp_idx].rx_bit_map,
+				priv->num_rx_queues) {
+			priv->gfargrp[grp_idx].num_rx_queues++;
+			priv->rx_queue[i]->grp = &priv->gfargrp[grp_idx];
+			rstat = rstat | (RSTAT_CLEAR_RHALT >> i);
+			rqueue = rqueue | ((RQUEUE_EN0 | RQUEUE_EX0) >> i);
+		}
+		priv->gfargrp[grp_idx].num_tx_queues = 0x0;
+		for_each_set_bit(i, &priv->gfargrp[grp_idx].tx_bit_map,
+				priv->num_tx_queues) {
+			priv->gfargrp[grp_idx].num_tx_queues++;
+			priv->tx_queue[i]->grp = &priv->gfargrp[grp_idx];
+			tstat = tstat | (TSTAT_CLEAR_THALT >> i);
+			tqueue = tqueue | (TQUEUE_EN0 >> i);
+		}
+		priv->gfargrp[grp_idx].rstat = rstat;
+		priv->gfargrp[grp_idx].tstat = tstat;
+		rstat = tstat =0;
+	}
+
+	gfar_write(&regs->rqueue, rqueue);
+	gfar_write(&regs->tqueue, tqueue);
+
 	priv->rx_buffer_size = DEFAULT_RX_BUFFER_SIZE;
-	priv->tx_ring_size = DEFAULT_TX_RING_SIZE;
-	priv->rx_ring_size = DEFAULT_RX_RING_SIZE;
 
-	priv->txcoalescing = DEFAULT_TX_COALESCE;
-	priv->txcount = DEFAULT_TXCOUNT;
-	priv->txtime = DEFAULT_TXTIME;
-	priv->rxcoalescing = DEFAULT_RX_COALESCE;
-	priv->rxcount = DEFAULT_RXCOUNT;
-	priv->rxtime = DEFAULT_RXTIME;
+	/* Initializing some of the rx/tx queue level parameters */
+	for (i = 0; i < priv->num_tx_queues; i++) {
+		priv->tx_queue[i]->tx_ring_size = DEFAULT_TX_RING_SIZE;
+		priv->tx_queue[i]->num_txbdfree = DEFAULT_TX_RING_SIZE;
+		priv->tx_queue[i]->txcoalescing = DEFAULT_TX_COALESCE;
+		priv->tx_queue[i]->txic = DEFAULT_TXIC;
+	}
 
+	for (i = 0; i < priv->num_rx_queues; i++) {
+		priv->rx_queue[i]->rx_ring_size = DEFAULT_RX_RING_SIZE;
+		priv->rx_queue[i]->rxcoalescing = DEFAULT_RX_COALESCE;
+		priv->rx_queue[i]->rxic = DEFAULT_RXIC;
+	}
+
+	/* enable filer if using multiple RX queues*/
+	if(priv->num_rx_queues > 1)
+		priv->rx_filer_enable = 1;
 	/* Enable most messages by default */
 	priv->msg_enable = (NETIF_MSG_IFUP << 1 ) - 1;
+
+	/* Carrier starts down, phylib will bring it up */
+	netif_carrier_off(dev);
 
 	err = register_netdev(dev);
 
@@ -354,47 +1166,236 @@ static int gfar_probe(struct platform_device *pdev)
 		goto register_fail;
 	}
 
+	device_init_wakeup(&dev->dev,
+		priv->device_flags & FSL_GIANFAR_DEV_HAS_MAGIC_PACKET);
+
+	/* fill out IRQ number and name fields */
+	len_devname = strlen(dev->name);
+	for (i = 0; i < priv->num_grps; i++) {
+		strncpy(&priv->gfargrp[i].int_name_tx[0], dev->name,
+				len_devname);
+		if (priv->device_flags & FSL_GIANFAR_DEV_HAS_MULTI_INTR) {
+			strncpy(&priv->gfargrp[i].int_name_tx[len_devname],
+				"_g", sizeof("_g"));
+			priv->gfargrp[i].int_name_tx[
+				strlen(priv->gfargrp[i].int_name_tx)] = i+48;
+			strncpy(&priv->gfargrp[i].int_name_tx[strlen(
+				priv->gfargrp[i].int_name_tx)],
+				"_tx", sizeof("_tx") + 1);
+
+			strncpy(&priv->gfargrp[i].int_name_rx[0], dev->name,
+					len_devname);
+			strncpy(&priv->gfargrp[i].int_name_rx[len_devname],
+					"_g", sizeof("_g"));
+			priv->gfargrp[i].int_name_rx[
+				strlen(priv->gfargrp[i].int_name_rx)] = i+48;
+			strncpy(&priv->gfargrp[i].int_name_rx[strlen(
+				priv->gfargrp[i].int_name_rx)],
+				"_rx", sizeof("_rx") + 1);
+
+			strncpy(&priv->gfargrp[i].int_name_er[0], dev->name,
+					len_devname);
+			strncpy(&priv->gfargrp[i].int_name_er[len_devname],
+				"_g", sizeof("_g"));
+			priv->gfargrp[i].int_name_er[strlen(
+					priv->gfargrp[i].int_name_er)] = i+48;
+			strncpy(&priv->gfargrp[i].int_name_er[strlen(\
+				priv->gfargrp[i].int_name_er)],
+				"_er", sizeof("_er") + 1);
+		} else
+			priv->gfargrp[i].int_name_tx[len_devname] = '\0';
+	}
+
+	/* Initialize the filer table */
+	gfar_init_filer_table(priv);
+
 	/* Create all the sysfs files */
 	gfar_init_sysfs(dev);
 
 	/* Print out the device info */
-	printk(KERN_INFO DEVICE_NAME, dev->name);
-	for (idx = 0; idx < 6; idx++)
-		printk("%2.2x%c", dev->dev_addr[idx], idx == 5 ? ' ' : ':');
-	printk("\n");
+	printk(KERN_INFO DEVICE_NAME "%pM\n", dev->name, dev->dev_addr);
 
 	/* Even more device info helps when determining which kernel */
 	/* provided which set of benchmarks. */
-#ifdef CONFIG_GFAR_NAPI
 	printk(KERN_INFO "%s: Running with NAPI enabled\n", dev->name);
-#else
-	printk(KERN_INFO "%s: Running with NAPI disabled\n", dev->name);
-#endif
-	printk(KERN_INFO "%s: %d/%d RX/TX BD ring size\n",
-	       dev->name, priv->rx_ring_size, priv->tx_ring_size);
+	for (i = 0; i < priv->num_rx_queues; i++)
+		printk(KERN_INFO "%s: RX BD ring size for Q[%d]: %d\n",
+			dev->name, i, priv->rx_queue[i]->rx_ring_size);
+	for(i = 0; i < priv->num_tx_queues; i++)
+		 printk(KERN_INFO "%s: TX BD ring size for Q[%d]: %d\n",
+			dev->name, i, priv->tx_queue[i]->tx_ring_size);
 
 	return 0;
 
 register_fail:
-	iounmap(priv->regs);
-regs_fail:
+	unmap_group_regs(priv);
+	free_tx_pointers(priv);
+	free_rx_pointers(priv);
+	if (priv->phy_node)
+		of_node_put(priv->phy_node);
+	if (priv->tbi_node)
+		of_node_put(priv->tbi_node);
 	free_netdev(dev);
 	return err;
 }
 
-static int gfar_remove(struct platform_device *pdev)
+static int gfar_remove(struct platform_device *ofdev)
 {
-	struct net_device *dev = platform_get_drvdata(pdev);
-	struct gfar_private *priv = netdev_priv(dev);
+	struct gfar_private *priv = dev_get_drvdata(&ofdev->dev);
 
-	platform_set_drvdata(pdev, NULL);
+	if (priv->phy_node)
+		of_node_put(priv->phy_node);
+	if (priv->tbi_node)
+		of_node_put(priv->tbi_node);
 
-	iounmap(priv->regs);
-	free_netdev(dev);
+	dev_set_drvdata(&ofdev->dev, NULL);
+
+	unregister_netdev(priv->ndev);
+	unmap_group_regs(priv);
+	free_netdev(priv->ndev);
 
 	return 0;
 }
 
+#ifdef CONFIG_PM
+
+static int gfar_suspend(struct device *dev)
+{
+	struct gfar_private *priv = dev_get_drvdata(dev);
+	struct net_device *ndev = priv->ndev;
+	struct gfar __iomem *regs = priv->gfargrp[0].regs;
+	unsigned long flags;
+	u32 tempval;
+
+	int magic_packet = priv->wol_en &&
+		(priv->device_flags & FSL_GIANFAR_DEV_HAS_MAGIC_PACKET);
+
+	netif_device_detach(ndev);
+
+	if (netif_running(ndev)) {
+
+		local_irq_save(flags);
+		lock_tx_qs(priv);
+		lock_rx_qs(priv);
+
+		gfar_halt_nodisable(ndev);
+
+		/* Disable Tx, and Rx if wake-on-LAN is disabled. */
+		tempval = gfar_read(&regs->maccfg1);
+
+		tempval &= ~MACCFG1_TX_EN;
+
+		if (!magic_packet)
+			tempval &= ~MACCFG1_RX_EN;
+
+		gfar_write(&regs->maccfg1, tempval);
+
+		unlock_rx_qs(priv);
+		unlock_tx_qs(priv);
+		local_irq_restore(flags);
+
+		disable_napi(priv);
+
+		if (magic_packet) {
+			/* Enable interrupt on Magic Packet */
+			gfar_write(&regs->imask, IMASK_MAG);
+
+			/* Enable Magic Packet mode */
+			tempval = gfar_read(&regs->maccfg2);
+			tempval |= MACCFG2_MPEN;
+			gfar_write(&regs->maccfg2, tempval);
+		} else {
+			phy_stop(priv->phydev);
+		}
+	}
+
+	return 0;
+}
+
+static int gfar_resume(struct device *dev)
+{
+	struct gfar_private *priv = dev_get_drvdata(dev);
+	struct net_device *ndev = priv->ndev;
+	struct gfar __iomem *regs = priv->gfargrp[0].regs;
+	unsigned long flags;
+	u32 tempval;
+	int magic_packet = priv->wol_en &&
+		(priv->device_flags & FSL_GIANFAR_DEV_HAS_MAGIC_PACKET);
+
+	if (!netif_running(ndev)) {
+		netif_device_attach(ndev);
+		return 0;
+	}
+
+	if (!magic_packet && priv->phydev)
+		phy_start(priv->phydev);
+
+	/* Disable Magic Packet mode, in case something
+	 * else woke us up.
+	 */
+	local_irq_save(flags);
+	lock_tx_qs(priv);
+	lock_rx_qs(priv);
+
+	tempval = gfar_read(&regs->maccfg2);
+	tempval &= ~MACCFG2_MPEN;
+	gfar_write(&regs->maccfg2, tempval);
+
+	gfar_start(ndev);
+
+	unlock_rx_qs(priv);
+	unlock_tx_qs(priv);
+	local_irq_restore(flags);
+
+	netif_device_attach(ndev);
+
+	enable_napi(priv);
+
+	return 0;
+}
+
+static int gfar_restore(struct device *dev)
+{
+	struct gfar_private *priv = dev_get_drvdata(dev);
+	struct net_device *ndev = priv->ndev;
+
+	if (!netif_running(ndev))
+		return 0;
+
+	gfar_init_bds(ndev);
+	init_registers(ndev);
+	gfar_set_mac_address(ndev);
+	gfar_init_mac(ndev);
+	gfar_start(ndev);
+
+	priv->oldlink = 0;
+	priv->oldspeed = 0;
+	priv->oldduplex = -1;
+
+	if (priv->phydev)
+		phy_start(priv->phydev);
+
+	netif_device_attach(ndev);
+	enable_napi(priv);
+
+	return 0;
+}
+
+static struct dev_pm_ops gfar_pm_ops = {
+	.suspend = gfar_suspend,
+	.resume = gfar_resume,
+	.freeze = gfar_suspend,
+	.thaw = gfar_resume,
+	.restore = gfar_restore,
+};
+
+#define GFAR_PM_OPS (&gfar_pm_ops)
+
+#else
+
+#define GFAR_PM_OPS NULL
+
+#endif
 
 /* Reads the controller's registers to determine what interface
  * connects it to the PHY.
@@ -402,7 +1403,10 @@ static int gfar_remove(struct platform_device *pdev)
 static phy_interface_t gfar_get_interface(struct net_device *dev)
 {
 	struct gfar_private *priv = netdev_priv(dev);
-	u32 ecntrl = gfar_read(&priv->regs->ecntrl);
+	struct gfar __iomem *regs = priv->gfargrp[0].regs;
+	u32 ecntrl;
+
+	ecntrl = gfar_read(&regs->ecntrl);
 
 	if (ecntrl & ECNTRL_SGMII_MODE)
 		return PHY_INTERFACE_MODE_SGMII;
@@ -417,11 +1421,21 @@ static phy_interface_t gfar_get_interface(struct net_device *dev)
 	if (ecntrl & ECNTRL_REDUCED_MODE) {
 		if (ecntrl & ECNTRL_REDUCED_MII_MODE)
 			return PHY_INTERFACE_MODE_RMII;
-		else
+		else {
+			phy_interface_t interface = priv->interface;
+
+			/*
+			 * This isn't autodetected right now, so it must
+			 * be set by the device tree or platform code.
+			 */
+			if (interface == PHY_INTERFACE_MODE_RGMII_ID)
+				return PHY_INTERFACE_MODE_RGMII_ID;
+
 			return PHY_INTERFACE_MODE_RGMII;
+		}
 	}
 
-	if (priv->einfo->device_flags & FSL_GIANFAR_DEV_HAS_GIGABIT)
+	if (priv->device_flags & FSL_GIANFAR_DEV_HAS_GIGABIT)
 		return PHY_INTERFACE_MODE_GMII;
 
 	return PHY_INTERFACE_MODE_MII;
@@ -435,109 +1449,202 @@ static int init_phy(struct net_device *dev)
 {
 	struct gfar_private *priv = netdev_priv(dev);
 	uint gigabit_support =
-		priv->einfo->device_flags & FSL_GIANFAR_DEV_HAS_GIGABIT ?
+		priv->device_flags & FSL_GIANFAR_DEV_HAS_GIGABIT ?
 		SUPPORTED_1000baseT_Full : 0;
-	struct phy_device *phydev;
-	char phy_id[BUS_ID_SIZE];
 	phy_interface_t interface;
 
 	priv->oldlink = 0;
 	priv->oldspeed = 0;
 	priv->oldduplex = -1;
 
-	snprintf(phy_id, BUS_ID_SIZE, PHY_ID_FMT, priv->einfo->bus_id, priv->einfo->phy_id);
-
 	interface = gfar_get_interface(dev);
 
-	phydev = phy_connect(dev, phy_id, &adjust_link, 0, interface);
-
-	if (IS_ERR(phydev)) {
-		printk(KERN_ERR "%s: Could not attach to PHY\n", dev->name);
-		return PTR_ERR(phydev);
+	priv->phydev = of_phy_connect(dev, priv->phy_node, &adjust_link, 0,
+				      interface);
+	if (!priv->phydev)
+		priv->phydev = of_phy_connect_fixed_link(dev, &adjust_link,
+							 interface);
+	if (!priv->phydev) {
+		dev_err(&dev->dev, "could not attach to PHY\n");
+		return -ENODEV;
 	}
 
-	/* Remove any features not supported by the controller */
-	phydev->supported &= (GFAR_SUPPORTED | gigabit_support);
-	phydev->advertising = phydev->supported;
+	if (interface == PHY_INTERFACE_MODE_SGMII)
+		gfar_configure_serdes(dev);
 
-	priv->phydev = phydev;
+	/* Remove any features not supported by the controller */
+	priv->phydev->supported &= (GFAR_SUPPORTED | gigabit_support);
+	priv->phydev->advertising = priv->phydev->supported;
 
 	return 0;
+}
+
+/*
+ * Initialize TBI PHY interface for communicating with the
+ * SERDES lynx PHY on the chip.  We communicate with this PHY
+ * through the MDIO bus on each controller, treating it as a
+ * "normal" PHY at the address found in the TBIPA register.  We assume
+ * that the TBIPA register is valid.  Either the MDIO bus code will set
+ * it to a value that doesn't conflict with other PHYs on the bus, or the
+ * value doesn't matter, as there are no other PHYs on the bus.
+ */
+static void gfar_configure_serdes(struct net_device *dev)
+{
+	struct gfar_private *priv = netdev_priv(dev);
+	struct phy_device *tbiphy;
+
+	if (!priv->tbi_node) {
+		dev_warn(&dev->dev, "error: SGMII mode requires that the "
+				    "device tree specify a tbi-handle\n");
+		return;
+	}
+
+	tbiphy = of_phy_find_device(priv->tbi_node);
+	if (!tbiphy) {
+		dev_err(&dev->dev, "error: Could not get TBI device\n");
+		return;
+	}
+
+	/*
+	 * If the link is already up, we must already be ok, and don't need to
+	 * configure and reset the TBI<->SerDes link.  Maybe U-Boot configured
+	 * everything for us?  Resetting it takes the link down and requires
+	 * several seconds for it to come back.
+	 */
+	if (phy_read(tbiphy, MII_BMSR) & BMSR_LSTATUS)
+		return;
+
+	/* Single clk mode, mii mode off(for serdes communication) */
+	phy_write(tbiphy, MII_TBICON, TBICON_CLK_SELECT);
+
+	phy_write(tbiphy, MII_ADVERTISE,
+			ADVERTISE_1000XFULL | ADVERTISE_1000XPAUSE |
+			ADVERTISE_1000XPSE_ASYM);
+
+	phy_write(tbiphy, MII_BMCR, BMCR_ANENABLE |
+			BMCR_ANRESTART | BMCR_FULLDPLX | BMCR_SPEED1000);
 }
 
 static void init_registers(struct net_device *dev)
 {
 	struct gfar_private *priv = netdev_priv(dev);
+	struct gfar __iomem *regs = NULL;
+	int i = 0;
 
-	/* Clear IEVENT */
-	gfar_write(&priv->regs->ievent, IEVENT_INIT_CLEAR);
+	for (i = 0; i < priv->num_grps; i++) {
+		regs = priv->gfargrp[i].regs;
+		/* Clear IEVENT */
+		gfar_write(&regs->ievent, IEVENT_INIT_CLEAR);
 
-	/* Initialize IMASK */
-	gfar_write(&priv->regs->imask, IMASK_INIT_CLEAR);
+		/* Initialize IMASK */
+		gfar_write(&regs->imask, IMASK_INIT_CLEAR);
+	}
 
+	regs = priv->gfargrp[0].regs;
 	/* Init hash registers to zero */
-	gfar_write(&priv->regs->igaddr0, 0);
-	gfar_write(&priv->regs->igaddr1, 0);
-	gfar_write(&priv->regs->igaddr2, 0);
-	gfar_write(&priv->regs->igaddr3, 0);
-	gfar_write(&priv->regs->igaddr4, 0);
-	gfar_write(&priv->regs->igaddr5, 0);
-	gfar_write(&priv->regs->igaddr6, 0);
-	gfar_write(&priv->regs->igaddr7, 0);
+	gfar_write(&regs->igaddr0, 0);
+	gfar_write(&regs->igaddr1, 0);
+	gfar_write(&regs->igaddr2, 0);
+	gfar_write(&regs->igaddr3, 0);
+	gfar_write(&regs->igaddr4, 0);
+	gfar_write(&regs->igaddr5, 0);
+	gfar_write(&regs->igaddr6, 0);
+	gfar_write(&regs->igaddr7, 0);
 
-	gfar_write(&priv->regs->gaddr0, 0);
-	gfar_write(&priv->regs->gaddr1, 0);
-	gfar_write(&priv->regs->gaddr2, 0);
-	gfar_write(&priv->regs->gaddr3, 0);
-	gfar_write(&priv->regs->gaddr4, 0);
-	gfar_write(&priv->regs->gaddr5, 0);
-	gfar_write(&priv->regs->gaddr6, 0);
-	gfar_write(&priv->regs->gaddr7, 0);
+	gfar_write(&regs->gaddr0, 0);
+	gfar_write(&regs->gaddr1, 0);
+	gfar_write(&regs->gaddr2, 0);
+	gfar_write(&regs->gaddr3, 0);
+	gfar_write(&regs->gaddr4, 0);
+	gfar_write(&regs->gaddr5, 0);
+	gfar_write(&regs->gaddr6, 0);
+	gfar_write(&regs->gaddr7, 0);
 
 	/* Zero out the rmon mib registers if it has them */
-	if (priv->einfo->device_flags & FSL_GIANFAR_DEV_HAS_RMON) {
-		memset_io(&(priv->regs->rmon), 0, sizeof (struct rmon_mib));
+	if (priv->device_flags & FSL_GIANFAR_DEV_HAS_RMON) {
+		memset_io(&(regs->rmon), 0, sizeof (struct rmon_mib));
 
 		/* Mask off the CAM interrupts */
-		gfar_write(&priv->regs->rmon.cam1, 0xffffffff);
-		gfar_write(&priv->regs->rmon.cam2, 0xffffffff);
+		gfar_write(&regs->rmon.cam1, 0xffffffff);
+		gfar_write(&regs->rmon.cam2, 0xffffffff);
 	}
 
 	/* Initialize the max receive buffer length */
-	gfar_write(&priv->regs->mrblr, priv->rx_buffer_size);
+	gfar_write(&regs->mrblr, priv->rx_buffer_size);
 
 	/* Initialize the Minimum Frame Length Register */
-	gfar_write(&priv->regs->minflr, MINFLR_INIT_SETTINGS);
-
-	/* Assign the TBI an address which won't conflict with the PHYs */
-	gfar_write(&priv->regs->tbipa, TBIPA_VALUE);
+	gfar_write(&regs->minflr, MINFLR_INIT_SETTINGS);
 }
 
+static int __gfar_is_rx_idle(struct gfar_private *priv)
+{
+	u32 res;
+
+	/*
+	 * Normaly TSEC should not hang on GRS commands, so we should
+	 * actually wait for IEVENT_GRSC flag.
+	 */
+	if (likely(!gfar_has_errata(priv, GFAR_ERRATA_A002)))
+		return 0;
+
+	/*
+	 * Read the eTSEC register at offset 0xD1C. If bits 7-14 are
+	 * the same as bits 23-30, the eTSEC Rx is assumed to be idle
+	 * and the Rx can be safely reset.
+	 */
+	res = gfar_read((void __iomem *)priv->gfargrp[0].regs + 0xd1c);
+	res &= 0x7f807f80;
+	if ((res & 0xffff) == (res >> 16))
+		return 1;
+
+	return 0;
+}
+
+/* Halt the receive and transmit queues */
+static void gfar_halt_nodisable(struct net_device *dev)
+{
+	struct gfar_private *priv = netdev_priv(dev);
+	struct gfar __iomem *regs = NULL;
+	u32 tempval;
+	int i = 0;
+
+	for (i = 0; i < priv->num_grps; i++) {
+		regs = priv->gfargrp[i].regs;
+		/* Mask all interrupts */
+		gfar_write(&regs->imask, IMASK_INIT_CLEAR);
+
+		/* Clear all interrupts */
+		gfar_write(&regs->ievent, IEVENT_INIT_CLEAR);
+	}
+
+	regs = priv->gfargrp[0].regs;
+	/* Stop the DMA, and wait for it to stop */
+	tempval = gfar_read(&regs->dmactrl);
+	if ((tempval & (DMACTRL_GRS | DMACTRL_GTS))
+	    != (DMACTRL_GRS | DMACTRL_GTS)) {
+		int ret;
+
+		tempval |= (DMACTRL_GRS | DMACTRL_GTS);
+		gfar_write(&regs->dmactrl, tempval);
+
+		do {
+			ret = spin_event_timeout(((gfar_read(&regs->ievent) &
+				 (IEVENT_GRSC | IEVENT_GTSC)) ==
+				 (IEVENT_GRSC | IEVENT_GTSC)), 1000000, 0);
+			if (!ret && !(gfar_read(&regs->ievent) & IEVENT_GRSC))
+				ret = __gfar_is_rx_idle(priv);
+		} while (!ret);
+	}
+}
 
 /* Halt the receive and transmit queues */
 void gfar_halt(struct net_device *dev)
 {
 	struct gfar_private *priv = netdev_priv(dev);
-	struct gfar __iomem *regs = priv->regs;
+	struct gfar __iomem *regs = priv->gfargrp[0].regs;
 	u32 tempval;
 
-	/* Mask all interrupts */
-	gfar_write(&regs->imask, IMASK_INIT_CLEAR);
-
-	/* Clear all interrupts */
-	gfar_write(&regs->ievent, IEVENT_INIT_CLEAR);
-
-	/* Stop the DMA, and wait for it to stop */
-	tempval = gfar_read(&priv->regs->dmactrl);
-	if ((tempval & (DMACTRL_GRS | DMACTRL_GTS))
-	    != (DMACTRL_GRS | DMACTRL_GTS)) {
-		tempval |= (DMACTRL_GRS | DMACTRL_GTS);
-		gfar_write(&priv->regs->dmactrl, tempval);
-
-		while (!(gfar_read(&priv->regs->ievent) &
-			 (IEVENT_GRSC | IEVENT_GTSC)))
-			cpu_relax();
-	}
+	gfar_halt_nodisable(dev);
 
 	/* Disable Rx and Tx */
 	tempval = gfar_read(&regs->maccfg1);
@@ -545,96 +1652,132 @@ void gfar_halt(struct net_device *dev)
 	gfar_write(&regs->maccfg1, tempval);
 }
 
+static void free_grp_irqs(struct gfar_priv_grp *grp)
+{
+	free_irq(grp->interruptError, grp);
+	free_irq(grp->interruptTransmit, grp);
+	free_irq(grp->interruptReceive, grp);
+}
+
 void stop_gfar(struct net_device *dev)
 {
 	struct gfar_private *priv = netdev_priv(dev);
-	struct gfar __iomem *regs = priv->regs;
 	unsigned long flags;
+	int i;
 
 	phy_stop(priv->phydev);
 
+
 	/* Lock it down */
-	spin_lock_irqsave(&priv->txlock, flags);
-	spin_lock(&priv->rxlock);
+	local_irq_save(flags);
+	lock_tx_qs(priv);
+	lock_rx_qs(priv);
 
 	gfar_halt(dev);
 
-	spin_unlock(&priv->rxlock);
-	spin_unlock_irqrestore(&priv->txlock, flags);
+	unlock_rx_qs(priv);
+	unlock_tx_qs(priv);
+	local_irq_restore(flags);
 
 	/* Free the IRQs */
-	if (priv->einfo->device_flags & FSL_GIANFAR_DEV_HAS_MULTI_INTR) {
-		free_irq(priv->interruptError, dev);
-		free_irq(priv->interruptTransmit, dev);
-		free_irq(priv->interruptReceive, dev);
+	if (priv->device_flags & FSL_GIANFAR_DEV_HAS_MULTI_INTR) {
+		for (i = 0; i < priv->num_grps; i++)
+			free_grp_irqs(&priv->gfargrp[i]);
 	} else {
- 		free_irq(priv->interruptTransmit, dev);
+		for (i = 0; i < priv->num_grps; i++)
+			free_irq(priv->gfargrp[i].interruptTransmit,
+					&priv->gfargrp[i]);
 	}
 
 	free_skb_resources(priv);
+}
 
-	dma_free_coherent(NULL,
-			sizeof(struct txbd8)*priv->tx_ring_size
-			+ sizeof(struct rxbd8)*priv->rx_ring_size,
-			priv->tx_bd_base,
-			gfar_read(&regs->tbase0));
+static void free_skb_tx_queue(struct gfar_priv_tx_q *tx_queue)
+{
+	struct txbd8 *txbdp;
+	struct gfar_private *priv = netdev_priv(tx_queue->dev);
+	int i, j;
+
+	txbdp = tx_queue->tx_bd_base;
+
+	for (i = 0; i < tx_queue->tx_ring_size; i++) {
+		if (!tx_queue->tx_skbuff[i])
+			continue;
+
+		dma_unmap_single(&priv->ofdev->dev, txbdp->bufPtr,
+				txbdp->length, DMA_TO_DEVICE);
+		txbdp->lstatus = 0;
+		for (j = 0; j < skb_shinfo(tx_queue->tx_skbuff[i])->nr_frags;
+				j++) {
+			txbdp++;
+			dma_unmap_page(&priv->ofdev->dev, txbdp->bufPtr,
+					txbdp->length, DMA_TO_DEVICE);
+		}
+		txbdp++;
+		dev_kfree_skb_any(tx_queue->tx_skbuff[i]);
+		tx_queue->tx_skbuff[i] = NULL;
+	}
+	kfree(tx_queue->tx_skbuff);
+}
+
+static void free_skb_rx_queue(struct gfar_priv_rx_q *rx_queue)
+{
+	struct rxbd8 *rxbdp;
+	struct gfar_private *priv = netdev_priv(rx_queue->dev);
+	int i;
+
+	rxbdp = rx_queue->rx_bd_base;
+
+	for (i = 0; i < rx_queue->rx_ring_size; i++) {
+		if (rx_queue->rx_skbuff[i]) {
+			dma_unmap_single(&priv->ofdev->dev,
+					rxbdp->bufPtr, priv->rx_buffer_size,
+					DMA_FROM_DEVICE);
+			dev_kfree_skb_any(rx_queue->rx_skbuff[i]);
+			rx_queue->rx_skbuff[i] = NULL;
+		}
+		rxbdp->lstatus = 0;
+		rxbdp->bufPtr = 0;
+		rxbdp++;
+	}
+	kfree(rx_queue->rx_skbuff);
 }
 
 /* If there are any tx skbs or rx skbs still around, free them.
  * Then free tx_skbuff and rx_skbuff */
 static void free_skb_resources(struct gfar_private *priv)
 {
-	struct rxbd8 *rxbdp;
-	struct txbd8 *txbdp;
+	struct gfar_priv_tx_q *tx_queue = NULL;
+	struct gfar_priv_rx_q *rx_queue = NULL;
 	int i;
 
 	/* Go through all the buffer descriptors and free their data buffers */
-	txbdp = priv->tx_bd_base;
-
-	for (i = 0; i < priv->tx_ring_size; i++) {
-
-		if (priv->tx_skbuff[i]) {
-			dma_unmap_single(NULL, txbdp->bufPtr,
-					txbdp->length,
-					DMA_TO_DEVICE);
-			dev_kfree_skb_any(priv->tx_skbuff[i]);
-			priv->tx_skbuff[i] = NULL;
-		}
+	for (i = 0; i < priv->num_tx_queues; i++) {
+		tx_queue = priv->tx_queue[i];
+		if(tx_queue->tx_skbuff)
+			free_skb_tx_queue(tx_queue);
 	}
 
-	kfree(priv->tx_skbuff);
-
-	rxbdp = priv->rx_bd_base;
-
-	/* rx_skbuff is not guaranteed to be allocated, so only
-	 * free it and its contents if it is allocated */
-	if(priv->rx_skbuff != NULL) {
-		for (i = 0; i < priv->rx_ring_size; i++) {
-			if (priv->rx_skbuff[i]) {
-				dma_unmap_single(NULL, rxbdp->bufPtr,
-						priv->rx_buffer_size,
-						DMA_FROM_DEVICE);
-
-				dev_kfree_skb_any(priv->rx_skbuff[i]);
-				priv->rx_skbuff[i] = NULL;
-			}
-
-			rxbdp->status = 0;
-			rxbdp->length = 0;
-			rxbdp->bufPtr = 0;
-
-			rxbdp++;
-		}
-
-		kfree(priv->rx_skbuff);
+	for (i = 0; i < priv->num_rx_queues; i++) {
+		rx_queue = priv->rx_queue[i];
+		if(rx_queue->rx_skbuff)
+			free_skb_rx_queue(rx_queue);
 	}
+
+	dma_free_coherent(&priv->ofdev->dev,
+			sizeof(struct txbd8) * priv->total_tx_ring_size +
+			sizeof(struct rxbd8) * priv->total_rx_ring_size,
+			priv->tx_queue[0]->tx_bd_base,
+			priv->tx_queue[0]->tx_bd_dma_base);
+	skb_queue_purge(&priv->rx_recycle);
 }
 
 void gfar_start(struct net_device *dev)
 {
 	struct gfar_private *priv = netdev_priv(dev);
-	struct gfar __iomem *regs = priv->regs;
+	struct gfar __iomem *regs = priv->gfargrp[0].regs;
 	u32 tempval;
+	int i = 0;
 
 	/* Enable Rx and Tx in MACCFG1 */
 	tempval = gfar_read(&regs->maccfg1);
@@ -642,257 +1785,159 @@ void gfar_start(struct net_device *dev)
 	gfar_write(&regs->maccfg1, tempval);
 
 	/* Initialize DMACTRL to have WWR and WOP */
-	tempval = gfar_read(&priv->regs->dmactrl);
+	tempval = gfar_read(&regs->dmactrl);
 	tempval |= DMACTRL_INIT_SETTINGS;
-	gfar_write(&priv->regs->dmactrl, tempval);
+	gfar_write(&regs->dmactrl, tempval);
 
 	/* Make sure we aren't stopped */
-	tempval = gfar_read(&priv->regs->dmactrl);
+	tempval = gfar_read(&regs->dmactrl);
 	tempval &= ~(DMACTRL_GRS | DMACTRL_GTS);
-	gfar_write(&priv->regs->dmactrl, tempval);
+	gfar_write(&regs->dmactrl, tempval);
 
-	/* Clear THLT/RHLT, so that the DMA starts polling now */
-	gfar_write(&regs->tstat, TSTAT_CLEAR_THALT);
-	gfar_write(&regs->rstat, RSTAT_CLEAR_RHALT);
+	for (i = 0; i < priv->num_grps; i++) {
+		regs = priv->gfargrp[i].regs;
+		/* Clear THLT/RHLT, so that the DMA starts polling now */
+		gfar_write(&regs->tstat, priv->gfargrp[i].tstat);
+		gfar_write(&regs->rstat, priv->gfargrp[i].rstat);
+		/* Unmask the interrupts we look for */
+		gfar_write(&regs->imask, IMASK_DEFAULT);
+	}
 
-	/* Unmask the interrupts we look for */
-	gfar_write(&regs->imask, IMASK_DEFAULT);
+	dev->trans_start = jiffies; /* prevent tx timeout */
 }
 
-/* Bring the controller up and running */
-int startup_gfar(struct net_device *dev)
+void gfar_configure_coalescing(struct gfar_private *priv,
+	unsigned long tx_mask, unsigned long rx_mask)
 {
-	struct txbd8 *txbdp;
-	struct rxbd8 *rxbdp;
-	dma_addr_t addr;
-	unsigned long vaddr;
-	int i;
-	struct gfar_private *priv = netdev_priv(dev);
-	struct gfar __iomem *regs = priv->regs;
-	int err = 0;
-	u32 rctrl = 0;
-	u32 attrs = 0;
+	struct gfar __iomem *regs = priv->gfargrp[0].regs;
+	u32 __iomem *baddr;
+	int i = 0;
 
-	gfar_write(&regs->imask, IMASK_INIT_CLEAR);
+	/* Backward compatible case ---- even if we enable
+	 * multiple queues, there's only single reg to program
+	 */
+	gfar_write(&regs->txic, 0);
+	if(likely(priv->tx_queue[0]->txcoalescing))
+		gfar_write(&regs->txic, priv->tx_queue[0]->txic);
 
-	/* Allocate memory for the buffer descriptors */
-	vaddr = (unsigned long) dma_alloc_coherent(NULL,
-			sizeof (struct txbd8) * priv->tx_ring_size +
-			sizeof (struct rxbd8) * priv->rx_ring_size,
-			&addr, GFP_KERNEL);
+	gfar_write(&regs->rxic, 0);
+	if(unlikely(priv->rx_queue[0]->rxcoalescing))
+		gfar_write(&regs->rxic, priv->rx_queue[0]->rxic);
 
-	if (vaddr == 0) {
-		if (netif_msg_ifup(priv))
-			printk(KERN_ERR "%s: Could not allocate buffer descriptors!\n",
-					dev->name);
-		return -ENOMEM;
+	if (priv->mode == MQ_MG_MODE) {
+		baddr = &regs->txic0;
+		for_each_set_bit(i, &tx_mask, priv->num_tx_queues) {
+			if (likely(priv->tx_queue[i]->txcoalescing)) {
+				gfar_write(baddr + i, 0);
+				gfar_write(baddr + i, priv->tx_queue[i]->txic);
+			}
+		}
+
+		baddr = &regs->rxic0;
+		for_each_set_bit(i, &rx_mask, priv->num_rx_queues) {
+			if (likely(priv->rx_queue[i]->rxcoalescing)) {
+				gfar_write(baddr + i, 0);
+				gfar_write(baddr + i, priv->rx_queue[i]->rxic);
+			}
+		}
 	}
+}
 
-	priv->tx_bd_base = (struct txbd8 *) vaddr;
-
-	/* enet DMA only understands physical addresses */
-	gfar_write(&regs->tbase0, addr);
-
-	/* Start the rx descriptor ring where the tx ring leaves off */
-	addr = addr + sizeof (struct txbd8) * priv->tx_ring_size;
-	vaddr = vaddr + sizeof (struct txbd8) * priv->tx_ring_size;
-	priv->rx_bd_base = (struct rxbd8 *) vaddr;
-	gfar_write(&regs->rbase0, addr);
-
-	/* Setup the skbuff rings */
-	priv->tx_skbuff =
-	    (struct sk_buff **) kmalloc(sizeof (struct sk_buff *) *
-					priv->tx_ring_size, GFP_KERNEL);
-
-	if (NULL == priv->tx_skbuff) {
-		if (netif_msg_ifup(priv))
-			printk(KERN_ERR "%s: Could not allocate tx_skbuff\n",
-					dev->name);
-		err = -ENOMEM;
-		goto tx_skb_fail;
-	}
-
-	for (i = 0; i < priv->tx_ring_size; i++)
-		priv->tx_skbuff[i] = NULL;
-
-	priv->rx_skbuff =
-	    (struct sk_buff **) kmalloc(sizeof (struct sk_buff *) *
-					priv->rx_ring_size, GFP_KERNEL);
-
-	if (NULL == priv->rx_skbuff) {
-		if (netif_msg_ifup(priv))
-			printk(KERN_ERR "%s: Could not allocate rx_skbuff\n",
-					dev->name);
-		err = -ENOMEM;
-		goto rx_skb_fail;
-	}
-
-	for (i = 0; i < priv->rx_ring_size; i++)
-		priv->rx_skbuff[i] = NULL;
-
-	/* Initialize some variables in our dev structure */
-	priv->dirty_tx = priv->cur_tx = priv->tx_bd_base;
-	priv->cur_rx = priv->rx_bd_base;
-	priv->skb_curtx = priv->skb_dirtytx = 0;
-	priv->skb_currx = 0;
-
-	/* Initialize Transmit Descriptor Ring */
-	txbdp = priv->tx_bd_base;
-	for (i = 0; i < priv->tx_ring_size; i++) {
-		txbdp->status = 0;
-		txbdp->length = 0;
-		txbdp->bufPtr = 0;
-		txbdp++;
-	}
-
-	/* Set the last descriptor in the ring to indicate wrap */
-	txbdp--;
-	txbdp->status |= TXBD_WRAP;
-
-	rxbdp = priv->rx_bd_base;
-	for (i = 0; i < priv->rx_ring_size; i++) {
-		struct sk_buff *skb = NULL;
-
-		rxbdp->status = 0;
-
-		skb = gfar_new_skb(dev, rxbdp);
-
-		priv->rx_skbuff[i] = skb;
-
-		rxbdp++;
-	}
-
-	/* Set the last descriptor in the ring to wrap */
-	rxbdp--;
-	rxbdp->status |= RXBD_WRAP;
+static int register_grp_irqs(struct gfar_priv_grp *grp)
+{
+	struct gfar_private *priv = grp->priv;
+	struct net_device *dev = priv->ndev;
+	int err;
 
 	/* If the device has multiple interrupts, register for
 	 * them.  Otherwise, only register for the one */
-	if (priv->einfo->device_flags & FSL_GIANFAR_DEV_HAS_MULTI_INTR) {
+	if (priv->device_flags & FSL_GIANFAR_DEV_HAS_MULTI_INTR) {
 		/* Install our interrupt handlers for Error,
 		 * Transmit, and Receive */
-		if (request_irq(priv->interruptError, gfar_error,
-				0, "enet_error", dev) < 0) {
+		if ((err = request_irq(grp->interruptError, gfar_error, 0,
+				grp->int_name_er,grp)) < 0) {
 			if (netif_msg_intr(priv))
 				printk(KERN_ERR "%s: Can't get IRQ %d\n",
-					dev->name, priv->interruptError);
+					dev->name, grp->interruptError);
 
-			err = -1;
 			goto err_irq_fail;
 		}
 
-		if (request_irq(priv->interruptTransmit, gfar_transmit,
-				0, "enet_tx", dev) < 0) {
+		if ((err = request_irq(grp->interruptTransmit, gfar_transmit,
+				0, grp->int_name_tx, grp)) < 0) {
 			if (netif_msg_intr(priv))
 				printk(KERN_ERR "%s: Can't get IRQ %d\n",
-					dev->name, priv->interruptTransmit);
-
-			err = -1;
-
+					dev->name, grp->interruptTransmit);
 			goto tx_irq_fail;
 		}
 
-		if (request_irq(priv->interruptReceive, gfar_receive,
-				0, "enet_rx", dev) < 0) {
+		if ((err = request_irq(grp->interruptReceive, gfar_receive, 0,
+				grp->int_name_rx, grp)) < 0) {
 			if (netif_msg_intr(priv))
-				printk(KERN_ERR "%s: Can't get IRQ %d (receive0)\n",
-						dev->name, priv->interruptReceive);
-
-			err = -1;
+				printk(KERN_ERR "%s: Can't get IRQ %d\n",
+					dev->name, grp->interruptReceive);
 			goto rx_irq_fail;
 		}
 	} else {
-		if (request_irq(priv->interruptTransmit, gfar_interrupt,
-				0, "gfar_interrupt", dev) < 0) {
+		if ((err = request_irq(grp->interruptTransmit, gfar_interrupt, 0,
+				grp->int_name_tx, grp)) < 0) {
 			if (netif_msg_intr(priv))
 				printk(KERN_ERR "%s: Can't get IRQ %d\n",
-					dev->name, priv->interruptError);
-
-			err = -1;
+					dev->name, grp->interruptTransmit);
 			goto err_irq_fail;
 		}
 	}
-
-	phy_start(priv->phydev);
-
-	/* Configure the coalescing support */
-	if (priv->txcoalescing)
-		gfar_write(&regs->txic,
-			   mk_ic_value(priv->txcount, priv->txtime));
-	else
-		gfar_write(&regs->txic, 0);
-
-	if (priv->rxcoalescing)
-		gfar_write(&regs->rxic,
-			   mk_ic_value(priv->rxcount, priv->rxtime));
-	else
-		gfar_write(&regs->rxic, 0);
-
-	if (priv->rx_csum_enable)
-		rctrl |= RCTRL_CHECKSUMMING;
-
-	if (priv->extended_hash) {
-		rctrl |= RCTRL_EXTHASH;
-
-		gfar_clear_exact_match(dev);
-		rctrl |= RCTRL_EMEN;
-	}
-
-	if (priv->vlan_enable)
-		rctrl |= RCTRL_VLAN;
-
-	if (priv->padding) {
-		rctrl &= ~RCTRL_PAL_MASK;
-		rctrl |= RCTRL_PADDING(priv->padding);
-	}
-
-	/* Init rctrl based on our settings */
-	gfar_write(&priv->regs->rctrl, rctrl);
-
-	if (dev->features & NETIF_F_IP_CSUM)
-		gfar_write(&priv->regs->tctrl, TCTRL_INIT_CSUM);
-
-	/* Set the extraction length and index */
-	attrs = ATTRELI_EL(priv->rx_stash_size) |
-		ATTRELI_EI(priv->rx_stash_index);
-
-	gfar_write(&priv->regs->attreli, attrs);
-
-	/* Start with defaults, and add stashing or locking
-	 * depending on the approprate variables */
-	attrs = ATTR_INIT_SETTINGS;
-
-	if (priv->bd_stash_en)
-		attrs |= ATTR_BDSTASH;
-
-	if (priv->rx_stash_size != 0)
-		attrs |= ATTR_BUFSTASH;
-
-	gfar_write(&priv->regs->attr, attrs);
-
-	gfar_write(&priv->regs->fifo_tx_thr, priv->fifo_threshold);
-	gfar_write(&priv->regs->fifo_tx_starve, priv->fifo_starve);
-	gfar_write(&priv->regs->fifo_tx_starve_shutoff, priv->fifo_starve_off);
-
-	/* Start the controller */
-	gfar_start(dev);
 
 	return 0;
 
 rx_irq_fail:
-	free_irq(priv->interruptTransmit, dev);
+	free_irq(grp->interruptTransmit, grp);
 tx_irq_fail:
-	free_irq(priv->interruptError, dev);
+	free_irq(grp->interruptError, grp);
 err_irq_fail:
-rx_skb_fail:
-	free_skb_resources(priv);
-tx_skb_fail:
-	dma_free_coherent(NULL,
-			sizeof(struct txbd8)*priv->tx_ring_size
-			+ sizeof(struct rxbd8)*priv->rx_ring_size,
-			priv->tx_bd_base,
-			gfar_read(&regs->tbase0));
+	return err;
 
+}
+
+/* Bring the controller up and running */
+int startup_gfar(struct net_device *ndev)
+{
+	struct gfar_private *priv = netdev_priv(ndev);
+	struct gfar __iomem *regs = NULL;
+	int err, i, j;
+
+	for (i = 0; i < priv->num_grps; i++) {
+		regs= priv->gfargrp[i].regs;
+		gfar_write(&regs->imask, IMASK_INIT_CLEAR);
+	}
+
+	regs= priv->gfargrp[0].regs;
+	err = gfar_alloc_skb_resources(ndev);
+	if (err)
+		return err;
+
+	gfar_init_mac(ndev);
+
+	for (i = 0; i < priv->num_grps; i++) {
+		err = register_grp_irqs(&priv->gfargrp[i]);
+		if (err) {
+			for (j = 0; j < i; j++)
+				free_grp_irqs(&priv->gfargrp[j]);
+			goto irq_fail;
+		}
+	}
+
+	/* Start the controller */
+	gfar_start(ndev);
+
+	phy_start(priv->phydev);
+
+	gfar_configure_coalescing(priv, 0xFF, 0xFF);
+
+	return 0;
+
+irq_fail:
+	free_skb_resources(priv);
 	return err;
 }
 
@@ -900,7 +1945,12 @@ tx_skb_fail:
 /* Returns 0 for success. */
 static int gfar_enet_open(struct net_device *dev)
 {
+	struct gfar_private *priv = netdev_priv(dev);
 	int err;
+
+	enable_napi(priv);
+
+	skb_queue_head_init(&priv->rx_recycle);
 
 	/* Initialize a bunch of registers */
 	init_registers(dev);
@@ -909,19 +1959,27 @@ static int gfar_enet_open(struct net_device *dev)
 
 	err = init_phy(dev);
 
-	if(err)
+	if (err) {
+		disable_napi(priv);
 		return err;
+	}
 
 	err = startup_gfar(dev);
+	if (err) {
+		disable_napi(priv);
+		return err;
+	}
 
-	netif_start_queue(dev);
+	netif_tx_start_all_queues(dev);
+
+	device_set_wakeup_enable(&dev->dev, priv->wol_en);
 
 	return err;
 }
 
-static inline struct txfcb *gfar_add_fcb(struct sk_buff *skb, struct txbd8 *bdp)
+static inline struct txfcb *gfar_add_fcb(struct sk_buff *skb)
 {
-	struct txfcb *fcb = (struct txfcb *)skb_push (skb, GMAC_FCB_LEN);
+	struct txfcb *fcb = (struct txfcb *)skb_push(skb, GMAC_FCB_LEN);
 
 	memset(fcb, 0, GMAC_FCB_LEN);
 
@@ -962,130 +2020,270 @@ void inline gfar_tx_vlan(struct sk_buff *skb, struct txfcb *fcb)
 	fcb->vlctl = vlan_tx_tag_get(skb);
 }
 
+static inline struct txbd8 *skip_txbd(struct txbd8 *bdp, int stride,
+			       struct txbd8 *base, int ring_size)
+{
+	struct txbd8 *new_bd = bdp + stride;
+
+	return (new_bd >= (base + ring_size)) ? (new_bd - ring_size) : new_bd;
+}
+
+static inline struct txbd8 *next_txbd(struct txbd8 *bdp, struct txbd8 *base,
+		int ring_size)
+{
+	return skip_txbd(bdp, 1, base, ring_size);
+}
+
 /* This is called by the kernel when a frame is ready for transmission. */
 /* It is pointed to by the dev->hard_start_xmit function pointer */
 static int gfar_start_xmit(struct sk_buff *skb, struct net_device *dev)
 {
 	struct gfar_private *priv = netdev_priv(dev);
+	struct gfar_priv_tx_q *tx_queue = NULL;
+	struct netdev_queue *txq;
+	struct gfar __iomem *regs = NULL;
 	struct txfcb *fcb = NULL;
-	struct txbd8 *txbdp;
-	u16 status;
+	struct txbd8 *txbdp, *txbdp_start, *base, *txbdp_tstamp = NULL;
+	u32 lstatus;
+	int i, rq = 0, do_tstamp = 0;
+	u32 bufaddr;
 	unsigned long flags;
+	unsigned int nr_frags, nr_txbds, length;
 
-	/* Update transmit stats */
-	priv->stats.tx_bytes += skb->len;
+	/*
+	 * TOE=1 frames larger than 2500 bytes may see excess delays
+	 * before start of transmission.
+	 */
+	if (unlikely(gfar_has_errata(priv, GFAR_ERRATA_76) &&
+			skb->ip_summed == CHECKSUM_PARTIAL &&
+			skb->len > 2500)) {
+		int ret;
 
-	/* Lock priv now */
-	spin_lock_irqsave(&priv->txlock, flags);
-
-	/* Point at the first free tx descriptor */
-	txbdp = priv->cur_tx;
-
-	/* Clear all but the WRAP status flags */
-	status = txbdp->status & TXBD_WRAP;
-
-	/* Set up checksumming */
-	if (likely((dev->features & NETIF_F_IP_CSUM)
-			&& (CHECKSUM_PARTIAL == skb->ip_summed))) {
-		fcb = gfar_add_fcb(skb, txbdp);
-		status |= TXBD_TOE;
-		gfar_tx_checksum(skb, fcb);
+		ret = skb_checksum_help(skb);
+		if (ret)
+			return ret;
 	}
 
-	if (priv->vlan_enable &&
-			unlikely(priv->vlgrp && vlan_tx_tag_present(skb))) {
+	rq = skb->queue_mapping;
+	tx_queue = priv->tx_queue[rq];
+	txq = netdev_get_tx_queue(dev, rq);
+	base = tx_queue->tx_bd_base;
+	regs = tx_queue->grp->regs;
+
+	/* check if time stamp should be generated */
+	if (unlikely(skb_shinfo(skb)->tx_flags & SKBTX_HW_TSTAMP &&
+		     priv->hwts_tx_en))
+		do_tstamp = 1;
+
+	/* make space for additional header when fcb is needed */
+	if (((skb->ip_summed == CHECKSUM_PARTIAL) ||
+			vlan_tx_tag_present(skb) ||
+			unlikely(do_tstamp)) &&
+			(skb_headroom(skb) < GMAC_FCB_LEN)) {
+		struct sk_buff *skb_new;
+
+		skb_new = skb_realloc_headroom(skb, GMAC_FCB_LEN);
+		if (!skb_new) {
+			dev->stats.tx_errors++;
+			kfree_skb(skb);
+			return NETDEV_TX_OK;
+		}
+		kfree_skb(skb);
+		skb = skb_new;
+	}
+
+	/* total number of fragments in the SKB */
+	nr_frags = skb_shinfo(skb)->nr_frags;
+
+	/* calculate the required number of TxBDs for this skb */
+	if (unlikely(do_tstamp))
+		nr_txbds = nr_frags + 2;
+	else
+		nr_txbds = nr_frags + 1;
+
+	/* check if there is space to queue this packet */
+	if (nr_txbds > tx_queue->num_txbdfree) {
+		/* no space, stop the queue */
+		netif_tx_stop_queue(txq);
+		dev->stats.tx_fifo_errors++;
+		return NETDEV_TX_BUSY;
+	}
+
+	/* Update transmit stats */
+	tx_queue->stats.tx_bytes += skb->len;
+	tx_queue->stats.tx_packets++;
+
+	txbdp = txbdp_start = tx_queue->cur_tx;
+	lstatus = txbdp->lstatus;
+
+	/* Time stamp insertion requires one additional TxBD */
+	if (unlikely(do_tstamp))
+		txbdp_tstamp = txbdp = next_txbd(txbdp, base,
+				tx_queue->tx_ring_size);
+
+	if (nr_frags == 0) {
+		if (unlikely(do_tstamp))
+			txbdp_tstamp->lstatus |= BD_LFLAG(TXBD_LAST |
+					TXBD_INTERRUPT);
+		else
+			lstatus |= BD_LFLAG(TXBD_LAST | TXBD_INTERRUPT);
+	} else {
+		/* Place the fragment addresses and lengths into the TxBDs */
+		for (i = 0; i < nr_frags; i++) {
+			/* Point at the next BD, wrapping as needed */
+			txbdp = next_txbd(txbdp, base, tx_queue->tx_ring_size);
+
+			length = skb_shinfo(skb)->frags[i].size;
+
+			lstatus = txbdp->lstatus | length |
+				BD_LFLAG(TXBD_READY);
+
+			/* Handle the last BD specially */
+			if (i == nr_frags - 1)
+				lstatus |= BD_LFLAG(TXBD_LAST | TXBD_INTERRUPT);
+
+			bufaddr = dma_map_page(&priv->ofdev->dev,
+					skb_shinfo(skb)->frags[i].page,
+					skb_shinfo(skb)->frags[i].page_offset,
+					length,
+					DMA_TO_DEVICE);
+
+			/* set the TxBD length and buffer pointer */
+			txbdp->bufPtr = bufaddr;
+			txbdp->lstatus = lstatus;
+		}
+
+		lstatus = txbdp_start->lstatus;
+	}
+
+	/* Set up checksumming */
+	if (CHECKSUM_PARTIAL == skb->ip_summed) {
+		fcb = gfar_add_fcb(skb);
+		/* as specified by errata */
+		if (unlikely(gfar_has_errata(priv, GFAR_ERRATA_12)
+			     && ((unsigned long)fcb % 0x20) > 0x18)) {
+			__skb_pull(skb, GMAC_FCB_LEN);
+			skb_checksum_help(skb);
+		} else {
+			lstatus |= BD_LFLAG(TXBD_TOE);
+			gfar_tx_checksum(skb, fcb);
+		}
+	}
+
+	if (vlan_tx_tag_present(skb)) {
 		if (unlikely(NULL == fcb)) {
-			fcb = gfar_add_fcb(skb, txbdp);
-			status |= TXBD_TOE;
+			fcb = gfar_add_fcb(skb);
+			lstatus |= BD_LFLAG(TXBD_TOE);
 		}
 
 		gfar_tx_vlan(skb, fcb);
 	}
 
-	/* Set buffer length and pointer */
-	txbdp->length = skb->len;
-	txbdp->bufPtr = dma_map_single(NULL, skb->data,
-			skb->len, DMA_TO_DEVICE);
+	/* Setup tx hardware time stamping if requested */
+	if (unlikely(do_tstamp)) {
+		skb_shinfo(skb)->tx_flags |= SKBTX_IN_PROGRESS;
+		if (fcb == NULL)
+			fcb = gfar_add_fcb(skb);
+		fcb->ptp = 1;
+		lstatus |= BD_LFLAG(TXBD_TOE);
+	}
 
-	/* Save the skb pointer so we can free it later */
-	priv->tx_skbuff[priv->skb_curtx] = skb;
+	txbdp_start->bufPtr = dma_map_single(&priv->ofdev->dev, skb->data,
+			skb_headlen(skb), DMA_TO_DEVICE);
 
-	/* Update the current skb pointer (wrapping if this was the last) */
-	priv->skb_curtx =
-	    (priv->skb_curtx + 1) & TX_RING_MOD_MASK(priv->tx_ring_size);
+	/*
+	 * If time stamping is requested one additional TxBD must be set up. The
+	 * first TxBD points to the FCB and must have a data length of
+	 * GMAC_FCB_LEN. The second TxBD points to the actual frame data with
+	 * the full frame length.
+	 */
+	if (unlikely(do_tstamp)) {
+		txbdp_tstamp->bufPtr = txbdp_start->bufPtr + GMAC_FCB_LEN;
+		txbdp_tstamp->lstatus |= BD_LFLAG(TXBD_READY) |
+				(skb_headlen(skb) - GMAC_FCB_LEN);
+		lstatus |= BD_LFLAG(TXBD_CRC | TXBD_READY) | GMAC_FCB_LEN;
+	} else {
+		lstatus |= BD_LFLAG(TXBD_CRC | TXBD_READY) | skb_headlen(skb);
+	}
 
-	/* Flag the BD as interrupt-causing */
-	status |= TXBD_INTERRUPT;
+	/*
+	 * We can work in parallel with gfar_clean_tx_ring(), except
+	 * when modifying num_txbdfree. Note that we didn't grab the lock
+	 * when we were reading the num_txbdfree and checking for available
+	 * space, that's because outside of this function it can only grow,
+	 * and once we've got needed space, it cannot suddenly disappear.
+	 *
+	 * The lock also protects us from gfar_error(), which can modify
+	 * regs->tstat and thus retrigger the transfers, which is why we
+	 * also must grab the lock before setting ready bit for the first
+	 * to be transmitted BD.
+	 */
+	spin_lock_irqsave(&tx_queue->txlock, flags);
 
-	/* Flag the BD as ready to go, last in frame, and  */
-	/* in need of CRC */
-	status |= (TXBD_READY | TXBD_LAST | TXBD_CRC);
-
-	dev->trans_start = jiffies;
-
-	/* The powerpc-specific eieio() is used, as wmb() has too strong
+	/*
+	 * The powerpc-specific eieio() is used, as wmb() has too strong
 	 * semantics (it requires synchronization between cacheable and
 	 * uncacheable mappings, which eieio doesn't provide and which we
 	 * don't need), thus requiring a more expensive sync instruction.  At
 	 * some point, the set of architecture-independent barrier functions
 	 * should be expanded to include weaker barriers.
 	 */
-
 	eieio();
-	txbdp->status = status;
 
-	/* If this was the last BD in the ring, the next one */
-	/* is at the beginning of the ring */
-	if (txbdp->status & TXBD_WRAP)
-		txbdp = priv->tx_bd_base;
-	else
-		txbdp++;
+	txbdp_start->lstatus = lstatus;
+
+	eieio(); /* force lstatus write before tx_skbuff */
+
+	tx_queue->tx_skbuff[tx_queue->skb_curtx] = skb;
+
+	/* Update the current skb pointer to the next entry we will use
+	 * (wrapping if necessary) */
+	tx_queue->skb_curtx = (tx_queue->skb_curtx + 1) &
+		TX_RING_MOD_MASK(tx_queue->tx_ring_size);
+
+	tx_queue->cur_tx = next_txbd(txbdp, base, tx_queue->tx_ring_size);
+
+	/* reduce TxBD free count */
+	tx_queue->num_txbdfree -= (nr_txbds);
 
 	/* If the next BD still needs to be cleaned up, then the bds
 	   are full.  We need to tell the kernel to stop sending us stuff. */
-	if (txbdp == priv->dirty_tx) {
-		netif_stop_queue(dev);
+	if (!tx_queue->num_txbdfree) {
+		netif_tx_stop_queue(txq);
 
-		priv->stats.tx_fifo_errors++;
+		dev->stats.tx_fifo_errors++;
 	}
 
-	/* Update the current txbd to the next one */
-	priv->cur_tx = txbdp;
-
 	/* Tell the DMA to go go go */
-	gfar_write(&priv->regs->tstat, TSTAT_CLEAR_THALT);
+	gfar_write(&regs->tstat, TSTAT_CLEAR_THALT >> tx_queue->qindex);
 
 	/* Unlock priv */
-	spin_unlock_irqrestore(&priv->txlock, flags);
+	spin_unlock_irqrestore(&tx_queue->txlock, flags);
 
-	return 0;
+	return NETDEV_TX_OK;
 }
 
 /* Stops the kernel queue, and halts the controller */
 static int gfar_close(struct net_device *dev)
 {
 	struct gfar_private *priv = netdev_priv(dev);
+
+	disable_napi(priv);
+
+	cancel_work_sync(&priv->reset_task);
 	stop_gfar(dev);
 
 	/* Disconnect from the PHY */
 	phy_disconnect(priv->phydev);
 	priv->phydev = NULL;
 
-	netif_stop_queue(dev);
+	netif_tx_stop_all_queues(dev);
 
 	return 0;
 }
 
-/* returns a net_device_stats structure pointer */
-static struct net_device_stats * gfar_get_stats(struct net_device *dev)
-{
-	struct gfar_private *priv = netdev_priv(dev);
-
-	return &(priv->stats);
-}
-
 /* Changes the mac address if the controller is not running. */
-int gfar_set_mac_address(struct net_device *dev)
+static int gfar_set_mac_address(struct net_device *dev)
 {
 	gfar_set_mac_for_addr(dev, 0, dev->dev_addr);
 
@@ -1098,53 +2296,60 @@ static void gfar_vlan_rx_register(struct net_device *dev,
 		struct vlan_group *grp)
 {
 	struct gfar_private *priv = netdev_priv(dev);
+	struct gfar __iomem *regs = NULL;
 	unsigned long flags;
 	u32 tempval;
 
-	spin_lock_irqsave(&priv->rxlock, flags);
+	regs = priv->gfargrp[0].regs;
+	local_irq_save(flags);
+	lock_rx_qs(priv);
 
 	priv->vlgrp = grp;
 
 	if (grp) {
 		/* Enable VLAN tag insertion */
-		tempval = gfar_read(&priv->regs->tctrl);
+		tempval = gfar_read(&regs->tctrl);
 		tempval |= TCTRL_VLINS;
 
-		gfar_write(&priv->regs->tctrl, tempval);
+		gfar_write(&regs->tctrl, tempval);
 
 		/* Enable VLAN tag extraction */
-		tempval = gfar_read(&priv->regs->rctrl);
-		tempval |= RCTRL_VLEX;
-		gfar_write(&priv->regs->rctrl, tempval);
+		tempval = gfar_read(&regs->rctrl);
+		tempval |= (RCTRL_VLEX | RCTRL_PRSDEP_INIT);
+		gfar_write(&regs->rctrl, tempval);
 	} else {
 		/* Disable VLAN tag insertion */
-		tempval = gfar_read(&priv->regs->tctrl);
+		tempval = gfar_read(&regs->tctrl);
 		tempval &= ~TCTRL_VLINS;
-		gfar_write(&priv->regs->tctrl, tempval);
+		gfar_write(&regs->tctrl, tempval);
 
 		/* Disable VLAN tag extraction */
-		tempval = gfar_read(&priv->regs->rctrl);
+		tempval = gfar_read(&regs->rctrl);
 		tempval &= ~RCTRL_VLEX;
-		gfar_write(&priv->regs->rctrl, tempval);
+		/* If parse is no longer required, then disable parser */
+		if (tempval & RCTRL_REQ_PARSER)
+			tempval |= RCTRL_PRSDEP_INIT;
+		else
+			tempval &= ~RCTRL_PRSDEP_INIT;
+		gfar_write(&regs->rctrl, tempval);
 	}
 
-	spin_unlock_irqrestore(&priv->rxlock, flags);
+	gfar_change_mtu(dev, dev->mtu);
+
+	unlock_rx_qs(priv);
+	local_irq_restore(flags);
 }
 
 static int gfar_change_mtu(struct net_device *dev, int new_mtu)
 {
 	int tempsize, tempval;
 	struct gfar_private *priv = netdev_priv(dev);
+	struct gfar __iomem *regs = priv->gfargrp[0].regs;
 	int oldsize = priv->rx_buffer_size;
 	int frame_size = new_mtu + ETH_HLEN;
 
-	if (priv->vlan_enable)
-		frame_size += VLAN_ETH_HLEN;
-
-	if (gfar_uses_fcb(priv))
-		frame_size += GMAC_FCB_LEN;
-
-	frame_size += priv->padding;
+	if (priv->vlgrp)
+		frame_size += VLAN_HLEN;
 
 	if ((frame_size < 64) || (frame_size > JUMBO_FRAME_SIZE)) {
 		if (netif_msg_drv(priv))
@@ -1152,6 +2357,11 @@ static int gfar_change_mtu(struct net_device *dev, int new_mtu)
 					dev->name);
 		return -EINVAL;
 	}
+
+	if (gfar_uses_fcb(priv))
+		frame_size += GMAC_FCB_LEN;
+
+	frame_size += priv->padding;
 
 	tempsize =
 	    (frame_size & ~(INCREMENTAL_BUFFER_SIZE - 1)) +
@@ -1166,20 +2376,21 @@ static int gfar_change_mtu(struct net_device *dev, int new_mtu)
 
 	dev->mtu = new_mtu;
 
-	gfar_write(&priv->regs->mrblr, priv->rx_buffer_size);
-	gfar_write(&priv->regs->maxfrm, priv->rx_buffer_size);
+	gfar_write(&regs->mrblr, priv->rx_buffer_size);
+	gfar_write(&regs->maxfrm, priv->rx_buffer_size);
 
 	/* If the mtu is larger than the max size for standard
 	 * ethernet frames (ie, a jumbo frame), then set maccfg2
 	 * to allow huge frames, and to check the length */
-	tempval = gfar_read(&priv->regs->maccfg2);
+	tempval = gfar_read(&regs->maccfg2);
 
-	if (priv->rx_buffer_size > DEFAULT_RX_BUFFER_SIZE)
+	if (priv->rx_buffer_size > DEFAULT_RX_BUFFER_SIZE ||
+			gfar_has_errata(priv, GFAR_ERRATA_74))
 		tempval |= (MACCFG2_HUGEFRAME | MACCFG2_LENGTHCHECK);
 	else
 		tempval &= ~(MACCFG2_HUGEFRAME | MACCFG2_LENGTHCHECK);
 
-	gfar_write(&priv->regs->maccfg2, tempval);
+	gfar_write(&regs->maccfg2, tempval);
 
 	if ((oldsize != tempsize) && (dev->flags & IFF_UP))
 		startup_gfar(dev);
@@ -1187,122 +2398,222 @@ static int gfar_change_mtu(struct net_device *dev, int new_mtu)
 	return 0;
 }
 
-/* gfar_timeout gets called when a packet has not been
+/* gfar_reset_task gets scheduled when a packet has not been
  * transmitted after a set amount of time.
  * For now, assume that clearing out all the structures, and
- * starting over will fix the problem. */
+ * starting over will fix the problem.
+ */
+static void gfar_reset_task(struct work_struct *work)
+{
+	struct gfar_private *priv = container_of(work, struct gfar_private,
+			reset_task);
+	struct net_device *dev = priv->ndev;
+
+	if (dev->flags & IFF_UP) {
+		netif_tx_stop_all_queues(dev);
+		stop_gfar(dev);
+		startup_gfar(dev);
+		netif_tx_start_all_queues(dev);
+	}
+
+	netif_tx_schedule_all(dev);
+}
+
 static void gfar_timeout(struct net_device *dev)
 {
 	struct gfar_private *priv = netdev_priv(dev);
 
-	priv->stats.tx_errors++;
-
-	if (dev->flags & IFF_UP) {
-		stop_gfar(dev);
-		startup_gfar(dev);
-	}
-
-	netif_schedule(dev);
+	dev->stats.tx_errors++;
+	schedule_work(&priv->reset_task);
 }
 
-/* Interrupt Handler for Transmit complete */
-static irqreturn_t gfar_transmit(int irq, void *dev_id)
+static void gfar_align_skb(struct sk_buff *skb)
 {
-	struct net_device *dev = (struct net_device *) dev_id;
-	struct gfar_private *priv = netdev_priv(dev);
-	struct txbd8 *bdp;
-
-	/* Clear IEVENT */
-	gfar_write(&priv->regs->ievent, IEVENT_TX_MASK);
-
-	/* Lock priv */
-	spin_lock(&priv->txlock);
-	bdp = priv->dirty_tx;
-	while ((bdp->status & TXBD_READY) == 0) {
-		/* If dirty_tx and cur_tx are the same, then either the */
-		/* ring is empty or full now (it could only be full in the beginning, */
-		/* obviously).  If it is empty, we are done. */
-		if ((bdp == priv->cur_tx) && (netif_queue_stopped(dev) == 0))
-			break;
-
-		priv->stats.tx_packets++;
-
-		/* Deferred means some collisions occurred during transmit, */
-		/* but we eventually sent the packet. */
-		if (bdp->status & TXBD_DEF)
-			priv->stats.collisions++;
-
-		/* Free the sk buffer associated with this TxBD */
-		dev_kfree_skb_irq(priv->tx_skbuff[priv->skb_dirtytx]);
-		priv->tx_skbuff[priv->skb_dirtytx] = NULL;
-		priv->skb_dirtytx =
-		    (priv->skb_dirtytx +
-		     1) & TX_RING_MOD_MASK(priv->tx_ring_size);
-
-		/* update bdp to point at next bd in the ring (wrapping if necessary) */
-		if (bdp->status & TXBD_WRAP)
-			bdp = priv->tx_bd_base;
-		else
-			bdp++;
-
-		/* Move dirty_tx to be the next bd */
-		priv->dirty_tx = bdp;
-
-		/* We freed a buffer, so now we can restart transmission */
-		if (netif_queue_stopped(dev))
-			netif_wake_queue(dev);
-	} /* while ((bdp->status & TXBD_READY) == 0) */
-
-	/* If we are coalescing the interrupts, reset the timer */
-	/* Otherwise, clear it */
-	if (priv->txcoalescing)
-		gfar_write(&priv->regs->txic,
-			   mk_ic_value(priv->txcount, priv->txtime));
-	else
-		gfar_write(&priv->regs->txic, 0);
-
-	spin_unlock(&priv->txlock);
-
-	return IRQ_HANDLED;
-}
-
-struct sk_buff * gfar_new_skb(struct net_device *dev, struct rxbd8 *bdp)
-{
-	unsigned int alignamount;
-	struct gfar_private *priv = netdev_priv(dev);
-	struct sk_buff *skb = NULL;
-	unsigned int timeout = SKB_ALLOC_TIMEOUT;
-
-	/* We have to allocate the skb, so keep trying till we succeed */
-	while ((!skb) && timeout--)
-		skb = dev_alloc_skb(priv->rx_buffer_size + RXBUF_ALIGNMENT);
-
-	if (NULL == skb)
-		return NULL;
-
-	alignamount = RXBUF_ALIGNMENT -
-		(((unsigned) skb->data) & (RXBUF_ALIGNMENT - 1));
-
 	/* We need the data buffer to be aligned properly.  We will reserve
 	 * as many bytes as needed to align the data properly
 	 */
-	skb_reserve(skb, alignamount);
+	skb_reserve(skb, RXBUF_ALIGNMENT -
+		(((unsigned long) skb->data) & (RXBUF_ALIGNMENT - 1)));
+}
 
-	bdp->bufPtr = dma_map_single(NULL, skb->data,
-			priv->rx_buffer_size, DMA_FROM_DEVICE);
+/* Interrupt Handler for Transmit complete */
+static int gfar_clean_tx_ring(struct gfar_priv_tx_q *tx_queue)
+{
+	struct net_device *dev = tx_queue->dev;
+	struct gfar_private *priv = netdev_priv(dev);
+	struct gfar_priv_rx_q *rx_queue = NULL;
+	struct txbd8 *bdp, *next = NULL;
+	struct txbd8 *lbdp = NULL;
+	struct txbd8 *base = tx_queue->tx_bd_base;
+	struct sk_buff *skb;
+	int skb_dirtytx;
+	int tx_ring_size = tx_queue->tx_ring_size;
+	int frags = 0, nr_txbds = 0;
+	int i;
+	int howmany = 0;
+	u32 lstatus;
+	size_t buflen;
 
-	bdp->length = 0;
+	rx_queue = priv->rx_queue[tx_queue->qindex];
+	bdp = tx_queue->dirty_tx;
+	skb_dirtytx = tx_queue->skb_dirtytx;
 
-	/* Mark the buffer empty */
-	eieio();
-	bdp->status |= (RXBD_EMPTY | RXBD_INTERRUPT);
+	while ((skb = tx_queue->tx_skbuff[skb_dirtytx])) {
+		unsigned long flags;
+
+		frags = skb_shinfo(skb)->nr_frags;
+
+		/*
+		 * When time stamping, one additional TxBD must be freed.
+		 * Also, we need to dma_unmap_single() the TxPAL.
+		 */
+		if (unlikely(skb_shinfo(skb)->tx_flags & SKBTX_IN_PROGRESS))
+			nr_txbds = frags + 2;
+		else
+			nr_txbds = frags + 1;
+
+		lbdp = skip_txbd(bdp, nr_txbds - 1, base, tx_ring_size);
+
+		lstatus = lbdp->lstatus;
+
+		/* Only clean completed frames */
+		if ((lstatus & BD_LFLAG(TXBD_READY)) &&
+				(lstatus & BD_LENGTH_MASK))
+			break;
+
+		if (unlikely(skb_shinfo(skb)->tx_flags & SKBTX_IN_PROGRESS)) {
+			next = next_txbd(bdp, base, tx_ring_size);
+			buflen = next->length + GMAC_FCB_LEN;
+		} else
+			buflen = bdp->length;
+
+		dma_unmap_single(&priv->ofdev->dev, bdp->bufPtr,
+				buflen, DMA_TO_DEVICE);
+
+		if (unlikely(skb_shinfo(skb)->tx_flags & SKBTX_IN_PROGRESS)) {
+			struct skb_shared_hwtstamps shhwtstamps;
+			u64 *ns = (u64*) (((u32)skb->data + 0x10) & ~0x7);
+			memset(&shhwtstamps, 0, sizeof(shhwtstamps));
+			shhwtstamps.hwtstamp = ns_to_ktime(*ns);
+			skb_tstamp_tx(skb, &shhwtstamps);
+			bdp->lstatus &= BD_LFLAG(TXBD_WRAP);
+			bdp = next;
+		}
+
+		bdp->lstatus &= BD_LFLAG(TXBD_WRAP);
+		bdp = next_txbd(bdp, base, tx_ring_size);
+
+		for (i = 0; i < frags; i++) {
+			dma_unmap_page(&priv->ofdev->dev,
+					bdp->bufPtr,
+					bdp->length,
+					DMA_TO_DEVICE);
+			bdp->lstatus &= BD_LFLAG(TXBD_WRAP);
+			bdp = next_txbd(bdp, base, tx_ring_size);
+		}
+
+		/*
+		 * If there's room in the queue (limit it to rx_buffer_size)
+		 * we add this skb back into the pool, if it's the right size
+		 */
+		if (skb_queue_len(&priv->rx_recycle) < rx_queue->rx_ring_size &&
+				skb_recycle_check(skb, priv->rx_buffer_size +
+					RXBUF_ALIGNMENT)) {
+			gfar_align_skb(skb);
+			skb_queue_head(&priv->rx_recycle, skb);
+		} else
+			dev_kfree_skb_any(skb);
+
+		tx_queue->tx_skbuff[skb_dirtytx] = NULL;
+
+		skb_dirtytx = (skb_dirtytx + 1) &
+			TX_RING_MOD_MASK(tx_ring_size);
+
+		howmany++;
+		spin_lock_irqsave(&tx_queue->txlock, flags);
+		tx_queue->num_txbdfree += nr_txbds;
+		spin_unlock_irqrestore(&tx_queue->txlock, flags);
+	}
+
+	/* If we freed a buffer, we can restart transmission, if necessary */
+	if (__netif_subqueue_stopped(dev, tx_queue->qindex) && tx_queue->num_txbdfree)
+		netif_wake_subqueue(dev, tx_queue->qindex);
+
+	/* Update dirty indicators */
+	tx_queue->skb_dirtytx = skb_dirtytx;
+	tx_queue->dirty_tx = bdp;
+
+	return howmany;
+}
+
+static void gfar_schedule_cleanup(struct gfar_priv_grp *gfargrp)
+{
+	unsigned long flags;
+
+	spin_lock_irqsave(&gfargrp->grplock, flags);
+	if (napi_schedule_prep(&gfargrp->napi)) {
+		gfar_write(&gfargrp->regs->imask, IMASK_RTX_DISABLED);
+		__napi_schedule(&gfargrp->napi);
+	} else {
+		/*
+		 * Clear IEVENT, so interrupts aren't called again
+		 * because of the packets that have already arrived.
+		 */
+		gfar_write(&gfargrp->regs->ievent, IEVENT_RTX_MASK);
+	}
+	spin_unlock_irqrestore(&gfargrp->grplock, flags);
+
+}
+
+/* Interrupt Handler for Transmit complete */
+static irqreturn_t gfar_transmit(int irq, void *grp_id)
+{
+	gfar_schedule_cleanup((struct gfar_priv_grp *)grp_id);
+	return IRQ_HANDLED;
+}
+
+static void gfar_new_rxbdp(struct gfar_priv_rx_q *rx_queue, struct rxbd8 *bdp,
+		struct sk_buff *skb)
+{
+	struct net_device *dev = rx_queue->dev;
+	struct gfar_private *priv = netdev_priv(dev);
+	dma_addr_t buf;
+
+	buf = dma_map_single(&priv->ofdev->dev, skb->data,
+			     priv->rx_buffer_size, DMA_FROM_DEVICE);
+	gfar_init_rxbdp(rx_queue, bdp, buf);
+}
+
+static struct sk_buff * gfar_alloc_skb(struct net_device *dev)
+{
+	struct gfar_private *priv = netdev_priv(dev);
+	struct sk_buff *skb = NULL;
+
+	skb = netdev_alloc_skb(dev, priv->rx_buffer_size + RXBUF_ALIGNMENT);
+	if (!skb)
+		return NULL;
+
+	gfar_align_skb(skb);
 
 	return skb;
 }
 
-static inline void count_errors(unsigned short status, struct gfar_private *priv)
+struct sk_buff * gfar_new_skb(struct net_device *dev)
 {
-	struct net_device_stats *stats = &priv->stats;
+	struct gfar_private *priv = netdev_priv(dev);
+	struct sk_buff *skb = NULL;
+
+	skb = skb_dequeue(&priv->rx_recycle);
+	if (!skb)
+		skb = gfar_alloc_skb(dev);
+
+	return skb;
+}
+
+static inline void count_errors(unsigned short status, struct net_device *dev)
+{
+	struct gfar_private *priv = netdev_priv(dev);
+	struct net_device_stats *stats = &dev->stats;
 	struct gfar_extra_stats *estats = &priv->extra_stats;
 
 	/* If the packet was truncated, none of the other errors
@@ -1337,61 +2648,10 @@ static inline void count_errors(unsigned short status, struct gfar_private *priv
 	}
 }
 
-irqreturn_t gfar_receive(int irq, void *dev_id)
+irqreturn_t gfar_receive(int irq, void *grp_id)
 {
-	struct net_device *dev = (struct net_device *) dev_id;
-	struct gfar_private *priv = netdev_priv(dev);
-#ifdef CONFIG_GFAR_NAPI
-	u32 tempval;
-#else
-	unsigned long flags;
-#endif
-
-	/* Clear IEVENT, so rx interrupt isn't called again
-	 * because of this interrupt */
-	gfar_write(&priv->regs->ievent, IEVENT_RX_MASK);
-
-	/* support NAPI */
-#ifdef CONFIG_GFAR_NAPI
-	if (netif_rx_schedule_prep(dev)) {
-		tempval = gfar_read(&priv->regs->imask);
-		tempval &= IMASK_RX_DISABLED;
-		gfar_write(&priv->regs->imask, tempval);
-
-		__netif_rx_schedule(dev);
-	} else {
-		if (netif_msg_rx_err(priv))
-			printk(KERN_DEBUG "%s: receive called twice (%x)[%x]\n",
-				dev->name, gfar_read(&priv->regs->ievent),
-				gfar_read(&priv->regs->imask));
-	}
-#else
-
-	spin_lock_irqsave(&priv->rxlock, flags);
-	gfar_clean_rx_ring(dev, priv->rx_ring_size);
-
-	/* If we are coalescing interrupts, update the timer */
-	/* Otherwise, clear it */
-	if (priv->rxcoalescing)
-		gfar_write(&priv->regs->rxic,
-			   mk_ic_value(priv->rxcount, priv->rxtime));
-	else
-		gfar_write(&priv->regs->rxic, 0);
-
-	spin_unlock_irqrestore(&priv->rxlock, flags);
-#endif
-
+	gfar_schedule_cleanup((struct gfar_priv_grp *)grp_id);
 	return IRQ_HANDLED;
-}
-
-static inline int gfar_rx_vlan(struct sk_buff *skb,
-		struct vlan_group *vlgrp, unsigned short vlctl)
-{
-#ifdef CONFIG_GFAR_NAPI
-	return vlan_hwaccel_receive_skb(skb, vlgrp, vlctl);
-#else
-	return vlan_hwaccel_rx(skb, vlgrp, vlctl);
-#endif
 }
 
 static inline void gfar_rx_checksum(struct sk_buff *skb, struct rxfcb *fcb)
@@ -1402,62 +2662,55 @@ static inline void gfar_rx_checksum(struct sk_buff *skb, struct rxfcb *fcb)
 	if ((fcb->flags & RXFCB_CSUM_MASK) == (RXFCB_CIP | RXFCB_CTU))
 		skb->ip_summed = CHECKSUM_UNNECESSARY;
 	else
-		skb->ip_summed = CHECKSUM_NONE;
+		skb_checksum_none_assert(skb);
 }
 
-
-static inline struct rxfcb *gfar_get_fcb(struct sk_buff *skb)
-{
-	struct rxfcb *fcb = (struct rxfcb *)skb->data;
-
-	/* Remove the FCB from the skb */
-	skb_pull(skb, GMAC_FCB_LEN);
-
-	return fcb;
-}
 
 /* gfar_process_frame() -- handle one incoming packet if skb
  * isn't NULL.  */
 static int gfar_process_frame(struct net_device *dev, struct sk_buff *skb,
-		int length)
+			      int amount_pull)
 {
 	struct gfar_private *priv = netdev_priv(dev);
 	struct rxfcb *fcb = NULL;
 
-	if (NULL == skb) {
-		if (netif_msg_rx_err(priv))
-			printk(KERN_WARNING "%s: Missing skb!!.\n", dev->name);
-		priv->stats.rx_dropped++;
-		priv->extra_stats.rx_skbmissing++;
-	} else {
-		int ret;
+	int ret;
 
-		/* Prep the skb for the packet */
-		skb_put(skb, length);
+	/* fcb is at the beginning if exists */
+	fcb = (struct rxfcb *)skb->data;
 
-		/* Grab the FCB if there is one */
-		if (gfar_uses_fcb(priv))
-			fcb = gfar_get_fcb(skb);
-
-		/* Remove the padded bytes, if there are any */
-		if (priv->padding)
-			skb_pull(skb, priv->padding);
-
-		if (priv->rx_csum_enable)
-			gfar_rx_checksum(skb, fcb);
-
-		/* Tell the skb what kind of packet this is */
-		skb->protocol = eth_type_trans(skb, dev);
-
-		/* Send the packet up the stack */
-		if (unlikely(priv->vlgrp && (fcb->flags & RXFCB_VLN)))
-			ret = gfar_rx_vlan(skb, priv->vlgrp, fcb->vlctl);
-		else
-			ret = RECEIVE(skb);
-
-		if (NET_RX_DROP == ret)
-			priv->extra_stats.kernel_dropped++;
+	/* Remove the FCB from the skb */
+	/* Remove the padded bytes, if there are any */
+	if (amount_pull) {
+		skb_record_rx_queue(skb, fcb->rq);
+		skb_pull(skb, amount_pull);
 	}
+
+	/* Get receive timestamp from the skb */
+	if (priv->hwts_rx_en) {
+		struct skb_shared_hwtstamps *shhwtstamps = skb_hwtstamps(skb);
+		u64 *ns = (u64 *) skb->data;
+		memset(shhwtstamps, 0, sizeof(*shhwtstamps));
+		shhwtstamps->hwtstamp = ns_to_ktime(*ns);
+	}
+
+	if (priv->padding)
+		skb_pull(skb, priv->padding);
+
+	if (priv->rx_csum_enable)
+		gfar_rx_checksum(skb, fcb);
+
+	/* Tell the skb what kind of packet this is */
+	skb->protocol = eth_type_trans(skb, dev);
+
+	/* Send the packet up the stack */
+	if (unlikely(priv->vlgrp && (fcb->flags & RXFCB_VLN)))
+		ret = vlan_hwaccel_receive_skb(skb, priv->vlgrp, fcb->vlctl);
+	else
+		ret = netif_receive_skb(skb);
+
+	if (NET_RX_DROP == ret)
+		priv->extra_stats.kernel_dropped++;
 
 	return 0;
 }
@@ -1466,108 +2719,153 @@ static int gfar_process_frame(struct net_device *dev, struct sk_buff *skb,
  *   until the budget/quota has been reached. Returns the number
  *   of frames handled
  */
-int gfar_clean_rx_ring(struct net_device *dev, int rx_work_limit)
+int gfar_clean_rx_ring(struct gfar_priv_rx_q *rx_queue, int rx_work_limit)
 {
-	struct rxbd8 *bdp;
+	struct net_device *dev = rx_queue->dev;
+	struct rxbd8 *bdp, *base;
 	struct sk_buff *skb;
-	u16 pkt_len;
+	int pkt_len;
+	int amount_pull;
 	int howmany = 0;
 	struct gfar_private *priv = netdev_priv(dev);
 
 	/* Get the first full descriptor */
-	bdp = priv->cur_rx;
+	bdp = rx_queue->cur_rx;
+	base = rx_queue->rx_bd_base;
+
+	amount_pull = (gfar_uses_fcb(priv) ? GMAC_FCB_LEN : 0);
 
 	while (!((bdp->status & RXBD_EMPTY) || (--rx_work_limit < 0))) {
+		struct sk_buff *newskb;
 		rmb();
-		skb = priv->rx_skbuff[priv->skb_currx];
-
-		if (!(bdp->status &
-		      (RXBD_LARGE | RXBD_SHORT | RXBD_NONOCTET
-		       | RXBD_CRCERR | RXBD_OVERRUN | RXBD_TRUNCATED))) {
-			/* Increment the number of packets */
-			priv->stats.rx_packets++;
-			howmany++;
-
-			/* Remove the FCS from the packet length */
-			pkt_len = bdp->length - 4;
-
-			gfar_process_frame(dev, skb, pkt_len);
-
-			priv->stats.rx_bytes += pkt_len;
-		} else {
-			count_errors(bdp->status, priv);
-
-			if (skb)
-				dev_kfree_skb_any(skb);
-
-			priv->rx_skbuff[priv->skb_currx] = NULL;
-		}
-
-		dev->last_rx = jiffies;
-
-		/* Clear the status flags for this buffer */
-		bdp->status &= ~RXBD_STATS;
 
 		/* Add another skb for the future */
-		skb = gfar_new_skb(dev, bdp);
-		priv->rx_skbuff[priv->skb_currx] = skb;
+		newskb = gfar_new_skb(dev);
+
+		skb = rx_queue->rx_skbuff[rx_queue->skb_currx];
+
+		dma_unmap_single(&priv->ofdev->dev, bdp->bufPtr,
+				priv->rx_buffer_size, DMA_FROM_DEVICE);
+
+		if (unlikely(!(bdp->status & RXBD_ERR) &&
+				bdp->length > priv->rx_buffer_size))
+			bdp->status = RXBD_LARGE;
+
+		/* We drop the frame if we failed to allocate a new buffer */
+		if (unlikely(!newskb || !(bdp->status & RXBD_LAST) ||
+				 bdp->status & RXBD_ERR)) {
+			count_errors(bdp->status, dev);
+
+			if (unlikely(!newskb))
+				newskb = skb;
+			else if (skb)
+				skb_queue_head(&priv->rx_recycle, skb);
+		} else {
+			/* Increment the number of packets */
+			rx_queue->stats.rx_packets++;
+			howmany++;
+
+			if (likely(skb)) {
+				pkt_len = bdp->length - ETH_FCS_LEN;
+				/* Remove the FCS from the packet length */
+				skb_put(skb, pkt_len);
+				rx_queue->stats.rx_bytes += pkt_len;
+				skb_record_rx_queue(skb, rx_queue->qindex);
+				gfar_process_frame(dev, skb, amount_pull);
+
+			} else {
+				if (netif_msg_rx_err(priv))
+					printk(KERN_WARNING
+					       "%s: Missing skb!\n", dev->name);
+				rx_queue->stats.rx_dropped++;
+				priv->extra_stats.rx_skbmissing++;
+			}
+
+		}
+
+		rx_queue->rx_skbuff[rx_queue->skb_currx] = newskb;
+
+		/* Setup the new bdp */
+		gfar_new_rxbdp(rx_queue, bdp, newskb);
 
 		/* Update to the next pointer */
-		if (bdp->status & RXBD_WRAP)
-			bdp = priv->rx_bd_base;
-		else
-			bdp++;
+		bdp = next_bd(bdp, base, rx_queue->rx_ring_size);
 
 		/* update to point at the next skb */
-		priv->skb_currx =
-		    (priv->skb_currx +
-		     1) & RX_RING_MOD_MASK(priv->rx_ring_size);
-
+		rx_queue->skb_currx =
+		    (rx_queue->skb_currx + 1) &
+		    RX_RING_MOD_MASK(rx_queue->rx_ring_size);
 	}
 
 	/* Update the current rxbd pointer to be the next one */
-	priv->cur_rx = bdp;
+	rx_queue->cur_rx = bdp;
 
 	return howmany;
 }
 
-#ifdef CONFIG_GFAR_NAPI
-static int gfar_poll(struct net_device *dev, int *budget)
+static int gfar_poll(struct napi_struct *napi, int budget)
 {
-	int howmany;
-	struct gfar_private *priv = netdev_priv(dev);
-	int rx_work_limit = *budget;
+	struct gfar_priv_grp *gfargrp = container_of(napi,
+			struct gfar_priv_grp, napi);
+	struct gfar_private *priv = gfargrp->priv;
+	struct gfar __iomem *regs = gfargrp->regs;
+	struct gfar_priv_tx_q *tx_queue = NULL;
+	struct gfar_priv_rx_q *rx_queue = NULL;
+	int rx_cleaned = 0, budget_per_queue = 0, rx_cleaned_per_queue = 0;
+	int tx_cleaned = 0, i, left_over_budget = budget;
+	unsigned long serviced_queues = 0;
+	int num_queues = 0;
 
-	if (rx_work_limit > dev->quota)
-		rx_work_limit = dev->quota;
+	num_queues = gfargrp->num_rx_queues;
+	budget_per_queue = budget/num_queues;
 
-	howmany = gfar_clean_rx_ring(dev, rx_work_limit);
+	/* Clear IEVENT, so interrupts aren't called again
+	 * because of the packets that have already arrived */
+	gfar_write(&regs->ievent, IEVENT_RTX_MASK);
 
-	dev->quota -= howmany;
-	rx_work_limit -= howmany;
-	*budget -= howmany;
+	while (num_queues && left_over_budget) {
 
-	if (rx_work_limit > 0) {
-		netif_rx_complete(dev);
+		budget_per_queue = left_over_budget/num_queues;
+		left_over_budget = 0;
+
+		for_each_set_bit(i, &gfargrp->rx_bit_map, priv->num_rx_queues) {
+			if (test_bit(i, &serviced_queues))
+				continue;
+			rx_queue = priv->rx_queue[i];
+			tx_queue = priv->tx_queue[rx_queue->qindex];
+
+			tx_cleaned += gfar_clean_tx_ring(tx_queue);
+			rx_cleaned_per_queue = gfar_clean_rx_ring(rx_queue,
+							budget_per_queue);
+			rx_cleaned += rx_cleaned_per_queue;
+			if(rx_cleaned_per_queue < budget_per_queue) {
+				left_over_budget = left_over_budget +
+					(budget_per_queue - rx_cleaned_per_queue);
+				set_bit(i, &serviced_queues);
+				num_queues--;
+			}
+		}
+	}
+
+	if (tx_cleaned)
+		return budget;
+
+	if (rx_cleaned < budget) {
+		napi_complete(napi);
 
 		/* Clear the halt bit in RSTAT */
-		gfar_write(&priv->regs->rstat, RSTAT_CLEAR_RHALT);
+		gfar_write(&regs->rstat, gfargrp->rstat);
 
-		gfar_write(&priv->regs->imask, IMASK_DEFAULT);
+		gfar_write(&regs->imask, IMASK_DEFAULT);
 
 		/* If we are coalescing interrupts, update the timer */
 		/* Otherwise, clear it */
-		if (priv->rxcoalescing)
-			gfar_write(&priv->regs->rxic,
-				   mk_ic_value(priv->rxcount, priv->rxtime));
-		else
-			gfar_write(&priv->regs->rxic, 0);
+		gfar_configure_coalescing(priv,
+				gfargrp->rx_bit_map, gfargrp->tx_bit_map);
 	}
 
-	/* Return 1 if there's more work to do */
-	return (rx_work_limit > 0) ? 0 : 1;
+	return rx_cleaned;
 }
-#endif
 
 #ifdef CONFIG_NET_POLL_CONTROLLER
 /*
@@ -1578,44 +2876,50 @@ static int gfar_poll(struct net_device *dev, int *budget)
 static void gfar_netpoll(struct net_device *dev)
 {
 	struct gfar_private *priv = netdev_priv(dev);
+	int i = 0;
 
 	/* If the device has multiple interrupts, run tx/rx */
-	if (priv->einfo->device_flags & FSL_GIANFAR_DEV_HAS_MULTI_INTR) {
-		disable_irq(priv->interruptTransmit);
-		disable_irq(priv->interruptReceive);
-		disable_irq(priv->interruptError);
-		gfar_interrupt(priv->interruptTransmit, dev);
-		enable_irq(priv->interruptError);
-		enable_irq(priv->interruptReceive);
-		enable_irq(priv->interruptTransmit);
+	if (priv->device_flags & FSL_GIANFAR_DEV_HAS_MULTI_INTR) {
+		for (i = 0; i < priv->num_grps; i++) {
+			disable_irq(priv->gfargrp[i].interruptTransmit);
+			disable_irq(priv->gfargrp[i].interruptReceive);
+			disable_irq(priv->gfargrp[i].interruptError);
+			gfar_interrupt(priv->gfargrp[i].interruptTransmit,
+						&priv->gfargrp[i]);
+			enable_irq(priv->gfargrp[i].interruptError);
+			enable_irq(priv->gfargrp[i].interruptReceive);
+			enable_irq(priv->gfargrp[i].interruptTransmit);
+		}
 	} else {
-		disable_irq(priv->interruptTransmit);
-		gfar_interrupt(priv->interruptTransmit, dev);
-		enable_irq(priv->interruptTransmit);
+		for (i = 0; i < priv->num_grps; i++) {
+			disable_irq(priv->gfargrp[i].interruptTransmit);
+			gfar_interrupt(priv->gfargrp[i].interruptTransmit,
+						&priv->gfargrp[i]);
+			enable_irq(priv->gfargrp[i].interruptTransmit);
+		}
 	}
 }
 #endif
 
 /* The interrupt handler for devices with one interrupt */
-static irqreturn_t gfar_interrupt(int irq, void *dev_id)
+static irqreturn_t gfar_interrupt(int irq, void *grp_id)
 {
-	struct net_device *dev = dev_id;
-	struct gfar_private *priv = netdev_priv(dev);
+	struct gfar_priv_grp *gfargrp = grp_id;
 
 	/* Save ievent for future reference */
-	u32 events = gfar_read(&priv->regs->ievent);
+	u32 events = gfar_read(&gfargrp->regs->ievent);
 
 	/* Check for reception */
 	if (events & IEVENT_RX_MASK)
-		gfar_receive(irq, dev_id);
+		gfar_receive(irq, grp_id);
 
 	/* Check for transmit completion */
 	if (events & IEVENT_TX_MASK)
-		gfar_transmit(irq, dev_id);
+		gfar_transmit(irq, grp_id);
 
 	/* Check for errors */
 	if (events & IEVENT_ERR_MASK)
-		gfar_error(irq, dev_id);
+		gfar_error(irq, grp_id);
 
 	return IRQ_HANDLED;
 }
@@ -1629,12 +2933,14 @@ static irqreturn_t gfar_interrupt(int irq, void *dev_id)
 static void adjust_link(struct net_device *dev)
 {
 	struct gfar_private *priv = netdev_priv(dev);
-	struct gfar __iomem *regs = priv->regs;
+	struct gfar __iomem *regs = priv->gfargrp[0].regs;
 	unsigned long flags;
 	struct phy_device *phydev = priv->phydev;
 	int new_state = 0;
 
-	spin_lock_irqsave(&priv->txlock, flags);
+	local_irq_save(flags);
+	lock_tx_qs(priv);
+
 	if (phydev->link) {
 		u32 tempval = gfar_read(&regs->maccfg2);
 		u32 ecntrl = gfar_read(&regs->ecntrl);
@@ -1657,6 +2963,8 @@ static void adjust_link(struct net_device *dev)
 			case 1000:
 				tempval =
 				    ((tempval & ~(MACCFG2_IF)) | MACCFG2_GMII);
+
+				ecntrl &= ~(ECNTRL_R100);
 				break;
 			case 100:
 			case 10:
@@ -1687,7 +2995,6 @@ static void adjust_link(struct net_device *dev)
 		if (!priv->oldlink) {
 			new_state = 1;
 			priv->oldlink = 1;
-			netif_schedule(dev);
 		}
 	} else if (priv->oldlink) {
 		new_state = 1;
@@ -1698,8 +3005,8 @@ static void adjust_link(struct net_device *dev)
 
 	if (new_state && netif_msg_link(priv))
 		phy_print_status(phydev);
-
-	spin_unlock_irqrestore(&priv->txlock, flags);
+	unlock_tx_qs(priv);
+	local_irq_restore(flags);
 }
 
 /* Update the hash table based on the current list of multicast
@@ -1708,12 +3015,12 @@ static void adjust_link(struct net_device *dev)
  * whenever dev->flags is changed */
 static void gfar_set_multi(struct net_device *dev)
 {
-	struct dev_mc_list *mc_ptr;
+	struct netdev_hw_addr *ha;
 	struct gfar_private *priv = netdev_priv(dev);
-	struct gfar __iomem *regs = priv->regs;
+	struct gfar __iomem *regs = priv->gfargrp[0].regs;
 	u32 tempval;
 
-	if(dev->flags & IFF_PROMISC) {
+	if (dev->flags & IFF_PROMISC) {
 		/* Set RCTRL to PROM */
 		tempval = gfar_read(&regs->rctrl);
 		tempval |= RCTRL_PROM;
@@ -1725,7 +3032,7 @@ static void gfar_set_multi(struct net_device *dev)
 		gfar_write(&regs->rctrl, tempval);
 	}
 
-	if(dev->flags & IFF_ALLMULTI) {
+	if (dev->flags & IFF_ALLMULTI) {
 		/* Set the hash to rx all multicast frames */
 		gfar_write(&regs->igaddr0, 0xffffffff);
 		gfar_write(&regs->igaddr1, 0xffffffff);
@@ -1777,21 +3084,18 @@ static void gfar_set_multi(struct net_device *dev)
 			em_num = 0;
 		}
 
-		if(dev->mc_count == 0)
+		if (netdev_mc_empty(dev))
 			return;
 
 		/* Parse the list, and set the appropriate bits */
-		for(mc_ptr = dev->mc_list; mc_ptr; mc_ptr = mc_ptr->next) {
+		netdev_for_each_mc_addr(ha, dev) {
 			if (idx < em_num) {
-				gfar_set_mac_for_addr(dev, idx,
-						mc_ptr->dmi_addr);
+				gfar_set_mac_for_addr(dev, idx, ha->addr);
 				idx++;
 			} else
-				gfar_set_hash_for_addr(dev, mc_ptr->dmi_addr);
+				gfar_set_hash_for_addr(dev, ha->addr);
 		}
 	}
-
-	return;
 }
 
 
@@ -1800,10 +3104,10 @@ static void gfar_set_multi(struct net_device *dev)
 static void gfar_clear_exact_match(struct net_device *dev)
 {
 	int idx;
-	u8 zero_arr[MAC_ADDR_LEN] = {0,0,0,0,0,0};
+	static const u8 zero_arr[MAC_ADDR_LEN] = {0, 0, 0, 0, 0, 0};
 
 	for(idx = 1;idx < GFAR_EM_NUM + 1;idx++)
-		gfar_set_mac_for_addr(dev, idx, (u8 *)zero_arr);
+		gfar_set_mac_for_addr(dev, idx, zero_arr);
 }
 
 /* Set the appropriate hash bit for the given addr */
@@ -1832,21 +3136,21 @@ static void gfar_set_hash_for_addr(struct net_device *dev, u8 *addr)
 	tempval = gfar_read(priv->hash_regs[whichreg]);
 	tempval |= value;
 	gfar_write(priv->hash_regs[whichreg], tempval);
-
-	return;
 }
 
 
 /* There are multiple MAC Address register pairs on some controllers
  * This function sets the numth pair to a given address
  */
-static void gfar_set_mac_for_addr(struct net_device *dev, int num, u8 *addr)
+static void gfar_set_mac_for_addr(struct net_device *dev, int num,
+				  const u8 *addr)
 {
 	struct gfar_private *priv = netdev_priv(dev);
+	struct gfar __iomem *regs = priv->gfargrp[0].regs;
 	int idx;
 	char tmpbuf[MAC_ADDR_LEN];
 	u32 tempval;
-	u32 __iomem *macptr = &priv->regs->macstnaddr1;
+	u32 __iomem *macptr = &regs->macstnaddr1;
 
 	macptr += num*2;
 
@@ -1863,60 +3167,70 @@ static void gfar_set_mac_for_addr(struct net_device *dev, int num, u8 *addr)
 }
 
 /* GFAR error interrupt handler */
-static irqreturn_t gfar_error(int irq, void *dev_id)
+static irqreturn_t gfar_error(int irq, void *grp_id)
 {
-	struct net_device *dev = dev_id;
-	struct gfar_private *priv = netdev_priv(dev);
+	struct gfar_priv_grp *gfargrp = grp_id;
+	struct gfar __iomem *regs = gfargrp->regs;
+	struct gfar_private *priv= gfargrp->priv;
+	struct net_device *dev = priv->ndev;
 
 	/* Save ievent for future reference */
-	u32 events = gfar_read(&priv->regs->ievent);
+	u32 events = gfar_read(&regs->ievent);
 
 	/* Clear IEVENT */
-	gfar_write(&priv->regs->ievent, IEVENT_ERR_MASK);
+	gfar_write(&regs->ievent, events & IEVENT_ERR_MASK);
+
+	/* Magic Packet is not an error. */
+	if ((priv->device_flags & FSL_GIANFAR_DEV_HAS_MAGIC_PACKET) &&
+	    (events & IEVENT_MAG))
+		events &= ~IEVENT_MAG;
 
 	/* Hmm... */
 	if (netif_msg_rx_err(priv) || netif_msg_tx_err(priv))
 		printk(KERN_DEBUG "%s: error interrupt (ievent=0x%08x imask=0x%08x)\n",
-		       dev->name, events, gfar_read(&priv->regs->imask));
+		       dev->name, events, gfar_read(&regs->imask));
 
 	/* Update the error counters */
 	if (events & IEVENT_TXE) {
-		priv->stats.tx_errors++;
+		dev->stats.tx_errors++;
 
 		if (events & IEVENT_LC)
-			priv->stats.tx_window_errors++;
+			dev->stats.tx_window_errors++;
 		if (events & IEVENT_CRL)
-			priv->stats.tx_aborted_errors++;
+			dev->stats.tx_aborted_errors++;
 		if (events & IEVENT_XFUN) {
+			unsigned long flags;
+
 			if (netif_msg_tx_err(priv))
 				printk(KERN_DEBUG "%s: TX FIFO underrun, "
 				       "packet dropped.\n", dev->name);
-			priv->stats.tx_dropped++;
+			dev->stats.tx_dropped++;
 			priv->extra_stats.tx_underrun++;
 
+			local_irq_save(flags);
+			lock_tx_qs(priv);
+
 			/* Reactivate the Tx Queues */
-			gfar_write(&priv->regs->tstat, TSTAT_CLEAR_THALT);
+			gfar_write(&regs->tstat, gfargrp->tstat);
+
+			unlock_tx_qs(priv);
+			local_irq_restore(flags);
 		}
 		if (netif_msg_tx_err(priv))
 			printk(KERN_DEBUG "%s: Transmit Error\n", dev->name);
 	}
 	if (events & IEVENT_BSY) {
-		priv->stats.rx_errors++;
+		dev->stats.rx_errors++;
 		priv->extra_stats.rx_bsy++;
 
-		gfar_receive(irq, dev_id);
-
-#ifndef CONFIG_GFAR_NAPI
-		/* Clear the halt bit in RSTAT */
-		gfar_write(&priv->regs->rstat, RSTAT_CLEAR_RHALT);
-#endif
+		gfar_receive(irq, grp_id);
 
 		if (netif_msg_rx_err(priv))
 			printk(KERN_DEBUG "%s: busy error (rstat: %x)\n",
-			       dev->name, gfar_read(&priv->regs->rstat));
+			       dev->name, gfar_read(&regs->rstat));
 	}
 	if (events & IEVENT_BABR) {
-		priv->stats.rx_errors++;
+		dev->stats.rx_errors++;
 		priv->extra_stats.rx_babr++;
 
 		if (netif_msg_rx_err(priv))
@@ -1938,34 +3252,39 @@ static irqreturn_t gfar_error(int irq, void *dev_id)
 	return IRQ_HANDLED;
 }
 
+static struct of_device_id gfar_match[] =
+{
+	{
+		.type = "network",
+		.compatible = "gianfar",
+	},
+	{
+		.compatible = "fsl,etsec2",
+	},
+	{},
+};
+MODULE_DEVICE_TABLE(of, gfar_match);
+
 /* Structure for a device driver */
 static struct platform_driver gfar_driver = {
+	.driver = {
+		.name = "fsl-gianfar",
+		.owner = THIS_MODULE,
+		.pm = GFAR_PM_OPS,
+		.of_match_table = gfar_match,
+	},
 	.probe = gfar_probe,
 	.remove = gfar_remove,
-	.driver	= {
-		.name = "fsl-gianfar",
-	},
 };
 
 static int __init gfar_init(void)
 {
-	int err = gfar_mdio_init();
-
-	if (err)
-		return err;
-
-	err = platform_driver_register(&gfar_driver);
-
-	if (err)
-		gfar_mdio_exit();
-
-	return err;
+	return platform_driver_register(&gfar_driver);
 }
 
 static void __exit gfar_exit(void)
 {
 	platform_driver_unregister(&gfar_driver);
-	gfar_mdio_exit();
 }
 
 module_init(gfar_init);

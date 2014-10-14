@@ -38,7 +38,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <asm/current.h>
+#include <linux/slab.h>
 
 #include "ehca_tools.h"
 #include "ehca_iverbs.h"
@@ -49,6 +49,7 @@ struct ib_pd *ehca_alloc_pd(struct ib_device *device,
 			    struct ib_ucontext *context, struct ib_udata *udata)
 {
 	struct ehca_pd *pd;
+	int i;
 
 	pd = kmem_cache_zalloc(pd_cache, GFP_KERNEL);
 	if (!pd) {
@@ -57,7 +58,11 @@ struct ib_pd *ehca_alloc_pd(struct ib_device *device,
 		return ERR_PTR(-ENOMEM);
 	}
 
-	pd->ownpid = current->tgid;
+	for (i = 0; i < 2; i++) {
+		INIT_LIST_HEAD(&pd->free[i]);
+		INIT_LIST_HEAD(&pd->full[i]);
+	}
+	mutex_init(&pd->lock);
 
 	/*
 	 * Kernel PD: when device = -1, 0
@@ -79,18 +84,24 @@ struct ib_pd *ehca_alloc_pd(struct ib_device *device,
 
 int ehca_dealloc_pd(struct ib_pd *pd)
 {
-	u32 cur_pid = current->tgid;
 	struct ehca_pd *my_pd = container_of(pd, struct ehca_pd, ib_pd);
+	int i, leftovers = 0;
+	struct ipz_small_queue_page *page, *tmp;
 
-	if (my_pd->ib_pd.uobject && my_pd->ib_pd.uobject->context &&
-	    my_pd->ownpid != cur_pid) {
-		ehca_err(pd->device, "Invalid caller pid=%x ownpid=%x",
-			 cur_pid, my_pd->ownpid);
-		return -EINVAL;
+	for (i = 0; i < 2; i++) {
+		list_splice(&my_pd->full[i], &my_pd->free[i]);
+		list_for_each_entry_safe(page, tmp, &my_pd->free[i], list) {
+			leftovers = 1;
+			free_page(page->page);
+			kmem_cache_free(small_qp_cache, page);
+		}
 	}
 
-	kmem_cache_free(pd_cache,
-			container_of(pd, struct ehca_pd, ib_pd));
+	if (leftovers)
+		ehca_warn(pd->device,
+			  "Some small queue pages were not freed");
+
+	kmem_cache_free(pd_cache, my_pd);
 
 	return 0;
 }
@@ -100,7 +111,7 @@ int ehca_init_pd_cache(void)
 	pd_cache = kmem_cache_create("ehca_cache_pd",
 				     sizeof(struct ehca_pd), 0,
 				     SLAB_HWCACHE_ALIGN,
-				     NULL, NULL);
+				     NULL);
 	if (!pd_cache)
 		return -ENOMEM;
 	return 0;

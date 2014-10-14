@@ -57,9 +57,6 @@ typedef union {
 	__u8  byte[2];
 } __u16_host_order;
 
-/* Same purpose, different application */
-#define u16ho(array) (* ((__u16 *) array))
-
 /* Types of discovery */
 typedef enum {
 	DISCOVERY_LOG,		/* What's in our discovery log */
@@ -80,7 +77,7 @@ typedef struct discovery_t {
 	irda_queue_t	q;		/* Must be first! */
 
 	discinfo_t	data;		/* Basic discovery information */
-	int		name_len;	/* Lenght of nickname */
+	int		name_len;	/* Length of nickname */
 
 	LAP_REASON	condition;	/* More info about the discovery */
 	int		gen_addr_bit;	/* Need to generate a new device

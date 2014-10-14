@@ -51,27 +51,20 @@
  */
 struct stliport {
 	unsigned long		magic;
+	struct tty_port		port;
 	unsigned int		portnr;
 	unsigned int		panelnr;
 	unsigned int		brdnr;
 	unsigned long		state;
 	unsigned int		devnr;
-	int			flags;
 	int			baud_base;
 	int			custom_divisor;
-	int			close_delay;
 	int			closing_wait;
-	int			refcount;
-	int			openwaitcnt;
 	int			rc;
 	int			argsize;
 	void			*argp;
 	unsigned int		rxmarkmsk;
-	struct tty_struct	*tty;
-	wait_queue_head_t	open_wait;
-	wait_queue_head_t	close_wait;
 	wait_queue_head_t	raw_wait;
-	struct work_struct	tqhangup;
 	struct asysigs		asig;
 	unsigned long		addr;
 	unsigned long		rxoffset;
@@ -93,7 +86,7 @@ struct stlibrd {
 	unsigned long	magic;
 	unsigned int	brdnr;
 	unsigned int	brdtype;
-	unsigned int	state;
+	unsigned long	state;
 	unsigned int	nrpanels;
 	unsigned int	nrports;
 	unsigned int	nrdevs;

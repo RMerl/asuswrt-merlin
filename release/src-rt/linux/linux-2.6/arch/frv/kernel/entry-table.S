@@ -86,7 +86,7 @@ __break_usertrap_fixup_table:
 	.globl		__break_kerneltrap_fixup_table
 __break_kerneltrap_fixup_table:
 
-	# handler declaration for a sofware or program interrupt
+	# handler declaration for a software or program interrupt
 .macro VECTOR_SOFTPROG tbr_tt, vec
 	.section .trap.user
 	.org		\tbr_tt
@@ -145,7 +145,7 @@ __break_kerneltrap_fixup_table:
 	.long		\vec
 .endm
 
-	# handler declaration for an MMU only sofware or program interrupt
+	# handler declaration for an MMU only software or program interrupt
 .macro VECTOR_SP_MMU tbr_tt, vec
 #ifdef CONFIG_MMU
  	VECTOR_SOFTPROG	\tbr_tt, \vec
@@ -316,8 +316,14 @@ __trap_fixup_kernel_data_tlb_miss:
 	.section	.trap.vector
 	.org		TBR_TT_TRAP0 >> 2
 	.long		system_call
-	.rept		126
+	.rept		119
 	.long		__entry_unsupported_trap
 	.endr
+
+	# userspace atomic op emulation, traps 120-126
+	.rept		7
+	.long		__entry_atomic_op
+	.endr
+	
 	.org		TBR_TT_BREAK >> 2
 	.long		__entry_debug_exception

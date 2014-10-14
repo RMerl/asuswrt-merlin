@@ -21,7 +21,6 @@
 
 #include <linux/bitops.h>
 #include <linux/module.h>
-#include <linux/moduleparam.h>
 #include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/device.h>
@@ -41,10 +40,12 @@ static int debug;
 module_param(debug, int, 0644);
 MODULE_PARM_DESC(debug, "Turn on/off debugging (default:off).");
 
+DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
+
 #define dprintk( args... ) \
-	do \
+	do { \
 		if (debug) printk(KERN_DEBUG args); \
-	while (0)
+	} while (0)
 
 #define IF_FREQUENCYx6 217    /* 6 * 36.16666666667MHz */
 
@@ -214,7 +215,7 @@ static int cx24108_tuner_set_params(struct dvb_frontend* fe, struct dvb_frontend
 		freq = 2150000; /* satellite IF is 950..2150MHz */
 
 	/* decide which VCO to use for the input frequency */
-	for(i = 1; (i < ARRAY_SIZE(osci)) && (osci[i] < freq); i++);
+	for(i = 1; (i < ARRAY_SIZE(osci) - 1) && (osci[i] < freq); i++);
 	printk("cx24108 debug: select vco #%d (f=%d)\n",i,freq);
 	band=bandsel[i];
 	/* the gain values must be set by SetSymbolrate */
@@ -426,10 +427,10 @@ static void or51211_reset(struct dvb_frontend * fe)
 	struct dvb_bt8xx_card *bt = fe->dvb->priv;
 
 	/* RESET DEVICE
-	 * reset is controled by GPIO-0
+	 * reset is controlled by GPIO-0
 	 * when set to 0 causes reset and when to 1 for normal op
 	 * must remain reset for 128 clock cycles on a 50Mhz clock
-	 * also PRM1 PRM2 & PRM4 are controled by GPIO-1,GPIO-2 & GPIO-4
+	 * also PRM1 PRM2 & PRM4 are controlled by GPIO-1,GPIO-2 & GPIO-4
 	 * We assume that the reset has be held low long enough or we
 	 * have been reset by a power on.  When the driver is unloaded
 	 * reset set to 0 so if reloaded we have been reset.
@@ -610,8 +611,9 @@ static void frontend_init(struct dvb_bt8xx_card *card, u32 type)
 		lgdt330x_reset(card);
 		card->fe = dvb_attach(lgdt330x_attach, &tdvs_tua6034_config, card->i2c_adapter);
 		if (card->fe != NULL) {
-			dvb_attach(dvb_pll_attach, card->fe, 0x61,
-				   card->i2c_adapter, &dvb_pll_lg_tdvs_h06xf);
+			dvb_attach(simple_tuner_attach, card->fe,
+				   card->i2c_adapter, 0x61,
+				   TUNER_LG_TDVS_H06XF);
 			dprintk ("dvb_bt8xx: lgdt330x detected\n");
 		}
 		break;
@@ -671,7 +673,7 @@ static void frontend_init(struct dvb_bt8xx_card *card, u32 type)
 		state->dst_ca = NULL;
 		/*	DST is not a frontend, attaching the ASIC	*/
 		if (dvb_attach(dst_attach, state, &card->dvb_adapter) == NULL) {
-			printk("%s: Could not find a Twinhan DST.\n", __FUNCTION__);
+			printk("%s: Could not find a Twinhan DST.\n", __func__);
 			break;
 		}
 		/*	Attach other DST peripherals if any		*/
@@ -692,11 +694,15 @@ static void frontend_init(struct dvb_bt8xx_card *card, u32 type)
 
 	case BTTV_BOARD_PC_HDTV:
 		card->fe = dvb_attach(or51211_attach, &or51211_config, card->i2c_adapter);
+		if (card->fe != NULL)
+			dvb_attach(simple_tuner_attach, card->fe,
+				   card->i2c_adapter, 0x61,
+				   TUNER_PHILIPS_FCV1236D);
 		break;
 	}
 
 	if (card->fe == NULL)
-		printk("dvb-bt8xx: A frontend driver was not found for device %04x/%04x subsystem %04x/%04x\n",
+		printk("dvb-bt8xx: A frontend driver was not found for device [%04x:%04x] subsystem [%04x:%04x]\n",
 		       card->bt->dev->vendor,
 		       card->bt->dev->device,
 		       card->bt->dev->subsystem_vendor,
@@ -713,7 +719,10 @@ static int __devinit dvb_bt8xx_load_card(struct dvb_bt8xx_card *card, u32 type)
 {
 	int result;
 
-	if ((result = dvb_register_adapter(&card->dvb_adapter, card->card_name, THIS_MODULE, &card->bt->dev->dev)) < 0) {
+	result = dvb_register_adapter(&card->dvb_adapter, card->card_name,
+				      THIS_MODULE, &card->bt->dev->dev,
+				      adapter_nr);
+	if (result < 0) {
 		printk("dvb_bt8xx: dvb_register_adapter failed (errno = %d)\n", result);
 		return result;
 	}
@@ -805,7 +814,7 @@ static int __devinit dvb_bt8xx_probe(struct bttv_sub_device *sub)
 
 	mutex_init(&card->lock);
 	card->bttv_nr = sub->core->nr;
-	strncpy(card->card_name, sub->core->name, sizeof(sub->core->name));
+	strlcpy(card->card_name, sub->core->v4l2_dev.name, sizeof(card->card_name));
 	card->i2c_adapter = &sub->core->i2c_adap;
 
 	switch(sub->core->type) {

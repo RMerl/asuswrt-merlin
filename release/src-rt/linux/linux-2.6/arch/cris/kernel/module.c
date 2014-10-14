@@ -21,6 +21,7 @@
 #include <linux/fs.h>
 #include <linux/string.h>
 #include <linux/kernel.h>
+#include <linux/slab.h>
 
 #if 0
 #define DEBUGP printk
@@ -28,20 +29,26 @@
 #define DEBUGP(fmt , ...)
 #endif
 
+#ifdef CONFIG_ETRAX_KMALLOCED_MODULES
+#define MALLOC_MODULE(size) kmalloc(size, GFP_KERNEL)
+#define FREE_MODULE(region) kfree(region)
+#else
+#define MALLOC_MODULE(size) vmalloc_exec(size)
+#define FREE_MODULE(region) vfree(region)
+#endif
+
 void *module_alloc(unsigned long size)
 {
 	if (size == 0)
 		return NULL;
-	return vmalloc_exec(size);
+	return MALLOC_MODULE(size);
 }
 
 
 /* Free memory returned from module_alloc */
 void module_free(struct module *mod, void *module_region)
 {
-	vfree(module_region);
-	/* FIXME: If module_region == mod->init_region, trim exception
-           table entries. */
+	FREE_MODULE(module_region);
 }
 
 /* We don't need anything special. */

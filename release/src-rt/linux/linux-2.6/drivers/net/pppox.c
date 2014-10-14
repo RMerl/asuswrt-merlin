@@ -22,7 +22,6 @@
 #include <linux/string.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
-#include <linux/slab.h>
 #include <linux/errno.h>
 #include <linux/netdevice.h>
 #include <linux/net.h>
@@ -37,9 +36,9 @@
 
 #include <asm/uaccess.h>
 
-static struct pppox_proto *pppox_protos[PX_MAX_PROTO + 1];
+static const struct pppox_proto *pppox_protos[PX_MAX_PROTO + 1];
 
-int register_pppox_proto(int proto_num, struct pppox_proto *pp)
+int register_pppox_proto(int proto_num, const struct pppox_proto *pp)
 {
 	if (proto_num < 0 || proto_num > PX_MAX_PROTO)
 		return -EINVAL;
@@ -73,7 +72,7 @@ int pppox_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg)
 {
 	struct sock *sk = sock->sk;
 	struct pppox_sock *po = pppox_sk(sk);
-	int rc = 0;
+	int rc;
 
 	lock_sock(sk);
 
@@ -94,12 +93,9 @@ int pppox_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg)
 		break;
 	}
 	default:
-		if (pppox_protos[sk->sk_protocol]->ioctl)
-			rc = pppox_protos[sk->sk_protocol]->ioctl(sock, cmd,
-								  arg);
-
-		break;
-	};
+		rc = pppox_protos[sk->sk_protocol]->ioctl ?
+			pppox_protos[sk->sk_protocol]->ioctl(sock, cmd, arg) : -ENOTTY;
+	}
 
 	release_sock(sk);
 	return rc;
@@ -107,7 +103,8 @@ int pppox_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg)
 
 EXPORT_SYMBOL(pppox_ioctl);
 
-static int pppox_create(struct socket *sock, int protocol)
+static int pppox_create(struct net *net, struct socket *sock, int protocol,
+			int kern)
 {
 	int rc = -EPROTOTYPE;
 
@@ -115,25 +112,20 @@ static int pppox_create(struct socket *sock, int protocol)
 		goto out;
 
 	rc = -EPROTONOSUPPORT;
-#ifdef CONFIG_KMOD
-	if (!pppox_protos[protocol]) {
-		char buffer[32];
-		sprintf(buffer, "pppox-proto-%d", protocol);
-		request_module(buffer);
-	}
-#endif
+	if (!pppox_protos[protocol])
+		request_module("pppox-proto-%d", protocol);
 	if (!pppox_protos[protocol] ||
 	    !try_module_get(pppox_protos[protocol]->owner))
 		goto out;
 
-	rc = pppox_protos[protocol]->create(sock);
+	rc = pppox_protos[protocol]->create(net, sock);
 
 	module_put(pppox_protos[protocol]->owner);
 out:
 	return rc;
 }
 
-static struct net_proto_family pppox_proto_family = {
+static const struct net_proto_family pppox_proto_family = {
 	.family	= PF_PPPOX,
 	.create	= pppox_create,
 	.owner	= THIS_MODULE,

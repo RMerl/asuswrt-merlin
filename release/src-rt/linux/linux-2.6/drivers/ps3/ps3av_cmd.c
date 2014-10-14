@@ -21,9 +21,10 @@
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/delay.h>
+
 #include <asm/ps3av.h>
-#include <asm/ps3fb.h>
 #include <asm/ps3.h>
+#include <asm/ps3gpu.h>
 
 #include "vuart.h"
 
@@ -141,6 +142,14 @@ static u32 ps3av_vid_video2av(int vid)
 			return ps3av_vid_video2av_table[i].av;
 
 	return PS3AV_CMD_AV_VID_480P;
+}
+
+static int ps3av_hdmi_range(void)
+{
+	if (ps3_compare_firmware_version(1, 8, 0) < 0)
+		return 0;
+	else
+		return 1; /* supported */
 }
 
 int ps3av_cmd_init(void)
@@ -350,6 +359,10 @@ u32 ps3av_cmd_set_av_video_cs(void *p, u32 avport, int video_vid, int cs_out,
 	/* should be same as video_mode.video_cs_out */
 	av_video_cs->av_cs_in = ps3av_cs_video2av(PS3AV_CMD_VIDEO_CS_RGB_8);
 	av_video_cs->bitlen_out = ps3av_cs_video2av_bitlen(cs_out);
+	if ((id & PS3AV_MODE_WHITE) && ps3av_hdmi_range())
+		av_video_cs->super_white = PS3AV_CMD_AV_SUPER_WHITE_ON;
+	else /* default off */
+		av_video_cs->super_white = PS3AV_CMD_AV_SUPER_WHITE_OFF;
 	av_video_cs->aspect = aspect;
 	if (id & PS3AV_MODE_DITHER) {
 		av_video_cs->dither = PS3AV_CMD_AV_DITHER_ON
@@ -392,6 +405,10 @@ u32 ps3av_cmd_set_video_mode(void *p, u32 head, int video_vid, int video_fmt,
 	video_mode->pitch = video_mode->width * 4;	/* line_length */
 	video_mode->video_out_format = PS3AV_CMD_VIDEO_OUT_FORMAT_RGB_12BIT;
 	video_mode->video_format = ps3av_video_fmt_table[video_fmt].format;
+	if ((id & PS3AV_MODE_COLOR) && ps3av_hdmi_range())
+		video_mode->video_cl_cnv = PS3AV_CMD_VIDEO_CL_CNV_DISABLE_LUT;
+	else /* default enable */
+		video_mode->video_cl_cnv = PS3AV_CMD_VIDEO_CL_CNV_ENABLE_LUT;
 	video_mode->video_order = ps3av_video_fmt_table[video_fmt].order;
 
 	pr_debug("%s: video_mode:vid:%x width:%d height:%d pitch:%d out_format:%d format:%x order:%x\n",
@@ -496,7 +513,6 @@ static const u32 ps3av_ns_table[][5] = {
 static void ps3av_cnv_ns(u8 *ns, u32 fs, u32 video_vid)
 {
 	u32 av_vid, ns_val;
-	u8 *p = ns;
 	int d;
 
 	d = ns_val = 0;
@@ -535,24 +551,22 @@ static void ps3av_cnv_ns(u8 *ns, u32 fs, u32 video_vid)
 	else
 		ns_val = ps3av_ns_table[PS3AV_CMD_AUDIO_FS_44K-BASE][d];
 
-	*p++ = ns_val & 0x000000FF;
-	*p++ = (ns_val & 0x0000FF00) >> 8;
-	*p = (ns_val & 0x00FF0000) >> 16;
+	*ns++ = ns_val & 0x000000FF;
+	*ns++ = (ns_val & 0x0000FF00) >> 8;
+	*ns = (ns_val & 0x00FF0000) >> 16;
 }
 
 #undef BASE
 
 static u8 ps3av_cnv_enable(u32 source, const u8 *enable)
 {
-	const u8 *p;
 	u8 ret = 0;
 
 	if (source == PS3AV_CMD_AUDIO_SOURCE_SPDIF) {
 		ret = 0x03;
 	} else if (source == PS3AV_CMD_AUDIO_SOURCE_SERIAL) {
-		p = enable;
-		ret = ((p[0] << 4) + (p[1] << 5) + (p[2] << 6) + (p[3] << 7)) |
-		      0x01;
+		ret = ((enable[0] << 4) + (enable[1] << 5) + (enable[2] << 6) +
+		       (enable[3] << 7)) | 0x01;
 	} else
 		printk(KERN_ERR "%s failed, source:%x\n", __func__, source);
 	return ret;
@@ -560,11 +574,9 @@ static u8 ps3av_cnv_enable(u32 source, const u8 *enable)
 
 static u8 ps3av_cnv_fifomap(const u8 *map)
 {
-	const u8 *p;
 	u8 ret = 0;
 
-	p = map;
-	ret = p[0] + (p[1] << 2) + (p[2] << 4) + (p[3] << 6);
+	ret = map[0] + (map[1] << 2) + (map[2] << 4) + (map[3] << 6);
 	return ret;
 }
 
@@ -649,9 +661,10 @@ u32 ps3av_cmd_set_av_audio_param(void *p, u32 port,
 }
 
 /* default cs val */
-static const u8 ps3av_mode_cs_info[] = {
+u8 ps3av_mode_cs_info[] = {
 	0x00, 0x09, 0x00, 0x02, 0x01, 0x00, 0x00, 0x00
 };
+EXPORT_SYMBOL_GPL(ps3av_mode_cs_info);
 
 #define CS_44	0x00
 #define CS_48	0x02
@@ -666,7 +679,7 @@ void ps3av_cmd_set_audio_mode(struct ps3av_pkt_audio_mode *audio, u32 avport,
 			      u32 ch, u32 fs, u32 word_bits, u32 format,
 			      u32 source)
 {
-	int spdif_through, spdif_bitstream;
+	int spdif_through;
 	int i;
 
 	if (!(ch | fs | format | word_bits | source)) {
@@ -676,7 +689,6 @@ void ps3av_cmd_set_audio_mode(struct ps3av_pkt_audio_mode *audio, u32 avport,
 		format = PS3AV_CMD_AUDIO_FORMAT_PCM;
 		source = PS3AV_CMD_AUDIO_SOURCE_SERIAL;
 	}
-	spdif_through = spdif_bitstream = 0;	/* XXX not supported */
 
 	/* audio mode */
 	memset(audio, 0, sizeof(*audio));
@@ -766,16 +778,17 @@ void ps3av_cmd_set_audio_mode(struct ps3av_pkt_audio_mode *audio, u32 avport,
 		break;
 	}
 
+	/* non-audio bit */
+	spdif_through = audio->audio_cs_info[0] & 0x02;
+
 	/* pass through setting */
 	if (spdif_through &&
 	    (avport == PS3AV_CMD_AVPORT_SPDIF_0 ||
-	     avport == PS3AV_CMD_AVPORT_SPDIF_1)) {
+	     avport == PS3AV_CMD_AVPORT_SPDIF_1 ||
+	     avport == PS3AV_CMD_AVPORT_HDMI_0 ||
+	     avport == PS3AV_CMD_AVPORT_HDMI_1)) {
 		audio->audio_word_bits = PS3AV_CMD_AUDIO_WORD_BITS_16;
-		audio->audio_source = PS3AV_CMD_AUDIO_SOURCE_SPDIF;
-		if (spdif_bitstream) {
-			audio->audio_format = PS3AV_CMD_AUDIO_FORMAT_BITSTREAM;
-			audio->audio_cs_info[0] |= CS_BIT;
-		}
+		audio->audio_format = PS3AV_CMD_AUDIO_FORMAT_BITSTREAM;
 	}
 }
 
@@ -852,7 +865,7 @@ int ps3av_cmd_avb_param(struct ps3av_pkt_avb_param *avb, u32 send_len)
 {
 	int res;
 
-	ps3fb_flip_ctl(0);	/* flip off */
+	mutex_lock(&ps3_gpu_mutex);
 
 	/* avb packet */
 	res = ps3av_do_pkt(PS3AV_CID_AVB_PARAM, send_len, sizeof(*avb),
@@ -866,7 +879,7 @@ int ps3av_cmd_avb_param(struct ps3av_pkt_avb_param *avb, u32 send_len)
 			 res);
 
       out:
-	ps3fb_flip_ctl(1);	/* flip on */
+	mutex_unlock(&ps3_gpu_mutex);
 	return res;
 }
 
@@ -911,72 +924,6 @@ int ps3av_cmd_video_get_monitor_info(struct ps3av_pkt_av_get_monitor_info *info,
 	return res;
 }
 
-#ifdef PS3AV_DEBUG
-void ps3av_cmd_av_hw_conf_dump(const struct ps3av_pkt_av_get_hw_conf *hw_conf)
-{
-	printk("av_h_conf:num of hdmi:%d\n", hw_conf->num_of_hdmi);
-	printk("av_h_conf:num of avmulti:%d\n", hw_conf->num_of_avmulti);
-	printk("av_h_conf:num of spdif:%d\n", hw_conf->num_of_spdif);
-}
-
-void ps3av_cmd_av_monitor_info_dump(const struct ps3av_pkt_av_get_monitor_info *monitor_info)
-{
-	const struct ps3av_info_monitor *info = &monitor_info->info;
-	const struct ps3av_info_audio *audio = info->audio;
-	int i;
-
-	printk("Monitor Info: size%d\n", monitor_info->send_hdr.size);
-
-	printk("avport:%02x\n", info->avport);
-	printk("monitor_id:");
-	for (i = 0; i < 10; i++)
-		printk("%02x ", info->monitor_id[i]);
-	printk("\nmonitor_type:%02x\n", info->monitor_type);
-	printk("monitor_name:");
-	for (i = 0; i < 16; i++)
-		printk("%c", info->monitor_name[i]);
-
-	/* resolution */
-	printk("\nresolution_60: bits:%08x native:%08x\n",
-	       info->res_60.res_bits, info->res_60.native);
-	printk("resolution_50: bits:%08x native:%08x\n",
-	       info->res_50.res_bits, info->res_50.native);
-	printk("resolution_other: bits:%08x native:%08x\n",
-	       info->res_other.res_bits, info->res_other.native);
-	printk("resolution_vesa: bits:%08x native:%08x\n",
-	       info->res_vesa.res_bits, info->res_vesa.native);
-
-	/* color space */
-	printk("color space    rgb:%02x\n", info->cs.rgb);
-	printk("color space yuv444:%02x\n", info->cs.yuv444);
-	printk("color space yuv422:%02x\n", info->cs.yuv422);
-
-	/* color info */
-	printk("color info   red:X %04x Y %04x\n",
-	       info->color.red_x, info->color.red_y);
-	printk("color info green:X %04x Y %04x\n",
-	       info->color.green_x, info->color.green_y);
-	printk("color info  blue:X %04x Y %04x\n",
-	       info->color.blue_x, info->color.blue_y);
-	printk("color info white:X %04x Y %04x\n",
-	       info->color.white_x, info->color.white_y);
-	printk("color info gamma: %08x\n", info->color.gamma);
-
-	/* other info */
-	printk("supported_AI:%02x\n", info->supported_ai);
-	printk("speaker_info:%02x\n", info->speaker_info);
-	printk("num of audio:%02x\n", info->num_of_audio_block);
-
-	/* audio block */
-	for (i = 0; i < info->num_of_audio_block; i++) {
-		printk("audio[%d] type:%02x max_ch:%02x fs:%02x sbit:%02x\n",
-		       i, audio->type, audio->max_num_of_ch, audio->fs,
-		       audio->sbit);
-		audio++;
-	}
-}
-#endif /* PS3AV_DEBUG */
-
 #define PS3AV_AV_LAYOUT_0 (PS3AV_CMD_AV_LAYOUT_32 \
 		| PS3AV_CMD_AV_LAYOUT_44 \
 		| PS3AV_CMD_AV_LAYOUT_48)
@@ -987,34 +934,3 @@ void ps3av_cmd_av_monitor_info_dump(const struct ps3av_pkt_av_get_monitor_info *
 		| PS3AV_CMD_AV_LAYOUT_176 \
 		| PS3AV_CMD_AV_LAYOUT_192)
 
-/************************* vuart ***************************/
-
-#define POLLING_INTERVAL  25	/* in msec */
-
-int ps3av_vuart_write(struct ps3_vuart_port_device *dev, const void *buf,
-		      unsigned long size)
-{
-	int error = ps3_vuart_write(dev, buf, size);
-	return error ? error : size;
-}
-
-int ps3av_vuart_read(struct ps3_vuart_port_device *dev, void *buf,
-		     unsigned long size, int timeout)
-{
-	int error;
-	int loopcnt = 0;
-
-	timeout = (timeout + POLLING_INTERVAL - 1) / POLLING_INTERVAL;
-	while (loopcnt++ <= timeout) {
-		error = ps3_vuart_read(dev, buf, size);
-		if (!error)
-			return size;
-		if (error != -EAGAIN) {
-			printk(KERN_ERR "%s: ps3_vuart_read failed %d\n",
-			       __func__, error);
-			return error;
-		}
-		msleep(POLLING_INTERVAL);
-	}
-	return -EWOULDBLOCK;
-}

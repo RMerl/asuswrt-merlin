@@ -12,7 +12,7 @@
 #include <asm/mmu.h>
 #include <asm/io.h>
 #include <asm/mmu_context.h>
-#include <asm/arch/svinto.h>
+#include <arch/svinto.h>
 
 extern void tlb_init(void);
 
@@ -182,7 +182,7 @@ paging_init(void)
 	 * mem_map page array.
 	 */
 
-	free_area_init_node(0, &contig_page_data, zones_size, PAGE_OFFSET >> PAGE_SHIFT, 0);
+	free_area_init_node(0, zones_size, PAGE_OFFSET >> PAGE_SHIFT, 0);
 }
 
 /* Initialize remaps of some I/O-ports. It is important that this
@@ -241,7 +241,7 @@ flush_etrax_cacherange(void *startadr, int length)
 }
 
 /* Due to a bug in Etrax100(LX) all versions, receiving DMA buffers
- * will occationally corrupt certain CPU writes if the DMA buffers
+ * will occasionally corrupt certain CPU writes if the DMA buffers
  * happen to be hot in the cache.
  * 
  * As a workaround, we have to flush the relevant parts of the cache

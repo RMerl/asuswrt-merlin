@@ -16,7 +16,8 @@
 # define PR_UNALIGN_NOPRINT	1	/* silently fix up unaligned user accesses */
 # define PR_UNALIGN_SIGBUS	2	/* generate SIGBUS on unaligned user access */
 
-/* Get/set whether or not to drop capabilities on setuid() away from uid 0 */
+/* Get/set whether or not to drop capabilities on setuid() away from
+ * uid 0 (as per security/commoncap.c) */
 #define PR_GET_KEEPCAPS   7
 #define PR_SET_KEEPCAPS   8
 
@@ -58,5 +59,47 @@
 # define PR_ENDIAN_BIG		0
 # define PR_ENDIAN_LITTLE	1	/* True little endian mode */
 # define PR_ENDIAN_PPC_LITTLE	2	/* "PowerPC" pseudo little endian */
+
+/* Get/set process seccomp mode */
+#define PR_GET_SECCOMP	21
+#define PR_SET_SECCOMP	22
+
+/* Get/set the capability bounding set (as per security/commoncap.c) */
+#define PR_CAPBSET_READ 23
+#define PR_CAPBSET_DROP 24
+
+/* Get/set the process' ability to use the timestamp counter instruction */
+#define PR_GET_TSC 25
+#define PR_SET_TSC 26
+# define PR_TSC_ENABLE		1	/* allow the use of the timestamp counter */
+# define PR_TSC_SIGSEGV		2	/* throw a SIGSEGV instead of reading the TSC */
+
+/* Get/set securebits (as per security/commoncap.c) */
+#define PR_GET_SECUREBITS 27
+#define PR_SET_SECUREBITS 28
+
+/*
+ * Get/set the timerslack as used by poll/select/nanosleep
+ * A value of 0 means "use default"
+ */
+#define PR_SET_TIMERSLACK 29
+#define PR_GET_TIMERSLACK 30
+
+#define PR_TASK_PERF_EVENTS_DISABLE		31
+#define PR_TASK_PERF_EVENTS_ENABLE		32
+
+/*
+ * Set early/late kill mode for hwpoison memory corruption.
+ * This influences when the process gets killed on a memory corruption.
+ */
+#define PR_MCE_KILL	33
+# define PR_MCE_KILL_CLEAR   0
+# define PR_MCE_KILL_SET     1
+
+# define PR_MCE_KILL_LATE    0
+# define PR_MCE_KILL_EARLY   1
+# define PR_MCE_KILL_DEFAULT 2
+
+#define PR_MCE_KILL_GET 34
 
 #endif /* _LINUX_PRCTL_H */

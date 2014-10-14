@@ -9,12 +9,15 @@
  * 2 of the License, or (at your option) any later version.
  */
 
-#include <linux/compiler.h>
+#include <linux/if_ether.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
 #include <linux/skbuff.h>
-#include <linux/spinlock.h>
 #include <linux/icmpv6.h>
 #include <linux/netfilter_ipv6.h>
+#include <net/dst.h>
 #include <net/ipv6.h>
+#include <net/ip6_route.h>
 #include <net/xfrm.h>
 
 int xfrm6_find_1stfragopt(struct xfrm_state *x, struct sk_buff *skb,
@@ -28,143 +31,79 @@ EXPORT_SYMBOL(xfrm6_find_1stfragopt);
 static int xfrm6_tunnel_check_size(struct sk_buff *skb)
 {
 	int mtu, ret = 0;
-	struct dst_entry *dst = skb->dst;
+	struct dst_entry *dst = skb_dst(skb);
 
 	mtu = dst_mtu(dst);
 	if (mtu < IPV6_MIN_MTU)
 		mtu = IPV6_MIN_MTU;
 
-	if (skb->len > mtu) {
+	if (!skb->local_df && skb->len > mtu) {
 		skb->dev = dst->dev;
-		icmpv6_send(skb, ICMPV6_PKT_TOOBIG, 0, mtu, skb->dev);
+		icmpv6_send(skb, ICMPV6_PKT_TOOBIG, 0, mtu);
 		ret = -EMSGSIZE;
 	}
 
 	return ret;
 }
 
-static int xfrm6_output_one(struct sk_buff *skb)
+int xfrm6_extract_output(struct xfrm_state *x, struct sk_buff *skb)
 {
-	struct dst_entry *dst = skb->dst;
-	struct xfrm_state *x = dst->xfrm;
 	int err;
 
-	if (skb->ip_summed == CHECKSUM_PARTIAL) {
-		err = skb_checksum_help(skb);
-		if (err)
-			goto error_nolock;
-	}
+	err = xfrm6_tunnel_check_size(skb);
+	if (err)
+		return err;
 
-	if (x->props.mode == XFRM_MODE_TUNNEL) {
-		err = xfrm6_tunnel_check_size(skb);
-		if (err)
-			goto error_nolock;
-	}
+	XFRM_MODE_SKB_CB(skb)->protocol = ipv6_hdr(skb)->nexthdr;
 
-	do {
-		spin_lock_bh(&x->lock);
-		err = xfrm_state_check(x, skb);
-		if (err)
-			goto error;
+	return xfrm6_extract_header(skb);
+}
 
-		err = x->mode->output(x, skb);
-		if (err)
-			goto error;
+int xfrm6_prepare_output(struct xfrm_state *x, struct sk_buff *skb)
+{
+	int err;
 
-		err = x->type->output(x, skb);
-		if (err)
-			goto error;
+	err = xfrm_inner_extract_output(x, skb);
+	if (err)
+		return err;
 
-		x->curlft.bytes += skb->len;
-		x->curlft.packets++;
-		if (x->props.mode == XFRM_MODE_ROUTEOPTIMIZATION)
-			x->lastused = get_seconds();
-
-		spin_unlock_bh(&x->lock);
-
-		skb_reset_network_header(skb);
-
-		if (!(skb->dst = dst_pop(dst))) {
-			err = -EHOSTUNREACH;
-			goto error_nolock;
-		}
-		dst = skb->dst;
-		x = dst->xfrm;
-	} while (x && (x->props.mode != XFRM_MODE_TUNNEL));
-
+	memset(IP6CB(skb), 0, sizeof(*IP6CB(skb)));
+#ifdef CONFIG_NETFILTER
 	IP6CB(skb)->flags |= IP6SKB_XFRM_TRANSFORMED;
-	err = 0;
-
-out_exit:
-	return err;
-error:
-	spin_unlock_bh(&x->lock);
-error_nolock:
-	kfree_skb(skb);
-	goto out_exit;
-}
-
-static int xfrm6_output_finish2(struct sk_buff *skb)
-{
-	int err;
-
-	while (likely((err = xfrm6_output_one(skb)) == 0)) {
-		nf_reset(skb);
-
-		err = nf_hook(PF_INET6, NF_IP6_LOCAL_OUT, &skb, NULL,
-			      skb->dst->dev, dst_output);
-		if (unlikely(err != 1))
-			break;
-
-		if (!skb->dst->xfrm)
-			return dst_output(skb);
-
-		err = nf_hook(PF_INET6, NF_IP6_POST_ROUTING, &skb, NULL,
-			      skb->dst->dev, xfrm6_output_finish2);
-		if (unlikely(err != 1))
-			break;
-	}
-
-	return err;
-}
-
-static int xfrm6_output_finish(struct sk_buff *skb)
-{
-	struct sk_buff *segs;
-
-	if (!skb_is_gso(skb))
-		return xfrm6_output_finish2(skb);
+#endif
 
 	skb->protocol = htons(ETH_P_IPV6);
-	segs = skb_gso_segment(skb, 0);
-	kfree_skb(skb);
-	if (unlikely(IS_ERR(segs)))
-		return PTR_ERR(segs);
+	skb->local_df = 1;
 
-	do {
-		struct sk_buff *nskb = segs->next;
-		int err;
+	return x->outer_mode->output2(x, skb);
+}
+EXPORT_SYMBOL(xfrm6_prepare_output);
 
-		segs->next = NULL;
-		err = xfrm6_output_finish2(segs);
+int xfrm6_output_finish(struct sk_buff *skb)
+{
+#ifdef CONFIG_NETFILTER
+	IP6CB(skb)->flags |= IP6SKB_XFRM_TRANSFORMED;
+#endif
 
-		if (unlikely(err)) {
-			while ((segs = nskb)) {
-				nskb = segs->next;
-				segs->next = NULL;
-				kfree_skb(segs);
-			}
-			return err;
-		}
+	skb->protocol = htons(ETH_P_IPV6);
+	return xfrm_output(skb);
+}
 
-		segs = nskb;
-	} while (segs);
+static int __xfrm6_output(struct sk_buff *skb)
+{
+	struct dst_entry *dst = skb_dst(skb);
+	struct xfrm_state *x = dst->xfrm;
 
-	return 0;
+	if ((x && x->props.mode == XFRM_MODE_TUNNEL) &&
+	    ((skb->len > ip6_skb_dst_mtu(skb) && !skb_is_gso(skb)) ||
+		dst_allfrag(skb_dst(skb)))) {
+			return ip6_fragment(skb, x->outer_mode->afinfo->output_finish);
+	}
+	return x->outer_mode->afinfo->output_finish(skb);
 }
 
 int xfrm6_output(struct sk_buff *skb)
 {
-	return NF_HOOK(PF_INET6, NF_IP6_POST_ROUTING, skb, NULL, skb->dst->dev,
-		       xfrm6_output_finish);
+	return NF_HOOK(NFPROTO_IPV6, NF_INET_POST_ROUTING, skb, NULL,
+		       skb_dst(skb)->dev, __xfrm6_output);
 }

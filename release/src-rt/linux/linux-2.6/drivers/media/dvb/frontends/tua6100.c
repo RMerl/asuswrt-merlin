@@ -28,6 +28,7 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#include <linux/slab.h>
 #include <linux/module.h>
 #include <linux/dvb/frontend.h>
 #include <asm/types.h>
@@ -58,7 +59,7 @@ static int tua6100_sleep(struct dvb_frontend *fe)
 	if (fe->ops.i2c_gate_ctrl)
 		fe->ops.i2c_gate_ctrl(fe, 1);
 	if ((ret = i2c_transfer (priv->i2c, &msg, 1)) != 1) {
-		printk("%s: i2c error\n", __FUNCTION__);
+		printk("%s: i2c error\n", __func__);
 	}
 	if (fe->ops.i2c_gate_ctrl)
 		fe->ops.i2c_gate_ctrl(fe, 0);

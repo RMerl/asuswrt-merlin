@@ -1,20 +1,11 @@
 /*
- * linux/fs/nfsd/nfsxdr.c
- *
  * XDR support for nfsd
  *
  * Copyright (C) 1995, 1996 Olaf Kirch <okir@monad.swb.de>
  */
 
-#include <linux/types.h>
-#include <linux/time.h>
-#include <linux/nfs.h>
-#include <linux/vfs.h>
-#include <linux/sunrpc/xdr.h>
-#include <linux/sunrpc/svc.h>
-#include <linux/nfsd/nfsd.h>
-#include <linux/nfsd/xdr.h>
-#include <linux/mm.h>
+#include "xdr.h"
+#include "auth.h"
 
 #define NFSDDBG_FACILITY		NFSDDBG_XDR
 
@@ -62,10 +53,10 @@ encode_fh(__be32 *p, struct svc_fh *fhp)
  * no slashes or null bytes.
  */
 static __be32 *
-decode_filename(__be32 *p, char **namp, int *lenp)
+decode_filename(__be32 *p, char **namp, unsigned int *lenp)
 {
 	char		*name;
-	int		i;
+	unsigned int	i;
 
 	if ((p = xdr_decode_string_inplace(p, namp, lenp, NFS_MAXNAMLEN)) != NULL) {
 		for (i = 0, name = *namp; i < *lenp; i++, name++) {
@@ -78,10 +69,10 @@ decode_filename(__be32 *p, char **namp, int *lenp)
 }
 
 static __be32 *
-decode_pathname(__be32 *p, char **namp, int *lenp)
+decode_pathname(__be32 *p, char **namp, unsigned int *lenp)
 {
 	char		*name;
-	int		i;
+	unsigned int	i;
 
 	if ((p = xdr_decode_string_inplace(p, namp, lenp, NFS_MAXPATHLEN)) != NULL) {
 		for (i = 0, name = *namp; i < *lenp; i++, name++) {
@@ -206,7 +197,7 @@ encode_fattr(struct svc_rqst *rqstp, __be32 *p, struct svc_fh *fhp,
 __be32 *nfs2svc_encode_fattr(struct svc_rqst *rqstp, __be32 *p, struct svc_fh *fhp)
 {
 	struct kstat stat;
-	vfs_getattr(fhp->fh_export->ex_mnt, fhp->fh_dentry, &stat);
+	vfs_getattr(fhp->fh_export->ex_path.mnt, fhp->fh_dentry, &stat);
 	return encode_fattr(rqstp, p, fhp, &stat);
 }
 
@@ -313,8 +304,11 @@ nfssvc_decode_writeargs(struct svc_rqst *rqstp, __be32 *p,
 	 * Round the length of the data which was specified up to
 	 * the next multiple of XDR units and then compare that
 	 * against the length which was actually received.
+	 * Note that when RPCSEC/GSS (for example) is used, the
+	 * data buffer can be padded so dlen might be larger
+	 * than required.  It must never be smaller.
 	 */
-	if (dlen != XDR_QUADLEN(len)*4)
+	if (dlen < XDR_QUADLEN(len)*4)
 		return 0;
 
 	rqstp->rq_vec[0].iov_base = (void*)p;
@@ -457,7 +451,7 @@ nfssvc_encode_readres(struct svc_rqst *rqstp, __be32 *p,
 	*p++ = htonl(resp->count);
 	xdr_ressize_check(rqstp, p);
 
-	/* now update rqstp->rq_res to reflect data aswell */
+	/* now update rqstp->rq_res to reflect data as well */
 	rqstp->rq_res.page_len = resp->count;
 	if (resp->count & 3) {
 		/* need to pad the tail */
@@ -521,6 +515,10 @@ nfssvc_encode_entry(void *ccdv, const char *name,
 	slen = XDR_QUADLEN(namlen);
 	if ((buflen = cd->buflen - slen - 4) < 0) {
 		cd->common.err = nfserr_toosmall;
+		return -EINVAL;
+	}
+	if (ino > ~((u32) 0)) {
+		cd->common.err = nfserr_fbig;
 		return -EINVAL;
 	}
 	*p++ = xdr_one;				/* mark entry present */

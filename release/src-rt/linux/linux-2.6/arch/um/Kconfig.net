@@ -14,7 +14,7 @@ config UML_NET
 
         For more information, including explanations of the networking and
         sample configurations, see
-        <http://user-mode-linux.sourceforge.net/networking.html>.
+        <http://user-mode-linux.sourceforge.net/old/networking.html>.
 
         If you'd like to be able to enable networking in the User-Mode
         linux environment, say Y; otherwise say N.  Note that you must
@@ -38,7 +38,7 @@ config UML_NET_ETHERTAP
         CONFIG_NETLINK_DEV configured as Y or M.
 
         For more information, see
-        <http://user-mode-linux.sourceforge.net/networking.html>  That site
+        <http://user-mode-linux.sourceforge.net/old/networking.html>  That site
         has examples of the UML command line to use to enable Ethertap
         networking.
 
@@ -72,7 +72,7 @@ config UML_NET_SLIP
         To use this, your host must support slip devices.
 
         For more information, see
-        <http://user-mode-linux.sourceforge.net/networking.html>.  That site
+        <http://user-mode-linux.sourceforge.net/old/networking.html>.
         has examples of the UML command line to use to enable slip
         networking, and details of a few quirks with it.
 
@@ -96,7 +96,7 @@ config UML_NET_DAEMON
         networking daemon on the host.
 
         For more information, see
-        <http://user-mode-linux.sourceforge.net/networking.html>  That site
+        <http://user-mode-linux.sourceforge.net/old/networking.html>  That site
         has examples of the UML command line to use to enable Daemon
         networking.
 
@@ -107,6 +107,28 @@ config UML_NET_DAEMON
         transports.  You'll need at least one of them, but may choose
         more than one without conflict.  If you don't need UML networking,
         say N.
+
+config UML_NET_VDE
+	bool "VDE transport"
+	depends on UML_NET
+	help
+	This User-Mode Linux network transport allows one or more running
+	UMLs on a single host to communicate with each other and also
+	with the rest of the world using Virtual Distributed Ethernet,
+	an improved fork of uml_switch.
+
+	You must have libvdeplug installed in order to build the vde
+	transport into UML.
+
+	To use this form of networking, you will need to run vde_switch
+	on the host.
+
+	For more information, see <http://wiki.virtualsquare.org/>
+	That site has a good overview of what VDE is and also examples
+	of the UML command line to use to enable VDE networking.
+
+	If you need UML networking with VDE,
+	say Y.
 
 config UML_NET_MCAST
 	bool "Multicast transport"
@@ -122,7 +144,7 @@ config UML_NET_MCAST
         To use this, your host kernel(s) must support IP Multicasting.
 
         For more information, see
-        <http://user-mode-linux.sourceforge.net/networking.html>  That site
+        <http://user-mode-linux.sourceforge.net/old/networking.html>  That site
         has examples of the UML command line to use to enable Multicast
         networking, and notes about the security of this approach.
 
@@ -143,7 +165,7 @@ config UML_NET_PCAP
 	installed in order to build the pcap transport into UML.
 
         For more information, see
-        <http://user-mode-linux.sourceforge.net/networking.html>  That site
+        <http://user-mode-linux.sourceforge.net/old/networking.html>  That site
         has examples of the UML command line to use to enable this option.
 
 	If you intend to use UML as a network monitor for the host, say
@@ -164,7 +186,7 @@ config UML_NET_SLIRP
         other transports, SLiRP works without the need of root level
         privleges, setuid binaries, or SLIP devices on the host.  This
         also means not every type of connection is possible, but most
-        situations can be accomodated with carefully crafted slirp
+        situations can be accommodated with carefully crafted slirp
         commands that can be passed along as part of the network device's
         setup string.  The effect of this transport on the UML is similar
         that of a host behind a firewall that masquerades all network

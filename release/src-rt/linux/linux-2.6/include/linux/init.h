@@ -29,7 +29,7 @@
  * sign followed by value, e.g.:
  *
  * static int init_variable __initdata = 0;
- * static char linux_logo[] __initdata = { 0x32, 0x36, ... };
+ * static const char linux_logo[] __initconst = { 0x32, 0x36, ... };
  *
  * Don't forget to initialize data not at file scope, i.e. within a function,
  * as gcc otherwise puts the data into the bss section and not into the init
@@ -40,36 +40,96 @@
 
 /* These are for everybody (although not all archs will actually
    discard it in modules) */
-#define __init		__attribute__ ((__section__ (".init.text")))
-#define __initdata	__attribute__ ((__section__ (".init.data")))
-#define __exitdata	__attribute__ ((__section__(".exit.data")))
-#define __exit_call	__attribute_used__ __attribute__ ((__section__ (".exitcall.exit")))
+#define __init		__section(.init.text) __cold notrace
+#define __initdata	__section(.init.data)
+#define __initconst	__section(.init.rodata)
+#define __exitdata	__section(.exit.data)
+#define __exit_call	__used __section(.exitcall.exit)
 
-/* modpost check for section mismatches during the kernel build.
+/*
+ * modpost check for section mismatches during the kernel build.
  * A section mismatch happens when there are references from a
  * code or data section to an init section (both code or data).
  * The init sections are (for most archs) discarded by the kernel
  * when early init has completed so all such references are potential bugs.
  * For exit sections the same issue exists.
+ *
  * The following markers are used for the cases where the reference to
- * the init/exit section (code or data) is valid and will teach modpost
- * not to issue a warning.
- * The markers follow same syntax rules as __init / __initdata. */
-#define __init_refok     noinline __attribute__ ((__section__ (".text.init.refok")))
-#define __initdata_refok          __attribute__ ((__section__ (".data.init.refok")))
+ * the *init / *exit section (code or data) is valid and will teach
+ * modpost not to issue a warning.  Intended semantics is that a code or
+ * data tagged __ref* can reference code or data from init section without
+ * producing a warning (of course, no warning does not mean code is
+ * correct, so optimally document why the __ref is needed and why it's OK).
+ *
+ * The markers follow same syntax rules as __init / __initdata.
+ */
+#define __ref            __section(.ref.text) noinline
+#define __refdata        __section(.ref.data)
+#define __refconst       __section(.ref.rodata)
+
+/* compatibility defines */
+#define __init_refok     __ref
+#define __initdata_refok __refdata
+#define __exit_refok     __ref
+
 
 #ifdef MODULE
-#define __exit		__attribute__ ((__section__(".exit.text")))
+#define __exitused
 #else
-#define __exit		__attribute_used__ __attribute__ ((__section__(".exit.text")))
+#define __exitused  __used
 #endif
 
+#define __exit          __section(.exit.text) __exitused __cold
+
+/* Used for HOTPLUG */
+#define __devinit        __section(.devinit.text) __cold
+#define __devinitdata    __section(.devinit.data)
+#define __devinitconst   __section(.devinit.rodata)
+#define __devexit        __section(.devexit.text) __exitused __cold
+#define __devexitdata    __section(.devexit.data)
+#define __devexitconst   __section(.devexit.rodata)
+
+/* Used for HOTPLUG_CPU */
+#define __cpuinit        __section(.cpuinit.text) __cold
+#define __cpuinitdata    __section(.cpuinit.data)
+#define __cpuinitconst   __section(.cpuinit.rodata)
+#define __cpuexit        __section(.cpuexit.text) __exitused __cold
+#define __cpuexitdata    __section(.cpuexit.data)
+#define __cpuexitconst   __section(.cpuexit.rodata)
+
+/* Used for MEMORY_HOTPLUG */
+#define __meminit        __section(.meminit.text) __cold
+#define __meminitdata    __section(.meminit.data)
+#define __meminitconst   __section(.meminit.rodata)
+#define __memexit        __section(.memexit.text) __exitused __cold
+#define __memexitdata    __section(.memexit.data)
+#define __memexitconst   __section(.memexit.rodata)
+
 /* For assembly routines */
+#define __HEAD		.section	".head.text","ax"
 #define __INIT		.section	".init.text","ax"
-#define __INIT_REFOK	.section	".text.init.refok","ax"
 #define __FINIT		.previous
-#define __INITDATA	.section	".init.data","aw"
-#define __INITDATA_REFOK .section	".data.init.refok","aw"
+
+#define __INITDATA	.section	".init.data","aw",%progbits
+#define __INITRODATA	.section	".init.rodata","a",%progbits
+#define __FINITDATA	.previous
+
+#define __DEVINIT        .section	".devinit.text", "ax"
+#define __DEVINITDATA    .section	".devinit.data", "aw"
+#define __DEVINITRODATA  .section	".devinit.rodata", "a"
+
+#define __CPUINIT        .section	".cpuinit.text", "ax"
+#define __CPUINITDATA    .section	".cpuinit.data", "aw"
+#define __CPUINITRODATA  .section	".cpuinit.rodata", "a"
+
+#define __MEMINIT        .section	".meminit.text", "ax"
+#define __MEMINITDATA    .section	".meminit.data", "aw"
+#define __MEMINITRODATA  .section	".meminit.rodata", "a"
+
+/* silence warnings when references are OK */
+#define __REF            .section       ".ref.text", "ax"
+#define __REFDATA        .section       ".ref.data", "aw"
+#define __REFCONST       .section       ".ref.rodata", "a"
 
 #ifndef __ASSEMBLY__
 /*
@@ -81,7 +141,11 @@ typedef void (*exitcall_t)(void);
 extern initcall_t __con_initcall_start[], __con_initcall_end[];
 extern initcall_t __security_initcall_start[], __security_initcall_end[];
 
+/* Used for contructor calls. */
+typedef void (*ctor_fn_t)(void);
+
 /* Defined in init/main.c */
+extern int do_one_initcall(initcall_t fn);
 extern char __initdata boot_command_line[];
 extern char *saved_command_line;
 extern unsigned int reset_devices;
@@ -89,6 +153,10 @@ extern unsigned int reset_devices;
 /* used by init/main.c */
 void setup_arch(char **);
 void prepare_namespace(void);
+
+extern void (*late_time_init)(void);
+
+extern int initcall_debug;
 
 #endif
   
@@ -107,8 +175,15 @@ void prepare_namespace(void);
  */
 
 #define __define_initcall(level,fn,id) \
-	static initcall_t __initcall_##fn##id __attribute_used__ \
+	static initcall_t __initcall_##fn##id __used \
 	__attribute__((__section__(".initcall" level ".init"))) = fn
+
+/*
+ * Early initcalls run before initializing SMP.
+ *
+ * Only for built-in code, not modules.
+ */
+#define early_initcall(fn)		__define_initcall("early",fn,early)
 
 /*
  * A "pure" initcall has no dependencies on anything else, and purely
@@ -116,7 +191,7 @@ void prepare_namespace(void);
  *
  * This only exists for built-in code, not for modules.
  */
-#define pure_initcall(fn)		__define_initcall("0",fn,1)
+#define pure_initcall(fn)		__define_initcall("0",fn,0)
 
 #define core_initcall(fn)		__define_initcall("1",fn,1)
 #define core_initcall_sync(fn)		__define_initcall("1s",fn,1s)
@@ -141,11 +216,11 @@ void prepare_namespace(void);
 
 #define console_initcall(fn) \
 	static initcall_t __initcall_##fn \
-	__attribute_used__ __attribute__((__section__(".con_initcall.init")))=fn
+	__used __section(.con_initcall.init) = fn
 
 #define security_initcall(fn) \
 	static initcall_t __initcall_##fn \
-	__attribute_used__ __attribute__((__section__(".security_initcall.init"))) = fn
+	__used __section(.security_initcall.init) = fn
 
 struct obs_kernel_param {
 	const char *str;
@@ -160,21 +235,15 @@ struct obs_kernel_param {
  * obs_kernel_param "array" too far apart in .init.setup.
  */
 #define __setup_param(str, unique_id, fn, early)			\
-	static char __setup_str_##unique_id[] __initdata = str;	\
+	static const char __setup_str_##unique_id[] __initconst	\
+		__aligned(1) = str; \
 	static struct obs_kernel_param __setup_##unique_id	\
-		__attribute_used__				\
-		__attribute__((__section__(".init.setup")))	\
+		__used __section(.init.setup)			\
 		__attribute__((aligned((sizeof(long)))))	\
 		= { __setup_str_##unique_id, fn, early }
 
-#define __setup_null_param(str, unique_id)			\
-	__setup_param(str, unique_id, NULL, 0)
-
 #define __setup(str, fn)					\
 	__setup_param(str, fn, fn, 0)
-
-#define __obsolete_setup(str)					\
-	__setup_null_param(str, __LINE__)
 
 /* NOTE: fn is as per module_param, not __setup!  Emits warning if fn
  * returns non-zero. */
@@ -183,6 +252,7 @@ struct obs_kernel_param {
 
 /* Relies on boot_command_line being set */
 void __init parse_early_param(void);
+void __init parse_early_options(char *cmdline);
 #endif /* __ASSEMBLY__ */
 
 /**
@@ -210,6 +280,7 @@ void __init parse_early_param(void);
 #else /* MODULE */
 
 /* Don't use these in modules, but some people do... */
+#define early_initcall(fn)		module_init(fn)
 #define core_initcall(fn)		module_init(fn)
 #define postcore_initcall(fn)		module_init(fn)
 #define arch_initcall(fn)		module_init(fn)
@@ -220,13 +291,7 @@ void __init parse_early_param(void);
 
 #define security_initcall(fn)		module_init(fn)
 
-/* These macros create a dummy inline: gcc 2.9x does not count alias
- as usage, hence the `unused function' warning when __init functions
- are declared static. We use the dummy __*_module_inline functions
- both to kill the warning and check the type of the init/cleanup
- function. */
-
-/* Each module must use one module_init(), or one no_module_init */
+/* Each module must use one module_init(). */
 #define module_init(initfn)					\
 	static inline initcall_t __inittest(void)		\
 	{ return initfn; }					\
@@ -239,60 +304,29 @@ void __init parse_early_param(void);
 	void cleanup_module(void) __attribute__((alias(#exitfn)));
 
 #define __setup_param(str, unique_id, fn)	/* nothing */
-#define __setup_null_param(str, unique_id) 	/* nothing */
 #define __setup(str, func) 			/* nothing */
-#define __obsolete_setup(str) 			/* nothing */
 #endif
 
 /* Data marked not to be saved by software suspend */
-#define __nosavedata __attribute__ ((__section__ (".data.nosave")))
+#define __nosavedata __section(.data..nosave)
 
 /* This means "can be init if no module support, otherwise module load
    may call it." */
 #ifdef CONFIG_MODULES
 #define __init_or_module
 #define __initdata_or_module
+#define __initconst_or_module
+#define __INIT_OR_MODULE	.text
+#define __INITDATA_OR_MODULE	.data
+#define __INITRODATA_OR_MODULE	.section ".rodata","a",%progbits
 #else
 #define __init_or_module __init
 #define __initdata_or_module __initdata
+#define __initconst_or_module __initconst
+#define __INIT_OR_MODULE __INIT
+#define __INITDATA_OR_MODULE __INITDATA
+#define __INITRODATA_OR_MODULE __INITRODATA
 #endif /*CONFIG_MODULES*/
-
-#ifdef CONFIG_HOTPLUG
-#define __devinit
-#define __devinitdata
-#define __devexit
-#define __devexitdata
-#else
-#define __devinit __init
-#define __devinitdata __initdata
-#define __devexit __exit
-#define __devexitdata __exitdata
-#endif
-
-#ifdef CONFIG_HOTPLUG_CPU
-#define __cpuinit
-#define __cpuinitdata
-#define __cpuexit
-#define __cpuexitdata
-#else
-#define __cpuinit	__init
-#define __cpuinitdata __initdata
-#define __cpuexit __exit
-#define __cpuexitdata	__exitdata
-#endif
-
-#if defined(CONFIG_MEMORY_HOTPLUG) || defined(CONFIG_ACPI_HOTPLUG_MEMORY) \
-	|| defined(CONFIG_ACPI_HOTPLUG_MEMORY_MODULE)
-#define __meminit
-#define __meminitdata
-#define __memexit
-#define __memexitdata
-#else
-#define __meminit	__init
-#define __meminitdata __initdata
-#define __memexit __exit
-#define __memexitdata	__exitdata
-#endif
 
 /* Functions marked as __devexit may be discarded at kernel link time, depending
    on config options.  Newer versions of binutils detect references from

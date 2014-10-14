@@ -28,7 +28,6 @@
 */
 
 #include <linux/module.h>
-#include <linux/moduleparam.h>
 #include <linux/init.h>
 #include <linux/delay.h>
 
@@ -37,18 +36,11 @@
 #include <linux/jiffies.h>
 #include <asm/io.h>
 
-static struct i2c_algo_bit_data bttv_i2c_algo_bit_template;
-static struct i2c_adapter bttv_i2c_adap_sw_template;
-static struct i2c_adapter bttv_i2c_adap_hw_template;
-static struct i2c_client bttv_i2c_client_template;
-
-static int attach_inform(struct i2c_client *client);
-
 static int i2c_debug;
 static int i2c_hw;
 static int i2c_scan;
 module_param(i2c_debug, int, 0644);
-MODULE_PARM_DESC(i2c_hw,"configure i2c debug level");
+MODULE_PARM_DESC(i2c_debug, "configure i2c debug level");
 module_param(i2c_hw,    int, 0444);
 MODULE_PARM_DESC(i2c_hw,"force use of hardware i2c support, "
 			"instead of software bitbang");
@@ -105,7 +97,7 @@ static int bttv_bit_getsda(void *data)
 	return state;
 }
 
-static struct i2c_algo_bit_data bttv_i2c_algo_bit_template = {
+static struct i2c_algo_bit_data __devinitdata bttv_i2c_algo_bit_template = {
 	.setsda  = bttv_bit_setsda,
 	.setscl  = bttv_bit_setscl,
 	.getsda  = bttv_bit_getsda,
@@ -114,22 +106,8 @@ static struct i2c_algo_bit_data bttv_i2c_algo_bit_template = {
 	.timeout = 200,
 };
 
-static struct i2c_adapter bttv_i2c_adap_sw_template = {
-	.owner             = THIS_MODULE,
-	.class             = I2C_CLASS_TV_ANALOG,
-	.name              = "bttv",
-	.id                = I2C_HW_B_BT848,
-	.client_register   = attach_inform,
-};
-
 /* ----------------------------------------------------------------------- */
 /* I2C functions - hardware i2c                                            */
-
-static int algo_control(struct i2c_adapter *adapter,
-			unsigned int cmd, unsigned long arg)
-{
-	return 0;
-}
 
 static u32 functionality(struct i2c_adapter *adap)
 {
@@ -143,9 +121,8 @@ bttv_i2c_wait_done(struct bttv *btv)
 
 	/* timeout */
 	if (wait_event_interruptible_timeout(btv->i2c_queue,
-		btv->i2c_done, msecs_to_jiffies(85)) == -ERESTARTSYS)
-
-	rc = -EIO;
+	    btv->i2c_done, msecs_to_jiffies(85)) == -ERESTARTSYS)
+		rc = -EIO;
 
 	if (btv->i2c_done & BT848_INT_RACK)
 		rc = 1;
@@ -251,7 +228,8 @@ bttv_i2c_readbytes(struct bttv *btv, const struct i2c_msg *msg, int last)
 
 static int bttv_i2c_xfer(struct i2c_adapter *i2c_adap, struct i2c_msg *msgs, int num)
 {
-	struct bttv *btv = i2c_get_adapdata(i2c_adap);
+	struct v4l2_device *v4l2_dev = i2c_get_adapdata(i2c_adap);
+	struct bttv *btv = to_bttv(v4l2_dev);
 	int retval = 0;
 	int i;
 
@@ -277,73 +255,13 @@ static int bttv_i2c_xfer(struct i2c_adapter *i2c_adap, struct i2c_msg *msgs, int
 	return retval;
 }
 
-static struct i2c_algorithm bttv_algo = {
+static const struct i2c_algorithm bttv_algo = {
 	.master_xfer   = bttv_i2c_xfer,
-	.algo_control  = algo_control,
 	.functionality = functionality,
-};
-
-static struct i2c_adapter bttv_i2c_adap_hw_template = {
-	.owner             = THIS_MODULE,
-	.class         = I2C_CLASS_TV_ANALOG,
-	.name          = "bt878",
-	.id            = I2C_HW_B_BT848 /* FIXME */,
-	.algo          = &bttv_algo,
-	.client_register = attach_inform,
 };
 
 /* ----------------------------------------------------------------------- */
 /* I2C functions - common stuff                                            */
-
-static int attach_inform(struct i2c_client *client)
-{
-	struct bttv *btv = i2c_get_adapdata(client->adapter);
-	int addr=ADDR_UNSET;
-
-
-	if (ADDR_UNSET != bttv_tvcards[btv->c.type].tuner_addr)
-		addr = bttv_tvcards[btv->c.type].tuner_addr;
-
-
-	if (bttv_debug)
-		printk(KERN_DEBUG "bttv%d: %s i2c attach [addr=0x%x,client=%s]\n",
-			btv->c.nr, client->driver->driver.name, client->addr,
-			client->name);
-	if (!client->driver->command)
-		return 0;
-
-	if (client->driver->id == I2C_DRIVERID_MSP3400)
-		btv->i2c_msp34xx_client = client;
-	if (client->driver->id == I2C_DRIVERID_TVAUDIO)
-		btv->i2c_tvaudio_client = client;
-	if (btv->tuner_type != UNSET) {
-		struct tuner_setup tun_setup;
-
-		if ((addr==ADDR_UNSET) ||
-				(addr==client->addr)) {
-
-			tun_setup.mode_mask = T_ANALOG_TV | T_DIGITAL_TV | T_RADIO;
-			tun_setup.type = btv->tuner_type;
-			tun_setup.addr = addr;
-			bttv_call_i2c_clients(btv, TUNER_SET_TYPE_ADDR, &tun_setup);
-		}
-
-	}
-
-	return 0;
-}
-
-void bttv_call_i2c_clients(struct bttv *btv, unsigned int cmd, void *arg)
-{
-	if (0 != btv->i2c_rc)
-		return;
-	i2c_clients_command(&btv->c.i2c_adap, cmd, arg);
-}
-
-static struct i2c_client bttv_i2c_client_template = {
-	.name	= "bttv internal",
-};
-
 
 /* read I2C */
 int bttv_I2CRead(struct bttv *btv, unsigned char addr, char *probe_for)
@@ -425,42 +343,39 @@ static void do_i2c_scan(char *name, struct i2c_client *c)
 /* init + register i2c algo-bit adapter */
 int __devinit init_bttv_i2c(struct bttv *btv)
 {
-	memcpy(&btv->i2c_client, &bttv_i2c_client_template,
-	       sizeof(bttv_i2c_client_template));
+	strlcpy(btv->i2c_client.name, "bttv internal", I2C_NAME_SIZE);
 
 	if (i2c_hw)
 		btv->use_i2c_hw = 1;
 	if (btv->use_i2c_hw) {
 		/* bt878 */
-		memcpy(&btv->c.i2c_adap, &bttv_i2c_adap_hw_template,
-		       sizeof(bttv_i2c_adap_hw_template));
+		strlcpy(btv->c.i2c_adap.name, "bt878",
+			sizeof(btv->c.i2c_adap.name));
+		btv->c.i2c_adap.algo = &bttv_algo;
 	} else {
 		/* bt848 */
 	/* Prevents usage of invalid delay values */
 		if (i2c_udelay<5)
 			i2c_udelay=5;
-		bttv_i2c_algo_bit_template.udelay=i2c_udelay;
 
-		memcpy(&btv->c.i2c_adap, &bttv_i2c_adap_sw_template,
-		       sizeof(bttv_i2c_adap_sw_template));
+		strlcpy(btv->c.i2c_adap.name, "bttv",
+			sizeof(btv->c.i2c_adap.name));
 		memcpy(&btv->i2c_algo, &bttv_i2c_algo_bit_template,
 		       sizeof(bttv_i2c_algo_bit_template));
+		btv->i2c_algo.udelay = i2c_udelay;
 		btv->i2c_algo.data = btv;
 		btv->c.i2c_adap.algo_data = &btv->i2c_algo;
 	}
+	btv->c.i2c_adap.owner = THIS_MODULE;
 
 	btv->c.i2c_adap.dev.parent = &btv->c.pci->dev;
 	snprintf(btv->c.i2c_adap.name, sizeof(btv->c.i2c_adap.name),
 		 "bt%d #%d [%s]", btv->id, btv->c.nr,
 		 btv->use_i2c_hw ? "hw" : "sw");
 
-	i2c_set_adapdata(&btv->c.i2c_adap, btv);
+	i2c_set_adapdata(&btv->c.i2c_adap, &btv->c.v4l2_dev);
 	btv->i2c_client.adapter = &btv->c.i2c_adap;
 
-	if (bttv_tvcards[btv->c.type].no_video)
-		btv->c.i2c_adap.class &= ~I2C_CLASS_TV_ANALOG;
-	if (bttv_tvcards[btv->c.type].has_dvb)
-		btv->c.i2c_adap.class |= I2C_CLASS_TV_DIGITAL;
 
 	if (btv->use_i2c_hw) {
 		btv->i2c_rc = i2c_add_adapter(&btv->c.i2c_adap);
@@ -470,20 +385,7 @@ int __devinit init_bttv_i2c(struct bttv *btv)
 		btv->i2c_rc = i2c_bit_add_bus(&btv->c.i2c_adap);
 	}
 	if (0 == btv->i2c_rc && i2c_scan)
-		do_i2c_scan(btv->c.name,&btv->i2c_client);
+		do_i2c_scan(btv->c.v4l2_dev.name, &btv->i2c_client);
+
 	return btv->i2c_rc;
 }
-
-int __devexit fini_bttv_i2c(struct bttv *btv)
-{
-	if (0 != btv->i2c_rc)
-		return 0;
-
-	return i2c_del_adapter(&btv->c.i2c_adap);
-}
-
-/*
- * Local variables:
- * c-basic-offset: 8
- * End:
- */

@@ -18,7 +18,6 @@
 #include <linux/ptrace.h>
 #include <linux/slab.h>
 #include <linux/user.h>
-#include <linux/a.out.h>
 #include <linux/screen_info.h>
 #include <linux/delay.h>
 #include <linux/mc146818rtc.h>
@@ -58,7 +57,6 @@ static struct notifier_block alpha_panic_block = {
 #include <asm/system.h>
 #include <asm/hwrpb.h>
 #include <asm/dma.h>
-#include <asm/io.h>
 #include <asm/mmu_context.h>
 #include <asm/console.h>
 
@@ -79,6 +77,11 @@ int alpha_l3_cacheshape;
 /* 0=minimum, 1=verbose, 2=all */
 /* These can be overridden via the command line, ie "verbose_mcheck=2") */
 unsigned long alpha_verbose_mcheck = CONFIG_VERBOSE_MCHECK_ON;
+#endif
+
+#ifdef CONFIG_NUMA
+struct cpumask node_to_cpumask_map[MAX_NUMNODES] __read_mostly;
+EXPORT_SYMBOL(node_to_cpumask_map);
 #endif
 
 /* Which processor we booted from.  */
@@ -249,9 +252,9 @@ reserve_std_resources(void)
 }
 
 #define PFN_MAX		PFN_DOWN(0x80000000)
-#define for_each_mem_cluster(memdesc, cluster, i)		\
-	for ((cluster) = (memdesc)->cluster, (i) = 0;		\
-	     (i) < (memdesc)->numclusters; (i)++, (cluster)++)
+#define for_each_mem_cluster(memdesc, _cluster, i)		\
+	for ((_cluster) = (memdesc)->cluster, (i) = 0;		\
+	     (i) < (memdesc)->numclusters; (i)++, (_cluster)++)
 
 static unsigned long __init
 get_mem_size_limit(char *s)
@@ -429,7 +432,8 @@ setup_memory(void *kernel_end)
 	}
 
 	/* Reserve the bootmap memory.  */
-	reserve_bootmem(PFN_PHYS(bootmap_start), bootmap_size);
+	reserve_bootmem(PFN_PHYS(bootmap_start), bootmap_size,
+			BOOTMEM_DEFAULT);
 	printk("reserving pages %ld:%ld\n", bootmap_start, bootmap_start+PFN_UP(bootmap_size));
 
 #ifdef CONFIG_BLK_DEV_INITRD
@@ -447,7 +451,7 @@ setup_memory(void *kernel_end)
 				       phys_to_virt(PFN_PHYS(max_low_pfn)));
 		} else {
 			reserve_bootmem(virt_to_phys((void *)initrd_start),
-					INITRD_SIZE);
+					INITRD_SIZE, BOOTMEM_DEFAULT);
 		}
 	}
 #endif /* CONFIG_BLK_DEV_INITRD */
@@ -1251,7 +1255,7 @@ show_cpuinfo(struct seq_file *f, void *slot)
 		       platform_string(), nr_processors);
 
 #ifdef CONFIG_SMP
-	seq_printf(f, "cpus active\t\t: %d\n"
+	seq_printf(f, "cpus active\t\t: %u\n"
 		      "cpu active mask\t\t: %016lx\n",
 		       num_online_cpus(), cpus_addr(cpu_possible_map)[0]);
 #endif
@@ -1400,8 +1404,6 @@ determine_cpu_caches (unsigned int cpu_type)
 	case PCA56_CPU:
 	case PCA57_CPU:
 	  {
-		unsigned long cbox_config, size;
-
 		if (cpu_type == PCA56_CPU) {
 			L1I = CSHAPE(16*1024, 6, 1);
 			L1D = CSHAPE(8*1024, 5, 1);
@@ -1411,10 +1413,12 @@ determine_cpu_caches (unsigned int cpu_type)
 		}
 		L3 = -1;
 
+#if 0
+		unsigned long cbox_config, size;
+
 		cbox_config = *(vulp) phys_to_virt (0xfffff00008UL);
 		size = 512*1024 * (1 << ((cbox_config >> 12) & 3));
 
-#if 0
 		L2 = ((cbox_config >> 31) & 1 ? CSHAPE (size, 6, 1) : -1);
 #else
 		L2 = external_cache_probe(512*1024, 6);
@@ -1472,7 +1476,7 @@ c_stop(struct seq_file *f, void *v)
 {
 }
 
-struct seq_operations cpuinfo_op = {
+const struct seq_operations cpuinfo_op = {
 	.start	= c_start,
 	.next	= c_next,
 	.stop	= c_stop,

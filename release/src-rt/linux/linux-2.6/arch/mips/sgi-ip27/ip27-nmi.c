@@ -1,4 +1,3 @@
-#include <linux/kallsyms.h>
 #include <linux/kernel.h>
 #include <linux/mmzone.h>
 #include <linux/nodemask.h>
@@ -18,11 +17,10 @@
 #endif
 
 #define CNODEID_NONE (cnodeid_t)-1
-#define enter_panic_mode()	spin_lock(&nmi_lock)
 
 typedef unsigned long machreg_t;
 
-DEFINE_SPINLOCK(nmi_lock);
+static arch_spinlock_t nmi_lock = __ARCH_SPIN_LOCK_UNLOCKED;
 
 /*
  * Lets see what else we need to do here. Set up sp, gp?
@@ -84,13 +82,10 @@ void nmi_cpu_eframe_save(nasid_t nasid, int slice)
 	/*
 	 * Saved cp0 registers
 	 */
-	printk("epc   : %016lx ", nr->epc);
-	print_symbol("%s ", nr->epc);
+	printk("epc   : %016lx %pS\n", nr->epc, (void *) nr->epc);
 	printk("%s\n", print_tainted());
-	printk("ErrEPC: %016lx ", nr->error_epc);
-	print_symbol("%s\n", nr->error_epc);
-	printk("ra    : %016lx ", nr->gpr[31]);
-	print_symbol("%s\n", nr->gpr[31]);
+	printk("ErrEPC: %016lx %pS\n", nr->error_epc, (void *) nr->error_epc);
+	printk("ra    : %016lx %pS\n", nr->gpr[31], (void *) nr->gpr[31]);
 	printk("Status: %08lx         ", nr->sr);
 
 	if (nr->sr & ST0_KX)
@@ -147,8 +142,8 @@ void nmi_dump_hub_irq(nasid_t nasid, int slice)
 	pend0 = REMOTE_HUB_L(nasid, PI_INT_PEND0);
 	pend1 = REMOTE_HUB_L(nasid, PI_INT_PEND1);
 
-	printk("PI_INT_MASK0: %16lx PI_INT_MASK1: %16lx\n", mask0, mask1);
-	printk("PI_INT_PEND0: %16lx PI_INT_PEND1: %16lx\n", pend0, pend1);
+	printk("PI_INT_MASK0: %16Lx PI_INT_MASK1: %16Lx\n", mask0, mask1);
+	printk("PI_INT_PEND0: %16Lx PI_INT_PEND1: %16Lx\n", pend0, pend1);
 	printk("\n\n");
 }
 
@@ -197,9 +192,9 @@ cont_nmi_dump(void)
 	atomic_inc(&nmied_cpus);
 #endif
 	/*
-	 * Use enter_panic_mode to allow only 1 cpu to proceed
+	 * Only allow 1 cpu to proceed
 	 */
-	enter_panic_mode();
+	arch_spin_lock(&nmi_lock);
 
 #ifdef REAL_NMI_SIGNAL
 	/*
@@ -223,7 +218,7 @@ cont_nmi_dump(void)
 		if (i == 1000) {
 			for_each_online_node(node)
 				if (NODEPDA(node)->dump_count == 0) {
-					cpu = node_to_first_cpu(node);
+					cpu = cpumask_first(cpumask_of_node(node));
 					for (n=0; n < CNODE_NUM_CPUS(node); cpu++, n++) {
 						CPUMASK_SETB(nmied_cpus, cpu);
 						/*

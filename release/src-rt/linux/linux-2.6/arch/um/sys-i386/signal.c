@@ -1,189 +1,292 @@
 /*
- * Copyright (C) 2004 Jeff Dike (jdike@addtoit.com)
+ * Copyright (C) 2004 - 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
  * Licensed under the GPL
  */
 
-#include "linux/signal.h"
-#include "linux/ptrace.h"
-#include "asm/current.h"
-#include "asm/ucontext.h"
-#include "asm/uaccess.h"
-#include "asm/unistd.h"
+#include <linux/ptrace.h>
+#include <asm/unistd.h>
+#include <asm/uaccess.h>
+#include <asm/ucontext.h>
 #include "frame_kern.h"
-#include "sigcontext.h"
-#include "registers.h"
-#include "mode.h"
-
-#ifdef CONFIG_MODE_SKAS
-
 #include "skas.h"
 
-void copy_sc(union uml_pt_regs *regs, void *from)
+void copy_sc(struct uml_pt_regs *regs, void *from)
 {
 	struct sigcontext *sc = from;
 
-	REGS_GS(regs->skas.regs) = sc->gs;
-	REGS_FS(regs->skas.regs) = sc->fs;
-	REGS_ES(regs->skas.regs) = sc->es;
-	REGS_DS(regs->skas.regs) = sc->ds;
-	REGS_EDI(regs->skas.regs) = sc->edi;
-	REGS_ESI(regs->skas.regs) = sc->esi;
-	REGS_EBP(regs->skas.regs) = sc->ebp;
-	REGS_SP(regs->skas.regs) = sc->esp;
-	REGS_EBX(regs->skas.regs) = sc->ebx;
-	REGS_EDX(regs->skas.regs) = sc->edx;
-	REGS_ECX(regs->skas.regs) = sc->ecx;
-	REGS_EAX(regs->skas.regs) = sc->eax;
-	REGS_IP(regs->skas.regs) = sc->eip;
-	REGS_CS(regs->skas.regs) = sc->cs;
-	REGS_EFLAGS(regs->skas.regs) = sc->eflags;
-	REGS_SS(regs->skas.regs) = sc->ss;
+	REGS_GS(regs->gp) = sc->gs;
+	REGS_FS(regs->gp) = sc->fs;
+	REGS_ES(regs->gp) = sc->es;
+	REGS_DS(regs->gp) = sc->ds;
+	REGS_EDI(regs->gp) = sc->di;
+	REGS_ESI(regs->gp) = sc->si;
+	REGS_EBP(regs->gp) = sc->bp;
+	REGS_SP(regs->gp) = sc->sp;
+	REGS_EBX(regs->gp) = sc->bx;
+	REGS_EDX(regs->gp) = sc->dx;
+	REGS_ECX(regs->gp) = sc->cx;
+	REGS_EAX(regs->gp) = sc->ax;
+	REGS_IP(regs->gp) = sc->ip;
+	REGS_CS(regs->gp) = sc->cs;
+	REGS_EFLAGS(regs->gp) = sc->flags;
+	REGS_SS(regs->gp) = sc->ss;
 }
 
-static int copy_sc_from_user_skas(struct pt_regs *regs,
-				  struct sigcontext __user *from)
+/*
+ * FPU tag word conversions.
+ */
+
+static inline unsigned short twd_i387_to_fxsr(unsigned short twd)
 {
-  	struct sigcontext sc;
-	unsigned long fpregs[HOST_FP_SIZE];
-	int err;
+	unsigned int tmp; /* to avoid 16 bit prefixes in the code */
+
+	/* Transform each pair of bits into 01 (valid) or 00 (empty) */
+	tmp = ~twd;
+	tmp = (tmp | (tmp>>1)) & 0x5555; /* 0V0V0V0V0V0V0V0V */
+	/* and move the valid bits to the lower byte. */
+	tmp = (tmp | (tmp >> 1)) & 0x3333; /* 00VV00VV00VV00VV */
+	tmp = (tmp | (tmp >> 2)) & 0x0f0f; /* 0000VVVV0000VVVV */
+	tmp = (tmp | (tmp >> 4)) & 0x00ff; /* 00000000VVVVVVVV */
+	return tmp;
+}
+
+static inline unsigned long twd_fxsr_to_i387(struct user_fxsr_struct *fxsave)
+{
+	struct _fpxreg *st = NULL;
+	unsigned long twd = (unsigned long) fxsave->twd;
+	unsigned long tag;
+	unsigned long ret = 0xffff0000;
+	int i;
+
+#define FPREG_ADDR(f, n)	((char *)&(f)->st_space + (n) * 16);
+
+	for (i = 0; i < 8; i++) {
+		if (twd & 0x1) {
+			st = (struct _fpxreg *) FPREG_ADDR(fxsave, i);
+
+			switch (st->exponent & 0x7fff) {
+			case 0x7fff:
+				tag = 2;		/* Special */
+				break;
+			case 0x0000:
+				if ( !st->significand[0] &&
+				     !st->significand[1] &&
+				     !st->significand[2] &&
+				     !st->significand[3] ) {
+					tag = 1;	/* Zero */
+				} else {
+					tag = 2;	/* Special */
+				}
+				break;
+			default:
+				if (st->significand[3] & 0x8000) {
+					tag = 0;	/* Valid */
+				} else {
+					tag = 2;	/* Special */
+				}
+				break;
+			}
+		} else {
+			tag = 3;			/* Empty */
+		}
+		ret |= (tag << (2 * i));
+		twd = twd >> 1;
+	}
+	return ret;
+}
+
+static int convert_fxsr_to_user(struct _fpstate __user *buf,
+				struct user_fxsr_struct *fxsave)
+{
+	unsigned long env[7];
+	struct _fpreg __user *to;
+	struct _fpxreg *from;
+	int i;
+
+	env[0] = (unsigned long)fxsave->cwd | 0xffff0000ul;
+	env[1] = (unsigned long)fxsave->swd | 0xffff0000ul;
+	env[2] = twd_fxsr_to_i387(fxsave);
+	env[3] = fxsave->fip;
+	env[4] = fxsave->fcs | ((unsigned long)fxsave->fop << 16);
+	env[5] = fxsave->foo;
+	env[6] = fxsave->fos;
+
+	if (__copy_to_user(buf, env, 7 * sizeof(unsigned long)))
+		return 1;
+
+	to = &buf->_st[0];
+	from = (struct _fpxreg *) &fxsave->st_space[0];
+	for (i = 0; i < 8; i++, to++, from++) {
+		unsigned long __user *t = (unsigned long __user *)to;
+		unsigned long *f = (unsigned long *)from;
+
+		if (__put_user(*f, t) ||
+				__put_user(*(f + 1), t + 1) ||
+				__put_user(from->exponent, &to->exponent))
+			return 1;
+	}
+	return 0;
+}
+
+static int convert_fxsr_from_user(struct user_fxsr_struct *fxsave,
+				  struct _fpstate __user *buf)
+{
+	unsigned long env[7];
+	struct _fpxreg *to;
+	struct _fpreg __user *from;
+	int i;
+
+	if (copy_from_user( env, buf, 7 * sizeof(long)))
+		return 1;
+
+	fxsave->cwd = (unsigned short)(env[0] & 0xffff);
+	fxsave->swd = (unsigned short)(env[1] & 0xffff);
+	fxsave->twd = twd_i387_to_fxsr((unsigned short)(env[2] & 0xffff));
+	fxsave->fip = env[3];
+	fxsave->fop = (unsigned short)((env[4] & 0xffff0000ul) >> 16);
+	fxsave->fcs = (env[4] & 0xffff);
+	fxsave->foo = env[5];
+	fxsave->fos = env[6];
+
+	to = (struct _fpxreg *) &fxsave->st_space[0];
+	from = &buf->_st[0];
+	for (i = 0; i < 8; i++, to++, from++) {
+		unsigned long *t = (unsigned long *)to;
+		unsigned long __user *f = (unsigned long __user *)from;
+
+		if (__get_user(*t, f) ||
+		    __get_user(*(t + 1), f + 1) ||
+		    __get_user(to->exponent, &from->exponent))
+			return 1;
+	}
+	return 0;
+}
+
+extern int have_fpx_regs;
+
+static int copy_sc_from_user(struct pt_regs *regs,
+			     struct sigcontext __user *from)
+{
+	struct sigcontext sc;
+	int err, pid;
 
 	err = copy_from_user(&sc, from, sizeof(sc));
-	err |= copy_from_user(fpregs, sc.fpstate, sizeof(fpregs));
-	if(err)
+	if (err)
 		return err;
 
+	pid = userspace_pid[current_thread_info()->cpu];
 	copy_sc(&regs->regs, &sc);
+	if (have_fpx_regs) {
+		struct user_fxsr_struct fpx;
 
-	err = restore_fp_registers(userspace_pid[0], fpregs);
-	if(err < 0) {
-	  	printk("copy_sc_from_user_skas - PTRACE_SETFPREGS failed, "
-		       "errno = %d\n", -err);
-		return err;
+		err = copy_from_user(&fpx,
+			&((struct _fpstate __user *)sc.fpstate)->_fxsr_env[0],
+				     sizeof(struct user_fxsr_struct));
+		if (err)
+			return 1;
+
+		err = convert_fxsr_from_user(&fpx, sc.fpstate);
+		if (err)
+			return 1;
+
+		err = restore_fpx_registers(pid, (unsigned long *) &fpx);
+		if (err < 0) {
+			printk(KERN_ERR "copy_sc_from_user - "
+			       "restore_fpx_registers failed, errno = %d\n",
+			       -err);
+			return 1;
+		}
+	}
+	else {
+		struct user_i387_struct fp;
+
+		err = copy_from_user(&fp, sc.fpstate,
+				     sizeof(struct user_i387_struct));
+		if (err)
+			return 1;
+
+		err = restore_fp_registers(pid, (unsigned long *) &fp);
+		if (err < 0) {
+			printk(KERN_ERR "copy_sc_from_user - "
+			       "restore_fp_registers failed, errno = %d\n",
+			       -err);
+			return 1;
+		}
 	}
 
 	return 0;
 }
 
-int copy_sc_to_user_skas(struct sigcontext __user *to, struct _fpstate __user *to_fp,
-                         struct pt_regs *regs, unsigned long sp)
+static int copy_sc_to_user(struct sigcontext __user *to,
+			   struct _fpstate __user *to_fp, struct pt_regs *regs,
+			   unsigned long sp)
 {
-  	struct sigcontext sc;
-	unsigned long fpregs[HOST_FP_SIZE];
+	struct sigcontext sc;
 	struct faultinfo * fi = &current->thread.arch.faultinfo;
-	int err;
+	int err, pid;
 
-	sc.gs = REGS_GS(regs->regs.skas.regs);
-	sc.fs = REGS_FS(regs->regs.skas.regs);
-	sc.es = REGS_ES(regs->regs.skas.regs);
-	sc.ds = REGS_DS(regs->regs.skas.regs);
-	sc.edi = REGS_EDI(regs->regs.skas.regs);
-	sc.esi = REGS_ESI(regs->regs.skas.regs);
-	sc.ebp = REGS_EBP(regs->regs.skas.regs);
-	sc.esp = sp;
-	sc.ebx = REGS_EBX(regs->regs.skas.regs);
-	sc.edx = REGS_EDX(regs->regs.skas.regs);
-	sc.ecx = REGS_ECX(regs->regs.skas.regs);
-	sc.eax = REGS_EAX(regs->regs.skas.regs);
-	sc.eip = REGS_IP(regs->regs.skas.regs);
-	sc.cs = REGS_CS(regs->regs.skas.regs);
-	sc.eflags = REGS_EFLAGS(regs->regs.skas.regs);
-	sc.esp_at_signal = regs->regs.skas.regs[UESP];
-	sc.ss = regs->regs.skas.regs[SS];
-        sc.cr2 = fi->cr2;
-        sc.err = fi->error_code;
-        sc.trapno = fi->trap_no;
+	sc.gs = REGS_GS(regs->regs.gp);
+	sc.fs = REGS_FS(regs->regs.gp);
+	sc.es = REGS_ES(regs->regs.gp);
+	sc.ds = REGS_DS(regs->regs.gp);
+	sc.di = REGS_EDI(regs->regs.gp);
+	sc.si = REGS_ESI(regs->regs.gp);
+	sc.bp = REGS_EBP(regs->regs.gp);
+	sc.sp = sp;
+	sc.bx = REGS_EBX(regs->regs.gp);
+	sc.dx = REGS_EDX(regs->regs.gp);
+	sc.cx = REGS_ECX(regs->regs.gp);
+	sc.ax = REGS_EAX(regs->regs.gp);
+	sc.ip = REGS_IP(regs->regs.gp);
+	sc.cs = REGS_CS(regs->regs.gp);
+	sc.flags = REGS_EFLAGS(regs->regs.gp);
+	sc.sp_at_signal = regs->regs.gp[UESP];
+	sc.ss = regs->regs.gp[SS];
+	sc.cr2 = fi->cr2;
+	sc.err = fi->error_code;
+	sc.trapno = fi->trap_no;
 
-	err = save_fp_registers(userspace_pid[0], fpregs);
-	if(err < 0){
-	  	printk("copy_sc_to_user_skas - PTRACE_GETFPREGS failed, "
-		       "errno = %d\n", err);
-		return 1;
-	}
 	to_fp = (to_fp ? to_fp : (struct _fpstate __user *) (to + 1));
 	sc.fpstate = to_fp;
 
-	if(err)
-	  	return err;
+	pid = userspace_pid[current_thread_info()->cpu];
+	if (have_fpx_regs) {
+		struct user_fxsr_struct fpx;
 
-	return copy_to_user(to, &sc, sizeof(sc)) ||
-	       copy_to_user(to_fp, fpregs, sizeof(fpregs));
-}
-#endif
+		err = save_fpx_registers(pid, (unsigned long *) &fpx);
+		if (err < 0){
+			printk(KERN_ERR "copy_sc_to_user - save_fpx_registers "
+			       "failed, errno = %d\n", err);
+			return 1;
+		}
 
-#ifdef CONFIG_MODE_TT
+		err = convert_fxsr_to_user(to_fp, &fpx);
+		if (err)
+			return 1;
 
-/* These copy a sigcontext to/from userspace.  They copy the fpstate pointer,
- * blowing away the old, good one.  So, that value is saved, and then restored
- * after the sigcontext copy.  In copy_from, the variable holding the saved
- * fpstate pointer, and the sigcontext that it should be restored to are both
- * in the kernel, so we can just restore using an assignment.  In copy_to, the
- * saved pointer is in the kernel, but the sigcontext is in userspace, so we
- * copy_to_user it.
- */
-int copy_sc_from_user_tt(struct sigcontext *to, struct sigcontext __user *from,
-			 int fpsize)
-{
-	struct _fpstate *to_fp;
-	struct _fpstate __user *from_fp;
-	unsigned long sigs;
-	int err;
+		err |= __put_user(fpx.swd, &to_fp->status);
+		err |= __put_user(X86_FXSR_MAGIC, &to_fp->magic);
+		if (err)
+			return 1;
 
-	to_fp = to->fpstate;
-	sigs = to->oldmask;
-	err = copy_from_user(to, from, sizeof(*to));
-	from_fp = to->fpstate;
-	to->oldmask = sigs;
-	to->fpstate = to_fp;
-	if(to_fp != NULL)
-		err |= copy_from_user(to_fp, from_fp, fpsize);
-	return err;
-}
-
-int copy_sc_to_user_tt(struct sigcontext __user *to, struct _fpstate __user *fp,
-		       struct sigcontext *from, int fpsize, unsigned long sp)
-{
-	struct _fpstate __user *to_fp;
-	struct _fpstate *from_fp;
-	int err;
-
-	to_fp =	(fp ? fp : (struct _fpstate __user *) (to + 1));
-	from_fp = from->fpstate;
-	err = copy_to_user(to, from, sizeof(*to));
-
-	/* The SP in the sigcontext is the updated one for the signal
-	 * delivery.  The sp passed in is the original, and this needs
-	 * to be restored, so we stick it in separately.
-	 */
-	err |= copy_to_user(&SC_SP(to), &sp, sizeof(sp));
-
-	if(from_fp != NULL){
-		err |= copy_to_user(&to->fpstate, &to_fp, sizeof(to->fpstate));
-		err |= copy_to_user(to_fp, from_fp, fpsize);
+		if (copy_to_user(&to_fp->_fxsr_env[0], &fpx,
+				 sizeof(struct user_fxsr_struct)))
+			return 1;
 	}
-	return err;
-}
-#endif
+	else {
+		struct user_i387_struct fp;
 
-static int copy_sc_from_user(struct pt_regs *to, void __user *from)
-{
-	int ret;
+		err = save_fp_registers(pid, (unsigned long *) &fp);
+		if (copy_to_user(to_fp, &fp, sizeof(struct user_i387_struct)))
+			return 1;
+	}
 
-	ret = CHOOSE_MODE(copy_sc_from_user_tt(UPT_SC(&to->regs), from,
-					       sizeof(struct _fpstate)),
-			  copy_sc_from_user_skas(to, from));
-	return ret;
+	return copy_to_user(to, &sc, sizeof(sc));
 }
 
-static int copy_sc_to_user(struct sigcontext __user *to, struct _fpstate __user *fp,
-			   struct pt_regs *from, unsigned long sp)
-{
-	return CHOOSE_MODE(copy_sc_to_user_tt(to, fp, UPT_SC(&from->regs),
-					      sizeof(*fp), sp),
-                           copy_sc_to_user_skas(to, fp, from, sp));
-}
-
-static int copy_ucontext_to_user(struct ucontext __user *uc, struct _fpstate __user *fp,
-				 sigset_t *set, unsigned long sp)
+static int copy_ucontext_to_user(struct ucontext __user *uc,
+				 struct _fpstate __user *fp, sigset_t *set,
+				 unsigned long sp)
 {
 	int err = 0;
 
@@ -233,7 +336,7 @@ int setup_signal_stack_sc(unsigned long stack_top, int sig,
 		return 1;
 
 	restorer = frame->retcode;
-	if(ka->sa.sa_flags & SA_RESTORER)
+	if (ka->sa.sa_flags & SA_RESTORER)
 		restorer = ka->sa.sa_restorer;
 
 	/* Update SP now because the page fault handler refuses to extend
@@ -265,7 +368,7 @@ int setup_signal_stack_sc(unsigned long stack_top, int sig,
 	err |= __put_user(__NR_sigreturn, (int __user *)(frame->retcode+2));
 	err |= __put_user(0x80cd, (short __user *)(frame->retcode+6));
 
-	if(err)
+	if (err)
 		goto err;
 
 	PT_REGS_SP(regs) = (unsigned long) frame;
@@ -298,7 +401,7 @@ int setup_signal_stack_si(unsigned long stack_top, int sig,
 		return 1;
 
 	restorer = frame->retcode;
-	if(ka->sa.sa_flags & SA_RESTORER)
+	if (ka->sa.sa_flags & SA_RESTORER)
 		restorer = ka->sa.sa_restorer;
 
 	/* See comment above about why this is here */
@@ -323,7 +426,7 @@ int setup_signal_stack_si(unsigned long stack_top, int sig,
 	err |= __put_user(__NR_rt_sigreturn, (int __user *)(frame->retcode+1));
 	err |= __put_user(0x80cd, (short __user *)(frame->retcode+5));
 
-	if(err)
+	if (err)
 		goto err;
 
 	PT_REGS_IP(regs) = (unsigned long) ka->sa.sa_handler;
@@ -350,8 +453,8 @@ long sys_sigreturn(struct pt_regs regs)
 	unsigned long __user *extramask = frame->extramask;
 	int sig_size = (_NSIG_WORDS - 1) * sizeof(unsigned long);
 
-	if(copy_from_user(&set.sig[0], oldmask, sizeof(set.sig[0])) ||
-	   copy_from_user(&set.sig[1], extramask, sig_size))
+	if (copy_from_user(&set.sig[0], oldmask, sizeof(set.sig[0])) ||
+	    copy_from_user(&set.sig[1], extramask, sig_size))
 		goto segfault;
 
 	sigdelsetmask(&set, ~_BLOCKABLE);
@@ -361,7 +464,7 @@ long sys_sigreturn(struct pt_regs regs)
 	recalc_sigpending();
 	spin_unlock_irq(&current->sighand->siglock);
 
-	if(copy_sc_from_user(&current->thread.regs, sc))
+	if (copy_sc_from_user(&current->thread.regs, sc))
 		goto segfault;
 
 	/* Avoid ERESTART handling */
@@ -376,12 +479,13 @@ long sys_sigreturn(struct pt_regs regs)
 long sys_rt_sigreturn(struct pt_regs regs)
 {
 	unsigned long sp = PT_REGS_SP(&current->thread.regs);
-	struct rt_sigframe __user *frame = (struct rt_sigframe __user *) (sp - 4);
+	struct rt_sigframe __user *frame =
+		(struct rt_sigframe __user *) (sp - 4);
 	sigset_t set;
 	struct ucontext __user *uc = &frame->uc;
 	int sig_size = _NSIG_WORDS * sizeof(unsigned long);
 
-	if(copy_from_user(&set, &uc->uc_sigmask, sig_size))
+	if (copy_from_user(&set, &uc->uc_sigmask, sig_size))
 		goto segfault;
 
 	sigdelsetmask(&set, ~_BLOCKABLE);
@@ -391,7 +495,7 @@ long sys_rt_sigreturn(struct pt_regs regs)
 	recalc_sigpending();
 	spin_unlock_irq(&current->sighand->siglock);
 
-	if(copy_sc_from_user(&current->thread.regs, &uc->uc_mcontext))
+	if (copy_sc_from_user(&current->thread.regs, &uc->uc_mcontext))
 		goto segfault;
 
 	/* Avoid ERESTART handling */

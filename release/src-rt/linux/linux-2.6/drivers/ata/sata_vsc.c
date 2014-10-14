@@ -47,7 +47,7 @@
 #include <linux/libata.h>
 
 #define DRV_NAME	"sata_vsc"
-#define DRV_VERSION	"2.2"
+#define DRV_VERSION	"2.3"
 
 enum {
 	VSC_MMIO_BAR			= 0,
@@ -98,20 +98,23 @@ enum {
 			      VSC_SATA_INT_PHY_CHANGE),
 };
 
-static u32 vsc_sata_scr_read (struct ata_port *ap, unsigned int sc_reg)
+static int vsc_sata_scr_read(struct ata_link *link,
+			     unsigned int sc_reg, u32 *val)
 {
 	if (sc_reg > SCR_CONTROL)
-		return 0xffffffffU;
-	return readl(ap->ioaddr.scr_addr + (sc_reg * 4));
+		return -EINVAL;
+	*val = readl(link->ap->ioaddr.scr_addr + (sc_reg * 4));
+	return 0;
 }
 
 
-static void vsc_sata_scr_write (struct ata_port *ap, unsigned int sc_reg,
-			       u32 val)
+static int vsc_sata_scr_write(struct ata_link *link,
+			      unsigned int sc_reg, u32 val)
 {
 	if (sc_reg > SCR_CONTROL)
-		return;
-	writel(val, ap->ioaddr.scr_addr + (sc_reg * 4));
+		return -EINVAL;
+	writel(val, link->ap->ioaddr.scr_addr + (sc_reg * 4));
+	return 0;
 }
 
 
@@ -161,7 +164,8 @@ static void vsc_sata_tf_load(struct ata_port *ap, const struct ata_taskfile *tf)
 	/*
 	 * The only thing the ctl register is used for is SRST.
 	 * That is not enabled or disabled via tf_load.
-	 * However, if ATA_NIEN is changed, then we need to change the interrupt register.
+	 * However, if ATA_NIEN is changed, then we need to change
+	 * the interrupt register.
 	 */
 	if ((tf->ctl & ATA_NIEN) != (ap->last_ctl & ATA_NIEN)) {
 		ap->last_ctl = tf->ctl;
@@ -198,7 +202,7 @@ static void vsc_sata_tf_read(struct ata_port *ap, struct ata_taskfile *tf)
 	struct ata_ioports *ioaddr = &ap->ioaddr;
 	u16 nsect, lbal, lbam, lbah, feature;
 
-	tf->command = ata_check_status(ap);
+	tf->command = ata_sff_check_status(ap);
 	tf->device = readw(ioaddr->device_addr);
 	feature = readw(ioaddr->error_addr);
 	nsect = readw(ioaddr->nsect_addr);
@@ -218,7 +222,7 @@ static void vsc_sata_tf_read(struct ata_port *ap, struct ata_taskfile *tf)
 		tf->hob_lbal = lbal >> 8;
 		tf->hob_lbam = lbam >> 8;
 		tf->hob_lbah = lbah >> 8;
-        }
+	}
 }
 
 static inline void vsc_error_intr(u8 port_status, struct ata_port *ap)
@@ -239,9 +243,9 @@ static void vsc_port_intr(u8 port_status, struct ata_port *ap)
 		return;
 	}
 
-	qc = ata_qc_from_tag(ap, ap->active_tag);
+	qc = ata_qc_from_tag(ap, ap->link.active_tag);
 	if (qc && likely(!(qc->tf.flags & ATA_TFLAG_POLLING)))
-		handled = ata_host_intr(ap, qc);
+		handled = ata_bmdma_port_intr(ap, qc);
 
 	/* We received an interrupt during a polled command,
 	 * or some other spurious condition.  Interrupt reporting
@@ -249,15 +253,16 @@ static void vsc_port_intr(u8 port_status, struct ata_port *ap)
 	 * simply clear the interrupt
 	 */
 	if (unlikely(!handled))
-		ata_chk_status(ap);
+		ap->ops->sff_check_status(ap);
 }
 
 /*
  * vsc_sata_interrupt
  *
- * Read the interrupt register and process for the devices that have them pending.
+ * Read the interrupt register and process for the devices that have
+ * them pending.
  */
-static irqreturn_t vsc_sata_interrupt (int irq, void *dev_instance)
+static irqreturn_t vsc_sata_interrupt(int irq, void *dev_instance)
 {
 	struct ata_host *host = dev_instance;
 	unsigned int i;
@@ -279,14 +284,8 @@ static irqreturn_t vsc_sata_interrupt (int irq, void *dev_instance)
 	for (i = 0; i < host->n_ports; i++) {
 		u8 port_status = (status >> (8 * i)) & 0xff;
 		if (port_status) {
-			struct ata_port *ap = host->ports[i];
-
-			if (ap && !(ap->flags & ATA_FLAG_DISABLED)) {
-				vsc_port_intr(port_status, ap);
-				handled++;
-			} else
-				dev_printk(KERN_ERR, host->dev,
-					": interrupt from disabled port %d\n", i);
+			vsc_port_intr(port_status, host->ports[i]);
+			handled++;
 		}
 	}
 
@@ -297,48 +296,21 @@ out:
 
 
 static struct scsi_host_template vsc_sata_sht = {
-	.module			= THIS_MODULE,
-	.name			= DRV_NAME,
-	.ioctl			= ata_scsi_ioctl,
-	.queuecommand		= ata_scsi_queuecmd,
-	.can_queue		= ATA_DEF_QUEUE,
-	.this_id		= ATA_SHT_THIS_ID,
-	.sg_tablesize		= LIBATA_MAX_PRD,
-	.cmd_per_lun		= ATA_SHT_CMD_PER_LUN,
-	.emulated		= ATA_SHT_EMULATED,
-	.use_clustering		= ATA_SHT_USE_CLUSTERING,
-	.proc_name		= DRV_NAME,
-	.dma_boundary		= ATA_DMA_BOUNDARY,
-	.slave_configure	= ata_scsi_slave_config,
-	.slave_destroy		= ata_scsi_slave_destroy,
-	.bios_param		= ata_std_bios_param,
+	ATA_BMDMA_SHT(DRV_NAME),
 };
 
 
-static const struct ata_port_operations vsc_sata_ops = {
-	.port_disable		= ata_port_disable,
-	.tf_load		= vsc_sata_tf_load,
-	.tf_read		= vsc_sata_tf_read,
-	.exec_command		= ata_exec_command,
-	.check_status		= ata_check_status,
-	.dev_select		= ata_std_dev_select,
-	.bmdma_setup            = ata_bmdma_setup,
-	.bmdma_start            = ata_bmdma_start,
-	.bmdma_stop		= ata_bmdma_stop,
-	.bmdma_status		= ata_bmdma_status,
-	.qc_prep		= ata_qc_prep,
-	.qc_issue		= ata_qc_issue_prot,
-	.data_xfer		= ata_data_xfer,
+static struct ata_port_operations vsc_sata_ops = {
+	.inherits		= &ata_bmdma_port_ops,
+	/* The IRQ handling is not quite standard SFF behaviour so we
+	   cannot use the default lost interrupt handler */
+	.lost_interrupt		= ATA_OP_NULL,
+	.sff_tf_load		= vsc_sata_tf_load,
+	.sff_tf_read		= vsc_sata_tf_read,
 	.freeze			= vsc_freeze,
 	.thaw			= vsc_thaw,
-	.error_handler		= ata_bmdma_error_handler,
-	.post_internal_cmd	= ata_bmdma_post_internal_cmd,
-	.irq_clear		= ata_bmdma_irq_clear,
-	.irq_on			= ata_irq_on,
-	.irq_ack		= ata_irq_ack,
 	.scr_read		= vsc_sata_scr_read,
 	.scr_write		= vsc_sata_scr_write,
-	.port_start		= ata_port_start,
 };
 
 static void __devinit vsc_sata_setup_port(struct ata_ioports *port,
@@ -364,14 +336,14 @@ static void __devinit vsc_sata_setup_port(struct ata_ioports *port,
 }
 
 
-static int __devinit vsc_sata_init_one (struct pci_dev *pdev, const struct pci_device_id *ent)
+static int __devinit vsc_sata_init_one(struct pci_dev *pdev,
+				       const struct pci_device_id *ent)
 {
 	static const struct ata_port_info pi = {
-		.flags		= ATA_FLAG_SATA | ATA_FLAG_NO_LEGACY |
-				  ATA_FLAG_MMIO,
-		.pio_mask	= 0x1f,
-		.mwdma_mask	= 0x07,
-		.udma_mask	= 0x7f,
+		.flags		= ATA_FLAG_SATA,
+		.pio_mask	= ATA_PIO4,
+		.mwdma_mask	= ATA_MWDMA2,
+		.udma_mask	= ATA_UDMA6,
 		.port_ops	= &vsc_sata_ops,
 	};
 	const struct ata_port_info *ppi[] = { &pi, NULL };
@@ -397,7 +369,7 @@ static int __devinit vsc_sata_init_one (struct pci_dev *pdev, const struct pci_d
 	if (pci_resource_len(pdev, 0) == 0)
 		return -ENODEV;
 
-	/* map IO regions and intialize host accordingly */
+	/* map IO regions and initialize host accordingly */
 	rc = pcim_iomap_regions(pdev, 1 << VSC_MMIO_BAR, DRV_NAME);
 	if (rc == -EBUSY)
 		pcim_pin_device(pdev);
@@ -407,17 +379,23 @@ static int __devinit vsc_sata_init_one (struct pci_dev *pdev, const struct pci_d
 
 	mmio_base = host->iomap[VSC_MMIO_BAR];
 
-	for (i = 0; i < host->n_ports; i++)
-		vsc_sata_setup_port(&host->ports[i]->ioaddr,
-				    mmio_base + (i + 1) * VSC_SATA_PORT_OFFSET);
+	for (i = 0; i < host->n_ports; i++) {
+		struct ata_port *ap = host->ports[i];
+		unsigned int offset = (i + 1) * VSC_SATA_PORT_OFFSET;
+
+		vsc_sata_setup_port(&ap->ioaddr, mmio_base + offset);
+
+		ata_port_pbar_desc(ap, VSC_MMIO_BAR, -1, "mmio");
+		ata_port_pbar_desc(ap, VSC_MMIO_BAR, offset, "port");
+	}
 
 	/*
 	 * Use 32 bit DMA mask, because 64 bit address support is poor.
 	 */
-	rc = pci_set_dma_mask(pdev, DMA_32BIT_MASK);
+	rc = pci_set_dma_mask(pdev, DMA_BIT_MASK(32));
 	if (rc)
 		return rc;
-	rc = pci_set_consistent_dma_mask(pdev, DMA_32BIT_MASK);
+	rc = pci_set_consistent_dma_mask(pdev, DMA_BIT_MASK(32));
 	if (rc)
 		return rc;
 

@@ -20,9 +20,13 @@
 #include <linux/taskstats_kern.h>
 #include <linux/tsacct_kern.h>
 #include <linux/delayacct.h>
-#include <linux/tsacct_kern.h>
 #include <linux/cpumask.h>
 #include <linux/percpu.h>
+#include <linux/slab.h>
+#include <linux/cgroupstats.h>
+#include <linux/cgroup.h>
+#include <linux/fs.h>
+#include <linux/file.h>
 #include <net/genetlink.h>
 #include <asm/atomic.h>
 
@@ -32,7 +36,7 @@
  */
 #define TASKSTATS_CPUMASK_MAXLEN	(100+6*NR_CPUS)
 
-static DEFINE_PER_CPU(__u32, taskstats_seqnum) = { 0 };
+static DEFINE_PER_CPU(__u32, taskstats_seqnum);
 static int family_registered;
 struct kmem_cache *taskstats_cache;
 
@@ -43,12 +47,15 @@ static struct genl_family family = {
 	.maxattr	= TASKSTATS_CMD_ATTR_MAX,
 };
 
-static struct nla_policy taskstats_cmd_get_policy[TASKSTATS_CMD_ATTR_MAX+1]
-__read_mostly = {
+static const struct nla_policy taskstats_cmd_get_policy[TASKSTATS_CMD_ATTR_MAX+1] = {
 	[TASKSTATS_CMD_ATTR_PID]  = { .type = NLA_U32 },
 	[TASKSTATS_CMD_ATTR_TGID] = { .type = NLA_U32 },
 	[TASKSTATS_CMD_ATTR_REGISTER_CPUMASK] = { .type = NLA_STRING },
 	[TASKSTATS_CMD_ATTR_DEREGISTER_CPUMASK] = { .type = NLA_STRING },};
+
+static const struct nla_policy cgroupstats_cmd_get_policy[CGROUPSTATS_CMD_ATTR_MAX+1] = {
+	[CGROUPSTATS_CMD_ATTR_FD] = { .type = NLA_U32 },
+};
 
 struct listener {
 	struct list_head list;
@@ -82,8 +89,7 @@ static int prepare_reply(struct genl_info *info, u8 cmd, struct sk_buff **skbp,
 		return -ENOMEM;
 
 	if (!info) {
-		int seq = get_cpu_var(taskstats_seqnum)++;
-		put_cpu_var(taskstats_seqnum);
+		int seq = this_cpu_inc_return(taskstats_seqnum) - 1;
 
 		reply = genlmsg_put(skb, 0, seq, &family, 0, cmd);
 	} else
@@ -100,7 +106,7 @@ static int prepare_reply(struct genl_info *info, u8 cmd, struct sk_buff **skbp,
 /*
  * Send taskstats data in @skb to listener with nl_pid @pid
  */
-static int send_reply(struct sk_buff *skb, pid_t pid)
+static int send_reply(struct sk_buff *skb, struct genl_info *info)
 {
 	struct genlmsghdr *genlhdr = nlmsg_data(nlmsg_hdr(skb));
 	void *reply = genlmsg_data(genlhdr);
@@ -112,7 +118,7 @@ static int send_reply(struct sk_buff *skb, pid_t pid)
 		return rc;
 	}
 
-	return genlmsg_unicast(skb, pid);
+	return genlmsg_reply(skb, info);
 }
 
 /*
@@ -142,7 +148,7 @@ static void send_cpu_listeners(struct sk_buff *skb,
 			if (!skb_next)
 				break;
 		}
-		rc = genlmsg_unicast(skb_cur, s->pid);
+		rc = genlmsg_unicast(&init_net, skb_cur, s->pid);
 		if (rc == -ECONNREFUSED) {
 			s->valid = 0;
 			delcount++;
@@ -168,22 +174,8 @@ static void send_cpu_listeners(struct sk_buff *skb,
 	up_write(&listeners->sem);
 }
 
-static int fill_pid(pid_t pid, struct task_struct *tsk,
-		struct taskstats *stats)
+static void fill_stats(struct task_struct *tsk, struct taskstats *stats)
 {
-	int rc = 0;
-
-	if (!tsk) {
-		rcu_read_lock();
-		tsk = find_task_by_pid(pid);
-		if (tsk)
-			get_task_struct(tsk);
-		rcu_read_unlock();
-		if (!tsk)
-			return -ESRCH;
-	} else
-		get_task_struct(tsk);
-
 	memset(stats, 0, sizeof(*stats));
 	/*
 	 * Each accounting subsystem adds calls to its functions to
@@ -196,21 +188,33 @@ static int fill_pid(pid_t pid, struct task_struct *tsk,
 
 	/* fill in basic acct fields */
 	stats->version = TASKSTATS_VERSION;
+	stats->nvcsw = tsk->nvcsw;
+	stats->nivcsw = tsk->nivcsw;
 	bacct_add_tsk(stats, tsk);
 
 	/* fill in extended acct fields */
 	xacct_add_tsk(stats, tsk);
-
-	/* Define err: label here if needed */
-	put_task_struct(tsk);
-	return rc;
-
 }
 
-static int fill_tgid(pid_t tgid, struct task_struct *first,
-		struct taskstats *stats)
+static int fill_stats_for_pid(pid_t pid, struct taskstats *stats)
 {
 	struct task_struct *tsk;
+
+	rcu_read_lock();
+	tsk = find_task_by_vpid(pid);
+	if (tsk)
+		get_task_struct(tsk);
+	rcu_read_unlock();
+	if (!tsk)
+		return -ESRCH;
+	fill_stats(tsk, stats);
+	put_task_struct(tsk);
+	return 0;
+}
+
+static int fill_stats_for_tgid(pid_t tgid, struct taskstats *stats)
+{
+	struct task_struct *tsk, *first;
 	unsigned long flags;
 	int rc = -ESRCH;
 
@@ -219,8 +223,7 @@ static int fill_tgid(pid_t tgid, struct task_struct *first,
 	 * leaders who are already counted with the dead tasks
 	 */
 	rcu_read_lock();
-	if (!first)
-		first = find_task_by_pid(tgid);
+	first = find_task_by_vpid(tgid);
 
 	if (!first || !lock_task_sighand(first, &flags))
 		goto out;
@@ -242,6 +245,8 @@ static int fill_tgid(pid_t tgid, struct task_struct *first,
 		 */
 		delayacct_add_tsk(stats, tsk);
 
+		stats->nvcsw += tsk->nvcsw;
+		stats->nivcsw += tsk->nivcsw;
 	} while_each_thread(first, tsk);
 
 	unlock_task_sighand(first, &flags);
@@ -251,12 +256,11 @@ out:
 
 	stats->version = TASKSTATS_VERSION;
 	/*
-	 * Accounting subsytems can also add calls here to modify
+	 * Accounting subsystems can also add calls here to modify
 	 * fields of taskstats.
 	 */
 	return rc;
 }
-
 
 static void fill_tgid_exit(struct task_struct *tsk)
 {
@@ -278,20 +282,21 @@ ret:
 	return;
 }
 
-static int add_del_listener(pid_t pid, cpumask_t *maskp, int isadd)
+static int add_del_listener(pid_t pid, const struct cpumask *mask, int isadd)
 {
 	struct listener_list *listeners;
-	struct listener *s, *tmp;
+	struct listener *s, *tmp, *s2;
 	unsigned int cpu;
-	cpumask_t mask = *maskp;
 
-	if (!cpus_subset(mask, cpu_possible_map))
+	if (!cpumask_subset(mask, cpu_possible_mask))
 		return -EINVAL;
 
+	s = NULL;
 	if (isadd == REGISTER) {
-		for_each_cpu_mask(cpu, mask) {
-			s = kmalloc_node(sizeof(struct listener), GFP_KERNEL,
-					 cpu_to_node(cpu));
+		for_each_cpu(cpu, mask) {
+			if (!s)
+				s = kmalloc_node(sizeof(struct listener),
+						 GFP_KERNEL, cpu_to_node(cpu));
 			if (!s)
 				goto cleanup;
 			s->pid = pid;
@@ -300,15 +305,22 @@ static int add_del_listener(pid_t pid, cpumask_t *maskp, int isadd)
 
 			listeners = &per_cpu(listener_array, cpu);
 			down_write(&listeners->sem);
+			list_for_each_entry_safe(s2, tmp, &listeners->list, list) {
+				if (s2->pid == pid)
+					goto next_cpu;
+			}
 			list_add(&s->list, &listeners->list);
+			s = NULL;
+next_cpu:
 			up_write(&listeners->sem);
 		}
+		kfree(s);
 		return 0;
 	}
 
 	/* Deregister or cleanup */
 cleanup:
-	for_each_cpu_mask(cpu, mask) {
+	for_each_cpu(cpu, mask) {
 		listeners = &per_cpu(listener_array, cpu);
 		down_write(&listeners->sem);
 		list_for_each_entry_safe(s, tmp, &listeners->list, list) {
@@ -323,7 +335,7 @@ cleanup:
 	return 0;
 }
 
-static int parse(struct nlattr *na, cpumask_t *mask)
+static int parse(struct nlattr *na, struct cpumask *mask)
 {
 	char *data;
 	int len;
@@ -340,10 +352,14 @@ static int parse(struct nlattr *na, cpumask_t *mask)
 	if (!data)
 		return -ENOMEM;
 	nla_strlcpy(data, na, len);
-	ret = cpulist_parse(data, *mask);
+	ret = cpulist_parse(data, mask);
 	kfree(data);
 	return ret;
 }
+
+#if defined(CONFIG_64BIT) && !defined(CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS)
+#define TASKSTATS_NEEDS_PADDING 1
+#endif
 
 static struct taskstats *mk_reply(struct sk_buff *skb, int type, u32 pid)
 {
@@ -354,9 +370,33 @@ static struct taskstats *mk_reply(struct sk_buff *skb, int type, u32 pid)
 			? TASKSTATS_TYPE_AGGR_PID
 			: TASKSTATS_TYPE_AGGR_TGID;
 
+	/*
+	 * The taskstats structure is internally aligned on 8 byte
+	 * boundaries but the layout of the aggregrate reply, with
+	 * two NLA headers and the pid (each 4 bytes), actually
+	 * force the entire structure to be unaligned. This causes
+	 * the kernel to issue unaligned access warnings on some
+	 * architectures like ia64. Unfortunately, some software out there
+	 * doesn't properly unroll the NLA packet and assumes that the start
+	 * of the taskstats structure will always be 20 bytes from the start
+	 * of the netlink payload. Aligning the start of the taskstats
+	 * structure breaks this software, which we don't want. So, for now
+	 * the alignment only happens on architectures that require it
+	 * and those users will have to update to fixed versions of those
+	 * packages. Space is reserved in the packet only when needed.
+	 * This ifdef should be removed in several years e.g. 2012 once
+	 * we can be confident that fixed versions are installed on most
+	 * systems. We add the padding before the aggregate since the
+	 * aggregate is already a defined type.
+	 */
+#ifdef TASKSTATS_NEEDS_PADDING
+	if (nla_put(skb, TASKSTATS_TYPE_NULL, 0, NULL) < 0)
+		goto err;
+#endif
 	na = nla_nest_start(skb, aggr);
 	if (!na)
 		goto err;
+
 	if (nla_put(skb, type, sizeof(pid), &pid) < 0)
 		goto err;
 	ret = nla_reserve(skb, TASKSTATS_TYPE_STATS, sizeof(struct taskstats));
@@ -369,62 +409,165 @@ err:
 	return NULL;
 }
 
-static int taskstats_user_cmd(struct sk_buff *skb, struct genl_info *info)
+static int cgroupstats_user_cmd(struct sk_buff *skb, struct genl_info *info)
 {
 	int rc = 0;
 	struct sk_buff *rep_skb;
-	struct taskstats *stats;
+	struct cgroupstats *stats;
+	struct nlattr *na;
 	size_t size;
-	cpumask_t mask;
+	u32 fd;
+	struct file *file;
+	int fput_needed;
 
-	rc = parse(info->attrs[TASKSTATS_CMD_ATTR_REGISTER_CPUMASK], &mask);
+	na = info->attrs[CGROUPSTATS_CMD_ATTR_FD];
+	if (!na)
+		return -EINVAL;
+
+	fd = nla_get_u32(info->attrs[CGROUPSTATS_CMD_ATTR_FD]);
+	file = fget_light(fd, &fput_needed);
+	if (!file)
+		return 0;
+
+	size = nla_total_size(sizeof(struct cgroupstats));
+
+	rc = prepare_reply(info, CGROUPSTATS_CMD_NEW, &rep_skb,
+				size);
 	if (rc < 0)
-		return rc;
-	if (rc == 0)
-		return add_del_listener(info->snd_pid, &mask, REGISTER);
+		goto err;
 
-	rc = parse(info->attrs[TASKSTATS_CMD_ATTR_DEREGISTER_CPUMASK], &mask);
+	na = nla_reserve(rep_skb, CGROUPSTATS_TYPE_CGROUP_STATS,
+				sizeof(struct cgroupstats));
+	stats = nla_data(na);
+	memset(stats, 0, sizeof(*stats));
+
+	rc = cgroupstats_build(stats, file->f_dentry);
+	if (rc < 0) {
+		nlmsg_free(rep_skb);
+		goto err;
+	}
+
+	rc = send_reply(rep_skb, info);
+
+err:
+	fput_light(file, fput_needed);
+	return rc;
+}
+
+static int cmd_attr_register_cpumask(struct genl_info *info)
+{
+	cpumask_var_t mask;
+	int rc;
+
+	if (!alloc_cpumask_var(&mask, GFP_KERNEL))
+		return -ENOMEM;
+	rc = parse(info->attrs[TASKSTATS_CMD_ATTR_REGISTER_CPUMASK], mask);
 	if (rc < 0)
-		return rc;
-	if (rc == 0)
-		return add_del_listener(info->snd_pid, &mask, DEREGISTER);
+		goto out;
+	rc = add_del_listener(info->snd_pid, mask, REGISTER);
+out:
+	free_cpumask_var(mask);
+	return rc;
+}
 
-	/*
-	 * Size includes space for nested attributes
-	 */
+static int cmd_attr_deregister_cpumask(struct genl_info *info)
+{
+	cpumask_var_t mask;
+	int rc;
+
+	if (!alloc_cpumask_var(&mask, GFP_KERNEL))
+		return -ENOMEM;
+	rc = parse(info->attrs[TASKSTATS_CMD_ATTR_DEREGISTER_CPUMASK], mask);
+	if (rc < 0)
+		goto out;
+	rc = add_del_listener(info->snd_pid, mask, DEREGISTER);
+out:
+	free_cpumask_var(mask);
+	return rc;
+}
+
+static size_t taskstats_packet_size(void)
+{
+	size_t size;
+
 	size = nla_total_size(sizeof(u32)) +
 		nla_total_size(sizeof(struct taskstats)) + nla_total_size(0);
+#ifdef TASKSTATS_NEEDS_PADDING
+	size += nla_total_size(0); /* Padding for alignment */
+#endif
+	return size;
+}
+
+static int cmd_attr_pid(struct genl_info *info)
+{
+	struct taskstats *stats;
+	struct sk_buff *rep_skb;
+	size_t size;
+	u32 pid;
+	int rc;
+
+	size = taskstats_packet_size();
 
 	rc = prepare_reply(info, TASKSTATS_CMD_NEW, &rep_skb, size);
 	if (rc < 0)
 		return rc;
 
 	rc = -EINVAL;
-	if (info->attrs[TASKSTATS_CMD_ATTR_PID]) {
-		u32 pid = nla_get_u32(info->attrs[TASKSTATS_CMD_ATTR_PID]);
-		stats = mk_reply(rep_skb, TASKSTATS_TYPE_PID, pid);
-		if (!stats)
-			goto err;
-
-		rc = fill_pid(pid, NULL, stats);
-		if (rc < 0)
-			goto err;
-	} else if (info->attrs[TASKSTATS_CMD_ATTR_TGID]) {
-		u32 tgid = nla_get_u32(info->attrs[TASKSTATS_CMD_ATTR_TGID]);
-		stats = mk_reply(rep_skb, TASKSTATS_TYPE_TGID, tgid);
-		if (!stats)
-			goto err;
-
-		rc = fill_tgid(tgid, NULL, stats);
-		if (rc < 0)
-			goto err;
-	} else
+	pid = nla_get_u32(info->attrs[TASKSTATS_CMD_ATTR_PID]);
+	stats = mk_reply(rep_skb, TASKSTATS_TYPE_PID, pid);
+	if (!stats)
 		goto err;
 
-	return send_reply(rep_skb, info->snd_pid);
+	rc = fill_stats_for_pid(pid, stats);
+	if (rc < 0)
+		goto err;
+	return send_reply(rep_skb, info);
 err:
 	nlmsg_free(rep_skb);
 	return rc;
+}
+
+static int cmd_attr_tgid(struct genl_info *info)
+{
+	struct taskstats *stats;
+	struct sk_buff *rep_skb;
+	size_t size;
+	u32 tgid;
+	int rc;
+
+	size = taskstats_packet_size();
+
+	rc = prepare_reply(info, TASKSTATS_CMD_NEW, &rep_skb, size);
+	if (rc < 0)
+		return rc;
+
+	rc = -EINVAL;
+	tgid = nla_get_u32(info->attrs[TASKSTATS_CMD_ATTR_TGID]);
+	stats = mk_reply(rep_skb, TASKSTATS_TYPE_TGID, tgid);
+	if (!stats)
+		goto err;
+
+	rc = fill_stats_for_tgid(tgid, stats);
+	if (rc < 0)
+		goto err;
+	return send_reply(rep_skb, info);
+err:
+	nlmsg_free(rep_skb);
+	return rc;
+}
+
+static int taskstats_user_cmd(struct sk_buff *skb, struct genl_info *info)
+{
+	if (info->attrs[TASKSTATS_CMD_ATTR_REGISTER_CPUMASK])
+		return cmd_attr_register_cpumask(info);
+	else if (info->attrs[TASKSTATS_CMD_ATTR_DEREGISTER_CPUMASK])
+		return cmd_attr_deregister_cpumask(info);
+	else if (info->attrs[TASKSTATS_CMD_ATTR_PID])
+		return cmd_attr_pid(info);
+	else if (info->attrs[TASKSTATS_CMD_ATTR_TGID])
+		return cmd_attr_tgid(info);
+	else
+		return -EINVAL;
 }
 
 static struct taskstats *taskstats_tgid_alloc(struct task_struct *tsk)
@@ -467,8 +610,7 @@ void taskstats_exit(struct task_struct *tsk, int group_dead)
 	/*
 	 * Size includes space for nested attributes
 	 */
-	size = nla_total_size(sizeof(u32)) +
-		nla_total_size(sizeof(struct taskstats)) + nla_total_size(0);
+	size = taskstats_packet_size();
 
 	is_thread_group = !!taskstats_tgid_alloc(tsk);
 	if (is_thread_group) {
@@ -478,7 +620,7 @@ void taskstats_exit(struct task_struct *tsk, int group_dead)
 		fill_tgid_exit(tsk);
 	}
 
-	listeners = &__raw_get_cpu_var(listener_array);
+	listeners = __this_cpu_ptr(&listener_array);
 	if (list_empty(&listeners->list))
 		return;
 
@@ -490,9 +632,7 @@ void taskstats_exit(struct task_struct *tsk, int group_dead)
 	if (!stats)
 		goto err;
 
-	rc = fill_pid(tsk->pid, tsk, stats);
-	if (rc < 0)
-		goto err;
+	fill_stats(tsk, stats);
 
 	/*
 	 * Doesn't matter if tsk is the leader or the last group member leaving
@@ -519,6 +659,12 @@ static struct genl_ops taskstats_ops = {
 	.policy		= taskstats_cmd_get_policy,
 };
 
+static struct genl_ops cgroupstats_ops = {
+	.cmd		= CGROUPSTATS_CMD_GET,
+	.doit		= cgroupstats_user_cmd,
+	.policy		= cgroupstats_cmd_get_policy,
+};
+
 /* Needed early in initialization */
 void __init taskstats_init_early(void)
 {
@@ -543,8 +689,15 @@ static int __init taskstats_init(void)
 	if (rc < 0)
 		goto err;
 
+	rc = genl_register_ops(&family, &cgroupstats_ops);
+	if (rc < 0)
+		goto err_cgroup_ops;
+
 	family_registered = 1;
+	pr_info("registered taskstats version %d\n", TASKSTATS_GENL_VERSION);
 	return 0;
+err_cgroup_ops:
+	genl_unregister_ops(&family, &taskstats_ops);
 err:
 	genl_unregister_family(&family);
 	return rc;

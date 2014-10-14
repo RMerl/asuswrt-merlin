@@ -2,6 +2,7 @@
  * JFFS2 -- Journalling Flash File System, Version 2.
  *
  * Copyright © 2001-2007 Red Hat, Inc.
+ * Copyright © 2004-2010 David Woodhouse <dwmw2@infradead.org>
  *
  * Created by David Woodhouse <dwmw2@infradead.org>
  *
@@ -24,7 +25,7 @@
 
 static int jffs2_flash_setup(struct jffs2_sb_info *c);
 
-static int jffs2_do_setattr (struct inode *inode, struct iattr *iattr)
+int jffs2_do_setattr (struct inode *inode, struct iattr *iattr)
 {
 	struct jffs2_full_dnode *old_metadata, *new_metadata;
 	struct jffs2_inode_info *f = JFFS2_INODE_INFO(inode);
@@ -36,10 +37,9 @@ static int jffs2_do_setattr (struct inode *inode, struct iattr *iattr)
 	unsigned int ivalid;
 	uint32_t alloclen;
 	int ret;
+	int alloc_type = ALLOC_NORMAL;
+
 	D1(printk(KERN_DEBUG "jffs2_setattr(): ino #%lu\n", inode->i_ino));
-	ret = inode_change_ok(inode, iattr);
-	if (ret)
-		return ret;
 
 	/* Special cases - we don't want more than one data node
 	   for these types on the medium at any time. So setattr
@@ -52,20 +52,20 @@ static int jffs2_do_setattr (struct inode *inode, struct iattr *iattr)
 		mdata = (char *)&dev;
 		D1(printk(KERN_DEBUG "jffs2_setattr(): Writing %d bytes of kdev_t\n", mdatalen));
 	} else if (S_ISLNK(inode->i_mode)) {
-		down(&f->sem);
+		mutex_lock(&f->sem);
 		mdatalen = f->metadata->size;
 		mdata = kmalloc(f->metadata->size, GFP_USER);
 		if (!mdata) {
-			up(&f->sem);
+			mutex_unlock(&f->sem);
 			return -ENOMEM;
 		}
 		ret = jffs2_read_dnode(c, f, f->metadata, mdata, 0, mdatalen);
 		if (ret) {
-			up(&f->sem);
+			mutex_unlock(&f->sem);
 			kfree(mdata);
 			return ret;
 		}
-		up(&f->sem);
+		mutex_unlock(&f->sem);
 		D1(printk(KERN_DEBUG "jffs2_setattr(): Writing %d bytes of symlink target\n", mdatalen));
 	}
 
@@ -84,7 +84,7 @@ static int jffs2_do_setattr (struct inode *inode, struct iattr *iattr)
 			 kfree(mdata);
 		return ret;
 	}
-	down(&f->sem);
+	mutex_lock(&f->sem);
 	ivalid = iattr->ia_valid;
 
 	ri->magic = cpu_to_je16(JFFS2_MAGIC_BITMASK);
@@ -99,11 +99,7 @@ static int jffs2_do_setattr (struct inode *inode, struct iattr *iattr)
 	ri->gid = cpu_to_je16((ivalid & ATTR_GID)?iattr->ia_gid:inode->i_gid);
 
 	if (ivalid & ATTR_MODE)
-		if (iattr->ia_mode & S_ISGID &&
-		    !in_group_p(je16_to_cpu(ri->gid)) && !capable(CAP_FSETID))
-			ri->mode = cpu_to_jemode(iattr->ia_mode & ~S_ISGID);
-		else
-			ri->mode = cpu_to_jemode(iattr->ia_mode);
+		ri->mode = cpu_to_jemode(iattr->ia_mode);
 	else
 		ri->mode = cpu_to_jemode(inode->i_mode);
 
@@ -121,6 +117,10 @@ static int jffs2_do_setattr (struct inode *inode, struct iattr *iattr)
 		ri->compr = JFFS2_COMPR_ZERO;
 		ri->dsize = cpu_to_je32(iattr->ia_size - inode->i_size);
 		ri->offset = cpu_to_je32(inode->i_size);
+	} else if (ivalid & ATTR_SIZE && !iattr->ia_size) {
+		/* For truncate-to-zero, treat it as deletion because
+		   it'll always be obsoleting all previous nodes */
+		alloc_type = ALLOC_DELETION;
 	}
 	ri->node_crc = cpu_to_je32(crc32(0, ri, sizeof(*ri)-8));
 	if (mdatalen)
@@ -128,14 +128,14 @@ static int jffs2_do_setattr (struct inode *inode, struct iattr *iattr)
 	else
 		ri->data_crc = cpu_to_je32(0);
 
-	new_metadata = jffs2_write_dnode(c, f, ri, mdata, mdatalen, ALLOC_NORMAL);
+	new_metadata = jffs2_write_dnode(c, f, ri, mdata, mdatalen, alloc_type);
 	if (S_ISLNK(inode->i_mode))
 		kfree(mdata);
 
 	if (IS_ERR(new_metadata)) {
 		jffs2_complete_reservation(c);
 		jffs2_free_raw_inode(ri);
-		up(&f->sem);
+		mutex_unlock(&f->sem);
 		return PTR_ERR(new_metadata);
 	}
 	/* It worked. Update the inode */
@@ -155,6 +155,7 @@ static int jffs2_do_setattr (struct inode *inode, struct iattr *iattr)
 	if (ivalid & ATTR_SIZE && inode->i_size < iattr->ia_size) {
 		jffs2_add_full_dnode_to_inode(c, f, new_metadata);
 		inode->i_size = iattr->ia_size;
+		inode->i_blocks = (inode->i_size + 511) >> 9;
 		f->metadata = NULL;
 	} else {
 		f->metadata = new_metadata;
@@ -165,16 +166,18 @@ static int jffs2_do_setattr (struct inode *inode, struct iattr *iattr)
 	}
 	jffs2_free_raw_inode(ri);
 
-	up(&f->sem);
+	mutex_unlock(&f->sem);
 	jffs2_complete_reservation(c);
 
-	/* We have to do the vmtruncate() without f->sem held, since
+	/* We have to do the truncate_setsize() without f->sem held, since
 	   some pages may be locked and waiting for it in readpage().
 	   We are protected from a simultaneous write() extending i_size
 	   back past iattr->ia_size, because do_truncate() holds the
 	   generic inode semaphore. */
-	if (ivalid & ATTR_SIZE && inode->i_size > iattr->ia_size)
-		vmtruncate(inode, iattr->ia_size);
+	if (ivalid & ATTR_SIZE && inode->i_size > iattr->ia_size) {
+		truncate_setsize(inode, iattr->ia_size);
+		inode->i_blocks = (inode->i_size + 511) >> 9;
+	}	
 
 	return 0;
 }
@@ -183,9 +186,14 @@ int jffs2_setattr(struct dentry *dentry, struct iattr *iattr)
 {
 	int rc;
 
+	rc = inode_change_ok(dentry->d_inode, iattr);
+	if (rc)
+		return rc;
+
 	rc = jffs2_do_setattr(dentry->d_inode, iattr);
 	if (!rc && (iattr->ia_valid & ATTR_MODE))
 		rc = jffs2_acl_chmod(dentry->d_inode);
+
 	return rc;
 }
 
@@ -200,6 +208,8 @@ int jffs2_statfs(struct dentry *dentry, struct kstatfs *buf)
 	buf->f_files = 0;
 	buf->f_ffree = 0;
 	buf->f_namelen = JFFS2_MAX_NAME_LEN;
+	buf->f_fsid.val[0] = JFFS2_SUPER_MAGIC;
+	buf->f_fsid.val[1] = c->mtd->index;
 
 	spin_lock(&c->erase_completion_lock);
 	avail = c->dirty_size + c->free_size;
@@ -215,7 +225,7 @@ int jffs2_statfs(struct dentry *dentry, struct kstatfs *buf)
 }
 
 
-void jffs2_clear_inode (struct inode *inode)
+void jffs2_evict_inode (struct inode *inode)
 {
 	/* We can forget about this inode for now - drop all
 	 *  the nodelists associated with it, etc.
@@ -223,33 +233,42 @@ void jffs2_clear_inode (struct inode *inode)
 	struct jffs2_sb_info *c = JFFS2_SB_INFO(inode->i_sb);
 	struct jffs2_inode_info *f = JFFS2_INODE_INFO(inode);
 
-	D1(printk(KERN_DEBUG "jffs2_clear_inode(): ino #%lu mode %o\n", inode->i_ino, inode->i_mode));
+	D1(printk(KERN_DEBUG "jffs2_evict_inode(): ino #%lu mode %o\n", inode->i_ino, inode->i_mode));
+	truncate_inode_pages(&inode->i_data, 0);
+	end_writeback(inode);
 	jffs2_do_clear_inode(c, f);
 }
 
-void jffs2_read_inode (struct inode *inode)
+struct inode *jffs2_iget(struct super_block *sb, unsigned long ino)
 {
 	struct jffs2_inode_info *f;
 	struct jffs2_sb_info *c;
 	struct jffs2_raw_inode latest_node;
 	union jffs2_device_node jdev;
+	struct inode *inode;
 	dev_t rdev = 0;
 	int ret;
 
-	D1(printk(KERN_DEBUG "jffs2_read_inode(): inode->i_ino == %lu\n", inode->i_ino));
+	D1(printk(KERN_DEBUG "jffs2_iget(): ino == %lu\n", ino));
+
+	inode = iget_locked(sb, ino);
+	if (!inode)
+		return ERR_PTR(-ENOMEM);
+	if (!(inode->i_state & I_NEW))
+		return inode;
 
 	f = JFFS2_INODE_INFO(inode);
 	c = JFFS2_SB_INFO(inode->i_sb);
 
 	jffs2_init_inode_info(f);
-	down(&f->sem);
+	mutex_lock(&f->sem);
 
 	ret = jffs2_do_read_inode(c, f, inode->i_ino, &latest_node);
 
 	if (ret) {
-		make_bad_inode(inode);
-		up(&f->sem);
-		return;
+		mutex_unlock(&f->sem);
+		iget_failed(inode);
+		return ERR_PTR(ret);
 	}
 	inode->i_mode = jemode_to_cpu(latest_node.mode);
 	inode->i_uid = je16_to_cpu(latest_node.uid);
@@ -259,7 +278,7 @@ void jffs2_read_inode (struct inode *inode)
 	inode->i_mtime = ITIME(je32_to_cpu(latest_node.mtime));
 	inode->i_ctime = ITIME(je32_to_cpu(latest_node.ctime));
 
-	inode->i_nlink = f->inocache->nlink;
+	inode->i_nlink = f->inocache->pino_nlink;
 
 	inode->i_blocks = (inode->i_size + 511) >> 9;
 
@@ -272,13 +291,12 @@ void jffs2_read_inode (struct inode *inode)
 	case S_IFDIR:
 	{
 		struct jffs2_full_dirent *fd;
+		inode->i_nlink = 2; /* parent and '.' */
 
 		for (fd=f->dents; fd; fd = fd->next) {
 			if (fd->type == DT_DIR && fd->ino)
 				inc_nlink(inode);
 		}
-		/* and '..' */
-		inc_nlink(inode);
 		/* Root dir gets i_nlink 3 for some reason */
 		if (inode->i_ino == 1)
 			inc_nlink(inode);
@@ -297,27 +315,22 @@ void jffs2_read_inode (struct inode *inode)
 	case S_IFBLK:
 	case S_IFCHR:
 		/* Read the device numbers from the media */
-		if (f->metadata->size != sizeof(jdev.old) &&
-		    f->metadata->size != sizeof(jdev.new)) {
+		if (f->metadata->size != sizeof(jdev.old_id) &&
+		    f->metadata->size != sizeof(jdev.new_id)) {
 			printk(KERN_NOTICE "Device node has strange size %d\n", f->metadata->size);
-			up(&f->sem);
-			jffs2_do_clear_inode(c, f);
-			make_bad_inode(inode);
-			return;
+			goto error_io;
 		}
 		D1(printk(KERN_DEBUG "Reading device numbers from flash\n"));
-		if (jffs2_read_dnode(c, f, f->metadata, (char *)&jdev, 0, f->metadata->size) < 0) {
+		ret = jffs2_read_dnode(c, f, f->metadata, (char *)&jdev, 0, f->metadata->size);
+		if (ret < 0) {
 			/* Eep */
 			printk(KERN_NOTICE "Read device numbers for inode %lu failed\n", (unsigned long)inode->i_ino);
-			up(&f->sem);
-			jffs2_do_clear_inode(c, f);
-			make_bad_inode(inode);
-			return;
+			goto error;
 		}
-		if (f->metadata->size == sizeof(jdev.old))
-			rdev = old_decode_dev(je16_to_cpu(jdev.old));
+		if (f->metadata->size == sizeof(jdev.old_id))
+			rdev = old_decode_dev(je16_to_cpu(jdev.old_id));
 		else
-			rdev = new_decode_dev(je32_to_cpu(jdev.new));
+			rdev = new_decode_dev(je32_to_cpu(jdev.new_id));
 
 	case S_IFSOCK:
 	case S_IFIFO:
@@ -329,9 +342,19 @@ void jffs2_read_inode (struct inode *inode)
 		printk(KERN_WARNING "jffs2_read_inode(): Bogus imode %o for ino %lu\n", inode->i_mode, (unsigned long)inode->i_ino);
 	}
 
-	up(&f->sem);
+	mutex_unlock(&f->sem);
 
 	D1(printk(KERN_DEBUG "jffs2_read_inode() returning\n"));
+	unlock_new_inode(inode);
+	return inode;
+
+error_io:
+	ret = -EIO;
+error:
+	mutex_unlock(&f->sem);
+	jffs2_do_clear_inode(c, f);
+	iget_failed(inode);
+	return ERR_PTR(ret);
 }
 
 void jffs2_dirty_inode(struct inode *inode)
@@ -369,33 +392,17 @@ int jffs2_remount_fs (struct super_block *sb, int *flags, char *data)
 	   Flush the writebuffer, if neccecary, else we loose it */
 	if (!(sb->s_flags & MS_RDONLY)) {
 		jffs2_stop_garbage_collect_thread(c);
-		down(&c->alloc_sem);
+		mutex_lock(&c->alloc_sem);
 		jffs2_flush_wbuf_pad(c);
-		up(&c->alloc_sem);
+		mutex_unlock(&c->alloc_sem);
 	}
 
 	if (!(*flags & MS_RDONLY))
 		jffs2_start_garbage_collect_thread(c);
 
 	*flags |= MS_NOATIME;
-
 	return 0;
 }
-
-void jffs2_write_super (struct super_block *sb)
-{
-	struct jffs2_sb_info *c = JFFS2_SB_INFO(sb);
-	sb->s_dirt = 0;
-
-	if (sb->s_flags & MS_RDONLY)
-		return;
-
-	D1(printk(KERN_DEBUG "jffs2_write_super()\n"));
-	jffs2_garbage_collect_trigger(c);
-	jffs2_erase_pending_blocks(c, 0);
-	jffs2_flush_wbuf_gc(c, 0);
-}
-
 
 /* jffs2_new_inode: allocate a new inode and inocache, add it to the hash,
    fill in the raw_inode while you're at it. */
@@ -418,20 +425,28 @@ struct inode *jffs2_new_inode (struct inode *dir_i, int mode, struct jffs2_raw_i
 
 	f = JFFS2_INODE_INFO(inode);
 	jffs2_init_inode_info(f);
-	down(&f->sem);
+	mutex_lock(&f->sem);
 
 	memset(ri, 0, sizeof(*ri));
 	/* Set OS-specific defaults for new inodes */
-	ri->uid = cpu_to_je16(current->fsuid);
+	ri->uid = cpu_to_je16(current_fsuid());
 
 	if (dir_i->i_mode & S_ISGID) {
 		ri->gid = cpu_to_je16(dir_i->i_gid);
 		if (S_ISDIR(mode))
 			mode |= S_ISGID;
 	} else {
-		ri->gid = cpu_to_je16(current->fsgid);
+		ri->gid = cpu_to_je16(current_fsgid());
 	}
-	ri->mode =  cpu_to_jemode(mode);
+
+	/* POSIX ACLs have to be processed now, at least partly.
+	   The umask is only applied if there's no default ACL */
+	ret = jffs2_init_acl_pre(dir_i, inode, &mode);
+	if (ret) {
+	    make_bad_inode(inode);
+	    iput(inode);
+	    return ERR_PTR(ret);
+	}
 	ret = jffs2_do_new_inode (c, f, mode, ri);
 	if (ret) {
 		make_bad_inode(inode);
@@ -449,11 +464,35 @@ struct inode *jffs2_new_inode (struct inode *dir_i, int mode, struct jffs2_raw_i
 	inode->i_blocks = 0;
 	inode->i_size = 0;
 
-	insert_inode_hash(inode);
+	if (insert_inode_locked(inode) < 0) {
+		make_bad_inode(inode);
+		unlock_new_inode(inode);
+		iput(inode);
+		return ERR_PTR(-EINVAL);
+	}
 
 	return inode;
 }
 
+static int calculate_inocache_hashsize(uint32_t flash_size)
+{
+	/*
+	 * Pick a inocache hash size based on the size of the medium.
+	 * Count how many megabytes we're dealing with, apply a hashsize twice
+	 * that size, but rounding down to the usual big powers of 2. And keep
+	 * to sensible bounds.
+	 */
+
+	int size_mb = flash_size / 1024 / 1024;
+	int hashsize = (size_mb * 2) & ~0x3f;
+
+	if (hashsize < INOCACHE_HASHSIZE_MIN)
+		return INOCACHE_HASHSIZE_MIN;
+	if (hashsize > INOCACHE_HASHSIZE_MAX)
+		return INOCACHE_HASHSIZE_MAX;
+
+	return hashsize;
+}
 
 int jffs2_do_fill_super(struct super_block *sb, void *data, int silent)
 {
@@ -500,7 +539,8 @@ int jffs2_do_fill_super(struct super_block *sb, void *data, int silent)
 	if (ret)
 		return ret;
 
-	c->inocache_list = kcalloc(INOCACHE_HASHSIZE, sizeof(struct jffs2_inode_cache *), GFP_KERNEL);
+	c->inocache_hashsize = calculate_inocache_hashsize(c->flash_size);
+	c->inocache_list = kcalloc(c->inocache_hashsize, sizeof(struct jffs2_inode_cache *), GFP_KERNEL);
 	if (!c->inocache_list) {
 		ret = -ENOMEM;
 		goto out_wbuf;
@@ -511,14 +551,15 @@ int jffs2_do_fill_super(struct super_block *sb, void *data, int silent)
 	if ((ret = jffs2_do_mount_fs(c)))
 		goto out_inohash;
 
-	ret = -EINVAL;
-
 	D1(printk(KERN_DEBUG "jffs2_do_fill_super(): Getting root inode\n"));
-	root_i = iget(sb, 1);
-	if (is_bad_inode(root_i)) {
+	root_i = jffs2_iget(sb, 1);
+	if (IS_ERR(root_i)) {
 		D1(printk(KERN_WARNING "get root inode failed\n"));
-		goto out_root_i;
+		ret = PTR_ERR(root_i);
+		goto out_root;
 	}
+
+	ret = -ENOMEM;
 
 	D1(printk(KERN_DEBUG "jffs2_do_fill_super(): d_alloc_root()\n"));
 	sb->s_root = d_alloc_root(root_i);
@@ -535,6 +576,7 @@ int jffs2_do_fill_super(struct super_block *sb, void *data, int silent)
 
  out_root_i:
 	iput(root_i);
+out_root:
 	jffs2_free_ino_caches(c);
 	jffs2_free_raw_node_refs(c);
 	if (jffs2_blocks_use_vmalloc(c))
@@ -557,11 +599,12 @@ void jffs2_gc_release_inode(struct jffs2_sb_info *c,
 }
 
 struct jffs2_inode_info *jffs2_gc_fetch_inode(struct jffs2_sb_info *c,
-						     int inum, int nlink)
+					      int inum, int unlinked)
 {
 	struct inode *inode;
 	struct jffs2_inode_cache *ic;
-	if (!nlink) {
+
+	if (unlinked) {
 		/* The inode has zero nlink but its nodes weren't yet marked
 		   obsolete. This has to be because we're still waiting for
 		   the final (close() and) iput() to happen.
@@ -604,13 +647,13 @@ struct jffs2_inode_info *jffs2_gc_fetch_inode(struct jffs2_sb_info *c,
 		   jffs2_do_unlink() would need the alloc_sem and we have it.
 		   Just iget() it, and if read_inode() is necessary that's OK.
 		*/
-		inode = iget(OFNI_BS_2SFFJ(c), inum);
-		if (!inode)
-			return ERR_PTR(-ENOMEM);
+		inode = jffs2_iget(OFNI_BS_2SFFJ(c), inum);
+		if (IS_ERR(inode))
+			return ERR_CAST(inode);
 	}
 	if (is_bad_inode(inode)) {
-		printk(KERN_NOTICE "Eep. read_inode() failed for ino #%u. nlink %d\n",
-		       inum, nlink);
+		printk(KERN_NOTICE "Eep. read_inode() failed for ino #%u. unlinked %d\n",
+		       inum, unlinked);
 		/* NB. This will happen again. We need to do something appropriate here. */
 		iput(inode);
 		return ERR_PTR(-EIO);

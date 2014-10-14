@@ -14,7 +14,6 @@
 */
 
 #include <linux/module.h>
-#include <linux/version.h>
 #include <linux/kernel.h>
 #include <linux/err.h>
 #include <linux/slab.h>
@@ -24,12 +23,11 @@
 #include <linux/init.h>
 #include <linux/clk.h>
 #include <linux/platform_device.h>
+#include <linux/io.h>
 
-#include <asm/io.h>
-
-#include <asm/arch/at91_twi.h>
-#include <asm/arch/board.h>
-#include <asm/arch/cpu.h>
+#include <mach/at91_twi.h>
+#include <mach/board.h>
+#include <mach/cpu.h>
 
 #define TWI_CLOCK		100000		/* Hz. max 400 Kbits/sec */
 
@@ -135,7 +133,7 @@ static int xfer_write(struct i2c_adapter *adap, unsigned char *buf, int length)
  * Generic i2c master transfer entrypoint.
  *
  * Note: We do not use Atmel's feature of storing the "internal device address".
- * Instead the "internal device address" has to be written using a seperate
+ * Instead the "internal device address" has to be written using a separate
  * i2c message.
  * http://lists.arm.linux.org.uk/pipermail/linux-arm-kernel/2004-September/024411.html
  */
@@ -201,10 +199,10 @@ static int __devinit at91_i2c_probe(struct platform_device *pdev)
 	if (!res)
 		return -ENXIO;
 
-	if (!request_mem_region(res->start, res->end - res->start + 1, "at91_i2c"))
+	if (!request_mem_region(res->start, resource_size(res), "at91_i2c"))
 		return -EBUSY;
 
-	twi_base = ioremap(res->start, res->end - res->start + 1);
+	twi_base = ioremap(res->start, resource_size(res));
 	if (!twi_base) {
 		rc = -ENOMEM;
 		goto fail0;
@@ -223,7 +221,7 @@ static int __devinit at91_i2c_probe(struct platform_device *pdev)
 		rc = -ENOMEM;
 		goto fail2;
 	}
-	sprintf(adapter->name, "AT91");
+	snprintf(adapter->name, sizeof(adapter->name), "AT91");
 	adapter->algo = &at91_algorithm;
 	adapter->class = I2C_CLASS_HWMON;
 	adapter->dev.parent = &pdev->dev;
@@ -253,7 +251,7 @@ fail2:
 fail1:
 	iounmap(twi_base);
 fail0:
-	release_mem_region(res->start, res->end - res->start + 1);
+	release_mem_region(res->start, resource_size(res));
 
 	return rc;
 }
@@ -269,7 +267,7 @@ static int __devexit at91_i2c_remove(struct platform_device *pdev)
 
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	iounmap(twi_base);
-	release_mem_region(res->start, res->end - res->start + 1);
+	release_mem_region(res->start, resource_size(res));
 
 	clk_disable(twi_clk);		/* disable peripheral clock */
 	clk_put(twi_clk);
@@ -298,7 +296,7 @@ static int at91_i2c_resume(struct platform_device *pdev)
 #endif
 
 /* work with "modprobe at91_i2c" from hotplugging or coldplugging */
-MODULE_ALIAS("at91_i2c");
+MODULE_ALIAS("platform:at91_i2c");
 
 static struct platform_driver at91_i2c_driver = {
 	.probe		= at91_i2c_probe,

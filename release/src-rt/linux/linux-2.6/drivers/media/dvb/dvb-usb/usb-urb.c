@@ -56,7 +56,7 @@ static void usb_urb_complete(struct urb *urb)
 				stream->complete(stream, b, urb->actual_length);
 			break;
 		default:
-			err("unkown endpoint type in completition handler.");
+			err("unknown endpoint type in completition handler.");
 			return;
 	}
 	usb_submit_urb(urb,GFP_ATOMIC);
@@ -96,8 +96,9 @@ static int usb_free_stream_buffers(struct usb_data_stream *stream)
 		while (stream->buf_num) {
 			stream->buf_num--;
 			deb_mem("freeing buffer %d\n",stream->buf_num);
-			usb_buffer_free(stream->udev, stream->buf_size,
-					stream->buf_list[stream->buf_num], stream->dma_addr[stream->buf_num]);
+			usb_free_coherent(stream->udev, stream->buf_size,
+					  stream->buf_list[stream->buf_num],
+					  stream->dma_addr[stream->buf_num]);
 		}
 	}
 
@@ -116,7 +117,7 @@ static int usb_allocate_stream_buffers(struct usb_data_stream *stream, int num, 
 	for (stream->buf_num = 0; stream->buf_num < num; stream->buf_num++) {
 		deb_mem("allocating buffer %d\n",stream->buf_num);
 		if (( stream->buf_list[stream->buf_num] =
-					usb_buffer_alloc(stream->udev, size, GFP_ATOMIC,
+					usb_alloc_coherent(stream->udev, size, GFP_ATOMIC,
 					&stream->dma_addr[stream->buf_num]) ) == NULL) {
 			deb_mem("not enough memory for urb-buffer allocation.\n");
 			usb_free_stream_buffers(stream);
@@ -135,7 +136,7 @@ stream->buf_list[stream->buf_num], (long long)stream->dma_addr[stream->buf_num])
 
 static int usb_bulk_urb_init(struct usb_data_stream *stream)
 {
-	int i;
+	int i, j;
 
 	if ((i = usb_allocate_stream_buffers(stream,stream->props.count,
 					stream->props.u.bulk.buffersize)) < 0)
@@ -143,16 +144,21 @@ static int usb_bulk_urb_init(struct usb_data_stream *stream)
 
 	/* allocate the URBs */
 	for (i = 0; i < stream->props.count; i++) {
-		if ((stream->urb_list[i] = usb_alloc_urb(0,GFP_ATOMIC)) == NULL)
+		stream->urb_list[i] = usb_alloc_urb(0, GFP_ATOMIC);
+		if (!stream->urb_list[i]) {
+			deb_mem("not enough memory for urb_alloc_urb!.\n");
+			for (j = 0; j < i; j++)
+				usb_free_urb(stream->urb_list[i]);
 			return -ENOMEM;
-
+		}
 		usb_fill_bulk_urb( stream->urb_list[i], stream->udev,
 				usb_rcvbulkpipe(stream->udev,stream->props.endpoint),
 				stream->buf_list[i],
 				stream->props.u.bulk.buffersize,
 				usb_urb_complete, stream);
 
-		stream->urb_list[i]->transfer_flags = 0;
+		stream->urb_list[i]->transfer_flags = URB_NO_TRANSFER_DMA_MAP;
+		stream->urb_list[i]->transfer_dma = stream->dma_addr[i];
 		stream->urbs_initialized++;
 	}
 	return 0;
@@ -170,9 +176,14 @@ static int usb_isoc_urb_init(struct usb_data_stream *stream)
 	for (i = 0; i < stream->props.count; i++) {
 		struct urb *urb;
 		int frame_offset = 0;
-		if ((stream->urb_list[i] =
-					usb_alloc_urb(stream->props.u.isoc.framesperurb,GFP_ATOMIC)) == NULL)
+
+		stream->urb_list[i] = usb_alloc_urb(stream->props.u.isoc.framesperurb, GFP_ATOMIC);
+		if (!stream->urb_list[i]) {
+			deb_mem("not enough memory for urb_alloc_urb!\n");
+			for (j = 0; j < i; j++)
+				usb_free_urb(stream->urb_list[i]);
 			return -ENOMEM;
+		}
 
 		urb = stream->urb_list[i];
 
@@ -218,7 +229,7 @@ int usb_urb_init(struct usb_data_stream *stream, struct usb_data_stream_properti
 		case USB_ISOC:
 			return usb_isoc_urb_init(stream);
 		default:
-			err("unkown URB-type for data transfer.");
+			err("unknown URB-type for data transfer.");
 			return -EINVAL;
 	}
 }

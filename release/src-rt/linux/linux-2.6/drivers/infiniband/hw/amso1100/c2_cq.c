@@ -35,6 +35,8 @@
  * SOFTWARE.
  *
  */
+#include <linux/gfp.h>
+
 #include "c2.h"
 #include "c2_vq.h"
 #include "c2_status.h"
@@ -133,7 +135,7 @@ static inline int c2_poll_one(struct c2_dev *c2dev,
 	struct c2_qp *qp;
 	int is_recv = 0;
 
-	ce = (struct c2wr_ce *) c2_mq_consume(&cq->mq);
+	ce = c2_mq_consume(&cq->mq);
 	if (!ce) {
 		return -EAGAIN;
 	}
@@ -146,7 +148,7 @@ static inline int c2_poll_one(struct c2_dev *c2dev,
 	while ((qp =
 		(struct c2_qp *) (unsigned long) ce->qp_user_context) == NULL) {
 		c2_mq_free(&cq->mq);
-		ce = (struct c2wr_ce *) c2_mq_consume(&cq->mq);
+		ce = c2_mq_consume(&cq->mq);
 		if (!ce)
 			return -EAGAIN;
 	}
@@ -255,7 +257,7 @@ int c2_arm_cq(struct ib_cq *ibcq, enum ib_cq_notify_flags notify_flags)
 static void c2_free_cq_buf(struct c2_dev *c2dev, struct c2_mq *mq)
 {
 	dma_free_coherent(&c2dev->pcidev->dev, mq->q_size * mq->msg_size,
-			  mq->msg_pool.host, pci_unmap_addr(mq, mapping));
+			  mq->msg_pool.host, dma_unmap_addr(mq, mapping));
 }
 
 static int c2_alloc_cq_buf(struct c2_dev *c2dev, struct c2_mq *mq, int q_size,
@@ -276,7 +278,7 @@ static int c2_alloc_cq_buf(struct c2_dev *c2dev, struct c2_mq *mq, int q_size,
 		       NULL,	/* peer (currently unknown) */
 		       C2_MQ_HOST_TARGET);
 
-	pci_unmap_addr_set(mq, mapping, mq->host_dma);
+	dma_unmap_addr_set(mq, mapping, mq->host_dma);
 
 	return 0;
 }
@@ -422,8 +424,8 @@ void c2_free_cq(struct c2_dev *c2dev, struct c2_cq *cq)
 		goto bail1;
 
 	reply = (struct c2wr_cq_destroy_rep *) (unsigned long) (vq_req->reply_msg);
-
-	vq_repbuf_free(c2dev, reply);
+	if (reply)
+		vq_repbuf_free(c2dev, reply);
       bail1:
 	vq_req_free(c2dev, vq_req);
       bail0:

@@ -1,6 +1,4 @@
 /*
- *  arch/mips/pmc-sierra/yosemite/atmel_read_eeprom.c
- *
  *  Copyright (C) 2003 PMC-Sierra Inc.
  *  Author: Manish Lachwani (lachwani@pmc-sierra.com)
  *
@@ -129,7 +127,7 @@ static int recv_ack(void)
 
 	if (ack) {
 		do_idle();
-		printk(KERN_ERR "Error reading the Atmel 24C32/24C64 EEPROM \n");
+		printk(KERN_ERR "Error reading the Atmel 24C32/24C64 EEPROM\n");
 		return -1;
 	}
 
@@ -148,7 +146,7 @@ int read_eeprom(char *buffer, int eeprom_size, int size)
 	send_byte(W_HEADER);
 	recv_ack();
 
-	/* EEPROM with size of more then 2K need two byte addressing */
+	/* EEPROM with size of more than 2K need two byte addressing */
 	if (eeprom_size > 2048) {
 		send_byte(0x00);
 		recv_ack();

@@ -16,31 +16,39 @@
 #include <linux/list.h>
 #include <linux/timer.h>
 #include <linux/init.h>
+#include <linux/gpio.h>
+#include <linux/clk.h>
 #include <linux/sysdev.h>
 #include <linux/serial_core.h>
 #include <linux/platform_device.h>
+#include <linux/io.h>
 
 #include <asm/mach/arch.h>
 #include <asm/mach/map.h>
 #include <asm/mach/irq.h>
 
-#include <asm/hardware.h>
-#include <asm/io.h>
+#include <mach/hardware.h>
 #include <asm/irq.h>
 
-#include <asm/arch/regs-clock.h>
-#include <asm/arch/regs-serial.h>
+#include <plat/cpu-freq.h>
 
-#include <asm/plat-s3c24xx/s3c2410.h>
-#include <asm/plat-s3c24xx/cpu.h>
-#include <asm/plat-s3c24xx/devs.h>
-#include <asm/plat-s3c24xx/clock.h>
+#include <mach/regs-clock.h>
+#include <plat/regs-serial.h>
+
+#include <plat/s3c2410.h>
+#include <plat/cpu.h>
+#include <plat/devs.h>
+#include <plat/clock.h>
+#include <plat/pll.h>
+
+#include <plat/gpio-core.h>
+#include <plat/gpio-cfg.h>
+#include <plat/gpio-cfg-helpers.h>
 
 /* Initial IO mappings */
 
 static struct map_desc s3c2410_iodesc[] __initdata = {
 	IODESC_ENT(CLKPWR),
-	IODESC_ENT(LCD),
 	IODESC_ENT(TIMER),
 	IODESC_ENT(WATCHDOG),
 };
@@ -60,25 +68,31 @@ void __init s3c2410_init_uarts(struct s3c2410_uartcfg *cfg, int no)
  * machine specific initialisation.
 */
 
-void __init s3c2410_map_io(struct map_desc *mach_desc, int mach_size)
+void __init s3c2410_map_io(void)
 {
-	/* register our io-tables */
+	s3c24xx_gpiocfg_default.set_pull = s3c_gpio_setpull_1up;
+	s3c24xx_gpiocfg_default.get_pull = s3c_gpio_getpull_1up;
 
 	iotable_init(s3c2410_iodesc, ARRAY_SIZE(s3c2410_iodesc));
-	iotable_init(mach_desc, mach_size);
 }
 
-void __init s3c2410_init_clocks(int xtal)
+void __init_or_cpufreq s3c2410_setup_clocks(void)
 {
+	struct clk *xtal_clk;
 	unsigned long tmp;
+	unsigned long xtal;
 	unsigned long fclk;
 	unsigned long hclk;
 	unsigned long pclk;
 
+	xtal_clk = clk_get(NULL, "xtal");
+	xtal = clk_get_rate(xtal_clk);
+	clk_put(xtal_clk);
+
 	/* now we've got our machine bits initialised, work out what
 	 * clocks we've got */
 
-	fclk = s3c2410_get_pll(__raw_readl(S3C2410_MPLLCON), xtal);
+	fclk = s3c24xx_get_pll(__raw_readl(S3C2410_MPLLCON), xtal);
 
 	tmp = __raw_readl(S3C2410_CLKDIVN);
 
@@ -96,12 +110,34 @@ void __init s3c2410_init_clocks(int xtal)
 	 * console to use them
 	 */
 
-	s3c24xx_setup_clocks(xtal, fclk, hclk, pclk);
+	s3c24xx_setup_clocks(fclk, hclk, pclk);
+}
+
+/* fake ARMCLK for use with cpufreq, etc. */
+
+static struct clk s3c2410_armclk = {
+	.name	= "armclk",
+	.parent	= &clk_f,
+	.id	= -1,
+};
+
+void __init s3c2410_init_clocks(int xtal)
+{
+	s3c24xx_register_baseclocks(xtal);
+	s3c2410_setup_clocks();
 	s3c2410_baseclk_add();
+	s3c24xx_register_clock(&s3c2410_armclk);
 }
 
 struct sysdev_class s3c2410_sysclass = {
-	set_kset_name("s3c2410-core"),
+	.name = "s3c2410-core",
+};
+
+/* Note, we would have liked to name this s3c2410-core, but we cannot
+ * register two sysdev_class with the same name.
+ */
+struct sysdev_class s3c2410a_sysclass = {
+	.name = "s3c2410a-core",
 };
 
 static struct sys_device s3c2410_sysdev = {
@@ -121,9 +157,22 @@ static int __init s3c2410_core_init(void)
 
 core_initcall(s3c2410_core_init);
 
+static int __init s3c2410a_core_init(void)
+{
+	return sysdev_class_register(&s3c2410a_sysclass);
+}
+
+core_initcall(s3c2410a_core_init);
+
 int __init s3c2410_init(void)
 {
 	printk("S3C2410: Initialising architecture\n");
 
 	return sysdev_register(&s3c2410_sysdev);
+}
+
+int __init s3c2410a_init(void)
+{
+	s3c2410_sysdev.cls = &s3c2410a_sysclass;
+	return s3c2410_init();
 }

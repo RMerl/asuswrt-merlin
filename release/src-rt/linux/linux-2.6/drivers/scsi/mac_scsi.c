@@ -47,12 +47,16 @@
 
 #include <asm/macintosh.h>
 #include <asm/macints.h>
-#include <asm/machw.h>
 #include <asm/mac_via.h>
 
 #include "scsi.h"
 #include <scsi/scsi_host.h>
 #include "mac_scsi.h"
+
+/* These control the behaviour of the generic 5380 core */
+#define AUTOSENSE
+#define PSEUDO_DMA
+
 #include "NCR5380.h"
 
 #if 0
@@ -298,7 +302,7 @@ int macscsi_detect(struct scsi_host_template * tpnt)
 
     if (instance->irq != SCSI_IRQ_NONE)
 	if (request_irq(instance->irq, NCR5380_intr, IRQ_FLG_SLOW, 
-		"ncr5380", instance)) {
+			"ncr5380", instance)) {
 	    printk(KERN_WARNING "scsi%d: IRQ%d not free, interrupts disabled\n",
 		   instance->host_no, instance->irq);
 	    instance->irq = SCSI_IRQ_NONE;
@@ -321,7 +325,7 @@ int macscsi_detect(struct scsi_host_template * tpnt)
 int macscsi_release (struct Scsi_Host *shpnt)
 {
 	if (shpnt->irq != SCSI_IRQ_NONE)
-		free_irq (shpnt->irq, NCR5380_intr);
+		free_irq(shpnt->irq, shpnt);
 	NCR5380_exit(shpnt);
 
 	return 0;
@@ -571,10 +575,6 @@ static int macscsi_pwrite (struct Scsi_Host *instance,
 }
 
 
-/* These control the behaviour of the generic 5380 core */
-#define AUTOSENSE
-#define PSEUDO_DMA
-
 #include "NCR5380.c"
 
 static struct scsi_host_template driver_template = {
@@ -591,7 +591,6 @@ static struct scsi_host_template driver_template = {
 	.this_id			= 7,
 	.sg_tablesize			= SG_ALL,
 	.cmd_per_lun			= CMD_PER_LUN,
-	.unchecked_isa_dma		= 0,
 	.use_clustering			= DISABLE_CLUSTERING
 };
 

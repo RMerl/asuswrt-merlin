@@ -44,8 +44,8 @@
 #include <linux/smp.h>
 #include <linux/timer.h>
 #include <linux/vmalloc.h>
+#include <linux/semaphore.h>
 
-#include <asm/semaphore.h>
 #include <asm/sal.h>
 #include <asm/uaccess.h>
 
@@ -192,7 +192,7 @@ struct salinfo_platform_oemdata_parms {
 static void
 salinfo_work_to_do(struct salinfo_data *data)
 {
-	down_trylock(&data->mutex);
+	(void)(down_trylock(&data->mutex) ?: 0);
 	up(&data->mutex);
 }
 
@@ -317,7 +317,7 @@ retry:
 	}
 
 	n = data->cpu_check;
-	for (i = 0; i < NR_CPUS; i++) {
+	for (i = 0; i < nr_cpu_ids; i++) {
 		if (cpu_isset(n, data->cpu_event)) {
 			if (!cpu_online(n)) {
 				cpu_clear(n, data->cpu_event);
@@ -326,7 +326,7 @@ retry:
 			cpu = n;
 			break;
 		}
-		if (++n == NR_CPUS)
+		if (++n == nr_cpu_ids)
 			n = 0;
 	}
 
@@ -337,7 +337,7 @@ retry:
 
 	/* for next read, start checking at next CPU */
 	data->cpu_check = cpu;
-	if (++data->cpu_check == NR_CPUS)
+	if (++data->cpu_check == nr_cpu_ids)
 		data->cpu_check = 0;
 
 	snprintf(cmd, sizeof(cmd), "read %d\n", cpu);
@@ -354,6 +354,7 @@ retry:
 static const struct file_operations salinfo_event_fops = {
 	.open  = salinfo_event_open,
 	.read  = salinfo_event_read,
+	.llseek = noop_llseek,
 };
 
 static int
@@ -404,10 +405,9 @@ static void
 call_on_cpu(int cpu, void (*fn)(void *), void *arg)
 {
 	cpumask_t save_cpus_allowed = current->cpus_allowed;
-	cpumask_t new_cpus_allowed = cpumask_of_cpu(cpu);
-	set_cpus_allowed(current, new_cpus_allowed);
+	set_cpus_allowed_ptr(current, cpumask_of(cpu));
 	(*fn)(arg);
-	set_cpus_allowed(current, save_cpus_allowed);
+	set_cpus_allowed_ptr(current, &save_cpus_allowed);
 }
 
 static void
@@ -572,9 +572,10 @@ static const struct file_operations salinfo_data_fops = {
 	.release = salinfo_log_release,
 	.read    = salinfo_log_read,
 	.write   = salinfo_log_write,
+	.llseek  = default_llseek,
 };
 
-static int __devinit
+static int __cpuinit
 salinfo_cpu_callback(struct notifier_block *nb, unsigned long action, void *hcpu)
 {
 	unsigned int i, cpu = (unsigned long)hcpu;
@@ -615,7 +616,7 @@ salinfo_cpu_callback(struct notifier_block *nb, unsigned long action, void *hcpu
 	return NOTIFY_OK;
 }
 
-static struct notifier_block salinfo_cpu_notifier =
+static struct notifier_block salinfo_cpu_notifier __cpuinitdata =
 {
 	.notifier_call = salinfo_cpu_callback,
 	.priority = 0,
@@ -643,23 +644,21 @@ salinfo_init(void)
 	for (i = 0; i < ARRAY_SIZE(salinfo_log_name); i++) {
 		data = salinfo_data + i;
 		data->type = i;
-		init_MUTEX(&data->mutex);
+		sema_init(&data->mutex, 1);
 		dir = proc_mkdir(salinfo_log_name[i], salinfo_dir);
 		if (!dir)
 			continue;
 
-		entry = create_proc_entry("event", S_IRUSR, dir);
+		entry = proc_create_data("event", S_IRUSR, dir,
+					 &salinfo_event_fops, data);
 		if (!entry)
 			continue;
-		entry->data = data;
-		entry->proc_fops = &salinfo_event_fops;
 		*sdir++ = entry;
 
-		entry = create_proc_entry("data", S_IRUSR | S_IWUSR, dir);
+		entry = proc_create_data("data", S_IRUSR | S_IWUSR, dir,
+					 &salinfo_data_fops, data);
 		if (!entry)
 			continue;
-		entry->data = data;
-		entry->proc_fops = &salinfo_data_fops;
 		*sdir++ = entry;
 
 		/* we missed any events before now */

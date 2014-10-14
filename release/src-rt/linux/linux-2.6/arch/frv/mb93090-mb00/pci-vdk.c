@@ -16,7 +16,6 @@
 #include <linux/init.h>
 #include <linux/ioport.h>
 #include <linux/delay.h>
-#include <linux/slab.h>
 
 #include <asm/segment.h>
 #include <asm/io.h>
@@ -29,6 +28,29 @@ unsigned int __nongpreldata pci_probe = 1;
 int  __nongpreldata pcibios_last_bus = -1;
 struct pci_bus *__nongpreldata pci_root_bus;
 struct pci_ops *__nongpreldata pci_root_ops;
+
+/*
+ * The accessible PCI window does not cover the entire CPU address space, but
+ * there are devices we want to access outside of that window, so we need to
+ * insert specific PCI bus resources instead of using the platform-level bus
+ * resources directly for the PCI root bus.
+ *
+ * These are configured and inserted by pcibios_init() and are attached to the
+ * root bus by pcibios_fixup_bus().
+ */
+static struct resource pci_ioport_resource = {
+	.name	= "PCI IO",
+	.start	= 0,
+	.end	= IO_SPACE_LIMIT,
+	.flags	= IORESOURCE_IO,
+};
+
+static struct resource pci_iomem_resource = {
+	.name	= "PCI mem",
+	.start	= 0,
+	.end	= -1,
+	.flags	= IORESOURCE_MEM,
+};
 
 /*
  * Functions for accessing PCI configuration space
@@ -199,58 +221,6 @@ static struct pci_ops * __init pci_check_direct(void)
 }
 
 /*
- * Several buggy motherboards address only 16 devices and mirror
- * them to next 16 IDs. We try to detect this `feature' on all
- * primary buses (those containing host bridges as they are
- * expected to be unique) and remove the ghost devices.
- */
-
-static void __init pcibios_fixup_ghosts(struct pci_bus *b)
-{
-	struct list_head *ln, *mn;
-	struct pci_dev *d, *e;
-	int mirror = PCI_DEVFN(16,0);
-	int seen_host_bridge = 0;
-	int i;
-
-	for (ln=b->devices.next; ln != &b->devices; ln=ln->next) {
-		d = pci_dev_b(ln);
-		if ((d->class >> 8) == PCI_CLASS_BRIDGE_HOST)
-			seen_host_bridge++;
-		for (mn=ln->next; mn != &b->devices; mn=mn->next) {
-			e = pci_dev_b(mn);
-			if (e->devfn != d->devfn + mirror ||
-			    e->vendor != d->vendor ||
-			    e->device != d->device ||
-			    e->class != d->class)
-				continue;
-			for(i=0; i<PCI_NUM_RESOURCES; i++)
-				if (e->resource[i].start != d->resource[i].start ||
-				    e->resource[i].end != d->resource[i].end ||
-				    e->resource[i].flags != d->resource[i].flags)
-					continue;
-			break;
-		}
-		if (mn == &b->devices)
-			return;
-	}
-	if (!seen_host_bridge)
-		return;
-	printk("PCI: Ignoring ghost devices on bus %02x\n", b->number);
-
-	ln = &b->devices;
-	while (ln->next != &b->devices) {
-		d = pci_dev_b(ln->next);
-		if (d->devfn >= mirror) {
-			list_del(&d->global_list);
-			list_del(&d->bus_list);
-			kfree(d);
-		} else
-			ln = ln->next;
-	}
-}
-
-/*
  * Discover remaining PCI buses in case there are peer host bridges.
  * We use the number of last PCI bus provided by the PCI BIOS.
  */
@@ -356,7 +326,12 @@ void __init pcibios_fixup_bus(struct pci_bus *bus)
 #if 0
 	printk("### PCIBIOS_FIXUP_BUS(%d)\n",bus->number);
 #endif
-	pcibios_fixup_ghosts(bus);
+
+	if (bus->number == 0) {
+		bus->resource[0] = &pci_ioport_resource;
+		bus->resource[1] = &pci_iomem_resource;
+	}
+
 	pci_read_bridge_bases(bus);
 
 	if (bus->number == 0) {
@@ -400,29 +375,38 @@ int __init pcibios_init(void)
 	__reg_MB86943_pci_sl_mem_base	= __region_CS2 + 0x08000000;
 	mb();
 
-	*(volatile unsigned long *)(__region_CS2+0x01300014) == 1;
+	/* enable PCI arbitration */
+	__reg_MB86943_pci_arbiter	= MB86943_PCIARB_EN;
 
-	ioport_resource.start	= (__reg_MB86943_sl_pci_io_base << 9) & 0xfffffc00;
-	ioport_resource.end	= (__reg_MB86943_sl_pci_io_range << 9) | 0x3ff;
-	ioport_resource.end	+= ioport_resource.start;
+	pci_ioport_resource.start	= (__reg_MB86943_sl_pci_io_base << 9) & 0xfffffc00;
+	pci_ioport_resource.end		= (__reg_MB86943_sl_pci_io_range << 9) | 0x3ff;
+	pci_ioport_resource.end		+= pci_ioport_resource.start;
 
 	printk("PCI IO window:  %08llx-%08llx\n",
-	       (unsigned long long) ioport_resource.start,
-	       (unsigned long long) ioport_resource.end);
+	       (unsigned long long) pci_ioport_resource.start,
+	       (unsigned long long) pci_ioport_resource.end);
 
-	iomem_resource.start	= (__reg_MB86943_sl_pci_mem_base << 9) & 0xfffffc00;
+	pci_iomem_resource.start	= (__reg_MB86943_sl_pci_mem_base << 9) & 0xfffffc00;
+	pci_iomem_resource.end		= (__reg_MB86943_sl_pci_mem_range << 9) | 0x3ff;
+	pci_iomem_resource.end		+= pci_iomem_resource.start;
 
-	/* Reserve somewhere to write to flush posted writes. */
-	iomem_resource.start += 0x400;
-
-	iomem_resource.end	= (__reg_MB86943_sl_pci_mem_range << 9) | 0x3ff;
-	iomem_resource.end	+= iomem_resource.start;
+	/* Reserve somewhere to write to flush posted writes.  This is used by
+	 * __flush_PCI_writes() from asm/io.h to force the write FIFO in the
+	 * CPU-PCI bridge to flush as this doesn't happen automatically when a
+	 * read is performed on the MB93090 development kit motherboard.
+	 */
+	pci_iomem_resource.start	+= 0x400;
 
 	printk("PCI MEM window: %08llx-%08llx\n",
-	       (unsigned long long) iomem_resource.start,
-	       (unsigned long long) iomem_resource.end);
+	       (unsigned long long) pci_iomem_resource.start,
+	       (unsigned long long) pci_iomem_resource.end);
 	printk("PCI DMA memory: %08lx-%08lx\n",
 	       dma_coherent_mem_start, dma_coherent_mem_end);
+
+	if (insert_resource(&iomem_resource, &pci_iomem_resource) < 0)
+		panic("Unable to insert PCI IOMEM resource\n");
+	if (insert_resource(&ioport_resource, &pci_ioport_resource) < 0)
+		panic("Unable to insert PCI IOPORT resource\n");
 
 	if (!pci_probe)
 		return -ENXIO;
@@ -464,7 +448,7 @@ int pcibios_enable_device(struct pci_dev *dev, int mask)
 {
 	int err;
 
-	if ((err = pcibios_enable_resources(dev, mask)) < 0)
+	if ((err = pci_enable_resources(dev, mask)) < 0)
 		return err;
 	if (!dev->msi_enabled)
 		pcibios_enable_irq(dev);

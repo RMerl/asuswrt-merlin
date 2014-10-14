@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006 QLogic, Inc. All rights reserved.
+ * Copyright (c) 2006, 2007, 2008 QLogic Corporation. All rights reserved.
  * Copyright (c) 2003, 2004, 2005, 2006 PathScale, Inc. All rights reserved.
  *
  * This software is available to you under a choice of one of two
@@ -33,6 +33,7 @@
 
 #include <linux/pci.h>
 #include <linux/netdevice.h>
+#include <linux/slab.h>
 #include <linux/vmalloc.h>
 
 #include "ipath_kernel.h"
@@ -41,7 +42,7 @@
 /*
  * min buffers we want to have per port, after driver
  */
-#define IPATH_MIN_USER_PORT_BUFCNT 8
+#define IPATH_MIN_USER_PORT_BUFCNT 7
 
 /*
  * Number of ports we are configured to use (to allow for more pio
@@ -54,13 +55,9 @@ MODULE_PARM_DESC(cfgports, "Set max number of ports to use");
 
 /*
  * Number of buffers reserved for driver (verbs and layered drivers.)
- * Reserved at end of buffer list.   Initialized based on
- * number of PIO buffers if not set via module interface.
+ * Initialized based on number of PIO buffers if not set via module interface.
  * The problem with this is that it's global, but we'll use different
- * numbers for different chip types.  So the default value is not
- * very useful.  I've redefined it for the 1.3 release so that it's
- * zero unless set by the user to something else, in which case we
- * try to respect it.
+ * numbers for different chip types.
  */
 static ushort ipath_kpiobufs;
 
@@ -91,7 +88,7 @@ static int create_port0_egr(struct ipath_devdata *dd)
 	struct ipath_skbinfo *skbinfo;
 	int ret;
 
-	egrcnt = dd->ipath_rcvegrcnt;
+	egrcnt = dd->ipath_p0_rcvegrcnt;
 
 	skbinfo = vmalloc(sizeof(*dd->ipath_port0_skbinfo) * egrcnt);
 	if (skbinfo == NULL) {
@@ -133,7 +130,8 @@ static int create_port0_egr(struct ipath_devdata *dd)
 				   dd->ipath_ibmaxlen, PCI_DMA_FROMDEVICE);
 		dd->ipath_f_put_tid(dd, e + (u64 __iomem *)
 				    ((char __iomem *) dd->ipath_kregbase +
-				     dd->ipath_rcvegrbase), 0,
+				     dd->ipath_rcvegrbase),
+				    RCVHQ_RCV_TYPE_EAGER,
 				    dd->ipath_port0_skbinfo[e].phys);
 	}
 
@@ -154,24 +152,13 @@ static int bringup_link(struct ipath_devdata *dd)
 			 dd->ipath_control);
 
 	/*
-	 * Note that prior to try 14 or 15 of IB, the credit scaling
-	 * wasn't working, because it was swapped for writes with the
-	 * 1 bit default linkstate field
+	 * set initial max size pkt IBC will send, including ICRC; it's the
+	 * PIO buffer size in dwords, less 1; also see ipath_set_mtu()
 	 */
+	val = (dd->ipath_ibmaxlen >> 2) + 1;
+	ibc = val << dd->ibcc_mpl_shift;
 
-	/* ignore pbc and align word */
-	val = dd->ipath_piosize2k - 2 * sizeof(u32);
-	/*
-	 * for ICRC, which we only send in diag test pkt mode, and we
-	 * don't need to worry about that for mtu
-	 */
-	val += 1;
-	/*
-	 * Set the IBC maxpktlength to the size of our pio buffers the
-	 * maxpktlength is in words.  This is *not* the IB data MTU.
-	 */
-	ibc = (val / sizeof(u32)) << INFINIPATH_IBCC_MAXPKTLEN_SHIFT;
-	/* in KB */
+	/* flowcontrolwatermark is in units of KBytes */
 	ibc |= 0x5ULL << INFINIPATH_IBCC_FLOWCTRLWATERMARK_SHIFT;
 	/*
 	 * How often flowctrl sent.  More or less in usecs; balance against
@@ -190,10 +177,13 @@ static int bringup_link(struct ipath_devdata *dd)
 	/*
 	 * Want to start out with both LINKCMD and LINKINITCMD in NOP
 	 * (0 and 0).  Don't put linkinitcmd in ipath_ibcctrl, want that
-	 * to stay a NOP
+	 * to stay a NOP. Flag that we are disabled, for the (unlikely)
+	 * case that some recovery path is trying to bring the link up
+	 * before we are ready.
 	 */
 	ibc |= INFINIPATH_IBCC_LINKINITCMD_DISABLE <<
 		INFINIPATH_IBCC_LINKINITCMD_SHIFT;
+	dd->ipath_flags |= IPATH_IB_LINK_DISABLED;
 	ipath_cdbg(VERBOSE, "Writing 0x%llx to ibcctrl\n",
 		   (unsigned long long) ibc);
 	ipath_write_kreg(dd, dd->ipath_kregs->kr_ibcctrl, ibc);
@@ -226,16 +216,26 @@ static struct ipath_portdata *create_portdata0(struct ipath_devdata *dd)
 		pd->port_cnt = 1;
 		/* The port 0 pkey table is used by the layer interface. */
 		pd->port_pkeys[0] = IPATH_DEFAULT_P_KEY;
+		pd->port_seq_cnt = 1;
 	}
 	return pd;
 }
 
-static int init_chip_first(struct ipath_devdata *dd,
-			   struct ipath_portdata **pdp)
+static int init_chip_first(struct ipath_devdata *dd)
 {
-	struct ipath_portdata *pd = NULL;
+	struct ipath_portdata *pd;
 	int ret = 0;
 	u64 val;
+
+	spin_lock_init(&dd->ipath_kernel_tid_lock);
+	spin_lock_init(&dd->ipath_user_tid_lock);
+	spin_lock_init(&dd->ipath_sendctrl_lock);
+	spin_lock_init(&dd->ipath_uctxt_lock);
+	spin_lock_init(&dd->ipath_sdma_lock);
+	spin_lock_init(&dd->ipath_gpio_lock);
+	spin_lock_init(&dd->ipath_eep_st_lock);
+	spin_lock_init(&dd->ipath_sdepb_lock);
+	mutex_init(&dd->ipath_eep_lock);
 
 	/*
 	 * skip cfgports stuff because we are not allocating memory,
@@ -243,19 +243,20 @@ static int init_chip_first(struct ipath_devdata *dd,
 	 * cfgports.  We do still check and report a difference, if
 	 * not same (should be impossible).
 	 */
-	dd->ipath_portcnt =
-		ipath_read_kreg32(dd, dd->ipath_kregs->kr_portcnt);
+	dd->ipath_f_config_ports(dd, ipath_cfgports);
 	if (!ipath_cfgports)
 		dd->ipath_cfgports = dd->ipath_portcnt;
 	else if (ipath_cfgports <= dd->ipath_portcnt) {
 		dd->ipath_cfgports = ipath_cfgports;
 		ipath_dbg("Configured to use %u ports out of %u in chip\n",
-			  dd->ipath_cfgports, dd->ipath_portcnt);
+			  dd->ipath_cfgports, ipath_read_kreg32(dd,
+			  dd->ipath_kregs->kr_portcnt));
 	} else {
 		dd->ipath_cfgports = dd->ipath_portcnt;
 		ipath_dbg("Tried to configured to use %u ports; chip "
 			  "only supports %u\n", ipath_cfgports,
-			  dd->ipath_portcnt);
+			  ipath_read_kreg32(dd,
+				  dd->ipath_kregs->kr_portcnt));
 	}
 	/*
 	 * Allocate full portcnt array, rather than just cfgports, because
@@ -271,22 +272,7 @@ static int init_chip_first(struct ipath_devdata *dd,
 		goto done;
 	}
 
-	dd->ipath_lastegrheads = kzalloc(sizeof(*dd->ipath_lastegrheads)
-					 * dd->ipath_cfgports,
-					 GFP_KERNEL);
-	dd->ipath_lastrcvhdrqtails =
-		kzalloc(sizeof(*dd->ipath_lastrcvhdrqtails)
-			* dd->ipath_cfgports, GFP_KERNEL);
-
-	if (!dd->ipath_lastegrheads || !dd->ipath_lastrcvhdrqtails) {
-		ipath_dev_err(dd, "Unable to allocate head arrays, "
-			      "failing\n");
-		ret = -ENOMEM;
-		goto done;
-	}
-
 	pd = create_portdata0(dd);
-
 	if (!pd) {
 		ipath_dev_err(dd, "Unable to allocate portdata for port "
 			      "0, failing\n");
@@ -310,7 +296,9 @@ static int init_chip_first(struct ipath_devdata *dd,
 	val = ipath_read_kreg64(dd, dd->ipath_kregs->kr_sendpiosize);
 	dd->ipath_piosize2k = val & ~0U;
 	dd->ipath_piosize4k = val >> 32;
-	dd->ipath_ibmtu = 4096;	/* default to largest legal MTU */
+	if (dd->ipath_piosize4k == 0 && ipath_mtu4096)
+		ipath_mtu4096 = 0; /* 4KB not supported by this chip */
+	dd->ipath_ibmtu = ipath_mtu4096 ? 4096 : 2048;
 	val = ipath_read_kreg64(dd, dd->ipath_kregs->kr_sendpiobufcnt);
 	dd->ipath_piobcnt2k = val & ~0U;
 	dd->ipath_piobcnt4k = val >> 32;
@@ -338,39 +326,46 @@ static int init_chip_first(struct ipath_devdata *dd,
 	else ipath_dbg("%u 2k piobufs @ %p\n",
 		       dd->ipath_piobcnt2k, dd->ipath_pio2kbase);
 
-	spin_lock_init(&dd->ipath_tid_lock);
-
 done:
-	*pdp = pd;
 	return ret;
 }
 
 /**
  * init_chip_reset - re-initialize after a reset, or enable
  * @dd: the infinipath device
- * @pdp: output for port data
  *
  * sanity check at least some of the values after reset, and
- * ensure no receive or transmit (explictly, in case reset
+ * ensure no receive or transmit (explicitly, in case reset
  * failed
  */
-static int init_chip_reset(struct ipath_devdata *dd,
-			   struct ipath_portdata **pdp)
+static int init_chip_reset(struct ipath_devdata *dd)
 {
 	u32 rtmp;
+	int i;
+	unsigned long flags;
 
-	*pdp = dd->ipath_pd[0];
-	/* ensure chip does no sends or receives while we re-initialize */
-	dd->ipath_control = dd->ipath_sendctrl = dd->ipath_rcvctrl = 0U;
-	ipath_write_kreg(dd, dd->ipath_kregs->kr_rcvctrl, 0);
-	ipath_write_kreg(dd, dd->ipath_kregs->kr_sendctrl, 0);
-	ipath_write_kreg(dd, dd->ipath_kregs->kr_control, 0);
+	/*
+	 * ensure chip does no sends or receives, tail updates, or
+	 * pioavail updates while we re-initialize
+	 */
+	dd->ipath_rcvctrl &= ~(1ULL << dd->ipath_r_tailupd_shift);
+	for (i = 0; i < dd->ipath_portcnt; i++) {
+		clear_bit(dd->ipath_r_portenable_shift + i,
+			  &dd->ipath_rcvctrl);
+		clear_bit(dd->ipath_r_intravail_shift + i,
+			  &dd->ipath_rcvctrl);
+	}
+	ipath_write_kreg(dd, dd->ipath_kregs->kr_rcvctrl,
+		dd->ipath_rcvctrl);
 
-	rtmp = ipath_read_kreg32(dd, dd->ipath_kregs->kr_portcnt);
-	if (dd->ipath_portcnt != rtmp)
-		dev_info(&dd->pcidev->dev, "portcnt was %u before "
-			 "reset, now %u, using original\n",
-			 dd->ipath_portcnt, rtmp);
+	spin_lock_irqsave(&dd->ipath_sendctrl_lock, flags);
+	dd->ipath_sendctrl = 0U; /* no sdma, etc */
+	ipath_write_kreg(dd, dd->ipath_kregs->kr_sendctrl, dd->ipath_sendctrl);
+	ipath_read_kreg64(dd, dd->ipath_kregs->kr_scratch);
+	spin_unlock_irqrestore(&dd->ipath_sendctrl_lock, flags);
+
+	ipath_write_kreg(dd, dd->ipath_kregs->kr_control, 0ULL);
+
 	rtmp = ipath_read_kreg32(dd, dd->ipath_kregs->kr_rcvtidcnt);
 	if (rtmp != dd->ipath_rcvtidcnt)
 		dev_info(&dd->pcidev->dev, "tidcnt was %u before "
@@ -447,7 +442,7 @@ static void init_shadow_tids(struct ipath_devdata *dd)
 	struct page **pages;
 	dma_addr_t *addrs;
 
-	pages = vmalloc(dd->ipath_cfgports * dd->ipath_rcvtidcnt *
+	pages = vzalloc(dd->ipath_cfgports * dd->ipath_rcvtidcnt *
 			sizeof(struct page *));
 	if (!pages) {
 		ipath_dev_err(dd, "failed to allocate shadow page * "
@@ -461,22 +456,20 @@ static void init_shadow_tids(struct ipath_devdata *dd)
 	if (!addrs) {
 		ipath_dev_err(dd, "failed to allocate shadow dma handle "
 			      "array, no expected sends!\n");
-		vfree(dd->ipath_pageshadow);
+		vfree(pages);
 		dd->ipath_pageshadow = NULL;
 		return;
 	}
-
-	memset(pages, 0, dd->ipath_cfgports * dd->ipath_rcvtidcnt *
-	       sizeof(struct page *));
 
 	dd->ipath_pageshadow = pages;
 	dd->ipath_physshadow = addrs;
 }
 
-static void enable_chip(struct ipath_devdata *dd,
-			struct ipath_portdata *pd, int reinit)
+static void enable_chip(struct ipath_devdata *dd, int reinit)
 {
 	u32 val;
+	u64 rcvmask;
+	unsigned long flags;
 	int i;
 
 	if (!reinit)
@@ -485,19 +478,32 @@ static void enable_chip(struct ipath_devdata *dd,
 	ipath_write_kreg(dd, dd->ipath_kregs->kr_rcvctrl,
 			 dd->ipath_rcvctrl);
 
+	spin_lock_irqsave(&dd->ipath_sendctrl_lock, flags);
 	/* Enable PIO send, and update of PIOavail regs to memory. */
 	dd->ipath_sendctrl = INFINIPATH_S_PIOENABLE |
 		INFINIPATH_S_PIOBUFAVAILUPD;
-	ipath_write_kreg(dd, dd->ipath_kregs->kr_sendctrl,
-			 dd->ipath_sendctrl);
 
 	/*
-	 * enable port 0 receive, and receive interrupt.  other ports
-	 * done as user opens and inits them.
+	 * Set the PIO avail update threshold to host memory
+	 * on chips that support it.
 	 */
-	dd->ipath_rcvctrl = INFINIPATH_R_TAILUPD |
-		(1ULL << INFINIPATH_R_PORTENABLE_SHIFT) |
-		(1ULL << INFINIPATH_R_INTRAVAIL_SHIFT);
+	if (dd->ipath_pioupd_thresh)
+		dd->ipath_sendctrl |= dd->ipath_pioupd_thresh
+			<< INFINIPATH_S_UPDTHRESH_SHIFT;
+	ipath_write_kreg(dd, dd->ipath_kregs->kr_sendctrl, dd->ipath_sendctrl);
+	ipath_read_kreg64(dd, dd->ipath_kregs->kr_scratch);
+	spin_unlock_irqrestore(&dd->ipath_sendctrl_lock, flags);
+
+	/*
+	 * Enable kernel ports' receive and receive interrupt.
+	 * Other ports done as user opens and inits them.
+	 */
+	rcvmask = 1ULL;
+	dd->ipath_rcvctrl |= (rcvmask << dd->ipath_r_portenable_shift) |
+		(rcvmask << dd->ipath_r_intravail_shift);
+	if (!(dd->ipath_flags & IPATH_NODMA_RTAIL))
+		dd->ipath_rcvctrl |= (1ULL << dd->ipath_r_tailupd_shift);
+
 	ipath_write_kreg(dd, dd->ipath_kregs->kr_rcvctrl,
 			 dd->ipath_rcvctrl);
 
@@ -508,17 +514,16 @@ static void enable_chip(struct ipath_devdata *dd,
 	dd->ipath_flags |= IPATH_INITTED;
 
 	/*
-	 * init our shadow copies of head from tail values, and write
-	 * head values to match.
+	 * Init our shadow copies of head from tail values,
+	 * and write head values to match.
 	 */
 	val = ipath_read_ureg32(dd, ur_rcvegrindextail, 0);
-	(void)ipath_write_ureg(dd, ur_rcvegrindexhead, val, 0);
-	dd->ipath_port0head = ipath_read_ureg32(dd, ur_rcvhdrtail, 0);
+	ipath_write_ureg(dd, ur_rcvegrindexhead, val, 0);
 
 	/* Initialize so we interrupt on next packet received */
-	(void)ipath_write_ureg(dd, ur_rcvhdrhead,
-			       dd->ipath_rhdrhead_intr_off |
-			       dd->ipath_port0head, 0);
+	ipath_write_ureg(dd, ur_rcvhdrhead,
+			 dd->ipath_rhdrhead_intr_off |
+			 dd->ipath_pd[0]->port_head, 0);
 
 	/*
 	 * by now pioavail updates to memory should have occurred, so
@@ -527,29 +532,29 @@ static void enable_chip(struct ipath_devdata *dd,
 	 * initial values of the generation bit correct.
 	 */
 	for (i = 0; i < dd->ipath_pioavregs; i++) {
-		__le64 val;
+		__le64 pioavail;
 
 		/*
 		 * Chip Errata bug 6641; even and odd qwords>3 are swapped.
 		 */
-		if (i > 3) {
-			if (i & 1)
-				val = dd->ipath_pioavailregs_dma[i - 1];
-			else
-				val = dd->ipath_pioavailregs_dma[i + 1];
-		}
+		if (i > 3 && (dd->ipath_flags & IPATH_SWAP_PIOBUFS))
+			pioavail = dd->ipath_pioavailregs_dma[i ^ 1];
 		else
-			val = dd->ipath_pioavailregs_dma[i];
-		dd->ipath_pioavailshadow[i] = le64_to_cpu(val);
+			pioavail = dd->ipath_pioavailregs_dma[i];
+		/*
+		 * don't need to worry about ipath_pioavailkernel here
+		 * because we will call ipath_chg_pioavailkernel() later
+		 * in initialization, to busy out buffers as needed
+		 */
+		dd->ipath_pioavailshadow[i] = le64_to_cpu(pioavail);
 	}
 	/* can get counters, stats, etc. */
 	dd->ipath_flags |= IPATH_PRESENT;
 }
 
-static int init_housekeeping(struct ipath_devdata *dd,
-			     struct ipath_portdata **pdp, int reinit)
+static int init_housekeeping(struct ipath_devdata *dd, int reinit)
 {
-	char boardn[32];
+	char boardn[40];
 	int ret = 0;
 
 	/*
@@ -608,18 +613,9 @@ static int init_housekeeping(struct ipath_devdata *dd,
 	ipath_write_kreg(dd, dd->ipath_kregs->kr_errorclear,
 			 INFINIPATH_E_RESET);
 
-	if (reinit)
-		ret = init_chip_reset(dd, pdp);
-	else
-		ret = init_chip_first(dd, pdp);
-
-	if (ret)
-		goto done;
-
-	ipath_cdbg(VERBOSE, "Revision %llx (PCI %x), %u ports, %u tids, "
-		   "%u egrtids\n", (unsigned long long) dd->ipath_revision,
-		   dd->ipath_pcirev, dd->ipath_portcnt, dd->ipath_rcvtidcnt,
-		   dd->ipath_rcvegrcnt);
+	ipath_cdbg(VERBOSE, "Revision %llx (PCI %x)\n",
+		   (unsigned long long) dd->ipath_revision,
+		   dd->ipath_pcirev);
 
 	if (((dd->ipath_revision >> INFINIPATH_R_SOFTWARE_SHIFT) &
 	     INFINIPATH_R_SOFTWARE_MASK) != IPATH_CHIP_SWVERSION) {
@@ -646,7 +642,7 @@ static int init_housekeeping(struct ipath_devdata *dd,
 	ret = dd->ipath_f_get_boardname(dd, boardn, sizeof boardn);
 
 	snprintf(dd->ipath_boardversion, sizeof(dd->ipath_boardversion),
-		 "Driver %u.%u, %s, InfiniPath%u %u.%u, PCI %u, "
+		 "ChipABI %u.%u, %s, InfiniPath%u %u.%u, PCI %u, "
 		 "SW Compat %u\n",
 		 IPATH_CHIP_VERS_MAJ, IPATH_CHIP_VERS_MIN, boardn,
 		 (unsigned)(dd->ipath_revision >> INFINIPATH_R_ARCH_SHIFT) &
@@ -658,10 +654,39 @@ static int init_housekeeping(struct ipath_devdata *dd,
 
 	ipath_dbg("%s", dd->ipath_boardversion);
 
+	if (ret)
+		goto done;
+
+	if (reinit)
+		ret = init_chip_reset(dd);
+	else
+		ret = init_chip_first(dd);
+
 done:
 	return ret;
 }
 
+static void verify_interrupt(unsigned long opaque)
+{
+	struct ipath_devdata *dd = (struct ipath_devdata *) opaque;
+
+	if (!dd)
+		return; /* being torn down */
+
+	/*
+	 * If we don't have any interrupts, let the user know and
+	 * don't bother checking again.
+	 */
+	if (dd->ipath_int_counter == 0) {
+		if (!dd->ipath_f_intr_fallback(dd))
+			dev_err(&dd->pcidev->dev, "No interrupts detected, "
+				"not usable.\n");
+		else /* re-arm the timer to see if fallback works */
+			mod_timer(&dd->ipath_intrchk_timer, jiffies + HZ/2);
+	} else
+		ipath_cdbg(VERBOSE, "%u interrupts at timer check\n",
+			dd->ipath_int_counter);
+}
 
 /**
  * ipath_init_chip - do the actual initialization sequence on the chip
@@ -680,14 +705,14 @@ done:
  */
 int ipath_init_chip(struct ipath_devdata *dd, int reinit)
 {
-	int ret = 0, i;
-	u32 val32, kpiobufs;
+	int ret = 0;
+	u32 kpiobufs, defkbufs;
 	u32 piobufs, uports;
 	u64 val;
-	struct ipath_portdata *pd = NULL; /* keep gcc4 happy */
+	struct ipath_portdata *pd;
 	gfp_t gfp_flags = GFP_USER | __GFP_COMP;
 
-	ret = init_housekeeping(dd, &pd, reinit);
+	ret = init_housekeeping(dd, reinit);
 	if (ret)
 		goto done;
 
@@ -707,7 +732,7 @@ int ipath_init_chip(struct ipath_devdata *dd, int reinit)
 	 * we now use routines that backend onto __get_free_pages, the
 	 * rest would be wasted.
 	 */
-	dd->ipath_rcvhdrcnt = dd->ipath_rcvegrcnt;
+	dd->ipath_rcvhdrcnt = max(dd->ipath_p0_rcvegrcnt, dd->ipath_rcvegrcnt);
 	ipath_write_kreg(dd, dd->ipath_kregs->kr_rcvhdrcnt,
 			 dd->ipath_rcvhdrcnt);
 
@@ -725,51 +750,56 @@ int ipath_init_chip(struct ipath_devdata *dd, int reinit)
 	dd->ipath_pioavregs = ALIGN(piobufs, sizeof(u64) * BITS_PER_BYTE / 2)
 		/ (sizeof(u64) * BITS_PER_BYTE / 2);
 	uports = dd->ipath_cfgports ? dd->ipath_cfgports - 1 : 0;
-	if (ipath_kpiobufs == 0) {
-		/* not set by user (this is default) */
-		if (piobufs >= (uports * IPATH_MIN_USER_PORT_BUFCNT) + 32)
-			kpiobufs = 32;
-		else
-			kpiobufs = 16;
-	}
+	if (piobufs > 144)
+		defkbufs = 32 + dd->ipath_pioreserved;
 	else
-		kpiobufs = ipath_kpiobufs;
+		defkbufs = 16 + dd->ipath_pioreserved;
 
-	if (kpiobufs + (uports * IPATH_MIN_USER_PORT_BUFCNT) > piobufs) {
-		i = (int) piobufs -
+	if (ipath_kpiobufs && (ipath_kpiobufs +
+		(uports * IPATH_MIN_USER_PORT_BUFCNT)) > piobufs) {
+		int i = (int) piobufs -
 			(int) (uports * IPATH_MIN_USER_PORT_BUFCNT);
-		if (i < 0)
-			i = 0;
+		if (i < 1)
+			i = 1;
 		dev_info(&dd->pcidev->dev, "Allocating %d PIO bufs of "
 			 "%d for kernel leaves too few for %d user ports "
-			 "(%d each); using %u\n", kpiobufs,
+			 "(%d each); using %u\n", ipath_kpiobufs,
 			 piobufs, uports, IPATH_MIN_USER_PORT_BUFCNT, i);
 		/*
 		 * shouldn't change ipath_kpiobufs, because could be
 		 * different for different devices...
 		 */
 		kpiobufs = i;
-	}
+	} else if (ipath_kpiobufs)
+		kpiobufs = ipath_kpiobufs;
+	else
+		kpiobufs = defkbufs;
 	dd->ipath_lastport_piobuf = piobufs - kpiobufs;
 	dd->ipath_pbufsport =
 		uports ? dd->ipath_lastport_piobuf / uports : 0;
-	val32 = dd->ipath_lastport_piobuf - (dd->ipath_pbufsport * uports);
-	if (val32 > 0) {
-		ipath_dbg("allocating %u pbufs/port leaves %u unused, "
-			  "add to kernel\n", dd->ipath_pbufsport, val32);
-		dd->ipath_lastport_piobuf -= val32;
-		ipath_dbg("%u pbufs/port leaves %u unused, add to kernel\n",
-			  dd->ipath_pbufsport, val32);
-	}
-	dd->ipath_lastpioindex = dd->ipath_lastport_piobuf;
+	/* if not an even divisor, some user ports get extra buffers */
+	dd->ipath_ports_extrabuf = dd->ipath_lastport_piobuf -
+		(dd->ipath_pbufsport * uports);
+	if (dd->ipath_ports_extrabuf)
+		ipath_dbg("%u pbufs/port leaves some unused, add 1 buffer to "
+			"ports <= %u\n", dd->ipath_pbufsport,
+			dd->ipath_ports_extrabuf);
+	dd->ipath_lastpioindex = 0;
+	dd->ipath_lastpioindexl = dd->ipath_piobcnt2k;
+	/* ipath_pioavailshadow initialized earlier */
 	ipath_cdbg(VERBOSE, "%d PIO bufs for kernel out of %d total %u "
 		   "each for %u user ports\n", kpiobufs,
 		   piobufs, dd->ipath_pbufsport, uports);
+	ret = dd->ipath_f_early_init(dd);
+	if (ret) {
+		ipath_dev_err(dd, "Early initialization failure\n");
+		goto done;
+	}
 
-	dd->ipath_f_early_init(dd);
-
-	/* early_init sets rcvhdrentsize and rcvhdrsize, so this must be
-	 * done after early_init */
+	/*
+	 * Early_init sets rcvhdrentsize and rcvhdrsize, so this must be
+	 * done after early_init.
+	 */
 	dd->ipath_hdrqlast =
 		dd->ipath_rcvhdrentsize * (dd->ipath_rcvhdrcnt - 1);
 	ipath_write_kreg(dd, dd->ipath_kregs->kr_rcvhdrentsize,
@@ -784,8 +814,9 @@ int ipath_init_chip(struct ipath_devdata *dd, int reinit)
 			goto done;
 	}
 
-	(void)ipath_write_kreg(dd, dd->ipath_kregs->kr_sendpioavailaddr,
-			       dd->ipath_pioavailregs_phys);
+	ipath_write_kreg(dd, dd->ipath_kregs->kr_sendpioavailaddr,
+			 dd->ipath_pioavailregs_phys);
+
 	/*
 	 * this is to detect s/w errors, which the h/w works around by
 	 * ignoring the low 6 bits of address, if it wasn't aligned.
@@ -811,8 +842,6 @@ int ipath_init_chip(struct ipath_devdata *dd, int reinit)
 	ipath_write_kreg(dd, dd->ipath_kregs->kr_hwerrclear,
 			 ~0ULL&~INFINIPATH_HWE_MEMBISTFAILED);
 	ipath_write_kreg(dd, dd->ipath_kregs->kr_control, 0ULL);
-	ipath_write_kreg(dd, dd->ipath_kregs->kr_sendctrl,
-			 INFINIPATH_S_PIOENABLE);
 
 	/*
 	 * before error clears, since we expect serdes pll errors during
@@ -835,14 +864,18 @@ int ipath_init_chip(struct ipath_devdata *dd, int reinit)
 	ipath_write_kreg(dd, dd->ipath_kregs->kr_hwerrmask,
 			 dd->ipath_hwerrmask);
 
-	dd->ipath_maskederrs = dd->ipath_ignorederrs;
 	/* clear all */
 	ipath_write_kreg(dd, dd->ipath_kregs->kr_errorclear, -1LL);
 	/* enable errors that are masked, at least this first time. */
 	ipath_write_kreg(dd, dd->ipath_kregs->kr_errormask,
 			 ~dd->ipath_maskederrs);
-	/* clear any interrups up to this point (ints still not enabled) */
+	dd->ipath_maskederrs = 0; /* don't re-enable ignored in timer */
+	dd->ipath_errormask =
+		ipath_read_kreg64(dd, dd->ipath_kregs->kr_errormask);
+	/* clear any interrupts up to this point (ints still not enabled) */
 	ipath_write_kreg(dd, dd->ipath_kregs->kr_intclear, -1LL);
+
+	dd->ipath_f_tidtemplate(dd);
 
 	/*
 	 * Set up the port 0 (kernel) rcvhdr q and egr TIDs.  If doing
@@ -850,47 +883,64 @@ int ipath_init_chip(struct ipath_devdata *dd, int reinit)
 	 * existing, and re-allocate.
 	 * Need to re-create rest of port 0 portdata as well.
 	 */
+	pd = dd->ipath_pd[0];
 	if (reinit) {
-		/* Alloc and init new ipath_portdata for port0,
+		struct ipath_portdata *npd;
+
+		/*
+		 * Alloc and init new ipath_portdata for port0,
 		 * Then free old pd. Could lead to fragmentation, but also
 		 * makes later support for hot-swap easier.
 		 */
-		struct ipath_portdata *npd;
 		npd = create_portdata0(dd);
 		if (npd) {
 			ipath_free_pddata(dd, pd);
-			dd->ipath_pd[0] = pd = npd;
+			dd->ipath_pd[0] = npd;
+			pd = npd;
 		} else {
-			ipath_dev_err(dd, "Unable to allocate portdata for"
-				      "  port 0, failing\n");
+			ipath_dev_err(dd, "Unable to allocate portdata"
+				      " for port 0, failing\n");
 			ret = -ENOMEM;
 			goto done;
 		}
 	}
-	dd->ipath_f_tidtemplate(dd);
 	ret = ipath_create_rcvhdrq(dd, pd);
-	if (!ret) {
-		dd->ipath_hdrqtailptr =
-			(volatile __le64 *)pd->port_rcvhdrtail_kvaddr;
+	if (!ret)
 		ret = create_port0_egr(dd);
-	}
-	if (ret)
-		ipath_dev_err(dd, "failed to allocate port 0 (kernel) "
+	if (ret) {
+		ipath_dev_err(dd, "failed to allocate kernel port's "
 			      "rcvhdrq and/or egr bufs\n");
+		goto done;
+	}
 	else
-		enable_chip(dd, pd, reinit);
+		enable_chip(dd, reinit);
 
+	/* after enable_chip, so pioavailshadow setup */
+	ipath_chg_pioavailkernel(dd, 0, piobufs, 1);
 
-	if (!ret && !reinit) {
-	    /* used when we close a port, for DMA already in flight at close */
+	/*
+	 * Cancel any possible active sends from early driver load.
+	 * Follows early_init because some chips have to initialize
+	 * PIO buffers in early_init to avoid false parity errors.
+	 * After enable and ipath_chg_pioavailkernel so we can safely
+	 * enable pioavail updates and PIOENABLE; packets are now
+	 * ready to go out.
+	 */
+	ipath_cancel_sends(dd, 1);
+
+	if (!reinit) {
+		/*
+		 * Used when we close a port, for DMA already in flight
+		 * at close.
+		 */
 		dd->ipath_dummy_hdrq = dma_alloc_coherent(
-			&dd->pcidev->dev, pd->port_rcvhdrq_size,
+			&dd->pcidev->dev, dd->ipath_pd[0]->port_rcvhdrq_size,
 			&dd->ipath_dummy_hdrq_phys,
 			gfp_flags);
-		if (!dd->ipath_dummy_hdrq ) {
+		if (!dd->ipath_dummy_hdrq) {
 			dev_info(&dd->pcidev->dev,
 				"Couldn't allocate 0x%lx bytes for dummy hdrq\n",
-				pd->port_rcvhdrq_size);
+				dd->ipath_pd[0]->port_rcvhdrq_size);
 			/* fallback to just 0'ing */
 			dd->ipath_dummy_hdrq_phys = 0UL;
 		}
@@ -902,7 +952,7 @@ int ipath_init_chip(struct ipath_devdata *dd, int reinit)
 	 */
 	ipath_write_kreg(dd, dd->ipath_kregs->kr_intclear, 0ULL);
 
-	if(!dd->ipath_stats_timer_active) {
+	if (!dd->ipath_stats_timer_active) {
 		/*
 		 * first init, or after an admin disable/enable
 		 * set up stats retrieval timer, even if we had errors
@@ -918,6 +968,16 @@ int ipath_init_chip(struct ipath_devdata *dd, int reinit)
 		dd->ipath_stats_timer_active = 1;
 	}
 
+	/* Set up SendDMA if chip supports it */
+	if (dd->ipath_flags & IPATH_HAS_SEND_DMA)
+		ret = setup_sdma(dd);
+
+	/* Set up HoL state */
+	init_timer(&dd->ipath_hol_timer);
+	dd->ipath_hol_timer.function = ipath_hol_event;
+	dd->ipath_hol_timer.data = (unsigned long)dd;
+	dd->ipath_hol_state = IPATH_HOL_UP;
+
 done:
 	if (!ret) {
 		*dd->ipath_statusp |= IPATH_STATUS_CHIP_PRESENT;
@@ -930,6 +990,20 @@ done:
 					 0ULL);
 			/* chip is usable; mark it as initialized */
 			*dd->ipath_statusp |= IPATH_STATUS_INITTED;
+
+			/*
+			 * setup to verify we get an interrupt, and fallback
+			 * to an alternate if necessary and possible
+			 */
+			if (!reinit) {
+				init_timer(&dd->ipath_intrchk_timer);
+				dd->ipath_intrchk_timer.function =
+					verify_interrupt;
+				dd->ipath_intrchk_timer.data =
+					(unsigned long) dd;
+			}
+			dd->ipath_intrchk_timer.expires = jiffies + HZ/2;
+			add_timer(&dd->ipath_intrchk_timer);
 		} else
 			ipath_dev_err(dd, "No interrupts enabled, couldn't "
 				      "setup interrupt address\n");

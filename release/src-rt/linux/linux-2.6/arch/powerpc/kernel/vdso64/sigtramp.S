@@ -20,7 +20,7 @@
 
 /* The nop here is a hack.  The dwarf2 unwind routines subtract 1 from
    the return address to get an address in the middle of the presumed
-   call instruction.  Since we don't have a call here, we artifically
+   call instruction.  Since we don't have a call here, we artificially
    extend the range covered by the unwind info by padding before the
    real start.  */
 	nop
@@ -134,13 +134,16 @@ V_FUNCTION_END(__kernel_sigtramp_rt64)
 9:
 
 /* This is where the pt_regs pointer can be found on the stack.  */
-#define PTREGS 128+168+56
+#define PTREGS	128+168+56
 
 /* Size of regs.  */
-#define RSIZE 8
+#define RSIZE	8
+
+/* Size of CR reg in DWARF unwind info. */
+#define CRSIZE	4
 
 /* This is the offset of the VMX reg pointer.  */
-#define VREGS 48*RSIZE+33*8
+#define VREGS	48*RSIZE+33*8
 
 /* Describe where general purpose regs are saved.  */
 #define EH_FRAME_GEN \
@@ -178,7 +181,7 @@ V_FUNCTION_END(__kernel_sigtramp_rt64)
   rsave (31, 31*RSIZE);							\
   rsave (67, 32*RSIZE);		/* ap, used as temp for nip */		\
   rsave (65, 36*RSIZE);		/* lr */				\
-  rsave (70, 38*RSIZE)		/* cr */
+  rsave (70, 38*RSIZE + (RSIZE - CRSIZE)) /* cr */
 
 /* Describe where the FP regs are saved.  */
 #define EH_FRAME_FP \

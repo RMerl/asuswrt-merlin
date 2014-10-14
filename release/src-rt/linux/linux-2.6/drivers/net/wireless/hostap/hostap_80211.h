@@ -2,61 +2,62 @@
 #define HOSTAP_80211_H
 
 #include <linux/types.h>
-#include <net/ieee80211_crypt.h>
+#include <linux/skbuff.h>
+#include <linux/netdevice.h>
 
 struct hostap_ieee80211_mgmt {
-	u16 frame_control;
-	u16 duration;
+	__le16 frame_control;
+	__le16 duration;
 	u8 da[6];
 	u8 sa[6];
 	u8 bssid[6];
-	u16 seq_ctrl;
+	__le16 seq_ctrl;
 	union {
 		struct {
-			u16 auth_alg;
-			u16 auth_transaction;
-			u16 status_code;
+			__le16 auth_alg;
+			__le16 auth_transaction;
+			__le16 status_code;
 			/* possibly followed by Challenge text */
 			u8 variable[0];
-		} __attribute__ ((packed)) auth;
+		} __packed auth;
 		struct {
-			u16 reason_code;
-		} __attribute__ ((packed)) deauth;
+			__le16 reason_code;
+		} __packed deauth;
 		struct {
-			u16 capab_info;
-			u16 listen_interval;
+			__le16 capab_info;
+			__le16 listen_interval;
 			/* followed by SSID and Supported rates */
 			u8 variable[0];
-		} __attribute__ ((packed)) assoc_req;
+		} __packed assoc_req;
 		struct {
-			u16 capab_info;
-			u16 status_code;
-			u16 aid;
+			__le16 capab_info;
+			__le16 status_code;
+			__le16 aid;
 			/* followed by Supported rates */
 			u8 variable[0];
-		} __attribute__ ((packed)) assoc_resp, reassoc_resp;
+		} __packed assoc_resp, reassoc_resp;
 		struct {
-			u16 capab_info;
-			u16 listen_interval;
+			__le16 capab_info;
+			__le16 listen_interval;
 			u8 current_ap[6];
 			/* followed by SSID and Supported rates */
 			u8 variable[0];
-		} __attribute__ ((packed)) reassoc_req;
+		} __packed reassoc_req;
 		struct {
-			u16 reason_code;
-		} __attribute__ ((packed)) disassoc;
+			__le16 reason_code;
+		} __packed disassoc;
 		struct {
-		} __attribute__ ((packed)) probe_req;
+		} __packed probe_req;
 		struct {
 			u8 timestamp[8];
-			u16 beacon_int;
-			u16 capab_info;
+			__le16 beacon_int;
+			__le16 capab_info;
 			/* followed by some of SSID, Supported rates,
 			 * FH Params, DS Params, CF Params, IBSS Params, TIM */
 			u8 variable[0];
-		} __attribute__ ((packed)) beacon, probe_resp;
+		} __packed beacon, probe_resp;
 	} u;
-} __attribute__ ((packed));
+} __packed;
 
 
 #define IEEE80211_MGMT_HDR_LEN 24
@@ -70,11 +71,6 @@ struct hostap_80211_rx_status {
 	u8 noise;
 	u16 rate; /* in 100 kbps */
 };
-
-
-void hostap_80211_rx(struct net_device *dev, struct sk_buff *skb,
-		     struct hostap_80211_rx_status *rx_stats);
-
 
 /* prism2_rx_80211 'type' argument */
 enum {
@@ -90,8 +86,11 @@ void hostap_dump_rx_80211(const char *name, struct sk_buff *skb,
 			  struct hostap_80211_rx_status *rx_stats);
 
 void hostap_dump_tx_80211(const char *name, struct sk_buff *skb);
-int hostap_data_start_xmit(struct sk_buff *skb, struct net_device *dev);
-int hostap_mgmt_start_xmit(struct sk_buff *skb, struct net_device *dev);
-int hostap_master_start_xmit(struct sk_buff *skb, struct net_device *dev);
+netdev_tx_t hostap_data_start_xmit(struct sk_buff *skb,
+				   struct net_device *dev);
+netdev_tx_t hostap_mgmt_start_xmit(struct sk_buff *skb,
+				   struct net_device *dev);
+netdev_tx_t hostap_master_start_xmit(struct sk_buff *skb,
+				     struct net_device *dev);
 
 #endif /* HOSTAP_80211_H */

@@ -14,6 +14,7 @@
 #include <linux/acpi.h>
 #include <linux/module.h>
 #include <linux/pci.h>
+#include <linux/slab.h>
 #include <linux/init.h>
 #include <linux/agp_backend.h>
 #include <asm/sn/addrs.h>
@@ -38,7 +39,7 @@ static struct aper_size_info_fixed sgi_tioca_sizes[] = {
 	{0, 0, 0},
 };
 
-static void *sgi_tioca_alloc_page(struct agp_bridge_data *bridge)
+static struct page *sgi_tioca_alloc_page(struct agp_bridge_data *bridge)
 {
 	struct page *page;
 	int nid;
@@ -51,9 +52,8 @@ static void *sgi_tioca_alloc_page(struct agp_bridge_data *bridge)
 		return NULL;
 
 	get_page(page);
-	SetPageLocked(page);
 	atomic_inc(&agp_bridge->current_memory_agp);
-	return page_address(page);
+	return page;
 }
 
 /*
@@ -71,8 +71,8 @@ static void sgi_tioca_tlbflush(struct agp_memory *mem)
  * entry.
  */
 static unsigned long
-sgi_tioca_mask_memory(struct agp_bridge_data *bridge,
-		      unsigned long addr, int type)
+sgi_tioca_mask_memory(struct agp_bridge_data *bridge, dma_addr_t addr,
+		      int type)
 {
 	return tioca_physpage_to_gart(addr);
 }
@@ -183,14 +183,15 @@ static int sgi_tioca_insert_memory(struct agp_memory *mem, off_t pg_start,
 		j++;
 	}
 
-	if (mem->is_flushed == FALSE) {
+	if (!mem->is_flushed) {
 		bridge->driver->cache_flush();
-		mem->is_flushed = TRUE;
+		mem->is_flushed = true;
 	}
 
 	for (i = 0, j = pg_start; i < mem->page_count; i++, j++) {
 		table[j] =
-		    bridge->driver->mask_memory(bridge, mem->memory[i],
+		    bridge->driver->mask_memory(bridge,
+						page_to_phys(mem->pages[i]),
 						mem->type);
 	}
 
@@ -265,8 +266,8 @@ const struct agp_bridge_driver sgi_tioca_driver = {
 	.agp_alloc_page = sgi_tioca_alloc_page,
 	.agp_destroy_page = agp_generic_destroy_page,
 	.agp_type_to_mask_type  = agp_generic_type_to_mask_type,
-	.cant_use_aperture = 1,
-	.needs_scratch_page = 0,
+	.cant_use_aperture = true,
+	.needs_scratch_page = false,
 	.num_aperture_sizes = 1,
 };
 

@@ -1,6 +1,4 @@
 /*
- * $Id: tmdc.c,v 1.31 2002/01/22 20:29:52 vojtech Exp $
- *
  *  Copyright (c) 1998-2001 Vojtech Pavlik
  *
  *   Based on the work of:
@@ -333,7 +331,7 @@ static int tmdc_setup_port(struct tmdc *tmdc, int idx, unsigned char *data)
 	input_dev->open = tmdc_open;
 	input_dev->close = tmdc_close;
 
-	input_dev->evbit[0] = BIT(EV_KEY) | BIT(EV_ABS);
+	input_dev->evbit[0] = BIT_MASK(EV_KEY) | BIT_MASK(EV_ABS);
 
 	for (i = 0; i < port->absc && i < TMDC_ABS; i++)
 		if (port->abs[i] >= 0)
@@ -440,8 +438,7 @@ static struct gameport_driver tmdc_drv = {
 
 static int __init tmdc_init(void)
 {
-	gameport_register_driver(&tmdc_drv);
-	return 0;
+	return gameport_register_driver(&tmdc_drv);
 }
 
 static void __exit tmdc_exit(void)

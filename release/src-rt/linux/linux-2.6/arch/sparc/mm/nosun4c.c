@@ -1,4 +1,4 @@
-/* $Id: nosun4c.c,v 1.3 2000/02/14 04:52:36 jj Exp $
+/*
  * nosun4c.c: This file is a bunch of dummies for SMP compiles, 
  *         so that it does not need sun4c and avoid ifdefs.
  *
@@ -62,7 +62,7 @@ pte_t *sun4c_pte_offset_kernel(pmd_t *dir, unsigned long address)
 	return NULL;
 }
 
-void sun4c_update_mmu_cache(struct vm_area_struct *vma, unsigned long address, pte_t pte)
+void sun4c_update_mmu_cache(struct vm_area_struct *vma, unsigned long address, pte_t *ptep)
 {
 }
 

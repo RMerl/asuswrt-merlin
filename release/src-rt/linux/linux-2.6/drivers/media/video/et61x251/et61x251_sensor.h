@@ -22,7 +22,7 @@
 #define _ET61X251_SENSOR_H_
 
 #include <linux/usb.h>
-#include <linux/videodev.h>
+#include <linux/videodev2.h>
 #include <linux/device.h>
 #include <linux/stddef.h>
 #include <linux/errno.h>
@@ -47,19 +47,11 @@ et61x251_match_id(struct et61x251_device* cam, const struct usb_device_id *id);
 
 extern void
 et61x251_attach_sensor(struct et61x251_device* cam,
-		       struct et61x251_sensor* sensor);
+		       const struct et61x251_sensor* sensor);
 
 /*****************************************************************************/
 
 extern int et61x251_write_reg(struct et61x251_device*, u8 value, u16 index);
-extern int et61x251_read_reg(struct et61x251_device*, u16 index);
-extern int et61x251_i2c_write(struct et61x251_device*, u8 address, u8 value);
-extern int et61x251_i2c_read(struct et61x251_device*, u8 address);
-extern int et61x251_i2c_try_write(struct et61x251_device*,
-				  struct et61x251_sensor*, u8 address,
-				  u8 value);
-extern int et61x251_i2c_try_read(struct et61x251_device*,
-				 struct et61x251_sensor*, u8 address);
 extern int et61x251_i2c_raw_write(struct et61x251_device*, u8 n, u8 data1,
 				  u8 data2, u8 data3, u8 data4, u8 data5,
 				  u8 data6, u8 data7, u8 data8, u8 address);

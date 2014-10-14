@@ -1,7 +1,7 @@
 /*
  *  drivers/s390/cio/chp.c
  *
- *    Copyright IBM Corp. 1999,2007
+ *    Copyright IBM Corp. 1999,2010
  *    Author(s): Cornelia Huck (cornelia.huck@de.ibm.com)
  *		 Arnd Bergmann (arndb@de.ibm.com)
  *		 Peter Oberparleiter <peter.oberparleiter@de.ibm.com>
@@ -14,9 +14,11 @@
 #include <linux/jiffies.h>
 #include <linux/wait.h>
 #include <linux/mutex.h>
-#include <asm/errno.h>
+#include <linux/errno.h>
+#include <linux/slab.h>
 #include <asm/chpid.h>
 #include <asm/sclp.h>
+#include <asm/crw.h>
 
 #include "cio.h"
 #include "css.h"
@@ -52,19 +54,13 @@ static struct work_struct cfg_work;
 /* Wait queue for configure completion events. */
 static wait_queue_head_t cfg_wait_queue;
 
-/* Return channel_path struct for given chpid. */
-static inline struct channel_path *chpid_to_chp(struct chp_id chpid)
-{
-	return css[chpid.cssid]->chps[chpid.id];
-}
-
 /* Set vary state for given chpid. */
 static void set_chp_logically_online(struct chp_id chpid, int onoff)
 {
 	chpid_to_chp(chpid)->state = onoff;
 }
 
-/* On succes return 0 if channel-path is varied offline, 1 if it is varied
+/* On success return 0 if channel-path is varied offline, 1 if it is varied
  * online. Return -ENODEV if channel-path is not registered. */
 int chp_get_status(struct chp_id chpid)
 {
@@ -86,7 +82,7 @@ u8 chp_get_sch_opm(struct subchannel *sch)
 
 	opm = 0;
 	chp_id_init(&chpid);
-	for (i=0; i < 8; i++) {
+	for (i = 0; i < 8; i++) {
 		opm <<= 1;
 		chpid.id = sch->schib.pmcw.chpid[i];
 		if (chp_get_status(chpid) != 0)
@@ -94,6 +90,7 @@ u8 chp_get_sch_opm(struct subchannel *sch)
 	}
 	return opm;
 }
+EXPORT_SYMBOL_GPL(chp_get_sch_opm);
 
 /**
  * chp_is_registered - check if a channel-path is registered
@@ -118,20 +115,11 @@ static int s390_vary_chpid(struct chp_id chpid, int on)
 
 	sprintf(dbf_text, on?"varyon%x.%02x":"varyoff%x.%02x", chpid.cssid,
 		chpid.id);
-	CIO_TRACE_EVENT( 2, dbf_text);
+	CIO_TRACE_EVENT(2, dbf_text);
 
 	status = chp_get_status(chpid);
-	if (status < 0) {
-		printk(KERN_ERR "Can't vary unknown chpid %x.%02x\n",
-		       chpid.cssid, chpid.id);
-		return -EINVAL;
-	}
-
-	if (!on && !status) {
-		printk(KERN_ERR "chpid %x.%02x is already offline\n",
-		       chpid.cssid, chpid.id);
-		return -EINVAL;
-	}
+	if (!on && !status)
+		return 0;
 
 	set_chp_logically_online(chpid, on);
 	chsc_chp_vary(chpid, on);
@@ -141,31 +129,27 @@ static int s390_vary_chpid(struct chp_id chpid, int on)
 /*
  * Channel measurement related functions
  */
-static ssize_t chp_measurement_chars_read(struct kobject *kobj, char *buf,
-					  loff_t off, size_t count)
+static ssize_t chp_measurement_chars_read(struct file *filp,
+					  struct kobject *kobj,
+					  struct bin_attribute *bin_attr,
+					  char *buf, loff_t off, size_t count)
 {
 	struct channel_path *chp;
-	unsigned int size;
+	struct device *device;
 
-	chp = to_channelpath(container_of(kobj, struct device, kobj));
+	device = container_of(kobj, struct device, kobj);
+	chp = to_channelpath(device);
 	if (!chp->cmg_chars)
 		return 0;
 
-	size = sizeof(struct cmg_chars);
-
-	if (off > size)
-		return 0;
-	if (off + count > size)
-		count = size - off;
-	memcpy(buf, chp->cmg_chars + off, count);
-	return count;
+	return memory_read_from_buffer(buf, count, &off,
+				chp->cmg_chars, sizeof(struct cmg_chars));
 }
 
 static struct bin_attribute chp_measurement_chars_attr = {
 	.attr = {
 		.name = "measurement_chars",
 		.mode = S_IRUSR,
-		.owner = THIS_MODULE,
 	},
 	.size = sizeof(struct cmg_chars),
 	.read = chp_measurement_chars_read,
@@ -193,14 +177,17 @@ static void chp_measurement_copy_block(struct cmg_entry *buf,
 	} while (reference_buf.values[0] != buf->values[0]);
 }
 
-static ssize_t chp_measurement_read(struct kobject *kobj, char *buf,
-				    loff_t off, size_t count)
+static ssize_t chp_measurement_read(struct file *filp, struct kobject *kobj,
+				    struct bin_attribute *bin_attr,
+				    char *buf, loff_t off, size_t count)
 {
 	struct channel_path *chp;
 	struct channel_subsystem *css;
+	struct device *device;
 	unsigned int size;
 
-	chp = to_channelpath(container_of(kobj, struct device, kobj));
+	device = container_of(kobj, struct device, kobj);
+	chp = to_channelpath(device);
 	css = to_css(chp->dev.parent);
 
 	size = sizeof(struct cmg_entry);
@@ -217,7 +204,6 @@ static struct bin_attribute chp_measurement_attr = {
 	.attr = {
 		.name = "measurement",
 		.mode = S_IRUSR,
-		.owner = THIS_MODULE,
 	},
 	.size = sizeof(struct cmg_entry),
 	.read = chp_measurement_read,
@@ -248,19 +234,21 @@ int chp_add_cmg_attr(struct channel_path *chp)
 static ssize_t chp_status_show(struct device *dev,
 			       struct device_attribute *attr, char *buf)
 {
-	struct channel_path *chp = container_of(dev, struct channel_path, dev);
+	struct channel_path *chp = to_channelpath(dev);
+	int status;
 
-	if (!chp)
-		return 0;
-	return (chp_get_status(chp->chpid) ? sprintf(buf, "online\n") :
-		sprintf(buf, "offline\n"));
+	mutex_lock(&chp->lock);
+	status = chp->state;
+	mutex_unlock(&chp->lock);
+
+	return status ? sprintf(buf, "online\n") : sprintf(buf, "offline\n");
 }
 
 static ssize_t chp_status_write(struct device *dev,
 				struct device_attribute *attr,
 				const char *buf, size_t count)
 {
-	struct channel_path *cp = container_of(dev, struct channel_path, dev);
+	struct channel_path *cp = to_channelpath(dev);
 	char cmd[10];
 	int num_args;
 	int error;
@@ -269,15 +257,18 @@ static ssize_t chp_status_write(struct device *dev,
 	if (!num_args)
 		return count;
 
-	if (!strnicmp(cmd, "on", 2) || !strcmp(cmd, "1"))
+	if (!strnicmp(cmd, "on", 2) || !strcmp(cmd, "1")) {
+		mutex_lock(&cp->lock);
 		error = s390_vary_chpid(cp->chpid, 1);
-	else if (!strnicmp(cmd, "off", 3) || !strcmp(cmd, "0"))
+		mutex_unlock(&cp->lock);
+	} else if (!strnicmp(cmd, "off", 3) || !strcmp(cmd, "0")) {
+		mutex_lock(&cp->lock);
 		error = s390_vary_chpid(cp->chpid, 0);
-	else
+		mutex_unlock(&cp->lock);
+	} else
 		error = -EINVAL;
 
 	return error < 0 ? error : count;
-
 }
 
 static DEVICE_ATTR(status, 0644, chp_status_show, chp_status_write);
@@ -288,7 +279,7 @@ static ssize_t chp_configure_show(struct device *dev,
 	struct channel_path *cp;
 	int status;
 
-	cp = container_of(dev, struct channel_path, dev);
+	cp = to_channelpath(dev);
 	status = chp_info_get_status(cp->chpid);
 	if (status < 0)
 		return status;
@@ -310,7 +301,7 @@ static ssize_t chp_configure_write(struct device *dev,
 		return -EINVAL;
 	if (val != 0 && val != 1)
 		return -EINVAL;
-	cp = container_of(dev, struct channel_path, dev);
+	cp = to_channelpath(dev);
 	chp_cfg_schedule(cp->chpid, val);
 	cfg_wait_idle();
 
@@ -322,11 +313,13 @@ static DEVICE_ATTR(configure, 0644, chp_configure_show, chp_configure_write);
 static ssize_t chp_type_show(struct device *dev, struct device_attribute *attr,
 			     char *buf)
 {
-	struct channel_path *chp = container_of(dev, struct channel_path, dev);
+	struct channel_path *chp = to_channelpath(dev);
+	u8 type;
 
-	if (!chp)
-		return 0;
-	return sprintf(buf, "%x\n", chp->desc.desc);
+	mutex_lock(&chp->lock);
+	type = chp->desc.desc;
+	mutex_unlock(&chp->lock);
+	return sprintf(buf, "%x\n", type);
 }
 
 static DEVICE_ATTR(type, 0444, chp_type_show, NULL);
@@ -359,7 +352,7 @@ static ssize_t chp_shared_show(struct device *dev,
 
 static DEVICE_ATTR(shared, 0444, chp_shared_show, NULL);
 
-static struct attribute * chp_attrs[] = {
+static struct attribute *chp_attrs[] = {
 	&dev_attr_status.attr,
 	&dev_attr_configure.attr,
 	&dev_attr_type.attr,
@@ -376,7 +369,7 @@ static void chp_release(struct device *dev)
 {
 	struct channel_path *cp;
 
-	cp = container_of(dev, struct channel_path, dev);
+	cp = to_channelpath(dev);
 	kfree(cp);
 }
 
@@ -401,13 +394,12 @@ int chp_new(struct chp_id chpid)
 	/* fill in status, etc. */
 	chp->chpid = chpid;
 	chp->state = 1;
-	chp->dev.parent = &css[chpid.cssid]->device;
+	chp->dev.parent = &channel_subsystems[chpid.cssid]->device;
 	chp->dev.release = chp_release;
-	snprintf(chp->dev.bus_id, BUS_ID_SIZE, "chp%x.%02x", chpid.cssid,
-		 chpid.id);
+	mutex_init(&chp->lock);
 
 	/* Obtain channel path description and fill it in. */
-	ret = chsc_determine_channel_path_description(chpid, &chp->desc);
+	ret = chsc_determine_base_channel_path_desc(chpid, &chp->desc);
 	if (ret)
 		goto out_free;
 	if ((chp->desc.flags & 0x80) == 0) {
@@ -415,49 +407,44 @@ int chp_new(struct chp_id chpid)
 		goto out_free;
 	}
 	/* Get channel-measurement characteristics. */
-	if (css_characteristics_avail && css_chsc_characteristics.scmc
-	    && css_chsc_characteristics.secm) {
+	if (css_chsc_characteristics.scmc && css_chsc_characteristics.secm) {
 		ret = chsc_get_channel_measurement_chars(chp);
 		if (ret)
 			goto out_free;
 	} else {
-		static int msg_done;
-
-		if (!msg_done) {
-			printk(KERN_WARNING "cio: Channel measurements not "
-			       "available, continuing.\n");
-			msg_done = 1;
-		}
 		chp->cmg = -1;
 	}
+	dev_set_name(&chp->dev, "chp%x.%02x", chpid.cssid, chpid.id);
 
 	/* make it known to the system */
 	ret = device_register(&chp->dev);
 	if (ret) {
-		printk(KERN_WARNING "%s: could not register %x.%02x\n",
-		       __func__, chpid.cssid, chpid.id);
-		goto out_free;
+		CIO_MSG_EVENT(0, "Could not register chp%x.%02x: %d\n",
+			      chpid.cssid, chpid.id, ret);
+		put_device(&chp->dev);
+		goto out;
 	}
 	ret = sysfs_create_group(&chp->dev.kobj, &chp_attr_group);
 	if (ret) {
 		device_unregister(&chp->dev);
-		goto out_free;
+		goto out;
 	}
-	mutex_lock(&css[chpid.cssid]->mutex);
-	if (css[chpid.cssid]->cm_enabled) {
+	mutex_lock(&channel_subsystems[chpid.cssid]->mutex);
+	if (channel_subsystems[chpid.cssid]->cm_enabled) {
 		ret = chp_add_cmg_attr(chp);
 		if (ret) {
 			sysfs_remove_group(&chp->dev.kobj, &chp_attr_group);
 			device_unregister(&chp->dev);
-			mutex_unlock(&css[chpid.cssid]->mutex);
-			goto out_free;
+			mutex_unlock(&channel_subsystems[chpid.cssid]->mutex);
+			goto out;
 		}
 	}
-	css[chpid.cssid]->chps[chpid.id] = chp;
-	mutex_unlock(&css[chpid.cssid]->mutex);
-	return ret;
+	channel_subsystems[chpid.cssid]->chps[chpid.id] = chp;
+	mutex_unlock(&channel_subsystems[chpid.cssid]->mutex);
+	goto out;
 out_free:
 	kfree(chp);
+out:
 	return ret;
 }
 
@@ -479,31 +466,82 @@ void *chp_get_chp_desc(struct chp_id chpid)
 	desc = kmalloc(sizeof(struct channel_path_desc), GFP_KERNEL);
 	if (!desc)
 		return NULL;
+
+	mutex_lock(&chp->lock);
 	memcpy(desc, &chp->desc, sizeof(struct channel_path_desc));
+	mutex_unlock(&chp->lock);
 	return desc;
 }
 
 /**
  * chp_process_crw - process channel-path status change
- * @id: channel-path ID number
- * @status: non-zero if channel-path has become available, zero otherwise
+ * @crw0: channel report-word to handler
+ * @crw1: second channel-report word (always NULL)
+ * @overflow: crw overflow indication
  *
  * Handle channel-report-words indicating that the status of a channel-path
  * has changed.
  */
-void chp_process_crw(int id, int status)
+static void chp_process_crw(struct crw *crw0, struct crw *crw1,
+			    int overflow)
 {
 	struct chp_id chpid;
 
+	if (overflow) {
+		css_schedule_eval_all();
+		return;
+	}
+	CIO_CRW_EVENT(2, "CRW reports slct=%d, oflw=%d, "
+		      "chn=%d, rsc=%X, anc=%d, erc=%X, rsid=%X\n",
+		      crw0->slct, crw0->oflw, crw0->chn, crw0->rsc, crw0->anc,
+		      crw0->erc, crw0->rsid);
+	/*
+	 * Check for solicited machine checks. These are
+	 * created by reset channel path and need not be
+	 * handled here.
+	 */
+	if (crw0->slct) {
+		CIO_CRW_EVENT(2, "solicited machine check for "
+			      "channel path %02X\n", crw0->rsid);
+		return;
+	}
 	chp_id_init(&chpid);
-	chpid.id = id;
-	if (status) {
+	chpid.id = crw0->rsid;
+	switch (crw0->erc) {
+	case CRW_ERC_IPARM: /* Path has come. */
 		if (!chp_is_registered(chpid))
 			chp_new(chpid);
 		chsc_chp_online(chpid);
-	} else
+		break;
+	case CRW_ERC_PERRI: /* Path has gone. */
+	case CRW_ERC_PERRN:
 		chsc_chp_offline(chpid);
+		break;
+	default:
+		CIO_CRW_EVENT(2, "Don't know how to handle erc=%x\n",
+			      crw0->erc);
+	}
 }
+
+int chp_ssd_get_mask(struct chsc_ssd_info *ssd, struct chp_link *link)
+{
+	int i;
+	int mask;
+
+	for (i = 0; i < 8; i++) {
+		mask = 0x80 >> i;
+		if (!(ssd->path_mask & mask))
+			continue;
+		if (!chp_id_is_equal(&ssd->chpid[i], &link->chpid))
+			continue;
+		if ((ssd->fla_valid_mask & mask) &&
+		    ((ssd->fla[i] & link->fla_mask) != link->fla))
+			continue;
+		return mask;
+	}
+	return 0;
+}
+EXPORT_SYMBOL_GPL(chp_ssd_get_mask);
 
 static inline int info_bit_num(struct chp_id id)
 {
@@ -584,6 +622,7 @@ static void cfg_func(struct work_struct *work)
 {
 	struct chp_id chpid;
 	enum cfg_task_t t;
+	int rc;
 
 	mutex_lock(&cfg_lock);
 	t = cfg_none;
@@ -598,14 +637,24 @@ static void cfg_func(struct work_struct *work)
 
 	switch (t) {
 	case cfg_configure:
-		sclp_chp_configure(chpid);
-		info_expire();
-		chsc_chp_online(chpid);
+		rc = sclp_chp_configure(chpid);
+		if (rc)
+			CIO_MSG_EVENT(2, "chp: sclp_chp_configure(%x.%02x)="
+				      "%d\n", chpid.cssid, chpid.id, rc);
+		else {
+			info_expire();
+			chsc_chp_online(chpid);
+		}
 		break;
 	case cfg_deconfigure:
-		sclp_chp_deconfigure(chpid);
-		info_expire();
-		chsc_chp_offline(chpid);
+		rc = sclp_chp_deconfigure(chpid);
+		if (rc)
+			CIO_MSG_EVENT(2, "chp: sclp_chp_deconfigure(%x.%02x)="
+				      "%d\n", chpid.cssid, chpid.id, rc);
+		else {
+			info_expire();
+			chsc_chp_offline(chpid);
+		}
 		break;
 	case cfg_none:
 		/* Get updated information after last change. */
@@ -663,10 +712,16 @@ static int cfg_wait_idle(void)
 static int __init chp_init(void)
 {
 	struct chp_id chpid;
+	int ret;
 
+	ret = crw_register_handler(CRW_RSC_CPATH, chp_process_crw);
+	if (ret)
+		return ret;
 	chp_wq = create_singlethread_workqueue("cio_chp");
-	if (!chp_wq)
+	if (!chp_wq) {
+		crw_unregister_handler(CRW_RSC_CPATH);
 		return -ENOMEM;
+	}
 	INIT_WORK(&cfg_work, cfg_func);
 	init_waitqueue_head(&cfg_wait_queue);
 	if (info_update())

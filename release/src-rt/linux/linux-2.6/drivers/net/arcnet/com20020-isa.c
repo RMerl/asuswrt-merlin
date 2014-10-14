@@ -30,7 +30,6 @@
 #include <linux/kernel.h>
 #include <linux/types.h>
 #include <linux/ioport.h>
-#include <linux/slab.h>
 #include <linux/errno.h>
 #include <linux/delay.h>
 #include <linux/netdevice.h>
@@ -52,7 +51,7 @@ static int __init com20020isa_probe(struct net_device *dev)
 {
 	int ioaddr;
 	unsigned long airqmask;
-	struct arcnet_local *lp = dev->priv;
+	struct arcnet_local *lp = netdev_priv(dev);
 	int err;
 
 	BUGLVL(D_NORMAL) printk(VERSION);
@@ -91,14 +90,14 @@ static int __init com20020isa_probe(struct net_device *dev)
 		outb(0, _INTMASK);
 		dev->irq = probe_irq_off(airqmask);
 
-		if (dev->irq <= 0) {
+		if ((int)dev->irq <= 0) {
 			BUGMSG(D_INIT_REASONS, "Autoprobe IRQ failed first time\n");
 			airqmask = probe_irq_on();
 			outb(NORXflag, _INTMASK);
 			udelay(5);
 			outb(0, _INTMASK);
 			dev->irq = probe_irq_off(airqmask);
-			if (dev->irq <= 0) {
+			if ((int)dev->irq <= 0) {
 				BUGMSG(D_NORMAL, "Autoprobe IRQ failed.\n");
 				err = -ENODEV;
 				goto out;
@@ -151,7 +150,9 @@ static int __init com20020_init(void)
 	if (node && node != 0xff)
 		dev->dev_addr[0] = node;
 
-	lp = dev->priv;
+	dev->netdev_ops = &com20020_netdev_ops;
+
+	lp = netdev_priv(dev);
 	lp->backplane = backplane;
 	lp->clockp = clockp & 7;
 	lp->clockm = clockm & 3;

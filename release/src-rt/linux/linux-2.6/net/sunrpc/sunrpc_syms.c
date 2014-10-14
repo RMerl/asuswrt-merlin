@@ -20,117 +20,48 @@
 #include <linux/sunrpc/auth.h>
 #include <linux/workqueue.h>
 #include <linux/sunrpc/rpc_pipe_fs.h>
+#include <linux/sunrpc/xprtsock.h>
 
+#include "netns.h"
 
-/* RPC scheduler */
-EXPORT_SYMBOL(rpc_execute);
-EXPORT_SYMBOL(rpc_init_task);
-EXPORT_SYMBOL(rpc_sleep_on);
-EXPORT_SYMBOL(rpc_wake_up_next);
-EXPORT_SYMBOL(rpc_wake_up_task);
-EXPORT_SYMBOL(rpc_wake_up_status);
+int sunrpc_net_id;
 
-/* RPC client functions */
-EXPORT_SYMBOL(rpc_clone_client);
-EXPORT_SYMBOL(rpc_bind_new_program);
-EXPORT_SYMBOL(rpc_shutdown_client);
-EXPORT_SYMBOL(rpc_killall_tasks);
-EXPORT_SYMBOL(rpc_call_sync);
-EXPORT_SYMBOL(rpc_call_async);
-EXPORT_SYMBOL(rpc_call_setup);
-EXPORT_SYMBOL(rpc_clnt_sigmask);
-EXPORT_SYMBOL(rpc_clnt_sigunmask);
-EXPORT_SYMBOL(rpc_delay);
-EXPORT_SYMBOL(rpc_restart_call);
-EXPORT_SYMBOL(rpc_setbufsize);
-EXPORT_SYMBOL(rpc_unlink);
-EXPORT_SYMBOL(rpc_wake_up);
-EXPORT_SYMBOL(rpc_queue_upcall);
-EXPORT_SYMBOL(rpc_mkpipe);
+static __net_init int sunrpc_init_net(struct net *net)
+{
+	int err;
 
-/* Client transport */
-EXPORT_SYMBOL(xprt_set_timeout);
+	err = rpc_proc_init(net);
+	if (err)
+		goto err_proc;
 
-/* Client credential cache */
-EXPORT_SYMBOL(rpcauth_register);
-EXPORT_SYMBOL(rpcauth_unregister);
-EXPORT_SYMBOL(rpcauth_create);
-EXPORT_SYMBOL(rpcauth_lookupcred);
-EXPORT_SYMBOL(rpcauth_lookup_credcache);
-EXPORT_SYMBOL(rpcauth_destroy_credcache);
-EXPORT_SYMBOL(rpcauth_init_credcache);
-EXPORT_SYMBOL(put_rpccred);
+	err = ip_map_cache_create(net);
+	if (err)
+		goto err_ipmap;
 
-/* RPC server stuff */
-EXPORT_SYMBOL(svc_create);
-EXPORT_SYMBOL(svc_create_thread);
-EXPORT_SYMBOL(svc_create_pooled);
-EXPORT_SYMBOL(svc_set_num_threads);
-EXPORT_SYMBOL(svc_exit_thread);
-EXPORT_SYMBOL(svc_destroy);
-EXPORT_SYMBOL(svc_drop);
-EXPORT_SYMBOL(svc_process);
-EXPORT_SYMBOL(svc_recv);
-EXPORT_SYMBOL(svc_wake_up);
-EXPORT_SYMBOL(svc_makesock);
-EXPORT_SYMBOL(svc_reserve);
-EXPORT_SYMBOL(svc_auth_register);
-EXPORT_SYMBOL(auth_domain_lookup);
-EXPORT_SYMBOL(svc_authenticate);
-EXPORT_SYMBOL(svc_set_client);
+	return 0;
 
-/* RPC statistics */
-#ifdef CONFIG_PROC_FS
-EXPORT_SYMBOL(rpc_proc_register);
-EXPORT_SYMBOL(rpc_proc_unregister);
-EXPORT_SYMBOL(svc_proc_register);
-EXPORT_SYMBOL(svc_proc_unregister);
-EXPORT_SYMBOL(svc_seq_show);
-#endif
+err_ipmap:
+	rpc_proc_exit(net);
+err_proc:
+	return err;
+}
 
-/* caching... */
-EXPORT_SYMBOL(auth_domain_find);
-EXPORT_SYMBOL(auth_domain_put);
-EXPORT_SYMBOL(auth_unix_add_addr);
-EXPORT_SYMBOL(auth_unix_forget_old);
-EXPORT_SYMBOL(auth_unix_lookup);
-EXPORT_SYMBOL(cache_check);
-EXPORT_SYMBOL(cache_flush);
-EXPORT_SYMBOL(cache_purge);
-EXPORT_SYMBOL(cache_register);
-EXPORT_SYMBOL(cache_unregister);
-EXPORT_SYMBOL(qword_add);
-EXPORT_SYMBOL(qword_addhex);
-EXPORT_SYMBOL(qword_get);
-EXPORT_SYMBOL(svcauth_unix_purge);
-EXPORT_SYMBOL(unix_domain_find);
+static __net_exit void sunrpc_exit_net(struct net *net)
+{
+	ip_map_cache_destroy(net);
+	rpc_proc_exit(net);
+}
 
-/* Generic XDR */
-EXPORT_SYMBOL(xdr_encode_string);
-EXPORT_SYMBOL(xdr_decode_string_inplace);
-EXPORT_SYMBOL(xdr_decode_netobj);
-EXPORT_SYMBOL(xdr_encode_netobj);
-EXPORT_SYMBOL(xdr_encode_pages);
-EXPORT_SYMBOL(xdr_inline_pages);
-EXPORT_SYMBOL(xdr_shift_buf);
-EXPORT_SYMBOL(xdr_encode_word);
-EXPORT_SYMBOL(xdr_decode_word);
-EXPORT_SYMBOL(xdr_encode_array2);
-EXPORT_SYMBOL(xdr_decode_array2);
-EXPORT_SYMBOL(xdr_buf_from_iov);
-EXPORT_SYMBOL(xdr_buf_subsegment);
-EXPORT_SYMBOL(xdr_buf_read_netobj);
-EXPORT_SYMBOL(read_bytes_from_xdr_buf);
+static struct pernet_operations sunrpc_net_ops = {
+	.init = sunrpc_init_net,
+	.exit = sunrpc_exit_net,
+	.id = &sunrpc_net_id,
+	.size = sizeof(struct sunrpc_net),
+};
 
-/* Debugging symbols */
-#ifdef RPC_DEBUG
-EXPORT_SYMBOL(rpc_debug);
-EXPORT_SYMBOL(nfs_debug);
-EXPORT_SYMBOL(nfsd_debug);
-EXPORT_SYMBOL(nlm_debug);
-#endif
+extern struct cache_detail unix_gid_cache;
 
-extern struct cache_detail ip_map_cache, unix_gid_cache;
+extern void cleanup_rpcb_clnt(void);
 
 static int __init
 init_sunrpc(void)
@@ -139,20 +70,31 @@ init_sunrpc(void)
 	if (err)
 		goto out;
 	err = rpc_init_mempool();
-	if (err) {
-		unregister_rpc_pipefs();
-		goto out;
-	}
+	if (err)
+		goto out2;
+	err = rpcauth_init_module();
+	if (err)
+		goto out3;
+
+	cache_initialize();
+
+	err = register_pernet_subsys(&sunrpc_net_ops);
+	if (err)
+		goto out4;
 #ifdef RPC_DEBUG
 	rpc_register_sysctl();
 #endif
-#ifdef CONFIG_PROC_FS
-	rpc_proc_init();
-#endif
-	cache_register(&ip_map_cache);
 	cache_register(&unix_gid_cache);
-	init_socket_xprt();
-	rpcauth_init_module();
+	svc_init_xprt_sock();	/* svc sock transport */
+	init_socket_xprt();	/* clnt sock transport */
+	return 0;
+
+out4:
+	rpcauth_remove_module();
+out3:
+	rpc_destroy_mempool();
+out2:
+	unregister_rpc_pipefs();
 out:
 	return err;
 }
@@ -160,21 +102,19 @@ out:
 static void __exit
 cleanup_sunrpc(void)
 {
+	cleanup_rpcb_clnt();
 	rpcauth_remove_module();
 	cleanup_socket_xprt();
+	svc_cleanup_xprt_sock();
 	unregister_rpc_pipefs();
 	rpc_destroy_mempool();
-	if (cache_unregister(&ip_map_cache))
-		printk(KERN_ERR "sunrpc: failed to unregister ip_map cache\n");
-	if (cache_unregister(&unix_gid_cache))
-	      printk(KERN_ERR "sunrpc: failed to unregister unix_gid cache\n");
+	cache_unregister(&unix_gid_cache);
+	unregister_pernet_subsys(&sunrpc_net_ops);
 #ifdef RPC_DEBUG
 	rpc_unregister_sysctl();
 #endif
-#ifdef CONFIG_PROC_FS
-	rpc_proc_exit();
-#endif
+	rcu_barrier(); /* Wait for completion of call_rcu()'s */
 }
 MODULE_LICENSE("GPL");
-module_init(init_sunrpc);
+fs_initcall(init_sunrpc); /* Ensure we're initialised before nfs */
 module_exit(cleanup_sunrpc);

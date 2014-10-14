@@ -21,6 +21,7 @@
 #include <linux/capability.h>
 #include <linux/bitops.h>
 #include <linux/wait.h>
+#include <linux/slab.h>
 #include <asm/byteorder.h>
 #include <asm/system.h>
 #include <asm/string.h>
@@ -496,8 +497,8 @@ static int open_rx_first(struct atm_vcc *vcc)
 			vcc->qos.rxtp.max_sdu = 65464;
 			/* fix this - we may want to receive 64kB SDUs
 			   later */
-		cells = (vcc->qos.rxtp.max_sdu+ATM_AAL5_TRAILER+
-		    ATM_CELL_PAYLOAD-1)/ATM_CELL_PAYLOAD;
+		cells = DIV_ROUND_UP(vcc->qos.rxtp.max_sdu + ATM_AAL5_TRAILER,
+				ATM_CELL_PAYLOAD);
 		zatm_vcc->pool = pool_index(cells*ATM_CELL_PAYLOAD);
 	}
 	else {
@@ -820,7 +821,7 @@ static int alloc_shaper(struct atm_dev *dev,int *pcr,int min,int max,int ubr)
 			}
 			else {
 				i = 255;
-				m = (ATM_OC3_PCR*255+max-1)/max;
+				m = DIV_ROUND_UP(ATM_OC3_PCR*255, max);
 			}
 		}
 		if (i > m) {
@@ -915,7 +916,7 @@ static int open_tx_first(struct atm_vcc *vcc)
 	unsigned long flags;
 	u32 *loop;
 	unsigned short chan;
-	int pcr,unlimited;
+	int unlimited;
 
 	DPRINTK("open_tx_first\n");
 	zatm_dev = ZATM_DEV(vcc->dev);
@@ -936,6 +937,8 @@ static int open_tx_first(struct atm_vcc *vcc)
 	    vcc->qos.txtp.max_pcr >= ATM_OC3_PCR);
 	if (unlimited && zatm_dev->ubr != -1) zatm_vcc->shaper = zatm_dev->ubr;
 	else {
+		int uninitialized_var(pcr);
+
 		if (unlimited) vcc->qos.txtp.max_sdu = ATM_MAX_AAL5_PDU;
 		if ((zatm_vcc->shaper = alloc_shaper(vcc->dev,&pcr,
 		    vcc->qos.txtp.min_pcr,vcc->qos.txtp.max_pcr,unlimited))
@@ -1182,7 +1185,6 @@ static int __devinit zatm_init(struct atm_dev *dev)
 	struct zatm_dev *zatm_dev;
 	struct pci_dev *pci_dev;
 	unsigned short command;
-	unsigned char revision;
 	int error,i,last;
 	unsigned long t0,t1,t2;
 
@@ -1192,8 +1194,7 @@ static int __devinit zatm_init(struct atm_dev *dev)
 	pci_dev = zatm_dev->pci_dev;
 	zatm_dev->base = pci_resource_start(pci_dev, 0);
 	zatm_dev->irq = pci_dev->irq;
-	if ((error = pci_read_config_word(pci_dev,PCI_COMMAND,&command)) ||
-	    (error = pci_read_config_byte(pci_dev,PCI_REVISION_ID,&revision))) {
+	if ((error = pci_read_config_word(pci_dev,PCI_COMMAND,&command))) {
 		printk(KERN_ERR DEV_LABEL "(itf %d): init error 0x%02x\n",
 		    dev->number,error);
 		return -EINVAL;
@@ -1206,7 +1207,7 @@ static int __devinit zatm_init(struct atm_dev *dev)
 	}
 	eprom_get_esi(dev);
 	printk(KERN_NOTICE DEV_LABEL "(itf %d): rev.%d,base=0x%x,irq=%d,",
-	    dev->number,revision,zatm_dev->base,zatm_dev->irq);
+	    dev->number,pci_dev->revision,zatm_dev->base,zatm_dev->irq);
 	/* reset uPD98401 */
 	zout(0,SWR);
 	while (!(zin(GSR) & uPD98401_INT_IND));
@@ -1517,7 +1518,7 @@ static int zatm_getsockopt(struct atm_vcc *vcc,int level,int optname,
 
 
 static int zatm_setsockopt(struct atm_vcc *vcc,int level,int optname,
-    void __user *optval,int optlen)
+    void __user *optval,unsigned int optlen)
 {
 	return -EINVAL;
 }
@@ -1596,7 +1597,7 @@ static int __devinit zatm_init_one(struct pci_dev *pci_dev,
 		goto out;
 	}
 
-	dev = atm_dev_register(DEV_LABEL, &ops, -1, NULL);
+	dev = atm_dev_register(DEV_LABEL, &pci_dev->dev, &ops, -1, NULL);
 	if (!dev)
 		goto out_free;
 
@@ -1636,10 +1637,8 @@ out_free:
 MODULE_LICENSE("GPL");
 
 static struct pci_device_id zatm_pci_tbl[] __devinitdata = {
-	{ PCI_VENDOR_ID_ZEITNET, PCI_DEVICE_ID_ZEITNET_1221,
-		PCI_ANY_ID, PCI_ANY_ID, 0, 0, ZATM_COPPER },
-	{ PCI_VENDOR_ID_ZEITNET, PCI_DEVICE_ID_ZEITNET_1225,
-		PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
+	{ PCI_VDEVICE(ZEITNET, PCI_DEVICE_ID_ZEITNET_1221), ZATM_COPPER },
+	{ PCI_VDEVICE(ZEITNET, PCI_DEVICE_ID_ZEITNET_1225), 0 },
 	{ 0, }
 };
 MODULE_DEVICE_TABLE(pci, zatm_pci_tbl);

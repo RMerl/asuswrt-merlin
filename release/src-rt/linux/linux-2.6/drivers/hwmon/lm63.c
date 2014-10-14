@@ -1,7 +1,7 @@
 /*
  * lm63.c - driver for the National Semiconductor LM63 temperature sensor
  *          with integrated fan control
- * Copyright (C) 2004-2006  Jean Delvare <khali@linux-fr.org>
+ * Copyright (C) 2004-2008  Jean Delvare <khali@linux-fr.org>
  * Based on the lm90 driver.
  *
  * The LM63 is a sensor chip made by National Semiconductor. It measures
@@ -53,13 +53,7 @@
  * Address is fully defined internally and cannot be changed.
  */
 
-static unsigned short normal_i2c[] = { 0x4c, I2C_CLIENT_END };
-
-/*
- * Insmod parameters
- */
-
-I2C_CLIENT_INSMOD_1(lm63);
+static const unsigned short normal_i2c[] = { 0x18, 0x4c, 0x4e, I2C_CLIENT_END };
 
 /*
  * The LM63 registers
@@ -104,6 +98,9 @@ I2C_CLIENT_INSMOD_1(lm63);
  * value, it uses signed 8-bit values with LSB = 1 degree Celsius.
  * For remote temperature, low and high limits, it uses signed 11-bit values
  * with LSB = 0.125 degree Celsius, left-justified in 16-bit registers.
+ * For LM64 the actual remote diode temperature is 16 degree Celsius higher
+ * than the register reading. Remote temperature setpoints have to be
+ * adapted accordingly.
  */
 
 #define FAN_FROM_REG(reg)	((reg) == 0xFFFC || (reg) == 0 ? 0 : \
@@ -128,24 +125,38 @@ I2C_CLIENT_INSMOD_1(lm63);
  * Functions declaration
  */
 
-static int lm63_attach_adapter(struct i2c_adapter *adapter);
-static int lm63_detach_client(struct i2c_client *client);
+static int lm63_probe(struct i2c_client *client,
+		      const struct i2c_device_id *id);
+static int lm63_remove(struct i2c_client *client);
 
 static struct lm63_data *lm63_update_device(struct device *dev);
 
-static int lm63_detect(struct i2c_adapter *adapter, int address, int kind);
+static int lm63_detect(struct i2c_client *client, struct i2c_board_info *info);
 static void lm63_init_client(struct i2c_client *client);
+
+enum chips { lm63, lm64 };
 
 /*
  * Driver data (common to all clients)
  */
 
+static const struct i2c_device_id lm63_id[] = {
+	{ "lm63", lm63 },
+	{ "lm64", lm64 },
+	{ }
+};
+MODULE_DEVICE_TABLE(i2c, lm63_id);
+
 static struct i2c_driver lm63_driver = {
+	.class		= I2C_CLASS_HWMON,
 	.driver = {
 		.name	= "lm63",
 	},
-	.attach_adapter	= lm63_attach_adapter,
-	.detach_client	= lm63_detach_client,
+	.probe		= lm63_probe,
+	.remove		= lm63_remove,
+	.id_table	= lm63_id,
+	.detect		= lm63_detect,
+	.address_list	= normal_i2c,
 };
 
 /*
@@ -153,11 +164,12 @@ static struct i2c_driver lm63_driver = {
  */
 
 struct lm63_data {
-	struct i2c_client client;
-	struct class_device *class_dev;
+	struct device *hwmon_dev;
 	struct mutex update_lock;
 	char valid; /* zero until following fields are valid */
 	unsigned long last_updated; /* in jiffies */
+	int kind;
+	int temp2_offset;
 
 	/* registers values */
 	u8 config, config_fan;
@@ -240,16 +252,34 @@ static ssize_t show_pwm1_enable(struct device *dev, struct device_attribute *dum
 	return sprintf(buf, "%d\n", data->config_fan & 0x20 ? 1 : 2);
 }
 
-static ssize_t show_temp8(struct device *dev, struct device_attribute *devattr,
-			  char *buf)
+/*
+ * There are 8bit registers for both local(temp1) and remote(temp2) sensor.
+ * For remote sensor registers temp2_offset has to be considered,
+ * for local sensor it must not.
+ * So we need separate 8bit accessors for local and remote sensor.
+ */
+static ssize_t show_local_temp8(struct device *dev,
+				struct device_attribute *devattr,
+				char *buf)
 {
 	struct sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
 	struct lm63_data *data = lm63_update_device(dev);
 	return sprintf(buf, "%d\n", TEMP8_FROM_REG(data->temp8[attr->index]));
 }
 
-static ssize_t set_temp8(struct device *dev, struct device_attribute *dummy,
-			 const char *buf, size_t count)
+static ssize_t show_remote_temp8(struct device *dev,
+				 struct device_attribute *devattr,
+				 char *buf)
+{
+	struct sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
+	struct lm63_data *data = lm63_update_device(dev);
+	return sprintf(buf, "%d\n", TEMP8_FROM_REG(data->temp8[attr->index])
+		       + data->temp2_offset);
+}
+
+static ssize_t set_local_temp8(struct device *dev,
+			       struct device_attribute *dummy,
+			       const char *buf, size_t count)
 {
 	struct i2c_client *client = to_i2c_client(dev);
 	struct lm63_data *data = i2c_get_clientdata(client);
@@ -267,7 +297,8 @@ static ssize_t show_temp11(struct device *dev, struct device_attribute *devattr,
 {
 	struct sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
 	struct lm63_data *data = lm63_update_device(dev);
-	return sprintf(buf, "%d\n", TEMP11_FROM_REG(data->temp11[attr->index]));
+	return sprintf(buf, "%d\n", TEMP11_FROM_REG(data->temp11[attr->index])
+		       + data->temp2_offset);
 }
 
 static ssize_t set_temp11(struct device *dev, struct device_attribute *devattr,
@@ -287,7 +318,7 @@ static ssize_t set_temp11(struct device *dev, struct device_attribute *devattr,
 	int nr = attr->index;
 
 	mutex_lock(&data->update_lock);
-	data->temp11[nr] = TEMP11_TO_REG(val);
+	data->temp11[nr] = TEMP11_TO_REG(val - data->temp2_offset);
 	i2c_smbus_write_byte_data(client, reg[(nr - 1) * 2],
 				  data->temp11[nr] >> 8);
 	i2c_smbus_write_byte_data(client, reg[(nr - 1) * 2 + 1],
@@ -303,6 +334,7 @@ static ssize_t show_temp2_crit_hyst(struct device *dev, struct device_attribute 
 {
 	struct lm63_data *data = lm63_update_device(dev);
 	return sprintf(buf, "%d\n", TEMP8_FROM_REG(data->temp8[2])
+		       + data->temp2_offset
 		       - TEMP8_FROM_REG(data->temp2_crit_hyst));
 }
 
@@ -317,7 +349,7 @@ static ssize_t set_temp2_crit_hyst(struct device *dev, struct device_attribute *
 	long hyst;
 
 	mutex_lock(&data->update_lock);
-	hyst = TEMP8_FROM_REG(data->temp8[2]) - val;
+	hyst = TEMP8_FROM_REG(data->temp8[2]) + data->temp2_offset - val;
 	i2c_smbus_write_byte_data(client, LM63_REG_REMOTE_TCRIT_HYST,
 				  HYST_TO_REG(hyst));
 	mutex_unlock(&data->update_lock);
@@ -348,23 +380,28 @@ static SENSOR_DEVICE_ATTR(fan1_min, S_IWUSR | S_IRUGO, show_fan,
 static DEVICE_ATTR(pwm1, S_IWUSR | S_IRUGO, show_pwm1, set_pwm1);
 static DEVICE_ATTR(pwm1_enable, S_IRUGO, show_pwm1_enable, NULL);
 
-static SENSOR_DEVICE_ATTR(temp1_input, S_IRUGO, show_temp8, NULL, 0);
-static SENSOR_DEVICE_ATTR(temp1_max, S_IWUSR | S_IRUGO, show_temp8,
-	set_temp8, 1);
+static SENSOR_DEVICE_ATTR(temp1_input, S_IRUGO, show_local_temp8, NULL, 0);
+static SENSOR_DEVICE_ATTR(temp1_max, S_IWUSR | S_IRUGO, show_local_temp8,
+	set_local_temp8, 1);
 
 static SENSOR_DEVICE_ATTR(temp2_input, S_IRUGO, show_temp11, NULL, 0);
 static SENSOR_DEVICE_ATTR(temp2_min, S_IWUSR | S_IRUGO, show_temp11,
 	set_temp11, 1);
 static SENSOR_DEVICE_ATTR(temp2_max, S_IWUSR | S_IRUGO, show_temp11,
 	set_temp11, 2);
-static SENSOR_DEVICE_ATTR(temp2_crit, S_IRUGO, show_temp8, NULL, 2);
+/*
+ * On LM63, temp2_crit can be set only once, which should be job
+ * of the bootloader.
+ */
+static SENSOR_DEVICE_ATTR(temp2_crit, S_IRUGO, show_remote_temp8,
+	NULL, 2);
 static DEVICE_ATTR(temp2_crit_hyst, S_IWUSR | S_IRUGO, show_temp2_crit_hyst,
 	set_temp2_crit_hyst);
 
 /* Individual alarm files */
 static SENSOR_DEVICE_ATTR(fan1_min_alarm, S_IRUGO, show_alarm, NULL, 0);
 static SENSOR_DEVICE_ATTR(temp2_crit_alarm, S_IRUGO, show_alarm, NULL, 1);
-static SENSOR_DEVICE_ATTR(temp2_input_fault, S_IRUGO, show_alarm, NULL, 2);
+static SENSOR_DEVICE_ATTR(temp2_fault, S_IRUGO, show_alarm, NULL, 2);
 static SENSOR_DEVICE_ATTR(temp2_min_alarm, S_IRUGO, show_alarm, NULL, 3);
 static SENSOR_DEVICE_ATTR(temp2_max_alarm, S_IRUGO, show_alarm, NULL, 4);
 static SENSOR_DEVICE_ATTR(temp1_max_alarm, S_IRUGO, show_alarm, NULL, 6);
@@ -383,7 +420,7 @@ static struct attribute *lm63_attributes[] = {
 	&dev_attr_temp2_crit_hyst.attr,
 
 	&sensor_dev_attr_temp2_crit_alarm.dev_attr.attr,
-	&sensor_dev_attr_temp2_input_fault.dev_attr.attr,
+	&sensor_dev_attr_temp2_fault.dev_attr.attr,
 	&sensor_dev_attr_temp2_min_alarm.dev_attr.attr,
 	&sensor_dev_attr_temp2_max_alarm.dev_attr.attr,
 	&sensor_dev_attr_temp1_max_alarm.dev_attr.attr,
@@ -411,100 +448,88 @@ static const struct attribute_group lm63_group_fan1 = {
  * Real code
  */
 
-static int lm63_attach_adapter(struct i2c_adapter *adapter)
+/* Return 0 if detection is successful, -ENODEV otherwise */
+static int lm63_detect(struct i2c_client *new_client,
+		       struct i2c_board_info *info)
 {
-	if (!(adapter->class & I2C_CLASS_HWMON))
-		return 0;
-	return i2c_probe(adapter, &addr_data, lm63_detect);
-}
-
-/*
- * The following function does more than just detection. If detection
- * succeeds, it also registers the new chip.
- */
-static int lm63_detect(struct i2c_adapter *adapter, int address, int kind)
-{
-	struct i2c_client *new_client;
-	struct lm63_data *data;
-	int err = 0;
+	struct i2c_adapter *adapter = new_client->adapter;
+	u8 man_id, chip_id, reg_config1, reg_config2;
+	u8 reg_alert_status, reg_alert_mask;
+	int address = new_client->addr;
 
 	if (!i2c_check_functionality(adapter, I2C_FUNC_SMBUS_BYTE_DATA))
-		goto exit;
+		return -ENODEV;
 
-	if (!(data = kzalloc(sizeof(struct lm63_data), GFP_KERNEL))) {
+	man_id = i2c_smbus_read_byte_data(new_client, LM63_REG_MAN_ID);
+	chip_id = i2c_smbus_read_byte_data(new_client, LM63_REG_CHIP_ID);
+
+	reg_config1 = i2c_smbus_read_byte_data(new_client,
+		      LM63_REG_CONFIG1);
+	reg_config2 = i2c_smbus_read_byte_data(new_client,
+		      LM63_REG_CONFIG2);
+	reg_alert_status = i2c_smbus_read_byte_data(new_client,
+			   LM63_REG_ALERT_STATUS);
+	reg_alert_mask = i2c_smbus_read_byte_data(new_client,
+			 LM63_REG_ALERT_MASK);
+
+	if (man_id != 0x01 /* National Semiconductor */
+	 || (reg_config1 & 0x18) != 0x00
+	 || (reg_config2 & 0xF8) != 0x00
+	 || (reg_alert_status & 0x20) != 0x00
+	 || (reg_alert_mask & 0xA4) != 0xA4) {
+		dev_dbg(&adapter->dev,
+			"Unsupported chip (man_id=0x%02X, chip_id=0x%02X)\n",
+			man_id, chip_id);
+		return -ENODEV;
+	}
+
+	if (chip_id == 0x41 && address == 0x4c)
+		strlcpy(info->type, "lm63", I2C_NAME_SIZE);
+	else if (chip_id == 0x51 && (address == 0x18 || address == 0x4e))
+		strlcpy(info->type, "lm64", I2C_NAME_SIZE);
+	else
+		return -ENODEV;
+
+	return 0;
+}
+
+static int lm63_probe(struct i2c_client *new_client,
+		      const struct i2c_device_id *id)
+{
+	struct lm63_data *data;
+	int err;
+
+	data = kzalloc(sizeof(struct lm63_data), GFP_KERNEL);
+	if (!data) {
 		err = -ENOMEM;
 		goto exit;
 	}
 
-	/* The common I2C client data is placed right before the
-	   LM63-specific data. */
-	new_client = &data->client;
 	i2c_set_clientdata(new_client, data);
-	new_client->addr = address;
-	new_client->adapter = adapter;
-	new_client->driver = &lm63_driver;
-	new_client->flags = 0;
-
-	/* Default to an LM63 if forced */
-	if (kind == 0)
-		kind = lm63;
-
-	if (kind < 0) { /* must identify */
-		u8 man_id, chip_id, reg_config1, reg_config2;
-		u8 reg_alert_status, reg_alert_mask;
-
-		man_id = i2c_smbus_read_byte_data(new_client,
-			 LM63_REG_MAN_ID);
-		chip_id = i2c_smbus_read_byte_data(new_client,
-			  LM63_REG_CHIP_ID);
-		reg_config1 = i2c_smbus_read_byte_data(new_client,
-			      LM63_REG_CONFIG1);
-		reg_config2 = i2c_smbus_read_byte_data(new_client,
-			      LM63_REG_CONFIG2);
-		reg_alert_status = i2c_smbus_read_byte_data(new_client,
-				   LM63_REG_ALERT_STATUS);
-		reg_alert_mask = i2c_smbus_read_byte_data(new_client,
-				 LM63_REG_ALERT_MASK);
-
-		if (man_id == 0x01 /* National Semiconductor */
-		 && chip_id == 0x41 /* LM63 */
-		 && (reg_config1 & 0x18) == 0x00
-		 && (reg_config2 & 0xF8) == 0x00
-		 && (reg_alert_status & 0x20) == 0x00
-		 && (reg_alert_mask & 0xA4) == 0xA4) {
-			kind = lm63;
-		} else { /* failed */
-			dev_dbg(&adapter->dev, "Unsupported chip "
-				"(man_id=0x%02X, chip_id=0x%02X).\n",
-				man_id, chip_id);
-			goto exit_free;
-		}
-	}
-
-	strlcpy(new_client->name, "lm63", I2C_NAME_SIZE);
 	data->valid = 0;
 	mutex_init(&data->update_lock);
 
-	/* Tell the I2C layer a new client has arrived */
-	if ((err = i2c_attach_client(new_client)))
-		goto exit_free;
+	/* Set the device type */
+	data->kind = id->driver_data;
+	if (data->kind == lm64)
+		data->temp2_offset = 16000;
 
-	/* Initialize the LM63 chip */
+	/* Initialize chip */
 	lm63_init_client(new_client);
 
 	/* Register sysfs hooks */
 	if ((err = sysfs_create_group(&new_client->dev.kobj,
 				      &lm63_group)))
-		goto exit_detach;
+		goto exit_free;
 	if (data->config & 0x04) { /* tachometer enabled */
 		if ((err = sysfs_create_group(&new_client->dev.kobj,
 					      &lm63_group_fan1)))
 			goto exit_remove_files;
 	}
 
-	data->class_dev = hwmon_device_register(&new_client->dev);
-	if (IS_ERR(data->class_dev)) {
-		err = PTR_ERR(data->class_dev);
+	data->hwmon_dev = hwmon_device_register(&new_client->dev);
+	if (IS_ERR(data->hwmon_dev)) {
+		err = PTR_ERR(data->hwmon_dev);
 		goto exit_remove_files;
 	}
 
@@ -513,8 +538,6 @@ static int lm63_detect(struct i2c_adapter *adapter, int address, int kind)
 exit_remove_files:
 	sysfs_remove_group(&new_client->dev.kobj, &lm63_group);
 	sysfs_remove_group(&new_client->dev.kobj, &lm63_group_fan1);
-exit_detach:
-	i2c_detach_client(new_client);
 exit_free:
 	kfree(data);
 exit:
@@ -533,7 +556,7 @@ static void lm63_init_client(struct i2c_client *client)
 
 	/* Start converting if needed */
 	if (data->config & 0x40) { /* standby */
-		dev_dbg(&client->dev, "Switching to operational mode");
+		dev_dbg(&client->dev, "Switching to operational mode\n");
 		data->config &= 0xA7;
 		i2c_smbus_write_byte_data(client, LM63_REG_CONFIG1,
 					  data->config);
@@ -556,17 +579,13 @@ static void lm63_init_client(struct i2c_client *client)
 		(data->config_fan & 0x20) ? "manual" : "auto");
 }
 
-static int lm63_detach_client(struct i2c_client *client)
+static int lm63_remove(struct i2c_client *client)
 {
 	struct lm63_data *data = i2c_get_clientdata(client);
-	int err;
 
-	hwmon_device_unregister(data->class_dev);
+	hwmon_device_unregister(data->hwmon_dev);
 	sysfs_remove_group(&client->dev.kobj, &lm63_group);
 	sysfs_remove_group(&client->dev.kobj, &lm63_group_fan1);
-
-	if ((err = i2c_detach_client(client)))
-		return err;
 
 	kfree(data);
 	return 0;

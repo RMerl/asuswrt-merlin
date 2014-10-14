@@ -4,7 +4,7 @@
  * Epson Research S1D13505 Embedded RAMDAC LCD/CRT Controller
  *   (previously known as SED1355)
  *
- * Cf. http://www.erd.epson.com/vdc/html/S1D13505.html
+ * Cf. http://vdc.epson.com/
  *
  *
  * Copyright (C) Hewlett-Packard Company.  All rights reserved.
@@ -48,7 +48,6 @@
 #include <linux/errno.h>
 #include <linux/string.h>
 #include <linux/mm.h>
-#include <linux/slab.h>
 #include <linux/delay.h>
 #include <linux/fb.h>
 #include <linux/init.h>
@@ -57,32 +56,21 @@
 
 #include <asm/types.h>
 #include <asm/io.h>
-#include <asm/uaccess.h>
+#include <linux/uaccess.h>
 
 #include <video/epson1355.h>
 
 struct epson1355_par {
 	unsigned long reg_addr;
+	u32 pseudo_palette[16];
 };
 
 /* ------------------------------------------------------------------------- */
 
-#ifdef CONFIG_SUPERH
-
-static inline u8 epson1355_read_reg(int index)
-{
-	return ctrl_inb(par.reg_addr + index);
-}
-
-static inline void epson1355_write_reg(u8 data, int index)
-{
-	ctrl_outb(data, par.reg_addr + index);
-}
-
-#elif defined(CONFIG_ARM)
+#if defined(CONFIG_ARM)
 
 # ifdef CONFIG_ARCH_CEIVA
-#  include <asm/arch/hardware.h>
+#  include <mach/hardware.h>
 #  define EPSON1355FB_BASE_PHYS	(CEIVA_PHYS_SED1355)
 # endif
 
@@ -289,7 +277,7 @@ static int epson1355fb_blank(int blank_mode, struct fb_info *info)
 	struct epson1355_par *par = info->par;
 
 	switch (blank_mode) {
-	case FB_BLANK_UNBLANKING:
+	case FB_BLANK_UNBLANK:
 	case FB_BLANK_NORMAL:
 		lcd_enable(par, 1);
 		backlight_enable(1);
@@ -613,7 +601,7 @@ static int epson1355fb_remove(struct platform_device *dev)
 	return 0;
 }
 
-int __init epson1355fb_probe(struct platform_device *dev)
+int __devinit epson1355fb_probe(struct platform_device *dev)
 {
 	struct epson1355_par *default_par;
 	struct fb_info *info;
@@ -635,7 +623,7 @@ int __init epson1355fb_probe(struct platform_device *dev)
 		goto bail;
 	}
 
-	info = framebuffer_alloc(sizeof(struct epson1355_par) + sizeof(u32) * 256, &dev->dev);
+	info = framebuffer_alloc(sizeof(struct epson1355_par), &dev->dev);
 	if (!info) {
 		rc = -ENOMEM;
 		goto bail;
@@ -648,7 +636,7 @@ int __init epson1355fb_probe(struct platform_device *dev)
 		rc = -ENOMEM;
 		goto bail;
 	}
-	info->pseudo_palette = (void *)(default_par + 1);
+	info->pseudo_palette = default_par->pseudo_palette;
 
 	info->screen_base = ioremap(EPSON1355FB_FB_PHYS, EPSON1355FB_FB_LEN);
 	if (!info->screen_base) {

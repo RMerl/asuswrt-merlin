@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2004, 2005 Topspin Communications.  All rights reserved.
- * Copyright (c) 2005 Mellanox Technologies. All rights reserved.
+ * Copyright (c) 2005, 2006, 2007, 2008 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2006, 2007 Cisco Systems.  All rights reserved.
  *
  * This software is available to you under a choice of one of two
@@ -38,6 +38,11 @@
 #include "mlx4.h"
 #include "icm.h"
 
+struct mlx4_mod_stat_cfg {
+	u8 log_pg_sz;
+	u8 log_pg_sz_m;
+};
+
 struct mlx4_dev_cap {
 	int max_srq_sz;
 	int max_qp_sz;
@@ -60,12 +65,24 @@ struct mlx4_dev_cap {
 	int max_rdma_global;
 	int local_ca_ack_delay;
 	int num_ports;
-	int max_mtu[MLX4_MAX_PORTS + 1];
+	u32 max_msg_sz;
+	int ib_mtu[MLX4_MAX_PORTS + 1];
 	int max_port_width[MLX4_MAX_PORTS + 1];
 	int max_vl[MLX4_MAX_PORTS + 1];
 	int max_gids[MLX4_MAX_PORTS + 1];
 	int max_pkeys[MLX4_MAX_PORTS + 1];
+	u64 def_mac[MLX4_MAX_PORTS + 1];
+	u16 eth_mtu[MLX4_MAX_PORTS + 1];
+	int trans_type[MLX4_MAX_PORTS + 1];
+	int vendor_oui[MLX4_MAX_PORTS + 1];
+	u16 wavelength[MLX4_MAX_PORTS + 1];
+	u64 trans_code[MLX4_MAX_PORTS + 1];
 	u16 stat_rate_support;
+	int udp_rss;
+	int loopback_support;
+	int vep_uc_steering;
+	int vep_mc_steering;
+	int wol;
 	u32 flags;
 	int reserved_uars;
 	int uar_size;
@@ -92,15 +109,16 @@ struct mlx4_dev_cap {
 	int cmpt_entry_sz;
 	int mtt_entry_sz;
 	int resize_srq;
-	u8  bmme_flags;
+	u32 bmme_flags;
 	u32 reserved_lkey;
 	u64 max_icm_sz;
+	int max_gso_sz;
+	u8  supported_port_types[MLX4_MAX_PORTS + 1];
+	u8  log_max_macs[MLX4_MAX_PORTS + 1];
+	u8  log_max_vlans[MLX4_MAX_PORTS + 1];
 };
 
 struct mlx4_adapter {
-	u32  vendor_id;
-	u32  device_id;
-	u32  revision_id;
 	char board_id[MLX4_BOARD_ID_LEN];
 	u8   inta_pin;
 };
@@ -163,5 +181,6 @@ int mlx4_SET_ICM_SIZE(struct mlx4_dev *dev, u64 icm_size, u64 *aux_pages);
 int mlx4_MAP_ICM_AUX(struct mlx4_dev *dev, struct mlx4_icm *icm);
 int mlx4_UNMAP_ICM_AUX(struct mlx4_dev *dev);
 int mlx4_NOP(struct mlx4_dev *dev);
+int mlx4_MOD_STAT_CFG(struct mlx4_dev *dev, struct mlx4_mod_stat_cfg *cfg);
 
 #endif /* MLX4_FW_H */

@@ -2,8 +2,7 @@
 #define _LINUX_RESOURCE_H
 
 #include <linux/time.h>
-
-struct task_struct;
+#include <linux/types.h>
 
 /*
  * Resource control/accounting header file for linux
@@ -19,6 +18,7 @@ struct task_struct;
 #define	RUSAGE_SELF	0
 #define	RUSAGE_CHILDREN	(-1)
 #define RUSAGE_BOTH	(-2)		/* sys_wait4() uses this */
+#define	RUSAGE_THREAD	1		/* only the calling thread */
 
 struct	rusage {
 	struct timeval ru_utime;	/* user time used */
@@ -44,6 +44,13 @@ struct rlimit {
 	unsigned long	rlim_max;
 };
 
+#define RLIM64_INFINITY		(~0ULL)
+
+struct rlimit64 {
+	__u64 rlim_cur;
+	__u64 rlim_max;
+};
+
 #define	PRIO_MIN	(-20)
 #define	PRIO_MAX	20
 
@@ -58,10 +65,10 @@ struct rlimit {
 #define _STK_LIM	(8*1024*1024)
 
 /*
- * GPG wants 32kB of mlocked memory, to make sure pass phrases
+ * GPG2 wants 64kB of mlocked memory, to make sure pass phrases
  * and other sensitive information are never written to disk.
  */
-#define MLOCK_LIMIT	(8 * PAGE_SIZE)
+#define MLOCK_LIMIT	((PAGE_SIZE > 64*1024) ? PAGE_SIZE : 64*1024)
 
 /*
  * Due to binary compatibility, the actual resource numbers
@@ -69,6 +76,14 @@ struct rlimit {
  */
 #include <asm/resource.h>
 
+#ifdef __KERNEL__
+
+struct task_struct;
+
 int getrusage(struct task_struct *p, int who, struct rusage __user *ru);
+int do_prlimit(struct task_struct *tsk, unsigned int resource,
+		struct rlimit *new_rlim, struct rlimit *old_rlim);
+
+#endif /* __KERNEL__ */
 
 #endif

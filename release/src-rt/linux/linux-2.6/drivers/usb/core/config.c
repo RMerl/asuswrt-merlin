@@ -1,5 +1,6 @@
 #include <linux/usb.h>
 #include <linux/usb/ch9.h>
+#include <linux/usb/hcd.h>
 #include <linux/usb/quirks.h>
 #include <linux/module.h>
 #include <linux/init.h>
@@ -7,7 +8,7 @@
 #include <linux/device.h>
 #include <asm/byteorder.h>
 #include "usb.h"
-#include "hcd.h"
+
 
 #define USB_MAXALTSETTING		128	/* Hard limit */
 #define USB_MAXENDPOINTS		30	/* Hard limit */
@@ -44,6 +45,102 @@ static int find_next_descriptor(unsigned char *buffer, int size,
 	return buffer - buffer0;
 }
 
+static void usb_parse_ss_endpoint_companion(struct device *ddev, int cfgno,
+		int inum, int asnum, struct usb_host_endpoint *ep,
+		unsigned char *buffer, int size)
+{
+	struct usb_ss_ep_comp_descriptor *desc;
+	int max_tx;
+
+	/* The SuperSpeed endpoint companion descriptor is supposed to
+	 * be the first thing immediately following the endpoint descriptor.
+	 */
+	desc = (struct usb_ss_ep_comp_descriptor *) buffer;
+	if (desc->bDescriptorType != USB_DT_SS_ENDPOINT_COMP ||
+			size < USB_DT_SS_EP_COMP_SIZE) {
+		dev_warn(ddev, "No SuperSpeed endpoint companion for config %d "
+				" interface %d altsetting %d ep %d: "
+				"using minimum values\n",
+				cfgno, inum, asnum, ep->desc.bEndpointAddress);
+
+		/* Fill in some default values.
+		 * Leave bmAttributes as zero, which will mean no streams for
+		 * bulk, and isoc won't support multiple bursts of packets.
+		 * With bursts of only one packet, and a Mult of 1, the max
+		 * amount of data moved per endpoint service interval is one
+		 * packet.
+		 */
+		ep->ss_ep_comp.bLength = USB_DT_SS_EP_COMP_SIZE;
+		ep->ss_ep_comp.bDescriptorType = USB_DT_SS_ENDPOINT_COMP;
+		if (usb_endpoint_xfer_isoc(&ep->desc) ||
+				usb_endpoint_xfer_int(&ep->desc))
+			ep->ss_ep_comp.wBytesPerInterval =
+					ep->desc.wMaxPacketSize;
+		return;
+	}
+
+	memcpy(&ep->ss_ep_comp, desc, USB_DT_SS_EP_COMP_SIZE);
+
+	/* Check the various values */
+	if (usb_endpoint_xfer_control(&ep->desc) && desc->bMaxBurst != 0) {
+		dev_warn(ddev, "Control endpoint with bMaxBurst = %d in "
+				"config %d interface %d altsetting %d ep %d: "
+				"setting to zero\n", desc->bMaxBurst,
+				cfgno, inum, asnum, ep->desc.bEndpointAddress);
+		ep->ss_ep_comp.bMaxBurst = 0;
+	} else if (desc->bMaxBurst > 15) {
+		dev_warn(ddev, "Endpoint with bMaxBurst = %d in "
+				"config %d interface %d altsetting %d ep %d: "
+				"setting to 15\n", desc->bMaxBurst,
+				cfgno, inum, asnum, ep->desc.bEndpointAddress);
+		ep->ss_ep_comp.bMaxBurst = 15;
+	}
+
+	if ((usb_endpoint_xfer_control(&ep->desc) ||
+			usb_endpoint_xfer_int(&ep->desc)) &&
+				desc->bmAttributes != 0) {
+		dev_warn(ddev, "%s endpoint with bmAttributes = %d in "
+				"config %d interface %d altsetting %d ep %d: "
+				"setting to zero\n",
+				usb_endpoint_xfer_control(&ep->desc) ? "Control" : "Bulk",
+				desc->bmAttributes,
+				cfgno, inum, asnum, ep->desc.bEndpointAddress);
+		ep->ss_ep_comp.bmAttributes = 0;
+	} else if (usb_endpoint_xfer_bulk(&ep->desc) &&
+			desc->bmAttributes > 16) {
+		dev_warn(ddev, "Bulk endpoint with more than 65536 streams in "
+				"config %d interface %d altsetting %d ep %d: "
+				"setting to max\n",
+				cfgno, inum, asnum, ep->desc.bEndpointAddress);
+		ep->ss_ep_comp.bmAttributes = 16;
+	} else if (usb_endpoint_xfer_isoc(&ep->desc) &&
+			desc->bmAttributes > 2) {
+		dev_warn(ddev, "Isoc endpoint has Mult of %d in "
+				"config %d interface %d altsetting %d ep %d: "
+				"setting to 3\n", desc->bmAttributes + 1,
+				cfgno, inum, asnum, ep->desc.bEndpointAddress);
+		ep->ss_ep_comp.bmAttributes = 2;
+	}
+
+	if (usb_endpoint_xfer_isoc(&ep->desc))
+		max_tx = ep->desc.wMaxPacketSize * (desc->bMaxBurst + 1) *
+			(desc->bmAttributes + 1);
+	else if (usb_endpoint_xfer_int(&ep->desc))
+		max_tx = ep->desc.wMaxPacketSize * (desc->bMaxBurst + 1);
+	else
+		max_tx = 999999;
+	if (desc->wBytesPerInterval > max_tx) {
+		dev_warn(ddev, "%s endpoint with wBytesPerInterval of %d in "
+				"config %d interface %d altsetting %d ep %d: "
+				"setting to %d\n",
+				usb_endpoint_xfer_isoc(&ep->desc) ? "Isoc" : "Int",
+				desc->wBytesPerInterval,
+				cfgno, inum, asnum, ep->desc.bEndpointAddress,
+				max_tx);
+		ep->ss_ep_comp.wBytesPerInterval = max_tx;
+	}
+}
+
 static int usb_parse_endpoint(struct device *ddev, int cfgno, int inum,
     int asnum, struct usb_host_interface *ifp, int num_ep,
     unsigned char *buffer, int size)
@@ -51,7 +148,7 @@ static int usb_parse_endpoint(struct device *ddev, int cfgno, int inum,
 	unsigned char *buffer0 = buffer;
 	struct usb_endpoint_descriptor *d;
 	struct usb_host_endpoint *endpoint;
-	int n, i, j;
+	int n, i, j, retval;
 
 	d = (struct usb_endpoint_descriptor *) buffer;
 	buffer += d->bLength;
@@ -93,6 +190,7 @@ static int usb_parse_endpoint(struct device *ddev, int cfgno, int inum,
 	if (usb_endpoint_xfer_int(d)) {
 		i = 1;
 		switch (to_usb_device(ddev)->speed) {
+		case USB_SPEED_SUPER:
 		case USB_SPEED_HIGH:
 			/* Many device manufacturers are using full-speed
 			 * bInterval values in high-speed interrupt endpoint
@@ -163,16 +261,22 @@ static int usb_parse_endpoint(struct device *ddev, int cfgno, int inum,
 				maxp);
 	}
 
+	/* Parse a possible SuperSpeed endpoint companion descriptor */
+	if (to_usb_device(ddev)->speed == USB_SPEED_SUPER)
+		usb_parse_ss_endpoint_companion(ddev, cfgno,
+				inum, asnum, endpoint, buffer, size);
+
 	/* Skip over any Class Specific or Vendor Specific descriptors;
 	 * find the next endpoint or interface descriptor */
 	endpoint->extra = buffer;
 	i = find_next_descriptor(buffer, size, USB_DT_ENDPOINT,
-	    USB_DT_INTERFACE, &n);
+			USB_DT_INTERFACE, &n);
 	endpoint->extralen = i;
+	retval = buffer - buffer0 + i;
 	if (n > 0)
 		dev_dbg(ddev, "skipped %d descriptor%s after %s\n",
 		    n, plural(n), "endpoint");
-	return buffer - buffer0 + i;
+	return retval;
 
 skip_to_next_endpoint_or_interface_descriptor:
 	i = find_next_descriptor(buffer, size, USB_DT_ENDPOINT,
@@ -377,7 +481,7 @@ static int usb_parse_configuration(struct usb_device *dev, int cfgidx,
 			if ((dev->quirks & USB_QUIRK_HONOR_BNUMINTERFACES) &&
 			    n >= nintf_orig) {
 				dev_warn(ddev, "config %d has more interface "
-				    "descriptors than it declares in "
+				    "descriptors, than it declares in "
 				    "bNumInterfaces, ignoring interface "
 				    "number: %d\n", cfgno, inum);
 				continue;
@@ -464,6 +568,8 @@ static int usb_parse_configuration(struct usb_device *dev, int cfgidx,
 		kref_init(&intfc->ref);
 	}
 
+	/* FIXME: parse the BOS descriptor */
+
 	/* Skip over any Class Specific or Vendor Specific descriptors;
 	 * find the first interface descriptor */
 	config->extra = buffer;
@@ -538,17 +644,29 @@ void usb_destroy_configuration(struct usb_device *dev)
 }
 
 
-// hub-only!! ... and only in reset path, or usb_new_device()
-// (used by real hubs and virtual root hubs)
+/*
+ * Get the USB config descriptors, cache and parse'em
+ *
+ * hub-only!! ... and only in reset path, or usb_new_device()
+ * (used by real hubs and virtual root hubs)
+ *
+ * NOTE: if this is a WUSB device and is not authorized, we skip the
+ *       whole thing. A non-authorized USB device has no
+ *       configurations.
+ */
 int usb_get_configuration(struct usb_device *dev)
 {
 	struct device *ddev = &dev->dev;
 	int ncfg = dev->descriptor.bNumConfigurations;
-	int result = -ENOMEM;
+	int result = 0;
 	unsigned int cfgno, length;
 	unsigned char *bigbuffer;
 	struct usb_config_descriptor *desc;
 
+	cfgno = 0;
+	if (dev->authorized == 0)	/* Not really an error */
+		goto out_not_authorized;
+	result = -ENOMEM;
 	if (ncfg > USB_MAXCONFIG) {
 		dev_warn(ddev, "too many configurations: %d, "
 		    "using maximum allowed: %d\n", ncfg, USB_MAXCONFIG);
@@ -574,14 +692,15 @@ int usb_get_configuration(struct usb_device *dev)
 	if (!desc)
 		goto err2;
 
-	for (cfgno = 0; cfgno < ncfg; cfgno++) {
+	result = 0;
+	for (; cfgno < ncfg; cfgno++) {
 		/* We grab just the first descriptor so we know how long
 		 * the whole configuration is */
 		result = usb_get_descriptor(dev, USB_DT_CONFIG, cfgno,
 		    desc, USB_DT_CONFIG_SIZE);
 		if (result < 0) {
 			dev_err(ddev, "unable to read config index %d "
-			    "descriptor/%s\n", cfgno, "start");
+			    "descriptor/%s: %d\n", cfgno, "start", result);
 			dev_err(ddev, "chopping to %d config(s)\n", cfgno);
 			dev->descriptor.bNumConfigurations = cfgno;
 			break;
@@ -628,6 +747,7 @@ int usb_get_configuration(struct usb_device *dev)
 
 err:
 	kfree(desc);
+out_not_authorized:
 	dev->descriptor.bNumConfigurations = cfgno;
 err2:
 	if (result == -ENOMEM)

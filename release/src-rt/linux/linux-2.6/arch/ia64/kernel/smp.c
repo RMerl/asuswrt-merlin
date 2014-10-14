@@ -58,48 +58,21 @@ static struct local_tlb_flush_counts {
 	unsigned int count;
 } __attribute__((__aligned__(32))) local_tlb_flush_counts[NR_CPUS];
 
-static DEFINE_PER_CPU(unsigned int, shadow_flush_counts[NR_CPUS]) ____cacheline_aligned;
-
-
-/*
- * Structure and data for smp_call_function(). This is designed to minimise static memory
- * requirements. It also looks cleaner.
- */
-static  __cacheline_aligned DEFINE_SPINLOCK(call_lock);
-
-struct call_data_struct {
-	void (*func) (void *info);
-	void *info;
-	long wait;
-	atomic_t started;
-	atomic_t finished;
-};
-
-static volatile struct call_data_struct *call_data;
+static DEFINE_PER_CPU_SHARED_ALIGNED(unsigned short [NR_CPUS],
+				     shadow_flush_counts);
 
 #define IPI_CALL_FUNC		0
 #define IPI_CPU_STOP		1
+#define IPI_CALL_FUNC_SINGLE	2
 #define IPI_KDUMP_CPU_STOP	3
 
 /* This needs to be cacheline aligned because it is written to by *other* CPUs.  */
-static DEFINE_PER_CPU(u64, ipi_operation) ____cacheline_aligned;
+static DEFINE_PER_CPU_SHARED_ALIGNED(unsigned long, ipi_operation);
 
 extern void cpu_halt (void);
 
-void
-lock_ipi_calllock(void)
-{
-	spin_lock_irq(&call_lock);
-}
-
-void
-unlock_ipi_calllock(void)
-{
-	spin_unlock_irq(&call_lock);
-}
-
 static void
-stop_this_cpu (void)
+stop_this_cpu(void)
 {
 	/*
 	 * Remove this CPU:
@@ -138,44 +111,23 @@ handle_IPI (int irq, void *dev_id)
 			ops &= ~(1 << which);
 
 			switch (which) {
-			      case IPI_CALL_FUNC:
-			      {
-				      struct call_data_struct *data;
-				      void (*func)(void *info);
-				      void *info;
-				      int wait;
-
-				      /* release the 'pointer lock' */
-				      data = (struct call_data_struct *) call_data;
-				      func = data->func;
-				      info = data->info;
-				      wait = data->wait;
-
-				      mb();
-				      atomic_inc(&data->started);
-				      /*
-				       * At this point the structure may be gone unless
-				       * wait is true.
-				       */
-				      (*func)(info);
-
-				      /* Notify the sending CPU that the task is done.  */
-				      mb();
-				      if (wait)
-					      atomic_inc(&data->finished);
-			      }
-			      break;
-
-			      case IPI_CPU_STOP:
+			case IPI_CPU_STOP:
 				stop_this_cpu();
 				break;
+			case IPI_CALL_FUNC:
+				generic_smp_call_function_interrupt();
+				break;
+			case IPI_CALL_FUNC_SINGLE:
+				generic_smp_call_function_single_interrupt();
+				break;
 #ifdef CONFIG_KEXEC
-			      case IPI_KDUMP_CPU_STOP:
+			case IPI_KDUMP_CPU_STOP:
 				unw_init_running(kdump_cpu_freeze, NULL);
 				break;
 #endif
-			      default:
-				printk(KERN_CRIT "Unknown IPI on CPU %d: %lu\n", this_cpu, which);
+			default:
+				printk(KERN_CRIT "Unknown IPI on CPU %d: %lu\n",
+						this_cpu, which);
 				break;
 			}
 		} while (ops);
@@ -184,6 +136,8 @@ handle_IPI (int irq, void *dev_id)
 	put_cpu();
 	return IRQ_HANDLED;
 }
+
+
 
 /*
  * Called with preemption disabled.
@@ -206,6 +160,19 @@ send_IPI_allbutself (int op)
 	for_each_online_cpu(i) {
 		if (i != smp_processor_id())
 			send_IPI_single(i, op);
+	}
+}
+
+/*
+ * Called with preemption disabled.
+ */
+static inline void
+send_IPI_mask(const struct cpumask *mask, int op)
+{
+	unsigned int cpu;
+
+	for_each_cpu(cpu, mask) {
+			send_IPI_single(cpu, op);
 	}
 }
 
@@ -259,6 +226,7 @@ smp_send_reschedule (int cpu)
 {
 	platform_send_ipi(cpu, IA64_IPI_RESCHEDULE, IA64_IPI_DM_INT, 0);
 }
+EXPORT_SYMBOL_GPL(smp_send_reschedule);
 
 /*
  * Called with preemption disabled.
@@ -288,7 +256,7 @@ smp_local_flush_tlb(void)
 void
 smp_flush_tlb_cpumask(cpumask_t xcpumask)
 {
-	unsigned int *counts = __ia64_per_cpu_var(shadow_flush_counts);
+	unsigned short *counts = __ia64_per_cpu_var(shadow_flush_counts);
 	cpumask_t cpumask = xcpumask;
 	int mycpu, cpu, flush_mycpu = 0;
 
@@ -296,7 +264,7 @@ smp_flush_tlb_cpumask(cpumask_t xcpumask)
 	mycpu = smp_processor_id();
 
 	for_each_cpu_mask(cpu, cpumask)
-		counts[cpu] = local_tlb_flush_counts[cpu].count;
+		counts[cpu] = local_tlb_flush_counts[cpu].count & 0xffff;
 
 	mb();
 	for_each_cpu_mask(cpu, cpumask) {
@@ -310,7 +278,7 @@ smp_flush_tlb_cpumask(cpumask_t xcpumask)
 		smp_local_flush_tlb();
 
 	for_each_cpu_mask(cpu, cpumask)
-		while(counts[cpu] == local_tlb_flush_counts[cpu].count)
+		while(counts[cpu] == (local_tlb_flush_counts[cpu].count & 0xffff))
 			udelay(FLUSH_DELAY);
 
 	preempt_enable();
@@ -319,12 +287,13 @@ smp_flush_tlb_cpumask(cpumask_t xcpumask)
 void
 smp_flush_tlb_all (void)
 {
-	on_each_cpu((void (*)(void *))local_flush_tlb_all, NULL, 1, 1);
+	on_each_cpu((void (*)(void *))local_flush_tlb_all, NULL, 1);
 }
 
 void
 smp_flush_tlb_mm (struct mm_struct *mm)
 {
+	cpumask_var_t cpus;
 	preempt_disable();
 	/* this happens for the common case of a single-threaded fork():  */
 	if (likely(mm == current->active_mm && atomic_read(&mm->mm_users) == 1))
@@ -333,131 +302,30 @@ smp_flush_tlb_mm (struct mm_struct *mm)
 		preempt_enable();
 		return;
 	}
-
+	if (!alloc_cpumask_var(&cpus, GFP_ATOMIC)) {
+		smp_call_function((void (*)(void *))local_finish_flush_tlb_mm,
+			mm, 1);
+	} else {
+		cpumask_copy(cpus, mm_cpumask(mm));
+		smp_call_function_many(cpus,
+			(void (*)(void *))local_finish_flush_tlb_mm, mm, 1);
+		free_cpumask_var(cpus);
+	}
+	local_irq_disable();
+	local_finish_flush_tlb_mm(mm);
+	local_irq_enable();
 	preempt_enable();
-	/*
-	 * We could optimize this further by using mm->cpu_vm_mask to track which CPUs
-	 * have been running in the address space.  It's not clear that this is worth the
-	 * trouble though: to avoid races, we have to raise the IPI on the target CPU
-	 * anyhow, and once a CPU is interrupted, the cost of local_flush_tlb_all() is
-	 * rather trivial.
-	 */
-	on_each_cpu((void (*)(void *))local_finish_flush_tlb_mm, mm, 1, 1);
 }
 
-/*
- * Run a function on another CPU
- *  <func>	The function to run. This must be fast and non-blocking.
- *  <info>	An arbitrary pointer to pass to the function.
- *  <nonatomic>	Currently unused.
- *  <wait>	If true, wait until function has completed on other CPUs.
- *  [RETURNS]   0 on success, else a negative status code.
- *
- * Does not return until the remote CPU is nearly ready to execute <func>
- * or is or has executed.
- */
-
-int
-smp_call_function_single (int cpuid, void (*func) (void *info), void *info, int nonatomic,
-			  int wait)
+void arch_send_call_function_single_ipi(int cpu)
 {
-	struct call_data_struct data;
-	int cpus = 1;
-	int me = get_cpu(); /* prevent preemption and reschedule on another processor */
-
-	if (cpuid == me) {
-		printk(KERN_INFO "%s: trying to call self\n", __FUNCTION__);
-		put_cpu();
-		return -EBUSY;
-	}
-
-	data.func = func;
-	data.info = info;
-	atomic_set(&data.started, 0);
-	data.wait = wait;
-	if (wait)
-		atomic_set(&data.finished, 0);
-
-	spin_lock_bh(&call_lock);
-
-	call_data = &data;
-	mb();	/* ensure store to call_data precedes setting of IPI_CALL_FUNC */
-  	send_IPI_single(cpuid, IPI_CALL_FUNC);
-
-	/* Wait for response */
-	while (atomic_read(&data.started) != cpus)
-		cpu_relax();
-
-	if (wait)
-		while (atomic_read(&data.finished) != cpus)
-			cpu_relax();
-	call_data = NULL;
-
-	spin_unlock_bh(&call_lock);
-	put_cpu();
-	return 0;
+	send_IPI_single(cpu, IPI_CALL_FUNC_SINGLE);
 }
-EXPORT_SYMBOL(smp_call_function_single);
 
-/*
- * this function sends a 'generic call function' IPI to all other CPUs
- * in the system.
- */
-
-/*
- *  [SUMMARY]	Run a function on all other CPUs.
- *  <func>	The function to run. This must be fast and non-blocking.
- *  <info>	An arbitrary pointer to pass to the function.
- *  <nonatomic>	currently unused.
- *  <wait>	If true, wait (atomically) until function has completed on other CPUs.
- *  [RETURNS]   0 on success, else a negative status code.
- *
- * Does not return until remote CPUs are nearly ready to execute <func> or are or have
- * executed.
- *
- * You must not call this function with disabled interrupts or from a
- * hardware interrupt handler or from a bottom half handler.
- */
-int
-smp_call_function (void (*func) (void *info), void *info, int nonatomic, int wait)
+void arch_send_call_function_ipi_mask(const struct cpumask *mask)
 {
-	struct call_data_struct data;
-	int cpus;
-
-	spin_lock(&call_lock);
-	cpus = num_online_cpus() - 1;
-	if (!cpus) {
-		spin_unlock(&call_lock);
-		return 0;
-	}
-
-	/* Can deadlock when called with interrupts disabled */
-	WARN_ON(irqs_disabled());
-
-	data.func = func;
-	data.info = info;
-	atomic_set(&data.started, 0);
-	data.wait = wait;
-	if (wait)
-		atomic_set(&data.finished, 0);
-
-	call_data = &data;
-	mb();	/* ensure store to call_data precedes setting of IPI_CALL_FUNC */
-	send_IPI_allbutself(IPI_CALL_FUNC);
-
-	/* Wait for response */
-	while (atomic_read(&data.started) != cpus)
-		cpu_relax();
-
-	if (wait)
-		while (atomic_read(&data.finished) != cpus)
-			cpu_relax();
-	call_data = NULL;
-
-	spin_unlock(&call_lock);
-	return 0;
+	send_IPI_mask(mask, IPI_CALL_FUNC);
 }
-EXPORT_SYMBOL(smp_call_function);
 
 /*
  * this function calls the 'stop' function on all other CPUs in the system.
@@ -468,7 +336,7 @@ smp_send_stop (void)
 	send_IPI_allbutself(IPI_CPU_STOP);
 }
 
-int __init
+int
 setup_profiling_timer (unsigned int multiplier)
 {
 	return -EINVAL;

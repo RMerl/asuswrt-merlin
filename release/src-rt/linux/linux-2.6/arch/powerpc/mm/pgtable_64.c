@@ -7,7 +7,6 @@
  *  Modifications by Paul Mackerras (PowerMac) (paulus@samba.org)
  *  and Cort Dougan (PReP) (cort@cs.nmt.edu)
  *    Copyright (C) 1996 Paul Mackerras
- *  Amiga/APUS changes by Jesper Skov (jskov@cygnus.co.uk).
  *
  *  Derived from "arch/i386/mm/init.c"
  *    Copyright (C) 1991, 1992, 1993, 1994  Linus Torvalds
@@ -34,55 +33,61 @@
 #include <linux/stddef.h>
 #include <linux/vmalloc.h>
 #include <linux/init.h>
-#include <linux/delay.h>
 #include <linux/bootmem.h>
-#include <linux/highmem.h>
-#include <linux/idr.h>
-#include <linux/nodemask.h>
-#include <linux/module.h>
+#include <linux/memblock.h>
+#include <linux/slab.h>
 
 #include <asm/pgalloc.h>
 #include <asm/page.h>
 #include <asm/prom.h>
-#include <asm/lmb.h>
-#include <asm/rtas.h>
 #include <asm/io.h>
 #include <asm/mmu_context.h>
 #include <asm/pgtable.h>
 #include <asm/mmu.h>
-#include <asm/uaccess.h>
 #include <asm/smp.h>
 #include <asm/machdep.h>
 #include <asm/tlb.h>
-#include <asm/eeh.h>
 #include <asm/processor.h>
-#include <asm/mmzone.h>
 #include <asm/cputable.h>
 #include <asm/sections.h>
 #include <asm/system.h>
-#include <asm/iommu.h>
 #include <asm/abs_addr.h>
-#include <asm/vdso.h>
 #include <asm/firmware.h>
 
 #include "mmu_decl.h"
 
-unsigned long ioremap_bot = IMALLOC_BASE;
-static unsigned long phbs_io_bot = PHBS_IO_BASE;
+unsigned long ioremap_bot = IOREMAP_BASE;
+
+
+#ifdef CONFIG_PPC_MMU_NOHASH
+static void *early_alloc_pgtable(unsigned long size)
+{
+	void *pt;
+
+	if (init_bootmem_done)
+		pt = __alloc_bootmem(size, size, __pa(MAX_DMA_ADDRESS));
+	else
+		pt = __va(memblock_alloc_base(size, size,
+					 __pa(MAX_DMA_ADDRESS)));
+	memset(pt, 0, size);
+
+	return pt;
+}
+#endif /* CONFIG_PPC_MMU_NOHASH */
 
 /*
- * map_io_page currently only called by __ioremap
- * map_io_page adds an entry to the ioremap page table
+ * map_kernel_page currently only called by __ioremap
+ * map_kernel_page adds an entry to the ioremap page table
  * and adds an entry to the HPT, possibly bolting it
  */
-static int map_io_page(unsigned long ea, unsigned long pa, int flags)
+int map_kernel_page(unsigned long ea, unsigned long pa, int flags)
 {
 	pgd_t *pgdp;
 	pud_t *pudp;
 	pmd_t *pmdp;
 	pte_t *ptep;
 
-	if (mem_init_done) {
+	if (slab_is_available()) {
 		pgdp = pgd_offset_k(ea);
 		pudp = pud_alloc(&init_mm, pgdp, ea);
 		if (!pudp)
@@ -96,6 +101,35 @@ static int map_io_page(unsigned long ea, unsigned long pa, int flags)
 		set_pte_at(&init_mm, ea, ptep, pfn_pte(pa >> PAGE_SHIFT,
 							  __pgprot(flags)));
 	} else {
+#ifdef CONFIG_PPC_MMU_NOHASH
+		/* Warning ! This will blow up if bootmem is not initialized
+		 * which our ppc64 code is keen to do that, we'll need to
+		 * fix it and/or be more careful
+		 */
+		pgdp = pgd_offset_k(ea);
+#ifdef PUD_TABLE_SIZE
+		if (pgd_none(*pgdp)) {
+			pudp = early_alloc_pgtable(PUD_TABLE_SIZE);
+			BUG_ON(pudp == NULL);
+			pgd_populate(&init_mm, pgdp, pudp);
+		}
+#endif /* PUD_TABLE_SIZE */
+		pudp = pud_offset(pgdp, ea);
+		if (pud_none(*pudp)) {
+			pmdp = early_alloc_pgtable(PMD_TABLE_SIZE);
+			BUG_ON(pmdp == NULL);
+			pud_populate(&init_mm, pudp, pmdp);
+		}
+		pmdp = pmd_offset(pudp, ea);
+		if (!pmd_present(*pmdp)) {
+			ptep = early_alloc_pgtable(PAGE_SIZE);
+			BUG_ON(ptep == NULL);
+			pmd_populate_kernel(&init_mm, pmdp, ptep);
+		}
+		ptep = pte_offset_kernel(pmdp, ea);
+		set_pte_at(&init_mm, ea, ptep, pfn_pte(pa >> PAGE_SHIFT,
+							  __pgprot(flags)));
+#else /* CONFIG_PPC_MMU_NOHASH */
 		/*
 		 * If the mm subsystem is not fully up, we cannot create a
 		 * linux page table entry for this mapping.  Simply bolt an
@@ -103,36 +137,67 @@ static int map_io_page(unsigned long ea, unsigned long pa, int flags)
 		 *
 		 */
 		if (htab_bolt_mapping(ea, ea + PAGE_SIZE, pa, flags,
-				      mmu_io_psize)) {
+				      mmu_io_psize, mmu_kernel_ssize)) {
 			printk(KERN_ERR "Failed to do bolted mapping IO "
 			       "memory at %016lx !\n", pa);
 			return -ENOMEM;
 		}
+#endif /* !CONFIG_PPC_MMU_NOHASH */
 	}
 	return 0;
 }
 
 
-static void __iomem * __ioremap_com(phys_addr_t addr, unsigned long pa,
-			    unsigned long ea, unsigned long size,
+/**
+ * __ioremap_at - Low level function to establish the page tables
+ *                for an IO mapping
+ */
+void __iomem * __ioremap_at(phys_addr_t pa, void *ea, unsigned long size,
 			    unsigned long flags)
 {
 	unsigned long i;
 
+	/* Make sure we have the base flags */
 	if ((flags & _PAGE_PRESENT) == 0)
 		flags |= pgprot_val(PAGE_KERNEL);
 
+	/* Non-cacheable page cannot be coherent */
+	if (flags & _PAGE_NO_CACHE)
+		flags &= ~_PAGE_COHERENT;
+
+	/* We don't support the 4K PFN hack with ioremap */
+	if (flags & _PAGE_4K_PFN)
+		return NULL;
+
+	WARN_ON(pa & ~PAGE_MASK);
+	WARN_ON(((unsigned long)ea) & ~PAGE_MASK);
+	WARN_ON(size & ~PAGE_MASK);
+
 	for (i = 0; i < size; i += PAGE_SIZE)
-		if (map_io_page(ea+i, pa+i, flags))
+		if (map_kernel_page((unsigned long)ea+i, pa+i, flags))
 			return NULL;
 
-	return (void __iomem *) (ea + (addr & ~PAGE_MASK));
+	return (void __iomem *)ea;
 }
 
-void __iomem * __ioremap(phys_addr_t addr, unsigned long size,
-			 unsigned long flags)
+/**
+ * __iounmap_from - Low level function to tear down the page tables
+ *                  for an IO mapping. This is used for mappings that
+ *                  are manipulated manually, like partial unmapping of
+ *                  PCI IOs or ISA space.
+ */
+void __iounmap_at(void *ea, unsigned long size)
 {
-	unsigned long pa, ea;
+	WARN_ON(((unsigned long)ea) & ~PAGE_MASK);
+	WARN_ON(size & ~PAGE_MASK);
+
+	unmap_kernel_range((unsigned long)ea, size);
+}
+
+void __iomem * __ioremap_caller(phys_addr_t addr, unsigned long size,
+				unsigned long flags, void *caller)
+{
+	phys_addr_t paligned;
 	void __iomem *ret;
 
 	/*
@@ -144,105 +209,81 @@ void __iomem * __ioremap(phys_addr_t addr, unsigned long size,
 	 * IMALLOC_END
 	 * 
 	 */
-	pa = addr & PAGE_MASK;
-	size = PAGE_ALIGN(addr + size) - pa;
+	paligned = addr & PAGE_MASK;
+	size = PAGE_ALIGN(addr + size) - paligned;
 
-	if ((size == 0) || (pa == 0))
+	if ((size == 0) || (paligned == 0))
 		return NULL;
 
 	if (mem_init_done) {
 		struct vm_struct *area;
-		area = im_get_free_area(size);
+
+		area = __get_vm_area_caller(size, VM_IOREMAP,
+					    ioremap_bot, IOREMAP_END,
+					    caller);
 		if (area == NULL)
 			return NULL;
-		ea = (unsigned long)(area->addr);
-		ret = __ioremap_com(addr, pa, ea, size, flags);
+
+		area->phys_addr = paligned;
+		ret = __ioremap_at(paligned, area->addr, size, flags);
 		if (!ret)
-			im_free(area->addr);
+			vunmap(area->addr);
 	} else {
-		ea = ioremap_bot;
-		ret = __ioremap_com(addr, pa, ea, size, flags);
+		ret = __ioremap_at(paligned, (void *)ioremap_bot, size, flags);
 		if (ret)
 			ioremap_bot += size;
 	}
+
+	if (ret)
+		ret += addr & ~PAGE_MASK;
 	return ret;
 }
 
+void __iomem * __ioremap(phys_addr_t addr, unsigned long size,
+			 unsigned long flags)
+{
+	return __ioremap_caller(addr, size, flags, __builtin_return_address(0));
+}
 
 void __iomem * ioremap(phys_addr_t addr, unsigned long size)
 {
 	unsigned long flags = _PAGE_NO_CACHE | _PAGE_GUARDED;
+	void *caller = __builtin_return_address(0);
 
 	if (ppc_md.ioremap)
-		return ppc_md.ioremap(addr, size, flags);
-	return __ioremap(addr, size, flags);
+		return ppc_md.ioremap(addr, size, flags, caller);
+	return __ioremap_caller(addr, size, flags, caller);
 }
 
 void __iomem * ioremap_flags(phys_addr_t addr, unsigned long size,
 			     unsigned long flags)
 {
+	void *caller = __builtin_return_address(0);
+
+	/* writeable implies dirty for kernel addresses */
+	if (flags & _PAGE_RW)
+		flags |= _PAGE_DIRTY;
+
+	/* we don't want to let _PAGE_USER and _PAGE_EXEC leak out */
+	flags &= ~(_PAGE_USER | _PAGE_EXEC);
+
+#ifdef _PAGE_BAP_SR
+	/* _PAGE_USER contains _PAGE_BAP_SR on BookE using the new PTE format
+	 * which means that we just cleared supervisor access... oops ;-) This
+	 * restores it
+	 */
+	flags |= _PAGE_BAP_SR;
+#endif
+
 	if (ppc_md.ioremap)
-		return ppc_md.ioremap(addr, size, flags);
-	return __ioremap(addr, size, flags);
+		return ppc_md.ioremap(addr, size, flags, caller);
+	return __ioremap_caller(addr, size, flags, caller);
 }
 
-
-#define IS_PAGE_ALIGNED(_val) ((_val) == ((_val) & PAGE_MASK))
-
-int __ioremap_explicit(phys_addr_t pa, unsigned long ea,
-		       unsigned long size, unsigned long flags)
-{
-	struct vm_struct *area;
-	void __iomem *ret;
-	
-	/* For now, require page-aligned values for pa, ea, and size */
-	if (!IS_PAGE_ALIGNED(pa) || !IS_PAGE_ALIGNED(ea) ||
-	    !IS_PAGE_ALIGNED(size)) {
-		printk(KERN_ERR	"unaligned value in %s\n", __FUNCTION__);
-		return 1;
-	}
-	
-	if (!mem_init_done) {
-		/* Two things to consider in this case:
-		 * 1) No records will be kept (imalloc, etc) that the region
-		 *    has been remapped
-		 * 2) It won't be easy to iounmap() the region later (because
-		 *    of 1)
-		 */
-		;
-	} else {
-		area = im_get_area(ea, size,
-			IM_REGION_UNUSED|IM_REGION_SUBSET|IM_REGION_EXISTS);
-		if (area == NULL) {
-			/* Expected when PHB-dlpar is in play */
-			return 1;
-		}
-		if (ea != (unsigned long) area->addr) {
-			printk(KERN_ERR "unexpected addr return from "
-			       "im_get_area\n");
-			return 1;
-		}
-	}
-	
-	ret = __ioremap_com(pa, pa, ea, size, flags);
-	if (ret == NULL) {
-		printk(KERN_ERR "ioremap_explicit() allocation failure !\n");
-		return 1;
-	}
-	if (ret != (void *) ea) {
-		printk(KERN_ERR "__ioremap_com() returned unexpected addr\n");
-		return 1;
-	}
-
-	return 0;
-}
 
 /*  
  * Unmap an IO region and remove it from imalloc'd list.
  * Access to IO memory should be serialized by driver.
- * This code is modeled after vmalloc code - unmap_vm_area()
- *
- * XXX	what about calls before mem_init_done (ie python_countermeasures())
  */
 void __iounmap(volatile void __iomem *token)
 {
@@ -251,9 +292,14 @@ void __iounmap(volatile void __iomem *token)
 	if (!mem_init_done)
 		return;
 	
-	addr = (void *) ((unsigned long __force) token & PAGE_MASK);
-
-	im_free(addr);
+	addr = (void *) ((unsigned long __force)
+			 PCI_FIX_ADDR(token) & PAGE_MASK);
+	if ((unsigned long)addr < ioremap_bot) {
+		printk(KERN_WARNING "Attempt to iounmap early bolted mapping"
+		       " at 0x%p\n", addr);
+		return;
+	}
+	vunmap(addr);
 }
 
 void iounmap(volatile void __iomem *token)
@@ -264,77 +310,10 @@ void iounmap(volatile void __iomem *token)
 		__iounmap(token);
 }
 
-static int iounmap_subset_regions(unsigned long addr, unsigned long size)
-{
-	struct vm_struct *area;
-
-	/* Check whether subsets of this region exist */
-	area = im_get_area(addr, size, IM_REGION_SUPERSET);
-	if (area == NULL)
-		return 1;
-
-	while (area) {
-		iounmap((void __iomem *) area->addr);
-		area = im_get_area(addr, size,
-				IM_REGION_SUPERSET);
-	}
-
-	return 0;
-}
-
-int __iounmap_explicit(volatile void __iomem *start, unsigned long size)
-{
-	struct vm_struct *area;
-	unsigned long addr;
-	int rc;
-	
-	addr = (unsigned long __force) start & PAGE_MASK;
-
-	/* Verify that the region either exists or is a subset of an existing
-	 * region.  In the latter case, split the parent region to create 
-	 * the exact region 
-	 */
-	area = im_get_area(addr, size, 
-			    IM_REGION_EXISTS | IM_REGION_SUBSET);
-	if (area == NULL) {
-		/* Determine whether subset regions exist.  If so, unmap */
-		rc = iounmap_subset_regions(addr, size);
-		if (rc) {
-			printk(KERN_ERR
-			       "%s() cannot unmap nonexistent range 0x%lx\n",
- 				__FUNCTION__, addr);
-			return 1;
-		}
-	} else {
-		iounmap((void __iomem *) area->addr);
-	}
-	/*
-	 * FIXME! This can't be right:
-	iounmap(area->addr);
-	 * Maybe it should be "iounmap(area);"
-	 */
-	return 0;
-}
-
 EXPORT_SYMBOL(ioremap);
 EXPORT_SYMBOL(ioremap_flags);
 EXPORT_SYMBOL(__ioremap);
+EXPORT_SYMBOL(__ioremap_at);
 EXPORT_SYMBOL(iounmap);
 EXPORT_SYMBOL(__iounmap);
-
-static DEFINE_SPINLOCK(phb_io_lock);
-
-void __iomem * reserve_phb_iospace(unsigned long size)
-{
-	void __iomem *virt_addr;
-		
-	if (phbs_io_bot >= IMALLOC_BASE) 
-		panic("reserve_phb_iospace(): phb io space overflow\n");
-			
-	spin_lock(&phb_io_lock);
-	virt_addr = (void __iomem *) phbs_io_bot;
-	phbs_io_bot += size;
-	spin_unlock(&phb_io_lock);
-
-	return virt_addr;
-}
+EXPORT_SYMBOL(__iounmap_at);

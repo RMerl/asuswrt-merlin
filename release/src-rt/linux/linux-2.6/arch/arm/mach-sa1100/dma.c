@@ -18,8 +18,8 @@
 
 #include <asm/system.h>
 #include <asm/irq.h>
-#include <asm/hardware.h>
-#include <asm/dma.h>
+#include <mach/hardware.h>
+#include <mach/dma.h>
 
 
 #undef DEBUG
@@ -39,7 +39,7 @@ typedef struct {
 
 static sa1100_dma_t dma_chan[SA1100_DMA_CHANNELS];
 
-static spinlock_t dma_list_lock;
+static DEFINE_SPINLOCK(dma_list_lock);
 
 
 static irqreturn_t dma_irq_handler(int irq, void *dev_id)
@@ -65,7 +65,7 @@ static irqreturn_t dma_irq_handler(int irq, void *dev_id)
 
 
 /**
- *	sa1100_request_dma - allocate one of the SA11x0's DMA chanels
+ *	sa1100_request_dma - allocate one of the SA11x0's DMA channels
  *	@device: The SA11x0 peripheral targeted by this request
  *	@device_id: An ascii name for the claiming device
  *	@callback: Function to be called when the DMA completes
@@ -76,7 +76,7 @@ static irqreturn_t dma_irq_handler(int irq, void *dev_id)
  * 	address of the hardware registers for that channel as the channel
  * 	identifier. This identifier is written to the location pointed by
  * 	@dma_regs. The list of possible values for @device are listed into
- * 	linux/include/asm-arm/arch-sa1100/dma.h as a dma_device_t enum.
+ * 	arch/arm/mach-sa1100/include/mach/dma.h as a dma_device_t enum.
  *
  * 	Note that reading from a port and writing to the same port are
  * 	actually considered as two different streams requiring separate
@@ -113,10 +113,10 @@ int sa1100_request_dma (dma_device_t device, const char *device_id,
 		}
 	}
 	if (!err) {
-	       if (dma)
-		       dma->device = device;
-	       else
-		       err = -ENOSR;
+		if (dma)
+			dma->device = device;
+		else
+			err = -ENOSR;
 	}
 	spin_unlock(&dma_list_lock);
 	if (err)
@@ -129,7 +129,7 @@ int sa1100_request_dma (dma_device_t device, const char *device_id,
 	if (err) {
 		printk(KERN_ERR
 		       "%s: unable to request IRQ %d for %s\n",
-		       __FUNCTION__, IRQ_DMA0 + i, device_id);
+		       __func__, IRQ_DMA0 + i, device_id);
 		dma->device = 0;
 		return err;
 	}
@@ -165,12 +165,12 @@ void sa1100_free_dma(dma_regs_t *regs)
 		if (regs == (dma_regs_t *)&DDAR(i))
 			break;
 	if (i >= SA1100_DMA_CHANNELS) {
-		printk(KERN_ERR "%s: bad DMA identifier\n", __FUNCTION__);
+		printk(KERN_ERR "%s: bad DMA identifier\n", __func__);
 		return;
 	}
 
 	if (!dma_chan[i].device) {
-		printk(KERN_ERR "%s: Trying to free free DMA\n", __FUNCTION__);
+		printk(KERN_ERR "%s: Trying to free free DMA\n", __func__);
 		return;
 	}
 
@@ -329,7 +329,7 @@ void sa1100_reset_dma(dma_regs_t *regs)
 		if (regs == (dma_regs_t *)&DDAR(i))
 			break;
 	if (i >= SA1100_DMA_CHANNELS) {
-		printk(KERN_ERR "%s: bad DMA identifier\n", __FUNCTION__);
+		printk(KERN_ERR "%s: bad DMA identifier\n", __func__);
 		return;
 	}
 

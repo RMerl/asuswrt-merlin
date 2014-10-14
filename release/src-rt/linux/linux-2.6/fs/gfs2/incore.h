@@ -1,6 +1,6 @@
 /*
  * Copyright (C) Sistina Software, Inc.  1997-2003 All rights reserved.
- * Copyright (C) 2004-2006 Red Hat, Inc.  All rights reserved.
+ * Copyright (C) 2004-2008 Red Hat, Inc.  All rights reserved.
  *
  * This copyrighted material is made available to anyone wishing to use,
  * modify, copy, or redistribute it subject to the terms and conditions
@@ -11,6 +11,12 @@
 #define __INCORE_DOT_H__
 
 #include <linux/fs.h>
+#include <linux/kobject.h>
+#include <linux/workqueue.h>
+#include <linux/dlm.h>
+#include <linux/buffer_head.h>
+#include <linux/rcupdate.h>
+#include <linux/rculist_bl.h>
 
 #define DIO_WAIT	0x00000010
 #define DIO_METADATA	0x00000020
@@ -25,8 +31,17 @@ struct gfs2_trans;
 struct gfs2_ail;
 struct gfs2_jdesc;
 struct gfs2_sbd;
+struct lm_lockops;
 
 typedef void (*gfs2_glop_bh_t) (struct gfs2_glock *gl, unsigned int ret);
+
+struct gfs2_log_header_host {
+	u64 lh_sequence;	/* Sequence number of this transaction */
+	u32 lh_flags;		/* GFS2_LOG_HEAD_... */
+	u32 lh_tail;		/* Block number of log tail */
+	u32 lh_blkno;
+	u32 lh_hash;
+};
 
 /*
  * Structure of operations that are associated with each
@@ -35,7 +50,6 @@ typedef void (*gfs2_glop_bh_t) (struct gfs2_glock *gl, unsigned int ret);
 
 struct gfs2_log_operations {
 	void (*lo_add) (struct gfs2_sbd *sdp, struct gfs2_log_element *le);
-	void (*lo_incore_commit) (struct gfs2_sbd *sdp, struct gfs2_trans *tr);
 	void (*lo_before_commit) (struct gfs2_sbd *sdp);
 	void (*lo_after_commit) (struct gfs2_sbd *sdp, struct gfs2_ail *ai);
 	void (*lo_before_scan) (struct gfs2_jdesc *jd,
@@ -52,9 +66,12 @@ struct gfs2_log_element {
 	const struct gfs2_log_operations *le_ops;
 };
 
+#define GBF_FULL 1
+
 struct gfs2_bitmap {
 	struct buffer_head *bi_bh;
 	char *bi_clone;
+	unsigned long bi_flags;
 	u32 bi_offset;
 	u32 bi_start;
 	u32 bi_len;
@@ -63,19 +80,27 @@ struct gfs2_bitmap {
 struct gfs2_rgrpd {
 	struct list_head rd_list;	/* Link with superblock */
 	struct list_head rd_list_mru;
-	struct list_head rd_recent;	/* Recently used rgrps */
 	struct gfs2_glock *rd_gl;	/* Glock for this rgrp */
-	struct gfs2_rindex_host rd_ri;
-	struct gfs2_rgrp_host rd_rg;
-	u64 rd_rg_vn;
-	struct gfs2_bitmap *rd_bits;
-	unsigned int rd_bh_count;
-	struct mutex rd_mutex;
+	u64 rd_addr;			/* grp block disk address */
+	u64 rd_data0;			/* first data location */
+	u32 rd_length;			/* length of rgrp header in fs blocks */
+	u32 rd_data;			/* num of data blocks in rgrp */
+	u32 rd_bitbytes;		/* number of bytes in data bitmaps */
+	u32 rd_free;
 	u32 rd_free_clone;
+	u32 rd_dinodes;
+	u64 rd_igeneration;
+	struct gfs2_bitmap *rd_bits;
+	struct mutex rd_mutex;
 	struct gfs2_log_element rd_le;
-	u32 rd_last_alloc_data;
-	u32 rd_last_alloc_meta;
 	struct gfs2_sbd *rd_sbd;
+	unsigned int rd_bh_count;
+	u32 rd_last_alloc;
+	u32 rd_flags;
+#define GFS2_RDF_CHECK		0x10000000 /* check for unlinked inodes */
+#define GFS2_RDF_UPTODATE	0x20000000 /* rg is up to date */
+#define GFS2_RDF_ERROR		0x40000000 /* error in rg */
+#define GFS2_RDF_MASK		0xf0000000 /* mask for internal flags */
 };
 
 enum gfs2_state_bits {
@@ -92,7 +117,13 @@ struct gfs2_bufdata {
 	struct buffer_head *bd_bh;
 	struct gfs2_glock *bd_gl;
 
-	struct list_head bd_list_tr;
+	union {
+		struct list_head list_tr;
+		u64 blkno;
+	} u;
+#define bd_list_tr u.list_tr
+#define bd_blkno u.blkno
+
 	struct gfs2_log_element bd_le;
 
 	struct gfs2_ail *bd_ail;
@@ -100,26 +131,47 @@ struct gfs2_bufdata {
 	struct list_head bd_ail_gl_list;
 };
 
+/*
+ * Internally, we prefix things with gdlm_ and GDLM_ (for gfs-dlm) since a
+ * prefix of lock_dlm_ gets awkward.
+ */
+
+#define GDLM_STRNAME_BYTES	25
+#define GDLM_LVB_SIZE		32
+
+enum {
+	DFL_BLOCK_LOCKS		= 0,
+};
+
+struct lm_lockname {
+	u64 ln_number;
+	unsigned int ln_type;
+};
+
+#define lm_name_equal(name1, name2) \
+        (((name1)->ln_number == (name2)->ln_number) && \
+         ((name1)->ln_type == (name2)->ln_type))
+
+
 struct gfs2_glock_operations {
 	void (*go_xmote_th) (struct gfs2_glock *gl);
-	void (*go_xmote_bh) (struct gfs2_glock *gl);
-	void (*go_drop_th) (struct gfs2_glock *gl);
+	int (*go_xmote_bh) (struct gfs2_glock *gl, struct gfs2_holder *gh);
 	void (*go_inval) (struct gfs2_glock *gl, int flags);
-	int (*go_demote_ok) (struct gfs2_glock *gl);
+	int (*go_demote_ok) (const struct gfs2_glock *gl);
 	int (*go_lock) (struct gfs2_holder *gh);
 	void (*go_unlock) (struct gfs2_holder *gh);
+	int (*go_dump)(struct seq_file *seq, const struct gfs2_glock *gl);
+	void (*go_callback) (struct gfs2_glock *gl);
 	const int go_type;
+	const unsigned long go_min_hold_time;
+	const unsigned long go_flags;
+#define GLOF_ASPACE 1
 };
 
 enum {
-	/* Actions */
-	HIF_MUTEX		= 0,
-	HIF_PROMOTE		= 1,
-
 	/* States */
-	HIF_HOLDER		= 6,
+	HIF_HOLDER		= 6,  /* Set for gh that "holds" the glock */
 	HIF_FIRST		= 7,
-	HIF_ABORTED		= 9,
 	HIF_WAIT		= 10,
 };
 
@@ -127,62 +179,67 @@ struct gfs2_holder {
 	struct list_head gh_list;
 
 	struct gfs2_glock *gh_gl;
-	pid_t gh_owner_pid;
+	struct pid *gh_owner_pid;
 	unsigned int gh_state;
 	unsigned gh_flags;
 
 	int gh_error;
-	unsigned long gh_iflags;
+	unsigned long gh_iflags; /* HIF_... */
 	unsigned long gh_ip;
 };
 
 enum {
-	GLF_LOCK		= 1,
-	GLF_STICKY		= 2,
-	GLF_DEMOTE		= 3,
-	GLF_DIRTY		= 5,
+	GLF_LOCK			= 1,
+	GLF_DEMOTE			= 3,
+	GLF_PENDING_DEMOTE		= 4,
+	GLF_DEMOTE_IN_PROGRESS		= 5,
+	GLF_DIRTY			= 6,
+	GLF_LFLUSH			= 7,
+	GLF_INVALIDATE_IN_PROGRESS	= 8,
+	GLF_REPLY_PENDING		= 9,
+	GLF_INITIAL			= 10,
+	GLF_FROZEN			= 11,
+	GLF_QUEUED			= 12,
 };
 
 struct gfs2_glock {
-	struct hlist_node gl_list;
+	struct hlist_bl_node gl_list;
 	unsigned long gl_flags;		/* GLF_... */
 	struct lm_lockname gl_name;
 	atomic_t gl_ref;
 
 	spinlock_t gl_spin;
 
-	unsigned int gl_state;
+	/* State fields protected by gl_spin */
+	unsigned int gl_state:2,	/* Current state */
+		     gl_target:2,	/* Target state */
+		     gl_demote_state:2,	/* State requested by remote node */
+		     gl_req:2,		/* State in last dlm request */
+		     gl_reply:8;	/* Last reply from the dlm */
+
 	unsigned int gl_hash;
-	unsigned int gl_demote_state; /* state requested by remote node */
 	unsigned long gl_demote_time; /* time of first demote request */
-	pid_t gl_owner_pid;
-	unsigned long gl_ip;
 	struct list_head gl_holders;
-	struct list_head gl_waiters1;	/* HIF_MUTEX */
-	struct list_head gl_waiters3;	/* HIF_PROMOTE */
 
 	const struct gfs2_glock_operations *gl_ops;
-
-	struct gfs2_holder *gl_req_gh;
-	gfs2_glop_bh_t gl_req_bh;
-
-	void *gl_lock;
-	char *gl_lvb;
-	atomic_t gl_lvb_count;
-
-	u64 gl_vn;
-	unsigned long gl_stamp;
+	char gl_strname[GDLM_STRNAME_BYTES];
+	struct dlm_lksb gl_lksb;
+	char gl_lvb[32];
+	unsigned long gl_tchange;
 	void *gl_object;
 
-	struct list_head gl_reclaim;
+	struct list_head gl_lru;
 
 	struct gfs2_sbd *gl_sbd;
 
-	struct inode *gl_aspace;
-	struct gfs2_log_element gl_le;
 	struct list_head gl_ail_list;
 	atomic_t gl_ail_count;
+	struct delayed_work gl_work;
+	struct work_struct gl_delete;
+	struct rcu_head gl_rcu;
 };
+
+#define GFS2_MIN_LVB_SIZE 32	/* Min size of LVB that gfs2 supports */
 
 struct gfs2_alloc {
 	/* Quota stuff */
@@ -207,29 +264,28 @@ struct gfs2_alloc {
 enum {
 	GIF_INVALID		= 0,
 	GIF_QD_LOCKED		= 1,
-	GIF_PAGED		= 2,
 	GIF_SW_PAGED		= 3,
 };
 
+
 struct gfs2_inode {
 	struct inode i_inode;
-	struct gfs2_inum_host i_num;
-
+	u64 i_no_addr;
+	u64 i_no_formal_ino;
+	u64 i_generation;
+	u64 i_eattr;
 	unsigned long i_flags;		/* GIF_... */
-
-	struct gfs2_dinode_host i_di; /* To be replaced by ref to block */
-
 	struct gfs2_glock *i_gl; /* Move into i_gh? */
 	struct gfs2_holder i_iopen_gh;
 	struct gfs2_holder i_gh; /* for prepare/commit_write only */
-	struct gfs2_alloc i_alloc;
-	u64 i_last_rg_alloc;
-
-	spinlock_t i_spin;
+	struct gfs2_alloc *i_alloc;
+	u64 i_goal;	/* goal block for allocations */
 	struct rw_semaphore i_rw_mutex;
-	unsigned long i_last_pfault;
-
-	struct buffer_head *i_cache[GFS2_MAX_META_HEIGHT];
+	struct list_head i_trunc_list;
+	u32 i_entries;
+	u32 i_diskflags;
+	u8 i_height;
+	u8 i_depth;
 };
 
 /*
@@ -241,26 +297,14 @@ static inline struct gfs2_inode *GFS2_I(struct inode *inode)
 	return container_of(inode, struct gfs2_inode, i_inode);
 }
 
-/* To be removed? */
-static inline struct gfs2_sbd *GFS2_SB(struct inode *inode)
+static inline struct gfs2_sbd *GFS2_SB(const struct inode *inode)
 {
 	return inode->i_sb->s_fs_info;
 }
 
-enum {
-	GFF_DID_DIRECT_ALLOC	= 0,
-	GFF_EXLOCK = 1,
-};
-
 struct gfs2_file {
-	unsigned long f_flags;		/* GFF_... */
 	struct mutex f_fl_mutex;
 	struct gfs2_holder f_fl_gh;
-};
-
-struct gfs2_revoke {
-	struct gfs2_log_element rv_le;
-	u64 rv_blkno;
 };
 
 struct gfs2_revoke_replay {
@@ -273,19 +317,14 @@ enum {
 	QDF_USER		= 0,
 	QDF_CHANGE		= 1,
 	QDF_LOCKED		= 2,
-};
-
-struct gfs2_quota_lvb {
-        __be32 qb_magic;
-        u32 __pad;
-        __be64 qb_limit;      /* Hard limit of # blocks to alloc */
-        __be64 qb_warn;       /* Warn user when alloc is above this # */
-        __be64 qb_value;       /* Current # blocks allocated */
+	QDF_REFRESH		= 3,
 };
 
 struct gfs2_quota_data {
 	struct list_head qd_list;
-	unsigned int qd_count;
+	struct list_head qd_reclaim;
+
+	atomic_t qd_count;
 
 	u32 qd_id;
 	unsigned long qd_flags;		/* QDF_... */
@@ -305,13 +344,6 @@ struct gfs2_quota_data {
 
 	u64 qd_sync_gen;
 	unsigned long qd_last_warn;
-	unsigned long qd_last_touched;
-};
-
-struct gfs2_log_buf {
-	struct list_head lb_list;
-	struct buffer_head *lb_bh;
-	struct buffer_head *lb_real;
 };
 
 struct gfs2_trans {
@@ -327,7 +359,9 @@ struct gfs2_trans {
 
 	unsigned int tr_num_buf;
 	unsigned int tr_num_buf_new;
+	unsigned int tr_num_databuf_new;
 	unsigned int tr_num_buf_rm;
+	unsigned int tr_num_databuf_rm;
 	struct list_head tr_list_buf;
 
 	unsigned int tr_num_revoke;
@@ -344,18 +378,30 @@ struct gfs2_ail {
 	u64 ai_sync_gen;
 };
 
+struct gfs2_journal_extent {
+	struct list_head extent_list;
+
+	unsigned int lblock; /* First logical block */
+	u64 dblock; /* First disk block */
+	u64 blocks;
+};
+
 struct gfs2_jdesc {
 	struct list_head jd_list;
-
+	struct list_head extent_list;
+	struct work_struct jd_work;
 	struct inode *jd_inode;
+	unsigned long jd_flags;
+#define JDF_RECOVERY 1
 	unsigned int jd_jid;
-	int jd_dirty;
-
 	unsigned int jd_blocks;
 };
 
-#define GFS2_GLOCKD_DEFAULT	1
-#define GFS2_GLOCKD_MAX		16
+struct gfs2_statfs_change_host {
+	s64 sc_total;
+	s64 sc_free;
+	s64 sc_dinodes;
+};
 
 #define GFS2_QUOTA_DEFAULT	GFS2_QUOTA_OFF
 #define GFS2_QUOTA_OFF		0
@@ -366,53 +412,46 @@ struct gfs2_jdesc {
 #define GFS2_DATA_WRITEBACK	1
 #define GFS2_DATA_ORDERED	2
 
+#define GFS2_ERRORS_DEFAULT     GFS2_ERRORS_WITHDRAW
+#define GFS2_ERRORS_WITHDRAW    0
+#define GFS2_ERRORS_CONTINUE    1 /* place holder for future feature */
+#define GFS2_ERRORS_RO          2 /* place holder for future feature */
+#define GFS2_ERRORS_PANIC       3
+
 struct gfs2_args {
-	char ar_lockproto[GFS2_LOCKNAME_LEN]; /* Name of the Lock Protocol */
-	char ar_locktable[GFS2_LOCKNAME_LEN]; /* Name of the Lock Table */
-	char ar_hostdata[GFS2_LOCKNAME_LEN]; /* Host specific data */
-	int ar_spectator; /* Don't get a journal because we're always RO */
-	int ar_ignore_local_fs; /* Don't optimize even if local_fs is 1 */
-	int ar_localflocks; /* Let the VFS do flock|fcntl locks for us */
-	int ar_localcaching; /* Local-style caching (dangerous on multihost) */
-	int ar_debug; /* Oops on errors instead of trying to be graceful */
-	int ar_upgrade; /* Upgrade ondisk/multihost format */
-	unsigned int ar_num_glockd; /* Number of glockd threads */
-	int ar_posix_acl; /* Enable posix acls */
-	int ar_quota; /* off/account/on */
-	int ar_suiddir; /* suiddir support */
-	int ar_data; /* ordered/writeback */
+	char ar_lockproto[GFS2_LOCKNAME_LEN];	/* Name of the Lock Protocol */
+	char ar_locktable[GFS2_LOCKNAME_LEN];	/* Name of the Lock Table */
+	char ar_hostdata[GFS2_LOCKNAME_LEN];	/* Host specific data */
+	unsigned int ar_spectator:1;		/* Don't get a journal */
+	unsigned int ar_localflocks:1;		/* Let the VFS do flock|fcntl */
+	unsigned int ar_debug:1;		/* Oops on errors */
+	unsigned int ar_posix_acl:1;		/* Enable posix acls */
+	unsigned int ar_quota:2;		/* off/account/on */
+	unsigned int ar_suiddir:1;		/* suiddir support */
+	unsigned int ar_data:2;			/* ordered/writeback */
+	unsigned int ar_meta:1;			/* mount metafs */
+	unsigned int ar_discard:1;		/* discard requests */
+	unsigned int ar_errors:2;               /* errors=withdraw | panic */
+	unsigned int ar_nobarrier:1;            /* do not send barriers */
+	int ar_commit;				/* Commit interval */
+	int ar_statfs_quantum;			/* The fast statfs interval */
+	int ar_quota_quantum;			/* The quota interval */
+	int ar_statfs_percent;			/* The % change to force sync */
 };
 
 struct gfs2_tune {
 	spinlock_t gt_spin;
 
-	unsigned int gt_ilimit;
-	unsigned int gt_ilimit_tries;
-	unsigned int gt_ilimit_min;
-	unsigned int gt_demote_secs; /* Cache retention for unheld glock */
-	unsigned int gt_incore_log_blocks;
-	unsigned int gt_log_flush_secs;
-	unsigned int gt_jindex_refresh_secs; /* Check for new journal index */
-
-	unsigned int gt_scand_secs;
-	unsigned int gt_recoverd_secs;
 	unsigned int gt_logd_secs;
-	unsigned int gt_quotad_secs;
 
 	unsigned int gt_quota_simul_sync; /* Max quotavals to sync at once */
 	unsigned int gt_quota_warn_period; /* Secs between quota warn msgs */
 	unsigned int gt_quota_scale_num; /* Numerator */
 	unsigned int gt_quota_scale_den; /* Denominator */
-	unsigned int gt_quota_cache_secs;
 	unsigned int gt_quota_quantum; /* Secs between syncs to quota file */
-	unsigned int gt_atime_quantum; /* Min secs between atime updates */
 	unsigned int gt_new_files_jdata;
-	unsigned int gt_new_files_directio;
 	unsigned int gt_max_readahead; /* Max bytes to read-ahead from disk */
-	unsigned int gt_lockdump_size;
-	unsigned int gt_stall_secs; /* Detects trouble! */
 	unsigned int gt_complain_secs;
-	unsigned int gt_reclaim_limit; /* Max num of glocks in reclaim list */
 	unsigned int gt_statfs_quantum;
 	unsigned int gt_statfs_slow;
 };
@@ -421,14 +460,61 @@ enum {
 	SDF_JOURNAL_CHECKED	= 0,
 	SDF_JOURNAL_LIVE	= 1,
 	SDF_SHUTDOWN		= 2,
-	SDF_NOATIME		= 3,
+	SDF_NOBARRIERS		= 3,
+	SDF_NORECOVERY		= 4,
+	SDF_DEMOTE		= 5,
+	SDF_NOJOURNALID		= 6,
 };
 
 #define GFS2_FSNAME_LEN		256
 
+struct gfs2_inum_host {
+	u64 no_formal_ino;
+	u64 no_addr;
+};
+
+struct gfs2_sb_host {
+	u32 sb_magic;
+	u32 sb_type;
+	u32 sb_format;
+
+	u32 sb_fs_format;
+	u32 sb_multihost_format;
+	u32 sb_bsize;
+	u32 sb_bsize_shift;
+
+	struct gfs2_inum_host sb_master_dir;
+	struct gfs2_inum_host sb_root_dir;
+
+	char sb_lockproto[GFS2_LOCKNAME_LEN];
+	char sb_locktable[GFS2_LOCKNAME_LEN];
+	u8 sb_uuid[16];
+};
+
+/*
+ * lm_mount() return values
+ *
+ * ls_jid - the journal ID this node should use
+ * ls_first - this node is the first to mount the file system
+ * ls_lockspace - lock module's context for this file system
+ * ls_ops - lock module's functions
+ */
+
+struct lm_lockstruct {
+	int ls_jid;
+	unsigned int ls_first;
+	unsigned int ls_first_done;
+	unsigned int ls_nodir;
+	const struct lm_lockops *ls_ops;
+	unsigned long ls_flags;
+	dlm_lockspace_t *ls_dlm;
+
+	int ls_recover_jid_done;
+	int ls_recover_jid_status;
+};
+
 struct gfs2_sbd {
 	struct super_block *sd_vfs;
-	struct super_block *sd_vfs_meta;
 	struct kobject sd_kobj;
 	unsigned long sd_flags;	/* SDF_... */
 	struct gfs2_sb_host sd_sb;
@@ -446,9 +532,9 @@ struct gfs2_sbd {
 	u32 sd_qc_per_block;
 	u32 sd_max_dirres;	/* Max blocks needed to add a directory entry */
 	u32 sd_max_height;	/* Max height of a file's metadata tree */
-	u64 sd_heightsize[GFS2_MAX_META_HEIGHT];
+	u64 sd_heightsize[GFS2_MAX_META_HEIGHT + 1];
 	u32 sd_max_jheight; /* Max height of journaled file's meta tree */
-	u64 sd_jheightsize[GFS2_MAX_META_HEIGHT];
+	u64 sd_jheightsize[GFS2_MAX_META_HEIGHT + 1];
 
 	struct gfs2_args sd_args;	/* Mount arguments */
 	struct gfs2_tune sd_tune;	/* Filesystem tuning structure */
@@ -456,48 +542,41 @@ struct gfs2_sbd {
 	/* Lock Stuff */
 
 	struct lm_lockstruct sd_lockstruct;
-	struct list_head sd_reclaim_list;
-	spinlock_t sd_reclaim_lock;
-	wait_queue_head_t sd_reclaim_wq;
-	atomic_t sd_reclaim_count;
 	struct gfs2_holder sd_live_gh;
 	struct gfs2_glock *sd_rename_gl;
 	struct gfs2_glock *sd_trans_gl;
+	wait_queue_head_t sd_glock_wait;
+	atomic_t sd_glock_disposal;
 
 	/* Inode Stuff */
 
-	struct inode *sd_master_dir;
+	struct dentry *sd_master_dir;
+	struct dentry *sd_root_dir;
+
 	struct inode *sd_jindex;
-	struct inode *sd_inum_inode;
 	struct inode *sd_statfs_inode;
-	struct inode *sd_ir_inode;
 	struct inode *sd_sc_inode;
 	struct inode *sd_qc_inode;
 	struct inode *sd_rindex;
 	struct inode *sd_quota_inode;
 
-	/* Inum stuff */
-
-	struct mutex sd_inum_mutex;
-
 	/* StatFS stuff */
 
 	spinlock_t sd_statfs_spin;
-	struct mutex sd_statfs_mutex;
 	struct gfs2_statfs_change_host sd_statfs_master;
 	struct gfs2_statfs_change_host sd_statfs_local;
-	unsigned long sd_statfs_sync_time;
+	int sd_statfs_force_sync;
 
 	/* Resource group stuff */
 
-	u64 sd_rindex_vn;
+	int sd_rindex_uptodate;
 	spinlock_t sd_rindex_spin;
 	struct mutex sd_rindex_mutex;
 	struct list_head sd_rindex_list;
 	struct list_head sd_rindex_mru_list;
-	struct list_head sd_rindex_recent_list;
 	struct gfs2_rgrpd *sd_rindex_forward;
 	unsigned int sd_rgrps;
+	unsigned int sd_max_rg_data;
 
 	/* Journal index stuff */
 
@@ -505,38 +584,33 @@ struct gfs2_sbd {
 	spinlock_t sd_jindex_spin;
 	struct mutex sd_jindex_mutex;
 	unsigned int sd_journals;
-	unsigned long sd_jindex_refresh_time;
 
 	struct gfs2_jdesc *sd_jdesc;
 	struct gfs2_holder sd_journal_gh;
 	struct gfs2_holder sd_jinode_gh;
 
-	struct gfs2_holder sd_ir_gh;
 	struct gfs2_holder sd_sc_gh;
 	struct gfs2_holder sd_qc_gh;
 
 	/* Daemon stuff */
 
-	struct task_struct *sd_scand_process;
-	struct task_struct *sd_recoverd_process;
 	struct task_struct *sd_logd_process;
 	struct task_struct *sd_quotad_process;
-	struct task_struct *sd_glockd_process[GFS2_GLOCKD_MAX];
-	unsigned int sd_glockd_num;
 
 	/* Quota stuff */
 
 	struct list_head sd_quota_list;
 	atomic_t sd_quota_count;
-	spinlock_t sd_quota_spin;
 	struct mutex sd_quota_mutex;
+	wait_queue_head_t sd_quota_wait;
+	struct list_head sd_trunc_list;
+	spinlock_t sd_trunc_lock;
 
 	unsigned int sd_quota_slots;
 	unsigned int sd_quota_chunks;
 	unsigned char **sd_quota_bitmap;
 
 	u64 sd_quota_sync_gen;
-	unsigned long sd_quota_sync_time;
 
 	/* Log stuff */
 
@@ -544,37 +618,40 @@ struct gfs2_sbd {
 
 	unsigned int sd_log_blks_reserved;
 	unsigned int sd_log_commited_buf;
-	unsigned int sd_log_commited_revoke;
+	unsigned int sd_log_commited_databuf;
+	int sd_log_commited_revoke;
 
-	unsigned int sd_log_num_gl;
+	atomic_t sd_log_pinned;
 	unsigned int sd_log_num_buf;
 	unsigned int sd_log_num_revoke;
 	unsigned int sd_log_num_rg;
 	unsigned int sd_log_num_databuf;
-	unsigned int sd_log_num_jdata;
-	unsigned int sd_log_num_hdrs;
 
-	struct list_head sd_log_le_gl;
 	struct list_head sd_log_le_buf;
 	struct list_head sd_log_le_revoke;
 	struct list_head sd_log_le_rg;
 	struct list_head sd_log_le_databuf;
+	struct list_head sd_log_le_ordered;
 
-	unsigned int sd_log_blks_free;
-	struct mutex sd_log_reserve_mutex;
+	atomic_t sd_log_thresh1;
+	atomic_t sd_log_thresh2;
+	atomic_t sd_log_blks_free;
+	wait_queue_head_t sd_log_waitq;
+	wait_queue_head_t sd_logd_waitq;
 
 	u64 sd_log_sequence;
 	unsigned int sd_log_head;
 	unsigned int sd_log_tail;
 	int sd_log_idle;
 
-	unsigned long sd_log_flush_time;
 	struct rw_semaphore sd_log_flush_lock;
-	struct list_head sd_log_flush_list;
+	atomic_t sd_log_in_flight;
+	wait_queue_head_t sd_log_flush_wait;
 
 	unsigned int sd_log_flush_head;
 	u64 sd_log_flush_wrapped;
 
+	spinlock_t sd_ail_lock;
 	struct list_head sd_ail1_list;
 	struct list_head sd_ail2_list;
 	u64 sd_ail_sync_gen;
@@ -594,13 +671,6 @@ struct gfs2_sbd {
 	struct mutex sd_freeze_lock;
 	unsigned int sd_freeze_count;
 
-	/* Counters */
-
-	atomic_t sd_glock_count;
-	atomic_t sd_glock_held_count;
-	atomic_t sd_inode_count;
-	atomic_t sd_reclaimed;
-
 	char sd_fsname[GFS2_FSNAME_LEN];
 	char sd_table_name[GFS2_FSNAME_LEN];
 	char sd_proto_name[GFS2_FSNAME_LEN];
@@ -608,7 +678,6 @@ struct gfs2_sbd {
 	/* Debugging crud */
 
 	unsigned long sd_last_warning;
-	struct vfsmount *sd_gfs2mnt;
 	struct dentry *debugfs_dir;    /* debugfs directory */
 	struct dentry *debugfs_dentry_glocks; /* for debugfs */
 };

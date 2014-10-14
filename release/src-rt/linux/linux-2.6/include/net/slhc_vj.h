@@ -3,7 +3,7 @@
 /*
  * Definitions for tcp compression routines.
  *
- * $Header: /ramdisk/repositories/20_cvs_clean_up/2011-02-11_sj/src/linux/linux-2.6/include/net/slhc_vj.h,v 1.1.1.1 2007-08-03 18:53:45 rnuti Exp $
+ * $Header: slcompress.h,v 1.10 89/12/31 08:53:02 van Exp $
  *
  * Copyright (c) 1989 Regents of the University of California.
  * All rights reserved.
@@ -117,9 +117,7 @@
  */
 
 typedef __u8 byte_t;
-#ifndef _TYPEDEFS_H_
 typedef __u32 int32;
-#endif
 
 /*
  * "state" data for each active tcp conversation on the wire.  This is

@@ -26,7 +26,7 @@ config FLASH_SIZE
 	default 0x00400000
 
 config PROCESSOR_ID
-	hex
+	hex 'Hard wire the processor ID'
 	default 0x00007700
 	depends on !CPU_CP15
 	help
@@ -34,7 +34,7 @@ config PROCESSOR_ID
 	  used instead of the auto-probing which utilizes the register.
 
 config REMAP_VECTORS_TO_RAM
-	bool 'Install vectors to the begining of RAM' if DRAM_BASE
+	bool 'Install vectors to the beginning of RAM' if DRAM_BASE
 	depends on DRAM_BASE
 	help
 	  The kernel needs to change the hardware exception vectors.

@@ -8,7 +8,6 @@
 
 #include <linux/types.h>
 #include <linux/init.h>
-#include <linux/random.h>
 #include <linux/ip.h>
 #include <linux/udp.h>
 
@@ -18,90 +17,34 @@
 #include <net/netfilter/nf_nat_rule.h>
 #include <net/netfilter/nf_nat_protocol.h>
 
-static int
-udp_in_range(const struct nf_conntrack_tuple *tuple,
-	     enum nf_nat_manip_type maniptype,
-	     const union nf_conntrack_man_proto *min,
-	     const union nf_conntrack_man_proto *max)
-{
-	__be16 port;
+static u_int16_t udp_port_rover;
 
-	if (maniptype == IP_NAT_MANIP_SRC)
-		port = tuple->src.u.udp.port;
-	else
-		port = tuple->dst.u.udp.port;
-
-	return ntohs(port) >= ntohs(min->udp.port) &&
-	       ntohs(port) <= ntohs(max->udp.port);
-}
-
-static int
+static void
 udp_unique_tuple(struct nf_conntrack_tuple *tuple,
 		 const struct nf_nat_range *range,
 		 enum nf_nat_manip_type maniptype,
 		 const struct nf_conn *ct)
 {
-	static u_int16_t port;
-	__be16 *portptr;
-	unsigned int range_size, min, i;
-
-	if (maniptype == IP_NAT_MANIP_SRC)
-		portptr = &tuple->src.u.udp.port;
-	else
-		portptr = &tuple->dst.u.udp.port;
-
-	/* If no range specified... */
-	if (!(range->flags & IP_NAT_RANGE_PROTO_SPECIFIED)) {
-		/* If it's dst rewrite, can't change port */
-		if (maniptype == IP_NAT_MANIP_DST)
-			return 0;
-
-		if (ntohs(*portptr) < 1024) {
-			/* Loose convention: >> 512 is credential passing */
-			if (ntohs(*portptr)<512) {
-				min = 1;
-				range_size = 511 - min + 1;
-			} else {
-				min = 600;
-				range_size = 1023 - min + 1;
-			}
-		} else {
-			min = 1024;
-			range_size = 65535 - 1024 + 1;
-		}
-	} else {
-		min = ntohs(range->min.udp.port);
-		range_size = ntohs(range->max.udp.port) - min + 1;
-	}
-
-	if (range->flags & IP_NAT_RANGE_PROTO_RANDOM)
-		port = net_random();
-
-	for (i = 0; i < range_size; i++, port++) {
-		*portptr = htons(min + port % range_size);
-		if (!nf_nat_used_tuple(tuple, ct))
-			return 1;
-	}
-	return 0;
+	nf_nat_proto_unique_tuple(tuple, range, maniptype, ct, &udp_port_rover);
 }
 
-static int
-udp_manip_pkt(struct sk_buff **pskb,
+static bool
+udp_manip_pkt(struct sk_buff *skb,
 	      unsigned int iphdroff,
 	      const struct nf_conntrack_tuple *tuple,
 	      enum nf_nat_manip_type maniptype)
 {
-	struct iphdr *iph = (struct iphdr *)((*pskb)->data + iphdroff);
+	const struct iphdr *iph = (struct iphdr *)(skb->data + iphdroff);
 	struct udphdr *hdr;
 	unsigned int hdroff = iphdroff + iph->ihl*4;
 	__be32 oldip, newip;
 	__be16 *portptr, newport;
 
-	if (!skb_make_writable(pskb, hdroff + sizeof(*hdr)))
-		return 0;
+	if (!skb_make_writable(skb, hdroff + sizeof(*hdr)))
+		return false;
 
-	iph = (struct iphdr *)((*pskb)->data + iphdroff);
-	hdr = (struct udphdr *)((*pskb)->data + hdroff);
+	iph = (struct iphdr *)(skb->data + iphdroff);
+	hdr = (struct udphdr *)(skb->data + hdroff);
 
 	if (maniptype == IP_NAT_MANIP_SRC) {
 		/* Get rid of src ip and src pt */
@@ -116,26 +59,25 @@ udp_manip_pkt(struct sk_buff **pskb,
 		newport = tuple->dst.u.udp.port;
 		portptr = &hdr->dest;
 	}
-	if (hdr->check || (*pskb)->ip_summed == CHECKSUM_PARTIAL) {
-		nf_proto_csum_replace4(&hdr->check, *pskb, oldip, newip, 1);
-		nf_proto_csum_replace2(&hdr->check, *pskb, *portptr, newport,
-				       0);
+	if (hdr->check || skb->ip_summed == CHECKSUM_PARTIAL) {
+		inet_proto_csum_replace4(&hdr->check, skb, oldip, newip, 1);
+		inet_proto_csum_replace2(&hdr->check, skb, *portptr, newport,
+					 0);
 		if (!hdr->check)
 			hdr->check = CSUM_MANGLED_0;
 	}
 	*portptr = newport;
-	return 1;
+	return true;
 }
 
-struct nf_nat_protocol nf_nat_protocol_udp = {
-	.name			= "UDP",
+const struct nf_nat_protocol nf_nat_protocol_udp = {
 	.protonum		= IPPROTO_UDP,
 	.me			= THIS_MODULE,
 	.manip_pkt		= udp_manip_pkt,
-	.in_range		= udp_in_range,
+	.in_range		= nf_nat_proto_in_range,
 	.unique_tuple		= udp_unique_tuple,
 #if defined(CONFIG_NF_CT_NETLINK) || defined(CONFIG_NF_CT_NETLINK_MODULE)
-	.range_to_nfattr	= nf_nat_port_range_to_nfattr,
-	.nfattr_to_range	= nf_nat_port_nfattr_to_range,
+	.range_to_nlattr	= nf_nat_proto_range_to_nlattr,
+	.nlattr_to_range	= nf_nat_proto_nlattr_to_range,
 #endif
 };

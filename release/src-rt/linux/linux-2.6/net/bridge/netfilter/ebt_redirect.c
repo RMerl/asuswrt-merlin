@@ -7,76 +7,74 @@
  *  April, 2002
  *
  */
-
 #include <linux/module.h>
 #include <net/sock.h>
 #include "../br_private.h"
+#include <linux/netfilter.h>
 #include <linux/netfilter/x_tables.h>
 #include <linux/netfilter_bridge/ebtables.h>
 #include <linux/netfilter_bridge/ebt_redirect.h>
 
-static int ebt_target_redirect(struct sk_buff **pskb, unsigned int hooknr,
-   const struct net_device *in, const struct net_device *out,
-   const void *data, unsigned int datalen)
+static unsigned int
+ebt_redirect_tg(struct sk_buff *skb, const struct xt_action_param *par)
 {
-	struct ebt_redirect_info *info = (struct ebt_redirect_info *)data;
+	const struct ebt_redirect_info *info = par->targinfo;
 
-	if (skb_shared(*pskb) || skb_cloned(*pskb)) {
-		struct sk_buff *nskb;
+	if (!skb_make_writable(skb, 0))
+		return EBT_DROP;
 
-		nskb = skb_copy(*pskb, GFP_ATOMIC);
-		if (!nskb)
-			return NF_DROP;
-		if ((*pskb)->sk)
-			skb_set_owner_w(nskb, (*pskb)->sk);
-		kfree_skb(*pskb);
-		*pskb = nskb;
-	}
-	if (hooknr != NF_BR_BROUTING)
-		memcpy(eth_hdr(*pskb)->h_dest,
-		       in->br_port->br->dev->dev_addr, ETH_ALEN);
+	if (par->hooknum != NF_BR_BROUTING)
+		/* rcu_read_lock()ed by nf_hook_slow */
+		memcpy(eth_hdr(skb)->h_dest,
+		       br_port_get_rcu(par->in)->br->dev->dev_addr, ETH_ALEN);
 	else
-		memcpy(eth_hdr(*pskb)->h_dest, in->dev_addr, ETH_ALEN);
-	(*pskb)->pkt_type = PACKET_HOST;
+		memcpy(eth_hdr(skb)->h_dest, par->in->dev_addr, ETH_ALEN);
+	skb->pkt_type = PACKET_HOST;
 	return info->target;
 }
 
-static int ebt_target_redirect_check(const char *tablename, unsigned int hookmask,
-   const struct ebt_entry *e, void *data, unsigned int datalen)
+static int ebt_redirect_tg_check(const struct xt_tgchk_param *par)
 {
-	struct ebt_redirect_info *info = (struct ebt_redirect_info *)data;
+	const struct ebt_redirect_info *info = par->targinfo;
+	unsigned int hook_mask;
 
-	if (datalen != XT_ALIGN(sizeof(struct ebt_redirect_info)))
-		return -EINVAL;
 	if (BASE_CHAIN && info->target == EBT_RETURN)
 		return -EINVAL;
-	CLEAR_BASE_CHAIN_BIT;
-	if ( (strcmp(tablename, "nat") || hookmask & ~(1 << NF_BR_PRE_ROUTING)) &&
-	     (strcmp(tablename, "broute") || hookmask & ~(1 << NF_BR_BROUTING)) )
+
+	hook_mask = par->hook_mask & ~(1 << NF_BR_NUMHOOKS);
+	if ((strcmp(par->table, "nat") != 0 ||
+	    hook_mask & ~(1 << NF_BR_PRE_ROUTING)) &&
+	    (strcmp(par->table, "broute") != 0 ||
+	    hook_mask & ~(1 << NF_BR_BROUTING)))
 		return -EINVAL;
 	if (INVALID_TARGET)
 		return -EINVAL;
 	return 0;
 }
 
-static struct ebt_target redirect_target =
-{
-	.name		= EBT_REDIRECT_TARGET,
-	.target		= ebt_target_redirect,
-	.check		= ebt_target_redirect_check,
+static struct xt_target ebt_redirect_tg_reg __read_mostly = {
+	.name		= "redirect",
+	.revision	= 0,
+	.family		= NFPROTO_BRIDGE,
+	.hooks		= (1 << NF_BR_NUMHOOKS) | (1 << NF_BR_PRE_ROUTING) |
+			  (1 << NF_BR_BROUTING),
+	.target		= ebt_redirect_tg,
+	.checkentry	= ebt_redirect_tg_check,
+	.targetsize	= sizeof(struct ebt_redirect_info),
 	.me		= THIS_MODULE,
 };
 
 static int __init ebt_redirect_init(void)
 {
-	return ebt_register_target(&redirect_target);
+	return xt_register_target(&ebt_redirect_tg_reg);
 }
 
 static void __exit ebt_redirect_fini(void)
 {
-	ebt_unregister_target(&redirect_target);
+	xt_unregister_target(&ebt_redirect_tg_reg);
 }
 
 module_init(ebt_redirect_init);
 module_exit(ebt_redirect_fini);
+MODULE_DESCRIPTION("Ebtables: Packet redirection to localhost");
 MODULE_LICENSE("GPL");

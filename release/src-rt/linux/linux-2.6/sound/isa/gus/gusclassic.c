@@ -1,6 +1,6 @@
 /*
  *  Driver for Gravis UltraSound Classic soundcard
- *  Copyright (c) by Jaroslav Kysela <perex@suse.cz>
+ *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  *
  *
  *   This program is free software; you can redistribute it and/or modify
@@ -19,7 +19,6 @@
  *
  */
 
-#include <sound/driver.h>
 #include <linux/init.h>
 #include <linux/err.h>
 #include <linux/isa.h>
@@ -37,7 +36,7 @@
 #define DEV_NAME "gusclassic"
 
 MODULE_DESCRIPTION(CRD_NAME);
-MODULE_AUTHOR("Jaroslav Kysela <perex@suse.cz>");
+MODULE_AUTHOR("Jaroslav Kysela <perex@perex.cz>");
 MODULE_LICENSE("GPL");
 MODULE_SUPPORTED_DEVICE("{{Gravis,UltraSound Classic}}");
 
@@ -91,24 +90,21 @@ static int __devinit snd_gusclassic_create(struct snd_card *card,
 	if (irq[n] == SNDRV_AUTO_IRQ) {
 		irq[n] = snd_legacy_find_free_irq(possible_irqs);
 		if (irq[n] < 0) {
-			snd_printk(KERN_ERR "%s: unable to find a free IRQ\n",
-				dev->bus_id);
+			dev_err(dev, "unable to find a free IRQ\n");
 			return -EBUSY;
 		}
 	}
 	if (dma1[n] == SNDRV_AUTO_DMA) {
 		dma1[n] = snd_legacy_find_free_dma(possible_dmas);
 		if (dma1[n] < 0) {
-			snd_printk(KERN_ERR "%s: unable to find a free DMA1\n",
-				dev->bus_id);
+			dev_err(dev, "unable to find a free DMA1\n");
 			return -EBUSY;
 		}
 	}
 	if (dma2[n] == SNDRV_AUTO_DMA) {
 		dma2[n] = snd_legacy_find_free_dma(possible_dmas);
 		if (dma2[n] < 0) {
-			snd_printk(KERN_ERR "%s: unable to find a free DMA2\n",
-				dev->bus_id);
+			dev_err(dev, "unable to find a free DMA2\n");
 			return -EBUSY;
 		}
 	}
@@ -152,9 +148,9 @@ static int __devinit snd_gusclassic_probe(struct device *dev, unsigned int n)
 	struct snd_gus_card *gus;
 	int error;
 
-	card = snd_card_new(index[n], id[n], THIS_MODULE, 0);
-	if (!card)
-		return -EINVAL;
+	error = snd_card_create(index[n], id[n], THIS_MODULE, 0, &card);
+	if (error < 0)
+		return error;
 
 	if (pcm_channels[n] < 2)
 		pcm_channels[n] = 2;
@@ -175,8 +171,8 @@ static int __devinit snd_gusclassic_probe(struct device *dev, unsigned int n)
 
 	error = -ENODEV;
 	if (gus->max_flag || gus->ess_flag) {
-		snd_printk(KERN_ERR "%s: GUS Classic or ACE soundcard was "
-			"not detected at 0x%lx\n", dev->bus_id, gus->gf1.port);
+		dev_err(dev, "GUS Classic or ACE soundcard was "
+			"not detected at 0x%lx\n", gus->gf1.port);
 		goto out;
 	}
 

@@ -3,7 +3,7 @@
 
 /*
  *  OSS MIXER API
- *  Copyright (c) by Jaroslav Kysela <perex@suse.cz>
+ *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  *
  *
  *   This program is free software; you can redistribute it and/or modify
@@ -72,6 +72,9 @@ struct snd_mixer_oss_file {
 	struct snd_card *card;
 	struct snd_mixer_oss *mixer;
 };
+
+int snd_mixer_oss_ioctl_card(struct snd_card *card,
+			     unsigned int cmd, unsigned long arg);
 
 #endif /* CONFIG_SND_MIXER_OSS */
 

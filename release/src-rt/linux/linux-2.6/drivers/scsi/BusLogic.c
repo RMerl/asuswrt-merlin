@@ -42,6 +42,7 @@
 #include <linux/spinlock.h>
 #include <linux/jiffies.h>
 #include <linux/dma-mapping.h>
+#include <linux/slab.h>
 #include <scsi/scsicam.h>
 
 #include <asm/dma.h>
@@ -304,18 +305,10 @@ static struct BusLogic_CCB *BusLogic_AllocateCCB(struct BusLogic_HostAdapter
 static void BusLogic_DeallocateCCB(struct BusLogic_CCB *CCB)
 {
 	struct BusLogic_HostAdapter *HostAdapter = CCB->HostAdapter;
-	struct scsi_cmnd *cmd = CCB->Command;
 
-	if (cmd->use_sg != 0) {
-		pci_unmap_sg(HostAdapter->PCI_Device,
-				(struct scatterlist *)cmd->request_buffer,
-				cmd->use_sg, cmd->sc_data_direction);
-	} else if (cmd->request_bufflen != 0) {
-		pci_unmap_single(HostAdapter->PCI_Device, CCB->DataPointer,
-				CCB->DataLength, cmd->sc_data_direction);
-	}
+	scsi_dma_unmap(CCB->Command);
 	pci_unmap_single(HostAdapter->PCI_Device, CCB->SenseDataPointer,
-			CCB->SenseDataLength, PCI_DMA_FROMDEVICE);
+			 CCB->SenseDataLength, PCI_DMA_FROMDEVICE);
 
 	CCB->Command = NULL;
 	CCB->Status = BusLogic_CCB_Free;
@@ -675,7 +668,7 @@ static int __init BusLogic_InitializeMultiMasterProbeInfo(struct BusLogic_HostAd
 		if (pci_enable_device(PCI_Device))
 			continue;
 
-		if (pci_set_dma_mask(PCI_Device, DMA_32BIT_MASK ))
+		if (pci_set_dma_mask(PCI_Device, DMA_BIT_MASK(32) ))
 			continue;
 
 		Bus = PCI_Device->bus->number;
@@ -842,7 +835,7 @@ static int __init BusLogic_InitializeMultiMasterProbeInfo(struct BusLogic_HostAd
 		if (pci_enable_device(PCI_Device))
 			continue;
 
-		if (pci_set_dma_mask(PCI_Device, DMA_32BIT_MASK))
+		if (pci_set_dma_mask(PCI_Device, DMA_BIT_MASK(32)))
 			continue;
 
 		Bus = PCI_Device->bus->number;
@@ -896,7 +889,7 @@ static int __init BusLogic_InitializeFlashPointProbeInfo(struct BusLogic_HostAda
 		if (pci_enable_device(PCI_Device))
 			continue;
 
-		if (pci_set_dma_mask(PCI_Device, DMA_32BIT_MASK))
+		if (pci_set_dma_mask(PCI_Device, DMA_BIT_MASK(32)))
 			continue;
 
 		Bus = PCI_Device->bus->number;
@@ -904,7 +897,7 @@ static int __init BusLogic_InitializeFlashPointProbeInfo(struct BusLogic_HostAda
 		IRQ_Channel = PCI_Device->irq;
 		IO_Address = BaseAddress0 = pci_resource_start(PCI_Device, 0);
 		PCI_Address = BaseAddress1 = pci_resource_start(PCI_Device, 1);
-#ifndef CONFIG_SCSI_OMIT_FLASHPOINT
+#ifdef CONFIG_SCSI_FLASHPOINT
 		if (pci_resource_flags(PCI_Device, 0) & IORESOURCE_MEM) {
 			BusLogic_Error("BusLogic: Base Address0 0x%X not I/O for " "FlashPoint Host Adapter\n", NULL, BaseAddress0);
 			BusLogic_Error("at PCI Bus %d Device %d I/O Address 0x%X\n", NULL, Bus, Device, IO_Address);
@@ -1014,6 +1007,9 @@ static void __init BusLogic_InitializeProbeInfoList(struct BusLogic_HostAdapter
 }
 
 
+#else
+#define BusLogic_InitializeProbeInfoList(adapter) \
+		BusLogic_InitializeProbeInfoListISA(adapter)
 #endif				/* CONFIG_PCI */
 
 
@@ -2648,7 +2644,8 @@ static void BusLogic_ProcessCompletedCCBs(struct BusLogic_HostAdapter *HostAdapt
 			 */
 			if (CCB->CDB[0] == INQUIRY && CCB->CDB[1] == 0 && CCB->HostAdapterStatus == BusLogic_CommandCompletedNormally) {
 				struct BusLogic_TargetFlags *TargetFlags = &HostAdapter->TargetFlags[CCB->TargetID];
-				struct SCSI_Inquiry *InquiryResult = (struct SCSI_Inquiry *) Command->request_buffer;
+				struct SCSI_Inquiry *InquiryResult =
+					(struct SCSI_Inquiry *) scsi_sglist(Command);
 				TargetFlags->TargetExists = true;
 				TargetFlags->TaggedQueuingSupported = InquiryResult->CmdQue;
 				TargetFlags->WideTransfersSupported = InquiryResult->WBus16;
@@ -2810,7 +2807,7 @@ static int BusLogic_host_reset(struct scsi_cmnd * SCpnt)
   Outgoing Mailbox for execution by the associated Host Adapter.
 */
 
-static int BusLogic_QueueCommand(struct scsi_cmnd *Command, void (*CompletionRoutine) (struct scsi_cmnd *))
+static int BusLogic_QueueCommand_lck(struct scsi_cmnd *Command, void (*CompletionRoutine) (struct scsi_cmnd *))
 {
 	struct BusLogic_HostAdapter *HostAdapter = (struct BusLogic_HostAdapter *) Command->device->host->hostdata;
 	struct BusLogic_TargetFlags *TargetFlags = &HostAdapter->TargetFlags[Command->device->id];
@@ -2819,9 +2816,8 @@ static int BusLogic_QueueCommand(struct scsi_cmnd *Command, void (*CompletionRou
 	int CDB_Length = Command->cmd_len;
 	int TargetID = Command->device->id;
 	int LogicalUnit = Command->device->lun;
-	void *BufferPointer = Command->request_buffer;
-	int BufferLength = Command->request_bufflen;
-	int SegmentCount = Command->use_sg;
+	int BufferLength = scsi_bufflen(Command);
+	int Count;
 	struct BusLogic_CCB *CCB;
 	/*
 	   SCSI REQUEST_SENSE commands will be executed automatically by the Host
@@ -2851,36 +2847,35 @@ static int BusLogic_QueueCommand(struct scsi_cmnd *Command, void (*CompletionRou
 			return 0;
 		}
 	}
+
 	/*
 	   Initialize the fields in the BusLogic Command Control Block (CCB).
 	 */
-	if (SegmentCount == 0 && BufferLength != 0) {
-		CCB->Opcode = BusLogic_InitiatorCCB;
-		CCB->DataLength = BufferLength;
-		CCB->DataPointer = pci_map_single(HostAdapter->PCI_Device,
-				BufferPointer, BufferLength,
-				Command->sc_data_direction);
-	} else if (SegmentCount != 0) {
-		struct scatterlist *ScatterList = (struct scatterlist *) BufferPointer;
-		int Segment, Count;
+	Count = scsi_dma_map(Command);
+	BUG_ON(Count < 0);
+	if (Count) {
+		struct scatterlist *sg;
+		int i;
 
-		Count = pci_map_sg(HostAdapter->PCI_Device, ScatterList, SegmentCount,
-				Command->sc_data_direction);
 		CCB->Opcode = BusLogic_InitiatorCCB_ScatterGather;
 		CCB->DataLength = Count * sizeof(struct BusLogic_ScatterGatherSegment);
 		if (BusLogic_MultiMasterHostAdapterP(HostAdapter))
 			CCB->DataPointer = (unsigned int) CCB->DMA_Handle + ((unsigned long) &CCB->ScatterGatherList - (unsigned long) CCB);
 		else
 			CCB->DataPointer = Virtual_to_32Bit_Virtual(CCB->ScatterGatherList);
-		for (Segment = 0; Segment < Count; Segment++) {
-			CCB->ScatterGatherList[Segment].SegmentByteCount = sg_dma_len(ScatterList + Segment);
-			CCB->ScatterGatherList[Segment].SegmentDataPointer = sg_dma_address(ScatterList + Segment);
+
+		scsi_for_each_sg(Command, sg, Count, i) {
+			CCB->ScatterGatherList[i].SegmentByteCount =
+				sg_dma_len(sg);
+			CCB->ScatterGatherList[i].SegmentDataPointer =
+				sg_dma_address(sg);
 		}
-	} else {
+	} else if (!Count) {
 		CCB->Opcode = BusLogic_InitiatorCCB;
 		CCB->DataLength = BufferLength;
 		CCB->DataPointer = 0;
 	}
+
 	switch (CDB[0]) {
 	case READ_6:
 	case READ_10:
@@ -2956,7 +2951,7 @@ static int BusLogic_QueueCommand(struct scsi_cmnd *Command, void (*CompletionRou
 		}
 	}
 	memcpy(CCB->CDB, CDB, CDB_Length);
-	CCB->SenseDataLength = sizeof(Command->sense_buffer);
+	CCB->SenseDataLength = SCSI_SENSE_BUFFERSIZE;
 	CCB->SenseDataPointer = pci_map_single(HostAdapter->PCI_Device, Command->sense_buffer, CCB->SenseDataLength, PCI_DMA_FROMDEVICE);
 	CCB->Command = Command;
 	Command->scsi_done = CompletionRoutine;
@@ -2999,6 +2994,7 @@ static int BusLogic_QueueCommand(struct scsi_cmnd *Command, void (*CompletionRou
 	return 0;
 }
 
+static DEF_SCSI_QCMD(BusLogic_QueueCommand)
 
 #if 0
 /*

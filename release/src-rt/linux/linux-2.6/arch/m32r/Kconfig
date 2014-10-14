@@ -1,13 +1,15 @@
-#
-# For a description of the syntax of this configuration file,
-# see Documentation/kbuild/kconfig-language.txt.
-#
-
-mainmenu "Linux/M32R Kernel Configuration"
-
 config M32R
 	bool
 	default y
+	select HAVE_IDE
+	select HAVE_OPROFILE
+	select INIT_ALL_POSSIBLE
+	select HAVE_KERNEL_GZIP
+	select HAVE_KERNEL_BZIP2
+	select HAVE_KERNEL_LZMA
+	select HAVE_GENERIC_HARDIRQS
+	select GENERIC_IRQ_PROBE
+	select GENERIC_IRQ_SHOW
 
 config SBUS
 	bool
@@ -20,18 +22,22 @@ config ZONE_DMA
 	bool
 	default y
 
-config GENERIC_HARDIRQS
-	bool
-	default y
-
-config GENERIC_IRQ_PROBE
-	bool
-	default y
-
 config NO_IOPORT
 	def_bool y
 
+config NO_DMA
+	def_bool y
+
+config HZ
+	int
+	default 100
+
+config ARCH_USES_GETTIMEOFFSET
+	def_bool y
+
 source "init/Kconfig"
+
+source "kernel/Kconfig.freezer"
 
 
 menu "Processor type and features"
@@ -54,9 +60,13 @@ config PLAT_MAPPI
 
 config PLAT_USRV
 	bool "uServer"
+	select PLAT_HAS_INT1ICU
 
 config PLAT_M32700UT
 	bool "M32700UT"
+	select PLAT_HAS_INT0ICU
+	select PLAT_HAS_INT1ICU
+	select PLAT_HAS_INT2ICU
 	help
 	  The M3T-M32700UT is an evaluation board based on uT-Engine
 	  specification.  This board has an M32700 (Chaos) evaluation chip.
@@ -65,6 +75,9 @@ config PLAT_M32700UT
 
 config PLAT_OPSPUT
 	bool "OPSPUT"
+	select PLAT_HAS_INT0ICU
+	select PLAT_HAS_INT1ICU
+	select PLAT_HAS_INT2ICU
 	help
 	  The OPSPUT is an evaluation board based on uT-Engine
 	  specification.  This board has a OPSP-REP chip.
@@ -86,6 +99,7 @@ config PLAT_MAPPI3
 
 config PLAT_M32104UT
 	bool "M32104UT"
+	select PLAT_HAS_INT1ICU
 	help
 	  The M3T-M32104UT is an reference board based on uT-Engine
 	  specification.  This board has a M32104 chip.
@@ -146,6 +160,18 @@ config ISA_DUAL_ISSUE
 	depends on CHIP_M32700 || CHIP_OPSP
 	default y
 
+config PLAT_HAS_INT0ICU
+	bool
+	default n
+
+config PLAT_HAS_INT1ICU
+	bool
+	default n
+
+config PLAT_HAS_INT2ICU
+	bool
+	default n
+
 config BUS_CLOCK
 	int "Bus Clock [Hz] (integer)"
 	default "70000000" if PLAT_MAPPI
@@ -184,10 +210,6 @@ config MEMORY_SIZE
 	default "01000000" if PLAT_M32104UT
 	default "00800000" if PLAT_OAKS32R
 
-config NOHIGHMEM
-	bool
-	default y
-
 config ARCH_DISCONTIGMEM_ENABLE
 	bool "Internal RAM Support"
 	depends on CHIP_M32700 || CHIP_M32102 || CHIP_VDEC2 || CHIP_OPSP || CHIP_M32104
@@ -212,6 +234,11 @@ config IRAM_SIZE
 # Define implied options from the CPU selection here
 #
 
+config GENERIC_LOCKBREAK
+	bool
+	default y
+	depends on SMP && PREEMPT
+
 config RWSEM_GENERIC_SPINLOCK
 	bool
 	depends on M32R
@@ -233,6 +260,10 @@ config GENERIC_FIND_NEXT_BIT
 	bool
 	default y
 
+config GENERIC_FIND_BIT_LE
+	bool
+	default y
+
 config GENERIC_HWEIGHT
 	bool
 	default y
@@ -241,7 +272,7 @@ config GENERIC_CALIBRATE_DELAY
 	bool
 	default y
 
-config SCHED_NO_NO_OMIT_FRAME_POINTER
+config SCHED_OMIT_FRAME_POINTER
         bool
         default y
 
@@ -259,6 +290,7 @@ config PREEMPT
 
 config SMP
 	bool "Symmetric multi-processing support"
+	select USE_GENERIC_SMP_HELPERS
 	---help---
 	  This enables support for systems with more than one CPU. If you have
 	  a system with only one CPU, like most personal computers, say N. If
@@ -274,9 +306,8 @@ config SMP
 	  Y to "Enhanced Real Time Clock Support", below. The "Advanced Power
 	  Management" code will be disabled if you say Y here.
 
-	  See also the <file:Documentation/smp.txt>,
-	  and the SMP-HOWTO available at
-	  <http://www.linuxdoc.org/docs.html#howto>.
+	  See also the SMP-HOWTO available at
+	  <http://tldp.org/HOWTO/SMP-HOWTO.html>.
 
 	  If you don't know what to do here, say N.
 
@@ -331,11 +362,6 @@ config PCI
 	  your box. Other bus systems are ISA, EISA, MicroChannel (MCA) or
 	  VESA. If you have PCI, say Y, otherwise N.
 
-	  The PCI-HOWTO, available from
-	  <http://www.linuxdoc.org/docs.html#howto>, contains valuable
-	  information about which PCI hardware does work under Linux and which
-	  doesn't.
-
 choice
 	prompt "PCI access mode"
 	depends on PCI
@@ -378,11 +404,7 @@ config PCI_DIRECT
 source "drivers/pci/Kconfig"
 
 config ISA
-	bool "ISA support"
-	help
-	  Find out whether you have ISA slots on your motherboard.  ISA is the
-	  name of a bus system, i.e. the way the CPU talks to the other stuff
-	  inside your box.  If you have ISA, say Y, otherwise N.
+	bool
 
 source "drivers/pcmcia/Kconfig"
 
@@ -402,8 +424,6 @@ source "net/Kconfig"
 source "drivers/Kconfig"
 
 source "fs/Kconfig"
-
-source "arch/m32r/oprofile/Kconfig"
 
 source "arch/m32r/Kconfig.debug"
 

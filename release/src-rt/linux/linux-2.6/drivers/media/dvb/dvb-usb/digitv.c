@@ -17,9 +17,13 @@
 #include "nxt6000.h"
 
 /* debug */
-int dvb_usb_digitv_debug;
+static int dvb_usb_digitv_debug;
 module_param_named(debug,dvb_usb_digitv_debug, int, 0644);
 MODULE_PARM_DESC(debug, "set debugging level (1=rc (or-able))." DVB_USB_DEBUG_STATUS);
+
+DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
+
+#define deb_rc(args...)   dprintk(dvb_usb_digitv_debug,0x01,args)
 
 static int digitv_ctrl_msg(struct dvb_usb_device *d,
 		u8 cmd, u8 vv, u8 *wbuf, int wlen, u8 *rbuf, int rlen)
@@ -118,7 +122,8 @@ static int digitv_nxt6000_tuner_set_params(struct dvb_frontend *fe, struct dvb_f
 {
 	struct dvb_usb_adapter *adap = fe->dvb->priv;
 	u8 b[5];
-	dvb_usb_tuner_calc_regs(fe,fep,b, 5);
+
+	fe->ops.tuner_ops.calc_regs(fe, fep, b, sizeof(b));
 	if (fe->ops.i2c_gate_ctrl)
 		fe->ops.i2c_gate_ctrl(fe, 1);
 	return digitv_ctrl_msg(adap->dev, USB_WRITE_TUNER, 0, &b[1], 4, NULL, 0);
@@ -130,12 +135,14 @@ static struct nxt6000_config digitv_nxt6000_config = {
 
 static int digitv_frontend_attach(struct dvb_usb_adapter *adap)
 {
+	struct digitv_state *st = adap->dev->priv;
+
 	if ((adap->fe = dvb_attach(mt352_attach, &digitv_mt352_config, &adap->dev->i2c_adap)) != NULL) {
-		adap->fe->ops.tuner_ops.calc_regs = dvb_usb_tuner_calc_regs;
+		st->is_nxt6000 = 0;
 		return 0;
 	}
 	if ((adap->fe = dvb_attach(nxt6000_attach, &digitv_nxt6000_config, &adap->dev->i2c_adap)) != NULL) {
-		adap->fe->ops.tuner_ops.set_params = digitv_nxt6000_tuner_set_params;
+		st->is_nxt6000 = 1;
 		return 0;
 	}
 	return -EIO;
@@ -143,67 +150,73 @@ static int digitv_frontend_attach(struct dvb_usb_adapter *adap)
 
 static int digitv_tuner_attach(struct dvb_usb_adapter *adap)
 {
-	adap->pll_addr = 0x60;
-	adap->pll_desc = &dvb_pll_tded4;
+	struct digitv_state *st = adap->dev->priv;
+
+	if (!dvb_attach(dvb_pll_attach, adap->fe, 0x60, NULL, DVB_PLL_TDED4))
+		return -ENODEV;
+
+	if (st->is_nxt6000)
+		adap->fe->ops.tuner_ops.set_params = digitv_nxt6000_tuner_set_params;
+
 	return 0;
 }
 
-static struct dvb_usb_rc_key digitv_rc_keys[] = {
-	{ 0x5f, 0x55, KEY_0 },
-	{ 0x6f, 0x55, KEY_1 },
-	{ 0x9f, 0x55, KEY_2 },
-	{ 0xaf, 0x55, KEY_3 },
-	{ 0x5f, 0x56, KEY_4 },
-	{ 0x6f, 0x56, KEY_5 },
-	{ 0x9f, 0x56, KEY_6 },
-	{ 0xaf, 0x56, KEY_7 },
-	{ 0x5f, 0x59, KEY_8 },
-	{ 0x6f, 0x59, KEY_9 },
-	{ 0x9f, 0x59, KEY_TV },
-	{ 0xaf, 0x59, KEY_AUX },
-	{ 0x5f, 0x5a, KEY_DVD },
-	{ 0x6f, 0x5a, KEY_POWER },
-	{ 0x9f, 0x5a, KEY_MHP },     /* labelled 'Picture' */
-	{ 0xaf, 0x5a, KEY_AUDIO },
-	{ 0x5f, 0x65, KEY_INFO },
-	{ 0x6f, 0x65, KEY_F13 },     /* 16:9 */
-	{ 0x9f, 0x65, KEY_F14 },     /* 14:9 */
-	{ 0xaf, 0x65, KEY_EPG },
-	{ 0x5f, 0x66, KEY_EXIT },
-	{ 0x6f, 0x66, KEY_MENU },
-	{ 0x9f, 0x66, KEY_UP },
-	{ 0xaf, 0x66, KEY_DOWN },
-	{ 0x5f, 0x69, KEY_LEFT },
-	{ 0x6f, 0x69, KEY_RIGHT },
-	{ 0x9f, 0x69, KEY_ENTER },
-	{ 0xaf, 0x69, KEY_CHANNELUP },
-	{ 0x5f, 0x6a, KEY_CHANNELDOWN },
-	{ 0x6f, 0x6a, KEY_VOLUMEUP },
-	{ 0x9f, 0x6a, KEY_VOLUMEDOWN },
-	{ 0xaf, 0x6a, KEY_RED },
-	{ 0x5f, 0x95, KEY_GREEN },
-	{ 0x6f, 0x95, KEY_YELLOW },
-	{ 0x9f, 0x95, KEY_BLUE },
-	{ 0xaf, 0x95, KEY_SUBTITLE },
-	{ 0x5f, 0x96, KEY_F15 },     /* AD */
-	{ 0x6f, 0x96, KEY_TEXT },
-	{ 0x9f, 0x96, KEY_MUTE },
-	{ 0xaf, 0x96, KEY_REWIND },
-	{ 0x5f, 0x99, KEY_STOP },
-	{ 0x6f, 0x99, KEY_PLAY },
-	{ 0x9f, 0x99, KEY_FASTFORWARD },
-	{ 0xaf, 0x99, KEY_F16 },     /* chapter */
-	{ 0x5f, 0x9a, KEY_PAUSE },
-	{ 0x6f, 0x9a, KEY_PLAY },
-	{ 0x9f, 0x9a, KEY_RECORD },
-	{ 0xaf, 0x9a, KEY_F17 },     /* picture in picture */
-	{ 0x5f, 0xa5, KEY_KPPLUS },  /* zoom in */
-	{ 0x6f, 0xa5, KEY_KPMINUS }, /* zoom out */
-	{ 0x9f, 0xa5, KEY_F18 },     /* capture */
-	{ 0xaf, 0xa5, KEY_F19 },     /* web */
-	{ 0x5f, 0xa6, KEY_EMAIL },
-	{ 0x6f, 0xa6, KEY_PHONE },
-	{ 0x9f, 0xa6, KEY_PC },
+static struct rc_map_table rc_map_digitv_table[] = {
+	{ 0x5f55, KEY_0 },
+	{ 0x6f55, KEY_1 },
+	{ 0x9f55, KEY_2 },
+	{ 0xaf55, KEY_3 },
+	{ 0x5f56, KEY_4 },
+	{ 0x6f56, KEY_5 },
+	{ 0x9f56, KEY_6 },
+	{ 0xaf56, KEY_7 },
+	{ 0x5f59, KEY_8 },
+	{ 0x6f59, KEY_9 },
+	{ 0x9f59, KEY_TV },
+	{ 0xaf59, KEY_AUX },
+	{ 0x5f5a, KEY_DVD },
+	{ 0x6f5a, KEY_POWER },
+	{ 0x9f5a, KEY_CAMERA },     /* labelled 'Picture' */
+	{ 0xaf5a, KEY_AUDIO },
+	{ 0x5f65, KEY_INFO },
+	{ 0x6f65, KEY_F13 },     /* 16:9 */
+	{ 0x9f65, KEY_F14 },     /* 14:9 */
+	{ 0xaf65, KEY_EPG },
+	{ 0x5f66, KEY_EXIT },
+	{ 0x6f66, KEY_MENU },
+	{ 0x9f66, KEY_UP },
+	{ 0xaf66, KEY_DOWN },
+	{ 0x5f69, KEY_LEFT },
+	{ 0x6f69, KEY_RIGHT },
+	{ 0x9f69, KEY_ENTER },
+	{ 0xaf69, KEY_CHANNELUP },
+	{ 0x5f6a, KEY_CHANNELDOWN },
+	{ 0x6f6a, KEY_VOLUMEUP },
+	{ 0x9f6a, KEY_VOLUMEDOWN },
+	{ 0xaf6a, KEY_RED },
+	{ 0x5f95, KEY_GREEN },
+	{ 0x6f95, KEY_YELLOW },
+	{ 0x9f95, KEY_BLUE },
+	{ 0xaf95, KEY_SUBTITLE },
+	{ 0x5f96, KEY_F15 },     /* AD */
+	{ 0x6f96, KEY_TEXT },
+	{ 0x9f96, KEY_MUTE },
+	{ 0xaf96, KEY_REWIND },
+	{ 0x5f99, KEY_STOP },
+	{ 0x6f99, KEY_PLAY },
+	{ 0x9f99, KEY_FASTFORWARD },
+	{ 0xaf99, KEY_F16 },     /* chapter */
+	{ 0x5f9a, KEY_PAUSE },
+	{ 0x6f9a, KEY_PLAY },
+	{ 0x9f9a, KEY_RECORD },
+	{ 0xaf9a, KEY_F17 },     /* picture in picture */
+	{ 0x5fa5, KEY_KPPLUS },  /* zoom in */
+	{ 0x6fa5, KEY_KPMINUS }, /* zoom out */
+	{ 0x9fa5, KEY_F18 },     /* capture */
+	{ 0xafa5, KEY_F19 },     /* web */
+	{ 0x5fa6, KEY_EMAIL },
+	{ 0x6fa6, KEY_PHONE },
+	{ 0x9fa6, KEY_PC },
 };
 
 static int digitv_rc_query(struct dvb_usb_device *d, u32 *event, int *state)
@@ -224,10 +237,10 @@ static int digitv_rc_query(struct dvb_usb_device *d, u32 *event, int *state)
 	/* if something is inside the buffer, simulate key press */
 	if (key[1] != 0)
 	{
-		  for (i = 0; i < d->props.rc_key_map_size; i++) {
-			if (d->props.rc_key_map[i].custom == key[1] &&
-			    d->props.rc_key_map[i].data == key[2]) {
-				*event = d->props.rc_key_map[i].event;
+		  for (i = 0; i < d->props.rc.legacy.rc_map_size; i++) {
+			if (rc5_custom(&d->props.rc.legacy.rc_map_table[i]) == key[1] &&
+			    rc5_data(&d->props.rc.legacy.rc_map_table[i]) == key[2]) {
+				*event = d->props.rc.legacy.rc_map_table[i].keycode;
 				*state = REMOTE_KEY_PRESSED;
 				return 0;
 			}
@@ -246,8 +259,9 @@ static int digitv_probe(struct usb_interface *intf,
 		const struct usb_device_id *id)
 {
 	struct dvb_usb_device *d;
-	int ret;
-	if ((ret = dvb_usb_device_init(intf,&digitv_properties,THIS_MODULE,&d)) == 0) {
+	int ret = dvb_usb_device_init(intf, &digitv_properties, THIS_MODULE, &d,
+				      adapter_nr);
+	if (ret == 0) {
 		u8 b[4] = { 0 };
 
 		if (d != NULL) { /* do that only when the firmware is loaded */
@@ -273,6 +287,8 @@ static struct dvb_usb_device_properties digitv_properties = {
 	.usb_ctrl = CYPRESS_FX2,
 	.firmware = "dvb-usb-digitv-02.fw",
 
+	.size_of_priv = sizeof(struct digitv_state),
+
 	.num_adapters = 1,
 	.adapter = {
 		{
@@ -294,10 +310,12 @@ static struct dvb_usb_device_properties digitv_properties = {
 	},
 	.identify_state   = digitv_identify_state,
 
-	.rc_interval      = 1000,
-	.rc_key_map       = digitv_rc_keys,
-	.rc_key_map_size  = ARRAY_SIZE(digitv_rc_keys),
-	.rc_query         = digitv_rc_query,
+	.rc.legacy = {
+		.rc_interval      = 1000,
+		.rc_map_table     = rc_map_digitv_table,
+		.rc_map_size      = ARRAY_SIZE(rc_map_digitv_table),
+		.rc_query         = digitv_rc_query,
+	},
 
 	.i2c_algo         = &digitv_i2c_algo,
 

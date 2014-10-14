@@ -15,152 +15,165 @@
  */
 
 #include <linux/spinlock.h>
+#include <linux/string.h>
+#include <linux/kobject.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/user_namespace.h>
 #include <linux/socket.h>
 #include <linux/skbuff.h>
 #include <linux/netlink.h>
-#include <linux/string.h>
-#include <linux/kobject.h>
 #include <net/sock.h>
+#include <net/net_namespace.h>
 
-#define BUFFER_SIZE	2048	/* buffer for the variables */
-#define NUM_ENVP	32	/* number of env pointers */
 
-#if defined(CONFIG_HOTPLUG)
 u64 uevent_seqnum;
-char uevent_helper[UEVENT_HELPER_PATH_LEN] = "/sbin/hotplug";
+char uevent_helper[UEVENT_HELPER_PATH_LEN] = CONFIG_UEVENT_HELPER_PATH;
 static DEFINE_SPINLOCK(sequence_lock);
-#if defined(CONFIG_NET)
-struct sock *uevent_sock = NULL;
-EXPORT_SYMBOL_GPL(uevent_sock);
+#ifdef CONFIG_NET
+struct uevent_sock {
+	struct list_head list;
+	struct sock *sk;
+};
+static LIST_HEAD(uevent_sock_list);
+static DEFINE_MUTEX(uevent_sock_mutex);
 #endif
 
-u64 uevent_next_seqnum(void)
+/* the strings here must match the enum in include/linux/kobject.h */
+static const char *kobject_actions[] = {
+	[KOBJ_ADD] =		"add",
+	[KOBJ_REMOVE] =		"remove",
+	[KOBJ_CHANGE] =		"change",
+	[KOBJ_MOVE] =		"move",
+	[KOBJ_ONLINE] =		"online",
+	[KOBJ_OFFLINE] =	"offline",
+};
+
+/**
+ * kobject_action_type - translate action string to numeric type
+ *
+ * @buf: buffer containing the action string, newline is ignored
+ * @len: length of buffer
+ * @type: pointer to the location to store the action type
+ *
+ * Returns 0 if the action string was recognized.
+ */
+int kobject_action_type(const char *buf, size_t count,
+			enum kobject_action *type)
 {
-	u64 seq;
+	enum kobject_action action;
+	int ret = -EINVAL;
 
-	spin_lock(&sequence_lock);
-	seq = ++uevent_seqnum;
-	spin_unlock(&sequence_lock);
+	if (count && (buf[count-1] == '\n' || buf[count-1] == '\0'))
+		count--;
 
-	return seq;
+	if (!count)
+		goto out;
+
+	for (action = 0; action < ARRAY_SIZE(kobject_actions); action++) {
+		if (strncmp(kobject_actions[action], buf, count) != 0)
+			continue;
+		if (kobject_actions[action][count] != '\0')
+			continue;
+		*type = action;
+		ret = 0;
+		break;
+	}
+out:
+	return ret;
 }
-EXPORT_SYMBOL_GPL(uevent_next_seqnum);
 
-static char *action_to_string(enum kobject_action action)
+#ifdef CONFIG_NET
+static int kobj_bcast_filter(struct sock *dsk, struct sk_buff *skb, void *data)
 {
-	switch (action) {
-	case KOBJ_ADD:
-		return "add";
-	case KOBJ_REMOVE:
-		return "remove";
-	case KOBJ_CHANGE:
-		return "change";
-	case KOBJ_OFFLINE:
-		return "offline";
-	case KOBJ_ONLINE:
-		return "online";
-	case KOBJ_MOVE:
-		return "move";
-	default:
-		return NULL;
+	struct kobject *kobj = data;
+	const struct kobj_ns_type_operations *ops;
+
+	ops = kobj_ns_ops(kobj);
+	if (ops) {
+		const void *sock_ns, *ns;
+		ns = kobj->ktype->namespace(kobj);
+		sock_ns = ops->netlink_ns(dsk);
+		return sock_ns != ns;
 	}
-}
-
-int notify_device_error(char *type, char *device, char *flag){
-	char *argv[] = { "/sbin/disk_remove", NULL };
-	char **envp;
-	char *buffer;
-	char *scratch;
-	int i = 0;
-	int retval = 0;
-
-	/* environment index */
-	envp = kzalloc(NUM_ENVP * sizeof (char *), GFP_KERNEL);
-	if(!envp)
-		return -ENOMEM;
-
-	/* environment values */
-	buffer = kmalloc(BUFFER_SIZE, GFP_KERNEL);
-	if(!buffer){
-		retval = -ENOMEM;
-		goto exit_notify;
-	}
-
-	/* event environemnt for helper process only */
-	envp[i++] = "HOME=/";
-	envp[i++] = "PATH=/sbin:/bin:/usr/sbin:/usr/bin";
-
-	scratch = buffer;
-	envp [i++] = scratch;
-	scratch += sprintf(scratch, "SUBSYSTEM=%s", type)+1;
-	envp [i++] = scratch;
-	scratch += sprintf(scratch, "DEVICE=%s", device)+1;
-	envp [i++] = scratch;
-	scratch += sprintf(scratch, "FLAG=%s", flag)+1;
-
-	call_usermodehelper(argv[0], argv, envp, 1);
-
-exit_notify:
-	kfree(buffer);
-	kfree(envp);
 
 	return 0;
 }
-EXPORT_SYMBOL_GPL(notify_device_error);
+#endif
+
+static int kobj_usermode_filter(struct kobject *kobj)
+{
+	const struct kobj_ns_type_operations *ops;
+
+	ops = kobj_ns_ops(kobj);
+	if (ops) {
+		const void *init_ns, *ns;
+		ns = kobj->ktype->namespace(kobj);
+		init_ns = ops->initial_ns();
+		return ns != init_ns;
+	}
+
+	return 0;
+}
 
 /**
  * kobject_uevent_env - send an uevent with environmental data
  *
- * @action: action that is happening (usually KOBJ_MOVE)
+ * @action: action that is happening
  * @kobj: struct kobject that the action is happening to
  * @envp_ext: pointer to environmental data
  *
- * Returns 0 if kobject_uevent() is completed with success or the
+ * Returns 0 if kobject_uevent_env() is completed with success or the
  * corresponding error when it fails.
  */
 int kobject_uevent_env(struct kobject *kobj, enum kobject_action action,
-			char *envp_ext[])
+		       char *envp_ext[])
 {
-	char **envp;
-	char *buffer;
-	char *scratch;
-	const char *action_string;
+	struct kobj_uevent_env *env;
+	const char *action_string = kobject_actions[action];
 	const char *devpath = NULL;
 	const char *subsystem;
 	struct kobject *top_kobj;
 	struct kset *kset;
-	struct kset_uevent_ops *uevent_ops;
+	const struct kset_uevent_ops *uevent_ops;
 	u64 seq;
-	char *seq_buff;
 	int i = 0;
 	int retval = 0;
-	int j;
+#ifdef CONFIG_NET
+	struct uevent_sock *ue_sk;
+#endif
 
-	pr_debug("%s\n", __FUNCTION__);
-
-	action_string = action_to_string(action);
-	if (!action_string) {
-		pr_debug("kobject attempted to send uevent without action_string!\n");
-		return -EINVAL;
-	}
+	pr_debug("kobject: '%s' (%p): %s\n",
+		 kobject_name(kobj), kobj, __func__);
 
 	/* search the kset we belong to */
 	top_kobj = kobj;
-	while (!top_kobj->kset && top_kobj->parent) {
+	while (!top_kobj->kset && top_kobj->parent)
 		top_kobj = top_kobj->parent;
-	}
+
 	if (!top_kobj->kset) {
-		pr_debug("kobject attempted to send uevent without kset!\n");
+		pr_debug("kobject: '%s' (%p): %s: attempted to send uevent "
+			 "without kset!\n", kobject_name(kobj), kobj,
+			 __func__);
 		return -EINVAL;
 	}
 
 	kset = top_kobj->kset;
 	uevent_ops = kset->uevent_ops;
 
-	/*  skip the event, if the filter returns zero. */
+	/* skip the event, if uevent_suppress is set*/
+	if (kobj->uevent_suppress) {
+		pr_debug("kobject: '%s' (%p): %s: uevent_suppress "
+				 "caused the event to drop!\n",
+				 kobject_name(kobj), kobj, __func__);
+		return 0;
+	}
+	/* skip the event, if the filter returns zero. */
 	if (uevent_ops && uevent_ops->filter)
 		if (!uevent_ops->filter(kset, kobj)) {
-			pr_debug("kobject filter function caused the event to drop!\n");
+			pr_debug("kobject: '%s' (%p): %s: filter function "
+				 "caused the event to drop!\n",
+				 kobject_name(kobj), kobj, __func__);
 			return 0;
 		}
 
@@ -170,21 +183,16 @@ int kobject_uevent_env(struct kobject *kobj, enum kobject_action action,
 	else
 		subsystem = kobject_name(&kset->kobj);
 	if (!subsystem) {
-		pr_debug("unset subsytem caused the event to drop!\n");
+		pr_debug("kobject: '%s' (%p): %s: unset subsystem caused the "
+			 "event to drop!\n", kobject_name(kobj), kobj,
+			 __func__);
 		return 0;
 	}
 
-	/* environment index */
-	envp = kzalloc(NUM_ENVP * sizeof (char *), GFP_KERNEL);
-	if (!envp)
+	/* environment buffer */
+	env = kzalloc(sizeof(struct kobj_uevent_env), GFP_KERNEL);
+	if (!env)
 		return -ENOMEM;
-
-	/* environment values */
-	buffer = kmalloc(BUFFER_SIZE, GFP_KERNEL);
-	if (!buffer) {
-		retval = -ENOMEM;
-		goto exit;
-	}
 
 	/* complete object path */
 	devpath = kobject_get_path(kobj, GFP_KERNEL);
@@ -193,90 +201,125 @@ int kobject_uevent_env(struct kobject *kobj, enum kobject_action action,
 		goto exit;
 	}
 
-	/* event environemnt for helper process only */
-	envp[i++] = "HOME=/";
-	envp[i++] = "PATH=/sbin:/bin:/usr/sbin:/usr/bin";
-
 	/* default keys */
-	scratch = buffer;
-	envp [i++] = scratch;
-	scratch += sprintf(scratch, "ACTION=%s", action_string) + 1;
-	envp [i++] = scratch;
-	scratch += sprintf (scratch, "DEVPATH=%s", devpath) + 1;
-	envp [i++] = scratch;
-	scratch += sprintf(scratch, "SUBSYSTEM=%s", subsystem) + 1;
-	for (j = 0; envp_ext && envp_ext[j]; j++)
-		envp[i++] = envp_ext[j];
-	/* just reserve the space, overwrite it after kset call has returned */
-	envp[i++] = seq_buff = scratch;
-	scratch += strlen("SEQNUM=18446744073709551616") + 1;
+	retval = add_uevent_var(env, "ACTION=%s", action_string);
+	if (retval)
+		goto exit;
+	retval = add_uevent_var(env, "DEVPATH=%s", devpath);
+	if (retval)
+		goto exit;
+	retval = add_uevent_var(env, "SUBSYSTEM=%s", subsystem);
+	if (retval)
+		goto exit;
+
+	/* keys passed in from the caller */
+	if (envp_ext) {
+		for (i = 0; envp_ext[i]; i++) {
+			retval = add_uevent_var(env, "%s", envp_ext[i]);
+			if (retval)
+				goto exit;
+		}
+	}
 
 	/* let the kset specific function add its stuff */
 	if (uevent_ops && uevent_ops->uevent) {
-		retval = uevent_ops->uevent(kset, kobj,
-				  &envp[i], NUM_ENVP - i, scratch,
-				  BUFFER_SIZE - (scratch - buffer));
+		retval = uevent_ops->uevent(kset, kobj, env);
 		if (retval) {
-			pr_debug ("%s - uevent() returned %d\n",
-				  __FUNCTION__, retval);
+			pr_debug("kobject: '%s' (%p): %s: uevent() returned "
+				 "%d\n", kobject_name(kobj), kobj,
+				 __func__, retval);
 			goto exit;
 		}
 	}
 
-	/* we will send an event, request a new sequence number */
-	seq = uevent_next_seqnum();
-	sprintf(seq_buff, "SEQNUM=%llu", (unsigned long long)seq);
+	/*
+	 * Mark "add" and "remove" events in the object to ensure proper
+	 * events to userspace during automatic cleanup. If the object did
+	 * send an "add" event, "remove" will automatically generated by
+	 * the core, if not already done by the caller.
+	 */
+	if (action == KOBJ_ADD)
+		kobj->state_add_uevent_sent = 1;
+	else if (action == KOBJ_REMOVE)
+		kobj->state_remove_uevent_sent = 1;
+
+	/* we will send an event, so request a new sequence number */
+	spin_lock(&sequence_lock);
+	seq = ++uevent_seqnum;
+	spin_unlock(&sequence_lock);
+	retval = add_uevent_var(env, "SEQNUM=%llu", (unsigned long long)seq);
+	if (retval)
+		goto exit;
 
 #if defined(CONFIG_NET)
 	/* send netlink message */
-	if (uevent_sock) {
+	mutex_lock(&uevent_sock_mutex);
+	list_for_each_entry(ue_sk, &uevent_sock_list, list) {
+		struct sock *uevent_sock = ue_sk->sk;
 		struct sk_buff *skb;
 		size_t len;
 
 		/* allocate message with the maximum possible size */
 		len = strlen(action_string) + strlen(devpath) + 2;
-		skb = alloc_skb(len + BUFFER_SIZE, GFP_KERNEL);
+		skb = alloc_skb(len + env->buflen, GFP_KERNEL);
 		if (skb) {
+			char *scratch;
+
 			/* add header */
 			scratch = skb_put(skb, len);
 			sprintf(scratch, "%s@%s", action_string, devpath);
 
 			/* copy keys to our continuous event payload buffer */
-			for (i = 2; envp[i]; i++) {
-				len = strlen(envp[i]) + 1;
+			for (i = 0; i < env->envp_idx; i++) {
+				len = strlen(env->envp[i]) + 1;
 				scratch = skb_put(skb, len);
-				strcpy(scratch, envp[i]);
+				strcpy(scratch, env->envp[i]);
 			}
 
 			NETLINK_CB(skb).dst_group = 1;
-			netlink_broadcast(uevent_sock, skb, 0, 1, GFP_KERNEL);
-		}
+			retval = netlink_broadcast_filtered(uevent_sock, skb,
+							    0, 1, GFP_KERNEL,
+							    kobj_bcast_filter,
+							    kobj);
+			/* ENOBUFS should be handled in userspace */
+			if (retval == -ENOBUFS)
+				retval = 0;
+		} else
+			retval = -ENOMEM;
 	}
+	mutex_unlock(&uevent_sock_mutex);
 #endif
 
 	/* call uevent_helper, usually only enabled during early boot */
-	if (uevent_helper[0]) {
+	if (uevent_helper[0] && !kobj_usermode_filter(kobj)) {
 		char *argv [3];
 
 		argv [0] = uevent_helper;
 		argv [1] = (char *)subsystem;
 		argv [2] = NULL;
-		call_usermodehelper (argv[0], argv, envp, 0);
+		retval = add_uevent_var(env, "HOME=/");
+		if (retval)
+			goto exit;
+		retval = add_uevent_var(env,
+					"PATH=/sbin:/bin:/usr/sbin:/usr/bin");
+		if (retval)
+			goto exit;
+
+		retval = call_usermodehelper(argv[0], argv,
+					     env->envp, UMH_WAIT_EXEC);
 	}
 
 exit:
 	kfree(devpath);
-	kfree(buffer);
-	kfree(envp);
+	kfree(env);
 	return retval;
 }
-
 EXPORT_SYMBOL_GPL(kobject_uevent_env);
 
 /**
- * kobject_uevent - notify userspace by ending an uevent
+ * kobject_uevent - notify userspace by sending an uevent
  *
- * @action: action that is happening (usually KOBJ_ADD and KOBJ_REMOVE)
+ * @action: action that is happening
  * @kobj: struct kobject that the action is happening to
  *
  * Returns 0 if kobject_uevent() is completed with success or the
@@ -286,76 +329,97 @@ int kobject_uevent(struct kobject *kobj, enum kobject_action action)
 {
 	return kobject_uevent_env(kobj, action, NULL);
 }
-
 EXPORT_SYMBOL_GPL(kobject_uevent);
 
 /**
- * add_uevent_var - helper for creating event variables
- * @envp: Pointer to table of environment variables, as passed into
- * uevent() method.
- * @num_envp: Number of environment variable slots available, as
- * passed into uevent() method.
- * @cur_index: Pointer to current index into @envp.  It should be
- * initialized to 0 before the first call to add_uevent_var(),
- * and will be incremented on success.
- * @buffer: Pointer to buffer for environment variables, as passed
- * into uevent() method.
- * @buffer_size: Length of @buffer, as passed into uevent() method.
- * @cur_len: Pointer to current length of space used in @buffer.
- * Should be initialized to 0 before the first call to
- * add_uevent_var(), and will be incremented on success.
- * @format: Format for creating environment variable (of the form
- * "XXX=%x") for snprintf().
+ * add_uevent_var - add key value string to the environment buffer
+ * @env: environment buffer structure
+ * @format: printf format for the key=value pair
  *
  * Returns 0 if environment variable was added successfully or -ENOMEM
  * if no space was available.
  */
-int add_uevent_var(char **envp, int num_envp, int *cur_index,
-		   char *buffer, int buffer_size, int *cur_len,
-		   const char *format, ...)
+int add_uevent_var(struct kobj_uevent_env *env, const char *format, ...)
 {
 	va_list args;
+	int len;
 
-	/*
-	 * We check against num_envp - 1 to make sure there is at
-	 * least one slot left after we return, since kobject_uevent()
-	 * needs to set the last slot to NULL.
-	 */
-	if (*cur_index >= num_envp - 1)
+	if (env->envp_idx >= ARRAY_SIZE(env->envp)) {
+		WARN(1, KERN_ERR "add_uevent_var: too many keys\n");
 		return -ENOMEM;
-
-	envp[*cur_index] = buffer + *cur_len;
+	}
 
 	va_start(args, format);
-	*cur_len += vsnprintf(envp[*cur_index],
-			      max(buffer_size - *cur_len, 0),
-			      format, args) + 1;
+	len = vsnprintf(&env->buf[env->buflen],
+			sizeof(env->buf) - env->buflen,
+			format, args);
 	va_end(args);
 
-	if (*cur_len > buffer_size)
+	if (len >= (sizeof(env->buf) - env->buflen)) {
+		WARN(1, KERN_ERR "add_uevent_var: buffer size too small\n");
 		return -ENOMEM;
+	}
 
-	(*cur_index)++;
+	env->envp[env->envp_idx++] = &env->buf[env->buflen];
+	env->buflen += len + 1;
 	return 0;
 }
 EXPORT_SYMBOL_GPL(add_uevent_var);
 
 #if defined(CONFIG_NET)
-static int __init kobject_uevent_init(void)
+static int uevent_net_init(struct net *net)
 {
-	uevent_sock = netlink_kernel_create(NETLINK_KOBJECT_UEVENT, 1, NULL,
-					    NULL, THIS_MODULE);
+	struct uevent_sock *ue_sk;
 
-	if (!uevent_sock) {
+	ue_sk = kzalloc(sizeof(*ue_sk), GFP_KERNEL);
+	if (!ue_sk)
+		return -ENOMEM;
+
+	ue_sk->sk = netlink_kernel_create(net, NETLINK_KOBJECT_UEVENT,
+					  1, NULL, NULL, THIS_MODULE);
+	if (!ue_sk->sk) {
 		printk(KERN_ERR
 		       "kobject_uevent: unable to create netlink socket!\n");
+		kfree(ue_sk);
 		return -ENODEV;
 	}
-
+	mutex_lock(&uevent_sock_mutex);
+	list_add_tail(&ue_sk->list, &uevent_sock_list);
+	mutex_unlock(&uevent_sock_mutex);
 	return 0;
 }
 
+static void uevent_net_exit(struct net *net)
+{
+	struct uevent_sock *ue_sk;
+
+	mutex_lock(&uevent_sock_mutex);
+	list_for_each_entry(ue_sk, &uevent_sock_list, list) {
+		if (sock_net(ue_sk->sk) == net)
+			goto found;
+	}
+	mutex_unlock(&uevent_sock_mutex);
+	return;
+
+found:
+	list_del(&ue_sk->list);
+	mutex_unlock(&uevent_sock_mutex);
+
+	netlink_kernel_release(ue_sk->sk);
+	kfree(ue_sk);
+}
+
+static struct pernet_operations uevent_net_ops = {
+	.init	= uevent_net_init,
+	.exit	= uevent_net_exit,
+};
+
+static int __init kobject_uevent_init(void)
+{
+	netlink_set_nonroot(NETLINK_KOBJECT_UEVENT, NL_NONROOT_RECV);
+	return register_pernet_subsys(&uevent_net_ops);
+}
+
+
 postcore_initcall(kobject_uevent_init);
 #endif
-
-#endif /* CONFIG_HOTPLUG */

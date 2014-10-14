@@ -29,8 +29,6 @@
 
 #include <asm/mach-pnx8550/pci.h>
 #include <asm/mach-pnx8550/glb.h>
-#include <asm/debug.h>
-
 
 static inline void clear_status(void)
 {
@@ -90,14 +88,14 @@ config_access(unsigned int pci_cmd, struct pci_bus *bus, unsigned int devfn, int
 
 		loops--;
 		if (loops == 0) {
-			printk("%s : Arbiter Locked.\n", __FUNCTION__);
+			printk("%s : Arbiter Locked.\n", __func__);
 		}
 	}
 
 	clear_status();
 	if ((pci_cmd == PCI_CMD_IOR) || (pci_cmd == PCI_CMD_IOW)) {
 		printk("%s timeout (GPPM_CTRL=%X) ioaddr %lX pci_cmd %X\n",
-		       __FUNCTION__, inl(PCI_BASE | PCI_GPPM_CTRL), ioaddr,
+		       __func__, inl(PCI_BASE | PCI_GPPM_CTRL), ioaddr,
 		       pci_cmd);
 	}
 
@@ -117,7 +115,7 @@ read_config_byte(struct pci_bus *bus, unsigned int devfn, int where, u8 * val)
 	unsigned int data = 0;
 	int err;
 
-	if (bus == 0)
+	if (bus == NULL)
 		return -1;
 
 	err = config_access(PCI_CMD_CONFIG_READ, bus, devfn, where, ~(1 << (where & 3)), &data);
@@ -145,7 +143,7 @@ read_config_word(struct pci_bus *bus, unsigned int devfn, int where, u16 * val)
 	unsigned int data = 0;
 	int err;
 
-	if (bus == 0)
+	if (bus == NULL)
 		return -1;
 
 	if (where & 0x01)
@@ -168,7 +166,7 @@ static int
 read_config_dword(struct pci_bus *bus, unsigned int devfn, int where, u32 * val)
 {
 	int err;
-	if (bus == 0)
+	if (bus == NULL)
 		return -1;
 
 	if (where & 0x03)
@@ -185,7 +183,7 @@ write_config_byte(struct pci_bus *bus, unsigned int devfn, int where, u8 val)
 	unsigned int data = (unsigned int)val;
 	int err;
 
-	if (bus == 0)
+	if (bus == NULL)
 		return -1;
 
 	switch (where & 0x03) {
@@ -213,7 +211,7 @@ write_config_word(struct pci_bus *bus, unsigned int devfn, int where, u16 val)
 	unsigned int data = (unsigned int)val;
 	int err;
 
-	if (bus == 0)
+	if (bus == NULL)
 		return -1;
 
 	if (where & 0x01)
@@ -235,7 +233,7 @@ static int
 write_config_dword(struct pci_bus *bus, unsigned int devfn, int where, u32 val)
 {
 	int err;
-	if (bus == 0)
+	if (bus == NULL)
 		return -1;
 
 	if (where & 0x03)

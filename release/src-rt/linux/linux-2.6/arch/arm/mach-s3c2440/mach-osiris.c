@@ -1,6 +1,6 @@
 /* linux/arch/arm/mach-s3c2440/mach-osiris.c
  *
- * Copyright (c) 2005 Simtec Electronics
+ * Copyright (c) 2005-2008 Simtec Electronics
  *	http://armlinux.simtec.co.uk/
  *	Ben Dooks <ben@simtec.co.uk>
  *
@@ -15,36 +15,44 @@
 #include <linux/list.h>
 #include <linux/timer.h>
 #include <linux/init.h>
+#include <linux/gpio.h>
 #include <linux/device.h>
 #include <linux/sysdev.h>
 #include <linux/serial_core.h>
+#include <linux/clk.h>
+#include <linux/i2c.h>
+#include <linux/io.h>
+
+#include <linux/i2c/tps65010.h>
 
 #include <asm/mach/arch.h>
 #include <asm/mach/map.h>
 #include <asm/mach/irq.h>
 
-#include <asm/arch/osiris-map.h>
-#include <asm/arch/osiris-cpld.h>
+#include <mach/osiris-map.h>
+#include <mach/osiris-cpld.h>
 
-#include <asm/hardware.h>
-#include <asm/io.h>
+#include <mach/hardware.h>
 #include <asm/irq.h>
 #include <asm/mach-types.h>
 
-#include <asm/arch/regs-serial.h>
-#include <asm/arch/regs-gpio.h>
-#include <asm/arch/regs-mem.h>
-#include <asm/arch/regs-lcd.h>
-#include <asm/arch/nand.h>
+#include <plat/cpu-freq.h>
+#include <plat/regs-serial.h>
+#include <mach/regs-gpio.h>
+#include <mach/regs-mem.h>
+#include <mach/regs-lcd.h>
+#include <plat/nand.h>
+#include <plat/iic.h>
 
 #include <linux/mtd/mtd.h>
 #include <linux/mtd/nand.h>
 #include <linux/mtd/nand_ecc.h>
 #include <linux/mtd/partitions.h>
 
-#include <asm/plat-s3c24xx/clock.h>
-#include <asm/plat-s3c24xx/devs.h>
-#include <asm/plat-s3c24xx/cpu.h>
+#include <plat/gpio-cfg.h>
+#include <plat/clock.h>
+#include <plat/devs.h>
+#include <plat/cpu.h>
 
 /* onboard perihperal map */
 
@@ -143,7 +151,7 @@ static int external_map[]   = { 2 };
 static int chip0_map[]      = { 0 };
 static int chip1_map[]      = { 1 };
 
-static struct mtd_partition osiris_default_nand_part[] = {
+static struct mtd_partition __initdata osiris_default_nand_part[] = {
 	[0] = {
 		.name	= "Boot Agent",
 		.size	= SZ_16K,
@@ -166,6 +174,29 @@ static struct mtd_partition osiris_default_nand_part[] = {
 	}
 };
 
+static struct mtd_partition __initdata osiris_default_nand_part_large[] = {
+	[0] = {
+		.name	= "Boot Agent",
+		.size	= SZ_128K,
+		.offset	= 0,
+	},
+	[1] = {
+		.name	= "/boot",
+		.size	= SZ_4M - SZ_128K,
+		.offset	= SZ_128K,
+	},
+	[2] = {
+		.name	= "user1",
+		.offset	= SZ_4M,
+		.size	= SZ_32M - SZ_4M,
+	},
+	[3] = {
+		.name	= "user2",
+		.offset	= SZ_32M,
+		.size	= MTDPART_SIZ_FULL,
+	}
+};
+
 /* the Osiris has 3 selectable slots for nand-flash, the two
  * on-board chip areas, as well as the external slot.
  *
@@ -173,11 +204,12 @@ static struct mtd_partition osiris_default_nand_part[] = {
  * socket.
 */
 
-static struct s3c2410_nand_set osiris_nand_sets[] = {
+static struct s3c2410_nand_set __initdata osiris_nand_sets[] = {
 	[1] = {
 		.name		= "External",
 		.nr_chips	= 1,
 		.nr_map		= external_map,
+		.options	= NAND_SCAN_SILENT_NODEV,
 		.nr_partitions	= ARRAY_SIZE(osiris_default_nand_part),
 		.partitions	= osiris_default_nand_part,
 	},
@@ -192,6 +224,7 @@ static struct s3c2410_nand_set osiris_nand_sets[] = {
 		.name		= "chip1",
 		.nr_chips	= 1,
 		.nr_map		= chip1_map,
+		.options	= NAND_SCAN_SILENT_NODEV,
 		.nr_partitions	= ARRAY_SIZE(osiris_default_nand_part),
 		.partitions	= osiris_default_nand_part,
 	},
@@ -215,7 +248,7 @@ static void osiris_nand_select(struct s3c2410_nand_set *set, int slot)
 	__raw_writeb(tmp, OSIRIS_VA_CTRL0);
 }
 
-static struct s3c2410_platform_nand osiris_nand_info = {
+static struct s3c2410_platform_nand __initdata osiris_nand_info = {
 	.tacls		= 25,
 	.twrph0		= 60,
 	.twrph1		= 60,
@@ -253,7 +286,21 @@ static unsigned char pm_osiris_ctrl0;
 
 static int osiris_pm_suspend(struct sys_device *sd, pm_message_t state)
 {
+	unsigned int tmp;
+
 	pm_osiris_ctrl0 = __raw_readb(OSIRIS_VA_CTRL0);
+	tmp = pm_osiris_ctrl0 & ~OSIRIS_CTRL0_NANDSEL;
+
+	/* ensure correct NAND slot is selected on resume */
+	if ((pm_osiris_ctrl0 & OSIRIS_CTRL0_BOOT_INT) == 0)
+	        tmp |= 2;
+
+	__raw_writeb(tmp, OSIRIS_VA_CTRL0);
+
+	/* ensure that an nRESET is not generated on resume. */
+	s3c2410_gpio_setpin(S3C2410_GPA(21), 1);
+	s3c_gpio_cfgpin(S3C2410_GPA(21), S3C2410_GPIO_OUTPUT);
+
 	return 0;
 }
 
@@ -261,6 +308,10 @@ static int osiris_pm_resume(struct sys_device *sd)
 {
 	if (pm_osiris_ctrl0 & OSIRIS_CTRL0_FIX8)
 		__raw_writeb(OSIRIS_CTRL1_FIX8, OSIRIS_VA_CTRL1);
+
+	__raw_writeb(pm_osiris_ctrl0, OSIRIS_VA_CTRL0);
+
+	s3c_gpio_cfgpin(S3C2410_GPA(21), S3C2410_GPA21_nRSTOUT);
 
 	return 0;
 }
@@ -271,7 +322,7 @@ static int osiris_pm_resume(struct sys_device *sd)
 #endif
 
 static struct sysdev_class osiris_pm_sysclass = {
-	set_kset_name("mach-osiris"),
+	.name		= "mach-osiris",
 	.suspend	= osiris_pm_suspend,
 	.resume		= osiris_pm_resume,
 };
@@ -280,21 +331,68 @@ static struct sys_device osiris_pm_sysdev = {
 	.cls		= &osiris_pm_sysclass,
 };
 
+/* Link for DVS driver to TPS65011 */
+
+static void osiris_tps_release(struct device *dev)
+{
+	/* static device, do not need to release anything */
+}
+
+static struct platform_device osiris_tps_device = {
+	.name	= "osiris-dvs",
+	.id	= -1,
+	.dev.release = osiris_tps_release,
+};
+
+static int osiris_tps_setup(struct i2c_client *client, void *context)
+{
+	osiris_tps_device.dev.parent = &client->dev;
+	return platform_device_register(&osiris_tps_device);
+}
+
+static int osiris_tps_remove(struct i2c_client *client, void *context)
+{
+	platform_device_unregister(&osiris_tps_device);
+	return 0;
+}
+
+static struct tps65010_board osiris_tps_board = {
+	.base		= -1,	/* GPIO can go anywhere at the moment */
+	.setup		= osiris_tps_setup,
+	.teardown	= osiris_tps_remove,
+};
+
+/* I2C devices fitted. */
+
+static struct i2c_board_info osiris_i2c_devs[] __initdata = {
+	{
+		I2C_BOARD_INFO("tps65011", 0x48),
+		.irq	= IRQ_EINT20,
+		.platform_data = &osiris_tps_board,
+	},
+};
+
 /* Standard Osiris devices */
 
 static struct platform_device *osiris_devices[] __initdata = {
-	&s3c_device_i2c,
+	&s3c_device_i2c0,
 	&s3c_device_wdt,
 	&s3c_device_nand,
 	&osiris_pcmcia,
 };
 
-static struct clk *osiris_clocks[] = {
+static struct clk *osiris_clocks[] __initdata = {
 	&s3c24xx_dclk0,
 	&s3c24xx_dclk1,
 	&s3c24xx_clkout0,
 	&s3c24xx_clkout1,
 	&s3c24xx_uclk,
+};
+
+static struct s3c_cpufreq_board __initdata osiris_cpufreq = {
+	.refresh	= 7800, /* refresh period is 7.8usec */
+	.auto_io	= 1,
+	.need_io	= 1,
 };
 
 static void __init osiris_map_io(void)
@@ -303,10 +401,10 @@ static void __init osiris_map_io(void)
 
 	/* initialise the clocks */
 
-	s3c24xx_dclk0.parent = NULL;
+	s3c24xx_dclk0.parent = &clk_upll;
 	s3c24xx_dclk0.rate   = 12*1000*1000;
 
-	s3c24xx_dclk1.parent = NULL;
+	s3c24xx_dclk1.parent = &clk_upll;
 	s3c24xx_dclk1.rate   = 24*1000*1000;
 
 	s3c24xx_clkout0.parent  = &s3c24xx_dclk0;
@@ -316,20 +414,27 @@ static void __init osiris_map_io(void)
 
 	s3c24xx_register_clocks(osiris_clocks, ARRAY_SIZE(osiris_clocks));
 
-	s3c_device_nand.dev.platform_data = &osiris_nand_info;
-
 	s3c24xx_init_io(osiris_iodesc, ARRAY_SIZE(osiris_iodesc));
 	s3c24xx_init_clocks(0);
 	s3c24xx_init_uarts(osiris_uartcfgs, ARRAY_SIZE(osiris_uartcfgs));
+
+	/* check for the newer revision boards with large page nand */
+
+	if ((__raw_readb(OSIRIS_VA_IDREG) & OSIRIS_ID_REVMASK) >= 4) {
+		printk(KERN_INFO "OSIRIS-B detected (revision %d)\n",
+		       __raw_readb(OSIRIS_VA_IDREG) & OSIRIS_ID_REVMASK);
+		osiris_nand_sets[0].partitions = osiris_default_nand_part_large;
+		osiris_nand_sets[0].nr_partitions = ARRAY_SIZE(osiris_default_nand_part_large);
+	} else {
+		/* write-protect line to the NAND */
+		s3c2410_gpio_setpin(S3C2410_GPA(0), 1);
+	}
 
 	/* fix bus configuration (nBE settings wrong on ABLE pre v2.20) */
 
 	local_irq_save(flags);
 	__raw_writel(__raw_readl(S3C2410_BWSCON) | S3C2410_BWSCON_ST1 | S3C2410_BWSCON_ST2 | S3C2410_BWSCON_ST3 | S3C2410_BWSCON_ST4 | S3C2410_BWSCON_ST5, S3C2410_BWSCON);
 	local_irq_restore(flags);
-
-	/* write-protect line to the NAND */
-	s3c2410_gpio_setpin(S3C2410_GPA0, 1);
 }
 
 static void __init osiris_init(void)
@@ -337,16 +442,21 @@ static void __init osiris_init(void)
 	sysdev_class_register(&osiris_pm_sysclass);
 	sysdev_register(&osiris_pm_sysdev);
 
+	s3c_i2c0_set_platdata(NULL);
+	s3c_nand_set_platdata(&osiris_nand_info);
+
+	s3c_cpufreq_setboard(&osiris_cpufreq);
+
+	i2c_register_board_info(0, osiris_i2c_devs,
+				ARRAY_SIZE(osiris_i2c_devs));
+
 	platform_add_devices(osiris_devices, ARRAY_SIZE(osiris_devices));
 };
 
 MACHINE_START(OSIRIS, "Simtec-OSIRIS")
 	/* Maintainer: Ben Dooks <ben@simtec.co.uk> */
-	.phys_io	= S3C2410_PA_UART,
-	.io_pg_offst	= (((u32)S3C24XX_VA_UART) >> 18) & 0xfffc,
 	.boot_params	= S3C2410_SDRAM_PA + 0x100,
 	.map_io		= osiris_map_io,
-	.init_machine	= osiris_init,
 	.init_irq	= s3c24xx_init_irq,
 	.init_machine	= osiris_init,
 	.timer		= &s3c24xx_timer,

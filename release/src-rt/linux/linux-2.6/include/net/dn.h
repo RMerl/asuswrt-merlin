@@ -3,11 +3,8 @@
 
 #include <linux/dn.h>
 #include <net/sock.h>
-#include <net/tcp.h>
 #include <asm/byteorder.h>
-
-#define dn_ntohs(x) le16_to_cpu(x)
-#define dn_htons(x) cpu_to_le16(x)
+#include <asm/unaligned.h>
 
 struct dn_scp                                   /* Session Control Port */
 {
@@ -176,7 +173,7 @@ struct dn_skb_cb {
 
 static inline __le16 dn_eth2dn(unsigned char *ethaddr)
 {
-	return dn_htons(ethaddr[4] | (ethaddr[5] << 8));
+	return get_unaligned((__le16 *)(ethaddr + 4));
 }
 
 static inline __le16 dn_saddr2dn(struct sockaddr_dn *saddr)
@@ -186,7 +183,7 @@ static inline __le16 dn_saddr2dn(struct sockaddr_dn *saddr)
 
 static inline void dn_dn2eth(unsigned char *ethaddr, __le16 addr)
 {
-	__u16 a = dn_ntohs(addr);
+	__u16 a = le16_to_cpu(addr);
 	ethaddr[0] = 0xAA;
 	ethaddr[1] = 0x00;
 	ethaddr[2] = 0x04;
@@ -195,10 +192,10 @@ static inline void dn_dn2eth(unsigned char *ethaddr, __le16 addr)
 	ethaddr[5] = (__u8)(a >> 8);
 }
 
-static inline void dn_sk_ports_copy(struct flowi *fl, struct dn_scp *scp)
+static inline void dn_sk_ports_copy(struct flowidn *fld, struct dn_scp *scp)
 {
-	fl->uli_u.dnports.sport = scp->addrloc;
-	fl->uli_u.dnports.dport = scp->addrrem;
+	fld->fld_sport = scp->addrloc;
+	fld->fld_dport = scp->addrrem;
 }
 
 extern unsigned dn_mss_from_pmtu(struct net_device *dev, int mtu);
@@ -228,7 +225,7 @@ extern int decnet_di_count;
 extern int decnet_dr_count;
 extern int decnet_no_fc_max_cwnd;
 
-extern int sysctl_decnet_mem[3];
+extern long sysctl_decnet_mem[3];
 extern int sysctl_decnet_wmem[3];
 extern int sysctl_decnet_rmem[3];
 

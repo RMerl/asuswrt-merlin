@@ -1,7 +1,7 @@
 /*
  * sound/oss/sb_card.c
  *
- * Detection routine for the ISA Sound Blaster and compatable sound
+ * Detection routine for the ISA Sound Blaster and compatible sound
  * cards.
  *
  * This file is distributed under the GNU GENERAL PUBLIC LICENSE (GPL)
@@ -24,6 +24,7 @@
 
 #include <linux/module.h>
 #include <linux/moduleparam.h>
+#include <linux/slab.h>
 #include <linux/init.h>
 #include "sound_config.h"
 #include "sb_mixer.h"

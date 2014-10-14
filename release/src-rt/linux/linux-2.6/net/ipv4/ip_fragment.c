@@ -5,10 +5,8 @@
  *
  *		The IP fragmentation functionality.
  *
- * Version:	$Id: ip_fragment.c,v 1.59 2002/01/12 07:54:56 davem Exp $
- *
  * Authors:	Fred N. van Kempen <waltje@uWalt.NL.Mugnet.ORG>
- *		Alan Cox <Alan.Cox@linux.org>
+ *		Alan Cox <alan@lxorguk.ukuu.org.uk>
  *
  * Fixes:
  *		Alan Cox	:	Split from ip.c , see ip_input.c for history.
@@ -34,35 +32,27 @@
 #include <linux/netdevice.h>
 #include <linux/jhash.h>
 #include <linux/random.h>
+#include <linux/slab.h>
+#include <net/route.h>
+#include <net/dst.h>
 #include <net/sock.h>
 #include <net/ip.h>
 #include <net/icmp.h>
 #include <net/checksum.h>
 #include <net/inetpeer.h>
+#include <net/inet_frag.h>
 #include <linux/tcp.h>
 #include <linux/udp.h>
 #include <linux/inet.h>
 #include <linux/netfilter_ipv4.h>
+#include <net/inet_ecn.h>
 
 /* NOTE. Logic of IP defragmentation is parallel to corresponding IPv6
  * code now. If you change something here, _PLEASE_ update ipv6/reassembly.c
  * as well. Or notify me, at least. --ANK
  */
 
-/* Fragment cache limits. We will commit 256K at one time. Should we
- * cross that limit we will prune down to 192K. This should cope with
- * even the most extreme cases without allowing an attacker to measurably
- * harm machine performance.
- */
-int sysctl_ipfrag_high_thresh __read_mostly = 256*1024;
-int sysctl_ipfrag_low_thresh __read_mostly = 192*1024;
-
-int sysctl_ipfrag_max_dist __read_mostly = 64;
-
-/* Important NOTE! Fragment queue must be destroyed before MSL expires.
- * RFC791 is wrong proposing to prolongate timer each fragment arrival by TTL.
- */
-int sysctl_ipfrag_time __read_mostly = IP_FRAG_TIME;
+static int sysctl_ipfrag_max_dist __read_mostly = 64;
 
 struct ipfrag_skb_cb
 {
@@ -70,157 +60,124 @@ struct ipfrag_skb_cb
 	int			offset;
 };
 
-#define FRAG_CB(skb)	((struct ipfrag_skb_cb*)((skb)->cb))
+#define FRAG_CB(skb)	((struct ipfrag_skb_cb *)((skb)->cb))
 
 /* Describe an entry in the "incomplete datagrams" queue. */
 struct ipq {
-	struct hlist_node list;
-	struct list_head lru_list;	/* lru list member 			*/
+	struct inet_frag_queue q;
+
 	u32		user;
 	__be32		saddr;
 	__be32		daddr;
 	__be16		id;
 	u8		protocol;
-	u8		last_in;
-#define COMPLETE		4
-#define FIRST_IN		2
-#define LAST_IN			1
-
-	struct sk_buff	*fragments;	/* linked list of received fragments	*/
-	int		len;		/* total length of original datagram	*/
-	int		meat;
-	spinlock_t	lock;
-	atomic_t	refcnt;
-	struct timer_list timer;	/* when will this queue expire?		*/
-	ktime_t		stamp;
+	u8		ecn; /* RFC3168 support */
 	int             iif;
 	unsigned int    rid;
 	struct inet_peer *peer;
 };
 
-/* Hash table. */
+#define IPFRAG_ECN_CLEAR  0x01 /* one frag had INET_ECN_NOT_ECT */
+#define IPFRAG_ECN_SET_CE 0x04 /* one frag had INET_ECN_CE */
 
-#define IPQ_HASHSZ	64
-
-/* Per-bucket lock is easy to add now. */
-static struct hlist_head ipq_hash[IPQ_HASHSZ];
-static DEFINE_RWLOCK(ipfrag_lock);
-static u32 ipfrag_hash_rnd;
-static LIST_HEAD(ipq_lru_list);
-int ip_frag_nqueues = 0;
-
-static __inline__ void __ipq_unlink(struct ipq *qp)
+static inline u8 ip4_frag_ecn(u8 tos)
 {
-	hlist_del(&qp->list);
-	list_del(&qp->lru_list);
-	ip_frag_nqueues--;
+	tos = (tos & INET_ECN_MASK) + 1;
+	/*
+	 * After the last operation we have (in binary):
+	 * INET_ECN_NOT_ECT => 001
+	 * INET_ECN_ECT_1   => 010
+	 * INET_ECN_ECT_0   => 011
+	 * INET_ECN_CE      => 100
+	 */
+	return (tos & 2) ? 0 : tos;
 }
 
-static __inline__ void ipq_unlink(struct ipq *ipq)
+static struct inet_frags ip4_frags;
+
+int ip_frag_nqueues(struct net *net)
 {
-	write_lock(&ipfrag_lock);
-	__ipq_unlink(ipq);
-	write_unlock(&ipfrag_lock);
+	return net->ipv4.frags.nqueues;
 }
+
+int ip_frag_mem(struct net *net)
+{
+	return atomic_read(&net->ipv4.frags.mem);
+}
+
+static int ip_frag_reasm(struct ipq *qp, struct sk_buff *prev,
+			 struct net_device *dev);
+
+struct ip4_create_arg {
+	struct iphdr *iph;
+	u32 user;
+};
 
 static unsigned int ipqhashfn(__be16 id, __be32 saddr, __be32 daddr, u8 prot)
 {
 	return jhash_3words((__force u32)id << 16 | prot,
 			    (__force u32)saddr, (__force u32)daddr,
-			    ipfrag_hash_rnd) & (IPQ_HASHSZ - 1);
+			    ip4_frags.rnd) & (INETFRAGS_HASHSZ - 1);
 }
 
-static struct timer_list ipfrag_secret_timer;
-int sysctl_ipfrag_secret_interval __read_mostly = 10 * 60 * HZ;
-
-static void ipfrag_secret_rebuild(unsigned long dummy)
+static unsigned int ip4_hashfn(struct inet_frag_queue *q)
 {
-	unsigned long now = jiffies;
-	int i;
+	struct ipq *ipq;
 
-	write_lock(&ipfrag_lock);
-	get_random_bytes(&ipfrag_hash_rnd, sizeof(u32));
-	for (i = 0; i < IPQ_HASHSZ; i++) {
-		struct ipq *q;
-		struct hlist_node *p, *n;
-
-		hlist_for_each_entry_safe(q, p, n, &ipq_hash[i], list) {
-			unsigned int hval = ipqhashfn(q->id, q->saddr,
-						      q->daddr, q->protocol);
-
-			if (hval != i) {
-				hlist_del(&q->list);
-
-				/* Relink to new hash chain. */
-				hlist_add_head(&q->list, &ipq_hash[hval]);
-			}
-		}
-	}
-	write_unlock(&ipfrag_lock);
-
-	mod_timer(&ipfrag_secret_timer, now + sysctl_ipfrag_secret_interval);
+	ipq = container_of(q, struct ipq, q);
+	return ipqhashfn(ipq->id, ipq->saddr, ipq->daddr, ipq->protocol);
 }
 
-atomic_t ip_frag_mem = ATOMIC_INIT(0);	/* Memory used for fragments */
+static int ip4_frag_match(struct inet_frag_queue *q, void *a)
+{
+	struct ipq *qp;
+	struct ip4_create_arg *arg = a;
+
+	qp = container_of(q, struct ipq, q);
+	return	qp->id == arg->iph->id &&
+			qp->saddr == arg->iph->saddr &&
+			qp->daddr == arg->iph->daddr &&
+			qp->protocol == arg->iph->protocol &&
+			qp->user == arg->user;
+}
 
 /* Memory Tracking Functions. */
-static __inline__ void frag_kfree_skb(struct sk_buff *skb, int *work)
+static void frag_kfree_skb(struct netns_frags *nf, struct sk_buff *skb)
 {
-	if (work)
-		*work -= skb->truesize;
-	atomic_sub(skb->truesize, &ip_frag_mem);
+	atomic_sub(skb->truesize, &nf->mem);
 	kfree_skb(skb);
 }
 
-static __inline__ void frag_free_queue(struct ipq *qp, int *work)
+static void ip4_frag_init(struct inet_frag_queue *q, void *a)
 {
-	if (work)
-		*work -= sizeof(struct ipq);
-	atomic_sub(sizeof(struct ipq), &ip_frag_mem);
-	kfree(qp);
+	struct ipq *qp = container_of(q, struct ipq, q);
+	struct ip4_create_arg *arg = a;
+
+	qp->protocol = arg->iph->protocol;
+	qp->id = arg->iph->id;
+	qp->ecn = ip4_frag_ecn(arg->iph->tos);
+	qp->saddr = arg->iph->saddr;
+	qp->daddr = arg->iph->daddr;
+	qp->user = arg->user;
+	qp->peer = sysctl_ipfrag_max_dist ?
+		inet_getpeer_v4(arg->iph->saddr, 1) : NULL;
 }
 
-static __inline__ struct ipq *frag_alloc_queue(void)
+static __inline__ void ip4_frag_free(struct inet_frag_queue *q)
 {
-	struct ipq *qp = kzalloc(sizeof(struct ipq), GFP_ATOMIC);
+	struct ipq *qp;
 
-	if (!qp)
-		return NULL;
-	atomic_add(sizeof(struct ipq), &ip_frag_mem);
-	return qp;
+	qp = container_of(q, struct ipq, q);
+	if (qp->peer)
+		inet_putpeer(qp->peer);
 }
 
 
 /* Destruction primitives. */
 
-/* Complete destruction of ipq. */
-static void ip_frag_destroy(struct ipq *qp, int *work)
+static __inline__ void ipq_put(struct ipq *ipq)
 {
-	struct sk_buff *fp;
-
-	BUG_TRAP(qp->last_in&COMPLETE);
-	BUG_TRAP(del_timer(&qp->timer) == 0);
-
-	if (qp->peer)
-		inet_putpeer(qp->peer);
-
-	/* Release all fragment data. */
-	fp = qp->fragments;
-	while (fp) {
-		struct sk_buff *xp = fp->next;
-
-		frag_kfree_skb(fp, work);
-		fp = xp;
-	}
-
-	/* Finally, release the queue descriptor itself. */
-	frag_free_queue(qp, work);
-}
-
-static __inline__ void ipq_put(struct ipq *ipq, int *work)
-{
-	if (atomic_dec_and_test(&ipq->refcnt))
-		ip_frag_destroy(ipq, work);
+	inet_frag_put(&ipq->q, &ip4_frags);
 }
 
 /* Kill ipq entry. It is not destroyed immediately,
@@ -228,48 +185,19 @@ static __inline__ void ipq_put(struct ipq *ipq, int *work)
  */
 static void ipq_kill(struct ipq *ipq)
 {
-	if (del_timer(&ipq->timer))
-		atomic_dec(&ipq->refcnt);
-
-	if (!(ipq->last_in & COMPLETE)) {
-		ipq_unlink(ipq);
-		atomic_dec(&ipq->refcnt);
-		ipq->last_in |= COMPLETE;
-	}
+	inet_frag_kill(&ipq->q, &ip4_frags);
 }
 
 /* Memory limiting on fragments.  Evictor trashes the oldest
  * fragment queue until we are back under the threshold.
  */
-static void ip_evictor(void)
+static void ip_evictor(struct net *net)
 {
-	struct ipq *qp;
-	struct list_head *tmp;
-	int work;
+	int evicted;
 
-	work = atomic_read(&ip_frag_mem) - sysctl_ipfrag_low_thresh;
-	if (work <= 0)
-		return;
-
-	while (work > 0) {
-		read_lock(&ipfrag_lock);
-		if (list_empty(&ipq_lru_list)) {
-			read_unlock(&ipfrag_lock);
-			return;
-		}
-		tmp = ipq_lru_list.next;
-		qp = list_entry(tmp, struct ipq, lru_list);
-		atomic_inc(&qp->refcnt);
-		read_unlock(&ipfrag_lock);
-
-		spin_lock(&qp->lock);
-		if (!(qp->last_in&COMPLETE))
-			ipq_kill(qp);
-		spin_unlock(&qp->lock);
-
-		ipq_put(qp, &work);
-		IP_INC_STATS_BH(IPSTATS_MIB_REASMFAILS);
-	}
+	evicted = inet_frag_evictor(&net->ipv4.frags, &ip4_frags);
+	if (evicted)
+		IP_ADD_STATS_BH(net, IPSTATS_MIB_REASMFAILS, evicted);
 }
 
 /*
@@ -277,135 +205,83 @@ static void ip_evictor(void)
  */
 static void ip_expire(unsigned long arg)
 {
-	struct ipq *qp = (struct ipq *) arg;
+	struct ipq *qp;
+	struct net *net;
 
-	spin_lock(&qp->lock);
+	qp = container_of((struct inet_frag_queue *) arg, struct ipq, q);
+	net = container_of(qp->q.net, struct net, ipv4.frags);
 
-	if (qp->last_in & COMPLETE)
+	spin_lock(&qp->q.lock);
+
+	if (qp->q.last_in & INET_FRAG_COMPLETE)
 		goto out;
 
 	ipq_kill(qp);
 
-	IP_INC_STATS_BH(IPSTATS_MIB_REASMTIMEOUT);
-	IP_INC_STATS_BH(IPSTATS_MIB_REASMFAILS);
+	IP_INC_STATS_BH(net, IPSTATS_MIB_REASMTIMEOUT);
+	IP_INC_STATS_BH(net, IPSTATS_MIB_REASMFAILS);
 
-	if ((qp->last_in&FIRST_IN) && qp->fragments != NULL) {
-		struct sk_buff *head = qp->fragments;
+	if ((qp->q.last_in & INET_FRAG_FIRST_IN) && qp->q.fragments != NULL) {
+		struct sk_buff *head = qp->q.fragments;
+		const struct iphdr *iph;
+		int err;
+
+		rcu_read_lock();
+		head->dev = dev_get_by_index_rcu(net, qp->iif);
+		if (!head->dev)
+			goto out_rcu_unlock;
+
+		/* skb dst is stale, drop it, and perform route lookup again */
+		skb_dst_drop(head);
+		iph = ip_hdr(head);
+		err = ip_route_input_noref(head, iph->daddr, iph->saddr,
+					   iph->tos, head->dev);
+		if (err)
+			goto out_rcu_unlock;
+
+		/*
+		 * Only an end host needs to send an ICMP
+		 * "Fragment Reassembly Timeout" message, per RFC792.
+		 */
+		if (qp->user == IP_DEFRAG_CONNTRACK_IN &&
+		    skb_rtable(head)->rt_type != RTN_LOCAL)
+			goto out_rcu_unlock;
+
+
 		/* Send an ICMP "Fragment Reassembly Timeout" message. */
-		if ((head->dev = dev_get_by_index(qp->iif)) != NULL) {
-			icmp_send(head, ICMP_TIME_EXCEEDED, ICMP_EXC_FRAGTIME, 0);
-			dev_put(head->dev);
-		}
+		icmp_send(head, ICMP_TIME_EXCEEDED, ICMP_EXC_FRAGTIME, 0);
+out_rcu_unlock:
+		rcu_read_unlock();
 	}
 out:
-	spin_unlock(&qp->lock);
-	ipq_put(qp, NULL);
-}
-
-/* Creation primitives. */
-
-static struct ipq *ip_frag_intern(struct ipq *qp_in)
-{
-	struct ipq *qp;
-#ifdef CONFIG_SMP
-	struct hlist_node *n;
-#endif
-	unsigned int hash;
-
-	write_lock(&ipfrag_lock);
-	hash = ipqhashfn(qp_in->id, qp_in->saddr, qp_in->daddr,
-			 qp_in->protocol);
-#ifdef CONFIG_SMP
-	/* With SMP race we have to recheck hash table, because
-	 * such entry could be created on other cpu, while we
-	 * promoted read lock to write lock.
-	 */
-	hlist_for_each_entry(qp, n, &ipq_hash[hash], list) {
-		if (qp->id == qp_in->id		&&
-		    qp->saddr == qp_in->saddr	&&
-		    qp->daddr == qp_in->daddr	&&
-		    qp->protocol == qp_in->protocol &&
-		    qp->user == qp_in->user) {
-			atomic_inc(&qp->refcnt);
-			write_unlock(&ipfrag_lock);
-			qp_in->last_in |= COMPLETE;
-			ipq_put(qp_in, NULL);
-			return qp;
-		}
-	}
-#endif
-	qp = qp_in;
-
-	if (!mod_timer(&qp->timer, jiffies + sysctl_ipfrag_time))
-		atomic_inc(&qp->refcnt);
-
-	atomic_inc(&qp->refcnt);
-	hlist_add_head(&qp->list, &ipq_hash[hash]);
-	INIT_LIST_HEAD(&qp->lru_list);
-	list_add_tail(&qp->lru_list, &ipq_lru_list);
-	ip_frag_nqueues++;
-	write_unlock(&ipfrag_lock);
-	return qp;
-}
-
-/* Add an entry to the 'ipq' queue for a newly received IP datagram. */
-static struct ipq *ip_frag_create(struct iphdr *iph, u32 user)
-{
-	struct ipq *qp;
-
-	if ((qp = frag_alloc_queue()) == NULL)
-		goto out_nomem;
-
-	qp->protocol = iph->protocol;
-	qp->id = iph->id;
-	qp->saddr = iph->saddr;
-	qp->daddr = iph->daddr;
-	qp->user = user;
-	qp->peer = sysctl_ipfrag_max_dist ? inet_getpeer(iph->saddr, 1) : NULL;
-
-	/* Initialize a timer for this entry. */
-	init_timer(&qp->timer);
-	qp->timer.data = (unsigned long) qp;	/* pointer to queue	*/
-	qp->timer.function = ip_expire;		/* expire function	*/
-	spin_lock_init(&qp->lock);
-	atomic_set(&qp->refcnt, 1);
-
-	return ip_frag_intern(qp);
-
-out_nomem:
-	LIMIT_NETDEBUG(KERN_ERR "ip_frag_create: no memory left !\n");
-	return NULL;
+	spin_unlock(&qp->q.lock);
+	ipq_put(qp);
 }
 
 /* Find the correct entry in the "incomplete datagrams" queue for
  * this IP datagram, and create new one, if nothing is found.
  */
-static inline struct ipq *ip_find(struct iphdr *iph, u32 user)
+static inline struct ipq *ip_find(struct net *net, struct iphdr *iph, u32 user)
 {
-	__be16 id = iph->id;
-	__be32 saddr = iph->saddr;
-	__be32 daddr = iph->daddr;
-	__u8 protocol = iph->protocol;
+	struct inet_frag_queue *q;
+	struct ip4_create_arg arg;
 	unsigned int hash;
-	struct ipq *qp;
-	struct hlist_node *n;
 
-	read_lock(&ipfrag_lock);
-	hash = ipqhashfn(id, saddr, daddr, protocol);
-	hlist_for_each_entry(qp, n, &ipq_hash[hash], list) {
-		if (qp->id == id		&&
-		    qp->saddr == saddr	&&
-		    qp->daddr == daddr	&&
-		    qp->protocol == protocol &&
-		    qp->user == user) {
-			atomic_inc(&qp->refcnt);
-			read_unlock(&ipfrag_lock);
-			return qp;
-		}
-	}
-	read_unlock(&ipfrag_lock);
+	arg.iph = iph;
+	arg.user = user;
 
-	return ip_frag_create(iph, user);
+	read_lock(&ip4_frags.lock);
+	hash = ipqhashfn(iph->id, iph->saddr, iph->daddr, iph->protocol);
+
+	q = inet_frag_find(&net->ipv4.frags, &ip4_frags, &arg, hash);
+	if (q == NULL)
+		goto out_nomem;
+
+	return container_of(q, struct ipq, q);
+
+out_nomem:
+	LIMIT_NETDEBUG(KERN_ERR "ip_frag_create: no memory left !\n");
+	return NULL;
 }
 
 /* Is the fragment too far ahead to be part of ipq? */
@@ -424,10 +300,13 @@ static inline int ip_frag_too_far(struct ipq *qp)
 	end = atomic_inc_return(&peer->rid);
 	qp->rid = end;
 
-	rc = qp->fragments && (end - start) > max;
+	rc = qp->q.fragments && (end - start) > max;
 
 	if (rc) {
-		IP_INC_STATS_BH(IPSTATS_MIB_REASMFAILS);
+		struct net *net;
+
+		net = container_of(qp->q.net, struct net, ipv4.frags);
+		IP_INC_STATS_BH(net, IPSTATS_MIB_REASMFAILS);
 	}
 
 	return rc;
@@ -437,43 +316,50 @@ static int ip_frag_reinit(struct ipq *qp)
 {
 	struct sk_buff *fp;
 
-	if (!mod_timer(&qp->timer, jiffies + sysctl_ipfrag_time)) {
-		atomic_inc(&qp->refcnt);
+	if (!mod_timer(&qp->q.timer, jiffies + qp->q.net->timeout)) {
+		atomic_inc(&qp->q.refcnt);
 		return -ETIMEDOUT;
 	}
 
-	fp = qp->fragments;
+	fp = qp->q.fragments;
 	do {
 		struct sk_buff *xp = fp->next;
-		frag_kfree_skb(fp, NULL);
+		frag_kfree_skb(qp->q.net, fp);
 		fp = xp;
 	} while (fp);
 
-	qp->last_in = 0;
-	qp->len = 0;
-	qp->meat = 0;
-	qp->fragments = NULL;
+	qp->q.last_in = 0;
+	qp->q.len = 0;
+	qp->q.meat = 0;
+	qp->q.fragments = NULL;
+	qp->q.fragments_tail = NULL;
 	qp->iif = 0;
+	qp->ecn = 0;
 
 	return 0;
 }
 
 /* Add new segment to existing queue. */
-static void ip_frag_queue(struct ipq *qp, struct sk_buff *skb)
+static int ip_frag_queue(struct ipq *qp, struct sk_buff *skb)
 {
 	struct sk_buff *prev, *next;
+	struct net_device *dev;
 	int flags, offset;
 	int ihl, end;
+	int err = -ENOENT;
+	u8 ecn;
 
-	if (qp->last_in & COMPLETE)
+	if (qp->q.last_in & INET_FRAG_COMPLETE)
 		goto err;
 
 	if (!(IPCB(skb)->flags & IPSKB_FRAG_COMPLETE) &&
-	    unlikely(ip_frag_too_far(qp)) && unlikely(ip_frag_reinit(qp))) {
+	    unlikely(ip_frag_too_far(qp)) &&
+	    unlikely(err = ip_frag_reinit(qp))) {
 		ipq_kill(qp);
 		goto err;
 	}
 
+	ecn = ip4_frag_ecn(ip_hdr(skb)->tos);
 	offset = ntohs(ip_hdr(skb)->frag_off);
 	flags = offset & ~IP_OFFSET;
 	offset &= IP_OFFSET;
@@ -482,49 +368,59 @@ static void ip_frag_queue(struct ipq *qp, struct sk_buff *skb)
 
 	/* Determine the position of this fragment. */
 	end = offset + skb->len - ihl;
+	err = -EINVAL;
 
 	/* Is this the final fragment? */
 	if ((flags & IP_MF) == 0) {
 		/* If we already have some bits beyond end
 		 * or have different end, the segment is corrrupted.
 		 */
-		if (end < qp->len ||
-		    ((qp->last_in & LAST_IN) && end != qp->len))
+		if (end < qp->q.len ||
+		    ((qp->q.last_in & INET_FRAG_LAST_IN) && end != qp->q.len))
 			goto err;
-		qp->last_in |= LAST_IN;
-		qp->len = end;
+		qp->q.last_in |= INET_FRAG_LAST_IN;
+		qp->q.len = end;
 	} else {
 		if (end&7) {
 			end &= ~7;
 			if (skb->ip_summed != CHECKSUM_UNNECESSARY)
 				skb->ip_summed = CHECKSUM_NONE;
 		}
-		if (end > qp->len) {
+		if (end > qp->q.len) {
 			/* Some bits beyond end -> corruption. */
-			if (qp->last_in & LAST_IN)
+			if (qp->q.last_in & INET_FRAG_LAST_IN)
 				goto err;
-			qp->len = end;
+			qp->q.len = end;
 		}
 	}
 	if (end == offset)
 		goto err;
 
+	err = -ENOMEM;
 	if (pskb_pull(skb, ihl) == NULL)
 		goto err;
-	if (pskb_trim_rcsum(skb, end-offset))
+
+	err = pskb_trim_rcsum(skb, end - offset);
+	if (err)
 		goto err;
 
 	/* Find out which fragments are in front and at the back of us
 	 * in the chain of fragments so far.  We must know where to put
 	 * this fragment, right?
 	 */
+	prev = qp->q.fragments_tail;
+	if (!prev || FRAG_CB(prev)->offset < offset) {
+		next = NULL;
+		goto found;
+	}
 	prev = NULL;
-	for (next = qp->fragments; next != NULL; next = next->next) {
+	for (next = qp->q.fragments; next != NULL; next = next->next) {
 		if (FRAG_CB(next)->offset >= offset)
 			break;	/* bingo! */
 		prev = next;
 	}
 
+found:
 	/* We found where to put this one.  Check for overlap with
 	 * preceding fragment, and, if needed, align things so that
 	 * any overlaps are eliminated.
@@ -534,14 +430,18 @@ static void ip_frag_queue(struct ipq *qp, struct sk_buff *skb)
 
 		if (i > 0) {
 			offset += i;
+			err = -EINVAL;
 			if (end <= offset)
 				goto err;
+			err = -ENOMEM;
 			if (!pskb_pull(skb, i))
 				goto err;
 			if (skb->ip_summed != CHECKSUM_UNNECESSARY)
 				skb->ip_summed = CHECKSUM_NONE;
 		}
 	}
+
+	err = -ENOMEM;
 
 	while (next && FRAG_CB(next)->offset < end) {
 		int i = end - FRAG_CB(next)->offset; /* overlap is 'i' bytes */
@@ -553,7 +453,7 @@ static void ip_frag_queue(struct ipq *qp, struct sk_buff *skb)
 			if (!pskb_pull(next, i))
 				goto err;
 			FRAG_CB(next)->offset += i;
-			qp->meat -= i;
+			qp->q.meat -= i;
 			if (next->ip_summed != CHECKSUM_UNNECESSARY)
 				next->ip_summed = CHECKSUM_NONE;
 			break;
@@ -568,10 +468,10 @@ static void ip_frag_queue(struct ipq *qp, struct sk_buff *skb)
 			if (prev)
 				prev->next = next;
 			else
-				qp->fragments = next;
+				qp->q.fragments = next;
 
-			qp->meat -= free_it->len;
-			frag_kfree_skb(free_it, NULL);
+			qp->q.meat -= free_it->len;
+			frag_kfree_skb(qp->q.net, free_it);
 		}
 	}
 
@@ -579,49 +479,81 @@ static void ip_frag_queue(struct ipq *qp, struct sk_buff *skb)
 
 	/* Insert this fragment in the chain of fragments. */
 	skb->next = next;
+	if (!next)
+		qp->q.fragments_tail = skb;
 	if (prev)
 		prev->next = skb;
 	else
-		qp->fragments = skb;
+		qp->q.fragments = skb;
 
-	if (skb->dev)
-		qp->iif = skb->dev->ifindex;
-	skb->dev = NULL;
-	qp->stamp = skb->tstamp;
-	qp->meat += skb->len;
-	atomic_add(skb->truesize, &ip_frag_mem);
+	dev = skb->dev;
+	if (dev) {
+		qp->iif = dev->ifindex;
+		skb->dev = NULL;
+	}
+	qp->q.stamp = skb->tstamp;
+	qp->q.meat += skb->len;
+	qp->ecn |= ecn;
+	atomic_add(skb->truesize, &qp->q.net->mem);
 	if (offset == 0)
-		qp->last_in |= FIRST_IN;
+		qp->q.last_in |= INET_FRAG_FIRST_IN;
 
-	write_lock(&ipfrag_lock);
-	list_move_tail(&qp->lru_list, &ipq_lru_list);
-	write_unlock(&ipfrag_lock);
+	if (qp->q.last_in == (INET_FRAG_FIRST_IN | INET_FRAG_LAST_IN) &&
+	    qp->q.meat == qp->q.len)
+		return ip_frag_reasm(qp, prev, dev);
 
-	return;
+	write_lock(&ip4_frags.lock);
+	list_move_tail(&qp->q.lru_list, &qp->q.net->lru_list);
+	write_unlock(&ip4_frags.lock);
+	return -EINPROGRESS;
 
 err:
 	kfree_skb(skb);
+	return err;
 }
 
 
 /* Build a new IP datagram from all its fragments. */
 
-static struct sk_buff *ip_frag_reasm(struct ipq *qp, struct net_device *dev)
+static int ip_frag_reasm(struct ipq *qp, struct sk_buff *prev,
+			 struct net_device *dev)
 {
+	struct net *net = container_of(qp->q.net, struct net, ipv4.frags);
 	struct iphdr *iph;
-	struct sk_buff *fp, *head = qp->fragments;
+	struct sk_buff *fp, *head = qp->q.fragments;
 	int len;
 	int ihlen;
+	int err;
 
 	ipq_kill(qp);
 
-	BUG_TRAP(head != NULL);
-	BUG_TRAP(FRAG_CB(head)->offset == 0);
+	/* Make the one we just received the head. */
+	if (prev) {
+		head = prev->next;
+		fp = skb_clone(head, GFP_ATOMIC);
+		if (!fp)
+			goto out_nomem;
+
+		fp->next = head->next;
+		if (!fp->next)
+			qp->q.fragments_tail = fp;
+		prev->next = fp;
+
+		skb_morph(head, qp->q.fragments);
+		head->next = qp->q.fragments->next;
+
+		kfree_skb(qp->q.fragments);
+		qp->q.fragments = head;
+	}
+
+	WARN_ON(head == NULL);
+	WARN_ON(FRAG_CB(head)->offset != 0);
 
 	/* Allocate a new buffer for the datagram. */
 	ihlen = ip_hdrlen(head);
-	len = ihlen + qp->len;
+	len = ihlen + qp->q.len;
 
+	err = -E2BIG;
 	if (len > 65535)
 		goto out_oversize;
 
@@ -632,7 +564,7 @@ static struct sk_buff *ip_frag_reasm(struct ipq *qp, struct net_device *dev)
 	/* If the first fragment is fragmented itself, we split
 	 * it to two chunks: the first with data and paged part
 	 * and the second, holding only fragments. */
-	if (skb_shinfo(head)->frag_list) {
+	if (skb_has_frag_list(head)) {
 		struct sk_buff *clone;
 		int i, plen = 0;
 
@@ -641,7 +573,7 @@ static struct sk_buff *ip_frag_reasm(struct ipq *qp, struct net_device *dev)
 		clone->next = head->next;
 		head->next = clone;
 		skb_shinfo(clone)->frag_list = skb_shinfo(head)->frag_list;
-		skb_shinfo(head)->frag_list = NULL;
+		skb_frag_list_init(head);
 		for (i=0; i<skb_shinfo(head)->nr_frags; i++)
 			plen += skb_shinfo(head)->frags[i].size;
 		clone->len = clone->data_len = head->data_len - plen;
@@ -649,12 +581,11 @@ static struct sk_buff *ip_frag_reasm(struct ipq *qp, struct net_device *dev)
 		head->len -= clone->len;
 		clone->csum = 0;
 		clone->ip_summed = head->ip_summed;
-		atomic_add(clone->truesize, &ip_frag_mem);
+		atomic_add(clone->truesize, &qp->q.net->mem);
 	}
 
 	skb_shinfo(head)->frag_list = head->next;
 	skb_push(head, head->data - skb_network_header(head));
-	atomic_sub(head->truesize, &ip_frag_mem);
 
 	for (fp=head->next; fp; fp = fp->next) {
 		head->data_len += fp->len;
@@ -664,79 +595,227 @@ static struct sk_buff *ip_frag_reasm(struct ipq *qp, struct net_device *dev)
 		else if (head->ip_summed == CHECKSUM_COMPLETE)
 			head->csum = csum_add(head->csum, fp->csum);
 		head->truesize += fp->truesize;
-		atomic_sub(fp->truesize, &ip_frag_mem);
 	}
+	atomic_sub(head->truesize, &qp->q.net->mem);
 
 	head->next = NULL;
 	head->dev = dev;
-	head->tstamp = qp->stamp;
+	head->tstamp = qp->q.stamp;
 
 	iph = ip_hdr(head);
 	iph->frag_off = 0;
 	iph->tot_len = htons(len);
-	IP_INC_STATS_BH(IPSTATS_MIB_REASMOKS);
-	qp->fragments = NULL;
-	return head;
+	/* RFC3168 5.3 Fragmentation support
+	 * If one fragment had INET_ECN_NOT_ECT,
+	 *	reassembled frame also has INET_ECN_NOT_ECT
+	 * Elif one fragment had INET_ECN_CE
+	 *	reassembled frame also has INET_ECN_CE
+	 */
+	if (qp->ecn & IPFRAG_ECN_CLEAR)
+		iph->tos &= ~INET_ECN_MASK;
+	else if (qp->ecn & IPFRAG_ECN_SET_CE)
+		iph->tos |= INET_ECN_CE;
+
+	IP_INC_STATS_BH(net, IPSTATS_MIB_REASMOKS);
+	qp->q.fragments = NULL;
+	qp->q.fragments_tail = NULL;
+	return 0;
 
 out_nomem:
 	LIMIT_NETDEBUG(KERN_ERR "IP: queue_glue: no memory for gluing "
 			      "queue %p\n", qp);
+	err = -ENOMEM;
 	goto out_fail;
 out_oversize:
 	if (net_ratelimit())
-		printk(KERN_INFO
-			"Oversized IP packet from %d.%d.%d.%d.\n",
-			NIPQUAD(qp->saddr));
+		printk(KERN_INFO "Oversized IP packet from %pI4.\n",
+			&qp->saddr);
 out_fail:
-	IP_INC_STATS_BH(IPSTATS_MIB_REASMFAILS);
-	return NULL;
+	IP_INC_STATS_BH(net, IPSTATS_MIB_REASMFAILS);
+	return err;
 }
 
 /* Process an incoming IP datagram fragment. */
-struct sk_buff *ip_defrag(struct sk_buff *skb, u32 user)
+int ip_defrag(struct sk_buff *skb, u32 user)
 {
 	struct ipq *qp;
-	struct net_device *dev;
+	struct net *net;
 
-	IP_INC_STATS_BH(IPSTATS_MIB_REASMREQDS);
+	net = skb->dev ? dev_net(skb->dev) : dev_net(skb_dst(skb)->dev);
+	IP_INC_STATS_BH(net, IPSTATS_MIB_REASMREQDS);
 
 	/* Start by cleaning up the memory. */
-	if (atomic_read(&ip_frag_mem) > sysctl_ipfrag_high_thresh)
-		ip_evictor();
-
-	dev = skb->dev;
+	if (atomic_read(&net->ipv4.frags.mem) > net->ipv4.frags.high_thresh)
+		ip_evictor(net);
 
 	/* Lookup (or create) queue header */
-	if ((qp = ip_find(ip_hdr(skb), user)) != NULL) {
-		struct sk_buff *ret = NULL;
+	if ((qp = ip_find(net, ip_hdr(skb), user)) != NULL) {
+		int ret;
 
-		spin_lock(&qp->lock);
+		spin_lock(&qp->q.lock);
 
-		ip_frag_queue(qp, skb);
+		ret = ip_frag_queue(qp, skb);
 
-		if (qp->last_in == (FIRST_IN|LAST_IN) &&
-		    qp->meat == qp->len)
-			ret = ip_frag_reasm(qp, dev);
-
-		spin_unlock(&qp->lock);
-		ipq_put(qp, NULL);
+		spin_unlock(&qp->q.lock);
+		ipq_put(qp);
 		return ret;
 	}
 
-	IP_INC_STATS_BH(IPSTATS_MIB_REASMFAILS);
+	IP_INC_STATS_BH(net, IPSTATS_MIB_REASMFAILS);
 	kfree_skb(skb);
-	return NULL;
+	return -ENOMEM;
 }
+EXPORT_SYMBOL(ip_defrag);
+
+#ifdef CONFIG_SYSCTL
+static int zero;
+
+static struct ctl_table ip4_frags_ns_ctl_table[] = {
+	{
+		.procname	= "ipfrag_high_thresh",
+		.data		= &init_net.ipv4.frags.high_thresh,
+		.maxlen		= sizeof(int),
+		.mode		= 0644,
+		.proc_handler	= proc_dointvec
+	},
+	{
+		.procname	= "ipfrag_low_thresh",
+		.data		= &init_net.ipv4.frags.low_thresh,
+		.maxlen		= sizeof(int),
+		.mode		= 0644,
+		.proc_handler	= proc_dointvec
+	},
+	{
+		.procname	= "ipfrag_time",
+		.data		= &init_net.ipv4.frags.timeout,
+		.maxlen		= sizeof(int),
+		.mode		= 0644,
+		.proc_handler	= proc_dointvec_jiffies,
+	},
+	{ }
+};
+
+static struct ctl_table ip4_frags_ctl_table[] = {
+	{
+		.procname	= "ipfrag_secret_interval",
+		.data		= &ip4_frags.secret_interval,
+		.maxlen		= sizeof(int),
+		.mode		= 0644,
+		.proc_handler	= proc_dointvec_jiffies,
+	},
+	{
+		.procname	= "ipfrag_max_dist",
+		.data		= &sysctl_ipfrag_max_dist,
+		.maxlen		= sizeof(int),
+		.mode		= 0644,
+		.proc_handler	= proc_dointvec_minmax,
+		.extra1		= &zero
+	},
+	{ }
+};
+
+static int __net_init ip4_frags_ns_ctl_register(struct net *net)
+{
+	struct ctl_table *table;
+	struct ctl_table_header *hdr;
+
+	table = ip4_frags_ns_ctl_table;
+	if (!net_eq(net, &init_net)) {
+		table = kmemdup(table, sizeof(ip4_frags_ns_ctl_table), GFP_KERNEL);
+		if (table == NULL)
+			goto err_alloc;
+
+		table[0].data = &net->ipv4.frags.high_thresh;
+		table[1].data = &net->ipv4.frags.low_thresh;
+		table[2].data = &net->ipv4.frags.timeout;
+	}
+
+	hdr = register_net_sysctl_table(net, net_ipv4_ctl_path, table);
+	if (hdr == NULL)
+		goto err_reg;
+
+	net->ipv4.frags_hdr = hdr;
+	return 0;
+
+err_reg:
+	if (!net_eq(net, &init_net))
+		kfree(table);
+err_alloc:
+	return -ENOMEM;
+}
+
+static void __net_exit ip4_frags_ns_ctl_unregister(struct net *net)
+{
+	struct ctl_table *table;
+
+	table = net->ipv4.frags_hdr->ctl_table_arg;
+	unregister_net_sysctl_table(net->ipv4.frags_hdr);
+	kfree(table);
+}
+
+static void ip4_frags_ctl_register(void)
+{
+	register_net_sysctl_rotable(net_ipv4_ctl_path, ip4_frags_ctl_table);
+}
+#else
+static inline int ip4_frags_ns_ctl_register(struct net *net)
+{
+	return 0;
+}
+
+static inline void ip4_frags_ns_ctl_unregister(struct net *net)
+{
+}
+
+static inline void ip4_frags_ctl_register(void)
+{
+}
+#endif
+
+static int __net_init ipv4_frags_init_net(struct net *net)
+{
+	/*
+	 * Fragment cache limits. We will commit 256K at one time. Should we
+	 * cross that limit we will prune down to 192K. This should cope with
+	 * even the most extreme cases without allowing an attacker to
+	 * measurably harm machine performance.
+	 */
+	net->ipv4.frags.high_thresh = 256 * 1024;
+	net->ipv4.frags.low_thresh = 192 * 1024;
+	/*
+	 * Important NOTE! Fragment queue must be destroyed before MSL expires.
+	 * RFC791 is wrong proposing to prolongate timer each fragment arrival
+	 * by TTL.
+	 */
+	net->ipv4.frags.timeout = IP_FRAG_TIME;
+
+	inet_frags_init_net(&net->ipv4.frags);
+
+	return ip4_frags_ns_ctl_register(net);
+}
+
+static void __net_exit ipv4_frags_exit_net(struct net *net)
+{
+	ip4_frags_ns_ctl_unregister(net);
+	inet_frags_exit_net(&net->ipv4.frags, &ip4_frags);
+}
+
+static struct pernet_operations ip4_frags_ops = {
+	.init = ipv4_frags_init_net,
+	.exit = ipv4_frags_exit_net,
+};
 
 void __init ipfrag_init(void)
 {
-	ipfrag_hash_rnd = (u32) ((num_physpages ^ (num_physpages>>7)) ^
-				 (jiffies ^ (jiffies >> 6)));
-
-	init_timer(&ipfrag_secret_timer);
-	ipfrag_secret_timer.function = ipfrag_secret_rebuild;
-	ipfrag_secret_timer.expires = jiffies + sysctl_ipfrag_secret_interval;
-	add_timer(&ipfrag_secret_timer);
+	ip4_frags_ctl_register();
+	register_pernet_subsys(&ip4_frags_ops);
+	ip4_frags.hashfn = ip4_hashfn;
+	ip4_frags.constructor = ip4_frag_init;
+	ip4_frags.destructor = ip4_frag_free;
+	ip4_frags.skb_free = NULL;
+	ip4_frags.qsize = sizeof(struct ipq);
+	ip4_frags.match = ip4_frag_match;
+	ip4_frags.frag_expire = ip_expire;
+	ip4_frags.secret_interval = 10 * 60 * HZ;
+	inet_frags_init(&ip4_frags);
 }
-
-EXPORT_SYMBOL(ip_defrag);

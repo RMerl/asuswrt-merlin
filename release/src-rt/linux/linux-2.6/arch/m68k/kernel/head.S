@@ -134,7 +134,7 @@
  *	Thanks to a small helping routine enabling the mmu got quite simple
  * and there is only one way left. mmu_engage makes a complete a new mapping
  * that only includes the absolute necessary to be able to jump to the final
- * postion and to restore the original mapping.
+ * position and to restore the original mapping.
  * As this code doesn't need a transparent translation register anymore this
  * means all registers are free to be used by machines that needs them for
  * other purposes.
@@ -196,7 +196,7 @@
  * for them and trying to understand what they mean.
  *
  * CONFIG_xxx:	These are the obvious machine configuration defines created
- * during configuration.  These are defined in include/linux/autoconf.h.
+ * during configuration.  These are defined in autoconf.h.
  *
  * CONSOLE:	There is support for head.S console in this file.  This
  * console can talk to a Mac frame buffer, but could easily be extrapolated
@@ -577,7 +577,7 @@ func_define	putn,1
 #endif
 .endm
 
-.text
+__HEAD
 ENTRY(_stext)
 /*
  * Version numbers of the bootinfo interface
@@ -969,7 +969,7 @@ L(mmu_init_amiga):
 	is_not_040_or_060(1f)
 
 	/*
-	 * 040: Map the 16Meg range physical 0x0 upto logical 0x8000.0000
+	 * 040: Map the 16Meg range physical 0x0 up to logical 0x8000.0000
 	 */
 	mmu_map		#0x80000000,#0,#0x01000000,#_PAGE_NOCACHE_S
 	/*
@@ -982,7 +982,7 @@ L(mmu_init_amiga):
 
 1:
 	/*
-	 * 030:	Map the 32Meg range physical 0x0 upto logical 0x8000.0000
+	 * 030:	Map the 32Meg range physical 0x0 up to logical 0x8000.0000
 	 */
 	mmu_map		#0x80000000,#0,#0x02000000,#_PAGE_NOCACHE030
 	mmu_map_tt	#1,#0x40000000,#0x20000000,#_PAGE_NOCACHE030
@@ -1074,7 +1074,7 @@ L(notq40):
 	is_040(1f)
 
 	/*
-	 * 030: Map the 32Meg range physical 0x0 upto logical 0xf000.0000
+	 * 030: Map the 32Meg range physical 0x0 up to logical 0xf000.0000
 	 */
 	mmu_map	#0xf0000000,#0,#0x02000000,#_PAGE_NOCACHE030
 
@@ -1082,7 +1082,7 @@ L(notq40):
 
 1:
 	/*
-	 * 040: Map the 16Meg range physical 0x0 upto logical 0xf000.0000
+	 * 040: Map the 16Meg range physical 0x0 up to logical 0xf000.0000
 	 */
 	mmu_map #0xf0000000,#0,#0x01000000,#_PAGE_NOCACHE_S
 
@@ -1434,7 +1434,7 @@ L(mmu_fixup_done):
 #endif
 
 #ifdef CONFIG_HP300
-	is_not_hp300(1f)
+	is_not_hp300(2f)
 	/*
 	 * Fix up the iobase register to point to the new location of the LEDs.
 	 */
@@ -3078,7 +3078,7 @@ func_start	serial_putc,%d0/%d1/%a0/%a1
 	/*
 	 * If the loader gave us a board type then we can use that to
 	 * select an appropriate output routine; otherwise we just use
-	 * the Bug code.  If we haev to use the Bug that means the Bug
+	 * the Bug code.  If we have to use the Bug that means the Bug
 	 * workspace has to be valid, which means the Bug has to use
 	 * the SRAM, which is non-standard.
 	 */

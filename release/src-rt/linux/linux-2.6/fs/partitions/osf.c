@@ -10,10 +10,13 @@
 #include "check.h"
 #include "osf.h"
 
-int osf_partition(struct parsed_partitions *state, struct block_device *bdev)
+#define MAX_OSF_PARTITIONS 18
+
+int osf_partition(struct parsed_partitions *state)
 {
 	int i;
 	int slot = 1;
+	unsigned int npartitions;
 	Sector sect;
 	unsigned char *data;
 	struct disklabel {
@@ -45,11 +48,11 @@ int osf_partition(struct parsed_partitions *state, struct block_device *bdev)
 			u8  p_fstype;
 			u8  p_frag;
 			__le16 p_cpg;
-		} d_partitions[8];
+		} d_partitions[MAX_OSF_PARTITIONS];
 	} * label;
 	struct d_partition * partition;
 
-	data = read_dev_sector(bdev, 0, &sect);
+	data = read_part_sector(state, 0, &sect);
 	if (!data)
 		return -1;
 
@@ -63,7 +66,12 @@ int osf_partition(struct parsed_partitions *state, struct block_device *bdev)
 		put_dev_sector(sect);
 		return 0;
 	}
-	for (i = 0 ; i < le16_to_cpu(label->d_npartitions); i++, partition++) {
+	npartitions = le16_to_cpu(label->d_npartitions);
+	if (npartitions > MAX_OSF_PARTITIONS) {
+		put_dev_sector(sect);
+		return 0;
+	}
+	for (i = 0 ; i < npartitions; i++, partition++) {
 		if (slot == state->limit)
 		        break;
 		if (le32_to_cpu(partition->p_size))
@@ -72,7 +80,7 @@ int osf_partition(struct parsed_partitions *state, struct block_device *bdev)
 				le32_to_cpu(partition->p_size));
 		slot++;
 	}
-	printk("\n");
+	strlcat(state->pp_buf, "\n", PAGE_SIZE);
 	put_dev_sector(sect);
 	return 1;
 }

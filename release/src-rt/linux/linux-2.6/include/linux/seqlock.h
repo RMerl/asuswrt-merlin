@@ -85,23 +85,29 @@ static inline int write_tryseqlock(seqlock_t *sl)
 /* Start of read calculation -- fetch last complete writer token */
 static __always_inline unsigned read_seqbegin(const seqlock_t *sl)
 {
-	unsigned ret = sl->sequence;
+	unsigned ret;
+
+repeat:
+	ret = ACCESS_ONCE(sl->sequence);
+	if (unlikely(ret & 1)) {
+		cpu_relax();
+		goto repeat;
+	}
 	smp_rmb();
+
 	return ret;
 }
 
-/* Test if reader processed invalid data.
- * If initial values is odd, 
- *	then writer had already started when section was entered
- * If sequence value changed
- *	then writer changed data while in section
- *    
- * Using xor saves one conditional branch.
+/*
+ * Test if reader processed invalid data.
+ *
+ * If sequence value changed then writer changed data while in section.
  */
-static __always_inline int read_seqretry(const seqlock_t *sl, unsigned iv)
+static __always_inline int read_seqretry(const seqlock_t *sl, unsigned start)
 {
 	smp_rmb();
-	return (iv & 1) | (sl->sequence ^ iv);
+
+	return unlikely(sl->sequence != start);
 }
 
 
@@ -119,23 +125,82 @@ typedef struct seqcount {
 #define SEQCNT_ZERO { 0 }
 #define seqcount_init(x)	do { *(x) = (seqcount_t) SEQCNT_ZERO; } while (0)
 
-/* Start of read using pointer to a sequence counter only.  */
+/**
+ * __read_seqcount_begin - begin a seq-read critical section (without barrier)
+ * @s: pointer to seqcount_t
+ * Returns: count to be passed to read_seqcount_retry
+ *
+ * __read_seqcount_begin is like read_seqcount_begin, but has no smp_rmb()
+ * barrier. Callers should ensure that smp_rmb() or equivalent ordering is
+ * provided before actually loading any of the variables that are to be
+ * protected in this critical section.
+ *
+ * Use carefully, only in critical code, and comment how the barrier is
+ * provided.
+ */
+static inline unsigned __read_seqcount_begin(const seqcount_t *s)
+{
+	unsigned ret;
+
+repeat:
+	ret = s->sequence;
+	if (unlikely(ret & 1)) {
+		cpu_relax();
+		goto repeat;
+	}
+	return ret;
+}
+
+/**
+ * read_seqcount_begin - begin a seq-read critical section
+ * @s: pointer to seqcount_t
+ * Returns: count to be passed to read_seqcount_retry
+ *
+ * read_seqcount_begin opens a read critical section of the given seqcount.
+ * Validity of the critical section is tested by checking read_seqcount_retry
+ * function.
+ */
 static inline unsigned read_seqcount_begin(const seqcount_t *s)
 {
-	unsigned ret = s->sequence;
+	unsigned ret = __read_seqcount_begin(s);
 	smp_rmb();
 	return ret;
 }
 
-/* Test if reader processed invalid data.
- * Equivalent to: iv is odd or sequence number has changed.
- *                (iv & 1) || (*s != iv)
- * Using xor saves one conditional branch.
+/**
+ * __read_seqcount_retry - end a seq-read critical section (without barrier)
+ * @s: pointer to seqcount_t
+ * @start: count, from read_seqcount_begin
+ * Returns: 1 if retry is required, else 0
+ *
+ * __read_seqcount_retry is like read_seqcount_retry, but has no smp_rmb()
+ * barrier. Callers should ensure that smp_rmb() or equivalent ordering is
+ * provided before actually loading any of the variables that are to be
+ * protected in this critical section.
+ *
+ * Use carefully, only in critical code, and comment how the barrier is
+ * provided.
  */
-static inline int read_seqcount_retry(const seqcount_t *s, unsigned iv)
+static inline int __read_seqcount_retry(const seqcount_t *s, unsigned start)
+{
+	return unlikely(s->sequence != start);
+}
+
+/**
+ * read_seqcount_retry - end a seq-read critical section
+ * @s: pointer to seqcount_t
+ * @start: count, from read_seqcount_begin
+ * Returns: 1 if retry is required, else 0
+ *
+ * read_seqcount_retry closes a read critical section of the given seqcount.
+ * If the critical section was invalid, it must be ignored (and typically
+ * retried).
+ */
+static inline int read_seqcount_retry(const seqcount_t *s, unsigned start)
 {
 	smp_rmb();
-	return (iv & 1) | (s->sequence ^ iv);
+
+	return __read_seqcount_retry(s, start);
 }
 
 
@@ -153,6 +218,19 @@ static inline void write_seqcount_end(seqcount_t *s)
 {
 	smp_wmb();
 	s->sequence++;
+}
+
+/**
+ * write_seqcount_barrier - invalidate in-progress read-side seq operations
+ * @s: pointer to seqcount_t
+ *
+ * After write_seqcount_barrier, no read-side seq operations will complete
+ * successfully and see data older than this.
+ */
+static inline void write_seqcount_barrier(seqcount_t *s)
+{
+	smp_wmb();
+	s->sequence+=2;
 }
 
 /*

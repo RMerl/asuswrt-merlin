@@ -427,7 +427,7 @@ static void vortex_mixer_init(vortex_t * vortex)
 
 	/* Set clipping ceiling (this may be all wrong). */
 	/*
-	for (x = 0; x > 0x80; x++) {
+	for (x = 0; x < 0x80; x++) {
 		hwwrite(vortex->mmio, VORTEX_MIXER_CLIP + (x << 2), 0x3ffff);
 	}
 	*/
@@ -1097,19 +1097,12 @@ static void vortex_adbdma_setstartbuffer(vortex_t * vortex, int adbdma, int sb)
 
 static void
 vortex_adbdma_setbuffers(vortex_t * vortex, int adbdma,
-			 struct snd_sg_buf * sgbuf, int psize, int count)
+			 int psize, int count)
 {
 	stream_t *dma = &vortex->dma_adb[adbdma];
 
-	if (sgbuf == NULL) {
-		printk(KERN_INFO "vortex: FATAL: sgbuf is NULL!\n");
-		return;
-	}
-	//printk(KERN_INFO "vortex: page count = %d, tblcount = %d\n", count, sgbuf->tblsize);
-
 	dma->period_bytes = psize;
 	dma->nr_periods = count;
-	dma->sgbuf = sgbuf;
 
 	dma->cfg0 = 0;
 	dma->cfg1 = 0;
@@ -1120,29 +1113,32 @@ vortex_adbdma_setbuffers(vortex_t * vortex, int adbdma,
 		dma->cfg1 |= 0x88000000 | 0x44000000 | 0x30000000 | (psize - 1);
 		hwwrite(vortex->mmio,
 			VORTEX_ADBDMA_BUFBASE + (adbdma << 4) + 0xc,
-			snd_sgbuf_get_addr(sgbuf, psize * 3));
+			snd_pcm_sgbuf_get_addr(dma->substream, psize * 3));
 		/* 3 pages */
 	case 3:
 		dma->cfg0 |= 0x12000000;
 		dma->cfg1 |= 0x80000000 | 0x40000000 | ((psize - 1) << 0xc);
 		hwwrite(vortex->mmio,
 			VORTEX_ADBDMA_BUFBASE + (adbdma << 4) + 0x8,
-			snd_sgbuf_get_addr(sgbuf, psize * 2));
+			snd_pcm_sgbuf_get_addr(dma->substream, psize * 2));
 		/* 2 pages */
 	case 2:
 		dma->cfg0 |= 0x88000000 | 0x44000000 | 0x10000000 | (psize - 1);
 		hwwrite(vortex->mmio,
 			VORTEX_ADBDMA_BUFBASE + (adbdma << 4) + 0x4,
-			snd_sgbuf_get_addr(sgbuf, psize));
+			snd_pcm_sgbuf_get_addr(dma->substream, psize));
 		/* 1 page */
 	case 1:
 		dma->cfg0 |= 0x80000000 | 0x40000000 | ((psize - 1) << 0xc);
 		hwwrite(vortex->mmio,
 			VORTEX_ADBDMA_BUFBASE + (adbdma << 4),
-			snd_sgbuf_get_addr(sgbuf, 0));
+			snd_pcm_sgbuf_get_addr(dma->substream, 0));
 		break;
 	}
-	//printk("vortex: cfg0 = 0x%x\nvortex: cfg1=0x%x\n", dma->cfg0, dma->cfg1);
+	/*
+	printk(KERN_DEBUG "vortex: cfg0 = 0x%x\nvortex: cfg1=0x%x\n",
+	       dma->cfg0, dma->cfg1);
+	*/
 	hwwrite(vortex->mmio, VORTEX_ADBDMA_BUFCFG0 + (adbdma << 3), dma->cfg0);
 	hwwrite(vortex->mmio, VORTEX_ADBDMA_BUFCFG1 + (adbdma << 3), dma->cfg1);
 
@@ -1205,7 +1201,7 @@ static int vortex_adbdma_bufshift(vortex_t * vortex, int adbdma)
 			//hwwrite(vortex->mmio, VORTEX_ADBDMA_BUFBASE+(((adbdma << 2)+pp) << 2), dma->table[p].addr);
 			hwwrite(vortex->mmio,
 				VORTEX_ADBDMA_BUFBASE + (((adbdma << 2) + pp) << 2),
-				snd_sgbuf_get_addr(dma->sgbuf,
+				snd_pcm_sgbuf_get_addr(dma->substream,
 				dma->period_bytes * p));
 			/* Force write thru cache. */
 			hwread(vortex->mmio, VORTEX_ADBDMA_BUFBASE +
@@ -1244,20 +1240,31 @@ static void vortex_adbdma_resetup(vortex_t *vortex, int adbdma) {
 			if (pp >= 4)
 				pp -= 4;
 		}
-		hwwrite(vortex->mmio, VORTEX_ADBDMA_BUFBASE+(((adbdma << 2)+pp) << 2), snd_sgbuf_get_addr(dma->sgbuf, dma->period_bytes * p));
+		hwwrite(vortex->mmio,
+			VORTEX_ADBDMA_BUFBASE + (((adbdma << 2) + pp) << 2),
+			snd_pcm_sgbuf_get_addr(dma->substream,
+					       dma->period_bytes * p));
 		/* Force write thru cache. */
 		hwread(vortex->mmio, VORTEX_ADBDMA_BUFBASE + (((adbdma << 2)+pp) << 2));
 	}
 }
 
-static int inline vortex_adbdma_getlinearpos(vortex_t * vortex, int adbdma)
+static inline int vortex_adbdma_getlinearpos(vortex_t * vortex, int adbdma)
 {
 	stream_t *dma = &vortex->dma_adb[adbdma];
-	int temp;
+	int temp, page, delta;
 
 	temp = hwread(vortex->mmio, VORTEX_ADBDMA_STAT + (adbdma << 2));
-	temp = (dma->period_virt * dma->period_bytes) + (temp & POS_MASK);
-	return (temp);
+	page = (temp & ADB_SUBBUF_MASK) >> ADB_SUBBUF_SHIFT;
+	if (dma->nr_periods >= 4)
+		delta = (page - dma->period_real) & 3;
+	else {
+		delta = (page - dma->period_real);
+		if (delta < 0)
+			delta += dma->nr_periods;
+	}
+	return (dma->period_virt + delta) * dma->period_bytes
+		+ (temp & (dma->period_bytes - 1));
 }
 
 static void vortex_adbdma_startfifo(vortex_t * vortex, int adbdma)
@@ -1367,13 +1374,12 @@ static void vortex_wtdma_setstartbuffer(vortex_t * vortex, int wtdma, int sb)
 
 static void
 vortex_wtdma_setbuffers(vortex_t * vortex, int wtdma,
-			struct snd_sg_buf * sgbuf, int psize, int count)
+			int psize, int count)
 {
 	stream_t *dma = &vortex->dma_wt[wtdma];
 
 	dma->period_bytes = psize;
 	dma->nr_periods = count;
-	dma->sgbuf = sgbuf;
 
 	dma->cfg0 = 0;
 	dma->cfg1 = 0;
@@ -1383,23 +1389,23 @@ vortex_wtdma_setbuffers(vortex_t * vortex, int wtdma,
 	case 4:
 		dma->cfg1 |= 0x88000000 | 0x44000000 | 0x30000000 | (psize-1);
 		hwwrite(vortex->mmio, VORTEX_WTDMA_BUFBASE + (wtdma << 4) + 0xc,
-			snd_sgbuf_get_addr(sgbuf, psize * 3));
+			snd_pcm_sgbuf_get_addr(dma->substream, psize * 3));
 		/* 3 pages */
 	case 3:
 		dma->cfg0 |= 0x12000000;
 		dma->cfg1 |= 0x80000000 | 0x40000000 | ((psize-1) << 0xc);
 		hwwrite(vortex->mmio, VORTEX_WTDMA_BUFBASE + (wtdma << 4)  + 0x8,
-			snd_sgbuf_get_addr(sgbuf, psize * 2));
+			snd_pcm_sgbuf_get_addr(dma->substream, psize * 2));
 		/* 2 pages */
 	case 2:
 		dma->cfg0 |= 0x88000000 | 0x44000000 | 0x10000000 | (psize-1);
 		hwwrite(vortex->mmio, VORTEX_WTDMA_BUFBASE + (wtdma << 4) + 0x4,
-			snd_sgbuf_get_addr(sgbuf, psize));
+			snd_pcm_sgbuf_get_addr(dma->substream, psize));
 		/* 1 page */
 	case 1:
 		dma->cfg0 |= 0x80000000 | 0x40000000 | ((psize-1) << 0xc);
 		hwwrite(vortex->mmio, VORTEX_WTDMA_BUFBASE + (wtdma << 4),
-			snd_sgbuf_get_addr(sgbuf, 0));
+			snd_pcm_sgbuf_get_addr(dma->substream, 0));
 		break;
 	}
 	hwwrite(vortex->mmio, VORTEX_WTDMA_BUFCFG0 + (wtdma << 3), dma->cfg0);
@@ -1465,7 +1471,8 @@ static int vortex_wtdma_bufshift(vortex_t * vortex, int wtdma)
 			hwwrite(vortex->mmio,
 				VORTEX_WTDMA_BUFBASE +
 				(((wtdma << 2) + pp) << 2),
-				snd_sgbuf_get_addr(dma->sgbuf, dma->period_bytes * p));
+				snd_pcm_sgbuf_get_addr(dma->substream,
+						       dma->period_bytes * p));
 			/* Force write thru cache. */
 			hwread(vortex->mmio, VORTEX_WTDMA_BUFBASE +
 			       (((wtdma << 2) + pp) << 2));
@@ -1499,14 +1506,13 @@ static int vortex_wtdma_getcursubuffer(vortex_t * vortex, int wtdma)
 		 POS_SHIFT) & POS_MASK);
 }
 #endif
-static int inline vortex_wtdma_getlinearpos(vortex_t * vortex, int wtdma)
+static inline int vortex_wtdma_getlinearpos(vortex_t * vortex, int wtdma)
 {
 	stream_t *dma = &vortex->dma_wt[wtdma];
 	int temp;
 
 	temp = hwread(vortex->mmio, VORTEX_WTDMA_STAT + (wtdma << 2));
-	//temp = (temp & POS_MASK) + (((temp>>WT_SUBBUF_SHIFT) & WT_SUBBUF_MASK)*(dma->cfg0&POS_MASK));
-	temp = (temp & POS_MASK) + ((dma->period_virt) * (dma->period_bytes));
+	temp = (dma->period_virt * dma->period_bytes) + (temp & (dma->period_bytes - 1));
 	return temp;
 }
 
@@ -1963,7 +1969,7 @@ vortex_connect_codecplay(vortex_t * vortex, int en, unsigned char mixers[])
 					  ADB_CODECOUT(0 + 4));
 		vortex_connection_mix_adb(vortex, en, 0x11, mixers[3],
 					  ADB_CODECOUT(1 + 4));
-		//printk("SDAC detected ");
+		/* printk(KERN_DEBUG "SDAC detected "); */
 	}
 #else
 	// Use plain direct output to codec.
@@ -2017,7 +2023,11 @@ vortex_adb_checkinout(vortex_t * vortex, int resmap[], int out, int restype)
 					resmap[restype] |= (1 << i);
 				else
 					vortex->dma_adb[i].resources[restype] |= (1 << i);
-				//printk("vortex: ResManager: type %d out %d\n", restype, i);
+				/*
+				printk(KERN_DEBUG
+				       "vortex: ResManager: type %d out %d\n",
+				       restype, i);
+				*/
 				return i;
 			}
 		}
@@ -2028,7 +2038,11 @@ vortex_adb_checkinout(vortex_t * vortex, int resmap[], int out, int restype)
 		for (i = 0; i < qty; i++) {
 			if (resmap[restype] & (1 << i)) {
 				resmap[restype] &= ~(1 << i);
-				//printk("vortex: ResManager: type %d in %d\n",restype, i);
+				/*
+				printk(KERN_DEBUG
+				       "vortex: ResManager: type %d in %d\n",
+				       restype, i);
+				*/
 				return i;
 			}
 		}
@@ -2395,7 +2409,7 @@ static irqreturn_t vortex_interrupt(int irq, void *dev_id)
 	if (!(hwread(vortex->mmio, VORTEX_STAT) & 0x1))
 		return IRQ_NONE;
 
-	// This is the Interrrupt Enable flag we set before (consistency check).
+	// This is the Interrupt Enable flag we set before (consistency check).
 	if (!(hwread(vortex->mmio, VORTEX_CTRL) & CTRL_IRQ_ENABLE))
 		return IRQ_NONE;
 
@@ -2434,7 +2448,8 @@ static irqreturn_t vortex_interrupt(int irq, void *dev_id)
 		spin_lock(&vortex->lock);
 		for (i = 0; i < NR_ADB; i++) {
 			if (vortex->dma_adb[i].fifo_status == FIFO_START) {
-				if (vortex_adbdma_bufshift(vortex, i)) ;
+				if (!vortex_adbdma_bufshift(vortex, i))
+					continue;
 				spin_unlock(&vortex->lock);
 				snd_pcm_period_elapsed(vortex->dma_adb[i].
 						       substream);
@@ -2793,7 +2808,7 @@ vortex_translateformat(vortex_t * vortex, char bits, char nch, int encod)
 {
 	int a, this_194;
 
-	if ((bits != 8) || (bits != 16))
+	if ((bits != 8) && (bits != 16))
 		return -1;
 
 	switch (encod) {

@@ -34,11 +34,11 @@ static int cache_seq_show(struct seq_file *file, void *iter)
 	 * Go uncached immediately so we don't skew the results any
 	 * more than we already are..
 	 */
-	jump_to_P2();
+	jump_to_uncached();
 
-	ccr = ctrl_inl(CCR);
+	ccr = __raw_readl(CCR);
 	if ((ccr & CCR_CACHE_ENABLE) == 0) {
-		back_to_P1();
+		back_to_cached();
 
 		seq_printf(file, "disabled\n");
 		return 0;
@@ -89,7 +89,7 @@ static int cache_seq_show(struct seq_file *file, void *iter)
 		for (addr = addrstart, line = 0;
 		     addr < addrstart + waysize;
 		     addr += cache->linesz, line++) {
-			unsigned long data = ctrl_inl(addr);
+			unsigned long data = __raw_readl(addr);
 
 			/* Check the V bit, ignore invalid cachelines */
 			if ((data & 1) == 0)
@@ -104,7 +104,7 @@ static int cache_seq_show(struct seq_file *file, void *iter)
 		addrstart += cache->way_incr;
 	}
 
-	back_to_P1();
+	back_to_cached();
 
 	return 0;
 }
@@ -119,25 +119,25 @@ static const struct file_operations cache_debugfs_fops = {
 	.open		= cache_debugfs_open,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
-	.release	= seq_release,
+	.release	= single_release,
 };
 
 static int __init cache_debugfs_init(void)
 {
 	struct dentry *dcache_dentry, *icache_dentry;
 
-	dcache_dentry = debugfs_create_file("dcache", S_IRUSR, NULL,
+	dcache_dentry = debugfs_create_file("dcache", S_IRUSR, arch_debugfs_dir,
 					    (unsigned int *)CACHE_TYPE_DCACHE,
 					    &cache_debugfs_fops);
-	if (IS_ERR(dcache_dentry))
-		return PTR_ERR(dcache_dentry);
+	if (!dcache_dentry)
+		return -ENOMEM;
 
-	icache_dentry = debugfs_create_file("icache", S_IRUSR, NULL,
+	icache_dentry = debugfs_create_file("icache", S_IRUSR, arch_debugfs_dir,
 					    (unsigned int *)CACHE_TYPE_ICACHE,
 					    &cache_debugfs_fops);
-	if (IS_ERR(icache_dentry)) {
+	if (!icache_dentry) {
 		debugfs_remove(dcache_dentry);
-		return PTR_ERR(icache_dentry);
+		return -ENOMEM;
 	}
 
 	return 0;

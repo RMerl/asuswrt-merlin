@@ -18,7 +18,7 @@
  *     published by the Free Software Foundation; either version 2 of 
  *     the License, or (at your option) any later version.
  *  
- *     Neither Dag Brattli nor University of Tromsø admit liability nor
+ *     Neither Dag Brattli nor University of TromsÃ¸ admit liability nor
  *     provide warranty for any of this software. This material is 
  *     provided "AS-IS" and at no charge.
  *     
@@ -77,7 +77,7 @@ static int tekram_open(struct sir_dev *dev)
 {
 	struct qos_info *qos = &dev->qos;
 
-	IRDA_DEBUG(2, "%s()\n", __FUNCTION__);
+	IRDA_DEBUG(2, "%s()\n", __func__);
 
 	sirdev_set_dtr_rts(dev, TRUE, TRUE);
 
@@ -92,7 +92,7 @@ static int tekram_open(struct sir_dev *dev)
 
 static int tekram_close(struct sir_dev *dev)
 {
-	IRDA_DEBUG(2, "%s()\n", __FUNCTION__);
+	IRDA_DEBUG(2, "%s()\n", __func__);
 
 	/* Power off dongle */
 	sirdev_set_dtr_rts(dev, FALSE, FALSE);
@@ -130,7 +130,7 @@ static int tekram_change_speed(struct sir_dev *dev, unsigned speed)
 	u8 byte;
 	static int ret = 0;
 	
-	IRDA_DEBUG(2, "%s()\n", __FUNCTION__);
+	IRDA_DEBUG(2, "%s()\n", __func__);
 
 	switch(state) {
 	case SIRDEV_STATE_DONGLE_SPEED:
@@ -179,7 +179,7 @@ static int tekram_change_speed(struct sir_dev *dev, unsigned speed)
 		break;
 
 	default:
-		IRDA_ERROR("%s - undefined state %d\n", __FUNCTION__, state);
+		IRDA_ERROR("%s - undefined state %d\n", __func__, state);
 		ret = -EINVAL;
 		break;
 	}
@@ -204,7 +204,7 @@ static int tekram_change_speed(struct sir_dev *dev, unsigned speed)
 
 static int tekram_reset(struct sir_dev *dev)
 {
-	IRDA_DEBUG(2, "%s()\n", __FUNCTION__);
+	IRDA_DEBUG(2, "%s()\n", __func__);
 
 	/* Clear DTR, Set RTS */
 	sirdev_set_dtr_rts(dev, FALSE, TRUE); 

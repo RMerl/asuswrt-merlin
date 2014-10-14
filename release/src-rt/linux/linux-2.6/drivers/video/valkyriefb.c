@@ -69,7 +69,7 @@
 #ifdef CONFIG_MAC
 /* We don't yet have functions to read the PRAM... perhaps we can
    adapt them from the PPC code? */
-static int default_vmode = VMODE_640_480_67;
+static int default_vmode = VMODE_CHOOSE;
 static int default_cmode = CMODE_8;
 #else
 static int default_vmode = VMODE_NVRAM;
@@ -119,7 +119,7 @@ static void set_valkyrie_clock(unsigned char *params);
 static int valkyrie_var_to_par(struct fb_var_screeninfo *var,
 	struct fb_par_valkyrie *par, const struct fb_info *fb_info);
 
-static void valkyrie_init_info(struct fb_info *info, struct fb_info_valkyrie *p);
+static int valkyrie_init_info(struct fb_info *info, struct fb_info_valkyrie *p);
 static void valkyrie_par_to_fix(struct fb_par_valkyrie *par, struct fb_fix_screeninfo *fix);
 static void valkyrie_init_fix(struct fb_fix_screeninfo *fix, struct fb_info_valkyrie *p);
 
@@ -326,11 +326,11 @@ int __init valkyriefb_init(void)
 
 #ifdef CONFIG_MAC
 	if (!MACH_IS_MAC)
-		return 0;
+		return -ENODEV;
 	if (!(mac_bi_data.id == MAC_MODEL_Q630
 	      /* I'm not sure about this one */
 	    || mac_bi_data.id == MAC_MODEL_P588))
-		return 0;
+		return -ENODEV;
 
 	/* Hardcoded addresses... welcome to 68k Macintosh country :-) */
 	frame_buffer_phys = 0xf9000000;
@@ -356,10 +356,9 @@ int __init valkyriefb_init(void)
 	}
 #endif /* ppc (!CONFIG_MAC) */
 
-	p = kmalloc(sizeof(*p), GFP_ATOMIC);
+	p = kzalloc(sizeof(*p), GFP_ATOMIC);
 	if (p == 0)
 		return -ENOMEM;
-	memset(p, 0, sizeof(*p));
 
 	/* Map in frame buffer and registers */
 	if (!request_mem_region(frame_buffer_phys, 0x100000, "valkyriefb")) {
@@ -382,18 +381,22 @@ int __init valkyriefb_init(void)
 
 	valkyrie_choose_mode(p);
 	mac_vmode_to_var(default_vmode, default_cmode, &p->info.var);
-	valkyrie_init_info(&p->info, p);
+	err = valkyrie_init_info(&p->info, p);
+	if (err < 0)
+		goto out_free;
 	valkyrie_init_fix(&p->info.fix, p);
 	if (valkyriefb_set_par(&p->info))
 		/* "can't happen" */
 		printk(KERN_ERR "valkyriefb: can't set default video mode\n");
 
 	if ((err = register_framebuffer(&p->info)) != 0)
-		goto out_free;
+		goto out_cmap_free;
 
 	printk(KERN_INFO "fb%d: valkyrie frame buffer device\n", p->info.node);
 	return 0;
 
+ out_cmap_free:
+	fb_dealloc_cmap(&p->info.cmap);
  out_free:
 	if (p->frame_buffer)
 		iounmap(p->frame_buffer);
@@ -539,14 +542,15 @@ static void valkyrie_par_to_fix(struct fb_par_valkyrie *par,
 		/* ywrapstep, xpanstep, ypanstep */
 }
 
-static void __init valkyrie_init_info(struct fb_info *info, struct fb_info_valkyrie *p)
+static int __init valkyrie_init_info(struct fb_info *info,
+		struct fb_info_valkyrie *p)
 {
 	info->fbops = &valkyriefb_ops;
 	info->screen_base = p->frame_buffer + 0x1000;
 	info->flags = FBINFO_DEFAULT;
 	info->pseudo_palette = p->pseudo_palette;
-	fb_alloc_cmap(&info->cmap, 256, 0);
 	info->par = &p->par;
+	return fb_alloc_cmap(&info->cmap, 256, 0);
 }
 
 

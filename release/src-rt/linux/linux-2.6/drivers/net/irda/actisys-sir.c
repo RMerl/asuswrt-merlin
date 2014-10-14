@@ -21,7 +21,7 @@
  *     published by the Free Software Foundation; either version 2 of 
  *     the License, or (at your option) any later version.
  *  
- *     Neither Dag Brattli nor University of Tromsø admit liability nor
+ *     Neither Dag Brattli nor University of TromsÃ¸ admit liability nor
  *     provide warranty for any of this software. This material is 
  *     provided "AS-IS" and at no charge.
  *     
@@ -67,7 +67,7 @@ static int actisys_reset(struct sir_dev *);
 /* Note : the 220L doesn't support 38400, but we will fix that below */
 static unsigned baud_rates[] = { 9600, 19200, 57600, 115200, 38400 };
 
-#define MAX_SPEEDS (sizeof(baud_rates)/sizeof(baud_rates[0]))
+#define MAX_SPEEDS ARRAY_SIZE(baud_rates)
 
 static struct dongle_driver act220l = {
 	.owner		= THIS_MODULE,
@@ -165,7 +165,7 @@ static int actisys_change_speed(struct sir_dev *dev, unsigned speed)
 	int ret = 0;
 	int i = 0;
 
-        IRDA_DEBUG(4, "%s(), speed=%d (was %d)\n", __FUNCTION__,
+        IRDA_DEBUG(4, "%s(), speed=%d (was %d)\n", __func__,
         	speed, dev->speed);
 
 	/* dongle was already resetted from irda_request state machine,

@@ -1,5 +1,5 @@
 /*
- * udbg for for NS16550 compatable serial ports
+ * udbg for NS16550 compatible serial ports
  *
  * Copyright (C) 2001-2005 PPC 64 Team, IBM Corp
  *
@@ -46,16 +46,23 @@ struct NS16550 {
 
 #define LCR_DLAB 0x80
 
-static volatile struct NS16550 __iomem *udbg_comport;
+static struct NS16550 __iomem *udbg_comport;
 
-static void udbg_550_putc(char c)
+static void udbg_550_flush(void)
 {
 	if (udbg_comport) {
 		while ((in_8(&udbg_comport->lsr) & LSR_THRE) == 0)
 			/* wait for idle */;
-		out_8(&udbg_comport->thr, c);
+	}
+}
+
+static void udbg_550_putc(char c)
+{
+	if (udbg_comport) {
 		if (c == '\n')
 			udbg_550_putc('\r');
+		udbg_550_flush();
+		out_8(&udbg_comport->thr, c);
 	}
 }
 
@@ -108,6 +115,7 @@ void udbg_init_uart(void __iomem *comport, unsigned int speed,
 		/* Clear & enable FIFOs */
 		out_8(&udbg_comport->fcr ,0x07);
 		udbg_putc = udbg_550_putc;
+		udbg_flush = udbg_550_flush;
 		udbg_getc = udbg_550_getc;
 		udbg_getc_poll = udbg_550_getc_poll;
 	}
@@ -117,7 +125,7 @@ unsigned int udbg_probe_uart_speed(void __iomem *comport, unsigned int clock)
 {
 	unsigned int dll, dlm, divisor, prescaler, speed;
 	u8 old_lcr;
-	volatile struct NS16550 __iomem *port = comport;
+	struct NS16550 __iomem *port = comport;
 
 	old_lcr = in_8(&port->lcr);
 
@@ -142,51 +150,67 @@ unsigned int udbg_probe_uart_speed(void __iomem *comport, unsigned int clock)
 	speed = (clock / prescaler) / (divisor * 16);
 
 	/* sanity check */
-	if (speed < 0 || speed > (clock / 16))
+	if (speed > (clock / 16))
 		speed = 9600;
 
 	return speed;
 }
 
 #ifdef CONFIG_PPC_MAPLE
-void udbg_maple_real_putc(char c)
+void udbg_maple_real_flush(void)
 {
 	if (udbg_comport) {
 		while ((real_readb(&udbg_comport->lsr) & LSR_THRE) == 0)
 			/* wait for idle */;
-		real_writeb(c, &udbg_comport->thr); eieio();
+	}
+}
+
+void udbg_maple_real_putc(char c)
+{
+	if (udbg_comport) {
 		if (c == '\n')
 			udbg_maple_real_putc('\r');
+		udbg_maple_real_flush();
+		real_writeb(c, &udbg_comport->thr); eieio();
 	}
 }
 
 void __init udbg_init_maple_realmode(void)
 {
-	udbg_comport = (volatile struct NS16550 __iomem *)0xf40003f8;
+	udbg_comport = (struct NS16550 __iomem *)0xf40003f8;
 
 	udbg_putc = udbg_maple_real_putc;
+	udbg_flush = udbg_maple_real_flush;
 	udbg_getc = NULL;
 	udbg_getc_poll = NULL;
 }
 #endif /* CONFIG_PPC_MAPLE */
 
 #ifdef CONFIG_PPC_PASEMI
-void udbg_pas_real_putc(char c)
+void udbg_pas_real_flush(void)
 {
 	if (udbg_comport) {
 		while ((real_205_readb(&udbg_comport->lsr) & LSR_THRE) == 0)
 			/* wait for idle */;
-		real_205_writeb(c, &udbg_comport->thr); eieio();
+	}
+}
+
+void udbg_pas_real_putc(char c)
+{
+	if (udbg_comport) {
 		if (c == '\n')
 			udbg_pas_real_putc('\r');
+		udbg_pas_real_flush();
+		real_205_writeb(c, &udbg_comport->thr); eieio();
 	}
 }
 
 void udbg_init_pas_realmode(void)
 {
-	udbg_comport = (volatile struct NS16550 __iomem *)0xfcff03f8UL;
+	udbg_comport = (struct NS16550 __iomem *)0xfcff03f8UL;
 
 	udbg_putc = udbg_pas_real_putc;
+	udbg_flush = udbg_pas_real_flush;
 	udbg_getc = NULL;
 	udbg_getc_poll = NULL;
 }
@@ -195,22 +219,82 @@ void udbg_init_pas_realmode(void)
 #ifdef CONFIG_PPC_EARLY_DEBUG_44x
 #include <platforms/44x/44x.h>
 
-static void udbg_44x_as1_putc(char c)
+static void udbg_44x_as1_flush(void)
 {
 	if (udbg_comport) {
 		while ((as1_readb(&udbg_comport->lsr) & LSR_THRE) == 0)
 			/* wait for idle */;
-		as1_writeb(c, &udbg_comport->thr); eieio();
+	}
+}
+
+static void udbg_44x_as1_putc(char c)
+{
+	if (udbg_comport) {
 		if (c == '\n')
 			udbg_44x_as1_putc('\r');
+		udbg_44x_as1_flush();
+		as1_writeb(c, &udbg_comport->thr); eieio();
 	}
+}
+
+static int udbg_44x_as1_getc(void)
+{
+	if (udbg_comport) {
+		while ((as1_readb(&udbg_comport->lsr) & LSR_DR) == 0)
+			; /* wait for char */
+		return as1_readb(&udbg_comport->rbr);
+	}
+	return -1;
 }
 
 void __init udbg_init_44x_as1(void)
 {
 	udbg_comport =
-		(volatile struct NS16550 __iomem *)PPC44x_EARLY_DEBUG_VIRTADDR;
+		(struct NS16550 __iomem *)PPC44x_EARLY_DEBUG_VIRTADDR;
 
 	udbg_putc = udbg_44x_as1_putc;
+	udbg_flush = udbg_44x_as1_flush;
+	udbg_getc = udbg_44x_as1_getc;
 }
 #endif /* CONFIG_PPC_EARLY_DEBUG_44x */
+
+#ifdef CONFIG_PPC_EARLY_DEBUG_40x
+static void udbg_40x_real_flush(void)
+{
+	if (udbg_comport) {
+		while ((real_readb(&udbg_comport->lsr) & LSR_THRE) == 0)
+			/* wait for idle */;
+	}
+}
+
+static void udbg_40x_real_putc(char c)
+{
+	if (udbg_comport) {
+		if (c == '\n')
+			udbg_40x_real_putc('\r');
+		udbg_40x_real_flush();
+		real_writeb(c, &udbg_comport->thr); eieio();
+	}
+}
+
+static int udbg_40x_real_getc(void)
+{
+	if (udbg_comport) {
+		while ((real_readb(&udbg_comport->lsr) & LSR_DR) == 0)
+			; /* wait for char */
+		return real_readb(&udbg_comport->rbr);
+	}
+	return -1;
+}
+
+void __init udbg_init_40x_realmode(void)
+{
+	udbg_comport = (struct NS16550 __iomem *)
+		CONFIG_PPC_EARLY_DEBUG_40x_PHYSADDR;
+
+	udbg_putc = udbg_40x_real_putc;
+	udbg_flush = udbg_40x_real_flush;
+	udbg_getc = udbg_40x_real_getc;
+	udbg_getc_poll = NULL;
+}
+#endif /* CONFIG_PPC_EARLY_DEBUG_40x */

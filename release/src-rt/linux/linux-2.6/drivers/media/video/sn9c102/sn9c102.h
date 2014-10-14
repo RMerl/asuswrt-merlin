@@ -25,6 +25,7 @@
 #include <linux/usb.h>
 #include <linux/videodev2.h>
 #include <media/v4l2-common.h>
+#include <media/v4l2-ioctl.h>
 #include <linux/device.h>
 #include <linux/list.h>
 #include <linux/spinlock.h>
@@ -36,6 +37,7 @@
 #include <linux/mutex.h>
 #include <linux/string.h>
 #include <linux/stddef.h>
+#include <linux/kref.h>
 
 #include "sn9c102_config.h"
 #include "sn9c102_sensor.h"
@@ -94,7 +96,7 @@ struct sn9c102_module_param {
 };
 
 static DEFINE_MUTEX(sn9c102_sysfs_lock);
-static DECLARE_RWSEM(sn9c102_disconnect);
+static DECLARE_RWSEM(sn9c102_dev_lock);
 
 struct sn9c102_device {
 	struct video_device* v4ldev;
@@ -122,12 +124,14 @@ struct sn9c102_device {
 
 	struct sn9c102_module_param module_param;
 
+	struct kref kref;
 	enum sn9c102_dev_state state;
 	u8 users;
 
-	struct mutex dev_mutex, fileop_mutex;
+	struct completion probe;
+	struct mutex open_mutex, fileop_mutex;
 	spinlock_t queue_lock;
-	wait_queue_head_t open, wait_frame, wait_stream;
+	wait_queue_head_t wait_open, wait_frame, wait_stream;
 };
 
 /*****************************************************************************/
@@ -173,7 +177,7 @@ do {                                                                          \
 			dev_info(&cam->usbdev->dev, fmt "\n", ## args);       \
 		else if ((level) >= 3)                                        \
 			dev_info(&cam->usbdev->dev, "[%s:%d] " fmt "\n",      \
-				 __FUNCTION__, __LINE__ , ## args);           \
+				 __func__, __LINE__ , ## args);           \
 	}                                                                     \
 } while (0)
 #	define V4LDBG(level, name, cmd)                                       \
@@ -188,7 +192,7 @@ do {                                                                          \
 			pr_info("sn9c102: " fmt "\n", ## args);               \
 		else if ((level) == 3)                                        \
 			pr_debug("sn9c102: [%s:%d] " fmt "\n",                \
-				 __FUNCTION__, __LINE__ , ## args);           \
+				 __func__, __LINE__ , ## args);           \
 	}                                                                     \
 } while (0)
 #else
@@ -199,7 +203,7 @@ do {                                                                          \
 
 #undef PDBG
 #define PDBG(fmt, args...)                                                    \
-dev_info(&cam->usbdev->dev, "[%s:%s:%d] " fmt "\n", __FILE__, __FUNCTION__,   \
+dev_info(&cam->usbdev->dev, "[%s:%s:%d] " fmt "\n", __FILE__, __func__,   \
 	 __LINE__ , ## args)
 
 #undef PDBGG

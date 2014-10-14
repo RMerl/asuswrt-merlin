@@ -5,14 +5,18 @@
  *
  * For more information please refer to Documentation/s390/zfcpdump.txt
  *
- * Copyright IBM Corp. 2003,2007
+ * Copyright IBM Corp. 2003,2008
  * Author(s): Michael Holzheu
  */
 
+#define KMSG_COMPONENT "zdump"
+#define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
+
 #include <linux/init.h>
+#include <linux/slab.h>
 #include <linux/miscdevice.h>
-#include <linux/utsname.h>
 #include <linux/debugfs.h>
+#include <asm/asm-offsets.h>
 #include <asm/ipl.h>
 #include <asm/sclp.h>
 #include <asm/setup.h>
@@ -21,14 +25,14 @@
 #include <asm/debug.h>
 #include <asm/processor.h>
 #include <asm/irqflags.h>
+#include <asm/checksum.h>
 #include "sclp.h"
 
 #define TRACE(x...) debug_sprintf_event(zcore_dbf, 1, x)
-#define MSG(x...) printk( KERN_ALERT x )
-#define ERROR_MSG(x...) printk ( KERN_ALERT "DUMP: " x )
 
 #define TO_USER		0
 #define TO_KERNEL	1
+#define CHUNK_INFO_SIZE	34 /* 2 16-byte char, each followed by blank */
 
 enum arch_id {
 	ARCH_S390	= 0,
@@ -38,19 +42,27 @@ enum arch_id {
 /* dump system info */
 
 struct sys_info {
-	enum arch_id	arch;
-	unsigned long	sa_base;
-	u32		sa_size;
-	int		cpu_map[NR_CPUS];
-	unsigned long	mem_size;
-	union save_area	lc_mask;
+	enum arch_id	 arch;
+	unsigned long	 sa_base;
+	u32		 sa_size;
+	int		 cpu_map[NR_CPUS];
+	unsigned long	 mem_size;
+	struct save_area lc_mask;
 };
+
+struct ipib_info {
+	unsigned long	ipib;
+	u32		checksum;
+}  __attribute__((packed));
 
 static struct sys_info sys_info;
 static struct debug_info *zcore_dbf;
 static int hsa_available;
 static struct dentry *zcore_dir;
 static struct dentry *zcore_file;
+static struct dentry *zcore_memmap_file;
+static struct dentry *zcore_reipl_file;
+static struct ipl_parameter_block *ipl_block;
 
 /*
  * Copy memory from HSA to kernel or user memory (not reentrant):
@@ -130,40 +142,14 @@ static int memcpy_hsa_kernel(void *dest, unsigned long src, size_t count)
 	return memcpy_hsa(dest, src, count, TO_KERNEL);
 }
 
-static int memcpy_real(void *dest, unsigned long src, size_t count)
-{
-	unsigned long flags;
-	int rc = -EFAULT;
-	register unsigned long _dest asm("2") = (unsigned long) dest;
-	register unsigned long _len1 asm("3") = (unsigned long) count;
-	register unsigned long _src  asm("4") = src;
-	register unsigned long _len2 asm("5") = (unsigned long) count;
-
-	if (count == 0)
-		return 0;
-	flags = __raw_local_irq_stnsm(0xf8); /* switch to real mode */
-	asm volatile (
-		"0:	mvcle	%1,%2,0x0\n"
-		"1:	jo	0b\n"
-		"	lhi	%0,0x0\n"
-		"2:\n"
-		EX_TABLE(1b,2b)
-		: "+d" (rc)
-		: "d" (_dest), "d" (_src), "d" (_len1), "d" (_len2)
-		: "cc", "memory");
-	__raw_local_irq_ssm(flags);
-
-	return rc;
-}
-
-static int memcpy_real_user(__user void *dest, unsigned long src, size_t count)
+static int memcpy_real_user(void __user *dest, unsigned long src, size_t count)
 {
 	static char buf[4096];
 	int offs = 0, size;
 
 	while (offs < count) {
 		size = min(sizeof(buf), count - offs);
-		if (memcpy_real(buf, src + offs, size))
+		if (memcpy_real(buf, (void *) src + offs, size))
 			return -EFAULT;
 		if (copy_to_user(dest + offs, buf, size))
 			return -EFAULT;
@@ -172,80 +158,27 @@ static int memcpy_real_user(__user void *dest, unsigned long src, size_t count)
 	return 0;
 }
 
-#ifdef __s390x__
-/*
- * Convert s390x (64 bit) cpu info to s390 (32 bit) cpu info
- */
-static void __init s390x_to_s390_regs(union save_area *out, union save_area *in,
-				      int cpu)
-{
-	int i;
-
-	for (i = 0; i < 16; i++) {
-		out->s390.gp_regs[i] = in->s390x.gp_regs[i] & 0x00000000ffffffff;
-		out->s390.acc_regs[i] = in->s390x.acc_regs[i];
-		out->s390.ctrl_regs[i] =
-			in->s390x.ctrl_regs[i] & 0x00000000ffffffff;
-	}
-	/* locore for 31 bit has only space for fpregs 0,2,4,6 */
-	out->s390.fp_regs[0] = in->s390x.fp_regs[0];
-	out->s390.fp_regs[1] = in->s390x.fp_regs[2];
-	out->s390.fp_regs[2] = in->s390x.fp_regs[4];
-	out->s390.fp_regs[3] = in->s390x.fp_regs[6];
-	memcpy(&(out->s390.psw[0]), &(in->s390x.psw[0]), 4);
-	out->s390.psw[1] |= 0x8; /* set bit 12 */
-	memcpy(&(out->s390.psw[4]),&(in->s390x.psw[12]), 4);
-	out->s390.psw[4] |= 0x80; /* set (31bit) addressing bit */
-	out->s390.pref_reg = in->s390x.pref_reg;
-	out->s390.timer = in->s390x.timer;
-	out->s390.clk_cmp = in->s390x.clk_cmp;
-}
-
-static void __init s390x_to_s390_save_areas(void)
-{
-	int i = 1;
-	static union save_area tmp;
-
-	while (zfcpdump_save_areas[i]) {
-		s390x_to_s390_regs(&tmp, zfcpdump_save_areas[i], i);
-		memcpy(zfcpdump_save_areas[i], &tmp, sizeof(tmp));
-		i++;
-	}
-}
-
-#endif /* __s390x__ */
-
 static int __init init_cpu_info(enum arch_id arch)
 {
-	union save_area *sa;
+	struct save_area *sa;
 
 	/* get info for boot cpu from lowcore, stored in the HSA */
 
 	sa = kmalloc(sizeof(*sa), GFP_KERNEL);
-	if (!sa) {
-		ERROR_MSG("kmalloc failed: %s: %i\n",__FUNCTION__, __LINE__);
+	if (!sa)
 		return -ENOMEM;
-	}
 	if (memcpy_hsa_kernel(sa, sys_info.sa_base, sys_info.sa_size) < 0) {
-		ERROR_MSG("could not copy from HSA\n");
+		TRACE("could not copy from HSA\n");
 		kfree(sa);
 		return -EIO;
 	}
 	zfcpdump_save_areas[0] = sa;
-
-#ifdef __s390x__
-	/* convert s390x regs to s390, if we are dumping an s390 Linux */
-
-	if (arch == ARCH_S390)
-		s390x_to_s390_save_areas();
-#endif
-
 	return 0;
 }
 
 static DEFINE_MUTEX(zcore_mutex);
 
-#define DUMP_VERSION	0x3
+#define DUMP_VERSION	0x5
 #define DUMP_MAGIC	0xa8190173618f23fdULL
 #define DUMP_ARCH_S390X	2
 #define DUMP_ARCH_S390	1
@@ -265,12 +198,19 @@ struct zcore_header {
 	u32 num_pages;
 	u32 pad1;
 	u64 tod;
-	cpuid_t cpu_id;
+	struct cpuid cpu_id;
 	u32 arch_id;
 	u32 volnr;
 	u32 build_arch;
 	u64 rmem_size;
-	char pad2[4016];
+	u8 mvdump;
+	u16 cpu_cnt;
+	u16 real_cpu_cnt;
+	u8 end_pad1[0x200-0x061];
+	u64 mvdump_sign;
+	u64 mvdump_zipl_time;
+	u8 end_pad2[0x800-0x210];
+	u32 lc_vec[512];
 } __attribute__((packed,__aligned__(16)));
 
 static struct zcore_header zcore_header = {
@@ -280,7 +220,7 @@ static struct zcore_header zcore_header = {
 	.dump_level	= 0,
 	.page_size	= PAGE_SIZE,
 	.mem_start	= 0,
-#ifdef __s390x__
+#ifdef CONFIG_64BIT
 	.build_arch	= DUMP_ARCH_S390X,
 #else
 	.build_arch	= DUMP_ARCH_S390,
@@ -331,11 +271,7 @@ static int zcore_add_lc(char __user *buf, unsigned long start, size_t count)
 		unsigned long prefix;
 		unsigned long sa_off, len, buf_off;
 
-		if (sys_info.arch == ARCH_S390)
-			prefix = zfcpdump_save_areas[i]->s390.pref_reg;
-		else
-			prefix = zfcpdump_save_areas[i]->s390x.pref_reg;
-
+		prefix = zfcpdump_save_areas[i]->pref_reg;
 		sa_start = prefix + sys_info.sa_base;
 		sa_end = prefix + sys_info.sa_base + sys_info.sa_size;
 
@@ -469,7 +405,7 @@ static loff_t zcore_lseek(struct file *file, loff_t offset, int orig)
 	return rc;
 }
 
-static struct file_operations zcore_fops = {
+static const struct file_operations zcore_fops = {
 	.owner		= THIS_MODULE,
 	.llseek		= zcore_lseek,
 	.read		= zcore_read,
@@ -477,61 +413,141 @@ static struct file_operations zcore_fops = {
 	.release	= zcore_release,
 };
 
-
-static void __init set_s390_lc_mask(union save_area *map)
+static ssize_t zcore_memmap_read(struct file *filp, char __user *buf,
+				 size_t count, loff_t *ppos)
 {
-	memset(&map->s390.ext_save, 0xff, sizeof(map->s390.ext_save));
-	memset(&map->s390.timer, 0xff, sizeof(map->s390.timer));
-	memset(&map->s390.clk_cmp, 0xff, sizeof(map->s390.clk_cmp));
-	memset(&map->s390.psw, 0xff, sizeof(map->s390.psw));
-	memset(&map->s390.pref_reg, 0xff, sizeof(map->s390.pref_reg));
-	memset(&map->s390.acc_regs, 0xff, sizeof(map->s390.acc_regs));
-	memset(&map->s390.fp_regs, 0xff, sizeof(map->s390.fp_regs));
-	memset(&map->s390.gp_regs, 0xff, sizeof(map->s390.gp_regs));
-	memset(&map->s390.ctrl_regs, 0xff, sizeof(map->s390.ctrl_regs));
+	return simple_read_from_buffer(buf, count, ppos, filp->private_data,
+				       MEMORY_CHUNKS * CHUNK_INFO_SIZE);
 }
 
-static void __init set_s390x_lc_mask(union save_area *map)
+static int zcore_memmap_open(struct inode *inode, struct file *filp)
 {
-	memset(&map->s390x.fp_regs, 0xff, sizeof(map->s390x.fp_regs));
-	memset(&map->s390x.gp_regs, 0xff, sizeof(map->s390x.gp_regs));
-	memset(&map->s390x.psw, 0xff, sizeof(map->s390x.psw));
-	memset(&map->s390x.pref_reg, 0xff, sizeof(map->s390x.pref_reg));
-	memset(&map->s390x.fp_ctrl_reg, 0xff, sizeof(map->s390x.fp_ctrl_reg));
-	memset(&map->s390x.tod_reg, 0xff, sizeof(map->s390x.tod_reg));
-	memset(&map->s390x.timer, 0xff, sizeof(map->s390x.timer));
-	memset(&map->s390x.clk_cmp, 0xff, sizeof(map->s390x.clk_cmp));
-	memset(&map->s390x.acc_regs, 0xff, sizeof(map->s390x.acc_regs));
-	memset(&map->s390x.ctrl_regs, 0xff, sizeof(map->s390x.ctrl_regs));
+	int i;
+	char *buf;
+	struct mem_chunk *chunk_array;
+
+	chunk_array = kzalloc(MEMORY_CHUNKS * sizeof(struct mem_chunk),
+			      GFP_KERNEL);
+	if (!chunk_array)
+		return -ENOMEM;
+	detect_memory_layout(chunk_array);
+	buf = kzalloc(MEMORY_CHUNKS * CHUNK_INFO_SIZE, GFP_KERNEL);
+	if (!buf) {
+		kfree(chunk_array);
+		return -ENOMEM;
+	}
+	for (i = 0; i < MEMORY_CHUNKS; i++) {
+		sprintf(buf + (i * CHUNK_INFO_SIZE), "%016llx %016llx ",
+			(unsigned long long) chunk_array[i].addr,
+			(unsigned long long) chunk_array[i].size);
+		if (chunk_array[i].size == 0)
+			break;
+	}
+	kfree(chunk_array);
+	filp->private_data = buf;
+	return nonseekable_open(inode, filp);
 }
+
+static int zcore_memmap_release(struct inode *inode, struct file *filp)
+{
+	kfree(filp->private_data);
+	return 0;
+}
+
+static const struct file_operations zcore_memmap_fops = {
+	.owner		= THIS_MODULE,
+	.read		= zcore_memmap_read,
+	.open		= zcore_memmap_open,
+	.release	= zcore_memmap_release,
+	.llseek		= no_llseek,
+};
+
+static ssize_t zcore_reipl_write(struct file *filp, const char __user *buf,
+				 size_t count, loff_t *ppos)
+{
+	if (ipl_block) {
+		diag308(DIAG308_SET, ipl_block);
+		diag308(DIAG308_IPL, NULL);
+	}
+	return count;
+}
+
+static int zcore_reipl_open(struct inode *inode, struct file *filp)
+{
+	return nonseekable_open(inode, filp);
+}
+
+static int zcore_reipl_release(struct inode *inode, struct file *filp)
+{
+	return 0;
+}
+
+static const struct file_operations zcore_reipl_fops = {
+	.owner		= THIS_MODULE,
+	.write		= zcore_reipl_write,
+	.open		= zcore_reipl_open,
+	.release	= zcore_reipl_release,
+	.llseek		= no_llseek,
+};
+
+#ifdef CONFIG_32BIT
+
+static void __init set_lc_mask(struct save_area *map)
+{
+	memset(&map->ext_save, 0xff, sizeof(map->ext_save));
+	memset(&map->timer, 0xff, sizeof(map->timer));
+	memset(&map->clk_cmp, 0xff, sizeof(map->clk_cmp));
+	memset(&map->psw, 0xff, sizeof(map->psw));
+	memset(&map->pref_reg, 0xff, sizeof(map->pref_reg));
+	memset(&map->acc_regs, 0xff, sizeof(map->acc_regs));
+	memset(&map->fp_regs, 0xff, sizeof(map->fp_regs));
+	memset(&map->gp_regs, 0xff, sizeof(map->gp_regs));
+	memset(&map->ctrl_regs, 0xff, sizeof(map->ctrl_regs));
+}
+
+#else /* CONFIG_32BIT */
+
+static void __init set_lc_mask(struct save_area *map)
+{
+	memset(&map->fp_regs, 0xff, sizeof(map->fp_regs));
+	memset(&map->gp_regs, 0xff, sizeof(map->gp_regs));
+	memset(&map->psw, 0xff, sizeof(map->psw));
+	memset(&map->pref_reg, 0xff, sizeof(map->pref_reg));
+	memset(&map->fp_ctrl_reg, 0xff, sizeof(map->fp_ctrl_reg));
+	memset(&map->tod_reg, 0xff, sizeof(map->tod_reg));
+	memset(&map->timer, 0xff, sizeof(map->timer));
+	memset(&map->clk_cmp, 0xff, sizeof(map->clk_cmp));
+	memset(&map->acc_regs, 0xff, sizeof(map->acc_regs));
+	memset(&map->ctrl_regs, 0xff, sizeof(map->ctrl_regs));
+}
+
+#endif /* CONFIG_32BIT */
 
 /*
  * Initialize dump globals for a given architecture
  */
 static int __init sys_info_init(enum arch_id arch)
 {
+	int rc;
+
 	switch (arch) {
 	case ARCH_S390X:
-		MSG("DETECTED 'S390X (64 bit) OS'\n");
-		sys_info.sa_base = SAVE_AREA_BASE_S390X;
-		sys_info.sa_size = sizeof(struct save_area_s390x);
-		set_s390x_lc_mask(&sys_info.lc_mask);
+		pr_alert("DETECTED 'S390X (64 bit) OS'\n");
 		break;
 	case ARCH_S390:
-		MSG("DETECTED 'S390 (32 bit) OS'\n");
-		sys_info.sa_base = SAVE_AREA_BASE_S390;
-		sys_info.sa_size = sizeof(struct save_area_s390);
-		set_s390_lc_mask(&sys_info.lc_mask);
+		pr_alert("DETECTED 'S390 (32 bit) OS'\n");
 		break;
 	default:
-		ERROR_MSG("unknown architecture 0x%x.\n",arch);
+		pr_alert("0x%x is an unknown architecture.\n",arch);
 		return -EINVAL;
 	}
+	sys_info.sa_base = SAVE_AREA_BASE;
+	sys_info.sa_size = sizeof(struct save_area);
 	sys_info.arch = arch;
-	if (init_cpu_info(arch)) {
-		ERROR_MSG("get cpu info failed\n");
-		return -ENOMEM;
-	}
+	set_lc_mask(&sys_info.lc_mask);
+	rc = init_cpu_info(arch);
+	if (rc)
+		return rc;
 	sys_info.mem_size = real_memory_size;
 
 	return 0;
@@ -543,29 +559,94 @@ static int __init check_sdias(void)
 
 	rc = sclp_sdias_blk_count();
 	if (rc < 0) {
-		ERROR_MSG("Could not determine HSA size\n");
+		TRACE("Could not determine HSA size\n");
 		return rc;
 	}
 	act_hsa_size = (rc - 1) * PAGE_SIZE;
 	if (act_hsa_size < ZFCPDUMP_HSA_SIZE) {
-		ERROR_MSG("HSA size too small: %i\n", act_hsa_size);
+		TRACE("HSA size too small: %i\n", act_hsa_size);
 		return -EINVAL;
 	}
 	return 0;
 }
 
-static void __init zcore_header_init(int arch, struct zcore_header *hdr)
+static int __init get_mem_size(unsigned long *mem)
 {
+	int i;
+	struct mem_chunk *chunk_array;
+
+	chunk_array = kzalloc(MEMORY_CHUNKS * sizeof(struct mem_chunk),
+			      GFP_KERNEL);
+	if (!chunk_array)
+		return -ENOMEM;
+	detect_memory_layout(chunk_array);
+	for (i = 0; i < MEMORY_CHUNKS; i++) {
+		if (chunk_array[i].size == 0)
+			break;
+		*mem += chunk_array[i].size;
+	}
+	kfree(chunk_array);
+	return 0;
+}
+
+static int __init zcore_header_init(int arch, struct zcore_header *hdr)
+{
+	int rc, i;
+	unsigned long memory = 0;
+	u32 prefix;
+
 	if (arch == ARCH_S390X)
 		hdr->arch_id = DUMP_ARCH_S390X;
 	else
 		hdr->arch_id = DUMP_ARCH_S390;
-	hdr->mem_size = sys_info.mem_size;
-	hdr->rmem_size = sys_info.mem_size;
+	rc = get_mem_size(&memory);
+	if (rc)
+		return rc;
+	hdr->mem_size = memory;
+	hdr->rmem_size = memory;
 	hdr->mem_end = sys_info.mem_size;
-	hdr->num_pages = sys_info.mem_size / PAGE_SIZE;
+	hdr->num_pages = memory / PAGE_SIZE;
 	hdr->tod = get_clock();
 	get_cpu_id(&hdr->cpu_id);
+	for (i = 0; zfcpdump_save_areas[i]; i++) {
+		prefix = zfcpdump_save_areas[i]->pref_reg;
+		hdr->real_cpu_cnt++;
+		if (!prefix)
+			continue;
+		hdr->lc_vec[hdr->cpu_cnt] = prefix;
+		hdr->cpu_cnt++;
+	}
+	return 0;
+}
+
+/*
+ * Provide IPL parameter information block from either HSA or memory
+ * for future reipl
+ */
+static int __init zcore_reipl_init(void)
+{
+	struct ipib_info ipib_info;
+	int rc;
+
+	rc = memcpy_hsa_kernel(&ipib_info, __LC_DUMP_REIPL, sizeof(ipib_info));
+	if (rc)
+		return rc;
+	if (ipib_info.ipib == 0)
+		return 0;
+	ipl_block = (void *) __get_free_page(GFP_KERNEL);
+	if (!ipl_block)
+		return -ENOMEM;
+	if (ipib_info.ipib < ZFCPDUMP_HSA_SIZE)
+		rc = memcpy_hsa_kernel(ipl_block, ipib_info.ipib, PAGE_SIZE);
+	else
+		rc = memcpy_real(ipl_block, (void *) ipib_info.ipib, PAGE_SIZE);
+	if (rc || csum_partial(ipl_block, ipl_block->hdr.len, 0) !=
+	    ipib_info.checksum) {
+		TRACE("Checksum does not match\n");
+		free_page((unsigned long) ipl_block);
+		ipl_block = NULL;
+	}
+	return 0;
 }
 
 static int __init zcore_init(void)
@@ -589,32 +670,40 @@ static int __init zcore_init(void)
 		goto fail;
 
 	rc = check_sdias();
-	if (rc) {
-		ERROR_MSG("Dump initialization failed\n");
+	if (rc)
 		goto fail;
-	}
 
 	rc = memcpy_hsa_kernel(&arch, __LC_AR_MODE_ID, 1);
-	if (rc) {
-		ERROR_MSG("sdial memcpy for arch id failed\n");
+	if (rc)
 		goto fail;
-	}
 
-#ifndef __s390x__
-	if (arch == ARCH_S390X) {
-		ERROR_MSG("32 bit dumper can't dump 64 bit system!\n");
+#ifdef CONFIG_64BIT
+	if (arch == ARCH_S390) {
+		pr_alert("The 64-bit dump tool cannot be used for a "
+			 "32-bit system\n");
 		rc = -EINVAL;
 		goto fail;
 	}
-#endif
-
-	rc = sys_info_init(arch);
-	if (rc) {
-		ERROR_MSG("arch init failed\n");
+#else /* CONFIG_64BIT */
+	if (arch == ARCH_S390X) {
+		pr_alert("The 32-bit dump tool cannot be used for a "
+			 "64-bit system\n");
+		rc = -EINVAL;
 		goto fail;
 	}
+#endif /* CONFIG_64BIT */
 
-	zcore_header_init(arch, &zcore_header);
+	rc = sys_info_init(arch);
+	if (rc)
+		goto fail;
+
+	rc = zcore_header_init(arch, &zcore_header);
+	if (rc)
+		goto fail;
+
+	rc = zcore_reipl_init();
+	if (rc)
+		goto fail;
 
 	zcore_dir = debugfs_create_dir("zcore" , NULL);
 	if (!zcore_dir) {
@@ -624,13 +713,30 @@ static int __init zcore_init(void)
 	zcore_file = debugfs_create_file("mem", S_IRUSR, zcore_dir, NULL,
 					 &zcore_fops);
 	if (!zcore_file) {
-		debugfs_remove(zcore_dir);
 		rc = -ENOMEM;
-		goto fail;
+		goto fail_dir;
+	}
+	zcore_memmap_file = debugfs_create_file("memmap", S_IRUSR, zcore_dir,
+						NULL, &zcore_memmap_fops);
+	if (!zcore_memmap_file) {
+		rc = -ENOMEM;
+		goto fail_file;
+	}
+	zcore_reipl_file = debugfs_create_file("reipl", S_IRUSR, zcore_dir,
+						NULL, &zcore_reipl_fops);
+	if (!zcore_reipl_file) {
+		rc = -ENOMEM;
+		goto fail_memmap_file;
 	}
 	hsa_available = 1;
 	return 0;
 
+fail_memmap_file:
+	debugfs_remove(zcore_memmap_file);
+fail_file:
+	debugfs_remove(zcore_file);
+fail_dir:
+	debugfs_remove(zcore_dir);
 fail:
 	diag308(DIAG308_REL_HSA, NULL);
 	return rc;
@@ -640,10 +746,15 @@ static void __exit zcore_exit(void)
 {
 	debug_unregister(zcore_dbf);
 	sclp_sdias_exit();
+	free_page((unsigned long) ipl_block);
+	debugfs_remove(zcore_reipl_file);
+	debugfs_remove(zcore_memmap_file);
+	debugfs_remove(zcore_file);
+	debugfs_remove(zcore_dir);
 	diag308(DIAG308_REL_HSA, NULL);
 }
 
-MODULE_AUTHOR("Copyright IBM Corp. 2003,2007");
+MODULE_AUTHOR("Copyright IBM Corp. 2003,2008");
 MODULE_DESCRIPTION("zcore module for zfcpdump support");
 MODULE_LICENSE("GPL");
 

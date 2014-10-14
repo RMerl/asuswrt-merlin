@@ -36,9 +36,10 @@
 #include <linux/ioport.h>
 #include <linux/kernel.h>
 #include <linux/spinlock.h>
+#include <linux/io.h>
+#include <linux/slab.h>
 
-#include <asm/hardware.h>
-#include <asm/io.h>
+#include <mach/hardware.h>
 #include <asm/irq.h>
 #include <asm/system.h>
 
@@ -163,8 +164,41 @@ sa1100_pcmcia_show_timing(struct soc_pcmcia_socket *skt, char *buf)
 	return p - buf;
 }
 
-int sa11xx_drv_pcmcia_probe(struct device *dev, struct pcmcia_low_level *ops,
-			    int first, int nr)
+static const char *skt_names[] = {
+	"PCMCIA socket 0",
+	"PCMCIA socket 1",
+};
+
+#define SKT_DEV_INFO_SIZE(n) \
+	(sizeof(struct skt_dev_info) + (n)*sizeof(struct soc_pcmcia_socket))
+
+int sa11xx_drv_pcmcia_add_one(struct soc_pcmcia_socket *skt)
+{
+	skt->res_skt.start = _PCMCIA(skt->nr);
+	skt->res_skt.end = _PCMCIA(skt->nr) + PCMCIASp - 1;
+	skt->res_skt.name = skt_names[skt->nr];
+	skt->res_skt.flags = IORESOURCE_MEM;
+
+	skt->res_io.start = _PCMCIAIO(skt->nr);
+	skt->res_io.end = _PCMCIAIO(skt->nr) + PCMCIAIOSp - 1;
+	skt->res_io.name = "io";
+	skt->res_io.flags = IORESOURCE_MEM | IORESOURCE_BUSY;
+
+	skt->res_mem.start = _PCMCIAMem(skt->nr);
+	skt->res_mem.end = _PCMCIAMem(skt->nr) + PCMCIAMemSp - 1;
+	skt->res_mem.name = "memory";
+	skt->res_mem.flags = IORESOURCE_MEM;
+
+	skt->res_attr.start = _PCMCIAAttr(skt->nr);
+	skt->res_attr.end = _PCMCIAAttr(skt->nr) + PCMCIAAttrSp - 1;
+	skt->res_attr.name = "attribute";
+	skt->res_attr.flags = IORESOURCE_MEM;
+
+	return soc_pcmcia_add_one(skt);
+}
+EXPORT_SYMBOL(sa11xx_drv_pcmcia_add_one);
+
+void sa11xx_drv_pcmcia_ops(struct pcmcia_low_level *ops)
 {
 	/*
 	 * set default MECR calculation if the board specific
@@ -179,8 +213,48 @@ int sa11xx_drv_pcmcia_probe(struct device *dev, struct pcmcia_low_level *ops,
 #ifdef CONFIG_CPU_FREQ
 	ops->frequency_change = sa1100_pcmcia_frequency_change;
 #endif
+}
+EXPORT_SYMBOL(sa11xx_drv_pcmcia_ops);
 
-	return soc_common_drv_pcmcia_probe(dev, ops, first, nr);
+int sa11xx_drv_pcmcia_probe(struct device *dev, struct pcmcia_low_level *ops,
+			    int first, int nr)
+{
+	struct skt_dev_info *sinfo;
+	struct soc_pcmcia_socket *skt;
+	int i, ret = 0;
+
+	sa11xx_drv_pcmcia_ops(ops);
+
+	sinfo = kzalloc(SKT_DEV_INFO_SIZE(nr), GFP_KERNEL);
+	if (!sinfo)
+		return -ENOMEM;
+
+	sinfo->nskt = nr;
+
+	/* Initialize processor specific parameters */
+	for (i = 0; i < nr; i++) {
+		skt = &sinfo->skt[i];
+
+		skt->nr = first + i;
+		skt->ops = ops;
+		skt->socket.owner = ops->owner;
+		skt->socket.dev.parent = dev;
+		skt->socket.pci_irq = NO_IRQ;
+
+		ret = sa11xx_drv_pcmcia_add_one(skt);
+		if (ret)
+			break;
+	}
+
+	if (ret) {
+		while (--i >= 0)
+			soc_pcmcia_remove_one(&sinfo->skt[i]);
+		kfree(sinfo);
+	} else {
+		dev_set_drvdata(dev, sinfo);
+	}
+
+	return ret;
 }
 EXPORT_SYMBOL(sa11xx_drv_pcmcia_probe);
 

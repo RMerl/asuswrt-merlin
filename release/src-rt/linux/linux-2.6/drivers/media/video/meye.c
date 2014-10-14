@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2001-2004 Stelian Pop <stelian@popies.net>
  *
- * Copyright (C) 2001-2002 Alcôve <www.alcove.com>
+ * Copyright (C) 2001-2002 AlcÃ´ve <www.alcove.com>
  *
  * Copyright (C) 2000 Andrew Tridgell <tridge@valinux.com>
  *
@@ -28,9 +28,13 @@
  */
 #include <linux/module.h>
 #include <linux/pci.h>
+#include <linux/sched.h>
 #include <linux/init.h>
-#include <linux/videodev.h>
+#include <linux/gfp.h>
+#include <linux/videodev2.h>
 #include <media/v4l2-common.h>
+#include <media/v4l2-device.h>
+#include <media/v4l2-ioctl.h>
 #include <asm/uaccess.h>
 #include <asm/io.h>
 #include <linux/delay.h>
@@ -42,14 +46,9 @@
 #include <linux/meye.h>
 
 MODULE_AUTHOR("Stelian Pop <stelian@popies.net>");
-MODULE_DESCRIPTION("v4l/v4l2 driver for the MotionEye camera");
+MODULE_DESCRIPTION("v4l2 driver for the MotionEye camera");
 MODULE_LICENSE("GPL");
 MODULE_VERSION(MEYE_DRIVER_VERSION);
-
-/* force usage of V4L1 API */
-static int forcev4l1; /* = 0 */
-module_param(forcev4l1, int, 0644);
-MODULE_PARM_DESC(forcev4l1, "force use of V4L1 instead of V4L2");
 
 /* number of grab buffers */
 static unsigned int gbuffers = 2;
@@ -121,7 +120,7 @@ static int ptable_alloc(void)
 	memset(meye.mchip_ptable, 0, sizeof(meye.mchip_ptable));
 
 	/* give only 32 bit DMA addresses */
-	if (dma_set_mask(&meye.mchip_dev->dev, DMA_32BIT_MASK))
+	if (dma_set_mask(&meye.mchip_dev->dev, DMA_BIT_MASK(32)))
 		return -1;
 
 	meye.mchip_ptable_toc = dma_alloc_coherent(&meye.mchip_dev->dev,
@@ -789,7 +788,7 @@ static irqreturn_t meye_irq(int irq, void *dev_id)
 {
 	u32 v;
 	int reqnr;
-	static int sequence = 0;
+	static int sequence;
 
 	v = mchip_read(MCHIP_MM_INTA);
 
@@ -803,8 +802,8 @@ again:
 		return IRQ_HANDLED;
 
 	if (meye.mchip_mode == MCHIP_HIC_MODE_CONT_OUT) {
-		if (kfifo_get(meye.grabq, (unsigned char *)&reqnr,
-			      sizeof(int)) != sizeof(int)) {
+		if (kfifo_out_locked(&meye.grabq, (unsigned char *)&reqnr,
+			      sizeof(int), &meye.grabq_lock) != sizeof(int)) {
 			mchip_free_frame();
 			return IRQ_HANDLED;
 		}
@@ -814,7 +813,8 @@ again:
 		meye.grab_buffer[reqnr].state = MEYE_BUF_DONE;
 		do_gettimeofday(&meye.grab_buffer[reqnr].timestamp);
 		meye.grab_buffer[reqnr].sequence = sequence++;
-		kfifo_put(meye.doneq, (unsigned char *)&reqnr, sizeof(int));
+		kfifo_in_locked(&meye.doneq, (unsigned char *)&reqnr,
+				sizeof(int), &meye.doneq_lock);
 		wake_up_interruptible(&meye.proc_list);
 	} else {
 		int size;
@@ -823,8 +823,8 @@ again:
 			mchip_free_frame();
 			goto again;
 		}
-		if (kfifo_get(meye.grabq, (unsigned char *)&reqnr,
-			      sizeof(int)) != sizeof(int)) {
+		if (kfifo_out_locked(&meye.grabq, (unsigned char *)&reqnr,
+			      sizeof(int), &meye.grabq_lock) != sizeof(int)) {
 			mchip_free_frame();
 			goto again;
 		}
@@ -834,7 +834,8 @@ again:
 		meye.grab_buffer[reqnr].state = MEYE_BUF_DONE;
 		do_gettimeofday(&meye.grab_buffer[reqnr].timestamp);
 		meye.grab_buffer[reqnr].sequence = sequence++;
-		kfifo_put(meye.doneq, (unsigned char *)&reqnr, sizeof(int));
+		kfifo_in_locked(&meye.doneq, (unsigned char *)&reqnr,
+				sizeof(int), &meye.doneq_lock);
 		wake_up_interruptible(&meye.proc_list);
 	}
 	mchip_free_frame();
@@ -845,826 +846,733 @@ again:
 /* video4linux integration                                                  */
 /****************************************************************************/
 
-static int meye_open(struct inode *inode, struct file *file)
+static int meye_open(struct file *file)
 {
-	int i, err;
+	int i;
 
-	err = video_exclusive_open(inode, file);
-	if (err < 0)
-		return err;
+	if (test_and_set_bit(0, &meye.in_use))
+		return -EBUSY;
 
 	mchip_hic_stop();
 
 	if (mchip_dma_alloc()) {
 		printk(KERN_ERR "meye: mchip framebuffer allocation failed\n");
-		video_exclusive_release(inode, file);
+		clear_bit(0, &meye.in_use);
 		return -ENOBUFS;
 	}
 
 	for (i = 0; i < MEYE_MAX_BUFNBRS; i++)
 		meye.grab_buffer[i].state = MEYE_BUF_UNUSED;
-	kfifo_reset(meye.grabq);
-	kfifo_reset(meye.doneq);
+	kfifo_reset(&meye.grabq);
+	kfifo_reset(&meye.doneq);
 	return 0;
 }
 
-static int meye_release(struct inode *inode, struct file *file)
+static int meye_release(struct file *file)
 {
 	mchip_hic_stop();
 	mchip_dma_free();
-	video_exclusive_release(inode, file);
+	clear_bit(0, &meye.in_use);
 	return 0;
 }
 
-static int meye_do_ioctl(struct inode *inode, struct file *file,
-			 unsigned int cmd, void *arg)
+static int meyeioc_g_params(struct meye_params *p)
 {
-	switch (cmd) {
+	*p = meye.params;
+	return 0;
+}
 
-	case VIDIOCGCAP: {
-		struct video_capability *b = arg;
-		strcpy(b->name,meye.video_dev->name);
-		b->type = VID_TYPE_CAPTURE;
-		b->channels = 1;
-		b->audios = 0;
-		b->maxwidth = 640;
-		b->maxheight = 480;
-		b->minwidth = 320;
-		b->minheight = 240;
-		break;
+static int meyeioc_s_params(struct meye_params *jp)
+{
+	if (jp->subsample > 1)
+		return -EINVAL;
+
+	if (jp->quality > 10)
+		return -EINVAL;
+
+	if (jp->sharpness > 63 || jp->agc > 63 || jp->picture > 63)
+		return -EINVAL;
+
+	if (jp->framerate > 31)
+		return -EINVAL;
+
+	mutex_lock(&meye.lock);
+
+	if (meye.params.subsample != jp->subsample ||
+	    meye.params.quality != jp->quality)
+		mchip_hic_stop();	/* need restart */
+
+	meye.params = *jp;
+	sony_pic_camera_command(SONY_PIC_COMMAND_SETCAMERASHARPNESS,
+			      meye.params.sharpness);
+	sony_pic_camera_command(SONY_PIC_COMMAND_SETCAMERAAGC,
+			      meye.params.agc);
+	sony_pic_camera_command(SONY_PIC_COMMAND_SETCAMERAPICTURE,
+			      meye.params.picture);
+	mutex_unlock(&meye.lock);
+
+	return 0;
+}
+
+static int meyeioc_qbuf_capt(int *nb)
+{
+	if (!meye.grab_fbuffer)
+		return -EINVAL;
+
+	if (*nb >= gbuffers)
+		return -EINVAL;
+
+	if (*nb < 0) {
+		/* stop capture */
+		mchip_hic_stop();
+		return 0;
 	}
 
-	case VIDIOCGCHAN: {
-		struct video_channel *v = arg;
-		v->flags = 0;
-		v->tuners = 0;
-		v->type = VIDEO_TYPE_CAMERA;
-		if (v->channel != 0)
-			return -EINVAL;
-		strcpy(v->name,"Camera");
-		break;
-	}
+	if (meye.grab_buffer[*nb].state != MEYE_BUF_UNUSED)
+		return -EBUSY;
 
-	case VIDIOCSCHAN: {
-		struct video_channel *v = arg;
-		if (v->channel != 0)
-			return -EINVAL;
-		break;
-	}
+	mutex_lock(&meye.lock);
 
-	case VIDIOCGPICT: {
-		struct video_picture *p = arg;
-		*p = meye.picture;
-		break;
-	}
+	if (meye.mchip_mode != MCHIP_HIC_MODE_CONT_COMP)
+		mchip_cont_compression_start();
 
-	case VIDIOCSPICT: {
-		struct video_picture *p = arg;
-		if (p->depth != 16)
-			return -EINVAL;
-		if (p->palette != VIDEO_PALETTE_YUV422 && p->palette != VIDEO_PALETTE_YUYV)
-			return -EINVAL;
-		mutex_lock(&meye.lock);
-		sony_pic_camera_command(SONY_PIC_COMMAND_SETCAMERABRIGHTNESS,
-				      p->brightness >> 10);
-		sony_pic_camera_command(SONY_PIC_COMMAND_SETCAMERAHUE,
-				      p->hue >> 10);
-		sony_pic_camera_command(SONY_PIC_COMMAND_SETCAMERACOLOR,
-				      p->colour >> 10);
-		sony_pic_camera_command(SONY_PIC_COMMAND_SETCAMERACONTRAST,
-				      p->contrast >> 10);
-		meye.picture = *p;
+	meye.grab_buffer[*nb].state = MEYE_BUF_USING;
+	kfifo_in_locked(&meye.grabq, (unsigned char *)nb, sizeof(int),
+			 &meye.grabq_lock);
+	mutex_unlock(&meye.lock);
+
+	return 0;
+}
+
+static int meyeioc_sync(struct file *file, void *fh, int *i)
+{
+	int unused;
+
+	if (*i < 0 || *i >= gbuffers)
+		return -EINVAL;
+
+	mutex_lock(&meye.lock);
+	switch (meye.grab_buffer[*i].state) {
+
+	case MEYE_BUF_UNUSED:
 		mutex_unlock(&meye.lock);
-		break;
-	}
-
-	case VIDIOCSYNC: {
-		int *i = arg;
-		int unused;
-
-		if (*i < 0 || *i >= gbuffers)
-			return -EINVAL;
-
-		mutex_lock(&meye.lock);
-
-		switch (meye.grab_buffer[*i].state) {
-
-		case MEYE_BUF_UNUSED:
-			mutex_unlock(&meye.lock);
-			return -EINVAL;
-		case MEYE_BUF_USING:
-			if (file->f_flags & O_NONBLOCK) {
-				mutex_unlock(&meye.lock);
-				return -EAGAIN;
-			}
-			if (wait_event_interruptible(meye.proc_list,
-						     (meye.grab_buffer[*i].state != MEYE_BUF_USING))) {
-				mutex_unlock(&meye.lock);
-				return -EINTR;
-			}
-			/* fall through */
-		case MEYE_BUF_DONE:
-			meye.grab_buffer[*i].state = MEYE_BUF_UNUSED;
-			kfifo_get(meye.doneq, (unsigned char *)&unused, sizeof(int));
-		}
-		mutex_unlock(&meye.lock);
-		break;
-	}
-
-	case VIDIOCMCAPTURE: {
-		struct video_mmap *vm = arg;
-		int restart = 0;
-
-		if (vm->frame >= gbuffers || vm->frame < 0)
-			return -EINVAL;
-		if (vm->format != VIDEO_PALETTE_YUV422 && vm->format != VIDEO_PALETTE_YUYV)
-			return -EINVAL;
-		if (vm->height * vm->width * 2 > gbufsize)
-			return -EINVAL;
-		if (!meye.grab_fbuffer)
-			return -EINVAL;
-		if (meye.grab_buffer[vm->frame].state != MEYE_BUF_UNUSED)
-			return -EBUSY;
-
-		mutex_lock(&meye.lock);
-		if (vm->width == 640 && vm->height == 480) {
-			if (meye.params.subsample) {
-				meye.params.subsample = 0;
-				restart = 1;
-			}
-		} else if (vm->width == 320 && vm->height == 240) {
-			if (!meye.params.subsample) {
-				meye.params.subsample = 1;
-				restart = 1;
-			}
-		} else {
-			mutex_unlock(&meye.lock);
-			return -EINVAL;
-		}
-
-		if (restart || meye.mchip_mode != MCHIP_HIC_MODE_CONT_OUT)
-			mchip_continuous_start();
-		meye.grab_buffer[vm->frame].state = MEYE_BUF_USING;
-		kfifo_put(meye.grabq, (unsigned char *)&vm->frame, sizeof(int));
-		mutex_unlock(&meye.lock);
-		break;
-	}
-
-	case VIDIOCGMBUF: {
-		struct video_mbuf *vm = arg;
-		int i;
-
-		memset(vm, 0 , sizeof(*vm));
-		vm->size = gbufsize * gbuffers;
-		vm->frames = gbuffers;
-		for (i = 0; i < gbuffers; i++)
-			vm->offsets[i] = i * gbufsize;
-		break;
-	}
-
-	case MEYEIOC_G_PARAMS: {
-		struct meye_params *p = arg;
-		*p = meye.params;
-		break;
-	}
-
-	case MEYEIOC_S_PARAMS: {
-		struct meye_params *jp = arg;
-		if (jp->subsample > 1)
-			return -EINVAL;
-		if (jp->quality > 10)
-			return -EINVAL;
-		if (jp->sharpness > 63 || jp->agc > 63 || jp->picture > 63)
-			return -EINVAL;
-		if (jp->framerate > 31)
-			return -EINVAL;
-		mutex_lock(&meye.lock);
-		if (meye.params.subsample != jp->subsample ||
-		    meye.params.quality != jp->quality)
-			mchip_hic_stop();	/* need restart */
-		meye.params = *jp;
-		sony_pic_camera_command(SONY_PIC_COMMAND_SETCAMERASHARPNESS,
-				      meye.params.sharpness);
-		sony_pic_camera_command(SONY_PIC_COMMAND_SETCAMERAAGC,
-				      meye.params.agc);
-		sony_pic_camera_command(SONY_PIC_COMMAND_SETCAMERAPICTURE,
-				      meye.params.picture);
-		mutex_unlock(&meye.lock);
-		break;
-	}
-
-	case MEYEIOC_QBUF_CAPT: {
-		int *nb = arg;
-
-		if (!meye.grab_fbuffer)
-			return -EINVAL;
-		if (*nb >= gbuffers)
-			return -EINVAL;
-		if (*nb < 0) {
-			/* stop capture */
-			mchip_hic_stop();
-			return 0;
-		}
-		if (meye.grab_buffer[*nb].state != MEYE_BUF_UNUSED)
-			return -EBUSY;
-		mutex_lock(&meye.lock);
-		if (meye.mchip_mode != MCHIP_HIC_MODE_CONT_COMP)
-			mchip_cont_compression_start();
-		meye.grab_buffer[*nb].state = MEYE_BUF_USING;
-		kfifo_put(meye.grabq, (unsigned char *)nb, sizeof(int));
-		mutex_unlock(&meye.lock);
-		break;
-	}
-
-	case MEYEIOC_SYNC: {
-		int *i = arg;
-		int unused;
-
-		if (*i < 0 || *i >= gbuffers)
-			return -EINVAL;
-
-		mutex_lock(&meye.lock);
-		switch (meye.grab_buffer[*i].state) {
-
-		case MEYE_BUF_UNUSED:
-			mutex_unlock(&meye.lock);
-			return -EINVAL;
-		case MEYE_BUF_USING:
-			if (file->f_flags & O_NONBLOCK) {
-				mutex_unlock(&meye.lock);
-				return -EAGAIN;
-			}
-			if (wait_event_interruptible(meye.proc_list,
-						     (meye.grab_buffer[*i].state != MEYE_BUF_USING))) {
-				mutex_unlock(&meye.lock);
-				return -EINTR;
-			}
-			/* fall through */
-		case MEYE_BUF_DONE:
-			meye.grab_buffer[*i].state = MEYE_BUF_UNUSED;
-			kfifo_get(meye.doneq, (unsigned char *)&unused, sizeof(int));
-		}
-		*i = meye.grab_buffer[*i].size;
-		mutex_unlock(&meye.lock);
-		break;
-	}
-
-	case MEYEIOC_STILLCAPT: {
-
-		if (!meye.grab_fbuffer)
-			return -EINVAL;
-		if (meye.grab_buffer[0].state != MEYE_BUF_UNUSED)
-			return -EBUSY;
-		mutex_lock(&meye.lock);
-		meye.grab_buffer[0].state = MEYE_BUF_USING;
-		mchip_take_picture();
-		mchip_get_picture(
-			meye.grab_fbuffer,
-			mchip_hsize() * mchip_vsize() * 2);
-		meye.grab_buffer[0].state = MEYE_BUF_DONE;
-		mutex_unlock(&meye.lock);
-		break;
-	}
-
-	case MEYEIOC_STILLJCAPT: {
-		int *len = arg;
-
-		if (!meye.grab_fbuffer)
-			return -EINVAL;
-		if (meye.grab_buffer[0].state != MEYE_BUF_UNUSED)
-			return -EBUSY;
-		mutex_lock(&meye.lock);
-		meye.grab_buffer[0].state = MEYE_BUF_USING;
-		*len = -1;
-		while (*len == -1) {
-			mchip_take_picture();
-			*len = mchip_compress_frame(meye.grab_fbuffer, gbufsize);
-		}
-		meye.grab_buffer[0].state = MEYE_BUF_DONE;
-		mutex_unlock(&meye.lock);
-		break;
-	}
-
-	case VIDIOC_QUERYCAP: {
-		struct v4l2_capability *cap = arg;
-
-		if (forcev4l1)
-			return -EINVAL;
-
-		memset(cap, 0, sizeof(*cap));
-		strcpy(cap->driver, "meye");
-		strcpy(cap->card, "meye");
-		sprintf(cap->bus_info, "PCI:%s", pci_name(meye.mchip_dev));
-		cap->version = (MEYE_DRIVER_MAJORVERSION << 8) +
-			       MEYE_DRIVER_MINORVERSION;
-		cap->capabilities = V4L2_CAP_VIDEO_CAPTURE |
-				    V4L2_CAP_STREAMING;
-		break;
-	}
-
-	case VIDIOC_ENUMINPUT: {
-		struct v4l2_input *i = arg;
-
-		if (i->index != 0)
-			return -EINVAL;
-		memset(i, 0, sizeof(*i));
-		i->index = 0;
-		strcpy(i->name, "Camera");
-		i->type = V4L2_INPUT_TYPE_CAMERA;
-		break;
-	}
-
-	case VIDIOC_G_INPUT: {
-		int *i = arg;
-
-		*i = 0;
-		break;
-	}
-
-	case VIDIOC_S_INPUT: {
-		int *i = arg;
-
-		if (*i != 0)
-			return -EINVAL;
-		break;
-	}
-
-	case VIDIOC_QUERYCTRL: {
-		struct v4l2_queryctrl *c = arg;
-
-		switch (c->id) {
-
-		case V4L2_CID_BRIGHTNESS:
-			c->type = V4L2_CTRL_TYPE_INTEGER;
-			strcpy(c->name, "Brightness");
-			c->minimum = 0;
-			c->maximum = 63;
-			c->step = 1;
-			c->default_value = 32;
-			c->flags = 0;
-			break;
-		case V4L2_CID_HUE:
-			c->type = V4L2_CTRL_TYPE_INTEGER;
-			strcpy(c->name, "Hue");
-			c->minimum = 0;
-			c->maximum = 63;
-			c->step = 1;
-			c->default_value = 32;
-			c->flags = 0;
-			break;
-		case V4L2_CID_CONTRAST:
-			c->type = V4L2_CTRL_TYPE_INTEGER;
-			strcpy(c->name, "Contrast");
-			c->minimum = 0;
-			c->maximum = 63;
-			c->step = 1;
-			c->default_value = 32;
-			c->flags = 0;
-			break;
-		case V4L2_CID_SATURATION:
-			c->type = V4L2_CTRL_TYPE_INTEGER;
-			strcpy(c->name, "Saturation");
-			c->minimum = 0;
-			c->maximum = 63;
-			c->step = 1;
-			c->default_value = 32;
-			c->flags = 0;
-			break;
-		case V4L2_CID_AGC:
-			c->type = V4L2_CTRL_TYPE_INTEGER;
-			strcpy(c->name, "Agc");
-			c->minimum = 0;
-			c->maximum = 63;
-			c->step = 1;
-			c->default_value = 48;
-			c->flags = 0;
-			break;
-		case V4L2_CID_SHARPNESS:
-			c->type = V4L2_CTRL_TYPE_INTEGER;
-			strcpy(c->name, "Sharpness");
-			c->minimum = 0;
-			c->maximum = 63;
-			c->step = 1;
-			c->default_value = 32;
-			c->flags = 0;
-			break;
-		case V4L2_CID_PICTURE:
-			c->type = V4L2_CTRL_TYPE_INTEGER;
-			strcpy(c->name, "Picture");
-			c->minimum = 0;
-			c->maximum = 63;
-			c->step = 1;
-			c->default_value = 0;
-			c->flags = 0;
-			break;
-		case V4L2_CID_JPEGQUAL:
-			c->type = V4L2_CTRL_TYPE_INTEGER;
-			strcpy(c->name, "JPEG quality");
-			c->minimum = 0;
-			c->maximum = 10;
-			c->step = 1;
-			c->default_value = 8;
-			c->flags = 0;
-			break;
-		case V4L2_CID_FRAMERATE:
-			c->type = V4L2_CTRL_TYPE_INTEGER;
-			strcpy(c->name, "Framerate");
-			c->minimum = 0;
-			c->maximum = 31;
-			c->step = 1;
-			c->default_value = 0;
-			c->flags = 0;
-			break;
-		default:
-			return -EINVAL;
-		}
-		break;
-	}
-
-	case VIDIOC_S_CTRL: {
-		struct v4l2_control *c = arg;
-
-		mutex_lock(&meye.lock);
-		switch (c->id) {
-		case V4L2_CID_BRIGHTNESS:
-			sony_pic_camera_command(
-				SONY_PIC_COMMAND_SETCAMERABRIGHTNESS, c->value);
-			meye.picture.brightness = c->value << 10;
-			break;
-		case V4L2_CID_HUE:
-			sony_pic_camera_command(
-				SONY_PIC_COMMAND_SETCAMERAHUE, c->value);
-			meye.picture.hue = c->value << 10;
-			break;
-		case V4L2_CID_CONTRAST:
-			sony_pic_camera_command(
-				SONY_PIC_COMMAND_SETCAMERACONTRAST, c->value);
-			meye.picture.contrast = c->value << 10;
-			break;
-		case V4L2_CID_SATURATION:
-			sony_pic_camera_command(
-				SONY_PIC_COMMAND_SETCAMERACOLOR, c->value);
-			meye.picture.colour = c->value << 10;
-			break;
-		case V4L2_CID_AGC:
-			sony_pic_camera_command(
-				SONY_PIC_COMMAND_SETCAMERAAGC, c->value);
-			meye.params.agc = c->value;
-			break;
-		case V4L2_CID_SHARPNESS:
-			sony_pic_camera_command(
-				SONY_PIC_COMMAND_SETCAMERASHARPNESS, c->value);
-			meye.params.sharpness = c->value;
-			break;
-		case V4L2_CID_PICTURE:
-			sony_pic_camera_command(
-				SONY_PIC_COMMAND_SETCAMERAPICTURE, c->value);
-			meye.params.picture = c->value;
-			break;
-		case V4L2_CID_JPEGQUAL:
-			meye.params.quality = c->value;
-			break;
-		case V4L2_CID_FRAMERATE:
-			meye.params.framerate = c->value;
-			break;
-		default:
-			mutex_unlock(&meye.lock);
-			return -EINVAL;
-		}
-		mutex_unlock(&meye.lock);
-		break;
-	}
-
-	case VIDIOC_G_CTRL: {
-		struct v4l2_control *c = arg;
-
-		mutex_lock(&meye.lock);
-		switch (c->id) {
-		case V4L2_CID_BRIGHTNESS:
-			c->value = meye.picture.brightness >> 10;
-			break;
-		case V4L2_CID_HUE:
-			c->value = meye.picture.hue >> 10;
-			break;
-		case V4L2_CID_CONTRAST:
-			c->value = meye.picture.contrast >> 10;
-			break;
-		case V4L2_CID_SATURATION:
-			c->value = meye.picture.colour >> 10;
-			break;
-		case V4L2_CID_AGC:
-			c->value = meye.params.agc;
-			break;
-		case V4L2_CID_SHARPNESS:
-			c->value = meye.params.sharpness;
-			break;
-		case V4L2_CID_PICTURE:
-			c->value = meye.params.picture;
-			break;
-		case V4L2_CID_JPEGQUAL:
-			c->value = meye.params.quality;
-			break;
-		case V4L2_CID_FRAMERATE:
-			c->value = meye.params.framerate;
-			break;
-		default:
-			mutex_unlock(&meye.lock);
-			return -EINVAL;
-		}
-		mutex_unlock(&meye.lock);
-		break;
-	}
-
-	case VIDIOC_ENUM_FMT: {
-		struct v4l2_fmtdesc *f = arg;
-
-		if (f->index > 1)
-			return -EINVAL;
-		if (f->type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
-			return -EINVAL;
-		if (f->index == 0) {
-			/* standard YUV 422 capture */
-			memset(f, 0, sizeof(*f));
-			f->index = 0;
-			f->type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-			f->flags = 0;
-			strcpy(f->description, "YUV422");
-			f->pixelformat = V4L2_PIX_FMT_YUYV;
-		} else {
-			/* compressed MJPEG capture */
-			memset(f, 0, sizeof(*f));
-			f->index = 1;
-			f->type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-			f->flags = V4L2_FMT_FLAG_COMPRESSED;
-			strcpy(f->description, "MJPEG");
-			f->pixelformat = V4L2_PIX_FMT_MJPEG;
-		}
-		break;
-	}
-
-	case VIDIOC_TRY_FMT: {
-		struct v4l2_format *f = arg;
-
-		if (f->type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
-			return -EINVAL;
-		if (f->fmt.pix.pixelformat != V4L2_PIX_FMT_YUYV &&
-		    f->fmt.pix.pixelformat != V4L2_PIX_FMT_MJPEG)
-			return -EINVAL;
-		if (f->fmt.pix.field != V4L2_FIELD_ANY &&
-		    f->fmt.pix.field != V4L2_FIELD_NONE)
-			return -EINVAL;
-		f->fmt.pix.field = V4L2_FIELD_NONE;
-		if (f->fmt.pix.width <= 320) {
-			f->fmt.pix.width = 320;
-			f->fmt.pix.height = 240;
-		} else {
-			f->fmt.pix.width = 640;
-			f->fmt.pix.height = 480;
-		}
-		f->fmt.pix.bytesperline = f->fmt.pix.width * 2;
-		f->fmt.pix.sizeimage = f->fmt.pix.height *
-				       f->fmt.pix.bytesperline;
-		f->fmt.pix.colorspace = 0;
-		f->fmt.pix.priv = 0;
-		break;
-	}
-
-	case VIDIOC_G_FMT: {
-		struct v4l2_format *f = arg;
-
-		if (f->type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
-			return -EINVAL;
-		memset(&f->fmt.pix, 0, sizeof(struct v4l2_pix_format));
-		f->type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-		switch (meye.mchip_mode) {
-		case MCHIP_HIC_MODE_CONT_OUT:
-		default:
-			f->fmt.pix.pixelformat = V4L2_PIX_FMT_YUYV;
-			break;
-		case MCHIP_HIC_MODE_CONT_COMP:
-			f->fmt.pix.pixelformat = V4L2_PIX_FMT_MJPEG;
-			break;
-		}
-		f->fmt.pix.field = V4L2_FIELD_NONE;
-		f->fmt.pix.width = mchip_hsize();
-		f->fmt.pix.height = mchip_vsize();
-		f->fmt.pix.bytesperline = f->fmt.pix.width * 2;
-		f->fmt.pix.sizeimage = f->fmt.pix.height *
-				       f->fmt.pix.bytesperline;
-		f->fmt.pix.colorspace = 0;
-		f->fmt.pix.priv = 0;
-		break;
-	}
-
-	case VIDIOC_S_FMT: {
-		struct v4l2_format *f = arg;
-
-		if (f->type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
-			return -EINVAL;
-		if (f->fmt.pix.pixelformat != V4L2_PIX_FMT_YUYV &&
-		    f->fmt.pix.pixelformat != V4L2_PIX_FMT_MJPEG)
-			return -EINVAL;
-		if (f->fmt.pix.field != V4L2_FIELD_ANY &&
-		    f->fmt.pix.field != V4L2_FIELD_NONE)
-			return -EINVAL;
-		f->fmt.pix.field = V4L2_FIELD_NONE;
-		mutex_lock(&meye.lock);
-		if (f->fmt.pix.width <= 320) {
-			f->fmt.pix.width = 320;
-			f->fmt.pix.height = 240;
-			meye.params.subsample = 1;
-		} else {
-			f->fmt.pix.width = 640;
-			f->fmt.pix.height = 480;
-			meye.params.subsample = 0;
-		}
-		switch (f->fmt.pix.pixelformat) {
-		case V4L2_PIX_FMT_YUYV:
-			meye.mchip_mode = MCHIP_HIC_MODE_CONT_OUT;
-			break;
-		case V4L2_PIX_FMT_MJPEG:
-			meye.mchip_mode = MCHIP_HIC_MODE_CONT_COMP;
-			break;
-		}
-		mutex_unlock(&meye.lock);
-		f->fmt.pix.bytesperline = f->fmt.pix.width * 2;
-		f->fmt.pix.sizeimage = f->fmt.pix.height *
-				       f->fmt.pix.bytesperline;
-		f->fmt.pix.colorspace = 0;
-		f->fmt.pix.priv = 0;
-
-		break;
-	}
-
-	case VIDIOC_REQBUFS: {
-		struct v4l2_requestbuffers *req = arg;
-		int i;
-
-		if (req->type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
-			return -EINVAL;
-		if (req->memory != V4L2_MEMORY_MMAP)
-			return -EINVAL;
-		if (meye.grab_fbuffer && req->count == gbuffers) {
-			/* already allocated, no modifications */
-			break;
-		}
-		mutex_lock(&meye.lock);
-		if (meye.grab_fbuffer) {
-			for (i = 0; i < gbuffers; i++)
-				if (meye.vma_use_count[i]) {
-					mutex_unlock(&meye.lock);
-					return -EINVAL;
-				}
-			rvfree(meye.grab_fbuffer, gbuffers * gbufsize);
-			meye.grab_fbuffer = NULL;
-		}
-		gbuffers = max(2, min((int)req->count, MEYE_MAX_BUFNBRS));
-		req->count = gbuffers;
-		meye.grab_fbuffer = rvmalloc(gbuffers * gbufsize);
-		if (!meye.grab_fbuffer) {
-			printk(KERN_ERR "meye: v4l framebuffer allocation"
-					" failed\n");
-			mutex_unlock(&meye.lock);
-			return -ENOMEM;
-		}
-		for (i = 0; i < gbuffers; i++)
-			meye.vma_use_count[i] = 0;
-		mutex_unlock(&meye.lock);
-		break;
-	}
-
-	case VIDIOC_QUERYBUF: {
-		struct v4l2_buffer *buf = arg;
-		int index = buf->index;
-
-		if (index < 0 || index >= gbuffers)
-			return -EINVAL;
-		memset(buf, 0, sizeof(*buf));
-		buf->type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-		buf->index = index;
-		buf->bytesused = meye.grab_buffer[index].size;
-		buf->flags = V4L2_BUF_FLAG_MAPPED;
-		if (meye.grab_buffer[index].state == MEYE_BUF_USING)
-			buf->flags |= V4L2_BUF_FLAG_QUEUED;
-		if (meye.grab_buffer[index].state == MEYE_BUF_DONE)
-			buf->flags |= V4L2_BUF_FLAG_DONE;
-		buf->field = V4L2_FIELD_NONE;
-		buf->timestamp = meye.grab_buffer[index].timestamp;
-		buf->sequence = meye.grab_buffer[index].sequence;
-		buf->memory = V4L2_MEMORY_MMAP;
-		buf->m.offset = index * gbufsize;
-		buf->length = gbufsize;
-		break;
-	}
-
-	case VIDIOC_QBUF: {
-		struct v4l2_buffer *buf = arg;
-
-		if (buf->type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
-			return -EINVAL;
-		if (buf->memory != V4L2_MEMORY_MMAP)
-			return -EINVAL;
-		if (buf->index < 0 || buf->index >= gbuffers)
-			return -EINVAL;
-		if (meye.grab_buffer[buf->index].state != MEYE_BUF_UNUSED)
-			return -EINVAL;
-		mutex_lock(&meye.lock);
-		buf->flags |= V4L2_BUF_FLAG_QUEUED;
-		buf->flags &= ~V4L2_BUF_FLAG_DONE;
-		meye.grab_buffer[buf->index].state = MEYE_BUF_USING;
-		kfifo_put(meye.grabq, (unsigned char *)&buf->index, sizeof(int));
-		mutex_unlock(&meye.lock);
-		break;
-	}
-
-	case VIDIOC_DQBUF: {
-		struct v4l2_buffer *buf = arg;
-		int reqnr;
-
-		if (buf->type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
-			return -EINVAL;
-		if (buf->memory != V4L2_MEMORY_MMAP)
-			return -EINVAL;
-
-		mutex_lock(&meye.lock);
-		if (kfifo_len(meye.doneq) == 0 && file->f_flags & O_NONBLOCK) {
+		return -EINVAL;
+	case MEYE_BUF_USING:
+		if (file->f_flags & O_NONBLOCK) {
 			mutex_unlock(&meye.lock);
 			return -EAGAIN;
 		}
 		if (wait_event_interruptible(meye.proc_list,
-					     kfifo_len(meye.doneq) != 0) < 0) {
+			(meye.grab_buffer[*i].state != MEYE_BUF_USING))) {
 			mutex_unlock(&meye.lock);
 			return -EINTR;
 		}
-		if (!kfifo_get(meye.doneq, (unsigned char *)&reqnr,
-			       sizeof(int))) {
-			mutex_unlock(&meye.lock);
-			return -EBUSY;
-		}
-		if (meye.grab_buffer[reqnr].state != MEYE_BUF_DONE) {
-			mutex_unlock(&meye.lock);
-			return -EINVAL;
-		}
-		buf->index = reqnr;
-		buf->bytesused = meye.grab_buffer[reqnr].size;
-		buf->flags = V4L2_BUF_FLAG_MAPPED;
-		buf->field = V4L2_FIELD_NONE;
-		buf->timestamp = meye.grab_buffer[reqnr].timestamp;
-		buf->sequence = meye.grab_buffer[reqnr].sequence;
-		buf->memory = V4L2_MEMORY_MMAP;
-		buf->m.offset = reqnr * gbufsize;
-		buf->length = gbufsize;
-		meye.grab_buffer[reqnr].state = MEYE_BUF_UNUSED;
-		mutex_unlock(&meye.lock);
-		break;
+		/* fall through */
+	case MEYE_BUF_DONE:
+		meye.grab_buffer[*i].state = MEYE_BUF_UNUSED;
+		if (kfifo_out_locked(&meye.doneq, (unsigned char *)&unused,
+				sizeof(int), &meye.doneq_lock) != sizeof(int))
+					break;
+	}
+	*i = meye.grab_buffer[*i].size;
+	mutex_unlock(&meye.lock);
+	return 0;
+}
+
+static int meyeioc_stillcapt(void)
+{
+	if (!meye.grab_fbuffer)
+		return -EINVAL;
+
+	if (meye.grab_buffer[0].state != MEYE_BUF_UNUSED)
+		return -EBUSY;
+
+	mutex_lock(&meye.lock);
+	meye.grab_buffer[0].state = MEYE_BUF_USING;
+	mchip_take_picture();
+
+	mchip_get_picture(meye.grab_fbuffer,
+			mchip_hsize() * mchip_vsize() * 2);
+
+	meye.grab_buffer[0].state = MEYE_BUF_DONE;
+	mutex_unlock(&meye.lock);
+
+	return 0;
+}
+
+static int meyeioc_stilljcapt(int *len)
+{
+	if (!meye.grab_fbuffer)
+		return -EINVAL;
+
+	if (meye.grab_buffer[0].state != MEYE_BUF_UNUSED)
+		return -EBUSY;
+
+	mutex_lock(&meye.lock);
+	meye.grab_buffer[0].state = MEYE_BUF_USING;
+	*len = -1;
+
+	while (*len == -1) {
+		mchip_take_picture();
+		*len = mchip_compress_frame(meye.grab_fbuffer, gbufsize);
 	}
 
-	case VIDIOC_STREAMON: {
-		mutex_lock(&meye.lock);
-		switch (meye.mchip_mode) {
-		case MCHIP_HIC_MODE_CONT_OUT:
-			mchip_continuous_start();
-			break;
-		case MCHIP_HIC_MODE_CONT_COMP:
-			mchip_cont_compression_start();
-			break;
-		default:
-			mutex_unlock(&meye.lock);
-			return -EINVAL;
-		}
-		mutex_unlock(&meye.lock);
+	meye.grab_buffer[0].state = MEYE_BUF_DONE;
+	mutex_unlock(&meye.lock);
+	return 0;
+}
+
+static int vidioc_querycap(struct file *file, void *fh,
+				struct v4l2_capability *cap)
+{
+	strcpy(cap->driver, "meye");
+	strcpy(cap->card, "meye");
+	sprintf(cap->bus_info, "PCI:%s", pci_name(meye.mchip_dev));
+
+	cap->version = (MEYE_DRIVER_MAJORVERSION << 8) +
+		       MEYE_DRIVER_MINORVERSION;
+
+	cap->capabilities = V4L2_CAP_VIDEO_CAPTURE |
+			    V4L2_CAP_STREAMING;
+
+	return 0;
+}
+
+static int vidioc_enum_input(struct file *file, void *fh, struct v4l2_input *i)
+{
+	if (i->index != 0)
+		return -EINVAL;
+
+	strcpy(i->name, "Camera");
+	i->type = V4L2_INPUT_TYPE_CAMERA;
+
+	return 0;
+}
+
+static int vidioc_g_input(struct file *file, void *fh, unsigned int *i)
+{
+	*i = 0;
+	return 0;
+}
+
+static int vidioc_s_input(struct file *file, void *fh, unsigned int i)
+{
+	if (i != 0)
+		return -EINVAL;
+
+	return 0;
+}
+
+static int vidioc_queryctrl(struct file *file, void *fh,
+				struct v4l2_queryctrl *c)
+{
+	switch (c->id) {
+
+	case V4L2_CID_BRIGHTNESS:
+		c->type = V4L2_CTRL_TYPE_INTEGER;
+		strcpy(c->name, "Brightness");
+		c->minimum = 0;
+		c->maximum = 63;
+		c->step = 1;
+		c->default_value = 32;
+		c->flags = 0;
 		break;
-	}
-
-	case VIDIOC_STREAMOFF: {
-		int i;
-
-		mutex_lock(&meye.lock);
-		mchip_hic_stop();
-		kfifo_reset(meye.grabq);
-		kfifo_reset(meye.doneq);
-		for (i = 0; i < MEYE_MAX_BUFNBRS; i++)
-			meye.grab_buffer[i].state = MEYE_BUF_UNUSED;
-		mutex_unlock(&meye.lock);
+	case V4L2_CID_HUE:
+		c->type = V4L2_CTRL_TYPE_INTEGER;
+		strcpy(c->name, "Hue");
+		c->minimum = 0;
+		c->maximum = 63;
+		c->step = 1;
+		c->default_value = 32;
+		c->flags = 0;
 		break;
-	}
+	case V4L2_CID_CONTRAST:
+		c->type = V4L2_CTRL_TYPE_INTEGER;
+		strcpy(c->name, "Contrast");
+		c->minimum = 0;
+		c->maximum = 63;
+		c->step = 1;
+		c->default_value = 32;
+		c->flags = 0;
+		break;
+	case V4L2_CID_SATURATION:
+		c->type = V4L2_CTRL_TYPE_INTEGER;
+		strcpy(c->name, "Saturation");
+		c->minimum = 0;
+		c->maximum = 63;
+		c->step = 1;
+		c->default_value = 32;
+		c->flags = 0;
+		break;
+	case V4L2_CID_AGC:
+		c->type = V4L2_CTRL_TYPE_INTEGER;
+		strcpy(c->name, "Agc");
+		c->minimum = 0;
+		c->maximum = 63;
+		c->step = 1;
+		c->default_value = 48;
+		c->flags = 0;
+		break;
+	case V4L2_CID_MEYE_SHARPNESS:
+	case V4L2_CID_SHARPNESS:
+		c->type = V4L2_CTRL_TYPE_INTEGER;
+		strcpy(c->name, "Sharpness");
+		c->minimum = 0;
+		c->maximum = 63;
+		c->step = 1;
+		c->default_value = 32;
 
-	/*
-	 * XXX what about private snapshot ioctls ?
-	 * Do they need to be converted to V4L2 ?
-	*/
-
+		/* Continue to report legacy private SHARPNESS ctrl but
+		 * say it is disabled in preference to ctrl in the spec
+		 */
+		c->flags = (c->id == V4L2_CID_SHARPNESS) ? 0 :
+						V4L2_CTRL_FLAG_DISABLED;
+		break;
+	case V4L2_CID_PICTURE:
+		c->type = V4L2_CTRL_TYPE_INTEGER;
+		strcpy(c->name, "Picture");
+		c->minimum = 0;
+		c->maximum = 63;
+		c->step = 1;
+		c->default_value = 0;
+		c->flags = 0;
+		break;
+	case V4L2_CID_JPEGQUAL:
+		c->type = V4L2_CTRL_TYPE_INTEGER;
+		strcpy(c->name, "JPEG quality");
+		c->minimum = 0;
+		c->maximum = 10;
+		c->step = 1;
+		c->default_value = 8;
+		c->flags = 0;
+		break;
+	case V4L2_CID_FRAMERATE:
+		c->type = V4L2_CTRL_TYPE_INTEGER;
+		strcpy(c->name, "Framerate");
+		c->minimum = 0;
+		c->maximum = 31;
+		c->step = 1;
+		c->default_value = 0;
+		c->flags = 0;
+		break;
 	default:
-		return -ENOIOCTLCMD;
+		return -EINVAL;
 	}
 
 	return 0;
 }
 
-static int meye_ioctl(struct inode *inode, struct file *file,
-		     unsigned int cmd, unsigned long arg)
+static int vidioc_s_ctrl(struct file *file, void *fh, struct v4l2_control *c)
 {
-	return video_usercopy(inode, file, cmd, arg, meye_do_ioctl);
+	mutex_lock(&meye.lock);
+	switch (c->id) {
+	case V4L2_CID_BRIGHTNESS:
+		sony_pic_camera_command(
+			SONY_PIC_COMMAND_SETCAMERABRIGHTNESS, c->value);
+		meye.brightness = c->value << 10;
+		break;
+	case V4L2_CID_HUE:
+		sony_pic_camera_command(
+			SONY_PIC_COMMAND_SETCAMERAHUE, c->value);
+		meye.hue = c->value << 10;
+		break;
+	case V4L2_CID_CONTRAST:
+		sony_pic_camera_command(
+			SONY_PIC_COMMAND_SETCAMERACONTRAST, c->value);
+		meye.contrast = c->value << 10;
+		break;
+	case V4L2_CID_SATURATION:
+		sony_pic_camera_command(
+			SONY_PIC_COMMAND_SETCAMERACOLOR, c->value);
+		meye.colour = c->value << 10;
+		break;
+	case V4L2_CID_AGC:
+		sony_pic_camera_command(
+			SONY_PIC_COMMAND_SETCAMERAAGC, c->value);
+		meye.params.agc = c->value;
+		break;
+	case V4L2_CID_SHARPNESS:
+	case V4L2_CID_MEYE_SHARPNESS:
+		sony_pic_camera_command(
+			SONY_PIC_COMMAND_SETCAMERASHARPNESS, c->value);
+		meye.params.sharpness = c->value;
+		break;
+	case V4L2_CID_PICTURE:
+		sony_pic_camera_command(
+			SONY_PIC_COMMAND_SETCAMERAPICTURE, c->value);
+		meye.params.picture = c->value;
+		break;
+	case V4L2_CID_JPEGQUAL:
+		meye.params.quality = c->value;
+		break;
+	case V4L2_CID_FRAMERATE:
+		meye.params.framerate = c->value;
+		break;
+	default:
+		mutex_unlock(&meye.lock);
+		return -EINVAL;
+	}
+	mutex_unlock(&meye.lock);
+
+	return 0;
+}
+
+static int vidioc_g_ctrl(struct file *file, void *fh, struct v4l2_control *c)
+{
+	mutex_lock(&meye.lock);
+	switch (c->id) {
+	case V4L2_CID_BRIGHTNESS:
+		c->value = meye.brightness >> 10;
+		break;
+	case V4L2_CID_HUE:
+		c->value = meye.hue >> 10;
+		break;
+	case V4L2_CID_CONTRAST:
+		c->value = meye.contrast >> 10;
+		break;
+	case V4L2_CID_SATURATION:
+		c->value = meye.colour >> 10;
+		break;
+	case V4L2_CID_AGC:
+		c->value = meye.params.agc;
+		break;
+	case V4L2_CID_SHARPNESS:
+	case V4L2_CID_MEYE_SHARPNESS:
+		c->value = meye.params.sharpness;
+		break;
+	case V4L2_CID_PICTURE:
+		c->value = meye.params.picture;
+		break;
+	case V4L2_CID_JPEGQUAL:
+		c->value = meye.params.quality;
+		break;
+	case V4L2_CID_FRAMERATE:
+		c->value = meye.params.framerate;
+		break;
+	default:
+		mutex_unlock(&meye.lock);
+		return -EINVAL;
+	}
+	mutex_unlock(&meye.lock);
+
+	return 0;
+}
+
+static int vidioc_enum_fmt_vid_cap(struct file *file, void *fh,
+				struct v4l2_fmtdesc *f)
+{
+	if (f->index > 1)
+		return -EINVAL;
+
+	if (f->index == 0) {
+		/* standard YUV 422 capture */
+		f->flags = 0;
+		strcpy(f->description, "YUV422");
+		f->pixelformat = V4L2_PIX_FMT_YUYV;
+	} else {
+		/* compressed MJPEG capture */
+		f->flags = V4L2_FMT_FLAG_COMPRESSED;
+		strcpy(f->description, "MJPEG");
+		f->pixelformat = V4L2_PIX_FMT_MJPEG;
+	}
+
+	return 0;
+}
+
+static int vidioc_try_fmt_vid_cap(struct file *file, void *fh,
+				struct v4l2_format *f)
+{
+	if (f->fmt.pix.pixelformat != V4L2_PIX_FMT_YUYV &&
+	    f->fmt.pix.pixelformat != V4L2_PIX_FMT_MJPEG)
+		return -EINVAL;
+
+	if (f->fmt.pix.field != V4L2_FIELD_ANY &&
+	    f->fmt.pix.field != V4L2_FIELD_NONE)
+		return -EINVAL;
+
+	f->fmt.pix.field = V4L2_FIELD_NONE;
+
+	if (f->fmt.pix.width <= 320) {
+		f->fmt.pix.width = 320;
+		f->fmt.pix.height = 240;
+	} else {
+		f->fmt.pix.width = 640;
+		f->fmt.pix.height = 480;
+	}
+
+	f->fmt.pix.bytesperline = f->fmt.pix.width * 2;
+	f->fmt.pix.sizeimage = f->fmt.pix.height *
+			       f->fmt.pix.bytesperline;
+	f->fmt.pix.colorspace = 0;
+	f->fmt.pix.priv = 0;
+
+	return 0;
+}
+
+static int vidioc_g_fmt_vid_cap(struct file *file, void *fh,
+				    struct v4l2_format *f)
+{
+	switch (meye.mchip_mode) {
+	case MCHIP_HIC_MODE_CONT_OUT:
+	default:
+		f->fmt.pix.pixelformat = V4L2_PIX_FMT_YUYV;
+		break;
+	case MCHIP_HIC_MODE_CONT_COMP:
+		f->fmt.pix.pixelformat = V4L2_PIX_FMT_MJPEG;
+		break;
+	}
+
+	f->fmt.pix.field = V4L2_FIELD_NONE;
+	f->fmt.pix.width = mchip_hsize();
+	f->fmt.pix.height = mchip_vsize();
+	f->fmt.pix.bytesperline = f->fmt.pix.width * 2;
+	f->fmt.pix.sizeimage = f->fmt.pix.height *
+			       f->fmt.pix.bytesperline;
+
+	return 0;
+}
+
+static int vidioc_s_fmt_vid_cap(struct file *file, void *fh,
+				    struct v4l2_format *f)
+{
+	if (f->fmt.pix.pixelformat != V4L2_PIX_FMT_YUYV &&
+	    f->fmt.pix.pixelformat != V4L2_PIX_FMT_MJPEG)
+		return -EINVAL;
+
+	if (f->fmt.pix.field != V4L2_FIELD_ANY &&
+	    f->fmt.pix.field != V4L2_FIELD_NONE)
+		return -EINVAL;
+
+	f->fmt.pix.field = V4L2_FIELD_NONE;
+	mutex_lock(&meye.lock);
+
+	if (f->fmt.pix.width <= 320) {
+		f->fmt.pix.width = 320;
+		f->fmt.pix.height = 240;
+		meye.params.subsample = 1;
+	} else {
+		f->fmt.pix.width = 640;
+		f->fmt.pix.height = 480;
+		meye.params.subsample = 0;
+	}
+
+	switch (f->fmt.pix.pixelformat) {
+	case V4L2_PIX_FMT_YUYV:
+		meye.mchip_mode = MCHIP_HIC_MODE_CONT_OUT;
+		break;
+	case V4L2_PIX_FMT_MJPEG:
+		meye.mchip_mode = MCHIP_HIC_MODE_CONT_COMP;
+		break;
+	}
+
+	mutex_unlock(&meye.lock);
+	f->fmt.pix.bytesperline = f->fmt.pix.width * 2;
+	f->fmt.pix.sizeimage = f->fmt.pix.height *
+			       f->fmt.pix.bytesperline;
+	f->fmt.pix.colorspace = 0;
+	f->fmt.pix.priv = 0;
+
+	return 0;
+}
+
+static int vidioc_reqbufs(struct file *file, void *fh,
+				struct v4l2_requestbuffers *req)
+{
+	int i;
+
+	if (req->memory != V4L2_MEMORY_MMAP)
+		return -EINVAL;
+
+	if (meye.grab_fbuffer && req->count == gbuffers) {
+		/* already allocated, no modifications */
+		return 0;
+	}
+
+	mutex_lock(&meye.lock);
+	if (meye.grab_fbuffer) {
+		for (i = 0; i < gbuffers; i++)
+			if (meye.vma_use_count[i]) {
+				mutex_unlock(&meye.lock);
+				return -EINVAL;
+			}
+		rvfree(meye.grab_fbuffer, gbuffers * gbufsize);
+		meye.grab_fbuffer = NULL;
+	}
+
+	gbuffers = max(2, min((int)req->count, MEYE_MAX_BUFNBRS));
+	req->count = gbuffers;
+	meye.grab_fbuffer = rvmalloc(gbuffers * gbufsize);
+
+	if (!meye.grab_fbuffer) {
+		printk(KERN_ERR "meye: v4l framebuffer allocation"
+				" failed\n");
+		mutex_unlock(&meye.lock);
+		return -ENOMEM;
+	}
+
+	for (i = 0; i < gbuffers; i++)
+		meye.vma_use_count[i] = 0;
+
+	mutex_unlock(&meye.lock);
+
+	return 0;
+}
+
+static int vidioc_querybuf(struct file *file, void *fh, struct v4l2_buffer *buf)
+{
+	unsigned int index = buf->index;
+
+	if (index >= gbuffers)
+		return -EINVAL;
+
+	buf->bytesused = meye.grab_buffer[index].size;
+	buf->flags = V4L2_BUF_FLAG_MAPPED;
+
+	if (meye.grab_buffer[index].state == MEYE_BUF_USING)
+		buf->flags |= V4L2_BUF_FLAG_QUEUED;
+
+	if (meye.grab_buffer[index].state == MEYE_BUF_DONE)
+		buf->flags |= V4L2_BUF_FLAG_DONE;
+
+	buf->field = V4L2_FIELD_NONE;
+	buf->timestamp = meye.grab_buffer[index].timestamp;
+	buf->sequence = meye.grab_buffer[index].sequence;
+	buf->memory = V4L2_MEMORY_MMAP;
+	buf->m.offset = index * gbufsize;
+	buf->length = gbufsize;
+
+	return 0;
+}
+
+static int vidioc_qbuf(struct file *file, void *fh, struct v4l2_buffer *buf)
+{
+	if (buf->memory != V4L2_MEMORY_MMAP)
+		return -EINVAL;
+
+	if (buf->index >= gbuffers)
+		return -EINVAL;
+
+	if (meye.grab_buffer[buf->index].state != MEYE_BUF_UNUSED)
+		return -EINVAL;
+
+	mutex_lock(&meye.lock);
+	buf->flags |= V4L2_BUF_FLAG_QUEUED;
+	buf->flags &= ~V4L2_BUF_FLAG_DONE;
+	meye.grab_buffer[buf->index].state = MEYE_BUF_USING;
+	kfifo_in_locked(&meye.grabq, (unsigned char *)&buf->index,
+			sizeof(int), &meye.grabq_lock);
+	mutex_unlock(&meye.lock);
+
+	return 0;
+}
+
+static int vidioc_dqbuf(struct file *file, void *fh, struct v4l2_buffer *buf)
+{
+	int reqnr;
+
+	if (buf->memory != V4L2_MEMORY_MMAP)
+		return -EINVAL;
+
+	mutex_lock(&meye.lock);
+
+	if (kfifo_len(&meye.doneq) == 0 && file->f_flags & O_NONBLOCK) {
+		mutex_unlock(&meye.lock);
+		return -EAGAIN;
+	}
+
+	if (wait_event_interruptible(meye.proc_list,
+				     kfifo_len(&meye.doneq) != 0) < 0) {
+		mutex_unlock(&meye.lock);
+		return -EINTR;
+	}
+
+	if (!kfifo_out_locked(&meye.doneq, (unsigned char *)&reqnr,
+		       sizeof(int), &meye.doneq_lock)) {
+		mutex_unlock(&meye.lock);
+		return -EBUSY;
+	}
+
+	if (meye.grab_buffer[reqnr].state != MEYE_BUF_DONE) {
+		mutex_unlock(&meye.lock);
+		return -EINVAL;
+	}
+
+	buf->index = reqnr;
+	buf->bytesused = meye.grab_buffer[reqnr].size;
+	buf->flags = V4L2_BUF_FLAG_MAPPED;
+	buf->field = V4L2_FIELD_NONE;
+	buf->timestamp = meye.grab_buffer[reqnr].timestamp;
+	buf->sequence = meye.grab_buffer[reqnr].sequence;
+	buf->memory = V4L2_MEMORY_MMAP;
+	buf->m.offset = reqnr * gbufsize;
+	buf->length = gbufsize;
+	meye.grab_buffer[reqnr].state = MEYE_BUF_UNUSED;
+	mutex_unlock(&meye.lock);
+
+	return 0;
+}
+
+static int vidioc_streamon(struct file *file, void *fh, enum v4l2_buf_type i)
+{
+	mutex_lock(&meye.lock);
+
+	switch (meye.mchip_mode) {
+	case MCHIP_HIC_MODE_CONT_OUT:
+		mchip_continuous_start();
+		break;
+	case MCHIP_HIC_MODE_CONT_COMP:
+		mchip_cont_compression_start();
+		break;
+	default:
+		mutex_unlock(&meye.lock);
+		return -EINVAL;
+	}
+
+	mutex_unlock(&meye.lock);
+
+	return 0;
+}
+
+static int vidioc_streamoff(struct file *file, void *fh, enum v4l2_buf_type i)
+{
+	mutex_lock(&meye.lock);
+	mchip_hic_stop();
+	kfifo_reset(&meye.grabq);
+	kfifo_reset(&meye.doneq);
+
+	for (i = 0; i < MEYE_MAX_BUFNBRS; i++)
+		meye.grab_buffer[i].state = MEYE_BUF_UNUSED;
+
+	mutex_unlock(&meye.lock);
+	return 0;
+}
+
+static long vidioc_default(struct file *file, void *fh, bool valid_prio,
+						int cmd, void *arg)
+{
+	switch (cmd) {
+	case MEYEIOC_G_PARAMS:
+		return meyeioc_g_params((struct meye_params *) arg);
+
+	case MEYEIOC_S_PARAMS:
+		return meyeioc_s_params((struct meye_params *) arg);
+
+	case MEYEIOC_QBUF_CAPT:
+		return meyeioc_qbuf_capt((int *) arg);
+
+	case MEYEIOC_SYNC:
+		return meyeioc_sync(file, fh, (int *) arg);
+
+	case MEYEIOC_STILLCAPT:
+		return meyeioc_stillcapt();
+
+	case MEYEIOC_STILLJCAPT:
+		return meyeioc_stilljcapt((int *) arg);
+
+	default:
+		return -EINVAL;
+	}
+
 }
 
 static unsigned int meye_poll(struct file *file, poll_table *wait)
@@ -1673,7 +1581,7 @@ static unsigned int meye_poll(struct file *file, poll_table *wait)
 
 	mutex_lock(&meye.lock);
 	poll_wait(file, &meye.proc_list, wait);
-	if (kfifo_len(meye.doneq))
+	if (kfifo_len(&meye.doneq))
 		res = POLLIN | POLLRDNORM;
 	mutex_unlock(&meye.lock);
 	return res;
@@ -1691,7 +1599,7 @@ static void meye_vm_close(struct vm_area_struct *vma)
 	meye.vma_use_count[idx]--;
 }
 
-static struct vm_operations_struct meye_vm_ops = {
+static const struct vm_operations_struct meye_vm_ops = {
 	.open		= meye_vm_open,
 	.close		= meye_vm_close,
 };
@@ -1747,25 +1655,41 @@ static int meye_mmap(struct file *file, struct vm_area_struct *vma)
 	return 0;
 }
 
-static const struct file_operations meye_fops = {
+static const struct v4l2_file_operations meye_fops = {
 	.owner		= THIS_MODULE,
 	.open		= meye_open,
 	.release	= meye_release,
 	.mmap		= meye_mmap,
-	.ioctl		= meye_ioctl,
-	.compat_ioctl	= v4l_compat_ioctl32,
+	.unlocked_ioctl	= video_ioctl2,
 	.poll		= meye_poll,
-	.llseek		= no_llseek,
+};
+
+static const struct v4l2_ioctl_ops meye_ioctl_ops = {
+	.vidioc_querycap	= vidioc_querycap,
+	.vidioc_enum_input	= vidioc_enum_input,
+	.vidioc_g_input		= vidioc_g_input,
+	.vidioc_s_input		= vidioc_s_input,
+	.vidioc_queryctrl	= vidioc_queryctrl,
+	.vidioc_s_ctrl		= vidioc_s_ctrl,
+	.vidioc_g_ctrl		= vidioc_g_ctrl,
+	.vidioc_enum_fmt_vid_cap = vidioc_enum_fmt_vid_cap,
+	.vidioc_try_fmt_vid_cap	= vidioc_try_fmt_vid_cap,
+	.vidioc_g_fmt_vid_cap	= vidioc_g_fmt_vid_cap,
+	.vidioc_s_fmt_vid_cap	= vidioc_s_fmt_vid_cap,
+	.vidioc_reqbufs		= vidioc_reqbufs,
+	.vidioc_querybuf	= vidioc_querybuf,
+	.vidioc_qbuf		= vidioc_qbuf,
+	.vidioc_dqbuf		= vidioc_dqbuf,
+	.vidioc_streamon	= vidioc_streamon,
+	.vidioc_streamoff	= vidioc_streamoff,
+	.vidioc_default		= vidioc_default,
 };
 
 static struct video_device meye_template = {
-	.owner		= THIS_MODULE,
 	.name		= "meye",
-	.type		= VID_TYPE_CAPTURE,
-	.hardware	= VID_HARDWARE_MEYE,
 	.fops		= &meye_fops,
+	.ioctl_ops 	= &meye_ioctl_ops,
 	.release	= video_device_release,
-	.minor		= -1,
 };
 
 #ifdef CONFIG_PM
@@ -1807,85 +1731,87 @@ static int meye_resume(struct pci_dev *pdev)
 static int __devinit meye_probe(struct pci_dev *pcidev,
 				const struct pci_device_id *ent)
 {
+	struct v4l2_device *v4l2_dev = &meye.v4l2_dev;
 	int ret = -EBUSY;
 	unsigned long mchip_adr;
-	u8 revision;
 
 	if (meye.mchip_dev != NULL) {
 		printk(KERN_ERR "meye: only one device allowed!\n");
 		goto outnotdev;
 	}
 
+	ret = v4l2_device_register(&pcidev->dev, v4l2_dev);
+	if (ret < 0) {
+		v4l2_err(v4l2_dev, "Could not register v4l2_device\n");
+		return ret;
+	}
+	ret = -ENOMEM;
 	meye.mchip_dev = pcidev;
-	meye.video_dev = video_device_alloc();
-	if (!meye.video_dev) {
-		printk(KERN_ERR "meye: video_device_alloc() failed!\n");
+	meye.vdev = video_device_alloc();
+	if (!meye.vdev) {
+		v4l2_err(v4l2_dev, "video_device_alloc() failed!\n");
 		goto outnotdev;
 	}
 
-	ret = -ENOMEM;
 	meye.grab_temp = vmalloc(MCHIP_NB_PAGES_MJPEG * PAGE_SIZE);
 	if (!meye.grab_temp) {
-		printk(KERN_ERR "meye: grab buffer allocation failed\n");
+		v4l2_err(v4l2_dev, "grab buffer allocation failed\n");
 		goto outvmalloc;
 	}
 
 	spin_lock_init(&meye.grabq_lock);
-	meye.grabq = kfifo_alloc(sizeof(int) * MEYE_MAX_BUFNBRS, GFP_KERNEL,
-				 &meye.grabq_lock);
-	if (IS_ERR(meye.grabq)) {
-		printk(KERN_ERR "meye: fifo allocation failed\n");
+	if (kfifo_alloc(&meye.grabq, sizeof(int) * MEYE_MAX_BUFNBRS,
+				GFP_KERNEL)) {
+		v4l2_err(v4l2_dev, "fifo allocation failed\n");
 		goto outkfifoalloc1;
 	}
 	spin_lock_init(&meye.doneq_lock);
-	meye.doneq = kfifo_alloc(sizeof(int) * MEYE_MAX_BUFNBRS, GFP_KERNEL,
-				 &meye.doneq_lock);
-	if (IS_ERR(meye.doneq)) {
-		printk(KERN_ERR "meye: fifo allocation failed\n");
+	if (kfifo_alloc(&meye.doneq, sizeof(int) * MEYE_MAX_BUFNBRS,
+				GFP_KERNEL)) {
+		v4l2_err(v4l2_dev, "fifo allocation failed\n");
 		goto outkfifoalloc2;
 	}
 
-	memcpy(meye.video_dev, &meye_template, sizeof(meye_template));
-	meye.video_dev->dev = &meye.mchip_dev->dev;
+	memcpy(meye.vdev, &meye_template, sizeof(meye_template));
+	meye.vdev->v4l2_dev = &meye.v4l2_dev;
 
+	ret = -EIO;
 	if ((ret = sony_pic_camera_command(SONY_PIC_COMMAND_SETCAMERA, 1))) {
-		printk(KERN_ERR "meye: unable to power on the camera\n");
-		printk(KERN_ERR "meye: did you enable the camera in "
+		v4l2_err(v4l2_dev, "meye: unable to power on the camera\n");
+		v4l2_err(v4l2_dev, "meye: did you enable the camera in "
 				"sonypi using the module options ?\n");
 		goto outsonypienable;
 	}
 
-	ret = -EIO;
 	if ((ret = pci_enable_device(meye.mchip_dev))) {
-		printk(KERN_ERR "meye: pci_enable_device failed\n");
+		v4l2_err(v4l2_dev, "meye: pci_enable_device failed\n");
 		goto outenabledev;
 	}
 
 	mchip_adr = pci_resource_start(meye.mchip_dev,0);
 	if (!mchip_adr) {
-		printk(KERN_ERR "meye: mchip has no device base address\n");
+		v4l2_err(v4l2_dev, "meye: mchip has no device base address\n");
 		goto outregions;
 	}
 	if (!request_mem_region(pci_resource_start(meye.mchip_dev, 0),
 				pci_resource_len(meye.mchip_dev, 0),
 				"meye")) {
-		printk(KERN_ERR "meye: request_mem_region failed\n");
+		v4l2_err(v4l2_dev, "meye: request_mem_region failed\n");
 		goto outregions;
 	}
 	meye.mchip_mmregs = ioremap(mchip_adr, MCHIP_MM_REGS);
 	if (!meye.mchip_mmregs) {
-		printk(KERN_ERR "meye: ioremap failed\n");
+		v4l2_err(v4l2_dev, "meye: ioremap failed\n");
 		goto outremap;
 	}
 
 	meye.mchip_irq = pcidev->irq;
 	if (request_irq(meye.mchip_irq, meye_irq,
 			IRQF_DISABLED | IRQF_SHARED, "meye", meye_irq)) {
-		printk(KERN_ERR "meye: request_irq failed\n");
+		v4l2_err(v4l2_dev, "request_irq failed\n");
 		goto outreqirq;
 	}
 
-	pci_read_config_byte(meye.mchip_dev, PCI_REVISION_ID, &revision);
 	pci_write_config_byte(meye.mchip_dev, PCI_CACHE_LINE_SIZE, 8);
 	pci_write_config_byte(meye.mchip_dev, PCI_LATENCY_TIMER, 64);
 
@@ -1906,21 +1832,12 @@ static int __devinit meye_probe(struct pci_dev *pcidev,
 	msleep(1);
 	mchip_set(MCHIP_MM_INTA, MCHIP_MM_INTA_HIC_1_MASK);
 
-	if (video_register_device(meye.video_dev, VFL_TYPE_GRABBER,
-				  video_nr) < 0) {
-		printk(KERN_ERR "meye: video_register_device failed\n");
-		goto outvideoreg;
-	}
-
 	mutex_init(&meye.lock);
 	init_waitqueue_head(&meye.proc_list);
-	meye.picture.depth = 16;
-	meye.picture.palette = VIDEO_PALETTE_YUV422;
-	meye.picture.brightness = 32 << 10;
-	meye.picture.hue = 32 << 10;
-	meye.picture.colour = 32 << 10;
-	meye.picture.contrast = 32 << 10;
-	meye.picture.whiteness = 0;
+	meye.brightness = 32 << 10;
+	meye.hue = 32 << 10;
+	meye.colour = 32 << 10;
+	meye.contrast = 32 << 10;
 	meye.params.subsample = 0;
 	meye.params.quality = 8;
 	meye.params.sharpness = 32;
@@ -1936,10 +1853,16 @@ static int __devinit meye_probe(struct pci_dev *pcidev,
 	sony_pic_camera_command(SONY_PIC_COMMAND_SETCAMERAPICTURE, 0);
 	sony_pic_camera_command(SONY_PIC_COMMAND_SETCAMERAAGC, 48);
 
-	printk(KERN_INFO "meye: Motion Eye Camera Driver v%s.\n",
+	if (video_register_device(meye.vdev, VFL_TYPE_GRABBER,
+				  video_nr) < 0) {
+		v4l2_err(v4l2_dev, "video_register_device failed\n");
+		goto outvideoreg;
+	}
+
+	v4l2_info(v4l2_dev, "Motion Eye Camera Driver v%s.\n",
 	       MEYE_DRIVER_VERSION);
-	printk(KERN_INFO "meye: mchip KL5A72002 rev. %d, base %lx, irq %d\n",
-	       revision, mchip_adr, meye.mchip_irq);
+	v4l2_info(v4l2_dev, "mchip KL5A72002 rev. %d, base %lx, irq %d\n",
+	       meye.mchip_dev->revision, mchip_adr, meye.mchip_irq);
 
 	return 0;
 
@@ -1955,20 +1878,20 @@ outregions:
 outenabledev:
 	sony_pic_camera_command(SONY_PIC_COMMAND_SETCAMERA, 0);
 outsonypienable:
-	kfifo_free(meye.doneq);
+	kfifo_free(&meye.doneq);
 outkfifoalloc2:
-	kfifo_free(meye.grabq);
+	kfifo_free(&meye.grabq);
 outkfifoalloc1:
 	vfree(meye.grab_temp);
 outvmalloc:
-	video_device_release(meye.video_dev);
+	video_device_release(meye.vdev);
 outnotdev:
 	return ret;
 }
 
 static void __devexit meye_remove(struct pci_dev *pcidev)
 {
-	video_unregister_device(meye.video_dev);
+	video_unregister_device(meye.vdev);
 
 	mchip_hic_stop();
 
@@ -1988,8 +1911,8 @@ static void __devexit meye_remove(struct pci_dev *pcidev)
 
 	sony_pic_camera_command(SONY_PIC_COMMAND_SETCAMERA, 0);
 
-	kfifo_free(meye.doneq);
-	kfifo_free(meye.grabq);
+	kfifo_free(&meye.doneq);
+	kfifo_free(&meye.grabq);
 
 	vfree(meye.grab_temp);
 
@@ -2002,8 +1925,7 @@ static void __devexit meye_remove(struct pci_dev *pcidev)
 }
 
 static struct pci_device_id meye_pci_tbl[] = {
-	{ PCI_VENDOR_ID_KAWASAKI, PCI_DEVICE_ID_MCHIP_KL5A72002,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
+	{ PCI_VDEVICE(KAWASAKI, PCI_DEVICE_ID_MCHIP_KL5A72002), 0 },
 	{ }
 };
 
@@ -2026,7 +1948,7 @@ static int __init meye_init(void)
 	if (gbufsize < 0 || gbufsize > MEYE_MAX_BUFSIZE)
 		gbufsize = MEYE_MAX_BUFSIZE;
 	gbufsize = PAGE_ALIGN(gbufsize);
-	printk(KERN_INFO "meye: using %d buffers with %dk (%dk total)"
+	printk(KERN_INFO "meye: using %d buffers with %dk (%dk total) "
 			 "for capture\n",
 			 gbuffers,
 			 gbufsize / 1024, gbuffers * gbufsize / 1024);

@@ -43,7 +43,7 @@
  * determined for each queue request anew.
  */
 #define QLOGICPTI_REQ_QUEUE_LEN	255	/* must be power of two - 1 */
-#define QLOGICPTI_MAX_SG(ql)	(4 + ((ql) > 0) ? 7*((ql) - 1) : 0)
+#define QLOGICPTI_MAX_SG(ql)	(4 + (((ql) > 0) ? 7*((ql) - 1) : 0))
 
 /* mailbox command complete status codes */
 #define MBOX_COMMAND_COMPLETE		0x4000
@@ -342,7 +342,7 @@ struct qlogicpti {
 	u_int	                  req_in_ptr;		/* index of next request slot */
 	u_int	                  res_out_ptr;		/* index of next result slot  */
 	long	                  send_marker;		/* must we send a marker?     */
-	struct sbus_dev		 *sdev;
+	struct platform_device	 *op;
 	unsigned long		  __pad;
 
 	int                       cmd_count[MAX_TARGETS];
@@ -380,8 +380,7 @@ struct qlogicpti {
 	unsigned char             swsreg;
 	unsigned int	
 		gotirq	:	1,	/* this instance got an irq */
-		is_pti	: 	1,	/* Non-zero if this is a PTI board. */
-		sbits	:	16;	/* syncmode known bits */
+		is_pti	: 	1;	/* Non-zero if this is a PTI board. */
 };
 
 /* How to twiddle them bits... */

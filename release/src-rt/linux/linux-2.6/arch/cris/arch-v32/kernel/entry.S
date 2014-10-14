@@ -10,7 +10,7 @@
  * after a timer-interrupt and after each system call.
  *
  * Stack layout in 'ret_from_system_call':
- * 	ptrace needs to have all regs on the stack.
+ *	ptrace needs to have all regs on the stack.
  *	if the order here is changed, it needs to be
  *	updated in fork.c:copy_process, signal.c:do_signal,
  *	ptrace.c and ptrace.h
@@ -24,8 +24,8 @@
 #include <asm/thread_info.h>
 #include <asm/asm-offsets.h>
 
-#include <asm/arch/hwregs/asm/reg_map_asm.h>
-#include <asm/arch/hwregs/asm/intr_vect_defs_asm.h>
+#include <hwregs/asm/reg_map_asm.h>
+#include <hwregs/asm/intr_vect_defs_asm.h>
 
 	;; Exported functions.
 	.globl system_call
@@ -76,12 +76,15 @@ _need_resched:
 
 	; Called at exit from fork. schedule_tail must be called to drop
 	; spinlock if CONFIG_PREEMPT.
+	.type	ret_from_fork,@function
 ret_from_fork:
 	jsr schedule_tail
 	nop
 	ba  ret_from_sys_call
 	nop
+	.size	ret_from_fork, . - ret_from_fork
 
+	.type	ret_from_intr,@function
 ret_from_intr:
 	;; Check for resched if preemptive kernel, or if we're going back to
 	;; user-mode. This test matches the user_regs(regs) macro. Don't simply
@@ -91,9 +94,10 @@ ret_from_intr:
 	move.d	[$acr], $r0
 	btstq	16, $r0			; User-mode flag.
 	bpl	_resume_kernel
+	.size	ret_from_intr, . - ret_from_intr + 2	; +2 includes the dslot.
 
 	; Note that di below is in delay slot.
-
+	.type	_resume_userspace,@function
 _resume_userspace:
 	di			; So need_resched and sigpending don't change.
 
@@ -107,6 +111,7 @@ _resume_userspace:
 	nop
 	ba	_Rexit
 	nop
+	.size	_resume_userspace, . - _resume_userspace
 
 	;; The system_call is called by a BREAK instruction, which looks pretty
 	;; much like any other exception.
@@ -122,30 +127,28 @@ _resume_userspace:
 	;; non-used instructions. Only the non-common cases cause the outlined code
 	;; to run..
 
+	.type	system_call,@function
 system_call:
 	;; Stack-frame similar to the irq heads, which is reversed in
 	;; ret_from_sys_call.
-	subq	12, $sp		; Skip EXS, EDA.
-	move	$erp, [$sp]
-	subq	4, $sp
-	move	$srp, [$sp]
-	subq	4, $sp
-	move	$ccs, [$sp]
-	subq	4, $sp
-	ei			; Allow IRQs while handling system call
-	move	$spc, [$sp]
-	subq	4, $sp
-	move	$mof, [$sp]
-	subq	4, $sp
-	move	$srs, [$sp]
-	subq	4, $sp
-	move.d	$acr, [$sp]
-	subq	14*4, $sp	; Make room for R0-R13.
-	movem	$r13, [$sp]	; Push R0-R13
-	subq	4, $sp
-	move.d	$r10, [$sp]	; Push orig_r10.
 
-; Set S-bit when kernel debugging to keep hardware breakpoints active.
+	sub.d	92, $sp		; Skip EXS and EDA.
+	movem	$r13, [$sp]
+	move.d	$sp, $r8
+	addq	14*4, $r8
+	move.d	$acr, $r0
+	move	$srs, $r1
+	move	$mof, $r2
+	move	$spc, $r3
+	move	$ccs, $r4
+	move	$srp, $r5
+	move	$erp, $r6
+	subq	4, $sp
+	movem	$r6, [$r8]
+	ei			; Enable interrupts while processing syscalls.
+	move.d	$r10, [$sp]
+
+	; Set S-bit when kernel debugging to keep hardware breakpoints active.
 #ifdef CONFIG_ETRAX_KGDB
 	move $ccs, $r0
 	or.d (1<<9), $r0
@@ -179,7 +182,7 @@ _syscall_traced:
 	move.d	$r0, [$sp]
 
 	;; The registers carrying parameters (R10-R13) are intact. The optional
-	;; fifth and sixth parameters is in MOF and SRP respectivly. Put them
+	;; fifth and sixth parameters is in MOF and SRP respectively. Put them
 	;; back on the stack.
 	subq	4, $sp
 	move	$srp, [$sp]
@@ -217,7 +220,9 @@ ret_from_sys_call:
 	and.d	_TIF_ALLWORK_MASK, $r1
 	bne	_syscall_exit_work
 	nop
+	.size	system_call, . - system_call
 
+	.type	_Rexit,@function
 _Rexit:
 	;; This epilogue MUST match the prologues in multiple_interrupt, irq.h
 	;; and ptregs.h.
@@ -234,10 +239,12 @@ _Rexit:
 	addq    8, $sp		; Skip EXS, EDA.
 	jump	$erp
 	rfe			; Restore condition code stack in delay-slot.
+	.size	_Rexit, . - _Rexit
 
 	;; We get here after doing a syscall if extra work might need to be done
 	;; perform syscall exit tracing if needed.
 
+	.type	_syscall_exit_work,@function
 _syscall_exit_work:
 	;; R0 contains current at this point and irq's are disabled.
 
@@ -253,14 +260,18 @@ _syscall_exit_work:
 	move.d	$r1, $r9
 	ba	_resume_userspace
 	nop
+	.size	_syscall_exit_work, . - _syscall_exit_work
 
+	.type	_work_pending,@function
 _work_pending:
 	addoq	+TI_flags, $r0, $acr
 	move.d	[$acr], $r10
 	btstq	TIF_NEED_RESCHED, $r10	; Need resched?
 	bpl	_work_notifysig		; No, must be signal/notify.
 	nop
+	.size	_work_pending, . - _work_pending
 
+	.type	_work_resched,@function
 _work_resched:
 	move.d	$r9, $r1		; Preserve R9.
 	jsr	schedule
@@ -276,20 +287,21 @@ _work_resched:
 	btstq	TIF_NEED_RESCHED, $r1
 	bmi	_work_resched		; current->work.need_resched.
 	nop
+	.size	_work_resched, . - _work_resched
 
+	.type	_work_notifysig,@function
 _work_notifysig:
 	;; Deal with pending signals and notify-resume requests.
 
 	addoq	+TI_flags, $r0, $acr
-	move.d	[$acr], $r13		; The thread_info_flags parameter.
-	move.d	$r9, $r10		; do_notify_resume syscall/irq param.
-	moveq	0, $r11			; oldset param - 0 in this case.
-	move.d	$sp, $r12		; The regs param.
+	move.d	[$acr], $r12		; The thread_info_flags parameter.
+	move.d	$sp, $r11		; The regs param.
 	jsr	do_notify_resume
-	nop
+	move.d	$r9, $r10		; do_notify_resume syscall/irq param.
 
 	ba _Rexit
 	nop
+	.size	_work_notifysig, . - _work_notifysig
 
 	;; We get here as a sidetrack when we've entered a syscall with the
 	;; trace-bit set. We need to call do_syscall_trace and then continue
@@ -331,41 +343,43 @@ _syscall_trace_entry:
 	;;
 	;; Returns old current in R10.
 
+	.type	resume,@function
 resume:
-	subq	4, $sp
-	move	$srp, [$sp]		; Keep old/new PC on the stack.
+	subq	4, $sp			; Make space for srp.
+
 	add.d	$r12, $r10		; R10 = current tasks tss.
 	addoq	+THREAD_ccs, $r10, $acr
+	move	$srp, [$sp]		; Keep old/new PC on the stack.
 	move	$ccs, [$acr]		; Save IRQ enable state.
 	di
 
 	addoq	+THREAD_usp, $r10, $acr
+	subq	10*4, $sp		; Make room for R9.
 	move	$usp, [$acr]		; Save user-mode stackpointer.
 
 	;; See copy_thread for the reason why register R9 is saved.
-	subq	10*4, $sp
 	movem	$r9, [$sp]		; Save non-scratch registers and R9.
 
 	addoq	+THREAD_ksp, $r10, $acr
+	move.d	$sp, $r10		; Return last running task in R10.
 	move.d	$sp, [$acr]		; Save kernel SP for old task.
 
-	move.d	$sp, $r10		; Return last running task in R10.
 	and.d   -8192, $r10		; Get thread_info from stackpointer.
 	addoq	+TI_task, $r10, $acr
-	move.d	[$acr], $r10		; Get task.
 	add.d	$r12, $r11		; Find the new tasks tss.
+	move.d	[$acr], $r10		; Get task.
 	addoq	+THREAD_ksp, $r11, $acr
 	move.d	[$acr], $sp		; Switch to new stackframe.
+	addoq	+THREAD_usp, $r11, $acr
 	movem	[$sp+], $r9		; Restore non-scratch registers and R9.
 
-	addoq	+THREAD_usp, $r11, $acr
 	move	[$acr], $usp		; Restore user-mode stackpointer.
 
 	addoq	+THREAD_ccs, $r11, $acr
+	move.d	[$sp+], $r11
+	jump	$r11			; Restore PC.
 	move	[$acr], $ccs		; Restore IRQ enable status.
-	move.d	[$sp+], $acr
-	jump	$acr			; Restore PC.
-	nop
+	.size	resume, . - resume
 
 nmi_interrupt:
 
@@ -396,7 +410,7 @@ nmi_interrupt:
 	btstq	REG_BIT(intr_vect, r_nmi, watchdog), $r0
 	bpl     1f
 	nop
-	jsr 	handle_watchdog_bite	; In time.c.
+	jsr	handle_watchdog_bite	; In time.c.
         move.d	$sp, $r10		; Pointer to registers
 1:	btstq	REG_BIT(intr_vect, r_nmi, ext), $r0
 	bpl     1f
@@ -428,6 +442,7 @@ spurious_interrupt:
 	;; time. Jump to the first set interrupt bit in a priotiry fashion. The
 	;; hardware will call the unserved interrupts after the handler
 	;; finishes.
+	.type	multiple_interrupt, @function
 multiple_interrupt:
 	;; This prologue MUST match the one in irq.h and the struct in ptregs.h!
 	subq	12, $sp		; Skip EXS, EDA.
@@ -460,6 +475,7 @@ multiple_interrupt:
 	move.d	$sp, $r10
 	jump    ret_from_intr
 	nop
+	.size	multiple_interrupt, . - multiple_interrupt
 
 do_sigtrap:
 	;; Sigtraps the process that executed the BREAK instruction. Creates a
@@ -514,6 +530,15 @@ gdb_handle_exception:
 _ugdb_handle_exception:
 	ba	do_sigtrap		; SIGTRAP the offending process.
 	move.d	[$sp+], $r0		; Restore R0 in delay slot.
+
+	.global kernel_execve
+	.type	kernel_execve,@function
+kernel_execve:
+	move.d __NR_execve, $r9
+	break 13
+	ret
+	nop
+	.size	kernel_execve, . - kernel_execve
 
 	.data
 
@@ -609,8 +634,8 @@ sys_call_table:
 	.long sys_uselib
 	.long sys_swapon
 	.long sys_reboot
-	.long old_readdir
-	.long old_mmap		/* 90 */
+	.long sys_old_readdir
+	.long sys_old_mmap	/* 90 */
 	.long sys_munmap
 	.long sys_truncate
 	.long sys_ftruncate
@@ -778,21 +803,21 @@ sys_call_table:
 	.long sys_epoll_ctl	/* 255 */
 	.long sys_epoll_wait
 	.long sys_remap_file_pages
- 	.long sys_set_tid_address
- 	.long sys_timer_create
- 	.long sys_timer_settime		/* 260 */
- 	.long sys_timer_gettime
- 	.long sys_timer_getoverrun
- 	.long sys_timer_delete
- 	.long sys_clock_settime
- 	.long sys_clock_gettime		/* 265 */
- 	.long sys_clock_getres
- 	.long sys_clock_nanosleep
+	.long sys_set_tid_address
+	.long sys_timer_create
+	.long sys_timer_settime		/* 260 */
+	.long sys_timer_gettime
+	.long sys_timer_getoverrun
+	.long sys_timer_delete
+	.long sys_clock_settime
+	.long sys_clock_gettime		/* 265 */
+	.long sys_clock_getres
+	.long sys_clock_nanosleep
 	.long sys_statfs64
 	.long sys_fstatfs64
 	.long sys_tgkill	/* 270 */
 	.long sys_utimes
- 	.long sys_fadvise64_64
+	.long sys_fadvise64_64
 	.long sys_ni_syscall	/* sys_vserver */
 	.long sys_ni_syscall	/* sys_mbind */
 	.long sys_ni_syscall	/* 275 sys_get_mempolicy */
@@ -805,6 +830,56 @@ sys_call_table:
 	.long sys_mq_getsetattr
 	.long sys_ni_syscall		/* reserved for kexec */
 	.long sys_waitid
+	.long sys_ni_syscall		/* 285 */ /* available */
+	.long sys_add_key
+	.long sys_request_key
+	.long sys_keyctl
+	.long sys_ioprio_set
+	.long sys_ioprio_get		/* 290 */
+	.long sys_inotify_init
+	.long sys_inotify_add_watch
+	.long sys_inotify_rm_watch
+	.long sys_migrate_pages
+	.long sys_openat		/* 295 */
+	.long sys_mkdirat
+	.long sys_mknodat
+	.long sys_fchownat
+	.long sys_futimesat
+	.long sys_fstatat64		/* 300 */
+	.long sys_unlinkat
+	.long sys_renameat
+	.long sys_linkat
+	.long sys_symlinkat
+	.long sys_readlinkat		/* 305 */
+	.long sys_fchmodat
+	.long sys_faccessat
+	.long sys_pselect6
+	.long sys_ppoll
+	.long sys_unshare		/* 310 */
+	.long sys_set_robust_list
+	.long sys_get_robust_list
+	.long sys_splice
+	.long sys_sync_file_range
+	.long sys_tee			/* 315 */
+	.long sys_vmsplice
+	.long sys_move_pages
+	.long sys_getcpu
+	.long sys_epoll_pwait
+	.long sys_utimensat		/* 320 */
+	.long sys_signalfd
+	.long sys_timerfd_create
+	.long sys_eventfd
+	.long sys_fallocate
+	.long sys_timerfd_settime       /* 325 */
+	.long sys_timerfd_gettime
+	.long sys_signalfd4
+	.long sys_eventfd2
+	.long sys_epoll_create1
+	.long sys_dup3			/* 330 */
+	.long sys_pipe2
+	.long sys_inotify_init1
+	.long sys_preadv
+	.long sys_pwritev
 
         /*
          * NOTE!! This doesn't have to be exact - we just have

@@ -118,6 +118,7 @@ enum IWCH_QP_FLAGS {
 };
 
 struct iwch_mpa_attributes {
+	u8 initiator;
 	u8 recv_marker_enabled;
 	u8 xmit_marker_enabled;	/* iWARP: enable inbound Read Resp. */
 	u8 crc_enabled;
@@ -213,7 +214,7 @@ static inline struct iwch_mm_entry *remove_mmap(struct iwch_ucontext *ucontext,
 		if (mm->key == key && mm->len == len) {
 			list_del_init(&mm->entry);
 			spin_unlock(&ucontext->mmap_lock);
-			PDBG("%s key 0x%x addr 0x%llx len %d\n", __FUNCTION__,
+			PDBG("%s key 0x%x addr 0x%llx len %d\n", __func__,
 			     key, (unsigned long long) mm->addr, mm->len);
 			return mm;
 		}
@@ -226,7 +227,7 @@ static inline void insert_mmap(struct iwch_ucontext *ucontext,
 			       struct iwch_mm_entry *mm)
 {
 	spin_lock(&ucontext->mmap_lock);
-	PDBG("%s key 0x%x addr 0x%llx len %d\n", __FUNCTION__,
+	PDBG("%s key 0x%x addr 0x%llx len %d\n", __func__,
 	     mm->key, (unsigned long long) mm->addr, mm->len);
 	list_add_tail(&mm->entry, &ucontext->mmaps);
 	spin_unlock(&ucontext->mmap_lock);
@@ -292,15 +293,14 @@ static inline u32 iwch_ib_to_tpt_access(int acc)
 	return (acc & IB_ACCESS_REMOTE_WRITE ? TPT_REMOTE_WRITE : 0) |
 	       (acc & IB_ACCESS_REMOTE_READ ? TPT_REMOTE_READ : 0) |
 	       (acc & IB_ACCESS_LOCAL_WRITE ? TPT_LOCAL_WRITE : 0) |
+	       (acc & IB_ACCESS_MW_BIND ? TPT_MW_BIND : 0) |
 	       TPT_LOCAL_READ;
 }
 
-static inline u32 iwch_ib_to_mwbind_access(int acc)
+static inline u32 iwch_ib_to_tpt_bind_access(int acc)
 {
-	return (acc & IB_ACCESS_REMOTE_WRITE ? T3_MEM_ACCESS_REM_WRITE : 0) |
-	       (acc & IB_ACCESS_REMOTE_READ ? T3_MEM_ACCESS_REM_READ : 0) |
-	       (acc & IB_ACCESS_LOCAL_WRITE ? T3_MEM_ACCESS_LOCAL_WRITE : 0) |
-	       T3_MEM_ACCESS_LOCAL_READ;
+	return (acc & IB_ACCESS_REMOTE_WRITE ? TPT_REMOTE_WRITE : 0) |
+	       (acc & IB_ACCESS_REMOTE_READ ? TPT_REMOTE_READ : 0);
 }
 
 enum iwch_mmid_state {
@@ -322,6 +322,7 @@ enum iwch_qp_query_flags {
 	IWCH_QP_QUERY_TEST_USERWRITE = 0x32	/* Test special */
 };
 
+u16 iwch_rqes_posted(struct iwch_qp *qhp);
 int iwch_post_send(struct ib_qp *ibqp, struct ib_send_wr *wr,
 		      struct ib_send_wr **bad_wr);
 int iwch_post_receive(struct ib_qp *ibqp, struct ib_recv_wr *wr,
@@ -331,20 +332,19 @@ int iwch_bind_mw(struct ib_qp *qp,
 			     struct ib_mw_bind *mw_bind);
 int iwch_poll_cq(struct ib_cq *ibcq, int num_entries, struct ib_wc *wc);
 int iwch_post_terminate(struct iwch_qp *qhp, struct respQ_msg_t *rsp_msg);
+int iwch_post_zb_read(struct iwch_qp *qhp);
 int iwch_register_device(struct iwch_dev *dev);
 void iwch_unregister_device(struct iwch_dev *dev);
-int iwch_quiesce_qps(struct iwch_cq *chp);
-int iwch_resume_qps(struct iwch_cq *chp);
 void stop_read_rep_timer(struct iwch_qp *qhp);
 int iwch_register_mem(struct iwch_dev *rhp, struct iwch_pd *php,
-					struct iwch_mr *mhp,
-					int shift,
-					__be64 *page_list);
+		      struct iwch_mr *mhp, int shift);
 int iwch_reregister_mem(struct iwch_dev *rhp, struct iwch_pd *php,
 					struct iwch_mr *mhp,
 					int shift,
-					__be64 *page_list,
 					int npages);
+int iwch_alloc_pbl(struct iwch_mr *mhp, int npages);
+void iwch_free_pbl(struct iwch_mr *mhp);
+int iwch_write_pbl(struct iwch_mr *mhp, __be64 *pages, int npages, int offset);
 int build_phys_page_list(struct ib_phys_buf *buffer_list,
 					int num_phys_buf,
 					u64 *iova_start,

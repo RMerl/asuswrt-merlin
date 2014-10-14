@@ -15,10 +15,6 @@
 #include <linux/slab.h>
 #include <linux/mtd/mtd.h>
 #include <linux/mtd/onenand.h>
-#include <linux/mtd/compatmac.h>
-
-extern int onenand_bbt_read_oob(struct mtd_info *mtd, loff_t from,
-				struct mtd_oob_ops *ops);
 
 /**
  * check_short_pattern - [GENERIC] check if a pattern is in the buffer
@@ -66,6 +62,7 @@ static int create_bbt(struct mtd_info *mtd, uint8_t *buf, struct nand_bbt_descr 
 	loff_t from;
 	size_t readlen, ooblen;
 	struct mtd_oob_ops ops;
+	int rgn;
 
 	printk(KERN_INFO "Scanning device for bad blocks\n");
 
@@ -79,7 +76,7 @@ static int create_bbt(struct mtd_info *mtd, uint8_t *buf, struct nand_bbt_descr 
 	/* Note that numblocks is 2 * (real numblocks) here;
 	 * see i += 2 below as it makses shifting and masking less painful
 	 */
-	numblocks = mtd->size >> (bbm->bbt_erase_shift - 1);
+	numblocks = this->chipsize >> (bbm->bbt_erase_shift - 1);
 	startblock = 0;
 	from = 0;
 
@@ -94,22 +91,29 @@ static int create_bbt(struct mtd_info *mtd, uint8_t *buf, struct nand_bbt_descr 
 		for (j = 0; j < len; j++) {
 			/* No need to read pages fully,
 			 * just read required OOB bytes */
-			ret = onenand_bbt_read_oob(mtd, from + j * mtd->writesize + bd->offs, &ops);
+			ret = onenand_bbt_read_oob(mtd,
+				from + j * this->writesize + bd->offs, &ops);
 
 			/* If it is a initial bad block, just ignore it */
 			if (ret == ONENAND_BBT_READ_FATAL_ERROR)
 				return -EIO;
 
-			if (ret || check_short_pattern(&buf[j * scanlen], scanlen, mtd->writesize, bd)) {
+			if (ret || check_short_pattern(&buf[j * scanlen],
+					       scanlen, this->writesize, bd)) {
 				bbm->bbt[i >> 3] |= 0x03 << (i & 0x6);
-				printk(KERN_WARNING "Bad eraseblock %d at 0x%08x\n",
-					i >> 1, (unsigned int) from);
+				printk(KERN_INFO "OneNAND eraseblock %d is an "
+					"initial bad block\n", i >> 1);
 				mtd->ecc_stats.badblocks++;
 				break;
 			}
 		}
 		i += 2;
-		from += (1 << bbm->bbt_erase_shift);
+
+		if (FLEXONENAND(this)) {
+			rgn = flexonenand_region(mtd, from);
+			from += mtd->eraseregions[rgn].erasesize;
+		} else
+			from += (1 << bbm->bbt_erase_shift);
 	}
 
 	return 0;
@@ -146,7 +150,7 @@ static int onenand_isbad_bbt(struct mtd_info *mtd, loff_t offs, int allowbbt)
 	uint8_t res;
 
 	/* Get block number * 2 */
-	block = (int) (offs >> (bbm->bbt_erase_shift - 1));
+	block = (int) (onenand_block(this, offs) << 1);
 	res = (bbm->bbt[block >> 3] >> (block & 0x06)) & 0x03;
 
 	DEBUG(MTD_DEBUG_LEVEL2, "onenand_isbad_bbt: bbt info for offs 0x%08x: (block %d) 0x%02x\n",
@@ -181,7 +185,7 @@ int onenand_scan_bbt(struct mtd_info *mtd, struct nand_bbt_descr *bd)
 	struct bbm_info *bbm = this->bbm;
 	int len, ret = 0;
 
-	len = mtd->size >> (this->erase_shift + 2);
+	len = this->chipsize >> (this->erase_shift + 2);
 	/* Allocate memory (2bit per block) and clear the memory bad block table */
 	bbm->bbt = kzalloc(len, GFP_KERNEL);
 	if (!bbm->bbt) {

@@ -35,7 +35,7 @@ config IP_ADVANCED_ROUTER
 
 	  at boot time after the /proc file system has been mounted.
 
-	  If you turn on IP forwarding, you will also get the rp_filter, which
+	  If you turn on IP forwarding, you should consider the rp_filter, which
 	  automatically rejects incoming packets if the routing table entry
 	  for their source address doesn't match the network interface they're
 	  arriving on. This has security advantages because it prevents the
@@ -46,44 +46,21 @@ config IP_ADVANCED_ROUTER
 	  rp_filter on use:
 
 	  echo 1 > /proc/sys/net/ipv4/conf/<device>/rp_filter
-	  or
+	   or
 	  echo 1 > /proc/sys/net/ipv4/conf/all/rp_filter
+
+	  Note that some distributions enable it in startup scripts.
+	  For details about rp_filter strict and loose mode read
+	  <file:Documentation/networking/ip-sysctl.txt>.
 
 	  If unsure, say N here.
 
-choice 
-	prompt "Choose IP: FIB lookup algorithm (choose FIB_HASH if unsure)"
+config IP_FIB_TRIE_STATS
+	bool "FIB TRIE statistics"
 	depends on IP_ADVANCED_ROUTER
-	default ASK_IP_FIB_HASH
-
-config ASK_IP_FIB_HASH
-	bool "FIB_HASH"
 	---help---
-	Current FIB is very proven and good enough for most users.
-
-config IP_FIB_TRIE
-	bool "FIB_TRIE"
-	---help---
-	Use new experimental LC-trie as FIB lookup algorithm. 
-        This improves lookup performance if you have a large
-	number of routes.
-
-	LC-trie is a longest matching prefix lookup algorithm which
-	performs better than FIB_HASH for large routing tables.
-	But, it consumes more memory and is more complex.
-	
-	LC-trie is described in:
-	
- 	IP-address lookup using LC-tries. Stefan Nilsson and Gunnar Karlsson
- 	IEEE Journal on Selected Areas in Communications, 17(6):1083-1092, June 1999
-	An experimental study of compression methods for dynamic tries
- 	Stefan Nilsson and Matti Tikkanen. Algorithmica, 33(1):19-33, 2002.
- 	http://www.nada.kth.se/~snilsson/public/papers/dyntrie2/
-       
-endchoice
-
-config IP_FIB_HASH
-	def_bool ASK_IP_FIB_HASH || !IP_ADVANCED_ROUTER
+	  Keep track of statistics on structure of FIB TRIE table.
+	  Useful for testing and measuring TRIE performance.
 
 config IP_MULTIPLE_TABLES
 	bool "IP: policy routing"
@@ -116,48 +93,6 @@ config IP_ROUTE_MULTIPATH
 	  equal "cost" and chooses one of them in a non-deterministic fashion
 	  if a matching packet arrives.
 
-config IP_ROUTE_MULTIPATH_CACHED
-	bool "IP: equal cost multipath with caching support (EXPERIMENTAL)"
-	depends on IP_ROUTE_MULTIPATH
-	help
-	  Normally, equal cost multipath routing is not supported by the
-	  routing cache. If you say Y here, alternative routes are cached
-	  and on cache lookup a route is chosen in a configurable fashion.
-
-	  If unsure, say N.
-
-config IP_ROUTE_MULTIPATH_RR
-	tristate "MULTIPATH: round robin algorithm"
-	depends on IP_ROUTE_MULTIPATH_CACHED
-	help
-	  Multipath routes are chosen according to Round Robin
-
-config IP_ROUTE_MULTIPATH_RANDOM
-	tristate "MULTIPATH: random algorithm"
-	depends on IP_ROUTE_MULTIPATH_CACHED
-	help
-	  Multipath routes are chosen in a random fashion. Actually,
-	  there is no weight for a route. The advantage of this policy
-	  is that it is implemented stateless and therefore introduces only
-	  a very small delay.
-
-config IP_ROUTE_MULTIPATH_WRANDOM
-	tristate "MULTIPATH: weighted random algorithm"
-	depends on IP_ROUTE_MULTIPATH_CACHED
-	help
-	  Multipath routes are chosen in a weighted random fashion. 
-	  The per route weights are the weights visible via ip route 2. As the
-	  corresponding state management introduces some overhead routing delay
-	  is increased.
-
-config IP_ROUTE_MULTIPATH_DRR
-	tristate "MULTIPATH: interface round robin algorithm"
-	depends on IP_ROUTE_MULTIPATH_CACHED
-	help
-	  Connections are distributed in a round robin fashion over the
-	  available interfaces. This policy makes sense if the connections 
-	  should be primarily distributed on interfaces and not on routes. 
-
 config IP_ROUTE_VERBOSE
 	bool "IP: verbose route monitoring"
 	depends on IP_ADVANCED_ROUTER
@@ -168,6 +103,9 @@ config IP_ROUTE_VERBOSE
 	  attack or a misconfigured system somewhere. The information is
 	  handled by the klogd daemon which is responsible for kernel messages
 	  ("man klogd").
+
+config IP_ROUTE_CLASSID
+	bool
 
 config IP_PNP
 	bool "IP: kernel level autoconfiguration"
@@ -195,7 +133,7 @@ config IP_PNP_DHCP
 
 	  If unsure, say Y. Note that if you want to use DHCP, a DHCP server
 	  must be operating on your network.  Read
-	  <file:Documentation/nfsroot.txt> for details.
+	  <file:Documentation/filesystems/nfs/nfsroot.txt> for details.
 
 config IP_PNP_BOOTP
 	bool "IP: BOOTP support"
@@ -210,7 +148,7 @@ config IP_PNP_BOOTP
 	  does BOOTP itself, providing all necessary information on the kernel
 	  command line, you can say N here. If unsure, say Y. Note that if you
 	  want to use BOOTP, a BOOTP server must be operating on your network.
-	  Read <file:Documentation/nfsroot.txt> for details.
+	  Read <file:Documentation/filesystems/nfs/nfsroot.txt> for details.
 
 config IP_PNP_RARP
 	bool "IP: RARP support"
@@ -222,11 +160,11 @@ config IP_PNP_RARP
 	  discovered automatically at boot time using the RARP protocol (an
 	  older protocol which is being obsoleted by BOOTP and DHCP), say Y
 	  here. Note that if you want to use RARP, a RARP server must be
-	  operating on your network. Read <file:Documentation/nfsroot.txt> for
-	  details.
+	  operating on your network. Read
+	  <file:Documentation/filesystems/nfs/nfsroot.txt> for details.
 
 # not yet ready..
-#   bool '    IP: ARP support' CONFIG_IP_PNP_ARP		
+#   bool '    IP: ARP support' CONFIG_IP_PNP_ARP
 config NET_IPIP
 	tristate "IP: tunneling"
 	select INET_TUNNEL
@@ -247,12 +185,12 @@ config NET_IPIP
 config NET_IPGRE_DEMUX
 	tristate "IP: GRE demultiplexer"
 	help
-	  This is helper module to demultiplex GRE packets on GRE version field criteria.
-	  Required by ip-gre and pptp modules.
+	 This is helper module to demultiplex GRE packets on GRE version field criteria.
+	 Required by ip_gre and pptp modules.
 
 config NET_IPGRE
 	tristate "IP: GRE tunnels over IP"
-	depends on NET_IPGRE_DEMUX
+	depends on (IPV6 || IPV6=n) && NET_IPGRE_DEMUX
 	help
 	  Tunneling means encapsulating data of one protocol type within
 	  another protocol and sending it over a channel that understands the
@@ -273,12 +211,6 @@ config NET_IPGRE_BROADCAST
 	  Network), but can be distributed all over the Internet. If you want
 	  to do that, say Y here and to "IP multicast routing" below.
 
-config IPSEC_NAT_TRAVERSAL
-	bool "IPSEC NAT-Traversal (KLIPS compatible)"
-	depends on INET
-	---help---
-          Includes support for RFC3947/RFC3948 NAT-Traversal of ESP over UDP.
-
 config IP_MROUTE
 	bool "IP: multicast routing"
 	depends on IP_MULTICAST
@@ -291,6 +223,20 @@ config IP_MROUTE
 	  capabilities of the various network cards is contained in
 	  <file:Documentation/networking/multicast.txt>. If you haven't heard
 	  about it, you don't need it.
+
+config IP_MROUTE_MULTIPLE_TABLES
+	bool "IP: multicast policy routing"
+	depends on IP_MROUTE && IP_ADVANCED_ROUTER
+	select FIB_RULES
+	help
+	  Normally, a multicast router runs a userspace daemon and decides
+	  what to do with a multicast packet based on the source and
+	  destination addresses. If you say Y here, the multicast router
+	  will also be able to take interfaces and packet marks into
+	  account and run multiple instances of userspace daemons
+	  simultaneously, each one handling a single table.
+
+	  If unsure, say N.
 
 config IP_PIMSM_V1
 	bool "IP: PIM-SM version 1 support"
@@ -315,32 +261,23 @@ config IP_PIMSM_V2
 	  you want to play with it.
 
 config ARPD
-	bool "IP: ARP daemon support (EXPERIMENTAL)"
-	depends on EXPERIMENTAL
+	bool "IP: ARP daemon support"
 	---help---
-	  Normally, the kernel maintains an internal cache which maps IP
-	  addresses to hardware addresses on the local network, so that
-	  Ethernet/Token Ring/ etc. frames are sent to the proper address on
-	  the physical networking layer. For small networks having a few
-	  hundred directly connected hosts or less, keeping this address
-	  resolution (ARP) cache inside the kernel works well. However,
-	  maintaining an internal ARP cache does not work well for very large
-	  switched networks, and will use a lot of kernel memory if TCP/IP
-	  connections are made to many machines on the network.
+	  The kernel maintains an internal cache which maps IP addresses to
+	  hardware addresses on the local network, so that Ethernet/Token Ring/
+	  etc. frames are sent to the proper address on the physical networking
+	  layer. Normally, kernel uses the ARP protocol to resolve these
+	  mappings.
 
-	  If you say Y here, the kernel's internal ARP cache will never grow
-	  to more than 256 entries (the oldest entries are expired in a LIFO
-	  manner) and communication will be attempted with the user space ARP
-	  daemon arpd. Arpd then answers the address resolution request either
-	  from its own cache or by asking the net.
+	  Saying Y here adds support to have an user space daemon to do this
+	  resolution instead. This is useful for implementing an alternate
+	  address resolution protocol (e.g. NHRP on mGRE tunnels) and also for
+	  testing purposes.
 
-	  This code is experimental and also obsolete. If you want to use it,
-	  you need to find a version of the daemon arpd on the net somewhere,
-	  and you should also say Y to "Kernel/User network link driver",
-	  below. If unsure, say N.
+	  If unsure, say N.
 
 config SYN_COOKIES
-	bool "IP: TCP syncookie support (disabled per default)"
+	bool "IP: TCP syncookie support"
 	---help---
 	  Normal TCP/IP networking is open to an attack known as "SYN
 	  flooding". This denial-of-service attack prevents legitimate remote
@@ -365,13 +302,13 @@ config SYN_COOKIES
 	  server is really overloaded. If this happens frequently better turn
 	  them off.
 
-	  If you say Y here, note that SYN cookies aren't enabled by default;
-	  you can enable them by saying Y to "/proc file system support" and
+	  If you say Y here, you can disable SYN cookies at run time by
+	  saying Y to "/proc file system support" and
 	  "Sysctl support" below and executing the command
 
-	  echo 1 >/proc/sys/net/ipv4/tcp_syncookies
+	  echo 0 > /proc/sys/net/ipv4/tcp_syncookies
 
-	  at boot time after the /proc file system has been mounted.
+	  after the /proc file system has been mounted.
 
 	  If unsure, say N.
 
@@ -391,6 +328,7 @@ config INET_ESP
 	tristate "IP: ESP transformation"
 	select XFRM
 	select CRYPTO
+	select CRYPTO_AUTHENC
 	select CRYPTO_HMAC
 	select CRYPTO_MD5
 	select CRYPTO_CBC
@@ -403,14 +341,12 @@ config INET_ESP
 
 config INET_IPCOMP
 	tristate "IP: IPComp transformation"
-	select XFRM
 	select INET_XFRM_TUNNEL
-	select CRYPTO
-	select CRYPTO_DEFLATE
+	select XFRM_IPCOMP
 	---help---
 	  Support for IP Payload Compression Protocol (IPComp) (RFC3173),
 	  typically needed for IPsec.
-	  
+
 	  If unsure, say Y.
 
 config INET_XFRM_TUNNEL
@@ -449,14 +385,24 @@ config INET_XFRM_MODE_BEET
 
 	  If unsure, say Y.
 
+config INET_LRO
+	tristate "Large Receive Offload (ipv4/tcp)"
+	default y
+	---help---
+	  Support for Large Receive Offload (ipv4/tcp).
+
+	  If unsure, say Y.
+
 config INET_DIAG
 	tristate "INET: socket monitoring interface"
 	default y
 	---help---
 	  Support for INET (TCP, DCCP, etc) socket monitoring interface used by
 	  native Linux tools such as ss. ss is included in iproute2, currently
-	  downloadable at <http://linux-net.osdl.org/index.php/Iproute2>.
+	  downloadable at:
 	  
+	    http://www.linuxfoundation.org/collaborate/workgroups/networking/iproute2
+
 	  If unsure, say Y.
 
 config INET_TCP_DIAG
@@ -585,7 +531,7 @@ config TCP_CONG_VENO
 	distinguishing to circumvent the difficult judgment of the packet loss
 	type. TCP Veno cuts down less congestion window in response to random
 	loss packets.
-	See http://www.ntu.edu.sg/home5/ZHOU0022/papers/CPFu03a.pdf
+	See <http://ieeexplore.ieee.org/xpl/freeabs_all.jsp?arnumber=1177186> 
 
 config TCP_CONG_YEAH
 	tristate "YeAH TCP"
@@ -607,7 +553,7 @@ config TCP_CONG_ILLINOIS
 	depends on EXPERIMENTAL
 	default n
 	---help---
-	TCP-Illinois is a sender-side modificatio of TCP Reno for
+	TCP-Illinois is a sender-side modification of TCP Reno for
 	high speed long delay links. It uses round-trip-time to
 	adjust the alpha and beta parameters to achieve a higher average
 	throughput and maintain fairness.
@@ -631,8 +577,14 @@ choice
 	config DEFAULT_HTCP
 		bool "Htcp" if TCP_CONG_HTCP=y
 
+	config DEFAULT_HYBLA
+		bool "Hybla" if TCP_CONG_HYBLA=y
+
 	config DEFAULT_VEGAS
 		bool "Vegas" if TCP_CONG_VEGAS=y
+
+	config DEFAULT_VENO
+		bool "Veno" if TCP_CONG_VENO=y
 
 	config DEFAULT_WESTWOOD
 		bool "Westwood" if TCP_CONG_WESTWOOD=y
@@ -654,8 +606,10 @@ config DEFAULT_TCP_CONG
 	default "bic" if DEFAULT_BIC
 	default "cubic" if DEFAULT_CUBIC
 	default "htcp" if DEFAULT_HTCP
+	default "hybla" if DEFAULT_HYBLA
 	default "vegas" if DEFAULT_VEGAS
 	default "westwood" if DEFAULT_WESTWOOD
+	default "veno" if DEFAULT_VENO
 	default "reno" if DEFAULT_RENO
 	default "cubic"
 
@@ -670,6 +624,3 @@ config TCP_MD5SIG
 	  on the Internet.
 
 	  If unsure, say N.
-
-source "net/ipv4/ipvs/Kconfig"
-

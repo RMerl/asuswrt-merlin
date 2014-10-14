@@ -3,6 +3,7 @@ config FADS
 
 config CPM1
 	bool
+	select CPM
 
 choice
 	prompt "8xx Machine Type"
@@ -30,6 +31,29 @@ config MPC885ADS
 	  Also known as DUET.
 	  The MPC885ADS is meant to serve as a platform for s/w and h/w
 	  development around the MPC885 processor family.
+
+config PPC_EP88XC
+	bool "Embedded Planet EP88xC (a.k.a. CWH-PPC-885XN-VE)"
+	select CPM1
+	help
+	  This enables support for the Embedded Planet EP88xC board.
+
+	  This board is also resold by Freescale as the QUICCStart
+	  MPC885 Evaluation System and/or the CWH-PPC-885XN-VE.
+
+config PPC_ADDER875
+	bool "Analogue & Micro Adder 875"
+	select CPM1
+	select REDBOOT
+	help
+	  This enables support for the Analogue & Micro Adder 875
+	  board.
+
+config TQM8XX
+	bool "TQM8XX"
+	select CPM1
+	help
+	  support for the mpc8xx based boards from TQM.
 
 endchoice
 
@@ -87,6 +111,16 @@ config 8xx_COPYBACK
 
 	  If in doubt, say Y here.
 
+config 8xx_GPIO
+	bool "GPIO API Support"
+	select GENERIC_GPIO
+	select ARCH_REQUIRE_GPIOLIB
+	help
+	  Saying Y here will cause the ports on an MPC8xx processor to be used
+	  with the GPIO API.  If you say N here, the kernel needs less memory.
+
+	  If in doubt, say Y here.
+
 config 8xx_CPU6
 	bool "CPU6 Silicon Errata (860 Pre Rev. C)"
 	help
@@ -98,6 +132,22 @@ config 8xx_CPU6
 	  performance hit.
 
 	  If in doubt, say N here.
+
+config 8xx_CPU15
+	bool "CPU15 Silicon Errata"
+	default y
+	help
+	  This enables a workaround for erratum CPU15 on MPC8xx chips.
+	  This bug can cause incorrect code execution under certain
+	  circumstances.  This workaround adds some overhead (a TLB miss
+	  every time execution crosses a page boundary), and you may wish
+	  to disable it if you have worked around the bug in the compiler
+	  (by not placing conditional branches or branches to LR or CTR
+	  in the last word of a page, with a target of the last cache
+	  line in the next page), or if you have used some other
+	  workaround.
+
+	  If in doubt, say Y here.
 
 choice
 	prompt "Microcode patch selection"

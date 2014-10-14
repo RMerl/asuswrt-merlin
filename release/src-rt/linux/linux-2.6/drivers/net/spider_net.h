@@ -52,7 +52,7 @@ extern char spider_net_driver_name[];
 
 #define SPIDER_NET_TX_TIMER			(HZ/5)
 #define SPIDER_NET_ANEG_TIMER			(HZ)
-#define SPIDER_NET_ANEG_TIMEOUT			2
+#define SPIDER_NET_ANEG_TIMEOUT			5
 
 #define SPIDER_NET_RX_CSUM_DEFAULT		1
 
@@ -159,9 +159,8 @@ extern char spider_net_driver_name[];
 
 /** interrupt mask registers */
 #define SPIDER_NET_INT0_MASK_VALUE	0x3f7fe2c7
-#define SPIDER_NET_INT1_MASK_VALUE	0xffff7ff7
-/* no MAC aborts -> auto retransmission */
-#define SPIDER_NET_INT2_MASK_VALUE	0xffef7ff1
+#define SPIDER_NET_INT1_MASK_VALUE	0x0000fff2
+#define SPIDER_NET_INT2_MASK_VALUE	0x000003f1
 
 /* we rely on flagged descriptor interrupts */
 #define SPIDER_NET_FRAMENUM_VALUE	0x00000000
@@ -349,10 +348,22 @@ enum spider_net_int2_status {
 #define SPIDER_NET_GPRDAT_MASK			0x0000ffff
 
 #define SPIDER_NET_DMAC_NOINTR_COMPLETE		0x00800000
-#define SPIDER_NET_DMAC_NOCS			0x00040000
+#define SPIDER_NET_DMAC_TXFRMTL		0x00040000
 #define SPIDER_NET_DMAC_TCP			0x00020000
 #define SPIDER_NET_DMAC_UDP			0x00030000
 #define SPIDER_NET_TXDCEST			0x08000000
+
+#define SPIDER_NET_DESCR_RXFDIS        0x00000001
+#define SPIDER_NET_DESCR_RXDCEIS       0x00000002
+#define SPIDER_NET_DESCR_RXDEN0IS      0x00000004
+#define SPIDER_NET_DESCR_RXINVDIS      0x00000008
+#define SPIDER_NET_DESCR_RXRERRIS      0x00000010
+#define SPIDER_NET_DESCR_RXFDCIMS      0x00000100
+#define SPIDER_NET_DESCR_RXDCEIMS      0x00000200
+#define SPIDER_NET_DESCR_RXDEN0IMS     0x00000400
+#define SPIDER_NET_DESCR_RXINVDIMS     0x00000800
+#define SPIDER_NET_DESCR_RXRERRMIS     0x00001000
+#define SPIDER_NET_DESCR_UNUSED        0x077fe0e0
 
 #define SPIDER_NET_DESCR_IND_PROC_MASK		0xF0000000
 #define SPIDER_NET_DESCR_COMPLETE		0x00000000 /* used in rx and tx */
@@ -363,6 +374,13 @@ enum spider_net_int2_status {
 #define SPIDER_NET_DESCR_CARDOWNED		0xA0000000 /* used in rx and tx */
 #define SPIDER_NET_DESCR_NOT_IN_USE		0xF0000000
 #define SPIDER_NET_DESCR_TXDESFLG		0x00800000
+
+#define SPIDER_NET_DESCR_BAD_STATUS   (SPIDER_NET_DESCR_RXDEN0IS | \
+                                       SPIDER_NET_DESCR_RXRERRIS | \
+                                       SPIDER_NET_DESCR_RXDEN0IMS | \
+                                       SPIDER_NET_DESCR_RXINVDIMS | \
+                                       SPIDER_NET_DESCR_RXRERRMIS | \
+                                       SPIDER_NET_DESCR_UNUSED)
 
 /* Descriptor, as defined by the hardware */
 struct spider_net_hw_descr {
@@ -447,6 +465,8 @@ struct spider_net_card {
 	struct pci_dev *pdev;
 	struct mii_phy phy;
 
+	struct napi_struct napi;
+
 	int medium;
 
 	void __iomem *regs;
@@ -466,15 +486,11 @@ struct spider_net_card {
 
 	/* for ethtool */
 	int msg_enable;
-	struct net_device_stats netdev_stats;
 	struct spider_net_extra_stats spider_stats;
 	struct spider_net_options options;
 
 	/* Must be last item in struct */
 	struct spider_net_descr darray[0];
 };
-
-#define pr_err(fmt,arg...) \
-	printk(KERN_ERR fmt ,##arg)
 
 #endif

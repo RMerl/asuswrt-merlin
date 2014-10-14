@@ -5,7 +5,6 @@
  * Copyright (C) 2004 by FS Forth-Systeme GmbH
  * All rights reserved.
  *
- * $Id: mach-smdk2410.c,v 1.1 2004/05/11 14:15:38 mpietrek Exp $
  * @Author: Jonas Dietsche
  *
  * This program is free software; you can redistribute it and/or
@@ -37,22 +36,23 @@
 #include <linux/init.h>
 #include <linux/serial_core.h>
 #include <linux/platform_device.h>
+#include <linux/io.h>
 
 #include <asm/mach/arch.h>
 #include <asm/mach/map.h>
 #include <asm/mach/irq.h>
 
-#include <asm/hardware.h>
-#include <asm/io.h>
+#include <mach/hardware.h>
 #include <asm/irq.h>
 #include <asm/mach-types.h>
 
-#include <asm/arch/regs-serial.h>
+#include <plat/regs-serial.h>
+#include <plat/iic.h>
 
-#include <asm/plat-s3c24xx/devs.h>
-#include <asm/plat-s3c24xx/cpu.h>
+#include <plat/devs.h>
+#include <plat/cpu.h>
 
-#include <asm/plat-s3c24xx/common-smdk.h>
+#include <plat/common-smdk.h>
 
 static struct map_desc smdk2410_iodesc[] __initdata = {
   /* nothing here yet */
@@ -87,10 +87,10 @@ static struct s3c2410_uartcfg smdk2410_uartcfgs[] __initdata = {
 };
 
 static struct platform_device *smdk2410_devices[] __initdata = {
-	&s3c_device_usb,
+	&s3c_device_ohci,
 	&s3c_device_lcd,
 	&s3c_device_wdt,
-	&s3c_device_i2c,
+	&s3c_device_i2c0,
 	&s3c_device_iis,
 };
 
@@ -103,6 +103,7 @@ static void __init smdk2410_map_io(void)
 
 static void __init smdk2410_init(void)
 {
+	s3c_i2c0_set_platdata(NULL);
 	platform_add_devices(smdk2410_devices, ARRAY_SIZE(smdk2410_devices));
 	smdk_machine_init();
 }
@@ -110,8 +111,6 @@ static void __init smdk2410_init(void)
 MACHINE_START(SMDK2410, "SMDK2410") /* @TODO: request a new identifier and switch
 				    * to SMDK2410 */
 	/* Maintainer: Jonas Dietsche */
-	.phys_io	= S3C2410_PA_UART,
-	.io_pg_offst	= (((u32)S3C24XX_VA_UART) >> 18) & 0xfffc,
 	.boot_params	= S3C2410_SDRAM_PA + 0x100,
 	.map_io		= smdk2410_map_io,
 	.init_irq	= s3c24xx_init_irq,

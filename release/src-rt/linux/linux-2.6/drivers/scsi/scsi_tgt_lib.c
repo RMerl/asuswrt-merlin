@@ -23,10 +23,12 @@
 #include <linux/hash.h>
 #include <linux/module.h>
 #include <linux/pagemap.h>
+#include <linux/slab.h>
 #include <scsi/scsi.h>
 #include <scsi/scsi_cmnd.h>
 #include <scsi/scsi_device.h>
 #include <scsi/scsi_host.h>
+#include <scsi/scsi_transport.h>
 #include <scsi/scsi_tgt.h>
 
 #include "scsi_tgt_priv.h"
@@ -46,6 +48,7 @@ struct scsi_tgt_cmd {
 
 	struct list_head hash_list;
 	struct request *rq;
+	u64 itn_id;
 	u64 tag;
 };
 
@@ -90,7 +93,7 @@ struct scsi_cmnd *scsi_host_get_command(struct Scsi_Host *shost,
 
 	/*
 	 * The blk helpers are used to the READ/WRITE requests
-	 * transfering data from a initiator point of view. Since
+	 * transferring data from a initiator point of view. Since
 	 * we are in target mode we want the opposite.
 	 */
 	rq = blk_get_request(shost->uspace_req_q, !write, gfp_mask);
@@ -101,10 +104,11 @@ struct scsi_cmnd *scsi_host_get_command(struct Scsi_Host *shost,
 	if (!cmd)
 		goto release_rq;
 
-	memset(cmd, 0, sizeof(*cmd));
 	cmd->sc_data_direction = data_dir;
 	cmd->jiffies_at_alloc = jiffies;
 	cmd->request = rq;
+
+	cmd->cmnd = rq->cmd;
 
 	rq->special = cmd;
 	rq->cmd_type = REQ_TYPE_SPECIAL;
@@ -178,19 +182,21 @@ static void scsi_tgt_cmd_destroy(struct work_struct *work)
 		container_of(work, struct scsi_tgt_cmd, work);
 	struct scsi_cmnd *cmd = tcmd->rq->special;
 
-	dprintk("cmd %p %d %lu\n", cmd, cmd->sc_data_direction,
+	dprintk("cmd %p %d %u\n", cmd, cmd->sc_data_direction,
 		rq_data_dir(cmd->request));
 	scsi_unmap_user_pages(tcmd);
+	tcmd->rq->bio = NULL;
 	scsi_host_put_command(scsi_tgt_cmd_to_host(cmd), cmd);
 }
 
 static void init_scsi_tgt_cmd(struct request *rq, struct scsi_tgt_cmd *tcmd,
-			      u64 tag)
+			      u64 itn_id, u64 tag)
 {
 	struct scsi_tgt_queuedata *qdata = rq->q->queuedata;
 	unsigned long flags;
 	struct list_head *head;
 
+	tcmd->itn_id = itn_id;
 	tcmd->tag = tag;
 	tcmd->bio = NULL;
 	INIT_WORK(&tcmd->work, scsi_tgt_cmd_destroy);
@@ -234,7 +240,7 @@ int scsi_tgt_alloc_queue(struct Scsi_Host *shost)
 	 * command as is recvd to userspace. uspace can then make
 	 * sure we do not overload the HBA
 	 */
-	q->nr_requests = shost->hostt->can_queue;
+	q->nr_requests = shost->can_queue;
 	/*
 	 * We currently only support software LLDs so this does
 	 * not matter for now. Do we need this for the cards we support?
@@ -301,14 +307,14 @@ EXPORT_SYMBOL_GPL(scsi_tgt_cmd_to_host);
  * @scsilun:	scsi lun
  * @tag:	unique value to identify this command for tmf
  */
-int scsi_tgt_queue_command(struct scsi_cmnd *cmd, struct scsi_lun *scsilun,
-			   u64 tag)
+int scsi_tgt_queue_command(struct scsi_cmnd *cmd, u64 itn_id,
+			   struct scsi_lun *scsilun, u64 tag)
 {
 	struct scsi_tgt_cmd *tcmd = cmd->request->end_io_data;
 	int err;
 
-	init_scsi_tgt_cmd(cmd->request, tcmd, tag);
-	err = scsi_tgt_uspace_send_cmd(cmd, scsilun, tag);
+	init_scsi_tgt_cmd(cmd->request, tcmd, itn_id, tag);
+	err = scsi_tgt_uspace_send_cmd(cmd, itn_id, scsilun, tag);
 	if (err)
 		cmd_hashlist_del(cmd);
 
@@ -317,19 +323,18 @@ int scsi_tgt_queue_command(struct scsi_cmnd *cmd, struct scsi_lun *scsilun,
 EXPORT_SYMBOL_GPL(scsi_tgt_queue_command);
 
 /*
- * This is run from a interrpt handler normally and the unmap
+ * This is run from a interrupt handler normally and the unmap
  * needs process context so we must queue
  */
 static void scsi_tgt_cmd_done(struct scsi_cmnd *cmd)
 {
 	struct scsi_tgt_cmd *tcmd = cmd->request->end_io_data;
 
-	dprintk("cmd %p %lu\n", cmd, rq_data_dir(cmd->request));
+	dprintk("cmd %p %u\n", cmd, rq_data_dir(cmd->request));
 
-	scsi_tgt_uspace_send_status(cmd, tcmd->tag);
+	scsi_tgt_uspace_send_status(cmd, tcmd->itn_id, tcmd->tag);
 
-	if (cmd->request_buffer)
-		scsi_free_sgtable(cmd);
+	scsi_release_buffers(cmd);
 
 	queue_work(scsi_tgtd, &tcmd->work);
 }
@@ -339,7 +344,7 @@ static int scsi_tgt_transfer_response(struct scsi_cmnd *cmd)
 	struct Scsi_Host *shost = scsi_tgt_cmd_to_host(cmd);
 	int err;
 
-	dprintk("cmd %p %lu\n", cmd, rq_data_dir(cmd->request));
+	dprintk("cmd %p %u\n", cmd, rq_data_dir(cmd->request));
 
 	err = shost->hostt->transfer_response(cmd, scsi_tgt_cmd_done);
 	switch (err) {
@@ -348,30 +353,6 @@ static int scsi_tgt_transfer_response(struct scsi_cmnd *cmd)
 		return -EAGAIN;
 	}
 	return 0;
-}
-
-static int scsi_tgt_init_cmd(struct scsi_cmnd *cmd, gfp_t gfp_mask)
-{
-	struct request *rq = cmd->request;
-	int count;
-
-	cmd->use_sg = rq->nr_phys_segments;
-	cmd->request_buffer = scsi_alloc_sgtable(cmd, gfp_mask);
-	if (!cmd->request_buffer)
-		return -ENOMEM;
-
-	cmd->request_bufflen = rq->data_len;
-
-	dprintk("cmd %p cnt %d %lu\n", cmd, cmd->use_sg, rq_data_dir(rq));
-	count = blk_rq_map_sg(rq->q, rq, cmd->request_buffer);
-	if (likely(count <= cmd->use_sg)) {
-		cmd->use_sg = count;
-		return 0;
-	}
-
-	eprintk("cmd %p cnt %d\n", cmd, cmd->use_sg);
-	scsi_free_sgtable(cmd);
-	return -EINVAL;
 }
 
 /* TODO: test this crap and replace bio_map_user with new interface maybe */
@@ -383,7 +364,7 @@ static int scsi_map_user_pages(struct scsi_tgt_cmd *tcmd, struct scsi_cmnd *cmd,
 	int err;
 
 	dprintk("%lx %u\n", uaddr, len);
-	err = blk_rq_map_user(q, rq, (void *)uaddr, len);
+	err = blk_rq_map_user(q, rq, NULL, (void *)uaddr, len, GFP_KERNEL);
 	if (err) {
 		/*
 		 * TODO: need to fixup sg_tablesize, max_segment_size,
@@ -399,9 +380,16 @@ static int scsi_map_user_pages(struct scsi_tgt_cmd *tcmd, struct scsi_cmnd *cmd,
 	}
 
 	tcmd->bio = rq->bio;
-	err = scsi_tgt_init_cmd(cmd, GFP_KERNEL);
-	if (err)
+	err = scsi_init_io(cmd, GFP_KERNEL);
+	if (err) {
+		scsi_release_buffers(cmd);
 		goto unmap_rq;
+	}
+	/*
+	 * we use REQ_TYPE_BLOCK_PC so scsi_init_io doesn't set the
+	 * length for us.
+	 */
+	cmd->sdb.length = blk_rq_bytes(rq);
 
 	return 0;
 
@@ -459,7 +447,7 @@ static struct request *tgt_cmd_hash_lookup(struct request_queue *q, u64 tag)
 	return rq;
 }
 
-int scsi_tgt_kspace_exec(int host_no, int result, u64 tag,
+int scsi_tgt_kspace_exec(int host_no, u64 itn_id, int result, u64 tag,
 			 unsigned long uaddr, u32 len, unsigned long sense_uaddr,
 			 u32 sense_len, u8 rw)
 {
@@ -493,8 +481,8 @@ int scsi_tgt_kspace_exec(int host_no, int result, u64 tag,
 	}
 	cmd = rq->special;
 
-	dprintk("cmd %p scb %x result %d len %d bufflen %u %lu %x\n",
-		cmd, cmd->cmnd[0], result, len, cmd->request_bufflen,
+	dprintk("cmd %p scb %x result %d len %d bufflen %u %u %x\n",
+		cmd, cmd->cmnd[0], result, len, scsi_bufflen(cmd),
 		rq_data_dir(rq), cmd->cmnd[0]);
 
 	if (result == TASK_ABORTED) {
@@ -541,21 +529,22 @@ done:
 	return err;
 }
 
-int scsi_tgt_tsk_mgmt_request(struct Scsi_Host *shost, int function, u64 tag,
-			      struct scsi_lun *scsilun, void *data)
+int scsi_tgt_tsk_mgmt_request(struct Scsi_Host *shost, u64 itn_id,
+			      int function, u64 tag, struct scsi_lun *scsilun,
+			      void *data)
 {
 	int err;
 
 	/* TODO: need to retry if this fails. */
-	err = scsi_tgt_uspace_send_tsk_mgmt(shost->host_no, function,
-					    tag, scsilun, data);
+	err = scsi_tgt_uspace_send_tsk_mgmt(shost->host_no, itn_id,
+					    function, tag, scsilun, data);
 	if (err < 0)
 		eprintk("The task management request lost!\n");
 	return err;
 }
 EXPORT_SYMBOL_GPL(scsi_tgt_tsk_mgmt_request);
 
-int scsi_tgt_kspace_tsk_mgmt(int host_no, u64 mid, int result)
+int scsi_tgt_kspace_tsk_mgmt(int host_no, u64 itn_id, u64 mid, int result)
 {
 	struct Scsi_Host *shost;
 	int err = -EINVAL;
@@ -573,7 +562,60 @@ int scsi_tgt_kspace_tsk_mgmt(int host_no, u64 mid, int result)
 		goto done;
 	}
 
-	err = shost->hostt->tsk_mgmt_response(mid, result);
+	err = shost->transportt->tsk_mgmt_response(shost, itn_id, mid, result);
+done:
+	scsi_host_put(shost);
+	return err;
+}
+
+int scsi_tgt_it_nexus_create(struct Scsi_Host *shost, u64 itn_id,
+			     char *initiator)
+{
+	int err;
+
+	/* TODO: need to retry if this fails. */
+	err = scsi_tgt_uspace_send_it_nexus_request(shost->host_no, itn_id, 0,
+						    initiator);
+	if (err < 0)
+		eprintk("The i_t_neuxs request lost, %d %llx!\n",
+			shost->host_no, (unsigned long long)itn_id);
+	return err;
+}
+EXPORT_SYMBOL_GPL(scsi_tgt_it_nexus_create);
+
+int scsi_tgt_it_nexus_destroy(struct Scsi_Host *shost, u64 itn_id)
+{
+	int err;
+
+	/* TODO: need to retry if this fails. */
+	err = scsi_tgt_uspace_send_it_nexus_request(shost->host_no,
+						    itn_id, 1, NULL);
+	if (err < 0)
+		eprintk("The i_t_neuxs request lost, %d %llx!\n",
+			shost->host_no, (unsigned long long)itn_id);
+	return err;
+}
+EXPORT_SYMBOL_GPL(scsi_tgt_it_nexus_destroy);
+
+int scsi_tgt_kspace_it_nexus_rsp(int host_no, u64 itn_id, int result)
+{
+	struct Scsi_Host *shost;
+	int err = -EINVAL;
+
+	dprintk("%d %d%llx\n", host_no, result, (unsigned long long)itn_id);
+
+	shost = scsi_host_lookup(host_no);
+	if (!shost) {
+		printk(KERN_ERR "Could not find host no %d\n", host_no);
+		return err;
+	}
+
+	if (!shost->uspace_req_q) {
+		printk(KERN_ERR "Not target scsi host %d\n", host_no);
+		goto done;
+	}
+
+	err = shost->transportt->it_nexus_response(shost, itn_id, result);
 done:
 	scsi_host_put(shost);
 	return err;
@@ -583,13 +625,11 @@ static int __init scsi_tgt_init(void)
 {
 	int err;
 
-	scsi_tgt_cmd_cache = kmem_cache_create("scsi_tgt_cmd",
-					       sizeof(struct scsi_tgt_cmd),
-					       0, 0, NULL, NULL);
+	scsi_tgt_cmd_cache =  KMEM_CACHE(scsi_tgt_cmd, 0);
 	if (!scsi_tgt_cmd_cache)
 		return -ENOMEM;
 
-	scsi_tgtd = create_workqueue("scsi_tgtd");
+	scsi_tgtd = alloc_workqueue("scsi_tgtd", 0, 1);
 	if (!scsi_tgtd) {
 		err = -ENOMEM;
 		goto free_kmemcache;

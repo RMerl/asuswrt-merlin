@@ -23,7 +23,7 @@
    Functions as standalone, loadable, and PCMCIA driver, the latter from
    Dave Hinds' PCMCIA package.
    
-   Cleaned up 26/10/2002 by Alan Cox <alan@redhat.com> as part of the 2.5
+   Cleaned up 26/10/2002 by Alan Cox <alan@lxorguk.ukuu.org.uk> as part of the 2.5
    SCSI driver cleanup and audit. This driver still needs work on the
    following
    	-	Non terminating hardware waits
@@ -265,8 +265,6 @@ static unsigned int ql_pcmd(struct scsi_cmnd *cmd)
 	unsigned int message;	/* scsi returned message */
 	unsigned int phase;	/* recorded scsi phase */
 	unsigned int reqlen;	/* total length of transfer */
-	struct scatterlist *sglist;	/* scatter-gather list pointer */
-	unsigned int sgcount;	/* sg counter */
 	char *buf;
 	struct qlogicfas408_priv *priv = get_priv_by_cmd(cmd);
 	int qbase = priv->qbase;
@@ -301,9 +299,10 @@ static unsigned int ql_pcmd(struct scsi_cmnd *cmd)
 	if (inb(qbase + 7) & 0x1f)	/* if some bytes in fifo */
 		outb(1, qbase + 3);	/* clear fifo */
 	/* note that request_bufflen is the total xfer size when sg is used */
-	reqlen = cmd->request_bufflen;
+	reqlen = scsi_bufflen(cmd);
 	/* note that it won't work if transfers > 16M are requested */
 	if (reqlen && !((phase = inb(qbase + 4)) & 6)) {	/* data phase */
+		struct scatterlist *sg;
 		rtrc(2)
 		outb(reqlen, qbase);	/* low-mid xfer cnt */
 		outb(reqlen >> 8, qbase + 1);	/* low-mid xfer cnt */
@@ -311,23 +310,16 @@ static unsigned int ql_pcmd(struct scsi_cmnd *cmd)
 		outb(0x90, qbase + 3);	/* command do xfer */
 		/* PIO pseudo DMA to buffer or sglist */
 		REG1;
-		if (!cmd->use_sg)
-			ql_pdma(priv, phase, cmd->request_buffer,
-				cmd->request_bufflen);
-		else {
-			sgcount = cmd->use_sg;
-			sglist = cmd->request_buffer;
-			while (sgcount--) {
-				if (priv->qabort) {
-					REG0;
-					return ((priv->qabort == 1 ?
-						DID_ABORT : DID_RESET) << 16);
-				}
-				buf = page_address(sglist->page) + sglist->offset;
-				if (ql_pdma(priv, phase, buf, sglist->length))
-					break;
-				sglist++;
+
+		scsi_for_each_sg(cmd, sg, scsi_sg_count(cmd), i) {
+			if (priv->qabort) {
+				REG0;
+				return ((priv->qabort == 1 ?
+					 DID_ABORT : DID_RESET) << 16);
 			}
+			buf = sg_virt(sg);
+			if (ql_pdma(priv, phase, buf, sg->length))
+				break;
 		}
 		REG0;
 		rtrc(2)
@@ -447,7 +439,7 @@ irqreturn_t qlogicfas408_ihandl(int irq, void *dev_id)
  *	Queued command
  */
 
-int qlogicfas408_queuecommand(struct scsi_cmnd *cmd,
+static int qlogicfas408_queuecommand_lck(struct scsi_cmnd *cmd,
 			      void (*done) (struct scsi_cmnd *))
 {
 	struct qlogicfas408_priv *priv = get_priv_by_cmd(cmd);
@@ -466,6 +458,8 @@ int qlogicfas408_queuecommand(struct scsi_cmnd *cmd,
 	ql_icmd(cmd);
 	return 0;
 }
+
+DEF_SCSI_QCMD(qlogicfas408_queuecommand)
 
 /* 
  *	Return bios parameters 

@@ -55,4 +55,46 @@ dvb-usb-opera-objs = opera1.o
 obj-$(CONFIG_DVB_USB_OPERA1) += dvb-usb-opera.o
 
 
-EXTRA_CFLAGS = -Idrivers/media/dvb/dvb-core/ -Idrivers/media/dvb/frontends/
+dvb-usb-af9005-objs = af9005.o af9005-fe.o
+obj-$(CONFIG_DVB_USB_AF9005) += dvb-usb-af9005.o
+
+dvb-usb-af9005-remote-objs = af9005-remote.o
+obj-$(CONFIG_DVB_USB_AF9005_REMOTE) += dvb-usb-af9005-remote.o
+
+dvb-usb-anysee-objs = anysee.o
+obj-$(CONFIG_DVB_USB_ANYSEE) += dvb-usb-anysee.o
+
+dvb-usb-dw2102-objs = dw2102.o
+obj-$(CONFIG_DVB_USB_DW2102) += dvb-usb-dw2102.o
+
+dvb-usb-dtv5100-objs = dtv5100.o
+obj-$(CONFIG_DVB_USB_DTV5100) += dvb-usb-dtv5100.o
+
+dvb-usb-af9015-objs = af9015.o
+obj-$(CONFIG_DVB_USB_AF9015) += dvb-usb-af9015.o
+
+dvb-usb-cinergyT2-objs = cinergyT2-core.o cinergyT2-fe.o
+obj-$(CONFIG_DVB_USB_CINERGY_T2) += dvb-usb-cinergyT2.o
+
+dvb-usb-ce6230-objs = ce6230.o
+obj-$(CONFIG_DVB_USB_CE6230) += dvb-usb-ce6230.o
+
+dvb-usb-friio-objs = friio.o friio-fe.o
+obj-$(CONFIG_DVB_USB_FRIIO) += dvb-usb-friio.o
+
+dvb-usb-ec168-objs = ec168.o
+obj-$(CONFIG_DVB_USB_EC168) += dvb-usb-ec168.o
+
+dvb-usb-az6027-objs = az6027.o
+obj-$(CONFIG_DVB_USB_AZ6027) += dvb-usb-az6027.o
+
+dvb-usb-lmedm04-objs = lmedm04.o
+obj-$(CONFIG_DVB_USB_LME2510) += dvb-usb-lmedm04.o
+
+dvb-usb-technisat-usb2-objs = technisat-usb2.o
+obj-$(CONFIG_DVB_USB_TECHNISAT_USB2) += dvb-usb-technisat-usb2.o
+
+EXTRA_CFLAGS += -Idrivers/media/dvb/dvb-core/ -Idrivers/media/dvb/frontends/
+# due to tuner-xc3028
+EXTRA_CFLAGS += -Idrivers/media/common/tuners
+

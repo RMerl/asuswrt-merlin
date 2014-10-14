@@ -2,7 +2,9 @@
 #define S390_CIO_IOASM_H
 
 #include <asm/chpid.h>
-#include "schid.h"
+#include <asm/schid.h>
+#include "orb.h"
+#include "cio.h"
 
 /*
  * TPI info structure
@@ -23,38 +25,24 @@ struct tpi_info {
  * Some S390 specific IO instructions as inline
  */
 
-static inline int stsch(struct subchannel_id schid,
-			    volatile struct schib *addr)
-{
-	register struct subchannel_id reg1 asm ("1") = schid;
-	int ccode;
-
-	asm volatile(
-		"	stsch	0(%2)\n"
-		"	ipm	%0\n"
-		"	srl	%0,28"
-		: "=d" (ccode) : "d" (reg1), "a" (addr), "m" (*addr) : "cc");
-	return ccode;
-}
-
-static inline int stsch_err(struct subchannel_id schid,
-				volatile struct schib *addr)
+static inline int stsch_err(struct subchannel_id schid, struct schib *addr)
 {
 	register struct subchannel_id reg1 asm ("1") = schid;
 	int ccode = -EIO;
 
 	asm volatile(
-		"	stsch	0(%2)\n"
+		"	stsch	0(%3)\n"
 		"0:	ipm	%0\n"
 		"	srl	%0,28\n"
 		"1:\n"
 		EX_TABLE(0b,1b)
-		: "+d" (ccode) : "d" (reg1), "a" (addr), "m" (*addr) : "cc");
+		: "+d" (ccode), "=m" (*addr)
+		: "d" (reg1), "a" (addr)
+		: "cc");
 	return ccode;
 }
 
-static inline int msch(struct subchannel_id schid,
-			   volatile struct schib *addr)
+static inline int msch(struct subchannel_id schid, struct schib *addr)
 {
 	register struct subchannel_id reg1 asm ("1") = schid;
 	int ccode;
@@ -63,12 +51,13 @@ static inline int msch(struct subchannel_id schid,
 		"	msch	0(%2)\n"
 		"	ipm	%0\n"
 		"	srl	%0,28"
-		: "=d" (ccode) : "d" (reg1), "a" (addr), "m" (*addr) : "cc");
+		: "=d" (ccode)
+		: "d" (reg1), "a" (addr), "m" (*addr)
+		: "cc");
 	return ccode;
 }
 
-static inline int msch_err(struct subchannel_id schid,
-			       volatile struct schib *addr)
+static inline int msch_err(struct subchannel_id schid, struct schib *addr)
 {
 	register struct subchannel_id reg1 asm ("1") = schid;
 	int ccode = -EIO;
@@ -79,99 +68,70 @@ static inline int msch_err(struct subchannel_id schid,
 		"	srl	%0,28\n"
 		"1:\n"
 		EX_TABLE(0b,1b)
-		: "+d" (ccode) : "d" (reg1), "a" (addr), "m" (*addr) : "cc");
+		: "+d" (ccode)
+		: "d" (reg1), "a" (addr), "m" (*addr)
+		: "cc");
 	return ccode;
 }
 
-static inline int tsch(struct subchannel_id schid,
-			   volatile struct irb *addr)
+static inline int tsch(struct subchannel_id schid, struct irb *addr)
 {
 	register struct subchannel_id reg1 asm ("1") = schid;
 	int ccode;
 
 	asm volatile(
-		"	tsch	0(%2)\n"
+		"	tsch	0(%3)\n"
 		"	ipm	%0\n"
 		"	srl	%0,28"
-		: "=d" (ccode) : "d" (reg1), "a" (addr), "m" (*addr) : "cc");
+		: "=d" (ccode), "=m" (*addr)
+		: "d" (reg1), "a" (addr)
+		: "cc");
 	return ccode;
 }
 
-static inline int tpi( volatile struct tpi_info *addr)
+static inline int ssch(struct subchannel_id schid, union orb *addr)
 {
-	int ccode;
-
-	asm volatile(
-		"	tpi	0(%1)\n"
-		"	ipm	%0\n"
-		"	srl	%0,28"
-		: "=d" (ccode) : "a" (addr), "m" (*addr) : "cc");
-	return ccode;
-}
-
-static inline int ssch(struct subchannel_id schid,
-			   volatile struct orb *addr)
-{
-	register struct subchannel_id reg1 asm ("1") = schid;
-	int ccode;
+	register struct subchannel_id reg1 asm("1") = schid;
+	int ccode = -EIO;
 
 	asm volatile(
 		"	ssch	0(%2)\n"
-		"	ipm	%0\n"
-		"	srl	%0,28"
-		: "=d" (ccode) : "d" (reg1), "a" (addr), "m" (*addr) : "cc");
-	return ccode;
-}
-
-static inline int rsch(struct subchannel_id schid)
-{
-	register struct subchannel_id reg1 asm ("1") = schid;
-	int ccode;
-
-	asm volatile(
-		"	rsch\n"
-		"	ipm	%0\n"
-		"	srl	%0,28"
-		: "=d" (ccode) : "d" (reg1) : "cc");
+		"0:	ipm	%0\n"
+		"	srl	%0,28\n"
+		"1:\n"
+		EX_TABLE(0b, 1b)
+		: "+d" (ccode)
+		: "d" (reg1), "a" (addr), "m" (*addr)
+		: "cc", "memory");
 	return ccode;
 }
 
 static inline int csch(struct subchannel_id schid)
 {
-	register struct subchannel_id reg1 asm ("1") = schid;
+	register struct subchannel_id reg1 asm("1") = schid;
 	int ccode;
 
 	asm volatile(
 		"	csch\n"
 		"	ipm	%0\n"
 		"	srl	%0,28"
-		: "=d" (ccode) : "d" (reg1) : "cc");
+		: "=d" (ccode)
+		: "d" (reg1)
+		: "cc");
 	return ccode;
 }
 
-static inline int hsch(struct subchannel_id schid)
+static inline int tpi(struct tpi_info *addr)
 {
-	register struct subchannel_id reg1 asm ("1") = schid;
 	int ccode;
 
 	asm volatile(
-		"	hsch\n"
+		"	tpi	0(%2)\n"
 		"	ipm	%0\n"
 		"	srl	%0,28"
-		: "=d" (ccode) : "d" (reg1) : "cc");
-	return ccode;
-}
-
-static inline int xsch(struct subchannel_id schid)
-{
-	register struct subchannel_id reg1 asm ("1") = schid;
-	int ccode;
-
-	asm volatile(
-		"	.insn	rre,0xb2760000,%1,0\n"
-		"	ipm	%0\n"
-		"	srl	%0,28"
-		: "=d" (ccode) : "d" (reg1) : "cc");
+		: "=d" (ccode), "=m" (*addr)
+		: "a" (addr)
+		: "cc");
 	return ccode;
 }
 

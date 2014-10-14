@@ -9,9 +9,17 @@
  */
 #include <linux/linkage.h>
 #include <linux/init.h>
-#include <asm/hardware.h>
 #include <asm/page.h>
 #include "proc-macros.S"
+
+/*
+ *	flush_icache_all()
+ *
+ *	Unconditionally clean and invalidate the entire icache.
+ */
+ENTRY(v4_flush_icache_all)
+	mov	pc, lr
+ENDPROC(v4_flush_icache_all)
 
 /*
  *	flush_user_cache_all()
@@ -29,7 +37,7 @@ ENTRY(v4_flush_user_cache_all)
  *	Clean and invalidate the entire cache.
  */
 ENTRY(v4_flush_kern_cache_all)
-#ifdef CPU_CP15
+#ifdef CONFIG_CPU_CP15
 	mov	r0, #0
 	mcr	p15, 0, r0, c7, c7, 0		@ flush ID cache
 	mov	pc, lr
@@ -48,7 +56,7 @@ ENTRY(v4_flush_kern_cache_all)
  *	- flags	- vma_area_struct flags describing address space
  */
 ENTRY(v4_flush_user_cache_range)
-#ifdef CPU_CP15
+#ifdef CONFIG_CPU_CP15
 	mov	ip, #0
 	mcreq	p15, 0, ip, c7, c7, 0		@ flush ID cache
 	mov	pc, lr
@@ -83,28 +91,15 @@ ENTRY(v4_coherent_user_range)
 	mov	pc, lr
 
 /*
- *	flush_kern_dcache_page(void *page)
+ *	flush_kern_dcache_area(void *addr, size_t size)
  *
  *	Ensure no D cache aliasing occurs, either with itself or
  *	the I cache
  *
- *	- addr	- page aligned address
+ *	- addr	- kernel address
+ *	- size	- region size
  */
-ENTRY(v4_flush_kern_dcache_page)
-	/* FALLTHROUGH */
-
-/*
- *	dma_inv_range(start, end)
- *
- *	Invalidate (discard) the specified virtual address range.
- *	May not write back any entries.  If 'start' or 'end'
- *	are not cache line aligned, those lines must be written
- *	back.
- *
- *	- start  - virtual start address
- *	- end	 - virtual end address
- */
-ENTRY(v4_dma_inv_range)
+ENTRY(v4_flush_kern_dcache_area)
 	/* FALLTHROUGH */
 
 /*
@@ -116,34 +111,46 @@ ENTRY(v4_dma_inv_range)
  *	- end	 - virtual end address
  */
 ENTRY(v4_dma_flush_range)
-#ifdef CPU_CP15
+#ifdef CONFIG_CPU_CP15
 	mov	r0, #0
 	mcr	p15, 0, r0, c7, c7, 0		@ flush ID cache
 #endif
+	mov	pc, lr
+
+/*
+ *	dma_unmap_area(start, size, dir)
+ *	- start	- kernel virtual start address
+ *	- size	- size of region
+ *	- dir	- DMA direction
+ */
+ENTRY(v4_dma_unmap_area)
+	teq	r2, #DMA_TO_DEVICE
+	bne	v4_dma_flush_range
 	/* FALLTHROUGH */
 
 /*
- *	dma_clean_range(start, end)
- *
- *	Clean (write back) the specified virtual address range.
- *
- *	- start  - virtual start address
- *	- end	 - virtual end address
+ *	dma_map_area(start, size, dir)
+ *	- start	- kernel virtual start address
+ *	- size	- size of region
+ *	- dir	- DMA direction
  */
-ENTRY(v4_dma_clean_range)
+ENTRY(v4_dma_map_area)
 	mov	pc, lr
+ENDPROC(v4_dma_unmap_area)
+ENDPROC(v4_dma_map_area)
 
 	__INITDATA
 
 	.type	v4_cache_fns, #object
 ENTRY(v4_cache_fns)
+	.long	v4_flush_icache_all
 	.long	v4_flush_kern_cache_all
 	.long	v4_flush_user_cache_all
 	.long	v4_flush_user_cache_range
 	.long	v4_coherent_kern_range
 	.long	v4_coherent_user_range
-	.long	v4_flush_kern_dcache_page
-	.long	v4_dma_inv_range
-	.long	v4_dma_clean_range
+	.long	v4_flush_kern_dcache_area
+	.long	v4_dma_map_area
+	.long	v4_dma_unmap_area
 	.long	v4_dma_flush_range
 	.size	v4_cache_fns, . - v4_cache_fns

@@ -11,6 +11,8 @@
 
 #include <linux/module.h>
 #include <linux/kernel.h>
+#include <linux/proc_fs.h>
+#include <linux/seq_file.h>
 #include <linux/skbuff.h>
 #include <linux/delay.h>
 #include <linux/mm.h>
@@ -20,6 +22,7 @@
 #include <linux/capi.h>
 #include <linux/kernelcapi.h>
 #include <linux/init.h>
+#include <linux/gfp.h>
 #include <asm/io.h>
 #include <asm/uaccess.h>
 #include <linux/netdevice.h>
@@ -678,8 +681,10 @@ static irqreturn_t c4_handle_interrupt(avmcard *card)
                 for (i=0; i < card->nr_controllers; i++) {
 			avmctrl_info *cinfo = &card->ctrlinfo[i];
 			memset(cinfo->version, 0, sizeof(cinfo->version));
+			spin_lock_irqsave(&card->lock, flags);
 			capilib_release(&cinfo->ncci_head);
-			capi_ctr_reseted(&cinfo->capi_ctrl);
+			spin_unlock_irqrestore(&card->lock, flags);
+			capi_ctr_down(&cinfo->capi_ctrl);
 		}
 		card->nlogcontr = 0;
 		return IRQ_HANDLED;
@@ -907,7 +912,7 @@ static void c4_reset_ctr(struct capi_ctr *ctrl)
         for (i=0; i < card->nr_controllers; i++) {
 		cinfo = &card->ctrlinfo[i];
 		memset(cinfo->version, 0, sizeof(cinfo->version));
-		capi_ctr_reseted(&cinfo->capi_ctrl);
+		capi_ctr_down(&cinfo->capi_ctrl);
 	}
 	card->nlogcontr = 0;
 }
@@ -1060,19 +1065,18 @@ static char *c4_procinfo(struct capi_ctr *ctrl)
 	return cinfo->infobuf;
 }
 
-static int c4_read_proc(char *page, char **start, off_t off,
-        		int count, int *eof, struct capi_ctr *ctrl)
+static int c4_proc_show(struct seq_file *m, void *v)
 {
+	struct capi_ctr *ctrl = m->private;
 	avmctrl_info *cinfo = (avmctrl_info *)(ctrl->driverdata);
 	avmcard *card = cinfo->card;
 	u8 flag;
-	int len = 0;
 	char *s;
 
-	len += sprintf(page+len, "%-16s %s\n", "name", card->name);
-	len += sprintf(page+len, "%-16s 0x%x\n", "io", card->port);
-	len += sprintf(page+len, "%-16s %d\n", "irq", card->irq);
-	len += sprintf(page+len, "%-16s 0x%lx\n", "membase", card->membase);
+	seq_printf(m, "%-16s %s\n", "name", card->name);
+	seq_printf(m, "%-16s 0x%x\n", "io", card->port);
+	seq_printf(m, "%-16s %d\n", "irq", card->irq);
+	seq_printf(m, "%-16s 0x%lx\n", "membase", card->membase);
 	switch (card->cardtype) {
 	case avm_b1isa: s = "B1 ISA"; break;
 	case avm_b1pci: s = "B1 PCI"; break;
@@ -1085,18 +1089,18 @@ static int c4_read_proc(char *page, char **start, off_t off,
 	case avm_c2: s = "C2"; break;
 	default: s = "???"; break;
 	}
-	len += sprintf(page+len, "%-16s %s\n", "type", s);
-	if ((s = cinfo->version[VER_DRIVER]) != 0)
-	   len += sprintf(page+len, "%-16s %s\n", "ver_driver", s);
-	if ((s = cinfo->version[VER_CARDTYPE]) != 0)
-	   len += sprintf(page+len, "%-16s %s\n", "ver_cardtype", s);
-	if ((s = cinfo->version[VER_SERIAL]) != 0)
-	   len += sprintf(page+len, "%-16s %s\n", "ver_serial", s);
+	seq_printf(m, "%-16s %s\n", "type", s);
+	if ((s = cinfo->version[VER_DRIVER]) != NULL)
+		seq_printf(m, "%-16s %s\n", "ver_driver", s);
+	if ((s = cinfo->version[VER_CARDTYPE]) != NULL)
+		seq_printf(m, "%-16s %s\n", "ver_cardtype", s);
+	if ((s = cinfo->version[VER_SERIAL]) != NULL)
+		seq_printf(m, "%-16s %s\n", "ver_serial", s);
 
 	if (card->cardtype != avm_m1) {
         	flag = ((u8 *)(ctrl->profile.manu))[3];
         	if (flag)
-			len += sprintf(page+len, "%-16s%s%s%s%s%s%s%s\n",
+			seq_printf(m, "%-16s%s%s%s%s%s%s%s\n",
 			"protocol",
 			(flag & 0x01) ? " DSS1" : "",
 			(flag & 0x02) ? " CT1" : "",
@@ -1110,7 +1114,7 @@ static int c4_read_proc(char *page, char **start, off_t off,
 	if (card->cardtype != avm_m1) {
         	flag = ((u8 *)(ctrl->profile.manu))[5];
 		if (flag)
-			len += sprintf(page+len, "%-16s%s%s%s%s\n",
+			seq_printf(m, "%-16s%s%s%s%s\n",
 			"linetype",
 			(flag & 0x01) ? " point to point" : "",
 			(flag & 0x02) ? " point to multipoint" : "",
@@ -1118,15 +1122,23 @@ static int c4_read_proc(char *page, char **start, off_t off,
 			(flag & 0x04) ? " leased line with D-channel" : ""
 			);
 	}
-	len += sprintf(page+len, "%-16s %s\n", "cardname", cinfo->cardname);
+	seq_printf(m, "%-16s %s\n", "cardname", cinfo->cardname);
 
-	if (off+count >= len)
-	   *eof = 1;
-	if (len < off)
-           return 0;
-	*start = page + off;
-	return ((count < len-off) ? count : len-off);
+	return 0;
 }
+
+static int c4_proc_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, c4_proc_show, PDE(inode)->data);
+}
+
+static const struct file_operations c4_proc_fops = {
+	.owner		= THIS_MODULE,
+	.open		= c4_proc_open,
+	.read		= seq_read,
+	.llseek		= seq_lseek,
+	.release	= single_release,
+};
 
 /* ------------------------------------------------------------- */
 
@@ -1165,7 +1177,7 @@ static int c4_add_card(struct capicardparams *p, struct pci_dev *dev,
 	}
 
 	card->mbase = ioremap(card->membase, 128);
-	if (card->mbase == 0) {
+	if (card->mbase == NULL) {
 		printk(KERN_NOTICE "c4: can't remap memory at 0x%lx\n",
 		       card->membase);
 		retval = -EIO;
@@ -1199,7 +1211,7 @@ static int c4_add_card(struct capicardparams *p, struct pci_dev *dev,
 		cinfo->capi_ctrl.load_firmware = c4_load_firmware;
 		cinfo->capi_ctrl.reset_ctr     = c4_reset_ctr;
 		cinfo->capi_ctrl.procinfo      = c4_procinfo;
-		cinfo->capi_ctrl.ctr_read_proc = c4_read_proc;
+		cinfo->capi_ctrl.proc_fops = &c4_proc_fops;
 		strcpy(cinfo->capi_ctrl.name, card->name);
 
 		retval = attach_capi_ctr(&cinfo->capi_ctrl);
@@ -1261,6 +1273,7 @@ static int __devinit c4_probe(struct pci_dev *dev,
 	if (retval != 0) {
 		printk(KERN_ERR "c4: no AVM-C%d at i/o %#x, irq %d detected, mem %#x\n",
 		       nr, param.port, param.irq, param.membase);
+		pci_disable_device(dev);
 		return -ENODEV;
 	}
 	return 0;
@@ -1289,9 +1302,9 @@ static int __init c4_init(void)
 	char rev[32];
 	int err;
 
-	if ((p = strchr(revision, ':')) != 0 && p[1]) {
+	if ((p = strchr(revision, ':')) != NULL && p[1]) {
 		strlcpy(rev, p + 2, 32);
-		if ((p = strchr(rev, '$')) != 0 && p > rev)
+		if ((p = strchr(rev, '$')) != NULL && p > rev)
 		   *(p-1) = 0;
 	} else
 		strcpy(rev, "1.0");

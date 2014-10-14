@@ -1,7 +1,7 @@
 /*******************************************************************
  * This file is part of the Emulex Linux Device Driver for         *
  * Fibre Channel Host Bus Adapters.                                *
- * Copyright (C) 2004-2005 Emulex.  All rights reserved.           *
+ * Copyright (C) 2004-2006 Emulex.  All rights reserved.           *
  * EMULEX and SLI are trademarks of Emulex.                        *
  * www.emulex.com                                                  *
  *                                                                 *
@@ -107,24 +107,30 @@ struct fcp_cmnd {
 
 };
 
+struct lpfc_scsicmd_bkt {
+	uint32_t cmd_count;
+};
+
 struct lpfc_scsi_buf {
 	struct list_head list;
 	struct scsi_cmnd *pCmd;
-	struct lpfc_hba *scsi_hba;
 	struct lpfc_rport_data *rdata;
 
 	uint32_t timeout;
 
+	uint16_t exch_busy;     /* SLI4 hba reported XB on complete WCQE */
 	uint16_t status;	/* From IOCB Word 7- ulpStatus */
 	uint32_t result;	/* From IOCB Word 4. */
 
 	uint32_t   seg_cnt;	/* Number of scatter-gather segments returned by
 				 * dma_map_sg.  The driver needs this for calls
 				 * to dma_unmap_sg. */
+	uint32_t prot_seg_cnt;  /* seg_cnt's counterpart for protection data */
+
 	dma_addr_t nonsg_phys;	/* Non scatter-gather physical address. */
 
 	/*
-	 * data and dma_handle are the kernel virutal and bus address of the
+	 * data and dma_handle are the kernel virtual and bus address of the
 	 * dma-able buffer containing the fcp_cmd, fcp_rsp and a scatter
 	 * gather bde list that supports the sg_tablesize value.
 	 */
@@ -135,10 +141,14 @@ struct lpfc_scsi_buf {
 	struct fcp_rsp *fcp_rsp;
 	struct ulp_bde64 *fcp_bpl;
 
+	dma_addr_t dma_phys_bpl;
+
 	/* cur_iocbq has phys of the dma-able buffer.
 	 * Iotag is in here
 	 */
 	struct lpfc_iocbq cur_iocbq;
+	wait_queue_head_t *waitq;
+	unsigned long start_time;
 };
 
 #define LPFC_SCSI_DMA_EXT_SIZE 264

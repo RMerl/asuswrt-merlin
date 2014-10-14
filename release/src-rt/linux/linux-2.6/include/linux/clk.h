@@ -35,6 +35,8 @@ struct clk;
  * clk_get may return different clock producers depending on @dev.)
  *
  * Drivers must assume that the clock source is not enabled.
+ *
+ * clk_get should not be called from within interrupt context.
  */
 struct clk *clk_get(struct device *dev, const char *id);
 
@@ -76,6 +78,8 @@ unsigned long clk_get_rate(struct clk *clk);
  * Note: drivers must ensure that all clk_enable calls made on this
  * clock source are balanced by clk_disable calls prior to calling
  * this function.
+ *
+ * clk_put should not be called from within interrupt context.
  */
 void clk_put(struct clk *clk);
 
@@ -120,5 +124,35 @@ int clk_set_parent(struct clk *clk, struct clk *parent);
  * valid IS_ERR() condition containing errno.
  */
 struct clk *clk_get_parent(struct clk *clk);
+
+/**
+ * clk_get_sys - get a clock based upon the device name
+ * @dev_id: device name
+ * @con_id: connection ID
+ *
+ * Returns a struct clk corresponding to the clock producer, or
+ * valid IS_ERR() condition containing errno.  The implementation
+ * uses @dev_id and @con_id to determine the clock consumer, and
+ * thereby the clock producer. In contrast to clk_get() this function
+ * takes the device name instead of the device itself for identification.
+ *
+ * Drivers must assume that the clock source is not enabled.
+ *
+ * clk_get_sys should not be called from within interrupt context.
+ */
+struct clk *clk_get_sys(const char *dev_id, const char *con_id);
+
+/**
+ * clk_add_alias - add a new clock alias
+ * @alias: name for clock alias
+ * @alias_dev_name: device name
+ * @id: platform specific clock name
+ * @dev: device
+ *
+ * Allows using generic clock names for drivers by adding a new alias.
+ * Assumes clkdev, see clkdev.h for more info.
+ */
+int clk_add_alias(const char *alias, const char *alias_dev_name, char *id,
+			struct device *dev);
 
 #endif

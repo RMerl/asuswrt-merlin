@@ -3,7 +3,7 @@
 #
 config SCSI_ACORNSCSI_3
 	tristate "Acorn SCSI card (aka30) support"
-	depends on ARCH_ACORN && SCSI && BROKEN
+	depends on ARCH_ACORN && SCSI
 	select SCSI_SPI_ATTRS
 	help
 	  This enables support for the Acorn SCSI card (aka30). If you have an
@@ -73,15 +73,6 @@ config SCSI_CUMANA_1
 	help
 	  This enables support for the Cumana SCSI I card. If you have an
 	  Acorn system with one of these, say Y. If unsure, say N.
-
-config SCSI_ECOSCSI
-	tristate "EcoScsi support (EXPERIMENTAL)"
-	depends on ARCH_ACORN && EXPERIMENTAL && (ARCH_ARC || ARCH_A5K) && SCSI
-	select SCSI_SPI_ATTRS
-	help
-	  This enables support for the EcoSCSI card -- a small card that sits
-	  in the Econet socket. If you have an Acorn system with one of these,
-	  say Y. If unsure, say N.
 
 config SCSI_OAK1
 	tristate "Oak SCSI support (EXPERIMENTAL)"

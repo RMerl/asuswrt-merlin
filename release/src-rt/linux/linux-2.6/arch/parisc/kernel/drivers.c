@@ -43,7 +43,7 @@ struct hppa_dma_ops *hppa_dma_ops __read_mostly;
 EXPORT_SYMBOL(hppa_dma_ops);
 
 static struct device root = {
-	.bus_id = "parisc",
+	.init_name = "parisc",
 };
 
 static inline int check_dev(struct device *dev)
@@ -393,7 +393,8 @@ EXPORT_SYMBOL(print_pci_hwpath);
 static void setup_bus_id(struct parisc_device *padev)
 {
 	struct hardware_path path;
-	char *output = padev->dev.bus_id;
+	char name[20];
+	char *output = name;
 	int i;
 
 	get_node_path(padev->dev.parent, &path);
@@ -404,6 +405,7 @@ static void setup_bus_id(struct parisc_device *padev)
 		output += sprintf(output, "%u:", (unsigned char) path.bc[i]);
 	}
 	sprintf(output, "%u", (unsigned char) padev->hw_path);
+	dev_set_name(&padev->dev, name);
 }
 
 struct parisc_device * create_tree_node(char id, struct device *parent)
@@ -547,6 +549,38 @@ static int parisc_generic_match(struct device *dev, struct device_driver *drv)
 	return match_device(to_parisc_driver(drv), to_parisc_device(dev));
 }
 
+static ssize_t make_modalias(struct device *dev, char *buf)
+{
+	const struct parisc_device *padev = to_parisc_device(dev);
+	const struct parisc_device_id *id = &padev->id;
+
+	return sprintf(buf, "parisc:t%02Xhv%04Xrev%02Xsv%08X\n",
+		(u8)id->hw_type, (u16)id->hversion, (u8)id->hversion_rev,
+		(u32)id->sversion);
+}
+
+static int parisc_uevent(struct device *dev, struct kobj_uevent_env *env)
+{
+	const struct parisc_device *padev;
+	char modalias[40];
+
+	if (!dev)
+		return -ENODEV;
+
+	padev = to_parisc_device(dev);
+	if (!padev)
+		return -ENODEV;
+
+	if (add_uevent_var(env, "PARISC_NAME=%s", padev->name))
+		return -ENOMEM;
+
+	make_modalias(dev, modalias);
+	if (add_uevent_var(env, "MODALIAS=%s", modalias))
+		return -ENOMEM;
+
+	return 0;
+}
+
 #define pa_dev_attr(name, field, format_string)				\
 static ssize_t name##_show(struct device *dev, struct device_attribute *attr, char *buf)		\
 {									\
@@ -564,12 +598,7 @@ pa_dev_attr_id(sversion, "0x%05x\n");
 
 static ssize_t modalias_show(struct device *dev, struct device_attribute *attr, char *buf)
 {
-	struct parisc_device *padev = to_parisc_device(dev);
-	struct parisc_device_id *id = &padev->id;
-
-	return sprintf(buf, "parisc:t%02Xhv%04Xrev%02Xsv%08X\n",
-		(u8)id->hw_type, (u16)id->hversion, (u8)id->hversion_rev,
-		(u32)id->sversion);
+	return make_modalias(dev, buf);
 }
 
 static struct device_attribute parisc_device_attrs[] = {
@@ -585,6 +614,7 @@ static struct device_attribute parisc_device_attrs[] = {
 struct bus_type parisc_bus_type = {
 	.name = "parisc",
 	.match = parisc_generic_match,
+	.uevent = parisc_uevent,
 	.dev_attrs = parisc_device_attrs,
 	.probe = parisc_driver_probe,
 	.remove = parisc_driver_remove,

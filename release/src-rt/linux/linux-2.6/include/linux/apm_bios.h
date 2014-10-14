@@ -16,26 +16,28 @@
  * General Public License for more details.
  */
 
+#include <linux/types.h>
+
 typedef unsigned short	apm_event_t;
 typedef unsigned short	apm_eventinfo_t;
+
+struct apm_bios_info {
+	__u16	version;
+	__u16	cseg;
+	__u32	offset;
+	__u16	cseg_16;
+	__u16	dseg;
+	__u16	flags;
+	__u16	cseg_len;
+	__u16	cseg_16_len;
+	__u16	dseg_len;
+};
 
 #ifdef __KERNEL__
 
 #define APM_CS		(GDT_ENTRY_APMBIOS_BASE * 8)
 #define APM_CS_16	(APM_CS + 8)
 #define APM_DS		(APM_CS_16 + 8)
-
-struct apm_bios_info {
-	unsigned short	version;
-	unsigned short	cseg;
-	unsigned long	offset;
-	unsigned short	cseg_16;
-	unsigned short	dseg;
-	unsigned short	flags;
-	unsigned short	cseg_len;
-	unsigned short	cseg_16_len;
-	unsigned short	dseg_len;
-};
 
 /* Results of APM Installation Check */
 #define APM_16_BIT_SUPPORT	0x0001

@@ -16,7 +16,6 @@
 #ifndef _NSP32_H
 #define _NSP32_H
 
-#include <linux/version.h>
 //#define NSP32_DEBUG 9
 
 /*
@@ -67,11 +66,6 @@ static char * nsp32_model[] = {
 /* Little Endian */
 typedef u32 u32_le;
 typedef u16 u16_le;
-
-/*
- * MACRO
- */
-#define BIT(x)      (1UL << (x))
 
 /*
  * BASIC Definitions
@@ -513,7 +507,7 @@ typedef struct _nsp32_lunt {
 /*
  * SCSI TARGET/LUN definition
  */
-#define NSP32_HOST_SCSIID    7  /* SCSI initiator is everytime defined as 7 */
+#define NSP32_HOST_SCSIID    7  /* SCSI initiator is every time defined as 7 */
 #define MAX_TARGET	     8
 #define MAX_LUN		     8	/* XXX: In SPI3, max number of LUN is 64. */
 

@@ -3,26 +3,54 @@
  *
  * NSLU2 board-setup
  *
- * based ixdp425-setup.c:
+ * Copyright (C) 2008 Rod Whitby <rod@whitby.id.au>
+ *
+ * based on ixdp425-setup.c:
  *      Copyright (C) 2003-2004 MontaVista Software, Inc.
+ * based on nslu2-power.c:
+ *	Copyright (C) 2005 Tower Technologies
  *
  * Author: Mark Rakes <mrakes at mac.com>
  * Author: Rod Whitby <rod@whitby.id.au>
+ * Author: Alessandro Zummo <a.zummo@towertech.it>
  * Maintainers: http://www.nslu2-linux.org/
  *
- * Fixed missing init_time in MACHINE_START kas11 10/22/04
- * Changed to conform to new style __init ixdp425 kas11 10/22/04
  */
 
-#include <linux/kernel.h>
+#include <linux/if_ether.h>
+#include <linux/irq.h>
 #include <linux/serial.h>
 #include <linux/serial_8250.h>
 #include <linux/leds.h>
-
+#include <linux/reboot.h>
+#include <linux/i2c.h>
+#include <linux/i2c-gpio.h>
+#include <linux/io.h>
 #include <asm/mach-types.h>
 #include <asm/mach/arch.h>
 #include <asm/mach/flash.h>
 #include <asm/mach/time.h>
+#include <asm/gpio.h>
+
+#define NSLU2_SDA_PIN		7
+#define NSLU2_SCL_PIN		6
+
+/* NSLU2 Timer */
+#define NSLU2_FREQ 66000000
+
+/* Buttons */
+#define NSLU2_PB_GPIO		5	/* power button */
+#define NSLU2_PO_GPIO		8	/* power off */
+#define NSLU2_RB_GPIO		12	/* reset button */
+
+/* Buzzer */
+#define NSLU2_GPIO_BUZZ		4
+
+/* LEDs */
+#define NSLU2_LED_RED_GPIO	0
+#define NSLU2_LED_GRN_GPIO	1
+#define NSLU2_LED_DISK1_GPIO	3
+#define NSLU2_LED_DISK2_GPIO	2
 
 static struct flash_platform_data nslu2_flash_data = {
 	.map_name		= "cfi_probe",
@@ -41,52 +69,55 @@ static struct platform_device nslu2_flash = {
 	.resource		= &nslu2_flash_resource,
 };
 
-static struct ixp4xx_i2c_pins nslu2_i2c_gpio_pins = {
+static struct i2c_gpio_platform_data nslu2_i2c_gpio_data = {
 	.sda_pin		= NSLU2_SDA_PIN,
 	.scl_pin		= NSLU2_SCL_PIN,
 };
 
-#ifdef CONFIG_LEDS_IXP4XX
-static struct resource nslu2_led_resources[] = {
+static struct i2c_board_info __initdata nslu2_i2c_board_info [] = {
 	{
-		.name		= "ready",  /* green led */
-		.start		= NSLU2_LED_GRN_GPIO,
-		.end		= NSLU2_LED_GRN_GPIO,
-		.flags		= IXP4XX_GPIO_HIGH,
+		I2C_BOARD_INFO("x1205", 0x6f),
+	},
+};
+
+static struct gpio_led nslu2_led_pins[] = {
+	{
+		.name		= "nslu2:green:ready",
+		.gpio		= NSLU2_LED_GRN_GPIO,
 	},
 	{
-		.name		= "status", /* red led */
-		.start		= NSLU2_LED_RED_GPIO,
-		.end		= NSLU2_LED_RED_GPIO,
-		.flags		= IXP4XX_GPIO_HIGH,
+		.name		= "nslu2:red:status",
+		.gpio		= NSLU2_LED_RED_GPIO,
 	},
 	{
-		.name		= "disk-1",
-		.start		= NSLU2_LED_DISK1_GPIO,
-		.end		= NSLU2_LED_DISK1_GPIO,
-		.flags		= IXP4XX_GPIO_LOW,
+		.name		= "nslu2:green:disk-1",
+		.gpio		= NSLU2_LED_DISK1_GPIO,
+		.active_low	= true,
 	},
 	{
-		.name		= "disk-2",
-		.start		= NSLU2_LED_DISK2_GPIO,
-		.end		= NSLU2_LED_DISK2_GPIO,
-		.flags		= IXP4XX_GPIO_LOW,
+		.name		= "nslu2:green:disk-2",
+		.gpio		= NSLU2_LED_DISK2_GPIO,
+		.active_low	= true,
 	},
+};
+
+static struct gpio_led_platform_data nslu2_led_data = {
+	.num_leds		= ARRAY_SIZE(nslu2_led_pins),
+	.leds			= nslu2_led_pins,
 };
 
 static struct platform_device nslu2_leds = {
-	.name			= "IXP4XX-GPIO-LED",
+	.name			= "leds-gpio",
 	.id			= -1,
-	.num_resources		= ARRAY_SIZE(nslu2_led_resources),
-	.resource		= nslu2_led_resources,
+	.dev.platform_data	= &nslu2_led_data,
 };
-#endif
 
-static struct platform_device nslu2_i2c_controller = {
-	.name			= "IXP4XX-I2C",
+static struct platform_device nslu2_i2c_gpio = {
+	.name			= "i2c-gpio",
 	.id			= 0,
-	.dev.platform_data	= &nslu2_i2c_gpio_pins,
-	.num_resources		= 0,
+	.dev	 = {
+		.platform_data	= &nslu2_i2c_gpio_data,
+	},
 };
 
 static struct platform_device nslu2_beeper = {
@@ -138,13 +169,29 @@ static struct platform_device nslu2_uart = {
 	.resource		= nslu2_uart_resources,
 };
 
+/* Built-in 10/100 Ethernet MAC interfaces */
+static struct eth_plat_info nslu2_plat_eth[] = {
+	{
+		.phy		= 1,
+		.rxq		= 3,
+		.txreadyq	= 20,
+	}
+};
+
+static struct platform_device nslu2_eth[] = {
+	{
+		.name			= "ixp4xx_eth",
+		.id			= IXP4XX_ETH_NPEB,
+		.dev.platform_data	= nslu2_plat_eth,
+	}
+};
+
 static struct platform_device *nslu2_devices[] __initdata = {
-	&nslu2_i2c_controller,
+	&nslu2_i2c_gpio,
 	&nslu2_flash,
 	&nslu2_beeper,
-#ifdef CONFIG_LEDS_IXP4XX
 	&nslu2_leds,
-#endif
+	&nslu2_eth[0],
 };
 
 static void nslu2_power_off(void)
@@ -156,6 +203,25 @@ static void nslu2_power_off(void)
 
 	/* do the deed */
 	gpio_line_set(NSLU2_PO_GPIO, IXP4XX_GPIO_HIGH);
+}
+
+static irqreturn_t nslu2_power_handler(int irq, void *dev_id)
+{
+	/* Signal init to do the ctrlaltdel action, this will bypass init if
+	 * it hasn't started and do a kernel_restart.
+	 */
+	ctrl_alt_del();
+
+	return IRQ_HANDLED;
+}
+
+static irqreturn_t nslu2_reset_handler(int irq, void *dev_id)
+{
+	/* This is the paper-clip reset, it shuts the machine down directly.
+	 */
+	machine_power_off();
+
+	return IRQ_HANDLED;
 }
 
 static void __init nslu2_timer_init(void)
@@ -173,13 +239,17 @@ static struct sys_timer nslu2_timer = {
 
 static void __init nslu2_init(void)
 {
+	uint8_t __iomem *f;
+	int i;
+
 	ixp4xx_sys_init();
 
 	nslu2_flash_resource.start = IXP4XX_EXP_BUS_BASE(0);
 	nslu2_flash_resource.end =
 		IXP4XX_EXP_BUS_BASE(0) + ixp4xx_exp_bus_size - 1;
 
-	pm_power_off = nslu2_power_off;
+	i2c_register_board_info(0, nslu2_i2c_board_info,
+				ARRAY_SIZE(nslu2_i2c_board_info));
 
 	/*
 	 * This is only useful on a modified machine, but it is valuable
@@ -189,12 +259,47 @@ static void __init nslu2_init(void)
 	(void)platform_device_register(&nslu2_uart);
 
 	platform_add_devices(nslu2_devices, ARRAY_SIZE(nslu2_devices));
+
+	pm_power_off = nslu2_power_off;
+
+	if (request_irq(gpio_to_irq(NSLU2_RB_GPIO), &nslu2_reset_handler,
+		IRQF_DISABLED | IRQF_TRIGGER_LOW,
+		"NSLU2 reset button", NULL) < 0) {
+
+		printk(KERN_DEBUG "Reset Button IRQ %d not available\n",
+			gpio_to_irq(NSLU2_RB_GPIO));
+	}
+
+	if (request_irq(gpio_to_irq(NSLU2_PB_GPIO), &nslu2_power_handler,
+		IRQF_DISABLED | IRQF_TRIGGER_HIGH,
+		"NSLU2 power button", NULL) < 0) {
+
+		printk(KERN_DEBUG "Power Button IRQ %d not available\n",
+			gpio_to_irq(NSLU2_PB_GPIO));
+	}
+
+	/*
+	 * Map in a portion of the flash and read the MAC address.
+	 * Since it is stored in BE in the flash itself, we need to
+	 * byteswap it if we're in LE mode.
+	 */
+	f = ioremap(IXP4XX_EXP_BUS_BASE(0), 0x40000);
+	if (f) {
+		for (i = 0; i < 6; i++)
+#ifdef __ARMEB__
+			nslu2_plat_eth[0].hwaddr[i] = readb(f + 0x3FFB0 + i);
+#else
+			nslu2_plat_eth[0].hwaddr[i] = readb(f + 0x3FFB0 + (i^3));
+#endif
+		iounmap(f);
+	}
+	printk(KERN_INFO "NSLU2: Using MAC address %pM for port 0\n",
+	       nslu2_plat_eth[0].hwaddr);
+
 }
 
 MACHINE_START(NSLU2, "Linksys NSLU2")
 	/* Maintainer: www.nslu2-linux.org */
-	.phys_io	= IXP4XX_PERIPHERAL_BASE_PHYS,
-	.io_pg_offst	= ((IXP4XX_PERIPHERAL_BASE_VIRT) >> 18) & 0xFFFC,
 	.boot_params	= 0x00000100,
 	.map_io		= ixp4xx_map_io,
 	.init_irq	= ixp4xx_init_irq,

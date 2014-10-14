@@ -17,25 +17,26 @@
 #include <linux/init.h>
 #include <linux/serial_core.h>
 #include <linux/platform_device.h>
+#include <linux/io.h>
 
 #include <asm/mach/arch.h>
 #include <asm/mach/map.h>
 #include <asm/mach/irq.h>
 
-#include <asm/arch/otom-map.h>
+#include <mach/otom-map.h>
 
-#include <asm/hardware.h>
-#include <asm/io.h>
+#include <mach/hardware.h>
 #include <asm/irq.h>
 #include <asm/mach-types.h>
 
-#include <asm/arch/regs-serial.h>
-#include <asm/arch/regs-gpio.h>
+#include <plat/regs-serial.h>
+#include <mach/regs-gpio.h>
 
-#include <asm/plat-s3c24xx/s3c2410.h>
-#include <asm/plat-s3c24xx/clock.h>
-#include <asm/plat-s3c24xx/devs.h>
-#include <asm/plat-s3c24xx/cpu.h>
+#include <plat/s3c2410.h>
+#include <plat/clock.h>
+#include <plat/devs.h>
+#include <plat/iic.h>
+#include <plat/cpu.h>
 
 static struct map_desc otom11_iodesc[] __initdata = {
   /* Device area */
@@ -91,10 +92,10 @@ static struct platform_device otom_device_nor = {
 /* Standard OTOM devices */
 
 static struct platform_device *otom11_devices[] __initdata = {
-	&s3c_device_usb,
+	&s3c_device_ohci,
 	&s3c_device_lcd,
 	&s3c_device_wdt,
-	&s3c_device_i2c,
+	&s3c_device_i2c0,
 	&s3c_device_iis,
  	&s3c_device_rtc,
 	&otom_device_nor,
@@ -109,13 +110,12 @@ static void __init otom11_map_io(void)
 
 static void __init otom11_init(void)
 {
+	s3c_i2c0_set_platdata(NULL);
 	platform_add_devices(otom11_devices, ARRAY_SIZE(otom11_devices));
 }
 
 MACHINE_START(OTOM, "Nex Vision - Otom 1.1")
 	/* Maintainer: Guillaume GOURAT <guillaume.gourat@nexvision.tv> */
-	.phys_io	= S3C2410_PA_UART,
-	.io_pg_offst	= (((u32)S3C24XX_VA_UART) >> 18) & 0xfffc,
 	.boot_params	= S3C2410_SDRAM_PA + 0x100,
 	.map_io		= otom11_map_io,
 	.init_machine	= otom11_init,

@@ -6,6 +6,7 @@
 #include <linux/mm.h>
 #include <linux/module.h>
 #include <linux/swap.h>
+#include <linux/gfp.h>
 #include <linux/bio.h>
 #include <linux/pagemap.h>
 #include <linux/mempool.h>
@@ -13,8 +14,9 @@
 #include <linux/init.h>
 #include <linux/hash.h>
 #include <linux/highmem.h>
-#include <linux/blktrace_api.h>
 #include <asm/tlbflush.h>
+
+#include <trace/events/block.h>
 
 #define POOL_SIZE	64
 #define ISA_POOL_SIZE	16
@@ -114,8 +116,8 @@ static void copy_to_high_bio_irq(struct bio *to, struct bio *from)
 		 */
 		vfrom = page_address(fromvec->bv_page) + tovec->bv_offset;
 
-		flush_dcache_page(tovec->bv_page);
 		bounce_copy_vec(tovec, vfrom);
+		flush_dcache_page(tovec->bv_page);
 	}
 }
 
@@ -140,26 +142,19 @@ static void bounce_end_io(struct bio *bio, mempool_t *pool, int err)
 		mempool_free(bvec->bv_page, pool);
 	}
 
-	bio_endio(bio_orig, bio_orig->bi_size, err);
+	bio_endio(bio_orig, err);
 	bio_put(bio);
 }
 
-static int bounce_end_io_write(struct bio *bio, unsigned int bytes_done, int err)
+static void bounce_end_io_write(struct bio *bio, int err)
 {
-	if (bio->bi_size)
-		return 1;
-
 	bounce_end_io(bio, page_pool, err);
-	return 0;
 }
 
-static int bounce_end_io_write_isa(struct bio *bio, unsigned int bytes_done, int err)
+static void bounce_end_io_write_isa(struct bio *bio, int err)
 {
-	if (bio->bi_size)
-		return 1;
 
 	bounce_end_io(bio, isa_page_pool, err);
-	return 0;
 }
 
 static void __bounce_end_io_read(struct bio *bio, mempool_t *pool, int err)
@@ -172,25 +167,17 @@ static void __bounce_end_io_read(struct bio *bio, mempool_t *pool, int err)
 	bounce_end_io(bio, pool, err);
 }
 
-static int bounce_end_io_read(struct bio *bio, unsigned int bytes_done, int err)
+static void bounce_end_io_read(struct bio *bio, int err)
 {
-	if (bio->bi_size)
-		return 1;
-
 	__bounce_end_io_read(bio, page_pool, err);
-	return 0;
 }
 
-static int bounce_end_io_read_isa(struct bio *bio, unsigned int bytes_done, int err)
+static void bounce_end_io_read_isa(struct bio *bio, int err)
 {
-	if (bio->bi_size)
-		return 1;
-
 	__bounce_end_io_read(bio, isa_page_pool, err);
-	return 0;
 }
 
-static void __blk_queue_bounce(request_queue_t *q, struct bio **bio_orig,
+static void __blk_queue_bounce(struct request_queue *q, struct bio **bio_orig,
 			       mempool_t *pool)
 {
 	struct page *page;
@@ -204,14 +191,19 @@ static void __blk_queue_bounce(request_queue_t *q, struct bio **bio_orig,
 		/*
 		 * is destination page below bounce pfn?
 		 */
-		if (page_to_pfn(page) <= q->bounce_pfn)
+		if (page_to_pfn(page) <= queue_bounce_pfn(q))
 			continue;
 
 		/*
 		 * irk, bounce it
 		 */
-		if (!bio)
-			bio = bio_alloc(GFP_NOIO, (*bio_orig)->bi_vcnt);
+		if (!bio) {
+			unsigned int cnt = (*bio_orig)->bi_vcnt;
+
+			bio = bio_alloc(GFP_NOIO, cnt);
+			memset(bio->bi_io_vec, 0, cnt * sizeof(struct bio_vec));
+		}
+			
 
 		to = bio->bi_io_vec + i;
 
@@ -237,7 +229,7 @@ static void __blk_queue_bounce(request_queue_t *q, struct bio **bio_orig,
 	if (!bio)
 		return;
 
-	blk_add_trace_bio(q, *bio_orig, BLK_TA_BOUNCE);
+	trace_block_bio_bounce(q, *bio_orig);
 
 	/*
 	 * at least one page was bounced, fill in possible non-highmem
@@ -275,9 +267,15 @@ static void __blk_queue_bounce(request_queue_t *q, struct bio **bio_orig,
 	*bio_orig = bio;
 }
 
-void blk_queue_bounce(request_queue_t *q, struct bio **bio_orig)
+void blk_queue_bounce(struct request_queue *q, struct bio **bio_orig)
 {
 	mempool_t *pool;
+
+	/*
+	 * Data-less bio, nothing to bounce
+	 */
+	if (!bio_has_data(*bio_orig))
+		return;
 
 	/*
 	 * for non-isa bounce case, just check if the bounce pfn is equal
@@ -285,7 +283,7 @@ void blk_queue_bounce(request_queue_t *q, struct bio **bio_orig)
 	 * don't waste time iterating over bio segments
 	 */
 	if (!(q->bounce_gfp & GFP_DMA)) {
-		if (q->bounce_pfn >= blk_max_pfn)
+		if (queue_bounce_pfn(q) >= blk_max_pfn)
 			return;
 		pool = page_pool;
 	} else {

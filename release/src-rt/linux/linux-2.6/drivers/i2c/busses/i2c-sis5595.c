@@ -1,6 +1,4 @@
 /*
-    sis5595.c - Part of lm_sensors, Linux kernel modules for hardware
-              monitoring
     Copyright (c) 1998, 1999  Frodo Looijaard <frodol@dds.nl> and
     Philip Edelbrock <phil@netroedge.com>
 
@@ -62,7 +60,8 @@
 #include <linux/ioport.h>
 #include <linux/init.h>
 #include <linux/i2c.h>
-#include <asm/io.h>
+#include <linux/acpi.h>
+#include <linux/io.h>
 
 static int blacklist[] = {
 	PCI_DEVICE_ID_SI_540,
@@ -129,6 +128,7 @@ MODULE_PARM_DESC(force_addr, "Initialize the base address of the i2c controller"
 
 static struct pci_driver sis5595_driver;
 static unsigned short sis5595_base;
+static struct pci_dev *sis5595_pdev;
 
 static u8 sis5595_read(u8 reg)
 {
@@ -142,7 +142,7 @@ static void sis5595_write(u8 reg, u8 data)
 	outb(data, sis5595_base + SMB_DAT);
 }
 
-static int sis5595_setup(struct pci_dev *SIS5595_dev)
+static int __devinit sis5595_setup(struct pci_dev *SIS5595_dev)
 {
 	u16 a;
 	u8 val;
@@ -173,6 +173,11 @@ static int sis5595_setup(struct pci_dev *SIS5595_dev)
 
 	/* NB: We grab just the two SMBus registers here, but this may still
 	 * interfere with ACPI :-(  */
+	retval = acpi_check_region(sis5595_base + SMB_INDEX, 2,
+				   sis5595_driver.name);
+	if (retval)
+		return retval;
+
 	if (!request_region(sis5595_base + SMB_INDEX, 2,
 			    sis5595_driver.name)) {
 		dev_err(&SIS5595_dev->dev, "SMBus registers 0x%04x-0x%04x already in use!\n",
@@ -235,9 +240,9 @@ static int sis5595_transaction(struct i2c_adapter *adap)
 		sis5595_write(SMB_STS_HI, temp >> 8);
 		if ((temp = sis5595_read(SMB_STS_LO) + (sis5595_read(SMB_STS_HI) << 8)) != 0x00) {
 			dev_dbg(&adap->dev, "Failed! (%02x)\n", temp);
-			return -1;
+			return -EBUSY;
 		} else {
-			dev_dbg(&adap->dev, "Successfull!\n");
+			dev_dbg(&adap->dev, "Successful!\n");
 		}
 	}
 
@@ -251,21 +256,21 @@ static int sis5595_transaction(struct i2c_adapter *adap)
 	} while (!(temp & 0x40) && (timeout++ < MAX_TIMEOUT));
 
 	/* If the SMBus is still busy, we give up */
-	if (timeout >= MAX_TIMEOUT) {
+	if (timeout > MAX_TIMEOUT) {
 		dev_dbg(&adap->dev, "SMBus Timeout!\n");
-		result = -1;
+		result = -ETIMEDOUT;
 	}
 
 	if (temp & 0x10) {
 		dev_dbg(&adap->dev, "Error: Failed bus transaction\n");
-		result = -1;
+		result = -ENXIO;
 	}
 
 	if (temp & 0x20) {
 		dev_err(&adap->dev, "Bus collision! SMBus may be locked until "
 			"next hard reset (or not...)\n");
 		/* Clock stops and slave is stuck in mid-transmission */
-		result = -1;
+		result = -EIO;
 	}
 
 	temp = sis5595_read(SMB_STS_LO) + (sis5595_read(SMB_STS_HI) << 8);
@@ -281,11 +286,13 @@ static int sis5595_transaction(struct i2c_adapter *adap)
 	return result;
 }
 
-/* Return -1 on error. */
+/* Return negative errno on error. */
 static s32 sis5595_access(struct i2c_adapter *adap, u16 addr,
 			  unsigned short flags, char read_write,
 			  u8 command, int size, union i2c_smbus_data *data)
 {
+	int status;
+
 	switch (size) {
 	case I2C_SMBUS_QUICK:
 		sis5595_write(SMB_ADDR, ((addr & 0x7f) << 1) | (read_write & 0x01));
@@ -315,21 +322,16 @@ static s32 sis5595_access(struct i2c_adapter *adap, u16 addr,
 		}
 		size = (size == I2C_SMBUS_PROC_CALL) ? SIS5595_PROC_CALL : SIS5595_WORD_DATA;
 		break;
-/*
-	case I2C_SMBUS_BLOCK_DATA:
-		printk(KERN_WARNING "sis5595.o: Block data not yet implemented!\n");
-		return -1;
-		break;
-*/
 	default:
-		printk(KERN_WARNING "sis5595.o: Unsupported transaction %d\n", size);
-		return -1;
+		dev_warn(&adap->dev, "Unsupported transaction %d\n", size);
+		return -EOPNOTSUPP;
 	}
 
 	sis5595_write(SMB_CTL_LO, ((size & 0x0E)));
 
-	if (sis5595_transaction(adap))
-		return -1;
+	status = sis5595_transaction(adap);
+	if (status)
+		return status;
 
 	if ((size != SIS5595_PROC_CALL) &&
 	    ((read_write == I2C_SMBUS_WRITE) || (size == SIS5595_QUICK)))
@@ -337,9 +339,7 @@ static s32 sis5595_access(struct i2c_adapter *adap, u16 addr,
 
 
 	switch (size) {
-	case SIS5595_BYTE:	/* Where is the result put? I assume here it is in
-				   SMB_DATA but it might just as well be in the
-				   SMB_CMD. No clue in the docs */
+	case SIS5595_BYTE:
 	case SIS5595_BYTE_DATA:
 		data->byte = sis5595_read(SMB_BYTE);
 		break;
@@ -365,12 +365,11 @@ static const struct i2c_algorithm smbus_algorithm = {
 
 static struct i2c_adapter sis5595_adapter = {
 	.owner		= THIS_MODULE,
-	.id		= I2C_HW_SMBUS_SIS5595,
-	.class          = I2C_CLASS_HWMON,
+	.class          = I2C_CLASS_HWMON | I2C_CLASS_SPD,
 	.algo		= &smbus_algorithm,
 };
 
-static struct pci_device_id sis5595_ids[] __devinitdata = {
+static const struct pci_device_id sis5595_ids[] __devinitconst = {
 	{ PCI_DEVICE(PCI_VENDOR_ID_SI, PCI_DEVICE_ID_SI_503) }, 
 	{ 0, }
 };
@@ -379,6 +378,8 @@ MODULE_DEVICE_TABLE (pci, sis5595_ids);
 
 static int __devinit sis5595_probe(struct pci_dev *dev, const struct pci_device_id *id)
 {
+	int err;
+
 	if (sis5595_setup(dev)) {
 		dev_err(&dev->dev, "SIS5595 not detected, module not inserted.\n");
 		return -ENODEV;
@@ -387,22 +388,26 @@ static int __devinit sis5595_probe(struct pci_dev *dev, const struct pci_device_
 	/* set up the sysfs linkage to our parent device */
 	sis5595_adapter.dev.parent = &dev->dev;
 
-	sprintf(sis5595_adapter.name, "SMBus SIS5595 adapter at %04x",
-		sis5595_base + SMB_INDEX);
-	return i2c_add_adapter(&sis5595_adapter);
-}
+	snprintf(sis5595_adapter.name, sizeof(sis5595_adapter.name),
+		 "SMBus SIS5595 adapter at %04x", sis5595_base + SMB_INDEX);
+	err = i2c_add_adapter(&sis5595_adapter);
+	if (err) {
+		release_region(sis5595_base + SMB_INDEX, 2);
+		return err;
+	}
 
-static void __devexit sis5595_remove(struct pci_dev *dev)
-{
-	i2c_del_adapter(&sis5595_adapter);
-	release_region(sis5595_base + SMB_INDEX, 2);
+	/* Always return failure here.  This is to allow other drivers to bind
+	 * to this pci device.  We don't really want to have control over the
+	 * pci device, we only wanted to read as few register values from it.
+	 */
+	sis5595_pdev =  pci_dev_get(dev);
+	return -ENODEV;
 }
 
 static struct pci_driver sis5595_driver = {
 	.name		= "sis5595_smbus",
 	.id_table	= sis5595_ids,
 	.probe		= sis5595_probe,
-	.remove		= __devexit_p(sis5595_remove),
 };
 
 static int __init i2c_sis5595_init(void)
@@ -413,6 +418,12 @@ static int __init i2c_sis5595_init(void)
 static void __exit i2c_sis5595_exit(void)
 {
 	pci_unregister_driver(&sis5595_driver);
+	if (sis5595_pdev) {
+		i2c_del_adapter(&sis5595_adapter);
+		release_region(sis5595_base + SMB_INDEX, 2);
+		pci_dev_put(sis5595_pdev);
+		sis5595_pdev = NULL;
+	}
 }
 
 MODULE_AUTHOR("Frodo Looijaard <frodol@dds.nl>");

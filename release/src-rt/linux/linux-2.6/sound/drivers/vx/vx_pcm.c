@@ -45,64 +45,13 @@
  *  - scheduled action on the stream.
  */
 
-#include <sound/driver.h>
 #include <linux/slab.h>
-#include <linux/vmalloc.h>
 #include <linux/delay.h>
 #include <sound/core.h>
 #include <sound/asoundef.h>
 #include <sound/pcm.h>
 #include <sound/vx_core.h>
 #include "vx_cmd.h"
-
-
-/*
- * we use a vmalloc'ed (sg-)buffer
- */
-
-/* get the physical page pointer on the given offset */
-static struct page *snd_pcm_get_vmalloc_page(struct snd_pcm_substream *subs,
-					     unsigned long offset)
-{
-	void *pageptr = subs->runtime->dma_area + offset;
-	return vmalloc_to_page(pageptr);
-}
-
-/*
- * allocate a buffer via vmalloc_32().
- * called from hw_params
- * NOTE: this may be called not only once per pcm open!
- */
-static int snd_pcm_alloc_vmalloc_buffer(struct snd_pcm_substream *subs, size_t size)
-{
-	struct snd_pcm_runtime *runtime = subs->runtime;
-	if (runtime->dma_area) {
-		/* already allocated */
-		if (runtime->dma_bytes >= size)
-			return 0; /* already enough large */
-		vfree(runtime->dma_area);
-	}
-	runtime->dma_area = vmalloc_32(size);
-	if (! runtime->dma_area)
-		return -ENOMEM;
-	memset(runtime->dma_area, 0, size);
-	runtime->dma_bytes = size;
-	return 1; /* changed */
-}
-
-/*
- * free the buffer.
- * called from hw_free callback
- * NOTE: this may be called not only once per pcm open!
- */
-static int snd_pcm_free_vmalloc_buffer(struct snd_pcm_substream *subs)
-{
-	struct snd_pcm_runtime *runtime = subs->runtime;
-
-	vfree(runtime->dma_area);
-	runtime->dma_area = NULL;
-	return 0;
-}
 
 
 /*
@@ -588,7 +537,8 @@ static int vx_pcm_playback_open(struct snd_pcm_substream *subs)
 		return -EBUSY;
 
 	audio = subs->pcm->device * 2;
-	snd_assert(audio < chip->audio_outs, return -EINVAL);
+	if (snd_BUG_ON(audio >= chip->audio_outs))
+		return -EINVAL;
 	
 	/* playback pipe may have been already allocated for monitoring */
 	pipe = chip->playback_pipes[audio];
@@ -823,7 +773,7 @@ static int vx_pcm_trigger(struct snd_pcm_substream *subs, int cmd)
 		 * we trigger the pipe using tasklet, so that the interrupts are
 		 * issued surely after the trigger is completed.
 		 */ 
-		tasklet_hi_schedule(&pipe->start_tq);
+		tasklet_schedule(&pipe->start_tq);
 		chip->pcm_running++;
 		pipe->running = 1;
 		break;
@@ -865,7 +815,8 @@ static snd_pcm_uframes_t vx_pcm_playback_pointer(struct snd_pcm_substream *subs)
 static int vx_pcm_hw_params(struct snd_pcm_substream *subs,
 				     struct snd_pcm_hw_params *hw_params)
 {
-	return snd_pcm_alloc_vmalloc_buffer(subs, params_buffer_bytes(hw_params));
+	return snd_pcm_lib_alloc_vmalloc_32_buffer
+					(subs, params_buffer_bytes(hw_params));
 }
 
 /*
@@ -873,7 +824,7 @@ static int vx_pcm_hw_params(struct snd_pcm_substream *subs,
  */
 static int vx_pcm_hw_free(struct snd_pcm_substream *subs)
 {
-	return snd_pcm_free_vmalloc_buffer(subs);
+	return snd_pcm_lib_free_vmalloc_buffer(subs);
 }
 
 /*
@@ -953,7 +904,8 @@ static struct snd_pcm_ops vx_pcm_playback_ops = {
 	.prepare =	vx_pcm_prepare,
 	.trigger =	vx_pcm_trigger,
 	.pointer =	vx_pcm_playback_pointer,
-	.page =		snd_pcm_get_vmalloc_page,
+	.page =		snd_pcm_lib_get_vmalloc_page,
+	.mmap =		snd_pcm_lib_mmap_vmalloc,
 };
 
 
@@ -997,7 +949,8 @@ static int vx_pcm_capture_open(struct snd_pcm_substream *subs)
 		return -EBUSY;
 
 	audio = subs->pcm->device * 2;
-	snd_assert(audio < chip->audio_ins, return -EINVAL);
+	if (snd_BUG_ON(audio >= chip->audio_ins))
+		return -EINVAL;
 	err = vx_alloc_pipe(chip, 1, audio, 2, &pipe);
 	if (err < 0)
 		return err;
@@ -1172,7 +1125,8 @@ static struct snd_pcm_ops vx_pcm_capture_ops = {
 	.prepare =	vx_pcm_prepare,
 	.trigger =	vx_pcm_trigger,
 	.pointer =	vx_pcm_capture_pointer,
-	.page =		snd_pcm_get_vmalloc_page,
+	.page =		snd_pcm_lib_get_vmalloc_page,
+	.mmap =		snd_pcm_lib_mmap_vmalloc,
 };
 
 
@@ -1215,7 +1169,8 @@ void vx_pcm_update_intr(struct vx_core *chip, unsigned int events)
 			}
 			if (capture)
 				continue;
-			snd_assert(p >= 0 && (unsigned int)p < chip->audio_outs,);
+			if (snd_BUG_ON(p < 0 || p >= chip->audio_outs))
+				continue;
 			pipe = chip->playback_pipes[p];
 			if (pipe && pipe->substream) {
 				vx_pcm_playback_update(chip, pipe->substream, pipe);
@@ -1234,7 +1189,7 @@ void vx_pcm_update_intr(struct vx_core *chip, unsigned int events)
 
 
 /*
- * vx_init_audio_io - check the availabe audio i/o and allocate pipe arrays
+ * vx_init_audio_io - check the available audio i/o and allocate pipe arrays
  */
 static int vx_init_audio_io(struct vx_core *chip)
 {

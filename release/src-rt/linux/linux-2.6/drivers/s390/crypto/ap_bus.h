@@ -5,6 +5,7 @@
  * Author(s): Cornelia Huck <cornelia.huck@de.ibm.com>
  *	      Martin Schwidefsky <schwidefsky@de.ibm.com>
  *	      Ralph Wuerthner <rwuerthn@de.ibm.com>
+ *	      Felix Beck <felix.beck@de.ibm.com>
  *
  * Adjunct processor bus header file.
  *
@@ -33,6 +34,7 @@
 #define AP_DEVICES 64		/* Number of AP devices. */
 #define AP_DOMAINS 16		/* Number of AP domains. */
 #define AP_MAX_RESET 90		/* Maximum number of resets. */
+#define AP_RESET_TIMEOUT (HZ/2)	/* Time in ticks for reset timeouts. */
 #define AP_CONFIG_TIME 30	/* Time in seconds between AP bus rescans. */
 #define AP_POLL_TIME 1		/* Time in ticks between receive polls. */
 
@@ -49,6 +51,15 @@ typedef unsigned int ap_qid_t;
 #define AP_QID_QUEUE(_qid) ((_qid) & 15)
 
 /**
+ * structy ap_queue_status - Holds the AP queue status.
+ * @queue_empty: Shows if queue is empty
+ * @replies_waiting: Waiting replies
+ * @queue_full: Is 1 if the queue is full
+ * @pad: A 4 bit pad
+ * @int_enabled: Shows if interrupts are enabled for the AP
+ * @response_conde: Holds the 8 bit response code
+ * @pad2: A 16 bit pad
+ *
  * The ap queue status word is returned by all three AP functions
  * (PQAP, NQAP and DQAP).  There's a set of flags in the first
  * byte, followed by a 1 byte response code.
@@ -57,7 +68,8 @@ struct ap_queue_status {
 	unsigned int queue_empty	: 1;
 	unsigned int replies_waiting	: 1;
 	unsigned int queue_full		: 1;
-	unsigned int pad1		: 5;
+	unsigned int pad1		: 4;
+	unsigned int int_enabled	: 1;
 	unsigned int response_code	: 8;
 	unsigned int pad2		: 16;
 };
@@ -68,13 +80,16 @@ struct ap_queue_status {
 #define AP_RESPONSE_DECONFIGURED	0x03
 #define AP_RESPONSE_CHECKSTOPPED	0x04
 #define AP_RESPONSE_BUSY		0x05
+#define AP_RESPONSE_INVALID_ADDRESS	0x06
+#define AP_RESPONSE_OTHERWISE_CHANGED	0x07
 #define AP_RESPONSE_Q_FULL		0x10
 #define AP_RESPONSE_NO_PENDING_REPLY	0x10
 #define AP_RESPONSE_INDEX_TOO_BIG	0x11
 #define AP_RESPONSE_NO_FIRST_PART	0x13
 #define AP_RESPONSE_MESSAGE_TOO_BIG	0x15
+#define AP_RESPONSE_REQ_FAC_NOT_INST	0x16
 
-/**
+/*
  * Known device types
  */
 #define AP_DEVICE_TYPE_PCICC	3
@@ -82,6 +97,15 @@ struct ap_queue_status {
 #define AP_DEVICE_TYPE_PCIXCC	5
 #define AP_DEVICE_TYPE_CEX2A	6
 #define AP_DEVICE_TYPE_CEX2C	7
+#define AP_DEVICE_TYPE_CEX3A	8
+#define AP_DEVICE_TYPE_CEX3C	9
+
+/*
+ * AP reset flag states
+ */
+#define AP_RESET_IGNORE	0	/* request timeout will be ignored */
+#define AP_RESET_ARMED	1	/* request timeout timer is active */
+#define AP_RESET_DO	2	/* AP reset required */
 
 struct ap_device;
 struct ap_message;
@@ -95,6 +119,7 @@ struct ap_driver {
 	/* receive is called from tasklet context */
 	void (*receive)(struct ap_device *, struct ap_message *,
 			struct ap_message *);
+	int request_timeout;		/* request timeout in jiffies */
 };
 
 #define to_ap_drv(x) container_of((x), struct ap_driver, driver)
@@ -112,6 +137,8 @@ struct ap_device {
 	int queue_depth;		/* AP queue depth.*/
 	int device_type;		/* AP device type. */
 	int unregistered;		/* marks AP device as unregistered */
+	struct timer_list timeout;	/* Timer for request timeouts. */
+	int reset;			/* Reset required after req. timeout. */
 
 	int queue_count;		/* # messages currently on AP queue. */
 
@@ -135,6 +162,7 @@ struct ap_message {
 	size_t length;			/* Message length. */
 
 	void *private;			/* ap driver private pointer. */
+	unsigned int special:1;		/* Used for special commands. */
 };
 
 #define AP_DEVICE(dt)					\
@@ -142,6 +170,18 @@ struct ap_message {
 	.match_flags=AP_DEVICE_ID_MATCH_DEVICE_TYPE,
 
 /**
+ * ap_init_message() - Initialize ap_message.
+ * Initialize a message before using. Otherwise this might result in
+ * unexpected behaviour.
+ */
+static inline void ap_init_message(struct ap_message *ap_msg)
+{
+	ap_msg->psmid = 0;
+	ap_msg->length = 0;
+	ap_msg->special = 0;
+}
+
+/*
  * Note: don't use ap_send/ap_recv after using ap_queue_message
  * for the first time. Otherwise the ap message queue will get
  * confused.
@@ -155,5 +195,7 @@ void ap_flush_queue(struct ap_device *ap_dev);
 
 int ap_module_init(void);
 void ap_module_exit(void);
+
+int ap_4096_commands_available(ap_qid_t qid);
 
 #endif /* _AP_BUS_H_ */

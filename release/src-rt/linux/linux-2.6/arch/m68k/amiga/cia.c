@@ -84,7 +84,7 @@ unsigned char cia_able_irq(struct ciabase *base, unsigned char mask)
 
 static irqreturn_t cia_handler(int irq, void *dev_id)
 {
-	struct ciabase *base = (struct ciabase *)dev_id;
+	struct ciabase *base = dev_id;
 	int mach_irq;
 	unsigned char ints;
 
@@ -176,5 +176,7 @@ void __init cia_init_IRQ(struct ciabase *base)
 	/* override auto int and install CIA handler */
 	m68k_setup_irq_controller(&auto_irq_controller, base->handler_irq, 1);
 	m68k_irq_startup(base->handler_irq);
-	request_irq(base->handler_irq, cia_handler, IRQF_SHARED, base->name, base);
+	if (request_irq(base->handler_irq, cia_handler, IRQF_SHARED,
+			base->name, base))
+		pr_err("Couldn't register %s interrupt\n", base->name);
 }

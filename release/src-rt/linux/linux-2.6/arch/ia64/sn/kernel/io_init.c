@@ -6,6 +6,7 @@
  * Copyright (C) 1992 - 1997, 2000-2006 Silicon Graphics, Inc. All rights reserved.
  */
 
+#include <linux/slab.h>
 #include <asm/sn/types.h>
 #include <asm/sn/addrs.h>
 #include <asm/sn/io.h>
@@ -128,8 +129,7 @@ sn_legacy_pci_window_fixup(struct pci_controller *controller,
 {
 		controller->window = kcalloc(2, sizeof(struct pci_window),
 					     GFP_KERNEL);
-		if (controller->window == NULL)
-			BUG();
+		BUG_ON(controller->window == NULL);
 		controller->window[0].offset = legacy_io;
 		controller->window[0].resource.name = "legacy_io";
 		controller->window[0].resource.flags = IORESOURCE_IO;
@@ -168,8 +168,7 @@ sn_pci_window_fixup(struct pci_dev *dev, unsigned int count,
 	idx = controller->windows;
 	new_count = controller->windows + count;
 	new_window = kcalloc(new_count, sizeof(struct pci_window), GFP_KERNEL);
-	if (new_window == NULL)
-		BUG();
+	BUG_ON(new_window == NULL);
 	if (controller->window) {
 		memcpy(new_window, controller->window,
 		       sizeof(struct pci_window) * controller->windows);
@@ -209,11 +208,11 @@ sn_io_slot_fixup(struct pci_dev *dev)
 
 	pcidev_info = kzalloc(sizeof(struct pcidev_info), GFP_KERNEL);
 	if (!pcidev_info)
-		panic("%s: Unable to alloc memory for pcidev_info", __FUNCTION__);
+		panic("%s: Unable to alloc memory for pcidev_info", __func__);
 
 	sn_irq_info = kzalloc(sizeof(struct sn_irq_info), GFP_KERNEL);
 	if (!sn_irq_info)
-		panic("%s: Unable to alloc memory for sn_irq_info", __FUNCTION__);
+		panic("%s: Unable to alloc memory for sn_irq_info", __func__);
 
 	/* Call to retrieve pci device information needed by kernel. */
 	status = sal_get_pcidev_info((u64) pci_domain_nr(dev),
@@ -222,8 +221,7 @@ sn_io_slot_fixup(struct pci_dev *dev)
 		(u64) __pa(pcidev_info),
 		(u64) __pa(sn_irq_info));
 
-	if (status)
-		BUG(); /* Cannot get platform pci device information */
+	BUG_ON(status); /* Cannot get platform pci device information */
 
 
 	/* Copy over PIO Mapped Addresses */
@@ -259,9 +257,23 @@ sn_io_slot_fixup(struct pci_dev *dev)
 			insert_resource(&ioport_resource, &dev->resource[idx]);
 		else
 			insert_resource(&iomem_resource, &dev->resource[idx]);
-		/* If ROM, mark as shadowed in PROM */
-		if (idx == PCI_ROM_RESOURCE)
-			dev->resource[idx].flags |= IORESOURCE_ROM_BIOS_COPY;
+		/*
+		 * If ROM, set the actual ROM image size, and mark as
+		 * shadowed in PROM.
+		 */
+		if (idx == PCI_ROM_RESOURCE) {
+			size_t image_size;
+			void __iomem *rom;
+
+			rom = ioremap(pci_resource_start(dev, PCI_ROM_RESOURCE),
+				      size + 1);
+			image_size = pci_get_rom_size(dev, rom, size + 1);
+			dev->resource[PCI_ROM_RESOURCE].end =
+				dev->resource[PCI_ROM_RESOURCE].start +
+				image_size - 1;
+			dev->resource[PCI_ROM_RESOURCE].flags |=
+						 IORESOURCE_ROM_BIOS_COPY;
+		}
 	}
 	/* Create a pci_window in the pci_controller struct for
 	 * each device resource.
@@ -278,7 +290,7 @@ EXPORT_SYMBOL(sn_io_slot_fixup);
  * sn_pci_controller_fixup() - This routine sets up a bus's resources
  *			       consistent with the Linux PCI abstraction layer.
  */
-static void
+static void __init
 sn_pci_controller_fixup(int segment, int busnum, struct pci_bus *bus)
 {
 	s64 status = 0;
@@ -293,8 +305,7 @@ sn_pci_controller_fixup(int segment, int busnum, struct pci_bus *bus)
 	prom_bussoft_ptr = __va(prom_bussoft_ptr);
 
 	controller = kzalloc(sizeof(*controller), GFP_KERNEL);
-	if (!controller)
-		BUG();
+	BUG_ON(!controller);
 	controller->segment = segment;
 
 	/*

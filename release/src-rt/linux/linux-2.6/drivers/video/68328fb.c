@@ -32,7 +32,6 @@
 #include <linux/errno.h>
 #include <linux/string.h>
 #include <linux/mm.h>
-#include <linux/slab.h>
 #include <linux/vmalloc.h>
 #include <linux/delay.h>
 #include <linux/interrupt.h>
@@ -60,7 +59,7 @@ static u_long videomemory;
 static u_long videomemorysize;
 
 static struct fb_info fb_info;
-static u32 mc68x328fb_pseudo_palette[17];
+static u32 mc68x328fb_pseudo_palette[16];
 
 static struct fb_var_screeninfo mc68x328fb_default __initdata = {
 	.red =		{ 0, 8, 0 },
@@ -308,7 +307,7 @@ static int mc68x328fb_setcolreg(u_int regno, u_int red, u_int green, u_int blue,
 	 * Pseudocolor:
 	 *    uses offset = 0 && length = RAMDAC register width.
 	 *    var->{color}.offset is 0
-	 *    var->{color}.length contains widht of DAC
+	 *    var->{color}.length contains width of DAC
 	 *    cmap is not used
 	 *    RAMDAC[X] is programmed to (red, green, blue)
 	 * Truecolor:
@@ -471,9 +470,11 @@ int __init mc68x328fb_init(void)
 	fb_info.pseudo_palette = &mc68x328fb_pseudo_palette;
 	fb_info.flags = FBINFO_DEFAULT | FBINFO_HWACCEL_YPAN;
 
-	fb_alloc_cmap(&fb_info.cmap, 256, 0);
+	if (fb_alloc_cmap(&fb_info.cmap, 256, 0))
+		return -ENOMEM;
 
 	if (register_framebuffer(&fb_info) < 0) {
+		fb_dealloc_cmap(&fb_info.cmap);
 		return -EINVAL;
 	}
 
@@ -494,6 +495,7 @@ module_init(mc68x328fb_init);
 static void __exit mc68x328fb_cleanup(void)
 {
 	unregister_framebuffer(&fb_info);
+	fb_dealloc_cmap(&fb_info.cmap);
 }
 
 module_exit(mc68x328fb_cleanup);

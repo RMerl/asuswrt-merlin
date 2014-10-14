@@ -2,7 +2,7 @@
  * Linux PPP over L2TP (PPPoL2TP) Socket Implementation (RFC 2661)
  *
  * This file supplies definitions required by the PPP over L2TP driver
- * (pppol2tp.c).  All version information wrt this file is located in pppol2tp.c
+ * (l2tp_ppp.c).  All version information wrt this file is located in l2tp_ppp.c
  *
  * License:
  *		This program is free software; you can redistribute it and/or
@@ -15,16 +15,17 @@
 #ifndef __LINUX_IF_PPPOL2TP_H
 #define __LINUX_IF_PPPOL2TP_H
 
-#include <asm/types.h>
+#include <linux/types.h>
 
 #ifdef __KERNEL__
 #include <linux/in.h>
 #endif
 
-/* Structure used to bind() the socket to a particular socket & tunnel */
-struct pppol2tp_addr
-{
-	pid_t	pid;			/* pid that owns the fd.
+/* Structure used to connect() the socket to a particular tunnel UDP
+ * socket.
+ */
+struct pppol2tp_addr {
+	__kernel_pid_t	pid;		/* pid that owns the fd.
 					 * 0 => current */
 	int	fd;			/* FD of UDP socket to use */
 
@@ -32,6 +33,20 @@ struct pppol2tp_addr
 
 	__u16 s_tunnel, s_session;	/* For matching incoming packets */
 	__u16 d_tunnel, d_session;	/* For sending outgoing packets */
+};
+
+/* The L2TPv3 protocol changes tunnel and session ids from 16 to 32
+ * bits. So we need a different sockaddr structure.
+ */
+struct pppol2tpv3_addr {
+	pid_t	pid;			/* pid that owns the fd.
+					 * 0 => current */
+	int	fd;			/* FD of UDP or IP socket to use */
+
+	struct sockaddr_in addr;	/* IP address and port to send to */
+
+	__u32 s_tunnel, s_session;	/* For matching incoming packets */
+	__u32 d_tunnel, d_session;	/* For sending outgoing packets */
 };
 
 /* Socket options:

@@ -38,7 +38,7 @@ static int dccp_write_timeout(struct sock *sk)
 
 	if (sk->sk_state == DCCP_REQUESTING || sk->sk_state == DCCP_PARTOPEN) {
 		if (icsk->icsk_retransmits != 0)
-			dst_negative_advice(&sk->sk_dst_cache);
+			dst_negative_advice(sk);
 		retry_until = icsk->icsk_syn_retries ?
 			    : sysctl_dccp_request_retries;
 	} else {
@@ -63,7 +63,7 @@ static int dccp_write_timeout(struct sock *sk)
 			   Golden words :-).
 		   */
 
-			dst_negative_advice(&sk->sk_dst_cache);
+			dst_negative_advice(sk);
 		}
 
 		retry_until = sysctl_dccp_retries2;
@@ -87,33 +87,12 @@ static void dccp_retransmit_timer(struct sock *sk)
 {
 	struct inet_connection_sock *icsk = inet_csk(sk);
 
-	/* retransmit timer is used for feature negotiation throughout
-	 * connection.  In this case, no packet is re-transmitted, but rather an
-	 * ack is generated and pending changes are placed into its options.
-	 */
-	if (sk->sk_send_head == NULL) {
-		dccp_pr_debug("feat negotiation retransmit timeout %p\n", sk);
-		if (sk->sk_state == DCCP_OPEN)
-			dccp_send_ack(sk);
-		goto backoff;
-	}
-
-	/*
-	 * sk->sk_send_head has to have one skb with
-	 * DCCP_SKB_CB(skb)->dccpd_type set to one of the retransmittable DCCP
-	 * packet types. The only packets eligible for retransmission are:
-	 *	-- Requests in client-REQUEST  state (sec. 8.1.1)
-	 *	-- Acks     in client-PARTOPEN state (sec. 8.1.5)
-	 *	-- CloseReq in server-CLOSEREQ state (sec. 8.3)
-	 *	-- Close    in   node-CLOSING  state (sec. 8.3)                */
-	BUG_TRAP(sk->sk_send_head != NULL);
-
 	/*
 	 * More than than 4MSL (8 minutes) has passed, a RESET(aborted) was
 	 * sent, no need to retransmit, this sock is dead.
 	 */
 	if (dccp_write_timeout(sk))
-		goto out;
+		return;
 
 	/*
 	 * We want to know the number of packets retransmitted, not the
@@ -122,30 +101,27 @@ static void dccp_retransmit_timer(struct sock *sk)
 	if (icsk->icsk_retransmits == 0)
 		DCCP_INC_STATS_BH(DCCP_MIB_TIMEOUTS);
 
-	if (dccp_retransmit_skb(sk, sk->sk_send_head) < 0) {
+	if (dccp_retransmit_skb(sk) != 0) {
 		/*
 		 * Retransmission failed because of local congestion,
 		 * do not backoff.
 		 */
-		if (icsk->icsk_retransmits == 0)
+		if (--icsk->icsk_retransmits == 0)
 			icsk->icsk_retransmits = 1;
 		inet_csk_reset_xmit_timer(sk, ICSK_TIME_RETRANS,
 					  min(icsk->icsk_rto,
 					      TCP_RESOURCE_PROBE_INTERVAL),
 					  DCCP_RTO_MAX);
-		goto out;
+		return;
 	}
 
-backoff:
 	icsk->icsk_backoff++;
-	icsk->icsk_retransmits++;
 
 	icsk->icsk_rto = min(icsk->icsk_rto << 1, DCCP_RTO_MAX);
 	inet_csk_reset_xmit_timer(sk, ICSK_TIME_RETRANS, icsk->icsk_rto,
 				  DCCP_RTO_MAX);
 	if (icsk->icsk_retransmits > sysctl_dccp_retries1)
 		__sk_dst_reset(sk);
-out:;
 }
 
 static void dccp_write_timer(unsigned long data)
@@ -224,7 +200,7 @@ static void dccp_delack_timer(unsigned long data)
 	if (sock_owned_by_user(sk)) {
 		/* Try again later. */
 		icsk->icsk_ack.blocked = 1;
-		NET_INC_STATS_BH(LINUX_MIB_DELAYEDACKLOCKED);
+		NET_INC_STATS_BH(sock_net(sk), LINUX_MIB_DELAYEDACKLOCKED);
 		sk_reset_timer(sk, &icsk->icsk_delack_timer,
 			       jiffies + TCP_DELACK_MIN);
 		goto out;
@@ -254,40 +230,63 @@ static void dccp_delack_timer(unsigned long data)
 			icsk->icsk_ack.ato = TCP_ATO_MIN;
 		}
 		dccp_send_ack(sk);
-		NET_INC_STATS_BH(LINUX_MIB_DELAYEDACKS);
+		NET_INC_STATS_BH(sock_net(sk), LINUX_MIB_DELAYEDACKS);
 	}
 out:
 	bh_unlock_sock(sk);
 	sock_put(sk);
 }
 
-/* Transmit-delay timer: used by the CCIDs to delay actual send time */
-static void dccp_write_xmit_timer(unsigned long data)
+/**
+ * dccp_write_xmitlet  -  Workhorse for CCID packet dequeueing interface
+ * See the comments above %ccid_dequeueing_decision for supported modes.
+ */
+static void dccp_write_xmitlet(unsigned long data)
 {
 	struct sock *sk = (struct sock *)data;
-	struct dccp_sock *dp = dccp_sk(sk);
 
 	bh_lock_sock(sk);
 	if (sock_owned_by_user(sk))
-		sk_reset_timer(sk, &dp->dccps_xmit_timer, jiffies+1);
+		sk_reset_timer(sk, &dccp_sk(sk)->dccps_xmit_timer, jiffies + 1);
 	else
-		dccp_write_xmit(sk, 0);
+		dccp_write_xmit(sk);
 	bh_unlock_sock(sk);
-	sock_put(sk);
 }
 
-static void dccp_init_write_xmit_timer(struct sock *sk)
+static void dccp_write_xmit_timer(unsigned long data)
 {
-	struct dccp_sock *dp = dccp_sk(sk);
-
-	init_timer(&dp->dccps_xmit_timer);
-	dp->dccps_xmit_timer.data = (unsigned long)sk;
-	dp->dccps_xmit_timer.function = dccp_write_xmit_timer;
+	dccp_write_xmitlet(data);
+	sock_put((struct sock *)data);
 }
 
 void dccp_init_xmit_timers(struct sock *sk)
 {
-	dccp_init_write_xmit_timer(sk);
+	struct dccp_sock *dp = dccp_sk(sk);
+
+	tasklet_init(&dp->dccps_xmitlet, dccp_write_xmitlet, (unsigned long)sk);
+	setup_timer(&dp->dccps_xmit_timer, dccp_write_xmit_timer,
+							     (unsigned long)sk);
 	inet_csk_init_xmit_timers(sk, &dccp_write_timer, &dccp_delack_timer,
 				  &dccp_keepalive_timer);
+}
+
+static ktime_t dccp_timestamp_seed;
+/**
+ * dccp_timestamp  -  10s of microseconds time source
+ * Returns the number of 10s of microseconds since loading DCCP. This is native
+ * DCCP time difference format (RFC 4340, sec. 13).
+ * Please note: This will wrap around about circa every 11.9 hours.
+ */
+u32 dccp_timestamp(void)
+{
+	s64 delta = ktime_us_delta(ktime_get_real(), dccp_timestamp_seed);
+
+	do_div(delta, 10);
+	return delta;
+}
+EXPORT_SYMBOL_GPL(dccp_timestamp);
+
+void __init dccp_timestamping_init(void)
+{
+	dccp_timestamp_seed = ktime_get_real();
 }

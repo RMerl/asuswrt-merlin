@@ -15,11 +15,12 @@
 #include <linux/init.h>
 #include <linux/device.h>
 #include <linux/string.h>
+#include <sound/ac97_codec.h>
 
 /*
  * Let drivers decide whether they want to support given codec from their
- * probe method.  Drivers have direct access to the struct snd_ac97 structure and may
- * decide based on the id field amongst other things.
+ * probe method. Drivers have direct access to the struct snd_ac97
+ * structure and may  decide based on the id field amongst other things.
  */
 static int ac97_bus_match(struct device *dev, struct device_driver *drv)
 {

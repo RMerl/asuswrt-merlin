@@ -23,7 +23,8 @@
 #include <linux/kernel.h>
 #include <linux/platform_device.h>
 #include <linux/hw_random.h>
-#include <asm/of_platform.h>
+#include <linux/delay.h>
+#include <linux/of_platform.h>
 #include <asm/io.h>
 
 #define SDCRNG_CTL_REG			0x00
@@ -41,12 +42,19 @@
 
 #define MODULE_NAME "pasemi_rng"
 
-static int pasemi_rng_data_present(struct hwrng *rng)
+static int pasemi_rng_data_present(struct hwrng *rng, int wait)
 {
 	void __iomem *rng_regs = (void __iomem *)rng->priv;
+	int data, i;
 
-	return (in_le32(rng_regs + SDCRNG_CTL_REG)
-		& SDCRNG_CTL_FVLD_M) ? 1 : 0;
+	for (i = 0; i < 20; i++) {
+		data = (in_le32(rng_regs + SDCRNG_CTL_REG)
+			& SDCRNG_CTL_FVLD_M) ? 1 : 0;
+		if (data || !wait)
+			break;
+		udelay(10);
+	}
+	return data;
 }
 
 static int pasemi_rng_data_read(struct hwrng *rng, u32 *data)
@@ -86,11 +94,10 @@ static struct hwrng pasemi_rng = {
 	.data_read	= pasemi_rng_data_read,
 };
 
-static int __devinit rng_probe(struct of_device *ofdev,
-			       const struct of_device_id *match)
+static int __devinit rng_probe(struct platform_device *ofdev)
 {
 	void __iomem *rng_regs;
-	struct device_node *rng_np = ofdev->node;
+	struct device_node *rng_np = ofdev->dev.of_node;
 	struct resource res;
 	int err = 0;
 
@@ -115,7 +122,7 @@ static int __devinit rng_probe(struct of_device *ofdev,
 	return err;
 }
 
-static int __devexit rng_remove(struct of_device *dev)
+static int __devexit rng_remove(struct platform_device *dev)
 {
 	void __iomem *rng_regs = (void __iomem *)pasemi_rng.priv;
 
@@ -126,28 +133,30 @@ static int __devexit rng_remove(struct of_device *dev)
 }
 
 static struct of_device_id rng_match[] = {
-	{
-		.compatible      = "1682m-rng",
-	},
-	{},
+	{ .compatible      = "1682m-rng", },
+	{ .compatible      = "pasemi,pwrficient-rng", },
+	{ },
 };
 
-static struct of_platform_driver rng_driver = {
-	.name		= "pasemi-rng",
-	.match_table	= rng_match,
+static struct platform_driver rng_driver = {
+	.driver = {
+		.name = "pasemi-rng",
+		.owner = THIS_MODULE,
+		.of_match_table = rng_match,
+	},
 	.probe		= rng_probe,
 	.remove		= rng_remove,
 };
 
 static int __init rng_init(void)
 {
-	return of_register_platform_driver(&rng_driver);
+	return platform_driver_register(&rng_driver);
 }
 module_init(rng_init);
 
 static void __exit rng_exit(void)
 {
-	of_unregister_platform_driver(&rng_driver);
+	platform_driver_unregister(&rng_driver);
 }
 module_exit(rng_exit);
 

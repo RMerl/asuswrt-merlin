@@ -6,7 +6,7 @@
  *    "TCP Veno: TCP Enhancement for Transmission over Wireless Access Networks."
  *    IEEE Journal on Selected Areas in Communication,
  *    Feb. 2003.
- * 	See http://www.ntu.edu.sg/home5/ZHOU0022/papers/CPFu03a.pdf
+ * 	See http://www.ie.cuhk.edu.hk/fileadmin/staff_upload/soung/Journal/J3.pdf
  */
 
 #include <linux/mm.h>
@@ -69,16 +69,16 @@ static void tcp_veno_init(struct sock *sk)
 }
 
 /* Do rtt sampling needed for Veno. */
-static void tcp_veno_pkts_acked(struct sock *sk, u32 cnt, ktime_t last)
+static void tcp_veno_pkts_acked(struct sock *sk, u32 cnt, s32 rtt_us)
 {
 	struct veno *veno = inet_csk_ca(sk);
 	u32 vrtt;
 
-	if (ktime_equal(last, net_invalid_timestamp()))
+	if (rtt_us < 0)
 		return;
 
 	/* Never allow zero rtt or baseRTT */
-	vrtt = ktime_to_us(net_timedelta(last)) + 1;
+	vrtt = rtt_us + 1;
 
 	/* Filter to find propagation delay: */
 	if (vrtt < veno->basertt)
@@ -114,14 +114,15 @@ static void tcp_veno_cwnd_event(struct sock *sk, enum tcp_ca_event event)
 		tcp_veno_init(sk);
 }
 
-static void tcp_veno_cong_avoid(struct sock *sk, u32 ack,
-				u32 seq_rtt, u32 in_flight, int flag)
+static void tcp_veno_cong_avoid(struct sock *sk, u32 ack, u32 in_flight)
 {
 	struct tcp_sock *tp = tcp_sk(sk);
 	struct veno *veno = inet_csk_ca(sk);
 
-	if (!veno->doing_veno_now)
-		return tcp_reno_cong_avoid(sk, ack, seq_rtt, in_flight, flag);
+	if (!veno->doing_veno_now) {
+		tcp_reno_cong_avoid(sk, ack, in_flight);
+		return;
+	}
 
 	/* limited by applications */
 	if (!tcp_is_cwnd_limited(sk, in_flight))
@@ -132,9 +133,10 @@ static void tcp_veno_cong_avoid(struct sock *sk, u32 ack,
 		/* We don't have enough rtt samples to do the Veno
 		 * calculation, so we'll behave like Reno.
 		 */
-		tcp_reno_cong_avoid(sk, ack, seq_rtt, in_flight, flag);
+		tcp_reno_cong_avoid(sk, ack, in_flight);
 	} else {
-		u32 rtt, target_cwnd;
+		u64 target_cwnd;
+		u32 rtt;
 
 		/* We have enough rtt samples, so, using the Veno
 		 * algorithm, we determine the state of the network.
@@ -142,8 +144,9 @@ static void tcp_veno_cong_avoid(struct sock *sk, u32 ack,
 
 		rtt = veno->minrtt;
 
-		target_cwnd = ((tp->snd_cwnd * veno->basertt)
-			       << V_PARAM_SHIFT) / rtt;
+		target_cwnd = (tp->snd_cwnd * veno->basertt);
+		target_cwnd <<= V_PARAM_SHIFT;
+		do_div(target_cwnd, rtt);
 
 		veno->diff = (tp->snd_cwnd << V_PARAM_SHIFT) - target_cwnd;
 
@@ -156,20 +159,14 @@ static void tcp_veno_cong_avoid(struct sock *sk, u32 ack,
 				/* In the "non-congestive state", increase cwnd
 				 *  every rtt.
 				 */
-				if (tp->snd_cwnd_cnt >= tp->snd_cwnd) {
-					if (tp->snd_cwnd < tp->snd_cwnd_clamp)
-						tp->snd_cwnd++;
-					tp->snd_cwnd_cnt = 0;
-				} else
-					tp->snd_cwnd_cnt++;
+				tcp_cong_avoid_ai(tp, tp->snd_cwnd);
 			} else {
 				/* In the "congestive state", increase cwnd
 				 * every other rtt.
 				 */
 				if (tp->snd_cwnd_cnt >= tp->snd_cwnd) {
-					if (veno->inc
-					    && tp->snd_cwnd <
-					    tp->snd_cwnd_clamp) {
+					if (veno->inc &&
+					    tp->snd_cwnd < tp->snd_cwnd_clamp) {
 						tp->snd_cwnd++;
 						veno->inc = 0;
 					} else
@@ -204,7 +201,7 @@ static u32 tcp_veno_ssthresh(struct sock *sk)
 		return max(tp->snd_cwnd >> 1U, 2U);
 }
 
-static struct tcp_congestion_ops tcp_veno = {
+static struct tcp_congestion_ops tcp_veno __read_mostly = {
 	.flags		= TCP_CONG_RTT_STAMP,
 	.init		= tcp_veno_init,
 	.ssthresh	= tcp_veno_ssthresh,

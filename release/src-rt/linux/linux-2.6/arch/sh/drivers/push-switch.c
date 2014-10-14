@@ -8,6 +8,7 @@
  * for more details.
  */
 #include <linux/init.h>
+#include <linux/slab.h>
 #include <linux/module.h>
 #include <linux/interrupt.h>
 #include <linux/platform_device.h>
@@ -106,7 +107,7 @@ static int switch_drv_remove(struct platform_device *pdev)
 		device_remove_file(&pdev->dev, &dev_attr_switch);
 
 	platform_set_drvdata(pdev, NULL);
-	flush_scheduled_work();
+	flush_work_sync(&psw->work);
 	del_timer_sync(&psw->debounce);
 	free_irq(irq, pdev);
 
@@ -138,4 +139,4 @@ module_exit(switch_exit);
 
 MODULE_VERSION(DRV_VERSION);
 MODULE_AUTHOR("Paul Mundt");
-MODULE_LICENSE("GPLv2");
+MODULE_LICENSE("GPL v2");

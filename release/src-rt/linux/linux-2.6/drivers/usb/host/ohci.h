@@ -371,6 +371,7 @@ struct ohci_hcd {
 	 * other external transceivers should be software-transparent
 	 */
 	struct otg_transceiver	*transceiver;
+	void (*start_hnp)(struct ohci_hcd *ohci);
 
 	/*
 	 * memory management for queue data structures
@@ -398,6 +399,11 @@ struct ohci_hcd {
 #define	OHCI_QUIRK_BE_MMIO	0x10			/* BE registers */
 #define	OHCI_QUIRK_ZFMICRO	0x20			/* Compaq ZFMicro chipset*/
 #define	OHCI_QUIRK_NEC		0x40			/* lost interrupts */
+#define	OHCI_QUIRK_FRAME_NO	0x80			/* no big endian frame_no shift */
+#define	OHCI_QUIRK_HUB_POWER	0x100			/* distrust firmware power/oc setup */
+#define	OHCI_QUIRK_AMD_PLL	0x200			/* AMD PLL quirk*/
+#define	OHCI_QUIRK_AMD_PREFETCH	0x400			/* pre-fetch for ISO transfer */
+#define	OHCI_QUIRK_SHUTDOWN	0x800			/* nVidia power bug */
 	// there are also chip quirks/bugs in init logic
 
 	struct work_struct	nec_work;	/* Worker for NEC quirk */
@@ -425,12 +431,28 @@ static inline int quirk_zfmicro(struct ohci_hcd *ohci)
 {
 	return ohci->flags & OHCI_QUIRK_ZFMICRO;
 }
+static inline int quirk_amdiso(struct ohci_hcd *ohci)
+{
+	return ohci->flags & OHCI_QUIRK_AMD_PLL;
+}
+static inline int quirk_amdprefetch(struct ohci_hcd *ohci)
+{
+	return ohci->flags & OHCI_QUIRK_AMD_PREFETCH;
+}
 #else
 static inline int quirk_nec(struct ohci_hcd *ohci)
 {
 	return 0;
 }
 static inline int quirk_zfmicro(struct ohci_hcd *ohci)
+{
+	return 0;
+}
+static inline int quirk_amdiso(struct ohci_hcd *ohci)
+{
+	return 0;
+}
+static inline int quirk_amdprefetch(struct ohci_hcd *ohci)
 {
 	return 0;
 }
@@ -528,15 +550,7 @@ static inline struct usb_hcd *ohci_to_hcd (const struct ohci_hcd *ohci)
  * Big-endian read/write functions are arch-specific.
  * Other arches can be added if/when they're needed.
  *
- * REVISIT: arch/powerpc now has readl/writel_be, so the
- * definition below can die once the STB04xxx support is
- * finally ported over.
  */
-#if defined(CONFIG_PPC) && !defined(CONFIG_PPC_MERGE)
-#define readl_be(addr)		in_be32((__force unsigned *)addr)
-#define writel_be(val, addr)	out_be32((__force unsigned *)addr, val)
-#endif
-
 static inline unsigned int _ohci_readl (const struct ohci_hcd *ohci,
 					__hc32 __iomem * regs)
 {
@@ -561,18 +575,8 @@ static inline void _ohci_writel (const struct ohci_hcd *ohci,
 #endif
 }
 
-#ifdef CONFIG_ARCH_LH7A404
-/* Marc Singer: at the time this code was written, the LH7A404
- * had a problem reading the USB host registers.  This
- * implementation of the ohci_readl function performs the read
- * twice as a work-around.
- */
-#define ohci_readl(o,r)		(_ohci_readl(o,r),_ohci_readl(o,r))
-#define ohci_writel(o,v,r)	_ohci_writel(o,v,r)
-#else
 #define ohci_readl(o,r)		_ohci_readl(o,r)
 #define ohci_writel(o,v,r)	_ohci_writel(o,v,r)
-#endif
 
 
 /*-------------------------------------------------------------------------*/
@@ -640,15 +644,12 @@ static inline u32 hc32_to_cpup (const struct ohci_hcd *ohci, const __hc32 *x)
 /* HCCA frame number is 16 bits, but is accessed as 32 bits since not all
  * hardware handles 16 bit reads.  That creates a different confusion on
  * some big-endian SOC implementations.  Same thing happens with PSW access.
- *
- * FIXME: Deal with that as a runtime quirk when STB03xxx is ported over
- * to arch/powerpc
  */
 
-#ifdef CONFIG_STB03xxx
-#define OHCI_BE_FRAME_NO_SHIFT	16
+#ifdef CONFIG_PPC_MPC52xx
+#define big_endian_frame_no_quirk(ohci)	(ohci->flags & OHCI_QUIRK_FRAME_NO)
 #else
-#define OHCI_BE_FRAME_NO_SHIFT	0
+#define big_endian_frame_no_quirk(ohci)	0
 #endif
 
 static inline u16 ohci_frame_no(const struct ohci_hcd *ohci)
@@ -656,7 +657,8 @@ static inline u16 ohci_frame_no(const struct ohci_hcd *ohci)
 	u32 tmp;
 	if (big_endian_desc(ohci)) {
 		tmp = be32_to_cpup((__force __be32 *)&ohci->hcca->frame_no);
-		tmp >>= OHCI_BE_FRAME_NO_SHIFT;
+		if (!big_endian_frame_no_quirk(ohci))
+			tmp >>= 16;
 	} else
 		tmp = le32_to_cpup((__force __le32 *)&ohci->hcca->frame_no);
 

@@ -3,7 +3,7 @@
  * Purpose:     Assembly portion of Generic MCA handling
  *
  * Copyright (C) 2004 FUJITSU LIMITED
- * Copyright (C) Hidetoshi Seto (seto.hidetoshi@jp.fujitsu.com)
+ * Copyright (C) 2004 Hidetoshi Seto <seto.hidetoshi@jp.fujitsu.com>
  */
 #include <linux/threads.h>
 
@@ -40,7 +40,11 @@ GLOBAL_ENTRY(mca_handler_bhhook)
 	mov	b6=loc1
 	;;
 	mov	loc1=rp
-	ssm	psr.i | psr.ic
+	ssm	psr.ic
+	;;
+	srlz.i
+	;;
+	ssm	psr.i
 	br.call.sptk.many rp=b6		// does not return ...
 	;;
 	mov	ar.pfs=loc0

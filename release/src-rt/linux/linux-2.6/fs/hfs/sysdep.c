@@ -8,15 +8,20 @@
  * This file contains the code to do various system dependent things.
  */
 
+#include <linux/namei.h>
 #include "hfs_fs.h"
 
 /* dentry case-handling: just lowercase everything */
 
 static int hfs_revalidate_dentry(struct dentry *dentry, struct nameidata *nd)
 {
-	struct inode *inode = dentry->d_inode;
+	struct inode *inode;
 	int diff;
 
+	if (nd->flags & LOOKUP_RCU)
+		return -ECHILD;
+
+	inode = dentry->d_inode;
 	if(!inode)
 		return 1;
 
@@ -31,7 +36,7 @@ static int hfs_revalidate_dentry(struct dentry *dentry, struct nameidata *nd)
 	return 1;
 }
 
-struct dentry_operations hfs_dentry_operations =
+const struct dentry_operations hfs_dentry_operations =
 {
 	.d_revalidate	= hfs_revalidate_dentry,
 	.d_hash		= hfs_hash_dentry,

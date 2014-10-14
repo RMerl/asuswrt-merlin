@@ -1,4 +1,3 @@
-// $Id: vmax301.c,v 1.32 2005/11/07 11:14:29 gleixner Exp $
 /* ######################################################################
 
    Tempustech VMAX SBC301 MTD Driver.
@@ -17,7 +16,6 @@
    ##################################################################### */
 
 #include <linux/module.h>
-#include <linux/slab.h>
 #include <linux/ioport.h>
 #include <linux/init.h>
 #include <linux/spinlock.h>
@@ -147,7 +145,7 @@ static void __exit cleanup_vmax301(void)
 	iounmap((void *)vmax_map[0].map_priv_1 - WINDOW_START);
 }
 
-int __init init_vmax301(void)
+static int __init init_vmax301(void)
 {
 	int i;
 	unsigned long iomapadr;

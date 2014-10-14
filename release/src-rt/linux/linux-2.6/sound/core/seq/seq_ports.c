@@ -1,7 +1,7 @@
 /*
  *   ALSA sequencer Ports
  *   Copyright (c) 1998 by Frank van de Pol <fvdpol@coil.demon.nl>
- *                         Jaroslav Kysela <perex@suse.cz>
+ *                         Jaroslav Kysela <perex@perex.cz>
  *
  *
  *   This program is free software; you can redistribute it and/or modify
@@ -20,7 +20,6 @@
  *
  */
 
-#include <sound/driver.h>
 #include <sound/core.h>
 #include <linux/slab.h>
 #include "seq_system.h"
@@ -131,7 +130,8 @@ struct snd_seq_client_port *snd_seq_create_port(struct snd_seq_client *client,
 	int num = -1;
 	
 	/* sanity check */
-	snd_assert(client, return NULL);
+	if (snd_BUG_ON(!client))
+		return NULL;
 
 	if (client->num_ports >= SNDRV_SEQ_MAX_PORTS - 1) {
 		snd_printk(KERN_WARNING "too many ports for client %d\n", client->number);
@@ -269,8 +269,8 @@ static int port_delete(struct snd_seq_client *client,
 	if (port->private_free)
 		port->private_free(port->private_data);
 
-	snd_assert(port->c_src.count == 0,);
-	snd_assert(port->c_dest.count == 0,);
+	snd_BUG_ON(port->c_src.count != 0);
+	snd_BUG_ON(port->c_dest.count != 0);
 
 	kfree(port);
 	return 0;
@@ -337,7 +337,8 @@ int snd_seq_delete_all_ports(struct snd_seq_client *client)
 int snd_seq_set_port_info(struct snd_seq_client_port * port,
 			  struct snd_seq_port_info * info)
 {
-	snd_assert(port && info, return -EINVAL);
+	if (snd_BUG_ON(!port || !info))
+		return -EINVAL;
 
 	/* set port name */
 	if (info->name[0])
@@ -366,7 +367,8 @@ int snd_seq_set_port_info(struct snd_seq_client_port * port,
 int snd_seq_get_port_info(struct snd_seq_client_port * port,
 			  struct snd_seq_port_info * info)
 {
-	snd_assert(port && info, return -EINVAL);
+	if (snd_BUG_ON(!port || !info))
+		return -EINVAL;
 
 	/* get port name */
 	strlcpy(info->name, port->name, sizeof(info->name));
@@ -410,7 +412,7 @@ int snd_seq_get_port_info(struct snd_seq_client_port * port,
  * initialization or termination of devices (see seq_midi.c).
  *
  * If callback_all option is set, the callback function is invoked
- * at each connnection/disconnection. 
+ * at each connection/disconnection. 
  */
 
 static int subscribe_port(struct snd_seq_client *client,

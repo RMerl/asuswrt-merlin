@@ -24,14 +24,15 @@
 #include <linux/kernel.h>
 #include <linux/jiffies.h>
 #include <linux/timer.h>
+#include <linux/slab.h>
 #include <linux/netdevice.h>
 #include <linux/skbuff.h>
 #include <asm/uaccess.h>
 #include <linux/init.h>
 #include <net/x25.h>
 
-static struct list_head x25_neigh_list = LIST_HEAD_INIT(x25_neigh_list);
-static DEFINE_RWLOCK(x25_neigh_list_lock);
+LIST_HEAD(x25_neigh_list);
+DEFINE_RWLOCK(x25_neigh_list_lock);
 
 static void x25_t20timer_expiry(unsigned long);
 
@@ -247,10 +248,7 @@ void x25_link_device_up(struct net_device *dev)
 		return;
 
 	skb_queue_head_init(&nb->queue);
-
-	init_timer(&nb->t20timer);
-	nb->t20timer.data     = (unsigned long)nb;
-	nb->t20timer.function = &x25_t20timer_expiry;
+	setup_timer(&nb->t20timer, x25_t20timer_expiry, (unsigned long)nb);
 
 	dev_hold(dev);
 	nb->dev      = dev;
@@ -362,16 +360,20 @@ int x25_subscr_ioctl(unsigned int cmd, void __user *arg)
 	dev_put(dev);
 
 	if (cmd == SIOCX25GSUBSCRIP) {
+		read_lock_bh(&x25_neigh_list_lock);
 		x25_subscr.extended	     = nb->extended;
 		x25_subscr.global_facil_mask = nb->global_facil_mask;
+		read_unlock_bh(&x25_neigh_list_lock);
 		rc = copy_to_user(arg, &x25_subscr,
 				  sizeof(x25_subscr)) ? -EFAULT : 0;
 	} else {
 		rc = -EINVAL;
 		if (!(x25_subscr.extended && x25_subscr.extended != 1)) {
 			rc = 0;
+			write_lock_bh(&x25_neigh_list_lock);
 			nb->extended	     = x25_subscr.extended;
 			nb->global_facil_mask = x25_subscr.global_facil_mask;
+			write_unlock_bh(&x25_neigh_list_lock);
 		}
 	}
 	x25_neigh_put(nb);
@@ -394,8 +396,12 @@ void __exit x25_link_free(void)
 	write_lock_bh(&x25_neigh_list_lock);
 
 	list_for_each_safe(entry, tmp, &x25_neigh_list) {
+		struct net_device *dev;
+
 		nb = list_entry(entry, struct x25_neigh, node);
+		dev = nb->dev;
 		__x25_remove_neigh(nb);
+		dev_put(dev);
 	}
 	write_unlock_bh(&x25_neigh_list_lock);
 }

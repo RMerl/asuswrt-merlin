@@ -14,8 +14,8 @@
  *             neuffer@goofy.zdv.uni-mainz.de               *
  *             a.arnold@kfa-juelich.de                      * 
  *                                                          *
- *  Updated 2002 by Alan Cox <alan@redhat.com> for Linux    *
- *  2.5.x and the newer locking and error handling          *
+ *  Updated 2002 by Alan Cox <alan@lxorguk.ukuu.org.uk> for *
+ *   Linux 2.5.x and the newer locking and error handling   *
  *                                                          *
  *  This program is free software; you can redistribute it  *
  *  and/or modify it under the terms of the GNU General     *
@@ -50,7 +50,6 @@
 #include <linux/kernel.h>
 #include <linux/string.h>
 #include <linux/ioport.h>
-#include <linux/slab.h>
 #include <linux/in.h>
 #include <linux/pci.h>
 #include <linux/proc_fs.h>
@@ -107,59 +106,44 @@ static struct scsi_host_template driver_template;
 static int eata_pio_proc_info(struct Scsi_Host *shost, char *buffer, char **start, off_t offset,
 			      int length, int rw)
 {
-    static u8 buff[512];
-    int size, len = 0;
-    off_t begin = 0, pos = 0;
+	int len = 0;
+	off_t begin = 0, pos = 0;
 
-    if (rw)
-    	return -ENOSYS;
-    if (offset == 0)
-	memset(buff, 0, sizeof(buff));
+	if (rw)
+		return -ENOSYS;
 
-    size = sprintf(buffer+len, "EATA (Extended Attachment) PIO driver version: "
+	len += sprintf(buffer+len, "EATA (Extended Attachment) PIO driver version: "
 		   "%d.%d%s\n",VER_MAJOR, VER_MINOR, VER_SUB);
-    len += size; pos = begin + len;
-    size = sprintf(buffer + len, "queued commands:     %10ld\n"
+	len += sprintf(buffer + len, "queued commands:     %10ld\n"
 		   "processed interrupts:%10ld\n", queue_counter, int_counter);
-    len += size; pos = begin + len;
-    
-    size = sprintf(buffer + len, "\nscsi%-2d: HBA %.10s\n",
+	len += sprintf(buffer + len, "\nscsi%-2d: HBA %.10s\n",
 		   shost->host_no, SD(shost)->name);
-    len += size; 
-    pos = begin + len;
-    size = sprintf(buffer + len, "Firmware revision: v%s\n", 
+	len += sprintf(buffer + len, "Firmware revision: v%s\n",
 		   SD(shost)->revision);
-    len += size;
-    pos = begin + len;
-    size = sprintf(buffer + len, "IO: PIO\n");
-    len += size; 
-    pos = begin + len;
-    size = sprintf(buffer + len, "Base IO : %#.4x\n", (u32) shost->base);
-    len += size; 
-    pos = begin + len;
-    size = sprintf(buffer + len, "Host Bus: %s\n", 
+	len += sprintf(buffer + len, "IO: PIO\n");
+	len += sprintf(buffer + len, "Base IO : %#.4x\n", (u32) shost->base);
+	len += sprintf(buffer + len, "Host Bus: %s\n",
 		   (SD(shost)->bustype == 'P')?"PCI ":
 		   (SD(shost)->bustype == 'E')?"EISA":"ISA ");
     
-    len += size; 
-    pos = begin + len;
+	pos = begin + len;
     
-    if (pos < offset) {
-	len = 0;
-	begin = pos;
-    }
-    if (pos > offset + length)
-	goto stop_output;
+	if (pos < offset) {
+		len = 0;
+		begin = pos;
+	}
+	if (pos > offset + length)
+		goto stop_output;
     
- stop_output:
-    DBG(DBG_PROC, printk("2pos: %ld offset: %ld len: %d\n", pos, offset, len));
-    *start=buffer+(offset-begin);   /* Start of wanted data */
-    len-=(offset-begin);            /* Start slop */
-    if(len>length)
-	len = length;               /* Ending slop */
-    DBG(DBG_PROC, printk("3pos: %ld offset: %ld len: %d\n", pos, offset, len));
+stop_output:
+	DBG(DBG_PROC, printk("2pos: %ld offset: %ld len: %d\n", pos, offset, len));
+	*start = buffer + (offset - begin);   /* Start of wanted data */
+	len -= (offset - begin);            /* Start slop */
+	if (len > length)
+		len = length;               /* Ending slop */
+	DBG(DBG_PROC, printk("3pos: %ld offset: %ld len: %d\n", pos, offset, len));
     
-    return (len);     
+	return len;
 }
 
 static int eata_pio_release(struct Scsi_Host *sh)
@@ -187,7 +171,7 @@ static void IncStat(struct scsi_pointer *SCp, unsigned int Increment)
 			SCp->Status = 0;
 		else {
 			SCp->buffer++;
-			SCp->ptr = page_address(SCp->buffer->page) + SCp->buffer->offset;
+			SCp->ptr = sg_virt(SCp->buffer);
 			SCp->this_residual = SCp->buffer->length;
 		}
 	}
@@ -351,7 +335,7 @@ static inline unsigned int eata_pio_send_command(unsigned long base, unsigned ch
 	return 0;
 }
 
-static int eata_pio_queue(struct scsi_cmnd *cmd,
+static int eata_pio_queue_lck(struct scsi_cmnd *cmd,
 		void (*done)(struct scsi_cmnd *))
 {
 	unsigned int x, y;
@@ -384,13 +368,12 @@ static int eata_pio_queue(struct scsi_cmnd *cmd,
 	cp = &hd->ccb[y];
 
 	memset(cp, 0, sizeof(struct eata_ccb));
-	memset(cmd->sense_buffer, 0, sizeof(cmd->sense_buffer));
 
 	cp->status = USED;	/* claim free slot */
 
 	DBG(DBG_QUEUE, scmd_printk(KERN_DEBUG, cmd,
 		"eata_pio_queue pid %ld, y %d\n",
-		cmd->pid, y));
+		cmd->serial_number, y));
 
 	cmd->scsi_done = (void *) done;
 
@@ -400,7 +383,7 @@ static int eata_pio_queue(struct scsi_cmnd *cmd,
 		cp->DataIn = 0;	/* Input mode  */
 
 	cp->Interpret = (cmd->device->id == hd->hostid);
-	cp->cp_datalen = cpu_to_be32(cmd->request_bufflen);
+	cp->cp_datalen = cpu_to_be32(scsi_bufflen(cmd));
 	cp->Auto_Req_Sen = 0;
 	cp->cp_reqDMA = 0;
 	cp->reqlen = 0;
@@ -417,15 +400,15 @@ static int eata_pio_queue(struct scsi_cmnd *cmd,
 	cp->cmd = cmd;
 	cmd->host_scribble = (char *) &hd->ccb[y];
 
-	if (cmd->use_sg == 0) {
+	if (!scsi_bufflen(cmd)) {
 		cmd->SCp.buffers_residual = 1;
-		cmd->SCp.ptr = cmd->request_buffer;
-		cmd->SCp.this_residual = cmd->request_bufflen;
+		cmd->SCp.ptr = NULL;
+		cmd->SCp.this_residual = 0;
 		cmd->SCp.buffer = NULL;
 	} else {
-		cmd->SCp.buffer = cmd->request_buffer;
-		cmd->SCp.buffers_residual = cmd->use_sg;
-		cmd->SCp.ptr = page_address(cmd->SCp.buffer->page) + cmd->SCp.buffer->offset;
+		cmd->SCp.buffer = scsi_sglist(cmd);
+		cmd->SCp.buffers_residual = scsi_sg_count(cmd);
+		cmd->SCp.ptr = sg_virt(cmd->SCp.buffer);
 		cmd->SCp.this_residual = cmd->SCp.buffer->length;
 	}
 	cmd->SCp.Status = (cmd->SCp.this_residual != 0);	/* TRUE as long as bytes 
@@ -435,10 +418,10 @@ static int eata_pio_queue(struct scsi_cmnd *cmd,
 		cmd->result = DID_BUS_BUSY << 16;
 		scmd_printk(KERN_NOTICE, cmd,
 			"eata_pio_queue pid %ld, HBA busy, "
-			"returning DID_BUS_BUSY, done.\n", cmd->pid);
+			"returning DID_BUS_BUSY, done.\n", cmd->serial_number);
 		done(cmd);
 		cp->status = FREE;
-		return (0);
+		return 0;
 	}
 	/* FIXME: timeout */
 	while (!(inb(base + HA_RSTATUS) & HA_SDRQ))
@@ -450,10 +433,12 @@ static int eata_pio_queue(struct scsi_cmnd *cmd,
 
 	DBG(DBG_QUEUE, scmd_printk(KERN_DEBUG, cmd,
 		"Queued base %#.4lx pid: %ld "
-		"slot %d irq %d\n", sh->base, cmd->pid, y, sh->irq));
+		"slot %d irq %d\n", sh->base, cmd->serial_number, y, sh->irq));
 
-	return (0);
+	return 0;
 }
+
+static DEF_SCSI_QCMD(eata_pio_queue)
 
 static int eata_pio_abort(struct scsi_cmnd *cmd)
 {
@@ -461,7 +446,7 @@ static int eata_pio_abort(struct scsi_cmnd *cmd)
 
 	DBG(DBG_ABNORM, scmd_printk(KERN_WARNING, cmd,
 		"eata_pio_abort called pid: %ld\n",
-		cmd->pid));
+		cmd->serial_number));
 
 	while (inb(cmd->device->host->base + HA_RAUXSTAT) & HA_ABUSY)
 		if (--loop == 0) {
@@ -497,7 +482,7 @@ static int eata_pio_host_reset(struct scsi_cmnd *cmd)
 
 	DBG(DBG_ABNORM, scmd_printk(KERN_WARNING, cmd,
 		"eata_pio_reset called pid:%ld\n",
-		cmd->pid));
+		cmd->serial_number));
 
 	spin_lock_irq(host->host_lock);
 
@@ -516,7 +501,7 @@ static int eata_pio_host_reset(struct scsi_cmnd *cmd)
 
 		sp = HD(cmd)->ccb[x].cmd;
 		HD(cmd)->ccb[x].status = RESET;
-		printk(KERN_WARNING "eata_pio_reset: slot %d in reset, pid %ld.\n", x, sp->pid);
+		printk(KERN_WARNING "eata_pio_reset: slot %d in reset, pid %ld.\n", x, sp->serial_number);
 
 		if (sp == NULL)
 			panic("eata_pio_reset: slot %d, sp==NULL.\n", x);
@@ -589,23 +574,28 @@ static char *get_pio_board_data(unsigned long base, unsigned int irq, unsigned i
 	cp.cp_cdb[5] = 0;
 
 	if (eata_pio_send_command(base, EATA_CMD_PIO_SEND_CP))
-		return (NULL);
-	while (!(inb(base + HA_RSTATUS) & HA_SDRQ));
+		return NULL;
+
+	while (!(inb(base + HA_RSTATUS) & HA_SDRQ))
+		cpu_relax();
+
 	outsw(base + HA_RDATA, &cp, cplen);
 	outb(EATA_CMD_PIO_TRUNC, base + HA_WCOMMAND);
 	for (z = 0; z < cppadlen; z++)
 		outw(0, base + HA_RDATA);
 
-	while (inb(base + HA_RSTATUS) & HA_SBUSY);
+	while (inb(base + HA_RSTATUS) & HA_SBUSY)
+		cpu_relax();
+
 	if (inb(base + HA_RSTATUS) & HA_SERROR)
-		return (NULL);
+		return NULL;
 	else if (!(inb(base + HA_RSTATUS) & HA_SDRQ))
-		return (NULL);
+		return NULL;
 	else {
 		insw(base + HA_RDATA, &buff, 127);
 		while (inb(base + HA_RSTATUS) & HA_SDRQ)
 			inw(base + HA_RDATA);
-		return (buff);
+		return buff;
 	}
 }
 
@@ -825,8 +815,6 @@ static int register_pio_HBA(long base, struct get_conf *gc, struct pci_dev *pdev
 		hd->primary = 0;
 	else
 		hd->primary = 1;
-
-	sh->unchecked_isa_dma = 0;	/* We can only do PIO */
 
 	hd->next = NULL;	/* build a linked list of all HBAs */
 	hd->prev = last_HBA;

@@ -21,27 +21,33 @@
 
 #include <linux/acpi.h>
 #include <linux/pnp.h>
+#include <linux/slab.h>
+#include <linux/mod_devicetable.h>
 #include <acpi/acpi_bus.h>
+
+#include "../base.h"
 #include "pnpacpi.h"
 
-static int num = 0;
+static int num;
 
 /* We need only to blacklist devices that have already an acpi driver that
  * can't use pnp layer. We don't need to blacklist device that are directly
  * used by the kernel (PCI root, ...), as it is harmless and there were
  * already present in pnpbios. But there is an exception for devices that
  * have irqs (PIC, Timer) because we call acpi_register_gsi.
- * Finaly only devices that have a CRS method need to be in this list.
+ * Finally, only devices that have a CRS method need to be in this list.
  */
-static char __initdata excluded_id_list[] =
-	"PNP0C09," /* EC */
-	"PNP0C0F," /* Link device */
-	"PNP0000," /* PIC */
-	"PNP0100," /* Timer */
-	;
-static inline int is_exclusive_device(struct acpi_device *dev)
+static struct acpi_device_id excluded_id_list[] __initdata = {
+	{"PNP0C09", 0},		/* EC */
+	{"PNP0C0F", 0},		/* Link device */
+	{"PNP0000", 0},		/* PIC */
+	{"PNP0100", 0},		/* Timer */
+	{"", 0},
+};
+
+static inline int __init is_exclusive_device(struct acpi_device *dev)
 {
-	return (!acpi_match_ids(dev, excluded_id_list));
+	return (!acpi_match_device_ids(dev, excluded_id_list));
 }
 
 /*
@@ -53,7 +59,7 @@ static inline int is_exclusive_device(struct acpi_device *dev)
 #define TEST_ALPHA(c) \
 	if (!('@' <= (c) || (c) <= 'Z')) \
 		return 0
-static int __init ispnpidacpi(char *id)
+static int __init ispnpidacpi(const char *id)
 {
 	TEST_ALPHA(id[0]);
 	TEST_ALPHA(id[1]);
@@ -67,91 +73,201 @@ static int __init ispnpidacpi(char *id)
 	return 1;
 }
 
-static void __init pnpidacpi_to_pnpid(char *id, char *str)
+static int pnpacpi_get_resources(struct pnp_dev *dev)
 {
-	str[0] = id[0];
-	str[1] = id[1];
-	str[2] = id[2];
-	str[3] = tolower(id[3]);
-	str[4] = tolower(id[4]);
-	str[5] = tolower(id[5]);
-	str[6] = tolower(id[6]);
-	str[7] = '\0';
+	pnp_dbg(&dev->dev, "get resources\n");
+	return pnpacpi_parse_allocated_resource(dev);
 }
 
-static int pnpacpi_get_resources(struct pnp_dev * dev, struct pnp_resource_table * res)
+static int pnpacpi_set_resources(struct pnp_dev *dev)
 {
-	acpi_status status;
-	status = pnpacpi_parse_allocated_resource((acpi_handle)dev->data,
-		&dev->res);
-	return ACPI_FAILURE(status) ? -ENODEV : 0;
-}
-
-static int pnpacpi_set_resources(struct pnp_dev * dev, struct pnp_resource_table * res)
-{
-	acpi_handle handle = dev->data;
+	struct acpi_device *acpi_dev;
+	acpi_handle handle;
 	struct acpi_buffer buffer;
-	int ret = 0;
-	acpi_status status;
+	int ret;
 
-	ret = pnpacpi_build_resource_template(handle, &buffer);
+	pnp_dbg(&dev->dev, "set resources\n");
+
+	handle = DEVICE_ACPI_HANDLE(&dev->dev);
+	if (!handle || ACPI_FAILURE(acpi_bus_get_device(handle, &acpi_dev))) {
+		dev_dbg(&dev->dev, "ACPI device not found in %s!\n", __func__);
+		return -ENODEV;
+	}
+
+	ret = pnpacpi_build_resource_template(dev, &buffer);
 	if (ret)
 		return ret;
-	ret = pnpacpi_encode_resources(res, &buffer);
+	ret = pnpacpi_encode_resources(dev, &buffer);
 	if (ret) {
 		kfree(buffer.pointer);
 		return ret;
 	}
-	status = acpi_set_current_resources(handle, &buffer);
-	if (ACPI_FAILURE(status))
+	if (ACPI_FAILURE(acpi_set_current_resources(handle, &buffer)))
 		ret = -EINVAL;
+	else if (acpi_bus_power_manageable(handle))
+		ret = acpi_bus_set_power(handle, ACPI_STATE_D0);
 	kfree(buffer.pointer);
 	return ret;
 }
 
 static int pnpacpi_disable_resources(struct pnp_dev *dev)
 {
-	acpi_status status;
+	struct acpi_device *acpi_dev;
+	acpi_handle handle;
+	int ret;
+
+	dev_dbg(&dev->dev, "disable resources\n");
+
+	handle = DEVICE_ACPI_HANDLE(&dev->dev);
+	if (!handle || ACPI_FAILURE(acpi_bus_get_device(handle, &acpi_dev))) {
+		dev_dbg(&dev->dev, "ACPI device not found in %s!\n", __func__);
+		return 0;
+	}
 
 	/* acpi_unregister_gsi(pnp_irq(dev, 0)); */
-	status = acpi_evaluate_object((acpi_handle)dev->data,
-		"_DIS", NULL, NULL);
-	return ACPI_FAILURE(status) ? -ENODEV : 0;
+	ret = 0;
+	if (acpi_bus_power_manageable(handle))
+		acpi_bus_set_power(handle, ACPI_STATE_D3);
+		/* continue even if acpi_bus_set_power() fails */
+	if (ACPI_FAILURE(acpi_evaluate_object(handle, "_DIS", NULL, NULL)))
+		ret = -ENODEV;
+	return ret;
 }
 
-static struct pnp_protocol pnpacpi_protocol = {
-	.name	= "Plug and Play ACPI",
-	.get	= pnpacpi_get_resources,
-	.set	= pnpacpi_set_resources,
+#ifdef CONFIG_ACPI_SLEEP
+static bool pnpacpi_can_wakeup(struct pnp_dev *dev)
+{
+	struct acpi_device *acpi_dev;
+	acpi_handle handle;
+
+	handle = DEVICE_ACPI_HANDLE(&dev->dev);
+	if (!handle || ACPI_FAILURE(acpi_bus_get_device(handle, &acpi_dev))) {
+		dev_dbg(&dev->dev, "ACPI device not found in %s!\n", __func__);
+		return false;
+	}
+
+	return acpi_bus_can_wakeup(handle);
+}
+
+static int pnpacpi_suspend(struct pnp_dev *dev, pm_message_t state)
+{
+	struct acpi_device *acpi_dev;
+	acpi_handle handle;
+	int error = 0;
+
+	handle = DEVICE_ACPI_HANDLE(&dev->dev);
+	if (!handle || ACPI_FAILURE(acpi_bus_get_device(handle, &acpi_dev))) {
+		dev_dbg(&dev->dev, "ACPI device not found in %s!\n", __func__);
+		return 0;
+	}
+
+	if (device_can_wakeup(&dev->dev)) {
+		error = acpi_pm_device_sleep_wake(&dev->dev,
+				device_may_wakeup(&dev->dev));
+		if (error)
+			return error;
+	}
+
+	if (acpi_bus_power_manageable(handle)) {
+		int power_state = acpi_pm_device_sleep_state(&dev->dev, NULL);
+
+		if (power_state < 0)
+			power_state = (state.event == PM_EVENT_ON) ?
+					ACPI_STATE_D0 : ACPI_STATE_D3;
+
+		/*
+		 * acpi_bus_set_power() often fails (keyboard port can't be
+		 * powered-down?), and in any case, our return value is ignored
+		 * by pnp_bus_suspend().  Hence we don't revert the wakeup
+		 * setting if the set_power fails.
+		 */
+		error = acpi_bus_set_power(handle, power_state);
+	}
+
+	return error;
+}
+
+static int pnpacpi_resume(struct pnp_dev *dev)
+{
+	struct acpi_device *acpi_dev;
+	acpi_handle handle = DEVICE_ACPI_HANDLE(&dev->dev);
+	int error = 0;
+
+	if (!handle || ACPI_FAILURE(acpi_bus_get_device(handle, &acpi_dev))) {
+		dev_dbg(&dev->dev, "ACPI device not found in %s!\n", __func__);
+		return -ENODEV;
+	}
+
+	if (device_may_wakeup(&dev->dev))
+		acpi_pm_device_sleep_wake(&dev->dev, false);
+
+	if (acpi_bus_power_manageable(handle))
+		error = acpi_bus_set_power(handle, ACPI_STATE_D0);
+
+	return error;
+}
+#endif
+
+struct pnp_protocol pnpacpi_protocol = {
+	.name	 = "Plug and Play ACPI",
+	.get	 = pnpacpi_get_resources,
+	.set	 = pnpacpi_set_resources,
 	.disable = pnpacpi_disable_resources,
+#ifdef CONFIG_ACPI_SLEEP
+	.can_wakeup = pnpacpi_can_wakeup,
+	.suspend = pnpacpi_suspend,
+	.resume = pnpacpi_resume,
+#endif
 };
+EXPORT_SYMBOL(pnpacpi_protocol);
+
+static char *__init pnpacpi_get_id(struct acpi_device *device)
+{
+	struct acpi_hardware_id *id;
+
+	list_for_each_entry(id, &device->pnp.ids, list) {
+		if (ispnpidacpi(id->id))
+			return id->id;
+	}
+
+	return NULL;
+}
 
 static int __init pnpacpi_add_device(struct acpi_device *device)
 {
 	acpi_handle temp = NULL;
 	acpi_status status;
-	struct pnp_id *dev_id;
 	struct pnp_dev *dev;
+	char *pnpid;
+	struct acpi_hardware_id *id;
 
+	/*
+	 * If a PnPacpi device is not present , the device
+	 * driver should not be loaded.
+	 */
 	status = acpi_get_handle(device->handle, "_CRS", &temp);
-	if (ACPI_FAILURE(status) || !ispnpidacpi(acpi_device_hid(device)) ||
-		is_exclusive_device(device))
+	if (ACPI_FAILURE(status))
 		return 0;
 
-	pnp_dbg("ACPI device : hid %s", acpi_device_hid(device));
-	dev =  kzalloc(sizeof(struct pnp_dev), GFP_KERNEL);
-	if (!dev) {
-		pnp_err("Out of memory");
+	pnpid = pnpacpi_get_id(device);
+	if (!pnpid)
+		return 0;
+
+	if (is_exclusive_device(device) || !device->status.present)
+		return 0;
+
+	dev = pnp_alloc_dev(&pnpacpi_protocol, num, pnpid);
+	if (!dev)
 		return -ENOMEM;
-	}
-	dev->data = device->handle;
-	/* .enabled means if the device can decode the resources */
+
+	dev->data = device;
+	/* .enabled means the device can decode the resources */
 	dev->active = device->status.enabled;
 	status = acpi_get_handle(device->handle, "_SRS", &temp);
 	if (ACPI_SUCCESS(status))
 		dev->capabilities |= PNP_CONFIGURABLE;
 	dev->capabilities |= PNP_READ;
-	if (device->flags.dynamic_status)
+	if (device->flags.dynamic_status && (dev->capabilities & PNP_CONFIGURABLE))
 		dev->capabilities |= PNP_WRITE;
 	if (device->flags.removable)
 		dev->capabilities |= PNP_REMOVABLE;
@@ -159,73 +275,37 @@ static int __init pnpacpi_add_device(struct acpi_device *device)
 	if (ACPI_SUCCESS(status))
 		dev->capabilities |= PNP_DISABLE;
 
-	dev->protocol = &pnpacpi_protocol;
-
 	if (strlen(acpi_device_name(device)))
 		strncpy(dev->name, acpi_device_name(device), sizeof(dev->name));
 	else
 		strncpy(dev->name, acpi_device_bid(device), sizeof(dev->name));
 
-	dev->number = num;
+	if (dev->active)
+		pnpacpi_parse_allocated_resource(dev);
 
-	/* set the initial values for the PnP device */
-	dev_id = kzalloc(sizeof(struct pnp_id), GFP_KERNEL);
-	if (!dev_id)
-		goto err;
-	pnpidacpi_to_pnpid(acpi_device_hid(device), dev_id->id);
-	pnp_add_id(dev_id, dev);
+	if (dev->capabilities & PNP_CONFIGURABLE)
+		pnpacpi_parse_resource_option_data(dev);
 
-	if(dev->active) {
-		/* parse allocated resource */
-		status = pnpacpi_parse_allocated_resource(device->handle, &dev->res);
-		if (ACPI_FAILURE(status) && (status != AE_NOT_FOUND)) {
-			pnp_err("PnPACPI: METHOD_NAME__CRS failure for %s", dev_id->id);
-			goto err1;
-		}
-	}
-
-	if(dev->capabilities & PNP_CONFIGURABLE) {
-		status = pnpacpi_parse_resource_option_data(device->handle,
-			dev);
-		if (ACPI_FAILURE(status) && (status != AE_NOT_FOUND)) {
-			pnp_err("PnPACPI: METHOD_NAME__PRS failure for %s", dev_id->id);
-			goto err1;
-		}
-	}
-
-	/* parse compatible ids */
-	if (device->flags.compatible_ids) {
-		struct acpi_compatible_id_list *cid_list = device->pnp.cid_list;
-		int i;
-
-		for (i = 0; i < cid_list->count; i++) {
-			if (!ispnpidacpi(cid_list->id[i].value))
-				continue;
-			dev_id = kzalloc(sizeof(struct pnp_id), GFP_KERNEL);
-			if (!dev_id)
-				continue;
-
-			pnpidacpi_to_pnpid(cid_list->id[i].value, dev_id->id);
-			pnp_add_id(dev_id, dev);
-		}
+	list_for_each_entry(id, &device->pnp.ids, list) {
+		if (!strcmp(id->id, pnpid))
+			continue;
+		if (!ispnpidacpi(id->id))
+			continue;
+		pnp_add_id(dev, id->id);
 	}
 
 	/* clear out the damaged flags */
 	if (!dev->active)
-		pnp_init_resource_table(&dev->res);
+		pnp_init_resources(dev);
 	pnp_add_device(dev);
-	num ++;
+	num++;
 
 	return AE_OK;
-err1:
-	kfree(dev_id);
-err:
-	kfree(dev);
-	return -EINVAL;
 }
 
 static acpi_status __init pnpacpi_add_device_handler(acpi_handle handle,
-	u32 lvl, void *context, void **rv)
+						     u32 lvl, void *context,
+						     void **rv)
 {
 	struct acpi_device *device;
 
@@ -238,23 +318,21 @@ static acpi_status __init pnpacpi_add_device_handler(acpi_handle handle,
 
 static int __init acpi_pnp_match(struct device *dev, void *_pnp)
 {
-	struct acpi_device	*acpi = to_acpi_device(dev);
-	struct pnp_dev		*pnp = _pnp;
+	struct acpi_device *acpi = to_acpi_device(dev);
+	struct pnp_dev *pnp = _pnp;
 
 	/* true means it matched */
-	return acpi->flags.hardware_id
-		&& !acpi_get_physical_device(acpi->handle)
-		&& compare_pnp_id(pnp->id, acpi->pnp.hardware_id);
+	return !acpi_get_physical_device(acpi->handle)
+	    && compare_pnp_id(pnp->id, acpi_device_hid(acpi));
 }
 
-static int __init acpi_pnp_find_device(struct device *dev, acpi_handle *handle)
+static int __init acpi_pnp_find_device(struct device *dev, acpi_handle * handle)
 {
-	struct device		*adev;
-	struct acpi_device	*acpi;
+	struct device *adev;
+	struct acpi_device *acpi;
 
 	adev = bus_find_device(&acpi_bus_type, NULL,
-			to_pnp_dev(dev),
-			acpi_pnp_match);
+			       to_pnp_dev(dev), acpi_pnp_match);
 	if (!adev)
 		return -ENODEV;
 
@@ -268,7 +346,7 @@ static int __init acpi_pnp_find_device(struct device *dev, acpi_handle *handle)
  * pnpdev->dev.archdata.acpi_handle point to its ACPI sibling.
  */
 static struct acpi_bus_type __initdata acpi_pnp_bus = {
-	.bus = &pnp_bus_type,
+	.bus	     = &pnp_bus_type,
 	.find_device = acpi_pnp_find_device,
 };
 
@@ -276,19 +354,20 @@ int pnpacpi_disabled __initdata;
 static int __init pnpacpi_init(void)
 {
 	if (acpi_disabled || pnpacpi_disabled) {
-		pnp_info("PnP ACPI: disabled");
+		printk(KERN_INFO "pnp: PnP ACPI: disabled\n");
 		return 0;
 	}
-	pnp_info("PnP ACPI init");
+	printk(KERN_INFO "pnp: PnP ACPI init\n");
 	pnp_register_protocol(&pnpacpi_protocol);
 	register_acpi_bus_type(&acpi_pnp_bus);
 	acpi_get_devices(NULL, pnpacpi_add_device_handler, NULL, NULL);
-	pnp_info("PnP ACPI: found %d devices", num);
+	printk(KERN_INFO "pnp: PnP ACPI: found %d devices\n", num);
 	unregister_acpi_bus_type(&acpi_pnp_bus);
 	pnp_platform_devices = 1;
 	return 0;
 }
-subsys_initcall(pnpacpi_init);
+
+fs_initcall(pnpacpi_init);
 
 static int __init pnpacpi_setup(char *str)
 {
@@ -298,8 +377,5 @@ static int __init pnpacpi_setup(char *str)
 		pnpacpi_disabled = 1;
 	return 1;
 }
-__setup("pnpacpi=", pnpacpi_setup);
 
-#if 0
-EXPORT_SYMBOL(pnpacpi_protocol);
-#endif
+__setup("pnpacpi=", pnpacpi_setup);

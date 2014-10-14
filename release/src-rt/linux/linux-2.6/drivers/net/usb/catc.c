@@ -36,7 +36,6 @@
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/string.h>
-#include <linux/slab.h>
 #include <linux/netdevice.h>
 #include <linux/etherdevice.h>
 #include <linux/skbuff.h>
@@ -44,6 +43,7 @@
 #include <linux/ethtool.h>
 #include <linux/crc32.h>
 #include <linux/bitops.h>
+#include <linux/gfp.h>
 #include <asm/uaccess.h>
 
 #undef DEBUG
@@ -163,7 +163,6 @@ struct catc {
 	struct net_device *netdev;
 	struct usb_device *usbdev;
 
-	struct net_device_stats stats;
 	unsigned long flags;
 
 	unsigned int tx_ptr, tx_idx;
@@ -229,14 +228,15 @@ static void catc_rx_done(struct urb *urb)
 	u8 *pkt_start = urb->transfer_buffer;
 	struct sk_buff *skb;
 	int pkt_len, pkt_offset = 0;
+	int status = urb->status;
 
 	if (!catc->is_f5u011) {
 		clear_bit(RX_RUNNING, &catc->flags);
 		pkt_offset = 2;
 	}
 
-	if (urb->status) {
-		dbg("rx_done, status %d, length %d", urb->status, urb->actual_length);
+	if (status) {
+		dbg("rx_done, status %d, length %d", status, urb->actual_length);
 		return;
 	}
 
@@ -244,8 +244,8 @@ static void catc_rx_done(struct urb *urb)
 		if(!catc->is_f5u011) {
 			pkt_len = le16_to_cpup((__le16*)pkt_start);
 			if (pkt_len > urb->actual_length) {
-				catc->stats.rx_length_errors++;
-				catc->stats.rx_errors++;
+				catc->netdev->stats.rx_length_errors++;
+				catc->netdev->stats.rx_errors++;
 				break;
 			}
 		} else {
@@ -255,14 +255,14 @@ static void catc_rx_done(struct urb *urb)
 		if (!(skb = dev_alloc_skb(pkt_len)))
 			return;
 
-		eth_copy_and_sum(skb, pkt_start + pkt_offset, pkt_len, 0);
+		skb_copy_to_linear_data(skb, pkt_start + pkt_offset, pkt_len);
 		skb_put(skb, pkt_len);
 
 		skb->protocol = eth_type_trans(skb, catc->netdev);
 		netif_rx(skb);
 
-		catc->stats.rx_packets++;
-		catc->stats.rx_bytes += pkt_len;
+		catc->netdev->stats.rx_packets++;
+		catc->netdev->stats.rx_bytes += pkt_len;
 
 		/* F5U011 only does one packet per RX */
 		if (catc->is_f5u011)
@@ -271,16 +271,14 @@ static void catc_rx_done(struct urb *urb)
 
 	} while (pkt_start - (u8 *) urb->transfer_buffer < urb->actual_length);
 
-	catc->netdev->last_rx = jiffies;
-
 	if (catc->is_f5u011) {
 		if (atomic_read(&catc->recq_sz)) {
-			int status;
+			int state;
 			atomic_dec(&catc->recq_sz);
 			dbg("getting extra packet");
 			urb->dev = catc->usbdev;
-			if ((status = usb_submit_urb(urb, GFP_ATOMIC)) < 0) {
-				dbg("submit(rx_urb) status %d", status);
+			if ((state = usb_submit_urb(urb, GFP_ATOMIC)) < 0) {
+				dbg("submit(rx_urb) status %d", state);
 			}
 		} else {
 			clear_bit(RX_RUNNING, &catc->flags);
@@ -292,8 +290,9 @@ static void catc_irq_done(struct urb *urb)
 {
 	struct catc *catc = urb->context;
 	u8 *data = urb->transfer_buffer;
-	int status;
+	int status = urb->status;
 	unsigned int hasdata = 0, linksts = LinkNoChange;
+	int res;
 
 	if (!catc->is_f5u011) {
 		hasdata = data[1] & 0x80;
@@ -309,7 +308,7 @@ static void catc_irq_done(struct urb *urb)
 			linksts = LinkBad;
 	}
 
-	switch (urb->status) {
+	switch (status) {
 	case 0:			/* success */
 		break;
 	case -ECONNRESET:	/* unlink */
@@ -318,7 +317,7 @@ static void catc_irq_done(struct urb *urb)
 		return;
 	/* -EPIPE:  should clear the halt */
 	default:		/* error */
-		dbg("irq_done, status %d, data %02x %02x.", urb->status, data[0], data[1]);
+		dbg("irq_done, status %d, data %02x %02x.", status, data[0], data[1]);
 		goto resubmit;
 	}
 
@@ -338,17 +337,17 @@ static void catc_irq_done(struct urb *urb)
 				atomic_inc(&catc->recq_sz);
 		} else {
 			catc->rx_urb->dev = catc->usbdev;
-			if ((status = usb_submit_urb(catc->rx_urb, GFP_ATOMIC)) < 0) {
-				err("submit(rx_urb) status %d", status);
+			if ((res = usb_submit_urb(catc->rx_urb, GFP_ATOMIC)) < 0) {
+				err("submit(rx_urb) status %d", res);
 			}
 		} 
 	}
 resubmit:
-	status = usb_submit_urb (urb, GFP_ATOMIC);
-	if (status)
+	res = usb_submit_urb (urb, GFP_ATOMIC);
+	if (res)
 		err ("can't resubmit intr, %s-%s, status %d",
 				catc->usbdev->bus->bus_name,
-				catc->usbdev->devpath, status);
+				catc->usbdev->devpath, res);
 }
 
 /*
@@ -380,20 +379,20 @@ static void catc_tx_done(struct urb *urb)
 {
 	struct catc *catc = urb->context;
 	unsigned long flags;
-	int r;
+	int r, status = urb->status;
 
-	if (urb->status == -ECONNRESET) {
+	if (status == -ECONNRESET) {
 		dbg("Tx Reset.");
 		urb->status = 0;
 		catc->netdev->trans_start = jiffies;
-		catc->stats.tx_errors++;
+		catc->netdev->stats.tx_errors++;
 		clear_bit(TX_RUNNING, &catc->flags);
 		netif_wake_queue(catc->netdev);
 		return;
 	}
 
-	if (urb->status) {
-		dbg("tx_done, status %d, length %d", urb->status, urb->actual_length);
+	if (status) {
+		dbg("tx_done, status %d, length %d", status, urb->actual_length);
 		return;
 	}
 
@@ -412,7 +411,8 @@ static void catc_tx_done(struct urb *urb)
 	spin_unlock_irqrestore(&catc->tx_lock, flags);
 }
 
-static int catc_hard_start_xmit(struct sk_buff *skb, struct net_device *netdev)
+static netdev_tx_t catc_start_xmit(struct sk_buff *skb,
+					 struct net_device *netdev)
 {
 	struct catc *catc = netdev_priv(netdev);
 	unsigned long flags;
@@ -423,7 +423,10 @@ static int catc_hard_start_xmit(struct sk_buff *skb, struct net_device *netdev)
 
 	catc->tx_ptr = (((catc->tx_ptr - 1) >> 6) + 1) << 6;
 	tx_buf = catc->tx_buf[catc->tx_idx] + catc->tx_ptr;
-	*((u16*)tx_buf) = (catc->is_f5u011) ? cpu_to_be16((u16)skb->len) : cpu_to_le16((u16)skb->len);
+	if (catc->is_f5u011)
+		*(__be16 *)tx_buf = cpu_to_be16(skb->len);
+	else
+		*(__le16 *)tx_buf = cpu_to_le16(skb->len);
 	skb_copy_from_linear_data(skb, tx_buf + 2, skb->len);
 	catc->tx_ptr += skb->len + 2;
 
@@ -433,27 +436,27 @@ static int catc_hard_start_xmit(struct sk_buff *skb, struct net_device *netdev)
 			clear_bit(TX_RUNNING, &catc->flags);
 	}
 
-	if ((catc->is_f5u011 && catc->tx_ptr)
-	     || (catc->tx_ptr >= ((TX_MAX_BURST - 1) * (PKT_SZ + 2))))
+	if ((catc->is_f5u011 && catc->tx_ptr) ||
+	    (catc->tx_ptr >= ((TX_MAX_BURST - 1) * (PKT_SZ + 2))))
 		netif_stop_queue(netdev);
 
 	spin_unlock_irqrestore(&catc->tx_lock, flags);
 
 	if (r >= 0) {
-		catc->stats.tx_bytes += skb->len;
-		catc->stats.tx_packets++;
+		catc->netdev->stats.tx_bytes += skb->len;
+		catc->netdev->stats.tx_packets++;
 	}
 
 	dev_kfree_skb(skb);
 
-	return 0;
+	return NETDEV_TX_OK;
 }
 
 static void catc_tx_timeout(struct net_device *netdev)
 {
 	struct catc *catc = netdev_priv(netdev);
 
-	warn("Transmit timed out.");
+	dev_warn(&netdev->dev, "Transmit timed out.\n");
 	usb_unlink_urb(catc->tx_urb);
 }
 
@@ -501,9 +504,10 @@ static void catc_ctrl_done(struct urb *urb)
 	struct catc *catc = urb->context;
 	struct ctrl_queue *q;
 	unsigned long flags;
+	int status = urb->status;
 
-	if (urb->status)
-		dbg("ctrl_done, status %d, len %d.", urb->status, urb->actual_length);
+	if (status)
+		dbg("ctrl_done, status %d, len %d.", status, urb->actual_length);
 
 	spin_lock_irqsave(&catc->ctrl_lock, flags);
 
@@ -584,15 +588,15 @@ static void catc_stats_done(struct catc *catc, struct ctrl_queue *q)
 	switch (index) {
 		case TxSingleColl:
 		case TxMultiColl:
-			catc->stats.collisions += data - last;
+			catc->netdev->stats.collisions += data - last;
 			break;
 		case TxExcessColl:
-			catc->stats.tx_aborted_errors += data - last;
-			catc->stats.tx_errors += data - last;
+			catc->netdev->stats.tx_aborted_errors += data - last;
+			catc->netdev->stats.tx_errors += data - last;
 			break;
 		case RxFramErr:
-			catc->stats.rx_frame_errors += data - last;
-			catc->stats.rx_errors += data - last;
+			catc->netdev->stats.rx_frame_errors += data - last;
+			catc->netdev->stats.rx_errors += data - last;
 			break;
 	}
 
@@ -610,12 +614,6 @@ static void catc_stats_timer(unsigned long data)
 	mod_timer(&catc->timer, jiffies + STATS_UPDATE);
 }
 
-static struct net_device_stats *catc_get_stats(struct net_device *netdev)
-{
-	struct catc *catc = netdev_priv(netdev);
-	return &catc->stats;
-}
-
 /*
  * Receive modes. Broadcast, Multicast, Promisc.
  */
@@ -631,10 +629,9 @@ static void catc_multicast(unsigned char *addr, u8 *multicast)
 static void catc_set_multicast_list(struct net_device *netdev)
 {
 	struct catc *catc = netdev_priv(netdev);
-	struct dev_mc_list *mc;
+	struct netdev_hw_addr *ha;
 	u8 broadcast[6];
 	u8 rx = RxEnable | RxPolarity | RxMultiCast;
-	int i;
 
 	memset(broadcast, 0xff, 6);
 	memset(catc->multicast, 0, 64);
@@ -650,8 +647,8 @@ static void catc_set_multicast_list(struct net_device *netdev)
 	if (netdev->flags & IFF_ALLMULTI) {
 		memset(catc->multicast, 0xff, 64);
 	} else {
-		for (i = 0, mc = netdev->mc_list; mc && i < netdev->mc_count; i++, mc = mc->next) {
-			u32 crc = ether_crc_le(6, mc->dmi_addr);
+		netdev_for_each_mc_addr(ha, netdev) {
+			u32 crc = ether_crc_le(6, ha->addr);
 			if (!catc->is_f5u011) {
 				catc->multicast[(crc >> 3) & 0x3f] |= 1 << (crc & 7);
 			} else {
@@ -700,7 +697,7 @@ static int catc_get_settings(struct net_device *dev, struct ethtool_cmd *cmd)
 	return 0;
 }
 
-static struct ethtool_ops ops = {
+static const struct ethtool_ops ops = {
 	.get_drvinfo = catc_get_drvinfo,
 	.get_settings = catc_get_settings,
 	.get_link = ethtool_op_get_link
@@ -746,6 +743,18 @@ static int catc_stop(struct net_device *netdev)
 	return 0;
 }
 
+static const struct net_device_ops catc_netdev_ops = {
+	.ndo_open		= catc_open,
+	.ndo_stop		= catc_stop,
+	.ndo_start_xmit		= catc_start_xmit,
+
+	.ndo_tx_timeout		= catc_tx_timeout,
+	.ndo_set_multicast_list = catc_set_multicast_list,
+	.ndo_change_mtu		= eth_change_mtu,
+	.ndo_set_mac_address 	= eth_mac_addr,
+	.ndo_validate_addr	= eth_validate_addr,
+};
+
 /*
  * USB probe, disconnect.
  */
@@ -770,13 +779,8 @@ static int catc_probe(struct usb_interface *intf, const struct usb_device_id *id
 
 	catc = netdev_priv(netdev);
 
-	netdev->open = catc_open;
-	netdev->hard_start_xmit = catc_hard_start_xmit;
-	netdev->stop = catc_stop;
-	netdev->get_stats = catc_get_stats;
-	netdev->tx_timeout = catc_tx_timeout;
+	netdev->netdev_ops = &catc_netdev_ops;
 	netdev->watchdog_timeo = TX_TIMEOUT;
-	netdev->set_multicast_list = catc_set_multicast_list;
 	SET_ETHTOOL_OPS(netdev, &ops);
 
 	catc->usbdev = usbdev;
@@ -844,7 +848,8 @@ static int catc_probe(struct usb_interface *intf, const struct usb_device_id *id
 			dbg("64k Memory\n");
 			break;
 		default:
-			warn("Couldn't detect memory size, assuming 32k");
+			dev_warn(&intf->dev,
+				 "Couldn't detect memory size, assuming 32k\n");
 		case 0x87654321:
 			catc_set_reg(catc, TxBufCount, 4);
 			catc_set_reg(catc, RxBufCount, 16);
@@ -891,11 +896,9 @@ static int catc_probe(struct usb_interface *intf, const struct usb_device_id *id
 		f5u011_rxmode(catc, catc->rxmode);
 	}
 	dbg("Init done.");
-	printk(KERN_INFO "%s: %s USB Ethernet at usb-%s-%s, ",
+	printk(KERN_INFO "%s: %s USB Ethernet at usb-%s-%s, %pM.\n",
 	       netdev->name, (catc->is_f5u011) ? "Belkin F5U011" : "CATC EL1210A NetMate",
-	       usbdev->bus->bus_name, usbdev->devpath);
-	for (i = 0; i < 5; i++) printk("%2.2x:", netdev->dev_addr[i]);
-	printk("%2.2x.\n", netdev->dev_addr[i]);
+	       usbdev->bus->bus_name, usbdev->devpath, netdev->dev_addr);
 	usb_set_intfdata(intf, catc);
 
 	SET_NETDEV_DEV(netdev, &intf->dev);
@@ -950,7 +953,8 @@ static int __init catc_init(void)
 {
 	int result = usb_register(&catc_driver);
 	if (result == 0)
-		info(DRIVER_VERSION " " DRIVER_DESC);
+		printk(KERN_INFO KBUILD_MODNAME ": " DRIVER_VERSION ":"
+		       DRIVER_DESC "\n");
 	return result;
 }
 

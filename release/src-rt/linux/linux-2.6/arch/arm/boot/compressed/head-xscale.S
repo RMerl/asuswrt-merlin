@@ -6,7 +6,6 @@
  */
 
 #include <linux/linkage.h>
-#include <asm/mach-types.h>
 
 		.section        ".start", "ax"
 
@@ -32,19 +31,6 @@ __XScale_start:
 		bic	r0, r0, #0x05		@ clear DC, MMU
 		bic	r0, r0, #0x1000		@ clear Icache
 		mcr	p15, 0, r0, c1, c0, 0
-
-#ifdef CONFIG_ARCH_LUBBOCK
-		mov	r7, #MACH_TYPE_LUBBOCK
-#endif
-
-#ifdef CONFIG_ARCH_COTULLA_IDP
-		mov	r7, #MACH_TYPE_COTULLA_IDP
-#endif
-
-#ifdef  CONFIG_MACH_GTWX5715
-               mov     r7, #(MACH_TYPE_GTWX5715 & 0xff)
-               orr     r7, r7, #(MACH_TYPE_GTWX5715 & 0xff00)
-#endif
 
 #ifdef CONFIG_ARCH_IXP2000
 		mov	r1, #-1

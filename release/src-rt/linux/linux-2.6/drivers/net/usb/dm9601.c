@@ -20,11 +20,11 @@
 #include <linux/mii.h>
 #include <linux/usb.h>
 #include <linux/crc32.h>
-
-#include "usbnet.h"
+#include <linux/usb/usbnet.h>
+#include <linux/slab.h>
 
 /* datasheet:
- http://www.davicom.com.tw/big5/download/Data%20Sheet/DM9601-DS-P01-930914.pdf
+ http://ptm2.cc.utu.fi/ftp/network/cards/DM9601/From_NET/DM9601-DS-P01-930914.pdf
 */
 
 /* control requests */
@@ -56,12 +56,28 @@
 
 static int dm_read(struct usbnet *dev, u8 reg, u16 length, void *data)
 {
-	devdbg(dev, "dm_read() reg=0x%02x length=%d", reg, length);
-	return usb_control_msg(dev->udev,
-			       usb_rcvctrlpipe(dev->udev, 0),
-			       DM_READ_REGS,
-			       USB_DIR_IN | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
-			       0, reg, data, length, USB_CTRL_SET_TIMEOUT);
+	void *buf;
+	int err = -ENOMEM;
+
+	netdev_dbg(dev->net, "dm_read() reg=0x%02x length=%d\n", reg, length);
+
+	buf = kmalloc(length, GFP_KERNEL);
+	if (!buf)
+		goto out;
+
+	err = usb_control_msg(dev->udev,
+			      usb_rcvctrlpipe(dev->udev, 0),
+			      DM_READ_REGS,
+			      USB_DIR_IN | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
+			      0, reg, buf, length, USB_CTRL_SET_TIMEOUT);
+	if (err == length)
+		memcpy(data, buf, length);
+	else if (err >= 0)
+		err = -EINVAL;
+	kfree(buf);
+
+ out:
+	return err;
 }
 
 static int dm_read_reg(struct usbnet *dev, u8 reg, u8 *value)
@@ -71,17 +87,33 @@ static int dm_read_reg(struct usbnet *dev, u8 reg, u8 *value)
 
 static int dm_write(struct usbnet *dev, u8 reg, u16 length, void *data)
 {
-	devdbg(dev, "dm_write() reg=0x%02x, length=%d", reg, length);
-	return usb_control_msg(dev->udev,
-			       usb_sndctrlpipe(dev->udev, 0),
-			       DM_WRITE_REGS,
-			       USB_DIR_OUT | USB_TYPE_VENDOR |USB_RECIP_DEVICE,
-			       0, reg, data, length, USB_CTRL_SET_TIMEOUT);
+	void *buf = NULL;
+	int err = -ENOMEM;
+
+	netdev_dbg(dev->net, "dm_write() reg=0x%02x, length=%d\n", reg, length);
+
+	if (data) {
+		buf = kmemdup(data, length, GFP_KERNEL);
+		if (!buf)
+			goto out;
+	}
+
+	err = usb_control_msg(dev->udev,
+			      usb_sndctrlpipe(dev->udev, 0),
+			      DM_WRITE_REGS,
+			      USB_DIR_OUT | USB_TYPE_VENDOR |USB_RECIP_DEVICE,
+			      0, reg, buf, length, USB_CTRL_SET_TIMEOUT);
+	kfree(buf);
+	if (err >= 0 && err < length)
+		err = -EINVAL;
+ out:
+	return err;
 }
 
 static int dm_write_reg(struct usbnet *dev, u8 reg, u8 value)
 {
-	devdbg(dev, "dm_write_reg() reg=0x%02x, value=0x%02x", reg, value);
+	netdev_dbg(dev->net, "dm_write_reg() reg=0x%02x, value=0x%02x\n",
+		   reg, value);
 	return usb_control_msg(dev->udev,
 			       usb_sndctrlpipe(dev->udev, 0),
 			       DM_WRITE_REG,
@@ -92,39 +124,39 @@ static int dm_write_reg(struct usbnet *dev, u8 reg, u8 value)
 static void dm_write_async_callback(struct urb *urb)
 {
 	struct usb_ctrlrequest *req = (struct usb_ctrlrequest *)urb->context;
+	int status = urb->status;
 
-	if (urb->status < 0)
-		printk(KERN_DEBUG "dm_write_async_callback() failed with %d",
-		       urb->status);
+	if (status < 0)
+		printk(KERN_DEBUG "dm_write_async_callback() failed with %d\n",
+		       status);
 
 	kfree(req);
 	usb_free_urb(urb);
 }
 
-static void dm_write_async(struct usbnet *dev, u8 reg, u16 length, void *data)
+static void dm_write_async_helper(struct usbnet *dev, u8 reg, u8 value,
+				  u16 length, void *data)
 {
 	struct usb_ctrlrequest *req;
 	struct urb *urb;
 	int status;
 
-	devdbg(dev, "dm_write_async() reg=0x%02x length=%d", reg, length);
-
 	urb = usb_alloc_urb(0, GFP_ATOMIC);
 	if (!urb) {
-		deverr(dev, "Error allocating URB in dm_write_async!");
+		netdev_err(dev->net, "Error allocating URB in dm_write_async_helper!\n");
 		return;
 	}
 
 	req = kmalloc(sizeof(struct usb_ctrlrequest), GFP_ATOMIC);
 	if (!req) {
-		deverr(dev, "Failed to allocate memory for control request");
+		netdev_err(dev->net, "Failed to allocate memory for control request\n");
 		usb_free_urb(urb);
 		return;
 	}
 
 	req->bRequestType = USB_DIR_OUT | USB_TYPE_VENDOR | USB_RECIP_DEVICE;
-	req->bRequest = DM_WRITE_REGS;
-	req->wValue = 0;
+	req->bRequest = length ? DM_WRITE_REGS : DM_WRITE_REG;
+	req->wValue = cpu_to_le16(value);
 	req->wIndex = cpu_to_le16(reg);
 	req->wLength = cpu_to_le16(length);
 
@@ -135,55 +167,29 @@ static void dm_write_async(struct usbnet *dev, u8 reg, u16 length, void *data)
 
 	status = usb_submit_urb(urb, GFP_ATOMIC);
 	if (status < 0) {
-		deverr(dev, "Error submitting the control message: status=%d",
-		       status);
+		netdev_err(dev->net, "Error submitting the control message: status=%d\n",
+			   status);
 		kfree(req);
 		usb_free_urb(urb);
 	}
+}
+
+static void dm_write_async(struct usbnet *dev, u8 reg, u16 length, void *data)
+{
+	netdev_dbg(dev->net, "dm_write_async() reg=0x%02x length=%d\n", reg, length);
+
+	dm_write_async_helper(dev, reg, 0, length, data);
 }
 
 static void dm_write_reg_async(struct usbnet *dev, u8 reg, u8 value)
 {
-	struct usb_ctrlrequest *req;
-	struct urb *urb;
-	int status;
+	netdev_dbg(dev->net, "dm_write_reg_async() reg=0x%02x value=0x%02x\n",
+		   reg, value);
 
-	devdbg(dev, "dm_write_reg_async() reg=0x%02x value=0x%02x",
-	       reg, value);
-
-	urb = usb_alloc_urb(0, GFP_ATOMIC);
-	if (!urb) {
-		deverr(dev, "Error allocating URB in dm_write_async!");
-		return;
-	}
-
-	req = kmalloc(sizeof(struct usb_ctrlrequest), GFP_ATOMIC);
-	if (!req) {
-		deverr(dev, "Failed to allocate memory for control request");
-		usb_free_urb(urb);
-		return;
-	}
-
-	req->bRequestType = USB_DIR_OUT | USB_TYPE_VENDOR | USB_RECIP_DEVICE;
-	req->bRequest = DM_WRITE_REG;
-	req->wValue = cpu_to_le16(value);
-	req->wIndex = cpu_to_le16(reg);
-	req->wLength = 0;
-
-	usb_fill_control_urb(urb, dev->udev,
-			     usb_sndctrlpipe(dev->udev, 0),
-			     (void *)req, NULL, 0, dm_write_async_callback, req);
-
-	status = usb_submit_urb(urb, GFP_ATOMIC);
-	if (status < 0) {
-		deverr(dev, "Error submitting the control message: status=%d",
-		       status);
-		kfree(req);
-		usb_free_urb(urb);
-	}
+	dm_write_async_helper(dev, reg, value, 0, NULL);
 }
 
-static int dm_read_shared_word(struct usbnet *dev, int phy, u8 reg, u16 *value)
+static int dm_read_shared_word(struct usbnet *dev, int phy, u8 reg, __le16 *value)
 {
 	int ret, i;
 
@@ -206,7 +212,7 @@ static int dm_read_shared_word(struct usbnet *dev, int phy, u8 reg, u16 *value)
 	}
 
 	if (i == DM_TIMEOUT) {
-		deverr(dev, "%s read timed out!", phy ? "phy" : "eeprom");
+		netdev_err(dev->net, "%s read timed out!\n", phy ? "phy" : "eeprom");
 		ret = -EIO;
 		goto out;
 	}
@@ -214,15 +220,15 @@ static int dm_read_shared_word(struct usbnet *dev, int phy, u8 reg, u16 *value)
 	dm_write_reg(dev, DM_SHARED_CTRL, 0x0);
 	ret = dm_read(dev, DM_SHARED_DATA, 2, value);
 
-	devdbg(dev, "read shared %d 0x%02x returned 0x%04x, %d",
-	       phy, reg, *value, ret);
+	netdev_dbg(dev->net, "read shared %d 0x%02x returned 0x%04x, %d\n",
+		   phy, reg, *value, ret);
 
  out:
 	mutex_unlock(&dev->phy_mutex);
 	return ret;
 }
 
-static int dm_write_shared_word(struct usbnet *dev, int phy, u8 reg, u16 value)
+static int dm_write_shared_word(struct usbnet *dev, int phy, u8 reg, __le16 value)
 {
 	int ret, i;
 
@@ -233,7 +239,7 @@ static int dm_write_shared_word(struct usbnet *dev, int phy, u8 reg, u16 value)
 		goto out;
 
 	dm_write_reg(dev, DM_SHARED_ADDR, phy ? (reg | 0x40) : reg);
-	dm_write_reg(dev, DM_SHARED_CTRL, phy ? 0x1c : 0x14);
+	dm_write_reg(dev, DM_SHARED_CTRL, phy ? 0x1a : 0x12);
 
 	for (i = 0; i < DM_TIMEOUT; i++) {
 		u8 tmp;
@@ -249,7 +255,7 @@ static int dm_write_shared_word(struct usbnet *dev, int phy, u8 reg, u16 value)
 	}
 
 	if (i == DM_TIMEOUT) {
-		deverr(dev, "%s write timed out!", phy ? "phy" : "eeprom");
+		netdev_err(dev->net, "%s write timed out!\n", phy ? "phy" : "eeprom");
 		ret = -EIO;
 		goto out;
 	}
@@ -277,7 +283,7 @@ static int dm9601_get_eeprom(struct net_device *net,
 			     struct ethtool_eeprom *eeprom, u8 * data)
 {
 	struct usbnet *dev = netdev_priv(net);
-	u16 *ebuf = (u16 *) data;
+	__le16 *ebuf = (__le16 *) data;
 	int i;
 
 	/* access is 16bit */
@@ -296,18 +302,18 @@ static int dm9601_mdio_read(struct net_device *netdev, int phy_id, int loc)
 {
 	struct usbnet *dev = netdev_priv(netdev);
 
-	u16 res;
+	__le16 res;
 
 	if (phy_id) {
-		devdbg(dev, "Only internal phy supported");
+		netdev_dbg(dev->net, "Only internal phy supported\n");
 		return 0;
 	}
 
 	dm_read_shared_word(dev, 1, loc, &res);
 
-	devdbg(dev,
-	       "dm9601_mdio_read() phy_id=0x%02x, loc=0x%02x, returns=0x%04x",
-	       phy_id, loc, le16_to_cpu(res));
+	netdev_dbg(dev->net,
+		   "dm9601_mdio_read() phy_id=0x%02x, loc=0x%02x, returns=0x%04x\n",
+		   phy_id, loc, le16_to_cpu(res));
 
 	return le16_to_cpu(res);
 }
@@ -316,15 +322,15 @@ static void dm9601_mdio_write(struct net_device *netdev, int phy_id, int loc,
 			      int val)
 {
 	struct usbnet *dev = netdev_priv(netdev);
-	u16 res = cpu_to_le16(val);
+	__le16 res = cpu_to_le16(val);
 
 	if (phy_id) {
-		devdbg(dev, "Only internal phy supported");
+		netdev_dbg(dev->net, "Only internal phy supported\n");
 		return;
 	}
 
-	devdbg(dev,"dm9601_mdio_write() phy_id=0x%02x, loc=0x%02x, val=0x%04x",
-	       phy_id, loc, val);
+	netdev_dbg(dev->net, "dm9601_mdio_write() phy_id=0x%02x, loc=0x%02x, val=0x%04x\n",
+		   phy_id, loc, val);
 
 	dm_write_shared_word(dev, 1, loc, res);
 }
@@ -351,7 +357,7 @@ static int dm9601_ioctl(struct net_device *net, struct ifreq *rq, int cmd)
 	return generic_mii_ioctl(&dev->mii, if_mii(rq), cmd, NULL);
 }
 
-static struct ethtool_ops dm9601_ethtool_ops = {
+static const struct ethtool_ops dm9601_ethtool_ops = {
 	.get_drvinfo	= dm9601_get_drvinfo,
 	.get_link	= dm9601_get_link,
 	.get_msglevel	= usbnet_get_msglevel,
@@ -369,21 +375,21 @@ static void dm9601_set_multicast(struct net_device *net)
 	/* We use the 20 byte dev->data for our 8 byte filter buffer
 	 * to avoid allocating memory that is tricky to free later */
 	u8 *hashes = (u8 *) & dev->data;
-	u8 rx_ctl = 0x01;
+	u8 rx_ctl = 0x31;
 
 	memset(hashes, 0x00, DM_MCAST_SIZE);
 	hashes[DM_MCAST_SIZE - 1] |= 0x80;	/* broadcast address */
 
 	if (net->flags & IFF_PROMISC) {
 		rx_ctl |= 0x02;
-	} else if (net->flags & IFF_ALLMULTI || net->mc_count > DM_MAX_MCAST) {
+	} else if (net->flags & IFF_ALLMULTI ||
+		   netdev_mc_count(net) > DM_MAX_MCAST) {
 		rx_ctl |= 0x04;
-	} else if (net->mc_count) {
-		struct dev_mc_list *mc_list = net->mc_list;
-		int i;
+	} else if (!netdev_mc_empty(net)) {
+		struct netdev_hw_addr *ha;
 
-		for (i = 0; i < net->mc_count; i++) {
-			u32 crc = ether_crc(ETH_ALEN, mc_list->dmi_addr) >> 26;
+		netdev_for_each_mc_addr(ha, net) {
+			u32 crc = ether_crc(ETH_ALEN, ha->addr) >> 26;
 			hashes[crc >> 3] |= 1 << (crc & 0x7);
 		}
 	}
@@ -392,16 +398,50 @@ static void dm9601_set_multicast(struct net_device *net)
 	dm_write_reg_async(dev, DM_RX_CTRL, rx_ctl);
 }
 
+static void __dm9601_set_mac_address(struct usbnet *dev)
+{
+	dm_write_async(dev, DM_PHY_ADDR, ETH_ALEN, dev->net->dev_addr);
+}
+
+static int dm9601_set_mac_address(struct net_device *net, void *p)
+{
+	struct sockaddr *addr = p;
+	struct usbnet *dev = netdev_priv(net);
+
+	if (!is_valid_ether_addr(addr->sa_data)) {
+		dev_err(&net->dev, "not setting invalid mac address %pM\n",
+								addr->sa_data);
+		return -EINVAL;
+	}
+
+	memcpy(net->dev_addr, addr->sa_data, net->addr_len);
+	__dm9601_set_mac_address(dev);
+
+	return 0;
+}
+
+static const struct net_device_ops dm9601_netdev_ops = {
+	.ndo_open		= usbnet_open,
+	.ndo_stop		= usbnet_stop,
+	.ndo_start_xmit		= usbnet_start_xmit,
+	.ndo_tx_timeout		= usbnet_tx_timeout,
+	.ndo_change_mtu		= usbnet_change_mtu,
+	.ndo_validate_addr	= eth_validate_addr,
+	.ndo_do_ioctl 		= dm9601_ioctl,
+	.ndo_set_multicast_list = dm9601_set_multicast,
+	.ndo_set_mac_address	= dm9601_set_mac_address,
+};
+
 static int dm9601_bind(struct usbnet *dev, struct usb_interface *intf)
 {
 	int ret;
+	u8 mac[ETH_ALEN];
 
 	ret = usbnet_get_endpoints(dev, intf);
 	if (ret)
 		goto out;
 
-	dev->net->do_ioctl = dm9601_ioctl;
-	dev->net->set_multicast_list = dm9601_set_multicast;
+	dev->net->netdev_ops = &dm9601_netdev_ops;
 	dev->net->ethtool_ops = &dm9601_ethtool_ops;
 	dev->net->hard_header_len += DM_TX_OVERHEAD;
 	dev->hard_mtu = dev->net->mtu + dev->net->hard_header_len;
@@ -418,10 +458,22 @@ static int dm9601_bind(struct usbnet *dev, struct usb_interface *intf)
 	udelay(20);
 
 	/* read MAC */
-	if (dm_read(dev, DM_PHY_ADDR, ETH_ALEN, dev->net->dev_addr) < 0) {
+	if (dm_read(dev, DM_PHY_ADDR, ETH_ALEN, mac) < 0) {
 		printk(KERN_ERR "Error reading MAC address\n");
 		ret = -ENODEV;
 		goto out;
+	}
+
+	/*
+	 * Overwrite the auto-generated address only with good ones.
+	 */
+	if (is_valid_ether_addr(mac))
+		memcpy(dev->net->dev_addr, mac, ETH_ALEN);
+	else {
+		printk(KERN_WARNING
+			"dm9601: No valid MAC address in EEPROM, using %pM\n",
+			dev->net->dev_addr);
+		__dm9601_set_mac_address(dev);
 	}
 
 	/* power up phy */
@@ -446,10 +498,10 @@ static int dm9601_rx_fixup(struct usbnet *dev, struct sk_buff *skb)
 	int len;
 
 	/* format:
-	   b0: rx status
-	   b1: packet length (incl crc) low
-	   b2: packet length (incl crc) high
-	   b3..n-4: packet data
+	   b1: rx status
+	   b2: packet length (incl crc) low
+	   b3: packet length (incl crc) high
+	   b4..n-4: packet data
 	   bn-3..bn: ethernet crc
 	 */
 
@@ -462,11 +514,11 @@ static int dm9601_rx_fixup(struct usbnet *dev, struct sk_buff *skb)
 	len = (skb->data[1] | (skb->data[2] << 8)) - 4;
 
 	if (unlikely(status & 0xbf)) {
-		if (status & 0x01) dev->stats.rx_fifo_errors++;
-		if (status & 0x02) dev->stats.rx_crc_errors++;
-		if (status & 0x04) dev->stats.rx_frame_errors++;
-		if (status & 0x20) dev->stats.rx_missed_errors++;
-		if (status & 0x90) dev->stats.rx_length_errors++;
+		if (status & 0x01) dev->net->stats.rx_fifo_errors++;
+		if (status & 0x02) dev->net->stats.rx_crc_errors++;
+		if (status & 0x04) dev->net->stats.rx_frame_errors++;
+		if (status & 0x20) dev->net->stats.rx_missed_errors++;
+		if (status & 0x90) dev->net->stats.rx_length_errors++;
 		return 0;
 	}
 
@@ -482,8 +534,8 @@ static struct sk_buff *dm9601_tx_fixup(struct usbnet *dev, struct sk_buff *skb,
 	int len;
 
 	/* format:
-	   b0: packet length low
-	   b1: packet length high
+	   b1: packet length low
+	   b2: packet length high
 	   b3..n: packet data
 	*/
 
@@ -541,7 +593,7 @@ static void dm9601_status(struct usbnet *dev, struct urb *urb)
 		}
 		else
 			netif_carrier_off(dev->net);
-		devdbg(dev, "Link Status is: %d", link);
+		netdev_dbg(dev->net, "Link Status is: %d\n", link);
 	}
 }
 
@@ -552,15 +604,15 @@ static int dm9601_link_reset(struct usbnet *dev)
 	mii_check_media(&dev->mii, 1, 1);
 	mii_ethtool_gset(&dev->mii, &ecmd);
 
-	devdbg(dev, "link_reset() speed: %d duplex: %d",
-	       ecmd.speed, ecmd.duplex);
+	netdev_dbg(dev->net, "link_reset() speed: %d duplex: %d\n",
+		   ecmd.speed, ecmd.duplex);
 
 	return 0;
 }
 
 static const struct driver_info dm9601_info = {
 	.description	= "Davicom DM9601 USB Ethernet",
-	.flags		= FLAG_ETHER,
+	.flags		= FLAG_ETHER | FLAG_LINK_INTR,
 	.bind		= dm9601_bind,
 	.rx_fixup	= dm9601_rx_fixup,
 	.tx_fixup	= dm9601_tx_fixup,
@@ -584,6 +636,26 @@ static const struct usb_device_id products[] = {
 	 },
 	{
 	 USB_DEVICE(0x0a46, 0x0268),	/* ShanTou ST268 USB NIC */
+	 .driver_info = (unsigned long)&dm9601_info,
+	 },
+	{
+	 USB_DEVICE(0x0a46, 0x8515),	/* ADMtek ADM8515 USB NIC */
+	 .driver_info = (unsigned long)&dm9601_info,
+	 },
+	{
+	USB_DEVICE(0x0a47, 0x9601),	/* Hirose USB-100 */
+	.driver_info = (unsigned long)&dm9601_info,
+	 },
+	{
+	USB_DEVICE(0x0fe6, 0x8101),	/* DM9601 USB to Fast Ethernet Adapter */
+	.driver_info = (unsigned long)&dm9601_info,
+	 },
+	{
+	 USB_DEVICE(0x0fe6, 0x9700),	/* DM9601 USB to Fast Ethernet Adapter */
+	 .driver_info = (unsigned long)&dm9601_info,
+	 },
+	{
+	 USB_DEVICE(0x0a46, 0x9000),	/* DM9000E */
 	 .driver_info = (unsigned long)&dm9601_info,
 	 },
 	{},			// END

@@ -29,7 +29,6 @@
 
 #include <linux/init.h>
 #include <linux/module.h>
-#include <linux/moduleparam.h>
 #include <linux/device.h>
 #include <linux/firmware.h>
 #include <linux/delay.h>
@@ -71,7 +70,7 @@ static int sp8870_writereg (struct sp8870_state* state, u16 reg, u16 data)
 	int err;
 
 	if ((err = i2c_transfer (state->i2c, &msg, 1)) != 1) {
-		dprintk ("%s: writereg error (err == %i, reg == 0x%02x, data == 0x%02x)\n", __FUNCTION__, err, reg, data);
+		dprintk ("%s: writereg error (err == %i, reg == 0x%02x, data == 0x%02x)\n", __func__, err, reg, data);
 		return -EREMOTEIO;
 	}
 
@@ -89,7 +88,7 @@ static int sp8870_readreg (struct sp8870_state* state, u16 reg)
 	ret = i2c_transfer (state->i2c, msg, 2);
 
 	if (ret != 2) {
-		dprintk("%s: readreg error (ret == %i)\n", __FUNCTION__, ret);
+		dprintk("%s: readreg error (ret == %i)\n", __func__, ret);
 		return -1;
 	}
 
@@ -99,13 +98,13 @@ static int sp8870_readreg (struct sp8870_state* state, u16 reg)
 static int sp8870_firmware_upload (struct sp8870_state* state, const struct firmware *fw)
 {
 	struct i2c_msg msg;
-	char *fw_buf = fw->data;
+	const char *fw_buf = fw->data;
 	int fw_pos;
 	u8 tx_buf[255];
 	int tx_len;
 	int err = 0;
 
-	dprintk ("%s: ...\n", __FUNCTION__);
+	dprintk ("%s: ...\n", __func__);
 
 	if (fw->size < SP8870_FIRMWARE_SIZE + SP8870_FIRMWARE_OFFSET)
 		return -EINVAL;
@@ -132,14 +131,14 @@ static int sp8870_firmware_upload (struct sp8870_state* state, const struct firm
 		msg.buf = tx_buf;
 		msg.len = tx_len + 2;
 		if ((err = i2c_transfer (state->i2c, &msg, 1)) != 1) {
-			printk("%s: firmware upload failed!\n", __FUNCTION__);
-			printk ("%s: i2c error (err == %i)\n", __FUNCTION__, err);
+			printk("%s: firmware upload failed!\n", __func__);
+			printk ("%s: i2c error (err == %i)\n", __func__, err);
 			return err;
 		}
 		fw_pos += tx_len;
 	}
 
-	dprintk ("%s: done!\n", __FUNCTION__);
+	dprintk ("%s: done!\n", __func__);
 	return 0;
 };
 
@@ -311,7 +310,7 @@ static int sp8870_init (struct dvb_frontend* fe)
 	if (state->initialised) return 0;
 	state->initialised = 1;
 
-	dprintk ("%s\n", __FUNCTION__);
+	dprintk ("%s\n", __func__);
 
 
 	/* request the firmware, this will block until someone uploads it */
@@ -450,15 +449,15 @@ static int sp8870_read_uncorrected_blocks (struct dvb_frontend* fe, u32* ublocks
 	return 0;
 }
 
-// number of trials to recover from lockup
+/* number of trials to recover from lockup */
 #define MAXTRIALS 5
-// maximum checks for data valid signal
+/* maximum checks for data valid signal */
 #define MAXCHECKS 100
 
-// only for debugging: counter for detected lockups
-static int lockups = 0;
-// only for debugging: counter for channel switches
-static int switches = 0;
+/* only for debugging: counter for detected lockups */
+static int lockups;
+/* only for debugging: counter for channel switches */
+static int switches;
 
 static int sp8870_set_frontend (struct dvb_frontend* fe, struct dvb_frontend_parameters *p)
 {
@@ -476,7 +475,7 @@ static int sp8870_set_frontend (struct dvb_frontend* fe, struct dvb_frontend_par
 	int trials = 0;
 	int check_count = 0;
 
-	dprintk("%s: frequency = %i\n", __FUNCTION__, p->frequency);
+	dprintk("%s: frequency = %i\n", __func__, p->frequency);
 
 	for (trials = 1; trials <= MAXTRIALS; trials++) {
 
@@ -488,7 +487,7 @@ static int sp8870_set_frontend (struct dvb_frontend* fe, struct dvb_frontend_par
 			valid = sp8870_read_data_valid_signal(state);
 			if (valid) {
 				dprintk("%s: delay = %i usec\n",
-					__FUNCTION__, check_count * 10);
+					__func__, check_count * 10);
 				break;
 			}
 			udelay(10);
@@ -498,20 +497,20 @@ static int sp8870_set_frontend (struct dvb_frontend* fe, struct dvb_frontend_par
 	}
 
 	if (!valid) {
-		printk("%s: firmware crash!!!!!!\n", __FUNCTION__);
+		printk("%s: firmware crash!!!!!!\n", __func__);
 		return -EIO;
 	}
 
 	if (debug) {
 		if (valid) {
 			if (trials > 1) {
-				printk("%s: firmware lockup!!!\n", __FUNCTION__);
-				printk("%s: recovered after %i trial(s))\n",  __FUNCTION__, trials - 1);
+				printk("%s: firmware lockup!!!\n", __func__);
+				printk("%s: recovered after %i trial(s))\n",  __func__, trials - 1);
 				lockups++;
 			}
 		}
 		switches++;
-		printk("%s: switches = %i lockups = %i\n", __FUNCTION__, switches, lockups);
+		printk("%s: switches = %i lockups = %i\n", __func__, switches, lockups);
 	}
 
 	return 0;
@@ -558,7 +557,7 @@ struct dvb_frontend* sp8870_attach(const struct sp8870_config* config,
 	struct sp8870_state* state = NULL;
 
 	/* allocate memory for the internal state */
-	state = kmalloc(sizeof(struct sp8870_state), GFP_KERNEL);
+	state = kzalloc(sizeof(struct sp8870_state), GFP_KERNEL);
 	if (state == NULL) goto error;
 
 	/* setup the state */

@@ -52,6 +52,10 @@ enum smi_action smi_handle_dr_smp_send(struct ib_smp *smp,
 	hop_cnt = smp->hop_cnt;
 
 	/* See section 14.2.2.2, Vol 1 IB spec */
+	/* C14-6 -- valid hop_cnt values are from 0 to 63 */
+	if (hop_cnt >= IB_SMP_MAX_PATH_HOPS)
+		return IB_SMI_DISCARD;
+
 	if (!ib_get_smp_direction(smp)) {
 		/* C14-9:1 */
 		if (hop_cnt && hop_ptr == 0) {
@@ -133,6 +137,10 @@ enum smi_action smi_handle_dr_smp_recv(struct ib_smp *smp, u8 node_type,
 	hop_cnt = smp->hop_cnt;
 
 	/* See section 14.2.2.2, Vol 1 IB spec */
+	/* C14-6 -- valid hop_cnt values are from 0 to 63 */
+	if (hop_cnt >= IB_SMP_MAX_PATH_HOPS)
+		return IB_SMI_DISCARD;
+
 	if (!ib_get_smp_direction(smp)) {
 		/* C14-9:1 -- sender should have incremented hop_ptr */
 		if (hop_cnt && hop_ptr == 0)
@@ -192,7 +200,7 @@ enum smi_action smi_handle_dr_smp_recv(struct ib_smp *smp, u8 node_type,
 			}
 			/* smp->hop_ptr updated when sending */
 			return (node_type == RDMA_NODE_IB_SWITCH ?
-				IB_SMI_HANDLE: IB_SMI_DISCARD);
+				IB_SMI_HANDLE : IB_SMI_DISCARD);
 		}
 
 		/* C14-13:4 -- hop_ptr = 0 -> give to SM */
@@ -211,7 +219,7 @@ enum smi_forward_action smi_check_forward_dr_smp(struct ib_smp *smp)
 	if (!ib_get_smp_direction(smp)) {
 		/* C14-9:2 -- intermediate hop */
 		if (hop_ptr && hop_ptr < hop_cnt)
-			return IB_SMI_SEND;
+			return IB_SMI_FORWARD;
 
 		/* C14-9:3 -- at the end of the DR segment of path */
 		if (hop_ptr == hop_cnt)
@@ -224,7 +232,7 @@ enum smi_forward_action smi_check_forward_dr_smp(struct ib_smp *smp)
 	} else {
 		/* C14-13:2  -- intermediate hop */
 		if (2 <= hop_ptr && hop_ptr <= hop_cnt)
-			return IB_SMI_SEND;
+			return IB_SMI_FORWARD;
 
 		/* C14-13:3 -- at the end of the DR segment of path */
 		if (hop_ptr == 1)
@@ -232,4 +240,14 @@ enum smi_forward_action smi_check_forward_dr_smp(struct ib_smp *smp)
 				IB_SMI_SEND : IB_SMI_LOCAL);
 	}
 	return IB_SMI_LOCAL;
+}
+
+/*
+ * Return the forwarding port number from initial_path for outgoing SMP and
+ * from return_path for returning SMP
+ */
+int smi_get_fwd_port(struct ib_smp *smp)
+{
+	return (!ib_get_smp_direction(smp) ? smp->initial_path[smp->hop_ptr+1] :
+		smp->return_path[smp->hop_ptr-1]);
 }

@@ -1,14 +1,23 @@
 /*
  * tick internal variable and functions used by low/high res code
  */
+#include <linux/hrtimer.h>
+#include <linux/tick.h>
+
+#ifdef CONFIG_GENERIC_CLOCKEVENTS_BUILD
+
+#define TICK_DO_TIMER_NONE	-1
+#define TICK_DO_TIMER_BOOT	-2
+
 DECLARE_PER_CPU(struct tick_device, tick_cpu_device);
-extern spinlock_t tick_device_lock;
 extern ktime_t tick_next_period;
 extern ktime_t tick_period;
 extern int tick_do_timer_cpu __read_mostly;
 
 extern void tick_setup_periodic(struct clock_event_device *dev, int broadcast);
 extern void tick_handle_periodic(struct clock_event_device *dev);
+
+extern void clockevents_shutdown(struct clock_event_device *dev);
 
 /*
  * NO_HZ / high resolution timer shared code
@@ -17,6 +26,8 @@ extern void tick_handle_periodic(struct clock_event_device *dev);
 extern void tick_setup_oneshot(struct clock_event_device *newdev,
 			       void (*handler)(struct clock_event_device *),
 			       ktime_t nextevt);
+extern int tick_dev_program_event(struct clock_event_device *dev,
+				  ktime_t expires, int force);
 extern int tick_program_event(ktime_t expires, int force);
 extern void tick_oneshot_notify(void);
 extern int tick_switch_to_oneshot(void (*handler)(struct clock_event_device *));
@@ -27,6 +38,9 @@ extern void tick_broadcast_oneshot_control(unsigned long reason);
 extern void tick_broadcast_switch_to_oneshot(void);
 extern void tick_shutdown_broadcast_oneshot(unsigned int *cpup);
 extern int tick_resume_broadcast_oneshot(struct clock_event_device *bc);
+extern int tick_broadcast_oneshot_active(void);
+extern void tick_check_oneshot_broadcast(int cpu);
+bool tick_broadcast_oneshot_available(void);
 # else /* BROADCAST */
 static inline void tick_broadcast_setup_oneshot(struct clock_event_device *bc)
 {
@@ -35,6 +49,9 @@ static inline void tick_broadcast_setup_oneshot(struct clock_event_device *bc)
 static inline void tick_broadcast_oneshot_control(unsigned long reason) { }
 static inline void tick_broadcast_switch_to_oneshot(void) { }
 static inline void tick_shutdown_broadcast_oneshot(unsigned int *cpup) { }
+static inline int tick_broadcast_oneshot_active(void) { return 0; }
+static inline void tick_check_oneshot_broadcast(int cpu) { }
+static inline bool tick_broadcast_oneshot_available(void) { return true; }
 # endif /* !BROADCAST */
 
 #else /* !ONESHOT */
@@ -64,14 +81,14 @@ static inline int tick_resume_broadcast_oneshot(struct clock_event_device *bc)
 {
 	return 0;
 }
+static inline int tick_broadcast_oneshot_active(void) { return 0; }
+static inline bool tick_broadcast_oneshot_available(void) { return false; }
 #endif /* !TICK_ONESHOT */
 
 /*
  * Broadcasting support
  */
 #ifdef CONFIG_GENERIC_CLOCKEVENTS_BROADCAST
-extern int tick_do_broadcast(cpumask_t mask);
-
 extern int tick_device_uses_broadcast(struct clock_event_device *dev, int cpu);
 extern int tick_check_broadcast_device(struct clock_event_device *dev);
 extern int tick_is_broadcast_device(struct clock_event_device *dev);
@@ -122,3 +139,8 @@ static inline int tick_device_is_functional(struct clock_event_device *dev)
 {
 	return !(dev->features & CLOCK_EVT_FEAT_DUMMY);
 }
+
+#endif
+
+extern void do_timer(unsigned long ticks);
+extern seqlock_t xtime_lock;

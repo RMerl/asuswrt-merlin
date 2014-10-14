@@ -8,6 +8,7 @@
 #ifndef _NET_DST_H
 #define _NET_DST_H
 
+#include <net/dst_ops.h>
 #include <linux/netdevice.h>
 #include <linux/rtnetlink.h>
 #include <linux/rcupdate.h>
@@ -35,92 +36,173 @@
 
 struct sk_buff;
 
-struct dst_entry
-{
+struct dst_entry {
 	struct rcu_head		rcu_head;
 	struct dst_entry	*child;
 	struct net_device       *dev;
-	short			error;
-	short			obsolete;
-	int			flags;
-#define DST_HOST		1
-#define DST_NOXFRM		2
-#define DST_NOPOLICY		4
-#define DST_NOHASH		8
-#define DST_BALANCED            0x10
+	struct  dst_ops	        *ops;
+	unsigned long		_metrics;
 	unsigned long		expires;
-
-	unsigned short		header_len;	/* more space at head required */
-	unsigned short		nfheader_len;	/* more non-fragment space at head required */
-	unsigned short		trailer_len;	/* space to reserve at tail */
-
-	u32			metrics[RTAX_MAX];
 	struct dst_entry	*path;
-
-	unsigned long		rate_last;	/* rate limiting for ICMP */
-	unsigned long		rate_tokens;
-
 	struct neighbour	*neighbour;
 	struct hh_cache		*hh;
+#ifdef CONFIG_XFRM
 	struct xfrm_state	*xfrm;
-
+#else
+	void			*__pad1;
+#endif
 	int			(*input)(struct sk_buff*);
 	int			(*output)(struct sk_buff*);
 
-#ifdef CONFIG_NET_CLS_ROUTE
+	short			error;
+	short			obsolete;
+	unsigned short		header_len;	/* more space at head required */
+	unsigned short		trailer_len;	/* space to reserve at tail */
+#ifdef CONFIG_IP_ROUTE_CLASSID
 	__u32			tclassid;
+#else
+	__u32			__pad2;
 #endif
 
-	struct  dst_ops	        *ops;
-		
-	unsigned long		lastuse;
+	/*
+	 * Align __refcnt to a 64 bytes alignment
+	 * (L1_CACHE_SIZE would be too much)
+	 */
+#ifdef CONFIG_64BIT
+	long			__pad_to_align_refcnt[1];
+#endif
+	/*
+	 * __refcnt wants to be on a different cache line from
+	 * input/output/ops or performance tanks badly
+	 */
 	atomic_t		__refcnt;	/* client references	*/
 	int			__use;
+	unsigned long		lastuse;
+	int			flags;
+#define DST_HOST		0x0001
+#define DST_NOXFRM		0x0002
+#define DST_NOPOLICY		0x0004
+#define DST_NOHASH		0x0008
+#define DST_NOCACHE		0x0010
 	union {
-		struct dst_entry *next;
-		struct rtable    *rt_next;
-		struct rt6_info   *rt6_next;
-		struct dn_route  *dn_next;
+		struct dst_entry	*next;
+		struct rtable __rcu	*rt_next;
+		struct rt6_info		*rt6_next;
+		struct dn_route __rcu	*dn_next;
 	};
-	char			info[0];
-};
-
-
-struct dst_ops
-{
-	unsigned short		family;
-	__be16			protocol;
-	unsigned		gc_thresh;
-
-	int			(*gc)(void);
-	struct dst_entry *	(*check)(struct dst_entry *, __u32 cookie);
-	void			(*destroy)(struct dst_entry *);
-	void			(*ifdown)(struct dst_entry *,
-					  struct net_device *dev, int how);
-	struct dst_entry *	(*negative_advice)(struct dst_entry *);
-	void			(*link_failure)(struct sk_buff *);
-	void			(*update_pmtu)(struct dst_entry *dst, u32 mtu);
-	int			entry_size;
-
-	atomic_t		entries;
-	struct kmem_cache 		*kmem_cachep;
 };
 
 #ifdef __KERNEL__
 
-static inline u32
-dst_metric(const struct dst_entry *dst, int metric)
+extern u32 *dst_cow_metrics_generic(struct dst_entry *dst, unsigned long old);
+extern const u32 dst_default_metrics[RTAX_MAX];
+
+#define DST_METRICS_READ_ONLY	0x1UL
+#define __DST_METRICS_PTR(Y)	\
+	((u32 *)((Y) & ~DST_METRICS_READ_ONLY))
+#define DST_METRICS_PTR(X)	__DST_METRICS_PTR((X)->_metrics)
+
+static inline bool dst_metrics_read_only(const struct dst_entry *dst)
 {
-	return dst->metrics[metric-1];
+	return dst->_metrics & DST_METRICS_READ_ONLY;
+}
+
+extern void __dst_destroy_metrics_generic(struct dst_entry *dst, unsigned long old);
+
+static inline void dst_destroy_metrics_generic(struct dst_entry *dst)
+{
+	unsigned long val = dst->_metrics;
+	if (!(val & DST_METRICS_READ_ONLY))
+		__dst_destroy_metrics_generic(dst, val);
+}
+
+static inline u32 *dst_metrics_write_ptr(struct dst_entry *dst)
+{
+	unsigned long p = dst->_metrics;
+
+	BUG_ON(!p);
+
+	if (p & DST_METRICS_READ_ONLY)
+		return dst->ops->cow_metrics(dst, p);
+	return __DST_METRICS_PTR(p);
+}
+
+/* This may only be invoked before the entry has reached global
+ * visibility.
+ */
+static inline void dst_init_metrics(struct dst_entry *dst,
+				    const u32 *src_metrics,
+				    bool read_only)
+{
+	dst->_metrics = ((unsigned long) src_metrics) |
+		(read_only ? DST_METRICS_READ_ONLY : 0);
+}
+
+static inline void dst_copy_metrics(struct dst_entry *dest, const struct dst_entry *src)
+{
+	u32 *dst_metrics = dst_metrics_write_ptr(dest);
+
+	if (dst_metrics) {
+		u32 *src_metrics = DST_METRICS_PTR(src);
+
+		memcpy(dst_metrics, src_metrics, RTAX_MAX * sizeof(u32));
+	}
+}
+
+static inline u32 *dst_metrics_ptr(struct dst_entry *dst)
+{
+	return DST_METRICS_PTR(dst);
+}
+
+static inline u32
+dst_metric_raw(const struct dst_entry *dst, const int metric)
+{
+	u32 *p = DST_METRICS_PTR(dst);
+
+	return p[metric-1];
+}
+
+static inline u32
+dst_metric(const struct dst_entry *dst, const int metric)
+{
+	WARN_ON_ONCE(metric == RTAX_HOPLIMIT ||
+		     metric == RTAX_ADVMSS ||
+		     metric == RTAX_MTU);
+	return dst_metric_raw(dst, metric);
+}
+
+static inline u32
+dst_metric_advmss(const struct dst_entry *dst)
+{
+	u32 advmss = dst_metric_raw(dst, RTAX_ADVMSS);
+
+	if (!advmss)
+		advmss = dst->ops->default_advmss(dst);
+
+	return advmss;
+}
+
+static inline void dst_metric_set(struct dst_entry *dst, int metric, u32 val)
+{
+	u32 *p = dst_metrics_write_ptr(dst);
+
+	if (p)
+		p[metric-1] = val;
+}
+
+static inline u32
+dst_feature(const struct dst_entry *dst, u32 feature)
+{
+	return dst_metric(dst, RTAX_FEATURES) & feature;
 }
 
 static inline u32 dst_mtu(const struct dst_entry *dst)
 {
-	u32 mtu = dst_metric(dst, RTAX_MTU);
-	/*
-	 * Alexey put it here, so ask him about it :)
-	 */
-	barrier();
+	u32 mtu = dst_metric_raw(dst, RTAX_MTU);
+
+	if (!mtu)
+		mtu = dst->ops->default_mtu(dst);
+
 	return mtu;
 }
 
@@ -133,27 +215,43 @@ static inline unsigned long dst_metric_rtt(const struct dst_entry *dst, int metr
 static inline void set_dst_metric_rtt(struct dst_entry *dst, int metric,
 				      unsigned long rtt)
 {
-	dst->metrics[metric-1] = jiffies_to_msecs(rtt);
+	dst_metric_set(dst, metric, jiffies_to_msecs(rtt));
 }
 
 static inline u32
 dst_allfrag(const struct dst_entry *dst)
 {
-	int ret = dst_metric(dst, RTAX_FEATURES) & RTAX_FEATURE_ALLFRAG;
-	/* Yes, _exactly_. This is paranoia. */
-	barrier();
+	int ret = dst_feature(dst,  RTAX_FEATURE_ALLFRAG);
 	return ret;
 }
 
 static inline int
-dst_metric_locked(struct dst_entry *dst, int metric)
+dst_metric_locked(const struct dst_entry *dst, int metric)
 {
 	return dst_metric(dst, RTAX_LOCK) & (1<<metric);
 }
 
 static inline void dst_hold(struct dst_entry * dst)
 {
+	/*
+	 * If your kernel compilation stops here, please check
+	 * __pad_to_align_refcnt declaration in struct dst_entry
+	 */
+	BUILD_BUG_ON(offsetof(struct dst_entry, __refcnt) & 63);
 	atomic_inc(&dst->__refcnt);
+}
+
+static inline void dst_use(struct dst_entry *dst, unsigned long time)
+{
+	dst_hold(dst);
+	dst->__use++;
+	dst->lastuse = time;
+}
+
+static inline void dst_use_noref(struct dst_entry *dst, unsigned long time)
+{
+	dst->__use++;
+	dst->lastuse = time;
 }
 
 static inline
@@ -164,31 +262,99 @@ struct dst_entry * dst_clone(struct dst_entry * dst)
 	return dst;
 }
 
-static inline
-void dst_release(struct dst_entry * dst)
-{
-	if (dst) {
-		int newrefcnt;
+extern void dst_release(struct dst_entry *dst);
 
-		smp_mb__before_atomic_dec();
-		newrefcnt = atomic_dec_return(&dst->__refcnt);
-		WARN_ON(newrefcnt < 0);
+static inline void refdst_drop(unsigned long refdst)
+{
+	if (!(refdst & SKB_DST_NOREF))
+		dst_release((struct dst_entry *)(refdst & SKB_DST_PTRMASK));
+}
+
+/**
+ * skb_dst_drop - drops skb dst
+ * @skb: buffer
+ *
+ * Drops dst reference count if a reference was taken.
+ */
+static inline void skb_dst_drop(struct sk_buff *skb)
+{
+	if (skb->_skb_refdst) {
+		refdst_drop(skb->_skb_refdst);
+		skb->_skb_refdst = 0UL;
 	}
+}
+
+static inline void skb_dst_copy(struct sk_buff *nskb, const struct sk_buff *oskb)
+{
+	nskb->_skb_refdst = oskb->_skb_refdst;
+	if (!(nskb->_skb_refdst & SKB_DST_NOREF))
+		dst_clone(skb_dst(nskb));
+}
+
+/**
+ * skb_dst_force - makes sure skb dst is refcounted
+ * @skb: buffer
+ *
+ * If dst is not yet refcounted, let's do it
+ */
+static inline void skb_dst_force(struct sk_buff *skb)
+{
+	if (skb_dst_is_noref(skb)) {
+		WARN_ON(!rcu_read_lock_held());
+		skb->_skb_refdst &= ~SKB_DST_NOREF;
+		dst_clone(skb_dst(skb));
+	}
+}
+
+
+/**
+ *	__skb_tunnel_rx - prepare skb for rx reinsert
+ *	@skb: buffer
+ *	@dev: tunnel device
+ *
+ *	After decapsulation, packet is going to re-enter (netif_rx()) our stack,
+ *	so make some cleanups. (no accounting done)
+ */
+static inline void __skb_tunnel_rx(struct sk_buff *skb, struct net_device *dev)
+{
+	skb->dev = dev;
+	skb->rxhash = 0;
+	skb_set_queue_mapping(skb, 0);
+	skb_dst_drop(skb);
+	nf_reset(skb);
+}
+
+/**
+ *	skb_tunnel_rx - prepare skb for rx reinsert
+ *	@skb: buffer
+ *	@dev: tunnel device
+ *
+ *	After decapsulation, packet is going to re-enter (netif_rx()) our stack,
+ *	so make some cleanups, and perform accounting.
+ *	Note: this accounting is not SMP safe.
+ */
+static inline void skb_tunnel_rx(struct sk_buff *skb, struct net_device *dev)
+{
+	/* TODO : stats should be SMP safe */
+	dev->stats.rx_packets++;
+	dev->stats.rx_bytes += skb->len;
+	__skb_tunnel_rx(skb, dev);
 }
 
 /* Children define the path of the packet through the
  * Linux networking.  Thus, destinations are stackable.
  */
 
-static inline struct dst_entry *dst_pop(struct dst_entry *dst)
+static inline struct dst_entry *skb_dst_pop(struct sk_buff *skb)
 {
-	struct dst_entry *child = dst_clone(dst->child);
+	struct dst_entry *child = dst_clone(skb_dst(skb)->child);
 
-	dst_release(dst);
+	skb_dst_drop(skb);
 	return child;
 }
 
-extern void * dst_alloc(struct dst_ops * ops);
+extern int dst_discard(struct sk_buff *skb);
+extern void *dst_alloc(struct dst_ops * ops, int initial_ref);
 extern void __dst_free(struct dst_entry * dst);
 extern struct dst_entry *dst_destroy(struct dst_entry * dst);
 
@@ -216,16 +382,9 @@ static inline void dst_confirm(struct dst_entry *dst)
 		neigh_confirm(dst->neighbour);
 }
 
-static inline void dst_negative_advice(struct dst_entry **dst_p)
-{
-	struct dst_entry * dst = *dst_p;
-	if (dst && dst->ops->negative_advice)
-		*dst_p = dst->ops->negative_advice(dst);
-}
-
 static inline void dst_link_failure(struct sk_buff *skb)
 {
-	struct dst_entry * dst = skb->dst;
+	struct dst_entry *dst = skb_dst(skb);
 	if (dst && dst->ops && dst->ops->link_failure)
 		dst->ops->link_failure(skb);
 }
@@ -244,23 +403,13 @@ static inline void dst_set_expires(struct dst_entry *dst, int timeout)
 /* Output packet to network from transport.  */
 static inline int dst_output(struct sk_buff *skb)
 {
-	return skb->dst->output(skb);
+	return skb_dst(skb)->output(skb);
 }
 
 /* Input packet from network to transport.  */
 static inline int dst_input(struct sk_buff *skb)
 {
-	int err;
-
-	for (;;) {
-		err = skb->dst->input(skb);
-
-		if (likely(err == 0))
-			return err;
-		/* Oh, Jamal... Seems, I will not forgive you this mess. :-) */
-		if (unlikely(err != NET_XMIT_BYPASS))
-			return err;
-	}
+	return skb_dst(skb)->input(skb);
 }
 
 static inline struct dst_entry *dst_check(struct dst_entry *dst, u32 cookie)
@@ -272,23 +421,24 @@ static inline struct dst_entry *dst_check(struct dst_entry *dst, u32 cookie)
 
 extern void		dst_init(void);
 
+/* Flags for xfrm_lookup flags argument. */
+enum {
+	XFRM_LOOKUP_ICMP = 1 << 0,
+};
+
 struct flowi;
 #ifndef CONFIG_XFRM
-static inline int xfrm_lookup(struct dst_entry **dst_p, struct flowi *fl,
-		       struct sock *sk, int flags)
+static inline struct dst_entry *xfrm_lookup(struct net *net,
+					    struct dst_entry *dst_orig,
+					    const struct flowi *fl, struct sock *sk,
+					    int flags)
 {
-	return 0;
+	return dst_orig;
 } 
-static inline int __xfrm_lookup(struct dst_entry **dst_p, struct flowi *fl,
-				struct sock *sk, int flags)
-{
-	return 0;
-}
 #else
-extern int xfrm_lookup(struct dst_entry **dst_p, struct flowi *fl,
-		       struct sock *sk, int flags);
-extern int __xfrm_lookup(struct dst_entry **dst_p, struct flowi *fl,
-			 struct sock *sk, int flags);
+extern struct dst_entry *xfrm_lookup(struct net *net, struct dst_entry *dst_orig,
+				     const struct flowi *fl, struct sock *sk,
+				     int flags);
 #endif
 #endif
 

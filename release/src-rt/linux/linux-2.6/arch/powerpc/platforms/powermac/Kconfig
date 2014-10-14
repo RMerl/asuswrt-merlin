@@ -1,7 +1,8 @@
 config PPC_PMAC
 	bool "Apple PowerMac based machines"
-	depends on PPC_MULTIPLATFORM
+	depends on PPC_BOOK3S
 	select MPIC
+	select PCI
 	select PPC_INDIRECT_PCI if PPC32
 	select PPC_MPC106 if PPC32
 	select PPC_NATIVE

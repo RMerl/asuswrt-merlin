@@ -36,6 +36,7 @@ enum llc_sockopts {
 	LLC_OPT_BUSY_TMR_EXP,	/* busy state expire time (secs). */
 	LLC_OPT_TX_WIN,		/* tx window size. */
 	LLC_OPT_RX_WIN,		/* rx window size. */
+	LLC_OPT_PKTINFO,	/* ancillary packet information. */
 	LLC_OPT_MAX
 };
 
@@ -49,9 +50,9 @@ enum llc_sockopts {
 
 /* LLC SAP types. */
 #define LLC_SAP_NULL	0x00		/* NULL SAP. 			*/
-#define LLC_SAP_LLC	0x02		/* LLC Sublayer Managment. 	*/
+#define LLC_SAP_LLC	0x02		/* LLC Sublayer Management. 	*/
 #define LLC_SAP_SNA	0x04		/* SNA Path Control. 		*/
-#define LLC_SAP_PNM	0x0E		/* Proway Network Managment.	*/	
+#define LLC_SAP_PNM	0x0E		/* Proway Network Management.	*/	
 #define LLC_SAP_IP	0x06		/* TCP/IP. 			*/
 #define LLC_SAP_BSPAN	0x42		/* Bridge Spanning Tree Proto	*/
 #define LLC_SAP_MMS	0x4E		/* Manufacturing Message Srv.	*/
@@ -69,6 +70,12 @@ enum llc_sockopts {
 #define LLC_SAP_LAR	0xDC		/* LAN Address Resolution 	*/
 #define LLC_SAP_RM	0xD4		/* Resource Management 		*/
 #define LLC_SAP_GLOBAL	0xFF		/* Global SAP. 			*/
+
+struct llc_pktinfo {
+	int lpi_ifindex;
+	unsigned char lpi_sap;
+	unsigned char lpi_mac[IFHWADDRLEN];
+};
 
 #ifdef __KERNEL__
 #define LLC_SAP_DYN_START	0xC0

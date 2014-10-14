@@ -240,7 +240,7 @@ static void __fas216_checkmagic(FAS216_Info *info, const char *func)
 		panic("scsi memory space corrupted in %s", func);
 	}
 }
-#define fas216_checkmagic(info) __fas216_checkmagic((info), __FUNCTION__)
+#define fas216_checkmagic(info) __fas216_checkmagic((info), __func__)
 #else
 #define fas216_checkmagic(info)
 #endif
@@ -2018,6 +2018,7 @@ static void fas216_rq_sns_done(FAS216_Info *info, struct scsi_cmnd *SCpnt,
 	 * the upper layers to process.  This would have been set
 	 * correctly by fas216_std_done.
 	 */
+	scsi_eh_restore_cmnd(SCpnt, &info->ses);
 	SCpnt->scsi_done(SCpnt);
 }
 
@@ -2103,23 +2104,12 @@ request_sense:
 	if (SCpnt->cmnd[0] == REQUEST_SENSE)
 		goto done;
 
+	scsi_eh_prep_cmnd(SCpnt, &info->ses, NULL, 0, ~0);
 	fas216_log_target(info, LOG_CONNECT, SCpnt->device->id,
 			  "requesting sense");
-	memset(SCpnt->cmnd, 0, sizeof (SCpnt->cmnd));
-	SCpnt->cmnd[0] = REQUEST_SENSE;
-	SCpnt->cmnd[1] = SCpnt->device->lun << 5;
-	SCpnt->cmnd[4] = sizeof(SCpnt->sense_buffer);
-	SCpnt->cmd_len = COMMAND_SIZE(SCpnt->cmnd[0]);
-	SCpnt->SCp.buffer = NULL;
-	SCpnt->SCp.buffers_residual = 0;
-	SCpnt->SCp.ptr = (char *)SCpnt->sense_buffer;
-	SCpnt->SCp.this_residual = sizeof(SCpnt->sense_buffer);
-	SCpnt->SCp.phase = sizeof(SCpnt->sense_buffer);
+	init_SCp(SCpnt);
 	SCpnt->SCp.Message = 0;
 	SCpnt->SCp.Status = 0;
-	SCpnt->request_bufflen = sizeof(SCpnt->sense_buffer);
-	SCpnt->sc_data_direction = DMA_FROM_DEVICE;
-	SCpnt->use_sg = 0;
 	SCpnt->tag = 0;
 	SCpnt->host_scribble = (void *)fas216_rq_sns_done;
 
@@ -2129,7 +2119,7 @@ request_sense:
 	 * executed, unless a target connects to us.
 	 */
 	if (info->reqSCpnt)
-		printk(KERN_WARNING "scsi%d.%c: loosing request command\n",
+		printk(KERN_WARNING "scsi%d.%c: losing request command\n",
 			info->host->host_no, '0' + SCpnt->device->id);
 	info->reqSCpnt = SCpnt;
 }
@@ -2208,7 +2198,7 @@ no_command:
  * Returns: 0 on success, else error.
  * Notes: io_request_lock is held, interrupts are disabled.
  */
-int fas216_queue_command(struct scsi_cmnd *SCpnt,
+static int fas216_queue_command_lck(struct scsi_cmnd *SCpnt,
 			 void (*done)(struct scsi_cmnd *))
 {
 	FAS216_Info *info = (FAS216_Info *)SCpnt->device->host->hostdata;
@@ -2250,6 +2240,8 @@ int fas216_queue_command(struct scsi_cmnd *SCpnt,
 	return result;
 }
 
+DEF_SCSI_QCMD(fas216_queue_command)
+
 /**
  * fas216_internal_done - trigger restart of a waiting thread in fas216_noqueue_command
  * @SCpnt: Command to wake
@@ -2273,7 +2265,7 @@ static void fas216_internal_done(struct scsi_cmnd *SCpnt)
  * Returns: scsi result code.
  * Notes: io_request_lock is held, interrupts are disabled.
  */
-int fas216_noqueue_command(struct scsi_cmnd *SCpnt,
+static int fas216_noqueue_command_lck(struct scsi_cmnd *SCpnt,
 			   void (*done)(struct scsi_cmnd *))
 {
 	FAS216_Info *info = (FAS216_Info *)SCpnt->device->host->hostdata;
@@ -2287,7 +2279,7 @@ int fas216_noqueue_command(struct scsi_cmnd *SCpnt,
 	BUG_ON(info->scsi.irq != NO_IRQ);
 
 	info->internal_done = 0;
-	fas216_queue_command(SCpnt, fas216_internal_done);
+	fas216_queue_command_lck(SCpnt, fas216_internal_done);
 
 	/*
 	 * This wastes time, since we can't return until the command is
@@ -2302,7 +2294,7 @@ int fas216_noqueue_command(struct scsi_cmnd *SCpnt,
 		 * If we don't have an IRQ, then we must poll the card for
 		 * it's interrupt, and use that to call this driver's
 		 * interrupt routine.  That way, we keep the command
-		 * progressing.  Maybe we can add some inteligence here
+		 * progressing.  Maybe we can add some intelligence here
 		 * and go to sleep if we know that the device is going
 		 * to be some time (eg, disconnected).
 		 */
@@ -2319,6 +2311,8 @@ int fas216_noqueue_command(struct scsi_cmnd *SCpnt,
 
 	return 0;
 }
+
+DEF_SCSI_QCMD(fas216_noqueue_command)
 
 /*
  * Error handler timeout function.  Indicate that we timed out,
@@ -2526,7 +2520,7 @@ int fas216_eh_device_reset(struct scsi_cmnd *SCpnt)
 		if (info->scsi.phase == PHASE_IDLE)
 			fas216_kick(info);
 
-		mod_timer(&info->eh_timer, 30 * HZ);
+		mod_timer(&info->eh_timer, jiffies + 30 * HZ);
 		spin_unlock_irqrestore(&info->host_lock, flags);
 
 		/*
@@ -2668,7 +2662,7 @@ int fas216_eh_host_reset(struct scsi_cmnd *SCpnt)
 	fas216_checkmagic(info);
 
 	printk("scsi%d.%c: %s: resetting host\n",
-		info->host->host_no, '0' + SCpnt->device->id, __FUNCTION__);
+		info->host->host_no, '0' + SCpnt->device->id, __func__);
 
 	/*
 	 * Reset the SCSI chip.

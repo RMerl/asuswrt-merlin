@@ -76,9 +76,8 @@ static ssize_t
 static unsigned int
 	dev_irnet_poll(struct file *,
 		       poll_table *);
-static int
-	dev_irnet_ioctl(struct inode *,
-			struct file *,
+static long
+	dev_irnet_ioctl(struct file *,
 			unsigned int,
 			unsigned long);
 /* ------------------------ PPP INTERFACE ------------------------ */
@@ -96,15 +95,16 @@ static int
 /**************************** VARIABLES ****************************/
 
 /* Filesystem callbacks (to call us) */
-static struct file_operations irnet_device_fops =
+static const struct file_operations irnet_device_fops =
 {
 	.owner		= THIS_MODULE,
 	.read		= dev_irnet_read,
 	.write		= dev_irnet_write,
 	.poll		= dev_irnet_poll,
-	.ioctl		= dev_irnet_ioctl,
+	.unlocked_ioctl	= dev_irnet_ioctl,
 	.open		= dev_irnet_open,
-	.release	= dev_irnet_close
+	.release	= dev_irnet_close,
+	.llseek		= noop_llseek,
   /* Also : llseek, readdir, mmap, flush, fsync, fasync, lock, readv, writev */
 };
 

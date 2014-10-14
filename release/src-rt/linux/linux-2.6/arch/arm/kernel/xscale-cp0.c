@@ -14,8 +14,8 @@
 #include <linux/signal.h>
 #include <linux/sched.h>
 #include <linux/init.h>
+#include <linux/io.h>
 #include <asm/thread_notify.h>
-#include <asm/io.h>
 
 static inline void dsp_save_state(u32 *state)
 {
@@ -70,7 +70,7 @@ static int iwmmxt_do(struct notifier_block *self, unsigned long cmd, void *t)
 		 * initialised state information on the first fault.
 		 */
 
-	case THREAD_NOTIFY_RELEASE:
+	case THREAD_NOTIFY_EXIT:
 		iwmmxt_task_release(thread);
 		break;
 

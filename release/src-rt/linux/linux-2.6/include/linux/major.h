@@ -53,7 +53,7 @@
 #define STL_SIOMEMMAJOR		28
 #define ACSI_MAJOR		28
 #define AZTECH_CDROM_MAJOR	29
-#define GRAPHDEV_MAJOR		29   /* SparcLinux & Linux/68k /dev/fb */
+#define FB_MAJOR		29   /* /dev/fb* framebuffers */
 #define CM206_CDROM_MAJOR	32
 #define IDE2_MAJOR		33
 #define IDE3_MAJOR		34
@@ -145,6 +145,7 @@
 #define UNIX98_PTY_MAJOR_COUNT	8
 #define UNIX98_PTY_SLAVE_MAJOR	(UNIX98_PTY_MASTER_MAJOR+UNIX98_PTY_MAJOR_COUNT)
 
+#define DRBD_MAJOR		147
 #define RTF_MAJOR		150
 #define RAW_MAJOR		162
 
@@ -158,6 +159,8 @@
 #define VXSPEC_MAJOR		200	/* VERITAS volume config driver */
 #define VXDMP_MAJOR		201	/* VERITAS volume multipath driver */
 
+#define XENVBD_MAJOR		202	/* Xen virtual block device */
+
 #define MSR_MAJOR		202
 #define CPUID_MAJOR		203
 
@@ -168,9 +171,7 @@
 
 #define VIOTAPE_MAJOR		230
 
-
-#define SCSI_DISK_MAJOR(M) ((M) == SCSI_DISK0_MAJOR || \
-  ((M) >= SCSI_DISK1_MAJOR && (M) <= SCSI_DISK7_MAJOR) || \
-  ((M) >= SCSI_DISK8_MAJOR && (M) <= SCSI_DISK15_MAJOR))
+#define BLOCK_EXT_MAJOR		259
+#define SCSI_OSD_MAJOR		260	/* open-osd's OSD scsi device */
 
 #endif

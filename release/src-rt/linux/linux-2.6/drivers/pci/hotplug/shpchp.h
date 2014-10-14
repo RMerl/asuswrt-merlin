@@ -35,6 +35,7 @@
 #include <linux/delay.h>
 #include <linux/sched.h>	/* signal_pending(), struct timer_list */
 #include <linux/mutex.h>
+#include <linux/workqueue.h>
 
 #if !defined(MODULE)
 	#define MY_NAME	"shpchp"
@@ -46,18 +47,33 @@ extern int shpchp_poll_mode;
 extern int shpchp_poll_time;
 extern int shpchp_debug;
 extern struct workqueue_struct *shpchp_wq;
+extern struct workqueue_struct *shpchp_ordered_wq;
 
 #define dbg(format, arg...)						\
-	do {								\
-		if (shpchp_debug)					\
-			printk("%s: " format, MY_NAME , ## arg);	\
-	} while (0)
+do {									\
+	if (shpchp_debug)						\
+		printk(KERN_DEBUG "%s: " format, MY_NAME , ## arg);	\
+} while (0)
 #define err(format, arg...)						\
 	printk(KERN_ERR "%s: " format, MY_NAME , ## arg)
 #define info(format, arg...)						\
 	printk(KERN_INFO "%s: " format, MY_NAME , ## arg)
 #define warn(format, arg...)						\
 	printk(KERN_WARNING "%s: " format, MY_NAME , ## arg)
+
+#define ctrl_dbg(ctrl, format, arg...)					\
+	do {								\
+		if (shpchp_debug)					\
+			dev_printk(KERN_DEBUG, &ctrl->pci_dev->dev,	\
+					format, ## arg);		\
+	} while (0)
+#define ctrl_err(ctrl, format, arg...)					\
+	dev_err(&ctrl->pci_dev->dev, format, ## arg)
+#define ctrl_info(ctrl, format, arg...)					\
+	dev_info(&ctrl->pci_dev->dev, format, ## arg)
+#define ctrl_warn(ctrl, format, arg...)					\
+	dev_warn(&ctrl->pci_dev->dev, format, ## arg)
+
 
 #define SLOT_NAME_SIZE 10
 struct slot {
@@ -69,15 +85,13 @@ struct slot {
 	u8 state;
 	u8 presence_save;
 	u8 pwr_save;
-	struct timer_list task_event;
-	u8 hp_slot;
 	struct controller *ctrl;
 	struct hpc_ops *hpc_ops;
 	struct hotplug_slot *hotplug_slot;
 	struct list_head	slot_list;
-	char name[SLOT_NAME_SIZE];
 	struct delayed_work work;	/* work for button event */
 	struct mutex lock;
+	u8 hp_slot;
 };
 
 struct event_info {
@@ -109,7 +123,7 @@ struct controller {
 #define PCI_DEVICE_ID_AMD_GOLAM_7450	0x7450
 #define PCI_DEVICE_ID_AMD_POGO_7458	0x7458
 
-/* AMD PCIX bridge registers */
+/* AMD PCI-X bridge registers */
 #define PCIX_MEM_BASE_LIMIT_OFFSET	0x1C
 #define PCIX_MISCII_OFFSET		0x48
 #define PCIX_MISC_BRIDGE_ERRORS_OFFSET	0x80
@@ -169,22 +183,20 @@ extern void cleanup_slots(struct controller *ctrl);
 extern void shpchp_queue_pushbutton_work(struct work_struct *work);
 extern int shpc_init( struct controller *ctrl, struct pci_dev *pdev);
 
-#ifdef CONFIG_ACPI
-static inline int get_hp_params_from_firmware(struct pci_dev *dev,
-					      struct hotplug_params *hpp)
+static inline const char *slot_name(struct slot *slot)
 {
-	if (ACPI_FAILURE(acpi_get_hp_params_from_firmware(dev->bus, hpp)))
-			return -ENODEV;
-	return 0;
+	return hotplug_slot_name(slot->hotplug_slot);
 }
-#define get_hp_hw_control_from_firmware(pdev)				\
-	do {								\
-		if (DEVICE_ACPI_HANDLE(&(pdev->dev)))			\
-			acpi_run_oshp(DEVICE_ACPI_HANDLE(&(pdev->dev)));\
-	} while (0)
+
+#ifdef CONFIG_ACPI
+#include <linux/pci-acpi.h>
+static inline int get_hp_hw_control_from_firmware(struct pci_dev *dev)
+{
+	u32 flags = OSC_SHPC_NATIVE_HP_CONTROL;
+	return acpi_get_hp_hw_control_from_firmware(dev, flags);
+}
 #else
-#define get_hp_params_from_firmware(dev, hpp) (-ENODEV)
-#define get_hp_hw_control_from_firmware(dev) do { } while (0)
+#define get_hp_hw_control_from_firmware(dev) (0)
 #endif
 
 struct ctrl_reg {
@@ -234,7 +246,7 @@ static inline struct slot *shpchp_find_slot(struct controller *ctrl, u8 device)
 			return slot;
 	}
 
-	err("%s: slot (device=0x%x) not found\n", __FUNCTION__, device);
+	ctrl_err(ctrl, "Slot (device=0x%02x) not found\n", device);
 	return NULL;
 }
 
@@ -268,7 +280,9 @@ static inline void amd_pogo_errata_restore_misc_reg(struct slot *p_slot)
 	pci_read_config_dword(p_slot->ctrl->pci_dev, PCIX_MISC_BRIDGE_ERRORS_OFFSET, &pcix_bridge_errors_reg);
 	perr_set = pcix_bridge_errors_reg & PERR_OBSERVED_MASK;
 	if (perr_set) {
-		dbg ("%s  W1C: Bridge_Errors[ PERR_OBSERVED = %08X]\n",__FUNCTION__ , perr_set);
+		ctrl_dbg(p_slot->ctrl,
+			 "Bridge_Errors[ PERR_OBSERVED = %08X] (W1C)\n",
+			 perr_set);
 
 		pci_write_config_dword(p_slot->ctrl->pci_dev, PCIX_MISC_BRIDGE_ERRORS_OFFSET, perr_set);
 	}
@@ -277,7 +291,7 @@ static inline void amd_pogo_errata_restore_misc_reg(struct slot *p_slot)
 	pci_read_config_dword(p_slot->ctrl->pci_dev, PCIX_MEM_BASE_LIMIT_OFFSET, &pcix_mem_base_reg);
 	rse_set = pcix_mem_base_reg & RSE_MASK;
 	if (rse_set) {
-		dbg ("%s  W1C: Memory_Base_Limit[ RSE ]\n",__FUNCTION__ );
+		ctrl_dbg(p_slot->ctrl, "Memory_Base_Limit[ RSE ] (W1C)\n");
 
 		pci_write_config_dword(p_slot->ctrl->pci_dev, PCIX_MEM_BASE_LIMIT_OFFSET, rse_set);
 	}
@@ -321,8 +335,6 @@ struct hpc_ops {
 	int (*set_attention_status)(struct slot *slot, u8 status);
 	int (*get_latch_status)(struct slot *slot, u8 *status);
 	int (*get_adapter_status)(struct slot *slot, u8 *status);
-	int (*get_max_bus_speed)(struct slot *slot, enum pci_bus_speed *speed);
-	int (*get_cur_bus_speed)(struct slot *slot, enum pci_bus_speed *speed);
 	int (*get_adapter_speed)(struct slot *slot, enum pci_bus_speed *speed);
 	int (*get_mode1_ECC_cap)(struct slot *slot, u8 *mode);
 	int (*get_prog_int)(struct slot *slot, u8 *prog_int);

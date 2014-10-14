@@ -198,9 +198,6 @@ static int plc_imsk_na = PL_PCM_CODE | PL_TRACE_PROP | PL_PCM_BREAK |
 static const int plc_imsk_act = PL_PCM_CODE | PL_TRACE_PROP | PL_PCM_BREAK |
 			PL_PCM_ENABLED | PL_SELF_TEST | PL_EBUF_ERR;
 
-/* external functions */
-void all_selection_criteria(struct s_smc *smc);
-
 /* internal functions */
 static void pcm_fsm(struct s_smc *smc, struct s_phy *phy, int cmd);
 static void pc_rcode_actions(struct s_smc *smc, int bit, struct s_phy *phy);
@@ -507,7 +504,7 @@ int sm_pm_get_ls(struct s_smc *smc, int phy)
 
 #ifdef	CONCENTRATOR
 	if (!plc_is_installed(smc,phy))
-		return(PC_QLS) ;
+		return PC_QLS;
 #endif
 
 	state = inpw(PLC(phy,PL_STATUS_A)) & PL_LINE_ST ;
@@ -531,7 +528,7 @@ int sm_pm_get_ls(struct s_smc *smc, int phy)
 	default :
 		state = PC_LS_NONE ;
 	}
-	return(state) ;
+	return state;
 }
 
 static int plc_send_bits(struct s_smc *smc, struct s_phy *phy, int len)
@@ -550,7 +547,7 @@ static int plc_send_bits(struct s_smc *smc, struct s_phy *phy, int len)
 #if	0
 		printf("PL_PCM_SIGNAL is set\n") ;
 #endif
-		return(1) ;
+		return 1;
 	}
 	/* write bit[n] & length = 1 to regs */
 	outpw(PLC(np,PL_VECTOR_LEN),len-1) ;	/* len=nr-1 */
@@ -565,7 +562,7 @@ static int plc_send_bits(struct s_smc *smc, struct s_phy *phy, int len)
 		printf("SIGNALING bit %d .. %d\n",phy->bitn,phy->bitn+len-1) ;
 #endif
 #endif
-	return(0) ;
+	return 0;
 }
 
 /*
@@ -963,7 +960,7 @@ static void pcm_fsm(struct s_smc *smc, struct s_phy *phy, int cmd)
 			/*PC88b*/
 			if (!phy->cf_join) {
 				phy->cf_join = TRUE ;
-				queue_event(smc,EVENT_CFM,CF_JOIN+np) ; ;
+				queue_event(smc,EVENT_CFM,CF_JOIN+np) ;
 			}
 			if (cmd == PC_JOIN)
 				GO_STATE(PC8_ACTIVE) ;
@@ -1280,7 +1277,7 @@ static void pc_rcode_actions(struct s_smc *smc, int bit, struct s_phy *phy)
 
 	mib = phy->mib ;
 
-	DB_PCMN(1,"SIG rec %x %x: \n", bit,phy->r_val[bit] ) ;
+	DB_PCMN(1,"SIG rec %x %x:\n", bit,phy->r_val[bit] ) ;
 	bit++ ;
 
 	switch(bit) {
@@ -1583,7 +1580,7 @@ static void pc_tcode_actions(struct s_smc *smc, const int bit, struct s_phy *phy
 		mib->fddiPORTMacIndicated.T_val = phy->t_val[9] ;
 		break ;
 	}
-	DB_PCMN(1,"SIG snd %x %x: \n", bit,phy->t_val[bit] ) ;
+	DB_PCMN(1,"SIG snd %x %x:\n", bit,phy->t_val[bit] ) ;
 }
 
 /*
@@ -1593,12 +1590,12 @@ int pcm_status_twisted(struct s_smc *smc)
 {
 	int	twist = 0 ;
 	if (smc->s.sas != SMT_DAS)
-		return(0) ;
+		return 0;
 	if (smc->y[PA].twisted && (smc->y[PA].mib->fddiPORTPCMState == PC8_ACTIVE))
 		twist |= 1 ;
 	if (smc->y[PB].twisted && (smc->y[PB].mib->fddiPORTPCMState == PC8_ACTIVE))
 		twist |= 2 ;
-	return(twist) ;
+	return twist;
 }
 
 /*
@@ -1639,9 +1636,9 @@ int pcm_rooted_station(struct s_smc *smc)
 	for (n = 0 ; n < NUMPHYS ; n++) {
 		if (smc->y[n].mib->fddiPORTPCMState == PC8_ACTIVE &&
 		    smc->y[n].mib->fddiPORTNeighborType == TM)
-			return(0) ;
+			return 0;
 	}
-	return(1) ;
+	return 1;
 }
 
 /*
@@ -1683,7 +1680,7 @@ void plc_irq(struct s_smc *smc, int np, unsigned int cmd)
 			 * Prevent counter from being wrapped after
 			 * hanging years in that interrupt.
 			 */
-			plc->ebuf_cont++ ;	/* Ebuf continous error */
+			plc->ebuf_cont++ ;	/* Ebuf continuous error */
 		}
 
 #ifdef	SUPERNET_3
@@ -1720,8 +1717,8 @@ void plc_irq(struct s_smc *smc, int np, unsigned int cmd)
 		}
 #endif	/* SUPERNET_3 */
 	} else {
-		/* Reset the continous error variable */
-		plc->ebuf_cont = 0 ;	/* reset Ebuf continous error */
+		/* Reset the continuous error variable */
+		plc->ebuf_cont = 0 ;	/* reset Ebuf continuous error */
 	}
 	if (cmd & PL_PHYINV) {		/* physical layer invalid signal */
 		plc->phyinv++ ;
@@ -1918,7 +1915,7 @@ int get_pcm_state(struct s_smc *smc, int np)
 		case PL_PC9 :	pcs = PC_MAINT ;	break ;
 		default :	pcs = PC_DISABLE ; 	break ;
 	}
-	return(pcs) ;
+	return pcs;
 }
 
 char *get_linestate(struct s_smc *smc, int np)
@@ -1940,7 +1937,7 @@ char *get_linestate(struct s_smc *smc, int np)
 		default:	ls = "unknown" ; break ;
 #endif
 	}
-	return(ls) ;
+	return ls;
 }
 
 char *get_pcmstate(struct s_smc *smc, int np)
@@ -1962,7 +1959,7 @@ char *get_pcmstate(struct s_smc *smc, int np)
 		case PL_PC9 :	pcs = "MAINT" ;		break ;
 		default :	pcs = "UNKNOWN" ; 	break ;
 	}
-	return(pcs) ;
+	return pcs;
 }
 
 void list_phy(struct s_smc *smc)

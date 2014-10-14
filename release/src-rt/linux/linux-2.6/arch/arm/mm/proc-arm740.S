@@ -12,7 +12,7 @@
 #include <linux/init.h>
 #include <asm/assembler.h>
 #include <asm/asm-offsets.h>
-#include <asm/elf.h>
+#include <asm/hwcap.h>
 #include <asm/pgtable-hwdef.h>
 #include <asm/pgtable.h>
 #include <asm/ptrace.h>
@@ -36,15 +36,11 @@ ENTRY(cpu_arm740_switch_mm)
  * cpu_arm740_proc_fin()
  */
 ENTRY(cpu_arm740_proc_fin)
-	stmfd	sp!, {lr}
-	mov	ip, #PSR_F_BIT | PSR_I_BIT | SVC_MODE
-	msr	cpsr_c, ip
 	mrc	p15, 0, r0, c1, c0, 0
 	bic	r0, r0, #0x3f000000		@ bank/f/lock/s
 	bic	r0, r0, #0x0000000c		@ w-buffer/cache
 	mcr	p15, 0, r0, c1, c0, 0		@ disable caches
-	mcr	p15, 0, r0, c7, c0, 0		@ invalidate cache
-	ldmfd	sp!, {pc}
+	mov	pc, lr
 
 /*
  * cpu_arm740_reset(loc)
@@ -59,7 +55,7 @@ ENTRY(cpu_arm740_reset)
 	mcr	p15, 0, ip, c1, c0, 0		@ ctrl register
 	mov	pc, r0
 
-	__INIT
+	__CPUINIT
 
 	.type	__arm740_setup, #function
 __arm740_setup:
@@ -126,6 +122,7 @@ __arm740_setup:
 	.type	arm740_processor_functions, #object
 ENTRY(arm740_processor_functions)
 	.word	v4t_late_abort
+	.word	legacy_pabort
 	.word	cpu_arm740_proc_init
 	.word	cpu_arm740_proc_fin
 	.word	cpu_arm740_reset
@@ -133,6 +130,9 @@ ENTRY(arm740_processor_functions)
 	.word	cpu_arm740_dcache_clean_area
 	.word	cpu_arm740_switch_mm
 	.word	0			@ cpu_*_set_pte
+	.word	0
+	.word	0
+	.word	0
 	.size	arm740_processor_functions, . - arm740_processor_functions
 
 	.section ".rodata"

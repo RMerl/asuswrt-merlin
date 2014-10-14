@@ -10,6 +10,7 @@
 #include <linux/spinlock.h>
 #include <linux/timer.h>
 #include <linux/list.h>
+#include <linux/slab.h>
 #include <asm/atomic.h>
 
 #define	AX25_T1CLAMPLO  		1
@@ -35,7 +36,7 @@
 #define AX25_P_ATALK			0xca	/* Appletalk                  */
 #define AX25_P_ATALK_ARP		0xcb	/* Appletalk ARP              */
 #define AX25_P_IP			0xcc	/* ARPA Internet Protocol     */
-#define AX25_P_ARP			0xcd	/* ARPA Adress Resolution     */
+#define AX25_P_ARP			0xcd	/* ARPA Address Resolution    */
 #define AX25_P_FLEXNET			0xce	/* FlexNet                    */
 #define AX25_P_NETROM 			0xcf	/* NET/ROM                    */
 #define AX25_P_TEXT 			0xF0	/* No layer 3 protocol impl.  */
@@ -324,6 +325,7 @@ extern void ax25_dama_on(ax25_cb *);
 extern void ax25_dama_off(ax25_cb *);
 
 /* ax25_ds_timer.c */
+extern void ax25_ds_setup_timer(ax25_dev *);
 extern void ax25_ds_set_timer(ax25_dev *);
 extern void ax25_ds_del_timer(ax25_dev *);
 extern void ax25_ds_timer(ax25_cb *);
@@ -363,8 +365,11 @@ extern int  ax25_rx_iframe(ax25_cb *, struct sk_buff *);
 extern int  ax25_kiss_rcv(struct sk_buff *, struct net_device *, struct packet_type *, struct net_device *);
 
 /* ax25_ip.c */
-extern int  ax25_hard_header(struct sk_buff *, struct net_device *, unsigned short, void *, void *, unsigned int);
+extern int ax25_hard_header(struct sk_buff *, struct net_device *,
+			    unsigned short, const void *,
+			    const void *, unsigned int);
 extern int  ax25_rebuild_header(struct sk_buff *);
+extern const struct header_ops ax25_header_ops;
 
 /* ax25_out.c */
 extern ax25_cb *ax25_send_frame(struct sk_buff *, int, ax25_address *, ax25_address *, ax25_digi *, struct net_device *);
@@ -413,6 +418,7 @@ extern void ax25_calculate_rtt(ax25_cb *);
 extern void ax25_disconnect(ax25_cb *, int);
 
 /* ax25_timer.c */
+extern void ax25_setup_timers(ax25_cb *);
 extern void ax25_start_heartbeat(ax25_cb *);
 extern void ax25_start_t1timer(ax25_cb *);
 extern void ax25_start_t2timer(ax25_cb *);

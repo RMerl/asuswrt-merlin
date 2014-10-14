@@ -54,20 +54,10 @@ void __init setup_kexec_cpu_down_mpic(void)
 static void pseries_kexec_cpu_down_xics(int crash_shutdown, int secondary)
 {
 	pseries_kexec_cpu_down(crash_shutdown, secondary);
-	xics_teardown_cpu(secondary);
+	xics_kexec_teardown_cpu(secondary);
 }
 
 void __init setup_kexec_cpu_down_xics(void)
 {
 	ppc_md.kexec_cpu_down = pseries_kexec_cpu_down_xics;
 }
-
-static int __init pseries_kexec_setup(void)
-{
-	ppc_md.machine_kexec = default_machine_kexec;
-	ppc_md.machine_kexec_prepare = default_machine_kexec_prepare;
-	ppc_md.machine_crash_shutdown = default_machine_crash_shutdown;
-
-	return 0;
-}
-__initcall(pseries_kexec_setup);

@@ -3,12 +3,10 @@
  *
  * Definitions and interface for Linux - z/VM Monitor Stream.
  *
- * Copyright (C) 2003,2006 IBM Corporation, IBM Deutschland Entwicklung GmbH.
+ * Copyright IBM Corp. 2003, 2008
  *
  * Author: Gerald Schaefer <gerald.schaefer@de.ibm.com>
  */
-
-//#define APPLDATA_DEBUG			/* Debug messages on/off */
 
 #define APPLDATA_MAX_REC_SIZE	  4024	/* Maximum size of the */
 					/* data buffer */
@@ -28,16 +26,6 @@
 #define CTL_APPLDATA_NET_SUM	2125
 #define CTL_APPLDATA_PROC	2126
 
-#define P_INFO(x...)	printk(KERN_INFO MY_PRINT_NAME " info: " x)
-#define P_ERROR(x...)	printk(KERN_ERR MY_PRINT_NAME " error: " x)
-#define P_WARNING(x...)	printk(KERN_WARNING MY_PRINT_NAME " status: " x)
-
-#ifdef APPLDATA_DEBUG
-#define P_DEBUG(x...)   printk(KERN_DEBUG MY_PRINT_NAME " debug: " x)
-#else
-#define P_DEBUG(x...)   do {} while (0)
-#endif
-
 struct appldata_ops {
 	struct list_head list;
 	struct ctl_table_header *sysctl_header;
@@ -45,7 +33,6 @@ struct appldata_ops {
 	int    active;				/* monitoring status */
 
 	/* fill in from here */
-	unsigned int ctl_nr;			/* sysctl ID */
 	char name[APPLDATA_PROC_NAME_LENGTH];	/* name of /proc fs node */
 	unsigned char record_nr;		/* Record Nr. for Product ID */
 	void (*callback)(void *data);		/* callback function */

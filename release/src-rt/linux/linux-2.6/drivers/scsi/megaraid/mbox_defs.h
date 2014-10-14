@@ -497,7 +497,7 @@ typedef struct {
  * @inserted_drive		: channel:Id of inserted drive
  * @battery_status		: bit 0: battery module missing
  *				bit 1: VBAD
- *				bit 2: temprature high
+ *				bit 2: temperature high
  *				bit 3: battery pack missing
  *				bit 4,5:
  *					00 - charge complete
@@ -660,7 +660,7 @@ typedef struct {
  * @lparam	: logical drives parameters
  * @span	: span
  *
- * 8-LD logical drive with upto 8 spans
+ * 8-LD logical drive with up to 8 spans
  */
 typedef struct {
 	logdrv_param_t	lparam;
@@ -673,7 +673,7 @@ typedef struct {
  * @lparam	: logical drives parameters
  * @span	: span
  *
- * 8-LD logical drive with upto 4 spans
+ * 8-LD logical drive with up to 4 spans
  */
 typedef struct {
 	logdrv_param_t	lparam;
@@ -686,7 +686,7 @@ typedef struct {
  * @type	: Type of the device
  * @cur_status	: current status of the device
  * @tag_depth	: Level of tagging
- * @sync_neg	: sync negotiation - ENABLE or DISBALE
+ * @sync_neg	: sync negotiation - ENABLE or DISABLE
  * @size	: configurable size in terms of 512 byte
  */
 typedef struct {
@@ -720,7 +720,7 @@ typedef struct {
  * @ldrv	: logical drives information
  * @pdrv	: physical drives information
  *
- * Disk array for 8LD logical drives with upto 8 spans
+ * Disk array for 8LD logical drives with up to 8 spans
  */
 typedef struct {
 	uint8_t			numldrv;
@@ -737,7 +737,7 @@ typedef struct {
  * @ldrv	: logical drives information
  * @pdrv	: physical drives information
  *
- * Disk array for 8LD logical drives with upto 4 spans
+ * Disk array for 8LD logical drives with up to 4 spans
  */
 typedef struct {
 	uint8_t			numldrv;

@@ -4,7 +4,7 @@
  * Copyright 2005 Wolfson Microelectronics PLC.
  * Copyright 2005 Openedhand Ltd.
  *
- * Authors: Liam Girdwood <liam.girdwood@wolfsonmicro.com>
+ * Authors: Liam Girdwood <lrg@slimlogic.co.uk>
  *          Richard Purdie <richard@openedhand.com>
  *
  *  This program is free software; you can redistribute  it and/or modify it
@@ -17,23 +17,19 @@
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/timer.h>
+#include <linux/i2c.h>
 #include <linux/interrupt.h>
 #include <linux/platform_device.h>
-#include <sound/driver.h>
 #include <sound/core.h>
 #include <sound/pcm.h>
 #include <sound/soc.h>
-#include <sound/soc-dapm.h>
 
 #include <asm/mach-types.h>
 #include <asm/hardware/locomo.h>
-#include <asm/arch/pxa-regs.h>
-#include <asm/arch/hardware.h>
-#include <asm/arch/poodle.h>
-#include <asm/arch/audio.h>
+#include <mach/poodle.h>
+#include <mach/audio.h>
 
 #include "../codecs/wm8731.h"
-#include "pxa2xx-pcm.h"
 #include "pxa2xx-i2s.h"
 
 #define POODLE_HP        1
@@ -49,7 +45,7 @@ static int poodle_spk_func;
 
 static void poodle_ext_control(struct snd_soc_codec *codec)
 {
-	int spk = 0;
+	struct snd_soc_dapm_context *dapm = &codec->dapm;
 
 	/* set up jack connection */
 	if (poodle_jack_func == POODLE_HP) {
@@ -58,55 +54,56 @@ static void poodle_ext_control(struct snd_soc_codec *codec)
 			POODLE_LOCOMO_GPIO_MUTE_L, 1);
 		locomo_gpio_write(&poodle_locomo_device.dev,
 			POODLE_LOCOMO_GPIO_MUTE_R, 1);
-		snd_soc_dapm_set_endpoint(codec, "Headphone Jack", 1);
+		snd_soc_dapm_enable_pin(dapm, "Headphone Jack");
 	} else {
 		locomo_gpio_write(&poodle_locomo_device.dev,
 			POODLE_LOCOMO_GPIO_MUTE_L, 0);
 		locomo_gpio_write(&poodle_locomo_device.dev,
 			POODLE_LOCOMO_GPIO_MUTE_R, 0);
-		snd_soc_dapm_set_endpoint(codec, "Headphone Jack", 0);
+		snd_soc_dapm_disable_pin(dapm, "Headphone Jack");
 	}
 
-	if (poodle_spk_func == POODLE_SPK_ON)
-		spk = 1;
-
 	/* set the enpoints to their new connetion states */
-	snd_soc_dapm_set_endpoint(codec, "Ext Spk", spk);
+	if (poodle_spk_func == POODLE_SPK_ON)
+		snd_soc_dapm_enable_pin(dapm, "Ext Spk");
+	else
+		snd_soc_dapm_disable_pin(dapm, "Ext Spk");
 
 	/* signal a DAPM event */
-	snd_soc_dapm_sync_endpoints(codec);
+	snd_soc_dapm_sync(dapm);
 }
 
 static int poodle_startup(struct snd_pcm_substream *substream)
 {
 	struct snd_soc_pcm_runtime *rtd = substream->private_data;
-	struct snd_soc_codec *codec = rtd->socdev->codec;
+	struct snd_soc_codec *codec = rtd->codec;
+
+	mutex_lock(&codec->mutex);
 
 	/* check the jack status at stream startup */
 	poodle_ext_control(codec);
+
+	mutex_unlock(&codec->mutex);
+
 	return 0;
 }
 
 /* we need to unmute the HP at shutdown as the mute burns power on poodle */
-static int poodle_shutdown(struct snd_pcm_substream *substream)
+static void poodle_shutdown(struct snd_pcm_substream *substream)
 {
-	struct snd_soc_pcm_runtime *rtd = substream->private_data;
-	struct snd_soc_codec *codec = rtd->socdev->codec;
-
 	/* set = unmute headphone */
 	locomo_gpio_write(&poodle_locomo_device.dev,
 		POODLE_LOCOMO_GPIO_MUTE_L, 1);
 	locomo_gpio_write(&poodle_locomo_device.dev,
 		POODLE_LOCOMO_GPIO_MUTE_R, 1);
-	return 0;
 }
 
 static int poodle_hw_params(struct snd_pcm_substream *substream,
 	struct snd_pcm_hw_params *params)
 {
 	struct snd_soc_pcm_runtime *rtd = substream->private_data;
-	struct snd_soc_codec_dai *codec_dai = rtd->dai->codec_dai;
-	struct snd_soc_cpu_dai *cpu_dai = rtd->dai->cpu_dai;
+	struct snd_soc_dai *codec_dai = rtd->codec_dai;
+	struct snd_soc_dai *cpu_dai = rtd->cpu_dai;
 	unsigned int clk = 0;
 	int ret = 0;
 
@@ -125,25 +122,25 @@ static int poodle_hw_params(struct snd_pcm_substream *substream,
 	}
 
 	/* set codec DAI configuration */
-	ret = codec_dai->dai_ops.set_fmt(codec_dai, SND_SOC_DAIFMT_I2S |
+	ret = snd_soc_dai_set_fmt(codec_dai, SND_SOC_DAIFMT_I2S |
 		SND_SOC_DAIFMT_NB_NF | SND_SOC_DAIFMT_CBS_CFS);
 	if (ret < 0)
 		return ret;
 
 	/* set cpu DAI configuration */
-	ret = cpu_dai->dai_ops.set_fmt(cpu_dai, SND_SOC_DAIFMT_I2S |
+	ret = snd_soc_dai_set_fmt(cpu_dai, SND_SOC_DAIFMT_I2S |
 		SND_SOC_DAIFMT_NB_NF | SND_SOC_DAIFMT_CBS_CFS);
 	if (ret < 0)
 		return ret;
 
 	/* set the codec system clock for DAC and ADC */
-	ret = codec_dai->dai_ops.set_sysclk(codec_dai, WM8731_SYSCLK, clk,
+	ret = snd_soc_dai_set_sysclk(codec_dai, WM8731_SYSCLK_XTAL, clk,
 		SND_SOC_CLOCK_IN);
 	if (ret < 0)
 		return ret;
 
 	/* set the I2S system clock as input (unused) */
-	ret = cpu_dai->dai_ops.set_sysclk(cpu_dai, PXA2XX_I2S_SYSCLK, 0,
+	ret = snd_soc_dai_set_sysclk(cpu_dai, PXA2XX_I2S_SYSCLK, 0,
 		SND_SOC_CLOCK_IN);
 	if (ret < 0)
 		return ret;
@@ -197,7 +194,8 @@ static int poodle_set_spk(struct snd_kcontrol *kcontrol,
 	return 1;
 }
 
-static int poodle_amp_event(struct snd_soc_dapm_widget *w, int event)
+static int poodle_amp_event(struct snd_soc_dapm_widget *w,
+	struct snd_kcontrol *k, int event)
 {
 	if (SND_SOC_DAPM_EVENT_ON(event))
 		locomo_gpio_write(&poodle_locomo_device.dev,
@@ -215,8 +213,8 @@ SND_SOC_DAPM_HP("Headphone Jack", NULL),
 SND_SOC_DAPM_SPK("Ext Spk", poodle_amp_event),
 };
 
-/* Corgi machine audio_mapnections to the codec pins */
-static const char *audio_map[][3] = {
+/* Corgi machine connections to the codec pins */
+static const struct snd_soc_dapm_route audio_map[] = {
 
 	/* headphone connected to LHPOUT1, RHPOUT1 */
 	{"Headphone Jack", NULL, "LHPOUT"},
@@ -225,8 +223,6 @@ static const char *audio_map[][3] = {
 	/* speaker connected to LOUT, ROUT */
 	{"Ext Spk", NULL, "ROUT"},
 	{"Ext Spk", NULL, "LOUT"},
-
-	{NULL, NULL, NULL},
 };
 
 static const char *jack_function[] = {"Off", "Headphone"};
@@ -236,7 +232,7 @@ static const struct soc_enum poodle_enum[] = {
 	SOC_ENUM_SINGLE_EXT(2, spk_function),
 };
 
-static const snd_kcontrol_new_t wm8731_poodle_controls[] = {
+static const struct snd_kcontrol_new wm8731_poodle_controls[] = {
 	SOC_ENUM_EXT("Jack Function", poodle_enum[0], poodle_get_jack,
 		poodle_set_jack),
 	SOC_ENUM_EXT("Speaker Function", poodle_enum[1], poodle_get_spk,
@@ -246,34 +242,30 @@ static const snd_kcontrol_new_t wm8731_poodle_controls[] = {
 /*
  * Logic for a wm8731 as connected on a Sharp SL-C7x0 Device
  */
-static int poodle_wm8731_init(struct snd_soc_codec *codec)
+static int poodle_wm8731_init(struct snd_soc_pcm_runtime *rtd)
 {
-	int i, err;
+	struct snd_soc_codec *codec = rtd->codec;
+	struct snd_soc_dapm_context *dapm = &codec->dapm;
+	int err;
 
-	snd_soc_dapm_set_endpoint(codec, "LLINEIN", 0);
-	snd_soc_dapm_set_endpoint(codec, "RLINEIN", 0);
-	snd_soc_dapm_set_endpoint(codec, "MICIN", 1);
+	snd_soc_dapm_nc_pin(dapm, "LLINEIN");
+	snd_soc_dapm_nc_pin(dapm, "RLINEIN");
+	snd_soc_dapm_enable_pin(dapm, "MICIN");
 
 	/* Add poodle specific controls */
-	for (i = 0; i < ARRAY_SIZE(wm8731_poodle_controls); i++) {
-		err = snd_ctl_add(codec->card,
-			snd_soc_cnew(&wm8731_poodle_controls[i],codec, NULL));
-		if (err < 0)
-			return err;
-	}
+	err = snd_soc_add_controls(codec, wm8731_poodle_controls,
+				ARRAY_SIZE(wm8731_poodle_controls));
+	if (err < 0)
+		return err;
 
 	/* Add poodle specific widgets */
-	for (i = 0; i < ARRAY_SIZE(wm8731_dapm_widgets); i++) {
-		snd_soc_dapm_new_control(codec, &wm8731_dapm_widgets[i]);
-	}
+	snd_soc_dapm_new_controls(dapm, wm8731_dapm_widgets,
+				  ARRAY_SIZE(wm8731_dapm_widgets));
 
 	/* Set up poodle specific audio path audio_map */
-	for (i = 0; audio_map[i][0] != NULL; i++) {
-		snd_soc_dapm_connect_input(codec, audio_map[i][0],
-			audio_map[i][1], audio_map[i][2]);
-	}
+	snd_soc_dapm_add_routes(dapm, audio_map, ARRAY_SIZE(audio_map));
 
-	snd_soc_dapm_sync_endpoints(codec);
+	snd_soc_dapm_sync(dapm);
 	return 0;
 }
 
@@ -281,30 +273,20 @@ static int poodle_wm8731_init(struct snd_soc_codec *codec)
 static struct snd_soc_dai_link poodle_dai = {
 	.name = "WM8731",
 	.stream_name = "WM8731",
-	.cpu_dai = &pxa_i2s_dai,
-	.codec_dai = &wm8731_dai,
+	.cpu_dai_name = "pxa2xx-i2s",
+	.codec_dai_name = "wm8731-hifi",
+	.platform_name = "pxa-pcm-audio",
+	.codec_name = "wm8731-codec.0-001b",
 	.init = poodle_wm8731_init,
 	.ops = &poodle_ops,
 };
 
 /* poodle audio machine driver */
-static struct snd_soc_machine snd_soc_machine_poodle = {
+static struct snd_soc_card snd_soc_poodle = {
 	.name = "Poodle",
 	.dai_link = &poodle_dai,
 	.num_links = 1,
-};
-
-/* poodle audio private data */
-static struct wm8731_setup_data poodle_wm8731_setup = {
-	.i2c_address = 0x1b,
-};
-
-/* poodle audio subsystem */
-static struct snd_soc_device poodle_snd_devdata = {
-	.machine = &snd_soc_machine_poodle,
-	.platform = &pxa2xx_soc_platform,
-	.codec_dev = &soc_codec_dev_wm8731,
-	.codec_data = &poodle_wm8731_setup,
+	.owner = THIS_MODULE,
 };
 
 static struct platform_device *poodle_snd_device;
@@ -328,8 +310,7 @@ static int __init poodle_init(void)
 	if (!poodle_snd_device)
 		return -ENOMEM;
 
-	platform_set_drvdata(poodle_snd_device, &poodle_snd_devdata);
-	poodle_snd_devdata.dev = &poodle_snd_device->dev;
+	platform_set_drvdata(poodle_snd_device, &snd_soc_poodle);
 	ret = platform_device_add(poodle_snd_device);
 
 	if (ret)

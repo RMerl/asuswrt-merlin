@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2007 Chelsio Communications.  All rights reserved.
+ * Copyright (C) 2006-2008 Chelsio Communications.  All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
@@ -34,7 +34,6 @@
 
 #include <linux/list.h>
 #include <asm/atomic.h>
-#include <asm/semaphore.h>
 #include <linux/netdevice.h>
 #include <linux/proc_fs.h>
 #include <linux/skbuff.h>
@@ -42,14 +41,12 @@
 
 #define T3CNAMSIZ 16
 
-/* Get the t3cdev associated with a net_device */
-#define T3CDEV(netdev) (struct t3cdev *)(netdev->priv)
-
 struct cxgb3_client;
 
 enum t3ctype {
 	T3A = 0,
-	T3B
+	T3B,
+	T3C,
 };
 
 struct t3cdev {
@@ -67,6 +64,7 @@ struct t3cdev {
 	void *l3opt;		/* optional layer 3 data */
 	void *l4opt;		/* optional layer 4 data */
 	void *ulp;		/* ulp stuff */
+	void *ulp_iscsi;	/* ulp iscsi */
 };
 
 #endif				/* _T3CDEV_H_ */

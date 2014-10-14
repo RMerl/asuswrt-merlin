@@ -17,11 +17,11 @@ struct transport_container;
 struct transport_class {
 	struct class class;
 	int (*setup)(struct transport_container *, struct device *,
-		     struct class_device *);
+		     struct device *);
 	int (*configure)(struct transport_container *, struct device *,
-			 struct class_device *);
+			 struct device *);
 	int (*remove)(struct transport_container *, struct device *,
-		      struct class_device *);
+		      struct device *);
 };
 
 #define DECLARE_TRANSPORT_CLASS(cls, nm, su, rm, cfg)			\
@@ -55,7 +55,7 @@ struct anon_transport_class cls = {				\
 
 struct transport_container {
 	struct attribute_container ac;
-	struct attribute_group *statistics;
+	const struct attribute_group *statistics;
 };
 
 #define attribute_container_to_transport_container(x) \
@@ -86,9 +86,10 @@ static inline int transport_container_register(struct transport_container *tc)
 	return attribute_container_register(&tc->ac);
 }
 
-static inline int transport_container_unregister(struct transport_container *tc)
+static inline void transport_container_unregister(struct transport_container *tc)
 {
-	return attribute_container_unregister(&tc->ac);
+	if (unlikely(attribute_container_unregister(&tc->ac)))
+		BUG();
 }
 
 int transport_class_register(struct transport_class *);

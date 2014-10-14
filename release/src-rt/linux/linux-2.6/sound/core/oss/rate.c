@@ -1,6 +1,6 @@
 /*
  *  Rate conversion Plug-In
- *  Copyright (c) 1999 by Jaroslav Kysela <perex@suse.cz>
+ *  Copyright (c) 1999 by Jaroslav Kysela <perex@perex.cz>
  *
  *
  *   This library is free software; you can redistribute it and/or modify
@@ -19,10 +19,6 @@
  *
  */
   
-#include <sound/driver.h>
-
-#ifdef CONFIG_SND_PCM_OSS_PLUGINS
-
 #include <linux/time.h>
 #include <sound/core.h>
 #include <sound/pcm.h>
@@ -161,7 +157,7 @@ static void resample_shrink(struct snd_pcm_plugin *plugin,
 		while (dst_frames1 > 0) {
 			S1 = S2;
 			if (src_frames1-- > 0) {
-				S1 = *src;
+				S2 = *src;
 				src += src_step;
 			}
 			if (pos & ~R_MASK) {
@@ -189,7 +185,8 @@ static snd_pcm_sframes_t rate_src_frames(struct snd_pcm_plugin *plugin, snd_pcm_
 	struct rate_priv *data;
 	snd_pcm_sframes_t res;
 
-	snd_assert(plugin != NULL, return -ENXIO);
+	if (snd_BUG_ON(!plugin))
+		return -ENXIO;
 	if (frames == 0)
 		return 0;
 	data = (struct rate_priv *)plugin->extra_data;
@@ -221,7 +218,8 @@ static snd_pcm_sframes_t rate_dst_frames(struct snd_pcm_plugin *plugin, snd_pcm_
 	struct rate_priv *data;
 	snd_pcm_sframes_t res;
 
-	snd_assert(plugin != NULL, return -ENXIO);
+	if (snd_BUG_ON(!plugin))
+		return -ENXIO;
 	if (frames == 0)
 		return 0;
 	data = (struct rate_priv *)plugin->extra_data;
@@ -256,19 +254,20 @@ static snd_pcm_sframes_t rate_transfer(struct snd_pcm_plugin *plugin,
 	snd_pcm_uframes_t dst_frames;
 	struct rate_priv *data;
 
-	snd_assert(plugin != NULL && src_channels != NULL && dst_channels != NULL, return -ENXIO);
+	if (snd_BUG_ON(!plugin || !src_channels || !dst_channels))
+		return -ENXIO;
 	if (frames == 0)
 		return 0;
 #ifdef CONFIG_SND_DEBUG
 	{
 		unsigned int channel;
 		for (channel = 0; channel < plugin->src_format.channels; channel++) {
-			snd_assert(src_channels[channel].area.first % 8 == 0 &&
-				   src_channels[channel].area.step % 8 == 0,
-				   return -ENXIO);
-			snd_assert(dst_channels[channel].area.first % 8 == 0 &&
-				   dst_channels[channel].area.step % 8 == 0,
-				   return -ENXIO);
+			if (snd_BUG_ON(src_channels[channel].area.first % 8 ||
+				       src_channels[channel].area.step % 8))
+				return -ENXIO;
+			if (snd_BUG_ON(dst_channels[channel].area.first % 8 ||
+				       dst_channels[channel].area.step % 8))
+				return -ENXIO;
 		}
 	}
 #endif
@@ -285,7 +284,8 @@ static int rate_action(struct snd_pcm_plugin *plugin,
 		       enum snd_pcm_plugin_action action,
 		       unsigned long udata)
 {
-	snd_assert(plugin != NULL, return -ENXIO);
+	if (snd_BUG_ON(!plugin))
+		return -ENXIO;
 	switch (action) {
 	case INIT:
 	case PREPARE:
@@ -306,14 +306,20 @@ int snd_pcm_plugin_build_rate(struct snd_pcm_substream *plug,
 	struct rate_priv *data;
 	struct snd_pcm_plugin *plugin;
 
-	snd_assert(r_plugin != NULL, return -ENXIO);
+	if (snd_BUG_ON(!r_plugin))
+		return -ENXIO;
 	*r_plugin = NULL;
 
-	snd_assert(src_format->channels == dst_format->channels, return -ENXIO);
-	snd_assert(src_format->channels > 0, return -ENXIO);
-	snd_assert(src_format->format == SNDRV_PCM_FORMAT_S16, return -ENXIO);
-	snd_assert(dst_format->format == SNDRV_PCM_FORMAT_S16, return -ENXIO);
-	snd_assert(src_format->rate != dst_format->rate, return -ENXIO);
+	if (snd_BUG_ON(src_format->channels != dst_format->channels))
+		return -ENXIO;
+	if (snd_BUG_ON(src_format->channels <= 0))
+		return -ENXIO;
+	if (snd_BUG_ON(src_format->format != SNDRV_PCM_FORMAT_S16))
+		return -ENXIO;
+	if (snd_BUG_ON(dst_format->format != SNDRV_PCM_FORMAT_S16))
+		return -ENXIO;
+	if (snd_BUG_ON(src_format->rate == dst_format->rate))
+		return -ENXIO;
 
 	err = snd_pcm_plugin_build(plug, "rate conversion",
 				   src_format, dst_format,
@@ -340,5 +346,3 @@ int snd_pcm_plugin_build_rate(struct snd_pcm_substream *plug,
 	*r_plugin = plugin;
 	return 0;
 }
-
-#endif

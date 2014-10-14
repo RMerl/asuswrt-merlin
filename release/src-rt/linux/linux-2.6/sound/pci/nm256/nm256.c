@@ -24,7 +24,6 @@
  *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
  */
   
-#include <sound/driver.h>
 #include <asm/io.h>
 #include <linux/delay.h>
 #include <linux/interrupt.h>
@@ -263,10 +262,10 @@ struct nm256 {
 /*
  * PCI ids
  */
-static struct pci_device_id snd_nm256_ids[] = {
-	{PCI_VENDOR_ID_NEOMAGIC, PCI_DEVICE_ID_NEOMAGIC_NM256AV_AUDIO, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
-	{PCI_VENDOR_ID_NEOMAGIC, PCI_DEVICE_ID_NEOMAGIC_NM256ZX_AUDIO, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
-	{PCI_VENDOR_ID_NEOMAGIC, PCI_DEVICE_ID_NEOMAGIC_NM256XL_PLUS_AUDIO, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
+static DEFINE_PCI_DEVICE_TABLE(snd_nm256_ids) = {
+	{PCI_VDEVICE(NEOMAGIC, PCI_DEVICE_ID_NEOMAGIC_NM256AV_AUDIO), 0},
+	{PCI_VDEVICE(NEOMAGIC, PCI_DEVICE_ID_NEOMAGIC_NM256ZX_AUDIO), 0},
+	{PCI_VDEVICE(NEOMAGIC, PCI_DEVICE_ID_NEOMAGIC_NM256XL_PLUS_AUDIO), 0},
 	{0,},
 };
 
@@ -563,7 +562,8 @@ snd_nm256_playback_trigger(struct snd_pcm_substream *substream, int cmd)
 	struct nm256_stream *s = substream->runtime->private_data;
 	int err = 0;
 
-	snd_assert(s != NULL, return -ENXIO);
+	if (snd_BUG_ON(!s))
+		return -ENXIO;
 
 	spin_lock(&chip->reg_lock);
 	switch (cmd) {
@@ -600,7 +600,8 @@ snd_nm256_capture_trigger(struct snd_pcm_substream *substream, int cmd)
 	struct nm256_stream *s = substream->runtime->private_data;
 	int err = 0;
 
-	snd_assert(s != NULL, return -ENXIO);
+	if (snd_BUG_ON(!s))
+		return -ENXIO;
 
 	spin_lock(&chip->reg_lock);
 	switch (cmd) {
@@ -636,7 +637,8 @@ static int snd_nm256_pcm_prepare(struct snd_pcm_substream *substream)
 	struct snd_pcm_runtime *runtime = substream->runtime;
 	struct nm256_stream *s = runtime->private_data;
 
-	snd_assert(s, return -ENXIO);
+	if (snd_BUG_ON(!s))
+		return -ENXIO;
 	s->dma_size = frames_to_bytes(runtime, substream->runtime->buffer_size);
 	s->period_size = frames_to_bytes(runtime, substream->runtime->period_size);
 	s->periods = substream->runtime->periods;
@@ -661,7 +663,8 @@ snd_nm256_playback_pointer(struct snd_pcm_substream *substream)
 	struct nm256_stream *s = substream->runtime->private_data;
 	unsigned long curp;
 
-	snd_assert(s, return 0);
+	if (snd_BUG_ON(!s))
+		return 0;
 	curp = snd_nm256_readl(chip, NM_PBUFFER_CURRP) - (unsigned long)s->buf;
 	curp %= s->dma_size;
 	return bytes_to_frames(substream->runtime, curp);
@@ -674,7 +677,8 @@ snd_nm256_capture_pointer(struct snd_pcm_substream *substream)
 	struct nm256_stream *s = substream->runtime->private_data;
 	unsigned long curp;
 
-	snd_assert(s != NULL, return 0);
+	if (snd_BUG_ON(!s))
+		return 0;
 	curp = snd_nm256_readl(chip, NM_RBUFFER_CURRP) - (unsigned long)s->buf;
 	curp %= s->dma_size;	
 	return bytes_to_frames(substream->runtime, curp);
@@ -842,7 +846,6 @@ static void snd_nm256_setup_stream(struct nm256 *chip, struct nm256_stream *s,
 	runtime->private_data = s;
 	s->substream = substream;
 
-	snd_pcm_set_sync(substream);
 	snd_pcm_hw_constraint_list(runtime, 0, SNDRV_PCM_HW_PARAM_RATE,
 				   &constraints_rates);
 }
@@ -1304,8 +1307,8 @@ snd_nm256_mixer(struct nm256 *chip)
 		.read = snd_nm256_ac97_read,
 	};
 
-	chip->ac97_regs = kcalloc(sizeof(short),
-				  ARRAY_SIZE(nm256_ac97_init_val), GFP_KERNEL);
+	chip->ac97_regs = kcalloc(ARRAY_SIZE(nm256_ac97_init_val),
+				  sizeof(short), GFP_KERNEL);
 	if (! chip->ac97_regs)
 		return -ENOMEM;
 
@@ -1441,7 +1444,7 @@ static int snd_nm256_free(struct nm256 *chip)
 		snd_nm256_capture_stop(chip);
 
 	if (chip->irq >= 0)
-		synchronize_irq(chip->irq);
+		free_irq(chip->irq, chip);
 
 	if (chip->cport)
 		iounmap(chip->cport);
@@ -1449,8 +1452,6 @@ static int snd_nm256_free(struct nm256 *chip)
 		iounmap(chip->buffer);
 	release_and_free_resource(chip->res_cport);
 	release_and_free_resource(chip->res_buffer);
-	if (chip->irq >= 0)
-		free_irq(chip->irq, chip);
 
 	pci_disable_device(chip->pci);
 	kfree(chip->ac97_regs);
@@ -1533,7 +1534,8 @@ snd_nm256_create(struct snd_card *card, struct pci_dev *pci,
 				printk(KERN_ERR "  force the driver to load by "
 				       "passing in the module parameter\n");
 				printk(KERN_ERR "    force_ac97=1\n");
-				printk(KERN_ERR "  or try sb16 or cs423x drivers instead.\n");
+				printk(KERN_ERR "  or try sb16, opl3sa2, or "
+				       "cs423x drivers instead.\n");
 				err = -ENXIO;
 				goto __error;
 			}
@@ -1666,9 +1668,9 @@ static int __devinit snd_nm256_probe(struct pci_dev *pci,
 		}
 	}
 
-	card = snd_card_new(index, id, THIS_MODULE, 0);
-	if (card == NULL)
-		return -ENOMEM;
+	err = snd_card_create(index, id, THIS_MODULE, 0, &card);
+	if (err < 0)
+		return err;
 
 	switch (pci->device) {
 	case PCI_DEVICE_ID_NEOMAGIC_NM256AV_AUDIO:

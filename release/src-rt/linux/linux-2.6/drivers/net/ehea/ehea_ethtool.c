@@ -26,6 +26,8 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+
 #include "ehea.h"
 #include "ehea_phyp.h"
 
@@ -40,7 +42,7 @@ static int ehea_get_settings(struct net_device *dev, struct ethtool_cmd *cmd)
 		return ret;
 
 	if (netif_carrier_ok(dev)) {
-		switch(port->port_speed) {
+		switch (port->port_speed) {
 		case EHEA_SPEED_10M: cmd->speed = SPEED_10; break;
 		case EHEA_SPEED_100M: cmd->speed = SPEED_100; break;
 		case EHEA_SPEED_1G: cmd->speed = SPEED_1000; break;
@@ -53,15 +55,20 @@ static int ehea_get_settings(struct net_device *dev, struct ethtool_cmd *cmd)
 		cmd->duplex = -1;
 	}
 
-	cmd->supported = (SUPPORTED_10000baseT_Full | SUPPORTED_1000baseT_Full
-		       | SUPPORTED_100baseT_Full |  SUPPORTED_100baseT_Half
-		       | SUPPORTED_10baseT_Full | SUPPORTED_10baseT_Half
-		       | SUPPORTED_Autoneg | SUPPORTED_FIBRE);
+	if (cmd->speed == SPEED_10000) {
+		cmd->supported = (SUPPORTED_10000baseT_Full | SUPPORTED_FIBRE);
+		cmd->advertising = (ADVERTISED_10000baseT_Full | ADVERTISED_FIBRE);
+		cmd->port = PORT_FIBRE;
+	} else {
+		cmd->supported = (SUPPORTED_1000baseT_Full | SUPPORTED_100baseT_Full
+			       | SUPPORTED_100baseT_Half | SUPPORTED_10baseT_Full
+			       | SUPPORTED_10baseT_Half | SUPPORTED_Autoneg
+			       | SUPPORTED_TP);
+		cmd->advertising = (ADVERTISED_1000baseT_Full | ADVERTISED_Autoneg
+				 | ADVERTISED_TP);
+		cmd->port = PORT_TP;
+	}
 
-	cmd->advertising = (ADVERTISED_10000baseT_Full | ADVERTISED_Autoneg
-			 | ADVERTISED_FIBRE);
-
-	cmd->port = PORT_FIBRE;
 	cmd->autoneg = port->autoneg == 1 ? AUTONEG_ENABLE : AUTONEG_DISABLE;
 
 	return 0;
@@ -78,7 +85,7 @@ static int ehea_set_settings(struct net_device *dev, struct ethtool_cmd *cmd)
 		goto doit;
 	}
 
-	switch(cmd->speed) {
+	switch (cmd->speed) {
 	case SPEED_10:
 		if (cmd->duplex == DUPLEX_FULL)
 			sp = H_SPEED_10M_F;
@@ -118,10 +125,10 @@ doit:
 	ret = ehea_set_portspeed(port, sp);
 
 	if (!ret)
-		ehea_info("%s: Port speed succesfully set: %dMbps "
-			  "%s Duplex",
-			  port->netdev->name, port->port_speed,
-			  port->full_duplex == 1 ? "Full" : "Half");
+		netdev_info(dev,
+			    "Port speed successfully set: %dMbps %s Duplex\n",
+			    port->port_speed,
+			    port->full_duplex == 1 ? "Full" : "Half");
 out:
 	return ret;
 }
@@ -134,10 +141,10 @@ static int ehea_nway_reset(struct net_device *dev)
 	ret = ehea_set_portspeed(port, EHEA_SPEED_AUTONEG);
 
 	if (!ret)
-		ehea_info("%s: Port speed succesfully set: %dMbps "
-			  "%s Duplex",
-			  port->netdev->name, port->port_speed,
-			  port->full_duplex == 1 ? "Full" : "Half");
+		netdev_info(port->netdev,
+			    "Port speed successfully set: %dMbps %s Duplex\n",
+			    port->port_speed,
+			    port->full_duplex == 1 ? "Full" : "Half");
 	return ret;
 }
 
@@ -183,6 +190,9 @@ static char ehea_ethtool_stats_keys[][ETH_GSTRING_LEN] = {
 	{"PR5 free_swqes"},
 	{"PR6 free_swqes"},
 	{"PR7 free_swqes"},
+	{"LRO aggregated"},
+	{"LRO flushed"},
+	{"LRO no_desc"},
 };
 
 static void ehea_get_strings(struct net_device *dev, u32 stringset, u8 *data)
@@ -193,9 +203,14 @@ static void ehea_get_strings(struct net_device *dev, u32 stringset, u8 *data)
 	}
 }
 
-static int ehea_get_stats_count(struct net_device *dev)
+static int ehea_get_sset_count(struct net_device *dev, int sset)
 {
-	return ARRAY_SIZE(ehea_ethtool_stats_keys);
+	switch (sset) {
+	case ETH_SS_STATS:
+		return ARRAY_SIZE(ehea_ethtool_stats_keys);
+	default:
+		return -EOPNOTSUPP;
+	}
 }
 
 static void ehea_get_ethtool_stats(struct net_device *dev,
@@ -204,7 +219,7 @@ static void ehea_get_ethtool_stats(struct net_device *dev,
 	int i, k, tmp;
 	struct ehea_port *port = netdev_priv(dev);
 
-	for (i = 0; i < ehea_get_stats_count(dev); i++)
+	for (i = 0; i < ehea_get_sset_count(dev, ETH_SS_STATS); i++)
 		data[i] = 0;
 	i = 0;
 
@@ -239,6 +254,32 @@ static void ehea_get_ethtool_stats(struct net_device *dev,
 	for (k = 0; k < 8; k++)
 		data[i++] = atomic_read(&port->port_res[k].swqe_avail);
 
+	for (k = 0, tmp = 0; k < EHEA_MAX_PORT_RES; k++)
+		tmp |= port->port_res[k].lro_mgr.stats.aggregated;
+	data[i++] = tmp;
+
+	for (k = 0, tmp = 0; k < EHEA_MAX_PORT_RES; k++)
+		tmp |= port->port_res[k].lro_mgr.stats.flushed;
+	data[i++] = tmp;
+
+	for (k = 0, tmp = 0; k < EHEA_MAX_PORT_RES; k++)
+		tmp |= port->port_res[k].lro_mgr.stats.no_desc;
+	data[i++] = tmp;
+
+}
+
+static int ehea_set_flags(struct net_device *dev, u32 data)
+{
+	/* Avoid changing the VLAN flags */
+	if ((data & (ETH_FLAG_RXVLAN | ETH_FLAG_TXVLAN)) !=
+	    (ethtool_op_get_flags(dev) & (ETH_FLAG_RXVLAN |
+					  ETH_FLAG_TXVLAN))){
+		return -EINVAL;
+	}
+
+	return ethtool_op_set_flags(dev, data, ETH_FLAG_LRO
+					| ETH_FLAG_TXVLAN
+					| ETH_FLAG_RXVLAN);
 }
 
 const struct ethtool_ops ehea_ethtool_ops = {
@@ -247,15 +288,14 @@ const struct ethtool_ops ehea_ethtool_ops = {
 	.get_msglevel = ehea_get_msglevel,
 	.set_msglevel = ehea_set_msglevel,
 	.get_link = ethtool_op_get_link,
-	.get_tx_csum = ethtool_op_get_tx_csum,
-	.get_sg = ethtool_op_get_sg,
-	.get_tso = ethtool_op_get_tso,
 	.set_tso = ethtool_op_set_tso,
 	.get_strings = ehea_get_strings,
-	.get_stats_count = ehea_get_stats_count,
+	.get_sset_count = ehea_get_sset_count,
 	.get_ethtool_stats = ehea_get_ethtool_stats,
 	.get_rx_csum = ehea_get_rx_csum,
 	.set_settings = ehea_set_settings,
+	.get_flags = ethtool_op_get_flags,
+	.set_flags = ehea_set_flags,
 	.nway_reset = ehea_nway_reset,		/* Restart autonegotiation */
 };
 

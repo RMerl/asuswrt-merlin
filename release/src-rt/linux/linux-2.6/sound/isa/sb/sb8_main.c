@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) by Jaroslav Kysela <perex@suse.cz>
+ *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  *                   Uros Bizjak <uros@kss-loka.si>
  *
  *  Routines for control of 8-bit SoundBlaster cards and clones
@@ -30,7 +30,6 @@
  *   Cleaned up and rewrote lowlevel routines.
  */
 
-#include <sound/driver.h>
 #include <asm/io.h>
 #include <asm/dma.h>
 #include <linux/init.h>
@@ -38,7 +37,7 @@
 #include <sound/core.h>
 #include <sound/sb.h>
 
-MODULE_AUTHOR("Jaroslav Kysela <perex@suse.cz>, Uros Bizjak <uros@kss-loka.si>");
+MODULE_AUTHOR("Jaroslav Kysela <perex@perex.cz>, Uros Bizjak <uros@kss-loka.si>");
 MODULE_DESCRIPTION("Routines for control of 8-bit SoundBlaster cards and clones");
 MODULE_LICENSE("GPL");
 
@@ -107,12 +106,26 @@ static int snd_sb8_playback_prepare(struct snd_pcm_substream *substream)
 	struct snd_sb *chip = snd_pcm_substream_chip(substream);
 	struct snd_pcm_runtime *runtime = substream->runtime;
 	unsigned int mixreg, rate, size, count;
+	unsigned char format;
+	unsigned char stereo = runtime->channels > 1;
+	int dma;
 
 	rate = runtime->rate;
 	switch (chip->hardware) {
+	case SB_HW_JAZZ16:
+		if (runtime->format == SNDRV_PCM_FORMAT_S16_LE) {
+			if (chip->mode & SB_MODE_CAPTURE_16)
+				return -EBUSY;
+			else
+				chip->mode |= SB_MODE_PLAYBACK_16;
+		}
+		chip->playback_format = SB_DSP_LO_OUTPUT_AUTO;
+		break;
 	case SB_HW_PRO:
 		if (runtime->channels > 1) {
-			snd_assert(rate == SB8_RATE(11025) || rate == SB8_RATE(22050), return -EINVAL);
+			if (snd_BUG_ON(rate != SB8_RATE(11025) &&
+				       rate != SB8_RATE(22050)))
+				return -EINVAL;
 			chip->playback_format = SB_DSP_HI_OUTPUT_AUTO;
 			break;
 		}
@@ -132,11 +145,21 @@ static int snd_sb8_playback_prepare(struct snd_pcm_substream *substream)
 	default:
 		return -EINVAL;
 	}
+	if (chip->mode & SB_MODE_PLAYBACK_16) {
+		format = stereo ? SB_DSP_STEREO_16BIT : SB_DSP_MONO_16BIT;
+		dma = chip->dma16;
+	} else {
+		format = stereo ? SB_DSP_STEREO_8BIT : SB_DSP_MONO_8BIT;
+		chip->mode |= SB_MODE_PLAYBACK_8;
+		dma = chip->dma8;
+	}
 	size = chip->p_dma_size = snd_pcm_lib_buffer_bytes(substream);
 	count = chip->p_period_size = snd_pcm_lib_period_bytes(substream);
 	spin_lock_irqsave(&chip->reg_lock, flags);
 	snd_sbdsp_command(chip, SB_DSP_SPEAKER_ON);
-	if (runtime->channels > 1) {
+	if (chip->hardware == SB_HW_JAZZ16)
+		snd_sbdsp_command(chip, format);
+	else if (stereo) {
 		/* set playback stereo mode */
 		spin_lock(&chip->mixer_lock);
 		mixreg = snd_sbmixer_read(chip, SB_DSP_STEREO_SW);
@@ -146,15 +169,14 @@ static int snd_sb8_playback_prepare(struct snd_pcm_substream *substream)
 		/* Soundblaster hardware programming reference guide, 3-23 */
 		snd_sbdsp_command(chip, SB_DSP_DMA8_EXIT);
 		runtime->dma_area[0] = 0x80;
-		snd_dma_program(chip->dma8, runtime->dma_addr, 1, DMA_MODE_WRITE);
+		snd_dma_program(dma, runtime->dma_addr, 1, DMA_MODE_WRITE);
 		/* force interrupt */
-		chip->mode = SB_MODE_HALT;
 		snd_sbdsp_command(chip, SB_DSP_OUTPUT);
 		snd_sbdsp_command(chip, 0);
 		snd_sbdsp_command(chip, 0);
 	}
 	snd_sbdsp_command(chip, SB_DSP_SAMPLE_RATE);
-	if (runtime->channels > 1) {
+	if (stereo) {
 		snd_sbdsp_command(chip, 256 - runtime->rate_den / 2);
 		spin_lock(&chip->mixer_lock);
 		/* save output filter status and turn it off */
@@ -167,13 +189,15 @@ static int snd_sb8_playback_prepare(struct snd_pcm_substream *substream)
 		snd_sbdsp_command(chip, 256 - runtime->rate_den);
 	}
 	if (chip->playback_format != SB_DSP_OUTPUT) {
+		if (chip->mode & SB_MODE_PLAYBACK_16)
+			count /= 2;
 		count--;
 		snd_sbdsp_command(chip, SB_DSP_BLOCK_SIZE);
 		snd_sbdsp_command(chip, count & 0xff);
 		snd_sbdsp_command(chip, count >> 8);
 	}
 	spin_unlock_irqrestore(&chip->reg_lock, flags);
-	snd_dma_program(chip->dma8, runtime->dma_addr,
+	snd_dma_program(dma, runtime->dma_addr,
 			size, DMA_MODE_WRITE | DMA_AUTOINIT);
 	return 0;
 }
@@ -211,7 +235,6 @@ static int snd_sb8_playback_trigger(struct snd_pcm_substream *substream,
 		snd_sbdsp_command(chip, SB_DSP_SPEAKER_OFF);
 	}
 	spin_unlock_irqrestore(&chip->reg_lock, flags);
-	chip->mode = (cmd == SNDRV_PCM_TRIGGER_START) ? SB_MODE_PLAYBACK_8 : SB_MODE_HALT;
 	return 0;
 }
 
@@ -233,12 +256,26 @@ static int snd_sb8_capture_prepare(struct snd_pcm_substream *substream)
 	struct snd_sb *chip = snd_pcm_substream_chip(substream);
 	struct snd_pcm_runtime *runtime = substream->runtime;
 	unsigned int mixreg, rate, size, count;
+	unsigned char format;
+	unsigned char stereo = runtime->channels > 1;
+	int dma;
 
 	rate = runtime->rate;
 	switch (chip->hardware) {
+	case SB_HW_JAZZ16:
+		if (runtime->format == SNDRV_PCM_FORMAT_S16_LE) {
+			if (chip->mode & SB_MODE_PLAYBACK_16)
+				return -EBUSY;
+			else
+				chip->mode |= SB_MODE_CAPTURE_16;
+		}
+		chip->capture_format = SB_DSP_LO_INPUT_AUTO;
+		break;
 	case SB_HW_PRO:
 		if (runtime->channels > 1) {
-			snd_assert(rate == SB8_RATE(11025) || rate == SB8_RATE(22050), return -EINVAL);
+			if (snd_BUG_ON(rate != SB8_RATE(11025) &&
+				       rate != SB8_RATE(22050)))
+				return -EINVAL;
 			chip->capture_format = SB_DSP_HI_INPUT_AUTO;
 			break;
 		}
@@ -259,14 +296,24 @@ static int snd_sb8_capture_prepare(struct snd_pcm_substream *substream)
 	default:
 		return -EINVAL;
 	}
+	if (chip->mode & SB_MODE_CAPTURE_16) {
+		format = stereo ? SB_DSP_STEREO_16BIT : SB_DSP_MONO_16BIT;
+		dma = chip->dma16;
+	} else {
+		format = stereo ? SB_DSP_STEREO_8BIT : SB_DSP_MONO_8BIT;
+		chip->mode |= SB_MODE_CAPTURE_8;
+		dma = chip->dma8;
+	}
 	size = chip->c_dma_size = snd_pcm_lib_buffer_bytes(substream);
 	count = chip->c_period_size = snd_pcm_lib_period_bytes(substream);
 	spin_lock_irqsave(&chip->reg_lock, flags);
 	snd_sbdsp_command(chip, SB_DSP_SPEAKER_OFF);
-	if (runtime->channels > 1)
+	if (chip->hardware == SB_HW_JAZZ16)
+		snd_sbdsp_command(chip, format);
+	else if (stereo)
 		snd_sbdsp_command(chip, SB_DSP_STEREO_8BIT);
 	snd_sbdsp_command(chip, SB_DSP_SAMPLE_RATE);
-	if (runtime->channels > 1) {
+	if (stereo) {
 		snd_sbdsp_command(chip, 256 - runtime->rate_den / 2);
 		spin_lock(&chip->mixer_lock);
 		/* save input filter status and turn it off */
@@ -278,14 +325,16 @@ static int snd_sb8_capture_prepare(struct snd_pcm_substream *substream)
 	} else {
 		snd_sbdsp_command(chip, 256 - runtime->rate_den);
 	}
-	if (chip->capture_format != SB_DSP_OUTPUT) {
+	if (chip->capture_format != SB_DSP_INPUT) {
+		if (chip->mode & SB_MODE_PLAYBACK_16)
+			count /= 2;
 		count--;
 		snd_sbdsp_command(chip, SB_DSP_BLOCK_SIZE);
 		snd_sbdsp_command(chip, count & 0xff);
 		snd_sbdsp_command(chip, count >> 8);
 	}
 	spin_unlock_irqrestore(&chip->reg_lock, flags);
-	snd_dma_program(chip->dma8, runtime->dma_addr,
+	snd_dma_program(dma, runtime->dma_addr,
 			size, DMA_MODE_READ | DMA_AUTOINIT);
 	return 0;
 }
@@ -325,7 +374,6 @@ static int snd_sb8_capture_trigger(struct snd_pcm_substream *substream,
 		snd_sbdsp_command(chip, SB_DSP_SPEAKER_OFF);
 	}
 	spin_unlock_irqrestore(&chip->reg_lock, flags);
-	chip->mode = (cmd == SNDRV_PCM_TRIGGER_START) ? SB_MODE_CAPTURE_8 : SB_MODE_HALT;
 	return 0;
 }
 
@@ -336,13 +384,21 @@ irqreturn_t snd_sb8dsp_interrupt(struct snd_sb *chip)
 
 	snd_sb_ack_8bit(chip);
 	switch (chip->mode) {
-	case SB_MODE_PLAYBACK_8:	/* ok.. playback is active */
+	case SB_MODE_PLAYBACK_16:	/* ok.. playback is active */
+		if (chip->hardware != SB_HW_JAZZ16)
+			break;
+		/* fallthru */
+	case SB_MODE_PLAYBACK_8:
 		substream = chip->playback_substream;
 		runtime = substream->runtime;
 		if (chip->playback_format == SB_DSP_OUTPUT)
 		    	snd_sb8_playback_trigger(substream, SNDRV_PCM_TRIGGER_START);
 		snd_pcm_period_elapsed(substream);
 		break;
+	case SB_MODE_CAPTURE_16:
+		if (chip->hardware != SB_HW_JAZZ16)
+			break;
+		/* fallthru */
 	case SB_MODE_CAPTURE_8:
 		substream = chip->capture_substream;
 		runtime = substream->runtime;
@@ -358,10 +414,15 @@ static snd_pcm_uframes_t snd_sb8_playback_pointer(struct snd_pcm_substream *subs
 {
 	struct snd_sb *chip = snd_pcm_substream_chip(substream);
 	size_t ptr;
+	int dma;
 
-	if (chip->mode != SB_MODE_PLAYBACK_8)
+	if (chip->mode & SB_MODE_PLAYBACK_8)
+		dma = chip->dma8;
+	else if (chip->mode & SB_MODE_PLAYBACK_16)
+		dma = chip->dma16;
+	else
 		return 0;
-	ptr = snd_dma_pointer(chip->dma8, chip->p_dma_size);
+	ptr = snd_dma_pointer(dma, chip->p_dma_size);
 	return bytes_to_frames(substream->runtime, ptr);
 }
 
@@ -369,10 +430,15 @@ static snd_pcm_uframes_t snd_sb8_capture_pointer(struct snd_pcm_substream *subst
 {
 	struct snd_sb *chip = snd_pcm_substream_chip(substream);
 	size_t ptr;
+	int dma;
 
-	if (chip->mode != SB_MODE_CAPTURE_8)
+	if (chip->mode & SB_MODE_CAPTURE_8)
+		dma = chip->dma8;
+	else if (chip->mode & SB_MODE_CAPTURE_16)
+		dma = chip->dma16;
+	else
 		return 0;
-	ptr = snd_dma_pointer(chip->dma8, chip->c_dma_size);
+	ptr = snd_dma_pointer(dma, chip->c_dma_size);
 	return bytes_to_frames(substream->runtime, ptr);
 }
 
@@ -443,6 +509,14 @@ static int snd_sb8_open(struct snd_pcm_substream *substream)
 		runtime->hw = snd_sb8_capture;
 	}
 	switch (chip->hardware) {
+	case SB_HW_JAZZ16:
+		if (chip->dma16 == 5 || chip->dma16 == 7)
+			runtime->hw.formats |= SNDRV_PCM_FMTBIT_S16_LE;
+		runtime->hw.rates |= SNDRV_PCM_RATE_8000_48000;
+		runtime->hw.rate_min = 4000;
+		runtime->hw.rate_max = 50000;
+		runtime->hw.channels_max = 2;
+		break;
 	case SB_HW_PRO:
 		runtime->hw.rate_max = 44100;
 		runtime->hw.channels_max = 2;
@@ -465,6 +539,14 @@ static int snd_sb8_open(struct snd_pcm_substream *substream)
 	}
 	snd_pcm_hw_constraint_ratnums(runtime, 0, SNDRV_PCM_HW_PARAM_RATE,
 				      &hw_constraints_clock);
+	if (chip->dma8 > 3 || chip->dma16 >= 0) {
+		snd_pcm_hw_constraint_step(runtime, 0,
+					   SNDRV_PCM_HW_PARAM_BUFFER_BYTES, 2);
+		snd_pcm_hw_constraint_step(runtime, 0,
+					   SNDRV_PCM_HW_PARAM_PERIOD_BYTES, 2);
+		runtime->hw.buffer_bytes_max = 128 * 1024 * 1024;
+		runtime->hw.period_bytes_max = 128 * 1024 * 1024;
+	}
 	return 0;	
 }
 
@@ -477,6 +559,10 @@ static int snd_sb8_close(struct snd_pcm_substream *substream)
 	chip->capture_substream = NULL;
 	spin_lock_irqsave(&chip->open_lock, flags);
 	chip->open &= ~SB_OPEN_PCM;
+	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
+		chip->mode &= ~SB_MODE_PLAYBACK;
+	else
+		chip->mode &= ~SB_MODE_CAPTURE;
 	spin_unlock_irqrestore(&chip->open_lock, flags);
 	return 0;
 }
@@ -512,6 +598,7 @@ int snd_sb8dsp_pcm(struct snd_sb *chip, int device, struct snd_pcm ** rpcm)
 	struct snd_card *card = chip->card;
 	struct snd_pcm *pcm;
 	int err;
+	size_t max_prealloc = 64 * 1024;
 
 	if (rpcm)
 		*rpcm = NULL;
@@ -524,9 +611,11 @@ int snd_sb8dsp_pcm(struct snd_sb *chip, int device, struct snd_pcm ** rpcm)
 	snd_pcm_set_ops(pcm, SNDRV_PCM_STREAM_PLAYBACK, &snd_sb8_playback_ops);
 	snd_pcm_set_ops(pcm, SNDRV_PCM_STREAM_CAPTURE, &snd_sb8_capture_ops);
 
+	if (chip->dma8 > 3 || chip->dma16 >= 0)
+		max_prealloc = 128 * 1024;
 	snd_pcm_lib_preallocate_pages_for_all(pcm, SNDRV_DMA_TYPE_DEV,
 					      snd_dma_isa_data(),
-					      64*1024, 64*1024);
+					      64*1024, max_prealloc);
 
 	if (rpcm)
 		*rpcm = pcm;

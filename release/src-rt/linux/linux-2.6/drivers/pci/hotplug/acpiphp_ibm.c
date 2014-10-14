@@ -26,6 +26,7 @@
  */
 
 #include <linux/init.h>
+#include <linux/slab.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <acpi/acpi_bus.h>
@@ -33,8 +34,10 @@
 #include <linux/kobject.h>
 #include <asm/uaccess.h>
 #include <linux/moduleparam.h>
+#include <linux/pci.h>
 
 #include "acpiphp.h"
+#include "../pci.h"
 
 #define DRIVER_VERSION	"1.0.1"
 #define DRIVER_AUTHOR	"Irene Zubarev <zubarev@us.ibm.com>, Vernon Mauery <vernux@us.ibm.com>"
@@ -105,8 +108,9 @@ static int ibm_set_attention_status(struct hotplug_slot *slot, u8 status);
 static int ibm_get_attention_status(struct hotplug_slot *slot, u8 *status);
 static void ibm_handle_events(acpi_handle handle, u32 event, void *context);
 static int ibm_get_table_from_acpi(char **bufp);
-static ssize_t ibm_read_apci_table(struct kobject *kobj,
-		char *buffer, loff_t pos, size_t size);
+static ssize_t ibm_read_apci_table(struct file *filp, struct kobject *kobj,
+				   struct bin_attribute *bin_attr,
+				   char *buffer, loff_t pos, size_t size);
 static acpi_status __init ibm_find_acpi_device(acpi_handle handle,
 		u32 lvl, void *context, void **rv);
 static int __init ibm_acpiphp_init(void);
@@ -117,7 +121,6 @@ static struct notification ibm_note;
 static struct bin_attribute ibm_apci_table_attr = {
 	    .attr = {
 		    .name = "apci_table",
-		    .owner = THIS_MODULE,
 		    .mode = S_IRUGO,
 	    },
 	    .read = ibm_read_apci_table,
@@ -134,11 +137,11 @@ static struct acpiphp_attention_info ibm_attention_info =
  * ibm_slot_from_id - workaround for bad ibm hardware
  * @id: the slot number that linux refers to the slot by
  *
- * Description: this method returns the aCPI slot descriptor
+ * Description: This method returns the aCPI slot descriptor
  * corresponding to the Linux slot number.  This descriptor
  * has info about the aPCI slot id and attention status.
  * This descriptor must be freed using kfree when done.
- **/
+ */
 static union apci_descriptor *ibm_slot_from_id(int id)
 {
 	int ind = 0, size;
@@ -173,20 +176,20 @@ ibm_slot_done:
  * @slot: the hotplug_slot to work with
  * @status: what to set the LED to (0 or 1)
  *
- * Description: this method is registered with the acpiphp module as a
- * callback to do the device specific task of setting the LED status
- **/
+ * Description: This method is registered with the acpiphp module as a
+ * callback to do the device specific task of setting the LED status.
+ */
 static int ibm_set_attention_status(struct hotplug_slot *slot, u8 status)
 {
 	union acpi_object args[2]; 
 	struct acpi_object_list params = { .pointer = args, .count = 2 };
 	acpi_status stat; 
-	unsigned long rc;
+	unsigned long long rc;
 	union apci_descriptor *ibm_slot;
 
 	ibm_slot = ibm_slot_from_id(hpslot_to_sun(slot));
 
-	dbg("%s: set slot %d (%d) attention status to %d\n", __FUNCTION__,
+	dbg("%s: set slot %d (%d) attention status to %d\n", __func__,
 			ibm_slot->slot.slot_num, ibm_slot->slot.slot_id,
 			(status ? 1 : 0));
 
@@ -202,7 +205,7 @@ static int ibm_set_attention_status(struct hotplug_slot *slot, u8 status)
 		err("APLS evaluation failed:  0x%08x\n", stat);
 		return -ENODEV;
 	} else if (!rc) {
-		err("APLS method failed:  0x%08lx\n", rc);
+		err("APLS method failed:  0x%08llx\n", rc);
 		return -ERANGE;
 	}
 	return 0;
@@ -213,13 +216,13 @@ static int ibm_set_attention_status(struct hotplug_slot *slot, u8 status)
  * @slot: the hotplug_slot to work with
  * @status: returns what the LED is set to (0 or 1)
  *
- * Description: this method is registered with the acpiphp module as a
- * callback to do the device specific task of getting the LED status
+ * Description: This method is registered with the acpiphp module as a
+ * callback to do the device specific task of getting the LED status.
  * 
  * Because there is no direct method of getting the LED status directly
  * from an ACPI call, we read the aPCI table and parse out our
  * slot descriptor to read the status from that.
- **/
+ */
 static int ibm_get_attention_status(struct hotplug_slot *slot, u8 *status)
 {
 	union apci_descriptor *ibm_slot;
@@ -231,7 +234,7 @@ static int ibm_get_attention_status(struct hotplug_slot *slot, u8 *status)
 	else
 		*status = 0;
 
-	dbg("%s: get slot %d (%d) attention status is %d\n", __FUNCTION__,
+	dbg("%s: get slot %d (%d) attention status is %d\n", __func__,
 			ibm_slot->slot.slot_num, ibm_slot->slot.slot_id,
 			*status);
 
@@ -245,8 +248,8 @@ static int ibm_get_attention_status(struct hotplug_slot *slot, u8 *status)
  * @event: the event info (device specific)
  * @context: passed context (our notification struct)
  *
- * Description: this method is registered as a callback with the ACPI
- * subsystem it is called when this device has an event to notify the OS of
+ * Description: This method is registered as a callback with the ACPI
+ * subsystem it is called when this device has an event to notify the OS of.
  *
  * The events actually come from the device as two events that get
  * synthesized into one event with data by this function.  The event
@@ -256,18 +259,21 @@ static int ibm_get_attention_status(struct hotplug_slot *slot, u8 *status)
  * From section 5.6.2.2 of the ACPI 2.0 spec, I understand that the OSPM will
  * only re-enable the interrupt that causes this event AFTER this method
  * has returned, thereby enforcing serial access for the notification struct.
- **/
+ */
 static void ibm_handle_events(acpi_handle handle, u32 event, void *context)
 {
 	u8 detail = event & 0x0f;
 	u8 subevent = event & 0xf0;
 	struct notification *note = context;
 
-	dbg("%s: Received notification %02x\n", __FUNCTION__, event);
+	dbg("%s: Received notification %02x\n", __func__, event);
 
 	if (subevent == 0x80) {
-		dbg("%s: generationg bus event\n", __FUNCTION__);
-		acpi_bus_generate_event(note->device, note->event, detail);
+		dbg("%s: generationg bus event\n", __func__);
+		acpi_bus_generate_proc_event(note->device, note->event, detail);
+		acpi_bus_generate_netlink_event(note->device->pnp.device_class,
+						  dev_name(&note->device->dev),
+						  note->event, detail);
 	} else
 		note->event = event;
 }
@@ -276,16 +282,16 @@ static void ibm_handle_events(acpi_handle handle, u32 event, void *context)
  * ibm_get_table_from_acpi - reads the APLS buffer from ACPI
  * @bufp: address to pointer to allocate for the table
  *
- * Description: this method reads the APLS buffer in from ACPI and
+ * Description: This method reads the APLS buffer in from ACPI and
  * stores the "stripped" table into a single buffer
- * it allocates and passes the address back in bufp
+ * it allocates and passes the address back in bufp.
  *
  * If NULL is passed in as buffer, this method only calculates
  * the size of the table and returns that without filling
- * in the buffer
+ * in the buffer.
  *
- * returns < 0 on error or the size of the table on success
- **/
+ * Returns < 0 on error or the size of the table on success.
+ */
 static int ibm_get_table_from_acpi(char **bufp)
 {
 	union acpi_object *package;
@@ -296,7 +302,7 @@ static int ibm_get_table_from_acpi(char **bufp)
 
 	status = acpi_evaluate_object(ibm_acpi_handle, "APCI", NULL, &buffer);
 	if (ACPI_FAILURE(status)) {
-		err("%s:  APCI evaluation failed\n", __FUNCTION__);
+		err("%s:  APCI evaluation failed\n", __func__);
 		return -ENODEV;
 	}
 
@@ -304,13 +310,13 @@ static int ibm_get_table_from_acpi(char **bufp)
 	if (!(package) ||
 			(package->type != ACPI_TYPE_PACKAGE) ||
 			!(package->package.elements)) {
-		err("%s:  Invalid APCI object\n", __FUNCTION__);
+		err("%s:  Invalid APCI object\n", __func__);
 		goto read_table_done;
 	}
 
 	for(size = 0, i = 0; i < package->package.count; i++) {
 		if (package->package.elements[i].type != ACPI_TYPE_BUFFER) {
-			err("%s:  Invalid APCI element %d\n", __FUNCTION__, i);
+			err("%s:  Invalid APCI element %d\n", __func__, i);
 			goto read_table_done;
 		}
 		size += package->package.elements[i].buffer.length;
@@ -321,7 +327,7 @@ static int ibm_get_table_from_acpi(char **bufp)
 
 	lbuf = kzalloc(size, GFP_KERNEL);
 	dbg("%s: element count: %i, ASL table size: %i, &table = 0x%p\n",
-			__FUNCTION__, package->package.count, size, lbuf);
+			__func__, package->package.count, size, lbuf);
 
 	if (lbuf) {
 		*bufp = lbuf;
@@ -345,25 +351,28 @@ read_table_done:
 
 /**
  * ibm_read_apci_table - callback for the sysfs apci_table file
+ * @filp: the open sysfs file
  * @kobj: the kobject this binary attribute is a part of
+ * @bin_attr: struct bin_attribute for this file
  * @buffer: the kernel space buffer to fill
  * @pos: the offset into the file
  * @size: the number of bytes requested
  *
- * Description: gets registered with sysfs as the reader callback
- * to be executed when /sys/bus/pci/slots/apci_table gets read
+ * Description: Gets registered with sysfs as the reader callback
+ * to be executed when /sys/bus/pci/slots/apci_table gets read.
  *
  * Since we don't get notified on open and close for this file,
  * things get really tricky here...
- * our solution is to only allow reading the table in all at once
- **/
-static ssize_t ibm_read_apci_table(struct kobject *kobj,
-		char *buffer, loff_t pos, size_t size)
+ * our solution is to only allow reading the table in all at once.
+ */
+static ssize_t ibm_read_apci_table(struct file *filp, struct kobject *kobj,
+				   struct bin_attribute *bin_attr,
+				   char *buffer, loff_t pos, size_t size)
 {
 	int bytes_read = -EINVAL;
 	char *table = NULL;
 	
-	dbg("%s: pos = %d, size = %zd\n", __FUNCTION__, (int)pos, size);
+	dbg("%s: pos = %d, size = %zd\n", __func__, (int)pos, size);
 
 	if (pos == 0) {
 		bytes_read = ibm_get_table_from_acpi(&table);
@@ -381,42 +390,40 @@ static ssize_t ibm_read_apci_table(struct kobject *kobj,
  * @context: a pointer to our handle to fill when we find the device
  * @rv: a return value to fill if desired
  *
- * Description: used as a callback when calling acpi_walk_namespace
+ * Description: Used as a callback when calling acpi_walk_namespace
  * to find our device.  When this method returns non-zero
- * acpi_walk_namespace quits its search and returns our value
- **/
+ * acpi_walk_namespace quits its search and returns our value.
+ */
 static acpi_status __init ibm_find_acpi_device(acpi_handle handle,
 		u32 lvl, void *context, void **rv)
 {
 	acpi_handle *phandle = (acpi_handle *)context;
 	acpi_status status; 
-	struct acpi_device_info info; 
-	struct acpi_buffer info_buffer = {
-		.length = sizeof(struct acpi_device_info),
-		.pointer = &info,
-	};
+	struct acpi_device_info *info;
+	int retval = 0;
 
-	status = acpi_get_object_info(handle, &info_buffer);
+	status = acpi_get_object_info(handle, &info);
 	if (ACPI_FAILURE(status)) {
-		err("%s:  Failed to get device information", __FUNCTION__);
-		return 0;
+		err("%s:  Failed to get device information status=0x%x\n",
+			__func__, status);
+		return retval;
 	}
-	info.hardware_id.value[sizeof(info.hardware_id.value) - 1] = '\0';
 
-	if (info.current_status && (info.valid & ACPI_VALID_HID) &&
-			(!strcmp(info.hardware_id.value, IBM_HARDWARE_ID1) ||
-			!strcmp(info.hardware_id.value, IBM_HARDWARE_ID2))) {
-		dbg("found hardware: %s, handle: %p\n", info.hardware_id.value,
-				handle);
+	if (info->current_status && (info->valid & ACPI_VALID_HID) &&
+			(!strcmp(info->hardware_id.string, IBM_HARDWARE_ID1) ||
+			 !strcmp(info->hardware_id.string, IBM_HARDWARE_ID2))) {
+		dbg("found hardware: %s, handle: %p\n",
+			info->hardware_id.string, handle);
 		*phandle = handle;
 		/* returning non-zero causes the search to stop
 		 * and returns this value to the caller of 
 		 * acpi_walk_namespace, but it also causes some warnings
 		 * in the acpi debug code to print...
 		 */
-		return FOUND_APCI;
+		retval = FOUND_APCI;
 	}
-	return 0;
+	kfree(info);
+	return retval;
 }
 
 static int __init ibm_acpiphp_init(void)
@@ -424,20 +431,20 @@ static int __init ibm_acpiphp_init(void)
 	int retval = 0;
 	acpi_status status;
 	struct acpi_device *device;
-	struct kobject *sysdir = &pci_hotplug_slots_subsys.kobj;
+	struct kobject *sysdir = &pci_slots_kset->kobj;
 
-	dbg("%s\n", __FUNCTION__);
+	dbg("%s\n", __func__);
 
 	if (acpi_walk_namespace(ACPI_TYPE_DEVICE, ACPI_ROOT_OBJECT,
-			ACPI_UINT32_MAX, ibm_find_acpi_device,
+			ACPI_UINT32_MAX, ibm_find_acpi_device, NULL,
 			&ibm_acpi_handle, NULL) != FOUND_APCI) {
-		err("%s: acpi_walk_namespace failed\n", __FUNCTION__);
+		err("%s: acpi_walk_namespace failed\n", __func__);
 		retval = -ENODEV;
 		goto init_return;
 	}
-	dbg("%s: found IBM aPCI device\n", __FUNCTION__);
+	dbg("%s: found IBM aPCI device\n", __func__);
 	if (acpi_bus_get_device(ibm_acpi_handle, &device)) {
-		err("%s: acpi_bus_get_device failed\n", __FUNCTION__);
+		err("%s: acpi_bus_get_device failed\n", __func__);
 		retval = -ENODEV;
 		goto init_return;
 	}
@@ -452,7 +459,7 @@ static int __init ibm_acpiphp_init(void)
 			&ibm_note);
 	if (ACPI_FAILURE(status)) {
 		err("%s: Failed to register notification handler\n",
-				__FUNCTION__);
+				__func__);
 		retval = -EBUSY;
 		goto init_cleanup;
 	}
@@ -471,19 +478,19 @@ init_return:
 static void __exit ibm_acpiphp_exit(void)
 {
 	acpi_status status;
-	struct kobject *sysdir = &pci_hotplug_slots_subsys.kobj;
+	struct kobject *sysdir = &pci_slots_kset->kobj;
 
-	dbg("%s\n", __FUNCTION__);
+	dbg("%s\n", __func__);
 
 	if (acpiphp_unregister_attention(&ibm_attention_info))
-		err("%s: attention info deregistration failed", __FUNCTION__);
+		err("%s: attention info deregistration failed", __func__);
 
 	status = acpi_remove_notify_handler(
 			   ibm_acpi_handle,
 			   ACPI_DEVICE_NOTIFY,
 			   ibm_handle_events);
 	if (ACPI_FAILURE(status))
-		err("%s: Notification handler removal failed\n", __FUNCTION__);
+		err("%s: Notification handler removal failed\n", __func__);
 	/* remove the /sys entries */
 	sysfs_remove_bin_file(sysdir, &ibm_apci_table_attr);
 }

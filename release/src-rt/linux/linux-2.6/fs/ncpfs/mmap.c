@@ -9,18 +9,18 @@
 #include <linux/stat.h>
 #include <linux/time.h>
 #include <linux/kernel.h>
+#include <linux/gfp.h>
 #include <linux/mm.h>
 #include <linux/shm.h>
 #include <linux/errno.h>
 #include <linux/mman.h>
 #include <linux/string.h>
-#include <linux/slab.h>
 #include <linux/fcntl.h>
-#include <linux/ncp_fs.h>
 
-#include "ncplib_kernel.h"
 #include <asm/uaccess.h>
 #include <asm/system.h>
+
+#include "ncp_fs.h"
 
 /*
  * Fill in the supplied page for mmap
@@ -50,10 +50,6 @@ static int ncp_file_mmap_fault(struct vm_area_struct *area,
 	pos = vmf->pgoff << PAGE_SHIFT;
 
 	count = PAGE_SIZE;
-	if ((unsigned long)vmf->virtual_address + PAGE_SIZE > area->vm_end) {
-		WARN_ON(1); /* shouldn't happen? */
-		count = area->vm_end - (unsigned long)vmf->virtual_address;
- 	}
 	/* what we can read in one go */
 	bufsize = NCP_SERVER(inode)->buffer_size;
 
@@ -62,6 +58,7 @@ static int ncp_file_mmap_fault(struct vm_area_struct *area,
 		while (already_read < count) {
 			int read_this_time;
 			int to_read;
+
 			to_read = bufsize - (pos % bufsize);
 
 			to_read = min_t(unsigned int, to_read, count - already_read);
@@ -98,7 +95,7 @@ static int ncp_file_mmap_fault(struct vm_area_struct *area,
 	return VM_FAULT_MAJOR;
 }
 
-static struct vm_operations_struct ncp_file_mmap =
+static const struct vm_operations_struct ncp_file_mmap =
 {
 	.fault = ncp_file_mmap_fault,
 };

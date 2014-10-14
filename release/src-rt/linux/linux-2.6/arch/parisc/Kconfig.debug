@@ -2,15 +2,6 @@ menu "Kernel hacking"
 
 source "lib/Kconfig.debug"
 
-config DEBUG_RWLOCK
-        bool "Read-write spinlock debugging"
-        depends on DEBUG_KERNEL && SMP
-        help
-          If you say Y here then read-write lock processing will count how many
-          times it has tried to get the lock and issue an error message after
-          too many attempts.  If you suspect a rwlock problem or a kernel
-          hacker asks for this option then say Y.  Otherwise say N.
-
 config DEBUG_RODATA
        bool "Write protect kernel read-only data structures"
        depends on DEBUG_KERNEL
@@ -20,5 +11,19 @@ config DEBUG_RODATA
          data. This option may have a slight performance impact because a
          portion of the kernel code won't be covered by a TLB anymore.
          If in doubt, say "N".
+
+config DEBUG_STRICT_USER_COPY_CHECKS
+	bool "Strict copy size checks"
+	depends on DEBUG_KERNEL && !TRACE_BRANCH_PROFILING
+	---help---
+	  Enabling this option turns a certain set of sanity checks for user
+	  copy operations into compile time failures.
+
+	  The copy_from_user() etc checks are there to help test if there
+	  are sufficient security checks on the length argument of
+	  the copy operation, by having gcc prove that the argument is
+	  within bounds.
+
+	  If unsure, or if you run an older (pre 4.4) gcc, say N.
 
 endmenu

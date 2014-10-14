@@ -112,8 +112,9 @@ titan_update_irq_hw(unsigned long mask)
 }
 
 static inline void
-titan_enable_irq(unsigned int irq)
+titan_enable_irq(struct irq_data *d)
 {
+	unsigned int irq = d->irq;
 	spin_lock(&titan_irq_lock);
 	titan_cached_irq_mask |= 1UL << (irq - 16);
 	titan_update_irq_hw(titan_cached_irq_mask);
@@ -121,26 +122,13 @@ titan_enable_irq(unsigned int irq)
 }
 
 static inline void
-titan_disable_irq(unsigned int irq)
+titan_disable_irq(struct irq_data *d)
 {
+	unsigned int irq = d->irq;
 	spin_lock(&titan_irq_lock);
 	titan_cached_irq_mask &= ~(1UL << (irq - 16));
 	titan_update_irq_hw(titan_cached_irq_mask);
 	spin_unlock(&titan_irq_lock);
-}
-
-static unsigned int
-titan_startup_irq(unsigned int irq)
-{
-	titan_enable_irq(irq);
-	return 0;	/* never anything pending */
-}
-
-static void
-titan_end_irq(unsigned int irq)
-{
-	if (!(irq_desc[irq].status & (IRQ_DISABLED|IRQ_INPROGRESS)))
-		titan_enable_irq(irq);
 }
 
 static void
@@ -157,19 +145,23 @@ titan_cpu_set_irq_affinity(unsigned int irq, cpumask_t affinity)
 
 }
 
-static void
-titan_set_irq_affinity(unsigned int irq, cpumask_t affinity)
+static int
+titan_set_irq_affinity(struct irq_data *d, const struct cpumask *affinity,
+		       bool force)
 { 
+	unsigned int irq = d->irq;
 	spin_lock(&titan_irq_lock);
-	titan_cpu_set_irq_affinity(irq - 16, affinity);
+	titan_cpu_set_irq_affinity(irq - 16, *affinity);
 	titan_update_irq_hw(titan_cached_irq_mask);
 	spin_unlock(&titan_irq_lock);
+
+	return 0;
 }
 
 static void
 titan_device_interrupt(unsigned long vector)
 {
-	printk("titan_device_interrupt: NOT IMPLEMENTED YET!! \n");
+	printk("titan_device_interrupt: NOT IMPLEMENTED YET!!\n");
 }
 
 static void 
@@ -183,24 +175,21 @@ titan_srm_device_interrupt(unsigned long vector)
 
 
 static void __init
-init_titan_irqs(struct hw_interrupt_type * ops, int imin, int imax)
+init_titan_irqs(struct irq_chip * ops, int imin, int imax)
 {
 	long i;
 	for (i = imin; i <= imax; ++i) {
-		irq_desc[i].status = IRQ_DISABLED | IRQ_LEVEL;
-		irq_desc[i].chip = ops;
+		irq_set_chip_and_handler(i, ops, handle_level_irq);
+		irq_set_status_flags(i, IRQ_LEVEL);
 	}
 }
 
-static struct hw_interrupt_type titan_irq_type = {
-       .typename       = "TITAN",
-       .startup        = titan_startup_irq,
-       .shutdown       = titan_disable_irq,
-       .enable         = titan_enable_irq,
-       .disable        = titan_disable_irq,
-       .ack            = titan_disable_irq,
-       .end            = titan_end_irq,
-       .set_affinity   = titan_set_irq_affinity,
+static struct irq_chip titan_irq_type = {
+       .name			= "TITAN",
+       .irq_unmask		= titan_enable_irq,
+       .irq_mask		= titan_disable_irq,
+       .irq_mask_ack		= titan_disable_irq,
+       .irq_set_affinity	= titan_set_irq_affinity,
 };
 
 static irqreturn_t
@@ -271,6 +260,19 @@ titan_dispatch_irqs(u64 mask)
  * Titan Family
  */
 static void __init
+titan_request_irq(unsigned int irq, irq_handler_t handler,
+		  unsigned long irqflags, const char *devname,
+		  void *dev_id)
+{
+	int err;
+	err = request_irq(irq, handler, irqflags, devname, dev_id);
+	if (err) {
+		printk("titan_request_irq for IRQ %d returned %d; ignoring\n",
+		       irq, err);
+	}
+}
+
+static void __init
 titan_late_init(void)
 {
 	/*
@@ -278,15 +280,15 @@ titan_late_init(void)
 	 * all reported to the kernel as machine checks, so the handler
 	 * is a nop so it can be called to count the individual events.
 	 */
-	request_irq(63+16, titan_intr_nop, IRQF_DISABLED,
+	titan_request_irq(63+16, titan_intr_nop, IRQF_DISABLED,
 		    "CChip Error", NULL);
-	request_irq(62+16, titan_intr_nop, IRQF_DISABLED,
+	titan_request_irq(62+16, titan_intr_nop, IRQF_DISABLED,
 		    "PChip 0 H_Error", NULL);
-	request_irq(61+16, titan_intr_nop, IRQF_DISABLED,
+	titan_request_irq(61+16, titan_intr_nop, IRQF_DISABLED,
 		    "PChip 1 H_Error", NULL);
-	request_irq(60+16, titan_intr_nop, IRQF_DISABLED,
+	titan_request_irq(60+16, titan_intr_nop, IRQF_DISABLED,
 		    "PChip 0 C_Error", NULL);
-	request_irq(59+16, titan_intr_nop, IRQF_DISABLED,
+	titan_request_irq(59+16, titan_intr_nop, IRQF_DISABLED,
 		    "PChip 1 C_Error", NULL);
 
 	/* 
@@ -345,9 +347,9 @@ privateer_init_pci(void)
 	 * Hook a couple of extra err interrupts that the
 	 * common titan code won't.
 	 */
-	request_irq(53+16, titan_intr_nop, IRQF_DISABLED,
+	titan_request_irq(53+16, titan_intr_nop, IRQF_DISABLED,
 		    "NMI", NULL);
-	request_irq(50+16, titan_intr_nop, IRQF_DISABLED,
+	titan_request_irq(50+16, titan_intr_nop, IRQF_DISABLED,
 		    "Temperature Warning", NULL);
 
 	/*

@@ -29,6 +29,7 @@
 #include <linux/slab.h>
 #include <linux/poll.h>
 #include <linux/fcntl.h>
+#include <linux/freezer.h>
 #include <linux/skbuff.h>
 #include <linux/socket.h>
 #include <linux/ioctl.h>
@@ -42,11 +43,6 @@
 #include <net/bluetooth/l2cap.h>
 
 #include "cmtp.h"
-
-#ifndef CONFIG_BT_CMTP_DEBUG
-#undef  BT_DBG
-#define BT_DBG(D...)
-#endif
 
 #define VERSION "1.0"
 
@@ -82,6 +78,7 @@ static void __cmtp_unlink_session(struct cmtp_session *session)
 
 static void __cmtp_copy_session(struct cmtp_session *session, struct cmtp_conninfo *ci)
 {
+	memset(ci, 0, sizeof(*ci));
 	bacpy(&ci->bdaddr, &session->bdaddr);
 
 	ci->flags = session->flags;
@@ -118,7 +115,8 @@ static inline void cmtp_add_msgpart(struct cmtp_session *session, int id, const 
 
 	size = (skb) ? skb->len + count : count;
 
-	if (!(nskb = alloc_skb(size, GFP_ATOMIC))) {
+	nskb = alloc_skb(size, GFP_ATOMIC);
+	if (!nskb) {
 		BT_ERR("Can't allocate memory for CAPI message");
 		return;
 	}
@@ -130,8 +128,7 @@ static inline void cmtp_add_msgpart(struct cmtp_session *session, int id, const 
 
 	session->reassembly[id] = nskb;
 
-	if (skb)
-		kfree_skb(skb);
+	kfree_skb(skb);
 }
 
 static inline int cmtp_recv_frame(struct cmtp_session *session, struct sk_buff *skb)
@@ -220,7 +217,8 @@ static void cmtp_process_transmit(struct cmtp_session *session)
 
 	BT_DBG("session %p", session);
 
-	if (!(nskb = alloc_skb(session->mtu, GFP_ATOMIC))) {
+	nskb = alloc_skb(session->mtu, GFP_ATOMIC);
+	if (!nskb) {
 		BT_ERR("Can't allocate memory for new frame");
 		return;
 	}
@@ -228,7 +226,8 @@ static void cmtp_process_transmit(struct cmtp_session *session)
 	while ((skb = skb_dequeue(&session->transmit))) {
 		struct cmtp_scb *scb = (void *) skb->cb;
 
-		if ((tail = (session->mtu - nskb->len)) < 5) {
+		tail = session->mtu - nskb->len;
+		if (tail < 5) {
 			cmtp_send_frame(session, nskb->data, nskb->len);
 			skb_trim(nskb, 0);
 			tail = session->mtu;
@@ -287,10 +286,9 @@ static int cmtp_session(void *arg)
 
 	daemonize("kcmtpd_ctr_%d", session->num);
 	set_user_nice(current, -15);
-	current->flags |= PF_NOFREEZE;
 
 	init_waitqueue_entry(&wait, current);
-	add_wait_queue(sk->sk_sleep, &wait);
+	add_wait_queue(sk_sleep(sk), &wait);
 	while (!atomic_read(&session->terminate)) {
 		set_current_state(TASK_INTERRUPTIBLE);
 
@@ -307,7 +305,7 @@ static int cmtp_session(void *arg)
 		schedule();
 	}
 	set_current_state(TASK_RUNNING);
-	remove_wait_queue(sk->sk_sleep, &wait);
+	remove_wait_queue(sk_sleep(sk), &wait);
 
 	down_write(&cmtp_session_sem);
 
@@ -327,13 +325,9 @@ static int cmtp_session(void *arg)
 int cmtp_add_connection(struct cmtp_connadd_req *req, struct socket *sock)
 {
 	struct cmtp_session *session, *s;
-	bdaddr_t src, dst;
 	int i, err;
 
 	BT_DBG("");
-
-	baswap(&src, &bt_sk(sock->sk)->src);
-	baswap(&dst, &bt_sk(sock->sk)->dst);
 
 	session = kzalloc(sizeof(struct cmtp_session), GFP_KERNEL);
 	if (!session)
@@ -353,7 +347,7 @@ int cmtp_add_connection(struct cmtp_connadd_req *req, struct socket *sock)
 
 	BT_DBG("mtu %d", session->mtu);
 
-	sprintf(session->name, "%s", batostr(&dst));
+	sprintf(session->name, "%s", batostr(&bt_sk(sock->sk)->dst));
 
 	session->sock  = sock;
 	session->state = BT_CONFIG;
@@ -475,8 +469,6 @@ int cmtp_get_conninfo(struct cmtp_conninfo *ci)
 
 static int __init cmtp_init(void)
 {
-	l2cap_load();
-
 	BT_INFO("CMTP (CAPI Emulation) ver %s", VERSION);
 
 	cmtp_init_sockets();

@@ -25,11 +25,11 @@
 #include <linux/amba/bus.h>
 #include <linux/amba/clcd.h>
 
-#include <asm/hardware.h>
+#include <mach/hardware.h>
 #include <asm/mach-types.h>
 #include <asm/mach/arch.h>
-#include <asm/arch/netx-regs.h>
-#include <asm/arch/eth.h>
+#include <mach/netx-regs.h>
+#include <mach/eth.h>
 
 #include "generic.h"
 #include "fb.h"
@@ -200,8 +200,6 @@ static void __init nxdb500_init(void)
 }
 
 MACHINE_START(NXDB500, "Hilscher nxdb500")
-	.phys_io	= 0x00100000,
-	.io_pg_offst	= (io_p2v(0x00100000) >> 18) & 0xfffc,
 	.boot_params	= 0x80000100,
 	.map_io		= netx_map_io,
 	.init_irq	= netx_init_irq,

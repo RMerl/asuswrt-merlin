@@ -12,21 +12,23 @@
 
 #include "ops.h"
 #include "stdio.h"
+#include "cuboot.h"
 
 #define TARGET_85xx
+#define TARGET_HAS_ETH3
 #include "ppcboot.h"
 
 static bd_t bd;
-extern char _end[];
-extern char _dtb_start[], _dtb_end[];
 
 static void platform_fixups(void)
 {
 	void *soc;
 
 	dt_fixup_memory(bd.bi_memstart, bd.bi_memsize);
-	dt_fixup_mac_addresses(bd.bi_enetaddr, bd.bi_enet1addr,
-	                       bd.bi_enet2addr);
+	dt_fixup_mac_address_by_alias("ethernet0", bd.bi_enetaddr);
+	dt_fixup_mac_address_by_alias("ethernet1", bd.bi_enet1addr);
+	dt_fixup_mac_address_by_alias("ethernet2", bd.bi_enet2addr);
+	dt_fixup_mac_address_by_alias("ethernet3", bd.bi_enet3addr);
 	dt_fixup_cpu_clocks(bd.bi_intfreq, bd.bi_busfreq / 8, bd.bi_busfreq);
 
 	/* Unfortunately, the specific model number is encoded in the
@@ -53,17 +55,8 @@ static void platform_fixups(void)
 void platform_init(unsigned long r3, unsigned long r4, unsigned long r5,
                    unsigned long r6, unsigned long r7)
 {
-	unsigned long end_of_ram = bd.bi_memstart + bd.bi_memsize;
-	unsigned long avail_ram = end_of_ram - (unsigned long)_end;
-
-	memcpy(&bd, (bd_t *)r3, sizeof(bd));
-	loader_info.initrd_addr = r4;
-	loader_info.initrd_size = r4 ? r5 - r4 : 0;
-	loader_info.cmdline = (char *)r6;
-	loader_info.cmdline_len = r7 - r6;
-
-	simple_alloc_init(_end, avail_ram - 1024*1024, 32, 64);
-	ft_init(_dtb_start, _dtb_end - _dtb_start, 32);
+	CUBOOT_INIT();
+	fdt_init(_dtb_start);
 	serial_console_init();
 	platform_ops.fixups = platform_fixups;
 }

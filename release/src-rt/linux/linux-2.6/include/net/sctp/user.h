@@ -1,21 +1,21 @@
-/* SCTP kernel reference Implementation
+/* SCTP kernel implementation
  * (C) Copyright IBM Corp. 2001, 2004
  * Copyright (c) 1999-2000 Cisco, Inc.
  * Copyright (c) 1999-2001 Motorola, Inc.
  * Copyright (c) 2002 Intel Corp.
  *
- * This file is part of the SCTP kernel reference Implementation
+ * This file is part of the SCTP kernel implementation
  *
  * This header represents the structures and constants needed to support
  * the SCTP Extension to the Sockets API.
  *
- * The SCTP reference implementation is free software;
+ * This SCTP implementation is free software;
  * you can redistribute it and/or modify it under the terms of
  * the GNU General Public License as published by
  * the Free Software Foundation; either version 2, or (at your option)
  * any later version.
  *
- * The SCTP reference implementation is distributed in the hope that it
+ * This SCTP implementation is distributed in the hope that it
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied
  *                 ************************
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -60,74 +60,50 @@ typedef __s32 sctp_assoc_t;
 /* The following symbols come from the Sockets API Extensions for
  * SCTP <draft-ietf-tsvwg-sctpsocket-07.txt>.
  */
-enum sctp_optname {
-	SCTP_RTOINFO,
-#define SCTP_RTOINFO SCTP_RTOINFO
-	SCTP_ASSOCINFO,
-#define SCTP_ASSOCINFO SCTP_ASSOCINFO
-	SCTP_INITMSG,
-#define SCTP_INITMSG SCTP_INITMSG
-	SCTP_NODELAY, 	/* Get/set nodelay option. */
-#define SCTP_NODELAY	SCTP_NODELAY
-	SCTP_AUTOCLOSE,
-#define SCTP_AUTOCLOSE SCTP_AUTOCLOSE
-	SCTP_SET_PEER_PRIMARY_ADDR, 
-#define SCTP_SET_PEER_PRIMARY_ADDR SCTP_SET_PEER_PRIMARY_ADDR
-	SCTP_PRIMARY_ADDR,
-#define SCTP_PRIMARY_ADDR SCTP_PRIMARY_ADDR
-	SCTP_ADAPTATION_LAYER,
-#define SCTP_ADAPTATION_LAYER SCTP_ADAPTATION_LAYER
-	SCTP_DISABLE_FRAGMENTS,
-#define SCTP_DISABLE_FRAGMENTS SCTP_DISABLE_FRAGMENTS
-	SCTP_PEER_ADDR_PARAMS,
-#define SCTP_PEER_ADDR_PARAMS SCTP_PEER_ADDR_PARAMS
-	SCTP_DEFAULT_SEND_PARAM,
-#define SCTP_DEFAULT_SEND_PARAM SCTP_DEFAULT_SEND_PARAM
-	SCTP_EVENTS,
-#define SCTP_EVENTS SCTP_EVENTS
-	SCTP_I_WANT_MAPPED_V4_ADDR,  /* Turn on/off mapped v4 addresses  */
-#define SCTP_I_WANT_MAPPED_V4_ADDR SCTP_I_WANT_MAPPED_V4_ADDR
-	SCTP_MAXSEG, 	/* Get/set maximum fragment. */
-#define SCTP_MAXSEG 	SCTP_MAXSEG
-	SCTP_STATUS,
-#define SCTP_STATUS SCTP_STATUS
-	SCTP_GET_PEER_ADDR_INFO,
-#define SCTP_GET_PEER_ADDR_INFO SCTP_GET_PEER_ADDR_INFO
-	SCTP_DELAYED_ACK_TIME,
-#define SCTP_DELAYED_ACK_TIME SCTP_DELAYED_ACK_TIME
-	SCTP_CONTEXT,	/* Receive Context */
-#define SCTP_CONTEXT SCTP_CONTEXT
-	SCTP_FRAGMENT_INTERLEAVE,
-#define SCTP_FRAGMENT_INTERLEAVE SCTP_FRAGMENT_INTERLEAVE
-	SCTP_PARTIAL_DELIVERY_POINT,	/* Set/Get partial delivery point */
-#define SCTP_PARTIAL_DELIVERY_POINT SCTP_PARTIAL_DELIVERY_POINT
-	SCTP_MAX_BURST,		/* Set/Get max burst */
-#define SCTP_MAX_BURST SCTP_MAX_BURST
+#define SCTP_RTOINFO	0
+#define SCTP_ASSOCINFO  1
+#define SCTP_INITMSG	2
+#define SCTP_NODELAY	3		/* Get/set nodelay option. */
+#define SCTP_AUTOCLOSE	4
+#define SCTP_SET_PEER_PRIMARY_ADDR 5
+#define SCTP_PRIMARY_ADDR	6
+#define SCTP_ADAPTATION_LAYER	7
+#define SCTP_DISABLE_FRAGMENTS	8
+#define SCTP_PEER_ADDR_PARAMS	9
+#define SCTP_DEFAULT_SEND_PARAM	10
+#define SCTP_EVENTS	11
+#define SCTP_I_WANT_MAPPED_V4_ADDR 12	/* Turn on/off mapped v4 addresses  */
+#define SCTP_MAXSEG	13		/* Get/set maximum fragment. */
+#define SCTP_STATUS	14
+#define SCTP_GET_PEER_ADDR_INFO	15
+#define SCTP_DELAYED_ACK_TIME	16
+#define SCTP_DELAYED_ACK SCTP_DELAYED_ACK_TIME
+#define SCTP_DELAYED_SACK SCTP_DELAYED_ACK_TIME
+#define SCTP_CONTEXT	17
+#define SCTP_FRAGMENT_INTERLEAVE	18
+#define SCTP_PARTIAL_DELIVERY_POINT	19 /* Set/Get partial delivery point */
+#define SCTP_MAX_BURST	20		/* Set/Get max burst */
+#define SCTP_AUTH_CHUNK	21	/* Set only: add a chunk type to authenticate */
+#define SCTP_HMAC_IDENT	22
+#define SCTP_AUTH_KEY	23
+#define SCTP_AUTH_ACTIVE_KEY	24
+#define SCTP_AUTH_DELETE_KEY	25
+#define SCTP_PEER_AUTH_CHUNKS	26	/* Read only */
+#define SCTP_LOCAL_AUTH_CHUNKS	27	/* Read only */
+#define SCTP_GET_ASSOC_NUMBER	28	/* Read only */
 
-	/* Internal Socket Options. Some of the sctp library functions are 
-	 * implemented using these socket options.
-	 */
-	SCTP_SOCKOPT_BINDX_ADD = 100,/* BINDX requests for adding addresses. */
-#define SCTP_SOCKOPT_BINDX_ADD	SCTP_SOCKOPT_BINDX_ADD
-	SCTP_SOCKOPT_BINDX_REM, /* BINDX requests for removing addresses. */
-#define SCTP_SOCKOPT_BINDX_REM	SCTP_SOCKOPT_BINDX_REM
-	SCTP_SOCKOPT_PEELOFF, 	/* peel off association. */
-#define SCTP_SOCKOPT_PEELOFF	SCTP_SOCKOPT_PEELOFF
-	SCTP_GET_PEER_ADDRS_NUM_OLD, 	/* Get number of peer addresss. */
-#define SCTP_GET_PEER_ADDRS_NUM_OLD	SCTP_GET_PEER_ADDRS_NUM_OLD
-	SCTP_GET_PEER_ADDRS_OLD, 	/* Get all peer addresss. */
-#define SCTP_GET_PEER_ADDRS_OLD	SCTP_GET_PEER_ADDRS_OLD
-	SCTP_GET_LOCAL_ADDRS_NUM_OLD, 	/* Get number of local addresss. */
-#define SCTP_GET_LOCAL_ADDRS_NUM_OLD	SCTP_GET_LOCAL_ADDRS_NUM_OLD
-	SCTP_GET_LOCAL_ADDRS_OLD, 	/* Get all local addresss. */
-#define SCTP_GET_LOCAL_ADDRS_OLD	SCTP_GET_LOCAL_ADDRS_OLD
-	SCTP_SOCKOPT_CONNECTX, /* CONNECTX requests. */
-#define SCTP_SOCKOPT_CONNECTX	SCTP_SOCKOPT_CONNECTX
-	SCTP_GET_PEER_ADDRS, 	/* Get all peer addresss. */
-#define SCTP_GET_PEER_ADDRS	SCTP_GET_PEER_ADDRS
-	SCTP_GET_LOCAL_ADDRS, 	/* Get all local addresss. */
-#define SCTP_GET_LOCAL_ADDRS	SCTP_GET_LOCAL_ADDRS
-};
+/* Internal Socket Options. Some of the sctp library functions are
+ * implemented using these socket options.
+ */
+#define SCTP_SOCKOPT_BINDX_ADD	100	/* BINDX requests for adding addrs */
+#define SCTP_SOCKOPT_BINDX_REM	101	/* BINDX requests for removing addrs. */
+#define SCTP_SOCKOPT_PEELOFF	102	/* peel off association. */
+/* Options 104-106 are deprecated and removed. Do not use this space */
+#define SCTP_SOCKOPT_CONNECTX_OLD	107	/* CONNECTX old requests. */
+#define SCTP_GET_PEER_ADDRS	108		/* Get all peer address. */
+#define SCTP_GET_LOCAL_ADDRS	109		/* Get all local address. */
+#define SCTP_SOCKOPT_CONNECTX	110		/* CONNECTX requests. */
+#define SCTP_SOCKOPT_CONNECTX3	111	/* CONNECTX requests (updated) */
 
 /*
  * 5.2.1 SCTP Initiation Structure (SCTP_INIT)
@@ -184,15 +160,10 @@ enum sctp_sinfo_flags {
 	SCTP_UNORDERED = 1,  /* Send/receive message unordered. */
 	SCTP_ADDR_OVER = 2,  /* Override the primary destination. */
 	SCTP_ABORT=4,        /* Send an ABORT message to the peer. */
+	SCTP_SACK_IMMEDIATELY = 8,	/* SACK should be sent without delay */
 	SCTP_EOF=MSG_FIN,    /* Initiate graceful shutdown process. */	
 };
 
-
-typedef union {
-	__u8   			raw;
-	struct sctp_initmsg	init;
-	struct sctp_sndrcvinfo	sndrcv;
-} sctp_cmsg_data_t;
 
 /* These are cmsg_types.  */
 typedef enum sctp_cmsg_type {
@@ -370,6 +341,19 @@ struct sctp_pdapi_event {
 
 enum { SCTP_PARTIAL_DELIVERY_ABORTED=0, };
 
+struct sctp_authkey_event {
+	__u16 auth_type;
+	__u16 auth_flags;
+	__u32 auth_length;
+	__u16 auth_keynumber;
+	__u16 auth_altkeynumber;
+	__u32 auth_indication;
+	sctp_assoc_t auth_assoc_id;
+};
+
+enum { SCTP_AUTH_NEWKEY = 0, };
+
+
 /*
  * Described in Section 7.3
  *   Ancillary Data and Notification Interest Options
@@ -383,6 +367,7 @@ struct sctp_event_subscribe {
 	__u8 sctp_shutdown_event;
 	__u8 sctp_partial_delivery_event;
 	__u8 sctp_adaptation_layer_event;
+	__u8 sctp_authentication_event;
 };
 
 /*
@@ -405,6 +390,7 @@ union sctp_notification {
 	struct sctp_shutdown_event sn_shutdown_event;
 	struct sctp_adaptation_event sn_adaptation_event;
 	struct sctp_pdapi_event sn_pdapi_event;
+	struct sctp_authkey_event sn_authkey_event;
 };
 
 /* Section 5.3.1
@@ -421,6 +407,7 @@ enum sctp_sn_type {
 	SCTP_SHUTDOWN_EVENT,
 	SCTP_PARTIAL_DELIVERY_EVENT,
 	SCTP_ADAPTATION_INDICATION,
+	SCTP_AUTHENTICATION_INDICATION,
 };
 
 /* Notification error codes used to fill up the error fields in some
@@ -539,13 +526,74 @@ struct sctp_paddrparams {
 	__u32			spp_flags;
 } __attribute__((packed, aligned(4)));
 
-/* 7.1.23. Delayed Ack Timer (SCTP_DELAYED_ACK_TIME)
+/*
+ * 7.1.18.  Add a chunk that must be authenticated (SCTP_AUTH_CHUNK)
  *
- *   This options will get or set the delayed ack timer.  The time is set
- *   in milliseconds.  If the assoc_id is 0, then this sets or gets the
- *   endpoints default delayed ack timer value.  If the assoc_id field is
- *   non-zero, then the set or get effects the specified association.
+ * This set option adds a chunk type that the user is requesting to be
+ * received only in an authenticated way.  Changes to the list of chunks
+ * will only effect future associations on the socket.
  */
+struct sctp_authchunk {
+	__u8		sauth_chunk;
+};
+
+/*
+ * 7.1.19.  Get or set the list of supported HMAC Identifiers (SCTP_HMAC_IDENT)
+ *
+ * This option gets or sets the list of HMAC algorithms that the local
+ * endpoint requires the peer to use.
+*/
+struct sctp_hmacalgo {
+	__u32		shmac_num_idents;
+	__u16		shmac_idents[];
+};
+
+/*
+ * 7.1.20.  Set a shared key (SCTP_AUTH_KEY)
+ *
+ * This option will set a shared secret key which is used to build an
+ * association shared key.
+ */
+struct sctp_authkey {
+	sctp_assoc_t	sca_assoc_id;
+	__u16		sca_keynumber;
+	__u16		sca_keylength;
+	__u8		sca_key[];
+};
+
+/*
+ * 7.1.21.  Get or set the active shared key (SCTP_AUTH_ACTIVE_KEY)
+ *
+ * This option will get or set the active shared key to be used to build
+ * the association shared key.
+ */
+
+struct sctp_authkeyid {
+	sctp_assoc_t	scact_assoc_id;
+	__u16		scact_keynumber;
+};
+
+
+/*
+ * 7.1.23.  Get or set delayed ack timer (SCTP_DELAYED_SACK)
+ *
+ * This option will effect the way delayed acks are performed.  This
+ * option allows you to get or set the delayed ack time, in
+ * milliseconds.  It also allows changing the delayed ack frequency.
+ * Changing the frequency to 1 disables the delayed sack algorithm.  If
+ * the assoc_id is 0, then this sets or gets the endpoints default
+ * values.  If the assoc_id field is non-zero, then the set or get
+ * effects the specified association for the one to many model (the
+ * assoc_id field is ignored by the one to one model).  Note that if
+ * sack_delay or sack_freq are 0 when setting this option, then the
+ * current values will remain unchanged.
+ */
+struct sctp_sack_info {
+	sctp_assoc_t	sack_assoc_id;
+	uint32_t	sack_delay;
+	uint32_t	sack_freq;
+};
+
 struct sctp_assoc_value {
     sctp_assoc_t            assoc_id;
     uint32_t                assoc_value;
@@ -605,6 +653,19 @@ struct sctp_status {
 	__u16			sstat_outstrms;
 	__u32			sstat_fragmentation_point;
 	struct sctp_paddrinfo	sstat_primary;
+};
+
+/*
+ * 7.2.3.  Get the list of chunks the peer requires to be authenticated
+ *         (SCTP_PEER_AUTH_CHUNKS)
+ *
+ * This option gets a list of chunks for a specified association that
+ * the peer requires to be received authenticated only.
+ */
+struct sctp_authchunks {
+	sctp_assoc_t	gauth_assoc_id;
+	__u32		gauth_number_of_chunks;
+	uint8_t		gauth_chunks[];
 };
 
 /*

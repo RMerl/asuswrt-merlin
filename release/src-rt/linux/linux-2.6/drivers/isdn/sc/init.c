@@ -8,6 +8,8 @@
 #include <linux/init.h>
 #include <linux/interrupt.h>
 #include <linux/delay.h>
+#include <linux/sched.h>
+#include <linux/slab.h>
 #include "includes.h"
 #include "hardware.h"
 #include "card.h"
@@ -334,7 +336,8 @@ static int __init sc_init(void)
 		 */
 		sc_adapter[cinst]->interrupt = irq[b];
 		if (request_irq(sc_adapter[cinst]->interrupt, interrupt_handler,
-				IRQF_DISABLED, interface->id, NULL))
+				IRQF_DISABLED, interface->id,
+				(void *)(unsigned long) cinst))
 		{
 			kfree(sc_adapter[cinst]->channel);
 			indicate_status(cinst, ISDN_STAT_UNLOAD, 0, NULL);	/* Fix me */
@@ -404,7 +407,7 @@ static void __exit sc_exit(void)
 		/*
 		 * Release the IRQ
 		 */
-		FREE_IRQ(sc_adapter[i]->interrupt, NULL);
+		free_irq(sc_adapter[i]->interrupt, NULL);
 
 		/*
 		 * Reset for a clean start

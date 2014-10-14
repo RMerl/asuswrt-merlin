@@ -73,7 +73,7 @@ static u8 at93c_read_byte(void)
 	int i;
 	u8 data = 0;
 
-	for (i = 0; i<=7; i++) {
+	for (i = 0; i <= 7; i++) {
 		data <<= 1;
 		data |= at93c_read_databit();
 	}
@@ -94,7 +94,8 @@ static void at93c_write_bits(u32 data, int size)
 
 static void at93c_init_op(void)
 {
-	at93c_reg_write((at93c_reg_read() | at93c->cs) & ~at93c->clk & ~(1 << at93c->rdata_shift));
+	at93c_reg_write((at93c_reg_read() | at93c->cs) &
+			~at93c->clk & ~(1 << at93c->rdata_shift));
 	lasat_ndelay(50);
 }
 

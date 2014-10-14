@@ -25,6 +25,9 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#define KMSG_COMPONENT "cio"
+#define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
+
 #include <linux/bootmem.h>
 #include <linux/device.h>
 #include <linux/init.h>
@@ -45,7 +48,8 @@
 #include "ioasm.h"
 #include "chsc.h"
 
-/* parameter to enable cmf during boot, possible uses are:
+/*
+ * parameter to enable cmf during boot, possible uses are:
  *  "s390cmf" -- enable cmf and allocate 2 MB of ram so measuring can be
  *               used on any subchannel
  *  "s390cmf=<num>" -- enable cmf and allocate enough memory to measure
@@ -73,18 +77,20 @@ enum cmb_index {
  * enum cmb_format - types of supported measurement block formats
  *
  * @CMF_BASIC:      traditional channel measurement blocks supported
- * 		    by all machines that we run on
+ *		    by all machines that we run on
  * @CMF_EXTENDED:   improved format that was introduced with the z990
- * 		    machine
- * @CMF_AUTODETECT: default: use extended format when running on a z990
- *                  or later machine, otherwise fall back to basic format
- **/
+ *		    machine
+ * @CMF_AUTODETECT: default: use extended format when running on a machine
+ *		    supporting extended format, otherwise fall back to
+ *		    basic format
+ */
 enum cmb_format {
 	CMF_BASIC,
 	CMF_EXTENDED,
 	CMF_AUTODETECT = -1,
 };
-/**
+
+/*
  * format - actual format for all measurement blocks
  *
  * The format module parameter can be set to a value of 0 (zero)
@@ -105,20 +111,21 @@ module_param(format, bool, 0444);
  *		either with the help of a special pool or with kmalloc
  * @free:	free memory allocated with @alloc
  * @set:	enable or disable measurement
+ * @read:	read a measurement entry at an index
  * @readall:	read a measurement block in a common format
  * @reset:	clear the data in the associated measurement block and
  *		reset its time stamp
  * @align:	align an allocated block so that the hardware can use it
  */
 struct cmb_operations {
-	int (*alloc)  (struct ccw_device*);
-	void(*free)   (struct ccw_device*);
-	int (*set)    (struct ccw_device*, u32);
-	u64 (*read)   (struct ccw_device*, int);
-	int (*readall)(struct ccw_device*, struct cmbdata *);
-	void (*reset) (struct ccw_device*);
-	void * (*align) (void *);
-
+	int  (*alloc)  (struct ccw_device *);
+	void (*free)   (struct ccw_device *);
+	int  (*set)    (struct ccw_device *, u32);
+	u64  (*read)   (struct ccw_device *, int);
+	int  (*readall)(struct ccw_device *, struct cmbdata *);
+	void (*reset)  (struct ccw_device *);
+	void *(*align) (void *);
+/* private: */
 	struct attribute_group *attr_group;
 };
 static struct cmb_operations *cmbops;
@@ -130,9 +137,11 @@ struct cmb_data {
 	unsigned long long last_update;  /* when last_block was updated */
 };
 
-/* our user interface is designed in terms of nanoseconds,
+/*
+ * Our user interface is designed in terms of nanoseconds,
  * while the hardware measures total times in its own
- * unit.*/
+ * unit.
+ */
 static inline u64 time_to_nsec(u32 value)
 {
 	return ((u64)value) * 128000ull;
@@ -152,19 +161,20 @@ static inline u64 time_to_avg_nsec(u32 value, u32 count)
 	if (count == 0)
 		return 0;
 
-	/* value comes in units of 128 µsec */
+	/* value comes in units of 128 Âµsec */
 	ret = time_to_nsec(value);
 	do_div(ret, count);
 
 	return ret;
 }
 
-/* activate or deactivate the channel monitor. When area is NULL,
+/*
+ * Activate or deactivate the channel monitor. When area is NULL,
  * the monitor is deactivated. The channel monitor needs to
  * be active in order to measure subchannels, which also need
- * to be enabled. */
-static inline void
-cmf_activate(void *area, unsigned int onoff)
+ * to be enabled.
+ */
+static inline void cmf_activate(void *area, unsigned int onoff)
 {
 	register void * __gpr2 asm("2");
 	register long __gpr1 asm("1");
@@ -175,59 +185,22 @@ cmf_activate(void *area, unsigned int onoff)
 	asm("schm" : : "d" (__gpr2), "d" (__gpr1) );
 }
 
-static int
-set_schib(struct ccw_device *cdev, u32 mme, int mbfc, unsigned long address)
+static int set_schib(struct ccw_device *cdev, u32 mme, int mbfc,
+		     unsigned long address)
 {
-	int ret;
-	int retry;
 	struct subchannel *sch;
-	struct schib *schib;
 
 	sch = to_subchannel(cdev->dev.parent);
-	schib = &sch->schib;
-	/* msch can silently fail, so do it again if necessary */
-	for (retry = 0; retry < 3; retry++) {
-		/* prepare schib */
-		stsch(sch->schid, schib);
-		schib->pmcw.mme  = mme;
-		schib->pmcw.mbfc = mbfc;
-		/* address can be either a block address or a block index */
-		if (mbfc)
-			schib->mba = address;
-		else
-			schib->pmcw.mbi = address;
 
-		/* try to submit it */
-		switch(ret = msch_err(sch->schid, schib)) {
-			case 0:
-				break;
-			case 1:
-			case 2: /* in I/O or status pending */
-				ret = -EBUSY;
-				break;
-			case 3: /* subchannel is no longer valid */
-				ret = -ENODEV;
-				break;
-			default: /* msch caught an exception */
-				ret = -EINVAL;
-				break;
-		}
-		stsch(sch->schid, schib); /* restore the schib */
+	sch->config.mme = mme;
+	sch->config.mbfc = mbfc;
+	/* address can be either a block address or a block index */
+	if (mbfc)
+		sch->config.mba = address;
+	else
+		sch->config.mbi = address;
 
-		if (ret)
-			break;
-
-		/* check if it worked */
-		if (schib->pmcw.mme  == mme &&
-		    schib->pmcw.mbfc == mbfc &&
-		    (mbfc ? (schib->mba == address)
-			  : (schib->pmcw.mbi == address)))
-			return 0;
-
-		ret = -EINVAL;
-	}
-
-	return ret;
+	return cio_commit_config(sch);
 }
 
 struct set_schib_struct {
@@ -331,15 +304,15 @@ static int cmf_copy_block(struct ccw_device *cdev)
 
 	sch = to_subchannel(cdev->dev.parent);
 
-	if (stsch(sch->schid, &sch->schib))
+	if (cio_update_schib(sch))
 		return -ENODEV;
 
-	if (sch->schib.scsw.fctl & SCSW_FCTL_START_FUNC) {
+	if (scsw_fctl(&sch->schib.scsw) & SCSW_FCTL_START_FUNC) {
 		/* Don't copy if a start function is in progress. */
-		if ((!sch->schib.scsw.actl & SCSW_ACTL_SUSPENDED) &&
-		    (sch->schib.scsw.actl &
+		if ((!(scsw_actl(&sch->schib.scsw) & SCSW_ACTL_SUSPENDED)) &&
+		    (scsw_actl(&sch->schib.scsw) &
 		     (SCSW_ACTL_DEVACT | SCSW_ACTL_SCHACT)) &&
-		    (!sch->schib.scsw.stctl & SCSW_STCTL_SEC_STATUS))
+		    (!(scsw_stctl(&sch->schib.scsw) & SCSW_STCTL_SEC_STATUS)))
 			return -EBUSY;
 	}
 	cmb_data = cdev->private->cmb;
@@ -466,6 +439,7 @@ static void cmf_generic_reset(struct ccw_device *cdev)
  *
  * @mem:	pointer to CMBs (only in basic measurement mode)
  * @list:	contains a linked list of all subchannels
+ * @num_channels: number of channels to be measured
  * @lock:	protect concurrent access to @mem and @list
  */
 struct cmb_area {
@@ -481,28 +455,36 @@ static struct cmb_area cmb_area = {
 	.num_channels  = 1024,
 };
 
-
 /* ****** old style CMB handling ********/
 
-/** int maxchannels
- *
+/*
  * Basic channel measurement blocks are allocated in one contiguous
  * block of memory, which can not be moved as long as any channel
  * is active. Therefore, a maximum number of subchannels needs to
  * be defined somewhere. This is a module parameter, defaulting to
- * a resonable value of 1024, or 32 kb of memory.
+ * a reasonable value of 1024, or 32 kb of memory.
  * Current kernels don't allow kmalloc with more than 128kb, so the
- * maximum is 4096
+ * maximum is 4096.
  */
 
 module_param_named(maxchannels, cmb_area.num_channels, uint, 0444);
 
 /**
  * struct cmb - basic channel measurement block
+ * @ssch_rsch_count: number of ssch and rsch
+ * @sample_count: number of samples
+ * @device_connect_time: time of device connect
+ * @function_pending_time: time of function pending
+ * @device_disconnect_time: time of device disconnect
+ * @control_unit_queuing_time: time of control unit queuing
+ * @device_active_only_time: time of device active only
+ * @reserved: unused in basic measurement mode
  *
- * cmb as used by the hardware the fields are described in z/Architecture
- * Principles of Operation, chapter 17.
- * The area to be a contiguous array and may not be reallocated or freed.
+ * The measurement block as used by the hardware. The fields are described
+ * further in z/Architecture Principles of Operation, chapter 17.
+ *
+ * The cmb area made up from these blocks must be a contiguous array and may
+ * not be reallocated or freed.
  * Only one cmb area can be present in the system.
  */
 struct cmb {
@@ -516,8 +498,9 @@ struct cmb {
 	u32 reserved[2];
 };
 
-/* insert a single device into the cmb_area list
- * called with cmb_area.lock held from alloc_cmb
+/*
+ * Insert a single device into the cmb_area list.
+ * Called with cmb_area.lock held from alloc_cmb.
  */
 static int alloc_cmb_single(struct ccw_device *cdev,
 			    struct cmb_data *cmb_data)
@@ -532,9 +515,11 @@ static int alloc_cmb_single(struct ccw_device *cdev,
 		goto out;
 	}
 
-	/* find first unused cmb in cmb_area.mem.
-	 * this is a little tricky: cmb_area.list
-	 * remains sorted by ->cmb->hw_data pointers */
+	/*
+	 * Find first unused cmb in cmb_area.mem.
+	 * This is a little tricky: cmb_area.list
+	 * remains sorted by ->cmb->hw_data pointers.
+	 */
 	cmb = cmb_area.mem;
 	list_for_each_entry(node, &cmb_area.list, cmb_list) {
 		struct cmb_data *data;
@@ -558,8 +543,7 @@ out:
 	return ret;
 }
 
-static int
-alloc_cmb (struct ccw_device *cdev)
+static int alloc_cmb(struct ccw_device *cdev)
 {
 	int ret;
 	struct cmb *mem;
@@ -667,7 +651,7 @@ static int set_cmb(struct ccw_device *cdev, u32 mme)
 	return set_schib_wait(cdev, mme, 0, offset);
 }
 
-static u64 read_cmb (struct ccw_device *cdev, int index)
+static u64 read_cmb(struct ccw_device *cdev, int index)
 {
 	struct cmb *cmb;
 	u32 val;
@@ -717,7 +701,7 @@ out:
 	return ret;
 }
 
-static int readall_cmb (struct ccw_device *cdev, struct cmbdata *data)
+static int readall_cmb(struct ccw_device *cdev, struct cmbdata *data)
 {
 	struct cmb *cmb;
 	struct cmb_data *cmb_data;
@@ -790,14 +774,25 @@ static struct cmb_operations cmbops_basic = {
 	.align	    = align_cmb,
 	.attr_group = &cmf_attr_group,
 };
-
+
 /* ******** extended cmb handling ********/
 
 /**
  * struct cmbe - extended channel measurement block
+ * @ssch_rsch_count: number of ssch and rsch
+ * @sample_count: number of samples
+ * @device_connect_time: time of device connect
+ * @function_pending_time: time of function pending
+ * @device_disconnect_time: time of device disconnect
+ * @control_unit_queuing_time: time of control unit queuing
+ * @device_active_only_time: time of device active only
+ * @device_busy_time: time of device busy
+ * @initial_command_response_time: initial command response time
+ * @reserved: unused
  *
- * cmb as used by the hardware, may be in any 64 bit physical location,
- * the fields are described in z/Architecture Principles of Operation,
+ * The measurement block as used by the hardware. May be in any 64 bit physical
+ * location.
+ * The fields are described further in z/Architecture Principles of Operation,
  * third edition, chapter 17.
  */
 struct cmbe {
@@ -813,10 +808,12 @@ struct cmbe {
 	u32 reserved[7];
 };
 
-/* kmalloc only guarantees 8 byte alignment, but we need cmbe
+/*
+ * kmalloc only guarantees 8 byte alignment, but we need cmbe
  * pointers to be naturally aligned. Make sure to allocate
- * enough space for two cmbes */
-static inline struct cmbe* cmbe_align(struct cmbe *c)
+ * enough space for two cmbes.
+ */
+static inline struct cmbe *cmbe_align(struct cmbe *c)
 {
 	unsigned long addr;
 	addr = ((unsigned long)c + sizeof (struct cmbe) - sizeof(long)) &
@@ -824,7 +821,7 @@ static inline struct cmbe* cmbe_align(struct cmbe *c)
 	return (struct cmbe*)addr;
 }
 
-static int alloc_cmbe (struct ccw_device *cdev)
+static int alloc_cmbe(struct ccw_device *cdev)
 {
 	struct cmbe *cmbe;
 	struct cmb_data *cmb_data;
@@ -870,7 +867,7 @@ out_free:
 	return ret;
 }
 
-static void free_cmbe (struct ccw_device *cdev)
+static void free_cmbe(struct ccw_device *cdev)
 {
 	struct cmb_data *cmb_data;
 
@@ -909,7 +906,7 @@ static int set_cmbe(struct ccw_device *cdev, u32 mme)
 }
 
 
-static u64 read_cmbe (struct ccw_device *cdev, int index)
+static u64 read_cmbe(struct ccw_device *cdev, int index)
 {
 	struct cmbe *cmb;
 	struct cmb_data *cmb_data;
@@ -967,7 +964,7 @@ out:
 	return ret;
 }
 
-static int readall_cmbe (struct ccw_device *cdev, struct cmbdata *data)
+static int readall_cmbe(struct ccw_device *cdev, struct cmbdata *data)
 {
 	struct cmbe *cmb;
 	struct cmb_data *cmb_data;
@@ -1044,17 +1041,16 @@ static struct cmb_operations cmbops_extended = {
 	.align	    = align_cmbe,
 	.attr_group = &cmf_attr_group_ext,
 };
-
 
-static ssize_t
-cmb_show_attr(struct device *dev, char *buf, enum cmb_index idx)
+static ssize_t cmb_show_attr(struct device *dev, char *buf, enum cmb_index idx)
 {
 	return sprintf(buf, "%lld\n",
 		(unsigned long long) cmf_read(to_ccwdev(dev), idx));
 }
 
-static ssize_t
-cmb_show_avg_sample_interval(struct device *dev, struct device_attribute *attr, char *buf)
+static ssize_t cmb_show_avg_sample_interval(struct device *dev,
+					    struct device_attribute *attr,
+					    char *buf)
 {
 	struct ccw_device *cdev;
 	long interval;
@@ -1076,8 +1072,9 @@ cmb_show_avg_sample_interval(struct device *dev, struct device_attribute *attr, 
 	return sprintf(buf, "%ld\n", interval);
 }
 
-static ssize_t
-cmb_show_avg_utilization(struct device *dev, struct device_attribute *attr, char *buf)
+static ssize_t cmb_show_avg_utilization(struct device *dev,
+					struct device_attribute *attr,
+					char *buf)
 {
 	struct cmbdata data;
 	u64 utilization;
@@ -1109,14 +1106,16 @@ cmb_show_avg_utilization(struct device *dev, struct device_attribute *attr, char
 }
 
 #define cmf_attr(name) \
-static ssize_t show_ ## name (struct device * dev, struct device_attribute *attr, char * buf) \
-{ return cmb_show_attr((dev), buf, cmb_ ## name); } \
-static DEVICE_ATTR(name, 0444, show_ ## name, NULL);
+static ssize_t show_##name(struct device *dev, \
+			   struct device_attribute *attr, char *buf)	\
+{ return cmb_show_attr((dev), buf, cmb_##name); } \
+static DEVICE_ATTR(name, 0444, show_##name, NULL);
 
 #define cmf_attr_avg(name) \
-static ssize_t show_avg_ ## name (struct device * dev, struct device_attribute *attr, char * buf) \
-{ return cmb_show_attr((dev), buf, cmb_ ## name); } \
-static DEVICE_ATTR(avg_ ## name, 0444, show_avg_ ## name, NULL);
+static ssize_t show_avg_##name(struct device *dev, \
+			       struct device_attribute *attr, char *buf) \
+{ return cmb_show_attr((dev), buf, cmb_##name); } \
+static DEVICE_ATTR(avg_##name, 0444, show_avg_##name, NULL);
 
 cmf_attr(ssch_rsch_count);
 cmf_attr(sample_count);
@@ -1128,7 +1127,8 @@ cmf_attr_avg(device_active_only_time);
 cmf_attr_avg(device_busy_time);
 cmf_attr_avg(initial_command_response_time);
 
-static DEVICE_ATTR(avg_sample_interval, 0444, cmb_show_avg_sample_interval, NULL);
+static DEVICE_ATTR(avg_sample_interval, 0444, cmb_show_avg_sample_interval,
+		   NULL);
 static DEVICE_ATTR(avg_utilization, 0444, cmb_show_avg_utilization, NULL);
 
 static struct attribute *cmf_attributes[] = {
@@ -1169,28 +1169,33 @@ static struct attribute_group cmf_attr_group_ext = {
 	.attrs = cmf_attributes_ext,
 };
 
-static ssize_t cmb_enable_show(struct device *dev, struct device_attribute *attr, char *buf)
+static ssize_t cmb_enable_show(struct device *dev,
+			       struct device_attribute *attr,
+			       char *buf)
 {
 	return sprintf(buf, "%d\n", to_ccwdev(dev)->private->cmb ? 1 : 0);
 }
 
-static ssize_t cmb_enable_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t c)
+static ssize_t cmb_enable_store(struct device *dev,
+				struct device_attribute *attr, const char *buf,
+				size_t c)
 {
 	struct ccw_device *cdev;
 	int ret;
+	unsigned long val;
+
+	ret = strict_strtoul(buf, 16, &val);
+	if (ret)
+		return ret;
 
 	cdev = to_ccwdev(dev);
 
-	switch (buf[0]) {
-	case '0':
+	switch (val) {
+	case 0:
 		ret = disable_cmf(cdev);
-		if (ret)
-			printk(KERN_INFO "disable_cmf failed (%d)\n", ret);
 		break;
-	case '1':
+	case 1:
 		ret = enable_cmf(cdev);
-		if (ret && ret != -EBUSY)
-			printk(KERN_INFO "enable_cmf failed (%d)\n", ret);
 		break;
 	}
 
@@ -1199,9 +1204,21 @@ static ssize_t cmb_enable_store(struct device *dev, struct device_attribute *att
 
 DEVICE_ATTR(cmb_enable, 0644, cmb_enable_show, cmb_enable_store);
 
-/* enable_cmf/disable_cmf: module interface for cmf (de)activation */
-int
-enable_cmf(struct ccw_device *cdev)
+int ccw_set_cmf(struct ccw_device *cdev, int enable)
+{
+	return cmbops->set(cdev, enable ? 2 : 0);
+}
+
+/**
+ * enable_cmf() - switch on the channel measurement for a specific device
+ *  @cdev:	The ccw device to be enabled
+ *
+ *  Returns %0 for success or a negative error value.
+ *
+ *  Context:
+ *    non-atomic
+ */
+int enable_cmf(struct ccw_device *cdev)
 {
 	int ret;
 
@@ -1222,8 +1239,16 @@ enable_cmf(struct ccw_device *cdev)
 	return ret;
 }
 
-int
-disable_cmf(struct ccw_device *cdev)
+/**
+ * disable_cmf() - switch off the channel measurement for a specific device
+ *  @cdev:	The ccw device to be disabled
+ *
+ *  Returns %0 for success or a negative error value.
+ *
+ *  Context:
+ *    non-atomic
+ */
+int disable_cmf(struct ccw_device *cdev)
 {
 	int ret;
 
@@ -1235,14 +1260,32 @@ disable_cmf(struct ccw_device *cdev)
 	return ret;
 }
 
-u64
-cmf_read(struct ccw_device *cdev, int index)
+/**
+ * cmf_read() - read one value from the current channel measurement block
+ * @cdev:	the channel to be read
+ * @index:	the index of the value to be read
+ *
+ * Returns the value read or %0 if the value cannot be read.
+ *
+ *  Context:
+ *    any
+ */
+u64 cmf_read(struct ccw_device *cdev, int index)
 {
 	return cmbops->read(cdev, index);
 }
 
-int
-cmf_readall(struct ccw_device *cdev, struct cmbdata *data)
+/**
+ * cmf_readall() - read the current channel measurement block
+ * @cdev:	the channel to be read
+ * @data:	a pointer to a data block that will be filled
+ *
+ * Returns %0 on success, a negative error value otherwise.
+ *
+ *  Context:
+ *    any
+ */
+int cmf_readall(struct ccw_device *cdev, struct cmbdata *data)
 {
 	return cmbops->readall(cdev, data);
 }
@@ -1254,18 +1297,18 @@ int cmf_reenable(struct ccw_device *cdev)
 	return cmbops->set(cdev, 2);
 }
 
-static int __init
-init_cmf(void)
+static int __init init_cmf(void)
 {
 	char *format_string;
 	char *detect_string = "parameter";
 
-	/* We cannot really autoprobe this. If the user did not give a parameter,
-	   see if we are running on z990 or up, otherwise fall back to basic mode. */
-
+	/*
+	 * If the user did not give a parameter, see if we are running on a
+	 * machine supporting extended measurement blocks, otherwise fall back
+	 * to basic mode.
+	 */
 	if (format == CMF_AUTODETECT) {
-		if (!css_characteristics_avail ||
-		    !css_general_characteristics.ext_mb) {
+		if (!css_general_characteristics.ext_mb) {
 			format = CMF_BASIC;
 		} else {
 			format = CMF_EXTENDED;
@@ -1279,26 +1322,16 @@ init_cmf(void)
 	case CMF_BASIC:
 		format_string = "basic";
 		cmbops = &cmbops_basic;
-		if (cmb_area.num_channels > 4096 || cmb_area.num_channels < 1) {
-			printk(KERN_ERR "Basic channel measurement facility"
-					" can only use 1 to 4096 devices\n"
-			       KERN_ERR "when the cmf driver is built"
-					" as a loadable module\n");
-			return 1;
-		}
 		break;
 	case CMF_EXTENDED:
- 		format_string = "extended";
+		format_string = "extended";
 		cmbops = &cmbops_extended;
 		break;
 	default:
-		printk(KERN_ERR "Invalid format %d for channel "
-			"measurement facility\n", format);
 		return 1;
 	}
-
-	printk(KERN_INFO "Channel measurement facility using %s format (%s)\n",
-		format_string, detect_string);
+	pr_info("Channel measurement facility initialized using format "
+		"%s (mode %s)\n", format_string, detect_string);
 	return 0;
 }
 

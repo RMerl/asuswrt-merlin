@@ -21,7 +21,6 @@
 #include <linux/pci.h>
 #include <linux/isapnp.h>
 
-extern const char *CardType[];
 static const char *niccy_revision = "$Revision: 1.21.2.4 $";
 
 #define byteout(addr,val) outb(val,addr)
@@ -223,7 +222,6 @@ static int niccy_card_msg(struct IsdnCardState *cs, int mt, void *arg)
 	return 0;
 }
 
-static struct pci_dev *niccy_dev __devinitdata = NULL;
 #ifdef __ISAPNP__
 static struct pnp_card *pnp_c __devinitdata = NULL;
 #endif
@@ -257,7 +255,7 @@ int __devinit setup_niccy(struct IsdnCard *card)
 			err = pnp_activate_dev(pnp_d);
 			if (err < 0) {
 				printk(KERN_WARNING "%s: pnp_activate_dev "
-					"ret(%d)\n", __FUNCTION__, err);
+					"ret(%d)\n", __func__, err);
 				return 0;
 			}
 			card->para[1] = pnp_port_start(pnp_d, 0);
@@ -285,14 +283,14 @@ int __devinit setup_niccy(struct IsdnCard *card)
 		cs->subtyp = NICCY_PNP;
 		cs->irq = card->para[0];
 		if (!request_region(cs->hw.niccy.isac, 2, "niccy data")) {
-			printk(KERN_WARNING "HiSax: %s data port %x-%x "
-				"already in use\n", CardType[card->typ],
+			printk(KERN_WARNING "HiSax: NICCY data port %x-%x "
+				"already in use\n",
 				cs->hw.niccy.isac, cs->hw.niccy.isac + 1);
 			return 0;
 		}
 		if (!request_region(cs->hw.niccy.isac_ale, 2, "niccy addr")) {
-			printk(KERN_WARNING "HiSax: %s address port %x-%x "
-				"already in use\n", CardType[card->typ],
+			printk(KERN_WARNING "HiSax: NICCY address port %x-%x "
+				"already in use\n",
 				cs->hw.niccy.isac_ale,
 				cs->hw.niccy.isac_ale + 1);
 			release_region(cs->hw.niccy.isac, 2);
@@ -300,9 +298,11 @@ int __devinit setup_niccy(struct IsdnCard *card)
 		}
 	} else {
 #ifdef CONFIG_PCI
+		static struct pci_dev *niccy_dev __devinitdata;
+
 		u_int pci_ioaddr;
 		cs->subtyp = 0;
-		if ((niccy_dev = pci_find_device(PCI_VENDOR_ID_SATSAGEM,
+		if ((niccy_dev = hisax_find_pci_device(PCI_VENDOR_ID_SATSAGEM,
 						 PCI_DEVICE_ID_SATSAGEM_NICCY,
 						 niccy_dev))) {
 			if (pci_enable_device(niccy_dev))
@@ -338,15 +338,13 @@ int __devinit setup_niccy(struct IsdnCard *card)
 		cs->hw.niccy.hscx_ale = pci_ioaddr + HSCX_PCI_ADDR;
 		if (!request_region(cs->hw.niccy.isac, 4, "niccy")) {
 			printk(KERN_WARNING
-			       "HiSax: %s data port %x-%x already in use\n",
-			       CardType[card->typ],
+			       "HiSax: NICCY data port %x-%x already in use\n",
 			       cs->hw.niccy.isac, cs->hw.niccy.isac + 4);
 			return 0;
 		}
 		if (!request_region(cs->hw.niccy.cfg_reg, 0x40, "niccy pci")) {
 			printk(KERN_WARNING
-			       "HiSax: %s pci port %x-%x already in use\n",
-			       CardType[card->typ],
+			       "HiSax: NICCY pci port %x-%x already in use\n",
 			       cs->hw.niccy.cfg_reg,
 			       cs->hw.niccy.cfg_reg + 0x40);
 			release_region(cs->hw.niccy.isac, 4);
@@ -358,8 +356,8 @@ int __devinit setup_niccy(struct IsdnCard *card)
 		return 0;
 #endif				/* CONFIG_PCI */
 	}
-	printk(KERN_INFO "HiSax: %s %s config irq:%d data:0x%X ale:0x%X\n",
-		CardType[cs->typ], (cs->subtyp == 1) ? "PnP" : "PCI",
+	printk(KERN_INFO "HiSax: NICCY %s config irq:%d data:0x%X ale:0x%X\n",
+		(cs->subtyp == 1) ? "PnP" : "PCI",
 		cs->irq, cs->hw.niccy.isac, cs->hw.niccy.isac_ale);
 	setup_isac(cs);
 	cs->readisac = &ReadISAC;

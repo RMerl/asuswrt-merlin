@@ -30,6 +30,8 @@
  * SOFTWARE.
  */
 
+#include <linux/scatterlist.h>
+#include <linux/gfp.h>
 #include <rdma/ib_verbs.h>
 
 #include "ipath_verbs.h"
@@ -96,17 +98,18 @@ static void ipath_dma_unmap_page(struct ib_device *dev,
 	BUG_ON(!valid_dma_direction(direction));
 }
 
-static int ipath_map_sg(struct ib_device *dev, struct scatterlist *sg, int nents,
-			enum dma_data_direction direction)
+static int ipath_map_sg(struct ib_device *dev, struct scatterlist *sgl,
+			int nents, enum dma_data_direction direction)
 {
+	struct scatterlist *sg;
 	u64 addr;
 	int i;
 	int ret = nents;
 
 	BUG_ON(!valid_dma_direction(direction));
 
-	for (i = 0; i < nents; i++) {
-		addr = (u64) page_address(sg[i].page);
+	for_each_sg(sgl, sg, nents, i) {
+		addr = (u64) page_address(sg_page(sg));
 		/* TODO: handle highmem pages */
 		if (!addr) {
 			ret = 0;
@@ -125,7 +128,7 @@ static void ipath_unmap_sg(struct ib_device *dev,
 
 static u64 ipath_sg_dma_address(struct ib_device *dev, struct scatterlist *sg)
 {
-	u64 addr = (u64) page_address(sg->page);
+	u64 addr = (u64) page_address(sg_page(sg));
 
 	if (addr)
 		addr += sg->offset;

@@ -45,7 +45,13 @@ struct priv {
 
 static inline void setbit128_bbe(void *b, int bit)
 {
-	__set_bit(bit ^ 0x78, b);
+	__set_bit(bit ^ (0x80 -
+#ifdef __BIG_ENDIAN
+			 BITS_PER_LONG
+#else
+			 BITS_PER_BYTE
+#endif
+			), b);
 }
 
 static int setkey(struct crypto_tfm *parent, const u8 *key,
@@ -91,8 +97,9 @@ struct sinfo {
 
 static inline void inc(be128 *iv)
 {
-	if (!(iv->b = cpu_to_be64(be64_to_cpu(iv->b) + 1)))
-		iv->a = cpu_to_be64(be64_to_cpu(iv->a) + 1);
+	be64_add_cpu(&iv->b, 1);
+	if (!iv->b)
+		be64_add_cpu(&iv->a, 1);
 }
 
 static inline void lrw_round(struct sinfo *s, void *dst, const void *src)
@@ -241,7 +248,7 @@ static struct crypto_instance *alloc(struct rtattr **tb)
 	alg = crypto_get_attr_alg(tb, CRYPTO_ALG_TYPE_CIPHER,
 				  CRYPTO_ALG_TYPE_MASK);
 	if (IS_ERR(alg))
-		return ERR_PTR(PTR_ERR(alg));
+		return ERR_CAST(alg);
 
 	inst = crypto_alloc_instance("lrw", alg);
 	if (IS_ERR(inst))

@@ -3,7 +3,6 @@
  */
 #include <linux/kernel.h>
 
-#include <linux/slab.h>
 #include <linux/mm.h>
 #include <linux/init.h>
 #include <linux/delay.h>
@@ -2542,8 +2541,8 @@ void __init SMC669_Init ( int index )
         SMC37c669_display_device_info( );
 #endif
 	local_irq_restore(flags);
-        printk( "SMC37c669 Super I/O Controller found @ 0x%lx\n",
-		(unsigned long) SMC_base );
+        printk( "SMC37c669 Super I/O Controller found @ 0x%p\n",
+		SMC_base );
     }
     else {
 	local_irq_restore(flags);

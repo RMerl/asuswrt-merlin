@@ -42,7 +42,7 @@ int rpaphp_get_sensor_state(struct slot *slot, int *state)
 	if (rc < 0) {
 		if (rc == -EFAULT || rc == -EEXIST) {
 			dbg("%s: slot must be power up to get sensor-state\n",
-			    __FUNCTION__);
+			    __func__);
 
 			/* some slots have to be powered up 
 			 * before get-sensor will succeed.
@@ -51,34 +51,22 @@ int rpaphp_get_sensor_state(struct slot *slot, int *state)
 						  &setlevel);
 			if (rc < 0) {
 				dbg("%s: power on slot[%s] failed rc=%d.\n",
-				    __FUNCTION__, slot->name, rc);
+				    __func__, slot->name, rc);
 			} else {
 				rc = rtas_get_sensor(DR_ENTITY_SENSE,
 						     slot->index, state);
 			}
 		} else if (rc == -ENODEV)
-			info("%s: slot is unusable\n", __FUNCTION__);
+			info("%s: slot is unusable\n", __func__);
 		else
-			err("%s failed to get sensor state\n", __FUNCTION__);
+			err("%s failed to get sensor state\n", __func__);
 	}
 	return rc;
 }
 
-static void set_slot_name(struct slot *slot)
-{
-	struct pci_bus *bus = slot->bus;
-	struct pci_dev *bridge;
-
-	bridge = bus->self;
-	if (bridge)
-		strcpy(slot->name, pci_name(bridge));
-	else
-		sprintf(slot->name, "%04x:%02x:00.0", pci_domain_nr(bus),
-			bus->number);
-}
-
 /**
  * rpaphp_enable_slot - record slot state, config pci device
+ * @slot: target &slot
  *
  * Initialize values in the slot, and the hotplug_slot info
  * structures to indicate if there is a pci card plugged into
@@ -107,14 +95,13 @@ int rpaphp_enable_slot(struct slot *slot)
 
 	bus = pcibios_find_pci_bus(slot->dn);
 	if (!bus) {
-		err("%s: no pci_bus for dn %s\n", __FUNCTION__, slot->dn->full_name);
+		err("%s: no pci_bus for dn %s\n", __func__, slot->dn->full_name);
 		return -EINVAL;
 	}
 
 	info->adapter_status = EMPTY;
 	slot->bus = bus;
 	slot->pci_devs = &bus->devices;
-	set_slot_name(slot);
 
 	/* if there's an adapter in the slot, go add the pci devices */
 	if (state == PRESENT) {
@@ -124,7 +111,7 @@ int rpaphp_enable_slot(struct slot *slot)
 		/* non-empty slot has to have child */
 		if (!slot->dn->child) {
 			err("%s: slot[%s]'s device_node doesn't have child for adapter\n",
-			    __FUNCTION__, slot->name);
+			    __func__, slot->name);
 			return -EINVAL;
 		}
 
@@ -136,9 +123,9 @@ int rpaphp_enable_slot(struct slot *slot)
 			slot->state = CONFIGURED;
 		}
 
-		if (debug) {
+		if (rpaphp_debug) {
 			struct pci_dev *dev;
-			dbg("%s: pci_devs of slot[%s]\n", __FUNCTION__, slot->dn->full_name);
+			dbg("%s: pci_devs of slot[%s]\n", __func__, slot->dn->full_name);
 			list_for_each_entry (dev, &bus->devices, bus_list)
 				dbg("\t%s\n", pci_name(dev));
 		}

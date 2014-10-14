@@ -1,5 +1,7 @@
 #include <linux/module.h>
 #include <linux/interrupt.h>
+#include <linux/device.h>
+#include <linux/gfp.h>
 
 /*
  * Device resource management aware IRQ request/free implementation.
@@ -24,10 +26,12 @@ static int devm_irq_match(struct device *dev, void *res, void *data)
 }
 
 /**
- *	devm_request_irq - allocate an interrupt line for a managed device
+ *	devm_request_threaded_irq - allocate an interrupt line for a managed device
  *	@dev: device to request interrupt for
  *	@irq: Interrupt line to allocate
  *	@handler: Function to be called when the IRQ occurs
+ *	@thread_fn: function to be called in a threaded interrupt context. NULL
+ *		    for devices which handle everything in @handler
  *	@irqflags: Interrupt type flags
  *	@devname: An ascii name for the claiming device
  *	@dev_id: A cookie passed back to the handler function
@@ -38,11 +42,12 @@ static int devm_irq_match(struct device *dev, void *res, void *data)
  *	automatically freed on driver detach.
  *
  *	If an IRQ allocated with this function needs to be freed
- *	separately, dev_free_irq() must be used.
+ *	separately, devm_free_irq() must be used.
  */
-int devm_request_irq(struct device *dev, unsigned int irq,
-		     irq_handler_t handler, unsigned long irqflags,
-		     const char *devname, void *dev_id)
+int devm_request_threaded_irq(struct device *dev, unsigned int irq,
+			      irq_handler_t handler, irq_handler_t thread_fn,
+			      unsigned long irqflags, const char *devname,
+			      void *dev_id)
 {
 	struct irq_devres *dr;
 	int rc;
@@ -52,7 +57,8 @@ int devm_request_irq(struct device *dev, unsigned int irq,
 	if (!dr)
 		return -ENOMEM;
 
-	rc = request_irq(irq, handler, irqflags, devname, dev_id);
+	rc = request_threaded_irq(irq, handler, thread_fn, irqflags, devname,
+				  dev_id);
 	if (rc) {
 		devres_free(dr);
 		return rc;
@@ -64,7 +70,7 @@ int devm_request_irq(struct device *dev, unsigned int irq,
 
 	return 0;
 }
-EXPORT_SYMBOL(devm_request_irq);
+EXPORT_SYMBOL(devm_request_threaded_irq);
 
 /**
  *	devm_free_irq - free an interrupt
@@ -75,7 +81,7 @@ EXPORT_SYMBOL(devm_request_irq);
  *	Except for the extra @dev argument, this function takes the
  *	same arguments and performs the same function as free_irq().
  *	This function instead of free_irq() should be used to manually
- *	free IRQs allocated with dev_request_irq().
+ *	free IRQs allocated with devm_request_irq().
  */
 void devm_free_irq(struct device *dev, unsigned int irq, void *dev_id)
 {

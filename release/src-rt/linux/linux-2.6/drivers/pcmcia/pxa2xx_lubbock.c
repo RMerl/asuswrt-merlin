@@ -21,47 +21,18 @@
 #include <linux/init.h>
 #include <linux/delay.h>
 
-#include <asm/hardware.h>
+#include <mach/hardware.h>
 #include <asm/hardware/sa1111.h>
 #include <asm/mach-types.h>
-#include <asm/arch/pxa-regs.h>
-#include <asm/arch/lubbock.h>
+#include <mach/lubbock.h>
 
 #include "sa1111_generic.h"
-
-static int
-lubbock_pcmcia_hw_init(struct soc_pcmcia_socket *skt)
-{
-	/*
-	 * Setup default state of GPIO outputs
-	 * before we enable them as outputs.
-	 */
-	GPSR(GPIO48_nPOE) =
-		GPIO_bit(GPIO48_nPOE) |
-		GPIO_bit(GPIO49_nPWE) |
-		GPIO_bit(GPIO50_nPIOR) |
-		GPIO_bit(GPIO51_nPIOW) |
-		GPIO_bit(GPIO52_nPCE_1) |
-		GPIO_bit(GPIO53_nPCE_2);
-
-	pxa_gpio_mode(GPIO48_nPOE_MD);
-	pxa_gpio_mode(GPIO49_nPWE_MD);
-	pxa_gpio_mode(GPIO50_nPIOR_MD);
-	pxa_gpio_mode(GPIO51_nPIOW_MD);
-	pxa_gpio_mode(GPIO52_nPCE_1_MD);
-	pxa_gpio_mode(GPIO53_nPCE_2_MD);
-	pxa_gpio_mode(GPIO54_pSKTSEL_MD);
-	pxa_gpio_mode(GPIO55_nPREG_MD);
-	pxa_gpio_mode(GPIO56_nPWAIT_MD);
-	pxa_gpio_mode(GPIO57_nIOIS16_MD);
-
-	return sa1111_pcmcia_hw_init(skt);
-}
 
 static int
 lubbock_pcmcia_configure_socket(struct soc_pcmcia_socket *skt,
 				const socket_state_t *state)
 {
+	struct sa1111_pcmcia_socket *s = to_skt(skt);
 	unsigned int pa_dwr_mask, pa_dwr_set, misc_mask, misc_set;
 	int ret = 0;
 
@@ -116,7 +87,7 @@ lubbock_pcmcia_configure_socket(struct soc_pcmcia_socket *skt,
 
 		default:
 			printk(KERN_ERR "%s(): unrecognized Vcc %u\n",
-			       __FUNCTION__, state->Vcc);
+			       __func__, state->Vcc);
 			ret = -1;
 		}
 
@@ -133,7 +104,7 @@ lubbock_pcmcia_configure_socket(struct soc_pcmcia_socket *skt,
 				pa_dwr_set |= GPIO_A0;
 			else {
 				printk(KERN_ERR "%s(): unrecognized Vpp %u\n",
-				       __FUNCTION__, state->Vpp);
+				       __func__, state->Vpp);
 				ret = -1;
 				break;
 			}
@@ -157,14 +128,14 @@ lubbock_pcmcia_configure_socket(struct soc_pcmcia_socket *skt,
 
 		default:
 			printk(KERN_ERR "%s(): unrecognized Vcc %u\n",
-			       __FUNCTION__, state->Vcc);
+			       __func__, state->Vcc);
 			ret = -1;
 			break;
 		}
 
 		if (state->Vpp != state->Vcc && state->Vpp != 0) {
 			printk(KERN_ERR "%s(): CF slot cannot support Vpp %u\n",
-			       __FUNCTION__, state->Vpp);
+			       __func__, state->Vpp);
 			ret = -1;
 			break;
 		}
@@ -179,7 +150,7 @@ lubbock_pcmcia_configure_socket(struct soc_pcmcia_socket *skt,
 
 	if (ret == 0) {
 		lubbock_set_misc_wr(misc_mask, misc_set);
-		sa1111_set_io(SA1111_DEV(skt->dev), pa_dwr_mask, pa_dwr_set);
+		sa1111_set_io(s->dev, pa_dwr_mask, pa_dwr_set);
 	}
 
 #if 1
@@ -205,7 +176,7 @@ lubbock_pcmcia_configure_socket(struct soc_pcmcia_socket *skt,
 			 * Switch to 5V,  Configure socket with 5V voltage
 			 */
 			lubbock_set_misc_wr(misc_mask, 0);
-			sa1111_set_io(SA1111_DEV(skt->dev), pa_dwr_mask, 0);
+			sa1111_set_io(s->dev, pa_dwr_mask, 0);
 
 			/*
 			 * It takes about 100ms to turn off Vcc.
@@ -216,7 +187,7 @@ lubbock_pcmcia_configure_socket(struct soc_pcmcia_socket *skt,
 			 * We need to hack around the const qualifier as
 			 * well to keep this ugly workaround localized and
 			 * not force it to the rest of the code. Barf bags
-			 * avaliable in the seat pocket in front of you!
+			 * available in the seat pocket in front of you!
 			 */
 			((socket_state_t *)state)->Vcc = 50;
 			((socket_state_t *)state)->Vpp = 50;
@@ -230,19 +201,15 @@ lubbock_pcmcia_configure_socket(struct soc_pcmcia_socket *skt,
 
 static struct pcmcia_low_level lubbock_pcmcia_ops = {
 	.owner			= THIS_MODULE,
-	.hw_init		= lubbock_pcmcia_hw_init,
-	.hw_shutdown		= sa1111_pcmcia_hw_shutdown,
-	.socket_state		= sa1111_pcmcia_socket_state,
 	.configure_socket	= lubbock_pcmcia_configure_socket,
 	.socket_init		= sa1111_pcmcia_socket_init,
-	.socket_suspend		= sa1111_pcmcia_socket_suspend,
 	.first			= 0,
 	.nr			= 2,
 };
 
 #include "pxa2xx_base.h"
 
-int __init pcmcia_lubbock_init(struct sa1111_dev *sadev)
+int pcmcia_lubbock_init(struct sa1111_dev *sadev)
 {
 	int ret = -ENODEV;
 
@@ -258,8 +225,10 @@ int __init pcmcia_lubbock_init(struct sa1111_dev *sadev)
 		/* Set CF Socket 1 power to standby mode. */
 		lubbock_set_misc_wr((1 << 15) | (1 << 14), 0);
 
-		sadev->dev.platform_data = &lubbock_pcmcia_ops;
-		ret = __pxa2xx_drv_pcmcia_probe(&sadev->dev);
+		pxa2xx_drv_pcmcia_ops(&lubbock_pcmcia_ops);
+		pxa2xx_configure_sockets(&sadev->dev);
+		ret = sa1111_pcmcia_add(sadev, &lubbock_pcmcia_ops,
+				pxa2xx_drv_pcmcia_add_one);
 	}
 
 	return ret;

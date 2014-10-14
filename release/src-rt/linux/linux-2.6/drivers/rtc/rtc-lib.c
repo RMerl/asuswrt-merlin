@@ -26,14 +26,13 @@ static const unsigned short rtc_ydays[2][13] = {
 };
 
 #define LEAPS_THRU_END_OF(y) ((y)/4 - (y)/100 + (y)/400)
-#define LEAP_YEAR(year) ((!(year % 4) && (year % 100)) || !(year % 400))
 
 /*
  * The number of days in the month.
  */
 int rtc_month_days(unsigned int month, unsigned int year)
 {
-	return rtc_days_in_month[month] + (LEAP_YEAR(year) && month == 1);
+	return rtc_days_in_month[month] + (is_leap_year(year) && month == 1);
 }
 EXPORT_SYMBOL(rtc_month_days);
 
@@ -42,7 +41,7 @@ EXPORT_SYMBOL(rtc_month_days);
  */
 int rtc_year_days(unsigned int day, unsigned int month, unsigned int year)
 {
-	return rtc_ydays[LEAP_YEAR(year)][month] + day-1;
+	return rtc_ydays[is_leap_year(year)][month] + day-1;
 }
 EXPORT_SYMBOL(rtc_year_days);
 
@@ -51,10 +50,11 @@ EXPORT_SYMBOL(rtc_year_days);
  */
 void rtc_time_to_tm(unsigned long time, struct rtc_time *tm)
 {
-	register int days, month, year;
+	unsigned int month, year;
+	int days;
 
 	days = time / 86400;
-	time -= days * 86400;
+	time -= (unsigned int) days * 86400;
 
 	/* day of the week, 1970-01-01 was a Thursday */
 	tm->tm_wday = (days + 4) % 7;
@@ -65,7 +65,7 @@ void rtc_time_to_tm(unsigned long time, struct rtc_time *tm)
 		- LEAPS_THRU_END_OF(1970 - 1);
 	if (days < 0) {
 		year -= 1;
-		days += 365 + LEAP_YEAR(year);
+		days += 365 + is_leap_year(year);
 	}
 	tm->tm_year = year - 1900;
 	tm->tm_yday = days + 1;
@@ -116,5 +116,33 @@ int rtc_tm_to_time(struct rtc_time *tm, unsigned long *time)
 	return 0;
 }
 EXPORT_SYMBOL(rtc_tm_to_time);
+
+/*
+ * Convert rtc_time to ktime
+ */
+ktime_t rtc_tm_to_ktime(struct rtc_time tm)
+{
+	time_t time;
+	rtc_tm_to_time(&tm, &time);
+	return ktime_set(time, 0);
+}
+EXPORT_SYMBOL_GPL(rtc_tm_to_ktime);
+
+/*
+ * Convert ktime to rtc_time
+ */
+struct rtc_time rtc_ktime_to_tm(ktime_t kt)
+{
+	struct timespec ts;
+	struct rtc_time ret;
+
+	ts = ktime_to_timespec(kt);
+	/* Round up any ns */
+	if (ts.tv_nsec)
+		ts.tv_sec++;
+	rtc_time_to_tm(ts.tv_sec, &ret);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(rtc_ktime_to_tm);
 
 MODULE_LICENSE("GPL");

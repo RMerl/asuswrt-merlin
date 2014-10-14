@@ -464,7 +464,7 @@ static void free_all_tags(void)
  *
  * Parameters: Scsi_Cmnd *cmd
  *    The command to work on. The first scatter buffer's data are
- *    assumed to be already transfered into ptr/this_residual.
+ *    assumed to be already transferred into ptr/this_residual.
  */
 
 static void merge_contiguous_buffers(Scsi_Cmnd *cmd)
@@ -477,10 +477,9 @@ static void merge_contiguous_buffers(Scsi_Cmnd *cmd)
 
 	for (endaddr = virt_to_phys(cmd->SCp.ptr + cmd->SCp.this_residual - 1) + 1;
 	     cmd->SCp.buffers_residual &&
-	     virt_to_phys(page_address(cmd->SCp.buffer[1].page) +
-			  cmd->SCp.buffer[1].offset) == endaddr;) {
+	     virt_to_phys(sg_virt(&cmd->SCp.buffer[1])) == endaddr;) {
 		MER_PRINTK("VTOP(%p) == %08lx -> merging\n",
-			   page_address(cmd->SCp.buffer[1].page), endaddr);
+			   page_address(sg_page(&cmd->SCp.buffer[1])), endaddr);
 #if (NDEBUG & NDEBUG_MERGING)
 		++cnt;
 #endif
@@ -512,11 +511,10 @@ static inline void initialize_SCp(Scsi_Cmnd *cmd)
 	 * various queues are valid.
 	 */
 
-	if (cmd->use_sg) {
-		cmd->SCp.buffer = (struct scatterlist *)cmd->request_buffer;
-		cmd->SCp.buffers_residual = cmd->use_sg - 1;
-		cmd->SCp.ptr = (char *)page_address(cmd->SCp.buffer->page) +
-			       cmd->SCp.buffer->offset;
+	if (scsi_bufflen(cmd)) {
+		cmd->SCp.buffer = scsi_sglist(cmd);
+		cmd->SCp.buffers_residual = scsi_sg_count(cmd) - 1;
+		cmd->SCp.ptr = sg_virt(cmd->SCp.buffer);
 		cmd->SCp.this_residual = cmd->SCp.buffer->length;
 		/* ++roman: Try to merge some scatter-buffers if they are at
 		 * contiguous physical addresses.
@@ -525,8 +523,8 @@ static inline void initialize_SCp(Scsi_Cmnd *cmd)
 	} else {
 		cmd->SCp.buffer = NULL;
 		cmd->SCp.buffers_residual = 0;
-		cmd->SCp.ptr = (char *)cmd->request_buffer;
-		cmd->SCp.this_residual = cmd->request_bufflen;
+		cmd->SCp.ptr = NULL;
+		cmd->SCp.this_residual = 0;
 	}
 }
 
@@ -653,6 +651,7 @@ static inline void NCR5380_print_phase(struct Scsi_Host *instance)
  * interrupt or bottom half.
  */
 
+#include <linux/gfp.h>
 #include <linux/workqueue.h>
 #include <linux/interrupt.h>
 
@@ -846,7 +845,7 @@ static char *lprint_Scsi_Cmnd(Scsi_Cmnd *cmd, char *pos, char *buffer, int lengt
  *
  */
 
-static int NCR5380_init(struct Scsi_Host *instance, int flags)
+static int __init NCR5380_init(struct Scsi_Host *instance, int flags)
 {
 	int i;
 	SETUP_HOSTDATA(instance);
@@ -911,7 +910,7 @@ static int NCR5380_init(struct Scsi_Host *instance, int flags)
  *
  */
 
-static int NCR5380_queue_command(Scsi_Cmnd *cmd, void (*done)(Scsi_Cmnd *))
+static int NCR5380_queue_command_lck(Scsi_Cmnd *cmd, void (*done)(Scsi_Cmnd *))
 {
 	SETUP_HOSTDATA(cmd->device->host);
 	Scsi_Cmnd *tmp;
@@ -938,21 +937,21 @@ static int NCR5380_queue_command(Scsi_Cmnd *cmd, void (*done)(Scsi_Cmnd *))
 	}
 # endif
 # ifdef NCR5380_STAT_LIMIT
-	if (cmd->request_bufflen > NCR5380_STAT_LIMIT)
+	if (scsi_bufflen(cmd) > NCR5380_STAT_LIMIT)
 # endif
 		switch (cmd->cmnd[0]) {
 		case WRITE:
 		case WRITE_6:
 		case WRITE_10:
 			hostdata->time_write[cmd->device->id] -= (jiffies - hostdata->timebase);
-			hostdata->bytes_write[cmd->device->id] += cmd->request_bufflen;
+			hostdata->bytes_write[cmd->device->id] += scsi_bufflen(cmd);
 			hostdata->pendingw++;
 			break;
 		case READ:
 		case READ_6:
 		case READ_10:
 			hostdata->time_read[cmd->device->id] -= (jiffies - hostdata->timebase);
-			hostdata->bytes_read[cmd->device->id] += cmd->request_bufflen;
+			hostdata->bytes_read[cmd->device->id] += scsi_bufflen(cmd);
 			hostdata->pendingr++;
 			break;
 		}
@@ -1022,6 +1021,8 @@ static int NCR5380_queue_command(Scsi_Cmnd *cmd, void (*done)(Scsi_Cmnd *))
 		NCR5380_main(NULL);
 	return 0;
 }
+
+static DEF_SCSI_QCMD(NCR5380_queue_command)
 
 /*
  * Function : NCR5380_main (void)
@@ -1354,21 +1355,21 @@ static irqreturn_t NCR5380_intr(int irq, void *dev_id)
 static void collect_stats(struct NCR5380_hostdata* hostdata, Scsi_Cmnd *cmd)
 {
 # ifdef NCR5380_STAT_LIMIT
-	if (cmd->request_bufflen > NCR5380_STAT_LIMIT)
+	if (scsi_bufflen(cmd) > NCR5380_STAT_LIMIT)
 # endif
 		switch (cmd->cmnd[0]) {
 		case WRITE:
 		case WRITE_6:
 		case WRITE_10:
 			hostdata->time_write[cmd->device->id] += (jiffies - hostdata->timebase);
-			/*hostdata->bytes_write[cmd->device->id] += cmd->request_bufflen;*/
+			/*hostdata->bytes_write[cmd->device->id] += scsi_bufflen(cmd);*/
 			hostdata->pendingw--;
 			break;
 		case READ:
 		case READ_6:
 		case READ_10:
 			hostdata->time_read[cmd->device->id] += (jiffies - hostdata->timebase);
-			/*hostdata->bytes_read[cmd->device->id] += cmd->request_bufflen;*/
+			/*hostdata->bytes_read[cmd->device->id] += scsi_bufflen(cmd);*/
 			hostdata->pendingr--;
 			break;
 		}
@@ -1719,7 +1720,7 @@ static int NCR5380_select(struct Scsi_Host *instance, Scsi_Cmnd *cmd, int tag)
  *	bytes to transfer, **data - pointer to data pointer.
  *
  * Returns : -1 when different phase is entered without transferring
- *	maximum number of bytes, 0 if all bytes are transfered or exit
+ *	maximum number of bytes, 0 if all bytes are transferred or exit
  *	is in same phase.
  *
  *	Also, *phase, *count, *data are modified in place.
@@ -1870,7 +1871,7 @@ static int do_abort(struct Scsi_Host *host)
 	 * the target sees, so we just handshake.
 	 */
 
-	while (!(tmp = NCR5380_read(STATUS_REG)) & SR_REQ)
+	while (!((tmp = NCR5380_read(STATUS_REG)) & SR_REQ))
 		;
 
 	NCR5380_write(TARGET_COMMAND_REG, PHASE_SR_TO_TCR(tmp));
@@ -1910,7 +1911,7 @@ static int do_abort(struct Scsi_Host *host)
  *	bytes to transfer, **data - pointer to data pointer.
  *
  * Returns : -1 when different phase is entered without transferring
- *	maximum number of bytes, 0 if all bytes or transfered or exit
+ *	maximum number of bytes, 0 if all bytes or transferred or exit
  *	is in same phase.
  *
  *	Also, *phase, *count, *data are modified in place.
@@ -2041,7 +2042,7 @@ static void NCR5380_information_transfer(struct Scsi_Host *instance)
 				sink = 1;
 				do_abort(instance);
 				cmd->result = DID_ERROR << 16;
-				cmd->done(cmd);
+				cmd->scsi_done(cmd);
 				return;
 #endif
 			case PHASE_DATAIN:
@@ -2054,8 +2055,7 @@ static void NCR5380_information_transfer(struct Scsi_Host *instance)
 					++cmd->SCp.buffer;
 					--cmd->SCp.buffers_residual;
 					cmd->SCp.this_residual = cmd->SCp.buffer->length;
-					cmd->SCp.ptr = page_address(cmd->SCp.buffer->page) +
-						   cmd->SCp.buffer->offset;
+					cmd->SCp.ptr = sg_virt(cmd->SCp.buffer);
 					/* ++roman: Try to merge some scatter-buffers if
 					 * they are at contiguous physical addresses.
 					 */
@@ -2100,7 +2100,7 @@ static void NCR5380_information_transfer(struct Scsi_Host *instance)
 						sink = 1;
 						do_abort(instance);
 						cmd->result = DID_ERROR << 16;
-						cmd->done(cmd);
+						cmd->scsi_done(cmd);
 						/* XXX - need to source or sink data here, as appropriate */
 					} else {
 #ifdef REAL_DMA
@@ -2235,24 +2235,17 @@ static void NCR5380_information_transfer(struct Scsi_Host *instance)
 						cmd->result = (cmd->result & 0x00ffff) | (DID_ERROR << 16);
 
 #ifdef AUTOSENSE
+					if ((cmd->cmnd[0] == REQUEST_SENSE) &&
+						hostdata->ses.cmd_len) {
+						scsi_eh_restore_cmnd(cmd, &hostdata->ses);
+						hostdata->ses.cmd_len = 0 ;
+					}
+
 					if ((cmd->cmnd[0] != REQUEST_SENSE) &&
 					    (status_byte(cmd->SCp.Status) == CHECK_CONDITION)) {
-						ASEN_PRINTK("scsi%d: performing request sense\n", HOSTNO);
-						cmd->cmnd[0] = REQUEST_SENSE;
-						cmd->cmnd[1] &= 0xe0;
-						cmd->cmnd[2] = 0;
-						cmd->cmnd[3] = 0;
-						cmd->cmnd[4] = sizeof(cmd->sense_buffer);
-						cmd->cmnd[5] = 0;
-						cmd->cmd_len = COMMAND_SIZE(cmd->cmnd[0]);
+						scsi_eh_prep_cmnd(cmd, &hostdata->ses, NULL, 0, ~0);
 
-						cmd->use_sg = 0;
-						/* this is initialized from initialize_SCp
-						cmd->SCp.buffer = NULL;
-						cmd->SCp.buffers_residual = 0;
-						*/
-						cmd->request_buffer = (char *) cmd->sense_buffer;
-						cmd->request_bufflen = sizeof(cmd->sense_buffer);
+						ASEN_PRINTK("scsi%d: performing request sense\n", HOSTNO);
 
 						local_irq_save(flags);
 						LIST(cmd,hostdata->issue_queue);
@@ -2836,8 +2829,7 @@ int NCR5380_abort(Scsi_Cmnd *cmd)
 	 */
 
 	local_irq_restore(flags);
-	printk(KERN_INFO "scsi%d: warning : SCSI command probably completed successfully\n"
-	       KERN_INFO "        before abortion\n", HOSTNO);
+	printk(KERN_INFO "scsi%d: warning : SCSI command probably completed successfully before abortion\n", HOSTNO);
 
 	/* Maybe it is sufficient just to release the ST-DMA lock... (if
 	 * possible at all) At least, we should check if the lock could be

@@ -24,6 +24,7 @@
 #include "seq_oss_midi.h"
 #include "../seq_lock.h"
 #include <linux/init.h>
+#include <linux/slab.h>
 
 /*
  * constants
@@ -245,8 +246,13 @@ snd_seq_oss_synth_setup(struct seq_oss_devinfo *dp)
 		info->nr_voices = rec->nr_voices;
 		if (info->nr_voices > 0) {
 			info->ch = kcalloc(info->nr_voices, sizeof(struct seq_oss_chinfo), GFP_KERNEL);
-			if (!info->ch)
-				BUG();
+			if (!info->ch) {
+				snd_printk(KERN_ERR "Cannot malloc\n");
+				rec->oper.close(&info->arg);
+				module_put(rec->oper.owner);
+				snd_use_lock_free(&rec->use_lock);
+				continue;
+			}
 			reset_channels(info);
 		}
 		debug_printk(("synth %d assigned\n", i));
@@ -303,7 +309,8 @@ snd_seq_oss_synth_cleanup(struct seq_oss_devinfo *dp)
 	struct seq_oss_synth *rec;
 	struct seq_oss_synthinfo *info;
 
-	snd_assert(dp->max_synthdev <= SNDRV_SEQ_OSS_MAX_SYNTH_DEVS, return);
+	if (snd_BUG_ON(dp->max_synthdev >= SNDRV_SEQ_OSS_MAX_SYNTH_DEVS))
+		return;
 	for (i = 0; i < dp->max_synthdev; i++) {
 		info = &dp->synths[i];
 		if (! info->opened)
@@ -397,7 +404,8 @@ snd_seq_oss_synth_reset(struct seq_oss_devinfo *dp, int dev)
 	struct seq_oss_synth *rec;
 	struct seq_oss_synthinfo *info;
 
-	snd_assert(dev >= 0 && dev < dp->max_synthdev, return);
+	if (snd_BUG_ON(dev < 0 || dev >= dp->max_synthdev))
+		return;
 	info = &dp->synths[dev];
 	if (! info->opened)
 		return;
@@ -598,6 +606,9 @@ int
 snd_seq_oss_synth_make_info(struct seq_oss_devinfo *dp, int dev, struct synth_info *inf)
 {
 	struct seq_oss_synth *rec;
+
+	if (dev < 0 || dev >= dp->max_synthdev)
+		return -ENXIO;
 
 	if (dp->synths[dev].is_midi) {
 		struct midi_info minf;

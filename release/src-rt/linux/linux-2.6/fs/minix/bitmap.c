@@ -12,12 +12,13 @@
 /* bitmap.c contains the code that handles the inode and block bitmaps */
 
 #include "minix.h"
-#include <linux/smp_lock.h>
 #include <linux/buffer_head.h>
 #include <linux/bitops.h>
 #include <linux/sched.h>
 
-static int nibblemap[] = { 4,3,3,2,3,2,2,1,3,2,2,1,2,1,1,0 };
+static const int nibblemap[] = { 4,3,3,2,3,2,2,1,3,2,2,1,2,1,1,0 };
+
+static DEFINE_SPINLOCK(bitmap_lock);
 
 static unsigned long count_free(struct buffer_head *map[], unsigned numblocks, __u32 numbits)
 {
@@ -69,11 +70,11 @@ void minix_free_block(struct inode *inode, unsigned long block)
 		return;
 	}
 	bh = sbi->s_zmap[zone];
-	lock_kernel();
+	spin_lock(&bitmap_lock);
 	if (!minix_test_and_clear_bit(bit, bh->b_data))
 		printk("minix_free_block (%s:%lu): bit already cleared\n",
 		       sb->s_id, block);
-	unlock_kernel();
+	spin_unlock(&bitmap_lock);
 	mark_buffer_dirty(bh);
 	return;
 }
@@ -88,18 +89,18 @@ int minix_new_block(struct inode * inode)
 		struct buffer_head *bh = sbi->s_zmap[i];
 		int j;
 
-		lock_kernel();
+		spin_lock(&bitmap_lock);
 		j = minix_find_first_zero_bit(bh->b_data, bits_per_zone);
 		if (j < bits_per_zone) {
 			minix_set_bit(j, bh->b_data);
-			unlock_kernel();
+			spin_unlock(&bitmap_lock);
 			mark_buffer_dirty(bh);
 			j += i * bits_per_zone + sbi->s_firstdatazone-1;
 			if (j < sbi->s_firstdatazone || j >= sbi->s_nzones)
 				break;
 			return j;
 		}
-		unlock_kernel();
+		spin_unlock(&bitmap_lock);
 	}
 	return 0;
 }
@@ -199,28 +200,26 @@ void minix_free_inode(struct inode * inode)
 	ino = inode->i_ino;
 	if (ino < 1 || ino > sbi->s_ninodes) {
 		printk("minix_free_inode: inode 0 or nonexistent inode\n");
-		goto out;
+		return;
 	}
 	bit = ino & ((1<<k) - 1);
 	ino >>= k;
 	if (ino >= sbi->s_imap_blocks) {
 		printk("minix_free_inode: nonexistent imap in superblock\n");
-		goto out;
+		return;
 	}
 
 	minix_clear_inode(inode);	/* clear on-disk copy */
 
 	bh = sbi->s_imap[ino];
-	lock_kernel();
+	spin_lock(&bitmap_lock);
 	if (!minix_test_and_clear_bit(bit, bh->b_data))
 		printk("minix_free_inode: bit %lu already cleared\n", bit);
-	unlock_kernel();
+	spin_unlock(&bitmap_lock);
 	mark_buffer_dirty(bh);
- out:
-	clear_inode(inode);		/* clear in-memory copy */
 }
 
-struct inode * minix_new_inode(const struct inode * dir, int * error)
+struct inode *minix_new_inode(const struct inode *dir, int mode, int *error)
 {
 	struct super_block *sb = dir->i_sb;
 	struct minix_sb_info *sbi = minix_sb(sb);
@@ -237,7 +236,7 @@ struct inode * minix_new_inode(const struct inode * dir, int * error)
 	j = bits_per_zone;
 	bh = NULL;
 	*error = -ENOSPC;
-	lock_kernel();
+	spin_lock(&bitmap_lock);
 	for (i = 0; i < sbi->s_imap_blocks; i++) {
 		bh = sbi->s_imap[i];
 		j = minix_find_first_zero_bit(bh->b_data, bits_per_zone);
@@ -245,25 +244,24 @@ struct inode * minix_new_inode(const struct inode * dir, int * error)
 			break;
 	}
 	if (!bh || j >= bits_per_zone) {
-		unlock_kernel();
+		spin_unlock(&bitmap_lock);
 		iput(inode);
 		return NULL;
 	}
 	if (minix_test_and_set_bit(j, bh->b_data)) {	/* shouldn't happen */
-		unlock_kernel();
+		spin_unlock(&bitmap_lock);
 		printk("minix_new_inode: bit already set\n");
 		iput(inode);
 		return NULL;
 	}
-	unlock_kernel();
+	spin_unlock(&bitmap_lock);
 	mark_buffer_dirty(bh);
 	j += i * bits_per_zone;
 	if (!j || j > sbi->s_ninodes) {
 		iput(inode);
 		return NULL;
 	}
-	inode->i_uid = current->fsuid;
-	inode->i_gid = (dir->i_mode & S_ISGID) ? dir->i_gid : current->fsgid;
+	inode_init_owner(inode, dir, mode);
 	inode->i_ino = j;
 	inode->i_mtime = inode->i_atime = inode->i_ctime = CURRENT_TIME_SEC;
 	inode->i_blocks = 0;

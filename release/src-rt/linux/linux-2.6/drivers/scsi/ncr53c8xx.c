@@ -98,6 +98,7 @@
 #include <linux/delay.h>
 #include <linux/dma-mapping.h>
 #include <linux/errno.h>
+#include <linux/gfp.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>
 #include <linux/ioport.h>
@@ -529,43 +530,20 @@ static void __unmap_scsi_data(struct device *dev, struct scsi_cmnd *cmd)
 {
 	switch(cmd->__data_mapped) {
 	case 2:
-		dma_unmap_sg(dev, cmd->request_buffer, cmd->use_sg,
-				cmd->sc_data_direction);
-		break;
-	case 1:
-		dma_unmap_single(dev, cmd->__data_mapping,
-				 cmd->request_bufflen,
-				 cmd->sc_data_direction);
+		scsi_dma_unmap(cmd);
 		break;
 	}
 	cmd->__data_mapped = 0;
-}
-
-static u_long __map_scsi_single_data(struct device *dev, struct scsi_cmnd *cmd)
-{
-	dma_addr_t mapping;
-
-	if (cmd->request_bufflen == 0)
-		return 0;
-
-	mapping = dma_map_single(dev, cmd->request_buffer,
-				 cmd->request_bufflen,
-				 cmd->sc_data_direction);
-	cmd->__data_mapped = 1;
-	cmd->__data_mapping = mapping;
-
-	return mapping;
 }
 
 static int __map_scsi_sg_data(struct device *dev, struct scsi_cmnd *cmd)
 {
 	int use_sg;
 
-	if (cmd->use_sg == 0)
+	use_sg = scsi_dma_map(cmd);
+	if (!use_sg)
 		return 0;
 
-	use_sg = dma_map_sg(dev, cmd->request_buffer, cmd->use_sg,
-			cmd->sc_data_direction);
 	cmd->__data_mapped = 2;
 	cmd->__data_mapping = use_sg;
 
@@ -573,7 +551,6 @@ static int __map_scsi_sg_data(struct device *dev, struct scsi_cmnd *cmd)
 }
 
 #define unmap_scsi_data(np, cmd)	__unmap_scsi_data(np->dev, cmd)
-#define map_scsi_single_data(np, cmd)	__map_scsi_single_data(np->dev, cmd)
 #define map_scsi_sg_data(np, cmd)	__map_scsi_sg_data(np->dev, cmd)
 
 /*==========================================================
@@ -2702,7 +2679,7 @@ static	struct script script0 __initdata = {
 }/*-------------------------< RESEL_TAG >-------------------*/,{
 	/*
 	**	Read IDENTIFY + SIMPLE + TAG using a single MOVE.
-	**	Agressive optimization, is'nt it?
+	**	Aggressive optimization, is'nt it?
 	**	No need to test the SIMPLE TAG message, since the 
 	**	driver only supports conformant devices for tags. ;-)
 	*/
@@ -4194,8 +4171,8 @@ static int ncr_queue_command (struct ncb *np, struct scsi_cmnd *cmd)
 	**
 	**----------------------------------------------------
 	*/
-	if (np->settle_time && cmd->timeout_per_command >= HZ) {
-		u_long tlimit = jiffies + cmd->timeout_per_command - HZ;
+	if (np->settle_time && cmd->request->timeout >= HZ) {
+		u_long tlimit = jiffies + cmd->request->timeout - HZ;
 		if (time_after(np->settle_time, tlimit))
 			np->settle_time = tlimit;
 	}
@@ -4987,10 +4964,11 @@ void ncr_complete (struct ncb *np, struct ccb *cp)
 		**	Copy back sense data to caller's buffer.
 		*/
 		memcpy(cmd->sense_buffer, cp->sense_buf,
-		       min(sizeof(cmd->sense_buffer), sizeof(cp->sense_buf)));
+		       min_t(size_t, SCSI_SENSE_BUFFERSIZE,
+			     sizeof(cp->sense_buf)));
 
 		if (DEBUG_FLAGS & (DEBUG_RESULT|DEBUG_TINY)) {
-			u_char * p = (u_char*) & cmd->sense_buffer;
+			u_char *p = cmd->sense_buffer;
 			int i;
 			PRINT_ADDR(cmd, "sense data:");
 			for (i=0; i<14; i++) printk (" %x", *p++);
@@ -5467,7 +5445,7 @@ static void ncr_getsync(struct ncb *np, u_char sfac, u_char *fakp, u_char *scntl
 	**	input speed faster than the period.
 	*/
 	kpc = per * clk;
-	while (--div >= 0)
+	while (--div > 0)
 		if (kpc >= (div_10M[div] << 2)) break;
 
 	/*
@@ -6518,7 +6496,7 @@ static void ncr_int_ma (struct ncb *np)
 	**	we force a SIR_NEGO_PROTO interrupt (it is a hack that avoids 
 	**	bloat for such a should_not_happen situation).
 	**	In all other situation, we reset the BUS.
-	**	Are these assumptions reasonnable ? (Wait and see ...)
+	**	Are these assumptions reasonable ? (Wait and see ...)
 	*/
 unexpected_phase:
 	dsp -= 8;
@@ -7667,39 +7645,16 @@ fail:
 **	sizes to the data segment array.
 */
 
-static int ncr_scatter_no_sglist(struct ncb *np, struct ccb *cp, struct scsi_cmnd *cmd)
-{
-	struct scr_tblmove *data = &cp->phys.data[MAX_SCATTER - 1];
-	int segment;
-
-	cp->data_len = cmd->request_bufflen;
-
-	if (cmd->request_bufflen) {
-		dma_addr_t baddr = map_scsi_single_data(np, cmd);
-		if (baddr) {
-			ncr_build_sge(np, data, baddr, cmd->request_bufflen);
-			segment = 1;
-		} else {
-			segment = -2;
-		}
-	} else {
-		segment = 0;
-	}
-
-	return segment;
-}
-
 static int ncr_scatter(struct ncb *np, struct ccb *cp, struct scsi_cmnd *cmd)
 {
 	int segment	= 0;
-	int use_sg	= (int) cmd->use_sg;
+	int use_sg	= scsi_sg_count(cmd);
 
 	cp->data_len	= 0;
 
-	if (!use_sg)
-		segment = ncr_scatter_no_sglist(np, cp, cmd);
-	else if ((use_sg = map_scsi_sg_data(np, cmd)) > 0) {
-		struct scatterlist *scatter = (struct scatterlist *)cmd->request_buffer;
+	use_sg = map_scsi_sg_data(np, cmd);
+	if (use_sg > 0) {
+		struct scatterlist *sg;
 		struct scr_tblmove *data;
 
 		if (use_sg > MAX_SCATTER) {
@@ -7709,16 +7664,15 @@ static int ncr_scatter(struct ncb *np, struct ccb *cp, struct scsi_cmnd *cmd)
 
 		data = &cp->phys.data[MAX_SCATTER - use_sg];
 
-		for (segment = 0; segment < use_sg; segment++) {
-			dma_addr_t baddr = sg_dma_address(&scatter[segment]);
-			unsigned int len = sg_dma_len(&scatter[segment]);
+		scsi_for_each_sg(cmd, sg, use_sg, segment) {
+			dma_addr_t baddr = sg_dma_address(sg);
+			unsigned int len = sg_dma_len(sg);
 
 			ncr_build_sge(np, &data[segment], baddr, len);
 			cp->data_len += len;
 		}
-	} else {
+	} else
 		segment = -2;
-	}
 
 	return segment;
 }
@@ -8075,7 +8029,7 @@ static int ncr53c8xx_slave_configure(struct scsi_device *device)
 	return 0;
 }
 
-static int ncr53c8xx_queue_command (struct scsi_cmnd *cmd, void (* done)(struct scsi_cmnd *))
+static int ncr53c8xx_queue_command_lck (struct scsi_cmnd *cmd, void (*done)(struct scsi_cmnd *))
 {
      struct ncb *np = ((struct host_data *) cmd->device->host->hostdata)->ncb;
      unsigned long flags;
@@ -8113,6 +8067,8 @@ printk("ncr53c8xx : command successfully queued\n");
 
      return sts;
 }
+
+static DEF_SCSI_QCMD(ncr53c8xx_queue_command)
 
 irqreturn_t ncr53c8xx_intr(int irq, void *dev_id)
 {
@@ -8191,12 +8147,7 @@ static int ncr53c8xx_abort(struct scsi_cmnd *cmd)
 	unsigned long flags;
 	struct scsi_cmnd *done_list;
 
-#if defined SCSI_RESET_SYNCHRONOUS && defined SCSI_RESET_ASYNCHRONOUS
-	printk("ncr53c8xx_abort: pid=%lu serial_number=%ld\n",
-		cmd->pid, cmd->serial_number);
-#else
-	printk("ncr53c8xx_abort: command pid %lu\n", cmd->pid);
-#endif
+	printk("ncr53c8xx_abort: command pid %lu\n", cmd->serial_number);
 
 	NCR_LOCK_NCB(np, flags);
 
@@ -8238,7 +8189,7 @@ static void insert_into_waiting_list(struct ncb *np, struct scsi_cmnd *cmd)
 	cmd->next_wcmd = NULL;
 	if (!(wcmd = np->waiting_list)) np->waiting_list = cmd;
 	else {
-		while ((wcmd->next_wcmd) != 0)
+		while (wcmd->next_wcmd)
 			wcmd = (struct scsi_cmnd *) wcmd->next_wcmd;
 		wcmd->next_wcmd = (char *) cmd;
 	}
@@ -8274,7 +8225,7 @@ static void process_waiting_list(struct ncb *np, int sts)
 #ifdef DEBUG_WAITING_LIST
 	if (waiting_list) printk("%s: waiting_list=%lx processing sts=%d\n", ncr_name(np), (u_long) waiting_list, sts);
 #endif
-	while ((wcmd = waiting_list) != 0) {
+	while ((wcmd = waiting_list) != NULL) {
 		waiting_list = (struct scsi_cmnd *) wcmd->next_wcmd;
 		wcmd->next_wcmd = NULL;
 		if (sts == DID_OK) {
@@ -8295,7 +8246,8 @@ static void process_waiting_list(struct ncb *np, int sts)
 
 #undef next_wcmd
 
-static ssize_t show_ncr53c8xx_revision(struct class_device *dev, char *buf)
+static ssize_t show_ncr53c8xx_revision(struct device *dev,
+				       struct device_attribute *attr, char *buf)
 {
 	struct Scsi_Host *host = class_to_shost(dev);
 	struct host_data *host_data = (struct host_data *)host->hostdata;
@@ -8303,12 +8255,12 @@ static ssize_t show_ncr53c8xx_revision(struct class_device *dev, char *buf)
 	return snprintf(buf, 20, "0x%x\n", host_data->ncb->revision_id);
 }
   
-static struct class_device_attribute ncr53c8xx_revision_attr = {
+static struct device_attribute ncr53c8xx_revision_attr = {
 	.attr	= { .name = "revision", .mode = S_IRUGO, },
 	.show	= show_ncr53c8xx_revision,
 };
   
-static struct class_device_attribute *ncr53c8xx_host_attrs[] = {
+static struct device_attribute *ncr53c8xx_host_attrs[] = {
 	&ncr53c8xx_revision_attr,
 	NULL
 };
@@ -8576,18 +8528,15 @@ struct Scsi_Host * __init ncr_attach(struct scsi_host_template *tpnt,
 }
 
 
-int ncr53c8xx_release(struct Scsi_Host *host)
+void ncr53c8xx_release(struct Scsi_Host *host)
 {
-	struct host_data *host_data;
+	struct host_data *host_data = shost_priv(host);
 #ifdef DEBUG_NCR53C8XX
 	printk("ncr53c8xx: release\n");
 #endif
-	if (!host)
-		return 1;
-	host_data = (struct host_data *)host->hostdata;
-	if (host_data && host_data->ncb)
+	if (host_data->ncb)
 		ncr_detach(host_data->ncb);
-	return 1;
+	scsi_host_put(host);
 }
 
 static void ncr53c8xx_set_period(struct scsi_target *starget, int period)

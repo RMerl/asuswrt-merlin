@@ -22,7 +22,6 @@
 #include "stdio_console.h"
 #include "line.h"
 #include "chan_kern.h"
-#include "kern_util.h"
 #include "irq_user.h"
 #include "mconsole_kern.h"
 #include "init.h"
@@ -35,7 +34,7 @@
 
 static struct tty_driver *console_driver;
 
-void stdio_announce(char *dev_name, int dev)
+static void stdio_announce(char *dev_name, int dev)
 {
 	printk(KERN_INFO "Virtual console %d assigned device '%s'\n", dev,
 	       dev_name);
@@ -46,8 +45,6 @@ static struct chan_opts opts = {
 	.announce 	= stdio_announce,
 	.xterm_title	= "Virtual Console #%d",
 	.raw		= 1,
-	.tramp_stack 	= 0,
-	.in_kernel 	= 1,
 };
 
 static int con_config(char *str, char **error_out);
@@ -101,7 +98,12 @@ static int con_remove(int n, char **error_out)
 
 static int con_open(struct tty_struct *tty, struct file *filp)
 {
-	return line_open(vts, tty);
+	int err = line_open(vts, tty);
+	if (err)
+		printk(KERN_ERR "Failed to open console %d, err = %d\n",
+		       tty->index, err);
+
+	return err;
 }
 
 /* Set in an initcall, checked in an exitcall */
@@ -156,7 +158,7 @@ static struct console stdiocons = {
 	.index		= -1,
 };
 
-int stdio_init(void)
+static int stdio_init(void)
 {
 	char *new_title;
 

@@ -15,13 +15,11 @@
 #include <linux/errno.h>
 #include <linux/string.h>
 #include <linux/mm.h>
-#include <linux/slab.h>
 #include <linux/vmalloc.h>
 #include <linux/delay.h>
 #include <linux/interrupt.h>
 #include <linux/platform_device.h>
 
-#include <asm/uaccess.h>
 #include <linux/fb.h>
 #include <linux/init.h>
 
@@ -38,7 +36,49 @@ static void *videomemory;
 static u_long videomemorysize = VIDEOMEMSIZE;
 module_param(videomemorysize, ulong, 0);
 
-static struct fb_var_screeninfo vfb_default __initdata = {
+/**********************************************************************
+ *
+ * Memory management
+ *
+ **********************************************************************/
+static void *rvmalloc(unsigned long size)
+{
+	void *mem;
+	unsigned long adr;
+
+	size = PAGE_ALIGN(size);
+	mem = vmalloc_32(size);
+	if (!mem)
+		return NULL;
+
+	memset(mem, 0, size); /* Clear the ram out, no junk to the user */
+	adr = (unsigned long) mem;
+	while (size > 0) {
+		SetPageReserved(vmalloc_to_page((void *)adr));
+		adr += PAGE_SIZE;
+		size -= PAGE_SIZE;
+	}
+
+	return mem;
+}
+
+static void rvfree(void *mem, unsigned long size)
+{
+	unsigned long adr;
+
+	if (!mem)
+		return;
+
+	adr = (unsigned long) mem;
+	while ((long) size > 0) {
+		ClearPageReserved(vmalloc_to_page((void *)adr));
+		adr += PAGE_SIZE;
+		size -= PAGE_SIZE;
+	}
+	vfree(mem);
+}
+
+static struct fb_var_screeninfo vfb_default __devinitdata = {
 	.xres =		640,
 	.yres =		480,
 	.xres_virtual =	640,
@@ -60,7 +100,7 @@ static struct fb_var_screeninfo vfb_default __initdata = {
       	.vmode =	FB_VMODE_NONINTERLACED,
 };
 
-static struct fb_fix_screeninfo vfb_fix __initdata = {
+static struct fb_fix_screeninfo vfb_fix __devinitdata = {
 	.id =		"Virtual FB",
 	.type =		FB_TYPE_PACKED_PIXELS,
 	.visual =	FB_VISUAL_PSEUDOCOLOR,
@@ -277,13 +317,16 @@ static int vfb_setcolreg(u_int regno, u_int red, u_int green, u_int blue,
 	 *   {hardwarespecific} contains width of RAMDAC
 	 *   cmap[X] is programmed to (X << red.offset) | (X << green.offset) | (X << blue.offset)
 	 *   RAMDAC[X] is programmed to (red, green, blue)
-	 * 
+	 *
 	 * Pseudocolor:
-	 *    uses offset = 0 && length = RAMDAC register width.
-	 *    var->{color}.offset is 0
-	 *    var->{color}.length contains widht of DAC
+	 *    var->{color}.offset is 0 unless the palette index takes less than
+	 *                        bits_per_pixel bits and is stored in the upper
+	 *                        bits of the pixel value
+	 *    var->{color}.length is set so that 1 << length is the number of available
+	 *                        palette entries
 	 *    cmap is not used
 	 *    RAMDAC[X] is programmed to (red, green, blue)
+	 *
 	 * Truecolor:
 	 *    does not use DAC. Usually 3 are present.
 	 *    var->{color}.offset contains start of bitfield
@@ -372,23 +415,59 @@ static int vfb_pan_display(struct fb_var_screeninfo *var,
 static int vfb_mmap(struct fb_info *info,
 		    struct vm_area_struct *vma)
 {
-	return -EINVAL;
+	unsigned long start = vma->vm_start;
+	unsigned long size = vma->vm_end - vma->vm_start;
+	unsigned long offset = vma->vm_pgoff << PAGE_SHIFT;
+	unsigned long page, pos;
+
+	if (offset + size > info->fix.smem_len) {
+		return -EINVAL;
+	}
+
+	pos = (unsigned long)info->fix.smem_start + offset;
+
+	while (size > 0) {
+		page = vmalloc_to_pfn((void *)pos);
+		if (remap_pfn_range(vma, start, page, PAGE_SIZE, PAGE_SHARED)) {
+			return -EAGAIN;
+		}
+		start += PAGE_SIZE;
+		pos += PAGE_SIZE;
+		if (size > PAGE_SIZE)
+			size -= PAGE_SIZE;
+		else
+			size = 0;
+	}
+
+	vma->vm_flags |= VM_RESERVED;	/* avoid to swap out this VMA */
+	return 0;
+
 }
 
 #ifndef MODULE
+/*
+ * The virtual framebuffer driver is only enabled if explicitly
+ * requested by passing 'video=vfb:' (or any actual options).
+ */
 static int __init vfb_setup(char *options)
 {
 	char *this_opt;
 
+	vfb_enable = 0;
+
+	if (!options)
+		return 1;
+
 	vfb_enable = 1;
 
-	if (!options || !*options)
+	if (!*options)
 		return 1;
 
 	while ((this_opt = strsep(&options, ",")) != NULL) {
 		if (!*this_opt)
 			continue;
-		if (!strncmp(this_opt, "disable", 7))
+		/* Test disable for backwards compatibility */
+		if (!strcmp(this_opt, "disable"))
 			vfb_enable = 0;
 	}
 	return 1;
@@ -399,7 +478,7 @@ static int __init vfb_setup(char *options)
      *  Initialisation
      */
 
-static int __init vfb_probe(struct platform_device *dev)
+static int __devinit vfb_probe(struct platform_device *dev)
 {
 	struct fb_info *info;
 	int retval = -ENOMEM;
@@ -407,7 +486,7 @@ static int __init vfb_probe(struct platform_device *dev)
 	/*
 	 * For real video cards we use ioremap.
 	 */
-	if (!(videomemory = vmalloc(videomemorysize)))
+	if (!(videomemory = rvmalloc(videomemorysize)))
 		return retval;
 
 	/*
@@ -430,6 +509,8 @@ static int __init vfb_probe(struct platform_device *dev)
 
 	if (!retval || (retval == 4))
 		info->var = vfb_default;
+	vfb_fix.smem_start = (unsigned long) videomemory;
+	vfb_fix.smem_len = videomemorysize;
 	info->fix = vfb_fix;
 	info->pseudo_palette = info->par;
 	info->par = NULL;
@@ -453,7 +534,7 @@ err2:
 err1:
 	framebuffer_release(info);
 err:
-	vfree(videomemory);
+	rvfree(videomemory, videomemorysize);
 	return retval;
 }
 
@@ -463,7 +544,8 @@ static int vfb_remove(struct platform_device *dev)
 
 	if (info) {
 		unregister_framebuffer(info);
-		vfree(videomemory);
+		rvfree(videomemory, videomemorysize);
+		fb_dealloc_cmap(&info->cmap);
 		framebuffer_release(info);
 	}
 	return 0;

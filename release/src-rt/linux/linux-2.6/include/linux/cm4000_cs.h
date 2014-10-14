@@ -1,6 +1,8 @@
 #ifndef	_CM4000_H_
 #define	_CM4000_H_
 
+#include <linux/types.h>
+
 #define	MAX_ATR			33
 
 #define	CM4000_MAX_DEV		4
@@ -10,25 +12,25 @@
  * not to break compilation of userspace apps. -HW */
 
 typedef struct atreq {
-	int32_t atr_len;
+	__s32 atr_len;
 	unsigned char atr[64];
-	int32_t power_act;
+	__s32 power_act;
 	unsigned char bIFSD;
 	unsigned char bIFSC;
 } atreq_t;
 
 
-/* what is particularly stupid in the original driver is the arch-dependant
+/* what is particularly stupid in the original driver is the arch-dependent
  * member sizes. This leads to CONFIG_COMPAT breakage, since 32bit userspace
  * will lay out the structure members differently than the 64bit kernel.
  *
- * I've changed "ptsreq.protocol" from "unsigned long" to "u_int32_t".
+ * I've changed "ptsreq.protocol" from "unsigned long" to "__u32".
  * On 32bit this will make no difference.  With 64bit kernels, it will make
  * 32bit apps work, too.
  */
 
 typedef struct ptsreq {
-	u_int32_t protocol; /*T=0: 2^0, T=1:  2^1*/
+	__u32 protocol; /*T=0: 2^0, T=1:  2^1*/
  	unsigned char flags;
  	unsigned char pts1;
  	unsigned char pts2;

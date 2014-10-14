@@ -34,9 +34,9 @@
 #include <asm/syscalls.h>
 #include <asm/vdso.h>
 
-#define DEBUG_SIG 0
+#include "signal.h"
 
-#define _BLOCKABLE (~(sigmask(SIGKILL) | sigmask(SIGSTOP)))
+#define DEBUG_SIG 0
 
 #define GP_REGS_SIZE	min(sizeof(elf_gregset_t), sizeof(struct pt_regs))
 #define FP_REGS_SIZE	sizeof(elf_fpregset_t)
@@ -64,20 +64,18 @@ struct rt_sigframe {
 	char abigap[288];
 } __attribute__ ((aligned (16)));
 
-long sys_sigaltstack(const stack_t __user *uss, stack_t __user *uoss, unsigned long r5,
-		     unsigned long r6, unsigned long r7, unsigned long r8,
-		     struct pt_regs *regs)
-{
-	return do_sigaltstack(uss, uoss, regs->gpr[1]);
-}
-
+static const char fmt32[] = KERN_INFO \
+	"%s[%d]: bad frame in %s: %08lx nip %08lx lr %08lx\n";
+static const char fmt64[] = KERN_INFO \
+	"%s[%d]: bad frame in %s: %016lx nip %016lx lr %016lx\n";
 
 /*
  * Set up the sigcontext for the signal frame.
  */
 
 static long setup_sigcontext(struct sigcontext __user *sc, struct pt_regs *regs,
-		 int signr, sigset_t *set, unsigned long handler)
+		 int signr, sigset_t *set, unsigned long handler,
+		 int ctx_has_vsx_region)
 {
 	/* When CONFIG_ALTIVEC is set, we _always_ setup v_regs even if the
 	 * process never used altivec yet (MSR_VEC is zero in pt_regs of
@@ -90,6 +88,7 @@ static long setup_sigcontext(struct sigcontext __user *sc, struct pt_regs *regs,
 #ifdef CONFIG_ALTIVEC
 	elf_vrreg_t __user *v_regs = (elf_vrreg_t __user *)(((unsigned long)sc->vmx_reserve + 15) & ~0xful);
 #endif
+	unsigned long msr = regs->msr;
 	long err = 0;
 
 	flush_fp_to_thread(current);
@@ -105,7 +104,7 @@ static long setup_sigcontext(struct sigcontext __user *sc, struct pt_regs *regs,
 		/* set MSR_VEC in the MSR value in the frame to indicate that sc->v_reg)
 		 * contains valid data.
 		 */
-		regs->msr |= MSR_VEC;
+		msr |= MSR_VEC;
 	}
 	/* We always copy to/from vrsave, it's 0 if we don't have or don't
 	 * use altivec.
@@ -114,10 +113,29 @@ static long setup_sigcontext(struct sigcontext __user *sc, struct pt_regs *regs,
 #else /* CONFIG_ALTIVEC */
 	err |= __put_user(0, &sc->v_regs);
 #endif /* CONFIG_ALTIVEC */
+	flush_fp_to_thread(current);
+	/* copy fpr regs and fpscr */
+	err |= copy_fpr_to_user(&sc->fp_regs, current);
+#ifdef CONFIG_VSX
+	/*
+	 * Copy VSX low doubleword to local buffer for formatting,
+	 * then out to userspace.  Update v_regs to point after the
+	 * VMX data.
+	 */
+	if (current->thread.used_vsr && ctx_has_vsx_region) {
+		__giveup_vsx(current);
+		v_regs += ELF_NVRREG;
+		err |= copy_vsx_to_user(v_regs, current);
+		/* set MSR_VSX in the MSR value in the frame to
+		 * indicate that sc->vs_reg) contains valid data.
+		 */
+		msr |= MSR_VSX;
+	}
+#endif /* CONFIG_VSX */
 	err |= __put_user(&sc->gp_regs, &sc->regs);
 	WARN_ON(!FULL_REGS(regs));
 	err |= __copy_to_user(&sc->gp_regs, regs, GP_REGS_SIZE);
-	err |= __copy_to_user(&sc->fp_regs, &current->thread.fpr, FP_REGS_SIZE);
+	err |= __put_user(msr, &sc->gp_regs[PT_MSR]);
 	err |= __put_user(signr, &sc->signal);
 	err |= __put_user(handler, &sc->handler);
 	if (set != NULL)
@@ -138,29 +156,32 @@ static long restore_sigcontext(struct pt_regs *regs, sigset_t *set, int sig,
 #endif
 	unsigned long err = 0;
 	unsigned long save_r13 = 0;
-	elf_greg_t *gregs = (elf_greg_t *)regs;
 	unsigned long msr;
+#ifdef CONFIG_VSX
 	int i;
+#endif
 
 	/* If this is not a signal return, we preserve the TLS in r13 */
 	if (!sig)
 		save_r13 = regs->gpr[13];
 
-	/* copy everything before MSR */
-	err |= __copy_from_user(regs, &sc->gp_regs,
-				PT_MSR*sizeof(unsigned long));
-
+	/* copy the GPRs */
+	err |= __copy_from_user(regs->gpr, sc->gp_regs, sizeof(regs->gpr));
+	err |= __get_user(regs->nip, &sc->gp_regs[PT_NIP]);
 	/* get MSR separately, transfer the LE bit if doing signal return */
 	err |= __get_user(msr, &sc->gp_regs[PT_MSR]);
 	if (sig)
 		regs->msr = (regs->msr & ~MSR_LE) | (msr & MSR_LE);
-
+	err |= __get_user(regs->orig_gpr3, &sc->gp_regs[PT_ORIG_R3]);
+	err |= __get_user(regs->ctr, &sc->gp_regs[PT_CTR]);
+	err |= __get_user(regs->link, &sc->gp_regs[PT_LNK]);
+	err |= __get_user(regs->xer, &sc->gp_regs[PT_XER]);
+	err |= __get_user(regs->ccr, &sc->gp_regs[PT_CCR]);
 	/* skip SOFTE */
-	for (i = PT_MSR+1; i <= PT_RESULT; i++) {
-		if (i == PT_SOFTE)
-			continue;
-		err |= __get_user(gregs[i], &sc->gp_regs[i]);
-	}
+	regs->trap = 0;
+	err |= __get_user(regs->dar, &sc->gp_regs[PT_DAR]);
+	err |= __get_user(regs->dsisr, &sc->gp_regs[PT_DSISR]);
+	err |= __get_user(regs->result, &sc->gp_regs[PT_RESULT]);
 
 	if (!sig)
 		regs->gpr[13] = save_r13;
@@ -181,9 +202,7 @@ static long restore_sigcontext(struct pt_regs *regs, sigset_t *set, int sig,
 	 * This has to be done before copying stuff into current->thread.fpr/vr
 	 * for the reasons explained in the previous comment.
 	 */
-	regs->msr &= ~(MSR_FP | MSR_FE0 | MSR_FE1 | MSR_VEC);
-
-	err |= __copy_from_user(&current->thread.fpr, &sc->fp_regs, FP_REGS_SIZE);
+	regs->msr &= ~(MSR_FP | MSR_FE0 | MSR_FE1 | MSR_VEC | MSR_VSX);
 
 #ifdef CONFIG_ALTIVEC
 	err |= __get_user(v_regs, &sc->v_regs);
@@ -203,27 +222,22 @@ static long restore_sigcontext(struct pt_regs *regs, sigset_t *set, int sig,
 	else
 		current->thread.vrsave = 0;
 #endif /* CONFIG_ALTIVEC */
-
+	/* restore floating point */
+	err |= copy_fpr_from_user(current, &sc->fp_regs);
+#ifdef CONFIG_VSX
+	/*
+	 * Get additional VSX data. Update v_regs to point after the
+	 * VMX data.  Copy VSX low doubleword from userspace to local
+	 * buffer for formatting, then into the taskstruct.
+	 */
+	v_regs += ELF_NVRREG;
+	if ((msr & MSR_VSX) != 0)
+		err |= copy_vsx_from_user(current, v_regs);
+	else
+		for (i = 0; i < 32 ; i++)
+			current->thread.fpr[i][TS_VSRLOWOFFSET] = 0;
+#endif
 	return err;
-}
-
-/*
- * Allocate space for the signal frame
- */
-static inline void __user * get_sigframe(struct k_sigaction *ka, struct pt_regs *regs,
-				  size_t frame_size)
-{
-        unsigned long newsp;
-
-        /* Default to using normal stack */
-        newsp = regs->gpr[1];
-
-	if ((ka->sa.sa_flags & SA_ONSTACK) && current->sas_ss_size) {
-		if (! on_sig_stack(regs->gpr[1]))
-			newsp = (current->sas_ss_sp + current->sas_ss_size);
-	}
-
-        return (void __user *)((newsp - frame_size) & -16ul);
 }
 
 /*
@@ -253,17 +267,11 @@ static long setup_trampoline(unsigned int syscall, unsigned int __user *tramp)
 }
 
 /*
- * Restore the user process's signal mask (also used by signal32.c)
+ * Userspace code may pass a ucontext which doesn't include VSX added
+ * at the end.  We need to check for this case.
  */
-void restore_sigmask(sigset_t *set)
-{
-	sigdelsetmask(set, ~_BLOCKABLE);
-	spin_lock_irq(&current->sighand->siglock);
-	current->blocked = *set;
-	recalc_sigpending();
-	spin_unlock_irq(&current->sighand->siglock);
-}
-
+#define UCONTEXTSIZEWITHOUTVSX \
+		(sizeof(struct ucontext) - 32*sizeof(long))
 
 /*
  * Handle {get,set,swap}_context operations
@@ -274,25 +282,42 @@ int sys_swapcontext(struct ucontext __user *old_ctx,
 {
 	unsigned char tmp;
 	sigset_t set;
+	unsigned long new_msr = 0;
+	int ctx_has_vsx_region = 0;
 
-	/* Context size is for future use. Right now, we only make sure
-	 * we are passed something we understand
+	if (new_ctx &&
+	    get_user(new_msr, &new_ctx->uc_mcontext.gp_regs[PT_MSR]))
+		return -EFAULT;
+	/*
+	 * Check that the context is not smaller than the original
+	 * size (with VMX but without VSX)
 	 */
-	if (ctx_size < sizeof(struct ucontext))
+	if (ctx_size < UCONTEXTSIZEWITHOUTVSX)
 		return -EINVAL;
+	/*
+	 * If the new context state sets the MSR VSX bits but
+	 * it doesn't provide VSX state.
+	 */
+	if ((ctx_size < sizeof(struct ucontext)) &&
+	    (new_msr & MSR_VSX))
+		return -EINVAL;
+	/* Does the context have enough room to store VSX data? */
+	if (ctx_size >= sizeof(struct ucontext))
+		ctx_has_vsx_region = 1;
 
 	if (old_ctx != NULL) {
-		if (!access_ok(VERIFY_WRITE, old_ctx, sizeof(*old_ctx))
-		    || setup_sigcontext(&old_ctx->uc_mcontext, regs, 0, NULL, 0)
+		if (!access_ok(VERIFY_WRITE, old_ctx, ctx_size)
+		    || setup_sigcontext(&old_ctx->uc_mcontext, regs, 0, NULL, 0,
+					ctx_has_vsx_region)
 		    || __copy_to_user(&old_ctx->uc_sigmask,
 				      &current->blocked, sizeof(sigset_t)))
 			return -EFAULT;
 	}
 	if (new_ctx == NULL)
 		return 0;
-	if (!access_ok(VERIFY_READ, new_ctx, sizeof(*new_ctx))
+	if (!access_ok(VERIFY_READ, new_ctx, ctx_size)
 	    || __get_user(tmp, (u8 __user *) new_ctx)
-	    || __get_user(tmp, (u8 __user *) (new_ctx + 1) - 1))
+	    || __get_user(tmp, (u8 __user *) new_ctx + ctx_size - 1))
 		return -EFAULT;
 
 	/*
@@ -355,11 +380,16 @@ badframe:
 	printk("badframe in sys_rt_sigreturn, regs=%p uc=%p &uc->uc_mcontext=%p\n",
 	       regs, uc, &uc->uc_mcontext);
 #endif
+	if (show_unhandled_signals && printk_ratelimit())
+		printk(regs->msr & MSR_SF ? fmt64 : fmt32,
+			current->comm, current->pid, "rt_sigreturn",
+			(long)uc, regs->nip, regs->link);
+
 	force_sig(SIGSEGV, current);
 	return 0;
 }
 
-static int setup_rt_frame(int signr, struct k_sigaction *ka, siginfo_t *info,
+int handle_rt_signal64(int signr, struct k_sigaction *ka, siginfo_t *info,
 		sigset_t *set, struct pt_regs *regs)
 {
 	/* Handler is *really* a pointer to the function descriptor for
@@ -372,9 +402,8 @@ static int setup_rt_frame(int signr, struct k_sigaction *ka, siginfo_t *info,
 	unsigned long newsp = 0;
 	long err = 0;
 
-	frame = get_sigframe(ka, regs, sizeof(*frame));
-
-	if (!access_ok(VERIFY_WRITE, frame, sizeof(*frame)))
+	frame = get_sigframe(ka, regs, sizeof(*frame), 0);
+	if (unlikely(frame == NULL))
 		goto badframe;
 
 	err |= __put_user(&frame->info, &frame->pinfo);
@@ -391,7 +420,7 @@ static int setup_rt_frame(int signr, struct k_sigaction *ka, siginfo_t *info,
 			  &frame->uc.uc_stack.ss_flags);
 	err |= __put_user(current->sas_ss_size, &frame->uc.uc_stack.ss_size);
 	err |= setup_sigcontext(&frame->uc.uc_mcontext, regs, signr, NULL,
-				(unsigned long)ka->sa.sa_handler);
+				(unsigned long)ka->sa.sa_handler, 1);
 	err |= __copy_to_user(&frame->uc.uc_sigmask, set, sizeof(*set));
 	if (err)
 		goto badframe;
@@ -411,7 +440,7 @@ static int setup_rt_frame(int signr, struct k_sigaction *ka, siginfo_t *info,
 	funct_desc_ptr = (func_descr_t __user *) ka->sa.sa_handler;
 
 	/* Allocate a dummy caller frame for the signal handler. */
-	newsp = (unsigned long)frame - __SIGNAL_FRAMESIZE;
+	newsp = ((unsigned long)frame) - __SIGNAL_FRAMESIZE;
 	err |= put_user(regs->gpr[1], (unsigned long __user *)newsp);
 
 	/* Set up "regs" so we "return" to the signal handler. */
@@ -439,137 +468,11 @@ badframe:
 	printk("badframe in setup_rt_frame, regs=%p frame=%p newsp=%lx\n",
 	       regs, frame, newsp);
 #endif
+	if (show_unhandled_signals && printk_ratelimit())
+		printk(regs->msr & MSR_SF ? fmt64 : fmt32,
+			current->comm, current->pid, "setup_rt_frame",
+			(long)frame, regs->nip, regs->link);
+
 	force_sigsegv(signr, current);
 	return 0;
 }
-
-
-/*
- * OK, we're invoking a handler
- */
-static int handle_signal(unsigned long sig, struct k_sigaction *ka,
-			 siginfo_t *info, sigset_t *oldset, struct pt_regs *regs)
-{
-	int ret;
-
-	/* Set up Signal Frame */
-	ret = setup_rt_frame(sig, ka, info, oldset, regs);
-
-	if (ret) {
-		spin_lock_irq(&current->sighand->siglock);
-		sigorsets(&current->blocked, &current->blocked, &ka->sa.sa_mask);
-		if (!(ka->sa.sa_flags & SA_NODEFER))
-			sigaddset(&current->blocked,sig);
-		recalc_sigpending();
-		spin_unlock_irq(&current->sighand->siglock);
-	}
-
-	return ret;
-}
-
-static inline void syscall_restart(struct pt_regs *regs, struct k_sigaction *ka)
-{
-	switch ((int)regs->result) {
-	case -ERESTART_RESTARTBLOCK:
-	case -ERESTARTNOHAND:
-		/* ERESTARTNOHAND means that the syscall should only be
-		 * restarted if there was no handler for the signal, and since
-		 * we only get here if there is a handler, we dont restart.
-		 */
-		regs->result = -EINTR;
-		regs->gpr[3] = EINTR;
-		regs->ccr |= 0x10000000;
-		break;
-	case -ERESTARTSYS:
-		/* ERESTARTSYS means to restart the syscall if there is no
-		 * handler or the handler was registered with SA_RESTART
-		 */
-		if (!(ka->sa.sa_flags & SA_RESTART)) {
-			regs->result = -EINTR;
-			regs->gpr[3] = EINTR;
-			regs->ccr |= 0x10000000;
-			break;
-		}
-		/* fallthrough */
-	case -ERESTARTNOINTR:
-		/* ERESTARTNOINTR means that the syscall should be
-		 * called again after the signal handler returns.
-		 */
-		regs->gpr[3] = regs->orig_gpr3;
-		regs->nip -= 4;
-		regs->result = 0;
-		break;
-	}
-}
-
-/*
- * Note that 'init' is a special process: it doesn't get signals it doesn't
- * want to handle. Thus you cannot kill init even with a SIGKILL even by
- * mistake.
- */
-int do_signal(sigset_t *oldset, struct pt_regs *regs)
-{
-	siginfo_t info;
-	int signr;
-	struct k_sigaction ka;
-
-	/*
-	 * If the current thread is 32 bit - invoke the
-	 * 32 bit signal handling code
-	 */
-	if (test_thread_flag(TIF_32BIT))
-		return do_signal32(oldset, regs);
-
-	if (test_thread_flag(TIF_RESTORE_SIGMASK))
-		oldset = &current->saved_sigmask;
-	else if (!oldset)
-		oldset = &current->blocked;
-
-	signr = get_signal_to_deliver(&info, &ka, regs, NULL);
-	if (signr > 0) {
-		int ret;
-
-		/* Whee!  Actually deliver the signal.  */
-		if (TRAP(regs) == 0x0C00)
-			syscall_restart(regs, &ka);
-
-		/*
-		 * Reenable the DABR before delivering the signal to
-		 * user space. The DABR will have been cleared if it
-		 * triggered inside the kernel.
-		 */
-		if (current->thread.dabr)
-			set_dabr(current->thread.dabr);
-
-		ret = handle_signal(signr, &ka, &info, oldset, regs);
-
-		/* If a signal was successfully delivered, the saved sigmask is in
-		   its frame, and we can clear the TIF_RESTORE_SIGMASK flag */
-		if (ret && test_thread_flag(TIF_RESTORE_SIGMASK))
-			clear_thread_flag(TIF_RESTORE_SIGMASK);
-
-		return ret;
-	}
-
-	if (TRAP(regs) == 0x0C00) {	/* System Call! */
-		if ((int)regs->result == -ERESTARTNOHAND ||
-		    (int)regs->result == -ERESTARTSYS ||
-		    (int)regs->result == -ERESTARTNOINTR) {
-			regs->gpr[3] = regs->orig_gpr3;
-			regs->nip -= 4; /* Back up & retry system call */
-			regs->result = 0;
-		} else if ((int)regs->result == -ERESTART_RESTARTBLOCK) {
-			regs->gpr[0] = __NR_restart_syscall;
-			regs->nip -= 4;
-			regs->result = 0;
-		}
-	}
-	/* No signal to deliver -- put the saved sigmask back */
-	if (test_thread_flag(TIF_RESTORE_SIGMASK)) {
-		clear_thread_flag(TIF_RESTORE_SIGMASK);
-		sigprocmask(SIG_SETMASK, &current->saved_sigmask, NULL);
-	}
-
-	return 0;
-}
-EXPORT_SYMBOL(do_signal);

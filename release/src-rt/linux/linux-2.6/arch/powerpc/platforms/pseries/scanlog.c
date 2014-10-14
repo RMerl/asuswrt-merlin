@@ -13,7 +13,7 @@
  * of this data using this driver.  A dump exists if the device-tree
  * /chosen/ibm,scan-log-data property exists.
  *
- * This driver exports /proc/ppc64/scan-log-dump which can be read.
+ * This driver exports /proc/powerpc/scan-log-dump which can be read.
  * The driver supports only sequential reads.
  *
  * The driver looks at a write to the driver for the single word "reset".
@@ -26,6 +26,7 @@
 #include <linux/proc_fs.h>
 #include <linux/init.h>
 #include <linux/delay.h>
+#include <linux/slab.h>
 #include <asm/uaccess.h>
 #include <asm/rtas.h>
 #include <asm/prom.h>
@@ -38,9 +39,7 @@
 #define SCANLOG_HWERROR -1
 #define SCANLOG_CONTINUE 1
 
-#define DEBUG(A...) do { if (scanlog_debug) printk(KERN_ERR "scanlog: " A); } while (0)
 
-static int scanlog_debug;
 static unsigned int ibm_scan_log_dump;			/* RTAS token */
 static struct proc_dir_entry *proc_ppc64_scan_log_dump;	/* The proc file */
 
@@ -56,11 +55,6 @@ static ssize_t scanlog_read(struct file *file, char __user *buf,
 
         dp = PDE(inode);
  	data = (unsigned int *)dp->data;
-
-	if (!data) {
-		printk(KERN_ERR "scanlog: read failed no data\n");
-		return -EIO;
-	}
 
 	if (count > RTAS_DATA_BUF_SIZE)
 		count = RTAS_DATA_BUF_SIZE;
@@ -86,14 +80,14 @@ static ssize_t scanlog_read(struct file *file, char __user *buf,
 		memcpy(data, rtas_data_buf, RTAS_DATA_BUF_SIZE);
 		spin_unlock(&rtas_data_buf_lock);
 
-		DEBUG("status=%d, data[0]=%x, data[1]=%x, data[2]=%x\n",
-		      status, data[0], data[1], data[2]);
+		pr_debug("scanlog: status=%d, data[0]=%x, data[1]=%x, " \
+			 "data[2]=%x\n", status, data[0], data[1], data[2]);
 		switch (status) {
 		    case SCANLOG_COMPLETE:
-			DEBUG("hit eof\n");
+			pr_debug("scanlog: hit eof\n");
 			return 0;
 		    case SCANLOG_HWERROR:
-			DEBUG("hardware error reading scan log data\n");
+			pr_debug("scanlog: hardware error reading data\n");
 			return -EIO;
 		    case SCANLOG_CONTINUE:
 			/* We may or may not have data yet */
@@ -110,7 +104,8 @@ static ssize_t scanlog_read(struct file *file, char __user *buf,
 			/* Assume extended busy */
 			wait_time = rtas_busy_delay_time(status);
 			if (!wait_time) {
-				printk(KERN_ERR "scanlog: unknown error from rtas: %d\n", status);
+				printk(KERN_ERR "scanlog: unknown error " \
+				       "from rtas: %d\n", status);
 				return -EIO;
 			}
 		}
@@ -134,15 +129,9 @@ static ssize_t scanlog_write(struct file * file, const char __user * buf,
 
 	if (buf) {
 		if (strncmp(stkbuf, "reset", 5) == 0) {
-			DEBUG("reset scanlog\n");
+			pr_debug("scanlog: reset scanlog\n");
 			status = rtas_call(ibm_scan_log_dump, 2, 1, NULL, 0, 0);
-			DEBUG("rtas returns %d\n", status);
-		} else if (strncmp(stkbuf, "debugon", 7) == 0) {
-			printk(KERN_ERR "scanlog: debug on\n");
-			scanlog_debug = 1;
-		} else if (strncmp(stkbuf, "debugoff", 8) == 0) {
-			printk(KERN_ERR "scanlog: debug off\n");
-			scanlog_debug = 0;
+			pr_debug("scanlog: rtas returns %d\n", status);
 		}
 	}
 	return count;
@@ -152,11 +141,6 @@ static int scanlog_open(struct inode * inode, struct file * file)
 {
 	struct proc_dir_entry *dp = PDE(inode);
 	unsigned int *data = (unsigned int *)dp->data;
-
-	if (!data) {
-		printk(KERN_ERR "scanlog: open failed no data\n");
-		return -EIO;
-	}
 
 	if (data[0] != 0) {
 		/* This imperfect test stops a second copy of the
@@ -175,10 +159,6 @@ static int scanlog_release(struct inode * inode, struct file * file)
 	struct proc_dir_entry *dp = PDE(inode);
 	unsigned int *data = (unsigned int *)dp->data;
 
-	if (!data) {
-		printk(KERN_ERR "scanlog: release failed no data\n");
-		return -EIO;
-	}
 	data[0] = 0;
 
 	return 0;
@@ -190,36 +170,35 @@ const struct file_operations scanlog_fops = {
 	.write		= scanlog_write,
 	.open		= scanlog_open,
 	.release	= scanlog_release,
+	.llseek		= noop_llseek,
 };
 
 static int __init scanlog_init(void)
 {
 	struct proc_dir_entry *ent;
+	void *data;
+	int err = -ENOMEM;
 
 	ibm_scan_log_dump = rtas_token("ibm,scan-log-dump");
-	if (ibm_scan_log_dump == RTAS_UNKNOWN_SERVICE) {
-		printk(KERN_ERR "scan-log-dump not implemented on this system\n");
-		return -EIO;
-	}
+	if (ibm_scan_log_dump == RTAS_UNKNOWN_SERVICE)
+		return -ENODEV;
 
-        ent = create_proc_entry("ppc64/rtas/scan-log-dump",  S_IRUSR, NULL);
-	if (ent) {
-		ent->proc_fops = &scanlog_fops;
-		/* Ideally we could allocate a buffer < 4G */
-		ent->data = kmalloc(RTAS_DATA_BUF_SIZE, GFP_KERNEL);
-		if (!ent->data) {
-			printk(KERN_ERR "Failed to allocate a buffer\n");
-			remove_proc_entry("scan-log-dump", ent->parent);
-			return -ENOMEM;
-		}
-		((unsigned int *)ent->data)[0] = 0;
-	} else {
-		printk(KERN_ERR "Failed to create ppc64/scan-log-dump proc entry\n");
-		return -EIO;
-	}
+	/* Ideally we could allocate a buffer < 4G */
+	data = kzalloc(RTAS_DATA_BUF_SIZE, GFP_KERNEL);
+	if (!data)
+		goto err;
+
+	ent = proc_create_data("powerpc/rtas/scan-log-dump", S_IRUSR, NULL,
+			       &scanlog_fops, data);
+	if (!ent)
+		goto err;
+
 	proc_ppc64_scan_log_dump = ent;
 
 	return 0;
+err:
+	kfree(data);
+	return err;
 }
 
 static void __exit scanlog_cleanup(void)

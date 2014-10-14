@@ -90,23 +90,6 @@
 #define PCI_CHIP_NM2360 0x0006
 #define PCI_CHIP_NM2380 0x0016
 
-
-struct xtimings {
-	unsigned int pixclock;
-	unsigned int HDisplay;
-	unsigned int HSyncStart;
-	unsigned int HSyncEnd;
-	unsigned int HTotal;
-	unsigned int VDisplay;
-	unsigned int VSyncStart;
-	unsigned int VSyncEnd;
-	unsigned int VTotal;
-	unsigned int sync;
-	int dblscan;
-	int interlaced;
-};
-
-
 /* --------------------------------------------------------------------- */
 
 typedef volatile struct {
@@ -140,14 +123,13 @@ typedef volatile struct {
 
 struct neofb_par {
 	struct vgastate state;
-	struct mutex open_lock;
 	unsigned int ref_count;
 
 	unsigned char MiscOutReg;	/* Misc */
 	unsigned char CRTC[25];		/* Crtc Controller */
 	unsigned char Sequencer[5];	/* Video Sequencer */
 	unsigned char Graphics[9];	/* Video Graphics */
-	unsigned char Attribute[21];	/* Video Atribute */
+	unsigned char Attribute[21];	/* Video Attribute */
 
 	unsigned char GeneralLockReg;
 	unsigned char ExtCRTDispAddr;

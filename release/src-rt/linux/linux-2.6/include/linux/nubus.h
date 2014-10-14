@@ -12,6 +12,7 @@
 #ifndef LINUX_NUBUS_H
 #define LINUX_NUBUS_H
 
+#include <linux/types.h>
 #ifdef __KERNEL__
 #include <asm/nubus.h>
 #endif
@@ -132,10 +133,12 @@ enum nubus_drhw {
 	NUBUS_DRHW_RDIUS_DCGX     = 0x027C, /* Radius DirectColor/GX */
 	NUBUS_DRHW_RDIUS_PC8      = 0x0291, /* Radius PrecisionColor 8 */
 	NUBUS_DRHW_LAPIS_PCS8     = 0x0292, /* Lapis ProColorServer 8 */
-	NUBUS_DRHW_RASTER_24LXI   = 0x02A0, /* RasterOps 8/24 XLi */
+	NUBUS_DRHW_RASTER_24XLI   = 0x02A0, /* RasterOps 8/24 XLi */
 	NUBUS_DRHW_RASTER_PBPGT   = 0x02A5, /* RasterOps PaintBoard Prism GT */
 	NUBUS_DRHW_EMACH_FSX      = 0x02AE, /* E-Machines Futura SX */
+	NUBUS_DRHW_RASTER_24XLTV  = 0x02B7, /* RasterOps 24XLTV */
 	NUBUS_DRHW_SMAC_THUND24   = 0x02CB, /* SuperMac Thunder/24 */
+	NUBUS_DRHW_SMAC_THUNDLGHT = 0x03D9, /* SuperMac ThunderLight */
 	NUBUS_DRHW_RDIUS_PC24XP   = 0x0406, /* Radius PrecisionColor 24Xp */
 	NUBUS_DRHW_RDIUS_PC24X    = 0x040A, /* Radius PrecisionColor 24X */
 	NUBUS_DRHW_RDIUS_PC8XJ    = 0x040B, /* Radius PrecisionColor 8XJ */
@@ -234,6 +237,7 @@ struct nubus_dirent
 	int mask;
 };
 
+#ifdef __KERNEL__
 struct nubus_board {
 	struct nubus_board* next;
 	struct nubus_dev* first_dev;
@@ -348,6 +352,7 @@ void nubus_get_rsrc_mem(void* dest,
 void nubus_get_rsrc_str(void* dest,
 			const struct nubus_dirent *dirent,
 			int maxlen);
+#endif /* __KERNEL__ */
 
 /* We'd like to get rid of this eventually.  Only daynaport.c uses it now. */
 static inline void *nubus_slot_addr(int slot)

@@ -26,13 +26,13 @@
 
 #include <linux/linkage.h>
 #include <asm/assembler.h>
-#include <asm/hardware.h>
-#include <asm/arch/map.h>
+#include <mach/hardware.h>
+#include <mach/map.h>
 
-#include <asm/arch/regs-gpio.h>
-#include <asm/arch/regs-clock.h>
-#include <asm/arch/regs-mem.h>
-#include <asm/arch/regs-serial.h>
+#include <mach/regs-gpio.h>
+#include <mach/regs-clock.h>
+#include <mach/regs-mem.h>
+#include <plat/regs-serial.h>
 
 /* CONFIG_DEBUG_RESUME is dangerous if your bootloader does not
  * reset the UART configuration, only enable if you really need this!
@@ -41,71 +41,44 @@
 
 	.text
 
-	/* s3c2410_cpu_save
-	 *
-	 * save enough of the CPU state to allow us to re-start
-	 * pm.c code. as we store items like the sp/lr, we will
-	 * end up returning from this function when the cpu resumes
-	 * so the return value is set to mark this.
-	 *
-	 * This arangement means we avoid having to flush the cache
-	 * from this code.
+	/* s3c_cpu_save
 	 *
 	 * entry:
-	 *	r0 = pointer to save block
-	 *
-	 * exit:
-	 *	r0 = 0 => we stored everything
-	 *	     1 => resumed from sleep
+	 *	r1 = v:p offset
 	*/
 
-ENTRY(s3c2410_cpu_save)
+ENTRY(s3c_cpu_save)
 	stmfd	sp!, { r4 - r12, lr }
+	ldr	r3, =resume_with_mmu
+	bl	cpu_suspend
 
-	@@ store co-processor registers
-
-	mrc	p15, 0, r4, c13, c0, 0	@ PID
-	mrc	p15, 0, r5, c3, c0, 0	@ Domain ID
-	mrc	p15, 0, r6, c2, c0, 0	@ translation table base address
-	mrc	p15, 0, r7, c1, c0, 0	@ control register
-
-	stmia	r0, { r4 - r13 }
-
-	mov	r0, #0
-	ldmfd	sp, { r4 - r12, pc }
-
+	@@ jump to final code to send system to sleep
+	ldr	r0, =pm_cpu_sleep
+	@@ldr	pc, [ r0 ]
+	ldr	r0, [ r0 ]
+	mov	pc, r0
+	
 	@@ return to the caller, after having the MMU
 	@@ turned on, this restores the last bits from the
 	@@ stack
 resume_with_mmu:
-	mov	r0, #1
 	ldmfd	sp!, { r4 - r12, pc }
 
 	.ltorg
 
-	@@ the next bits sit in the .data segment, even though they
-	@@ happen to be code... the s3c2410_sleep_save_phys needs to be
-	@@ accessed by the resume code before it can restore the MMU.
-	@@ This means that the variable has to be close enough for the
-	@@ code to read it... since the .text segment needs to be RO,
-	@@ the data segment can be the only place to put this code.
-
-	.data
-
-	.global	s3c2410_sleep_save_phys
-s3c2410_sleep_save_phys:
-	.word	0
-
-	/* s3c2410_cpu_resume
-	 *
-	 * resume code entry for bootloader to call
-	 *
-	 * we must put this code here in the data segment as we have no
-	 * other way of restoring the stack pointer after sleep, and we
-	 * must not write to the code segment (code is read-only)
+	/* sleep magic, to allow the bootloader to check for an valid
+	 * image to resume to. Must be the first word before the
+	 * s3c_cpu_resume entry.
 	*/
 
-ENTRY(s3c2410_cpu_resume)
+	.word	0x2bedf00d
+
+	/* s3c_cpu_resume
+	 *
+	 * resume code entry for bootloader to call
+	*/
+
+ENTRY(s3c_cpu_resume)
 	mov	r0, #PSR_I_BIT | PSR_F_BIT | SVC_MODE
 	msr	cpsr_c, r0
 
@@ -133,25 +106,4 @@ ENTRY(s3c2410_cpu_resume)
 	beq	1001b
 #endif /* CONFIG_DEBUG_RESUME */
 
-	mov	r1, #0
-	mcr	p15, 0, r1, c8, c7, 0		@@ invalidate I & D TLBs
-	mcr	p15, 0, r1, c7, c7, 0		@@ invalidate I & D caches
-
-	ldr	r0, s3c2410_sleep_save_phys	@ address of restore block
-	ldmia	r0, { r4 - r13 }
-
-	mcr	p15, 0, r4, c13, c0, 0		@ PID
-	mcr	p15, 0, r5, c3, c0, 0		@ Domain ID
-	mcr	p15, 0, r6, c2, c0, 0		@ translation table base
-
-#ifdef CONFIG_DEBUG_RESUME
-	mov	r3, #'R'
-	strb	r3, [ r2, #S3C2410_UTXH ]
-#endif
-
-	ldr	r2, =resume_with_mmu
-	mcr	p15, 0, r7, c1, c0, 0		@ turn on MMU, etc
-	nop					@ second-to-last before mmu
-	mov	pc, r2				@ go back to virtual address
-
-	.ltorg
+	b	cpu_resume

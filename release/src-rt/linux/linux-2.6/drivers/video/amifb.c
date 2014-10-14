@@ -45,14 +45,14 @@
 #include <linux/errno.h>
 #include <linux/string.h>
 #include <linux/mm.h>
-#include <linux/slab.h>
 #include <linux/delay.h>
 #include <linux/interrupt.h>
 #include <linux/fb.h>
 #include <linux/init.h>
 #include <linux/ioport.h>
+#include <linux/platform_device.h>
+#include <linux/uaccess.h>
 
-#include <asm/uaccess.h>
 #include <asm/system.h>
 #include <asm/irq.h>
 #include <asm/amigahw.h>
@@ -96,7 +96,7 @@
 #endif
 
 #ifdef DEBUG
-#  define DPRINTK(fmt, args...)	printk(KERN_DEBUG "%s: " fmt, __FUNCTION__ , ## args)
+#  define DPRINTK(fmt, args...)	printk(KERN_DEBUG "%s: " fmt, __func__ , ## args)
 #else
 #  define DPRINTK(fmt, args...)
 #endif
@@ -112,7 +112,7 @@
    +----------+---------------------------------------------+----------+-------+
    |          |                ^                            |          |       |
    |          |                |upper_margin                |          |       |
-   |          |                ¥                            |          |       |
+   |          |                v                            |          |       |
    +----------###############################################----------+-------+
    |          #                ^                            #          |       |
    |          #                |                            #          |       |
@@ -133,15 +133,15 @@
    |          #                |                            #          |       |
    |          #                |                            #          |       |
    |          #                |                            #          |       |
-   |          #                ¥                            #          |       |
+   |          #                v                            #          |       |
    +----------###############################################----------+-------+
    |          |                ^                            |          |       |
    |          |                |lower_margin                |          |       |
-   |          |                ¥                            |          |       |
+   |          |                v                            |          |       |
    +----------+---------------------------------------------+----------+-------+
    |          |                ^                            |          |       |
    |          |                |vsync_len                   |          |       |
-   |          |                ¥                            |          |       |
+   |          |                v                            |          |       |
    +----------+---------------------------------------------+----------+-------+
 
 
@@ -325,7 +325,7 @@
    CCIR -> PAL
    -----------
 
-      - a scanline is 64 µs long, of which 52.48 µs are visible. This is about
+      - a scanline is 64 Âµs long, of which 52.48 Âµs are visible. This is about
         736 visible 70 ns pixels per line.
       - we have 625 scanlines, of which 575 are visible (interlaced); after
         rounding this becomes 576.
@@ -333,7 +333,7 @@
    RETMA -> NTSC
    -------------
 
-      - a scanline is 63.5 µs long, of which 53.5 µs are visible.  This is about
+      - a scanline is 63.5 Âµs long, of which 53.5 Âµs are visible.  This is about
         736 visible 70 ns pixels per line.
       - we have 525 scanlines, of which 485 are visible (interlaced); after
         rounding this becomes 484.
@@ -802,7 +802,7 @@ static u_short ecs_palette[32];
 
 static u_short do_vmode_full = 0;	/* Change the Video Mode */
 static u_short do_vmode_pan = 0;	/* Update the Video Mode */
-static short do_blank = 0;		/* (Un)Blank the Screen (±1) */
+static short do_blank = 0;		/* (Un)Blank the Screen (Â±1) */
 static u_short do_cursor = 0;		/* Move the Cursor */
 
 
@@ -1136,8 +1136,7 @@ static int amifb_ioctl(struct fb_info *info, unsigned int cmd, unsigned long arg
 	 * Interface to the low level console driver
 	 */
 
-int amifb_init(void);
-static void amifb_deinit(void);
+static void amifb_deinit(struct platform_device *pdev);
 
 	/*
 	 * Internal routines
@@ -2048,13 +2047,16 @@ static void amifb_copyarea(struct fb_info *info,
 	width = x2 - dx;
 	height = y2 - dy;
 
+	if (area->sx + dx < area->dx || area->sy + dy < area->dy)
+		return;
+
 	/* update sx,sy */
 	sx = area->sx + (dx - area->dx);
 	sy = area->sy + (dy - area->dy);
 
 	/* the source must be completely inside the virtual screen */
-	if (sx < 0 || sy < 0 || (sx + width) > info->var.xres_virtual ||
-	    (sy + height) > info->var.yres_virtual)
+	if (sx + width > info->var.xres_virtual ||
+			sy + height > info->var.yres_virtual)
 		return;
 
 	if (dy > sy || (dy == sy && dx > sx)) {
@@ -2157,9 +2159,9 @@ static void amifb_imageblit(struct fb_info *info, const struct fb_image *image)
 			src += pitch;
 		}
 	} else {
-		c2p(info->screen_base, image->data, dx, dy, width, height,
-		    par->next_line, par->next_plane, image->width,
-		    info->var.bits_per_pixel);
+		c2p_planar(info->screen_base, image->data, dx, dy, width,
+			   height, par->next_line, par->next_plane,
+			   image->width, info->var.bits_per_pixel);
 	}
 }
 
@@ -2245,7 +2247,7 @@ static inline void chipfree(void)
 	 * Initialisation
 	 */
 
-int __init amifb_init(void)
+static int __init amifb_probe(struct platform_device *pdev)
 {
 	int tag, i, err = 0;
 	u_long chipptr;
@@ -2260,16 +2262,6 @@ int __init amifb_init(void)
 	}
 	amifb_setup(option);
 #endif
-	if (!MACH_IS_AMIGA || !AMIGAHW_PRESENT(AMI_VIDEO))
-		return -ENXIO;
-
-	/*
-	 * We request all registers starting from bplpt[0]
-	 */
-	if (!request_mem_region(CUSTOM_PHYSADDR+0xe0, 0x120,
-				"amifb [Denise/Lisa]"))
-		return -EBUSY;
-
 	custom.dmacon = DMAF_ALL | DMAF_MASTER;
 
 	switch (amiga_chipset) {
@@ -2333,7 +2325,7 @@ default_chipset:
 			strcat(fb_info.fix.id, "Unknown");
 			goto default_chipset;
 #else /* CONFIG_FB_AMIGA_OCS */
-			err = -ENXIO;
+			err = -ENODEV;
 			goto amifb_error;
 #endif /* CONFIG_FB_AMIGA_OCS */
 			break;
@@ -2376,12 +2368,16 @@ default_chipset:
 	fb_info.fbops = &amifb_ops;
 	fb_info.par = &currentpar;
 	fb_info.flags = FBINFO_DEFAULT;
+	fb_info.device = &pdev->dev;
 
 	if (!fb_find_mode(&fb_info.var, &fb_info, mode_option, ami_modedb,
 			  NUM_TOTAL_MODES, &ami_modedb[defmode], 4)) {
 		err = -EINVAL;
 		goto amifb_error;
 	}
+
+	fb_videomode_to_modelist(ami_modedb, NUM_TOTAL_MODES,
+				 &fb_info.modelist);
 
 	round_down_bpp = 0;
 	chipptr = chipalloc(fb_info.fix.smem_len+
@@ -2432,7 +2428,9 @@ default_chipset:
 		goto amifb_error;
 	}
 
-	fb_alloc_cmap(&fb_info.cmap, 1<<fb_info.var.bits_per_pixel, 0);
+	err = fb_alloc_cmap(&fb_info.cmap, 1<<fb_info.var.bits_per_pixel, 0);
+	if (err)
+		goto amifb_error;
 
 	if (register_framebuffer(&fb_info) < 0) {
 		err = -EINVAL;
@@ -2445,17 +2443,18 @@ default_chipset:
 	return 0;
 
 amifb_error:
-	amifb_deinit();
+	amifb_deinit(pdev);
 	return err;
 }
 
-static void amifb_deinit(void)
+static void amifb_deinit(struct platform_device *pdev)
 {
+	if (fb_info.cmap.len)
+		fb_dealloc_cmap(&fb_info.cmap);
 	fb_dealloc_cmap(&fb_info.cmap);
 	chipfree();
 	if (videomemory)
 		iounmap((void*)videomemory);
-	release_mem_region(CUSTOM_PHYSADDR+0xe0, 0x120);
 	custom.dmacon = DMAF_ALL | DMAF_MASTER;
 }
 
@@ -3787,16 +3786,35 @@ static void ami_rebuild_copper(void)
 	}
 }
 
+static int __exit amifb_remove(struct platform_device *pdev)
+{
+	unregister_framebuffer(&fb_info);
+	amifb_deinit(pdev);
+	amifb_video_off();
+	return 0;
+}
+
+static struct platform_driver amifb_driver = {
+	.remove = __exit_p(amifb_remove),
+	.driver   = {
+		.name	= "amiga-video",
+		.owner	= THIS_MODULE,
+	},
+};
+
+static int __init amifb_init(void)
+{
+	return platform_driver_probe(&amifb_driver, amifb_probe);
+}
 
 module_init(amifb_init);
 
-#ifdef MODULE
-MODULE_LICENSE("GPL");
-
-void cleanup_module(void)
+static void __exit amifb_exit(void)
 {
-	unregister_framebuffer(&fb_info);
-	amifb_deinit();
-	amifb_video_off();
+	platform_driver_unregister(&amifb_driver);
 }
-#endif /* MODULE */
+
+module_exit(amifb_exit);
+
+MODULE_LICENSE("GPL");
+MODULE_ALIAS("platform:amiga-video");

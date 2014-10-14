@@ -2,6 +2,7 @@
  * JFFS2 -- Journalling Flash File System, Version 2.
  *
  * Copyright © 2001-2007 Red Hat, Inc.
+ * Copyright © 2004-2010 David Woodhouse <dwmw2@infradead.org>
  *
  * Created by David Woodhouse <dwmw2@infradead.org>
  *
@@ -14,7 +15,6 @@
 #endif
 
 #include <linux/kernel.h>
-#include <linux/slab.h>
 #include <linux/zlib.h>
 #include <linux/zutil.h>
 #include "nodelist.h"
@@ -40,12 +40,13 @@ static z_stream inf_strm, def_strm;
 
 static int __init alloc_workspaces(void)
 {
-	def_strm.workspace = vmalloc(zlib_deflate_workspacesize());
+	def_strm.workspace = vmalloc(zlib_deflate_workspacesize(MAX_WBITS,
+							MAX_MEM_LEVEL));
 	if (!def_strm.workspace) {
-		printk(KERN_WARNING "Failed to allocate %d bytes for deflate workspace\n", zlib_deflate_workspacesize());
+		printk(KERN_WARNING "Failed to allocate %d bytes for deflate workspace\n", zlib_deflate_workspacesize(MAX_WBITS, MAX_MEM_LEVEL));
 		return -ENOMEM;
 	}
-	D1(printk(KERN_DEBUG "Allocated %d bytes for deflate workspace\n", zlib_deflate_workspacesize()));
+	D1(printk(KERN_DEBUG "Allocated %d bytes for deflate workspace\n", zlib_deflate_workspacesize(MAX_WBITS, MAX_MEM_LEVEL)));
 	inf_strm.workspace = vmalloc(zlib_inflate_workspacesize());
 	if (!inf_strm.workspace) {
 		printk(KERN_WARNING "Failed to allocate %d bytes for inflate workspace\n", zlib_inflate_workspacesize());
@@ -68,8 +69,7 @@ static void free_workspaces(void)
 
 static int jffs2_zlib_compress(unsigned char *data_in,
 			       unsigned char *cpage_out,
-			       uint32_t *sourcelen, uint32_t *dstlen,
-			       void *model)
+			       uint32_t *sourcelen, uint32_t *dstlen)
 {
 	int ret;
 
@@ -136,8 +136,7 @@ static int jffs2_zlib_compress(unsigned char *data_in,
 
 static int jffs2_zlib_decompress(unsigned char *data_in,
 				 unsigned char *cpage_out,
-				 uint32_t srclen, uint32_t destlen,
-				 void *model)
+				 uint32_t srclen, uint32_t destlen)
 {
 	int ret;
 	int wbits = MAX_WBITS;
@@ -181,7 +180,7 @@ static int jffs2_zlib_decompress(unsigned char *data_in,
 	}
 	zlib_inflateEnd(&inf_strm);
 	mutex_unlock(&inflate_mutex);
-        return 0;
+	return 0;
 }
 
 static struct jffs2_compressor jffs2_zlib_comp = {
@@ -203,11 +202,11 @@ int __init jffs2_zlib_init(void)
 
     ret = alloc_workspaces();
     if (ret)
-        return ret;
+	    return ret;
 
     ret = jffs2_register_compressor(&jffs2_zlib_comp);
     if (ret)
-        free_workspaces();
+	    free_workspaces();
 
     return ret;
 }

@@ -16,37 +16,42 @@
 #include <linux/list.h>
 #include <linux/timer.h>
 #include <linux/init.h>
+#include <linux/clk.h>
 #include <linux/delay.h>
 #include <linux/sysdev.h>
 #include <linux/serial_core.h>
 #include <linux/platform_device.h>
+#include <linux/io.h>
 
 #include <asm/mach/arch.h>
 #include <asm/mach/map.h>
 #include <asm/mach/irq.h>
 
-#include <asm/hardware.h>
+#include <mach/hardware.h>
 #include <asm/proc-fns.h>
-#include <asm/io.h>
 #include <asm/irq.h>
 
-#include <asm/arch/reset.h>
-#include <asm/arch/idle.h>
+#include <mach/reset.h>
+#include <mach/idle.h>
 
-#include <asm/arch/regs-clock.h>
-#include <asm/arch/regs-serial.h>
-#include <asm/arch/regs-power.h>
-#include <asm/arch/regs-gpio.h>
-#include <asm/arch/regs-gpioj.h>
-#include <asm/arch/regs-dsc.h>
-#include <asm/arch/regs-spi.h>
-#include <asm/arch/regs-s3c2412.h>
+#include <plat/cpu-freq.h>
 
-#include <asm/plat-s3c24xx/s3c2412.h>
-#include <asm/plat-s3c24xx/cpu.h>
-#include <asm/plat-s3c24xx/devs.h>
-#include <asm/plat-s3c24xx/clock.h>
-#include <asm/plat-s3c24xx/pm.h>
+#include <mach/regs-clock.h>
+#include <plat/regs-serial.h>
+#include <mach/regs-power.h>
+#include <mach/regs-gpio.h>
+#include <mach/regs-gpioj.h>
+#include <mach/regs-dsc.h>
+#include <plat/regs-spi.h>
+#include <mach/regs-s3c2412.h>
+
+#include <plat/s3c2412.h>
+#include <plat/cpu.h>
+#include <plat/devs.h>
+#include <plat/clock.h>
+#include <plat/pm.h>
+#include <plat/pll.h>
+#include <plat/nand-core.h>
 
 #ifndef CONFIG_CPU_S3C2412_ONLY
 void __iomem *s3c24xx_va_gpio2 = S3C24XX_VA_GPIO;
@@ -63,9 +68,20 @@ static inline void s3c2412_init_gpio2(void)
 
 static struct map_desc s3c2412_iodesc[] __initdata = {
 	IODESC_ENT(CLKPWR),
-	IODESC_ENT(LCD),
 	IODESC_ENT(TIMER),
 	IODESC_ENT(WATCHDOG),
+	{
+		.virtual = (unsigned long)S3C2412_VA_SSMC,
+		.pfn	 = __phys_to_pfn(S3C2412_PA_SSMC),
+		.length	 = SZ_1M,
+		.type	 = MT_DEVICE,
+	},
+	{
+		.virtual = (unsigned long)S3C2412_VA_EBI,
+		.pfn	 = __phys_to_pfn(S3C2412_PA_EBI),
+		.length	 = SZ_1M,
+		.type	 = MT_DEVICE,
+	},
 };
 
 /* uart registration process */
@@ -77,7 +93,12 @@ void __init s3c2412_init_uarts(struct s3c2410_uartcfg *cfg, int no)
 	/* rename devices that are s3c2412/s3c2413 specific */
 	s3c_device_sdi.name  = "s3c2412-sdi";
 	s3c_device_lcd.name  = "s3c2412-lcd";
-	s3c_device_nand.name = "s3c2412-nand";
+	s3c_nand_setname("s3c2412-nand");
+
+	/* alter IRQ of SDI controller */
+
+	s3c_device_sdi.resource[1].start = IRQ_S3C2412_SDI;
+	s3c_device_sdi.resource[1].end   = IRQ_S3C2412_SDI;
 
 	/* spi channel related changes, s3c2412/13 specific */
 	s3c_device_spi0.name = "s3c2412-spi";
@@ -132,7 +153,7 @@ static void s3c2412_hard_reset(void)
  * machine specific initialisation.
 */
 
-void __init s3c2412_map_io(struct map_desc *mach_desc, int mach_size)
+void __init s3c2412_map_io(void)
 {
 	/* move base of IO */
 
@@ -149,27 +170,34 @@ void __init s3c2412_map_io(struct map_desc *mach_desc, int mach_size)
 	/* register our io-tables */
 
 	iotable_init(s3c2412_iodesc, ARRAY_SIZE(s3c2412_iodesc));
-	iotable_init(mach_desc, mach_size);
 }
 
-void __init s3c2412_init_clocks(int xtal)
+void __init_or_cpufreq s3c2412_setup_clocks(void)
 {
+	struct clk *xtal_clk;
 	unsigned long tmp;
+	unsigned long xtal;
 	unsigned long fclk;
 	unsigned long hclk;
 	unsigned long pclk;
 
+	xtal_clk = clk_get(NULL, "xtal");
+	xtal = clk_get_rate(xtal_clk);
+	clk_put(xtal_clk);
+
 	/* now we've got our machine bits initialised, work out what
 	 * clocks we've got */
 
-	fclk = s3c2410_get_pll(__raw_readl(S3C2410_MPLLCON), xtal*2);
+	fclk = s3c24xx_get_pll(__raw_readl(S3C2410_MPLLCON), xtal * 2);
+
+	clk_mpll.rate = fclk;
 
 	tmp = __raw_readl(S3C2410_CLKDIVN);
 
 	/* work out clock scalings */
 
 	hclk = fclk / ((tmp & S3C2412_CLKDIVN_HDIVN_MASK) + 1);
-	hclk /= ((tmp & S3C2421_CLKDIVN_ARMDIVN) ? 2 : 1);
+	hclk /= ((tmp & S3C2412_CLKDIVN_ARMDIVN) ? 2 : 1);
 	pclk = hclk / ((tmp & S3C2412_CLKDIVN_PDIVN) ? 2 : 1);
 
 	/* print brieft summary of clocks, etc */
@@ -177,11 +205,17 @@ void __init s3c2412_init_clocks(int xtal)
 	printk("S3C2412: core %ld.%03ld MHz, memory %ld.%03ld MHz, peripheral %ld.%03ld MHz\n",
 	       print_mhz(fclk), print_mhz(hclk), print_mhz(pclk));
 
+	s3c24xx_setup_clocks(fclk, hclk, pclk);
+}
+
+void __init s3c2412_init_clocks(int xtal)
+{
 	/* initialise the clocks here, to allow other things like the
 	 * console to use them
 	 */
 
-	s3c24xx_setup_clocks(xtal, fclk, hclk, pclk);
+	s3c24xx_register_baseclocks(xtal);
+	s3c2412_setup_clocks();
 	s3c2412_baseclk_add();
 }
 
@@ -192,7 +226,7 @@ void __init s3c2412_init_clocks(int xtal)
 */
 
 struct sysdev_class s3c2412_sysclass = {
-	set_kset_name("s3c2412-core"),
+	.name = "s3c2412-core",
 };
 
 static int __init s3c2412_core_init(void)

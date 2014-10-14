@@ -21,28 +21,15 @@
 #include "card.h"
 #include <linux/interrupt.h>
 
-static int get_card_from_irq(int irq)
-{
-	int i;
-
-	for(i = 0 ; i < cinst ; i++) {
-		if(sc_adapter[i]->interrupt == irq)
-			return i;
-	}
-	return -1;
-}
-
 /*
  * 
  */
-irqreturn_t interrupt_handler(int interrupt, void *cardptr)
+irqreturn_t interrupt_handler(int dummy, void *card_inst)
 {
 
 	RspMessage rcvmsg;
 	int channel;
-	int card;
-
-	card = get_card_from_irq(interrupt);
+	int card = (int)(unsigned long) card_inst;
 
 	if(!IS_VALID_CARD(card)) {
 		pr_debug("Invalid param: %d is not a valid card id\n", card);
@@ -125,11 +112,19 @@ irqreturn_t interrupt_handler(int interrupt, void *cardptr)
 			}
 			else if(callid>=0x0000 && callid<=0x7FFF)
 			{
+				int len;
+
 				pr_debug("%s: Got Incoming Call\n",
 						sc_adapter[card]->devicename);
-				strcpy(setup.phone,&(rcvmsg.msg_data.byte_array[4]));
-				strcpy(setup.eazmsn,
-					sc_adapter[card]->channel[rcvmsg.phy_link_no-1].dn);
+				len = strlcpy(setup.phone, &(rcvmsg.msg_data.byte_array[4]),
+						sizeof(setup.phone));
+				if (len >= sizeof(setup.phone))
+					continue;
+				len = strlcpy(setup.eazmsn,
+						sc_adapter[card]->channel[rcvmsg.phy_link_no - 1].dn,
+						sizeof(setup.eazmsn));
+				if (len >= sizeof(setup.eazmsn))
+					continue;
 				setup.si1 = 7;
 				setup.si2 = 0;
 				setup.plan = 0;
@@ -189,7 +184,9 @@ irqreturn_t interrupt_handler(int interrupt, void *cardptr)
 		 * Handle a GetMyNumber Rsp
 		 */
 		if (IS_CE_MESSAGE(rcvmsg,Call,0,GetMyNumber)){
-			strcpy(sc_adapter[card]->channel[rcvmsg.phy_link_no-1].dn,rcvmsg.msg_data.byte_array);
+			strlcpy(sc_adapter[card]->channel[rcvmsg.phy_link_no - 1].dn,
+				rcvmsg.msg_data.byte_array,
+				sizeof(rcvmsg.msg_data.byte_array));
 			continue;
 		}
 			

@@ -249,10 +249,6 @@ static int setup_hostid = -1;
 module_param(setup_hostid, int, 0);
 
 
-#if defined(CONFIG_TT_DMA_EMUL)
-#include "atari_dma_emul.c"
-#endif
-
 #if defined(REAL_DMA)
 
 static int scsi_dma_is_ignored_buserr(unsigned char dma_stat)
@@ -393,7 +389,7 @@ static irqreturn_t scsi_tt_intr(int irq, void *dummy)
 
 #endif /* REAL_DMA */
 
-	NCR5380_intr(0, 0);
+	NCR5380_intr(irq, dummy);
 
 #if 0
 	/* To be sure the int is not masked */
@@ -458,7 +454,7 @@ static irqreturn_t scsi_falcon_intr(int irq, void *dummy)
 
 #endif /* REAL_DMA */
 
-	NCR5380_intr(0, 0);
+	NCR5380_intr(irq, dummy);
 	return IRQ_HANDLED;
 }
 
@@ -576,24 +572,7 @@ static void falcon_get_lock(void)
 }
 
 
-/* This is the wrapper function for NCR5380_queue_command(). It just
- * tries to get the lock on the ST-DMA (see above) and then calls the
- * original function.
- */
-
-#if 0
-int atari_queue_command(Scsi_Cmnd *cmd, void (*done)(Scsi_Cmnd *))
-{
-	/* falcon_get_lock();
-	 * ++guenther: moved to NCR5380_queue_command() to prevent
-	 * race condition, see there for an explanation.
-	 */
-	return NCR5380_queue_command(cmd, done);
-}
-#endif
-
-
-int atari_scsi_detect(struct scsi_host_template *host)
+int __init atari_scsi_detect(struct scsi_host_template *host)
 {
 	static int called = 0;
 	struct Scsi_Host *instance;
@@ -684,7 +663,7 @@ int atari_scsi_detect(struct scsi_host_template *host)
 		 * interrupt after having cleared the pending flag for the DMA
 		 * interrupt. */
 		if (request_irq(IRQ_TT_MFP_SCSI, scsi_tt_intr, IRQ_TYPE_SLOW,
-				 "SCSI NCR5380", scsi_tt_intr)) {
+				 "SCSI NCR5380", instance)) {
 			printk(KERN_ERR "atari_scsi_detect: cannot allocate irq %d, aborting",IRQ_TT_MFP_SCSI);
 			scsi_unregister(atari_scsi_host);
 			atari_stram_free(atari_dma_buffer);
@@ -695,21 +674,8 @@ int atari_scsi_detect(struct scsi_host_template *host)
 #ifdef REAL_DMA
 		tt_scsi_dma.dma_ctrl = 0;
 		atari_dma_residual = 0;
-#ifdef CONFIG_TT_DMA_EMUL
-		if (MACH_IS_HADES) {
-			if (request_irq(IRQ_AUTO_2, hades_dma_emulator,
-					 IRQ_TYPE_PRIO, "Hades DMA emulator",
-					 hades_dma_emulator)) {
-				printk(KERN_ERR "atari_scsi_detect: cannot allocate irq %d, aborting (MACH_IS_HADES)",IRQ_AUTO_2);
-				free_irq(IRQ_TT_MFP_SCSI, scsi_tt_intr);
-				scsi_unregister(atari_scsi_host);
-				atari_stram_free(atari_dma_buffer);
-				atari_dma_buffer = 0;
-				return 0;
-			}
-		}
-#endif
-		if (MACH_IS_MEDUSA || MACH_IS_HADES) {
+
+		if (MACH_IS_MEDUSA) {
 			/* While the read overruns (described by Drew Eckhardt in
 			 * NCR5380.c) never happened on TTs, they do in fact on the Medusa
 			 * (This was the cause why SCSI didn't work right for so long
@@ -761,7 +727,7 @@ int atari_scsi_detect(struct scsi_host_template *host)
 int atari_scsi_release(struct Scsi_Host *sh)
 {
 	if (IS_A_TT())
-		free_irq(IRQ_TT_MFP_SCSI, scsi_tt_intr);
+		free_irq(IRQ_TT_MFP_SCSI, sh);
 	if (atari_dma_buffer)
 		atari_stram_free(atari_dma_buffer);
 	return 1;
@@ -1007,11 +973,7 @@ static unsigned long atari_dma_xfer_len(unsigned long wanted_len,
 					Scsi_Cmnd *cmd, int write_flag)
 {
 	unsigned long	possible_len, limit;
-#ifndef CONFIG_TT_DMA_EMUL
-	if (MACH_IS_HADES)
-		/* Hades has no SCSI DMA at all :-( Always force use of PIO */
-		return 0;
-#endif
+
 	if (IS_A_TT())
 		/* TT SCSI DMA can transfer arbitrary #bytes */
 		return wanted_len;

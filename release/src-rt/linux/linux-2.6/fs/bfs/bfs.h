@@ -14,12 +14,10 @@ struct bfs_sb_info {
 	unsigned long si_blocks;
 	unsigned long si_freeb;
 	unsigned long si_freei;
-	unsigned long si_lf_ioff;
-	unsigned long si_lf_sblk;
 	unsigned long si_lf_eblk;
 	unsigned long si_lasti;
-	unsigned long * si_imap;
-	struct buffer_head * si_sbh;		/* buffer header w/superblock */
+	unsigned long *si_imap;
+	struct mutex bfs_lock;
 };
 
 /*
@@ -39,13 +37,15 @@ static inline struct bfs_sb_info *BFS_SB(struct super_block *sb)
 
 static inline struct bfs_inode_info *BFS_I(struct inode *inode)
 {
-	return list_entry(inode, struct bfs_inode_info, vfs_inode);
+	return container_of(inode, struct bfs_inode_info, vfs_inode);
 }
 
 
 #define printf(format, args...) \
-	printk(KERN_ERR "BFS-fs: %s(): " format, __FUNCTION__, ## args)
+	printk(KERN_ERR "BFS-fs: %s(): " format, __func__, ## args)
 
+/* inode.c */
+extern struct inode *bfs_iget(struct super_block *sb, unsigned long ino);
 
 /* file.c */
 extern const struct inode_operations bfs_file_inops;

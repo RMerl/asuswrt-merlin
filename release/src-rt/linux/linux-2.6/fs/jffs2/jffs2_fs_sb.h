@@ -2,6 +2,7 @@
  * JFFS2 -- Journalling Flash File System, Version 2.
  *
  * Copyright © 2001-2007 Red Hat, Inc.
+ * Copyright © 2004-2010 David Woodhouse <dwmw2@infradead.org>
  *
  * Created by David Woodhouse <dwmw2@infradead.org>
  *
@@ -16,7 +17,7 @@
 #include <linux/spinlock.h>
 #include <linux/workqueue.h>
 #include <linux/completion.h>
-#include <asm/semaphore.h>
+#include <linux/mutex.h>
 #include <linux/timer.h>
 #include <linux/wait.h>
 #include <linux/list.h>
@@ -44,7 +45,7 @@ struct jffs2_sb_info {
 	struct completion gc_thread_start; /* GC thread start completion */
 	struct completion gc_thread_exit; /* GC thread exit completion port */
 
-	struct semaphore alloc_sem;	/* Used to protect all the following
+	struct mutex alloc_sem;		/* Used to protect all the following
 					   fields, and also to protect against
 					   out-of-order writing of nodes. And GC. */
 	uint32_t cleanmarker_size;	/* Size of an _inline_ CLEANMARKER
@@ -69,6 +70,8 @@ struct jffs2_sb_info {
 	uint8_t resv_blocks_gctrigger;	/* ... wake up the GC thread */
 	uint8_t resv_blocks_gcbad;	/* ... pick a block from the bad_list to GC */
 	uint8_t resv_blocks_gcmerge;	/* ... merge pages when garbage collecting */
+	/* Number of 'very dirty' blocks before we trigger immediate GC */
+	uint8_t vdirty_blocks_gctrigger;
 
 	uint32_t nospc_dirty_size;
 
@@ -85,6 +88,7 @@ struct jffs2_sb_info {
 	struct list_head erasable_list;		/* Blocks which are completely dirty, and need erasing */
 	struct list_head erasable_pending_wbuf_list;	/* Blocks which need erasing but only after the current wbuf is flushed */
 	struct list_head erasing_list;		/* Blocks which are currently erasing */
+	struct list_head erase_checking_list;	/* Blocks which are being checked and marked */
 	struct list_head erase_pending_list;	/* Blocks which need erasing now */
 	struct list_head erase_complete_list;	/* Blocks which are erased and need the clean marker written to them */
 	struct list_head free_list;		/* Blocks which are free and ready to be used */
@@ -96,16 +100,20 @@ struct jffs2_sb_info {
 	wait_queue_head_t erase_wait;		/* For waiting for erases to complete */
 
 	wait_queue_head_t inocache_wq;
+	int inocache_hashsize;
 	struct jffs2_inode_cache **inocache_list;
 	spinlock_t inocache_lock;
 
 	/* Sem to allow jffs2_garbage_collect_deletion_dirent to
 	   drop the erase_completion_lock while it's holding a pointer
 	   to an obsoleted node. I don't like this. Alternatives welcomed. */
-	struct semaphore erase_free_sem;
+	struct mutex erase_free_sem;
 
 	uint32_t wbuf_pagesize; /* 0 for NOR and other flashes with no wbuf */
 
+#ifdef CONFIG_JFFS2_FS_WBUF_VERIFY
+	unsigned char *wbuf_verify; /* read-back buffer for verification */
+#endif
 #ifdef CONFIG_JFFS2_FS_WRITEBUFFER
 	unsigned char *wbuf; /* Write-behind buffer for NAND flash */
 	uint32_t wbuf_ofs;
@@ -136,4 +144,4 @@ struct jffs2_sb_info {
 	void *os_priv;
 };
 
-#endif /* _JFFS2_FB_SB */
+#endif /* _JFFS2_FS_SB */

@@ -66,8 +66,7 @@ static int tiocx_match(struct device *dev, struct device_driver *drv)
 
 }
 
-static int tiocx_uevent(struct device *dev, char **envp, int num_envp,
-			 char *buffer, int buffer_size)
+static int tiocx_uevent(struct device *dev, struct kobj_uevent_env *env)
 {
 	return -ENODEV;
 }
@@ -207,8 +206,7 @@ cx_device_register(nasid_t nasid, int part_num, int mfg_num,
 	cx_dev->dev.parent = NULL;
 	cx_dev->dev.bus = &tiocx_bus_type;
 	cx_dev->dev.release = tiocx_bus_release;
-	snprintf(cx_dev->dev.bus_id, BUS_ID_SIZE, "%d",
-		 cx_dev->cx_id.nasid);
+	dev_set_name(&cx_dev->dev, "%d", cx_dev->cx_id.nasid);
 	device_register(&cx_dev->dev);
 	get_device(&cx_dev->dev);
 
@@ -369,8 +367,8 @@ static void tio_corelet_reset(nasid_t nasid, int corelet)
 
 static int is_fpga_tio(int nasid, int *bt)
 {
-	u16 ioboard_type;
-	s64 rc;
+	u16 uninitialized_var(ioboard_type);	/* GCC be quiet */
+	long rc;
 
 	rc = ia64_sn_sysctl_ioboard_get(nasid, &ioboard_type);
 	if (rc) {

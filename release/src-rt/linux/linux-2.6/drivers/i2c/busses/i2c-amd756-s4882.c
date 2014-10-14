@@ -1,7 +1,7 @@
 /*
  * i2c-amd756-s4882.c - i2c-amd756 extras for the Tyan S4882 motherboard
  *
- * Copyright (C) 2004 Jean Delvare <khali@linux-fr.org>
+ * Copyright (C) 2004, 2008 Jean Delvare <khali@linux-fr.org>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -58,7 +58,7 @@ static s32 amd756_access_virt0(struct i2c_adapter * adap, u16 addr,
 	/* We exclude the multiplexed addresses */
 	if (addr == 0x4c || (addr & 0xfc) == 0x50 || (addr & 0xfc) == 0x30
 	 || addr == 0x18)
-		return -1;
+		return -ENXIO;
 
 	mutex_lock(&amd756_lock);
 
@@ -86,7 +86,7 @@ static inline s32 amd756_access_channel(struct i2c_adapter * adap, u16 addr,
 
 	/* We exclude the non-multiplexed addresses */
 	if (addr != 0x4c && (addr & 0xfc) != 0x50 && (addr & 0xfc) != 0x30)
-		return -1;
+		return -ENXIO;
 
 	mutex_lock(&amd756_lock);
 
@@ -155,14 +155,23 @@ static int __init amd756_s4882_init(void)
 	int i, error;
 	union i2c_smbus_data ioconfig;
 
+	if (!amd756_smbus.dev.parent)
+		return -ENODEV;
+
+	/* Configure the PCA9556 multiplexer */
+	ioconfig.byte = 0x00; /* All I/O to output mode */
+	error = i2c_smbus_xfer(&amd756_smbus, 0x18, 0, I2C_SMBUS_WRITE, 0x03,
+			       I2C_SMBUS_BYTE_DATA, &ioconfig);
+	if (error) {
+		dev_err(&amd756_smbus.dev, "PCA9556 configuration failed\n");
+		error = -EIO;
+		goto ERROR0;
+	}
+
 	/* Unregister physical bus */
 	error = i2c_del_adapter(&amd756_smbus);
 	if (error) {
-		if (error == -EINVAL)
-			error = -ENODEV;
-		else
-			dev_err(&amd756_smbus.dev, "Physical bus removal "
-				"failed\n");
+		dev_err(&amd756_smbus.dev, "Physical bus removal failed\n");
 		goto ERROR0;
 	}
 
@@ -188,8 +197,8 @@ static int __init amd756_s4882_init(void)
 	for (i = 1; i < 5; i++) {
 		s4882_algo[i] = *(amd756_smbus.algo);
 		s4882_adapter[i] = amd756_smbus;
-		sprintf(s4882_adapter[i].name,
-			"SMBus 8111 adapter (CPU%d)", i-1);
+		snprintf(s4882_adapter[i].name, sizeof(s4882_adapter[i].name),
+			 "SMBus 8111 adapter (CPU%d)", i-1);
 		s4882_adapter[i].algo = s4882_algo+i;
 		s4882_adapter[i].dev.parent = amd756_smbus.dev.parent;
 	}
@@ -198,22 +207,11 @@ static int __init amd756_s4882_init(void)
 	s4882_algo[3].smbus_xfer = amd756_access_virt3;
 	s4882_algo[4].smbus_xfer = amd756_access_virt4;
 
-	/* Configure the PCA9556 multiplexer */
-	ioconfig.byte = 0x00; /* All I/O to output mode */
-	error = amd756_smbus.algo->smbus_xfer(&amd756_smbus, 0x18, 0,
-					      I2C_SMBUS_WRITE, 0x03,
-					      I2C_SMBUS_BYTE_DATA, &ioconfig);
-	if (error) {
-		dev_err(&amd756_smbus.dev, "PCA9556 configuration failed\n");
-		error = -EIO;
-		goto ERROR3;
-	}
-
 	/* Register virtual adapters */
 	for (i = 0; i < 5; i++) {
 		error = i2c_add_adapter(s4882_adapter+i);
 		if (error) {
-			dev_err(&amd756_smbus.dev,
+			printk(KERN_ERR "i2c-amd756-s4882: "
 			       "Virtual adapter %d registration "
 			       "failed, module not inserted\n", i);
 			for (i--; i >= 0; i--)
@@ -231,7 +229,8 @@ ERROR2:
 	kfree(s4882_adapter);
 	s4882_adapter = NULL;
 ERROR1:
-	i2c_del_adapter(&amd756_smbus);
+	/* Restore physical bus */
+	i2c_add_adapter(&amd756_smbus);
 ERROR0:
 	return error;
 }
@@ -251,8 +250,8 @@ static void __exit amd756_s4882_exit(void)
 
 	/* Restore physical bus */
 	if (i2c_add_adapter(&amd756_smbus))
-		dev_err(&amd756_smbus.dev, "Physical bus restoration "
-			"failed\n");
+		printk(KERN_ERR "i2c-amd756-s4882: "
+		       "Physical bus restoration failed\n");
 }
 
 MODULE_AUTHOR("Jean Delvare <khali@linux-fr.org>");

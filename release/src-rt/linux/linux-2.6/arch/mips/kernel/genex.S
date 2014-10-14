@@ -6,7 +6,7 @@
  * Copyright (C) 1994 - 2000, 2001, 2003 Ralf Baechle
  * Copyright (C) 1999, 2000 Silicon Graphics, Inc.
  * Copyright (C) 2001 MIPS Technologies, Inc.
- * Copyright (C) 2002 Maciej W. Rozycki
+ * Copyright (C) 2002, 2007  Maciej W. Rozycki
  */
 #include <linux/init.h>
 
@@ -52,17 +52,9 @@ NESTED(except_vec1_generic, 0, sp)
 NESTED(except_vec3_generic, 0, sp)
 	.set	push
 	.set	noat
-#ifdef CONFIG_BCM47XX
-	nop
-	nop
-#endif
 #if R5432_CP0_INTERRUPT_WAR
 	mfc0	k0, CP0_INDEX
 #endif
-#ifdef CONFIG_BCM47XX
-	nop
-	nop
-#endif          
 	mfc0	k1, CP0_CAUSE
 	andi	k1, k1, 0x7c
 #ifdef CONFIG_64BIT
@@ -290,8 +282,8 @@ NESTED(except_vec_vi_handler, 0, sp)
 	and	t0, a0, t1
 #ifdef CONFIG_MIPS_MT_SMTC_IM_BACKSTOP
 	mfc0	t2, CP0_TCCONTEXT
-	or	t0, t0, t2
-	mtc0	t0, CP0_TCCONTEXT
+	or	t2, t0, t2
+	mtc0	t2, CP0_TCCONTEXT
 #endif /* CONFIG_MIPS_MT_SMTC_IM_BACKSTOP */
 	xor	t1, t1, t0
 	mtc0	t1, CP0_STATUS
@@ -393,10 +385,14 @@ NESTED(nmi_handler, PT_SIZE, sp)
 	.endm
 
 	.macro	__build_clear_fpe
+	.set	push
+	/* gas fails to assemble cfc1 for some archs (octeon).*/ \
+	.set	mips1
 	cfc1	a1, fcr31
 	li	a2, ~(0x3f << 12)
 	and	a2, a1
 	ctc1	a2, fcr31
+	.set	pop
 	TRACE_IRQS_ON
 	STI
 	.endm
@@ -461,7 +457,15 @@ NESTED(nmi_handler, PT_SIZE, sp)
 	BUILD_HANDLER tr tr sti silent			/* #13 */
 	BUILD_HANDLER fpe fpe fpe silent		/* #15 */
 	BUILD_HANDLER mdmx mdmx sti silent		/* #22 */
+#ifdef 	CONFIG_HARDWARE_WATCHPOINTS
+	/*
+	 * For watch, interrupts will be enabled after the watch
+	 * registers are read.
+	 */
+	BUILD_HANDLER watch watch cli silent		/* #23 */
+#else
 	BUILD_HANDLER watch watch sti verbose		/* #23 */
+#endif
 	BUILD_HANDLER mcheck mcheck cli verbose		/* #24 */
 	BUILD_HANDLER mt mt sti silent			/* #25 */
 	BUILD_HANDLER dsp dsp sti silent		/* #26 */
@@ -516,7 +520,13 @@ NESTED(nmi_handler, PT_SIZE, sp)
 	jr	k0
 	 rfe
 #else
+#ifndef CONFIG_CPU_DADDI_WORKAROUNDS
 	LONG_ADDIU	k0, 4		/* stall on $k0 */
+#else
+	.set	at=v1
+	LONG_ADDIU	k0, 4
+	.set	noat
+#endif
 	MTC0	k0, CP0_EPC
 	/* I hope three instructions between MTC0 and ERET are enough... */
 	ori	k1, _THREAD_MASK

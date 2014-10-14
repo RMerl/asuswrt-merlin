@@ -14,8 +14,8 @@
 #include <linux/i2c-algo-bit.h>
 #include <linux/init.h>
 #include <linux/platform_device.h>
-
-#include <asm/io.h>
+#include <linux/slab.h>
+#include <linux/io.h>
 
 #define I2C_CONTROL	0x00
 #define I2C_CONTROLS	0x00
@@ -76,7 +76,7 @@ static int i2c_versatile_probe(struct platform_device *dev)
 		goto err_out;
 	}
 
-	if (!request_mem_region(r->start, r->end - r->start + 1, "versatile-i2c")) {
+	if (!request_mem_region(r->start, resource_size(r), "versatile-i2c")) {
 		ret = -EBUSY;
 		goto err_out;
 	}
@@ -87,7 +87,7 @@ static int i2c_versatile_probe(struct platform_device *dev)
 		goto err_release;
 	}
 
-	i2c->base = ioremap(r->start, r->end - r->start + 1);
+	i2c->base = ioremap(r->start, resource_size(r));
 	if (!i2c->base) {
 		ret = -ENOMEM;
 		goto err_free;
@@ -102,7 +102,13 @@ static int i2c_versatile_probe(struct platform_device *dev)
 	i2c->algo = i2c_versatile_algo;
 	i2c->algo.data = i2c;
 
-	ret = i2c_bit_add_bus(&i2c->adap);
+	if (dev->id >= 0) {
+		/* static bus numbering */
+		i2c->adap.nr = dev->id;
+		ret = i2c_bit_add_numbered_bus(&i2c->adap);
+	} else
+		/* dynamic bus numbering */
+		ret = i2c_bit_add_bus(&i2c->adap);
 	if (ret >= 0) {
 		platform_set_drvdata(dev, i2c);
 		return 0;
@@ -112,7 +118,7 @@ static int i2c_versatile_probe(struct platform_device *dev)
  err_free:
 	kfree(i2c);
  err_release:
-	release_mem_region(r->start, r->end - r->start + 1);
+	release_mem_region(r->start, resource_size(r));
  err_out:
 	return ret;
 }
@@ -146,8 +152,9 @@ static void __exit i2c_versatile_exit(void)
 	platform_driver_unregister(&i2c_versatile_driver);
 }
 
-module_init(i2c_versatile_init);
+subsys_initcall(i2c_versatile_init);
 module_exit(i2c_versatile_exit);
 
 MODULE_DESCRIPTION("ARM Versatile I2C bus driver");
 MODULE_LICENSE("GPL");
+MODULE_ALIAS("platform:versatile-i2c");

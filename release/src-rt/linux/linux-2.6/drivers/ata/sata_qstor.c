@@ -29,6 +29,7 @@
 
 #include <linux/kernel.h>
 #include <linux/module.h>
+#include <linux/gfp.h>
 #include <linux/pci.h>
 #include <linux/init.h>
 #include <linux/blkdev.h>
@@ -39,7 +40,7 @@
 #include <linux/libata.h>
 
 #define DRV_NAME	"sata_qstor"
-#define DRV_VERSION	"0.08"
+#define DRV_VERSION	"0.09"
 
 enum {
 	QS_MMIO_BAR		= 4,
@@ -103,7 +104,7 @@ enum {
 	QS_DMA_BOUNDARY		= ~0UL
 };
 
-typedef enum { qs_state_idle, qs_state_pkt, qs_state_mmio } qs_state_t;
+typedef enum { qs_state_mmio, qs_state_pkt } qs_state_t;
 
 struct qs_port_priv {
 	u8			*pkt;
@@ -111,72 +112,52 @@ struct qs_port_priv {
 	qs_state_t		state;
 };
 
-static u32 qs_scr_read (struct ata_port *ap, unsigned int sc_reg);
-static void qs_scr_write (struct ata_port *ap, unsigned int sc_reg, u32 val);
-static int qs_ata_init_one (struct pci_dev *pdev, const struct pci_device_id *ent);
+static int qs_scr_read(struct ata_link *link, unsigned int sc_reg, u32 *val);
+static int qs_scr_write(struct ata_link *link, unsigned int sc_reg, u32 val);
+static int qs_ata_init_one(struct pci_dev *pdev, const struct pci_device_id *ent);
 static int qs_port_start(struct ata_port *ap);
 static void qs_host_stop(struct ata_host *host);
-static void qs_phy_reset(struct ata_port *ap);
 static void qs_qc_prep(struct ata_queued_cmd *qc);
 static unsigned int qs_qc_issue(struct ata_queued_cmd *qc);
 static int qs_check_atapi_dma(struct ata_queued_cmd *qc);
-static void qs_bmdma_stop(struct ata_queued_cmd *qc);
-static u8 qs_bmdma_status(struct ata_port *ap);
-static void qs_irq_clear(struct ata_port *ap);
-static void qs_eng_timeout(struct ata_port *ap);
+static void qs_freeze(struct ata_port *ap);
+static void qs_thaw(struct ata_port *ap);
+static int qs_prereset(struct ata_link *link, unsigned long deadline);
+static void qs_error_handler(struct ata_port *ap);
 
 static struct scsi_host_template qs_ata_sht = {
-	.module			= THIS_MODULE,
-	.name			= DRV_NAME,
-	.ioctl			= ata_scsi_ioctl,
-	.queuecommand		= ata_scsi_queuecmd,
-	.can_queue		= ATA_DEF_QUEUE,
-	.this_id		= ATA_SHT_THIS_ID,
+	ATA_BASE_SHT(DRV_NAME),
 	.sg_tablesize		= QS_MAX_PRD,
-	.cmd_per_lun		= ATA_SHT_CMD_PER_LUN,
-	.emulated		= ATA_SHT_EMULATED,
-	//FIXME .use_clustering		= ATA_SHT_USE_CLUSTERING,
-	.use_clustering		= ENABLE_CLUSTERING,
-	.proc_name		= DRV_NAME,
 	.dma_boundary		= QS_DMA_BOUNDARY,
-	.slave_configure	= ata_scsi_slave_config,
-	.slave_destroy		= ata_scsi_slave_destroy,
-	.bios_param		= ata_std_bios_param,
 };
 
-static const struct ata_port_operations qs_ata_ops = {
-	.port_disable		= ata_port_disable,
-	.tf_load		= ata_tf_load,
-	.tf_read		= ata_tf_read,
-	.check_status		= ata_check_status,
+static struct ata_port_operations qs_ata_ops = {
+	.inherits		= &ata_sff_port_ops,
+
 	.check_atapi_dma	= qs_check_atapi_dma,
-	.exec_command		= ata_exec_command,
-	.dev_select		= ata_std_dev_select,
-	.phy_reset		= qs_phy_reset,
 	.qc_prep		= qs_qc_prep,
 	.qc_issue		= qs_qc_issue,
-	.data_xfer		= ata_data_xfer,
-	.eng_timeout		= qs_eng_timeout,
-	.irq_clear		= qs_irq_clear,
-	.irq_on			= ata_irq_on,
-	.irq_ack		= ata_irq_ack,
+
+	.freeze			= qs_freeze,
+	.thaw			= qs_thaw,
+	.prereset		= qs_prereset,
+	.softreset		= ATA_OP_NULL,
+	.error_handler		= qs_error_handler,
+	.lost_interrupt		= ATA_OP_NULL,
+
 	.scr_read		= qs_scr_read,
 	.scr_write		= qs_scr_write,
+
 	.port_start		= qs_port_start,
 	.host_stop		= qs_host_stop,
-	.bmdma_stop		= qs_bmdma_stop,
-	.bmdma_status		= qs_bmdma_status,
 };
 
 static const struct ata_port_info qs_port_info[] = {
 	/* board_2068_idx */
 	{
-		.flags		= ATA_FLAG_SATA | ATA_FLAG_NO_LEGACY |
-				  ATA_FLAG_SATA_RESET |
-				  //FIXME ATA_FLAG_SRST |
-				  ATA_FLAG_MMIO | ATA_FLAG_PIO_POLLING,
-		.pio_mask	= 0x10, /* pio4 */
-		.udma_mask	= 0x7f, /* udma0-6 */
+		.flags		= ATA_FLAG_SATA | ATA_FLAG_PIO_POLLING,
+		.pio_mask	= ATA_PIO4_ONLY,
+		.udma_mask	= ATA_UDMA6,
 		.port_ops	= &qs_ata_ops,
 	},
 };
@@ -204,25 +185,12 @@ static int qs_check_atapi_dma(struct ata_queued_cmd *qc)
 	return 1;	/* ATAPI DMA not supported */
 }
 
-static void qs_bmdma_stop(struct ata_queued_cmd *qc)
-{
-	/* nothing */
-}
-
-static u8 qs_bmdma_status(struct ata_port *ap)
-{
-	return 0;
-}
-
-static void qs_irq_clear(struct ata_port *ap)
-{
-	/* nothing */
-}
-
 static inline void qs_enter_reg_mode(struct ata_port *ap)
 {
 	u8 __iomem *chan = qs_mmio_base(ap->host) + (ap->port_no * 0x4000);
+	struct qs_port_priv *pp = ap->private_data;
 
+	pp->state = qs_state_mmio;
 	writeb(QS_CTR0_REG, chan + QS_CCT_CTR0);
 	readb(chan + QS_CCT_CTR0);        /* flush */
 }
@@ -236,37 +204,50 @@ static inline void qs_reset_channel_logic(struct ata_port *ap)
 	qs_enter_reg_mode(ap);
 }
 
-static void qs_phy_reset(struct ata_port *ap)
+static void qs_freeze(struct ata_port *ap)
 {
-	struct qs_port_priv *pp = ap->private_data;
+	u8 __iomem *mmio_base = qs_mmio_base(ap->host);
 
-	pp->state = qs_state_idle;
-	qs_reset_channel_logic(ap);
-	sata_phy_reset(ap);
+	writeb(0, mmio_base + QS_HCT_CTRL); /* disable host interrupts */
+	qs_enter_reg_mode(ap);
 }
 
-static void qs_eng_timeout(struct ata_port *ap)
+static void qs_thaw(struct ata_port *ap)
 {
-	struct qs_port_priv *pp = ap->private_data;
+	u8 __iomem *mmio_base = qs_mmio_base(ap->host);
 
-	if (pp->state != qs_state_idle) /* healthy paranoia */
-		pp->state = qs_state_mmio;
-	qs_reset_channel_logic(ap);
-	ata_eng_timeout(ap);
+	qs_enter_reg_mode(ap);
+	writeb(1, mmio_base + QS_HCT_CTRL); /* enable host interrupts */
 }
 
-static u32 qs_scr_read (struct ata_port *ap, unsigned int sc_reg)
+static int qs_prereset(struct ata_link *link, unsigned long deadline)
+{
+	struct ata_port *ap = link->ap;
+
+	qs_reset_channel_logic(ap);
+	return ata_sff_prereset(link, deadline);
+}
+
+static int qs_scr_read(struct ata_link *link, unsigned int sc_reg, u32 *val)
 {
 	if (sc_reg > SCR_CONTROL)
-		return ~0U;
-	return readl(ap->ioaddr.scr_addr + (sc_reg * 8));
+		return -EINVAL;
+	*val = readl(link->ap->ioaddr.scr_addr + (sc_reg * 8));
+	return 0;
 }
 
-static void qs_scr_write (struct ata_port *ap, unsigned int sc_reg, u32 val)
+static void qs_error_handler(struct ata_port *ap)
+{
+	qs_enter_reg_mode(ap);
+	ata_sff_error_handler(ap);
+}
+
+static int qs_scr_write(struct ata_link *link, unsigned int sc_reg, u32 val)
 {
 	if (sc_reg > SCR_CONTROL)
-		return;
-	writel(val, ap->ioaddr.scr_addr + (sc_reg * 8));
+		return -EINVAL;
+	writel(val, link->ap->ioaddr.scr_addr + (sc_reg * 8));
+	return 0;
 }
 
 static unsigned int qs_fill_sg(struct ata_queued_cmd *qc)
@@ -274,14 +255,10 @@ static unsigned int qs_fill_sg(struct ata_queued_cmd *qc)
 	struct scatterlist *sg;
 	struct ata_port *ap = qc->ap;
 	struct qs_port_priv *pp = ap->private_data;
-	unsigned int nelem;
 	u8 *prd = pp->pkt + QS_CPB_BYTES;
+	unsigned int si;
 
-	WARN_ON(qc->__sg == NULL);
-	WARN_ON(qc->n_elem == 0 && qc->pad_len == 0);
-
-	nelem = 0;
-	ata_for_each_sg(sg, qc) {
+	for_each_sg(qc->sg, sg, qc->n_elem, si) {
 		u64 addr;
 		u32 len;
 
@@ -293,12 +270,11 @@ static unsigned int qs_fill_sg(struct ata_queued_cmd *qc)
 		*(__le32 *)prd = cpu_to_le32(len);
 		prd += sizeof(u64);
 
-		VPRINTK("PRD[%u] = (0x%llX, 0x%X)\n", nelem,
+		VPRINTK("PRD[%u] = (0x%llX, 0x%X)\n", si,
 					(unsigned long long)addr, len);
-		nelem++;
 	}
 
-	return nelem;
+	return si;
 }
 
 static void qs_qc_prep(struct ata_queued_cmd *qc)
@@ -312,10 +288,8 @@ static void qs_qc_prep(struct ata_queued_cmd *qc)
 	VPRINTK("ENTER\n");
 
 	qs_enter_reg_mode(qc->ap);
-	if (qc->tf.protocol != ATA_PROT_DMA) {
-		ata_qc_prep(qc);
+	if (qc->tf.protocol != ATA_PROT_DMA)
 		return;
-	}
 
 	nelem = qs_fill_sg(qc);
 
@@ -337,7 +311,7 @@ static void qs_qc_prep(struct ata_queued_cmd *qc)
 	buf[28] = dflags;
 
 	/* frame information structure (FIS) */
-	ata_tf_to_fis(&qc->tf, &buf[32], 0);
+	ata_tf_to_fis(&qc->tf, 0, 1, &buf[32]);
 }
 
 static inline void qs_packet_start(struct ata_queued_cmd *qc)
@@ -359,12 +333,11 @@ static unsigned int qs_qc_issue(struct ata_queued_cmd *qc)
 
 	switch (qc->tf.protocol) {
 	case ATA_PROT_DMA:
-
 		pp->state = qs_state_pkt;
 		qs_packet_start(qc);
 		return 0;
 
-	case ATA_PROT_ATAPI_DMA:
+	case ATAPI_PROT_DMA:
 		BUG();
 		break;
 
@@ -373,7 +346,27 @@ static unsigned int qs_qc_issue(struct ata_queued_cmd *qc)
 	}
 
 	pp->state = qs_state_mmio;
-	return ata_qc_issue_prot(qc);
+	return ata_sff_qc_issue(qc);
+}
+
+static void qs_do_or_die(struct ata_queued_cmd *qc, u8 status)
+{
+	qc->err_mask |= ac_err_mask(status);
+
+	if (!qc->err_mask) {
+		ata_qc_complete(qc);
+	} else {
+		struct ata_port    *ap  = qc->ap;
+		struct ata_eh_info *ehi = &ap->link.eh_info;
+
+		ata_ehi_clear_desc(ehi);
+		ata_ehi_push_desc(ehi, "status 0x%02X", status);
+
+		if (qc->err_mask == AC_ERR_DEV)
+			ata_port_abort(ap);
+		else
+			ata_port_freeze(ap);
+	}
 }
 
 static inline unsigned int qs_intr_pkt(struct ata_host *host)
@@ -393,28 +386,24 @@ static inline unsigned int qs_intr_pkt(struct ata_host *host)
 			u8 sHST = sff1 & 0x3f;	/* host status */
 			unsigned int port_no = (sff1 >> 8) & 0x03;
 			struct ata_port *ap = host->ports[port_no];
+			struct qs_port_priv *pp = ap->private_data;
+			struct ata_queued_cmd *qc;
 
 			DPRINTK("SFF=%08x%08x: sCHAN=%u sHST=%d sDST=%02x\n",
 					sff1, sff0, port_no, sHST, sDST);
 			handled = 1;
-			if (ap && !(ap->flags & ATA_FLAG_DISABLED)) {
-				struct ata_queued_cmd *qc;
-				struct qs_port_priv *pp = ap->private_data;
-				if (!pp || pp->state != qs_state_pkt)
-					continue;
-				qc = ata_qc_from_tag(ap, ap->active_tag);
-				if (qc && (!(qc->tf.flags & ATA_TFLAG_POLLING))) {
-					switch (sHST) {
-					case 0: /* successful CPB */
-					case 3: /* device error */
-						pp->state = qs_state_idle;
-						qs_enter_reg_mode(qc->ap);
-						qc->err_mask |= ac_err_mask(sDST);
-						ata_qc_complete(qc);
-						break;
-					default:
-						break;
-					}
+			if (!pp || pp->state != qs_state_pkt)
+				continue;
+			qc = ata_qc_from_tag(ap, ap->link.active_tag);
+			if (qc && (!(qc->tf.flags & ATA_TFLAG_POLLING))) {
+				switch (sHST) {
+				case 0: /* successful CPB */
+				case 3: /* device error */
+					qs_enter_reg_mode(qc->ap);
+					qs_do_or_die(qc, sDST);
+					break;
+				default:
+					break;
 				}
 			}
 		}
@@ -427,31 +416,30 @@ static inline unsigned int qs_intr_mmio(struct ata_host *host)
 	unsigned int handled = 0, port_no;
 
 	for (port_no = 0; port_no < host->n_ports; ++port_no) {
-		struct ata_port *ap;
-		ap = host->ports[port_no];
-		if (ap &&
-		    !(ap->flags & ATA_FLAG_DISABLED)) {
-			struct ata_queued_cmd *qc;
-			struct qs_port_priv *pp = ap->private_data;
-			if (!pp || pp->state != qs_state_mmio)
-				continue;
-			qc = ata_qc_from_tag(ap, ap->active_tag);
-			if (qc && (!(qc->tf.flags & ATA_TFLAG_POLLING))) {
+		struct ata_port *ap = host->ports[port_no];
+		struct qs_port_priv *pp = ap->private_data;
+		struct ata_queued_cmd *qc;
 
-				/* check main status, clearing INTRQ */
-				u8 status = ata_check_status(ap);
-				if ((status & ATA_BUSY))
-					continue;
-				DPRINTK("ata%u: protocol %d (dev_stat 0x%X)\n",
-					ap->print_id, qc->tf.protocol, status);
-
-				/* complete taskfile transaction */
-				pp->state = qs_state_idle;
-				qc->err_mask |= ac_err_mask(status);
-				ata_qc_complete(qc);
-				handled = 1;
-			}
+		qc = ata_qc_from_tag(ap, ap->link.active_tag);
+		if (!qc) {
+			/*
+			 * The qstor hardware generates spurious
+			 * interrupts from time to time when switching
+			 * in and out of packet mode.  There's no
+			 * obvious way to know if we're here now due
+			 * to that, so just ack the irq and pretend we
+			 * knew it was ours.. (ugh).  This does not
+			 * affect packet mode.
+			 */
+			ata_sff_check_status(ap);
+			handled = 1;
+			continue;
 		}
+
+		if (!pp || pp->state != qs_state_mmio)
+			continue;
+		if (!(qc->tf.flags & ATA_TFLAG_POLLING))
+			handled |= ata_sff_port_intr(ap, qc);
 	}
 	return handled;
 }
@@ -460,12 +448,13 @@ static irqreturn_t qs_intr(int irq, void *dev_instance)
 {
 	struct ata_host *host = dev_instance;
 	unsigned int handled = 0;
+	unsigned long flags;
 
 	VPRINTK("ENTER\n");
 
-	spin_lock(&host->lock);
+	spin_lock_irqsave(&host->lock, flags);
 	handled  = qs_intr_pkt(host) | qs_intr_mmio(host);
-	spin_unlock(&host->lock);
+	spin_unlock_irqrestore(&host->lock, flags);
 
 	VPRINTK("EXIT\n");
 
@@ -497,12 +486,7 @@ static int qs_port_start(struct ata_port *ap)
 	void __iomem *mmio_base = qs_mmio_base(ap->host);
 	void __iomem *chan = mmio_base + (ap->port_no * 0x4000);
 	u64 addr;
-	int rc;
 
-	rc = ata_port_start(ap);
-	if (rc)
-		return rc;
-	qs_enter_reg_mode(ap);
 	pp = devm_kzalloc(dev, sizeof(*pp), GFP_KERNEL);
 	if (!pp)
 		return -ENOMEM;
@@ -513,6 +497,7 @@ static int qs_port_start(struct ata_port *ap)
 	memset(pp->pkt, 0, QS_PKT_BYTES);
 	ap->private_data = pp;
 
+	qs_enter_reg_mode(ap);
 	addr = (u64)pp->pkt_dma;
 	writel((u32) addr,        chan + QS_CCF_CPBA);
 	writel((u32)(addr >> 32), chan + QS_CCF_CPBA + 4);
@@ -573,10 +558,10 @@ static int qs_set_dma_masks(struct pci_dev *pdev, void __iomem *mmio_base)
 	int rc, have_64bit_bus = (bus_info & QS_HPHY_64BIT);
 
 	if (have_64bit_bus &&
-	    !pci_set_dma_mask(pdev, DMA_64BIT_MASK)) {
-		rc = pci_set_consistent_dma_mask(pdev, DMA_64BIT_MASK);
+	    !pci_set_dma_mask(pdev, DMA_BIT_MASK(64))) {
+		rc = pci_set_consistent_dma_mask(pdev, DMA_BIT_MASK(64));
 		if (rc) {
-			rc = pci_set_consistent_dma_mask(pdev, DMA_32BIT_MASK);
+			rc = pci_set_consistent_dma_mask(pdev, DMA_BIT_MASK(32));
 			if (rc) {
 				dev_printk(KERN_ERR, &pdev->dev,
 					   "64-bit DMA enable failed\n");
@@ -584,13 +569,13 @@ static int qs_set_dma_masks(struct pci_dev *pdev, void __iomem *mmio_base)
 			}
 		}
 	} else {
-		rc = pci_set_dma_mask(pdev, DMA_32BIT_MASK);
+		rc = pci_set_dma_mask(pdev, DMA_BIT_MASK(32));
 		if (rc) {
 			dev_printk(KERN_ERR, &pdev->dev,
 				"32-bit DMA enable failed\n");
 			return rc;
 		}
-		rc = pci_set_consistent_dma_mask(pdev, DMA_32BIT_MASK);
+		rc = pci_set_consistent_dma_mask(pdev, DMA_BIT_MASK(32));
 		if (rc) {
 			dev_printk(KERN_ERR, &pdev->dev,
 				"32-bit consistent DMA enable failed\n");
@@ -635,9 +620,14 @@ static int qs_ata_init_one(struct pci_dev *pdev,
 		return rc;
 
 	for (port_no = 0; port_no < host->n_ports; ++port_no) {
-		void __iomem *chan =
-			host->iomap[QS_MMIO_BAR] + (port_no * 0x4000);
-		qs_ata_setup_port(&host->ports[port_no]->ioaddr, chan);
+		struct ata_port *ap = host->ports[port_no];
+		unsigned int offset = port_no * 0x4000;
+		void __iomem *chan = host->iomap[QS_MMIO_BAR] + offset;
+
+		qs_ata_setup_port(&ap->ioaddr, chan);
+
+		ata_port_pbar_desc(ap, QS_MMIO_BAR, -1, "mmio");
+		ata_port_pbar_desc(ap, QS_MMIO_BAR, offset, "port");
 	}
 
 	/* initialize adapter */

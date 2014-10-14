@@ -23,11 +23,13 @@
 
 /* #define DEBUG */
 
-#define debug(format, arg...) pr_debug("ff-core: " format "\n", ## arg)
+#define pr_fmt(fmt) KBUILD_BASENAME ": " fmt
 
 #include <linux/input.h>
 #include <linux/module.h>
 #include <linux/mutex.h>
+#include <linux/sched.h>
+#include <linux/slab.h>
 
 /*
  * Check that the effect_id is a valid effect and whether the user
@@ -114,7 +116,7 @@ int input_ff_upload(struct input_dev *dev, struct ff_effect *effect,
 
 	if (effect->type < FF_EFFECT_MIN || effect->type > FF_EFFECT_MAX ||
 	    !test_bit(effect->type, dev->ffbit)) {
-		debug("invalid or not supported effect type in upload");
+		pr_debug("invalid or not supported effect type in upload\n");
 		return -EINVAL;
 	}
 
@@ -122,7 +124,7 @@ int input_ff_upload(struct input_dev *dev, struct ff_effect *effect,
 	    (effect->u.periodic.waveform < FF_WAVEFORM_MIN ||
 	     effect->u.periodic.waveform > FF_WAVEFORM_MAX ||
 	     !test_bit(effect->u.periodic.waveform, dev->ffbit))) {
-		debug("invalid or not supported wave form in upload");
+		pr_debug("invalid or not supported wave form in upload\n");
 		return -EINVAL;
 	}
 
@@ -166,8 +168,10 @@ int input_ff_upload(struct input_dev *dev, struct ff_effect *effect,
 	if (ret)
 		goto out;
 
+	spin_lock_irq(&dev->event_lock);
 	ff->effects[id] = *effect;
 	ff->effect_owners[id] = file;
+	spin_unlock_irq(&dev->event_lock);
 
  out:
 	mutex_unlock(&ff->mutex);
@@ -189,15 +193,21 @@ static int erase_effect(struct input_dev *dev, int effect_id,
 	if (error)
 		return error;
 
+	spin_lock_irq(&dev->event_lock);
 	ff->playback(dev, effect_id, 0);
+	ff->effect_owners[effect_id] = NULL;
+	spin_unlock_irq(&dev->event_lock);
 
 	if (ff->erase) {
 		error = ff->erase(dev, effect_id);
-		if (error)
-			return error;
-	}
+		if (error) {
+			spin_lock_irq(&dev->event_lock);
+			ff->effect_owners[effect_id] = file;
+			spin_unlock_irq(&dev->event_lock);
 
-	ff->effect_owners[effect_id] = NULL;
+			return error;
+		}
+	}
 
 	return 0;
 }
@@ -236,7 +246,7 @@ static int flush_effects(struct input_dev *dev, struct file *file)
 	struct ff_device *ff = dev->ff;
 	int i;
 
-	debug("flushing now");
+	pr_debug("flushing now\n");
 
 	mutex_lock(&ff->mutex);
 
@@ -263,8 +273,6 @@ int input_ff_event(struct input_dev *dev, unsigned int type,
 	if (type != EV_FF)
 		return 0;
 
-	mutex_lock(&ff->mutex);
-
 	switch (code) {
 	case FF_GAIN:
 		if (!test_bit(FF_GAIN, dev->ffbit) || value > 0xffff)
@@ -286,7 +294,6 @@ int input_ff_event(struct input_dev *dev, unsigned int type,
 		break;
 	}
 
-	mutex_unlock(&ff->mutex);
 	return 0;
 }
 EXPORT_SYMBOL_GPL(input_ff_event);
@@ -308,8 +315,7 @@ int input_ff_create(struct input_dev *dev, int max_effects)
 	int i;
 
 	if (!max_effects) {
-		printk(KERN_ERR
-		       "ff-core: cannot allocate device without any effects\n");
+		pr_err("cannot allocate device without any effects\n");
 		return -EINVAL;
 	}
 
@@ -331,23 +337,23 @@ int input_ff_create(struct input_dev *dev, int max_effects)
 	dev->ff = ff;
 	dev->flush = flush_effects;
 	dev->event = input_ff_event;
-	set_bit(EV_FF, dev->evbit);
+	__set_bit(EV_FF, dev->evbit);
 
 	/* Copy "true" bits into ff device bitmap */
 	for (i = 0; i <= FF_MAX; i++)
 		if (test_bit(i, dev->ffbit))
-			set_bit(i, ff->ffbit);
+			__set_bit(i, ff->ffbit);
 
 	/* we can emulate RUMBLE with periodic effects */
 	if (test_bit(FF_PERIODIC, ff->ffbit))
-		set_bit(FF_RUMBLE, dev->ffbit);
+		__set_bit(FF_RUMBLE, dev->ffbit);
 
 	return 0;
 }
 EXPORT_SYMBOL_GPL(input_ff_create);
 
 /**
- * input_ff_free() - frees force feedback portion of input device
+ * input_ff_destroy() - frees force feedback portion of input device
  * @dev: input device supporting force feedback
  *
  * This function is only needed in error path as input core will
@@ -356,12 +362,15 @@ EXPORT_SYMBOL_GPL(input_ff_create);
  */
 void input_ff_destroy(struct input_dev *dev)
 {
-	clear_bit(EV_FF, dev->evbit);
-	if (dev->ff) {
-		if (dev->ff->destroy)
-			dev->ff->destroy(dev->ff);
-		kfree(dev->ff->private);
-		kfree(dev->ff);
+	struct ff_device *ff = dev->ff;
+
+	__clear_bit(EV_FF, dev->evbit);
+	if (ff) {
+		if (ff->destroy)
+			ff->destroy(ff);
+		kfree(ff->private);
+		kfree(ff->effects);
+		kfree(ff);
 		dev->ff = NULL;
 	}
 }

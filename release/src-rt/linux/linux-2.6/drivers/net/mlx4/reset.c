@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2006, 2007 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007, 2008 Mellanox Technologies. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
@@ -30,7 +31,6 @@
  * SOFTWARE.
  */
 
-#include <linux/init.h>
 #include <linux/errno.h>
 #include <linux/pci.h>
 #include <linux/delay.h>
@@ -118,6 +118,9 @@ int mlx4_reset(struct mlx4_dev *dev)
 	/* actually hit reset */
 	writel(MLX4_RESET_VALUE, reset + MLX4_RESET_OFFSET);
 	iounmap(reset);
+
+	/* Docs say to wait one second before accessing device */
+	msleep(1000);
 
 	end = jiffies + MLX4_RESET_TIMEOUT_JIFFIES;
 	do {

@@ -36,7 +36,6 @@
 
 #include <linux/kernel.h>
 #include <linux/module.h>
-#include <linux/moduleparam.h>
 #include <linux/init.h>
 #include <linux/delay.h>
 #include <linux/string.h>
@@ -45,7 +44,6 @@
 
 #include "dvb_math.h"
 #include "dvb_frontend.h"
-#include "dvb-pll.h"
 #include "or51132.h"
 
 static int debug;
@@ -93,7 +91,7 @@ static int or51132_writebuf(struct or51132_state *state, const u8 *buf, int len)
    Less code and more efficient that loading a buffer on the stack with
    the bytes to send and then calling or51132_writebuf() on that. */
 #define or51132_writebytes(state, data...)  \
-	({ const static u8 _data[] = {data}; \
+	({ static const u8 _data[] = {data}; \
 	or51132_writebuf(state, _data, sizeof(_data)); })
 
 /* Read data from demod into buffer.  Returns 0 on success. */
@@ -128,13 +126,13 @@ static int or51132_readreg(struct or51132_state *state, u8 reg)
 		       reg, err);
 		return -EREMOTEIO;
 	}
-	return le16_to_cpup((u16*)buf);
+	return buf[0] | (buf[1] << 8);
 }
 
 static int or51132_load_firmware (struct dvb_frontend* fe, const struct firmware *fw)
 {
 	struct or51132_state* state = fe->demodulator_priv;
-	const static u8 run_buf[] = {0x7F,0x01};
+	static const u8 run_buf[] = {0x7F,0x01};
 	u8 rec_buf[8];
 	u32 firmwareAsize, firmwareBsize;
 	int i,ret;
@@ -142,9 +140,9 @@ static int or51132_load_firmware (struct dvb_frontend* fe, const struct firmware
 	dprintk("Firmware is %Zd bytes\n",fw->size);
 
 	/* Get size of firmware A and B */
-	firmwareAsize = le32_to_cpu(*((u32*)fw->data));
+	firmwareAsize = le32_to_cpu(*((__le32*)fw->data));
 	dprintk("FirmwareA is %i bytes\n",firmwareAsize);
-	firmwareBsize = le32_to_cpu(*((u32*)(fw->data+4)));
+	firmwareBsize = le32_to_cpu(*((__le32*)(fw->data+4)));
 	dprintk("FirmwareB is %i bytes\n",firmwareBsize);
 
 	/* Upload firmware */
@@ -342,7 +340,7 @@ static int or51132_set_parameters(struct dvb_frontend* fe,
 		}
 		printk("or51132: Waiting for firmware upload(%s)...\n",
 		       fwname);
-		ret = request_firmware(&fw, fwname, &state->i2c->dev);
+		ret = request_firmware(&fw, fwname, state->i2c->dev.parent);
 		if (ret) {
 			printk(KERN_WARNING "or51132: No firmware up"
 			       "loaded(timeout or file not found?)\n");
@@ -421,7 +419,7 @@ static int or51132_read_status(struct dvb_frontend* fe, fe_status_t* status)
 		*status = 0;
 		return -EREMOTEIO;
 	}
-	dprintk("%s: read_status %04x\n", __FUNCTION__, reg);
+	dprintk("%s: read_status %04x\n", __func__, reg);
 
 	if (reg & 0x0100) /* Receiver Lock */
 		*status = FE_HAS_SIGNAL|FE_HAS_CARRIER|FE_HAS_VITERBI|
@@ -506,14 +504,14 @@ start:
 		if (retry--) goto start;
 		return -EREMOTEIO;
 	}
-	dprintk("%s: modulation %02x, NTSC rej O%s\n", __FUNCTION__,
+	dprintk("%s: modulation %02x, NTSC rej O%s\n", __func__,
 		reg&0xff, reg&0x1000?"n":"ff");
 
 	/* Calculate SNR using noise, c, and NTSC rejection correction */
 	state->snr = calculate_snr(noise, c) - usK;
 	*snr = (state->snr) >> 16;
 
-	dprintk("%s: noise = 0x%08x, snr = %d.%02d dB\n", __FUNCTION__, noise,
+	dprintk("%s: noise = 0x%08x, snr = %d.%02d dB\n", __func__, noise,
 		state->snr >> 24, (((state->snr>>8) & 0xffff) * 100) >> 16);
 
 	return 0;
@@ -564,9 +562,9 @@ struct dvb_frontend* or51132_attach(const struct or51132_config* config,
 	struct or51132_state* state = NULL;
 
 	/* Allocate memory for the internal state */
-	state = kmalloc(sizeof(struct or51132_state), GFP_KERNEL);
+	state = kzalloc(sizeof(struct or51132_state), GFP_KERNEL);
 	if (state == NULL)
-		goto error;
+		return NULL;
 
 	/* Setup the state */
 	state->config = config;
@@ -578,10 +576,6 @@ struct dvb_frontend* or51132_attach(const struct or51132_config* config,
 	memcpy(&state->frontend.ops, &or51132_ops, sizeof(struct dvb_frontend_ops));
 	state->frontend.demodulator_priv = state;
 	return &state->frontend;
-
-error:
-	kfree(state);
-	return NULL;
 }
 
 static struct dvb_frontend_ops or51132_ops = {

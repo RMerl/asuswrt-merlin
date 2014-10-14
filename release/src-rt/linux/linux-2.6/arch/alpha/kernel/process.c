@@ -17,10 +17,7 @@
 #include <linux/stddef.h>
 #include <linux/unistd.h>
 #include <linux/ptrace.h>
-#include <linux/slab.h>
 #include <linux/user.h>
-#include <linux/a.out.h>
-#include <linux/utsname.h>
 #include <linux/time.h>
 #include <linux/major.h>
 #include <linux/stat.h>
@@ -30,6 +27,7 @@
 #include <linux/reboot.h>
 #include <linux/tty.h>
 #include <linux/console.h>
+#include <linux/slab.h>
 
 #include <asm/reg.h>
 #include <asm/uaccess.h>
@@ -94,7 +92,8 @@ common_shutdown_1(void *generic_ptr)
 	if (cpuid != boot_cpuid) {
 		flags |= 0x00040000UL; /* "remain halted" */
 		*pflags = flags;
-		cpu_clear(cpuid, cpu_present_map);
+		set_cpu_present(cpuid, false);
+		set_cpu_possible(cpuid, false);
 		halt();
 	}
 #endif
@@ -120,7 +119,8 @@ common_shutdown_1(void *generic_ptr)
 
 #ifdef CONFIG_SMP
 	/* Wait for the secondaries to halt. */
-	cpu_clear(boot_cpuid, cpu_present_map);
+	set_cpu_present(boot_cpuid, false);
+	set_cpu_possible(boot_cpuid, false);
 	while (cpus_weight(cpu_present_map))
 		barrier();
 #endif
@@ -161,7 +161,7 @@ common_shutdown(int mode, char *restart_cmd)
 	struct halt_info args;
 	args.mode = mode;
 	args.restart_cmd = restart_cmd;
-	on_each_cpu(common_shutdown_1, &args, 1, 0);
+	on_each_cpu(common_shutdown_1, &args, 0);
 }
 
 void
@@ -271,7 +271,7 @@ alpha_vfork(struct pt_regs *regs)
  */
 
 int
-copy_thread(int nr, unsigned long clone_flags, unsigned long usp,
+copy_thread(unsigned long clone_flags, unsigned long usp,
 	    unsigned long unused,
 	    struct task_struct * p, struct pt_regs * regs)
 {
@@ -318,68 +318,6 @@ copy_thread(int nr, unsigned long clone_flags, unsigned long usp,
 }
 
 /*
- * Fill in the user structure for an ECOFF core dump.
- */
-void
-dump_thread(struct pt_regs * pt, struct user * dump)
-{
-	/* switch stack follows right below pt_regs: */
-	struct switch_stack * sw = ((struct switch_stack *) pt) - 1;
-
-	dump->magic = CMAGIC;
-	dump->start_code  = current->mm->start_code;
-	dump->start_data  = current->mm->start_data;
-	dump->start_stack = rdusp() & ~(PAGE_SIZE - 1);
-	dump->u_tsize = ((current->mm->end_code - dump->start_code)
-			 >> PAGE_SHIFT);
-	dump->u_dsize = ((current->mm->brk + PAGE_SIZE-1 - dump->start_data)
-			 >> PAGE_SHIFT);
-	dump->u_ssize = (current->mm->start_stack - dump->start_stack
-			 + PAGE_SIZE-1) >> PAGE_SHIFT;
-
-	/*
-	 * We store the registers in an order/format that is
-	 * compatible with DEC Unix/OSF/1 as this makes life easier
-	 * for gdb.
-	 */
-	dump->regs[EF_V0]  = pt->r0;
-	dump->regs[EF_T0]  = pt->r1;
-	dump->regs[EF_T1]  = pt->r2;
-	dump->regs[EF_T2]  = pt->r3;
-	dump->regs[EF_T3]  = pt->r4;
-	dump->regs[EF_T4]  = pt->r5;
-	dump->regs[EF_T5]  = pt->r6;
-	dump->regs[EF_T6]  = pt->r7;
-	dump->regs[EF_T7]  = pt->r8;
-	dump->regs[EF_S0]  = sw->r9;
-	dump->regs[EF_S1]  = sw->r10;
-	dump->regs[EF_S2]  = sw->r11;
-	dump->regs[EF_S3]  = sw->r12;
-	dump->regs[EF_S4]  = sw->r13;
-	dump->regs[EF_S5]  = sw->r14;
-	dump->regs[EF_S6]  = sw->r15;
-	dump->regs[EF_A3]  = pt->r19;
-	dump->regs[EF_A4]  = pt->r20;
-	dump->regs[EF_A5]  = pt->r21;
-	dump->regs[EF_T8]  = pt->r22;
-	dump->regs[EF_T9]  = pt->r23;
-	dump->regs[EF_T10] = pt->r24;
-	dump->regs[EF_T11] = pt->r25;
-	dump->regs[EF_RA]  = pt->r26;
-	dump->regs[EF_T12] = pt->r27;
-	dump->regs[EF_AT]  = pt->r28;
-	dump->regs[EF_SP]  = rdusp();
-	dump->regs[EF_PS]  = pt->ps;
-	dump->regs[EF_PC]  = pt->pc;
-	dump->regs[EF_GP]  = pt->gp;
-	dump->regs[EF_A0]  = pt->r16;
-	dump->regs[EF_A1]  = pt->r17;
-	dump->regs[EF_A2]  = pt->r18;
-	memcpy((char *)dump->regs + EF_SIZE, sw->fp, 32 * 8);
-}
-EXPORT_SYMBOL(dump_thread);
-
-/*
  * Fill in the user structure for a ELF core dump.
  */
 void
@@ -418,7 +356,7 @@ dump_elf_thread(elf_greg_t *dest, struct pt_regs *pt, struct thread_info *ti)
 	dest[27] = pt->r27;
 	dest[28] = pt->r28;
 	dest[29] = pt->gp;
-	dest[30] = rdusp();
+	dest[30] = ti == current_thread_info() ? rdusp() : ti->pcb.usp;
 	dest[31] = pt->pc;
 
 	/* Once upon a time this was the PS value.  Which is stupid
@@ -449,8 +387,9 @@ EXPORT_SYMBOL(dump_elf_task_fp);
  * sys_execve() executes a new program.
  */
 asmlinkage int
-do_sys_execve(char __user *ufilename, char __user * __user *argv,
-	      char __user * __user *envp, struct pt_regs *regs)
+do_sys_execve(const char __user *ufilename,
+	      const char __user *const __user *argv,
+	      const char __user *const __user *envp, struct pt_regs *regs)
 {
 	int error;
 	char *filename;

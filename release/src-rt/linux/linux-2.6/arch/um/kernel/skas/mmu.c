@@ -1,20 +1,14 @@
-/* 
- * Copyright (C) 2002 Jeff Dike (jdike@karaya.com)
+/*
+ * Copyright (C) 2002 - 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
  * Licensed under the GPL
  */
 
-#include "linux/sched.h"
-#include "linux/list.h"
-#include "linux/spinlock.h"
-#include "linux/slab.h"
-#include "linux/errno.h"
 #include "linux/mm.h"
-#include "asm/current.h"
-#include "asm/segment.h"
-#include "asm/mmu.h"
+#include "linux/sched.h"
+#include "linux/slab.h"
 #include "asm/pgalloc.h"
 #include "asm/pgtable.h"
-#include "asm/ldt.h"
+#include "as-layout.h"
 #include "os.h"
 #include "skas.h"
 
@@ -37,122 +31,162 @@ static int init_stub_pte(struct mm_struct *mm, unsigned long proc,
 	if (!pmd)
 		goto out_pmd;
 
-	pte = pte_alloc_map(mm, pmd, proc);
+	pte = pte_alloc_map(mm, NULL, pmd, proc);
 	if (!pte)
 		goto out_pte;
 
-	/* There's an interaction between the skas0 stub pages, stack
-	 * randomization, and the BUG at the end of exit_mmap.  exit_mmap
-         * checks that the number of page tables freed is the same as had
-         * been allocated.  If the stack is on the last page table page,
-	 * then the stack pte page will be freed, and if not, it won't.  To
-	 * avoid having to know where the stack is, or if the process mapped
-	 * something at the top of its address space for some other reason,
-	 * we set TASK_SIZE to end at the start of the last page table.
-	 * This keeps exit_mmap off the last page, but introduces a leak
-	 * of that page.  So, we hang onto it here and free it in
-	 * destroy_context_skas.
-	 */
-
-        mm->context.skas.last_page_table = pmd_page_vaddr(*pmd);
-#ifdef CONFIG_3_LEVEL_PGTABLES
-        mm->context.skas.last_pmd = (unsigned long) __va(pud_val(*pud));
-#endif
-
 	*pte = mk_pte(virt_to_page(kernel), __pgprot(_PAGE_PRESENT));
 	*pte = pte_mkread(*pte);
-	return(0);
+	return 0;
 
- out_pmd:
-	pud_free(pud);
  out_pte:
-	pmd_free(pmd);
+	pmd_free(mm, pmd);
+ out_pmd:
+	pud_free(mm, pud);
  out:
-	return(-ENOMEM);
+	return -ENOMEM;
 }
 
-int init_new_context_skas(struct task_struct *task, struct mm_struct *mm)
+int init_new_context(struct task_struct *task, struct mm_struct *mm)
 {
- 	struct mmu_context_skas *from_mm = NULL;
-	struct mmu_context_skas *to_mm = &mm->context.skas;
+ 	struct mm_context *from_mm = NULL;
+	struct mm_context *to_mm = &mm->context;
 	unsigned long stack = 0;
 	int ret = -ENOMEM;
 
-	if(skas_needs_stub){
+	if (skas_needs_stub) {
 		stack = get_zeroed_page(GFP_KERNEL);
-		if(stack == 0)
+		if (stack == 0)
 			goto out;
-
-		/* This zeros the entry that pgd_alloc didn't, needed since
-		 * we are about to reinitialize it, and want mm.nr_ptes to
-		 * be accurate.
-		 */
-		mm->pgd[USER_PTRS_PER_PGD] = __pgd(0);
-
-		ret = init_stub_pte(mm, CONFIG_STUB_CODE,
-				    (unsigned long) &__syscall_stub_start);
-		if(ret)
-			goto out_free;
-
-		ret = init_stub_pte(mm, CONFIG_STUB_DATA, stack);
-		if(ret)
-			goto out_free;
-
-		mm->nr_ptes--;
 	}
 
 	to_mm->id.stack = stack;
-	if(current->mm != NULL && current->mm != &init_mm)
-		from_mm = &current->mm->context.skas;
+	if (current->mm != NULL && current->mm != &init_mm)
+		from_mm = &current->mm->context;
 
-	if(proc_mm){
+	if (proc_mm) {
 		ret = new_mm(stack);
-		if(ret < 0){
-			printk("init_new_context_skas - new_mm failed, "
-			       "errno = %d\n", ret);
+		if (ret < 0) {
+			printk(KERN_ERR "init_new_context_skas - "
+			       "new_mm failed, errno = %d\n", ret);
 			goto out_free;
 		}
 		to_mm->id.u.mm_fd = ret;
 	}
 	else {
-		if(from_mm)
+		if (from_mm)
 			to_mm->id.u.pid = copy_context_skas0(stack,
 							     from_mm->id.u.pid);
 		else to_mm->id.u.pid = start_userspace(stack);
+
+		if (to_mm->id.u.pid < 0) {
+			ret = to_mm->id.u.pid;
+			goto out_free;
+		}
 	}
 
 	ret = init_new_ldt(to_mm, from_mm);
-	if(ret < 0){
-		printk("init_new_context_skas - init_ldt"
+	if (ret < 0) {
+		printk(KERN_ERR "init_new_context_skas - init_ldt"
 		       " failed, errno = %d\n", ret);
 		goto out_free;
 	}
 
+	to_mm->stub_pages = NULL;
+
 	return 0;
 
  out_free:
-	if(to_mm->id.stack != 0)
+	if (to_mm->id.stack != 0)
 		free_page(to_mm->id.stack);
  out:
 	return ret;
 }
 
-void destroy_context_skas(struct mm_struct *mm)
+void arch_dup_mmap(struct mm_struct *oldmm, struct mm_struct *mm)
 {
-	struct mmu_context_skas *mmu = &mm->context.skas;
+	struct page **pages;
+	int err, ret;
 
-	if(proc_mm)
-		os_close_file(mmu->id.u.mm_fd);
-	else
-		os_kill_ptraced_process(mmu->id.u.pid, 1);
+	if (!skas_needs_stub)
+		return;
 
-	if(!proc_mm || !ptrace_faultinfo){
-		free_page(mmu->id.stack);
-		pte_lock_deinit(virt_to_page(mmu->last_page_table));
-		pte_free_kernel((pte_t *) mmu->last_page_table);
-		dec_zone_page_state(virt_to_page(mmu->last_page_table), NR_PAGETABLE);
-#ifdef CONFIG_3_LEVEL_PGTABLES
-		pmd_free((pmd_t *) mmu->last_pmd);
-#endif
+	ret = init_stub_pte(mm, STUB_CODE,
+			    (unsigned long) &__syscall_stub_start);
+	if (ret)
+		goto out;
+
+	ret = init_stub_pte(mm, STUB_DATA, mm->context.id.stack);
+	if (ret)
+		goto out;
+
+	pages = kmalloc(2 * sizeof(struct page *), GFP_KERNEL);
+	if (pages == NULL) {
+		printk(KERN_ERR "arch_dup_mmap failed to allocate 2 page "
+		       "pointers\n");
+		goto out;
 	}
+
+	pages[0] = virt_to_page(&__syscall_stub_start);
+	pages[1] = virt_to_page(mm->context.id.stack);
+	mm->context.stub_pages = pages;
+
+	/* dup_mmap already holds mmap_sem */
+	err = install_special_mapping(mm, STUB_START, STUB_END - STUB_START,
+				      VM_READ | VM_MAYREAD | VM_EXEC |
+				      VM_MAYEXEC | VM_DONTCOPY, pages);
+	if (err) {
+		printk(KERN_ERR "install_special_mapping returned %d\n", err);
+		goto out_free;
+	}
+	return;
+
+out_free:
+	kfree(pages);
+out:
+	force_sigsegv(SIGSEGV, current);
+}
+
+void arch_exit_mmap(struct mm_struct *mm)
+{
+	pte_t *pte;
+
+	if (mm->context.stub_pages != NULL)
+		kfree(mm->context.stub_pages);
+	pte = virt_to_pte(mm, STUB_CODE);
+	if (pte != NULL)
+		pte_clear(mm, STUB_CODE, pte);
+
+	pte = virt_to_pte(mm, STUB_DATA);
+	if (pte == NULL)
+		return;
+
+	pte_clear(mm, STUB_DATA, pte);
+}
+
+void destroy_context(struct mm_struct *mm)
+{
+	struct mm_context *mmu = &mm->context;
+
+	if (proc_mm)
+		os_close_file(mmu->id.u.mm_fd);
+	else {
+		/*
+		 * If init_new_context wasn't called, this will be
+		 * zero, resulting in a kill(0), which will result in the
+		 * whole UML suddenly dying.  Also, cover negative and
+		 * 1 cases, since they shouldn't happen either.
+		 */
+		if (mmu->id.u.pid < 2) {
+			printk(KERN_ERR "corrupt mm_context - pid = %d\n",
+			       mmu->id.u.pid);
+			return;
+		}
+		os_kill_ptraced_process(mmu->id.u.pid, 1);
+	}
+
+	if (skas_needs_stub)
+		free_page(mmu->id.stack);
+
+	free_ldt(mmu);
 }

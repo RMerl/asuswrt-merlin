@@ -20,24 +20,18 @@
 /* This header is used to share core functionality between the
    standalone connection tracking module, and the compatibility layer's use
    of connection tracking. */
-extern unsigned int nf_conntrack_in(int pf,
+extern unsigned int nf_conntrack_in(struct net *net,
+				    u_int8_t pf,
 				    unsigned int hooknum,
-				    struct sk_buff **pskb);
+				    struct sk_buff *skb);
 
-extern int nf_conntrack_init(void);
-extern void nf_conntrack_cleanup(void);
+extern int nf_conntrack_init(struct net *net);
+extern void nf_conntrack_cleanup(struct net *net);
 
 extern int nf_conntrack_proto_init(void);
 extern void nf_conntrack_proto_fini(void);
 
-struct nf_conntrack_l3proto;
-extern struct nf_conntrack_l3proto *nf_ct_find_l3proto(u_int16_t pf);
-/* Like above, but you already have conntrack read lock. */
-extern struct nf_conntrack_l3proto *__nf_ct_find_l3proto(u_int16_t l3proto);
-
-struct nf_conntrack_l4proto;
-
-extern int
+extern bool
 nf_ct_get_tuple(const struct sk_buff *skb,
 		unsigned int nhoff,
 		unsigned int dataoff,
@@ -47,7 +41,7 @@ nf_ct_get_tuple(const struct sk_buff *skb,
 		const struct nf_conntrack_l3proto *l3proto,
 		const struct nf_conntrack_l4proto *l4proto);
 
-extern int
+extern bool
 nf_ct_invert_tuple(struct nf_conntrack_tuple *inverse,
 		   const struct nf_conntrack_tuple *orig,
 		   const struct nf_conntrack_l3proto *l3proto,
@@ -55,36 +49,31 @@ nf_ct_invert_tuple(struct nf_conntrack_tuple *inverse,
 
 /* Find a connection corresponding to a tuple. */
 extern struct nf_conntrack_tuple_hash *
-nf_conntrack_find_get(const struct nf_conntrack_tuple *tuple,
-		      const struct nf_conn *ignored_conntrack);
+nf_conntrack_find_get(struct net *net, u16 zone,
+		      const struct nf_conntrack_tuple *tuple);
 
-extern int __nf_conntrack_confirm(struct sk_buff **pskb);
+extern int __nf_conntrack_confirm(struct sk_buff *skb);
 
 /* Confirm a connection: returns NF_DROP if packet must be dropped. */
-static inline int nf_conntrack_confirm(struct sk_buff **pskb)
+static inline int nf_conntrack_confirm(struct sk_buff *skb)
 {
-	struct nf_conn *ct = (struct nf_conn *)(*pskb)->nfct;
+	struct nf_conn *ct = (struct nf_conn *)skb->nfct;
 	int ret = NF_ACCEPT;
 
-	if (ct && ct != &nf_conntrack_untracked) {
+	if (ct && !nf_ct_is_untracked(ct)) {
 		if (!nf_ct_is_confirmed(ct))
-			ret = __nf_conntrack_confirm(pskb);
+			ret = __nf_conntrack_confirm(skb);
 		if (likely(ret == NF_ACCEPT))
 			nf_ct_deliver_cached_events(ct);
 	}
 	return ret;
 }
 
-extern void __nf_conntrack_attach(struct sk_buff *nskb, struct sk_buff *skb);
-
 int
 print_tuple(struct seq_file *s, const struct nf_conntrack_tuple *tuple,
-	    struct nf_conntrack_l3proto *l3proto,
-	    struct nf_conntrack_l4proto *proto);
+            const struct nf_conntrack_l3proto *l3proto,
+            const struct nf_conntrack_l4proto *proto);
 
-extern struct list_head *nf_conntrack_hash;
-extern struct list_head nf_conntrack_expect_list;
-extern rwlock_t nf_conntrack_lock ;
-extern struct list_head unconfirmed;
+extern spinlock_t nf_conntrack_lock ;
 
 #endif /* _NF_CONNTRACK_CORE_H */

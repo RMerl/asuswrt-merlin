@@ -4,7 +4,7 @@
  * Copyright (c) 2006, Rik Snel <rsnel@cube.dyndns.org>
  *
  * Based on Dr Brian Gladman's (GPL'd) work published at
- * http://fp.gladman.plus.com/cryptography_technology/index.htm
+ * http://gladman.plushost.co.uk/oldsite/cryptography_technology/index.php
  * See the original copyright notice below.
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -89,7 +89,7 @@
 }
 
 /*	Given the value i in 0..255 as the byte overflow when a field element
-    in GHASH is multipled by x^8, this function will return the values that
+    in GHASH is multiplied by x^8, this function will return the values that
     are generated in the lo 16-bit word of the field value by applying the
     modular polynomial. The values lo_byte and hi_byte are returned via the
     macro xp_fun(lo_byte, hi_byte) so that the values can be assembled into
@@ -141,6 +141,17 @@ static void gf128mul_x_bbe(be128 *r, const be128 *x)
 	r->a = cpu_to_be64((a << 1) | (b >> 63));
 	r->b = cpu_to_be64((b << 1) ^ _tt);
 }
+
+void gf128mul_x_ble(be128 *r, const be128 *x)
+{
+	u64 a = le64_to_cpu(x->a);
+	u64 b = le64_to_cpu(x->b);
+	u64 _tt = gf128mul_table_bbe[b >> 63];
+
+	r->a = cpu_to_le64((a << 1) ^ _tt);
+	r->b = cpu_to_le64((b << 1) | (a >> 63));
+}
+EXPORT_SYMBOL(gf128mul_x_ble);
 
 static void gf128mul_x8_lle(be128 *x)
 {

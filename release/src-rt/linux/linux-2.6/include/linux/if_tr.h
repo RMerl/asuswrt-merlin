@@ -19,6 +19,7 @@
 #ifndef _LINUX_IF_TR_H
 #define _LINUX_IF_TR_H
 
+#include <linux/types.h>
 #include <asm/byteorder.h>	/* For __be16 */
 
 /* IEEE 802.5 Token-Ring magic constants.  The frame sizes omit the preamble
@@ -49,9 +50,6 @@ static inline struct trh_hdr *tr_hdr(const struct sk_buff *skb)
 {
 	return (struct trh_hdr *)skb_mac_header(skb);
 }
-#ifdef CONFIG_SYSCTL
-extern struct ctl_table tr_table[];
-#endif
 #endif
 
 /* This is an Token-Ring LLC structure */

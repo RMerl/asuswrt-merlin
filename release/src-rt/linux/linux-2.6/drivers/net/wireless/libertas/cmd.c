@@ -3,1525 +3,1210 @@
   * It prepares command and sends it to firmware when it is ready.
   */
 
-#include <net/iw_handler.h>
-#include "host.h"
-#include "hostcmd.h"
+#include <linux/kfifo.h>
+#include <linux/sched.h>
+#include <linux/slab.h>
+#include <linux/if_arp.h>
+
 #include "decl.h"
-#include "defs.h"
-#include "dev.h"
-#include "join.h"
-#include "wext.h"
+#include "cfg.h"
+#include "cmd.h"
 
-static void cleanup_cmdnode(struct cmd_ctrl_node *ptempnode);
-
-static u16 commands_allowed_in_ps[] = {
-	cmd_802_11_rssi,
-};
+#define CAL_NF(nf)		((s32)(-(s32)(nf)))
+#define CAL_RSSI(snr, nf)	((s32)((s32)(snr) + CAL_NF(nf)))
 
 /**
- *  @brief This function checks if the commans is allowed
- *  in PS mode not.
+ *  @brief Simple callback that copies response back into command
+ *
+ *  @param priv    	A pointer to struct lbs_private structure
+ *  @param extra  	A pointer to the original command structure for which
+ *                      'resp' is a response
+ *  @param resp         A pointer to the command response
+ *
+ *  @return 	   	0 on success, error on failure
+ */
+int lbs_cmd_copyback(struct lbs_private *priv, unsigned long extra,
+		     struct cmd_header *resp)
+{
+	struct cmd_header *buf = (void *)extra;
+	uint16_t copy_len;
+
+	copy_len = min(le16_to_cpu(buf->size), le16_to_cpu(resp->size));
+	memcpy(buf, resp, copy_len);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(lbs_cmd_copyback);
+
+/**
+ *  @brief Simple callback that ignores the result. Use this if
+ *  you just want to send a command to the hardware, but don't
+ *  care for the result.
+ *
+ *  @param priv         ignored
+ *  @param extra        ignored
+ *  @param resp         ignored
+ *
+ *  @return 	   	0 for success
+ */
+static int lbs_cmd_async_callback(struct lbs_private *priv, unsigned long extra,
+		     struct cmd_header *resp)
+{
+	return 0;
+}
+
+
+/**
+ *  @brief Checks whether a command is allowed in Power Save mode
  *
  *  @param command the command ID
- *  @return 	   TRUE or FALSE
+ *  @return 	   1 if allowed, 0 if not allowed
  */
-static u8 is_command_allowed_in_ps(__le16 command)
+static u8 is_command_allowed_in_ps(u16 cmd)
 {
-	int i;
-
-	for (i = 0; i < ARRAY_SIZE(commands_allowed_in_ps); i++) {
-		if (command == cpu_to_le16(commands_allowed_in_ps[i]))
-			return 1;
-	}
-
-	return 0;
-}
-
-static int wlan_cmd_hw_spec(wlan_private * priv, struct cmd_ds_command *cmd)
-{
-	struct cmd_ds_get_hw_spec *hwspec = &cmd->params.hwspec;
-
-	lbs_deb_enter(LBS_DEB_CMD);
-
-	cmd->command = cpu_to_le16(cmd_get_hw_spec);
-	cmd->size = cpu_to_le16(sizeof(struct cmd_ds_get_hw_spec) + S_DS_GEN);
-	memcpy(hwspec->permanentaddr, priv->adapter->current_addr, ETH_ALEN);
-
-	lbs_deb_leave(LBS_DEB_CMD);
-	return 0;
-}
-
-static int wlan_cmd_802_11_ps_mode(wlan_private * priv,
-				   struct cmd_ds_command *cmd,
-				   u16 cmd_action)
-{
-	struct cmd_ds_802_11_ps_mode *psm = &cmd->params.psmode;
-	wlan_adapter *adapter = priv->adapter;
-
-	lbs_deb_enter(LBS_DEB_CMD);
-
-	cmd->command = cpu_to_le16(cmd_802_11_ps_mode);
-	cmd->size = cpu_to_le16(sizeof(struct cmd_ds_802_11_ps_mode) +
-				S_DS_GEN);
-	psm->action = cpu_to_le16(cmd_action);
-	psm->multipledtim = 0;
-	switch (cmd_action) {
-	case cmd_subcmd_enter_ps:
-		lbs_deb_cmd("PS command:" "SubCode- Enter PS\n");
-		lbs_deb_cmd("locallisteninterval = %d\n",
-		       adapter->locallisteninterval);
-
-		psm->locallisteninterval =
-		    cpu_to_le16(adapter->locallisteninterval);
-		psm->nullpktinterval =
-		    cpu_to_le16(adapter->nullpktinterval);
-		psm->multipledtim =
-		    cpu_to_le16(priv->adapter->multipledtim);
-		break;
-
-	case cmd_subcmd_exit_ps:
-		lbs_deb_cmd("PS command:" "SubCode- Exit PS\n");
-		break;
-
-	case cmd_subcmd_sleep_confirmed:
-		lbs_deb_cmd("PS command: SubCode- sleep confirm\n");
-		break;
-
+	switch (cmd) {
+	case CMD_802_11_RSSI:
+		return 1;
+	case CMD_802_11_HOST_SLEEP_CFG:
+		return 1;
 	default:
 		break;
 	}
-
-	lbs_deb_leave(LBS_DEB_CMD);
 	return 0;
 }
 
-static int wlan_cmd_802_11_inactivity_timeout(wlan_private * priv,
-					      struct cmd_ds_command *cmd,
-					      u16 cmd_action, void *pdata_buf)
+/**
+ *  @brief Updates the hardware details like MAC address and regulatory region
+ *
+ *  @param priv    	A pointer to struct lbs_private structure
+ *
+ *  @return 	   	0 on success, error on failure
+ */
+int lbs_update_hw_spec(struct lbs_private *priv)
 {
-	u16 *timeout = pdata_buf;
-
-	cmd->command = cpu_to_le16(cmd_802_11_inactivity_timeout);
-	cmd->size =
-	    cpu_to_le16(sizeof(struct cmd_ds_802_11_inactivity_timeout)
-			     + S_DS_GEN);
-
-	cmd->params.inactivity_timeout.action = cpu_to_le16(cmd_action);
-
-	if (cmd_action)
-		cmd->params.inactivity_timeout.timeout = cpu_to_le16(*timeout);
-	else
-		cmd->params.inactivity_timeout.timeout = 0;
-
-	return 0;
-}
-
-static int wlan_cmd_802_11_sleep_params(wlan_private * priv,
-					struct cmd_ds_command *cmd,
-					u16 cmd_action)
-{
-	wlan_adapter *adapter = priv->adapter;
-	struct cmd_ds_802_11_sleep_params *sp = &cmd->params.sleep_params;
+	struct cmd_ds_get_hw_spec cmd;
+	int ret = -1;
+	u32 i;
 
 	lbs_deb_enter(LBS_DEB_CMD);
 
-	cmd->size = cpu_to_le16((sizeof(struct cmd_ds_802_11_sleep_params)) +
-				S_DS_GEN);
-	cmd->command = cpu_to_le16(cmd_802_11_sleep_params);
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.hdr.size = cpu_to_le16(sizeof(cmd));
+	memcpy(cmd.permanentaddr, priv->current_addr, ETH_ALEN);
+	ret = lbs_cmd_with_response(priv, CMD_GET_HW_SPEC, &cmd);
+	if (ret)
+		goto out;
 
-	if (cmd_action == cmd_act_get) {
-		memset(&adapter->sp, 0, sizeof(struct sleep_params));
-		memset(sp, 0, sizeof(struct cmd_ds_802_11_sleep_params));
-		sp->action = cpu_to_le16(cmd_action);
-	} else if (cmd_action == cmd_act_set) {
-		sp->action = cpu_to_le16(cmd_action);
-		sp->error = cpu_to_le16(adapter->sp.sp_error);
-		sp->offset = cpu_to_le16(adapter->sp.sp_offset);
-		sp->stabletime = cpu_to_le16(adapter->sp.sp_stabletime);
-		sp->calcontrol = (u8) adapter->sp.sp_calcontrol;
-		sp->externalsleepclk = (u8) adapter->sp.sp_extsleepclk;
-		sp->reserved = cpu_to_le16(adapter->sp.sp_reserved);
+	priv->fwcapinfo = le32_to_cpu(cmd.fwcapinfo);
+
+	/* The firmware release is in an interesting format: the patch
+	 * level is in the most significant nibble ... so fix that: */
+	priv->fwrelease = le32_to_cpu(cmd.fwrelease);
+	priv->fwrelease = (priv->fwrelease << 8) |
+		(priv->fwrelease >> 24 & 0xff);
+
+	/* Some firmware capabilities:
+	 * CF card    firmware 5.0.16p0:   cap 0x00000303
+	 * USB dongle firmware 5.110.17p2: cap 0x00000303
+	 */
+	lbs_pr_info("%pM, fw %u.%u.%up%u, cap 0x%08x\n",
+		cmd.permanentaddr,
+		priv->fwrelease >> 24 & 0xff,
+		priv->fwrelease >> 16 & 0xff,
+		priv->fwrelease >>  8 & 0xff,
+		priv->fwrelease       & 0xff,
+		priv->fwcapinfo);
+	lbs_deb_cmd("GET_HW_SPEC: hardware interface 0x%x, hardware spec 0x%04x\n",
+		    cmd.hwifversion, cmd.version);
+
+	/* Clamp region code to 8-bit since FW spec indicates that it should
+	 * only ever be 8-bit, even though the field size is 16-bit.  Some firmware
+	 * returns non-zero high 8 bits here.
+	 *
+	 * Firmware version 4.0.102 used in CF8381 has region code shifted.  We
+	 * need to check for this problem and handle it properly.
+	 */
+	if (MRVL_FW_MAJOR_REV(priv->fwrelease) == MRVL_FW_V4)
+		priv->regioncode = (le16_to_cpu(cmd.regioncode) >> 8) & 0xFF;
+	else
+		priv->regioncode = le16_to_cpu(cmd.regioncode) & 0xFF;
+
+	for (i = 0; i < MRVDRV_MAX_REGION_CODE; i++) {
+		/* use the region code to search for the index */
+		if (priv->regioncode == lbs_region_code_to_index[i])
+			break;
 	}
 
+	/* if it's unidentified region code, use the default (USA) */
+	if (i >= MRVDRV_MAX_REGION_CODE) {
+		priv->regioncode = 0x10;
+		lbs_pr_info("unidentified region code; using the default (USA)\n");
+	}
+
+	if (priv->current_addr[0] == 0xff)
+		memmove(priv->current_addr, cmd.permanentaddr, ETH_ALEN);
+
+	if (!priv->copied_hwaddr) {
+		memcpy(priv->dev->dev_addr, priv->current_addr, ETH_ALEN);
+		if (priv->mesh_dev)
+			memcpy(priv->mesh_dev->dev_addr,
+				priv->current_addr, ETH_ALEN);
+		priv->copied_hwaddr = 1;
+	}
+
+out:
+	lbs_deb_leave(LBS_DEB_CMD);
+	return ret;
+}
+
+static int lbs_ret_host_sleep_cfg(struct lbs_private *priv, unsigned long dummy,
+			struct cmd_header *resp)
+{
+	lbs_deb_enter(LBS_DEB_CMD);
+	if (priv->is_host_sleep_activated) {
+		priv->is_host_sleep_configured = 0;
+		if (priv->psstate == PS_STATE_FULL_POWER) {
+			priv->is_host_sleep_activated = 0;
+			wake_up_interruptible(&priv->host_sleep_q);
+		}
+	} else {
+		priv->is_host_sleep_configured = 1;
+	}
 	lbs_deb_leave(LBS_DEB_CMD);
 	return 0;
 }
 
-static int wlan_cmd_802_11_set_wep(wlan_private * priv,
-                                   struct cmd_ds_command *cmd,
-                                   u32 cmd_act,
-                                   void * pdata_buf)
+int lbs_host_sleep_cfg(struct lbs_private *priv, uint32_t criteria,
+		struct wol_config *p_wol_config)
 {
-	struct cmd_ds_802_11_set_wep *wep = &cmd->params.wep;
-	wlan_adapter *adapter = priv->adapter;
+	struct cmd_ds_host_sleep cmd_config;
+	int ret;
+
+	/*
+	 * Certain firmware versions do not support EHS_REMOVE_WAKEUP command
+	 * and the card will return a failure.  Since we need to be
+	 * able to reset the mask, in those cases we set a 0 mask instead.
+	 */
+	if (criteria == EHS_REMOVE_WAKEUP && !priv->ehs_remove_supported)
+		criteria = 0;
+
+	cmd_config.hdr.size = cpu_to_le16(sizeof(cmd_config));
+	cmd_config.criteria = cpu_to_le32(criteria);
+	cmd_config.gpio = priv->wol_gpio;
+	cmd_config.gap = priv->wol_gap;
+
+	if (p_wol_config != NULL)
+		memcpy((uint8_t *)&cmd_config.wol_conf, (uint8_t *)p_wol_config,
+				sizeof(struct wol_config));
+	else
+		cmd_config.wol_conf.action = CMD_ACT_ACTION_NONE;
+
+	ret = __lbs_cmd(priv, CMD_802_11_HOST_SLEEP_CFG, &cmd_config.hdr,
+			le16_to_cpu(cmd_config.hdr.size),
+			lbs_ret_host_sleep_cfg, 0);
+	if (!ret) {
+		if (p_wol_config)
+			memcpy((uint8_t *) p_wol_config,
+					(uint8_t *)&cmd_config.wol_conf,
+					sizeof(struct wol_config));
+	} else {
+		lbs_pr_info("HOST_SLEEP_CFG failed %d\n", ret);
+	}
+
+	return ret;
+}
+EXPORT_SYMBOL_GPL(lbs_host_sleep_cfg);
+
+/**
+ *  @brief Sets the Power Save mode
+ *
+ *  @param priv    	A pointer to struct lbs_private structure
+ *  @param cmd_action	The Power Save operation (PS_MODE_ACTION_ENTER_PS or
+ *                         PS_MODE_ACTION_EXIT_PS)
+ *  @param block	Whether to block on a response or not
+ *
+ *  @return 	   	0 on success, error on failure
+ */
+int lbs_set_ps_mode(struct lbs_private *priv, u16 cmd_action, bool block)
+{
+	struct cmd_ds_802_11_ps_mode cmd;
 	int ret = 0;
-	struct assoc_request * assoc_req = pdata_buf;
 
 	lbs_deb_enter(LBS_DEB_CMD);
 
-	cmd->command = cpu_to_le16(cmd_802_11_set_wep);
-	cmd->size = cpu_to_le16(sizeof(*wep) + S_DS_GEN);
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.hdr.size = cpu_to_le16(sizeof(cmd));
+	cmd.action = cpu_to_le16(cmd_action);
 
-	if (cmd_act == cmd_act_add) {
-		int i;
+	if (cmd_action == PS_MODE_ACTION_ENTER_PS) {
+		lbs_deb_cmd("PS_MODE: action ENTER_PS\n");
+		cmd.multipledtim = cpu_to_le16(1);  /* Default DTIM multiple */
+	} else if (cmd_action == PS_MODE_ACTION_EXIT_PS) {
+		lbs_deb_cmd("PS_MODE: action EXIT_PS\n");
+	} else {
+		/* We don't handle CONFIRM_SLEEP here because it needs to
+		 * be fastpathed to the firmware.
+		 */
+		lbs_deb_cmd("PS_MODE: unknown action 0x%X\n", cmd_action);
+		ret = -EOPNOTSUPP;
+		goto out;
+	}
 
-		if (!assoc_req) {
-			lbs_deb_cmd("Invalid association request!");
+	if (block)
+		ret = lbs_cmd_with_response(priv, CMD_802_11_PS_MODE, &cmd);
+	else
+		lbs_cmd_async(priv, CMD_802_11_PS_MODE, &cmd.hdr, sizeof (cmd));
+
+out:
+	lbs_deb_leave_args(LBS_DEB_CMD, "ret %d", ret);
+	return ret;
+}
+
+int lbs_cmd_802_11_sleep_params(struct lbs_private *priv, uint16_t cmd_action,
+				struct sleep_params *sp)
+{
+	struct cmd_ds_802_11_sleep_params cmd;
+	int ret;
+
+	lbs_deb_enter(LBS_DEB_CMD);
+
+	if (cmd_action == CMD_ACT_GET) {
+		memset(&cmd, 0, sizeof(cmd));
+	} else {
+		cmd.error = cpu_to_le16(sp->sp_error);
+		cmd.offset = cpu_to_le16(sp->sp_offset);
+		cmd.stabletime = cpu_to_le16(sp->sp_stabletime);
+		cmd.calcontrol = sp->sp_calcontrol;
+		cmd.externalsleepclk = sp->sp_extsleepclk;
+		cmd.reserved = cpu_to_le16(sp->sp_reserved);
+	}
+	cmd.hdr.size = cpu_to_le16(sizeof(cmd));
+	cmd.action = cpu_to_le16(cmd_action);
+
+	ret = lbs_cmd_with_response(priv, CMD_802_11_SLEEP_PARAMS, &cmd);
+
+	if (!ret) {
+		lbs_deb_cmd("error 0x%x, offset 0x%x, stabletime 0x%x, "
+			    "calcontrol 0x%x extsleepclk 0x%x\n",
+			    le16_to_cpu(cmd.error), le16_to_cpu(cmd.offset),
+			    le16_to_cpu(cmd.stabletime), cmd.calcontrol,
+			    cmd.externalsleepclk);
+
+		sp->sp_error = le16_to_cpu(cmd.error);
+		sp->sp_offset = le16_to_cpu(cmd.offset);
+		sp->sp_stabletime = le16_to_cpu(cmd.stabletime);
+		sp->sp_calcontrol = cmd.calcontrol;
+		sp->sp_extsleepclk = cmd.externalsleepclk;
+		sp->sp_reserved = le16_to_cpu(cmd.reserved);
+	}
+
+	lbs_deb_leave_args(LBS_DEB_CMD, "ret %d", ret);
+	return 0;
+}
+
+static int lbs_wait_for_ds_awake(struct lbs_private *priv)
+{
+	int ret = 0;
+
+	lbs_deb_enter(LBS_DEB_CMD);
+
+	if (priv->is_deep_sleep) {
+		if (!wait_event_interruptible_timeout(priv->ds_awake_q,
+					!priv->is_deep_sleep, (10 * HZ))) {
+			lbs_pr_err("ds_awake_q: timer expired\n");
 			ret = -1;
-			goto done;
 		}
+	}
 
-		wep->action = cpu_to_le16(cmd_act_add);
+	lbs_deb_leave_args(LBS_DEB_CMD, "ret %d", ret);
+	return ret;
+}
 
-		/* default tx key index */
-		wep->keyindex = cpu_to_le16((u16)(assoc_req->wep_tx_keyidx &
-						  (u32)cmd_WEP_KEY_INDEX_MASK));
+int lbs_set_deep_sleep(struct lbs_private *priv, int deep_sleep)
+{
+	int ret =  0;
 
-		lbs_deb_cmd("Tx key Index: %u\n", le16_to_cpu(wep->keyindex));
+	lbs_deb_enter(LBS_DEB_CMD);
 
-		/* Copy key types and material to host command structure */
-		for (i = 0; i < 4; i++) {
-			struct WLAN_802_11_KEY * pkey = &assoc_req->wep_keys[i];
-
-			switch (pkey->len) {
-			case KEY_LEN_WEP_40:
-				wep->keytype[i] = cmd_type_wep_40_bit;
-				memmove(&wep->keymaterial[i], pkey->key,
-				        pkey->len);
-				break;
-			case KEY_LEN_WEP_104:
-				wep->keytype[i] = cmd_type_wep_104_bit;
-				memmove(&wep->keymaterial[i], pkey->key,
-				        pkey->len);
-				break;
-			case 0:
-				break;
-			default:
-				lbs_deb_cmd("Invalid WEP key %d length of %d\n",
-				       i, pkey->len);
-				ret = -1;
-				goto done;
-				break;
+	if (deep_sleep) {
+		if (priv->is_deep_sleep != 1) {
+			lbs_deb_cmd("deep sleep: sleep\n");
+			BUG_ON(!priv->enter_deep_sleep);
+			ret = priv->enter_deep_sleep(priv);
+			if (!ret) {
+				netif_stop_queue(priv->dev);
+				netif_carrier_off(priv->dev);
 			}
-		}
-	} else if (cmd_act == cmd_act_remove) {
-		/* ACT_REMOVE clears _all_ WEP keys */
-		wep->action = cpu_to_le16(cmd_act_remove);
-
-		/* default tx key index */
-		wep->keyindex = cpu_to_le16((u16)(adapter->wep_tx_keyidx &
-						  (u32)cmd_WEP_KEY_INDEX_MASK));
-	}
-
-	ret = 0;
-
-done:
-	lbs_deb_leave_args(LBS_DEB_CMD, "ret %d", ret);
-	return ret;
-}
-
-static int wlan_cmd_802_11_enable_rsn(wlan_private * priv,
-				      struct cmd_ds_command *cmd,
-				      u16 cmd_action,
-				      void * pdata_buf)
-{
-	struct cmd_ds_802_11_enable_rsn *penableRSN = &cmd->params.enbrsn;
-	u32 * enable = pdata_buf;
-
-	lbs_deb_enter(LBS_DEB_CMD);
-
-	cmd->command = cpu_to_le16(cmd_802_11_enable_rsn);
-	cmd->size = cpu_to_le16(sizeof(*penableRSN) + S_DS_GEN);
-	penableRSN->action = cpu_to_le16(cmd_action);
-
-	if (cmd_action == cmd_act_set) {
-		if (*enable)
-			penableRSN->enable = cpu_to_le16(cmd_enable_rsn);
-		else
-			penableRSN->enable = cpu_to_le16(cmd_enable_rsn);
-	}
-
-	lbs_deb_leave(LBS_DEB_CMD);
-	return 0;
-}
-
-
-static void set_one_wpa_key(struct MrvlIEtype_keyParamSet * pkeyparamset,
-                            struct WLAN_802_11_KEY * pkey)
-{
-	pkeyparamset->keytypeid = cpu_to_le16(pkey->type);
-
-	if (pkey->flags & KEY_INFO_WPA_ENABLED) {
-		pkeyparamset->keyinfo |= cpu_to_le16(KEY_INFO_WPA_ENABLED);
-	}
-	if (pkey->flags & KEY_INFO_WPA_UNICAST) {
-		pkeyparamset->keyinfo |= cpu_to_le16(KEY_INFO_WPA_UNICAST);
-	}
-	if (pkey->flags & KEY_INFO_WPA_MCAST) {
-		pkeyparamset->keyinfo |= cpu_to_le16(KEY_INFO_WPA_MCAST);
-	}
-
-	pkeyparamset->type = cpu_to_le16(TLV_TYPE_KEY_MATERIAL);
-	pkeyparamset->keylen = cpu_to_le16(pkey->len);
-	memcpy(pkeyparamset->key, pkey->key, pkey->len);
-	pkeyparamset->length = cpu_to_le16(  sizeof(pkeyparamset->keytypeid)
-	                                        + sizeof(pkeyparamset->keyinfo)
-	                                        + sizeof(pkeyparamset->keylen)
-	                                        + sizeof(pkeyparamset->key));
-}
-
-static int wlan_cmd_802_11_key_material(wlan_private * priv,
-					struct cmd_ds_command *cmd,
-					u16 cmd_action,
-					u32 cmd_oid, void *pdata_buf)
-{
-	struct cmd_ds_802_11_key_material *pkeymaterial =
-	    &cmd->params.keymaterial;
-	struct assoc_request * assoc_req = pdata_buf;
-	int ret = 0;
-	int index = 0;
-
-	lbs_deb_enter(LBS_DEB_CMD);
-
-	cmd->command = cpu_to_le16(cmd_802_11_key_material);
-	pkeymaterial->action = cpu_to_le16(cmd_action);
-
-	if (cmd_action == cmd_act_get) {
-		cmd->size = cpu_to_le16(S_DS_GEN + sizeof (pkeymaterial->action));
-		ret = 0;
-		goto done;
-	}
-
-	memset(&pkeymaterial->keyParamSet, 0, sizeof(pkeymaterial->keyParamSet));
-
-	if (test_bit(ASSOC_FLAG_WPA_UCAST_KEY, &assoc_req->flags)) {
-		set_one_wpa_key(&pkeymaterial->keyParamSet[index],
-		                &assoc_req->wpa_unicast_key);
-		index++;
-	}
-
-	if (test_bit(ASSOC_FLAG_WPA_MCAST_KEY, &assoc_req->flags)) {
-		set_one_wpa_key(&pkeymaterial->keyParamSet[index],
-		                &assoc_req->wpa_mcast_key);
-		index++;
-	}
-
-	cmd->size = cpu_to_le16(  S_DS_GEN
-	                        + sizeof (pkeymaterial->action)
-	                        + (index * sizeof(struct MrvlIEtype_keyParamSet)));
-
-	ret = 0;
-
-done:
-	lbs_deb_leave_args(LBS_DEB_CMD, "ret %d", ret);
-	return ret;
-}
-
-static int wlan_cmd_802_11_reset(wlan_private * priv,
-				 struct cmd_ds_command *cmd, int cmd_action)
-{
-	struct cmd_ds_802_11_reset *reset = &cmd->params.reset;
-
-	cmd->command = cpu_to_le16(cmd_802_11_reset);
-	cmd->size = cpu_to_le16(sizeof(struct cmd_ds_802_11_reset) + S_DS_GEN);
-	reset->action = cpu_to_le16(cmd_action);
-
-	return 0;
-}
-
-static int wlan_cmd_802_11_get_log(wlan_private * priv,
-				   struct cmd_ds_command *cmd)
-{
-	cmd->command = cpu_to_le16(cmd_802_11_get_log);
-	cmd->size =
-		cpu_to_le16(sizeof(struct cmd_ds_802_11_get_log) + S_DS_GEN);
-
-	return 0;
-}
-
-static int wlan_cmd_802_11_get_stat(wlan_private * priv,
-				    struct cmd_ds_command *cmd)
-{
-	cmd->command = cpu_to_le16(cmd_802_11_get_stat);
-	cmd->size =
-	    cpu_to_le16(sizeof(struct cmd_ds_802_11_get_stat) + S_DS_GEN);
-
-	return 0;
-}
-
-static int wlan_cmd_802_11_snmp_mib(wlan_private * priv,
-				    struct cmd_ds_command *cmd,
-				    int cmd_action,
-				    int cmd_oid, void *pdata_buf)
-{
-	struct cmd_ds_802_11_snmp_mib *pSNMPMIB = &cmd->params.smib;
-	wlan_adapter *adapter = priv->adapter;
-	u8 ucTemp;
-
-	lbs_deb_enter(LBS_DEB_CMD);
-
-	lbs_deb_cmd("SNMP_CMD: cmd_oid = 0x%x\n", cmd_oid);
-
-	cmd->command = cpu_to_le16(cmd_802_11_snmp_mib);
-	cmd->size = cpu_to_le16(sizeof(*pSNMPMIB) + S_DS_GEN);
-
-	switch (cmd_oid) {
-	case OID_802_11_INFRASTRUCTURE_MODE:
-	{
-		u8 mode = (u8) (size_t) pdata_buf;
-		pSNMPMIB->querytype = cpu_to_le16(cmd_act_set);
-		pSNMPMIB->oid = cpu_to_le16((u16) desired_bsstype_i);
-		pSNMPMIB->bufsize = sizeof(u8);
-		if (mode == IW_MODE_ADHOC) {
-			ucTemp = SNMP_MIB_VALUE_ADHOC;
 		} else {
-			/* Infra and Auto modes */
-			ucTemp = SNMP_MIB_VALUE_INFRA;
+			lbs_pr_err("deep sleep: already enabled\n");
 		}
-
-		memmove(pSNMPMIB->value, &ucTemp, sizeof(u8));
-
-		break;
-	}
-
-	case OID_802_11D_ENABLE:
-		{
-			u32 ulTemp;
-
-			pSNMPMIB->oid = cpu_to_le16((u16) dot11d_i);
-
-			if (cmd_action == cmd_act_set) {
-				pSNMPMIB->querytype = cmd_act_set;
-				pSNMPMIB->bufsize = sizeof(u16);
-				ulTemp = *(u32 *)pdata_buf;
-				*((__le16 *)(pSNMPMIB->value)) =
-				    cpu_to_le16((u16) ulTemp);
+	} else {
+		if (priv->is_deep_sleep) {
+			lbs_deb_cmd("deep sleep: wakeup\n");
+			BUG_ON(!priv->exit_deep_sleep);
+			ret = priv->exit_deep_sleep(priv);
+			if (!ret) {
+				ret = lbs_wait_for_ds_awake(priv);
+				if (ret)
+					lbs_pr_err("deep sleep: wakeup"
+							"failed\n");
 			}
-			break;
 		}
+	}
 
-	case OID_802_11_FRAGMENTATION_THRESHOLD:
-		{
-			u32 ulTemp;
+	lbs_deb_leave_args(LBS_DEB_CMD, "ret %d", ret);
+	return ret;
+}
 
-			pSNMPMIB->oid = cpu_to_le16((u16) fragthresh_i);
+static int lbs_ret_host_sleep_activate(struct lbs_private *priv,
+		unsigned long dummy,
+		struct cmd_header *cmd)
+{
+	lbs_deb_enter(LBS_DEB_FW);
+	priv->is_host_sleep_activated = 1;
+	wake_up_interruptible(&priv->host_sleep_q);
+	lbs_deb_leave(LBS_DEB_FW);
+	return 0;
+}
 
-			if (cmd_action == cmd_act_get) {
-				pSNMPMIB->querytype = cpu_to_le16(cmd_act_get);
-			} else if (cmd_action == cmd_act_set) {
-				pSNMPMIB->querytype = cpu_to_le16(cmd_act_set);
-				pSNMPMIB->bufsize = cpu_to_le16(sizeof(u16));
-				ulTemp = *((u32 *) pdata_buf);
-				*((__le16 *)(pSNMPMIB->value)) =
-				    cpu_to_le16((u16) ulTemp);
+int lbs_set_host_sleep(struct lbs_private *priv, int host_sleep)
+{
+	struct cmd_header cmd;
+	int ret = 0;
+	uint32_t criteria = EHS_REMOVE_WAKEUP;
 
+	lbs_deb_enter(LBS_DEB_CMD);
+
+	if (host_sleep) {
+		if (priv->is_host_sleep_activated != 1) {
+			memset(&cmd, 0, sizeof(cmd));
+			ret = lbs_host_sleep_cfg(priv, priv->wol_criteria,
+					(struct wol_config *)NULL);
+			if (ret) {
+				lbs_pr_info("Host sleep configuration failed: "
+						"%d\n", ret);
+				return ret;
+			}
+			if (priv->psstate == PS_STATE_FULL_POWER) {
+				ret = __lbs_cmd(priv,
+						CMD_802_11_HOST_SLEEP_ACTIVATE,
+						&cmd,
+						sizeof(cmd),
+						lbs_ret_host_sleep_activate, 0);
+				if (ret)
+					lbs_pr_info("HOST_SLEEP_ACTIVATE "
+							"failed: %d\n", ret);
 			}
 
-			break;
-		}
-
-	case OID_802_11_RTS_THRESHOLD:
-		{
-
-			u32 ulTemp;
-			pSNMPMIB->oid = le16_to_cpu((u16) rtsthresh_i);
-
-			if (cmd_action == cmd_act_get) {
-				pSNMPMIB->querytype = cpu_to_le16(cmd_act_get);
-			} else if (cmd_action == cmd_act_set) {
-				pSNMPMIB->querytype = cpu_to_le16(cmd_act_set);
-				pSNMPMIB->bufsize = cpu_to_le16(sizeof(u16));
-				ulTemp = *((u32 *)pdata_buf);
-				*(__le16 *)(pSNMPMIB->value) =
-				    cpu_to_le16((u16) ulTemp);
-
+			if (!wait_event_interruptible_timeout(
+						priv->host_sleep_q,
+						priv->is_host_sleep_activated,
+						(10 * HZ))) {
+				lbs_pr_err("host_sleep_q: timer expired\n");
+				ret = -1;
 			}
-			break;
+		} else {
+			lbs_pr_err("host sleep: already enabled\n");
 		}
-	case OID_802_11_TX_RETRYCOUNT:
-		pSNMPMIB->oid = cpu_to_le16((u16) short_retrylim_i);
+	} else {
+		if (priv->is_host_sleep_activated)
+			ret = lbs_host_sleep_cfg(priv, criteria,
+					(struct wol_config *)NULL);
+	}
 
-		if (cmd_action == cmd_act_get) {
-			pSNMPMIB->querytype = cpu_to_le16(cmd_act_get);
-		} else if (cmd_action == cmd_act_set) {
-			pSNMPMIB->querytype = cpu_to_le16(cmd_act_set);
-			pSNMPMIB->bufsize = cpu_to_le16(sizeof(u16));
-			*((__le16 *)(pSNMPMIB->value)) =
-			    cpu_to_le16((u16) adapter->txretrycount);
-		}
+	return ret;
+}
 
+/**
+ *  @brief Set an SNMP MIB value
+ *
+ *  @param priv    	A pointer to struct lbs_private structure
+ *  @param oid  	The OID to set in the firmware
+ *  @param val  	Value to set the OID to
+ *
+ *  @return 	   	0 on success, error on failure
+ */
+int lbs_set_snmp_mib(struct lbs_private *priv, u32 oid, u16 val)
+{
+	struct cmd_ds_802_11_snmp_mib cmd;
+	int ret;
+
+	lbs_deb_enter(LBS_DEB_CMD);
+
+	memset(&cmd, 0, sizeof (cmd));
+	cmd.hdr.size = cpu_to_le16(sizeof(cmd));
+	cmd.action = cpu_to_le16(CMD_ACT_SET);
+	cmd.oid = cpu_to_le16((u16) oid);
+
+	switch (oid) {
+	case SNMP_MIB_OID_BSS_TYPE:
+		cmd.bufsize = cpu_to_le16(sizeof(u8));
+		cmd.value[0] = val;
+		break;
+	case SNMP_MIB_OID_11D_ENABLE:
+	case SNMP_MIB_OID_FRAG_THRESHOLD:
+	case SNMP_MIB_OID_RTS_THRESHOLD:
+	case SNMP_MIB_OID_SHORT_RETRY_LIMIT:
+	case SNMP_MIB_OID_LONG_RETRY_LIMIT:
+		cmd.bufsize = cpu_to_le16(sizeof(u16));
+		*((__le16 *)(&cmd.value)) = cpu_to_le16(val);
 		break;
 	default:
-		break;
+		lbs_deb_cmd("SNMP_CMD: (set) unhandled OID 0x%x\n", oid);
+		ret = -EINVAL;
+		goto out;
 	}
 
-	lbs_deb_cmd(
-	       "SNMP_CMD: command=0x%x, size=0x%x, seqnum=0x%x, result=0x%x\n",
-	       le16_to_cpu(cmd->command), le16_to_cpu(cmd->size),
-	       le16_to_cpu(cmd->seqnum), le16_to_cpu(cmd->result));
+	lbs_deb_cmd("SNMP_CMD: (set) oid 0x%x, oid size 0x%x, value 0x%x\n",
+		    le16_to_cpu(cmd.oid), le16_to_cpu(cmd.bufsize), val);
 
-	lbs_deb_cmd(
-	       "SNMP_CMD: action=0x%x, oid=0x%x, oidsize=0x%x, value=0x%x\n",
-	       le16_to_cpu(pSNMPMIB->querytype), le16_to_cpu(pSNMPMIB->oid),
-	       le16_to_cpu(pSNMPMIB->bufsize),
-	       le16_to_cpu(*(__le16 *) pSNMPMIB->value));
+	ret = lbs_cmd_with_response(priv, CMD_802_11_SNMP_MIB, &cmd);
 
-	lbs_deb_leave(LBS_DEB_CMD);
-	return 0;
+out:
+	lbs_deb_leave_args(LBS_DEB_CMD, "ret %d", ret);
+	return ret;
 }
 
-static int wlan_cmd_802_11_radio_control(wlan_private * priv,
-					 struct cmd_ds_command *cmd,
-					 int cmd_action)
+/**
+ *  @brief Get an SNMP MIB value
+ *
+ *  @param priv    	A pointer to struct lbs_private structure
+ *  @param oid  	The OID to retrieve from the firmware
+ *  @param out_val  	Location for the returned value
+ *
+ *  @return 	   	0 on success, error on failure
+ */
+int lbs_get_snmp_mib(struct lbs_private *priv, u32 oid, u16 *out_val)
 {
-	wlan_adapter *adapter = priv->adapter;
-	struct cmd_ds_802_11_radio_control *pradiocontrol = &cmd->params.radio;
+	struct cmd_ds_802_11_snmp_mib cmd;
+	int ret;
 
 	lbs_deb_enter(LBS_DEB_CMD);
 
-	cmd->size =
-	    cpu_to_le16((sizeof(struct cmd_ds_802_11_radio_control)) +
-			     S_DS_GEN);
-	cmd->command = cpu_to_le16(cmd_802_11_radio_control);
+	memset(&cmd, 0, sizeof (cmd));
+	cmd.hdr.size = cpu_to_le16(sizeof(cmd));
+	cmd.action = cpu_to_le16(CMD_ACT_GET);
+	cmd.oid = cpu_to_le16(oid);
 
-	pradiocontrol->action = cpu_to_le16(cmd_action);
+	ret = lbs_cmd_with_response(priv, CMD_802_11_SNMP_MIB, &cmd);
+	if (ret)
+		goto out;
 
-	switch (adapter->preamble) {
-	case cmd_type_short_preamble:
-		pradiocontrol->control = cpu_to_le16(SET_SHORT_PREAMBLE);
+	switch (le16_to_cpu(cmd.bufsize)) {
+	case sizeof(u8):
+		*out_val = cmd.value[0];
 		break;
-
-	case cmd_type_long_preamble:
-		pradiocontrol->control = cpu_to_le16(SET_LONG_PREAMBLE);
-		break;
-
-	case cmd_type_auto_preamble:
-	default:
-		pradiocontrol->control = cpu_to_le16(SET_AUTO_PREAMBLE);
-		break;
-	}
-
-	if (adapter->radioon)
-		pradiocontrol->control |= cpu_to_le16(TURN_ON_RF);
-	else
-		pradiocontrol->control &= cpu_to_le16(~TURN_ON_RF);
-
-	lbs_deb_leave(LBS_DEB_CMD);
-	return 0;
-}
-
-static int wlan_cmd_802_11_rf_tx_power(wlan_private * priv,
-				       struct cmd_ds_command *cmd,
-				       u16 cmd_action, void *pdata_buf)
-{
-
-	struct cmd_ds_802_11_rf_tx_power *prtp = &cmd->params.txp;
-
-	lbs_deb_enter(LBS_DEB_CMD);
-
-	cmd->size =
-	    cpu_to_le16((sizeof(struct cmd_ds_802_11_rf_tx_power)) + S_DS_GEN);
-	cmd->command = cpu_to_le16(cmd_802_11_rf_tx_power);
-	prtp->action = cpu_to_le16(cmd_action);
-
-	lbs_deb_cmd("RF_TX_POWER_CMD: size:%d cmd:0x%x Act:%d\n",
-		    le16_to_cpu(cmd->size), le16_to_cpu(cmd->command),
-		    le16_to_cpu(prtp->action));
-
-	switch (cmd_action) {
-	case cmd_act_tx_power_opt_get:
-		prtp->action = cpu_to_le16(cmd_act_get);
-		prtp->currentlevel = 0;
-		break;
-
-	case cmd_act_tx_power_opt_set_high:
-		prtp->action = cpu_to_le16(cmd_act_set);
-		prtp->currentlevel = cpu_to_le16(cmd_act_tx_power_index_high);
-		break;
-
-	case cmd_act_tx_power_opt_set_mid:
-		prtp->action = cpu_to_le16(cmd_act_set);
-		prtp->currentlevel = cpu_to_le16(cmd_act_tx_power_index_mid);
-		break;
-
-	case cmd_act_tx_power_opt_set_low:
-		prtp->action = cpu_to_le16(cmd_act_set);
-		prtp->currentlevel = cpu_to_le16(*((u16 *) pdata_buf));
-		break;
-	}
-
-	lbs_deb_leave(LBS_DEB_CMD);
-	return 0;
-}
-
-static int wlan_cmd_802_11_rf_antenna(wlan_private * priv,
-				      struct cmd_ds_command *cmd,
-				      u16 cmd_action, void *pdata_buf)
-{
-	struct cmd_ds_802_11_rf_antenna *rant = &cmd->params.rant;
-
-	cmd->command = cpu_to_le16(cmd_802_11_rf_antenna);
-	cmd->size = cpu_to_le16(sizeof(struct cmd_ds_802_11_rf_antenna) +
-				S_DS_GEN);
-
-	rant->action = cpu_to_le16(cmd_action);
-	if ((cmd_action == cmd_act_set_rx) || (cmd_action == cmd_act_set_tx)) {
-		rant->antennamode = cpu_to_le16((u16) (*(u32 *) pdata_buf));
-	}
-
-	return 0;
-}
-
-static int wlan_cmd_802_11_rate_adapt_rateset(wlan_private * priv,
-					      struct cmd_ds_command *cmd,
-					      u16 cmd_action)
-{
-	struct cmd_ds_802_11_rate_adapt_rateset
-	*rateadapt = &cmd->params.rateset;
-	wlan_adapter *adapter = priv->adapter;
-
-	cmd->size =
-	    cpu_to_le16(sizeof(struct cmd_ds_802_11_rate_adapt_rateset)
-			     + S_DS_GEN);
-	cmd->command = cpu_to_le16(cmd_802_11_rate_adapt_rateset);
-
-	lbs_deb_enter(LBS_DEB_CMD);
-
-	rateadapt->action = cpu_to_le16(cmd_action);
-	rateadapt->enablehwauto = cpu_to_le16(adapter->enablehwauto);
-	rateadapt->bitmap = cpu_to_le16(adapter->ratebitmap);
-
-	lbs_deb_leave(LBS_DEB_CMD);
-	return 0;
-}
-
-static int wlan_cmd_802_11_data_rate(wlan_private * priv,
-				     struct cmd_ds_command *cmd,
-				     u16 cmd_action)
-{
-	struct cmd_ds_802_11_data_rate *pdatarate = &cmd->params.drate;
-	wlan_adapter *adapter = priv->adapter;
-
-	lbs_deb_enter(LBS_DEB_CMD);
-
-	cmd->size = cpu_to_le16(sizeof(struct cmd_ds_802_11_data_rate) +
-			     S_DS_GEN);
-
-	cmd->command = cpu_to_le16(cmd_802_11_data_rate);
-
-	memset(pdatarate, 0, sizeof(struct cmd_ds_802_11_data_rate));
-
-	pdatarate->action = cpu_to_le16(cmd_action);
-
-	if (cmd_action == cmd_act_set_tx_fix_rate) {
-		pdatarate->datarate[0] = libertas_data_rate_to_index(adapter->datarate);
-		lbs_deb_cmd("Setting FW for fixed rate 0x%02X\n",
-		       adapter->datarate);
-	} else if (cmd_action == cmd_act_set_tx_auto) {
-		lbs_deb_cmd("Setting FW for AUTO rate\n");
-	}
-
-	lbs_deb_leave(LBS_DEB_CMD);
-	return 0;
-}
-
-static int wlan_cmd_mac_multicast_adr(wlan_private * priv,
-				      struct cmd_ds_command *cmd,
-				      u16 cmd_action)
-{
-	struct cmd_ds_mac_multicast_adr *pMCastAdr = &cmd->params.madr;
-	wlan_adapter *adapter = priv->adapter;
-
-	cmd->size = cpu_to_le16(sizeof(struct cmd_ds_mac_multicast_adr) +
-			     S_DS_GEN);
-	cmd->command = cpu_to_le16(cmd_mac_multicast_adr);
-
-	pMCastAdr->action = cpu_to_le16(cmd_action);
-	pMCastAdr->nr_of_adrs =
-	    cpu_to_le16((u16) adapter->nr_of_multicastmacaddr);
-	memcpy(pMCastAdr->maclist, adapter->multicastlist,
-	       adapter->nr_of_multicastmacaddr * ETH_ALEN);
-
-	return 0;
-}
-
-static int wlan_cmd_802_11_rf_channel(wlan_private * priv,
-				      struct cmd_ds_command *cmd,
-				      int option, void *pdata_buf)
-{
-	struct cmd_ds_802_11_rf_channel *rfchan = &cmd->params.rfchannel;
-
-	cmd->command = cpu_to_le16(cmd_802_11_rf_channel);
-	cmd->size = cpu_to_le16(sizeof(struct cmd_ds_802_11_rf_channel) +
-				S_DS_GEN);
-
-	if (option == cmd_opt_802_11_rf_channel_set) {
-		rfchan->currentchannel = cpu_to_le16(*((u16 *) pdata_buf));
-	}
-
-	rfchan->action = cpu_to_le16(option);
-
-	return 0;
-}
-
-static int wlan_cmd_802_11_rssi(wlan_private * priv,
-				struct cmd_ds_command *cmd)
-{
-	wlan_adapter *adapter = priv->adapter;
-
-	cmd->command = cpu_to_le16(cmd_802_11_rssi);
-	cmd->size = cpu_to_le16(sizeof(struct cmd_ds_802_11_rssi) + S_DS_GEN);
-	cmd->params.rssi.N = cpu_to_le16(priv->adapter->bcn_avg_factor);
-
-	/* reset Beacon SNR/NF/RSSI values */
-	adapter->SNR[TYPE_BEACON][TYPE_NOAVG] = 0;
-	adapter->SNR[TYPE_BEACON][TYPE_AVG] = 0;
-	adapter->NF[TYPE_BEACON][TYPE_NOAVG] = 0;
-	adapter->NF[TYPE_BEACON][TYPE_AVG] = 0;
-	adapter->RSSI[TYPE_BEACON][TYPE_NOAVG] = 0;
-	adapter->RSSI[TYPE_BEACON][TYPE_AVG] = 0;
-
-	return 0;
-}
-
-static int wlan_cmd_reg_access(wlan_private * priv,
-			       struct cmd_ds_command *cmdptr,
-			       u8 cmd_action, void *pdata_buf)
-{
-	struct wlan_offset_value *offval;
-
-	lbs_deb_enter(LBS_DEB_CMD);
-
-	offval = (struct wlan_offset_value *)pdata_buf;
-
-	switch (cmdptr->command) {
-	case cmd_mac_reg_access:
-		{
-			struct cmd_ds_mac_reg_access *macreg;
-
-			cmdptr->size =
-			    cpu_to_le16(sizeof (struct cmd_ds_mac_reg_access)
-					+ S_DS_GEN);
-			macreg =
-			    (struct cmd_ds_mac_reg_access *)&cmdptr->params.
-			    macreg;
-
-			macreg->action = cpu_to_le16(cmd_action);
-			macreg->offset = cpu_to_le16((u16) offval->offset);
-			macreg->value = cpu_to_le32(offval->value);
-
-			break;
-		}
-
-	case cmd_bbp_reg_access:
-		{
-			struct cmd_ds_bbp_reg_access *bbpreg;
-
-			cmdptr->size =
-			    cpu_to_le16(sizeof
-					     (struct cmd_ds_bbp_reg_access)
-					     + S_DS_GEN);
-			bbpreg =
-			    (struct cmd_ds_bbp_reg_access *)&cmdptr->params.
-			    bbpreg;
-
-			bbpreg->action = cpu_to_le16(cmd_action);
-			bbpreg->offset = cpu_to_le16((u16) offval->offset);
-			bbpreg->value = (u8) offval->value;
-
-			break;
-		}
-
-	case cmd_rf_reg_access:
-		{
-			struct cmd_ds_rf_reg_access *rfreg;
-
-			cmdptr->size =
-			    cpu_to_le16(sizeof
-					     (struct cmd_ds_rf_reg_access) +
-					     S_DS_GEN);
-			rfreg =
-			    (struct cmd_ds_rf_reg_access *)&cmdptr->params.
-			    rfreg;
-
-			rfreg->action = cpu_to_le16(cmd_action);
-			rfreg->offset = cpu_to_le16((u16) offval->offset);
-			rfreg->value = (u8) offval->value;
-
-			break;
-		}
-
-	default:
-		break;
-	}
-
-	lbs_deb_leave(LBS_DEB_CMD);
-	return 0;
-}
-
-static int wlan_cmd_802_11_mac_address(wlan_private * priv,
-				       struct cmd_ds_command *cmd,
-				       u16 cmd_action)
-{
-	wlan_adapter *adapter = priv->adapter;
-
-	cmd->command = cpu_to_le16(cmd_802_11_mac_address);
-	cmd->size = cpu_to_le16(sizeof(struct cmd_ds_802_11_mac_address) +
-			     S_DS_GEN);
-	cmd->result = 0;
-
-	cmd->params.macadd.action = cpu_to_le16(cmd_action);
-
-	if (cmd_action == cmd_act_set) {
-		memcpy(cmd->params.macadd.macadd,
-		       adapter->current_addr, ETH_ALEN);
-		lbs_dbg_hex("SET_CMD: MAC ADDRESS-", adapter->current_addr, 6);
-	}
-
-	return 0;
-}
-
-static int wlan_cmd_802_11_eeprom_access(wlan_private * priv,
-					 struct cmd_ds_command *cmd,
-					 int cmd_action, void *pdata_buf)
-{
-	struct wlan_ioctl_regrdwr *ea = pdata_buf;
-
-	lbs_deb_enter(LBS_DEB_CMD);
-
-	cmd->command = cpu_to_le16(cmd_802_11_eeprom_access);
-	cmd->size = cpu_to_le16(sizeof(struct cmd_ds_802_11_eeprom_access) +
-				S_DS_GEN);
-	cmd->result = 0;
-
-	cmd->params.rdeeprom.action = cpu_to_le16(ea->action);
-	cmd->params.rdeeprom.offset = cpu_to_le16(ea->offset);
-	cmd->params.rdeeprom.bytecount = cpu_to_le16(ea->NOB);
-	cmd->params.rdeeprom.value = 0;
-
-	return 0;
-}
-
-static int wlan_cmd_bt_access(wlan_private * priv,
-			       struct cmd_ds_command *cmd,
-			       u16 cmd_action, void *pdata_buf)
-{
-	struct cmd_ds_bt_access *bt_access = &cmd->params.bt;
-	lbs_deb_cmd("BT CMD(%d)\n", cmd_action);
-
-	cmd->command = cpu_to_le16(cmd_bt_access);
-	cmd->size = cpu_to_le16(sizeof(struct cmd_ds_bt_access) + S_DS_GEN);
-	cmd->result = 0;
-	bt_access->action = cpu_to_le16(cmd_action);
-
-	switch (cmd_action) {
-	case cmd_act_bt_access_add:
-		memcpy(bt_access->addr1, pdata_buf, 2 * ETH_ALEN);
-		lbs_dbg_hex("BT_ADD: blinded mac address-", bt_access->addr1, 6);
-		break;
-	case cmd_act_bt_access_del:
-		memcpy(bt_access->addr1, pdata_buf, 1 * ETH_ALEN);
-		lbs_dbg_hex("BT_DEL: blinded mac address-", bt_access->addr1, 6);
-		break;
-	case cmd_act_bt_access_list:
-		bt_access->id = cpu_to_le32(*(u32 *) pdata_buf);
-		break;
-	case cmd_act_bt_access_reset:
-		break;
-	case cmd_act_bt_access_set_invert:
-		bt_access->id = cpu_to_le32(*(u32 *) pdata_buf);
-		break;
-	case cmd_act_bt_access_get_invert:
+	case sizeof(u16):
+		*out_val = le16_to_cpu(*((__le16 *)(&cmd.value)));
 		break;
 	default:
+		lbs_deb_cmd("SNMP_CMD: (get) unhandled OID 0x%x size %d\n",
+		            oid, le16_to_cpu(cmd.bufsize));
 		break;
 	}
-	return 0;
+
+out:
+	lbs_deb_leave_args(LBS_DEB_CMD, "ret %d", ret);
+	return ret;
 }
 
-static int wlan_cmd_fwt_access(wlan_private * priv,
-			       struct cmd_ds_command *cmd,
-			       u16 cmd_action, void *pdata_buf)
+/**
+ *  @brief Get the min, max, and current TX power
+ *
+ *  @param priv    	A pointer to struct lbs_private structure
+ *  @param curlevel  	Current power level in dBm
+ *  @param minlevel  	Minimum supported power level in dBm (optional)
+ *  @param maxlevel  	Maximum supported power level in dBm (optional)
+ *
+ *  @return 	   	0 on success, error on failure
+ */
+int lbs_get_tx_power(struct lbs_private *priv, s16 *curlevel, s16 *minlevel,
+		     s16 *maxlevel)
 {
-	struct cmd_ds_fwt_access *fwt_access = &cmd->params.fwt;
-	lbs_deb_cmd("FWT CMD(%d)\n", cmd_action);
+	struct cmd_ds_802_11_rf_tx_power cmd;
+	int ret;
 
-	cmd->command = cpu_to_le16(cmd_fwt_access);
-	cmd->size = cpu_to_le16(sizeof(struct cmd_ds_fwt_access) + S_DS_GEN);
-	cmd->result = 0;
+	lbs_deb_enter(LBS_DEB_CMD);
 
-	if (pdata_buf)
-		memcpy(fwt_access, pdata_buf, sizeof(*fwt_access));
-	else
-		memset(fwt_access, 0, sizeof(*fwt_access));
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.hdr.size = cpu_to_le16(sizeof(cmd));
+	cmd.action = cpu_to_le16(CMD_ACT_GET);
 
-	fwt_access->action = cpu_to_le16(cmd_action);
+	ret = lbs_cmd_with_response(priv, CMD_802_11_RF_TX_POWER, &cmd);
+	if (ret == 0) {
+		*curlevel = le16_to_cpu(cmd.curlevel);
+		if (minlevel)
+			*minlevel = cmd.minlevel;
+		if (maxlevel)
+			*maxlevel = cmd.maxlevel;
+	}
 
-	return 0;
+	lbs_deb_leave(LBS_DEB_CMD);
+	return ret;
 }
 
-static int wlan_cmd_mesh_access(wlan_private * priv,
-				struct cmd_ds_command *cmd,
-				u16 cmd_action, void *pdata_buf)
+/**
+ *  @brief Set the TX power
+ *
+ *  @param priv    	A pointer to struct lbs_private structure
+ *  @param dbm  	The desired power level in dBm
+ *
+ *  @return 	   	0 on success, error on failure
+ */
+int lbs_set_tx_power(struct lbs_private *priv, s16 dbm)
 {
-	struct cmd_ds_mesh_access *mesh_access = &cmd->params.mesh;
-	lbs_deb_cmd("FWT CMD(%d)\n", cmd_action);
+	struct cmd_ds_802_11_rf_tx_power cmd;
+	int ret;
 
-	cmd->command = cpu_to_le16(cmd_mesh_access);
-	cmd->size = cpu_to_le16(sizeof(struct cmd_ds_mesh_access) + S_DS_GEN);
-	cmd->result = 0;
+	lbs_deb_enter(LBS_DEB_CMD);
 
-	if (pdata_buf)
-		memcpy(mesh_access, pdata_buf, sizeof(*mesh_access));
-	else
-		memset(mesh_access, 0, sizeof(*mesh_access));
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.hdr.size = cpu_to_le16(sizeof(cmd));
+	cmd.action = cpu_to_le16(CMD_ACT_SET);
+	cmd.curlevel = cpu_to_le16(dbm);
 
-	mesh_access->action = cpu_to_le16(cmd_action);
+	lbs_deb_cmd("SET_RF_TX_POWER: %d dBm\n", dbm);
 
-	return 0;
+	ret = lbs_cmd_with_response(priv, CMD_802_11_RF_TX_POWER, &cmd);
+
+	lbs_deb_leave(LBS_DEB_CMD);
+	return ret;
 }
 
-void libertas_queue_cmd(wlan_adapter * adapter, struct cmd_ctrl_node *cmdnode, u8 addtail)
+/**
+ *  @brief Enable or disable monitor mode (only implemented on OLPC usb8388 FW)
+ *
+ *  @param priv        A pointer to struct lbs_private structure
+ *  @param enable      1 to enable monitor mode, 0 to disable
+ *
+ *  @return            0 on success, error on failure
+ */
+int lbs_set_monitor_mode(struct lbs_private *priv, int enable)
+{
+	struct cmd_ds_802_11_monitor_mode cmd;
+	int ret;
+
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.hdr.size = cpu_to_le16(sizeof(cmd));
+	cmd.action = cpu_to_le16(CMD_ACT_SET);
+	if (enable)
+		cmd.mode = cpu_to_le16(0x1);
+
+	lbs_deb_cmd("SET_MONITOR_MODE: %d\n", enable);
+
+	ret = lbs_cmd_with_response(priv, CMD_802_11_MONITOR_MODE, &cmd);
+	if (ret == 0) {
+		priv->dev->type = enable ? ARPHRD_IEEE80211_RADIOTAP :
+						ARPHRD_ETHER;
+	}
+
+	lbs_deb_leave(LBS_DEB_CMD);
+	return ret;
+}
+
+/**
+ *  @brief Get the radio channel
+ *
+ *  @param priv    	A pointer to struct lbs_private structure
+ *
+ *  @return 	   	The channel on success, error on failure
+ */
+static int lbs_get_channel(struct lbs_private *priv)
+{
+	struct cmd_ds_802_11_rf_channel cmd;
+	int ret = 0;
+
+	lbs_deb_enter(LBS_DEB_CMD);
+
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.hdr.size = cpu_to_le16(sizeof(cmd));
+	cmd.action = cpu_to_le16(CMD_OPT_802_11_RF_CHANNEL_GET);
+
+	ret = lbs_cmd_with_response(priv, CMD_802_11_RF_CHANNEL, &cmd);
+	if (ret)
+		goto out;
+
+	ret = le16_to_cpu(cmd.channel);
+	lbs_deb_cmd("current radio channel is %d\n", ret);
+
+out:
+	lbs_deb_leave_args(LBS_DEB_CMD, "ret %d", ret);
+	return ret;
+}
+
+int lbs_update_channel(struct lbs_private *priv)
+{
+	int ret;
+
+	/* the channel in f/w could be out of sync; get the current channel */
+	lbs_deb_enter(LBS_DEB_ASSOC);
+
+	ret = lbs_get_channel(priv);
+	if (ret > 0) {
+		priv->channel = ret;
+		ret = 0;
+	}
+	lbs_deb_leave_args(LBS_DEB_ASSOC, "ret %d", ret);
+	return ret;
+}
+
+/**
+ *  @brief Set the radio channel
+ *
+ *  @param priv    	A pointer to struct lbs_private structure
+ *  @param channel  	The desired channel, or 0 to clear a locked channel
+ *
+ *  @return 	   	0 on success, error on failure
+ */
+int lbs_set_channel(struct lbs_private *priv, u8 channel)
+{
+	struct cmd_ds_802_11_rf_channel cmd;
+#ifdef DEBUG
+	u8 old_channel = priv->channel;
+#endif
+	int ret = 0;
+
+	lbs_deb_enter(LBS_DEB_CMD);
+
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.hdr.size = cpu_to_le16(sizeof(cmd));
+	cmd.action = cpu_to_le16(CMD_OPT_802_11_RF_CHANNEL_SET);
+	cmd.channel = cpu_to_le16(channel);
+
+	ret = lbs_cmd_with_response(priv, CMD_802_11_RF_CHANNEL, &cmd);
+	if (ret)
+		goto out;
+
+	priv->channel = (uint8_t) le16_to_cpu(cmd.channel);
+	lbs_deb_cmd("channel switch from %d to %d\n", old_channel,
+		priv->channel);
+
+out:
+	lbs_deb_leave_args(LBS_DEB_CMD, "ret %d", ret);
+	return ret;
+}
+
+/**
+ *  @brief Get current RSSI and noise floor
+ *
+ *  @param priv		A pointer to struct lbs_private structure
+ *  @param rssi		On successful return, signal level in mBm
+ *
+ *  @return 	   	The channel on success, error on failure
+ */
+int lbs_get_rssi(struct lbs_private *priv, s8 *rssi, s8 *nf)
+{
+	struct cmd_ds_802_11_rssi cmd;
+	int ret = 0;
+
+	lbs_deb_enter(LBS_DEB_CMD);
+
+	BUG_ON(rssi == NULL);
+	BUG_ON(nf == NULL);
+
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.hdr.size = cpu_to_le16(sizeof(cmd));
+	/* Average SNR over last 8 beacons */
+	cmd.n_or_snr = cpu_to_le16(8);
+
+	ret = lbs_cmd_with_response(priv, CMD_802_11_RSSI, &cmd);
+	if (ret == 0) {
+		*nf = CAL_NF(le16_to_cpu(cmd.nf));
+		*rssi = CAL_RSSI(le16_to_cpu(cmd.n_or_snr), le16_to_cpu(cmd.nf));
+	}
+
+	lbs_deb_leave_args(LBS_DEB_CMD, "ret %d", ret);
+	return ret;
+}
+
+/**
+ *  @brief Send regulatory and 802.11d domain information to the firmware
+ *
+ *  @param priv		pointer to struct lbs_private
+ *  @param request	cfg80211 regulatory request structure
+ *  @param bands	the device's supported bands and channels
+ *
+ *  @return		0 on success, error code on failure
+*/
+int lbs_set_11d_domain_info(struct lbs_private *priv,
+			    struct regulatory_request *request,
+			    struct ieee80211_supported_band **bands)
+{
+	struct cmd_ds_802_11d_domain_info cmd;
+	struct mrvl_ie_domain_param_set *domain = &cmd.domain;
+	struct ieee80211_country_ie_triplet *t;
+	enum ieee80211_band band;
+	struct ieee80211_channel *ch;
+	u8 num_triplet = 0;
+	u8 num_parsed_chan = 0;
+	u8 first_channel = 0, next_chan = 0, max_pwr = 0;
+	u8 i, flag = 0;
+	size_t triplet_size;
+	int ret;
+
+	lbs_deb_enter(LBS_DEB_11D);
+
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.action = cpu_to_le16(CMD_ACT_SET);
+
+	lbs_deb_11d("Setting country code '%c%c'\n",
+		    request->alpha2[0], request->alpha2[1]);
+
+	domain->header.type = cpu_to_le16(TLV_TYPE_DOMAIN);
+
+	/* Set country code */
+	domain->country_code[0] = request->alpha2[0];
+	domain->country_code[1] = request->alpha2[1];
+	domain->country_code[2] = ' ';
+
+	/* Now set up the channel triplets; firmware is somewhat picky here
+	 * and doesn't validate channel numbers and spans; hence it would
+	 * interpret a triplet of (36, 4, 20) as channels 36, 37, 38, 39.  Since
+	 * the last 3 aren't valid channels, the driver is responsible for
+	 * splitting that up into 4 triplet pairs of (36, 1, 20) + (40, 1, 20)
+	 * etc.
+	 */
+	for (band = 0;
+	     (band < IEEE80211_NUM_BANDS) && (num_triplet < MAX_11D_TRIPLETS);
+	     band++) {
+
+		if (!bands[band])
+			continue;
+
+		for (i = 0;
+		     (i < bands[band]->n_channels) && (num_triplet < MAX_11D_TRIPLETS);
+		     i++) {
+			ch = &bands[band]->channels[i];
+			if (ch->flags & IEEE80211_CHAN_DISABLED)
+				continue;
+
+			if (!flag) {
+				flag = 1;
+				next_chan = first_channel = (u32) ch->hw_value;
+				max_pwr = ch->max_power;
+				num_parsed_chan = 1;
+				continue;
+			}
+
+			if ((ch->hw_value == next_chan + 1) &&
+					(ch->max_power == max_pwr)) {
+				/* Consolidate adjacent channels */
+				next_chan++;
+				num_parsed_chan++;
+			} else {
+				/* Add this triplet */
+				lbs_deb_11d("11D triplet (%d, %d, %d)\n",
+					first_channel, num_parsed_chan,
+					max_pwr);
+				t = &domain->triplet[num_triplet];
+				t->chans.first_channel = first_channel;
+				t->chans.num_channels = num_parsed_chan;
+				t->chans.max_power = max_pwr;
+				num_triplet++;
+				flag = 0;
+			}
+		}
+
+		if (flag) {
+			/* Add last triplet */
+			lbs_deb_11d("11D triplet (%d, %d, %d)\n", first_channel,
+				num_parsed_chan, max_pwr);
+			t = &domain->triplet[num_triplet];
+			t->chans.first_channel = first_channel;
+			t->chans.num_channels = num_parsed_chan;
+			t->chans.max_power = max_pwr;
+			num_triplet++;
+		}
+	}
+
+	lbs_deb_11d("# triplets %d\n", num_triplet);
+
+	/* Set command header sizes */
+	triplet_size = num_triplet * sizeof(struct ieee80211_country_ie_triplet);
+	domain->header.len = cpu_to_le16(sizeof(domain->country_code) +
+					triplet_size);
+
+	lbs_deb_hex(LBS_DEB_11D, "802.11D domain param set",
+			(u8 *) &cmd.domain.country_code,
+			le16_to_cpu(domain->header.len));
+
+	cmd.hdr.size = cpu_to_le16(sizeof(cmd.hdr) +
+				   sizeof(cmd.action) +
+				   sizeof(cmd.domain.header) +
+				   sizeof(cmd.domain.country_code) +
+				   triplet_size);
+
+	ret = lbs_cmd_with_response(priv, CMD_802_11D_DOMAIN_INFO, &cmd);
+
+	lbs_deb_leave_args(LBS_DEB_11D, "ret %d", ret);
+	return ret;
+}
+
+/**
+ *  @brief Read a MAC, Baseband, or RF register
+ *
+ *  @param priv		pointer to struct lbs_private
+ *  @param cmd		register command, one of CMD_MAC_REG_ACCESS,
+ *                        CMD_BBP_REG_ACCESS, or CMD_RF_REG_ACCESS
+ *  @param offset       byte offset of the register to get
+ *  @param value        on success, the value of the register at 'offset'
+ *
+ *  @return		0 on success, error code on failure
+*/
+int lbs_get_reg(struct lbs_private *priv, u16 reg, u16 offset, u32 *value)
+{
+	struct cmd_ds_reg_access cmd;
+	int ret = 0;
+
+	lbs_deb_enter(LBS_DEB_CMD);
+
+	BUG_ON(value == NULL);
+
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.hdr.size = cpu_to_le16(sizeof(cmd));
+	cmd.action = cpu_to_le16(CMD_ACT_GET);
+
+	if (reg != CMD_MAC_REG_ACCESS &&
+	    reg != CMD_BBP_REG_ACCESS &&
+	    reg != CMD_RF_REG_ACCESS) {
+		ret = -EINVAL;
+		goto out;
+	}
+
+	ret = lbs_cmd_with_response(priv, reg, &cmd);
+	if (ret) {
+		if (reg == CMD_BBP_REG_ACCESS || reg == CMD_RF_REG_ACCESS)
+			*value = cmd.value.bbp_rf;
+		else if (reg == CMD_MAC_REG_ACCESS)
+			*value = le32_to_cpu(cmd.value.mac);
+	}
+
+out:
+	lbs_deb_leave_args(LBS_DEB_CMD, "ret %d", ret);
+	return ret;
+}
+
+/**
+ *  @brief Write a MAC, Baseband, or RF register
+ *
+ *  @param priv		pointer to struct lbs_private
+ *  @param cmd		register command, one of CMD_MAC_REG_ACCESS,
+ *                        CMD_BBP_REG_ACCESS, or CMD_RF_REG_ACCESS
+ *  @param offset       byte offset of the register to set
+ *  @param value        the value to write to the register at 'offset'
+ *
+ *  @return		0 on success, error code on failure
+*/
+int lbs_set_reg(struct lbs_private *priv, u16 reg, u16 offset, u32 value)
+{
+	struct cmd_ds_reg_access cmd;
+	int ret = 0;
+
+	lbs_deb_enter(LBS_DEB_CMD);
+
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.hdr.size = cpu_to_le16(sizeof(cmd));
+	cmd.action = cpu_to_le16(CMD_ACT_SET);
+
+	if (reg == CMD_BBP_REG_ACCESS || reg == CMD_RF_REG_ACCESS)
+		cmd.value.bbp_rf = (u8) (value & 0xFF);
+	else if (reg == CMD_MAC_REG_ACCESS)
+		cmd.value.mac = cpu_to_le32(value);
+	else {
+		ret = -EINVAL;
+		goto out;
+	}
+
+	ret = lbs_cmd_with_response(priv, reg, &cmd);
+
+out:
+	lbs_deb_leave_args(LBS_DEB_CMD, "ret %d", ret);
+	return ret;
+}
+
+static void lbs_queue_cmd(struct lbs_private *priv,
+			  struct cmd_ctrl_node *cmdnode)
 {
 	unsigned long flags;
-	struct cmd_ds_command *cmdptr;
+	int addtail = 1;
 
-	lbs_deb_enter(LBS_DEB_CMD);
+	lbs_deb_enter(LBS_DEB_HOST);
 
 	if (!cmdnode) {
-		lbs_deb_cmd("QUEUE_CMD: cmdnode is NULL\n");
+		lbs_deb_host("QUEUE_CMD: cmdnode is NULL\n");
 		goto done;
 	}
-
-	cmdptr = (struct cmd_ds_command *)cmdnode->bufvirtualaddr;
-	if (!cmdptr) {
-		lbs_deb_cmd("QUEUE_CMD: cmdptr is NULL\n");
+	if (!cmdnode->cmdbuf->size) {
+		lbs_deb_host("DNLD_CMD: cmd size is zero\n");
 		goto done;
 	}
+	cmdnode->result = 0;
 
 	/* Exit_PS command needs to be queued in the header always. */
-	if (cmdptr->command == cmd_802_11_ps_mode) {
-		struct cmd_ds_802_11_ps_mode *psm = &cmdptr->params.psmode;
-		if (psm->action == cpu_to_le16(cmd_subcmd_exit_ps)) {
-			if (adapter->psstate != PS_STATE_FULL_POWER)
+	if (le16_to_cpu(cmdnode->cmdbuf->command) == CMD_802_11_PS_MODE) {
+		struct cmd_ds_802_11_ps_mode *psm = (void *) &cmdnode->cmdbuf;
+
+		if (psm->action == cpu_to_le16(PS_MODE_ACTION_EXIT_PS)) {
+			if (priv->psstate != PS_STATE_FULL_POWER)
 				addtail = 0;
 		}
 	}
 
-	spin_lock_irqsave(&adapter->driver_lock, flags);
+	if (le16_to_cpu(cmdnode->cmdbuf->command) == CMD_802_11_WAKEUP_CONFIRM)
+		addtail = 0;
+
+	spin_lock_irqsave(&priv->driver_lock, flags);
 
 	if (addtail)
-		list_add_tail((struct list_head *)cmdnode,
-			      &adapter->cmdpendingq);
+		list_add_tail(&cmdnode->list, &priv->cmdpendingq);
 	else
-		list_add((struct list_head *)cmdnode, &adapter->cmdpendingq);
+		list_add(&cmdnode->list, &priv->cmdpendingq);
 
-	spin_unlock_irqrestore(&adapter->driver_lock, flags);
+	spin_unlock_irqrestore(&priv->driver_lock, flags);
 
-	lbs_deb_cmd("QUEUE_CMD: Inserted node=%p, cmd=0x%x in cmdpendingq\n",
-	       cmdnode,
-	       le16_to_cpu(((struct cmd_ds_gen*)cmdnode->bufvirtualaddr)->command));
+	lbs_deb_host("QUEUE_CMD: inserted command 0x%04x into cmdpendingq\n",
+		     le16_to_cpu(cmdnode->cmdbuf->command));
 
 done:
-	lbs_deb_leave(LBS_DEB_CMD);
+	lbs_deb_leave(LBS_DEB_HOST);
 }
 
-/*
- * TODO: Fix the issue when DownloadcommandToStation is being called the
- * second time when the command timesout. All the cmdptr->xxx are in little
- * endian and therefore all the comparissions will fail.
- * For now - we are not performing the endian conversion the second time - but
- * for PS and DEEP_SLEEP we need to worry
- */
-static int DownloadcommandToStation(wlan_private * priv,
-				    struct cmd_ctrl_node *cmdnode)
+static void lbs_submit_command(struct lbs_private *priv,
+			       struct cmd_ctrl_node *cmdnode)
 {
 	unsigned long flags;
-	struct cmd_ds_command *cmdptr;
-	wlan_adapter *adapter = priv->adapter;
-	int ret = 0;
-	u16 cmdsize;
-	u16 command;
+	struct cmd_header *cmd;
+	uint16_t cmdsize;
+	uint16_t command;
+	int timeo = 3 * HZ;
+	int ret;
 
-	lbs_deb_enter(LBS_DEB_CMD);
+	lbs_deb_enter(LBS_DEB_HOST);
 
-	if (!adapter || !cmdnode) {
-		lbs_deb_cmd("DNLD_CMD: adapter = %p, cmdnode = %p\n",
-		       adapter, cmdnode);
-		if (cmdnode) {
-			spin_lock_irqsave(&adapter->driver_lock, flags);
-			__libertas_cleanup_and_insert_cmd(priv, cmdnode);
-			spin_unlock_irqrestore(&adapter->driver_lock, flags);
+	cmd = cmdnode->cmdbuf;
+
+	spin_lock_irqsave(&priv->driver_lock, flags);
+	priv->cur_cmd = cmdnode;
+	spin_unlock_irqrestore(&priv->driver_lock, flags);
+
+	cmdsize = le16_to_cpu(cmd->size);
+	command = le16_to_cpu(cmd->command);
+
+	/* These commands take longer */
+	if (command == CMD_802_11_SCAN || command == CMD_802_11_ASSOCIATE)
+		timeo = 5 * HZ;
+
+	lbs_deb_cmd("DNLD_CMD: command 0x%04x, seq %d, size %d\n",
+		     command, le16_to_cpu(cmd->seqnum), cmdsize);
+	lbs_deb_hex(LBS_DEB_CMD, "DNLD_CMD", (void *) cmdnode->cmdbuf, cmdsize);
+
+	ret = priv->hw_host_to_card(priv, MVMS_CMD, (u8 *) cmd, cmdsize);
+
+	if (ret) {
+		lbs_pr_info("DNLD_CMD: hw_host_to_card failed: %d\n", ret);
+		/* Let the timer kick in and retry, and potentially reset
+		   the whole thing if the condition persists */
+		timeo = HZ/4;
+	}
+
+	if (command == CMD_802_11_DEEP_SLEEP) {
+		if (priv->is_auto_deep_sleep_enabled) {
+			priv->wakeup_dev_required = 1;
+			priv->dnld_sent = 0;
 		}
-		ret = -1;
-		goto done;
+		priv->is_deep_sleep = 1;
+		lbs_complete_command(priv, cmdnode, 0);
+	} else {
+		/* Setup the timer after transmit command */
+		mod_timer(&priv->command_timer, jiffies + timeo);
 	}
 
-	cmdptr = (struct cmd_ds_command *)cmdnode->bufvirtualaddr;
-
-
-	spin_lock_irqsave(&adapter->driver_lock, flags);
-	if (!cmdptr || !cmdptr->size) {
-		lbs_deb_cmd("DNLD_CMD: cmdptr is Null or cmd size is Zero, "
-		       "Not sending\n");
-		__libertas_cleanup_and_insert_cmd(priv, cmdnode);
-		spin_unlock_irqrestore(&adapter->driver_lock, flags);
-		ret = -1;
-		goto done;
-	}
-
-	adapter->cur_cmd = cmdnode;
-	adapter->cur_cmd_retcode = 0;
-	spin_unlock_irqrestore(&adapter->driver_lock, flags);
-	lbs_deb_cmd("DNLD_CMD:: Before download, size of cmd = %d\n",
-		    le16_to_cpu(cmdptr->size));
-
-	cmdsize = cmdptr->size;
-
-	command = cpu_to_le16(cmdptr->command);
-
-	cmdnode->cmdwaitqwoken = 0;
-	cmdsize = cpu_to_le16(cmdsize);
-
-	ret = priv->hw_host_to_card(priv, MVMS_CMD, (u8 *) cmdptr, cmdsize);
-
-	if (ret != 0) {
-		lbs_deb_cmd("DNLD_CMD: Host to Card failed\n");
-		spin_lock_irqsave(&adapter->driver_lock, flags);
-		__libertas_cleanup_and_insert_cmd(priv, adapter->cur_cmd);
-		adapter->cur_cmd = NULL;
-		spin_unlock_irqrestore(&adapter->driver_lock, flags);
-		ret = -1;
-		goto done;
-	}
-
-	lbs_deb_cmd("DNLD_CMD: Sent command 0x%x @ %lu\n", command, jiffies);
-	lbs_dbg_hex("DNLD_CMD: command", cmdnode->bufvirtualaddr, cmdsize);
-
-	/* Setup the timer after transmit command */
-	if (command == cmd_802_11_scan || command == cmd_802_11_authenticate
-	    || command == cmd_802_11_associate)
-		mod_timer(&adapter->command_timer, jiffies + (10*HZ));
-	else
-		mod_timer(&adapter->command_timer, jiffies + (5*HZ));
-
-	ret = 0;
-
-done:
-	lbs_deb_leave_args(LBS_DEB_CMD, "ret %d", ret);
-	return ret;
-}
-
-static int wlan_cmd_mac_control(wlan_private * priv,
-				struct cmd_ds_command *cmd)
-{
-	struct cmd_ds_mac_control *mac = &cmd->params.macctrl;
-
-	lbs_deb_enter(LBS_DEB_CMD);
-
-	cmd->command = cpu_to_le16(cmd_mac_control);
-	cmd->size = cpu_to_le16(sizeof(struct cmd_ds_mac_control) + S_DS_GEN);
-	mac->action = cpu_to_le16(priv->adapter->currentpacketfilter);
-
-	lbs_deb_cmd("wlan_cmd_mac_control(): action=0x%X size=%d\n",
-		    le16_to_cpu(mac->action), le16_to_cpu(cmd->size));
-
-	lbs_deb_leave(LBS_DEB_CMD);
-	return 0;
+	lbs_deb_leave(LBS_DEB_HOST);
 }
 
 /**
  *  This function inserts command node to cmdfreeq
- *  after cleans it. Requires adapter->driver_lock held.
+ *  after cleans it. Requires priv->driver_lock held.
  */
-void __libertas_cleanup_and_insert_cmd(wlan_private * priv, struct cmd_ctrl_node *ptempcmd)
+static void __lbs_cleanup_and_insert_cmd(struct lbs_private *priv,
+					 struct cmd_ctrl_node *cmdnode)
 {
-	wlan_adapter *adapter = priv->adapter;
+	lbs_deb_enter(LBS_DEB_HOST);
 
-	if (!ptempcmd)
-		goto done;
+	if (!cmdnode)
+		goto out;
 
-	cleanup_cmdnode(ptempcmd);
-	list_add_tail((struct list_head *)ptempcmd, &adapter->cmdfreeq);
-done:
-	return;
+	cmdnode->callback = NULL;
+	cmdnode->callback_arg = 0;
+
+	memset(cmdnode->cmdbuf, 0, LBS_CMD_BUFFER_SIZE);
+
+	list_add_tail(&cmdnode->list, &priv->cmdfreeq);
+ out:
+	lbs_deb_leave(LBS_DEB_HOST);
 }
 
-void libertas_cleanup_and_insert_cmd(wlan_private * priv, struct cmd_ctrl_node *ptempcmd)
+static void lbs_cleanup_and_insert_cmd(struct lbs_private *priv,
+	struct cmd_ctrl_node *ptempcmd)
 {
 	unsigned long flags;
 
-	spin_lock_irqsave(&priv->adapter->driver_lock, flags);
-	__libertas_cleanup_and_insert_cmd(priv, ptempcmd);
-	spin_unlock_irqrestore(&priv->adapter->driver_lock, flags);
+	spin_lock_irqsave(&priv->driver_lock, flags);
+	__lbs_cleanup_and_insert_cmd(priv, ptempcmd);
+	spin_unlock_irqrestore(&priv->driver_lock, flags);
 }
 
-int libertas_set_radio_control(wlan_private * priv)
+void lbs_complete_command(struct lbs_private *priv, struct cmd_ctrl_node *cmd,
+			  int result)
 {
-	int ret = 0;
+	cmd->result = result;
+	cmd->cmdwaitqwoken = 1;
+	wake_up_interruptible(&cmd->cmdwait_q);
+
+	if (!cmd->callback || cmd->callback == lbs_cmd_async_callback)
+		__lbs_cleanup_and_insert_cmd(priv, cmd);
+	priv->cur_cmd = NULL;
+}
+
+int lbs_set_radio(struct lbs_private *priv, u8 preamble, u8 radio_on)
+{
+	struct cmd_ds_802_11_radio_control cmd;
+	int ret = -EINVAL;
 
 	lbs_deb_enter(LBS_DEB_CMD);
 
-	ret = libertas_prepare_and_send_command(priv,
-				    cmd_802_11_radio_control,
-				    cmd_act_set,
-				    cmd_option_waitforrsp, 0, NULL);
+	cmd.hdr.size = cpu_to_le16(sizeof(cmd));
+	cmd.action = cpu_to_le16(CMD_ACT_SET);
 
-	lbs_deb_cmd("RADIO_SET: on or off: 0x%X, preamble = 0x%X\n",
-	       priv->adapter->radioon, priv->adapter->preamble);
-
-	lbs_deb_leave_args(LBS_DEB_CMD, "ret %d", ret);
-	return ret;
-}
-
-int libertas_set_mac_packet_filter(wlan_private * priv)
-{
-	int ret = 0;
-
-	lbs_deb_enter(LBS_DEB_CMD);
-
-	lbs_deb_cmd("libertas_set_mac_packet_filter value = %x\n",
-	       priv->adapter->currentpacketfilter);
-
-	/* Send MAC control command to station */
-	ret = libertas_prepare_and_send_command(priv,
-				    cmd_mac_control, 0, 0, 0, NULL);
-
-	lbs_deb_leave_args(LBS_DEB_CMD, "ret %d", ret);
-	return ret;
-}
-
-/**
- *  @brief This function prepare the command before send to firmware.
- *
- *  @param priv		A pointer to wlan_private structure
- *  @param cmd_no	command number
- *  @param cmd_action	command action: GET or SET
- *  @param wait_option	wait option: wait response or not
- *  @param cmd_oid	cmd oid: treated as sub command
- *  @param pdata_buf	A pointer to informaion buffer
- *  @return 		0 or -1
- */
-int libertas_prepare_and_send_command(wlan_private * priv,
-			  u16 cmd_no,
-			  u16 cmd_action,
-			  u16 wait_option, u32 cmd_oid, void *pdata_buf)
-{
-	int ret = 0;
-	wlan_adapter *adapter = priv->adapter;
-	struct cmd_ctrl_node *cmdnode;
-	struct cmd_ds_command *cmdptr;
-	unsigned long flags;
-
-	lbs_deb_enter(LBS_DEB_CMD);
-
-	if (!adapter) {
-		lbs_deb_cmd("PREP_CMD: adapter is Null\n");
-		ret = -1;
-		goto done;
-	}
-
-	if (adapter->surpriseremoved) {
-		lbs_deb_cmd("PREP_CMD: Card is Removed\n");
-		ret = -1;
-		goto done;
-	}
-
-	cmdnode = libertas_get_free_cmd_ctrl_node(priv);
-
-	if (cmdnode == NULL) {
-		lbs_deb_cmd("PREP_CMD: No free cmdnode\n");
-
-		/* Wake up main thread to execute next command */
-		wake_up_interruptible(&priv->mainthread.waitq);
-		ret = -1;
-		goto done;
-	}
-
-	libertas_set_cmd_ctrl_node(priv, cmdnode, cmd_oid, wait_option, pdata_buf);
-
-	cmdptr = (struct cmd_ds_command *)cmdnode->bufvirtualaddr;
-
-	lbs_deb_cmd("PREP_CMD: Val of cmd ptr=%p, command=0x%X\n",
-	       cmdptr, cmd_no);
-
-	if (!cmdptr) {
-		lbs_deb_cmd("PREP_CMD: bufvirtualaddr of cmdnode is NULL\n");
-		libertas_cleanup_and_insert_cmd(priv, cmdnode);
-		ret = -1;
-		goto done;
-	}
-
-	/* Set sequence number, command and INT option */
-	adapter->seqnum++;
-	cmdptr->seqnum = cpu_to_le16(adapter->seqnum);
-
-	cmdptr->command = cpu_to_le16(cmd_no);
-	cmdptr->result = 0;
-
-	switch (cmd_no) {
-	case cmd_get_hw_spec:
-		ret = wlan_cmd_hw_spec(priv, cmdptr);
-		break;
-	case cmd_802_11_ps_mode:
-		ret = wlan_cmd_802_11_ps_mode(priv, cmdptr, cmd_action);
-		break;
-
-	case cmd_802_11_scan:
-		ret = libertas_cmd_80211_scan(priv, cmdptr, pdata_buf);
-		break;
-
-	case cmd_mac_control:
-		ret = wlan_cmd_mac_control(priv, cmdptr);
-		break;
-
-	case cmd_802_11_associate:
-	case cmd_802_11_reassociate:
-		ret = libertas_cmd_80211_associate(priv, cmdptr, pdata_buf);
-		break;
-
-	case cmd_802_11_deauthenticate:
-		ret = libertas_cmd_80211_deauthenticate(priv, cmdptr);
-		break;
-
-	case cmd_802_11_set_wep:
-		ret = wlan_cmd_802_11_set_wep(priv, cmdptr, cmd_action, pdata_buf);
-		break;
-
-	case cmd_802_11_ad_hoc_start:
-		ret = libertas_cmd_80211_ad_hoc_start(priv, cmdptr, pdata_buf);
-		break;
-	case cmd_code_dnld:
-		break;
-
-	case cmd_802_11_reset:
-		ret = wlan_cmd_802_11_reset(priv, cmdptr, cmd_action);
-		break;
-
-	case cmd_802_11_get_log:
-		ret = wlan_cmd_802_11_get_log(priv, cmdptr);
-		break;
-
-	case cmd_802_11_authenticate:
-		ret = libertas_cmd_80211_authenticate(priv, cmdptr, pdata_buf);
-		break;
-
-	case cmd_802_11_get_stat:
-		ret = wlan_cmd_802_11_get_stat(priv, cmdptr);
-		break;
-
-	case cmd_802_11_snmp_mib:
-		ret = wlan_cmd_802_11_snmp_mib(priv, cmdptr,
-					       cmd_action, cmd_oid, pdata_buf);
-		break;
-
-	case cmd_mac_reg_access:
-	case cmd_bbp_reg_access:
-	case cmd_rf_reg_access:
-		ret = wlan_cmd_reg_access(priv, cmdptr, cmd_action, pdata_buf);
-		break;
-
-	case cmd_802_11_rf_channel:
-		ret = wlan_cmd_802_11_rf_channel(priv, cmdptr,
-						 cmd_action, pdata_buf);
-		break;
-
-	case cmd_802_11_rf_tx_power:
-		ret = wlan_cmd_802_11_rf_tx_power(priv, cmdptr,
-						  cmd_action, pdata_buf);
-		break;
-
-	case cmd_802_11_radio_control:
-		ret = wlan_cmd_802_11_radio_control(priv, cmdptr, cmd_action);
-		break;
-
-	case cmd_802_11_rf_antenna:
-		ret = wlan_cmd_802_11_rf_antenna(priv, cmdptr,
-						 cmd_action, pdata_buf);
-		break;
-
-	case cmd_802_11_data_rate:
-		ret = wlan_cmd_802_11_data_rate(priv, cmdptr, cmd_action);
-		break;
-	case cmd_802_11_rate_adapt_rateset:
-		ret = wlan_cmd_802_11_rate_adapt_rateset(priv,
-							 cmdptr, cmd_action);
-		break;
-
-	case cmd_mac_multicast_adr:
-		ret = wlan_cmd_mac_multicast_adr(priv, cmdptr, cmd_action);
-		break;
-
-	case cmd_802_11_ad_hoc_join:
-		ret = libertas_cmd_80211_ad_hoc_join(priv, cmdptr, pdata_buf);
-		break;
-
-	case cmd_802_11_rssi:
-		ret = wlan_cmd_802_11_rssi(priv, cmdptr);
-		break;
-
-	case cmd_802_11_ad_hoc_stop:
-		ret = libertas_cmd_80211_ad_hoc_stop(priv, cmdptr);
-		break;
-
-	case cmd_802_11_enable_rsn:
-		ret = wlan_cmd_802_11_enable_rsn(priv, cmdptr, cmd_action,
-				pdata_buf);
-		break;
-
-	case cmd_802_11_key_material:
-		ret = wlan_cmd_802_11_key_material(priv, cmdptr, cmd_action,
-				cmd_oid, pdata_buf);
-		break;
-
-	case cmd_802_11_pairwise_tsc:
-		break;
-	case cmd_802_11_group_tsc:
-		break;
-
-	case cmd_802_11_mac_address:
-		ret = wlan_cmd_802_11_mac_address(priv, cmdptr, cmd_action);
-		break;
-
-	case cmd_802_11_eeprom_access:
-		ret = wlan_cmd_802_11_eeprom_access(priv, cmdptr,
-						    cmd_action, pdata_buf);
-		break;
-
-	case cmd_802_11_set_afc:
-	case cmd_802_11_get_afc:
-
-		cmdptr->command = cpu_to_le16(cmd_no);
-		cmdptr->size = cpu_to_le16(sizeof(struct cmd_ds_802_11_afc) +
-					   S_DS_GEN);
-
-		memmove(&cmdptr->params.afc,
-			pdata_buf, sizeof(struct cmd_ds_802_11_afc));
-
-		ret = 0;
-		goto done;
-
-	case cmd_802_11d_domain_info:
-		ret = libertas_cmd_802_11d_domain_info(priv, cmdptr,
-						   cmd_no, cmd_action);
-		break;
-
-	case cmd_802_11_sleep_params:
-		ret = wlan_cmd_802_11_sleep_params(priv, cmdptr, cmd_action);
-		break;
-	case cmd_802_11_inactivity_timeout:
-		ret = wlan_cmd_802_11_inactivity_timeout(priv, cmdptr,
-							 cmd_action, pdata_buf);
-		libertas_set_cmd_ctrl_node(priv, cmdnode, 0, 0, pdata_buf);
-		break;
-
-	case cmd_802_11_tpc_cfg:
-		cmdptr->command = cpu_to_le16(cmd_802_11_tpc_cfg);
-		cmdptr->size =
-		    cpu_to_le16(sizeof(struct cmd_ds_802_11_tpc_cfg) +
-				     S_DS_GEN);
-
-		memmove(&cmdptr->params.tpccfg,
-			pdata_buf, sizeof(struct cmd_ds_802_11_tpc_cfg));
-
-		ret = 0;
-		break;
-	case cmd_802_11_led_gpio_ctrl:
-		{
-			struct mrvlietypes_ledgpio *gpio =
-			    (struct mrvlietypes_ledgpio*)
-			    cmdptr->params.ledgpio.data;
-
-			memmove(&cmdptr->params.ledgpio,
-				pdata_buf,
-				sizeof(struct cmd_ds_802_11_led_ctrl));
-
-			cmdptr->command =
-			    cpu_to_le16(cmd_802_11_led_gpio_ctrl);
-
-#define ACTION_NUMLED_TLVTYPE_LEN_FIELDS_LEN 8
-			cmdptr->size =
-			    cpu_to_le16(gpio->header.len + S_DS_GEN +
-					     ACTION_NUMLED_TLVTYPE_LEN_FIELDS_LEN);
-			gpio->header.len = cpu_to_le16(gpio->header.len);
-
-			ret = 0;
+	/* Only v8 and below support setting the preamble */
+	if (priv->fwrelease < 0x09000000) {
+		switch (preamble) {
+		case RADIO_PREAMBLE_SHORT:
+		case RADIO_PREAMBLE_AUTO:
+		case RADIO_PREAMBLE_LONG:
+			cmd.control = cpu_to_le16(preamble);
 			break;
+		default:
+			goto out;
 		}
-	case cmd_802_11_pwr_cfg:
-		cmdptr->command = cpu_to_le16(cmd_802_11_pwr_cfg);
-		cmdptr->size =
-		    cpu_to_le16(sizeof(struct cmd_ds_802_11_pwr_cfg) +
-				     S_DS_GEN);
-		memmove(&cmdptr->params.pwrcfg, pdata_buf,
-			sizeof(struct cmd_ds_802_11_pwr_cfg));
-
-		ret = 0;
-		break;
-	case cmd_bt_access:
-		ret = wlan_cmd_bt_access(priv, cmdptr, cmd_action, pdata_buf);
-		break;
-
-	case cmd_fwt_access:
-		ret = wlan_cmd_fwt_access(priv, cmdptr, cmd_action, pdata_buf);
-		break;
-
-	case cmd_mesh_access:
-		ret = wlan_cmd_mesh_access(priv, cmdptr, cmd_action, pdata_buf);
-		break;
-
-	case cmd_get_tsf:
-		cmdptr->command = cpu_to_le16(cmd_get_tsf);
-		cmdptr->size = cpu_to_le16(sizeof(struct cmd_ds_get_tsf) +
-					   S_DS_GEN);
-		ret = 0;
-		break;
-	case cmd_802_11_tx_rate_query:
-		cmdptr->command = cpu_to_le16(cmd_802_11_tx_rate_query);
-		cmdptr->size = cpu_to_le16(sizeof(struct cmd_tx_rate_query) +
-					   S_DS_GEN);
-		adapter->txrate = 0;
-		ret = 0;
-		break;
-	default:
-		lbs_deb_cmd("PREP_CMD: unknown command- %#x\n", cmd_no);
-		ret = -1;
-		break;
 	}
 
-	/* return error, since the command preparation failed */
-	if (ret != 0) {
-		lbs_deb_cmd("PREP_CMD: command preparation failed\n");
-		libertas_cleanup_and_insert_cmd(priv, cmdnode);
-		ret = -1;
-		goto done;
+	if (radio_on)
+		cmd.control |= cpu_to_le16(0x1);
+	else {
+		cmd.control &= cpu_to_le16(~0x1);
+		priv->txpower_cur = 0;
 	}
 
-	cmdnode->cmdwaitqwoken = 0;
+	lbs_deb_cmd("RADIO_CONTROL: radio %s, preamble %d\n",
+		    radio_on ? "ON" : "OFF", preamble);
 
-	libertas_queue_cmd(adapter, cmdnode, 1);
-	adapter->nr_cmd_pending++;
-	wake_up_interruptible(&priv->mainthread.waitq);
+	priv->radio_on = radio_on;
 
-	if (wait_option & cmd_option_waitforrsp) {
-		lbs_deb_cmd("PREP_CMD: Wait for CMD response\n");
-		might_sleep();
-		wait_event_interruptible(cmdnode->cmdwait_q,
-					 cmdnode->cmdwaitqwoken);
-	}
+	ret = lbs_cmd_with_response(priv, CMD_802_11_RADIO_CONTROL, &cmd);
 
-	spin_lock_irqsave(&adapter->driver_lock, flags);
-	if (adapter->cur_cmd_retcode) {
-		lbs_deb_cmd("PREP_CMD: command failed with return code=%d\n",
-		       adapter->cur_cmd_retcode);
-		adapter->cur_cmd_retcode = 0;
-		ret = -1;
-	}
-	spin_unlock_irqrestore(&adapter->driver_lock, flags);
-
-done:
+out:
 	lbs_deb_leave_args(LBS_DEB_CMD, "ret %d", ret);
 	return ret;
 }
-EXPORT_SYMBOL_GPL(libertas_prepare_and_send_command);
+
+void lbs_set_mac_control(struct lbs_private *priv)
+{
+	struct cmd_ds_mac_control cmd;
+
+	lbs_deb_enter(LBS_DEB_CMD);
+
+	cmd.hdr.size = cpu_to_le16(sizeof(cmd));
+	cmd.action = cpu_to_le16(priv->mac_control);
+	cmd.reserved = 0;
+
+	lbs_cmd_async(priv, CMD_MAC_CONTROL, &cmd.hdr, sizeof(cmd));
+
+	lbs_deb_leave(LBS_DEB_CMD);
+}
 
 /**
  *  @brief This function allocates the command buffer and link
  *  it to command free queue.
  *
- *  @param priv		A pointer to wlan_private structure
+ *  @param priv		A pointer to struct lbs_private structure
  *  @return 		0 or -1
  */
-int libertas_allocate_cmd_buffer(wlan_private * priv)
+int lbs_allocate_cmd_buffer(struct lbs_private *priv)
 {
 	int ret = 0;
-	u32 ulbufsize;
+	u32 bufsize;
 	u32 i;
-	struct cmd_ctrl_node *tempcmd_array;
-	u8 *ptempvirtualaddr;
-	wlan_adapter *adapter = priv->adapter;
+	struct cmd_ctrl_node *cmdarray;
 
-	lbs_deb_enter(LBS_DEB_CMD);
+	lbs_deb_enter(LBS_DEB_HOST);
 
-	/* Allocate and initialize cmdCtrlNode */
-	ulbufsize = sizeof(struct cmd_ctrl_node) * MRVDRV_NUM_OF_CMD_BUFFER;
-
-	if (!(tempcmd_array = kzalloc(ulbufsize, GFP_KERNEL))) {
-		lbs_deb_cmd(
-		       "ALLOC_CMD_BUF: failed to allocate tempcmd_array\n");
+	/* Allocate and initialize the command array */
+	bufsize = sizeof(struct cmd_ctrl_node) * LBS_NUM_CMD_BUFFERS;
+	if (!(cmdarray = kzalloc(bufsize, GFP_KERNEL))) {
+		lbs_deb_host("ALLOC_CMD_BUF: tempcmd_array is NULL\n");
 		ret = -1;
 		goto done;
 	}
-	adapter->cmd_array = tempcmd_array;
+	priv->cmd_array = cmdarray;
 
-	/* Allocate and initialize command buffers */
-	ulbufsize = MRVDRV_SIZE_OF_CMD_BUFFER;
-	for (i = 0; i < MRVDRV_NUM_OF_CMD_BUFFER; i++) {
-		if (!(ptempvirtualaddr = kzalloc(ulbufsize, GFP_KERNEL))) {
-			lbs_deb_cmd(
-			       "ALLOC_CMD_BUF: ptempvirtualaddr: out of memory\n");
+	/* Allocate and initialize each command buffer in the command array */
+	for (i = 0; i < LBS_NUM_CMD_BUFFERS; i++) {
+		cmdarray[i].cmdbuf = kzalloc(LBS_CMD_BUFFER_SIZE, GFP_KERNEL);
+		if (!cmdarray[i].cmdbuf) {
+			lbs_deb_host("ALLOC_CMD_BUF: ptempvirtualaddr is NULL\n");
 			ret = -1;
 			goto done;
 		}
-
-		/* Update command buffer virtual */
-		tempcmd_array[i].bufvirtualaddr = ptempvirtualaddr;
 	}
 
-	for (i = 0; i < MRVDRV_NUM_OF_CMD_BUFFER; i++) {
-		init_waitqueue_head(&tempcmd_array[i].cmdwait_q);
-		libertas_cleanup_and_insert_cmd(priv, &tempcmd_array[i]);
+	for (i = 0; i < LBS_NUM_CMD_BUFFERS; i++) {
+		init_waitqueue_head(&cmdarray[i].cmdwait_q);
+		lbs_cleanup_and_insert_cmd(priv, &cmdarray[i]);
 	}
-
 	ret = 0;
 
 done:
-	lbs_deb_leave_args(LBS_DEB_CMD, "ret %d", ret);
+	lbs_deb_leave_args(LBS_DEB_HOST, "ret %d", ret);
 	return ret;
 }
 
 /**
  *  @brief This function frees the command buffer.
  *
- *  @param priv		A pointer to wlan_private structure
+ *  @param priv		A pointer to struct lbs_private structure
  *  @return 		0 or -1
  */
-int libertas_free_cmd_buffer(wlan_private * priv)
+int lbs_free_cmd_buffer(struct lbs_private *priv)
 {
-	u32 ulbufsize; /* Someone needs to die for this. Slowly and painfully */
+	struct cmd_ctrl_node *cmdarray;
 	unsigned int i;
-	struct cmd_ctrl_node *tempcmd_array;
-	wlan_adapter *adapter = priv->adapter;
 
-	lbs_deb_enter(LBS_DEB_CMD);
+	lbs_deb_enter(LBS_DEB_HOST);
 
 	/* need to check if cmd array is allocated or not */
-	if (adapter->cmd_array == NULL) {
-		lbs_deb_cmd("FREE_CMD_BUF: cmd_array is Null\n");
+	if (priv->cmd_array == NULL) {
+		lbs_deb_host("FREE_CMD_BUF: cmd_array is NULL\n");
 		goto done;
 	}
 
-	tempcmd_array = adapter->cmd_array;
+	cmdarray = priv->cmd_array;
 
 	/* Release shared memory buffers */
-	ulbufsize = MRVDRV_SIZE_OF_CMD_BUFFER;
-	for (i = 0; i < MRVDRV_NUM_OF_CMD_BUFFER; i++) {
-		if (tempcmd_array[i].bufvirtualaddr) {
-			lbs_deb_cmd("Free all the array\n");
-			kfree(tempcmd_array[i].bufvirtualaddr);
-			tempcmd_array[i].bufvirtualaddr = NULL;
+	for (i = 0; i < LBS_NUM_CMD_BUFFERS; i++) {
+		if (cmdarray[i].cmdbuf) {
+			kfree(cmdarray[i].cmdbuf);
+			cmdarray[i].cmdbuf = NULL;
 		}
 	}
 
 	/* Release cmd_ctrl_node */
-	if (adapter->cmd_array) {
-		lbs_deb_cmd("Free cmd_array\n");
-		kfree(adapter->cmd_array);
-		adapter->cmd_array = NULL;
+	if (priv->cmd_array) {
+		kfree(priv->cmd_array);
+		priv->cmd_array = NULL;
 	}
 
 done:
-	lbs_deb_leave(LBS_DEB_CMD);
+	lbs_deb_leave(LBS_DEB_HOST);
 	return 0;
 }
 
@@ -1529,167 +1214,114 @@ done:
  *  @brief This function gets a free command node if available in
  *  command free queue.
  *
- *  @param priv		A pointer to wlan_private structure
+ *  @param priv		A pointer to struct lbs_private structure
  *  @return cmd_ctrl_node A pointer to cmd_ctrl_node structure or NULL
  */
-struct cmd_ctrl_node *libertas_get_free_cmd_ctrl_node(wlan_private * priv)
+static struct cmd_ctrl_node *lbs_get_free_cmd_node(struct lbs_private *priv)
 {
 	struct cmd_ctrl_node *tempnode;
-	wlan_adapter *adapter = priv->adapter;
 	unsigned long flags;
 
-	if (!adapter)
+	lbs_deb_enter(LBS_DEB_HOST);
+
+	if (!priv)
 		return NULL;
 
-	spin_lock_irqsave(&adapter->driver_lock, flags);
+	spin_lock_irqsave(&priv->driver_lock, flags);
 
-	if (!list_empty(&adapter->cmdfreeq)) {
-		tempnode = (struct cmd_ctrl_node *)adapter->cmdfreeq.next;
-		list_del((struct list_head *)tempnode);
+	if (!list_empty(&priv->cmdfreeq)) {
+		tempnode = list_first_entry(&priv->cmdfreeq,
+					    struct cmd_ctrl_node, list);
+		list_del(&tempnode->list);
 	} else {
-		lbs_deb_cmd("GET_CMD_NODE: cmd_ctrl_node is not available\n");
+		lbs_deb_host("GET_CMD_NODE: cmd_ctrl_node is not available\n");
 		tempnode = NULL;
 	}
 
-	spin_unlock_irqrestore(&adapter->driver_lock, flags);
+	spin_unlock_irqrestore(&priv->driver_lock, flags);
 
-	if (tempnode) {
-		/*
-		lbs_pr_debug(3, "GET_CMD_NODE: cmdCtrlNode available\n");
-		lbs_pr_debug(3, "GET_CMD_NODE: cmdCtrlNode Address = %p\n",
-		       tempnode);
-		*/
-		cleanup_cmdnode(tempnode);
-	}
-
+	lbs_deb_leave(LBS_DEB_HOST);
 	return tempnode;
 }
 
 /**
- *  @brief This function cleans command node.
- *
- *  @param ptempnode	A pointer to cmdCtrlNode structure
- *  @return 		n/a
- */
-static void cleanup_cmdnode(struct cmd_ctrl_node *ptempnode)
-{
-	if (!ptempnode)
-		return;
-	ptempnode->cmdwaitqwoken = 1;
-	wake_up_interruptible(&ptempnode->cmdwait_q);
-	ptempnode->status = 0;
-	ptempnode->cmd_oid = (u32) 0;
-	ptempnode->wait_option = 0;
-	ptempnode->pdata_buf = NULL;
-
-	if (ptempnode->bufvirtualaddr != NULL)
-		memset(ptempnode->bufvirtualaddr, 0, MRVDRV_SIZE_OF_CMD_BUFFER);
-	return;
-}
-
-/**
- *  @brief This function initializes the command node.
- *
- *  @param priv		A pointer to wlan_private structure
- *  @param ptempnode	A pointer to cmd_ctrl_node structure
- *  @param cmd_oid	cmd oid: treated as sub command
- *  @param wait_option	wait option: wait response or not
- *  @param pdata_buf	A pointer to informaion buffer
- *  @return 		0 or -1
- */
-void libertas_set_cmd_ctrl_node(wlan_private * priv,
-		    struct cmd_ctrl_node *ptempnode,
-		    u32 cmd_oid, u16 wait_option, void *pdata_buf)
-{
-	lbs_deb_enter(LBS_DEB_CMD);
-
-	if (!ptempnode)
-		return;
-
-	ptempnode->cmd_oid = cmd_oid;
-	ptempnode->wait_option = wait_option;
-	ptempnode->pdata_buf = pdata_buf;
-
-	lbs_deb_leave(LBS_DEB_CMD);
-}
-
-/**
  *  @brief This function executes next command in command
- *  pending queue. It will put fimware back to PS mode
+ *  pending queue. It will put firmware back to PS mode
  *  if applicable.
  *
- *  @param priv     A pointer to wlan_private structure
+ *  @param priv     A pointer to struct lbs_private structure
  *  @return 	   0 or -1
  */
-int libertas_execute_next_command(wlan_private * priv)
+int lbs_execute_next_command(struct lbs_private *priv)
 {
-	wlan_adapter *adapter = priv->adapter;
 	struct cmd_ctrl_node *cmdnode = NULL;
-	struct cmd_ds_command *cmdptr;
+	struct cmd_header *cmd;
 	unsigned long flags;
 	int ret = 0;
 
-	lbs_deb_enter(LBS_DEB_CMD);
+	/* Debug group is LBS_DEB_THREAD and not LBS_DEB_HOST, because the
+	 * only caller to us is lbs_thread() and we get even when a
+	 * data packet is received */
+	lbs_deb_enter(LBS_DEB_THREAD);
 
-	spin_lock_irqsave(&adapter->driver_lock, flags);
+	spin_lock_irqsave(&priv->driver_lock, flags);
 
-	if (adapter->cur_cmd) {
-		lbs_pr_alert( "EXEC_NEXT_CMD: there is command in processing!\n");
-		spin_unlock_irqrestore(&adapter->driver_lock, flags);
+	if (priv->cur_cmd) {
+		lbs_pr_alert( "EXEC_NEXT_CMD: already processing command!\n");
+		spin_unlock_irqrestore(&priv->driver_lock, flags);
 		ret = -1;
 		goto done;
 	}
 
-	if (!list_empty(&adapter->cmdpendingq)) {
-		cmdnode = (struct cmd_ctrl_node *)
-		    adapter->cmdpendingq.next;
+	if (!list_empty(&priv->cmdpendingq)) {
+		cmdnode = list_first_entry(&priv->cmdpendingq,
+					   struct cmd_ctrl_node, list);
 	}
 
-	spin_unlock_irqrestore(&adapter->driver_lock, flags);
+	spin_unlock_irqrestore(&priv->driver_lock, flags);
 
 	if (cmdnode) {
-		lbs_deb_cmd(
-		       "EXEC_NEXT_CMD: Got next command from cmdpendingq\n");
-		cmdptr = (struct cmd_ds_command *)cmdnode->bufvirtualaddr;
+		cmd = cmdnode->cmdbuf;
 
-		if (is_command_allowed_in_ps(cmdptr->command)) {
-			if ((adapter->psstate == PS_STATE_SLEEP) ||
-			    (adapter->psstate == PS_STATE_PRE_SLEEP)) {
-				lbs_deb_cmd(
-				       "EXEC_NEXT_CMD: Cannot send cmd 0x%x in psstate %d\n",
-				       le16_to_cpu(cmdptr->command),
-				       adapter->psstate);
+		if (is_command_allowed_in_ps(le16_to_cpu(cmd->command))) {
+			if ((priv->psstate == PS_STATE_SLEEP) ||
+			    (priv->psstate == PS_STATE_PRE_SLEEP)) {
+				lbs_deb_host(
+				       "EXEC_NEXT_CMD: cannot send cmd 0x%04x in psstate %d\n",
+				       le16_to_cpu(cmd->command),
+				       priv->psstate);
 				ret = -1;
 				goto done;
 			}
-			lbs_deb_cmd("EXEC_NEXT_CMD: OK to send command "
-			       "0x%x in psstate %d\n",
-				    le16_to_cpu(cmdptr->command),
-				    adapter->psstate);
-		} else if (adapter->psstate != PS_STATE_FULL_POWER) {
+			lbs_deb_host("EXEC_NEXT_CMD: OK to send command "
+				     "0x%04x in psstate %d\n",
+				     le16_to_cpu(cmd->command), priv->psstate);
+		} else if (priv->psstate != PS_STATE_FULL_POWER) {
 			/*
 			 * 1. Non-PS command:
 			 * Queue it. set needtowakeup to TRUE if current state
-			 * is SLEEP, otherwise call libertas_ps_wakeup to send Exit_PS.
-			 * 2. PS command but not Exit_PS:
+			 * is SLEEP, otherwise call send EXIT_PS.
+			 * 2. PS command but not EXIT_PS:
 			 * Ignore it.
-			 * 3. PS command Exit_PS:
+			 * 3. PS command EXIT_PS:
 			 * Set needtowakeup to TRUE if current state is SLEEP,
 			 * otherwise send this command down to firmware
 			 * immediately.
 			 */
-			if (cmdptr->command !=
-			    cpu_to_le16(cmd_802_11_ps_mode)) {
+			if (cmd->command != cpu_to_le16(CMD_802_11_PS_MODE)) {
 				/*  Prepare to send Exit PS,
 				 *  this non PS command will be sent later */
-				if ((adapter->psstate == PS_STATE_SLEEP)
-				    || (adapter->psstate == PS_STATE_PRE_SLEEP)
+				if ((priv->psstate == PS_STATE_SLEEP)
+				    || (priv->psstate == PS_STATE_PRE_SLEEP)
 				    ) {
 					/* w/ new scheme, it will not reach here.
 					   since it is blocked in main_thread. */
-					adapter->needtowakeup = 1;
-				} else
-					libertas_ps_wakeup(priv, 0);
+					priv->needtowakeup = 1;
+				} else {
+					lbs_set_ps_mode(priv,
+							PS_MODE_ACTION_EXIT_PS,
+							false);
+				}
 
 				ret = 0;
 				goto done;
@@ -1698,221 +1330,341 @@ int libertas_execute_next_command(wlan_private * priv)
 				 * PS command. Ignore it if it is not Exit_PS.
 				 * otherwise send it down immediately.
 				 */
-				struct cmd_ds_802_11_ps_mode *psm =
-				    &cmdptr->params.psmode;
+				struct cmd_ds_802_11_ps_mode *psm = (void *)&cmd[1];
 
-				lbs_deb_cmd(
-				       "EXEC_NEXT_CMD: PS cmd- action=0x%x\n",
+				lbs_deb_host(
+				       "EXEC_NEXT_CMD: PS cmd, action 0x%02x\n",
 				       psm->action);
 				if (psm->action !=
-				    cpu_to_le16(cmd_subcmd_exit_ps)) {
-					lbs_deb_cmd(
-					       "EXEC_NEXT_CMD: Ignore Enter PS cmd\n");
-					list_del((struct list_head *)cmdnode);
-					libertas_cleanup_and_insert_cmd(priv, cmdnode);
+				    cpu_to_le16(PS_MODE_ACTION_EXIT_PS)) {
+					lbs_deb_host(
+					       "EXEC_NEXT_CMD: ignore ENTER_PS cmd\n");
+					spin_lock_irqsave(&priv->driver_lock, flags);
+					list_del(&cmdnode->list);
+					lbs_complete_command(priv, cmdnode, 0);
+					spin_unlock_irqrestore(&priv->driver_lock, flags);
 
 					ret = 0;
 					goto done;
 				}
 
-				if ((adapter->psstate == PS_STATE_SLEEP) ||
-				    (adapter->psstate == PS_STATE_PRE_SLEEP)) {
-					lbs_deb_cmd(
-					       "EXEC_NEXT_CMD: Ignore ExitPS cmd in sleep\n");
-					list_del((struct list_head *)cmdnode);
-					libertas_cleanup_and_insert_cmd(priv, cmdnode);
-					adapter->needtowakeup = 1;
+				if ((priv->psstate == PS_STATE_SLEEP) ||
+				    (priv->psstate == PS_STATE_PRE_SLEEP)) {
+					lbs_deb_host(
+					       "EXEC_NEXT_CMD: ignore EXIT_PS cmd in sleep\n");
+					spin_lock_irqsave(&priv->driver_lock, flags);
+					list_del(&cmdnode->list);
+					lbs_complete_command(priv, cmdnode, 0);
+					spin_unlock_irqrestore(&priv->driver_lock, flags);
+					priv->needtowakeup = 1;
 
 					ret = 0;
 					goto done;
 				}
 
-				lbs_deb_cmd(
-				       "EXEC_NEXT_CMD: Sending Exit_PS down...\n");
+				lbs_deb_host(
+				       "EXEC_NEXT_CMD: sending EXIT_PS\n");
 			}
 		}
-		list_del((struct list_head *)cmdnode);
-		lbs_deb_cmd("EXEC_NEXT_CMD: Sending 0x%04X command\n",
-			    le16_to_cpu(cmdptr->command));
-		DownloadcommandToStation(priv, cmdnode);
+		spin_lock_irqsave(&priv->driver_lock, flags);
+		list_del(&cmdnode->list);
+		spin_unlock_irqrestore(&priv->driver_lock, flags);
+		lbs_deb_host("EXEC_NEXT_CMD: sending command 0x%04x\n",
+			    le16_to_cpu(cmd->command));
+		lbs_submit_command(priv, cmdnode);
 	} else {
 		/*
 		 * check if in power save mode, if yes, put the device back
 		 * to PS mode
 		 */
-		if ((adapter->psmode != wlan802_11powermodecam) &&
-		    (adapter->psstate == PS_STATE_FULL_POWER) &&
-		    (adapter->connect_status == libertas_connected)) {
-			if (adapter->secinfo.WPAenabled ||
-			    adapter->secinfo.WPA2enabled) {
+#ifdef TODO
+		/*
+		 * This was the old code for libertas+wext. Someone that
+		 * understands this beast should re-code it in a sane way.
+		 *
+		 * I actually don't understand why this is related to WPA
+		 * and to connection status, shouldn't powering should be
+		 * independ of such things?
+		 */
+		if ((priv->psmode != LBS802_11POWERMODECAM) &&
+		    (priv->psstate == PS_STATE_FULL_POWER) &&
+		    ((priv->connect_status == LBS_CONNECTED) ||
+		    lbs_mesh_connected(priv))) {
+			if (priv->secinfo.WPAenabled ||
+			    priv->secinfo.WPA2enabled) {
 				/* check for valid WPA group keys */
-				if (adapter->wpa_mcast_key.len ||
-				    adapter->wpa_unicast_key.len) {
-					lbs_deb_cmd(
+				if (priv->wpa_mcast_key.len ||
+				    priv->wpa_unicast_key.len) {
+					lbs_deb_host(
 					       "EXEC_NEXT_CMD: WPA enabled and GTK_SET"
 					       " go back to PS_SLEEP");
-					libertas_ps_sleep(priv, 0);
+					lbs_set_ps_mode(priv,
+							PS_MODE_ACTION_ENTER_PS,
+							false);
 				}
 			} else {
-				lbs_deb_cmd(
-				       "EXEC_NEXT_CMD: command PendQ is empty,"
-				       " go back to PS_SLEEP");
-				libertas_ps_sleep(priv, 0);
+				lbs_deb_host(
+				       "EXEC_NEXT_CMD: cmdpendingq empty, "
+				       "go back to PS_SLEEP");
+				lbs_set_ps_mode(priv, PS_MODE_ACTION_ENTER_PS,
+						false);
 			}
 		}
+#endif
 	}
 
 	ret = 0;
 done:
-	lbs_deb_leave(LBS_DEB_CMD);
+	lbs_deb_leave(LBS_DEB_THREAD);
 	return ret;
 }
 
-void libertas_send_iwevcustom_event(wlan_private * priv, s8 * str)
-{
-	union iwreq_data iwrq;
-	u8 buf[50];
-
-	lbs_deb_enter(LBS_DEB_CMD);
-
-	memset(&iwrq, 0, sizeof(union iwreq_data));
-	memset(buf, 0, sizeof(buf));
-
-	snprintf(buf, sizeof(buf) - 1, "%s", str);
-
-	iwrq.data.length = strlen(buf) + 1 + IW_EV_LCP_LEN;
-
-	/* Send Event to upper layer */
-	lbs_deb_cmd("Event Indication string = %s\n", (char *)buf);
-	lbs_deb_cmd("Event Indication String length = %d\n", iwrq.data.length);
-
-	lbs_deb_cmd("Sending wireless event IWEVCUSTOM for %s\n", str);
-	wireless_send_event(priv->dev, IWEVCUSTOM, &iwrq, buf);
-
-	lbs_deb_leave(LBS_DEB_CMD);
-}
-
-static int sendconfirmsleep(wlan_private * priv, u8 * cmdptr, u16 size)
+static void lbs_send_confirmsleep(struct lbs_private *priv)
 {
 	unsigned long flags;
-	wlan_adapter *adapter = priv->adapter;
-	int ret = 0;
+	int ret;
 
-	lbs_deb_enter(LBS_DEB_CMD);
+	lbs_deb_enter(LBS_DEB_HOST);
+	lbs_deb_hex(LBS_DEB_HOST, "sleep confirm", (u8 *) &confirm_sleep,
+		sizeof(confirm_sleep));
 
-	lbs_deb_cmd("SEND_SLEEPC_CMD: Before download, size of cmd = %d\n",
-	       size);
-
-	lbs_dbg_hex("SEND_SLEEPC_CMD: Sleep confirm command", cmdptr, size);
-
-	ret = priv->hw_host_to_card(priv, MVMS_CMD, cmdptr, size);
-	priv->dnld_sent = DNLD_RES_RECEIVED;
-
-	spin_lock_irqsave(&adapter->driver_lock, flags);
-	if (adapter->intcounter || adapter->currenttxskb)
-		lbs_deb_cmd("SEND_SLEEPC_CMD: intcounter=%d currenttxskb=%p\n",
-		       adapter->intcounter, adapter->currenttxskb);
-	spin_unlock_irqrestore(&adapter->driver_lock, flags);
-
+	ret = priv->hw_host_to_card(priv, MVMS_CMD, (u8 *) &confirm_sleep,
+		sizeof(confirm_sleep));
 	if (ret) {
-		lbs_pr_alert(
-		       "SEND_SLEEPC_CMD: Host to Card failed for Confirm Sleep\n");
-	} else {
-		spin_lock_irqsave(&adapter->driver_lock, flags);
-		if (!adapter->intcounter) {
-			adapter->psstate = PS_STATE_SLEEP;
-		} else {
-			lbs_deb_cmd("SEND_SLEEPC_CMD: After sent,IntC=%d\n",
-			       adapter->intcounter);
-		}
-		spin_unlock_irqrestore(&adapter->driver_lock, flags);
-
-		lbs_deb_cmd("SEND_SLEEPC_CMD: Sent Confirm Sleep command\n");
-		lbs_deb_cmd("+");
+		lbs_pr_alert("confirm_sleep failed\n");
+		goto out;
 	}
 
-	lbs_deb_leave_args(LBS_DEB_CMD, "ret %d", ret);
-	return ret;
-}
+	spin_lock_irqsave(&priv->driver_lock, flags);
 
-void libertas_ps_sleep(wlan_private * priv, int wait_option)
-{
-	lbs_deb_enter(LBS_DEB_CMD);
+	/* We don't get a response on the sleep-confirmation */
+	priv->dnld_sent = DNLD_RES_RECEIVED;
 
-	/*
-	 * PS is currently supported only in Infrastructure mode
-	 * Remove this check if it is to be supported in IBSS mode also
-	 */
+	if (priv->is_host_sleep_configured) {
+		priv->is_host_sleep_activated = 1;
+		wake_up_interruptible(&priv->host_sleep_q);
+	}
 
-	libertas_prepare_and_send_command(priv, cmd_802_11_ps_mode,
-			      cmd_subcmd_enter_ps, wait_option, 0, NULL);
+	/* If nothing to do, go back to sleep (?) */
+	if (!kfifo_len(&priv->event_fifo) && !priv->resp_len[priv->resp_idx])
+		priv->psstate = PS_STATE_SLEEP;
 
-	lbs_deb_leave(LBS_DEB_CMD);
-}
+	spin_unlock_irqrestore(&priv->driver_lock, flags);
 
-/**
- *  @brief This function sends Eixt_PS command to firmware.
- *
- *  @param priv    	A pointer to wlan_private structure
- *  @param wait_option	wait response or not
- *  @return 	   	n/a
- */
-void libertas_ps_wakeup(wlan_private * priv, int wait_option)
-{
-	__le32 Localpsmode;
-
-	lbs_deb_enter(LBS_DEB_CMD);
-
-	Localpsmode = cpu_to_le32(wlan802_11powermodecam);
-
-	lbs_deb_cmd("Exit_PS: Localpsmode = %d\n", wlan802_11powermodecam);
-
-	libertas_prepare_and_send_command(priv, cmd_802_11_ps_mode,
-			      cmd_subcmd_exit_ps,
-			      wait_option, 0, &Localpsmode);
-
-	lbs_deb_leave(LBS_DEB_CMD);
+out:
+	lbs_deb_leave(LBS_DEB_HOST);
 }
 
 /**
  *  @brief This function checks condition and prepares to
  *  send sleep confirm command to firmware if ok.
  *
- *  @param priv    	A pointer to wlan_private structure
+ *  @param priv    	A pointer to struct lbs_private structure
  *  @param psmode  	Power Saving mode
  *  @return 	   	n/a
  */
-void libertas_ps_confirm_sleep(wlan_private * priv, u16 psmode)
+void lbs_ps_confirm_sleep(struct lbs_private *priv)
 {
 	unsigned long flags =0;
-	wlan_adapter *adapter = priv->adapter;
-	u8 allowed = 1;
+	int allowed = 1;
 
-	lbs_deb_enter(LBS_DEB_CMD);
+	lbs_deb_enter(LBS_DEB_HOST);
 
+	spin_lock_irqsave(&priv->driver_lock, flags);
 	if (priv->dnld_sent) {
 		allowed = 0;
-		lbs_deb_cmd("D");
+		lbs_deb_host("dnld_sent was set\n");
 	}
 
-	spin_lock_irqsave(&adapter->driver_lock, flags);
-	if (adapter->cur_cmd) {
+	/* In-progress command? */
+	if (priv->cur_cmd) {
 		allowed = 0;
-		lbs_deb_cmd("C");
+		lbs_deb_host("cur_cmd was set\n");
 	}
-	if (adapter->intcounter > 0) {
+
+	/* Pending events or command responses? */
+	if (kfifo_len(&priv->event_fifo) || priv->resp_len[priv->resp_idx]) {
 		allowed = 0;
-		lbs_deb_cmd("I%d", adapter->intcounter);
+		lbs_deb_host("pending events or command responses\n");
 	}
-	spin_unlock_irqrestore(&adapter->driver_lock, flags);
+	spin_unlock_irqrestore(&priv->driver_lock, flags);
 
 	if (allowed) {
-		lbs_deb_cmd("Sending libertas_ps_confirm_sleep\n");
-		sendconfirmsleep(priv, (u8 *) & adapter->libertas_ps_confirm_sleep,
-				 sizeof(struct PS_CMD_ConfirmSleep));
+		lbs_deb_host("sending lbs_ps_confirm_sleep\n");
+		lbs_send_confirmsleep(priv);
 	} else {
-		lbs_deb_cmd("Sleep Confirm has been delayed\n");
+		lbs_deb_host("sleep confirm has been delayed\n");
 	}
 
+	lbs_deb_leave(LBS_DEB_HOST);
+}
+
+
+/**
+ * @brief Configures the transmission power control functionality.
+ *
+ * @param priv		A pointer to struct lbs_private structure
+ * @param enable	Transmission power control enable
+ * @param p0		Power level when link quality is good (dBm).
+ * @param p1		Power level when link quality is fair (dBm).
+ * @param p2		Power level when link quality is poor (dBm).
+ * @param usesnr	Use Signal to Noise Ratio in TPC
+ *
+ * @return 0 on success
+ */
+int lbs_set_tpc_cfg(struct lbs_private *priv, int enable, int8_t p0, int8_t p1,
+		int8_t p2, int usesnr)
+{
+	struct cmd_ds_802_11_tpc_cfg cmd;
+	int ret;
+
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.hdr.size = cpu_to_le16(sizeof(cmd));
+	cmd.action = cpu_to_le16(CMD_ACT_SET);
+	cmd.enable = !!enable;
+	cmd.usesnr = !!usesnr;
+	cmd.P0 = p0;
+	cmd.P1 = p1;
+	cmd.P2 = p2;
+
+	ret = lbs_cmd_with_response(priv, CMD_802_11_TPC_CFG, &cmd);
+
+	return ret;
+}
+
+/**
+ * @brief Configures the power adaptation settings.
+ *
+ * @param priv		A pointer to struct lbs_private structure
+ * @param enable	Power adaptation enable
+ * @param p0		Power level for 1, 2, 5.5 and 11 Mbps (dBm).
+ * @param p1		Power level for 6, 9, 12, 18, 22, 24 and 36 Mbps (dBm).
+ * @param p2		Power level for 48 and 54 Mbps (dBm).
+ *
+ * @return 0 on Success
+ */
+
+int lbs_set_power_adapt_cfg(struct lbs_private *priv, int enable, int8_t p0,
+		int8_t p1, int8_t p2)
+{
+	struct cmd_ds_802_11_pa_cfg cmd;
+	int ret;
+
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.hdr.size = cpu_to_le16(sizeof(cmd));
+	cmd.action = cpu_to_le16(CMD_ACT_SET);
+	cmd.enable = !!enable;
+	cmd.P0 = p0;
+	cmd.P1 = p1;
+	cmd.P2 = p2;
+
+	ret = lbs_cmd_with_response(priv, CMD_802_11_PA_CFG , &cmd);
+
+	return ret;
+}
+
+
+struct cmd_ctrl_node *__lbs_cmd_async(struct lbs_private *priv,
+	uint16_t command, struct cmd_header *in_cmd, int in_cmd_size,
+	int (*callback)(struct lbs_private *, unsigned long, struct cmd_header *),
+	unsigned long callback_arg)
+{
+	struct cmd_ctrl_node *cmdnode;
+
+	lbs_deb_enter(LBS_DEB_HOST);
+
+	if (priv->surpriseremoved) {
+		lbs_deb_host("PREP_CMD: card removed\n");
+		cmdnode = ERR_PTR(-ENOENT);
+		goto done;
+	}
+
+	/* No commands are allowed in Deep Sleep until we toggle the GPIO
+	 * to wake up the card and it has signaled that it's ready.
+	 */
+	if (!priv->is_auto_deep_sleep_enabled) {
+		if (priv->is_deep_sleep) {
+			lbs_deb_cmd("command not allowed in deep sleep\n");
+			cmdnode = ERR_PTR(-EBUSY);
+			goto done;
+		}
+	}
+
+	cmdnode = lbs_get_free_cmd_node(priv);
+	if (cmdnode == NULL) {
+		lbs_deb_host("PREP_CMD: cmdnode is NULL\n");
+
+		/* Wake up main thread to execute next command */
+		wake_up_interruptible(&priv->waitq);
+		cmdnode = ERR_PTR(-ENOBUFS);
+		goto done;
+	}
+
+	cmdnode->callback = callback;
+	cmdnode->callback_arg = callback_arg;
+
+	/* Copy the incoming command to the buffer */
+	memcpy(cmdnode->cmdbuf, in_cmd, in_cmd_size);
+
+	/* Set sequence number, clean result, move to buffer */
+	priv->seqnum++;
+	cmdnode->cmdbuf->command = cpu_to_le16(command);
+	cmdnode->cmdbuf->size    = cpu_to_le16(in_cmd_size);
+	cmdnode->cmdbuf->seqnum  = cpu_to_le16(priv->seqnum);
+	cmdnode->cmdbuf->result  = 0;
+
+	lbs_deb_host("PREP_CMD: command 0x%04x\n", command);
+
+	cmdnode->cmdwaitqwoken = 0;
+	lbs_queue_cmd(priv, cmdnode);
+	wake_up_interruptible(&priv->waitq);
+
+ done:
+	lbs_deb_leave_args(LBS_DEB_HOST, "ret %p", cmdnode);
+	return cmdnode;
+}
+
+void lbs_cmd_async(struct lbs_private *priv, uint16_t command,
+	struct cmd_header *in_cmd, int in_cmd_size)
+{
+	lbs_deb_enter(LBS_DEB_CMD);
+	__lbs_cmd_async(priv, command, in_cmd, in_cmd_size,
+		lbs_cmd_async_callback, 0);
 	lbs_deb_leave(LBS_DEB_CMD);
 }
+
+int __lbs_cmd(struct lbs_private *priv, uint16_t command,
+	      struct cmd_header *in_cmd, int in_cmd_size,
+	      int (*callback)(struct lbs_private *, unsigned long, struct cmd_header *),
+	      unsigned long callback_arg)
+{
+	struct cmd_ctrl_node *cmdnode;
+	unsigned long flags;
+	int ret = 0;
+
+	lbs_deb_enter(LBS_DEB_HOST);
+
+	cmdnode = __lbs_cmd_async(priv, command, in_cmd, in_cmd_size,
+				  callback, callback_arg);
+	if (IS_ERR(cmdnode)) {
+		ret = PTR_ERR(cmdnode);
+		goto done;
+	}
+
+	might_sleep();
+	wait_event_interruptible(cmdnode->cmdwait_q, cmdnode->cmdwaitqwoken);
+
+	spin_lock_irqsave(&priv->driver_lock, flags);
+	ret = cmdnode->result;
+	if (ret)
+		lbs_pr_info("PREP_CMD: command 0x%04x failed: %d\n",
+			    command, ret);
+
+	__lbs_cleanup_and_insert_cmd(priv, cmdnode);
+	spin_unlock_irqrestore(&priv->driver_lock, flags);
+
+done:
+	lbs_deb_leave_args(LBS_DEB_HOST, "ret %d", ret);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(__lbs_cmd);

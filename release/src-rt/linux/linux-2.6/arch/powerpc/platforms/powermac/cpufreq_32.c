@@ -21,7 +21,6 @@
 #include <linux/sched.h>
 #include <linux/adb.h>
 #include <linux/pmu.h>
-#include <linux/slab.h>
 #include <linux/cpufreq.h>
 #include <linux/init.h>
 #include <linux/sysdev.h>
@@ -43,14 +42,6 @@
  * init/main.c to make it non-init before enabling DEBUG_FREQ
  */
 #undef DEBUG_FREQ
-
-/*
- * There is a problem with the core cpufreq code on SMP kernels,
- * it won't recalculate the Bogomips properly
- */
-#ifdef CONFIG_SMP
-#warning "WARNING, CPUFREQ not recommended on SMP kernels"
-#endif
 
 extern void low_choose_7447a_dfs(int dfs);
 extern void low_choose_750fx_pll(int pll);
@@ -113,8 +104,6 @@ static inline void debug_calc_bogomips(void)
 	 * result. We backup/restore the value to avoid affecting the
 	 * core cpufreq framework's own calculation.
 	 */
-	extern void calibrate_delay(void);
-
 	unsigned long save_lpj = loops_per_jiffy;
 	calibrate_delay();
 	loops_per_jiffy = save_lpj;
@@ -312,7 +301,7 @@ static int pmu_set_cpu_speed(int low_speed)
  		_set_L3CR(save_l3cr);
 
 	/* Restore userland MMU context */
-	set_context(current->active_mm->context.id, current->active_mm->pgd);
+	switch_mmu_context(NULL, current->active_mm);
 
 #ifdef DEBUG_FREQ
 	printk(KERN_DEBUG "HID1, after: %x\n", mfspr(SPRN_HID1));
@@ -321,8 +310,12 @@ static int pmu_set_cpu_speed(int low_speed)
 	/* Restore low level PMU operations */
 	pmu_unlock();
 
-	/* Restore decrementer */
-	wakeup_decrementer();
+	/*
+	 * Restore decrementer; we'll take a decrementer interrupt
+	 * as soon as interrupts are re-enabled and the generic
+	 * clockevents code will reprogram it with the right value.
+	 */
+	set_dec(1);
 
 	/* Restore interrupts */
  	mpic_cpu_set_priority(pic_prio);
@@ -410,7 +403,6 @@ static int pmac_cpufreq_cpu_init(struct cpufreq_policy *policy)
 	if (policy->cpu != 0)
 		return -ENODEV;
 
-	policy->governor = CPUFREQ_DEFAULT_GOVERNOR;
 	policy->cpuinfo.transition_latency	= CPUFREQ_ETERNAL;
 	policy->cur = cur_freq;
 
@@ -437,7 +429,7 @@ static u32 read_gpio(struct device_node *np)
 	return offset;
 }
 
-static int pmac_cpufreq_suspend(struct cpufreq_policy *policy, pm_message_t pmsg)
+static int pmac_cpufreq_suspend(struct cpufreq_policy *policy)
 {
 	/* Ok, this could be made a bit smarter, but let's be robust for now. We
 	 * always force a speed change to high speed before sleep, to make sure
@@ -668,31 +660,31 @@ static int __init pmac_cpufreq_setup(void)
 	cur_freq = (*value) / 1000;
 
 	/*  Check for 7447A based MacRISC3 */
-	if (machine_is_compatible("MacRISC3") &&
+	if (of_machine_is_compatible("MacRISC3") &&
 	    of_get_property(cpunode, "dynamic-power-step", NULL) &&
 	    PVR_VER(mfspr(SPRN_PVR)) == 0x8003) {
 		pmac_cpufreq_init_7447A(cpunode);
 	/* Check for other MacRISC3 machines */
-	} else if (machine_is_compatible("PowerBook3,4") ||
-		   machine_is_compatible("PowerBook3,5") ||
-		   machine_is_compatible("MacRISC3")) {
+	} else if (of_machine_is_compatible("PowerBook3,4") ||
+		   of_machine_is_compatible("PowerBook3,5") ||
+		   of_machine_is_compatible("MacRISC3")) {
 		pmac_cpufreq_init_MacRISC3(cpunode);
 	/* Else check for iBook2 500/600 */
-	} else if (machine_is_compatible("PowerBook4,1")) {
+	} else if (of_machine_is_compatible("PowerBook4,1")) {
 		hi_freq = cur_freq;
 		low_freq = 400000;
 		set_speed_proc = pmu_set_cpu_speed;
 		is_pmu_based = 1;
 	}
 	/* Else check for TiPb 550 */
-	else if (machine_is_compatible("PowerBook3,3") && cur_freq == 550000) {
+	else if (of_machine_is_compatible("PowerBook3,3") && cur_freq == 550000) {
 		hi_freq = cur_freq;
 		low_freq = 500000;
 		set_speed_proc = pmu_set_cpu_speed;
 		is_pmu_based = 1;
 	}
 	/* Else check for TiPb 400 & 500 */
-	else if (machine_is_compatible("PowerBook3,2")) {
+	else if (of_machine_is_compatible("PowerBook3,2")) {
 		/* We only know about the 400 MHz and the 500Mhz model
 		 * they both have 300 MHz as low frequency
 		 */

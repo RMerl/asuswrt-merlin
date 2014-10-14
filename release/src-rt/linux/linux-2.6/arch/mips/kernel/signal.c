@@ -8,6 +8,7 @@
  * Copyright (C) 1999, 2000 Silicon Graphics, Inc.
  */
 #include <linux/cache.h>
+#include <linux/irqflags.h>
 #include <linux/sched.h>
 #include <linux/mm.h>
 #include <linux/personality.h>
@@ -19,7 +20,9 @@
 #include <linux/ptrace.h>
 #include <linux/unistd.h>
 #include <linux/compiler.h>
+#include <linux/syscalls.h>
 #include <linux/uaccess.h>
+#include <linux/tracehook.h>
 
 #include <asm/abi.h>
 #include <asm/asm.h>
@@ -33,6 +36,15 @@
 #include <asm/vdso.h>
 
 #include "signal-common.h"
+
+static int (*save_fp_context)(struct sigcontext __user *sc);
+static int (*restore_fp_context)(struct sigcontext __user *sc);
+
+extern asmlinkage int _save_fp_context(struct sigcontext __user *sc);
+extern asmlinkage int _restore_fp_context(struct sigcontext __user *sc);
+
+extern asmlinkage int fpu_emulator_save_context(struct sigcontext __user *sc);
+extern asmlinkage int fpu_emulator_restore_context(struct sigcontext __user *sc);
 
 struct sigframe {
 	u32 sf_ass[4];		/* argument save space for o32 */
@@ -73,7 +85,7 @@ static int protected_save_fp_context(struct sigcontext __user *sc)
 
 static int protected_restore_fp_context(struct sigcontext __user *sc)
 {
-	int err, tmp;
+	int err, tmp __maybe_unused;
 	while (1) {
 		lock_fpu_owner();
 		own_fpu_inatomic(0);
@@ -286,8 +298,8 @@ asmlinkage int sys_rt_sigsuspend(nabi_no_regargs struct pt_regs regs)
 }
 
 #ifdef CONFIG_TRAD_SIGNALS
-asmlinkage int sys_sigaction(int sig, const struct sigaction __user *act,
-	struct sigaction __user *oact)
+SYSCALL_DEFINE3(sigaction, int, sig, const struct sigaction __user *, act,
+	struct sigaction __user *, oact)
 {
 	struct k_sigaction new_ka, old_ka;
 	int ret;
@@ -568,9 +580,9 @@ static int handle_signal(unsigned long sig, siginfo_t *info,
 		return ret;
 
 	spin_lock_irq(&current->sighand->siglock);
-	sigorsets(&current->blocked,&current->blocked,&ka->sa.sa_mask);
+	sigorsets(&current->blocked, &current->blocked, &ka->sa.sa_mask);
 	if (!(ka->sa.sa_flags & SA_NODEFER))
-		sigaddset(&current->blocked,sig);
+		sigaddset(&current->blocked, sig);
 	recalc_sigpending();
 	spin_unlock_irq(&current->sighand->siglock);
 
@@ -647,7 +659,53 @@ static void do_signal(struct pt_regs *regs)
 asmlinkage void do_notify_resume(struct pt_regs *regs, void *unused,
 	__u32 thread_info_flags)
 {
+	local_irq_enable();
+
 	/* deal with pending signal delivery */
 	if (thread_info_flags & (_TIF_SIGPENDING | _TIF_RESTORE_SIGMASK))
 		do_signal(regs);
+
+	if (thread_info_flags & _TIF_NOTIFY_RESUME) {
+		clear_thread_flag(TIF_NOTIFY_RESUME);
+		tracehook_notify_resume(regs);
+		if (current->replacement_session_keyring)
+			key_replace_session_keyring();
+	}
 }
+
+#ifdef CONFIG_SMP
+static int smp_save_fp_context(struct sigcontext __user *sc)
+{
+	return raw_cpu_has_fpu
+	       ? _save_fp_context(sc)
+	       : fpu_emulator_save_context(sc);
+}
+
+static int smp_restore_fp_context(struct sigcontext __user *sc)
+{
+	return raw_cpu_has_fpu
+	       ? _restore_fp_context(sc)
+	       : fpu_emulator_restore_context(sc);
+}
+#endif
+
+static int signal_setup(void)
+{
+#ifdef CONFIG_SMP
+	/* For now just do the cpu_has_fpu check when the functions are invoked */
+	save_fp_context = smp_save_fp_context;
+	restore_fp_context = smp_restore_fp_context;
+#else
+	if (cpu_has_fpu) {
+		save_fp_context = _save_fp_context;
+		restore_fp_context = _restore_fp_context;
+	} else {
+		save_fp_context = fpu_emulator_save_context;
+		restore_fp_context = fpu_emulator_restore_context;
+	}
+#endif
+
+	return 0;
+}
+
+arch_initcall(signal_setup);

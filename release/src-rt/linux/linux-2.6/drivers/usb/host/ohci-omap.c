@@ -18,16 +18,16 @@
 #include <linux/jiffies.h>
 #include <linux/platform_device.h>
 #include <linux/clk.h>
+#include <linux/gpio.h>
 
-#include <asm/hardware.h>
+#include <mach/hardware.h>
 #include <asm/io.h>
 #include <asm/mach-types.h>
 
-#include <asm/arch/mux.h>
-#include <asm/arch/irqs.h>
-#include <asm/arch/gpio.h>
-#include <asm/arch/fpga.h>
-#include <asm/arch/usb.h>
+#include <plat/mux.h>
+#include <mach/irqs.h>
+#include <plat/fpga.h>
+#include <plat/usb.h>
 
 
 /* OMAP-1510 OHCI has its own MMU for DMA */
@@ -47,7 +47,7 @@
 #endif
 
 #ifdef CONFIG_TPS65010
-#include <asm/arch/tps65010.h>
+#include <linux/i2c/tps65010.h>
 #else
 
 #define LOW	0
@@ -169,13 +169,16 @@ static void start_hnp(struct ohci_hcd *ohci)
 {
 	const unsigned	port = ohci_to_hcd(ohci)->self.otg_port - 1;
 	unsigned long	flags;
+	u32 l;
 
 	otg_start_hnp(ohci->transceiver);
 
 	local_irq_save(flags);
 	ohci->transceiver->state = OTG_STATE_A_SUSPEND;
 	writel (RH_PS_PSS, &ohci->regs->roothub.portstatus [port]);
-	OTG_CTRL_REG &= ~OTG_A_BUSREQ;
+	l = omap_readl(OTG_CTRL);
+	l &= ~OTG_A_BUSREQ;
+	omap_writel(l, OTG_CTRL);
 	local_irq_restore(flags);
 }
 
@@ -205,7 +208,7 @@ static int ohci_omap_init(struct usb_hcd *hcd)
 	if (cpu_is_omap16xx())
 		ocpi_enable();
 
-#ifdef	CONFIG_ARCH_OMAP_OTG
+#ifdef	CONFIG_USB_OTG
 	if (need_transceiver) {
 		ohci->transceiver = otg_get_transceiver();
 		if (ohci->transceiver) {
@@ -222,12 +225,13 @@ static int ohci_omap_init(struct usb_hcd *hcd)
 			dev_err(hcd->self.controller, "can't find transceiver\n");
 			return -ENODEV;
 		}
+		ohci->start_hnp = start_hnp;
 	}
 #endif
 
 	omap_ohci_clock_power(1);
 
-	if (cpu_is_omap1510()) {
+	if (cpu_is_omap15xx()) {
 		omap_1510_local_bus_power(1);
 		omap_1510_local_bus_init();
 	}
@@ -250,14 +254,14 @@ static int ohci_omap_init(struct usb_hcd *hcd)
 
 			/* gpio9 for overcurrent detction */
 			omap_cfg_reg(W8_1610_GPIO9);
-			omap_request_gpio(9);
-			omap_set_gpio_direction(9, 1 /* IN */);
+			gpio_request(9, "OHCI overcurrent");
+			gpio_direction_input(9);
 
 			/* for paranoia's sake:  disable USB.PUEN */
 			omap_cfg_reg(W4_USB_HIGHZ);
 		}
 		ohci_writel(ohci, rh, &ohci->regs->roothub.a);
-		distrust_firmware = 0;
+		ohci->flags &= ~OHCI_QUIRK_HUB_POWER;
 	} else if (machine_is_nokia770()) {
 		/* We require a self-powered hub, which should have
 		 * plenty of power. */
@@ -278,6 +282,7 @@ static int ohci_omap_init(struct usb_hcd *hcd)
 static void ohci_omap_stop(struct usb_hcd *hcd)
 {
 	dev_dbg(hcd->self.controller, "stopping USB Controller\n");
+	ohci_stop(hcd);
 	omap_ohci_clock_power(0);
 }
 
@@ -311,14 +316,14 @@ static int usb_hcd_omap_probe (const struct hc_driver *driver,
 		return -ENODEV;
 	}
 
-	usb_host_ck = clk_get(0, "usb_hhc_ck");
+	usb_host_ck = clk_get(&pdev->dev, "usb_hhc_ck");
 	if (IS_ERR(usb_host_ck))
 		return PTR_ERR(usb_host_ck);
 
-	if (!cpu_is_omap1510())
-		usb_dc_ck = clk_get(0, "usb_dc_ck");
+	if (!cpu_is_omap15xx())
+		usb_dc_ck = clk_get(&pdev->dev, "usb_dc_ck");
 	else
-		usb_dc_ck = clk_get(0, "lb_ck");
+		usb_dc_ck = clk_get(&pdev->dev, "lb_ck");
 
 	if (IS_ERR(usb_dc_ck)) {
 		clk_put(usb_host_ck);
@@ -326,7 +331,7 @@ static int usb_hcd_omap_probe (const struct hc_driver *driver,
 	}
 
 
-	hcd = usb_create_hcd (driver, &pdev->dev, pdev->dev.bus_id);
+	hcd = usb_create_hcd (driver, &pdev->dev, dev_name(&pdev->dev));
 	if (!hcd) {
 		retval = -ENOMEM;
 		goto err0;
@@ -340,7 +345,12 @@ static int usb_hcd_omap_probe (const struct hc_driver *driver,
 		goto err1;
 	}
 
-	hcd->regs = (void __iomem *) (int) IO_ADDRESS(hcd->rsrc_start);
+	hcd->regs = ioremap(hcd->rsrc_start, hcd->rsrc_len);
+	if (!hcd->regs) {
+		dev_err(&pdev->dev, "can't ioremap OHCI HCD\n");
+		retval = -ENOMEM;
+		goto err2;
+	}
 
 	ohci = hcd_to_ohci(hcd);
 	ohci_hcd_init(ohci);
@@ -351,11 +361,11 @@ static int usb_hcd_omap_probe (const struct hc_driver *driver,
 	irq = platform_get_irq(pdev, 0);
 	if (irq < 0) {
 		retval = -ENXIO;
-		goto err2;
+		goto err3;
 	}
 	retval = usb_add_hcd(hcd, irq, IRQF_DISABLED);
 	if (retval)
-		goto err2;
+		goto err3;
 
 	host_initialized = 1;
 
@@ -363,6 +373,8 @@ static int usb_hcd_omap_probe (const struct hc_driver *driver,
 		omap_ohci_clock_power(0);
 
 	return 0;
+err3:
+	iounmap(hcd->regs);
 err2:
 	release_mem_region(hcd->rsrc_start, hcd->rsrc_len);
 err1:
@@ -396,7 +408,8 @@ usb_hcd_omap_remove (struct usb_hcd *hcd, struct platform_device *pdev)
 		put_device(ohci->transceiver->dev);
 	}
 	if (machine_is_omap_osk())
-		omap_free_gpio(9);
+		gpio_free(9);
+	iounmap(hcd->regs);
 	release_mem_region(hcd->rsrc_start, hcd->rsrc_len);
 	usb_put_hcd(hcd);
 	clk_put(usb_dc_ck);
@@ -466,7 +479,6 @@ static const struct hc_driver ohci_omap_hc_driver = {
 	 */
 	.hub_status_data =	ohci_hub_status_data,
 	.hub_control =		ohci_hub_control,
-	.hub_irq_enable =	ohci_rhsc_enable,
 #ifdef	CONFIG_PM
 	.bus_suspend =		ohci_bus_suspend,
 	.bus_resume =		ohci_bus_resume,
@@ -543,3 +555,4 @@ static struct platform_driver ohci_hcd_omap_driver = {
 	},
 };
 
+MODULE_ALIAS("platform:ohci");

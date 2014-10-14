@@ -1,6 +1,8 @@
 #ifndef _LINUX_UNALIGNED_LE_STRUCT_H
 #define _LINUX_UNALIGNED_LE_STRUCT_H
 
+#include <linux/unaligned/packed_struct.h>
+
 static inline u16 get_unaligned_le16(const void *p)
 {
 	return __get_unaligned_cpu16((const u8 *)p);

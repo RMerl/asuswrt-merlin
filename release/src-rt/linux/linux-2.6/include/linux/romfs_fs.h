@@ -1,6 +1,9 @@
 #ifndef __LINUX_ROMFS_FS_H
 #define __LINUX_ROMFS_FS_H
 
+#include <linux/types.h>
+#include <linux/fs.h>
+
 /* The basic structures of the romfs filesystem */
 
 #define ROMBSIZE BLOCK_SIZE
@@ -53,9 +56,4 @@ struct romfs_inode {
 #define ROMFH_PAD (ROMFH_SIZE-1)
 #define ROMFH_MASK (~ROMFH_PAD)
 
-#ifdef __KERNEL__
-
-/* Not much now */
-
-#endif /* __KERNEL__ */
 #endif

@@ -1,13 +1,13 @@
 menu "Kernel hacking"
 
 config TRACE_IRQFLAGS_SUPPORT
-	bool
-	default y
+	def_bool y
 
 source "lib/Kconfig.debug"
 
 config SH_STANDARD_BIOS
 	bool "Use LinuxSH standard BIOS"
+	depends on SUPERH32
 	help
 	  Say Y here if your target has the gdb-sh-stub
 	  package from www.m17n.org (or any conforming standard LinuxSH BIOS)
@@ -19,45 +19,14 @@ config SH_STANDARD_BIOS
 	  mask ROM and no flash (WindowsCE machines fall in this category).
 	  If unsure, say N.
 
-config EARLY_SCIF_CONSOLE
-	bool "Use early SCIF console"
-	help
-	  This enables an early console using a fixed SCIF port. This can
-	  be used by platforms that are either not running the SH
-	  standard BIOS, or do not wish to use the BIOS callbacks for the
-	  serial I/O.
-
-config EARLY_SCIF_CONSOLE_PORT
-	hex "SCIF port for early console"
-	depends on EARLY_SCIF_CONSOLE
-	default "0xffe00000" if CPU_SUBTYPE_SH7780
-	default "0xfffe9800" if CPU_SUBTYPE_SH7206
-	default "0xf8420000" if CPU_SUBTYPE_SH7619
-	default "0xa4400000" if CPU_SUBTYPE_SH7712 || CPU_SUBTYPE_SH7705
-	default "0xffe80000" if CPU_SH4
-
-config EARLY_PRINTK
-	bool "Early printk support"
-	depends on SH_STANDARD_BIOS || EARLY_SCIF_CONSOLE
-	help
-	  Say Y here to redirect kernel printk messages to the serial port
-	  used by the SH-IPL bootloader, starting very early in the boot
-	  process and ending when the kernel's serial console is initialised.
-	  This option is only useful porting the kernel to a new machine,
-	  when the kernel may crash or hang before the serial console is
-	  initialised. If unsure, say N.
-
-	  On devices that are running SH-IPL and want to keep the port
-	  initialization consistent while not using the BIOS callbacks,
-	  select both the EARLY_SCIF_CONSOLE and SH_STANDARD_BIOS, using
-	  the kernel command line option to toggle back and forth.
-
-config DEBUG_STACKOVERFLOW
+config STACK_DEBUG
 	bool "Check for stack overflows"
-	depends on DEBUG_KERNEL
+	depends on DEBUG_KERNEL && SUPERH32
 	help
 	  This option will cause messages to be printed if free stack space
-	  drops below a certain limit.
+	  drops below a certain limit. Saying Y here will add overhead to
+	  every function call and will therefore incur a major
+	  performance hit. Most users should say N.
 
 config DEBUG_STACK_USAGE
 	bool "Stack utilization instrumentation"
@@ -70,7 +39,7 @@ config DEBUG_STACK_USAGE
 
 config 4KSTACKS
 	bool "Use 4Kb for kernel stacks instead of 8Kb"
-	depends on DEBUG_KERNEL
+	depends on DEBUG_KERNEL && (MMU || BROKEN) && !PAGE_SIZE_64KB
 	help
 	  If you say Y here the kernel will use a 4Kb stacksize for the
 	  kernel stack attached to each process/thread. This facilitates
@@ -78,82 +47,53 @@ config 4KSTACKS
 	  on the VM subsystem for higher order allocations. This option
 	  will also use IRQ stacks to compensate for the reduced stackspace.
 
-config SH_KGDB
-	bool "Include KGDB kernel debugger"
+config IRQSTACKS
+	bool "Use separate kernel stacks when processing interrupts"
+	depends on DEBUG_KERNEL && SUPERH32 && BROKEN
+	help
+	  If you say Y here the kernel will use separate kernel stacks
+	  for handling hard and soft interrupts.  This can help avoid
+	  overflowing the process kernel stacks.
+
+config DUMP_CODE
+	bool "Show disassembly of nearby code in register dumps"
+	depends on DEBUG_KERNEL && SUPERH32
+	default y if DEBUG_BUGVERBOSE
+	default n
+	help
+	  This prints out a code trace of the instructions leading up to
+	  the faulting instruction as a debugging aid. As this does grow
+	  the kernel in size a bit, most users will want to say N here.
+
+	  Those looking for more verbose debugging output should say Y.
+
+config DWARF_UNWINDER
+	bool "Enable the DWARF unwinder for stacktraces"
 	select FRAME_POINTER
-	select DEBUG_INFO
-	help
-	  Include in-kernel hooks for kgdb, the Linux kernel source level
-	  debugger.  See <http://kgdb.sourceforge.net/> for more information.
-	  Unless you are intending to debug the kernel, say N here.
-
-menu "KGDB configuration options"
-	depends on SH_KGDB
-
-config MORE_COMPILE_OPTIONS
-	bool "Add any additional compile options"
-	help
-	  If you want to add additional CFLAGS to the kernel build, enable this
-	  option and then enter what you would like to add in the next question.
-	  Note however that -g is already appended with the selection of KGDB.
-
-config COMPILE_OPTIONS
-	string "Additional compile arguments"
-	depends on MORE_COMPILE_OPTIONS
-
-config KGDB_NMI
-	bool "Enter KGDB on NMI"
 	default n
+	help
+	  Enabling this option will make stacktraces more accurate, at
+	  the cost of an increase in overall kernel size.
 
-config SH_KGDB_CONSOLE
-	bool "Console messages through GDB"
-	depends on !SERIAL_SH_SCI_CONSOLE
-	select SERIAL_CORE_CONSOLE
+config SH_NO_BSS_INIT
+	bool "Avoid zeroing BSS (to speed-up startup on suitable platforms)"
+	depends on DEBUG_KERNEL
 	default n
+	help
+	  If running in painfully slow environments, such as an RTL
+	  simulation or from remote memory via SHdebug, where the memory
+	  can already be guaranteed to ber zeroed on boot, say Y.
 
-config KGDB_SYSRQ
-	bool "Allow SysRq 'G' to enter KGDB"
-	default y
+	  For all other cases, say N. If this option seems perplexing, or
+	  you aren't sure, say N.
 
-comment "Serial port setup"
+config SH64_SR_WATCH
+	bool "Debug: set SR.WATCH to enable hardware watchpoints and trace"
+	depends on SUPERH64
 
-config KGDB_DEFPORT
-	int "Port number (ttySCn)"
-	default "1"
-
-config KGDB_DEFBAUD
-	int "Baud rate"
-	default "115200"
-
-choice
-	prompt "Parity"
-	depends on SH_KGDB
-	default KGDB_DEFPARITY_N
-
-config KGDB_DEFPARITY_N
-	bool "None"
-
-config KGDB_DEFPARITY_E
-	bool "Even"
-
-config KGDB_DEFPARITY_O
-	bool "Odd"
-
-endchoice
-
-choice
-	prompt "Data bits"
-	depends on SH_KGDB
-	default KGDB_DEFBITS_8
-
-config KGDB_DEFBITS_8
-	bool "8"
-
-config KGDB_DEFBITS_7
-	bool "7"
-
-endchoice
-
-endmenu
+config MCOUNT
+	def_bool y
+	depends on SUPERH32
+	depends on STACK_DEBUG || FUNCTION_TRACER
 
 endmenu

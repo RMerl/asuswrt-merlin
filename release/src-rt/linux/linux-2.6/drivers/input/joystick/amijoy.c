@@ -1,6 +1,4 @@
 /*
- * $Id: amijoy.c,v 1.13 2002/01/22 20:26:32 vojtech Exp $
- *
  *  Copyright (c) 1998-2001 Vojtech Pavlik
  */
 
@@ -32,7 +30,6 @@
 #include <linux/errno.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
-#include <linux/moduleparam.h>
 #include <linux/init.h>
 #include <linux/input.h>
 #include <linux/interrupt.h>
@@ -137,12 +134,13 @@ static int __init amijoy_init(void)
 		amijoy_dev[i]->open = amijoy_open;
 		amijoy_dev[i]->close = amijoy_close;
 
-		amijoy_dev[i]->evbit[0] = BIT(EV_KEY) | BIT(EV_ABS);
-		amijoy_dev[i]->absbit[0] = BIT(ABS_X) | BIT(ABS_Y);
-		amijoy_dev[i]->keybit[LONG(BTN_LEFT)] = BIT(BTN_LEFT) | BIT(BTN_MIDDLE) | BIT(BTN_RIGHT);
+		amijoy_dev[i]->evbit[0] = BIT_MASK(EV_KEY) | BIT_MASK(EV_ABS);
+		amijoy_dev[i]->absbit[0] = BIT_MASK(ABS_X) | BIT_MASK(ABS_Y);
+		amijoy_dev[i]->keybit[BIT_WORD(BTN_LEFT)] = BIT_MASK(BTN_LEFT) |
+			BIT_MASK(BTN_MIDDLE) | BIT_MASK(BTN_RIGHT);
 		for (j = 0; j < 2; j++) {
-			amijoy_dev[i]->absmin[ABS_X + j] = -1;
-			amijoy_dev[i]->absmax[ABS_X + j] = 1;
+			input_set_abs_params(amijoy_dev[i], ABS_X + j,
+					     -1, 1, 0, 0);
 		}
 
 		err = input_register_device(amijoy_dev[i]);

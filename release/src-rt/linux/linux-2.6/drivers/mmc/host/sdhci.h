@@ -1,25 +1,24 @@
 /*
- *  linux/drivers/mmc/sdhci.h - Secure Digital Host Controller Interface driver
+ *  linux/drivers/mmc/host/sdhci.h - Secure Digital Host Controller Interface driver
  *
- *  Copyright (C) 2005-2007 Pierre Ossman, All Rights Reserved.
+ * Header file for Host Controller registers and I/O accessors.
+ *
+ *  Copyright (C) 2005-2008 Pierre Ossman, All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or (at
  * your option) any later version.
  */
+#ifndef __SDHCI_HW_H
+#define __SDHCI_HW_H
 
-/*
- * PCI registers
- */
+#include <linux/scatterlist.h>
+#include <linux/compiler.h>
+#include <linux/types.h>
+#include <linux/io.h>
 
-#define PCI_SDHCI_IFPIO			0x00
-#define PCI_SDHCI_IFDMA			0x01
-#define PCI_SDHCI_IFVENDOR		0x02
-
-#define PCI_SLOT_INFO			0x40	/* 8 bits */
-#define  PCI_SLOT_INFO_SLOTS(x)		((x >> 4) & 7)
-#define  PCI_SLOT_INFO_FIRST_BAR_MASK	0x07
+#include <linux/mmc/sdhci.h>
 
 /*
  * Controller registers
@@ -46,6 +45,7 @@
 #define  SDHCI_CMD_CRC		0x08
 #define  SDHCI_CMD_INDEX	0x10
 #define  SDHCI_CMD_DATA		0x20
+#define  SDHCI_CMD_ABORTCMD	0xC0
 
 #define  SDHCI_CMD_RESP_NONE	0x00
 #define  SDHCI_CMD_RESP_LONG	0x01
@@ -53,6 +53,7 @@
 #define  SDHCI_CMD_RESP_SHORT_BUSY 0x03
 
 #define SDHCI_MAKE_CMD(c, f) (((c & 0xff) << 8) | (f & 0xff))
+#define SDHCI_GET_CMD(c) ((c>>8) & 0x3f)
 
 #define SDHCI_RESPONSE		0x10
 
@@ -72,6 +73,12 @@
 #define  SDHCI_CTRL_LED		0x01
 #define  SDHCI_CTRL_4BITBUS	0x02
 #define  SDHCI_CTRL_HISPD	0x04
+#define  SDHCI_CTRL_DMA_MASK	0x18
+#define   SDHCI_CTRL_SDMA	0x00
+#define   SDHCI_CTRL_ADMA1	0x08
+#define   SDHCI_CTRL_ADMA32	0x10
+#define   SDHCI_CTRL_ADMA64	0x18
+#define   SDHCI_CTRL_8BITBUS	0x20
 
 #define SDHCI_POWER_CONTROL	0x29
 #define  SDHCI_POWER_ON		0x01
@@ -81,10 +88,17 @@
 
 #define SDHCI_BLOCK_GAP_CONTROL	0x2A
 
-#define SDHCI_WALK_UP_CONTROL	0x2B
+#define SDHCI_WAKE_UP_CONTROL	0x2B
+#define  SDHCI_WAKE_ON_INT	0x01
+#define  SDHCI_WAKE_ON_INSERT	0x02
+#define  SDHCI_WAKE_ON_REMOVE	0x04
 
 #define SDHCI_CLOCK_CONTROL	0x2C
 #define  SDHCI_DIVIDER_SHIFT	8
+#define  SDHCI_DIVIDER_HI_SHIFT	6
+#define  SDHCI_DIV_MASK	0xFF
+#define  SDHCI_DIV_MASK_LEN	8
+#define  SDHCI_DIV_HI_MASK	0x300
 #define  SDHCI_CLOCK_CARD_EN	0x0004
 #define  SDHCI_CLOCK_INT_STABLE	0x0002
 #define  SDHCI_CLOCK_INT_EN	0x0001
@@ -107,6 +121,7 @@
 #define  SDHCI_INT_CARD_INSERT	0x00000040
 #define  SDHCI_INT_CARD_REMOVE	0x00000080
 #define  SDHCI_INT_CARD_INT	0x00000100
+#define  SDHCI_INT_ERROR	0x00008000
 #define  SDHCI_INT_TIMEOUT	0x00010000
 #define  SDHCI_INT_CRC		0x00020000
 #define  SDHCI_INT_END_BIT	0x00040000
@@ -116,6 +131,7 @@
 #define  SDHCI_INT_DATA_END_BIT	0x00400000
 #define  SDHCI_INT_BUS_POWER	0x00800000
 #define  SDHCI_INT_ACMD12ERR	0x01000000
+#define  SDHCI_INT_ADMA_ERROR	0x02000000
 
 #define  SDHCI_INT_NORMAL_MASK	0x00007FFF
 #define  SDHCI_INT_ERROR_MASK	0xFFFF8000
@@ -125,7 +141,8 @@
 #define  SDHCI_INT_DATA_MASK	(SDHCI_INT_DATA_END | SDHCI_INT_DMA_END | \
 		SDHCI_INT_DATA_AVAIL | SDHCI_INT_SPACE_AVAIL | \
 		SDHCI_INT_DATA_TIMEOUT | SDHCI_INT_DATA_CRC | \
-		SDHCI_INT_DATA_END_BIT)
+		SDHCI_INT_DATA_END_BIT | SDHCI_INT_ADMA_ERROR)
+#define SDHCI_INT_ALL_MASK	((unsigned int)-1)
 
 #define SDHCI_ACMD12_ERR	0x3C
 
@@ -136,22 +153,36 @@
 #define  SDHCI_TIMEOUT_CLK_SHIFT 0
 #define  SDHCI_TIMEOUT_CLK_UNIT	0x00000080
 #define  SDHCI_CLOCK_BASE_MASK	0x00003F00
+#define  SDHCI_CLOCK_V3_BASE_MASK	0x0000FF00
 #define  SDHCI_CLOCK_BASE_SHIFT	8
 #define  SDHCI_MAX_BLOCK_MASK	0x00030000
 #define  SDHCI_MAX_BLOCK_SHIFT  16
+#define  SDHCI_CAN_DO_8BIT	0x00040000
+#define  SDHCI_CAN_DO_ADMA2	0x00080000
+#define  SDHCI_CAN_DO_ADMA1	0x00100000
 #define  SDHCI_CAN_DO_HISPD	0x00200000
-#define  SDHCI_CAN_DO_DMA	0x00400000
+#define  SDHCI_CAN_DO_SDMA	0x00400000
 #define  SDHCI_CAN_VDD_330	0x01000000
 #define  SDHCI_CAN_VDD_300	0x02000000
 #define  SDHCI_CAN_VDD_180	0x04000000
+#define  SDHCI_CAN_64BIT	0x10000000
 
-/* 44-47 reserved for more caps */
+#define SDHCI_CAPABILITIES_1	0x44
 
 #define SDHCI_MAX_CURRENT	0x48
 
 /* 4C-4F reserved for more max current */
 
-/* 50-FB reserved */
+#define SDHCI_SET_ACMD12_ERROR	0x50
+#define SDHCI_SET_INT_ERROR	0x52
+
+#define SDHCI_ADMA_ERROR	0x54
+
+/* 55-57 reserved */
+
+#define SDHCI_ADMA_ADDRESS	0x58
+
+/* 60-FB reserved */
 
 #define SDHCI_SLOT_INT_STATUS	0xFC
 
@@ -160,51 +191,141 @@
 #define  SDHCI_VENDOR_VER_SHIFT	8
 #define  SDHCI_SPEC_VER_MASK	0x00FF
 #define  SDHCI_SPEC_VER_SHIFT	0
+#define   SDHCI_SPEC_100	0
+#define   SDHCI_SPEC_200	1
+#define   SDHCI_SPEC_300	2
 
-struct sdhci_chip;
+/*
+ * End of controller registers.
+ */
 
-struct sdhci_host {
-	struct sdhci_chip	*chip;
-	struct mmc_host		*mmc;		/* MMC structure */
+#define SDHCI_MAX_DIV_SPEC_200	256
+#define SDHCI_MAX_DIV_SPEC_300	2046
 
-	spinlock_t		lock;		/* Mutex */
+struct sdhci_ops {
+#ifdef CONFIG_MMC_SDHCI_IO_ACCESSORS
+	u32		(*read_l)(struct sdhci_host *host, int reg);
+	u16		(*read_w)(struct sdhci_host *host, int reg);
+	u8		(*read_b)(struct sdhci_host *host, int reg);
+	void		(*write_l)(struct sdhci_host *host, u32 val, int reg);
+	void		(*write_w)(struct sdhci_host *host, u16 val, int reg);
+	void		(*write_b)(struct sdhci_host *host, u8 val, int reg);
+#endif
 
-	int			flags;		/* Host attributes */
-#define SDHCI_USE_DMA		(1<<0)
+	void	(*set_clock)(struct sdhci_host *host, unsigned int clock);
 
-	unsigned int		max_clk;	/* Max possible freq (MHz) */
-	unsigned int		timeout_clk;	/* Timeout freq (KHz) */
-
-	unsigned int		clock;		/* Current clock (MHz) */
-	unsigned short		power;		/* Current voltage */
-
-	struct mmc_request	*mrq;		/* Current request */
-	struct mmc_command	*cmd;		/* Current command */
-	struct mmc_data		*data;		/* Current data request */
-
-	struct scatterlist	*cur_sg;	/* We're working on this */
-	int			num_sg;		/* Entries left */
-	int			offset;		/* Offset into current sg */
-	int			remain;		/* Bytes left in current */
-
-	char			slot_descr[20];	/* Name for reservations */
-
-	int			irq;		/* Device IRQ */
-	int			bar;		/* PCI BAR index */
-	unsigned long		addr;		/* Bus address */
-	void __iomem *		ioaddr;		/* Mapped address */
-
-	struct tasklet_struct	card_tasklet;	/* Tasklet structures */
-	struct tasklet_struct	finish_tasklet;
-
-	struct timer_list	timer;		/* Timer for timeouts */
+	int		(*enable_dma)(struct sdhci_host *host);
+	unsigned int	(*get_max_clock)(struct sdhci_host *host);
+	unsigned int	(*get_min_clock)(struct sdhci_host *host);
+	unsigned int	(*get_timeout_clock)(struct sdhci_host *host);
+	int		(*platform_8bit_width)(struct sdhci_host *host,
+					       int width);
+	void (*platform_send_init_74_clocks)(struct sdhci_host *host,
+					     u8 power_mode);
+	unsigned int    (*get_ro)(struct sdhci_host *host);
 };
 
-struct sdhci_chip {
-	struct pci_dev		*pdev;
+#ifdef CONFIG_MMC_SDHCI_IO_ACCESSORS
 
-	unsigned long		quirks;
+static inline void sdhci_writel(struct sdhci_host *host, u32 val, int reg)
+{
+	if (unlikely(host->ops->write_l))
+		host->ops->write_l(host, val, reg);
+	else
+		writel(val, host->ioaddr + reg);
+}
 
-	int			num_slots;	/* Slots on controller */
-	struct sdhci_host	*hosts[0];	/* Pointers to hosts */
-};
+static inline void sdhci_writew(struct sdhci_host *host, u16 val, int reg)
+{
+	if (unlikely(host->ops->write_w))
+		host->ops->write_w(host, val, reg);
+	else
+		writew(val, host->ioaddr + reg);
+}
+
+static inline void sdhci_writeb(struct sdhci_host *host, u8 val, int reg)
+{
+	if (unlikely(host->ops->write_b))
+		host->ops->write_b(host, val, reg);
+	else
+		writeb(val, host->ioaddr + reg);
+}
+
+static inline u32 sdhci_readl(struct sdhci_host *host, int reg)
+{
+	if (unlikely(host->ops->read_l))
+		return host->ops->read_l(host, reg);
+	else
+		return readl(host->ioaddr + reg);
+}
+
+static inline u16 sdhci_readw(struct sdhci_host *host, int reg)
+{
+	if (unlikely(host->ops->read_w))
+		return host->ops->read_w(host, reg);
+	else
+		return readw(host->ioaddr + reg);
+}
+
+static inline u8 sdhci_readb(struct sdhci_host *host, int reg)
+{
+	if (unlikely(host->ops->read_b))
+		return host->ops->read_b(host, reg);
+	else
+		return readb(host->ioaddr + reg);
+}
+
+#else
+
+static inline void sdhci_writel(struct sdhci_host *host, u32 val, int reg)
+{
+	writel(val, host->ioaddr + reg);
+}
+
+static inline void sdhci_writew(struct sdhci_host *host, u16 val, int reg)
+{
+	writew(val, host->ioaddr + reg);
+}
+
+static inline void sdhci_writeb(struct sdhci_host *host, u8 val, int reg)
+{
+	writeb(val, host->ioaddr + reg);
+}
+
+static inline u32 sdhci_readl(struct sdhci_host *host, int reg)
+{
+	return readl(host->ioaddr + reg);
+}
+
+static inline u16 sdhci_readw(struct sdhci_host *host, int reg)
+{
+	return readw(host->ioaddr + reg);
+}
+
+static inline u8 sdhci_readb(struct sdhci_host *host, int reg)
+{
+	return readb(host->ioaddr + reg);
+}
+
+#endif /* CONFIG_MMC_SDHCI_IO_ACCESSORS */
+
+extern struct sdhci_host *sdhci_alloc_host(struct device *dev,
+	size_t priv_size);
+extern void sdhci_free_host(struct sdhci_host *host);
+
+static inline void *sdhci_priv(struct sdhci_host *host)
+{
+	return (void *)host->private;
+}
+
+extern void sdhci_card_detect(struct sdhci_host *host);
+extern int sdhci_add_host(struct sdhci_host *host);
+extern void sdhci_remove_host(struct sdhci_host *host, int dead);
+
+#ifdef CONFIG_PM
+extern int sdhci_suspend_host(struct sdhci_host *host, pm_message_t state);
+extern int sdhci_resume_host(struct sdhci_host *host);
+extern void sdhci_enable_irq_wakeups(struct sdhci_host *host);
+#endif
+
+#endif /* __SDHCI_HW_H */

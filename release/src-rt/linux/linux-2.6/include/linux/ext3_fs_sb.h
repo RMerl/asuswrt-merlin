@@ -44,6 +44,7 @@ struct ext3_sb_info {
 	struct ext3_super_block * s_es;	/* Pointer to the super block in the buffer */
 	struct buffer_head ** s_group_desc;
 	unsigned long  s_mount_opt;
+	ext3_fsblk_t s_sb_block;
 	uid_t s_resuid;
 	gid_t s_resgid;
 	unsigned short s_mount_state;
@@ -56,10 +57,11 @@ struct ext3_sb_info {
 	u32 s_next_generation;
 	u32 s_hash_seed[4];
 	int s_def_hash_version;
+	int s_hash_unsigned;	/* 3 if hash should be signed, 0 if not */
 	struct percpu_counter s_freeblocks_counter;
 	struct percpu_counter s_freeinodes_counter;
 	struct percpu_counter s_dirs_counter;
-	struct blockgroup_lock s_blockgroup_lock;
+	struct blockgroup_lock *s_blockgroup_lock;
 
 	/* root of the per fs reservation window tree */
 	spinlock_t s_rsv_window_lock;
@@ -70,6 +72,8 @@ struct ext3_sb_info {
 	struct inode * s_journal_inode;
 	struct journal_s * s_journal;
 	struct list_head s_orphan;
+	struct mutex s_orphan_lock;
+	struct mutex s_resize_lock;
 	unsigned long s_commit_interval;
 	struct block_device *journal_bdev;
 #ifdef CONFIG_JBD_DEBUG
@@ -81,5 +85,11 @@ struct ext3_sb_info {
 	int s_jquota_fmt;			/* Format of quota to use */
 #endif
 };
+
+static inline spinlock_t *
+sb_bgl_lock(struct ext3_sb_info *sbi, unsigned int block_group)
+{
+	return bgl_lock_ptr(sbi->s_blockgroup_lock, block_group);
+}
 
 #endif	/* _LINUX_EXT3_FS_SB */

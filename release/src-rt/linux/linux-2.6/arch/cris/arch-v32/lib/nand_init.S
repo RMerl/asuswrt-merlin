@@ -22,11 +22,11 @@
 ##
 ##=============================================================================
 
-#include <asm/arch/hwregs/asm/reg_map_asm.h>
-#include <asm/arch/hwregs/asm/gio_defs_asm.h>
-#include <asm/arch/hwregs/asm/pinmux_defs_asm.h>
-#include <asm/arch/hwregs/asm/bif_core_defs_asm.h>
-#include <asm/arch/hwregs/asm/config_defs_asm.h>
+#include <arch/hwregs/asm/reg_map_asm.h>
+#include <arch/hwregs/asm/gio_defs_asm.h>
+#include <arch/hwregs/asm/pinmux_defs_asm.h>
+#include <arch/hwregs/asm/bif_core_defs_asm.h>
+#include <arch/hwregs/asm/config_defs_asm.h>
 
 ;; There are 8-bit NAND flashes and 16-bit NAND flashes.
 ;; We need to treat them slightly different.
@@ -139,7 +139,7 @@ copy_nand_to_ram:
 	lsrq	8, $r4
 	move.b	$r4, [$r1]	; Row address
 	lsrq	8, $r4
-	move.b	$r4, [$r1]	; Row adddress
+	move.b	$r4, [$r1]	; Row address
 	moveq	20, $r4
 2:	bne	2b
 	subq	1, $r4

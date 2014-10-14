@@ -54,13 +54,14 @@
 #define MPA_FLAGS_MASK		0xE0
 
 #define put_ep(ep) { \
-	PDBG("put_ep (via %s:%u) ep %p refcnt %d\n", __FUNCTION__, __LINE__,  \
+	PDBG("put_ep (via %s:%u) ep %p refcnt %d\n", __func__, __LINE__,  \
 	     ep, atomic_read(&((ep)->kref.refcount))); \
+	WARN_ON(atomic_read(&((ep)->kref.refcount)) < 1); \
 	kref_put(&((ep)->kref), __free_ep); \
 }
 
 #define get_ep(ep) { \
-	PDBG("get_ep (via %s:%u) ep %p, refcnt %d\n", __FUNCTION__, __LINE__, \
+	PDBG("get_ep (via %s:%u) ep %p, refcnt %d\n", __func__, __LINE__, \
 	     ep, atomic_read(&((ep)->kref.refcount))); \
 	kref_get(&((ep)->kref));  \
 }
@@ -144,8 +145,10 @@ enum iwch_ep_state {
 };
 
 enum iwch_ep_flags {
-	PEER_ABORT_IN_PROGRESS	= (1 << 0),
-	ABORT_REQ_IN_PROGRESS	= (1 << 1),
+	PEER_ABORT_IN_PROGRESS	= 0,
+	ABORT_REQ_IN_PROGRESS	= 1,
+	RELEASE_RESOURCES	= 2,
+	CLOSE_SENT		= 3,
 };
 
 struct iwch_ep_common {
@@ -160,6 +163,7 @@ struct iwch_ep_common {
 	wait_queue_head_t waitq;
 	int rpl_done;
 	int rpl_err;
+	unsigned long flags;
 };
 
 struct iwch_listen_ep {
@@ -175,6 +179,7 @@ struct iwch_ep {
 	unsigned int atid;
 	u32 hwtid;
 	u32 snd_seq;
+	u32 rcv_seq;
 	struct l2t_entry *l2t;
 	struct dst_entry *dst;
 	struct sk_buff *mpa_skb;
@@ -186,7 +191,6 @@ struct iwch_ep {
 	u16 plen;
 	u32 ird;
 	u32 ord;
-	u32 flags;
 };
 
 static inline struct iwch_ep *to_ep(struct iw_cm_id *cm_id)
@@ -224,5 +228,6 @@ int iwch_ep_redirect(void *ctx, struct dst_entry *old, struct dst_entry *new, st
 
 int __init iwch_cm_init(void);
 void __exit iwch_cm_term(void);
+extern int peer2peer;
 
 #endif				/* _IWCH_CM_H_ */

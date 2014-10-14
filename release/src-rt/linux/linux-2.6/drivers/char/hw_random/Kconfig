@@ -9,7 +9,28 @@ config HW_RANDOM
 	  Hardware Random Number Generator Core infrastructure.
 
 	  To compile this driver as a module, choose M here: the
-	  module will be called rng-core.
+	  module will be called rng-core.  This provides a device
+	  that's usually called /dev/hw_random, and which exposes one
+	  of possibly several hardware random number generators.
+
+	  These hardware random number generators do not feed directly
+	  into the kernel's random number generator.  That is usually
+	  handled by the "rngd" daemon.  Documentation/hw_random.txt
+	  has more information.
+
+	  If unsure, say Y.
+
+config HW_RANDOM_TIMERIOMEM
+	tristate "Timer IOMEM HW Random Number Generator support"
+	depends on HW_RANDOM && HAS_IOMEM
+	---help---
+	  This driver provides kernel-side support for a generic Random
+	  Number Generator used by reading a 'dumb' iomem address that
+	  is to be read no faster than, for example, once a second;
+	  the default FPGA bitstream on the TS-7800 has such functionality.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called timeriomem-rng.
 
 	  If unsure, say Y.
 
@@ -41,7 +62,7 @@ config HW_RANDOM_AMD
 
 config HW_RANDOM_GEODE
 	tristate "AMD Geode HW Random Number Generator support"
-	depends on HW_RANDOM && X86 && PCI
+	depends on HW_RANDOM && X86_32 && PCI
 	default HW_RANDOM
 	---help---
 	  This driver provides kernel-side support for the Random Number
@@ -52,9 +73,22 @@ config HW_RANDOM_GEODE
 
 	  If unsure, say Y.
 
+config HW_RANDOM_N2RNG
+	tristate "Niagara2 Random Number Generator support"
+	depends on HW_RANDOM && SPARC64
+	default HW_RANDOM
+	---help---
+	  This driver provides kernel-side support for the Random Number
+	  Generator hardware found on Niagara2 cpus.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called n2-rng.
+
+	  If unsure, say Y.
+
 config HW_RANDOM_VIA
 	tristate "VIA HW Random Number Generator support"
-	depends on HW_RANDOM && X86_32
+	depends on HW_RANDOM && X86
 	default HW_RANDOM
 	---help---
 	  This driver provides kernel-side support for the Random Number
@@ -80,7 +114,7 @@ config HW_RANDOM_IXP4XX
 
 config HW_RANDOM_OMAP
 	tristate "OMAP Random Number Generator support"
-	depends on HW_RANDOM && (ARCH_OMAP16XX || ARCH_OMAP24XX)
+	depends on HW_RANDOM && (ARCH_OMAP16XX || ARCH_OMAP2)
 	default HW_RANDOM
  	---help---
  	  This driver provides kernel-side support for the Random Number
@@ -92,16 +126,87 @@ config HW_RANDOM_OMAP
 
  	  If unsure, say Y.
 
+config HW_RANDOM_OCTEON
+	tristate "Octeon Random Number Generator support"
+	depends on HW_RANDOM && CPU_CAVIUM_OCTEON
+	default HW_RANDOM
+	---help---
+	  This driver provides kernel-side support for the Random Number
+	  Generator hardware found on Octeon processors.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called octeon-rng.
+
+	  If unsure, say Y.
+
 config HW_RANDOM_PASEMI
 	tristate "PA Semi HW Random Number Generator support"
 	depends on HW_RANDOM && PPC_PASEMI
 	default HW_RANDOM
 	---help---
 	  This driver provides kernel-side support for the Random Number
-	  Generator hardware found on PA6T-1682M processor.
+	  Generator hardware found on PA Semi PWRficient SoCs.
 
 	  To compile this driver as a module, choose M here: the
 	  module will be called pasemi-rng.
 
 	  If unsure, say Y.
 
+config HW_RANDOM_VIRTIO
+	tristate "VirtIO Random Number Generator support"
+	depends on HW_RANDOM && VIRTIO
+	---help---
+	  This driver provides kernel-side support for the virtual Random Number
+	  Generator hardware.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called virtio-rng.  If unsure, say N.
+
+config HW_RANDOM_TX4939
+	tristate "TX4939 Random Number Generator support"
+	depends on HW_RANDOM && SOC_TX4939
+	default HW_RANDOM
+	---help---
+	  This driver provides kernel-side support for the Random Number
+	  Generator hardware found on TX4939 SoC.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called tx4939-rng.
+
+	  If unsure, say Y.
+
+config HW_RANDOM_MXC_RNGA
+	tristate "Freescale i.MX RNGA Random Number Generator"
+	depends on HW_RANDOM && ARCH_HAS_RNGA
+	---help---
+	  This driver provides kernel-side support for the Random Number
+	  Generator hardware found on Freescale i.MX processors.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called mxc-rnga.
+
+	  If unsure, say Y.
+
+config HW_RANDOM_NOMADIK
+	tristate "ST-Ericsson Nomadik Random Number Generator support"
+	depends on HW_RANDOM && PLAT_NOMADIK
+	---help---
+	  This driver provides kernel-side support for the Random Number
+	  Generator hardware found on ST-Ericsson SoCs (8815 and 8500).
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called nomadik-rng.
+
+	  If unsure, say Y.
+
+config HW_RANDOM_PICOXCELL
+	tristate "Picochip picoXcell true random number generator support"
+	depends on HW_RANDOM && ARCH_PICOXCELL && PICOXCELL_PC3X3
+	---help---
+	  This driver provides kernel-side support for the Random Number
+	  Generator hardware found on Picochip PC3x3 and later devices.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called picoxcell-rng.
+
+	  If unsure, say Y.

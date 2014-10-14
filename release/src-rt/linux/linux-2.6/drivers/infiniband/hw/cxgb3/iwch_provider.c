@@ -37,8 +37,12 @@
 #include <linux/delay.h>
 #include <linux/errno.h>
 #include <linux/list.h>
+#include <linux/sched.h>
 #include <linux/spinlock.h>
 #include <linux/ethtool.h>
+#include <linux/rtnetlink.h>
+#include <linux/inetdevice.h>
+#include <linux/slab.h>
 
 #include <asm/io.h>
 #include <asm/irq.h>
@@ -55,6 +59,7 @@
 #include "iwch_provider.h"
 #include "iwch_cm.h"
 #include "iwch_user.h"
+#include "common.h"
 
 static int iwch_modify_port(struct ib_device *ibdev,
 			    u8 port, int port_modify_mask,
@@ -100,7 +105,7 @@ static int iwch_dealloc_ucontext(struct ib_ucontext *context)
 	struct iwch_ucontext *ucontext = to_iwch_ucontext(context);
 	struct iwch_mm_entry *mm, *tmp;
 
-	PDBG("%s context %p\n", __FUNCTION__, context);
+	PDBG("%s context %p\n", __func__, context);
 	list_for_each_entry_safe(mm, tmp, &ucontext->mmaps, entry)
 		kfree(mm);
 	cxio_release_ucontext(&rhp->rdev, &ucontext->uctx);
@@ -114,7 +119,7 @@ static struct ib_ucontext *iwch_alloc_ucontext(struct ib_device *ibdev,
 	struct iwch_ucontext *context;
 	struct iwch_dev *rhp = to_iwch_dev(ibdev);
 
-	PDBG("%s ibdev %p\n", __FUNCTION__, ibdev);
+	PDBG("%s ibdev %p\n", __func__, ibdev);
 	context = kzalloc(sizeof(*context), GFP_KERNEL);
 	if (!context)
 		return ERR_PTR(-ENOMEM);
@@ -128,7 +133,7 @@ static int iwch_destroy_cq(struct ib_cq *ib_cq)
 {
 	struct iwch_cq *chp;
 
-	PDBG("%s ib_cq %p\n", __FUNCTION__, ib_cq);
+	PDBG("%s ib_cq %p\n", __func__, ib_cq);
 	chp = to_iwch_cq(ib_cq);
 
 	remove_handle(chp->rhp, &chp->rhp->cqidr, chp->cq.cqid);
@@ -149,8 +154,10 @@ static struct ib_cq *iwch_create_cq(struct ib_device *ibdev, int entries, int ve
 	struct iwch_create_cq_resp uresp;
 	struct iwch_create_cq_req ureq;
 	struct iwch_ucontext *ucontext = NULL;
+	static int warned;
+	size_t resplen;
 
-	PDBG("%s ib_dev %p entries %d\n", __FUNCTION__, ibdev, entries);
+	PDBG("%s ib_dev %p entries %d\n", __func__, ibdev, entries);
 	rhp = to_iwch_dev(ibdev);
 	chp = kzalloc(sizeof(*chp), GFP_KERNEL);
 	if (!chp)
@@ -183,16 +190,20 @@ static struct ib_cq *iwch_create_cq(struct ib_device *ibdev, int entries, int ve
 	entries = roundup_pow_of_two(entries);
 	chp->cq.size_log2 = ilog2(entries);
 
-	if (cxio_create_cq(&rhp->rdev, &chp->cq)) {
+	if (cxio_create_cq(&rhp->rdev, &chp->cq, !ucontext)) {
 		kfree(chp);
 		return ERR_PTR(-ENOMEM);
 	}
 	chp->rhp = rhp;
-	chp->ibcq.cqe = (1 << chp->cq.size_log2) - 1;
+	chp->ibcq.cqe = 1 << chp->cq.size_log2;
 	spin_lock_init(&chp->lock);
 	atomic_set(&chp->refcnt, 1);
 	init_waitqueue_head(&chp->wait);
-	insert_handle(rhp, &rhp->cqidr, chp, chp->cq.cqid);
+	if (insert_handle(rhp, &rhp->cqidr, chp, chp->cq.cqid)) {
+		cxio_destroy_cq(&chp->rhp->rdev, &chp->cq);
+		kfree(chp);
+		return ERR_PTR(-ENOMEM);
+	}
 
 	if (ucontext) {
 		struct iwch_mm_entry *mm;
@@ -208,15 +219,26 @@ static struct ib_cq *iwch_create_cq(struct ib_device *ibdev, int entries, int ve
 		uresp.key = ucontext->key;
 		ucontext->key += PAGE_SIZE;
 		spin_unlock(&ucontext->mmap_lock);
-		if (ib_copy_to_udata(udata, &uresp, sizeof (uresp))) {
+		mm->key = uresp.key;
+		mm->addr = virt_to_phys(chp->cq.queue);
+		if (udata->outlen < sizeof uresp) {
+			if (!warned++)
+				printk(KERN_WARNING MOD "Warning - "
+				       "downlevel libcxgb3 (non-fatal).\n");
+			mm->len = PAGE_ALIGN((1UL << uresp.size_log2) *
+					     sizeof(struct t3_cqe));
+			resplen = sizeof(struct iwch_create_cq_resp_v0);
+		} else {
+			mm->len = PAGE_ALIGN(((1UL << uresp.size_log2) + 1) *
+					     sizeof(struct t3_cqe));
+			uresp.memsize = mm->len;
+			resplen = sizeof uresp;
+		}
+		if (ib_copy_to_udata(udata, &uresp, resplen)) {
 			kfree(mm);
 			iwch_destroy_cq(&chp->ibcq);
 			return ERR_PTR(-EFAULT);
 		}
-		mm->key = uresp.key;
-		mm->addr = virt_to_phys(chp->cq.queue);
-		mm->len = PAGE_ALIGN((1UL << uresp.size_log2) *
-					     sizeof (struct t3_cqe));
 		insert_mmap(ucontext, mm);
 	}
 	PDBG("created cqid 0x%0x chp %p size 0x%0x, dma_addr 0x%0llx\n",
@@ -232,7 +254,7 @@ static int iwch_resize_cq(struct ib_cq *cq, int cqe, struct ib_udata *udata)
 	struct t3_cq oldcq, newcq;
 	int ret;
 
-	PDBG("%s ib_cq %p cqe %d\n", __FUNCTION__, cq, cqe);
+	PDBG("%s ib_cq %p cqe %d\n", __func__, cq, cqe);
 
 	/* We don't downsize... */
 	if (cqe <= cq->cqe)
@@ -280,7 +302,7 @@ static int iwch_resize_cq(struct ib_cq *cq, int cqe, struct ib_udata *udata)
 	ret = cxio_destroy_cq(&chp->rhp->rdev, &oldcq);
 	if (ret) {
 		printk(KERN_ERR MOD "%s - cxio_destroy_cq failed %d\n",
-			__FUNCTION__, ret);
+			__func__, ret);
 	}
 
 	/* add user hooks here */
@@ -315,7 +337,7 @@ static int iwch_arm_cq(struct ib_cq *ibcq, enum ib_cq_notify_flags flags)
 		chp->cq.rptr = rptr;
 	} else
 		spin_lock_irqsave(&chp->lock, flag);
-	PDBG("%s rptr 0x%x\n", __FUNCTION__, chp->cq.rptr);
+	PDBG("%s rptr 0x%x\n", __func__, chp->cq.rptr);
 	err = cxio_hal_cq_op(&rhp->rdev, &chp->cq, cq_op, 0);
 	spin_unlock_irqrestore(&chp->lock, flag);
 	if (err < 0)
@@ -336,7 +358,7 @@ static int iwch_mmap(struct ib_ucontext *context, struct vm_area_struct *vma)
 	struct iwch_ucontext *ucontext;
 	u64 addr;
 
-	PDBG("%s pgoff 0x%lx key 0x%x len %d\n", __FUNCTION__, vma->vm_pgoff,
+	PDBG("%s pgoff 0x%lx key 0x%x len %d\n", __func__, vma->vm_pgoff,
 	     key, len);
 
 	if (vma->vm_start & (PAGE_SIZE-1)) {
@@ -389,7 +411,7 @@ static int iwch_deallocate_pd(struct ib_pd *pd)
 
 	php = to_iwch_pd(pd);
 	rhp = php->rhp;
-	PDBG("%s ibpd %p pdid 0x%x\n", __FUNCTION__, pd, php->pdid);
+	PDBG("%s ibpd %p pdid 0x%x\n", __func__, pd, php->pdid);
 	cxio_hal_put_pdid(rhp->rdev.rscp, php->pdid);
 	kfree(php);
 	return 0;
@@ -403,7 +425,7 @@ static struct ib_pd *iwch_allocate_pd(struct ib_device *ibdev,
 	u32 pdid;
 	struct iwch_dev *rhp;
 
-	PDBG("%s ibdev %p\n", __FUNCTION__, ibdev);
+	PDBG("%s ibdev %p\n", __func__, ibdev);
 	rhp = (struct iwch_dev *) ibdev;
 	pdid = cxio_hal_get_pdid(rhp->rdev.rscp);
 	if (!pdid)
@@ -421,7 +443,7 @@ static struct ib_pd *iwch_allocate_pd(struct ib_device *ibdev,
 			return ERR_PTR(-EFAULT);
 		}
 	}
-	PDBG("%s pdid 0x%0x ptr 0x%p\n", __FUNCTION__, pdid, php);
+	PDBG("%s pdid 0x%0x ptr 0x%p\n", __func__, pdid, php);
 	return &php->ibpd;
 }
 
@@ -431,7 +453,7 @@ static int iwch_dereg_mr(struct ib_mr *ib_mr)
 	struct iwch_mr *mhp;
 	u32 mmid;
 
-	PDBG("%s ib_mr %p\n", __FUNCTION__, ib_mr);
+	PDBG("%s ib_mr %p\n", __func__, ib_mr);
 	/* There can be no memory windows */
 	if (atomic_read(&ib_mr->usecnt))
 		return -EINVAL;
@@ -441,12 +463,13 @@ static int iwch_dereg_mr(struct ib_mr *ib_mr)
 	mmid = mhp->attr.stag >> 8;
 	cxio_dereg_mem(&rhp->rdev, mhp->attr.stag, mhp->attr.pbl_size,
 		       mhp->attr.pbl_addr);
+	iwch_free_pbl(mhp);
 	remove_handle(rhp, &rhp->mmidr, mmid);
 	if (mhp->kva)
 		kfree((void *) (unsigned long) mhp->kva);
 	if (mhp->umem)
 		ib_umem_release(mhp->umem);
-	PDBG("%s mmid 0x%x ptr %p\n", __FUNCTION__, mmid, mhp);
+	PDBG("%s mmid 0x%x ptr %p\n", __func__, mmid, mhp);
 	kfree(mhp);
 	return 0;
 }
@@ -466,13 +489,15 @@ static struct ib_mr *iwch_register_phys_mem(struct ib_pd *pd,
 	struct iwch_mr *mhp;
 	int ret;
 
-	PDBG("%s ib_pd %p\n", __FUNCTION__, pd);
+	PDBG("%s ib_pd %p\n", __func__, pd);
 	php = to_iwch_pd(pd);
 	rhp = php->rhp;
 
 	mhp = kzalloc(sizeof(*mhp), GFP_KERNEL);
 	if (!mhp)
 		return ERR_PTR(-ENOMEM);
+
+	mhp->rhp = rhp;
 
 	/* First check that we have enough alignment */
 	if ((*iova_start & ~PAGE_MASK) != (buffer_list[0].addr & ~PAGE_MASK)) {
@@ -491,7 +516,17 @@ static struct ib_mr *iwch_register_phys_mem(struct ib_pd *pd,
 	if (ret)
 		goto err;
 
-	mhp->rhp = rhp;
+	ret = iwch_alloc_pbl(mhp, npages);
+	if (ret) {
+		kfree(page_list);
+		goto err_pbl;
+	}
+
+	ret = iwch_write_pbl(mhp, page_list, npages, 0);
+	kfree(page_list);
+	if (ret)
+		goto err_pbl;
+
 	mhp->attr.pdid = php->pdid;
 	mhp->attr.zbva = 0;
 
@@ -501,12 +536,15 @@ static struct ib_mr *iwch_register_phys_mem(struct ib_pd *pd,
 
 	mhp->attr.len = (u32) total_size;
 	mhp->attr.pbl_size = npages;
-	ret = iwch_register_mem(rhp, php, mhp, shift, page_list);
-	kfree(page_list);
-	if (ret) {
-		goto err;
-	}
+	ret = iwch_register_mem(rhp, php, mhp, shift);
+	if (ret)
+		goto err_pbl;
+
 	return &mhp->ibmr;
+
+err_pbl:
+	iwch_free_pbl(mhp);
+
 err:
 	kfree(mhp);
 	return ERR_PTR(ret);
@@ -530,7 +568,7 @@ static int iwch_reregister_phys_mem(struct ib_mr *mr,
 	int npages;
 	int ret;
 
-	PDBG("%s ib_mr %p ib_pd %p\n", __FUNCTION__, mr, pd);
+	PDBG("%s ib_mr %p ib_pd %p\n", __func__, mr, pd);
 
 	/* There can be no memory windows */
 	if (atomic_read(&mr->usecnt))
@@ -559,7 +597,7 @@ static int iwch_reregister_phys_mem(struct ib_mr *mr,
 			return ret;
 	}
 
-	ret = iwch_reregister_mem(rhp, php, &mh, shift, page_list, npages);
+	ret = iwch_reregister_mem(rhp, php, &mh, shift, npages);
 	kfree(page_list);
 	if (ret) {
 		return ret;
@@ -593,7 +631,7 @@ static struct ib_mr *iwch_reg_user_mr(struct ib_pd *pd, u64 start, u64 length,
 	struct iwch_mr *mhp;
 	struct iwch_reg_user_mr_resp uresp;
 
-	PDBG("%s ib_pd %p\n", __FUNCTION__, pd);
+	PDBG("%s ib_pd %p\n", __func__, pd);
 
 	php = to_iwch_pd(pd);
 	rhp = php->rhp;
@@ -601,7 +639,9 @@ static struct ib_mr *iwch_reg_user_mr(struct ib_pd *pd, u64 start, u64 length,
 	if (!mhp)
 		return ERR_PTR(-ENOMEM);
 
-	mhp->umem = ib_umem_get(pd->uobject->context, start, length, acc);
+	mhp->rhp = rhp;
+
+	mhp->umem = ib_umem_get(pd->uobject->context, start, length, acc, 0);
 	if (IS_ERR(mhp->umem)) {
 		err = PTR_ERR(mhp->umem);
 		kfree(mhp);
@@ -614,10 +654,14 @@ static struct ib_mr *iwch_reg_user_mr(struct ib_pd *pd, u64 start, u64 length,
 	list_for_each_entry(chunk, &mhp->umem->chunk_list, list)
 		n += chunk->nents;
 
-	pages = kmalloc(n * sizeof(u64), GFP_KERNEL);
+	err = iwch_alloc_pbl(mhp, n);
+	if (err)
+		goto err;
+
+	pages = (__be64 *) __get_free_page(GFP_KERNEL);
 	if (!pages) {
 		err = -ENOMEM;
-		goto err;
+		goto err_pbl;
 	}
 
 	i = n = 0;
@@ -629,26 +673,39 @@ static struct ib_mr *iwch_reg_user_mr(struct ib_pd *pd, u64 start, u64 length,
 				pages[i++] = cpu_to_be64(sg_dma_address(
 					&chunk->page_list[j]) +
 					mhp->umem->page_size * k);
+				if (i == PAGE_SIZE / sizeof *pages) {
+					err = iwch_write_pbl(mhp, pages, i, n);
+					if (err)
+						goto pbl_done;
+					n += i;
+					i = 0;
+				}
 			}
 		}
 
-	mhp->rhp = rhp;
+	if (i)
+		err = iwch_write_pbl(mhp, pages, i, n);
+
+pbl_done:
+	free_page((unsigned long) pages);
+	if (err)
+		goto err_pbl;
+
 	mhp->attr.pdid = php->pdid;
 	mhp->attr.zbva = 0;
 	mhp->attr.perms = iwch_ib_to_tpt_access(acc);
 	mhp->attr.va_fbo = virt;
 	mhp->attr.page_size = shift - 12;
 	mhp->attr.len = (u32) length;
-	mhp->attr.pbl_size = i;
-	err = iwch_register_mem(rhp, php, mhp, shift, pages);
-	kfree(pages);
-	if (err)
-		goto err;
 
-	if (udata && t3b_device(rhp)) {
+	err = iwch_register_mem(rhp, php, mhp, shift);
+	if (err)
+		goto err_pbl;
+
+	if (udata && !t3a_device(rhp)) {
 		uresp.pbl_addr = (mhp->attr.pbl_addr -
-	                         rhp->rdev.rnic_info.pbl_base) >> 3;
-		PDBG("%s user resp pbl_addr 0x%x\n", __FUNCTION__,
+				 rhp->rdev.rnic_info.pbl_base) >> 3;
+		PDBG("%s user resp pbl_addr 0x%x\n", __func__,
 		     uresp.pbl_addr);
 
 		if (ib_copy_to_udata(udata, &uresp, sizeof (uresp))) {
@@ -659,6 +716,9 @@ static struct ib_mr *iwch_reg_user_mr(struct ib_pd *pd, u64 start, u64 length,
 	}
 
 	return &mhp->ibmr;
+
+err_pbl:
+	iwch_free_pbl(mhp);
 
 err:
 	ib_umem_release(mhp->umem);
@@ -672,7 +732,7 @@ static struct ib_mr *iwch_get_dma_mr(struct ib_pd *pd, int acc)
 	u64 kva;
 	struct ib_mr *ibmr;
 
-	PDBG("%s ib_pd %p\n", __FUNCTION__, pd);
+	PDBG("%s ib_pd %p\n", __func__, pd);
 
 	/*
 	 * T3 only supports 32 bits of size.
@@ -708,8 +768,13 @@ static struct ib_mw *iwch_alloc_mw(struct ib_pd *pd)
 	mhp->attr.type = TPT_MW;
 	mhp->attr.stag = stag;
 	mmid = (stag) >> 8;
-	insert_handle(rhp, &rhp->mmidr, mhp, mmid);
-	PDBG("%s mmid 0x%x mhp %p stag 0x%x\n", __FUNCTION__, mmid, mhp, stag);
+	mhp->ibmw.rkey = stag;
+	if (insert_handle(rhp, &rhp->mmidr, mhp, mmid)) {
+		cxio_deallocate_window(&rhp->rdev, mhp->attr.stag);
+		kfree(mhp);
+		return ERR_PTR(-ENOMEM);
+	}
+	PDBG("%s mmid 0x%x mhp %p stag 0x%x\n", __func__, mmid, mhp, stag);
 	return &(mhp->ibmw);
 }
 
@@ -725,8 +790,76 @@ static int iwch_dealloc_mw(struct ib_mw *mw)
 	cxio_deallocate_window(&rhp->rdev, mhp->attr.stag);
 	remove_handle(rhp, &rhp->mmidr, mmid);
 	kfree(mhp);
-	PDBG("%s ib_mw %p mmid 0x%x ptr %p\n", __FUNCTION__, mw, mmid, mhp);
+	PDBG("%s ib_mw %p mmid 0x%x ptr %p\n", __func__, mw, mmid, mhp);
 	return 0;
+}
+
+static struct ib_mr *iwch_alloc_fast_reg_mr(struct ib_pd *pd, int pbl_depth)
+{
+	struct iwch_dev *rhp;
+	struct iwch_pd *php;
+	struct iwch_mr *mhp;
+	u32 mmid;
+	u32 stag = 0;
+	int ret = 0;
+
+	php = to_iwch_pd(pd);
+	rhp = php->rhp;
+	mhp = kzalloc(sizeof(*mhp), GFP_KERNEL);
+	if (!mhp)
+		goto err;
+
+	mhp->rhp = rhp;
+	ret = iwch_alloc_pbl(mhp, pbl_depth);
+	if (ret)
+		goto err1;
+	mhp->attr.pbl_size = pbl_depth;
+	ret = cxio_allocate_stag(&rhp->rdev, &stag, php->pdid,
+				 mhp->attr.pbl_size, mhp->attr.pbl_addr);
+	if (ret)
+		goto err2;
+	mhp->attr.pdid = php->pdid;
+	mhp->attr.type = TPT_NON_SHARED_MR;
+	mhp->attr.stag = stag;
+	mhp->attr.state = 1;
+	mmid = (stag) >> 8;
+	mhp->ibmr.rkey = mhp->ibmr.lkey = stag;
+	if (insert_handle(rhp, &rhp->mmidr, mhp, mmid))
+		goto err3;
+
+	PDBG("%s mmid 0x%x mhp %p stag 0x%x\n", __func__, mmid, mhp, stag);
+	return &(mhp->ibmr);
+err3:
+	cxio_dereg_mem(&rhp->rdev, stag, mhp->attr.pbl_size,
+		       mhp->attr.pbl_addr);
+err2:
+	iwch_free_pbl(mhp);
+err1:
+	kfree(mhp);
+err:
+	return ERR_PTR(ret);
+}
+
+static struct ib_fast_reg_page_list *iwch_alloc_fastreg_pbl(
+					struct ib_device *device,
+					int page_list_len)
+{
+	struct ib_fast_reg_page_list *page_list;
+
+	page_list = kmalloc(sizeof *page_list + page_list_len * sizeof(u64),
+			    GFP_KERNEL);
+	if (!page_list)
+		return ERR_PTR(-ENOMEM);
+
+	page_list->page_list = (u64 *)(page_list + 1);
+	page_list->max_page_list_len = page_list_len;
+
+	return page_list;
+}
+
+static void iwch_free_fastreg_pbl(struct ib_fast_reg_page_list *page_list)
+{
+	kfree(page_list);
 }
 
 static int iwch_destroy_qp(struct ib_qp *ib_qp)
@@ -753,7 +886,7 @@ static int iwch_destroy_qp(struct ib_qp *ib_qp)
 	cxio_destroy_qp(&rhp->rdev, &qhp->wq,
 			ucontext ? &ucontext->uctx : &rhp->rdev.uctx);
 
-	PDBG("%s ib_qp %p qpid 0x%0x qhp %p\n", __FUNCTION__,
+	PDBG("%s ib_qp %p qpid 0x%0x qhp %p\n", __func__,
 	     ib_qp, qhp->wq.qpid, qhp);
 	kfree(qhp);
 	return 0;
@@ -772,7 +905,7 @@ static struct ib_qp *iwch_create_qp(struct ib_pd *pd,
 	int wqsize, sqsize, rqsize;
 	struct iwch_ucontext *ucontext;
 
-	PDBG("%s ib_pd %p\n", __FUNCTION__, pd);
+	PDBG("%s ib_pd %p\n", __func__, pd);
 	if (attrs->qp_type != IB_QPT_RC)
 		return ERR_PTR(-EINVAL);
 	php = to_iwch_pd(pd);
@@ -804,7 +937,16 @@ static struct ib_qp *iwch_create_qp(struct ib_pd *pd,
 	 */
 	sqsize = roundup_pow_of_two(attrs->cap.max_send_wr);
 	wqsize = roundup_pow_of_two(rqsize + sqsize);
-	PDBG("%s wqsize %d sqsize %d rqsize %d\n", __FUNCTION__,
+
+	/*
+	 * Kernel users need more wq space for fastreg WRs which can take
+	 * 2 WR fragments.
+	 */
+	ucontext = pd->uobject ? to_iwch_ucontext(pd->uobject->context) : NULL;
+	if (!ucontext && wqsize < (rqsize + (2 * sqsize)))
+		wqsize = roundup_pow_of_two(rqsize +
+				roundup_pow_of_two(attrs->cap.max_send_wr * 2));
+	PDBG("%s wqsize %d sqsize %d rqsize %d\n", __func__,
 	     wqsize, sqsize, rqsize);
 	qhp = kzalloc(sizeof(*qhp), GFP_KERNEL);
 	if (!qhp)
@@ -812,14 +954,16 @@ static struct ib_qp *iwch_create_qp(struct ib_pd *pd,
 	qhp->wq.size_log2 = ilog2(wqsize);
 	qhp->wq.rq_size_log2 = ilog2(rqsize);
 	qhp->wq.sq_size_log2 = ilog2(sqsize);
-	ucontext = pd->uobject ? to_iwch_ucontext(pd->uobject->context) : NULL;
 	if (cxio_create_qp(&rhp->rdev, !udata, &qhp->wq,
 			   ucontext ? &ucontext->uctx : &rhp->rdev.uctx)) {
 		kfree(qhp);
 		return ERR_PTR(-ENOMEM);
 	}
+
 	attrs->cap.max_recv_wr = rqsize - 1;
 	attrs->cap.max_send_wr = sqsize;
+	attrs->cap.max_inline_data = T3_MAX_INLINE;
+
 	qhp->rhp = rhp;
 	qhp->attr.pd = php->pdid;
 	qhp->attr.scq = ((struct iwch_cq *) attrs->send_cq)->cq.cqid;
@@ -846,7 +990,13 @@ static struct ib_qp *iwch_create_qp(struct ib_pd *pd,
 	spin_lock_init(&qhp->lock);
 	init_waitqueue_head(&qhp->wait);
 	atomic_set(&qhp->refcnt, 1);
-	insert_handle(rhp, &rhp->qpidr, qhp, qhp->wq.qpid);
+
+	if (insert_handle(rhp, &rhp->qpidr, qhp, qhp->wq.qpid)) {
+		cxio_destroy_qp(&rhp->rdev, &qhp->wq,
+			ucontext ? &ucontext->uctx : &rhp->rdev.uctx);
+		kfree(qhp);
+		return ERR_PTR(-ENOMEM);
+	}
 
 	if (udata) {
 
@@ -893,10 +1043,10 @@ static struct ib_qp *iwch_create_qp(struct ib_pd *pd,
 	qhp->ibqp.qp_num = qhp->wq.qpid;
 	init_timer(&(qhp->timer));
 	PDBG("%s sq_num_entries %d, rq_num_entries %d "
-	     "qpid 0x%0x qhp %p dma_addr 0x%llx size %d\n",
-	     __FUNCTION__, qhp->attr.sq_num_entries, qhp->attr.rq_num_entries,
+	     "qpid 0x%0x qhp %p dma_addr 0x%llx size %d rq_addr 0x%x\n",
+	     __func__, qhp->attr.sq_num_entries, qhp->attr.rq_num_entries,
 	     qhp->wq.qpid, qhp, (unsigned long long) qhp->wq.dma_addr,
-	     1 << qhp->wq.size_log2);
+	     1 << qhp->wq.size_log2, qhp->wq.rq_addr);
 	return &qhp->ibqp;
 }
 
@@ -908,7 +1058,7 @@ static int iwch_ib_modify_qp(struct ib_qp *ibqp, struct ib_qp_attr *attr,
 	enum iwch_qp_attr_mask mask = 0;
 	struct iwch_qp_attributes attrs;
 
-	PDBG("%s ib_qp %p\n", __FUNCTION__, ibqp);
+	PDBG("%s ib_qp %p\n", __func__, ibqp);
 
 	/* iwarp does not support the RTR state */
 	if ((attr_mask & IB_QP_STATE) && (attr->qp_state == IB_QPS_RTR))
@@ -941,20 +1091,20 @@ static int iwch_ib_modify_qp(struct ib_qp *ibqp, struct ib_qp_attr *attr,
 
 void iwch_qp_add_ref(struct ib_qp *qp)
 {
-	PDBG("%s ib_qp %p\n", __FUNCTION__, qp);
+	PDBG("%s ib_qp %p\n", __func__, qp);
 	atomic_inc(&(to_iwch_qp(qp)->refcnt));
 }
 
 void iwch_qp_rem_ref(struct ib_qp *qp)
 {
-	PDBG("%s ib_qp %p\n", __FUNCTION__, qp);
+	PDBG("%s ib_qp %p\n", __func__, qp);
 	if (atomic_dec_and_test(&(to_iwch_qp(qp)->refcnt)))
 	        wake_up(&(to_iwch_qp(qp)->wait));
 }
 
 static struct ib_qp *iwch_get_qp(struct ib_device *dev, int qpn)
 {
-	PDBG("%s ib_dev %p qpn 0x%x\n", __FUNCTION__, dev, qpn);
+	PDBG("%s ib_dev %p qpn 0x%x\n", __func__, dev, qpn);
 	return (struct ib_qp *)get_qhp(to_iwch_dev(dev), qpn);
 }
 
@@ -962,7 +1112,7 @@ static struct ib_qp *iwch_get_qp(struct ib_device *dev, int qpn)
 static int iwch_query_pkey(struct ib_device *ibdev,
 			   u8 port, u16 index, u16 * pkey)
 {
-	PDBG("%s ibdev %p\n", __FUNCTION__, ibdev);
+	PDBG("%s ibdev %p\n", __func__, ibdev);
 	*pkey = 0;
 	return 0;
 }
@@ -973,7 +1123,7 @@ static int iwch_query_gid(struct ib_device *ibdev, u8 port,
 	struct iwch_dev *dev;
 
 	PDBG("%s ibdev %p, port %d, index %d, gid %p\n",
-	       __FUNCTION__, ibdev, port, index, gid);
+	       __func__, ibdev, port, index, gid);
 	dev = to_iwch_dev(ibdev);
 	BUG_ON(port == 0 || port > 2);
 	memset(&(gid->raw[0]), 0, sizeof(gid->raw));
@@ -981,30 +1131,56 @@ static int iwch_query_gid(struct ib_device *ibdev, u8 port,
 	return 0;
 }
 
+static u64 fw_vers_string_to_u64(struct iwch_dev *iwch_dev)
+{
+	struct ethtool_drvinfo info;
+	struct net_device *lldev = iwch_dev->rdev.t3cdev_p->lldev;
+	char *cp, *next;
+	unsigned fw_maj, fw_min, fw_mic;
+
+	lldev->ethtool_ops->get_drvinfo(lldev, &info);
+
+	next = info.fw_version + 1;
+	cp = strsep(&next, ".");
+	sscanf(cp, "%i", &fw_maj);
+	cp = strsep(&next, ".");
+	sscanf(cp, "%i", &fw_min);
+	cp = strsep(&next, ".");
+	sscanf(cp, "%i", &fw_mic);
+
+	return (((u64)fw_maj & 0xffff) << 32) | ((fw_min & 0xffff) << 16) |
+	       (fw_mic & 0xffff);
+}
+
 static int iwch_query_device(struct ib_device *ibdev,
 			     struct ib_device_attr *props)
 {
 
 	struct iwch_dev *dev;
-	PDBG("%s ibdev %p\n", __FUNCTION__, ibdev);
+	PDBG("%s ibdev %p\n", __func__, ibdev);
 
 	dev = to_iwch_dev(ibdev);
 	memset(props, 0, sizeof *props);
 	memcpy(&props->sys_image_guid, dev->rdev.t3cdev_p->lldev->dev_addr, 6);
+	props->hw_ver = dev->rdev.t3cdev_p->type;
+	props->fw_ver = fw_vers_string_to_u64(dev);
 	props->device_cap_flags = dev->device_cap_flags;
+	props->page_size_cap = dev->attr.mem_pgsizes_bitmask;
 	props->vendor_id = (u32)dev->rdev.rnic_info.pdev->vendor;
 	props->vendor_part_id = (u32)dev->rdev.rnic_info.pdev->device;
-	props->max_mr_size = ~0ull;
+	props->max_mr_size = dev->attr.max_mr_size;
 	props->max_qp = dev->attr.max_qps;
 	props->max_qp_wr = dev->attr.max_wrs;
 	props->max_sge = dev->attr.max_sge_per_wr;
 	props->max_sge_rd = 1;
 	props->max_qp_rd_atom = dev->attr.max_rdma_reads_per_qp;
+	props->max_qp_init_rd_atom = dev->attr.max_rdma_reads_per_qp;
 	props->max_cq = dev->attr.max_cqs;
 	props->max_cqe = dev->attr.max_cqes_per_cq;
 	props->max_mr = dev->attr.max_mem_regs;
 	props->max_pd = dev->attr.max_pds;
 	props->local_ca_ack_delay = 0;
+	props->max_fast_reg_page_list_len = T3_MAX_FASTREG_DEPTH;
 
 	return 0;
 }
@@ -1012,14 +1188,42 @@ static int iwch_query_device(struct ib_device *ibdev,
 static int iwch_query_port(struct ib_device *ibdev,
 			   u8 port, struct ib_port_attr *props)
 {
-	PDBG("%s ibdev %p\n", __FUNCTION__, ibdev);
+	struct iwch_dev *dev;
+	struct net_device *netdev;
+	struct in_device *inetdev;
+
+	PDBG("%s ibdev %p\n", __func__, ibdev);
+
+	dev = to_iwch_dev(ibdev);
+	netdev = dev->rdev.port_info.lldevs[port-1];
+
+	memset(props, 0, sizeof(struct ib_port_attr));
 	props->max_mtu = IB_MTU_4096;
-	props->lid = 0;
-	props->lmc = 0;
-	props->sm_lid = 0;
-	props->sm_sl = 0;
-	props->state = IB_PORT_ACTIVE;
-	props->phys_state = 0;
+	if (netdev->mtu >= 4096)
+		props->active_mtu = IB_MTU_4096;
+	else if (netdev->mtu >= 2048)
+		props->active_mtu = IB_MTU_2048;
+	else if (netdev->mtu >= 1024)
+		props->active_mtu = IB_MTU_1024;
+	else if (netdev->mtu >= 512)
+		props->active_mtu = IB_MTU_512;
+	else
+		props->active_mtu = IB_MTU_256;
+
+	if (!netif_carrier_ok(netdev))
+		props->state = IB_PORT_DOWN;
+	else {
+		inetdev = in_dev_get(netdev);
+		if (inetdev) {
+			if (inetdev->ifa_list)
+				props->state = IB_PORT_ACTIVE;
+			else
+				props->state = IB_PORT_INIT;
+			in_dev_put(inetdev);
+		} else
+			props->state = IB_PORT_INIT;
+	}
+
 	props->port_cap_flags =
 	    IB_PORT_CM_SUP |
 	    IB_PORT_SNMP_TUNNEL_SUP |
@@ -1028,7 +1232,6 @@ static int iwch_query_port(struct ib_device *ibdev,
 	    IB_PORT_VENDOR_CLASS_SUP | IB_PORT_BOOT_MGMT_SUP;
 	props->gid_tbl_len = 1;
 	props->pkey_tbl_len = 1;
-	props->qkey_viol_cntr = 0;
 	props->active_width = 2;
 	props->active_speed = 2;
 	props->max_msg_sz = -1;
@@ -1036,57 +1239,115 @@ static int iwch_query_port(struct ib_device *ibdev,
 	return 0;
 }
 
-static ssize_t show_rev(struct class_device *cdev, char *buf)
+static ssize_t show_rev(struct device *dev, struct device_attribute *attr,
+			char *buf)
 {
-	struct iwch_dev *dev = container_of(cdev, struct iwch_dev,
-					    ibdev.class_dev);
-	PDBG("%s class dev 0x%p\n", __FUNCTION__, cdev);
-	return sprintf(buf, "%d\n", dev->rdev.t3cdev_p->type);
+	struct iwch_dev *iwch_dev = container_of(dev, struct iwch_dev,
+						 ibdev.dev);
+	PDBG("%s dev 0x%p\n", __func__, dev);
+	return sprintf(buf, "%d\n", iwch_dev->rdev.t3cdev_p->type);
 }
 
-static ssize_t show_fw_ver(struct class_device *cdev, char *buf)
+static ssize_t show_fw_ver(struct device *dev, struct device_attribute *attr, char *buf)
 {
-	struct iwch_dev *dev = container_of(cdev, struct iwch_dev,
-					    ibdev.class_dev);
+	struct iwch_dev *iwch_dev = container_of(dev, struct iwch_dev,
+						 ibdev.dev);
 	struct ethtool_drvinfo info;
-	struct net_device *lldev = dev->rdev.t3cdev_p->lldev;
+	struct net_device *lldev = iwch_dev->rdev.t3cdev_p->lldev;
 
-	PDBG("%s class dev 0x%p\n", __FUNCTION__, cdev);
+	PDBG("%s dev 0x%p\n", __func__, dev);
 	lldev->ethtool_ops->get_drvinfo(lldev, &info);
 	return sprintf(buf, "%s\n", info.fw_version);
 }
 
-static ssize_t show_hca(struct class_device *cdev, char *buf)
+static ssize_t show_hca(struct device *dev, struct device_attribute *attr,
+			char *buf)
 {
-	struct iwch_dev *dev = container_of(cdev, struct iwch_dev,
-					    ibdev.class_dev);
+	struct iwch_dev *iwch_dev = container_of(dev, struct iwch_dev,
+						 ibdev.dev);
 	struct ethtool_drvinfo info;
-	struct net_device *lldev = dev->rdev.t3cdev_p->lldev;
+	struct net_device *lldev = iwch_dev->rdev.t3cdev_p->lldev;
 
-	PDBG("%s class dev 0x%p\n", __FUNCTION__, cdev);
+	PDBG("%s dev 0x%p\n", __func__, dev);
 	lldev->ethtool_ops->get_drvinfo(lldev, &info);
 	return sprintf(buf, "%s\n", info.driver);
 }
 
-static ssize_t show_board(struct class_device *cdev, char *buf)
+static ssize_t show_board(struct device *dev, struct device_attribute *attr,
+			  char *buf)
 {
-	struct iwch_dev *dev = container_of(cdev, struct iwch_dev,
-					    ibdev.class_dev);
-	PDBG("%s class dev 0x%p\n", __FUNCTION__, dev);
-	return sprintf(buf, "%x.%x\n", dev->rdev.rnic_info.pdev->vendor,
-		                       dev->rdev.rnic_info.pdev->device);
+	struct iwch_dev *iwch_dev = container_of(dev, struct iwch_dev,
+						 ibdev.dev);
+	PDBG("%s dev 0x%p\n", __func__, dev);
+	return sprintf(buf, "%x.%x\n", iwch_dev->rdev.rnic_info.pdev->vendor,
+		       iwch_dev->rdev.rnic_info.pdev->device);
 }
 
-static CLASS_DEVICE_ATTR(hw_rev, S_IRUGO, show_rev, NULL);
-static CLASS_DEVICE_ATTR(fw_ver, S_IRUGO, show_fw_ver, NULL);
-static CLASS_DEVICE_ATTR(hca_type, S_IRUGO, show_hca, NULL);
-static CLASS_DEVICE_ATTR(board_id, S_IRUGO, show_board, NULL);
+static int iwch_get_mib(struct ib_device *ibdev,
+			union rdma_protocol_stats *stats)
+{
+	struct iwch_dev *dev;
+	struct tp_mib_stats m;
+	int ret;
 
-static struct class_device_attribute *iwch_class_attributes[] = {
-	&class_device_attr_hw_rev,
-	&class_device_attr_fw_ver,
-	&class_device_attr_hca_type,
-	&class_device_attr_board_id
+	PDBG("%s ibdev %p\n", __func__, ibdev);
+	dev = to_iwch_dev(ibdev);
+	ret = dev->rdev.t3cdev_p->ctl(dev->rdev.t3cdev_p, RDMA_GET_MIB, &m);
+	if (ret)
+		return -ENOSYS;
+
+	memset(stats, 0, sizeof *stats);
+	stats->iw.ipInReceives = ((u64) m.ipInReceive_hi << 32) +
+				m.ipInReceive_lo;
+	stats->iw.ipInHdrErrors = ((u64) m.ipInHdrErrors_hi << 32) +
+				  m.ipInHdrErrors_lo;
+	stats->iw.ipInAddrErrors = ((u64) m.ipInAddrErrors_hi << 32) +
+				   m.ipInAddrErrors_lo;
+	stats->iw.ipInUnknownProtos = ((u64) m.ipInUnknownProtos_hi << 32) +
+				      m.ipInUnknownProtos_lo;
+	stats->iw.ipInDiscards = ((u64) m.ipInDiscards_hi << 32) +
+				 m.ipInDiscards_lo;
+	stats->iw.ipInDelivers = ((u64) m.ipInDelivers_hi << 32) +
+				 m.ipInDelivers_lo;
+	stats->iw.ipOutRequests = ((u64) m.ipOutRequests_hi << 32) +
+				  m.ipOutRequests_lo;
+	stats->iw.ipOutDiscards = ((u64) m.ipOutDiscards_hi << 32) +
+				  m.ipOutDiscards_lo;
+	stats->iw.ipOutNoRoutes = ((u64) m.ipOutNoRoutes_hi << 32) +
+				  m.ipOutNoRoutes_lo;
+	stats->iw.ipReasmTimeout = (u64) m.ipReasmTimeout;
+	stats->iw.ipReasmReqds = (u64) m.ipReasmReqds;
+	stats->iw.ipReasmOKs = (u64) m.ipReasmOKs;
+	stats->iw.ipReasmFails = (u64) m.ipReasmFails;
+	stats->iw.tcpActiveOpens = (u64) m.tcpActiveOpens;
+	stats->iw.tcpPassiveOpens = (u64) m.tcpPassiveOpens;
+	stats->iw.tcpAttemptFails = (u64) m.tcpAttemptFails;
+	stats->iw.tcpEstabResets = (u64) m.tcpEstabResets;
+	stats->iw.tcpOutRsts = (u64) m.tcpOutRsts;
+	stats->iw.tcpCurrEstab = (u64) m.tcpCurrEstab;
+	stats->iw.tcpInSegs = ((u64) m.tcpInSegs_hi << 32) +
+			      m.tcpInSegs_lo;
+	stats->iw.tcpOutSegs = ((u64) m.tcpOutSegs_hi << 32) +
+			       m.tcpOutSegs_lo;
+	stats->iw.tcpRetransSegs = ((u64) m.tcpRetransSeg_hi << 32) +
+				  m.tcpRetransSeg_lo;
+	stats->iw.tcpInErrs = ((u64) m.tcpInErrs_hi << 32) +
+			      m.tcpInErrs_lo;
+	stats->iw.tcpRtoMin = (u64) m.tcpRtoMin;
+	stats->iw.tcpRtoMax = (u64) m.tcpRtoMax;
+	return 0;
+}
+
+static DEVICE_ATTR(hw_rev, S_IRUGO, show_rev, NULL);
+static DEVICE_ATTR(fw_ver, S_IRUGO, show_fw_ver, NULL);
+static DEVICE_ATTR(hca_type, S_IRUGO, show_hca, NULL);
+static DEVICE_ATTR(board_id, S_IRUGO, show_board, NULL);
+
+static struct device_attribute *iwch_class_attributes[] = {
+	&dev_attr_hw_rev,
+	&dev_attr_fw_ver,
+	&dev_attr_hca_type,
+	&dev_attr_board_id,
 };
 
 int iwch_register_device(struct iwch_dev *dev)
@@ -1094,14 +1355,17 @@ int iwch_register_device(struct iwch_dev *dev)
 	int ret;
 	int i;
 
-	PDBG("%s iwch_dev %p\n", __FUNCTION__, dev);
+	PDBG("%s iwch_dev %p\n", __func__, dev);
 	strlcpy(dev->ibdev.name, "cxgb3_%d", IB_DEVICE_NAME_MAX);
 	memset(&dev->ibdev.node_guid, 0, sizeof(dev->ibdev.node_guid));
 	memcpy(&dev->ibdev.node_guid, dev->rdev.t3cdev_p->lldev->dev_addr, 6);
 	dev->ibdev.owner = THIS_MODULE;
-	dev->device_cap_flags =
-	    (IB_DEVICE_ZERO_STAG |
-	     IB_DEVICE_SEND_W_INV | IB_DEVICE_MEM_WINDOW);
+	dev->device_cap_flags = IB_DEVICE_LOCAL_DMA_LKEY |
+				IB_DEVICE_MEM_WINDOW |
+				IB_DEVICE_MEM_MGT_EXTENSIONS;
+
+	/* cxgb3 supports STag 0. */
+	dev->ibdev.local_dma_lkey = 0;
 
 	dev->ibdev.uverbs_cmd_mask =
 	    (1ull << IB_USER_VERBS_CMD_GET_CONTEXT) |
@@ -1153,19 +1417,22 @@ int iwch_register_device(struct iwch_dev *dev)
 	dev->ibdev.alloc_mw = iwch_alloc_mw;
 	dev->ibdev.bind_mw = iwch_bind_mw;
 	dev->ibdev.dealloc_mw = iwch_dealloc_mw;
-
+	dev->ibdev.alloc_fast_reg_mr = iwch_alloc_fast_reg_mr;
+	dev->ibdev.alloc_fast_reg_page_list = iwch_alloc_fastreg_pbl;
+	dev->ibdev.free_fast_reg_page_list = iwch_free_fastreg_pbl;
 	dev->ibdev.attach_mcast = iwch_multicast_attach;
 	dev->ibdev.detach_mcast = iwch_multicast_detach;
 	dev->ibdev.process_mad = iwch_process_mad;
-
 	dev->ibdev.req_notify_cq = iwch_arm_cq;
 	dev->ibdev.post_send = iwch_post_send;
 	dev->ibdev.post_recv = iwch_post_receive;
+	dev->ibdev.get_protocol_stats = iwch_get_mib;
+	dev->ibdev.uverbs_abi_ver = IWCH_UVERBS_ABI_VERSION;
 
+	dev->ibdev.iwcm = kmalloc(sizeof(struct iw_cm_verbs), GFP_KERNEL);
+	if (!dev->ibdev.iwcm)
+		return -ENOMEM;
 
-	dev->ibdev.iwcm =
-	    (struct iw_cm_verbs *) kmalloc(sizeof(struct iw_cm_verbs),
-					   GFP_KERNEL);
 	dev->ibdev.iwcm->connect = iwch_connect;
 	dev->ibdev.iwcm->accept = iwch_accept_cr;
 	dev->ibdev.iwcm->reject = iwch_reject_cr;
@@ -1175,13 +1442,13 @@ int iwch_register_device(struct iwch_dev *dev)
 	dev->ibdev.iwcm->rem_ref = iwch_qp_rem_ref;
 	dev->ibdev.iwcm->get_qp = iwch_get_qp;
 
-	ret = ib_register_device(&dev->ibdev);
+	ret = ib_register_device(&dev->ibdev, NULL);
 	if (ret)
 		goto bail1;
 
 	for (i = 0; i < ARRAY_SIZE(iwch_class_attributes); ++i) {
-		ret = class_device_create_file(&dev->ibdev.class_dev,
-					       iwch_class_attributes[i]);
+		ret = device_create_file(&dev->ibdev.dev,
+					 iwch_class_attributes[i]);
 		if (ret) {
 			goto bail2;
 		}
@@ -1190,6 +1457,7 @@ int iwch_register_device(struct iwch_dev *dev)
 bail2:
 	ib_unregister_device(&dev->ibdev);
 bail1:
+	kfree(dev->ibdev.iwcm);
 	return ret;
 }
 
@@ -1197,10 +1465,11 @@ void iwch_unregister_device(struct iwch_dev *dev)
 {
 	int i;
 
-	PDBG("%s iwch_dev %p\n", __FUNCTION__, dev);
+	PDBG("%s iwch_dev %p\n", __func__, dev);
 	for (i = 0; i < ARRAY_SIZE(iwch_class_attributes); ++i)
-		class_device_remove_file(&dev->ibdev.class_dev,
-					 iwch_class_attributes[i]);
+		device_remove_file(&dev->ibdev.dev,
+				   iwch_class_attributes[i]);
 	ib_unregister_device(&dev->ibdev);
+	kfree(dev->ibdev.iwcm);
 	return;
 }

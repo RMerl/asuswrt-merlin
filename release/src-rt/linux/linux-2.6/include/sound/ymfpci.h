@@ -2,7 +2,7 @@
 #define __SOUND_YMFPCI_H
 
 /*
- *  Copyright (c) by Jaroslav Kysela <perex@suse.cz>
+ *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  *  Definitions for Yahama YMF724/740/744/754 chips
  *
  *
@@ -331,6 +331,7 @@ struct snd_ymfpci {
 	struct snd_ac97 *ac97;
 	struct snd_rawmidi *rawmidi;
 	struct snd_timer *timer;
+	unsigned int timer_ticks;
 
 	struct pci_dev *pci;
 	struct snd_card *card;

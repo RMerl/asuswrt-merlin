@@ -28,7 +28,6 @@
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/ioport.h>
-#include <linux/slab.h>
 #include <linux/delay.h>
 #include <linux/netdevice.h>
 #include <linux/bootmem.h>
@@ -156,7 +155,7 @@ static int __init arcrimi_found(struct net_device *dev)
 	}
 
 	/* reserve the irq */
-	if (request_irq(dev->irq, &arcnet_interrupt, 0, "arcnet (RIM I)", dev)) {
+	if (request_irq(dev->irq, arcnet_interrupt, 0, "arcnet (RIM I)", dev)) {
 		iounmap(p);
 		release_mem_region(dev->mem_start, MIRROR_SIZE);
 		BUGMSG(D_NORMAL, "Can't get IRQ %d!\n", dev->irq);
@@ -174,9 +173,9 @@ static int __init arcrimi_found(struct net_device *dev)
 	 * 2k (or there are no mirrors at all) but on some, it's 4k.
 	 */
 	mirror_size = MIRROR_SIZE;
-	if (readb(p) == TESTvalue
-	    && check_mirror(shmem - MIRROR_SIZE, MIRROR_SIZE) == 0
-	    && check_mirror(shmem - 2 * MIRROR_SIZE, MIRROR_SIZE) == 1)
+	if (readb(p) == TESTvalue &&
+	    check_mirror(shmem - MIRROR_SIZE, MIRROR_SIZE) == 0 &&
+	    check_mirror(shmem - 2 * MIRROR_SIZE, MIRROR_SIZE) == 1)
 		mirror_size = 2 * MIRROR_SIZE;
 
 	first_mirror = shmem - mirror_size;
@@ -194,7 +193,7 @@ static int __init arcrimi_found(struct net_device *dev)
 
 	/* initialize the rest of the device structure. */
 
-	lp = dev->priv;
+	lp = netdev_priv(dev);
 	lp->card_name = "RIM I";
 	lp->hw.command = arcrimi_command;
 	lp->hw.status = arcrimi_status;
@@ -260,7 +259,7 @@ err_free_irq:
  */
 static int arcrimi_reset(struct net_device *dev, int really_reset)
 {
-	struct arcnet_local *lp = dev->priv;
+	struct arcnet_local *lp = netdev_priv(dev);
 	void __iomem *ioaddr = lp->mem_start + 0x800;
 
 	BUGMSG(D_INIT, "Resetting %s (status=%02Xh)\n", dev->name, ASTATUS());
@@ -281,7 +280,7 @@ static int arcrimi_reset(struct net_device *dev, int really_reset)
 
 static void arcrimi_setmask(struct net_device *dev, int mask)
 {
-	struct arcnet_local *lp = dev->priv;
+	struct arcnet_local *lp = netdev_priv(dev);
 	void __iomem *ioaddr = lp->mem_start + 0x800;
 
 	AINTMASK(mask);
@@ -289,7 +288,7 @@ static void arcrimi_setmask(struct net_device *dev, int mask)
 
 static int arcrimi_status(struct net_device *dev)
 {
-	struct arcnet_local *lp = dev->priv;
+	struct arcnet_local *lp = netdev_priv(dev);
 	void __iomem *ioaddr = lp->mem_start + 0x800;
 
 	return ASTATUS();
@@ -297,7 +296,7 @@ static int arcrimi_status(struct net_device *dev)
 
 static void arcrimi_command(struct net_device *dev, int cmd)
 {
-	struct arcnet_local *lp = dev->priv;
+	struct arcnet_local *lp = netdev_priv(dev);
 	void __iomem *ioaddr = lp->mem_start + 0x800;
 
 	ACOMMAND(cmd);
@@ -306,7 +305,7 @@ static void arcrimi_command(struct net_device *dev, int cmd)
 static void arcrimi_copy_to_card(struct net_device *dev, int bufnum, int offset,
 				 void *buf, int count)
 {
-	struct arcnet_local *lp = dev->priv;
+	struct arcnet_local *lp = netdev_priv(dev);
 	void __iomem *memaddr = lp->mem_start + 0x800 + bufnum * 512 + offset;
 	TIME("memcpy_toio", count, memcpy_toio(memaddr, buf, count));
 }
@@ -315,7 +314,7 @@ static void arcrimi_copy_to_card(struct net_device *dev, int bufnum, int offset,
 static void arcrimi_copy_from_card(struct net_device *dev, int bufnum, int offset,
 				   void *buf, int count)
 {
-	struct arcnet_local *lp = dev->priv;
+	struct arcnet_local *lp = netdev_priv(dev);
 	void __iomem *memaddr = lp->mem_start + 0x800 + bufnum * 512 + offset;
 	TIME("memcpy_fromio", count, memcpy_fromio(buf, memaddr, count));
 }
@@ -361,7 +360,7 @@ static int __init arc_rimi_init(void)
 static void __exit arc_rimi_exit(void)
 {
 	struct net_device *dev = my_dev;
-	struct arcnet_local *lp = dev->priv;
+	struct arcnet_local *lp = netdev_priv(dev);
 
 	unregister_netdev(dev);
 	iounmap(lp->mem_start);

@@ -22,7 +22,6 @@
 #include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/param.h>
-#include <linux/moduleparam.h>
 #include <linux/errno.h>
 #include <linux/slab.h>
 #include <linux/device.h>
@@ -35,7 +34,8 @@
 #include <linux/mm.h>
 #include <linux/vmalloc.h>
 #include <linux/page-flags.h>
-#include <linux/byteorder/generic.h>
+#include <media/v4l2-ioctl.h>
+#include <asm/byteorder.h>
 #include <asm/page.h>
 #include <asm/uaccess.h>
 
@@ -45,11 +45,11 @@
 
 #define ET61X251_MODULE_NAME    "V4L2 driver for ET61X[12]51 "                \
 				"PC Camera Controllers"
-#define ET61X251_MODULE_AUTHOR  "(C) 2006 Luca Risolia"
+#define ET61X251_MODULE_AUTHOR  "(C) 2006-2007 Luca Risolia"
 #define ET61X251_AUTHOR_EMAIL   "<luca.risolia@studio.unibo.it>"
 #define ET61X251_MODULE_LICENSE "GPL"
-#define ET61X251_MODULE_VERSION "1:1.04"
-#define ET61X251_MODULE_VERSION_CODE  KERNEL_VERSION(1, 1, 4)
+#define ET61X251_MODULE_VERSION "1:1.09"
+#define ET61X251_MODULE_VERSION_CODE  KERNEL_VERSION(1, 1, 9)
 
 /*****************************************************************************/
 
@@ -228,7 +228,7 @@ int et61x251_write_reg(struct et61x251_device* cam, u8 value, u16 index)
 }
 
 
-int et61x251_read_reg(struct et61x251_device* cam, u16 index)
+static int et61x251_read_reg(struct et61x251_device* cam, u16 index)
 {
 	struct usb_device* udev = cam->usbdev;
 	u8* buff = cam->control_buffer;
@@ -245,7 +245,8 @@ int et61x251_read_reg(struct et61x251_device* cam, u16 index)
 
 
 static int
-et61x251_i2c_wait(struct et61x251_device* cam, struct et61x251_sensor* sensor)
+et61x251_i2c_wait(struct et61x251_device* cam,
+		  const struct et61x251_sensor* sensor)
 {
 	int i, r;
 
@@ -265,72 +266,6 @@ et61x251_i2c_wait(struct et61x251_device* cam, struct et61x251_sensor* sensor)
 	}
 
 	return -EBUSY;
-}
-
-
-int
-et61x251_i2c_try_read(struct et61x251_device* cam,
-		      struct et61x251_sensor* sensor, u8 address)
-{
-	struct usb_device* udev = cam->usbdev;
-	u8* data = cam->control_buffer;
-	int err = 0, res;
-
-	data[0] = address;
-	data[1] = cam->sensor.i2c_slave_id;
-	data[2] = cam->sensor.rsta | 0x10;
-	data[3] = !(et61x251_read_reg(cam, 0x8b) & 0x02);
-	res = usb_control_msg(udev, usb_sndctrlpipe(udev, 0), 0x00, 0x41,
-			      0, 0x88, data, 4, ET61X251_CTRL_TIMEOUT);
-	if (res < 0)
-		err += res;
-
-	err += et61x251_i2c_wait(cam, sensor);
-
-	res = usb_control_msg(udev, usb_rcvctrlpipe(udev, 0), 0x00, 0xc1,
-			      0, 0x80, data, 8, ET61X251_CTRL_TIMEOUT);
-	if (res < 0)
-		err += res;
-
-	if (err)
-		DBG(3, "I2C read failed for %s image sensor", sensor->name);
-
-	PDBGG("I2C read: address 0x%02X, value: 0x%02X", address, data[0]);
-
-	return err ? -1 : (int)data[0];
-}
-
-
-int
-et61x251_i2c_try_write(struct et61x251_device* cam,
-		       struct et61x251_sensor* sensor, u8 address, u8 value)
-{
-	struct usb_device* udev = cam->usbdev;
-	u8* data = cam->control_buffer;
-	int err = 0, res;
-
-	data[0] = address;
-	data[1] = cam->sensor.i2c_slave_id;
-	data[2] = cam->sensor.rsta | 0x12;
-	res = usb_control_msg(udev, usb_sndctrlpipe(udev, 0), 0x00, 0x41,
-			      0, 0x88, data, 3, ET61X251_CTRL_TIMEOUT);
-	if (res < 0)
-		err += res;
-
-	data[0] = value;
-	res = usb_control_msg(udev, usb_sndctrlpipe(udev, 0), 0x00, 0x41,
-			      0, 0x80, data, 1, ET61X251_CTRL_TIMEOUT);
-	if (res < 0)
-		err += res;
-
-	err += et61x251_i2c_wait(cam, sensor);
-
-	if (err)
-		DBG(3, "I2C write failed for %s image sensor", sensor->name);
-
-	PDBGG("I2C write: address 0x%02X, value: 0x%02X", address, value);
-
-	return err ? -1 : 0;
 }
 
 
@@ -385,17 +320,6 @@ et61x251_i2c_raw_write(struct et61x251_device* cam, u8 n, u8 data1, u8 data2,
 
 }
 
-
-int et61x251_i2c_read(struct et61x251_device* cam, u8 address)
-{
-	return et61x251_i2c_try_read(cam, &cam->sensor, address);
-}
-
-
-int et61x251_i2c_write(struct et61x251_device* cam, u8 address, u8 value)
-{
-	return et61x251_i2c_try_write(cam, &cam->sensor, address, value);
-}
 
 /*****************************************************************************/
 
@@ -615,7 +539,7 @@ static int et61x251_start_transfer(struct et61x251_device* cam)
 	return 0;
 
 free_urbs:
-	for (i = 0; (i < ET61X251_URBS) &&  cam->urb[i]; i++)
+	for (i = 0; (i < ET61X251_URBS) && cam->urb[i]; i++)
 		usb_free_urb(cam->urb[i]);
 
 free_buffers:
@@ -663,8 +587,8 @@ static int et61x251_stream_interrupt(struct et61x251_device* cam)
 	else if (cam->stream != STREAM_OFF) {
 		cam->state |= DEV_MISCONFIGURED;
 		DBG(1, "URB timeout reached. The camera is misconfigured. To "
-		       "use it, close and open /dev/video%d again.",
-		    cam->v4ldev->minor);
+		       "use it, close and open %s again.",
+		    video_device_node_name(cam->v4ldev));
 		return -EIO;
 	}
 
@@ -674,6 +598,83 @@ static int et61x251_stream_interrupt(struct et61x251_device* cam)
 /*****************************************************************************/
 
 #ifdef CONFIG_VIDEO_ADV_DEBUG
+
+static int et61x251_i2c_try_read(struct et61x251_device* cam,
+				 const struct et61x251_sensor* sensor,
+				 u8 address)
+{
+	struct usb_device* udev = cam->usbdev;
+	u8* data = cam->control_buffer;
+	int err = 0, res;
+
+	data[0] = address;
+	data[1] = cam->sensor.i2c_slave_id;
+	data[2] = cam->sensor.rsta | 0x10;
+	data[3] = !(et61x251_read_reg(cam, 0x8b) & 0x02);
+	res = usb_control_msg(udev, usb_sndctrlpipe(udev, 0), 0x00, 0x41,
+			      0, 0x88, data, 4, ET61X251_CTRL_TIMEOUT);
+	if (res < 0)
+		err += res;
+
+	err += et61x251_i2c_wait(cam, sensor);
+
+	res = usb_control_msg(udev, usb_rcvctrlpipe(udev, 0), 0x00, 0xc1,
+			      0, 0x80, data, 8, ET61X251_CTRL_TIMEOUT);
+	if (res < 0)
+		err += res;
+
+	if (err)
+		DBG(3, "I2C read failed for %s image sensor", sensor->name);
+
+	PDBGG("I2C read: address 0x%02X, value: 0x%02X", address, data[0]);
+
+	return err ? -1 : (int)data[0];
+}
+
+
+static int et61x251_i2c_try_write(struct et61x251_device* cam,
+				  const struct et61x251_sensor* sensor,
+				  u8 address, u8 value)
+{
+	struct usb_device* udev = cam->usbdev;
+	u8* data = cam->control_buffer;
+	int err = 0, res;
+
+	data[0] = address;
+	data[1] = cam->sensor.i2c_slave_id;
+	data[2] = cam->sensor.rsta | 0x12;
+	res = usb_control_msg(udev, usb_sndctrlpipe(udev, 0), 0x00, 0x41,
+			      0, 0x88, data, 3, ET61X251_CTRL_TIMEOUT);
+	if (res < 0)
+		err += res;
+
+	data[0] = value;
+	res = usb_control_msg(udev, usb_sndctrlpipe(udev, 0), 0x00, 0x41,
+			      0, 0x80, data, 1, ET61X251_CTRL_TIMEOUT);
+	if (res < 0)
+		err += res;
+
+	err += et61x251_i2c_wait(cam, sensor);
+
+	if (err)
+		DBG(3, "I2C write failed for %s image sensor", sensor->name);
+
+	PDBGG("I2C write: address 0x%02X, value: 0x%02X", address, value);
+
+	return err ? -1 : 0;
+}
+
+static int et61x251_i2c_read(struct et61x251_device* cam, u8 address)
+{
+	return et61x251_i2c_try_read(cam, &cam->sensor, address);
+}
+
+static int et61x251_i2c_write(struct et61x251_device* cam,
+			      u8 address, u8 value)
+{
+	return et61x251_i2c_try_write(cam, &cam->sensor, address, value);
+}
+
 static u8 et61x251_strtou8(const char* buff, size_t len, ssize_t* count)
 {
 	char str[5];
@@ -682,7 +683,7 @@ static u8 et61x251_strtou8(const char* buff, size_t len, ssize_t* count)
 
 	if (len < 4) {
 		strncpy(str, buff, len);
-		str[len+1] = '\0';
+		str[len] = '\0';
 	} else {
 		strncpy(str, buff, 4);
 		str[4] = '\0';
@@ -705,7 +706,8 @@ static u8 et61x251_strtou8(const char* buff, size_t len, ssize_t* count)
    NOTE 2: buffers are PAGE_SIZE long
 */
 
-static ssize_t et61x251_show_reg(struct class_device* cd, char* buf)
+static ssize_t et61x251_show_reg(struct device* cd,
+				 struct device_attribute *attr, char* buf)
 {
 	struct et61x251_device* cam;
 	ssize_t count;
@@ -728,7 +730,8 @@ static ssize_t et61x251_show_reg(struct class_device* cd, char* buf)
 
 
 static ssize_t
-et61x251_store_reg(struct class_device* cd, const char* buf, size_t len)
+et61x251_store_reg(struct device* cd,
+		   struct device_attribute *attr, const char* buf, size_t len)
 {
 	struct et61x251_device* cam;
 	u8 index;
@@ -760,7 +763,8 @@ et61x251_store_reg(struct class_device* cd, const char* buf, size_t len)
 }
 
 
-static ssize_t et61x251_show_val(struct class_device* cd, char* buf)
+static ssize_t et61x251_show_val(struct device* cd,
+				 struct device_attribute *attr, char* buf)
 {
 	struct et61x251_device* cam;
 	ssize_t count;
@@ -791,7 +795,8 @@ static ssize_t et61x251_show_val(struct class_device* cd, char* buf)
 
 
 static ssize_t
-et61x251_store_val(struct class_device* cd, const char* buf, size_t len)
+et61x251_store_val(struct device* cd, struct device_attribute *attr,
+		   const char* buf, size_t len)
 {
 	struct et61x251_device* cam;
 	u8 value;
@@ -829,7 +834,8 @@ et61x251_store_val(struct class_device* cd, const char* buf, size_t len)
 }
 
 
-static ssize_t et61x251_show_i2c_reg(struct class_device* cd, char* buf)
+static ssize_t et61x251_show_i2c_reg(struct device* cd,
+				     struct device_attribute *attr, char* buf)
 {
 	struct et61x251_device* cam;
 	ssize_t count;
@@ -854,7 +860,8 @@ static ssize_t et61x251_show_i2c_reg(struct class_device* cd, char* buf)
 
 
 static ssize_t
-et61x251_store_i2c_reg(struct class_device* cd, const char* buf, size_t len)
+et61x251_store_i2c_reg(struct device* cd, struct device_attribute *attr,
+		       const char* buf, size_t len)
 {
 	struct et61x251_device* cam;
 	u8 index;
@@ -886,7 +893,8 @@ et61x251_store_i2c_reg(struct class_device* cd, const char* buf, size_t len)
 }
 
 
-static ssize_t et61x251_show_i2c_val(struct class_device* cd, char* buf)
+static ssize_t et61x251_show_i2c_val(struct device* cd,
+				     struct device_attribute *attr, char* buf)
 {
 	struct et61x251_device* cam;
 	ssize_t count;
@@ -922,7 +930,8 @@ static ssize_t et61x251_show_i2c_val(struct class_device* cd, char* buf)
 
 
 static ssize_t
-et61x251_store_i2c_val(struct class_device* cd, const char* buf, size_t len)
+et61x251_store_i2c_val(struct device* cd, struct device_attribute *attr,
+		       const char* buf, size_t len)
 {
 	struct et61x251_device* cam;
 	u8 value;
@@ -965,42 +974,40 @@ et61x251_store_i2c_val(struct class_device* cd, const char* buf, size_t len)
 }
 
 
-static CLASS_DEVICE_ATTR(reg, S_IRUGO | S_IWUSR,
-			 et61x251_show_reg, et61x251_store_reg);
-static CLASS_DEVICE_ATTR(val, S_IRUGO | S_IWUSR,
-			 et61x251_show_val, et61x251_store_val);
-static CLASS_DEVICE_ATTR(i2c_reg, S_IRUGO | S_IWUSR,
-			 et61x251_show_i2c_reg, et61x251_store_i2c_reg);
-static CLASS_DEVICE_ATTR(i2c_val, S_IRUGO | S_IWUSR,
-			 et61x251_show_i2c_val, et61x251_store_i2c_val);
+static DEVICE_ATTR(reg, S_IRUGO | S_IWUSR,
+		   et61x251_show_reg, et61x251_store_reg);
+static DEVICE_ATTR(val, S_IRUGO | S_IWUSR,
+		   et61x251_show_val, et61x251_store_val);
+static DEVICE_ATTR(i2c_reg, S_IRUGO | S_IWUSR,
+		   et61x251_show_i2c_reg, et61x251_store_i2c_reg);
+static DEVICE_ATTR(i2c_val, S_IRUGO | S_IWUSR,
+		   et61x251_show_i2c_val, et61x251_store_i2c_val);
 
 
 static int et61x251_create_sysfs(struct et61x251_device* cam)
 {
-	struct video_device *v4ldev = cam->v4ldev;
+	struct device *classdev = &(cam->v4ldev->dev);
 	int err = 0;
 
-	if ((err = video_device_create_file(v4ldev, &class_device_attr_reg)))
+	if ((err = device_create_file(classdev, &dev_attr_reg)))
 		goto err_out;
-	if ((err = video_device_create_file(v4ldev, &class_device_attr_val)))
+	if ((err = device_create_file(classdev, &dev_attr_val)))
 		goto err_reg;
 
 	if (cam->sensor.sysfs_ops) {
-		if ((err = video_device_create_file(v4ldev,
-						  &class_device_attr_i2c_reg)))
+		if ((err = device_create_file(classdev, &dev_attr_i2c_reg)))
 			goto err_val;
-		if ((err = video_device_create_file(v4ldev,
-						  &class_device_attr_i2c_val)))
+		if ((err = device_create_file(classdev, &dev_attr_i2c_val)))
 			goto err_i2c_reg;
 	}
 
 err_i2c_reg:
 	if (cam->sensor.sysfs_ops)
-	video_device_remove_file(v4ldev, &class_device_attr_i2c_reg);
+		device_remove_file(classdev, &dev_attr_i2c_reg);
 err_val:
-	video_device_remove_file(v4ldev, &class_device_attr_val);
+	device_remove_file(classdev, &dev_attr_val);
 err_reg:
-	video_device_remove_file(v4ldev, &class_device_attr_reg);
+	device_remove_file(classdev, &dev_attr_reg);
 err_out:
 	return err;
 }
@@ -1103,7 +1110,8 @@ static int et61x251_init(struct et61x251_device* cam)
 	int err = 0;
 
 	if (!(cam->state & DEV_INITIALIZED)) {
-		init_waitqueue_head(&cam->open);
+		mutex_init(&cam->open_mutex);
+		init_waitqueue_head(&cam->wait_open);
 		qctrl = s->qctrl;
 		rect = &(s->cropcap.defrect);
 		cam->compression.quality = ET61X251_COMPRESSION_QUALITY;
@@ -1177,63 +1185,80 @@ static int et61x251_init(struct et61x251_device* cam)
 	return 0;
 }
 
-
-static void et61x251_release_resources(struct et61x251_device* cam)
-{
-	mutex_lock(&et61x251_sysfs_lock);
-
-	DBG(2, "V4L2 device /dev/video%d deregistered", cam->v4ldev->minor);
-	video_set_drvdata(cam->v4ldev, NULL);
-	video_unregister_device(cam->v4ldev);
-
-	mutex_unlock(&et61x251_sysfs_lock);
-
-	kfree(cam->control_buffer);
-}
-
 /*****************************************************************************/
 
-static int et61x251_open(struct inode* inode, struct file* filp)
+static void et61x251_release_resources(struct kref *kref)
+{
+	struct et61x251_device *cam;
+
+	mutex_lock(&et61x251_sysfs_lock);
+
+	cam = container_of(kref, struct et61x251_device, kref);
+
+	DBG(2, "V4L2 device %s deregistered",
+	    video_device_node_name(cam->v4ldev));
+	video_set_drvdata(cam->v4ldev, NULL);
+	video_unregister_device(cam->v4ldev);
+	usb_put_dev(cam->usbdev);
+	kfree(cam->control_buffer);
+	kfree(cam);
+
+	mutex_unlock(&et61x251_sysfs_lock);
+}
+
+
+static int et61x251_open(struct file *filp)
 {
 	struct et61x251_device* cam;
 	int err = 0;
 
-	/*
-	   This is the only safe way to prevent race conditions with
-	   disconnect
-	*/
-	if (!down_read_trylock(&et61x251_disconnect))
+	if (!down_read_trylock(&et61x251_dev_lock))
 		return -ERESTARTSYS;
 
-	cam = video_get_drvdata(video_devdata(filp));
+	cam = video_drvdata(filp);
 
-	if (mutex_lock_interruptible(&cam->dev_mutex)) {
-		up_read(&et61x251_disconnect);
+	if (wait_for_completion_interruptible(&cam->probe)) {
+		up_read(&et61x251_dev_lock);
 		return -ERESTARTSYS;
 	}
 
+	kref_get(&cam->kref);
+
+	if (mutex_lock_interruptible(&cam->open_mutex)) {
+		kref_put(&cam->kref, et61x251_release_resources);
+		up_read(&et61x251_dev_lock);
+		return -ERESTARTSYS;
+	}
+
+	if (cam->state & DEV_DISCONNECTED) {
+		DBG(1, "Device not present");
+		err = -ENODEV;
+		goto out;
+	}
+
 	if (cam->users) {
-		DBG(2, "Device /dev/video%d is busy...", cam->v4ldev->minor);
+		DBG(2, "Device %s is already in use",
+		       video_device_node_name(cam->v4ldev));
+		DBG(3, "Simultaneous opens are not supported");
 		if ((filp->f_flags & O_NONBLOCK) ||
 		    (filp->f_flags & O_NDELAY)) {
 			err = -EWOULDBLOCK;
 			goto out;
 		}
-		mutex_unlock(&cam->dev_mutex);
-		err = wait_event_interruptible_exclusive(cam->open,
-						  cam->state & DEV_DISCONNECTED
+		DBG(2, "A blocking open() has been requested. Wait for the "
+		       "device to be released...");
+		up_read(&et61x251_dev_lock);
+		err = wait_event_interruptible_exclusive(cam->wait_open,
+						(cam->state & DEV_DISCONNECTED)
 							 || !cam->users);
-		if (err) {
-			up_read(&et61x251_disconnect);
-			return err;
-		}
+		down_read(&et61x251_dev_lock);
+		if (err)
+			goto out;
 		if (cam->state & DEV_DISCONNECTED) {
-			up_read(&et61x251_disconnect);
-			return -ENODEV;
+			err = -ENODEV;
+			goto out;
 		}
-		mutex_lock(&cam->dev_mutex);
 	}
-
 
 	if (cam->state & DEV_MISCONFIGURED) {
 		err = et61x251_init(cam);
@@ -1256,39 +1281,37 @@ static int et61x251_open(struct inode* inode, struct file* filp)
 	cam->frame_count = 0;
 	et61x251_empty_framequeues(cam);
 
-	DBG(3, "Video device /dev/video%d is open", cam->v4ldev->minor);
+	DBG(3, "Video device %s is open",
+	    video_device_node_name(cam->v4ldev));
 
 out:
-	mutex_unlock(&cam->dev_mutex);
-	up_read(&et61x251_disconnect);
+	mutex_unlock(&cam->open_mutex);
+	if (err)
+		kref_put(&cam->kref, et61x251_release_resources);
+	up_read(&et61x251_dev_lock);
 	return err;
 }
 
 
-static int et61x251_release(struct inode* inode, struct file* filp)
+static int et61x251_release(struct file *filp)
 {
-	struct et61x251_device* cam = video_get_drvdata(video_devdata(filp));
+	struct et61x251_device* cam;
 
-	mutex_lock(&cam->dev_mutex); /* prevent disconnect() to be called */
+	down_write(&et61x251_dev_lock);
+
+	cam = video_drvdata(filp);
 
 	et61x251_stop_transfer(cam);
-
 	et61x251_release_buffers(cam);
-
-	if (cam->state & DEV_DISCONNECTED) {
-		et61x251_release_resources(cam);
-		usb_put_dev(cam->usbdev);
-		mutex_unlock(&cam->dev_mutex);
-		kfree(cam);
-		return 0;
-	}
-
 	cam->users--;
-	wake_up_interruptible_nr(&cam->open, 1);
+	wake_up_interruptible_nr(&cam->wait_open, 1);
 
-	DBG(3, "Video device /dev/video%d closed", cam->v4ldev->minor);
+	DBG(3, "Video device %s closed",
+	    video_device_node_name(cam->v4ldev));
 
-	mutex_unlock(&cam->dev_mutex);
+	kref_put(&cam->kref, et61x251_release_resources);
+
+	up_write(&et61x251_dev_lock);
 
 	return 0;
 }
@@ -1298,7 +1321,7 @@ static ssize_t
 et61x251_read(struct file* filp, char __user * buf,
 	      size_t count, loff_t* f_pos)
 {
-	struct et61x251_device* cam = video_get_drvdata(video_devdata(filp));
+	struct et61x251_device *cam = video_drvdata(filp);
 	struct et61x251_frame_t* f, * i;
 	unsigned long lock_flags;
 	long timeout;
@@ -1324,7 +1347,7 @@ et61x251_read(struct file* filp, char __user * buf,
 		DBG(3, "Close and open the device again to choose the read "
 		       "method");
 		mutex_unlock(&cam->fileop_mutex);
-		return -EINVAL;
+		return -EBUSY;
 	}
 
 	if (cam->io == IO_NONE) {
@@ -1359,8 +1382,10 @@ et61x251_read(struct file* filp, char __user * buf,
 			    (!list_empty(&cam->outqueue)) ||
 			    (cam->state & DEV_DISCONNECTED) ||
 			    (cam->state & DEV_MISCONFIGURED),
-			    cam->module_param.frame_timeout *
-			    1000 * msecs_to_jiffies(1) );
+			    msecs_to_jiffies(
+				cam->module_param.frame_timeout * 1000
+			    )
+			  );
 		if (timeout < 0) {
 			mutex_unlock(&cam->fileop_mutex);
 			return timeout;
@@ -1406,7 +1431,7 @@ exit:
 
 static unsigned int et61x251_poll(struct file *filp, poll_table *wait)
 {
-	struct et61x251_device* cam = video_get_drvdata(video_devdata(filp));
+	struct et61x251_device *cam = video_drvdata(filp);
 	struct et61x251_frame_t* f;
 	unsigned long lock_flags;
 	unsigned int mask = 0;
@@ -1474,7 +1499,7 @@ static void et61x251_vm_close(struct vm_area_struct* vma)
 }
 
 
-static struct vm_operations_struct et61x251_vm_ops = {
+static const struct vm_operations_struct et61x251_vm_ops = {
 	.open = et61x251_vm_open,
 	.close = et61x251_vm_close,
 };
@@ -1482,7 +1507,7 @@ static struct vm_operations_struct et61x251_vm_ops = {
 
 static int et61x251_mmap(struct file* filp, struct vm_area_struct *vma)
 {
-	struct et61x251_device* cam = video_get_drvdata(video_devdata(filp));
+	struct et61x251_device *cam = video_drvdata(filp);
 	unsigned long size = vma->vm_end - vma->vm_start,
 		      start = vma->vm_start;
 	void *pos;
@@ -1504,7 +1529,12 @@ static int et61x251_mmap(struct file* filp, struct vm_area_struct *vma)
 		return -EIO;
 	}
 
-	if (cam->io != IO_MMAP || !(vma->vm_flags & VM_WRITE) ||
+	if (!(vma->vm_flags & (VM_WRITE | VM_READ))) {
+		mutex_unlock(&cam->fileop_mutex);
+		return -EACCES;
+	}
+
+	if (cam->io != IO_MMAP ||
 	    size != PAGE_ALIGN(cam->frame[0].buf.length)) {
 		mutex_unlock(&cam->fileop_mutex);
 		return -EINVAL;
@@ -1535,7 +1565,6 @@ static int et61x251_mmap(struct file* filp, struct vm_area_struct *vma)
 
 	vma->vm_ops = &et61x251_vm_ops;
 	vma->vm_private_data = &cam->frame[i];
-
 	et61x251_vm_open(vma);
 
 	mutex_unlock(&cam->fileop_mutex);
@@ -1557,7 +1586,7 @@ et61x251_vidioc_querycap(struct et61x251_device* cam, void __user * arg)
 
 	strlcpy(cap.card, cam->v4ldev->name, sizeof(cap.card));
 	if (usb_make_path(cam->usbdev, cap.bus_info, sizeof(cap.bus_info)) < 0)
-		strlcpy(cap.bus_info, cam->usbdev->dev.bus_id,
+		strlcpy(cap.bus_info, dev_name(&cam->usbdev->dev),
 			sizeof(cap.bus_info));
 
 	if (copy_to_user(arg, &cap, sizeof(cap)))
@@ -1581,6 +1610,7 @@ et61x251_vidioc_enuminput(struct et61x251_device* cam, void __user * arg)
 	memset(&i, 0, sizeof(i));
 	strcpy(i.name, "Camera");
 	i.type = V4L2_INPUT_TYPE_CAMERA;
+	i.capabilities = V4L2_IN_CAP_STD;
 
 	if (copy_to_user(arg, &i, sizeof(i)))
 		return -EFAULT;
@@ -1684,7 +1714,7 @@ et61x251_vidioc_s_ctrl(struct et61x251_device* cam, void __user * arg)
 	if (copy_from_user(&ctrl, arg, sizeof(ctrl)))
 		return -EFAULT;
 
-	for (i = 0; i < ARRAY_SIZE(s->qctrl); i++)
+	for (i = 0; i < ARRAY_SIZE(s->qctrl); i++) {
 		if (ctrl.id == s->qctrl[i].id) {
 			if (s->qctrl[i].flags & V4L2_CTRL_FLAG_DISABLED)
 				return -EINVAL;
@@ -1694,7 +1724,9 @@ et61x251_vidioc_s_ctrl(struct et61x251_device* cam, void __user * arg)
 			ctrl.value -= ctrl.value % s->qctrl[i].step;
 			break;
 		}
-
+	}
+	if (i == ARRAY_SIZE(s->qctrl))
+		return -EINVAL;
 	if ((err = s->set_ctrl(cam, &ctrl)))
 		return err;
 
@@ -1764,7 +1796,7 @@ et61x251_vidioc_s_crop(struct et61x251_device* cam, void __user * arg)
 			if (cam->frame[i].vma_use_count) {
 				DBG(3, "VIDIOC_S_CROP failed. "
 				       "Unmap the buffers first.");
-				return -EINVAL;
+				return -EBUSY;
 			}
 
 	/* Preserve R,G or B origin */
@@ -1820,8 +1852,8 @@ et61x251_vidioc_s_crop(struct et61x251_device* cam, void __user * arg)
 	if (err) { /* atomic, no rollback in ioctl() */
 		cam->state |= DEV_MISCONFIGURED;
 		DBG(1, "VIDIOC_S_CROP failed because of hardware problems. To "
-		       "use the camera, close and open /dev/video%d again.",
-		    cam->v4ldev->minor);
+		       "use the camera, close and open %s again.",
+		    video_device_node_name(cam->v4ldev));
 		return -EIO;
 	}
 
@@ -1833,8 +1865,8 @@ et61x251_vidioc_s_crop(struct et61x251_device* cam, void __user * arg)
 	    nbuffers != et61x251_request_buffers(cam, nbuffers, cam->io)) {
 		cam->state |= DEV_MISCONFIGURED;
 		DBG(1, "VIDIOC_S_CROP failed because of not enough memory. To "
-		       "use the camera, close and open /dev/video%d again.",
-		    cam->v4ldev->minor);
+		       "use the camera, close and open %s again.",
+		    video_device_node_name(cam->v4ldev));
 		return -ENOMEM;
 	}
 
@@ -1921,6 +1953,8 @@ et61x251_vidioc_g_fmt(struct et61x251_device* cam, void __user * arg)
 	if (format.type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
 		return -EINVAL;
 
+	pfmt->colorspace = (pfmt->pixelformat == V4L2_PIX_FMT_ET61X251) ?
+			   0 : V4L2_COLORSPACE_SRGB;
 	pfmt->bytesperline = (pfmt->pixelformat==V4L2_PIX_FMT_ET61X251)
 			     ? 0 : (pfmt->width * pfmt->priv) / 8;
 	pfmt->sizeimage = pfmt->height * ((pfmt->width*pfmt->priv)/8);
@@ -1996,6 +2030,8 @@ et61x251_vidioc_try_s_fmt(struct et61x251_device* cam, unsigned int cmd,
 	    pix->pixelformat != V4L2_PIX_FMT_SBGGR8)
 		pix->pixelformat = pfmt->pixelformat;
 	pix->priv = pfmt->priv; /* bpp */
+	pix->colorspace = (pix->pixelformat == V4L2_PIX_FMT_ET61X251) ?
+			  0 : V4L2_COLORSPACE_SRGB;
 	pix->colorspace = pfmt->colorspace;
 	pix->bytesperline = (pix->pixelformat == V4L2_PIX_FMT_ET61X251)
 			    ? 0 : (pix->width * pix->priv) / 8;
@@ -2013,7 +2049,7 @@ et61x251_vidioc_try_s_fmt(struct et61x251_device* cam, unsigned int cmd,
 			if (cam->frame[i].vma_use_count) {
 				DBG(3, "VIDIOC_S_FMT failed. "
 				       "Unmap the buffers first.");
-				return -EINVAL;
+				return -EBUSY;
 			}
 
 	if (cam->stream == STREAM_ON)
@@ -2039,8 +2075,8 @@ et61x251_vidioc_try_s_fmt(struct et61x251_device* cam, unsigned int cmd,
 	if (err) { /* atomic, no rollback in ioctl() */
 		cam->state |= DEV_MISCONFIGURED;
 		DBG(1, "VIDIOC_S_FMT failed because of hardware problems. To "
-		       "use the camera, close and open /dev/video%d again.",
-		    cam->v4ldev->minor);
+		       "use the camera, close and open %s again.",
+		    video_device_node_name(cam->v4ldev));
 		return -EIO;
 	}
 
@@ -2051,8 +2087,8 @@ et61x251_vidioc_try_s_fmt(struct et61x251_device* cam, unsigned int cmd,
 	    nbuffers != et61x251_request_buffers(cam, nbuffers, cam->io)) {
 		cam->state |= DEV_MISCONFIGURED;
 		DBG(1, "VIDIOC_S_FMT failed because of not enough memory. To "
-		       "use the camera, close and open /dev/video%d again.",
-		    cam->v4ldev->minor);
+		       "use the camera, close and open %s again.",
+		    video_device_node_name(cam->v4ldev));
 		return -ENOMEM;
 	}
 
@@ -2100,7 +2136,7 @@ et61x251_vidioc_s_jpegcomp(struct et61x251_device* cam, void __user * arg)
 		cam->state |= DEV_MISCONFIGURED;
 		DBG(1, "VIDIOC_S_JPEGCOMP failed because of hardware "
 		       "problems. To use the camera, close and open "
-		       "/dev/video%d again.", cam->v4ldev->minor);
+		       "%s again.", video_device_node_name(cam->v4ldev));
 		return -EIO;
 	}
 
@@ -2129,14 +2165,14 @@ et61x251_vidioc_reqbufs(struct et61x251_device* cam, void __user * arg)
 	if (cam->io == IO_READ) {
 		DBG(3, "Close and open the device again to choose the mmap "
 		       "I/O method");
-		return -EINVAL;
+		return -EBUSY;
 	}
 
 	for (i = 0; i < cam->nbuffers; i++)
 		if (cam->frame[i].vma_use_count) {
 			DBG(3, "VIDIOC_REQBUFS failed. "
 			       "Previous buffers are still mapped.");
-			return -EINVAL;
+			return -EBUSY;
 		}
 
 	if (cam->stream == STREAM_ON)
@@ -2284,9 +2320,6 @@ et61x251_vidioc_streamon(struct et61x251_device* cam, void __user * arg)
 	if (type != V4L2_BUF_TYPE_VIDEO_CAPTURE || cam->io != IO_MMAP)
 		return -EINVAL;
 
-	if (list_empty(&cam->inqueue))
-		return -EINVAL;
-
 	cam->stream = STREAM_ON;
 
 	DBG(3, "Stream on");
@@ -2367,10 +2400,10 @@ et61x251_vidioc_s_parm(struct et61x251_device* cam, void __user * arg)
 }
 
 
-static int et61x251_ioctl_v4l2(struct inode* inode, struct file* filp,
-			       unsigned int cmd, void __user * arg)
+static long et61x251_ioctl_v4l2(struct file *filp,
+			       unsigned int cmd, void __user *arg)
 {
-	struct et61x251_device* cam = video_get_drvdata(video_devdata(filp));
+	struct et61x251_device *cam = video_drvdata(filp);
 
 	switch (cmd) {
 
@@ -2462,11 +2495,11 @@ static int et61x251_ioctl_v4l2(struct inode* inode, struct file* filp,
 }
 
 
-static int et61x251_ioctl(struct inode* inode, struct file* filp,
+static long et61x251_ioctl(struct file *filp,
 			 unsigned int cmd, unsigned long arg)
 {
-	struct et61x251_device* cam = video_get_drvdata(video_devdata(filp));
-	int err = 0;
+	struct et61x251_device *cam = video_drvdata(filp);
+	long err = 0;
 
 	if (mutex_lock_interruptible(&cam->fileop_mutex))
 		return -ERESTARTSYS;
@@ -2486,7 +2519,7 @@ static int et61x251_ioctl(struct inode* inode, struct file* filp,
 
 	V4LDBG(3, "et61x251", cmd);
 
-	err = et61x251_ioctl_v4l2(inode, filp, cmd, (void __user *)arg);
+	err = et61x251_ioctl_v4l2(filp, cmd, (void __user *)arg);
 
 	mutex_unlock(&cam->fileop_mutex);
 
@@ -2494,16 +2527,14 @@ static int et61x251_ioctl(struct inode* inode, struct file* filp,
 }
 
 
-static const struct file_operations et61x251_fops = {
+static const struct v4l2_file_operations et61x251_fops = {
 	.owner = THIS_MODULE,
 	.open =    et61x251_open,
 	.release = et61x251_release,
-	.ioctl =   et61x251_ioctl,
-	.compat_ioctl = v4l_compat_ioctl32,
+	.unlocked_ioctl =   et61x251_ioctl,
 	.read =    et61x251_read,
 	.poll =    et61x251_poll,
 	.mmap =    et61x251_mmap,
-	.llseek =  no_llseek,
 };
 
 /*****************************************************************************/
@@ -2514,7 +2545,7 @@ et61x251_usb_probe(struct usb_interface* intf, const struct usb_device_id* id)
 {
 	struct usb_device *udev = interface_to_usbdev(intf);
 	struct et61x251_device* cam;
-	static unsigned int dev_nr = 0;
+	static unsigned int dev_nr;
 	unsigned int i;
 	int err = 0;
 
@@ -2534,8 +2565,6 @@ et61x251_usb_probe(struct usb_interface* intf, const struct usb_device_id* id)
 		err = -ENOMEM;
 		goto fail;
 	}
-
-	mutex_init(&cam->dev_mutex);
 
 	DBG(2, "ET61X[12]51 PC Camera Controller detected "
 	       "(vid/pid 0x%04X:0x%04X)",id->idVendor, id->idProduct);
@@ -2560,15 +2589,12 @@ et61x251_usb_probe(struct usb_interface* intf, const struct usb_device_id* id)
 	}
 
 	strcpy(cam->v4ldev->name, "ET61X[12]51 PC Camera");
-	cam->v4ldev->owner = THIS_MODULE;
-	cam->v4ldev->type = VID_TYPE_CAPTURE | VID_TYPE_SCALES;
-	cam->v4ldev->hardware = 0;
 	cam->v4ldev->fops = &et61x251_fops;
-	cam->v4ldev->minor = video_nr[dev_nr];
 	cam->v4ldev->release = video_device_release;
+	cam->v4ldev->parent = &udev->dev;
 	video_set_drvdata(cam->v4ldev, cam);
 
-	mutex_lock(&cam->dev_mutex);
+	init_completion(&cam->probe);
 
 	err = video_register_device(cam->v4ldev, VFL_TYPE_GRABBER,
 				    video_nr[dev_nr]);
@@ -2578,11 +2604,12 @@ et61x251_usb_probe(struct usb_interface* intf, const struct usb_device_id* id)
 			DBG(1, "Free /dev/videoX node not found");
 		video_nr[dev_nr] = -1;
 		dev_nr = (dev_nr < ET61X251_MAX_DEVICES-1) ? dev_nr+1 : 0;
-		mutex_unlock(&cam->dev_mutex);
+		complete_all(&cam->probe);
 		goto fail;
 	}
 
-	DBG(2, "V4L2 device registered as /dev/video%d", cam->v4ldev->minor);
+	DBG(2, "V4L2 device registered as %s",
+	    video_device_node_name(cam->v4ldev));
 
 	cam->module_param.force_munmap = force_munmap[dev_nr];
 	cam->module_param.frame_timeout = frame_timeout[dev_nr];
@@ -2599,11 +2626,15 @@ et61x251_usb_probe(struct usb_interface* intf, const struct usb_device_id* id)
 		       "device controlling. Error #%d", err);
 #else
 	DBG(2, "Optional device control through 'sysfs' interface disabled");
+	DBG(3, "Compile the kernel with the 'CONFIG_VIDEO_ADV_DEBUG' "
+	       "configuration option to enable it.");
 #endif
 
 	usb_set_intfdata(intf, cam);
+	kref_init(&cam->kref);
+	usb_get_dev(cam->usbdev);
 
-	mutex_unlock(&cam->dev_mutex);
+	complete_all(&cam->probe);
 
 	return 0;
 
@@ -2620,40 +2651,31 @@ fail:
 
 static void et61x251_usb_disconnect(struct usb_interface* intf)
 {
-	struct et61x251_device* cam = usb_get_intfdata(intf);
+	struct et61x251_device* cam;
 
-	if (!cam)
-		return;
+	down_write(&et61x251_dev_lock);
 
-	down_write(&et61x251_disconnect);
-
-	mutex_lock(&cam->dev_mutex);
+	cam = usb_get_intfdata(intf);
 
 	DBG(2, "Disconnecting %s...", cam->v4ldev->name);
 
-	wake_up_interruptible_all(&cam->open);
-
 	if (cam->users) {
-		DBG(2, "Device /dev/video%d is open! Deregistration and "
-		       "memory deallocation are deferred on close.",
-		    cam->v4ldev->minor);
+		DBG(2, "Device %s is open! Deregistration and memory "
+		       "deallocation are deferred.",
+		    video_device_node_name(cam->v4ldev));
 		cam->state |= DEV_MISCONFIGURED;
 		et61x251_stop_transfer(cam);
 		cam->state |= DEV_DISCONNECTED;
 		wake_up_interruptible(&cam->wait_frame);
 		wake_up(&cam->wait_stream);
-		usb_get_dev(cam->usbdev);
-	} else {
+	} else
 		cam->state |= DEV_DISCONNECTED;
-		et61x251_release_resources(cam);
-	}
 
-	mutex_unlock(&cam->dev_mutex);
+	wake_up_interruptible_all(&cam->wait_open);
 
-	if (!cam->users)
-		kfree(cam);
+	kref_put(&cam->kref, et61x251_release_resources);
 
-	up_write(&et61x251_disconnect);
+	up_write(&et61x251_dev_lock);
 }
 
 

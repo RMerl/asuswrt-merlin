@@ -4,9 +4,7 @@
  *	http://www.simtec.co.uk/products/SWLINUX/
  *	Ben Dooks <ben@simtec.co.uk>
  *
- * Generic platfrom device based RAM map
- *
- * $Id: plat-ram.c,v 1.7 2005/11/07 11:14:28 gleixner Exp $
+ * Generic platform device based RAM map
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -47,6 +45,7 @@ struct platram_info {
 	struct mtd_info		*mtd;
 	struct map_info		 map;
 	struct mtd_partition	*partitions;
+	bool			free_partitions;
 	struct resource		*area;
 	struct platdata_mtd_ram	*pdata;
 };
@@ -98,7 +97,8 @@ static int platram_remove(struct platform_device *pdev)
 #ifdef CONFIG_MTD_PARTITIONS
 		if (info->partitions) {
 			del_mtd_partitions(info->mtd);
-			kfree(info->partitions);
+			if (info->free_partitions)
+				kfree(info->partitions);
 		}
 #endif
 		del_mtd_device(info->mtd);
@@ -175,8 +175,9 @@ static int platram_probe(struct platform_device *pdev)
 	/* setup map parameters */
 
 	info->map.phys = res->start;
-	info->map.size = (res->end - res->start) + 1;
-	info->map.name = pdata->mapname != NULL ? pdata->mapname : (char *)pdev->name;
+	info->map.size = resource_size(res);
+	info->map.name = pdata->mapname != NULL ?
+			(char *)pdata->mapname : (char *)pdev->name;
 	info->map.bankwidth = pdata->bankwidth;
 
 	/* register our usage of the memory area */
@@ -203,9 +204,19 @@ static int platram_probe(struct platform_device *pdev)
 
 	dev_dbg(&pdev->dev, "initialised map, probing for mtd\n");
 
-	/* probe for the right mtd map driver */
+	/* probe for the right mtd map driver
+	 * supplied by the platform_data struct */
 
-	info->mtd = do_map_probe("map_ram" , &info->map);
+	if (pdata->map_probes) {
+		const char **map_probes = pdata->map_probes;
+
+		for ( ; !info->mtd && *map_probes; map_probes++)
+			info->mtd = do_map_probe(*map_probes , &info->map);
+	}
+	/* fallback to map_ram */
+	else
+		info->mtd = do_map_probe("map_ram", &info->map);
+
 	if (info->mtd == NULL) {
 		dev_err(&pdev->dev, "failed to probe for map_ram\n");
 		err = -ENOMEM;
@@ -213,6 +224,7 @@ static int platram_probe(struct platform_device *pdev)
 	}
 
 	info->mtd->owner = THIS_MODULE;
+	info->mtd->dev.parent = &pdev->dev;
 
 	platram_setrw(info, PLATRAM_RW);
 
@@ -220,19 +232,21 @@ static int platram_probe(struct platform_device *pdev)
 	 * to add this device whole */
 
 #ifdef CONFIG_MTD_PARTITIONS
-	if (pdata->nr_partitions > 0) {
-		const char **probes = { NULL };
-
-		if (pdata->probes)
-			probes = (const char **)pdata->probes;
-
-		err = parse_mtd_partitions(info->mtd, probes,
+	if (!pdata->nr_partitions) {
+		/* try to probe using the supplied probe type */
+		if (pdata->probes) {
+			err = parse_mtd_partitions(info->mtd, pdata->probes,
 					   &info->partitions, 0);
-		if (err > 0) {
-			err = add_mtd_partitions(info->mtd, info->partitions,
-						 err);
+			info->free_partitions = 1;
+			if (err > 0)
+				err = add_mtd_partitions(info->mtd,
+					info->partitions, err);
 		}
 	}
+	/* use the static mapping */
+	else
+		err = add_mtd_partitions(info->mtd, pdata->partitions,
+				pdata->nr_partitions);
 #endif /* CONFIG_MTD_PARTITIONS */
 
 	if (add_mtd_device(info->mtd)) {
@@ -240,7 +254,9 @@ static int platram_probe(struct platform_device *pdev)
 		err = -ENOMEM;
 	}
 
-	dev_info(&pdev->dev, "registered mtd device\n");
+	if (!err)
+		dev_info(&pdev->dev, "registered mtd device\n");
+
 	return err;
 
  exit_free:
@@ -250,6 +266,9 @@ static int platram_probe(struct platform_device *pdev)
 }
 
 /* device driver info */
+
+/* work with hotplug and coldplug */
+MODULE_ALIAS("platform:mtd-ram");
 
 static struct platform_driver platram_driver = {
 	.probe		= platram_probe,

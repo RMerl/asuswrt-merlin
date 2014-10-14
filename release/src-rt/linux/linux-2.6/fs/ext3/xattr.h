@@ -58,16 +58,15 @@ struct ext3_xattr_entry {
 
 # ifdef CONFIG_EXT3_FS_XATTR
 
-extern struct xattr_handler ext3_xattr_user_handler;
-extern struct xattr_handler ext3_xattr_trusted_handler;
-extern struct xattr_handler ext3_xattr_acl_access_handler;
-extern struct xattr_handler ext3_xattr_acl_default_handler;
-extern struct xattr_handler ext3_xattr_security_handler;
+extern const struct xattr_handler ext3_xattr_user_handler;
+extern const struct xattr_handler ext3_xattr_trusted_handler;
+extern const struct xattr_handler ext3_xattr_acl_access_handler;
+extern const struct xattr_handler ext3_xattr_acl_default_handler;
+extern const struct xattr_handler ext3_xattr_security_handler;
 
 extern ssize_t ext3_listxattr(struct dentry *, char *, size_t);
 
 extern int ext3_xattr_get(struct inode *, int, const char *, void *, size_t);
-extern int ext3_xattr_list(struct inode *, char *, size_t);
 extern int ext3_xattr_set(struct inode *, int, const char *, const void *, size_t, int);
 extern int ext3_xattr_set_handle(handle_t *, struct inode *, int, const char *, const void *, size_t, int);
 
@@ -77,19 +76,13 @@ extern void ext3_xattr_put_super(struct super_block *);
 extern int init_ext3_xattr(void);
 extern void exit_ext3_xattr(void);
 
-extern struct xattr_handler *ext3_xattr_handlers[];
+extern const struct xattr_handler *ext3_xattr_handlers[];
 
 # else  /* CONFIG_EXT3_FS_XATTR */
 
 static inline int
 ext3_xattr_get(struct inode *inode, int name_index, const char *name,
 	       void *buffer, size_t size, int flags)
-{
-	return -EOPNOTSUPP;
-}
-
-static inline int
-ext3_xattr_list(struct inode *inode, void *buffer, size_t size)
 {
 	return -EOPNOTSUPP;
 }
@@ -135,10 +128,10 @@ exit_ext3_xattr(void)
 
 #ifdef CONFIG_EXT3_FS_SECURITY
 extern int ext3_init_security(handle_t *handle, struct inode *inode,
-				struct inode *dir);
+			      struct inode *dir, const struct qstr *qstr);
 #else
 static inline int ext3_init_security(handle_t *handle, struct inode *inode,
-				struct inode *dir)
+				     struct inode *dir, const struct qstr *qstr)
 {
 	return 0;
 }

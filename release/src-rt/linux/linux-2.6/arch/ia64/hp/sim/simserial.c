@@ -24,6 +24,7 @@
 #include <linux/major.h>
 #include <linux/fcntl.h>
 #include <linux/mm.h>
+#include <linux/seq_file.h>
 #include <linux/slab.h>
 #include <linux/capability.h>
 #include <linux/console.h>
@@ -35,10 +36,6 @@
 #include <asm/irq.h>
 #include <asm/hw_irq.h>
 #include <asm/uaccess.h>
-
-#ifdef CONFIG_KDB
-# include <linux/kdb.h>
-#endif
 
 #undef SIMSERIAL_DEBUG	/* define this to get some debug information */
 
@@ -152,7 +149,7 @@ static  void receive_chars(struct tty_struct *tty)
 						ch = ia64_ssc(0, 0, 0, 0,
 							      SSC_GETCHAR);
 					while (!ch);
-					handle_sysrq(ch, NULL);
+					handle_sysrq(ch);
 				}
 #endif
 				seen_esc = 0;
@@ -197,38 +194,28 @@ static irqreturn_t rs_interrupt_single(int irq, void *dev_id)
  * -------------------------------------------------------------------
  */
 
-#if 0
-/*
- * not really used in our situation so keep them commented out for now
- */
-static DECLARE_TASK_QUEUE(tq_serial); /* used to be at the top of the file */
-static void do_serial_bh(void)
-{
-	run_task_queue(&tq_serial);
-	printk(KERN_ERR "do_serial_bh: called\n");
-}
-#endif
-
 static void do_softint(struct work_struct *private_)
 {
 	printk(KERN_ERR "simserial: do_softint called\n");
 }
 
-static void rs_put_char(struct tty_struct *tty, unsigned char ch)
+static int rs_put_char(struct tty_struct *tty, unsigned char ch)
 {
 	struct async_struct *info = (struct async_struct *)tty->driver_data;
 	unsigned long flags;
 
-	if (!tty || !info->xmit.buf) return;
+	if (!tty || !info->xmit.buf)
+		return 0;
 
 	local_irq_save(flags);
 	if (CIRC_SPACE(info->xmit.head, info->xmit.tail, SERIAL_XMIT_SIZE) == 0) {
 		local_irq_restore(flags);
-		return;
+		return 0;
 	}
 	info->xmit.buf[info->xmit.head] = ch;
 	info->xmit.head = (info->xmit.head + 1) & (SERIAL_XMIT_SIZE-1);
 	local_irq_restore(flags);
+	return 1;
 }
 
 static void transmit_chars(struct async_struct *info, int *intr_done)
@@ -353,11 +340,7 @@ static void rs_flush_buffer(struct tty_struct *tty)
 	info->xmit.head = info->xmit.tail = 0;
 	local_irq_restore(flags);
 
-	wake_up_interruptible(&tty->write_wait);
-
-	if ((tty->flags & (1 << TTY_DO_WRITE_WAKEUP)) &&
-	    tty->ldisc.write_wakeup)
-		(tty->ldisc.write_wakeup)(tty);
+	tty_wakeup(tty);
 }
 
 /*
@@ -406,32 +389,17 @@ static void rs_unthrottle(struct tty_struct * tty)
 	printk(KERN_INFO "simrs_unthrottle called\n");
 }
 
-/*
- * rs_break() --- routine which turns the break handling on or off
- */
-static void rs_break(struct tty_struct *tty, int break_state)
-{
-}
 
-static int rs_ioctl(struct tty_struct *tty, struct file * file,
-		    unsigned int cmd, unsigned long arg)
+static int rs_ioctl(struct tty_struct *tty, unsigned int cmd, unsigned long arg)
 {
 	if ((cmd != TIOCGSERIAL) && (cmd != TIOCSSERIAL) &&
 	    (cmd != TIOCSERCONFIG) && (cmd != TIOCSERGSTRUCT) &&
-	    (cmd != TIOCMIWAIT) && (cmd != TIOCGICOUNT)) {
+	    (cmd != TIOCMIWAIT)) {
 		if (tty->flags & (1 << TTY_IO_ERROR))
 		    return -EIO;
 	}
 
 	switch (cmd) {
-		case TIOCMGET:
-			printk(KERN_INFO "rs_ioctl: TIOCMGET called\n");
-			return -EINVAL;
-		case TIOCMBIS:
-		case TIOCMBIC:
-		case TIOCMSET:
-			printk(KERN_INFO "rs_ioctl: TIOCMBIS/BIC/SET called\n");
-			return -EINVAL;
 		case TIOCGSERIAL:
 			printk(KERN_INFO "simrs_ioctl TIOCGSERIAL called\n");
 			return 0;
@@ -464,16 +432,6 @@ static int rs_ioctl(struct tty_struct *tty, struct file * file,
 		case TIOCMIWAIT:
 			printk(KERN_INFO "rs_ioctl: TIOCMIWAIT: called\n");
 			return 0;
-		/*
-		 * Get counter of input serial line interrupts (DCD,RI,DSR,CTS)
-		 * Return: write counters to the user passed counter struct
-		 * NB: both 1->0 and 0->1 transitions are counted except for
-		 *     RI where only 0->1 is counted.
-		 */
-		case TIOCGICOUNT:
-			printk(KERN_INFO "rs_ioctl: TIOCGICOUNT called\n");
-			return 0;
-
 		case TIOCSERGWILD:
 		case TIOCSERSWILD:
 			/* "setserial -W" is called in Debian boot */
@@ -490,14 +448,6 @@ static int rs_ioctl(struct tty_struct *tty, struct file * file,
 
 static void rs_set_termios(struct tty_struct *tty, struct ktermios *old_termios)
 {
-	unsigned int cflag = tty->termios->c_cflag;
-
-	if (   (cflag == old_termios->c_cflag)
-	    && (   RELEVANT_IFLAG(tty->termios->c_iflag)
-		== RELEVANT_IFLAG(old_termios->c_iflag)))
-	  return;
-
-
 	/* Handle turning off CRTSCTS */
 	if ((old_termios->c_cflag & CRTSCTS) &&
 	    !(tty->termios->c_cflag & CRTSCTS)) {
@@ -625,8 +575,8 @@ static void rs_close(struct tty_struct *tty, struct file * filp)
 	 * the line discipline to only process XON/XOFF characters.
 	 */
 	shutdown(info);
-	if (tty->driver->flush_buffer) tty->driver->flush_buffer(tty);
-	if (tty->ldisc.flush_buffer) tty->ldisc.flush_buffer(tty);
+	rs_flush_buffer(tty);
+	tty_ldisc_flush(tty);
 	info->event = 0;
 	info->tty = NULL;
 	if (info->blocked_open) {
@@ -888,37 +838,35 @@ static int rs_open(struct tty_struct *tty, struct file * filp)
  * /proc fs routines....
  */
 
-static inline int line_info(char *buf, struct serial_state *state)
+static inline void line_info(struct seq_file *m, struct serial_state *state)
 {
-	return sprintf(buf, "%d: uart:%s port:%lX irq:%d\n",
+	seq_printf(m, "%d: uart:%s port:%lX irq:%d\n",
 		       state->line, uart_config[state->type].name,
 		       state->port, state->irq);
 }
 
-static int rs_read_proc(char *page, char **start, off_t off, int count,
-		 int *eof, void *data)
+static int rs_proc_show(struct seq_file *m, void *v)
 {
-	int i, len = 0, l;
-	off_t	begin = 0;
+	int i;
 
-	len += sprintf(page, "simserinfo:1.0 driver:%s\n", serial_version);
-	for (i = 0; i < NR_PORTS && len < 4000; i++) {
-		l = line_info(page + len, &rs_table[i]);
-		len += l;
-		if (len+begin > off+count)
-			goto done;
-		if (len+begin < off) {
-			begin += len;
-			len = 0;
-		}
-	}
-	*eof = 1;
-done:
-	if (off >= len+begin)
-		return 0;
-	*start = page + (begin-off);
-	return ((count < begin+len-off) ? count : begin+len-off);
+	seq_printf(m, "simserinfo:1.0 driver:%s\n", serial_version);
+	for (i = 0; i < NR_PORTS; i++)
+		line_info(m, &rs_table[i]);
+	return 0;
 }
+
+static int rs_proc_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, rs_proc_show, NULL);
+}
+
+static const struct file_operations rs_proc_fops = {
+	.owner		= THIS_MODULE,
+	.open		= rs_proc_open,
+	.read		= seq_read,
+	.llseek		= seq_lseek,
+	.release	= single_release,
+};
 
 /*
  * ---------------------------------------------------------------------
@@ -956,9 +904,8 @@ static const struct tty_operations hp_ops = {
 	.stop = rs_stop,
 	.start = rs_start,
 	.hangup = rs_hangup,
-	.break_ctl = rs_break,
 	.wait_until_sent = rs_wait_until_sent,
-	.read_proc = rs_read_proc,
+	.proc_fops = &rs_proc_fops,
 };
 
 /*
@@ -1004,7 +951,7 @@ simrs_init (void)
 		if (!state->irq) {
 			if ((rc = assign_irq_vector(AUTO_ASSIGN)) < 0)
 				panic("%s: out of interrupt vectors!\n",
-				      __FUNCTION__);
+				      __func__);
 			state->irq = rc;
 			ia64_ssc_connect_irq(KEYBOARD_INTR, state->irq);
 		}

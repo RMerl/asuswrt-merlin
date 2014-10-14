@@ -57,7 +57,7 @@ static int amba_kmi_write(struct serio *io, unsigned char val)
 	struct amba_kmi_port *kmi = io->port_data;
 	unsigned int timeleft = 10000; /* timeout in 100ms */
 
-	while ((readb(KMISTAT) & KMISTAT_TXEMPTY) == 0 && timeleft--)
+	while ((readb(KMISTAT) & KMISTAT_TXEMPTY) == 0 && --timeleft)
 		udelay(10);
 
 	if (timeleft)
@@ -107,7 +107,8 @@ static void amba_kmi_close(struct serio *io)
 	clk_disable(kmi->clk);
 }
 
-static int amba_kmi_probe(struct amba_device *dev, void *id)
+static int __devinit amba_kmi_probe(struct amba_device *dev,
+	const struct amba_id *id)
 {
 	struct amba_kmi_port *kmi;
 	struct serio *io;
@@ -117,27 +118,25 @@ static int amba_kmi_probe(struct amba_device *dev, void *id)
 	if (ret)
 		return ret;
 
-	kmi = kmalloc(sizeof(struct amba_kmi_port), GFP_KERNEL);
-	io = kmalloc(sizeof(struct serio), GFP_KERNEL);
+	kmi = kzalloc(sizeof(struct amba_kmi_port), GFP_KERNEL);
+	io = kzalloc(sizeof(struct serio), GFP_KERNEL);
 	if (!kmi || !io) {
 		ret = -ENOMEM;
 		goto out;
 	}
 
-	memset(kmi, 0, sizeof(struct amba_kmi_port));
-	memset(io, 0, sizeof(struct serio));
 
 	io->id.type	= SERIO_8042;
 	io->write	= amba_kmi_write;
 	io->open	= amba_kmi_open;
 	io->close	= amba_kmi_close;
-	strlcpy(io->name, dev->dev.bus_id, sizeof(io->name));
-	strlcpy(io->phys, dev->dev.bus_id, sizeof(io->phys));
+	strlcpy(io->name, dev_name(&dev->dev), sizeof(io->name));
+	strlcpy(io->phys, dev_name(&dev->dev), sizeof(io->phys));
 	io->port_data	= kmi;
 	io->dev.parent	= &dev->dev;
 
-	kmi->io 	= io;
-	kmi->base	= ioremap(dev->res.start, KMI_SIZE);
+	kmi->io		= io;
+	kmi->base	= ioremap(dev->res.start, resource_size(&dev->res));
 	if (!kmi->base) {
 		ret = -ENOMEM;
 		goto out;
@@ -164,7 +163,7 @@ static int amba_kmi_probe(struct amba_device *dev, void *id)
 	return ret;
 }
 
-static int amba_kmi_remove(struct amba_device *dev)
+static int __devexit amba_kmi_remove(struct amba_device *dev)
 {
 	struct amba_kmi_port *kmi = amba_get_drvdata(dev);
 
@@ -199,10 +198,11 @@ static struct amba_id amba_kmi_idtable[] = {
 static struct amba_driver ambakmi_driver = {
 	.drv		= {
 		.name	= "kmi-pl050",
+		.owner	= THIS_MODULE,
 	},
 	.id_table	= amba_kmi_idtable,
 	.probe		= amba_kmi_probe,
-	.remove		= amba_kmi_remove,
+	.remove		= __devexit_p(amba_kmi_remove),
 	.resume		= amba_kmi_resume,
 };
 

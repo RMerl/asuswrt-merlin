@@ -66,7 +66,7 @@ static void usb_ctrl_msg(struct st5481_adapter *adapter,
 	struct ctrl_msg *ctrl_msg;
 	
 	if ((w_index = fifo_add(&ctrl->msg_fifo.f)) < 0) {
-		WARN("control msg FIFO full");
+		WARNING("control msg FIFO full");
 		return;
 	}
 	ctrl_msg = &ctrl->msg_fifo.data[w_index]; 
@@ -139,7 +139,7 @@ static void usb_ctrl_complete(struct urb *urb)
 				DBG(1,"urb killed status %d", urb->status);
 				return; // Give up
 			default: 
-				WARN("urb status %d",urb->status);
+				WARNING("urb status %d",urb->status);
 				break;
 		}
 	}
@@ -149,14 +149,7 @@ static void usb_ctrl_complete(struct urb *urb)
 	if (ctrl_msg->dr.bRequest == USB_REQ_CLEAR_FEATURE) {
 	        /* Special case handling for pipe reset */
 		le16_to_cpus(&ctrl_msg->dr.wIndex);
-
-		/* toggle is reset on clear */
-		usb_settoggle(adapter->usb_dev, 
-			      ctrl_msg->dr.wIndex & ~USB_DIR_IN, 
-			      (ctrl_msg->dr.wIndex & USB_DIR_IN) == 0,
-			      0);
-
-
+		usb_reset_endpoint(adapter->usb_dev, ctrl_msg->dr.wIndex);
 	}
 	
 	if (ctrl_msg->complete)
@@ -198,7 +191,7 @@ static void usb_int_complete(struct urb *urb)
 			DBG(2, "urb shutting down with status: %d", urb->status);
 			return;
 		default:
-			WARN("nonzero urb status received: %d", urb->status);
+			WARNING("nonzero urb status received: %d", urb->status);
 			goto exit;
 	}
 
@@ -235,7 +228,7 @@ static void usb_int_complete(struct urb *urb)
 exit:
 	status = usb_submit_urb (urb, GFP_ATOMIC);
 	if (status)
-		WARN("usb_submit_urb failed with result %d", status);
+		WARNING("usb_submit_urb failed with result %d", status);
 }
 
 /* ======================================================================
@@ -257,7 +250,7 @@ int st5481_setup_usb(struct st5481_adapter *adapter)
 	DBG(2,"");
 	
 	if ((status = usb_reset_configuration (dev)) < 0) {
-		WARN("reset_configuration failed,status=%d",status);
+		WARNING("reset_configuration failed,status=%d",status);
 		return status;
 	}
 
@@ -269,7 +262,7 @@ int st5481_setup_usb(struct st5481_adapter *adapter)
 
 	// Check if the config is sane
 	if ( altsetting->desc.bNumEndpoints != 7 ) {
-		WARN("expecting 7 got %d endpoints!", altsetting->desc.bNumEndpoints);
+		WARNING("expecting 7 got %d endpoints!", altsetting->desc.bNumEndpoints);
 		return -EINVAL;
 	}
 
@@ -279,7 +272,7 @@ int st5481_setup_usb(struct st5481_adapter *adapter)
 
 	// Use alternative setting 3 on interface 0 to have 2B+D
 	if ((status = usb_set_interface (dev, 0, 3)) < 0) {
-		WARN("usb_set_interface failed,status=%d",status);
+		WARNING("usb_set_interface failed,status=%d",status);
 		return status;
 	}
 
@@ -342,7 +335,7 @@ void st5481_release_usb(struct st5481_adapter *adapter)
 	usb_kill_urb(intr->urb);
 	kfree(intr->urb->transfer_buffer);
 	usb_free_urb(intr->urb);
-	ctrl->urb = NULL;
+	intr->urb = NULL;
 }
 
 /*
@@ -477,7 +470,7 @@ void st5481_release_isocpipes(struct urb* urb[2])
 
 /*
  * Decode frames received on the B/D channel.
- * Note that this function will be called continously
+ * Note that this function will be called continuously
  * with 64Kbit/s / 16Kbit/s of data and hence it will be 
  * called 50 times per second with 20 ISOC descriptors. 
  * Called at interrupt.
@@ -497,7 +490,7 @@ static void usb_in_complete(struct urb *urb)
 				DBG(1,"urb killed status %d", urb->status);
 				return; // Give up
 			default: 
-				WARN("urb status %d",urb->status);
+				WARNING("urb status %d",urb->status);
 				break;
 		}
 	}
@@ -523,7 +516,7 @@ static void usb_in_complete(struct urb *urb)
 			DBG(4,"count=%d",status);
 			DBG_PACKET(0x400, in->rcvbuf, status);
 			if (!(skb = dev_alloc_skb(status))) {
-				WARN("receive out of memory\n");
+				WARNING("receive out of memory\n");
 				break;
 			}
 			memcpy(skb_put(skb, status), in->rcvbuf, status);
@@ -644,10 +637,13 @@ void st5481_in_mode(struct st5481_in *in, int mode)
 	usb_unlink_urb(in->urb[1]);
 
 	if (in->mode != L1_MODE_NULL) {
-		if (in->mode != L1_MODE_TRANS)
-			isdnhdlc_rcv_init(&in->hdlc_state,
-				in->mode == L1_MODE_HDLC_56K);
-		
+		if (in->mode != L1_MODE_TRANS) {
+			u32 features = HDLC_BITREVERSE;
+
+			if (in->mode == L1_MODE_HDLC_56K)
+				features |= HDLC_56KBIT;
+			isdnhdlc_rcv_init(&in->hdlc_state, features);
+		}
 		st5481_usb_pipe_reset(in->adapter, in->ep, NULL, NULL);
 		st5481_usb_device_ctrl_msg(in->adapter, in->counter,
 					   in->packet_size,

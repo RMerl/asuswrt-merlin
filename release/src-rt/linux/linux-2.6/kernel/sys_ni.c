@@ -4,6 +4,10 @@
 
 #include <asm/unistd.h>
 
+/*  we can't #include <linux/syscalls.h> here,
+    but tell gcc to not warn with -Wmissing-prototypes  */
+asmlinkage long sys_ni_syscall(void);
+
 /*
  * Non-implemented system calls get redirected here.
  */
@@ -14,6 +18,7 @@ asmlinkage long sys_ni_syscall(void)
 
 cond_syscall(sys_nfsservctl);
 cond_syscall(sys_quotactl);
+cond_syscall(sys32_quotactl);
 cond_syscall(sys_acct);
 cond_syscall(sys_lookup_dcookie);
 cond_syscall(sys_swapon);
@@ -26,6 +31,7 @@ cond_syscall(sys_socketpair);
 cond_syscall(sys_bind);
 cond_syscall(sys_listen);
 cond_syscall(sys_accept);
+cond_syscall(sys_accept4);
 cond_syscall(sys_connect);
 cond_syscall(sys_getsockname);
 cond_syscall(sys_getpeername);
@@ -35,10 +41,18 @@ cond_syscall(sys_recvfrom);
 cond_syscall(sys_recv);
 cond_syscall(sys_socket);
 cond_syscall(sys_setsockopt);
+cond_syscall(compat_sys_setsockopt);
 cond_syscall(sys_getsockopt);
+cond_syscall(compat_sys_getsockopt);
 cond_syscall(sys_shutdown);
 cond_syscall(sys_sendmsg);
+cond_syscall(compat_sys_sendmsg);
 cond_syscall(sys_recvmsg);
+cond_syscall(sys_recvmmsg);
+cond_syscall(compat_sys_recvmsg);
+cond_syscall(compat_sys_recv);
+cond_syscall(compat_sys_recvfrom);
+cond_syscall(compat_sys_recvmmsg);
 cond_syscall(sys_socketcall);
 cond_syscall(sys_futex);
 cond_syscall(compat_sys_futex);
@@ -47,9 +61,11 @@ cond_syscall(compat_sys_set_robust_list);
 cond_syscall(sys_get_robust_list);
 cond_syscall(compat_sys_get_robust_list);
 cond_syscall(sys_epoll_create);
+cond_syscall(sys_epoll_create1);
 cond_syscall(sys_epoll_ctl);
 cond_syscall(sys_epoll_wait);
 cond_syscall(sys_epoll_pwait);
+cond_syscall(compat_sys_epoll_pwait);
 cond_syscall(sys_semget);
 cond_syscall(sys_semop);
 cond_syscall(sys_semtimedop);
@@ -85,6 +101,7 @@ cond_syscall(sys_keyctl);
 cond_syscall(compat_sys_keyctl);
 cond_syscall(compat_sys_socketcall);
 cond_syscall(sys_inotify_init);
+cond_syscall(sys_inotify_init1);
 cond_syscall(sys_inotify_add_watch);
 cond_syscall(sys_inotify_rm_watch);
 cond_syscall(sys_migrate_pages);
@@ -110,18 +127,26 @@ cond_syscall(sys_setreuid16);
 cond_syscall(sys_setuid16);
 cond_syscall(sys_vm86old);
 cond_syscall(sys_vm86);
+cond_syscall(sys_ipc);
 cond_syscall(compat_sys_ipc);
 cond_syscall(compat_sys_sysctl);
+cond_syscall(sys_flock);
+cond_syscall(sys_io_setup);
+cond_syscall(sys_io_destroy);
+cond_syscall(sys_io_submit);
+cond_syscall(sys_io_cancel);
+cond_syscall(sys_io_getevents);
+cond_syscall(sys_syslog);
 
 /* arch-specific weak syscall entries */
 cond_syscall(sys_pciconfig_read);
 cond_syscall(sys_pciconfig_write);
 cond_syscall(sys_pciconfig_iobase);
 cond_syscall(sys32_ipc);
-cond_syscall(sys32_sysctl);
 cond_syscall(ppc_rtas);
 cond_syscall(sys_spu_run);
 cond_syscall(sys_spu_create);
+cond_syscall(sys_subpage_prot);
 
 /* mmu depending weak syscall entries */
 cond_syscall(sys_mprotect);
@@ -144,10 +169,25 @@ cond_syscall(sys_ioprio_get);
 
 /* New file descriptors */
 cond_syscall(sys_signalfd);
+cond_syscall(sys_signalfd4);
 cond_syscall(compat_sys_signalfd);
+cond_syscall(compat_sys_signalfd4);
 cond_syscall(sys_timerfd_create);
 cond_syscall(sys_timerfd_settime);
 cond_syscall(sys_timerfd_gettime);
 cond_syscall(compat_sys_timerfd_settime);
 cond_syscall(compat_sys_timerfd_gettime);
 cond_syscall(sys_eventfd);
+cond_syscall(sys_eventfd2);
+
+/* performance counters: */
+cond_syscall(sys_perf_event_open);
+
+/* fanotify! */
+cond_syscall(sys_fanotify_init);
+cond_syscall(sys_fanotify_mark);
+
+/* open by handle */
+cond_syscall(sys_name_to_handle_at);
+cond_syscall(sys_open_by_handle_at);
+cond_syscall(compat_sys_open_by_handle_at);

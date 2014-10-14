@@ -29,8 +29,33 @@
 #include <asm/asm-offsets.h>
 #include <asm/processor.h>
 #include <asm/kexec.h>
+#include <asm/bug.h>
+#include <asm/ptrace.h>
 
 	.text
+
+_GLOBAL(call_do_softirq)
+	mflr	r0
+	stw	r0,4(r1)
+	stwu	r1,THREAD_SIZE-STACK_FRAME_OVERHEAD(r3)
+	mr	r1,r3
+	bl	__do_softirq
+	lwz	r1,0(r1)
+	lwz	r0,4(r1)
+	mtlr	r0
+	blr
+
+_GLOBAL(call_handle_irq)
+	mflr	r0
+	stw	r0,4(r1)
+	mtctr	r6
+	stwu	r1,THREAD_SIZE-STACK_FRAME_OVERHEAD(r5)
+	mr	r1,r5
+	bctrl
+	lwz	r1,0(r1)
+	lwz	r0,4(r1)
+	mtlr	r0
+	blr
 
 /*
  * This returns the high 64 bits of the product of two 64-bit numbers.
@@ -152,7 +177,7 @@ _GLOBAL(low_choose_750fx_pll)
 	mtspr	SPRN_HID1,r4
 
 	/* Store new HID1 image */
-	rlwinm	r6,r1,0,0,18
+	rlwinm	r6,r1,0,0,(31-THREAD_SHIFT)
 	lwz	r6,TI_CPU(r6)
 	slwi	r6,r6,2
 	addis	r6,r6,nap_save_hid1@ha
@@ -206,162 +231,46 @@ _GLOBAL(_nmask_and_or_msr)
 	isync
 	blr			/* Done */
 
+#ifdef CONFIG_40x
 
 /*
- * Flush MMU TLB
+ * Do an IO access in real mode
  */
-_GLOBAL(_tlbia)
-#if defined(CONFIG_40x)
-	sync			/* Flush to memory before changing mapping */
-	tlbia
-	isync			/* Flush shadow TLB */
-#elif defined(CONFIG_44x)
-	li	r3,0
+_GLOBAL(real_readb)
+	mfmsr	r7
+	ori	r0,r7,MSR_DR
+	xori	r0,r0,MSR_DR
 	sync
-
-	/* Load high watermark */
-	lis	r4,tlb_44x_hwater@ha
-	lwz	r5,tlb_44x_hwater@l(r4)
-
-1:	tlbwe	r3,r3,PPC44x_TLB_PAGEID
-	addi	r3,r3,1
-	cmpw	0,r3,r5
-	ble	1b
-
-	isync
-#elif defined(CONFIG_FSL_BOOKE)
-	/* Invalidate all entries in TLB0 */
-	li	r3, 0x04
-	tlbivax	0,3
-	/* Invalidate all entries in TLB1 */
-	li	r3, 0x0c
-	tlbivax	0,3
-	/* Invalidate all entries in TLB2 */
-	li	r3, 0x14
-	tlbivax	0,3
-	/* Invalidate all entries in TLB3 */
-	li	r3, 0x1c
-	tlbivax	0,3
-	msync
-#ifdef CONFIG_SMP
-	tlbsync
-#endif /* CONFIG_SMP */
-#else /* !(CONFIG_40x || CONFIG_44x || CONFIG_FSL_BOOKE) */
-#if defined(CONFIG_SMP)
-	rlwinm	r8,r1,0,0,18
-	lwz	r8,TI_CPU(r8)
-	oris	r8,r8,10
-	mfmsr	r10
-	SYNC
-	rlwinm	r0,r10,0,17,15		/* clear bit 16 (MSR_EE) */
-	rlwinm	r0,r0,0,28,26		/* clear DR */
 	mtmsr	r0
-	SYNC_601
+	sync
 	isync
-	lis	r9,mmu_hash_lock@h
-	ori	r9,r9,mmu_hash_lock@l
-	tophys(r9,r9)
-10:	lwarx	r7,0,r9
-	cmpwi	0,r7,0
-	bne-	10b
-	stwcx.	r8,0,r9
-	bne-	10b
+	lbz	r3,0(r3)
 	sync
-	tlbia
+	mtmsr	r7
 	sync
-	TLBSYNC
-	li	r0,0
-	stw	r0,0(r9)		/* clear mmu_hash_lock */
-	mtmsr	r10
-	SYNC_601
 	isync
-#else /* CONFIG_SMP */
-	sync
-	tlbia
-	sync
-#endif /* CONFIG_SMP */
-#endif /* ! defined(CONFIG_40x) */
 	blr
 
-/*
- * Flush MMU TLB for a particular address
+	/*
+ * Do an IO access in real mode
  */
-_GLOBAL(_tlbie)
-#if defined(CONFIG_40x)
-	tlbsx.	r3, 0, r3
-	bne	10f
+_GLOBAL(real_writeb)
+	mfmsr	r7
+	ori	r0,r7,MSR_DR
+	xori	r0,r0,MSR_DR
 	sync
-	/* There are only 64 TLB entries, so r3 < 64, which means bit 25 is clear.
-	 * Since 25 is the V bit in the TLB_TAG, loading this value will invalidate
-	 * the TLB entry. */
-	tlbwe	r3, r3, TLB_TAG
-	isync
-10:
-#elif defined(CONFIG_44x)
-	mfspr	r4,SPRN_MMUCR
-	mfspr	r5,SPRN_PID			/* Get PID */
-	rlwimi	r4,r5,0,24,31			/* Set TID */
-	mtspr	SPRN_MMUCR,r4
-
-	tlbsx.	r3, 0, r3
-	bne	10f
-	sync
-	/* There are only 64 TLB entries, so r3 < 64,
-	 * which means bit 22, is clear.  Since 22 is
-	 * the V bit in the TLB_PAGEID, loading this
-	 * value will invalidate the TLB entry.
-	 */
-	tlbwe	r3, r3, PPC44x_TLB_PAGEID
-	isync
-10:
-#elif defined(CONFIG_FSL_BOOKE)
-	rlwinm	r4, r3, 0, 0, 19
-	ori	r5, r4, 0x08	/* TLBSEL = 1 */
-	ori	r6, r4, 0x10	/* TLBSEL = 2 */
-	ori	r7, r4, 0x18	/* TLBSEL = 3 */
-	tlbivax	0, r4
-	tlbivax	0, r5
-	tlbivax	0, r6
-	tlbivax	0, r7
-	msync
-#if defined(CONFIG_SMP)
-	tlbsync
-#endif /* CONFIG_SMP */
-#else /* !(CONFIG_40x || CONFIG_44x || CONFIG_FSL_BOOKE) */
-#if defined(CONFIG_SMP)
-	rlwinm	r8,r1,0,0,18
-	lwz	r8,TI_CPU(r8)
-	oris	r8,r8,11
-	mfmsr	r10
-	SYNC
-	rlwinm	r0,r10,0,17,15		/* clear bit 16 (MSR_EE) */
-	rlwinm	r0,r0,0,28,26		/* clear DR */
 	mtmsr	r0
-	SYNC_601
-	isync
-	lis	r9,mmu_hash_lock@h
-	ori	r9,r9,mmu_hash_lock@l
-	tophys(r9,r9)
-10:	lwarx	r7,0,r9
-	cmpwi	0,r7,0
-	bne-	10b
-	stwcx.	r8,0,r9
-	bne-	10b
-	eieio
-	tlbie	r3
 	sync
-	TLBSYNC
-	li	r0,0
-	stw	r0,0(r9)		/* clear mmu_hash_lock */
-	mtmsr	r10
-	SYNC_601
 	isync
-#else /* CONFIG_SMP */
-	tlbie	r3
+	stb	r3,0(r4)
 	sync
-#endif /* CONFIG_SMP */
-#endif /* ! CONFIG_40x */
+	mtmsr	r7
+	sync
+	isync
 	blr
+
+#endif /* CONFIG_40x */
+
 
 /*
  * Flush instruction cache.
@@ -392,7 +301,7 @@ BEGIN_FTR_SECTION
 	mtspr   SPRN_L1CSR0,r3
 	isync
 	blr
-END_FTR_SECTION_IFCLR(CPU_FTR_SPLIT_ID_CACHE)
+END_FTR_SECTION_IFSET(CPU_FTR_UNIFIED_ID_CACHE)
 	mfspr	r3,SPRN_L1CSR1
 	ori	r3,r3,L1CSR1_ICFI|L1CSR1_ICLFR
 	mtspr	SPRN_L1CSR1,r3
@@ -416,10 +325,10 @@ END_FTR_SECTION_IFCLR(CPU_FTR_SPLIT_ID_CACHE)
  *
  * flush_icache_range(unsigned long start, unsigned long stop)
  */
-_GLOBAL(__flush_icache_range)
+_KPROBE(__flush_icache_range)
 BEGIN_FTR_SECTION
 	blr				/* for 601, do nothing */
-END_FTR_SECTION_IFCLR(CPU_FTR_SPLIT_ID_CACHE)
+END_FTR_SECTION_IFSET(CPU_FTR_COHERENT_ICACHE)
 	li	r5,L1_CACHE_BYTES-1
 	andc	r3,r3,r5
 	subf	r4,r3,r4
@@ -432,10 +341,17 @@ END_FTR_SECTION_IFCLR(CPU_FTR_SPLIT_ID_CACHE)
 	addi	r3,r3,L1_CACHE_BYTES
 	bdnz	1b
 	sync				/* wait for dcbst's to get to ram */
+#ifndef CONFIG_44x
 	mtctr	r4
 2:	icbi	0,r6
 	addi	r6,r6,L1_CACHE_BYTES
 	bdnz	2b
+#else
+	/* Flash invalidate on 44x because we are passed kmapped addresses and
+	   this doesn't work for userspace pages due to the virtually tagged
+	   icache.  Sigh. */
+	iccci	0, r0
+#endif
 	sync				/* additional sync needed on g4 */
 	isync
 	blr
@@ -514,16 +430,28 @@ _GLOBAL(invalidate_dcache_range)
  */
 _GLOBAL(__flush_dcache_icache)
 BEGIN_FTR_SECTION
-	blr					/* for 601, do nothing */
-END_FTR_SECTION_IFCLR(CPU_FTR_SPLIT_ID_CACHE)
-	rlwinm	r3,r3,0,0,19			/* Get page base address */
-	li	r4,4096/L1_CACHE_BYTES	/* Number of lines in a page */
+	blr
+END_FTR_SECTION_IFSET(CPU_FTR_COHERENT_ICACHE)
+	rlwinm	r3,r3,0,0,31-PAGE_SHIFT		/* Get page base address */
+	li	r4,PAGE_SIZE/L1_CACHE_BYTES	/* Number of lines in a page */
 	mtctr	r4
 	mr	r6,r3
 0:	dcbst	0,r3				/* Write line to ram */
 	addi	r3,r3,L1_CACHE_BYTES
 	bdnz	0b
 	sync
+#ifdef CONFIG_44x
+	/* We don't flush the icache on 44x. Those have a virtual icache
+	 * and we don't have access to the virtual address here (it's
+	 * not the page vaddr but where it's mapped in user space). The
+	 * flushing of the icache on these is handled elsewhere, when
+	 * a change in the address space occurs, before returning to
+	 * user space
+	 */
+BEGIN_MMU_FTR_SECTION
+	blr
+END_MMU_FTR_SECTION_IFSET(MMU_FTR_TYPE_44x)
+#endif /* CONFIG_44x */
 	mtctr	r4
 1:	icbi	0,r6
 	addi	r6,r6,L1_CACHE_BYTES
@@ -532,6 +460,7 @@ END_FTR_SECTION_IFCLR(CPU_FTR_SPLIT_ID_CACHE)
 	isync
 	blr
 
+#ifndef CONFIG_BOOKE
 /*
  * Flush a particular page from the data cache to RAM, identified
  * by its physical address.  We turn off the MMU so we can just use
@@ -543,13 +472,13 @@ END_FTR_SECTION_IFCLR(CPU_FTR_SPLIT_ID_CACHE)
 _GLOBAL(__flush_dcache_icache_phys)
 BEGIN_FTR_SECTION
 	blr					/* for 601, do nothing */
-END_FTR_SECTION_IFCLR(CPU_FTR_SPLIT_ID_CACHE)
+END_FTR_SECTION_IFSET(CPU_FTR_COHERENT_ICACHE)
 	mfmsr	r10
 	rlwinm	r0,r10,0,28,26			/* clear DR */
 	mtmsr	r0
 	isync
-	rlwinm	r3,r3,0,0,19			/* Get page base address */
-	li	r4,4096/L1_CACHE_BYTES	/* Number of lines in a page */
+	rlwinm	r3,r3,0,0,31-PAGE_SHIFT		/* Get page base address */
+	li	r4,PAGE_SIZE/L1_CACHE_BYTES	/* Number of lines in a page */
 	mtctr	r4
 	mr	r6,r3
 0:	dcbst	0,r3				/* Write line to ram */
@@ -564,6 +493,7 @@ END_FTR_SECTION_IFCLR(CPU_FTR_SPLIT_ID_CACHE)
 	mtmsr	r10				/* restore DR */
 	isync
 	blr
+#endif /* CONFIG_BOOKE */
 
 /*
  * Clear pages using the dcbz instruction, which doesn't cause any
@@ -573,18 +503,10 @@ END_FTR_SECTION_IFCLR(CPU_FTR_SPLIT_ID_CACHE)
  * void clear_pages(void *page, int order) ;
  */
 _GLOBAL(clear_pages)
-	li	r0,4096/L1_CACHE_BYTES
+	li	r0,PAGE_SIZE/L1_CACHE_BYTES
 	slw	r0,r0,r4
 	mtctr	r0
-#ifdef CONFIG_8xx
-	li	r4, 0
-1:	stw	r4, 0(r3)
-	stw	r4, 4(r3)
-	stw	r4, 8(r3)
-	stw	r4, 12(r3)
-#else
 1:	dcbz	0,r3
-#endif
 	addi	r3,r3,L1_CACHE_BYTES
 	bdnz	1b
 	blr
@@ -609,15 +531,6 @@ _GLOBAL(copy_page)
 	addi	r3,r3,-4
 	addi	r4,r4,-4
 
-#ifdef CONFIG_8xx
-	/* don't use prefetch on 8xx */
-    	li	r0,4096/L1_CACHE_BYTES
-	mtctr	r0
-1:	COPY_16_BYTES
-	bdnz	1b
-	blr
-
-#else	/* not 8xx, we can prefetch */
 	li	r5,4
 
 #if MAX_COPY_PREFETCH > 1
@@ -631,7 +544,7 @@ _GLOBAL(copy_page)
 	dcbt	r5,r4
 	li	r11,L1_CACHE_BYTES+4
 #endif /* MAX_COPY_PREFETCH */
-	li	r0,4096/L1_CACHE_BYTES - MAX_COPY_PREFETCH
+	li	r0,PAGE_SIZE/L1_CACHE_BYTES - MAX_COPY_PREFETCH
 	crclr	4*cr0+eq
 2:
 	mtctr	r0
@@ -658,7 +571,6 @@ _GLOBAL(copy_page)
 	li	r0,MAX_COPY_PREFETCH
 	li	r11,4
 	b	2b
-#endif	/* CONFIG_8xx */
 
 /*
  * void atomic_clear_mask(atomic_t mask, atomic_t *addr)
@@ -728,6 +640,21 @@ _GLOBAL(__lshrdi3)
 	or	r4,r4,r7	# LSW |= t2
 	blr
 
+/*
+ * 64-bit comparison: __ucmpdi2(u64 a, u64 b)
+ * Returns 0 if a < b, 1 if a == b, 2 if a > b.
+ */
+_GLOBAL(__ucmpdi2)
+	cmplw	r3,r5
+	li	r3,1
+	bne	1f
+	cmplw	r4,r6
+	beqlr
+1:	li	r3,0
+	bltlr
+	li	r3,2
+	blr
+
 _GLOBAL(abs)
 	srawi	r4,r3,31
 	xor	r3,r3,r4
@@ -749,8 +676,10 @@ _GLOBAL(kernel_thread)
 	li	r4,0		/* new sp (unused) */
 	li	r0,__NR_clone
 	sc
-	cmpwi	0,r3,0		/* parent or child? */
-	bne	1f		/* return if parent */
+	bns+	1f		/* did system call indicate error? */
+	neg	r3,r3		/* if so, make return code negative */
+1:	cmpwi	0,r3,0		/* parent or child? */
+	bne	2f		/* return if parent */
 	li	r0,0		/* make top-level stack frame */
 	stwu	r0,-16(r1)
 	mtlr	r30		/* fn addr in lr */
@@ -760,16 +689,9 @@ _GLOBAL(kernel_thread)
 	li	r0,__NR_exit	/* exit if function returns */
 	li	r3,0
 	sc
-1:	lwz	r30,8(r1)
+2:	lwz	r30,8(r1)
 	lwz	r31,12(r1)
 	addi	r1,r1,16
-	blr
-
-_GLOBAL(kernel_execve)
-	li	r0,__NR_execve
-	sc
-	bnslr
-	neg	r3,r3
 	blr
 
 /*
@@ -788,6 +710,22 @@ relocate_new_kernel:
 	/* r4 = reboot_code_buffer */
 	/* r5 = start_address      */
 
+#ifdef CONFIG_FSL_BOOKE
+
+	mr	r29, r3
+	mr	r30, r4
+	mr	r31, r5
+
+#define ENTRY_MAPPING_KEXEC_SETUP
+#include "fsl_booke_entry_mapping.S"
+#undef ENTRY_MAPPING_KEXEC_SETUP
+
+	mr      r3, r29
+	mr      r4, r30
+	mr      r5, r31
+
+	li	r0, 0
+#else
 	li	r0, 0
 
 	/*
@@ -804,12 +742,13 @@ relocate_new_kernel:
 	rfi
 
 1:
+#endif
 	/* from this point address translation is turned off */
 	/* and interrupts are disabled */
 
 	/* set a new stack at the bottom of our page... */
 	/* (not really needed now) */
-	addi	r1, r4, KEXEC_CONTROL_CODE_SIZE - 8 /* for LR Save+Back Chain */
+	addi	r1, r4, KEXEC_CONTROL_PAGE_SIZE - 8 /* for LR Save+Back Chain */
 	stw	r0, 0(r1)
 
 	/* Do the copies */
@@ -871,6 +810,9 @@ relocate_new_kernel:
 	 */
 	isync
 	sync
+
+	mfspr	r3, SPRN_PIR /* current core we are running on */
+	mr	r4, r5 /* load physical address of chunk called */
 
 	/* jump to the entry point, usually the setup routine */
 	mtlr	r5

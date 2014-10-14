@@ -35,6 +35,7 @@
 #include <linux/audit.h>
 #include <linux/tty.h>
 #include <linux/security.h>
+#include <linux/gfp.h>
 #include <net/sock.h>
 #include <net/netlink.h>
 #include <net/genetlink.h>
@@ -45,10 +46,6 @@
 #include "netlabel_unlabeled.h"
 #include "netlabel_cipso_v4.h"
 #include "netlabel_user.h"
-
-/* do not do any auditing if audit_enabled == 0, see kernel/audit.c for
- * details */
-extern int audit_enabled;
 
 /*
  * NetLabel NETLINK Setup Functions
@@ -63,7 +60,7 @@ extern int audit_enabled;
  * non-zero on failure.
  *
  */
-int netlbl_netlink_init(void)
+int __init netlbl_netlink_init(void)
 {
 	int ret_val;
 
@@ -100,7 +97,6 @@ int netlbl_netlink_init(void)
 struct audit_buffer *netlbl_audit_start_common(int type,
 					       struct netlbl_audit *audit_info)
 {
-	struct audit_context *audit_ctx = current->audit_context;
 	struct audit_buffer *audit_buf;
 	char *secctx;
 	u32 secctx_len;
@@ -108,17 +104,21 @@ struct audit_buffer *netlbl_audit_start_common(int type,
 	if (audit_enabled == 0)
 		return NULL;
 
-	audit_buf = audit_log_start(audit_ctx, GFP_ATOMIC, type);
+	audit_buf = audit_log_start(current->audit_context, GFP_ATOMIC, type);
 	if (audit_buf == NULL)
 		return NULL;
 
-	audit_log_format(audit_buf, "netlabel: auid=%u", audit_info->loginuid);
+	audit_log_format(audit_buf, "netlabel: auid=%u ses=%u",
+			 audit_info->loginuid,
+			 audit_info->sessionid);
 
 	if (audit_info->secid != 0 &&
 	    security_secid_to_secctx(audit_info->secid,
 				     &secctx,
-				     &secctx_len) == 0)
+				     &secctx_len) == 0) {
 		audit_log_format(audit_buf, " subj=%s", secctx);
+		security_release_secctx(secctx, secctx_len);
+	}
 
 	return audit_buf;
 }

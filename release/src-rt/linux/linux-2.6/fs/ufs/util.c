@@ -8,9 +8,10 @@
  
 #include <linux/string.h>
 #include <linux/slab.h>
-#include <linux/ufs_fs.h>
 #include <linux/buffer_head.h>
 
+#include "ufs_fs.h"
+#include "ufs.h"
 #include "swab.h"
 #include "util.h"
 
@@ -26,7 +27,7 @@ struct ufs_buffer_head * _ubh_bread_ (struct ufs_sb_private_info * uspi,
 	if (count > UFS_MAXFRAG)
 		return NULL;
 	ubh = (struct ufs_buffer_head *)
-		kmalloc (sizeof (struct ufs_buffer_head), GFP_KERNEL);
+		kmalloc (sizeof (struct ufs_buffer_head), GFP_NOFS);
 	if (!ubh)
 		return NULL;
 	ubh->fragment = fragment;
@@ -112,21 +113,17 @@ void ubh_mark_buffer_uptodate (struct ufs_buffer_head * ubh, int flag)
 	}
 }
 
-void ubh_ll_rw_block(int rw, struct ufs_buffer_head *ubh)
+void ubh_sync_block(struct ufs_buffer_head *ubh)
 {
-	if (!ubh)
-		return;
+	if (ubh) {
+		unsigned i;
 
-	ll_rw_block(rw, ubh->count, ubh->bh);
-}
+		for (i = 0; i < ubh->count; i++)
+			write_dirty_buffer(ubh->bh[i], WRITE);
 
-void ubh_wait_on_buffer (struct ufs_buffer_head * ubh)
-{
-	unsigned i;
-	if (!ubh)
-		return;
-	for ( i = 0; i < ubh->count; i++ )
-		wait_on_buffer (ubh->bh[i]);
+		for (i = 0; i < ubh->count; i++)
+			wait_on_buffer(ubh->bh[i]);
+	}
 }
 
 void ubh_bforget (struct ufs_buffer_head * ubh)

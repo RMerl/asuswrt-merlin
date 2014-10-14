@@ -3,27 +3,108 @@
  * Copytight (C) 1999, 2000 Silicon Graphics, Inc.
  */
 #include <linux/bcd.h>
+#include <linux/clockchips.h>
 #include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/sched.h>
 #include <linux/interrupt.h>
 #include <linux/kernel_stat.h>
 #include <linux/param.h>
+#include <linux/smp.h>
 #include <linux/time.h>
 #include <linux/timex.h>
 #include <linux/mm.h>
+#include <linux/platform_device.h>
 
 #include <asm/time.h>
 #include <asm/pgtable.h>
 #include <asm/sgialib.h>
 #include <asm/sn/ioc3.h>
-#include <asm/m48t35.h>
 #include <asm/sn/klconfig.h>
 #include <asm/sn/arch.h>
 #include <asm/sn/addrs.h>
 #include <asm/sn/sn_private.h>
 #include <asm/sn/sn0/ip27.h>
 #include <asm/sn/sn0/hub.h>
+
+#define TICK_SIZE (tick_nsec / 1000)
+
+/* Includes for ioc3_init().  */
+#include <asm/sn/types.h>
+#include <asm/sn/sn0/addrs.h>
+#include <asm/sn/sn0/hubni.h>
+#include <asm/sn/sn0/hubio.h>
+#include <asm/pci/bridge.h>
+
+static void enable_rt_irq(struct irq_data *d)
+{
+}
+
+static void disable_rt_irq(struct irq_data *d)
+{
+}
+
+static struct irq_chip rt_irq_type = {
+	.name		= "SN HUB RT timer",
+	.irq_mask	= disable_rt_irq,
+	.irq_unmask	= enable_rt_irq,
+};
+
+static int rt_next_event(unsigned long delta, struct clock_event_device *evt)
+{
+	unsigned int cpu = smp_processor_id();
+	int slice = cputoslice(cpu);
+	unsigned long cnt;
+
+	cnt = LOCAL_HUB_L(PI_RT_COUNT);
+	cnt += delta;
+	LOCAL_HUB_S(PI_RT_COMPARE_A + PI_COUNT_OFFSET * slice, cnt);
+
+	return LOCAL_HUB_L(PI_RT_COUNT) >= cnt ? -ETIME : 0;
+}
+
+static void rt_set_mode(enum clock_event_mode mode,
+		struct clock_event_device *evt)
+{
+	switch (mode) {
+	case CLOCK_EVT_MODE_ONESHOT:
+		/* The only mode supported */
+		break;
+
+	case CLOCK_EVT_MODE_PERIODIC:
+	case CLOCK_EVT_MODE_UNUSED:
+	case CLOCK_EVT_MODE_SHUTDOWN:
+	case CLOCK_EVT_MODE_RESUME:
+		/* Nothing to do  */
+		break;
+	}
+}
+
+int rt_timer_irq;
+
+static DEFINE_PER_CPU(struct clock_event_device, hub_rt_clockevent);
+static DEFINE_PER_CPU(char [11], hub_rt_name);
+
+static irqreturn_t hub_rt_counter_handler(int irq, void *dev_id)
+{
+	unsigned int cpu = smp_processor_id();
+	struct clock_event_device *cd = &per_cpu(hub_rt_clockevent, cpu);
+	int slice = cputoslice(cpu);
+
+	/*
+	 * Ack
+	 */
+	LOCAL_HUB_S(PI_RT_PEND_A + PI_COUNT_OFFSET * slice, 0);
+	cd->event_handler(cd);
+
+	return IRQ_HANDLED;
+}
+
+struct irqaction hub_rt_irqaction = {
+	.handler	= hub_rt_counter_handler,
+	.flags		= IRQF_DISABLED | IRQF_PERCPU | IRQF_TIMER,
+	.name		= "hub-rt",
+};
 
 /*
  * This is a hack; we really need to figure these values out dynamically
@@ -34,204 +115,77 @@
  * Ralf: which clock rate is used to feed the counter?
  */
 #define NSEC_PER_CYCLE		800
-#define CYCLES_PER_SEC		(NSEC_PER_SEC/NSEC_PER_CYCLE)
-#define CYCLES_PER_JIFFY	(CYCLES_PER_SEC/HZ)
+#define CYCLES_PER_SEC		(NSEC_PER_SEC / NSEC_PER_CYCLE)
 
-#define TICK_SIZE (tick_nsec / 1000)
-
-static unsigned long ct_cur[NR_CPUS];	/* What counter should be at next timer irq */
-static long last_rtc_update;		/* Last time the rtc clock got updated */
-
-#if 0
-static int set_rtc_mmss(unsigned long nowtime)
+void __cpuinit hub_rt_clock_event_init(void)
 {
-	int retval = 0;
-	int real_seconds, real_minutes, cmos_minutes;
-	struct m48t35_rtc *rtc;
-	nasid_t nid;
+	unsigned int cpu = smp_processor_id();
+	struct clock_event_device *cd = &per_cpu(hub_rt_clockevent, cpu);
+	unsigned char *name = per_cpu(hub_rt_name, cpu);
+	int irq = rt_timer_irq;
 
-	nid = get_nasid();
-	rtc = (struct m48t35_rtc *)(KL_CONFIG_CH_CONS_INFO(nid)->memory_base +
-							IOC3_BYTEBUS_DEV0);
-
-	rtc->control |= M48T35_RTC_READ;
-	cmos_minutes = BCD2BIN(rtc->min);
-	rtc->control &= ~M48T35_RTC_READ;
-
-	/*
-	 * Since we're only adjusting minutes and seconds, don't interfere with
-	 * hour overflow. This avoids messing with unknown time zones but
-	 * requires your RTC not to be off by more than 15 minutes
-	 */
-	real_seconds = nowtime % 60;
-	real_minutes = nowtime / 60;
-	if (((abs(real_minutes - cmos_minutes) + 15)/30) & 1)
-		real_minutes += 30;	/* correct for half hour time zone */
-	real_minutes %= 60;
-
-	if (abs(real_minutes - cmos_minutes) < 30) {
-		real_seconds = BIN2BCD(real_seconds);
-		real_minutes = BIN2BCD(real_minutes);
-		rtc->control |= M48T35_RTC_SET;
-		rtc->sec = real_seconds;
-		rtc->min = real_minutes;
-		rtc->control &= ~M48T35_RTC_SET;
-	} else {
-		printk(KERN_WARNING
-		       "set_rtc_mmss: can't update from %d to %d\n",
-		       cmos_minutes, real_minutes);
-		retval = -1;
-	}
-
-	return retval;
-}
-#endif
-
-static unsigned int rt_timer_irq;
-
-void ip27_rt_timer_interrupt(void)
-{
-	int cpu = smp_processor_id();
-	int cpuA = cputoslice(cpu) == 0;
-	unsigned int irq = rt_timer_irq;
-
-	irq_enter();
-	write_seqlock(&xtime_lock);
-
-again:
-	LOCAL_HUB_S(cpuA ? PI_RT_PEND_A : PI_RT_PEND_B, 0);	/* Ack  */
-	ct_cur[cpu] += CYCLES_PER_JIFFY;
-	LOCAL_HUB_S(cpuA ? PI_RT_COMPARE_A : PI_RT_COMPARE_B, ct_cur[cpu]);
-
-	if (LOCAL_HUB_L(PI_RT_COUNT) >= ct_cur[cpu])
-		goto again;
-
-	kstat_this_cpu.irqs[irq]++;		/* kstat only for bootcpu? */
-
-	if (cpu == 0)
-		do_timer(1);
-
-	update_process_times(user_mode(get_irq_regs()));
-
-	/*
-	 * If we have an externally synchronized Linux clock, then update
-	 * RTC clock accordingly every ~11 minutes. Set_rtc_mmss() has to be
-	 * called as close as possible to when a second starts.
-	 */
-	if (ntp_synced() &&
-	    xtime.tv_sec > last_rtc_update + 660 &&
-	    (xtime.tv_nsec / 1000) >= 500000 - ((unsigned) TICK_SIZE) / 2 &&
-	    (xtime.tv_nsec / 1000) <= 500000 + ((unsigned) TICK_SIZE) / 2) {
-		if (rtc_mips_set_time(xtime.tv_sec) == 0) {
-			last_rtc_update = xtime.tv_sec;
-		} else {
-			last_rtc_update = xtime.tv_sec - 600;
-			/* do it again in 60 s */
-		}
-	}
-
-	write_sequnlock(&xtime_lock);
-	irq_exit();
+	sprintf(name, "hub-rt %d", cpu);
+	cd->name		= name;
+	cd->features		= CLOCK_EVT_FEAT_ONESHOT;
+	clockevent_set_clock(cd, CYCLES_PER_SEC);
+	cd->max_delta_ns        = clockevent_delta2ns(0xfffffffffffff, cd);
+	cd->min_delta_ns        = clockevent_delta2ns(0x300, cd);
+	cd->rating		= 200;
+	cd->irq			= irq;
+	cd->cpumask		= cpumask_of(cpu);
+	cd->set_next_event	= rt_next_event;
+	cd->set_mode		= rt_set_mode;
+	clockevents_register_device(cd);
 }
 
-/* Includes for ioc3_init().  */
-#include <asm/sn/types.h>
-#include <asm/sn/sn0/addrs.h>
-#include <asm/sn/sn0/hubni.h>
-#include <asm/sn/sn0/hubio.h>
-#include <asm/pci/bridge.h>
-
-static __init unsigned long get_m48t35_time(void)
+static void __init hub_rt_clock_event_global_init(void)
 {
-        unsigned int year, month, date, hour, min, sec;
-	struct m48t35_rtc *rtc;
-	nasid_t nid;
+	int irq;
 
-	nid = get_nasid();
-	rtc = (struct m48t35_rtc *)(KL_CONFIG_CH_CONS_INFO(nid)->memory_base +
-							IOC3_BYTEBUS_DEV0);
+	do {
+		smp_wmb();
+		irq = rt_timer_irq;
+		if (irq)
+			break;
 
-	rtc->control |= M48T35_RTC_READ;
-	sec = rtc->sec;
-	min = rtc->min;
-	hour = rtc->hour;
-	date = rtc->date;
-	month = rtc->month;
-	year = rtc->year;
-	rtc->control &= ~M48T35_RTC_READ;
+		irq = allocate_irqno();
+		if (irq < 0)
+			panic("Allocation of irq number for timer failed");
+	} while (xchg(&rt_timer_irq, irq));
 
-        sec = BCD2BIN(sec);
-        min = BCD2BIN(min);
-        hour = BCD2BIN(hour);
-        date = BCD2BIN(date);
-        month = BCD2BIN(month);
-        year = BCD2BIN(year);
-
-        year += 1970;
-
-        return mktime(year, month, date, hour, min, sec);
+	irq_set_chip_and_handler(irq, &rt_irq_type, handle_percpu_irq);
+	setup_irq(irq, &hub_rt_irqaction);
 }
 
-static void enable_rt_irq(unsigned int irq)
-{
-}
-
-static void disable_rt_irq(unsigned int irq)
-{
-}
-
-static struct irq_chip rt_irq_type = {
-	.name		= "SN HUB RT timer",
-	.ack		= disable_rt_irq,
-	.mask		= disable_rt_irq,
-	.mask_ack	= disable_rt_irq,
-	.unmask		= enable_rt_irq,
-	.eoi		= enable_rt_irq,
-};
-
-static struct irqaction rt_irqaction = {
-	.handler	= (irq_handler_t) ip27_rt_timer_interrupt,
-	.flags		= IRQF_DISABLED,
-	.mask		= CPU_MASK_NONE,
-	.name		= "timer"
-};
-
-void __init plat_timer_setup(struct irqaction *irq)
-{
-	int irqno  = allocate_irqno();
-
-	if (irqno < 0)
-		panic("Can't allocate interrupt number for timer interrupt");
-
-	set_irq_chip_and_handler(irqno, &rt_irq_type, handle_percpu_irq);
-
-	/* over-write the handler, we use our own way */
-	irq->handler = no_action;
-
-	/* setup irqaction */
-	irq_desc[irqno].status |= IRQ_PER_CPU;
-
-	rt_timer_irq = irqno;
-	/*
-	 * Only needed to get /proc/interrupt to display timer irq stats
-	 */
-	setup_irq(irqno, &rt_irqaction);
-}
-
-static cycle_t ip27_hpt_read(void)
+static cycle_t hub_rt_read(struct clocksource *cs)
 {
 	return REMOTE_HUB_L(cputonasid(0), PI_RT_COUNT);
 }
 
-void __init ip27_time_init(void)
+struct clocksource hub_rt_clocksource = {
+	.name	= "HUB-RT",
+	.rating	= 200,
+	.read	= hub_rt_read,
+	.mask	= CLOCKSOURCE_MASK(52),
+	.flags	= CLOCK_SOURCE_IS_CONTINUOUS,
+};
+
+static void __init hub_rt_clocksource_init(void)
 {
-	clocksource_mips.read = ip27_hpt_read;
-	mips_hpt_frequency = CYCLES_PER_SEC;
-	xtime.tv_sec = get_m48t35_time();
-	xtime.tv_nsec = 0;
+	struct clocksource *cs = &hub_rt_clocksource;
+
+	clocksource_set_clock(cs, CYCLES_PER_SEC);
+	clocksource_register(cs);
 }
 
-void __init cpu_time_init(void)
+void __init plat_time_init(void)
+{
+	hub_rt_clocksource_init();
+	hub_rt_clock_event_global_init();
+	hub_rt_clock_event_init();
+}
+
+void __cpuinit cpu_time_init(void)
 {
 	lboard_t *board;
 	klcpu_t *cpu;
@@ -254,23 +208,39 @@ void __init cpu_time_init(void)
 
 void __cpuinit hub_rtc_init(cnodeid_t cnode)
 {
+
 	/*
 	 * We only need to initialize the current node.
 	 * If this is not the current node then it is a cpuless
 	 * node and timeouts will not happen there.
 	 */
 	if (get_compact_nodeid() == cnode) {
-		int cpu = smp_processor_id();
 		LOCAL_HUB_S(PI_RT_EN_A, 1);
 		LOCAL_HUB_S(PI_RT_EN_B, 1);
 		LOCAL_HUB_S(PI_PROF_EN_A, 0);
 		LOCAL_HUB_S(PI_PROF_EN_B, 0);
-		ct_cur[cpu] = CYCLES_PER_JIFFY;
-		LOCAL_HUB_S(PI_RT_COMPARE_A, ct_cur[cpu]);
 		LOCAL_HUB_S(PI_RT_COUNT, 0);
 		LOCAL_HUB_S(PI_RT_PEND_A, 0);
-		LOCAL_HUB_S(PI_RT_COMPARE_B, ct_cur[cpu]);
-		LOCAL_HUB_S(PI_RT_COUNT, 0);
 		LOCAL_HUB_S(PI_RT_PEND_B, 0);
 	}
 }
+
+static int __init sgi_ip27_rtc_devinit(void)
+{
+	struct resource res;
+
+	memset(&res, 0, sizeof(res));
+	res.start = XPHYSADDR(KL_CONFIG_CH_CONS_INFO(master_nasid)->memory_base +
+			      IOC3_BYTEBUS_DEV0);
+	res.end = res.start + 32767;
+	res.flags = IORESOURCE_MEM;
+
+	return IS_ERR(platform_device_register_simple("rtc-m48t35", -1,
+						      &res, 1));
+}
+
+/*
+ * kludge make this a device_initcall after ioc3 resource conflicts
+ * are resolved
+ */
+late_initcall(sgi_ip27_rtc_devinit);

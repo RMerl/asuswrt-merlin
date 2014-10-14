@@ -21,67 +21,62 @@
 #include <linux/sched.h>
 #include <linux/mm.h>
 #include <linux/smp.h>
-#include <linux/smp_lock.h>
 #include <linux/errno.h>
 #include <linux/ptrace.h>
+#include <linux/regset.h>
 #include <linux/user.h>
 #include <linux/security.h>
 #include <linux/signal.h>
+#include <linux/compat.h>
 
 #include <asm/uaccess.h>
 #include <asm/page.h>
 #include <asm/pgtable.h>
 #include <asm/system.h>
 
-#include "ptrace-common.h"
-
 /*
  * does not yet catch signals sent when the child dies.
  * in exit.c or in signal.c.
  */
 
-long compat_sys_ptrace(int request, int pid, unsigned long addr,
-		       unsigned long data)
+/*
+ * Here are the old "legacy" powerpc specific getregs/setregs ptrace calls,
+ * we mark them as obsolete now, they will be removed in a future version
+ */
+static long compat_ptrace_old(struct task_struct *child, long request,
+			      long addr, long data)
 {
-	struct task_struct *child;
+	switch (request) {
+	case PPC_PTRACE_GETREGS:	/* Get GPRs 0 - 31. */
+		return copy_regset_to_user(child,
+					   task_user_regset_view(current), 0,
+					   0, 32 * sizeof(compat_long_t),
+					   compat_ptr(data));
+
+	case PPC_PTRACE_SETREGS:	/* Set GPRs 0 - 31. */
+		return copy_regset_from_user(child,
+					     task_user_regset_view(current), 0,
+					     0, 32 * sizeof(compat_long_t),
+					     compat_ptr(data));
+	}
+
+	return -EPERM;
+}
+
+/* Macros to workout the correct index for the FPR in the thread struct */
+#define FPRNUMBER(i) (((i) - PT_FPR0) >> 1)
+#define FPRHALF(i) (((i) - PT_FPR0) & 1)
+#define FPRINDEX(i) TS_FPRWIDTH * FPRNUMBER(i) * 2 + FPRHALF(i)
+#define FPRINDEX_3264(i) (TS_FPRWIDTH * ((i) - PT_FPR0))
+
+long compat_arch_ptrace(struct task_struct *child, compat_long_t request,
+			compat_ulong_t caddr, compat_ulong_t cdata)
+{
+	unsigned long addr = caddr;
+	unsigned long data = cdata;
 	int ret;
 
-	lock_kernel();
-	if (request == PTRACE_TRACEME) {
-		ret = ptrace_traceme();
-		goto out;
-	}
-
-	child = ptrace_get_task_struct(pid);
-	if (IS_ERR(child)) {
-		ret = PTR_ERR(child);
-		goto out;
-	}
-
-	if (request == PTRACE_ATTACH) {
-		ret = ptrace_attach(child);
-		goto out_tsk;
-	}
-
-	ret = ptrace_check_attach(child, request == PTRACE_KILL);
-	if (ret < 0)
-		goto out_tsk;
-
 	switch (request) {
-	/* when I and D space are separate, these will need to be fixed. */
-	case PTRACE_PEEKTEXT: /* read word at location addr. */ 
-	case PTRACE_PEEKDATA: {
-		unsigned int tmp;
-		int copied;
-
-		copied = access_process_vm(child, addr, &tmp, sizeof(tmp), 0);
-		ret = -EIO;
-		if (copied != sizeof(tmp))
-			break;
-		ret = put_user(tmp, (u32 __user *)data);
-		break;
-	}
-
 	/*
 	 * Read 4 bytes of the other process' storage
 	 *  data is a pointer specifying where the user wants the
@@ -122,8 +117,9 @@ long compat_sys_ptrace(int request, int pid, unsigned long addr,
 		if ((addr & 3) || (index > PT_FPSCR32))
 			break;
 
+		CHECK_FULL_REGS(child->thread.regs);
 		if (index < PT_FPR0) {
-			tmp = get_reg(child, index);
+			tmp = ptrace_get_reg(child, index);
 		} else {
 			flush_fp_to_thread(child);
 			/*
@@ -131,7 +127,8 @@ long compat_sys_ptrace(int request, int pid, unsigned long addr,
 			 * to be an array of unsigned int (32 bits) - the
 			 * index passed in is based on this assumption.
 			 */
-			tmp = ((unsigned int *)child->thread.fpr)[index - PT_FPR0];
+			tmp = ((unsigned int *)child->thread.fpr)
+				[FPRINDEX(index)];
 		}
 		ret = put_user((unsigned int)tmp, (u32 __user *)data);
 		break;
@@ -162,31 +159,23 @@ long compat_sys_ptrace(int request, int pid, unsigned long addr,
 		else
 			part = 0;  /* want the 1st half of the register (left-most). */
 
-		/* Validate the input - check to see if address is on the wrong boundary or beyond the end of the user area */
+		/* Validate the input - check to see if address is on the wrong boundary
+		 * or beyond the end of the user area
+		 */
 		if ((addr & 3) || numReg > PT_FPSCR)
 			break;
 
+		CHECK_FULL_REGS(child->thread.regs);
 		if (numReg >= PT_FPR0) {
 			flush_fp_to_thread(child);
-			tmp = ((unsigned long int *)child->thread.fpr)[numReg - PT_FPR0];
+			/* get 64 bit FPR */
+			tmp = ((u64 *)child->thread.fpr)
+				[FPRINDEX_3264(numReg)];
 		} else { /* register within PT_REGS struct */
-			tmp = get_reg(child, numReg);
+			tmp = ptrace_get_reg(child, numReg);
 		} 
 		reg32bits = ((u32*)&tmp)[part];
 		ret = put_user(reg32bits, (u32 __user *)data);
-		break;
-	}
-
-	/* If I and D space are separate, this will have to be fixed. */
-	case PTRACE_POKETEXT: /* write the word at location addr. */
-	case PTRACE_POKEDATA: {
-		unsigned int tmp;
-		tmp = data;
-		ret = 0;
-		if (access_process_vm(child, addr, &tmp, sizeof(tmp), 1)
-				== sizeof(tmp))
-			break;
-		ret = -EIO;
 		break;
 	}
 
@@ -226,10 +215,9 @@ long compat_sys_ptrace(int request, int pid, unsigned long addr,
 		if ((addr & 3) || (index > PT_FPSCR32))
 			break;
 
-		if (index == PT_ORIG_R3)
-			break;
+		CHECK_FULL_REGS(child->thread.regs);
 		if (index < PT_FPR0) {
-			ret = put_reg(child, index, data);
+			ret = ptrace_put_reg(child, index, data);
 		} else {
 			flush_fp_to_thread(child);
 			/*
@@ -237,7 +225,8 @@ long compat_sys_ptrace(int request, int pid, unsigned long addr,
 			 * to be an array of unsigned int (32 bits) - the
 			 * index passed in is based on this assumption.
 			 */
-			((unsigned int *)child->thread.fpr)[index - PT_FPR0] = data;
+			((unsigned int *)child->thread.fpr)
+				[FPRINDEX(index)] = data;
 			ret = 0;
 		}
 		break;
@@ -258,70 +247,31 @@ long compat_sys_ptrace(int request, int pid, unsigned long addr,
 		/* Determine which register the user wants */
 		index = (u64)addr >> 2;
 		numReg = index / 2;
+
 		/*
 		 * Validate the input - check to see if address is on the
 		 * wrong boundary or beyond the end of the user area
 		 */
 		if ((addr & 3) || (numReg > PT_FPSCR))
 			break;
-		/* Insure it is a register we let them change */
-		if ((numReg == PT_ORIG_R3)
-				|| ((numReg > PT_CCR) && (numReg < PT_FPR0)))
-			break;
-		if (numReg >= PT_FPR0) {
+		CHECK_FULL_REGS(child->thread.regs);
+		if (numReg < PT_FPR0) {
+			unsigned long freg = ptrace_get_reg(child, numReg);
+			if (index % 2)
+				freg = (freg & ~0xfffffffful) | (data & 0xfffffffful);
+			else
+				freg = (freg & 0xfffffffful) | (data << 32);
+			ret = ptrace_put_reg(child, numReg, freg);
+		} else {
+			u64 *tmp;
 			flush_fp_to_thread(child);
+			/* get 64 bit FPR ... */
+			tmp = &(((u64 *)child->thread.fpr)
+				[FPRINDEX_3264(numReg)]);
+			/* ... write the 32 bit part we want */
+			((u32 *)tmp)[index % 2] = data;
+			ret = 0;
 		}
-		if (numReg == PT_MSR)
-			data = (data & MSR_DEBUGCHANGE)
-				| (child->thread.regs->msr & ~MSR_DEBUGCHANGE);
-		((u32*)child->thread.regs)[index] = data;
-		ret = 0;
-		break;
-	}
-
-	case PTRACE_SYSCALL: /* continue and stop at next (return from) syscall */
-	case PTRACE_CONT: { /* restart after signal. */
-		ret = -EIO;
-		if (!valid_signal(data))
-			break;
-		if (request == PTRACE_SYSCALL)
-			set_tsk_thread_flag(child, TIF_SYSCALL_TRACE);
-		else
-			clear_tsk_thread_flag(child, TIF_SYSCALL_TRACE);
-		child->exit_code = data;
-		/* make sure the single step bit is not set. */
-		clear_single_step(child);
-		wake_up_process(child);
-		ret = 0;
-		break;
-	}
-
-	/*
-	 * make the child exit.  Best I can do is send it a sigkill.
-	 * perhaps it should be put in the status that it wants to
-	 * exit.
-	 */
-	case PTRACE_KILL: {
-		ret = 0;
-		if (child->exit_state == EXIT_ZOMBIE)	/* already dead */
-			break;
-		child->exit_code = SIGKILL;
-		/* make sure the single step bit is not set. */
-		clear_single_step(child);
-		wake_up_process(child);
-		break;
-	}
-
-	case PTRACE_SINGLESTEP: {  /* set the trap flag. */
-		ret = -EIO;
-		if (!valid_signal(data))
-			break;
-		clear_tsk_thread_flag(child, TIF_SYSCALL_TRACE);
-		set_single_step(child);
-		child->exit_code = data;
-		/* give it a chance to run. */
-		wake_up_process(child);
-		ret = 0;
 		break;
 	}
 
@@ -330,107 +280,58 @@ long compat_sys_ptrace(int request, int pid, unsigned long addr,
 		/* We only support one DABR and no IABRS at the moment */
 		if (addr > 0)
 			break;
+#ifdef CONFIG_PPC_ADV_DEBUG_REGS
+		ret = put_user(child->thread.dac1, (u32 __user *)data);
+#else
 		ret = put_user(child->thread.dabr, (u32 __user *)data);
-		break;
-	}
-
-	case PTRACE_SET_DEBUGREG:
-		ret = ptrace_set_debugreg(child, addr, data);
-		break;
-
-	case PTRACE_DETACH:
-		ret = ptrace_detach(child, data);
-		break;
-
-	case PPC_PTRACE_GETREGS: { /* Get GPRs 0 - 31. */
-		int i;
-		unsigned long *reg = &((unsigned long *)child->thread.regs)[0];
-		unsigned int __user *tmp = (unsigned int __user *)addr;
-
-		for (i = 0; i < 32; i++) {
-			ret = put_user(*reg, tmp);
-			if (ret)
-				break;
-			reg++;
-			tmp++;
-		}
-		break;
-	}
-
-	case PPC_PTRACE_SETREGS: { /* Set GPRs 0 - 31. */
-		int i;
-		unsigned long *reg = &((unsigned long *)child->thread.regs)[0];
-		unsigned int __user *tmp = (unsigned int __user *)addr;
-
-		for (i = 0; i < 32; i++) {
-			ret = get_user(*reg, tmp);
-			if (ret)
-				break;
-			reg++;
-			tmp++;
-		}
-		break;
-	}
-
-	case PPC_PTRACE_GETFPREGS: { /* Get FPRs 0 - 31. */
-		int i;
-		unsigned long *reg = &((unsigned long *)child->thread.fpr)[0];
-		unsigned int __user *tmp = (unsigned int __user *)addr;
-
-		flush_fp_to_thread(child);
-
-		for (i = 0; i < 32; i++) {
-			ret = put_user(*reg, tmp);
-			if (ret)
-				break;
-			reg++;
-			tmp++;
-		}
-		break;
-	}
-
-	case PPC_PTRACE_SETFPREGS: { /* Get FPRs 0 - 31. */
-		int i;
-		unsigned long *reg = &((unsigned long *)child->thread.fpr)[0];
-		unsigned int __user *tmp = (unsigned int __user *)addr;
-
-		flush_fp_to_thread(child);
-
-		for (i = 0; i < 32; i++) {
-			ret = get_user(*reg, tmp);
-			if (ret)
-				break;
-			reg++;
-			tmp++;
-		}
-		break;
-	}
-
-	case PTRACE_GETEVENTMSG:
-		ret = put_user(child->ptrace_message, (unsigned int __user *) data);
-		break;
-
-#ifdef CONFIG_ALTIVEC
-	case PTRACE_GETVRREGS:
-		/* Get the child altivec register state. */
-		flush_altivec_to_thread(child);
-		ret = get_vrregs((unsigned long __user *)data, child);
-		break;
-
-	case PTRACE_SETVRREGS:
-		/* Set the child altivec register state. */
-		flush_altivec_to_thread(child);
-		ret = set_vrregs(child, (unsigned long __user *)data);
-		break;
 #endif
+		break;
+	}
+
+	case PTRACE_GETREGS:	/* Get all pt_regs from the child. */
+		return copy_regset_to_user(
+			child, task_user_regset_view(current), 0,
+			0, PT_REGS_COUNT * sizeof(compat_long_t),
+			compat_ptr(data));
+
+	case PTRACE_SETREGS:	/* Set all gp regs in the child. */
+		return copy_regset_from_user(
+			child, task_user_regset_view(current), 0,
+			0, PT_REGS_COUNT * sizeof(compat_long_t),
+			compat_ptr(data));
+
+	case PTRACE_GETFPREGS:
+	case PTRACE_SETFPREGS:
+	case PTRACE_GETVRREGS:
+	case PTRACE_SETVRREGS:
+	case PTRACE_GETVSRREGS:
+	case PTRACE_SETVSRREGS:
+	case PTRACE_GETREGS64:
+	case PTRACE_SETREGS64:
+	case PPC_PTRACE_GETFPREGS:
+	case PPC_PTRACE_SETFPREGS:
+	case PTRACE_KILL:
+	case PTRACE_SINGLESTEP:
+	case PTRACE_DETACH:
+	case PTRACE_SET_DEBUGREG:
+	case PTRACE_SYSCALL:
+	case PTRACE_CONT:
+	case PPC_PTRACE_GETHWDBGINFO:
+	case PPC_PTRACE_SETHWDEBUG:
+	case PPC_PTRACE_DELHWDEBUG:
+		ret = arch_ptrace(child, request, addr, data);
+		break;
+
+	/* Old reverse args ptrace callss */
+	case PPC_PTRACE_GETREGS: /* Get GPRs 0 - 31. */
+	case PPC_PTRACE_SETREGS: /* Set GPRs 0 - 31. */
+		ret = compat_ptrace_old(child, request, addr, data);
+		break;
 
 	default:
-		ret = ptrace_request(child, request, addr, data);
+		ret = compat_ptrace_request(child, request, addr, data);
 		break;
 	}
-out_tsk:
-	put_task_struct(child);
-out:
-	unlock_kernel();
+
 	return ret;
 }

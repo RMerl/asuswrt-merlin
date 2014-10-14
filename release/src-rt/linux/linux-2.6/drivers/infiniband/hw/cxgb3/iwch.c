@@ -47,42 +47,82 @@ MODULE_DESCRIPTION("Chelsio T3 RDMA Driver");
 MODULE_LICENSE("Dual BSD/GPL");
 MODULE_VERSION(DRV_VERSION);
 
-cxgb3_cpl_handler_func t3c_handlers[NUM_CPL_CMDS];
-
 static void open_rnic_dev(struct t3cdev *);
 static void close_rnic_dev(struct t3cdev *);
+static void iwch_event_handler(struct t3cdev *, u32, u32);
 
 struct cxgb3_client t3c_client = {
 	.name = "iw_cxgb3",
 	.add = open_rnic_dev,
 	.remove = close_rnic_dev,
 	.handlers = t3c_handlers,
-	.redirect = iwch_ep_redirect
+	.redirect = iwch_ep_redirect,
+	.event_handler = iwch_event_handler
 };
 
 static LIST_HEAD(dev_list);
 static DEFINE_MUTEX(dev_mutex);
 
+static int disable_qp_db(int id, void *p, void *data)
+{
+	struct iwch_qp *qhp = p;
+
+	cxio_disable_wq_db(&qhp->wq);
+	return 0;
+}
+
+static int enable_qp_db(int id, void *p, void *data)
+{
+	struct iwch_qp *qhp = p;
+
+	if (data)
+		ring_doorbell(qhp->rhp->rdev.ctrl_qp.doorbell, qhp->wq.qpid);
+	cxio_enable_wq_db(&qhp->wq);
+	return 0;
+}
+
+static void disable_dbs(struct iwch_dev *rnicp)
+{
+	spin_lock_irq(&rnicp->lock);
+	idr_for_each(&rnicp->qpidr, disable_qp_db, NULL);
+	spin_unlock_irq(&rnicp->lock);
+}
+
+static void enable_dbs(struct iwch_dev *rnicp, int ring_db)
+{
+	spin_lock_irq(&rnicp->lock);
+	idr_for_each(&rnicp->qpidr, enable_qp_db,
+		     (void *)(unsigned long)ring_db);
+	spin_unlock_irq(&rnicp->lock);
+}
+
+static void iwch_db_drop_task(struct work_struct *work)
+{
+	struct iwch_dev *rnicp = container_of(work, struct iwch_dev,
+					      db_drop_task.work);
+	enable_dbs(rnicp, 1);
+}
+
 static void rnic_init(struct iwch_dev *rnicp)
 {
-	PDBG("%s iwch_dev %p\n", __FUNCTION__,  rnicp);
+	PDBG("%s iwch_dev %p\n", __func__,  rnicp);
 	idr_init(&rnicp->cqidr);
 	idr_init(&rnicp->qpidr);
 	idr_init(&rnicp->mmidr);
 	spin_lock_init(&rnicp->lock);
+	INIT_DELAYED_WORK(&rnicp->db_drop_task, iwch_db_drop_task);
 
-	rnicp->attr.vendor_id = 0x168;
-	rnicp->attr.vendor_part_id = 7;
 	rnicp->attr.max_qps = T3_MAX_NUM_QP - 32;
-	rnicp->attr.max_wrs = (1UL << 24) - 1;
+	rnicp->attr.max_wrs = T3_MAX_QP_DEPTH;
 	rnicp->attr.max_sge_per_wr = T3_MAX_SGE;
 	rnicp->attr.max_sge_per_rdma_write_wr = T3_MAX_SGE;
 	rnicp->attr.max_cqs = T3_MAX_NUM_CQ - 1;
-	rnicp->attr.max_cqes_per_cq = (1UL << 24) - 1;
+	rnicp->attr.max_cqes_per_cq = T3_MAX_CQ_DEPTH;
 	rnicp->attr.max_mem_regs = cxio_num_stags(&rnicp->rdev);
 	rnicp->attr.max_phys_buf_entries = T3_MAX_PBL_SIZE;
 	rnicp->attr.max_pds = T3_MAX_NUM_PD - 1;
-	rnicp->attr.mem_pgsizes_bitmask = 0x7FFF;	/* 4KB-128MB */
+	rnicp->attr.mem_pgsizes_bitmask = T3_PAGESIZE_MASK;
+	rnicp->attr.max_mr_size = T3_MAX_MR_SIZE;
 	rnicp->attr.can_resize_wq = 0;
 	rnicp->attr.max_rdma_reads_per_qp = 8;
 	rnicp->attr.max_rdma_read_resources =
@@ -104,11 +144,9 @@ static void rnic_init(struct iwch_dev *rnicp)
 static void open_rnic_dev(struct t3cdev *tdev)
 {
 	struct iwch_dev *rnicp;
-	static int vers_printed;
 
-	PDBG("%s t3cdev %p\n", __FUNCTION__,  tdev);
-	if (!vers_printed++)
-		printk(KERN_INFO MOD "Chelsio T3 RDMA Driver - version %s\n",
+	PDBG("%s t3cdev %p\n", __func__,  tdev);
+	printk_once(KERN_INFO MOD "Chelsio T3 RDMA Driver - version %s\n",
 		       DRV_VERSION);
 	rnicp = (struct iwch_dev *)ib_alloc_device(sizeof(*rnicp));
 	if (!rnicp) {
@@ -144,10 +182,13 @@ static void open_rnic_dev(struct t3cdev *tdev)
 static void close_rnic_dev(struct t3cdev *tdev)
 {
 	struct iwch_dev *dev, *tmp;
-	PDBG("%s t3cdev %p\n", __FUNCTION__,  tdev);
+	PDBG("%s t3cdev %p\n", __func__,  tdev);
 	mutex_lock(&dev_mutex);
 	list_for_each_entry_safe(dev, tmp, &dev_list, entry) {
 		if (dev->rdev.t3cdev_p == tdev) {
+			dev->rdev.flags = CXIO_ERROR_FATAL;
+			synchronize_net();
+			cancel_delayed_work_sync(&dev->db_drop_task);
 			list_del(&dev->entry);
 			iwch_unregister_device(dev);
 			cxio_rdev_close(&dev->rdev);
@@ -159,6 +200,69 @@ static void close_rnic_dev(struct t3cdev *tdev)
 		}
 	}
 	mutex_unlock(&dev_mutex);
+}
+
+static void iwch_event_handler(struct t3cdev *tdev, u32 evt, u32 port_id)
+{
+	struct cxio_rdev *rdev = tdev->ulp;
+	struct iwch_dev *rnicp;
+	struct ib_event event;
+	u32 portnum = port_id + 1;
+	int dispatch = 0;
+
+	if (!rdev)
+		return;
+	rnicp = rdev_to_iwch_dev(rdev);
+	switch (evt) {
+	case OFFLOAD_STATUS_DOWN: {
+		rdev->flags = CXIO_ERROR_FATAL;
+		synchronize_net();
+		event.event  = IB_EVENT_DEVICE_FATAL;
+		dispatch = 1;
+		break;
+		}
+	case OFFLOAD_PORT_DOWN: {
+		event.event  = IB_EVENT_PORT_ERR;
+		dispatch = 1;
+		break;
+		}
+	case OFFLOAD_PORT_UP: {
+		event.event  = IB_EVENT_PORT_ACTIVE;
+		dispatch = 1;
+		break;
+		}
+	case OFFLOAD_DB_FULL: {
+		disable_dbs(rnicp);
+		break;
+		}
+	case OFFLOAD_DB_EMPTY: {
+		enable_dbs(rnicp, 1);
+		break;
+		}
+	case OFFLOAD_DB_DROP: {
+		unsigned long delay = 1000;
+		unsigned short r;
+
+		disable_dbs(rnicp);
+		get_random_bytes(&r, 2);
+		delay += r & 1023;
+
+		/*
+		 * delay is between 1000-2023 usecs.
+		 */
+		schedule_delayed_work(&rnicp->db_drop_task,
+			usecs_to_jiffies(delay));
+		break;
+		}
+	}
+
+	if (dispatch) {
+		event.device = &rnicp->ibdev;
+		event.element.port_num = portnum;
+		ib_dispatch_event(&event);
+	}
+
+	return;
 }
 
 static int __init iwch_init_module(void)

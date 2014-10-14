@@ -12,6 +12,7 @@
 #include <linux/if.h>
 #include <linux/skbuff.h>
 #include <linux/netdevice.h>
+#include <linux/slab.h>
 #include <linux/workqueue.h>
 #include <linux/wireless.h>
 #include <net/iw_handler.h>
@@ -23,7 +24,6 @@
 #include "hostap_wlan.h"
 
 
-static char *version = PRISM2_VERSION " (Jouni Malinen <j@w1.fi>)";
 static char *dev_info = "hostap_plx";
 
 
@@ -32,7 +32,6 @@ MODULE_DESCRIPTION("Support for Intersil Prism2-based 802.11 wireless LAN "
 		   "cards (PLX).");
 MODULE_SUPPORTED_DEVICE("Intersil Prism2-based WLAN cards (PLX)");
 MODULE_LICENSE("GPL");
-MODULE_VERSION(PRISM2_VERSION);
 
 
 static int ignore_cis;
@@ -62,7 +61,7 @@ struct hostap_plx_priv {
 
 #define PLXDEV(vendor,dev,str) { vendor, dev, PCI_ANY_ID, PCI_ANY_ID }
 
-static struct pci_device_id prism2_plx_id_table[] __devinitdata = {
+static DEFINE_PCI_DEVICE_TABLE(prism2_plx_id_table) = {
 	PLXDEV(0x10b7, 0x7770, "3Com AirConnect PCI 777A"),
 	PLXDEV(0x111a, 0x1023, "Siemens SpeedStream SS1023"),
 	PLXDEV(0x126c, 0x8030, "Nortel emobility"),
@@ -437,7 +436,7 @@ static int prism2_plx_probe(struct pci_dev *pdev,
 	unsigned long pccard_attr_mem;
 	unsigned int pccard_attr_len;
 	void __iomem *attr_mem = NULL;
-	unsigned int cor_offset, cor_index;
+	unsigned int cor_offset = 0, cor_index = 0;
 	u32 reg;
 	local_info_t *local = NULL;
 	struct net_device *dev = NULL;
@@ -610,29 +609,23 @@ static void prism2_plx_remove(struct pci_dev *pdev)
 
 MODULE_DEVICE_TABLE(pci, prism2_plx_id_table);
 
-static struct pci_driver prism2_plx_drv_id = {
+static struct pci_driver prism2_plx_driver = {
 	.name		= "hostap_plx",
 	.id_table	= prism2_plx_id_table,
 	.probe		= prism2_plx_probe,
 	.remove		= prism2_plx_remove,
-	.suspend	= NULL,
-	.resume		= NULL,
-	.enable_wake	= NULL
 };
 
 
 static int __init init_prism2_plx(void)
 {
-	printk(KERN_INFO "%s: %s\n", dev_info, version);
-
-	return pci_register_driver(&prism2_plx_drv_id);
+	return pci_register_driver(&prism2_plx_driver);
 }
 
 
 static void __exit exit_prism2_plx(void)
 {
-	pci_unregister_driver(&prism2_plx_drv_id);
-	printk(KERN_INFO "%s: Driver unloaded\n", dev_info);
+	pci_unregister_driver(&prism2_plx_driver);
 }
 
 

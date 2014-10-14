@@ -14,8 +14,9 @@
 #include <asm/uaccess.h>
 #include <asm/sections.h>
 #include <asm/prom.h>
-#include <asm/ans-lcd.h>
 #include <asm/io.h>
+
+#include "ans-lcd.h"
 
 #define ANSLCD_ADDR		0xf301c000
 #define ANSLCD_CTRL_IX 0x00
@@ -24,6 +25,7 @@
 static unsigned long anslcd_short_delay = 80;
 static unsigned long anslcd_long_delay = 3280;
 static volatile unsigned char __iomem *anslcd_ptr;
+static DEFINE_MUTEX(anslcd_mutex);
 
 #undef DEBUG
 
@@ -63,25 +65,30 @@ anslcd_write( struct file * file, const char __user * buf,
 
 	if (!access_ok(VERIFY_READ, buf, count))
 		return -EFAULT;
+
+	mutex_lock(&anslcd_mutex);
 	for ( i = *ppos; count > 0; ++i, ++p, --count ) 
 	{
 		char c;
 		__get_user(c, p);
 		anslcd_write_byte_data( c );
 	}
+	mutex_unlock(&anslcd_mutex);
 	*ppos = i;
 	return p - buf;
 }
 
-static int
-anslcd_ioctl( struct inode * inode, struct file * file,
-				unsigned int cmd, unsigned long arg )
+static long
+anslcd_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 {
 	char ch, __user *temp;
+	long ret = 0;
 
 #ifdef DEBUG
 	printk(KERN_DEBUG "LCD: ioctl(%d,%d)\n",cmd,arg);
 #endif
+
+	mutex_lock(&anslcd_mutex);
 
 	switch ( cmd )
 	{
@@ -91,7 +98,7 @@ anslcd_ioctl( struct inode * inode, struct file * file,
 		anslcd_write_byte_ctrl ( 0x06 );
 		anslcd_write_byte_ctrl ( 0x01 );
 		anslcd_write_byte_ctrl ( 0x02 );
-		return 0;
+		break;
 	case ANSLCD_SENDCTRL:
 		temp = (char __user *) arg;
 		__get_user(ch, temp);
@@ -99,20 +106,25 @@ anslcd_ioctl( struct inode * inode, struct file * file,
 			anslcd_write_byte_ctrl ( ch );
 			__get_user(ch, temp);
 		}
-		return 0;
+		break;
 	case ANSLCD_SETSHORTDELAY:
 		if (!capable(CAP_SYS_ADMIN))
-			return -EACCES;
-		anslcd_short_delay=arg;
-		return 0;
+			ret =-EACCES;
+		else
+			anslcd_short_delay=arg;
+		break;
 	case ANSLCD_SETLONGDELAY:
 		if (!capable(CAP_SYS_ADMIN))
-			return -EACCES;
-		anslcd_long_delay=arg;
-		return 0;
+			ret = -EACCES;
+		else
+			anslcd_long_delay=arg;
+		break;
 	default:
-		return -EINVAL;
+		ret = -EINVAL;
 	}
+
+	mutex_unlock(&anslcd_mutex);
+	return ret;
 }
 
 static int
@@ -122,9 +134,10 @@ anslcd_open( struct inode * inode, struct file * file )
 }
 
 const struct file_operations anslcd_fops = {
-	.write	= anslcd_write,
-	.ioctl	= anslcd_ioctl,
-	.open	= anslcd_open,
+	.write		= anslcd_write,
+	.unlocked_ioctl	= anslcd_ioctl,
+	.open		= anslcd_open,
+	.llseek		= default_llseek,
 };
 
 static struct miscdevice anslcd_dev = {
@@ -165,6 +178,7 @@ anslcd_init(void)
 	printk(KERN_DEBUG "LCD: init\n");
 #endif
 
+	mutex_lock(&anslcd_mutex);
 	anslcd_write_byte_ctrl ( 0x38 );
 	anslcd_write_byte_ctrl ( 0x0c );
 	anslcd_write_byte_ctrl ( 0x06 );
@@ -173,6 +187,7 @@ anslcd_init(void)
 	for(a=0;a<80;a++) {
 		anslcd_write_byte_data(anslcd_logo[a]);
 	}
+	mutex_unlock(&anslcd_mutex);
 	return 0;
 }
 

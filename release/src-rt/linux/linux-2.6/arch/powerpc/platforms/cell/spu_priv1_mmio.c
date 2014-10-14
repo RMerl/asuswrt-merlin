@@ -22,12 +22,12 @@
 #include <linux/list.h>
 #include <linux/module.h>
 #include <linux/ptrace.h>
-#include <linux/slab.h>
 #include <linux/wait.h>
 #include <linux/mm.h>
 #include <linux/io.h>
 #include <linux/mutex.h>
 #include <linux/device.h>
+#include <linux/sched.h>
 
 #include <asm/spu.h>
 #include <asm/spu_priv1.h>
@@ -75,8 +75,19 @@ static u64 int_stat_get(struct spu *spu, int class)
 
 static void cpu_affinity_set(struct spu *spu, int cpu)
 {
-	u64 target = iic_get_target_id(cpu);
-	u64 route = target << 48 | target << 32 | target << 16;
+	u64 target;
+	u64 route;
+
+	if (nr_cpus_node(spu->node)) {
+		const struct cpumask *spumask = cpumask_of_node(spu->node),
+			*cpumask = cpumask_of_node(cpu_to_node(cpu));
+
+		if (!cpumask_intersects(spumask, cpumask))
+			return;
+	}
+
+	target = iic_get_target_id(cpu);
+	route = target << 48 | target << 32 | target << 16;
 	out_be64(&spu->priv1->int_route_RW, route);
 }
 

@@ -16,8 +16,8 @@
 #include <asm/mmu.h>
 #include <asm/io.h>
 #include <asm/mmu_context.h>
-#include <asm/arch/hwregs/asm/mmu_defs_asm.h>
-#include <asm/arch/hwregs/supp_reg.h>
+#include <arch/hwregs/asm/mmu_defs_asm.h>
+#include <arch/hwregs/supp_reg.h>
 
 extern void tlb_init(void);
 
@@ -27,8 +27,7 @@ extern void tlb_init(void);
  * at kseg_4 thus the ksegs are set up again. Also clear the TLB and do various
  * other paging stuff.
  */
-void __init
-cris_mmu_init(void)
+void __init cris_mmu_init(void)
 {
 	unsigned long mmu_config;
 	unsigned long mmu_kbase_hi;
@@ -55,17 +54,26 @@ cris_mmu_init(void)
 	/* Initialise the TLB. Function found in tlb.c. */
 	tlb_init();
 
-	/* Enable exceptions and initialize the kernel segments. */
+	/*
+	 * Enable exceptions and initialize the kernel segments.
+	 * See head.S for differences between ARTPEC-3 and ETRAX FS.
+	 */
 	mmu_config = ( REG_STATE(mmu, rw_mm_cfg, we, on)        |
 		       REG_STATE(mmu, rw_mm_cfg, acc, on)       |
 		       REG_STATE(mmu, rw_mm_cfg, ex, on)        |
 		       REG_STATE(mmu, rw_mm_cfg, inv, on)       |
+#ifdef CONFIG_CRIS_MACH_ARTPEC3
+		       REG_STATE(mmu, rw_mm_cfg, seg_f, page)   |
+		       REG_STATE(mmu, rw_mm_cfg, seg_e, page)   |
+		       REG_STATE(mmu, rw_mm_cfg, seg_d, linear) |
+#else
 		       REG_STATE(mmu, rw_mm_cfg, seg_f, linear) |
 		       REG_STATE(mmu, rw_mm_cfg, seg_e, linear) |
 		       REG_STATE(mmu, rw_mm_cfg, seg_d, page)   |
+#endif
 		       REG_STATE(mmu, rw_mm_cfg, seg_c, linear) |
 		       REG_STATE(mmu, rw_mm_cfg, seg_b, linear) |
-#ifndef CONFIG_ETRAXFS_SIM
+#ifndef CONFIG_ETRAX_VCS_SIM
                        REG_STATE(mmu, rw_mm_cfg, seg_a, page)   |
 #else
 		       REG_STATE(mmu, rw_mm_cfg, seg_a, linear) |
@@ -81,16 +89,18 @@ cris_mmu_init(void)
 		       REG_STATE(mmu, rw_mm_cfg, seg_1, page)   |
 		       REG_STATE(mmu, rw_mm_cfg, seg_0, page));
 
+	/* See head.S for differences between ARTPEC-3 and ETRAX FS. */
 	mmu_kbase_hi = ( REG_FIELD(mmu, rw_mm_kbase_hi, base_f, 0x0) |
+#ifdef CONFIG_CRIS_MACH_ARTPEC3
+			 REG_FIELD(mmu, rw_mm_kbase_hi, base_e, 0x0) |
+			 REG_FIELD(mmu, rw_mm_kbase_hi, base_d, 0x5) |
+#else
 			 REG_FIELD(mmu, rw_mm_kbase_hi, base_e, 0x8) |
 			 REG_FIELD(mmu, rw_mm_kbase_hi, base_d, 0x0) |
-#ifndef CONFIG_ETRAXFS_SIM
-                         REG_FIELD(mmu, rw_mm_kbase_hi, base_c, 0x4) |
-#else
-			 REG_FIELD(mmu, rw_mm_kbase_hi, base_c, 0x0) |
 #endif
+                         REG_FIELD(mmu, rw_mm_kbase_hi, base_c, 0x4) |
 			 REG_FIELD(mmu, rw_mm_kbase_hi, base_b, 0xb) |
-#ifndef CONFIG_ETRAXFS_SIM
+#ifndef CONFIG_ETRAX_VCS_SIM
 			 REG_FIELD(mmu, rw_mm_kbase_hi, base_a, 0x0) |
 #else
                          REG_FIELD(mmu, rw_mm_kbase_hi, base_a, 0xa) |
@@ -133,8 +143,7 @@ cris_mmu_init(void)
 	SUPP_REG_WR(RW_GC_CFG, 0xf); /* IMMU, DMMU, ICache, DCache on */
 }
 
-void __init
-paging_init(void)
+void __init paging_init(void)
 {
 	int i;
 	unsigned long zones_size[MAX_NR_ZONES];
@@ -166,7 +175,7 @@ paging_init(void)
 	 * substantially higher than 0, like us (we start at PAGE_OFFSET). This
 	 * saves space in the mem_map page array.
 	 */
-	free_area_init_node(0, &contig_page_data, zones_size, PAGE_OFFSET >> PAGE_SHIFT, 0);
+	free_area_init_node(0, zones_size, PAGE_OFFSET >> PAGE_SHIFT, 0);
 
 	mem_map = contig_page_data.node_mem_map;
 }

@@ -13,142 +13,108 @@
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/netfilter_ipv4/ip_tables.h>
+#include <linux/slab.h>
 #include <net/ip.h>
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Netfilter Core Team <coreteam@netfilter.org>");
 MODULE_DESCRIPTION("iptables filter table");
 
-#define FILTER_VALID_HOOKS ((1 << NF_IP_LOCAL_IN) | (1 << NF_IP_FORWARD) | (1 << NF_IP_LOCAL_OUT))
+#define FILTER_VALID_HOOKS ((1 << NF_INET_LOCAL_IN) | \
+			    (1 << NF_INET_FORWARD) | \
+			    (1 << NF_INET_LOCAL_OUT))
 
-static struct
-{
-	struct ipt_replace repl;
-	struct ipt_standard entries[3];
-	struct ipt_error term;
-} initial_table __initdata = {
-	.repl = {
-		.name = "filter",
-		.valid_hooks = FILTER_VALID_HOOKS,
-		.num_entries = 4,
-		.size = sizeof(struct ipt_standard) * 3 + sizeof(struct ipt_error),
-		.hook_entry = {
-			[NF_IP_LOCAL_IN] = 0,
-			[NF_IP_FORWARD] = sizeof(struct ipt_standard),
-			[NF_IP_LOCAL_OUT] = sizeof(struct ipt_standard) * 2,
-		},
-		.underflow = {
-			[NF_IP_LOCAL_IN] = 0,
-			[NF_IP_FORWARD] = sizeof(struct ipt_standard),
-			[NF_IP_LOCAL_OUT] = sizeof(struct ipt_standard) * 2,
-		},
-	},
-	.entries = {
-		IPT_STANDARD_INIT(NF_ACCEPT),	/* LOCAL_IN */
-		IPT_STANDARD_INIT(NF_ACCEPT),	/* FORWARD */
-		IPT_STANDARD_INIT(NF_ACCEPT),	/* LOCAL_OUT */
-	},
-	.term = IPT_ERROR_INIT,			/* ERROR */
-};
-
-static struct xt_table packet_filter = {
+static const struct xt_table packet_filter = {
 	.name		= "filter",
 	.valid_hooks	= FILTER_VALID_HOOKS,
 	.me		= THIS_MODULE,
-	.af		= AF_INET,
+	.af		= NFPROTO_IPV4,
+	.priority	= NF_IP_PRI_FILTER,
 };
 
-/* The work comes in here from netfilter.c. */
 static unsigned int
-ipt_hook(unsigned int hook,
-	 struct sk_buff **pskb,
-	 const struct net_device *in,
-	 const struct net_device *out,
-	 int (*okfn)(struct sk_buff *))
+iptable_filter_hook(unsigned int hook, struct sk_buff *skb,
+		    const struct net_device *in, const struct net_device *out,
+		    int (*okfn)(struct sk_buff *))
 {
-	return ipt_do_table(pskb, hook, in, out, &packet_filter);
-}
+	const struct net *net;
 
-static unsigned int
-ipt_local_out_hook(unsigned int hook,
-		   struct sk_buff **pskb,
-		   const struct net_device *in,
-		   const struct net_device *out,
-		   int (*okfn)(struct sk_buff *))
-{
-	/* root is playing with raw sockets. */
-	if ((*pskb)->len < sizeof(struct iphdr)
-	    || ip_hdrlen(*pskb) < sizeof(struct iphdr)) {
-		if (net_ratelimit())
-			printk("iptable_filter: ignoring short SOCK_RAW "
-			       "packet.\n");
+	if (hook == NF_INET_LOCAL_OUT &&
+	    (skb->len < sizeof(struct iphdr) ||
+	     ip_hdrlen(skb) < sizeof(struct iphdr)))
+		/* root is playing with raw sockets. */
 		return NF_ACCEPT;
-	}
 
-	return ipt_do_table(pskb, hook, in, out, &packet_filter);
+	net = dev_net((in != NULL) ? in : out);
+	return ipt_do_table(skb, hook, in, out, net->ipv4.iptable_filter);
 }
 
-static struct nf_hook_ops ipt_ops[] = {
-	{
-		.hook		= ipt_hook,
-		.owner		= THIS_MODULE,
-		.pf		= PF_INET,
-		.hooknum	= NF_IP_LOCAL_IN,
-		.priority	= NF_IP_PRI_FILTER,
-	},
-	{
-		.hook		= ipt_hook,
-		.owner		= THIS_MODULE,
-		.pf		= PF_INET,
-		.hooknum	= NF_IP_FORWARD,
-		.priority	= NF_IP_PRI_FILTER,
-	},
-	{
-		.hook		= ipt_local_out_hook,
-		.owner		= THIS_MODULE,
-		.pf		= PF_INET,
-		.hooknum	= NF_IP_LOCAL_OUT,
-		.priority	= NF_IP_PRI_FILTER,
-	},
-};
+static struct nf_hook_ops *filter_ops __read_mostly;
 
 /* Default to forward because I got too much mail already. */
 static int forward = NF_ACCEPT;
 module_param(forward, bool, 0000);
+
+static int __net_init iptable_filter_net_init(struct net *net)
+{
+	struct ipt_replace *repl;
+
+	repl = ipt_alloc_initial_table(&packet_filter);
+	if (repl == NULL)
+		return -ENOMEM;
+	/* Entry 1 is the FORWARD hook */
+	((struct ipt_standard *)repl->entries)[1].target.verdict =
+		-forward - 1;
+
+	net->ipv4.iptable_filter =
+		ipt_register_table(net, &packet_filter, repl);
+	kfree(repl);
+	if (IS_ERR(net->ipv4.iptable_filter))
+		return PTR_ERR(net->ipv4.iptable_filter);
+	return 0;
+}
+
+static void __net_exit iptable_filter_net_exit(struct net *net)
+{
+	ipt_unregister_table(net, net->ipv4.iptable_filter);
+}
+
+static struct pernet_operations iptable_filter_net_ops = {
+	.init = iptable_filter_net_init,
+	.exit = iptable_filter_net_exit,
+};
 
 static int __init iptable_filter_init(void)
 {
 	int ret;
 
 	if (forward < 0 || forward > NF_MAX_VERDICT) {
-		printk("iptables forward must be 0 or 1\n");
+		pr_err("iptables forward must be 0 or 1\n");
 		return -EINVAL;
 	}
 
-	/* Entry 1 is the FORWARD hook */
-	initial_table.entries[1].target.verdict = -forward - 1;
-
-	/* Register table */
-	ret = ipt_register_table(&packet_filter, &initial_table.repl);
+	ret = register_pernet_subsys(&iptable_filter_net_ops);
 	if (ret < 0)
 		return ret;
 
 	/* Register hooks */
-	ret = nf_register_hooks(ipt_ops, ARRAY_SIZE(ipt_ops));
-	if (ret < 0)
+	filter_ops = xt_hook_link(&packet_filter, iptable_filter_hook);
+	if (IS_ERR(filter_ops)) {
+		ret = PTR_ERR(filter_ops);
 		goto cleanup_table;
+	}
 
 	return ret;
 
  cleanup_table:
-	ipt_unregister_table(&packet_filter);
+	unregister_pernet_subsys(&iptable_filter_net_ops);
 	return ret;
 }
 
 static void __exit iptable_filter_fini(void)
 {
-	nf_unregister_hooks(ipt_ops, ARRAY_SIZE(ipt_ops));
-	ipt_unregister_table(&packet_filter);
+	xt_hook_unlink(&packet_filter, filter_ops);
+	unregister_pernet_subsys(&iptable_filter_net_ops);
 }
 
 module_init(iptable_filter_init);

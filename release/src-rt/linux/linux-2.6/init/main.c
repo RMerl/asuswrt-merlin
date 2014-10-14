@@ -14,24 +14,23 @@
 #include <linux/proc_fs.h>
 #include <linux/kernel.h>
 #include <linux/syscalls.h>
+#include <linux/stackprotector.h>
 #include <linux/string.h>
 #include <linux/ctype.h>
 #include <linux/delay.h>
-#include <linux/utsname.h>
 #include <linux/ioport.h>
 #include <linux/init.h>
-#include <linux/smp_lock.h>
 #include <linux/initrd.h>
-#include <linux/hdreg.h>
 #include <linux/bootmem.h>
+#include <linux/acpi.h>
 #include <linux/tty.h>
-#include <linux/gfp.h>
 #include <linux/percpu.h>
 #include <linux/kmod.h>
+#include <linux/vmalloc.h>
 #include <linux/kernel_stat.h>
 #include <linux/start_kernel.h>
 #include <linux/security.h>
-#include <linux/workqueue.h>
+#include <linux/smp.h>
 #include <linux/profile.h>
 #include <linux/rcupdate.h>
 #include <linux/moduleparam.h>
@@ -39,6 +38,7 @@
 #include <linux/writeback.h>
 #include <linux/cpu.h>
 #include <linux/cpuset.h>
+#include <linux/cgroup.h>
 #include <linux/efi.h>
 #include <linux/tick.h>
 #include <linux/interrupt.h>
@@ -48,14 +48,26 @@
 #include <linux/rmap.h>
 #include <linux/mempolicy.h>
 #include <linux/key.h>
-#include <linux/unwind.h>
 #include <linux/buffer_head.h>
+#include <linux/page_cgroup.h>
 #include <linux/debug_locks.h>
+#include <linux/debugobjects.h>
 #include <linux/lockdep.h>
+#include <linux/kmemleak.h>
 #include <linux/pid_namespace.h>
 #include <linux/device.h>
 #include <linux/kthread.h>
+#include <linux/sched.h>
+#include <linux/signal.h>
 #include <linux/idr.h>
+#include <linux/kgdb.h>
+#include <linux/ftrace.h>
+#include <linux/async.h>
+#include <linux/kmemcheck.h>
+#include <linux/sfi.h>
+#include <linux/shmem_fs.h>
+#include <linux/slab.h>
+#include <linux/perf_event.h>
 
 #include <asm/io.h>
 #include <asm/bugs.h>
@@ -67,40 +79,15 @@
 #include <asm/smp.h>
 #endif
 
-/*
- * This is one of the first .c files built. Error out early if we have compiler
- * trouble.
- *
- * Versions of gcc older than that listed below may actually compile and link
- * okay, but the end product can have subtle run time bugs.  To avoid associated
- * bogus bug reports, we flatly refuse to compile with a gcc that is known to be
- * too old from the very beginning.
- */
-#if (__GNUC__ < 3) || (__GNUC__ == 3 && __GNUC_MINOR__ < 2)
-#error Sorry, your GCC is too old. It builds incorrect kernels.
-#endif
-
-#if __GNUC__ == 4 && __GNUC_MINOR__ == 1 && __GNUC_PATCHLEVEL__ == 0
-#warning gcc-4.1.0 is known to miscompile the kernel.  A different compiler version is recommended.
-#endif
-
 static int kernel_init(void *);
 
 extern void init_IRQ(void);
 extern void fork_init(unsigned long);
 extern void mca_init(void);
 extern void sbus_init(void);
-extern void signals_init(void);
-extern void pidhash_init(void);
-extern void pidmap_init(void);
 extern void prio_tree_init(void);
 extern void radix_tree_init(void);
 extern void free_initmem(void);
-#ifdef	CONFIG_ACPI
-extern void acpi_early_init(void);
-#else
-static inline void acpi_early_init(void) { }
-#endif
 #ifndef CONFIG_DEBUG_RODATA
 static inline void mark_rodata_ro(void) { }
 #endif
@@ -109,7 +96,16 @@ static inline void mark_rodata_ro(void) { }
 extern void tc_init(void);
 #endif
 
-enum system_states system_state;
+/*
+ * Debug helper: via this flag we know that we are in 'early bootup code'
+ * where only the boot processor is running with IRQ disabled.  This means
+ * two things - IRQ must not be enabled before the flag is cleared and some
+ * operations which are not allowed with IRQ disabled are allowed while the
+ * flag is set.
+ */
+bool early_boot_irqs_disabled __read_mostly;
+
+enum system_states system_state __read_mostly;
 EXPORT_SYMBOL(system_state);
 
 /*
@@ -120,7 +116,7 @@ EXPORT_SYMBOL(system_state);
 
 extern void time_init(void);
 /* Default late time init is NULL. archs can override this later. */
-void (*late_time_init)(void);
+void (*__initdata late_time_init)(void);
 extern void softirq_init(void);
 
 /* Untouched command line saved by arch-specific code. */
@@ -132,9 +128,6 @@ static char *static_command_line;
 
 static char *execute_command;
 static char *ramdisk_execute_command;
-
-/* Setup configured maximum number of CPUs to activate */
-static unsigned int max_cpus = NR_CPUS;
 
 /*
  * If set, this is an indication to the drivers that reset the underlying
@@ -148,32 +141,6 @@ static unsigned int max_cpus = NR_CPUS;
 unsigned int reset_devices;
 EXPORT_SYMBOL(reset_devices);
 
-/*
- * Setup routine for controlling SMP activation
- *
- * Command-line option of "nosmp" or "maxcpus=0" will disable SMP
- * activation entirely (the MPS table probe still happens, though).
- *
- * Command-line option of "maxcpus=<NUM>", where <NUM> is an integer
- * greater than 0, limits the maximum number of CPUs activated in
- * SMP mode to <NUM>.
- */
-static int __init nosmp(char *str)
-{
-	max_cpus = 0;
-	return 1;
-}
-
-__setup("nosmp", nosmp);
-
-static int __init maxcpus(char *str)
-{
-	get_option(&str, &max_cpus);
-	return 1;
-}
-
-__setup("maxcpus=", maxcpus);
-
 static int __init set_reset_devices(char *str)
 {
 	reset_devices = 1;
@@ -182,15 +149,15 @@ static int __init set_reset_devices(char *str)
 
 __setup("reset_devices", set_reset_devices);
 
-static char * argv_init[MAX_INIT_ARGS+2] = { "init", NULL, };
-char * envp_init[MAX_INIT_ENVS+2] = { "HOME=/", "TERM=linux", NULL, };
+static const char * argv_init[MAX_INIT_ARGS+2] = { "init", NULL, };
+const char * envp_init[MAX_INIT_ENVS+2] = { "HOME=/", "TERM=linux", NULL, };
 static const char *panic_later, *panic_param;
 
-extern struct obs_kernel_param __setup_start[], __setup_end[];
+extern const struct obs_kernel_param __setup_start[], __setup_end[];
 
 static int __init obsolete_checksetup(char *line)
 {
-	struct obs_kernel_param *p;
+	const struct obs_kernel_param *p;
 	int had_early_param = 0;
 
 	p = __setup_start;
@@ -227,34 +194,30 @@ EXPORT_SYMBOL(loops_per_jiffy);
 
 static int __init debug_kernel(char *str)
 {
-	if (*str)
-		return 0;
 	console_loglevel = 10;
-	return 1;
+	return 0;
 }
 
 static int __init quiet_kernel(char *str)
 {
-	if (*str)
-		return 0;
 	console_loglevel = 4;
-	return 1;
+	return 0;
 }
 
-__setup("debug", debug_kernel);
-__setup("quiet", quiet_kernel);
+early_param("debug", debug_kernel);
+early_param("quiet", quiet_kernel);
 
 static int __init loglevel(char *str)
 {
 	get_option(&str, &console_loglevel);
-	return 1;
+	return 0;
 }
 
-__setup("loglevel=", loglevel);
+early_param("loglevel", loglevel);
 
 /*
  * Unknown boot options get handed to init, unless they look like
- * failed parameters
+ * unused parameters (modprobe will find them in /proc/cmdline).
  */
 static int __init unknown_bootoption(char *param, char *val)
 {
@@ -275,14 +238,9 @@ static int __init unknown_bootoption(char *param, char *val)
 	if (obsolete_checksetup(param))
 		return 0;
 
-	/*
-	 * Preemptive maintenance for "why didn't my mispelled command
-	 * line work?"
-	 */
-	if (strchr(param, '.') && (!val || strchr(param, '.') < val)) {
-		printk(KERN_ERR "Unknown boot option `%s': ignoring\n", param);
+	/* Unused module parameter. */
+	if (strchr(param, '.') && (!val || strchr(param, '.') < val))
 		return 0;
-	}
 
 	if (panic_later)
 		return 0;
@@ -312,6 +270,10 @@ static int __init unknown_bootoption(char *param, char *val)
 	}
 	return 0;
 }
+
+#ifdef CONFIG_DEBUG_PAGEALLOC
+int __read_mostly debug_pagealloc_enabled = 0;
+#endif
 
 static int __init init_setup(char *str)
 {
@@ -343,7 +305,7 @@ static int __init rdinit_setup(char *str)
 __setup("rdinit=", rdinit_setup);
 
 #ifndef CONFIG_SMP
-
+static const unsigned int setup_max_cpus = NR_CPUS;
 #ifdef CONFIG_X86_LOCAL_APIC
 static void __init smp_init(void)
 {
@@ -353,52 +315,8 @@ static void __init smp_init(void)
 #define smp_init()	do { } while (0)
 #endif
 
-static inline void setup_per_cpu_areas(void) { }
+static inline void setup_nr_cpu_ids(void) { }
 static inline void smp_prepare_cpus(unsigned int maxcpus) { }
-
-#else
-
-#ifdef __GENERIC_PER_CPU
-unsigned long __per_cpu_offset[NR_CPUS] __read_mostly;
-
-EXPORT_SYMBOL(__per_cpu_offset);
-
-static void __init setup_per_cpu_areas(void)
-{
-	unsigned long size, i;
-	char *ptr;
-	unsigned long nr_possible_cpus = num_possible_cpus();
-
-	/* Copy section for each CPU (we discard the original) */
-	size = ALIGN(PERCPU_ENOUGH_ROOM, PAGE_SIZE);
-	ptr = alloc_bootmem_pages(size * nr_possible_cpus);
-
-	for_each_possible_cpu(i) {
-		__per_cpu_offset[i] = ptr - __per_cpu_start;
-		memcpy(ptr, __per_cpu_start, __per_cpu_end - __per_cpu_start);
-		ptr += size;
-	}
-}
-#endif /* !__GENERIC_PER_CPU */
-
-/* Called by boot processor to activate the rest. */
-static void __init smp_init(void)
-{
-	unsigned int cpu;
-
-	/* FIXME: This should be done in userspace --RR */
-	for_each_present_cpu(cpu) {
-		if (num_online_cpus() >= max_cpus)
-			break;
-		if (!cpu_online(cpu))
-			cpu_up(cpu);
-	}
-
-	/* Any cleanup work */
-	printk(KERN_INFO "Brought up %ld CPUs\n", (long)num_online_cpus());
-	smp_cpus_done(max_cpus);
-}
-
 #endif
 
 /*
@@ -424,36 +342,49 @@ static void __init setup_command_line(char *command_line)
  * gcc-3.4 accidentally inlines this function, so use noinline.
  */
 
-static void noinline __init_refok rest_init(void)
-	__releases(kernel_lock)
+static __initdata DECLARE_COMPLETION(kthreadd_done);
+
+static noinline void __init_refok rest_init(void)
 {
 	int pid;
 
+	rcu_scheduler_starting();
+	/*
+	 * We need to spawn init first so that it obtains pid 1, however
+	 * the init task will end up wanting to create kthreads, which, if
+	 * we schedule it before we create kthreadd, will OOPS.
+	 */
 	kernel_thread(kernel_init, NULL, CLONE_FS | CLONE_SIGHAND);
 	numa_default_policy();
 	pid = kernel_thread(kthreadd, NULL, CLONE_FS | CLONE_FILES);
-	kthreadd_task = find_task_by_pid(pid);
-	unlock_kernel();
+	rcu_read_lock();
+	kthreadd_task = find_task_by_pid_ns(pid, &init_pid_ns);
+	rcu_read_unlock();
+	complete(&kthreadd_done);
 
 	/*
 	 * The boot idle thread must execute schedule()
-	 * at least one to get things moving:
+	 * at least once to get things moving:
 	 */
+	init_idle_bootup_task(current);
 	preempt_enable_no_resched();
 	schedule();
 	preempt_disable();
 
 	/* Call into cpu_idle with preempt disabled */
 	cpu_idle();
-} 
+}
 
 /* Check for early params. */
 static int __init do_early_param(char *param, char *val)
 {
-	struct obs_kernel_param *p;
+	const struct obs_kernel_param *p;
 
 	for (p = __setup_start; p < __setup_end; p++) {
-		if (p->early && strcmp(param, p->str) == 0) {
+		if ((p->early && strcmp(param, p->str) == 0) ||
+		    (strcmp(param, "console") == 0 &&
+		     strcmp(p->str, "earlycon") == 0)
+		) {
 			if (p->setup_func(val) != 0)
 				printk(KERN_WARNING
 				       "Malformed early option '%s'\n", param);
@@ -461,6 +392,11 @@ static int __init do_early_param(char *param, char *val)
 	}
 	/* We accept everything at this stage. */
 	return 0;
+}
+
+void __init parse_early_options(char *cmdline)
+{
+	parse_args("early options", cmdline, NULL, 0, do_early_param);
 }
 
 /* Arch code calls this early on, or if not, just before other parsing. */
@@ -474,7 +410,7 @@ void __init parse_early_param(void)
 
 	/* All fall through to do_early_param. */
 	strlcpy(tmp_cmdline, boot_command_line, COMMAND_LINE_SIZE);
-	parse_args("early options", tmp_cmdline, NULL, 0, do_early_param);
+	parse_early_options(tmp_cmdline);
 	done = 1;
 }
 
@@ -486,50 +422,93 @@ static void __init boot_cpu_init(void)
 {
 	int cpu = smp_processor_id();
 	/* Mark the boot cpu "present", "online" etc for SMP and UP case */
-	cpu_set(cpu, cpu_online_map);
-	cpu_set(cpu, cpu_present_map);
-	cpu_set(cpu, cpu_possible_map);
+	set_cpu_online(cpu, true);
+	set_cpu_active(cpu, true);
+	set_cpu_present(cpu, true);
+	set_cpu_possible(cpu, true);
 }
 
-void __init __attribute__((weak)) smp_setup_processor_id(void)
+void __init __weak smp_setup_processor_id(void)
 {
+}
+
+void __init __weak thread_info_cache_init(void)
+{
+}
+
+/*
+ * Set up kernel memory allocators
+ */
+static void __init mm_init(void)
+{
+	/*
+	 * page_cgroup requires countinous pages as memmap
+	 * and it's bigger than MAX_ORDER unless SPARSEMEM.
+	 */
+	page_cgroup_init_flatmem();
+	mem_init();
+	kmem_cache_init();
+	percpu_init_late();
+	pgtable_cache_init();
+	vmalloc_init();
 }
 
 asmlinkage void __init start_kernel(void)
 {
 	char * command_line;
-	extern struct kernel_param __start___param[], __stop___param[];
+	extern const struct kernel_param __start___param[], __stop___param[];
 
 	smp_setup_processor_id();
 
-printk("start_kernel\n");
 	/*
 	 * Need to run as early as possible, to initialize the
 	 * lockdep hash:
 	 */
-	unwind_init();
 	lockdep_init();
+	debug_objects_early_init();
+
+	/*
+	 * Set up the the initial canary ASAP:
+	 */
+	boot_init_stack_canary();
+
+	cgroup_init_early();
 
 	local_irq_disable();
-	early_boot_irqs_off();
-	early_init_irq_lock_class();
+	early_boot_irqs_disabled = true;
 
 /*
  * Interrupts are still disabled. Do necessary setups, then
  * enable them
  */
-	lock_kernel();
 	tick_init();
 	boot_cpu_init();
 	page_address_init();
-	printk(KERN_NOTICE);
-	printk(linux_banner);
+	printk(KERN_NOTICE "%s", linux_banner);
 	setup_arch(&command_line);
+	mm_init_owner(&init_mm, &init_task);
 	setup_command_line(command_line);
-	unwind_setup();
+	setup_nr_cpu_ids();
 	setup_per_cpu_areas();
 	smp_prepare_boot_cpu();	/* arch-specific boot-cpu hooks */
 
+	build_all_zonelists(NULL);
+	page_alloc_init();
+
+	printk(KERN_NOTICE "Kernel command line: %s\n", boot_command_line);
+	parse_early_param();
+	parse_args("Booting kernel", static_command_line, __start___param,
+		   __stop___param - __start___param,
+		   &unknown_bootoption);
+	/*
+	 * These use large bootmem allocations and must precede
+	 * kmem_cache_init()
+	 */
+	pidhash_init();
+	vfs_caches_init_early();
+	sort_main_extable();
+	trap_init();
+	mm_init();
 	/*
 	 * Set up the scheduler prior starting any interrupts (such as the
 	 * timer interrupt). Full topology setup happens at smp_init()
@@ -541,23 +520,19 @@ printk("start_kernel\n");
 	 * fragile until we cpu_idle() for the first time.
 	 */
 	preempt_disable();
-	build_all_zonelists();
-	page_alloc_init();
-	printk(KERN_NOTICE "Kernel command line: %s\n", boot_command_line);
-	parse_early_param();
-	parse_args("Booting kernel", static_command_line, __start___param,
-		   __stop___param - __start___param,
-		   &unknown_bootoption);
 	if (!irqs_disabled()) {
 		printk(KERN_WARNING "start_kernel(): bug: interrupts were "
 				"enabled *very* early, fixing it\n");
 		local_irq_disable();
 	}
-	sort_main_extable();
-	trap_init();
+	idr_init_cache();
+	perf_event_init();
 	rcu_init();
+	radix_tree_init();
+	/* init some links before init_ISA_irqs() */
+	early_irq_init();
 	init_IRQ();
-	pidhash_init();
+	prio_tree_init();
 	init_timers();
 	hrtimers_init();
 	softirq_init();
@@ -565,9 +540,15 @@ printk("start_kernel\n");
 	time_init();
 	profile_init();
 	if (!irqs_disabled())
-		printk("start_kernel(): bug: interrupts were enabled early\n");
-	early_boot_irqs_on();
+		printk(KERN_CRIT "start_kernel(): bug: interrupts were "
+				 "enabled early\n");
+	early_boot_irqs_disabled = false;
 	local_irq_enable();
+
+	/* Interrupts are enabled now so all GFP allocations are safe. */
+	gfp_allowed_mask = __GFP_BITS_MASK;
+
+	kmem_cache_init_late();
 
 	/*
 	 * HACK ALERT! This is early. We're enabling the console before
@@ -589,47 +570,46 @@ printk("start_kernel\n");
 
 #ifdef CONFIG_BLK_DEV_INITRD
 	if (initrd_start && !initrd_below_start_ok &&
-			initrd_start < min_low_pfn << PAGE_SHIFT) {
+	    page_to_pfn(virt_to_page((void *)initrd_start)) < min_low_pfn) {
 		printk(KERN_CRIT "initrd overwritten (0x%08lx < 0x%08lx) - "
-		    "disabling it.\n",initrd_start,min_low_pfn << PAGE_SHIFT);
+		    "disabling it.\n",
+		    page_to_pfn(virt_to_page((void *)initrd_start)),
+		    min_low_pfn);
 		initrd_start = 0;
 	}
 #endif
-	vfs_caches_init_early();
-	cpuset_init_early();
-	mem_init();
-	kmem_cache_init();
-	idr_init_cache();
+	page_cgroup_init();
+	enable_debug_pagealloc();
+	debug_objects_mem_init();
+	kmemleak_init();
 	setup_per_cpu_pageset();
 	numa_policy_init();
 	if (late_time_init)
 		late_time_init();
+	sched_clock_init();
 	calibrate_delay();
 	pidmap_init();
-	pgtable_cache_init();
-#ifdef CONFIG_DUMP_PREV_OOPS_MSG 
-        prepare_and_dump_previous_oops();
-#endif
-	prio_tree_init();
 	anon_vma_init();
 #ifdef CONFIG_X86
 	if (efi_enabled)
 		efi_enter_virtual_mode();
 #endif
-	fork_init(num_physpages);
+	thread_info_cache_init();
+	cred_init();
+	fork_init(totalram_pages);
 	proc_caches_init();
 	buffer_init();
-	unnamed_dev_init();
 	key_init();
 	security_init();
-	vfs_caches_init(num_physpages);
-	radix_tree_init();
+	dbg_late_init();
+	vfs_caches_init(totalram_pages);
 	signals_init();
 	/* rootfs populating might need page-writeback */
 	page_writeback_init();
 #ifdef CONFIG_PROC_FS
 	proc_root_init();
 #endif
+	cgroup_init();
 	cpuset_init();
 	taskstats_init_early();
 	delayacct_init();
@@ -637,80 +617,87 @@ printk("start_kernel\n");
 	check_bugs();
 
 	acpi_early_init(); /* before LAPIC and SMP init */
+	sfi_init_late();
+
+	ftrace_init();
 
 	/* Do the rest non-__init'ed, we're now alive */
 	rest_init();
 }
 
-static int __initdata initcall_debug;
-
-static int __init initcall_debug_setup(char *str)
+/* Call all constructor functions linked into the kernel. */
+static void __init do_ctors(void)
 {
-	initcall_debug = 1;
-	return 1;
-}
-__setup("initcall_debug", initcall_debug_setup);
+#ifdef CONFIG_CONSTRUCTORS
+	ctor_fn_t *fn = (ctor_fn_t *) __ctors_start;
 
-extern initcall_t __initcall_start[], __initcall_end[];
+	for (; fn < (ctor_fn_t *) __ctors_end; fn++)
+		(*fn)();
+#endif
+}
+
+int initcall_debug;
+core_param(initcall_debug, initcall_debug, bool, 0644);
+
+static char msgbuf[64];
+
+static int __init_or_module do_one_initcall_debug(initcall_t fn)
+{
+	ktime_t calltime, delta, rettime;
+	unsigned long long duration;
+	int ret;
+
+	printk(KERN_DEBUG "calling  %pF @ %i\n", fn, task_pid_nr(current));
+	calltime = ktime_get();
+	ret = fn();
+	rettime = ktime_get();
+	delta = ktime_sub(rettime, calltime);
+	duration = (unsigned long long) ktime_to_ns(delta) >> 10;
+	printk(KERN_DEBUG "initcall %pF returned %d after %lld usecs\n", fn,
+		ret, duration);
+
+	return ret;
+}
+
+int __init_or_module do_one_initcall(initcall_t fn)
+{
+	int count = preempt_count();
+	int ret;
+
+	if (initcall_debug)
+		ret = do_one_initcall_debug(fn);
+	else
+		ret = fn();
+
+	msgbuf[0] = 0;
+
+	if (ret && ret != -ENODEV && initcall_debug)
+		sprintf(msgbuf, "error code %d ", ret);
+
+	if (preempt_count() != count) {
+		strlcat(msgbuf, "preemption imbalance ", sizeof(msgbuf));
+		preempt_count() = count;
+	}
+	if (irqs_disabled()) {
+		strlcat(msgbuf, "disabled interrupts ", sizeof(msgbuf));
+		local_irq_enable();
+	}
+	if (msgbuf[0]) {
+		printk("initcall %pF returned with %s\n", fn, msgbuf);
+	}
+
+	return ret;
+}
+
+
+extern initcall_t __initcall_start[], __initcall_end[], __early_initcall_end[];
 
 static void __init do_initcalls(void)
 {
-	initcall_t *call;
-	int count = preempt_count();
+	initcall_t *fn;
 
-	for (call = __initcall_start; call < __initcall_end; call++) {
-		ktime_t t0, t1, delta;
-		char *msg = NULL;
-		char msgbuf[40];
-		int result;
-
-		if (initcall_debug) {
-			printk("Calling initcall 0x%p", *call);
-			print_fn_descriptor_symbol(": %s()",
-					(unsigned long) *call);
-			printk("\n");
-			t0 = ktime_get();
-		}
-
-		result = (*call)();
-
-		if (initcall_debug) {
-			t1 = ktime_get();
-			delta = ktime_sub(t1, t0);
-
-			printk("initcall 0x%p", *call);
-			print_fn_descriptor_symbol(": %s()",
-					(unsigned long) *call);
-			printk(" returned %d.\n", result);
-
-			printk("initcall 0x%p ran for %Ld msecs: ",
-				*call, (unsigned long long)delta.tv64 >> 20);
-			print_fn_descriptor_symbol("%s()\n",
-				(unsigned long) *call);
-		}
-
-		if (result && result != -ENODEV && initcall_debug) {
-			sprintf(msgbuf, "error code %d", result);
-			msg = msgbuf;
-		}
-		if (preempt_count() != count) {
-			msg = "preemption imbalance";
-			preempt_count() = count;
-		}
-		if (irqs_disabled()) {
-			msg = "disabled interrupts";
-			local_irq_enable();
-		}
-		if (msg) {
-			printk(KERN_WARNING "initcall at 0x%p", *call);
-			print_fn_descriptor_symbol(": %s()",
-					(unsigned long) *call);
-			printk(": returned with %s\n", msg);
-		}
-	}
-
-	/* Make sure there is no pending stuff from the initcall sequence */
-	flush_scheduled_work();
+	for (fn = __early_initcall_end; fn < __initcall_end; fn++)
+		do_one_initcall(*fn);
 }
 
 /*
@@ -722,27 +709,24 @@ static void __init do_initcalls(void)
  */
 static void __init do_basic_setup(void)
 {
-	/* drivers will send hotplug events */
-	init_workqueues();
+	cpuset_init_smp();
 	usermodehelper_init();
+	init_tmpfs();
 	driver_init();
 	init_irq_proc();
+	do_ctors();
 	do_initcalls();
 }
 
 static void __init do_pre_smp_initcalls(void)
 {
-	extern int spawn_ksoftirqd(void);
-#ifdef CONFIG_SMP
-	extern int migration_init(void);
+	initcall_t *fn;
 
-	migration_init();
-#endif
-	spawn_ksoftirqd();
-	spawn_softlockup_task();
+	for (fn = __initcall_start; fn < __early_initcall_end; fn++)
+		do_one_initcall(*fn);
 }
 
-static void run_init_process(char *init_filename)
+static void run_init_process(const char *init_filename)
 {
 	argv_init[0] = init_filename;
 	kernel_execve(init_filename, argv_init, envp_init);
@@ -751,19 +735,17 @@ static void run_init_process(char *init_filename)
 /* This is a non __init function. Force it to be noinline otherwise gcc
  * makes it inline to init() and it becomes part of init.text section
  */
-static int noinline init_post(void)
+static noinline int init_post(void)
 {
+	/* need to finish all async __init code before freeing the memory */
+	async_synchronize_full();
 	free_initmem();
-	unlock_kernel();
 	mark_rodata_ro();
 	system_state = SYSTEM_RUNNING;
 	numa_default_policy();
 
-	if (sys_open((const char __user *) "/dev/console", O_RDWR, 0) < 0)
-		printk(KERN_WARNING "Warning: unable to open an initial console.\n");
 
-	(void) sys_dup(0);
-	(void) sys_dup(0);
+	current->signal->flags |= SIGNAL_UNKILLABLE;
 
 	if (ramdisk_execute_command) {
 		run_init_process(ramdisk_execute_command);
@@ -787,40 +769,43 @@ static int noinline init_post(void)
 	run_init_process("/bin/init");
 	run_init_process("/bin/sh");
 
-	panic("No init found.  Try passing init= option to kernel.");
+	panic("No init found.  Try passing init= option to kernel. "
+	      "See Linux Documentation/init.txt for guidance.");
 }
 
 static int __init kernel_init(void * unused)
 {
-	lock_kernel();
+	/*
+	 * Wait until kthreadd is all set-up.
+	 */
+	wait_for_completion(&kthreadd_done);
+	/*
+	 * init can allocate pages on any node
+	 */
+	set_mems_allowed(node_states[N_HIGH_MEMORY]);
 	/*
 	 * init can run on any cpu.
 	 */
-	set_cpus_allowed(current, CPU_MASK_ALL);
-	/*
-	 * Tell the world that we're going to be the grim
-	 * reaper of innocent orphaned children.
-	 *
-	 * We don't want people to have to make incorrect
-	 * assumptions about where in the task array this
-	 * can be found.
-	 */
-	init_pid_ns.child_reaper = current;
+	set_cpus_allowed_ptr(current, cpu_all_mask);
 
-	__set_special_pids(1, 1);
 	cad_pid = task_pid(current);
 
-	smp_prepare_cpus(max_cpus);
+	smp_prepare_cpus(setup_max_cpus);
 
 	do_pre_smp_initcalls();
+	lockup_detector_init();
 
 	smp_init();
 	sched_init_smp();
 
-	cpuset_init_smp();
-
 	do_basic_setup();
 
+	/* Open the /dev/console on the rootfs, this should never fail */
+	if (sys_open((const char __user *) "/dev/console", O_RDWR, 0) < 0)
+		printk(KERN_WARNING "Warning: unable to open an initial console.\n");
+
+	(void) sys_dup(0);
+	(void) sys_dup(0);
 	/*
 	 * check if there is an early userspace init.  If yes, let it do all
 	 * the work
@@ -839,6 +824,7 @@ static int __init kernel_init(void * unused)
 	 * we're essentially up and running. Get rid of the
 	 * initmem segments and start the user-mode stuff..
 	 */
+
 	init_post();
 	return 0;
 }

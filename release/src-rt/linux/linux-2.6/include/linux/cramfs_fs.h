@@ -2,8 +2,8 @@
 #define __CRAMFS_H
 
 #include <linux/types.h>
+#include <linux/magic.h>
 
-#define CRAMFS_MAGIC		0x28cd3d45	/* some random number */
 #define CRAMFS_SIGNATURE	"Compressed ROMFS"
 
 /*
@@ -84,9 +84,11 @@ struct cramfs_super {
 				| CRAMFS_FLAG_WRONG_SIGNATURE \
 				| CRAMFS_FLAG_SHIFTED_ROOT_OFFSET )
 
+#ifdef __KERNEL__
 /* Uncompression interfaces to the underlying zlib */
 int cramfs_uncompress_block(void *dst, int dstlen, void *src, int srclen);
 int cramfs_uncompress_init(void);
 void cramfs_uncompress_exit(void);
+#endif /* __KERNEL__ */
 
 #endif

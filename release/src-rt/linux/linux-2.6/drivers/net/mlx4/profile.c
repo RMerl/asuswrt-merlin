@@ -32,7 +32,7 @@
  * SOFTWARE.
  */
 
-#include <linux/init.h>
+#include <linux/slab.h>
 
 #include "mlx4.h"
 #include "fw.h"
@@ -85,7 +85,7 @@ u64 mlx4_make_profile(struct mlx4_dev *dev,
 	struct mlx4_resource tmp;
 	int i, j;
 
-	profile = kzalloc(MLX4_RES_NUM * sizeof *profile, GFP_KERNEL);
+	profile = kcalloc(MLX4_RES_NUM, sizeof(*profile), GFP_KERNEL);
 	if (!profile)
 		return -ENOMEM;
 
@@ -98,7 +98,7 @@ u64 mlx4_make_profile(struct mlx4_dev *dev,
 	profile[MLX4_RES_EQ].size     = dev_cap->eqc_entry_sz;
 	profile[MLX4_RES_DMPT].size   = dev_cap->dmpt_entry_sz;
 	profile[MLX4_RES_CMPT].size   = dev_cap->cmpt_entry_sz;
-	profile[MLX4_RES_MTT].size    = MLX4_MTT_ENTRY_PER_SEG * dev_cap->mtt_entry_sz;
+	profile[MLX4_RES_MTT].size    = dev->caps.mtts_per_seg * dev_cap->mtt_entry_sz;
 	profile[MLX4_RES_MCG].size    = MLX4_MGM_ENTRY_SIZE;
 
 	profile[MLX4_RES_QP].num      = request->num_qp;
@@ -107,7 +107,7 @@ u64 mlx4_make_profile(struct mlx4_dev *dev,
 	profile[MLX4_RES_AUXC].num    = request->num_qp;
 	profile[MLX4_RES_SRQ].num     = request->num_srq;
 	profile[MLX4_RES_CQ].num      = request->num_cq;
-	profile[MLX4_RES_EQ].num      = MLX4_NUM_EQ + dev_cap->reserved_eqs;
+	profile[MLX4_RES_EQ].num      = min_t(unsigned, dev_cap->max_eqs, MAX_MSIX);
 	profile[MLX4_RES_DMPT].num    = request->num_mpt;
 	profile[MLX4_RES_CMPT].num    = MLX4_NUM_CMPTS;
 	profile[MLX4_RES_MTT].num     = request->num_mtt;

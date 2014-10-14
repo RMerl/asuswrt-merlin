@@ -11,6 +11,7 @@
 #include <linux/kernel.h>
 #include <linux/mm.h>
 #include <linux/ptrace.h>
+#include <linux/tracehook.h>
 #include <linux/sched.h>
 #include <linux/signal.h>
 #include <linux/smp.h>
@@ -20,7 +21,6 @@
 #include <linux/unistd.h>
 #include <linux/wait.h>
 
-#include <asm/ia32.h>
 #include <asm/intrinsics.h>
 #include <asm/uaccess.h>
 #include <asm/rse.h>
@@ -98,7 +98,7 @@ restore_sigcontext (struct sigcontext __user *sc, struct sigscratch *scr)
 	if ((flags & IA64_SC_FLAG_FPH_VALID) != 0) {
 		struct ia64_psr *psr = ia64_psr(&scr->pt);
 
-		__copy_from_user(current->thread.fph, &sc->sc_fr[32], 96*16);
+		err |= __copy_from_user(current->thread.fph, &sc->sc_fr[32], 96*16);
 		psr->mfh = 0;	/* drop signal handler's fph contents... */
 		preempt_disable();
 		if (psr->dfh)
@@ -227,8 +227,8 @@ ia64_rt_sigreturn (struct sigscratch *scr)
 	si.si_signo = SIGSEGV;
 	si.si_errno = 0;
 	si.si_code = SI_KERNEL;
-	si.si_pid = current->pid;
-	si.si_uid = current->uid;
+	si.si_pid = task_pid_vnr(current);
+	si.si_uid = current_uid();
 	si.si_addr = sc;
 	force_sig_info(SIGSEGV, &si, current);
 	return retval;
@@ -244,7 +244,7 @@ static long
 setup_sigcontext (struct sigcontext __user *sc, sigset_t *mask, struct sigscratch *scr)
 {
 	unsigned long flags = 0, ifs, cfm, nat;
-	long err;
+	long err = 0;
 
 	ifs = scr->pt.cr_ifs;
 
@@ -257,12 +257,12 @@ setup_sigcontext (struct sigcontext __user *sc, sigset_t *mask, struct sigscratc
 	ia64_flush_fph(current);
 	if ((current->thread.flags & IA64_THREAD_FPH_VALID)) {
 		flags |= IA64_SC_FLAG_FPH_VALID;
-		__copy_to_user(&sc->sc_fr[32], current->thread.fph, 96*16);
+		err = __copy_to_user(&sc->sc_fr[32], current->thread.fph, 96*16);
 	}
 
 	nat = ia64_get_scratch_nat_bits(&scr->pt, scr->scratch_unat);
 
-	err  = __put_user(flags, &sc->sc_flags);
+	err |= __put_user(flags, &sc->sc_flags);
 	err |= __put_user(nat, &sc->sc_nat);
 	err |= PUT_SIGSET(mask, &sc->sc_mask);
 	err |= __put_user(cfm, &sc->sc_cfm);
@@ -280,15 +280,7 @@ setup_sigcontext (struct sigcontext __user *sc, sigset_t *mask, struct sigscratc
 	err |= __copy_to_user(&sc->sc_gr[15], &scr->pt.r15, 8);		/* r15 */
 	err |= __put_user(scr->pt.cr_iip + ia64_psr(&scr->pt)->ri, &sc->sc_ip);
 
-	if (flags & IA64_SC_FLAG_IN_SYSCALL) {
-		/* Clear scratch registers if the signal interrupted a system call. */
-		err |= __put_user(0, &sc->sc_ar_ccv);				/* ar.ccv */
-		err |= __put_user(0, &sc->sc_br[7]);				/* b7 */
-		err |= __put_user(0, &sc->sc_gr[14]);				/* r14 */
-		err |= __clear_user(&sc->sc_ar25, 2*8);			/* ar.csd & ar.ssd */
-		err |= __clear_user(&sc->sc_gr[2], 2*8);			/* r2-r3 */
-		err |= __clear_user(&sc->sc_gr[16], 16*8);			/* r16-r31 */
-	} else {
+	if (!(flags & IA64_SC_FLAG_IN_SYSCALL)) {
 		/* Copy scratch regs to sigcontext if the signal didn't interrupt a syscall. */
 		err |= __put_user(scr->pt.ar_ccv, &sc->sc_ar_ccv);		/* ar.ccv */
 		err |= __put_user(scr->pt.b7, &sc->sc_br[7]);			/* b7 */
@@ -332,8 +324,8 @@ force_sigsegv_info (int sig, void __user *addr)
 	si.si_signo = SIGSEGV;
 	si.si_errno = 0;
 	si.si_code = SI_KERNEL;
-	si.si_pid = current->pid;
-	si.si_uid = current->uid;
+	si.si_pid = task_pid_vnr(current);
+	si.si_uid = current_uid();
 	si.si_addr = addr;
 	force_sig_info(SIGSEGV, &si, current);
 	return 0;
@@ -350,15 +342,33 @@ setup_frame (int sig, struct k_sigaction *ka, siginfo_t *info, sigset_t *set,
 
 	new_sp = scr->pt.r12;
 	tramp_addr = (unsigned long) __kernel_sigtramp;
-	if ((ka->sa.sa_flags & SA_ONSTACK) && sas_ss_flags(new_sp) == 0) {
-		new_sp = current->sas_ss_sp + current->sas_ss_size;
-		/*
-		 * We need to check for the register stack being on the signal stack
-		 * separately, because it's switched separately (memory stack is switched
-		 * in the kernel, register stack is switched in the signal trampoline).
-		 */
-		if (!rbs_on_sig_stack(scr->pt.ar_bspstore))
-			new_rbs = (current->sas_ss_sp + sizeof(long) - 1) & ~(sizeof(long) - 1);
+	if (ka->sa.sa_flags & SA_ONSTACK) {
+		int onstack = sas_ss_flags(new_sp);
+
+		if (onstack == 0) {
+			new_sp = current->sas_ss_sp + current->sas_ss_size;
+			/*
+			 * We need to check for the register stack being on the
+			 * signal stack separately, because it's switched
+			 * separately (memory stack is switched in the kernel,
+			 * register stack is switched in the signal trampoline).
+			 */
+			if (!rbs_on_sig_stack(scr->pt.ar_bspstore))
+				new_rbs = ALIGN(current->sas_ss_sp,
+						sizeof(long));
+		} else if (onstack == SS_ONSTACK) {
+			unsigned long check_sp;
+
+			/*
+			 * If we are on the alternate signal stack and would
+			 * overflow it, don't. Return an always-bogus address
+			 * instead so we will die with SIGSEGV.
+			 */
+			check_sp = (new_sp - sizeof(*frame)) & -STACK_ALIGN;
+			if (!likely(on_sig_stack(check_sp)))
+				return force_sigsegv_info(sig, (void __user *)
+							  check_sp);
+		}
 	}
 	frame = (void __user *) ((new_sp - sizeof(*frame)) & -STACK_ALIGN);
 
@@ -414,14 +424,8 @@ static long
 handle_signal (unsigned long sig, struct k_sigaction *ka, siginfo_t *info, sigset_t *oldset,
 	       struct sigscratch *scr)
 {
-	if (IS_IA32_PROCESS(&scr->pt)) {
-		/* send signal to IA-32 process */
-		if (!ia32_setup_frame1(sig, ka, info, oldset, &scr->pt))
-			return 0;
-	} else
-		/* send signal to IA-64 process */
-		if (!setup_frame(sig, ka, info, oldset, scr))
-			return 0;
+	if (!setup_frame(sig, ka, info, oldset, scr))
+		return 0;
 
 	spin_lock_irq(&current->sighand->siglock);
 	sigorsets(&current->blocked, &current->blocked, &ka->sa.sa_mask);
@@ -429,6 +433,13 @@ handle_signal (unsigned long sig, struct k_sigaction *ka, siginfo_t *info, sigse
 		sigaddset(&current->blocked, sig);
 	recalc_sigpending();
 	spin_unlock_irq(&current->sighand->siglock);
+
+	/*
+	 * Let tracing know that we've done the handler setup.
+	 */
+	tracehook_signal_handler(sig, info, ka, &scr->pt,
+				 test_thread_flag(TIF_SINGLESTEP));
+
 	return 1;
 }
 
@@ -444,7 +455,6 @@ ia64_do_signal (struct sigscratch *scr, long in_syscall)
 	siginfo_t info;
 	long restart = in_syscall;
 	long errno = scr->pt.r8;
-#	define ERR_CODE(c)	(IS_IA32_PROCESS(&scr->pt) ? -(c) : (c))
 
 	/*
 	 * In the ia64_leave_kernel code path, we want the common case to go fast, which
@@ -454,7 +464,7 @@ ia64_do_signal (struct sigscratch *scr, long in_syscall)
 	if (!user_mode(&scr->pt))
 		return;
 
-	if (test_thread_flag(TIF_RESTORE_SIGMASK))
+	if (current_thread_info()->status & TS_RESTORE_SIGMASK)
 		oldset = &current->saved_sigmask;
 	else
 		oldset = &current->blocked;
@@ -472,14 +482,7 @@ ia64_do_signal (struct sigscratch *scr, long in_syscall)
 		 * inferior call), thus it's important to check for restarting _after_
 		 * get_signal_to_deliver().
 		 */
-		if (IS_IA32_PROCESS(&scr->pt)) {
-			if (in_syscall) {
-				if (errno >= 0)
-					restart = 0;
-				else
-					errno = -errno;
-			}
-		} else if ((long) scr->pt.r10 != -1)
+		if ((long) scr->pt.r10 != -1)
 			/*
 			 * A system calls has to be restarted only if one of the error codes
 			 * ERESTARTNOHAND, ERESTARTSYS, or ERESTARTNOINTR is returned.  If r10
@@ -495,22 +498,18 @@ ia64_do_signal (struct sigscratch *scr, long in_syscall)
 			switch (errno) {
 			      case ERESTART_RESTARTBLOCK:
 			      case ERESTARTNOHAND:
-				scr->pt.r8 = ERR_CODE(EINTR);
+				scr->pt.r8 = EINTR;
 				/* note: scr->pt.r10 is already -1 */
 				break;
 
 			      case ERESTARTSYS:
 				if ((ka.sa.sa_flags & SA_RESTART) == 0) {
-					scr->pt.r8 = ERR_CODE(EINTR);
+					scr->pt.r8 = EINTR;
 					/* note: scr->pt.r10 is already -1 */
 					break;
 				}
 			      case ERESTARTNOINTR:
-				if (IS_IA32_PROCESS(&scr->pt)) {
-					scr->pt.r8 = scr->pt.r1;
-					scr->pt.cr_iip -= 2;
-				} else
-					ia64_decrement_ip(&scr->pt);
+				ia64_decrement_ip(&scr->pt);
 				restart = 0; /* don't restart twice if handle_signal() fails... */
 			}
 		}
@@ -520,12 +519,13 @@ ia64_do_signal (struct sigscratch *scr, long in_syscall)
 		 * continue to iterate in this loop so we can deliver the SIGSEGV...
 		 */
 		if (handle_signal(signr, &ka, &info, oldset, scr)) {
-			/* a signal was successfully delivered; the saved
+			/*
+			 * A signal was successfully delivered; the saved
 			 * sigmask will have been stored in the signal frame,
 			 * and will be restored by sigreturn, so we can simply
-			 * clear the TIF_RESTORE_SIGMASK flag */
-			if (test_thread_flag(TIF_RESTORE_SIGMASK))
-				clear_thread_flag(TIF_RESTORE_SIGMASK);
+			 * clear the TS_RESTORE_SIGMASK flag.
+			 */
+			current_thread_info()->status &= ~TS_RESTORE_SIGMASK;
 			return;
 		}
 	}
@@ -536,28 +536,21 @@ ia64_do_signal (struct sigscratch *scr, long in_syscall)
 		if (errno == ERESTARTNOHAND || errno == ERESTARTSYS || errno == ERESTARTNOINTR
 		    || errno == ERESTART_RESTARTBLOCK)
 		{
-			if (IS_IA32_PROCESS(&scr->pt)) {
-				scr->pt.r8 = scr->pt.r1;
-				scr->pt.cr_iip -= 2;
-				if (errno == ERESTART_RESTARTBLOCK)
-					scr->pt.r8 = 0;	/* x86 version of __NR_restart_syscall */
-			} else {
-				/*
-				 * Note: the syscall number is in r15 which is saved in
-				 * pt_regs so all we need to do here is adjust ip so that
-				 * the "break" instruction gets re-executed.
-				 */
-				ia64_decrement_ip(&scr->pt);
-				if (errno == ERESTART_RESTARTBLOCK)
-					scr->pt.r15 = __NR_restart_syscall;
-			}
+			/*
+			 * Note: the syscall number is in r15 which is saved in
+			 * pt_regs so all we need to do here is adjust ip so that
+			 * the "break" instruction gets re-executed.
+			 */
+			ia64_decrement_ip(&scr->pt);
+			if (errno == ERESTART_RESTARTBLOCK)
+				scr->pt.r15 = __NR_restart_syscall;
 		}
 	}
 
 	/* if there's no signal to deliver, we just put the saved sigmask
 	 * back */
-	if (test_thread_flag(TIF_RESTORE_SIGMASK)) {
-		clear_thread_flag(TIF_RESTORE_SIGMASK);
+	if (current_thread_info()->status & TS_RESTORE_SIGMASK) {
+		current_thread_info()->status &= ~TS_RESTORE_SIGMASK;
 		sigprocmask(SIG_SETMASK, &current->saved_sigmask, NULL);
 	}
 }

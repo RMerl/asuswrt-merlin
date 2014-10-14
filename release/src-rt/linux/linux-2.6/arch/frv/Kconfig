@@ -1,10 +1,12 @@
-#
-# For a description of the syntax of this configuration file,
-# see Documentation/kbuild/kconfig-language.txt.
-#
 config FRV
 	bool
 	default y
+	select HAVE_IDE
+	select HAVE_ARCH_TRACEHOOK
+	select HAVE_IRQ_WORK
+	select HAVE_PERF_EVENTS
+	select HAVE_GENERIC_HARDIRQS
+	select GENERIC_IRQ_SHOW
 
 config ZONE_DMA
 	bool
@@ -21,6 +23,10 @@ config GENERIC_FIND_NEXT_BIT
 	bool
 	default y
 
+config GENERIC_FIND_BIT_LE
+	bool
+	default y
+
 config GENERIC_HWEIGHT
 	bool
 	default y
@@ -28,18 +34,6 @@ config GENERIC_HWEIGHT
 config GENERIC_CALIBRATE_DELAY
 	bool
 	default n
-
-config GENERIC_HARDIRQS
-	bool
-	default y
-
-config GENERIC_HARDIRQS_NO__DO_IRQ
-	bool
-	default y
-
-config GENERIC_TIME
-	bool
-	default y
 
 config TIME_LOW_RES
 	bool
@@ -57,9 +51,13 @@ config ARCH_HAS_ILOG2_U64
 	bool
 	default y
 
-mainmenu "Fujitsu FR-V Kernel Configuration"
+config HZ
+	int
+	default 1000
 
 source "init/Kconfig"
+
+source "kernel/Kconfig.freezer"
 
 
 menu "Fujitsu FR-V system setup"
@@ -79,7 +77,7 @@ config FRV_OUTOFLINE_ATOMIC_OPS
 	  Setting this option causes the FR-V atomic operations to be mostly
 	  implemented out-of-line.
 
-	  See Documentation/fujitsu/frv/atomic-ops.txt for more information.
+	  See Documentation/frv/atomic-ops.txt for more information.
 
 config HIGHMEM
 	bool "High memory support"
@@ -137,6 +135,15 @@ config UCPAGE_OFFSET_C0000000
        bool "0xC0000000 (Recommended)"
 
 endchoice
+
+config PAGE_OFFSET
+	hex
+	default 0x20000000 if UCPAGE_OFFSET_20000000
+	default 0x40000000 if UCPAGE_OFFSET_40000000
+	default 0x60000000 if UCPAGE_OFFSET_60000000
+	default 0x80000000 if UCPAGE_OFFSET_80000000
+	default 0xA0000000 if UCPAGE_OFFSET_A0000000
+	default 0xC0000000
 
 config PROTECT_KERNEL
 	bool "Protect core kernel against userspace"
@@ -322,11 +329,6 @@ config PCI
 	  onboard. If you have one of these boards and you wish to use the PCI
 	  facilities, say Y here.
 
-	  The PCI-HOWTO, available from
-	  <http://www.tldp.org/docs.html#howto>, contains valuable
-	  information about which PCI hardware does work under Linux and which
-	  doesn't.
-
 config RESERVE_DMA_COHERENT
 	bool "Reserve DMA coherent memory"
 	depends on PCI && !MMU
@@ -357,6 +359,10 @@ source "drivers/pcmcia/Kconfig"
 #	  should probably wait a while.
 
 menu "Power management options"
+
+config ARCH_SUSPEND_POSSIBLE
+	def_bool y
+
 source kernel/power/Kconfig
 endmenu
 

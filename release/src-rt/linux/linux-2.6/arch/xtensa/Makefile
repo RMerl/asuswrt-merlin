@@ -14,6 +14,8 @@
 # (Use VAR=<xtensa_config> to use another default compiler.)
 
 variant-$(CONFIG_XTENSA_VARIANT_FSF)		:= fsf
+variant-$(CONFIG_XTENSA_VARIANT_DC232B)		:= dc232b
+variant-$(CONFIG_XTENSA_VARIANT_S6000)		:= s6000
 variant-$(CONFIG_XTENSA_VARIANT_LINUX_CUSTOM)	:= custom
 
 VARIANT = $(variant-y)
@@ -23,11 +25,26 @@ export VARIANT
 
 platform-$(CONFIG_XTENSA_PLATFORM_XT2000)	:= xt2000
 platform-$(CONFIG_XTENSA_PLATFORM_ISS)		:= iss
+platform-$(CONFIG_XTENSA_PLATFORM_S6105)	:= s6105
 
 PLATFORM = $(platform-y)
 export PLATFORM
 
-CFLAGS		+= -pipe -mlongcalls
+# temporarily until string.h is fixed
+KBUILD_CFLAGS += -ffreestanding
+
+KBUILD_CFLAGS += -pipe -mlongcalls
+
+KBUILD_CFLAGS += $(call cc-option,-mforce-no-pic,)
+
+vardirs := $(patsubst %,arch/xtensa/variants/%/,$(variant-y))
+plfdirs := $(patsubst %,arch/xtensa/platforms/%/,$(platform-y))
+
+ifeq ($(KBUILD_SRC),)
+KBUILD_CPPFLAGS += $(patsubst %,-I%include,$(vardirs) $(plfdirs))
+else
+KBUILD_CPPFLAGS += $(patsubst %,-I$(srctree)/%include,$(vardirs) $(plfdirs))
+endif
 
 KBUILD_DEFCONFIG := iss_defconfig
 
@@ -49,34 +66,22 @@ ifneq ($(VARIANT),)
   endif
 endif
 
-#
+# Only build variant and/or platform if it includes a Makefile
 
-LIBGCC := $(shell $(CC) $(CFLAGS) -print-libgcc-file-name)
+buildvar := $(shell test -a $(srctree)/arch/xtensa/variants/$(VARIANT)/Makefile && echo arch/xtensa/variants/$(VARIANT)/)
+buildplf := $(shell test -a $(srctree)/arch/xtensa/platforms/$(PLATFORM)/Makefile && echo arch/xtensa/platforms/$(PLATFORM)/)
+
+# Find libgcc.a
+
+LIBGCC := $(shell $(CC) $(KBUILD_CFLAGS) -print-libgcc-file-name)
 
 head-y		:= arch/xtensa/kernel/head.o
 core-y		+= arch/xtensa/kernel/ arch/xtensa/mm/
-ifneq ($(PLATFORM),)
-core-y		+= arch/xtensa/platform-$(PLATFORM)/
-endif
+core-y		+= $(buildvar) $(buildplf)
+
 libs-y		+= arch/xtensa/lib/ $(LIBGCC)
 
 boot		:= arch/xtensa/boot
-
-archinc		:= include/asm-xtensa
-
-archprepare: $(archinc)/.platform
-
-# Update processor variant and platform symlinks if something which affects
-# them changed.
-
-$(archinc)/.platform: $(wildcard include/config/arch/*.h) include/config/auto.conf
-	@echo '  SYMLINK $(archinc)/variant -> $(archinc)/variant-$(VARIANT)'
-	$(Q)mkdir -p $(archinc)
-	$(Q)ln -fsn $(srctree)/$(archinc)/variant-$(VARIANT) $(archinc)/variant
-	@echo '  SYMLINK $(archinc)/platform -> $(archinc)/platform-$(PLATFORM)'
-	$(Q)ln -fsn $(srctree)/$(archinc)/platform-$(PLATFORM) $(archinc)/platform
-	@touch $@
-
 
 all: zImage
 
@@ -84,10 +89,6 @@ bzImage : zImage
 
 zImage zImage.initrd: vmlinux
 	$(Q)$(MAKE) $(build)=$(boot) $@
-
-CLEAN_FILES	+= arch/xtensa/vmlinux.lds                      \
-		   $(archinc)/platform $(archinc)/variant	\
-		   $(archinc)/.platform
 
 define archhelp
   @echo '* zImage      - Compressed kernel image (arch/xtensa/boot/images/zImage.*)'

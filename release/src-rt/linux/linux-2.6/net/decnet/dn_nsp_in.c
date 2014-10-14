@@ -57,6 +57,7 @@
 #include <linux/netdevice.h>
 #include <linux/inet.h>
 #include <linux/route.h>
+#include <linux/slab.h>
 #include <net/sock.h>
 #include <net/tcp_states.h>
 #include <asm/system.h>
@@ -83,7 +84,9 @@ static void dn_log_martian(struct sk_buff *skb, const char *msg)
 	if (decnet_log_martians && net_ratelimit()) {
 		char *devname = skb->dev ? skb->dev->name : "???";
 		struct dn_skb_cb *cb = DN_SKB_CB(skb);
-		printk(KERN_INFO "DECnet: Martian packet (%s) dev=%s src=0x%04hx dst=0x%04hx srcport=0x%04hx dstport=0x%04hx\n", msg, devname, dn_ntohs(cb->src), dn_ntohs(cb->dst), dn_ntohs(cb->src_port), dn_ntohs(cb->dst_port));
+		printk(KERN_INFO "DECnet: Martian packet (%s) dev=%s src=0x%04hx dst=0x%04hx srcport=0x%04hx dstport=0x%04hx\n",
+		       msg, devname, le16_to_cpu(cb->src), le16_to_cpu(cb->dst),
+		       le16_to_cpu(cb->src_port), le16_to_cpu(cb->dst_port));
 	}
 }
 
@@ -133,7 +136,7 @@ static int dn_process_ack(struct sock *sk, struct sk_buff *skb, int oth)
 	if (skb->len < 2)
 		return len;
 
-	if ((ack = dn_ntohs(*ptr)) & 0x8000) {
+	if ((ack = le16_to_cpu(*ptr)) & 0x8000) {
 		skb_pull(skb, 2);
 		ptr++;
 		len += 2;
@@ -147,7 +150,7 @@ static int dn_process_ack(struct sock *sk, struct sk_buff *skb, int oth)
 	if (skb->len < 2)
 		return len;
 
-	if ((ack = dn_ntohs(*ptr)) & 0x8000) {
+	if ((ack = le16_to_cpu(*ptr)) & 0x8000) {
 		skb_pull(skb, 2);
 		len += 2;
 		if ((ack & 0x4000) == 0) {
@@ -237,7 +240,7 @@ static struct sock *dn_find_listener(struct sk_buff *skb, unsigned short *reason
 	cb->dst_port = msg->dstaddr;
 	cb->services = msg->services;
 	cb->info     = msg->info;
-	cb->segsize  = dn_ntohs(msg->segsize);
+	cb->segsize  = le16_to_cpu(msg->segsize);
 
 	if (!pskb_may_pull(skb, sizeof(*msg)))
 		goto err_out;
@@ -344,7 +347,7 @@ static void dn_nsp_conn_conf(struct sock *sk, struct sk_buff *skb)
 	ptr = skb->data;
 	cb->services = *ptr++;
 	cb->info = *ptr++;
-	cb->segsize = dn_ntohs(*(__le16 *)ptr);
+	cb->segsize = le16_to_cpu(*(__le16 *)ptr);
 
 	if ((scp->state == DN_CI) || (scp->state == DN_CD)) {
 		scp->persist = 0;
@@ -361,7 +364,7 @@ static void dn_nsp_conn_conf(struct sock *sk, struct sk_buff *skb)
 		if (skb->len > 0) {
 			u16 dlen = *skb->data;
 			if ((dlen <= 16) && (dlen <= skb->len)) {
-				scp->conndata_in.opt_optl = dn_htons(dlen);
+				scp->conndata_in.opt_optl = cpu_to_le16(dlen);
 				skb_copy_from_linear_data_offset(skb, 1,
 					      scp->conndata_in.opt_data, dlen);
 			}
@@ -396,17 +399,17 @@ static void dn_nsp_disc_init(struct sock *sk, struct sk_buff *skb)
 	if (skb->len < 2)
 		goto out;
 
-	reason = dn_ntohs(*(__le16 *)skb->data);
+	reason = le16_to_cpu(*(__le16 *)skb->data);
 	skb_pull(skb, 2);
 
-	scp->discdata_in.opt_status = dn_htons(reason);
+	scp->discdata_in.opt_status = cpu_to_le16(reason);
 	scp->discdata_in.opt_optl   = 0;
 	memset(scp->discdata_in.opt_data, 0, 16);
 
 	if (skb->len > 0) {
 		u16 dlen = *skb->data;
 		if ((dlen <= 16) && (dlen <= skb->len)) {
-			scp->discdata_in.opt_optl = dn_htons(dlen);
+			scp->discdata_in.opt_optl = cpu_to_le16(dlen);
 			skb_copy_from_linear_data_offset(skb, 1, scp->discdata_in.opt_data, dlen);
 		}
 	}
@@ -463,7 +466,7 @@ static void dn_nsp_disc_conf(struct sock *sk, struct sk_buff *skb)
 	if (skb->len != 2)
 		goto out;
 
-	reason = dn_ntohs(*(__le16 *)skb->data);
+	reason = le16_to_cpu(*(__le16 *)skb->data);
 
 	sk->sk_state = TCP_CLOSE;
 
@@ -512,7 +515,7 @@ static void dn_nsp_linkservice(struct sock *sk, struct sk_buff *skb)
 	if (skb->len != 4)
 		goto out;
 
-	segnum = dn_ntohs(*(__le16 *)ptr);
+	segnum = le16_to_cpu(*(__le16 *)ptr);
 	ptr += 2;
 	lsflags = *(unsigned char *)ptr++;
 	fcval = *ptr;
@@ -576,6 +579,7 @@ out:
 static __inline__ int dn_queue_skb(struct sock *sk, struct sk_buff *skb, int sig, struct sk_buff_head *queue)
 {
 	int err;
+	int skb_len;
 
 	/* Cast skb->rcvbuf to unsigned... It's pointless, but reduces
 	   number of warnings when compiling with -W --ANK
@@ -590,22 +594,12 @@ static __inline__ int dn_queue_skb(struct sock *sk, struct sk_buff *skb, int sig
 	if (err)
 		goto out;
 
+	skb_len = skb->len;
 	skb_set_owner_r(skb, sk);
 	skb_queue_tail(queue, skb);
 
-	/* This code only runs from BH or BH protected context.
-	 * Therefore the plain read_lock is ok here. -DaveM
-	 */
-	read_lock(&sk->sk_callback_lock);
-	if (!sock_flag(sk, SOCK_DEAD)) {
-		struct socket *sock = sk->sk_socket;
-		wake_up_interruptible(sk->sk_sleep);
-		if (sock && sock->fasync_list &&
-		    !test_bit(SOCK_ASYNC_WAITDATA, &sock->flags))
-			__kill_fasync(sock->fasync_list, sig,
-				    (sig == SIGURG) ? POLL_PRI : POLL_IN);
-	}
-	read_unlock(&sk->sk_callback_lock);
+	if (!sock_flag(sk, SOCK_DEAD))
+		sk->sk_data_ready(sk, skb_len);
 out:
 	return err;
 }
@@ -620,7 +614,7 @@ static void dn_nsp_otherdata(struct sock *sk, struct sk_buff *skb)
 	if (skb->len < 2)
 		goto out;
 
-	cb->segnum = segnum = dn_ntohs(*(__le16 *)skb->data);
+	cb->segnum = segnum = le16_to_cpu(*(__le16 *)skb->data);
 	skb_pull(skb, 2);
 
 	if (seq_next(scp->numoth_rcv, segnum)) {
@@ -648,7 +642,7 @@ static void dn_nsp_data(struct sock *sk, struct sk_buff *skb)
 	if (skb->len < 2)
 		goto out;
 
-	cb->segnum = segnum = dn_ntohs(*(__le16 *)skb->data);
+	cb->segnum = segnum = le16_to_cpu(*(__le16 *)skb->data);
 	skb_pull(skb, 2);
 
 	if (seq_next(scp->numdat_rcv, segnum)) {
@@ -816,7 +810,8 @@ free_out:
 
 int dn_nsp_rx(struct sk_buff *skb)
 {
-	return NF_HOOK(PF_DECnet, NF_DN_LOCAL_IN, skb, skb->dev, NULL, dn_nsp_rx_packet);
+	return NF_HOOK(NFPROTO_DECNET, NF_DN_LOCAL_IN, skb, skb->dev, NULL,
+		       dn_nsp_rx_packet);
 }
 
 /*

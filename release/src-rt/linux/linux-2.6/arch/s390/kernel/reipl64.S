@@ -1,13 +1,10 @@
 /*
- *  arch/s390/kernel/reipl.S
- *
- *  S390 version
- *    Copyright (C) 2000 IBM Deutschland Entwicklung GmbH, IBM Corporation
- *    Author(s): Holger Smolinski (Holger.Smolinski@de.ibm.com)
-		 Denis Joseph Barrow (djbarrow@de.ibm.com,barrow_dj@yahoo.com)
+ *    Copyright IBM Corp 2000,2009
+ *    Author(s): Holger Smolinski <Holger.Smolinski@de.ibm.com>,
+ *		 Denis Joseph Barrow,
  */
 
-#include <asm/lowcore.h>
+#include <asm/asm-offsets.h>
 
 #
 # do_reipl_asm
@@ -30,7 +27,7 @@ do_reipl_asm:	basr	%r13,0
 		mvc	__LC_PREFIX_SAVE_AREA-0x1000(4,%r1),0(%r10)
 		stfpc	__LC_FP_CREG_SAVE_AREA-0x1000(%r1)
 		stckc	.Lclkcmp-.Lpg0(%r13)
-		mvc	__LC_CLOCK_COMP_SAVE_AREA-0x1000(8,%r1),.Lclkcmp-.Lpg0(%r13)
+		mvc	__LC_CLOCK_COMP_SAVE_AREA-0x1000(7,%r1),.Lclkcmp-.Lpg0(%r13)
 		stpt	__LC_CPU_TIMER_SAVE_AREA-0x1000(%r1)
 		stg	%r13, __LC_PSW_SAVE_AREA-0x1000+8(%r1)
 
@@ -81,7 +78,7 @@ do_reipl_asm:	basr	%r13,0
  * in the ESA psw.
  * Bit 31 of the addresses has to be 0 for the
  * 31bit lpswe instruction a fact they appear to have
- * ommited from the pop.
+ * omitted from the pop.
  */
 .Lnewpsw:	.quad	0x0000000080000000
 		.quad	.Lpg1

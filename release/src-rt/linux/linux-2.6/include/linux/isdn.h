@@ -16,14 +16,8 @@
 
 #include <linux/ioctl.h>
 
-#ifdef CONFIG_COBALT_MICRO_SERVER
-/* Save memory */
-#define ISDN_MAX_DRIVERS    2
-#define ISDN_MAX_CHANNELS   8
-#else
 #define ISDN_MAX_DRIVERS    32
 #define ISDN_MAX_CHANNELS   64
-#endif
 
 /* New ioctl-codes */
 #define IIOCNETAIF  _IO('I',1)
@@ -167,6 +161,7 @@ typedef struct {
 #include <linux/etherdevice.h>
 #include <linux/skbuff.h>
 #include <linux/tcp.h>
+#include <linux/mutex.h>
 
 #define ISDN_TTY_MAJOR    43
 #define ISDN_TTYAUX_MAJOR 44
@@ -286,7 +281,6 @@ typedef struct {
 /* Local interface-data */
 typedef struct isdn_net_local_s {
   ulong                  magic;
-  char                   name[10];     /* Name of device                   */
   struct net_device_stats stats;       /* Ethernet Statistics              */
   int                    isdn_device;  /* Index to isdn-device             */
   int                    isdn_channel; /* Index to isdn-channel            */
@@ -353,13 +347,6 @@ typedef struct isdn_net_local_s {
                                        /* a particular channel (including  */
                                        /* the frame_cnt                    */
 
-  int                    (*org_hhc)(
-				    struct neighbour *neigh,
-				    struct hh_cache *hh);
-                                       /* Ptr to orig. header_cache_update */
-  void                   (*org_hcu)(struct hh_cache *,
-				    struct net_device *,
-                                    unsigned char *);
   int  pppbind;                        /* ippp device for bindings         */
   int					dialtimeout;	/* How long shall we try on dialing? (jiffies) */
   int					dialwait;		/* How long shall we wait after failed attempt? (jiffies) */
@@ -389,7 +376,7 @@ typedef struct isdn_net_dev_s {
 					  online                           */
   spinlock_t queue_lock;               /* lock to protect queue            */
   void *next;                          /* Pointer to next isdn-interface   */
-  struct net_device dev;               /* interface to upper levels        */
+  struct net_device *dev;              /* interface to upper levels        */
 #ifdef CONFIG_ISDN_PPP
   ippp_bundle * pb;		/* pointer to the common bundle structure
    			         * with the per-bundle data */
@@ -514,7 +501,6 @@ typedef struct modem_info {
   struct ktermios	normal_termios;  /* For saving termios structs     */
   struct ktermios	callout_termios;
   wait_queue_head_t	open_wait, close_wait;
-  struct semaphore      write_sem;
   spinlock_t	        readlock;
 } modem_info;
 
@@ -624,7 +610,7 @@ typedef struct isdn_devt {
 	int               v110emu[ISDN_MAX_CHANNELS]; /* V.110 emulator-mode 0=none */
 	atomic_t          v110use[ISDN_MAX_CHANNELS]; /* Usage-Semaphore for stream */
 	isdn_v110_stream  *v110[ISDN_MAX_CHANNELS];   /* V.110 private data         */
-	struct semaphore  sem;                        /* serialize list access*/
+	struct mutex      mtx;                        /* serialize list access*/
 	unsigned long     global_features;
 } isdn_dev;
 

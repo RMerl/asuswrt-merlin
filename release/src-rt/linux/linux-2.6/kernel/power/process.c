@@ -9,20 +9,20 @@
 #undef DEBUG
 
 #include <linux/interrupt.h>
+#include <linux/oom.h>
 #include <linux/suspend.h>
 #include <linux/module.h>
 #include <linux/syscalls.h>
 #include <linux/freezer.h>
+#include <linux/delay.h>
+#include <linux/workqueue.h>
 
 /* 
  * Timeout for stopping processes
  */
 #define TIMEOUT	(20 * HZ)
 
-#define FREEZER_KERNEL_THREADS 0
-#define FREEZER_USER_SPACE 1
-
-static inline int freezeable(struct task_struct * p)
+static inline int freezable(struct task_struct * p)
 {
 	if ((p == current) ||
 	    (p->flags & PF_NOFREEZE) ||
@@ -31,119 +31,76 @@ static inline int freezeable(struct task_struct * p)
 	return 1;
 }
 
-/*
- * freezing is complete, mark current process as frozen
- */
-static inline void frozen_process(void)
-{
-	if (!unlikely(current->flags & PF_NOFREEZE)) {
-		current->flags |= PF_FROZEN;
-		wmb();
-	}
-	clear_tsk_thread_flag(current, TIF_FREEZE);
-}
-
-/* Refrigerator is place where frozen processes are stored :-). */
-void refrigerator(void)
-{
-	/* Hmm, should we be allowed to suspend when there are realtime
-	   processes around? */
-	long save;
-
-	task_lock(current);
-	if (freezing(current)) {
-		frozen_process();
-		task_unlock(current);
-	} else {
-		task_unlock(current);
-		return;
-	}
-	save = current->state;
-	pr_debug("%s entered refrigerator\n", current->comm);
-
-	spin_lock_irq(&current->sighand->siglock);
-	recalc_sigpending(); /* We sent fake signal, clean it up */
-	spin_unlock_irq(&current->sighand->siglock);
-
-	for (;;) {
-		set_current_state(TASK_UNINTERRUPTIBLE);
-		if (!frozen(current))
-			break;
-		schedule();
-	}
-	pr_debug("%s left refrigerator\n", current->comm);
-	current->state = save;
-}
-
-static inline void freeze_process(struct task_struct *p)
-{
-	unsigned long flags;
-
-	if (!freezing(p)) {
-		rmb();
-		if (!frozen(p)) {
-			if (p->state == TASK_STOPPED)
-				force_sig_specific(SIGSTOP, p);
-
-			freeze(p);
-			spin_lock_irqsave(&p->sighand->siglock, flags);
-			signal_wake_up(p, p->state == TASK_STOPPED);
-			spin_unlock_irqrestore(&p->sighand->siglock, flags);
-		}
-	}
-}
-
-static void cancel_freezing(struct task_struct *p)
-{
-	unsigned long flags;
-
-	if (freezing(p)) {
-		pr_debug("  clean up: %s\n", p->comm);
-		do_not_freeze(p);
-		spin_lock_irqsave(&p->sighand->siglock, flags);
-		recalc_sigpending_and_wake(p);
-		spin_unlock_irqrestore(&p->sighand->siglock, flags);
-	}
-}
-
-static inline int is_user_space(struct task_struct *p)
-{
-	return p->mm && !(p->flags & PF_BORROWED_MM);
-}
-
-static unsigned int try_to_freeze_tasks(int freeze_user_space)
+static int try_to_freeze_tasks(bool sig_only)
 {
 	struct task_struct *g, *p;
 	unsigned long end_time;
 	unsigned int todo;
+	bool wq_busy = false;
+	struct timeval start, end;
+	u64 elapsed_csecs64;
+	unsigned int elapsed_csecs;
+	bool wakeup = false;
+
+	do_gettimeofday(&start);
 
 	end_time = jiffies + TIMEOUT;
-	do {
+
+	if (!sig_only)
+		freeze_workqueues_begin();
+
+	while (true) {
 		todo = 0;
 		read_lock(&tasklist_lock);
 		do_each_thread(g, p) {
-			if (!freezeable(p))
+			if (frozen(p) || !freezable(p))
 				continue;
 
-			if (frozen(p))
+			if (!freeze_task(p, sig_only))
 				continue;
 
-			if (p->state == TASK_TRACED && frozen(p->parent)) {
-				cancel_freezing(p);
-				continue;
-			}
-			if (freeze_user_space && !is_user_space(p))
-				continue;
-
-			freeze_process(p);
-			if (!freezer_should_skip(p))
+			/*
+			 * Now that we've done set_freeze_flag, don't
+			 * perturb a task in TASK_STOPPED or TASK_TRACED.
+			 * It is "frozen enough".  If the task does wake
+			 * up, it will immediately call try_to_freeze.
+			 *
+			 * Because freeze_task() goes through p's
+			 * scheduler lock after setting TIF_FREEZE, it's
+			 * guaranteed that either we see TASK_RUNNING or
+			 * try_to_stop() after schedule() in ptrace/signal
+			 * stop sees TIF_FREEZE.
+			 */
+			if (!task_is_stopped_or_traced(p) &&
+			    !freezer_should_skip(p))
 				todo++;
 		} while_each_thread(g, p);
 		read_unlock(&tasklist_lock);
-		yield();			/* Yield is okay here */
-		if (todo && time_after(jiffies, end_time))
+
+		if (!sig_only) {
+			wq_busy = freeze_workqueues_busy();
+			todo += wq_busy;
+		}
+
+		if (!todo || time_after(jiffies, end_time))
 			break;
-	} while (todo);
+
+		if (pm_wakeup_pending()) {
+			wakeup = true;
+			break;
+		}
+
+		/*
+		 * We need to retry, but first give the freezing tasks some
+		 * time to enter the regrigerator.
+		 */
+		msleep(10);
+	}
+
+	do_gettimeofday(&end);
+	elapsed_csecs64 = timeval_to_ns(&end) - timeval_to_ns(&start);
+	do_div(elapsed_csecs64, NSEC_PER_SEC / 100);
+	elapsed_csecs = elapsed_csecs64;
 
 	if (todo) {
 		/* This does not unfreeze processes that are already frozen
@@ -152,65 +109,71 @@ static unsigned int try_to_freeze_tasks(int freeze_user_space)
 		 * but it cleans up leftover PF_FREEZE requests.
 		 */
 		printk("\n");
-		printk(KERN_ERR "Stopping %s timed out after %d seconds "
-				"(%d tasks refusing to freeze):\n",
-				freeze_user_space ? "user space processes" :
-					"kernel threads",
-				TIMEOUT / HZ, todo);
+		printk(KERN_ERR "Freezing of tasks %s after %d.%02d seconds "
+		       "(%d tasks refusing to freeze, wq_busy=%d):\n",
+		       wakeup ? "aborted" : "failed",
+		       elapsed_csecs / 100, elapsed_csecs % 100,
+		       todo - wq_busy, wq_busy);
+
+		thaw_workqueues();
+
 		read_lock(&tasklist_lock);
 		do_each_thread(g, p) {
-			if (freeze_user_space && !is_user_space(p))
-				continue;
-
 			task_lock(p);
-			if (freezeable(p) && !frozen(p) &&
-			    !freezer_should_skip(p))
-				printk(KERN_ERR " %s\n", p->comm);
-
+			if (!wakeup && freezing(p) && !freezer_should_skip(p))
+				sched_show_task(p);
 			cancel_freezing(p);
 			task_unlock(p);
 		} while_each_thread(g, p);
 		read_unlock(&tasklist_lock);
+	} else {
+		printk("(elapsed %d.%02d seconds) ", elapsed_csecs / 100,
+			elapsed_csecs % 100);
 	}
 
-	return todo;
+	return todo ? -EBUSY : 0;
 }
 
 /**
  *	freeze_processes - tell processes to enter the refrigerator
- *
- *	Returns 0 on success, or the number of processes that didn't freeze,
- *	although they were told to.
  */
 int freeze_processes(void)
 {
-	unsigned int nr_unfrozen;
+	int error;
 
-	printk("Stopping tasks ... ");
-	nr_unfrozen = try_to_freeze_tasks(FREEZER_USER_SPACE);
-	if (nr_unfrozen)
-		return nr_unfrozen;
-
-	sys_sync();
-	nr_unfrozen = try_to_freeze_tasks(FREEZER_KERNEL_THREADS);
-	if (nr_unfrozen)
-		return nr_unfrozen;
-
+	printk("Freezing user space processes ... ");
+	error = try_to_freeze_tasks(true);
+	if (error)
+		goto Exit;
 	printk("done.\n");
+
+	printk("Freezing remaining freezable tasks ... ");
+	error = try_to_freeze_tasks(false);
+	if (error)
+		goto Exit;
+	printk("done.");
+
+	oom_killer_disable();
+ Exit:
 	BUG_ON(in_atomic());
-	return 0;
+	printk("\n");
+
+	return error;
 }
 
-static void thaw_tasks(int thaw_user_space)
+static void thaw_tasks(bool nosig_only)
 {
 	struct task_struct *g, *p;
 
 	read_lock(&tasklist_lock);
 	do_each_thread(g, p) {
-		if (!freezeable(p))
+		if (!freezable(p))
 			continue;
 
-		if (is_user_space(p) == !thaw_user_space)
+		if (nosig_only && should_send_signal(p))
+			continue;
+
+		if (cgroup_freezing_or_frozen(p))
 			continue;
 
 		thaw_process(p);
@@ -220,11 +183,13 @@ static void thaw_tasks(int thaw_user_space)
 
 void thaw_processes(void)
 {
+	oom_killer_enable();
+
 	printk("Restarting tasks ... ");
-	thaw_tasks(FREEZER_KERNEL_THREADS);
-	thaw_tasks(FREEZER_USER_SPACE);
+	thaw_workqueues();
+	thaw_tasks(true);
+	thaw_tasks(false);
 	schedule();
 	printk("done.\n");
 }
 
-EXPORT_SYMBOL(refrigerator);

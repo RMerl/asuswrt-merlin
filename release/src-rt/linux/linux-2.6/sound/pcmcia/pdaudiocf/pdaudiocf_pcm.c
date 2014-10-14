@@ -3,7 +3,7 @@
  *
  * PCM part
  *
- * Copyright (c) 2003 by Jaroslav Kysela <perex@suse.cz>
+ * Copyright (c) 2003 by Jaroslav Kysela <perex@perex.cz>
  *
  *   This program is free software; you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -20,57 +20,11 @@
  *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
  */
 
-#include <sound/driver.h>
-#include <linux/slab.h>
-#include <linux/vmalloc.h>
 #include <linux/delay.h>
 #include <sound/core.h>
 #include <sound/asoundef.h>
 #include "pdaudiocf.h"
 
-
-/*
- * we use a vmalloc'ed (sg-)buffer
- */
-
-/* get the physical page pointer on the given offset */
-static struct page *snd_pcm_get_vmalloc_page(struct snd_pcm_substream *subs, unsigned long offset)
-{
-	void *pageptr = subs->runtime->dma_area + offset;
-	return vmalloc_to_page(pageptr);
-}
-
-/*
- * hw_params callback
- * NOTE: this may be called not only once per pcm open!
- */
-static int snd_pcm_alloc_vmalloc_buffer(struct snd_pcm_substream *subs, size_t size)
-{
-	struct snd_pcm_runtime *runtime = subs->runtime;
-	if (runtime->dma_area) {
-		if (runtime->dma_bytes >= size)
-			return 0; /* already enough large */
-		vfree(runtime->dma_area);
-	}
-	runtime->dma_area = vmalloc_32(size);
-	if (! runtime->dma_area)
-		return -ENOMEM;
-	runtime->dma_bytes = size;
-	return 0;
-}
-
-/*
- * hw_free callback
- * NOTE: this may be called not only once per pcm open!
- */
-static int snd_pcm_free_vmalloc_buffer(struct snd_pcm_substream *subs)
-{
-	struct snd_pcm_runtime *runtime = subs->runtime;
-
-	vfree(runtime->dma_area);
-	runtime->dma_area = NULL;
-	return 0;
-}
 
 /*
  * clear the SRAM contents
@@ -148,7 +102,8 @@ static int pdacf_pcm_trigger(struct snd_pcm_substream *subs, int cmd)
 static int pdacf_pcm_hw_params(struct snd_pcm_substream *subs,
 				     struct snd_pcm_hw_params *hw_params)
 {
-	return snd_pcm_alloc_vmalloc_buffer(subs, params_buffer_bytes(hw_params));
+	return snd_pcm_lib_alloc_vmalloc_32_buffer
+					(subs, params_buffer_bytes(hw_params));
 }
 
 /*
@@ -156,7 +111,7 @@ static int pdacf_pcm_hw_params(struct snd_pcm_substream *subs,
  */
 static int pdacf_pcm_hw_free(struct snd_pcm_substream *subs)
 {
-	return snd_pcm_free_vmalloc_buffer(subs);
+	return snd_pcm_lib_free_vmalloc_buffer(subs);
 }
 
 /*
@@ -241,7 +196,8 @@ static int pdacf_pcm_prepare(struct snd_pcm_substream *subs)
 static struct snd_pcm_hardware pdacf_pcm_capture_hw = {
 	.info =			(SNDRV_PCM_INFO_MMAP | SNDRV_PCM_INFO_INTERLEAVED |
 				 SNDRV_PCM_INFO_PAUSE | SNDRV_PCM_INFO_RESUME |
-				 SNDRV_PCM_INFO_MMAP_VALID),
+				 SNDRV_PCM_INFO_MMAP_VALID |
+				 SNDRV_PCM_INFO_BATCH),
 	.formats =		SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S16_BE |
 				SNDRV_PCM_FMTBIT_S24_3LE | SNDRV_PCM_FMTBIT_S24_3BE |
 				SNDRV_PCM_FMTBIT_S32_LE | SNDRV_PCM_FMTBIT_S32_BE,
@@ -319,7 +275,8 @@ static struct snd_pcm_ops pdacf_pcm_capture_ops = {
 	.prepare =	pdacf_pcm_prepare,
 	.trigger =	pdacf_pcm_trigger,
 	.pointer =	pdacf_pcm_capture_pointer,
-	.page =		snd_pcm_get_vmalloc_page,
+	.page =		snd_pcm_lib_get_vmalloc_page,
+	.mmap =		snd_pcm_lib_mmap_vmalloc,
 };
 
 

@@ -36,8 +36,8 @@
 #include <net/irda/irda_device.h>
 
 #include <asm/irq.h>
-#include <asm/dma.h>
-#include <asm/hardware.h>
+#include <mach/dma.h>
+#include <mach/hardware.h>
 #include <asm/mach/irda.h>
 
 static int power_level = 3;
@@ -60,7 +60,6 @@ struct sa1100_irda {
 	dma_regs_t		*txdma;
 	dma_regs_t		*rxdma;
 
-	struct net_device_stats	stats;
 	struct device		*dev;
 	struct irda_platform_data *pdata;
 	struct irlap_cb		*irlap;
@@ -233,8 +232,11 @@ static int sa1100_irda_startup(struct sa1100_irda *si)
 	/*
 	 * Ensure that the ports for this device are setup correctly.
 	 */
-	if (si->pdata->startup)
-		si->pdata->startup(si->dev);
+	if (si->pdata->startup)	{
+		ret = si->pdata->startup(si->dev);
+		if (ret)
+			return ret;
+	}
 
 	/*
 	 * Configure PPC for IRDA - we want to drive TXD2 low.
@@ -298,7 +300,7 @@ static int sa1100_irda_suspend(struct platform_device *pdev, pm_message_t state)
 	if (!dev)
 		return 0;
 
-	si = dev->priv;
+	si = netdev_priv(dev);
 	if (si->open) {
 		/*
 		 * Stop the transmit queue
@@ -323,13 +325,13 @@ static int sa1100_irda_resume(struct platform_device *pdev)
 	if (!dev)
 		return 0;
 
-	si = dev->priv;
+	si = netdev_priv(dev);
 	if (si->open) {
 		/*
 		 * If we missed a speed change, initialise at the new speed
 		 * directly.  It is debatable whether this is actually
 		 * required, but in the interests of continuing from where
-		 * we left off it is desireable.  The converse argument is
+		 * we left off it is desirable.  The converse argument is
 		 * that we should re-negotiate at 9600 baud again.
 		 */
 		if (si->newspeed) {
@@ -359,7 +361,7 @@ static int sa1100_irda_resume(struct platform_device *pdev)
  */
 static void sa1100_irda_hpsir_irq(struct net_device *dev)
 {
-	struct sa1100_irda *si = dev->priv;
+	struct sa1100_irda *si = netdev_priv(dev);
 	int status;
 
 	status = Ser2UTSR0;
@@ -375,13 +377,13 @@ static void sa1100_irda_hpsir_irq(struct net_device *dev)
 		data = Ser2UTDR;
 
 		if (stat & (UTSR1_FRE | UTSR1_ROR)) {
-			si->stats.rx_errors++;
+			dev->stats.rx_errors++;
 			if (stat & UTSR1_FRE)
-				si->stats.rx_frame_errors++;
+				dev->stats.rx_frame_errors++;
 			if (stat & UTSR1_ROR)
-				si->stats.rx_fifo_errors++;
+				dev->stats.rx_fifo_errors++;
 		} else
-			async_unwrap_char(dev, &si->stats, &si->rx_buff, data);
+			async_unwrap_char(dev, &dev->stats, &si->rx_buff, data);
 
 		status = Ser2UTSR0;
 	}
@@ -396,9 +398,9 @@ static void sa1100_irda_hpsir_irq(struct net_device *dev)
 		 * There are at least 4 bytes in the FIFO.  Read 3 bytes
 		 * and leave the rest to the block below.
 		 */
-		async_unwrap_char(dev, &si->stats, &si->rx_buff, Ser2UTDR);
-		async_unwrap_char(dev, &si->stats, &si->rx_buff, Ser2UTDR);
-		async_unwrap_char(dev, &si->stats, &si->rx_buff, Ser2UTDR);
+		async_unwrap_char(dev, &dev->stats, &si->rx_buff, Ser2UTDR);
+		async_unwrap_char(dev, &dev->stats, &si->rx_buff, Ser2UTDR);
+		async_unwrap_char(dev, &dev->stats, &si->rx_buff, Ser2UTDR);
 	}
 
 	if (status & (UTSR0_RFS | UTSR0_RID)) {
@@ -406,11 +408,10 @@ static void sa1100_irda_hpsir_irq(struct net_device *dev)
 		 * Fifo contains more than 1 character.
 		 */
 		do {
-			async_unwrap_char(dev, &si->stats, &si->rx_buff,
+			async_unwrap_char(dev, &dev->stats, &si->rx_buff,
 					  Ser2UTDR);
 		} while (Ser2UTSR1 & UTSR1_RNE);
 
-		dev->last_rx = jiffies;
 	}
 
 	if (status & UTSR0_TFS && si->tx_buff.len) {
@@ -423,8 +424,8 @@ static void sa1100_irda_hpsir_irq(struct net_device *dev)
 		} while (Ser2UTSR1 & UTSR1_TNF && si->tx_buff.len);
 
 		if (si->tx_buff.len == 0) {
-			si->stats.tx_packets++;
-			si->stats.tx_bytes += si->tx_buff.data -
+			dev->stats.tx_packets++;
+			dev->stats.tx_bytes += si->tx_buff.data -
 					      si->tx_buff.head;
 
 			/*
@@ -483,11 +484,11 @@ static void sa1100_irda_fir_error(struct sa1100_irda *si, struct net_device *dev
 		data = Ser2HSDR;
 
 		if (stat & (HSSR1_CRE | HSSR1_ROR)) {
-			si->stats.rx_errors++;
+			dev->stats.rx_errors++;
 			if (stat & HSSR1_CRE)
-				si->stats.rx_crc_errors++;
+				dev->stats.rx_crc_errors++;
 			if (stat & HSSR1_ROR)
-				si->stats.rx_frame_errors++;
+				dev->stats.rx_frame_errors++;
 		} else
 			skb->data[len++] = data;
 
@@ -506,8 +507,8 @@ static void sa1100_irda_fir_error(struct sa1100_irda *si, struct net_device *dev
 		skb->dev = dev;
 		skb_reset_mac_header(skb);
 		skb->protocol = htons(ETH_P_IRDA);
-		si->stats.rx_packets++;
-		si->stats.rx_bytes += len;
+		dev->stats.rx_packets++;
+		dev->stats.rx_bytes += len;
 
 		/*
 		 * Before we pass the buffer up, allocate a new one.
@@ -515,7 +516,6 @@ static void sa1100_irda_fir_error(struct sa1100_irda *si, struct net_device *dev
 		sa1100_irda_rx_alloc(si);
 
 		netif_rx(skb);
-		dev->last_rx = jiffies;
 	} else {
 		/*
 		 * Remap the buffer.
@@ -534,7 +534,7 @@ static void sa1100_irda_fir_error(struct sa1100_irda *si, struct net_device *dev
  */
 static void sa1100_irda_fir_irq(struct net_device *dev)
 {
-	struct sa1100_irda *si = dev->priv;
+	struct sa1100_irda *si = netdev_priv(dev);
 
 	/*
 	 * Stop RX DMA
@@ -547,10 +547,10 @@ static void sa1100_irda_fir_irq(struct net_device *dev)
 	 * from the fifo.
 	 */
 	if (Ser2HSSR0 & (HSSR0_FRE | HSSR0_RAB)) {
-		si->stats.rx_errors++;
+		dev->stats.rx_errors++;
 
 		if (Ser2HSSR0 & HSSR0_FRE)
-			si->stats.rx_frame_errors++;
+			dev->stats.rx_frame_errors++;
 
 		/*
 		 * Clear out the DMA...
@@ -582,7 +582,7 @@ static void sa1100_irda_fir_irq(struct net_device *dev)
 static irqreturn_t sa1100_irda_irq(int irq, void *dev_id)
 {
 	struct net_device *dev = dev_id;
-	if (IS_FIR(((struct sa1100_irda *)dev->priv)))
+	if (IS_FIR(((struct sa1100_irda *)netdev_priv(dev))))
 		sa1100_irda_fir_irq(dev);
 	else
 		sa1100_irda_hpsir_irq(dev);
@@ -595,7 +595,7 @@ static irqreturn_t sa1100_irda_irq(int irq, void *dev_id)
 static void sa1100_irda_txdma_irq(void *id)
 {
 	struct net_device *dev = id;
-	struct sa1100_irda *si = dev->priv;
+	struct sa1100_irda *si = netdev_priv(dev);
 	struct sk_buff *skb = si->txskb;
 
 	si->txskb = NULL;
@@ -635,8 +635,8 @@ static void sa1100_irda_txdma_irq(void *id)
 	 */
 	if (skb) {
 		dma_unmap_single(si->dev, si->txbuf_dma, skb->len, DMA_TO_DEVICE);
-		si->stats.tx_packets ++;
-		si->stats.tx_bytes += skb->len;
+		dev->stats.tx_packets ++;
+		dev->stats.tx_bytes += skb->len;
 		dev_kfree_skb_irq(skb);
 	}
 
@@ -649,7 +649,7 @@ static void sa1100_irda_txdma_irq(void *id)
 
 static int sa1100_irda_hard_xmit(struct sk_buff *skb, struct net_device *dev)
 {
-	struct sa1100_irda *si = dev->priv;
+	struct sa1100_irda *si = netdev_priv(dev);
 	int speed = irda_get_next_speed(skb);
 
 	/*
@@ -669,7 +669,7 @@ static int sa1100_irda_hard_xmit(struct sk_buff *skb, struct net_device *dev)
 			sa1100_irda_set_speed(si, speed);
 		}
 		dev_kfree_skb(skb);
-		return 0;
+		return NETDEV_TX_OK;
 	}
 
 	if (!IS_FIR(si)) {
@@ -715,16 +715,14 @@ static int sa1100_irda_hard_xmit(struct sk_buff *skb, struct net_device *dev)
 		Ser2HSCR0 = si->hscr0 | HSCR0_HSSP | HSCR0_TXE;
 	}
 
-	dev->trans_start = jiffies;
-
-	return 0;
+	return NETDEV_TX_OK;
 }
 
 static int
 sa1100_irda_ioctl(struct net_device *dev, struct ifreq *ifreq, int cmd)
 {
 	struct if_irda_req *rq = (struct if_irda_req *)ifreq;
-	struct sa1100_irda *si = dev->priv;
+	struct sa1100_irda *si = netdev_priv(dev);
 	int ret = -EOPNOTSUPP;
 
 	switch (cmd) {
@@ -764,15 +762,9 @@ sa1100_irda_ioctl(struct net_device *dev, struct ifreq *ifreq, int cmd)
 	return ret;
 }
 
-static struct net_device_stats *sa1100_irda_stats(struct net_device *dev)
-{
-	struct sa1100_irda *si = dev->priv;
-	return &si->stats;
-}
-
 static int sa1100_irda_start(struct net_device *dev)
 {
-	struct sa1100_irda *si = dev->priv;
+	struct sa1100_irda *si = netdev_priv(dev);
 	int err;
 
 	si->speed = 9600;
@@ -835,7 +827,7 @@ err_irq:
 
 static int sa1100_irda_stop(struct net_device *dev)
 {
-	struct sa1100_irda *si = dev->priv;
+	struct sa1100_irda *si = netdev_priv(dev);
 
 	disable_irq(dev->irq);
 	sa1100_irda_shutdown(si);
@@ -884,6 +876,13 @@ static int sa1100_irda_init_iobuf(iobuff_t *io, int size)
 	return io->head ? 0 : -ENOMEM;
 }
 
+static const struct net_device_ops sa1100_irda_netdev_ops = {
+	.ndo_open		= sa1100_irda_start,
+	.ndo_stop		= sa1100_irda_stop,
+	.ndo_start_xmit		= sa1100_irda_hard_xmit,
+	.ndo_do_ioctl		= sa1100_irda_ioctl,
+};
+
 static int sa1100_irda_probe(struct platform_device *pdev)
 {
 	struct net_device *dev;
@@ -908,7 +907,7 @@ static int sa1100_irda_probe(struct platform_device *pdev)
 	if (!dev)
 		goto err_mem_4;
 
-	si = dev->priv;
+	si = netdev_priv(dev);
 	si->dev = &pdev->dev;
 	si->pdata = pdev->dev.platform_data;
 
@@ -922,12 +921,8 @@ static int sa1100_irda_probe(struct platform_device *pdev)
 	if (err)
 		goto err_mem_5;
 
-	dev->hard_start_xmit	= sa1100_irda_hard_xmit;
-	dev->open		= sa1100_irda_start;
-	dev->stop		= sa1100_irda_stop;
-	dev->do_ioctl		= sa1100_irda_ioctl;
-	dev->get_stats		= sa1100_irda_stats;
-	dev->irq		= IRQ_Ser2ICP;
+	dev->netdev_ops	= &sa1100_irda_netdev_ops;
+	dev->irq	= IRQ_Ser2ICP;
 
 	irda_init_max_qos_capabilies(&si->qos);
 
@@ -987,7 +982,7 @@ static int sa1100_irda_remove(struct platform_device *pdev)
 	struct net_device *dev = platform_get_drvdata(pdev);
 
 	if (dev) {
-		struct sa1100_irda *si = dev->priv;
+		struct sa1100_irda *si = netdev_priv(dev);
 		unregister_netdev(dev);
 		kfree(si->tx_buff.head);
 		kfree(si->rx_buff.head);
@@ -1008,6 +1003,7 @@ static struct platform_driver sa1100ir_driver = {
 	.resume		= sa1100_irda_resume,
 	.driver		= {
 		.name	= "sa11x0-ir",
+		.owner	= THIS_MODULE,
 	},
 };
 
@@ -1041,3 +1037,4 @@ MODULE_LICENSE("GPL");
 MODULE_PARM_DESC(power_level, "IrDA power level, 1 (low) to 3 (high)");
 MODULE_PARM_DESC(tx_lpm, "Enable transmitter low power (1.6us) mode");
 MODULE_PARM_DESC(max_rate, "Maximum baud rate (4000000, 115200, 57600, 38400, 19200, 9600)");
+MODULE_ALIAS("platform:sa11x0-ir");

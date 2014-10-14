@@ -23,14 +23,13 @@ static inline int overlap(int min1, int max1, int min2, int max2)
 /* Functions to register sockopt ranges (exclusive). */
 int nf_register_sockopt(struct nf_sockopt_ops *reg)
 {
-	struct list_head *i;
+	struct nf_sockopt_ops *ops;
 	int ret = 0;
 
 	if (mutex_lock_interruptible(&nf_sockopt_mutex) != 0)
 		return -EINTR;
 
-	list_for_each(i, &nf_sockopts) {
-		struct nf_sockopt_ops *ops = (struct nf_sockopt_ops *)i;
+	list_for_each_entry(ops, &nf_sockopts, list) {
 		if (ops->pf == reg->pf
 		    && (overlap(ops->set_optmin, ops->set_optmax,
 				reg->set_optmin, reg->set_optmax)
@@ -55,144 +54,113 @@ EXPORT_SYMBOL(nf_register_sockopt);
 
 void nf_unregister_sockopt(struct nf_sockopt_ops *reg)
 {
-	/* No point being interruptible: we're probably in cleanup_module() */
- restart:
 	mutex_lock(&nf_sockopt_mutex);
-	if (reg->use != 0) {
-		/* To be woken by nf_sockopt call... */
-		/* FIXME: Stuart Young's name appears gratuitously. */
-		set_current_state(TASK_UNINTERRUPTIBLE);
-		reg->cleanup_task = current;
-		mutex_unlock(&nf_sockopt_mutex);
-		schedule();
-		goto restart;
-	}
 	list_del(&reg->list);
 	mutex_unlock(&nf_sockopt_mutex);
 }
 EXPORT_SYMBOL(nf_unregister_sockopt);
 
+static struct nf_sockopt_ops *nf_sockopt_find(struct sock *sk, u_int8_t pf,
+		int val, int get)
+{
+	struct nf_sockopt_ops *ops;
+
+	if (mutex_lock_interruptible(&nf_sockopt_mutex) != 0)
+		return ERR_PTR(-EINTR);
+
+	list_for_each_entry(ops, &nf_sockopts, list) {
+		if (ops->pf == pf) {
+			if (!try_module_get(ops->owner))
+				goto out_nosup;
+
+			if (get) {
+				if (val >= ops->get_optmin &&
+						val < ops->get_optmax)
+					goto out;
+			} else {
+				if (val >= ops->set_optmin &&
+						val < ops->set_optmax)
+					goto out;
+			}
+			module_put(ops->owner);
+		}
+	}
+out_nosup:
+	ops = ERR_PTR(-ENOPROTOOPT);
+out:
+	mutex_unlock(&nf_sockopt_mutex);
+	return ops;
+}
+
 /* Call get/setsockopt() */
-static int nf_sockopt(struct sock *sk, int pf, int val,
+static int nf_sockopt(struct sock *sk, u_int8_t pf, int val,
 		      char __user *opt, int *len, int get)
 {
-	struct list_head *i;
 	struct nf_sockopt_ops *ops;
 	int ret;
 
-	if (mutex_lock_interruptible(&nf_sockopt_mutex) != 0)
-		return -EINTR;
+	ops = nf_sockopt_find(sk, pf, val, get);
+	if (IS_ERR(ops))
+		return PTR_ERR(ops);
 
-	list_for_each(i, &nf_sockopts) {
-		ops = (struct nf_sockopt_ops *)i;
-		if (ops->pf == pf) {
-			if (get) {
-				if (val >= ops->get_optmin
-				    && val < ops->get_optmax) {
-					ops->use++;
-					mutex_unlock(&nf_sockopt_mutex);
-					ret = ops->get(sk, val, opt, len);
-					goto out;
-				}
-			} else {
-				if (val >= ops->set_optmin
-				    && val < ops->set_optmax) {
-					ops->use++;
-					mutex_unlock(&nf_sockopt_mutex);
-					ret = ops->set(sk, val, opt, *len);
-					goto out;
-				}
-			}
-		}
-	}
-	mutex_unlock(&nf_sockopt_mutex);
-	return -ENOPROTOOPT;
+	if (get)
+		ret = ops->get(sk, val, opt, len);
+	else
+		ret = ops->set(sk, val, opt, *len);
 
- out:
-	mutex_lock(&nf_sockopt_mutex);
-	ops->use--;
-	if (ops->cleanup_task)
-		wake_up_process(ops->cleanup_task);
-	mutex_unlock(&nf_sockopt_mutex);
+	module_put(ops->owner);
 	return ret;
 }
 
-int nf_setsockopt(struct sock *sk, int pf, int val, char __user *opt,
-		  int len)
+int nf_setsockopt(struct sock *sk, u_int8_t pf, int val, char __user *opt,
+		  unsigned int len)
 {
 	return nf_sockopt(sk, pf, val, opt, &len, 0);
 }
 EXPORT_SYMBOL(nf_setsockopt);
 
-int nf_getsockopt(struct sock *sk, int pf, int val, char __user *opt, int *len)
+int nf_getsockopt(struct sock *sk, u_int8_t pf, int val, char __user *opt,
+		  int *len)
 {
 	return nf_sockopt(sk, pf, val, opt, len, 1);
 }
 EXPORT_SYMBOL(nf_getsockopt);
 
 #ifdef CONFIG_COMPAT
-static int compat_nf_sockopt(struct sock *sk, int pf, int val,
+static int compat_nf_sockopt(struct sock *sk, u_int8_t pf, int val,
 			     char __user *opt, int *len, int get)
 {
-	struct list_head *i;
 	struct nf_sockopt_ops *ops;
 	int ret;
 
-	if (mutex_lock_interruptible(&nf_sockopt_mutex) != 0)
-		return -EINTR;
+	ops = nf_sockopt_find(sk, pf, val, get);
+	if (IS_ERR(ops))
+		return PTR_ERR(ops);
 
-	list_for_each(i, &nf_sockopts) {
-		ops = (struct nf_sockopt_ops *)i;
-		if (ops->pf == pf) {
-			if (get) {
-				if (val >= ops->get_optmin
-				    && val < ops->get_optmax) {
-					ops->use++;
-					mutex_unlock(&nf_sockopt_mutex);
-					if (ops->compat_get)
-						ret = ops->compat_get(sk,
-							val, opt, len);
-					else
-						ret = ops->get(sk,
-							val, opt, len);
-					goto out;
-				}
-			} else {
-				if (val >= ops->set_optmin
-				    && val < ops->set_optmax) {
-					ops->use++;
-					mutex_unlock(&nf_sockopt_mutex);
-					if (ops->compat_set)
-						ret = ops->compat_set(sk,
-							val, opt, *len);
-					else
-						ret = ops->set(sk,
-							val, opt, *len);
-					goto out;
-				}
-			}
-		}
+	if (get) {
+		if (ops->compat_get)
+			ret = ops->compat_get(sk, val, opt, len);
+		else
+			ret = ops->get(sk, val, opt, len);
+	} else {
+		if (ops->compat_set)
+			ret = ops->compat_set(sk, val, opt, *len);
+		else
+			ret = ops->set(sk, val, opt, *len);
 	}
-	mutex_unlock(&nf_sockopt_mutex);
-	return -ENOPROTOOPT;
 
- out:
-	mutex_lock(&nf_sockopt_mutex);
-	ops->use--;
-	if (ops->cleanup_task)
-		wake_up_process(ops->cleanup_task);
-	mutex_unlock(&nf_sockopt_mutex);
+	module_put(ops->owner);
 	return ret;
 }
 
-int compat_nf_setsockopt(struct sock *sk, int pf,
-		int val, char __user *opt, int len)
+int compat_nf_setsockopt(struct sock *sk, u_int8_t pf,
+		int val, char __user *opt, unsigned int len)
 {
 	return compat_nf_sockopt(sk, pf, val, opt, &len, 0);
 }
 EXPORT_SYMBOL(compat_nf_setsockopt);
 
-int compat_nf_getsockopt(struct sock *sk, int pf,
+int compat_nf_getsockopt(struct sock *sk, u_int8_t pf,
 		int val, char __user *opt, int *len)
 {
 	return compat_nf_sockopt(sk, pf, val, opt, len, 1);

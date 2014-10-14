@@ -16,10 +16,10 @@
 #include <linux/delay.h>
 #include <linux/sched.h>
 #include <linux/timer.h>
-#include <linux/hdreg.h>
 #include <linux/stddef.h>
 #include <linux/init.h>
-#include <linux/ide.h>
+#include <linux/kthread.h>
+#include <linux/mutex.h>
 #include <asm/prom.h>
 #include <asm/pgtable.h>
 #include <asm/io.h>
@@ -32,16 +32,6 @@
 #include <asm/keylargo.h>
 #include <linux/adb.h>
 #include <linux/pmu.h>
-
-
-#define MB_DEBUG
-#define MB_IGNORE_SIGNALS
-
-#ifdef MB_DEBUG
-#define MBDBG(fmt, arg...)	printk(KERN_INFO fmt , ## arg)
-#else
-#define MBDBG(fmt, arg...)	do { } while (0)
-#endif
 
 #define MB_FCR32(bay, r)	((bay)->base + ((r) >> 2))
 #define MB_FCR8(bay, r)		(((volatile u8 __iomem *)((bay)->base)) + (r))
@@ -77,25 +67,14 @@ struct media_bay_info {
 	int				index;
 	int				cached_gpio;
 	int				sleeping;
-	struct semaphore		lock;
-#ifdef CONFIG_BLK_DEV_IDE
-	void __iomem			*cd_base;
-	int 				cd_index;
-	int				cd_irq;
-	int				cd_retry;
-#endif
+	int				user_lock;
+	struct mutex			lock;
 };
 
 #define MAX_BAYS	2
 
 static struct media_bay_info media_bays[MAX_BAYS];
-int media_bay_count = 0;
-
-#ifdef CONFIG_BLK_DEV_IDE
-/* check the busy bit in the media-bay ide interface
-   (assumes the media-bay contains an ide device) */
-#define MB_IDE_READY(i)	((readb(media_bays[i].cd_base + 0x70) & 0x80) == 0)
-#endif
+static int media_bay_count = 0;
 
 /*
  * Wait that number of ms between each step in normal polling mode
@@ -128,19 +107,9 @@ int media_bay_count = 0;
 
 /*
  * Wait this many ticks after an IDE device (e.g. CD-ROM) is inserted
- * (or until the device is ready) before waiting for busy bit to disappear
+ * (or until the device is ready) before calling into the driver
  */
 #define MB_IDE_WAIT	1000
-
-/*
- * Timeout waiting for busy bit of an IDE device to go down
- */
-#define MB_IDE_TIMEOUT	5000
-
-/*
- * Max retries of the full power up/down sequence for an IDE device
- */
-#define MAX_CD_RETRIES	3
 
 /*
  * States of a media bay
@@ -151,7 +120,6 @@ enum {
 	mb_enabling_bay,	/* enable bits set, waiting MB_RESET_DELAY */
 	mb_resetting,		/* reset bit unset, waiting MB_SETUP_DELAY */
 	mb_ide_resetting,	/* IDE reset bit unser, waiting MB_IDE_WAIT */
-	mb_ide_waiting,		/* Waiting for BUSY bit to go away until MB_IDE_TIMEOUT */
 	mb_up,			/* Media bay full */
 	mb_powering_down	/* Powering down (avoid too fast down/up) */
 };
@@ -371,12 +339,12 @@ static inline void set_mb_power(struct media_bay_info* bay, int onoff)
 	if (onoff) {
 		bay->ops->power(bay, 1);
 		bay->state = mb_powering_up;
-		MBDBG("mediabay%d: powering up\n", bay->index);
+		pr_debug("mediabay%d: powering up\n", bay->index);
 	} else { 
 		/* Make sure everything is powered down & disabled */
 		bay->ops->power(bay, 0);
 		bay->state = mb_powering_down;
-		MBDBG("mediabay%d: powering down\n", bay->index);
+		pr_debug("mediabay%d: powering down\n", bay->index);
 	}
 	bay->timer = msecs_to_jiffies(MB_POWER_DELAY);
 }
@@ -385,107 +353,117 @@ static void poll_media_bay(struct media_bay_info* bay)
 {
 	int id = bay->ops->content(bay);
 
-	if (id == bay->last_value) {
-		if (id != bay->content_id) {
-			bay->value_count += msecs_to_jiffies(MB_POLL_DELAY);
-			if (bay->value_count >= msecs_to_jiffies(MB_STABLE_DELAY)) {
-				/* If the device type changes without going thru
-				 * "MB_NO", we force a pass by "MB_NO" to make sure
-				 * things are properly reset
-				 */
-				if ((id != MB_NO) && (bay->content_id != MB_NO)) {
-					id = MB_NO;
-					MBDBG("mediabay%d: forcing MB_NO\n", bay->index);
-				}
-				MBDBG("mediabay%d: switching to %d\n", bay->index, id);
-				set_mb_power(bay, id != MB_NO);
-				bay->content_id = id;
-				if (id == MB_NO) {
-#ifdef CONFIG_BLK_DEV_IDE
-					bay->cd_retry = 0;
-#endif
-					printk(KERN_INFO "media bay %d is empty\n", bay->index);
-				}
-			}
-		}
-	} else {
+	static char *mb_content_types[] = {
+		"a floppy drive",
+		"a floppy drive",
+		"an unsuported audio device",
+		"an ATA device",
+		"an unsupported PCI device",
+		"an unknown device",
+	};
+
+	if (id != bay->last_value) {
 		bay->last_value = id;
 		bay->value_count = 0;
+		return;
+	}
+	if (id == bay->content_id)
+		return;
+
+	bay->value_count += msecs_to_jiffies(MB_POLL_DELAY);
+	if (bay->value_count >= msecs_to_jiffies(MB_STABLE_DELAY)) {
+		/* If the device type changes without going thru
+		 * "MB_NO", we force a pass by "MB_NO" to make sure
+		 * things are properly reset
+		 */
+		if ((id != MB_NO) && (bay->content_id != MB_NO)) {
+			id = MB_NO;
+			pr_debug("mediabay%d: forcing MB_NO\n", bay->index);
+		}
+		pr_debug("mediabay%d: switching to %d\n", bay->index, id);
+		set_mb_power(bay, id != MB_NO);
+		bay->content_id = id;
+		if (id >= MB_NO || id < 0)
+			printk(KERN_INFO "mediabay%d: Bay is now empty\n", bay->index);
+		else
+			printk(KERN_INFO "mediabay%d: Bay contains %s\n",
+			       bay->index, mb_content_types[id]);
 	}
 }
 
-int check_media_bay(struct device_node *which_bay, int what)
+int check_media_bay(struct macio_dev *baydev)
 {
-#ifdef CONFIG_BLK_DEV_IDE
-	int	i;
+	struct media_bay_info* bay;
+	int id;
 
-	for (i=0; i<media_bay_count; i++)
-		if (media_bays[i].mdev && which_bay == media_bays[i].mdev->ofdev.node) {
-			if ((what == media_bays[i].content_id) && media_bays[i].state == mb_up)
-				return 0;
-			media_bays[i].cd_index = -1;
-			return -EINVAL;
-		}
-#endif /* CONFIG_BLK_DEV_IDE */
-	return -ENODEV;
+	if (baydev == NULL)
+		return MB_NO;
+
+	/* This returns an instant snapshot, not locking, sine
+	 * we may be called with the bay lock held. The resulting
+	 * fuzzyness of the result if called at the wrong time is
+	 * not actually a huge deal
+	 */
+	bay = macio_get_drvdata(baydev);
+	if (bay == NULL)
+		return MB_NO;
+	id = bay->content_id;
+	if (bay->state != mb_up)
+		return MB_NO;
+	if (id == MB_FD1)
+		return MB_FD;
+	return id;
 }
-EXPORT_SYMBOL(check_media_bay);
+EXPORT_SYMBOL_GPL(check_media_bay);
 
-int check_media_bay_by_base(unsigned long base, int what)
+void lock_media_bay(struct macio_dev *baydev)
 {
-#ifdef CONFIG_BLK_DEV_IDE
-	int	i;
+	struct media_bay_info* bay;
 
-	for (i=0; i<media_bay_count; i++)
-		if (media_bays[i].mdev && base == (unsigned long) media_bays[i].cd_base) {
-			if ((what == media_bays[i].content_id) && media_bays[i].state == mb_up)
-				return 0;
-			media_bays[i].cd_index = -1;
-			return -EINVAL;
-		} 
-#endif
-	
-	return -ENODEV;
+	if (baydev == NULL)
+		return;
+	bay = macio_get_drvdata(baydev);
+	if (bay == NULL)
+		return;
+	mutex_lock(&bay->lock);
+	bay->user_lock = 1;
 }
+EXPORT_SYMBOL_GPL(lock_media_bay);
 
-int media_bay_set_ide_infos(struct device_node* which_bay, unsigned long base,
-	int irq, int index)
+void unlock_media_bay(struct macio_dev *baydev)
 {
-#ifdef CONFIG_BLK_DEV_IDE
-	int	i;
+	struct media_bay_info* bay;
 
-	for (i=0; i<media_bay_count; i++) {
-		struct media_bay_info* bay = &media_bays[i];
-
-		if (bay->mdev && which_bay == bay->mdev->ofdev.node) {
-			int timeout = 5000;
-			
-			down(&bay->lock);
-
- 			bay->cd_base	= (void __iomem *) base;
-			bay->cd_irq	= irq;
-
-			if ((MB_CD != bay->content_id) || bay->state != mb_up) {
-				up(&bay->lock);
-				return 0;
-			}
-			printk(KERN_DEBUG "Registered ide%d for media bay %d\n", index, i);
-			do {
-				if (MB_IDE_READY(i)) {
-					bay->cd_index	= index;
-					up(&bay->lock);
-					return 0;
-				}
-				mdelay(1);
-			} while(--timeout);
-			printk(KERN_DEBUG "Timeount waiting IDE in bay %d\n", i);
-			up(&bay->lock);
-			return -ENODEV;
-		}
+	if (baydev == NULL)
+		return;
+	bay = macio_get_drvdata(baydev);
+	if (bay == NULL)
+		return;
+	if (bay->user_lock) {
+		bay->user_lock = 0;
+		mutex_unlock(&bay->lock);
 	}
-#endif /* CONFIG_BLK_DEV_IDE */
-	
-	return -ENODEV;
+}
+EXPORT_SYMBOL_GPL(unlock_media_bay);
+
+static int mb_broadcast_hotplug(struct device *dev, void *data)
+{
+	struct media_bay_info* bay = data;
+	struct macio_dev *mdev;
+	struct macio_driver *drv;
+	int state;
+
+	if (dev->bus != &macio_bus_type)
+		return 0;
+
+	state = bay->state == mb_up ? bay->content_id : MB_NO;
+	if (state == MB_FD1)
+		state = MB_FD;
+	mdev = to_macio_device(dev);
+	drv = to_macio_driver(dev->driver);
+	if (dev->driver && drv->mediabay_event)
+		drv->mediabay_event(mdev, state);
+	return 0;
 }
 
 static void media_bay_step(int i)
@@ -496,8 +474,8 @@ static void media_bay_step(int i)
 	if (bay->state != mb_powering_down)
 	    poll_media_bay(bay);
 
-	/* If timer expired or polling IDE busy, run state machine */
-	if ((bay->state != mb_ide_waiting) && (bay->timer != 0)) {
+	/* If timer expired run state machine */
+	if (bay->timer != 0) {
 		bay->timer -= msecs_to_jiffies(MB_POLL_DELAY);
 		if (bay->timer > 0)
 			return;
@@ -507,107 +485,50 @@ static void media_bay_step(int i)
 	switch(bay->state) {
 	case mb_powering_up:
 	    	if (bay->ops->setup_bus(bay, bay->last_value) < 0) {
-			MBDBG("mediabay%d: device not supported (kind:%d)\n", i, bay->content_id);
+			pr_debug("mediabay%d: device not supported (kind:%d)\n",
+				 i, bay->content_id);
 	    		set_mb_power(bay, 0);
 	    		break;
 	    	}
 	    	bay->timer = msecs_to_jiffies(MB_RESET_DELAY);
 	    	bay->state = mb_enabling_bay;
-		MBDBG("mediabay%d: enabling (kind:%d)\n", i, bay->content_id);
+		pr_debug("mediabay%d: enabling (kind:%d)\n", i, bay->content_id);
 		break;
 	case mb_enabling_bay:
 		bay->ops->un_reset(bay);
 	    	bay->timer = msecs_to_jiffies(MB_SETUP_DELAY);
 	    	bay->state = mb_resetting;
-		MBDBG("mediabay%d: waiting reset (kind:%d)\n", i, bay->content_id);
+		pr_debug("mediabay%d: releasing bay reset (kind:%d)\n",
+			 i, bay->content_id);
 	    	break;
-	    
 	case mb_resetting:
 		if (bay->content_id != MB_CD) {
-			MBDBG("mediabay%d: bay is up (kind:%d)\n", i, bay->content_id);
+			pr_debug("mediabay%d: bay is up (kind:%d)\n", i,
+				 bay->content_id);
 			bay->state = mb_up;
+			device_for_each_child(&bay->mdev->ofdev.dev,
+					      bay, mb_broadcast_hotplug);
 			break;
 	    	}
-#ifdef CONFIG_BLK_DEV_IDE
-		MBDBG("mediabay%d: waiting IDE reset (kind:%d)\n", i, bay->content_id);
+		pr_debug("mediabay%d: releasing ATA reset (kind:%d)\n",
+			 i, bay->content_id);
 		bay->ops->un_reset_ide(bay);
 	    	bay->timer = msecs_to_jiffies(MB_IDE_WAIT);
 	    	bay->state = mb_ide_resetting;
-#else
-		printk(KERN_DEBUG "media-bay %d is ide (not compiled in kernel)\n", i);
-		set_mb_power(bay, 0);
-#endif /* CONFIG_BLK_DEV_IDE */
 	    	break;
-	    
-#ifdef CONFIG_BLK_DEV_IDE
-	case mb_ide_resetting:
-	    	bay->timer = msecs_to_jiffies(MB_IDE_TIMEOUT);
-	    	bay->state = mb_ide_waiting;
-		MBDBG("mediabay%d: waiting IDE ready (kind:%d)\n", i, bay->content_id);
-	    	break;
-	    
-	case mb_ide_waiting:
-		if (bay->cd_base == NULL) {
-			bay->timer = 0;
-			bay->state = mb_up;
-			MBDBG("mediabay%d: up before IDE init\n", i);
-			break;
-		} else if (MB_IDE_READY(i)) {
-			bay->timer = 0;
-			bay->state = mb_up;
-			if (bay->cd_index < 0) {
-				hw_regs_t hw;
 
-				printk("mediabay %d, registering IDE...\n", i);
-				pmu_suspend();
-				ide_init_hwif_ports(&hw, (unsigned long) bay->cd_base, (unsigned long) 0, NULL);
-				hw.irq = bay->cd_irq;
-				hw.chipset = ide_pmac;
-				bay->cd_index = ide_register_hw(&hw, 0, NULL);
-				pmu_resume();
-			}
-			if (bay->cd_index == -1) {
-				/* We eventually do a retry */
-				bay->cd_retry++;
-				printk("IDE register error\n");
-				set_mb_power(bay, 0);
-			} else {
-				printk(KERN_DEBUG "media-bay %d is ide%d\n", i, bay->cd_index);
-				MBDBG("mediabay %d IDE ready\n", i);
-			}
-			break;
-	    	} else if (bay->timer > 0)
-			bay->timer -= msecs_to_jiffies(MB_POLL_DELAY);
-	    	if (bay->timer <= 0) {
-			printk("\nIDE Timeout in bay %d !, IDE state is: 0x%02x\n",
-			       i, readb(bay->cd_base + 0x70));
-			MBDBG("mediabay%d: nIDE Timeout !\n", i);
-			set_mb_power(bay, 0);
-			bay->timer = 0;
-	    	}
-		break;
-#endif /* CONFIG_BLK_DEV_IDE */
+	case mb_ide_resetting:
+		pr_debug("mediabay%d: bay is up (kind:%d)\n", i, bay->content_id);
+		bay->state = mb_up;
+		device_for_each_child(&bay->mdev->ofdev.dev,
+				      bay, mb_broadcast_hotplug);
+	    	break;
 
 	case mb_powering_down:
 	    	bay->state = mb_empty;
-#ifdef CONFIG_BLK_DEV_IDE
-    	        if (bay->cd_index >= 0) {
-			printk(KERN_DEBUG "Unregistering mb %d ide, index:%d\n", i,
-			       bay->cd_index);
-			ide_unregister(bay->cd_index);
-			bay->cd_index = -1;
-		}
-	    	if (bay->cd_retry) {
-			if (bay->cd_retry > MAX_CD_RETRIES) {
-				/* Should add an error sound (sort of beep in dmasound) */
-				printk("\nmedia-bay %d, IDE device badly inserted or unrecognised\n", i);
-			} else {
-				/* Force a new power down/up sequence */
-				bay->content_id = MB_NO;
-			}
-	    	}
-#endif /* CONFIG_BLK_DEV_IDE */    
-		MBDBG("mediabay%d: end of power down\n", i);
+		device_for_each_child(&bay->mdev->ofdev.dev,
+				      bay, mb_broadcast_hotplug);
+		pr_debug("mediabay%d: end of power down\n", i);
 	    	break;
 	}
 }
@@ -622,23 +543,17 @@ static int media_bay_task(void *x)
 {
 	int	i;
 
-	strcpy(current->comm, "media-bay");
-#ifdef MB_IGNORE_SIGNALS
-	sigfillset(&current->blocked);
-#endif
-
-	for (;;) {
+	while (!kthread_should_stop()) {
 		for (i = 0; i < media_bay_count; ++i) {
-			down(&media_bays[i].lock);
+			mutex_lock(&media_bays[i].lock);
 			if (!media_bays[i].sleeping)
 				media_bay_step(i);
-			up(&media_bays[i].lock);
+			mutex_unlock(&media_bays[i].lock);
 		}
 
 		msleep_interruptible(MB_POLL_DELAY);
-		if (signal_pending(current))
-			return 0;
 	}
+	return 0;
 }
 
 static int __devinit media_bay_attach(struct macio_dev *mdev, const struct of_device_id *match)
@@ -649,7 +564,7 @@ static int __devinit media_bay_attach(struct macio_dev *mdev, const struct of_de
 	unsigned long base;
 	int i;
 
-	ofnode = mdev->ofdev.node;
+	ofnode = mdev->ofdev.dev.of_node;
 
 	if (macio_resource_count(mdev) < 1)
 		return -ENODEV;
@@ -673,7 +588,7 @@ static int __devinit media_bay_attach(struct macio_dev *mdev, const struct of_de
 	bay->index = i;
 	bay->ops = match->data;
 	bay->sleeping = 0;
-	init_MUTEX(&bay->lock);
+	mutex_init(&bay->lock);
 
 	/* Init HW probing */
 	if (bay->ops->init)
@@ -688,18 +603,13 @@ static int __devinit media_bay_attach(struct macio_dev *mdev, const struct of_de
 	bay->last_value = bay->ops->content(bay);
 	bay->value_count = msecs_to_jiffies(MB_STABLE_DELAY);
 	bay->state = mb_empty;
-	do {
-		msleep(MB_POLL_DELAY);
-		media_bay_step(i);
-	} while((bay->state != mb_empty) &&
-		(bay->state != mb_up));
 
 	/* Mark us ready by filling our mdev data */
 	macio_set_drvdata(mdev, bay);
 
 	/* Startup kernel thread */
 	if (i == 0)
-		kernel_thread(media_bay_task, NULL, CLONE_KERNEL);
+		kthread_run(media_bay_task, NULL, "media-bay");
 
 	return 0;
 
@@ -709,11 +619,12 @@ static int media_bay_suspend(struct macio_dev *mdev, pm_message_t state)
 {
 	struct media_bay_info	*bay = macio_get_drvdata(mdev);
 
-	if (state.event != mdev->ofdev.dev.power.power_state.event && state.event == PM_EVENT_SUSPEND) {
-		down(&bay->lock);
+	if (state.event != mdev->ofdev.dev.power.power_state.event
+	    && (state.event & PM_EVENT_SLEEP)) {
+		mutex_lock(&bay->lock);
 		bay->sleeping = 1;
 		set_mb_power(bay, 0);
-		up(&bay->lock);
+		mutex_unlock(&bay->lock);
 		msleep(MB_POLL_DELAY);
 		mdev->ofdev.dev.power.power_state = state;
 	}
@@ -732,28 +643,25 @@ static int media_bay_resume(struct macio_dev *mdev)
 	       	   they seem to help the 3400 get it right.
 	       	 */
 	       	/* Force MB power to 0 */
-		down(&bay->lock);
+		mutex_lock(&bay->lock);
 	       	set_mb_power(bay, 0);
 		msleep(MB_POWER_DELAY);
 	       	if (bay->ops->content(bay) != bay->content_id) {
-			printk("mediabay%d: content changed during sleep...\n", bay->index);
-			up(&bay->lock);
+			printk("mediabay%d: Content changed during sleep...\n", bay->index);
+			mutex_unlock(&bay->lock);
 	       		return 0;
 		}
 	       	set_mb_power(bay, 1);
 	       	bay->last_value = bay->content_id;
 	       	bay->value_count = msecs_to_jiffies(MB_STABLE_DELAY);
 	       	bay->timer = msecs_to_jiffies(MB_POWER_DELAY);
-#ifdef CONFIG_BLK_DEV_IDE
-	       	bay->cd_retry = 0;
-#endif
 	       	do {
 			msleep(MB_POLL_DELAY);
 	       		media_bay_step(bay->index);
 	       	} while((bay->state != mb_empty) &&
 	       		(bay->state != mb_up));
 		bay->sleeping = 0;
-		up(&bay->lock);
+		mutex_unlock(&bay->lock);
 	}
 	return 0;
 }
@@ -820,8 +728,10 @@ static struct of_device_id media_bay_match[] =
 
 static struct macio_driver media_bay_driver =
 {
-	.name		= "media-bay",
-	.match_table	= media_bay_match,
+	.driver = {
+		.name		= "media-bay",
+		.of_match_table	= media_bay_match,
+	},
 	.probe		= media_bay_attach,
 	.suspend	= media_bay_suspend,
 	.resume		= media_bay_resume
@@ -834,9 +744,6 @@ static int __init media_bay_init(void)
 	for (i=0; i<MAX_BAYS; i++) {
 		memset((char *)&media_bays[i], 0, sizeof(struct media_bay_info));
 		media_bays[i].content_id	= -1;
-#ifdef CONFIG_BLK_DEV_IDE
-		media_bays[i].cd_index		= -1;
-#endif
 	}
 	if (!machine_is(powermac))
 		return 0;

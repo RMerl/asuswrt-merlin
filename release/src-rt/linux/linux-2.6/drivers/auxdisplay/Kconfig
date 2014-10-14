@@ -5,8 +5,15 @@
 # Auxiliary display drivers configuration.
 #
 
-menu "Auxiliary Display support"
-	depends on PARPORT
+menuconfig AUXDISPLAY
+	bool "Auxiliary Display support"
+	---help---
+	  Say Y here to get to see options for auxiliary display drivers.
+	  This option alone does not add any kernel code.
+
+	  If you say N, all options in this submenu will be skipped and disabled.
+
+if AUXDISPLAY
 
 config KS0108
 	tristate "KS0108 LCD Controller"
@@ -56,7 +63,7 @@ config KS0108_DELAY
 	  Amount of time the ks0108 should wait between each control write
 	  to the parallel port.
 
-	  If your driver seems to miss random writings, increment this.
+	  If your LCD seems to miss random writings, increment this.
 
 	  If you don't know what I'm talking about, ignore it.
 
@@ -111,4 +118,5 @@ config CFAG12864B_RATE
 
 	  If you compile this as a module, you can still override this
 	  value using the module parameters.
-endmenu
+
+endif # AUXDISPLAY

@@ -1,11 +1,6 @@
-# sound/Config.in
-#
-
-menu "Sound"
-	depends on HAS_IOMEM
-
-config SOUND
+menuconfig SOUND
 	tristate "Sound card support"
+	depends on HAS_IOMEM
 	help
 	  If you have a sound card in your computer, i.e. if it can say more
 	  than an occasional beep, say Y.  Be sure to have all the information
@@ -28,26 +23,53 @@ config SOUND
 	  and read <file:Documentation/sound/oss/README.modules>; the module
 	  will be called soundcore.
 
-	  I'm told that even without a sound card, you can make your computer
-	  say more than an occasional beep, by programming the PC speaker.
-	  Kernel patches and supporting utilities to do that are in the pcsp
-	  package, available at <ftp://ftp.infradead.org/pub/pcsp/>.
+if SOUND
+
+config SOUND_OSS_CORE
+	bool
+	default n
+
+config SOUND_OSS_CORE_PRECLAIM
+	bool "Preclaim OSS device numbers"
+	depends on SOUND_OSS_CORE
+	default y
+	help
+	  With this option enabled, the kernel will claim all OSS device
+	  numbers if any OSS support (native or emulation) is enabled
+	  whether the respective module is loaded or not and try to load the
+	  appropriate module using sound-slot/service-* and char-major-*
+	  module aliases when one of the device numbers is opened.  With
+	  this option disabled, kernel will only claim actually in-use
+	  device numbers and opening a missing device will generate only the
+	  standard char-major-* aliases.
+
+	  The only visible difference is use of additional module aliases
+	  and whether OSS sound devices appear multiple times in
+	  /proc/devices.  sound-slot/service-* module aliases are scheduled
+	  to be removed (ie. PRECLAIM won't be available) and this option is
+	  to make the transition easier.  This option can be overridden
+	  during boot using the kernel parameter soundcore.preclaim_oss.
+
+	  Disabling this allows alternative OSS implementations.
+
+	  Please read Documentation/feature-removal-schedule.txt for
+	  details.
+
+	  If unsure, say Y.
 
 source "sound/oss/dmasound/Kconfig"
 
 if !M68K
 
-menu "Advanced Linux Sound Architecture"
-	depends on SOUND!=n
-
-config SND
+menuconfig SND
 	tristate "Advanced Linux Sound Architecture"
-	depends on SOUND
 	help
 	  Say 'Y' or 'M' to enable ALSA (Advanced Linux Sound Architecture),
 	  the new base sound system.
 
 	  For more information, see <http://www.alsa-project.org/>
+
+if SND
 
 source "sound/core/Kconfig"
 
@@ -63,11 +85,19 @@ source "sound/aoa/Kconfig"
 
 source "sound/arm/Kconfig"
 
+source "sound/atmel/Kconfig"
+
+source "sound/spi/Kconfig"
+
 source "sound/mips/Kconfig"
+
+source "sound/sh/Kconfig"
 
 # the following will depend on the order of config.
 # here assuming USB is defined before ALSA
 source "sound/usb/Kconfig"
+
+source "sound/firewire/Kconfig"
 
 # the following will depend on the order of config.
 # here assuming PCMCIA is defined before ALSA
@@ -79,23 +109,25 @@ source "sound/parisc/Kconfig"
 
 source "sound/soc/Kconfig"
 
-endmenu
+endif # SND
 
-menu "Open Sound System"
-	depends on SOUND!=n
-
-config SOUND_PRIME
+menuconfig SOUND_PRIME
 	tristate "Open Sound System (DEPRECATED)"
-	depends on SOUND
+	select SOUND_OSS_CORE
 	help
 	  Say 'Y' or 'M' to enable Open Sound System drivers.
 
+if SOUND_PRIME
+
 source "sound/oss/Kconfig"
 
-endmenu
+endif # SOUND_PRIME
 
-endif
+endif # !M68K
 
+endif # SOUND
+
+# AC97_BUS is used from both sound and ucb1400
 config AC97_BUS
 	tristate
 	help
@@ -103,5 +135,3 @@ config AC97_BUS
 	  sound subsystem and other function drivers completely unrelated to
 	  sound although they're sharing the AC97 bus. Concerned drivers
 	  should "select" this.
-
-endmenu

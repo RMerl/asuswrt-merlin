@@ -154,7 +154,7 @@ static void check_bus_watcher(void)
 	if (status & ~(1UL << 31)) {
 		l2_err = csr_in32(IOADDR(A_BUS_L2_ERRORS));
 #ifdef DUMP_L2_ECC_TAG_ON_ERROR
-		l2_tag = in64(IO_SPACE_BASE | A_L2_ECC_TAG);
+		l2_tag = in64(IOADDR(A_L2_ECC_TAG));
 #endif
 		memio_err = csr_in32(IOADDR(A_BUS_MEM_IO_ERRORS));
 		printk("Bus watcher error counters: %08x %08x\n", l2_err, memio_err);
@@ -183,9 +183,9 @@ asmlinkage void sb1_cache_error(void)
 #ifdef CONFIG_SIBYTE_BW_TRACE
 	/* Freeze the trace buffer now */
 #if defined(CONFIG_SIBYTE_BCM1x55) || defined(CONFIG_SIBYTE_BCM1x80)
-	csr_out32(M_BCM1480_SCD_TRACE_CFG_FREEZE, IO_SPACE_BASE | A_SCD_TRACE_CFG);
+	csr_out32(M_BCM1480_SCD_TRACE_CFG_FREEZE, IOADDR(A_SCD_TRACE_CFG));
 #else
-	csr_out32(M_SCD_TRACE_CFG_FREEZE, IO_SPACE_BASE | A_SCD_TRACE_CFG);
+	csr_out32(M_SCD_TRACE_CFG_FREEZE, IOADDR(A_SCD_TRACE_CFG));
 #endif
 	printk("Trace buffer frozen\n");
 #endif
@@ -271,14 +271,22 @@ asmlinkage void sb1_cache_error(void)
 
 /* Parity lookup table. */
 static const uint8_t parity[256] = {
-	0,1,1,0,1,0,0,1,1,0,0,1,0,1,1,0,1,0,0,1,0,1,1,0,0,1,1,0,1,0,0,1,
-	1,0,0,1,0,1,1,0,0,1,1,0,1,0,0,1,0,1,1,0,1,0,0,1,1,0,0,1,0,1,1,0,
-	1,0,0,1,0,1,1,0,0,1,1,0,1,0,0,1,0,1,1,0,1,0,0,1,1,0,0,1,0,1,1,0,
-	0,1,1,0,1,0,0,1,1,0,0,1,0,1,1,0,1,0,0,1,0,1,1,0,0,1,1,0,1,0,0,1,
-	1,0,0,1,0,1,1,0,0,1,1,0,1,0,0,1,0,1,1,0,1,0,0,1,1,0,0,1,0,1,1,0,
-	0,1,1,0,1,0,0,1,1,0,0,1,0,1,1,0,1,0,0,1,0,1,1,0,0,1,1,0,1,0,0,1,
-	0,1,1,0,1,0,0,1,1,0,0,1,0,1,1,0,1,0,0,1,0,1,1,0,0,1,1,0,1,0,0,1,
-	1,0,0,1,0,1,1,0,0,1,1,0,1,0,0,1,0,1,1,0,1,0,0,1,1,0,0,1,0,1,1,0
+	0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
+	1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
+	1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
+	0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
+	1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
+	0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
+	0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
+	1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
+	1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
+	0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
+	0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
+	1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
+	0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
+	1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
+	1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
+	0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0
 };
 
 /* Masks to select bits for Hamming parity, mask_72_64[i] for bit[i] */
@@ -559,13 +567,10 @@ static uint32_t extract_dc(unsigned short addr, int data)
 				datalo = ((unsigned long long)datalohi << 32) | datalolo;
 				ecc = dc_ecc(datalo);
 				if (ecc != datahi) {
-					int bits = 0;
+					int bits;
 					bad_ecc |= 1 << (3-offset);
 					ecc ^= datahi;
-					while (ecc) {
-						if (ecc & 1) bits++;
-						ecc >>= 1;
-					}
+					bits = hweight8(ecc);
 					res |= (bits == 1) ? CP0_CERRD_DATA_SBE : CP0_CERRD_DATA_DBE;
 				}
 				printk("  %02X-%016llX", datahi, datalo);

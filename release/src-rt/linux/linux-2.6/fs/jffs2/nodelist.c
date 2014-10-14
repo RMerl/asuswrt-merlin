@@ -15,7 +15,6 @@
 #include <linux/mtd/mtd.h>
 #include <linux/rbtree.h>
 #include <linux/crc32.h>
-#include <linux/slab.h>
 #include <linux/pagemap.h>
 #include "nodelist.h"
 
@@ -32,15 +31,18 @@ void jffs2_add_fd_to_list(struct jffs2_sb_info *c, struct jffs2_full_dirent *new
 		if ((*prev)->nhash == new->nhash && !strcmp((*prev)->name, new->name)) {
 			/* Duplicate. Free one */
 			if (new->version < (*prev)->version) {
-				dbg_dentlist("Eep! Marking new dirent node is obsolete, old is \"%s\", ino #%u\n",
+				dbg_dentlist("Eep! Marking new dirent node obsolete, old is \"%s\", ino #%u\n",
 					(*prev)->name, (*prev)->ino);
 				jffs2_mark_node_obsolete(c, new->raw);
 				jffs2_free_full_dirent(new);
 			} else {
-				dbg_dentlist("marking old dirent \"%s\", ino #%u bsolete\n",
+				dbg_dentlist("marking old dirent \"%s\", ino #%u obsolete\n",
 					(*prev)->name, (*prev)->ino);
 				new->next = (*prev)->next;
-				jffs2_mark_node_obsolete(c, ((*prev)->raw));
+				/* It may have been a 'placeholder' deletion dirent, 
+				   if jffs2_can_mark_obsolete() (see jffs2_do_unlink()) */
+				if ((*prev)->raw)
+					jffs2_mark_node_obsolete(c, ((*prev)->raw));
 				jffs2_free_full_dirent(*prev);
 				*prev = new;
 			}
@@ -418,7 +420,7 @@ struct jffs2_inode_cache *jffs2_get_ino_cache(struct jffs2_sb_info *c, uint32_t 
 {
 	struct jffs2_inode_cache *ret;
 
-	ret = c->inocache_list[ino % INOCACHE_HASHSIZE];
+	ret = c->inocache_list[ino % c->inocache_hashsize];
 	while (ret && ret->ino < ino) {
 		ret = ret->next;
 	}
@@ -439,7 +441,7 @@ void jffs2_add_ino_cache (struct jffs2_sb_info *c, struct jffs2_inode_cache *new
 
 	dbg_inocache("add %p (ino #%u)\n", new, new->ino);
 
-	prev = &c->inocache_list[new->ino % INOCACHE_HASHSIZE];
+	prev = &c->inocache_list[new->ino % c->inocache_hashsize];
 
 	while ((*prev) && (*prev)->ino < new->ino) {
 		prev = &(*prev)->next;
@@ -460,7 +462,7 @@ void jffs2_del_ino_cache(struct jffs2_sb_info *c, struct jffs2_inode_cache *old)
 	dbg_inocache("del %p (ino #%u)\n", old, old->ino);
 	spin_lock(&c->inocache_lock);
 
-	prev = &c->inocache_list[old->ino % INOCACHE_HASHSIZE];
+	prev = &c->inocache_list[old->ino % c->inocache_hashsize];
 
 	while ((*prev) && (*prev)->ino < old->ino) {
 		prev = &(*prev)->next;
@@ -485,7 +487,7 @@ void jffs2_free_ino_caches(struct jffs2_sb_info *c)
 	int i;
 	struct jffs2_inode_cache *this, *next;
 
-	for (i=0; i<INOCACHE_HASHSIZE; i++) {
+	for (i=0; i < c->inocache_hashsize; i++) {
 		this = c->inocache_list[i];
 		while (this) {
 			next = this->next;

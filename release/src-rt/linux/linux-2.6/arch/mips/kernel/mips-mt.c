@@ -6,162 +6,41 @@
 #include <linux/device.h>
 #include <linux/kernel.h>
 #include <linux/sched.h>
-#include <linux/cpumask.h>
 #include <linux/module.h>
 #include <linux/interrupt.h>
 #include <linux/security.h>
 
 #include <asm/cpu.h>
-#include <linux/cpuset.h>
 #include <asm/processor.h>
 #include <asm/atomic.h>
 #include <asm/system.h>
 #include <asm/hardirq.h>
 #include <asm/mmu_context.h>
-#include <asm/smp.h>
 #include <asm/mipsmtregs.h>
 #include <asm/r4kcache.h>
 #include <asm/cacheflush.h>
 
-/*
- * CPU mask used to set process affinity for MT VPEs/TCs with FPUs
- */
+int vpelimit;
 
-cpumask_t mt_fpu_cpumask;
-
-#ifdef CONFIG_MIPS_MT_FPAFF
-
-#include <linux/cpu.h>
-#include <linux/delay.h>
-#include <asm/uaccess.h>
-
-unsigned long mt_fpemul_threshold = 0;
-
-/*
- * Replacement functions for the sys_sched_setaffinity() and
- * sys_sched_getaffinity() system calls, so that we can integrate
- * FPU affinity with the user's requested processor affinity.
- * This code is 98% identical with the sys_sched_setaffinity()
- * and sys_sched_getaffinity() system calls, and should be
- * updated when kernel/sched.c changes.
- */
-
-/*
- * find_process_by_pid - find a process with a matching PID value.
- * used in sys_sched_set/getaffinity() in kernel/sched.c, so
- * cloned here.
- */
-static inline struct task_struct *find_process_by_pid(pid_t pid)
+static int __init maxvpes(char *str)
 {
-	return pid ? find_task_by_pid(pid) : current;
+	get_option(&str, &vpelimit);
+
+	return 1;
 }
 
-extern struct mutex sched_hotcpu_mutex;
+__setup("maxvpes=", maxvpes);
 
-/*
- * mipsmt_sys_sched_setaffinity - set the cpu affinity of a process
- */
-asmlinkage long mipsmt_sys_sched_setaffinity(pid_t pid, unsigned int len,
-				      unsigned long __user *user_mask_ptr)
+int tclimit;
+
+static int __init maxtcs(char *str)
 {
-	cpumask_t new_mask, effective_mask;
-	struct task_struct *p;
-	int retval;
+	get_option(&str, &tclimit);
 
-	if (len < sizeof(new_mask))
-		return -EINVAL;
-
-	if (copy_from_user(&new_mask, user_mask_ptr, sizeof(new_mask)))
-		return -EFAULT;
-
-	mutex_lock(&sched_hotcpu_mutex);
-	read_lock(&tasklist_lock);
-
-	p = find_process_by_pid(pid);
-	if (!p) {
-		read_unlock(&tasklist_lock);
-		mutex_unlock(&sched_hotcpu_mutex);
-		return -ESRCH;
-	}
-
-	/*
-	 * It is not safe to call set_cpus_allowed with the
-	 * tasklist_lock held.  We will bump the task_struct's
-	 * usage count and drop tasklist_lock before invoking
-	 * set_cpus_allowed.
-	 */
-	get_task_struct(p);
-	read_unlock(&tasklist_lock);
-
-	retval = -EPERM;
-	if ((current->euid != p->euid) && (current->euid != p->uid) &&
-			!capable(CAP_SYS_NICE))
-		goto out_unlock;
-
-	retval = security_task_setscheduler(p, 0, NULL);
-	if (retval)
-		goto out_unlock;
-
-	/* Record new user-specified CPU set for future reference */
-	p->thread.user_cpus_allowed = new_mask;
-
-	/* Compute new global allowed CPU set if necessary */
-	if( (p->thread.mflags & MF_FPUBOUND)
-	&& cpus_intersects(new_mask, mt_fpu_cpumask)) {
-		cpus_and(effective_mask, new_mask, mt_fpu_cpumask);
-		retval = set_cpus_allowed(p, effective_mask);
-	} else {
-		effective_mask = new_mask;
-		p->thread.mflags &= ~MF_FPUBOUND;
-		retval = set_cpus_allowed(p, new_mask);
-	}
-
-
-out_unlock:
-	put_task_struct(p);
-	mutex_unlock(&sched_hotcpu_mutex);
-	return retval;
+	return 1;
 }
 
-/*
- * mipsmt_sys_sched_getaffinity - get the cpu affinity of a process
- */
-asmlinkage long mipsmt_sys_sched_getaffinity(pid_t pid, unsigned int len,
-				      unsigned long __user *user_mask_ptr)
-{
-	unsigned int real_len;
-	cpumask_t mask;
-	int retval;
-	struct task_struct *p;
-
-	real_len = sizeof(mask);
-	if (len < real_len)
-		return -EINVAL;
-
-	lock_cpu_hotplug();
-	read_lock(&tasklist_lock);
-
-	retval = -ESRCH;
-	p = find_process_by_pid(pid);
-	if (!p)
-		goto out_unlock;
-	retval = security_task_getscheduler(p);
-	if (retval)
-		goto out_unlock;
-
-	cpus_and(mask, p->thread.user_cpus_allowed, cpu_possible_map);
-
-out_unlock:
-	read_unlock(&tasklist_lock);
-	unlock_cpu_hotplug();
-	if (retval)
-		return retval;
-	if (copy_to_user(user_mask_ptr, &mask, real_len))
-		return -EFAULT;
-	return real_len;
-}
-
-#endif /* CONFIG_MIPS_MT_FPAFF */
+__setup("maxtcs=", maxtcs);
 
 /*
  * Dump new MIPS MT state for the core. Does not leave TCs halted.
@@ -193,27 +72,32 @@ void mips_mt_regdump(unsigned long mvpctl)
 	nvpe = ((mvpconf0 & MVPCONF0_PVPE) >> MVPCONF0_PVPE_SHIFT) + 1;
 	ntc = ((mvpconf0 & MVPCONF0_PTC) >> MVPCONF0_PTC_SHIFT) + 1;
 	printk("-- per-VPE State --\n");
-	for(i = 0; i < nvpe; i++) {
-	    for(tc = 0; tc < ntc; tc++) {
+	for (i = 0; i < nvpe; i++) {
+		for (tc = 0; tc < ntc; tc++) {
 			settc(tc);
-		if((read_tc_c0_tcbind() & TCBIND_CURVPE) == i) {
-		    printk("  VPE %d\n", i);
-		    printk("   VPEControl : %08lx\n", read_vpe_c0_vpecontrol());
-		    printk("   VPEConf0 : %08lx\n", read_vpe_c0_vpeconf0());
-		    printk("   VPE%d.Status : %08lx\n",
-				i, read_vpe_c0_status());
-		    printk("   VPE%d.EPC : %08lx\n", i, read_vpe_c0_epc());
-		    printk("   VPE%d.Cause : %08lx\n", i, read_vpe_c0_cause());
-		    printk("   VPE%d.Config7 : %08lx\n",
-				i, read_vpe_c0_config7());
-		    break; /* Next VPE */
+			if ((read_tc_c0_tcbind() & TCBIND_CURVPE) == i) {
+				printk("  VPE %d\n", i);
+				printk("   VPEControl : %08lx\n",
+				       read_vpe_c0_vpecontrol());
+				printk("   VPEConf0 : %08lx\n",
+				       read_vpe_c0_vpeconf0());
+				printk("   VPE%d.Status : %08lx\n",
+				       i, read_vpe_c0_status());
+				printk("   VPE%d.EPC : %08lx %pS\n",
+				       i, read_vpe_c0_epc(),
+				       (void *) read_vpe_c0_epc());
+				printk("   VPE%d.Cause : %08lx\n",
+				       i, read_vpe_c0_cause());
+				printk("   VPE%d.Config7 : %08lx\n",
+				       i, read_vpe_c0_config7());
+				break; /* Next VPE */
+			}
 		}
-	    }
 	}
 	printk("-- per-TC State --\n");
-	for(tc = 0; tc < ntc; tc++) {
+	for (tc = 0; tc < ntc; tc++) {
 		settc(tc);
-		if(read_tc_c0_tcbind() == read_c0_tcbind()) {
+		if (read_tc_c0_tcbind() == read_c0_tcbind()) {
 			/* Are we dumping ourself?  */
 			haltval = 0; /* Then we're not halted, and mustn't be */
 			tcstatval = flags; /* And pre-dump TCStatus is flags */
@@ -226,7 +110,8 @@ void mips_mt_regdump(unsigned long mvpctl)
 		}
 		printk("   TCStatus : %08lx\n", tcstatval);
 		printk("   TCBind : %08lx\n", read_tc_c0_tcbind());
-		printk("   TCRestart : %08lx\n", read_tc_c0_tcrestart());
+		printk("   TCRestart : %08lx %pS\n",
+		       read_tc_c0_tcrestart(), (void *) read_tc_c0_tcrestart());
 		printk("   TCHalt : %08lx\n", haltval);
 		printk("   TCContext : %08lx\n", read_tc_c0_tccontext());
 		if (!haltval)
@@ -240,10 +125,10 @@ void mips_mt_regdump(unsigned long mvpctl)
 	local_irq_restore(flags);
 }
 
-static int mt_opt_norps = 0;
+static int mt_opt_norps;
 static int mt_opt_rpsctl = -1;
 static int mt_opt_nblsu = -1;
-static int mt_opt_forceconfig7 = 0;
+static int mt_opt_forceconfig7;
 static int mt_opt_config7 = -1;
 
 static int __init rps_disable(char *s)
@@ -276,8 +161,8 @@ static int __init config7_set(char *str)
 __setup("config7=", config7_set);
 
 /* Experimental cache flush control parameters that should go away some day */
-int mt_protiflush = 0;
-int mt_protdflush = 0;
+int mt_protiflush;
+int mt_protdflush;
 int mt_n_iflushes = 1;
 int mt_n_dflushes = 1;
 
@@ -308,19 +193,8 @@ static int __init ndflush(char *s)
 	return 1;
 }
 __setup("ndflush=", ndflush);
-#ifdef CONFIG_MIPS_MT_FPAFF
-static int fpaff_threshold = -1;
 
-static int __init fpaff_thresh(char *str)
-{
-	get_option(&str, &fpaff_threshold);
-	return 1;
-}
-
-__setup("fpaff=", fpaff_thresh);
-#endif /* CONFIG_MIPS_MT_FPAFF */
-
-static unsigned int itc_base = 0;
+static unsigned int itc_base;
 
 static int __init set_itc_base(char *str)
 {
@@ -360,7 +234,7 @@ void mips_mt_set_cpuoptions(void)
 	if (oconfig7 != nconfig7) {
 		__asm__ __volatile("sync");
 		write_c0_config7(nconfig7);
-		ehb ();
+		ehb();
 		printk("Config7: 0x%08x\n", read_c0_config7());
 	}
 
@@ -373,20 +247,6 @@ void mips_mt_set_cpuoptions(void)
 		printk("I-Cache Flushes Repeated %d times\n", mt_n_iflushes);
 	if (mt_n_dflushes != 1)
 		printk("D-Cache Flushes Repeated %d times\n", mt_n_dflushes);
-
-#ifdef CONFIG_MIPS_MT_FPAFF
-	/* FPU Use Factor empirically derived from experiments on 34K */
-#define FPUSEFACTOR 333
-
-	if (fpaff_threshold >= 0) {
-		mt_fpemul_threshold = fpaff_threshold;
-	} else {
-		mt_fpemul_threshold =
-			(FPUSEFACTOR * (loops_per_jiffy/(500000/HZ))) / HZ;
-	}
-	printk("FPU Affinity set after %ld emulations\n",
-			mt_fpemul_threshold);
-#endif /* CONFIG_MIPS_MT_FPAFF */
 
 	if (itc_base != 0) {
 		/*

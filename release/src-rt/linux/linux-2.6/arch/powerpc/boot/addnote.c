@@ -20,12 +20,12 @@
 #include <string.h>
 
 /* CHRP note section */
-char arch[] = "PowerPC";
+static const char arch[] = "PowerPC";
 
 #define N_DESCR	6
 unsigned int descr[N_DESCR] = {
 	0xffffffff,		/* real-mode = true */
-	0x00c00000,		/* real-base, i.e. where we expect OF to be */
+	0x02000000,		/* real-base, i.e. where we expect OF to be */
 	0xffffffff,		/* real-size */
 	0xffffffff,		/* virt-base */
 	0xffffffff,		/* virt-size */
@@ -33,7 +33,7 @@ unsigned int descr[N_DESCR] = {
 };
 
 /* RPA note section */
-char rpaname[] = "IBM,RPA-Client-Config";
+static const char rpaname[] = "IBM,RPA-Client-Config";
 
 /*
  * Note: setting ignore_my_client_config *should* mean that OF ignores

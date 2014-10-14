@@ -6,11 +6,13 @@
  *  the Free Software Foundation; either version 2 of the License, or
  *  (at your option) any later version.
  *
- *  You need an userspace library to cooperate with this driver. It (and other
+ *  You need a userspace library to cooperate with this driver. It (and other
  *  info) may be obtained here:
  *  http://www.fi.muni.cz/~xslaby/phantom.html
+ *  or alternatively, you might use OpenHaptics provided by Sensable.
  */
 
+#include <linux/compat.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/device.h>
@@ -19,19 +21,24 @@
 #include <linux/poll.h>
 #include <linux/interrupt.h>
 #include <linux/cdev.h>
+#include <linux/slab.h>
 #include <linux/phantom.h>
+#include <linux/sched.h>
+#include <linux/mutex.h>
 
 #include <asm/atomic.h>
 #include <asm/io.h>
 
-#define PHANTOM_VERSION		"n0.9.5"
+#define PHANTOM_VERSION		"n0.9.8"
 
 #define PHANTOM_MAX_MINORS	8
 
 #define PHN_IRQCTL		0x4c    /* irq control in caddr space */
 
 #define PHB_RUNNING		1
+#define PHB_NOT_OH		2
 
+static DEFINE_MUTEX(phantom_mutex);
 static struct class *phantom_class;
 static int phantom_major;
 
@@ -47,7 +54,11 @@ struct phantom_device {
 	struct cdev cdev;
 
 	struct mutex open_lock;
-	spinlock_t ioctl_lock;
+	spinlock_t regs_lock;
+
+	/* used in NOT_OH mode */
+	struct phm_regs oregs;
+	u32 ctl_reg;
 };
 
 static unsigned char phantom_devices[PHANTOM_MAX_MINORS];
@@ -82,13 +93,11 @@ static long phantom_ioctl(struct file *file, unsigned int cmd,
 	struct phm_regs rs;
 	struct phm_reg r;
 	void __user *argp = (void __user *)arg;
+	unsigned long flags;
 	unsigned int i;
 
-	if (_IOC_TYPE(cmd) != PH_IOC_MAGIC ||
-			_IOC_NR(cmd) > PH_IOC_MAXNR)
-		return -ENOTTY;
-
 	switch (cmd) {
+	case PHN_SETREG:
 	case PHN_SET_REG:
 		if (copy_from_user(&r, argp, sizeof(r)))
 			return -EFAULT;
@@ -96,33 +105,48 @@ static long phantom_ioctl(struct file *file, unsigned int cmd,
 		if (r.reg > 7)
 			return -EINVAL;
 
-		spin_lock(&dev->ioctl_lock);
+		spin_lock_irqsave(&dev->regs_lock, flags);
 		if (r.reg == PHN_CONTROL && (r.value & PHN_CTL_IRQ) &&
 				phantom_status(dev, dev->status | PHB_RUNNING)){
-			spin_unlock(&dev->ioctl_lock);
+			spin_unlock_irqrestore(&dev->regs_lock, flags);
 			return -ENODEV;
 		}
 
 		pr_debug("phantom: writing %x to %u\n", r.value, r.reg);
+
+		/* preserve amp bit (don't allow to change it when in NOT_OH) */
+		if (r.reg == PHN_CONTROL && (dev->status & PHB_NOT_OH)) {
+			r.value &= ~PHN_CTL_AMP;
+			r.value |= dev->ctl_reg & PHN_CTL_AMP;
+			dev->ctl_reg = r.value;
+		}
+
 		iowrite32(r.value, dev->iaddr + r.reg);
 		ioread32(dev->iaddr); /* PCI posting */
 
 		if (r.reg == PHN_CONTROL && !(r.value & PHN_CTL_IRQ))
 			phantom_status(dev, dev->status & ~PHB_RUNNING);
-		spin_unlock(&dev->ioctl_lock);
+		spin_unlock_irqrestore(&dev->regs_lock, flags);
 		break;
+	case PHN_SETREGS:
 	case PHN_SET_REGS:
 		if (copy_from_user(&rs, argp, sizeof(rs)))
 			return -EFAULT;
 
 		pr_debug("phantom: SRS %u regs %x\n", rs.count, rs.mask);
-		spin_lock(&dev->ioctl_lock);
-		for (i = 0; i < min(rs.count, 8U); i++)
-			if ((1 << i) & rs.mask)
-				iowrite32(rs.values[i], dev->oaddr + i);
-		ioread32(dev->iaddr); /* PCI posting */
-		spin_unlock(&dev->ioctl_lock);
+		spin_lock_irqsave(&dev->regs_lock, flags);
+		if (dev->status & PHB_NOT_OH)
+			memcpy(&dev->oregs, &rs, sizeof(rs));
+		else {
+			u32 m = min(rs.count, 8U);
+			for (i = 0; i < m; i++)
+				if (rs.mask & BIT(i))
+					iowrite32(rs.values[i], dev->oaddr + i);
+			ioread32(dev->iaddr); /* PCI posting */
+		}
+		spin_unlock_irqrestore(&dev->regs_lock, flags);
 		break;
+	case PHN_GETREG:
 	case PHN_GET_REG:
 		if (copy_from_user(&r, argp, sizeof(r)))
 			return -EFAULT;
@@ -135,19 +159,36 @@ static long phantom_ioctl(struct file *file, unsigned int cmd,
 		if (copy_to_user(argp, &r, sizeof(r)))
 			return -EFAULT;
 		break;
-	case PHN_GET_REGS:
+	case PHN_GETREGS:
+	case PHN_GET_REGS: {
+		u32 m;
+
 		if (copy_from_user(&rs, argp, sizeof(rs)))
 			return -EFAULT;
 
+		m = min(rs.count, 8U);
+
 		pr_debug("phantom: GRS %u regs %x\n", rs.count, rs.mask);
-		spin_lock(&dev->ioctl_lock);
-		for (i = 0; i < min(rs.count, 8U); i++)
-			if ((1 << i) & rs.mask)
+		spin_lock_irqsave(&dev->regs_lock, flags);
+		for (i = 0; i < m; i++)
+			if (rs.mask & BIT(i))
 				rs.values[i] = ioread32(dev->iaddr + i);
-		spin_unlock(&dev->ioctl_lock);
+		atomic_set(&dev->counter, 0);
+		spin_unlock_irqrestore(&dev->regs_lock, flags);
 
 		if (copy_to_user(argp, &rs, sizeof(rs)))
 			return -EFAULT;
+		break;
+	} case PHN_NOT_OH:
+		spin_lock_irqsave(&dev->regs_lock, flags);
+		if (dev->status & PHB_RUNNING) {
+			printk(KERN_ERR "phantom: you need to set NOT_OH "
+					"before you start the device!\n");
+			spin_unlock_irqrestore(&dev->regs_lock, flags);
+			return -EINVAL;
+		}
+		dev->status |= PHB_NOT_OH;
+		spin_unlock_irqrestore(&dev->regs_lock, flags);
 		break;
 	default:
 		return -ENOTTY;
@@ -156,26 +197,47 @@ static long phantom_ioctl(struct file *file, unsigned int cmd,
 	return 0;
 }
 
+#ifdef CONFIG_COMPAT
+static long phantom_compat_ioctl(struct file *filp, unsigned int cmd,
+		unsigned long arg)
+{
+	if (_IOC_NR(cmd) <= 3 && _IOC_SIZE(cmd) == sizeof(compat_uptr_t)) {
+		cmd &= ~(_IOC_SIZEMASK << _IOC_SIZESHIFT);
+		cmd |= sizeof(void *) << _IOC_SIZESHIFT;
+	}
+	return phantom_ioctl(filp, cmd, (unsigned long)compat_ptr(arg));
+}
+#else
+#define phantom_compat_ioctl NULL
+#endif
+
 static int phantom_open(struct inode *inode, struct file *file)
 {
 	struct phantom_device *dev = container_of(inode->i_cdev,
 			struct phantom_device, cdev);
 
+	mutex_lock(&phantom_mutex);
 	nonseekable_open(inode, file);
 
-	if (mutex_lock_interruptible(&dev->open_lock))
+	if (mutex_lock_interruptible(&dev->open_lock)) {
+		mutex_unlock(&phantom_mutex);
 		return -ERESTARTSYS;
+	}
 
 	if (dev->opened) {
 		mutex_unlock(&dev->open_lock);
+		mutex_unlock(&phantom_mutex);
 		return -EINVAL;
 	}
 
+	WARN_ON(dev->status & PHB_NOT_OH);
+
 	file->private_data = dev;
 
+	atomic_set(&dev->counter, 0);
 	dev->opened++;
 	mutex_unlock(&dev->open_lock);
-
+	mutex_unlock(&phantom_mutex);
 	return 0;
 }
 
@@ -187,6 +249,7 @@ static int phantom_release(struct inode *inode, struct file *file)
 
 	dev->opened = 0;
 	phantom_status(dev, dev->status & ~PHB_RUNNING);
+	dev->status &= ~PHB_NOT_OH;
 
 	mutex_unlock(&dev->open_lock);
 
@@ -200,32 +263,55 @@ static unsigned int phantom_poll(struct file *file, poll_table *wait)
 
 	pr_debug("phantom_poll: %d\n", atomic_read(&dev->counter));
 	poll_wait(file, &dev->wait, wait);
-	if (atomic_read(&dev->counter)) {
+
+	if (!(dev->status & PHB_RUNNING))
+		mask = POLLERR;
+	else if (atomic_read(&dev->counter))
 		mask = POLLIN | POLLRDNORM;
-		atomic_dec(&dev->counter);
-	} else if ((dev->status & PHB_RUNNING) == 0)
-		mask = POLLIN | POLLRDNORM | POLLERR;
+
 	pr_debug("phantom_poll end: %x/%d\n", mask, atomic_read(&dev->counter));
 
 	return mask;
 }
 
-static struct file_operations phantom_file_ops = {
+static const struct file_operations phantom_file_ops = {
 	.open = phantom_open,
 	.release = phantom_release,
 	.unlocked_ioctl = phantom_ioctl,
+	.compat_ioctl = phantom_compat_ioctl,
 	.poll = phantom_poll,
+	.llseek = no_llseek,
 };
 
 static irqreturn_t phantom_isr(int irq, void *data)
 {
 	struct phantom_device *dev = data;
+	unsigned int i;
+	u32 ctl;
 
-	if (!(ioread32(dev->iaddr + PHN_CONTROL) & PHN_CTL_IRQ))
+	spin_lock(&dev->regs_lock);
+	ctl = ioread32(dev->iaddr + PHN_CONTROL);
+	if (!(ctl & PHN_CTL_IRQ)) {
+		spin_unlock(&dev->regs_lock);
 		return IRQ_NONE;
+	}
 
 	iowrite32(0, dev->iaddr);
 	iowrite32(0xc0, dev->iaddr);
+
+	if (dev->status & PHB_NOT_OH) {
+		struct phm_regs *r = &dev->oregs;
+		u32 m = min(r->count, 8U);
+
+		for (i = 0; i < m; i++)
+			if (r->mask & BIT(i))
+				iowrite32(r->values[i], dev->oaddr + i);
+
+		dev->ctl_reg ^= PHN_CTL_AMP;
+		iowrite32(dev->ctl_reg, dev->iaddr + PHN_CONTROL);
+	}
+	spin_unlock(&dev->regs_lock);
+
 	ioread32(dev->iaddr); /* PCI posting */
 
 	atomic_inc(&dev->counter);
@@ -257,8 +343,10 @@ static int __devinit phantom_probe(struct pci_dev *pdev,
 	int retval;
 
 	retval = pci_enable_device(pdev);
-	if (retval)
+	if (retval) {
+		dev_err(&pdev->dev, "pci_enable_device failed!\n");
 		goto err;
+	}
 
 	minor = phantom_get_free();
 	if (minor == PHANTOM_MAX_MINORS) {
@@ -270,8 +358,10 @@ static int __devinit phantom_probe(struct pci_dev *pdev,
 	phantom_devices[minor] = 1;
 
 	retval = pci_request_regions(pdev, "phantom");
-	if (retval)
+	if (retval) {
+		dev_err(&pdev->dev, "pci_request_regions failed!\n");
 		goto err_null;
+	}
 
 	retval = -ENOMEM;
 	pht = kzalloc(sizeof(*pht), GFP_KERNEL);
@@ -297,7 +387,7 @@ static int __devinit phantom_probe(struct pci_dev *pdev,
 	}
 
 	mutex_init(&pht->open_lock);
-	spin_lock_init(&pht->ioctl_lock);
+	spin_lock_init(&pht->regs_lock);
 	init_waitqueue_head(&pht->wait);
 	cdev_init(&pht->cdev, &phantom_file_ops);
 	pht->cdev.owner = THIS_MODULE;
@@ -317,8 +407,9 @@ static int __devinit phantom_probe(struct pci_dev *pdev,
 		goto err_irq;
 	}
 
-	if (IS_ERR(device_create(phantom_class, &pdev->dev, MKDEV(phantom_major,
-			minor), "phantom%u", minor)))
+	if (IS_ERR(device_create(phantom_class, &pdev->dev,
+				 MKDEV(phantom_major, minor), NULL,
+				 "phantom%u", minor)))
 		dev_err(&pdev->dev, "can't create device\n");
 
 	pci_set_drvdata(pdev, pht);
@@ -378,6 +469,8 @@ static int phantom_suspend(struct pci_dev *pdev, pm_message_t state)
 	iowrite32(0, dev->caddr + PHN_IRQCTL);
 	ioread32(dev->caddr + PHN_IRQCTL); /* PCI posting */
 
+	synchronize_irq(pdev->irq);
+
 	return 0;
 }
 
@@ -395,8 +488,9 @@ static int phantom_resume(struct pci_dev *pdev)
 #endif
 
 static struct pci_device_id phantom_pci_tbl[] __devinitdata = {
-	{ PCI_DEVICE(PCI_VENDOR_ID_PLX, PCI_DEVICE_ID_PLX_9050),
-		.class = PCI_CLASS_BRIDGE_OTHER << 8, .class_mask = 0xffff00 },
+	{ .vendor = PCI_VENDOR_ID_PLX, .device = PCI_DEVICE_ID_PLX_9050,
+	  .subvendor = PCI_VENDOR_ID_PLX, .subdevice = PCI_DEVICE_ID_PLX_9050,
+	  .class = PCI_CLASS_BRIDGE_OTHER << 8, .class_mask = 0xffff00 },
 	{ 0, }
 };
 MODULE_DEVICE_TABLE(pci, phantom_pci_tbl);
@@ -410,12 +504,7 @@ static struct pci_driver phantom_pci_driver = {
 	.resume = phantom_resume
 };
 
-static ssize_t phantom_show_version(struct class *cls, char *buf)
-{
-	return sprintf(buf, PHANTOM_VERSION "\n");
-}
-
-static CLASS_ATTR(version, 0444, phantom_show_version, NULL);
+static CLASS_ATTR_STRING(version, 0444, PHANTOM_VERSION);
 
 static int __init phantom_init(void)
 {
@@ -428,7 +517,7 @@ static int __init phantom_init(void)
 		printk(KERN_ERR "phantom: can't register phantom class\n");
 		goto err;
 	}
-	retval = class_create_file(phantom_class, &class_attr_version);
+	retval = class_create_file(phantom_class, &class_attr_version.attr);
 	if (retval) {
 		printk(KERN_ERR "phantom: can't create sysfs version file\n");
 		goto err_class;
@@ -454,7 +543,7 @@ static int __init phantom_init(void)
 err_unchr:
 	unregister_chrdev_region(dev, PHANTOM_MAX_MINORS);
 err_attr:
-	class_remove_file(phantom_class, &class_attr_version);
+	class_remove_file(phantom_class, &class_attr_version.attr);
 err_class:
 	class_destroy(phantom_class);
 err:
@@ -467,7 +556,7 @@ static void __exit phantom_exit(void)
 
 	unregister_chrdev_region(MKDEV(phantom_major, 0), PHANTOM_MAX_MINORS);
 
-	class_remove_file(phantom_class, &class_attr_version);
+	class_remove_file(phantom_class, &class_attr_version.attr);
 	class_destroy(phantom_class);
 
 	pr_debug("phantom: module successfully removed\n");
@@ -477,6 +566,6 @@ module_init(phantom_init);
 module_exit(phantom_exit);
 
 MODULE_AUTHOR("Jiri Slaby <jirislaby@gmail.com>");
-MODULE_DESCRIPTION("Sensable Phantom driver");
+MODULE_DESCRIPTION("Sensable Phantom driver (PCI devices)");
 MODULE_LICENSE("GPL");
 MODULE_VERSION(PHANTOM_VERSION);

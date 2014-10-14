@@ -11,27 +11,16 @@
  * Copyright:	Jamal Hadi Salim (2002-4)
  */
 
-#include <asm/uaccess.h>
-#include <asm/system.h>
-#include <asm/bitops.h>
 #include <linux/types.h>
 #include <linux/kernel.h>
 #include <linux/string.h>
-#include <linux/mm.h>
-#include <linux/socket.h>
-#include <linux/sockios.h>
-#include <linux/in.h>
 #include <linux/errno.h>
-#include <linux/interrupt.h>
-#include <linux/netdevice.h>
 #include <linux/skbuff.h>
 #include <linux/rtnetlink.h>
 #include <linux/module.h>
 #include <linux/init.h>
-#include <linux/proc_fs.h>
-#include <linux/kmod.h>
+#include <linux/slab.h>
 #include <net/netlink.h>
-#include <net/sock.h>
 #include <net/pkt_sched.h>
 #include <linux/tc_act/tc_ipt.h>
 #include <net/tc_act/tc_ipt.h>
@@ -50,40 +39,42 @@ static struct tcf_hashinfo ipt_hash_info = {
 	.lock	=	&ipt_lock,
 };
 
-static int ipt_init_target(struct ipt_entry_target *t, char *table, unsigned int hook)
+static int ipt_init_target(struct xt_entry_target *t, char *table, unsigned int hook)
 {
+	struct xt_tgchk_param par;
 	struct xt_target *target;
 	int ret = 0;
 
 	target = xt_request_find_target(AF_INET, t->u.user.name,
 					t->u.user.revision);
-	if (!target)
-		return -ENOENT;
+	if (IS_ERR(target))
+		return PTR_ERR(target);
 
 	t->u.kernel.target = target;
+	par.table     = table;
+	par.entryinfo = NULL;
+	par.target    = target;
+	par.targinfo  = t->data;
+	par.hook_mask = hook;
+	par.family    = NFPROTO_IPV4;
 
-	ret = xt_check_target(target, AF_INET, t->u.target_size - sizeof(*t),
-			      table, hook, 0, 0);
-	if (ret) {
+	ret = xt_check_target(&par, t->u.target_size - sizeof(*t), 0, false);
+	if (ret < 0) {
 		module_put(t->u.kernel.target->me);
 		return ret;
 	}
-	if (t->u.kernel.target->checkentry
-	    && !t->u.kernel.target->checkentry(table, NULL,
-					       t->u.kernel.target, t->data,
-					       hook)) {
-		module_put(t->u.kernel.target->me);
-		ret = -EINVAL;
-	}
-
-	return ret;
+	return 0;
 }
 
-static void ipt_destroy_target(struct ipt_entry_target *t)
+static void ipt_destroy_target(struct xt_entry_target *t)
 {
-	if (t->u.kernel.target->destroy)
-		t->u.kernel.target->destroy(t->u.kernel.target, t->data);
-	module_put(t->u.kernel.target->me);
+	struct xt_tgdtor_param par = {
+		.target   = t->u.kernel.target,
+		.targinfo = t->data,
+	};
+	if (par.target->destroy != NULL)
+		par.target->destroy(&par);
+	module_put(par.target->me);
 }
 
 static int tcf_ipt_release(struct tcf_ipt *ipt, int bind)
@@ -104,41 +95,50 @@ static int tcf_ipt_release(struct tcf_ipt *ipt, int bind)
 	return ret;
 }
 
-static int tcf_ipt_init(struct rtattr *rta, struct rtattr *est,
+static const struct nla_policy ipt_policy[TCA_IPT_MAX + 1] = {
+	[TCA_IPT_TABLE]	= { .type = NLA_STRING, .len = IFNAMSIZ },
+	[TCA_IPT_HOOK]	= { .type = NLA_U32 },
+	[TCA_IPT_INDEX]	= { .type = NLA_U32 },
+	[TCA_IPT_TARG]	= { .len = sizeof(struct xt_entry_target) },
+};
+
+static int tcf_ipt_init(struct nlattr *nla, struct nlattr *est,
 			struct tc_action *a, int ovr, int bind)
 {
-	struct rtattr *tb[TCA_IPT_MAX];
+	struct nlattr *tb[TCA_IPT_MAX + 1];
 	struct tcf_ipt *ipt;
 	struct tcf_common *pc;
-	struct ipt_entry_target *td, *t;
+	struct xt_entry_target *td, *t;
 	char *tname;
 	int ret = 0, err;
 	u32 hook = 0;
 	u32 index = 0;
 
-	if (rta == NULL || rtattr_parse_nested(tb, TCA_IPT_MAX, rta) < 0)
+	if (nla == NULL)
 		return -EINVAL;
 
-	if (tb[TCA_IPT_HOOK-1] == NULL ||
-	    RTA_PAYLOAD(tb[TCA_IPT_HOOK-1]) < sizeof(u32))
+	err = nla_parse_nested(tb, TCA_IPT_MAX, nla, ipt_policy);
+	if (err < 0)
+		return err;
+
+	if (tb[TCA_IPT_HOOK] == NULL)
 		return -EINVAL;
-	if (tb[TCA_IPT_TARG-1] == NULL ||
-	    RTA_PAYLOAD(tb[TCA_IPT_TARG-1]) < sizeof(*t))
-		return -EINVAL;
-	td = (struct ipt_entry_target *)RTA_DATA(tb[TCA_IPT_TARG-1]);
-	if (RTA_PAYLOAD(tb[TCA_IPT_TARG-1]) < td->u.target_size)
+	if (tb[TCA_IPT_TARG] == NULL)
 		return -EINVAL;
 
-	if (tb[TCA_IPT_INDEX-1] != NULL &&
-	    RTA_PAYLOAD(tb[TCA_IPT_INDEX-1]) >= sizeof(u32))
-		index = *(u32 *)RTA_DATA(tb[TCA_IPT_INDEX-1]);
+	td = (struct xt_entry_target *)nla_data(tb[TCA_IPT_TARG]);
+	if (nla_len(tb[TCA_IPT_TARG]) < td->u.target_size)
+		return -EINVAL;
+
+	if (tb[TCA_IPT_INDEX] != NULL)
+		index = nla_get_u32(tb[TCA_IPT_INDEX]);
 
 	pc = tcf_hash_check(index, a, bind, &ipt_hash_info);
 	if (!pc) {
 		pc = tcf_hash_create(index, est, a, sizeof(*ipt), bind,
 				     &ipt_idx_gen, &ipt_hash_info);
-		if (unlikely(!pc))
-			return -ENOMEM;
+		if (IS_ERR(pc))
+			return PTR_ERR(pc);
 		ret = ACT_P_CREATED;
 	} else {
 		if (!ovr) {
@@ -148,21 +148,22 @@ static int tcf_ipt_init(struct rtattr *rta, struct rtattr *est,
 	}
 	ipt = to_ipt(pc);
 
-	hook = *(u32 *)RTA_DATA(tb[TCA_IPT_HOOK-1]);
+	hook = nla_get_u32(tb[TCA_IPT_HOOK]);
 
 	err = -ENOMEM;
 	tname = kmalloc(IFNAMSIZ, GFP_KERNEL);
 	if (unlikely(!tname))
 		goto err1;
-	if (tb[TCA_IPT_TABLE - 1] == NULL ||
-	    rtattr_strlcpy(tname, tb[TCA_IPT_TABLE-1], IFNAMSIZ) >= IFNAMSIZ)
+	if (tb[TCA_IPT_TABLE] == NULL ||
+	    nla_strlcpy(tname, tb[TCA_IPT_TABLE], IFNAMSIZ) >= IFNAMSIZ)
 		strcpy(tname, "mangle");
 
 	t = kmemdup(td, td->u.target_size, GFP_KERNEL);
 	if (unlikely(!t))
 		goto err2;
 
-	if ((err = ipt_init_target(t, tname, hook)) < 0)
+	err = ipt_init_target(t, tname, hook);
+	if (err < 0)
 		goto err3;
 
 	spin_lock_bh(&ipt->tcf_lock);
@@ -199,6 +200,7 @@ static int tcf_ipt(struct sk_buff *skb, struct tc_action *a,
 {
 	int ret = 0, result = 0;
 	struct tcf_ipt *ipt = a->priv;
+	struct xt_action_param par;
 
 	if (skb_cloned(skb)) {
 		if (pskb_expand_head(skb, 0, 0, GFP_ATOMIC))
@@ -208,20 +210,19 @@ static int tcf_ipt(struct sk_buff *skb, struct tc_action *a,
 	spin_lock(&ipt->tcf_lock);
 
 	ipt->tcf_tm.lastuse = jiffies;
-	ipt->tcf_bstats.bytes += skb->len;
-	ipt->tcf_bstats.packets++;
+	bstats_update(&ipt->tcf_bstats, skb);
 
 	/* yes, we have to worry about both in and out dev
-	 worry later - danger - this API seems to have changed
-	 from earlier kernels */
+	 * worry later - danger - this API seems to have changed
+	 * from earlier kernels
+	 */
+	par.in       = skb->dev;
+	par.out      = NULL;
+	par.hooknum  = ipt->tcfi_hook;
+	par.target   = ipt->tcfi_t->u.kernel.target;
+	par.targinfo = ipt->tcfi_t->data;
+	ret = par.target->target(skb, &par);
 
-	/* iptables targets take a double skb pointer in case the skb
-	 * needs to be replaced. We don't own the skb, so this must not
-	 * happen. The pskb_expand_head above should make sure of this */
-	ret = ipt->tcfi_t->u.kernel.target->target(&skb, skb->dev, NULL,
-						   ipt->tcfi_hook,
-						   ipt->tcfi_t->u.kernel.target,
-						   ipt->tcfi_t->data);
 	switch (ret) {
 	case NF_ACCEPT:
 		result = TC_ACT_OK;
@@ -230,12 +231,13 @@ static int tcf_ipt(struct sk_buff *skb, struct tc_action *a,
 		result = TC_ACT_SHOT;
 		ipt->tcf_qstats.drops++;
 		break;
-	case IPT_CONTINUE:
+	case XT_CONTINUE:
 		result = TC_ACT_PIPE;
 		break;
 	default:
 		if (net_ratelimit())
-			printk("Bogus netfilter code %d assume ACCEPT\n", ret);
+			pr_notice("tc filter: Bogus netfilter code"
+				  " %d assume ACCEPT\n", ret);
 		result = TC_POLICE_OK;
 		break;
 	}
@@ -248,36 +250,36 @@ static int tcf_ipt_dump(struct sk_buff *skb, struct tc_action *a, int bind, int 
 {
 	unsigned char *b = skb_tail_pointer(skb);
 	struct tcf_ipt *ipt = a->priv;
-	struct ipt_entry_target *t;
+	struct xt_entry_target *t;
 	struct tcf_t tm;
 	struct tc_cnt c;
 
 	/* for simple targets kernel size == user size
-	** user name = target name
-	** for foolproof you need to not assume this
-	*/
+	 * user name = target name
+	 * for foolproof you need to not assume this
+	 */
 
 	t = kmemdup(ipt->tcfi_t, ipt->tcfi_t->u.user.target_size, GFP_ATOMIC);
 	if (unlikely(!t))
-		goto rtattr_failure;
+		goto nla_put_failure;
 
 	c.bindcnt = ipt->tcf_bindcnt - bind;
 	c.refcnt = ipt->tcf_refcnt - ref;
 	strcpy(t->u.user.name, ipt->tcfi_t->u.kernel.target->name);
 
-	RTA_PUT(skb, TCA_IPT_TARG, ipt->tcfi_t->u.user.target_size, t);
-	RTA_PUT(skb, TCA_IPT_INDEX, 4, &ipt->tcf_index);
-	RTA_PUT(skb, TCA_IPT_HOOK, 4, &ipt->tcfi_hook);
-	RTA_PUT(skb, TCA_IPT_CNT, sizeof(struct tc_cnt), &c);
-	RTA_PUT(skb, TCA_IPT_TABLE, IFNAMSIZ, ipt->tcfi_tname);
+	NLA_PUT(skb, TCA_IPT_TARG, ipt->tcfi_t->u.user.target_size, t);
+	NLA_PUT_U32(skb, TCA_IPT_INDEX, ipt->tcf_index);
+	NLA_PUT_U32(skb, TCA_IPT_HOOK, ipt->tcfi_hook);
+	NLA_PUT(skb, TCA_IPT_CNT, sizeof(struct tc_cnt), &c);
+	NLA_PUT_STRING(skb, TCA_IPT_TABLE, ipt->tcfi_tname);
 	tm.install = jiffies_to_clock_t(jiffies - ipt->tcf_tm.install);
 	tm.lastuse = jiffies_to_clock_t(jiffies - ipt->tcf_tm.lastuse);
 	tm.expires = jiffies_to_clock_t(ipt->tcf_tm.expires);
-	RTA_PUT(skb, TCA_IPT_TM, sizeof (tm), &tm);
+	NLA_PUT(skb, TCA_IPT_TM, sizeof (tm), &tm);
 	kfree(t);
 	return skb->len;
 
-rtattr_failure:
+nla_put_failure:
 	nlmsg_trim(skb, b);
 	kfree(t);
 	return -1;

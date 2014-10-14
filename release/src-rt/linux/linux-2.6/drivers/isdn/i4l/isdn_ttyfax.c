@@ -470,7 +470,7 @@ isdn_tty_cmd_FCLASS2(char **p, modem_info * info)
 		}
 		return 0;
 	}
-	/* BADMUL=value - dummy 0=disable errorchk disabled (treshold multiplier) */
+	/* BADMUL=value - dummy 0=disable errorchk disabled (threshold multiplier) */
 	if (!strncmp(p[0], "BADMUL", 6)) {
 		p[0] += 6;
 		switch (*p[0]) {
@@ -834,7 +834,7 @@ isdn_tty_cmd_FCLASS2(char **p, modem_info * info)
 		char *rp = &f->resolution;
 
 		p[0] += 2;
-		if (!info->faxonline & 1)	/* not outgoing connection */
+		if (!(info->faxonline & 1))	/* not outgoing connection */
 			PARSE_ERROR1;
 
 		for (i = 0; (((*p[0] >= '0') && (*p[0] <= '9')) || (*p[0] == ',')) && (i < 4); i++) {
@@ -906,7 +906,8 @@ isdn_tty_cmd_FCLASS2(char **p, modem_info * info)
 			sprintf(rs, "\r\n0-2");
 			isdn_tty_at_cout(rs, info);
 		} else {
-			if ((f->phase != ISDN_FAX_PHASE_D) || (!info->faxonline & 1))
+			if ((f->phase != ISDN_FAX_PHASE_D) ||
+			    (!(info->faxonline & 1)))
 				PARSE_ERROR1;
 			par = isdn_getnum(p);
 			if ((par < 0) || (par > 2))

@@ -2,7 +2,7 @@
 *******************************************************************************
 **
 **  Copyright (C) Sistina Software, Inc.  1997-2003  All rights reserved.
-**  Copyright (C) 2004-2005 Red Hat, Inc.  All rights reserved.
+**  Copyright (C) 2004-2007 Red Hat, Inc.  All rights reserved.
 **
 **  This copyrighted material is made available to anyone wishing to use,
 **  modify, copy, or redistribute it subject to the terms and conditions
@@ -24,19 +24,28 @@
 
 
 /* If the start for which we're re-enabling locking (seq) has been superseded
-   by a newer stop (ls_recover_seq), we need to leave locking disabled. */
+   by a newer stop (ls_recover_seq), we need to leave locking disabled.
+
+   We suspend dlm_recv threads here to avoid the race where dlm_recv a) sees
+   locking stopped and b) adds a message to the requestqueue, but dlm_recoverd
+   enables locking and clears the requestqueue between a and b. */
 
 static int enable_locking(struct dlm_ls *ls, uint64_t seq)
 {
 	int error = -EINTR;
 
+	down_write(&ls->ls_recv_active);
+
 	spin_lock(&ls->ls_recover_lock);
 	if (ls->ls_recover_seq == seq) {
 		set_bit(LSFL_RUNNING, &ls->ls_flags);
+		/* unblocks processes waiting to enter the dlm */
 		up_write(&ls->ls_in_recovery);
 		error = 0;
 	}
 	spin_unlock(&ls->ls_recover_lock);
+
+	up_write(&ls->ls_recv_active);
 	return error;
 }
 
@@ -58,17 +67,18 @@ static int ls_recover(struct dlm_ls *ls, struct dlm_recover *rv)
 	dlm_astd_resume();
 
 	/*
+	 * Free non-master tossed rsb's.  Master rsb's are kept on toss
+	 * list and put on root list to be included in resdir recovery.
+	 */
+
+	dlm_clear_toss_list(ls);
+
+	/*
 	 * This list of root rsb's will be the basis of most of the recovery
 	 * routines.
 	 */
 
 	dlm_create_root_list(ls);
-
-	/*
-	 * Free all the tossed rsb's so we don't have to recover them.
-	 */
-
-	dlm_clear_toss_list(ls);
 
 	/*
 	 * Add or remove nodes from the lockspace's ls_nodes list.
@@ -190,6 +200,8 @@ static int ls_recover(struct dlm_ls *ls, struct dlm_recover *rv)
 
 	dlm_clear_members_gone(ls);
 
+	dlm_adjust_timeouts(ls);
+
 	error = enable_locking(ls, rv->seq);
 	if (error) {
 		log_debug(ls, "enable_locking failed %d", error);
@@ -245,6 +257,7 @@ static void do_ls_recovery(struct dlm_ls *ls)
 	if (rv) {
 		ls_recover(ls, rv);
 		kfree(rv->nodeids);
+		kfree(rv->new);
 		kfree(rv);
 	}
 }

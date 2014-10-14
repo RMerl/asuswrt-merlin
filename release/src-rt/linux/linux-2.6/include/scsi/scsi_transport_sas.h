@@ -4,24 +4,24 @@
 #include <linux/transport_class.h>
 #include <linux/types.h>
 #include <linux/mutex.h>
+#include <scsi/sas.h>
 
 struct scsi_transport_template;
 struct sas_rphy;
-
+struct request;
 
 enum sas_device_type {
-	SAS_PHY_UNUSED,
-	SAS_END_DEVICE,
-	SAS_EDGE_EXPANDER_DEVICE,
-	SAS_FANOUT_EXPANDER_DEVICE,
+	SAS_PHY_UNUSED = 0,
+	SAS_END_DEVICE = 1,
+	SAS_EDGE_EXPANDER_DEVICE = 2,
+	SAS_FANOUT_EXPANDER_DEVICE = 3,
 };
 
-enum sas_protocol {
-	SAS_PROTOCOL_SATA		= 0x01,
-	SAS_PROTOCOL_SMP		= 0x02,
-	SAS_PROTOCOL_STP		= 0x04,
-	SAS_PROTOCOL_SSP		= 0x08,
-};
+static inline int sas_protocol_ata(enum sas_protocol proto)
+{
+	return ((proto & SAS_PROTOCOL_SATA) ||
+		(proto & SAS_PROTOCOL_STP))? 1 : 0;
+}
 
 enum sas_linkrate {
 	/* These Values are defined in the SAS standard */
@@ -80,22 +80,24 @@ struct sas_phy {
 
 #define dev_to_phy(d) \
 	container_of((d), struct sas_phy, dev)
-#define transport_class_to_phy(cdev) \
-	dev_to_phy((cdev)->dev)
+#define transport_class_to_phy(dev) \
+	dev_to_phy((dev)->parent)
 #define phy_to_shost(phy) \
 	dev_to_shost((phy)->dev.parent)
 
+struct request_queue;
 struct sas_rphy {
 	struct device		dev;
 	struct sas_identify	identify;
 	struct list_head	list;
+	struct request_queue	*q;
 	u32			scsi_target_id;
 };
 
 #define dev_to_rphy(d) \
 	container_of((d), struct sas_rphy, dev)
-#define transport_class_to_rphy(cdev) \
-	dev_to_rphy((cdev)->dev)
+#define transport_class_to_rphy(dev) \
+	dev_to_rphy((dev)->parent)
 #define rphy_to_shost(rphy) \
 	dev_to_shost((rphy)->dev.parent)
 #define target_to_rphy(targ) \
@@ -105,6 +107,8 @@ struct sas_end_device {
 	struct sas_rphy		rphy;
 	/* flags */
 	unsigned		ready_led_meaning:1;
+	unsigned		tlr_supported:1;
+	unsigned		tlr_enabled:1;
 	/* parameters */
 	u16			I_T_nexus_loss_timeout;
 	u16			initiator_response_timeout;
@@ -150,8 +154,8 @@ struct sas_port {
 
 #define dev_to_sas_port(d) \
 	container_of((d), struct sas_port, dev)
-#define transport_class_to_sas_port(cdev) \
-	dev_to_sas_port((cdev)->dev)
+#define transport_class_to_sas_port(dev) \
+	dev_to_sas_port((dev)->parent)
 
 struct sas_phy_linkrates {
 	enum sas_linkrate maximum_linkrate;
@@ -166,6 +170,7 @@ struct sas_function_template {
 	int (*phy_reset)(struct sas_phy *, int);
 	int (*phy_enable)(struct sas_phy *, int);
 	int (*set_phy_speed)(struct sas_phy *, struct sas_phy_linkrates *);
+	int (*smp_handler)(struct Scsi_Host *, struct sas_rphy *, struct request *);
 };
 
 
@@ -177,6 +182,11 @@ extern void sas_phy_free(struct sas_phy *);
 extern int sas_phy_add(struct sas_phy *);
 extern void sas_phy_delete(struct sas_phy *);
 extern int scsi_is_sas_phy(const struct device *);
+
+unsigned int sas_tlr_supported(struct scsi_device *);
+unsigned int sas_is_tlr_enabled(struct scsi_device *);
+void sas_disable_tlr(struct scsi_device *);
+void sas_enable_tlr(struct scsi_device *);
 
 extern struct sas_rphy *sas_end_device_alloc(struct sas_port *);
 extern struct sas_rphy *sas_expander_alloc(struct sas_port *, enum sas_device_type);

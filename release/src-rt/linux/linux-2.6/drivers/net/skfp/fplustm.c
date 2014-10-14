@@ -112,8 +112,8 @@ static u_long mac_get_tneg(struct s_smc *smc)
 	u_long	tneg ;
 
 	tneg = (u_long)((long)inpw(FM_A(FM_TNEG))<<5) ;
-	return((u_long)((tneg + ((inpw(FM_A(FM_TMRS))>>10)&0x1f)) |
-		0xffe00000L)) ;
+	return (u_long)((tneg + ((inpw(FM_A(FM_TMRS))>>10)&0x1f)) |
+		0xffe00000L) ;
 }
 
 void mac_update_counter(struct s_smc *smc)
@@ -163,7 +163,7 @@ static u_long read_mdr(struct s_smc *smc, unsigned int addr)
 			/* is used */
 	p = (u_long)inpw(FM_A(FM_MDRU))<<16 ;
 	p += (u_long)inpw(FM_A(FM_MDRL)) ;
-	return(p) ;
+	return p;
 }
 #endif
 
@@ -340,7 +340,7 @@ static void mac_counter_init(struct s_smc *smc)
 	outpw(FM_A(FM_LCNTR),0) ;
 	outpw(FM_A(FM_ECNTR),0) ;
 	/*
-	 * clear internal error counter stucture
+	 * clear internal error counter structure
 	 */
 	ec = (u_long *)&smc->hw.fp.err_stats ;
 	for (i = (sizeof(struct err_st)/sizeof(long)) ; i ; i--)
@@ -398,21 +398,21 @@ static void copy_tx_mac(struct s_smc *smc, u_long td, struct fddi_mac *mac,
 /* u_long td;		 transmit descriptor */
 /* struct fddi_mac *mac; mac frame pointer */
 /* unsigned off;	 start address within buffer memory */
-/* int len ;		 lenght of the frame including the FC */
+/* int len ;		 length of the frame including the FC */
 {
 	int	i ;
-	u_int	*p ;
+	__le32	*p ;
 
 	CHECK_NPP() ;
 	MARW(off) ;		/* set memory address reg for writes */
 
-	p = (u_int *) mac ;
+	p = (__le32 *) mac ;
 	for (i = (len + 3)/4 ; i ; i--) {
 		if (i == 1) {
 			/* last word, set the tag bit */
 			outpw(FM_A(FM_CMDREG2),FM_ISTTB) ;
 		}
-		write_mdr(smc,MDR_REVERSE(*p)) ;
+		write_mdr(smc,le32_to_cpu(*p)) ;
 		p++ ;
 	}
 
@@ -444,7 +444,7 @@ static void copy_tx_mac(struct s_smc *smc, u_long td, struct fddi_mac *mac,
  */
 static void directed_beacon(struct s_smc *smc)
 {
-	SK_LOC_DECL(u_int,a[2]) ;
+	SK_LOC_DECL(__le32,a[2]) ;
 
 	/*
 	 * set UNA in frame
@@ -458,9 +458,9 @@ static void directed_beacon(struct s_smc *smc)
 	CHECK_NPP() ;
 	 /* set memory address reg for writes */
 	MARW(smc->hw.fp.fifo.rbc_ram_start+DBEACON_FRAME_OFF+4) ;
-	write_mdr(smc,MDR_REVERSE(a[0])) ;
+	write_mdr(smc,le32_to_cpu(a[0])) ;
 	outpw(FM_A(FM_CMDREG2),FM_ISTTB) ;	/* set the tag bit */
-	write_mdr(smc,MDR_REVERSE(a[1])) ;
+	write_mdr(smc,le32_to_cpu(a[1])) ;
 
 	outpw(FM_A(FM_SABC),smc->hw.fp.fifo.rbc_ram_start + DBEACON_FRAME_OFF) ;
 }
@@ -887,7 +887,7 @@ int init_fplus(struct s_smc *smc)
 	/* make sure all PCI settings are correct */
 	mac_do_pci_fix(smc) ;
 
-	return(init_mac(smc,1)) ;
+	return init_mac(smc, 1);
 	/* enable_formac(smc) ; */
 }
 
@@ -989,7 +989,7 @@ static int init_mac(struct s_smc *smc, int all)
 	}
 	smc->hw.hw_state = STARTED ;
 
-	return(0) ;
+	return 0;
 }
 
 
@@ -1049,7 +1049,7 @@ void sm_ma_control(struct s_smc *smc, int mode)
 
 int sm_mac_get_tx_state(struct s_smc *smc)
 {
-	return((inpw(FM_A(FM_STMCHN))>>4)&7) ;
+	return (inpw(FM_A(FM_STMCHN))>>4) & 7;
 }
 
 /*
@@ -1084,9 +1084,9 @@ static struct s_fpmc* mac_get_mc_table(struct s_smc *smc,
 		}
 		if (memcmp((char *)&tb->a,(char *)own,6))
 			continue ;
-		return(tb) ;
+		return tb;
 	}
-	return(slot) ;			/* return first free or NULL */
+	return slot;			/* return first free or NULL */
 }
 
 /*
@@ -1152,12 +1152,12 @@ int mac_add_multicast(struct s_smc *smc, struct fddi_addr *addr, int can)
 	 */
 	if (can & 0x80) {
 		if (smc->hw.fp.smt_slots_used >= SMT_MAX_MULTI) {
-			return(1) ;
+			return 1;
 		}
 	}
 	else {
 		if (smc->hw.fp.os_slots_used >= FPMAX_MULTICAST-SMT_MAX_MULTI) {
-			return(1) ;
+			return 1;
 		}
 	}
 
@@ -1165,7 +1165,7 @@ int mac_add_multicast(struct s_smc *smc, struct fddi_addr *addr, int can)
 	 * find empty slot
 	 */
 	if (!(tb = mac_get_mc_table(smc,addr,&own,0,can & ~0x80)))
-		return(1) ;
+		return 1;
 	tb->n++ ;
 	tb->a = own ;
 	tb->perm = (can & 0x80) ? 1 : 0 ;
@@ -1175,7 +1175,7 @@ int mac_add_multicast(struct s_smc *smc, struct fddi_addr *addr, int can)
 	else
 		smc->hw.fp.os_slots_used++ ;
 
-	return(0) ;
+	return 0;
 }
 
 /*
@@ -1262,8 +1262,8 @@ Function	DOWNCALL/INTERN	(SMT, fplustm.c)
 
 Para	mode =	1	RX_ENABLE_ALLMULTI	enable all multicasts
 		2	RX_DISABLE_ALLMULTI	disable "enable all multicasts"
-		3	RX_ENABLE_PROMISC	enable promiscous
-		4	RX_DISABLE_PROMISC	disable promiscous
+		3	RX_ENABLE_PROMISC	enable promiscuous
+		4	RX_DISABLE_PROMISC	disable promiscuous
 		5	RX_ENABLE_NSA		enable reception of NSA frames
 		6	RX_DISABLE_NSA		disable reception of NSA frames
 
@@ -1352,7 +1352,7 @@ void rtm_set_timer(struct s_smc *smc)
 	/*
 	 * MIB timer and hardware timer have the same resolution of 80nS
 	 */
-	DB_RMT("RMT: setting new fddiPATHT_Rmode, t = %d ns \n",
+	DB_RMT("RMT: setting new fddiPATHT_Rmode, t = %d ns\n",
 		(int) smc->mib.a[PATH0].fddiPATHT_Rmode,0) ;
 	outpd(ADDR(B2_RTM_INI),smc->mib.a[PATH0].fddiPATHT_Rmode) ;
 }

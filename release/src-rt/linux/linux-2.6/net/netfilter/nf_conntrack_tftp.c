@@ -22,38 +22,32 @@ MODULE_AUTHOR("Magnus Boden <mb@ozaba.mine.nu>");
 MODULE_DESCRIPTION("TFTP connection tracking helper");
 MODULE_LICENSE("GPL");
 MODULE_ALIAS("ip_conntrack_tftp");
+MODULE_ALIAS_NFCT_HELPER("tftp");
 
 #define MAX_PORTS 8
 static unsigned short ports[MAX_PORTS];
-static int ports_c;
+static unsigned int ports_c;
 module_param_array(ports, ushort, &ports_c, 0400);
 MODULE_PARM_DESC(ports, "Port numbers of TFTP servers");
 
-#if 0
-#define DEBUGP(format, args...) printk("%s:%s:" format, \
-				       __FILE__, __FUNCTION__ , ## args)
-#else
-#define DEBUGP(format, args...)
-#endif
-
-unsigned int (*nf_nat_tftp_hook)(struct sk_buff **pskb,
+unsigned int (*nf_nat_tftp_hook)(struct sk_buff *skb,
 				 enum ip_conntrack_info ctinfo,
 				 struct nf_conntrack_expect *exp) __read_mostly;
 EXPORT_SYMBOL_GPL(nf_nat_tftp_hook);
 
-static int tftp_help(struct sk_buff **pskb,
+static int tftp_help(struct sk_buff *skb,
 		     unsigned int protoff,
 		     struct nf_conn *ct,
 		     enum ip_conntrack_info ctinfo)
 {
-	struct tftphdr _tftph, *tfh;
+	const struct tftphdr *tfh;
+	struct tftphdr _tftph;
 	struct nf_conntrack_expect *exp;
 	struct nf_conntrack_tuple *tuple;
 	unsigned int ret = NF_ACCEPT;
-	int family = ct->tuplehash[IP_CT_DIR_ORIGINAL].tuple.src.l3num;
 	typeof(nf_nat_tftp_hook) nf_nat_tftp;
 
-	tfh = skb_header_pointer(*pskb, protoff + sizeof(struct udphdr),
+	tfh = skb_header_pointer(skb, protoff + sizeof(struct udphdr),
 				 sizeof(_tftph), &_tftph);
 	if (tfh == NULL)
 		return NF_ACCEPT;
@@ -62,45 +56,48 @@ static int tftp_help(struct sk_buff **pskb,
 	case TFTP_OPCODE_READ:
 	case TFTP_OPCODE_WRITE:
 		/* RRQ and WRQ works the same way */
-		DEBUGP("");
-		NF_CT_DUMP_TUPLE(&ct->tuplehash[IP_CT_DIR_ORIGINAL].tuple);
-		NF_CT_DUMP_TUPLE(&ct->tuplehash[IP_CT_DIR_REPLY].tuple);
+		nf_ct_dump_tuple(&ct->tuplehash[IP_CT_DIR_ORIGINAL].tuple);
+		nf_ct_dump_tuple(&ct->tuplehash[IP_CT_DIR_REPLY].tuple);
 
-		exp = nf_conntrack_expect_alloc(ct);
+		exp = nf_ct_expect_alloc(ct);
 		if (exp == NULL)
 			return NF_DROP;
 		tuple = &ct->tuplehash[IP_CT_DIR_REPLY].tuple;
-		nf_conntrack_expect_init(exp, family,
-					 &tuple->src.u3, &tuple->dst.u3,
-					 IPPROTO_UDP,
-					 NULL, &tuple->dst.u.udp.port);
+		nf_ct_expect_init(exp, NF_CT_EXPECT_CLASS_DEFAULT,
+				  nf_ct_l3num(ct),
+				  &tuple->src.u3, &tuple->dst.u3,
+				  IPPROTO_UDP, NULL, &tuple->dst.u.udp.port);
 
-		DEBUGP("expect: ");
-		NF_CT_DUMP_TUPLE(&exp->tuple);
-		NF_CT_DUMP_TUPLE(&exp->mask);
+		pr_debug("expect: ");
+		nf_ct_dump_tuple(&exp->tuple);
 
 		nf_nat_tftp = rcu_dereference(nf_nat_tftp_hook);
 		if (nf_nat_tftp && ct->status & IPS_NAT_MASK)
-			ret = nf_nat_tftp(pskb, ctinfo, exp);
-		else if (nf_conntrack_expect_related(exp) != 0)
+			ret = nf_nat_tftp(skb, ctinfo, exp);
+		else if (nf_ct_expect_related(exp) != 0)
 			ret = NF_DROP;
-		nf_conntrack_expect_put(exp);
+		nf_ct_expect_put(exp);
 		break;
 	case TFTP_OPCODE_DATA:
 	case TFTP_OPCODE_ACK:
-		DEBUGP("Data/ACK opcode\n");
+		pr_debug("Data/ACK opcode\n");
 		break;
 	case TFTP_OPCODE_ERROR:
-		DEBUGP("Error opcode\n");
+		pr_debug("Error opcode\n");
 		break;
 	default:
-		DEBUGP("Unknown opcode\n");
+		pr_debug("Unknown opcode\n");
 	}
 	return ret;
 }
 
 static struct nf_conntrack_helper tftp[MAX_PORTS][2] __read_mostly;
 static char tftp_names[MAX_PORTS][2][sizeof("tftp-65535")] __read_mostly;
+
+static const struct nf_conntrack_expect_policy tftp_exp_policy = {
+	.max_expected	= 1,
+	.timeout	= 5 * 60,
+};
 
 static void nf_conntrack_tftp_fini(void)
 {
@@ -128,11 +125,7 @@ static int __init nf_conntrack_tftp_init(void)
 		for (j = 0; j < 2; j++) {
 			tftp[i][j].tuple.dst.protonum = IPPROTO_UDP;
 			tftp[i][j].tuple.src.u.udp.port = htons(ports[i]);
-			tftp[i][j].mask.src.l3num = 0xFFFF;
-			tftp[i][j].mask.dst.protonum = 0xFF;
-			tftp[i][j].mask.src.u.udp.port = htons(0xFFFF);
-			tftp[i][j].max_expected = 1;
-			tftp[i][j].timeout = 5 * 60; /* 5 minutes */
+			tftp[i][j].expect_policy = &tftp_exp_policy;
 			tftp[i][j].me = THIS_MODULE;
 			tftp[i][j].help = tftp_help;
 
@@ -145,8 +138,8 @@ static int __init nf_conntrack_tftp_init(void)
 
 			ret = nf_conntrack_helper_register(&tftp[i][j]);
 			if (ret) {
-				printk("nf_ct_tftp: failed to register helper "
-				       "for pf: %u port: %u\n",
+				printk(KERN_ERR "nf_ct_tftp: failed to register"
+				       " helper for pf: %u port: %u\n",
 					tftp[i][j].tuple.src.l3num, ports[i]);
 				nf_conntrack_tftp_fini();
 				return ret;

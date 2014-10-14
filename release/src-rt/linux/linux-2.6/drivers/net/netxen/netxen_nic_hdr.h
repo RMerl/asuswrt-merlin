@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2003 - 2006 NetXen, Inc.
+ * Copyright (C) 2003 - 2009 NetXen, Inc.
+ * Copyright (C) 2009 - QLogic Corporation.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or
@@ -18,31 +19,15 @@
  * MA  02111-1307, USA.
  *
  * The full GNU General Public License is included in this distribution
- * in the file called LICENSE.
+ * in the file called "COPYING".
  *
- * Contact Information:
- *    info@netxen.com
- * NetXen,
- * 3965 Freedom Circle, Fourth floor,
- * Santa Clara, CA 95054
  */
 
 #ifndef __NETXEN_NIC_HDR_H_
 #define __NETXEN_NIC_HDR_H_
 
-#include <linux/module.h>
 #include <linux/kernel.h>
-#include <linux/version.h>
-
-#include <asm/semaphore.h>
-#include <linux/spinlock.h>
-#include <asm/irq.h>
-#include <linux/init.h>
-#include <linux/errno.h>
-#include <linux/pci.h>
 #include <linux/types.h>
-#include <asm/uaccess.h>
-#include <asm/string.h>		/* for memset */
 
 /*
  * The basic unit of access when reading/writing control registers.
@@ -127,7 +112,8 @@ enum {
 	NETXEN_HW_PEGR0_CRB_AGT_ADR,
 	NETXEN_HW_PEGR1_CRB_AGT_ADR,
 	NETXEN_HW_PEGR2_CRB_AGT_ADR,
-	NETXEN_HW_PEGR3_CRB_AGT_ADR
+	NETXEN_HW_PEGR3_CRB_AGT_ADR,
+	NETXEN_HW_PEGN4_CRB_AGT_ADR
 };
 
 /*  Hub 5 */
@@ -317,6 +303,8 @@ enum {
 	((NETXEN_HW_H4_CH_HUB_ADR << 7) | NETXEN_HW_PEGN2_CRB_AGT_ADR)
 #define NETXEN_HW_CRB_HUB_AGT_ADR_PGN3	\
 	((NETXEN_HW_H4_CH_HUB_ADR << 7) | NETXEN_HW_PEGN3_CRB_AGT_ADR)
+#define NETXEN_HW_CRB_HUB_AGT_ADR_PGN4	\
+	((NETXEN_HW_H4_CH_HUB_ADR << 7) | NETXEN_HW_PEGN4_CRB_AGT_ADR)
 #define NETXEN_HW_CRB_HUB_AGT_ADR_PGNC	\
 	((NETXEN_HW_H4_CH_HUB_ADR << 7) | NETXEN_HW_PEGNC_CRB_AGT_ADR)
 #define NETXEN_HW_CRB_HUB_AGT_ADR_PGR0	\
@@ -362,12 +350,7 @@ enum {
 #define NETXEN_HW_CRB_HUB_AGT_ADR_LPC	\
 	((NETXEN_HW_H6_CH_HUB_ADR << 7) | NETXEN_HW_LPC_CRB_AGT_ADR)
 
-/*
- * MAX_RCV_CTX : The number of receive contexts that are available on
- * the phantom.
- */
-#define MAX_RCV_CTX			1
-
+#define NETXEN_SRE_MISC			(NETXEN_CRB_SRE + 0x0002c)
 #define NETXEN_SRE_INT_STATUS		(NETXEN_CRB_SRE + 0x00034)
 #define NETXEN_SRE_PBI_ACTIVE_STATUS	(NETXEN_CRB_SRE + 0x01014)
 #define NETXEN_SRE_L1RE_CTL		(NETXEN_CRB_SRE + 0x03000)
@@ -436,6 +419,8 @@ enum {
 #define NETXEN_CRB_ROMUSB	\
 	NETXEN_PCI_CRB_WINDOW(NETXEN_HW_PX_MAP_CRB_ROMUSB)
 #define NETXEN_CRB_I2Q		NETXEN_PCI_CRB_WINDOW(NETXEN_HW_PX_MAP_CRB_I2Q)
+#define NETXEN_CRB_I2C0		NETXEN_PCI_CRB_WINDOW(NETXEN_HW_PX_MAP_CRB_I2C0)
+#define NETXEN_CRB_SMB		NETXEN_PCI_CRB_WINDOW(NETXEN_HW_PX_MAP_CRB_SMB)
 #define NETXEN_CRB_MAX		NETXEN_PCI_CRB_WINDOW(64)
 
 #define NETXEN_CRB_PCIX_HOST	NETXEN_PCI_CRB_WINDOW(NETXEN_HW_PX_MAP_CRB_PH)
@@ -444,9 +429,11 @@ enum {
 #define NETXEN_CRB_PEG_NET_1	NETXEN_PCI_CRB_WINDOW(NETXEN_HW_PX_MAP_CRB_PGN1)
 #define NETXEN_CRB_PEG_NET_2	NETXEN_PCI_CRB_WINDOW(NETXEN_HW_PX_MAP_CRB_PGN2)
 #define NETXEN_CRB_PEG_NET_3	NETXEN_PCI_CRB_WINDOW(NETXEN_HW_PX_MAP_CRB_PGN3)
+#define NETXEN_CRB_PEG_NET_4	NETXEN_PCI_CRB_WINDOW(NETXEN_HW_PX_MAP_CRB_SQS2)
 #define NETXEN_CRB_PEG_NET_D	NETXEN_PCI_CRB_WINDOW(NETXEN_HW_PX_MAP_CRB_PGND)
 #define NETXEN_CRB_PEG_NET_I	NETXEN_PCI_CRB_WINDOW(NETXEN_HW_PX_MAP_CRB_PGNI)
 #define NETXEN_CRB_DDR_NET	NETXEN_PCI_CRB_WINDOW(NETXEN_HW_PX_MAP_CRB_MN)
+#define NETXEN_CRB_QDR_NET	NETXEN_PCI_CRB_WINDOW(NETXEN_HW_PX_MAP_CRB_SN)
 
 #define NETXEN_CRB_PCIX_MD	NETXEN_PCI_CRB_WINDOW(NETXEN_HW_PX_MAP_CRB_PS)
 #define NETXEN_CRB_PCIE		NETXEN_CRB_PCIX_MD
@@ -456,11 +443,26 @@ enum {
 #define ISR_INT_MASK_SLOW	(NETXEN_PCIX_PS_REG(PCIX_INT_MASK))
 #define ISR_INT_TARGET_STATUS	(NETXEN_PCIX_PS_REG(PCIX_TARGET_STATUS))
 #define ISR_INT_TARGET_MASK	(NETXEN_PCIX_PS_REG(PCIX_TARGET_MASK))
+#define ISR_INT_TARGET_STATUS_F1   (NETXEN_PCIX_PS_REG(PCIX_TARGET_STATUS_F1))
+#define ISR_INT_TARGET_MASK_F1     (NETXEN_PCIX_PS_REG(PCIX_TARGET_MASK_F1))
+#define ISR_INT_TARGET_STATUS_F2   (NETXEN_PCIX_PS_REG(PCIX_TARGET_STATUS_F2))
+#define ISR_INT_TARGET_MASK_F2     (NETXEN_PCIX_PS_REG(PCIX_TARGET_MASK_F2))
+#define ISR_INT_TARGET_STATUS_F3   (NETXEN_PCIX_PS_REG(PCIX_TARGET_STATUS_F3))
+#define ISR_INT_TARGET_MASK_F3     (NETXEN_PCIX_PS_REG(PCIX_TARGET_MASK_F3))
+#define ISR_INT_TARGET_STATUS_F4   (NETXEN_PCIX_PS_REG(PCIX_TARGET_STATUS_F4))
+#define ISR_INT_TARGET_MASK_F4     (NETXEN_PCIX_PS_REG(PCIX_TARGET_MASK_F4))
+#define ISR_INT_TARGET_STATUS_F5   (NETXEN_PCIX_PS_REG(PCIX_TARGET_STATUS_F5))
+#define ISR_INT_TARGET_MASK_F5     (NETXEN_PCIX_PS_REG(PCIX_TARGET_MASK_F5))
+#define ISR_INT_TARGET_STATUS_F6   (NETXEN_PCIX_PS_REG(PCIX_TARGET_STATUS_F6))
+#define ISR_INT_TARGET_MASK_F6     (NETXEN_PCIX_PS_REG(PCIX_TARGET_MASK_F6))
+#define ISR_INT_TARGET_STATUS_F7   (NETXEN_PCIX_PS_REG(PCIX_TARGET_STATUS_F7))
+#define ISR_INT_TARGET_MASK_F7     (NETXEN_PCIX_PS_REG(PCIX_TARGET_MASK_F7))
 
 #define NETXEN_PCI_MAPSIZE	128
 #define NETXEN_PCI_DDR_NET	(0x00000000UL)
 #define NETXEN_PCI_QDR_NET	(0x04000000UL)
 #define NETXEN_PCI_DIRECT_CRB	(0x04400000UL)
+#define NETXEN_PCI_CAMQM	(0x04800000UL)
 #define NETXEN_PCI_CAMQM_MAX	(0x04ffffffUL)
 #define NETXEN_PCI_OCM0		(0x05000000UL)
 #define NETXEN_PCI_OCM0_MAX	(0x050fffffUL)
@@ -469,6 +471,13 @@ enum {
 #define NETXEN_PCI_CRBSPACE	(0x06000000UL)
 #define NETXEN_PCI_128MB_SIZE	(0x08000000UL)
 #define NETXEN_PCI_32MB_SIZE	(0x02000000UL)
+#define NETXEN_PCI_2MB_SIZE	(0x00200000UL)
+
+#define NETXEN_PCI_MN_2M	(0)
+#define NETXEN_PCI_MS_2M	(0x80000)
+#define NETXEN_PCI_OCM0_2M	(0x000c0000UL)
+#define NETXEN_PCI_CAMQM_2M_BASE	(0x000ff800UL)
+#define NETXEN_PCI_CAMQM_2M_END		(0x04800800UL)
 
 #define NETXEN_CRB_CAM	NETXEN_PCI_CRB_WINDOW(NETXEN_HW_PX_MAP_CRB_CAM)
 
@@ -479,7 +488,14 @@ enum {
 #define NETXEN_ADDR_OCM1	(0x0000000200400000ULL)
 #define NETXEN_ADDR_OCM1_MAX	(0x00000002004fffffULL)
 #define NETXEN_ADDR_QDR_NET	(0x0000000300000000ULL)
-#define NETXEN_ADDR_QDR_NET_MAX (0x00000003003fffffULL)
+#define NETXEN_ADDR_QDR_NET_MAX_P2 (0x00000003003fffffULL)
+#define NETXEN_ADDR_QDR_NET_MAX_P3 (0x0000000303ffffffULL)
+
+/*
+ *   Register offsets for MN
+ */
+#define	NETXEN_MIU_CONTROL	(0x000)
+#define	NETXEN_MIU_MN_CONTROL	(NETXEN_CRB_DDR_NET+NETXEN_MIU_CONTROL)
 
 	/* 200ms delay in each loop */
 #define	NETXEN_NIU_PHY_WAITLEN		200000
@@ -529,6 +545,8 @@ enum {
 #define	NETXEN_NIU_TEST_MUX_CTL		(NETXEN_CRB_NIU + 0x00094)
 #define	NETXEN_NIU_XG_PAUSE_CTL		(NETXEN_CRB_NIU + 0x00098)
 #define	NETXEN_NIU_XG_PAUSE_LEVEL	(NETXEN_CRB_NIU + 0x000dc)
+#define	NETXEN_NIU_FRAME_COUNT_SELECT	(NETXEN_CRB_NIU + 0x000ac)
+#define	NETXEN_NIU_FRAME_COUNT		(NETXEN_CRB_NIU + 0x000b0)
 #define	NETXEN_NIU_XG_SEL		(NETXEN_CRB_NIU + 0x00128)
 #define NETXEN_NIU_GB_PAUSE_CTL		(NETXEN_CRB_NIU + 0x0030c)
 
@@ -544,6 +562,9 @@ enum {
 #define NETXEN_MULTICAST_ADDR_HI_1	(NETXEN_CRB_NIU + 0x1014)
 #define NETXEN_MULTICAST_ADDR_HI_2	(NETXEN_CRB_NIU + 0x1018)
 #define NETXEN_MULTICAST_ADDR_HI_3	(NETXEN_CRB_NIU + 0x101c)
+
+#define NETXEN_UNICAST_ADDR_BASE	(NETXEN_CRB_NIU + 0x1080)
+#define	NETXEN_MULTICAST_ADDR_BASE	(NETXEN_CRB_NIU + 0x1100)
 
 #define	NETXEN_NIU_GB_MAC_CONFIG_0(I)		\
 	(NETXEN_CRB_NIU + 0x30000 + (I)*0x10000)
@@ -625,9 +646,80 @@ enum {
 #define NETXEN_NIU_XG1_CONTROL_CHAR_CNT		(NETXEN_CRB_NIU + 0x80054)
 #define NETXEN_NIU_XG1_PAUSE_FRAME_CNT		(NETXEN_CRB_NIU + 0x80058)
 
+/* P3 802.3ap */
+#define NETXEN_NIU_AP_MAC_CONFIG_0(I)      (NETXEN_CRB_NIU+0xa0000+(I)*0x10000)
+#define NETXEN_NIU_AP_MAC_CONFIG_1(I)      (NETXEN_CRB_NIU+0xa0004+(I)*0x10000)
+#define NETXEN_NIU_AP_MAC_IPG_IFG(I)       (NETXEN_CRB_NIU+0xa0008+(I)*0x10000)
+#define NETXEN_NIU_AP_HALF_DUPLEX_CTRL(I)  (NETXEN_CRB_NIU+0xa000c+(I)*0x10000)
+#define NETXEN_NIU_AP_MAX_FRAME_SIZE(I)    (NETXEN_CRB_NIU+0xa0010+(I)*0x10000)
+#define NETXEN_NIU_AP_TEST_REG(I)          (NETXEN_CRB_NIU+0xa001c+(I)*0x10000)
+#define NETXEN_NIU_AP_MII_MGMT_CONFIG(I)   (NETXEN_CRB_NIU+0xa0020+(I)*0x10000)
+#define NETXEN_NIU_AP_MII_MGMT_COMMAND(I)  (NETXEN_CRB_NIU+0xa0024+(I)*0x10000)
+#define NETXEN_NIU_AP_MII_MGMT_ADDR(I)     (NETXEN_CRB_NIU+0xa0028+(I)*0x10000)
+#define NETXEN_NIU_AP_MII_MGMT_CTRL(I)     (NETXEN_CRB_NIU+0xa002c+(I)*0x10000)
+#define NETXEN_NIU_AP_MII_MGMT_STATUS(I)   (NETXEN_CRB_NIU+0xa0030+(I)*0x10000)
+#define NETXEN_NIU_AP_MII_MGMT_INDICATE(I) (NETXEN_CRB_NIU+0xa0034+(I)*0x10000)
+#define NETXEN_NIU_AP_INTERFACE_CTRL(I)    (NETXEN_CRB_NIU+0xa0038+(I)*0x10000)
+#define NETXEN_NIU_AP_INTERFACE_STATUS(I)  (NETXEN_CRB_NIU+0xa003c+(I)*0x10000)
+#define NETXEN_NIU_AP_STATION_ADDR_0(I)    (NETXEN_CRB_NIU+0xa0040+(I)*0x10000)
+#define NETXEN_NIU_AP_STATION_ADDR_1(I)    (NETXEN_CRB_NIU+0xa0044+(I)*0x10000)
+
+
+#define TEST_AGT_CTRL	(0x00)
+
+#define TA_CTL_START	1
+#define TA_CTL_ENABLE	2
+#define TA_CTL_WRITE	4
+#define TA_CTL_BUSY	8
+
+/*
+ *   Register offsets for MN
+ */
+#define MIU_TEST_AGT_BASE		(0x90)
+
+#define MIU_TEST_AGT_ADDR_LO		(0x04)
+#define MIU_TEST_AGT_ADDR_HI		(0x08)
+#define MIU_TEST_AGT_WRDATA_LO		(0x10)
+#define MIU_TEST_AGT_WRDATA_HI		(0x14)
+#define MIU_TEST_AGT_RDDATA_LO		(0x18)
+#define MIU_TEST_AGT_RDDATA_HI		(0x1c)
+
+#define MIU_TEST_AGT_ADDR_MASK		0xfffffff8
+#define MIU_TEST_AGT_UPPER_ADDR(off)	(0)
+
+/*
+ *   Register offsets for MS
+ */
+#define SIU_TEST_AGT_BASE		(0x60)
+
+#define SIU_TEST_AGT_ADDR_LO		(0x04)
+#define SIU_TEST_AGT_ADDR_HI		(0x18)
+#define SIU_TEST_AGT_WRDATA_LO		(0x08)
+#define SIU_TEST_AGT_WRDATA_HI		(0x0c)
+#define SIU_TEST_AGT_WRDATA(i)		(0x08+(4*(i)))
+#define SIU_TEST_AGT_RDDATA_LO		(0x10)
+#define SIU_TEST_AGT_RDDATA_HI		(0x14)
+#define SIU_TEST_AGT_RDDATA(i)		(0x10+(4*(i)))
+
+#define SIU_TEST_AGT_ADDR_MASK		0x3ffff8
+#define SIU_TEST_AGT_UPPER_ADDR(off)	((off)>>22)
+
 /* XG Link status */
 #define XG_LINK_UP	0x10
 #define XG_LINK_DOWN	0x20
+
+#define XG_LINK_UP_P3	0x01
+#define XG_LINK_DOWN_P3	0x02
+#define XG_LINK_STATE_P3_MASK 0xf
+#define XG_LINK_STATE_P3(pcifn,val) \
+	(((val) >> ((pcifn) * 4)) & XG_LINK_STATE_P3_MASK)
+
+#define P3_LINK_SPEED_MHZ	100
+#define P3_LINK_SPEED_MASK	0xff
+#define P3_LINK_SPEED_REG(pcifn)	\
+	(CRB_PF_LINK_SPEED_1 + (((pcifn) / 4) * 4))
+#define P3_LINK_SPEED_VAL(pcifn, reg)	\
+	(((reg) >> (8 * ((pcifn) & 0x3))) & P3_LINK_SPEED_MASK)
 
 #define NETXEN_CAM_RAM_BASE	(NETXEN_CRB_CAM + 0x02000)
 #define NETXEN_CAM_RAM(reg)	(NETXEN_CAM_RAM_BASE + (reg))
@@ -635,8 +727,90 @@ enum {
 #define NETXEN_FW_VERSION_MINOR (NETXEN_CAM_RAM(0x154))
 #define NETXEN_FW_VERSION_SUB	(NETXEN_CAM_RAM(0x158))
 #define NETXEN_ROM_LOCK_ID	(NETXEN_CAM_RAM(0x100))
-
 #define NETXEN_PHY_LOCK_ID	(NETXEN_CAM_RAM(0x120))
+#define NETXEN_CRB_WIN_LOCK_ID	(NETXEN_CAM_RAM(0x124))
+
+#define NIC_CRB_BASE		(NETXEN_CAM_RAM(0x200))
+#define NIC_CRB_BASE_2		(NETXEN_CAM_RAM(0x700))
+#define NETXEN_NIC_REG(X)	(NIC_CRB_BASE+(X))
+#define NETXEN_NIC_REG_2(X)	(NIC_CRB_BASE_2+(X))
+
+#define NX_CDRP_CRB_OFFSET		(NETXEN_NIC_REG(0x18))
+#define NX_ARG1_CRB_OFFSET		(NETXEN_NIC_REG(0x1c))
+#define NX_ARG2_CRB_OFFSET		(NETXEN_NIC_REG(0x20))
+#define NX_ARG3_CRB_OFFSET		(NETXEN_NIC_REG(0x24))
+#define NX_SIGN_CRB_OFFSET		(NETXEN_NIC_REG(0x28))
+
+#define CRB_HOST_DUMMY_BUF_ADDR_HI	(NETXEN_NIC_REG(0x3c))
+#define CRB_HOST_DUMMY_BUF_ADDR_LO	(NETXEN_NIC_REG(0x40))
+
+#define CRB_CMDPEG_STATE		(NETXEN_NIC_REG(0x50))
+#define CRB_RCVPEG_STATE		(NETXEN_NIC_REG(0x13c))
+
+#define CRB_XG_STATE			(NETXEN_NIC_REG(0x94))
+#define CRB_XG_STATE_P3			(NETXEN_NIC_REG(0x98))
+#define CRB_PF_LINK_SPEED_1		(NETXEN_NIC_REG(0xe8))
+#define CRB_PF_LINK_SPEED_2		(NETXEN_NIC_REG(0xec))
+
+#define CRB_MPORT_MODE			(NETXEN_NIC_REG(0xc4))
+#define CRB_DMA_SHIFT			(NETXEN_NIC_REG(0xcc))
+#define CRB_INT_VECTOR			(NETXEN_NIC_REG(0xd4))
+
+#define CRB_CMD_PRODUCER_OFFSET		(NETXEN_NIC_REG(0x08))
+#define CRB_CMD_CONSUMER_OFFSET		(NETXEN_NIC_REG(0x0c))
+#define CRB_CMD_PRODUCER_OFFSET_1   	(NETXEN_NIC_REG(0x1ac))
+#define CRB_CMD_CONSUMER_OFFSET_1	(NETXEN_NIC_REG(0x1b0))
+#define CRB_CMD_PRODUCER_OFFSET_2	(NETXEN_NIC_REG(0x1b8))
+#define CRB_CMD_CONSUMER_OFFSET_2	(NETXEN_NIC_REG(0x1bc))
+#define CRB_CMD_PRODUCER_OFFSET_3	(NETXEN_NIC_REG(0x1d0))
+#define CRB_CMD_CONSUMER_OFFSET_3	(NETXEN_NIC_REG(0x1d4))
+#define CRB_TEMP_STATE			(NETXEN_NIC_REG(0x1b4))
+
+#define CRB_V2P_0			(NETXEN_NIC_REG(0x290))
+#define CRB_V2P(port)			(CRB_V2P_0+((port)*4))
+#define CRB_DRIVER_VERSION		(NETXEN_NIC_REG(0x2a0))
+
+#define CRB_SW_INT_MASK_0		(NETXEN_NIC_REG(0x1d8))
+#define CRB_SW_INT_MASK_1		(NETXEN_NIC_REG(0x1e0))
+#define CRB_SW_INT_MASK_2		(NETXEN_NIC_REG(0x1e4))
+#define CRB_SW_INT_MASK_3		(NETXEN_NIC_REG(0x1e8))
+
+#define CRB_FW_CAPABILITIES_1		(NETXEN_CAM_RAM(0x128))
+#define CRB_MAC_BLOCK_START		(NETXEN_CAM_RAM(0x1c0))
+
+/*
+ * capabilities register, can be used to selectively enable/disable features
+ * for backward compatibility
+ */
+#define CRB_NIC_CAPABILITIES_HOST	NETXEN_NIC_REG(0x1a8)
+#define CRB_NIC_MSI_MODE_HOST		NETXEN_NIC_REG(0x270)
+
+#define INTR_SCHEME_PERPORT	      	0x1
+#define MSI_MODE_MULTIFUNC	      	0x1
+
+/* used for ethtool tests */
+#define CRB_SCRATCHPAD_TEST	    NETXEN_NIC_REG(0x280)
+
+/*
+ * CrbPortPhanCntrHi/Lo is used to pass the address of HostPhantomIndex address
+ * which can be read by the Phantom host to get producer/consumer indexes from
+ * Phantom/Casper. If it is not HOST_SHARED_MEMORY, then the following
+ * registers will be used for the addresses of the ring's shared memory
+ * on the Phantom.
+ */
+
+#define nx_get_temp_val(x)		((x) >> 16)
+#define nx_get_temp_state(x)		((x) & 0xffff)
+#define nx_encode_temp(val, state)	(((val) << 16) | (state))
+
+/*
+ * Temperature control.
+ */
+enum {
+	NX_TEMP_NORMAL = 0x1,	/* Normal operating range */
+	NX_TEMP_WARN,		/* Sound alert, temperature getting high */
+	NX_TEMP_PANIC		/* Fatal error, hardware has shut down. */
+};
 
 /* Lock IDs for PHY lock */
 #define PHY_LOCK_DRIVER		0x44524956
@@ -649,22 +823,74 @@ enum {
 #define PCIX_INT_VECTOR		(0x10100)
 #define PCIX_INT_MASK		(0x10104)
 
-#define PCIX_MN_WINDOW		(0x10200)
-#define PCIX_MS_WINDOW		(0x10204)
-#define PCIX_SN_WINDOW		(0x10208)
 #define PCIX_CRB_WINDOW		(0x10210)
 #define PCIX_CRB_WINDOW_F0	(0x10210)
 #define PCIX_CRB_WINDOW_F1	(0x10230)
 #define PCIX_CRB_WINDOW_F2	(0x10250)
 #define PCIX_CRB_WINDOW_F3	(0x10270)
+#define PCIX_CRB_WINDOW_F4	(0x102ac)
+#define PCIX_CRB_WINDOW_F5	(0x102bc)
+#define PCIX_CRB_WINDOW_F6	(0x102cc)
+#define PCIX_CRB_WINDOW_F7	(0x102dc)
+#define PCIE_CRB_WINDOW_REG(func)	(((func) < 4) ? \
+		(PCIX_CRB_WINDOW_F0 + (0x20 * (func))) :\
+		(PCIX_CRB_WINDOW_F4 + (0x10 * ((func)-4))))
+
+#define PCIX_MN_WINDOW		(0x10200)
+#define PCIX_MN_WINDOW_F0	(0x10200)
+#define PCIX_MN_WINDOW_F1	(0x10220)
+#define PCIX_MN_WINDOW_F2	(0x10240)
+#define PCIX_MN_WINDOW_F3	(0x10260)
+#define PCIX_MN_WINDOW_F4	(0x102a0)
+#define PCIX_MN_WINDOW_F5	(0x102b0)
+#define PCIX_MN_WINDOW_F6	(0x102c0)
+#define PCIX_MN_WINDOW_F7	(0x102d0)
+#define PCIE_MN_WINDOW_REG(func)	(((func) < 4) ? \
+		(PCIX_MN_WINDOW_F0 + (0x20 * (func))) :\
+		(PCIX_MN_WINDOW_F4 + (0x10 * ((func)-4))))
+
+#define PCIX_SN_WINDOW		(0x10208)
+#define PCIX_SN_WINDOW_F0	(0x10208)
+#define PCIX_SN_WINDOW_F1	(0x10228)
+#define PCIX_SN_WINDOW_F2	(0x10248)
+#define PCIX_SN_WINDOW_F3	(0x10268)
+#define PCIX_SN_WINDOW_F4	(0x102a8)
+#define PCIX_SN_WINDOW_F5	(0x102b8)
+#define PCIX_SN_WINDOW_F6	(0x102c8)
+#define PCIX_SN_WINDOW_F7	(0x102d8)
+#define PCIE_SN_WINDOW_REG(func)	(((func) < 4) ? \
+		(PCIX_SN_WINDOW_F0 + (0x20 * (func))) :\
+		(PCIX_SN_WINDOW_F4 + (0x10 * ((func)-4))))
+
+#define PCIX_OCM_WINDOW		(0x10800)
+#define PCIX_OCM_WINDOW_REG(func)	(PCIX_OCM_WINDOW + 0x20 * (func))
 
 #define PCIX_TARGET_STATUS	(0x10118)
+#define PCIX_TARGET_STATUS_F1	(0x10160)
+#define PCIX_TARGET_STATUS_F2	(0x10164)
+#define PCIX_TARGET_STATUS_F3	(0x10168)
+#define PCIX_TARGET_STATUS_F4	(0x10360)
+#define PCIX_TARGET_STATUS_F5	(0x10364)
+#define PCIX_TARGET_STATUS_F6	(0x10368)
+#define PCIX_TARGET_STATUS_F7	(0x1036c)
+
 #define PCIX_TARGET_MASK	(0x10128)
+#define PCIX_TARGET_MASK_F1	(0x10170)
+#define PCIX_TARGET_MASK_F2	(0x10174)
+#define PCIX_TARGET_MASK_F3	(0x10178)
+#define PCIX_TARGET_MASK_F4	(0x10370)
+#define PCIX_TARGET_MASK_F5	(0x10374)
+#define PCIX_TARGET_MASK_F6	(0x10378)
+#define PCIX_TARGET_MASK_F7	(0x1037c)
 
 #define PCIX_MSI_F0		(0x13000)
 #define PCIX_MSI_F1		(0x13004)
 #define PCIX_MSI_F2		(0x13008)
 #define PCIX_MSI_F3		(0x1300c)
+#define PCIX_MSI_F4		(0x13010)
+#define PCIX_MSI_F5		(0x13014)
+#define PCIX_MSI_F6		(0x13018)
+#define PCIX_MSI_F7		(0x1301c)
 #define PCIX_MSI_F(i)		(0x13000+((i)*4))
 
 #define PCIX_PS_MEM_SPACE	(0x90000)
@@ -678,15 +904,147 @@ enum {
 
 #define PCIE_DCR		0x00d8
 
+#define PCIE_SEM0_LOCK		(0x1c000)
+#define PCIE_SEM0_UNLOCK	(0x1c004)
+#define PCIE_SEM1_LOCK		(0x1c008)
+#define PCIE_SEM1_UNLOCK	(0x1c00c)
 #define PCIE_SEM2_LOCK		(0x1c010)	/* Flash lock   */
 #define PCIE_SEM2_UNLOCK	(0x1c014)	/* Flash unlock */
 #define PCIE_SEM3_LOCK	  	(0x1c018)	/* Phy lock     */
 #define PCIE_SEM3_UNLOCK	(0x1c01c)	/* Phy unlock   */
+#define PCIE_SEM4_LOCK	  	(0x1c020)
+#define PCIE_SEM4_UNLOCK	(0x1c024)
+#define PCIE_SEM5_LOCK		(0x1c028)	/* API lock     */
+#define PCIE_SEM5_UNLOCK	(0x1c02c)	/* API unlock   */
+#define PCIE_SEM6_LOCK		(0x1c030)	/* sw lock      */
+#define PCIE_SEM6_UNLOCK	(0x1c034)	/* sw unlock    */
+#define PCIE_SEM7_LOCK		(0x1c038)	/* crb win lock */
+#define PCIE_SEM7_UNLOCK	(0x1c03c)	/* crbwin unlock*/
+#define PCIE_SEM_LOCK(N)	(PCIE_SEM0_LOCK + 8*(N))
+#define PCIE_SEM_UNLOCK(N)	(PCIE_SEM0_UNLOCK + 8*(N))
 
+#define PCIE_SETUP_FUNCTION	(0x12040)
+#define PCIE_SETUP_FUNCTION2	(0x12048)
+#define PCIE_MISCCFG_RC         (0x1206c)
 #define PCIE_TGT_SPLIT_CHICKEN	(0x12080)
+#define PCIE_CHICKEN3		(0x120c8)
 
+#define ISR_INT_STATE_REG       (NETXEN_PCIX_PS_REG(PCIE_MISCCFG_RC))
 #define PCIE_MAX_MASTER_SPLIT	(0x14048)
 
-#define NETXEN_CAM_RAM_DMA_WATCHDOG_CTRL		(0x14)
+#define NETXEN_PORT_MODE_NONE		0
+#define NETXEN_PORT_MODE_XG		1
+#define NETXEN_PORT_MODE_GB		2
+#define NETXEN_PORT_MODE_802_3_AP	3
+#define NETXEN_PORT_MODE_AUTO_NEG	4
+#define NETXEN_PORT_MODE_AUTO_NEG_1G	5
+#define NETXEN_PORT_MODE_AUTO_NEG_XG	6
+#define NETXEN_PORT_MODE_ADDR		(NETXEN_CAM_RAM(0x24))
+#define NETXEN_WOL_PORT_MODE		(NETXEN_CAM_RAM(0x198))
+
+#define NETXEN_WOL_CONFIG_NV		(NETXEN_CAM_RAM(0x184))
+#define NETXEN_WOL_CONFIG		(NETXEN_CAM_RAM(0x188))
+
+#define NX_PEG_TUNE_MN_PRESENT		0x1
+#define NX_PEG_TUNE_CAPABILITY		(NETXEN_CAM_RAM(0x02c))
+
+#define NETXEN_DMA_WATCHDOG_CTRL	(NETXEN_CAM_RAM(0x14))
+#define NETXEN_PEG_ALIVE_COUNTER	(NETXEN_CAM_RAM(0xb0))
+#define NETXEN_PEG_HALT_STATUS1 	(NETXEN_CAM_RAM(0xa8))
+#define NETXEN_PEG_HALT_STATUS2 	(NETXEN_CAM_RAM(0xac))
+#define NX_CRB_DEV_REF_COUNT		(NETXEN_CAM_RAM(0x138))
+#define NX_CRB_DEV_STATE		(NETXEN_CAM_RAM(0x140))
+
+/* Device State */
+#define NX_DEV_COLD		1
+#define NX_DEV_INITALIZING	2
+#define NX_DEV_READY		3
+#define NX_DEV_NEED_RESET	4
+#define NX_DEV_NEED_QUISCENT	5
+#define NX_DEV_NEED_AER 	6
+#define NX_DEV_FAILED		7
+
+#define NX_RCODE_DRIVER_INFO		0x20000000
+#define NX_RCODE_DRIVER_CAN_RELOAD	0x40000000
+#define NX_RCODE_FATAL_ERROR		0x80000000
+#define NX_FWERROR_PEGNUM(code)		((code) & 0xff)
+#define NX_FWERROR_CODE(code)		((code >> 8) & 0xfffff)
+
+#define FW_POLL_DELAY			(2 * HZ)
+#define FW_FAIL_THRESH			3
+#define FW_POLL_THRESH			10
+
+#define	ISR_MSI_INT_TRIGGER(FUNC) (NETXEN_PCIX_PS_REG(PCIX_MSI_F(FUNC)))
+#define ISR_LEGACY_INT_TRIGGERED(VAL)	(((VAL) & 0x300) == 0x200)
+
+/*
+ * PCI Interrupt Vector Values.
+ */
+#define	PCIX_INT_VECTOR_BIT_F0	0x0080
+#define	PCIX_INT_VECTOR_BIT_F1	0x0100
+#define	PCIX_INT_VECTOR_BIT_F2	0x0200
+#define	PCIX_INT_VECTOR_BIT_F3	0x0400
+#define	PCIX_INT_VECTOR_BIT_F4	0x0800
+#define	PCIX_INT_VECTOR_BIT_F5	0x1000
+#define	PCIX_INT_VECTOR_BIT_F6	0x2000
+#define	PCIX_INT_VECTOR_BIT_F7	0x4000
+
+struct netxen_legacy_intr_set {
+	uint32_t	int_vec_bit;
+	uint32_t	tgt_status_reg;
+	uint32_t	tgt_mask_reg;
+	uint32_t	pci_int_reg;
+};
+
+#define	NX_LEGACY_INTR_CONFIG						\
+{									\
+	{								\
+		.int_vec_bit	=	PCIX_INT_VECTOR_BIT_F0,		\
+		.tgt_status_reg	=	ISR_INT_TARGET_STATUS,		\
+		.tgt_mask_reg	=	ISR_INT_TARGET_MASK,		\
+		.pci_int_reg	=	ISR_MSI_INT_TRIGGER(0) },	\
+									\
+	{								\
+		.int_vec_bit	=	PCIX_INT_VECTOR_BIT_F1,		\
+		.tgt_status_reg	=	ISR_INT_TARGET_STATUS_F1,	\
+		.tgt_mask_reg	=	ISR_INT_TARGET_MASK_F1,		\
+		.pci_int_reg	=	ISR_MSI_INT_TRIGGER(1) },	\
+									\
+	{								\
+		.int_vec_bit	=	PCIX_INT_VECTOR_BIT_F2,		\
+		.tgt_status_reg	=	ISR_INT_TARGET_STATUS_F2,	\
+		.tgt_mask_reg	=	ISR_INT_TARGET_MASK_F2,		\
+		.pci_int_reg	=	ISR_MSI_INT_TRIGGER(2) },	\
+									\
+	{								\
+		.int_vec_bit	=	PCIX_INT_VECTOR_BIT_F3,		\
+		.tgt_status_reg	=	ISR_INT_TARGET_STATUS_F3,	\
+		.tgt_mask_reg	=	ISR_INT_TARGET_MASK_F3,		\
+		.pci_int_reg	=	ISR_MSI_INT_TRIGGER(3) },	\
+									\
+	{								\
+		.int_vec_bit	=	PCIX_INT_VECTOR_BIT_F4,		\
+		.tgt_status_reg	=	ISR_INT_TARGET_STATUS_F4,	\
+		.tgt_mask_reg	=	ISR_INT_TARGET_MASK_F4,		\
+		.pci_int_reg	=	ISR_MSI_INT_TRIGGER(4) },	\
+									\
+	{								\
+		.int_vec_bit	=	PCIX_INT_VECTOR_BIT_F5,		\
+		.tgt_status_reg	=	ISR_INT_TARGET_STATUS_F5,	\
+		.tgt_mask_reg	=	ISR_INT_TARGET_MASK_F5,		\
+		.pci_int_reg	=	ISR_MSI_INT_TRIGGER(5) },	\
+									\
+	{								\
+		.int_vec_bit	=	PCIX_INT_VECTOR_BIT_F6,		\
+		.tgt_status_reg	=	ISR_INT_TARGET_STATUS_F6,	\
+		.tgt_mask_reg	=	ISR_INT_TARGET_MASK_F6,		\
+		.pci_int_reg	=	ISR_MSI_INT_TRIGGER(6) },	\
+									\
+	{								\
+		.int_vec_bit	=	PCIX_INT_VECTOR_BIT_F7,		\
+		.tgt_status_reg	=	ISR_INT_TARGET_STATUS_F7,	\
+		.tgt_mask_reg	=	ISR_INT_TARGET_MASK_F7,		\
+		.pci_int_reg	=	ISR_MSI_INT_TRIGGER(7) },	\
+}
 
 #endif				/* __NETXEN_NIC_HDR_H_ */

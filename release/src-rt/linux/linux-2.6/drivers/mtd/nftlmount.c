@@ -2,9 +2,8 @@
  * NFTL mount code with extensive checks
  *
  * Author: Fabrice Bellard (fabrice.bellard@netgem.com)
- * Copyright (C) 2000 Netgem S.A.
- *
- * $Id: nftlmount.c,v 1.41 2005/11/07 11:14:21 gleixner Exp $
+ * Copyright © 2000 Netgem S.A.
+ * Copyright © 1999-2010 David Woodhouse <dwmw2@infradead.org>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,13 +30,6 @@
 
 #define SECTORSIZE 512
 
-char nftlmountrev[]="$Revision: 1.41 $";
-
-extern int nftl_read_oob(struct mtd_info *mtd, loff_t offs, size_t len,
-			 size_t *retlen, uint8_t *buf);
-extern int nftl_write_oob(struct mtd_info *mtd, loff_t offs, size_t len,
-			  size_t *retlen, uint8_t *buf);
-
 /* find_boot_record: Find the NFTL Media Header and its Spare copy which contains the
  *	various device information of the NFTL partition and Bad Unit Table. Update
  *	the ReplUnitTable[] table accroding to the Bad Unit Table. ReplUnitTable[]
@@ -60,7 +52,7 @@ static int find_boot_record(struct NFTLrecord *nftl)
 	   the mtd device accordingly.  We could even get rid of
 	   nftl->EraseSize if there were any point in doing so. */
 	nftl->EraseSize = nftl->mbd.mtd->erasesize;
-        nftl->nb_blocks = nftl->mbd.mtd->size / nftl->EraseSize;
+        nftl->nb_blocks = (u32)nftl->mbd.mtd->size / nftl->EraseSize;
 
 	nftl->MediaUnit = BLOCK_NIL;
 	nftl->SpareMediaUnit = BLOCK_NIL;
@@ -177,7 +169,7 @@ device is already correct.
 			printk(KERN_NOTICE "WARNING: Support for NFTL with UnitSizeFactor 0x%02x is experimental\n",
 			       mh->UnitSizeFactor);
 			nftl->EraseSize = nftl->mbd.mtd->erasesize << (0xff - mh->UnitSizeFactor);
-			nftl->nb_blocks = nftl->mbd.mtd->size / nftl->EraseSize;
+			nftl->nb_blocks = (u32)nftl->mbd.mtd->size / nftl->EraseSize;
 		}
 #endif
 		nftl->nb_boot_blocks = le16_to_cpu(mh->FirstPhysicalEUN);
@@ -429,7 +421,7 @@ static void check_sectors_in_chain(struct NFTLrecord *nftl, unsigned int first_b
 	}
 }
 
-/* calc_chain_lenght: Walk through a Virtual Unit Chain and estimate chain length */
+/* calc_chain_length: Walk through a Virtual Unit Chain and estimate chain length */
 static int calc_chain_length(struct NFTLrecord *nftl, unsigned int first_block)
 {
 	unsigned int length = 0, block = first_block;

@@ -100,7 +100,7 @@
  * finished; this function moves the message state to MSG_COMPLETE and signals
  * the IOP. This two-step process is provided to allow the handler to defer
  * message processing to a bottom-half handler if the processing will take
- * a signifigant amount of time (handlers are called at interrupt time so they
+ * a significant amount of time (handlers are called at interrupt time so they
  * should execute quickly.)
  */
 
@@ -109,7 +109,6 @@
 #include <linux/mm.h>
 #include <linux/delay.h>
 #include <linux/init.h>
-#include <linux/proc_fs.h>
 #include <linux/interrupt.h>
 
 #include <asm/bootinfo.h>
@@ -120,13 +119,9 @@
 
 /*#define DEBUG_IOP*/
 
-/* Set to nonezero if the IOPs are present. Set by iop_init() */
+/* Set to non-zero if the IOPs are present. Set by iop_init() */
 
 int iop_scc_present,iop_ism_present;
-
-#ifdef CONFIG_PROC_FS
-static int iop_get_proc_info(char *, char **, off_t, int);
-#endif /* CONFIG_PROC_FS */
 
 /* structure for tracking channel listeners */
 
@@ -299,12 +294,6 @@ void __init iop_init(void)
 		iop_listeners[IOP_NUM_ISM][i].devname = NULL;
 		iop_listeners[IOP_NUM_ISM][i].handler = NULL;
 	}
-
-#if 0	/* Crashing in 2.4 now, not yet sure why.   --jmt */
-#ifdef CONFIG_PROC_FS
-	create_proc_info_entry("mac_iop", 0, &proc_root, iop_get_proc_info);
-#endif
-#endif
 }
 
 /*
@@ -316,14 +305,16 @@ void __init iop_register_interrupts(void)
 {
 	if (iop_ism_present) {
 		if (oss_present) {
-			request_irq(OSS_IRQLEV_IOPISM, iop_ism_irq,
+			if (request_irq(OSS_IRQLEV_IOPISM, iop_ism_irq,
 					IRQ_FLG_LOCK, "ISM IOP",
-					(void *) IOP_NUM_ISM);
+					(void *) IOP_NUM_ISM))
+				pr_err("Couldn't register ISM IOP interrupt\n");
 			oss_irq_enable(IRQ_MAC_ADB);
 		} else {
-			request_irq(IRQ_VIA2_0, iop_ism_irq,
+			if (request_irq(IRQ_VIA2_0, iop_ism_irq,
 					IRQ_FLG_LOCK|IRQ_FLG_FAST, "ISM IOP",
-					(void *) IOP_NUM_ISM);
+					(void *) IOP_NUM_ISM))
+				pr_err("Couldn't register ISM IOP interrupt\n");
 		}
 		if (!iop_alive(iop_base[IOP_NUM_ISM])) {
 			printk("IOP: oh my god, they killed the ISM IOP!\n");
@@ -637,77 +628,3 @@ irqreturn_t iop_ism_irq(int irq, void *dev_id)
 	}
 	return IRQ_HANDLED;
 }
-
-#ifdef CONFIG_PROC_FS
-
-char *iop_chan_state(int state)
-{
-	switch(state) {
-		case IOP_MSG_IDLE	: return "idle      ";
-		case IOP_MSG_NEW	: return "new       ";
-		case IOP_MSG_RCVD	: return "received  ";
-		case IOP_MSG_COMPLETE	: return "completed ";
-		default			: return "unknown   ";
-	}
-}
-
-int iop_dump_one_iop(char *buf, int iop_num, char *iop_name)
-{
-	int i,len = 0;
-	volatile struct mac_iop *iop = iop_base[iop_num];
-
-	len += sprintf(buf+len, "%s IOP channel states:\n\n", iop_name);
-	len += sprintf(buf+len, "##  send_state  recv_state  device\n");
-	len += sprintf(buf+len, "------------------------------------------------\n");
-	for (i = 0 ; i < NUM_IOP_CHAN ; i++) {
-		len += sprintf(buf+len, "%2d  %10s  %10s  %s\n", i,
-			iop_chan_state(iop_readb(iop, IOP_ADDR_SEND_STATE+i)),
-			iop_chan_state(iop_readb(iop, IOP_ADDR_RECV_STATE+i)),
-			iop_listeners[iop_num][i].handler?
-				      iop_listeners[iop_num][i].devname : "");
-
-	}
-	len += sprintf(buf+len, "\n");
-	return len;
-}
-
-static int iop_get_proc_info(char *buf, char **start, off_t pos, int count)
-{
-	int len, cnt;
-
-	cnt = 0;
-	len =  sprintf(buf, "IOPs detected:\n\n");
-
-	if (iop_scc_present) {
-		len += sprintf(buf+len, "SCC IOP (%p): status %02X\n",
-				iop_base[IOP_NUM_SCC],
-				(uint) iop_base[IOP_NUM_SCC]->status_ctrl);
-	}
-	if (iop_ism_present) {
-		len += sprintf(buf+len, "ISM IOP (%p): status %02X\n\n",
-				iop_base[IOP_NUM_ISM],
-				(uint) iop_base[IOP_NUM_ISM]->status_ctrl);
-	}
-
-	if (iop_scc_present) {
-		len += iop_dump_one_iop(buf+len, IOP_NUM_SCC, "SCC");
-
-	}
-
-	if (iop_ism_present) {
-		len += iop_dump_one_iop(buf+len, IOP_NUM_ISM, "ISM");
-
-	}
-
-	if (len >= pos) {
-		if (!*start) {
-			*start = buf + pos;
-			cnt = len - pos;
-		} else {
-			cnt += len;
-		}
-	}
-	return (count > cnt) ? cnt : count;
-}
-
-#endif /* CONFIG_PROC_FS */

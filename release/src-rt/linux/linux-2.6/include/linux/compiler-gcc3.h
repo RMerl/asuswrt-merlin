@@ -1,24 +1,23 @@
-/* Never include this file directly.  Include <linux/compiler.h> instead.  */
+#ifndef __LINUX_COMPILER_H
+#error "Please don't include <linux/compiler-gcc3.h> directly, include <linux/compiler.h> instead."
+#endif
 
-/* These definitions are for GCC v3.x.  */
-#include <linux/compiler-gcc.h>
+#if __GNUC_MINOR__ < 2
+# error Sorry, your compiler is too old - please upgrade it.
+#endif
 
 #if __GNUC_MINOR__ >= 3
 # define __used			__attribute__((__used__))
-# define __attribute_used__	__used				/* deprecated */
 #else
 # define __used			__attribute__((__unused__))
-# define __attribute_used__	__used				/* deprecated */
 #endif
 
 #if __GNUC_MINOR__ >= 4
 #define __must_check		__attribute__((warn_unused_result))
 #endif
 
-/*
- * A trick to suppress uninitialized variable warning without generating any
- * code
- */
-#define uninitialized_var(x) x = x
-
-#define __always_inline		inline __attribute__((always_inline))
+#ifdef CONFIG_GCOV_KERNEL
+# if __GNUC_MINOR__ < 4
+#   error "GCOV profiling support for gcc versions below 3.4 not included"
+# endif /* __GNUC_MINOR__ */
+#endif /* CONFIG_GCOV_KERNEL */

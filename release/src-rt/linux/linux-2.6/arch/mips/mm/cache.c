@@ -3,13 +3,17 @@
  * License.  See the file "COPYING" in the main directory of this archive
  * for more details.
  *
- * Copyright (C) 1994 - 2003, 07 by Ralf Baechle (ralf@linux-mips.org)
+ * Copyright (C) 1994 - 2003, 06, 07 by Ralf Baechle (ralf@linux-mips.org)
  * Copyright (C) 2007 MIPS Technologies, Inc.
  */
+#include <linux/fs.h>
+#include <linux/fcntl.h>
 #include <linux/init.h>
 #include <linux/kernel.h>
+#include <linux/linkage.h>
 #include <linux/module.h>
 #include <linux/sched.h>
+#include <linux/syscalls.h>
 #include <linux/mm.h>
 
 #include <asm/cacheflush.h>
@@ -26,6 +30,10 @@ void (*flush_cache_range)(struct vm_area_struct *vma, unsigned long start,
 void (*flush_cache_page)(struct vm_area_struct *vma, unsigned long page,
 	unsigned long pfn);
 void (*flush_icache_range)(unsigned long start, unsigned long end);
+void (*local_flush_icache_range)(unsigned long start, unsigned long end);
+
+void (*__flush_cache_vmap)(void);
+void (*__flush_cache_vunmap)(void);
 
 /* MIPS specific cache operations */
 void (*flush_cache_sigtramp)(unsigned long addr);
@@ -44,8 +52,6 @@ void (*_dma_cache_wback)(unsigned long start, unsigned long size);
 void (*_dma_cache_inv)(unsigned long start, unsigned long size);
 
 EXPORT_SYMBOL(_dma_cache_wback_inv);
-EXPORT_SYMBOL(_dma_cache_wback);
-EXPORT_SYMBOL(_dma_cache_inv);
 
 #endif /* CONFIG_DMA_NONCOHERENT */
 
@@ -53,46 +59,29 @@ EXPORT_SYMBOL(_dma_cache_inv);
  * We could optimize the case where the cache argument is not BCACHE but
  * that seems very atypical use ...
  */
-asmlinkage int sys_cacheflush(unsigned long addr,
-	unsigned long bytes, unsigned int cache)
+SYSCALL_DEFINE3(cacheflush, unsigned long, addr, unsigned long, bytes,
+	unsigned int, cache)
 {
-	struct vm_area_struct* vma;
-
 	if (bytes == 0)
 		return 0;
 	if (!access_ok(VERIFY_WRITE, (void __user *) addr, bytes))
 		return -EFAULT;
 
-	if (cache & DCACHE)
-        {
-                vma = find_vma(current->mm, (unsigned long) addr);
-                if (vma) {
-                        flush_cache_range(vma,(unsigned long)addr,((unsigned long)addr) + bytes);
-                }
-                else {
-                        __flush_cache_all();
-                }
-        }
-        if (cache & ICACHE)
-        {
-                flush_icache_range(addr, addr + bytes);
-        }	
+	flush_icache_range(addr, addr + bytes);
 
 	return 0;
 }
 
-void *kmap_atomic_page_address(struct page *page);
-
 void __flush_dcache_page(struct page *page)
 {
+	struct address_space *mapping = page_mapping(page);
 	unsigned long addr;
 
-	if (PageHighMem(page)) {
-		addr = (unsigned long) kmap_atomic_page_address(page);
-		if (addr) {
-			flush_data_cache_page(addr);
-			return;
-		}
+	if (PageHighMem(page))
+		return;
+	if (mapping && !mapping_mapped(mapping)) {
+		SetPageDcacheDirty(page);
+		return;
 	}
 
 	/*
@@ -101,8 +90,7 @@ void __flush_dcache_page(struct page *page)
 	 * get faulted into the tlb (and thus flushed) anyways.
 	 */
 	addr = (unsigned long) page_address(page);
-	if (addr)
-		flush_data_cache_page(addr);
+	flush_data_cache_page(addr);
 }
 
 EXPORT_SYMBOL(__flush_dcache_page);
@@ -125,35 +113,77 @@ void __flush_anon_page(struct page *page, unsigned long vmaddr)
 
 EXPORT_SYMBOL(__flush_anon_page);
 
-void __update_cache(struct vm_area_struct *vma, unsigned long address,
-	pte_t pte)
+static void mips_flush_dcache_from_pte(pte_t pteval, unsigned long address)
 {
 	struct page *page;
-	unsigned long pfn, addr;
-	int exec = (vma->vm_flags & VM_EXEC) && !cpu_has_ic_fills_f_dc;
+	unsigned long pfn = pte_pfn(pteval);
 
-	pfn = pte_pfn(pte);
 	if (unlikely(!pfn_valid(pfn)))
 		return;
+
 	page = pfn_to_page(pfn);
-	if (page_mapping(page))
-	{
-		addr = (unsigned long) page_address(page);
-		if (exec || pages_do_alias(addr, address & PAGE_MASK))
-			if (addr)
-				flush_data_cache_page(addr);
+	if (page_mapping(page) && Page_dcache_dirty(page)) {
+		unsigned long page_addr = (unsigned long) page_address(page);
+
+		if (!cpu_has_ic_fills_f_dc ||
+		    pages_do_alias(page_addr, address & PAGE_MASK))
+			flush_data_cache_page(page_addr);
+		ClearPageDcacheDirty(page);
 	}
 }
 
-static char cache_panic[] __cpuinitdata =
-	"Yeee, unsupported cache architecture.";
-
-void __init cpu_early_probe_cache(void)
+void set_pte_at(struct mm_struct *mm, unsigned long addr,
+        pte_t *ptep, pte_t pteval)
 {
-	if (cpu_has_4k_cache) {
-		extern void __weak r4k_probe_cache(void);
+        if (cpu_has_dc_aliases || !cpu_has_ic_fills_f_dc) {
+                if (pte_present(pteval))
+                        mips_flush_dcache_from_pte(pteval, addr);
+        }
 
-		return r4k_probe_cache();
+        set_pte(ptep, pteval);
+}
+
+unsigned long _page_cachable_default;
+EXPORT_SYMBOL(_page_cachable_default);
+
+static inline void setup_protection_map(void)
+{
+	if (kernel_uses_smartmips_rixi) {
+		protection_map[0]  = __pgprot(_page_cachable_default | _PAGE_PRESENT | _PAGE_NO_EXEC | _PAGE_NO_READ);
+		protection_map[1]  = __pgprot(_page_cachable_default | _PAGE_PRESENT | _PAGE_NO_EXEC);
+		protection_map[2]  = __pgprot(_page_cachable_default | _PAGE_PRESENT | _PAGE_NO_EXEC | _PAGE_NO_READ);
+		protection_map[3]  = __pgprot(_page_cachable_default | _PAGE_PRESENT | _PAGE_NO_EXEC);
+		protection_map[4]  = __pgprot(_page_cachable_default | _PAGE_PRESENT | _PAGE_NO_READ);
+		protection_map[5]  = __pgprot(_page_cachable_default | _PAGE_PRESENT);
+		protection_map[6]  = __pgprot(_page_cachable_default | _PAGE_PRESENT | _PAGE_NO_READ);
+		protection_map[7]  = __pgprot(_page_cachable_default | _PAGE_PRESENT);
+
+		protection_map[8]  = __pgprot(_page_cachable_default | _PAGE_PRESENT | _PAGE_NO_EXEC | _PAGE_NO_READ);
+		protection_map[9]  = __pgprot(_page_cachable_default | _PAGE_PRESENT | _PAGE_NO_EXEC);
+		protection_map[10] = __pgprot(_page_cachable_default | _PAGE_PRESENT | _PAGE_NO_EXEC | _PAGE_WRITE | _PAGE_NO_READ);
+		protection_map[11] = __pgprot(_page_cachable_default | _PAGE_PRESENT | _PAGE_NO_EXEC | _PAGE_WRITE);
+		protection_map[12] = __pgprot(_page_cachable_default | _PAGE_PRESENT | _PAGE_NO_READ);
+		protection_map[13] = __pgprot(_page_cachable_default | _PAGE_PRESENT);
+		protection_map[14] = __pgprot(_page_cachable_default | _PAGE_PRESENT | _PAGE_WRITE  | _PAGE_NO_READ);
+		protection_map[15] = __pgprot(_page_cachable_default | _PAGE_PRESENT | _PAGE_WRITE);
+
+	} else {
+		protection_map[0] = PAGE_NONE;
+		protection_map[1] = PAGE_READONLY;
+		protection_map[2] = PAGE_COPY;
+		protection_map[3] = PAGE_COPY;
+		protection_map[4] = PAGE_READONLY;
+		protection_map[5] = PAGE_READONLY;
+		protection_map[6] = PAGE_COPY;
+		protection_map[7] = PAGE_COPY;
+		protection_map[8] = PAGE_NONE;
+		protection_map[9] = PAGE_READONLY;
+		protection_map[10] = PAGE_SHARED;
+		protection_map[11] = PAGE_SHARED;
+		protection_map[12] = PAGE_READONLY;
+		protection_map[13] = PAGE_READONLY;
+		protection_map[14] = PAGE_SHARED;
+		protection_map[15] = PAGE_SHARED;
 	}
 }
 
@@ -163,38 +193,41 @@ void __cpuinit cpu_cache_init(void)
 		extern void __weak r3k_cache_init(void);
 
 		r3k_cache_init();
-		return;
 	}
 	if (cpu_has_6k_cache) {
 		extern void __weak r6k_cache_init(void);
 
 		r6k_cache_init();
-		return;
 	}
 	if (cpu_has_4k_cache) {
 		extern void __weak r4k_cache_init(void);
 
 		r4k_cache_init();
-		return;
 	}
 	if (cpu_has_8k_cache) {
 		extern void __weak r8k_cache_init(void);
 
 		r8k_cache_init();
-		return;
 	}
 	if (cpu_has_tx39_cache) {
 		extern void __weak tx39_cache_init(void);
 
 		tx39_cache_init();
-		return;
-	}
-	if (cpu_has_sb1_cache) {
-		extern void __weak sb1_cache_init(void);
-
-		sb1_cache_init();
-		return;
 	}
 
-	panic(cache_panic);
+	if (cpu_has_octeon_cache) {
+		extern void __weak octeon_cache_init(void);
+
+		octeon_cache_init();
+	}
+
+	setup_protection_map();
+}
+
+int __weak __uncached_access(struct file *file, unsigned long addr)
+{
+	if (file->f_flags & O_DSYNC)
+		return 1;
+
+	return addr >= __pa(high_memory);
 }

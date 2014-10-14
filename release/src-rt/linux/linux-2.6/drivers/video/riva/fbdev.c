@@ -56,10 +56,6 @@
 #include "rivafb.h"
 #include "nvreg.h"
 
-#ifndef CONFIG_PCI		/* sanity check */
-#error This driver requires PCI support.
-#endif
-
 /* version number of this driver */
 #define RIVAFB_VERSION "0.9.5b"
 
@@ -74,14 +70,14 @@
 #define NVTRACE          if(0) printk
 #endif
 
-#define NVTRACE_ENTER(...)  NVTRACE("%s START\n", __FUNCTION__)
-#define NVTRACE_LEAVE(...)  NVTRACE("%s END\n", __FUNCTION__)
+#define NVTRACE_ENTER(...)  NVTRACE("%s START\n", __func__)
+#define NVTRACE_LEAVE(...)  NVTRACE("%s END\n", __func__)
 
 #ifdef CONFIG_FB_RIVA_DEBUG
 #define assert(expr) \
 	if(!(expr)) { \
 	printk( "Assertion failed! %s,%s,%s,line=%d\n",\
-	#expr,__FILE__,__FUNCTION__,__LINE__); \
+	#expr,__FILE__,__func__,__LINE__); \
 	BUG(); \
 	}
 #else
@@ -307,7 +303,7 @@ static int riva_bl_get_level_brightness(struct riva_par *par,
 
 static int riva_bl_update_status(struct backlight_device *bd)
 {
-	struct riva_par *par = class_get_devdata(&bd->class_dev);
+	struct riva_par *par = bl_get_data(bd);
 	U032 tmp_pcrt, tmp_pmc;
 	int level;
 
@@ -335,13 +331,14 @@ static int riva_bl_get_brightness(struct backlight_device *bd)
 	return bd->props.brightness;
 }
 
-static struct backlight_ops riva_bl_ops = {
+static const struct backlight_ops riva_bl_ops = {
 	.get_brightness = riva_bl_get_brightness,
 	.update_status	= riva_bl_update_status,
 };
 
 static void riva_bl_init(struct riva_par *par)
 {
+	struct backlight_properties props;
 	struct fb_info *info = pci_get_drvdata(par->pdev);
 	struct backlight_device *bd;
 	char name[12];
@@ -357,7 +354,11 @@ static void riva_bl_init(struct riva_par *par)
 
 	snprintf(name, sizeof(name), "rivabl%d", info->node);
 
-	bd = backlight_device_register(name, info->dev, par, &riva_bl_ops);
+	memset(&props, 0, sizeof(struct backlight_properties));
+	props.type = BACKLIGHT_RAW;
+	props.max_brightness = FB_BACKLIGHT_LEVELS - 1;
+	bd = backlight_device_register(name, info->dev, par, &riva_bl_ops,
+				       &props);
 	if (IS_ERR(bd)) {
 		info->bl_dev = NULL;
 		printk(KERN_WARNING "riva: Backlight registration failed\n");
@@ -369,7 +370,6 @@ static void riva_bl_init(struct riva_par *par)
 		MIN_LEVEL * FB_BACKLIGHT_MAX / MAX_LEVEL,
 		FB_BACKLIGHT_MAX);
 
-	bd->props.max_brightness = FB_BACKLIGHT_LEVELS - 1;
 	bd->props.brightness = bd->props.max_brightness;
 	bd->props.power = FB_BLANK_UNBLANK;
 	backlight_update_status(bd);
@@ -2146,7 +2146,7 @@ static void __devexit rivafb_remove(struct pci_dev *pd)
  * ------------------------------------------------------------------------- */
 
 #ifndef MODULE
-static int __init rivafb_setup(char *options)
+static int __devinit rivafb_setup(char *options)
 {
 	char *this_opt;
 
@@ -2213,14 +2213,12 @@ static int __devinit rivafb_init(void)
 
 module_init(rivafb_init);
 
-#ifdef MODULE
 static void __exit rivafb_exit(void)
 {
 	pci_unregister_driver(&rivafb_driver);
 }
 
 module_exit(rivafb_exit);
-#endif /* MODULE */
 
 module_param(noaccel, bool, 0);
 MODULE_PARM_DESC(noaccel, "bool: disable acceleration");

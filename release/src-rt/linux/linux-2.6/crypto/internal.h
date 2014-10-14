@@ -6,7 +6,7 @@
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
- * Software Foundation; either version 2 of the License, or (at your option) 
+ * Software Foundation; either version 2 of the License, or (at your option)
  * any later version.
  *
  */
@@ -25,7 +25,7 @@
 #include <linux/notifier.h>
 #include <linux/rwsem.h>
 #include <linux/slab.h>
-#include <asm/kmap_types.h>
+#include <linux/fips.h>
 
 /* Crypto notification events. */
 enum {
@@ -50,29 +50,6 @@ extern struct list_head crypto_alg_list;
 extern struct rw_semaphore crypto_alg_sem;
 extern struct blocking_notifier_head crypto_chain;
 
-extern enum km_type crypto_km_types[];
-
-static inline enum km_type crypto_kmap_type(int out)
-{
-	return crypto_km_types[(in_softirq() ? 2 : 0) + out];
-}
-
-static inline void *crypto_kmap(struct page *page, int out)
-{
-	return kmap_atomic(page, crypto_kmap_type(out));
-}
-
-static inline void crypto_kunmap(void *vaddr, int out)
-{
-	kunmap_atomic(vaddr, crypto_kmap_type(out));
-}
-
-static inline void crypto_yield(u32 flags)
-{
-	if (flags & CRYPTO_TFM_REQ_MAY_SLEEP)
-		cond_resched();
-}
-
 #ifdef CONFIG_PROC_FS
 void __init crypto_init_proc(void);
 void __exit crypto_exit_proc(void);
@@ -82,18 +59,6 @@ static inline void crypto_init_proc(void)
 static inline void crypto_exit_proc(void)
 { }
 #endif
-
-static inline unsigned int crypto_digest_ctxsize(struct crypto_alg *alg)
-{
-	unsigned int len = alg->cra_ctxsize;
-
-	if (alg->cra_alignmask) {
-		len = ALIGN(len, (unsigned long)alg->cra_alignmask + 1);
-		len += alg->cra_digest.dia_digestsize;
-	}
-
-	return len;
-}
 
 static inline unsigned int crypto_cipher_ctxsize(struct crypto_alg *alg)
 {
@@ -106,28 +71,35 @@ static inline unsigned int crypto_compress_ctxsize(struct crypto_alg *alg)
 }
 
 struct crypto_alg *crypto_mod_get(struct crypto_alg *alg);
-struct crypto_alg *__crypto_alg_lookup(const char *name, u32 type, u32 mask);
+struct crypto_alg *crypto_alg_lookup(const char *name, u32 type, u32 mask);
 struct crypto_alg *crypto_alg_mod_lookup(const char *name, u32 type, u32 mask);
 
-int crypto_init_digest_ops(struct crypto_tfm *tfm);
 int crypto_init_cipher_ops(struct crypto_tfm *tfm);
 int crypto_init_compress_ops(struct crypto_tfm *tfm);
 
-void crypto_exit_digest_ops(struct crypto_tfm *tfm);
 void crypto_exit_cipher_ops(struct crypto_tfm *tfm);
 void crypto_exit_compress_ops(struct crypto_tfm *tfm);
 
+struct crypto_larval *crypto_larval_alloc(const char *name, u32 type, u32 mask);
+void crypto_larval_kill(struct crypto_alg *alg);
+struct crypto_alg *crypto_larval_lookup(const char *name, u32 type, u32 mask);
 void crypto_larval_error(const char *name, u32 type, u32 mask);
+void crypto_alg_tested(const char *name, int err);
 
 void crypto_shoot_alg(struct crypto_alg *alg);
 struct crypto_tfm *__crypto_alloc_tfm(struct crypto_alg *alg, u32 type,
 				      u32 mask);
-
-int crypto_register_instance(struct crypto_template *tmpl,
-			     struct crypto_instance *inst);
+void *crypto_create_tfm(struct crypto_alg *alg,
+			const struct crypto_type *frontend);
+struct crypto_alg *crypto_find_alg(const char *alg_name,
+				   const struct crypto_type *frontend,
+				   u32 type, u32 mask);
+void *crypto_alloc_tfm(const char *alg_name,
+		       const struct crypto_type *frontend, u32 type, u32 mask);
 
 int crypto_register_notifier(struct notifier_block *nb);
 int crypto_unregister_notifier(struct notifier_block *nb);
+int crypto_probing_notify(unsigned long val, void *v);
 
 static inline void crypto_alg_put(struct crypto_alg *alg)
 {
@@ -160,9 +132,9 @@ static inline int crypto_is_moribund(struct crypto_alg *alg)
 	return alg->cra_flags & (CRYPTO_ALG_DEAD | CRYPTO_ALG_DYING);
 }
 
-static inline int crypto_notify(unsigned long val, void *v)
+static inline void crypto_notify(unsigned long val, void *v)
 {
-	return blocking_notifier_call_chain(&crypto_chain, val, v);
+	blocking_notifier_call_chain(&crypto_chain, val, v);
 }
 
 #endif	/* _CRYPTO_INTERNAL_H */

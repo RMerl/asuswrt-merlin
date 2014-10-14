@@ -7,11 +7,11 @@
  *              and from work (c) 1998 Mike Shaver.
  */
 
-#include <linux/efs_fs.h>
-#include <linux/efs_fs_sb.h>
 #include <linux/buffer_head.h>
 #include <linux/module.h>
 #include <linux/fs.h>
+#include "efs.h"
+#include <linux/efs_fs_sb.h>
 
 static int efs_readpage(struct file *file, struct page *page)
 {
@@ -23,7 +23,6 @@ static sector_t _efs_bmap(struct address_space *mapping, sector_t block)
 }
 static const struct address_space_operations efs_aops = {
 	.readpage = efs_readpage,
-	.sync_page = block_sync_page,
 	.bmap = _efs_bmap
 };
 
@@ -45,17 +44,26 @@ static inline void extent_copy(efs_extent *src, efs_extent *dst) {
 	return;
 }
 
-void efs_read_inode(struct inode *inode)
+struct inode *efs_iget(struct super_block *super, unsigned long ino)
 {
 	int i, inode_index;
 	dev_t device;
 	u32 rdev;
 	struct buffer_head *bh;
-	struct efs_sb_info    *sb = SUPER_INFO(inode->i_sb);
-	struct efs_inode_info *in = INODE_INFO(inode);
+	struct efs_sb_info    *sb = SUPER_INFO(super);
+	struct efs_inode_info *in;
 	efs_block_t block, offset;
 	struct efs_dinode *efs_inode;
-  
+	struct inode *inode;
+
+	inode = iget_locked(super, ino);
+	if (IS_ERR(inode))
+		return ERR_PTR(-ENOMEM);
+	if (!(inode->i_state & I_NEW))
+		return inode;
+
+	in = INODE_INFO(inode);
+
 	/*
 	** EFS layout:
 	**
@@ -131,7 +139,7 @@ void efs_read_inode(struct inode *inode)
 	brelse(bh);
    
 #ifdef DEBUG
-	printk(KERN_DEBUG "EFS: read_inode(): inode %lu, extents %d, mode %o\n",
+	printk(KERN_DEBUG "EFS: efs_iget(): inode %lu, extents %d, mode %o\n",
 		inode->i_ino, in->numextents, inode->i_mode);
 #endif
 
@@ -159,13 +167,13 @@ void efs_read_inode(struct inode *inode)
 			break;
 	}
 
-	return;
+	unlock_new_inode(inode);
+	return inode;
         
 read_inode_error:
 	printk(KERN_WARNING "EFS: failed to read inode %lu\n", inode->i_ino);
-	make_bad_inode(inode);
-
-	return;
+	iget_failed(inode);
+	return ERR_PTR(-EIO);
 }
 
 static inline efs_block_t

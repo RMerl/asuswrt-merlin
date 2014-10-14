@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) by Jaroslav Kysela <perex@suse.cz>
+ *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  *  GUS's memory allocation routines / bottom layer
  *
  *
@@ -19,7 +19,6 @@
  *
  */
 
-#include <sound/driver.h>
 #include <linux/slab.h>
 #include <linux/string.h>
 #include <sound/core.h>
@@ -128,7 +127,8 @@ static struct snd_gf1_mem_block *snd_gf1_mem_share(struct snd_gf1_mem * alloc,
 	    !share_id[2] && !share_id[3])
 		return NULL;
 	for (block = alloc->first; block; block = block->next)
-		if (!memcmp(share_id, block->share_id, sizeof(share_id)))
+		if (!memcmp(share_id, block->share_id,
+				sizeof(block->share_id)))
 			return block;
 	return NULL;
 }

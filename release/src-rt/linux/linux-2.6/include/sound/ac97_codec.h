@@ -2,7 +2,7 @@
 #define __SOUND_AC97_CODEC_H
 
 /*
- *  Copyright (c) by Jaroslav Kysela <perex@suse.cz>
+ *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  *  Universal interface for Audio Codec '97
  *
  *  For more details look to AC '97 component specification revision 2.1
@@ -31,6 +31,9 @@
 #include "pcm.h"
 #include "control.h"
 #include "info.h"
+
+/* maximum number of devices on the AC97 bus */
+#define	AC97_BUS_MAX_DEVICES	4
 
 /*
  *  AC'97 codec registers
@@ -93,6 +96,10 @@
 #define AC97_FUNC_INFO		0x68	/* Function Information */
 #define AC97_SENSE_INFO		0x6a	/* Sense Details */
 
+/* volume controls */
+#define AC97_MUTE_MASK_MONO	0x8000
+#define AC97_MUTE_MASK_STEREO	0x8080
+
 /* slot allocation */
 #define AC97_SLOT_TAG		0
 #define AC97_SLOT_CMD_ADDR	1
@@ -135,6 +142,7 @@
 #define AC97_BC_18BIT_ADC	0x0100	/* 18-bit ADC resolution */
 #define AC97_BC_20BIT_ADC	0x0200	/* 20-bit ADC resolution */
 #define AC97_BC_ADC_MASK	0x0300
+#define AC97_BC_3D_TECH_ID_MASK	0x7c00	/* Per-vendor ID of 3D enhancement */
 
 /* general purpose */
 #define AC97_GP_DRSS_MASK	0x0c00	/* double rate slot select */
@@ -281,10 +289,12 @@
 /* specific - Analog Devices */
 #define AC97_AD_TEST		0x5a	/* test register */
 #define AC97_AD_TEST2		0x5c	/* undocumented test register 2 */
+#define AC97_AD_HPFD_SHIFT	12	/* High Pass Filter Disable */
 #define AC97_AD_CODEC_CFG	0x70	/* codec configuration */
 #define AC97_AD_JACK_SPDIF	0x72	/* Jack Sense & S/PDIF */
 #define AC97_AD_SERIAL_CFG	0x74	/* Serial Configuration */
 #define AC97_AD_MISC		0x76	/* Misc Control Bits */
+#define AC97_AD_VREFD_SHIFT	2	/* V_REFOUT Disable (AD1888) */
 
 /* specific - Cirrus Logic */
 #define AC97_CSR_ACMODE		0x5e	/* AC Mode Register */
@@ -345,9 +355,9 @@
 #define AC97_ALC650_GPIO_STATUS		0x78
 #define AC97_ALC650_CLOCK		0x7a
 
-/* specific - Yamaha YMF753 */
-#define AC97_YMF753_DIT_CTRL2	0x66	/* DIT Control 2 */
-#define AC97_YMF753_3D_MODE_SEL	0x68	/* 3D Mode Select */
+/* specific - Yamaha YMF7x3 */
+#define AC97_YMF7X3_DIT_CTRL	0x66	/* DIT Control (YMF743) / 2 (YMF753) */
+#define AC97_YMF7X3_3D_MODE_SEL	0x68	/* 3D Mode Select */
 
 /* specific - C-Media */
 #define AC97_CM9738_VENDOR_CTRL	0x5a
@@ -375,7 +385,7 @@
 #define AC97_SCAP_DETECT_BY_VENDOR (1<<8) /* use vendor registers for read tests */
 #define AC97_SCAP_NO_SPDIF	(1<<9)	/* don't build SPDIF controls */
 #define AC97_SCAP_EAPD_LED	(1<<10)	/* EAPD as mute LED */
-#define AC97_SCAP_POWER_SAVE	(1<<11)	/* capable for aggresive power-saving */
+#define AC97_SCAP_POWER_SAVE	(1<<11)	/* capable for aggressive power-saving */
 
 /* ac97->flags */
 #define AC97_HAS_PC_BEEP	(1<<0)	/* force PC Speaker usage */
@@ -397,6 +407,7 @@
 #define AC97_HAS_NO_TONE	(1<<16) /* no Tone volume */
 #define AC97_HAS_NO_STD_PCM	(1<<17)	/* no standard AC97 PCM volume and mute */
 #define AC97_HAS_NO_AUX		(1<<18) /* no standard AC97 AUX volume and mute */
+#define AC97_HAS_8CH		(1<<19) /* supports 8-channel output */
 
 /* rates indexes */
 #define AC97_RATES_FRONT_DAC	0
@@ -471,7 +482,7 @@ struct snd_ac97_template {
 
 struct snd_ac97 {
 	/* -- lowlevel (hardware) driver specific -- */
-	struct snd_ac97_build_ops * build_ops;
+	const struct snd_ac97_build_ops *build_ops;
 	void *private_data;
 	void (*private_free) (struct snd_ac97 *ac97);
 	/* --- */
@@ -504,6 +515,7 @@ struct snd_ac97 {
 			unsigned short pcmreg[3];	// PCM registers
 			unsigned short codec_cfg[3];	// CODEC_CFG bits
 			unsigned char swap_mic_linein;	// AD1986/AD1986A only
+			unsigned char lo_as_master;	/* LO as master */
 		} ad18xx;
 		unsigned int dev_flags;		/* device specific */
 	} spec;
@@ -586,7 +598,7 @@ enum {
 
 struct ac97_quirk {
 	unsigned short subvendor; /* PCI subsystem vendor id */
-	unsigned short subdevice; /* PCI sybsystem device id */
+	unsigned short subdevice; /* PCI subsystem device id */
 	unsigned short mask;	/* device id bit mask, 0 = accept all */
 	unsigned int codec_id;	/* codec id (if any), 0 = accept all */
 	const char *name;	/* name shown as info */
@@ -637,5 +649,11 @@ int snd_ac97_pcm_double_rate_rules(struct snd_pcm_runtime *runtime);
 
 /* ad hoc AC97 device driver access */
 extern struct bus_type ac97_bus_type;
+
+/* AC97 platform_data adding function */
+static inline void snd_ac97_dev_add_pdata(struct snd_ac97 *ac97, void *data)
+{
+	ac97->dev.platform_data = data;
+}
 
 #endif /* __SOUND_AC97_CODEC_H */

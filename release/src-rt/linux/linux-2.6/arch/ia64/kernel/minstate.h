@@ -2,6 +2,22 @@
 #include <asm/cache.h>
 
 #include "entry.h"
+#include "paravirt_inst.h"
+
+#ifdef CONFIG_VIRT_CPU_ACCOUNTING
+/* read ar.itc in advance, and use it before leaving bank 0 */
+#define ACCOUNT_GET_STAMP				\
+(pUStk) mov.m r20=ar.itc;
+#define ACCOUNT_SYS_ENTER				\
+(pUStk) br.call.spnt rp=account_sys_enter		\
+	;;
+#else
+#define ACCOUNT_GET_STAMP
+#define ACCOUNT_SYS_ENTER
+#endif
+
+.section ".data..patch.rse", "a"
+.previous
 
 /*
  * DO_SAVE_MIN switches to the kernel stacks (if necessary) and saves
@@ -28,16 +44,16 @@
  * Note that psr.ic is NOT turned on by this macro.  This is so that
  * we can pass interruption state as arguments to a handler.
  */
-#define DO_SAVE_MIN(COVER,SAVE_IFS,EXTRA)							\
+#define IA64_NATIVE_DO_SAVE_MIN(__COVER,SAVE_IFS,EXTRA,WORKAROUND)				\
 	mov r16=IA64_KR(CURRENT);	/* M */							\
 	mov r27=ar.rsc;			/* M */							\
 	mov r20=r1;			/* A */							\
 	mov r25=ar.unat;		/* M */							\
-	mov r29=cr.ipsr;		/* M */							\
+	MOV_FROM_IPSR(p0,r29);		/* M */							\
 	mov r26=ar.pfs;			/* I */							\
-	mov r28=cr.iip;			/* M */							\
+	MOV_FROM_IIP(r28);			/* M */						\
 	mov r21=ar.fpsr;		/* M */							\
-	COVER;				/* B;; (or nothing) */					\
+	__COVER;				/* B;; (or nothing) */				\
 	;;											\
 	adds r16=IA64_TASK_THREAD_ON_USTACK_OFFSET,r16;						\
 	;;											\
@@ -75,6 +91,7 @@
 	tbit.nz p15,p0=r29,IA64_PSR_I_BIT;							\
 	mov r29=b0										\
 	;;											\
+	WORKAROUND;										\
 	adds r16=PT(R8),r1;	/* initialize first base pointer */				\
 	adds r17=PT(R9),r1;	/* initialize second base pointer */				\
 (pKStk)	mov r18=r0;		/* make sure r18 isn't NaT */					\
@@ -122,11 +139,13 @@
 	;;											\
 .mem.offset 0,0; st8.spill [r16]=r2,16;								\
 .mem.offset 8,0; st8.spill [r17]=r3,16;								\
+	ACCOUNT_GET_STAMP									\
 	adds r2=IA64_PT_REGS_R16_OFFSET,r1;							\
 	;;											\
 	EXTRA;											\
 	movl r1=__gp;		/* establish kernel global pointer */				\
 	;;											\
+	ACCOUNT_SYS_ENTER									\
 	bsw.1;			/* switch back to bank 1 (must be last in insn group) */	\
 	;;
 
@@ -192,6 +211,40 @@
 	st8 [r25]=r10;      	/* ar.ssd */	\
 	;;
 
-#define SAVE_MIN_WITH_COVER	DO_SAVE_MIN(cover, mov r30=cr.ifs,)
-#define SAVE_MIN_WITH_COVER_R19	DO_SAVE_MIN(cover, mov r30=cr.ifs, mov r15=r19)
-#define SAVE_MIN		DO_SAVE_MIN(     , mov r30=r0, )
+#define RSE_WORKAROUND				\
+(pUStk) extr.u r17=r18,3,6;			\
+(pUStk)	sub r16=r18,r22;			\
+[1:](pKStk)	br.cond.sptk.many 1f;		\
+	.xdata4 ".data..patch.rse",1b-.		\
+	;;					\
+	cmp.ge p6,p7 = 33,r17;			\
+	;;					\
+(p6)	mov r17=0x310;				\
+(p7)	mov r17=0x308;				\
+	;;					\
+	cmp.leu p1,p0=r16,r17;			\
+(p1)	br.cond.sptk.many 1f;			\
+	dep.z r17=r26,0,62;			\
+	movl r16=2f;				\
+	;;					\
+	mov ar.pfs=r17;				\
+	dep r27=r0,r27,16,14;			\
+	mov b0=r16;				\
+	;;					\
+	br.ret.sptk b0;				\
+	;;					\
+2:						\
+	mov ar.rsc=r0				\
+	;;					\
+	flushrs;				\
+	;;					\
+	mov ar.bspstore=r22			\
+	;;					\
+	mov r18=ar.bsp;				\
+	;;					\
+1:						\
+	.pred.rel "mutex", pKStk, pUStk
+
+#define SAVE_MIN_WITH_COVER	DO_SAVE_MIN(COVER, mov r30=cr.ifs, , RSE_WORKAROUND)
+#define SAVE_MIN_WITH_COVER_R19	DO_SAVE_MIN(COVER, mov r30=cr.ifs, mov r15=r19, RSE_WORKAROUND)
+#define SAVE_MIN			DO_SAVE_MIN(     , mov r30=r0, , )

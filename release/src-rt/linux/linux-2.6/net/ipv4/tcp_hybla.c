@@ -85,8 +85,7 @@ static inline u32 hybla_fraction(u32 odds)
  *     o Give cwnd a new value based on the model proposed
  *     o remember increments <1
  */
-static void hybla_cong_avoid(struct sock *sk, u32 ack, u32 rtt,
-			    u32 in_flight, int flag)
+static void hybla_cong_avoid(struct sock *sk, u32 ack, u32 in_flight)
 {
 	struct tcp_sock *tp = tcp_sk(sk);
 	struct hybla *ca = inet_csk_ca(sk);
@@ -102,8 +101,10 @@ static void hybla_cong_avoid(struct sock *sk, u32 ack, u32 rtt,
 	if (!tcp_is_cwnd_limited(sk, in_flight))
 		return;
 
-	if (!ca->hybla_en)
-		return tcp_reno_cong_avoid(sk, ack, rtt, in_flight, flag);
+	if (!ca->hybla_en) {
+		tcp_reno_cong_avoid(sk, ack, in_flight);
+		return;
+	}
 
 	if (ca->rho == 0)
 		hybla_recalc_param(sk);
@@ -125,8 +126,8 @@ static void hybla_cong_avoid(struct sock *sk, u32 ack, u32 rtt,
 		 * calculate 2^fract in a <<7 value.
 		 */
 		is_slowstart = 1;
-		increment = ((1 << ca->rho) * hybla_fraction(rho_fractions))
-			- 128;
+		increment = ((1 << min(ca->rho, 16U)) *
+			hybla_fraction(rho_fractions)) - 128;
 	} else {
 		/*
 		 * congestion avoidance
@@ -149,7 +150,11 @@ static void hybla_cong_avoid(struct sock *sk, u32 ack, u32 rtt,
 		ca->snd_cwnd_cents -= 128;
 		tp->snd_cwnd_cnt = 0;
 	}
-
+	/* check when cwnd has not been incremented for a while */
+	if (increment == 0 && odd == 0 && tp->snd_cwnd_cnt >= tp->snd_cwnd) {
+		tp->snd_cwnd++;
+		tp->snd_cwnd_cnt = 0;
+	}
 	/* clamp down slowstart cwnd to ssthresh value. */
 	if (is_slowstart)
 		tp->snd_cwnd = min(tp->snd_cwnd, tp->snd_ssthresh);
@@ -157,7 +162,7 @@ static void hybla_cong_avoid(struct sock *sk, u32 ack, u32 rtt,
 	tp->snd_cwnd = min_t(u32, tp->snd_cwnd, tp->snd_cwnd_clamp);
 }
 
-static struct tcp_congestion_ops tcp_hybla = {
+static struct tcp_congestion_ops tcp_hybla __read_mostly = {
 	.init		= hybla_init,
 	.ssthresh	= tcp_reno_ssthresh,
 	.min_cwnd	= tcp_reno_min_cwnd,

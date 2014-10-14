@@ -22,7 +22,7 @@
  * aha1740_makecode may still need even more work
  * if it doesn't work for your devices, take a look.
  *
- * Reworked for new_eh and new locking by Alan Cox <alan@redhat.com>
+ * Reworked for new_eh and new locking by Alan Cox <alan@lxorguk.ukuu.org.uk>
  *
  * Converted to EISA and generic DMA APIs by Marc Zyngier
  * <maz@wild-wind.fr.eu.org>, 4/2003.
@@ -50,6 +50,7 @@
 #include <linux/device.h>
 #include <linux/eisa.h>
 #include <linux/dma-mapping.h>
+#include <linux/gfp.h>
 
 #include <asm/dma.h>
 #include <asm/system.h>
@@ -271,20 +272,8 @@ static irqreturn_t aha1740_intr_handle(int irq, void *dev_id)
 				continue;
 			}
 			sgptr = (struct aha1740_sg *) SCtmp->host_scribble;
-			if (SCtmp->use_sg) {
-				/* We used scatter-gather.
-				   Do the unmapping dance. */
-				dma_unmap_sg (&edev->dev,
-					      (struct scatterlist *) SCtmp->request_buffer,
-					      SCtmp->use_sg,
-					      SCtmp->sc_data_direction);
-			} else {
-				dma_unmap_single (&edev->dev,
-						  sgptr->buf_dma_addr,
-						  SCtmp->request_bufflen,
-						  DMA_BIDIRECTIONAL);
-			}
-	    
+			scsi_dma_unmap(SCtmp);
+
 			/* Free the sg block */
 			dma_free_coherent (&edev->dev,
 					   sizeof (struct aha1740_sg),
@@ -298,7 +287,7 @@ static irqreturn_t aha1740_intr_handle(int irq, void *dev_id)
 			   cdb when we come back */
 			if ( (adapstat & G2INTST_MASK) == G2INTST_CCBERROR ) {
 				memcpy(SCtmp->sense_buffer, ecbptr->sense, 
-				       sizeof(SCtmp->sense_buffer));
+				       SCSI_SENSE_BUFFERSIZE);
 				errstatus = aha1740_makecode(ecbptr->sense,ecbptr->status);
 			} else
 				errstatus = 0;
@@ -342,18 +331,16 @@ static irqreturn_t aha1740_intr_handle(int irq, void *dev_id)
 	return IRQ_RETVAL(handled);
 }
 
-static int aha1740_queuecommand(Scsi_Cmnd * SCpnt, void (*done)(Scsi_Cmnd *))
+static int aha1740_queuecommand_lck(Scsi_Cmnd * SCpnt, void (*done)(Scsi_Cmnd *))
 {
 	unchar direction;
 	unchar *cmd = (unchar *) SCpnt->cmnd;
 	unchar target = scmd_id(SCpnt);
 	struct aha1740_hostdata *host = HOSTDATA(SCpnt->device->host);
 	unsigned long flags;
-	void *buff = SCpnt->request_buffer;
-	int bufflen = SCpnt->request_bufflen;
 	dma_addr_t sg_dma;
 	struct aha1740_sg *sgptr;
-	int ecbno;
+	int ecbno, nseg;
 	DEB(int i);
 
 	if(*cmd == REQUEST_SENSE) {
@@ -423,24 +410,23 @@ static int aha1740_queuecommand(Scsi_Cmnd * SCpnt, void (*done)(Scsi_Cmnd *))
 	}
 	sgptr = (struct aha1740_sg *) SCpnt->host_scribble;
 	sgptr->sg_dma_addr = sg_dma;
-    
-	if (SCpnt->use_sg) {
-		struct scatterlist * sgpnt;
+
+	nseg = scsi_dma_map(SCpnt);
+	BUG_ON(nseg < 0);
+	if (nseg) {
+		struct scatterlist *sg;
 		struct aha1740_chain * cptr;
-		int i, count;
+		int i;
 		DEB(unsigned char * ptr);
 
 		host->ecb[ecbno].sg = 1;  /* SCSI Initiator Command
 					   * w/scatter-gather*/
-		sgpnt = (struct scatterlist *) SCpnt->request_buffer;
 		cptr = sgptr->sg_chain;
-		count = dma_map_sg (&host->edev->dev, sgpnt, SCpnt->use_sg,
-				    SCpnt->sc_data_direction);
-		for(i=0; i < count; i++) {
-			cptr[i].datalen = sg_dma_len (sgpnt + i);
-			cptr[i].dataptr = sg_dma_address (sgpnt + i);
+		scsi_for_each_sg(SCpnt, sg, nseg, i) {
+			cptr[i].datalen = sg_dma_len (sg);
+			cptr[i].dataptr = sg_dma_address (sg);
 		}
-		host->ecb[ecbno].datalen = count*sizeof(struct aha1740_chain);
+		host->ecb[ecbno].datalen = nseg * sizeof(struct aha1740_chain);
 		host->ecb[ecbno].dataptr = sg_dma;
 #ifdef DEBUG
 		printk("cptr %x: ",cptr);
@@ -448,11 +434,8 @@ static int aha1740_queuecommand(Scsi_Cmnd * SCpnt, void (*done)(Scsi_Cmnd *))
 		for(i=0;i<24;i++) printk("%02x ", ptr[i]);
 #endif
 	} else {
-		host->ecb[ecbno].datalen = bufflen;
-		sgptr->buf_dma_addr =  dma_map_single (&host->edev->dev,
-						       buff, bufflen,
-						       DMA_BIDIRECTIONAL);
-		host->ecb[ecbno].dataptr = sgptr->buf_dma_addr;
+		host->ecb[ecbno].datalen = 0;
+		host->ecb[ecbno].dataptr = 0;
 	}
 	host->ecb[ecbno].lun = SCpnt->device->lun;
 	host->ecb[ecbno].ses = 1; /* Suppress underrun errors */
@@ -478,7 +461,7 @@ static int aha1740_queuecommand(Scsi_Cmnd * SCpnt, void (*done)(Scsi_Cmnd *))
 	/* The Adaptec Spec says the card is so fast that the loops
            will only be executed once in the code below. Even if this
            was true with the fastest processors when the spec was
-           written, it doesn't seem to be true with todays fast
+           written, it doesn't seem to be true with today's fast
            processors. We print a warning if the code is executed more
            often than LOOPCNT_WARN. If this happens, it should be
            investigated. If the count reaches LOOPCNT_MAX, we assume
@@ -519,6 +502,8 @@ static int aha1740_queuecommand(Scsi_Cmnd * SCpnt, void (*done)(Scsi_Cmnd *))
 		printk(KERN_ALERT "aha1740_queuecommand: done can't be NULL\n");
 	return 0;
 }
+
+static DEF_SCSI_QCMD(aha1740_queuecommand)
 
 /* Query the board for its irq_level and irq_type.  Nothing else matters
    in enhanced mode on an EISA bus. */
@@ -664,7 +649,7 @@ static int aha1740_probe (struct device *dev)
 
 static __devexit int aha1740_remove (struct device *dev)
 {
-	struct Scsi_Host *shpnt = dev->driver_data;
+	struct Scsi_Host *shpnt = dev_get_drvdata(dev);
 	struct aha1740_hostdata *host = HOSTDATA (shpnt);
 
 	scsi_remove_host(shpnt);

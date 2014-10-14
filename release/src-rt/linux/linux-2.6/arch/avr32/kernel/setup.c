@@ -26,8 +26,8 @@
 #include <asm/setup.h>
 #include <asm/sysreg.h>
 
-#include <asm/arch/board.h>
-#include <asm/arch/init.h>
+#include <mach/board.h>
+#include <mach/init.h>
 
 extern int root_mountflags;
 
@@ -163,6 +163,7 @@ add_reserved_region(resource_size_t start, resource_size_t end,
 	new->start = start;
 	new->end = end;
 	new->name = name;
+	new->sibling = next;
 	new->flags = IORESOURCE_MEM;
 
 	*pprev = new;
@@ -248,7 +249,7 @@ static int __init early_parse_fbmem(char *p)
 
 	fbmem_size = memparse(p, &p);
 	if (*p == '@') {
-		fbmem_start = memparse(p, &p);
+		fbmem_start = memparse(p + 1, &p);
 		ret = add_reserved_region(fbmem_start,
 					  fbmem_start + fbmem_size - 1,
 					  "Framebuffer");
@@ -273,12 +274,33 @@ static int __init early_parse_fbmem(char *p)
 			printk(KERN_WARNING
 			       "Failed to allocate framebuffer memory\n");
 			fbmem_size = 0;
+		} else {
+			memset(__va(fbmem_start), 0, fbmem_size);
 		}
 	}
 
 	return 0;
 }
 early_param("fbmem", early_parse_fbmem);
+
+/*
+ * Pick out the memory size.  We look for mem=size@start,
+ * where start and size are "size[KkMmGg]"
+ */
+static int __init early_mem(char *p)
+{
+	resource_size_t size, start;
+
+	start = system_ram->start;
+	size  = memparse(p, &p);
+	if (*p == '@')
+		start = memparse(p + 1, &p);
+
+	system_ram->start = start;
+	system_ram->end = system_ram->start + size - 1;
+	return 0;
+}
+early_param("mem", early_mem);
 
 static int __init parse_tag_core(struct tag *tag)
 {
@@ -313,7 +335,7 @@ __tagtable(ATAG_MEM, parse_tag_mem);
 
 static int __init parse_tag_rdimg(struct tag *tag)
 {
-#ifdef CONFIG_INITRD
+#ifdef CONFIG_BLK_DEV_INITRD
 	struct tag_mem_range *mem = &tag->u.mem_range;
 	int ret;
 
@@ -323,7 +345,7 @@ static int __init parse_tag_rdimg(struct tag *tag)
 		return 0;
 	}
 
-	ret = add_reserved_region(mem->start, mem->start + mem->size - 1,
+	ret = add_reserved_region(mem->addr, mem->addr + mem->size - 1,
 				  "initrd");
 	if (ret) {
 		printk(KERN_WARNING
@@ -367,6 +389,21 @@ static int __init parse_tag_clock(struct tag *tag)
 	return 0;
 }
 __tagtable(ATAG_CLOCK, parse_tag_clock);
+
+/*
+ * The board_number correspond to the bd->bi_board_number in U-Boot. This
+ * parameter is only available during initialisation and can be used in some
+ * kind of board identification.
+ */
+u32 __initdata board_number;
+
+static int __init parse_tag_boardinfo(struct tag *tag)
+{
+	board_number = tag->u.boardinfo.board_number;
+
+	return 0;
+}
+__tagtable(ATAG_BOARDINFO, parse_tag_boardinfo);
 
 /*
  * Scan the tag table for this tag, and call its parse function. The
@@ -489,7 +526,8 @@ static void __init setup_bootmem(void)
 		/* Reserve space for the bootmem bitmap... */
 		reserve_bootmem_node(NODE_DATA(node),
 				     PFN_PHYS(bootmap_pfn),
-				     bootmap_size);
+				     bootmap_size,
+				     BOOTMEM_DEFAULT);
 
 		/* ...and any other reserved regions. */
 		for (res = reserved; res; res = res->sibling) {
@@ -505,7 +543,8 @@ static void __init setup_bootmem(void)
 			    && res->end < PFN_PHYS(max_pfn))
 				reserve_bootmem_node(
 					NODE_DATA(node), res->start,
-					res->end - res->start + 1);
+					res->end - res->start + 1,
+					BOOTMEM_DEFAULT);
 		}
 
 		node_set_online(node);

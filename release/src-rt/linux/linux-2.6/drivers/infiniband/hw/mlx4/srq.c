@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2007 Cisco Systems, Inc. All rights reserved.
+ * Copyright (c) 2007, 2008 Mellanox Technologies. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
@@ -32,19 +33,14 @@
 
 #include <linux/mlx4/qp.h>
 #include <linux/mlx4/srq.h>
+#include <linux/slab.h>
 
 #include "mlx4_ib.h"
 #include "user.h"
 
 static void *get_wqe(struct mlx4_ib_srq *srq, int n)
 {
-	int offset = n << srq->msrq.wqe_shift;
-
-	if (srq->buf.nbufs == 1)
-		return srq->buf.u.direct.buf + offset;
-	else
-		return srq->buf.u.page_list[offset >> PAGE_SHIFT].buf +
-			(offset & (PAGE_SIZE - 1));
+	return mlx4_buf_offset(&srq->buf, n << srq->msrq.wqe_shift);
 }
 
 static void mlx4_ib_srq_event(struct mlx4_srq *srq, enum mlx4_event type)
@@ -79,6 +75,7 @@ struct ib_srq *mlx4_ib_create_srq(struct ib_pd *pd,
 	struct mlx4_ib_dev *dev = to_mdev(pd->device);
 	struct mlx4_ib_srq *srq;
 	struct mlx4_wqe_srq_next_seg *next;
+	struct mlx4_wqe_data_seg *scatter;
 	int desc_size;
 	int buf_size;
 	int err;
@@ -115,7 +112,7 @@ struct ib_srq *mlx4_ib_create_srq(struct ib_pd *pd,
 		}
 
 		srq->umem = ib_umem_get(pd->uobject->context, ucmd.buf_addr,
-					buf_size, 0);
+					buf_size, 0, 0);
 		if (IS_ERR(srq->umem)) {
 			err = PTR_ERR(srq->umem);
 			goto err_srq;
@@ -135,7 +132,7 @@ struct ib_srq *mlx4_ib_create_srq(struct ib_pd *pd,
 		if (err)
 			goto err_mtt;
 	} else {
-		err = mlx4_ib_db_alloc(dev, &srq->db, 0);
+		err = mlx4_db_alloc(dev->dev, &srq->db, 0);
 		if (err)
 			goto err_srq;
 
@@ -154,6 +151,11 @@ struct ib_srq *mlx4_ib_create_srq(struct ib_pd *pd,
 			next = get_wqe(srq, i);
 			next->next_wqe_index =
 				cpu_to_be16((i + 1) & (srq->msrq.max - 1));
+
+			for (scatter = (void *) (next + 1);
+			     (void *) scatter < (void *) next + desc_size;
+			     ++scatter)
+				scatter->lkey = cpu_to_be32(MLX4_INVALID_LKEY);
 		}
 
 		err = mlx4_mtt_init(dev->dev, srq->buf.npages, srq->buf.page_shift,
@@ -206,7 +208,7 @@ err_buf:
 
 err_db:
 	if (!pd->uobject)
-		mlx4_ib_db_free(dev, &srq->db);
+		mlx4_db_free(dev->dev, &srq->db);
 
 err_srq:
 	kfree(srq);
@@ -240,6 +242,24 @@ int mlx4_ib_modify_srq(struct ib_srq *ibsrq, struct ib_srq_attr *attr,
 	return 0;
 }
 
+int mlx4_ib_query_srq(struct ib_srq *ibsrq, struct ib_srq_attr *srq_attr)
+{
+	struct mlx4_ib_dev *dev = to_mdev(ibsrq->device);
+	struct mlx4_ib_srq *srq = to_msrq(ibsrq);
+	int ret;
+	int limit_watermark;
+
+	ret = mlx4_srq_query(dev->dev, &srq->msrq, &limit_watermark);
+	if (ret)
+		return ret;
+
+	srq_attr->srq_limit = limit_watermark;
+	srq_attr->max_wr    = srq->msrq.max - 1;
+	srq_attr->max_sge   = srq->msrq.max_gs;
+
+	return 0;
+}
+
 int mlx4_ib_destroy_srq(struct ib_srq *srq)
 {
 	struct mlx4_ib_dev *dev = to_mdev(srq->device);
@@ -255,7 +275,7 @@ int mlx4_ib_destroy_srq(struct ib_srq *srq)
 		kfree(msrq->wrid);
 		mlx4_buf_free(dev->dev, msrq->msrq.max << msrq->msrq.wqe_shift,
 			      &msrq->buf);
-		mlx4_ib_db_free(dev, &msrq->db);
+		mlx4_db_free(dev->dev, &msrq->db);
 	}
 
 	kfree(msrq);

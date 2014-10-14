@@ -41,7 +41,6 @@
  * - Run application using a midi device (eg. /dev/snd/midiC1D0)
  */
 
-#include <sound/driver.h>
 #include <linux/init.h>
 #include <linux/wait.h>
 #include <linux/err.h>
@@ -91,15 +90,17 @@ static int __devinit snd_virmidi_probe(struct platform_device *devptr)
 	int idx, err;
 	int dev = devptr->id;
 
-	card = snd_card_new(index[dev], id[dev], THIS_MODULE,
-			    sizeof(struct snd_card_virmidi));
-	if (card == NULL)
-		return -ENOMEM;
-	vmidi = (struct snd_card_virmidi *)card->private_data;
+	err = snd_card_create(index[dev], id[dev], THIS_MODULE,
+			      sizeof(struct snd_card_virmidi), &card);
+	if (err < 0)
+		return err;
+	vmidi = card->private_data;
 	vmidi->card = card;
 
 	if (midi_devs[dev] > MAX_MIDI_DEVICES) {
-		snd_printk("too much midi devices for virmidi %d: force to use %d\n", dev, MAX_MIDI_DEVICES);
+		snd_printk(KERN_WARNING
+			   "too much midi devices for virmidi %d: "
+			   "force to use %d\n", dev, MAX_MIDI_DEVICES);
 		midi_devs[dev] = MAX_MIDI_DEVICES;
 	}
 	for (idx = 0; idx < midi_devs[dev]; idx++) {
@@ -145,7 +146,7 @@ static struct platform_driver snd_virmidi_driver = {
 	},
 };
 
-static void __init_or_module snd_virmidi_unregister_all(void)
+static void snd_virmidi_unregister_all(void)
 {
 	int i;
 

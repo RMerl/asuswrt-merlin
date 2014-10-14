@@ -46,10 +46,10 @@
 #define PRESENT         1	/* Card in slot */
 
 #define MY_NAME "rpaphp"
-extern int debug;
+extern int rpaphp_debug;
 #define dbg(format, arg...)					\
 	do {							\
-		if (debug)					\
+		if (rpaphp_debug)					\
 			printk(KERN_DEBUG "%s: " format,	\
 				MY_NAME , ## arg); 		\
 	} while (0)
@@ -74,7 +74,6 @@ struct slot {
 	u32 type;
 	u32 power_domain;
 	char *name;
-	char *location;
 	struct device_node *dn;
 	struct pci_bus *bus;
 	struct list_head *pci_devs;

@@ -36,7 +36,7 @@
 #include <linux/init.h>
 #include <asm/assembler.h>
 #include <asm/asm-offsets.h>
-#include <asm/elf.h>
+#include <asm/hwcap.h>
 #include <asm/pgtable-hwdef.h>
 #include <asm/pgtable.h>
 #include <asm/ptrace.h>
@@ -54,20 +54,16 @@ ENTRY(cpu_arm720_proc_init)
 		mov	pc, lr
 
 ENTRY(cpu_arm720_proc_fin)
-		stmfd	sp!, {lr}
-		mov	ip, #PSR_F_BIT | PSR_I_BIT | SVC_MODE
-		msr	cpsr_c, ip
 		mrc	p15, 0, r0, c1, c0, 0
 		bic	r0, r0, #0x1000			@ ...i............
 		bic	r0, r0, #0x000e			@ ............wca.
 		mcr	p15, 0, r0, c1, c0, 0		@ disable caches
-		mcr	p15, 0, r1, c7, c7, 0		@ invalidate cache
-		ldmfd	sp!, {pc}
+		mov	pc, lr
 
 /*
  * Function: arm720_proc_do_idle(void)
  * Params  : r0 = unused
- * Purpose : put the processer in proper idle mode
+ * Purpose : put the processor in proper idle mode
  */
 ENTRY(cpu_arm720_do_idle)
 		mov	pc, lr
@@ -93,29 +89,12 @@ ENTRY(cpu_arm720_switch_mm)
  *	   : r1 = value to set
  * Purpose : Set a PTE and flush it out of any WB cache
  */
-		.align	5
+	.align	5
 ENTRY(cpu_arm720_set_pte_ext)
 #ifdef CONFIG_MMU
-		str	r1, [r0], #-2048		@ linux version
-
-		eor	r1, r1, #L_PTE_PRESENT | L_PTE_YOUNG | L_PTE_WRITE | L_PTE_DIRTY
-
-		bic	r2, r1, #PTE_SMALL_AP_MASK
-		bic	r2, r2, #PTE_TYPE_MASK
-		orr	r2, r2, #PTE_TYPE_SMALL
-
-		tst	r1, #L_PTE_USER			@ User?
-		orrne	r2, r2, #PTE_SMALL_AP_URO_SRW
-
-		tst	r1, #L_PTE_WRITE | L_PTE_DIRTY	@ Write and Dirty?
-		orreq	r2, r2, #PTE_SMALL_AP_UNO_SRW
-
-		tst	r1, #L_PTE_PRESENT | L_PTE_YOUNG	@ Present and Young
-		movne	r2, #0
-
-		str	r2, [r0]			@ hardware version
+	armv3_set_pte_ext wc_disable=0
 #endif
-		mov	pc, lr
+	mov	pc, lr
 
 /*
  * Function: arm720_reset
@@ -134,7 +113,7 @@ ENTRY(cpu_arm720_reset)
 		mcr	p15, 0, ip, c1, c0, 0		@ ctrl register
 		mov	pc, r0
 
-	__INIT
+	__CPUINIT
 
 	.type	__arm710_setup, #function
 __arm710_setup:
@@ -198,6 +177,7 @@ arm720_crval:
 		.type	arm720_processor_functions, #object
 ENTRY(arm720_processor_functions)
 		.word	v4t_late_abort
+		.word	legacy_pabort
 		.word	cpu_arm720_proc_init
 		.word	cpu_arm720_proc_fin
 		.word	cpu_arm720_reset
@@ -205,6 +185,9 @@ ENTRY(arm720_processor_functions)
 		.word	cpu_arm720_dcache_clean_area
 		.word	cpu_arm720_switch_mm
 		.word	cpu_arm720_set_pte_ext
+		.word	0
+		.word	0
+		.word	0
 		.size	arm720_processor_functions, . - arm720_processor_functions
 
 		.section ".rodata"
@@ -230,7 +213,7 @@ cpu_arm720_name:
 		.align
 
 /*
- * See linux/include/asm-arm/procinfo.h for a definition of this structure.
+ * See <asm/procinfo.h> for a definition of this structure.
  */
 	
 		.section ".proc.info.init", #alloc, #execinstr

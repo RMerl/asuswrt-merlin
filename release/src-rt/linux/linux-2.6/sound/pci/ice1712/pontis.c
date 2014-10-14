@@ -21,7 +21,6 @@
  *
  */
 
-#include <sound/driver.h>
 #include <asm/io.h>
 #include <linux/delay.h>
 #include <linux/interrupt.h>
@@ -44,7 +43,8 @@
 /* WM8776 registers */
 #define WM_HP_ATTEN_L		0x00	/* headphone left attenuation */
 #define WM_HP_ATTEN_R		0x01	/* headphone left attenuation */
-#define WM_HP_MASTER		0x02	/* headphone master (both channels), override LLR */
+#define WM_HP_MASTER		0x02	/* headphone master (both channels) */
+					/* override LLR */
 #define WM_DAC_ATTEN_L		0x03	/* digital left attenuation */
 #define WM_DAC_ATTEN_R		0x04
 #define WM_DAC_MASTER		0x05
@@ -216,14 +216,7 @@ static int wm_adc_vol_put(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_val
 /*
  * ADC input mux mixer control
  */
-static int wm_adc_mux_info(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_info *uinfo)
-{
-	uinfo->type = SNDRV_CTL_ELEM_TYPE_BOOLEAN;
-	uinfo->count = 1;
-	uinfo->value.integer.min = 0;
-	uinfo->value.integer.max = 1;
-	return 0;
-}
+#define wm_adc_mux_info		snd_ctl_boolean_mono_info
 
 static int wm_adc_mux_get(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
 {
@@ -254,20 +247,13 @@ static int wm_adc_mux_put(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_val
 		wm_put(ice, WM_ADC_MUX, nval);
 	}
 	mutex_unlock(&ice->gpio_mutex);
-	return 0;
+	return change;
 }
 
 /*
  * Analog bypass (In -> Out)
  */
-static int wm_bypass_info(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_info *uinfo)
-{
-	uinfo->type = SNDRV_CTL_ELEM_TYPE_BOOLEAN;
-	uinfo->count = 1;
-	uinfo->value.integer.min = 0;
-	uinfo->value.integer.max = 1;
-	return 0;
-}
+#define wm_bypass_info		snd_ctl_boolean_mono_info
 
 static int wm_bypass_get(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
 {
@@ -302,14 +288,7 @@ static int wm_bypass_put(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_valu
 /*
  * Left/Right swap
  */
-static int wm_chswap_info(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_info *uinfo)
-{
-	uinfo->type = SNDRV_CTL_ELEM_TYPE_BOOLEAN;
-	uinfo->count = 1;
-	uinfo->value.integer.min = 0;
-	uinfo->value.integer.max = 1;
-	return 0;
-}
+#define wm_chswap_info		snd_ctl_boolean_mono_info
 
 static int wm_chswap_get(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
 {
@@ -472,7 +451,7 @@ static int cs_source_put(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_valu
 		change = 1;
 	}
 	mutex_unlock(&ice->gpio_mutex);
-	return 0;
+	return change;
 }
 
 
@@ -659,7 +638,7 @@ static struct snd_kcontrol_new pontis_controls[] __devinitdata = {
  */
 static void wm_proc_regs_write(struct snd_info_entry *entry, struct snd_info_buffer *buffer)
 {
-	struct snd_ice1712 *ice = (struct snd_ice1712 *)entry->private_data;
+	struct snd_ice1712 *ice = entry->private_data;
 	char line[64];
 	unsigned int reg, val;
 	mutex_lock(&ice->gpio_mutex);
@@ -674,7 +653,7 @@ static void wm_proc_regs_write(struct snd_info_entry *entry, struct snd_info_buf
 
 static void wm_proc_regs_read(struct snd_info_entry *entry, struct snd_info_buffer *buffer)
 {
-	struct snd_ice1712 *ice = (struct snd_ice1712 *)entry->private_data;
+	struct snd_ice1712 *ice = entry->private_data;
 	int reg, val;
 
 	mutex_lock(&ice->gpio_mutex);
@@ -697,7 +676,7 @@ static void wm_proc_init(struct snd_ice1712 *ice)
 
 static void cs_proc_regs_read(struct snd_info_entry *entry, struct snd_info_buffer *buffer)
 {
-	struct snd_ice1712 *ice = (struct snd_ice1712 *)entry->private_data;
+	struct snd_ice1712 *ice = entry->private_data;
 	int reg, val;
 
 	mutex_lock(&ice->gpio_mutex);
@@ -762,7 +741,7 @@ static int __devinit pontis_init(struct snd_ice1712 *ice)
 		WM_DAC_ATTEN_L,	0x0100,	/* DAC 0dB */
 		WM_DAC_ATTEN_R,	0x0000,	/* DAC 0dB */
 		WM_DAC_ATTEN_R,	0x0100,	/* DAC 0dB */
-		// WM_DAC_MASTER,	0x0100,	/* DAC master muted */
+		/* WM_DAC_MASTER,	0x0100, */	/* DAC master muted */
 		WM_PHASE_SWAP,	0x0000,	/* phase normal */
 		WM_DAC_CTRL2,	0x0000,	/* no deemphasis, no ZFLG */
 		WM_ADC_ATTEN_L,	0x0000,	/* ADC muted */
@@ -789,7 +768,7 @@ static int __devinit pontis_init(struct snd_ice1712 *ice)
 	ice->num_total_dacs = 2;
 	ice->num_total_adcs = 2;
 
-	/* to remeber the register values */
+	/* to remember the register values */
 	ice->akm = kzalloc(sizeof(struct snd_akm4xxx), GFP_KERNEL);
 	if (! ice->akm)
 		return -ENOMEM;

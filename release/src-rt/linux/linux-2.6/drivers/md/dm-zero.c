@@ -4,7 +4,7 @@
  * This file is released under the GPL.
  */
 
-#include "dm.h"
+#include <linux/device-mapper.h>
 
 #include <linux/module.h>
 #include <linux/init.h>
@@ -21,6 +21,11 @@ static int zero_ctr(struct dm_target *ti, unsigned int argc, char **argv)
 		ti->error = "No arguments required";
 		return -EINVAL;
 	}
+
+	/*
+	 * Silently drop discards, avoiding -EOPNOTSUPP.
+	 */
+	ti->num_discard_requests = 1;
 
 	return 0;
 }
@@ -43,7 +48,7 @@ static int zero_map(struct dm_target *ti, struct bio *bio,
 		break;
 	}
 
-	bio_endio(bio, bio->bi_size, 0);
+	bio_endio(bio, 0);
 
 	/* accepted bio, don't make new request */
 	return DM_MAPIO_SUBMITTED;
@@ -69,10 +74,7 @@ static int __init dm_zero_init(void)
 
 static void __exit dm_zero_exit(void)
 {
-	int r = dm_unregister_target(&zero_target);
-
-	if (r < 0)
-		DMERR("unregister failed %d", r);
+	dm_unregister_target(&zero_target);
 }
 
 module_init(dm_zero_init)

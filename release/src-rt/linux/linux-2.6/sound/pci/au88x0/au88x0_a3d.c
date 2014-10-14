@@ -53,7 +53,7 @@ a3dsrc_GetTimeConsts(a3dsrc_t * a, short *HrtfTrack, short *ItdTrack,
 }
 
 #endif
-/* Atmospheric absorbtion. */
+/* Atmospheric absorption. */
 
 static void
 a3dsrc_SetAtmosTarget(a3dsrc_t * a, short aa, short b, short c, short d,
@@ -462,9 +462,10 @@ static void a3dsrc_ZeroSliceIO(a3dsrc_t * a)
 /* Reset Single A3D source. */
 static void a3dsrc_ZeroState(a3dsrc_t * a)
 {
-
-	//printk("vortex: ZeroState slice: %d, source %d\n", a->slice, a->source);
-
+	/*
+	printk(KERN_DEBUG "vortex: ZeroState slice: %d, source %d\n",
+	       a->slice, a->source);
+	*/
 	a3dsrc_SetAtmosState(a, 0, 0, 0, 0);
 	a3dsrc_SetHrtfState(a, A3dHrirZeros, A3dHrirZeros);
 	a3dsrc_SetItdDline(a, A3dItdDlineZeros);
@@ -834,7 +835,7 @@ snd_vortex_a3d_filter_put(struct snd_kcontrol *kcontrol,
 		params[i] = ucontrol->value.integer.value[i];
 	/* Translate generic filter params to a3d filter params. */
 	vortex_a3d_translate_filter(a->filter, params);
-	/* Atmospheric absorbtion and filtering. */
+	/* Atmospheric absorption and filtering. */
 	a3dsrc_SetAtmosTarget(a, a->filter[0],
 			      a->filter[1], a->filter[2],
 			      a->filter[3], a->filter[4]);

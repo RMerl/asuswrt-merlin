@@ -50,8 +50,8 @@
  * Macros for calculating offsets into config space given a device
  * structure or dev/fun/reg
  */
-#define CFGOFFSET(bus,devfn,where) (((bus)<<16) + ((devfn)<<8) + (where))
-#define CFGADDR(bus,devfn,where)   CFGOFFSET((bus)->number,(devfn),where)
+#define CFGOFFSET(bus, devfn, where) (((bus)<<16) + ((devfn)<<8) + (where))
+#define CFGADDR(bus, devfn, where)   CFGOFFSET((bus)->number, (devfn), where)
 
 static void *cfg_space;
 
@@ -59,7 +59,7 @@ static void *cfg_space;
 #define LDT_BUS_ENABLED	2
 #define PCI_DEVICE_MODE	4
 
-static int sb1250_bus_status = 0;
+static int sb1250_bus_status;
 
 #define PCI_BRIDGE_DEVICE  0
 #define LDT_BRIDGE_DEVICE  1
@@ -85,7 +85,7 @@ static inline void WRITECFG32(u32 addr, u32 data)
 	*(u32 *) (cfg_space + (addr & ~3)) = data;
 }
 
-int pcibios_map_irq(struct pci_dev *dev, u8 slot, u8 pin)
+int pcibios_map_irq(const struct pci_dev *dev, u8 slot, u8 pin)
 {
 	return dev->irq;
 }
@@ -208,9 +208,9 @@ struct pci_controller sb1250_controller = {
 
 static int __init sb1250_pcibios_init(void)
 {
+	void __iomem *io_map_base;
 	uint32_t cmdreg;
 	uint64_t reg;
-	extern int pci_probe_only;
 
 	/* CFE will assign PCI resources */
 	pci_probe_only = 1;
@@ -254,11 +254,9 @@ static int __init sb1250_pcibios_init(void)
 	 * works correctly with most of Linux's drivers.
 	 * XXX ehs: Should this happen in PCI Device mode?
 	 */
-
-	set_io_port_base((unsigned long)
-			 ioremap(A_PHYS_LDTPCI_IO_MATCH_BYTES, 65536));
-	isa_slot_offset = (unsigned long)
-	    ioremap(A_PHYS_LDTPCI_IO_MATCH_BYTES_32, 1024 * 1024);
+	io_map_base = ioremap(A_PHYS_LDTPCI_IO_MATCH_BYTES, 1024 * 1024);
+	sb1250_controller.io_map_base = (unsigned long)io_map_base;
+	set_io_port_base((unsigned long)io_map_base);
 
 #ifdef CONFIG_SIBYTE_HAS_LDT
 	/*

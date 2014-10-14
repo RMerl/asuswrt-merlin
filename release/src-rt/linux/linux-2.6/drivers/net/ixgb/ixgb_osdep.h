@@ -1,7 +1,7 @@
 /*******************************************************************************
 
   Intel PRO/10GbE Linux driver
-  Copyright(c) 1999 - 2006 Intel Corporation.
+  Copyright(c) 1999 - 2008 Intel Corporation.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms and conditions of the GNU General Public License,
@@ -39,29 +39,10 @@
 #include <linux/interrupt.h>
 #include <linux/sched.h>
 
-typedef enum {
-#undef FALSE
-	FALSE = 0,
-#undef TRUE
-	TRUE = 1
-} boolean_t;
-
 #undef ASSERT
-#define ASSERT(x)	if(!(x)) BUG()
-#define MSGOUT(S, A, B)	printk(KERN_DEBUG S "\n", A, B)
+#define ASSERT(x)	BUG_ON(!(x))
 
-#ifdef DBG
-#define DEBUGOUT(S)		printk(KERN_DEBUG S "\n")
-#define DEBUGOUT1(S, A...)	printk(KERN_DEBUG S "\n", A)
-#else
-#define DEBUGOUT(S)
-#define DEBUGOUT1(S, A...)
-#endif
-
-#define DEBUGFUNC(F) DEBUGOUT(F)
-#define DEBUGOUT2 DEBUGOUT1
-#define DEBUGOUT3 DEBUGOUT2
-#define DEBUGOUT7 DEBUGOUT3
+#define ENTER() pr_debug("%s\n", __func__);
 
 #define IXGB_WRITE_REG(a, reg, value) ( \
 	writel((value), ((a)->hw_addr + IXGB_##reg)))

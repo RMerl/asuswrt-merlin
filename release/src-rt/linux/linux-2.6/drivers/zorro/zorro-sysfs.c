@@ -49,18 +49,13 @@ static ssize_t zorro_show_resource(struct device *dev, struct device_attribute *
 
 static DEVICE_ATTR(resource, S_IRUGO, zorro_show_resource, NULL);
 
-static ssize_t zorro_read_config(struct kobject *kobj, char *buf, loff_t off,
-				 size_t count)
+static ssize_t zorro_read_config(struct file *filp, struct kobject *kobj,
+				 struct bin_attribute *bin_attr,
+				 char *buf, loff_t off, size_t count)
 {
 	struct zorro_dev *z = to_zorro_dev(container_of(kobj, struct device,
 					   kobj));
 	struct ConfigDev cd;
-	unsigned int size = sizeof(cd);
-
-	if (off > size)
-		return 0;
-	if (off+count > size)
-		count = size-off;
 
 	/* Construct a ConfigDev */
 	memset(&cd, 0, sizeof(cd));
@@ -70,31 +65,44 @@ static ssize_t zorro_read_config(struct kobject *kobj, char *buf, loff_t off,
 	cd.cd_BoardAddr = (void *)zorro_resource_start(z);
 	cd.cd_BoardSize = zorro_resource_len(z);
 
-	memcpy(buf, (void *)&cd+off, count);
-	return count;
+	return memory_read_from_buffer(buf, count, &off, &cd, sizeof(cd));
 }
 
 static struct bin_attribute zorro_config_attr = {
 	.attr =	{
 		.name = "config",
-		.mode = S_IRUGO | S_IWUSR,
-		.owner = THIS_MODULE
+		.mode = S_IRUGO,
 	},
 	.size = sizeof(struct ConfigDev),
 	.read = zorro_read_config,
 };
 
-void zorro_create_sysfs_dev_files(struct zorro_dev *z)
+static ssize_t modalias_show(struct device *dev, struct device_attribute *attr,
+			     char *buf)
+{
+	struct zorro_dev *z = to_zorro_dev(dev);
+
+	return sprintf(buf, ZORRO_DEVICE_MODALIAS_FMT "\n", z->id);
+}
+
+static DEVICE_ATTR(modalias, S_IRUGO, modalias_show, NULL);
+
+int zorro_create_sysfs_dev_files(struct zorro_dev *z)
 {
 	struct device *dev = &z->dev;
+	int error;
 
 	/* current configuration's attributes */
-	device_create_file(dev, &dev_attr_id);
-	device_create_file(dev, &dev_attr_type);
-	device_create_file(dev, &dev_attr_serial);
-	device_create_file(dev, &dev_attr_slotaddr);
-	device_create_file(dev, &dev_attr_slotsize);
-	device_create_file(dev, &dev_attr_resource);
-	sysfs_create_bin_file(&dev->kobj, &zorro_config_attr);
+	if ((error = device_create_file(dev, &dev_attr_id)) ||
+	    (error = device_create_file(dev, &dev_attr_type)) ||
+	    (error = device_create_file(dev, &dev_attr_serial)) ||
+	    (error = device_create_file(dev, &dev_attr_slotaddr)) ||
+	    (error = device_create_file(dev, &dev_attr_slotsize)) ||
+	    (error = device_create_file(dev, &dev_attr_resource)) ||
+	    (error = device_create_file(dev, &dev_attr_modalias)) ||
+	    (error = sysfs_create_bin_file(&dev->kobj, &zorro_config_attr)))
+		return error;
+
+	return 0;
 }
 

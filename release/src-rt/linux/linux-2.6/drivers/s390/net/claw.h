@@ -74,8 +74,8 @@
 #define MAX_ENVELOPE_SIZE       65536
 #define CLAW_DEFAULT_MTU_SIZE   4096
 #define DEF_PACK_BUFSIZE	32768
-#define READ                    0
-#define WRITE                   1
+#define READ_CHANNEL		0
+#define WRITE_CHANNEL		1
 
 #define TB_TX                   0          /* sk buffer handling in process  */
 #define TB_STOP                 1          /* network device stop in process */
@@ -85,7 +85,7 @@
 #define CLAW_MAX_DEV            256        /*      max claw devices          */
 #define MAX_NAME_LEN            8          /* host name, adapter name length */
 #define CLAW_FRAME_SIZE         4096
-#define CLAW_ID_SIZE            BUS_ID_SIZE+3
+#define CLAW_ID_SIZE		20+3
 
 /* state machine codes used in claw_irq_handler */
 
@@ -114,11 +114,32 @@ do { \
 	debug_event(claw_dbf_##name,level,(void*)(addr),len); \
 } while (0)
 
+/* Allow to sort out low debug levels early to avoid wasted sprints */
+static inline int claw_dbf_passes(debug_info_t *dbf_grp, int level)
+{
+	return (level <= dbf_grp->level);
+}
+
 #define CLAW_DBF_TEXT_(level,name,text...) \
-do {                                       \
-	sprintf(debug_buffer, text);  \
-		debug_text_event(claw_dbf_##name,level, debug_buffer);\
-} while (0)
+	do { \
+		if (claw_dbf_passes(claw_dbf_##name, level)) { \
+			sprintf(debug_buffer, text); \
+			debug_text_event(claw_dbf_##name, level, \
+						debug_buffer); \
+		} \
+	} while (0)
+
+/**
+ * Enum for classifying detected devices.
+ */
+enum claw_channel_types {
+	/* Device is not a channel  */
+	claw_channel_type_none,
+
+	/* Device is a CLAW channel device */
+	claw_channel_type_claw
+};
+
 
 /*******************************************************
 *  Define Control Blocks                               *
@@ -278,8 +299,6 @@ struct claw_env {
         __u16                   write_size;     /* write buffer size */
         __u16                   dev_id;         /* device ident */
 	__u8			packing;	/* are we packing? */
-	volatile __u8		queme_switch;   /* gate for imed packing  */
-	volatile unsigned long	pk_delay;	/* Delay for adaptive packing */
         __u8                    in_use;         /* device active flag */
         struct net_device       *ndev;    	/* backward ptr to the net dev*/
 };

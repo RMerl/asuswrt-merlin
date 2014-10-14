@@ -10,6 +10,7 @@
 #include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/pci.h>
+#include <linux/smp.h>
 #include <asm/sn/arch.h>
 #include <asm/pci/bridge.h>
 #include <asm/paccess.h>
@@ -47,6 +48,8 @@ int __cpuinit bridge_probe(nasid_t nasid, int widget_id, int masterwid)
 	static int num_bridges = 0;
 	bridge_t *bridge;
 	int slot;
+
+	pci_probe_only = 1;
 
 	printk("a bridge\n");
 
@@ -100,6 +103,11 @@ int __cpuinit bridge_probe(nasid_t nasid, int widget_id, int masterwid)
 	 */
 	bridge->b_wid_control |= BRIDGE_CTRL_IO_SWAP |
 	                         BRIDGE_CTRL_MEM_SWAP;
+#ifdef CONFIG_PAGE_SIZE_4KB
+	bridge->b_wid_control &= ~BRIDGE_CTRL_PAGE_SIZE;
+#else /* 16kB or larger */
+	bridge->b_wid_control |= BRIDGE_CTRL_PAGE_SIZE;
+#endif
 
 	/*
 	 * Hmm...  IRIX sets additional bits in the address which
@@ -134,15 +142,9 @@ int __cpuinit bridge_probe(nasid_t nasid, int widget_id, int masterwid)
  * A given PCI device, in general, should be able to intr any of the cpus
  * on any one of the hubs connected to its xbow.
  */
-int __devinit pcibios_map_irq(struct pci_dev *dev, u8 slot, u8 pin)
+int __devinit pcibios_map_irq(const struct pci_dev *dev, u8 slot, u8 pin)
 {
 	return 0;
-}
-
-/* Most MIPS systems have straight-forward swizzling needs.  */
-static inline u8 bridge_swizzle(u8 pin, u8 slot)
-{
-	return (((pin - 1) + slot) % 4) + 1;
 }
 
 static inline struct pci_dev *bridge_root_dev(struct pci_dev *dev)
@@ -209,7 +211,7 @@ static inline void pci_enable_swapping(struct pci_dev *dev)
 	bridge->b_widget.w_tflush;	/* Flush */
 }
 
-static void __init pci_fixup_ioc3(struct pci_dev *d)
+static void __devinit pci_fixup_ioc3(struct pci_dev *d)
 {
 	pci_disable_swapping(d);
 }
@@ -220,6 +222,7 @@ int pcibus_to_node(struct pci_bus *bus)
 
 	return bc->nasid;
 }
+EXPORT_SYMBOL(pcibus_to_node);
 
 DECLARE_PCI_FIXUP_HEADER(PCI_VENDOR_ID_SGI, PCI_DEVICE_ID_SGI_IOC3,
 	pci_fixup_ioc3);

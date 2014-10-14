@@ -47,8 +47,7 @@ _GLOBAL(slb_allocate_realmode)
 	 * it to VSID 0, which is reserved as a bad VSID - one which
 	 * will never have any pages in it.  */
 
-	/* Check if hitting the linear mapping of the vmalloc/ioremap
-	 * kernel space
+	/* Check if hitting the linear mapping or some other kernel space
 	*/
 	bne	cr7,1f
 
@@ -57,24 +56,39 @@ _GLOBAL(slb_allocate_realmode)
 	 */
 _GLOBAL(slb_miss_kernel_load_linear)
 	li	r11,0
-	b	slb_finish_load
-
-1:	/* vmalloc/ioremap mapping encoding bits, the "li" instructions below
-	 * will be patched by the kernel at boot
-	 */
 BEGIN_FTR_SECTION
-	/* check whether this is in vmalloc or ioremap space */
+	b	slb_finish_load
+END_FTR_SECTION_IFCLR(CPU_FTR_1T_SEGMENT)
+	b	slb_finish_load_1T
+
+1:
+#ifdef CONFIG_SPARSEMEM_VMEMMAP
+	/* Check virtual memmap region. To be patches at kernel boot */
+	cmpldi	cr0,r9,0xf
+	bne	1f
+_GLOBAL(slb_miss_kernel_load_vmemmap)
+	li	r11,0
+	b	6f
+1:
+#endif /* CONFIG_SPARSEMEM_VMEMMAP */
+
+	/* vmalloc mapping gets the encoding from the PACA as the mapping
+	 * can be demoted from 64K -> 4K dynamically on some machines
+	 */
 	clrldi	r11,r10,48
 	cmpldi	r11,(VMALLOC_SIZE >> 28) - 1
 	bgt	5f
 	lhz	r11,PACAVMALLOCSLLP(r13)
-	b	slb_finish_load
+	b	6f
 5:
-END_FTR_SECTION_IFCLR(CPU_FTR_CI_LARGE_PAGE)
-_GLOBAL(slb_miss_kernel_load_io)
+	/* IO mapping */
+	_GLOBAL(slb_miss_kernel_load_io)
 	li	r11,0
+6:
+BEGIN_FTR_SECTION
 	b	slb_finish_load
-
+END_FTR_SECTION_IFCLR(CPU_FTR_1T_SEGMENT)
+	b	slb_finish_load_1T
 
 0:	/* user address: proto-VSID = context << 15 | ESID. First check
 	 * if the address is within the boundaries of the user region
@@ -122,7 +136,13 @@ _GLOBAL(slb_miss_kernel_load_io)
 #endif /* CONFIG_PPC_MM_SLICES */
 
 	ld	r9,PACACONTEXTID(r13)
+BEGIN_FTR_SECTION
+	cmpldi	r10,0x1000
+END_FTR_SECTION_IFSET(CPU_FTR_1T_SEGMENT)
 	rldimi	r10,r9,USER_ESID_BITS,0
+BEGIN_FTR_SECTION
+	bge	slb_finish_load_1T
+END_FTR_SECTION_IFSET(CPU_FTR_1T_SEGMENT)
 	b	slb_finish_load
 
 8:	/* invalid EA */
@@ -188,7 +208,7 @@ _GLOBAL(slb_allocate_user)
  * r3 = EA, r10 = proto-VSID, r11 = flags, clobbers r9, cr7 = <> PAGE_OFFSET
  */
 slb_finish_load:
-	ASM_VSID_SCRAMBLE(r10,r9)
+	ASM_VSID_SCRAMBLE(r10,r9,256M)
 	rldimi	r11,r10,SLB_VSID_SHIFT,16	/* combine VSID and flags */
 
 	/* r3 = EA, r11 = VSID data */
@@ -213,10 +233,11 @@ BEGIN_FW_FTR_SECTION
 END_FW_FTR_SECTION_IFSET(FW_FEATURE_ISERIES)
 #endif /* CONFIG_PPC_ISERIES */
 
-	ld	r10,PACASTABRR(r13)
+7:	ld	r10,PACASTABRR(r13)
 	addi	r10,r10,1
-	/* use a cpu feature mask if we ever change our slb size */
-	cmpldi	r10,SLB_NUM_ENTRIES
+	/* This gets soft patched on boot. */
+_GLOBAL(slb_compare_rr_to_size)
+	cmpldi	r10,0
 
 	blt+	4f
 	li	r10,SLB_NUM_BOLTED
@@ -258,4 +279,21 @@ END_FW_FTR_SECTION_IFSET(FW_FEATURE_ISERIES)
 	sth	r3,PACASLBCACHEPTR(r13)	/* paca->slb_cache_ptr = offset */
 	crclr	4*cr0+eq		/* set result to "success" */
 	blr
+
+/*
+ * Finish loading of a 1T SLB entry (for the kernel linear mapping) and return.
+ * We assume legacy iSeries will never have 1T segments.
+ *
+ * r3 = EA, r10 = proto-VSID, r11 = flags, clobbers r9
+ */
+slb_finish_load_1T:
+	srdi	r10,r10,40-28		/* get 1T ESID */
+	ASM_VSID_SCRAMBLE(r10,r9,1T)
+	rldimi	r11,r10,SLB_VSID_SHIFT_1T,16	/* combine VSID and flags */
+	li	r10,MMU_SEGSIZE_1T
+	rldimi	r11,r10,SLB_VSID_SSIZE_SHIFT,0	/* insert segment size */
+
+	/* r3 = EA, r11 = VSID data */
+	clrrdi	r3,r3,SID_SHIFT_1T	/* clear out non-ESID bits */
+	b	7b
 

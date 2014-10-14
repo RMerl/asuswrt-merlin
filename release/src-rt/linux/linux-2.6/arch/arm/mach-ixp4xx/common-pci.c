@@ -25,14 +25,15 @@
 #include <linux/slab.h>
 #include <linux/delay.h>
 #include <linux/device.h>
+#include <linux/io.h>
 #include <asm/dma-mapping.h>
 
-#include <asm/io.h>
+#include <asm/cputype.h>
 #include <asm/irq.h>
 #include <asm/sizes.h>
 #include <asm/system.h>
 #include <asm/mach/pci.h>
-#include <asm/hardware.h>
+#include <mach/hardware.h>
 
 
 /*
@@ -87,7 +88,7 @@ static inline int check_master_abort(void)
 	if (isr & PCI_ISR_PFE) {
 		/* make sure the Master Abort bit is reset */    
 		*PCI_ISR = PCI_ISR_PFE;
-		pr_debug("%s failed\n", __FUNCTION__);
+		pr_debug("%s failed\n", __func__);
 		return 1;
 	}
 
@@ -347,7 +348,7 @@ int dma_needs_bounce(struct device *dev, dma_addr_t dma_addr, size_t size)
  * This is really ugly and we need a better way of specifying
  * DMA-capable regions of memory.
  */
-void __init ixp4xx_adjust_zones(int node, unsigned long *zone_size,
+void __init ixp4xx_adjust_zones(unsigned long *zone_size,
 	unsigned long *zhole_size)
 {
 	unsigned int sz = SZ_64M >> PAGE_SHIFT;
@@ -355,7 +356,7 @@ void __init ixp4xx_adjust_zones(int node, unsigned long *zone_size,
 	/*
 	 * Only adjust if > 64M on current system
 	 */
-	if (node || (zone_size[0] <= sz))
+	if (zone_size[0] <= sz)
 		return;
 
 	zone_size[1] = zone_size[0] - sz;
@@ -365,16 +366,14 @@ void __init ixp4xx_adjust_zones(int node, unsigned long *zone_size,
 }
 
 void __init ixp4xx_pci_preinit(void)
-{  
-	unsigned long processor_id;
-
-	asm("mrc p15, 0, %0, cr0, cr0, 0;" : "=r"(processor_id) :);
+{
+	unsigned long cpuid = read_cpuid_id();
 
 	/*
 	 * Determine which PCI read method to use.
 	 * Rev 0 IXP425 requires workaround.
 	 */
-	if (!(processor_id & 0xf) && cpu_is_ixp42x()) {
+	if (!(cpuid & 0xf) && cpu_is_ixp42x()) {
 		printk("PCI: IXP42x A0 silicon detected - "
 			"PCI Non-Prefetch Workaround Enabled\n");
 		ixp4xx_pci_read = ixp4xx_pci_read_errata;
@@ -383,21 +382,22 @@ void __init ixp4xx_pci_preinit(void)
 
 
 	/* hook in our fault handler for PCI errors */
-	hook_fault_code(16+6, abort_handler, SIGBUS, "imprecise external abort");
+	hook_fault_code(16+6, abort_handler, SIGBUS, 0,
+			"imprecise external abort");
 
 	pr_debug("setup PCI-AHB(inbound) and AHB-PCI(outbound) address mappings\n");
 
-	/* 
+	/*
 	 * We use identity AHB->PCI address translation
 	 * in the 0x48000000 to 0x4bffffff address space
 	 */
 	*PCI_PCIMEMBASE = 0x48494A4B;
 
-	/* 
+	/*
 	 * We also use identity PCI->AHB address translation
 	 * in 4 16MB BARs that begin at the physical memory start
 	 */
-	*PCI_AHBMEMBASE = (PHYS_OFFSET & 0xFF000000) + 
+	*PCI_AHBMEMBASE = (PHYS_OFFSET & 0xFF000000) +
 		((PHYS_OFFSET & 0xFF000000) >> 8) +
 		((PHYS_OFFSET & 0xFF000000) >> 16) +
 		((PHYS_OFFSET & 0xFF000000) >> 24) +
@@ -409,18 +409,19 @@ void __init ixp4xx_pci_preinit(void)
 		pr_debug("setup BARs in controller\n");
 
 		/*
-		 * We configure the PCI inbound memory windows to be 
+		 * We configure the PCI inbound memory windows to be
 		 * 1:1 mapped to SDRAM
 		 */
-		local_write_config(PCI_BASE_ADDRESS_0, 4, PHYS_OFFSET + 0x00000000);
-		local_write_config(PCI_BASE_ADDRESS_1, 4, PHYS_OFFSET + 0x01000000);
-		local_write_config(PCI_BASE_ADDRESS_2, 4, PHYS_OFFSET + 0x02000000);
-		local_write_config(PCI_BASE_ADDRESS_3, 4, PHYS_OFFSET + 0x03000000);
+		local_write_config(PCI_BASE_ADDRESS_0, 4, PHYS_OFFSET);
+		local_write_config(PCI_BASE_ADDRESS_1, 4, PHYS_OFFSET + SZ_16M);
+		local_write_config(PCI_BASE_ADDRESS_2, 4, PHYS_OFFSET + SZ_32M);
+		local_write_config(PCI_BASE_ADDRESS_3, 4, PHYS_OFFSET + SZ_48M);
 
 		/*
-		 * Enable CSR window at 0xff000000.
+		 * Enable CSR window at 64 MiB to allow PCI masters
+		 * to continue prefetching past 64 MiB boundary.
 		 */
-		local_write_config(PCI_BASE_ADDRESS_4, 4, 0xff000008);
+		local_write_config(PCI_BASE_ADDRESS_4, 4, PHYS_OFFSET + SZ_64M);
 
 		/*
 		 * Enable the IO window to be way up high, at 0xfffffc00
@@ -481,11 +482,7 @@ int ixp4xx_setup(int nr, struct pci_sys_data *sys)
 
 	res[1].name = "PCI Memory Space";
 	res[1].start = PCIBIOS_MIN_MEM;
-#ifndef CONFIG_IXP4XX_INDIRECT_PCI
-	res[1].end = 0x4bffffff;
-#else
-	res[1].end = 0x4fffffff;
-#endif
+	res[1].end = PCIBIOS_MAX_MEM;
 	res[1].flags = IORESOURCE_MEM;
 
 	request_resource(&ioport_resource, &res[0]);
@@ -501,32 +498,14 @@ int ixp4xx_setup(int nr, struct pci_sys_data *sys)
 	return 1;
 }
 
-struct pci_bus *ixp4xx_scan_bus(int nr, struct pci_sys_data *sys)
+struct pci_bus * __devinit ixp4xx_scan_bus(int nr, struct pci_sys_data *sys)
 {
 	return pci_scan_bus(sys->busnr, &ixp4xx_ops, sys);
 }
 
-/*
- * We override these so we properly do dmabounce otherwise drivers
- * are able to set the dma_mask to 0xffffffff and we can no longer
- * trap bounces. :(
- *
- * We just return true on everyhing except for < 64MB in which case 
- * we will fail miseralby and die since we can't handle that case.
- */
-int
-pci_set_dma_mask(struct pci_dev *dev, u64 mask)
+int dma_set_coherent_mask(struct device *dev, u64 mask)
 {
-	if (mask >= SZ_64M - 1 )
-		return 0;
-
-	return -EIO;
-}
-    
-int
-pci_set_consistent_dma_mask(struct pci_dev *dev, u64 mask)
-{
-	if (mask >= SZ_64M - 1 )
+	if (mask >= SZ_64M - 1)
 		return 0;
 
 	return -EIO;
@@ -534,4 +513,4 @@ pci_set_consistent_dma_mask(struct pci_dev *dev, u64 mask)
 
 EXPORT_SYMBOL(ixp4xx_pci_read);
 EXPORT_SYMBOL(ixp4xx_pci_write);
-
+EXPORT_SYMBOL(dma_set_coherent_mask);

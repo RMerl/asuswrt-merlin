@@ -30,18 +30,20 @@
 #include <linux/init.h>
 #include <linux/completion.h>
 #include <linux/delay.h>
+#include <linux/proc_fs.h>
 #include <linux/dma-mapping.h>
 #include <linux/bcd.h>
 #include <linux/rtc.h>
+#include <linux/slab.h>
 
 #include <asm/time.h>
 #include <asm/uaccess.h>
 #include <asm/paca.h>
 #include <asm/abs_addr.h>
 #include <asm/firmware.h>
-#include <asm/iseries/vio.h>
 #include <asm/iseries/mf.h>
 #include <asm/iseries/hv_lp_config.h>
+#include <asm/iseries/hv_lp_event.h>
 #include <asm/iseries/it_lp_queue.h>
 
 #include "setup.h"
@@ -49,7 +51,7 @@
 static int mf_initialized;
 
 /*
- * This is the structure layout for the Machine Facilites LPAR event
+ * This is the structure layout for the Machine Facilities LPAR event
  * flows.
  */
 struct vsp_cmd_data {
@@ -267,7 +269,8 @@ static struct pending_event *new_pending_event(void)
 	return ev;
 }
 
-static int signal_vsp_instruction(struct vsp_cmd_data *vsp_cmd)
+static int __maybe_unused
+signal_vsp_instruction(struct vsp_cmd_data *vsp_cmd)
 {
 	struct pending_event *ev = new_pending_event();
 	int rc;
@@ -722,13 +725,13 @@ static int mf_set_rtc(struct rtc_time *tm)
 	day = tm->tm_mday;
 	mon = tm->tm_mon + 1;
 
-	BIN_TO_BCD(sec);
-	BIN_TO_BCD(min);
-	BIN_TO_BCD(hour);
-	BIN_TO_BCD(mon);
-	BIN_TO_BCD(day);
-	BIN_TO_BCD(y1);
-	BIN_TO_BCD(y2);
+	sec = bin2bcd(sec);
+	min = bin2bcd(min);
+	hour = bin2bcd(hour);
+	mon = bin2bcd(mon);
+	day = bin2bcd(day);
+	y1 = bin2bcd(y1);
+	y2 = bin2bcd(y2);
 
 	memset(ce_time, 0, sizeof(ce_time));
 	ce_time[3] = 0x41;
@@ -777,12 +780,12 @@ static int rtc_set_tm(int rc, u8 *ce_msg, struct rtc_time *tm)
 		u8 day = ce_msg[10];
 		u8 mon = ce_msg[11];
 
-		BCD_TO_BIN(sec);
-		BCD_TO_BIN(min);
-		BCD_TO_BIN(hour);
-		BCD_TO_BIN(day);
-		BCD_TO_BIN(mon);
-		BCD_TO_BIN(year);
+		sec = bcd2bin(sec);
+		min = bcd2bin(min);
+		hour = bcd2bin(hour);
+		day = bcd2bin(day);
+		mon = bcd2bin(mon);
+		year = bcd2bin(year);
 
 		if (year <= 69)
 			year += 100;
@@ -854,61 +857,58 @@ static int mf_get_boot_rtc(struct rtc_time *tm)
 }
 
 #ifdef CONFIG_PROC_FS
-
-static int proc_mf_dump_cmdline(char *page, char **start, off_t off,
-		int count, int *eof, void *data)
+static int mf_cmdline_proc_show(struct seq_file *m, void *v)
 {
-	int len;
-	char *p;
+	char *page, *p;
 	struct vsp_cmd_data vsp_cmd;
 	int rc;
 	dma_addr_t dma_addr;
 
 	/* The HV appears to return no more than 256 bytes of command line */
-	if (off >= 256)
-		return 0;
-	if ((off + count) > 256)
-		count = 256 - off;
-
-	dma_addr = dma_map_single(iSeries_vio_dev, page, off + count,
-			DMA_FROM_DEVICE);
-	if (dma_mapping_error(dma_addr))
+	page = kmalloc(256, GFP_KERNEL);
+	if (!page)
 		return -ENOMEM;
-	memset(page, 0, off + count);
+
+	dma_addr = iseries_hv_map(page, 256, DMA_FROM_DEVICE);
+	if (dma_addr == DMA_ERROR_CODE) {
+		kfree(page);
+		return -ENOMEM;
+	}
+	memset(page, 0, 256);
 	memset(&vsp_cmd, 0, sizeof(vsp_cmd));
 	vsp_cmd.cmd = 33;
 	vsp_cmd.sub_data.kern.token = dma_addr;
 	vsp_cmd.sub_data.kern.address_type = HvLpDma_AddressType_TceIndex;
-	vsp_cmd.sub_data.kern.side = (u64)data;
-	vsp_cmd.sub_data.kern.length = off + count;
+	vsp_cmd.sub_data.kern.side = (u64)m->private;
+	vsp_cmd.sub_data.kern.length = 256;
 	mb();
 	rc = signal_vsp_instruction(&vsp_cmd);
-	dma_unmap_single(iSeries_vio_dev, dma_addr, off + count,
-			DMA_FROM_DEVICE);
-	if (rc)
+	iseries_hv_unmap(dma_addr, 256, DMA_FROM_DEVICE);
+	if (rc) {
+		kfree(page);
 		return rc;
-	if (vsp_cmd.result_code != 0)
+	}
+	if (vsp_cmd.result_code != 0) {
+		kfree(page);
 		return -ENOMEM;
+	}
 	p = page;
-	len = 0;
-	while (len < (off + count)) {
-		if ((*p == '\0') || (*p == '\n')) {
-			if (*p == '\0')
-				*p = '\n';
-			p++;
-			len++;
-			*eof = 1;
+	while (p - page < 256) {
+		if (*p == '\0' || *p == '\n') {
+			*p = '\n';
 			break;
 		}
 		p++;
-		len++;
-	}
 
-	if (len < off) {
-		*eof = 1;
-		len = 0;
 	}
-	return len;
+	seq_write(m, page, p - page);
+	kfree(page);
+	return 0;
+}
+
+static int mf_cmdline_proc_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, mf_cmdline_proc_show, PDE(inode)->data);
 }
 
 #if 0
@@ -919,8 +919,7 @@ static int mf_getVmlinuxChunk(char *buffer, int *size, int offset, u64 side)
 	int len = *size;
 	dma_addr_t dma_addr;
 
-	dma_addr = dma_map_single(iSeries_vio_dev, buffer, len,
-			DMA_FROM_DEVICE);
+	dma_addr = iseries_hv_map(buffer, len, DMA_FROM_DEVICE);
 	memset(buffer, 0, len);
 	memset(&vsp_cmd, 0, sizeof(vsp_cmd));
 	vsp_cmd.cmd = 32;
@@ -938,7 +937,7 @@ static int mf_getVmlinuxChunk(char *buffer, int *size, int offset, u64 side)
 			rc = -ENOMEM;
 	}
 
-	dma_unmap_single(iSeries_vio_dev, dma_addr, len, DMA_FROM_DEVICE);
+	iseries_hv_unmap(dma_addr, len, DMA_FROM_DEVICE);
 
 	return rc;
 }
@@ -964,10 +963,8 @@ static int proc_mf_dump_vmlinux(char *page, char **start, off_t off,
 }
 #endif
 
-static int proc_mf_dump_side(char *page, char **start, off_t off,
-		int count, int *eof, void *data)
+static int mf_side_proc_show(struct seq_file *m, void *v)
 {
-	int len;
 	char mf_current_side = ' ';
 	struct vsp_cmd_data vsp_cmd;
 
@@ -991,21 +988,17 @@ static int proc_mf_dump_side(char *page, char **start, off_t off,
 		}
 	}
 
-	len = sprintf(page, "%c\n", mf_current_side);
-
-	if (len <= (off + count))
-		*eof = 1;
-	*start = page + off;
-	len -= off;
-	if (len > count)
-		len = count;
-	if (len < 0)
-		len = 0;
-	return len;
+	seq_printf(m, "%c\n", mf_current_side);
+	return 0;
 }
 
-static int proc_mf_change_side(struct file *file, const char __user *buffer,
-		unsigned long count, void *data)
+static int mf_side_proc_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, mf_side_proc_show, NULL);
+}
+
+static ssize_t mf_side_proc_write(struct file *file, const char __user *buffer,
+				  size_t count, loff_t *pos)
 {
 	char side;
 	u64 newSide;
@@ -1043,76 +1036,27 @@ static int proc_mf_change_side(struct file *file, const char __user *buffer,
 	return count;
 }
 
-#if 0
-static void mf_getSrcHistory(char *buffer, int size)
+static const struct file_operations mf_side_proc_fops = {
+	.owner		= THIS_MODULE,
+	.open		= mf_side_proc_open,
+	.read		= seq_read,
+	.llseek		= seq_lseek,
+	.release	= single_release,
+	.write		= mf_side_proc_write,
+};
+
+static int mf_src_proc_show(struct seq_file *m, void *v)
 {
-	struct IplTypeReturnStuff return_stuff;
-	struct pending_event *ev = new_pending_event();
-	int rc = 0;
-	char *pages[4];
-
-	pages[0] = kmalloc(4096, GFP_ATOMIC);
-	pages[1] = kmalloc(4096, GFP_ATOMIC);
-	pages[2] = kmalloc(4096, GFP_ATOMIC);
-	pages[3] = kmalloc(4096, GFP_ATOMIC);
-	if ((ev == NULL) || (pages[0] == NULL) || (pages[1] == NULL)
-			 || (pages[2] == NULL) || (pages[3] == NULL))
-		return -ENOMEM;
-
-	return_stuff.xType = 0;
-	return_stuff.xRc = 0;
-	return_stuff.xDone = 0;
-	ev->event.hp_lp_event.xSubtype = 6;
-	ev->event.hp_lp_event.x.xSubtypeData =
-		subtype_data('M', 'F', 'V', 'I');
-	ev->event.data.vsp_cmd.xEvent = &return_stuff;
-	ev->event.data.vsp_cmd.cmd = 4;
-	ev->event.data.vsp_cmd.lp_index = HvLpConfig_getLpIndex();
-	ev->event.data.vsp_cmd.result_code = 0xFF;
-	ev->event.data.vsp_cmd.reserved = 0;
-	ev->event.data.vsp_cmd.sub_data.page[0] = iseries_hv_addr(pages[0]);
-	ev->event.data.vsp_cmd.sub_data.page[1] = iseries_hv_addr(pages[1]);
-	ev->event.data.vsp_cmd.sub_data.page[2] = iseries_hv_addr(pages[2]);
-	ev->event.data.vsp_cmd.sub_data.page[3] = iseries_hv_addr(pages[3]);
-	mb();
-	if (signal_event(ev) != 0)
-		return;
-
- 	while (return_stuff.xDone != 1)
- 		udelay(10);
- 	if (return_stuff.xRc == 0)
- 		memcpy(buffer, pages[0], size);
-	kfree(pages[0]);
-	kfree(pages[1]);
-	kfree(pages[2]);
-	kfree(pages[3]);
-}
-#endif
-
-static int proc_mf_dump_src(char *page, char **start, off_t off,
-		int count, int *eof, void *data)
-{
-#if 0
-	int len;
-
-	mf_getSrcHistory(page, count);
-	len = count;
-	len -= off;
-	if (len < count) {
-		*eof = 1;
-		if (len <= 0)
-			return 0;
-	} else
-		len = count;
-	*start = page + off;
-	return len;
-#else
 	return 0;
-#endif
 }
 
-static int proc_mf_change_src(struct file *file, const char __user *buffer,
-		unsigned long count, void *data)
+static int mf_src_proc_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, mf_src_proc_show, NULL);
+}
+
+static ssize_t mf_src_proc_write(struct file *file, const char __user *buffer,
+				 size_t count, loff_t *pos)
 {
 	char stkbuf[10];
 
@@ -1137,9 +1081,19 @@ static int proc_mf_change_src(struct file *file, const char __user *buffer,
 	return count;
 }
 
-static int proc_mf_change_cmdline(struct file *file, const char __user *buffer,
-		unsigned long count, void *data)
+static const struct file_operations mf_src_proc_fops = {
+	.owner		= THIS_MODULE,
+	.open		= mf_src_proc_open,
+	.read		= seq_read,
+	.llseek		= seq_lseek,
+	.release	= single_release,
+	.write		= mf_src_proc_write,
+};
+
+static ssize_t mf_cmdline_proc_write(struct file *file, const char __user *buffer,
+				     size_t count, loff_t *pos)
 {
+	void *data = PDE(file->f_path.dentry->d_inode)->data;
 	struct vsp_cmd_data vsp_cmd;
 	dma_addr_t dma_addr;
 	char *page;
@@ -1149,8 +1103,7 @@ static int proc_mf_change_cmdline(struct file *file, const char __user *buffer,
 		goto out;
 
 	dma_addr = 0;
-	page = dma_alloc_coherent(iSeries_vio_dev, count, &dma_addr,
-			GFP_ATOMIC);
+	page = iseries_hv_alloc(count, &dma_addr, GFP_ATOMIC);
 	ret = -ENOMEM;
 	if (page == NULL)
 		goto out;
@@ -1170,10 +1123,19 @@ static int proc_mf_change_cmdline(struct file *file, const char __user *buffer,
 	ret = count;
 
 out_free:
-	dma_free_coherent(iSeries_vio_dev, count, page, dma_addr);
+	iseries_hv_free(count, page, dma_addr);
 out:
 	return ret;
 }
+
+static const struct file_operations mf_cmdline_proc_fops = {
+	.owner		= THIS_MODULE,
+	.open		= mf_cmdline_proc_open,
+	.read		= seq_read,
+	.llseek		= seq_lseek,
+	.release	= single_release,
+	.write		= mf_cmdline_proc_write,
+};
 
 static ssize_t proc_mf_change_vmlinux(struct file *file,
 				      const char __user *buf,
@@ -1190,8 +1152,7 @@ static ssize_t proc_mf_change_vmlinux(struct file *file,
 		goto out;
 
 	dma_addr = 0;
-	page = dma_alloc_coherent(iSeries_vio_dev, count, &dma_addr,
-			GFP_ATOMIC);
+	page = iseries_hv_alloc(count, &dma_addr, GFP_ATOMIC);
 	rc = -ENOMEM;
 	if (page == NULL) {
 		printk(KERN_ERR "mf.c: couldn't allocate memory to set vmlinux chunk\n");
@@ -1219,13 +1180,14 @@ static ssize_t proc_mf_change_vmlinux(struct file *file,
 	*ppos += count;
 	rc = count;
 out_free:
-	dma_free_coherent(iSeries_vio_dev, count, page, dma_addr);
+	iseries_hv_free(count, page, dma_addr);
 out:
 	return rc;
 }
 
 static const struct file_operations proc_vmlinux_operations = {
 	.write		= proc_mf_change_vmlinux,
+	.llseek		= default_llseek,
 };
 
 static int __init mf_proc_init(void)
@@ -1250,36 +1212,30 @@ static int __init mf_proc_init(void)
 		if (!mf)
 			return 1;
 
-		ent = create_proc_entry("cmdline", S_IFREG|S_IRUSR|S_IWUSR, mf);
+		ent = proc_create_data("cmdline", S_IRUSR|S_IWUSR, mf,
+				       &mf_cmdline_proc_fops, (void *)(long)i);
 		if (!ent)
 			return 1;
-		ent->data = (void *)(long)i;
-		ent->read_proc = proc_mf_dump_cmdline;
-		ent->write_proc = proc_mf_change_cmdline;
 
 		if (i == 3)	/* no vmlinux entry for 'D' */
 			continue;
 
-		ent = create_proc_entry("vmlinux", S_IFREG|S_IWUSR, mf);
+		ent = proc_create_data("vmlinux", S_IFREG|S_IWUSR, mf,
+				       &proc_vmlinux_operations,
+				       (void *)(long)i);
 		if (!ent)
 			return 1;
-		ent->data = (void *)(long)i;
-		ent->proc_fops = &proc_vmlinux_operations;
 	}
 
-	ent = create_proc_entry("side", S_IFREG|S_IRUSR|S_IWUSR, mf_proc_root);
+	ent = proc_create("side", S_IFREG|S_IRUSR|S_IWUSR, mf_proc_root,
+			  &mf_side_proc_fops);
 	if (!ent)
 		return 1;
-	ent->data = (void *)0;
-	ent->read_proc = proc_mf_dump_side;
-	ent->write_proc = proc_mf_change_side;
 
-	ent = create_proc_entry("src", S_IFREG|S_IRUSR|S_IWUSR, mf_proc_root);
+	ent = proc_create("src", S_IFREG|S_IRUSR|S_IWUSR, mf_proc_root,
+			  &mf_src_proc_fops);
 	if (!ent)
 		return 1;
-	ent->data = (void *)0;
-	ent->read_proc = proc_mf_dump_src;
-	ent->write_proc = proc_mf_change_src;
 
 	return 0;
 }

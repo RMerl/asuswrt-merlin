@@ -85,9 +85,6 @@ sn9c102_attach_sensor(struct sn9c102_device* cam,
 */
 
 /* The "try" I2C I/O versions are used when probing the sensor */
-extern int sn9c102_i2c_try_write(struct sn9c102_device*,
-				 const struct sn9c102_sensor*, u8 address,
-				 u8 value);
 extern int sn9c102_i2c_try_read(struct sn9c102_device*,
 				const struct sn9c102_sensor*, u8 address);
 
@@ -123,10 +120,10 @@ extern int sn9c102_write_regs(struct sn9c102_device*, const u8 valreg[][2],
 /*
    Write multiple registers with constant values. For example:
    sn9c102_write_const_regs(cam, {0x00, 0x14}, {0x60, 0x17}, {0x0f, 0x18});
-   Register adresses must be < 256.
+   Register addresses must be < 256.
 */
 #define sn9c102_write_const_regs(sn9c102_device, data...)                     \
-	({ const static u8 _valreg[][2] = {data};                             \
+	({ static const u8 _valreg[][2] = {data};                             \
 	sn9c102_write_regs(sn9c102_device, _valreg, ARRAY_SIZE(_valreg)); })
 
 /*****************************************************************************/
@@ -150,7 +147,7 @@ enum sn9c102_i2c_interface {
 
 struct sn9c102_sensor {
 	char name[32], /* sensor name */
-	     maintainer[64]; /* name of the mantainer <email> */
+	     maintainer[64]; /* name of the maintainer <email> */
 
 	enum sn9c102_bridge supported_bridge; /* supported SN9C1xx bridges */
 
@@ -183,7 +180,7 @@ struct sn9c102_sensor {
 	   It should be used to initialize the sensor only, but may also
 	   configure part of the SN9C1XX chip if necessary. You don't need to
 	   setup picture settings like brightness, contrast, etc.. here, if
-	   the corrisponding controls are implemented (see below), since
+	   the corresponding controls are implemented (see below), since
 	   they are adjusted in the core driver by calling the set_ctrl()
 	   method after init(), where the arguments are the default values
 	   specified in the v4l2_queryctrl list of supported controls;

@@ -1,10 +1,8 @@
 /*
- * $Id: block2mtd.c,v 1.30 2005/11/29 14:48:32 gleixner Exp $
- *
  * block2mtd.c - create an mtd from a block device
  *
  * Copyright (C) 2001,2002	Simon Evans <spse@secret.org.uk>
- * Copyright (C) 2004-2006	Jörn Engel <joern@wh.fh-wedel.de>
+ * Copyright (C) 2004-2006	Joern Engel <joern@wh.fh-wedel.de>
  *
  * Licence: GPL
  */
@@ -16,13 +14,10 @@
 #include <linux/list.h>
 #include <linux/init.h>
 #include <linux/mtd/mtd.h>
-#include <linux/mtd/partitions.h>
 #include <linux/buffer_head.h>
 #include <linux/mutex.h>
 #include <linux/mount.h>
-
-#define VERSION "$Revision: 1.30 $"
-
+#include <linux/slab.h>
 
 #define ERROR(fmt, args...) printk(KERN_ERR "block2mtd: " fmt "\n" , ## args)
 #define INFO(fmt, args...) printk(KERN_INFO "block2mtd: " fmt "\n" , ## args)
@@ -96,7 +91,6 @@ static int block2mtd_erase(struct mtd_info *mtd, struct erase_info *instr)
 	} else
 		instr->state = MTD_ERASE_DONE;
 
-	instr->state = MTD_ERASE_DONE;
 	mtd_erase_callback(instr);
 	return err;
 }
@@ -230,7 +224,7 @@ static void block2mtd_free_device(struct block2mtd_dev *dev)
 	if (dev->blkdev) {
 		invalidate_mapping_pages(dev->blkdev->bd_inode->i_mapping,
 					0, -1);
-		close_bdev_excl(dev->blkdev);
+		blkdev_put(dev->blkdev, FMODE_READ|FMODE_WRITE|FMODE_EXCL);
 	}
 
 	kfree(dev);
@@ -238,11 +232,12 @@ static void block2mtd_free_device(struct block2mtd_dev *dev)
 
 
 /* FIXME: ensure that mtd->size % erase_size == 0 */
-static struct block2mtd_dev *add_device(char *devname, int erase_size, char *mtdname)
+static struct block2mtd_dev *add_device(char *devname, int erase_size)
 {
+	const fmode_t mode = FMODE_READ | FMODE_WRITE | FMODE_EXCL;
 	struct block_device *bdev;
 	struct block2mtd_dev *dev;
-	struct mtd_partition *part;
+	char *name;
 
 	if (!devname)
 		return NULL;
@@ -252,7 +247,7 @@ static struct block2mtd_dev *add_device(char *devname, int erase_size, char *mtd
 		return NULL;
 
 	/* Get a handle on the device */
-	bdev = open_bdev_excl(devname, O_RDWR, NULL);
+	bdev = blkdev_get_by_path(devname, mode, dev);
 #ifndef MODULE
 	if (IS_ERR(bdev)) {
 
@@ -260,9 +255,8 @@ static struct block2mtd_dev *add_device(char *devname, int erase_size, char *mtd
 		   to resolve the device name by other means. */
 
 		dev_t devt = name_to_dev_t(devname);
-		if (devt) {
-			bdev = open_by_devnum(devt, FMODE_WRITE | FMODE_READ);
-		}
+		if (devt)
+			bdev = blkdev_get_by_dev(devt, mode, dev);
 	}
 #endif
 
@@ -281,18 +275,13 @@ static struct block2mtd_dev *add_device(char *devname, int erase_size, char *mtd
 
 	/* Setup the MTD structure */
 	/* make the name contain the block device in */
-
-	if (!mtdname)
-		mtdname = devname;
-
-	dev->mtd.name = kmalloc(strlen(mtdname) + 1, GFP_KERNEL);
-
-	if (!dev->mtd.name)
+	name = kasprintf(GFP_KERNEL, "block2mtd: %s", devname);
+	if (!name)
 		goto devinit_err;
-	
-	strcpy(dev->mtd.name, mtdname);
 
-	dev->mtd.size = dev->blkdev->bd_inode->i_size & PAGE_MASK & ~(erase_size - 1);
+	dev->mtd.name = name;
+
+	dev->mtd.size = dev->blkdev->bd_inode->i_size & PAGE_MASK;
 	dev->mtd.erasesize = erase_size;
 	dev->mtd.writesize = 1;
 	dev->mtd.type = MTD_RAM;
@@ -304,18 +293,15 @@ static struct block2mtd_dev *add_device(char *devname, int erase_size, char *mtd
 	dev->mtd.read = block2mtd_read;
 	dev->mtd.priv = dev;
 	dev->mtd.owner = THIS_MODULE;
-	
-	part = kzalloc(sizeof(struct mtd_partition), GFP_KERNEL);
-	part->name = dev->mtd.name;
-	part->offset = 0;
-	part->size = dev->mtd.size;
-	if (add_mtd_partitions(&dev->mtd, part, 1)) {
-		/* Device didnt get added, so free the entry */
+
+	if (add_mtd_device(&dev->mtd)) {
+		/* Device didn't get added, so free the entry */
 		goto devinit_err;
 	}
 	list_add(&dev->list, &blkmtd_device_list);
 	INFO("mtd%d: [%s] erase_size = %dKiB [%d]", dev->mtd.index,
-			mtdname, dev->mtd.erasesize >> 10, dev->mtd.erasesize);
+			dev->mtd.name + strlen("block2mtd: "),
+			dev->mtd.erasesize >> 10, dev->mtd.erasesize);
 	return dev;
 
 devinit_err:
@@ -375,9 +361,9 @@ static inline void kill_final_newline(char *str)
 }
 
 
-#define parse_err(fmt, args...) do {		\
-	ERROR("block2mtd: " fmt "\n", ## args);	\
-	return 0;				\
+#define parse_err(fmt, args...) do {	\
+	ERROR(fmt, ## args);		\
+	return 0;			\
 } while (0)
 
 #ifndef MODULE
@@ -388,9 +374,9 @@ static char block2mtd_paramline[80 + 12]; /* 80 for device, 12 for erase size */
 
 static int block2mtd_setup2(const char *val)
 {
-	char buf[80 + 12 + 80]; /* 80 for device, 12 for erase size, 80 for name */
+	char buf[80 + 12]; /* 80 for device, 12 for erase size */
 	char *str = buf;
-	char *token[3];
+	char *token[2];
 	char *name;
 	size_t erase_size = PAGE_SIZE;
 	int i, ret;
@@ -401,7 +387,7 @@ static int block2mtd_setup2(const char *val)
 	strcpy(str, val);
 	kill_final_newline(str);
 
-	for (i = 0; i < 3; i++)
+	for (i = 0; i < 2; i++)
 		token[i] = strsep(&str, ",");
 
 	if (str)
@@ -417,14 +403,11 @@ static int block2mtd_setup2(const char *val)
 	if (token[1]) {
 		ret = parse_num(&erase_size, token[1]);
 		if (ret) {
-			kfree(name);
 			parse_err("illegal erase size");
 		}
 	}
-	if (token[2] && (strlen(token[2]) + 1 > 80))
-		parse_err("mtd device name too long");
 
-	add_device(name, erase_size, token[2]);
+	add_device(name, erase_size);
 
 	return 0;
 }
@@ -458,12 +441,11 @@ static int block2mtd_setup(const char *val, struct kernel_param *kp)
 
 
 module_param_call(block2mtd, block2mtd_setup, NULL, NULL, 0200);
-MODULE_PARM_DESC(block2mtd, "Device to use. \"block2mtd=<dev>[,<erasesize>[,<name>]]\"");
+MODULE_PARM_DESC(block2mtd, "Device to use. \"block2mtd=<dev>[,<erasesize>]\"");
 
 static int __init block2mtd_init(void)
 {
 	int ret = 0;
-	INFO("version " VERSION);
 
 #ifndef MODULE
 	if (strlen(block2mtd_paramline))
@@ -485,7 +467,7 @@ static void __devexit block2mtd_exit(void)
 		block2mtd_sync(&dev->mtd);
 		del_mtd_device(&dev->mtd);
 		INFO("mtd%d: [%s] removed", dev->mtd.index,
-				dev->mtd.name + strlen("blkmtd: "));
+				dev->mtd.name + strlen("block2mtd: "));
 		list_del(&dev->list);
 		block2mtd_free_device(dev);
 	}
@@ -496,5 +478,5 @@ module_init(block2mtd_init);
 module_exit(block2mtd_exit);
 
 MODULE_LICENSE("GPL");
-MODULE_AUTHOR("Simon Evans <spse@secret.org.uk> and others");
+MODULE_AUTHOR("Joern Engel <joern@lazybastard.org>");
 MODULE_DESCRIPTION("Emulate an MTD using a block device");

@@ -41,6 +41,7 @@
 #include <linux/interrupt.h>
 #include <linux/ctype.h>
 #include <linux/dma-mapping.h>
+#include <linux/slab.h>
 
 #include <asm/mach-au1x00/au1000.h>
 #include "au1200fb.h"
@@ -1078,7 +1079,7 @@ static int au1200fb_fb_check_var(struct fb_var_screeninfo *var,
 	 * clock can only be obtain by dividing this value by an even integer.
 	 * Fallback to a slower pixel clock if necessary. */
 	pixclock = max((u32)(PICOS2KHZ(var->pixclock) * 1000), fbi->monspecs.dclkmin);
-	pixclock = min(pixclock, min(fbi->monspecs.dclkmax, (u32)AU1200_LCD_MAX_CLK/2));
+	pixclock = min3(pixclock, fbi->monspecs.dclkmax, (u32)AU1200_LCD_MAX_CLK/2);
 
 	if (AU1200_LCD_MAX_CLK % pixclock) {
 		int diff = AU1200_LCD_MAX_CLK % pixclock;
@@ -1571,7 +1572,7 @@ static int au1200fb_init_fbinfo(struct au1200fb_device *fbdev)
 	/* Copy monitor specs from panel data */
 	/* fixme: we're setting up LCD controller windows, so these dont give a
 	damn as to what the monitor specs are (the panel itself does, but that
-	isnt done here...so maybe need a generic catchall monitor setting??? */
+	isn't done here...so maybe need a generic catchall monitor setting??? */
 	memcpy(&fbi->monspecs, &panel->monspecs, sizeof(struct fb_monspecs));
 
 	/* We first try the user mode passed in argument. If that failed,
@@ -1589,11 +1590,10 @@ static int au1200fb_init_fbinfo(struct au1200fb_device *fbdev)
 		return -EFAULT;
 	}
 
-	fbi->pseudo_palette = kmalloc(sizeof(u32) * 16, GFP_KERNEL);
+	fbi->pseudo_palette = kcalloc(16, sizeof(u32), GFP_KERNEL);
 	if (!fbi->pseudo_palette) {
 		return -ENOMEM;
 	}
-	memset(fbi->pseudo_palette, 0, sizeof(u32) * 16);
 
 	if (fb_alloc_cmap(&fbi->cmap, AU1200_LCD_NBR_PALETTE_ENTRIES, 0) < 0) {
 		print_err("Fail to allocate colormap (%d entries)",
@@ -1623,7 +1623,7 @@ static int au1200fb_init_fbinfo(struct au1200fb_device *fbdev)
 
 /* AU1200 LCD controller device driver */
 
-static int au1200fb_drv_probe(struct device *dev)
+static int au1200fb_drv_probe(struct platform_device *dev)
 {
 	struct au1200fb_device *fbdev;
 	unsigned long page;
@@ -1646,7 +1646,7 @@ static int au1200fb_drv_probe(struct device *dev)
 		/* Allocate the framebuffer to the maximum screen size */
 		fbdev->fb_len = (win->w[plane].xres * win->w[plane].yres * bpp) / 8;
 
-		fbdev->fb_mem = dma_alloc_noncoherent(dev,
+		fbdev->fb_mem = dma_alloc_noncoherent(&dev->dev,
 				PAGE_ALIGN(fbdev->fb_len),
 				&fbdev->fb_phys, GFP_KERNEL);
 		if (!fbdev->fb_mem) {
@@ -1716,7 +1716,7 @@ failed:
 	return ret;
 }
 
-static int au1200fb_drv_remove(struct device *dev)
+static int au1200fb_drv_remove(struct platform_device *dev)
 {
 	struct au1200fb_device *fbdev;
 	int plane;
@@ -1734,7 +1734,8 @@ static int au1200fb_drv_remove(struct device *dev)
 		/* Clean up all probe data */
 		unregister_framebuffer(&fbdev->fb_info);
 		if (fbdev->fb_mem)
-			dma_free_noncoherent(dev, PAGE_ALIGN(fbdev->fb_len),
+			dma_free_noncoherent(&dev->dev,
+					PAGE_ALIGN(fbdev->fb_len),
 					fbdev->fb_mem, fbdev->fb_phys);
 		if (fbdev->fb_info.cmap.len != 0)
 			fb_dealloc_cmap(&fbdev->fb_info.cmap);
@@ -1748,22 +1749,24 @@ static int au1200fb_drv_remove(struct device *dev)
 }
 
 #ifdef CONFIG_PM
-static int au1200fb_drv_suspend(struct device *dev, u32 state, u32 level)
+static int au1200fb_drv_suspend(struct platform_device *dev, u32 state)
 {
 	/* TODO */
 	return 0;
 }
 
-static int au1200fb_drv_resume(struct device *dev, u32 level)
+static int au1200fb_drv_resume(struct platform_device *dev)
 {
 	/* TODO */
 	return 0;
 }
 #endif /* CONFIG_PM */
 
-static struct device_driver au1200fb_driver = {
-	.name		= "au1200-lcd",
-	.bus		= &platform_bus_type,
+static struct platform_driver au1200fb_driver = {
+	.driver = {
+		.name		= "au1200-lcd",
+		.owner          = THIS_MODULE,
+	},
 	.probe		= au1200fb_drv_probe,
 	.remove		= au1200fb_drv_remove,
 #ifdef CONFIG_PM
@@ -1907,12 +1910,12 @@ static int __init au1200fb_init(void)
 		printk(KERN_INFO "Power management device entry for the au1200fb loaded.\n");
 	#endif
 
-	return driver_register(&au1200fb_driver);
+	return platform_driver_register(&au1200fb_driver);
 }
 
 static void __exit au1200fb_cleanup(void)
 {
-	driver_unregister(&au1200fb_driver);
+	platform_driver_unregister(&au1200fb_driver);
 }
 
 module_init(au1200fb_init);

@@ -11,12 +11,16 @@
  */
 
 #include <linux/module.h>
+#include <linux/pm.h>
 
+#include <asm/irq.h>
 #include <asm/mach/arch.h>
 #include <asm/mach/map.h>
-#include <asm/arch/at91sam9261.h>
-#include <asm/arch/at91_pmc.h>
-#include <asm/arch/at91_rstc.h>
+#include <mach/cpu.h>
+#include <mach/at91sam9261.h>
+#include <mach/at91_pmc.h>
+#include <mach/at91_rstc.h>
+#include <mach/at91_shdwc.h>
 
 #include "generic.h"
 #include "clock.h"
@@ -27,10 +31,23 @@ static struct map_desc at91sam9261_io_desc[] __initdata = {
 		.pfn		= __phys_to_pfn(AT91_BASE_SYS),
 		.length		= SZ_16K,
 		.type		= MT_DEVICE,
-	}, {
+	},
+};
+
+static struct map_desc at91sam9261_sram_desc[] __initdata = {
+	{
 		.virtual	= AT91_IO_VIRT_BASE - AT91SAM9261_SRAM_SIZE,
 		.pfn		= __phys_to_pfn(AT91SAM9261_SRAM_BASE),
 		.length		= AT91SAM9261_SRAM_SIZE,
+		.type		= MT_DEVICE,
+	},
+};
+
+static struct map_desc at91sam9g10_sram_desc[] __initdata = {
+	{
+		.virtual	= AT91_IO_VIRT_BASE - AT91SAM9G10_SRAM_SIZE,
+		.pfn		= __phys_to_pfn(AT91SAM9G10_SRAM_BASE),
+		.length		= AT91SAM9G10_SRAM_SIZE,
 		.type		= MT_DEVICE,
 	},
 };
@@ -240,9 +257,9 @@ static struct at91_gpio_bank at91sam9261_gpio[] = {
 	}
 };
 
-static void at91sam9261_reset(void)
+static void at91sam9261_poweroff(void)
 {
-	at91_sys_write(AT91_RSTC_CR, AT91_RSTC_KEY | AT91_RSTC_PROCRST | AT91_RSTC_PERRST);
+	at91_sys_write(AT91_SHDW_CR, AT91_SHDW_KEY | AT91_SHDW_SHDW);
 }
 
 
@@ -255,7 +272,14 @@ void __init at91sam9261_initialize(unsigned long main_clock)
 	/* Map peripherals */
 	iotable_init(at91sam9261_io_desc, ARRAY_SIZE(at91sam9261_io_desc));
 
-	at91_arch_reset = at91sam9261_reset;
+	if (cpu_is_at91sam9g10())
+		iotable_init(at91sam9g10_sram_desc, ARRAY_SIZE(at91sam9g10_sram_desc));
+	else
+		iotable_init(at91sam9261_sram_desc, ARRAY_SIZE(at91sam9261_sram_desc));
+
+
+	at91_arch_reset = at91sam9_alt_reset;
+	pm_power_off = at91sam9261_poweroff;
 	at91_extern_irq = (1 << AT91SAM9261_ID_IRQ0) | (1 << AT91SAM9261_ID_IRQ1)
 			| (1 << AT91SAM9261_ID_IRQ2);
 
@@ -279,25 +303,25 @@ void __init at91sam9261_initialize(unsigned long main_clock)
 static unsigned int at91sam9261_default_irq_priority[NR_AIC_IRQS] __initdata = {
 	7,	/* Advanced Interrupt Controller */
 	7,	/* System Peripherals */
-	0,	/* Parallel IO Controller A */
-	0,	/* Parallel IO Controller B */
-	0,	/* Parallel IO Controller C */
+	1,	/* Parallel IO Controller A */
+	1,	/* Parallel IO Controller B */
+	1,	/* Parallel IO Controller C */
 	0,
-	6,	/* USART 0 */
-	6,	/* USART 1 */
-	6,	/* USART 2 */
+	5,	/* USART 0 */
+	5,	/* USART 1 */
+	5,	/* USART 2 */
 	0,	/* Multimedia Card Interface */
-	4,	/* USB Device Port */
-	0,	/* Two-Wire Interface */
-	6,	/* Serial Peripheral Interface 0 */
-	6,	/* Serial Peripheral Interface 1 */
-	5,	/* Serial Synchronous Controller 0 */
-	5,	/* Serial Synchronous Controller 1 */
-	5,	/* Serial Synchronous Controller 2 */
+	2,	/* USB Device Port */
+	6,	/* Two-Wire Interface */
+	5,	/* Serial Peripheral Interface 0 */
+	5,	/* Serial Peripheral Interface 1 */
+	4,	/* Serial Synchronous Controller 0 */
+	4,	/* Serial Synchronous Controller 1 */
+	4,	/* Serial Synchronous Controller 2 */
 	0,	/* Timer Counter 0 */
 	0,	/* Timer Counter 1 */
 	0,	/* Timer Counter 2 */
-	3,	/* USB Host port */
+	2,	/* USB Host port */
 	3,	/* LCD Controller */
 	0,
 	0,

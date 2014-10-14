@@ -24,7 +24,7 @@
 #include <linux/module.h>
 #include <linux/platform_device.h>
 
-#include <asm/hardware.h>
+#include <mach/hardware.h>
 #include <asm/setup.h>
 #include <asm/mach-types.h>
 #include <asm/irq.h>
@@ -33,22 +33,11 @@
 #include <asm/mach/map.h>
 #include <asm/mach/irq.h>
 
-#include <asm/arch/board.h>
-#include <asm/arch/gpio.h>
+#include <mach/board.h>
+#include <mach/gpio.h>
 
 #include "generic.h"
 
-
-/*
- * Serial port configuration.
- *    0 .. 3 = USART0 .. USART3
- *    4      = DBGU
- */
-static struct at91_uart_config __initdata kafa_uart_config = {
-	.console_tty	= 0,				/* ttyS0 */
-	.nr_tty		= 2,
-	.tty_map	= { 4, 0, -1, -1, -1 }		/* ttyS0, ..., ttyS4 */
-};
 
 static void __init kafa_map_io(void)
 {
@@ -58,8 +47,14 @@ static void __init kafa_map_io(void)
 	/* Set up the LEDs */
 	at91_init_leds(AT91_PIN_PB4, AT91_PIN_PB4);
 
-	/* Setup the serial ports and console */
-	at91_init_serial(&kafa_uart_config);
+	/* DBGU on ttyS0. (Rx & Tx only) */
+	at91_register_uart(0, 0, 0);
+
+	/* USART0 on ttyS1 (Rx, Tx, CTS, RTS) */
+	at91_register_uart(AT91RM9200_ID_US0, 1, ATMEL_UART_CTS | ATMEL_UART_RTS);
+
+	/* set serial console to ttyS0 (ie, DBGU) */
+	at91_set_serial_console(0);
 }
 
 static void __init kafa_init_irq(void)
@@ -92,15 +87,13 @@ static void __init kafa_board_init(void)
 	/* USB Device */
 	at91_add_device_udc(&kafa_udc_data);
 	/* I2C */
-	at91_add_device_i2c();
+	at91_add_device_i2c(NULL, 0);
 	/* SPI */
 	at91_add_device_spi(NULL, 0);
 }
 
 MACHINE_START(KAFA, "Sperry-Sun KAFA")
 	/* Maintainer: Sergei Sharonov */
-	.phys_io	= AT91_BASE_SYS,
-	.io_pg_offst	= (AT91_VA_BASE_SYS >> 18) & 0xfffc,
 	.boot_params	= AT91_SDRAM_BASE + 0x100,
 	.timer		= &at91rm9200_timer,
 	.map_io		= kafa_map_io,

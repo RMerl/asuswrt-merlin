@@ -142,9 +142,6 @@ enum StirCtrl2Mask {
 };
 
 enum StirFifoCtlMask {
-	FIFOCTL_EOF = 0x80,
-	FIFOCTL_UNDER = 0x40,
-	FIFOCTL_OVER = 0x20,
 	FIFOCTL_DIR = 0x10,
 	FIFOCTL_CLR = 0x08,
 	FIFOCTL_EMPTY = 0x04,
@@ -167,7 +164,7 @@ struct stir_cb {
         struct usb_device *usbdev;      /* init: probe_irda */
         struct net_device *netdev;      /* network layer */
         struct irlap_cb   *irlap;       /* The link layer we are binded to */
-        struct net_device_stats stats;	/* network statistics */
+
         struct qos_info   qos;
 	unsigned 	  speed;	/* Current speed */
 
@@ -222,7 +219,7 @@ static inline int read_reg(struct stir_cb *stir, __u16 reg,
 
 static inline int isfir(u32 speed)
 {
-	return (speed == 4000000);
+	return speed == 4000000;
 }
 
 /*
@@ -326,16 +323,16 @@ static void fir_eof(struct stir_cb *stir)
 		pr_debug("%s: short frame len %d\n",
 			 stir->netdev->name, len);
 
-		++stir->stats.rx_errors;
-		++stir->stats.rx_length_errors;
+		++stir->netdev->stats.rx_errors;
+		++stir->netdev->stats.rx_length_errors;
 		return;
 	}
 
 	fcs = ~(crc32_le(~0, rx_buff->data, len));
-	if (fcs != le32_to_cpu(get_unaligned((u32 *)(rx_buff->data+len)))) {
+	if (fcs != get_unaligned_le32(rx_buff->data + len)) {
 		pr_debug("crc error calc 0x%x len %d\n", fcs, len);
-		stir->stats.rx_errors++;
-		stir->stats.rx_crc_errors++;
+		stir->netdev->stats.rx_errors++;
+		stir->netdev->stats.rx_crc_errors++;
 		return;
 	}
 
@@ -343,7 +340,7 @@ static void fir_eof(struct stir_cb *stir)
 	if (len < IRDA_RX_COPY_THRESHOLD) {
 		nskb = dev_alloc_skb(len + 1);
 		if (unlikely(!nskb)) {
-			++stir->stats.rx_dropped;
+			++stir->netdev->stats.rx_dropped;
 			return;
 		}
 		skb_reserve(nskb, 1);
@@ -352,7 +349,7 @@ static void fir_eof(struct stir_cb *stir)
 	} else {
 		nskb = dev_alloc_skb(rx_buff->truesize);
 		if (unlikely(!nskb)) {
-			++stir->stats.rx_dropped;
+			++stir->netdev->stats.rx_dropped;
 			return;
 		}
 		skb_reserve(nskb, 1);
@@ -369,8 +366,8 @@ static void fir_eof(struct stir_cb *stir)
 
 	netif_rx(skb);
 
-	stir->stats.rx_packets++;
-	stir->stats.rx_bytes += len;
+	stir->netdev->stats.rx_packets++;
+	stir->netdev->stats.rx_bytes += len;
 
 	rx_buff->data = rx_buff->head;
 	rx_buff->len = 0;
@@ -440,7 +437,7 @@ static void stir_fir_chars(struct stir_cb *stir,
 		if (unlikely(rx_buff->len >= rx_buff->truesize)) {
 			pr_debug("%s: fir frame exceeds %d\n",
 				 stir->netdev->name, rx_buff->truesize);
-			++stir->stats.rx_over_errors;
+			++stir->netdev->stats.rx_over_errors;
 			goto error_recovery;
 		}
 
@@ -448,10 +445,10 @@ static void stir_fir_chars(struct stir_cb *stir,
 		continue;
 
 	frame_error:
-		++stir->stats.rx_frame_errors;
+		++stir->netdev->stats.rx_frame_errors;
 
 	error_recovery:
-		++stir->stats.rx_errors;
+		++stir->netdev->stats.rx_errors;
 		rx_buff->state = OUTSIDE_FRAME;
 		rx_buff->in_frame = FALSE;
 	}
@@ -464,7 +461,7 @@ static void stir_sir_chars(struct stir_cb *stir,
 	int i;
 
 	for (i = 0; i < len; i++)
-		async_unwrap_char(stir->netdev, &stir->stats,
+		async_unwrap_char(stir->netdev, &stir->netdev->stats,
 				  &stir->rx_buff, bytes[i]);
 }
 
@@ -509,7 +506,7 @@ static int change_speed(struct stir_cb *stir, unsigned speed)
 			goto found;
 	}
 
-	warn("%s: invalid speed %d", stir->netdev->name, speed);
+	dev_warn(&stir->netdev->dev, "invalid speed %d\n", speed);
 	return -EINVAL;
 
  found:
@@ -563,7 +560,8 @@ static int change_speed(struct stir_cb *stir, unsigned speed)
 /*
  * Called from net/core when new frame is available.
  */
-static int stir_hard_xmit(struct sk_buff *skb, struct net_device *netdev)
+static netdev_tx_t stir_hard_xmit(struct sk_buff *skb,
+					struct net_device *netdev)
 {
 	struct stir_cb *stir = netdev_priv(netdev);
 
@@ -581,7 +579,7 @@ static int stir_hard_xmit(struct sk_buff *skb, struct net_device *netdev)
 		dev_kfree_skb(skb);
 	}
 
-	return 0;
+	return NETDEV_TX_OK;
 }
 
 /*
@@ -594,14 +592,15 @@ static int fifo_txwait(struct stir_cb *stir, int space)
 {
 	int err;
 	unsigned long count, status;
+	unsigned long prev_count = 0x1fff;
 
 	/* Read FIFO status and count */
-	for(;;) {
+	for (;; prev_count = count) {
 		err = read_reg(stir, REG_FIFOCTL, stir->fifo_status, 
 				   FIFO_REGS_SIZE);
 		if (unlikely(err != FIFO_REGS_SIZE)) {
-			warn("%s: FIFO register read error: %d", 
-			     stir->netdev->name, err);
+			dev_warn(&stir->netdev->dev,
+				 "FIFO register read error: %d\n", err);
 
 			return err;
 		}
@@ -613,21 +612,25 @@ static int fifo_txwait(struct stir_cb *stir, int space)
 		pr_debug("fifo status 0x%lx count %lu\n", status, count);
 
 		/* is fifo receiving already, or empty */
-		if (!(status & FIFOCTL_DIR)
-		    || (status & FIFOCTL_EMPTY))
+		if (!(status & FIFOCTL_DIR) ||
+		    (status & FIFOCTL_EMPTY))
 			return 0;
 
 		if (signal_pending(current))
 			return -EINTR;
 
 		/* shutting down? */
-		if (!netif_running(stir->netdev)
-		    || !netif_device_present(stir->netdev))
+		if (!netif_running(stir->netdev) ||
+		    !netif_device_present(stir->netdev))
 			return -ESHUTDOWN;
 
 		/* only waiting for some space */
 		if (space >= 0 && STIR_FIFO_SIZE - 4 > space + count)
 			return 0;
+
+		/* queue confused */
+		if (prev_count < count)
+			break;
 
 		/* estimate transfer time for remaining chars */
 		msleep((count * 8000) / stir->speed);
@@ -690,7 +693,7 @@ static void receive_stop(struct stir_cb *stir)
 	usb_kill_urb(stir->rx_urb);
 
 	if (stir->rx_buff.in_frame) 
-		stir->stats.collisions++;
+		stir->netdev->stats.collisions++;
 }
 /*
  * Wrap data in socket buffer and send it.
@@ -716,15 +719,15 @@ static void stir_send(struct stir_cb *stir, struct sk_buff *skb)
 	if (!first_frame)
 		fifo_txwait(stir, wraplen);
 
-	stir->stats.tx_packets++;
-	stir->stats.tx_bytes += skb->len;
+	stir->netdev->stats.tx_packets++;
+	stir->netdev->stats.tx_bytes += skb->len;
 	stir->netdev->trans_start = jiffies;
 	pr_debug("send %d (%d)\n", skb->len, wraplen);
 
 	if (usb_bulk_msg(stir->usbdev, usb_sndbulkpipe(stir->usbdev, 1),
 			 stir->io_buf, wraplen,
 			 NULL, TRANSMIT_TIMEOUT))
-		stir->stats.tx_errors++;
+		stir->netdev->stats.tx_errors++;
 }
 
 /*
@@ -773,16 +776,17 @@ static int stir_transmit_thread(void *arg)
 		}
 
 		/* nothing to send? start receiving */
-		if (!stir->receiving 
-		    && irda_device_txqueue_empty(dev)) {
+		if (!stir->receiving &&
+		    irda_device_txqueue_empty(dev)) {
 			/* Wait otherwise chip gets confused. */
 			if (fifo_txwait(stir, -1))
 				break;
 
 			if (unlikely(receive_start(stir))) {
 				if (net_ratelimit())
-					info("%s: receive usb submit failed",
-					     stir->netdev->name);
+					dev_info(&dev->dev,
+						 "%s: receive usb submit failed\n",
+						 stir->netdev->name);
 				stir->receiving = 0;
 				msleep(10);
 				continue;
@@ -821,7 +825,6 @@ static void stir_rcv_irq(struct urb *urb)
 		unwrap_chars(stir, urb->transfer_buffer,
 			     urb->actual_length);
 		
-		stir->netdev->last_rx = jiffies;
 		do_gettimeofday(&stir->rx_time);
 	}
 
@@ -834,8 +837,8 @@ static void stir_rcv_irq(struct urb *urb)
 
 	/* in case of error, the kernel thread will restart us */
 	if (err) {
-		warn("%s: usb receive submit error: %d",
-			stir->netdev->name, err);
+		dev_warn(&stir->netdev->dev, "usb receive submit error: %d\n",
+			 err);
 		stir->receiving = 0;
 		wake_up_process(stir->thread);
 	}
@@ -1005,14 +1008,12 @@ static int stir_net_ioctl(struct net_device *netdev, struct ifreq *rq, int cmd)
 	return ret;
 }
 
-/*
- * Get device stats (for /proc/net/dev and ifconfig)
- */
-static struct net_device_stats *stir_net_get_stats(struct net_device *netdev)
-{
-	struct stir_cb *stir = netdev_priv(netdev);
-	return &stir->stats;
-}
+static const struct net_device_ops stir_netdev_ops = {
+	.ndo_open       = stir_net_open,
+	.ndo_stop       = stir_net_close,
+	.ndo_start_xmit = stir_hard_xmit,
+	.ndo_do_ioctl   = stir_net_ioctl,
+};
 
 /*
  * This routine is called by the USB subsystem for each new device
@@ -1034,7 +1035,6 @@ static int stir_probe(struct usb_interface *intf,
 	if(!net)
 		goto err_out1;
 
-	SET_MODULE_OWNER(net);
 	SET_NETDEV_DEV(net, &intf->dev);
 	stir = netdev_priv(net);
 	stir->netdev = net;
@@ -1062,17 +1062,14 @@ static int stir_probe(struct usb_interface *intf,
 	irda_qos_bits_to_value(&stir->qos);
 
 	/* Override the network functions we need to use */
-	net->hard_start_xmit = stir_hard_xmit;
-	net->open            = stir_net_open;
-	net->stop            = stir_net_close;
-	net->get_stats	     = stir_net_get_stats;
-	net->do_ioctl        = stir_net_ioctl;
+	net->netdev_ops = &stir_netdev_ops;
 
 	ret = register_netdev(net);
 	if (ret != 0)
 		goto err_out2;
 
-	info("IrDA: Registered SigmaTel device %s", net->name);
+	dev_info(&intf->dev, "IrDA: Registered SigmaTel device %s\n",
+		 net->name);
 
 	usb_set_intfdata(intf, stir);
 

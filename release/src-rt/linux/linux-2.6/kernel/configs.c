@@ -54,9 +54,6 @@
 
 #ifdef CONFIG_IKCONFIG_PROC
 
-/**************************************************/
-/* globals and useful constants                   */
-
 static ssize_t
 ikconfig_read_current(struct file *file, char __user *buf,
 		      size_t len, loff_t * offset)
@@ -69,33 +66,27 @@ ikconfig_read_current(struct file *file, char __user *buf,
 static const struct file_operations ikconfig_file_ops = {
 	.owner = THIS_MODULE,
 	.read = ikconfig_read_current,
+	.llseek = default_llseek,
 };
-
-/***************************************************/
-/* ikconfig_init: start up everything we need to */
 
 static int __init ikconfig_init(void)
 {
 	struct proc_dir_entry *entry;
 
 	/* create the current config file */
-	entry = create_proc_entry("config.gz", S_IFREG | S_IRUGO,
-				  &proc_root);
+	entry = proc_create("config.gz", S_IFREG | S_IRUGO, NULL,
+			    &ikconfig_file_ops);
 	if (!entry)
 		return -ENOMEM;
 
-	entry->proc_fops = &ikconfig_file_ops;
 	entry->size = kernel_config_data_size;
 
 	return 0;
 }
 
-/***************************************************/
-/* ikconfig_cleanup: clean up our mess           */
-
 static void __exit ikconfig_cleanup(void)
 {
-	remove_proc_entry("config.gz", &proc_root);
+	remove_proc_entry("config.gz", NULL);
 }
 
 module_init(ikconfig_init);

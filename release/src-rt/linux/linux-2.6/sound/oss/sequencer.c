@@ -212,7 +212,6 @@ int sequencer_write(int dev, struct file *file, const char __user *buf, int coun
 {
 	unsigned char event_rec[EV_SZ], ev_code;
 	int p = 0, c, ev_size;
-	int err;
 	int mode = translate_mode(file);
 
 	dev = dev >> 4;
@@ -242,7 +241,7 @@ int sequencer_write(int dev, struct file *file, const char __user *buf, int coun
 				return -ENXIO;
 
 			fmt = (*(short *) &event_rec[0]) & 0xffff;
-			err = synth_devs[dev]->load_patch(dev, fmt, buf, p + 4, c, 0);
+			err = synth_devs[dev]->load_patch(dev, fmt, buf + p, c, 0);
 			if (err < 0)
 				return err;
 
@@ -285,7 +284,7 @@ int sequencer_write(int dev, struct file *file, const char __user *buf, int coun
 		{
 			if (!midi_opened[event_rec[2]])
 			{
-				int mode;
+				int err, mode;
 				int dev = event_rec[2];
 
 				if (dev >= max_mididev || midi_devs[dev]==NULL)
@@ -1632,8 +1631,6 @@ unsigned long compute_finetune(unsigned long base_freq, int bend, int range,
 	}
 
 	semitones = bend / 100;
-	if (semitones > 99)
-		semitones = 99;
 	cents = bend % 100;
 
 	amount = (int) (semitone_tuning[semitones] * multiplier * cent_tuning[cents]) / 10000;
@@ -1649,13 +1646,13 @@ void sequencer_init(void)
 {
 	if (sequencer_ok)
 		return;
-	queue = (unsigned char *)vmalloc(SEQ_MAX_QUEUE * EV_SZ);
+	queue = vmalloc(SEQ_MAX_QUEUE * EV_SZ);
 	if (queue == NULL)
 	{
 		printk(KERN_ERR "sequencer: Can't allocate memory for sequencer output queue\n");
 		return;
 	}
-	iqueue = (unsigned char *)vmalloc(SEQ_MAX_QUEUE * IEV_SZ);
+	iqueue = vmalloc(SEQ_MAX_QUEUE * IEV_SZ);
 	if (iqueue == NULL)
 	{
 		printk(KERN_ERR "sequencer: Can't allocate memory for sequencer input queue\n");

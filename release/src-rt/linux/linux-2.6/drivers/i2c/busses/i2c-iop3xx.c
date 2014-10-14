@@ -38,8 +38,7 @@
 #include <linux/errno.h>
 #include <linux/platform_device.h>
 #include <linux/i2c.h>
-
-#include <asm/io.h>
+#include <linux/io.h>
 
 #include "i2c-iop3xx.h"
 
@@ -55,12 +54,6 @@ iic_cook_addr(struct i2c_msg *msg)
 
 	if (msg->flags & I2C_M_RD)
 		addr |= 1;
-
-	/*
-	 * Read or Write?
-	 */
-	if (msg->flags & I2C_M_REV_DIR_ADDR)
-		addr ^= 1;
 
 	return addr;   
 }
@@ -389,13 +382,6 @@ iop3xx_i2c_master_xfer(struct i2c_adapter *i2c_adap, struct i2c_msg *msgs,
 	return im;   
 }
 
-static int 
-iop3xx_i2c_algo_control(struct i2c_adapter *adapter, unsigned int cmd,
-			unsigned long arg)
-{
-	return 0;
-}
-
 static u32 
 iop3xx_i2c_func(struct i2c_adapter *adap)
 {
@@ -404,7 +390,6 @@ iop3xx_i2c_func(struct i2c_adapter *adap)
 
 static const struct i2c_algorithm iop3xx_i2c_algo = {
 	.master_xfer	= iop3xx_i2c_master_xfer,
-	.algo_control	= iop3xx_i2c_algo_control,
 	.functionality	= iop3xx_i2c_func,
 };
 
@@ -424,7 +409,7 @@ iop3xx_i2c_remove(struct platform_device *pdev)
 		IOP3XX_ICR_RXFULL_IE | IOP3XX_ICR_TXEMPTY_IE);
 	__raw_writel(cr, adapter_data->ioaddr + CR_OFFSET);
 
-	iounmap((void __iomem*)adapter_data->ioaddr);
+	iounmap(adapter_data->ioaddr);
 	release_mem_region(res->start, IOP3XX_I2C_IO_SIZE);
 	kfree(adapter_data);
 	kfree(padapter);
@@ -468,7 +453,7 @@ iop3xx_i2c_probe(struct platform_device *pdev)
 	/* set the adapter enumeration # */
 	adapter_data->id = i2c_id++;
 
-	adapter_data->ioaddr = (u32)ioremap(res->start, IOP3XX_I2C_IO_SIZE);
+	adapter_data->ioaddr = ioremap(res->start, IOP3XX_I2C_IO_SIZE);
 	if (!adapter_data->ioaddr) {
 		ret = -ENOMEM;
 		goto release_region;
@@ -488,15 +473,15 @@ iop3xx_i2c_probe(struct platform_device *pdev)
 	}
 
 	memcpy(new_adapter->name, pdev->name, strlen(pdev->name));
-	new_adapter->id = I2C_HW_IOP3XX;
 	new_adapter->owner = THIS_MODULE;
+	new_adapter->class = I2C_CLASS_HWMON | I2C_CLASS_SPD;
 	new_adapter->dev.parent = &pdev->dev;
+	new_adapter->nr = pdev->id;
 
 	/*
 	 * Default values...should these come in from board code?
 	 */
-	new_adapter->timeout = 100;	
-	new_adapter->retries = 3;
+	new_adapter->timeout = HZ;
 	new_adapter->algo = &iop3xx_i2c_algo;
 
 	init_waitqueue_head(&adapter_data->waitq);
@@ -508,12 +493,12 @@ iop3xx_i2c_probe(struct platform_device *pdev)
 	platform_set_drvdata(pdev, new_adapter);
 	new_adapter->algo_data = adapter_data;
 
-	i2c_add_adapter(new_adapter);
+	i2c_add_numbered_adapter(new_adapter);
 
 	return 0;
 
 unmap:
-	iounmap((void __iomem*)adapter_data->ioaddr);
+	iounmap(adapter_data->ioaddr);
 
 release_region:
 	release_mem_region(res->start, IOP3XX_I2C_IO_SIZE);
@@ -557,3 +542,4 @@ module_exit (i2c_iop3xx_exit);
 MODULE_AUTHOR("D-TACQ Solutions Ltd <www.d-tacq.com>");
 MODULE_DESCRIPTION("IOP3xx iic algorithm and driver");
 MODULE_LICENSE("GPL");
+MODULE_ALIAS("platform:IOP3xx-I2C");

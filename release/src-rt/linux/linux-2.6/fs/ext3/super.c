@@ -27,7 +27,6 @@
 #include <linux/init.h>
 #include <linux/blkdev.h>
 #include <linux/parser.h>
-#include <linux/smp_lock.h>
 #include <linux/buffer_head.h>
 #include <linux/exportfs.h>
 #include <linux/vfs.h>
@@ -44,12 +43,18 @@
 #include "acl.h"
 #include "namei.h"
 
+#ifdef CONFIG_EXT3_DEFAULTS_TO_ORDERED
+  #define EXT3_MOUNT_DEFAULT_DATA_MODE EXT3_MOUNT_ORDERED_DATA
+#else
+  #define EXT3_MOUNT_DEFAULT_DATA_MODE EXT3_MOUNT_WRITEBACK_DATA
+#endif
+
 static int ext3_load_journal(struct super_block *, struct ext3_super_block *,
 			     unsigned long journal_devnum);
 static int ext3_create_journal(struct super_block *, struct ext3_super_block *,
 			       unsigned int);
-static void ext3_commit_super (struct super_block * sb,
-			       struct ext3_super_block * es,
+static int ext3_commit_super(struct super_block *sb,
+			       struct ext3_super_block *es,
 			       int sync);
 static void ext3_mark_recovery_complete(struct super_block * sb,
 					struct ext3_super_block * es);
@@ -60,9 +65,8 @@ static const char *ext3_decode_error(struct super_block * sb, int errno,
 				     char nbuf[16]);
 static int ext3_remount (struct super_block * sb, int * flags, char * data);
 static int ext3_statfs (struct dentry * dentry, struct kstatfs * buf);
-static void ext3_unlockfs(struct super_block *sb);
-static void ext3_write_super (struct super_block * sb);
-static void ext3_write_super_lockfs(struct super_block *sb);
+static int ext3_unfreeze(struct super_block *sb);
+static int ext3_freeze(struct super_block *sb);
 
 /*
  * Wrappers for journal_start/end.
@@ -84,7 +88,7 @@ handle_t *ext3_journal_start_sb(struct super_block *sb, int nblocks)
 	 * take the FS itself readonly cleanly. */
 	journal = EXT3_SB(sb)->s_journal;
 	if (is_journal_aborted(journal)) {
-		ext3_abort(sb, __FUNCTION__,
+		ext3_abort(sb, __func__,
 			   "Detected aborted journal");
 		return ERR_PTR(-EROFS);
 	}
@@ -130,10 +134,26 @@ void ext3_journal_abort_handle(const char *caller, const char *err_fn,
 	if (is_handle_aborted(handle))
 		return;
 
-	printk(KERN_ERR "%s: aborting transaction: %s in %s\n",
-	       caller, errstr, err_fn);
+	printk(KERN_ERR "EXT3-fs: %s: aborting transaction: %s in %s\n",
+		caller, errstr, err_fn);
 
 	journal_abort_handle(handle);
+}
+
+void ext3_msg(struct super_block *sb, const char *prefix,
+		const char *fmt, ...)
+{
+	struct va_format vaf;
+	va_list args;
+
+	va_start(args, fmt);
+
+	vaf.fmt = fmt;
+	vaf.va = &args;
+
+	printk("%sEXT3-fs (%s): %pV\n", prefix, sb->s_id, &vaf);
+
+	va_end(args);
 }
 
 /* Deal with the reporting of failure conditions on a filesystem such as
@@ -147,7 +167,7 @@ void ext3_journal_abort_handle(const char *caller, const char *err_fn,
  * write out the superblock safely.
  *
  * We'll just use the journal_abort() error code to record an error in
- * the journal instead.  On recovery, the journal will compain about
+ * the journal instead.  On recovery, the journal will complain about
  * that error until we've noted it down and cleared it.
  */
 
@@ -164,30 +184,35 @@ static void ext3_handle_error(struct super_block *sb)
 	if (!test_opt (sb, ERRORS_CONT)) {
 		journal_t *journal = EXT3_SB(sb)->s_journal;
 
-		EXT3_SB(sb)->s_mount_opt |= EXT3_MOUNT_ABORT;
+		set_opt(EXT3_SB(sb)->s_mount_opt, ABORT);
 		if (journal)
 			journal_abort(journal, -EIO);
 	}
 	if (test_opt (sb, ERRORS_RO)) {
-		printk (KERN_CRIT "Remounting filesystem read-only\n");
+		ext3_msg(sb, KERN_CRIT,
+			"error: remounting filesystem read-only");
 		sb->s_flags |= MS_RDONLY;
-		notify_device_error("filesystem", sb->s_id, "1");
 	}
 	ext3_commit_super(sb, es, 1);
 	if (test_opt(sb, ERRORS_PANIC))
-		panic("EXT3-fs (device %s): panic forced after error\n",
+		panic("EXT3-fs (%s): panic forced after error\n",
 			sb->s_id);
 }
 
-void ext3_error (struct super_block * sb, const char * function,
-		 const char * fmt, ...)
+void ext3_error(struct super_block *sb, const char *function,
+		const char *fmt, ...)
 {
+	struct va_format vaf;
 	va_list args;
 
 	va_start(args, fmt);
-	printk(KERN_CRIT "EXT3-fs error (device %s): %s: ",sb->s_id, function);
-	vprintk(fmt, args);
-	printk("\n");
+
+	vaf.fmt = fmt;
+	vaf.va = &args;
+
+	printk(KERN_CRIT "EXT3-fs error (device %s): %s: %pV\n",
+	       sb->s_id, function, &vaf);
+
 	va_end(args);
 
 	ext3_handle_error(sb);
@@ -243,8 +268,7 @@ void __ext3_std_error (struct super_block * sb, const char * function,
 		return;
 
 	errstr = ext3_decode_error(sb, errno, nbuf);
-	printk (KERN_CRIT "EXT3-fs error (device %s) in %s: %s\n",
-		sb->s_id, function, errstr);
+	ext3_msg(sb, KERN_CRIT, "error in %s: %s", function, errstr);
 
 	ext3_handle_error(sb);
 }
@@ -259,43 +283,51 @@ void __ext3_std_error (struct super_block * sb, const char * function,
  * case we take the easy way out and panic immediately.
  */
 
-void ext3_abort (struct super_block * sb, const char * function,
-		 const char * fmt, ...)
+void ext3_abort(struct super_block *sb, const char *function,
+		 const char *fmt, ...)
 {
+	struct va_format vaf;
 	va_list args;
 
-	printk (KERN_CRIT "ext3_abort called.\n");
-
 	va_start(args, fmt);
-	printk(KERN_CRIT "EXT3-fs error (device %s): %s: ",sb->s_id, function);
-	vprintk(fmt, args);
-	printk("\n");
+
+	vaf.fmt = fmt;
+	vaf.va = &args;
+
+	printk(KERN_CRIT "EXT3-fs (%s): error: %s: %pV\n",
+	       sb->s_id, function, &vaf);
+
 	va_end(args);
 
 	if (test_opt(sb, ERRORS_PANIC))
-		panic("EXT3-fs panic from previous error\n");
+		panic("EXT3-fs: panic from previous error\n");
 
 	if (sb->s_flags & MS_RDONLY)
 		return;
 
-	printk(KERN_CRIT "Remounting filesystem read-only\n");
+	ext3_msg(sb, KERN_CRIT,
+		"error: remounting filesystem read-only");
 	EXT3_SB(sb)->s_mount_state |= EXT3_ERROR_FS;
 	sb->s_flags |= MS_RDONLY;
-	notify_device_error("filesystem", sb->s_id, "1");
-	EXT3_SB(sb)->s_mount_opt |= EXT3_MOUNT_ABORT;
-	journal_abort(EXT3_SB(sb)->s_journal, -EIO);
+	set_opt(EXT3_SB(sb)->s_mount_opt, ABORT);
+	if (EXT3_SB(sb)->s_journal)
+		journal_abort(EXT3_SB(sb)->s_journal, -EIO);
 }
 
-void ext3_warning (struct super_block * sb, const char * function,
-		   const char * fmt, ...)
+void ext3_warning(struct super_block *sb, const char *function,
+		  const char *fmt, ...)
 {
+	struct va_format vaf;
 	va_list args;
 
 	va_start(args, fmt);
-	printk(KERN_WARNING "EXT3-fs warning (device %s): %s: ",
-	       sb->s_id, function);
-	vprintk(fmt, args);
-	printk("\n");
+
+	vaf.fmt = fmt;
+	vaf.va = &args;
+
+	printk(KERN_WARNING "EXT3-fs (%s): warning: %s: %pV\n",
+	       sb->s_id, function, &vaf);
+
 	va_end(args);
 }
 
@@ -306,10 +338,10 @@ void ext3_update_dynamic_rev(struct super_block *sb)
 	if (le32_to_cpu(es->s_rev_level) > EXT3_GOOD_OLD_REV)
 		return;
 
-	ext3_warning(sb, __FUNCTION__,
-		     "updating to rev %d because of new feature flag, "
-		     "running e2fsck is recommended",
-		     EXT3_DYNAMIC_REV);
+	ext3_msg(sb, KERN_WARNING,
+		"warning: updating to rev %d because of "
+		"new feature flag, running e2fsck is recommended",
+		EXT3_DYNAMIC_REV);
 
 	es->s_first_ino = cpu_to_le32(EXT3_GOOD_OLD_FIRST_INO);
 	es->s_inode_size = cpu_to_le16(EXT3_GOOD_OLD_INODE_SIZE);
@@ -327,19 +359,20 @@ void ext3_update_dynamic_rev(struct super_block *sb)
 /*
  * Open the external journal device
  */
-static struct block_device *ext3_blkdev_get(dev_t dev)
+static struct block_device *ext3_blkdev_get(dev_t dev, struct super_block *sb)
 {
 	struct block_device *bdev;
 	char b[BDEVNAME_SIZE];
 
-	bdev = open_by_devnum(dev, FMODE_READ|FMODE_WRITE);
+	bdev = blkdev_get_by_dev(dev, FMODE_READ|FMODE_WRITE|FMODE_EXCL, sb);
 	if (IS_ERR(bdev))
 		goto fail;
 	return bdev;
 
 fail:
-	printk(KERN_ERR "EXT3: failed to open journal device %s: %ld\n",
-			__bdevname(dev, b), PTR_ERR(bdev));
+	ext3_msg(sb, "error: failed to open journal device %s: %ld",
+		__bdevname(dev, b), PTR_ERR(bdev));
+
 	return NULL;
 }
 
@@ -348,8 +381,7 @@ fail:
  */
 static int ext3_blkdev_put(struct block_device *bdev)
 {
-	bd_release(bdev);
-	return blkdev_put(bdev);
+	return blkdev_put(bdev, FMODE_READ|FMODE_WRITE|FMODE_EXCL);
 }
 
 static int ext3_blkdev_remove(struct ext3_sb_info *sbi)
@@ -374,13 +406,13 @@ static void dump_orphan_list(struct super_block *sb, struct ext3_sb_info *sbi)
 {
 	struct list_head *l;
 
-	printk(KERN_ERR "sb orphan head is %d\n",
+	ext3_msg(sb, KERN_ERR, "error: sb orphan head is %d",
 	       le32_to_cpu(sbi->s_es->s_last_orphan));
 
-	printk(KERN_ERR "sb_info orphan list:\n");
+	ext3_msg(sb, KERN_ERR, "sb_info orphan list:");
 	list_for_each(l, &sbi->s_orphan) {
 		struct inode *inode = orphan_list_entry(l);
-		printk(KERN_ERR "  "
+		ext3_msg(sb, KERN_ERR, "  "
 		       "inode %s:%lu at %p: mode %o, nlink %d, next %d\n",
 		       inode->i_sb->s_id, inode->i_ino, inode,
 		       inode->i_mode, inode->i_nlink,
@@ -392,10 +424,15 @@ static void ext3_put_super (struct super_block * sb)
 {
 	struct ext3_sb_info *sbi = EXT3_SB(sb);
 	struct ext3_super_block *es = sbi->s_es;
-	int i;
+	int i, err;
 
+	dquot_disable(sb, -1, DQUOT_USAGE_ENABLED | DQUOT_LIMITS_ENABLED);
 	ext3_xattr_put_super(sb);
-	journal_destroy(sbi->s_journal);
+	err = journal_destroy(sbi->s_journal);
+	sbi->s_journal = NULL;
+	if (err < 0)
+		ext3_abort(sb, __func__, "Couldn't clean up the journal");
+
 	if (!(sb->s_flags & MS_RDONLY)) {
 		EXT3_CLEAR_INCOMPAT_FEATURE(sb, EXT3_FEATURE_INCOMPAT_RECOVER);
 		es->s_state = cpu_to_le16(sbi->s_mount_state);
@@ -436,8 +473,8 @@ static void ext3_put_super (struct super_block * sb)
 		ext3_blkdev_remove(sbi);
 	}
 	sb->s_fs_info = NULL;
+	kfree(sbi->s_blockgroup_lock);
 	kfree(sbi);
-	return;
 }
 
 static struct kmem_cache *ext3_inode_cachep;
@@ -452,21 +489,34 @@ static struct inode *ext3_alloc_inode(struct super_block *sb)
 	ei = kmem_cache_alloc(ext3_inode_cachep, GFP_NOFS);
 	if (!ei)
 		return NULL;
-#ifdef CONFIG_EXT3_FS_POSIX_ACL
-	ei->i_acl = EXT3_ACL_NOT_CACHED;
-	ei->i_default_acl = EXT3_ACL_NOT_CACHED;
-#endif
 	ei->i_block_alloc_info = NULL;
 	ei->vfs_inode.i_version = 1;
+	atomic_set(&ei->i_datasync_tid, 0);
+	atomic_set(&ei->i_sync_tid, 0);
 	return &ei->vfs_inode;
+}
+
+static void ext3_i_callback(struct rcu_head *head)
+{
+	struct inode *inode = container_of(head, struct inode, i_rcu);
+	INIT_LIST_HEAD(&inode->i_dentry);
+	kmem_cache_free(ext3_inode_cachep, EXT3_I(inode));
 }
 
 static void ext3_destroy_inode(struct inode *inode)
 {
-	kmem_cache_free(ext3_inode_cachep, EXT3_I(inode));
+	if (!list_empty(&(EXT3_I(inode)->i_orphan))) {
+		printk("EXT3 Inode %p: orphan list check failed!\n",
+			EXT3_I(inode));
+		print_hex_dump(KERN_INFO, "", DUMP_PREFIX_ADDRESS, 16, 4,
+				EXT3_I(inode), sizeof(struct ext3_inode_info),
+				false);
+		dump_stack();
+	}
+	call_rcu(&inode->i_rcu, ext3_i_callback);
 }
 
-static void init_once(void * foo, struct kmem_cache * cachep, unsigned long flags)
+static void init_once(void *foo)
 {
 	struct ext3_inode_info *ei = (struct ext3_inode_info *) foo;
 
@@ -484,7 +534,7 @@ static int init_inodecache(void)
 					     sizeof(struct ext3_inode_info),
 					     0, (SLAB_RECLAIM_ACCOUNT|
 						SLAB_MEM_SPREAD),
-					     init_once, NULL);
+					     init_once);
 	if (ext3_inode_cachep == NULL)
 		return -ENOMEM;
 	return 0;
@@ -495,35 +545,27 @@ static void destroy_inodecache(void)
 	kmem_cache_destroy(ext3_inode_cachep);
 }
 
-static void ext3_clear_inode(struct inode *inode)
-{
-	struct ext3_block_alloc_info *rsv = EXT3_I(inode)->i_block_alloc_info;
-#ifdef CONFIG_EXT3_FS_POSIX_ACL
-	if (EXT3_I(inode)->i_acl &&
-			EXT3_I(inode)->i_acl != EXT3_ACL_NOT_CACHED) {
-		posix_acl_release(EXT3_I(inode)->i_acl);
-		EXT3_I(inode)->i_acl = EXT3_ACL_NOT_CACHED;
-	}
-	if (EXT3_I(inode)->i_default_acl &&
-			EXT3_I(inode)->i_default_acl != EXT3_ACL_NOT_CACHED) {
-		posix_acl_release(EXT3_I(inode)->i_default_acl);
-		EXT3_I(inode)->i_default_acl = EXT3_ACL_NOT_CACHED;
-	}
-#endif
-	ext3_discard_reservation(inode);
-	EXT3_I(inode)->i_block_alloc_info = NULL;
-	if (unlikely(rsv))
-		kfree(rsv);
-}
-
 static inline void ext3_show_quota_options(struct seq_file *seq, struct super_block *sb)
 {
 #if defined(CONFIG_QUOTA)
 	struct ext3_sb_info *sbi = EXT3_SB(sb);
 
-	if (sbi->s_jquota_fmt)
-		seq_printf(seq, ",jqfmt=%s",
-		(sbi->s_jquota_fmt == QFMT_VFS_OLD) ? "vfsold": "vfsv0");
+	if (sbi->s_jquota_fmt) {
+		char *fmtname = "";
+
+		switch (sbi->s_jquota_fmt) {
+		case QFMT_VFS_OLD:
+			fmtname = "vfsold";
+			break;
+		case QFMT_VFS_V0:
+			fmtname = "vfsv0";
+			break;
+		case QFMT_VFS_V1:
+			fmtname = "vfsv1";
+			break;
+		}
+		seq_printf(seq, ",jqfmt=%s", fmtname);
+	}
 
 	if (sbi->s_qf_names[USRQUOTA])
 		seq_printf(seq, ",usrjquota=%s", sbi->s_qf_names[USRQUOTA]);
@@ -531,24 +573,107 @@ static inline void ext3_show_quota_options(struct seq_file *seq, struct super_bl
 	if (sbi->s_qf_names[GRPQUOTA])
 		seq_printf(seq, ",grpjquota=%s", sbi->s_qf_names[GRPQUOTA]);
 
-	if (sbi->s_mount_opt & EXT3_MOUNT_USRQUOTA)
+	if (test_opt(sb, USRQUOTA))
 		seq_puts(seq, ",usrquota");
 
-	if (sbi->s_mount_opt & EXT3_MOUNT_GRPQUOTA)
+	if (test_opt(sb, GRPQUOTA))
 		seq_puts(seq, ",grpquota");
 #endif
 }
 
+static char *data_mode_string(unsigned long mode)
+{
+	switch (mode) {
+	case EXT3_MOUNT_JOURNAL_DATA:
+		return "journal";
+	case EXT3_MOUNT_ORDERED_DATA:
+		return "ordered";
+	case EXT3_MOUNT_WRITEBACK_DATA:
+		return "writeback";
+	}
+	return "unknown";
+}
+
+/*
+ * Show an option if
+ *  - it's set to a non-default value OR
+ *  - if the per-sb default is different from the global default
+ */
 static int ext3_show_options(struct seq_file *seq, struct vfsmount *vfs)
 {
 	struct super_block *sb = vfs->mnt_sb;
+	struct ext3_sb_info *sbi = EXT3_SB(sb);
+	struct ext3_super_block *es = sbi->s_es;
+	unsigned long def_mount_opts;
 
-	if (test_opt(sb, DATA_FLAGS) == EXT3_MOUNT_JOURNAL_DATA)
-		seq_puts(seq, ",data=journal");
-	else if (test_opt(sb, DATA_FLAGS) == EXT3_MOUNT_ORDERED_DATA)
-		seq_puts(seq, ",data=ordered");
-	else if (test_opt(sb, DATA_FLAGS) == EXT3_MOUNT_WRITEBACK_DATA)
-		seq_puts(seq, ",data=writeback");
+	def_mount_opts = le32_to_cpu(es->s_default_mount_opts);
+
+	if (sbi->s_sb_block != 1)
+		seq_printf(seq, ",sb=%lu", sbi->s_sb_block);
+	if (test_opt(sb, MINIX_DF))
+		seq_puts(seq, ",minixdf");
+	if (test_opt(sb, GRPID))
+		seq_puts(seq, ",grpid");
+	if (!test_opt(sb, GRPID) && (def_mount_opts & EXT3_DEFM_BSDGROUPS))
+		seq_puts(seq, ",nogrpid");
+	if (sbi->s_resuid != EXT3_DEF_RESUID ||
+	    le16_to_cpu(es->s_def_resuid) != EXT3_DEF_RESUID) {
+		seq_printf(seq, ",resuid=%u", sbi->s_resuid);
+	}
+	if (sbi->s_resgid != EXT3_DEF_RESGID ||
+	    le16_to_cpu(es->s_def_resgid) != EXT3_DEF_RESGID) {
+		seq_printf(seq, ",resgid=%u", sbi->s_resgid);
+	}
+	if (test_opt(sb, ERRORS_RO)) {
+		int def_errors = le16_to_cpu(es->s_errors);
+
+		if (def_errors == EXT3_ERRORS_PANIC ||
+		    def_errors == EXT3_ERRORS_CONTINUE) {
+			seq_puts(seq, ",errors=remount-ro");
+		}
+	}
+	if (test_opt(sb, ERRORS_CONT))
+		seq_puts(seq, ",errors=continue");
+	if (test_opt(sb, ERRORS_PANIC))
+		seq_puts(seq, ",errors=panic");
+	if (test_opt(sb, NO_UID32))
+		seq_puts(seq, ",nouid32");
+	if (test_opt(sb, DEBUG))
+		seq_puts(seq, ",debug");
+	if (test_opt(sb, OLDALLOC))
+		seq_puts(seq, ",oldalloc");
+#ifdef CONFIG_EXT3_FS_XATTR
+	if (test_opt(sb, XATTR_USER))
+		seq_puts(seq, ",user_xattr");
+	if (!test_opt(sb, XATTR_USER) &&
+	    (def_mount_opts & EXT3_DEFM_XATTR_USER)) {
+		seq_puts(seq, ",nouser_xattr");
+	}
+#endif
+#ifdef CONFIG_EXT3_FS_POSIX_ACL
+	if (test_opt(sb, POSIX_ACL))
+		seq_puts(seq, ",acl");
+	if (!test_opt(sb, POSIX_ACL) && (def_mount_opts & EXT3_DEFM_ACL))
+		seq_puts(seq, ",noacl");
+#endif
+	if (!test_opt(sb, RESERVATION))
+		seq_puts(seq, ",noreservation");
+	if (sbi->s_commit_interval) {
+		seq_printf(seq, ",commit=%u",
+			   (unsigned) (sbi->s_commit_interval / HZ));
+	}
+
+	/*
+	 * Always display barrier state so it's clear what the status is.
+	 */
+	seq_puts(seq, ",barrier=");
+	seq_puts(seq, test_opt(sb, BARRIER) ? "1" : "0");
+	seq_printf(seq, ",data=%s", data_mode_string(test_opt(sb, DATA_FLAGS)));
+	if (test_opt(sb, DATA_ERR_ABORT))
+		seq_puts(seq, ",data_err=abort");
+
+	if (test_opt(sb, NOLOAD))
+		seq_puts(seq, ",norecovery");
 
 	ext3_show_quota_options(seq, sb);
 
@@ -574,11 +699,10 @@ static struct inode *ext3_nfs_get_inode(struct super_block *sb,
 	 * Currently we don't know the generation for parent directory, so
 	 * a generation of 0 means "accept any"
 	 */
-	inode = iget(sb, ino);
-	if (inode == NULL)
-		return ERR_PTR(-ENOMEM);
-	if (is_bad_inode(inode) ||
-	    (generation && inode->i_generation != generation)) {
+	inode = ext3_iget(sb, ino);
+	if (IS_ERR(inode))
+		return ERR_CAST(inode);
+	if (generation && inode->i_generation != generation) {
 		iput(inode);
 		return ERR_PTR(-ESTALE);
 	}
@@ -600,70 +724,82 @@ static struct dentry *ext3_fh_to_parent(struct super_block *sb, struct fid *fid,
 				    ext3_nfs_get_inode);
 }
 
+/*
+ * Try to release metadata pages (indirect blocks, directories) which are
+ * mapped via the block device.  Since these pages could have journal heads
+ * which would prevent try_to_free_buffers() from freeing them, we must use
+ * jbd layer's try_to_free_buffers() function to release them.
+ */
+static int bdev_try_to_free_page(struct super_block *sb, struct page *page,
+				 gfp_t wait)
+{
+	journal_t *journal = EXT3_SB(sb)->s_journal;
+
+	WARN_ON(PageChecked(page));
+	if (!page_has_buffers(page))
+		return 0;
+	if (journal)
+		return journal_try_to_free_buffers(journal, page, 
+						   wait & ~__GFP_WAIT);
+	return try_to_free_buffers(page);
+}
+
 #ifdef CONFIG_QUOTA
 #define QTYPE2NAME(t) ((t)==USRQUOTA?"user":"group")
 #define QTYPE2MOPT(on, t) ((t)==USRQUOTA?((on)##USRJQUOTA):((on)##GRPJQUOTA))
 
-static int ext3_dquot_initialize(struct inode *inode, int type);
-static int ext3_dquot_drop(struct inode *inode);
 static int ext3_write_dquot(struct dquot *dquot);
 static int ext3_acquire_dquot(struct dquot *dquot);
 static int ext3_release_dquot(struct dquot *dquot);
 static int ext3_mark_dquot_dirty(struct dquot *dquot);
 static int ext3_write_info(struct super_block *sb, int type);
-static int ext3_quota_on(struct super_block *sb, int type, int format_id, char *path);
+static int ext3_quota_on(struct super_block *sb, int type, int format_id,
+			 struct path *path);
 static int ext3_quota_on_mount(struct super_block *sb, int type);
 static ssize_t ext3_quota_read(struct super_block *sb, int type, char *data,
 			       size_t len, loff_t off);
 static ssize_t ext3_quota_write(struct super_block *sb, int type,
 				const char *data, size_t len, loff_t off);
 
-static struct dquot_operations ext3_quota_operations = {
-	.initialize	= ext3_dquot_initialize,
-	.drop		= ext3_dquot_drop,
-	.alloc_space	= dquot_alloc_space,
-	.alloc_inode	= dquot_alloc_inode,
-	.free_space	= dquot_free_space,
-	.free_inode	= dquot_free_inode,
-	.transfer	= dquot_transfer,
+static const struct dquot_operations ext3_quota_operations = {
 	.write_dquot	= ext3_write_dquot,
 	.acquire_dquot	= ext3_acquire_dquot,
 	.release_dquot	= ext3_release_dquot,
 	.mark_dirty	= ext3_mark_dquot_dirty,
-	.write_info	= ext3_write_info
+	.write_info	= ext3_write_info,
+	.alloc_dquot	= dquot_alloc,
+	.destroy_dquot	= dquot_destroy,
 };
 
-static struct quotactl_ops ext3_qctl_operations = {
+static const struct quotactl_ops ext3_qctl_operations = {
 	.quota_on	= ext3_quota_on,
-	.quota_off	= vfs_quota_off,
-	.quota_sync	= vfs_quota_sync,
-	.get_info	= vfs_get_dqinfo,
-	.set_info	= vfs_set_dqinfo,
-	.get_dqblk	= vfs_get_dqblk,
-	.set_dqblk	= vfs_set_dqblk
+	.quota_off	= dquot_quota_off,
+	.quota_sync	= dquot_quota_sync,
+	.get_info	= dquot_get_dqinfo,
+	.set_info	= dquot_set_dqinfo,
+	.get_dqblk	= dquot_get_dqblk,
+	.set_dqblk	= dquot_set_dqblk
 };
 #endif
 
 static const struct super_operations ext3_sops = {
 	.alloc_inode	= ext3_alloc_inode,
 	.destroy_inode	= ext3_destroy_inode,
-	.read_inode	= ext3_read_inode,
 	.write_inode	= ext3_write_inode,
 	.dirty_inode	= ext3_dirty_inode,
-	.delete_inode	= ext3_delete_inode,
+	.evict_inode	= ext3_evict_inode,
 	.put_super	= ext3_put_super,
-	.write_super	= ext3_write_super,
 	.sync_fs	= ext3_sync_fs,
-	.write_super_lockfs = ext3_write_super_lockfs,
-	.unlockfs	= ext3_unlockfs,
+	.freeze_fs	= ext3_freeze,
+	.unfreeze_fs	= ext3_unfreeze,
 	.statfs		= ext3_statfs,
 	.remount_fs	= ext3_remount,
-	.clear_inode	= ext3_clear_inode,
 	.show_options	= ext3_show_options,
 #ifdef CONFIG_QUOTA
 	.quota_read	= ext3_quota_read,
 	.quota_write	= ext3_quota_write,
 #endif
+	.bdev_try_to_free_page = bdev_try_to_free_page,
 };
 
 static const struct export_operations ext3_export_ops = {
@@ -680,13 +816,14 @@ enum {
 	Opt_reservation, Opt_noreservation, Opt_noload, Opt_nobh, Opt_bh,
 	Opt_commit, Opt_journal_update, Opt_journal_inum, Opt_journal_dev,
 	Opt_abort, Opt_data_journal, Opt_data_ordered, Opt_data_writeback,
+	Opt_data_err_abort, Opt_data_err_ignore,
 	Opt_usrjquota, Opt_grpjquota, Opt_offusrjquota, Opt_offgrpjquota,
-	Opt_jqfmt_vfsold, Opt_jqfmt_vfsv0, Opt_quota, Opt_noquota,
-	Opt_ignore, Opt_barrier, Opt_err, Opt_resize, Opt_usrquota,
-	Opt_grpquota
+	Opt_jqfmt_vfsold, Opt_jqfmt_vfsv0, Opt_jqfmt_vfsv1, Opt_quota,
+	Opt_noquota, Opt_ignore, Opt_barrier, Opt_nobarrier, Opt_err,
+	Opt_resize, Opt_usrquota, Opt_grpquota
 };
 
-static match_table_t tokens = {
+static const match_table_t tokens = {
 	{Opt_bsd_df, "bsddf"},
 	{Opt_minix_df, "minixdf"},
 	{Opt_grpid, "grpid"},
@@ -712,6 +849,7 @@ static match_table_t tokens = {
 	{Opt_reservation, "reservation"},
 	{Opt_noreservation, "noreservation"},
 	{Opt_noload, "noload"},
+	{Opt_noload, "norecovery"},
 	{Opt_nobh, "nobh"},
 	{Opt_bh, "bh"},
 	{Opt_commit, "commit=%u"},
@@ -722,22 +860,27 @@ static match_table_t tokens = {
 	{Opt_data_journal, "data=journal"},
 	{Opt_data_ordered, "data=ordered"},
 	{Opt_data_writeback, "data=writeback"},
+	{Opt_data_err_abort, "data_err=abort"},
+	{Opt_data_err_ignore, "data_err=ignore"},
 	{Opt_offusrjquota, "usrjquota="},
 	{Opt_usrjquota, "usrjquota=%s"},
 	{Opt_offgrpjquota, "grpjquota="},
 	{Opt_grpjquota, "grpjquota=%s"},
 	{Opt_jqfmt_vfsold, "jqfmt=vfsold"},
 	{Opt_jqfmt_vfsv0, "jqfmt=vfsv0"},
+	{Opt_jqfmt_vfsv1, "jqfmt=vfsv1"},
 	{Opt_grpquota, "grpquota"},
 	{Opt_noquota, "noquota"},
 	{Opt_quota, "quota"},
 	{Opt_usrquota, "usrquota"},
 	{Opt_barrier, "barrier=%u"},
+	{Opt_barrier, "barrier"},
+	{Opt_nobarrier, "nobarrier"},
 	{Opt_resize, "resize"},
 	{Opt_err, NULL},
 };
 
-static ext3_fsblk_t get_sb_block(void **data)
+static ext3_fsblk_t get_sb_block(void **data, struct super_block *sb)
 {
 	ext3_fsblk_t	sb_block;
 	char		*options = (char *) *data;
@@ -748,7 +891,7 @@ static ext3_fsblk_t get_sb_block(void **data)
 	/*todo: use simple_strtoll with >32bit ext3 */
 	sb_block = simple_strtoul(options, &options, 0);
 	if (*options && *options != ',') {
-		printk("EXT3-fs: Invalid sb specification: %s\n",
+		ext3_msg(sb, "error: invalid sb specification: %s",
 		       (char *) *data);
 		return 1;
 	}
@@ -757,6 +900,63 @@ static ext3_fsblk_t get_sb_block(void **data)
 	*data = (void *) options;
 	return sb_block;
 }
+
+#ifdef CONFIG_QUOTA
+static int set_qf_name(struct super_block *sb, int qtype, substring_t *args)
+{
+	struct ext3_sb_info *sbi = EXT3_SB(sb);
+	char *qname;
+
+	if (sb_any_quota_loaded(sb) &&
+		!sbi->s_qf_names[qtype]) {
+		ext3_msg(sb, KERN_ERR,
+			"Cannot change journaled "
+			"quota options when quota turned on");
+		return 0;
+	}
+	qname = match_strdup(args);
+	if (!qname) {
+		ext3_msg(sb, KERN_ERR,
+			"Not enough memory for storing quotafile name");
+		return 0;
+	}
+	if (sbi->s_qf_names[qtype] &&
+		strcmp(sbi->s_qf_names[qtype], qname)) {
+		ext3_msg(sb, KERN_ERR,
+			"%s quota file already specified", QTYPE2NAME(qtype));
+		kfree(qname);
+		return 0;
+	}
+	sbi->s_qf_names[qtype] = qname;
+	if (strchr(sbi->s_qf_names[qtype], '/')) {
+		ext3_msg(sb, KERN_ERR,
+			"quotafile must be on filesystem root");
+		kfree(sbi->s_qf_names[qtype]);
+		sbi->s_qf_names[qtype] = NULL;
+		return 0;
+	}
+	set_opt(sbi->s_mount_opt, QUOTA);
+	return 1;
+}
+
+static int clear_qf_name(struct super_block *sb, int qtype) {
+
+	struct ext3_sb_info *sbi = EXT3_SB(sb);
+
+	if (sb_any_quota_loaded(sb) &&
+		sbi->s_qf_names[qtype]) {
+		ext3_msg(sb, KERN_ERR, "Cannot change journaled quota options"
+			" when quota turned on");
+		return 0;
+	}
+	/*
+	 * The space will be released later when all options are confirmed
+	 * to be correct
+	 */
+	sbi->s_qf_names[qtype] = NULL;
+	return 1;
+}
+#endif
 
 static int parse_options (char *options, struct super_block *sb,
 			  unsigned int *inum, unsigned long *journal_devnum,
@@ -768,8 +968,7 @@ static int parse_options (char *options, struct super_block *sb,
 	int data_opt = 0;
 	int option;
 #ifdef CONFIG_QUOTA
-	int qtype;
-	char *qname;
+	int qfmt;
 #endif
 
 	if (!options)
@@ -779,7 +978,11 @@ static int parse_options (char *options, struct super_block *sb,
 		int token;
 		if (!*p)
 			continue;
-
+		/*
+		 * Initialize args struct so we know whether arg was
+		 * found; some options take optional arguments.
+		 */
+		args[0].to = args[0].from = 0;
 		token = match_token(p, tokens, args);
 		switch (token) {
 		case Opt_bsd_df:
@@ -848,7 +1051,8 @@ static int parse_options (char *options, struct super_block *sb,
 #else
 		case Opt_user_xattr:
 		case Opt_nouser_xattr:
-			printk("EXT3 (no)user_xattr options not supported\n");
+			ext3_msg(sb, KERN_INFO,
+				"(no)user_xattr options not supported");
 			break;
 #endif
 #ifdef CONFIG_EXT3_FS_POSIX_ACL
@@ -861,7 +1065,8 @@ static int parse_options (char *options, struct super_block *sb,
 #else
 		case Opt_acl:
 		case Opt_noacl:
-			printk("EXT3 (no)acl options not supported\n");
+			ext3_msg(sb, KERN_INFO,
+				"(no)acl options not supported");
 			break;
 #endif
 		case Opt_reservation:
@@ -877,16 +1082,16 @@ static int parse_options (char *options, struct super_block *sb,
 			   user to specify an existing inode to be the
 			   journal file. */
 			if (is_remount) {
-				printk(KERN_ERR "EXT3-fs: cannot specify "
-				       "journal on remount\n");
+				ext3_msg(sb, KERN_ERR, "error: cannot specify "
+					"journal on remount");
 				return 0;
 			}
 			set_opt (sbi->s_mount_opt, UPDATE_JOURNAL);
 			break;
 		case Opt_journal_inum:
 			if (is_remount) {
-				printk(KERN_ERR "EXT3-fs: cannot specify "
-				       "journal on remount\n");
+				ext3_msg(sb, KERN_ERR, "error: cannot specify "
+				       "journal on remount");
 				return 0;
 			}
 			if (match_int(&args[0], &option))
@@ -895,8 +1100,8 @@ static int parse_options (char *options, struct super_block *sb,
 			break;
 		case Opt_journal_dev:
 			if (is_remount) {
-				printk(KERN_ERR "EXT3-fs: cannot specify "
-				       "journal on remount\n");
+				ext3_msg(sb, KERN_ERR, "error: cannot specify "
+				       "journal on remount");
 				return 0;
 			}
 			if (match_int(&args[0], &option))
@@ -925,80 +1130,62 @@ static int parse_options (char *options, struct super_block *sb,
 			data_opt = EXT3_MOUNT_WRITEBACK_DATA;
 		datacheck:
 			if (is_remount) {
-				if ((sbi->s_mount_opt & EXT3_MOUNT_DATA_FLAGS)
-						!= data_opt) {
-					printk(KERN_ERR
-						"EXT3-fs: cannot change data "
-						"mode on remount\n");
-					return 0;
-				}
+				if (test_opt(sb, DATA_FLAGS) == data_opt)
+					break;
+				ext3_msg(sb, KERN_ERR,
+					"error: cannot change "
+					"data mode on remount. The filesystem "
+					"is mounted in data=%s mode and you "
+					"try to remount it in data=%s mode.",
+					data_mode_string(test_opt(sb,
+							DATA_FLAGS)),
+					data_mode_string(data_opt));
+				return 0;
 			} else {
-				sbi->s_mount_opt &= ~EXT3_MOUNT_DATA_FLAGS;
+				clear_opt(sbi->s_mount_opt, DATA_FLAGS);
 				sbi->s_mount_opt |= data_opt;
 			}
 			break;
+		case Opt_data_err_abort:
+			set_opt(sbi->s_mount_opt, DATA_ERR_ABORT);
+			break;
+		case Opt_data_err_ignore:
+			clear_opt(sbi->s_mount_opt, DATA_ERR_ABORT);
+			break;
 #ifdef CONFIG_QUOTA
 		case Opt_usrjquota:
-			qtype = USRQUOTA;
-			goto set_qf_name;
+			if (!set_qf_name(sb, USRQUOTA, &args[0]))
+				return 0;
+			break;
 		case Opt_grpjquota:
-			qtype = GRPQUOTA;
-set_qf_name:
-			if (sb_any_quota_enabled(sb)) {
-				printk(KERN_ERR
-					"EXT3-fs: Cannot change journaled "
-					"quota options when quota turned on.\n");
+			if (!set_qf_name(sb, GRPQUOTA, &args[0]))
 				return 0;
-			}
-			qname = match_strdup(&args[0]);
-			if (!qname) {
-				printk(KERN_ERR
-					"EXT3-fs: not enough memory for "
-					"storing quotafile name.\n");
-				return 0;
-			}
-			if (sbi->s_qf_names[qtype] &&
-			    strcmp(sbi->s_qf_names[qtype], qname)) {
-				printk(KERN_ERR
-					"EXT3-fs: %s quota file already "
-					"specified.\n", QTYPE2NAME(qtype));
-				kfree(qname);
-				return 0;
-			}
-			sbi->s_qf_names[qtype] = qname;
-			if (strchr(sbi->s_qf_names[qtype], '/')) {
-				printk(KERN_ERR
-					"EXT3-fs: quotafile must be on "
-					"filesystem root.\n");
-				kfree(sbi->s_qf_names[qtype]);
-				sbi->s_qf_names[qtype] = NULL;
-				return 0;
-			}
-			set_opt(sbi->s_mount_opt, QUOTA);
 			break;
 		case Opt_offusrjquota:
-			qtype = USRQUOTA;
-			goto clear_qf_name;
-		case Opt_offgrpjquota:
-			qtype = GRPQUOTA;
-clear_qf_name:
-			if (sb_any_quota_enabled(sb)) {
-				printk(KERN_ERR "EXT3-fs: Cannot change "
-					"journaled quota options when "
-					"quota turned on.\n");
+			if (!clear_qf_name(sb, USRQUOTA))
 				return 0;
-			}
-			/*
-			 * The space will be released later when all options
-			 * are confirmed to be correct
-			 */
-			sbi->s_qf_names[qtype] = NULL;
+			break;
+		case Opt_offgrpjquota:
+			if (!clear_qf_name(sb, GRPQUOTA))
+				return 0;
 			break;
 		case Opt_jqfmt_vfsold:
-			sbi->s_jquota_fmt = QFMT_VFS_OLD;
-			break;
+			qfmt = QFMT_VFS_OLD;
+			goto set_qf_format;
 		case Opt_jqfmt_vfsv0:
-			sbi->s_jquota_fmt = QFMT_VFS_V0;
+			qfmt = QFMT_VFS_V0;
+			goto set_qf_format;
+		case Opt_jqfmt_vfsv1:
+			qfmt = QFMT_VFS_V1;
+set_qf_format:
+			if (sb_any_quota_loaded(sb) &&
+			    sbi->s_jquota_fmt != qfmt) {
+				ext3_msg(sb, KERN_ERR, "error: cannot change "
+					"journaled quota options when "
+					"quota turned on.");
+				return 0;
+			}
+			sbi->s_jquota_fmt = qfmt;
 			break;
 		case Opt_quota:
 		case Opt_usrquota:
@@ -1010,9 +1197,9 @@ clear_qf_name:
 			set_opt(sbi->s_mount_opt, GRPQUOTA);
 			break;
 		case Opt_noquota:
-			if (sb_any_quota_enabled(sb)) {
-				printk(KERN_ERR "EXT3-fs: Cannot change quota "
-					"options when quota turned on.\n");
+			if (sb_any_quota_loaded(sb)) {
+				ext3_msg(sb, KERN_ERR, "error: cannot change "
+					"quota options when quota turned on.");
 				return 0;
 			}
 			clear_opt(sbi->s_mount_opt, QUOTA);
@@ -1023,15 +1210,19 @@ clear_qf_name:
 		case Opt_quota:
 		case Opt_usrquota:
 		case Opt_grpquota:
+			ext3_msg(sb, KERN_ERR,
+				"error: quota options not supported.");
+			break;
 		case Opt_usrjquota:
 		case Opt_grpjquota:
 		case Opt_offusrjquota:
 		case Opt_offgrpjquota:
 		case Opt_jqfmt_vfsold:
 		case Opt_jqfmt_vfsv0:
-			printk(KERN_ERR
-				"EXT3-fs: journalled quota options not "
-				"supported.\n");
+		case Opt_jqfmt_vfsv1:
+			ext3_msg(sb, KERN_ERR,
+				"error: journaled quota options not "
+				"supported.");
 			break;
 		case Opt_noquota:
 			break;
@@ -1039,9 +1230,15 @@ clear_qf_name:
 		case Opt_abort:
 			set_opt(sbi->s_mount_opt, ABORT);
 			break;
+		case Opt_nobarrier:
+			clear_opt(sbi->s_mount_opt, BARRIER);
+			break;
 		case Opt_barrier:
-			if (match_int(&args[0], &option))
-				return 0;
+			if (args[0].from) {
+				if (match_int(&args[0], &option))
+					return 0;
+			} else
+				option = 1;	/* No argument, default to 1 */
 			if (option)
 				set_opt(sbi->s_mount_opt, BARRIER);
 			else
@@ -1051,8 +1248,9 @@ clear_qf_name:
 			break;
 		case Opt_resize:
 			if (!is_remount) {
-				printk("EXT3-fs: resize option only available "
-					"for remount\n");
+				ext3_msg(sb, KERN_ERR,
+					"error: resize option only available "
+					"for remount");
 				return 0;
 			}
 			if (match_int(&args[0], &option) != 0)
@@ -1060,47 +1258,43 @@ clear_qf_name:
 			*n_blocks_count = option;
 			break;
 		case Opt_nobh:
-			set_opt(sbi->s_mount_opt, NOBH);
+			ext3_msg(sb, KERN_WARNING,
+				"warning: ignoring deprecated nobh option");
 			break;
 		case Opt_bh:
-			clear_opt(sbi->s_mount_opt, NOBH);
+			ext3_msg(sb, KERN_WARNING,
+				"warning: ignoring deprecated bh option");
 			break;
 		default:
-			printk (KERN_ERR
-				"EXT3-fs: Unrecognized mount option \"%s\" "
-				"or missing value\n", p);
+			ext3_msg(sb, KERN_ERR,
+				"error: unrecognized mount option \"%s\" "
+				"or missing value", p);
 			return 0;
 		}
 	}
 #ifdef CONFIG_QUOTA
 	if (sbi->s_qf_names[USRQUOTA] || sbi->s_qf_names[GRPQUOTA]) {
-		if ((sbi->s_mount_opt & EXT3_MOUNT_USRQUOTA) &&
-		     sbi->s_qf_names[USRQUOTA])
+		if (test_opt(sb, USRQUOTA) && sbi->s_qf_names[USRQUOTA])
 			clear_opt(sbi->s_mount_opt, USRQUOTA);
-
-		if ((sbi->s_mount_opt & EXT3_MOUNT_GRPQUOTA) &&
-		     sbi->s_qf_names[GRPQUOTA])
+		if (test_opt(sb, GRPQUOTA) && sbi->s_qf_names[GRPQUOTA])
 			clear_opt(sbi->s_mount_opt, GRPQUOTA);
 
-		if ((sbi->s_qf_names[USRQUOTA] &&
-				(sbi->s_mount_opt & EXT3_MOUNT_GRPQUOTA)) ||
-		    (sbi->s_qf_names[GRPQUOTA] &&
-				(sbi->s_mount_opt & EXT3_MOUNT_USRQUOTA))) {
-			printk(KERN_ERR "EXT3-fs: old and new quota "
-					"format mixing.\n");
+		if (test_opt(sb, GRPQUOTA) || test_opt(sb, USRQUOTA)) {
+			ext3_msg(sb, KERN_ERR, "error: old and new quota "
+					"format mixing.");
 			return 0;
 		}
 
 		if (!sbi->s_jquota_fmt) {
-			printk(KERN_ERR "EXT3-fs: journaled quota format "
-					"not specified.\n");
+			ext3_msg(sb, KERN_ERR, "error: journaled quota format "
+					"not specified.");
 			return 0;
 		}
 	} else {
 		if (sbi->s_jquota_fmt) {
-			printk(KERN_ERR "EXT3-fs: journaled quota format "
+			ext3_msg(sb, KERN_ERR, "error: journaled quota format "
 					"specified with no journaling "
-					"enabled.\n");
+					"enabled.");
 			return 0;
 		}
 	}
@@ -1115,40 +1309,41 @@ static int ext3_setup_super(struct super_block *sb, struct ext3_super_block *es,
 	int res = 0;
 
 	if (le32_to_cpu(es->s_rev_level) > EXT3_MAX_SUPP_REV) {
-		printk (KERN_ERR "EXT3-fs warning: revision level too high, "
-			"forcing read-only mode\n");
+		ext3_msg(sb, KERN_ERR,
+			"error: revision level too high, "
+			"forcing read-only mode");
 		res = MS_RDONLY;
-		notify_device_error("filesystem", sb->s_id, "1");
 	}
 	if (read_only)
 		return res;
 	if (!(sbi->s_mount_state & EXT3_VALID_FS))
-		printk (KERN_WARNING "EXT3-fs warning: mounting unchecked fs, "
-			"running e2fsck is recommended\n");
+		ext3_msg(sb, KERN_WARNING,
+			"warning: mounting unchecked fs, "
+			"running e2fsck is recommended");
 	else if ((sbi->s_mount_state & EXT3_ERROR_FS))
-		printk (KERN_WARNING
-			"EXT3-fs warning: mounting fs with errors, "
-			"running e2fsck is recommended\n");
-	else if ((__s16) le16_to_cpu(es->s_max_mnt_count) >= 0 &&
+		ext3_msg(sb, KERN_WARNING,
+			"warning: mounting fs with errors, "
+			"running e2fsck is recommended");
+	else if ((__s16) le16_to_cpu(es->s_max_mnt_count) > 0 &&
 		 le16_to_cpu(es->s_mnt_count) >=
-		 (unsigned short) (__s16) le16_to_cpu(es->s_max_mnt_count))
-		printk (KERN_WARNING
-			"EXT3-fs warning: maximal mount count reached, "
-			"running e2fsck is recommended\n");
+			le16_to_cpu(es->s_max_mnt_count))
+		ext3_msg(sb, KERN_WARNING,
+			"warning: maximal mount count reached, "
+			"running e2fsck is recommended");
 	else if (le32_to_cpu(es->s_checkinterval) &&
 		(le32_to_cpu(es->s_lastcheck) +
 			le32_to_cpu(es->s_checkinterval) <= get_seconds()))
-		printk (KERN_WARNING
-			"EXT3-fs warning: checktime reached, "
-			"running e2fsck is recommended\n");
+		ext3_msg(sb, KERN_WARNING,
+			"warning: checktime reached, "
+			"running e2fsck is recommended");
 #if 0
 		/* @@@ We _will_ want to clear the valid bit if we find
                    inconsistencies, to force a fsck at reboot.  But for
                    a plain journaled filesystem we can keep it set as
                    valid forever! :) */
-	es->s_state = cpu_to_le16(le16_to_cpu(es->s_state) & ~EXT3_VALID_FS);
+	es->s_state &= cpu_to_le16(~EXT3_VALID_FS);
 #endif
-	if (!(__s16) le16_to_cpu(es->s_max_mnt_count))
+	if (!le16_to_cpu(es->s_max_mnt_count))
 		es->s_max_mnt_count = cpu_to_le16(EXT3_DFL_MAX_MNT_COUNT);
 	le16_add_cpu(&es->s_mnt_count, 1);
 	es->s_mtime = cpu_to_le32(get_seconds());
@@ -1157,49 +1352,43 @@ static int ext3_setup_super(struct super_block *sb, struct ext3_super_block *es,
 
 	ext3_commit_super(sb, es, 1);
 	if (test_opt(sb, DEBUG))
-		printk(KERN_INFO "[EXT3 FS bs=%lu, gc=%lu, "
-				"bpg=%lu, ipg=%lu, mo=%04lx]\n",
+		ext3_msg(sb, KERN_INFO, "[bs=%lu, gc=%lu, "
+				"bpg=%lu, ipg=%lu, mo=%04lx]",
 			sb->s_blocksize,
 			sbi->s_groups_count,
 			EXT3_BLOCKS_PER_GROUP(sb),
 			EXT3_INODES_PER_GROUP(sb),
 			sbi->s_mount_opt);
 
-	printk(KERN_INFO "EXT3 FS on %s, ", sb->s_id);
 	if (EXT3_SB(sb)->s_journal->j_inode == NULL) {
 		char b[BDEVNAME_SIZE];
-
-		printk("external journal on %s\n",
+		ext3_msg(sb, KERN_INFO, "using external journal on %s",
 			bdevname(EXT3_SB(sb)->s_journal->j_dev, b));
 	} else {
-		printk("internal journal\n");
+		ext3_msg(sb, KERN_INFO, "using internal journal");
 	}
 	return res;
 }
 
 /* Called at mount-time, super-block is locked */
-static int ext3_check_descriptors (struct super_block * sb)
+static int ext3_check_descriptors(struct super_block *sb)
 {
 	struct ext3_sb_info *sbi = EXT3_SB(sb);
-	ext3_fsblk_t first_block = le32_to_cpu(sbi->s_es->s_first_data_block);
-	ext3_fsblk_t last_block;
-	struct ext3_group_desc * gdp = NULL;
-	int desc_block = 0;
 	int i;
 
 	ext3_debug ("Checking group descriptors");
 
-	for (i = 0; i < sbi->s_groups_count; i++)
-	{
+	for (i = 0; i < sbi->s_groups_count; i++) {
+		struct ext3_group_desc *gdp = ext3_get_group_desc(sb, i, NULL);
+		ext3_fsblk_t first_block = ext3_group_first_block_no(sb, i);
+		ext3_fsblk_t last_block;
+
 		if (i == sbi->s_groups_count - 1)
 			last_block = le32_to_cpu(sbi->s_es->s_blocks_count) - 1;
 		else
 			last_block = first_block +
 				(EXT3_BLOCKS_PER_GROUP(sb) - 1);
 
-		if ((i % EXT3_DESC_PER_BLOCK(sb)) == 0)
-			gdp = (struct ext3_group_desc *)
-					sbi->s_group_desc[desc_block++]->b_data;
 		if (le32_to_cpu(gdp->bg_block_bitmap) < first_block ||
 		    le32_to_cpu(gdp->bg_block_bitmap) > last_block)
 		{
@@ -1231,8 +1420,6 @@ static int ext3_check_descriptors (struct super_block * sb)
 					le32_to_cpu(gdp->bg_inode_table));
 			return 0;
 		}
-		first_block += EXT3_BLOCKS_PER_GROUP(sb);
-		gdp++;
 	}
 
 	sbi->s_es->s_free_blocks_count=cpu_to_le32(ext3_count_free_blocks(sb));
@@ -1272,8 +1459,15 @@ static void ext3_orphan_cleanup (struct super_block * sb,
 	}
 
 	if (bdev_read_only(sb->s_bdev)) {
-		printk(KERN_ERR "EXT3-fs: write access "
-			"unavailable, skipping orphan cleanup.\n");
+		ext3_msg(sb, KERN_ERR, "error: write access "
+			"unavailable, skipping orphan cleanup.");
+		return;
+	}
+
+	/* Check if feature set allows readwrite operations */
+	if (EXT3_HAS_RO_COMPAT_FEATURE(sb, ~EXT3_FEATURE_RO_COMPAT_SUPP)) {
+		ext3_msg(sb, KERN_INFO, "Skipping orphan cleanup due to "
+			 "unknown ROCOMPAT features");
 		return;
 	}
 
@@ -1287,8 +1481,7 @@ static void ext3_orphan_cleanup (struct super_block * sb,
 	}
 
 	if (s_flags & MS_RDONLY) {
-		printk(KERN_INFO "EXT3-fs: %s: orphan cleanup on readonly fs\n",
-		       sb->s_id);
+		ext3_msg(sb, KERN_INFO, "orphan cleanup on readonly fs");
 		sb->s_flags &= ~MS_RDONLY;
 	}
 #ifdef CONFIG_QUOTA
@@ -1299,9 +1492,9 @@ static void ext3_orphan_cleanup (struct super_block * sb,
 		if (EXT3_SB(sb)->s_qf_names[i]) {
 			int ret = ext3_quota_on_mount(sb, i);
 			if (ret < 0)
-				printk(KERN_ERR
-					"EXT3-fs: Cannot turn on journaled "
-					"quota: error %d\n", ret);
+				ext3_msg(sb, KERN_ERR,
+					"error: cannot turn on journaled "
+					"quota: %d", ret);
 		}
 	}
 #endif
@@ -1309,18 +1502,18 @@ static void ext3_orphan_cleanup (struct super_block * sb,
 	while (es->s_last_orphan) {
 		struct inode *inode;
 
-		if (!(inode =
-		      ext3_orphan_get(sb, le32_to_cpu(es->s_last_orphan)))) {
+		inode = ext3_orphan_get(sb, le32_to_cpu(es->s_last_orphan));
+		if (IS_ERR(inode)) {
 			es->s_last_orphan = 0;
 			break;
 		}
 
 		list_add(&EXT3_I(inode)->i_orphan, &EXT3_SB(sb)->s_orphan);
-		DQUOT_INIT(inode);
+		dquot_initialize(inode);
 		if (inode->i_nlink) {
 			printk(KERN_DEBUG
 				"%s: truncating inode %lu to %Ld bytes\n",
-				__FUNCTION__, inode->i_ino, inode->i_size);
+				__func__, inode->i_ino, inode->i_size);
 			jbd_debug(2, "truncating inode %lu to %Ld bytes\n",
 				  inode->i_ino, inode->i_size);
 			ext3_truncate(inode);
@@ -1328,7 +1521,7 @@ static void ext3_orphan_cleanup (struct super_block * sb,
 		} else {
 			printk(KERN_DEBUG
 				"%s: deleting unreferenced inode %lu\n",
-				__FUNCTION__, inode->i_ino);
+				__func__, inode->i_ino);
 			jbd_debug(2, "deleting unreferenced inode %lu\n",
 				  inode->i_ino);
 			nr_orphans++;
@@ -1339,16 +1532,16 @@ static void ext3_orphan_cleanup (struct super_block * sb,
 #define PLURAL(x) (x), ((x)==1) ? "" : "s"
 
 	if (nr_orphans)
-		printk(KERN_INFO "EXT3-fs: %s: %d orphan inode%s deleted\n",
-		       sb->s_id, PLURAL(nr_orphans));
+		ext3_msg(sb, KERN_INFO, "%d orphan inode%s deleted",
+		       PLURAL(nr_orphans));
 	if (nr_truncates)
-		printk(KERN_INFO "EXT3-fs: %s: %d truncate%s cleaned up\n",
-		       sb->s_id, PLURAL(nr_truncates));
+		ext3_msg(sb, KERN_INFO, "%d truncate%s cleaned up",
+		       PLURAL(nr_truncates));
 #ifdef CONFIG_QUOTA
 	/* Turn quotas off */
 	for (i = 0; i < MAXQUOTAS; i++) {
 		if (sb_dqopt(sb)->files[i])
-			vfs_quota_off(sb, i);
+			dquot_quota_off(sb, i);
 	}
 #endif
 	sb->s_flags = s_flags; /* Restore MS_RDONLY status */
@@ -1427,7 +1620,7 @@ static int ext3_fill_super (struct super_block *sb, void *data, int silent)
 	struct ext3_super_block *es = NULL;
 	struct ext3_sb_info *sbi;
 	ext3_fsblk_t block;
-	ext3_fsblk_t sb_block = get_sb_block(&data);
+	ext3_fsblk_t sb_block = get_sb_block(&data, sb);
 	ext3_fsblk_t logic_sb_block;
 	unsigned long offset = 0;
 	unsigned int journal_inum = 0;
@@ -1439,21 +1632,29 @@ static int ext3_fill_super (struct super_block *sb, void *data, int silent)
 	int db_count;
 	int i;
 	int needs_recovery;
+	int ret = -EINVAL;
 	__le32 features;
+	int err;
 
 	sbi = kzalloc(sizeof(*sbi), GFP_KERNEL);
 	if (!sbi)
 		return -ENOMEM;
+
+	sbi->s_blockgroup_lock =
+		kzalloc(sizeof(struct blockgroup_lock), GFP_KERNEL);
+	if (!sbi->s_blockgroup_lock) {
+		kfree(sbi);
+		return -ENOMEM;
+	}
 	sb->s_fs_info = sbi;
 	sbi->s_mount_opt = 0;
 	sbi->s_resuid = EXT3_DEF_RESUID;
 	sbi->s_resgid = EXT3_DEF_RESGID;
-
-	unlock_kernel();
+	sbi->s_sb_block = sb_block;
 
 	blocksize = sb_min_blocksize(sb, EXT3_MIN_BLOCK_SIZE);
 	if (!blocksize) {
-		printk(KERN_ERR "EXT3-fs: unable to set blocksize\n");
+		ext3_msg(sb, KERN_ERR, "error: unable to set blocksize");
 		goto out_fail;
 	}
 
@@ -1469,14 +1670,14 @@ static int ext3_fill_super (struct super_block *sb, void *data, int silent)
 	}
 
 	if (!(bh = sb_bread(sb, logic_sb_block))) {
-		printk (KERN_ERR "EXT3-fs: unable to read superblock\n");
+		ext3_msg(sb, KERN_ERR, "error: unable to read superblock");
 		goto out_fail;
 	}
 	/*
 	 * Note: s_es must be initialized as soon as possible because
 	 *       some ext3 macro-instructions depend on its value
 	 */
-	es = (struct ext3_super_block *) (((char *)bh->b_data) + offset);
+	es = (struct ext3_super_block *) (bh->b_data + offset);
 	sbi->s_es = es;
 	sb->s_magic = le16_to_cpu(es->s_magic);
 	if (sb->s_magic != EXT3_SUPER_MAGIC)
@@ -1499,11 +1700,11 @@ static int ext3_fill_super (struct super_block *sb, void *data, int silent)
 		set_opt(sbi->s_mount_opt, POSIX_ACL);
 #endif
 	if ((def_mount_opts & EXT3_DEFM_JMODE) == EXT3_DEFM_JMODE_DATA)
-		sbi->s_mount_opt |= EXT3_MOUNT_JOURNAL_DATA;
+		set_opt(sbi->s_mount_opt, JOURNAL_DATA);
 	else if ((def_mount_opts & EXT3_DEFM_JMODE) == EXT3_DEFM_JMODE_ORDERED)
-		sbi->s_mount_opt |= EXT3_MOUNT_ORDERED_DATA;
+		set_opt(sbi->s_mount_opt, ORDERED_DATA);
 	else if ((def_mount_opts & EXT3_DEFM_JMODE) == EXT3_DEFM_JMODE_WBACK)
-		sbi->s_mount_opt |= EXT3_MOUNT_WRITEBACK_DATA;
+		set_opt(sbi->s_mount_opt, WRITEBACK_DATA);
 
 	if (le16_to_cpu(sbi->s_es->s_errors) == EXT3_ERRORS_PANIC)
 		set_opt(sbi->s_mount_opt, ERRORS_PANIC);
@@ -1522,15 +1723,15 @@ static int ext3_fill_super (struct super_block *sb, void *data, int silent)
 		goto failed_mount;
 
 	sb->s_flags = (sb->s_flags & ~MS_POSIXACL) |
-		((sbi->s_mount_opt & EXT3_MOUNT_POSIX_ACL) ? MS_POSIXACL : 0);
+		(test_opt(sb, POSIX_ACL) ? MS_POSIXACL : 0);
 
 	if (le32_to_cpu(es->s_rev_level) == EXT3_GOOD_OLD_REV &&
 	    (EXT3_HAS_COMPAT_FEATURE(sb, ~0U) ||
 	     EXT3_HAS_RO_COMPAT_FEATURE(sb, ~0U) ||
 	     EXT3_HAS_INCOMPAT_FEATURE(sb, ~0U)))
-		printk(KERN_WARNING
-		       "EXT3-fs warning: feature flags set on rev 0 fs, "
-		       "running e2fsck is recommended\n");
+		ext3_msg(sb, KERN_WARNING,
+			"warning: feature flags set on rev 0 fs, "
+			"running e2fsck is recommended");
 	/*
 	 * Check feature flags regardless of the revision level, since we
 	 * previously didn't change the revision level when setting the flags,
@@ -1538,59 +1739,60 @@ static int ext3_fill_super (struct super_block *sb, void *data, int silent)
 	 */
 	features = EXT3_HAS_INCOMPAT_FEATURE(sb, ~EXT3_FEATURE_INCOMPAT_SUPP);
 	if (features) {
-		printk(KERN_ERR "EXT3-fs: %s: couldn't mount because of "
-		       "unsupported optional features (%x).\n",
-		       sb->s_id, le32_to_cpu(features));
+		ext3_msg(sb, KERN_ERR,
+			"error: couldn't mount because of unsupported "
+			"optional features (%x)", le32_to_cpu(features));
 		goto failed_mount;
 	}
 	features = EXT3_HAS_RO_COMPAT_FEATURE(sb, ~EXT3_FEATURE_RO_COMPAT_SUPP);
 	if (!(sb->s_flags & MS_RDONLY) && features) {
-		printk(KERN_ERR "EXT3-fs: %s: couldn't mount RDWR because of "
-		       "unsupported optional features (%x).\n",
-		       sb->s_id, le32_to_cpu(features));
+		ext3_msg(sb, KERN_ERR,
+			"error: couldn't mount RDWR because of unsupported "
+			"optional features (%x)", le32_to_cpu(features));
 		goto failed_mount;
 	}
 	blocksize = BLOCK_SIZE << le32_to_cpu(es->s_log_block_size);
 
 	if (blocksize < EXT3_MIN_BLOCK_SIZE ||
 	    blocksize > EXT3_MAX_BLOCK_SIZE) {
-		printk(KERN_ERR
-		       "EXT3-fs: Unsupported filesystem blocksize %d on %s.\n",
-		       blocksize, sb->s_id);
+		ext3_msg(sb, KERN_ERR,
+			"error: couldn't mount because of unsupported "
+			"filesystem blocksize %d", blocksize);
 		goto failed_mount;
 	}
 
-	hblock = bdev_hardsect_size(sb->s_bdev);
+	hblock = bdev_logical_block_size(sb->s_bdev);
 	if (sb->s_blocksize != blocksize) {
 		/*
 		 * Make sure the blocksize for the filesystem is larger
 		 * than the hardware sectorsize for the machine.
 		 */
 		if (blocksize < hblock) {
-			printk(KERN_ERR "EXT3-fs: blocksize %d too small for "
-			       "device blocksize %d.\n", blocksize, hblock);
+			ext3_msg(sb, KERN_ERR,
+				"error: fsblocksize %d too small for "
+				"hardware sectorsize %d", blocksize, hblock);
 			goto failed_mount;
 		}
 
 		brelse (bh);
 		if (!sb_set_blocksize(sb, blocksize)) {
-			printk(KERN_ERR "EXT3-fs: bad blocksize %d.\n",
-				blocksize);
+			ext3_msg(sb, KERN_ERR,
+				"error: bad blocksize %d", blocksize);
 			goto out_fail;
 		}
 		logic_sb_block = (sb_block * EXT3_MIN_BLOCK_SIZE) / blocksize;
 		offset = (sb_block * EXT3_MIN_BLOCK_SIZE) % blocksize;
 		bh = sb_bread(sb, logic_sb_block);
 		if (!bh) {
-			printk(KERN_ERR
-			       "EXT3-fs: Can't read superblock on 2nd try.\n");
+			ext3_msg(sb, KERN_ERR,
+			       "error: can't read superblock on 2nd try");
 			goto failed_mount;
 		}
-		es = (struct ext3_super_block *)(((char *)bh->b_data) + offset);
+		es = (struct ext3_super_block *)(bh->b_data + offset);
 		sbi->s_es = es;
 		if (es->s_magic != cpu_to_le16(EXT3_SUPER_MAGIC)) {
-			printk (KERN_ERR
-				"EXT3-fs: Magic mismatch, very weird !\n");
+			ext3_msg(sb, KERN_ERR,
+				"error: magic mismatch");
 			goto failed_mount;
 		}
 	}
@@ -1606,8 +1808,8 @@ static int ext3_fill_super (struct super_block *sb, void *data, int silent)
 		if ((sbi->s_inode_size < EXT3_GOOD_OLD_INODE_SIZE) ||
 		    (!is_power_of_2(sbi->s_inode_size)) ||
 		    (sbi->s_inode_size > blocksize)) {
-			printk (KERN_ERR
-				"EXT3-fs: unsupported inode size: %d\n",
+			ext3_msg(sb, KERN_ERR,
+				"error: unsupported inode size: %d",
 				sbi->s_inode_size);
 			goto failed_mount;
 		}
@@ -1615,8 +1817,8 @@ static int ext3_fill_super (struct super_block *sb, void *data, int silent)
 	sbi->s_frag_size = EXT3_MIN_FRAG_SIZE <<
 				   le32_to_cpu(es->s_log_frag_size);
 	if (blocksize != sbi->s_frag_size) {
-		printk(KERN_ERR
-		       "EXT3-fs: fragsize %lu != blocksize %u (unsupported)\n",
+		ext3_msg(sb, KERN_ERR,
+		       "error: fragsize %lu != blocksize %u (unsupported)",
 		       sbi->s_frag_size, blocksize);
 		goto failed_mount;
 	}
@@ -1639,33 +1841,46 @@ static int ext3_fill_super (struct super_block *sb, void *data, int silent)
 	for (i=0; i < 4; i++)
 		sbi->s_hash_seed[i] = le32_to_cpu(es->s_hash_seed[i]);
 	sbi->s_def_hash_version = es->s_def_hash_version;
+	i = le32_to_cpu(es->s_flags);
+	if (i & EXT2_FLAGS_UNSIGNED_HASH)
+		sbi->s_hash_unsigned = 3;
+	else if ((i & EXT2_FLAGS_SIGNED_HASH) == 0) {
+#ifdef __CHAR_UNSIGNED__
+		es->s_flags |= cpu_to_le32(EXT2_FLAGS_UNSIGNED_HASH);
+		sbi->s_hash_unsigned = 3;
+#else
+		es->s_flags |= cpu_to_le32(EXT2_FLAGS_SIGNED_HASH);
+#endif
+	}
 
 	if (sbi->s_blocks_per_group > blocksize * 8) {
-		printk (KERN_ERR
-			"EXT3-fs: #blocks per group too big: %lu\n",
+		ext3_msg(sb, KERN_ERR,
+			"#blocks per group too big: %lu",
 			sbi->s_blocks_per_group);
 		goto failed_mount;
 	}
 	if (sbi->s_frags_per_group > blocksize * 8) {
-		printk (KERN_ERR
-			"EXT3-fs: #fragments per group too big: %lu\n",
+		ext3_msg(sb, KERN_ERR,
+			"error: #fragments per group too big: %lu",
 			sbi->s_frags_per_group);
 		goto failed_mount;
 	}
 	if (sbi->s_inodes_per_group > blocksize * 8) {
-		printk (KERN_ERR
-			"EXT3-fs: #inodes per group too big: %lu\n",
+		ext3_msg(sb, KERN_ERR,
+			"error: #inodes per group too big: %lu",
 			sbi->s_inodes_per_group);
 		goto failed_mount;
 	}
 
-	if (le32_to_cpu(es->s_blocks_count) >
-		    (sector_t)(~0ULL) >> (sb->s_blocksize_bits - 9)) {
-		printk(KERN_ERR "EXT3-fs: filesystem on %s:"
-			" too large to mount safely\n", sb->s_id);
+	err = generic_check_addressable(sb->s_blocksize_bits,
+					le32_to_cpu(es->s_blocks_count));
+	if (err) {
+		ext3_msg(sb, KERN_ERR,
+			"error: filesystem is too large to mount safely");
 		if (sizeof(sector_t) < 8)
-			printk(KERN_WARNING "EXT3-fs: CONFIG_LBD not "
-					"enabled\n");
+			ext3_msg(sb, KERN_ERR,
+				"error: CONFIG_LBDAF not enabled");
+		ret = err;
 		goto failed_mount;
 	}
 
@@ -1674,41 +1889,36 @@ static int ext3_fill_super (struct super_block *sb, void *data, int silent)
 	sbi->s_groups_count = ((le32_to_cpu(es->s_blocks_count) -
 			       le32_to_cpu(es->s_first_data_block) - 1)
 				       / EXT3_BLOCKS_PER_GROUP(sb)) + 1;
-	db_count = (sbi->s_groups_count + EXT3_DESC_PER_BLOCK(sb) - 1) /
-		   EXT3_DESC_PER_BLOCK(sb);
+	db_count = DIV_ROUND_UP(sbi->s_groups_count, EXT3_DESC_PER_BLOCK(sb));
 	sbi->s_group_desc = kmalloc(db_count * sizeof (struct buffer_head *),
 				    GFP_KERNEL);
 	if (sbi->s_group_desc == NULL) {
-		printk (KERN_ERR "EXT3-fs: not enough memory\n");
+		ext3_msg(sb, KERN_ERR,
+			"error: not enough memory");
+		ret = -ENOMEM;
 		goto failed_mount;
 	}
 
-	bgl_lock_init(&sbi->s_blockgroup_lock);
+	bgl_lock_init(sbi->s_blockgroup_lock);
 
 	for (i = 0; i < db_count; i++) {
 		block = descriptor_loc(sb, logic_sb_block, i);
 		sbi->s_group_desc[i] = sb_bread(sb, block);
 		if (!sbi->s_group_desc[i]) {
-			printk (KERN_ERR "EXT3-fs: "
-				"can't read group descriptor %d\n", i);
+			ext3_msg(sb, KERN_ERR,
+				"error: can't read group descriptor %d", i);
 			db_count = i;
 			goto failed_mount2;
 		}
 	}
 	if (!ext3_check_descriptors (sb)) {
-		printk(KERN_ERR "EXT3-fs: group descriptors corrupted!\n");
+		ext3_msg(sb, KERN_ERR,
+			"error: group descriptors corrupted");
 		goto failed_mount2;
 	}
 	sbi->s_gdb_count = db_count;
 	get_random_bytes(&sbi->s_next_generation, sizeof(u32));
 	spin_lock_init(&sbi->s_next_gen_lock);
-
-	percpu_counter_init(&sbi->s_freeblocks_counter,
-		ext3_count_free_blocks(sb));
-	percpu_counter_init(&sbi->s_freeinodes_counter,
-		ext3_count_free_inodes(sb));
-	percpu_counter_init(&sbi->s_dirs_counter,
-		ext3_count_dirs(sb));
 
 	/* per fileystem reservation list head & lock */
 	spin_lock_init(&sbi->s_rsv_window_lock);
@@ -1733,7 +1943,10 @@ static int ext3_fill_super (struct super_block *sb, void *data, int silent)
 	sb->s_qcop = &ext3_qctl_operations;
 	sb->dq_op = &ext3_quota_operations;
 #endif
+	memcpy(sb->s_uuid, es->s_uuid, sizeof(es->s_uuid));
 	INIT_LIST_HEAD(&sbi->s_orphan); /* unlinked but open files */
+	mutex_init(&sbi->s_orphan_lock);
+	mutex_init(&sbi->s_resize_lock);
 
 	sb->s_root = NULL;
 
@@ -1747,18 +1960,31 @@ static int ext3_fill_super (struct super_block *sb, void *data, int silent)
 	 */
 	if (!test_opt(sb, NOLOAD) &&
 	    EXT3_HAS_COMPAT_FEATURE(sb, EXT3_FEATURE_COMPAT_HAS_JOURNAL)) {
-		if (needs_recovery)
-			printk (KERN_INFO "EXT3-fs: starting recovery.\n");
 		if (ext3_load_journal(sb, es, journal_devnum))
-			goto failed_mount3;
+			goto failed_mount2;
 	} else if (journal_inum) {
 		if (ext3_create_journal(sb, es, journal_inum))
-			goto failed_mount3;
+			goto failed_mount2;
 	} else {
 		if (!silent)
-			printk (KERN_ERR
-				"ext3: No journal on filesystem on %s\n",
-				sb->s_id);
+			ext3_msg(sb, KERN_ERR,
+				"error: no journal found. "
+				"mounting ext3 over ext2?");
+		goto failed_mount2;
+	}
+	err = percpu_counter_init(&sbi->s_freeblocks_counter,
+			ext3_count_free_blocks(sb));
+	if (!err) {
+		err = percpu_counter_init(&sbi->s_freeinodes_counter,
+				ext3_count_free_inodes(sb));
+	}
+	if (!err) {
+		err = percpu_counter_init(&sbi->s_dirs_counter,
+				ext3_count_dirs(sb));
+	}
+	if (err) {
+		ext3_msg(sb, KERN_ERR, "error: insufficient memory");
+		ret = err;
 		goto failed_mount3;
 	}
 
@@ -1771,7 +1997,7 @@ static int ext3_fill_super (struct super_block *sb, void *data, int silent)
                    cope, else JOURNAL_DATA */
 		if (journal_check_available_features
 		    (sbi->s_journal, 0, 0, JFS_FEATURE_INCOMPAT_REVOKE))
-			set_opt(sbi->s_mount_opt, ORDERED_DATA);
+			set_opt(sbi->s_mount_opt, DEFAULT_DATA_MODE);
 		else
 			set_opt(sbi->s_mount_opt, JOURNAL_DATA);
 		break;
@@ -1780,75 +2006,66 @@ static int ext3_fill_super (struct super_block *sb, void *data, int silent)
 	case EXT3_MOUNT_WRITEBACK_DATA:
 		if (!journal_check_available_features
 		    (sbi->s_journal, 0, 0, JFS_FEATURE_INCOMPAT_REVOKE)) {
-			printk(KERN_ERR "EXT3-fs: Journal does not support "
-			       "requested data journaling mode\n");
-			goto failed_mount4;
+			ext3_msg(sb, KERN_ERR,
+				"error: journal does not support "
+				"requested data journaling mode");
+			goto failed_mount3;
 		}
 	default:
 		break;
 	}
 
-	if (test_opt(sb, NOBH)) {
-		if (!(test_opt(sb, DATA_FLAGS) == EXT3_MOUNT_WRITEBACK_DATA)) {
-			printk(KERN_WARNING "EXT3-fs: Ignoring nobh option - "
-				"its supported only with writeback mode\n");
-			clear_opt(sbi->s_mount_opt, NOBH);
-		}
-	}
 	/*
 	 * The journal_load will have done any necessary log recovery,
 	 * so we can safely mount the rest of the filesystem now.
 	 */
 
-	root = iget(sb, EXT3_ROOT_INO);
-	sb->s_root = d_alloc_root(root);
-	if (!sb->s_root) {
-		printk(KERN_ERR "EXT3-fs: get root inode failed\n");
-		iput(root);
-		goto failed_mount4;
+	root = ext3_iget(sb, EXT3_ROOT_INO);
+	if (IS_ERR(root)) {
+		ext3_msg(sb, KERN_ERR, "error: get root inode failed");
+		ret = PTR_ERR(root);
+		goto failed_mount3;
 	}
 	if (!S_ISDIR(root->i_mode) || !root->i_blocks || !root->i_size) {
-		dput(sb->s_root);
-		sb->s_root = NULL;
-		printk(KERN_ERR "EXT3-fs: corrupt root inode, run e2fsck\n");
-		goto failed_mount4;
+		iput(root);
+		ext3_msg(sb, KERN_ERR, "error: corrupt root inode, run e2fsck");
+		goto failed_mount3;
+	}
+	sb->s_root = d_alloc_root(root);
+	if (!sb->s_root) {
+		ext3_msg(sb, KERN_ERR, "error: get root dentry failed");
+		iput(root);
+		ret = -ENOMEM;
+		goto failed_mount3;
 	}
 
 	ext3_setup_super (sb, es, sb->s_flags & MS_RDONLY);
-	/*
-	 * akpm: core read_super() calls in here with the superblock locked.
-	 * That deadlocks, because orphan cleanup needs to lock the superblock
-	 * in numerous places.  Here we just pop the lock - it's relatively
-	 * harmless, because we are now ready to accept write_super() requests,
-	 * and aviro says that's the only reason for hanging onto the
-	 * superblock lock.
-	 */
+
 	EXT3_SB(sb)->s_mount_state |= EXT3_ORPHAN_FS;
 	ext3_orphan_cleanup(sb, es);
 	EXT3_SB(sb)->s_mount_state &= ~EXT3_ORPHAN_FS;
 	if (needs_recovery)
-		printk (KERN_INFO "EXT3-fs: recovery complete.\n");
+		ext3_msg(sb, KERN_INFO, "recovery complete");
 	ext3_mark_recovery_complete(sb, es);
-	printk (KERN_INFO "EXT3-fs: mounted filesystem with %s data mode.\n",
+	ext3_msg(sb, KERN_INFO, "mounted filesystem with %s data mode",
 		test_opt(sb,DATA_FLAGS) == EXT3_MOUNT_JOURNAL_DATA ? "journal":
 		test_opt(sb,DATA_FLAGS) == EXT3_MOUNT_ORDERED_DATA ? "ordered":
 		"writeback");
 
-	lock_kernel();
 	return 0;
 
 cantfind_ext3:
 	if (!silent)
-		printk(KERN_ERR "VFS: Can't find ext3 filesystem on dev %s.\n",
+		ext3_msg(sb, KERN_INFO,
+			"error: can't find ext3 filesystem on dev %s.",
 		       sb->s_id);
 	goto failed_mount;
 
-failed_mount4:
-	journal_destroy(sbi->s_journal);
 failed_mount3:
 	percpu_counter_destroy(&sbi->s_freeblocks_counter);
 	percpu_counter_destroy(&sbi->s_freeinodes_counter);
 	percpu_counter_destroy(&sbi->s_dirs_counter);
+	journal_destroy(sbi->s_journal);
 failed_mount2:
 	for (i = 0; i < db_count; i++)
 		brelse(sbi->s_group_desc[i]);
@@ -1862,9 +2079,9 @@ failed_mount:
 	brelse(bh);
 out_fail:
 	sb->s_fs_info = NULL;
+	kfree(sbi->s_blockgroup_lock);
 	kfree(sbi);
-	lock_kernel();
-	return -EINVAL;
+	return ret;
 }
 
 /*
@@ -1887,6 +2104,10 @@ static void ext3_init_journal_params(struct super_block *sb, journal_t *journal)
 		journal->j_flags |= JFS_BARRIER;
 	else
 		journal->j_flags &= ~JFS_BARRIER;
+	if (test_opt(sb, DATA_ERR_ABORT))
+		journal->j_flags |= JFS_ABORT_ON_SYNCDATA_ERR;
+	else
+		journal->j_flags &= ~JFS_ABORT_ON_SYNCDATA_ERR;
 	spin_unlock(&journal->j_state_lock);
 }
 
@@ -1900,29 +2121,29 @@ static journal_t *ext3_get_journal(struct super_block *sb,
 	 * things happen if we iget() an unused inode, as the subsequent
 	 * iput() will try to delete it. */
 
-	journal_inode = iget(sb, journal_inum);
-	if (!journal_inode) {
-		printk(KERN_ERR "EXT3-fs: no journal found.\n");
+	journal_inode = ext3_iget(sb, journal_inum);
+	if (IS_ERR(journal_inode)) {
+		ext3_msg(sb, KERN_ERR, "error: no journal found");
 		return NULL;
 	}
 	if (!journal_inode->i_nlink) {
 		make_bad_inode(journal_inode);
 		iput(journal_inode);
-		printk(KERN_ERR "EXT3-fs: journal inode is deleted.\n");
+		ext3_msg(sb, KERN_ERR, "error: journal inode is deleted");
 		return NULL;
 	}
 
 	jbd_debug(2, "Journal inode found at %p: %Ld bytes\n",
 		  journal_inode, journal_inode->i_size);
-	if (is_bad_inode(journal_inode) || !S_ISREG(journal_inode->i_mode)) {
-		printk(KERN_ERR "EXT3-fs: invalid journal inode.\n");
+	if (!S_ISREG(journal_inode->i_mode)) {
+		ext3_msg(sb, KERN_ERR, "error: invalid journal inode");
 		iput(journal_inode);
 		return NULL;
 	}
 
 	journal = journal_init_inode(journal_inode);
 	if (!journal) {
-		printk(KERN_ERR "EXT3-fs: Could not load journal inode\n");
+		ext3_msg(sb, KERN_ERR, "error: could not load journal inode");
 		iput(journal_inode);
 		return NULL;
 	}
@@ -1944,22 +2165,15 @@ static journal_t *ext3_get_dev_journal(struct super_block *sb,
 	struct ext3_super_block * es;
 	struct block_device *bdev;
 
-	bdev = ext3_blkdev_get(j_dev);
+	bdev = ext3_blkdev_get(j_dev, sb);
 	if (bdev == NULL)
 		return NULL;
 
-	if (bd_claim(bdev, sb)) {
-		printk(KERN_ERR
-		        "EXT3: failed to claim external journal device.\n");
-		blkdev_put(bdev);
-		return NULL;
-	}
-
 	blocksize = sb->s_blocksize;
-	hblock = bdev_hardsect_size(bdev);
+	hblock = bdev_logical_block_size(bdev);
 	if (blocksize < hblock) {
-		printk(KERN_ERR
-			"EXT3-fs: blocksize too small for journal device.\n");
+		ext3_msg(sb, KERN_ERR,
+			"error: blocksize too small for journal device");
 		goto out_bdev;
 	}
 
@@ -1967,23 +2181,23 @@ static journal_t *ext3_get_dev_journal(struct super_block *sb,
 	offset = EXT3_MIN_BLOCK_SIZE % blocksize;
 	set_blocksize(bdev, blocksize);
 	if (!(bh = __bread(bdev, sb_block, blocksize))) {
-		printk(KERN_ERR "EXT3-fs: couldn't read superblock of "
-		       "external journal\n");
+		ext3_msg(sb, KERN_ERR, "error: couldn't read superblock of "
+			"external journal");
 		goto out_bdev;
 	}
 
-	es = (struct ext3_super_block *) (((char *)bh->b_data) + offset);
+	es = (struct ext3_super_block *) (bh->b_data + offset);
 	if ((le16_to_cpu(es->s_magic) != EXT3_SUPER_MAGIC) ||
 	    !(le32_to_cpu(es->s_feature_incompat) &
 	      EXT3_FEATURE_INCOMPAT_JOURNAL_DEV)) {
-		printk(KERN_ERR "EXT3-fs: external journal has "
-					"bad superblock\n");
+		ext3_msg(sb, KERN_ERR, "error: external journal has "
+			"bad superblock");
 		brelse(bh);
 		goto out_bdev;
 	}
 
 	if (memcmp(EXT3_SB(sb)->s_es->s_journal_uuid, es->s_uuid, 16)) {
-		printk(KERN_ERR "EXT3-fs: journal UUID does not match\n");
+		ext3_msg(sb, KERN_ERR, "error: journal UUID does not match");
 		brelse(bh);
 		goto out_bdev;
 	}
@@ -1995,19 +2209,21 @@ static journal_t *ext3_get_dev_journal(struct super_block *sb,
 	journal = journal_init_dev(bdev, sb->s_bdev,
 					start, len, blocksize);
 	if (!journal) {
-		printk(KERN_ERR "EXT3-fs: failed to create device journal\n");
+		ext3_msg(sb, KERN_ERR,
+			"error: failed to create device journal");
 		goto out_bdev;
 	}
 	journal->j_private = sb;
 	ll_rw_block(READ, 1, &journal->j_sb_buffer);
 	wait_on_buffer(journal->j_sb_buffer);
 	if (!buffer_uptodate(journal->j_sb_buffer)) {
-		printk(KERN_ERR "EXT3-fs: I/O error on journal device\n");
+		ext3_msg(sb, KERN_ERR, "I/O error on journal device");
 		goto out_journal;
 	}
 	if (be32_to_cpu(journal->j_superblock->s_nr_users) != 1) {
-		printk(KERN_ERR "EXT3-fs: External journal has more than one "
-					"user (unsupported) - %d\n",
+		ext3_msg(sb, KERN_ERR,
+			"error: external journal has more than one "
+			"user (unsupported) - %d",
 			be32_to_cpu(journal->j_superblock->s_nr_users));
 		goto out_journal;
 	}
@@ -2033,8 +2249,8 @@ static int ext3_load_journal(struct super_block *sb,
 
 	if (journal_devnum &&
 	    journal_devnum != le32_to_cpu(es->s_journal_dev)) {
-		printk(KERN_INFO "EXT3-fs: external journal device major/minor "
-			"numbers have changed\n");
+		ext3_msg(sb, KERN_INFO, "external journal device major/minor "
+			"numbers have changed");
 		journal_dev = new_decode_dev(journal_devnum);
 	} else
 		journal_dev = new_decode_dev(le32_to_cpu(es->s_journal_dev));
@@ -2049,21 +2265,21 @@ static int ext3_load_journal(struct super_block *sb,
 
 	if (EXT3_HAS_INCOMPAT_FEATURE(sb, EXT3_FEATURE_INCOMPAT_RECOVER)) {
 		if (sb->s_flags & MS_RDONLY) {
-			printk(KERN_INFO "EXT3-fs: INFO: recovery "
-					"required on readonly filesystem.\n");
+			ext3_msg(sb, KERN_INFO,
+				"recovery required on readonly filesystem");
 			if (really_read_only) {
-				printk(KERN_ERR "EXT3-fs: write access "
-					"unavailable, cannot proceed.\n");
+				ext3_msg(sb, KERN_ERR, "error: write access "
+					"unavailable, cannot proceed");
 				return -EROFS;
 			}
-			printk (KERN_INFO "EXT3-fs: write access will "
-					"be enabled during recovery.\n");
+			ext3_msg(sb, KERN_INFO,
+				"write access will be enabled during recovery");
 		}
 	}
 
 	if (journal_inum && journal_dev) {
-		printk(KERN_ERR "EXT3-fs: filesystem has both journal "
-		       "and inode journals!\n");
+		ext3_msg(sb, KERN_ERR, "error: filesystem has both journal "
+		       "and inode journals");
 		return -EINVAL;
 	}
 
@@ -2075,10 +2291,13 @@ static int ext3_load_journal(struct super_block *sb,
 			return -EINVAL;
 	}
 
+	if (!(journal->j_flags & JFS_BARRIER))
+		printk(KERN_INFO "EXT3-fs: barriers not enabled\n");
+
 	if (!really_read_only && test_opt(sb, UPDATE_JOURNAL)) {
 		err = journal_update_format(journal);
 		if (err)  {
-			printk(KERN_ERR "EXT3-fs: error updating journal.\n");
+			ext3_msg(sb, KERN_ERR, "error updating journal");
 			journal_destroy(journal);
 			return err;
 		}
@@ -2090,7 +2309,7 @@ static int ext3_load_journal(struct super_block *sb,
 		err = journal_load(journal);
 
 	if (err) {
-		printk(KERN_ERR "EXT3-fs: error loading journal.\n");
+		ext3_msg(sb, KERN_ERR, "error loading journal");
 		journal_destroy(journal);
 		return err;
 	}
@@ -2098,10 +2317,9 @@ static int ext3_load_journal(struct super_block *sb,
 	EXT3_SB(sb)->s_journal = journal;
 	ext3_clear_journal_err(sb, es);
 
-	if (journal_devnum &&
+	if (!really_read_only && journal_devnum &&
 	    journal_devnum != le32_to_cpu(es->s_journal_dev)) {
 		es->s_journal_dev = cpu_to_le32(journal_devnum);
-		sb->s_dirt = 1;
 
 		/* Make sure we flush the recovery flag to disk. */
 		ext3_commit_super(sb, es, 1);
@@ -2110,16 +2328,17 @@ static int ext3_load_journal(struct super_block *sb,
 	return 0;
 }
 
-static int ext3_create_journal(struct super_block * sb,
-			       struct ext3_super_block * es,
+static int ext3_create_journal(struct super_block *sb,
+			       struct ext3_super_block *es,
 			       unsigned int journal_inum)
 {
 	journal_t *journal;
 	int err;
 
 	if (sb->s_flags & MS_RDONLY) {
-		printk(KERN_ERR "EXT3-fs: readonly filesystem when trying to "
-				"create journal.\n");
+		ext3_msg(sb, KERN_ERR,
+			"error: readonly filesystem when trying to "
+			"create journal");
 		return -EROFS;
 	}
 
@@ -2127,12 +2346,12 @@ static int ext3_create_journal(struct super_block * sb,
 	if (!journal)
 		return -EINVAL;
 
-	printk(KERN_INFO "EXT3-fs: creating new journal on inode %u\n",
+	ext3_msg(sb, KERN_INFO, "creating new journal on inode %u",
 	       journal_inum);
 
 	err = journal_create(journal);
 	if (err) {
-		printk(KERN_ERR "EXT3-fs: error creating journal.\n");
+		ext3_msg(sb, KERN_ERR, "error creating journal");
 		journal_destroy(journal);
 		return -EIO;
 	}
@@ -2144,7 +2363,6 @@ static int ext3_create_journal(struct super_block * sb,
 	EXT3_SET_COMPAT_FEATURE(sb, EXT3_FEATURE_COMPAT_HAS_JOURNAL);
 
 	es->s_journal_inum = cpu_to_le32(journal_inum);
-	sb->s_dirt = 1;
 
 	/* Make sure we flush the recovery flag to disk. */
 	ext3_commit_super(sb, es, 1);
@@ -2152,21 +2370,56 @@ static int ext3_create_journal(struct super_block * sb,
 	return 0;
 }
 
-static void ext3_commit_super (struct super_block * sb,
-			       struct ext3_super_block * es,
+static int ext3_commit_super(struct super_block *sb,
+			       struct ext3_super_block *es,
 			       int sync)
 {
 	struct buffer_head *sbh = EXT3_SB(sb)->s_sbh;
+	int error = 0;
 
 	if (!sbh)
-		return;
-	es->s_wtime = cpu_to_le32(get_seconds());
+		return error;
+
+	if (buffer_write_io_error(sbh)) {
+		/*
+		 * Oh, dear.  A previous attempt to write the
+		 * superblock failed.  This could happen because the
+		 * USB device was yanked out.  Or it could happen to
+		 * be a transient write error and maybe the block will
+		 * be remapped.  Nothing we can do but to retry the
+		 * write and hope for the best.
+		 */
+		ext3_msg(sb, KERN_ERR, "previous I/O error to "
+		       "superblock detected");
+		clear_buffer_write_io_error(sbh);
+		set_buffer_uptodate(sbh);
+	}
+	/*
+	 * If the file system is mounted read-only, don't update the
+	 * superblock write time.  This avoids updating the superblock
+	 * write time when we are mounting the root file system
+	 * read/only but we need to replay the journal; at that point,
+	 * for people who are east of GMT and who make their clock
+	 * tick in localtime for Windows bug-for-bug compatibility,
+	 * the clock is set in the future, and this will cause e2fsck
+	 * to complain and force a full file system check.
+	 */
+	if (!(sb->s_flags & MS_RDONLY))
+		es->s_wtime = cpu_to_le32(get_seconds());
 	es->s_free_blocks_count = cpu_to_le32(ext3_count_free_blocks(sb));
 	es->s_free_inodes_count = cpu_to_le32(ext3_count_free_inodes(sb));
 	BUFFER_TRACE(sbh, "marking dirty");
 	mark_buffer_dirty(sbh);
-	if (sync)
-		sync_dirty_buffer(sbh);
+	if (sync) {
+		error = sync_dirty_buffer(sbh);
+		if (buffer_write_io_error(sbh)) {
+			ext3_msg(sb, KERN_ERR, "I/O error while writing "
+			       "superblock");
+			clear_buffer_write_io_error(sbh);
+			set_buffer_uptodate(sbh);
+		}
+	}
+	return error;
 }
 
 
@@ -2181,15 +2434,16 @@ static void ext3_mark_recovery_complete(struct super_block * sb,
 	journal_t *journal = EXT3_SB(sb)->s_journal;
 
 	journal_lock_updates(journal);
-	journal_flush(journal);
-	lock_super(sb);
+	if (journal_flush(journal) < 0)
+		goto out;
+
 	if (EXT3_HAS_INCOMPAT_FEATURE(sb, EXT3_FEATURE_INCOMPAT_RECOVER) &&
 	    sb->s_flags & MS_RDONLY) {
 		EXT3_CLEAR_INCOMPAT_FEATURE(sb, EXT3_FEATURE_INCOMPAT_RECOVER);
-		sb->s_dirt = 0;
 		ext3_commit_super(sb, es, 1);
 	}
-	unlock_super(sb);
+
+out:
 	journal_unlock_updates(journal);
 }
 
@@ -2198,8 +2452,8 @@ static void ext3_mark_recovery_complete(struct super_block * sb,
  * has recorded an error from a previous lifetime, move that error to the
  * main filesystem now.
  */
-static void ext3_clear_journal_err(struct super_block * sb,
-				   struct ext3_super_block * es)
+static void ext3_clear_journal_err(struct super_block *sb,
+				   struct ext3_super_block *es)
 {
 	journal_t *journal;
 	int j_errno;
@@ -2217,9 +2471,9 @@ static void ext3_clear_journal_err(struct super_block * sb,
 		char nbuf[16];
 
 		errstr = ext3_decode_error(sb, j_errno, nbuf);
-		ext3_warning(sb, __FUNCTION__, "Filesystem error recorded "
+		ext3_warning(sb, __func__, "Filesystem error recorded "
 			     "from previous mount: %s", errstr);
-		ext3_warning(sb, __FUNCTION__, "Marking fs in need of "
+		ext3_warning(sb, __func__, "Marking fs in need of "
 			     "filesystem check.");
 
 		EXT3_SB(sb)->s_mount_state |= EXT3_ERROR_FS;
@@ -2243,32 +2497,14 @@ int ext3_force_commit(struct super_block *sb)
 		return 0;
 
 	journal = EXT3_SB(sb)->s_journal;
-	sb->s_dirt = 0;
 	ret = ext3_journal_force_commit(journal);
 	return ret;
-}
-
-/*
- * Ext3 always journals updates to the superblock itself, so we don't
- * have to propagate any other updates to the superblock on disk at this
- * point.  Just start an async writeback to get the buffers on their way
- * to the disk.
- *
- * This implicitly triggers the writebehind on sync().
- */
-
-static void ext3_write_super (struct super_block * sb)
-{
-	if (mutex_trylock(&sb->s_lock) != 0)
-		BUG();
-	sb->s_dirt = 0;
 }
 
 static int ext3_sync_fs(struct super_block *sb, int wait)
 {
 	tid_t target;
 
-	sb->s_dirt = 0;
 	if (journal_start_commit(EXT3_SB(sb)->s_journal, &target)) {
 		if (wait)
 			log_wait_commit(EXT3_SB(sb)->s_journal, target);
@@ -2280,28 +2516,43 @@ static int ext3_sync_fs(struct super_block *sb, int wait)
  * LVM calls this function before a (read-only) snapshot is created.  This
  * gives us a chance to flush the journal completely and mark the fs clean.
  */
-static void ext3_write_super_lockfs(struct super_block *sb)
+static int ext3_freeze(struct super_block *sb)
 {
-	sb->s_dirt = 0;
+	int error = 0;
+	journal_t *journal;
 
 	if (!(sb->s_flags & MS_RDONLY)) {
-		journal_t *journal = EXT3_SB(sb)->s_journal;
+		journal = EXT3_SB(sb)->s_journal;
 
 		/* Now we set up the journal barrier. */
 		journal_lock_updates(journal);
-		journal_flush(journal);
+
+		/*
+		 * We don't want to clear needs_recovery flag when we failed
+		 * to flush the journal.
+		 */
+		error = journal_flush(journal);
+		if (error < 0)
+			goto out;
 
 		/* Journal blocked and flushed, clear needs_recovery flag. */
 		EXT3_CLEAR_INCOMPAT_FEATURE(sb, EXT3_FEATURE_INCOMPAT_RECOVER);
-		ext3_commit_super(sb, EXT3_SB(sb)->s_es, 1);
+		error = ext3_commit_super(sb, EXT3_SB(sb)->s_es, 1);
+		if (error)
+			goto out;
 	}
+	return 0;
+
+out:
+	journal_unlock_updates(journal);
+	return error;
 }
 
 /*
  * Called by LVM after the snapshot is done.  We need to reset the RECOVER
  * flag here, even though the filesystem is not technically dirty yet.
  */
-static void ext3_unlockfs(struct super_block *sb)
+static int ext3_unfreeze(struct super_block *sb)
 {
 	if (!(sb->s_flags & MS_RDONLY)) {
 		lock_super(sb);
@@ -2311,6 +2562,7 @@ static void ext3_unlockfs(struct super_block *sb)
 		unlock_super(sb);
 		journal_unlock_updates(EXT3_SB(sb)->s_journal);
 	}
+	return 0;
 }
 
 static int ext3_remount (struct super_block * sb, int * flags, char * data)
@@ -2320,12 +2572,14 @@ static int ext3_remount (struct super_block * sb, int * flags, char * data)
 	ext3_fsblk_t n_blocks_count = 0;
 	unsigned long old_sb_flags;
 	struct ext3_mount_options old_opts;
+	int enable_quota = 0;
 	int err;
 #ifdef CONFIG_QUOTA
 	int i;
 #endif
 
 	/* Store the original options */
+	lock_super(sb);
 	old_sb_flags = sb->s_flags;
 	old_opts.s_mount_opt = sbi->s_mount_opt;
 	old_opts.s_resuid = sbi->s_resuid;
@@ -2345,11 +2599,11 @@ static int ext3_remount (struct super_block * sb, int * flags, char * data)
 		goto restore_opts;
 	}
 
-	if (sbi->s_mount_opt & EXT3_MOUNT_ABORT)
-		ext3_abort(sb, __FUNCTION__, "Abort forced by user");
+	if (test_opt(sb, ABORT))
+		ext3_abort(sb, __func__, "Abort forced by user");
 
 	sb->s_flags = (sb->s_flags & ~MS_POSIXACL) |
-		((sbi->s_mount_opt & EXT3_MOUNT_POSIX_ACL) ? MS_POSIXACL : 0);
+		(test_opt(sb, POSIX_ACL) ? MS_POSIXACL : 0);
 
 	es = sbi->s_es;
 
@@ -2357,18 +2611,21 @@ static int ext3_remount (struct super_block * sb, int * flags, char * data)
 
 	if ((*flags & MS_RDONLY) != (sb->s_flags & MS_RDONLY) ||
 		n_blocks_count > le32_to_cpu(es->s_blocks_count)) {
-		if (sbi->s_mount_opt & EXT3_MOUNT_ABORT) {
+		if (test_opt(sb, ABORT)) {
 			err = -EROFS;
 			goto restore_opts;
 		}
 
 		if (*flags & MS_RDONLY) {
+			err = dquot_suspend(sb, -1);
+			if (err < 0)
+				goto restore_opts;
+
 			/*
 			 * First of all, the unconditional stuff we have to do
 			 * to disable replay of the journal when we next remount
 			 */
 			sb->s_flags |= MS_RDONLY;
-			notify_device_error("filesystem", sb->s_id, "1");
 
 			/*
 			 * OK, test if we are remounting a valid rw partition
@@ -2379,21 +2636,15 @@ static int ext3_remount (struct super_block * sb, int * flags, char * data)
 			    (sbi->s_mount_state & EXT3_VALID_FS))
 				es->s_state = cpu_to_le16(sbi->s_mount_state);
 
-			/*
-			 * We have to unlock super so that we can wait for
-			 * transactions.
-			 */
-			unlock_super(sb);
 			ext3_mark_recovery_complete(sb, es);
-			lock_super(sb);
 		} else {
 			__le32 ret;
 			if ((ret = EXT3_HAS_RO_COMPAT_FEATURE(sb,
 					~EXT3_FEATURE_RO_COMPAT_SUPP))) {
-				printk(KERN_WARNING "EXT3-fs: %s: couldn't "
-				       "remount RDWR because of unsupported "
-				       "optional features (%x).\n",
-				       sb->s_id, le32_to_cpu(ret));
+				ext3_msg(sb, KERN_WARNING,
+					"warning: couldn't remount RDWR "
+					"because of unsupported optional "
+					"features (%x)", le32_to_cpu(ret));
 				err = -EROFS;
 				goto restore_opts;
 			}
@@ -2404,11 +2655,10 @@ static int ext3_remount (struct super_block * sb, int * flags, char * data)
 			 * require a full umount/remount for now.
 			 */
 			if (es->s_last_orphan) {
-				printk(KERN_WARNING "EXT3-fs: %s: couldn't "
+				ext3_msg(sb, KERN_WARNING, "warning: couldn't "
 				       "remount RDWR because of unprocessed "
 				       "orphan inode list.  Please "
-				       "umount/remount instead.\n",
-				       sb->s_id);
+				       "umount/remount instead.");
 				err = -EINVAL;
 				goto restore_opts;
 			}
@@ -2425,6 +2675,7 @@ static int ext3_remount (struct super_block * sb, int * flags, char * data)
 				goto restore_opts;
 			if (!ext3_setup_super (sb, es, 0))
 				sb->s_flags &= ~MS_RDONLY;
+			enable_quota = 1;
 		}
 	}
 #ifdef CONFIG_QUOTA
@@ -2434,6 +2685,10 @@ static int ext3_remount (struct super_block * sb, int * flags, char * data)
 		    old_opts.s_qf_names[i] != sbi->s_qf_names[i])
 			kfree(old_opts.s_qf_names[i]);
 #endif
+	unlock_super(sb);
+
+	if (enable_quota)
+		dquot_resume(sb, -1);
 	return 0;
 restore_opts:
 	sb->s_flags = old_sb_flags;
@@ -2450,6 +2705,7 @@ restore_opts:
 		sbi->s_qf_names[i] = old_opts.s_qf_names[i];
 	}
 #endif
+	unlock_super(sb);
 	return err;
 }
 
@@ -2503,14 +2759,12 @@ static int ext3_statfs (struct dentry * dentry, struct kstatfs * buf)
 	buf->f_type = EXT3_SUPER_MAGIC;
 	buf->f_bsize = sb->s_blocksize;
 	buf->f_blocks = le32_to_cpu(es->s_blocks_count) - sbi->s_overhead_last;
-	buf->f_bfree = percpu_counter_sum(&sbi->s_freeblocks_counter);
-	es->s_free_blocks_count = cpu_to_le32(buf->f_bfree);
+	buf->f_bfree = percpu_counter_sum_positive(&sbi->s_freeblocks_counter);
 	buf->f_bavail = buf->f_bfree - le32_to_cpu(es->s_r_blocks_count);
 	if (buf->f_bfree < le32_to_cpu(es->s_r_blocks_count))
 		buf->f_bavail = 0;
 	buf->f_files = le32_to_cpu(es->s_inodes_count);
-	buf->f_ffree = percpu_counter_sum(&sbi->s_freeinodes_counter);
-	es->s_free_inodes_count = cpu_to_le32(buf->f_ffree);
+	buf->f_ffree = percpu_counter_sum_positive(&sbi->s_freeinodes_counter);
 	buf->f_namelen = EXT3_NAME_LEN;
 	fsid = le64_to_cpup((void *)es->s_uuid) ^
 	       le64_to_cpup((void *)es->s_uuid + sizeof(u64));
@@ -2524,7 +2778,7 @@ static int ext3_statfs (struct dentry * dentry, struct kstatfs * buf)
  * Process 1                         Process 2
  * ext3_create()                     quota_sync()
  *   journal_start()                   write_dquot()
- *   DQUOT_INIT()                        down(dqio_mutex)
+ *   dquot_initialize()                       down(dqio_mutex)
  *     down(dqio_mutex)                    journal_start()
  *
  */
@@ -2534,44 +2788,6 @@ static int ext3_statfs (struct dentry * dentry, struct kstatfs * buf)
 static inline struct inode *dquot_to_inode(struct dquot *dquot)
 {
 	return sb_dqopt(dquot->dq_sb)->files[dquot->dq_type];
-}
-
-static int ext3_dquot_initialize(struct inode *inode, int type)
-{
-	handle_t *handle;
-	int ret, err;
-
-	/* We may create quota structure so we need to reserve enough blocks */
-	handle = ext3_journal_start(inode, 2*EXT3_QUOTA_INIT_BLOCKS(inode->i_sb));
-	if (IS_ERR(handle))
-		return PTR_ERR(handle);
-	ret = dquot_initialize(inode, type);
-	err = ext3_journal_stop(handle);
-	if (!ret)
-		ret = err;
-	return ret;
-}
-
-static int ext3_dquot_drop(struct inode *inode)
-{
-	handle_t *handle;
-	int ret, err;
-
-	/* We may delete quota structure so we need to reserve enough blocks */
-	handle = ext3_journal_start(inode, 2*EXT3_QUOTA_DEL_BLOCKS(inode->i_sb));
-	if (IS_ERR(handle)) {
-		/*
-		 * We call dquot_drop() anyway to at least release references
-		 * to quota structures so that umount does not hang.
-		 */
-		dquot_drop(inode);
-		return PTR_ERR(handle);
-	}
-	ret = dquot_drop(inode);
-	err = ext3_journal_stop(handle);
-	if (!ret)
-		ret = err;
-	return ret;
 }
 
 static int ext3_write_dquot(struct dquot *dquot)
@@ -2615,8 +2831,11 @@ static int ext3_release_dquot(struct dquot *dquot)
 
 	handle = ext3_journal_start(dquot_to_inode(dquot),
 					EXT3_QUOTA_DEL_BLOCKS(dquot->dq_sb));
-	if (IS_ERR(handle))
+	if (IS_ERR(handle)) {
+		/* Release dquot anyway to avoid endless cycle in dqput() */
+		dquot_release(dquot);
 		return PTR_ERR(handle);
+	}
 	ret = dquot_release(dquot);
 	err = ext3_journal_stop(handle);
 	if (!ret)
@@ -2658,45 +2877,55 @@ static int ext3_write_info(struct super_block *sb, int type)
  */
 static int ext3_quota_on_mount(struct super_block *sb, int type)
 {
-	return vfs_quota_on_mount(sb, EXT3_SB(sb)->s_qf_names[type],
-			EXT3_SB(sb)->s_jquota_fmt, type);
+	return dquot_quota_on_mount(sb, EXT3_SB(sb)->s_qf_names[type],
+					EXT3_SB(sb)->s_jquota_fmt, type);
 }
 
 /*
  * Standard function to be called on quota_on
  */
 static int ext3_quota_on(struct super_block *sb, int type, int format_id,
-			 char *path)
+			 struct path *path)
 {
 	int err;
-	struct nameidata nd;
 
 	if (!test_opt(sb, QUOTA))
 		return -EINVAL;
-	/* Not journalling quota? */
-	if (!EXT3_SB(sb)->s_qf_names[USRQUOTA] &&
-	    !EXT3_SB(sb)->s_qf_names[GRPQUOTA])
-		return vfs_quota_on(sb, type, format_id, path);
-	err = path_lookup(path, LOOKUP_FOLLOW, &nd);
-	if (err)
-		return err;
+
 	/* Quotafile not on the same filesystem? */
-	if (nd.mnt->mnt_sb != sb) {
-		path_release(&nd);
+	if (path->mnt->mnt_sb != sb)
 		return -EXDEV;
+	/* Journaling quota? */
+	if (EXT3_SB(sb)->s_qf_names[type]) {
+		/* Quotafile not of fs root? */
+		if (path->dentry->d_parent != sb->s_root)
+			ext3_msg(sb, KERN_WARNING,
+				"warning: Quota file not on filesystem root. "
+				"Journaled quota will not work.");
 	}
-	/* Quotafile not of fs root? */
-	if (nd.dentry->d_parent->d_inode != sb->s_root->d_inode)
-		printk(KERN_WARNING
-			"EXT3-fs: Quota file not on filesystem root. "
-			"Journalled quota will not work.\n");
-	path_release(&nd);
-	return vfs_quota_on(sb, type, format_id, path);
+
+	/*
+	 * When we journal data on quota file, we have to flush journal to see
+	 * all updates to the file when we bypass pagecache...
+	 */
+	if (ext3_should_journal_data(path->dentry->d_inode)) {
+		/*
+		 * We don't need to lock updates but journal_flush() could
+		 * otherwise be livelocked...
+		 */
+		journal_lock_updates(EXT3_SB(sb)->s_journal);
+		err = journal_flush(EXT3_SB(sb)->s_journal);
+		journal_unlock_updates(EXT3_SB(sb)->s_journal);
+		if (err)
+			return err;
+	}
+
+	return dquot_quota_on(sb, type, format_id, path);
 }
 
 /* Read data from quotafile - avoid pagecache and such because we cannot afford
  * acquiring the locks... As quota files are never truncated and quota code
- * itself serializes the operations (and noone else should touch the files)
+ * itself serializes the operations (and no one else should touch the files)
  * we don't have to be afraid of races */
 static ssize_t ext3_quota_read(struct super_block *sb, int type, char *data,
 			       size_t len, loff_t off)
@@ -2743,73 +2972,79 @@ static ssize_t ext3_quota_write(struct super_block *sb, int type,
 	sector_t blk = off >> EXT3_BLOCK_SIZE_BITS(sb);
 	int err = 0;
 	int offset = off & (sb->s_blocksize - 1);
-	int tocopy;
 	int journal_quota = EXT3_SB(sb)->s_qf_names[type] != NULL;
-	size_t towrite = len;
 	struct buffer_head *bh;
 	handle_t *handle = journal_current_handle();
 
-	mutex_lock_nested(&inode->i_mutex, I_MUTEX_QUOTA);
-	while (towrite > 0) {
-		tocopy = sb->s_blocksize - offset < towrite ?
-				sb->s_blocksize - offset : towrite;
-		bh = ext3_bread(handle, inode, blk, 1, &err);
-		if (!bh)
-			goto out;
-		if (journal_quota) {
-			err = ext3_journal_get_write_access(handle, bh);
-			if (err) {
-				brelse(bh);
-				goto out;
-			}
-		}
-		lock_buffer(bh);
-		memcpy(bh->b_data+offset, data, tocopy);
-		flush_dcache_page(bh->b_page);
-		unlock_buffer(bh);
-		if (journal_quota)
-			err = ext3_journal_dirty_metadata(handle, bh);
-		else {
-			/* Always do at least ordered writes for quotas */
-			err = ext3_journal_dirty_data(handle, bh);
-			mark_buffer_dirty(bh);
-		}
-		brelse(bh);
-		if (err)
-			goto out;
-		offset = 0;
-		towrite -= tocopy;
-		data += tocopy;
-		blk++;
+	if (!handle) {
+		ext3_msg(sb, KERN_WARNING,
+			"warning: quota write (off=%llu, len=%llu)"
+			" cancelled because transaction is not started.",
+			(unsigned long long)off, (unsigned long long)len);
+		return -EIO;
 	}
+
+	/*
+	 * Since we account only one data block in transaction credits,
+	 * then it is impossible to cross a block boundary.
+	 */
+	if (sb->s_blocksize - offset < len) {
+		ext3_msg(sb, KERN_WARNING, "Quota write (off=%llu, len=%llu)"
+			" cancelled because not block aligned",
+			(unsigned long long)off, (unsigned long long)len);
+		return -EIO;
+	}
+	mutex_lock_nested(&inode->i_mutex, I_MUTEX_QUOTA);
+	bh = ext3_bread(handle, inode, blk, 1, &err);
+	if (!bh)
+		goto out;
+	if (journal_quota) {
+		err = ext3_journal_get_write_access(handle, bh);
+		if (err) {
+			brelse(bh);
+			goto out;
+		}
+	}
+	lock_buffer(bh);
+	memcpy(bh->b_data+offset, data, len);
+	flush_dcache_page(bh->b_page);
+	unlock_buffer(bh);
+	if (journal_quota)
+		err = ext3_journal_dirty_metadata(handle, bh);
+	else {
+		/* Always do at least ordered writes for quotas */
+		err = ext3_journal_dirty_data(handle, bh);
+		mark_buffer_dirty(bh);
+	}
+	brelse(bh);
 out:
-	if (len == towrite) {
+	if (err) {
 		mutex_unlock(&inode->i_mutex);
 		return err;
 	}
-	if (inode->i_size < off+len-towrite) {
-		i_size_write(inode, off+len-towrite);
+	if (inode->i_size < off + len) {
+		i_size_write(inode, off + len);
 		EXT3_I(inode)->i_disksize = inode->i_size;
 	}
 	inode->i_version++;
 	inode->i_mtime = inode->i_ctime = CURRENT_TIME;
 	ext3_mark_inode_dirty(handle, inode);
 	mutex_unlock(&inode->i_mutex);
-	return len - towrite;
+	return len;
 }
 
 #endif
 
-static int ext3_get_sb(struct file_system_type *fs_type,
-	int flags, const char *dev_name, void *data, struct vfsmount *mnt)
+static struct dentry *ext3_mount(struct file_system_type *fs_type,
+	int flags, const char *dev_name, void *data)
 {
-	return get_sb_bdev(fs_type, flags, dev_name, data, ext3_fill_super, mnt);
+	return mount_bdev(fs_type, flags, dev_name, data, ext3_fill_super);
 }
 
 static struct file_system_type ext3_fs_type = {
 	.owner		= THIS_MODULE,
 	.name		= "ext3",
-	.get_sb		= ext3_get_sb,
+	.mount		= ext3_mount,
 	.kill_sb	= kill_block_super,
 	.fs_flags	= FS_REQUIRES_DEV,
 };

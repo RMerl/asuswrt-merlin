@@ -2,18 +2,18 @@
 #include <linux/errno.h>
 #include <linux/kernel.h>
 #include <linux/proc_fs.h>
+#include <linux/slab.h>
 #include <linux/types.h>
 #include <asm/ptrace.h>
 #include <asm/uaccess.h>
 
 #define SAMPLE_BUFFER_SIZE 8192
 
-static char* sample_buffer;
-static char* sample_buffer_pos;
+static char *sample_buffer;
+static char *sample_buffer_pos;
 static int prof_running = 0;
 
-void
-cris_profile_sample(struct pt_regs* regs)
+void cris_profile_sample(struct pt_regs *regs)
 {
 	if (!prof_running)
 		return;
@@ -23,7 +23,7 @@ cris_profile_sample(struct pt_regs* regs)
 	else
 		*(unsigned int*)sample_buffer_pos = 0;
 
-	*(unsigned int*)(sample_buffer_pos + 4) = instruction_pointer(regs);
+	*(unsigned int *)(sample_buffer_pos + 4) = instruction_pointer(regs);
 	sample_buffer_pos += 8;
 
 	if (sample_buffer_pos == sample_buffer + SAMPLE_BUFFER_SIZE)
@@ -35,19 +35,16 @@ read_cris_profile(struct file *file, char __user *buf,
 		  size_t count, loff_t *ppos)
 {
 	unsigned long p = *ppos;
+	ssize_t ret;
 
-	if (p > SAMPLE_BUFFER_SIZE)
-		return 0;
+	ret = simple_read_from_buffer(buf, count, ppos, sample_buffer,
+						SAMPLE_BUFFER_SIZE);
+	if (ret < 0)
+		return ret;
 
-	if (p + count > SAMPLE_BUFFER_SIZE)
-		count = SAMPLE_BUFFER_SIZE - p;
-	if (copy_to_user(buf, sample_buffer + p,count))
-		return -EFAULT;
+	memset(sample_buffer + p, 0, ret);
 
-	memset(sample_buffer + p, 0, count);
-	*ppos += count;
-
-	return count;
+	return ret;
 }
 
 static ssize_t
@@ -56,15 +53,16 @@ write_cris_profile(struct file *file, const char __user *buf,
 {
 	sample_buffer_pos = sample_buffer;
 	memset(sample_buffer, 0, SAMPLE_BUFFER_SIZE);
+	return count < SAMPLE_BUFFER_SIZE ? count : SAMPLE_BUFFER_SIZE;
 }
 
 static const struct file_operations cris_proc_profile_operations = {
 	.read		= read_cris_profile,
 	.write		= write_cris_profile,
+	.llseek		= default_llseek,
 };
 
-static int
-__init init_cris_profile(void)
+static int __init init_cris_profile(void)
 {
 	struct proc_dir_entry *entry;
 
@@ -75,14 +73,14 @@ __init init_cris_profile(void)
 
 	sample_buffer_pos = sample_buffer;
 
-	entry = create_proc_entry("system_profile", S_IWUSR | S_IRUGO, NULL);
+	entry = proc_create("system_profile", S_IWUSR | S_IRUGO, NULL,
+			    &cris_proc_profile_operations);
 	if (entry) {
-		entry->proc_fops = &cris_proc_profile_operations;
 		entry->size = SAMPLE_BUFFER_SIZE;
 	}
 	prof_running = 1;
 
 	return 0;
 }
-
 __initcall(init_cris_profile);
+

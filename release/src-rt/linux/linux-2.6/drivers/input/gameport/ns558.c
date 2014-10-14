@@ -1,6 +1,4 @@
 /*
- * $Id: ns558.c,v 1.43 2002/01/24 19:23:21 vojtech Exp $
- *
  *  Copyright (c) 1999-2001 Vojtech Pavlik
  *  Copyright (c) 1999 Brian Gerst
  */
@@ -168,7 +166,7 @@ static int ns558_isa_probe(int io)
 
 #ifdef CONFIG_PNP
 
-static struct pnp_device_id pnp_devids[] = {
+static const struct pnp_device_id pnp_devids[] = {
 	{ .id = "@P@0001", .driver_data = 0 }, /* ALS 100 */
 	{ .id = "@P@0020", .driver_data = 0 }, /* ALS 200 */
 	{ .id = "@P@1001", .driver_data = 0 }, /* ALS 100+ */
@@ -228,7 +226,7 @@ static int ns558_pnp_probe(struct pnp_dev *dev, const struct pnp_device_id *did)
 	ns558->gameport = port;
 
 	gameport_set_name(port, "NS558 PnP Gameport");
-	gameport_set_phys(port, "pnp%s/gameport0", dev->dev.bus_id);
+	gameport_set_phys(port, "pnp%s/gameport0", dev_name(&dev->dev));
 	port->dev.parent = &dev->dev;
 	port->io = ioport;
 

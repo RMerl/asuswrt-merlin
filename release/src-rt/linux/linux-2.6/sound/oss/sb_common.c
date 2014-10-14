@@ -31,6 +31,7 @@
 #include <linux/module.h>
 #include <linux/delay.h>
 #include <linux/spinlock.h>
+#include <linux/slab.h>
 
 #include "sound_config.h"
 #include "sound_firmware.h"
@@ -157,7 +158,7 @@ static void sb_intr (sb_devc *devc)
 				break;
 
 			default:
-				/* printk(KERN_WARN "Sound Blaster: Unexpected interrupt\n"); */
+				/* printk(KERN_WARNING "Sound Blaster: Unexpected interrupt\n"); */
 				;
 		}
 	}
@@ -177,7 +178,7 @@ static void sb_intr (sb_devc *devc)
 				break;
 
 			default:
-				/* printk(KERN_WARN "Sound Blaster: Unexpected interrupt\n"); */
+				/* printk(KERN_WARNING "Sound Blaster: Unexpected interrupt\n"); */
 				;
 		}
 	}
@@ -1228,7 +1229,8 @@ int probe_sbmpu(struct address_info *hw_config, struct module *owner)
 		}
 		attach_mpu401(hw_config, owner);
 		if (last_sb->irq == -hw_config->irq)
-			last_sb->midi_irq_cookie=(void *)hw_config->slots[1];
+			last_sb->midi_irq_cookie =
+				(void *)(long) hw_config->slots[1];
 		return 1;
 	}
 #endif

@@ -1,6 +1,4 @@
 /*
- * $Id: wr_sbc82xx_flash.c,v 1.8 2005/11/07 11:14:29 gleixner Exp $
- *
  * Map for flash chips on Wind River PowerQUICC II SBC82xx board.
  *
  * Copyright (C) 2004 Red Hat, Inc.
@@ -76,7 +74,7 @@ do {								\
 	}							\
 } while (0);
 
-int __init init_sbc82xx_flash(void)
+static int __init init_sbc82xx_flash(void)
 {
 	volatile memctl_cpm2_t *mc = &cpm2_immr->im_memctl;
 	int bigflash;

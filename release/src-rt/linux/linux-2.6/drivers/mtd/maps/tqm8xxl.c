@@ -2,8 +2,6 @@
  * Handle mapping of the flash memory access routines
  * on TQM8xxL based devices.
  *
- * $Id: tqm8xxl.c,v 1.15 2005/11/07 11:14:28 gleixner Exp $
- *
  * based on rpxlite.c
  *
  * Copyright(C) 2001 Kirk Lee <kirk@hpc.ee.ntu.edu.tw>
@@ -65,7 +63,7 @@ static void __iomem *start_scan_addr;
  */
 
 #ifdef CONFIG_MTD_PARTITIONS
-/* Currently, TQM8xxL has upto 8MiB flash */
+/* Currently, TQM8xxL has up to 8MiB flash */
 static unsigned long tqm8xxl_max_flash_size = 0x00800000;
 
 /* partition definition for first flash bank
@@ -111,7 +109,7 @@ static struct mtd_partition tqm8xxl_fs_partitions[] = {
 };
 #endif
 
-int __init init_tqm_mtd(void)
+static int __init init_tqm_mtd(void)
 {
 	int idx = 0, ret = 0;
 	unsigned long flash_addr, flash_size, mtd_size = 0;
@@ -124,7 +122,7 @@ int __init init_tqm_mtd(void)
 	//request maximum flash size address space
 	start_scan_addr = ioremap(flash_addr, flash_size);
 	if (!start_scan_addr) {
-		printk(KERN_WARNING "%s:Failed to ioremap address:0x%x\n", __FUNCTION__, flash_addr);
+		printk(KERN_WARNING "%s:Failed to ioremap address:0x%x\n", __func__, flash_addr);
 		return -EIO;
 	}
 
@@ -132,7 +130,7 @@ int __init init_tqm_mtd(void)
 		if(mtd_size >= flash_size)
 			break;
 
-		printk(KERN_INFO "%s: chip probing count %d\n", __FUNCTION__, idx);
+		printk(KERN_INFO "%s: chip probing count %d\n", __func__, idx);
 
 		map_banks[idx] = kzalloc(sizeof(struct map_info), GFP_KERNEL);
 		if(map_banks[idx] == NULL) {
@@ -141,7 +139,7 @@ int __init init_tqm_mtd(void)
 			goto error_mem;
 		}
 
-		map_banks[idx]->name = (char *)kmalloc(16, GFP_KERNEL);
+		map_banks[idx]->name = kmalloc(16, GFP_KERNEL);
 
 		if (!map_banks[idx]->name) {
 			ret = -ENOMEM;
@@ -178,7 +176,7 @@ int __init init_tqm_mtd(void)
 			mtd_size += mtd_banks[idx]->size;
 			num_banks++;
 
-			printk(KERN_INFO "%s: bank%d, name:%s, size:%dbytes \n", __FUNCTION__, num_banks,
+			printk(KERN_INFO "%s: bank%d, name:%s, size:%dbytes \n", __func__, num_banks,
 			mtd_banks[idx]->name, mtd_banks[idx]->size);
 		}
 	}

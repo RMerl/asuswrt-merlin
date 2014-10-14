@@ -23,7 +23,6 @@
 #include <linux/list.h>
 #include <linux/module.h>
 #include <linux/ptrace.h>
-#include <linux/slab.h>
 #include <linux/wait.h>
 #include <linux/mm.h>
 #include <linux/io.h>
@@ -35,6 +34,7 @@
 #include <asm/firmware.h>
 #include <asm/prom.h>
 
+#include "spufs/spufs.h"
 #include "interrupt.h"
 
 struct device_node *spu_devnode(struct spu *spu)
@@ -48,10 +48,18 @@ static u64 __init find_spu_unit_number(struct device_node *spe)
 {
 	const unsigned int *prop;
 	int proplen;
+
+	/* new device trees should provide the physical-id attribute */
+	prop = of_get_property(spe, "physical-id", &proplen);
+	if (proplen == 4)
+		return (u64)*prop;
+
+	/* celleb device tree provides the unit-id */
 	prop = of_get_property(spe, "unit-id", &proplen);
 	if (proplen == 4)
 		return (u64)*prop;
 
+	/* legacy device trees provide the id in the reg attribute */
 	prop = of_get_property(spe, "reg", &proplen);
 	if (proplen == 4)
 		return (u64)*prop;
@@ -83,7 +91,7 @@ static int __init spu_map_interrupts_old(struct spu *spu,
 
 	tmp = of_get_property(np->parent->parent, "node-id", NULL);
 	if (!tmp) {
-		printk(KERN_WARNING "%s: can't find node-id\n", __FUNCTION__);
+		printk(KERN_WARNING "%s: can't find node-id\n", __func__);
 		nid = spu->node;
 	} else
 		nid = tmp[0];
@@ -279,6 +287,7 @@ static int __init of_enumerate_spus(int (*fn)(void *data))
 {
 	int ret;
 	struct device_node *node;
+	unsigned int n = 0;
 
 	ret = -ENODEV;
 	for (node = of_find_node_by_type(NULL, "spe");
@@ -286,11 +295,12 @@ static int __init of_enumerate_spus(int (*fn)(void *data))
 		ret = fn(node);
 		if (ret) {
 			printk(KERN_WARNING "%s: Error initializing %s\n",
-				__FUNCTION__, node->name);
+				__func__, node->name);
 			break;
 		}
+		n++;
 	}
-	return ret;
+	return ret ? ret : n;
 }
 
 static int __init of_create_spu(struct spu *spu, void *data)
@@ -316,7 +326,7 @@ static int __init of_create_spu(struct spu *spu, void *data)
 		if (!legacy_map) {
 			legacy_map = 1;
 			printk(KERN_WARNING "%s: Legacy device tree found, "
-				"trying to map old style\n", __FUNCTION__);
+				"trying to map old style\n", __func__);
 		}
 		ret = spu_map_device_old(spu);
 		if (ret) {
@@ -331,11 +341,11 @@ static int __init of_create_spu(struct spu *spu, void *data)
 		if (!legacy_irq) {
 			legacy_irq = 1;
 			printk(KERN_WARNING "%s: Legacy device tree found, "
-				"trying old style irq\n", __FUNCTION__);
+				"trying old style irq\n", __func__);
 		}
 		ret = spu_map_interrupts_old(spu, spe);
 		if (ret) {
-			printk(KERN_ERR "%s: could not map interrupts",
+			printk(KERN_ERR "%s: could not map interrupts\n",
 				spu->name);
 			goto out_unmap;
 		}
@@ -359,8 +369,188 @@ static int of_destroy_spu(struct spu *spu)
 	return 0;
 }
 
+static void enable_spu_by_master_run(struct spu_context *ctx)
+{
+	ctx->ops->master_start(ctx);
+}
+
+static void disable_spu_by_master_run(struct spu_context *ctx)
+{
+	ctx->ops->master_stop(ctx);
+}
+
+/* Hardcoded affinity idxs for qs20 */
+#define QS20_SPES_PER_BE 8
+static int qs20_reg_idxs[QS20_SPES_PER_BE] =   { 0, 2, 4, 6, 7, 5, 3, 1 };
+static int qs20_reg_memory[QS20_SPES_PER_BE] = { 1, 1, 0, 0, 0, 0, 0, 0 };
+
+static struct spu *spu_lookup_reg(int node, u32 reg)
+{
+	struct spu *spu;
+	const u32 *spu_reg;
+
+	list_for_each_entry(spu, &cbe_spu_info[node].spus, cbe_list) {
+		spu_reg = of_get_property(spu_devnode(spu), "reg", NULL);
+		if (*spu_reg == reg)
+			return spu;
+	}
+	return NULL;
+}
+
+static void init_affinity_qs20_harcoded(void)
+{
+	int node, i;
+	struct spu *last_spu, *spu;
+	u32 reg;
+
+	for (node = 0; node < MAX_NUMNODES; node++) {
+		last_spu = NULL;
+		for (i = 0; i < QS20_SPES_PER_BE; i++) {
+			reg = qs20_reg_idxs[i];
+			spu = spu_lookup_reg(node, reg);
+			if (!spu)
+				continue;
+			spu->has_mem_affinity = qs20_reg_memory[reg];
+			if (last_spu)
+				list_add_tail(&spu->aff_list,
+						&last_spu->aff_list);
+			last_spu = spu;
+		}
+	}
+}
+
+static int of_has_vicinity(void)
+{
+	struct device_node *dn;
+
+	for_each_node_by_type(dn, "spe") {
+		if (of_find_property(dn, "vicinity", NULL))  {
+			of_node_put(dn);
+			return 1;
+		}
+	}
+	return 0;
+}
+
+static struct spu *devnode_spu(int cbe, struct device_node *dn)
+{
+	struct spu *spu;
+
+	list_for_each_entry(spu, &cbe_spu_info[cbe].spus, cbe_list)
+		if (spu_devnode(spu) == dn)
+			return spu;
+	return NULL;
+}
+
+static struct spu *
+neighbour_spu(int cbe, struct device_node *target, struct device_node *avoid)
+{
+	struct spu *spu;
+	struct device_node *spu_dn;
+	const phandle *vic_handles;
+	int lenp, i;
+
+	list_for_each_entry(spu, &cbe_spu_info[cbe].spus, cbe_list) {
+		spu_dn = spu_devnode(spu);
+		if (spu_dn == avoid)
+			continue;
+		vic_handles = of_get_property(spu_dn, "vicinity", &lenp);
+		for (i=0; i < (lenp / sizeof(phandle)); i++) {
+			if (vic_handles[i] == target->phandle)
+				return spu;
+		}
+	}
+	return NULL;
+}
+
+static void init_affinity_node(int cbe)
+{
+	struct spu *spu, *last_spu;
+	struct device_node *vic_dn, *last_spu_dn;
+	phandle avoid_ph;
+	const phandle *vic_handles;
+	const char *name;
+	int lenp, i, added;
+
+	last_spu = list_first_entry(&cbe_spu_info[cbe].spus, struct spu,
+								cbe_list);
+	avoid_ph = 0;
+	for (added = 1; added < cbe_spu_info[cbe].n_spus; added++) {
+		last_spu_dn = spu_devnode(last_spu);
+		vic_handles = of_get_property(last_spu_dn, "vicinity", &lenp);
+
+		/*
+		 * Walk through each phandle in vicinity property of the spu
+		 * (tipically two vicinity phandles per spe node)
+		 */
+		for (i = 0; i < (lenp / sizeof(phandle)); i++) {
+			if (vic_handles[i] == avoid_ph)
+				continue;
+
+			vic_dn = of_find_node_by_phandle(vic_handles[i]);
+			if (!vic_dn)
+				continue;
+
+			/* a neighbour might be spe, mic-tm, or bif0 */
+			name = of_get_property(vic_dn, "name", NULL);
+			if (!name)
+				continue;
+
+			if (strcmp(name, "spe") == 0) {
+				spu = devnode_spu(cbe, vic_dn);
+				avoid_ph = last_spu_dn->phandle;
+			} else {
+				/*
+				 * "mic-tm" and "bif0" nodes do not have
+				 * vicinity property. So we need to find the
+				 * spe which has vic_dn as neighbour, but
+				 * skipping the one we came from (last_spu_dn)
+				 */
+				spu = neighbour_spu(cbe, vic_dn, last_spu_dn);
+				if (!spu)
+					continue;
+				if (!strcmp(name, "mic-tm")) {
+					last_spu->has_mem_affinity = 1;
+					spu->has_mem_affinity = 1;
+				}
+				avoid_ph = vic_dn->phandle;
+			}
+
+			list_add_tail(&spu->aff_list, &last_spu->aff_list);
+			last_spu = spu;
+			break;
+		}
+	}
+}
+
+static void init_affinity_fw(void)
+{
+	int cbe;
+
+	for (cbe = 0; cbe < MAX_NUMNODES; cbe++)
+		init_affinity_node(cbe);
+}
+
+static int __init init_affinity(void)
+{
+	if (of_has_vicinity()) {
+		init_affinity_fw();
+	} else {
+		long root = of_get_flat_dt_root();
+		if (of_flat_dt_is_compatible(root, "IBM,CPBW-1.0"))
+			init_affinity_qs20_harcoded();
+		else
+			printk("No affinity configuration found\n");
+	}
+
+	return 0;
+}
+
 const struct spu_management_ops spu_management_of_ops = {
 	.enumerate_spus = of_enumerate_spus,
 	.create_spu = of_create_spu,
 	.destroy_spu = of_destroy_spu,
+	.enable_spu = enable_spu_by_master_run,
+	.disable_spu = disable_spu_by_master_run,
+	.init_affinity = init_affinity,
 };

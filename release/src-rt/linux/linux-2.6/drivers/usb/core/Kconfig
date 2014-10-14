@@ -28,7 +28,7 @@ comment "Miscellaneous USB options"
 	depends on USB
 
 config USB_DEVICEFS
-	bool "USB device filesystem"
+	bool "USB device filesystem (DEPRECATED)"
 	depends on USB
 	---help---
 	  If you say Y here (and to "/proc file system support" in the "File
@@ -46,11 +46,15 @@ config USB_DEVICEFS
 	  For the format of the various /proc/bus/usb/ files, please read
 	  <file:Documentation/usb/proc_usb_info.txt>.
 
-	  Usbfs files can't handle Access Control Lists (ACL), which are the
-	  default way to grant access to USB devices for untrusted users of a
-	  desktop system. The usbfs functionality is replaced by real
-	  device-nodes managed by udev. These nodes live in /dev/bus/usb and
-	  are used by libusb.
+	  Modern Linux systems do not use this.
+
+	  Usbfs entries are files and not character devices; usbfs can't
+	  handle Access Control Lists (ACL) which are the default way to
+	  grant access to USB devices for untrusted users of a desktop
+	  system.
+
+	  The usbfs functionality is replaced by real device-nodes managed by
+	  udev.  These nodes lived in /dev/bus/usb and are used by libusb.
 
 config USB_DEVICE_CLASS
 	bool "USB device class-devices (DEPRECATED)"
@@ -76,8 +80,8 @@ config USB_DEVICE_CLASS
 	    NAME="bus/usb/$env{BUSNUM}/$env{DEVNUM}", MODE="0644"
 
 config USB_DYNAMIC_MINORS
-	bool "Dynamic USB minor allocation (EXPERIMENTAL)"
-	depends on USB && EXPERIMENTAL
+	bool "Dynamic USB minor allocation"
+	depends on USB
 	help
 	  If you say Y here, the USB subsystem will use dynamic minor
 	  allocation for any device that uses the USB major number.
@@ -87,12 +91,13 @@ config USB_DYNAMIC_MINORS
 	  If you are unsure about this, say N here.
 
 config USB_SUSPEND
-	bool "USB selective suspend/resume and wakeup (EXPERIMENTAL)"
-	depends on USB && PM && EXPERIMENTAL
+	bool "USB runtime power management (autosuspend) and wakeup"
+	depends on USB && PM_RUNTIME
 	help
 	  If you say Y here, you can use driver calls or the sysfs
-	  "power/state" file to suspend or resume individual USB
-	  peripherals.
+	  "power/control" file to enable or disable autosuspend for
+	  individual USB peripherals (see
+	  Documentation/usb/power-management.txt for more details).
 
 	  Also, USB "remote wakeup" signaling is supported, whereby some
 	  USB devices (like keyboards and network adapters) can wake up
@@ -102,22 +107,32 @@ config USB_SUSPEND
 	  If you are unsure about this, say N here.
 
 config USB_OTG
-	bool
+	bool "OTG support"
 	depends on USB && EXPERIMENTAL
-	select USB_SUSPEND
+	depends on USB_SUSPEND
 	default n
+	help
+	  The most notable feature of USB OTG is support for a
+	  "Dual-Role" device, which can act as either a device
+	  or a host. The initial role is decided by the type of
+	  plug inserted and can be changed later when two dual
+	  role devices talk to each other.
 
+	  Select this only if your board has Mini-AB/Micro-AB
+	  connector.
 
 config USB_OTG_WHITELIST
 	bool "Rely on OTG Targeted Peripherals List"
-	depends on USB_OTG
-	default y
+	depends on USB_OTG || EXPERT
+	default y if USB_OTG
+	default n if EXPERT
 	help
 	  If you say Y here, the "otg_whitelist.h" file will be used as a
 	  product whitelist, so USB peripherals not listed there will be
 	  rejected during enumeration.  This behavior is required by the
 	  USB OTG specification for all devices not on your product's
-	  "Targeted Peripherals List".
+	  "Targeted Peripherals List".  "Embedded Hosts" are likewise
+	  allowed to support only a limited number of peripherals.
 
 	  Otherwise, peripherals not listed there will only generate a
 	  warning and enumeration will continue.  That's more like what
@@ -126,9 +141,10 @@ config USB_OTG_WHITELIST
 
 config USB_OTG_BLACKLIST_HUB
 	bool "Disable external hubs"
-	depends on USB_OTG
+	depends on USB_OTG || EXPERT
 	help
 	  If you say Y here, then Linux will refuse to enumerate
 	  external hubs.  OTG hosts are allowed to reduce hardware
-	  and software costs by not supporting external hubs.
+	  and software costs by not supporting external hubs.  So
+	  are "Embedded Hosts" that don't offer OTG support.
 

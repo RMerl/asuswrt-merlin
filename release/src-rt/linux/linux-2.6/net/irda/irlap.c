@@ -63,7 +63,7 @@ static void irlap_init_qos_capabilities(struct irlap_cb *self,
 					struct qos_info *qos_user);
 
 #ifdef CONFIG_IRDA_DEBUG
-static char *lap_reasons[] = {
+static const char *const lap_reasons[] = {
 	"ERROR, NOT USED",
 	"LAP_DISC_INDICATION",
 	"LAP_NO_RESPONSE",
@@ -88,14 +88,14 @@ int __init irlap_init(void)
 	irlap = hashbin_new(HB_LOCK);
 	if (irlap == NULL) {
 		IRDA_ERROR("%s: can't allocate irlap hashbin!\n",
-			   __FUNCTION__);
+			   __func__);
 		return -ENOMEM;
 	}
 
 	return 0;
 }
 
-void __exit irlap_cleanup(void)
+void irlap_cleanup(void)
 {
 	IRDA_ASSERT(irlap != NULL, return;);
 
@@ -113,7 +113,7 @@ struct irlap_cb *irlap_open(struct net_device *dev, struct qos_info *qos,
 {
 	struct irlap_cb *self;
 
-	IRDA_DEBUG(4, "%s()\n", __FUNCTION__);
+	IRDA_DEBUG(4, "%s()\n", __func__);
 
 	/* Initialize the irlap structure. */
 	self = kzalloc(sizeof(struct irlap_cb), GFP_KERNEL);
@@ -165,7 +165,7 @@ struct irlap_cb *irlap_open(struct net_device *dev, struct qos_info *qos,
 
 	irlap_apply_default_connection_parameters(self);
 
-	self->N3 = 3; /* # connections attemts to try before giving up */
+	self->N3 = 3; /* # connections attempts to try before giving up */
 
 	self->state = LAP_NDM;
 
@@ -215,7 +215,7 @@ void irlap_close(struct irlap_cb *self)
 {
 	struct irlap_cb *lap;
 
-	IRDA_DEBUG(4, "%s()\n", __FUNCTION__);
+	IRDA_DEBUG(4, "%s()\n", __func__);
 
 	IRDA_ASSERT(self != NULL, return;);
 	IRDA_ASSERT(self->magic == LAP_MAGIC, return;);
@@ -231,7 +231,7 @@ void irlap_close(struct irlap_cb *self)
 	/* Be sure that we manage to remove ourself from the hash */
 	lap = hashbin_remove(irlap, self->saddr, NULL);
 	if (!lap) {
-		IRDA_DEBUG(1, "%s(), Didn't find myself!\n", __FUNCTION__);
+		IRDA_DEBUG(1, "%s(), Didn't find myself!\n", __func__);
 		return;
 	}
 	__irlap_close(lap);
@@ -246,7 +246,7 @@ EXPORT_SYMBOL(irlap_close);
  */
 void irlap_connect_indication(struct irlap_cb *self, struct sk_buff *skb)
 {
-	IRDA_DEBUG(4, "%s()\n", __FUNCTION__);
+	IRDA_DEBUG(4, "%s()\n", __func__);
 
 	IRDA_ASSERT(self != NULL, return;);
 	IRDA_ASSERT(self->magic == LAP_MAGIC, return;);
@@ -265,7 +265,7 @@ void irlap_connect_indication(struct irlap_cb *self, struct sk_buff *skb)
  */
 void irlap_connect_response(struct irlap_cb *self, struct sk_buff *userdata)
 {
-	IRDA_DEBUG(4, "%s()\n", __FUNCTION__);
+	IRDA_DEBUG(4, "%s()\n", __func__);
 
 	irlap_do_event(self, CONNECT_RESPONSE, userdata, NULL);
 }
@@ -280,7 +280,7 @@ void irlap_connect_response(struct irlap_cb *self, struct sk_buff *userdata)
 void irlap_connect_request(struct irlap_cb *self, __u32 daddr,
 			   struct qos_info *qos_user, int sniff)
 {
-	IRDA_DEBUG(3, "%s(), daddr=0x%08x\n", __FUNCTION__, daddr);
+	IRDA_DEBUG(3, "%s(), daddr=0x%08x\n", __func__, daddr);
 
 	IRDA_ASSERT(self != NULL, return;);
 	IRDA_ASSERT(self->magic == LAP_MAGIC, return;);
@@ -307,7 +307,7 @@ void irlap_connect_request(struct irlap_cb *self, __u32 daddr,
  */
 void irlap_connect_confirm(struct irlap_cb *self, struct sk_buff *skb)
 {
-	IRDA_DEBUG(4, "%s()\n", __FUNCTION__);
+	IRDA_DEBUG(4, "%s()\n", __func__);
 
 	IRDA_ASSERT(self != NULL, return;);
 	IRDA_ASSERT(self->magic == LAP_MAGIC, return;);
@@ -344,7 +344,7 @@ void irlap_data_request(struct irlap_cb *self, struct sk_buff *skb,
 	IRDA_ASSERT(self != NULL, return;);
 	IRDA_ASSERT(self->magic == LAP_MAGIC, return;);
 
-	IRDA_DEBUG(3, "%s()\n", __FUNCTION__);
+	IRDA_DEBUG(3, "%s()\n", __func__);
 
 	IRDA_ASSERT(skb_headroom(skb) >= (LAP_ADDR_HEADER+LAP_CTRL_HEADER),
 		    return;);
@@ -391,7 +391,7 @@ void irlap_unitdata_request(struct irlap_cb *self, struct sk_buff *skb)
 	IRDA_ASSERT(self != NULL, return;);
 	IRDA_ASSERT(self->magic == LAP_MAGIC, return;);
 
-	IRDA_DEBUG(3, "%s()\n", __FUNCTION__);
+	IRDA_DEBUG(3, "%s()\n", __func__);
 
 	IRDA_ASSERT(skb_headroom(skb) >= (LAP_ADDR_HEADER+LAP_CTRL_HEADER),
 	       return;);
@@ -417,7 +417,7 @@ void irlap_unitdata_request(struct irlap_cb *self, struct sk_buff *skb)
 #ifdef CONFIG_IRDA_ULTRA
 void irlap_unitdata_indication(struct irlap_cb *self, struct sk_buff *skb)
 {
-	IRDA_DEBUG(1, "%s()\n", __FUNCTION__);
+	IRDA_DEBUG(1, "%s()\n", __func__);
 
 	IRDA_ASSERT(self != NULL, return;);
 	IRDA_ASSERT(self->magic == LAP_MAGIC, return;);
@@ -437,7 +437,7 @@ void irlap_unitdata_indication(struct irlap_cb *self, struct sk_buff *skb)
  */
 void irlap_disconnect_request(struct irlap_cb *self)
 {
-	IRDA_DEBUG(3, "%s()\n", __FUNCTION__);
+	IRDA_DEBUG(3, "%s()\n", __func__);
 
 	IRDA_ASSERT(self != NULL, return;);
 	IRDA_ASSERT(self->magic == LAP_MAGIC, return;);
@@ -450,15 +450,15 @@ void irlap_disconnect_request(struct irlap_cb *self)
 
 	/* Check if we are in the right state for disconnecting */
 	switch (self->state) {
-	case LAP_XMIT_P:        /* FALLTROUGH */
-	case LAP_XMIT_S:        /* FALLTROUGH */
-	case LAP_CONN:          /* FALLTROUGH */
-	case LAP_RESET_WAIT:    /* FALLTROUGH */
+	case LAP_XMIT_P:        /* FALLTHROUGH */
+	case LAP_XMIT_S:        /* FALLTHROUGH */
+	case LAP_CONN:          /* FALLTHROUGH */
+	case LAP_RESET_WAIT:    /* FALLTHROUGH */
 	case LAP_RESET_CHECK:
 		irlap_do_event(self, DISCONNECT_REQUEST, NULL, NULL);
 		break;
 	default:
-		IRDA_DEBUG(2, "%s(), disconnect pending!\n", __FUNCTION__);
+		IRDA_DEBUG(2, "%s(), disconnect pending!\n", __func__);
 		self->disconnect_pending = TRUE;
 		break;
 	}
@@ -472,7 +472,7 @@ void irlap_disconnect_request(struct irlap_cb *self)
  */
 void irlap_disconnect_indication(struct irlap_cb *self, LAP_REASON reason)
 {
-	IRDA_DEBUG(1, "%s(), reason=%s\n", __FUNCTION__, lap_reasons[reason]);
+	IRDA_DEBUG(1, "%s(), reason=%s\n", __func__, lap_reasons[reason]);
 
 	IRDA_ASSERT(self != NULL, return;);
 	IRDA_ASSERT(self->magic == LAP_MAGIC, return;);
@@ -482,18 +482,18 @@ void irlap_disconnect_indication(struct irlap_cb *self, LAP_REASON reason)
 
 	switch (reason) {
 	case LAP_RESET_INDICATION:
-		IRDA_DEBUG(1, "%s(), Sending reset request!\n", __FUNCTION__);
+		IRDA_DEBUG(1, "%s(), Sending reset request!\n", __func__);
 		irlap_do_event(self, RESET_REQUEST, NULL, NULL);
 		break;
-	case LAP_NO_RESPONSE:	   /* FALLTROUGH */
-	case LAP_DISC_INDICATION:  /* FALLTROUGH */
-	case LAP_FOUND_NONE:       /* FALLTROUGH */
+	case LAP_NO_RESPONSE:	   /* FALLTHROUGH */
+	case LAP_DISC_INDICATION:  /* FALLTHROUGH */
+	case LAP_FOUND_NONE:       /* FALLTHROUGH */
 	case LAP_MEDIA_BUSY:
 		irlmp_link_disconnect_indication(self->notify.instance, self,
 						 reason, NULL);
 		break;
 	default:
-		IRDA_ERROR("%s: Unknown reason %d\n", __FUNCTION__, reason);
+		IRDA_ERROR("%s: Unknown reason %d\n", __func__, reason);
 	}
 }
 
@@ -511,7 +511,7 @@ void irlap_discovery_request(struct irlap_cb *self, discovery_t *discovery)
 	IRDA_ASSERT(self->magic == LAP_MAGIC, return;);
 	IRDA_ASSERT(discovery != NULL, return;);
 
-	IRDA_DEBUG(4, "%s(), nslots = %d\n", __FUNCTION__, discovery->nslots);
+	IRDA_DEBUG(4, "%s(), nslots = %d\n", __func__, discovery->nslots);
 
 	IRDA_ASSERT((discovery->nslots == 1) || (discovery->nslots == 6) ||
 		    (discovery->nslots == 8) || (discovery->nslots == 16),
@@ -520,7 +520,7 @@ void irlap_discovery_request(struct irlap_cb *self, discovery_t *discovery)
 	/* Discovery is only possible in NDM mode */
 	if (self->state != LAP_NDM) {
 		IRDA_DEBUG(4, "%s(), discovery only possible in NDM mode\n",
-			   __FUNCTION__);
+			   __func__);
 		irlap_discovery_confirm(self, NULL);
 		/* Note : in theory, if we are not in NDM, we could postpone
 		 * the discovery like we do for connection request.
@@ -543,7 +543,7 @@ void irlap_discovery_request(struct irlap_cb *self, discovery_t *discovery)
 
 	if (self->discovery_log == NULL) {
 		IRDA_WARNING("%s(), Unable to allocate discovery log!\n",
-			     __FUNCTION__);
+			     __func__);
 		return;
 	}
 
@@ -598,7 +598,7 @@ void irlap_discovery_confirm(struct irlap_cb *self, hashbin_t *discovery_log)
  */
 void irlap_discovery_indication(struct irlap_cb *self, discovery_t *discovery)
 {
-	IRDA_DEBUG(4, "%s()\n", __FUNCTION__);
+	IRDA_DEBUG(4, "%s()\n", __func__);
 
 	IRDA_ASSERT(self != NULL, return;);
 	IRDA_ASSERT(self->magic == LAP_MAGIC, return;);
@@ -644,7 +644,7 @@ void irlap_status_indication(struct irlap_cb *self, int quality_of_link)
  */
 void irlap_reset_indication(struct irlap_cb *self)
 {
-	IRDA_DEBUG(1, "%s()\n", __FUNCTION__);
+	IRDA_DEBUG(1, "%s()\n", __func__);
 
 	IRDA_ASSERT(self != NULL, return;);
 	IRDA_ASSERT(self->magic == LAP_MAGIC, return;);
@@ -660,7 +660,7 @@ void irlap_reset_indication(struct irlap_cb *self)
  */
 void irlap_reset_confirm(void)
 {
-	IRDA_DEBUG(1, "%s()\n", __FUNCTION__);
+	IRDA_DEBUG(1, "%s()\n", __func__);
 }
 
 /*
@@ -760,7 +760,7 @@ int irlap_validate_nr_received(struct irlap_cb *self, int nr)
 {
 	/*  nr as expected?  */
 	if (nr == self->vs) {
-		IRDA_DEBUG(4, "%s(), expected!\n", __FUNCTION__);
+		IRDA_DEBUG(4, "%s(), expected!\n", __func__);
 		return NR_EXPECTED;
 	}
 
@@ -788,7 +788,7 @@ int irlap_validate_nr_received(struct irlap_cb *self, int nr)
  */
 void irlap_initiate_connection_state(struct irlap_cb *self)
 {
-	IRDA_DEBUG(4, "%s()\n", __FUNCTION__);
+	IRDA_DEBUG(4, "%s()\n", __func__);
 
 	IRDA_ASSERT(self != NULL, return;);
 	IRDA_ASSERT(self->magic == LAP_MAGIC, return;);
@@ -871,7 +871,7 @@ static void irlap_change_speed(struct irlap_cb *self, __u32 speed, int now)
 {
 	struct sk_buff *skb;
 
-	IRDA_DEBUG(0, "%s(), setting speed to %d\n", __FUNCTION__, speed);
+	IRDA_DEBUG(0, "%s(), setting speed to %d\n", __func__, speed);
 
 	IRDA_ASSERT(self != NULL, return;);
 	IRDA_ASSERT(self->magic == LAP_MAGIC, return;);
@@ -914,7 +914,7 @@ static void irlap_init_qos_capabilities(struct irlap_cb *self,
 	 *  user may not have set all of them.
 	 */
 	if (qos_user) {
-		IRDA_DEBUG(1, "%s(), Found user specified QoS!\n", __FUNCTION__);
+		IRDA_DEBUG(1, "%s(), Found user specified QoS!\n", __func__);
 
 		if (qos_user->baud_rate.bits)
 			self->qos_rx.baud_rate.bits &= qos_user->baud_rate.bits;
@@ -944,7 +944,7 @@ static void irlap_init_qos_capabilities(struct irlap_cb *self,
  */
 void irlap_apply_default_connection_parameters(struct irlap_cb *self)
 {
-	IRDA_DEBUG(4, "%s()\n", __FUNCTION__);
+	IRDA_DEBUG(4, "%s()\n", __func__);
 
 	IRDA_ASSERT(self != NULL, return;);
 	IRDA_ASSERT(self->magic == LAP_MAGIC, return;);
@@ -1007,7 +1007,7 @@ void irlap_apply_default_connection_parameters(struct irlap_cb *self)
  */
 void irlap_apply_connection_parameters(struct irlap_cb *self, int now)
 {
-	IRDA_DEBUG(4, "%s()\n", __FUNCTION__);
+	IRDA_DEBUG(4, "%s()\n", __func__);
 
 	IRDA_ASSERT(self != NULL, return;);
 	IRDA_ASSERT(self->magic == LAP_MAGIC, return;);
@@ -1210,7 +1210,7 @@ static int irlap_seq_show(struct seq_file *seq, void *v)
 	return 0;
 }
 
-static struct seq_operations irlap_seq_ops = {
+static const struct seq_operations irlap_seq_ops = {
 	.start  = irlap_seq_start,
 	.next   = irlap_seq_next,
 	.stop   = irlap_seq_stop,
@@ -1219,29 +1219,11 @@ static struct seq_operations irlap_seq_ops = {
 
 static int irlap_seq_open(struct inode *inode, struct file *file)
 {
-	struct seq_file *seq;
-	int rc = -ENOMEM;
-	struct irlap_iter_state *s = kzalloc(sizeof(*s), GFP_KERNEL);
+	if (irlap == NULL)
+		return -EINVAL;
 
-	if (!s)
-		goto out;
-
-	if (irlap == NULL) {
-		rc = -EINVAL;
-		goto out_kfree;
-	}
-
-	rc = seq_open(file, &irlap_seq_ops);
-	if (rc)
-		goto out_kfree;
-
-	seq	     = file->private_data;
-	seq->private = s;
-out:
-	return rc;
-out_kfree:
-	kfree(s);
-	goto out;
+	return seq_open_private(file, &irlap_seq_ops,
+			sizeof(struct irlap_iter_state));
 }
 
 const struct file_operations irlap_seq_fops = {

@@ -77,9 +77,13 @@
 #include <linux/signal.h>
 #include <linux/smp.h>
 #include <linux/sched.h>
+#include <linux/debugfs.h>
+#include <linux/perf_event.h>
+
 #include <asm/asm.h>
 #include <asm/branch.h>
 #include <asm/byteorder.h>
+#include <asm/cop2.h>
 #include <asm/inst.h>
 #include <asm/uaccess.h>
 #include <asm/system.h>
@@ -87,19 +91,28 @@
 #define STR(x)  __STR(x)
 #define __STR(x)  #x
 
-#ifdef CONFIG_PROC_FS
-unsigned long unaligned_instructions;
+enum {
+	UNALIGNED_ACTION_QUIET,
+	UNALIGNED_ACTION_SIGNAL,
+	UNALIGNED_ACTION_SHOW,
+};
+#ifdef CONFIG_DEBUG_FS
+static u32 unaligned_instructions;
+static u32 unaligned_action;
+#else
+#define unaligned_action UNALIGNED_ACTION_QUIET
 #endif
+extern void show_registers(struct pt_regs *regs);
 
-static inline int emulate_load_store_insn(struct pt_regs *regs,
-	void __user *addr, unsigned int __user *pc,
-	unsigned long **regptr, unsigned long *newvalue)
+static void emulate_load_store_insn(struct pt_regs *regs,
+	void __user *addr, unsigned int __user *pc)
 {
 	union mips_instruction insn;
 	unsigned long value;
 	unsigned int res;
 
-	*regptr=NULL;
+	perf_sw_event(PERF_COUNT_SW_EMULATION_FAULTS,
+		      1, 0, regs, 0);
 
 	/*
 	 * This load never faults.
@@ -168,8 +181,8 @@ static inline int emulate_load_store_insn(struct pt_regs *regs,
 			: "r" (addr), "i" (-EFAULT));
 		if (res)
 			goto fault;
-		*newvalue = value;
-		*regptr = &regs->regs[insn.i_format.rt];
+		compute_return_epc(regs);
+		regs->regs[insn.i_format.rt] = value;
 		break;
 
 	case lw_op:
@@ -198,8 +211,8 @@ static inline int emulate_load_store_insn(struct pt_regs *regs,
 			: "r" (addr), "i" (-EFAULT));
 		if (res)
 			goto fault;
-		*newvalue = value;
-		*regptr = &regs->regs[insn.i_format.rt];
+		compute_return_epc(regs);
+		regs->regs[insn.i_format.rt] = value;
 		break;
 
 	case lhu_op:
@@ -232,8 +245,8 @@ static inline int emulate_load_store_insn(struct pt_regs *regs,
 			: "r" (addr), "i" (-EFAULT));
 		if (res)
 			goto fault;
-		*newvalue = value;
-		*regptr = &regs->regs[insn.i_format.rt];
+		compute_return_epc(regs);
+		regs->regs[insn.i_format.rt] = value;
 		break;
 
 	case lwu_op:
@@ -272,8 +285,8 @@ static inline int emulate_load_store_insn(struct pt_regs *regs,
 			: "r" (addr), "i" (-EFAULT));
 		if (res)
 			goto fault;
-		*newvalue = value;
-		*regptr = &regs->regs[insn.i_format.rt];
+		compute_return_epc(regs);
+		regs->regs[insn.i_format.rt] = value;
 		break;
 #endif /* CONFIG_64BIT */
 
@@ -314,8 +327,8 @@ static inline int emulate_load_store_insn(struct pt_regs *regs,
 			: "r" (addr), "i" (-EFAULT));
 		if (res)
 			goto fault;
-		*newvalue = value;
-		*regptr = &regs->regs[insn.i_format.rt];
+		compute_return_epc(regs);
+		regs->regs[insn.i_format.rt] = value;
 		break;
 #endif /* CONFIG_64BIT */
 
@@ -356,6 +369,7 @@ static inline int emulate_load_store_insn(struct pt_regs *regs,
 			: "r" (value), "r" (addr), "i" (-EFAULT));
 		if (res)
 			goto fault;
+		compute_return_epc(regs);
 		break;
 
 	case sw_op:
@@ -386,6 +400,7 @@ static inline int emulate_load_store_insn(struct pt_regs *regs,
 		: "r" (value), "r" (addr), "i" (-EFAULT));
 		if (res)
 			goto fault;
+		compute_return_epc(regs);
 		break;
 
 	case sd_op:
@@ -424,6 +439,7 @@ static inline int emulate_load_store_insn(struct pt_regs *regs,
 		: "r" (value), "r" (addr), "i" (-EFAULT));
 		if (res)
 			goto fault;
+		compute_return_epc(regs);
 		break;
 #endif /* CONFIG_64BIT */
 
@@ -439,17 +455,27 @@ static inline int emulate_load_store_insn(struct pt_regs *regs,
 		 */
 		goto sigbus;
 
+	/*
+	 * COP2 is available to implementor for application specific use.
+	 * It's up to applications to register a notifier chain and do
+	 * whatever they have to do, including possible sending of signals.
+	 */
 	case lwc2_op:
+		cu2_notifier_call_chain(CU2_LWC2_OP, regs);
+		break;
+
 	case ldc2_op:
+		cu2_notifier_call_chain(CU2_LDC2_OP, regs);
+		break;
+
 	case swc2_op:
+		cu2_notifier_call_chain(CU2_SWC2_OP, regs);
+		break;
+
 	case sdc2_op:
-		/*
-		 * These are the coprocessor 2 load/stores.  The current
-		 * implementations don't use cp2 and cp2 should always be
-		 * disabled in c0_status.  So send SIGILL.
-                 * (No longer true: The Sony Praystation uses cp2 for
-                 * 3D matrix operations.  Dunno if that thingy has a MMU ...)
-		 */
+		cu2_notifier_call_chain(CU2_SDC2_OP, regs);
+		break;
+
 	default:
 		/*
 		 * Pheeee...  We encountered an yet unknown instruction or
@@ -458,41 +484,40 @@ static inline int emulate_load_store_insn(struct pt_regs *regs,
 		goto sigill;
 	}
 
-#ifdef CONFIG_PROC_FS
+#ifdef CONFIG_DEBUG_FS
 	unaligned_instructions++;
 #endif
 
-	return 0;
+	return;
 
 fault:
 	/* Did we have an exception handler installed? */
 	if (fixup_exception(regs))
-		return 1;
+		return;
 
-	die_if_kernel ("Unhandled kernel unaligned access", regs);
+	die_if_kernel("Unhandled kernel unaligned access", regs);
 	force_sig(SIGSEGV, current);
 
-	return 0;
+	return;
 
 sigbus:
 	die_if_kernel("Unhandled kernel unaligned access", regs);
 	force_sig(SIGBUS, current);
 
-	return 0;
+	return;
 
 sigill:
 	die_if_kernel("Unhandled kernel unaligned access or invalid instruction", regs);
 	force_sig(SIGILL, current);
-
-	return 0;
 }
 
 asmlinkage void do_ade(struct pt_regs *regs)
 {
-	unsigned long *regptr, newval;
 	unsigned int __user *pc;
 	mm_segment_t seg;
 
+	perf_sw_event(PERF_COUNT_SW_ALIGNMENT_FAULTS,
+			1, 0, regs, regs->cp0_badvaddr);
 	/*
 	 * Did we catch a fault trying to load an instruction?
 	 * Or are we running in MIPS16 mode?
@@ -501,8 +526,12 @@ asmlinkage void do_ade(struct pt_regs *regs)
 		goto sigbus;
 
 	pc = (unsigned int __user *) exception_epc(regs);
-	if (user_mode(regs) && (current->thread.mflags & MF_FIXADE) == 0)
+	if (user_mode(regs) && !test_thread_flag(TIF_FIXADE))
 		goto sigbus;
+	if (unaligned_action == UNALIGNED_ACTION_SIGNAL)
+		goto sigbus;
+	else if (unaligned_action == UNALIGNED_ACTION_SHOW)
+		show_registers(regs);
 
 	/*
 	 * Do branch emulation only if we didn't forward the exception.
@@ -511,16 +540,7 @@ asmlinkage void do_ade(struct pt_regs *regs)
 	seg = get_fs();
 	if (!user_mode(regs))
 		set_fs(KERNEL_DS);
-	if (!emulate_load_store_insn(regs, (void __user *)regs->cp0_badvaddr, pc,
-	                             &regptr, &newval)) {
-		compute_return_epc(regs);
-		/*
-		 * Now that branch is evaluated, update the dest
-		 * register if necessary
-		 */
-		if (regptr)
-			*regptr = newval;
-	}
+	emulate_load_store_insn(regs, (void __user *)regs->cp0_badvaddr, pc);
 	set_fs(seg);
 
 	return;
@@ -533,3 +553,24 @@ sigbus:
 	 * XXX On return from the signal handler we should advance the epc
 	 */
 }
+
+#ifdef CONFIG_DEBUG_FS
+extern struct dentry *mips_debugfs_dir;
+static int __init debugfs_unaligned(void)
+{
+	struct dentry *d;
+
+	if (!mips_debugfs_dir)
+		return -ENODEV;
+	d = debugfs_create_u32("unaligned_instructions", S_IRUGO,
+			       mips_debugfs_dir, &unaligned_instructions);
+	if (!d)
+		return -ENOMEM;
+	d = debugfs_create_u32("unaligned_action", S_IRUGO | S_IWUSR,
+			       mips_debugfs_dir, &unaligned_action);
+	if (!d)
+		return -ENOMEM;
+	return 0;
+}
+__initcall(debugfs_unaligned);
+#endif

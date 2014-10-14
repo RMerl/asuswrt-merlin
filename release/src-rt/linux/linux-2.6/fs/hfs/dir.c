@@ -25,8 +25,6 @@ static struct dentry *hfs_lookup(struct inode *dir, struct dentry *dentry,
 	struct inode *inode = NULL;
 	int res;
 
-	dentry->d_op = &hfs_dentry_operations;
-
 	hfs_find_init(HFS_SB(dir->i_sb)->cat_tree, &fd);
 	hfs_cat_build_key(dir->i_sb, fd.search_key, dir->i_ino, &dentry->d_name);
 	res = hfs_brec_read(&fd, &rec, sizeof(rec));
@@ -79,6 +77,11 @@ static int hfs_readdir(struct file *filp, void *dirent, filldir_t filldir)
 		filp->f_pos++;
 		/* fall through */
 	case 1:
+		if (fd.entrylength > sizeof(entry) || fd.entrylength < 0) {
+			err = -EIO;
+			goto out;
+		}
+
 		hfs_bnode_read(fd.bnode, &entry, fd.entryoffset, fd.entrylength);
 		if (entry.type != HFS_CDR_THD) {
 			printk(KERN_ERR "hfs: bad catalog folder thread\n");
@@ -109,6 +112,12 @@ static int hfs_readdir(struct file *filp, void *dirent, filldir_t filldir)
 			err = -EIO;
 			goto out;
 		}
+
+		if (fd.entrylength > sizeof(entry) || fd.entrylength < 0) {
+			err = -EIO;
+			goto out;
+		}
+
 		hfs_bnode_read(fd.bnode, &entry, fd.entryoffset, fd.entrylength);
 		type = entry.type;
 		len = hfs_mac2asc(sb, strbuf, &fd.key->cat.CName);
@@ -229,46 +238,22 @@ static int hfs_mkdir(struct inode *dir, struct dentry *dentry, int mode)
 }
 
 /*
- * hfs_unlink()
+ * hfs_remove()
  *
- * This is the unlink() entry in the inode_operations structure for
- * regular HFS directories.  The purpose is to delete an existing
- * file, given the inode for the parent directory and the name
- * (and its length) of the existing file.
+ * This serves as both unlink() and rmdir() in the inode_operations
+ * structure for regular HFS directories.  The purpose is to delete
+ * an existing child, given the inode for the parent directory and
+ * the name (and its length) of the existing directory.
+ *
+ * HFS does not have hardlinks, so both rmdir and unlink set the
+ * link count to 0.  The only difference is the emptiness check.
  */
-static int hfs_unlink(struct inode *dir, struct dentry *dentry)
+static int hfs_remove(struct inode *dir, struct dentry *dentry)
 {
-	struct inode *inode;
+	struct inode *inode = dentry->d_inode;
 	int res;
 
-	inode = dentry->d_inode;
-	res = hfs_cat_delete(inode->i_ino, dir, &dentry->d_name);
-	if (res)
-		return res;
-
-	drop_nlink(inode);
-	hfs_delete_inode(inode);
-	inode->i_ctime = CURRENT_TIME_SEC;
-	mark_inode_dirty(inode);
-
-	return res;
-}
-
-/*
- * hfs_rmdir()
- *
- * This is the rmdir() entry in the inode_operations structure for
- * regular HFS directories.  The purpose is to delete an existing
- * directory, given the inode for the parent directory and the name
- * (and its length) of the existing directory.
- */
-static int hfs_rmdir(struct inode *dir, struct dentry *dentry)
-{
-	struct inode *inode;
-	int res;
-
-	inode = dentry->d_inode;
-	if (inode->i_size != 2)
+	if (S_ISDIR(inode->i_mode) && inode->i_size != 2)
 		return -ENOTEMPTY;
 	res = hfs_cat_delete(inode->i_ino, dir, &dentry->d_name);
 	if (res)
@@ -298,7 +283,7 @@ static int hfs_rename(struct inode *old_dir, struct dentry *old_dentry,
 
 	/* Unlink destination if it already exists */
 	if (new_dentry->d_inode) {
-		res = hfs_unlink(new_dir, new_dentry);
+		res = hfs_remove(new_dir, new_dentry);
 		if (res)
 			return res;
 	}
@@ -323,9 +308,9 @@ const struct file_operations hfs_dir_operations = {
 const struct inode_operations hfs_dir_inode_operations = {
 	.create		= hfs_create,
 	.lookup		= hfs_lookup,
-	.unlink		= hfs_unlink,
+	.unlink		= hfs_remove,
 	.mkdir		= hfs_mkdir,
-	.rmdir		= hfs_rmdir,
+	.rmdir		= hfs_remove,
 	.rename		= hfs_rename,
 	.setattr	= hfs_inode_setattr,
 };

@@ -14,6 +14,9 @@
 #define SIS_TLBCNTRL	0x97
 #define SIS_TLBFLUSH	0x98
 
+#define PCI_DEVICE_ID_SI_662	0x0662
+#define PCI_DEVICE_ID_SI_671	0x0671
+
 static int __devinitdata agp_sis_force_delay = 0;
 static int __devinitdata agp_sis_agp_spec = -1;
 
@@ -27,8 +30,8 @@ static int sis_fetch_size(void)
 	values = A_SIZE_8(agp_bridge->driver->aperture_sizes);
 	for (i = 0; i < agp_bridge->driver->num_aperture_sizes; i++) {
 		if ((temp_size == values[i].size_value) ||
-		    ((temp_size & ~(0x03)) ==
-		     (values[i].size_value & ~(0x03)))) {
+		    ((temp_size & ~(0x07)) ==
+		     (values[i].size_value & ~(0x07)))) {
 			agp_bridge->previous_size =
 			    agp_bridge->current_size = (void *) (values + i);
 
@@ -76,10 +79,8 @@ static void sis_delayed_enable(struct agp_bridge_data *bridge, u32 mode)
 	u32 command;
 	int rate;
 
-	printk(KERN_INFO PFX "Found an AGP %d.%d compliant device at %s.\n",
-		agp_bridge->major_version,
-		agp_bridge->minor_version,
-		pci_name(agp_bridge->dev));
+	dev_info(&agp_bridge->dev->dev, "AGP %d.%d bridge\n",
+		 agp_bridge->major_version, agp_bridge->minor_version);
 
 	pci_read_config_dword(agp_bridge->dev, agp_bridge->capndx + PCI_AGP_STATUS, &command);
 	command = agp_collect_device_status(bridge, mode, command);
@@ -91,8 +92,8 @@ static void sis_delayed_enable(struct agp_bridge_data *bridge, u32 mode)
 		if (!agp)
 			continue;
 
-		printk(KERN_INFO PFX "Putting AGP V3 device at %s into %dx mode\n",
-			pci_name(device), rate);
+		dev_info(&agp_bridge->dev->dev, "putting AGP V3 device at %s into %dx mode\n",
+			 pci_name(device), rate);
 
 		pci_write_config_dword(device, agp + PCI_AGP_COMMAND, command);
 
@@ -102,7 +103,7 @@ static void sis_delayed_enable(struct agp_bridge_data *bridge, u32 mode)
 		 * cannot be configured
 		 */
 		if (device->device == bridge->dev->device) {
-			printk(KERN_INFO PFX "SiS delay workaround: giving bridge time to recover.\n");
+			dev_info(&agp_bridge->dev->dev, "SiS delay workaround: giving bridge time to recover\n");
 			msleep(10);
 		}
 	}
@@ -124,6 +125,7 @@ static struct agp_bridge_driver sis_driver = {
 	.aperture_sizes		= sis_generic_sizes,
 	.size_type		= U8_APER_SIZE,
 	.num_aperture_sizes	= 7,
+	.needs_scratch_page	= true,
 	.configure		= sis_configure,
 	.fetch_size		= sis_fetch_size,
 	.cleanup		= sis_cleanup,
@@ -139,7 +141,9 @@ static struct agp_bridge_driver sis_driver = {
 	.alloc_by_type		= agp_generic_alloc_by_type,
 	.free_by_type		= agp_generic_free_by_type,
 	.agp_alloc_page		= agp_generic_alloc_page,
+	.agp_alloc_pages	= agp_generic_alloc_pages,
 	.agp_destroy_page	= agp_generic_destroy_page,
+	.agp_destroy_pages	= agp_generic_destroy_pages,
 	.agp_type_to_mask_type  = agp_generic_type_to_mask_type,
 };
 
@@ -187,7 +191,8 @@ static int __devinit agp_sis_probe(struct pci_dev *pdev,
 		return -ENODEV;
 
 
-	printk(KERN_INFO PFX "Detected SiS chipset - id:%i\n", pdev->device);
+	dev_info(&pdev->dev, "SiS chipset [%04x/%04x]\n",
+		 pdev->vendor, pdev->device);
 	bridge = agp_alloc_bridge();
 	if (!bridge)
 		return -ENOMEM;
@@ -214,12 +219,32 @@ static void __devexit agp_sis_remove(struct pci_dev *pdev)
 	agp_put_bridge(bridge);
 }
 
+#ifdef CONFIG_PM
+
+static int agp_sis_suspend(struct pci_dev *pdev, pm_message_t state)
+{
+	pci_save_state(pdev);
+	pci_set_power_state(pdev, pci_choose_state(pdev, state));
+
+	return 0;
+}
+
+static int agp_sis_resume(struct pci_dev *pdev)
+{
+	pci_set_power_state(pdev, PCI_D0);
+	pci_restore_state(pdev);
+
+	return sis_driver.configure();
+}
+
+#endif /* CONFIG_PM */
+
 static struct pci_device_id agp_sis_pci_table[] = {
 	{
 		.class		= (PCI_CLASS_BRIDGE_HOST << 8),
 		.class_mask	= ~0,
 		.vendor		= PCI_VENDOR_ID_SI,
-		.device		= PCI_DEVICE_ID_SI_5591_AGP,
+		.device		= PCI_DEVICE_ID_SI_5591,
 		.subvendor	= PCI_ANY_ID,
 		.subdevice	= PCI_ANY_ID,
 	},
@@ -331,6 +356,22 @@ static struct pci_device_id agp_sis_pci_table[] = {
 		.class		= (PCI_CLASS_BRIDGE_HOST << 8),
 		.class_mask	= ~0,
 		.vendor		= PCI_VENDOR_ID_SI,
+		.device		= PCI_DEVICE_ID_SI_662,
+		.subvendor	= PCI_ANY_ID,
+		.subdevice	= PCI_ANY_ID,
+	},
+	{
+		.class		= (PCI_CLASS_BRIDGE_HOST << 8),
+		.class_mask	= ~0,
+		.vendor		= PCI_VENDOR_ID_SI,
+		.device		= PCI_DEVICE_ID_SI_671,
+		.subvendor	= PCI_ANY_ID,
+		.subdevice	= PCI_ANY_ID,
+	},
+	{
+		.class		= (PCI_CLASS_BRIDGE_HOST << 8),
+		.class_mask	= ~0,
+		.vendor		= PCI_VENDOR_ID_SI,
 		.device		= PCI_DEVICE_ID_SI_730,
 		.subvendor	= PCI_ANY_ID,
 		.subdevice	= PCI_ANY_ID,
@@ -375,14 +416,6 @@ static struct pci_device_id agp_sis_pci_table[] = {
 		.subvendor	= PCI_ANY_ID,
 		.subdevice	= PCI_ANY_ID,
 	},
-	{
-		.class		= (PCI_CLASS_BRIDGE_HOST << 8),
-		.class_mask	= ~0,
-		.vendor		= PCI_VENDOR_ID_SI,
-		.device		= PCI_DEVICE_ID_SI_760,
-		.subvendor	= PCI_ANY_ID,
-		.subdevice	= PCI_ANY_ID,
-	},
 	{ }
 };
 
@@ -393,6 +426,10 @@ static struct pci_driver agp_sis_pci_driver = {
 	.id_table	= agp_sis_pci_table,
 	.probe		= agp_sis_probe,
 	.remove		= agp_sis_remove,
+#ifdef CONFIG_PM
+	.suspend	= agp_sis_suspend,
+	.resume		= agp_sis_resume,
+#endif
 };
 
 static int __init agp_sis_init(void)

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006 QLogic, Inc. All rights reserved.
+ * Copyright (c) 2006, 2007, 2008 QLogic Corporation. All rights reserved.
  * Copyright (c) 2005, 2006 PathScale, Inc. All rights reserved.
  *
  * This software is available to you under a choice of one of two
@@ -32,6 +32,8 @@
  */
 
 #include <linux/err.h>
+#include <linux/sched.h>
+#include <linux/slab.h>
 #include <linux/vmalloc.h>
 
 #include "ipath_verbs.h"
@@ -242,7 +244,6 @@ static void ipath_free_qp(struct ipath_qp_table *qpt, struct ipath_qp *qp)
 {
 	struct ipath_qp *q, **qpp;
 	unsigned long flags;
-	int fnd = 0;
 
 	spin_lock_irqsave(&qpt->lock, flags);
 
@@ -253,51 +254,40 @@ static void ipath_free_qp(struct ipath_qp_table *qpt, struct ipath_qp *qp)
 			*qpp = qp->next;
 			qp->next = NULL;
 			atomic_dec(&qp->refcount);
-			fnd = 1;
 			break;
 		}
 	}
 
 	spin_unlock_irqrestore(&qpt->lock, flags);
-
-	if (!fnd)
-		return;
-
-	free_qpn(qpt, qp->ibqp.qp_num);
-
-	wait_event(qp->wait, !atomic_read(&qp->refcount));
 }
 
 /**
- * ipath_free_all_qps - remove all QPs from the table
+ * ipath_free_all_qps - check for QPs still in use
  * @qpt: the QP table to empty
+ *
+ * There should not be any QPs still in use.
+ * Free memory for table.
  */
-void ipath_free_all_qps(struct ipath_qp_table *qpt)
+unsigned ipath_free_all_qps(struct ipath_qp_table *qpt)
 {
 	unsigned long flags;
-	struct ipath_qp *qp, *nqp;
-	u32 n;
+	struct ipath_qp *qp;
+	u32 n, qp_inuse = 0;
 
+	spin_lock_irqsave(&qpt->lock, flags);
 	for (n = 0; n < qpt->max; n++) {
-		spin_lock_irqsave(&qpt->lock, flags);
 		qp = qpt->table[n];
 		qpt->table[n] = NULL;
-		spin_unlock_irqrestore(&qpt->lock, flags);
 
-		while (qp) {
-			nqp = qp->next;
-			free_qpn(qpt, qp->ibqp.qp_num);
-			if (!atomic_dec_and_test(&qp->refcount) ||
-			    !ipath_destroy_qp(&qp->ibqp))
-				ipath_dbg("QP memory leak!\n");
-			qp = nqp;
-		}
+		for (; qp; qp = qp->next)
+			qp_inuse++;
 	}
+	spin_unlock_irqrestore(&qpt->lock, flags);
 
-	for (n = 0; n < ARRAY_SIZE(qpt->map); n++) {
+	for (n = 0; n < ARRAY_SIZE(qpt->map); n++)
 		if (qpt->map[n].page)
-			free_page((unsigned long)qpt->map[n].page);
-	}
+			free_page((unsigned long) qpt->map[n].page);
+	return qp_inuse;
 }
 
 /**
@@ -329,19 +319,23 @@ struct ipath_qp *ipath_lookup_qpn(struct ipath_qp_table *qpt, u32 qpn)
 /**
  * ipath_reset_qp - initialize the QP state to the reset state
  * @qp: the QP to reset
+ * @type: the QP type
  */
-static void ipath_reset_qp(struct ipath_qp *qp)
+static void ipath_reset_qp(struct ipath_qp *qp, enum ib_qp_type type)
 {
 	qp->remote_qpn = 0;
 	qp->qkey = 0;
 	qp->qp_access_flags = 0;
-	qp->s_busy = 0;
-	qp->s_flags &= ~IPATH_S_SIGNAL_REQ_WR;
+	atomic_set(&qp->s_dma_busy, 0);
+	qp->s_flags &= IPATH_S_SIGNAL_REQ_WR;
 	qp->s_hdrwords = 0;
+	qp->s_wqe = NULL;
+	qp->s_pkt_delay = 0;
+	qp->s_draining = 0;
 	qp->s_psn = 0;
 	qp->r_psn = 0;
 	qp->r_msn = 0;
-	if (qp->ibqp.qp_type == IB_QPT_RC) {
+	if (type == IB_QPT_RC) {
 		qp->s_state = IB_OPCODE_RC_SEND_LAST;
 		qp->r_state = IB_OPCODE_RC_SEND_LAST;
 	} else {
@@ -350,7 +344,8 @@ static void ipath_reset_qp(struct ipath_qp *qp)
 	}
 	qp->s_ack_state = IB_OPCODE_RC_ACKNOWLEDGE;
 	qp->r_nak_state = 0;
-	qp->r_wrid_valid = 0;
+	qp->r_aflags = 0;
+	qp->r_flags = 0;
 	qp->s_rnr_timeout = 0;
 	qp->s_head = 0;
 	qp->s_tail = 0;
@@ -358,7 +353,6 @@ static void ipath_reset_qp(struct ipath_qp *qp)
 	qp->s_last = 0;
 	qp->s_ssn = 1;
 	qp->s_lsn = 0;
-	qp->s_wait_credit = 0;
 	memset(qp->s_ack_queue, 0, sizeof(qp->s_ack_queue));
 	qp->r_head_ack_queue = 0;
 	qp->s_tail_ack_queue = 0;
@@ -367,66 +361,51 @@ static void ipath_reset_qp(struct ipath_qp *qp)
 		qp->r_rq.wq->head = 0;
 		qp->r_rq.wq->tail = 0;
 	}
-	qp->r_reuse_sge = 0;
 }
 
 /**
- * ipath_error_qp - put a QP into an error state
- * @qp: the QP to put into an error state
+ * ipath_error_qp - put a QP into the error state
+ * @qp: the QP to put into the error state
  * @err: the receive completion error to signal if a RWQE is active
  *
  * Flushes both send and receive work queues.
+ * Returns true if last WQE event should be generated.
  * The QP s_lock should be held and interrupts disabled.
+ * If we are already in error state, just return.
  */
 
-void ipath_error_qp(struct ipath_qp *qp, enum ib_wc_status err)
+int ipath_error_qp(struct ipath_qp *qp, enum ib_wc_status err)
 {
 	struct ipath_ibdev *dev = to_idev(qp->ibqp.device);
 	struct ib_wc wc;
+	int ret = 0;
 
-	ipath_dbg("QP%d/%d in error state\n",
-		  qp->ibqp.qp_num, qp->remote_qpn);
+	if (qp->state == IB_QPS_ERR)
+		goto bail;
+
+	qp->state = IB_QPS_ERR;
 
 	spin_lock(&dev->pending_lock);
-	/* XXX What if its already removed by the timeout code? */
 	if (!list_empty(&qp->timerwait))
 		list_del_init(&qp->timerwait);
 	if (!list_empty(&qp->piowait))
 		list_del_init(&qp->piowait);
 	spin_unlock(&dev->pending_lock);
 
-	wc.vendor_err = 0;
-	wc.byte_len = 0;
-	wc.imm_data = 0;
+	/* Schedule the sending tasklet to drain the send work queue. */
+	if (qp->s_last != qp->s_head)
+		ipath_schedule_send(qp);
+
+	memset(&wc, 0, sizeof(wc));
 	wc.qp = &qp->ibqp;
-	wc.src_qp = 0;
-	wc.wc_flags = 0;
-	wc.pkey_index = 0;
-	wc.slid = 0;
-	wc.sl = 0;
-	wc.dlid_path_bits = 0;
-	wc.port_num = 0;
-	if (qp->r_wrid_valid) {
-		qp->r_wrid_valid = 0;
+	wc.opcode = IB_WC_RECV;
+
+	if (test_and_clear_bit(IPATH_R_WRID_VALID, &qp->r_aflags)) {
 		wc.wr_id = qp->r_wr_id;
-		wc.opcode = IB_WC_RECV;
 		wc.status = err;
-		ipath_cq_enter(to_icq(qp->ibqp.send_cq), &wc, 1);
+		ipath_cq_enter(to_icq(qp->ibqp.recv_cq), &wc, 1);
 	}
 	wc.status = IB_WC_WR_FLUSH_ERR;
-
-	while (qp->s_last != qp->s_head) {
-		struct ipath_swqe *wqe = get_swqe_ptr(qp, qp->s_last);
-
-		wc.wr_id = wqe->wr.wr_id;
-		wc.opcode = ib_ipath_wc_opcode[wqe->wr.opcode];
-		if (++qp->s_last >= qp->s_size)
-			qp->s_last = 0;
-		ipath_cq_enter(to_icq(qp->ibqp.send_cq), &wc, 1);
-	}
-	qp->s_cur = qp->s_tail = qp->s_head;
-	qp->s_hdrwords = 0;
-	qp->s_ack_state = IB_OPCODE_RC_ACKNOWLEDGE;
 
 	if (qp->r_rq.wq) {
 		struct ipath_rwq *wq;
@@ -443,7 +422,6 @@ void ipath_error_qp(struct ipath_qp *qp, enum ib_wc_status err)
 		tail = wq->tail;
 		if (tail >= qp->r_rq.size)
 			tail = 0;
-		wc.opcode = IB_WC_RECV;
 		while (tail != head) {
 			wc.wr_id = get_rwqe_ptr(&qp->r_rq, tail)->wr_id;
 			if (++tail >= qp->r_rq.size)
@@ -453,7 +431,11 @@ void ipath_error_qp(struct ipath_qp *qp, enum ib_wc_status err)
 		wq->tail = tail;
 
 		spin_unlock(&qp->r_rq.lock);
-	}
+	} else if (qp->ibqp.event_handler)
+		ret = 1;
+
+bail:
+	return ret;
 }
 
 /**
@@ -471,10 +453,10 @@ int ipath_modify_qp(struct ib_qp *ibqp, struct ib_qp_attr *attr,
 	struct ipath_ibdev *dev = to_idev(ibqp->device);
 	struct ipath_qp *qp = to_iqp(ibqp);
 	enum ib_qp_state cur_state, new_state;
-	unsigned long flags;
+	int lastwqe = 0;
 	int ret;
 
-	spin_lock_irqsave(&qp->s_lock, flags);
+	spin_lock_irq(&qp->s_lock);
 
 	cur_state = attr_mask & IB_QP_CUR_STATE ?
 		attr->cur_qp_state : qp->state;
@@ -507,17 +489,14 @@ int ipath_modify_qp(struct ib_qp *ibqp, struct ib_qp_attr *attr,
 		    attr->port_num > ibqp->device->phys_port_cnt)
 			goto inval;
 
-	if (attr_mask & IB_QP_PATH_MTU)
-		if (attr->path_mtu > IB_MTU_4096)
-			goto inval;
-
-	if (attr_mask & IB_QP_MAX_DEST_RD_ATOMIC)
-		if (attr->max_dest_rd_atomic > 1)
-			goto inval;
-
-	if (attr_mask & IB_QP_MAX_QP_RD_ATOMIC)
-		if (attr->max_rd_atomic > 1)
-			goto inval;
+	/*
+	 * don't allow invalid Path MTU values or greater than 2048
+	 * unless we are configured for a 4KB MTU
+	 */
+	if ((attr_mask & IB_QP_PATH_MTU) &&
+		(ib_mtu_enum_to_int(attr->path_mtu) == -1 ||
+		(attr->path_mtu > IB_MTU_2048 && !ipath_mtu4096)))
+		goto inval;
 
 	if (attr_mask & IB_QP_PATH_MIG_STATE)
 		if (attr->path_mig_state != IB_MIG_MIGRATED &&
@@ -530,16 +509,42 @@ int ipath_modify_qp(struct ib_qp *ibqp, struct ib_qp_attr *attr,
 
 	switch (new_state) {
 	case IB_QPS_RESET:
-		ipath_reset_qp(qp);
+		if (qp->state != IB_QPS_RESET) {
+			qp->state = IB_QPS_RESET;
+			spin_lock(&dev->pending_lock);
+			if (!list_empty(&qp->timerwait))
+				list_del_init(&qp->timerwait);
+			if (!list_empty(&qp->piowait))
+				list_del_init(&qp->piowait);
+			spin_unlock(&dev->pending_lock);
+			qp->s_flags &= ~IPATH_S_ANY_WAIT;
+			spin_unlock_irq(&qp->s_lock);
+			/* Stop the sending tasklet */
+			tasklet_kill(&qp->s_task);
+			wait_event(qp->wait_dma, !atomic_read(&qp->s_dma_busy));
+			spin_lock_irq(&qp->s_lock);
+		}
+		ipath_reset_qp(qp, ibqp->qp_type);
+		break;
+
+	case IB_QPS_SQD:
+		qp->s_draining = qp->s_last != qp->s_cur;
+		qp->state = new_state;
+		break;
+
+	case IB_QPS_SQE:
+		if (qp->ibqp.qp_type == IB_QPT_RC)
+			goto inval;
+		qp->state = new_state;
 		break;
 
 	case IB_QPS_ERR:
-		ipath_error_qp(qp, IB_WC_WR_FLUSH_ERR);
+		lastwqe = ipath_error_qp(qp, IB_WC_WR_FLUSH_ERR);
 		break;
 
 	default:
+		qp->state = new_state;
 		break;
-
 	}
 
 	if (attr_mask & IB_QP_PKEY_INDEX)
@@ -559,8 +564,10 @@ int ipath_modify_qp(struct ib_qp *ibqp, struct ib_qp_attr *attr,
 	if (attr_mask & IB_QP_ACCESS_FLAGS)
 		qp->qp_access_flags = attr->qp_access_flags;
 
-	if (attr_mask & IB_QP_AV)
+	if (attr_mask & IB_QP_AV) {
 		qp->remote_ah_attr = attr->ah_attr;
+		qp->s_dmult = ipath_ib_rate_to_mult(attr->ah_attr.static_rate);
+	}
 
 	if (attr_mask & IB_QP_PATH_MTU)
 		qp->path_mtu = attr->path_mtu;
@@ -590,14 +597,21 @@ int ipath_modify_qp(struct ib_qp *ibqp, struct ib_qp_attr *attr,
 	if (attr_mask & IB_QP_MAX_QP_RD_ATOMIC)
 		qp->s_max_rd_atomic = attr->max_rd_atomic;
 
-	qp->state = new_state;
-	spin_unlock_irqrestore(&qp->s_lock, flags);
+	spin_unlock_irq(&qp->s_lock);
 
+	if (lastwqe) {
+		struct ib_event ev;
+
+		ev.device = qp->ibqp.device;
+		ev.element.qp = &qp->ibqp;
+		ev.event = IB_EVENT_QP_LAST_WQE_REACHED;
+		qp->ibqp.event_handler(&ev, qp->ibqp.qp_context);
+	}
 	ret = 0;
 	goto bail;
 
 inval:
-	spin_unlock_irqrestore(&qp->s_lock, flags);
+	spin_unlock_irq(&qp->s_lock);
 	ret = -EINVAL;
 
 bail:
@@ -628,14 +642,14 @@ int ipath_query_qp(struct ib_qp *ibqp, struct ib_qp_attr *attr,
 	attr->pkey_index = qp->s_pkey_index;
 	attr->alt_pkey_index = 0;
 	attr->en_sqd_async_notify = 0;
-	attr->sq_draining = 0;
+	attr->sq_draining = qp->s_draining;
 	attr->max_rd_atomic = qp->s_max_rd_atomic;
 	attr->max_dest_rd_atomic = qp->r_max_rd_atomic;
 	attr->min_rnr_timer = qp->r_min_rnr_timer;
 	attr->port_num = 1;
 	attr->timeout = qp->timeout;
 	attr->retry_cnt = qp->s_retry_cnt;
-	attr->rnr_retry = qp->s_rnr_retry;
+	attr->rnr_retry = qp->s_rnr_retry_cnt;
 	attr->alt_port_num = 0;
 	attr->alt_timeout = 0;
 
@@ -733,27 +747,42 @@ struct ib_qp *ipath_create_qp(struct ib_pd *ibpd,
 	struct ipath_swqe *swq = NULL;
 	struct ipath_ibdev *dev;
 	size_t sz;
+	size_t sg_list_sz;
 	struct ib_qp *ret;
 
-	if (init_attr->cap.max_send_sge > ib_ipath_max_sges ||
-	    init_attr->cap.max_recv_sge > ib_ipath_max_sges ||
-	    init_attr->cap.max_send_wr > ib_ipath_max_qp_wrs ||
-	    init_attr->cap.max_recv_wr > ib_ipath_max_qp_wrs) {
-		ret = ERR_PTR(-ENOMEM);
+	if (init_attr->create_flags) {
+		ret = ERR_PTR(-EINVAL);
 		goto bail;
 	}
 
-	if (init_attr->cap.max_send_sge +
-	    init_attr->cap.max_recv_sge +
-	    init_attr->cap.max_send_wr +
-	    init_attr->cap.max_recv_wr == 0) {
+	if (init_attr->cap.max_send_sge > ib_ipath_max_sges ||
+	    init_attr->cap.max_send_wr > ib_ipath_max_qp_wrs) {
 		ret = ERR_PTR(-EINVAL);
 		goto bail;
+	}
+
+	/* Check receive queue parameters if no SRQ is specified. */
+	if (!init_attr->srq) {
+		if (init_attr->cap.max_recv_sge > ib_ipath_max_sges ||
+		    init_attr->cap.max_recv_wr > ib_ipath_max_qp_wrs) {
+			ret = ERR_PTR(-EINVAL);
+			goto bail;
+		}
+		if (init_attr->cap.max_send_sge +
+		    init_attr->cap.max_send_wr +
+		    init_attr->cap.max_recv_sge +
+		    init_attr->cap.max_recv_wr == 0) {
+			ret = ERR_PTR(-EINVAL);
+			goto bail;
+		}
 	}
 
 	switch (init_attr->qp_type) {
 	case IB_QPT_UC:
 	case IB_QPT_RC:
+	case IB_QPT_UD:
+	case IB_QPT_SMI:
+	case IB_QPT_GSI:
 		sz = sizeof(struct ipath_sge) *
 			init_attr->cap.max_send_sge +
 			sizeof(struct ipath_swqe);
@@ -762,24 +791,32 @@ struct ib_qp *ipath_create_qp(struct ib_pd *ibpd,
 			ret = ERR_PTR(-ENOMEM);
 			goto bail;
 		}
-		/* FALLTHROUGH */
-	case IB_QPT_UD:
-	case IB_QPT_SMI:
-	case IB_QPT_GSI:
 		sz = sizeof(*qp);
+		sg_list_sz = 0;
 		if (init_attr->srq) {
 			struct ipath_srq *srq = to_isrq(init_attr->srq);
 
-			sz += sizeof(*qp->r_sg_list) *
-				srq->rq.max_sge;
-		} else
-			sz += sizeof(*qp->r_sg_list) *
-				init_attr->cap.max_recv_sge;
-		qp = kmalloc(sz, GFP_KERNEL);
+			if (srq->rq.max_sge > 1)
+				sg_list_sz = sizeof(*qp->r_sg_list) *
+					(srq->rq.max_sge - 1);
+		} else if (init_attr->cap.max_recv_sge > 1)
+			sg_list_sz = sizeof(*qp->r_sg_list) *
+				(init_attr->cap.max_recv_sge - 1);
+		qp = kmalloc(sz + sg_list_sz, GFP_KERNEL);
 		if (!qp) {
 			ret = ERR_PTR(-ENOMEM);
 			goto bail_swq;
 		}
+		if (sg_list_sz && (init_attr->qp_type == IB_QPT_UD ||
+		    init_attr->qp_type == IB_QPT_SMI ||
+		    init_attr->qp_type == IB_QPT_GSI)) {
+			qp->r_ud_sg_list = kmalloc(sg_list_sz, GFP_KERNEL);
+			if (!qp->r_ud_sg_list) {
+				ret = ERR_PTR(-ENOMEM);
+				goto bail_qp;
+			}
+		} else
+			qp->r_ud_sg_list = NULL;
 		if (init_attr->srq) {
 			sz = 0;
 			qp->r_rq.size = 0;
@@ -796,7 +833,7 @@ struct ib_qp *ipath_create_qp(struct ib_pd *ibpd,
 					      qp->r_rq.size * sz);
 			if (!qp->r_rq.wq) {
 				ret = ERR_PTR(-ENOMEM);
-				goto bail_qp;
+				goto bail_sg_list;
 			}
 		}
 
@@ -808,8 +845,8 @@ struct ib_qp *ipath_create_qp(struct ib_pd *ibpd,
 		spin_lock_init(&qp->r_rq.lock);
 		atomic_set(&qp->refcount, 0);
 		init_waitqueue_head(&qp->wait);
-		tasklet_init(&qp->s_task, ipath_do_ruc_send,
-			     (unsigned long)qp);
+		init_waitqueue_head(&qp->wait_dma);
+		tasklet_init(&qp->s_task, ipath_do_send, (unsigned long)qp);
 		INIT_LIST_HEAD(&qp->piowait);
 		INIT_LIST_HEAD(&qp->timerwait);
 		qp->state = IB_QPS_RESET;
@@ -825,10 +862,12 @@ struct ib_qp *ipath_create_qp(struct ib_pd *ibpd,
 				      init_attr->qp_type);
 		if (err) {
 			ret = ERR_PTR(err);
-			goto bail_rwq;
+			vfree(qp->r_rq.wq);
+			goto bail_sg_list;
 		}
 		qp->ip = NULL;
-		ipath_reset_qp(qp);
+		qp->s_tx = NULL;
+		ipath_reset_qp(qp, init_attr->qp_type);
 		break;
 
 	default:
@@ -844,8 +883,6 @@ struct ib_qp *ipath_create_qp(struct ib_pd *ibpd,
 	 * See ipath_mmap() for details.
 	 */
 	if (udata && udata->outlen >= sizeof(__u64)) {
-		int err;
-
 		if (!qp->r_rq.wq) {
 			__u64 offset = 0;
 
@@ -853,7 +890,7 @@ struct ib_qp *ipath_create_qp(struct ib_pd *ibpd,
 					       sizeof(offset));
 			if (err) {
 				ret = ERR_PTR(err);
-				goto bail_rwq;
+				goto bail_ip;
 			}
 		} else {
 			u32 s = sizeof(struct ipath_rwq) +
@@ -865,7 +902,7 @@ struct ib_qp *ipath_create_qp(struct ib_pd *ibpd,
 						   qp->r_rq.wq);
 			if (!qp->ip) {
 				ret = ERR_PTR(-ENOMEM);
-				goto bail_rwq;
+				goto bail_ip;
 			}
 
 			err = ib_copy_to_udata(udata, &(qp->ip->offset),
@@ -897,9 +934,14 @@ struct ib_qp *ipath_create_qp(struct ib_pd *ibpd,
 	goto bail;
 
 bail_ip:
-	kfree(qp->ip);
-bail_rwq:
-	vfree(qp->r_rq.wq);
+	if (qp->ip)
+		kref_put(&qp->ip->ref, ipath_release_mmap_info);
+	else
+		vfree(qp->r_rq.wq);
+	ipath_free_qp(&dev->qp_table, qp);
+	free_qpn(&dev->qp_table, qp->ibqp.qp_num);
+bail_sg_list:
+	kfree(qp->r_ud_sg_list);
 bail_qp:
 	kfree(qp);
 bail_swq:
@@ -921,38 +963,50 @@ int ipath_destroy_qp(struct ib_qp *ibqp)
 {
 	struct ipath_qp *qp = to_iqp(ibqp);
 	struct ipath_ibdev *dev = to_idev(ibqp->device);
-	unsigned long flags;
 
-	spin_lock_irqsave(&qp->s_lock, flags);
-	qp->state = IB_QPS_ERR;
-	spin_unlock_irqrestore(&qp->s_lock, flags);
+	/* Make sure HW and driver activity is stopped. */
+	spin_lock_irq(&qp->s_lock);
+	if (qp->state != IB_QPS_RESET) {
+		qp->state = IB_QPS_RESET;
+		spin_lock(&dev->pending_lock);
+		if (!list_empty(&qp->timerwait))
+			list_del_init(&qp->timerwait);
+		if (!list_empty(&qp->piowait))
+			list_del_init(&qp->piowait);
+		spin_unlock(&dev->pending_lock);
+		qp->s_flags &= ~IPATH_S_ANY_WAIT;
+		spin_unlock_irq(&qp->s_lock);
+		/* Stop the sending tasklet */
+		tasklet_kill(&qp->s_task);
+		wait_event(qp->wait_dma, !atomic_read(&qp->s_dma_busy));
+	} else
+		spin_unlock_irq(&qp->s_lock);
+
+	ipath_free_qp(&dev->qp_table, qp);
+
+	if (qp->s_tx) {
+		atomic_dec(&qp->refcount);
+		if (qp->s_tx->txreq.flags & IPATH_SDMA_TXREQ_F_FREEBUF)
+			kfree(qp->s_tx->txreq.map_addr);
+		spin_lock_irq(&dev->pending_lock);
+		list_add(&qp->s_tx->txreq.list, &dev->txreq_free);
+		spin_unlock_irq(&dev->pending_lock);
+		qp->s_tx = NULL;
+	}
+
+	wait_event(qp->wait, !atomic_read(&qp->refcount));
+
+	/* all user's cleaned up, mark it available */
+	free_qpn(&dev->qp_table, qp->ibqp.qp_num);
 	spin_lock(&dev->n_qps_lock);
 	dev->n_qps_allocated--;
 	spin_unlock(&dev->n_qps_lock);
-
-	/* Stop the sending tasklet. */
-	tasklet_kill(&qp->s_task);
-
-	/* Make sure the QP isn't on the timeout list. */
-	spin_lock_irqsave(&dev->pending_lock, flags);
-	if (!list_empty(&qp->timerwait))
-		list_del_init(&qp->timerwait);
-	if (!list_empty(&qp->piowait))
-		list_del_init(&qp->piowait);
-	spin_unlock_irqrestore(&dev->pending_lock, flags);
-
-	/*
-	 * Make sure that the QP is not in the QPN table so receive
-	 * interrupts will discard packets for this QP.  XXX Also remove QP
-	 * from multicast table.
-	 */
-	if (atomic_read(&qp->refcount) != 0)
-		ipath_free_qp(&dev->qp_table, qp);
 
 	if (qp->ip)
 		kref_put(&qp->ip->ref, ipath_release_mmap_info);
 	else
 		vfree(qp->r_rq.wq);
+	kfree(qp->r_ud_sg_list);
 	vfree(qp->s_wq);
 	kfree(qp);
 	return 0;
@@ -992,49 +1046,6 @@ bail:
 }
 
 /**
- * ipath_sqerror_qp - put a QP's send queue into an error state
- * @qp: QP who's send queue will be put into an error state
- * @wc: the WC responsible for putting the QP in this state
- *
- * Flushes the send work queue.
- * The QP s_lock should be held and interrupts disabled.
- */
-
-void ipath_sqerror_qp(struct ipath_qp *qp, struct ib_wc *wc)
-{
-	struct ipath_ibdev *dev = to_idev(qp->ibqp.device);
-	struct ipath_swqe *wqe = get_swqe_ptr(qp, qp->s_last);
-
-	ipath_dbg("Send queue error on QP%d/%d: err: %d\n",
-		  qp->ibqp.qp_num, qp->remote_qpn, wc->status);
-
-	spin_lock(&dev->pending_lock);
-	/* XXX What if its already removed by the timeout code? */
-	if (!list_empty(&qp->timerwait))
-		list_del_init(&qp->timerwait);
-	if (!list_empty(&qp->piowait))
-		list_del_init(&qp->piowait);
-	spin_unlock(&dev->pending_lock);
-
-	ipath_cq_enter(to_icq(qp->ibqp.send_cq), wc, 1);
-	if (++qp->s_last >= qp->s_size)
-		qp->s_last = 0;
-
-	wc->status = IB_WC_WR_FLUSH_ERR;
-
-	while (qp->s_last != qp->s_head) {
-		wqe = get_swqe_ptr(qp, qp->s_last);
-		wc->wr_id = wqe->wr.wr_id;
-		wc->opcode = ib_ipath_wc_opcode[wqe->wr.opcode];
-		ipath_cq_enter(to_icq(qp->ibqp.send_cq), wc, 1);
-		if (++qp->s_last >= qp->s_size)
-			qp->s_last = 0;
-	}
-	qp->s_cur = qp->s_tail = qp->s_head;
-	qp->state = IB_QPS_SQE;
-}
-
-/**
  * ipath_get_credit - flush the send work queue of a QP
  * @qp: the qp who's send work queue to flush
  * @aeth: the Acknowledge Extended Transport Header
@@ -1060,9 +1071,10 @@ void ipath_get_credit(struct ipath_qp *qp, u32 aeth)
 	}
 
 	/* Restart sending if it was blocked due to lack of credits. */
-	if (qp->s_cur != qp->s_head &&
+	if ((qp->s_flags & IPATH_S_WAIT_SSN_CREDIT) &&
+	    qp->s_cur != qp->s_head &&
 	    (qp->s_lsn == (u32) -1 ||
 	     ipath_cmp24(get_swqe_ptr(qp, qp->s_cur)->ssn,
 			 qp->s_lsn + 1) <= 0))
-		tasklet_hi_schedule(&qp->s_task);
+		ipath_schedule_send(qp);
 }

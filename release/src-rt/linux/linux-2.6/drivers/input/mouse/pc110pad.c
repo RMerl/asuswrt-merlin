@@ -1,6 +1,4 @@
 /*
- * $Id: pc110pad.c,v 1.12 2001/09/25 10:12:07 vojtech Exp $
- *
  *  Copyright (c) 2000-2001 Vojtech Pavlik
  *
  *  Based on the work of:
@@ -39,6 +37,7 @@
 #include <linux/init.h>
 #include <linux/interrupt.h>
 #include <linux/pci.h>
+#include <linux/delay.h>
 
 #include <asm/io.h>
 #include <asm/irq.h>
@@ -62,8 +61,10 @@ static irqreturn_t pc110pad_interrupt(int irq, void *ptr)
 	int value     = inb_p(pc110pad_io);
 	int handshake = inb_p(pc110pad_io + 2);
 
-	outb_p(handshake |  1, pc110pad_io + 2);
-	outb_p(handshake & ~1, pc110pad_io + 2);
+	outb(handshake |  1, pc110pad_io + 2);
+	udelay(2);
+	outb(handshake & ~1, pc110pad_io + 2);
+	udelay(2);
 	inb_p(0x64);
 
 	pc110pad_data[pc110pad_count++] = value;
@@ -107,14 +108,10 @@ static int pc110pad_open(struct input_dev *dev)
  */
 static int __init pc110pad_init(void)
 {
-	struct pci_dev *dev;
 	int err;
 
-	dev = pci_get_device(PCI_ANY_ID, PCI_ANY_ID, NULL);
-	if (dev) {
-		pci_dev_put(dev);
+	if (!no_pci_devices())
 		return -ENODEV;
-	}
 
 	if (!request_region(pc110pad_io, 4, "pc110pad")) {
 		printk(KERN_ERR "pc110pad: I/O area %#x-%#x in use.\n",
@@ -144,12 +141,12 @@ static int __init pc110pad_init(void)
 	pc110pad_dev->id.product = 0x0001;
 	pc110pad_dev->id.version = 0x0100;
 
-	pc110pad_dev->evbit[0] = BIT(EV_KEY) | BIT(EV_ABS);
-	pc110pad_dev->absbit[0] = BIT(ABS_X) | BIT(ABS_Y);
-	pc110pad_dev->keybit[LONG(BTN_TOUCH)] = BIT(BTN_TOUCH);
+	pc110pad_dev->evbit[0] = BIT_MASK(EV_KEY) | BIT_MASK(EV_ABS);
+	pc110pad_dev->absbit[0] = BIT_MASK(ABS_X) | BIT_MASK(ABS_Y);
+	pc110pad_dev->keybit[BIT_WORD(BTN_TOUCH)] = BIT_MASK(BTN_TOUCH);
 
-	pc110pad_dev->absmax[ABS_X] = 0x1ff;
-	pc110pad_dev->absmax[ABS_Y] = 0x0ff;
+	input_abs_set_max(pc110pad_dev, ABS_X, 0x1ff);
+	input_abs_set_max(pc110pad_dev, ABS_Y, 0x0ff);
 
 	pc110pad_dev->open = pc110pad_open;
 	pc110pad_dev->close = pc110pad_close;

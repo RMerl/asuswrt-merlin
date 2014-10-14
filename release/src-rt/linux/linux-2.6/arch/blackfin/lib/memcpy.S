@@ -1,36 +1,13 @@
 /*
- * File:         arch/blackfin/lib/memcpy.S
- * Based on:
- * Author:
+ * internal version of memcpy(), issued by the compiler to copy blocks of
+ * data around. This is really memmove() - it has to be able to deal with
+ * possible overlaps, because that ambiguity is when the compiler gives up
+ * and calls a function. We have our own, internal version so that we get
+ * something we trust, even if the user has redefined the normal symbol.
  *
- * Created:
- * Description:  internal version of memcpy(), issued by the compiler
- *               to copy blocks of data around.
- *               This is really memmove() - it has to be able to deal with
- *               possible overlaps, because that ambiguity is when the compiler
- *               gives up and calls a function. We have our own, internal version
- *               so that we get something we trust, even if the user has redefined
- *               the normal symbol.
+ * Copyright 2004-2009 Analog Devices Inc.
  *
- * Modified:
- *               Copyright 2004-2006 Analog Devices Inc.
- *
- * Bugs:         Enter bugs at http://blackfin.uclinux.org/
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, see the file COPYING, or write
- * to the Free Software Foundation, Inc.,
- * 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ * Licensed under the ADI BSD license or the GPL-2 (or later)
  */
 
 #include <linux/linkage.h>
@@ -70,8 +47,8 @@ ENTRY(_memcpy)
 	/* Check for aligned data.*/
 
 	R3 = R1 | R0;
-	R0 = 0x3;
-	R3 = R3 & R0;
+	R1 = 0x3;
+	R3 = R3 & R1;
 	CC = R3;	/* low bits set on either address? */
 	IF CC JUMP .Lnot_aligned;
 
@@ -83,7 +60,6 @@ ENTRY(_memcpy)
 	/* less than eight bytes... */
 	P2 = R2;
 	LSETUP(.Lthree_start, .Lthree_end) LC0=P2;
-	R0 = R1;	/* setup src address for return */
 .Lthree_start:
 	R3 = B[P1++] (X);
 .Lthree_end:
@@ -95,10 +71,9 @@ ENTRY(_memcpy)
 	/* There's at least eight bytes to copy. */
 	P2 += -1;	/* because we unroll one iteration */
 	LSETUP(.Lword_loops, .Lword_loope) LC0=P2;
-	R0 = R1;
 	I1 = P1;
 	R3 = [I1++];
-#ifdef ANOMALY_05000202
+#if ANOMALY_05000202
 .Lword_loops:
 	[P0++] = R3;
 .Lword_loope:
@@ -120,7 +95,6 @@ ENTRY(_memcpy)
 .Lnot_aligned:
 	/* From here, we're copying byte-by-byte. */
 	LSETUP (.Lbyte_start, .Lbyte_end) LC0=P2;
-	R0 = R1;	/* Save src address for return */
 .Lbyte_start:
 	R1 = B[P1++] (X);
 .Lbyte_end:
@@ -135,7 +109,6 @@ ENTRY(_memcpy)
 	 * Don't bother to work out alignment for
 	 * the reverse case.
 	 */
-	R0 = R1;	/* save src for later. */
 	P0 = P0 + P2;
 	P0 += -1;
 	P1 = P1 + P2;

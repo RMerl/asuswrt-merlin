@@ -9,7 +9,6 @@
 #include <linux/string.h>
 #include <linux/tty.h>
 
-#include <asm/semaphore.h>
 #include <asm/processor.h>
 #include <asm/uaccess.h>
 #include <asm/checksum.h>
@@ -27,25 +26,13 @@ extern void __Mod(void);
 extern void __ashldi3(void);
 extern void __ashrdi3(void);
 extern void __lshrdi3(void);
+extern void __negdi2(void);
 extern void iounmap(volatile void * __iomem);
 
 /* Platform dependent support */
 EXPORT_SYMBOL(kernel_thread);
 EXPORT_SYMBOL(get_cmos_time);
 EXPORT_SYMBOL(loops_per_usec);
-
-/* String functions */
-EXPORT_SYMBOL(memcmp);
-EXPORT_SYMBOL(memmove);
-EXPORT_SYMBOL(strstr);
-EXPORT_SYMBOL(strcpy);
-EXPORT_SYMBOL(strchr);
-EXPORT_SYMBOL(strcmp);
-EXPORT_SYMBOL(strlen);
-EXPORT_SYMBOL(strcat);
-EXPORT_SYMBOL(strncat);
-EXPORT_SYMBOL(strncmp);
-EXPORT_SYMBOL(strncpy);
 
 /* Math functions */
 EXPORT_SYMBOL(__Udiv);
@@ -55,16 +42,11 @@ EXPORT_SYMBOL(__Mod);
 EXPORT_SYMBOL(__ashldi3);
 EXPORT_SYMBOL(__ashrdi3);
 EXPORT_SYMBOL(__lshrdi3);
+EXPORT_SYMBOL(__negdi2);
 
 /* Memory functions */
 EXPORT_SYMBOL(__ioremap);
 EXPORT_SYMBOL(iounmap);
-
-/* Semaphore functions */
-EXPORT_SYMBOL(__up);
-EXPORT_SYMBOL(__down);
-EXPORT_SYMBOL(__down_interruptible);
-EXPORT_SYMBOL(__down_trylock);
 
 /* Userspace access functions */
 EXPORT_SYMBOL(__copy_user_zeroing);
@@ -84,4 +66,4 @@ EXPORT_SYMBOL(start_one_shot_timer);
 EXPORT_SYMBOL(del_fast_timer);
 EXPORT_SYMBOL(schedule_usleep);
 #endif
-
+EXPORT_SYMBOL(csum_partial);

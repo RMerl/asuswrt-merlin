@@ -1,7 +1,7 @@
 /*
  *  init.c, Common initialization routines for NEC VR4100 series.
  *
- *  Copyright (C) 2003-2005  Yoichi Yuasa <yoichi_yuasa@tripeaks.co.jp>
+ *  Copyright (C) 2003-2009  Yoichi Yuasa <yuasa@linux-mips.org>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -36,9 +36,11 @@ static void __init iomem_resource_init(void)
 	iomem_resource.end = IO_MEM_RESOURCE_END;
 }
 
-static void __init setup_timer_frequency(void)
+void __init plat_time_init(void)
 {
 	unsigned long tclock;
+
+	vr41xx_calculate_clock_frequency();
 
 	tclock = vr41xx_get_tclock_frequency();
 	if (current_cpu_data.processor_id == PRID_VR4131_REV2_0 ||
@@ -48,22 +50,11 @@ static void __init setup_timer_frequency(void)
 		mips_hpt_frequency = tclock / 4;
 }
 
-void __init plat_timer_setup(struct irqaction *irq)
-{
-	setup_irq(TIMER_IRQ, irq);
-}
-
-static void __init timer_init(void)
-{
-	board_time_init = setup_timer_frequency;
-}
-
 void __init plat_mem_setup(void)
 {
-	vr41xx_calculate_clock_frequency();
-
-	timer_init();
 	iomem_resource_init();
+
+	vr41xx_siu_setup();
 }
 
 void __init prom_init(void)
@@ -75,9 +66,9 @@ void __init prom_init(void)
 	argv = (char **)fw_arg1;
 
 	for (i = 1; i < argc; i++) {
-		strcat(arcs_cmdline, argv[i]);
+		strlcat(arcs_cmdline, argv[i], COMMAND_LINE_SIZE);
 		if (i < (argc - 1))
-			strcat(arcs_cmdline, " ");
+			strlcat(arcs_cmdline, " ", COMMAND_LINE_SIZE);
 	}
 }
 

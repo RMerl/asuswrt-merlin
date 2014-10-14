@@ -9,32 +9,28 @@
 
 #include <linux/errno.h>
 #include <linux/pci.h>
-#include <linux/smp_lock.h>
 #include <linux/syscalls.h>
 #include <asm/uaccess.h>
 #include "pci.h"
 
-asmlinkage long
-sys_pciconfig_read(unsigned long bus, unsigned long dfn,
-		   unsigned long off, unsigned long len,
-		   void __user *buf)
+SYSCALL_DEFINE5(pciconfig_read, unsigned long, bus, unsigned long, dfn,
+		unsigned long, off, unsigned long, len, void __user *, buf)
 {
 	struct pci_dev *dev;
 	u8 byte;
 	u16 word;
 	u32 dword;
-	long err, cfg_ret;
+	long err;
+	long cfg_ret;
 
-	err = -EPERM;
 	if (!capable(CAP_SYS_ADMIN))
-		goto error;
+		return -EPERM;
 
 	err = -ENODEV;
-	dev = pci_find_slot(bus, dfn);
+	dev = pci_get_bus_and_slot(bus, dfn);
 	if (!dev)
 		goto error;
 
-	lock_kernel();
 	switch (len) {
 	case 1:
 		cfg_ret = pci_user_read_config_byte(dev, off, &byte);
@@ -47,10 +43,8 @@ sys_pciconfig_read(unsigned long bus, unsigned long dfn,
 		break;
 	default:
 		err = -EINVAL;
-		unlock_kernel();
 		goto error;
 	};
-	unlock_kernel();
 
 	err = -EIO;
 	if (cfg_ret != PCIBIOS_SUCCESSFUL)
@@ -66,7 +60,8 @@ sys_pciconfig_read(unsigned long bus, unsigned long dfn,
 	case 4:
 		err = put_user(dword, (unsigned int __user *)buf);
 		break;
-	};
+	}
+	pci_dev_put(dev);
 	return err;
 
 error:
@@ -83,14 +78,13 @@ error:
 	case 4:
 		put_user(-1, (unsigned int __user *)buf);
 		break;
-	};
+	}
+	pci_dev_put(dev);
 	return err;
 }
 
-asmlinkage long
-sys_pciconfig_write(unsigned long bus, unsigned long dfn,
-		    unsigned long off, unsigned long len,
-		    void __user *buf)
+SYSCALL_DEFINE5(pciconfig_write, unsigned long, bus, unsigned long, dfn,
+		unsigned long, off, unsigned long, len, void __user *, buf)
 {
 	struct pci_dev *dev;
 	u8 byte;
@@ -101,11 +95,10 @@ sys_pciconfig_write(unsigned long bus, unsigned long dfn,
 	if (!capable(CAP_SYS_ADMIN))
 		return -EPERM;
 
-	dev = pci_find_slot(bus, dfn);
+	dev = pci_get_bus_and_slot(bus, dfn);
 	if (!dev)
 		return -ENODEV;
 
-	lock_kernel();
 	switch(len) {
 	case 1:
 		err = get_user(byte, (u8 __user *)buf);
@@ -137,8 +130,7 @@ sys_pciconfig_write(unsigned long bus, unsigned long dfn,
 	default:
 		err = -EINVAL;
 		break;
-	};
-	unlock_kernel();
-
+	}
+	pci_dev_put(dev);
 	return err;
 }

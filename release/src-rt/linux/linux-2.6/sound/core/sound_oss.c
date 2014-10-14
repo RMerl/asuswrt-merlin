@@ -1,6 +1,6 @@
 /*
  *  Advanced Linux Sound Architecture
- *  Copyright (c) by Jaroslav Kysela <perex@suse.cz>
+ *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  *
  *
  *   This program is free software; you can redistribute it and/or modify
@@ -18,8 +18,6 @@
  *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
  *
  */
-
-#include <sound/driver.h>
 
 #ifdef CONFIG_SND_OSSEMUL
 
@@ -66,7 +64,8 @@ static int snd_oss_kernel_minor(int type, struct snd_card *card, int dev)
 
 	switch (type) {
 	case SNDRV_OSS_DEVICE_TYPE_MIXER:
-		snd_assert(card != NULL && dev <= 1, return -EINVAL);
+		if (snd_BUG_ON(!card || dev < 0 || dev > 1))
+			return -EINVAL;
 		minor = SNDRV_MINOR_OSS(card->number, (dev ? SNDRV_MINOR_OSS_MIXER1 : SNDRV_MINOR_OSS_MIXER));
 		break;
 	case SNDRV_OSS_DEVICE_TYPE_SEQUENCER:
@@ -76,11 +75,13 @@ static int snd_oss_kernel_minor(int type, struct snd_card *card, int dev)
 		minor = SNDRV_MINOR_OSS_MUSIC;
 		break;
 	case SNDRV_OSS_DEVICE_TYPE_PCM:
-		snd_assert(card != NULL && dev <= 1, return -EINVAL);
+		if (snd_BUG_ON(!card || dev < 0 || dev > 1))
+			return -EINVAL;
 		minor = SNDRV_MINOR_OSS(card->number, (dev ? SNDRV_MINOR_OSS_PCM1 : SNDRV_MINOR_OSS_PCM));
 		break;
 	case SNDRV_OSS_DEVICE_TYPE_MIDI:
-		snd_assert(card != NULL && dev <= 1, return -EINVAL);
+		if (snd_BUG_ON(!card || dev < 0 || dev > 1))
+			return -EINVAL;
 		minor = SNDRV_MINOR_OSS(card->number, (dev ? SNDRV_MINOR_OSS_MIDI1 : SNDRV_MINOR_OSS_MIDI));
 		break;
 	case SNDRV_OSS_DEVICE_TYPE_DMFM:
@@ -92,7 +93,8 @@ static int snd_oss_kernel_minor(int type, struct snd_card *card, int dev)
 	default:
 		return -EINVAL;
 	}
-	snd_assert(minor >= 0 && minor < SNDRV_OSS_MINORS, return -EINVAL);
+	if (minor < 0 || minor >= SNDRV_OSS_MINORS)
+		return -EINVAL;
 	return minor;
 }
 

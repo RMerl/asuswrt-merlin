@@ -17,6 +17,13 @@
 
 /* device attributes */
 
+/*
+ * NOTE:  RTC times displayed in sysfs use the RTC's timezone.  That's
+ * ideally UTC.  However, PCs that also boot to MS-Windows normally use
+ * the local time and change to match daylight savings time.  That affects
+ * attributes including date, time, since_epoch, and wakealarm.
+ */
+
 static ssize_t
 rtc_sysfs_show_name(struct device *dev, struct device_attribute *attr,
 		char *buf)
@@ -73,11 +80,50 @@ rtc_sysfs_show_since_epoch(struct device *dev, struct device_attribute *attr,
 	return retval;
 }
 
+static ssize_t
+rtc_sysfs_show_max_user_freq(struct device *dev, struct device_attribute *attr,
+		char *buf)
+{
+	return sprintf(buf, "%d\n", to_rtc_device(dev)->max_user_freq);
+}
+
+static ssize_t
+rtc_sysfs_set_max_user_freq(struct device *dev, struct device_attribute *attr,
+		const char *buf, size_t n)
+{
+	struct rtc_device *rtc = to_rtc_device(dev);
+	unsigned long val = simple_strtoul(buf, NULL, 0);
+
+	if (val >= 4096 || val == 0)
+		return -EINVAL;
+
+	rtc->max_user_freq = (int)val;
+
+	return n;
+}
+
+static ssize_t
+rtc_sysfs_show_hctosys(struct device *dev, struct device_attribute *attr,
+		char *buf)
+{
+#ifdef CONFIG_RTC_HCTOSYS_DEVICE
+	if (rtc_hctosys_ret == 0 &&
+			strcmp(dev_name(&to_rtc_device(dev)->dev),
+				CONFIG_RTC_HCTOSYS_DEVICE) == 0)
+		return sprintf(buf, "1\n");
+	else
+#endif
+		return sprintf(buf, "0\n");
+}
+
 static struct device_attribute rtc_attrs[] = {
 	__ATTR(name, S_IRUGO, rtc_sysfs_show_name, NULL),
 	__ATTR(date, S_IRUGO, rtc_sysfs_show_date, NULL),
 	__ATTR(time, S_IRUGO, rtc_sysfs_show_time, NULL),
 	__ATTR(since_epoch, S_IRUGO, rtc_sysfs_show_since_epoch, NULL),
+	__ATTR(max_user_freq, S_IRUGO | S_IWUSR, rtc_sysfs_show_max_user_freq,
+			rtc_sysfs_set_max_user_freq),
+	__ATTR(hctosys, S_IRUGO, rtc_sysfs_show_hctosys, NULL),
 	{ },
 };
 
@@ -89,13 +135,13 @@ rtc_sysfs_show_wakealarm(struct device *dev, struct device_attribute *attr,
 	unsigned long alarm;
 	struct rtc_wkalrm alm;
 
-	/* Don't show disabled alarms; but the RTC could leave the
-	 * alarm enabled after it's already triggered.  Alarms are
-	 * conceptually one-shot, even though some common hardware
-	 * (PCs) doesn't actually work that way.
+	/* Don't show disabled alarms.  For uniformity, RTC alarms are
+	 * conceptually one-shot, even though some common RTCs (on PCs)
+	 * don't actually work that way.
 	 *
-	 * REVISIT maybe we should require RTC implementations to
-	 * disable the RTC alarm after it triggers, for uniformity.
+	 * NOTE: RTC implementations where the alarm doesn't match an
+	 * exact YYYY-MM-DD HH:MM[:SS] date *must* disable their RTC
+	 * alarms after they trigger, to ensure one-shot semantics.
 	 */
 	retval = rtc_read_alarm(to_rtc_device(dev), &alm);
 	if (retval == 0 && alm.enabled) {
@@ -114,6 +160,8 @@ rtc_sysfs_set_wakealarm(struct device *dev, struct device_attribute *attr,
 	unsigned long now, alarm;
 	struct rtc_wkalrm alm;
 	struct rtc_device *rtc = to_rtc_device(dev);
+	char *buf_ptr;
+	int adjust = 0;
 
 	/* Only request alarms that trigger in the future.  Disable them
 	 * by writing another time, e.g. 0 meaning Jan 1 1970 UTC.
@@ -123,7 +171,15 @@ rtc_sysfs_set_wakealarm(struct device *dev, struct device_attribute *attr,
 		return retval;
 	rtc_tm_to_time(&alm.time, &now);
 
-	alarm = simple_strtoul(buf, NULL, 0);
+	buf_ptr = (char *)buf;
+	if (*buf_ptr == '+') {
+		buf_ptr++;
+		adjust = 1;
+	}
+	alarm = simple_strtoul(buf_ptr, NULL, 0);
+	if (adjust) {
+		alarm += now;
+	}
 	if (alarm > now) {
 		/* Avoid accidentally clobbering active alarms; we can't
 		 * entirely prevent that here, without even the minimal
@@ -176,9 +232,8 @@ void rtc_sysfs_add_device(struct rtc_device *rtc)
 
 	err = device_create_file(&rtc->dev, &dev_attr_wakealarm);
 	if (err)
-		dev_err(rtc->dev.parent, "failed to create "
-				"alarm attribute, %d",
-				err);
+		dev_err(rtc->dev.parent,
+			"failed to create alarm attribute, %d\n", err);
 }
 
 void rtc_sysfs_del_device(struct rtc_device *rtc)

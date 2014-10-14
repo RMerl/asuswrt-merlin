@@ -13,6 +13,7 @@
 
 #include "ext2.h"
 #include <linux/quotaops.h>
+#include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/buffer_head.h>
 #include <linux/capability.h>
@@ -106,7 +107,7 @@ static int ext2_valid_block_bitmap(struct super_block *sb,
 		return 1;
 
 err_out:
-	ext2_error(sb, __FUNCTION__,
+	ext2_error(sb, __func__,
 			"Invalid block bitmap - "
 			"block_group = %d, block = %lu",
 			block_group, bitmap_blk);
@@ -132,7 +133,7 @@ read_block_bitmap(struct super_block *sb, unsigned int block_group)
 	bitmap_blk = le32_to_cpu(desc->bg_block_bitmap);
 	bh = sb_getblk(sb, bitmap_blk);
 	if (unlikely(!bh)) {
-		ext2_error(sb, __FUNCTION__,
+		ext2_error(sb, __func__,
 			    "Cannot read block bitmap - "
 			    "block_group = %d, block_bitmap = %u",
 			    block_group, le32_to_cpu(desc->bg_block_bitmap));
@@ -143,7 +144,7 @@ read_block_bitmap(struct super_block *sb, unsigned int block_group)
 
 	if (bh_submit_read(bh) < 0) {
 		brelse(bh);
-		ext2_error(sb, __FUNCTION__,
+		ext2_error(sb, __func__,
 			    "Cannot read block bitmap - "
 			    "block_group = %d, block_bitmap = %u",
 			    block_group, le32_to_cpu(desc->bg_block_bitmap));
@@ -163,7 +164,7 @@ static void release_blocks(struct super_block *sb, int count)
 	if (count) {
 		struct ext2_sb_info *sbi = EXT2_SB(sb);
 
-		percpu_counter_mod(&sbi->s_freeblocks_counter, count);
+		percpu_counter_add(&sbi->s_freeblocks_counter, count);
 		sb->s_dirt = 1;
 	}
 }
@@ -249,7 +250,7 @@ restart:
 	BUG_ON(bad);
 }
 #define rsv_window_dump(root, verbose) \
-	__rsv_window_dump((root), (verbose), __FUNCTION__)
+	__rsv_window_dump((root), (verbose), __func__)
 #else
 #define rsv_window_dump(root, verbose) do {} while (0)
 #endif
@@ -548,7 +549,7 @@ do_more:
 	for (i = 0, group_freed = 0; i < count; i++) {
 		if (!ext2_clear_bit_atomic(sb_bgl_lock(sbi, block_group),
 						bit + i, bitmap_bh->b_data)) {
-			ext2_error(sb, __FUNCTION__,
+			ext2_error(sb, __func__,
 				"bit already cleared for block %lu", block + i);
 		} else {
 			group_freed++;
@@ -570,7 +571,7 @@ do_more:
 error_return:
 	brelse(bitmap_bh);
 	release_blocks(sb, freed);
-	DQUOT_FREE_BLOCK(inode, freed);
+	dquot_free_block_nodirty(inode, freed);
 }
 
 /**
@@ -645,10 +646,9 @@ find_next_usable_block(int start, struct buffer_head *bh, int maxblocks)
 	return here;
 }
 
-/*
+/**
  * ext2_try_to_allocate()
  * @sb:			superblock
- * @handle:		handle to this transaction
  * @group:		given allocation block group
  * @bitmap_bh:		bufferhead holds the block bitmap
  * @grp_goal:		given target block within the group
@@ -850,7 +850,7 @@ static int find_next_reservable_window(
 		rsv_window_remove(sb, my_rsv);
 
 	/*
-	 * Let's book the whole avaliable window for now.  We will check the
+	 * Let's book the whole available window for now.  We will check the
 	 * disk bitmap later and then, if there are free blocks then we adjust
 	 * the window size if it's larger than requested.
 	 * Otherwise, we will remove this node from the tree next time
@@ -1193,7 +1193,7 @@ static int ext2_has_free_blocks(struct ext2_sb_info *sbi)
 	free_blocks = percpu_counter_read_positive(&sbi->s_freeblocks_counter);
 	root_blocks = le32_to_cpu(sbi->s_es->s_r_blocks_count);
 	if (free_blocks < root_blocks + 1 && !capable(CAP_SYS_RESOURCE) &&
-		sbi->s_resuid != current->fsuid &&
+		sbi->s_resuid != current_fsuid() &&
 		(sbi->s_resgid == 0 || !in_group_p (sbi->s_resgid))) {
 		return 0;
 	}
@@ -1236,6 +1236,7 @@ ext2_fsblk_t ext2_new_blocks(struct inode *inode, ext2_fsblk_t goal,
 	unsigned short windowsz = 0;
 	unsigned long ngroups;
 	unsigned long num = *count;
+	int ret;
 
 	*errp = -ENOSPC;
 	sb = inode->i_sb;
@@ -1247,8 +1248,9 @@ ext2_fsblk_t ext2_new_blocks(struct inode *inode, ext2_fsblk_t goal,
 	/*
 	 * Check quota for allocation of this block.
 	 */
-	if (DQUOT_ALLOC_BLOCK(inode, num)) {
-		*errp = -EDQUOT;
+	ret = dquot_alloc_block(inode, num);
+	if (ret) {
+		*errp = ret;
 		return 0;
 	}
 
@@ -1316,8 +1318,8 @@ retry_alloc:
 	smp_rmb();
 
 	/*
-	 * Now search the rest of the groups.  We assume that 
-	 * i and gdp correctly point to the last group visited.
+	 * Now search the rest of the groups.  We assume that
+	 * group_no and gdp correctly point to the last group visited.
 	 */
 	for (bgi = 0; bgi < ngroups; bgi++) {
 		group_no++;
@@ -1328,6 +1330,12 @@ retry_alloc:
 			goto io_error;
 
 		free_blocks = le16_to_cpu(gdp->bg_free_blocks_count);
+		/*
+		 * skip this group (and avoid loading bitmap) if there
+		 * are no free blocks
+		 */
+		if (!free_blocks)
+			continue;
 		/*
 		 * skip this group if the number of
 		 * free blocks is less than half of the reservation
@@ -1349,9 +1357,9 @@ retry_alloc:
 			goto allocated;
 	}
 	/*
-	 * We may end up a bogus ealier ENOSPC error due to
+	 * We may end up a bogus earlier ENOSPC error due to
 	 * filesystem is "full" of reservations, but
-	 * there maybe indeed free blocks avaliable on disk
+	 * there maybe indeed free blocks available on disk
 	 * In this case, we just forget about the reservations
 	 * just do block allocation as without reservations.
 	 */
@@ -1401,7 +1409,7 @@ allocated:
 	}
 
 	group_adjust_blocks(sb, group_no, gdp, gdp_bh, -num);
-	percpu_counter_mod(&sbi->s_freeblocks_counter, -num);
+	percpu_counter_sub(&sbi->s_freeblocks_counter, num);
 
 	mark_buffer_dirty(bitmap_bh);
 	if (sb->s_flags & MS_SYNCHRONOUS)
@@ -1409,7 +1417,8 @@ allocated:
 
 	*errp = 0;
 	brelse(bitmap_bh);
-	DQUOT_FREE_BLOCK(inode, *count-num);
+	dquot_free_block_nodirty(inode, *count-num);
+	mark_inode_dirty(inode);
 	*count = num;
 	return ret_block;
 
@@ -1419,8 +1428,10 @@ out:
 	/*
 	 * Undo the block allocation
 	 */
-	if (!performed_allocation)
-		DQUOT_FREE_BLOCK(inode, *count);
+	if (!performed_allocation) {
+		dquot_free_block_nodirty(inode, *count);
+		mark_inode_dirty(inode);
+	}
 	brelse(bitmap_bh);
 	return 0;
 }
@@ -1434,7 +1445,7 @@ ext2_fsblk_t ext2_new_block(struct inode *inode, unsigned long goal, int *errp)
 
 #ifdef EXT2FS_DEBUG
 
-static int nibblemap[] = {4, 3, 3, 2, 3, 2, 2, 1, 3, 2, 2, 1, 2, 1, 1, 0};
+static const int nibblemap[] = {4, 3, 3, 2, 3, 2, 2, 1, 3, 2, 2, 1, 2, 1, 1, 0};
 
 unsigned long ext2_count_free (struct buffer_head * map, unsigned int numchars)
 {
@@ -1495,14 +1506,6 @@ unsigned long ext2_count_free_blocks (struct super_block * sb)
 #endif
 }
 
-static inline int
-block_in_use(unsigned long block, struct super_block *sb, unsigned char *map)
-{
-	return ext2_test_bit ((block -
-		le32_to_cpu(EXT2_SB(sb)->s_es->s_first_data_block)) %
-			 EXT2_BLOCKS_PER_GROUP(sb), map);
-}
-
 static inline int test_root(int a, int b)
 {
 	int num = b;
@@ -1547,9 +1550,6 @@ int ext2_bg_has_super(struct super_block *sb, int group)
  */
 unsigned long ext2_bg_num_gdb(struct super_block *sb, int group)
 {
-	if (EXT2_HAS_RO_COMPAT_FEATURE(sb,EXT2_FEATURE_RO_COMPAT_SPARSE_SUPER)&&
-	    !ext2_group_sparse(group))
-		return 0;
-	return EXT2_SB(sb)->s_gdb_count;
+	return ext2_bg_has_super(sb, group) ? EXT2_SB(sb)->s_gdb_count : 0;
 }
 

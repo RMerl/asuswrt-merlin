@@ -22,6 +22,9 @@
 #include <linux/bitops.h>
 #include <asm/system.h>
 #include <asm/irq.h>
+#include <asm/hpsim.h>
+
+#include "hpsim_ssc.h"
 
 #define SIMETH_RECV_MAX	10
 
@@ -34,12 +37,6 @@
  */
 #define SIMETH_FRAME_SIZE	ETH_FRAME_LEN
 
-
-#define SSC_NETDEV_PROBE		100
-#define SSC_NETDEV_SEND			101
-#define SSC_NETDEV_RECV			102
-#define SSC_NETDEV_ATTACH		103
-#define SSC_NETDEV_DETACH		104
 
 #define NETWORK_INTR			8
 
@@ -124,9 +121,6 @@ simeth_probe (void)
 	return r;
 }
 
-extern long ia64_ssc (long, long, long, long, int);
-extern void ia64_ssc_connect_irq (long intr, long irq);
-
 static inline int
 netdev_probe(char *name, unsigned char *ether)
 {
@@ -173,6 +167,15 @@ netdev_read(int fd, unsigned char *buf, unsigned int len)
 	return ia64_ssc(fd, __pa(buf), len, 0, SSC_NETDEV_RECV);
 }
 
+static const struct net_device_ops simeth_netdev_ops = {
+	.ndo_open		= simeth_open,
+	.ndo_stop		= simeth_close,
+	.ndo_start_xmit		= simeth_tx,
+	.ndo_get_stats		= simeth_get_stats,
+	.ndo_set_multicast_list	= set_multicast_list, /* not yet used */
+
+};
+
 /*
  * Function shared with module code, so cannot be in init section
  *
@@ -212,14 +215,10 @@ simeth_probe1(void)
 
 	memcpy(dev->dev_addr, mac_addr, sizeof(mac_addr));
 
-	local = dev->priv;
+	local = netdev_priv(dev);
 	local->simfd = fd; /* keep track of underlying file descriptor */
 
-	dev->open		= simeth_open;
-	dev->stop		= simeth_close;
-	dev->hard_start_xmit	= simeth_tx;
-	dev->get_stats		= simeth_get_stats;
-	dev->set_multicast_list = set_multicast_list; /* no yet used */
+	dev->netdev_ops = &simeth_netdev_ops;
 
 	err = register_netdev(dev);
 	if (err) {
@@ -228,7 +227,7 @@ simeth_probe1(void)
 	}
 
 	if ((rc = assign_irq_vector(AUTO_ASSIGN)) < 0)
-		panic("%s: out of interrupt vectors!\n", __FUNCTION__);
+		panic("%s: out of interrupt vectors!\n", __func__);
 	dev->irq = rc;
 
 	/*
@@ -300,6 +299,9 @@ simeth_device_event(struct notifier_block *this,unsigned long event, void *ptr)
 		return NOTIFY_DONE;
 	}
 
+	if (dev_net(dev) != &init_net)
+		return NOTIFY_DONE;
+
 	if ( event != NETDEV_UP && event != NETDEV_DOWN ) return NOTIFY_DONE;
 
 	/*
@@ -328,7 +330,7 @@ simeth_device_event(struct notifier_block *this,unsigned long event, void *ptr)
 	 * we get DOWN then UP.
 	 */
 
-	local = dev->priv;
+	local = netdev_priv(dev);
 	/* now do it for real */
 	r = event == NETDEV_UP ?
 		netdev_attach(local->simfd, dev->irq, ntohl(ifa->ifa_local)):
@@ -383,7 +385,7 @@ frame_print(unsigned char *from, unsigned char *frame, int len)
 static int
 simeth_tx(struct sk_buff *skb, struct net_device *dev)
 {
-	struct simeth_local *local = dev->priv;
+	struct simeth_local *local = netdev_priv(dev);
 
 #if 0
 	/* ensure we have at least ETH_ZLEN bytes (min frame size) */
@@ -410,7 +412,7 @@ simeth_tx(struct sk_buff *skb, struct net_device *dev)
 	 */
 
 	dev_kfree_skb(skb);
-	return 0;
+	return NETDEV_TX_OK;
 }
 
 static inline struct sk_buff *
@@ -446,7 +448,7 @@ simeth_rx(struct net_device *dev)
 	int			len;
 	int			rcv_count = SIMETH_RECV_MAX;
 
-	local = dev->priv;
+	local = netdev_priv(dev);
 	/*
 	 * the loop concept has been borrowed from other drivers
 	 * looks to me like it's a throttling thing to avoid pushing to many
@@ -500,11 +502,6 @@ simeth_interrupt(int irq, void *dev_id)
 {
 	struct net_device *dev = dev_id;
 
-	if ( dev == NULL ) {
-		printk(KERN_WARNING "simeth: irq %d for unknown device\n", irq);
-		return IRQ_NONE;
-	}
-
 	/*
 	 * very simple loop because we get interrupts only when receiving
 	 */
@@ -515,7 +512,7 @@ simeth_interrupt(int irq, void *dev_id)
 static struct net_device_stats *
 simeth_get_stats(struct net_device *dev)
 {
-	struct simeth_local *local = dev->priv;
+	struct simeth_local *local = netdev_priv(dev);
 
 	return &local->stats;
 }

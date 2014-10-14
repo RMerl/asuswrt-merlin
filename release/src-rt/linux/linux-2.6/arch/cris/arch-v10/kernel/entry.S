@@ -1,252 +1,9 @@
-/* $Id: entry.S,v 1.28 2005/06/20 05:06:30 starvik Exp $
- *
+/*
  *  linux/arch/cris/entry.S
  *
  *  Copyright (C) 2000, 2001, 2002 Axis Communications AB
  *
  *  Authors:	Bjorn Wesen (bjornw@axis.com)
- *
- *  $Log: entry.S,v $
- *  Revision 1.28  2005/06/20 05:06:30  starvik
- *  Remove unnecessary diff to kernel.org tree
- *
- *  Revision 1.27  2005/03/04 08:16:16  starvik
- *  Merge of Linux 2.6.11.
- *
- *  Revision 1.26  2005/01/11 13:49:47  starvik
- *  Added NMI handler.
- *
- *  Revision 1.25  2004/12/27 11:18:32  starvik
- *  Merge of Linux 2.6.10 (not functional yet).
- *
- *  Revision 1.24  2004/12/22 10:41:23  starvik
- *  Updates to make v10 compile with the latest SMP aware generic code (even
- *  though v10 will never have SMP).
- *
- *  Revision 1.23  2004/10/19 13:07:37  starvik
- *  Merge of Linux 2.6.9
- *
- *  Revision 1.22  2004/06/21 10:29:55  starvik
- *  Merge of Linux 2.6.7
- *
- *  Revision 1.21  2004/06/09 05:30:27  starvik
- *  Clean up multiple interrupt handling.
- *    Prevent interrupts from interrupting each other.
- *    Handle all active interrupts.
- *
- *  Revision 1.20  2004/06/08 08:55:32  starvik
- *  Removed unused code
- *
- *  Revision 1.19  2004/06/04 11:56:15  starvik
- *  Implemented page table lookup for refills in assembler for improved performance.
- *
- *  Revision 1.18  2004/05/11 12:28:25  starvik
- *  Merge of Linux 2.6.6
- *
- *  Revision 1.17  2003/09/11 07:29:49  starvik
- *  Merge of Linux 2.6.0-test5
- *
- *  Revision 1.16  2003/07/04 08:27:41  starvik
- *  Merge of Linux 2.5.74
- *
- *  Revision 1.15  2003/04/09 07:32:55  starvik
- *  resume should return task_struct, not thread_info
- *
- *  Revision 1.14  2003/04/09 05:20:44  starvik
- *  Merge of Linux 2.5.67
- *
- *  Revision 1.13  2002/12/11 15:42:02  starvik
- *  Extracted v10 (ETRAX 100LX) specific stuff from arch/cris/kernel/*.c
- *
- *  Revision 1.12  2002/12/10 09:00:10  starvik
- *  Merge of Linux 2.5.51
- *
- *  Revision 1.11  2002/12/05 07:53:10  starvik
- *  Corrected constants used with btstq
- *
- *  Revision 1.10  2002/11/27 08:45:10  starvik
- *  pid is in task_struct, not thread_info
- *
- *  Revision 1.9  2002/11/26 09:52:05  starvik
- *  Added preemptive kernel scheduling (if CONFIG_PREEMPT)
- *
- *  Revision 1.8  2002/11/20 11:56:11  starvik
- *  Merge of Linux 2.5.48
- *
- *  Revision 1.7  2002/11/18 13:02:42  starvik
- *  Added fourth parameter to do_notify_resume
- *  Minor cleanup
- *
- *  Revision 1.6  2002/11/11 10:37:50  starvik
- *  Use new asm-offset defines
- *  Modified for new location of current->work etc
- *  Removed SYMBOL_NAME from syscalls
- *  Added some new syscalls
- *
- *  Revision 1.5  2002/11/05 06:45:11  starvik
- *  Merge of Linux 2.5.45
- *
- *  Revision 1.4  2002/02/05 15:41:31  bjornw
- *  Rewritten to conform better to current 2.5 code (similar to arch/i386)
- *
- *  Revision 1.3  2002/01/21 15:22:20  bjornw
- *  NICE_DOGGY fix from 2.4 arch/cris
- *
- *  Revision 1.37  2001/12/07 17:03:55  bjornw
- *  Call a c-hook called watchdog_bite_hook instead of show_registers directly
- *
- *  Revision 1.36  2001/11/22 13:36:36  bjornw
- *  * In ret_from_intr, check regs->dccr for usermode reentrance instead of
- *    DCCR explicitely (because the latter might not reflect current reality)
- *  * In mmu_bus_fault, set $r9 _after_ calling the C-code instead of before
- *    since $r9 is call-clobbered and is potentially needed afterwards
- *
- *  Revision 1.35  2001/10/30 17:10:15  bjornw
- *  Add some syscalls
- *
- *  Revision 1.34  2001/10/01 14:45:03  bjornw
- *  Removed underscores and added register prefixes
- *
- *  Revision 1.33  2001/08/21 13:48:01  jonashg
- *  Added fix by HP to avoid oops when doing a hard_reset_now.
- *
- *  Revision 1.32  2001/08/14 04:32:02  hp
- *  In _resume, add comment why R9 is saved; don't sound like it's call-saved.
- *
- *  Revision 1.31  2001/07/25 16:07:42  bjornw
- *  softirq_active/mask -> softirq_pending only
- *
- *  Revision 1.30  2001/07/05 01:03:32  hp
- *  - include asm/errno.h to get ENOSYS.
- *  - Use ENOSYS, not local constant LENOSYS; tweak comments.
- *  - Explain why .include, not #include is used.
- *  - Make oops-register-dump if watchdog bits and it's not expected.
- *  - Don't jsr, use jump _hard_reset_now, and skip spurious nop.
- *  - Use correct section attribute for section .rodata.
- *  - Adjust sys_ni_syscall fill number.
- *
- *  Revision 1.29  2001/06/25 14:07:00  hp
- *  	Fix review comment.
- *  	* head.S: Use IO_STATE, IO_FIELD and IO_MASK constructs instead of
- *  	magic numbers.  Add comment that -traditional must not be used.
- *  	* entry.S (SYMBOL_NAME): Change redefinition to use ## concatenation.
- *  	Correct and update comment.
- *  	* Makefile (.S.o): Don't use -traditional.  Add comment why the
- *  	toplevel rule can't be used (now that there's a reason).
- *
- *  Revision 1.28  2001/06/21 02:00:40  hp
- *  	* entry.S: Include asm/unistd.h.
- *  	(_sys_call_table): Use section .rodata, not .data.
- *  	(_kernel_thread): Move from...
- *  	* process.c: ... here.
- *  	* entryoffsets.c (VAL): Break out from...
- *  	(OF): Use VAL.
- *  	(LCLONE_VM): New asmified value from CLONE_VM.
- *
- *  Revision 1.27  2001/05/29 11:25:27  markusl
- *  In case of "spurious_interrupt", do hard_reset instead of hanging system in a loop...
- *
- *  Revision 1.26  2001/05/15 15:46:03  bjornw
- *  Include config.h now that we use some CONFIG_ options
- *
- *  Revision 1.25  2001/05/15 05:38:47  hp
- *  Tweaked code in _ret_from_sys_call
- *
- *  Revision 1.24  2001/05/15 05:27:49  hp
- *  Save r9 in r1 over function call rather than on stack.
- *
- *  Revision 1.23  2001/05/15 05:10:00  hp
- *  Generate entry.S structure offsets from C
- *
- *  Revision 1.22  2001/04/17 13:58:39  orjanf
- *  * Renamed CONFIG_KGDB to CONFIG_ETRAX_KGDB.
- *
- *  Revision 1.21  2001/04/17 11:33:29  orjanf
- *  Updated according to review:
- *  * Included asm/sv_addr_ag.h to get macro for internal register.
- *  * Corrected comment regarding system call argument passing.
- *  * Removed comment about instruction being in a delay slot.
- *  * Added comment about SYMBOL_NAME macro.
- *
- *  Revision 1.20  2001/04/12 08:51:07  hp
- *  - Add entry for sys_fcntl64.  In fact copy last piece from i386 including ...
- *  - .rept to fill table to safe state with sys_ni_syscall.
- *
- *  Revision 1.19  2001/04/04 09:43:32  orjanf
- *  * Moved do_sigtrap from traps.c to entry.S.
- *  * LTASK_PID need not be global anymore.
- *
- *  Revision 1.18  2001/03/26 09:25:02  markusl
- *  Updated after review, should now handle USB interrupts correctly.
- *
- *  Revision 1.17  2001/03/21 16:12:55  bjornw
- *  * Always make room for the cpu status record in the frame, in order to
- *    use the same framelength and layout for both mmu busfaults and normal
- *    irqs. No need to check for the explicit CRIS_FRAME_FIXUP type anymore.
- *  * Fixed bug with using addq for popping the stack in the epilogue - it
- *    destroyed the flag register. Use instructions that don't affect the
- *    flag register instead.
- *  * Removed write to R_PORT_PA_DATA during spurious_interrupt
- *
- *  Revision 1.16  2001/03/20 19:43:02  bjornw
- *  * Get rid of esp0 setting
- *  * Give a 7th argument to a systemcall - the stackframe
- *
- *  Revision 1.15  2001/03/05 13:14:30  bjornw
- *  Spelling fix
- *
- *  Revision 1.14  2001/02/23 08:36:36  perf
- *  New ABI; syscallnr=r9, arg5=mof, arg6=srp.
- *  Corrected tracesys call check.
- *
- *  Revision 1.13  2001/02/15 08:40:55  perf
- *  H-P by way of perf;
- *  - (_system_call): Don't read system call function address into r1.
- *  - (RBFExit): There is no such thing as a null pop.  Adjust sp by addq.
- *  - (_system_call): Don't use r10 and don't save and restore it.
- *  - (THREAD_ESP0): New constant.
- *  - (_system_call): Inline set_esp0.
- *
- *  Revision 1.12  2001/01/31 17:56:25  orjanf
- *  Added definition of LTASK_PID and made it global.
- *
- *  Revision 1.11  2001/01/10 21:13:29  bjornw
- *  SYMBOL_NAME is defined incorrectly for the compiler options we currently use
- *
- *  Revision 1.10  2000/12/18 23:47:56  bjornw
- *  * Added syscall trace support (ptrace), completely untested of course
- *  * Removed redundant check for NULL entries in syscall_table
- *
- *  Revision 1.9  2000/11/21 16:40:51  bjornw
- *  * New frame type used when an SBFS frame needs to be popped without
- *    actually restarting the instruction
- *  * Enable interrupts in signal_return (they did so in x86, I hope it's a good
- *    idea)
- *
- *  Revision 1.8  2000/11/17 16:53:35  bjornw
- *  Added detection of frame-type in Rexit, so that mmu_bus_fault can
- *  use ret_from_intr in the return-path to check for signals (like SEGV)
- *  and other foul things that might have occurred during the fault.
- *
- *  Revision 1.7  2000/10/06 15:04:28  bjornw
- *  Include mof in register savings
- *
- *  Revision 1.6  2000/09/12 16:02:44  bjornw
- *  Linux-2.4.0-test7 derived updates
- *
- *  Revision 1.5  2000/08/17 15:35:15  bjornw
- *  2.4.0-test6 changed local_irq_count and friends API
- *
- *  Revision 1.4  2000/08/02 13:59:30  bjornw
- *  Removed olduname and uname from the syscall list
- *
- *  Revision 1.3  2000/07/31 13:32:58  bjornw
- *  * Export ret_from_intr
- *  * _resume updated (prev/last tjohejsan)
- *  * timer_interrupt obsolete
- *  * SIGSEGV detection in mmu_bus_fault temporarily disabled
- *
- *
  */
 
 /*
@@ -266,7 +23,7 @@
 #include <linux/linkage.h>
 #include <linux/sys.h>
 #include <asm/unistd.h>
-#include <asm/arch/sv_addr_ag.h>
+#include <arch/sv_addr_ag.h>
 #include <asm/errno.h>
 #include <asm/thread_info.h>
 #include <asm/asm-offsets.h>
@@ -500,9 +257,8 @@ _work_notifysig:
 	;; deal with pending signals and notify-resume requests
 
 	move.d	$r9, $r10	; do_notify_resume syscall/irq param
-	moveq	0, $r11		; oldset param - 0 in this case
-	move.d	$sp, $r12	; the regs param
-	move.d  $r1, $r13	; the thread_info_flags parameter
+	move.d	$sp, $r11	; the regs param
+	move.d  $r1, $r12	; the thread_info_flags parameter
 	jsr	do_notify_resume
 	
 	ba _Rexit
@@ -602,7 +358,7 @@ mmu_bus_fault:
 1:	btstq	12, $r1		   ; Refill?
 	bpl	2f
 	lsrq	24, $r1     ; Get PGD index (bit 24-31)
-	move.d  [per_cpu__current_pgd], $r0 ; PGD for the current process
+	move.d  [current_pgd], $r0 ; PGD for the current process
 	move.d	[$r0+$r1.d], $r0   ; Get PMD
 	beq	2f
 	nop
@@ -678,13 +434,19 @@ IRQ1_interrupt:
 	push	$r10		; push orig_r10
 	clear.d [$sp=$sp-4]	; frametype == 0, normal frame
 
+	;; If there is a glitch on the NMI pin shorter than ~100ns
+	;; (i.e. non-active by the time we get here) then the nmi_pin bit
+	;; in R_IRQ_MASK0_RD will already be cleared.  The watchdog_nmi bit
+	;; is cleared by us however (when feeding the watchdog), which is why
+	;; we use that bit to determine what brought us here.
+
 	move.d	[R_IRQ_MASK0_RD], $r1 ; External NMI or watchdog?
-	and.d   0x80000000, $r1
-	beq	wdog
+	and.d   (1<<30), $r1
+	bne	wdog
 	move.d  $sp, $r10
 	jsr	handle_nmi
 	setf m			; Enable NMI again
-	retb			; Return from NMI
+	ba	_Rexit		; Return the standard way
 	nop
 wdog:
 #if defined(CONFIG_ETRAX_WATCHDOG) && !defined(CONFIG_SVINTO_SIM)
@@ -774,23 +536,10 @@ multiple_interrupt:
 	movem	$r13, [$sp]
 	push	$r10		; push orig_r10
 	clear.d [$sp=$sp-4]	; frametype == 0, normal frame
-	
-	moveq	2, $r2		; first bit we care about is the timer0 irq
-	move.d	[R_VECT_MASK_RD], $r0; read the irq bits that triggered the multiple irq
-	move.d	$r0, [R_VECT_MASK_CLR] ; Block all active IRQs
-1:	
-	btst	$r2, $r0	; check for the irq given by bit r2
-	bpl	2f
-	move.d  $r2, $r10	; First argument to do_IRQ
-	move.d  $sp, $r11	; second argument to do_IRQ
-	jsr	do_IRQ
-2:
-	addq	1, $r2		; next vector bit
-	cmp.b	32, $r2
-	bne	1b	; process all irq's up to and including number 31
-	moveq	0, $r9  ; make ret_from_intr realise we came from an ir
-	
-	move.d	$r0, [R_VECT_MASK_SET] ;  Unblock all the IRQs
+
+	move.d  $sp, $r10
+	jsr	do_multiple_IRQ
+
 	jump    ret_from_intr
 
 do_sigtrap:
@@ -836,7 +585,14 @@ _ugdb_handle_breakpoint:
 	pop	$r0			; Restore r0. 
 	ba	do_sigtrap		; SIGTRAP the offending process. 
 	pop	$dccr			; Restore dccr in delay slot.
-	
+
+	.global kernel_execve
+kernel_execve:
+	move.d __NR_execve, $r9
+	break 13
+	ret
+	nop
+
 	.data
 
 hw_bp_trigs:
@@ -935,8 +691,8 @@ sys_call_table:
 	.long sys_uselib
 	.long sys_swapon
 	.long sys_reboot
-	.long old_readdir
-	.long old_mmap		/* 90 */
+	.long sys_old_readdir
+	.long sys_old_mmap	/* 90 */
 	.long sys_munmap
 	.long sys_truncate
 	.long sys_ftruncate
@@ -1135,6 +891,52 @@ sys_call_table:
 	.long sys_add_key
 	.long sys_request_key
 	.long sys_keyctl
+	.long sys_ioprio_set
+	.long sys_ioprio_get		/* 290 */
+	.long sys_inotify_init
+	.long sys_inotify_add_watch
+	.long sys_inotify_rm_watch
+	.long sys_migrate_pages
+	.long sys_openat		/* 295 */
+	.long sys_mkdirat
+	.long sys_mknodat
+	.long sys_fchownat
+	.long sys_futimesat
+	.long sys_fstatat64		/* 300 */
+	.long sys_unlinkat
+	.long sys_renameat
+	.long sys_linkat
+	.long sys_symlinkat
+	.long sys_readlinkat		/* 305 */
+	.long sys_fchmodat
+	.long sys_faccessat
+	.long sys_pselect6
+	.long sys_ppoll
+	.long sys_unshare		/* 310 */
+	.long sys_set_robust_list
+	.long sys_get_robust_list
+	.long sys_splice
+	.long sys_sync_file_range
+	.long sys_tee			/* 315 */
+	.long sys_vmsplice
+	.long sys_move_pages
+	.long sys_getcpu
+	.long sys_epoll_pwait
+	.long sys_utimensat		/* 320 */
+	.long sys_signalfd
+	.long sys_timerfd_create
+	.long sys_eventfd
+	.long sys_fallocate
+	.long sys_timerfd_settime	/* 325 */
+	.long sys_timerfd_gettime
+	.long sys_signalfd4
+	.long sys_eventfd2
+	.long sys_epoll_create1
+	.long sys_dup3			/* 330 */
+	.long sys_pipe2
+	.long sys_inotify_init1
+	.long sys_preadv
+	.long sys_pwritev
 
         /*
          * NOTE!! This doesn't have to be exact - we just have

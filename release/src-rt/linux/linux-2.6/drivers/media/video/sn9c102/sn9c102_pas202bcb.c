@@ -4,7 +4,6 @@
  *                                                                         *
  * Copyright (C) 2004 by Carlos Eduardo Medaglia Dyonisio                  *
  *                       <medaglia@undl.org.br>                            *
- *                       http://cadu.homelinux.com:8080/                   *
  *                                                                         *
  * Support for SN9C103, DAC Magnitude, exposure and green gain controls    *
  * added by Luca Risolia <luca.risolia@studio.unibo.it>                    *
@@ -26,6 +25,7 @@
 
 #include <linux/delay.h>
 #include "sn9c102_sensor.h"
+#include "sn9c102_devtable.h"
 
 
 static int pas202bcb_init(struct sn9c102_device* cam)

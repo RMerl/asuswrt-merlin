@@ -30,6 +30,7 @@
 #include <linux/ioport.h>
 #include <linux/delay.h>
 #include <linux/netdevice.h>
+#include <linux/slab.h>
 #include <asm/io.h>
 #include <linux/arcdevice.h>
 
@@ -468,7 +469,7 @@ static int __init com90xx_found(int ioaddr, int airq, u_long shmem, void __iomem
 		release_mem_region(shmem, MIRROR_SIZE);
 		return -ENOMEM;
 	}
-	lp = dev->priv;
+	lp = netdev_priv(dev);
 	/* find the real shared memory start/end points, including mirrors */
 
 	/* guess the actual size of one "memory mirror" - the number of
@@ -501,7 +502,7 @@ static int __init com90xx_found(int ioaddr, int airq, u_long shmem, void __iomem
 		goto err_free_dev;
 
 	/* reserve the irq */
-	if (request_irq(airq, &arcnet_interrupt, 0, "arcnet (90xx)", dev)) {
+	if (request_irq(airq, arcnet_interrupt, 0, "arcnet (90xx)", dev)) {
 		BUGMSG(D_NORMAL, "Can't get IRQ %d!\n", airq);
 		goto err_release_mem;
 	}
@@ -583,9 +584,9 @@ static void com90xx_setmask(struct net_device *dev, int mask)
  *
  * However, it does make sure the card is in a defined state.
  */
-int com90xx_reset(struct net_device *dev, int really_reset)
+static int com90xx_reset(struct net_device *dev, int really_reset)
 {
-	struct arcnet_local *lp = dev->priv;
+	struct arcnet_local *lp = netdev_priv(dev);
 	short ioaddr = dev->base_addr;
 
 	BUGMSG(D_INIT, "Resetting (status=%02Xh)\n", ASTATUS());
@@ -621,7 +622,7 @@ int com90xx_reset(struct net_device *dev, int really_reset)
 static void com90xx_copy_to_card(struct net_device *dev, int bufnum, int offset,
 				 void *buf, int count)
 {
-	struct arcnet_local *lp = dev->priv;
+	struct arcnet_local *lp = netdev_priv(dev);
 	void __iomem *memaddr = lp->mem_start + bufnum * 512 + offset;
 	TIME("memcpy_toio", count, memcpy_toio(memaddr, buf, count));
 }
@@ -630,7 +631,7 @@ static void com90xx_copy_to_card(struct net_device *dev, int bufnum, int offset,
 static void com90xx_copy_from_card(struct net_device *dev, int bufnum, int offset,
 				   void *buf, int count)
 {
-	struct arcnet_local *lp = dev->priv;
+	struct arcnet_local *lp = netdev_priv(dev);
 	void __iomem *memaddr = lp->mem_start + bufnum * 512 + offset;
 	TIME("memcpy_fromio", count, memcpy_fromio(buf, memaddr, count));
 }
@@ -656,7 +657,7 @@ static void __exit com90xx_exit(void)
 
 	for (count = 0; count < numcards; count++) {
 		dev = cards[count];
-		lp = dev->priv;
+		lp = netdev_priv(dev);
 
 		unregister_netdev(dev);
 		free_irq(dev->irq, dev);

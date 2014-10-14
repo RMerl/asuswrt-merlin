@@ -29,7 +29,6 @@ unsigned long hub_pio_map(cnodeid_t cnode, xwidgetnum_t widget,
 			  unsigned long xtalk_addr, size_t size)
 {
 	nasid_t nasid = COMPACT_TO_NASID_NODEID(cnode);
-	volatile hubreg_t junk;
 	unsigned i;
 
 	/* use small-window mapping if possible */
@@ -64,7 +63,7 @@ unsigned long hub_pio_map(cnodeid_t cnode, xwidgetnum_t widget,
 		 * after we write it.
 		 */
 		IIO_ITTE_PUT(nasid, i, HUB_PIO_MAP_TO_MEM, widget, xtalk_addr);
-		junk = HUB_L(IIO_ITTE_GET(nasid, i));
+		(void) HUB_L(IIO_ITTE_GET(nasid, i));
 
 		return NODE_BWIN_BASE(nasid, widget) + (xtalk_addr % BWIN_SIZE);
 	}
@@ -168,7 +167,7 @@ static void hub_set_piomode(nasid_t nasid)
 }
 
 /*
- * hub_pio_init  -  PIO-related hub initalization
+ * hub_pio_init  -  PIO-related hub initialization
  *
  * @hub:	hubinfo structure for our hub
  */

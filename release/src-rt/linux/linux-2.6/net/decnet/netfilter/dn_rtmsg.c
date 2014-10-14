@@ -14,6 +14,7 @@
  */
 #include <linux/module.h>
 #include <linux/skbuff.h>
+#include <linux/slab.h>
 #include <linux/init.h>
 #include <linux/netdevice.h>
 #include <linux/netfilter.h>
@@ -88,12 +89,12 @@ static void dnrmg_send_peer(struct sk_buff *skb)
 
 
 static unsigned int dnrmg_hook(unsigned int hook,
-			struct sk_buff **pskb,
+			struct sk_buff *skb,
 			const struct net_device *in,
 			const struct net_device *out,
 			int (*okfn)(struct sk_buff *))
 {
-	dnrmg_send_peer(*pskb);
+	dnrmg_send_peer(skb);
 	return NF_ACCEPT;
 }
 
@@ -115,18 +116,7 @@ static inline void dnrmg_receive_user_skb(struct sk_buff *skb)
 	RCV_SKB_FAIL(-EINVAL);
 }
 
-static void dnrmg_receive_user_sk(struct sock *sk, int len)
-{
-	struct sk_buff *skb;
-	unsigned int qlen = skb_queue_len(&sk->sk_receive_queue);
-
-	for (; qlen && (skb = skb_dequeue(&sk->sk_receive_queue)); qlen--) {
-		dnrmg_receive_user_skb(skb);
-		kfree_skb(skb);
-	}
-}
-
-static struct nf_hook_ops dnrmg_ops = {
+static struct nf_hook_ops dnrmg_ops __read_mostly = {
 	.hook		= dnrmg_hook,
 	.pf		= PF_DECnet,
 	.hooknum	= NF_DN_ROUTE,
@@ -137,8 +127,10 @@ static int __init dn_rtmsg_init(void)
 {
 	int rv = 0;
 
-	dnrmg = netlink_kernel_create(NETLINK_DNRTMSG, DNRNG_NLGRP_MAX,
-				      dnrmg_receive_user_sk, NULL, THIS_MODULE);
+	dnrmg = netlink_kernel_create(&init_net,
+				      NETLINK_DNRTMSG, DNRNG_NLGRP_MAX,
+				      dnrmg_receive_user_skb,
+				      NULL, THIS_MODULE);
 	if (dnrmg == NULL) {
 		printk(KERN_ERR "dn_rtmsg: Cannot create netlink socket");
 		return -ENOMEM;
@@ -146,7 +138,7 @@ static int __init dn_rtmsg_init(void)
 
 	rv = nf_register_hook(&dnrmg_ops);
 	if (rv) {
-		sock_release(dnrmg->sk_socket);
+		netlink_kernel_release(dnrmg);
 	}
 
 	return rv;
@@ -155,7 +147,7 @@ static int __init dn_rtmsg_init(void)
 static void __exit dn_rtmsg_fini(void)
 {
 	nf_unregister_hook(&dnrmg_ops);
-	sock_release(dnrmg->sk_socket);
+	netlink_kernel_release(dnrmg);
 }
 
 

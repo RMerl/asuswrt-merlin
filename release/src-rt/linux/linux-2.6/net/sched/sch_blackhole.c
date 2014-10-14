@@ -14,7 +14,6 @@
 #include <linux/module.h>
 #include <linux/types.h>
 #include <linux/kernel.h>
-#include <linux/netdevice.h>
 #include <linux/skbuff.h>
 #include <net/pkt_sched.h>
 
@@ -29,11 +28,12 @@ static struct sk_buff *blackhole_dequeue(struct Qdisc *sch)
 	return NULL;
 }
 
-static struct Qdisc_ops blackhole_qdisc_ops = {
+static struct Qdisc_ops blackhole_qdisc_ops __read_mostly = {
 	.id		= "blackhole",
 	.priv_size	= 0,
 	.enqueue	= blackhole_enqueue,
 	.dequeue	= blackhole_dequeue,
+	.peek		= blackhole_dequeue,
 	.owner		= THIS_MODULE,
 };
 

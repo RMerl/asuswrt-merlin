@@ -1,8 +1,6 @@
 /**
- * $Id: phram.c,v 1.16 2005/11/07 11:14:25 gleixner Exp $
- *
  * Copyright (c) ????		Jochen Schäuble <psionic@psionic.de>
- * Copyright (c) 2003-2004	Jörn Engel <joern@wh.fh-wedel.de>
+ * Copyright (c) 2003-2004	Joern Engel <joern@wh.fh-wedel.de>
  *
  * Usage:
  *
@@ -16,6 +14,9 @@
  * Example:
  *	phram=swap,64Mi,128Mi phram=test,900Mi,1Mi
  */
+
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+
 #include <asm/io.h>
 #include <linux/init.h>
 #include <linux/kernel.h>
@@ -24,8 +25,6 @@
 #include <linux/moduleparam.h>
 #include <linux/slab.h>
 #include <linux/mtd/mtd.h>
-
-#define ERROR(fmt, args...) printk(KERN_ERR "phram: " fmt , ## args)
 
 struct phram_mtd_list {
 	struct mtd_info mtd;
@@ -57,20 +56,21 @@ static int phram_erase(struct mtd_info *mtd, struct erase_info *instr)
 }
 
 static int phram_point(struct mtd_info *mtd, loff_t from, size_t len,
-		size_t *retlen, u_char **mtdbuf)
+		size_t *retlen, void **virt, resource_size_t *phys)
 {
-	u_char *start = mtd->priv;
-
 	if (from + len > mtd->size)
 		return -EINVAL;
 
-	*mtdbuf = start + from;
+	/* can we return a physical address with this driver? */
+	if (phys)
+		return -EINVAL;
+
+	*virt = mtd->priv + from;
 	*retlen = len;
 	return 0;
 }
 
-static void phram_unpoint(struct mtd_info *mtd, u_char *addr, loff_t from,
-		size_t len)
+static void phram_unpoint(struct mtd_info *mtd, loff_t from, size_t len)
 {
 }
 
@@ -117,6 +117,7 @@ static void unregister_devices(void)
 	list_for_each_entry_safe(this, safe, &phram_list, list) {
 		del_mtd_device(&this->mtd);
 		iounmap(this->mtd.priv);
+		kfree(this->mtd.name);
 		kfree(this);
 	}
 }
@@ -133,7 +134,7 @@ static int register_device(char *name, unsigned long start, unsigned long len)
 	ret = -EIO;
 	new->mtd.priv = ioremap(start, len);
 	if (!new->mtd.priv) {
-		ERROR("ioremap failed\n");
+		pr_err("ioremap failed\n");
 		goto out1;
 	}
 
@@ -153,7 +154,7 @@ static int register_device(char *name, unsigned long start, unsigned long len)
 
 	ret = -EAGAIN;
 	if (add_mtd_device(&new->mtd)) {
-		ERROR("Failed to register new device\n");
+		pr_err("Failed to register new device\n");
 		goto out2;
 	}
 
@@ -228,8 +229,8 @@ static inline void kill_final_newline(char *str)
 
 
 #define parse_err(fmt, args...) do {	\
-	ERROR(fmt , ## args);	\
-	return 0;		\
+	pr_err(fmt , ## args);	\
+	return 1;		\
 } while (0)
 
 static int phram_setup(const char *val, struct kernel_param *kp)
@@ -257,12 +258,8 @@ static int phram_setup(const char *val, struct kernel_param *kp)
 		parse_err("not enough arguments\n");
 
 	ret = parse_name(&name, token[0]);
-	if (ret == -ENOMEM)
-		parse_err("out of memory\n");
-	if (ret == -ENOSPC)
-		parse_err("name too long\n");
 	if (ret)
-		return 0;
+		return ret;
 
 	ret = parse_num32(&start, token[1]);
 	if (ret) {
@@ -276,13 +273,17 @@ static int phram_setup(const char *val, struct kernel_param *kp)
 		parse_err("illegal device length\n");
 	}
 
-	register_device(name, start, len);
+	ret = register_device(name, start, len);
+	if (!ret)
+		pr_info("%s device: %#x at %#x\n", name, len, start);
+	else
+		kfree(name);
 
-	return 0;
+	return ret;
 }
 
 module_param_call(phram, phram_setup, NULL, NULL, 000);
-MODULE_PARM_DESC(phram,"Memory region to map. \"map=<name>,<start>,<length>\"");
+MODULE_PARM_DESC(phram, "Memory region to map. \"phram=<name>,<start>,<length>\"");
 
 
 static int __init init_phram(void)
@@ -299,5 +300,5 @@ module_init(init_phram);
 module_exit(cleanup_phram);
 
 MODULE_LICENSE("GPL");
-MODULE_AUTHOR("Jörn Engel <joern@wh.fh-wedel.de>");
+MODULE_AUTHOR("Joern Engel <joern@wh.fh-wedel.de>");
 MODULE_DESCRIPTION("MTD driver for physical RAM");

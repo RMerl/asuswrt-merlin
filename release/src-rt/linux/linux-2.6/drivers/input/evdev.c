@@ -8,67 +8,103 @@
  * the Free Software Foundation.
  */
 
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+
 #define EVDEV_MINOR_BASE	64
 #define EVDEV_MINORS		32
-#define EVDEV_BUFFER_SIZE	64
+#define EVDEV_MIN_BUFFER_SIZE	64U
+#define EVDEV_BUF_PACKETS	8
 
 #include <linux/poll.h>
+#include <linux/sched.h>
 #include <linux/slab.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/input.h>
 #include <linux/major.h>
 #include <linux/device.h>
-#include <linux/compat.h>
+#include "input-compat.h"
 
 struct evdev {
-	int exist;
 	int open;
 	int minor;
-	char name[16];
 	struct input_handle handle;
 	wait_queue_head_t wait;
-	struct evdev_client *grab;
+	struct evdev_client __rcu *grab;
 	struct list_head client_list;
+	spinlock_t client_lock; /* protects client_list */
+	struct mutex mutex;
+	struct device dev;
+	bool exist;
 };
 
 struct evdev_client {
-	struct input_event buffer[EVDEV_BUFFER_SIZE];
-	int head;
-	int tail;
+	unsigned int head;
+	unsigned int tail;
+	spinlock_t buffer_lock; /* protects access to buffer, head and tail */
 	struct fasync_struct *fasync;
 	struct evdev *evdev;
 	struct list_head node;
+	unsigned int bufsize;
+	struct input_event buffer[];
 };
 
 static struct evdev *evdev_table[EVDEV_MINORS];
+static DEFINE_MUTEX(evdev_table_mutex);
 
-static void evdev_event(struct input_handle *handle, unsigned int type, unsigned int code, int value)
+static void evdev_pass_event(struct evdev_client *client,
+			     struct input_event *event)
+{
+	/* Interrupts are disabled, just acquire the lock. */
+	spin_lock(&client->buffer_lock);
+
+	client->buffer[client->head++] = *event;
+	client->head &= client->bufsize - 1;
+
+	if (unlikely(client->head == client->tail)) {
+		/*
+		 * This effectively "drops" all unconsumed events, leaving
+		 * EV_SYN/SYN_DROPPED plus the newest event in the queue.
+		 */
+		client->tail = (client->head - 2) & (client->bufsize - 1);
+
+		client->buffer[client->tail].time = event->time;
+		client->buffer[client->tail].type = EV_SYN;
+		client->buffer[client->tail].code = SYN_DROPPED;
+		client->buffer[client->tail].value = 0;
+	}
+
+	spin_unlock(&client->buffer_lock);
+
+	if (event->type == EV_SYN)
+		kill_fasync(&client->fasync, SIGIO, POLL_IN);
+}
+
+/*
+ * Pass incoming event to all connected clients.
+ */
+static void evdev_event(struct input_handle *handle,
+			unsigned int type, unsigned int code, int value)
 {
 	struct evdev *evdev = handle->private;
 	struct evdev_client *client;
+	struct input_event event;
 
-	if (evdev->grab) {
-		client = evdev->grab;
+	do_gettimeofday(&event.time);
+	event.type = type;
+	event.code = code;
+	event.value = value;
 
-		do_gettimeofday(&client->buffer[client->head].time);
-		client->buffer[client->head].type = type;
-		client->buffer[client->head].code = code;
-		client->buffer[client->head].value = value;
-		client->head = (client->head + 1) & (EVDEV_BUFFER_SIZE - 1);
+	rcu_read_lock();
 
-		kill_fasync(&client->fasync, SIGIO, POLL_IN);
-	} else
-		list_for_each_entry(client, &evdev->client_list, node) {
+	client = rcu_dereference(evdev->grab);
+	if (client)
+		evdev_pass_event(client, &event);
+	else
+		list_for_each_entry_rcu(client, &evdev->client_list, node)
+			evdev_pass_event(client, &event);
 
-			do_gettimeofday(&client->buffer[client->head].time);
-			client->buffer[client->head].type = type;
-			client->buffer[client->head].code = code;
-			client->buffer[client->head].value = value;
-			client->head = (client->head + 1) & (EVDEV_BUFFER_SIZE - 1);
-
-			kill_fasync(&client->fasync, SIGIO, POLL_IN);
-		}
+	rcu_read_unlock();
 
 	wake_up_interruptible(&evdev->wait);
 }
@@ -76,28 +112,132 @@ static void evdev_event(struct input_handle *handle, unsigned int type, unsigned
 static int evdev_fasync(int fd, struct file *file, int on)
 {
 	struct evdev_client *client = file->private_data;
-	int retval;
 
-	retval = fasync_helper(fd, file, on, &client->fasync);
-
-	return retval < 0 ? retval : 0;
+	return fasync_helper(fd, file, on, &client->fasync);
 }
 
 static int evdev_flush(struct file *file, fl_owner_t id)
 {
 	struct evdev_client *client = file->private_data;
 	struct evdev *evdev = client->evdev;
+	int retval;
+
+	retval = mutex_lock_interruptible(&evdev->mutex);
+	if (retval)
+		return retval;
 
 	if (!evdev->exist)
-		return -ENODEV;
+		retval = -ENODEV;
+	else
+		retval = input_flush_device(&evdev->handle, file);
 
-	return input_flush_device(&evdev->handle, file);
+	mutex_unlock(&evdev->mutex);
+	return retval;
 }
 
-static void evdev_free(struct evdev *evdev)
+static void evdev_free(struct device *dev)
 {
-	evdev_table[evdev->minor] = NULL;
+	struct evdev *evdev = container_of(dev, struct evdev, dev);
+
+	input_put_device(evdev->handle.dev);
 	kfree(evdev);
+}
+
+/*
+ * Grabs an event device (along with underlying input device).
+ * This function is called with evdev->mutex taken.
+ */
+static int evdev_grab(struct evdev *evdev, struct evdev_client *client)
+{
+	int error;
+
+	if (evdev->grab)
+		return -EBUSY;
+
+	error = input_grab_device(&evdev->handle);
+	if (error)
+		return error;
+
+	rcu_assign_pointer(evdev->grab, client);
+	synchronize_rcu();
+
+	return 0;
+}
+
+static int evdev_ungrab(struct evdev *evdev, struct evdev_client *client)
+{
+	if (evdev->grab != client)
+		return  -EINVAL;
+
+	rcu_assign_pointer(evdev->grab, NULL);
+	synchronize_rcu();
+	input_release_device(&evdev->handle);
+
+	return 0;
+}
+
+static void evdev_attach_client(struct evdev *evdev,
+				struct evdev_client *client)
+{
+	spin_lock(&evdev->client_lock);
+	list_add_tail_rcu(&client->node, &evdev->client_list);
+	spin_unlock(&evdev->client_lock);
+	synchronize_rcu();
+}
+
+static void evdev_detach_client(struct evdev *evdev,
+				struct evdev_client *client)
+{
+	spin_lock(&evdev->client_lock);
+	list_del_rcu(&client->node);
+	spin_unlock(&evdev->client_lock);
+	synchronize_rcu();
+}
+
+static int evdev_open_device(struct evdev *evdev)
+{
+	int retval;
+
+	retval = mutex_lock_interruptible(&evdev->mutex);
+	if (retval)
+		return retval;
+
+	if (!evdev->exist)
+		retval = -ENODEV;
+	else if (!evdev->open++) {
+		retval = input_open_device(&evdev->handle);
+		if (retval)
+			evdev->open--;
+	}
+
+	mutex_unlock(&evdev->mutex);
+	return retval;
+}
+
+static void evdev_close_device(struct evdev *evdev)
+{
+	mutex_lock(&evdev->mutex);
+
+	if (evdev->exist && !--evdev->open)
+		input_close_device(&evdev->handle);
+
+	mutex_unlock(&evdev->mutex);
+}
+
+/*
+ * Wake up users waiting for IO so they can disconnect from
+ * dead device.
+ */
+static void evdev_hangup(struct evdev *evdev)
+{
+	struct evdev_client *client;
+
+	spin_lock(&evdev->client_lock);
+	list_for_each_entry(client, &evdev->client_list, node)
+		kill_fasync(&client->fasync, SIGIO, POLL_HUP);
+	spin_unlock(&evdev->client_lock);
+
+	wake_up_interruptible(&evdev->wait);
 }
 
 static int evdev_release(struct inode *inode, struct file *file)
@@ -105,189 +245,150 @@ static int evdev_release(struct inode *inode, struct file *file)
 	struct evdev_client *client = file->private_data;
 	struct evdev *evdev = client->evdev;
 
-	if (evdev->grab == client) {
-		input_release_device(&evdev->handle);
-		evdev->grab = NULL;
-	}
+	mutex_lock(&evdev->mutex);
+	if (evdev->grab == client)
+		evdev_ungrab(evdev, client);
+	mutex_unlock(&evdev->mutex);
 
-	evdev_fasync(-1, file, 0);
-	list_del(&client->node);
+	evdev_detach_client(evdev, client);
 	kfree(client);
 
-	if (!--evdev->open) {
-		if (evdev->exist)
-			input_close_device(&evdev->handle);
-		else
-			evdev_free(evdev);
-	}
+	evdev_close_device(evdev);
+	put_device(&evdev->dev);
 
 	return 0;
 }
 
+static unsigned int evdev_compute_buffer_size(struct input_dev *dev)
+{
+	unsigned int n_events =
+		max(dev->hint_events_per_packet * EVDEV_BUF_PACKETS,
+		    EVDEV_MIN_BUFFER_SIZE);
+
+	return roundup_pow_of_two(n_events);
+}
+
 static int evdev_open(struct inode *inode, struct file *file)
 {
-	struct evdev_client *client;
 	struct evdev *evdev;
+	struct evdev_client *client;
 	int i = iminor(inode) - EVDEV_MINOR_BASE;
+	unsigned int bufsize;
 	int error;
 
 	if (i >= EVDEV_MINORS)
 		return -ENODEV;
 
+	error = mutex_lock_interruptible(&evdev_table_mutex);
+	if (error)
+		return error;
 	evdev = evdev_table[i];
+	if (evdev)
+		get_device(&evdev->dev);
+	mutex_unlock(&evdev_table_mutex);
 
-	if (!evdev || !evdev->exist)
+	if (!evdev)
 		return -ENODEV;
 
-	client = kzalloc(sizeof(struct evdev_client), GFP_KERNEL);
-	if (!client)
-		return -ENOMEM;
+	bufsize = evdev_compute_buffer_size(evdev->handle.dev);
 
-	client->evdev = evdev;
-	list_add_tail(&client->node, &evdev->client_list);
-
-	if (!evdev->open++ && evdev->exist) {
-		error = input_open_device(&evdev->handle);
-		if (error) {
-			list_del(&client->node);
-			kfree(client);
-			return error;
-		}
+	client = kzalloc(sizeof(struct evdev_client) +
+				bufsize * sizeof(struct input_event),
+			 GFP_KERNEL);
+	if (!client) {
+		error = -ENOMEM;
+		goto err_put_evdev;
 	}
+
+	client->bufsize = bufsize;
+	spin_lock_init(&client->buffer_lock);
+	client->evdev = evdev;
+	evdev_attach_client(evdev, client);
+
+	error = evdev_open_device(evdev);
+	if (error)
+		goto err_free_client;
 
 	file->private_data = client;
-	return 0;
-}
-
-#ifdef CONFIG_COMPAT
-
-struct input_event_compat {
-	struct compat_timeval time;
-	__u16 type;
-	__u16 code;
-	__s32 value;
-};
-
-/* Note to the author of this code: did it ever occur to
-   you why the ifdefs are needed? Think about it again. -AK */
-#ifdef CONFIG_X86_64
-#  define COMPAT_TEST is_compat_task()
-#elif defined(CONFIG_IA64)
-#  define COMPAT_TEST IS_IA32_PROCESS(task_pt_regs(current))
-#elif defined(CONFIG_S390)
-#  define COMPAT_TEST test_thread_flag(TIF_31BIT)
-#elif defined(CONFIG_MIPS)
-#  define COMPAT_TEST (current->thread.mflags & MF_32BIT_ADDR)
-#else
-#  define COMPAT_TEST test_thread_flag(TIF_32BIT)
-#endif
-
-static inline size_t evdev_event_size(void)
-{
-	return COMPAT_TEST ?
-		sizeof(struct input_event_compat) : sizeof(struct input_event);
-}
-
-static int evdev_event_from_user(const char __user *buffer, struct input_event *event)
-{
-	if (COMPAT_TEST) {
-		struct input_event_compat compat_event;
-
-		if (copy_from_user(&compat_event, buffer, sizeof(struct input_event_compat)))
-			return -EFAULT;
-
-		event->time.tv_sec = compat_event.time.tv_sec;
-		event->time.tv_usec = compat_event.time.tv_usec;
-		event->type = compat_event.type;
-		event->code = compat_event.code;
-		event->value = compat_event.value;
-
-	} else {
-		if (copy_from_user(event, buffer, sizeof(struct input_event)))
-			return -EFAULT;
-	}
+	nonseekable_open(inode, file);
 
 	return 0;
+
+ err_free_client:
+	evdev_detach_client(evdev, client);
+	kfree(client);
+ err_put_evdev:
+	put_device(&evdev->dev);
+	return error;
 }
 
-static int evdev_event_to_user(char __user *buffer, const struct input_event *event)
-{
-	if (COMPAT_TEST) {
-		struct input_event_compat compat_event;
-
-		compat_event.time.tv_sec = event->time.tv_sec;
-		compat_event.time.tv_usec = event->time.tv_usec;
-		compat_event.type = event->type;
-		compat_event.code = event->code;
-		compat_event.value = event->value;
-
-		if (copy_to_user(buffer, &compat_event, sizeof(struct input_event_compat)))
-			return -EFAULT;
-
-	} else {
-		if (copy_to_user(buffer, event, sizeof(struct input_event)))
-			return -EFAULT;
-	}
-
-	return 0;
-}
-
-#else
-
-static inline size_t evdev_event_size(void)
-{
-	return sizeof(struct input_event);
-}
-
-static int evdev_event_from_user(const char __user *buffer, struct input_event *event)
-{
-	if (copy_from_user(event, buffer, sizeof(struct input_event)))
-		return -EFAULT;
-
-	return 0;
-}
-
-static int evdev_event_to_user(char __user *buffer, const struct input_event *event)
-{
-	if (copy_to_user(buffer, event, sizeof(struct input_event)))
-		return -EFAULT;
-
-	return 0;
-}
-
-#endif /* CONFIG_COMPAT */
-
-static ssize_t evdev_write(struct file *file, const char __user *buffer, size_t count, loff_t *ppos)
+static ssize_t evdev_write(struct file *file, const char __user *buffer,
+			   size_t count, loff_t *ppos)
 {
 	struct evdev_client *client = file->private_data;
 	struct evdev *evdev = client->evdev;
 	struct input_event event;
-	int retval = 0;
+	int retval;
 
-	if (!evdev->exist)
-		return -ENODEV;
+	if (count < input_event_size())
+		return -EINVAL;
 
-	while (retval < count) {
+	retval = mutex_lock_interruptible(&evdev->mutex);
+	if (retval)
+		return retval;
 
-		if (evdev_event_from_user(buffer + retval, &event))
-			return -EFAULT;
-		input_inject_event(&evdev->handle, event.type, event.code, event.value);
-		retval += evdev_event_size();
+	if (!evdev->exist) {
+		retval = -ENODEV;
+		goto out;
 	}
 
+	do {
+		if (input_event_from_user(buffer + retval, &event)) {
+			retval = -EFAULT;
+			goto out;
+		}
+		retval += input_event_size();
+
+		input_inject_event(&evdev->handle,
+				   event.type, event.code, event.value);
+	} while (retval + input_event_size() <= count);
+
+ out:
+	mutex_unlock(&evdev->mutex);
 	return retval;
 }
 
-static ssize_t evdev_read(struct file *file, char __user *buffer, size_t count, loff_t *ppos)
+static int evdev_fetch_next_event(struct evdev_client *client,
+				  struct input_event *event)
+{
+	int have_event;
+
+	spin_lock_irq(&client->buffer_lock);
+
+	have_event = client->head != client->tail;
+	if (have_event) {
+		*event = client->buffer[client->tail++];
+		client->tail &= client->bufsize - 1;
+	}
+
+	spin_unlock_irq(&client->buffer_lock);
+
+	return have_event;
+}
+
+static ssize_t evdev_read(struct file *file, char __user *buffer,
+			  size_t count, loff_t *ppos)
 {
 	struct evdev_client *client = file->private_data;
 	struct evdev *evdev = client->evdev;
+	struct input_event event;
 	int retval;
 
-	if (count < evdev_event_size())
+	if (count < input_event_size())
 		return -EINVAL;
 
-	if (client->head == client->tail && evdev->exist && (file->f_flags & O_NONBLOCK))
+	if (client->head == client->tail && evdev->exist &&
+	    (file->f_flags & O_NONBLOCK))
 		return -EAGAIN;
 
 	retval = wait_event_interruptible(evdev->wait,
@@ -298,15 +399,13 @@ static ssize_t evdev_read(struct file *file, char __user *buffer, size_t count, 
 	if (!evdev->exist)
 		return -ENODEV;
 
-	while (client->head != client->tail && retval + evdev_event_size() <= count) {
+	while (retval + input_event_size() <= count &&
+	       evdev_fetch_next_event(client, &event)) {
 
-		struct input_event *event = (struct input_event *) client->buffer + client->tail;
-
-		if (evdev_event_to_user(buffer + retval, event))
+		if (input_event_to_user(buffer + retval, &event))
 			return -EFAULT;
 
-		client->tail = (client->tail + 1) & (EVDEV_BUFFER_SIZE - 1);
-		retval += evdev_event_size();
+		retval += input_event_size();
 	}
 
 	return retval;
@@ -317,16 +416,21 @@ static unsigned int evdev_poll(struct file *file, poll_table *wait)
 {
 	struct evdev_client *client = file->private_data;
 	struct evdev *evdev = client->evdev;
+	unsigned int mask;
 
 	poll_wait(file, &evdev->wait, wait);
-	return ((client->head == client->tail) ? 0 : (POLLIN | POLLRDNORM)) |
-		(evdev->exist ? 0 : (POLLHUP | POLLERR));
+
+	mask = evdev->exist ? POLLOUT | POLLWRNORM : POLLHUP | POLLERR;
+	if (client->head != client->tail)
+		mask |= POLLIN | POLLRDNORM;
+
+	return mask;
 }
 
 #ifdef CONFIG_COMPAT
 
 #define BITS_PER_LONG_COMPAT (sizeof(compat_long_t) * 8)
-#define NBITS_COMPAT(x) ((((x) - 1) / BITS_PER_LONG_COMPAT) + 1)
+#define BITS_TO_LONGS_COMPAT(x) ((((x) - 1) / BITS_PER_LONG_COMPAT) + 1)
 
 #ifdef __BIG_ENDIAN
 static int bits_to_user(unsigned long *bits, unsigned int maxbit,
@@ -335,7 +439,7 @@ static int bits_to_user(unsigned long *bits, unsigned int maxbit,
 	int len, i;
 
 	if (compat) {
-		len = NBITS_COMPAT(maxbit) * sizeof(compat_long_t);
+		len = BITS_TO_LONGS_COMPAT(maxbit) * sizeof(compat_long_t);
 		if (len > maxlen)
 			len = maxlen;
 
@@ -346,7 +450,7 @@ static int bits_to_user(unsigned long *bits, unsigned int maxbit,
 					 sizeof(compat_long_t)))
 				return -EFAULT;
 	} else {
-		len = NBITS(maxbit) * sizeof(long);
+		len = BITS_TO_LONGS(maxbit) * sizeof(long);
 		if (len > maxlen)
 			len = maxlen;
 
@@ -361,8 +465,8 @@ static int bits_to_user(unsigned long *bits, unsigned int maxbit,
 			unsigned int maxlen, void __user *p, int compat)
 {
 	int len = compat ?
-			NBITS_COMPAT(maxbit) * sizeof(compat_long_t) :
-			NBITS(maxbit) * sizeof(long);
+			BITS_TO_LONGS_COMPAT(maxbit) * sizeof(compat_long_t) :
+			BITS_TO_LONGS(maxbit) * sizeof(long);
 
 	if (len > maxlen)
 		len = maxlen;
@@ -376,7 +480,7 @@ static int bits_to_user(unsigned long *bits, unsigned int maxbit,
 static int bits_to_user(unsigned long *bits, unsigned int maxbit,
 			unsigned int maxlen, void __user *p, int compat)
 {
-	int len = NBITS(maxbit) * sizeof(long);
+	int len = BITS_TO_LONGS(maxbit) * sizeof(long);
 
 	if (len > maxlen)
 		len = maxlen;
@@ -400,8 +504,121 @@ static int str_to_user(const char *str, unsigned int maxlen, void __user *p)
 	return copy_to_user(p, str, len) ? -EFAULT : len;
 }
 
-static long evdev_ioctl_handler(struct file *file, unsigned int cmd,
-				void __user *p, int compat_mode)
+#define OLD_KEY_MAX	0x1ff
+static int handle_eviocgbit(struct input_dev *dev,
+			    unsigned int type, unsigned int size,
+			    void __user *p, int compat_mode)
+{
+	static unsigned long keymax_warn_time;
+	unsigned long *bits;
+	int len;
+
+	switch (type) {
+
+	case      0: bits = dev->evbit;  len = EV_MAX;  break;
+	case EV_KEY: bits = dev->keybit; len = KEY_MAX; break;
+	case EV_REL: bits = dev->relbit; len = REL_MAX; break;
+	case EV_ABS: bits = dev->absbit; len = ABS_MAX; break;
+	case EV_MSC: bits = dev->mscbit; len = MSC_MAX; break;
+	case EV_LED: bits = dev->ledbit; len = LED_MAX; break;
+	case EV_SND: bits = dev->sndbit; len = SND_MAX; break;
+	case EV_FF:  bits = dev->ffbit;  len = FF_MAX;  break;
+	case EV_SW:  bits = dev->swbit;  len = SW_MAX;  break;
+	default: return -EINVAL;
+	}
+
+	/*
+	 * Work around bugs in userspace programs that like to do
+	 * EVIOCGBIT(EV_KEY, KEY_MAX) and not realize that 'len'
+	 * should be in bytes, not in bits.
+	 */
+	if (type == EV_KEY && size == OLD_KEY_MAX) {
+		len = OLD_KEY_MAX;
+		if (printk_timed_ratelimit(&keymax_warn_time, 10 * 1000))
+			pr_warning("(EVIOCGBIT): Suspicious buffer size %u, "
+				   "limiting output to %zu bytes. See "
+				   "http://userweb.kernel.org/~dtor/eviocgbit-bug.html\n",
+				   OLD_KEY_MAX,
+				   BITS_TO_LONGS(OLD_KEY_MAX) * sizeof(long));
+	}
+
+	return bits_to_user(bits, len, size, p, compat_mode);
+}
+#undef OLD_KEY_MAX
+
+static int evdev_handle_get_keycode(struct input_dev *dev, void __user *p)
+{
+	struct input_keymap_entry ke = {
+		.len	= sizeof(unsigned int),
+		.flags	= 0,
+	};
+	int __user *ip = (int __user *)p;
+	int error;
+
+	/* legacy case */
+	if (copy_from_user(ke.scancode, p, sizeof(unsigned int)))
+		return -EFAULT;
+
+	error = input_get_keycode(dev, &ke);
+	if (error)
+		return error;
+
+	if (put_user(ke.keycode, ip + 1))
+		return -EFAULT;
+
+	return 0;
+}
+
+static int evdev_handle_get_keycode_v2(struct input_dev *dev, void __user *p)
+{
+	struct input_keymap_entry ke;
+	int error;
+
+	if (copy_from_user(&ke, p, sizeof(ke)))
+		return -EFAULT;
+
+	error = input_get_keycode(dev, &ke);
+	if (error)
+		return error;
+
+	if (copy_to_user(p, &ke, sizeof(ke)))
+		return -EFAULT;
+
+	return 0;
+}
+
+static int evdev_handle_set_keycode(struct input_dev *dev, void __user *p)
+{
+	struct input_keymap_entry ke = {
+		.len	= sizeof(unsigned int),
+		.flags	= 0,
+	};
+	int __user *ip = (int __user *)p;
+
+	if (copy_from_user(ke.scancode, p, sizeof(unsigned int)))
+		return -EFAULT;
+
+	if (get_user(ke.keycode, ip + 1))
+		return -EFAULT;
+
+	return input_set_keycode(dev, &ke);
+}
+
+static int evdev_handle_set_keycode_v2(struct input_dev *dev, void __user *p)
+{
+	struct input_keymap_entry ke;
+
+	if (copy_from_user(&ke, p, sizeof(ke)))
+		return -EFAULT;
+
+	if (ke.len > sizeof(ke.scancode))
+		return -EINVAL;
+
+	return input_set_keycode(dev, &ke);
+}
+
+static long evdev_do_ioctl(struct file *file, unsigned int cmd,
+			   void __user *p, int compat_mode)
 {
 	struct evdev_client *client = file->private_data;
 	struct evdev *evdev = client->evdev;
@@ -409,189 +626,199 @@ static long evdev_ioctl_handler(struct file *file, unsigned int cmd,
 	struct input_absinfo abs;
 	struct ff_effect effect;
 	int __user *ip = (int __user *)p;
-	int i, t, u, v;
+	unsigned int i, t, u, v;
+	unsigned int size;
 	int error;
 
-	if (!evdev->exist)
-		return -ENODEV;
-
+	/* First we check for fixed-length commands */
 	switch (cmd) {
 
-		case EVIOCGVERSION:
-			return put_user(EV_VERSION, ip);
+	case EVIOCGVERSION:
+		return put_user(EV_VERSION, ip);
 
-		case EVIOCGID:
-			if (copy_to_user(p, &dev->id, sizeof(struct input_id)))
-				return -EFAULT;
-			return 0;
+	case EVIOCGID:
+		if (copy_to_user(p, &dev->id, sizeof(struct input_id)))
+			return -EFAULT;
+		return 0;
 
-		case EVIOCGREP:
-			if (!test_bit(EV_REP, dev->evbit))
-				return -ENOSYS;
-			if (put_user(dev->rep[REP_DELAY], ip))
-				return -EFAULT;
-			if (put_user(dev->rep[REP_PERIOD], ip + 1))
-				return -EFAULT;
-			return 0;
+	case EVIOCGREP:
+		if (!test_bit(EV_REP, dev->evbit))
+			return -ENOSYS;
+		if (put_user(dev->rep[REP_DELAY], ip))
+			return -EFAULT;
+		if (put_user(dev->rep[REP_PERIOD], ip + 1))
+			return -EFAULT;
+		return 0;
 
-		case EVIOCSREP:
-			if (!test_bit(EV_REP, dev->evbit))
-				return -ENOSYS;
-			if (get_user(u, ip))
-				return -EFAULT;
-			if (get_user(v, ip + 1))
-				return -EFAULT;
+	case EVIOCSREP:
+		if (!test_bit(EV_REP, dev->evbit))
+			return -ENOSYS;
+		if (get_user(u, ip))
+			return -EFAULT;
+		if (get_user(v, ip + 1))
+			return -EFAULT;
 
-			input_inject_event(&evdev->handle, EV_REP, REP_DELAY, u);
-			input_inject_event(&evdev->handle, EV_REP, REP_PERIOD, v);
+		input_inject_event(&evdev->handle, EV_REP, REP_DELAY, u);
+		input_inject_event(&evdev->handle, EV_REP, REP_PERIOD, v);
 
-			return 0;
+		return 0;
 
-		case EVIOCGKEYCODE:
-			if (get_user(t, ip))
-				return -EFAULT;
+	case EVIOCRMFF:
+		return input_ff_erase(dev, (int)(unsigned long) p, file);
 
-			error = dev->getkeycode(dev, t, &v);
-			if (error)
-				return error;
+	case EVIOCGEFFECTS:
+		i = test_bit(EV_FF, dev->evbit) ?
+				dev->ff->max_effects : 0;
+		if (put_user(i, ip))
+			return -EFAULT;
+		return 0;
 
-			if (put_user(v, ip + 1))
-				return -EFAULT;
+	case EVIOCGRAB:
+		if (p)
+			return evdev_grab(evdev, client);
+		else
+			return evdev_ungrab(evdev, client);
 
-			return 0;
+	case EVIOCGKEYCODE:
+		return evdev_handle_get_keycode(dev, p);
 
-		case EVIOCSKEYCODE:
-			if (get_user(t, ip) || get_user(v, ip + 1))
-				return -EFAULT;
+	case EVIOCSKEYCODE:
+		return evdev_handle_set_keycode(dev, p);
 
-			return dev->setkeycode(dev, t, v);
+	case EVIOCGKEYCODE_V2:
+		return evdev_handle_get_keycode_v2(dev, p);
 
-		case EVIOCSFF:
-			if (copy_from_user(&effect, p, sizeof(effect)))
-				return -EFAULT;
+	case EVIOCSKEYCODE_V2:
+		return evdev_handle_set_keycode_v2(dev, p);
+	}
 
-			error = input_ff_upload(dev, &effect, file);
+	size = _IOC_SIZE(cmd);
 
-			if (put_user(effect.id, &(((struct ff_effect __user *)p)->id)))
-				return -EFAULT;
+	/* Now check variable-length commands */
+#define EVIOC_MASK_SIZE(nr)	((nr) & ~(_IOC_SIZEMASK << _IOC_SIZESHIFT))
+	switch (EVIOC_MASK_SIZE(cmd)) {
 
-			return error;
+	case EVIOCGPROP(0):
+		return bits_to_user(dev->propbit, INPUT_PROP_MAX,
+				    size, p, compat_mode);
 
-		case EVIOCRMFF:
-			return input_ff_erase(dev, (int)(unsigned long) p, file);
+	case EVIOCGKEY(0):
+		return bits_to_user(dev->key, KEY_MAX, size, p, compat_mode);
 
-		case EVIOCGEFFECTS:
-			i = test_bit(EV_FF, dev->evbit) ? dev->ff->max_effects : 0;
-			if (put_user(i, ip))
-				return -EFAULT;
-			return 0;
+	case EVIOCGLED(0):
+		return bits_to_user(dev->led, LED_MAX, size, p, compat_mode);
 
-		case EVIOCGRAB:
-			if (p) {
-				if (evdev->grab)
-					return -EBUSY;
-				if (input_grab_device(&evdev->handle))
-					return -EBUSY;
-				evdev->grab = client;
-				return 0;
-			} else {
-				if (evdev->grab != client)
-					return -EINVAL;
-				input_release_device(&evdev->handle);
-				evdev->grab = NULL;
-				return 0;
-			}
+	case EVIOCGSND(0):
+		return bits_to_user(dev->snd, SND_MAX, size, p, compat_mode);
 
-		default:
+	case EVIOCGSW(0):
+		return bits_to_user(dev->sw, SW_MAX, size, p, compat_mode);
 
-			if (_IOC_TYPE(cmd) != 'E')
+	case EVIOCGNAME(0):
+		return str_to_user(dev->name, size, p);
+
+	case EVIOCGPHYS(0):
+		return str_to_user(dev->phys, size, p);
+
+	case EVIOCGUNIQ(0):
+		return str_to_user(dev->uniq, size, p);
+
+	case EVIOC_MASK_SIZE(EVIOCSFF):
+		if (input_ff_effect_from_user(p, size, &effect))
+			return -EFAULT;
+
+		error = input_ff_upload(dev, &effect, file);
+
+		if (put_user(effect.id, &(((struct ff_effect __user *)p)->id)))
+			return -EFAULT;
+
+		return error;
+	}
+
+	/* Multi-number variable-length handlers */
+	if (_IOC_TYPE(cmd) != 'E')
+		return -EINVAL;
+
+	if (_IOC_DIR(cmd) == _IOC_READ) {
+
+		if ((_IOC_NR(cmd) & ~EV_MAX) == _IOC_NR(EVIOCGBIT(0, 0)))
+			return handle_eviocgbit(dev,
+						_IOC_NR(cmd) & EV_MAX, size,
+						p, compat_mode);
+
+		if ((_IOC_NR(cmd) & ~ABS_MAX) == _IOC_NR(EVIOCGABS(0))) {
+
+			if (!dev->absinfo)
 				return -EINVAL;
 
-			if (_IOC_DIR(cmd) == _IOC_READ) {
+			t = _IOC_NR(cmd) & ABS_MAX;
+			abs = dev->absinfo[t];
 
-				if ((_IOC_NR(cmd) & ~EV_MAX) == _IOC_NR(EVIOCGBIT(0,0))) {
+			if (copy_to_user(p, &abs, min_t(size_t,
+					size, sizeof(struct input_absinfo))))
+				return -EFAULT;
 
-					unsigned long *bits;
-					int len;
-
-					switch (_IOC_NR(cmd) & EV_MAX) {
-						case      0: bits = dev->evbit;  len = EV_MAX;  break;
-						case EV_KEY: bits = dev->keybit; len = KEY_MAX; break;
-						case EV_REL: bits = dev->relbit; len = REL_MAX; break;
-						case EV_ABS: bits = dev->absbit; len = ABS_MAX; break;
-						case EV_MSC: bits = dev->mscbit; len = MSC_MAX; break;
-						case EV_LED: bits = dev->ledbit; len = LED_MAX; break;
-						case EV_SND: bits = dev->sndbit; len = SND_MAX; break;
-						case EV_FF:  bits = dev->ffbit;  len = FF_MAX;  break;
-						case EV_SW:  bits = dev->swbit;  len = SW_MAX;  break;
-						default: return -EINVAL;
-					}
-					return bits_to_user(bits, len, _IOC_SIZE(cmd), p, compat_mode);
-				}
-
-				if (_IOC_NR(cmd) == _IOC_NR(EVIOCGKEY(0)))
-					return bits_to_user(dev->key, KEY_MAX, _IOC_SIZE(cmd),
-							    p, compat_mode);
-
-				if (_IOC_NR(cmd) == _IOC_NR(EVIOCGLED(0)))
-					return bits_to_user(dev->led, LED_MAX, _IOC_SIZE(cmd),
-							    p, compat_mode);
-
-				if (_IOC_NR(cmd) == _IOC_NR(EVIOCGSND(0)))
-					return bits_to_user(dev->snd, SND_MAX, _IOC_SIZE(cmd),
-							    p, compat_mode);
-
-				if (_IOC_NR(cmd) == _IOC_NR(EVIOCGSW(0)))
-					return bits_to_user(dev->sw, SW_MAX, _IOC_SIZE(cmd),
-							    p, compat_mode);
-
-				if (_IOC_NR(cmd) == _IOC_NR(EVIOCGNAME(0)))
-					return str_to_user(dev->name, _IOC_SIZE(cmd), p);
-
-				if (_IOC_NR(cmd) == _IOC_NR(EVIOCGPHYS(0)))
-					return str_to_user(dev->phys, _IOC_SIZE(cmd), p);
-
-				if (_IOC_NR(cmd) == _IOC_NR(EVIOCGUNIQ(0)))
-					return str_to_user(dev->uniq, _IOC_SIZE(cmd), p);
-
-				if ((_IOC_NR(cmd) & ~ABS_MAX) == _IOC_NR(EVIOCGABS(0))) {
-
-					t = _IOC_NR(cmd) & ABS_MAX;
-
-					abs.value = dev->abs[t];
-					abs.minimum = dev->absmin[t];
-					abs.maximum = dev->absmax[t];
-					abs.fuzz = dev->absfuzz[t];
-					abs.flat = dev->absflat[t];
-
-					if (copy_to_user(p, &abs, sizeof(struct input_absinfo)))
-						return -EFAULT;
-
-					return 0;
-				}
-
-			}
-
-			if (_IOC_DIR(cmd) == _IOC_WRITE) {
-
-				if ((_IOC_NR(cmd) & ~ABS_MAX) == _IOC_NR(EVIOCSABS(0))) {
-
-					t = _IOC_NR(cmd) & ABS_MAX;
-
-					if (copy_from_user(&abs, p, sizeof(struct input_absinfo)))
-						return -EFAULT;
-
-					dev->abs[t] = abs.value;
-					dev->absmin[t] = abs.minimum;
-					dev->absmax[t] = abs.maximum;
-					dev->absfuzz[t] = abs.fuzz;
-					dev->absflat[t] = abs.flat;
-
-					return 0;
-				}
-			}
+			return 0;
+		}
 	}
+
+	if (_IOC_DIR(cmd) == _IOC_WRITE) {
+
+		if ((_IOC_NR(cmd) & ~ABS_MAX) == _IOC_NR(EVIOCSABS(0))) {
+
+			if (!dev->absinfo)
+				return -EINVAL;
+
+			t = _IOC_NR(cmd) & ABS_MAX;
+
+			if (copy_from_user(&abs, p, min_t(size_t,
+					size, sizeof(struct input_absinfo))))
+				return -EFAULT;
+
+			if (size < sizeof(struct input_absinfo))
+				abs.resolution = 0;
+
+			/* We can't change number of reserved MT slots */
+			if (t == ABS_MT_SLOT)
+				return -EINVAL;
+
+			/*
+			 * Take event lock to ensure that we are not
+			 * changing device parameters in the middle
+			 * of event.
+			 */
+			spin_lock_irq(&dev->event_lock);
+			dev->absinfo[t] = abs;
+			spin_unlock_irq(&dev->event_lock);
+
+			return 0;
+		}
+	}
+
 	return -EINVAL;
+}
+
+static long evdev_ioctl_handler(struct file *file, unsigned int cmd,
+				void __user *p, int compat_mode)
+{
+	struct evdev_client *client = file->private_data;
+	struct evdev *evdev = client->evdev;
+	int retval;
+
+	retval = mutex_lock_interruptible(&evdev->mutex);
+	if (retval)
+		return retval;
+
+	if (!evdev->exist) {
+		retval = -ENODEV;
+		goto out;
+	}
+
+	retval = evdev_do_ioctl(file, cmd, p, compat_mode);
+
+ out:
+	mutex_unlock(&evdev->mutex);
+	return retval;
 }
 
 static long evdev_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
@@ -600,39 +827,93 @@ static long evdev_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 }
 
 #ifdef CONFIG_COMPAT
-static long evdev_ioctl_compat(struct file *file, unsigned int cmd, unsigned long arg)
+static long evdev_ioctl_compat(struct file *file,
+				unsigned int cmd, unsigned long arg)
 {
 	return evdev_ioctl_handler(file, cmd, compat_ptr(arg), 1);
 }
 #endif
 
 static const struct file_operations evdev_fops = {
-	.owner =	THIS_MODULE,
-	.read =		evdev_read,
-	.write =	evdev_write,
-	.poll =		evdev_poll,
-	.open =		evdev_open,
-	.release =	evdev_release,
-	.unlocked_ioctl = evdev_ioctl,
+	.owner		= THIS_MODULE,
+	.read		= evdev_read,
+	.write		= evdev_write,
+	.poll		= evdev_poll,
+	.open		= evdev_open,
+	.release	= evdev_release,
+	.unlocked_ioctl	= evdev_ioctl,
 #ifdef CONFIG_COMPAT
-	.compat_ioctl =	evdev_ioctl_compat,
+	.compat_ioctl	= evdev_ioctl_compat,
 #endif
-	.fasync =	evdev_fasync,
-	.flush =	evdev_flush
+	.fasync		= evdev_fasync,
+	.flush		= evdev_flush,
+	.llseek		= no_llseek,
 };
 
+static int evdev_install_chrdev(struct evdev *evdev)
+{
+	/*
+	 * No need to do any locking here as calls to connect and
+	 * disconnect are serialized by the input core
+	 */
+	evdev_table[evdev->minor] = evdev;
+	return 0;
+}
+
+static void evdev_remove_chrdev(struct evdev *evdev)
+{
+	/*
+	 * Lock evdev table to prevent race with evdev_open()
+	 */
+	mutex_lock(&evdev_table_mutex);
+	evdev_table[evdev->minor] = NULL;
+	mutex_unlock(&evdev_table_mutex);
+}
+
+/*
+ * Mark device non-existent. This disables writes, ioctls and
+ * prevents new users from opening the device. Already posted
+ * blocking reads will stay, however new ones will fail.
+ */
+static void evdev_mark_dead(struct evdev *evdev)
+{
+	mutex_lock(&evdev->mutex);
+	evdev->exist = false;
+	mutex_unlock(&evdev->mutex);
+}
+
+static void evdev_cleanup(struct evdev *evdev)
+{
+	struct input_handle *handle = &evdev->handle;
+
+	evdev_mark_dead(evdev);
+	evdev_hangup(evdev);
+	evdev_remove_chrdev(evdev);
+
+	/* evdev is marked dead so no one else accesses evdev->open */
+	if (evdev->open) {
+		input_flush_device(handle, NULL);
+		input_close_device(handle);
+	}
+}
+
+/*
+ * Create new evdev device. Note that input core serializes calls
+ * to connect and disconnect so we don't need to lock evdev_table here.
+ */
 static int evdev_connect(struct input_handler *handler, struct input_dev *dev,
 			 const struct input_device_id *id)
 {
 	struct evdev *evdev;
-	struct class_device *cdev;
-	dev_t devt;
 	int minor;
 	int error;
 
-	for (minor = 0; minor < EVDEV_MINORS && evdev_table[minor]; minor++);
+	for (minor = 0; minor < EVDEV_MINORS; minor++)
+		if (!evdev_table[minor])
+			break;
+
 	if (minor == EVDEV_MINORS) {
-		printk(KERN_ERR "evdev: no more free evdev devices\n");
+		pr_err("no more free evdev devices\n");
 		return -ENFILE;
 	}
 
@@ -641,69 +922,56 @@ static int evdev_connect(struct input_handler *handler, struct input_dev *dev,
 		return -ENOMEM;
 
 	INIT_LIST_HEAD(&evdev->client_list);
+	spin_lock_init(&evdev->client_lock);
+	mutex_init(&evdev->mutex);
 	init_waitqueue_head(&evdev->wait);
 
-	evdev->exist = 1;
+	dev_set_name(&evdev->dev, "event%d", minor);
+	evdev->exist = true;
 	evdev->minor = minor;
-	evdev->handle.dev = dev;
-	evdev->handle.name = evdev->name;
+
+	evdev->handle.dev = input_get_device(dev);
+	evdev->handle.name = dev_name(&evdev->dev);
 	evdev->handle.handler = handler;
 	evdev->handle.private = evdev;
-	sprintf(evdev->name, "event%d", minor);
 
-	evdev_table[minor] = evdev;
-
-	devt = MKDEV(INPUT_MAJOR, EVDEV_MINOR_BASE + minor),
-
-	cdev = class_device_create(&input_class, &dev->cdev, devt,
-				   dev->cdev.dev, evdev->name);
-	if (IS_ERR(cdev)) {
-		error = PTR_ERR(cdev);
-		goto err_free_evdev;
-	}
-
-	/* temporary symlink to keep userspace happy */
-	error = sysfs_create_link(&input_class.subsys.kobj,
-				  &cdev->kobj, evdev->name);
-	if (error)
-		goto err_cdev_destroy;
+	evdev->dev.devt = MKDEV(INPUT_MAJOR, EVDEV_MINOR_BASE + minor);
+	evdev->dev.class = &input_class;
+	evdev->dev.parent = &dev->dev;
+	evdev->dev.release = evdev_free;
+	device_initialize(&evdev->dev);
 
 	error = input_register_handle(&evdev->handle);
 	if (error)
-		goto err_remove_link;
+		goto err_free_evdev;
+
+	error = evdev_install_chrdev(evdev);
+	if (error)
+		goto err_unregister_handle;
+
+	error = device_add(&evdev->dev);
+	if (error)
+		goto err_cleanup_evdev;
 
 	return 0;
 
- err_remove_link:
-	sysfs_remove_link(&input_class.subsys.kobj, evdev->name);
- err_cdev_destroy:
-	class_device_destroy(&input_class, devt);
+ err_cleanup_evdev:
+	evdev_cleanup(evdev);
+ err_unregister_handle:
+	input_unregister_handle(&evdev->handle);
  err_free_evdev:
-	kfree(evdev);
-	evdev_table[minor] = NULL;
+	put_device(&evdev->dev);
 	return error;
 }
 
 static void evdev_disconnect(struct input_handle *handle)
 {
 	struct evdev *evdev = handle->private;
-	struct evdev_client *client;
 
+	device_del(&evdev->dev);
+	evdev_cleanup(evdev);
 	input_unregister_handle(handle);
-
-	sysfs_remove_link(&input_class.subsys.kobj, evdev->name);
-	class_device_destroy(&input_class,
-			MKDEV(INPUT_MAJOR, EVDEV_MINOR_BASE + evdev->minor));
-	evdev->exist = 0;
-
-	if (evdev->open) {
-		input_flush_device(handle, NULL);
-		input_close_device(handle);
-		list_for_each_entry(client, &evdev->client_list, node)
-			kill_fasync(&client->fasync, SIGIO, POLL_HUP);
-		wake_up_interruptible(&evdev->wait);
-	} else
-		evdev_free(evdev);
+	put_device(&evdev->dev);
 }
 
 static const struct input_device_id evdev_ids[] = {
@@ -714,13 +982,13 @@ static const struct input_device_id evdev_ids[] = {
 MODULE_DEVICE_TABLE(input, evdev_ids);
 
 static struct input_handler evdev_handler = {
-	.event =	evdev_event,
-	.connect =	evdev_connect,
-	.disconnect =	evdev_disconnect,
-	.fops =		&evdev_fops,
-	.minor =	EVDEV_MINOR_BASE,
-	.name =		"evdev",
-	.id_table =	evdev_ids,
+	.event		= evdev_event,
+	.connect	= evdev_connect,
+	.disconnect	= evdev_disconnect,
+	.fops		= &evdev_fops,
+	.minor		= EVDEV_MINOR_BASE,
+	.name		= "evdev",
+	.id_table	= evdev_ids,
 };
 
 static int __init evdev_init(void)

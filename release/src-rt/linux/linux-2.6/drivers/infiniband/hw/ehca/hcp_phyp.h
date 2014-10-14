@@ -78,12 +78,12 @@ static inline void hipz_galpa_store(struct h_galpa galpa, u32 offset, u64 value)
 	*(volatile u64 __force *)addr = value;
 }
 
-int hcp_galpas_ctor(struct h_galpas *galpas,
+int hcp_galpas_ctor(struct h_galpas *galpas, int is_user,
 		    u64 paddr_kernel, u64 paddr_user);
 
 int hcp_galpas_dtor(struct h_galpas *galpas);
 
-int hcall_map_page(u64 physaddr, u64 * mapaddr);
+u64 hcall_map_page(u64 physaddr);
 
 int hcall_unmap_page(u64 mapaddr);
 

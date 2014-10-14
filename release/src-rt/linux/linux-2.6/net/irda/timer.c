@@ -18,7 +18,7 @@
  *     published by the Free Software Foundation; either version 2 of
  *     the License, or (at your option) any later version.
  *
- *     Neither Dag Brattli nor University of Tromsø admit liability nor
+ *     Neither Dag Brattli nor University of TromsÃ¸ admit liability nor
  *     provide warranty for any of this software. This material is
  *     provided "AS-IS" and at no charge.
  *
@@ -59,7 +59,7 @@ void irlap_start_query_timer(struct irlap_cb *self, int S, int s)
 	 * slot time, plus add some extra time to properly receive the last
 	 * discovery packet (which is longer due to extra discovery info),
 	 * to avoid messing with for incomming connections requests and
-	 * to accomodate devices that perform discovery slower than us.
+	 * to accommodate devices that perform discovery slower than us.
 	 * Jean II */
 	timeout = ((sysctl_slot_timeout * HZ / 1000) * (S - s)
 		   + XIDEXTRA_TIMEOUT + SMALLBUSY_TIMEOUT);
@@ -219,7 +219,7 @@ static void irlap_backoff_timer_expired(void *data)
  *
  *
  */
-void irlap_media_busy_expired(void* data)
+static void irlap_media_busy_expired(void *data)
 {
 	struct irlap_cb *self = (struct irlap_cb *) data;
 
