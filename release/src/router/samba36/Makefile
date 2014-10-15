@@ -146,6 +146,10 @@ else
 	@install -D $(srcdir)/bin/smbpasswd $(INSTALLDIR)/usr/bin/smbpasswd
 endif
 
+	@install -D codepages/lowcase.dat $(INSTALLDIR)/etc/samba
+	@install -D codepages/upcase.dat $(INSTALLDIR)/etc/samba
+	@install -D codepages/valid.dat $(INSTALLDIR)/etc/samba
+
 #	@install -D $(srcdir)/bin/libsmbclient.so.0 $(INSTALLDIR)/usr/lib/libsmbclient.so.0
 #	@ln -sf libsmbclient.so.0 $(INSTALLDIR)/usr/lib/libsmbclient.so
 #	@install -D $(srcdir)/bin/libbigballofmud.so $(INSTALLDIR)/usr/lib/libbigballofmud.so
