@@ -109,8 +109,6 @@ apps: .conf
 		--without-ads \
 		--without-acl-support \
 		--without-ldap \
-		--without-cifsmount \
-		--without-cifsupcall \
 		--without-cluster-support \
 		--without-utmp \
 		--without-winbind \
