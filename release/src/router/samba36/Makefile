@@ -6,6 +6,8 @@ srcdir=source3
 SMBCFLAGS = $(EXTRACFLAGS) -O3 -ffunction-sections -fdata-sections
 SMBLDFLAGS = -ffunction-sections -fdata-sections -Wl,--gc-sections
 
+SMB_USE_MULTICALL=1
+
 ifeq ($(RTCONFIG_BCMARM), y)
 SMBCFLAGS += -DBCMARM
 SMBLDFLAGS += -lgcc_s
@@ -133,17 +135,29 @@ install: all
 	@install -d $(INSTALLDIR)/usr/bin/
 	@install -d $(INSTALLDIR)/usr/sbin/
 	@install -d $(INSTALLDIR)/usr/lib/
+ifeq ($(SMB_USE_MULTICALL), 1)
+	@install -D $(srcdir)/bin/samba_multicall $(INSTALLDIR)/usr/bin/samba_multicall
+	@ln -sf samba_multicall $(INSTALLDIR)/usr/sbin/smbd
+	@ln -sf samba_multicall $(INSTALLDIR)/usr/sbin/nmbd
+	@ln -sf samba_multicall $(INSTALLDIR)/usr/bin/smbpasswd
+else
 	@install -D $(srcdir)/bin/smbd $(INSTALLDIR)/usr/sbin/smbd
 	@install -D $(srcdir)/bin/nmbd $(INSTALLDIR)/usr/sbin/nmbd
 	@install -D $(srcdir)/bin/smbpasswd $(INSTALLDIR)/usr/bin/smbpasswd
+endif
+
 #	@install -D $(srcdir)/bin/libsmbclient.so.0 $(INSTALLDIR)/usr/lib/libsmbclient.so.0
 #	@ln -sf libsmbclient.so.0 $(INSTALLDIR)/usr/lib/libsmbclient.so
 #	@install -D $(srcdir)/bin/libbigballofmud.so $(INSTALLDIR)/usr/lib/libbigballofmud.so
 ###############################Charles Modify##########	
 
+ifeq ($(SMB_USE_MULTICALL), 1)
+	$(STRIP) -s $(INSTALLDIR)/usr/bin/samba_multicall
+else
 	$(STRIP) -s $(INSTALLDIR)/usr/sbin/smbd
 	$(STRIP) -s $(INSTALLDIR)/usr/sbin/nmbd
 	$(STRIP) -s $(INSTALLDIR)/usr/bin/smbpasswd
+endif
 #	$(STRIP) -s $(INSTALLDIR)/usr/lib/libsmbclient.so.0
 	# do not strip shared library, it will be optimized by libfoo.pl
 	# $(STRIP) -s $(INSTALLDIR)/usr/lib/libbigballofmud.so
