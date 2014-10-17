@@ -4381,7 +4381,7 @@ void generate_wl_para(int unit, int subunit)
 			nvram_set(strcat_r(prefix, "wmf_bss_enable", tmp), nvram_safe_get(strcat_r(prefix2, "wmf_bss_enable", tmp2)));
 			if (!nvram_match(strcat_r(prefix2, "macmode", tmp2), "disabled"))
 			{
-				nvram_set(strcat_r(prefix, "maclmode", tmp), nvram_safe_get(strcat_r(prefix2, "macmode", tmp2)));
+				nvram_set(strcat_r(prefix, "macmode", tmp), nvram_safe_get(strcat_r(prefix2, "macmode", tmp2)));
 				nvram_set(strcat_r(prefix, "maclist", tmp), nvram_safe_get(strcat_r(prefix2, "maclist", tmp2)));
 			}
 			else

@@ -137,8 +137,8 @@ install: all
 	@install -d $(INSTALLDIR)/usr/lib/
 ifeq ($(SMB_USE_MULTICALL), 1)
 	@install -D $(srcdir)/bin/samba_multicall $(INSTALLDIR)/usr/bin/samba_multicall
-	@ln -sf samba_multicall $(INSTALLDIR)/usr/sbin/smbd
-	@ln -sf samba_multicall $(INSTALLDIR)/usr/sbin/nmbd
+	@ln -sf ../bin/samba_multicall $(INSTALLDIR)/usr/sbin/smbd
+	@ln -sf ../bin/samba_multicall $(INSTALLDIR)/usr/sbin/nmbd
 	@ln -sf samba_multicall $(INSTALLDIR)/usr/bin/smbpasswd
 else
 	@install -D $(srcdir)/bin/smbd $(INSTALLDIR)/usr/sbin/smbd
