@@ -243,7 +243,7 @@ int mssl_init(char *cert, char *priv)
 	// Create the new CTX with the method 
 	// If server=1, use TLSv1_server_method() or SSLv23_server_method()
 	// else 	use TLSv1_client_method() or SSLv23_client_method()
-	ctx = SSL_CTX_new(server ? SSLv23_server_method() : SSLv23_client_method()); // SSLv23 for IE
+	ctx = SSL_CTX_new(server ? TLSv1_server_method() : TLSv1_client_method()); // TLS 1.0 min, SSL2 and 3 are unsafe
 
 	if (!ctx) {
 		fprintf(stderr,"[ssl_init] SSL_CTX_new() failed\n"); // tmp test
