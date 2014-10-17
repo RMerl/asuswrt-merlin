@@ -579,6 +579,10 @@ History
    - NEW: Added HID support to ARM kernel (AC56,AC68,AC87)
    - CHANGED: Reverted NAT loopback code to Asus's, since our own
               code is currently broken by recent FW code changes.
+   - CHANGED: Updated openssl to 1.0.0o, resolving a few security issues.
+   - CHANGED: Disabled SSLv2 and SSLv3 support for https access to the
+              router webui.  IE6 users, your time is up - upgrade.
+              TLS 1.0 is now the only supported method.
    - FIXED: DNSFilter client list dropdown would sometime be empty.
    - FIXED: DNS queries run on the router were forwarded to upstream
             nameservers instead of dnsmasq
