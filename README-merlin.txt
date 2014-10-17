@@ -577,16 +577,19 @@ History
           used by OpenWRT)
    - NEW: Added postconf and custom config support for snmpd.conf
    - NEW: Added HID support to ARM kernel (AC56,AC68,AC87)
-   - FIXED: minidlna didn't support inotify-based updates due to Asus
-            disabling threadsafe support in sqlite3.  I suspect this 
-            might cause the TrendMicro DPI engine to lose some performance
-            since it also uses sqlite (I assume that was the reason
-            why Asus disabled it in the first place) (Asus bug)
+   - CHANGED: Reverted NAT loopback code to Asus's, since our own
+              code is currently broken by recent FW code changes.
    - FIXED: DNSFilter client list dropdown would sometime be empty.
    - FIXED: DNS queries run on the router were forwarded to upstream
             nameservers instead of dnsmasq
    - FIXED: Re-added the USB HID kernel module needed for UPS monitoring
             (patch by ryzhov_al)
+   - FIXED: Incorrect top margin on some pages such as AiCloud, and
+            stretched font on the progress splash (Asus bug)
+   - FIXED: URL and keyword filtering wasn't working under certain
+            situations when CTF was enabled
+   - FIXED: Mac Filtering wasn't working with Guest networks
+            (Asus bug) (Patch by saintdev)
 
 
 376.47 (20-Sept-2014)
