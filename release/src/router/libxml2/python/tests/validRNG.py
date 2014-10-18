@@ -11,7 +11,7 @@ class ErrorHandler:
 
     def handler(self, msg, data):
         if data != ARG:
-            raise Exception, "Error handler did not receive correct argument"
+            raise Exception("Error handler did not receive correct argument")
         self.errors.append(msg)
 
 # Memory debug specific
@@ -49,7 +49,7 @@ ctxt.setValidityErrorHandler(e.handler, e.handler, ARG)
 doc = libxml2.parseDoc(valid)
 ret = doc.relaxNGValidateDoc(ctxt)
 if ret != 0 or e.errors:
-    print "error doing RelaxNG validation"
+    print("error doing RelaxNG validation")
     sys.exit(1)
 doc.freeDoc()
 
@@ -57,7 +57,7 @@ doc.freeDoc()
 doc = libxml2.parseDoc(invalid)
 ret = doc.relaxNGValidateDoc(ctxt)
 if ret == 0 or not e.errors:
-    print "Error: document supposed to be RelaxNG invalid"
+    print("Error: document supposed to be RelaxNG invalid")
     sys.exit(1)
 doc.freeDoc()
 
@@ -69,8 +69,8 @@ libxml2.relaxNGCleanupTypes()
 # Memory debug specific
 libxml2.cleanupParser()
 if libxml2.debugMemory(1) == 0:
-    print "OK"
+    print("OK")
 else:
-    print "Memory leak %d bytes" % (libxml2.debugMemory(1))
+    print("Memory leak %d bytes" % (libxml2.debugMemory(1)))
     libxml2.dumpMemory()
 

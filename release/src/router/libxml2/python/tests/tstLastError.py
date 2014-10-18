@@ -17,8 +17,8 @@ class TestCase(unittest.TestCase):
         if libxml2.debugMemory(1) != 0:
             libxml2.dumpMemory() 
             self.fail("Memory leak %d bytes" % (libxml2.debugMemory(1),))
-	else:
-	    print "OK"
+        else:
+            print("OK")
 
     def failUnlessXmlError(self,f,args,exc,domain,code,message,level,file,line):
         """Run function f, with arguments args and expect an exception exc;
@@ -27,19 +27,19 @@ class TestCase(unittest.TestCase):
         # disable the default error handler
         libxml2.registerErrorHandler(None,None)
         try:
-	    apply(f,args)
+            f(*args)
         except exc:
             e = libxml2.lastError()
             if e is None:
                 self.fail("lastError not set")
             if 0:
-                print "domain = ",e.domain()
-                print "code = ",e.code()
-                print "message =",repr(e.message())
-                print "level =",e.level()
-                print "file =",e.file()
-                print "line =",e.line()
-                print
+                print("domain = ",e.domain())
+                print("code = ",e.code())
+                print("message =",repr(e.message()))
+                print("level =",e.level())
+                print("file =",e.file())
+                print("line =",e.line())
+                print()
             self.failUnlessEqual(domain,e.domain())
             self.failUnlessEqual(code,e.code())
             self.failUnlessEqual(message,e.message())

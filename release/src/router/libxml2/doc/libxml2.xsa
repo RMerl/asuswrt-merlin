@@ -8,20 +8,95 @@
   </vendor>
   <product id="libxml2">
     <name>libxml2</name>
-    <version>2.7.5</version>
-    <last-release> Sep 24 2009</last-release>
+    <version>2.9.1</version>
+    <last-release> Apr 19 2013</last-release>
     <info-url>http://xmlsoft.org/</info-url>
-    <changes>   -  Bug Fixes:
-    Restore behavior of --with-threads without argument (Andrew W. Nosenko),
-    Fix memory leak when doc is NULL (Rob Richards),
-    595792 fixing a RelaxNG bug introduced in 2.7.4 (Daniel Veillard),
-    Fix a Relaxng bug raised by libvirt test suite (Daniel Veillard),
-    Fix a parsing problem with little data at startup (Daniel Veillard),
-    link python module with python library (Frederic Crozat),
-    594874 Forgot an fclose in xmllint (Daniel Veillard)
+    <changes>   -  Features:
+    Support for Python3 (Daniel Veillard),
+    Add xmlXPathSetContextNode and xmlXPathNodeEval (Alex Bligh)
   
-   -  Cleanup:
-    Adding symbols.xml to EXTRA_DIST (Daniel Veillard)
+   -  Documentation:
+    Add documentation for xmllint --xpath (Daniel Veillard),
+    Fix the URL of the SAX documentation from James (Daniel Veillard),
+    Fix spelling of "length". (Michael Wood)
+  
+   -  Portability:
+    Fix python bindings with versions older than 2.7 (Daniel Veillard),
+    rebuild docs:Makefile.am (Roumen Petrov),
+    elfgcchack.h after rebuild in doc (Roumen Petrov),
+    elfgcchack for buf module (Roumen Petrov),
+    Fix a uneeded and wrong extra link parameter (Daniel Veillard),
+    Few cleanup patches for Windows (Denis Pauk),
+    Fix rpmbuild --nocheck (Mark Salter),
+    Fix for win32/configure.js and WITH_THREAD_ALLOC (Daniel Richard),
+    Fix Broken multi-arch support in xml2-config (Daniel Veillard),
+    Fix a portability issue for GCC &lt; 3.4.0 (Daniel Veillard),
+    Windows build fixes (Daniel Richard),
+    Fix a thread portability problem (Friedrich Haubensak),
+    Downgrade autoconf requirement to 2.63 (Daniel Veillard)
+  
+   -  Bug Fixes:
+    Fix a linking error for python bindings (Daniel Veillard),
+    Fix a couple of return without value (Jüri Aedla),
+    Improve the hashing functions (Daniel Franke),
+    Improve handling of xmlStopParser() (Daniel Veillard),
+    Remove risk of lockup in dictionary initialization (Daniel Veillard),
+    Activate detection of encoding in external subset (Daniel Veillard),
+    Fix an output buffer flushing conversion bug (Mikhail Titov),
+    Fix an old bug in xmlSchemaValidateOneElement (Csaba László),
+    Fix configure cannot remove messages (Gilles Espinasse),
+    fix schema validation in combination with xsi:nil (Daniel Veillard),
+    xmlCtxtReadFile doesn't work with literal IPv6 URLs (Steve Wolf),
+    Fix a few problems with setEntityLoader (Alexey Neyman),
+    Detect excessive entities expansion upon replacement (Daniel Veillard),
+    Fix the flushing out of raw buffers on encoding conversions (Daniel,
+Veillard),
+    Fix some buffer conversion issues (Daniel Veillard),
+    When calling xmlNodeDump make sure we grow the buffer quickly (Daniel,
+Veillard),
+    Fix an error in the progressive DTD parsing code (Dan Winship),
+    xmllint should not load DTD by default when using the reader (Daniel,
+Veillard),
+    Try IBM-037 when looking for EBCDIC handlers (Petr Sumbera),
+    Fix potential out of bound access (Daniel Veillard),
+    Fix large parse of file from memory (Daniel Veillard),
+    Fix a bug in the nsclean option of the parser (Daniel Veillard),
+    Fix a regression in 2.9.0 breaking validation while streaming (Daniel,
+Veillard),
+    Remove potential calls to exit() (Daniel Veillard)
+  
+   -  Improvements:
+    Regenerated API, and testapi, rebuild documentation (Daniel Veillard),
+    Fix tree iterators broken by 2to3 script (Daniel Veillard),
+    update all tests for Python3 and Python2 (Daniel Veillard),
+    A few more fixes for python 3 affecting libxml2.py (Daniel Veillard),
+    Fix compilation on Python3 (Daniel Veillard),
+    Converting apibuild.py to python3 (Daniel Veillard),
+    First pass at starting porting to python3 (Daniel Veillard),
+    updated configure.in for python3 (Daniel Veillard),
+    Add support for xpathRegisterVariable in Python (Shaun McCance),
+    Added a regression tests from bug 694228 data (Daniel Veillard),
+    Cache presence of '&lt;' in entities content (Daniel Veillard),
+    Avoid extra processing on entities (Daniel Veillard),
+    Python binding for xmlRegisterInputCallback (Alexey Neyman),
+    Python bindings: DOM casts everything to xmlNode (Alexey Neyman),
+    Define LIBXML_THREAD_ALLOC_ENABLED via xmlversion.h (Tim Starling),
+    Adding streaming validation to runtest checks (Daniel Veillard),
+    Add a --pushsmall option to xmllint (Daniel Veillard)
+  
+   -  Cleanups:
+    Switched comment in file to UTF-8 encoding (Daniel Veillard),
+    Extend gitignore (Daniel Veillard),
+    Silent the new python test on input (Alexey Neyman),
+    Cleanup of a duplicate test (Daniel Veillard),
+    Cleanup on duplicate test expressions (Daniel Veillard),
+    Fix compiler warning after 153cf15905cf4ec080612ada6703757d10caba1e (Patrick,
+Gansterer),
+    Spec cleanups and a fix for multiarch support (Daniel Veillard),
+    Silence a clang warning (Daniel Veillard),
+    Cleanup the Copyright to be pure MIT Licence wording (Daniel Veillard),
+    rand_seed should be static in dict.c (Wouter Van Rooy),
+    Fix typos in parser comments (Jan Pokorný)
   
 
 </changes>

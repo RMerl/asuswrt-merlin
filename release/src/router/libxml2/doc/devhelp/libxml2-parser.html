@@ -220,6 +220,8 @@ void	<a href="#xmlSetExternalEntityLoader">xmlSetExternalEntityLoader</a>	(<a hr
     <a name="XML_WITH_DEBUG_MEM">XML_WITH_DEBUG_MEM</a> = 29
     <a name="XML_WITH_DEBUG_RUN">XML_WITH_DEBUG_RUN</a> = 30
     <a name="XML_WITH_ZLIB">XML_WITH_ZLIB</a> = 31
+    <a name="XML_WITH_ICU">XML_WITH_ICU</a> = 32
+    <a name="XML_WITH_LZMA">XML_WITH_LZMA</a> = 33
     <a name="XML_WITH_NONE">XML_WITH_NONE</a> = 99999 /*  just to be sure of allocation size */
 };
 </pre><p/>
@@ -306,7 +308,9 @@ void	<a href="#xmlSetExternalEntityLoader">xmlSetExternalEntityLoader</a>	(<a hr
     <a name="XML_PARSE_OLD10">XML_PARSE_OLD10</a> = 131072 /* parse using XML-1.0 before update 5 */
     <a name="XML_PARSE_NOBASEFIX">XML_PARSE_NOBASEFIX</a> = 262144 /* do not fixup XINCLUDE xml:base uris */
     <a name="XML_PARSE_HUGE">XML_PARSE_HUGE</a> = 524288 /* relax any hardcoded limit from the parser */
-    <a name="XML_PARSE_OLDSAX">XML_PARSE_OLDSAX</a> = 1048576 /*  parse using SAX2 interface from before 2.7.0 */
+    <a name="XML_PARSE_OLDSAX">XML_PARSE_OLDSAX</a> = 1048576 /* parse using SAX2 interface before 2.7.0 */
+    <a name="XML_PARSE_IGNORE_ENC">XML_PARSE_IGNORE_ENC</a> = 2097152 /* ignore internal document encoding hint */
+    <a name="XML_PARSE_BIG_LINES">XML_PARSE_BIG_LINES</a> = 4194304 /*  Store big lines numbers in text PSVI field */
 };
 </pre><p/>
 </div>
@@ -658,11 +662,11 @@ void	<a href="#xmlSetExternalEntityLoader">xmlSetExternalEntityLoader</a>	(<a hr
         <hr/>
         <div class="refsect2" lang="en"><h3><a name="xmlParserInputGrow"/>xmlParserInputGrow ()</h3><pre class="programlisting">int	xmlParserInputGrow		(<a href="libxml2-tree.html#xmlParserInputPtr">xmlParserInputPtr</a> in, <br/>					 int len)<br/>
 </pre><p>This function increase the input for the parser. It tries to preserve pointers to the input buffer, and keep already read data</p>
-<div class="variablelist"><table border="0"><col align="left"/><tbody><tr><td><span class="term"><i><tt>in</tt></i>:</span></td><td>an XML parser input</td></tr><tr><td><span class="term"><i><tt>len</tt></i>:</span></td><td>an indicative size for the lookahead</td></tr><tr><td><span class="term"><i><tt>Returns</tt></i>:</span></td><td>the number of xmlChars read, or -1 in case of error, 0 indicate the end of this entity</td></tr></tbody></table></div></div>
+<div class="variablelist"><table border="0"><col align="left"/><tbody><tr><td><span class="term"><i><tt>in</tt></i>:</span></td><td>an XML parser input</td></tr><tr><td><span class="term"><i><tt>len</tt></i>:</span></td><td>an indicative size for the lookahead</td></tr><tr><td><span class="term"><i><tt>Returns</tt></i>:</span></td><td>the amount of char read, or -1 in case of error, 0 indicate the end of this entity</td></tr></tbody></table></div></div>
         <hr/>
         <div class="refsect2" lang="en"><h3><a name="xmlParserInputRead"/>xmlParserInputRead ()</h3><pre class="programlisting">int	xmlParserInputRead		(<a href="libxml2-tree.html#xmlParserInputPtr">xmlParserInputPtr</a> in, <br/>					 int len)<br/>
-</pre><p>This function refresh the input for the parser. It doesn't try to preserve pointers to the input buffer, and discard already read data</p>
-<div class="variablelist"><table border="0"><col align="left"/><tbody><tr><td><span class="term"><i><tt>in</tt></i>:</span></td><td>an XML parser input</td></tr><tr><td><span class="term"><i><tt>len</tt></i>:</span></td><td>an indicative size for the lookahead</td></tr><tr><td><span class="term"><i><tt>Returns</tt></i>:</span></td><td>the number of xmlChars read, or -1 in case of error, 0 indicate the end of this entity</td></tr></tbody></table></div></div>
+</pre><p>This function was internal and is deprecated.</p>
+<div class="variablelist"><table border="0"><col align="left"/><tbody><tr><td><span class="term"><i><tt>in</tt></i>:</span></td><td>an XML parser input</td></tr><tr><td><span class="term"><i><tt>len</tt></i>:</span></td><td>an indicative size for the lookahead</td></tr><tr><td><span class="term"><i><tt>Returns</tt></i>:</span></td><td>-1 as this is an error to use it.</td></tr></tbody></table></div></div>
         <hr/>
         <div class="refsect2" lang="en"><h3><a name="xmlPedanticParserDefault"/>xmlPedanticParserDefault ()</h3><pre class="programlisting">int	xmlPedanticParserDefault	(int val)<br/>
 </pre><p>Set and return the previous value for enabling pedantic warnings.</p>

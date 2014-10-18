@@ -19,7 +19,7 @@ def checkNamespaceDefs(node, count):
     nsList = list(namespaceDefs(node))
     #print nsList
     if len(nsList) != count :
-        raise Exception, "Error: saw %d namespace declarations.  Expected %d" % (len(nsList), count)
+        raise Exception("Error: saw %d namespace declarations.  Expected %d" % (len(nsList), count))
     
 # Memory debug specific
 libxml2.debugMemory(1)
@@ -56,7 +56,7 @@ doc.freeDoc()
 # Memory debug specific
 libxml2.cleanupParser()
 if libxml2.debugMemory(1) == 0:
-    print "OK"
+    print("OK")
 else:
-    print "Memory leak %d bytes" % (libxml2.debugMemory(1))
+    print("Memory leak %d bytes" % (libxml2.debugMemory(1)))
     libxml2.dumpMemory()

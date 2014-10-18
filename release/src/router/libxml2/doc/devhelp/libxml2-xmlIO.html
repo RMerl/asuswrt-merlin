@@ -82,9 +82,11 @@ void *	<a href="#xmlIOHTTPOpen">xmlIOHTTPOpen</a>			(const char * filename);
 <a href="libxml2-xmlstring.html#xmlChar">xmlChar</a> *	<a href="#xmlNormalizeWindowsPath">xmlNormalizeWindowsPath</a>	(const <a href="libxml2-xmlstring.html#xmlChar">xmlChar</a> * path);
 typedef int <a href="#xmlInputReadCallback">xmlInputReadCallback</a>		(void * context, <br/>					 char * buffer, <br/>					 int len);
 <a href="libxml2-tree.html#xmlParserInputBufferPtr">xmlParserInputBufferPtr</a>	<a href="#xmlParserInputBufferCreateStatic">xmlParserInputBufferCreateStatic</a>	(const char * mem, <br/>							 int size, <br/>							 <a href="libxml2-encoding.html#xmlCharEncoding">xmlCharEncoding</a> enc);
+const <a href="libxml2-xmlstring.html#xmlChar">xmlChar</a> *	<a href="#xmlOutputBufferGetContent">xmlOutputBufferGetContent</a>	(<a href="libxml2-tree.html#xmlOutputBufferPtr">xmlOutputBufferPtr</a> out);
 int	<a href="#xmlIOHTTPClose">xmlIOHTTPClose</a>			(void * context);
 int	<a href="#xmlOutputBufferWriteEscape">xmlOutputBufferWriteEscape</a>	(<a href="libxml2-tree.html#xmlOutputBufferPtr">xmlOutputBufferPtr</a> out, <br/>					 const <a href="libxml2-xmlstring.html#xmlChar">xmlChar</a> * str, <br/>					 <a href="libxml2-encoding.html#xmlCharEncodingOutputFunc">xmlCharEncodingOutputFunc</a> escaping);
 <a href="libxml2-tree.html#xmlOutputBufferPtr">xmlOutputBufferPtr</a>	<a href="#xmlOutputBufferCreateFilename">xmlOutputBufferCreateFilename</a>	(const char * URI, <br/>							 <a href="libxml2-encoding.html#xmlCharEncodingHandlerPtr">xmlCharEncodingHandlerPtr</a> encoder, <br/>							 int compression);
+size_t	<a href="#xmlOutputBufferGetSize">xmlOutputBufferGetSize</a>		(<a href="libxml2-tree.html#xmlOutputBufferPtr">xmlOutputBufferPtr</a> out);
 void	<a href="#xmlCleanupOutputCallbacks">xmlCleanupOutputCallbacks</a>	(void);
 typedef void * <a href="#xmlInputOpenCallback">xmlInputOpenCallback</a>		(char const * filename);
 int	<a href="#xmlParserInputBufferRead">xmlParserInputBufferRead</a>	(<a href="libxml2-tree.html#xmlParserInputBufferPtr">xmlParserInputBufferPtr</a> in, <br/>					 int len);
@@ -254,6 +256,14 @@ void *	<a href="#xmlIOHTTPOpenW">xmlIOHTTPOpenW</a>			(const char * post_uri, <b
         <div class="refsect2" lang="en"><h3><a name="xmlOutputBufferFlush"/>xmlOutputBufferFlush ()</h3><pre class="programlisting">int	xmlOutputBufferFlush		(<a href="libxml2-tree.html#xmlOutputBufferPtr">xmlOutputBufferPtr</a> out)<br/>
 </pre><p>flushes the output I/O channel</p>
 <div class="variablelist"><table border="0"><col align="left"/><tbody><tr><td><span class="term"><i><tt>out</tt></i>:</span></td><td>a buffered output</td></tr><tr><td><span class="term"><i><tt>Returns</tt></i>:</span></td><td>the number of byte written or -1 in case of error.</td></tr></tbody></table></div></div>
+        <hr/>
+        <div class="refsect2" lang="en"><h3><a name="xmlOutputBufferGetContent"/>xmlOutputBufferGetContent ()</h3><pre class="programlisting">const <a href="libxml2-xmlstring.html#xmlChar">xmlChar</a> *	xmlOutputBufferGetContent	(<a href="libxml2-tree.html#xmlOutputBufferPtr">xmlOutputBufferPtr</a> out)<br/>
+</pre><p>Gives a pointer to the data currently held in the output buffer</p>
+<div class="variablelist"><table border="0"><col align="left"/><tbody><tr><td><span class="term"><i><tt>out</tt></i>:</span></td><td>an <a href="libxml2-tree.html#xmlOutputBufferPtr">xmlOutputBufferPtr</a></td></tr><tr><td><span class="term"><i><tt>Returns</tt></i>:</span></td><td>a pointer to the data or NULL in case of error</td></tr></tbody></table></div></div>
+        <hr/>
+        <div class="refsect2" lang="en"><h3><a name="xmlOutputBufferGetSize"/>xmlOutputBufferGetSize ()</h3><pre class="programlisting">size_t	xmlOutputBufferGetSize		(<a href="libxml2-tree.html#xmlOutputBufferPtr">xmlOutputBufferPtr</a> out)<br/>
+</pre><p>Gives the length of the data currently held in the output buffer</p>
+<div class="variablelist"><table border="0"><col align="left"/><tbody><tr><td><span class="term"><i><tt>out</tt></i>:</span></td><td>an <a href="libxml2-tree.html#xmlOutputBufferPtr">xmlOutputBufferPtr</a></td></tr><tr><td><span class="term"><i><tt>Returns</tt></i>:</span></td><td>0 in case or error or no data is held, the size otherwise</td></tr></tbody></table></div></div>
         <hr/>
         <div class="refsect2" lang="en"><h3><a name="xmlOutputBufferWrite"/>xmlOutputBufferWrite ()</h3><pre class="programlisting">int	xmlOutputBufferWrite		(<a href="libxml2-tree.html#xmlOutputBufferPtr">xmlOutputBufferPtr</a> out, <br/>					 int len, <br/>					 const char * buf)<br/>
 </pre><p>Write the content of the array in the output I/O buffer This routine handle the I18N transcoding from internal UTF-8 The buffer is lossless, i.e. will store in case of partial or delayed writes.</p>

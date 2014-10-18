@@ -13,7 +13,7 @@
   exclude-result-prefixes="exsl str">
 
   <!-- Generate XHTML-1.0 transitional -->
-  <xsl:output method="xml" encoding="ISO-8859-1" indent="yes"
+  <xsl:output method="xml" encoding="UTF-8" indent="yes"
       doctype-public="-//W3C//DTD XHTML 1.0 Transitional//EN"
       doctype-system="http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"/>
 
@@ -491,7 +491,7 @@ A:link, A:visited, A:active { text-decoration: underline }
   <xsl:template match="file">
     <xsl:variable name="name" select="@name"/>
     <xsl:variable name="title">Module <xsl:value-of select="$name"/> from <xsl:value-of select="/api/@name"/></xsl:variable>
-    <xsl:document href="{$htmldir}/libxml-{$name}.html" method="xml" encoding="ISO-8859-1"
+    <xsl:document href="{$htmldir}/libxml-{$name}.html" method="xml" encoding="UTF-8"
       doctype-public="-//W3C//DTD XHTML 1.0 Transitional//EN"
       doctype-system="http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 	    <xsl:call-template name="style"/>
@@ -564,7 +564,7 @@ A:link, A:visited, A:active { text-decoration: underline }
   <xsl:template name="mainpage">
     <xsl:param name="file" select="concat($htmldir, '/libxml-index.html')"/>
     <xsl:variable name="title">Reference Manual for <xsl:value-of select="/api/@name"/></xsl:variable>
-    <xsl:document href="{$file}" method="xml" encoding="ISO-8859-1"
+    <xsl:document href="{$file}" method="xml" encoding="UTF-8"
       doctype-public="-//W3C//DTD XHTML 1.0 Transitional//EN"
       doctype-system="http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
       <xsl:call-template name="style"/>

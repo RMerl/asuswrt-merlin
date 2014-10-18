@@ -1,17 +1,22 @@
 #!/usr/bin/python -u
 import sys
 import libxml2
-import StringIO
+try:
+    import StringIO
+    str_io = StringIO.StringIO
+except:
+    import io
+    str_io = io.StringIO
 
 def testSimpleBufferWrites():
-    f = StringIO.StringIO()
+    f = str_io()
     buf = libxml2.createOutputBuffer(f, "ISO-8859-1")
     buf.write(3, "foo")
     buf.writeString("bar")
     buf.close()
-    
+
     if f.getvalue() != "foobar":
-        print "Failed to save to StringIO"
+        print("Failed to save to StringIO")
         sys.exit(1)
 
 def testSaveDocToBuffer():
@@ -23,15 +28,15 @@ def testSaveDocToBuffer():
 <?xml version="1.0" encoding="UTF-8"?>
 <foo>Hello</foo>
 '''
-    f = StringIO.StringIO()
+    f = str_io()
     buf = libxml2.createOutputBuffer(f, 'UTF-8')
     doc = libxml2.parseDoc(input)
     doc.saveFileTo(buf, 'UTF-8')
     doc.freeDoc()
     if f.getvalue() != expected:
-        print 'xmlDoc.saveFileTo() call failed.'
-        print '     got: %s' % repr(f.getvalue())
-        print 'expected: %s' % repr(expected)
+        print('xmlDoc.saveFileTo() call failed.')
+        print('     got: %s' % repr(f.getvalue()))
+        print('expected: %s' % repr(expected))
         sys.exit(1)
 
 def testSaveFormattedDocToBuffer():
@@ -49,13 +54,13 @@ def testSaveFormattedDocToBuffer():
 ''')
     doc = libxml2.parseDoc(input)
     for i in (0, 1):
-        f = StringIO.StringIO()
+        f = str_io()
         buf = libxml2.createOutputBuffer(f, 'UTF-8')
         doc.saveFormatFileTo(buf, 'UTF-8', i)
         if f.getvalue() != expected[i]:
-            print 'xmlDoc.saveFormatFileTo() call failed.'
-            print '     got: %s' % repr(f.getvalue())
-            print 'expected: %s' % repr(expected[i])
+            print('xmlDoc.saveFormatFileTo() call failed.')
+            print('     got: %s' % repr(f.getvalue()))
+            print('expected: %s' % repr(expected[i]))
             sys.exit(1)
     doc.freeDoc()
 
@@ -69,22 +74,22 @@ def testSaveIntoOutputBuffer():
 <?xml version="1.0" encoding="UTF-8"?>
 <foo>Hello</foo>
 '''
-    f = StringIO.StringIO()
+    f = str_io()
     doc = libxml2.parseDoc(input)
     buf = libxml2.createOutputBuffer(f, 'UTF-8')
     buf.saveFileTo(doc, 'UTF-8')
     if f.getvalue() != expected:
-        print 'outputBuffer.saveFileTo() call failed.'
-        print '     got: %s' % repr(f.getvalue())
-        print 'expected: %s' % repr(expected)
+        print('outputBuffer.saveFileTo() call failed.')
+        print('     got: %s' % repr(f.getvalue()))
+        print('expected: %s' % repr(expected))
         sys.exit(1)
-    f = StringIO.StringIO()
+    f = str_io()
     buf = libxml2.createOutputBuffer(f, 'UTF-8')
     buf.saveFormatFileTo(doc, 'UTF-8', 1)
     if f.getvalue() != expected:
-        print 'outputBuffer.saveFormatFileTo() call failed.'
-        print '     got: %s' % repr(f.getvalue())
-        print 'expected: %s' % repr(expected)
+        print('outputBuffer.saveFormatFileTo() call failed.')
+        print('     got: %s' % repr(f.getvalue()))
+        print('expected: %s' % repr(expected))
         sys.exit(1)
     doc.freeDoc()
 
@@ -99,7 +104,7 @@ if __name__ == '__main__':
 
     libxml2.cleanupParser()
     if libxml2.debugMemory(1) == 0:
-        print "OK"
+        print("OK")
     else:
-        print "Memory leak %d bytes" % (libxml2.debugMemory(1))
+        print("Memory leak %d bytes" % (libxml2.debugMemory(1)))
         libxml2.dumpMemory()

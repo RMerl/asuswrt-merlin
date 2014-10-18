@@ -3,8 +3,13 @@
 # this tests the basic APIs of the XmlTextReader interface
 #
 import libxml2
-import StringIO
 import sys
+try:
+    import StringIO
+    str_io = StringIO.StringIO
+except:
+    import io
+    str_io = io.StringIO
 
 # Memory debug specific
 libxml2.debugMemory(1)
@@ -17,7 +22,7 @@ def myErrorHandler(arg,msg,severity,locator):
     global err
     err = err + "%s (%d) %s:%d:%s" % (arg,severity,locator.BaseURI(),locator.LineNumber(),msg)
 
-f = StringIO.StringIO("""<a xmlns="foo"><b b1="b1"/><c>content of c</a>""")
+f = str_io("""<a xmlns="foo"><b b1="b1"/><c>content of c</a>""")
 input = libxml2.inputBuffer(f)
 reader = input.newTextReader("test1")
 reader.SetErrorHandler(myErrorHandler,"-->")
@@ -25,14 +30,14 @@ while reader.Read() == 1:
     pass
 
 if err != expect:
-    print "error"
-    print "received %s" %(err)
-    print "expected %s" %(expect)
+    print("error")
+    print("received %s" %(err))
+    print("expected %s" %(expect))
     sys.exit(1)
 
 reader.SetErrorHandler(None,None)
 if reader.GetErrorHandler() != (None,None):
-    print "GetErrorHandler failed"
+    print("GetErrorHandler failed")
     sys.exit(1)
 
 #
@@ -45,7 +50,7 @@ del reader
 # Memory debug specific
 libxml2.cleanupParser()
 if libxml2.debugMemory(1) == 0:
-    print "OK"
+    print("OK")
 else:
-    print "Memory leak %d bytes" % (libxml2.debugMemory(1))
+    print("Memory leak %d bytes" % (libxml2.debugMemory(1)))
     libxml2.dumpMemory()

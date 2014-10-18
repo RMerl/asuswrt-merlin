@@ -27,21 +27,21 @@ ctxt = doc.xpathNewContext()
 libxml2.registerXPathFunction(ctxt._o, "foo", None, foo)
 res = ctxt.xpathEval("foo('hello')")
 if type(res) != type([]):
-    print "Failed to return a nodeset"
+    print("Failed to return a nodeset")
     sys.exit(1)
 if len(res) != 1:
-    print "Unexpected nodeset size"
+    print("Unexpected nodeset size")
     sys.exit(1)
 node = res[0]
 if node.name != 'p':
-    print "Unexpected nodeset element result"
+    print("Unexpected nodeset element result")
     sys.exit(1)
 node = node.children
 if node.type != 'text':
-    print "Unexpected nodeset element children type"
+    print("Unexpected nodeset element children type")
     sys.exit(1)
 if node.content != 'hello':
-    print "Unexpected nodeset element children content"
+    print("Unexpected nodeset element children content")
     sys.exit(1)
 
 doc.freeDoc()
@@ -51,7 +51,7 @@ ctxt.xpathFreeContext()
 #memory debug specific
 libxml2.cleanupParser()
 if libxml2.debugMemory(1) == 0:
-    print "OK"
+    print("OK")
 else:
-    print "Memory leak %d bytes" % (libxml2.debugMemory(1))
+    print("Memory leak %d bytes" % (libxml2.debugMemory(1)))
     libxml2.dumpMemory()

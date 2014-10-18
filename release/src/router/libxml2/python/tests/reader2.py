@@ -5,8 +5,13 @@
 import sys
 import glob
 import string
-import StringIO
 import libxml2
+try:
+    import StringIO
+    str_io = StringIO.StringIO
+except:
+    import io
+    str_io = io.StringIO
 
 # Memory debug specific
 libxml2.debugMemory(1)
@@ -30,7 +35,11 @@ libxml2.registerErrorHandler(callback, "")
 valid_files = glob.glob("../../test/valid/*.x*")
 valid_files.sort()
 for file in valid_files:
-    if string.find(file, "t8") != -1:
+    if file.find("t8") != -1:
+        continue
+    if file == "../../test/valid/rss.xml":
+        continue
+    if file == "../../test/valid/xlink.xml":
         continue
     reader = libxml2.newTextReaderFilename(file)
     #print "%s:" % (file)
@@ -39,11 +48,11 @@ for file in valid_files:
     while ret == 1:
         ret = reader.Read()
     if ret != 0:
-        print "Error parsing and validating %s" % (file)
+        print("Error parsing and validating %s" % (file))
 	#sys.exit(1)
 
 if err != expect:
-    print err
+    print(err)
 
 #
 # another separate test based on Stephane Bidoul one
@@ -79,7 +88,7 @@ expect="""10,test
 res=""
 err=""
 
-input = libxml2.inputBuffer(StringIO.StringIO(s))
+input = libxml2.inputBuffer(str_io(s))
 reader = input.newTextReader("test2")
 reader.SetParserProp(libxml2.PARSER_LOADDTD,1)
 reader.SetParserProp(libxml2.PARSER_DEFAULTATTRS,1)
@@ -89,12 +98,12 @@ while reader.Read() == 1:
     res = res + "%s,%s\n" % (reader.NodeType(),reader.Name())
 
 if res != expect:
-    print "test2 failed: unexpected output"
-    print res
+    print("test2 failed: unexpected output")
+    print(res)
     sys.exit(1)
 if err != "":
-    print "test2 failed: validation error found"
-    print err
+    print("test2 failed: validation error found")
+    print(err)
     sys.exit(1)
 
 #
@@ -124,12 +133,12 @@ res=""
 
 def myResolver(URL, ID, ctxt):
     if URL == "tst.ent":
-        return(StringIO.StringIO(tst_ent))
+        return(str_io(tst_ent))
     return None
 
 libxml2.setEntityLoader(myResolver)
 
-input = libxml2.inputBuffer(StringIO.StringIO(s))
+input = libxml2.inputBuffer(str_io(s))
 reader = input.newTextReader("test3")
 reader.SetParserProp(libxml2.PARSER_LOADDTD,1)
 reader.SetParserProp(libxml2.PARSER_DEFAULTATTRS,1)
@@ -139,12 +148,12 @@ while reader.Read() == 1:
     res = res + "%s %s\n" % (reader.NodeType(),reader.Name())
 
 if res != expect:
-    print "test3 failed: unexpected output"
-    print res
+    print("test3 failed: unexpected output")
+    print(res)
     sys.exit(1)
 if err != "":
-    print "test3 failed: validation error found"
-    print err
+    print("test3 failed: validation error found")
+    print(err)
     sys.exit(1)
 
 #
@@ -183,7 +192,7 @@ expect="""10 test 0
 res=""
 err=""
 
-input = libxml2.inputBuffer(StringIO.StringIO(s))
+input = libxml2.inputBuffer(str_io(s))
 reader = input.newTextReader("test4")
 reader.SetParserProp(libxml2.PARSER_LOADDTD,1)
 reader.SetParserProp(libxml2.PARSER_DEFAULTATTRS,1)
@@ -193,12 +202,12 @@ while reader.Read() == 1:
     res = res + "%s %s %d\n" % (reader.NodeType(),reader.Name(),reader.Depth())
 
 if res != expect:
-    print "test4 failed: unexpected output"
-    print res
+    print("test4 failed: unexpected output")
+    print(res)
     sys.exit(1)
 if err != "":
-    print "test4 failed: validation error found"
-    print err
+    print("test4 failed: validation error found")
+    print(err)
     sys.exit(1)
 
 #
@@ -228,18 +237,18 @@ expect="""10 test 0
 res=""
 err=""
 
-input = libxml2.inputBuffer(StringIO.StringIO(s))
+input = libxml2.inputBuffer(str_io(s))
 reader = input.newTextReader("test5")
 reader.SetParserProp(libxml2.PARSER_VALIDATE,1)
 while reader.Read() == 1:
     res = res + "%s %s %d\n" % (reader.NodeType(),reader.Name(),reader.Depth())
 
 if res != expect:
-    print "test5 failed: unexpected output"
-    print res
+    print("test5 failed: unexpected output")
+    print(res)
 if err != "":
-    print "test5 failed: validation error found"
-    print err
+    print("test5 failed: validation error found")
+    print(err)
 
 #
 # cleanup
@@ -250,7 +259,7 @@ del reader
 # Memory debug specific
 libxml2.cleanupParser()
 if libxml2.debugMemory(1) == 0:
-    print "OK"
+    print("OK")
 else:
-    print "Memory leak %d bytes" % (libxml2.debugMemory(1))
+    print("Memory leak %d bytes" % (libxml2.debugMemory(1)))
     libxml2.dumpMemory()

@@ -23,6 +23,25 @@
 #include <libxml/xmlschemas.h>
 #endif
 
+/*
+ * for older versions of Python, we don't use PyBytes, but keep PyString
+ * and don't use Capsule but CObjects
+ */
+#if PY_VERSION_HEX < 0x02070000
+#ifndef PyBytes_Check
+#define PyBytes_Check PyString_Check
+#define PyBytes_Size PyString_Size
+#define PyBytes_AsString PyString_AsString
+#define PyBytes_AS_STRING PyString_AS_STRING
+#define PyBytes_GET_SIZE PyString_GET_SIZE
+#endif
+#ifndef PyCapsule_New
+#define PyCapsule_New PyCObject_FromVoidPtrAndDesc
+#define PyCapsule_CheckExact PyCObject_Check
+#define PyCapsule_GetPointer(o, n) PyCObject_GetDesc((o))
+#endif
+#endif
+
 /**
  * ATTRIBUTE_UNUSED:
  *
@@ -150,8 +169,16 @@ typedef struct {
 } PyURI_Object;
 
 /* FILE * have their own internal representation */
+#if PY_MAJOR_VERSION >= 3
+FILE *libxml_PyFileGet(PyObject *f);
+void libxml_PyFileRelease(FILE *f);
+#define PyFile_Get(v) (((v) == Py_None) ? NULL : libxml_PyFileGet(v))
+#define PyFile_Release(f) libxml_PyFileRelease(f)
+#else
 #define PyFile_Get(v) (((v) == Py_None) ? NULL : \
 	(PyFile_Check(v) ? (PyFile_AsFile(v)) : stdout))
+#define PyFile_Release(f)
+#endif
 
 #ifdef LIBXML_SCHEMAS_ENABLED
 typedef struct {
@@ -247,3 +274,6 @@ PyObject * libxml_xmlSchemaValidCtxtPtrWrap(xmlSchemaValidCtxtPtr valid);
 #endif /* LIBXML_SCHEMAS_ENABLED */
 PyObject * libxml_xmlErrorPtrWrap(xmlErrorPtr error);
 PyObject * libxml_xmlSchemaSetValidErrors(PyObject * self, PyObject * args);
+PyObject * libxml_xmlRegisterInputCallback(PyObject *self, PyObject *args);
+PyObject * libxml_xmlUnregisterInputCallback(PyObject *self, PyObject *args);
+PyObject * libxml_xmlNodeRemoveNsDef(PyObject * self, PyObject * args);

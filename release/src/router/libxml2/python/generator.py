@@ -47,19 +47,19 @@ class docParser(xml.sax.handler.ContentHandler):
 
     def close(self):
         if debug:
-            print "close"
+            print("close")
 
     def getmethodname(self):
         return self._methodname
 
     def data(self, text):
         if debug:
-            print "data %s" % text
+            print("data %s" % text)
         self._data.append(text)
 
     def start(self, tag, attrs):
         if debug:
-            print "start %s, %s" % (tag, attrs)
+            print("start %s, %s" % (tag, attrs))
         if tag == 'function':
             self._data = []
             self.in_function = 1
@@ -69,9 +69,9 @@ class docParser(xml.sax.handler.ContentHandler):
             self.function_descr = None
             self.function_return = None
             self.function_file = None
-            if attrs.has_key('name'):
+            if 'name' in attrs.keys():
                 self.function = attrs['name']
-            if attrs.has_key('file'):
+            if 'file' in attrs.keys():
                 self.function_file = attrs['file']
         elif tag == 'cond':
             self._data = []
@@ -82,29 +82,29 @@ class docParser(xml.sax.handler.ContentHandler):
                 self.function_arg_name = None
                 self.function_arg_type = None
                 self.function_arg_info = None
-                if attrs.has_key('name'):
+                if 'name' in attrs.keys():
                     self.function_arg_name = attrs['name']
-                if attrs.has_key('type'):
+                if 'type' in attrs.keys():
                     self.function_arg_type = attrs['type']
-                if attrs.has_key('info'):
+                if 'info' in attrs.keys():
                     self.function_arg_info = attrs['info']
         elif tag == 'return':
             if self.in_function == 1:
                 self.function_return_type = None
                 self.function_return_info = None
                 self.function_return_field = None
-                if attrs.has_key('type'):
+                if 'type' in attrs.keys():
                     self.function_return_type = attrs['type']
-                if attrs.has_key('info'):
+                if 'info' in attrs.keys():
                     self.function_return_info = attrs['info']
-                if attrs.has_key('field'):
+                if 'field' in attrs.keys():
                     self.function_return_field = attrs['field']
         elif tag == 'enum':
             enum(attrs['type'],attrs['name'],attrs['value'])
 
     def end(self, tag):
         if debug:
-            print "end %s" % tag
+            print("end %s" % tag)
         if tag == 'function':
             if self.function != None:
                 function(self.function, self.function_descr,
@@ -133,13 +133,13 @@ class docParser(xml.sax.handler.ContentHandler):
                 str = str + c
             if self.in_function == 1:
                 self.function_cond = str
-                
-                
+
+
 def function(name, desc, ret, args, file, cond):
     functions[name] = (desc, ret, args, file, cond)
 
 def enum(type, name, value):
-    if not enums.has_key(type):
+    if type not in enums:
         enums[type] = {}
     enums[type][name] = value
 
@@ -339,6 +339,8 @@ def skip_function(name):
         return 1
     if name == "xmlValidateAttributeDecl":
         return 1
+    if name == "xmlPopInputCallbacks":
+        return 1
 
     return 0
 
@@ -351,10 +353,10 @@ def print_function_wrapper(name, output, export, include):
     try:
         (desc, ret, args, file, cond) = functions[name]
     except:
-        print "failed to get function %s infos"
+        print("failed to get function %s infos")
         return
 
-    if skipped_modules.has_key(file):
+    if file in skipped_modules:
         return 0
     if skip_function(name) == 1:
         return 0
@@ -368,16 +370,17 @@ def print_function_wrapper(name, output, export, include):
     c_args=""
     c_return=""
     c_convert=""
+    c_release=""
     num_bufs=0
     for arg in args:
         # This should be correct
         if arg[1][0:6] == "const ":
             arg[1] = arg[1][6:]
         c_args = c_args + "    %s %s;\n" % (arg[1], arg[0])
-        if py_types.has_key(arg[1]):
+        if arg[1] in py_types:
             (f, t, n, c) = py_types[arg[1]]
             if (f == 'z') and (name in foreign_encoding_args) and (num_bufs == 0):
-                f = 't#'
+                f = 's#'
             if f != None:
                 format = format + f
             if t != None:
@@ -388,17 +391,20 @@ def print_function_wrapper(name, output, export, include):
                    arg[1], t, arg[0])
             else:
                 format_args = format_args + ", &%s" % (arg[0])
-            if f == 't#':
+            if f == 's#':
                 format_args = format_args + ", &py_buffsize%d" % num_bufs
                 c_args = c_args + "    int py_buffsize%d;\n" % num_bufs
                 num_bufs = num_bufs + 1
             if c_call != "":
                 c_call = c_call + ", "
             c_call = c_call + "%s" % (arg[0])
+            if t == "File":
+                c_release = c_release + \
+		            "    PyFile_Release(%s);\n" % (arg[0])
         else:
-            if skipped_types.has_key(arg[1]):
+            if arg[1] in skipped_types:
                 return 0
-            if unknown_types.has_key(arg[1]):
+            if arg[1] in unknown_types:
                 lst = unknown_types[arg[1]]
                 lst.append(name)
             else:
@@ -420,25 +426,25 @@ def print_function_wrapper(name, output, export, include):
         else:
             c_call = "\n    %s(%s);\n" % (name, c_call)
         ret_convert = "    Py_INCREF(Py_None);\n    return(Py_None);\n"
-    elif py_types.has_key(ret[0]):
+    elif ret[0] in py_types:
         (f, t, n, c) = py_types[ret[0]]
-        c_return = "    %s c_retval;\n" % (ret[0])
+        c_return = c_return + "    %s c_retval;\n" % (ret[0])
         if file == "python_accessor" and ret[2] != None:
             c_call = "\n    c_retval = %s->%s;\n" % (args[0][0], ret[2])
         else:
             c_call = "\n    c_retval = %s(%s);\n" % (name, c_call)
         ret_convert = "    py_retval = libxml_%sWrap((%s) c_retval);\n" % (n,c)
         ret_convert = ret_convert + "    return(py_retval);\n"
-    elif py_return_types.has_key(ret[0]):
+    elif ret[0] in py_return_types:
         (f, t, n, c) = py_return_types[ret[0]]
-        c_return = "    %s c_retval;\n" % (ret[0])
+        c_return = c_return + "    %s c_retval;\n" % (ret[0])
         c_call = "\n    c_retval = %s(%s);\n" % (name, c_call)
         ret_convert = "    py_retval = libxml_%sWrap((%s) c_retval);\n" % (n,c)
         ret_convert = ret_convert + "    return(py_retval);\n"
     else:
-        if skipped_types.has_key(ret[0]):
+        if ret[0] in skipped_types:
             return 0
-        if unknown_types.has_key(ret[0]):
+        if ret[0] in unknown_types:
             lst = unknown_types[ret[0]]
             lst.append(name)
         else:
@@ -489,8 +495,10 @@ def print_function_wrapper(name, output, export, include):
         output.write("        return(NULL);\n")
     if c_convert != "":
         output.write(c_convert)
-                                                              
+
     output.write(c_call)
+    if c_release != "":
+        output.write(c_release)
     output.write(ret_convert)
     output.write("}\n\n")
     if cond != None and cond != "":
@@ -510,19 +518,19 @@ def buildStubs():
         (parser, target)  = getparser()
         parser.feed(data)
         parser.close()
-    except IOError, msg:
+    except IOError as msg:
         try:
             f = open(os.path.join(srcPref,"..","doc","libxml2-api.xml"))
             data = f.read()
             (parser, target)  = getparser()
             parser.feed(data)
             parser.close()
-        except IOError, msg:
-            print file, ":", msg
+        except IOError as msg:
+            print(file, ":", msg)
             sys.exit(1)
 
-    n = len(functions.keys())
-    print "Found %d functions in libxml2-api.xml" % (n)
+    n = len(list(functions.keys()))
+    print("Found %d functions in libxml2-api.xml" % (n))
 
     py_types['pythonObject'] = ('O', "pythonObject", "pythonObject", "pythonObject")
     try:
@@ -531,12 +539,12 @@ def buildStubs():
         (parser, target)  = getparser()
         parser.feed(data)
         parser.close()
-    except IOError, msg:
-        print file, ":", msg
+    except IOError as msg:
+        print(file, ":", msg)
 
 
-    print "Found %d functions in libxml2-python-api.xml" % (
-          len(functions.keys()) - n)
+    print("Found %d functions in libxml2-python-api.xml" % (
+          len(list(functions.keys())) - n))
     nb_wrap = 0
     failed = 0
     skipped = 0
@@ -553,7 +561,7 @@ def buildStubs():
     wrapper.write("#include <libxml/xmlschemastypes.h>\n")
     wrapper.write("#include \"libxml_wrap.h\"\n")
     wrapper.write("#include \"libxml2-py.h\"\n\n")
-    for function in functions.keys():
+    for function in sorted(functions.keys()):
         ret = print_function_wrapper(function, wrapper, export, include)
         if ret < 0:
             failed = failed + 1
@@ -567,12 +575,12 @@ def buildStubs():
     export.close()
     wrapper.close()
 
-    print "Generated %d wrapper functions, %d failed, %d skipped\n" % (nb_wrap,
-                                                              failed, skipped)
-    print "Missing type converters: "
-    for type in unknown_types.keys():
-        print "%s:%d " % (type, len(unknown_types[type])),
-    print
+    print("Generated %d wrapper functions, %d failed, %d skipped\n" % (nb_wrap,
+                                                              failed, skipped))
+    print("Missing type converters: ")
+    for type in list(unknown_types.keys()):
+        print("%s:%d " % (type, len(unknown_types[type])))
+    print()
 
 #######################################################################
 #
@@ -589,7 +597,7 @@ classes_type = {
     "xmlNodePtr": ("._o", "xmlNode(_obj=%s)", "xmlNode"),
     "xmlNode *": ("._o", "xmlNode(_obj=%s)", "xmlNode"),
     "xmlDocPtr": ("._o", "xmlDoc(_obj=%s)", "xmlDoc"),
-    "xmlDocPtr *": ("._o", "xmlDoc(_obj=%s)", "xmlDoc"),
+    "xmlDoc *": ("._o", "xmlDoc(_obj=%s)", "xmlDoc"),
     "htmlDocPtr": ("._o", "xmlDoc(_obj=%s)", "xmlDoc"),
     "htmlxmlDocPtr *": ("._o", "xmlDoc(_obj=%s)", "xmlDoc"),
     "xmlAttrPtr": ("._o", "xmlAttr(_obj=%s)", "xmlAttr"),
@@ -697,40 +705,40 @@ def nameFixup(name, classe, type, file):
     l = len(classe)
     if name[0:l] == listname:
         func = name[l:]
-        func = string.lower(func[0:1]) + func[1:]
+        func = func[0:1].lower() + func[1:]
     elif name[0:12] == "xmlParserGet" and file == "python_accessor":
         func = name[12:]
-        func = string.lower(func[0:1]) + func[1:]
+        func = func[0:1].lower() + func[1:]
     elif name[0:12] == "xmlParserSet" and file == "python_accessor":
         func = name[12:]
-        func = string.lower(func[0:1]) + func[1:]
+        func = func[0:1].lower() + func[1:]
     elif name[0:10] == "xmlNodeGet" and file == "python_accessor":
         func = name[10:]
-        func = string.lower(func[0:1]) + func[1:]
+        func = func[0:1].lower() + func[1:]
     elif name[0:9] == "xmlURIGet" and file == "python_accessor":
         func = name[9:]
-        func = string.lower(func[0:1]) + func[1:]
+        func = func[0:1].lower() + func[1:]
     elif name[0:9] == "xmlURISet" and file == "python_accessor":
         func = name[6:]
-        func = string.lower(func[0:1]) + func[1:]
+        func = func[0:1].lower() + func[1:]
     elif name[0:11] == "xmlErrorGet" and file == "python_accessor":
         func = name[11:]
-        func = string.lower(func[0:1]) + func[1:]
+        func = func[0:1].lower() + func[1:]
     elif name[0:17] == "xmlXPathParserGet" and file == "python_accessor":
         func = name[17:]
-        func = string.lower(func[0:1]) + func[1:]
+        func = func[0:1].lower() + func[1:]
     elif name[0:11] == "xmlXPathGet" and file == "python_accessor":
         func = name[11:]
-        func = string.lower(func[0:1]) + func[1:]
+        func = func[0:1].lower() + func[1:]
     elif name[0:11] == "xmlXPathSet" and file == "python_accessor":
         func = name[8:]
-        func = string.lower(func[0:1]) + func[1:]
+        func = func[0:1].lower() + func[1:]
     elif name[0:15] == "xmlOutputBuffer" and file != "python":
         func = name[15:]
-        func = string.lower(func[0:1]) + func[1:]
+        func = func[0:1].lower() + func[1:]
     elif name[0:20] == "xmlParserInputBuffer" and file != "python":
         func = name[20:]
-        func = string.lower(func[0:1]) + func[1:]
+        func = func[0:1].lower() + func[1:]
     elif name[0:9] == "xmlRegexp" and file == "xmlregexp":
         func = "regexp" + name[9:]
     elif name[0:6] == "xmlReg" and file == "xmlregexp":
@@ -745,19 +753,19 @@ def nameFixup(name, classe, type, file):
         func = name[9:]
     elif name[0:11] == "xmlACatalog":
         func = name[11:]
-        func = string.lower(func[0:1]) + func[1:]
+        func = func[0:1].lower() + func[1:]
     elif name[0:l] == classe:
         func = name[l:]
-        func = string.lower(func[0:1]) + func[1:]
+        func = func[0:1].lower() + func[1:]
     elif name[0:7] == "libxml_":
         func = name[7:]
-        func = string.lower(func[0:1]) + func[1:]
+        func = func[0:1].lower() + func[1:]
     elif name[0:6] == "xmlGet":
         func = name[6:]
-        func = string.lower(func[0:1]) + func[1:]
+        func = func[0:1].lower() + func[1:]
     elif name[0:3] == "xml":
         func = name[3:]
-        func = string.lower(func[0:1]) + func[1:]
+        func = func[0:1].lower() + func[1:]
     else:
         func = name
     if func[0:5] == "xPath":
@@ -795,11 +803,29 @@ def functionCompare(info1, info2):
         return 1
     return 0
 
+def cmp_to_key(mycmp):
+    'Convert a cmp= function into a key= function'
+    class K(object):
+        def __init__(self, obj, *args):
+            self.obj = obj
+        def __lt__(self, other):
+            return mycmp(self.obj, other.obj) < 0
+        def __gt__(self, other):
+            return mycmp(self.obj, other.obj) > 0
+        def __eq__(self, other):
+            return mycmp(self.obj, other.obj) == 0
+        def __le__(self, other):
+            return mycmp(self.obj, other.obj) <= 0
+        def __ge__(self, other):
+            return mycmp(self.obj, other.obj) >= 0
+        def __ne__(self, other):
+            return mycmp(self.obj, other.obj) != 0
+    return K
 def writeDoc(name, args, indent, output):
      if functions[name][0] is None or functions[name][0] == "":
          return
      val = functions[name][0]
-     val = string.replace(val, "NULL", "None")
+     val = val.replace("NULL", "None")
      output.write(indent)
      output.write('"""')
      while len(val) > 60:
@@ -807,7 +833,7 @@ def writeDoc(name, args, indent, output):
              val = val[1:]
              continue
          str = val[0:60]
-         i = string.rfind(str, " ")
+         i = str.rfind(" ")
          if i < 0:
              i = 60
          str = val[0:i]
@@ -856,14 +882,14 @@ def buildWrappers():
             if tinfo[2] == classe:
                 ctypes.append(type)
                 ctypes_processed[type] = ()
-    for type in classes_type.keys():
-        if ctypes_processed.has_key(type):
+    for type in sorted(classes_type.keys()):
+        if type in ctypes_processed:
             continue
         tinfo = classes_type[type]
-        if not classes_processed.has_key(tinfo[2]):
+        if tinfo[2] not in classes_processed:
             classes_list.append(tinfo[2])
             classes_processed[tinfo[2]] = ()
-            
+
         ctypes.append(type)
         ctypes_processed[type] = ()
 
@@ -912,9 +938,9 @@ def buildWrappers():
     txt.write("          Generated Classes for libxml2-python\n\n")
 
     txt.write("#\n# Global functions of the module\n#\n\n")
-    if function_classes.has_key("None"):
+    if "None" in function_classes:
         flist = function_classes["None"]
-        flist.sort(functionCompare)
+        flist = sorted(flist, key=cmp_to_key(functionCompare))
         oldfile = ""
         for info in flist:
             (index, func, name, ret, args, file) = info
@@ -934,11 +960,17 @@ def buildWrappers():
             writeDoc(name, args, '    ', classes)
 
             for arg in args:
-                if classes_type.has_key(arg[1]):
+                if arg[1] in classes_type:
                     classes.write("    if %s is None: %s__o = None\n" %
                                   (arg[0], arg[0]))
                     classes.write("    else: %s__o = %s%s\n" %
                                   (arg[0], arg[0], classes_type[arg[1]][0]))
+                if arg[1] in py_types:
+                    (f, t, n, c) = py_types[arg[1]]
+                    if t == "File":
+                        classes.write("    if %s is not None: %s.flush()\n" % (
+                                      arg[0], arg[0]))
+
             if ret[0] != "void":
                 classes.write("    ret = ")
             else:
@@ -949,26 +981,36 @@ def buildWrappers():
                 if n != 0:
                     classes.write(", ")
                 classes.write("%s" % arg[0])
-                if classes_type.has_key(arg[1]):
+                if arg[1] in classes_type:
                     classes.write("__o")
                 n = n + 1
             classes.write(")\n")
+
+# This may be needed to reposition the I/O, but likely to cause more harm
+# than good. Those changes in Python3 really break the model.
+#           for arg in args:
+#               if arg[1] in py_types:
+#                   (f, t, n, c) = py_types[arg[1]]
+#                   if t == "File":
+#                       classes.write("    if %s is not None: %s.seek(0,0)\n"%(
+#                                     arg[0], arg[0]))
+
             if ret[0] != "void":
-                if classes_type.has_key(ret[0]):
+                if ret[0] in classes_type:
                     #
                     # Raise an exception
                     #
-                    if functions_noexcept.has_key(name):
+                    if name in functions_noexcept:
                         classes.write("    if ret is None:return None\n")
-                    elif string.find(name, "URI") >= 0:
+                    elif name.find("URI") >= 0:
                         classes.write(
                         "    if ret is None:raise uriError('%s() failed')\n"
                                       % (name))
-                    elif string.find(name, "XPath") >= 0:
+                    elif name.find("XPath") >= 0:
                         classes.write(
                         "    if ret is None:raise xpathError('%s() failed')\n"
                                       % (name))
-                    elif string.find(name, "Parse") >= 0:
+                    elif name.find("Parse") >= 0:
                         classes.write(
                         "    if ret is None:raise parserError('%s() failed')\n"
                                       % (name))
@@ -988,7 +1030,7 @@ def buildWrappers():
         if classname == "None":
             pass
         else:
-            if classes_ancestor.has_key(classname):
+            if classname in classes_ancestor:
                 txt.write("\n\nClass %s(%s)\n" % (classname,
                           classes_ancestor[classname]))
                 classes.write("class %s(%s):\n" % (classname,
@@ -996,12 +1038,11 @@ def buildWrappers():
                 classes.write("    def __init__(self, _obj=None):\n")
                 if classes_ancestor[classname] == "xmlCore" or \
                    classes_ancestor[classname] == "xmlNode":
-                    classes.write("        if type(_obj).__name__ != ")
-                    classes.write("'PyCObject':\n")
-                    classes.write("            raise TypeError, ")
-                    classes.write("'%s needs a PyCObject argument'\n" % \
+                    classes.write("        if checkWrapper(_obj) != 0:")
+                    classes.write("            raise TypeError")
+                    classes.write("('%s got a wrong wrapper object type')\n" % \
                                 classname)
-                if reference_keepers.has_key(classname):
+                if classname in reference_keepers:
                     rlist = reference_keepers[classname]
                     for ref in rlist:
                         classes.write("        self.%s = None\n" % ref[1])
@@ -1012,20 +1053,20 @@ def buildWrappers():
                    classes_ancestor[classname] == "xmlNode":
                     classes.write("    def __repr__(self):\n")
                     format = "<%s (%%s) object at 0x%%x>" % (classname)
-                    classes.write("        return \"%s\" %% (self.name, long(pos_id (self)))\n\n" % (
+                    classes.write("        return \"%s\" %% (self.name, int(pos_id (self)))\n\n" % (
                                   format))
             else:
                 txt.write("Class %s()\n" % (classname))
                 classes.write("class %s:\n" % (classname))
                 classes.write("    def __init__(self, _obj=None):\n")
-                if reference_keepers.has_key(classname):
+                if classname in reference_keepers:
                     list = reference_keepers[classname]
                     for ref in list:
                         classes.write("        self.%s = None\n" % ref[1])
                 classes.write("        if _obj != None:self._o = _obj;return\n")
                 classes.write("        self._o = None\n\n")
             destruct=None
-            if classes_destructors.has_key(classname):
+            if classname in classes_destructors:
                 classes.write("    def __del__(self):\n")
                 classes.write("        if self._o != None:\n")
                 classes.write("            libxml2mod.%s(self._o)\n" %
@@ -1033,7 +1074,7 @@ def buildWrappers():
                 classes.write("        self._o = None\n\n")
                 destruct=classes_destructors[classname]
             flist = function_classes[classname]
-            flist.sort(functionCompare)
+            flist = sorted(flist, key=cmp_to_key(functionCompare))
             oldfile = ""
             for info in flist:
                 (index, func, name, ret, args, file) = info
@@ -1065,7 +1106,7 @@ def buildWrappers():
                 writeDoc(name, args, '        ', classes)
                 n = 0
                 for arg in args:
-                    if classes_type.has_key(arg[1]):
+                    if arg[1] in classes_type:
                         if n != index:
                             classes.write("        if %s is None: %s__o = None\n" %
                                           (arg[0], arg[0]))
@@ -1083,31 +1124,31 @@ def buildWrappers():
                         classes.write(", ")
                     if n != index:
                         classes.write("%s" % arg[0])
-                        if classes_type.has_key(arg[1]):
+                        if arg[1] in classes_type:
                             classes.write("__o")
                     else:
                         classes.write("self")
-                        if classes_type.has_key(arg[1]):
+                        if arg[1] in classes_type:
                             classes.write(classes_type[arg[1]][0])
                     n = n + 1
                 classes.write(")\n")
                 if ret[0] != "void":
-                    if classes_type.has_key(ret[0]):
+                    if ret[0] in classes_type:
                         #
                         # Raise an exception
                         #
-                        if functions_noexcept.has_key(name):
+                        if name in functions_noexcept:
                             classes.write(
                                 "        if ret is None:return None\n")
-                        elif string.find(name, "URI") >= 0:
+                        elif name.find("URI") >= 0:
                             classes.write(
                     "        if ret is None:raise uriError('%s() failed')\n"
                                           % (name))
-                        elif string.find(name, "XPath") >= 0:
+                        elif name.find("XPath") >= 0:
                             classes.write(
                     "        if ret is None:raise xpathError('%s() failed')\n"
                                           % (name))
-                        elif string.find(name, "Parse") >= 0:
+                        elif name.find("Parse") >= 0:
                             classes.write(
                     "        if ret is None:raise parserError('%s() failed')\n"
                                           % (name))
@@ -1129,7 +1170,7 @@ def buildWrappers():
                         # See reference_keepers for the list
                         #
                         tclass = classes_type[ret[0]][2]
-                        if reference_keepers.has_key(tclass):
+                        if tclass in reference_keepers:
                             list = reference_keepers[tclass]
                             for pref in list:
                                 if pref[0] == classname:
@@ -1139,22 +1180,22 @@ def buildWrappers():
                         # return the class
                         #
                         classes.write("        return __tmp\n")
-                    elif converter_type.has_key(ret[0]):
+                    elif ret[0] in converter_type:
                         #
                         # Raise an exception
                         #
-                        if functions_noexcept.has_key(name):
+                        if name in functions_noexcept:
                             classes.write(
                                 "        if ret is None:return None")
-                        elif string.find(name, "URI") >= 0:
+                        elif name.find("URI") >= 0:
                             classes.write(
                     "        if ret is None:raise uriError('%s() failed')\n"
                                           % (name))
-                        elif string.find(name, "XPath") >= 0:
+                        elif name.find("XPath") >= 0:
                             classes.write(
                     "        if ret is None:raise xpathError('%s() failed')\n"
                                           % (name))
-                        elif string.find(name, "Parse") >= 0:
+                        elif name.find("Parse") >= 0:
                             classes.write(
                     "        if ret is None:raise parserError('%s() failed')\n"
                                           % (name))
@@ -1175,7 +1216,7 @@ def buildWrappers():
     for type,enum in enums.items():
         classes.write("# %s\n" % type)
         items = enum.items()
-        items.sort(lambda i1,i2: cmp(long(i1[1]),long(i2[1])))
+        items = sorted(items, key=(lambda i: int(i[1])))
         for name,value in items:
             classes.write("%s = %s\n" % (name,value))
         classes.write("\n")

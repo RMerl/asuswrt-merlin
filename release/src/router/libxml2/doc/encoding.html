@@ -1,19 +1,20 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" /><link rel="SHORTCUT ICON" href="/favicon.ico" /><style type="text/css">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><link rel="SHORTCUT ICON" href="/favicon.ico" /><style type="text/css">
 TD {font-family: Verdana,Arial,Helvetica}
 BODY {font-family: Verdana,Arial,Helvetica; margin-top: 2em; margin-left: 0em; margin-right: 0em}
 H1 {font-family: Verdana,Arial,Helvetica}
 H2 {font-family: Verdana,Arial,Helvetica}
 H3 {font-family: Verdana,Arial,Helvetica}
 A:link, A:visited, A:active { text-decoration: underline }
-</style><title>Encodings support</title></head><body bgcolor="#8b7765" text="#000000" link="#a06060" vlink="#000000"><table border="0" width="100%" cellpadding="5" cellspacing="0" align="center"><tr><td width="120"><a href="http://swpat.ffii.org/"><img src="epatents.png" alt="Action against software patents" /></a></td><td width="180"><a href="http://www.gnome.org/"><img src="gnome2.png" alt="Gnome2 Logo" /></a><a href="http://www.w3.org/Status"><img src="w3c.png" alt="W3C Logo" /></a><a href="http://www.redhat.com/"><img src="redhat.gif" alt="Red Hat Logo" /></a><div align="left"><a href="http://xmlsoft.org/"><img src="Libxml2-Logo-180x168.gif" alt="Made with Libxml2 Logo" /></a></div></td><td><table border="0" width="90%" cellpadding="2" cellspacing="0" align="center" bgcolor="#000000"><tr><td><table width="100%" border="0" cellspacing="1" cellpadding="3" bgcolor="#fffacd"><tr><td align="center"><h1>The XML C parser and toolkit of Gnome</h1><h2>Encodings support</h2></td></tr></table></td></tr></table></td></tr></table><table border="0" cellpadding="4" cellspacing="0" width="100%" align="center"><tr><td bgcolor="#8b7765"><table border="0" cellspacing="0" cellpadding="2" width="100%"><tr><td valign="top" width="200" bgcolor="#8b7765"><table border="0" cellspacing="0" cellpadding="1" width="100%" bgcolor="#000000"><tr><td><table width="100%" border="0" cellspacing="1" cellpadding="3"><tr><td colspan="1" bgcolor="#eecfa1" align="center"><center><b>Main Menu</b></center></td></tr><tr><td bgcolor="#fffacd"><form action="search.php" enctype="application/x-www-form-urlencoded" method="get"><input name="query" type="text" size="20" value="" /><input name="submit" type="submit" value="Search ..." /></form><ul><li><a href="index.html">Home</a></li><li><a href="html/index.html">Reference Manual</a></li><li><a href="intro.html">Introduction</a></li><li><a href="FAQ.html">FAQ</a></li><li><a href="docs.html" style="font-weight:bold">Developer Menu</a></li><li><a href="bugs.html">Reporting bugs and getting help</a></li><li><a href="help.html">How to help</a></li><li><a href="downloads.html">Downloads</a></li><li><a href="news.html">Releases</a></li><li><a href="XMLinfo.html">XML</a></li><li><a href="XSLT.html">XSLT</a></li><li><a href="xmldtd.html">Validation &amp; DTDs</a></li><li><a href="encoding.html">Encodings support</a></li><li><a href="catalog.html">Catalog support</a></li><li><a href="namespaces.html">Namespaces</a></li><li><a href="contribs.html">Contributions</a></li><li><a href="examples/index.html" style="font-weight:bold">Code Examples</a></li><li><a href="html/index.html" style="font-weight:bold">API Menu</a></li><li><a href="guidelines.html">XML Guidelines</a></li><li><a href="ChangeLog.html">Recent Changes</a></li></ul></td></tr></table><table width="100%" border="0" cellspacing="1" cellpadding="3"><tr><td colspan="1" bgcolor="#eecfa1" align="center"><center><b>Related links</b></center></td></tr><tr><td bgcolor="#fffacd"><ul><li><a href="http://mail.gnome.org/archives/xml/">Mail archive</a></li><li><a href="http://xmlsoft.org/XSLT/">XSLT libxslt</a></li><li><a href="http://phd.cs.unibo.it/gdome2/">DOM gdome2</a></li><li><a href="http://www.aleksey.com/xmlsec/">XML-DSig xmlsec</a></li><li><a href="ftp://xmlsoft.org/">FTP</a></li><li><a href="http://www.zlatkovic.com/projects/libxml/">Windows binaries</a></li><li><a href="http://opencsw.org/packages/libxml2">Solaris binaries</a></li><li><a href="http://www.explain.com.au/oss/libxml2xslt.html">MacOsX binaries</a></li><li><a href="http://codespeak.net/lxml/">lxml Python bindings</a></li><li><a href="http://cpan.uwinnipeg.ca/dist/XML-LibXML">Perl bindings</a></li><li><a href="http://libxmlplusplus.sourceforge.net/">C++ bindings</a></li><li><a href="http://www.zend.com/php5/articles/php5-xmlphp.php#Heading4">PHP bindings</a></li><li><a href="http://sourceforge.net/projects/libxml2-pas/">Pascal bindings</a></li><li><a href="http://libxml.rubyforge.org/">Ruby bindings</a></li><li><a href="http://tclxml.sourceforge.net/">Tcl bindings</a></li><li><a href="http://bugzilla.gnome.org/buglist.cgi?product=libxml2">Bug Tracker</a></li></ul></td></tr></table></td></tr></table></td><td valign="top" bgcolor="#8b7765"><table border="0" cellspacing="0" cellpadding="1" width="100%"><tr><td><table border="0" cellspacing="0" cellpadding="1" width="100%" bgcolor="#000000"><tr><td><table border="0" cellpadding="3" cellspacing="1" width="100%"><tr><td bgcolor="#fffacd"><p>If you are not really familiar with Internationalization (usual shortcut
+</style><title>Encodings support</title></head><body bgcolor="#8b7765" text="#000000" link="#a06060" vlink="#000000"><table border="0" width="100%" cellpadding="5" cellspacing="0" align="center"><tr><td width="120"><a href="http://swpat.ffii.org/"><img src="epatents.png" alt="Action against software patents" /></a></td><td width="180"><a href="http://www.gnome.org/"><img src="gnome2.png" alt="Gnome2 Logo" /></a><a href="http://www.w3.org/Status"><img src="w3c.png" alt="W3C Logo" /></a><a href="http://www.redhat.com/"><img src="redhat.gif" alt="Red Hat Logo" /></a><div align="left"><a href="http://xmlsoft.org/"><img src="Libxml2-Logo-180x168.gif" alt="Made with Libxml2 Logo" /></a></div></td><td><table border="0" width="90%" cellpadding="2" cellspacing="0" align="center" bgcolor="#000000"><tr><td><table width="100%" border="0" cellspacing="1" cellpadding="3" bgcolor="#fffacd"><tr><td align="center"><h1>The XML C parser and toolkit of Gnome</h1><h2>Encodings support</h2></td></tr></table></td></tr></table></td></tr></table><table border="0" cellpadding="4" cellspacing="0" width="100%" align="center"><tr><td bgcolor="#8b7765"><table border="0" cellspacing="0" cellpadding="2" width="100%"><tr><td valign="top" width="200" bgcolor="#8b7765"><table border="0" cellspacing="0" cellpadding="1" width="100%" bgcolor="#000000"><tr><td><table width="100%" border="0" cellspacing="1" cellpadding="3"><tr><td colspan="1" bgcolor="#eecfa1" align="center"><center><b>Main Menu</b></center></td></tr><tr><td bgcolor="#fffacd"><form action="search.php" enctype="application/x-www-form-urlencoded" method="get"><input name="query" type="text" size="20" value="" /><input name="submit" type="submit" value="Search ..." /></form><ul><li><a href="index.html">Home</a></li><li><a href="html/index.html">Reference Manual</a></li><li><a href="intro.html">Introduction</a></li><li><a href="FAQ.html">FAQ</a></li><li><a href="docs.html" style="font-weight:bold">Developer Menu</a></li><li><a href="bugs.html">Reporting bugs and getting help</a></li><li><a href="help.html">How to help</a></li><li><a href="downloads.html">Downloads</a></li><li><a href="news.html">Releases</a></li><li><a href="XMLinfo.html">XML</a></li><li><a href="XSLT.html">XSLT</a></li><li><a href="xmldtd.html">Validation &amp; DTDs</a></li><li><a href="encoding.html">Encodings support</a></li><li><a href="catalog.html">Catalog support</a></li><li><a href="namespaces.html">Namespaces</a></li><li><a href="contribs.html">Contributions</a></li><li><a href="examples/index.html" style="font-weight:bold">Code Examples</a></li><li><a href="html/index.html" style="font-weight:bold">API Menu</a></li><li><a href="guidelines.html">XML Guidelines</a></li><li><a href="ChangeLog.html">Recent Changes</a></li></ul></td></tr></table><table width="100%" border="0" cellspacing="1" cellpadding="3"><tr><td colspan="1" bgcolor="#eecfa1" align="center"><center><b>Related links</b></center></td></tr><tr><td bgcolor="#fffacd"><ul><li><a href="http://mail.gnome.org/archives/xml/">Mail archive</a></li><li><a href="http://xmlsoft.org/XSLT/">XSLT libxslt</a></li><li><a href="http://phd.cs.unibo.it/gdome2/">DOM gdome2</a></li><li><a href="http://www.aleksey.com/xmlsec/">XML-DSig xmlsec</a></li><li><a href="ftp://xmlsoft.org/">FTP</a></li><li><a href="http://www.zlatkovic.com/projects/libxml/">Windows binaries</a></li><li><a href="http://opencsw.org/packages/libxml2">Solaris binaries</a></li><li><a href="http://www.explain.com.au/oss/libxml2xslt.html">MacOsX binaries</a></li><li><a href="http://lxml.de/">lxml Python bindings</a></li><li><a href="http://cpan.uwinnipeg.ca/dist/XML-LibXML">Perl bindings</a></li><li><a href="http://libxmlplusplus.sourceforge.net/">C++ bindings</a></li><li><a href="http://www.zend.com/php5/articles/php5-xmlphp.php#Heading4">PHP bindings</a></li><li><a href="http://sourceforge.net/projects/libxml2-pas/">Pascal bindings</a></li><li><a href="http://libxml.rubyforge.org/">Ruby bindings</a></li><li><a href="http://tclxml.sourceforge.net/">Tcl bindings</a></li><li><a href="http://bugzilla.gnome.org/buglist.cgi?product=libxml2">Bug Tracker</a></li></ul></td></tr></table></td></tr></table></td><td valign="top" bgcolor="#8b7765"><table border="0" cellspacing="0" cellpadding="1" width="100%"><tr><td><table border="0" cellspacing="0" cellpadding="1" width="100%" bgcolor="#000000"><tr><td><table border="0" cellpadding="3" cellspacing="1" width="100%"><tr><td bgcolor="#fffacd"><p>If you are not really familiar with Internationalization (usual shortcut
 is I18N) , Unicode, characters and glyphs, I suggest you read a <a href="http://www.tbray.org/ongoing/When/200x/2003/04/06/Unicode">presentation</a>
 by Tim Bray on Unicode and why you should care about it.</p><p>If you don't understand why <b>it does not make sense to have a string
 without knowing what encoding it uses</b>, then as Joel Spolsky said <a href="http://www.joelonsoftware.com/articles/Unicode.html">please do not
 write another line of code until you finish reading that article.</a>. It is
 a prerequisite to understand this page, and avoid a lot of problems with
-libxml2, XML or text processing in general.</p><p>Table of Content:</p><ol><li><a href="encoding.html#What">What does internationalization support
+libxml2, XML or text processing in general.</p><p>Table of Content:</p><ol>
+  <li><a href="encoding.html#What">What does internationalization support
     mean ?</a></li>
   <li><a href="encoding.html#internal">The internal encoding, how and
   why</a></li>
@@ -33,7 +34,8 @@ allows the document to be encoded in other encodings at the condition that
 they are clearly labeled as such. For example the following is a wellformed
 XML document encoded in ISO-8859-1 and using accentuated letters that we
 French like for both markup and content:</p><pre>&lt;?xml version="1.0" encoding="ISO-8859-1"?&gt;
-&lt;très&gt;là&lt;/très&gt;</pre><p>Having internationalization support in libxml2 means the following:</p><ul><li>the document is properly parsed</li>
+&lt;très&gt;là &lt;/très&gt;</pre><p>Having internationalization support in libxml2 means the following:</p><ul>
+  <li>the document is properly parsed</li>
   <li>information about it's encoding is saved</li>
   <li>it can be modified</li>
   <li>it can be saved in its original encoding</li>
@@ -54,7 +56,8 @@ an internationalized fashion by libxml2 too:</p><pre>&lt;!DOCTYPE HTML PUBLIC "-
 &lt;p&gt;W3C crée des standards pour le Web.&lt;/body&gt;
 &lt;/html&gt;</pre><h3><a name="internal" id="internal">The internal encoding, how and why</a></h3><p>One of the core decisions was to force all documents to be converted to a
 default internal encoding, and that encoding to be UTF-8, here are the
-rationales for those choices:</p><ul><li>keeping the native encoding in the internal form would force the libxml
+rationales for those choices:</p><ul>
+  <li>keeping the native encoding in the internal form would force the libxml
     users (or the code associated) to be fully aware of the encoding of the
     original document, for examples when adding a text node to a document,
     the content would have to be provided in the document encoding, i.e. the
@@ -67,7 +70,8 @@ rationales for those choices:</p><ul><li>keeping the native encoding in the inte
     considered an intelligent choice too since it's a direct Unicode mapping
     support. I selected UTF-8 on the basis of efficiency and compatibility
     with surrounding software:
-    <ul><li>UTF-8 while a bit more complex to convert from/to (i.e. slightly
+    <ul>
+      <li>UTF-8 while a bit more complex to convert from/to (i.e. slightly
         more costly to import and export CPU wise) is also far more compact
         than UTF-16 (and UCS-4) for a majority of the documents I see it used
         for right now (RPM RDF catalogs, advogato data, various configuration
@@ -86,8 +90,10 @@ rationales for those choices:</p><ul><li>keeping the native encoding in the inte
         upcoming Gnome text widget, and a lot of Unix code (yet another place
         where Unix programmer base takes a different approach from Microsoft
         - they are using UTF-16)</li>
-    </ul></li>
-</ul><p>What does this mean in practice for the libxml2 user:</p><ul><li>xmlChar, the libxml2 data type is a byte, those bytes must be assembled
+    </ul>
+  </li>
+</ul><p>What does this mean in practice for the libxml2 user:</p><ul>
+  <li>xmlChar, the libxml2 data type is a byte, those bytes must be assembled
     as UTF-8 valid strings. The proper way to terminate an xmlChar * string
     is simply to append 0 byte, as usual.</li>
   <li>One just need to make sure that when using chars outside the ASCII set,
@@ -95,7 +101,8 @@ rationales for those choices:</p><ul><li>keeping the native encoding in the inte
 </ul><h3><a name="implemente" id="implemente">How is it implemented ?</a></h3><p>Let's describe how all this works within libxml, basically the I18N
 (internationalization) support get triggered only during I/O operation, i.e.
 when reading a document or saving one. Let's look first at the reading
-sequence:</p><ol><li>when a document is processed, we usually don't know the encoding, a
+sequence:</p><ol>
+  <li>when a document is processed, we usually don't know the encoding, a
     simple heuristic allows to detect UTF-16 and UCS-4 from encodings where
     the ASCII range (0-0x7F) maps with ASCII</li>
   <li>the xml declaration if available is parsed, including the encoding
@@ -107,10 +114,10 @@ sequence:</p><ol><li>when a document is processed, we usually don't know the enc
     You may end-up with a garbled document, or no document at all ! Example:
     <pre>~/XML -&gt; ./xmllint err.xml 
 err.xml:1: error: Input is not proper UTF-8, indicate encoding !
-&lt;très&gt;là&lt;/très&gt;
+&lt;très&gt;là &lt;/très&gt;
    ^
 err.xml:1: error: Bytes: 0xE8 0x73 0x3E 0x6C
-&lt;très&gt;là&lt;/très&gt;
+&lt;très&gt;là &lt;/très&gt;
    ^</pre>
   </li>
   <li>xmlSwitchEncoding() does an encoding name lookup, canonicalize it, and
@@ -136,7 +143,8 @@ err2.xml:1: error: Unsupported encoding UnsupportedEnc
 collected/built an xmlDoc DOM like structure) ? It depends on the function
 called, xmlSaveFile() will just try to save in the original encoding, while
 xmlSaveFileTo() and xmlSaveFileEnc() can optionally save to a given
-encoding:</p><ol><li>if no encoding is given, libxml2 will look for an encoding value
+encoding:</p><ol>
+  <li>if no encoding is given, libxml2 will look for an encoding value
     associated to the document and if it exists will try to save to that
     encoding,
     <p>otherwise everything is written in the internal form, i.e. UTF-8</p>
@@ -161,12 +169,13 @@ encoding:</p><ol><li>if no encoding is given, libxml2 will look for an encoding 
     characters for tag or attribute names). A special "ascii" encoding name
     is used to save documents to a pure ascii form can be used when
     portability is really crucial</li>
-</ol><p>Here are a few examples based on the same test document:</p><pre>~/XML -&gt; ./xmllint isolat1 
+</ol><p>Here are a few examples based on the same test document and assumin a
+terminal using ISO-8859-1 as the text encoding:</p><pre>~/XML -&gt; ./xmllint isolat1 
 &lt;?xml version="1.0" encoding="ISO-8859-1"?&gt;
-&lt;très&gt;là&lt;/très&gt;
+&lt;très&gt;lÃ &lt;/très&gt;
 ~/XML -&gt; ./xmllint --encode UTF-8 isolat1 
 &lt;?xml version="1.0" encoding="UTF-8"?&gt;
-&lt;trÃ¨s&gt;lÃ �&lt;/trÃ¨s&gt;
+&lt;trÃ¨s&gt;lÃ  &lt;/trÃ¨s&gt;
 ~/XML -&gt; </pre><p>The same processing is applied (and reuse most of the code) for HTML I18N
 processing. Looking up and modifying the content encoding is a bit more
 difficult since it is located in a &lt;meta&gt; tag under the &lt;head&gt;,
@@ -174,7 +183,8 @@ so a couple of functions htmlGetMetaEncoding() and htmlSetMetaEncoding() have
 been provided. The parser also attempts to switch encoding on the fly when
 detecting such a tag on input. Except for that the processing is the same
 (and again reuses the same code).</p><h3><a name="Default" id="Default">Default supported encodings</a></h3><p>libxml2 has a set of default converters for the following encodings
-(located in encoding.c):</p><ol><li>UTF-8 is supported by default (null handlers)</li>
+(located in encoding.c):</p><ol>
+  <li>UTF-8 is supported by default (null handlers)</li>
   <li>UTF-16, both little and big endian</li>
   <li>ISO-Latin-1 (ISO-8859-1) covering most western languages</li>
   <li>ASCII, useful mostly for saving</li>
@@ -192,7 +202,8 @@ goal is to be able to parse document whose encoding is supported but where
 the name differs (for example from the default set of names accepted by
 iconv). The following functions allow to register and handle new aliases for
 existing encodings. Once registered libxml2 will automatically lookup the
-aliases when handling a document:</p><ul><li>int xmlAddEncodingAlias(const char *name, const char *alias);</li>
+aliases when handling a document:</p><ul>
+  <li>int xmlAddEncodingAlias(const char *name, const char *alias);</li>
   <li>int xmlDelEncodingAlias(const char *alias);</li>
   <li>const char * xmlGetEncodingAlias(const char *alias);</li>
   <li>void xmlCleanupEncodingAliases(void);</li>

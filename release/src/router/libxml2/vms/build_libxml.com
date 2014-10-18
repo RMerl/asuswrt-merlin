@@ -31,7 +31,7 @@ $!- configuration -------------------------------------------------------------
 $!
 $!- compile command.  If p1="nowarn" suppress the expected warning types
 $!
-$   cc_opts = "/DEF=HAVE_CONFIG_H/NAMES=(SHORTENED)/FLOAT=IEEE/IEEE_MODE=DENORM_RESULTS/INCLUDE=xml_srcdir"
+$   cc_opts = "/nowarn/DEF=HAVE_CONFIG_H/NAMES=(as_is,SHORTENED)/FLOAT=IEEE/IEEE_MODE=DENORM_RESULTS/INCLUDE=xml_srcdir"
 $!
 $   if p1.eqs."DEBUG" .or. p2.eqs."DEBUG"
 $   then
@@ -46,15 +46,15 @@ $!- list of sources to be built into the LIBXML library.  Compare this list
 $!  to the definition of "libxml2_la_SOURCES" in the file MAKEFILE.IN.
 $!  Currently this definition includes the list WITH_TRIO_SOURCES_TRUE
 $!
-$   sources = "SAX.c entities.c encoding.c error.c parserInternals.c"
-$   sources = sources + " parser.c tree.c hash.c list.c xmlIO.c xmlmemory.c uri.c"
+$   sources = "parser.c SAX.c entities.c encoding.c error.c parserInternals.c"
+$   sources = sources + " tree.c hash.c list.c xmlIO.c xmlmemory.c uri.c"
 $   sources = sources + " valid.c xlink.c HTMLparser.c HTMLtree.c debugXML.c xpath.c"
 $   sources = sources + " xpointer.c xinclude.c nanohttp.c nanoftp.c DOCBparser.c"
 $   sources = sources + " catalog.c globals.c threads.c c14n.c xmlstring.c"
 $   sources = sources + " xmlregexp.c xmlschemas.c xmlschemastypes.c xmlunicode.c"
 $   sources = sources + " triostr.c trio.c xmlreader.c relaxng.c dict.c SAX2.c"
 $   sources = sources + " xmlwriter.c legacy.c chvalid.c pattern.c xmlsave.c"
-$   sources = sources + " schematron.c"
+$   sources = sources + " schematron.c xmlmodule.c buf.c"
 $!
 $!- list of main modules to compile and link.  Compare this list to the
 $!  definition of bin_PROGRAMS in MAKEFILE.IN
@@ -102,6 +102,7 @@ $     endif
 $   endif
 $!
 $   copy/log config.vms xml_srcdir:config.h
+$!   copy/log xmlversion.h [-.include.libxml]
 $!
 $   if f$trnlnm("libxml").eqs.""
 $   then
@@ -256,8 +257,14 @@ $   then
 $	opts = ""
 $	if debug then opts = "/DEBUG"
 $	write sys$output "''link_command'''opts' ''object_file',XML_LIBDIR:libxml.olb/library"
-$	link_command'opts' 'object_file',-
+$	if f$search( "sys$library:iconv.olb" ) .eqs. ""
+$	then
+$	  link_command'opts' 'object_file',-
       		XML_LIBDIR:libxml.olb/library
+$	else
+$	  link_command'opts' 'object_file',-
+      		XML_LIBDIR:libxml.olb/library,sys$library:iconv/lib
+$	endif
 $   endif
 $!
 $EXIT_BUILD:

@@ -1741,4 +1741,28 @@
     <symbol file="globals">xmlStructuredErrorContext</symbol>
     <symbol file="xinclude">xmlXIncludeProcessTreeFlagsData</symbol>
   </release>
+  <release version="2.8.0">
+    <symbol file="xmlreader">xmlTextReaderRelaxNGValidateCtxt</symbol>
+    <symbol file="tree">xmlBufferDetach</symbol>
+    <symbol file="dict">xmlInitializeDict</symbol>
+  </release>
+  <release version="2.9.0">
+    <symbol file="tree">xmlBufContent</symbol>
+    <symbol file="tree">xmlBufEnd</symbol>
+    <symbol file="tree">xmlBufGetNodeContent</symbol>
+    <symbol file="tree">xmlBufNodeDump</symbol>
+    <symbol file="tree">xmlBufShrink</symbol>
+    <symbol file="tree">xmlBufUse</symbol>
+    <symbol file="dict">xmlDictGetUsage</symbol>
+    <symbol file="dict">xmlDictSetLimit</symbol>
+    <symbol file="xmlschemas">xmlSchemaValidateSetFilename</symbol>
+    <symbol file="xmlschemas">xmlSchemaValidateSetLocator</symbol>
+    <symbol file="xmlIO">xmlOutputBufferGetContent</symbol>
+    <symbol file="xmlIO">xmlOutputBufferGetSize</symbol>
+    <symbol file="xmlwriter">xmlTextWriterSetQuoteChar</symbol>
+  </release>
+  <release version="2.9.1">
+    <symbol file="xpath">xmlXPathNodeEval</symbol>
+    <symbol file="xpath">xmlXPathSetContextNode</symbol>
+  </release>
 </symbols>

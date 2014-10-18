@@ -19,6 +19,8 @@
 #undef HAVE_LIBHISTORY
 #undef HAVE_LIBREADLINE
 
+#define ICONV_CONST
+
 /* Define if you have the class function.  */
 #undef HAVE_CLASS
 
@@ -207,3 +209,8 @@
 #endif
 
 #define xmlBufferWriteChar xmlBufferWriteChar2
+
+#include <inttypes.h>
+
+#define HAVE_DLOPEN 1
+#define HAVE_DLFCN_H 1

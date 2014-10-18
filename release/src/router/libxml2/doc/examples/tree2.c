@@ -3,7 +3,7 @@
  * synopsis: Creates a tree
  * purpose:  Shows how to create document, nodes and dump it to stdout or file.
  * usage:    tree2 <filename>  -Default output: stdout
- * test:     tree2 > tree2.tmp ; diff tree2.tmp tree2.res ; rm tree2.tmp
+ * test:     tree2 > tree2.tmp && diff tree2.tmp $(srcdir)/tree2.res
  * author:   Lucas Brasilino <brasilino@recife.pe.gov.br>
  * copy:     see Copyright for the status of this software
  */

@@ -46,6 +46,7 @@
       <pre class="synopsis">#define <a href="#LIBXML_VERSION_EXTRA">LIBXML_VERSION_EXTRA</a>;
 #define <a href="#LIBXML_MODULES_ENABLED">LIBXML_MODULES_ENABLED</a>;
 #define <a href="#LIBXML_LEGACY_ENABLED">LIBXML_LEGACY_ENABLED</a>;
+#define <a href="#LIBXML_LZMA_ENABLED">LIBXML_LZMA_ENABLED</a>;
 #define <a href="#LIBXML_READER_ENABLED">LIBXML_READER_ENABLED</a>;
 #define <a href="#LIBXML_THREAD_ENABLED">LIBXML_THREAD_ENABLED</a>;
 #define <a href="#LIBXML_DOTTED_VERSION">LIBXML_DOTTED_VERSION</a>;
@@ -68,6 +69,7 @@
 #define <a href="#LIBXML_CATALOG_ENABLED">LIBXML_CATALOG_ENABLED</a>;
 #define <a href="#LIBXML_ATTR_ALLOC_SIZE">LIBXML_ATTR_ALLOC_SIZE</a>;
 #define <a href="#LIBXML_REGEXP_ENABLED">LIBXML_REGEXP_ENABLED</a>;
+#define <a href="#LIBXML_ICU_ENABLED">LIBXML_ICU_ENABLED</a>;
 #define <a href="#LIBXML_MODULE_EXTENSION">LIBXML_MODULE_EXTENSION</a>;
 #define <a href="#LIBXML_ICONV_ENABLED">LIBXML_ICONV_ENABLED</a>;
 #define <a href="#LIBXML_HTML_ENABLED">LIBXML_HTML_ENABLED</a>;
@@ -81,11 +83,12 @@
 #define <a href="#DEBUG_MEMORY_LOCATION">DEBUG_MEMORY_LOCATION</a>;
 #define <a href="#LIBXML_ATTR_FORMAT">LIBXML_ATTR_FORMAT</a>;
 #define <a href="#LIBXML_TEST_VERSION">LIBXML_TEST_VERSION</a>;
+#define <a href="#LIBXML_THREAD_ALLOC_ENABLED">LIBXML_THREAD_ALLOC_ENABLED</a>;
 #define <a href="#LIBXML_XPATH_ENABLED">LIBXML_XPATH_ENABLED</a>;
-#define <a href="#LIBXML_EXPR_ENABLED">LIBXML_EXPR_ENABLED</a>;
+#define <a href="#LIBXML_PATTERN_ENABLED">LIBXML_PATTERN_ENABLED</a>;
 #define <a href="#LIBXML_VALID_ENABLED">LIBXML_VALID_ENABLED</a>;
 #define <a href="#LIBXML_TREE_ENABLED">LIBXML_TREE_ENABLED</a>;
-#define <a href="#LIBXML_PATTERN_ENABLED">LIBXML_PATTERN_ENABLED</a>;
+#define <a href="#LIBXML_EXPR_ENABLED">LIBXML_EXPR_ENABLED</a>;
 void	<a href="#xmlCheckVersion">xmlCheckVersion</a>			(int version);
 </pre>
     </div>
@@ -159,12 +162,20 @@ void	<a href="#xmlCheckVersion">xmlCheckVersion</a>			(int version);
 </pre><p>Whether iconv support is available</p>
 </div>
         <hr/>
+        <div class="refsect2" lang="en"><h3><a name="LIBXML_ICU_ENABLED">Macro </a>LIBXML_ICU_ENABLED</h3><pre class="programlisting">#define <a href="#LIBXML_ICU_ENABLED">LIBXML_ICU_ENABLED</a>;
+</pre><p>Whether icu support is available</p>
+</div>
+        <hr/>
         <div class="refsect2" lang="en"><h3><a name="LIBXML_ISO8859X_ENABLED">Macro </a>LIBXML_ISO8859X_ENABLED</h3><pre class="programlisting">#define <a href="#LIBXML_ISO8859X_ENABLED">LIBXML_ISO8859X_ENABLED</a>;
 </pre><p>Whether ISO-8859-* support is made available in case iconv is not</p>
 </div>
         <hr/>
         <div class="refsect2" lang="en"><h3><a name="LIBXML_LEGACY_ENABLED">Macro </a>LIBXML_LEGACY_ENABLED</h3><pre class="programlisting">#define <a href="#LIBXML_LEGACY_ENABLED">LIBXML_LEGACY_ENABLED</a>;
 </pre><p>Whether the deprecated APIs are compiled in for compatibility</p>
+</div>
+        <hr/>
+        <div class="refsect2" lang="en"><h3><a name="LIBXML_LZMA_ENABLED">Macro </a>LIBXML_LZMA_ENABLED</h3><pre class="programlisting">#define <a href="#LIBXML_LZMA_ENABLED">LIBXML_LZMA_ENABLED</a>;
+</pre><p>Whether the Lzma support is compiled in</p>
 </div>
         <hr/>
         <div class="refsect2" lang="en"><h3><a name="LIBXML_MODULES_ENABLED">Macro </a>LIBXML_MODULES_ENABLED</h3><pre class="programlisting">#define <a href="#LIBXML_MODULES_ENABLED">LIBXML_MODULES_ENABLED</a>;
@@ -209,6 +220,10 @@ void	<a href="#xmlCheckVersion">xmlCheckVersion</a>			(int version);
         <hr/>
         <div class="refsect2" lang="en"><h3><a name="LIBXML_TEST_VERSION">Macro </a>LIBXML_TEST_VERSION</h3><pre class="programlisting">#define <a href="#LIBXML_TEST_VERSION">LIBXML_TEST_VERSION</a>;
 </pre><p>Macro to check that the libxml version in use is compatible with the version the software has been compiled against</p>
+</div>
+        <hr/>
+        <div class="refsect2" lang="en"><h3><a name="LIBXML_THREAD_ALLOC_ENABLED">Macro </a>LIBXML_THREAD_ALLOC_ENABLED</h3><pre class="programlisting">#define <a href="#LIBXML_THREAD_ALLOC_ENABLED">LIBXML_THREAD_ALLOC_ENABLED</a>;
+</pre><p>Whether the allocation hooks are per-thread</p>
 </div>
         <hr/>
         <div class="refsect2" lang="en"><h3><a name="LIBXML_THREAD_ENABLED">Macro </a>LIBXML_THREAD_ENABLED</h3><pre class="programlisting">#define <a href="#LIBXML_THREAD_ENABLED">LIBXML_THREAD_ENABLED</a>;

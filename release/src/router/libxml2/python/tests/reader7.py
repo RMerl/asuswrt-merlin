@@ -3,7 +3,6 @@
 # this tests the entities substitutions with the XmlTextReader interface
 #
 import sys
-import StringIO
 import libxml2
 
 # Memory debug specific
@@ -44,12 +43,12 @@ while ret == 1:
     ret = reader.Read()
 
 if ret != 0:
-    print "Error parsing the document test1"
+    print("Error parsing the document test1")
     sys.exit(1)
 
 if result != expect:
-    print "Unexpected result for test1"
-    print result
+    print("Unexpected result for test1")
+    print(result)
     sys.exit(1)
 
 #
@@ -80,12 +79,12 @@ while ret == 1:
     ret = reader.Read()
 
 if ret != 0:
-    print "Error parsing the document test2"
+    print("Error parsing the document test2")
     sys.exit(1)
 
 if result != expect:
-    print "Unexpected result for test2"
-    print result
+    print("Unexpected result for test2")
+    print(result)
     sys.exit(1)
 
 #
@@ -96,7 +95,7 @@ del reader
 # Memory debug specific
 libxml2.cleanupParser()
 if libxml2.debugMemory(1) == 0:
-    print "OK"
+    print("OK")
 else:
-    print "Memory leak %d bytes" % (libxml2.debugMemory(1))
+    print("Memory leak %d bytes" % (libxml2.debugMemory(1)))
     libxml2.dumpMemory()

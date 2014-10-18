@@ -11,7 +11,7 @@ class ErrorHandler:
 
     def handler(self, msg, data):
         if data != ARG:
-            raise Exception, "Error handler did not receive correct argument"
+            raise Exception("Error handler did not receive correct argument")
         self.errors.append(msg)
 
 
@@ -34,7 +34,7 @@ ctxt.setValidityErrorHandler(e.handler, e.handler, ARG)
 doc = libxml2.parseDoc(valid)
 ret = doc.validateDtd(ctxt, dtd)
 if ret != 1 or e.errors:
-    print "error doing DTD validation"
+    print("error doing DTD validation")
     sys.exit(1)
 doc.freeDoc()
 
@@ -42,7 +42,7 @@ doc.freeDoc()
 doc = libxml2.parseDoc(invalid)
 ret = doc.validateDtd(ctxt, dtd)
 if ret != 0 or not e.errors:
-    print "Error: document supposed to be invalid"
+    print("Error: document supposed to be invalid")
 doc.freeDoc()
 
 dtd.freeDtd()
@@ -52,8 +52,8 @@ del ctxt
 # Memory debug specific
 libxml2.cleanupParser()
 if libxml2.debugMemory(1) == 0:
-    print "OK"
+    print("OK")
 else:
-    print "Memory leak %d bytes" % (libxml2.debugMemory(1))
+    print("Memory leak %d bytes" % (libxml2.debugMemory(1)))
     libxml2.dumpMemory()
 

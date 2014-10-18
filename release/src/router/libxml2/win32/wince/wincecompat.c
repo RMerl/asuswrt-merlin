@@ -34,11 +34,10 @@ int open(const char *filename,int oflag, ...)
 	char mode[3]; /* mode[0] ="w/r/a"  mode[1]="+" */
 	mode[2]=0;
 	if ( oflag==(O_WRONLY|O_CREAT) )
-		mode[0]="w";
+		mode[0]='w';
 	else if (oflag==O_RDONLY)
-		mode[0]="r";
-	return fopen(filename, mode);
-
+		mode[0]='r';
+	return (int) fopen(filename, mode);
 }
 
 int close(int handle)

@@ -4,7 +4,7 @@
  *              said elements and save the resulting document.
  * purpose: 	Shows how to make a full round-trip from a load/edit/save
  * usage:	xpath2 <xml-file> <xpath-expr> <new-value>
- * test:	xpath2 test3.xml '//discarded' discarded > xpath2.tmp ; diff xpath2.tmp xpath2.res ; rm xpath2.tmp
+ * test:	xpath2 test3.xml '//discarded' discarded > xpath2.tmp && diff xpath2.tmp $(srcdir)/xpath2.res
  * author: 	Aleksey Sanin and Daniel Veillard
  * copy: 	see Copyright for the status of this software.
  */

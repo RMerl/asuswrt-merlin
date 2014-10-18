@@ -10,6 +10,15 @@
       <arg name='ns_uri' type='xmlChar *' info='the namespace or NULL'/>
       <arg name='f' type='pythonObject' info='the python function'/>
     </function>
+    <function name='xmlXPathRegisterVariable' file='python'>
+      <cond>defined(LIBXML_XPATH_ENABLED)</cond>
+      <info>Register a variable with the XPath context</info>
+      <return type='int' info="1 in case of success, 0 or -1 in case of error"/>
+      <arg name='ctx' type='xmlXPathContextPtr' info='the xpathContext'/>
+      <arg name='name' type='xmlChar *' info='the variable name'/>
+      <arg name='ns_uri' type='xmlChar *' info='the namespace or NULL'/>
+      <arg name='value' type='pythonObject' info='the value'/>
+    </function>
     <function name='xmlNewNode' file='python'>
       <info>Create a new Node</info>
       <return type='xmlNodePtr' info="A new element node"/>

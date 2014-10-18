@@ -42,24 +42,24 @@ badexprs = (
 for expr in badexprs:
 	try:
 		ctxt.xpathEval(expr)
-	except libxml2.xpathError, e:
+	except libxml2.xpathError:
 	        pass
 	else:
-		print "Unexpectedly legal expression:", expr
+		print("Unexpectedly legal expression:", expr)
 ctxt.xpathFreeContext()
 doc.freeDoc()
 
 if err != expect:
-    print "error"
-    print "received %s" %(err)
-    print "expected %s" %(expect)
+    print("error")
+    print("received %s" %(err))
+    print("expected %s" %(expect))
     sys.exit(1)
 
 libxml2.cleanupParser()
 leakedbytes = libxml2.debugMemory(True)
 if leakedbytes == 0:
-	print "OK"
+	print("OK")
 else:
-	print "Memory leak", leakedbytes, "bytes"
+	print("Memory leak", leakedbytes, "bytes")
 	# drop file to .memdump file in cwd, but won't work if not compiled in
 	libxml2.dumpMemory()

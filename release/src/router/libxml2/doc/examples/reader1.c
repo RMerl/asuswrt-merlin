@@ -6,7 +6,7 @@
  *          (Note that the XMLReader functions require libxml2 version later
  *          than 2.6.)
  * usage: reader1 <filename>
- * test: reader1 test2.xml > reader1.tmp ; diff reader1.tmp reader1.res ; rm reader1.tmp
+ * test: reader1 test2.xml > reader1.tmp && diff reader1.tmp $(srcdir)/reader1.res
  * author: Daniel Veillard
  * copy: see Copyright for the status of this software.
  */

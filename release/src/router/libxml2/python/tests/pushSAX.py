@@ -51,14 +51,14 @@ ctxt=None
 
 reference = "startDocument:startElement foo {'url': 'tst'}:characters: bar:endElement foo:endDocument:"
 if log != reference:
-    print "Error got: %s" % log
-    print "Exprected: %s" % reference
+    print("Error got: %s" % log)
+    print("Exprected: %s" % reference)
     sys.exit(1)
 
 # Memory debug specific
 libxml2.cleanupParser()
 if libxml2.debugMemory(1) == 0:
-    print "OK"
+    print("OK")
 else:
-    print "Memory leak %d bytes" % (libxml2.debugMemory(1))
+    print("Memory leak %d bytes" % (libxml2.debugMemory(1)))
     libxml2.dumpMemory()

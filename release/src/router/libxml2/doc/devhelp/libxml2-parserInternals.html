@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
-    <title>parserInternals: internals routines exported by the parser.</title>
+    <title>parserInternals: internals routines and limits exported by the parser.</title>
     <meta name="generator" content="Libxml2 devhelp stylesheet"/>
     <link rel="start" href="index.html" title="libxml2 Reference Manual"/>
     <link rel="up" href="general.html" title="API"/>
@@ -38,7 +38,7 @@
     <h2>
       <span class="refentrytitle">parserInternals</span>
     </h2>
-    <p>parserInternals - internals routines exported by the parser.</p>
+    <p>parserInternals - internals routines and limits exported by the parser.</p>
     <p>this module exports a number of internal parsing routines they are not really all intended for applications but can prove useful doing low level processing. </p>
     <p>Author(s): Daniel Veillard </p>
     <div class="refsynopsisdiv">
@@ -55,14 +55,17 @@
 #define <a href="#IS_LETTER">IS_LETTER</a>(c);
 #define <a href="#IS_IDEOGRAPHIC">IS_IDEOGRAPHIC</a>(c);
 #define <a href="#MOVETO_STARTTAG">MOVETO_STARTTAG</a>(p);
+#define <a href="#XML_MAX_NAME_LENGTH">XML_MAX_NAME_LENGTH</a>;
 #define <a href="#IS_ASCII_LETTER">IS_ASCII_LETTER</a>(c);
 #define <a href="#IS_DIGIT">IS_DIGIT</a>(c);
+#define <a href="#XML_MAX_DICTIONARY_LIMIT">XML_MAX_DICTIONARY_LIMIT</a>;
 #define <a href="#XML_SUBSTITUTE_PEREF">XML_SUBSTITUTE_PEREF</a>;
 #define <a href="#MOVETO_ENDTAG">MOVETO_ENDTAG</a>(p);
 #define <a href="#SKIP_EOL">SKIP_EOL</a>(p);
 #define <a href="#IS_EXTENDER_CH">IS_EXTENDER_CH</a>(c);
 #define <a href="#IS_BLANK_CH">IS_BLANK_CH</a>(c);
 #define <a href="#IS_LETTER_CH">IS_LETTER_CH</a>(c);
+#define <a href="#XML_MAX_LOOKUP_LIMIT">XML_MAX_LOOKUP_LIMIT</a>;
 #define <a href="#XML_MAX_TEXT_LENGTH">XML_MAX_TEXT_LENGTH</a>;
 #define <a href="#XML_SUBSTITUTE_NONE">XML_SUBSTITUTE_NONE</a>;
 #define <a href="#IS_COMBINING">IS_COMBINING</a>(c);
@@ -263,12 +266,24 @@ void	<a href="#xmlParseEntityDecl">xmlParseEntityDecl</a>		(<a href="libxml2-tre
 </pre><p>Skips the end of line chars.</p><div class="variablelist"><table border="0"><col align="left"/><tbody><tr><td><span class="term"><i><tt>p</tt></i>:</span></td><td>and UTF8 string pointer</td></tr></tbody></table></div>
 </div>
         <hr/>
+        <div class="refsect2" lang="en"><h3><a name="XML_MAX_DICTIONARY_LIMIT">Macro </a>XML_MAX_DICTIONARY_LIMIT</h3><pre class="programlisting">#define <a href="#XML_MAX_DICTIONARY_LIMIT">XML_MAX_DICTIONARY_LIMIT</a>;
+</pre><p>Maximum size allowed by the parser for a dictionary by default This is not a limitation of the parser but a safety boundary feature, use <a href="libxml2-parser.html#XML_PARSE_HUGE">XML_PARSE_HUGE</a> option to override it. Introduced in 2.9.0</p>
+</div>
+        <hr/>
+        <div class="refsect2" lang="en"><h3><a name="XML_MAX_LOOKUP_LIMIT">Macro </a>XML_MAX_LOOKUP_LIMIT</h3><pre class="programlisting">#define <a href="#XML_MAX_LOOKUP_LIMIT">XML_MAX_LOOKUP_LIMIT</a>;
+</pre><p>Maximum size allowed by the parser for ahead lookup This is an upper boundary enforced by the parser to avoid bad behaviour on "unfriendly' content Introduced in 2.9.0</p>
+</div>
+        <hr/>
         <div class="refsect2" lang="en"><h3><a name="XML_MAX_NAMELEN">Macro </a>XML_MAX_NAMELEN</h3><pre class="programlisting">#define <a href="#XML_MAX_NAMELEN">XML_MAX_NAMELEN</a>;
 </pre><p>Identifiers can be longer, but this will be more costly at runtime.</p>
 </div>
         <hr/>
+        <div class="refsect2" lang="en"><h3><a name="XML_MAX_NAME_LENGTH">Macro </a>XML_MAX_NAME_LENGTH</h3><pre class="programlisting">#define <a href="#XML_MAX_NAME_LENGTH">XML_MAX_NAME_LENGTH</a>;
+</pre><p>Maximum size allowed for a markup identitier This is not a limitation of the parser but a safety boundary feature, use <a href="libxml2-parser.html#XML_PARSE_HUGE">XML_PARSE_HUGE</a> option to override it. Note that with the use of parsing dictionaries overriding the limit may result in more runtime memory usage in face of "unfriendly' content Introduced in 2.9.0</p>
+</div>
+        <hr/>
         <div class="refsect2" lang="en"><h3><a name="XML_MAX_TEXT_LENGTH">Macro </a>XML_MAX_TEXT_LENGTH</h3><pre class="programlisting">#define <a href="#XML_MAX_TEXT_LENGTH">XML_MAX_TEXT_LENGTH</a>;
-</pre><p>Maximum size allowed for a single text node when building a tree. This is not a limitation of the parser but a safety boundary feature, use <a href="libxml2-parser.html#XML_PARSE_HUGE">XML_PARSE_HUGE</a> option to override it.</p>
+</pre><p>Maximum size allowed for a single text node when building a tree. This is not a limitation of the parser but a safety boundary feature, use <a href="libxml2-parser.html#XML_PARSE_HUGE">XML_PARSE_HUGE</a> option to override it. Introduced in 2.9.0</p>
 </div>
         <hr/>
         <div class="refsect2" lang="en"><h3><a name="XML_SUBSTITUTE_BOTH">Macro </a>XML_SUBSTITUTE_BOTH</h3><pre class="programlisting">#define <a href="#XML_SUBSTITUTE_BOTH">XML_SUBSTITUTE_BOTH</a>;
@@ -340,7 +355,7 @@ void	<a href="#xmlParseEntityDecl">xmlParseEntityDecl</a>		(<a href="libxml2-tre
 <div class="variablelist"><table border="0"><col align="left"/><tbody><tr><td><span class="term"><i><tt>ctxt</tt></i>:</span></td><td>an XML parser context</td></tr><tr><td><span class="term"><i><tt>value</tt></i>:</span></td><td>the element node</td></tr><tr><td><span class="term"><i><tt>Returns</tt></i>:</span></td><td>-1 in case of error, the index in the stack otherwise</td></tr></tbody></table></div></div>
         <hr/>
         <div class="refsect2" lang="en"><h3><a name="xmlCheckLanguageID"/>xmlCheckLanguageID ()</h3><pre class="programlisting">int	xmlCheckLanguageID		(const <a href="libxml2-xmlstring.html#xmlChar">xmlChar</a> * lang)<br/>
-</pre><p>Checks that the value conforms to the LanguageID production: NOTE: this is somewhat deprecated, those productions were removed from the XML Second edition. [33] LanguageID ::= Langcode ('-' Subcode)* [34] Langcode ::= ISO639Code | IanaCode | UserCode [35] ISO639Code ::= ([a-z] | [A-Z]) ([a-z] | [A-Z]) [36] IanaCode ::= ('i' | 'I') '-' ([a-z] | [A-Z])+ [37] UserCode ::= ('x' | 'X') '-' ([a-z] | [A-Z])+ [38] Subcode ::= ([a-z] | [A-Z])+</p>
+</pre><p>Checks that the value conforms to the LanguageID production: NOTE: this is somewhat deprecated, those productions were removed from the XML Second edition. [33] LanguageID ::= Langcode ('-' Subcode)* [34] Langcode ::= ISO639Code | IanaCode | UserCode [35] ISO639Code ::= ([a-z] | [A-Z]) ([a-z] | [A-Z]) [36] IanaCode ::= ('i' | 'I') '-' ([a-z] | [A-Z])+ [37] UserCode ::= ('x' | 'X') '-' ([a-z] | [A-Z])+ [38] Subcode ::= ([a-z] | [A-Z])+ The current REC <a href="libxml2-SAX.html#reference">reference</a> the sucessors of RFC 1766, currently 5646 http://www.rfc-editor.org/rfc/rfc5646.txt langtag = language ["-" script] ["-" region] *("-" variant) *("-" extension) ["-" privateuse] language = 2*3ALPHA ; shortest ISO 639 code ["-" extlang] ; sometimes followed by ; extended language subtags / 4ALPHA ; or reserved for future use / 5*8ALPHA ; or registered language subtag extlang = 3ALPHA ; selected ISO 639 codes *2("-" 3ALPHA) ; permanently reserved script = 4ALPHA ; ISO 15924 code region = 2ALPHA ; ISO 3166-1 code / 3DIGIT ; UN M.49 code variant = 5*8alphanum ; registered variants / (DIGIT 3alphanum) extension = singleton 1*("-" (2*8alphanum)) ; Single alphanumerics ; "x" reserved for private use singleton = DIGIT ; 0 - 9 / %x41-57 ; A - W / %x59-5A ; Y - Z / %x61-77 ; a - w / %x79-7A ; y - z it sounds right to still allow Irregular i-xxx IANA and user codes too The parser below doesn't try to cope with extension or privateuse that could be added but that's not interoperable anyway</p>
 <div class="variablelist"><table border="0"><col align="left"/><tbody><tr><td><span class="term"><i><tt>lang</tt></i>:</span></td><td>pointer to the string value</td></tr><tr><td><span class="term"><i><tt>Returns</tt></i>:</span></td><td>1 if correct 0 otherwise</td></tr></tbody></table></div></div>
         <hr/>
         <div class="refsect2" lang="en"><h3><a name="xmlCopyChar"/>xmlCopyChar ()</h3><pre class="programlisting">int	xmlCopyChar			(int len, <br/>					 <a href="libxml2-xmlstring.html#xmlChar">xmlChar</a> * out, <br/>					 int val)<br/>
@@ -412,7 +427,7 @@ void	<a href="#xmlParseEntityDecl">xmlParseEntityDecl</a>		(<a href="libxml2-tre
 <div class="variablelist"><table border="0"><col align="left"/><tbody><tr><td><span class="term"><i><tt>ctxt</tt></i>:</span></td><td>an XML parser context</td></tr><tr><td><span class="term"><i><tt>filename</tt></i>:</span></td><td>the filename to use as entity</td></tr><tr><td><span class="term"><i><tt>Returns</tt></i>:</span></td><td>the new input stream or NULL in case of error</td></tr></tbody></table></div></div>
         <hr/>
         <div class="refsect2" lang="en"><h3><a name="xmlNewInputStream"/>xmlNewInputStream ()</h3><pre class="programlisting"><a href="libxml2-tree.html#xmlParserInputPtr">xmlParserInputPtr</a>	xmlNewInputStream	(<a href="libxml2-tree.html#xmlParserCtxtPtr">xmlParserCtxtPtr</a> ctxt)<br/>
-</pre><p>Create a new input stream structure</p>
+</pre><p>Create a new input stream structure.</p>
 <div class="variablelist"><table border="0"><col align="left"/><tbody><tr><td><span class="term"><i><tt>ctxt</tt></i>:</span></td><td>an XML parser context</td></tr><tr><td><span class="term"><i><tt>Returns</tt></i>:</span></td><td>the new input stream or NULL</td></tr></tbody></table></div></div>
         <hr/>
         <div class="refsect2" lang="en"><h3><a name="xmlNewStringInputStream"/>xmlNewStringInputStream ()</h3><pre class="programlisting"><a href="libxml2-tree.html#xmlParserInputPtr">xmlParserInputPtr</a>	xmlNewStringInputStream	(<a href="libxml2-tree.html#xmlParserCtxtPtr">xmlParserCtxtPtr</a> ctxt, <br/>						 const <a href="libxml2-xmlstring.html#xmlChar">xmlChar</a> * buffer)<br/>

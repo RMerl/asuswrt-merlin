@@ -29,7 +29,7 @@ ctxt = rngs.relaxNGNewValidCtxt()
 doc = libxml2.parseDoc(instance)
 ret = doc.relaxNGValidateDoc(ctxt)
 if ret != 0:
-    print "error doing RelaxNG validation"
+    print("error doing RelaxNG validation")
     sys.exit(1)
 
 doc.freeDoc()
@@ -41,8 +41,8 @@ libxml2.relaxNGCleanupTypes()
 # Memory debug specific
 libxml2.cleanupParser()
 if libxml2.debugMemory(1) == 0:
-    print "OK"
+    print("OK")
 else:
-    print "Memory leak %d bytes" % (libxml2.debugMemory(1))
+    print("Memory leak %d bytes" % (libxml2.debugMemory(1)))
     libxml2.dumpMemory()
 

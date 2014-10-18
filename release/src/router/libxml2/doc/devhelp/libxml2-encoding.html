@@ -43,7 +43,8 @@
     <p>Author(s): Daniel Veillard </p>
     <div class="refsynopsisdiv">
       <h2>Synopsis</h2>
-      <pre class="synopsis">typedef enum <a href="#xmlCharEncoding">xmlCharEncoding</a>;
+      <pre class="synopsis">typedef struct _uconv_t <a href="#uconv_t">uconv_t</a>;
+typedef enum <a href="#xmlCharEncoding">xmlCharEncoding</a>;
 typedef struct _xmlCharEncodingHandler <a href="#xmlCharEncodingHandler">xmlCharEncodingHandler</a>;
 typedef <a href="libxml2-encoding.html#xmlCharEncodingHandler">xmlCharEncodingHandler</a> * <a href="#xmlCharEncodingHandlerPtr">xmlCharEncodingHandlerPtr</a>;
 int	<a href="#xmlDelEncodingAlias">xmlDelEncodingAlias</a>		(const char * alias);
@@ -75,6 +76,13 @@ const char *	<a href="#xmlGetCharEncodingName">xmlGetCharEncodingName</a>	(<a hr
     <div class="refsect1" lang="en">
       <h2>Details</h2>
       <div class="refsect2" lang="en">
+        <div class="refsect2" lang="en"><h3><a name="uconv_t">Structure </a>uconv_t</h3><pre class="programlisting">struct _uconv_t {
+    UConverter *	uconv	: for conversion between an encoding and UTF-16
+    UConverter *	utf8	: for conversion between UTF-8 and UTF-16
+} uconv_t;
+</pre><p/>
+</div>
+        <hr/>
         <div class="refsect2" lang="en"><h3><a name="xmlCharEncoding">Enum </a>xmlCharEncoding</h3><pre class="programlisting">enum <a href="#xmlCharEncoding">xmlCharEncoding</a> {
     <a name="XML_CHAR_ENCODING_ERROR">XML_CHAR_ENCODING_ERROR</a> = -1 /* No char encoding detected */
     <a name="XML_CHAR_ENCODING_NONE">XML_CHAR_ENCODING_NONE</a> = 0 /* No char encoding detected */
@@ -110,6 +118,8 @@ const char *	<a href="#xmlGetCharEncodingName">xmlGetCharEncodingName</a>	(<a hr
     <a href="libxml2-encoding.html#xmlCharEncodingOutputFunc">xmlCharEncodingOutputFunc</a>	output
     iconv_t	iconv_in
     iconv_t	iconv_out
+    <a href="libxml2-encoding.html#uconv_t">uconv_t</a> *	uconv_in
+    <a href="libxml2-encoding.html#uconv_t">uconv_t</a> *	uconv_out
 } xmlCharEncodingHandler;
 </pre><p/>
 </div>

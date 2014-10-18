@@ -11,7 +11,7 @@
   <xsl:import href="site.xsl"/>
 
   <!-- Generate XHTML-1.0 transitional -->
-  <xsl:output method="xml" encoding="ISO-8859-1" indent="yes"
+  <xsl:output method="xml" encoding="UTF-8" indent="yes"
       doctype-public="-//W3C//DTD XHTML 1.0 Transitional//EN"
       doctype-system="http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"/>
 
@@ -75,7 +75,7 @@
   <xsl:template match="constructors">
     <xsl:message>Generating API Constructors</xsl:message>
     <xsl:variable name="title">List of constructors for <xsl:value-of select="$module"/></xsl:variable>
-    <xsl:document href="APIconstructors.html" method="xml" encoding="ISO-8859-1"
+    <xsl:document href="APIconstructors.html" method="xml" encoding="UTF-8"
       doctype-public="-//W3C//DTD XHTML 1.0 Transitional//EN"
       doctype-system="http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
       <html>
@@ -131,7 +131,7 @@
   <xsl:template match="files">
     <xsl:message>Generating API List of synbols per file</xsl:message>
     <xsl:variable name="title">List of Symbols per Module for <xsl:value-of select="$module"/></xsl:variable>
-    <xsl:document href="APIfiles.html" method="xml" encoding="ISO-8859-1"
+    <xsl:document href="APIfiles.html" method="xml" encoding="UTF-8"
       doctype-public="-//W3C//DTD XHTML 1.0 Transitional//EN"
       doctype-system="http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
       <html>
@@ -187,7 +187,7 @@
   <xsl:template match="functions">
     <xsl:message>Generating API Functions by Type</xsl:message>
     <xsl:variable name="title">List of function manipulating types in <xsl:value-of select="$module"/></xsl:variable>
-    <xsl:document href="APIfunctions.html" method="xml" encoding="ISO-8859-1"
+    <xsl:document href="APIfunctions.html" method="xml" encoding="UTF-8"
       doctype-public="-//W3C//DTD XHTML 1.0 Transitional//EN"
       doctype-system="http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
       <html>
@@ -243,7 +243,7 @@
   <xsl:template match="alpha">
     <xsl:message>Generating API Alphabetic list</xsl:message>
     <xsl:variable name="title">Alphabetic List of Symbols in <xsl:value-of select="$module"/></xsl:variable>
-    <xsl:document href="APIsymbols.html" method="xml" encoding="ISO-8859-1"
+    <xsl:document href="APIsymbols.html" method="xml" encoding="UTF-8"
       doctype-public="-//W3C//DTD XHTML 1.0 Transitional//EN"
       doctype-system="http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
       <html>
@@ -316,7 +316,7 @@
     <xsl:variable name="block" select="concat($start, '-', $end)"/>
     <xsl:variable name="target" select="/apirefs/index/chunk[@name = $name]"/>
     <xsl:variable name="title">API Alphabetic Index <xsl:value-of select="$block"/> for <xsl:value-of select="$module"/></xsl:variable>
-    <xsl:document href="API{$name}.html" method="xml" encoding="ISO-8859-1"
+    <xsl:document href="API{$name}.html" method="xml" encoding="UTF-8"
       doctype-public="-//W3C//DTD XHTML 1.0 Transitional//EN"
       doctype-system="http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
       <html>

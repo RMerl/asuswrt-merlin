@@ -35,14 +35,14 @@ source.freeDoc()
 # check the resulting tree
 str = dest.serialize()
 if str != """<root xmlns:foobar="http://example.org/bar" xmlns:default="http://example.org/include" xmlns:foo="http://example.org/foo"><default:fragment><foo:elem bar="tricky"/></default:fragment></root>""":
-    print "reconciliateNs() failed"
+    print("reconciliateNs() failed")
     sys.exit(1)
 target.freeDoc()
 
 # Memory debug specific
 libxml2.cleanupParser()
 if libxml2.debugMemory(1) == 0:
-    print "OK"
+    print("OK")
 else:
-    print "Memory leak %d bytes" % (libxml2.debugMemory(1))
+    print("Memory leak %d bytes" % (libxml2.debugMemory(1)))
     libxml2.dumpMemory()
