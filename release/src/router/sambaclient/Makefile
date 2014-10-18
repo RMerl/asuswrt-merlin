@@ -5,7 +5,7 @@
 #***********************************************************************
 
 include ../common.mak
-ifeq ($(RTCONFIG_SAMBA_NEW),y)
+ifeq ($(RTCONFIG_SAMBA_MODERN),y)
 SMBSRC = samba36
 else
 SMBSRC = samba-3.5.8
