@@ -36,9 +36,9 @@
 	background-color:#576D73;
 	position:absolute;
 	*margin-top:27px;	
-	margin-left:231px;
+	margin-left:35px;
 	*margin-left:-133px;
-	width:145px;
+	width:350px;
 	text-align:left;	
 	height:auto;
 	overflow-y:auto;
@@ -107,6 +107,7 @@ function initial(){
 function show_wl_maclist_x(){
 	var wl_maclist_x_row = wl_maclist_x_array.split('&#60');
 	var code = "";
+	var width = "";
 	code +='<table width="100%" border="1" cellspacing="0" cellpadding="4" align="center" class="list_table"  id="wl_maclist_x_table">'; 
 	if(wl_maclist_x_row.length == 1)
 		code +='<tr><td style="color:#FFCC00;"><#IPConnection_VSList_Norule#></td>';
@@ -116,9 +117,13 @@ function show_wl_maclist_x(){
 
 			var wl_maclist_x_col = wl_maclist_x_row[i].split('&#62');
 			for(var j = 0; j < wl_maclist_x_col.length; j++){
-				code +='<td width="40%">'+ wl_maclist_x_col[j] +'</td>';
+				if (j == 0) 
+					width = "30%";
+				 else 
+					width = "50%";
+				code +='<td width="'+width+'">'+ wl_maclist_x_col[j] +'</td>';
 			}
-			if (j != 2) code +='<td width="40%"></td>';
+			if (j != 2) code +='<td width="50%"></td>';
 			code +='<td width="20%"><input type="button" class=\"remove_btn\" onclick=\"deleteRow(this);\" value=\"\"/></td></tr>';		
 		}
 	}	
@@ -274,28 +279,36 @@ function hideClients_Block(){
 }
 
 function showWLMACList(){
-	var code = "";
-	var show_macaddr = "";
 	var wireless_flag = 0;
-	for(i=0;i<clientList.length;i++){
-		if(clientList[clientList[i]].isWL != 0 && (clientList[clientList[i]].isWL == (parseInt(document.form.wl_unit.value)+1))){		//0: wired, 1: 2.4GHz, 2: 5GHz, filter clients under current band
-			wireless_flag = 1;			
-			code += '<a><div onmouseover="over_var=1;" onmouseout="over_var=0;" onclick="setClientmac(\''+clientList[i]+'\');"><strong>'+clientList[clientList[i]].name+'</strong> ';
-			code += ' </div></a>';
+	var htmlCode = "";
+	for(var i=0; i<clientList.length;i++){
+		var clientObj = clientList[clientList[i]];
+
+		if(clientObj.isWL != 0 && (clientObj.isWL == (parseInt(document.form.wl_unit.value)+1))){
+			wireless_flag = 1;
+			if(clientObj.name.length > 25) clientObj.name = clientObj.name.substring(0, 23) + "..";
+
+			htmlCode += '<a><div onmouseover="over_var=1;" onmouseout="over_var=0;" onclick="setClientmac(\'';
+			htmlCode += clientObj.mac;
+			htmlCode += '\', \'';
+			htmlCode += clientObj.name;
+			htmlCode += '\');"><strong>';
+			htmlCode += clientObj.mac + '</strong>&nbsp;&nbsp;(' + clientObj.name + ')';
+			htmlCode += '</strong></div></a><!--[if lte IE 6.5]><iframe class="hackiframe2"></iframe><![endif]-->';
 		}
 	}
-			
-	code +='<!--[if lte IE 6.5]><iframe class="hackiframe2"></iframe><![endif]-->';	
-	document.getElementById("WL_MAC_List_Block").innerHTML = code;
-	
+
+        $("WL_MAC_List_Block").innerHTML = htmlCode;
+
 	if(wireless_flag == 0)
 		document.getElementById("pull_arrow").style.display = "none";
 	else
 		document.getElementById("pull_arrow").style.display = "";
 }
 
-function setClientmac(macaddr){
+function setClientmac(macaddr,name){
 	document.form.wl_maclist_x_0.value = macaddr;
+	document.form.wl_macname_x_0.value = name;
 	hideClients_Block();
 	over_var = 0;
 }
@@ -414,18 +427,18 @@ function enable_macMode(){
 							</tr>
 						</thead>
 							<tr>
-								<th width="40%"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(5,10);"><#FirewallConfig_MFList_groupitemname#></th> 
-								<th width="40%">Name</th>
+								<th width="30%"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(5,10);"><#FirewallConfig_MFList_groupitemname#></th> 
+								<th width="50%">Name</th>
 								<th width="20%"><#list_add_delete#></th>
 							</tr>
 							<tr>
-								<td width="40%">
+								<td width="30%">
 									<input type="text" maxlength="17" class="input_macaddr_table" name="wl_maclist_x_0" onKeyPress="return is_hwaddr(this,event)" onClick="hideClients_Block();">
 									<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="position:absolute;display:none;" onclick="pullWLMACList(this);" title="<#select_wireless_MAC#>" onmouseover="over_var=1;" onmouseout="over_var=0;">
 									<div id="WL_MAC_List_Block" class="WL_MAC_Block"></div>
 					              		</td>
-								<td width="40%">
-									<input type="text" class="input_15_table" maxlenght="15" onKeypress="return is_alphanum(this,event);" name="wl_macname_x_0">
+								<td width="50%">
+									<input type="text" class="input_25_table" maxlenght="25" onKeypress="return is_alphanum(this,event);" name="wl_macname_x_0">
 								</td>
 								<td width="20%">	
 									<input type="button" class="add_btn" onClick="addRow(document.form.wl_maclist_x_0, document.form.wl_macname_x_0, 128);" value="">
