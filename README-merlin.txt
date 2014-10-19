@@ -1,5 +1,5 @@
-Asuswrt-Merlin - build 376.48 (xx-xxx-2014)
-===========================================
+Asuswrt-Merlin - build 376.48 Beta 1 (18-Oct-2014)
+==================================================
 
 About
 -----
@@ -60,7 +60,7 @@ System:
      all LEDs
    - Entware easy setup script (alternative to Optware - the two are 
      mutually exclusive) (not available on RT-AC56/RT-AC68/RT-AC87)
-   - Experimental SNMP support (from Asus)
+   - Full SNMP support (based on experimental code from Asus)
 
 
 Disk sharing:
@@ -78,8 +78,6 @@ Networking:
    - CIFS client support (for mounting remote SMB share on the router)
    - Layer7 iptables matching (N16/N66/AC66 only)
    - User-defined options for WAN DHCP queries (required by some ISPs)
-   - Improved NAT loopback (based on code from phuzi0n from the DD-WRT 
-     forums)
    - Advanced OpenVPN client and server support (all models except 
      RT-N16)
    - Netfilter ipset module, for efficient blacklist implementation
@@ -571,18 +569,21 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
-376.48 (xx-xxxx-2014)
+376.48 Beta 1 (18-Oct-2014)
    - NEW: Merged with Asus 376_2769 AC87 GPL
    - NEW: Enabled numerous modules in net-snmp (based on the list
           used by OpenWRT)
    - NEW: Added postconf and custom config support for snmpd.conf
    - NEW: Added HID support to ARM kernel (AC56,AC68,AC87)
-   - CHANGED: Reverted NAT loopback code to Asus's, since our own
+   - CHANGED: Reverted NAT loopback code to Asus', since our own
               code is currently broken by recent FW code changes.
    - CHANGED: Updated openssl to 1.0.0o, resolving a few security issues.
    - CHANGED: Disabled SSLv2 and SSLv3 support for https access to the
               router webui.  IE6 users, your time is up - upgrade.
               TLS 1.0 is now the only supported method.
+   - CHANGED: upgraded main Samba server from 3.0.x to 3.6.24.  This might
+              cause a slight drop in performance, but should improve
+              both reliability and security.
    - FIXED: DNSFilter client list dropdown would sometime be empty.
    - FIXED: DNS queries run on the router were forwarded to upstream
             nameservers instead of dnsmasq
@@ -594,6 +595,8 @@ History
             situations when CTF was enabled
    - FIXED: Mac Filtering wasn't working with Guest networks
             (Asus bug) (Patch by saintdev)
+   - FIXED: Chosing a client on the MAC Filter page wasn't properly
+            filling the Name field.  Also reorganized layout a bit.
 
 
 376.47 (20-Sept-2014)
