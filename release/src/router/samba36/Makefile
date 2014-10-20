@@ -117,7 +117,8 @@ apps: .conf
 		--without-quotas \
 		--without-libtalloc \
 		--without-libtevent \
-		--without-sys-quotas
+		--without-sys-quotas \
+		--without-dnsupdate
 	touch .conf
 	mkdir -p $(srcdir)/bin
 
