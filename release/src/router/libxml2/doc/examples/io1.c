@@ -6,7 +6,7 @@
  *          XInclude method context to show how dynamic document can
  *          be built in a clean way.
  * usage: io1
- * test: io1 > io1.tmp ; diff io1.tmp io1.res ; rm -f io1.tmp
+ * test: io1 > io1.tmp && diff io1.tmp $(srcdir)/io1.res
  * author: Daniel Veillard
  * copy: see Copyright for the status of this software.
  */

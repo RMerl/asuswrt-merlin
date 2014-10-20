@@ -69,6 +69,7 @@
 			<arg choice="plain"><option>--version</option></arg>
 			<arg choice="plain"><option>--debug</option></arg>
 			<arg choice="plain"><option>--shell</option></arg>
+			<arg choice="plain"><option>--xpath "<replaceable class="option">XPath_expression</replaceable>"</option></arg>
 			<arg choice="plain"><option>--debugent</option></arg>
 			<arg choice="plain"><option>--copy</option></arg>
 			<arg choice="plain"><option>--recover</option></arg>
@@ -270,7 +271,7 @@
 		<varlistentry>
 	<term><option>--encode <replaceable class="option">ENCODING</replaceable></option></term>
 	<listitem>
-		<para>Output in the given encoding.</para>
+		<para>Output in the given encoding. Note that this works for full document not fragments or result from XPath queries.</para>
 	</listitem>
 		</varlistentry>
 
@@ -523,6 +524,19 @@
 		<para>
 			Run a navigating shell. Details on available commands in shell mode
 			are below (see <xref linkend="shell"/>).
+		</para>
+	</listitem>
+		</varlistentry>
+
+		<varlistentry>
+	<term><option>--xpath "<replaceable class="option">XPath_expression</replaceable>"</option></term>
+	<listitem>
+		<para>
+			Run an XPath expression given as argument and print the
+			result. In case of a nodeset result, each node in the
+			node set is serialized in full in the output. In case
+			of an empty node set the "XPath set is empty" result
+			will be shown and an error exit code will be returned.
 		</para>
 	</listitem>
 		</varlistentry>

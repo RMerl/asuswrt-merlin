@@ -24,13 +24,13 @@ except libxml2.parserError:
     got_exc = 1
 
 if got_exc == 0:
-    print "Failed to get a parser exception"
+    print("Failed to get a parser exception")
     sys.exit(1)
 
 if err != expect:
-    print "error"
-    print "received %s" %(err)
-    print "expected %s" %(expect)
+    print("error")
+    print("received %s" %(err))
+    print("expected %s" %(expect))
     sys.exit(1)
 
 i = 10000
@@ -45,7 +45,7 @@ while i > 0:
 # Memory debug specific
 libxml2.cleanupParser()
 if libxml2.debugMemory(1) == 0:
-    print "OK"
+    print("OK")
 else:
-    print "Memory leak %d bytes" % (libxml2.debugMemory(1))
+    print("Memory leak %d bytes" % (libxml2.debugMemory(1)))
     libxml2.dumpMemory()

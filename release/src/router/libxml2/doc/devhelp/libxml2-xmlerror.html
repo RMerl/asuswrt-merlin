@@ -84,7 +84,7 @@ void	<a href="#xmlResetError">xmlResetError</a>			(<a href="libxml2-xmlerror.htm
     char *	str2	: extra string information
     char *	str3	: extra string information
     int	int1	: extra number information
-    int	int2	: column number of the error or 0 if N/A (todo: rename this field when
+    int	int2	: error column # or 0 if N/A (todo: rename field when we would brk ABI)
     void *	ctxt	: the parser context if available
     void *	node	: the node in the tree
 } xmlError;
@@ -120,7 +120,9 @@ void	<a href="#xmlResetError">xmlResetError</a>			(<a href="libxml2-xmlerror.htm
     <a name="XML_FROM_WRITER">XML_FROM_WRITER</a> = 25 /* The xmlwriter module */
     <a name="XML_FROM_MODULE">XML_FROM_MODULE</a> = 26 /* The dynamically loaded module modul */
     <a name="XML_FROM_I18N">XML_FROM_I18N</a> = 27 /* The module handling character conversion */
-    <a name="XML_FROM_SCHEMATRONV">XML_FROM_SCHEMATRONV</a> = 28 /*  The Schematron validator module */
+    <a name="XML_FROM_SCHEMATRONV">XML_FROM_SCHEMATRONV</a> = 28 /* The Schematron validator module */
+    <a name="XML_FROM_BUFFER">XML_FROM_BUFFER</a> = 29 /* The buffers module */
+    <a name="XML_FROM_URI">XML_FROM_URI</a> = 30 /*  The URI module */
 };
 </pre><p/>
 </div>
@@ -249,6 +251,8 @@ void	<a href="#xmlResetError">xmlResetError</a>			(<a href="libxml2-xmlerror.htm
     <a name="XML_WAR_ENTITY_REDEFINED">XML_WAR_ENTITY_REDEFINED</a> = 107 /* 107 */
     <a name="XML_ERR_UNKNOWN_VERSION">XML_ERR_UNKNOWN_VERSION</a> = 108 /* 108 */
     <a name="XML_ERR_VERSION_MISMATCH">XML_ERR_VERSION_MISMATCH</a> = 109 /* 109 */
+    <a name="XML_ERR_NAME_TOO_LONG">XML_ERR_NAME_TOO_LONG</a> = 110 /* 110 */
+    <a name="XML_ERR_USER_STOP">XML_ERR_USER_STOP</a> = 111 /* 111 */
     <a name="XML_NS_ERR_XML_NAMESPACE">XML_NS_ERR_XML_NAMESPACE</a> = 200
     <a name="XML_NS_ERR_UNDEFINED_NAMESPACE">XML_NS_ERR_UNDEFINED_NAMESPACE</a> = 201 /* 201 */
     <a name="XML_NS_ERR_QNAME">XML_NS_ERR_QNAME</a> = 202 /* 202 */
@@ -870,8 +874,7 @@ void	<a href="#xmlResetError">xmlResetError</a>			(<a href="libxml2-xmlerror.htm
     <a name="XML_I18N_EXCESS_HANDLER">XML_I18N_EXCESS_HANDLER</a> = 6002 /* 6002 */
     <a name="XML_I18N_CONV_FAILED">XML_I18N_CONV_FAILED</a> = 6003 /* 6003 */
     <a name="XML_I18N_NO_OUTPUT">XML_I18N_NO_OUTPUT</a> = 6004 /* 6004 */
-    <a name="XML_CHECK_">XML_CHECK_</a> = 6005 /* 5033 */
-    <a name="XML_CHECK_X">XML_CHECK_X</a> = 6006 /*  503 */
+    <a name="XML_BUF_OVERFLOW">XML_BUF_OVERFLOW</a> = 7000
 };
 </pre><p/>
 </div>

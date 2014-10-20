@@ -5,7 +5,7 @@
  *          get the root element, then walk the document and print
  *          all the element name in document order.
  * usage: tree1 filename_or_URL
- * test: tree1 test2.xml > tree1.tmp ; diff tree1.tmp tree1.res ; rm tree1.tmp
+ * test: tree1 test2.xml > tree1.tmp && diff tree1.tmp $(srcdir)/tree1.res
  * author: Dodji Seketeli
  * copy: see Copyright for the status of this software.
  */

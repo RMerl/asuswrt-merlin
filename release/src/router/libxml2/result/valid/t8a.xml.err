@@ -1,4 +1,5 @@
-Entity: line 1: parser error : internal error
+Entity: line 1: parser error : internal error: xmlParseInternalSubset: error detected in Markup declaration
+
  %defroot; 
           ^
 Entity: line 1: 

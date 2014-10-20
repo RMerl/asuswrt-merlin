@@ -27,6 +27,9 @@
 #ifdef LIBXML_ICONV_ENABLED
 #include <iconv.h>
 #endif
+#ifdef LIBXML_ICU_ENABLED
+#include <unicode/ucnv.h>
+#endif
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -125,6 +128,13 @@ typedef int (* xmlCharEncodingOutputFunc)(unsigned char *out, int *outlen,
  * Block defining the handlers for non UTF-8 encodings.
  * If iconv is supported, there are two extra fields.
  */
+#ifdef LIBXML_ICU_ENABLED
+struct _uconv_t {
+  UConverter *uconv; /* for conversion between an encoding and UTF-16 */
+  UConverter *utf8; /* for conversion between UTF-8 and UTF-16 */
+};
+typedef struct _uconv_t uconv_t;
+#endif
 
 typedef struct _xmlCharEncodingHandler xmlCharEncodingHandler;
 typedef xmlCharEncodingHandler *xmlCharEncodingHandlerPtr;
@@ -136,6 +146,10 @@ struct _xmlCharEncodingHandler {
     iconv_t                    iconv_in;
     iconv_t                    iconv_out;
 #endif /* LIBXML_ICONV_ENABLED */
+#ifdef LIBXML_ICU_ENABLED
+    uconv_t                    *uconv_in;
+    uconv_t                    *uconv_out;
+#endif /* LIBXML_ICU_ENABLED */
 };
 
 #ifdef __cplusplus
@@ -149,32 +163,32 @@ extern "C" {
 /*
  * Interfaces for encoding handlers.
  */
-XMLPUBFUN void XMLCALL	
+XMLPUBFUN void XMLCALL
 	xmlInitCharEncodingHandlers	(void);
-XMLPUBFUN void XMLCALL	
+XMLPUBFUN void XMLCALL
 	xmlCleanupCharEncodingHandlers	(void);
-XMLPUBFUN void XMLCALL	
+XMLPUBFUN void XMLCALL
 	xmlRegisterCharEncodingHandler	(xmlCharEncodingHandlerPtr handler);
 XMLPUBFUN xmlCharEncodingHandlerPtr XMLCALL
 	xmlGetCharEncodingHandler	(xmlCharEncoding enc);
 XMLPUBFUN xmlCharEncodingHandlerPtr XMLCALL
 	xmlFindCharEncodingHandler	(const char *name);
 XMLPUBFUN xmlCharEncodingHandlerPtr XMLCALL
-	xmlNewCharEncodingHandler	(const char *name, 
-                          		 xmlCharEncodingInputFunc input,
-                          		 xmlCharEncodingOutputFunc output);
+	xmlNewCharEncodingHandler	(const char *name,
+					 xmlCharEncodingInputFunc input,
+					 xmlCharEncodingOutputFunc output);
 
 /*
  * Interfaces for encoding names and aliases.
  */
-XMLPUBFUN int XMLCALL	
+XMLPUBFUN int XMLCALL
 	xmlAddEncodingAlias		(const char *name,
 					 const char *alias);
-XMLPUBFUN int XMLCALL	
+XMLPUBFUN int XMLCALL
 	xmlDelEncodingAlias		(const char *alias);
 XMLPUBFUN const char * XMLCALL
 	xmlGetEncodingAlias		(const char *alias);
-XMLPUBFUN void XMLCALL	
+XMLPUBFUN void XMLCALL
 	xmlCleanupEncodingAliases	(void);
 XMLPUBFUN xmlCharEncoding XMLCALL
 	xmlParseCharEncoding		(const char *name);
@@ -188,12 +202,12 @@ XMLPUBFUN xmlCharEncoding XMLCALL
 	xmlDetectCharEncoding		(const unsigned char *in,
 					 int len);
 
-XMLPUBFUN int XMLCALL	
+XMLPUBFUN int XMLCALL
 	xmlCharEncOutFunc		(xmlCharEncodingHandler *handler,
 					 xmlBufferPtr out,
 					 xmlBufferPtr in);
 
-XMLPUBFUN int XMLCALL	
+XMLPUBFUN int XMLCALL
 	xmlCharEncInFunc		(xmlCharEncodingHandler *handler,
 					 xmlBufferPtr out,
 					 xmlBufferPtr in);
@@ -201,20 +215,20 @@ XMLPUBFUN int XMLCALL
 	xmlCharEncFirstLine		(xmlCharEncodingHandler *handler,
 					 xmlBufferPtr out,
 					 xmlBufferPtr in);
-XMLPUBFUN int XMLCALL	
+XMLPUBFUN int XMLCALL
 	xmlCharEncCloseFunc		(xmlCharEncodingHandler *handler);
 
 /*
  * Export a few useful functions
  */
 #ifdef LIBXML_OUTPUT_ENABLED
-XMLPUBFUN int XMLCALL	
+XMLPUBFUN int XMLCALL
 	UTF8Toisolat1			(unsigned char *out,
 					 int *outlen,
 					 const unsigned char *in,
 					 int *inlen);
 #endif /* LIBXML_OUTPUT_ENABLED */
-XMLPUBFUN int XMLCALL	
+XMLPUBFUN int XMLCALL
 	isolat1ToUTF8			(unsigned char *out,
 					 int *outlen,
 					 const unsigned char *in,

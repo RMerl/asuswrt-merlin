@@ -6,14 +6,14 @@ import sys, os
 from distutils.core import setup, Extension
 
 # Below ROOT, we expect to find include, include/libxml2, lib and bin.
-# On *nix, it is not needed (but should not harm), 
+# On *nix, it is not needed (but should not harm),
 # on Windows, it is set by configure.js.
-ROOT = r'@prefix@' 
+ROOT = r'@prefix@'
 
 # Thread-enabled libxml2
 with_threads = @WITH_THREADS@
 
-# If this flag is set (windows only), 
+# If this flag is set (windows only),
 # a private copy of the dlls are included in the package.
 # If this flag is not set, the libxml2 and libxslt
 # dlls must be found somewhere in the PATH at runtime.
@@ -32,7 +32,7 @@ except:
 if WITHDLLS:
     # libxml dlls (expected in ROOT/bin)
     dlls = [ 'iconv.dll','libxml2.dll','libxslt.dll','libexslt.dll' ]
-    dlls = map(lambda dll: os.path.join(ROOT,'bin',dll),dlls)
+    dlls = [os.path.join(ROOT,'bin',dll) for dll in dlls]
 
     # create __init__.py for the libxmlmods package
     if not os.path.exists("libxmlmods"):
@@ -51,9 +51,9 @@ else:
     libraryPrefix = ''
     platformLibs = ["m","z"]
 
-# those are examined to find 
+# those are examined to find
 # - libxml2/libxml/tree.h
-# - iconv.h 
+# - iconv.h
 # - libxslt/xsltconfig.h
 includes_dir = [
 "/usr/include",
@@ -67,20 +67,20 @@ xml_includes=""
 for dir in includes_dir:
     if not missing(dir + "/libxml2/libxml/tree.h"):
         xml_includes=dir + "/libxml2"
-	break;
+        break;
 
 if xml_includes == "":
-    print "failed to find headers for libxml2: update includes_dir"
+    print("failed to find headers for libxml2: update includes_dir")
     sys.exit(1)
 
 iconv_includes=""
 for dir in includes_dir:
     if not missing(dir + "/iconv.h"):
         iconv_includes=dir
-	break;
+        break;
 
 if iconv_includes == "":
-    print "failed to find headers for libiconv: update includes_dir"
+    print("failed to find headers for libiconv: update includes_dir")
     sys.exit(1)
 
 # those are added in the linker search path for libraries
@@ -90,22 +90,22 @@ os.path.join(ROOT,'lib'),
 
 xml_files = ["libxml2-api.xml", "libxml2-python-api.xml",
              "libxml.c", "libxml.py", "libxml_wrap.h", "types.c",
-	     "xmlgenerator.py", "README", "TODO", "drv_libxml2.py"]
+             "xmlgenerator.py", "README", "TODO", "drv_libxml2.py"]
 
 xslt_files = ["libxslt-api.xml", "libxslt-python-api.xml",
              "libxslt.c", "libxsl.py", "libxslt_wrap.h",
-	     "xsltgenerator.py"]
+             "xsltgenerator.py"]
 
 if missing("libxml2-py.c") or missing("libxml2.py"):
     try:
-	try:
-	    import xmlgenerator
-	except:
-	    import generator
+        try:
+            import xmlgenerator
+        except:
+            import generator
     except:
-	print "failed to find and generate stubs for libxml2, aborting ..."
-	print sys.exc_type, sys.exc_value
-	sys.exit(1)
+        print("failed to find and generate stubs for libxml2, aborting ...")
+        print(sys.exc_info()[0], sys.exc_info()[1])
+        sys.exit(1)
 
     head = open("libxml.py", "r")
     generated = open("libxml2class.py", "r")
@@ -116,7 +116,7 @@ if missing("libxml2-py.c") or missing("libxml2.py"):
         else:
             result.write(line)
     for line in generated.readlines():
-	result.write(line)
+        result.write(line)
     head.close()
     generated.close()
     result.close()
@@ -124,41 +124,41 @@ if missing("libxml2-py.c") or missing("libxml2.py"):
 with_xslt=0
 if missing("libxslt-py.c") or missing("libxslt.py"):
     if missing("xsltgenerator.py") or missing("libxslt-api.xml"):
-        print "libxslt stub generator not found, libxslt not built"
+        print("libxslt stub generator not found, libxslt not built")
     else:
-	try:
-	    import xsltgenerator
-	except:
-	    print "failed to generate stubs for libxslt, aborting ..."
-	    print sys.exc_type, sys.exc_value
-	else:
-	    head = open("libxsl.py", "r")
-	    generated = open("libxsltclass.py", "r")
-	    result = open("libxslt.py", "w")
-	    for line in head.readlines():
+        try:
+            import xsltgenerator
+        except:
+            print("failed to generate stubs for libxslt, aborting ...")
+            print(sys.exc_info()[0], sys.exc_info()[1])
+        else:
+            head = open("libxsl.py", "r")
+            generated = open("libxsltclass.py", "r")
+            result = open("libxslt.py", "w")
+            for line in head.readlines():
                 if WITHDLLS:
                     result.write(altImport(line))
                 else:
                     result.write(line)
-	    for line in generated.readlines():
-		result.write(line)
-	    head.close()
-	    generated.close()
-	    result.close()
-	    with_xslt=1
+            for line in generated.readlines():
+                result.write(line)
+            head.close()
+            generated.close()
+            result.close()
+            with_xslt=1
 else:
     with_xslt=1
 
 if with_xslt == 1:
     xslt_includes=""
     for dir in includes_dir:
-	if not missing(dir + "/libxslt/xsltconfig.h"):
-	    xslt_includes=dir + "/libxslt"
-	    break;
+        if not missing(dir + "/libxslt/xsltconfig.h"):
+            xslt_includes=dir + "/libxslt"
+            break;
 
     if xslt_includes == "":
-	print "failed to find headers for libxslt: update includes_dir"
-	with_xslt = 0
+        print("failed to find headers for libxslt: update includes_dir")
+        with_xslt = 0
 
 
 descr = "libxml2 package"
@@ -194,11 +194,11 @@ if with_xslt == 1:
 
 
 extens=[Extension('libxml2mod', c_files, include_dirs=includes,
-                  library_dirs=libdirs, 
-                  libraries=libs, define_macros=macros)] 
+                  library_dirs=libdirs,
+                  libraries=libs, define_macros=macros)]
 if with_xslt == 1:
     extens.append(Extension('libxsltmod', xslt_c_files, include_dirs=includes,
-			    library_dirs=libdirs, 
+                            library_dirs=libdirs,
                             libraries=libs, define_macros=macros))
 
 if missing("MANIFEST"):
@@ -208,8 +208,8 @@ if missing("MANIFEST"):
     for file in xml_files:
         manifest.write(file + "\n")
     if with_xslt == 1:
-	for file in xslt_files:
-	    manifest.write(file + "\n")
+        for file in xslt_files:
+            manifest.write(file + "\n")
     manifest.close()
 
 if WITHDLLS:

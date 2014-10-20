@@ -14,8 +14,8 @@ for n in d.xpathEval("//namespace::*"):
 d.freeDoc()
 
 if res != expect:
-    print "test5 failed: unexpected output"
-    print res
+    print("test5 failed: unexpected output")
+    print(res)
 del res
 del d
 del n
@@ -23,7 +23,7 @@ del n
 libxml2.cleanupParser()
 
 if libxml2.debugMemory(1) == 0:
-    print "OK"
+    print("OK")
 else:
-    print "Memory leak %d bytes" % (libxml2.debugMemory(1))
+    print("Memory leak %d bytes" % (libxml2.debugMemory(1)))
     libxml2.dumpMemory()

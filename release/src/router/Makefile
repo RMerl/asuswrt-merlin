@@ -2982,6 +2982,7 @@ pcre-8.31-clean:
 
 libxml2/stamp-h1:
 	cd libxml2 && \
+	./autogen.sh && \
 	CC=$(CC) AR=$(AR) RANLIB=$(RANLIB) LD=$(LD) CFLAGS="-Os -Wall $(EXTRACFLAGS)" \
 	./$(CONFIGURE) --prefix=/usr --without-python --disable-dependency-tracking
 	touch $@
@@ -2996,7 +2997,7 @@ libxml2-install: libxml2
 	cd $(INSTALLDIR)/libxml2/usr/lib && ln -sf libxml2.so.2 libxml2.so
 
 libxml2-clean:
-	-@$(MAKE) -C libxml2 clean
+	@[ ! -f libxml2/Makefile ] || $(MAKE) -C libxml2 clean
 	@rm -f libxml2/stamp-h1
 
 #libiconv-1.14

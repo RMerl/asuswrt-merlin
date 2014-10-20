@@ -28,9 +28,7 @@
 #include "libxml_wrap.h"
 #include "libxml2-py.h"
 
-#if (defined(_MSC_VER) || defined(__MINGW32__)) && !defined(vsnprintf)
-#define vsnprintf(b,c,f,a) _vsnprintf(b,c,f,a)
-#elif defined(WITH_TRIO)
+#if defined(WITH_TRIO)
 #include "trio.h"
 #define vsnprintf trio_vsnprintf
 #endif
@@ -43,7 +41,17 @@
 /* #define DEBUG_FILES */
 /* #define DEBUG_LOADER */
 
+#if PY_MAJOR_VERSION >= 3
+PyObject *PyInit_libxml2mod(void);
+
+#define PY_IMPORT_STRING_SIZE PyUnicode_FromStringAndSize
+#define PY_IMPORT_STRING PyUnicode_FromString
+#else
 void initlibxml2mod(void);
+#define PY_IMPORT_STRING_SIZE PyString_FromStringAndSize
+#define PY_IMPORT_STRING PyString_FromString
+#endif
+
 
 /**
  * TODO:
@@ -282,18 +290,42 @@ xmlPythonFileReadRaw (void * context, char * buffer, int len) {
     if (ret == NULL) {
 	printf("xmlPythonFileReadRaw: result is NULL\n");
 	return(-1);
-    } else if (PyString_Check(ret)) {
-	lenread = PyString_Size(ret);
-	data = PyString_AsString(ret);
-	if (lenread > len)
-	    memcpy(buffer, data, len);
-	else
-	    memcpy(buffer, data, lenread);
-	Py_DECREF(ret);
+    } else if (PyBytes_Check(ret)) {
+	lenread = PyBytes_Size(ret);
+	data = PyBytes_AsString(ret);
+#ifdef PyUnicode_Check
+    } else if PyUnicode_Check (ret) {
+#if PY_VERSION_HEX >= 0x03030000
+        Py_ssize_t size;
+	const char *tmp;
+
+	/* tmp doesn't need to be deallocated */
+        tmp = PyUnicode_AsUTF8AndSize(ret, &size);
+
+	lenread = (int) size;
+	data = (char *) tmp;
+#else
+        PyObject *b;
+	b = PyUnicode_AsUTF8String(ret);
+	if (b == NULL) {
+	    printf("xmlPythonFileReadRaw: failed to convert to UTF-8\n");
+	    return(-1);
+	}
+	lenread = PyBytes_Size(b);
+	data = PyBytes_AsString(b);
+	Py_DECREF(b);
+#endif
+#endif
     } else {
 	printf("xmlPythonFileReadRaw: result is not a String\n");
 	Py_DECREF(ret);
+	return(-1);
     }
+    if (lenread > len)
+	memcpy(buffer, data, len);
+    else
+	memcpy(buffer, data, lenread);
+    Py_DECREF(ret);
     return(lenread);
 }
 
@@ -323,18 +355,42 @@ xmlPythonFileRead (void * context, char * buffer, int len) {
     if (ret == NULL) {
 	printf("xmlPythonFileRead: result is NULL\n");
 	return(-1);
-    } else if (PyString_Check(ret)) {
-	lenread = PyString_Size(ret);
-	data = PyString_AsString(ret);
-	if (lenread > len)
-	    memcpy(buffer, data, len);
-	else
-	    memcpy(buffer, data, lenread);
-	Py_DECREF(ret);
+    } else if (PyBytes_Check(ret)) {
+	lenread = PyBytes_Size(ret);
+	data = PyBytes_AsString(ret);
+#ifdef PyUnicode_Check
+    } else if PyUnicode_Check (ret) {
+#if PY_VERSION_HEX >= 0x03030000
+        Py_ssize_t size;
+	const char *tmp;
+
+	/* tmp doesn't need to be deallocated */
+        tmp = PyUnicode_AsUTF8AndSize(ret, &size);
+
+	lenread = (int) size;
+	data = (char *) tmp;
+#else
+        PyObject *b;
+	b = PyUnicode_AsUTF8String(ret);
+	if (b == NULL) {
+	    printf("xmlPythonFileRead: failed to convert to UTF-8\n");
+	    return(-1);
+	}
+	lenread = PyBytes_Size(b);
+	data = PyBytes_AsString(b);
+	Py_DECREF(b);
+#endif
+#endif
     } else {
 	printf("xmlPythonFileRead: result is not a String\n");
 	Py_DECREF(ret);
+	return(-1);
     }
+    if (lenread > len)
+	memcpy(buffer, data, len);
+    else
+	memcpy(buffer, data, lenread);
+    Py_DECREF(ret);
     return(lenread);
 }
 
@@ -360,7 +416,7 @@ xmlPythonFileWrite (void * context, const char * buffer, int len) {
 #endif
     file = (PyObject *) context;
     if (file == NULL) return(-1);
-    string = PyString_FromStringAndSize(buffer, len);
+    string = PY_IMPORT_STRING_SIZE(buffer, len);
     if (string == NULL) return(-1);
     if (PyObject_HasAttrString(file, (char *) "io_write")) {
         ret = PyEval_CallMethod(file, (char *) "io_write", (char *) "(O)",
@@ -373,8 +429,8 @@ xmlPythonFileWrite (void * context, const char * buffer, int len) {
     if (ret == NULL) {
 	printf("xmlPythonFileWrite: result is NULL\n");
 	return(-1);
-    } else if (PyInt_Check(ret)) {
-	written = (int) PyInt_AsLong(ret);
+    } else if (PyLong_Check(ret)) {
+	written = (int) PyLong_AsLong(ret);
 	Py_DECREF(ret);
     } else if (ret == Py_None) {
 	written = len;
@@ -667,7 +723,7 @@ pythonExternalEntityLoader(const char *URL, const char *ID,
 	Py_XDECREF(ctxtobj);
 #ifdef DEBUG_LOADER
 	printf("pythonExternalEntityLoader: result ");
-	PyObject_Print(ret, stderr, 0);
+	PyObject_Print(ret, stdout, 0);
 	printf("\n");
 #endif
 
@@ -713,19 +769,114 @@ libxml_xmlSetEntityLoader(ATTRIBUTE_UNUSED PyObject *self, PyObject *args) {
 		&loader))
 	return(NULL);
 
+    if (!PyCallable_Check(loader)) {
+	PyErr_SetString(PyExc_ValueError, "entity loader is not callable");
+	return(NULL);
+    }
+
 #ifdef DEBUG_LOADER
     printf("libxml_xmlSetEntityLoader\n");
 #endif
     if (defaultExternalEntityLoader == NULL) 
 	defaultExternalEntityLoader = xmlGetExternalEntityLoader();
 
+    Py_XDECREF(pythonExternalEntityLoaderObjext);
     pythonExternalEntityLoaderObjext = loader;
+    Py_XINCREF(pythonExternalEntityLoaderObjext);
     xmlSetExternalEntityLoader(pythonExternalEntityLoader);
 
-    py_retval = PyInt_FromLong(0);
+    py_retval = PyLong_FromLong(0);
     return(py_retval);
 }
 
+/************************************************************************
+ *									*
+ *		Input callback registration				*
+ *									*
+ ************************************************************************/
+static PyObject *pythonInputOpenCallbackObject;
+static int pythonInputCallbackID = -1;
+
+static int
+pythonInputMatchCallback(ATTRIBUTE_UNUSED const char *URI)
+{
+    /* Always return success, real decision whether URI is supported will be
+     * made in open callback.  */
+    return 1;
+}
+
+static void *
+pythonInputOpenCallback(const char *URI)
+{
+    PyObject *ret;
+
+    ret = PyObject_CallFunction(pythonInputOpenCallbackObject,
+	    (char *)"s", URI);
+    if (ret == Py_None) {
+	Py_DECREF(Py_None);
+	return NULL;
+    }
+    return ret;
+}
+
+PyObject *
+libxml_xmlRegisterInputCallback(ATTRIBUTE_UNUSED PyObject *self,
+                                PyObject *args) {
+    PyObject *cb;
+
+    if (!PyArg_ParseTuple(args,
+		(const char *)"O:libxml_xmlRegisterInputCallback", &cb))
+	return(NULL);
+
+    if (!PyCallable_Check(cb)) {
+	PyErr_SetString(PyExc_ValueError, "input callback is not callable");
+	return(NULL);
+    }
+
+    /* Python module registers a single callback and manages the list of
+     * all callbacks internally. This is necessitated by xmlInputMatchCallback
+     * API, which does not allow for passing of data objects to discriminate
+     * different Python methods.  */
+    if (pythonInputCallbackID == -1) {
+	pythonInputCallbackID = xmlRegisterInputCallbacks(
+		pythonInputMatchCallback, pythonInputOpenCallback,
+		xmlPythonFileReadRaw, xmlPythonFileCloseRaw);
+	if (pythonInputCallbackID == -1)
+	    return PyErr_NoMemory();
+	pythonInputOpenCallbackObject = cb;
+	Py_INCREF(pythonInputOpenCallbackObject);
+    }
+
+    Py_INCREF(Py_None);
+    return(Py_None);
+}
+
+PyObject *
+libxml_xmlUnregisterInputCallback(ATTRIBUTE_UNUSED PyObject *self,
+                                ATTRIBUTE_UNUSED PyObject *args) {
+    int ret;
+
+    ret = xmlPopInputCallbacks();
+    if (pythonInputCallbackID != -1) {
+	/* Assert that the right input callback was popped. libxml's API does not
+	 * allow removal by ID, so all that could be done is an assert.  */
+	if (pythonInputCallbackID == ret) {
+	    pythonInputCallbackID = -1;
+	    Py_DECREF(pythonInputOpenCallbackObject);
+	    pythonInputOpenCallbackObject = NULL;
+	} else {
+	    PyErr_SetString(PyExc_AssertionError, "popped non-python input callback");
+	    return(NULL);
+	}
+    } else if (ret == -1) {
+	/* No more callbacks to pop */
+	PyErr_SetString(PyExc_IndexError, "no input callbacks to pop");
+	return(NULL);
+    }
+
+    Py_INCREF(Py_None);
+    return(Py_None);
+}
 
 /************************************************************************
  *									*
@@ -766,10 +917,10 @@ pythonStartElement(void *user_data, const xmlChar * name,
         } else {
             dict = PyDict_New();
             for (i = 0; attrs[i] != NULL; i++) {
-                attrname = PyString_FromString((char *) attrs[i]);
+                attrname = PY_IMPORT_STRING((char *) attrs[i]);
                 i++;
                 if (attrs[i] != NULL) {
-                    attrvalue = PyString_FromString((char *) attrs[i]);
+                    attrvalue = PY_IMPORT_STRING((char *) attrs[i]);
                 } else {
                     Py_XINCREF(Py_None);
                     attrvalue = Py_None;
@@ -1172,7 +1323,7 @@ pythonAttributeDecl(void *user_data,
         nameList = PyList_New(count);
         count = 0;
         for (node = tree; node != NULL; node = node->next) {
-            newName = PyString_FromString((char *) node->name);
+            newName = PY_IMPORT_STRING((char *) node->name);
             PyList_SetItem(nameList, count, newName);
 	    Py_DECREF(newName);
             count++;
@@ -1367,6 +1518,7 @@ libxml_htmlCreatePushParser(ATTRIBUTE_UNUSED PyObject * self,
 PyObject *
 libxml_xmlSAXParseFile(ATTRIBUTE_UNUSED PyObject * self, PyObject * args)
 {
+#ifdef LIBXML_SAX1_ENABLED
     int recover;
     const char *URI;
     PyObject *pyobj_SAX = NULL;
@@ -1388,6 +1540,7 @@ libxml_xmlSAXParseFile(ATTRIBUTE_UNUSED PyObject * self, PyObject * args)
     Py_INCREF(pyobj_SAX);
     /* The reference is released in pythonEndDocument() */
     xmlSAXUserParseFile(SAX, pyobj_SAX, URI);
+#endif /* LIBXML_SAX1_ENABLED */
     Py_INCREF(Py_None);
     return (Py_None);
 }
@@ -1745,7 +1898,7 @@ typedef struct
 typedef xmlValidCtxtPyCtxt *xmlValidCtxtPyCtxtPtr;
 
 static void
-libxml_xmlValidCtxtGenericErrorFuncHandler(void *ctx, int severity, char *str) 
+libxml_xmlValidCtxtGenericErrorFuncHandler(void *ctx, ATTRIBUTE_UNUSED int severity, char *str)
 {
     PyObject *list;
     PyObject *result;
@@ -1772,7 +1925,7 @@ libxml_xmlValidCtxtGenericErrorFuncHandler(void *ctx, int severity, char *str)
 }
 
 static void
-libxml_xmlValidCtxtGenericWarningFuncHandler(void *ctx, int severity, char *str) 
+libxml_xmlValidCtxtGenericWarningFuncHandler(void *ctx, ATTRIBUTE_UNUSED int severity, char *str)
 {
     PyObject *list;
     PyObject *result;
@@ -2033,7 +2186,7 @@ libxml_xmlFreeTextReader(ATTRIBUTE_UNUSED PyObject *self, PyObject *args) {
 
     if (!PyArg_ParseTuple(args, (char *)"O:xmlFreeTextReader", &pyobj_reader))
         return(NULL);
-    if (!PyCObject_Check(pyobj_reader)) {
+    if (!PyCapsule_CheckExact(pyobj_reader)) {
 	Py_INCREF(Py_None);
 	return(Py_None);
     }
@@ -2231,6 +2384,32 @@ libxml_xmlRegisterXPathFunction(ATTRIBUTE_UNUSED PyObject * self,
     
   done:
     py_retval = libxml_intWrap((int) c_retval);
+    return (py_retval);
+}
+
+PyObject *
+libxml_xmlXPathRegisterVariable(ATTRIBUTE_UNUSED PyObject * self,
+                                PyObject * args)
+{
+    PyObject *py_retval;
+    int c_retval = 0;
+    xmlChar *name;
+    xmlChar *ns_uri;
+    xmlXPathContextPtr ctx;
+    xmlXPathObjectPtr val;
+    PyObject *pyobj_ctx;
+    PyObject *pyobj_value;
+
+    if (!PyArg_ParseTuple
+        (args, (char *) "OszO:xpathRegisterVariable", &pyobj_ctx, &name,
+         &ns_uri, &pyobj_value))
+        return (NULL);
+
+    ctx = (xmlXPathContextPtr) PyxmlXPathContext_Get(pyobj_ctx);
+    val = libxml_xmlXPathObjectPtrConvert(pyobj_value);
+
+    c_retval = xmlXPathRegisterVariableNS(ctx, name, ns_uri, val);
+    py_retval = libxml_intWrap(c_retval);
     return (py_retval);
 }
 
@@ -2504,6 +2683,7 @@ libxml_last(ATTRIBUTE_UNUSED PyObject * self, PyObject * args)
                 xmlAttrPtr attr = (xmlAttrPtr) cur;
 
                 res = attr->last;
+		break;
             }
         default:
             res = NULL;
@@ -2566,6 +2746,10 @@ libxml_type(ATTRIBUTE_UNUSED PyObject * self, PyObject * args)
     if (!PyArg_ParseTuple(args, (char *) "O:last", &obj))
         return NULL;
     cur = PyxmlNode_Get(obj);
+    if (cur == NULL) {
+        Py_INCREF(Py_None);
+	return (Py_None);
+    }
 
 #ifdef DEBUG
     printf("libxml_type: cur = %p\n", cur);
@@ -2682,7 +2866,7 @@ libxml_xmlNodeRemoveNsDef(ATTRIBUTE_UNUSED PyObject * self, PyObject * args)
     PyObject *pyobj_node;
     xmlChar *href;
     xmlNsPtr c_retval;
-    
+
     if (!PyArg_ParseTuple
         (args, (char *) "Oz:xmlNodeRemoveNsDef", &pyobj_node, &href))
         return (NULL);
@@ -2762,7 +2946,6 @@ libxml_serializeNode(ATTRIBUTE_UNUSED PyObject * self, PyObject * args)
     xmlDocPtr doc;
     const char *encoding;
     int format;
-    int len;
     xmlSaveCtxtPtr ctxt;
     xmlBufferPtr buf;
     int options = 0;
@@ -2845,16 +3028,12 @@ libxml_saveNodeTo(ATTRIBUTE_UNUSED PyObject * self, PyObject * args)
                           &py_file, &encoding, &format))
         return (NULL);
     node = (xmlNodePtr) PyxmlNode_Get(pyobj_node);
-
     if (node == NULL) {
-        return (PyInt_FromLong((long) -1));
+        return (PyLong_FromLong((long) -1));
     }
-    if ((py_file == NULL) || (!(PyFile_Check(py_file)))) {
-        return (PyInt_FromLong((long) -1));
-    }
-    output = PyFile_AsFile(py_file);
+    output = PyFile_Get(py_file);
     if (output == NULL) {
-        return (PyInt_FromLong((long) -1));
+        return (PyLong_FromLong((long) -1));
     }
 
     if (node->type == XML_DOCUMENT_NODE) {
@@ -2873,7 +3052,7 @@ libxml_saveNodeTo(ATTRIBUTE_UNUSED PyObject * self, PyObject * args)
     if (encoding != NULL) {
         handler = xmlFindCharEncodingHandler(encoding);
         if (handler == NULL) {
-            return (PyInt_FromLong((long) -1));
+            return (PyLong_FromLong((long) -1));
         }
     }
     if (doc->type == XML_HTML_DOCUMENT_NODE) {
@@ -2898,7 +3077,8 @@ libxml_saveNodeTo(ATTRIBUTE_UNUSED PyObject * self, PyObject * args)
         xmlNodeDumpOutput(buf, doc, node, 0, format, encoding);
         len = xmlOutputBufferClose(buf);
     }
-    return (PyInt_FromLong((long) len));
+    PyFile_Release(output);
+    return (PyLong_FromLong((long) len));
 }
 #endif /* LIBXML_OUTPUT_ENABLED */
 
@@ -3404,7 +3584,7 @@ PystringSet_Convert(PyObject *py_strings, xmlChar *** result)
     {
         int idx;
         for (idx=0; idx < count; ++idx) {
-            char* s = PyString_AsString
+            char* s = PyBytes_AsString
                 (is_tuple
                  ? PyTuple_GET_ITEM(py_strings, idx)
                  : PyList_GET_ITEM(py_strings, idx));
@@ -3493,8 +3673,8 @@ libxml_C14NDocDumpMemory(ATTRIBUTE_UNUSED PyObject * self,
         return NULL;
     }
     else {
-        py_retval = PyString_FromStringAndSize((const char *) doc_txt,
-                                               result);
+        py_retval = PY_IMPORT_STRING_SIZE((const char *) doc_txt,
+                                                result);
         xmlFree(doc_txt);
         return py_retval;
     }
@@ -3535,11 +3715,7 @@ libxml_C14NDocSaveTo(ATTRIBUTE_UNUSED PyObject * self,
         return NULL;
     }
 
-    if ((py_file == NULL) || (!(PyFile_Check(py_file)))) {
-        PyErr_SetString(PyExc_TypeError, "bad file.");
-        return NULL;
-    }
-    output = PyFile_AsFile(py_file);
+    output = PyFile_Get(py_file);
     if (output == NULL) {
         PyErr_SetString(PyExc_TypeError, "bad file.");
         return NULL;
@@ -3577,6 +3753,7 @@ libxml_C14NDocSaveTo(ATTRIBUTE_UNUSED PyObject * self,
         xmlFree(prefixes);
     }
 
+    PyFile_Release(output);
     len = xmlOutputBufferClose(buf);
 
     if (result < 0) {
@@ -3585,7 +3762,7 @@ libxml_C14NDocSaveTo(ATTRIBUTE_UNUSED PyObject * self,
         return NULL;
     }
     else
-        return PyInt_FromLong((long) len);
+        return PyLong_FromLong((long) len);
 }
 
 #endif
@@ -3599,7 +3776,7 @@ libxml_getObjDesc(PyObject *self ATTRIBUTE_UNUSED, PyObject *args) {
 
     if (!PyArg_ParseTuple(args, (char *)"O:getObjDesc", &obj))
         return NULL;
-    str = PyCObject_GetDesc(obj);
+    str = PyCapsule_GetPointer(obj, PyCapsule_GetName(obj));
     return Py_BuildValue((char *)"s", str);
 }
 
@@ -3694,31 +3871,64 @@ static PyMethodDef libxmlMethods[] = {
     {(char *) "getObjDesc", libxml_getObjDesc, METH_VARARGS, NULL},
     {(char *) "compareNodesEqual", libxml_compareNodesEqual, METH_VARARGS, NULL},
     {(char *) "nodeHash", libxml_nodeHash, METH_VARARGS, NULL},
+    {(char *) "xmlRegisterInputCallback", libxml_xmlRegisterInputCallback, METH_VARARGS, NULL},
+    {(char *) "xmlUnregisterInputCallback", libxml_xmlUnregisterInputCallback, METH_VARARGS, NULL},
     {NULL, NULL, 0, NULL}
 };
+
+#if PY_MAJOR_VERSION >= 3
+#define INITERROR return NULL
+
+static struct PyModuleDef moduledef = {
+        PyModuleDef_HEAD_INIT,
+        "libxml2mod",
+        NULL,
+        -1,
+        libxmlMethods,
+        NULL,
+        NULL,
+        NULL,
+        NULL
+};
+
+#else
+#define INITERROR return
 
 #ifdef MERGED_MODULES
 extern void initlibxsltmod(void);
 #endif
 
-void
-initlibxml2mod(void)
+#endif
+
+#if PY_MAJOR_VERSION >= 3
+PyObject *PyInit_libxml2mod(void)
+#else
+void initlibxml2mod(void)
+#endif
 {
-    static int initialized = 0;
+    PyObject *module;
 
-    if (initialized != 0)
-        return;
-
+#if PY_MAJOR_VERSION >= 3
+    module = PyModule_Create(&moduledef);
+#else
     /* intialize the python extension module */
-    Py_InitModule((char *) "libxml2mod", libxmlMethods);
+    module = Py_InitModule((char *) "libxml2mod", libxmlMethods);
+#endif
+    if (module == NULL)
+        INITERROR;
 
     /* initialize libxml2 */
     xmlInitParser();
+    /* TODO this probably need to be revamped for Python3 */
     libxml_xmlErrorInitialize();
 
-    initialized = 1;
-
+#if PY_MAJOR_VERSION < 3
 #ifdef MERGED_MODULES
     initlibxsltmod();
+#endif
+#endif
+
+#if PY_MAJOR_VERSION >= 3
+    return module;
 #endif
 }

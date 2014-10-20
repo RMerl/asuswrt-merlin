@@ -3,14 +3,19 @@
 # this tests the basic APIs of the XmlTextReader interface
 #
 import libxml2
-import StringIO
 import sys
+try:
+    import StringIO
+    str_io = StringIO.StringIO
+except:
+    import io
+    str_io = io.StringIO
 
 # Memory debug specific
 libxml2.debugMemory(1)
 
 def tst_reader(s):
-    f = StringIO.StringIO(s)
+    f = str_io(s)
     input = libxml2.inputBuffer(f)
     reader = input.newTextReader("tst")
     res = ""
@@ -32,14 +37,14 @@ expect="""1 (test) [None] 0
 res = tst_reader("""<test><b/><c/></test>""")
 
 if res != expect:
-    print "Did not get the expected error message:"
-    print res
+    print("Did not get the expected error message:")
+    print(res)
     sys.exit(1)
 
 # Memory debug specific
 libxml2.cleanupParser()
 if libxml2.debugMemory(1) == 0:
-    print "OK"
+    print("OK")
 else:
-    print "Memory leak %d bytes" % (libxml2.debugMemory(1))
+    print("Memory leak %d bytes" % (libxml2.debugMemory(1)))
     libxml2.dumpMemory()

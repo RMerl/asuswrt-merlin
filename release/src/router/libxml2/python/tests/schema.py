@@ -33,7 +33,7 @@ ctxt_valid  = ctxt_schema.schemaNewValidCtxt()
 doc = libxml2.parseDoc(instance)
 ret = doc.schemaValidateDoc(ctxt_valid)
 if ret != 0:
-    print "error doing schema validation"
+    print("error doing schema validation")
     sys.exit(1)
 
 doc.freeDoc()
@@ -45,8 +45,8 @@ libxml2.schemaCleanupTypes()
 # Memory debug specific
 libxml2.cleanupParser()
 if libxml2.debugMemory(1) == 0:
-    print "OK"
+    print("OK")
 else:
-    print "Memory leak %d bytes" % (libxml2.debugMemory(1))
+    print("Memory leak %d bytes" % (libxml2.debugMemory(1)))
     libxml2.dumpMemory()
 

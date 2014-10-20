@@ -20,7 +20,7 @@ doc = libxml2.parseDoc(
 elem = doc.getRootElement()
 attr = elem.hasNsProp('attr', 'http://abc.org')
 if attr == None or attr.serialize()[:-1] != """<!ATTLIST test abc:attr CDATA #FIXED "def">""":
-    print "Failed to find defaulted attribute abc:attr"
+    print("Failed to find defaulted attribute abc:attr")
     sys.exit(1)
 
 doc.freeDoc()
@@ -28,7 +28,7 @@ doc.freeDoc()
 # Memory debug specific
 libxml2.cleanupParser()
 if libxml2.debugMemory(1) == 0:
-    print "OK"
+    print("OK")
 else:
-    print "Memory leak %d bytes" % (libxml2.debugMemory(1))
+    print("Memory leak %d bytes" % (libxml2.debugMemory(1)))
     libxml2.dumpMemory()

@@ -43,13 +43,15 @@
     <p>Author(s): Daniel Veillard </p>
     <div class="refsynopsisdiv">
       <h2>Synopsis</h2>
-      <pre class="synopsis">int	<a href="#xmlNanoFTPQuit">xmlNanoFTPQuit</a>			(void * ctx);
+      <pre class="synopsis">#define <a href="#INVALID_SOCKET">INVALID_SOCKET</a>;
+#define <a href="#SOCKET">SOCKET</a>;
+int	<a href="#xmlNanoFTPQuit">xmlNanoFTPQuit</a>			(void * ctx);
 int	<a href="#xmlNanoFTPClose">xmlNanoFTPClose</a>			(void * ctx);
 typedef void <a href="#ftpListCallback">ftpListCallback</a>			(void * userData, <br/>					 const char * filename, <br/>					 const char * attrib, <br/>					 const char * owner, <br/>					 const char * group, <br/>					 unsigned long size, <br/>					 int links, <br/>					 int year, <br/>					 const char * month, <br/>					 int day, <br/>					 int hour, <br/>					 int minute);
 int	<a href="#xmlNanoFTPCloseConnection">xmlNanoFTPCloseConnection</a>	(void * ctx);
 void	<a href="#xmlNanoFTPProxy">xmlNanoFTPProxy</a>			(const char * host, <br/>					 int port, <br/>					 const char * user, <br/>					 const char * passwd, <br/>					 int type);
 int	<a href="#xmlNanoFTPUpdateURL">xmlNanoFTPUpdateURL</a>		(void * ctx, <br/>					 const char * URL);
-int	<a href="#xmlNanoFTPGetConnection">xmlNanoFTPGetConnection</a>		(void * ctx);
+<a href="libxml2-nanoftp.html#SOCKET">SOCKET</a>	<a href="#xmlNanoFTPGetConnection">xmlNanoFTPGetConnection</a>		(void * ctx);
 int	<a href="#xmlNanoFTPDele">xmlNanoFTPDele</a>			(void * ctx, <br/>					 const char * file);
 void *	<a href="#xmlNanoFTPNewCtxt">xmlNanoFTPNewCtxt</a>		(const char * URL);
 int	<a href="#xmlNanoFTPCheckResponse">xmlNanoFTPCheckResponse</a>		(void * ctx);
@@ -62,7 +64,7 @@ void *	<a href="#xmlNanoFTPConnectTo">xmlNanoFTPConnectTo</a>		(const char * ser
 int	<a href="#xmlNanoFTPList">xmlNanoFTPList</a>			(void * ctx, <br/>					 <a href="libxml2-nanoftp.html#ftpListCallback">ftpListCallback</a> callback, <br/>					 void * userData, <br/>					 const char * filename);
 void *	<a href="#xmlNanoFTPOpen">xmlNanoFTPOpen</a>			(const char * URL);
 int	<a href="#xmlNanoFTPConnect">xmlNanoFTPConnect</a>		(void * ctx);
-int	<a href="#xmlNanoFTPGetSocket">xmlNanoFTPGetSocket</a>		(void * ctx, <br/>					 const char * filename);
+<a href="libxml2-nanoftp.html#SOCKET">SOCKET</a>	<a href="#xmlNanoFTPGetSocket">xmlNanoFTPGetSocket</a>		(void * ctx, <br/>					 const char * filename);
 int	<a href="#xmlNanoFTPGet">xmlNanoFTPGet</a>			(void * ctx, <br/>					 <a href="libxml2-nanoftp.html#ftpDataCallback">ftpDataCallback</a> callback, <br/>					 void * userData, <br/>					 const char * filename);
 int	<a href="#xmlNanoFTPRead">xmlNanoFTPRead</a>			(void * ctx, <br/>					 void * dest, <br/>					 int len);
 void	<a href="#xmlNanoFTPFreeCtxt">xmlNanoFTPFreeCtxt</a>		(void * ctx);
@@ -75,6 +77,14 @@ void	<a href="#xmlNanoFTPCleanup">xmlNanoFTPCleanup</a>		(void);
     <div class="refsect1" lang="en">
       <h2>Details</h2>
       <div class="refsect2" lang="en">
+        <div class="refsect2" lang="en"><h3><a name="INVALID_SOCKET">Macro </a>INVALID_SOCKET</h3><pre class="programlisting">#define <a href="#INVALID_SOCKET">INVALID_SOCKET</a>;
+</pre><p>macro used to provide portability of code to windows sockets the value to be used when the socket is not valid</p>
+</div>
+        <hr/>
+        <div class="refsect2" lang="en"><h3><a name="SOCKET">Macro </a>SOCKET</h3><pre class="programlisting">#define <a href="#SOCKET">SOCKET</a>;
+</pre><p>macro used to provide portability of code to windows sockets</p>
+</div>
+        <hr/>
         <div class="refsect2" lang="en"><h3><a name="ftpDataCallback"/>Function type ftpDataCallback</h3><pre class="programlisting">void	ftpDataCallback			(void * userData, <br/>					 const char * data, <br/>					 int len)<br/>
 </pre><p>A callback for the <a href="libxml2-nanoftp.html#xmlNanoFTPGet">xmlNanoFTPGet</a> command.</p>
 <div class="variablelist"><table border="0"><col align="left"/><tbody><tr><td><span class="term"><i><tt>userData</tt></i>:</span></td><td>the user provided context</td></tr><tr><td><span class="term"><i><tt>data</tt></i>:</span></td><td>the data received</td></tr><tr><td><span class="term"><i><tt>len</tt></i>:</span></td><td>its size in bytes</td></tr></tbody></table></div></div>
@@ -123,7 +133,7 @@ void	<a href="#xmlNanoFTPCleanup">xmlNanoFTPCleanup</a>		(void);
 </pre><p>Fetch the given file from the server. All data are passed back in the callbacks. The last callback has a size of 0 block.</p>
 <div class="variablelist"><table border="0"><col align="left"/><tbody><tr><td><span class="term"><i><tt>ctx</tt></i>:</span></td><td>an FTP context</td></tr><tr><td><span class="term"><i><tt>callback</tt></i>:</span></td><td>the user callback</td></tr><tr><td><span class="term"><i><tt>userData</tt></i>:</span></td><td>the user callback data</td></tr><tr><td><span class="term"><i><tt>filename</tt></i>:</span></td><td>the file to retrieve</td></tr><tr><td><span class="term"><i><tt>Returns</tt></i>:</span></td><td>-1 incase of error, 0 otherwise</td></tr></tbody></table></div></div>
         <hr/>
-        <div class="refsect2" lang="en"><h3><a name="xmlNanoFTPGetConnection"/>xmlNanoFTPGetConnection ()</h3><pre class="programlisting">int	xmlNanoFTPGetConnection		(void * ctx)<br/>
+        <div class="refsect2" lang="en"><h3><a name="xmlNanoFTPGetConnection"/>xmlNanoFTPGetConnection ()</h3><pre class="programlisting"><a href="libxml2-nanoftp.html#SOCKET">SOCKET</a>	xmlNanoFTPGetConnection		(void * ctx)<br/>
 </pre><p>Try to open a data connection to the server. Currently only passive mode is supported.</p>
 <div class="variablelist"><table border="0"><col align="left"/><tbody><tr><td><span class="term"><i><tt>ctx</tt></i>:</span></td><td>an FTP context</td></tr><tr><td><span class="term"><i><tt>Returns</tt></i>:</span></td><td>-1 incase of error, 0 otherwise</td></tr></tbody></table></div></div>
         <hr/>
@@ -131,7 +141,7 @@ void	<a href="#xmlNanoFTPCleanup">xmlNanoFTPCleanup</a>		(void);
 </pre><p>Get the response from the FTP server after a command.</p>
 <div class="variablelist"><table border="0"><col align="left"/><tbody><tr><td><span class="term"><i><tt>ctx</tt></i>:</span></td><td>an FTP context</td></tr><tr><td><span class="term"><i><tt>Returns</tt></i>:</span></td><td>the code number</td></tr></tbody></table></div></div>
         <hr/>
-        <div class="refsect2" lang="en"><h3><a name="xmlNanoFTPGetSocket"/>xmlNanoFTPGetSocket ()</h3><pre class="programlisting">int	xmlNanoFTPGetSocket		(void * ctx, <br/>					 const char * filename)<br/>
+        <div class="refsect2" lang="en"><h3><a name="xmlNanoFTPGetSocket"/>xmlNanoFTPGetSocket ()</h3><pre class="programlisting"><a href="libxml2-nanoftp.html#SOCKET">SOCKET</a>	xmlNanoFTPGetSocket		(void * ctx, <br/>					 const char * filename)<br/>
 </pre><p>Initiate fetch of the given file from the server.</p>
 <div class="variablelist"><table border="0"><col align="left"/><tbody><tr><td><span class="term"><i><tt>ctx</tt></i>:</span></td><td>an FTP context</td></tr><tr><td><span class="term"><i><tt>filename</tt></i>:</span></td><td>the file to retrieve (or NULL if path is in context).</td></tr><tr><td><span class="term"><i><tt>Returns</tt></i>:</span></td><td>the socket for the data connection, or &lt;0 in case of error</td></tr></tbody></table></div></div>
         <hr/>

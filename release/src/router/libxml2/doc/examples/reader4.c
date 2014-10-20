@@ -6,7 +6,7 @@
  * and parser context.  (Note that the XMLReader functions require
  * libxml2 version later than 2.6.)
  * usage: reader4 <filename> [ filename ... ]
- * test: reader4 test1.xml test2.xml test3.xml > reader4.tmp ; diff reader4.tmp reader4.res ; rm reader4.tmp
+ * test: reader4 test1.xml test2.xml test3.xml > reader4.tmp && diff reader4.tmp $(srcdir)/reader4.res
  * author: Graham Bennett
  * copy: see Copyright for the status of this software.
  */

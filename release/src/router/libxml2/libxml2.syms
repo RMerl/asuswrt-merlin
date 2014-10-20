@@ -2231,3 +2231,51 @@ LIBXML2_2.7.4 {
   xmlXIncludeProcessTreeFlagsData;
 } LIBXML2_2.7.3;
 
+LIBXML2_2.8.0 {
+    global:
+
+# xmlreader
+  xmlTextReaderRelaxNGValidateCtxt;
+
+# tree
+  xmlBufferDetach;
+
+# dict
+  xmlInitializeDict;
+} LIBXML2_2.7.4;
+
+LIBXML2_2.9.0 {
+    global:
+
+# tree
+  xmlBufContent;
+  xmlBufEnd;
+  xmlBufGetNodeContent;
+  xmlBufNodeDump;
+  xmlBufShrink;
+  xmlBufUse;
+
+# dict
+  xmlDictGetUsage;
+  xmlDictSetLimit;
+
+# xmlschemas
+  xmlSchemaValidateSetFilename;
+  xmlSchemaValidateSetLocator;
+
+# xmlIO
+  xmlOutputBufferGetContent;
+  xmlOutputBufferGetSize;
+
+# xmlwriter
+  xmlTextWriterSetQuoteChar;
+} LIBXML2_2.8.0;
+
+LIBXML2_2.9.1 {
+    global:
+
+# xpath
+  xmlXPathNodeEval;
+  xmlXPathSetContextNode;
+} LIBXML2_2.9.0;
+

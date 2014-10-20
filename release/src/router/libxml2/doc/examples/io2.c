@@ -4,7 +4,7 @@
  * purpose: Demonstrate the use of xmlDocDumpMemory
  *          to output document to a character buffer
  * usage: io2
- * test: io2 > io2.tmp ; diff io2.tmp io2.res ; rm -f io2.tmp
+ * test: io2 > io2.tmp && diff io2.tmp $(srcdir)/io2.res
  * author: John Fleck
  * copy: see Copyright for the status of this software.
  */

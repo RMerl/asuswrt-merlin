@@ -1,6 +1,9 @@
 #!/usr/bin/python -u
 import string, sys, time
-import thread
+try:
+    from _thread import get_ident
+except:
+    from thread import get_ident
 from threading import Thread, Lock
 
 import libxml2
@@ -31,8 +34,8 @@ def test(expectedLineNumbersDefault):
     # check a per thread-global
     if expectedLineNumbersDefault != getLineNumbersDefault():
         failed = 1
-        print "FAILED to obtain correct value for " \
-              "lineNumbersDefault in thread %d" % thread.get_ident()
+        print("FAILED to obtain correct value for " \
+              "lineNumbersDefault in thread %d" % get_ident())
     # check ther global error handler 
     # (which is NOT per-thread in the python bindings)
     try:
@@ -51,7 +54,7 @@ libxml2.lineNumbersDefault(1)
 test(1)
 ec = len(eh.errors)
 if ec == 0:
-    print "FAILED: should have obtained errors"
+    print("FAILED: should have obtained errors")
     sys.exit(1)
 
 ts = []
@@ -65,7 +68,7 @@ for t in ts:
     t.join()
 
 if len(eh.errors) != ec+THREADS_COUNT*ec:
-    print "FAILED: did not obtain the correct number of errors"
+    print("FAILED: did not obtain the correct number of errors")
     sys.exit(1)
 
 # set lineNumbersDefault for future new threads
@@ -80,17 +83,17 @@ for t in ts:
     t.join()
 
 if len(eh.errors) != ec+THREADS_COUNT*ec*2:
-    print "FAILED: did not obtain the correct number of errors"
+    print("FAILED: did not obtain the correct number of errors")
     sys.exit(1)
 
 if failed:
-    print "FAILED"
+    print("FAILED")
     sys.exit(1)
 
 # Memory debug specific
 libxml2.cleanupParser()
 if libxml2.debugMemory(1) == 0:
-    print "OK"
+    print("OK")
 else:
-    print "Memory leak %d bytes" % (libxml2.debugMemory(1))
+    print("Memory leak %d bytes" % (libxml2.debugMemory(1)))
     libxml2.dumpMemory()

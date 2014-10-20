@@ -20,16 +20,16 @@ class callback:
     def startDocument(self):
         global ctxt
         if ctxt.byteConsumed() != self.startd:
-            print "document start at wrong index: %d expecting %d\n" % (
-                  ctxt.byteConsumed(), self.startd)
+            print("document start at wrong index: %d expecting %d\n" % (
+                  ctxt.byteConsumed(), self.startd))
             sys.exit(1)
 
     def endDocument(self):
         global ctxt
         expect = self.ende + self.delta * (self.count - 1) + self.endd
         if ctxt.byteConsumed() != expect:
-            print "document end at wrong index: %d expecting %d\n" % (
-                  ctxt.byteConsumed(), expect)
+            print("document end at wrong index: %d expecting %d\n" % (
+                  ctxt.byteConsumed(), expect))
             sys.exit(1)
 
     def startElement(self, tag, attrs):
@@ -37,8 +37,8 @@ class callback:
         if tag == "bar1":
             expect = self.starte + self.delta * self.count
             if ctxt.byteConsumed() != expect:
-                print "element start at wrong index: %d expecting %d\n" % (
-                   ctxt.byteConsumed(), expect)
+                print("element start at wrong index: %d expecting %d\n" % (
+                   ctxt.byteConsumed(), expect))
                 sys.exit(1)
             
 
@@ -47,8 +47,8 @@ class callback:
         if tag == "bar1":
             expect = self.ende + self.delta * self.count
             if ctxt.byteConsumed() != expect:
-                print "element end at wrong index: %d expecting %d\n" % (
-                      ctxt.byteConsumed(), expect)
+                print("element end at wrong index: %d expecting %d\n" % (
+                      ctxt.byteConsumed(), expect))
                 sys.exit(1)
             self.count = self.count + 1
 
@@ -107,7 +107,7 @@ ctxt=None
 # Memory debug specific
 libxml2.cleanupParser()
 if libxml2.debugMemory(1) == 0:
-    print "OK"
+    print("OK")
 else:
-    print "Memory leak %d bytes" % (libxml2.debugMemory(1))
+    print("Memory leak %d bytes" % (libxml2.debugMemory(1)))
     libxml2.dumpMemory()
