@@ -3,8 +3,8 @@ include ../common.mak
 #srcdir=source
 srcdir=source3
 
-SMBCFLAGS = $(EXTRACFLAGS) -O3 -ffunction-sections -fdata-sections
-SMBLDFLAGS = -ffunction-sections -fdata-sections -Wl,--gc-sections
+SMBCFLAGS = $(EXTRACFLAGS) -O3 -ffunction-sections -fdata-sections -I$(TOP)/libiconv-1.14/include
+SMBLDFLAGS = -ffunction-sections -fdata-sections -Wl,--gc-sections -L$(TOP)/libiconv-1.14/lib/.libs
 
 SMB_USE_MULTICALL=1
 
@@ -90,6 +90,7 @@ apps: .conf
 		--libdir=/etc \
 		--localstatedir=/var \
 		--host=$(HOST)-linux \
+		--with-libiconv=$(TOP)/libiconv-1.14 \
 		--with-configdir=/etc \
 		--with-rootsbindir=/usr/sbin \
 		--with-piddir=/var/run/samba \
