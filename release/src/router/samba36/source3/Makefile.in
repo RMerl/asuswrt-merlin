@@ -3498,7 +3498,7 @@ clean:: cleanlibs
 	-rm -f smbd/build_options.c
 	-rm -f $(PRECOMPILED_HEADER)
 	-rm -f core */*~ *~ \
-		*/*.o */*/*.o */*/*/*.o */*/*/*/*.o *.o \
+		*.o */*.o */*/*.o */*/*/*.o */*/*/*/*.o \
 		../testsuite/*/*.o \
 		../nsswitch/*.o ../nsswitch/*/*.o ../nsswitch/*/*/*.o ../nsswitch/*.@SHLIBEXT@ \
 		../client/*.o \
