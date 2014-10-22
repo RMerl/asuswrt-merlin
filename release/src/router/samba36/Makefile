@@ -125,6 +125,7 @@ apps: .conf
 
 clean:
 	-$(MAKE) -C $(srcdir) distclean
+	@rm -f auth/*.o
 	@rm -f .conf
 
 distclean: clean
