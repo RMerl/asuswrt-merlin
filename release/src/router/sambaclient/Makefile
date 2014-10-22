@@ -30,6 +30,11 @@ ifeq ($(RTCONFIG_BCMARM),y)
 CFLAGS += -I$(SRCBASE)/common/include
 endif
 
+ifeq ($(RTCONFIG_SAMBA_MODERN),y)
+LDFLAGS += -L$(TOP)/libiconv-1.14/lib/.libs
+LIBS += -liconv
+endif
+
 objects = main.o smb_api.o list.o usb.o
 
 all : sambaclient
