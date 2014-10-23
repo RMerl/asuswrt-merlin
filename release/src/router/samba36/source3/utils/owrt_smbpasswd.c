@@ -165,11 +165,14 @@ int main(int argc, char **argv)
 {
 	const char *prog = argv[0];
 	const char *user;
+	char *pswd;
 	FILE *fp;
 	bool add = false, delete = false, get_stdin = false, found;
 	int ch;
 	int uid;
 	struct stat st;
+
+	TALLOC_CTX *frame = talloc_stackframe();
 
 	if(argc != 3)
 	{
@@ -209,9 +212,14 @@ int main(int argc, char **argv)
 
 	if (found)
 		fseek(fp, -strlen(buf), SEEK_CUR);
-	smbpasswd_write_user(fp, user, uid, argv[2]);
 
+	pswd = strdup(argv[2]);
+	smbpasswd_write_user(fp, user, uid, pswd);
+	free(pswd);
 out:
+
 	fclose(fp);
+	TALLOC_FREE(frame);
+
 	return 0;
 }
