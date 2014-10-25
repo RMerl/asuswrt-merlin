@@ -2292,7 +2292,7 @@ void write_static_leases(char *file)
 		if ((vars == 2) || (vars == 3)) {
 			if(strlen(mac)==0||strlen(ip)==0) continue;
 			fprintf(fp, "%s %s\n", mac, ip);
-			if ((vars == 3) && (strlen(name) > 0) && (is_valid_hostname(name))) {
+			if ((vars == 3) && (strlen(name) > 0) && (is_valid_dnsname(name))) {
 				fprintf(fp2, "%s %s\n", ip, name);
 			}
 		} else {

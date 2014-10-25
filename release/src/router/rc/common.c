@@ -1362,6 +1362,27 @@ is_valid_hostname(const char *name)
 	return len;
 }
 
+int
+is_valid_dnsname(const char *name)
+{
+	int len, i;
+
+	if (!name)
+		return 0;
+
+	len = strlen(name);
+	for (i = 0; i < len ; i++) {
+		if (name[i] != '.' && is_invalid_char_for_hostname(name[i])) {
+			len = 0;
+			break;
+		}
+	}
+#if 0
+	printf("%s is %svalid for dnsname\n", name, len ? "" : "in");
+#endif
+	return len;
+}
+
 int get_meminfo_item(const char *name)
 {
 	int ret = 0;
