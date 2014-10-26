@@ -84,7 +84,7 @@ LIBS = -lpthread -lm \
 else
 #LIBS += -lpthread -lm -lvorbis -logg -lsqlite3 -lexif -ljpeg -lFLAC -lid3tag -lz -lavformat -lavcodec -lavutil
 # Temporary workaround as we need a threadsafe build of sqlite
-LIBS += -lpthread -lm -lvorbis -logg ./libsqlite3_threadsafe.a -lexif -ljpeg -lFLAC -lid3tag -lz -lavformat -lavcodec -lavutil
+LIBS += -lpthread -lm -lvorbis -logg ./libsqlite3_threadsafe$(BCMEX).a -lexif -ljpeg -lFLAC -lid3tag -lz -lavformat -lavcodec -lavutil
 endif
 
 TESTUPNPDESCGENOBJS = testupnpdescgen.o upnpdescgen.o
