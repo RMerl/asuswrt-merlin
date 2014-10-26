@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 376.48 Beta 1 (18-Oct-2014)
+Asuswrt-Merlin - build 376.48 Beta 2 (26-Oct-2014)
 ==================================================
 
 About
@@ -569,6 +569,22 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
+376.48 Beta 2 (26-Oct-2014)
+   - NEW: Added logo to the webui header
+   - CHANGED: Samba 3.6 will now use libiconv to handle
+              charset conversion (will resolve CP850
+              warnings amongst other things)
+  - CHANGED: Updated miniupnpd to 20141023 code from Github.
+  - CHANGED: Updated dropbear to 2014.66.
+  - CHANGED: Reverted NTP update code to GPL 2678 in hopes of
+             resolving the few cases where it didn't work anymore.
+  - FIXED: minidlna is once again able to use inotify for updates.
+           A temporary workaround has been implemented where
+           minidlna will be staticly linked with a threadsafe
+           build of sqlite3, while BWDPI will continue to use
+           the shared non-threadsafe library. (Asus bug)
+
+
 376.48 Beta 1 (18-Oct-2014)
    - NEW: Merged with Asus 376_2769 AC87 GPL
    - NEW: Enabled numerous modules in net-snmp (based on the list
@@ -586,7 +602,7 @@ History
               both reliability and security.
    - FIXED: DNSFilter client list dropdown would sometime be empty.
    - FIXED: DNS queries run on the router were forwarded to upstream
-            nameservers instead of dnsmasq
+            nameservers instead of the local dnsmasq
    - FIXED: Re-added the USB HID kernel module needed for UPS monitoring
             (patch by ryzhov_al)
    - FIXED: Incorrect top margin on some pages such as AiCloud, and
