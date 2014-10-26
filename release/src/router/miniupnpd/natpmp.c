@@ -306,59 +306,57 @@ void ProcessIncomingNATPMPPacket(int s, unsigned char *msg_buff, int len,
 			                 "%hu->%s:%hu %s lifetime=%us",
 			                 eport, senderaddrstr, iport,
 			                 (req[1]==1)?"udp":"tcp", lifetime);
-			if(eport==0)
-				eport = iport;
 			/* TODO: accept port mapping if iport ok but eport not ok
 			 * (and set eport correctly) */
 			if(lifetime == 0) {
 				/* remove the mapping */
-				if(iport == 0) {
-					/* remove all the mappings for this client */
-					int index = 0;
-					unsigned short eport2, iport2;
-					char iaddr2[16];
-					int proto2;
-					char desc[64];
-					while(get_redirect_rule_by_index(index, 0,
-					          &eport2, iaddr2, sizeof(iaddr2),
-							  &iport2, &proto2,
-							  desc, sizeof(desc),
-					          0, 0, &timestamp, 0, 0) >= 0) {
-						syslog(LOG_DEBUG, "%d %d %hu->'%s':%hu '%s'",
-						       index, proto2, eport2, iaddr2, iport2, desc);
-						if(0 == strcmp(iaddr2, senderaddrstr)
-						  && 0 == memcmp(desc, "NAT-PMP", 7)) {
+				/* RFC6886 :
+				 * A client MAY also send an explicit packet to request deletion of a
+				 * mapping that is no longer needed. A client requests explicit
+				 * deletion of a mapping by sending a message to the NAT gateway
+				 * requesting the mapping, with the Requested Lifetime in Seconds set to
+				 * zero. The Suggested External Port MUST be set to zero by the client
+				 * on sending, and MUST be ignored by the gateway on reception. */
+				int index = 0;
+				unsigned short eport2, iport2;
+				char iaddr2[16];
+				int proto2;
+				char desc[64];
+				eport = 0; /* to indicate correct removing of port mapping */
+				while(get_redirect_rule_by_index(index, 0,
+				          &eport2, iaddr2, sizeof(iaddr2),
+						  &iport2, &proto2,
+						  desc, sizeof(desc),
+				          0, 0, &timestamp, 0, 0) >= 0) {
+					syslog(LOG_DEBUG, "%d %d %hu->'%s':%hu '%s'",
+					       index, proto2, eport2, iaddr2, iport2, desc);
+					if(0 == strcmp(iaddr2, senderaddrstr)
+					  && 0 == memcmp(desc, "NAT-PMP", 7)) {
+						/* (iport == 0) => remove all the mappings for this client */
+						if((iport == 0) || ((iport == iport2) && (proto == proto2))) {
 							r = _upnp_delete_redir(eport2, proto2);
-							/* TODO : check return value */
-							if(r<0) {
-								syslog(LOG_ERR, "failed to remove port mapping");
-								index++;
+							if(r < 0) {
+								syslog(LOG_ERR, "Failed to remove NAT-PMP mapping eport %hu, protocol %s",
+								       eport2, (proto2==IPPROTO_TCP)?"TCP":"UDP");
+								resp[3] = 2;	/* Not Authorized/Refused */
+								break;
 							} else {
 								syslog(LOG_INFO, "NAT-PMP %s port %hu mapping removed",
 								       proto2==IPPROTO_TCP?"TCP":"UDP", eport2);
+								index--;
 							}
-						} else {
-							index++;
 						}
 					}
-				} else {
-					/* To improve the interworking between nat-pmp and
-					 * UPnP, we should check that we remove only NAT-PMP
-					 * mappings */
-					r = _upnp_delete_redir(eport, proto);
-					/*syslog(LOG_DEBUG, "%hu %d r=%d", eport, proto, r);*/
-					if(r<0) {
-						//syslog(LOG_ERR, "Failed to remove NAT-PMP mapping eport %hu, protocol %s", eport, (proto==IPPROTO_TCP)?"TCP":"UDP");
-						resp[3] = 2;	/* Not Authorized/Refused */
-					}
+					index++;
 				}
-				eport = 0; /* to indicate correct removing of port mapping */
 			} else if(iport==0) {
 				resp[3] = 2;	/* Not Authorized/Refused */
 			} else { /* iport > 0 && lifetime > 0 */
 				unsigned short eport_first = 0;
 				int any_eport_allowed = 0;
 				char desc[64];
+				if(eport==0)	/* if no suggested external port, use same a internal port */
+					eport = iport;
 				while(resp[3] == 0) {
 					if(eport_first == 0) { /* first time in loop */
 						eport_first = eport;

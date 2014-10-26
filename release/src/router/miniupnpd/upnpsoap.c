@@ -1,4 +1,4 @@
-/* $Id: upnpsoap.c,v 1.123 2014/04/09 12:39:54 nanard Exp $ */
+/* $Id: upnpsoap.c,v 1.128 2014/09/25 09:02:25 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * (c) 2006-2014 Thomas Bernard
@@ -707,13 +707,37 @@ DeletePortMapping(struct upnphttp * h, const char * action)
 
 	eport = (unsigned short)atoi(ext_port);
 
-	/* TODO : if in secure mode, check the IP
+	syslog(LOG_INFO, "%s: external port: %hu, protocol: %s",
+		action, eport, protocol);
+
+	/* if in secure mode, check the IP
 	 * Removing a redirection is not a security threat,
 	 * just an annoyance for the user using it. So this is not
 	 * a priority. */
-
-	syslog(LOG_INFO, "%s: external port: %hu, protocol: %s",
-		action, eport, protocol);
+	if(GETFLAG(SECUREMODEMASK))
+	{
+		char int_ip[32];
+		struct in_addr int_ip_addr;
+		unsigned short iport;
+		unsigned int leaseduration = 0;
+		r = upnp_get_redirection_infos(eport, protocol, &iport,
+		                               int_ip, sizeof(int_ip),
+		                               NULL, 0, NULL, 0,
+		                               &leaseduration);
+		if(r >= 0)
+		{
+			if(inet_pton(AF_INET, int_ip, &int_ip_addr) > 0)
+			{
+				if(h->clientaddr.s_addr != int_ip_addr.s_addr)
+				{
+					SoapError(h, 606, "Action not authorized");
+					/*SoapError(h, 714, "NoSuchEntryInArray");*/
+					ClearNameValueList(&data);
+					return;
+				}
+			}
+		}
+	}
 
 	r = upnp_delete_redirection(eport, protocol);
 

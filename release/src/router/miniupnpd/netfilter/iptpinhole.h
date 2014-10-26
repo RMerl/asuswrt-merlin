@@ -8,6 +8,7 @@
 #define IPTPINHOLE_H_INCLUDED
 
 #ifdef ENABLE_UPNPPINHOLE
+#include <sys/types.h>
 
 int add_pinhole(const char * ifname,
                 const char * rem_host, unsigned short rem_port,

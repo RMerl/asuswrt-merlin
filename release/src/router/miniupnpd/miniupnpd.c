@@ -39,7 +39,7 @@
 #include <sys/param.h>
 #if defined(sun)
 #include <kstat.h>
-#else
+#elif !defined(__linux__)
 /* for BSD's sysctl */
 #include <sys/sysctl.h>
 #endif
@@ -2137,6 +2137,20 @@ main(int argc, char * * argv)
 				                               msg_buff, sizeof(msg_buff));
 				if (len < 1)
 					continue;
+				/* Check if the packet is coming from a LAN to enforce RFC6886 :
+				 * The NAT gateway MUST NOT accept mapping requests destined to the NAT
+				 * gateway's external IP address or received on its external network
+				 * interface.  Only packets received on the internal interface(s) with a
+				 * destination address matching the internal address(es) of the NAT
+				 * gateway should be allowed. */
+				lan_addr = get_lan_for_peer((struct sockaddr *)&senderaddr);
+				if(lan_addr == NULL) {
+					char sender_str[64];
+					sockaddr_to_string((struct sockaddr *)&senderaddr, sender_str, sizeof(sender_str));
+					syslog(LOG_WARNING, "NAT-PMP/PCP packet sender %s not from a LAN, ignoring",
+					       sender_str);
+					continue;
+				}
 #ifdef ENABLE_PCP
 				if (msg_buff[0]==0) {  /* version equals to 0 -> means NAT-PMP */
 					ProcessIncomingNATPMPPacket(snatpmp[i], msg_buff, len,

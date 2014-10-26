@@ -19,6 +19,7 @@
 #ifdef AF_LINK
 #include <net/if_dl.h>
 #endif
+#include <errno.h>
 
 #include "upnputils.h"
 #include "upnpglobalvars.h"
@@ -35,17 +36,23 @@ sockaddr_to_string(const struct sockaddr * addr, char * str, size_t size)
 
 	switch(addr->sa_family)
 	{
+#ifdef AF_INET6
 	case AF_INET6:
-		inet_ntop(addr->sa_family,
-		          &((struct sockaddr_in6 *)addr)->sin6_addr,
-		          buffer, sizeof(buffer));
+		if(inet_ntop(addr->sa_family,
+		             &((struct sockaddr_in6 *)addr)->sin6_addr,
+		             buffer, sizeof(buffer)) == NULL) {
+			snprintf(buffer, sizeof(buffer), "inet_ntop: %s", strerror(errno));
+		}
 		port = ntohs(((struct sockaddr_in6 *)addr)->sin6_port);
 		n = snprintf(str, size, "[%s]:%hu", buffer, port);
 		break;
+#endif /* AF_INET6 */
 	case AF_INET:
-		inet_ntop(addr->sa_family,
-		          &((struct sockaddr_in *)addr)->sin_addr,
-		          buffer, sizeof(buffer));
+		if(inet_ntop(addr->sa_family,
+		             &((struct sockaddr_in *)addr)->sin_addr,
+		             buffer, sizeof(buffer)) == NULL) {
+			snprintf(buffer, sizeof(buffer), "inet_ntop: %s", strerror(errno));
+		}
 		port = ntohs(((struct sockaddr_in *)addr)->sin_port);
 		n = snprintf(str, size, "%s:%hu", buffer, port);
 		break;
@@ -63,7 +70,7 @@ sockaddr_to_string(const struct sockaddr * addr, char * str, size_t size)
 			             link_ntoa(sdl));
 		}
 		break;
-#endif
+#endif	/* AF_LINK */
 	default:
 		n = snprintf(str, size, "unknown address family %d", addr->sa_family);
 #if 0
@@ -93,7 +100,9 @@ struct lan_addr_s *
 get_lan_for_peer(const struct sockaddr * peer)
 {
 	struct lan_addr_s * lan_addr = NULL;
+#ifdef DEBUG
 	char dbg_str[64];
+#endif /* DEBUG */
 
 #ifdef ENABLE_IPV6
 	if(peer->sa_family == AF_INET6)
@@ -141,7 +150,7 @@ get_lan_for_peer(const struct sockaddr * peer)
 	}
 	else if(peer->sa_family == AF_INET)
 	{
-#endif
+#endif /* ENABLE_IPV6 */
 		for(lan_addr = lan_addrs.lh_first;
 		    lan_addr != NULL;
 		    lan_addr = lan_addr->list.le_next)
@@ -152,8 +161,9 @@ get_lan_for_peer(const struct sockaddr * peer)
 		}
 #ifdef ENABLE_IPV6
 	}
-#endif
+#endif /* ENABLE_IPV6 */
 
+#ifdef DEBUG
 	sockaddr_to_string(peer, dbg_str, sizeof(dbg_str));
 	if(lan_addr) {
 		syslog(LOG_DEBUG, "%s: %s found in LAN %s %s",
@@ -163,6 +173,7 @@ get_lan_for_peer(const struct sockaddr * peer)
 		syslog(LOG_DEBUG, "%s: %s not found !", "get_lan_for_peer()",
 		       dbg_str);
 	}
+#endif /* DEBUG */
 	return lan_addr;
 }
 

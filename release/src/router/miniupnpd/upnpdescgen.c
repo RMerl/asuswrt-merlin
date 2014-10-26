@@ -368,9 +368,9 @@ static const struct argument GetExternalIPAddressArgs[] =
 
 static const struct argument DeletePortMappingArgs[] =
 {
-	{1, 11},
-	{1, 12},
-	{1, 14},
+	{1, 11},	/* RemoteHost */
+	{1, 12},	/* ExternalPort */
+	{1, 14},	/* PortMappingProtocol */
 	{0, 0}
 };
 
