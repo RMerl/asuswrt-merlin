@@ -53,6 +53,7 @@ static void sesssigchild_handler(int val);
 static void closechansess(struct Channel *channel);
 static int newchansess(struct Channel *channel);
 static void chansessionrequest(struct Channel *channel);
+static int sesscheckclose(struct Channel *channel);
 
 static void send_exitsignalstatus(struct Channel *channel);
 static void send_msg_chansess_exitstatus(struct Channel * channel,
@@ -61,6 +62,14 @@ static void send_msg_chansess_exitsignal(struct Channel * channel,
 		struct ChanSess * chansess);
 static void get_termmodes(struct ChanSess *chansess);
 
+const struct ChanType svrchansess = {
+	0, /* sepfds */
+	"session", /* name */
+	newchansess, /* inithandler */
+	sesscheckclose, /* checkclosehandler */
+	chansessionrequest, /* reqhandler */
+	closechansess, /* closehandler */
+};
 
 /* required to clear environment */
 extern char** environ;
@@ -232,6 +241,7 @@ static int newchansess(struct Channel *channel) {
 	chansess = (struct ChanSess*)m_malloc(sizeof(struct ChanSess));
 	chansess->cmd = NULL;
 	chansess->connection_string = NULL;
+	chansess->client_string = NULL;
 	chansess->pid = 0;
 
 	/* pty details */
@@ -593,19 +603,26 @@ static int sessionpty(struct ChanSess * chansess) {
 	return DROPBEAR_SUCCESS;
 }
 
-static char* make_connection_string() {
+static void make_connection_string(struct ChanSess *chansess) {
 	char *local_ip, *local_port, *remote_ip, *remote_port;
 	size_t len;
-	char *ret;
 	get_socket_address(ses.sock_in, &local_ip, &local_port, &remote_ip, &remote_port, 0);
-	len = strlen(local_ip) + strlen(local_port) + strlen(remote_ip) + strlen(remote_port) + 4;
-	ret = m_malloc(len);
-	snprintf(ret, len, "%s %s %s %s", remote_ip, remote_port, local_ip, local_port);
+
+	/* "remoteip remoteport localip localport" */
+	len = strlen(local_ip) + strlen(remote_ip) + 20;
+	chansess->connection_string = m_malloc(len);
+	snprintf(chansess->connection_string, len, "%s %s %s %s", remote_ip, remote_port, local_ip, local_port);
+
+	/* deprecated but bash only loads .bashrc if SSH_CLIENT is set */ 
+	/* "remoteip remoteport localport" */
+	len = strlen(remote_ip) + 20;
+	chansess->client_string = m_malloc(len);
+	snprintf(chansess->client_string, len, "%s %s %s", remote_ip, remote_port, local_port);
+
 	m_free(local_ip);
 	m_free(local_port);
 	m_free(remote_ip);
 	m_free(remote_port);
-	return ret;
 }
 
 /* Handle a command request from the client. This is used for both shell
@@ -668,7 +685,7 @@ static int sessioncommand(struct Channel *channel, struct ChanSess *chansess,
 	/* uClinux will vfork(), so there'll be a race as 
 	connection_string is freed below. */
 #ifndef USE_VFORK
-	chansess->connection_string = make_connection_string();
+	make_connection_string(chansess);
 #endif
 
 	if (chansess->term == NULL) {
@@ -685,6 +702,7 @@ static int sessioncommand(struct Channel *channel, struct ChanSess *chansess,
 
 #ifndef USE_VFORK
 	m_free(chansess->connection_string);
+	m_free(chansess->client_string);
 #endif
 
 	if (ret == DROPBEAR_FAILURE) {
@@ -940,6 +958,10 @@ static void execchild(void *user_data) {
 	if (chansess->connection_string) {
 		addnewvar("SSH_CONNECTION", chansess->connection_string);
 	}
+
+	if (chansess->client_string) {
+		addnewvar("SSH_CLIENT", chansess->client_string);
+	}
 	
 #ifdef ENABLE_SVR_PUBKEY_OPTIONS
 	if (chansess->original_command) {
@@ -967,16 +989,6 @@ static void execchild(void *user_data) {
 	/* only reached on error */
 	dropbear_exit("Child failed");
 }
-
-const struct ChanType svrchansess = {
-	0, /* sepfds */
-	"session", /* name */
-	newchansess, /* inithandler */
-	sesscheckclose, /* checkclosehandler */
-	chansessionrequest, /* reqhandler */
-	closechansess, /* closehandler */
-};
-
 
 /* Set up the general chansession environment, in particular child-exit
  * handling */

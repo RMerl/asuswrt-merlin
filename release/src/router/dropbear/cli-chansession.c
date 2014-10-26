@@ -92,17 +92,6 @@ static void cli_closechansess(struct Channel *UNUSED(channel)) {
 	}
 }
 
-void cli_start_send_channel_request(struct Channel *channel, 
-		unsigned char *type) {
-
-	CHECKCLEARTOWRITE();
-	buf_putbyte(ses.writepayload, SSH_MSG_CHANNEL_REQUEST);
-	buf_putint(ses.writepayload, channel->remotechan);
-
-	buf_putstring(ses.writepayload, type, strlen(type));
-
-}
-
 /* Taken from OpenSSH's sshtty.c:
  * RCSID("OpenBSD: sshtty.c,v 1.5 2003/09/19 17:43:35 markus Exp "); */
 static void cli_tty_setup() {
@@ -287,7 +276,7 @@ static void send_chansess_pty_req(struct Channel *channel) {
 
 	TRACE(("enter send_chansess_pty_req"))
 
-	cli_start_send_channel_request(channel, "pty-req");
+	start_send_channel_request(channel, "pty-req");
 
 	/* Don't want replies */
 	buf_putbyte(ses.writepayload, 0);
@@ -330,7 +319,7 @@ static void send_chansess_shell_req(struct Channel *channel) {
 		reqtype = "shell";
 	}
 
-	cli_start_send_channel_request(channel, reqtype);
+	start_send_channel_request(channel, reqtype);
 
 	/* XXX TODO */
 	buf_putbyte(ses.writepayload, 0); /* Don't want replies */

@@ -234,7 +234,7 @@ void cli_setup_agent(struct Channel *channel) {
 		return;
 	}
 	
-	cli_start_send_channel_request(channel, "auth-agent-req@openssh.com");
+	start_send_channel_request(channel, "auth-agent-req@openssh.com");
 	/* Don't want replies */
 	buf_putbyte(ses.writepayload, 0);
 	encrypt_packet();

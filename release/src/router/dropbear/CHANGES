@@ -1,3 +1,16 @@
+2014.66 - Thursday 23 October 2014
+
+- Use the same keepalive handling behaviour as OpenSSH. This will work better 
+  with some SSH implementations that have different behaviour with unknown 
+  message types.
+
+- Don't reply with SSH_MSG_UNIMPLEMENTED when we receive a reply to our own 
+  keepalive message
+
+- Set $SSH_CLIENT to keep bash happy, patch from Ryan Cleere
+
+- Fix wtmp which broke since 2013.62, patch from Whoopie
+
 2014.65 - Friday 8 August 2014
 
 - Fix 2014.64 regression, server session hang on exit with scp (and probably

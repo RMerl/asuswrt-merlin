@@ -410,7 +410,9 @@ static void loadhostkey(const char *keyfile, int fatal_duplicate) {
 	sign_key * read_key = new_sign_key();
 	enum signkey_type type = DROPBEAR_SIGNKEY_ANY;
 	if (readhostkey(keyfile, read_key, &type) == DROPBEAR_FAILURE) {
-		dropbear_log(LOG_WARNING, "Failed loading %s", keyfile);
+		if (!svr_opts.delay_hostkey) {
+			dropbear_log(LOG_WARNING, "Failed loading %s", keyfile);
+		}
 	}
 
 #ifdef DROPBEAR_RSA

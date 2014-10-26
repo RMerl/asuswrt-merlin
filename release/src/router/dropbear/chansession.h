@@ -51,9 +51,12 @@ struct ChanSess {
 	/* exit details */
 	struct exitinfo exit;
 
-	/* Used to set $SSH_CONNECTION in the child session. 
-	Is only set temporarily before forking */
+
+	/* These are only set temporarily before forking */
+	/* Used to set $SSH_CONNECTION in the child session.  */
 	char *connection_string;
+	/* Used to set $SSH_CLIENT in the child session. */
+	char *client_string;
 	
 #ifndef DISABLE_X11FWD
 	struct Listener * x11listener;
@@ -89,7 +92,6 @@ void cli_chansess_winchange();
 #ifdef ENABLE_CLI_NETCAT
 void cli_send_netcat_request();
 #endif
-void cli_start_send_channel_request(struct Channel *channel, unsigned char *type);
 
 void svr_chansessinitialise();
 extern const struct ChanType svrchansess;
