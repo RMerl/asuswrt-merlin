@@ -1,4 +1,4 @@
-/* $Id: pcpserver.c,v 1.32 2014/05/15 10:27:36 nanard Exp $ */
+/* $Id: pcpserver.c,v 1.38 2014/10/27 16:35:13 nanard Exp $ */
 /* MiniUPnP project
  * Website : http://miniupnp.free.fr/
  * Author : Peter Tatrai
@@ -1023,6 +1023,7 @@ static int CreatePCPMap_FW(pcp_info_t *pcp_msg_info)
 	pcp_msg_info->ext_port = pcp_msg_info->int_port;
 	return PCP_SUCCESS;
 #else
+	UNUSED(pcp_msg_info);
 	return PCP_ERR_NO_RESOURCES;
 #endif /* ENABLE_UPNPPINHOLE */
 }

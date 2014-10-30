@@ -1,4 +1,6 @@
-$Id: Changelog.txt,v 1.379 2014/10/22 08:52:17 nanard Exp $
+$Id: Changelog.txt,v 1.382 2014/10/27 16:35:42 nanard Exp $
+
+VERSION 1.9 : released on 2014/10/27
 
 2014/10/23:
   Properly implements NAT-PMP mapping removal according to RCF6886

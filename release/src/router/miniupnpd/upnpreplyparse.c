@@ -1,4 +1,4 @@
-/* $Id: upnpreplyparse.c,v 1.15 2013/06/06 21:36:40 nanard Exp $ */
+/* $Id: upnpreplyparse.c,v 1.16 2014/10/27 16:33:19 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * (c) 2006-2013 Thomas Bernard
@@ -53,7 +53,8 @@ NameValueParserEndElt(void * d, const char * name, int l)
 		{
 			nv->value[0] = '\0';
 		}
-	    LIST_INSERT_HEAD( &(data->head), nv, entries);
+		nv->l_next = data->l_head;	/* insert in list */
+		data->l_head = nv;
 	}
 	data->cdata = NULL;
 	data->cdatalen = 0;
@@ -89,19 +90,19 @@ void
 ParseNameValue(const char * buffer, int bufsize,
                struct NameValueParserData * data)
 {
-    struct xmlparser parser;
-    LIST_INIT(&(data->head));
+	struct xmlparser parser;
+	data->l_head = NULL;
 	data->portListing = NULL;
 	data->portListingLength = 0;
-    /* init xmlparser object */
-    parser.xmlstart = buffer;
-    parser.xmlsize = bufsize;
-    parser.data = data;
-    parser.starteltfunc = NameValueParserStartElt;
-    parser.endeltfunc = NameValueParserEndElt;
-    parser.datafunc = NameValueParserGetData;
+	/* init xmlparser object */
+	parser.xmlstart = buffer;
+	parser.xmlsize = bufsize;
+	parser.data = data;
+	parser.starteltfunc = NameValueParserStartElt;
+	parser.endeltfunc = NameValueParserEndElt;
+	parser.datafunc = NameValueParserGetData;
 	parser.attfunc = 0;
-    parsexml(&parser);
+	parsexml(&parser);
 }
 
 void
@@ -114,9 +115,9 @@ ClearNameValueList(struct NameValueParserData * pdata)
 		pdata->portListing = NULL;
 		pdata->portListingLength = 0;
 	}
-    while((nv = pdata->head.lh_first) != NULL)
+    while((nv = pdata->l_head) != NULL)
     {
-        LIST_REMOVE(nv, entries);
+		pdata->l_head = nv->l_next;
         free(nv);
     }
 }
@@ -127,9 +128,9 @@ GetValueFromNameValueList(struct NameValueParserData * pdata,
 {
     struct NameValue * nv;
     char * p = NULL;
-    for(nv = pdata->head.lh_first;
+    for(nv = pdata->l_head;
         (nv != NULL) && (p == NULL);
-        nv = nv->entries.le_next)
+        nv = nv->l_next)
     {
         if(strcmp(nv->name, Name) == 0)
             p = nv->value;
