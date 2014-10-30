@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 376.48 Beta 2 (26-Oct-2014)
+Asuswrt-Merlin - build 376.48 Beta 3 (xx-xxx-2014)
 ==================================================
 
 About
@@ -69,6 +69,8 @@ Disk sharing:
    - NFS sharing (through webui)
    - Improved compatibility with 3TB+ and Advanced Format HDDs
    - Allow or disable WAN access to the FTP server
+   - Updated Samba version (3.6.x)
+
 
 Networking:
    - Force acting as a Master Browser
@@ -569,6 +571,12 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
+376.48 Beta 3 (xx-xxx-2014)
+   - FIXED: Couldn't edit share permissions for Samba if your disk
+            contained an unmounted/hidden partition (Asus bug in 2769)
+   - FIXED: Missing Max User field to Samba page (Asus bug)
+
+
 376.48 Beta 2 (26-Oct-2014)
    - NEW: Added logo to the webui header
    - CHANGED: Samba 3.6 will now use libiconv to handle
