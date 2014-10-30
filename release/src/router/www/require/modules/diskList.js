@@ -66,11 +66,11 @@
 			tmpDisk.node = foreign_disk_interface_names()[i];
 			tmpDisk.deviceName = decodeURIComponentSafe(foreign_disks()[i]);
 			tmpDisk.deviceType = "storage";
-			tmpDisk.mountNumber = foreign_disk_total_mounted_number()[i];
+			tmpDisk.mountNumber = foreign_disk_pool_number()[i];
 
 			var _mountedPart = 0;	
 			while (_mountedPart < tmpDisk.mountNumber && allPartIndex < pool_name.length){
-				if(pool_types()[allPartIndex] != "unknown" || pool_status()[allPartIndex] != "unmounted"){	
+				/*if(pool_types()[allPartIndex] != "unknown" || pool_status()[allPartIndex] != "unmounted")*/{	
 					var tmpParts = new newPartition();
 					tmpParts.partName = pool_names()[allPartIndex];
 					tmpParts.mountPoint = pool_devices()[allPartIndex];
