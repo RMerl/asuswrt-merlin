@@ -23,4 +23,7 @@ src/openvpn/openvpn
 version.sh
 ltmain.sh
 tests/t_client.sh
+configure
+ltmain.sh
+libtool.m4
 
