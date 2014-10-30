@@ -4,6 +4,7 @@
 *.libs
 *.so
 *.lo
+config.h
 libcharset.so*
 lib/charset.alias
 lib/libcharset.h
@@ -11,6 +12,9 @@ lib/localcharset.h
 libcharset/lib/charset.alias
 libcharset/lib/ref-add.sed
 libcharset/lib/ref-del.sed
+libtool
+Makefile
+po/Makefile.in
 src/iconv_no_i18n
 srclib/alloca.h
 srclib/arg-nonnull.h

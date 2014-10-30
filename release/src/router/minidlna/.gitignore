@@ -6,4 +6,5 @@
 *.d
 minidlna
 autom4te.cache
+osver.h
 
