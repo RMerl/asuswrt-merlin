@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 376.48 Beta 3 (xx-xxx-2014)
+Asuswrt-Merlin - build 376.48 Beta 3 (02-Nov-2014)
 ==================================================
 
 About
@@ -571,9 +571,12 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
-376.48 Beta 3 (xx-xxx-2014)
+376.48 Beta 3 (02-Nov-2014)
+   - CHANGED: Updated miniupnpd to release 1.9 (plus upstream PCP fix)
    - FIXED: Couldn't edit share permissions for Samba if your disk
             contained an unmounted/hidden partition (Asus bug in 2769)
+   - FIXED: Couldn't edit share permissions for Samba for the RT-N66U
+            internal SDcard reader (Asus bug in 2769)
    - FIXED: Missing Max User field to Samba page (Asus bug)
 
 
@@ -599,12 +602,12 @@ History
           used by OpenWRT)
    - NEW: Added postconf and custom config support for snmpd.conf
    - NEW: Added HID support to ARM kernel (AC56,AC68,AC87)
-   - CHANGED: Reverted NAT loopback code to Asus', since our own
+   - CHANGED: Reverted NAT loopback code to Asus's, since our own
               code is currently broken by recent FW code changes.
    - CHANGED: Updated openssl to 1.0.0o, resolving a few security issues.
    - CHANGED: Disabled SSLv2 and SSLv3 support for https access to the
               router webui.  IE6 users, your time is up - upgrade.
-              TLS 1.0 is now the only supported method.
+              TLS 1.0 is now the only supported protocol.
    - CHANGED: upgraded main Samba server from 3.0.x to 3.6.24.  This might
               cause a slight drop in performance, but should improve
               both reliability and security.
