@@ -35,6 +35,7 @@ Supported devices are:
  * RT-AC66U
  * RT-AC56U
  * RT-AC68U
+ * RT-AC68P
  * RT-AC87U
 
 NOTE: all the "R" versions (for example RT-N66R) are the same as their 
@@ -571,6 +572,14 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
+376.48 (xx-Nov-2014)
+   - NEW: Added the RT-AC68P to the list of supported devices
+   - FIXED: Samba would fail to start if the router admin username contained
+            upper case characters.  Samba was modified to have it try to
+            local the UNIX user as provided (it was previously only
+            trying upper and lower case versions) (Samba 3.6 bug)
+
+
 376.48 Beta 3 (02-Nov-2014)
    - CHANGED: Updated miniupnpd to release 1.9 (plus upstream PCP fix)
    - FIXED: Couldn't edit share permissions for Samba if your disk
