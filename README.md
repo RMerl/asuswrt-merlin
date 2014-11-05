@@ -15,6 +15,7 @@ At this time, the supported devices are:
 - RT-N66U
 - RT-AC66U
 - RT-AC68U
+- RT-AC68P
 - RT-AC87U
 
 NOTE: all the "R" versions (for example RT-N66R) are the same as their 
