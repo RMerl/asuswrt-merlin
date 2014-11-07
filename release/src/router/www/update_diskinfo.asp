@@ -22,6 +22,7 @@
 		this.totalSize = "";
 		this.totalUsed = "";
 		this.mountNumber = "";
+		this.partNumber = "";
 		this.serialNum = "";
 		this.hasErrPart = false;
 		this.hasAppDev = false;
@@ -61,38 +62,37 @@
 		tmpDisk.deviceName = decodeURIComponentSafe(foreign_disks()[i]);
 		tmpDisk.deviceType = "storage";
 		tmpDisk.mountNumber = foreign_disk_total_mounted_number()[i];
+		tmpDisk.partNumber = foreign_disk_pool_number()[i];
 
-		var _mountedPart = 0;	
-		while (_mountedPart < tmpDisk.mountNumber && allPartIndex < pool_name.length){
-			if(pool_types()[allPartIndex] != "unknown" || pool_status()[allPartIndex] != "unmounted"){	
-				var tmpParts = new newPartition();
-				tmpParts.partName = pool_names()[allPartIndex];
-				tmpParts.mountPoint = pool_devices()[allPartIndex];
-				if(tmpParts.mountPoint == initialValue.apps_dev){
-					tmpParts.isAppDev = true;
-					tmpDisk.hasAppDev = true;
+		var _part = 0;
+		while (_part < tmpDisk.partNumber && allPartIndex < pool_name.length){
+			var tmpParts = new newPartition();
+			tmpParts.partName = pool_names()[allPartIndex];
+			tmpParts.mountPoint = pool_devices()[allPartIndex];
+			if(tmpParts.mountPoint == initialValue.apps_dev){
+				tmpParts.isAppDev = true;
+				tmpDisk.hasAppDev = true;
+			}
+			if(tmpParts.mountPoint == initialValue.tm_device_name){
+				tmpParts.isTM = true;
+				tmpDisk.hasTM = true;
+			}		
+			tmpParts.size = parseInt(pool_kilobytes()[allPartIndex]);
+			tmpParts.used = parseInt(pool_kilobytes_in_use()[allPartIndex]);
+			tmpParts.format = pool_types()[allPartIndex];
+			tmpParts.status = pool_status()[allPartIndex];
+			if(initialValue.apps_fsck_ret.length > 0) {
+				tmpParts.fsck = initialValue.apps_fsck_ret[allPartIndex][1];
+				if(initialValue.apps_fsck_ret[allPartIndex][1] == 1){
+					tmpDisk.hasErrPart = true;
 				}
-				if(tmpParts.mountPoint == initialValue.tm_device_name){
-					tmpParts.isTM = true;
-					tmpDisk.hasTM = true;
-				}		
-				tmpParts.size = parseInt(pool_kilobytes()[allPartIndex]);
-				tmpParts.used = parseInt(pool_kilobytes_in_use()[allPartIndex]);
-				tmpParts.format = pool_types()[allPartIndex];
-				tmpParts.status = pool_status()[allPartIndex];
-				if(initialValue.apps_fsck_ret.length > 0) {
-					tmpParts.fsck = initialValue.apps_fsck_ret[allPartIndex][1];
-					if(initialValue.apps_fsck_ret[allPartIndex][1] == 1){
-						tmpDisk.hasErrPart = true;
-					}
-				}
-
-				tmpDisk.partition.push(tmpParts);
-				tmpDisk.totalSize = parseInt(tmpDisk.totalSize + tmpParts.size);
-				tmpDisk.totalUsed = parseInt(tmpDisk.totalUsed + tmpParts.used);
-				_mountedPart++;
 			}
 
+			tmpDisk.partition.push(tmpParts);
+			tmpDisk.totalSize = parseInt(tmpDisk.totalSize + tmpParts.size);
+			tmpDisk.totalUsed = parseInt(tmpDisk.totalUsed + tmpParts.used);
+
+			_part++;
 			allPartIndex++;
 		}
 
