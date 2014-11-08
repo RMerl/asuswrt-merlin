@@ -1,5 +1,5 @@
-Asuswrt-Merlin - build 376.48 Beta 3 (02-Nov-2014)
-==================================================
+Asuswrt-Merlin - build 376.48 (07-Nov-2014)
+===========================================
 
 About
 -----
@@ -572,8 +572,14 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
-376.48 (xx-Nov-2014)
+376.48 (7-Nov-2014)
    - NEW: Added the RT-AC68P to the list of supported devices
+   - CHANGED: Use sha256 checksums instead of MD5 for improved
+              security when validating your downloads.
+              (note: checksums are also posted on the support
+              forum at SmallNetBuilder)
+   - CHANGED: Switched my fix for unmounted/hidden partition
+              support with Asus's own fix from GPL 3561.
    - FIXED: Samba would fail to start if the router admin username contained
             upper case characters.  Samba was modified to have it try to
             local the UNIX user as provided (it was previously only
