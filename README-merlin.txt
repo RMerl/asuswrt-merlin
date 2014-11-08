@@ -1,5 +1,5 @@
-Asuswrt-Merlin - build 376.48 (07-Nov-2014)
-===========================================
+Asuswrt-Merlin - build 376.48_1 (07-Nov-2014)
+=============================================
 
 About
 -----
@@ -572,6 +572,13 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
+376.48_1 (7-Nov-2014)
+   - FIXED: Max-lease calculation Asus introduced in 376_2769 is
+            broken - re-hardcode it to 253 like they used to do in
+            previous release.  Will be properly fixed once they
+            release a newer GPL with this issue resolved.
+            (Asus bug)
+
 376.48 (7-Nov-2014)
    - NEW: Added the RT-AC68P to the list of supported devices
    - CHANGED: Use sha256 checksums instead of MD5 for improved
