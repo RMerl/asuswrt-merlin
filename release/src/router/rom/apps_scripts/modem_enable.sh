@@ -11,7 +11,6 @@ modem_pid=`nvram get usb_modem_act_pid`
 modem_pin=`nvram get modem_pincode`
 modem_apn=`nvram get modem_apn`
 
-
 # $1: ifname.
 _get_wdm_by_usbnet(){
 	rp1=`readlink -f /sys/class/net/$1/device 2>/dev/null`
@@ -109,9 +108,17 @@ if [ "$modem_vid" == "8193" ];then
 	echo "successfull to register network."
 elif [ "$modem_type" == "qmi" ]; then
 	wdm=`_get_wdm_by_usbnet $1`
+	modem_user=`nvram get modem_user`
+	modem_pass=`nvram get modem_pass`
+	if [ "$modem_user" != "" ]; then
+		modem_user="--username $modem_user "
+	fi
+	if [ "$modem_pass" != "" ]; then
+		modem_pass="--password $modem_pass "
+	fi
 
 	echo "QMI: try if the network is registered..."
-	uqmi -d $wdm --keep-client-id wds --start-network $modem_apn >/tmp/at_ret
+	uqmi -d $wdm --keep-client-id wds --start-network $modem_apn $modem_user $modem_pass >/tmp/at_ret
 	ret=`cat /tmp/at_ret |grep "handle="`
 	if [ "$ret" != "" ]; then
 		echo "successfull to register network."
@@ -146,7 +153,7 @@ elif [ "$modem_type" == "qmi" ]; then
 		echo "QMI: wait for network registered...$tries"
 		sleep 1
 
-		uqmi -d $wdm --keep-client-id wds --start-network $modem_apn >/tmp/at_ret
+		uqmi -d $wdm --keep-client-id wds --start-network $modem_apn $modem_user $modem_pass>/tmp/at_ret
 		ret=`cat /tmp/at_ret |grep "handle="`
 		if [ "$ret" != "" ]; then
 			break
