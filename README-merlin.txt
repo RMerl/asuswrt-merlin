@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 376.48_1 (07-Nov-2014)
+Asuswrt-Merlin - build 376.48_2 (08-Nov-2014)
 =============================================
 
 About
@@ -572,6 +572,11 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
+376.48_2 (8-Nov-2014)
+   - FIXED: Samba would fail to start on the RT-N16 due to a
+            missing library.
+
+
 376.48_1 (7-Nov-2014)
    - FIXED: Max-lease calculation Asus introduced in 376_2769 is
             broken - re-hardcode it to 253 like they used to do in
