@@ -359,7 +359,7 @@ endif
 
 else # Samba 3.6.x
 obj-$(NEED_SAMBA3) += samba36
-obj-$(NEED_SAMBA) += libiconv-1.14
+obj-$(NEED_SAMBA3) += libiconv-1.14
 endif
 
 ifeq ($(RTCONFIG_NTFS),y)
